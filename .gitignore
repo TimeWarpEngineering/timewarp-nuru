@@ -417,3 +417,4 @@ FodyWeavers.xsd
 *.msm
 *.msp
 NURU-CONTEXT-DUMP.md
+LocalNuGetCache/

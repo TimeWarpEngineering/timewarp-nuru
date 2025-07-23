@@ -19,8 +19,7 @@ public class TypeConverterRegistry : ITypeConverterRegistry
     /// </summary>
     public void RegisterConverter(IRouteTypeConverter converter)
     {
-        if (converter == null)
-            throw new ArgumentNullException(nameof(converter));
+        ArgumentNullException.ThrowIfNull(converter);
 
         _convertersByConstraint[converter.ConstraintName] = converter;
         _convertersByType[converter.TargetType] = converter;

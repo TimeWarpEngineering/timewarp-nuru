@@ -22,8 +22,7 @@ public class DefaultEndpointCollectionBuilder : IEndpointCollectionBuilder
         if (string.IsNullOrWhiteSpace(routePattern))
             throw new ArgumentException("Route pattern cannot be null or empty.", nameof(routePattern));
 
-        if (handler == null)
-            throw new ArgumentNullException(nameof(handler));
+        ArgumentNullException.ThrowIfNull(handler);
 
         var parsedRoute = RoutePatternParser.Parse(routePattern);
         var method = handler.Method;

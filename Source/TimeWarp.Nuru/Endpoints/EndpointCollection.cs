@@ -30,8 +30,7 @@ public class EndpointCollection : IEnumerable<RouteEndpoint>
     /// <param name="endpoint">The endpoint to add.</param>
     public void Add(RouteEndpoint endpoint)
     {
-        if (endpoint == null)
-            throw new ArgumentNullException(nameof(endpoint));
+        ArgumentNullException.ThrowIfNull(endpoint);
 
         lock (_lock)
         {

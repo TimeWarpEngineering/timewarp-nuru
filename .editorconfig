@@ -297,26 +297,78 @@ dotnet_code_quality.null_check_validation_methods = NotNull
 # CA1308: Normalize strings to uppercase
 dotnet_diagnostic.ca1308.severity = none
 
-# Roslynator configuration - reasonable defaults to avoid noise
-# Documentation comments
+# Roslynator configuration - comprehensive settings
+# See Scripts/Documentation/Developer/Reference/RoslynatorRules.md for full rule descriptions
+
+# Documentation comments - disabled for now
 dotnet_diagnostic.RCS1139.severity = none # Add summary element to documentation comment
+dotnet_diagnostic.RCS1140.severity = none # Add exception to documentation comment
 dotnet_diagnostic.RCS1141.severity = none # Add 'param' element to documentation comment
 dotnet_diagnostic.RCS1142.severity = none # Add 'typeparam' element to documentation comment
+dotnet_diagnostic.RCS1181.severity = none # Convert comment to documentation comment
 
 # Expression preferences
 dotnet_diagnostic.RCS1021.severity = none # Use expression-bodied lambda
 dotnet_diagnostic.RCS1238.severity = none # Avoid nested ?: operators
+dotnet_diagnostic.RCS1077.severity = warning # Optimize LINQ method call
+dotnet_diagnostic.RCS1128.severity = warning # Use coalesce expression
+dotnet_diagnostic.RCS1146.severity = warning # Use conditional access
 
-# Naming
+# Naming conventions
 dotnet_diagnostic.RCS1045.severity = none # Rename private field to camel case with underscore
+dotnet_diagnostic.RCS1046.severity = warning # Use 'Async' suffix for async method
+dotnet_diagnostic.RCS1047.severity = warning # Non-asynchronous method name should not end with 'Async'
 
-# Line breaks
+# Line breaks and formatting
 dotnet_diagnostic.RCS0051.severity = none # Add/remove new line before 'while' in 'do' statement
 dotnet_diagnostic.RCS0052.severity = none # Add/remove new line before equals sign
+dotnet_diagnostic.RCS0036.severity = warning # Remove blank line between single-line declarations
 
-# Other common ones to consider
+# Code quality and best practices
+dotnet_diagnostic.RCS1018.severity = warning # Add/remove accessibility modifiers
+dotnet_diagnostic.RCS1037.severity = warning # Remove trailing white-space
+dotnet_diagnostic.RCS1049.severity = warning # Simplify boolean comparison
+dotnet_diagnostic.RCS1058.severity = warning # Use compound assignment
+dotnet_diagnostic.RCS1089.severity = warning # Use --/++ operator instead of assignment
+dotnet_diagnostic.RCS1090.severity = warning # Add/remove 'ConfigureAwait(false)' call
+dotnet_diagnostic.RCS1104.severity = warning # Simplify conditional expression
 dotnet_diagnostic.RCS1123.severity = none # Add parentheses when necessary
+dotnet_diagnostic.RCS1124.severity = warning # Inline local variable
+dotnet_diagnostic.RCS1132.severity = warning # Remove redundant overriding member
+dotnet_diagnostic.RCS1133.severity = warning # Remove redundant Dispose/Close call
+dotnet_diagnostic.RCS1134.severity = warning # Remove redundant statement
+dotnet_diagnostic.RCS1175.severity = warning # Unused 'this' parameter
 dotnet_diagnostic.RCS1194.severity = none # Implement exception constructors
+dotnet_diagnostic.RCS1197.severity = warning # Optimize StringBuilder.Append/AppendLine call
+dotnet_diagnostic.RCS1214.severity = warning # Unnecessary interpolated string
+dotnet_diagnostic.RCS1220.severity = warning # Use pattern matching instead of combination of 'is' operator and cast operator
+
+# Performance
+dotnet_diagnostic.RCS1080.severity = warning # Use 'Count/Length' property instead of 'Any' method
+dotnet_diagnostic.RCS1096.severity = warning # Use bitwise operation instead of calling 'HasFlag'
+dotnet_diagnostic.RCS1235.severity = warning # Optimize method call
+
+# Async/await
+dotnet_diagnostic.RCS1174.severity = warning # Remove redundant async/await
+dotnet_diagnostic.RCS1229.severity = warning # Use async/await when necessary
+
+# Collections and LINQ
+dotnet_diagnostic.RCS1072.severity = warning # Remove empty namespace declaration
+dotnet_diagnostic.RCS1112.severity = warning # Combine 'Enumerable.Where' method chain
+dotnet_diagnostic.RCS1113.severity = warning # Use 'string.IsNullOrEmpty' method
+dotnet_diagnostic.RCS1155.severity = warning # Use StringComparison when comparing strings
+
+# Null handling  
+dotnet_diagnostic.RCS1163.severity = warning # Unused parameter
+dotnet_diagnostic.RCS1165.severity = warning # Unconstrained type parameter checked for null
+dotnet_diagnostic.RCS1166.severity = warning # Value type object is never equal to null
+dotnet_diagnostic.RCS1248.severity = warning # Use 'is null' instead of '== null'
+dotnet_diagnostic.RCS1249.severity = warning # Unnecessary null-forgiving operator
+
+# Unity-specific rules (if applicable)
+dotnet_diagnostic.RCS9001.severity = none # Use predefined type
+dotnet_diagnostic.RCS9002.severity = none # Use property instead of field.name
+dotnet_diagnostic.RCS9003.severity = none # Unnecessary conditional access
 
 # Global Usings Analyzer
 

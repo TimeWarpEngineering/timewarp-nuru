@@ -10,7 +10,6 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
     <PackageReference Include="TimeWarp.Mediator" />
-    <PackageReference Include="Roslynator.Analyzers" PrivateAssets="all" />
   </ItemGroup>
 
   <ItemGroup>

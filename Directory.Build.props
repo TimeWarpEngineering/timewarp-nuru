@@ -35,4 +35,10 @@
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
   
+  <ItemGroup>
+    <!-- Code Analyzers -->
+    <PackageReference Include="Roslynator.Analyzers" PrivateAssets="all" />
+    <PackageReference Include="Roslynator.CodeAnalysis.Analyzers" PrivateAssets="all" />
+    <PackageReference Include="Roslynator.Formatting.Analyzers" PrivateAssets="all" />
+  </ItemGroup>
 </Project>

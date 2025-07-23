@@ -1,0 +1,22 @@
+namespace TimeWarp.Nuru.TypeConversion.Converters;
+
+/// <summary>
+/// Converts string values to double-precision floating point numbers.
+/// </summary>
+public class DoubleTypeConverter : IRouteTypeConverter
+{
+    public Type TargetType => typeof(double);
+    public string ConstraintName => "double";
+    
+    public bool TryConvert(string value, out object? result)
+    {
+        if (double.TryParse(value, out var doubleValue))
+        {
+            result = doubleValue;
+            return true;
+        }
+        
+        result = null;
+        return false;
+    }
+}

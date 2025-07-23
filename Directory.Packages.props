@@ -7,5 +7,6 @@
     <!-- External packages -->
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
     <PackageVersion Include="TimeWarp.Mediator" Version="13.0.0-beta.1" />
+    <PackageVersion Include="TimeWarp.Cli" Version="0.6.0-rc12" />
   </ItemGroup>
 </Project>

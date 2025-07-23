@@ -1,25 +1,22 @@
 #!/usr/bin/dotnet --
-// Build.cs - Build the TimeWarp.Nuru library
+// Clean.cs - Clean the TimeWarp.Nuru solution
 
 // Change to script directory for relative paths
 string scriptDir = (AppContext.GetData("EntryPointFileDirectoryPath") as string)!;
 Directory.SetCurrentDirectory(scriptDir);
 
-Console.WriteLine("Building TimeWarp.Nuru library...");
+Console.WriteLine("Cleaning TimeWarp.Nuru solution...");
 Console.WriteLine($"Working from: {Directory.GetCurrentDirectory()}");
 
-// Build the project with minimal verbosity to see errors
+// Clean the solution with minimal verbosity
 try
 {
-    ExecutionResult result = await DotNet.Build()
-        .WithProject("../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj")
-        .WithConfiguration("Release")
+    ExecutionResult result = await DotNet.Clean()
+        .WithProject("../TimeWarp.Nuru.slnx")
         .WithVerbosity("minimal")
-        .WithNoIncremental()
-        .WithNoValidation()
         .ExecuteAsync();
 
-    result.WriteToConsole(); 
+    result.WriteToConsole();
 }
 catch (Exception ex)
 {
@@ -34,6 +31,21 @@ catch (Exception ex)
     }
     
     Console.WriteLine($"Stack trace: {ex.StackTrace}");
-    Console.WriteLine("❌ Build failed with exception!");
+    Console.WriteLine("❌ Clean failed with exception!");
     Environment.Exit(1);
+}
+
+// Also delete obj and bin directories to ensure complete cleanup
+Console.WriteLine("\nDeleting obj and bin directories...");
+try
+{
+    await Shell.Run("find")
+        .WithArguments("..", "-type", "d", "(", "-name", "obj", "-o", "-name", "bin", ")")
+        .Pipe("xargs", "rm", "-rf")
+        .ExecuteAsync();
+    Console.WriteLine("✅ Deleted all obj and bin directories");
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"Warning: Could not delete some directories: {ex.Message}");
 }

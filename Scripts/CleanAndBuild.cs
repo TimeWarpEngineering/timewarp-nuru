@@ -1,0 +1,27 @@
+#!/usr/bin/dotnet --
+// CleanAndBuild.cs - Clean and build the TimeWarp.Nuru solution
+
+// Change to script directory for relative paths
+string scriptDir = (AppContext.GetData("EntryPointFileDirectoryPath") as string)!;
+Directory.SetCurrentDirectory(scriptDir);
+
+Console.WriteLine("Running Clean and Build for TimeWarp.Nuru...");
+Console.WriteLine($"Working from: {Directory.GetCurrentDirectory()}");
+
+// Run Clean.cs
+var cleanResult = await Shell.Run("./Clean.cs").ExecuteAsync();
+if (cleanResult.ExitCode != 0)
+{
+    Console.WriteLine("❌ Clean failed!");
+    Environment.Exit(1);
+}
+
+// Run Build.cs
+var buildResult = await Shell.Run("./Build.cs").ExecuteAsync();
+if (buildResult.ExitCode != 0)
+{
+    Console.WriteLine("❌ Build failed!");
+    Environment.Exit(1);
+}
+
+Console.WriteLine("\n✅ Clean and Build completed successfully!");

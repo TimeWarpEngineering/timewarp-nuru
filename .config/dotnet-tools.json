@@ -1,5 +1,34 @@
 {
   "version": 1,
   "isRoot": true,
-  "tools": {}
+  "tools": {
+    "roslynator.dotnet.cli": {
+      "version": "0.10.1",
+      "commands": [
+        "roslynator"
+      ],
+      "rollForward": false
+    },
+    "dotnet-format": {
+      "version": "5.1.250801",
+      "commands": [
+        "dotnet-format"
+      ],
+      "rollForward": false
+    },
+    "dotnet-outdated-tool": {
+      "version": "4.6.8",
+      "commands": [
+        "dotnet-outdated"
+      ],
+      "rollForward": false
+    },
+    "benchmarkdotnet.tool": {
+      "version": "0.12.1",
+      "commands": [
+        "dotnet-benchmark"
+      ],
+      "rollForward": false
+    }
+  }
 }

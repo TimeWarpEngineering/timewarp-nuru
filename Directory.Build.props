@@ -26,7 +26,12 @@
     <!-- Fail build on analyzer warnings since TreatWarningsAsErrors is true -->
     <CodeAnalysisTreatWarningsAsErrors>false</CodeAnalysisTreatWarningsAsErrors>
     
-    <!-- Use local packages directory instead of global cache -->
-    <RestorePackagesPath>$(MSBuildThisFileDirectory)LocalNuGetCache</RestorePackagesPath>
+    <!-- Use local packages directory instead of global cache -->    <RestorePackagesPath>$(MSBuildThisFileDirectory)LocalNuGetCache</RestorePackagesPath>
+    
+    <!-- Common Project Settings -->
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
   </PropertyGroup>
 </Project>

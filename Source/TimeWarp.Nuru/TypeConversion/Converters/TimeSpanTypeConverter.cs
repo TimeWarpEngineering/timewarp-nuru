@@ -8,7 +8,7 @@ public class TimeSpanTypeConverter : IRouteTypeConverter
 {
     public Type TargetType => typeof(TimeSpan);
     public string ConstraintName => "timespan";
-    
+
     public bool TryConvert(string value, out object? result)
     {
         if (TimeSpan.TryParse(value, out var timeSpanValue))
@@ -16,7 +16,7 @@ public class TimeSpanTypeConverter : IRouteTypeConverter
             result = timeSpanValue;
             return true;
         }
-        
+
         result = null;
         return false;
     }

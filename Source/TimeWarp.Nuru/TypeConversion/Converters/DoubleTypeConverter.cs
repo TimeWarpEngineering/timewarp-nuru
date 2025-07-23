@@ -7,7 +7,7 @@ public class DoubleTypeConverter : IRouteTypeConverter
 {
     public Type TargetType => typeof(double);
     public string ConstraintName => "double";
-    
+
     public bool TryConvert(string value, out object? result)
     {
         if (double.TryParse(value, out var doubleValue))
@@ -15,7 +15,7 @@ public class DoubleTypeConverter : IRouteTypeConverter
             result = doubleValue;
             return true;
         }
-        
+
         result = null;
         return false;
     }

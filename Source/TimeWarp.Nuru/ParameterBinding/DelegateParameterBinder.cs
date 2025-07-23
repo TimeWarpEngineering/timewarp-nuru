@@ -12,25 +12,25 @@ public static class DelegateParameterBinder
     /// Invokes a delegate with parameters bound from extracted route values.
     /// </summary>
     public static object? InvokeWithParameters(
-        Delegate handler, 
+        Delegate handler,
         Dictionary<string, string> extractedValues,
         ITypeConverterRegistry typeConverterRegistry,
         IServiceProvider serviceProvider)
     {
         var method = handler.Method;
         var parameters = method.GetParameters();
-        
+
         if (parameters.Length == 0)
         {
             return handler.DynamicInvoke();
         }
-        
+
         var args = new object?[parameters.Length];
-        
+
         for (int i = 0; i < parameters.Length; i++)
         {
             var param = parameters[i];
-            
+
             // Try to get value from extracted values
             if (extractedValues.TryGetValue(param.Name!, out var stringValue))
             {
@@ -98,23 +98,23 @@ public static class DelegateParameterBinder
                 }
             }
         }
-        
+
         return handler.DynamicInvoke(args);
     }
-    
+
     private static bool IsServiceParameter(ParameterInfo parameter)
     {
         var type = parameter.ParameterType;
-        
+
         // Simple heuristic: if it's not a common value type and not string/array, 
         // it's likely a service
-        if (type.IsPrimitive || type == typeof(string) || type == typeof(decimal) || 
+        if (type.IsPrimitive || type == typeof(string) || type == typeof(decimal) ||
             type == typeof(DateTime) || type == typeof(DateTimeOffset) || type == typeof(Guid) ||
             type.IsArray || (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>)))
         {
             return false;
         }
-        
+
         return true;
     }
 }

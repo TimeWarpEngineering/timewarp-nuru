@@ -7,7 +7,7 @@ public class GuidTypeConverter : IRouteTypeConverter
 {
     public Type TargetType => typeof(Guid);
     public string ConstraintName => "guid";
-    
+
     public bool TryConvert(string value, out object? result)
     {
         if (Guid.TryParse(value, out var guidValue))
@@ -15,7 +15,7 @@ public class GuidTypeConverter : IRouteTypeConverter
             result = guidValue;
             return true;
         }
-        
+
         result = null;
         return false;
     }

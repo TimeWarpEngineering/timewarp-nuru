@@ -7,7 +7,7 @@ public class LongTypeConverter : IRouteTypeConverter
 {
     public Type TargetType => typeof(long);
     public string ConstraintName => "long";
-    
+
     public bool TryConvert(string value, out object? result)
     {
         if (long.TryParse(value, out var longValue))
@@ -15,7 +15,7 @@ public class LongTypeConverter : IRouteTypeConverter
             result = longValue;
             return true;
         }
-        
+
         result = null;
         return false;
     }

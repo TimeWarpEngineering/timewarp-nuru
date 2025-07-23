@@ -19,16 +19,16 @@ public static class ServiceCollectionExtensions
         // Register the endpoint collection as a singleton
         services.TryAddSingleton<EndpointCollection>();
         services.TryAddSingleton<IEndpointCollectionBuilder, DefaultEndpointCollectionBuilder>();
-        
+
         // Register type conversion
         services.TryAddSingleton<ITypeConverterRegistry, TypeConverterRegistry>();
-        
+
         // Register command executor for Mediator integration
         services.TryAddSingleton<CommandExecutor>();
-        
+
         // Register the CLI
         services.TryAddSingleton<NuruCli>();
-        
+
         return services;
     }
 }

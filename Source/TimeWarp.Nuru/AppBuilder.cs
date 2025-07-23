@@ -12,16 +12,16 @@ public class AppBuilder
 {
     private readonly ServiceCollection _services = new();
     private readonly EndpointCollection _endpoints = new();
-    
+
     public IServiceCollection Services => _services;
-    
+
     public AppBuilder()
     {
         // Add default services
         _services.AddNuru();
         _services.AddSingleton(_endpoints);
     }
-    
+
     /// <summary>
     /// Adds a delegate-based route.
     /// </summary>
@@ -35,11 +35,11 @@ public class AppBuilder
             Method = handler.Method,
             Description = description
         };
-        
+
         _endpoints.Add(endpoint);
         return this;
     }
-    
+
     /// <summary>
     /// Adds a Mediator command-based route.
     /// </summary>
@@ -55,11 +55,11 @@ public class AppBuilder
             Description = description,
             CommandType = typeof(TCommand)
         };
-        
+
         _endpoints.Add(endpoint);
         return this;
     }
-    
+
     /// <summary>
     /// Adds a Mediator command-based route with response.
     /// </summary>
@@ -75,11 +75,11 @@ public class AppBuilder
             Description = description,
             CommandType = typeof(TCommand)
         };
-        
+
         _endpoints.Add(endpoint);
         return this;
     }
-    
+
     /// <summary>
     /// Builds the service provider and returns a runnable app.
     /// </summary>
@@ -96,17 +96,17 @@ public class AppBuilder
 public class NuruApp
 {
     private readonly IServiceProvider _serviceProvider;
-    
+
     public IServiceProvider Services => _serviceProvider;
-    
+
     public NuruApp(IServiceProvider serviceProvider)
     {
         _serviceProvider = serviceProvider;
     }
-    
+
     public async Task<int> RunAsync(string[] args)
     {
         var cli = _serviceProvider.GetRequiredService<NuruCli>();
-        return await cli.RunAsync(args);
+        return await cli.RunAsync(args).ConfigureAwait(false);
     }
 }

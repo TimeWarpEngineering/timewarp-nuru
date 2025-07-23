@@ -7,7 +7,7 @@ public class DecimalTypeConverter : IRouteTypeConverter
 {
     public Type TargetType => typeof(decimal);
     public string ConstraintName => "decimal";
-    
+
     public bool TryConvert(string value, out object? result)
     {
         if (decimal.TryParse(value, out var decimalValue))
@@ -15,7 +15,7 @@ public class DecimalTypeConverter : IRouteTypeConverter
             result = decimalValue;
             return true;
         }
-        
+
         result = null;
         return false;
     }

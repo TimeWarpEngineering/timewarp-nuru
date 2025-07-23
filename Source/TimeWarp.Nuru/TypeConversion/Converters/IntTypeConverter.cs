@@ -7,7 +7,7 @@ public class IntTypeConverter : IRouteTypeConverter
 {
     public Type TargetType => typeof(int);
     public string ConstraintName => "int";
-    
+
     public bool TryConvert(string value, out object? result)
     {
         if (int.TryParse(value, out var intValue))
@@ -15,7 +15,7 @@ public class IntTypeConverter : IRouteTypeConverter
             result = intValue;
             return true;
         }
-        
+
         result = null;
         return false;
     }

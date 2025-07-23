@@ -8,7 +8,7 @@ public class DateTimeTypeConverter : IRouteTypeConverter
 {
     public Type TargetType => typeof(DateTime);
     public string ConstraintName => "datetime";
-    
+
     public bool TryConvert(string value, out object? result)
     {
         if (DateTime.TryParse(value, out var dateTimeValue))
@@ -16,7 +16,7 @@ public class DateTimeTypeConverter : IRouteTypeConverter
             result = dateTimeValue;
             return true;
         }
-        
+
         result = null;
         return false;
     }

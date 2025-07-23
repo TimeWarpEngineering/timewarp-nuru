@@ -12,7 +12,7 @@ builder.Services.AddSingleton<IRequestHandler<CalculateCommand, CalculateRespons
 // Add routes
 builder.AddRoute("status", () => Console.WriteLine("✓ System is running"), "Check system status");
 
-builder.AddRoute("echo {message}", (string message) => 
+builder.AddRoute("echo {message}", (string message) =>
 {
     Console.WriteLine($"Echo: {message}");
 }, "Echo a message back");
@@ -27,23 +27,23 @@ builder.AddRoute<CalculateCommand, CalculateResponse>("calc {value1:double} {val
 
 // Build and run
 var app = builder.Build();
-return await app.RunAsync(args);
+return await app.RunAsync(args).ConfigureAwait(false);
 
 // Command and handler definitions
-public class CalculateCommand : IRequest<CalculateResponse>
+internal class CalculateCommand : IRequest<CalculateResponse>
 {
     public double Value1 { get; set; }
     public double Value2 { get; set; }
     public string Operation { get; set; } = "add";
 }
 
-public class CalculateResponse
+internal class CalculateResponse
 {
     public double Result { get; set; }
     public string Formula { get; set; } = "";
 }
 
-public class CalculateHandler : IRequestHandler<CalculateCommand, CalculateResponse>
+internal class CalculateHandler : IRequestHandler<CalculateCommand, CalculateResponse>
 {
     public Task<CalculateResponse> Handle(CalculateCommand request, CancellationToken cancellationToken)
     {
@@ -55,7 +55,7 @@ public class CalculateHandler : IRequestHandler<CalculateCommand, CalculateRespo
             "divide" => request.Value2 != 0 ? request.Value1 / request.Value2 : double.NaN,
             _ => throw new ArgumentException($"Unknown operation: {request.Operation}")
         };
-        
+
         var op = request.Operation.ToLower() switch
         {
             "add" => "+",
@@ -64,7 +64,7 @@ public class CalculateHandler : IRequestHandler<CalculateCommand, CalculateRespo
             "divide" => "/",
             _ => "?"
         };
-        
+
         return Task.FromResult(new CalculateResponse
         {
             Result = result,

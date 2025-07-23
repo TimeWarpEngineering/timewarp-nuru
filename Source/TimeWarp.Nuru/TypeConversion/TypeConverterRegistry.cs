@@ -7,13 +7,13 @@ public class TypeConverterRegistry : ITypeConverterRegistry
 {
     private readonly Dictionary<string, IRouteTypeConverter> _convertersByConstraint = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<Type, IRouteTypeConverter> _convertersByType = new();
-    
+
     public TypeConverterRegistry()
     {
         // Register default converters
         RegisterDefaultConverters();
     }
-    
+
     /// <summary>
     /// Registers a type converter.
     /// </summary>
@@ -21,11 +21,11 @@ public class TypeConverterRegistry : ITypeConverterRegistry
     {
         if (converter == null)
             throw new ArgumentNullException(nameof(converter));
-            
+
         _convertersByConstraint[converter.ConstraintName] = converter;
         _convertersByType[converter.TargetType] = converter;
     }
-    
+
     /// <summary>
     /// Gets a converter by constraint name (e.g., "int", "bool").
     /// </summary>
@@ -33,12 +33,12 @@ public class TypeConverterRegistry : ITypeConverterRegistry
     {
         if (string.IsNullOrEmpty(constraintName))
             return null;
-            
-        return _convertersByConstraint.TryGetValue(constraintName, out var converter) 
-            ? converter 
+
+        return _convertersByConstraint.TryGetValue(constraintName, out var converter)
+            ? converter
             : null;
     }
-    
+
     /// <summary>
     /// Gets a converter by target type.
     /// </summary>
@@ -46,12 +46,12 @@ public class TypeConverterRegistry : ITypeConverterRegistry
     {
         if (targetType == null)
             return null;
-            
-        return _convertersByType.TryGetValue(targetType, out var converter) 
-            ? converter 
+
+        return _convertersByType.TryGetValue(targetType, out var converter)
+            ? converter
             : null;
     }
-    
+
     /// <summary>
     /// Attempts to convert a string value to the specified type using the constraint.
     /// </summary>
@@ -63,10 +63,10 @@ public class TypeConverterRegistry : ITypeConverterRegistry
             result = null;
             return false;
         }
-        
+
         return converter.TryConvert(value, out result);
     }
-    
+
     /// <summary>
     /// Attempts to convert a string value to the specified type.
     /// </summary>
@@ -78,10 +78,10 @@ public class TypeConverterRegistry : ITypeConverterRegistry
             result = null;
             return false;
         }
-        
+
         return converter.TryConvert(value, out result);
     }
-    
+
     private void RegisterDefaultConverters()
     {
         RegisterConverter(new Converters.IntTypeConverter());

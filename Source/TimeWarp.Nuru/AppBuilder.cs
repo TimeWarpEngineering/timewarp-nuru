@@ -1,7 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
+using TimeWarp.Mediator;
 using TimeWarp.Nuru.Endpoints;
 using TimeWarp.Nuru.Parsing;
-using TimeWarp.Mediator;
 
 namespace TimeWarp.Nuru;
 
@@ -85,7 +85,7 @@ public class AppBuilder
     /// </summary>
     public NuruApp Build()
     {
-        var serviceProvider = _services.BuildServiceProvider();
+    ServiceProvider serviceProvider = _services.BuildServiceProvider();
         return new NuruApp(serviceProvider);
     }
 }
@@ -106,7 +106,7 @@ public class NuruApp
 
     public async Task<int> RunAsync(string[] args)
     {
-        var cli = _serviceProvider.GetRequiredService<NuruCli>();
+    NuruCli cli = _serviceProvider.GetRequiredService<NuruCli>();
         return await cli.RunAsync(args).ConfigureAwait(false);
     }
 }

@@ -17,27 +17,27 @@ public static class DelegateParameterBinder
         ITypeConverterRegistry typeConverterRegistry,
         IServiceProvider serviceProvider)
     {
-        var method = handler.Method;
-        var parameters = method.GetParameters();
+    MethodInfo method = handler.Method;
+    ParameterInfo[] parameters = method.GetParameters();
 
         if (parameters.Length == 0)
         {
             return handler.DynamicInvoke();
         }
 
-        var args = new object?[parameters.Length];
+    object?[] args = new object?[parameters.Length];
 
         for (int i = 0; i < parameters.Length; i++)
         {
-            var param = parameters[i];
+      ParameterInfo param = parameters[i];
 
             // Try to get value from extracted values
-            if (extractedValues.TryGetValue(param.Name!, out var stringValue))
+            if (extractedValues.TryGetValue(param.Name!, out string? stringValue))
             {
                 // Handle arrays (catch-all parameters)
                 if (param.ParameterType.IsArray)
                 {
-                    var elementType = param.ParameterType.GetElementType()!;
+          Type elementType = param.ParameterType.GetElementType()!;
                     if (elementType == typeof(string))
                     {
                         // Split the value for string arrays
@@ -52,7 +52,7 @@ public static class DelegateParameterBinder
                 else
                 {
                     // Convert the value to the parameter type
-                    if (typeConverterRegistry.TryConvert(stringValue, param.ParameterType, out var convertedValue))
+                    if (typeConverterRegistry.TryConvert(stringValue, param.ParameterType, out object? convertedValue))
                     {
                         args[i] = convertedValue;
                     }
@@ -104,7 +104,7 @@ public static class DelegateParameterBinder
 
     private static bool IsServiceParameter(ParameterInfo parameter)
     {
-        var type = parameter.ParameterType;
+    Type type = parameter.ParameterType;
 
         // Simple heuristic: if it's not a common value type and not string/array, 
         // it's likely a service

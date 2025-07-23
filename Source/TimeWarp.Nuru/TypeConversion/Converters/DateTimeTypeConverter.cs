@@ -11,7 +11,7 @@ public class DateTimeTypeConverter : IRouteTypeConverter
 
     public bool TryConvert(string value, out object? result)
     {
-        if (DateTime.TryParse(value, out var dateTimeValue))
+        if (DateTime.TryParse(value, out DateTime dateTimeValue))
         {
             result = dateTimeValue;
             return true;

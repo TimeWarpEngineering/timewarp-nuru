@@ -24,8 +24,8 @@ public class DefaultEndpointCollectionBuilder : IEndpointCollectionBuilder
 
         ArgumentNullException.ThrowIfNull(handler);
 
-        var parsedRoute = RoutePatternParser.Parse(routePattern);
-        var method = handler.Method;
+    ParsedRoute parsedRoute = RoutePatternParser.Parse(routePattern);
+    MethodInfo method = handler.Method;
 
         var endpoint = new RouteEndpoint
         {
@@ -37,8 +37,8 @@ public class DefaultEndpointCollectionBuilder : IEndpointCollectionBuilder
             Metadata = metadata
         };
 
-        // Extract description from metadata if available
-        var description = metadata.OfType<string>().FirstOrDefault();
+    // Extract description from metadata if available
+    string? description = metadata.OfType<string>().FirstOrDefault();
         if (description != null)
         {
             endpoint.Description = description;

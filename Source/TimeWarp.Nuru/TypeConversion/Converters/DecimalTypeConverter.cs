@@ -10,7 +10,7 @@ public class DecimalTypeConverter : IRouteTypeConverter
 
     public bool TryConvert(string value, out object? result)
     {
-        if (decimal.TryParse(value, out var decimalValue))
+        if (decimal.TryParse(value, out decimal decimalValue))
         {
             result = decimalValue;
             return true;

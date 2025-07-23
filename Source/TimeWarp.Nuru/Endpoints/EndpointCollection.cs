@@ -34,8 +34,8 @@ public class EndpointCollection : IEnumerable<RouteEndpoint>
 
         lock (_lock)
         {
-            // Check for duplicate routes
-            var existingRoute = _endpoints.FirstOrDefault(e =>
+      // Check for duplicate routes
+      RouteEndpoint? existingRoute = _endpoints.FirstOrDefault(e =>
                 e.RoutePattern.Equals(endpoint.RoutePattern, StringComparison.OrdinalIgnoreCase));
 
             if (existingRoute != null)
@@ -50,7 +50,7 @@ public class EndpointCollection : IEnumerable<RouteEndpoint>
             // Then by Specificity descending for routes with same order
             _endpoints.Sort((a, b) =>
             {
-                var orderComparison = b.Order.CompareTo(a.Order);
+              int orderComparison = b.Order.CompareTo(a.Order);
                 return orderComparison != 0
                     ? orderComparison
                     : b.ParsedRoute.Specificity.CompareTo(a.ParsedRoute.Specificity);

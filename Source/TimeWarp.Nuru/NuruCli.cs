@@ -19,7 +19,7 @@ public class NuruCli
         _serviceProvider = serviceProvider;
         _endpoints = serviceProvider.GetRequiredService<EndpointCollection>();
 
-        var typeConverterRegistry = serviceProvider.GetRequiredService<ITypeConverterRegistry>();
+    ITypeConverterRegistry typeConverterRegistry = serviceProvider.GetRequiredService<ITypeConverterRegistry>();
         _resolver = new RouteBasedCommandResolver(_endpoints, typeConverterRegistry);
     }
 
@@ -27,8 +27,8 @@ public class NuruCli
     {
         try
         {
-            // Parse and match route
-            var result = _resolver.Resolve(args);
+      // Parse and match route
+      ResolverResult result = _resolver.Resolve(args);
 
             if (!result.Success || result.MatchedEndpoint == null)
             {
@@ -37,8 +37,8 @@ public class NuruCli
                 return 1;
             }
 
-            // Check if this is a Mediator command
-            var commandType = result.MatchedEndpoint.CommandType;
+      // Check if this is a Mediator command
+      Type? commandType = result.MatchedEndpoint.CommandType;
 
             if (commandType != null && IsMediatrCommand(commandType))
             {
@@ -67,10 +67,10 @@ public class NuruCli
 
     private async Task<int> ExecuteMediatrCommand(Type commandType, ResolverResult result)
     {
-        var commandExecutor = _serviceProvider.GetRequiredService<CommandExecutor>();
+    CommandExecutor commandExecutor = _serviceProvider.GetRequiredService<CommandExecutor>();
 
-        // Execute through Mediator
-        var response = await commandExecutor.ExecuteCommandAsync(
+    // Execute through Mediator
+    object? response = await commandExecutor.ExecuteCommandAsync(
             commandType,
             result.ExtractedValues,
             CancellationToken.None).ConfigureAwait(false);
@@ -87,8 +87,8 @@ public class NuruCli
         {
             try
             {
-                var typeConverterRegistry = _serviceProvider.GetRequiredService<ITypeConverterRegistry>();
-                var returnValue = ParameterBinding.DelegateParameterBinder.InvokeWithParameters(
+        ITypeConverterRegistry typeConverterRegistry = _serviceProvider.GetRequiredService<ITypeConverterRegistry>();
+        object? returnValue = ParameterBinding.DelegateParameterBinder.InvokeWithParameters(
                     del,
                     result.ExtractedValues,
                     typeConverterRegistry,
@@ -115,7 +115,7 @@ public class NuruCli
     private void ShowAvailableCommands()
     {
         System.Console.WriteLine("\nAvailable commands:");
-        foreach (var endpoint in _endpoints)
+        foreach (RouteEndpoint endpoint in _endpoints)
         {
             System.Console.WriteLine($"  {endpoint.RoutePattern}  {endpoint.Description ?? ""}");
         }

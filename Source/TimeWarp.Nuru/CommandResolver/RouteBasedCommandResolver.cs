@@ -16,12 +16,12 @@ public class RouteBasedCommandResolver
 
     public ResolverResult Resolve(IReadOnlyList<string> args)
     {
-        // Try to match against route endpoints
-        var matchResult = MatchRoute(args);
+    // Try to match against route endpoints
+    (RouteEndpoint endpoint, Dictionary<string, string> extractedValues)? matchResult = MatchRoute(args);
 
         if (matchResult != null)
         {
-            var (endpoint, extractedValues) = matchResult.Value;
+            (RouteEndpoint endpoint, Dictionary<string, string> extractedValues) = matchResult.Value;
 
             return new ResolverResult
             {
@@ -40,12 +40,12 @@ public class RouteBasedCommandResolver
 
     private (RouteEndpoint endpoint, Dictionary<string, string> extractedValues)? MatchRoute(IReadOnlyList<string> args)
     {
-        foreach (var endpoint in _endpoints)
+        foreach (RouteEndpoint endpoint in _endpoints)
         {
             var extractedValues = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
             // Check positional segments
-            if (MatchPositionalSegments(endpoint, args, extractedValues, out var consumedArgs))
+            if (MatchPositionalSegments(endpoint, args, extractedValues, out int consumedArgs))
             {
                 // Check if remaining args match required options
                 var remainingArgs = args.Skip(consumedArgs).ToList();
@@ -63,12 +63,12 @@ public class RouteBasedCommandResolver
         Dictionary<string, string> extractedValues, out int consumedArgs)
     {
         consumedArgs = 0;
-        var template = endpoint.ParsedRoute.PositionalTemplate;
+    RouteSegment[] template = endpoint.ParsedRoute.PositionalTemplate;
 
         // Match each segment in the template
         for (int i = 0; i < template.Length; i++)
         {
-            var segment = template[i];
+      RouteSegment segment = template[i];
 
             // For catch-all segment (must be last), consume all remaining
             if (segment is ParameterSegment param && param.IsCatchAll)
@@ -85,7 +85,7 @@ public class RouteBasedCommandResolver
             if (i >= args.Count || args[i].StartsWith("-"))
                 return false; // Not enough args or hit an option
 
-            if (!segment.TryMatch(args[i], out var value))
+            if (!segment.TryMatch(args[i], out string? value))
                 return false;
 
             if (value != null && segment is ParameterSegment ps)
@@ -100,21 +100,21 @@ public class RouteBasedCommandResolver
     private bool CheckRequiredOptions(RouteEndpoint endpoint, IReadOnlyList<string> remainingArgs,
         Dictionary<string, string> extractedValues)
     {
-        var optionSegments = endpoint.ParsedRoute.OptionSegments;
+    OptionSegment[] optionSegments = endpoint.ParsedRoute.OptionSegments;
 
         // If no required options, we're good
         if (optionSegments.Length == 0)
             return true;
 
         // Check each required option segment
-        foreach (var optionSegment in optionSegments)
+        foreach (OptionSegment optionSegment in optionSegments)
         {
             bool found = false;
 
             // Look through remaining args for this option
             for (int i = 0; i < remainingArgs.Count; i++)
             {
-                var arg = remainingArgs[i];
+        string arg = remainingArgs[i];
 
                 if (optionSegment.TryMatch(arg, out _))
                 {

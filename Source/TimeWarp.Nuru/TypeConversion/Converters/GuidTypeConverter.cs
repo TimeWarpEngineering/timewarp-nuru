@@ -10,7 +10,7 @@ public class GuidTypeConverter : IRouteTypeConverter
 
     public bool TryConvert(string value, out object? result)
     {
-        if (Guid.TryParse(value, out var guidValue))
+        if (Guid.TryParse(value, out Guid guidValue))
         {
             result = guidValue;
             return true;

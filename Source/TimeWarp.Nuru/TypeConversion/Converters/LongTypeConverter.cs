@@ -10,7 +10,7 @@ public class LongTypeConverter : IRouteTypeConverter
 
     public bool TryConvert(string value, out object? result)
     {
-        if (long.TryParse(value, out var longValue))
+        if (long.TryParse(value, out long longValue))
         {
             result = longValue;
             return true;

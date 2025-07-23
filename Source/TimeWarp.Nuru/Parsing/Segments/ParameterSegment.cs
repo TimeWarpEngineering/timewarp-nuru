@@ -35,7 +35,7 @@ public class ParameterSegment : RouteSegment
 
     public override string ToDisplayString()
     {
-        var result = IsCatchAll ? "{*" : "{";
+    string result = IsCatchAll ? "{*" : "{";
         result += Name;
         if (Constraint != null)
         {

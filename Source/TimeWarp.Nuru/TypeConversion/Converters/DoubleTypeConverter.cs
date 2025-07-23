@@ -10,7 +10,7 @@ public class DoubleTypeConverter : IRouteTypeConverter
 
     public bool TryConvert(string value, out object? result)
     {
-        if (double.TryParse(value, out var doubleValue))
+        if (double.TryParse(value, out double doubleValue))
         {
             result = doubleValue;
             return true;

@@ -11,7 +11,7 @@ public class TimeSpanTypeConverter : IRouteTypeConverter
 
     public bool TryConvert(string value, out object? result)
     {
-        if (TimeSpan.TryParse(value, out var timeSpanValue))
+        if (TimeSpan.TryParse(value, out TimeSpan timeSpanValue))
         {
             result = timeSpanValue;
             return true;

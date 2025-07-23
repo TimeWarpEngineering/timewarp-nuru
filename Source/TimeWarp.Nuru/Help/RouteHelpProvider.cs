@@ -17,7 +17,7 @@ public class RouteHelpProvider
     /// </summary>
     public void ShowHelp()
     {
-        var routes = _endpoints.Endpoints;
+    IReadOnlyList<RouteEndpoint> routes = _endpoints.Endpoints;
 
         if (!routes.Any())
         {
@@ -28,13 +28,13 @@ public class RouteHelpProvider
         System.Console.WriteLine("Available Routes:");
         System.Console.WriteLine();
 
-        // Group routes by their command prefix
-        var groupedRoutes = GroupRoutesByPrefix(routes);
+    // Group routes by their command prefix
+    Dictionary<string, List<RouteEndpoint>> groupedRoutes = GroupRoutesByPrefix(routes);
 
         // Display ungrouped routes first
         if (groupedRoutes.ContainsKey(""))
         {
-            foreach (var route in groupedRoutes[""])
+            foreach (RouteEndpoint route in groupedRoutes[""])
             {
                 DisplayRoute(route);
             }
@@ -46,10 +46,10 @@ public class RouteHelpProvider
         }
 
         // Display grouped routes
-        foreach (var group in groupedRoutes.Where(g => !string.IsNullOrEmpty(g.Key)).OrderBy(g => g.Key))
+        foreach (KeyValuePair<string, List<RouteEndpoint>> group in groupedRoutes.Where(g => !string.IsNullOrEmpty(g.Key)).OrderBy(g => g.Key))
         {
             System.Console.WriteLine($"{group.Key} Commands:");
-            foreach (var route in group.Value)
+            foreach (RouteEndpoint? route in group.Value)
             {
                 DisplayRoute(route, indent: true);
             }
@@ -59,14 +59,14 @@ public class RouteHelpProvider
 
     private void DisplayRoute(RouteEndpoint route, bool indent = false)
     {
-        var prefix = indent ? "  " : "";
-        var pattern = route.RoutePattern;
-        var description = route.Description;
+    string prefix = indent ? "  " : "";
+    string pattern = route.RoutePattern;
+    string? description = route.Description;
 
         if (!string.IsNullOrEmpty(description))
         {
-            // Calculate padding for alignment
-            var padding = 40 - pattern.Length - prefix.Length;
+      // Calculate padding for alignment
+      int padding = 40 - pattern.Length - prefix.Length;
             if (padding < 2) padding = 2;
 
             System.Console.WriteLine($"{prefix}{pattern}{new string(' ', padding)}{description}");
@@ -81,9 +81,9 @@ public class RouteHelpProvider
     {
         var groups = new Dictionary<string, List<RouteEndpoint>>();
 
-        foreach (var route in routes.OrderBy(r => r.RoutePattern))
+        foreach (RouteEndpoint? route in routes.OrderBy(r => r.RoutePattern))
         {
-            var prefix = GetCommandPrefix(route.RoutePattern);
+      string prefix = GetCommandPrefix(route.RoutePattern);
 
             if (!groups.ContainsKey(prefix))
             {
@@ -104,8 +104,8 @@ public class RouteHelpProvider
             return "";
         }
 
-        // Extract the first word as the command prefix
-        var parts = routePattern.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+    // Extract the first word as the command prefix
+    string[] parts = routePattern.Split(' ', StringSplitOptions.RemoveEmptyEntries);
         if (parts.Length > 1)
         {
             // Multi-part command, use first part as group (e.g., "git" from "git status")

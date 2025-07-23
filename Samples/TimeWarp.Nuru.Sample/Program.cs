@@ -1,6 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
-using TimeWarp.Nuru;
 using TimeWarp.Mediator;
+using TimeWarp.Nuru;
 
 // Build the app
 var builder = new AppBuilder();
@@ -26,7 +26,7 @@ builder.AddRoute<CalculateCommand, CalculateResponse>("calc {value1:double} {val
     "Perform calculation (operations: add, subtract, multiply, divide)");
 
 // Build and run
-var app = builder.Build();
+NuruApp app = builder.Build();
 return await app.RunAsync(args).ConfigureAwait(false);
 
 // Command and handler definitions
@@ -47,7 +47,7 @@ internal class CalculateHandler : IRequestHandler<CalculateCommand, CalculateRes
 {
     public Task<CalculateResponse> Handle(CalculateCommand request, CancellationToken cancellationToken)
     {
-        var result = request.Operation.ToLower() switch
+    double result = request.Operation.ToLower() switch
         {
             "add" => request.Value1 + request.Value2,
             "subtract" => request.Value1 - request.Value2,
@@ -56,7 +56,7 @@ internal class CalculateHandler : IRequestHandler<CalculateCommand, CalculateRes
             _ => throw new ArgumentException($"Unknown operation: {request.Operation}")
         };
 
-        var op = request.Operation.ToLower() switch
+    string op = request.Operation.ToLower() switch
         {
             "add" => "+",
             "subtract" => "-",

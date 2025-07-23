@@ -1,12 +1,10 @@
 // System namespaces
-global using System;
-global using System.Reflection;
-global using System.Text.RegularExpressions;
-
 // Microsoft namespaces
 global using Microsoft.Extensions.DependencyInjection;
 global using Microsoft.Extensions.DependencyInjection.Extensions;
-
+global using System;
+global using System.Reflection;
+global using System.Text.RegularExpressions;
 // TimeWarp namespaces
 global using TimeWarp.Mediator;
 global using TimeWarp.Nuru.CommandResolver;

@@ -1,6 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
-using TimeWarp.Nuru;
 using TimeWarp.Mediator;
+using TimeWarp.Nuru;
 
 var builder = new AppBuilder();
 
@@ -100,5 +100,5 @@ builder.AddRoute("--help", () =>
 });
 
 // Build and run
-var app = builder.Build();
+NuruApp app = builder.Build();
 return await app.RunAsync(args).ConfigureAwait(false);

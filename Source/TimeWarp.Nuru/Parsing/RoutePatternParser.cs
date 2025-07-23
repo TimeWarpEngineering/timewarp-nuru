@@ -17,18 +17,18 @@ public static class RoutePatternParser
         if (string.IsNullOrWhiteSpace(routePattern))
             throw new ArgumentException("Route pattern cannot be null or empty.", nameof(routePattern));
 
-        var parts = routePattern.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+    string[] parts = routePattern.Split(' ', StringSplitOptions.RemoveEmptyEntries);
         var segments = new List<RouteSegment>();
         var requiredOptions = new List<string>();
         var optionSegments = new List<OptionSegment>();
         var parameters = new Dictionary<string, RouteParameter>();
-        var hasCatchAll = false;
+    bool hasCatchAll = false;
         string? catchAllParameterName = null;
-        var specificity = 0;
+    int specificity = 0;
 
         for (int i = 0; i < parts.Length; i++)
         {
-            var part = parts[i];
+      string part = parts[i];
 
             if (part.StartsWith("--") || part.StartsWith("-"))
             {
@@ -38,7 +38,7 @@ public static class RoutePatternParser
 
                 if (part.Contains('|'))
                 {
-                    var optionParts = part.Split('|');
+          string[] optionParts = part.Split('|');
                     optionName = optionParts[0];
                     shortAlias = optionParts.Length > 1 ? optionParts[1] : null;
                 }
@@ -58,12 +58,12 @@ public static class RoutePatternParser
                 {
                     expectsValue = true;
                     i++; // Move to parameter
-                    var paramMatch = ParameterRegex.Match(parts[i]);
+          Match paramMatch = ParameterRegex.Match(parts[i]);
                     if (paramMatch.Success)
                     {
-                        var paramName = paramMatch.Groups[2].Value;
-                        var isCatchAll = paramMatch.Groups[1].Value == "*";
-                        var typeConstraint = paramMatch.Groups[4].Value;
+            string paramName = paramMatch.Groups[2].Value;
+            bool isCatchAll = paramMatch.Groups[1].Value == "*";
+            string typeConstraint = paramMatch.Groups[4].Value;
 
                         valueParameterName = paramName;
                         parameters[paramName] = new RouteParameter
@@ -90,13 +90,13 @@ public static class RoutePatternParser
             }
             else if (part.StartsWith("{"))
             {
-                // This is a positional parameter
-                var paramMatch = ParameterRegex.Match(part);
+        // This is a positional parameter
+        Match paramMatch = ParameterRegex.Match(part);
                 if (paramMatch.Success)
                 {
-                    var paramName = paramMatch.Groups[2].Value;
-                    var isCatchAll = paramMatch.Groups[1].Value == "*";
-                    var typeConstraint = paramMatch.Groups[4].Value;
+          string paramName = paramMatch.Groups[2].Value;
+          bool isCatchAll = paramMatch.Groups[1].Value == "*";
+          string typeConstraint = paramMatch.Groups[4].Value;
 
                     parameters[paramName] = new RouteParameter
                     {

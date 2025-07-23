@@ -1,5 +1,5 @@
-using TimeWarp.Mediator;
 using System.Text.Json;
+using TimeWarp.Mediator;
 
 namespace TimeWarp.Nuru.CommandResolver;
 
@@ -22,26 +22,26 @@ public class CommandExecutor
     /// </summary>
     public async Task<object?> ExecuteCommandAsync(Type commandType, Dictionary<string, string> extractedValues, CancellationToken cancellationToken)
     {
-        // Create instance of the command
-        var command = Activator.CreateInstance(commandType)
+    // Create instance of the command
+    object command = Activator.CreateInstance(commandType)
             ?? throw new InvalidOperationException($"Failed to create instance of {commandType.Name}");
 
         // Populate command properties from extracted values
         PopulateCommand(command, commandType, extractedValues);
 
-        // Execute through Mediator (get from service provider to respect scoped lifetime)
-        var mediator = _serviceProvider.GetRequiredService<IMediator>();
-        var result = await mediator.Send(command, cancellationToken).ConfigureAwait(false);
+    // Execute through Mediator (get from service provider to respect scoped lifetime)
+    IMediator mediator = _serviceProvider.GetRequiredService<IMediator>();
+    object? result = await mediator.Send(command, cancellationToken).ConfigureAwait(false);
 
         return result;
     }
 
     private void PopulateCommand(object command, Type commandType, Dictionary<string, string> extractedValues)
     {
-        foreach (var (paramName, value) in extractedValues)
+        foreach ((string paramName, string value) in extractedValues)
         {
-            // Find property (case-insensitive)
-            var property = commandType.GetProperties()
+      // Find property (case-insensitive)
+      PropertyInfo? property = commandType.GetProperties()
                 .FirstOrDefault(p => string.Equals(p.Name, paramName, StringComparison.OrdinalIgnoreCase));
 
             if (property == null || !property.CanWrite)
@@ -50,7 +50,7 @@ public class CommandExecutor
             try
             {
                 // Convert the string value to the property type
-                if (_typeConverterRegistry.TryConvert(value, property.PropertyType, out var convertedValue))
+                if (_typeConverterRegistry.TryConvert(value, property.PropertyType, out object? convertedValue))
                 {
                     property.SetValue(command, convertedValue);
                 }
@@ -60,8 +60,8 @@ public class CommandExecutor
                 }
                 else
                 {
-                    // Try basic conversion as fallback
-                    var converted = Convert.ChangeType(value, property.PropertyType);
+          // Try basic conversion as fallback
+          object converted = Convert.ChangeType(value, property.PropertyType);
                     property.SetValue(command, converted);
                 }
             }
@@ -81,10 +81,10 @@ public class CommandExecutor
         if (response == null)
             return;
 
-        var responseType = response.GetType();
+    Type responseType = response.GetType();
 
-        // Check if the response has a custom ToString() implementation
-        var toStringMethod = responseType.GetMethod("ToString", Type.EmptyTypes);
+    // Check if the response has a custom ToString() implementation
+    MethodInfo? toStringMethod = responseType.GetMethod("ToString", Type.EmptyTypes);
         if (toStringMethod != null && toStringMethod.DeclaringType != typeof(object))
         {
             // Use custom ToString
@@ -97,8 +97,8 @@ public class CommandExecutor
         }
         else
         {
-            // Complex object - serialize to JSON for display
-            var json = JsonSerializer.Serialize(response, new JsonSerializerOptions
+      // Complex object - serialize to JSON for display
+      string json = JsonSerializer.Serialize(response, new JsonSerializerOptions
             {
                 WriteIndented = true,
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase

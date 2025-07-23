@@ -50,7 +50,7 @@ public class OptionSegment : RouteSegment
         {
             if (arg.StartsWith("-") && arg.Length > 2 && !arg.StartsWith("--"))
             {
-                var shortChar = ShortAlias[1];
+        char shortChar = ShortAlias[1];
                 return arg.Contains(shortChar);
             }
         }

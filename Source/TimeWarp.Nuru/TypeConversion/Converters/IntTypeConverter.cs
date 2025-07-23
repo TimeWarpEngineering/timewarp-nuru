@@ -10,7 +10,7 @@ public class IntTypeConverter : IRouteTypeConverter
 
     public bool TryConvert(string value, out object? result)
     {
-        if (int.TryParse(value, out var intValue))
+        if (int.TryParse(value, out int intValue))
         {
             result = intValue;
             return true;

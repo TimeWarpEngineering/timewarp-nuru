@@ -127,6 +127,10 @@ csharp_style_conditional_delegate_call = true:suggestion
 csharp_style_prefer_null_check_over_type_check = true:warning
 dotnet_style_prefer_null_check_over_type_check = true:warning
 
+# Roslynator specific rules
+roslynator_null_check_style = pattern_matching
+dotnet_diagnostic.RCS1248.severity = warning # Use 'is null' instead of '== null'
+
 # Modifier preferences
 csharp_prefer_static_local_function = true:suggestion
 csharp_preferred_modifier_order = public, private, protected, internal, static, extern, new, virtual, abstract, sealed, override, readonly, unsafe, volatile, async:suggestion
@@ -292,6 +296,27 @@ dotnet_code_quality.null_check_validation_methods = NotNull
 
 # CA1308: Normalize strings to uppercase
 dotnet_diagnostic.ca1308.severity = none
+
+# Roslynator configuration - reasonable defaults to avoid noise
+# Documentation comments
+dotnet_diagnostic.RCS1139.severity = none # Add summary element to documentation comment
+dotnet_diagnostic.RCS1141.severity = none # Add 'param' element to documentation comment
+dotnet_diagnostic.RCS1142.severity = none # Add 'typeparam' element to documentation comment
+
+# Expression preferences
+dotnet_diagnostic.RCS1021.severity = none # Use expression-bodied lambda
+dotnet_diagnostic.RCS1238.severity = none # Avoid nested ?: operators
+
+# Naming
+dotnet_diagnostic.RCS1045.severity = none # Rename private field to camel case with underscore
+
+# Line breaks
+dotnet_diagnostic.RCS0051.severity = none # Add/remove new line before 'while' in 'do' statement
+dotnet_diagnostic.RCS0052.severity = none # Add/remove new line before equals sign
+
+# Other common ones to consider
+dotnet_diagnostic.RCS1123.severity = none # Add parentheses when necessary
+dotnet_diagnostic.RCS1194.severity = none # Implement exception constructors
 
 # Global Usings Analyzer
 

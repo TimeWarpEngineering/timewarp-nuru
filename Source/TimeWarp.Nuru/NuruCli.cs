@@ -40,12 +40,12 @@ public class NuruCli
       if (commandType is not null && IsMediatrCommand(commandType))
       {
         // Execute through Mediator
-        return await ExecuteMediatrCommand(commandType, result).ConfigureAwait(false);
+        return await ExecuteMediatrCommandAsync(commandType, result).ConfigureAwait(false);
       }
       else
       {
         // Execute delegate directly
-        return await ExecuteDelegate(result).ConfigureAwait(false);
+        return await ExecuteDelegateAsync(result).ConfigureAwait(false);
       }
     }
     catch (Exception ex)
@@ -62,7 +62,7 @@ public class NuruCli
         i == typeof(TimeWarp.Mediator.IRequest));
   }
 
-  private async Task<int> ExecuteMediatrCommand(Type commandType, ResolverResult result)
+  private async Task<int> ExecuteMediatrCommandAsync(Type commandType, ResolverResult result)
   {
     CommandExecutor commandExecutor = _serviceProvider.GetRequiredService<CommandExecutor>();
 
@@ -78,7 +78,7 @@ public class NuruCli
     return 0;
   }
 
-  private async Task<int> ExecuteDelegate(ResolverResult result)
+  private async Task<int> ExecuteDelegateAsync(ResolverResult result)
   {
     if (result.MatchedEndpoint?.Handler is Delegate del)
     {

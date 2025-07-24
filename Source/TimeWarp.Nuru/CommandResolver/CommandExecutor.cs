@@ -18,7 +18,7 @@ public class CommandExecutor
   /// <summary>
   /// Creates a command instance, populates it with extracted values, and executes it through Mediator.
   /// </summary>
-  public async Task<object?> ExecuteCommandAsync(Type commandType, Dictionary<string, string> extractedValues, CancellationToken cancellationToken)
+  public Task<object?> ExecuteCommandAsync(Type commandType, Dictionary<string, string> extractedValues, CancellationToken cancellationToken)
   {
     // Create instance of the command
     object command = Activator.CreateInstance(commandType)
@@ -29,7 +29,7 @@ public class CommandExecutor
 
     // Execute through Mediator (get from service provider to respect scoped lifetime)
     IMediator mediator = _serviceProvider.GetRequiredService<IMediator>();
-    return await mediator.Send(command, cancellationToken).ConfigureAwait(false);
+    return mediator.Send(command, cancellationToken);
   }
 
   private void PopulateCommand(object command, Type commandType, Dictionary<string, string> extractedValues)

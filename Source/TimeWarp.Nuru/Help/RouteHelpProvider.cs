@@ -100,7 +100,7 @@ public class RouteHelpProvider
   private string GetCommandPrefix(string routePattern)
   {
     // Skip catch-all patterns
-    if (routePattern.StartsWith('{')))
+    if (routePattern.StartsWith('{'))
     {
       return "";
     }

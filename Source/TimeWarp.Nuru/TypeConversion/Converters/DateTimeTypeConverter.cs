@@ -6,18 +6,18 @@ namespace TimeWarp.Nuru.TypeConversion.Converters;
 /// </summary>
 public class DateTimeTypeConverter : IRouteTypeConverter
 {
-    public Type TargetType => typeof(DateTime);
-    public string ConstraintName => "datetime";
+  public Type TargetType => typeof(DateTime);
+  public string ConstraintName => "datetime";
 
-    public bool TryConvert(string value, out object? result)
+  public bool TryConvert(string value, out object? result)
+  {
+    if (DateTime.TryParse(value, out DateTime dateTimeValue))
     {
-        if (DateTime.TryParse(value, out DateTime dateTimeValue))
-        {
-            result = dateTimeValue;
-            return true;
-        }
-
-        result = null;
-        return false;
+      result = dateTimeValue;
+      return true;
     }
+
+    result = null;
+    return false;
+  }
 }

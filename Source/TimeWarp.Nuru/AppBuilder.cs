@@ -10,84 +10,84 @@ namespace TimeWarp.Nuru;
 /// </summary>
 public class AppBuilder
 {
-    private readonly ServiceCollection _services = new();
-    private readonly EndpointCollection _endpoints = new();
+  private readonly ServiceCollection _services = new();
+  private readonly EndpointCollection _endpoints = new();
 
-    public IServiceCollection Services => _services;
+  public IServiceCollection Services => _services;
 
-    public AppBuilder()
+  public AppBuilder()
+  {
+    // Add default services
+    _services.AddNuru();
+    _services.AddSingleton(_endpoints);
+  }
+
+  /// <summary>
+  /// Adds a delegate-based route.
+  /// </summary>
+  public AppBuilder AddRoute(string pattern, Delegate handler, string? description = null)
+  {
+    var endpoint = new RouteEndpoint
     {
-        // Add default services
-        _services.AddNuru();
-        _services.AddSingleton(_endpoints);
-    }
+      RoutePattern = pattern,
+      ParsedRoute = RoutePatternParser.Parse(pattern),
+      Handler = handler,
+      Method = handler.Method,
+      Description = description
+    };
 
-    /// <summary>
-    /// Adds a delegate-based route.
-    /// </summary>
-    public AppBuilder AddRoute(string pattern, Delegate handler, string? description = null)
+    _endpoints.Add(endpoint);
+    return this;
+  }
+
+  /// <summary>
+  /// Adds a Mediator command-based route.
+  /// </summary>
+  public AppBuilder AddRoute<TCommand>(string pattern, string? description = null)
+      where TCommand : IRequest, new()
+  {
+    var endpoint = new RouteEndpoint
     {
-        var endpoint = new RouteEndpoint
-        {
-            RoutePattern = pattern,
-            ParsedRoute = RoutePatternParser.Parse(pattern),
-            Handler = handler,
-            Method = handler.Method,
-            Description = description
-        };
+      RoutePattern = pattern,
+      ParsedRoute = RoutePatternParser.Parse(pattern),
+      Handler = new Action(() => { }), // Placeholder
+      Method = typeof(Action).GetMethod("Invoke")!,
+      Description = description,
+      CommandType = typeof(TCommand)
+    };
 
-        _endpoints.Add(endpoint);
-        return this;
-    }
+    _endpoints.Add(endpoint);
+    return this;
+  }
 
-    /// <summary>
-    /// Adds a Mediator command-based route.
-    /// </summary>
-    public AppBuilder AddRoute<TCommand>(string pattern, string? description = null)
-        where TCommand : IRequest, new()
+  /// <summary>
+  /// Adds a Mediator command-based route with response.
+  /// </summary>
+  public AppBuilder AddRoute<TCommand, TResponse>(string pattern, string? description = null)
+      where TCommand : IRequest<TResponse>, new()
+  {
+    var endpoint = new RouteEndpoint
     {
-        var endpoint = new RouteEndpoint
-        {
-            RoutePattern = pattern,
-            ParsedRoute = RoutePatternParser.Parse(pattern),
-            Handler = new Action(() => { }), // Placeholder
-            Method = typeof(Action).GetMethod("Invoke")!,
-            Description = description,
-            CommandType = typeof(TCommand)
-        };
+      RoutePattern = pattern,
+      ParsedRoute = RoutePatternParser.Parse(pattern),
+      Handler = new Action(() => { }), // Placeholder
+      Method = typeof(Action).GetMethod("Invoke")!,
+      Description = description,
+      CommandType = typeof(TCommand)
+    };
 
-        _endpoints.Add(endpoint);
-        return this;
-    }
+    _endpoints.Add(endpoint);
+    return this;
+  }
 
-    /// <summary>
-    /// Adds a Mediator command-based route with response.
-    /// </summary>
-    public AppBuilder AddRoute<TCommand, TResponse>(string pattern, string? description = null)
-        where TCommand : IRequest<TResponse>, new()
-    {
-        var endpoint = new RouteEndpoint
-        {
-            RoutePattern = pattern,
-            ParsedRoute = RoutePatternParser.Parse(pattern),
-            Handler = new Action(() => { }), // Placeholder
-            Method = typeof(Action).GetMethod("Invoke")!,
-            Description = description,
-            CommandType = typeof(TCommand)
-        };
-
-        _endpoints.Add(endpoint);
-        return this;
-    }
-
-    /// <summary>
-    /// Builds the service provider and returns a runnable app.
-    /// </summary>
-    public NuruApp Build()
-    {
+  /// <summary>
+  /// Builds the service provider and returns a runnable app.
+  /// </summary>
+  public NuruApp Build()
+  {
     ServiceProvider serviceProvider = _services.BuildServiceProvider();
-        return new NuruApp(serviceProvider);
-    }
+    return new NuruApp(serviceProvider);
+  }
 }
 
 /// <summary>
@@ -95,18 +95,18 @@ public class AppBuilder
 /// </summary>
 public class NuruApp
 {
-    private readonly IServiceProvider _serviceProvider;
+  private readonly IServiceProvider _serviceProvider;
 
-    public IServiceProvider Services => _serviceProvider;
+  public IServiceProvider Services => _serviceProvider;
 
-    public NuruApp(IServiceProvider serviceProvider)
-    {
-        _serviceProvider = serviceProvider;
-    }
+  public NuruApp(IServiceProvider serviceProvider)
+  {
+    _serviceProvider = serviceProvider;
+  }
 
-    public async Task<int> RunAsync(string[] args)
-    {
+  public async Task<int> RunAsync(string[] args)
+  {
     NuruCli cli = _serviceProvider.GetRequiredService<NuruCli>();
-        return await cli.RunAsync(args).ConfigureAwait(false);
-    }
+    return await cli.RunAsync(args).ConfigureAwait(false);
+  }
 }

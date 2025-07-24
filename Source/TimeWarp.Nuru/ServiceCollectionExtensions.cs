@@ -11,24 +11,24 @@ namespace TimeWarp.Nuru;
 /// </summary>
 public static class ServiceCollectionExtensions
 {
-    /// <summary>
-    /// Adds TimeWarp.Console services to the service collection.
-    /// </summary>
-    public static IServiceCollection AddNuru(this IServiceCollection services)
-    {
-        // Register the endpoint collection as a singleton
-        services.TryAddSingleton<EndpointCollection>();
-        services.TryAddSingleton<IEndpointCollectionBuilder, DefaultEndpointCollectionBuilder>();
+  /// <summary>
+  /// Adds TimeWarp.Console services to the service collection.
+  /// </summary>
+  public static IServiceCollection AddNuru(this IServiceCollection services)
+  {
+    // Register the endpoint collection as a singleton
+    services.TryAddSingleton<EndpointCollection>();
+    services.TryAddSingleton<IEndpointCollectionBuilder, DefaultEndpointCollectionBuilder>();
 
-        // Register type conversion
-        services.TryAddSingleton<ITypeConverterRegistry, TypeConverterRegistry>();
+    // Register type conversion
+    services.TryAddSingleton<ITypeConverterRegistry, TypeConverterRegistry>();
 
-        // Register command executor for Mediator integration
-        services.TryAddSingleton<CommandExecutor>();
+    // Register command executor for Mediator integration
+    services.TryAddSingleton<CommandExecutor>();
 
-        // Register the CLI
-        services.TryAddSingleton<NuruCli>();
+    // Register the CLI
+    services.TryAddSingleton<NuruCli>();
 
-        return services;
-    }
+    return services;
+  }
 }

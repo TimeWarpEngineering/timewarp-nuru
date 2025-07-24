@@ -10,63 +10,63 @@ namespace TimeWarp.Nuru;
 /// </summary>
 public class NuruCli
 {
-    private readonly IServiceProvider _serviceProvider;
-    private readonly EndpointCollection _endpoints;
-    private readonly RouteBasedCommandResolver _resolver;
+  private readonly IServiceProvider _serviceProvider;
+  private readonly EndpointCollection _endpoints;
+  private readonly RouteBasedCommandResolver _resolver;
 
-    public NuruCli(IServiceProvider serviceProvider)
-    {
-        _serviceProvider = serviceProvider;
-        _endpoints = serviceProvider.GetRequiredService<EndpointCollection>();
+  public NuruCli(IServiceProvider serviceProvider)
+  {
+    _serviceProvider = serviceProvider;
+    _endpoints = serviceProvider.GetRequiredService<EndpointCollection>();
 
     ITypeConverterRegistry typeConverterRegistry = serviceProvider.GetRequiredService<ITypeConverterRegistry>();
-        _resolver = new RouteBasedCommandResolver(_endpoints, typeConverterRegistry);
-    }
+    _resolver = new RouteBasedCommandResolver(_endpoints, typeConverterRegistry);
+  }
 
-    public async Task<int> RunAsync(string[] args)
+  public async Task<int> RunAsync(string[] args)
+  {
+    try
     {
-        try
-        {
       // Parse and match route
       ResolverResult result = _resolver.Resolve(args);
 
-            if (!result.Success || result.MatchedEndpoint == null)
-            {
-                System.Console.Error.WriteLine(result.ErrorMessage ?? "No matching command found.");
-                ShowAvailableCommands();
-                return 1;
-            }
+      if (!result.Success || result.MatchedEndpoint == null)
+      {
+        System.Console.Error.WriteLine(result.ErrorMessage ?? "No matching command found.");
+        ShowAvailableCommands();
+        return 1;
+      }
 
       // Check if this is a Mediator command
       Type? commandType = result.MatchedEndpoint.CommandType;
 
-            if (commandType != null && IsMediatrCommand(commandType))
-            {
-                // Execute through Mediator
-                return await ExecuteMediatrCommand(commandType, result).ConfigureAwait(false);
-            }
-            else
-            {
-                // Execute delegate directly
-                return await ExecuteDelegate(result).ConfigureAwait(false);
-            }
-        }
-        catch (Exception ex)
-        {
-            System.Console.Error.WriteLine($"Error: {ex.Message}");
-            return 1;
-        }
+      if (commandType != null && IsMediatrCommand(commandType))
+      {
+        // Execute through Mediator
+        return await ExecuteMediatrCommand(commandType, result).ConfigureAwait(false);
+      }
+      else
+      {
+        // Execute delegate directly
+        return await ExecuteDelegate(result).ConfigureAwait(false);
+      }
     }
-
-    private bool IsMediatrCommand(Type type)
+    catch (Exception ex)
     {
-        return type.GetInterfaces().Any(i =>
-            i.IsGenericType && i.GetGenericTypeDefinition() == typeof(TimeWarp.Mediator.IRequest<>) ||
-            i == typeof(TimeWarp.Mediator.IRequest));
+      System.Console.Error.WriteLine($"Error: {ex.Message}");
+      return 1;
     }
+  }
 
-    private async Task<int> ExecuteMediatrCommand(Type commandType, ResolverResult result)
-    {
+  private bool IsMediatrCommand(Type type)
+  {
+    return type.GetInterfaces().Any(i =>
+        i.IsGenericType && i.GetGenericTypeDefinition() == typeof(TimeWarp.Mediator.IRequest<>) ||
+        i == typeof(TimeWarp.Mediator.IRequest));
+  }
+
+  private async Task<int> ExecuteMediatrCommand(Type commandType, ResolverResult result)
+  {
     CommandExecutor commandExecutor = _serviceProvider.GetRequiredService<CommandExecutor>();
 
     // Execute through Mediator
@@ -75,18 +75,18 @@ public class NuruCli
             result.ExtractedValues,
             CancellationToken.None).ConfigureAwait(false);
 
-        // Display the result
-        CommandExecutor.DisplayResponse(response);
+    // Display the result
+    CommandExecutor.DisplayResponse(response);
 
-        return 0;
-    }
+    return 0;
+  }
 
-    private async Task<int> ExecuteDelegate(ResolverResult result)
+  private async Task<int> ExecuteDelegate(ResolverResult result)
+  {
+    if (result.MatchedEndpoint?.Handler is Delegate del)
     {
-        if (result.MatchedEndpoint?.Handler is Delegate del)
-        {
-            try
-            {
+      try
+      {
         ITypeConverterRegistry typeConverterRegistry = _serviceProvider.GetRequiredService<ITypeConverterRegistry>();
         object? returnValue = ParameterBinding.DelegateParameterBinder.InvokeWithParameters(
                     del,
@@ -94,30 +94,30 @@ public class NuruCli
                     typeConverterRegistry,
                     _serviceProvider);
 
-                // Handle async delegates
-                if (returnValue is Task task)
-                {
-                    await task.ConfigureAwait(false);
-                }
-
-                return 0;
-            }
-            catch (Exception ex)
-            {
-                System.Console.Error.WriteLine($"Error executing delegate: {ex.Message}");
-                return 1;
-            }
-        }
-
-        return 1;
-    }
-
-    private void ShowAvailableCommands()
-    {
-        System.Console.WriteLine("\nAvailable commands:");
-        foreach (RouteEndpoint endpoint in _endpoints)
+        // Handle async delegates
+        if (returnValue is Task task)
         {
-            System.Console.WriteLine($"  {endpoint.RoutePattern}  {endpoint.Description ?? ""}");
+          await task.ConfigureAwait(false);
         }
+
+        return 0;
+      }
+      catch (Exception ex)
+      {
+        System.Console.Error.WriteLine($"Error executing delegate: {ex.Message}");
+        return 1;
+      }
     }
+
+    return 1;
+  }
+
+  private void ShowAvailableCommands()
+  {
+    System.Console.WriteLine("\nAvailable commands:");
+    foreach (RouteEndpoint endpoint in _endpoints)
+    {
+      System.Console.WriteLine($"  {endpoint.RoutePattern}  {endpoint.Description ?? ""}");
+    }
+  }
 }

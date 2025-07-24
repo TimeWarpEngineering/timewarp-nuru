@@ -14,12 +14,12 @@ builder.AddRoute("status", () => Console.WriteLine("✓ System is running"), "Ch
 
 builder.AddRoute("echo {message}", (string message) =>
 {
-    Console.WriteLine($"Echo: {message}");
+  Console.WriteLine($"Echo: {message}");
 }, "Echo a message back");
 
 builder.AddRoute("proxy {command} {*args}", (string command, string[] args) =>
 {
-    Console.WriteLine($"Would execute: {command} {string.Join(" ", args)}");
+  Console.WriteLine($"Would execute: {command} {string.Join(" ", args)}");
 }, "Proxy command execution");
 
 builder.AddRoute<CalculateCommand, CalculateResponse>("calc {value1:double} {value2:double} --operation {operation}",
@@ -32,43 +32,43 @@ return await app.RunAsync(args).ConfigureAwait(false);
 // Command and handler definitions
 internal class CalculateCommand : IRequest<CalculateResponse>
 {
-    public double Value1 { get; set; }
-    public double Value2 { get; set; }
-    public string Operation { get; set; } = "add";
+  public double Value1 { get; set; }
+  public double Value2 { get; set; }
+  public string Operation { get; set; } = "add";
 }
 
 internal class CalculateResponse
 {
-    public double Result { get; set; }
-    public string Formula { get; set; } = "";
+  public double Result { get; set; }
+  public string Formula { get; set; } = "";
 }
 
 internal class CalculateHandler : IRequestHandler<CalculateCommand, CalculateResponse>
 {
-    public Task<CalculateResponse> Handle(CalculateCommand request, CancellationToken cancellationToken)
-    {
+  public Task<CalculateResponse> Handle(CalculateCommand request, CancellationToken cancellationToken)
+  {
     double result = request.Operation.ToLower() switch
-        {
-            "add" => request.Value1 + request.Value2,
-            "subtract" => request.Value1 - request.Value2,
-            "multiply" => request.Value1 * request.Value2,
-            "divide" => request.Value2 != 0 ? request.Value1 / request.Value2 : double.NaN,
-            _ => throw new ArgumentException($"Unknown operation: {request.Operation}")
-        };
+    {
+      "add" => request.Value1 + request.Value2,
+      "subtract" => request.Value1 - request.Value2,
+      "multiply" => request.Value1 * request.Value2,
+      "divide" => request.Value2 != 0 ? request.Value1 / request.Value2 : double.NaN,
+      _ => throw new ArgumentException($"Unknown operation: {request.Operation}")
+    };
 
     string op = request.Operation.ToLower() switch
-        {
-            "add" => "+",
-            "subtract" => "-",
-            "multiply" => "*",
-            "divide" => "/",
-            _ => "?"
-        };
+    {
+      "add" => "+",
+      "subtract" => "-",
+      "multiply" => "*",
+      "divide" => "/",
+      _ => "?"
+    };
 
-        return Task.FromResult(new CalculateResponse
-        {
-            Result = result,
-            Formula = $"{request.Value1} {op} {request.Value2} = {result}"
-        });
-    }
+    return Task.FromResult(new CalculateResponse
+    {
+      Result = result,
+      Formula = $"{request.Value1} {op} {request.Value2} = {result}"
+    });
+  }
 }

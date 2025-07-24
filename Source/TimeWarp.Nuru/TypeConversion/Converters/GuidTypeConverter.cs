@@ -5,18 +5,18 @@ namespace TimeWarp.Nuru.TypeConversion.Converters;
 /// </summary>
 public class GuidTypeConverter : IRouteTypeConverter
 {
-    public Type TargetType => typeof(Guid);
-    public string ConstraintName => "guid";
+  public Type TargetType => typeof(Guid);
+  public string ConstraintName => "guid";
 
-    public bool TryConvert(string value, out object? result)
+  public bool TryConvert(string value, out object? result)
+  {
+    if (Guid.TryParse(value, out Guid guidValue))
     {
-        if (Guid.TryParse(value, out Guid guidValue))
-        {
-            result = guidValue;
-            return true;
-        }
-
-        result = null;
-        return false;
+      result = guidValue;
+      return true;
     }
+
+    result = null;
+    return false;
+  }
 }

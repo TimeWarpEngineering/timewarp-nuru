@@ -6,18 +6,18 @@ namespace TimeWarp.Nuru.TypeConversion.Converters;
 /// </summary>
 public class TimeSpanTypeConverter : IRouteTypeConverter
 {
-    public Type TargetType => typeof(TimeSpan);
-    public string ConstraintName => "timespan";
+  public Type TargetType => typeof(TimeSpan);
+  public string ConstraintName => "timespan";
 
-    public bool TryConvert(string value, out object? result)
+  public bool TryConvert(string value, out object? result)
+  {
+    if (TimeSpan.TryParse(value, out TimeSpan timeSpanValue))
     {
-        if (TimeSpan.TryParse(value, out TimeSpan timeSpanValue))
-        {
-            result = timeSpanValue;
-            return true;
-        }
-
-        result = null;
-        return false;
+      result = timeSpanValue;
+      return true;
     }
+
+    result = null;
+    return false;
+  }
 }

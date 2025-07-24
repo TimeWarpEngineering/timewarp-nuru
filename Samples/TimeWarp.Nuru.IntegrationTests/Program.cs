@@ -86,17 +86,17 @@ builder.AddRoute("{*everything}", (string[] everything) =>
 // Help command
 builder.AddRoute("--help", () =>
 {
-    Console.WriteLine("TimeWarp.Nuru Integration Tests");
-    Console.WriteLine("==================================");
-    Console.WriteLine("Available test scenarios:");
-    Console.WriteLine("  status                          - Basic status command");
-    Console.WriteLine("  version                         - Show version");
-    Console.WriteLine("  git status                      - Git status");
-    Console.WriteLine("  git commit [options]            - Git commit with various options");
-    Console.WriteLine("  docker run [options] {image}    - Docker run with enhancements");
-    Console.WriteLine("  kubectl get {resource}          - Kubectl commands");
-    Console.WriteLine("  npm install {package} [options] - NPM commands");
-    Console.WriteLine("  --help                          - Show this help");
+  Console.WriteLine("TimeWarp.Nuru Integration Tests");
+  Console.WriteLine("==================================");
+  Console.WriteLine("Available test scenarios:");
+  Console.WriteLine("  status                          - Basic status command");
+  Console.WriteLine("  version                         - Show version");
+  Console.WriteLine("  git status                      - Git status");
+  Console.WriteLine("  git commit [options]            - Git commit with various options");
+  Console.WriteLine("  docker run [options] {image}    - Docker run with enhancements");
+  Console.WriteLine("  kubectl get {resource}          - Kubectl commands");
+  Console.WriteLine("  npm install {package} [options] - NPM commands");
+  Console.WriteLine("  --help                          - Show this help");
 });
 
 // Build and run

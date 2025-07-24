@@ -5,18 +5,18 @@ namespace TimeWarp.Nuru.TypeConversion.Converters;
 /// </summary>
 public class DoubleTypeConverter : IRouteTypeConverter
 {
-    public Type TargetType => typeof(double);
-    public string ConstraintName => "double";
+  public Type TargetType => typeof(double);
+  public string ConstraintName => "double";
 
-    public bool TryConvert(string value, out object? result)
+  public bool TryConvert(string value, out object? result)
+  {
+    if (double.TryParse(value, out double doubleValue))
     {
-        if (double.TryParse(value, out double doubleValue))
-        {
-            result = doubleValue;
-            return true;
-        }
-
-        result = null;
-        return false;
+      result = doubleValue;
+      return true;
     }
+
+    result = null;
+    return false;
+  }
 }

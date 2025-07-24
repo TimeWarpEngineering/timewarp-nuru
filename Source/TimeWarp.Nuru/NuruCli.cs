@@ -7,17 +7,17 @@ namespace TimeWarp.Nuru;
 /// </summary>
 public class NuruCli
 {
-  private readonly IServiceProvider _serviceProvider;
-  private readonly EndpointCollection _endpoints;
-  private readonly RouteBasedCommandResolver _resolver;
+  private readonly IServiceProvider ServiceProvider;
+  private readonly EndpointCollection Endpoints;
+  private readonly RouteBasedCommandResolver Resolver;
 
   public NuruCli(IServiceProvider serviceProvider)
   {
-    _serviceProvider = serviceProvider;
-    _endpoints = serviceProvider.GetRequiredService<EndpointCollection>();
+    ServiceProvider = serviceProvider;
+    Endpoints = serviceProvider.GetRequiredService<EndpointCollection>();
 
     ITypeConverterRegistry typeConverterRegistry = serviceProvider.GetRequiredService<ITypeConverterRegistry>();
-    _resolver = new RouteBasedCommandResolver(_endpoints, typeConverterRegistry);
+    Resolver = new RouteBasedCommandResolver(Endpoints, typeConverterRegistry);
   }
 
   public async Task<int> RunAsync(string[] args)
@@ -27,7 +27,7 @@ public class NuruCli
     try
     {
       // Parse and match route
-      ResolverResult result = _resolver.Resolve(args);
+      ResolverResult result = Resolver.Resolve(args);
 
       if (!result.Success || result.MatchedEndpoint is null)
       {
@@ -68,7 +68,7 @@ public class NuruCli
 
   private async Task<int> ExecuteMediatorCommandAsync(Type commandType, ResolverResult result)
   {
-    CommandExecutor commandExecutor = _serviceProvider.GetRequiredService<CommandExecutor>();
+    CommandExecutor commandExecutor = ServiceProvider.GetRequiredService<CommandExecutor>();
 
     // Execute through Mediator
     object? response = await commandExecutor.ExecuteCommandAsync(
@@ -88,12 +88,12 @@ public class NuruCli
     {
       try
       {
-        ITypeConverterRegistry typeConverterRegistry = _serviceProvider.GetRequiredService<ITypeConverterRegistry>();
+        ITypeConverterRegistry typeConverterRegistry = ServiceProvider.GetRequiredService<ITypeConverterRegistry>();
         object? returnValue = ParameterBinding.DelegateParameterBinder.InvokeWithParameters(
                     del,
                     result.ExtractedValues,
                     typeConverterRegistry,
-                    _serviceProvider);
+                    ServiceProvider);
 
         // Handle async delegates
         if (returnValue is Task task)
@@ -118,7 +118,7 @@ public class NuruCli
   private void ShowAvailableCommands()
   {
     Console.WriteLine("\nAvailable commands:");
-    foreach (RouteEndpoint endpoint in _endpoints)
+    foreach (RouteEndpoint endpoint in Endpoints)
     {
       Console.WriteLine($"  {endpoint.RoutePattern}  {endpoint.Description ?? ""}");
     }

@@ -5,8 +5,8 @@ namespace TimeWarp.Nuru.TypeConversion;
 /// </summary>
 public class TypeConverterRegistry : ITypeConverterRegistry
 {
-  private readonly Dictionary<string, IRouteTypeConverter> _convertersByConstraint = new(StringComparer.OrdinalIgnoreCase);
-  private readonly Dictionary<Type, IRouteTypeConverter> _convertersByType = [];
+  private readonly Dictionary<string, IRouteTypeConverter> ConvertersByConstraint = new(StringComparer.OrdinalIgnoreCase);
+  private readonly Dictionary<Type, IRouteTypeConverter> ConvertersByType = [];
 
   public TypeConverterRegistry()
   {
@@ -21,8 +21,8 @@ public class TypeConverterRegistry : ITypeConverterRegistry
   {
     ArgumentNullException.ThrowIfNull(converter);
 
-    _convertersByConstraint[converter.ConstraintName] = converter;
-    _convertersByType[converter.TargetType] = converter;
+    ConvertersByConstraint[converter.ConstraintName] = converter;
+    ConvertersByType[converter.TargetType] = converter;
   }
 
   /// <summary>
@@ -35,7 +35,7 @@ public class TypeConverterRegistry : ITypeConverterRegistry
     if (constraintName.Length == 0)
       return null;
 
-    return _convertersByConstraint.TryGetValue(constraintName, out IRouteTypeConverter? converter)
+    return ConvertersByConstraint.TryGetValue(constraintName, out IRouteTypeConverter? converter)
         ? converter
         : null;
   }
@@ -48,7 +48,7 @@ public class TypeConverterRegistry : ITypeConverterRegistry
     if (targetType is null)
       return null;
 
-    return _convertersByType.TryGetValue(targetType, out IRouteTypeConverter? converter)
+    return ConvertersByType.TryGetValue(targetType, out IRouteTypeConverter? converter)
         ? converter
         : null;
   }

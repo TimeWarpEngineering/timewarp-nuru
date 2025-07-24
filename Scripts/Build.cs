@@ -12,13 +12,26 @@ Directory.SetCurrentDirectory(scriptDir);
 Console.WriteLine("Building TimeWarp.Nuru library...");
 Console.WriteLine($"Working from: {Directory.GetCurrentDirectory()}");
 
-// Build the project with minimal verbosity to see errors
+// First check code style with dotnet format
+Console.WriteLine("Checking code style with dotnet format...");
+ExecutionResult formatResult = await Shell.Run("dotnet")
+    .WithArguments("format", "../TimeWarp.Nuru.slnx", "--verify-no-changes", "--severity", "warn")
+    .ExecuteAsync();
+
+if (!formatResult.IsSuccess)
+{
+    Console.WriteLine("❌ Code style violations found! Run 'dotnet format' to fix them.");
+    formatResult.WriteToConsole();
+    Environment.Exit(1);
+}
+
+// Build the solution
 try
 {
     ExecutionResult result = await DotNet.Build()
-        .WithProject("../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj")
+        .WithProject("../TimeWarp.Nuru.slnx")
         .WithConfiguration("Release")
-        .WithVerbosity("minimal")
+        .WithVerbosity("normal")
         .WithNoIncremental()
         .WithNoValidation()
         .ExecuteAsync();

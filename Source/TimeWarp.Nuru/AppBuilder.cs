@@ -6,16 +6,16 @@ namespace TimeWarp.Nuru;
 /// </summary>
 public class AppBuilder
 {
-  private readonly ServiceCollection _services = [];
-  private readonly EndpointCollection _endpoints = [];
+  private readonly ServiceCollection ServiceCollection = [];
+  private readonly EndpointCollection EndpointCollection = [];
 
-  public IServiceCollection Services => _services;
+  public IServiceCollection Services => ServiceCollection;
 
   public AppBuilder()
   {
     // Add default services
-    _services.AddNuru();
-    _services.AddSingleton(_endpoints);
+    ServiceCollection.AddNuru();
+    ServiceCollection.AddSingleton(EndpointCollection);
   }
 
   /// <summary>
@@ -35,7 +35,7 @@ public class AppBuilder
       Description = description
     };
 
-    _endpoints.Add(endpoint);
+    EndpointCollection.Add(endpoint);
     return this;
   }
 
@@ -55,7 +55,7 @@ public class AppBuilder
       CommandType = typeof(TCommand)
     };
 
-    _endpoints.Add(endpoint);
+    EndpointCollection.Add(endpoint);
     return this;
   }
 
@@ -75,7 +75,7 @@ public class AppBuilder
       CommandType = typeof(TCommand)
     };
 
-    _endpoints.Add(endpoint);
+    EndpointCollection.Add(endpoint);
     return this;
   }
 
@@ -84,7 +84,7 @@ public class AppBuilder
   /// </summary>
   public NuruApp Build()
   {
-    ServiceProvider serviceProvider = _services.BuildServiceProvider();
+    ServiceProvider serviceProvider = ServiceCollection.BuildServiceProvider();
     return new NuruApp(serviceProvider);
   }
 }
@@ -94,18 +94,18 @@ public class AppBuilder
 /// </summary>
 public class NuruApp
 {
-  private readonly IServiceProvider _serviceProvider;
+  private readonly IServiceProvider ServiceProvider;
 
-  public IServiceProvider Services => _serviceProvider;
+  public IServiceProvider Services => ServiceProvider;
 
   public NuruApp(IServiceProvider serviceProvider)
   {
-    _serviceProvider = serviceProvider;
+    ServiceProvider = serviceProvider;
   }
 
   public Task<int> RunAsync(string[] args)
   {
-    NuruCli cli = _serviceProvider.GetRequiredService<NuruCli>();
+    NuruCli cli = ServiceProvider.GetRequiredService<NuruCli>();
     return cli.RunAsync(args);
   }
 }

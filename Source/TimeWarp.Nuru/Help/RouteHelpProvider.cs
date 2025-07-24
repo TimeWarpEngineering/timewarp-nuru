@@ -5,11 +5,11 @@ namespace TimeWarp.Nuru.Help;
 /// </summary>
 public class RouteHelpProvider
 {
-  private readonly EndpointCollection _endpoints;
+  private readonly EndpointCollection Endpoints;
 
   public RouteHelpProvider(EndpointCollection endpoints)
   {
-    _endpoints = endpoints ?? throw new ArgumentNullException(nameof(endpoints));
+    Endpoints = endpoints ?? throw new ArgumentNullException(nameof(endpoints));
   }
 
   /// <summary>
@@ -17,7 +17,7 @@ public class RouteHelpProvider
   /// </summary>
   public void ShowHelp()
   {
-    IReadOnlyList<RouteEndpoint> routes = _endpoints.Endpoints;
+    IReadOnlyList<RouteEndpoint> routes = Endpoints.Endpoints;
 
     if (routes.Count == 0)
     {

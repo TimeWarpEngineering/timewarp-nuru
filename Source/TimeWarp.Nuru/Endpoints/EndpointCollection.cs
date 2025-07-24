@@ -6,8 +6,8 @@ namespace TimeWarp.Nuru.Endpoints;
 /// </summary>
 public class EndpointCollection : IEnumerable<RouteEndpoint>
 {
-  private readonly List<RouteEndpoint> _endpoints = [];
-  private readonly object _lock = new();
+  private readonly List<RouteEndpoint> EndpointsList = [];
+  private readonly object LockObject = new();
 
   /// <summary>
   /// Gets all endpoints in the collection, ordered by specificity (most specific first).
@@ -16,9 +16,9 @@ public class EndpointCollection : IEnumerable<RouteEndpoint>
   {
     get
     {
-      lock (_lock)
+      lock (LockObject)
       {
-        return _endpoints.ToList();
+        return EndpointsList.ToList();
       }
     }
   }
@@ -31,23 +31,23 @@ public class EndpointCollection : IEnumerable<RouteEndpoint>
   {
     ArgumentNullException.ThrowIfNull(endpoint);
 
-    lock (_lock)
+    lock (LockObject)
     {
       // Check for duplicate routes
-      RouteEndpoint? existingRoute = _endpoints.FirstOrDefault(e =>
+      RouteEndpoint? existingRoute = EndpointsList.FirstOrDefault(e =>
                 e.RoutePattern.Equals(endpoint.RoutePattern, StringComparison.OrdinalIgnoreCase));
 
       if (existingRoute is not null)
       {
         // Warn about duplicate route
         System.Console.Error.WriteLine($"Warning: Duplicate route pattern '{endpoint.RoutePattern}' detected. The new handler will override the previous one.");
-        _endpoints.Remove(existingRoute);
+        EndpointsList.Remove(existingRoute);
       }
 
-      _endpoints.Add(endpoint);
+      EndpointsList.Add(endpoint);
       // Sort by Order descending (higher order = higher priority)
       // Then by Specificity descending for routes with same order
-      _endpoints.Sort((a, b) =>
+      EndpointsList.Sort((a, b) =>
       {
         int orderComparison = b.Order.CompareTo(a.Order);
         return orderComparison != 0
@@ -62,9 +62,9 @@ public class EndpointCollection : IEnumerable<RouteEndpoint>
   /// </summary>
   public void Clear()
   {
-    lock (_lock)
+    lock (LockObject)
     {
-      _endpoints.Clear();
+      EndpointsList.Clear();
     }
   }
 
@@ -75,18 +75,18 @@ public class EndpointCollection : IEnumerable<RouteEndpoint>
   {
     get
     {
-      lock (_lock)
+      lock (LockObject)
       {
-        return _endpoints.Count;
+        return EndpointsList.Count;
       }
     }
   }
 
   public IEnumerator<RouteEndpoint> GetEnumerator()
   {
-    lock (_lock)
+    lock (LockObject)
     {
-      return _endpoints.ToList().GetEnumerator();
+      return EndpointsList.ToList().GetEnumerator();
     }
   }
 

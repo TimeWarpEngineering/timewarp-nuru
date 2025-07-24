@@ -6,19 +6,19 @@ namespace TimeWarp.Nuru.CommandResolver;
 /// </summary>
 public class CommandExecutor
 {
-  private static readonly JsonSerializerOptions s_jsonOptions = new()
+  private static readonly JsonSerializerOptions JsonOptions = new()
   {
     WriteIndented = true,
     PropertyNamingPolicy = JsonNamingPolicy.CamelCase
   };
 
-  private readonly IServiceProvider _serviceProvider;
-  private readonly ITypeConverterRegistry _typeConverterRegistry;
+  private readonly IServiceProvider ServiceProvider;
+  private readonly ITypeConverterRegistry TypeConverterRegistry;
 
   public CommandExecutor(IServiceProvider serviceProvider, ITypeConverterRegistry typeConverterRegistry)
   {
-    _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
-    _typeConverterRegistry = typeConverterRegistry ?? throw new ArgumentNullException(nameof(typeConverterRegistry));
+    ServiceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
+    TypeConverterRegistry = typeConverterRegistry ?? throw new ArgumentNullException(nameof(typeConverterRegistry));
   }
 
   /// <summary>
@@ -37,7 +37,7 @@ public class CommandExecutor
     PopulateCommand(command, commandType, extractedValues);
 
     // Execute through Mediator (get from service provider to respect scoped lifetime)
-    IMediator mediator = _serviceProvider.GetRequiredService<IMediator>();
+    IMediator mediator = ServiceProvider.GetRequiredService<IMediator>();
     return mediator.Send(command, cancellationToken);
   }
 
@@ -55,7 +55,7 @@ public class CommandExecutor
       try
       {
         // Convert the string value to the property type
-        if (_typeConverterRegistry.TryConvert(value, property.PropertyType, out object? convertedValue))
+        if (TypeConverterRegistry.TryConvert(value, property.PropertyType, out object? convertedValue))
         {
           property.SetValue(command, convertedValue);
         }
@@ -103,7 +103,7 @@ public class CommandExecutor
     else
     {
       // Complex object - serialize to JSON for display
-      string json = JsonSerializer.Serialize(response, s_jsonOptions);
+      string json = JsonSerializer.Serialize(response, JsonOptions);
       System.Console.WriteLine(json);
     }
   }

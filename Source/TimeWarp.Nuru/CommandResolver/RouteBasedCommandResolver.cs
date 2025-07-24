@@ -5,13 +5,13 @@ namespace TimeWarp.Nuru.CommandResolver;
 /// </summary>
 public class RouteBasedCommandResolver
 {
-  private readonly EndpointCollection _endpoints;
-  private readonly ITypeConverterRegistry _typeConverterRegistry;
+  private readonly EndpointCollection Endpoints;
+  private readonly ITypeConverterRegistry TypeConverterRegistry;
 
   public RouteBasedCommandResolver(EndpointCollection endpoints, ITypeConverterRegistry typeConverterRegistry)
   {
-    _endpoints = endpoints ?? throw new ArgumentNullException(nameof(endpoints));
-    _typeConverterRegistry = typeConverterRegistry ?? throw new ArgumentNullException(nameof(typeConverterRegistry));
+    Endpoints = endpoints ?? throw new ArgumentNullException(nameof(endpoints));
+    TypeConverterRegistry = typeConverterRegistry ?? throw new ArgumentNullException(nameof(typeConverterRegistry));
   }
 
   public ResolverResult Resolve(IReadOnlyList<string> args)
@@ -42,7 +42,7 @@ public class RouteBasedCommandResolver
 
   private (RouteEndpoint endpoint, Dictionary<string, string> extractedValues)? MatchRoute(IReadOnlyList<string> args)
   {
-    foreach (RouteEndpoint endpoint in _endpoints)
+    foreach (RouteEndpoint endpoint in Endpoints)
     {
       var extractedValues = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 

@@ -1,0 +1,17 @@
+Build Status: SUCCESS (with warnings in Sample project)
+
+All IDE1006 naming violations have been fixed:
+- AppBuilder.cs: Fixed private field naming (removed underscore prefixes)
+- CommandExecutor.cs: Fixed private field and static field naming
+- EndpointCollection.cs: Fixed private field naming
+- TypeConverterRegistry.cs: Fixed private field naming
+- RouteHelpProvider.cs: Fixed private field naming
+- RouteBasedCommandResolver.cs: Fixed private field naming
+- NuruCli.cs: Fixed private field naming
+
+Remaining warnings (in Sample project only):
+- CA1812: 'CalculateHandler' is never instantiated
+- CA1852: Classes can be sealed
+- CA1304/CA1311: Culture-specific string operations
+
+The main TimeWarp.Nuru library builds successfully with no warnings.

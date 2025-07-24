@@ -5,6 +5,8 @@
     <Description>Route-based CLI framework for .NET - bringing web-style routing to command-line applications</Description>
     <PackageTags>cli;command-line;routing;framework;dotnet;console;consoleappframework;commandlineparser;mcmaster;cocona;spectre;system-commandline;clipr;commanddotnet</PackageTags>
     <Version>1.0.0-beta.1</Version>
+    <!-- Disable localization warning as CLI frameworks don't typically need localization -->
+    <NoWarn>$(NoWarn);CA1303</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

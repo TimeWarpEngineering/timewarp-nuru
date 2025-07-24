@@ -21,12 +21,12 @@ public class RouteHelpProvider
 
     if (routes.Count == 0)
     {
-      System.Console.WriteLine("No routes are registered.");
+      Console.WriteLine("No routes are registered.");
       return;
     }
 
-    System.Console.WriteLine("Available Routes:");
-    System.Console.WriteLine();
+    Console.WriteLine("Available Routes:");
+    Console.WriteLine();
 
     // Group routes by their command prefix
     Dictionary<string, List<RouteEndpoint>> groupedRoutes = GroupRoutesByPrefix(routes);
@@ -41,20 +41,20 @@ public class RouteHelpProvider
 
       if (groupedRoutes.Count > 1)
       {
-        System.Console.WriteLine();
+        Console.WriteLine();
       }
     }
 
     // Display grouped routes
     foreach (KeyValuePair<string, List<RouteEndpoint>> group in groupedRoutes.Where(g => !string.IsNullOrEmpty(g.Key)).OrderBy(g => g.Key))
     {
-      System.Console.WriteLine($"{group.Key} Commands:");
+      Console.WriteLine($"{group.Key} Commands:");
       foreach (RouteEndpoint? route in group.Value)
       {
         DisplayRoute(route, indent: true);
       }
 
-      System.Console.WriteLine();
+      Console.WriteLine();
     }
   }
 
@@ -70,11 +70,11 @@ public class RouteHelpProvider
       int padding = 40 - pattern.Length - prefix.Length;
       if (padding < 2) padding = 2;
 
-      System.Console.WriteLine($"{prefix}{pattern}{new string(' ', padding)}{description}");
+      Console.WriteLine($"{prefix}{pattern}{new string(' ', padding)}{description}");
     }
     else
     {
-      System.Console.WriteLine($"{prefix}{pattern}");
+      Console.WriteLine($"{prefix}{pattern}");
     }
   }
 

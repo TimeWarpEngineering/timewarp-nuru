@@ -29,7 +29,7 @@ public class NuruCli
 
       if (!result.Success || result.MatchedEndpoint is null)
       {
-        await System.Console.Error.WriteLineAsync(result.ErrorMessage ?? "No matching command found.").ConfigureAwait(false);
+        await Console.Error.WriteLineAsync(result.ErrorMessage ?? "No matching command found.").ConfigureAwait(false);
         ShowAvailableCommands();
         return 1;
       }
@@ -50,7 +50,7 @@ public class NuruCli
     }
     catch (Exception ex)
     {
-      await System.Console.Error.WriteLineAsync($"Error: {ex.Message}").ConfigureAwait(false);
+      await Console.Error.WriteLineAsync($"Error: {ex.Message}").ConfigureAwait(false);
       return 1;
     }
   }
@@ -101,7 +101,7 @@ public class NuruCli
       }
       catch (Exception ex)
       {
-        await System.Console.Error.WriteLineAsync($"Error executing delegate: {ex.Message}").ConfigureAwait(false);
+        await Console.Error.WriteLineAsync($"Error executing delegate: {ex.Message}").ConfigureAwait(false);
         return 1;
       }
     }
@@ -111,10 +111,10 @@ public class NuruCli
 
   private void ShowAvailableCommands()
   {
-    System.Console.WriteLine("\nAvailable commands:");
+    Console.WriteLine("\nAvailable commands:");
     foreach (RouteEndpoint endpoint in _endpoints)
     {
-      System.Console.WriteLine($"  {endpoint.RoutePattern}  {endpoint.Description ?? ""}");
+      Console.WriteLine($"  {endpoint.RoutePattern}  {endpoint.Description ?? ""}");
     }
   }
 }

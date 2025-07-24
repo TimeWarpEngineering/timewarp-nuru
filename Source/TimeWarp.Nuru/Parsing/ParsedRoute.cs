@@ -10,17 +10,17 @@ public class ParsedRoute
   /// Gets or sets the positional template - the ordered segments (literals and parameters)
   /// that must be matched before any options.
   /// </summary>
-  public required RouteSegment[] PositionalTemplate { get; set; }
+  public required IReadOnlyList<RouteSegment> PositionalTemplate { get; set; }
 
   /// <summary>
   /// Gets or sets the required options that must be present (e.g., ["--amend"]).
   /// </summary>
-  public string[] RequiredOptions { get; set; } = Array.Empty<string>();
+  public IReadOnlyList<string> RequiredOptions { get; set; } = Array.Empty<string>();
 
   /// <summary>
   /// Gets or sets the option segments that must be matched.
   /// </summary>
-  public OptionSegment[] OptionSegments { get; set; } = Array.Empty<OptionSegment>();
+  public IReadOnlyList<OptionSegment> OptionSegments { get; set; } = Array.Empty<OptionSegment>();
 
   /// <summary>
   /// Gets or sets the route parameters extracted from the pattern (e.g., {name}, {id:int}).
@@ -49,7 +49,7 @@ public class ParsedRoute
   /// For routes with catch-all, this is the number of segments minus one.
   /// For routes without catch-all, this is the exact number of segments.
   /// </summary>
-  public int MinimumRequiredArgs => HasCatchAll ? PositionalTemplate.Length - 1 : PositionalTemplate.Length;
+  public int MinimumRequiredArgs => HasCatchAll ? PositionalTemplate.Count - 1 : PositionalTemplate.Count;
 }
 
 /// <summary>

@@ -63,10 +63,10 @@ public class RouteBasedCommandResolver
       Dictionary<string, string> extractedValues, out int consumedArgs)
   {
     consumedArgs = 0;
-    RouteSegment[] template = endpoint.ParsedRoute.PositionalTemplate;
+    IReadOnlyList<RouteSegment> template = endpoint.ParsedRoute.PositionalTemplate;
 
     // Match each segment in the template
-    for (int i = 0; i < template.Length; i++)
+    for (int i = 0; i < template.Count; i++)
     {
       RouteSegment segment = template[i];
 
@@ -101,10 +101,10 @@ public class RouteBasedCommandResolver
   private bool CheckRequiredOptions(RouteEndpoint endpoint, IReadOnlyList<string> remainingArgs,
       Dictionary<string, string> extractedValues)
   {
-    OptionSegment[] optionSegments = endpoint.ParsedRoute.OptionSegments;
+    IReadOnlyList<OptionSegment> optionSegments = endpoint.ParsedRoute.OptionSegments;
 
     // If no required options, we're good
-    if (optionSegments.Length == 0)
+    if (optionSegments.Count == 0)
       return true;
 
     // Check each required option segment

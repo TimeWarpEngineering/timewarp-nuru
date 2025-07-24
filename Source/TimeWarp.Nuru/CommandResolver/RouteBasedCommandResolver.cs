@@ -100,7 +100,7 @@ public class RouteBasedCommandResolver
     return true;
   }
 
-  private static bool CheckRequiredOptions(RouteEndpoint endpoint, IReadOnlyList<string> remainingArgs,
+  private static bool CheckRequiredOptions(RouteEndpoint endpoint, List<string> remainingArgs,
       Dictionary<string, string> extractedValues)
   {
     IReadOnlyList<OptionSegment> optionSegments = endpoint.ParsedRoute.OptionSegments;

@@ -36,7 +36,7 @@ public static class RoutePatternParser
         string optionName;
         string? shortAlias = null;
 
-        if (part.Contains('|'))
+        if (part.Contains('|', StringComparison.Ordinal))
         {
           string[] optionParts = part.Split('|');
           optionName = optionParts[0];

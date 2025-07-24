@@ -111,7 +111,7 @@ public class RouteHelpProvider
     if (parts.Length > 1)
     {
       // Multi-part command, use first part as group (e.g., "git" from "git status")
-      return char.ToUpper(parts[0][0]) + parts[0].Substring(1);
+      return char.ToUpper(parts[0][0], CultureInfo.InvariantCulture) + parts[0].Substring(1);
     }
 
     // Single word command, no grouping

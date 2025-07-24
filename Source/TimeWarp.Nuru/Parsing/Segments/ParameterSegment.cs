@@ -9,12 +9,10 @@ public class ParameterSegment : RouteSegment
   /// Gets the name of the parameter.
   /// </summary>
   public string Name { get; }
-
   /// <summary>
   /// Gets whether this is a catch-all parameter (*).
   /// </summary>
   public bool IsCatchAll { get; }
-
   /// <summary>
   /// Gets the constraint for this parameter (e.g., "int" in {id:int}).
   /// </summary>

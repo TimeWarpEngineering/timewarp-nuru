@@ -50,6 +50,8 @@ internal sealed class CalculateHandler : IRequestHandler<CalculateCommand, Calcu
 {
   public Task<CalculateResponse> Handle(CalculateCommand request, CancellationToken cancellationToken)
   {
+    ArgumentNullException.ThrowIfNull(request);
+
     double result = request.Operation.ToLower(CultureInfo.InvariantCulture) switch
     {
       "add" => request.Value1 + request.Value2,

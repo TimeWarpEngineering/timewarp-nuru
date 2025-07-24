@@ -83,7 +83,7 @@ public class RouteBasedCommandResolver
       }
 
       // Regular segment matching
-      if (i >= args.Count || args[i].StartsWith("-"))
+      if (i >= args.Count || args[i].StartsWith('-'))
         return false; // Not enough args or hit an option
 
       if (!segment.TryMatch(args[i], out string? value))
@@ -124,7 +124,7 @@ public class RouteBasedCommandResolver
           // If this option expects a value, verify one exists and extract it
           if (optionSegment.ExpectsValue)
           {
-            if (i + 1 >= remainingArgs.Count || remainingArgs[i + 1].StartsWith("-"))
+            if (i + 1 >= remainingArgs.Count || remainingArgs[i + 1].StartsWith('-'))
             {
               return false;
             }

@@ -30,7 +30,7 @@ public static class RoutePatternParser
     {
       string part = parts[i];
 
-      if (part.StartsWith("--") || part.StartsWith("-"))
+      if (part.StartsWith("--") || part.StartsWith('-'))
       {
         // This is an option - check for alias syntax (--long|-s)
         string optionName;
@@ -54,7 +54,7 @@ public static class RoutePatternParser
         bool expectsValue = false;
         string? valueParameterName = null;
 
-        if (i + 1 < parts.Length && parts[i + 1].StartsWith("{"))
+        if (i + 1 < parts.Length && parts[i + 1].StartsWith('{'))
         {
           expectsValue = true;
           i++; // Move to parameter
@@ -88,7 +88,7 @@ public static class RoutePatternParser
         // Add option segment with alias
         optionSegments.Add(new OptionSegment(optionName, expectsValue, valueParameterName, shortAlias));
       }
-      else if (part.StartsWith("{"))
+      else if (part.StartsWith('{'))
       {
         // This is a positional parameter
         Match paramMatch = ParameterRegex.Match(part);

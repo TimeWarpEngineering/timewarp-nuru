@@ -29,7 +29,7 @@ public class NuruCli
 
       if (!result.Success || result.MatchedEndpoint is null)
       {
-        System.Console.Error.WriteLine(result.ErrorMessage ?? "No matching command found.");
+        await System.Console.Error.WriteLineAsync(result.ErrorMessage ?? "No matching command found.").ConfigureAwait(false);
         ShowAvailableCommands();
         return 1;
       }
@@ -50,7 +50,7 @@ public class NuruCli
     }
     catch (Exception ex)
     {
-      System.Console.Error.WriteLine($"Error: {ex.Message}");
+      await System.Console.Error.WriteLineAsync($"Error: {ex.Message}").ConfigureAwait(false);
       return 1;
     }
   }
@@ -101,7 +101,7 @@ public class NuruCli
       }
       catch (Exception ex)
       {
-        System.Console.Error.WriteLine($"Error executing delegate: {ex.Message}");
+        await System.Console.Error.WriteLineAsync($"Error executing delegate: {ex.Message}").ConfigureAwait(false);
         return 1;
       }
     }

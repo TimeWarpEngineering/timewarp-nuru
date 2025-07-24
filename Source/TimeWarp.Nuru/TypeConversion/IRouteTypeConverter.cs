@@ -9,7 +9,6 @@ public interface IRouteTypeConverter
   /// Gets the target type this converter produces.
   /// </summary>
   Type TargetType { get; }
-
   /// <summary>
   /// Gets the constraint name used in route patterns (e.g., "int", "bool", "guid").
   /// </summary>

@@ -37,10 +37,10 @@ public class NuruCli
       // Check if this is a Mediator command
       Type? commandType = result.MatchedEndpoint.CommandType;
 
-      if (commandType is not null && IsMediatrCommand(commandType))
+      if (commandType is not null && IsMediatorCommand(commandType))
       {
         // Execute through Mediator
-        return await ExecuteMediatrCommandAsync(commandType, result).ConfigureAwait(false);
+        return await ExecuteMediatorCommandAsync(commandType, result).ConfigureAwait(false);
       }
       else
       {
@@ -55,14 +55,14 @@ public class NuruCli
     }
   }
 
-  private bool IsMediatrCommand(Type type)
+  private bool IsMediatorCommand(Type type)
   {
     return type.GetInterfaces().Any(i =>
         i.IsGenericType && i.GetGenericTypeDefinition() == typeof(TimeWarp.Mediator.IRequest<>) ||
         i == typeof(TimeWarp.Mediator.IRequest));
   }
 
-  private async Task<int> ExecuteMediatrCommandAsync(Type commandType, ResolverResult result)
+  private async Task<int> ExecuteMediatorCommandAsync(Type commandType, ResolverResult result)
   {
     CommandExecutor commandExecutor = _serviceProvider.GetRequiredService<CommandExecutor>();
 

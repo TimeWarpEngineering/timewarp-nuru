@@ -9,17 +9,14 @@ public class OptionSegment : RouteSegment
   /// Gets the option name (e.g., "--amend" or "-m").
   /// </summary>
   public string Name { get; }
-
   /// <summary>
   /// Gets whether this option expects a value.
   /// </summary>
   public bool ExpectsValue { get; }
-
   /// <summary>
   /// Gets the parameter name for the option value, if any.
   /// </summary>
   public string? ValueParameterName { get; }
-
   /// <summary>
   /// Gets the short form alias for this option (e.g., "-m" for "--message").
   /// </summary>

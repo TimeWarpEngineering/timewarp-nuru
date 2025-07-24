@@ -39,7 +39,7 @@ public class DefaultEndpointCollectionBuilder : IEndpointCollectionBuilder
 
     // Extract description from metadata if available
     string? description = metadata.OfType<string>().FirstOrDefault();
-    if (description != null)
+    if (description is not null)
     {
       endpoint.Description = description;
     }

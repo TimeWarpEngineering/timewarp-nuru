@@ -42,11 +42,11 @@ public class OptionSegment : RouteSegment
       return true;
 
     // Check if arg matches the short alias
-    if (ShortAlias != null && arg == ShortAlias)
+    if (ShortAlias is not null && arg == ShortAlias)
       return true;
 
     // For short options, check grouped options (e.g., -abc contains -a)
-    if (ShortAlias != null && ShortAlias.StartsWith("-") && ShortAlias.Length == 2)
+    if (ShortAlias?.StartsWith("-") == true && ShortAlias.Length == 2)
     {
       if (arg.StartsWith("-") && arg.Length > 2 && !arg.StartsWith("--"))
       {

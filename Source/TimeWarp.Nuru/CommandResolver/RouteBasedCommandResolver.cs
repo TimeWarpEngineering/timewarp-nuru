@@ -19,7 +19,7 @@ public class RouteBasedCommandResolver
     // Try to match against route endpoints
     (RouteEndpoint endpoint, Dictionary<string, string> extractedValues)? matchResult = MatchRoute(args);
 
-    if (matchResult != null)
+    if (matchResult is not null)
     {
       (RouteEndpoint endpoint, Dictionary<string, string> extractedValues) = matchResult.Value;
 
@@ -89,7 +89,7 @@ public class RouteBasedCommandResolver
       if (!segment.TryMatch(args[i], out string? value))
         return false;
 
-      if (value != null && segment is ParameterSegment ps)
+      if (value is not null && segment is ParameterSegment ps)
         extractedValues[ps.Name] = value;
 
       consumedArgs++;
@@ -130,7 +130,7 @@ public class RouteBasedCommandResolver
             }
 
             // Extract the option value
-            if (optionSegment.ValueParameterName != null)
+            if (optionSegment.ValueParameterName is not null)
             {
               extractedValues[optionSegment.ValueParameterName] = remainingArgs[i + 1];
             }

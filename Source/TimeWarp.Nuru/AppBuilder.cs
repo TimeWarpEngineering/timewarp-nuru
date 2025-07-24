@@ -100,9 +100,9 @@ public class NuruApp
     _serviceProvider = serviceProvider;
   }
 
-  public async Task<int> RunAsync(string[] args)
+  public Task<int> RunAsync(string[] args)
   {
     NuruCli cli = _serviceProvider.GetRequiredService<NuruCli>();
-    return await cli.RunAsync(args).ConfigureAwait(false);
+    return cli.RunAsync(args);
   }
 }

@@ -29,9 +29,7 @@ public class CommandExecutor
 
     // Execute through Mediator (get from service provider to respect scoped lifetime)
     IMediator mediator = _serviceProvider.GetRequiredService<IMediator>();
-    object? result = await mediator.Send(command, cancellationToken).ConfigureAwait(false);
-
-    return result;
+    return await mediator.Send(command, cancellationToken).ConfigureAwait(false);
   }
 
   private void PopulateCommand(object command, Type commandType, Dictionary<string, string> extractedValues)
@@ -42,7 +40,7 @@ public class CommandExecutor
       PropertyInfo? property = commandType.GetProperties()
                 .FirstOrDefault(p => string.Equals(p.Name, paramName, StringComparison.OrdinalIgnoreCase));
 
-      if (property == null || !property.CanWrite)
+      if (property?.CanWrite != true)
         continue;
 
       try
@@ -76,14 +74,14 @@ public class CommandExecutor
   /// </summary>
   public static void DisplayResponse(object? response)
   {
-    if (response == null)
+    if (response is null)
       return;
 
     Type responseType = response.GetType();
 
     // Check if the response has a custom ToString() implementation
     MethodInfo? toStringMethod = responseType.GetMethod("ToString", Type.EmptyTypes);
-    if (toStringMethod != null && toStringMethod.DeclaringType != typeof(object))
+    if (toStringMethod is not null && toStringMethod.DeclaringType != typeof(object))
     {
       // Use custom ToString
       System.Console.WriteLine(response.ToString());

@@ -79,7 +79,7 @@ public static class DelegateParameterBinder
         if (IsServiceParameter(param))
         {
           args[i] = serviceProvider.GetService(param.ParameterType);
-          if (args[i] == null && !param.HasDefaultValue)
+          if (args[i] is null && !param.HasDefaultValue)
           {
             throw new InvalidOperationException(
                 $"Cannot resolve service of type {param.ParameterType} for parameter '{param.Name}'");

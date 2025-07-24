@@ -19,7 +19,7 @@ public class RouteHelpProvider
   {
     IReadOnlyList<RouteEndpoint> routes = _endpoints.Endpoints;
 
-    if (!routes.Any())
+    if (routes.Count == 0)
     {
       System.Console.WriteLine("No routes are registered.");
       return;

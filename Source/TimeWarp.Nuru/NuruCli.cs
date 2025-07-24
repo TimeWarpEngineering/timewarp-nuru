@@ -27,7 +27,7 @@ public class NuruCli
       // Parse and match route
       ResolverResult result = _resolver.Resolve(args);
 
-      if (!result.Success || result.MatchedEndpoint == null)
+      if (!result.Success || result.MatchedEndpoint is null)
       {
         System.Console.Error.WriteLine(result.ErrorMessage ?? "No matching command found.");
         ShowAvailableCommands();
@@ -37,7 +37,7 @@ public class NuruCli
       // Check if this is a Mediator command
       Type? commandType = result.MatchedEndpoint.CommandType;
 
-      if (commandType != null && IsMediatrCommand(commandType))
+      if (commandType is not null && IsMediatrCommand(commandType))
       {
         // Execute through Mediator
         return await ExecuteMediatrCommand(commandType, result).ConfigureAwait(false);

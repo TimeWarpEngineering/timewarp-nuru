@@ -37,7 +37,7 @@ public class ParameterSegment : RouteSegment
   {
     string result = IsCatchAll ? "{*" : "{";
     result += Name;
-    if (Constraint != null)
+    if (Constraint is not null)
     {
       result += ":" + Constraint;
     }

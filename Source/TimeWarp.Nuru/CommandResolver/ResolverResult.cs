@@ -7,6 +7,6 @@ public class ResolverResult
 {
   public bool Success { get; init; }
   public RouteEndpoint? MatchedEndpoint { get; init; }
-  public Dictionary<string, string> ExtractedValues { get; init; } = new();
+  public Dictionary<string, string> ExtractedValues { get; init; } = [];
   public string? ErrorMessage { get; init; }
 }

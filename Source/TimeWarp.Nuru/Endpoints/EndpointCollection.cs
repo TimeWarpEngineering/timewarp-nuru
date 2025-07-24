@@ -6,7 +6,7 @@ namespace TimeWarp.Nuru.Endpoints;
 /// </summary>
 public class EndpointCollection : IEnumerable<RouteEndpoint>
 {
-  private readonly List<RouteEndpoint> _endpoints = new();
+  private readonly List<RouteEndpoint> _endpoints = [];
   private readonly object _lock = new();
 
   /// <summary>

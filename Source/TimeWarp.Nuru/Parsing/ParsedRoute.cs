@@ -23,7 +23,7 @@ public class ParsedRoute
   /// Gets the route parameters extracted from the pattern (e.g., {name}, {id:int}).
   /// Key is the parameter name, value contains parameter metadata.
   /// </summary>
-  public Dictionary<string, RouteParameter> Parameters { get; } = new();
+  public Dictionary<string, RouteParameter> Parameters { get; } = [];
   /// <summary>
   /// Gets or sets whether this route has a catch-all parameter (e.g., {*args}).
   /// </summary>

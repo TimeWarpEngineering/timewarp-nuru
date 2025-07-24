@@ -6,7 +6,7 @@ namespace TimeWarp.Nuru.TypeConversion;
 public class TypeConverterRegistry : ITypeConverterRegistry
 {
   private readonly Dictionary<string, IRouteTypeConverter> _convertersByConstraint = new(StringComparer.OrdinalIgnoreCase);
-  private readonly Dictionary<Type, IRouteTypeConverter> _convertersByType = new();
+  private readonly Dictionary<Type, IRouteTypeConverter> _convertersByType = [];
 
   public TypeConverterRegistry()
   {

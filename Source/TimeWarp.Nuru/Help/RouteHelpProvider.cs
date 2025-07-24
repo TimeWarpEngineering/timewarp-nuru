@@ -88,7 +88,7 @@ public class RouteHelpProvider
 
       if (!groups.TryGetValue(prefix, out List<RouteEndpoint>? list))
       {
-        list = new List<RouteEndpoint>();
+        list = [];
         groups[prefix] = list;
       }
 

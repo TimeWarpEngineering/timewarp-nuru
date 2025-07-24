@@ -6,8 +6,8 @@ namespace TimeWarp.Nuru;
 /// </summary>
 public class AppBuilder
 {
-  private readonly ServiceCollection _services = new();
-  private readonly EndpointCollection _endpoints = new();
+  private readonly ServiceCollection _services = [];
+  private readonly EndpointCollection _endpoints = [];
 
   public IServiceCollection Services => _services;
 

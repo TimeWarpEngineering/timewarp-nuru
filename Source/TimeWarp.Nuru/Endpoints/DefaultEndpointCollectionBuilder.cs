@@ -14,7 +14,7 @@ public class DefaultEndpointCollectionBuilder : IEndpointCollectionBuilder
 
   public void AddRoute(string routePattern, Delegate handler)
   {
-    AddRoute(routePattern, handler, Array.Empty<object>());
+    AddRoute(routePattern, handler, []);
   }
 
   public void AddRoute(string routePattern, Delegate handler, params object[] metadata)

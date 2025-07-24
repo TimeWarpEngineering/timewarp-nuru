@@ -50,7 +50,9 @@ public class NuruCli
         return await ExecuteDelegateAsync(result).ConfigureAwait(false);
       }
     }
+#pragma warning disable CA1031 // Do not catch general exception types - This is intentional for CLI error handling
     catch (Exception ex)
+#pragma warning restore CA1031 // Do not catch general exception types
     {
       await Console.Error.WriteLineAsync($"Error: {ex.Message}").ConfigureAwait(false);
       return 1;
@@ -101,7 +103,9 @@ public class NuruCli
 
         return 0;
       }
+#pragma warning disable CA1031 // Do not catch general exception types - This is intentional for CLI error handling
       catch (Exception ex)
+#pragma warning restore CA1031 // Do not catch general exception types
       {
         await Console.Error.WriteLineAsync($"Error executing delegate: {ex.Message}").ConfigureAwait(false);
         return 1;

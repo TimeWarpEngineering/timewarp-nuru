@@ -61,7 +61,7 @@ public class RouteBasedCommandResolver
     return null;
   }
 
-  private bool MatchPositionalSegments(RouteEndpoint endpoint, IReadOnlyList<string> args,
+  private static bool MatchPositionalSegments(RouteEndpoint endpoint, IReadOnlyList<string> args,
       Dictionary<string, string> extractedValues, out int consumedArgs)
   {
     consumedArgs = 0;
@@ -100,7 +100,7 @@ public class RouteBasedCommandResolver
     return true;
   }
 
-  private bool CheckRequiredOptions(RouteEndpoint endpoint, IReadOnlyList<string> remainingArgs,
+  private static bool CheckRequiredOptions(RouteEndpoint endpoint, IReadOnlyList<string> remainingArgs,
       Dictionary<string, string> extractedValues)
   {
     IReadOnlyList<OptionSegment> optionSegments = endpoint.ParsedRoute.OptionSegments;

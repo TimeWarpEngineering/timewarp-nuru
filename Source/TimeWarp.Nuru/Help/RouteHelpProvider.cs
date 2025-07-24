@@ -58,7 +58,7 @@ public class RouteHelpProvider
     }
   }
 
-  private void DisplayRoute(RouteEndpoint route, bool indent = false)
+  private static void DisplayRoute(RouteEndpoint route, bool indent = false)
   {
     string prefix = indent ? "  " : "";
     string pattern = route.RoutePattern;
@@ -78,7 +78,7 @@ public class RouteHelpProvider
     }
   }
 
-  private Dictionary<string, List<RouteEndpoint>> GroupRoutesByPrefix(IReadOnlyList<RouteEndpoint> routes)
+  private static Dictionary<string, List<RouteEndpoint>> GroupRoutesByPrefix(IReadOnlyList<RouteEndpoint> routes)
   {
     var groups = new Dictionary<string, List<RouteEndpoint>>();
 
@@ -98,7 +98,7 @@ public class RouteHelpProvider
     return groups;
   }
 
-  private string GetCommandPrefix(string routePattern)
+  private static string GetCommandPrefix(string routePattern)
   {
     // Skip catch-all patterns
     if (routePattern.StartsWith('{'))

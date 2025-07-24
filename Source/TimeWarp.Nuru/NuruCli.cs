@@ -59,7 +59,7 @@ public class NuruCli
     }
   }
 
-  private bool IsMediatorCommand(Type type)
+  private static bool IsMediatorCommand(Type type)
   {
     return type.GetInterfaces().Any(i =>
         i.IsGenericType && i.GetGenericTypeDefinition() == typeof(TimeWarp.Mediator.IRequest<>) ||

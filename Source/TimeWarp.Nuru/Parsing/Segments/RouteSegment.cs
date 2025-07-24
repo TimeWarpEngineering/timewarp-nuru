@@ -12,7 +12,6 @@ public abstract class RouteSegment
   /// <param name="extractedValue">If this is a parameter segment, the extracted value; otherwise null.</param>
   /// <returns>True if the segment matches the argument; otherwise false.</returns>
   public abstract bool TryMatch(string arg, out string? extractedValue);
-
   /// <summary>
   /// Gets the display representation of this segment for debugging.
   /// </summary>

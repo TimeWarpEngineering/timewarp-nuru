@@ -1,4 +1,3 @@
-using System.Collections;
 
 namespace TimeWarp.Nuru.Endpoints;
 

@@ -3,7 +3,9 @@
 global using Microsoft.Extensions.DependencyInjection;
 global using Microsoft.Extensions.DependencyInjection.Extensions;
 global using System;
+global using System.Collections;
 global using System.Reflection;
+global using System.Text.Json;
 global using System.Text.RegularExpressions;
 // TimeWarp namespaces
 global using TimeWarp.Mediator;

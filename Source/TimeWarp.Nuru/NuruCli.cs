@@ -1,6 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
-using TimeWarp.Nuru.CommandResolver;
-using TimeWarp.Nuru.Endpoints;
 
 namespace TimeWarp.Nuru;
 

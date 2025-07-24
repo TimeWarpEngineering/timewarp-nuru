@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using System.Globalization;
 using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 
@@ -30,24 +31,26 @@ NuruApp app = builder.Build();
 return await app.RunAsync(args).ConfigureAwait(false);
 
 // Command and handler definitions
-internal class CalculateCommand : IRequest<CalculateResponse>
+internal sealed class CalculateCommand : IRequest<CalculateResponse>
 {
   public double Value1 { get; set; }
   public double Value2 { get; set; }
   public string Operation { get; set; } = "add";
 }
 
-internal class CalculateResponse
+internal sealed class CalculateResponse
 {
   public double Result { get; set; }
   public string Formula { get; set; } = "";
 }
 
-internal class CalculateHandler : IRequestHandler<CalculateCommand, CalculateResponse>
+#pragma warning disable CA1812 // CalculateHandler is instantiated by dependency injection
+internal sealed class CalculateHandler : IRequestHandler<CalculateCommand, CalculateResponse>
+#pragma warning restore CA1812
 {
   public Task<CalculateResponse> Handle(CalculateCommand request, CancellationToken cancellationToken)
   {
-    double result = request.Operation.ToLower() switch
+    double result = request.Operation.ToLower(CultureInfo.InvariantCulture) switch
     {
       "add" => request.Value1 + request.Value2,
       "subtract" => request.Value1 - request.Value2,
@@ -56,7 +59,7 @@ internal class CalculateHandler : IRequestHandler<CalculateCommand, CalculateRes
       _ => throw new ArgumentException($"Unknown operation: {request.Operation}")
     };
 
-    string op = request.Operation.ToLower() switch
+    string op = request.Operation.ToLower(CultureInfo.InvariantCulture) switch
     {
       "add" => "+",
       "subtract" => "-",

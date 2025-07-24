@@ -23,10 +23,10 @@ public class ParsedRoute
   public IReadOnlyList<OptionSegment> OptionSegments { get; set; } = Array.Empty<OptionSegment>();
 
   /// <summary>
-  /// Gets or sets the route parameters extracted from the pattern (e.g., {name}, {id:int}).
+  /// Gets the route parameters extracted from the pattern (e.g., {name}, {id:int}).
   /// Key is the parameter name, value contains parameter metadata.
   /// </summary>
-  public Dictionary<string, RouteParameter> Parameters { get; set; } = new();
+  public Dictionary<string, RouteParameter> Parameters { get; } = new();
 
   /// <summary>
   /// Gets or sets whether this route has a catch-all parameter (e.g., {*args}).

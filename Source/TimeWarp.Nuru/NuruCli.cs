@@ -22,6 +22,8 @@ public class NuruCli
 
   public async Task<int> RunAsync(string[] args)
   {
+    ArgumentNullException.ThrowIfNull(args);
+
     try
     {
       // Parse and match route

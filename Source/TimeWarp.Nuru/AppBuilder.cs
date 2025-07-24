@@ -23,6 +23,9 @@ public class AppBuilder
   /// </summary>
   public AppBuilder AddRoute(string pattern, Delegate handler, string? description = null)
   {
+    ArgumentNullException.ThrowIfNull(pattern);
+    ArgumentNullException.ThrowIfNull(handler);
+
     var endpoint = new RouteEndpoint
     {
       RoutePattern = pattern,

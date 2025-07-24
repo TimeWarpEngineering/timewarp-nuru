@@ -26,6 +26,9 @@ public class CommandExecutor
   /// </summary>
   public Task<object?> ExecuteCommandAsync(Type commandType, Dictionary<string, string> extractedValues, CancellationToken cancellationToken)
   {
+    ArgumentNullException.ThrowIfNull(commandType);
+    ArgumentNullException.ThrowIfNull(extractedValues);
+
     // Create instance of the command
     object command = Activator.CreateInstance(commandType)
             ?? throw new InvalidOperationException($"Failed to create instance of {commandType.Name}");

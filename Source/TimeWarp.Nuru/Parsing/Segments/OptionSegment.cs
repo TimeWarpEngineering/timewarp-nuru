@@ -35,6 +35,8 @@ public class OptionSegment : RouteSegment
 
   public override bool TryMatch(string arg, out string? extractedValue)
   {
+    ArgumentNullException.ThrowIfNull(arg);
+
     extractedValue = null;
 
     // Direct match for the option name

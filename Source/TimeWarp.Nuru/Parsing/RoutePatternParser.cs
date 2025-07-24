@@ -131,15 +131,22 @@ public static class RoutePatternParser
       }
     }
 
-    return new ParsedRoute
+    var parsedRoute = new ParsedRoute
     {
       PositionalTemplate = segments.ToArray(),
       RequiredOptions = requiredOptions.ToArray(),
       OptionSegments = optionSegments.ToArray(),
-      Parameters = parameters,
       HasCatchAll = hasCatchAll,
       CatchAllParameterName = catchAllParameterName,
       Specificity = specificity
     };
+
+    // Copy parameters to the existing dictionary
+    foreach (KeyValuePair<string, RouteParameter> kvp in parameters)
+    {
+      parsedRoute.Parameters[kvp.Key] = kvp.Value;
+    }
+
+    return parsedRoute;
   }
 }

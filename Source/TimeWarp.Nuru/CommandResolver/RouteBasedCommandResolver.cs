@@ -16,6 +16,8 @@ public class RouteBasedCommandResolver
 
   public ResolverResult Resolve(IReadOnlyList<string> args)
   {
+    ArgumentNullException.ThrowIfNull(args);
+
     // Try to match against route endpoints
     (RouteEndpoint endpoint, Dictionary<string, string> extractedValues)? matchResult = MatchRoute(args);
 

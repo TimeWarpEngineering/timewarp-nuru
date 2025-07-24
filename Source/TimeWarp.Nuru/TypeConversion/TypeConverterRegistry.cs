@@ -30,7 +30,9 @@ public class TypeConverterRegistry : ITypeConverterRegistry
   /// </summary>
   public IRouteTypeConverter? GetConverterByConstraint(string constraintName)
   {
-    if (string.IsNullOrEmpty(constraintName))
+    ArgumentNullException.ThrowIfNull(constraintName);
+
+    if (constraintName.Length == 0)
       return null;
 
     return _convertersByConstraint.TryGetValue(constraintName, out IRouteTypeConverter? converter)
@@ -56,6 +58,9 @@ public class TypeConverterRegistry : ITypeConverterRegistry
   /// </summary>
   public bool TryConvert(string value, string constraintName, out object? result)
   {
+    ArgumentNullException.ThrowIfNull(value);
+    ArgumentNullException.ThrowIfNull(constraintName);
+
     IRouteTypeConverter? converter = GetConverterByConstraint(constraintName);
     if (converter is null)
     {
@@ -71,6 +76,9 @@ public class TypeConverterRegistry : ITypeConverterRegistry
   /// </summary>
   public bool TryConvert(string value, Type targetType, out object? result)
   {
+    ArgumentNullException.ThrowIfNull(value);
+    ArgumentNullException.ThrowIfNull(targetType);
+
     IRouteTypeConverter? converter = GetConverterByType(targetType);
     if (converter is null)
     {

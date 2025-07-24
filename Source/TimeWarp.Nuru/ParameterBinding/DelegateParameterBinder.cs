@@ -15,6 +15,11 @@ public static class DelegateParameterBinder
       ITypeConverterRegistry typeConverterRegistry,
       IServiceProvider serviceProvider)
   {
+    ArgumentNullException.ThrowIfNull(handler);
+    ArgumentNullException.ThrowIfNull(extractedValues);
+    ArgumentNullException.ThrowIfNull(typeConverterRegistry);
+    ArgumentNullException.ThrowIfNull(serviceProvider);
+
     MethodInfo method = handler.Method;
     ParameterInfo[] parameters = method.GetParameters();
 

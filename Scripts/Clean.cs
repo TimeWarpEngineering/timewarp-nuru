@@ -20,16 +20,16 @@ try
 }
 catch (Exception ex)
 {
-    Console.WriteLine($"=== Exception Details ===");
+    Console.WriteLine("=== Exception Details ===");
     Console.WriteLine($"Exception type: {ex.GetType().Name}");
     Console.WriteLine($"Message: {ex.Message}");
-    
-    if (ex.InnerException != null)
+
+    if (ex.InnerException is not null)
     {
         Console.WriteLine($"Inner exception type: {ex.InnerException.GetType().Name}");
         Console.WriteLine($"Inner exception message: {ex.InnerException.Message}");
     }
-    
+
     Console.WriteLine($"Stack trace: {ex.StackTrace}");
     Console.WriteLine("❌ Clean failed with exception!");
     Environment.Exit(1);

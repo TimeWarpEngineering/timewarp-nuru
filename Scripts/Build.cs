@@ -1,5 +1,9 @@
 #!/usr/bin/dotnet --
 // Build.cs - Build the TimeWarp.Nuru library
+#pragma warning disable CA1014 // Mark assemblies with CLSCompliant
+#pragma warning disable CA1031 // Do not catch general exception types
+#pragma warning disable CA1303 // Do not pass literals as localized parameters
+#pragma warning disable CA2007 // Consider calling ConfigureAwait on the awaited task
 
 // Change to script directory for relative paths
 string scriptDir = (AppContext.GetData("EntryPointFileDirectoryPath") as string)!;
@@ -19,20 +23,20 @@ try
         .WithNoValidation()
         .ExecuteAsync();
 
-    result.WriteToConsole(); 
+    result.WriteToConsole();
 }
 catch (Exception ex)
 {
-    Console.WriteLine($"=== Exception Details ===");
+    Console.WriteLine("=== Exception Details ===");
     Console.WriteLine($"Exception type: {ex.GetType().Name}");
     Console.WriteLine($"Message: {ex.Message}");
-    
-    if (ex.InnerException != null)
+
+    if (ex.InnerException is not null)
     {
         Console.WriteLine($"Inner exception type: {ex.InnerException.GetType().Name}");
         Console.WriteLine($"Inner exception message: {ex.InnerException.Message}");
     }
-    
+
     Console.WriteLine($"Stack trace: {ex.StackTrace}");
     Console.WriteLine("❌ Build failed with exception!");
     Environment.Exit(1);

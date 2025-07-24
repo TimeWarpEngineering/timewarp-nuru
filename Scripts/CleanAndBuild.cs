@@ -9,7 +9,7 @@ Console.WriteLine("Running Clean and Build for TimeWarp.Nuru...");
 Console.WriteLine($"Working from: {Directory.GetCurrentDirectory()}");
 
 // Run Clean.cs
-var cleanResult = await Shell.Run("./Clean.cs").ExecuteAsync();
+ExecutionResult cleanResult = await Shell.Run("./Clean.cs").ExecuteAsync();
 if (cleanResult.ExitCode != 0)
 {
     Console.WriteLine("❌ Clean failed!");
@@ -17,7 +17,7 @@ if (cleanResult.ExitCode != 0)
 }
 
 // Run Build.cs
-var buildResult = await Shell.Run("./Build.cs").ExecuteAsync();
+ExecutionResult buildResult = await Shell.Run("./Build.cs").ExecuteAsync();
 if (buildResult.ExitCode != 0)
 {
     Console.WriteLine("❌ Build failed!");

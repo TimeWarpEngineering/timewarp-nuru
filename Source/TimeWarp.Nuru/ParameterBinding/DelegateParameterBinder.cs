@@ -68,7 +68,7 @@ public static class DelegateParameterBinder
             // Try basic conversion as fallback
             try
             {
-              args[i] = Convert.ChangeType(stringValue, param.ParameterType);
+              args[i] = Convert.ChangeType(stringValue, param.ParameterType, CultureInfo.InvariantCulture);
             }
             catch
             {

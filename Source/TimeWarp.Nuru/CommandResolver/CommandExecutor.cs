@@ -66,7 +66,7 @@ public class CommandExecutor
         else
         {
           // Try basic conversion as fallback
-          object converted = Convert.ChangeType(value, property.PropertyType);
+          object converted = Convert.ChangeType(value, property.PropertyType, CultureInfo.InvariantCulture);
           property.SetValue(command, converted);
         }
       }

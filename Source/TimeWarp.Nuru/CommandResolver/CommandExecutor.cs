@@ -6,6 +6,12 @@ namespace TimeWarp.Nuru.CommandResolver;
 /// </summary>
 public class CommandExecutor
 {
+  private static readonly JsonSerializerOptions s_jsonOptions = new()
+  {
+    WriteIndented = true,
+    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+  };
+
   private readonly IServiceProvider _serviceProvider;
   private readonly ITypeConverterRegistry _typeConverterRegistry;
 
@@ -94,11 +100,7 @@ public class CommandExecutor
     else
     {
       // Complex object - serialize to JSON for display
-      string json = JsonSerializer.Serialize(response, new JsonSerializerOptions
-      {
-        WriteIndented = true,
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-      });
+      string json = JsonSerializer.Serialize(response, s_jsonOptions);
       System.Console.WriteLine(json);
     }
   }

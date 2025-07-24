@@ -78,6 +78,7 @@ public class RouteBasedCommandResolver
         {
           extractedValues[param.Name] = string.Join(" ", args.Skip(i));
         }
+
         return true;
       }
 

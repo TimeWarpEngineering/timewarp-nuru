@@ -41,6 +41,7 @@ public class ParameterSegment : RouteSegment
     {
       result += ":" + Constraint;
     }
+
     result += "}";
     return result;
   }

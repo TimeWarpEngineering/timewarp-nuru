@@ -32,9 +32,9 @@ public class RouteHelpProvider
     Dictionary<string, List<RouteEndpoint>> groupedRoutes = GroupRoutesByPrefix(routes);
 
     // Display ungrouped routes first
-    if (groupedRoutes.ContainsKey(""))
+    if (groupedRoutes.TryGetValue("", out List<RouteEndpoint>? ungroupedRoutes))
     {
-      foreach (RouteEndpoint route in groupedRoutes[""])
+      foreach (RouteEndpoint route in ungroupedRoutes)
       {
         DisplayRoute(route);
       }
@@ -86,12 +86,13 @@ public class RouteHelpProvider
     {
       string prefix = GetCommandPrefix(route.RoutePattern);
 
-      if (!groups.ContainsKey(prefix))
+      if (!groups.TryGetValue(prefix, out List<RouteEndpoint>? list))
       {
-        groups[prefix] = new List<RouteEndpoint>();
+        list = new List<RouteEndpoint>();
+        groups[prefix] = list;
       }
 
-      groups[prefix].Add(route);
+      list.Add(route);
     }
 
     return groups;

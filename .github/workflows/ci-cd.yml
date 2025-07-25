@@ -1,0 +1,90 @@
+name: NuGet Publish
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'Source/**'
+      - 'Samples/**'
+      - 'Scripts/**'
+      - '.github/workflows/**'
+  pull_request:
+    branches:
+      - master
+    paths:
+      - 'Source/**'
+      - 'Samples/**'
+      - 'Scripts/**'
+      - '.github/workflows/**'
+  release:
+    types: [published] # Triggered when a release is published via GitHub Releases UI or gh CLI
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Required for MinVer to read all tags
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Make scripts executable
+        run: |
+          chmod +x Scripts/Build.cs
+          chmod +x Scripts/*.cs
+          chmod +x Samples/TimeWarp.Nuru.IntegrationTests/test-all.sh
+
+      - name: Create LocalNuGetFeed directory
+        run: mkdir -p LocalNuGetFeed
+
+      - name: Build and Test
+        run: |
+          echo "Building TimeWarp.Nuru..."
+          dotnet build Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj --configuration Release
+          
+          echo "Running integration tests..."
+          cd Samples/TimeWarp.Nuru.IntegrationTests
+          ./test-all.sh
+
+      - name: Build for Release
+        if: github.event_name == 'release'
+        run: |
+          echo "Building TimeWarp.Nuru for release (GeneratePackageOnBuild=true)..."
+          dotnet build Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj --configuration Release
+
+      - name: Check if version already published (Releases only)
+        if: github.event_name == 'release'
+        run: |
+          VERSION=$(grep '<Version>' Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj | sed 's/.*<Version>\(.*\)<\/Version>.*/\1/')
+          echo "Checking if TimeWarp.Nuru $VERSION is already published on NuGet.org..."
+          
+          # Check TimeWarp.Nuru using package search - only check NuGet.org source
+          if dotnet package search TimeWarp.Nuru --exact-match --prerelease --source https://api.nuget.org/v3/index.json | grep -q "$VERSION"; then
+            echo "⚠️ WARNING: TimeWarp.Nuru $VERSION is already published to NuGet.org"
+            echo "❌ This version cannot be republished. Please increment the version in TimeWarp.Nuru.csproj"
+            exit 1
+          else
+            echo "✅ TimeWarp.Nuru $VERSION is not yet published on NuGet.org"
+          fi
+
+      - name: Publish to NuGet.org (Releases only)
+        if: github.event_name == 'release'
+        run: |
+          dotnet nuget push LocalNuGetFeed/*.nupkg \
+            --api-key ${{ secrets.NUGET_API_KEY }} \
+            --source https://api.nuget.org/v3/index.json \
+            --skip-duplicate
+        env:
+          DOTNET_NUGET_SIGNATURE_VERIFICATION: false
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Packages-${{ github.run_number }}
+          path: LocalNuGetFeed/*.nupkg

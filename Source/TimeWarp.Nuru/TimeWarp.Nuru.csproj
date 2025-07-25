@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Description>Route-based CLI framework for .NET - bringing web-style routing to command-line applications</Description>
+    <PackageTags>cli;command-line;routing;framework;dotnet;console;consoleappframework;commandlineparser;mcmaster;cocona;spectre;system-commandline;clipr;commanddotnet</PackageTags>
+    <Version>1.0.0-beta.1</Version>
+    <!-- Disable localization warning as CLI frameworks don't typically need localization -->
+    <NoWarn>$(NoWarn);CA1303</NoWarn>
+    <!-- Enforce code style rules during build -->
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="GlobalUsingsAnalyzer">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <PackageReference Include="TimeWarp.Mediator" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\Assets\Logo.png" Pack="true" PackagePath="" />
+    <None Include="..\..\README.md" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+</Project>

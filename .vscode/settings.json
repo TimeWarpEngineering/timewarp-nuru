@@ -18,5 +18,13 @@
     "titleBar.inactiveBackground": "#401a1599",
     "titleBar.inactiveForeground": "#e7e7e799"
   },
-  "peacock.remoteColor": "#401a15"
+  "peacock.remoteColor": "#401a15",
+  "cSpell.words": [
+    "Cocona",
+    "Fx's",
+    "LINQ",
+    "Nuru",
+    "Ryzen",
+    "Stackalloc"
+  ]
 }

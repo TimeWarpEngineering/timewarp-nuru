@@ -78,14 +78,14 @@ internal class RouteBasedCommandResolver
         consumedArgs = args.Length;
         if (i < args.Length)
         {
-          extractedValues[param.Name] = string.Join(" ", args.Skip(i));
+          extractedValues[param.Name] = string.Join(CommonStrings.Space, args.Skip(i));
         }
 
         return true;
       }
 
       // Regular segment matching
-      if (i >= args.Length || args[i].StartsWith('-'))
+      if (i >= args.Length || args[i].StartsWith(CommonStrings.SingleDash))
         return false; // Not enough args or hit an option
 
       if (!segment.TryMatch(args[i], out string? value))
@@ -126,7 +126,7 @@ internal class RouteBasedCommandResolver
           // If this option expects a value, verify one exists and extract it
           if (optionSegment.ExpectsValue)
           {
-            if (i + 1 >= remainingArgs.Count || remainingArgs[i + 1].StartsWith('-'))
+            if (i + 1 >= remainingArgs.Count || remainingArgs[i + 1].StartsWith(CommonStrings.SingleDash))
             {
               return false;
             }

@@ -30,7 +30,7 @@ public static class RoutePatternParser
     {
       string part = parts[i];
 
-      if (part.StartsWith("--", StringComparison.Ordinal) || part.StartsWith('-'))
+      if (part.StartsWith(CommonStrings.DoubleDash, StringComparison.Ordinal) || part.StartsWith(CommonStrings.SingleDash))
       {
         // This is an option - check for alias syntax (--long|-s)
         string optionName;

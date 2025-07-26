@@ -8,12 +8,12 @@ public class BoolTypeConverter : IRouteTypeConverter
 {
   private static readonly HashSet<string> TrueValues = new(StringComparer.OrdinalIgnoreCase)
     {
-        "true", "yes", "1", "on", "enabled"
+        CommonStrings.True, CommonStrings.Yes, CommonStrings.One, CommonStrings.On, CommonStrings.Enabled
     };
 
   private static readonly HashSet<string> FalseValues = new(StringComparer.OrdinalIgnoreCase)
     {
-        "false", "no", "0", "off", "disabled"
+        CommonStrings.False, CommonStrings.No, CommonStrings.Zero, CommonStrings.Off, CommonStrings.Disabled
     };
 
   public Type TargetType => typeof(bool);

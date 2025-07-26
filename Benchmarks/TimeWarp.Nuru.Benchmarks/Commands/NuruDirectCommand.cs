@@ -16,7 +16,9 @@ public static class NuruDirectCommand
     );
     
     // Prepend "test" to the args since Nuru expects a command name
-    string[] nuruArgs = new[] { "test" }.Concat(args).ToArray();
+    string[] nuruArgs = new string[args.Length + 1];
+    nuruArgs[0] = "test";
+    Array.Copy(args, 0, nuruArgs, 1, args.Length);
     
     DirectApp app = builder.Build();
     await app.RunAsync(nuruArgs);

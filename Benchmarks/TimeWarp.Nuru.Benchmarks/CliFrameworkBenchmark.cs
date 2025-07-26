@@ -20,6 +20,12 @@ public class CliFrameworkBenchmark
         await NuruCommand.Execute(Arguments);
     }
 
+    [Benchmark(Description = "TimeWarp.Nuru.Direct")]
+    public async Task ExecuteWithNuruDirect()
+    {
+        await NuruDirectCommand.Execute(Arguments);
+    }
+
     [Benchmark(Description = "Cocona.Lite")]
     public void ExecuteWithCoconaLite()
     {

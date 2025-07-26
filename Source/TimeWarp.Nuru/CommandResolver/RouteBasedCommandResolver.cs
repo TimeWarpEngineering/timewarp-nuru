@@ -3,7 +3,7 @@ namespace TimeWarp.Nuru.CommandResolver;
 /// <summary>
 /// A command resolver that uses route patterns to match commands.
 /// </summary>
-public class RouteBasedCommandResolver
+internal class RouteBasedCommandResolver
 {
   private readonly EndpointCollection Endpoints;
   private readonly ITypeConverterRegistry TypeConverterRegistry;
@@ -14,7 +14,7 @@ public class RouteBasedCommandResolver
     TypeConverterRegistry = typeConverterRegistry ?? throw new ArgumentNullException(nameof(typeConverterRegistry));
   }
 
-  public ResolverResult Resolve(IReadOnlyList<string> args)
+  public ResolverResult Resolve(string[] args)
   {
     ArgumentNullException.ThrowIfNull(args);
 
@@ -40,7 +40,7 @@ public class RouteBasedCommandResolver
     };
   }
 
-  private (RouteEndpoint endpoint, Dictionary<string, string> extractedValues)? MatchRoute(IReadOnlyList<string> args)
+  private (RouteEndpoint endpoint, Dictionary<string, string> extractedValues)? MatchRoute(string[] args)
   {
     foreach (RouteEndpoint endpoint in Endpoints)
     {
@@ -50,7 +50,7 @@ public class RouteBasedCommandResolver
       if (MatchPositionalSegments(endpoint, args, extractedValues, out int consumedArgs))
       {
         // Check if remaining args match required options
-        var remainingArgs = args.Skip(consumedArgs).ToList();
+        var remainingArgs = new ArraySegment<string>(args, consumedArgs, args.Length - consumedArgs);
         if (CheckRequiredOptions(endpoint, remainingArgs, extractedValues))
         {
           return (endpoint, extractedValues);
@@ -61,7 +61,7 @@ public class RouteBasedCommandResolver
     return null;
   }
 
-  private static bool MatchPositionalSegments(RouteEndpoint endpoint, IReadOnlyList<string> args,
+  private static bool MatchPositionalSegments(RouteEndpoint endpoint, string[] args,
       Dictionary<string, string> extractedValues, out int consumedArgs)
   {
     consumedArgs = 0;
@@ -75,8 +75,8 @@ public class RouteBasedCommandResolver
       // For catch-all segment (must be last), consume all remaining
       if (segment is ParameterSegment param && param.IsCatchAll)
       {
-        consumedArgs = args.Count;
-        if (i < args.Count)
+        consumedArgs = args.Length;
+        if (i < args.Length)
         {
           extractedValues[param.Name] = string.Join(" ", args.Skip(i));
         }
@@ -85,7 +85,7 @@ public class RouteBasedCommandResolver
       }
 
       // Regular segment matching
-      if (i >= args.Count || args[i].StartsWith('-'))
+      if (i >= args.Length || args[i].StartsWith('-'))
         return false; // Not enough args or hit an option
 
       if (!segment.TryMatch(args[i], out string? value))
@@ -100,7 +100,7 @@ public class RouteBasedCommandResolver
     return true;
   }
 
-  private static bool CheckRequiredOptions(RouteEndpoint endpoint, List<string> remainingArgs,
+  private static bool CheckRequiredOptions(RouteEndpoint endpoint, IReadOnlyList<string> remainingArgs,
       Dictionary<string, string> extractedValues)
   {
     IReadOnlyList<OptionSegment> optionSegments = endpoint.ParsedRoute.OptionSegments;

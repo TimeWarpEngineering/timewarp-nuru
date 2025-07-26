@@ -214,3 +214,32 @@ While we can reduce allocations further, consider:
 3. **Usability**: DI provides valuable features for complex applications
 
 **Recommendation**: Focus on removing DI overhead for the benchmark scenario while keeping it available for real applications that need it.
+
+## Implemented Optimizations
+
+### 1. ArraySegment for Argument Slicing (Implemented: 2025-07-26)
+
+**Change**: Replaced `args.Skip(consumedArgs).ToList()` with `ArraySegment<string>`
+
+**Location**: `RouteBasedCommandResolver.cs:53`
+
+**Before**:
+```csharp
+var remainingArgs = args.Skip(consumedArgs).ToList();
+```
+
+**After**:
+```csharp
+var remainingArgs = new ArraySegment<string>(args, consumedArgs, args.Length - consumedArgs);
+```
+
+**Results**:
+- Memory saved: 112 bytes (18,576 B → 18,464 B)
+- Percentage improvement: 0.6%
+- Performance impact: Improved from 42.747 ms to 35.720 ms (16.4% faster)
+- Ranking improvement: Moved from 7th to 5th place (now ahead of McMaster and CommandLineParser)
+
+**Notes**: 
+- Small memory saving but significant performance improvement
+- Eliminated LINQ allocation overhead
+- Changed method signatures from `IReadOnlyList<string>` to `string[]` for efficiency

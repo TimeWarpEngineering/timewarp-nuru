@@ -5,13 +5,23 @@ namespace TimeWarp.Nuru.TypeConversion;
 /// </summary>
 public class TypeConverterRegistry : ITypeConverterRegistry
 {
+  // Static shared default converters - initialized once for all instances
+  private static readonly Dictionary<string, IRouteTypeConverter> DefaultConvertersByConstraint = new(StringComparer.OrdinalIgnoreCase);
+  private static readonly Dictionary<Type, IRouteTypeConverter> DefaultConvertersByType = [];
+  
+  // Instance-specific custom converters (usually empty)
   private readonly Dictionary<string, IRouteTypeConverter> ConvertersByConstraint = new(StringComparer.OrdinalIgnoreCase);
   private readonly Dictionary<Type, IRouteTypeConverter> ConvertersByType = [];
 
+  static TypeConverterRegistry()
+  {
+    // Register default converters once for all instances
+    RegisterDefaultConverters();
+  }
+
   public TypeConverterRegistry()
   {
-    // Register default converters
-    RegisterDefaultConverters();
+    // No need to register defaults - they're in static dictionaries
   }
 
   /// <summary>
@@ -35,9 +45,10 @@ public class TypeConverterRegistry : ITypeConverterRegistry
     if (constraintName.Length == 0)
       return null;
 
-    return ConvertersByConstraint.TryGetValue(constraintName, out IRouteTypeConverter? converter)
-        ? converter
-        : null;
+    // Check instance converters first, then defaults
+    return ConvertersByConstraint.TryGetValue(constraintName, out IRouteTypeConverter? converter) ? converter
+         : DefaultConvertersByConstraint.TryGetValue(constraintName, out converter) ? converter
+         : null;
   }
 
   /// <summary>
@@ -48,9 +59,10 @@ public class TypeConverterRegistry : ITypeConverterRegistry
     if (targetType is null)
       return null;
 
-    return ConvertersByType.TryGetValue(targetType, out IRouteTypeConverter? converter)
-        ? converter
-        : null;
+    // Check instance converters first, then defaults
+    return ConvertersByType.TryGetValue(targetType, out IRouteTypeConverter? converter) ? converter
+         : DefaultConvertersByType.TryGetValue(targetType, out converter) ? converter
+         : null;
   }
 
   /// <summary>
@@ -89,15 +101,21 @@ public class TypeConverterRegistry : ITypeConverterRegistry
     return converter.TryConvert(value, out result);
   }
 
-  private void RegisterDefaultConverters()
+  private static void RegisterDefaultConverters()
   {
-    RegisterConverter(new Converters.IntTypeConverter());
-    RegisterConverter(new Converters.BoolTypeConverter());
-    RegisterConverter(new Converters.LongTypeConverter());
-    RegisterConverter(new Converters.DoubleTypeConverter());
-    RegisterConverter(new Converters.DecimalTypeConverter());
-    RegisterConverter(new Converters.GuidTypeConverter());
-    RegisterConverter(new Converters.DateTimeTypeConverter());
-    RegisterConverter(new Converters.TimeSpanTypeConverter());
+    RegisterDefaultConverter(new Converters.IntTypeConverter());
+    RegisterDefaultConverter(new Converters.BoolTypeConverter());
+    RegisterDefaultConverter(new Converters.LongTypeConverter());
+    RegisterDefaultConverter(new Converters.DoubleTypeConverter());
+    RegisterDefaultConverter(new Converters.DecimalTypeConverter());
+    RegisterDefaultConverter(new Converters.GuidTypeConverter());
+    RegisterDefaultConverter(new Converters.DateTimeTypeConverter());
+    RegisterDefaultConverter(new Converters.TimeSpanTypeConverter());
+  }
+  
+  private static void RegisterDefaultConverter(IRouteTypeConverter converter)
+  {
+    DefaultConvertersByConstraint[converter.ConstraintName] = converter;
+    DefaultConvertersByType[converter.TargetType] = converter;
   }
 }

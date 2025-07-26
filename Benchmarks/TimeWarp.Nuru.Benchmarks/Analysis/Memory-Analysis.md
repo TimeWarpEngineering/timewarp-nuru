@@ -215,6 +215,121 @@ While we can reduce allocations further, consider:
 
 **Recommendation**: Focus on removing DI overhead for the benchmark scenario while keeping it available for real applications that need it.
 
+## Detailed Memory Allocation Breakdown (2025-07-27)
+
+Through incremental testing, we've identified exactly where TimeWarp.Nuru's 18,464 B allocations occur:
+
+### Test Results
+
+| Test Scenario | Allocations | Description |
+|---------------|-------------|-------------|
+| Return immediately | 0 B | Baseline - no framework code runs |
+| Create AppBuilder only | 712 B | AppBuilder + ServiceCollection + EndpointCollection |
+| Add route + Build() | 7,984 B | DI container creation (7,272 B) |
+| DI + GetRequiredService<NuruCli> | 13,928 B | Resolving NuruCli + RouteBasedCommandResolver (5,944 B) |
+| Full execution (with route) | 18,464 B | Actually running the CLI (4,536 B) |
+
+### Key Findings
+
+1. **DI Container is NOT the largest consumer** (contrary to initial estimate)
+   - DI container build: 7,272 B (39%)
+   - NuruCli resolution: 5,944 B (32%)
+   - CLI execution: 4,536 B (25%)
+   - AppBuilder setup: 712 B (4%)
+
+2. **Surprising allocations during "no-op" execution**
+   - Even with no routes defined, just calling RunAsync allocates ~6KB
+   - This includes: array concatenation, ResolverResult, error messages, console buffers
+
+3. **We're only 2,568 B away from beating System.CommandLine**
+   - Current: 18,464 B (with full route parsing/execution)
+   - Without CLI execution: 13,928 B (still more than System.CommandLine's 11,360 B)
+   - System.CommandLine: 11,360 B
+   - Gap: 2,568 B
+
+4. **Proper DI pattern increases allocations**
+   - After fixing DI anti-pattern (injecting services directly instead of ServiceProvider)
+   - Memory increased from 14,200 B to 15,296 B (+1,096 B)
+   - This is due to eager resolution of CommandExecutor and ITypeConverterRegistry
+   - The lazy GetRequiredService pattern was saving memory in our benchmark scenario
+
+5. **System.CommandLine comparison is not apples-to-apples**
+   - System.CommandLine benchmark: NO dependency injection
+   - TimeWarp.Nuru benchmark: Full DI container included
+   - This accounts for most of the allocation difference
+
+### Memory Allocation Sources
+
+#### 1. AppBuilder Construction (712 B)
+```csharp
+new AppBuilder()
+  - ServiceCollection instance
+  - EndpointCollection instance
+  - Default service registrations
+```
+
+#### 2. DI Container Build (7,272 B)
+```csharp
+ServiceCollection.BuildServiceProvider()
+  - ServiceProvider internal structures
+  - Service descriptors and caches
+  - Scoped service tracking
+  - Type activation caches
+```
+
+#### 3. NuruCli Resolution (5,944 B)
+```csharp
+ServiceProvider.GetRequiredService<NuruCli>()
+  - NuruCli instance
+  - RouteBasedCommandResolver instance
+  - Getting EndpointCollection from DI
+  - Getting ITypeConverterRegistry from DI
+```
+
+#### 4. CLI Execution (4,536 B)
+```csharp
+cli.RunAsync(args)
+  - new[] { "test" }.Concat(args).ToArray()
+  - Dictionary<string, string> for each endpoint match attempt
+  - ResolverResult with error message
+  - Console.Error.WriteLineAsync buffers
+  - ArraySegment for remaining args
+```
+
+## Planned Optimizations
+
+### DirectAppBuilder - No-DI Path (Planned: 2025-07-27)
+
+Based on our analysis, we plan to implement a lightweight alternative that skips DI entirely:
+
+**Design**:
+```csharp
+public class DirectAppBuilder
+{
+    private readonly EndpointCollection endpoints = new();
+    private readonly TypeConverterRegistry typeConverters = new();
+    
+    public void AddRoute(string pattern, Delegate handler) { ... }
+    public Task<int> RunAsync(string[] args) { ... }
+}
+```
+
+**Expected savings**:
+- Skip ServiceCollection: -712 B
+- Skip ServiceProvider build: -7,272 B
+- Skip NuruCli DI resolution: -1,096 B
+- **Total expected savings: ~9KB**
+
+**Trade-offs**:
+- No Mediator support (requires DI)
+- No service injection into handlers
+- Manual wiring only
+- But perfect for simple CLI tools that don't need DI
+
+This would give users two paths:
+- **AppBuilder**: Full features with DI (~15.3KB)
+- **DirectAppBuilder**: Lightweight, no DI (~6-7KB expected)
+
 ## Implemented Optimizations
 
 ### 1. ArraySegment for Argument Slicing (Implemented: 2025-07-26)

@@ -42,9 +42,10 @@ internal class RouteBasedCommandResolver
 
   private (RouteEndpoint endpoint, Dictionary<string, string> extractedValues)? MatchRoute(string[] args)
   {
+    var extractedValues = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
     foreach (RouteEndpoint endpoint in Endpoints)
     {
-      var extractedValues = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
       // Check positional segments
       if (MatchPositionalSegments(endpoint, args, extractedValues, out int consumedArgs))

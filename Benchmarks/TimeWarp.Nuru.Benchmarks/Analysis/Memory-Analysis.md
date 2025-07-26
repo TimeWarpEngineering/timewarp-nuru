@@ -243,3 +243,36 @@ var remainingArgs = new ArraySegment<string>(args, consumedArgs, args.Length - c
 - Small memory saving but significant performance improvement
 - Eliminated LINQ allocation overhead
 - Changed method signatures from `IReadOnlyList<string>` to `string[]` for efficiency
+
+### 2. String Interning for Common Values (Implemented: 2025-07-26)
+
+**Change**: Created `CommonStrings` class with interned common CLI strings
+
+**Files Changed**:
+- Created `CommonStrings.cs` with interned strings
+- Updated `RouteBasedCommandResolver.cs` to use `CommonStrings.SingleDash` 
+- Updated `RoutePatternParser.cs` to use `CommonStrings.DoubleDash` and `CommonStrings.SingleDash`
+- Updated `OptionSegment.cs` to use interned dash strings
+- Updated `BoolTypeConverter.cs` to use interned boolean value strings
+
+**Implementation**:
+```csharp
+internal static class CommonStrings
+{
+  public static readonly string SingleDash = string.Intern("-");
+  public static readonly string DoubleDash = string.Intern("--");
+  public static readonly string True = string.Intern("true");
+  public static readonly string False = string.Intern("false");
+  // ... more common strings
+}
+```
+
+**Results**:
+- Memory saved: 0 bytes in cold-start benchmark
+- Memory benefit appears in repeated executions when same strings are reused
+- Ensures common strings like "-", "--", "true", "false" share memory across the application
+
+**Notes**:
+- String interning reduces memory when strings are created multiple times
+- No benefit in single-execution benchmarks
+- Most valuable in long-running applications or repeated command parsing

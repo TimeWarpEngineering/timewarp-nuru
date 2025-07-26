@@ -5,23 +5,13 @@ namespace TimeWarp.Nuru.TypeConversion;
 /// </summary>
 public class TypeConverterRegistry : ITypeConverterRegistry
 {
-  // Static shared default converters - initialized once for all instances
-  private static readonly Dictionary<string, IRouteTypeConverter> DefaultConvertersByConstraint = new(StringComparer.OrdinalIgnoreCase);
-  private static readonly Dictionary<Type, IRouteTypeConverter> DefaultConvertersByType = [];
-  
   // Instance-specific custom converters (usually empty)
   private readonly Dictionary<string, IRouteTypeConverter> ConvertersByConstraint = new(StringComparer.OrdinalIgnoreCase);
   private readonly Dictionary<Type, IRouteTypeConverter> ConvertersByType = [];
 
-  static TypeConverterRegistry()
-  {
-    // Register default converters once for all instances
-    RegisterDefaultConverters();
-  }
-
   public TypeConverterRegistry()
   {
-    // No need to register defaults - they're in static dictionaries
+    // No initialization needed - defaults are handled by static methods
   }
 
   /// <summary>
@@ -45,10 +35,8 @@ public class TypeConverterRegistry : ITypeConverterRegistry
     if (constraintName.Length == 0)
       return null;
 
-    // Check instance converters first, then defaults
-    return ConvertersByConstraint.TryGetValue(constraintName, out IRouteTypeConverter? converter) ? converter
-         : DefaultConvertersByConstraint.TryGetValue(constraintName, out converter) ? converter
-         : null;
+    // Check custom converters
+    return ConvertersByConstraint.TryGetValue(constraintName, out IRouteTypeConverter? converter) ? converter : null;
   }
 
   /// <summary>
@@ -59,10 +47,8 @@ public class TypeConverterRegistry : ITypeConverterRegistry
     if (targetType is null)
       return null;
 
-    // Check instance converters first, then defaults
-    return ConvertersByType.TryGetValue(targetType, out IRouteTypeConverter? converter) ? converter
-         : DefaultConvertersByType.TryGetValue(targetType, out converter) ? converter
-         : null;
+    // Check custom converters
+    return ConvertersByType.TryGetValue(targetType, out IRouteTypeConverter? converter) ? converter : null;
   }
 
   /// <summary>
@@ -73,6 +59,12 @@ public class TypeConverterRegistry : ITypeConverterRegistry
     ArgumentNullException.ThrowIfNull(value);
     ArgumentNullException.ThrowIfNull(constraintName);
 
+    // Try default constraint conversions first
+    Type? targetType = DefaultTypeConverters.GetTypeForConstraint(constraintName);
+    if (targetType is not null && DefaultTypeConverters.TryConvert(value, targetType, out result))
+      return true;
+
+    // Fall back to custom converters
     IRouteTypeConverter? converter = GetConverterByConstraint(constraintName);
     if (converter is null)
     {
@@ -91,6 +83,11 @@ public class TypeConverterRegistry : ITypeConverterRegistry
     ArgumentNullException.ThrowIfNull(value);
     ArgumentNullException.ThrowIfNull(targetType);
 
+    // Try default conversions first (no allocations)
+    if (DefaultTypeConverters.TryConvert(value, targetType, out result))
+      return true;
+
+    // Fall back to custom converters
     IRouteTypeConverter? converter = GetConverterByType(targetType);
     if (converter is null)
     {
@@ -101,21 +98,4 @@ public class TypeConverterRegistry : ITypeConverterRegistry
     return converter.TryConvert(value, out result);
   }
 
-  private static void RegisterDefaultConverters()
-  {
-    RegisterDefaultConverter(new Converters.IntTypeConverter());
-    RegisterDefaultConverter(new Converters.BoolTypeConverter());
-    RegisterDefaultConverter(new Converters.LongTypeConverter());
-    RegisterDefaultConverter(new Converters.DoubleTypeConverter());
-    RegisterDefaultConverter(new Converters.DecimalTypeConverter());
-    RegisterDefaultConverter(new Converters.GuidTypeConverter());
-    RegisterDefaultConverter(new Converters.DateTimeTypeConverter());
-    RegisterDefaultConverter(new Converters.TimeSpanTypeConverter());
-  }
-  
-  private static void RegisterDefaultConverter(IRouteTypeConverter converter)
-  {
-    DefaultConvertersByConstraint[converter.ConstraintName] = converter;
-    DefaultConvertersByType[converter.TargetType] = converter;
-  }
 }

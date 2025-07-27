@@ -25,19 +25,17 @@ internal class RouteBasedCommandResolver
     {
       (RouteEndpoint endpoint, Dictionary<string, string> extractedValues) = matchResult.Value;
 
-      return new ResolverResult
-      {
-        Success = true,
-        MatchedEndpoint = endpoint,
-        ExtractedValues = extractedValues
-      };
+      return new ResolverResult(
+        success: true,
+        matchedEndpoint: endpoint,
+        extractedValues: extractedValues
+      );
     }
 
-    return new ResolverResult
-    {
-      Success = false,
-      ErrorMessage = "No matching command found"
-    };
+    return new ResolverResult(
+      success: false,
+      errorMessage: "No matching command found"
+    );
   }
 
   private (RouteEndpoint endpoint, Dictionary<string, string> extractedValues)? MatchRoute(string[] args)

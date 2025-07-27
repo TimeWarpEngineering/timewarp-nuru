@@ -5,13 +5,13 @@ namespace TimeWarp.Nuru.TypeConversion;
 /// </summary>
 public class TypeConverterRegistry : ITypeConverterRegistry
 {
-  // Instance-specific custom converters (usually empty)
-  private readonly Dictionary<string, IRouteTypeConverter> ConvertersByConstraint = new(StringComparer.OrdinalIgnoreCase);
-  private readonly Dictionary<Type, IRouteTypeConverter> ConvertersByType = [];
+  // Instance-specific custom converters - lazily initialized only when needed
+  private Dictionary<string, IRouteTypeConverter>? ConvertersByConstraint;
+  private Dictionary<Type, IRouteTypeConverter>? ConvertersByType;
 
   public TypeConverterRegistry()
   {
-    // No initialization needed - defaults are handled by static methods
+    // Dictionaries are now lazily initialized only when custom converters are registered
   }
 
   /// <summary>
@@ -20,6 +20,10 @@ public class TypeConverterRegistry : ITypeConverterRegistry
   public void RegisterConverter(IRouteTypeConverter converter)
   {
     ArgumentNullException.ThrowIfNull(converter);
+
+    // Lazy initialize dictionaries on first use
+    ConvertersByConstraint ??= new Dictionary<string, IRouteTypeConverter>(StringComparer.OrdinalIgnoreCase);
+    ConvertersByType ??= new Dictionary<Type, IRouteTypeConverter>();
 
     ConvertersByConstraint[converter.ConstraintName] = converter;
     ConvertersByType[converter.TargetType] = converter;
@@ -35,8 +39,8 @@ public class TypeConverterRegistry : ITypeConverterRegistry
     if (constraintName.Length == 0)
       return null;
 
-    // Check custom converters
-    return ConvertersByConstraint.TryGetValue(constraintName, out IRouteTypeConverter? converter) ? converter : null;
+    // Check custom converters (only if dictionary was initialized)
+    return ConvertersByConstraint?.TryGetValue(constraintName, out IRouteTypeConverter? converter) == true ? converter : null;
   }
 
   /// <summary>
@@ -47,8 +51,8 @@ public class TypeConverterRegistry : ITypeConverterRegistry
     if (targetType is null)
       return null;
 
-    // Check custom converters
-    return ConvertersByType.TryGetValue(targetType, out IRouteTypeConverter? converter) ? converter : null;
+    // Check custom converters (only if dictionary was initialized)
+    return ConvertersByType?.TryGetValue(targetType, out IRouteTypeConverter? converter) == true ? converter : null;
   }
 
   /// <summary>

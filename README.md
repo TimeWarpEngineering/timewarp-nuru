@@ -211,11 +211,20 @@ builder.AddRoute("fetch {url}", async (string url) => {
 
 ## 🚄 Native AOT Ready
 
-Build ultra-fast native binaries:
+Build ultra-fast native binaries with the right configuration:
 
+**For Direct approach:**
 ```xml
 <PropertyGroup>
   <PublishAot>true</PublishAot>
+</PropertyGroup>
+```
+
+**For Mediator/Mixed approach:**
+```xml
+<PropertyGroup>
+  <PublishAot>true</PublishAot>
+  <TrimMode>partial</TrimMode>  <!-- Preserve reflection for command handlers -->
 </PropertyGroup>
 ```
 

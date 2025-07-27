@@ -7,6 +7,7 @@ on:
     paths:
       - 'Source/**'
       - 'Samples/**'
+      - 'Tests/**'
       - 'Scripts/**'
       - '.github/workflows/**'
   pull_request:
@@ -15,6 +16,7 @@ on:
     paths:
       - 'Source/**'
       - 'Samples/**'
+      - 'Tests/**'
       - 'Scripts/**'
       - '.github/workflows/**'
   release:
@@ -38,7 +40,7 @@ jobs:
         run: |
           chmod +x Scripts/Build.cs
           chmod +x Scripts/*.cs
-          chmod +x Samples/TimeWarp.Nuru.IntegrationTests/test-all.sh
+          chmod +x Tests/test-both-versions.sh
 
       - name: Create LocalNuGetFeed directory
         run: mkdir -p LocalNuGetFeed
@@ -49,8 +51,8 @@ jobs:
           dotnet build Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj --configuration Release
           
           echo "Running integration tests..."
-          cd Samples/TimeWarp.Nuru.IntegrationTests
-          ./test-all.sh
+          cd Tests
+          ./test-both-versions.sh
 
       - name: Build for Release
         if: github.event_name == 'release'

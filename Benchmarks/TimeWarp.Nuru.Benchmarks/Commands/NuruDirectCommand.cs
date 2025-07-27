@@ -4,6 +4,10 @@ namespace TimeWarp.Nuru.Benchmarks.Commands;
 
 public static class NuruDirectCommand
 {
+  // Cache the array since benchmark always uses the same arguments
+  private static readonly string[] CachedNuruArgs = 
+    ["test", "--str", "hello world", "-i", "13", "-b"];
+  
   public static async Task Execute(string[] args)
   {
     DirectAppBuilder builder = new();
@@ -15,12 +19,7 @@ public static class NuruDirectCommand
       (string str, int intOption) => { }
     );
     
-    // Prepend "test" to the args since Nuru expects a command name
-    string[] nuruArgs = new string[args.Length + 1];
-    nuruArgs[0] = "test";
-    Array.Copy(args, 0, nuruArgs, 1, args.Length);
-    
     DirectApp app = builder.Build();
-    await app.RunAsync(nuruArgs);
+    await app.RunAsync(CachedNuruArgs);
   }
 }

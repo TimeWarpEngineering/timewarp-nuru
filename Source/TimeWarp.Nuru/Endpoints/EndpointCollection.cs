@@ -34,6 +34,21 @@ public class EndpointCollection : IEnumerable<RouteEndpoint>
     }
 
     EndpointsList.Add(endpoint);
+  }
+
+  /// <summary>
+  /// Removes all endpoints from the collection.
+  /// </summary>
+  internal void Clear()
+  {
+    EndpointsList.Clear();
+  }
+
+  /// <summary>
+  /// Sorts the endpoints by order and specificity. Called once during build.
+  /// </summary>
+  internal void Sort()
+  {
     // Sort by Order descending (higher order = higher priority)
     // Then by Specificity descending for routes with same order
     EndpointsList.Sort((a, b) =>
@@ -43,14 +58,6 @@ public class EndpointCollection : IEnumerable<RouteEndpoint>
                 ? orderComparison
                 : b.ParsedRoute.Specificity.CompareTo(a.ParsedRoute.Specificity);
     });
-  }
-
-  /// <summary>
-  /// Removes all endpoints from the collection.
-  /// </summary>
-  internal void Clear()
-  {
-    EndpointsList.Clear();
   }
 
   /// <summary>

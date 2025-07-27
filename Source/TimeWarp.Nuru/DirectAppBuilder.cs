@@ -40,6 +40,7 @@ public class DirectAppBuilder
   /// </summary>
   public DirectApp Build()
   {
+    EndpointCollection.Sort();
     return new DirectApp
     (
       EndpointCollection,

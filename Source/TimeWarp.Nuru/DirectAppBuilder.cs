@@ -169,6 +169,11 @@ public class DirectApp
         {
           args[i] = stringValue;
         }
+        else if (param.ParameterType == typeof(string[]))
+        {
+          // Split space-delimited string into array for catch-all parameters
+          args[i] = stringValue.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        }
         else
         {
           throw new InvalidOperationException

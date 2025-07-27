@@ -99,7 +99,6 @@ public static class RoutePatternParser
           parameters[paramName] = new RouteParameter
           {
             Name = paramName,
-            Position = segments.Count,
             TypeConstraint = string.IsNullOrEmpty(typeConstraint) ? null : typeConstraint
           };
 

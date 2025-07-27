@@ -51,7 +51,7 @@ if [ $? -ne 0 ]; then
 fi
 
 # Find the built executable
-EXECUTABLE="./bin/Release/net9.0/TimeWarp.Nuru.IntegrationTests"
+EXECUTABLE="./bin/Release/net9.0/TimeWarp.Nuru.TestApp"
 if [ ! -f "$EXECUTABLE" ]; then
     echo -e "${RED}Could not find built executable at $EXECUTABLE${NC}"
     exit 1

@@ -37,14 +37,6 @@ public class EndpointCollection : IEnumerable<RouteEndpoint>
   }
 
   /// <summary>
-  /// Removes all endpoints from the collection.
-  /// </summary>
-  internal void Clear()
-  {
-    EndpointsList.Clear();
-  }
-
-  /// <summary>
   /// Sorts the endpoints by order and specificity. Called once during build.
   /// </summary>
   internal void Sort()

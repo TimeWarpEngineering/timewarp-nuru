@@ -6,10 +6,6 @@ namespace TimeWarp.Nuru.Parsing;
 public class RouteParameter
 {
   /// <summary>
-  /// Gets or sets the parameter name (without braces).
-  /// </summary>
-  public required string Name { get; set; }
-  /// <summary>
   /// Gets or sets the type constraint (e.g., "int" from {id:int}).
   /// </summary>
   public string? TypeConstraint { get; set; }

@@ -67,7 +67,6 @@ public static class RoutePatternParser
             valueParameterName = paramName;
             parameters[paramName] = new RouteParameter
             {
-              Name = paramName,
               AssociatedOption = optionName,
               TypeConstraint = string.IsNullOrEmpty(typeConstraint) ? null : typeConstraint
             };
@@ -98,7 +97,6 @@ public static class RoutePatternParser
 
           parameters[paramName] = new RouteParameter
           {
-            Name = paramName,
             TypeConstraint = string.IsNullOrEmpty(typeConstraint) ? null : typeConstraint
           };
 

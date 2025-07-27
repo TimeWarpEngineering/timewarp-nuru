@@ -59,6 +59,8 @@ jobs:
         run: |
           echo "Building TimeWarp.Nuru for release (GeneratePackageOnBuild=true)..."
           dotnet build Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj --configuration Release
+          echo "Copying NuGet package to LocalNuGetFeed..."
+          cp Source/TimeWarp.Nuru/bin/Release/*.nupkg LocalNuGetFeed/
 
       - name: Check if version already published (Releases only)
         if: github.event_name == 'release'

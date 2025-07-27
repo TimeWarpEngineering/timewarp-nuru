@@ -418,3 +418,6 @@ FodyWeavers.xsd
 *.msp
 NURU-CONTEXT-DUMP.md
 LocalNuGetCache/
+
+# AOT publish output
+**/aot-output/

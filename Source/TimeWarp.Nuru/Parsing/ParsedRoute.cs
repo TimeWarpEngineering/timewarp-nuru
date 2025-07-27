@@ -25,13 +25,13 @@ public class ParsedRoute
   /// </summary>
   public Dictionary<string, RouteParameter> Parameters { get; } = [];
   /// <summary>
-  /// Gets or sets whether this route has a catch-all parameter (e.g., {*args}).
-  /// </summary>
-  public bool HasCatchAll { get; set; }
-  /// <summary>
-  /// Gets or sets the name of the catch-all parameter if HasCatchAll is true.
+  /// Gets or sets the name of the catch-all parameter if present (e.g., "args" for {*args}).
   /// </summary>
   public string? CatchAllParameterName { get; set; }
+  /// <summary>
+  /// Gets whether this route has a catch-all parameter.
+  /// </summary>
+  public bool HasCatchAll => CatchAllParameterName != null;
   /// <summary>
   /// Gets or sets the specificity score used for ordering route matches.
   /// Higher values indicate more specific routes that should be tried first.
@@ -42,7 +42,7 @@ public class ParsedRoute
   /// For routes with catch-all, this is the number of segments minus one.
   /// For routes without catch-all, this is the exact number of segments.
   /// </summary>
-  public int MinimumRequiredArgs => HasCatchAll ? PositionalTemplate.Count - 1 : PositionalTemplate.Count;
+  public int MinimumRequiredArgs => CatchAllParameterName != null ? PositionalTemplate.Count - 1 : PositionalTemplate.Count;
 }
 
 /// <summary>

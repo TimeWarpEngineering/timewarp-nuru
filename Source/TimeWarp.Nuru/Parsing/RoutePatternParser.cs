@@ -22,7 +22,6 @@ public static class RoutePatternParser
     var requiredOptions = new List<string>();
     var optionSegments = new List<OptionSegment>();
     var parameters = new Dictionary<string, RouteParameter>();
-    bool hasCatchAll = false;
     string? catchAllParameterName = null;
     int specificity = 0;
 
@@ -75,7 +74,6 @@ public static class RoutePatternParser
 
             if (isCatchAll)
             {
-              hasCatchAll = true;
               catchAllParameterName = paramName;
             }
             else
@@ -107,7 +105,6 @@ public static class RoutePatternParser
 
           if (isCatchAll)
           {
-            hasCatchAll = true;
             catchAllParameterName = paramName;
             // Catch-all reduces specificity
             specificity -= 20;
@@ -136,7 +133,6 @@ public static class RoutePatternParser
       PositionalTemplate = segments.ToArray(),
       RequiredOptions = requiredOptions.ToArray(),
       OptionSegments = optionSegments.ToArray(),
-      HasCatchAll = hasCatchAll,
       CatchAllParameterName = catchAllParameterName,
       Specificity = specificity
     };

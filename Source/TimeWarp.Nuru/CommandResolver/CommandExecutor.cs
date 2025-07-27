@@ -54,8 +54,15 @@ public class CommandExecutor
 
       try
       {
+        // Handle string arrays (for catch-all parameters)
+        if (property.PropertyType == typeof(string[]))
+        {
+          // Split the value by spaces to create an array
+          string[] arrayValue = value.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+          property.SetValue(command, arrayValue);
+        }
         // Convert the string value to the property type
-        if (TypeConverterRegistry.TryConvert(value, property.PropertyType, out object? convertedValue))
+        else if (TypeConverterRegistry.TryConvert(value, property.PropertyType, out object? convertedValue))
         {
           property.SetValue(command, convertedValue);
         }
@@ -66,8 +73,16 @@ public class CommandExecutor
         else
         {
           // Try basic conversion as fallback
-          object converted = Convert.ChangeType(value, property.PropertyType, CultureInfo.InvariantCulture);
-          property.SetValue(command, converted);
+          try
+          {
+            object converted = Convert.ChangeType(value, property.PropertyType, CultureInfo.InvariantCulture);
+            property.SetValue(command, converted);
+          }
+          catch
+          {
+            throw new InvalidOperationException(
+                $"Cannot convert '{value}' to type {property.PropertyType} for parameter '{property.Name}'");
+          }
         }
       }
       catch (Exception ex)
@@ -87,6 +102,10 @@ public class CommandExecutor
       return;
 
     Type responseType = response.GetType();
+
+    // Check if this is Unit.Value (represents no return value)
+    if (responseType.Name == "Unit" && responseType.Namespace == "TimeWarp.Mediator")
+      return;
 
     // Check if the response has a custom ToString() implementation
     MethodInfo? toStringMethod = responseType.GetMethod("ToString", Type.EmptyTypes);

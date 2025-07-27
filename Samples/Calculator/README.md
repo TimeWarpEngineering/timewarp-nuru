@@ -4,13 +4,9 @@ This directory contains three calculator implementations demonstrating different
 
 ## Running the Examples
 
-First, build the TimeWarp.Nuru library:
-```bash
-cd ../../Source/TimeWarp.Nuru
-dotnet build -c Release
-```
+**Requires .NET 10 Preview 6 or later**
 
-Then run any calculator directly:
+Simply run any calculator directly:
 
 ### calc-direct - Maximum Performance
 ```bash
@@ -58,11 +54,11 @@ Then run any calculator directly:
 
 ## Architecture Comparison
 
-| Approach | When to Use | Benefits |
-|----------|-------------|----------|
-| **Direct** | Simple CLIs, scripts, tools | • Minimal memory (4KB)<br>• Fastest execution<br>• No dependencies |
-| **Mediator** | Enterprise apps, complex domains | • Testable handlers<br>• Dependency injection<br>• Separation of concerns |
-| **Mixed** | Apps with varying complexity | • Performance where needed<br>• Structure where valuable<br>• Flexible architecture |
+| Approach     | When to Use                      | Benefits                                                                            |
+| ------------ | -------------------------------- | ----------------------------------------------------------------------------------- |
+| **Direct**   | Simple CLIs, scripts, tools      | • Minimal memory (4KB)<br>• Fastest execution<br>• No dependencies                  |
+| **Mediator** | Enterprise apps, complex domains | • Testable handlers<br>• Dependency injection<br>• Separation of concerns           |
+| **Mixed**    | Apps with varying complexity     | • Performance where needed<br>• Structure where valuable<br>• Flexible architecture |
 
 ## Implementation Details
 

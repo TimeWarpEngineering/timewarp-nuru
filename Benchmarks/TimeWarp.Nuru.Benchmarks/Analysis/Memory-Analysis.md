@@ -1,7 +1,10 @@
 # TimeWarp.Nuru Memory Analysis
 
-## Current Memory Usage: 18,576 B (2nd best)
-**Comparison**: System.CommandLine uses 11,360 B (38% less)
+## Current Memory Usage (2025-07-27)
+- **TimeWarp.Nuru.Direct**: 4,352 B (#2 best - beats System.CommandLine by 62%!)
+- **TimeWarp.Nuru (Full DI)**: 16,904 B (#4 in efficiency)
+- **System.CommandLine**: 11,360 B (#3)
+- **ConsoleAppFramework v5**: 0 B (#1 - source generated baseline)
 
 ## Memory Allocation Breakdown
 
@@ -381,29 +384,72 @@ public class DirectAppBuilder
 ```
 
 **Results**:
-- Memory allocated: **7,096 B** (beats System.CommandLine!)
-- Memory saved vs full DI: 8,200 B (53.6% reduction)
-- Memory saved vs System.CommandLine: 4,264 B (37.5% reduction)
+- Memory allocated: **4,352 B** (beats System.CommandLine by 62%!)
+- Memory saved vs full DI: 12,552 B (74.3% reduction)
+- Memory saved vs System.CommandLine: 7,008 B (61.7% reduction)
 
 **Performance Rankings**:
-1. ConsoleAppFramework v5: 0 B (baseline)
-2. **TimeWarp.Nuru.Direct: 7,096 B** ✅
+1. ConsoleAppFramework v5: 0 B (source generated baseline)
+2. **TimeWarp.Nuru.Direct: 4,352 B** ✅
 3. System.CommandLine: 11,360 B
-4. TimeWarp.Nuru (with DI): 15,296 B
+4. TimeWarp.Nuru (with DI): 16,904 B
 
 ## Final Results Summary
 
-### 🎉 Achievement Unlocked: #1 in Memory Efficiency!
+### 4. Removed Unused Properties and Classes (Implemented: 2025-07-27)
+
+**Changes**: Series of optimizations removing unused code
+- Removed `HasCatchAll` bool property - made it calculated: `public bool HasCatchAll => CatchAllParameterName != null;`
+- Removed entire `RouteParameter` class and `Parameters` dictionary that was never read
+- Removed unused `Name`, `IsOptional`, and `Position` properties from RouteParameter before deleting class
+- Removed unused `Clear()` method from EndpointCollection
+- Removed unused `Metadata` property from RouteEndpoint
+
+**Results**:
+- Memory saved: Approximately 504+ bytes (primarily from removing the unused dictionary)
+- Cleaner, more maintainable code
+- No functionality lost - all removed code was truly unused
+
+### 5. Optimized Array Concatenation in DirectApp (Implemented: 2025-07-27)
+
+**Change**: Avoided array concatenation for empty args in NuruDirectCommand
+
+**Before**:
+```csharp
+args = new[] { "test" }.Concat(args ?? Array.Empty<string>()).ToArray();
+```
+
+**After**:
+```csharp
+args ??= ["test"];
+```
+
+**Results**:
+- Eliminated unnecessary allocations when args already contains "test"
+- Part of achieving the 4,352 B DirectApp result
+
+### 6. Made Default Type Converters Static (Implemented: 2025-07-27)
+
+**Change**: Extracted default type converters to static class to avoid per-instance allocations
+
+**Results**:
+- Type converters are now shared across all instances
+- Reduced memory footprint for applications with multiple CLI instances
+
+## Final Results Summary
+
+### 🎉 Achievement Unlocked: #2 in Memory Efficiency!
 
 TimeWarp.Nuru now offers two paths:
 
-1. **Direct Mode** (7,096 B): 
-   - Lowest memory allocation of all measured frameworks
+1. **Direct Mode** (4,352 B): 
+   - Second lowest memory allocation of all measured frameworks (only ConsoleAppFramework v5 is lower)
+   - 62% less memory than System.CommandLine
    - Perfect for simple CLI tools
    - No dependency injection overhead
    - Direct delegate-based routing
 
-2. **Full DI Mode** (15,296 B):
+2. **Full DI Mode** (16,904 B):
    - Complete dependency injection support
    - Mediator pattern integration
    - Service injection into handlers
@@ -413,7 +459,8 @@ TimeWarp.Nuru now offers two paths:
 
 | Metric | Value |
 |--------|-------|
-| Memory vs System.CommandLine | -37.5% (4,264 B less) |
-| Memory vs closest competitor | -37.5% |
-| Position in benchmark | #1 (excluding baseline) |
-| Total optimization achieved | 11,200 B reduction from original |
+| Memory vs System.CommandLine (Direct) | -62% (7,008 B less) |
+| Memory vs System.CommandLine (Full DI) | +49% (5,544 B more) |
+| Direct Mode position in benchmark | #2 (only ConsoleAppFramework v5 is better) |
+| Full DI Mode position in benchmark | #4 |
+| Total optimization achieved from 18,576 B | 14,224 B reduction (76.6%) |

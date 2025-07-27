@@ -1,0 +1,15 @@
+<Project>
+  <!-- Don't import parent Directory.Build.props - we want simpler rules for samples -->
+  
+  <PropertyGroup>
+    <!-- Basic settings for samples -->
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- Don't treat warnings as errors in samples -->
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <!-- Disable code analysis for samples -->
+    <EnableNETAnalyzers>false</EnableNETAnalyzers>
+    <EnforceCodeStyleInBuild>false</EnforceCodeStyleInBuild>
+  </PropertyGroup>
+</Project>

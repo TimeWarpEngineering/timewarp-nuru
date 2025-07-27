@@ -1,0 +1,84 @@
+#!/usr/bin/dotnet --
+// calc-direct - Calculator using Direct approach for maximum performance
+#:project ../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
+
+using TimeWarp.Nuru;
+
+// Calculator using Direct approach for maximum performance
+var app = new DirectAppBuilder()
+    // Basic operations
+    .AddRoute("add {x:double} {y:double}", 
+        (double x, double y) => Console.WriteLine($"{x} + {y} = {x + y}"))
+    
+    .AddRoute("subtract {x:double} {y:double}", 
+        (double x, double y) => Console.WriteLine($"{x} - {y} = {x - y}"))
+    
+    .AddRoute("multiply {x:double} {y:double}", 
+        (double x, double y) => Console.WriteLine($"{x} × {y} = {x * y}"))
+    
+    .AddRoute("divide {x:double} {y:double}", 
+        (double x, double y) =>
+        {
+            if (y == 0)
+            {
+                Console.WriteLine("Error: Division by zero");
+                return;
+            }
+            Console.WriteLine($"{x} ÷ {y} = {x / y}");
+        })
+    
+    // Rounding with options
+    .AddRoute("round {value:double} --mode {mode}", 
+        (double value, string mode) =>
+        {
+            var result = mode.ToLower() switch
+            {
+                "up" => Math.Ceiling(value),
+                "down" => Math.Floor(value),
+                "nearest" => Math.Round(value),
+                "banker" or "accountancy" => Math.Round(value, MidpointRounding.ToEven),
+                _ => double.NaN
+            };
+            
+            if (double.IsNaN(result))
+            {
+                Console.WriteLine($"Error: Unknown rounding mode '{mode}'");
+                Console.WriteLine("Valid modes: up, down, nearest, banker/accountancy");
+                return;
+            }
+            
+            Console.WriteLine($"Round({value}, {mode}) = {result}");
+        })
+    
+    // Default rounding (nearest)
+    .AddRoute("round {value:double}", 
+        (double value) => Console.WriteLine($"Round({value}) = {Math.Round(value)}"))
+    
+    // Help commands
+    .AddRoute("add help", 
+        () => Console.WriteLine("Usage: ./calc-direct add <x> <y>\nAdds two numbers together."))
+    
+    .AddRoute("round help", 
+        () => Console.WriteLine(
+            "Usage: ./calc-direct round <value> [--mode <mode>]\n" +
+            "Rounds a number using the specified mode.\n" +
+            "Modes:\n" +
+            "  up         - Always round up (ceiling)\n" +
+            "  down       - Always round down (floor)\n" +
+            "  nearest    - Round to nearest integer (default)\n" +
+            "  banker     - Banker's rounding (round half to even)"))
+    
+    .AddRoute("help", 
+        () => Console.WriteLine(
+            "Calculator Commands:\n" +
+            "  add <x> <y>              - Add two numbers\n" +
+            "  subtract <x> <y>         - Subtract y from x\n" +
+            "  multiply <x> <y>         - Multiply two numbers\n" +
+            "  divide <x> <y>           - Divide x by y\n" +
+            "  round <value> [--mode]   - Round a number\n" +
+            "\n" +
+            "Add 'help' after any command for detailed usage."))
+    
+    .Build();
+
+return await app.RunAsync(args);

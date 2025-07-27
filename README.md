@@ -13,6 +13,9 @@
 
 > **Nuru** means "light" in Swahili - illuminating the path to your commands with clarity and simplicity.
 
+> [!NOTE]
+> **No Commercial License Required** - TimeWarp.Nuru and [TimeWarp.Mediator](https://github.com/TimeWarpEngineering/timewarp-mediator) are both released under the Unlicense. Unlike MediatR (which now requires commercial licensing), our libraries are free for any use, commercial or otherwise.
+
 ## 📦 Installation
 
 ```bash

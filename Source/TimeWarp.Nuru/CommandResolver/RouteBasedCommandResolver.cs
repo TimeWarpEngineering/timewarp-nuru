@@ -52,9 +52,20 @@ internal class RouteBasedCommandResolver
       {
         // Check if remaining args match required options
         var remainingArgs = new ArraySegment<string>(args, consumedArgs, args.Length - consumedArgs);
-        if (CheckRequiredOptions(endpoint, remainingArgs, extractedValues))
+        if (CheckRequiredOptions(endpoint, remainingArgs, extractedValues, out int optionsConsumed))
         {
-          return (endpoint, extractedValues);
+          // For catch-all routes, we don't need to check if all args were consumed
+          if (endpoint.ParsedRoute.HasCatchAll)
+          {
+            return (endpoint, extractedValues);
+          }
+          
+          // For non-catch-all routes, ensure all arguments were consumed
+          int totalConsumed = consumedArgs + optionsConsumed;
+          if (totalConsumed == args.Length)
+          {
+            return (endpoint, extractedValues);
+          }
         }
       }
     }
@@ -102,8 +113,9 @@ internal class RouteBasedCommandResolver
   }
 
   private static bool CheckRequiredOptions(RouteEndpoint endpoint, IReadOnlyList<string> remainingArgs,
-      Dictionary<string, string> extractedValues)
+      Dictionary<string, string> extractedValues, out int optionsConsumed)
   {
+    optionsConsumed = 0;
     IReadOnlyList<OptionSegment> optionSegments = endpoint.ParsedRoute.OptionSegments;
 
     // If no required options, we're good
@@ -127,7 +139,7 @@ internal class RouteBasedCommandResolver
           // If this option expects a value, verify one exists and extract it
           if (optionSegment.ExpectsValue)
           {
-            if (i + 1 >= remainingArgs.Count || remainingArgs[i + 1].StartsWith(CommonStrings.SingleDash))
+            if (i + 1 >= remainingArgs.Count || remainingArgs[i + 1].StartsWith(CommonStrings.SingleDash, StringComparison.Ordinal))
             {
               return false;
             }
@@ -137,6 +149,11 @@ internal class RouteBasedCommandResolver
             {
               extractedValues[optionSegment.ValueParameterName] = remainingArgs[i + 1];
             }
+            optionsConsumed += 2; // Option + value
+          }
+          else
+          {
+            optionsConsumed++; // Just the option
           }
 
           break;

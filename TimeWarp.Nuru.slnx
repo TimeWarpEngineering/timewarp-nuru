@@ -3,10 +3,13 @@
     <Project Path="Benchmarks/TimeWarp.Nuru.Benchmarks/TimeWarp.Nuru.Benchmarks.csproj" />
   </Folder>
   <Folder Name="/Samples/">
-    <Project Path="Samples/TimeWarp.Nuru.IntegrationTests/TimeWarp.Nuru.IntegrationTests.csproj" />
     <Project Path="Samples/TimeWarp.Nuru.Sample/TimeWarp.Nuru.Sample.csproj" />
   </Folder>
   <Folder Name="/Source/">
     <Project Path="Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj" />
+  </Folder>
+  <Folder Name="/Tests/">
+    <Project Path="Tests/TimeWarp.Nuru.TestApp.Delegates/TimeWarp.Nuru.TestApp.Delegates.csproj" />
+    <Project Path="Tests/TimeWarp.Nuru.TestApp.Mediator/TimeWarp.Nuru.TestApp.Mediator.csproj" />
   </Folder>
 </Solution>

@@ -421,3 +421,6 @@ LocalNuGetCache/
 
 # AOT publish output
 **/aot-output/
+
+# Test logs
+Tests/logs/

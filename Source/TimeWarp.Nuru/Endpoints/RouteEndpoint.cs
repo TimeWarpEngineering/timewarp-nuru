@@ -27,10 +27,6 @@ public class RouteEndpoint
   /// </summary>
   public int Order { get; set; }
   /// <summary>
-  /// Gets or sets additional metadata associated with this endpoint.
-  /// </summary>
-  public IReadOnlyList<object> Metadata { get; set; } = Array.Empty<object>();
-  /// <summary>
   /// Gets or sets a user-friendly description of this endpoint.
   /// </summary>
   public string? Description { get; set; }

@@ -10,12 +10,7 @@ var builder = new AppBuilder();
 
 // Register services
 builder.Services.AddSingleton<ICalculatorService, CalculatorService>();
-builder.Services.AddSingleton<IMediator, Mediator>();
-builder.Services.AddSingleton(typeof(IRequestHandler<AddCommand>), typeof(AddHandler));
-builder.Services.AddSingleton(typeof(IRequestHandler<SubtractCommand>), typeof(SubtractHandler));
-builder.Services.AddSingleton(typeof(IRequestHandler<MultiplyCommand>), typeof(MultiplyHandler));
-builder.Services.AddSingleton(typeof(IRequestHandler<DivideCommand>), typeof(DivideHandler));
-builder.Services.AddSingleton(typeof(IRequestHandler<RoundCommand>), typeof(RoundHandler));
+builder.Services.AddMediatR(config => config.RegisterServicesFromAssembly(typeof(AddCommand).Assembly));
 
 // Define routes - no return type needed, just console output
 builder.AddRoute<AddCommand>("add {x:double} {y:double}");

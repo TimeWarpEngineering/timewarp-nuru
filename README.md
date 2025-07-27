@@ -249,19 +249,20 @@ TimeWarp.Nuru delivers where it counts:
 - **Native AOT**: Compile to 3.3 MB single-file binaries
 - **Rich Functionality**: Route patterns, type safety, DI, mixed approaches
 
-### Real-World Performance Comparison
-Results from running 37 comprehensive integration tests:
+### Real-World Performance: 37 Integration Tests
 
-| Implementation | Test Results | JIT Time | AOT Time | AOT Binary Size |
-|----------------|--------------|----------|----------|-----------------|
-| **Direct**     | 37/37 ✓      | 7.78s    | 0.26s    | 3.3 MB         |
-| **Mediator**   | 37/37 ✓      | 2.89s    | 0.35s    | 4.8 MB         |
+| Implementation | Test Results | Execution Time | Speed Improvement |
+|----------------|--------------|----------------|-------------------|
+| **Direct (JIT)** | 37/37 ✓ | 2.49s | Baseline |
+| **Mediator (JIT)** | 37/37 ✓ | 6.52s | 161% slower |
+| **Direct (AOT)** | 37/37 ✓ | **0.30s** 🚀 | 88% faster than JIT |
+| **Mediator (AOT)** | 37/37 ✓ | **0.42s** 🚀 | 93% faster than JIT |
 
-**Key Performance Insights:**
-- **JIT Performance**: Mediator is 62% faster than Direct routing in JIT mode
-- **AOT Performance**: Direct routing is 33% faster than Mediator in AOT mode
-- **AOT Improvement**: Both approaches see 87-96% performance gains with AOT
-- **Trade-offs**: Mediator adds 1.5 MB to binary size but provides full DI/testability
+**Key Insights:**
+- **AOT is ridiculously fast**: Sub-second execution for 37 complex CLI tests
+- **Direct approach**: Best for maximum performance (3.3 MB binary)
+- **Mediator approach**: Worth the overhead for DI/testability (4.8 MB binary)
+- **Both scale beautifully**: From simple scripts to enterprise applications
 
 ## 🌟 Working Examples
 

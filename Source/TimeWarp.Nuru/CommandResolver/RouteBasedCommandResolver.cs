@@ -3,7 +3,7 @@ namespace TimeWarp.Nuru.CommandResolver;
 /// <summary>
 /// A command resolver that uses route patterns to match commands.
 /// </summary>
-public class RouteBasedCommandResolver
+internal class RouteBasedCommandResolver
 {
   private readonly EndpointCollection Endpoints;
   private readonly ITypeConverterRegistry TypeConverterRegistry;
@@ -14,7 +14,7 @@ public class RouteBasedCommandResolver
     TypeConverterRegistry = typeConverterRegistry ?? throw new ArgumentNullException(nameof(typeConverterRegistry));
   }
 
-  public ResolverResult Resolve(IReadOnlyList<string> args)
+  public ResolverResult Resolve(string[] args)
   {
     ArgumentNullException.ThrowIfNull(args);
 
@@ -25,35 +25,45 @@ public class RouteBasedCommandResolver
     {
       (RouteEndpoint endpoint, Dictionary<string, string> extractedValues) = matchResult.Value;
 
-      return new ResolverResult
-      {
-        Success = true,
-        MatchedEndpoint = endpoint,
-        ExtractedValues = extractedValues
-      };
+      return new ResolverResult(
+        success: true,
+        matchedEndpoint: endpoint,
+        extractedValues: extractedValues
+      );
     }
 
-    return new ResolverResult
-    {
-      Success = false,
-      ErrorMessage = "No matching command found"
-    };
+    return new ResolverResult(
+      success: false,
+      errorMessage: "No matching command found"
+    );
   }
 
-  private (RouteEndpoint endpoint, Dictionary<string, string> extractedValues)? MatchRoute(IReadOnlyList<string> args)
+  private (RouteEndpoint endpoint, Dictionary<string, string> extractedValues)? MatchRoute(string[] args)
   {
+    var extractedValues = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
     foreach (RouteEndpoint endpoint in Endpoints)
     {
-      var extractedValues = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
       // Check positional segments
       if (MatchPositionalSegments(endpoint, args, extractedValues, out int consumedArgs))
       {
         // Check if remaining args match required options
-        var remainingArgs = args.Skip(consumedArgs).ToList();
-        if (CheckRequiredOptions(endpoint, remainingArgs, extractedValues))
+        var remainingArgs = new ArraySegment<string>(args, consumedArgs, args.Length - consumedArgs);
+        if (CheckRequiredOptions(endpoint, remainingArgs, extractedValues, out int optionsConsumed))
         {
-          return (endpoint, extractedValues);
+          // For catch-all routes, we don't need to check if all args were consumed
+          if (endpoint.ParsedRoute.HasCatchAll)
+          {
+            return (endpoint, extractedValues);
+          }
+          
+          // For non-catch-all routes, ensure all arguments were consumed
+          int totalConsumed = consumedArgs + optionsConsumed;
+          if (totalConsumed == args.Length)
+          {
+            return (endpoint, extractedValues);
+          }
         }
       }
     }
@@ -61,7 +71,7 @@ public class RouteBasedCommandResolver
     return null;
   }
 
-  private static bool MatchPositionalSegments(RouteEndpoint endpoint, IReadOnlyList<string> args,
+  private static bool MatchPositionalSegments(RouteEndpoint endpoint, string[] args,
       Dictionary<string, string> extractedValues, out int consumedArgs)
   {
     consumedArgs = 0;
@@ -75,17 +85,17 @@ public class RouteBasedCommandResolver
       // For catch-all segment (must be last), consume all remaining
       if (segment is ParameterSegment param && param.IsCatchAll)
       {
-        consumedArgs = args.Count;
-        if (i < args.Count)
+        consumedArgs = args.Length;
+        if (i < args.Length)
         {
-          extractedValues[param.Name] = string.Join(" ", args.Skip(i));
+          extractedValues[param.Name] = string.Join(CommonStrings.Space, args.Skip(i));
         }
 
         return true;
       }
 
       // Regular segment matching
-      if (i >= args.Count || args[i].StartsWith('-'))
+      if (i >= args.Length || args[i].StartsWith(CommonStrings.SingleDash))
         return false; // Not enough args or hit an option
 
       if (!segment.TryMatch(args[i], out string? value))
@@ -100,9 +110,10 @@ public class RouteBasedCommandResolver
     return true;
   }
 
-  private static bool CheckRequiredOptions(RouteEndpoint endpoint, List<string> remainingArgs,
-      Dictionary<string, string> extractedValues)
+  private static bool CheckRequiredOptions(RouteEndpoint endpoint, IReadOnlyList<string> remainingArgs,
+      Dictionary<string, string> extractedValues, out int optionsConsumed)
   {
+    optionsConsumed = 0;
     IReadOnlyList<OptionSegment> optionSegments = endpoint.ParsedRoute.OptionSegments;
 
     // If no required options, we're good
@@ -126,7 +137,7 @@ public class RouteBasedCommandResolver
           // If this option expects a value, verify one exists and extract it
           if (optionSegment.ExpectsValue)
           {
-            if (i + 1 >= remainingArgs.Count || remainingArgs[i + 1].StartsWith('-'))
+            if (i + 1 >= remainingArgs.Count || remainingArgs[i + 1].StartsWith(CommonStrings.SingleDash, StringComparison.Ordinal))
             {
               return false;
             }
@@ -136,6 +147,11 @@ public class RouteBasedCommandResolver
             {
               extractedValues[optionSegment.ValueParameterName] = remainingArgs[i + 1];
             }
+            optionsConsumed += 2; // Option + value
+          }
+          else
+          {
+            optionsConsumed++; // Just the option
           }
 
           break;

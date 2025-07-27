@@ -21,8 +21,6 @@ public static class RoutePatternParser
     var segments = new List<RouteSegment>();
     var requiredOptions = new List<string>();
     var optionSegments = new List<OptionSegment>();
-    var parameters = new Dictionary<string, RouteParameter>();
-    bool hasCatchAll = false;
     string? catchAllParameterName = null;
     int specificity = 0;
 
@@ -30,7 +28,7 @@ public static class RoutePatternParser
     {
       string part = parts[i];
 
-      if (part.StartsWith("--", StringComparison.Ordinal) || part.StartsWith('-'))
+      if (part.StartsWith(CommonStrings.DoubleDash, StringComparison.Ordinal) || part.StartsWith(CommonStrings.SingleDash))
       {
         // This is an option - check for alias syntax (--long|-s)
         string optionName;
@@ -66,16 +64,9 @@ public static class RoutePatternParser
             string typeConstraint = paramMatch.Groups[4].Value;
 
             valueParameterName = paramName;
-            parameters[paramName] = new RouteParameter
-            {
-              Name = paramName,
-              AssociatedOption = optionName,
-              TypeConstraint = string.IsNullOrEmpty(typeConstraint) ? null : typeConstraint
-            };
 
             if (isCatchAll)
             {
-              hasCatchAll = true;
               catchAllParameterName = paramName;
             }
             else
@@ -98,16 +89,10 @@ public static class RoutePatternParser
           bool isCatchAll = paramMatch.Groups[1].Value == "*";
           string typeConstraint = paramMatch.Groups[4].Value;
 
-          parameters[paramName] = new RouteParameter
-          {
-            Name = paramName,
-            Position = segments.Count,
-            TypeConstraint = string.IsNullOrEmpty(typeConstraint) ? null : typeConstraint
-          };
+          // Parameter information is stored in the ParameterSegment
 
           if (isCatchAll)
           {
-            hasCatchAll = true;
             catchAllParameterName = paramName;
             // Catch-all reduces specificity
             specificity -= 20;
@@ -136,16 +121,9 @@ public static class RoutePatternParser
       PositionalTemplate = segments.ToArray(),
       RequiredOptions = requiredOptions.ToArray(),
       OptionSegments = optionSegments.ToArray(),
-      HasCatchAll = hasCatchAll,
       CatchAllParameterName = catchAllParameterName,
       Specificity = specificity
     };
-
-    // Copy parameters to the existing dictionary
-    foreach (KeyValuePair<string, RouteParameter> kvp in parameters)
-    {
-      parsedRoute.Parameters[kvp.Key] = kvp.Value;
-    }
 
     return parsedRoute;
   }

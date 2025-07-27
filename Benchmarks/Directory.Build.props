@@ -1,0 +1,3 @@
+<Project>
+  <!-- This file intentionally does not import parent Directory.Build.props to avoid analyzer settings -->
+</Project>

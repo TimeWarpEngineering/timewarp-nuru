@@ -10,14 +10,22 @@ public class NuruCli
   private readonly IServiceProvider ServiceProvider;
   private readonly EndpointCollection Endpoints;
   private readonly RouteBasedCommandResolver Resolver;
+  private readonly ITypeConverterRegistry TypeConverterRegistry;
+  private readonly CommandExecutor CommandExecutor;
 
-  public NuruCli(IServiceProvider serviceProvider)
+  public NuruCli
+  (
+    IServiceProvider serviceProvider,
+    EndpointCollection endpoints,
+    ITypeConverterRegistry typeConverterRegistry,
+    CommandExecutor commandExecutor
+  )
   {
     ServiceProvider = serviceProvider;
-    Endpoints = serviceProvider.GetRequiredService<EndpointCollection>();
-
-    ITypeConverterRegistry typeConverterRegistry = serviceProvider.GetRequiredService<ITypeConverterRegistry>();
-    Resolver = new RouteBasedCommandResolver(Endpoints, typeConverterRegistry);
+    Endpoints = endpoints;
+    TypeConverterRegistry = typeConverterRegistry;
+    CommandExecutor = commandExecutor;
+    Resolver = new RouteBasedCommandResolver(endpoints, typeConverterRegistry);
   }
 
   public async Task<int> RunAsync(string[] args)
@@ -68,10 +76,8 @@ public class NuruCli
 
   private async Task<int> ExecuteMediatorCommandAsync(Type commandType, ResolverResult result)
   {
-    CommandExecutor commandExecutor = ServiceProvider.GetRequiredService<CommandExecutor>();
-
     // Execute through Mediator
-    object? response = await commandExecutor.ExecuteCommandAsync(
+    object? response = await CommandExecutor.ExecuteCommandAsync(
             commandType,
             result.ExtractedValues,
             CancellationToken.None).ConfigureAwait(false);
@@ -88,12 +94,14 @@ public class NuruCli
     {
       try
       {
-        ITypeConverterRegistry typeConverterRegistry = ServiceProvider.GetRequiredService<ITypeConverterRegistry>();
-        object? returnValue = ParameterBinding.DelegateParameterBinder.InvokeWithParameters(
-                    del,
-                    result.ExtractedValues,
-                    typeConverterRegistry,
-                    ServiceProvider);
+        object? returnValue =
+          ParameterBinding.DelegateParameterBinder.InvokeWithParameters
+          (
+            del,
+            result.ExtractedValues,
+            TypeConverterRegistry,
+            ServiceProvider
+          );
 
         // Handle async delegates
         if (returnValue is Task task)

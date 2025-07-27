@@ -5,13 +5,13 @@ namespace TimeWarp.Nuru.TypeConversion;
 /// </summary>
 public class TypeConverterRegistry : ITypeConverterRegistry
 {
-  private readonly Dictionary<string, IRouteTypeConverter> ConvertersByConstraint = new(StringComparer.OrdinalIgnoreCase);
-  private readonly Dictionary<Type, IRouteTypeConverter> ConvertersByType = [];
+  // Instance-specific custom converters - lazily initialized only when needed
+  private Dictionary<string, IRouteTypeConverter>? ConvertersByConstraint;
+  private Dictionary<Type, IRouteTypeConverter>? ConvertersByType;
 
   public TypeConverterRegistry()
   {
-    // Register default converters
-    RegisterDefaultConverters();
+    // Dictionaries are now lazily initialized only when custom converters are registered
   }
 
   /// <summary>
@@ -20,6 +20,10 @@ public class TypeConverterRegistry : ITypeConverterRegistry
   public void RegisterConverter(IRouteTypeConverter converter)
   {
     ArgumentNullException.ThrowIfNull(converter);
+
+    // Lazy initialize dictionaries on first use
+    ConvertersByConstraint ??= new Dictionary<string, IRouteTypeConverter>(StringComparer.OrdinalIgnoreCase);
+    ConvertersByType ??= new Dictionary<Type, IRouteTypeConverter>();
 
     ConvertersByConstraint[converter.ConstraintName] = converter;
     ConvertersByType[converter.TargetType] = converter;
@@ -35,9 +39,8 @@ public class TypeConverterRegistry : ITypeConverterRegistry
     if (constraintName.Length == 0)
       return null;
 
-    return ConvertersByConstraint.TryGetValue(constraintName, out IRouteTypeConverter? converter)
-        ? converter
-        : null;
+    // Check custom converters (only if dictionary was initialized)
+    return ConvertersByConstraint?.TryGetValue(constraintName, out IRouteTypeConverter? converter) == true ? converter : null;
   }
 
   /// <summary>
@@ -48,9 +51,8 @@ public class TypeConverterRegistry : ITypeConverterRegistry
     if (targetType is null)
       return null;
 
-    return ConvertersByType.TryGetValue(targetType, out IRouteTypeConverter? converter)
-        ? converter
-        : null;
+    // Check custom converters (only if dictionary was initialized)
+    return ConvertersByType?.TryGetValue(targetType, out IRouteTypeConverter? converter) == true ? converter : null;
   }
 
   /// <summary>
@@ -61,6 +63,12 @@ public class TypeConverterRegistry : ITypeConverterRegistry
     ArgumentNullException.ThrowIfNull(value);
     ArgumentNullException.ThrowIfNull(constraintName);
 
+    // Try default constraint conversions first
+    Type? targetType = DefaultTypeConverters.GetTypeForConstraint(constraintName);
+    if (targetType is not null && DefaultTypeConverters.TryConvert(value, targetType, out result))
+      return true;
+
+    // Fall back to custom converters
     IRouteTypeConverter? converter = GetConverterByConstraint(constraintName);
     if (converter is null)
     {
@@ -79,6 +87,11 @@ public class TypeConverterRegistry : ITypeConverterRegistry
     ArgumentNullException.ThrowIfNull(value);
     ArgumentNullException.ThrowIfNull(targetType);
 
+    // Try default conversions first (no allocations)
+    if (DefaultTypeConverters.TryConvert(value, targetType, out result))
+      return true;
+
+    // Fall back to custom converters
     IRouteTypeConverter? converter = GetConverterByType(targetType);
     if (converter is null)
     {
@@ -89,15 +102,4 @@ public class TypeConverterRegistry : ITypeConverterRegistry
     return converter.TryConvert(value, out result);
   }
 
-  private void RegisterDefaultConverters()
-  {
-    RegisterConverter(new Converters.IntTypeConverter());
-    RegisterConverter(new Converters.BoolTypeConverter());
-    RegisterConverter(new Converters.LongTypeConverter());
-    RegisterConverter(new Converters.DoubleTypeConverter());
-    RegisterConverter(new Converters.DecimalTypeConverter());
-    RegisterConverter(new Converters.GuidTypeConverter());
-    RegisterConverter(new Converters.DateTimeTypeConverter());
-    RegisterConverter(new Converters.TimeSpanTypeConverter());
-  }
 }

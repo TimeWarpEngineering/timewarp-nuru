@@ -12,12 +12,7 @@ public class DefaultEndpointCollectionBuilder : IEndpointCollectionBuilder
     EndpointCollection = endpointCollection ?? throw new ArgumentNullException(nameof(endpointCollection));
   }
 
-  public void AddRoute(string routePattern, Delegate handler)
-  {
-    AddRoute(routePattern, handler, []);
-  }
-
-  public void AddRoute(string routePattern, Delegate handler, params object[] metadata)
+  public void AddRoute(string routePattern, Delegate handler, string? description = null)
   {
     if (string.IsNullOrWhiteSpace(routePattern))
       throw new ArgumentException("Route pattern cannot be null or empty.", nameof(routePattern));
@@ -34,15 +29,8 @@ public class DefaultEndpointCollectionBuilder : IEndpointCollectionBuilder
       Handler = handler,
       Method = method,
       Order = parsedRoute.Specificity,
-      Metadata = metadata
+      Description = description
     };
-
-    // Extract description from metadata if available
-    string? description = metadata.OfType<string>().FirstOrDefault();
-    if (description is not null)
-    {
-      endpoint.Description = description;
-    }
 
     EndpointCollection.Add(endpoint);
   }

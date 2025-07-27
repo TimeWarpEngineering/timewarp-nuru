@@ -84,6 +84,7 @@ public class AppBuilder
   /// </summary>
   public NuruApp Build()
   {
+    EndpointCollection.Sort();
     ServiceProvider serviceProvider = ServiceCollection.BuildServiceProvider();
     return new NuruApp(serviceProvider);
   }

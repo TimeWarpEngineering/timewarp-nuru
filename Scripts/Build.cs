@@ -15,7 +15,7 @@ Console.WriteLine($"Working from: {Directory.GetCurrentDirectory()}");
 // First check code style with dotnet format
 Console.WriteLine("Checking code style with dotnet format...");
 ExecutionResult formatResult = await Shell.Run("dotnet")
-    .WithArguments("format", "../TimeWarp.Nuru.slnx", "--verify-no-changes", "--severity", "warn")
+    .WithArguments("format", "../TimeWarp.Nuru.slnx", "--verify-no-changes", "--severity", "warn", "--exclude", "**/Benchmarks/**")
     .ExecuteAsync();
 
 if (!formatResult.IsSuccess)

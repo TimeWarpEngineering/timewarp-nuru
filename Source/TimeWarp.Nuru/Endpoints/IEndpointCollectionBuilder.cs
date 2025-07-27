@@ -10,14 +10,8 @@ public interface IEndpointCollectionBuilder
   /// </summary>
   /// <param name="routePattern">The route pattern (e.g., "git commit --amend").</param>
   /// <param name="handler">The delegate to invoke when the route is matched.</param>
-  void AddRoute(string routePattern, Delegate handler);
-  /// <summary>
-  /// Adds a route with the specified pattern, handler, and metadata to the endpoint collection.
-  /// </summary>
-  /// <param name="routePattern">The route pattern (e.g., "git commit --amend").</param>
-  /// <param name="handler">The delegate to invoke when the route is matched.</param>
-  /// <param name="metadata">Additional metadata to associate with the endpoint.</param>
-  void AddRoute(string routePattern, Delegate handler, params object[] metadata);
+  /// <param name="description">Optional description of what this route does.</param>
+  void AddRoute(string routePattern, Delegate handler, string? description = null);
 
   /// <summary>
   /// Gets the endpoint collection being built.

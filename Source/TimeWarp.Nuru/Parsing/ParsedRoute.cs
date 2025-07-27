@@ -20,18 +20,13 @@ public class ParsedRoute
   /// </summary>
   public IReadOnlyList<OptionSegment> OptionSegments { get; set; } = Array.Empty<OptionSegment>();
   /// <summary>
-  /// Gets the route parameters extracted from the pattern (e.g., {name}, {id:int}).
-  /// Key is the parameter name, value contains parameter metadata.
-  /// </summary>
-  public Dictionary<string, RouteParameter> Parameters { get; } = [];
-  /// <summary>
-  /// Gets or sets whether this route has a catch-all parameter (e.g., {*args}).
-  /// </summary>
-  public bool HasCatchAll { get; set; }
-  /// <summary>
-  /// Gets or sets the name of the catch-all parameter if HasCatchAll is true.
+  /// Gets or sets the name of the catch-all parameter if present (e.g., "args" for {*args}).
   /// </summary>
   public string? CatchAllParameterName { get; set; }
+  /// <summary>
+  /// Gets whether this route has a catch-all parameter.
+  /// </summary>
+  public bool HasCatchAll => CatchAllParameterName != null;
   /// <summary>
   /// Gets or sets the specificity score used for ordering route matches.
   /// Higher values indicate more specific routes that should be tried first.
@@ -42,32 +37,5 @@ public class ParsedRoute
   /// For routes with catch-all, this is the number of segments minus one.
   /// For routes without catch-all, this is the exact number of segments.
   /// </summary>
-  public int MinimumRequiredArgs => HasCatchAll ? PositionalTemplate.Count - 1 : PositionalTemplate.Count;
-}
-
-/// <summary>
-/// Represents a parameter in a route pattern.
-/// </summary>
-public class RouteParameter
-{
-  /// <summary>
-  /// Gets or sets the parameter name (without braces).
-  /// </summary>
-  public required string Name { get; set; }
-  /// <summary>
-  /// Gets or sets the position in the segments array (-1 for option parameters).
-  /// </summary>
-  public int Position { get; set; } = -1;
-  /// <summary>
-  /// Gets or sets whether this parameter is optional.
-  /// </summary>
-  public bool IsOptional { get; set; }
-  /// <summary>
-  /// Gets or sets the type constraint (e.g., "int" from {id:int}).
-  /// </summary>
-  public string? TypeConstraint { get; set; }
-  /// <summary>
-  /// Gets or sets the option name this parameter is associated with (e.g., "--message" for --message {msg}).
-  /// </summary>
-  public string? AssociatedOption { get; set; }
+  public int MinimumRequiredArgs => CatchAllParameterName != null ? PositionalTemplate.Count - 1 : PositionalTemplate.Count;
 }

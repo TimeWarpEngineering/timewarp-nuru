@@ -3,6 +3,11 @@
 # Comprehensive test that compares Delegate vs Mediator implementations
 # Tests both JIT and AOT versions
 
+# Create log file with timestamp in logs directory
+LOG_FILE="Tests/logs/comparison-results-$(date '+%Y%m%d-%H%M%S').log"
+exec > >(tee "$LOG_FILE")
+exec 2>&1
+
 # Color codes for output
 GREEN='\033[0;32m'
 RED='\033[0;31m'
@@ -108,6 +113,7 @@ run_all_tests() {
 echo "=============================================="
 echo "TimeWarp.Nuru Delegate vs Mediator Comparison"
 echo "=============================================="
+echo "Run started at: $(date '+%Y-%m-%d %H:%M:%S')"
 echo ""
 
 # Build all versions first
@@ -244,3 +250,6 @@ if [ -f "./Tests/TimeWarp.Nuru.TestApp.Mediator/aot-output/TimeWarp.Nuru.TestApp
     MEDIATOR_SIZE=$(ls -lh "./Tests/TimeWarp.Nuru.TestApp.Mediator/aot-output/TimeWarp.Nuru.TestApp.Mediator" | awk '{print $5}')
     echo "- Mediator AOT: $MEDIATOR_SIZE"
 fi
+
+echo ""
+echo "Run completed at: $(date '+%Y-%m-%d %H:%M:%S')"

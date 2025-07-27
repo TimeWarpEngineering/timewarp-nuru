@@ -1,0 +1,154 @@
+#!/usr/bin/dotnet --
+// calc-mixed - Calculator mixing Direct and Mediator approaches
+#:project ../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
+
+using TimeWarp.Nuru;
+using TimeWarp.Mediator;
+using Microsoft.Extensions.DependencyInjection;
+
+var builder = new AppBuilder();
+
+// Register services for complex operations
+builder.Services.AddSingleton<IScientificCalculator, ScientificCalculator>();
+builder.Services.AddMediatR(config => config.RegisterServicesFromAssembly(typeof(FactorialCommand).Assembly));
+
+// Use Direct approach for simple operations (performance)
+builder.AddRoute("add {x:double} {y:double}", 
+    (double x, double y) => Console.WriteLine($"{x} + {y} = {x + y}"));
+
+builder.AddRoute("subtract {x:double} {y:double}", 
+    (double x, double y) => Console.WriteLine($"{x} - {y} = {x - y}"));
+
+builder.AddRoute("multiply {x:double} {y:double}", 
+    (double x, double y) => Console.WriteLine($"{x} × {y} = {x * y}"));
+
+builder.AddRoute("divide {x:double} {y:double}", 
+    (double x, double y) =>
+    {
+        if (y == 0)
+        {
+            Console.WriteLine("Error: Division by zero");
+            return;
+        }
+        Console.WriteLine($"{x} ÷ {y} = {x / y}");
+    });
+
+// Use Mediator for complex operations (testability, DI)
+builder.AddRoute<FactorialCommand>("factorial {n:int}");
+builder.AddRoute<PrimeCheckCommand>("isprime {n:int}");
+builder.AddRoute<FibonacciCommand>("fibonacci {n:int}");
+
+// Help
+builder.AddRoute("help", 
+    () => Console.WriteLine(
+        "Calculator Commands:\n" +
+        "Basic (Direct - Fast):\n" +
+        "  add <x> <y>              - Add two numbers\n" +
+        "  subtract <x> <y>         - Subtract y from x\n" +
+        "  multiply <x> <y>         - Multiply two numbers\n" +
+        "  divide <x> <y>           - Divide x by y\n" +
+        "\n" +
+        "Scientific (Mediator - Testable):\n" +
+        "  factorial <n>            - Calculate n!\n" +
+        "  isprime <n>              - Check if n is prime\n" +
+        "  fibonacci <n>            - Calculate nth Fibonacci number"));
+
+var app = builder.Build();
+return await app.RunAsync(args);
+
+// Complex operations using Mediator pattern
+public class FactorialCommand : IRequest { public int N { get; set; } }
+public class PrimeCheckCommand : IRequest { public int N { get; set; } }
+public class FibonacciCommand : IRequest { public int N { get; set; } }
+
+public interface IScientificCalculator
+{
+    long Factorial(int n);
+    bool IsPrime(int n);
+    long Fibonacci(int n);
+}
+
+public class ScientificCalculator : IScientificCalculator
+{
+    public long Factorial(int n)
+    {
+        if (n < 0) throw new ArgumentException("Factorial not defined for negative numbers");
+        if (n == 0 || n == 1) return 1;
+        
+        long result = 1;
+        for (int i = 2; i <= n; i++)
+            result *= i;
+        return result;
+    }
+    
+    public bool IsPrime(int n)
+    {
+        if (n <= 1) return false;
+        if (n == 2) return true;
+        if (n % 2 == 0) return false;
+        
+        for (int i = 3; i * i <= n; i += 2)
+            if (n % i == 0) return false;
+        
+        return true;
+    }
+    
+    public long Fibonacci(int n)
+    {
+        if (n < 0) throw new ArgumentException("Fibonacci not defined for negative numbers");
+        if (n <= 1) return n;
+        
+        long a = 0, b = 1;
+        for (int i = 2; i <= n; i++)
+        {
+            long temp = a + b;
+            a = b;
+            b = temp;
+        }
+        return b;
+    }
+}
+
+public class FactorialHandler(IScientificCalculator calc) : IRequestHandler<FactorialCommand>
+{
+    public async Task Handle(FactorialCommand request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var result = calc.Factorial(request.N);
+            Console.WriteLine($"{request.N}! = {result}");
+        }
+        catch (ArgumentException ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+        }
+        await Task.CompletedTask;
+    }
+}
+
+public class PrimeCheckHandler(IScientificCalculator calc) : IRequestHandler<PrimeCheckCommand>
+{
+    public async Task Handle(PrimeCheckCommand request, CancellationToken cancellationToken)
+    {
+        var result = calc.IsPrime(request.N);
+        Console.WriteLine($"{request.N} is {(result ? "prime" : "not prime")}");
+        await Task.CompletedTask;
+    }
+}
+
+public class FibonacciHandler(IScientificCalculator calc) : IRequestHandler<FibonacciCommand>
+{
+    public async Task Handle(FibonacciCommand request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var result = calc.Fibonacci(request.N);
+            Console.WriteLine($"Fibonacci({request.N}) = {result}");
+        }
+        catch (ArgumentException ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+        }
+        await Task.CompletedTask;
+    }
+}

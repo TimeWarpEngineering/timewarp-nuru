@@ -5,40 +5,7 @@ using TimeWarp.Nuru;
 var builder = new AppBuilder();
 
 // Add services
-builder.Services.AddSingleton<IMediator, Mediator>();
-
-// Register all handlers (37 total)
-builder.Services.AddSingleton<IRequestHandler<StatusCommand>, StatusHandler>();
-builder.Services.AddSingleton<IRequestHandler<VersionCommand>, VersionHandler>();
-builder.Services.AddSingleton<IRequestHandler<GitStatusCommand>, GitStatusHandler>();
-builder.Services.AddSingleton<IRequestHandler<GitCommitCommand>, GitCommitHandler>();
-builder.Services.AddSingleton<IRequestHandler<GitPushCommand>, GitPushHandler>();
-builder.Services.AddSingleton<IRequestHandler<GitCommitAmendCommand>, GitCommitAmendHandler>();
-builder.Services.AddSingleton<IRequestHandler<GitCommitAmendNoEditCommand>, GitCommitAmendNoEditHandler>();
-builder.Services.AddSingleton<IRequestHandler<GitLogCommand>, GitLogHandler>();
-builder.Services.AddSingleton<IRequestHandler<DockerRunEnhancedCommand>, DockerRunEnhancedHandler>();
-builder.Services.AddSingleton<IRequestHandler<DockerRunCommand>, DockerRunHandler>();
-builder.Services.AddSingleton<IRequestHandler<DockerBuildCommand>, DockerBuildHandler>();
-builder.Services.AddSingleton<IRequestHandler<DockerPsCommand>, DockerPsHandler>();
-builder.Services.AddSingleton<IRequestHandler<DockerCommand>, DockerHandler>();
-builder.Services.AddSingleton<IRequestHandler<KubectlGetEnhancedCommand>, KubectlGetEnhancedHandler>();
-builder.Services.AddSingleton<IRequestHandler<KubectlGetWatchCommand>, KubectlGetWatchHandler>();
-builder.Services.AddSingleton<IRequestHandler<KubectlGetCommand>, KubectlGetHandler>();
-builder.Services.AddSingleton<IRequestHandler<KubectlApplyCommand>, KubectlApplyHandler>();
-builder.Services.AddSingleton<IRequestHandler<KubectlCommand>, KubectlHandler>();
-builder.Services.AddSingleton<IRequestHandler<NpmInstallDevCommand>, NpmInstallDevHandler>();
-builder.Services.AddSingleton<IRequestHandler<NpmInstallSaveCommand>, NpmInstallSaveHandler>();
-builder.Services.AddSingleton<IRequestHandler<NpmInstallCommand>, NpmInstallHandler>();
-builder.Services.AddSingleton<IRequestHandler<NpmRunCommand>, NpmRunHandler>();
-builder.Services.AddSingleton<IRequestHandler<NpmCommand>, NpmHandler>();
-builder.Services.AddSingleton<IRequestHandler<GitCommitMAmendCommand>, GitCommitMAmendHandler>();
-builder.Services.AddSingleton<IRequestHandler<GitCommitAmendMCommand>, GitCommitAmendMHandler>();
-builder.Services.AddSingleton<IRequestHandler<GitCommitAmendMessageCommand>, GitCommitAmendMessageHandler>();
-builder.Services.AddSingleton<IRequestHandler<GitCommitMessageAmendCommand>, GitCommitMessageAmendHandler>();
-builder.Services.AddSingleton<IRequestHandler<GitCommitMCommand>, GitCommitMHandler>();
-builder.Services.AddSingleton<IRequestHandler<GitCommitMessageCommand>, GitCommitMessageHandler>();
-builder.Services.AddSingleton<IRequestHandler<CatchAllCommand>, CatchAllHandler>();
-builder.Services.AddSingleton<IRequestHandler<HelpCommand>, HelpHandler>();
+builder.Services.AddMediatR(config => config.RegisterServicesFromAssembly(typeof(StatusCommand).Assembly));
 
 // Test 1: Basic Commands (2)
 builder.AddRoute<StatusCommand>("status");

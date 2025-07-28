@@ -65,7 +65,7 @@ jobs:
       - name: Check if version already published (Releases only)
         if: github.event_name == 'release'
         run: |
-          VERSION=$(grep '<Version>' Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj | sed 's/.*<Version>\(.*\)<\/Version>.*/\1/')
+          VERSION=$(grep '<Version>' Directory.Build.props | sed 's/.*<Version>\(.*\)<\/Version>.*/\1/')
           echo "Checking if TimeWarp.Nuru $VERSION is already published on NuGet.org..."
           
           # Check TimeWarp.Nuru using package search - only check NuGet.org source

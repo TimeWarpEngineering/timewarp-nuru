@@ -69,7 +69,7 @@ jobs:
           echo "Checking if TimeWarp.Nuru $VERSION is already published on NuGet.org..."
           
           # Check TimeWarp.Nuru using package search - only check NuGet.org source
-          if dotnet package search TimeWarp.Nuru --exact-match --prerelease --source https://api.nuget.org/v3/index.json | grep -q "$VERSION"; then
+          if dotnet package search TimeWarp.Nuru --exact-match --prerelease --source https://api.nuget.org/v3/index.json | grep -q "| $VERSION |"; then
             echo "⚠️ WARNING: TimeWarp.Nuru $VERSION is already published to NuGet.org"
             echo "❌ This version cannot be republished. Please increment the version in TimeWarp.Nuru.csproj"
             exit 1

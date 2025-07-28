@@ -5,7 +5,7 @@ using TimeWarp.Nuru;
 var builder = new AppBuilder();
 
 // Add services
-builder.Services.AddMediatR(config => config.RegisterServicesFromAssembly(typeof(StatusCommand).Assembly));
+builder.Services.AddMediator(config => config.RegisterServicesFromAssembly(typeof(StatusCommand).Assembly));
 
 // Test 1: Basic Commands (2)
 builder.AddRoute<StatusCommand>("status");

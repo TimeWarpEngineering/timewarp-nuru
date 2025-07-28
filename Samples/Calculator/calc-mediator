@@ -39,7 +39,7 @@ builder.AddRoute("help",
         "  subtract <x> <y>         - Subtract y from x\n" +
         "  multiply <x> <y>         - Multiply two numbers\n" +
         "  divide <x> <y>           - Divide x by y\n" +
-        "  round <value> [--mode]   - Round a number\n" +
+        "  round <value> [--mode]   - Round a number (modes: up, down, nearest, banker)\n" +
         "\n" +
         "Add 'help' after any command for detailed usage."));
 

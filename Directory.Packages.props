@@ -9,7 +9,7 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageVersion>
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="9.0.7" />
-    <PackageVersion Include="TimeWarp.Mediator" Version="13.0.0-beta.2" />
+    <PackageVersion Include="TimeWarp.Mediator" Version="13.0.0-beta.3" />
     <PackageVersion Include="TimeWarp.Cli" Version="0.6.0-rc12" />
     <!-- Benchmark packages -->
     <PackageVersion Include="BenchmarkDotNet" Version="0.15.2" />

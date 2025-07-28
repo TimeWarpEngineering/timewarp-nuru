@@ -10,7 +10,7 @@ var builder = new AppBuilder();
 
 // Register services for complex operations
 builder.Services.AddSingleton<IScientificCalculator, ScientificCalculator>();
-builder.Services.AddMediatR(config => config.RegisterServicesFromAssembly(typeof(FactorialCommand).Assembly));
+builder.Services.AddMediator(config => config.RegisterServicesFromAssembly(typeof(FactorialCommand).Assembly));
 
 // Use Direct approach for simple operations (performance)
 builder.AddRoute("add {x:double} {y:double}", 

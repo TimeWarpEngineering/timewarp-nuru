@@ -5,7 +5,7 @@
 using TimeWarp.Nuru;
 
 // Calculator using Direct approach for maximum performance
-var app = new DirectAppBuilder()
+var app = new NuruAppBuilder()
     // Basic operations
     .AddRoute("add {x:double} {y:double}", 
         (double x, double y) => Console.WriteLine($"{x} + {y} = {x + y}"))

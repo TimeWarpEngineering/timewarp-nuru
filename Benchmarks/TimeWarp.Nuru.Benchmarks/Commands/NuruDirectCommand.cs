@@ -10,7 +10,7 @@ public static class NuruDirectCommand
   
   public static async Task Execute(string[] args)
   {
-    DirectAppBuilder builder = new();
+    NuruAppBuilder builder = new();
     
     // Add a route that matches the benchmark arguments pattern
     builder.AddRoute
@@ -19,7 +19,7 @@ public static class NuruDirectCommand
       (string str, int intOption) => { }
     );
     
-    DirectApp app = builder.Build();
+    NuruApp app = builder.Build();
     await app.RunAsync(CachedNuruArgs);
   }
 }

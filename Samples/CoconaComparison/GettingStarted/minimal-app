@@ -5,7 +5,7 @@
 using TimeWarp.Nuru;
 
 // Simple CLI app demonstrating basic argument and option handling
-var app = new DirectAppBuilder()
+var app = new NuruAppBuilder()
     .AddRoute("hello {name:string} --to-upper-case {toUpperCase:bool}", 
         (string name, bool toUpperCase) => 
         {

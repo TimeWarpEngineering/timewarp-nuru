@@ -25,7 +25,7 @@ public void Hello(bool toUpperCase, [Argument]string name)
 ### Nuru Implementation
 
 ```csharp
-var app = new DirectAppBuilder()
+var app = new NuruAppBuilder()
     .AddRoute("hello {name:string} --to-upper-case {toUpperCase:bool}", 
         (string name, bool toUpperCase) => 
         {
@@ -56,7 +56,7 @@ return await app.RunAsync(args);
 
 ### 2. Entry Point
 - **Cocona**: Uses `CoconaApp.Run<T>()` pattern requiring a class type
-- **Nuru**: Uses fluent builder pattern with `DirectAppBuilder`
+- **Nuru**: Uses fluent builder pattern with `NuruAppBuilder`
 
 ### 3. Command Definition
 - **Cocona**: Commands are methods with attributes
@@ -115,7 +115,7 @@ app hello --help
 ## Performance Considerations
 
 - **Cocona**: Class instantiation and reflection overhead
-- **Nuru**: Direct routing with minimal overhead (especially with DirectAppBuilder)
+- **Nuru**: Direct routing with minimal overhead
 
 ## Developer Experience
 

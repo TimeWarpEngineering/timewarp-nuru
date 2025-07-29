@@ -88,7 +88,7 @@ builder.AddRoute("backup {*files}", (string[] files) => BackupFiles(files));
 
 **🚀 Direct** - Maximum performance, zero overhead
 ```csharp
-var app = new DirectAppBuilder()
+var app = new NuruAppBuilder()
     .AddRoute("deploy {env}", (string env) => Deploy(env))
     .Build(); // ~4KB memory, blazing fast
 ```

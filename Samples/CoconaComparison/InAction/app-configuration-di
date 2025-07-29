@@ -7,30 +7,19 @@
 #:package Microsoft.Extensions.Configuration.EnvironmentVariables
 
 using TimeWarp.Nuru;
+using TimeWarp.Nuru.Extensions;
 using TimeWarp.Mediator;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using static System.Console;
 
-// Build configuration
-var configuration = new ConfigurationBuilder()
-    .SetBasePath(Directory.GetCurrentDirectory())
-    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-    .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? "Production"}.json", optional: true)
-    .AddEnvironmentVariables()
-    .Build();
-
-// Create app with DI and configuration
-var builder = new NuruAppBuilder()
+// Create app with DI and automatic configuration setup
+var app = new NuruAppBuilder()
     .AddDependencyInjection(config => 
     {
         config.RegisterServicesFromAssembly(typeof(RunCommand).Assembly);
-    });
-
-// Add configuration to DI container
-builder.Services.AddSingleton<IConfiguration>(configuration);
-
-var app = builder
+    })
+    .AddConfiguration(args)  // Automatically sets up standard configuration sources
     .AddRoute<RunCommand>("run")
     .AddAutoHelp()
     .Build();

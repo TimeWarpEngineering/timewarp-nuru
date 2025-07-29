@@ -52,25 +52,13 @@ return await app.RunAsync(args);
 ## Nuru Implementation (DI/Class-based)
 
 ```csharp
-// Build configuration
-var configuration = new ConfigurationBuilder()
-    .SetBasePath(Directory.GetCurrentDirectory())
-    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-    .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? "Production"}.json", optional: true)
-    .AddEnvironmentVariables()
-    .Build();
-
-// Create app with DI and configuration
-var builder = new NuruAppBuilder()
+// Create app with DI and automatic configuration setup
+var app = new NuruAppBuilder()
     .AddDependencyInjection(config => 
     {
         config.RegisterServicesFromAssembly(typeof(RunCommand).Assembly);
-    });
-
-// Add configuration to DI container
-builder.Services.AddSingleton<IConfiguration>(configuration);
-
-var app = builder
+    })
+    .AddConfiguration(args)  // Automatically sets up standard configuration sources
     .AddRoute<RunCommand>("run")
     .AddAutoHelp()
     .Build();
@@ -108,7 +96,7 @@ public class RunCommand : IRequest
 ### Configuration Setup
 - **Cocona**: Uses Host Builder pattern, configuration is automatically set up
 - **Nuru (Delegate)**: Manual configuration building with full control
-- **Nuru (DI)**: Manual configuration building, then added to DI container
+- **Nuru (DI)**: Uses `.AddConfiguration(args)` for automatic setup (similar to Cocona)
 
 ### Dependency Injection
 - **Cocona**: Uses `[FromService]` attribute for configuration injection

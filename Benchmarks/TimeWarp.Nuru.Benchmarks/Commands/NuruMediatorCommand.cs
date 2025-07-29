@@ -9,13 +9,18 @@ public static class NuruMediatorCommand
   public static async Task Execute(string[] args)
   {
     var builder = new NuruAppBuilder()
-        .AddDependencyInjection(config => config.RegisterServicesFromAssembly(typeof(TestCommand).Assembly));
+        .AddDependencyInjection();
+
+    // Register only the specific handler for this benchmark
+    builder.Services.AddTransient<IRequestHandler<TestCommand>, TestCommand.Handler>();
 
     // Add a route that matches the benchmark arguments pattern
     builder.AddRoute<TestCommand>("test --str {str} -i {intOption:int} -b");
 
     // Prepend "test" to the args since Nuru expects a command name
-    string[] nuruArgs = new[] { "test" }.Concat(args).ToArray();
+    string[] nuruArgs = new string[args.Length + 1];
+    nuruArgs[0] = "test";
+    Array.Copy(args, 0, nuruArgs, 1, args.Length);
 
     var app = builder.Build();
     await app.RunAsync(nuruArgs);

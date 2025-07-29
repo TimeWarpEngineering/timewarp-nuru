@@ -43,13 +43,15 @@ public class NuruAppBuilder
       ServiceCollection.AddSingleton<ITypeConverterRegistry>(TypeConverterRegistry);
 
       // Add Mediator support
-      if (configureMediatorOptions is null)
+      if (configureMediatorOptions is not null)
       {
-        ServiceCollection.AddMediator(_ => { });
+        ServiceCollection.AddMediator(configureMediatorOptions);
       }
       else
       {
-        ServiceCollection.AddMediator(configureMediatorOptions);
+        // Add core mediator services without assembly scanning
+        var defaultConfig = new MediatorServiceConfiguration();
+        TimeWarp.Mediator.Registration.ServiceRegistrar.AddRequiredServices(ServiceCollection, defaultConfig);
       }
     }
 

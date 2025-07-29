@@ -5,6 +5,8 @@
   <PropertyGroup>
     <!-- Treat warnings as errors to see them during script compilation -->
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <!-- Suppress CLSCompliant warning for scripts -->
+    <NoWarn>$(NoWarn);CA1014;CA1031;CA1303;CA2007 </NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

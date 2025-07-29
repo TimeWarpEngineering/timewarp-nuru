@@ -1,0 +1,33 @@
+#!/usr/bin/dotnet --
+// typical-simple-app-di - Nuru DI/class-based version of Cocona's GettingStarted.TypicalSimpleApp
+#:project ../../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
+
+using TimeWarp.Nuru;
+using TimeWarp.Mediator;
+using Microsoft.Extensions.DependencyInjection;
+using static System.Console;
+
+// Typical simple CLI app with DI support
+var app = new NuruAppBuilder()
+    .AddDependencyInjection(config => config.RegisterServicesFromAssembly(typeof(HelloCommand).Assembly))
+    .AddRoute<HelloCommand>("hello {name|Your name} --to-upper-case,-u|Print a name converted to upper-case {toUpperCase:bool}")
+    .AddAutoHelp()
+    .Build();
+
+return await app.RunAsync(args);
+
+// Command class following typical enterprise patterns
+public class HelloCommand : IRequest
+{
+    public string Name { get; set; } = string.Empty;
+    public bool ToUpperCase { get; set; }
+    
+    public class Handler : IRequestHandler<HelloCommand>
+    {
+        public async Task Handle(HelloCommand request, CancellationToken cancellationToken)
+        {
+            WriteLine($"Hello {(request.ToUpperCase ? request.Name.ToUpper() : request.Name)}!");
+            await Task.CompletedTask;
+        }
+    }
+}

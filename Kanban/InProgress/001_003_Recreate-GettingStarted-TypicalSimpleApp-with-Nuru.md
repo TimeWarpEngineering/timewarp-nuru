@@ -22,18 +22,18 @@ Port the Cocona GettingStarted.TypicalSimpleApp sample to Nuru, demonstrating a 
 ## Checklist
 
 ### Implementation
-- [ ] Analyze the TypicalSimpleApp sample structure
-- [ ] Port all commands and options to Nuru
-- [ ] Ensure typical patterns are properly implemented
-- [ ] Test the application functionality
+- [x] Analyze the TypicalSimpleApp sample structure
+- [x] Port all commands and options to Nuru
+- [x] Ensure typical patterns are properly implemented
+- [x] Test the application functionality
 
 ### Documentation
-- [ ] Create Overview.md with side-by-side comparison
-- [ ] Document differences in:
-  - [ ] Typical app structure conventions
-  - [ ] Common patterns and best practices
-  - [ ] Configuration approaches
-  - [ ] Error handling patterns
+- [x] Create Overview.md with side-by-side comparison
+- [x] Document differences in:
+  - [x] Typical app structure conventions
+  - [x] Common patterns and best practices
+  - [x] Configuration approaches
+  - [x] Error handling patterns
 
 ## Notes
 

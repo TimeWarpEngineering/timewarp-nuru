@@ -3,8 +3,18 @@
 # Comprehensive test that compares Delegate vs Mediator implementations
 # Tests both JIT and AOT versions
 
+# Get the directory where this script is located
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+# Change to the repository root (parent of Tests directory)
+pushd "$SCRIPT_DIR/.." > /dev/null || exit 1
+
+# Ensure we return to original directory on exit
+trap 'popd > /dev/null' EXIT
+
 # Create log file with timestamp in logs directory
 LOG_FILE="Tests/logs/comparison-results-$(date '+%Y%m%d-%H%M%S').log"
+mkdir -p "$(dirname "$LOG_FILE")"
 exec > >(tee "$LOG_FILE")
 exec 2>&1
 

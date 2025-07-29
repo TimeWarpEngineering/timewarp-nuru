@@ -21,13 +21,18 @@ public class OptionSegment : RouteSegment
   /// Gets the short form alias for this option (e.g., "-m" for "--message").
   /// </summary>
   public string? ShortAlias { get; }
+  /// <summary>
+  /// Gets the description for this option.
+  /// </summary>
+  public string? Description { get; }
 
-  public OptionSegment(string name, bool expectsValue = false, string? valueParameterName = null, string? shortAlias = null)
+  public OptionSegment(string name, bool expectsValue = false, string? valueParameterName = null, string? shortAlias = null, string? description = null)
   {
     Name = name ?? throw new ArgumentNullException(nameof(name));
     ExpectsValue = expectsValue;
     ValueParameterName = valueParameterName;
     ShortAlias = shortAlias;
+    Description = description;
   }
 
   public override bool TryMatch(string arg, out string? extractedValue)

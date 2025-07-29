@@ -5,7 +5,89 @@ namespace TimeWarp.Nuru.Parsing;
 /// </summary>
 public static class RoutePatternParser
 {
-  private static readonly Regex ParameterRegex = new(@"\{(\*)?([^}:]+)(:([^}]+))?\}", RegexOptions.Compiled);
+  private static readonly Regex ParameterRegex = new(@"\{(\*)?([^}:|]+)(:([^}|]+))?(\|([^}]+))?\}", RegexOptions.Compiled);
+
+  /// <summary>
+  /// Tokenizes a route pattern, preserving descriptions that contain spaces.
+  /// </summary>
+  private static List<string> TokenizePattern(string pattern)
+  {
+    var tokens = new List<string>();
+    var currentToken = new System.Text.StringBuilder();
+    bool inBraces = false;
+    bool inOptionDescription = false;
+    int braceDepth = 0;
+
+    for (int i = 0; i < pattern.Length; i++)
+    {
+      char c = pattern[i];
+
+      if (c == '{')
+      {
+        inBraces = true;
+        braceDepth++;
+      }
+      else if (c == '}')
+      {
+        braceDepth--;
+        if (braceDepth == 0)
+        {
+          inBraces = false;
+          // If we were in an option description and hit the closing brace of a parameter,
+          // we need to check if the next character starts a new token
+          if (inOptionDescription && i + 1 < pattern.Length && pattern[i + 1] == '|')
+          {
+            // This is the case where we have --option {param}|Description
+            // The description continues after the parameter
+            currentToken.Append(c);
+            continue;
+          }
+        }
+      }
+      else if (c == '|' && !inBraces)
+      {
+        // Start of option description
+        inOptionDescription = true;
+      }
+      else if (c == ' ' && !inBraces && !inOptionDescription)
+      {
+        // Space outside of braces and descriptions - this is a token separator
+        if (currentToken.Length > 0)
+        {
+          tokens.Add(currentToken.ToString());
+          currentToken.Clear();
+        }
+
+        continue;
+      }
+      else if (c == ' ' && inOptionDescription)
+      {
+        // Check if we're at the start of a new option/parameter
+        if (i + 1 < pattern.Length && (pattern[i + 1] == '-' || pattern[i + 1] == '{'))
+        {
+          // This space ends the description
+          inOptionDescription = false;
+          if (currentToken.Length > 0)
+          {
+            tokens.Add(currentToken.ToString());
+            currentToken.Clear();
+          }
+
+          continue;
+        }
+      }
+
+      currentToken.Append(c);
+    }
+
+    // Add the last token
+    if (currentToken.Length > 0)
+    {
+      tokens.Add(currentToken.ToString());
+    }
+
+    return tokens;
+  }
 
   /// <summary>
   /// Parses a route pattern string into a ParsedRoute object.
@@ -17,32 +99,53 @@ public static class RoutePatternParser
     if (string.IsNullOrWhiteSpace(routePattern))
       throw new ArgumentException("Route pattern cannot be null or empty.", nameof(routePattern));
 
-    string[] parts = routePattern.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+    // First, tokenize the pattern to handle descriptions with spaces
+    List<string> parts = TokenizePattern(routePattern);
+
+    // Debug: print tokens
+    Console.WriteLine($"DEBUG: Tokenized '{routePattern}' into:");
+    foreach (string token in parts)
+    {
+      Console.WriteLine($"  Token: '{token}'");
+    }
+
     var segments = new List<RouteSegment>();
     var requiredOptions = new List<string>();
     var optionSegments = new List<OptionSegment>();
     string? catchAllParameterName = null;
     int specificity = 0;
 
-    for (int i = 0; i < parts.Length; i++)
+    for (int i = 0; i < parts.Count; i++)
     {
       string part = parts[i];
+      Console.WriteLine($"DEBUG: Processing part[{i}]: '{part}'");
 
       if (part.StartsWith(CommonStrings.DoubleDash, StringComparison.Ordinal) || part.StartsWith(CommonStrings.SingleDash, StringComparison.Ordinal))
       {
-        // This is an option - check for alias syntax (--long|-s)
+        // This is an option - parse syntax: --long,-s|Description
         string optionName;
         string? shortAlias = null;
+        string? description = null;
 
-        if (part.Contains('|', StringComparison.Ordinal))
+        // First check for description (pipe separator)
+        string optionPart = part;
+        int pipeIndex = part.IndexOf('|', StringComparison.Ordinal);
+        if (pipeIndex > 0)
         {
-          string[] optionParts = part.Split('|');
-          optionName = optionParts[0];
-          shortAlias = optionParts.Length > 1 ? optionParts[1] : null;
+          optionPart = part[..pipeIndex];
+          description = part[(pipeIndex + 1)..];
+        }
+
+        // Then check for short alias (comma separator)
+        if (optionPart.Contains(',', StringComparison.Ordinal))
+        {
+          string[] aliasParts = optionPart.Split(',');
+          optionName = aliasParts[0];
+          shortAlias = aliasParts.Length > 1 ? aliasParts[1] : null;
         }
         else
         {
-          optionName = part;
+          optionName = optionPart;
         }
 
         requiredOptions.Add(optionName);
@@ -52,16 +155,41 @@ public static class RoutePatternParser
         bool expectsValue = false;
         string? valueParameterName = null;
 
-        if (i + 1 < parts.Length && parts[i + 1].StartsWith('{'))
+        if (i + 1 < parts.Count && parts[i + 1].StartsWith('{'))
         {
           expectsValue = true;
           i++; // Move to parameter
-          Match paramMatch = ParameterRegex.Match(parts[i]);
+
+          // The parameter part might have an option description after it
+          string paramPart = parts[i];
+          string? optionDescriptionSuffix = null;
+
+          // Check if there's a pipe after the closing brace
+          int closingBraceIndex = paramPart.IndexOf('}', StringComparison.Ordinal);
+          if (closingBraceIndex > 0 && closingBraceIndex + 1 < paramPart.Length && paramPart[closingBraceIndex + 1] == '|')
+          {
+            // Split the parameter part from the option description
+            optionDescriptionSuffix = paramPart[(closingBraceIndex + 2)..];
+            paramPart = paramPart[..(closingBraceIndex + 1)];
+
+            // If we already had a description from the option part, append this
+            if (description is not null)
+            {
+              description = description + " " + optionDescriptionSuffix;
+            }
+            else
+            {
+              description = optionDescriptionSuffix;
+            }
+          }
+
+          Match paramMatch = ParameterRegex.Match(paramPart);
           if (paramMatch.Success)
           {
             string paramName = paramMatch.Groups[2].Value;
             bool isCatchAll = paramMatch.Groups[1].Value == "*";
-            string typeConstraint = paramMatch.Groups[4].Value;
+            string? typeConstraint = paramMatch.Groups[4].Success ? paramMatch.Groups[4].Value : null;
+            string? paramDescription = paramMatch.Groups[6].Success ? paramMatch.Groups[6].Value : null;
 
             valueParameterName = paramName;
 
@@ -76,8 +204,8 @@ public static class RoutePatternParser
           }
         }
 
-        // Add option segment with alias
-        optionSegments.Add(new OptionSegment(optionName, expectsValue, valueParameterName, shortAlias));
+        // Add option segment with alias and description
+        optionSegments.Add(new OptionSegment(optionName, expectsValue, valueParameterName, shortAlias, description));
       }
       else if (part.StartsWith('{'))
       {
@@ -87,7 +215,8 @@ public static class RoutePatternParser
         {
           string paramName = paramMatch.Groups[2].Value;
           bool isCatchAll = paramMatch.Groups[1].Value == "*";
-          string typeConstraint = paramMatch.Groups[4].Value;
+          string? typeConstraint = paramMatch.Groups[4].Success ? paramMatch.Groups[4].Value : null;
+          string? description = paramMatch.Groups[6].Success ? paramMatch.Groups[6].Value : null;
 
           // Parameter information is stored in the ParameterSegment
 
@@ -98,12 +227,12 @@ public static class RoutePatternParser
             specificity -= 20;
 
             // Add catch-all as a parameter segment
-            segments.Add(new ParameterSegment(paramName, isCatchAll: true, typeConstraint));
+            segments.Add(new ParameterSegment(paramName, isCatchAll: true, typeConstraint, description));
           }
           else
           {
             // Add regular parameter segment
-            segments.Add(new ParameterSegment(paramName, isCatchAll: false, typeConstraint));
+            segments.Add(new ParameterSegment(paramName, isCatchAll: false, typeConstraint, description));
             specificity += 2; // Positional parameters slightly increase specificity
           }
         }
@@ -111,6 +240,7 @@ public static class RoutePatternParser
       else
       {
         // This is a literal segment
+        Console.WriteLine($"DEBUG: Adding literal segment: '{part}'");
         segments.Add(new LiteralSegment(part));
         specificity += 15; // Literal segments greatly increase specificity
       }

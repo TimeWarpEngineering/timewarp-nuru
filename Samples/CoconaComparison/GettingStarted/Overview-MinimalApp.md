@@ -25,25 +25,25 @@ public void Hello(bool toUpperCase, [Argument]string name)
 ### Nuru Implementation
 
 ```csharp
-var app = new NuruAppBuilder()
-    .AddRoute("hello {name:string} --to-upper-case {toUpperCase:bool}", 
-        (string name, bool toUpperCase) => 
-        {
-            Console.WriteLine($"Hello {(toUpperCase ? name.ToUpper() : name)}");
-        })
-    
-    // Help command
-    .AddRoute("hello --help", 
-        () => Console.WriteLine(
-            "Usage: minimal-app hello <name> [options]\n" +
-            "\n" +
-            "Arguments:\n" +
-            "  name  The name to greet\n" +
-            "\n" +
-            "Options:\n" +
-            "  --to-upper-case  Convert name to uppercase"))
-    
-    .Build();
+using TimeWarp.Nuru;
+using TimeWarp.Nuru.Help;
+using static System.Console;
+
+var builder = new NuruAppBuilder();
+
+// Add the main hello command
+builder.AddRoute("hello {name:string} --to-upper-case {toUpperCase:bool}", 
+    (string name, bool toUpperCase) => 
+    {
+        WriteLine($"Hello {(toUpperCase ? name.ToUpper() : name)}");
+    },
+    description: "Greets a person by name with optional uppercase");
+
+// Add help commands manually - Nuru doesn't auto-generate these
+builder.AddRoute("hello --help", () => WriteLine(RouteHelpProvider.GetHelpText(builder.EndpointCollection)));
+builder.AddRoute("--help", () => WriteLine(RouteHelpProvider.GetHelpText(builder.EndpointCollection)));
+
+var app = builder.Build();
 
 return await app.RunAsync(args);
 ```
@@ -75,8 +75,14 @@ return await app.RunAsync(args);
 - **Nuru**: Explicit routes for different parameter combinations
 
 ### 6. Help Generation
-- **Cocona**: Automatically generates help from method signatures and attributes
-- **Nuru**: Requires explicit help route definition
+- **Cocona**: Automatically generates help for `--help` and `command --help` without any code ✨
+  - Framework automatically intercepts help flags
+  - Generates help from method signatures and attributes
+  - No developer effort required
+- **Nuru**: Requires explicit help route definitions
+  - Must manually add routes for `--help` and `hello --help`
+  - `RouteHelpProvider` assists with formatting but doesn't auto-generate routes
+  - More control but more code required
 
 ## Usage Examples
 
@@ -121,12 +127,14 @@ app hello --help
 
 ### Cocona
 - Familiar to ASP.NET developers
-- Less typing for simple cases
+- Less typing for simple cases (4 lines of actual code)
 - Strong IDE support for method signatures
 - Automatic parameter validation
+- Help generation requires zero code
 
 ### Nuru
 - More explicit and predictable
 - Clear routing patterns
 - Better for performance-critical scenarios
 - Flexible handler implementation
+- Requires explicit help routes (adds ~3 lines for basic help)

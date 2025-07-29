@@ -6,9 +6,13 @@ namespace TimeWarp.Nuru;
 public class NuruApp
 {
   private readonly IServiceProvider? ServiceProvider;
-  private readonly EndpointCollection Endpoints;
   private readonly ITypeConverterRegistry TypeConverterRegistry;
   private readonly CommandExecutor? CommandExecutor;
+
+  /// <summary>
+  /// Gets the collection of registered endpoints.
+  /// </summary>
+  public EndpointCollection Endpoints { get; }
 
   /// <summary>
   /// Direct constructor - no dependency injection.
@@ -29,8 +33,6 @@ public class NuruApp
     TypeConverterRegistry = serviceProvider.GetRequiredService<ITypeConverterRegistry>();
     CommandExecutor = serviceProvider.GetRequiredService<CommandExecutor>();
   }
-
-  public IServiceProvider? Services => ServiceProvider;
 
   public async Task<int> RunAsync(string[] args)
   {

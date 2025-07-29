@@ -1,0 +1,63 @@
+#!/usr/bin/dotnet --
+// subcommand-app - Nuru version of Cocona's GettingStarted.SubCommandApp
+#:project ../../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
+
+using TimeWarp.Nuru;
+using static System.Console;
+
+// CLI app demonstrating sub-commands and nested command structures
+var app = new NuruAppBuilder()
+    // Top-level commands
+    .AddRoute("hello {name|Your name} --to-upper-case,-u|Print a name converted to upper-case {toUpperCase:bool}", 
+        (string name, bool toUpperCase) => 
+        {
+            WriteLine($"Hello {(toUpperCase ? name.ToUpper() : name)}!");
+        },
+        description: "Say hello")
+    .AddRoute("bye {name|Your name} --to-lower-case,-l|Print a name converted to lower-case {toLowerCase:bool}", 
+        (string name, bool toLowerCase) => 
+        {
+            WriteLine($"Goodbye {(toLowerCase ? name.ToLower() : name)}!");
+        },
+        description: "Say goodbye")
+    
+    // Sub-commands
+    .AddRoute("sub-commands konnichiwa {member}", 
+        (Member member) => 
+        {
+            WriteLine($"Konnichiwa! {member}");
+        },
+        description: "Say konnichiwa to a member")
+    .AddRoute("sub-commands hello", 
+        () => 
+        {
+            WriteLine("Hello!");
+        },
+        description: "Say hello from sub-commands")
+    
+    // Sub-sub-commands
+    .AddRoute("sub-commands sub-sub-commands foobar", 
+        () => 
+        {
+            WriteLine("Foobar!");
+        },
+        description: "Execute foobar")
+    // Primary command (default when only value provided)
+    .AddRoute("sub-commands sub-sub-commands {value:string}", 
+        (string value) => 
+        {
+            WriteLine($"value={value}");
+        },
+        description: "Primary command with value")
+    
+    .AddAutoHelp()  // Generates help for all command levels
+    .Build();
+
+return await app.RunAsync(args);
+
+// Enum for member parameter
+public enum Member
+{
+    Alice,
+    Karen
+}

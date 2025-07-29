@@ -8,6 +8,7 @@ using TimeWarp.Nuru;
 using TimeWarp.Mediator;
 using Microsoft.Extensions.DependencyInjection;
 using System.Linq;
+using static System.Console;
 
 var builder = new NuruAppBuilder()
     .AddDependencyInjection(config => config.RegisterServicesFromAssembly(typeof(FactorialCommand).Assembly));
@@ -17,23 +18,23 @@ builder.Services.AddSingleton<IScientificCalculator, ScientificCalculator>();
 
 // Use Direct approach for simple operations (performance)
 builder.AddRoute("add {x:double} {y:double}", 
-    (double x, double y) => Console.WriteLine($"{x} + {y} = {x + y}"));
+    (double x, double y) => WriteLine($"{x} + {y} = {x + y}"));
 
 builder.AddRoute("subtract {x:double} {y:double}", 
-    (double x, double y) => Console.WriteLine($"{x} - {y} = {x - y}"));
+    (double x, double y) => WriteLine($"{x} - {y} = {x - y}"));
 
 builder.AddRoute("multiply {x:double} {y:double}", 
-    (double x, double y) => Console.WriteLine($"{x} × {y} = {x * y}"));
+    (double x, double y) => WriteLine($"{x} × {y} = {x * y}"));
 
 builder.AddRoute("divide {x:double} {y:double}", 
     (double x, double y) =>
     {
         if (y == 0)
         {
-            Console.WriteLine("Error: Division by zero");
+            WriteLine("Error: Division by zero");
             return;
         }
-        Console.WriteLine($"{x} ÷ {y} = {x / y}");
+        WriteLine($"{x} ÷ {y} = {x / y}");
     });
 
 // Use Mediator for complex operations (testability, DI)
@@ -57,7 +58,7 @@ builder.AddRoute("compare {x:double} {y:double}",
 
 // Help
 builder.AddRoute("help", 
-    () => Console.WriteLine(
+    () => WriteLine(
         "Calculator Commands:\n" +
         "Basic (Direct - Fast):\n" +
         "  add <x> <y>              - Add two numbers\n" +
@@ -158,11 +159,11 @@ public class FactorialHandler(IScientificCalculator calc) : IRequestHandler<Fact
         try
         {
             var result = calc.Factorial(request.N);
-            Console.WriteLine($"{request.N}! = {result}");
+            WriteLine($"{request.N}! = {result}");
         }
         catch (ArgumentException ex)
         {
-            Console.WriteLine($"Error: {ex.Message}");
+            WriteLine($"Error: {ex.Message}");
         }
         await Task.CompletedTask;
     }
@@ -173,7 +174,7 @@ public class PrimeCheckHandler(IScientificCalculator calc) : IRequestHandler<Pri
     public async Task Handle(PrimeCheckCommand request, CancellationToken cancellationToken)
     {
         var result = calc.IsPrime(request.N);
-        Console.WriteLine($"{request.N} is {(result ? "prime" : "not prime")}");
+        WriteLine($"{request.N} is {(result ? "prime" : "not prime")}");
         await Task.CompletedTask;
     }
 }
@@ -185,11 +186,11 @@ public class FibonacciHandler(IScientificCalculator calc) : IRequestHandler<Fibo
         try
         {
             var result = calc.Fibonacci(request.N);
-            Console.WriteLine($"Fibonacci({request.N}) = {result}");
+            WriteLine($"Fibonacci({request.N}) = {result}");
         }
         catch (ArgumentException ex)
         {
-            Console.WriteLine($"Error: {ex.Message}");
+            WriteLine($"Error: {ex.Message}");
         }
         await Task.CompletedTask;
     }

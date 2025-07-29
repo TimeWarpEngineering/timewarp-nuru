@@ -3,28 +3,29 @@
 #:project ../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
 
 using TimeWarp.Nuru;
+using static System.Console;
 
 // Calculator using Direct approach for maximum performance
 var app = new NuruAppBuilder()
     // Basic operations
     .AddRoute("add {x:double} {y:double}", 
-        (double x, double y) => Console.WriteLine($"{x} + {y} = {x + y}"))
+        (double x, double y) => WriteLine($"{x} + {y} = {x + y}"))
     
     .AddRoute("subtract {x:double} {y:double}", 
-        (double x, double y) => Console.WriteLine($"{x} - {y} = {x - y}"))
+        (double x, double y) => WriteLine($"{x} - {y} = {x - y}"))
     
     .AddRoute("multiply {x:double} {y:double}", 
-        (double x, double y) => Console.WriteLine($"{x} × {y} = {x * y}"))
+        (double x, double y) => WriteLine($"{x} × {y} = {x * y}"))
     
     .AddRoute("divide {x:double} {y:double}", 
         (double x, double y) =>
         {
             if (y == 0)
             {
-                Console.WriteLine("Error: Division by zero");
+                WriteLine("Error: Division by zero");
                 return;
             }
-            Console.WriteLine($"{x} ÷ {y} = {x / y}");
+            WriteLine($"{x} ÷ {y} = {x / y}");
         })
     
     // Rounding with options
@@ -42,24 +43,24 @@ var app = new NuruAppBuilder()
             
             if (double.IsNaN(result))
             {
-                Console.WriteLine($"Error: Unknown rounding mode '{mode}'");
-                Console.WriteLine("Valid modes: up, down, nearest, banker/accountancy");
+                WriteLine($"Error: Unknown rounding mode '{mode}'");
+                WriteLine("Valid modes: up, down, nearest, banker/accountancy");
                 return;
             }
             
-            Console.WriteLine($"Round({value}, {mode}) = {result}");
+            WriteLine($"Round({value}, {mode}) = {result}");
         })
     
     // Default rounding (nearest)
     .AddRoute("round {value:double}", 
-        (double value) => Console.WriteLine($"Round({value}) = {Math.Round(value)}"))
+        (double value) => WriteLine($"Round({value}) = {Math.Round(value)}"))
     
     // Help commands
     .AddRoute("add help", 
-        () => Console.WriteLine("Usage: ./calc-direct add <x> <y>\nAdds two numbers together."))
+        () => WriteLine("Usage: ./calc-direct add <x> <y>\nAdds two numbers together."))
     
     .AddRoute("round help", 
-        () => Console.WriteLine(
+        () => WriteLine(
             "Usage: ./calc-direct round <value> [--mode <mode>]\n" +
             "Rounds a number using the specified mode.\n" +
             "Modes:\n" +
@@ -69,7 +70,7 @@ var app = new NuruAppBuilder()
             "  banker     - Banker's rounding (round half to even)"))
     
     .AddRoute("help", 
-        () => Console.WriteLine(
+        () => WriteLine(
             "Calculator Commands:\n" +
             "  add <x> <y>              - Add two numbers\n" +
             "  subtract <x> <y>         - Subtract y from x\n" +

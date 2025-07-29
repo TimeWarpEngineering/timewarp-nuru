@@ -102,13 +102,6 @@ public static class RoutePatternParser
     // First, tokenize the pattern to handle descriptions with spaces
     List<string> parts = TokenizePattern(routePattern);
 
-    // Debug: print tokens
-    Console.WriteLine($"DEBUG: Tokenized '{routePattern}' into:");
-    foreach (string token in parts)
-    {
-      Console.WriteLine($"  Token: '{token}'");
-    }
-
     var segments = new List<RouteSegment>();
     var requiredOptions = new List<string>();
     var optionSegments = new List<OptionSegment>();
@@ -118,7 +111,6 @@ public static class RoutePatternParser
     for (int i = 0; i < parts.Count; i++)
     {
       string part = parts[i];
-      Console.WriteLine($"DEBUG: Processing part[{i}]: '{part}'");
 
       if (part.StartsWith(CommonStrings.DoubleDash, StringComparison.Ordinal) || part.StartsWith(CommonStrings.SingleDash, StringComparison.Ordinal))
       {
@@ -240,7 +232,6 @@ public static class RoutePatternParser
       else
       {
         // This is a literal segment
-        Console.WriteLine($"DEBUG: Adding literal segment: '{part}'");
         segments.Add(new LiteralSegment(part));
         specificity += 15; // Literal segments greatly increase specificity
       }

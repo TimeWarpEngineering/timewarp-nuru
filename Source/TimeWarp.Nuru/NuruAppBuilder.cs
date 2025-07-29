@@ -133,6 +133,17 @@ public class NuruAppBuilder
   }
 
   /// <summary>
+  /// Registers a custom type converter for parameter conversion.
+  /// </summary>
+  /// <param name="converter">The type converter to register.</param>
+  public NuruAppBuilder AddTypeConverter(IRouteTypeConverter converter)
+  {
+    ArgumentNullException.ThrowIfNull(converter);
+    TypeConverterRegistry.RegisterConverter(converter);
+    return this;
+  }
+
+  /// <summary>
   /// Builds and returns a runnable NuruApp.
   /// </summary>
   public NuruApp Build()

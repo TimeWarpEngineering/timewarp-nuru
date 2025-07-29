@@ -16,12 +16,14 @@ public class RouteEndpoint
   public required ParsedRoute ParsedRoute { get; set; }
   /// <summary>
   /// Gets or sets the handler delegate that will be invoked when this endpoint is matched.
+  /// For Mediator commands, this will be null and CommandType will be used instead.
   /// </summary>
-  public required Delegate Handler { get; set; }
+  public Delegate? Handler { get; set; }
   /// <summary>
   /// Gets or sets the method info for the handler (used for parameter binding).
+  /// For Mediator commands, this will be null.
   /// </summary>
-  public required MethodInfo Method { get; set; }
+  public MethodInfo? Method { get; set; }
   /// <summary>
   /// Gets or sets the order/specificity of this route (higher values match first).
   /// </summary>

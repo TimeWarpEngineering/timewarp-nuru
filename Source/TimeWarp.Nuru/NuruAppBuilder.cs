@@ -11,22 +11,48 @@ public class NuruAppBuilder
   private ServiceCollection? ServiceCollection;
 
   /// <summary>
-  /// Gets the service collection if dependency injection has been added.
+  /// Gets the service collection. Throws if dependency injection has not been added.
+  /// Call AddDependencyInjection() first to enable DI and Mediator support.
   /// </summary>
-  public IServiceCollection? Services => ServiceCollection;
+  public IServiceCollection Services
+  {
+    get
+    {
+      if (ServiceCollection is null)
+      {
+        throw new InvalidOperationException(
+          "Dependency injection has not been enabled. Call AddDependencyInjection() first.");
+      }
+
+      return ServiceCollection;
+    }
+  }
 
   /// <summary>
   /// Adds dependency injection support to the application.
+  /// This also enables Mediator support for command-based routing.
   /// </summary>
-  public NuruAppBuilder AddDependencyInjection()
+  /// <param name="configureMediatorOptions">Optional action to configure Mediator options.</param>
+  public NuruAppBuilder AddDependencyInjection(Action<MediatorServiceConfiguration>? configureMediatorOptions = null)
   {
-    if (ServiceCollection == null)
+    if (ServiceCollection is null)
     {
-      ServiceCollection = new ServiceCollection();
+      ServiceCollection = [];
       ServiceCollection.AddNuru();
       ServiceCollection.AddSingleton(EndpointCollection);
       ServiceCollection.AddSingleton<ITypeConverterRegistry>(TypeConverterRegistry);
+
+      // Add Mediator support
+      if (configureMediatorOptions is null)
+      {
+        ServiceCollection.AddMediator(_ => { });
+      }
+      else
+      {
+        ServiceCollection.AddMediator(configureMediatorOptions);
+      }
     }
+
     return this;
   }
 
@@ -58,7 +84,12 @@ public class NuruAppBuilder
   public NuruAppBuilder AddRoute<TCommand>(string pattern, string? description = null)
       where TCommand : IRequest, new()
   {
-    if (ServiceCollection == null)
+    return AddMediatorRoute(typeof(TCommand), pattern, description);
+  }
+
+  private NuruAppBuilder AddMediatorRoute(Type commandType, string pattern, string? description)
+  {
+    if (ServiceCollection is null)
     {
       throw new InvalidOperationException("Dependency injection must be added before using Mediator commands. Call AddDependencyInjection() first.");
     }
@@ -67,10 +98,8 @@ public class NuruAppBuilder
     {
       RoutePattern = pattern,
       ParsedRoute = RoutePatternParser.Parse(pattern),
-      Handler = new Action(() => { }), // Placeholder
-      Method = typeof(Action).GetMethod("Invoke")!,
       Description = description,
-      CommandType = typeof(TCommand)
+      CommandType = commandType
     };
 
     EndpointCollection.Add(endpoint);
@@ -84,23 +113,7 @@ public class NuruAppBuilder
   public NuruAppBuilder AddRoute<TCommand, TResponse>(string pattern, string? description = null)
       where TCommand : IRequest<TResponse>, new()
   {
-    if (ServiceCollection == null)
-    {
-      throw new InvalidOperationException("Dependency injection must be added before using Mediator commands. Call AddDependencyInjection() first.");
-    }
-
-    var endpoint = new RouteEndpoint
-    {
-      RoutePattern = pattern,
-      ParsedRoute = RoutePatternParser.Parse(pattern),
-      Handler = new Action(() => { }), // Placeholder
-      Method = typeof(Action).GetMethod("Invoke")!,
-      Description = description,
-      CommandType = typeof(TCommand)
-    };
-
-    EndpointCollection.Add(endpoint);
-    return this;
+    return AddMediatorRoute(typeof(TCommand), pattern, description);
   }
 
   /// <summary>
@@ -109,8 +122,8 @@ public class NuruAppBuilder
   public NuruApp Build()
   {
     EndpointCollection.Sort();
-    
-    if (ServiceCollection != null)
+
+    if (ServiceCollection is not null)
     {
       // DI path - build service provider and return DI-enabled app
       ServiceProvider serviceProvider = ServiceCollection.BuildServiceProvider();

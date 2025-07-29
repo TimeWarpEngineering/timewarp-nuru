@@ -54,10 +54,10 @@ public class NuruApp
         return 1;
       }
 
-      // Check if this is a Mediator command (only if DI is available)
+      // Check if this is a Mediator command (CommandType is set)
       Type? commandType = result.MatchedEndpoint.CommandType;
 
-      if (commandType is not null && ServiceProvider is not null && IsMediatorCommand(commandType))
+      if (commandType is not null && ServiceProvider is not null)
       {
         // Execute through Mediator
         return await ExecuteMediatorCommandAsync(commandType, result).ConfigureAwait(false);
@@ -66,6 +66,11 @@ public class NuruApp
       // Execute as delegate
       if (result.MatchedEndpoint.Handler is Delegate del)
       {
+        if (result.ExtractedValues is null)
+        {
+          throw new InvalidOperationException("ExtractedValues cannot be null for a successful match.");
+        }
+
         return await ExecuteDelegateAsync(del, result.ExtractedValues).ConfigureAwait(false);
       }
 
@@ -75,7 +80,11 @@ public class NuruApp
 
       return 1;
     }
+#pragma warning disable CA1031 // Do not catch general exception types
+    // This is the top-level exception handler for the CLI app. We need to catch all exceptions
+    // to provide meaningful error messages to users rather than crashing.
     catch (Exception ex)
+#pragma warning restore CA1031
     {
       await Console.Error.WriteLineAsync($"Error: {ex.Message}").ConfigureAwait(false);
       return 1;
@@ -89,11 +98,19 @@ public class NuruApp
       throw new InvalidOperationException("CommandExecutor is not available. Ensure DI is configured.");
     }
 
+    if (result.ExtractedValues is null)
+    {
+      throw new InvalidOperationException("ExtractedValues cannot be null for a successful match.");
+    }
+
     object? returnValue = await CommandExecutor.ExecuteCommandAsync(
       commandType,
       result.ExtractedValues,
       CancellationToken.None
     ).ConfigureAwait(false);
+
+    // Display the response (if any)
+    CommandExecutor.DisplayResponse(returnValue);
 
     // Handle int return values
     if (returnValue is int exitCode)
@@ -118,11 +135,29 @@ public class NuruApp
       if (returnValue is Task task)
       {
         await task.ConfigureAwait(false);
+
+        // For Task<T>, get the result
+        Type taskType = task.GetType();
+        if (taskType.IsGenericType)
+        {
+          PropertyInfo? resultProperty = taskType.GetProperty("Result");
+          if (resultProperty is not null)
+          {
+            returnValue = resultProperty.GetValue(task);
+          }
+        }
       }
+
+      // Display the response (if any)
+      CommandExecutor.DisplayResponse(returnValue);
 
       return 0;
     }
+#pragma warning disable CA1031 // Do not catch general exception types
+    // We catch all exceptions here to provide consistent error handling for delegate execution.
+    // The CLI should not crash due to handler exceptions.
     catch (Exception ex)
+#pragma warning restore CA1031
     {
       await Console.Error.WriteLineAsync(
         $"Error executing handler: {ex.Message}"
@@ -232,15 +267,6 @@ public class NuruApp
     }
 
     return args;
-  }
-
-  private static bool IsMediatorCommand(Type type)
-  {
-    return type.GetInterfaces().Any(i =>
-      i.IsGenericType &&
-      (i.GetGenericTypeDefinition() == typeof(IRequest<>) ||
-       i.GetGenericTypeDefinition() == typeof(IRequest))
-    );
   }
 
   private void ShowAvailableCommands()

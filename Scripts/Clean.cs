@@ -5,8 +5,8 @@
 string scriptDir = (AppContext.GetData("EntryPointFileDirectoryPath") as string)!;
 Directory.SetCurrentDirectory(scriptDir);
 
-Console.WriteLine("Cleaning TimeWarp.Nuru solution...");
-Console.WriteLine($"Working from: {Directory.GetCurrentDirectory()}");
+WriteLine("Cleaning TimeWarp.Nuru solution...");
+WriteLine($"Working from: {Directory.GetCurrentDirectory()}");
 
 // Clean the solution with minimal verbosity
 try
@@ -20,32 +20,32 @@ try
 }
 catch (Exception ex)
 {
-    Console.WriteLine("=== Exception Details ===");
-    Console.WriteLine($"Exception type: {ex.GetType().Name}");
-    Console.WriteLine($"Message: {ex.Message}");
+    WriteLine("=== Exception Details ===");
+    WriteLine($"Exception type: {ex.GetType().Name}");
+    WriteLine($"Message: {ex.Message}");
 
     if (ex.InnerException is not null)
     {
-        Console.WriteLine($"Inner exception type: {ex.InnerException.GetType().Name}");
-        Console.WriteLine($"Inner exception message: {ex.InnerException.Message}");
+        WriteLine($"Inner exception type: {ex.InnerException.GetType().Name}");
+        WriteLine($"Inner exception message: {ex.InnerException.Message}");
     }
 
-    Console.WriteLine($"Stack trace: {ex.StackTrace}");
-    Console.WriteLine("❌ Clean failed with exception!");
+    WriteLine($"Stack trace: {ex.StackTrace}");
+    WriteLine("❌ Clean failed with exception!");
     Environment.Exit(1);
 }
 
 // Also delete obj and bin directories to ensure complete cleanup
-Console.WriteLine("\nDeleting obj and bin directories...");
+WriteLine("\nDeleting obj and bin directories...");
 try
 {
     await Shell.Run("find")
         .WithArguments("..", "-type", "d", "(", "-name", "obj", "-o", "-name", "bin", ")")
         .Pipe("xargs", "rm", "-rf")
         .ExecuteAsync();
-    Console.WriteLine("✅ Deleted all obj and bin directories");
+    WriteLine("✅ Deleted all obj and bin directories");
 }
 catch (Exception ex)
 {
-    Console.WriteLine($"Warning: Could not delete some directories: {ex.Message}");
+    WriteLine($"Warning: Could not delete some directories: {ex.Message}");
 }

@@ -5,14 +5,14 @@
 string scriptDir = (AppContext.GetData("EntryPointFileDirectoryPath") as string)!;
 Directory.SetCurrentDirectory(scriptDir);
 
-Console.WriteLine("Running Clean and Build for TimeWarp.Nuru...");
-Console.WriteLine($"Working from: {Directory.GetCurrentDirectory()}");
+WriteLine("Running Clean and Build for TimeWarp.Nuru...");
+WriteLine($"Working from: {Directory.GetCurrentDirectory()}");
 
 // Run Clean.cs
 ExecutionResult cleanResult = await Shell.Run("./Clean.cs").ExecuteAsync();
 if (cleanResult.ExitCode != 0)
 {
-    Console.WriteLine("❌ Clean failed!");
+    WriteLine("❌ Clean failed!");
     Environment.Exit(1);
 }
 
@@ -20,8 +20,8 @@ if (cleanResult.ExitCode != 0)
 ExecutionResult buildResult = await Shell.Run("./Build.cs").ExecuteAsync();
 if (buildResult.ExitCode != 0)
 {
-    Console.WriteLine("❌ Build failed!");
+    WriteLine("❌ Build failed!");
     Environment.Exit(1);
 }
 
-Console.WriteLine("\n✅ Clean and Build completed successfully!");
+WriteLine("\n✅ Clean and Build completed successfully!");

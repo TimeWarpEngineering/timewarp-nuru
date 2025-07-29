@@ -5,15 +5,15 @@ using System.Xml.Linq;
 string scriptDir = AppContext.GetData("EntryPointFileDirectoryPath") as string ?? throw new InvalidOperationException("Could not get entry point directory");
 Directory.SetCurrentDirectory(scriptDir);
 
-Console.WriteLine("Running Roslynator analysis and fixes...");
-Console.WriteLine($"Working from: {Directory.GetCurrentDirectory()}");
+WriteLine("Running Roslynator analysis and fixes...");
+WriteLine($"Working from: {Directory.GetCurrentDirectory()}");
 
 // Read the .slnx file to get all project paths
 const string SolutionFileName = "TimeWarp.Nuru.slnx";
 string slnxPath = Path.Combine("..", SolutionFileName);
 if (!File.Exists(slnxPath))
 {
-  Console.WriteLine($"Error: Solution file not found at {slnxPath}");
+  WriteLine($"Error: Solution file not found at {slnxPath}");
   Environment.Exit(1);
 }
 
@@ -28,7 +28,7 @@ foreach (XElement project in doc.Descendants("Project"))
   }
 }
 
-Console.WriteLine($"Found {projects.Count} projects to analyze");
+WriteLine($"Found {projects.Count} projects to analyze");
 
 // Get command line arguments
 string[] commandArgs = Environment.GetCommandLineArgs();
@@ -38,7 +38,7 @@ bool hasErrors = false;
 
 foreach (string project in projects)
 {
-  Console.WriteLine($"\nAnalyzing project: {Path.GetFileName(project)}");
+  WriteLine($"\nAnalyzing project: {Path.GetFileName(project)}");
 
   try
   {
@@ -48,18 +48,18 @@ foreach (string project in projects)
     if (!string.IsNullOrEmpty(diagnosticId))
     {
       roslynatorCommand = roslynatorCommand.WithArguments("--supported-diagnostics", diagnosticId);
-      Console.WriteLine($"  Fixing diagnostic: {diagnosticId}");
+      WriteLine($"  Fixing diagnostic: {diagnosticId}");
     }
 
     ExecutionResult result = await roslynatorCommand.ExecuteAsync().ConfigureAwait(false);
 
     if (result.ExitCode == 0)
     {
-      Console.WriteLine("  ✅ Success");
+      WriteLine("  ✅ Success");
     }
     else
     {
-      Console.WriteLine($"  ❌ Failed with exit code {result.ExitCode}");
+      WriteLine($"  ❌ Failed with exit code {result.ExitCode}");
       hasErrors = true;
     }
 
@@ -67,10 +67,10 @@ foreach (string project in projects)
   }
   catch (InvalidOperationException ex)
   {
-    Console.WriteLine($"  ❌ Error: {ex.Message}");
+    WriteLine($"  ❌ Error: {ex.Message}");
     hasErrors = true;
   }
 }
 
-Console.WriteLine(hasErrors ? "\n❌ Analysis completed with errors!" : "\n✅ Analysis complete!");
+WriteLine(hasErrors ? "\n❌ Analysis completed with errors!" : "\n✅ Analysis complete!");
 Environment.Exit(hasErrors ? 1 : 0);

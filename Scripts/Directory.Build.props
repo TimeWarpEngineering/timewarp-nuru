@@ -15,6 +15,7 @@
     <Using Include="System.Runtime.CompilerServices" />
     <Using Include="System.Text.Json" />
     <Using Include="TimeWarp.Cli" />
+    <Using Include="System.Console" Static="true" />
   </ItemGroup>
 
   <ItemGroup>

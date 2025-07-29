@@ -15,7 +15,7 @@ var app = new NuruAppBuilder()
     .AddRoute("deploy {env|Target environment} --force,-f|Skip confirmation prompts",
         (string env) => WriteLine($"Force deploy to {env}"),
         "Deploy with force")
-    .AddRoute("deploy {env|Target environment} --version {ver|Version to deploy}|Deploy specific version",
+    .AddRoute("deploy {env|Target environment} --version|Deploy specific version {ver|Version to deploy}",
         (string env, string ver) => WriteLine($"Deploy version {ver} to {env}"),
         "Deploy specific version")
     .AddAutoHelp()

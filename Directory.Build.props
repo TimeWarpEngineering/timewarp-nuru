@@ -34,6 +34,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
+    
+    <!-- Suppress CA1812 - false positives for DI-instantiated classes -->
+    <NoWarn>$(NoWarn);CA1812</NoWarn>
   </PropertyGroup>
   
   <ItemGroup>

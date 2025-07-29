@@ -187,24 +187,24 @@ builder.AddRoute("deploy {app} --env {environment}",
 Scale from simple scripts to complex applications:
 
 ```csharp
-// Commands as classes - perfect for complex logic
+// Commands as classes with nested handlers - perfect for complex logic
 public class DeployCommand : IRequest
 {
     public string Environment { get; set; }
     public string? Version { get; set; }
     public bool DryRun { get; set; }
-}
-
-// Handlers with full DI support
-public class DeployHandler(IDeploymentService deployment, ILogger logger) 
-    : IRequestHandler<DeployCommand>
-{
-    public async Task Handle(DeployCommand cmd, CancellationToken ct)
+    
+    // Handler nested inside command for better organization
+    public class Handler(IDeploymentService deployment, ILogger logger) 
+        : IRequestHandler<DeployCommand>
     {
-        if (cmd.DryRun)
-            await deployment.ValidateAsync(cmd.Environment, cmd.Version);
-        else  
-            await deployment.ExecuteAsync(cmd.Environment, cmd.Version);
+        public async Task Handle(DeployCommand cmd, CancellationToken ct)
+        {
+            if (cmd.DryRun)
+                await deployment.ValidateAsync(cmd.Environment, cmd.Version);
+            else  
+                await deployment.ExecuteAsync(cmd.Environment, cmd.Version);
+        }
     }
 }
 
@@ -234,14 +234,18 @@ builder.AddRoute("fetch {url}", async (string url) => {
     await File.WriteAllTextAsync("result.txt", data);
 });
 
-// Async Mediator commands
-public class FetchCommand : IRequest<string> { public string Url { get; set; } }
-public class FetchHandler : IRequestHandler<FetchCommand, string>
-{
-    public async Task<string> Handle(FetchCommand cmd, CancellationToken ct)
+// Async Mediator commands with nested handler
+public class FetchCommand : IRequest<string> 
+{ 
+    public string Url { get; set; }
+    
+    public class Handler : IRequestHandler<FetchCommand, string>
     {
-        using var client = new HttpClient();
-        return await client.GetStringAsync(cmd.Url, ct);
+        public async Task<string> Handle(FetchCommand cmd, CancellationToken ct)
+        {
+            using var client = new HttpClient();
+            return await client.GetStringAsync(cmd.Url, ct);
+        }
     }
 }
 ```
@@ -270,13 +274,18 @@ builder.AddRoute("process {file}", (string file) =>
 builder.AddDependencyInjection();
 builder.Services.AddLogging(); // Add logging services
 
-public class AnalyzeHandler(ILogger<AnalyzeHandler> logger) : IRequestHandler<AnalyzeCommand, AnalyzeResult>
+public class AnalyzeCommand : IRequest<AnalyzeResult>
 {
-    public async Task<AnalyzeResult> Handle(AnalyzeCommand cmd, CancellationToken ct)
+    public string Path { get; set; }
+    
+    public class Handler(ILogger<Handler> logger) : IRequestHandler<AnalyzeCommand, AnalyzeResult>
     {
-        logger.LogInformation("Starting analysis of {Path}", cmd.Path);  // Structured logging
-        var result = await AnalyzeAsync(cmd.Path);
-        return result;  // Returned object → JSON to stdout
+        public async Task<AnalyzeResult> Handle(AnalyzeCommand cmd, CancellationToken ct)
+        {
+            logger.LogInformation("Starting analysis of {Path}", cmd.Path);  // Structured logging
+            var result = await AnalyzeAsync(cmd.Path);
+            return result;  // Returned object → JSON to stdout
+        }
     }
 }
 ```

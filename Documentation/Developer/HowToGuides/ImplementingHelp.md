@@ -220,54 +220,52 @@ For applications using the Mediator pattern:
 public class HelpCommand : IRequest 
 {
     public string? Topic { get; set; }
-}
-
-public class HelpHandler(EndpointCollection endpoints) : IRequestHandler<HelpCommand>
-{
-    }
     
-    public Task Handle(HelpCommand request, CancellationToken cancellationToken)
+    public class Handler(EndpointCollection endpoints) : IRequestHandler<HelpCommand>
     {
-        if (!string.IsNullOrEmpty(request.Topic))
+        public Task Handle(HelpCommand request, CancellationToken cancellationToken)
         {
-            ShowTopicHelp(request.Topic);
-        }
-        else
-        {
-            ShowGeneralHelp();
+            if (!string.IsNullOrEmpty(request.Topic))
+            {
+                ShowTopicHelp(request.Topic);
+            }
+            else
+            {
+                ShowGeneralHelp();
+            }
+            
+            return Task.CompletedTask;
         }
         
-        return Task.CompletedTask;
-    }
-    
-    private void ShowTopicHelp(string topic)
-    {
-        // Show help for specific topic
-        var relevantRoutes = endpoints.Endpoints
-            .Where(e => e.RoutePattern.Contains(topic, StringComparison.OrdinalIgnoreCase))
-            .ToList();
-            
-        if (relevantRoutes.Any())
+        private void ShowTopicHelp(string topic)
         {
-            Console.WriteLine($"Help for '{topic}':");
-            foreach (var route in relevantRoutes)
+            // Show help for specific topic
+            var relevantRoutes = endpoints.Endpoints
+                .Where(e => e.RoutePattern.Contains(topic, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+                
+            if (relevantRoutes.Any())
             {
-                Console.WriteLine($"  {route.RoutePattern}");
-                if (!string.IsNullOrEmpty(route.Description))
+                Console.WriteLine($"Help for '{topic}':");
+                foreach (var route in relevantRoutes)
                 {
-                    Console.WriteLine($"    {route.Description}");
+                    Console.WriteLine($"  {route.RoutePattern}");
+                    if (!string.IsNullOrEmpty(route.Description))
+                    {
+                        Console.WriteLine($"    {route.Description}");
+                    }
                 }
             }
+            else
+            {
+                Console.WriteLine($"No help available for '{topic}'");
+            }
         }
-        else
+        
+        private void ShowGeneralHelp()
         {
-            Console.WriteLine($"No help available for '{topic}'");
+            Console.WriteLine(RouteHelpProvider.GetHelpText(endpoints));
         }
-    }
-    
-    private void ShowGeneralHelp()
-    {
-        Console.WriteLine(RouteHelpProvider.GetHelpText(endpoints));
     }
 }
 

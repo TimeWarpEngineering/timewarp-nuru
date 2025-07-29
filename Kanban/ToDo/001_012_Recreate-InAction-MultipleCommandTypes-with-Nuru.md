@@ -13,6 +13,7 @@ Port the Cocona InAction.MultipleCommandTypes sample to Nuru, demonstrating orga
 - Organize commands by feature or domain
 - Register multiple command types
 - Create Overview.md comparing organization patterns
+- Implementation location: `Samples/CoconaComparison/InAction/multiple-command-types`
 
 ## Checklist
 

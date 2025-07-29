@@ -13,6 +13,7 @@ Port the Cocona InAction.ParameterSet sample to Nuru, demonstrating parameter se
 - Implement mutually exclusive option groups
 - Handle parameter set validation
 - Create Overview.md comparing parameter set approaches
+- Implementation location: `Samples/CoconaComparison/InAction/parameter-set`
 
 ## Checklist
 

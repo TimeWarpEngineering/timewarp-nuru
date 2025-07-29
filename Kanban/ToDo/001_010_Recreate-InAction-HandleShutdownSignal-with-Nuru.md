@@ -13,6 +13,7 @@ Port the Cocona InAction.HandleShutdownSignal sample to Nuru, demonstrating grac
 - Implement graceful cleanup on Ctrl+C
 - Handle cancellation tokens properly
 - Create Overview.md comparing shutdown approaches
+- Implementation location: `Samples/CoconaComparison/InAction/handle-shutdown-signal`
 
 ## Checklist
 

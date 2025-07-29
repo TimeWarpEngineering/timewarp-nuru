@@ -13,6 +13,7 @@ Port the Cocona Advanced.GenericHost sample to Nuru, demonstrating integration w
 - Configure host services and logging
 - Implement hosted services
 - Create Overview.md comparing host integration
+- Implementation location: `Samples/CoconaComparison/Advanced/generic-host`
 
 ## Checklist
 

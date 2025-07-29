@@ -13,6 +13,7 @@ Port the Cocona InAction.AppConfiguration sample to Nuru, demonstrating integrat
 - Implement appsettings.json and appsettings.Development.json loading
 - Demonstrate configuration injection and usage
 - Create Overview.md comparing configuration approaches
+- Implementation location: `Samples/CoconaComparison/InAction/app-configuration`
 
 ## Checklist
 

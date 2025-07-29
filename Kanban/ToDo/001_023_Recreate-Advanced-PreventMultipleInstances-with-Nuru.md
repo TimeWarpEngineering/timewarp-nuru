@@ -13,6 +13,7 @@ Port the Cocona Advanced.PreventMultipleInstances sample to Nuru, demonstrating 
 - Implement mutex-based instance prevention
 - Handle already-running scenarios gracefully
 - Create Overview.md comparing singleton approaches
+- Implementation location: `Samples/CoconaComparison/Advanced/prevent-multiple-instances`
 
 ## Checklist
 

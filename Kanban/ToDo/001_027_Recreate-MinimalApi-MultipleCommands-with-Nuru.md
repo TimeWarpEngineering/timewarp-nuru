@@ -13,6 +13,7 @@ Port the Cocona MinimalApi.MultipleCommands sample to Nuru, demonstrating multip
 - Show command organization in minimal style
 - Implement various command patterns
 - Create Overview.md comparing approaches
+- Implementation location: `Samples/CoconaComparison/MinimalApi/minimal-api-multiple-commands`
 
 ## Checklist
 

@@ -13,6 +13,7 @@ Port the Cocona Advanced.OptionLikeCommand sample to Nuru, demonstrating option-
 - Implement --version and --help as commands
 - Handle special option patterns
 - Create Overview.md comparing approaches
+- Implementation location: `Samples/CoconaComparison/Advanced/option-like-command`
 
 ## Checklist
 

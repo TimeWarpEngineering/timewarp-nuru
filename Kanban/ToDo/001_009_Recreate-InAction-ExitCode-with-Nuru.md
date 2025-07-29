@@ -13,6 +13,7 @@ Port the Cocona InAction.ExitCode sample to Nuru, demonstrating proper exit code
 - Implement commands that return different exit codes
 - Handle exceptions and their exit codes
 - Create Overview.md comparing exit code strategies
+- Implementation location: `Samples/CoconaComparison/InAction/exit-code`
 
 ## Checklist
 

@@ -13,6 +13,7 @@ Port the Cocona InAction.ManyArguments sample to Nuru, demonstrating handling of
 - Implement variadic parameter collection
 - Handle argument arrays and lists
 - Create Overview.md comparing argument handling
+- Implementation location: `Samples/CoconaComparison/InAction/many-arguments`
 
 ## Checklist
 

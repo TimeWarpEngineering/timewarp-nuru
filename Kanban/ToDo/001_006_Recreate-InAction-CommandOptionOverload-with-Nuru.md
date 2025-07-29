@@ -13,6 +13,7 @@ Port the Cocona InAction.CommandOptionOverload sample to Nuru, demonstrating com
 - Implement multiple command signatures with same name
 - Handle different parameter combinations
 - Create Overview.md comparing overload approaches
+- Implementation location: `Samples/CoconaComparison/InAction/command-option-overload`
 
 ## Checklist
 

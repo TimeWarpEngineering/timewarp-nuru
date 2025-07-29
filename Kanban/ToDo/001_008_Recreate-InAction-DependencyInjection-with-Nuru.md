@@ -13,6 +13,7 @@ Port the Cocona InAction.DependencyInjection sample to Nuru, demonstrating depen
 - Register and inject services into commands
 - Demonstrate scoped and singleton lifetimes
 - Create Overview.md comparing DI approaches
+- Implementation location: `Samples/CoconaComparison/InAction/dependency-injection`
 
 ## Checklist
 

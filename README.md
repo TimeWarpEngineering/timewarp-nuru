@@ -212,6 +212,44 @@ builder.AddRoute("fetch {url}", async (string url) => {
 });
 ```
 
+### Output Handling & Console Streams
+
+TimeWarp.Nuru gives you full control over output handling:
+
+```csharp
+// Simple console output (stdout)
+builder.AddRoute("hello", () => Console.WriteLine("Hello!"));
+
+// Structured data - automatically serialized to JSON (stdout)
+builder.AddRoute("info", () => new { Name = "MyApp", Version = "1.0" });
+
+// Separate concerns: diagnostics to stderr, data to stdout
+builder.AddRoute("process {file}", (string file) => 
+{
+    Console.Error.WriteLine($"Processing {file}...");  // Progress to stderr
+    Thread.Sleep(1000);
+    Console.Error.WriteLine("Complete!");
+    return new { File = file, Lines = 42, Status = "OK" };  // Result as JSON to stdout
+});
+
+// With DI and logging
+public class AnalyzeHandler(ILogger<AnalyzeHandler> logger) : IRequestHandler<AnalyzeCommand, AnalyzeResult>
+{
+    public async Task<AnalyzeResult> Handle(AnalyzeCommand cmd, CancellationToken ct)
+    {
+        logger.LogInformation("Starting analysis of {Path}", cmd.Path);  // Structured logging
+        var result = await AnalyzeAsync(cmd.Path);
+        return result;  // Returned object → JSON to stdout
+    }
+}
+```
+
+**Best Practices:**
+- Use `Console.WriteLine()` for human-readable output to stdout
+- Use `Console.Error.WriteLine()` for progress, diagnostics, and errors to stderr  
+- Return objects from handlers to get automatic JSON serialization to stdout
+- This separation enables piping and scripting: `./myapp analyze data.csv | jq '.summary'`
+
 ## 🚄 Native AOT Ready
 
 Build ultra-fast native binaries with the right configuration:

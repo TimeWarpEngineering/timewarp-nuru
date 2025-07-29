@@ -14,7 +14,7 @@ Parent task to track the recreation of all 29 Cocona sample applications using N
 ## Checklist
 
 ### Getting Started Samples (3 tasks)
-- [ ] 001_001_Recreate-GettingStarted-MinimalApp-with-Nuru
+- [x] 001_001_Recreate-GettingStarted-MinimalApp-with-Nuru
 - [ ] 001_002_Recreate-GettingStarted-SubCommandApp-with-Nuru
 - [ ] 001_003_Recreate-GettingStarted-TypicalSimpleApp-with-Nuru
 

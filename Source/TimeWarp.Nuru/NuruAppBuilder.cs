@@ -1,4 +1,3 @@
-
 namespace TimeWarp.Nuru;
 
 /// <summary>
@@ -84,7 +83,17 @@ public class NuruAppBuilder
   /// Requires AddDependencyInjection() to be called first.
   /// </summary>
   public NuruAppBuilder AddRoute<TCommand>(string pattern, string? description = null)
-      where TCommand : IRequest, new()
+    where TCommand : IRequest, new()
+  {
+    return AddMediatorRoute(typeof(TCommand), pattern, description);
+  }
+
+  /// <summary>
+  /// Adds a Mediator command-based route with response.
+  /// Requires AddDependencyInjection() to be called first.
+  /// </summary>
+  public NuruAppBuilder AddRoute<TCommand, TResponse>(string pattern, string? description = null)
+    where TCommand : IRequest<TResponse>, new()
   {
     return AddMediatorRoute(typeof(TCommand), pattern, description);
   }
@@ -106,16 +115,6 @@ public class NuruAppBuilder
 
     EndpointCollection.Add(endpoint);
     return this;
-  }
-
-  /// <summary>
-  /// Adds a Mediator command-based route with response.
-  /// Requires AddDependencyInjection() to be called first.
-  /// </summary>
-  public NuruAppBuilder AddRoute<TCommand, TResponse>(string pattern, string? description = null)
-      where TCommand : IRequest<TResponse>, new()
-  {
-    return AddMediatorRoute(typeof(TCommand), pattern, description);
   }
 
   /// <summary>

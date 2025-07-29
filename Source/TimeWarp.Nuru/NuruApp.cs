@@ -8,7 +8,6 @@ public class NuruApp
   private readonly IServiceProvider? ServiceProvider;
   private readonly EndpointCollection Endpoints;
   private readonly ITypeConverterRegistry TypeConverterRegistry;
-  private readonly RouteBasedCommandResolver Resolver;
   private readonly CommandExecutor? CommandExecutor;
 
   /// <summary>
@@ -18,7 +17,6 @@ public class NuruApp
   {
     Endpoints = endpoints ?? throw new ArgumentNullException(nameof(endpoints));
     TypeConverterRegistry = typeConverterRegistry ?? throw new ArgumentNullException(nameof(typeConverterRegistry));
-    Resolver = new RouteBasedCommandResolver(endpoints, typeConverterRegistry);
   }
 
   /// <summary>
@@ -30,7 +28,6 @@ public class NuruApp
     Endpoints = serviceProvider.GetRequiredService<EndpointCollection>();
     TypeConverterRegistry = serviceProvider.GetRequiredService<ITypeConverterRegistry>();
     CommandExecutor = serviceProvider.GetRequiredService<CommandExecutor>();
-    Resolver = new RouteBasedCommandResolver(Endpoints, TypeConverterRegistry);
   }
 
   public IServiceProvider? Services => ServiceProvider;
@@ -42,7 +39,7 @@ public class NuruApp
     try
     {
       // Parse and match route
-      ResolverResult result = Resolver.Resolve(args);
+      ResolverResult result = RouteBasedCommandResolver.Resolve(args, Endpoints, TypeConverterRegistry);
 
       if (!result.Success || result.MatchedEndpoint is null)
       {

@@ -75,7 +75,6 @@ public static class RouteHelpProvider
     }
   }
 
-
   private static Dictionary<string, List<RouteEndpoint>> GroupRoutesByPrefix(IReadOnlyList<RouteEndpoint> routes)
   {
     var groups = new Dictionary<string, List<RouteEndpoint>>();

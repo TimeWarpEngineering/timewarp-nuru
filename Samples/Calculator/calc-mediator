@@ -47,33 +47,97 @@ builder.AddRoute("help",
 var app = builder.Build();
 return await app.RunAsync(args);
 
-// Command definitions - using classes with properties for the constraint
+// Command definitions with nested handlers
 public class AddCommand : IRequest 
 { 
     public double X { get; set; }
     public double Y { get; set; }
+    
+    public class Handler(ICalculatorService calc) : IRequestHandler<AddCommand>
+    {
+        public async Task Handle(AddCommand request, CancellationToken cancellationToken)
+        {
+            var result = calc.Add(request.X, request.Y);
+            WriteLine($"{request.X} + {request.Y} = {result}");
+            await Task.CompletedTask;
+        }
+    }
 }
+
 public class SubtractCommand : IRequest
 {
     public double X { get; set; }
     public double Y { get; set; }
+    
+    public class Handler(ICalculatorService calc) : IRequestHandler<SubtractCommand>
+    {
+        public async Task Handle(SubtractCommand request, CancellationToken cancellationToken)
+        {
+            var result = calc.Subtract(request.X, request.Y);
+            WriteLine($"{request.X} - {request.Y} = {result}");
+            await Task.CompletedTask;
+        }
+    }
 }
+
 public class MultiplyCommand : IRequest
 {
     public double X { get; set; }
     public double Y { get; set; }
+    
+    public class Handler(ICalculatorService calc) : IRequestHandler<MultiplyCommand>
+    {
+        public async Task Handle(MultiplyCommand request, CancellationToken cancellationToken)
+        {
+            var result = calc.Multiply(request.X, request.Y);
+            WriteLine($"{request.X} × {request.Y} = {result}");
+            await Task.CompletedTask;
+        }
+    }
 }
+
 public class DivideCommand : IRequest
 {
     public double X { get; set; }
     public double Y { get; set; }
+    
+    public class Handler(ICalculatorService calc) : IRequestHandler<DivideCommand>
+    {
+        public async Task Handle(DivideCommand request, CancellationToken cancellationToken)
+        {
+            var (result, error) = calc.Divide(request.X, request.Y);
+            if (error != null)
+                WriteLine($"Error: {error}");
+            else
+                WriteLine($"{request.X} ÷ {request.Y} = {result}");
+            await Task.CompletedTask;
+        }
+    }
 }
+
 public class RoundCommand : IRequest
 {
     public double Value { get; set; }
     public string? Mode { get; set; } = "nearest";
+    
+    public class Handler(ICalculatorService calc) : IRequestHandler<RoundCommand>
+    {
+        public async Task Handle(RoundCommand request, CancellationToken cancellationToken)
+        {
+            var (result, error) = calc.Round(request.Value, request.Mode ?? "nearest");
+            if (error != null)
+            {
+                WriteLine($"Error: {error}");
+                WriteLine("Valid modes: up, down, nearest, banker/accountancy");
+            }
+            else
+            {
+                WriteLine($"Round({request.Value}, {request.Mode ?? "nearest"}) = {result}");
+            }
+            await Task.CompletedTask;
+        }
+    }
 }
-
 
 // Service interface
 public interface ICalculatorService
@@ -110,64 +174,3 @@ public class CalculatorService : ICalculatorService
         };
 }
 
-// Handlers
-public class AddHandler(ICalculatorService calc) : IRequestHandler<AddCommand>
-{
-    public async Task Handle(AddCommand request, CancellationToken cancellationToken)
-    {
-        var result = calc.Add(request.X, request.Y);
-        WriteLine($"{request.X} + {request.Y} = {result}");
-        await Task.CompletedTask;
-    }
-}
-
-public class SubtractHandler(ICalculatorService calc) : IRequestHandler<SubtractCommand>
-{
-    public async Task Handle(SubtractCommand request, CancellationToken cancellationToken)
-    {
-        var result = calc.Subtract(request.X, request.Y);
-        WriteLine($"{request.X} - {request.Y} = {result}");
-        await Task.CompletedTask;
-    }
-}
-
-public class MultiplyHandler(ICalculatorService calc) : IRequestHandler<MultiplyCommand>
-{
-    public async Task Handle(MultiplyCommand request, CancellationToken cancellationToken)
-    {
-        var result = calc.Multiply(request.X, request.Y);
-        WriteLine($"{request.X} × {request.Y} = {result}");
-        await Task.CompletedTask;
-    }
-}
-
-public class DivideHandler(ICalculatorService calc) : IRequestHandler<DivideCommand>
-{
-    public async Task Handle(DivideCommand request, CancellationToken cancellationToken)
-    {
-        var (result, error) = calc.Divide(request.X, request.Y);
-        if (error != null)
-            WriteLine($"Error: {error}");
-        else
-            WriteLine($"{request.X} ÷ {request.Y} = {result}");
-        await Task.CompletedTask;
-    }
-}
-
-public class RoundHandler(ICalculatorService calc) : IRequestHandler<RoundCommand>
-{
-    public async Task Handle(RoundCommand request, CancellationToken cancellationToken)
-    {
-        var (result, error) = calc.Round(request.Value, request.Mode ?? "nearest");
-        if (error != null)
-        {
-            WriteLine($"Error: {error}");
-            WriteLine("Valid modes: up, down, nearest, banker/accountancy");
-        }
-        else
-        {
-            WriteLine($"Round({request.Value}, {request.Mode ?? "nearest"}) = {result}");
-        }
-        await Task.CompletedTask;
-    }
-}

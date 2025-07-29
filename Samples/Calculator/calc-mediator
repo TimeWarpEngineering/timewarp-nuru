@@ -173,4 +173,3 @@ public class CalculatorService : ICalculatorService
             _ => (0, $"Unknown rounding mode '{mode}'")
         };
 }
-

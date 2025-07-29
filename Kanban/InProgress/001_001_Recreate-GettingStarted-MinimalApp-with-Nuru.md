@@ -17,18 +17,19 @@ Port the Cocona GettingStarted.MinimalApp sample to Nuru, demonstrating the simp
 ## Checklist
 
 ### Implementation
-- [ ] Create single-file executable at `Samples/CoconaComparison/GettingStarted/minimal-app`
-- [ ] Port the Hello command with toUpperCase option and name argument
-- [ ] Ensure proper argument and option parsing
-- [ ] Test the application works as expected
+- [x] Create single-file executable at `Samples/CoconaComparison/GettingStarted/minimal-app` (delegate version)
+- [x] Create single-file executable at `Samples/CoconaComparison/GettingStarted/minimal-app-di` (class-based with DI)
+- [x] Port the Hello command with toUpperCase option and name argument
+- [x] Ensure proper argument and option parsing
+- [x] Test both implementations work as expected
 
 ### Documentation
-- [ ] Create Overview.md with side-by-side comparison
-- [ ] Document differences in:
-  - [ ] Project setup and initialization
-  - [ ] Main method structure
-  - [ ] Attribute/annotation usage
-  - [ ] Argument and option declaration
+- [x] Create Overview.md with side-by-side comparison
+- [x] Document differences in:
+  - [x] Project setup and initialization
+  - [x] Main method structure
+  - [x] Attribute/annotation usage
+  - [x] Argument and option declaration
 
 ## Notes
 

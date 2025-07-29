@@ -1,0 +1,63 @@
+#!/usr/bin/dotnet --
+// app-configuration-di - Nuru DI version with configuration injection
+#:project ../../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
+#:package Microsoft.Extensions.Configuration
+#:package Microsoft.Extensions.Configuration.Binder
+#:package Microsoft.Extensions.Configuration.Json
+#:package Microsoft.Extensions.Configuration.EnvironmentVariables
+
+using TimeWarp.Nuru;
+using TimeWarp.Mediator;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Configuration;
+using static System.Console;
+
+// Build configuration
+var configuration = new ConfigurationBuilder()
+    .SetBasePath(Directory.GetCurrentDirectory())
+    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+    .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? "Production"}.json", optional: true)
+    .AddEnvironmentVariables()
+    .Build();
+
+// Create app with DI and configuration
+var builder = new NuruAppBuilder()
+    .AddDependencyInjection(config => 
+    {
+        config.RegisterServicesFromAssembly(typeof(RunCommand).Assembly);
+    });
+
+// Add configuration to DI container
+builder.Services.AddSingleton<IConfiguration>(configuration);
+
+var app = builder
+    .AddRoute<RunCommand>("run")
+    .AddAutoHelp()
+    .Build();
+
+return await app.RunAsync(args);
+
+// Command that receives configuration through DI
+public class RunCommand : IRequest
+{
+    public class Handler : IRequestHandler<RunCommand>
+    {
+        private readonly IConfiguration _configuration;
+        
+        public Handler(IConfiguration configuration)
+        {
+            _configuration = configuration;
+        }
+        
+        public async Task Handle(RunCommand request, CancellationToken cancellationToken)
+        {
+            var configValue1 = _configuration.GetValue<bool>("ConfigValue1");
+            var configValue2 = _configuration.GetValue<string>("ConfigValue2");
+            
+            WriteLine($"ConfigValue1: {configValue1}");
+            WriteLine($"ConfigValue2: {configValue2}");
+            
+            await Task.CompletedTask;
+        }
+    }
+}

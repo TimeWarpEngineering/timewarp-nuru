@@ -271,7 +271,6 @@ public class NuruApp
 
   private void ShowAvailableCommands()
   {
-    var helpProvider = new Help.RouteHelpProvider(Endpoints);
-    helpProvider.ShowHelp();
+    Console.WriteLine(RouteHelpProvider.GetHelpText(Endpoints));
   }
 }

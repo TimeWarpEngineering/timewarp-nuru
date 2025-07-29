@@ -78,6 +78,19 @@ internal static class DefaultTypeConverters
         return true;
       }
     }
+    else if (targetType.IsEnum)
+    {
+      try
+      {
+        result = Enum.Parse(targetType, value, ignoreCase: true);
+        return true;
+      }
+      catch (ArgumentException)
+      {
+        // Value is not a valid enum member
+        return false;
+      }
+    }
 
     return false;
   }

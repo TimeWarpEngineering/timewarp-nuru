@@ -138,3 +138,18 @@ DOTNET_ENVIRONMENT=Development ./app-configuration run
 # Uses Production configuration (default)
 ./app-configuration run
 ```
+
+## Evaluation
+
+With the addition of the `.AddConfiguration()` extension method, Nuru now offers the best of both worlds:
+
+1. **Delegate Approach**: Full control over configuration for simple scenarios or when you need custom configuration sources
+2. **DI Approach with AddConfiguration**: Matches Cocona's convenience for standard configuration scenarios
+
+The `.AddConfiguration()` method automatically sets up:
+- `appsettings.json` (optional)
+- Environment-specific configuration files
+- Environment variables
+- Command line arguments
+
+This brings Nuru to feature parity with Cocona's Host Builder pattern while maintaining the flexibility to manually configure when needed. The performance characteristics remain unchanged - the delegate approach still offers minimal overhead while the DI approach provides enterprise patterns.

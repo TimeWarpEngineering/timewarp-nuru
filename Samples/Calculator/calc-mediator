@@ -6,11 +6,11 @@ using TimeWarp.Nuru;
 using TimeWarp.Mediator;
 using Microsoft.Extensions.DependencyInjection;
 
-var builder = new AppBuilder();
+var builder = new NuruAppBuilder()
+    .AddDependencyInjection(config => config.RegisterServicesFromAssembly(typeof(AddCommand).Assembly));
 
 // Register services
 builder.Services.AddSingleton<ICalculatorService, CalculatorService>();
-builder.Services.AddMediator(config => config.RegisterServicesFromAssembly(typeof(AddCommand).Assembly));
 
 // Define routes - no return type needed, just console output
 builder.AddRoute<AddCommand>("add {x:double} {y:double}");

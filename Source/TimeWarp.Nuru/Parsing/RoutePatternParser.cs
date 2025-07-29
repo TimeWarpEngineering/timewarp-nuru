@@ -28,7 +28,7 @@ public static class RoutePatternParser
     {
       string part = parts[i];
 
-      if (part.StartsWith(CommonStrings.DoubleDash, StringComparison.Ordinal) || part.StartsWith(CommonStrings.SingleDash))
+      if (part.StartsWith(CommonStrings.DoubleDash, StringComparison.Ordinal) || part.StartsWith(CommonStrings.SingleDash, StringComparison.Ordinal))
       {
         // This is an option - check for alias syntax (--long|-s)
         string optionName;
@@ -116,7 +116,7 @@ public static class RoutePatternParser
       }
     }
 
-    var parsedRoute = new ParsedRoute
+    return new ParsedRoute
     {
       PositionalTemplate = segments.ToArray(),
       RequiredOptions = requiredOptions.ToArray(),
@@ -124,7 +124,5 @@ public static class RoutePatternParser
       CatchAllParameterName = catchAllParameterName,
       Specificity = specificity
     };
-
-    return parsedRoute;
   }
 }

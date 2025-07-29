@@ -13,7 +13,7 @@ internal static class DefaultTypeConverters
   public static bool TryConvert(string value, Type targetType, out object? result)
   {
     result = null;
-    
+
     if (targetType == typeof(int))
     {
       if (int.TryParse(value, out int intValue))
@@ -78,7 +78,7 @@ internal static class DefaultTypeConverters
         return true;
       }
     }
-    
+
     return false;
   }
 

@@ -3,7 +3,7 @@ namespace TimeWarp.Nuru.CommandResolver;
 /// <summary>
 /// A command resolver that uses route patterns to match commands.
 /// </summary>
-internal class RouteBasedCommandResolver
+internal sealed class RouteBasedCommandResolver
 {
   private readonly EndpointCollection Endpoints;
   private readonly ITypeConverterRegistry TypeConverterRegistry;
@@ -57,7 +57,7 @@ internal class RouteBasedCommandResolver
           {
             return (endpoint, extractedValues);
           }
-          
+
           // For non-catch-all routes, ensure all arguments were consumed
           int totalConsumed = consumedArgs + optionsConsumed;
           if (totalConsumed == args.Length)
@@ -95,7 +95,7 @@ internal class RouteBasedCommandResolver
       }
 
       // Regular segment matching
-      if (i >= args.Length || args[i].StartsWith(CommonStrings.SingleDash))
+      if (i >= args.Length || args[i].StartsWith(CommonStrings.SingleDash, StringComparison.Ordinal))
         return false; // Not enough args or hit an option
 
       if (!segment.TryMatch(args[i], out string? value))
@@ -147,6 +147,7 @@ internal class RouteBasedCommandResolver
             {
               extractedValues[optionSegment.ValueParameterName] = remainingArgs[i + 1];
             }
+
             optionsConsumed += 2; // Option + value
           }
           else

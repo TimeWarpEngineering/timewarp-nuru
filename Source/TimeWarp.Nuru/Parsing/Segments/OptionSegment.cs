@@ -45,9 +45,9 @@ public class OptionSegment : RouteSegment
       return true;
 
     // For short options, check grouped options (e.g., -abc contains -a)
-    if (ShortAlias?.StartsWith(CommonStrings.SingleDash) == true && ShortAlias.Length == 2)
+    if (ShortAlias?.StartsWith(CommonStrings.SingleDash, StringComparison.Ordinal) == true && ShortAlias.Length == 2)
     {
-      if (arg.StartsWith(CommonStrings.SingleDash) && arg.Length > 2 && !arg.StartsWith(CommonStrings.DoubleDash, StringComparison.Ordinal))
+      if (arg.StartsWith(CommonStrings.SingleDash, StringComparison.Ordinal) && arg.Length > 2 && !arg.StartsWith(CommonStrings.DoubleDash, StringComparison.Ordinal))
       {
         char shortChar = ShortAlias[1];
         return arg.Contains(shortChar.ToString(), StringComparison.Ordinal);

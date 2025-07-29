@@ -23,7 +23,7 @@ public class TypeConverterRegistry : ITypeConverterRegistry
 
     // Lazy initialize dictionaries on first use
     ConvertersByConstraint ??= new Dictionary<string, IRouteTypeConverter>(StringComparer.OrdinalIgnoreCase);
-    ConvertersByType ??= new Dictionary<Type, IRouteTypeConverter>();
+    ConvertersByType ??= [];
 
     ConvertersByConstraint[converter.ConstraintName] = converter;
     ConvertersByType[converter.TargetType] = converter;

@@ -1,0 +1,104 @@
+#!/usr/bin/dotnet --
+// command-filter-di - Nuru DI version demonstrating mediator pipeline behaviors
+#:project ../../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
+#:package Microsoft.Extensions.Logging.Console
+#:property PublishAot=false
+
+using TimeWarp.Nuru;
+using TimeWarp.Nuru.Extensions;
+using TimeWarp.Mediator;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using static System.Console;
+
+// Create app with DI and pipeline behaviors
+var builder = new NuruAppBuilder()
+    .AddDependencyInjection(config => 
+    {
+        config.RegisterServicesFromAssembly(typeof(HelloCommand).Assembly);
+    });
+
+// Configure logging and add pipeline behaviors
+builder.Services.AddLogging(config => 
+{
+    config.AddConsole();
+    config.SetMinimumLevel(LogLevel.Information);
+});
+builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
+builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+
+var app = builder
+    .AddRoute<HelloCommand>("hello")
+    .AddAutoHelp()
+    .Build();
+
+// Optional: Display pipeline info
+// var pipelineInfo = builder.Services.GetPipelineInfo();
+// WriteLine(pipelineInfo);
+
+return await app.RunAsync(args);
+
+// Command with multiple pipeline behaviors applied
+public class HelloCommand : IRequest
+{
+    public class Handler : IRequestHandler<HelloCommand>
+    {
+        public async Task Handle(HelloCommand request, CancellationToken cancellationToken)
+        {
+            WriteLine($"Hello Konnichiwa");
+            await Task.CompletedTask;
+        }
+    }
+}
+
+// Logging behavior (similar to CommandFilter)
+public class LoggingBehavior<TRequest, TResponse> : TimeWarp.Mediator.IPipelineBehavior<TRequest, TResponse>
+    where TRequest : IRequest
+{
+    private readonly ILogger<LoggingBehavior<TRequest, TResponse>> _logger;
+
+    public LoggingBehavior(ILogger<LoggingBehavior<TRequest, TResponse>> logger)
+    {
+        _logger = logger;
+    }
+
+    public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
+    {
+        var requestName = typeof(TRequest).Name;
+        _logger.LogInformation($"[LoggingBehavior] Before Command: {requestName}");
+        
+        try
+        {
+            var response = await next();
+            _logger.LogInformation($"[LoggingBehavior] After Command: {requestName}");
+            return response;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError($"[LoggingBehavior] Exception: {ex.GetType().FullName}: {ex.Message}");
+            throw;
+        }
+    }
+}
+
+// Validation behavior (another cross-cutting concern)
+public class ValidationBehavior<TRequest, TResponse> : TimeWarp.Mediator.IPipelineBehavior<TRequest, TResponse>
+    where TRequest : IRequest
+{
+    private readonly ILogger<ValidationBehavior<TRequest, TResponse>> _logger;
+
+    public ValidationBehavior(ILogger<ValidationBehavior<TRequest, TResponse>> logger)
+    {
+        _logger = logger;
+    }
+
+    public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
+    {
+        _logger.LogInformation($"[ValidationBehavior] Validating: {typeof(TRequest).Name}");
+        
+        // In a real application, you would perform validation here
+        // For example, using FluentValidation or custom validation logic
+        
+        return await next();
+    }
+}

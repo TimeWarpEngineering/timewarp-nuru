@@ -14,7 +14,7 @@
     <PackageVersion Include="Microsoft.Extensions.Configuration.CommandLine" Version="9.0.0" />
     <PackageVersion Include="Microsoft.Extensions.Configuration.Json" Version="9.0.0" />
     <PackageVersion Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="9.0.0" />
-    <PackageVersion Include="TimeWarp.Mediator" Version="13.0.0-beta.3" />
+    <PackageVersion Include="TimeWarp.Mediator" Version="13.0.0-beta.4" />
     <PackageVersion Include="TimeWarp.Cli" Version="0.6.0-rc12" />
     <!-- Benchmark packages -->
     <PackageVersion Include="BenchmarkDotNet" Version="0.15.2" />
@@ -24,6 +24,7 @@
     <PackageVersion Include="CommandLineParser" Version="2.9.1" />
     <PackageVersion Include="ConsoleAppFramework" Version="5.5.0" />
     <PackageVersion Include="Microsoft.Extensions.Hosting" Version="9.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Console" Version="9.0.0" />
     <PackageVersion Include="McMaster.Extensions.CommandLineUtils" Version="4.1.1" />
     <PackageVersion Include="PowerArgs" Version="4.0.3" />
     <PackageVersion Include="Spectre.Console.Cli" Version="0.50.0" />

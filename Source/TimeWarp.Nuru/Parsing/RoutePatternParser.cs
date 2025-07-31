@@ -3,7 +3,7 @@ namespace TimeWarp.Nuru.Parsing;
 /// <summary>
 /// Parses route pattern strings into ParsedRoute objects.
 /// </summary>
-public static class RoutePatternParser
+internal static class RoutePatternParser
 {
   private static readonly Regex ParameterRegex = new(@"\{(\*)?([^}:|]+)(:([^}|]+))?(\|([^}]+))?\}", RegexOptions.Compiled);
 
@@ -96,8 +96,7 @@ public static class RoutePatternParser
   /// <returns>A parsed representation of the route.</returns>
   public static ParsedRoute Parse(string routePattern)
   {
-    if (string.IsNullOrWhiteSpace(routePattern))
-      throw new ArgumentException("Route pattern cannot be null or empty.", nameof(routePattern));
+    ArgumentNullException.ThrowIfNull(routePattern);
 
     // First, tokenize the pattern to handle descriptions with spaces
     List<string> parts = TokenizePattern(routePattern);

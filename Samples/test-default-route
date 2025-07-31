@@ -1,0 +1,14 @@
+#!/usr/bin/dotnet --
+// test-default-route - Test default route functionality
+#:project ../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
+
+using TimeWarp.Nuru;
+
+var app = new NuruAppBuilder()
+    .AddDefaultRoute(() => Console.WriteLine("Welcome to MyApp! Use --help for available commands."))
+    .AddRoute("--help", () => Console.WriteLine("Available commands: version, status"))
+    .AddRoute("version", () => Console.WriteLine("Version 1.0.0"))
+    .AddRoute("status", () => Console.WriteLine("Status: OK"))
+    .Build();
+
+return await app.RunAsync(args);

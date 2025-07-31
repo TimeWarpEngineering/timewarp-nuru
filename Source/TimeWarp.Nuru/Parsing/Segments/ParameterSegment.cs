@@ -17,12 +17,17 @@ public class ParameterSegment : RouteSegment
   /// Gets the constraint for this parameter (e.g., "int" in {id:int}).
   /// </summary>
   public string? Constraint { get; }
+  /// <summary>
+  /// Gets the description for this parameter.
+  /// </summary>
+  public string? Description { get; }
 
-  public ParameterSegment(string name, bool isCatchAll = false, string? constraint = null)
+  public ParameterSegment(string name, bool isCatchAll = false, string? constraint = null, string? description = null)
   {
     Name = name ?? throw new ArgumentNullException(nameof(name));
     IsCatchAll = isCatchAll;
     Constraint = constraint;
+    Description = description;
   }
 
   public override bool TryMatch(string arg, out string? extractedValue)

@@ -10,7 +10,6 @@ internal static class CommonStrings
   // Option prefixes
   public static readonly string SingleDash = string.Intern("-");
   public static readonly string DoubleDash = string.Intern("--");
-  
   // Boolean values
   public static readonly string True = string.Intern("true");
   public static readonly string False = string.Intern("false");
@@ -22,7 +21,6 @@ internal static class CommonStrings
   public static readonly string Off = string.Intern("off");
   public static readonly string Enabled = string.Intern("enabled");
   public static readonly string Disabled = string.Intern("disabled");
-  
   // Common characters and symbols
   public static readonly string Space = string.Intern(" ");
   public static readonly string Empty = string.Empty; // Already interned by .NET

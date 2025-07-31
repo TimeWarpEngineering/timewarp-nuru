@@ -4,7 +4,7 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     
     <!-- Package Metadata -->
-    <Version>1.0.0</Version>
+    <Version>2.0.0-beta.1</Version>
     <Authors>Steven T. Cramer</Authors>
     <RepositoryUrl>https://github.com/TimeWarpEngineering/timewarp-nuru</RepositoryUrl>
     <PackageLicenseExpression>Unlicense</PackageLicenseExpression>
@@ -12,7 +12,7 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
     
     <!-- Analyzer Settings -->
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <WarningLevel>5</WarningLevel>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <AnalysisMode>All</AnalysisMode>
@@ -34,6 +34,11 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
+    
+    <!-- Suppress CA1812 - false positives for DI-instantiated classes -->
+    <!-- Suppress CA1014 - We don't need CLS compliance for this library -->
+    <!-- Suppress AOT warnings until we implement proper AOT support -->
+    <NoWarn>$(NoWarn);CA1812;CA1014;IL2026;IL2067;IL2070;IL2075;IL3050;IL2104;IL3053</NoWarn>
   </PropertyGroup>
   
   <ItemGroup>

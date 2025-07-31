@@ -4,11 +4,11 @@ using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 
 // Build the app
-var builder = new AppBuilder();
-
-// Add services
-builder.Services.AddSingleton<IMediator, Mediator>();
-builder.Services.AddSingleton<IRequestHandler<CalculateCommand, CalculateResponse>, CalculateHandler>();
+var builder = new NuruAppBuilder()
+    .AddDependencyInjection(config => 
+    {
+        config.RegisterServicesFromAssembly(typeof(CalculateHandler).Assembly);
+    });
 
 // Add routes
 builder.AddRoute("status", () => Console.WriteLine("✓ System is running"), "Check system status");

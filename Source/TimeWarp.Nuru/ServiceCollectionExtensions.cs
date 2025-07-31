@@ -21,9 +21,6 @@ public static class ServiceCollectionExtensions
     // Register command executor for Mediator integration
     services.TryAddSingleton<CommandExecutor>();
 
-    // Register the CLI
-    services.TryAddSingleton<NuruCli>();
-
     return services;
   }
 }

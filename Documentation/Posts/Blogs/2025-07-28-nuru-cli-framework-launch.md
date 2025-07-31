@@ -41,7 +41,7 @@ That's... a lot of ceremony for "take an ID and do something."
 With TimeWarp.Nuru, you write CLI commands like web routes:
 
 ```csharp
-var app = new DirectAppBuilder()
+var app = new NuruAppBuilder()
     .AddRoute("users {id:int}", (int id) => GetUser(id))
     .AddRoute("deploy {env} --dry-run", (string env) => DeployDryRun(env))
     .AddRoute("backup {*files}", (string[] files) => BackupFiles(files))
@@ -50,19 +50,20 @@ var app = new DirectAppBuilder()
 await app.RunAsync(args);
 ```
 
-That's it. Your entire CLI app.
+That's it. Your entire CLI app. One builder, infinite possibilities.
 
 ## But What About Complex Apps?
 
-Fair question. Sometimes you need dependency injection, unit testing, and all that enterprise goodness. That's why Nuru gives you two modes:
+Fair question. Sometimes you need dependency injection, unit testing, and all that enterprise goodness. That's why Nuru gives you flexibility within a single builder:
 
-**Direct Mode**: For when you just want to get stuff done
+**Direct approach**: For when you just want to get stuff done
 ```csharp
-.AddRoute("status", () => Console.WriteLine("All systems operational"))
+builder.AddRoute("status", () => Console.WriteLine("All systems operational"))
 ```
 
-**Mediator Mode**: For when you need structure
+**Mediator approach**: For when you need structure
 ```csharp
+builder.AddDependencyInjection(); // Enable DI and Mediator support
 builder.Services.AddSingleton<IDeploymentService, DeploymentService>();
 builder.AddRoute<DeployCommand>("deploy {environment} --strategy {strategy}");
 ```
@@ -74,11 +75,14 @@ The kicker? You can use both in the same app. Simple commands stay simple. Compl
 Here's a deployment tool I built last week:
 
 ```csharp
-var builder = new AppBuilder();
+var builder = new NuruAppBuilder();
 
 // Simple commands: Direct
 builder.AddRoute("status", () => ShowStatus());
 builder.AddRoute("version", () => Console.WriteLine("v1.0.0"));
+
+// Enable DI for complex commands
+builder.AddDependencyInjection();
 
 // Complex commands: Mediator with DI
 builder.Services.AddSingleton<IKubernetesClient, KubernetesClient>();
@@ -95,9 +99,9 @@ The status command? One line. The deployment logic? Properly structured with ser
 
 ## Performance? Yeah, We Got That
 
-Look, I'm not going to bore you with benchmark charts. But when you remove unnecessary abstractions, good things happen. The Direct mode is fast. Really fast. And it compiles to tiny Native AOT binaries that start instantly.
+Look, I'm not going to bore you with benchmark charts. But when you remove unnecessary abstractions, good things happen. Direct routes are fast. Really fast. And they compile to tiny Native AOT binaries that start instantly.
 
-Perfect for containerized environments where every millisecond of cold start matters.
+Perfect for containerized environments where every millisecond of cold start matters. But here's the beauty - you don't have to choose upfront. Start simple, add DI when you need it. One builder, your choice.
 
 ## Your CLI Superpower
 
@@ -120,7 +124,7 @@ Then:
 ```csharp
 using TimeWarp.Nuru;
 
-var app = new DirectAppBuilder()
+var app = new NuruAppBuilder()
     .AddRoute("greet {name}", (string name) => 
         Console.WriteLine($"Hello, {name}!"))
     .Build();

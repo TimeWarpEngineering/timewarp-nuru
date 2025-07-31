@@ -1,0 +1,19 @@
+#!/usr/bin/dotnet --
+// typical-simple-app - Nuru version of Cocona's GettingStarted.TypicalSimpleApp
+#:project ../../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
+
+using TimeWarp.Nuru;
+using static System.Console;
+
+// Typical simple CLI app with a single command and proper description
+var app = new NuruAppBuilder()
+    .AddRoute("hello {name|Your name} --to-upper-case,-u|Print a name converted to upper-case {toUpperCase:bool}", 
+        (string name, bool toUpperCase) => 
+        {
+            WriteLine($"Hello {(toUpperCase ? name.ToUpper() : name)}!");
+        },
+        description: "This is a sample application")
+    .AddAutoHelp()  // Enable help generation for a professional CLI experience
+    .Build();
+
+return await app.RunAsync(args);

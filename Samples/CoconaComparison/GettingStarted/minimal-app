@@ -1,0 +1,19 @@
+#!/usr/bin/dotnet --
+// minimal-app - Nuru version of Cocona's GettingStarted.MinimalApp
+#:project ../../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
+
+using TimeWarp.Nuru;
+using static System.Console;
+
+// Simple CLI app demonstrating basic argument and option handling with auto-generated help
+var app = new NuruAppBuilder()
+    .AddRoute("hello {name:string} --to-upper-case {toUpperCase:bool}", 
+        (string name, bool toUpperCase) => 
+        {
+            WriteLine($"Hello {(toUpperCase ? name.ToUpper() : name)}");
+        },
+        description: "Greets a person by name with optional uppercase")
+    .AddAutoHelp()  // This automatically generates --help and hello --help routes
+    .Build();
+
+return await app.RunAsync(args);

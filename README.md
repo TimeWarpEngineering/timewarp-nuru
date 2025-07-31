@@ -30,7 +30,7 @@ Build a powerful calculator CLI that mixes performance and flexibility:
 using TimeWarp.Nuru;
 using TimeWarp.Mediator;
 
-var builder = new AppBuilder();
+var builder = new NuruAppBuilder();
 
 // Simple operations: Direct approach (maximum speed)
 builder.AddRoute("add {x:double} {y:double}", 
@@ -38,6 +38,9 @@ builder.AddRoute("add {x:double} {y:double}",
 
 builder.AddRoute("multiply {x:double} {y:double}", 
     (double x, double y) => Console.WriteLine($"{x} × {y} = {x * y}"));
+
+// Enable DI for complex operations
+builder.AddDependencyInjection();
 
 // Complex operations: Mediator approach (testable, DI)
 builder.Services.AddSingleton<ICalculator, Calculator>();
@@ -70,6 +73,22 @@ dotnet run -- factorial 5
 
 ## 🎯 Why TimeWarp.Nuru?
 
+### Mix Direct and Mediator Approaches in One App
+Choose the right tool for each command:
+```csharp
+var builder = new NuruAppBuilder();
+
+// Direct delegates for simple operations (fast, no overhead)
+builder.AddRoute("ping", () => Console.WriteLine("pong"));
+
+// Add DI when you need it
+builder.AddDependencyInjection();
+
+// Mediator pattern for complex operations (testable, DI, structured)
+builder.Services.AddSingleton<IDatabase, Database>();
+builder.AddRoute<QueryCommand>("query {sql}");
+```
+
 ### Web-Style Route Patterns for CLI
 ```csharp
 // Familiar syntax from web development
@@ -78,33 +97,37 @@ builder.AddRoute("serve --port {port:int} --host {host?}", (int port, string? ho
 builder.AddRoute("backup {*files}", (string[] files) => BackupFiles(files));
 ```
 
-### Flexibility Without Compromise
-**Choose your approach per command** - not per application:
-- Simple commands → Direct (fast)
-- Complex commands → Mediator (structured)
-- Mixed in the same app → Best of both
+### Flexibility: Mix Approaches in the Same App
+**Choose the right approach for each command**:
+- Simple commands → Direct delegates (fast, zero overhead)
+- Complex commands → Mediator pattern (testable, DI, structured)
+- Both in the same app → Maximum flexibility
 
-### Three Approaches - Choose Your Power Level
+### Choose Your Approach Per Command
 
 **🚀 Direct** - Maximum performance, zero overhead
 ```csharp
-var app = new DirectAppBuilder()
+var app = new NuruAppBuilder()
     .AddRoute("deploy {env}", (string env) => Deploy(env))
     .Build(); // ~4KB memory, blazing fast
 ```
 
 **🏗️ Mediator** - Enterprise patterns, full DI
 ```csharp
-var builder = new AppBuilder();
+var builder = new NuruAppBuilder()
+    .AddDependencyInjection(); // Enable DI and Mediator support
 builder.AddRoute<DeployCommand>("deploy {env} --strategy {strategy}");
 // Testable handlers, dependency injection, complex logic
 ```
 
 **⚡ Mixed** - Best of both worlds (recommended)
 ```csharp
+var builder = new NuruAppBuilder();
 // Simple commands: Direct (speed)
 builder.AddRoute("status", () => ShowStatus());
 
+// Enable DI for complex commands
+builder.AddDependencyInjection();
 // Complex commands: Mediator (structure)
 builder.AddRoute<AnalyzeCommand>("analyze {*files}");
 ```
@@ -164,26 +187,30 @@ builder.AddRoute("deploy {app} --env {environment}",
 Scale from simple scripts to complex applications:
 
 ```csharp
-// Commands as classes - perfect for complex logic
+// Commands as classes with nested handlers - perfect for complex logic
 public class DeployCommand : IRequest
 {
     public string Environment { get; set; }
     public string? Version { get; set; }
     public bool DryRun { get; set; }
-}
-
-// Handlers with full DI support
-public class DeployHandler(IDeploymentService deployment, ILogger logger) 
-    : IRequestHandler<DeployCommand>
-{
-    public async Task Handle(DeployCommand cmd, CancellationToken ct)
+    
+    // Handler nested inside command for better organization
+    public class Handler(IDeploymentService deployment, ILogger logger) 
+        : IRequestHandler<DeployCommand>
     {
-        if (cmd.DryRun)
-            await deployment.ValidateAsync(cmd.Environment, cmd.Version);
-        else  
-            await deployment.ExecuteAsync(cmd.Environment, cmd.Version);
+        public async Task Handle(DeployCommand cmd, CancellationToken ct)
+        {
+            if (cmd.DryRun)
+                await deployment.ValidateAsync(cmd.Environment, cmd.Version);
+            else  
+                await deployment.ExecuteAsync(cmd.Environment, cmd.Version);
+        }
     }
 }
+
+// Enable DI and register services
+builder.AddDependencyInjection();
+builder.Services.AddSingleton<IDeploymentService, DeploymentService>();
 
 // Simple registration
 builder.AddRoute<DeployCommand>("deploy {environment} --version {version?} --dry-run");
@@ -199,18 +226,75 @@ builder.AddRoute("download {url:uri}", (Uri url) => Download(url));
 builder.AddRoute("process {date:datetime}", (DateTime d) => Process(d));
 ```
 
-### Custom Types & Async
+### Async Support
 ```csharp
-// Add your own type converters
-builder.AddTypeConverter<GitBranch>(value => GitBranch.Parse(value));
-builder.AddRoute("checkout {branch:GitBranch}", (GitBranch b) => Git.Checkout(b));
-
-// Full async support
+// Full async support for both Direct and Mediator approaches
 builder.AddRoute("fetch {url}", async (string url) => {
     var data = await httpClient.GetStringAsync(url);
     await File.WriteAllTextAsync("result.txt", data);
 });
+
+// Async Mediator commands with nested handler
+public class FetchCommand : IRequest<string> 
+{ 
+    public string Url { get; set; }
+    
+    public class Handler : IRequestHandler<FetchCommand, string>
+    {
+        public async Task<string> Handle(FetchCommand cmd, CancellationToken ct)
+        {
+            using var client = new HttpClient();
+            return await client.GetStringAsync(cmd.Url, ct);
+        }
+    }
+}
 ```
+
+### Output Handling & Console Streams
+
+TimeWarp.Nuru gives you full control over output handling:
+
+```csharp
+// Simple console output (stdout)
+builder.AddRoute("hello", () => Console.WriteLine("Hello!"));
+
+// Structured data - automatically serialized to JSON (stdout)
+builder.AddRoute("info", () => new { Name = "MyApp", Version = "1.0" });
+
+// Separate concerns: diagnostics to stderr, data to stdout
+builder.AddRoute("process {file}", (string file) => 
+{
+    Console.Error.WriteLine($"Processing {file}...");  // Progress to stderr
+    Thread.Sleep(1000);
+    Console.Error.WriteLine("Complete!");
+    return new { File = file, Lines = 42, Status = "OK" };  // Result as JSON to stdout
+});
+
+// With DI and logging
+builder.AddDependencyInjection();
+builder.Services.AddLogging(); // Add logging services
+
+public class AnalyzeCommand : IRequest<AnalyzeResult>
+{
+    public string Path { get; set; }
+    
+    public class Handler(ILogger<Handler> logger) : IRequestHandler<AnalyzeCommand, AnalyzeResult>
+    {
+        public async Task<AnalyzeResult> Handle(AnalyzeCommand cmd, CancellationToken ct)
+        {
+            logger.LogInformation("Starting analysis of {Path}", cmd.Path);  // Structured logging
+            var result = await AnalyzeAsync(cmd.Path);
+            return result;  // Returned object → JSON to stdout
+        }
+    }
+}
+```
+
+**Best Practices:**
+- Use `Console.WriteLine()` for human-readable output to stdout
+- Use `Console.Error.WriteLine()` for progress, diagnostics, and errors to stderr  
+- Return objects from handlers to get automatic JSON serialization to stdout
+- This separation enables piping and scripting: `./myapp analyze data.csv | jq '.summary'`
 
 ## 🚄 Native AOT Ready
 

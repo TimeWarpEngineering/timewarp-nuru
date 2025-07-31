@@ -3,8 +3,18 @@
 # Comprehensive test that compares Delegate vs Mediator implementations
 # Tests both JIT and AOT versions
 
+# Get the directory where this script is located
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+# Change to the repository root (parent of Tests directory)
+pushd "$SCRIPT_DIR/.." > /dev/null || exit 1
+
+# Ensure we return to original directory on exit
+trap 'popd > /dev/null' EXIT
+
 # Create log file with timestamp in logs directory
 LOG_FILE="Tests/logs/comparison-results-$(date '+%Y%m%d-%H%M%S').log"
+mkdir -p "$(dirname "$LOG_FILE")"
 exec > >(tee "$LOG_FILE")
 exec 2>&1
 
@@ -119,20 +129,37 @@ echo ""
 # Build all versions first
 echo "Building projects..."
 echo -n "  Delegate version (JIT)... "
-(cd Tests/TimeWarp.Nuru.TestApp.Delegates && dotnet build -c Release --nologo --verbosity quiet > /dev/null 2>&1)
-echo -e "${GREEN}✓${NC}"
+if (cd Tests/TimeWarp.Nuru.TestApp.Delegates && dotnet build -c Release --nologo --verbosity quiet > /dev/null 2>&1); then
+    echo -e "${GREEN}✓${NC}"
+else
+    echo -e "${RED}✗ Build failed${NC}"
+    echo "Build error output:"
+    (cd Tests/TimeWarp.Nuru.TestApp.Delegates && dotnet build -c Release --nologo)
+    exit 1
+fi
 
 echo -n "  Mediator version (JIT)... "
-(cd Tests/TimeWarp.Nuru.TestApp.Mediator && dotnet build -c Release --nologo --verbosity quiet > /dev/null 2>&1)
-echo -e "${GREEN}✓${NC}"
+if (cd Tests/TimeWarp.Nuru.TestApp.Mediator && dotnet build -c Release --nologo --verbosity quiet > /dev/null 2>&1); then
+    echo -e "${GREEN}✓${NC}"
+else
+    echo -e "${RED}✗ Build failed${NC}"
+    echo "Build error output:"
+    (cd Tests/TimeWarp.Nuru.TestApp.Mediator && dotnet build -c Release --nologo)
+    exit 1
+fi
 
 echo -n "  Delegate version (AOT)... "
-(cd Tests/TimeWarp.Nuru.TestApp.Delegates && dotnet publish -c Release -r linux-x64 -p:PublishAot=true -o ./aot-output --nologo --verbosity quiet > /dev/null 2>&1)
-echo -e "${GREEN}✓${NC}"
+if (cd Tests/TimeWarp.Nuru.TestApp.Delegates && dotnet publish -c Release -r linux-x64 -p:PublishAot=true -o ./aot-output --nologo --verbosity quiet > /dev/null 2>&1); then
+    echo -e "${GREEN}✓${NC}"
+else
+    echo -e "${RED}✗ AOT build failed${NC}"
+    echo "Build error output:"
+    (cd Tests/TimeWarp.Nuru.TestApp.Delegates && dotnet publish -c Release -r linux-x64 -p:PublishAot=true -o ./aot-output --nologo)
+    exit 1
+fi
 
 echo -n "  Mediator version (AOT)... "
-(cd Tests/TimeWarp.Nuru.TestApp.Mediator && dotnet publish -c Release -r linux-x64 -p:PublishAot=true -o ./aot-output --nologo --verbosity quiet > /dev/null 2>&1)
-if [ $? -eq 0 ]; then
+if (cd Tests/TimeWarp.Nuru.TestApp.Mediator && dotnet publish -c Release -r linux-x64 -p:PublishAot=true -o ./aot-output --nologo --verbosity quiet > /dev/null 2>&1); then
     echo -e "${GREEN}✓${NC}"
 else
     echo -e "${RED}✗ AOT build failed (likely due to reflection warnings)${NC}"

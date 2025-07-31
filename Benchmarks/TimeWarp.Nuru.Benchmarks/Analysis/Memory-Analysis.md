@@ -1,10 +1,14 @@
 # TimeWarp.Nuru Memory Analysis
 
-## Current Memory Usage (2025-07-27)
-- **TimeWarp.Nuru.Direct**: 4,352 B (#2 best - beats System.CommandLine by 62%!)
-- **TimeWarp.Nuru (Full DI)**: 16,904 B (#4 in efficiency)
+## Current Memory Usage (2025-07-29)
+- **TimeWarp.Nuru.Direct**: 4,016 B (#2 best - beats System.CommandLine by 65%!)
+- **TimeWarp.Nuru (Mediator)**: 30,560 B (proper IRequest/IRequestHandler implementation)
 - **System.CommandLine**: 11,360 B (#3)
 - **ConsoleAppFramework v5**: 0 B (#1 - source generated baseline)
+
+### Previous Results (2025-07-27)
+- **TimeWarp.Nuru.Direct**: 4,352 B 
+- **TimeWarp.Nuru (Full DI)**: 16,904 B (was using delegate, not true mediator)
 
 ## Memory Allocation Breakdown
 

@@ -13,7 +13,7 @@ internal static class DefaultTypeConverters
   public static bool TryConvert(string value, Type targetType, out object? result)
   {
     result = null;
-    
+
     if (targetType == typeof(int))
     {
       if (int.TryParse(value, out int intValue))
@@ -78,7 +78,20 @@ internal static class DefaultTypeConverters
         return true;
       }
     }
-    
+    else if (targetType.IsEnum)
+    {
+      try
+      {
+        result = Enum.Parse(targetType, value, ignoreCase: true);
+        return true;
+      }
+      catch (ArgumentException)
+      {
+        // Value is not a valid enum member
+        return false;
+      }
+    }
+
     return false;
   }
 

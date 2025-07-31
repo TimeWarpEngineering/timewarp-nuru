@@ -1,6 +1,6 @@
 using TimeWarp.Nuru;
 
-var builder = new DirectAppBuilder();
+var builder = new NuruAppBuilder();
 
 // Test 1: Basic Commands
 builder.AddRoute("status", () => Console.WriteLine("✓ System is running"));
@@ -95,5 +95,5 @@ builder.AddRoute("--help", () =>
 });
 
 // Build and run
-DirectApp app = builder.Build();
+NuruApp app = builder.Build();
 return await app.RunAsync(args).ConfigureAwait(false);

@@ -21,13 +21,18 @@ public class OptionSegment : RouteSegment
   /// Gets the short form alias for this option (e.g., "-m" for "--message").
   /// </summary>
   public string? ShortAlias { get; }
+  /// <summary>
+  /// Gets the description for this option.
+  /// </summary>
+  public string? Description { get; }
 
-  public OptionSegment(string name, bool expectsValue = false, string? valueParameterName = null, string? shortAlias = null)
+  public OptionSegment(string name, bool expectsValue = false, string? valueParameterName = null, string? shortAlias = null, string? description = null)
   {
     Name = name ?? throw new ArgumentNullException(nameof(name));
     ExpectsValue = expectsValue;
     ValueParameterName = valueParameterName;
     ShortAlias = shortAlias;
+    Description = description;
   }
 
   public override bool TryMatch(string arg, out string? extractedValue)
@@ -45,9 +50,9 @@ public class OptionSegment : RouteSegment
       return true;
 
     // For short options, check grouped options (e.g., -abc contains -a)
-    if (ShortAlias?.StartsWith(CommonStrings.SingleDash) == true && ShortAlias.Length == 2)
+    if (ShortAlias?.StartsWith(CommonStrings.SingleDash, StringComparison.Ordinal) == true && ShortAlias.Length == 2)
     {
-      if (arg.StartsWith(CommonStrings.SingleDash) && arg.Length > 2 && !arg.StartsWith(CommonStrings.DoubleDash, StringComparison.Ordinal))
+      if (arg.StartsWith(CommonStrings.SingleDash, StringComparison.Ordinal) && arg.Length > 2 && !arg.StartsWith(CommonStrings.DoubleDash, StringComparison.Ordinal))
       {
         char shortChar = ShortAlias[1];
         return arg.Contains(shortChar.ToString(), StringComparison.Ordinal);

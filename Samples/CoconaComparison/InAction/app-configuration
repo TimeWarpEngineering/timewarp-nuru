@@ -1,0 +1,36 @@
+#!/usr/bin/dotnet --
+// app-configuration - Nuru delegate version showing configuration usage
+#:project ../../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
+#:package Microsoft.Extensions.Configuration
+#:package Microsoft.Extensions.Configuration.Binder
+#:package Microsoft.Extensions.Configuration.Json
+#:package Microsoft.Extensions.Configuration.EnvironmentVariables
+
+using TimeWarp.Nuru;
+using Microsoft.Extensions.Configuration;
+using static System.Console;
+
+// Build configuration manually for delegate approach
+var configuration = new ConfigurationBuilder()
+    .SetBasePath(Directory.GetCurrentDirectory())
+    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+    .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? "Production"}.json", optional: true)
+    .AddEnvironmentVariables()
+    .Build();
+
+// Access configuration values
+var configValue1 = configuration.GetValue<bool>("ConfigValue1");
+var configValue2 = configuration.GetValue<string>("ConfigValue2");
+
+// Create app with route that uses configuration
+var app = new NuruAppBuilder()
+    .AddRoute("run", () =>
+    {
+        WriteLine($"ConfigValue1: {configValue1}");
+        WriteLine($"ConfigValue2: {configValue2}");
+    },
+    description: "Run the application and display configuration values")
+    .AddAutoHelp()
+    .Build();
+
+return await app.RunAsync(args);

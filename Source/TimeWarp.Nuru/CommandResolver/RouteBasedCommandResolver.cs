@@ -3,23 +3,16 @@ namespace TimeWarp.Nuru.CommandResolver;
 /// <summary>
 /// A command resolver that uses route patterns to match commands.
 /// </summary>
-internal class RouteBasedCommandResolver
+internal static class RouteBasedCommandResolver
 {
-  private readonly EndpointCollection Endpoints;
-  private readonly ITypeConverterRegistry TypeConverterRegistry;
-
-  public RouteBasedCommandResolver(EndpointCollection endpoints, ITypeConverterRegistry typeConverterRegistry)
-  {
-    Endpoints = endpoints ?? throw new ArgumentNullException(nameof(endpoints));
-    TypeConverterRegistry = typeConverterRegistry ?? throw new ArgumentNullException(nameof(typeConverterRegistry));
-  }
-
-  public ResolverResult Resolve(string[] args)
+  public static ResolverResult Resolve(string[] args, EndpointCollection endpoints, ITypeConverterRegistry typeConverterRegistry)
   {
     ArgumentNullException.ThrowIfNull(args);
+    ArgumentNullException.ThrowIfNull(endpoints);
+    ArgumentNullException.ThrowIfNull(typeConverterRegistry);
 
     // Try to match against route endpoints
-    (RouteEndpoint endpoint, Dictionary<string, string> extractedValues)? matchResult = MatchRoute(args);
+    (RouteEndpoint endpoint, Dictionary<string, string> extractedValues)? matchResult = MatchRoute(args, endpoints);
 
     if (matchResult is not null)
     {
@@ -38,13 +31,12 @@ internal class RouteBasedCommandResolver
     );
   }
 
-  private (RouteEndpoint endpoint, Dictionary<string, string> extractedValues)? MatchRoute(string[] args)
+  private static (RouteEndpoint endpoint, Dictionary<string, string> extractedValues)? MatchRoute(string[] args, EndpointCollection endpoints)
   {
     var extractedValues = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
-    foreach (RouteEndpoint endpoint in Endpoints)
+    foreach (RouteEndpoint endpoint in endpoints)
     {
-
       // Check positional segments
       if (MatchPositionalSegments(endpoint, args, extractedValues, out int consumedArgs))
       {
@@ -57,7 +49,7 @@ internal class RouteBasedCommandResolver
           {
             return (endpoint, extractedValues);
           }
-          
+
           // For non-catch-all routes, ensure all arguments were consumed
           int totalConsumed = consumedArgs + optionsConsumed;
           if (totalConsumed == args.Length)
@@ -95,7 +87,7 @@ internal class RouteBasedCommandResolver
       }
 
       // Regular segment matching
-      if (i >= args.Length || args[i].StartsWith(CommonStrings.SingleDash))
+      if (i >= args.Length || args[i].StartsWith(CommonStrings.SingleDash, StringComparison.Ordinal))
         return false; // Not enough args or hit an option
 
       if (!segment.TryMatch(args[i], out string? value))
@@ -147,6 +139,7 @@ internal class RouteBasedCommandResolver
             {
               extractedValues[optionSegment.ValueParameterName] = remainingArgs[i + 1];
             }
+
             optionsConsumed += 2; // Option + value
           }
           else

@@ -63,11 +63,24 @@ public class NuruAppBuilder
   }
 
   /// <summary>
+  /// Adds a default route that executes when no arguments are provided.
+  /// </summary>
+  public NuruAppBuilder AddDefaultRoute(Delegate handler, string? description = null)
+  {
+    return AddRouteInternal(string.Empty, handler, description);
+  }
+
+  /// <summary>
   /// Adds a delegate-based route.
   /// </summary>
   public NuruAppBuilder AddRoute(string pattern, Delegate handler, string? description = null)
   {
     ArgumentNullException.ThrowIfNull(pattern);
+    return AddRouteInternal(pattern, handler, description);
+  }
+
+  private NuruAppBuilder AddRouteInternal(string pattern, Delegate handler, string? description)
+  {
     ArgumentNullException.ThrowIfNull(handler);
 
     var endpoint = new RouteEndpoint

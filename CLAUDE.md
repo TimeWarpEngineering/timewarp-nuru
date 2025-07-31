@@ -1,3 +1,4 @@
+@Agent.md
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
@@ -124,3 +125,10 @@ dotnet publish -c Release -r linux-x64 -p:PublishAot=true -p:TrimMode=partial
 - Central package management via Directory.Packages.props
 - Local NuGet cache configured in Directory.Build.props
 - Supports .NET 10 script mode (see README examples)
+
+## Cocona Comparison Documentation
+
+When working with Cocona comparison documents in `/Samples/CoconaComparison/`:
+- Follow the template structure defined in `CoconaComparisonTemplate.md`
+- Check `CoconaComparisonUpdateTracking.md` for documents needing updates
+- Ensure all comparison documents maintain consistent structure for better developer experience

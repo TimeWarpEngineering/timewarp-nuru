@@ -142,8 +142,22 @@ public class NuruApp
           PropertyInfo? resultProperty = taskType.GetProperty("Result");
           if (resultProperty is not null)
           {
-            returnValue = resultProperty.GetValue(task);
+            object? result = resultProperty.GetValue(task);
+            // Check if this is VoidTaskResult (used internally for void async methods)
+            if (result?.GetType().Name == "VoidTaskResult")
+            {
+              returnValue = null;
+            }
+            else
+            {
+              returnValue = result;
+            }
           }
+        }
+        else
+        {
+          // For non-generic Task (void async), set to null to avoid displaying VoidTaskResult
+          returnValue = null;
         }
       }
 

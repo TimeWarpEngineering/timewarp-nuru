@@ -74,7 +74,14 @@ builder.AddRoute("git commit -m {message}", (string message) =>
 builder.AddRoute("git commit --message {message}", (string message) =>
     Console.WriteLine($"Creating commit with message: {message} (using --message flag)"));
 
-// Test 11: Ultimate Catch-All
+// Test 11: Async void methods
+builder.AddRoute("async-test", async () =>
+{
+    await Task.Delay(10); // Simulate async work
+    Console.WriteLine("Async operation completed");
+});
+
+// Test 12: Ultimate Catch-All
 builder.AddRoute("{*everything}", (string[] everything) =>
     Console.WriteLine($"Unknown command: {string.Join(" ", everything)}"));
 

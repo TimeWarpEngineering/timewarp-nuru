@@ -104,18 +104,21 @@ run_all_tests() {
     run_test "Short form -m" 'git commit -m "Short form"' "Short form.*using -m shorthand"
     run_test "Long form --message" 'git commit --message "Long form"' "Long form.*using --message flag"
 
-    # Test 11: Ultimate Catch-All
+    # Test 11: Async void methods
+    run_test "Async void method" "async-test" "Async operation completed"
+
+    # Test 12: Ultimate Catch-All
     run_test "Unknown command" "some random command that does not match anything" "Unknown command: some random command that does not match anything"
     run_test "Multiple unknown args" "foo bar baz qux" "Unknown command: foo bar baz qux"
 
-    # Test 12: Help System
+    # Test 13: Help System
     run_test "Help flag" "--help" "TimeWarp.Nuru Integration Tests"
 
-    # Test 13: Parameter Type Conversion
+    # Test 14: Parameter Type Conversion
     run_test "Integer parameter" "git log --max-count 42" "Showing last 42 commits"
     run_test "Invalid integer" "git log --max-count abc" "Cannot convert 'abc' to type System.Int32"
 
-    # Test 14: Catch-All Parameters
+    # Test 15: Catch-All Parameters
     run_test "Docker complex command" "docker run -v /host:/container -e ENV=prod --name test nginx" "docker run -v /host:/container -e ENV=prod --name test nginx"
     run_test "npm complex command" "npm install react react-dom @types/react --save-dev --legacy-peer-deps" "npm install react react-dom @types/react --save-dev --legacy-peer-deps"
 }
@@ -179,7 +182,7 @@ END_TIME=$(date +%s.%N)
 DELEGATE_JIT_TIME=$(echo "$END_TIME - $START_TIME" | bc)
 DELEGATE_JIT_PASSED=$PASSED
 DELEGATE_JIT_FAILED=$FAILED
-echo "Passed: $PASSED/37, Failed: $FAILED"
+echo "Passed: $PASSED/38, Failed: $FAILED"
 echo "Execution time: ${DELEGATE_JIT_TIME}s"
 
 echo ""
@@ -192,7 +195,7 @@ END_TIME=$(date +%s.%N)
 MEDIATOR_JIT_TIME=$(echo "$END_TIME - $START_TIME" | bc)
 MEDIATOR_JIT_PASSED=$PASSED
 MEDIATOR_JIT_FAILED=$FAILED
-echo "Passed: $PASSED/37, Failed: $FAILED"
+echo "Passed: $PASSED/38, Failed: $FAILED"
 echo "Execution time: ${MEDIATOR_JIT_TIME}s"
 
 echo ""
@@ -206,7 +209,7 @@ if [ -f "$EXECUTABLE" ]; then
     DELEGATE_AOT_TIME=$(echo "$END_TIME - $START_TIME" | bc)
     DELEGATE_AOT_PASSED=$PASSED
     DELEGATE_AOT_FAILED=$FAILED
-    echo "Passed: $PASSED/37, Failed: $FAILED"
+    echo "Passed: $PASSED/38, Failed: $FAILED"
     echo "Execution time: ${DELEGATE_AOT_TIME}s"
 else
     echo -e "${RED}AOT binary not found${NC}"
@@ -224,7 +227,7 @@ if [ -f "$EXECUTABLE" ]; then
     MEDIATOR_AOT_TIME=$(echo "$END_TIME - $START_TIME" | bc)
     MEDIATOR_AOT_PASSED=$PASSED
     MEDIATOR_AOT_FAILED=$FAILED
-    echo "Passed: $PASSED/37, Failed: $FAILED"
+    echo "Passed: $PASSED/38, Failed: $FAILED"
     echo "Execution time: ${MEDIATOR_AOT_TIME}s"
 else
     echo -e "${RED}AOT binary not found (build may have failed due to reflection)${NC}"

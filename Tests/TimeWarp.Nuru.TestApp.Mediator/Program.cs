@@ -60,6 +60,9 @@ builder.AddRoute<AsyncTestCommand>("async-test");
 builder.AddRoute<DeployCommand>("deploy {env} {tag?}");
 builder.AddRoute<BackupCommand>("backup {source} {destination?}");
 
+// Test 17: Nullable Type Parameters
+builder.AddRoute<SleepCommand>("sleep {seconds:int?}");
+
 // Test 11: Ultimate Catch-All (2)
 builder.AddRoute<CatchAllCommand>("{*everything}");
 
@@ -70,7 +73,7 @@ builder.AddRoute<HelpCommand>("--help");
 NuruApp app = builder.Build();
 return await app.RunAsync(args).ConfigureAwait(false);
 
-// ========== Command Definitions with Nested Handlers (42 total) ==========
+// ========== Command Definitions with Nested Handlers (44 total) ==========
 
 // Test 1: Basic Commands
 internal sealed class StatusCommand : IRequest
@@ -529,6 +532,22 @@ internal sealed class BackupCommand : IRequest
       {
         Console.WriteLine($"Backing up {request.Source} to {request.Destination}");
       }
+    }
+  }
+}
+
+// Test 17: Nullable Type Parameters
+internal sealed class SleepCommand : IRequest
+{
+  public int? Seconds { get; set; }
+
+  public class Handler : IRequestHandler<SleepCommand>
+  {
+    public Task Handle(SleepCommand request, CancellationToken cancellationToken)
+    {
+      int sleepTime = request.Seconds ?? 1;
+      Console.WriteLine($"Sleeping for {sleepTime} seconds");
+      return Task.CompletedTask;
     }
   }
 }

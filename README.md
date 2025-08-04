@@ -182,6 +182,25 @@ builder.AddRoute("deploy {app} --env {environment}",
     (string app, string env) => DeployReal(app, env));
 ```
 
+### Automatic Help Generation
+
+Enable automatic help for all your commands:
+
+```csharp
+var app = new NuruAppBuilder()
+    .AddRoute("deploy {env|Target environment} {tag?|Optional version tag}", 
+        (string env, string? tag) => Deploy(env, tag))
+    .AddRoute("backup {source} --compress,-c|Enable compression", 
+        (string source, bool compress) => Backup(source, compress))
+    .AddAutoHelp()  // Generates help for all commands
+    .Build();
+```
+
+This automatically creates:
+- `--help` - Shows all available commands
+- `deploy --help` - Shows usage for the deploy command
+- Parameter and option descriptions using the `|` syntax
+
 ## 🏗️ Enterprise-Ready Patterns
 
 Scale from simple scripts to complex applications:

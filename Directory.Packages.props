@@ -14,7 +14,7 @@
     <PackageVersion Include="Microsoft.Extensions.Configuration.CommandLine" Version="9.0.0" />
     <PackageVersion Include="Microsoft.Extensions.Configuration.Json" Version="9.0.0" />
     <PackageVersion Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="9.0.0" />
-    <PackageVersion Include="TimeWarp.Mediator" Version="13.0.0-beta.4" />
+    <PackageVersion Include="TimeWarp.Mediator" Version="13.0.0" />
     <PackageVersion Include="TimeWarp.Cli" Version="0.6.0-rc12" />
     <!-- Benchmark packages -->
     <PackageVersion Include="BenchmarkDotNet" Version="0.15.2" />

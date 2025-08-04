@@ -43,7 +43,7 @@ public static class RouteHelpProvider
     // Display grouped routes
     foreach (KeyValuePair<string, List<RouteEndpoint>> group in groupedRoutes.Where(g => !string.IsNullOrEmpty(g.Key)).OrderBy(g => g.Key))
     {
-      sb.AppendLine($"{group.Key} Commands:");
+      sb.AppendLine(CultureInfo.InvariantCulture, $"{group.Key} Commands:");
       foreach (RouteEndpoint? route in group.Value)
       {
         AppendRoute(sb, route, indent: true);
@@ -67,11 +67,11 @@ public static class RouteHelpProvider
       int padding = 40 - pattern.Length - prefix.Length;
       if (padding < 2) padding = 2;
 
-      sb.AppendLine($"{prefix}{pattern}{new string(' ', padding)}{description}");
+      sb.AppendLine(CultureInfo.InvariantCulture, $"{prefix}{pattern}{new string(' ', padding)}{description}");
     }
     else
     {
-      sb.AppendLine($"{prefix}{pattern}");
+      sb.AppendLine(CultureInfo.InvariantCulture, $"{prefix}{pattern}");
     }
   }
 

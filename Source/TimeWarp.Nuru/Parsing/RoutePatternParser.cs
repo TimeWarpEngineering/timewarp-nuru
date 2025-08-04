@@ -183,6 +183,13 @@ internal static class RoutePatternParser
             string? typeConstraint = paramMatch.Groups[5].Success ? paramMatch.Groups[5].Value : null;
             string? paramDescription = paramMatch.Groups[7].Success ? paramMatch.Groups[7].Value : null;
 
+            // Check if the type constraint ends with ? for nullable types
+            if (!isOptional && typeConstraint?.EndsWith('?') == true)
+            {
+              isOptional = true;
+              // Note: We keep the ? in the type constraint so TypeConverterRegistry can handle it
+            }
+
             valueParameterName = paramName;
 
             if (isCatchAll)
@@ -210,6 +217,13 @@ internal static class RoutePatternParser
           bool isOptional = paramMatch.Groups[3].Value == "?";
           string? typeConstraint = paramMatch.Groups[5].Success ? paramMatch.Groups[5].Value : null;
           string? description = paramMatch.Groups[7].Success ? paramMatch.Groups[7].Value : null;
+
+          // Check if the type constraint ends with ? for nullable types
+          if (!isOptional && typeConstraint?.EndsWith('?') == true)
+          {
+            isOptional = true;
+            // Note: We keep the ? in the type constraint so TypeConverterRegistry can handle it
+          }
 
           // Parameter information is stored in the ParameterSegment
 

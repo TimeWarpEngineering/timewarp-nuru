@@ -121,6 +121,12 @@ run_all_tests() {
     # Test 15: Catch-All Parameters
     run_test "Docker complex command" "docker run -v /host:/container -e ENV=prod --name test nginx" "docker run -v /host:/container -e ENV=prod --name test nginx"
     run_test "npm complex command" "npm install react react-dom @types/react --save-dev --legacy-peer-deps" "npm install react react-dom @types/react --save-dev --legacy-peer-deps"
+    
+    # Test 16: Optional Parameters
+    run_test "Deploy with required param only" "deploy prod" "Deploying to prod with latest tag"
+    run_test "Deploy with both params" "deploy prod v2.0" "Deploying to prod with tag v2.0"
+    run_test "Backup with required param only" "backup mydata" "Backing up mydata to default location"
+    run_test "Backup with both params" "backup mydata /backup/location" "Backing up mydata to /backup/location"
 }
 
 echo "=============================================="
@@ -182,7 +188,7 @@ END_TIME=$(date +%s.%N)
 DELEGATE_JIT_TIME=$(echo "$END_TIME - $START_TIME" | bc)
 DELEGATE_JIT_PASSED=$PASSED
 DELEGATE_JIT_FAILED=$FAILED
-echo "Passed: $PASSED/38, Failed: $FAILED"
+echo "Passed: $PASSED/42, Failed: $FAILED"
 echo "Execution time: ${DELEGATE_JIT_TIME}s"
 
 echo ""
@@ -195,7 +201,7 @@ END_TIME=$(date +%s.%N)
 MEDIATOR_JIT_TIME=$(echo "$END_TIME - $START_TIME" | bc)
 MEDIATOR_JIT_PASSED=$PASSED
 MEDIATOR_JIT_FAILED=$FAILED
-echo "Passed: $PASSED/38, Failed: $FAILED"
+echo "Passed: $PASSED/42, Failed: $FAILED"
 echo "Execution time: ${MEDIATOR_JIT_TIME}s"
 
 echo ""
@@ -209,7 +215,7 @@ if [ -f "$EXECUTABLE" ]; then
     DELEGATE_AOT_TIME=$(echo "$END_TIME - $START_TIME" | bc)
     DELEGATE_AOT_PASSED=$PASSED
     DELEGATE_AOT_FAILED=$FAILED
-    echo "Passed: $PASSED/38, Failed: $FAILED"
+    echo "Passed: $PASSED/42, Failed: $FAILED"
     echo "Execution time: ${DELEGATE_AOT_TIME}s"
 else
     echo -e "${RED}AOT binary not found${NC}"
@@ -227,7 +233,7 @@ if [ -f "$EXECUTABLE" ]; then
     MEDIATOR_AOT_TIME=$(echo "$END_TIME - $START_TIME" | bc)
     MEDIATOR_AOT_PASSED=$PASSED
     MEDIATOR_AOT_FAILED=$FAILED
-    echo "Passed: $PASSED/38, Failed: $FAILED"
+    echo "Passed: $PASSED/42, Failed: $FAILED"
     echo "Execution time: ${MEDIATOR_AOT_TIME}s"
 else
     echo -e "${RED}AOT binary not found (build may have failed due to reflection)${NC}"

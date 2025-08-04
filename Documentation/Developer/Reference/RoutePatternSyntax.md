@@ -54,6 +54,13 @@ Parameters can be made optional by adding `?` after the name:
 .AddRoute("deploy {env} {tag?}", (string env, string? tag) => ...)
 ```
 
+Optional parameters can also have type constraints:
+
+```csharp
+.AddRoute("wait {seconds:int?}", (int? seconds) => ...)
+.AddRoute("backup {source} {destination:string?}", (string source, string? destination) => ...)
+```
+
 ### Catch-all Parameters
 
 Use `*` prefix for catch-all parameters that capture all remaining arguments:

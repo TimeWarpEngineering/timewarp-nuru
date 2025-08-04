@@ -53,6 +53,13 @@ builder.AddRoute<GitCommitMessageAmendCommand>("git commit --message {message} -
 builder.AddRoute<GitCommitMCommand>("git commit -m {message}");
 builder.AddRoute<GitCommitMessageCommand>("git commit --message {message}");
 
+// Test 11: Async void methods
+builder.AddRoute<AsyncTestCommand>("async-test");
+
+// Test 15: Optional Parameters
+builder.AddRoute<DeployCommand>("deploy {env} {tag?}");
+builder.AddRoute<BackupCommand>("backup {source} {destination?}");
+
 // Test 11: Ultimate Catch-All (2)
 builder.AddRoute<CatchAllCommand>("{*everything}");
 
@@ -63,7 +70,7 @@ builder.AddRoute<HelpCommand>("--help");
 NuruApp app = builder.Build();
 return await app.RunAsync(args).ConfigureAwait(false);
 
-// ========== Command Definitions with Nested Handlers (37 total) ==========
+// ========== Command Definitions with Nested Handlers (42 total) ==========
 
 // Test 1: Basic Commands
 internal sealed class StatusCommand : IRequest
@@ -463,6 +470,65 @@ internal sealed class GitCommitMessageCommand : IRequest
     {
       Console.WriteLine($"Creating commit with message: {request.Message} (using --message flag)");
       return Task.CompletedTask;
+    }
+  }
+}
+
+// Test 11: Async void methods
+internal sealed class AsyncTestCommand : IRequest
+{
+  public class Handler : IRequestHandler<AsyncTestCommand>
+  {
+    public async Task Handle(AsyncTestCommand request, CancellationToken cancellationToken)
+    {
+      await Task.Delay(100, cancellationToken);
+      Console.WriteLine("Async operation completed");
+    }
+  }
+}
+
+// Test 15: Optional Parameters
+internal sealed class DeployCommand : IRequest
+{
+  public string Env { get; set; } = "";
+  public string? Tag { get; set; }
+
+  public class Handler : IRequestHandler<DeployCommand>
+  {
+    public Task Handle(DeployCommand request, CancellationToken cancellationToken)
+    {
+      if (string.IsNullOrEmpty(request.Tag))
+      {
+        Console.WriteLine($"Deploying to {request.Env} with latest tag");
+      }
+      else
+      {
+        Console.WriteLine($"Deploying to {request.Env} with tag {request.Tag}");
+      }
+
+      return Task.CompletedTask;
+    }
+  }
+}
+
+internal sealed class BackupCommand : IRequest
+{
+  public string Source { get; set; } = "";
+  public string? Destination { get; set; }
+
+  public class Handler : IRequestHandler<BackupCommand>
+  {
+    public async Task Handle(BackupCommand request, CancellationToken cancellationToken)
+    {
+      await Task.Delay(50, cancellationToken);
+      if (string.IsNullOrEmpty(request.Destination))
+      {
+        Console.WriteLine($"Backing up {request.Source} to default location");
+      }
+      else
+      {
+        Console.WriteLine($"Backing up {request.Source} to {request.Destination}");
+      }
     }
   }
 }

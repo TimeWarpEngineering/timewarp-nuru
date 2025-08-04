@@ -87,8 +87,29 @@ internal static class RouteBasedCommandResolver
       }
 
       // Regular segment matching
-      if (i >= args.Length || args[i].StartsWith(CommonStrings.SingleDash, StringComparison.Ordinal))
-        return false; // Not enough args or hit an option
+      if (i >= args.Length)
+      {
+        // Check if this is an optional parameter
+        if (segment is ParameterSegment optionalParam && optionalParam.IsOptional)
+        {
+          // Optional parameter with no value - skip it
+          continue;
+        }
+
+        return false; // Not enough args
+      }
+
+      if (args[i].StartsWith(CommonStrings.SingleDash, StringComparison.Ordinal))
+      {
+        // Hit an option - check if current segment is optional
+        if (segment is ParameterSegment optionalParam && optionalParam.IsOptional)
+        {
+          // Optional parameter followed by an option - skip it
+          continue;
+        }
+
+        return false; // Required parameter but hit an option
+      }
 
       if (!segment.TryMatch(args[i], out string? value))
         return false;

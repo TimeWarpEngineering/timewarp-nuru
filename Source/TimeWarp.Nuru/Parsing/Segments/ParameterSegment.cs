@@ -21,13 +21,18 @@ public class ParameterSegment : RouteSegment
   /// Gets the description for this parameter.
   /// </summary>
   public string? Description { get; }
+  /// <summary>
+  /// Gets whether this parameter is optional.
+  /// </summary>
+  public bool IsOptional { get; }
 
-  public ParameterSegment(string name, bool isCatchAll = false, string? constraint = null, string? description = null)
+  public ParameterSegment(string name, bool isCatchAll = false, string? constraint = null, string? description = null, bool isOptional = false)
   {
     Name = name ?? throw new ArgumentNullException(nameof(name));
     IsCatchAll = isCatchAll;
     Constraint = constraint;
     Description = description;
+    IsOptional = isOptional;
   }
 
   public override bool TryMatch(string arg, out string? extractedValue)
@@ -40,6 +45,11 @@ public class ParameterSegment : RouteSegment
   {
     string result = IsCatchAll ? "{*" : "{";
     result += Name;
+    if (IsOptional)
+    {
+      result += "?";
+    }
+
     if (Constraint is not null)
     {
       result += ":" + Constraint;

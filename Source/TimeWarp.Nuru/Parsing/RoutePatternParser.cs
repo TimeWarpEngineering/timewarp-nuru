@@ -5,7 +5,7 @@ namespace TimeWarp.Nuru.Parsing;
 /// </summary>
 internal static class RoutePatternParser
 {
-  private static readonly Regex ParameterRegex = new(@"\{(\*)?([^}:|]+)(:([^}|]+))?(\|([^}]+))?\}", RegexOptions.Compiled);
+  private static readonly Regex ParameterRegex = new(@"\{(\*)?([^}:|?]+)(\?)?(:([^}|]+))?(\|([^}]+))?\}", RegexOptions.Compiled);
 
   /// <summary>
   /// Tokenizes a route pattern, preserving descriptions that contain spaces.
@@ -179,8 +179,9 @@ internal static class RoutePatternParser
           {
             string paramName = paramMatch.Groups[2].Value;
             bool isCatchAll = paramMatch.Groups[1].Value == "*";
-            string? typeConstraint = paramMatch.Groups[4].Success ? paramMatch.Groups[4].Value : null;
-            string? paramDescription = paramMatch.Groups[6].Success ? paramMatch.Groups[6].Value : null;
+            bool isOptional = paramMatch.Groups[3].Value == "?";
+            string? typeConstraint = paramMatch.Groups[5].Success ? paramMatch.Groups[5].Value : null;
+            string? paramDescription = paramMatch.Groups[7].Success ? paramMatch.Groups[7].Value : null;
 
             valueParameterName = paramName;
 
@@ -206,8 +207,9 @@ internal static class RoutePatternParser
         {
           string paramName = paramMatch.Groups[2].Value;
           bool isCatchAll = paramMatch.Groups[1].Value == "*";
-          string? typeConstraint = paramMatch.Groups[4].Success ? paramMatch.Groups[4].Value : null;
-          string? description = paramMatch.Groups[6].Success ? paramMatch.Groups[6].Value : null;
+          bool isOptional = paramMatch.Groups[3].Value == "?";
+          string? typeConstraint = paramMatch.Groups[5].Success ? paramMatch.Groups[5].Value : null;
+          string? description = paramMatch.Groups[7].Success ? paramMatch.Groups[7].Value : null;
 
           // Parameter information is stored in the ParameterSegment
 
@@ -218,12 +220,12 @@ internal static class RoutePatternParser
             specificity -= 20;
 
             // Add catch-all as a parameter segment
-            segments.Add(new ParameterSegment(paramName, isCatchAll: true, typeConstraint, description));
+            segments.Add(new ParameterSegment(paramName, isCatchAll: true, typeConstraint, description, isOptional));
           }
           else
           {
             // Add regular parameter segment
-            segments.Add(new ParameterSegment(paramName, isCatchAll: false, typeConstraint, description));
+            segments.Add(new ParameterSegment(paramName, isCatchAll: false, typeConstraint, description, isOptional));
             specificity += 2; // Positional parameters slightly increase specificity
           }
         }

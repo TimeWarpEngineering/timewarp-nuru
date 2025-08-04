@@ -70,7 +70,7 @@ public class NuruApp
           throw new InvalidOperationException("ExtractedValues cannot be null for a successful match.");
         }
 
-        return await ExecuteDelegateAsync(del, result.ExtractedValues).ConfigureAwait(false);
+        return await ExecuteDelegateAsync(del, result.ExtractedValues, result.MatchedEndpoint).ConfigureAwait(false);
       }
 
       await Console.Error.WriteLineAsync(
@@ -120,13 +120,13 @@ public class NuruApp
     return 0;
   }
 
-  private async Task<int> ExecuteDelegateAsync(Delegate del, Dictionary<string, string> extractedValues)
+  private async Task<int> ExecuteDelegateAsync(Delegate del, Dictionary<string, string> extractedValues, RouteEndpoint endpoint)
   {
     try
     {
       object?[] args = ServiceProvider is not null
-        ? BindParametersWithDI(del.Method, extractedValues)
-        : BindParameters(del.Method, extractedValues);
+        ? BindParametersWithDI(del.Method, extractedValues, endpoint)
+        : BindParameters(del.Method, extractedValues, endpoint);
 
       object? returnValue = del.DynamicInvoke(args);
 
@@ -180,7 +180,7 @@ public class NuruApp
     }
   }
 
-  private object?[] BindParameters(MethodInfo method, Dictionary<string, string> extractedValues)
+  private object?[] BindParameters(MethodInfo method, Dictionary<string, string> extractedValues, RouteEndpoint endpoint)
   {
     ParameterInfo[] parameters = method.GetParameters();
     object?[] args = new object?[parameters.Length];
@@ -220,6 +220,11 @@ public class NuruApp
       {
         args[i] = param.DefaultValue;
       }
+      else if (IsOptionalParameter(param.Name!, endpoint))
+      {
+        // Optional parameter without a value - set to null
+        args[i] = null;
+      }
       else
       {
         throw new InvalidOperationException(
@@ -231,7 +236,7 @@ public class NuruApp
     return args;
   }
 
-  private object?[] BindParametersWithDI(MethodInfo method, Dictionary<string, string> extractedValues)
+  private object?[] BindParametersWithDI(MethodInfo method, Dictionary<string, string> extractedValues, RouteEndpoint endpoint)
   {
     // Use DelegateParameterBinder when DI is available
     // This handles DI injection for parameters
@@ -271,6 +276,11 @@ public class NuruApp
       {
         args[i] = param.DefaultValue;
       }
+      else if (IsOptionalParameter(param.Name!, endpoint))
+      {
+        // Optional parameter without a value - set to null
+        args[i] = null;
+      }
       else
       {
         throw new InvalidOperationException(
@@ -285,5 +295,32 @@ public class NuruApp
   private void ShowAvailableCommands()
   {
     Console.WriteLine(RouteHelpProvider.GetHelpText(Endpoints));
+  }
+
+  private static bool IsOptionalParameter(string parameterName, RouteEndpoint endpoint)
+  {
+    // Check positional parameters
+    foreach (RouteSegment segment in endpoint.ParsedRoute.PositionalTemplate)
+    {
+      if (segment is ParameterSegment param && param.Name == parameterName)
+      {
+        return param.IsOptional;
+      }
+    }
+
+    // Check option parameters
+    foreach (OptionSegment option in endpoint.ParsedRoute.OptionSegments)
+    {
+      if (option.ValueParameterName == parameterName)
+      {
+        // Option parameters are optional if the parameter is marked as optional
+        // We need to check the route pattern for this
+        return endpoint.RoutePattern.Contains($"{{{parameterName}?", StringComparison.Ordinal) ||
+               (endpoint.RoutePattern.Contains($"{{{parameterName}:", StringComparison.Ordinal) &&
+                endpoint.RoutePattern.Contains("?}", StringComparison.Ordinal));
+      }
+    }
+
+    return false;
   }
 }

@@ -81,7 +81,41 @@ builder.AddRoute("async-test", async () =>
     Console.WriteLine("Async operation completed");
 });
 
-// Test 12: Ultimate Catch-All
+// Test 12: Optional Parameters
+builder.AddRoute("deploy {env} {tag?}", (string env, string? tag) =>
+{
+    if (tag is not null)
+    {
+        Console.WriteLine($"Deploying to {env} with tag {tag}");
+    }
+    else
+    {
+        Console.WriteLine($"Deploying to {env} with latest tag");
+    }
+});
+
+// Test 13: Async with Optional Parameters
+builder.AddRoute("backup {source} {destination?}", async (string source, string? destination) =>
+{
+    await Task.Delay(10); // Simulate async work
+    if (destination is not null)
+    {
+        Console.WriteLine($"Backing up {source} to {destination}");
+    }
+    else
+    {
+        Console.WriteLine($"Backing up {source} to default location");
+    }
+});
+
+// Test 14: Optional Parameters with Type Constraints
+builder.AddRoute("sleep {seconds:int?}", (int? seconds) =>
+{
+    int sleepTime = seconds ?? 1;
+    Console.WriteLine($"Sleeping for {sleepTime} seconds");
+});
+
+// Test 15: Ultimate Catch-All
 builder.AddRoute("{*everything}", (string[] everything) =>
     Console.WriteLine($"Unknown command: {string.Join(" ", everything)}"));
 
@@ -98,6 +132,10 @@ builder.AddRoute("--help", () =>
   Console.WriteLine("  docker run [options] {image}    - Docker run with enhancements");
   Console.WriteLine("  kubectl get {resource}          - Kubectl commands");
   Console.WriteLine("  npm install {package} [options] - NPM commands");
+  Console.WriteLine("  async-test                      - Test async command");
+  Console.WriteLine("  deploy {env} {tag?}             - Deploy with optional tag");
+  Console.WriteLine("  backup {source} {destination?}  - Async backup with optional destination");
+  Console.WriteLine("  sleep {seconds:int?}            - Sleep with optional seconds");
   Console.WriteLine("  --help                          - Show this help");
 });
 

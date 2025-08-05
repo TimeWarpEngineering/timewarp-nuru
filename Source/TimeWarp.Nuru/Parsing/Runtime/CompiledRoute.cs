@@ -1,24 +1,24 @@
 namespace TimeWarp.Nuru.Parsing;
 
 /// <summary>
-/// Represents a parsed route pattern that has been broken down into its components
+/// Represents a compiled route pattern that has been broken down into its components
 /// for efficient matching against command-line arguments.
 /// </summary>
-public class ParsedRoute
+public class CompiledRoute
 {
   /// <summary>
-  /// Gets or sets the positional template - the ordered segments (literals and parameters)
+  /// Gets or sets the positional matchers - the ordered segments (literals and parameters)
   /// that must be matched before any options.
   /// </summary>
-  public required IReadOnlyList<RouteSegment> PositionalTemplate { get; set; }
+  public required IReadOnlyList<RouteMatcher> PositionalMatchers { get; set; }
   /// <summary>
-  /// Gets or sets the required options that must be present (e.g., ["--amend"]).
+  /// Gets or sets the required option patterns that must be present (e.g., ["--amend"]).
   /// </summary>
-  public IReadOnlyList<string> RequiredOptions { get; set; } = Array.Empty<string>();
+  public IReadOnlyList<string> RequiredOptionPatterns { get; set; } = Array.Empty<string>();
   /// <summary>
-  /// Gets or sets the option segments that must be matched.
+  /// Gets or sets the option matchers that must be matched.
   /// </summary>
-  public IReadOnlyList<OptionSegment> OptionSegments { get; set; } = Array.Empty<OptionSegment>();
+  public IReadOnlyList<OptionMatcher> OptionMatchers { get; set; } = Array.Empty<OptionMatcher>();
   /// <summary>
   /// Gets or sets the name of the catch-all parameter if present (e.g., "args" for {*args}).
   /// </summary>
@@ -37,5 +37,5 @@ public class ParsedRoute
   /// For routes with catch-all, this is the number of segments minus one.
   /// For routes without catch-all, this is the exact number of segments.
   /// </summary>
-  public int MinimumRequiredArgs => CatchAllParameterName is not null ? PositionalTemplate.Count - 1 : PositionalTemplate.Count;
+  public int MinimumRequiredArgs => CatchAllParameterName is not null ? PositionalMatchers.Count - 1 : PositionalMatchers.Count;
 }

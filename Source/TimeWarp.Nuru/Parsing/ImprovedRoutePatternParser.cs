@@ -3,25 +3,25 @@ namespace TimeWarp.Nuru.Parsing;
 using TimeWarp.Nuru.Parsing.Ast;
 
 /// <summary>
-/// Improved route pattern parser that uses a proper AST-based approach
-/// while maintaining compatibility with the existing ParsedRoute API.
+/// Route parser facade that uses a proper syntax tree-based approach
+/// while maintaining compatibility with the existing API.
 /// </summary>
-internal static class ImprovedRoutePatternParser
+internal static class RouteParserFacade
 {
-  private static readonly NewRoutePatternParser Parser = new NewRoutePatternParser();
-  private static readonly ParsedRouteBuilder Builder = new();
+  private static readonly RouteParser Parser = new();
+  private static readonly RouteCompiler Compiler = new();
 
   /// <summary>
-  /// Parses a route pattern string into a ParsedRoute object.
+  /// Parses a route pattern string into a CompiledRoute object.
   /// </summary>
   /// <param name="routePattern">The route pattern to parse (e.g., "git commit --amend").</param>
-  /// <returns>A parsed representation of the route.</returns>
+  /// <returns>A compiled representation of the route.</returns>
   /// <exception cref="ArgumentException">Thrown when the route pattern is invalid.</exception>
-  public static ParsedRoute Parse(string routePattern)
+  public static CompiledRoute Parse(string routePattern)
   {
     ArgumentNullException.ThrowIfNull(routePattern);
 
-    ParseResult<RoutePatternAst> result = Parser.Parse(routePattern);
+    ParseResult<RouteSyntax> result = Parser.Parse(routePattern);
 
     if (!result.Success)
     {
@@ -32,19 +32,19 @@ internal static class ImprovedRoutePatternParser
       throw new ArgumentException($"Invalid route pattern '{routePattern}': {Environment.NewLine}{combinedMessage}");
     }
 
-    return Builder.Build(result.Value!);
+    return Compiler.Compile(result.Value!);
   }
 
   /// <summary>
-  /// Tries to parse a route pattern string into a ParsedRoute object.
+  /// Tries to parse a route pattern string into a CompiledRoute object.
   /// </summary>
   /// <param name="routePattern">The route pattern to parse.</param>
-  /// <param name="parsedRoute">The parsed route if successful.</param>
+  /// <param name="compiledRoute">The compiled route if successful.</param>
   /// <param name="errors">The parsing errors if unsuccessful.</param>
   /// <returns>True if parsing was successful, false otherwise.</returns>
-  public static bool TryParse(string routePattern, out ParsedRoute? parsedRoute, out IReadOnlyList<ParseError> errors)
+  public static bool TryParse(string routePattern, out CompiledRoute? compiledRoute, out IReadOnlyList<ParseError> errors)
   {
-    parsedRoute = null;
+    compiledRoute = null;
     errors = [];
 
     if (routePattern is null)
@@ -53,12 +53,12 @@ internal static class ImprovedRoutePatternParser
       return false;
     }
 
-    ParseResult<RoutePatternAst> result = Parser.Parse(routePattern);
+    ParseResult<RouteSyntax> result = Parser.Parse(routePattern);
     errors = result.Errors;
 
     if (result.Success)
     {
-      parsedRoute = Builder.Build(result.Value!);
+      compiledRoute = Compiler.Compile(result.Value!);
       return true;
     }
 

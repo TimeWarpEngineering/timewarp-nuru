@@ -90,13 +90,13 @@ public static class RoutePatternParser
   }
 
   /// <summary>
-  /// Parses a route pattern string into a ParsedRoute object.
+  /// Parses a route pattern string into a CompiledRoute object.
   /// </summary>
   /// <param name="routePattern">The route pattern to parse (e.g., "git commit --amend").</param>
-  /// <returns>A parsed representation of the route.</returns>
-  public static ParsedRoute Parse(string routePattern)
+  /// <returns>A compiled representation of the route.</returns>
+  public static CompiledRoute Parse(string routePattern)
   {
-    // Use the new improved parser
-    return ImprovedRoutePatternParser.Parse(routePattern);
+    // Use the route parser facade
+    return RouteParserFacade.Parse(routePattern);
   }
 }

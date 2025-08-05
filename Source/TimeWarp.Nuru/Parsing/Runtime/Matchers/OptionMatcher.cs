@@ -1,14 +1,14 @@
 namespace TimeWarp.Nuru.Parsing.Segments;
 
 /// <summary>
-/// Represents an option segment in a route pattern that must be matched.
+/// Represents an option matcher in a route pattern that must be matched.
 /// </summary>
-public class OptionSegment : RouteSegment
+public class OptionMatcher : RouteMatcher
 {
   /// <summary>
-  /// Gets the option name (e.g., "--amend" or "-m").
+  /// Gets the option match pattern (e.g., "--amend" or "-m").
   /// </summary>
-  public string Name { get; }
+  public string MatchPattern { get; }
   /// <summary>
   /// Gets whether this option expects a value.
   /// </summary>
@@ -16,22 +16,22 @@ public class OptionSegment : RouteSegment
   /// <summary>
   /// Gets the parameter name for the option value, if any.
   /// </summary>
-  public string? ValueParameterName { get; }
+  public string? ParameterName { get; }
   /// <summary>
-  /// Gets the short form alias for this option (e.g., "-m" for "--message").
+  /// Gets the alternate form for this option (e.g., "-m" for "--message").
   /// </summary>
-  public string? ShortAlias { get; }
+  public string? AlternateForm { get; }
   /// <summary>
   /// Gets the description for this option.
   /// </summary>
   public string? Description { get; }
 
-  public OptionSegment(string name, bool expectsValue = false, string? valueParameterName = null, string? shortAlias = null, string? description = null)
+  public OptionMatcher(string matchPattern, bool expectsValue = false, string? parameterName = null, string? alternateForm = null, string? description = null)
   {
-    Name = name ?? throw new ArgumentNullException(nameof(name));
+    MatchPattern = matchPattern ?? throw new ArgumentNullException(nameof(matchPattern));
     ExpectsValue = expectsValue;
-    ValueParameterName = valueParameterName;
-    ShortAlias = shortAlias;
+    ParameterName = parameterName;
+    AlternateForm = alternateForm;
     Description = description;
   }
 
@@ -41,20 +41,20 @@ public class OptionSegment : RouteSegment
 
     extractedValue = null;
 
-    // Direct match for the option name
-    if (arg == Name)
+    // Direct match for the option pattern
+    if (arg == MatchPattern)
       return true;
 
-    // Check if arg matches the short alias
-    if (ShortAlias is not null && arg == ShortAlias)
+    // Check if arg matches the alternate form
+    if (AlternateForm is not null && arg == AlternateForm)
       return true;
 
     // For short options, check grouped options (e.g., -abc contains -a)
-    if (ShortAlias?.StartsWith(CommonStrings.SingleDash, StringComparison.Ordinal) == true && ShortAlias.Length == 2)
+    if (AlternateForm?.StartsWith(CommonStrings.SingleDash, StringComparison.Ordinal) == true && AlternateForm.Length == 2)
     {
       if (arg.StartsWith(CommonStrings.SingleDash, StringComparison.Ordinal) && arg.Length > 2 && !arg.StartsWith(CommonStrings.DoubleDash, StringComparison.Ordinal))
       {
-        char shortChar = ShortAlias[1];
+        char shortChar = AlternateForm[1];
         return arg.Contains(shortChar.ToString(), StringComparison.Ordinal);
       }
     }
@@ -62,5 +62,5 @@ public class OptionSegment : RouteSegment
     return false;
   }
 
-  public override string ToDisplayString() => Name;
+  public override string ToDisplayString() => MatchPattern;
 }

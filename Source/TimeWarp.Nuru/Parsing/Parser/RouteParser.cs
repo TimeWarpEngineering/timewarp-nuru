@@ -5,7 +5,7 @@ using TimeWarp.Nuru.Parsing.Ast;
 /// <summary>
 /// Recursive descent parser for route patterns.
 /// </summary>
-public sealed class NewRoutePatternParser : IRoutePatternParser
+public sealed class RouteParser : IRouteParser
 {
   private IReadOnlyList<Token> Tokens = [];
   private int CurrentIndex;
@@ -18,7 +18,7 @@ public sealed class NewRoutePatternParser : IRoutePatternParser
     Environment.GetEnvironmentVariable("NURU_DEBUG") == "true";
 
   /// <inheritdoc />
-  public ParseResult<RoutePatternAst> Parse(string pattern)
+  public ParseResult<RouteSyntax> Parse(string pattern)
   {
     ArgumentNullException.ThrowIfNull(pattern);
 
@@ -39,8 +39,8 @@ public sealed class NewRoutePatternParser : IRoutePatternParser
     // Parse tokens into AST
     try
     {
-      List<SegmentNode> segments = ParsePattern();
-      var ast = new RoutePatternAst(segments);
+      List<SegmentSyntax> segments = ParsePattern();
+      var ast = new RouteSyntax(segments);
 
       if (EnableDiagnostics && Errors.Count == 0)
       {
@@ -48,12 +48,12 @@ public sealed class NewRoutePatternParser : IRoutePatternParser
       }
 
       return Errors.Count == 0
-        ? new ParseResult<RoutePatternAst>
+        ? new ParseResult<RouteSyntax>
         {
           Value = ast,
           Success = true
         }
-        : new ParseResult<RoutePatternAst>
+        : new ParseResult<RouteSyntax>
         {
           Success = false,
           Errors = Errors
@@ -62,7 +62,7 @@ public sealed class NewRoutePatternParser : IRoutePatternParser
     catch (ParseException)
     {
       // Parsing failed completely
-      return new ParseResult<RoutePatternAst>
+      return new ParseResult<RouteSyntax>
       {
         Success = false,
         Errors = Errors
@@ -71,11 +71,11 @@ public sealed class NewRoutePatternParser : IRoutePatternParser
   }
 
   /// <summary>
-  /// Returns a diagnostic dump of an AST for debugging.
+  /// Returns a diagnostic dump of a syntax tree for debugging.
   /// </summary>
-  /// <param name="ast">The AST to dump.</param>
-  /// <returns>A formatted string showing the AST structure.</returns>
-  public static string DumpAst(RoutePatternAst ast)
+  /// <param name="ast">The syntax tree to dump.</param>
+  /// <returns>A formatted string showing the syntax tree structure.</returns>
+  public static string DumpAst(RouteSyntax ast)
   {
     ArgumentNullException.ThrowIfNull(ast);
 
@@ -91,15 +91,15 @@ public sealed class NewRoutePatternParser : IRoutePatternParser
     return sb.ToString();
   }
 
-  private List<SegmentNode> ParsePattern()
+  private List<SegmentSyntax> ParsePattern()
   {
-    var segments = new List<SegmentNode>();
+    var segments = new List<SegmentSyntax>();
 
     while (!IsAtEnd())
     {
       try
       {
-        SegmentNode? segment = ParseSegment();
+        SegmentSyntax? segment = ParseSegment();
         if (segment is not null)
         {
           segments.Add(segment);
@@ -115,7 +115,7 @@ public sealed class NewRoutePatternParser : IRoutePatternParser
     return segments;
   }
 
-  private SegmentNode? ParseSegment()
+  private SegmentSyntax? ParseSegment()
   {
     Token token = Peek();
 
@@ -129,17 +129,17 @@ public sealed class NewRoutePatternParser : IRoutePatternParser
     };
   }
 
-  private LiteralNode ParseLiteral()
+  private LiteralSyntax ParseLiteral()
   {
     Token token = Consume(TokenType.Identifier, "Expected identifier");
-    return new LiteralNode(token.Value)
+    return new LiteralSyntax(token.Value)
     {
       Position = token.Position,
       Length = token.Length
     };
   }
 
-  private ParameterNode ParseParameter()
+  private ParameterSyntax ParseParameter()
   {
     Token leftBrace = Consume(TokenType.LeftBrace, "Expected '{'");
     int startPos = leftBrace.Position;
@@ -182,14 +182,14 @@ public sealed class NewRoutePatternParser : IRoutePatternParser
 
     Token rightBrace = Consume(TokenType.RightBrace, "Expected '}'");
 
-    return new ParameterNode(paramName, isCatchAll, isOptional, typeConstraint, description)
+    return new ParameterSyntax(paramName, isCatchAll, isOptional, typeConstraint, description)
     {
       Position = startPos,
       Length = rightBrace.EndPosition - startPos
     };
   }
 
-  private OptionNode ParseOption()
+  private OptionSyntax ParseOption()
   {
     Token optionToken = Current();
 
@@ -201,24 +201,24 @@ public sealed class NewRoutePatternParser : IRoutePatternParser
     // Option name
     Token optionNameToken = Consume(TokenType.Identifier, "Expected option name");
 
-    string? longName;
-    string? shortName = null;
+    string? longForm;
+    string? shortForm = null;
 
     if (isLong)
     {
-      longName = optionNameToken.Value;
+      longForm = optionNameToken.Value;
       // Check for short alias
       if (Match(TokenType.Comma))
       {
         Consume(TokenType.SingleDash, "Expected '-' after comma");
         Token shortToken = Consume(TokenType.Identifier, "Expected short option name");
-        shortName = shortToken.Value;
+        shortForm = shortToken.Value;
       }
     }
     else
     {
-      longName = null;
-      shortName = optionNameToken.Value;
+      longForm = null;
+      shortForm = optionNameToken.Value;
     }
 
     // Description
@@ -229,7 +229,7 @@ public sealed class NewRoutePatternParser : IRoutePatternParser
     }
 
     // Parameter for option
-    ParameterNode? parameter = null;
+    ParameterSyntax? parameter = null;
     if (Check(TokenType.LeftBrace))
     {
       parameter = ParseParameter();
@@ -237,14 +237,14 @@ public sealed class NewRoutePatternParser : IRoutePatternParser
 
     int endPos = Previous().EndPosition;
 
-    return new OptionNode(longName, shortName, description, parameter)
+    return new OptionSyntax(longForm, shortForm, description, parameter)
     {
       Position = startPos,
       Length = endPos - startPos
     };
   }
 
-  private SegmentNode? ParseInvalidToken()
+  private SegmentSyntax? ParseInvalidToken()
   {
     Token token = Advance();
 

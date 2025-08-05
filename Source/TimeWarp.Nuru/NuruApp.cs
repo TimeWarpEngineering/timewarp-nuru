@@ -300,18 +300,18 @@ public class NuruApp
   private static bool IsOptionalParameter(string parameterName, RouteEndpoint endpoint)
   {
     // Check positional parameters
-    foreach (RouteSegment segment in endpoint.ParsedRoute.PositionalTemplate)
+    foreach (RouteMatcher segment in endpoint.CompiledRoute.PositionalMatchers)
     {
-      if (segment is ParameterSegment param && param.Name == parameterName)
+      if (segment is ParameterMatcher param && param.Name == parameterName)
       {
         return param.IsOptional;
       }
     }
 
     // Check option parameters
-    foreach (OptionSegment option in endpoint.ParsedRoute.OptionSegments)
+    foreach (OptionMatcher option in endpoint.CompiledRoute.OptionMatchers)
     {
-      if (option.ValueParameterName == parameterName)
+      if (option.ParameterName == parameterName)
       {
         // Option parameters are optional if the parameter is marked as optional
         // We need to check the route pattern for this

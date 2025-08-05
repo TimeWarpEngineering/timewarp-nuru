@@ -3,49 +3,49 @@ namespace TimeWarp.Nuru.Parsing;
 using TimeWarp.Nuru.Parsing.Ast;
 
 /// <summary>
-/// Visitor interface for processing route pattern AST nodes.
+/// Visitor interface for processing route pattern syntax nodes.
 /// </summary>
 /// <typeparam name="T">The return type of visitor methods.</typeparam>
-public interface IRoutePatternVisitor<T>
+public interface ISyntaxVisitor<T>
 {
   /// <summary>
   /// Visits the root pattern node.
   /// </summary>
-  /// <param name="pattern">The route pattern AST.</param>
+  /// <param name="pattern">The route syntax tree.</param>
   /// <returns>The result of visiting this node.</returns>
-  T VisitPattern(RoutePatternAst pattern);
+  T VisitPattern(RouteSyntax pattern);
   /// <summary>
   /// Visits a literal segment node.
   /// </summary>
   /// <param name="literal">The literal node.</param>
   /// <returns>The result of visiting this node.</returns>
-  T VisitLiteral(LiteralNode literal);
+  T VisitLiteral(LiteralSyntax literal);
   /// <summary>
   /// Visits a parameter segment node.
   /// </summary>
   /// <param name="parameter">The parameter node.</param>
   /// <returns>The result of visiting this node.</returns>
-  T VisitParameter(ParameterNode parameter);
+  T VisitParameter(ParameterSyntax parameter);
   /// <summary>
   /// Visits an option segment node.
   /// </summary>
   /// <param name="optionNode">The option node.</param>
   /// <returns>The result of visiting this node.</returns>
-  T VisitOption(OptionNode optionNode);
+  T VisitOption(OptionSyntax optionNode);
 }
 
 /// <summary>
 /// Base visitor class that provides default implementations.
 /// </summary>
 /// <typeparam name="T">The return type of visitor methods.</typeparam>
-public abstract class RoutePatternVisitor<T> : IRoutePatternVisitor<T>
+public abstract class SyntaxVisitor<T> : ISyntaxVisitor<T>
 {
   /// <inheritdoc />
-  public virtual T VisitPattern(RoutePatternAst pattern)
+  public virtual T VisitPattern(RouteSyntax pattern)
   {
     ArgumentNullException.ThrowIfNull(pattern, nameof(pattern));
 
-    foreach (SegmentNode segment in pattern.Segments)
+    foreach (SegmentSyntax segment in pattern.Segments)
     {
       Visit(segment);
     }
@@ -54,22 +54,22 @@ public abstract class RoutePatternVisitor<T> : IRoutePatternVisitor<T>
   }
 
   /// <inheritdoc />
-  public abstract T VisitLiteral(LiteralNode literal);
+  public abstract T VisitLiteral(LiteralSyntax literal);
   /// <inheritdoc />
-  public abstract T VisitParameter(ParameterNode parameter);
+  public abstract T VisitParameter(ParameterSyntax parameter);
   /// <inheritdoc />
-  public abstract T VisitOption(OptionNode optionNode);
+  public abstract T VisitOption(OptionSyntax optionNode);
 
   /// <summary>
   /// Dispatches to the appropriate visit method based on the node type.
   /// </summary>
   /// <param name="node">The node to visit.</param>
   /// <returns>The result of visiting the node.</returns>
-  protected T Visit(SegmentNode node) => node switch
+  protected T Visit(SegmentSyntax node) => node switch
   {
-    LiteralNode literal => VisitLiteral(literal),
-    ParameterNode parameter => VisitParameter(parameter),
-    OptionNode option => VisitOption(option),
+    LiteralSyntax literal => VisitLiteral(literal),
+    ParameterSyntax parameter => VisitParameter(parameter),
+    OptionSyntax option => VisitOption(option),
     _ => throw new ArgumentException($"Unknown segment node type: {node.GetType()}")
   };
 }

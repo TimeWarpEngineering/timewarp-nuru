@@ -4,53 +4,53 @@ using TimeWarp.Nuru.Parsing.Ast;
 using TimeWarp.Nuru.Parsing.Segments;
 
 /// <summary>
-/// Visitor that converts route pattern AST to the existing ParsedRoute structure.
+/// Compiler that converts route pattern syntax tree to the runtime CompiledRoute structure.
 /// This maintains backward compatibility with the current system.
 /// </summary>
-internal sealed class ParsedRouteBuilder : RoutePatternVisitor<object?>
+internal sealed class RouteCompiler : SyntaxVisitor<object?>
 {
-  private readonly List<RouteSegment> Segments = [];
-  private readonly List<string> RequiredOptions = [];
-  private readonly List<OptionSegment> OptionSegments = [];
+  private readonly List<RouteMatcher> Segments = [];
+  private readonly List<string> RequiredOptionPatterns = [];
+  private readonly List<OptionMatcher> OptionMatchers = [];
   private string? CatchAllParameterName;
   private int Specificity;
 
   /// <summary>
-  /// Converts a route pattern AST to a ParsedRoute.
+  /// Compiles a route pattern syntax tree to a CompiledRoute.
   /// </summary>
-  /// <param name="ast">The AST to convert.</param>
-  /// <returns>A ParsedRoute compatible with the existing system.</returns>
-  public ParsedRoute Build(RoutePatternAst ast)
+  /// <param name="syntax">The syntax tree to compile.</param>
+  /// <returns>A CompiledRoute compatible with the existing system.</returns>
+  public CompiledRoute Compile(RouteSyntax syntax)
   {
     // Reset state
     Segments.Clear();
-    RequiredOptions.Clear();
-    OptionSegments.Clear();
+    RequiredOptionPatterns.Clear();
+    OptionMatchers.Clear();
     CatchAllParameterName = null;
     Specificity = 0;
 
     // Visit all segments
-    VisitPattern(ast);
+    VisitPattern(syntax);
 
-    // Build the ParsedRoute
-    return new ParsedRoute
+    // Build the CompiledRoute
+    return new CompiledRoute
     {
-      PositionalTemplate = Segments.ToArray(),
-      RequiredOptions = RequiredOptions.ToArray(),
-      OptionSegments = OptionSegments.ToArray(),
+      PositionalMatchers = Segments.ToArray(),
+      RequiredOptionPatterns = RequiredOptionPatterns.ToArray(),
+      OptionMatchers = OptionMatchers.ToArray(),
       CatchAllParameterName = CatchAllParameterName,
       Specificity = Specificity
     };
   }
 
-  public override object? VisitLiteral(LiteralNode literal)
+  public override object? VisitLiteral(LiteralSyntax literal)
   {
-    Segments.Add(new LiteralSegment(literal.Value));
+    Segments.Add(new LiteralMatcher(literal.Value));
     Specificity += 15; // Literal segments greatly increase specificity
     return null;
   }
 
-  public override object? VisitParameter(ParameterNode parameter)
+  public override object? VisitParameter(ParameterSyntax parameter)
   {
     if (parameter.IsCatchAll)
     {
@@ -62,28 +62,28 @@ internal sealed class ParsedRouteBuilder : RoutePatternVisitor<object?>
       Specificity += 2; // Positional parameters slightly increase specificity
     }
 
-    // Create parameter segment
-    var parameterSegment = new ParameterSegment(
+    // Create parameter matcher
+    var parameterMatcher = new ParameterMatcher(
         parameter.Name,
         parameter.IsCatchAll,
         parameter.Type,
         parameter.Description,
         parameter.IsOptional);
 
-    Segments.Add(parameterSegment);
+    Segments.Add(parameterMatcher);
     return null;
   }
 
-  public override object? VisitOption(OptionNode option)
+  public override object? VisitOption(OptionSyntax option)
   {
     string? optionShortSyntax =
-      option.ShortName is not null
-      ? $"-{option.ShortName}"
+      option.ShortForm is not null
+      ? $"-{option.ShortForm}"
       : null;
 
     string? optionLongSyntax =
-      option.LongName is not null
-      ? $"--{option.LongName}"
+      option.LongForm is not null
+      ? $"--{option.LongForm}"
       : null;
 
     string optionSyntax =
@@ -91,7 +91,7 @@ internal sealed class ParsedRouteBuilder : RoutePatternVisitor<object?>
       ?? optionLongSyntax
       ?? throw new ParseException("Option must have a syntax");
 
-    RequiredOptions.Add(optionSyntax);
+    RequiredOptionPatterns.Add(optionSyntax);
     Specificity += 10; // Options increase specificity
 
     // Determine if this option expects a value
@@ -106,18 +106,18 @@ internal sealed class ParsedRouteBuilder : RoutePatternVisitor<object?>
         Specificity += 5; // Option parameters increase specificity
     }
 
-    // Create option segment
-    var optionSegment =
-      new OptionSegment
+    // Create option matcher
+    var optionMatcher =
+      new OptionMatcher
       (
-        optionSyntax,
-        expectsValue,
-        valueParameterName,
-        optionShortSyntax,
-        option.Description
+        matchPattern: optionSyntax,
+        expectsValue: expectsValue,
+        parameterName: valueParameterName,
+        alternateForm: optionShortSyntax,
+        description: option.Description
       );
 
-    OptionSegments.Add(optionSegment);
+    OptionMatchers.Add(optionMatcher);
     return null;
   }
 }

@@ -76,17 +76,20 @@ internal sealed class ParsedRouteBuilder : RoutePatternVisitor<object?>
 
   public override object? VisitOption(OptionNode option)
   {
-    string? optionName = option.ShortName ?? option.LongName;
-    if (string.IsNullOrEmpty(optionName))
-    {
-      throw new ParseException("Option must have a name");
-    }
+    string? optionShortSyntax =
+      option.ShortName is not null
+      ? $"-{option.ShortName}"
+      : null;
 
-    // To get the syntax we need to prefix either '-' or '--'
-    // depending on whether it's a long or short option.
-    string optionSyntax = option.LongName is not null
-        ? $"--{option.LongName}"
-        : $"-{option.ShortName}";
+    string? optionLongSyntax =
+      option.LongName is not null
+      ? $"--{option.LongName}"
+      : null;
+
+    string optionSyntax =
+      optionShortSyntax
+      ?? optionLongSyntax
+      ?? throw new ParseException("Option must have a syntax");
 
     RequiredOptions.Add(optionSyntax);
     Specificity += 10; // Options increase specificity
@@ -98,22 +101,21 @@ internal sealed class ParsedRouteBuilder : RoutePatternVisitor<object?>
     if (option.Parameter is not null)
     {
       if (option.Parameter.IsCatchAll)
-      {
         CatchAllParameterName = option.Parameter.Name;
-      }
       else
-      {
         Specificity += 5; // Option parameters increase specificity
-      }
     }
 
     // Create option segment
-    var optionSegment = new OptionSegment(
+    var optionSegment =
+      new OptionSegment
+      (
         optionSyntax,
         expectsValue,
         valueParameterName,
-        option.ShortName is not null ? $"-{option.ShortName}" : null,
-        option.Description);
+        optionShortSyntax,
+        option.Description
+      );
 
     OptionSegments.Add(optionSegment);
     return null;

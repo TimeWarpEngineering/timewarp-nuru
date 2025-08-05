@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru.Parsing.Segments;
+namespace TimeWarp.Nuru.Parsing;
 
 /// <summary>
 /// Base class for all route matchers (literals, parameters, etc.)

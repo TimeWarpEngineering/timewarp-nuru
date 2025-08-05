@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru.Parsing.Segments;
+namespace TimeWarp.Nuru.Parsing;
 
 /// <summary>
 /// Represents an option matcher in a route pattern that must be matched.

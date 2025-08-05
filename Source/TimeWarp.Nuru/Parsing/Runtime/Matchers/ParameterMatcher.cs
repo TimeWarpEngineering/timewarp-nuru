@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru.Parsing.Segments;
+namespace TimeWarp.Nuru.Parsing;
 
 /// <summary>
 /// Represents a parameter matcher in a route pattern that extracts a value.

@@ -38,6 +38,26 @@ public class RoutePatternLexer
     return Tokens;
   }
 
+  /// <summary>
+  /// Returns a diagnostic dump of the tokens for debugging.
+  /// </summary>
+  /// <param name="tokens">The tokens to dump.</param>
+  /// <returns>A formatted string showing all tokens.</returns>
+  public static string DumpTokens(IReadOnlyList<Token> tokens)
+  {
+    ArgumentNullException.ThrowIfNull(tokens);
+
+    var sb = new StringBuilder();
+    sb.Append("Tokens (").Append(tokens.Count).AppendLine("):");
+
+    foreach (Token token in tokens)
+    {
+      sb.Append("  ").AppendLine(token.ToString());
+    }
+
+    return sb.ToString();
+  }
+
   private void ScanToken()
   {
     char c = Advance();
@@ -173,9 +193,22 @@ public class RoutePatternLexer
     var identifier = new StringBuilder();
     identifier.Append(Input[start]);
 
-    while (!IsAtEnd() && IsAlphaNumeric(Peek()))
+    while (!IsAtEnd())
     {
-      identifier.Append(Advance());
+      char c = Peek();
+      if (IsAlphaNumeric(c))
+      {
+        identifier.Append(Advance());
+      }
+      else if (c == '-' && Position + 1 < Input.Length && IsAlphaNumeric(Input[Position + 1]))
+      {
+        // Include dash if followed by alphanumeric (compound identifiers like "no-edit")
+        identifier.Append(Advance());
+      }
+      else
+      {
+        break;
+      }
     }
 
     AddToken(TokenType.Identifier, identifier.ToString(), start);

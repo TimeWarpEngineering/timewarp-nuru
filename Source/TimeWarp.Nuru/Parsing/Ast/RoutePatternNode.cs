@@ -31,7 +31,10 @@ public abstract record SegmentNode : RoutePatternNode
 /// Examples: "git", "status", "commit"
 /// </summary>
 /// <param name="Value">The literal text that must match.</param>
-public record LiteralNode(string Value) : SegmentNode;
+public record LiteralNode(string Value) : SegmentNode
+{
+  public override string ToString() => $"Literal: '{Value}'";
+}
 
 /// <summary>
 /// A parameter segment that captures a value from command line arguments.
@@ -47,7 +50,19 @@ public record ParameterNode(
   bool IsCatchAll = false,
   bool IsOptional = false,
   string? Type = null,
-  string? Description = null) : SegmentNode;
+  string? Description = null) : SegmentNode
+{
+  public override string ToString()
+  {
+    var sb = new System.Text.StringBuilder();
+    sb.Append("Parameter: name='").Append(Name).Append('\'');
+    if (IsCatchAll) sb.Append(", catchAll=true");
+    if (IsOptional) sb.Append(", optional=true");
+    if (Type is not null) sb.Append(", type='").Append(Type).Append('\'');
+    if (Description is not null) sb.Append(", desc='").Append(Description).Append('\'');
+    return sb.ToString();
+  }
+}
 
 /// <summary>
 /// An option segment that represents a command line option.
@@ -58,8 +73,20 @@ public record ParameterNode(
 /// <param name="Description">Option description from pipe syntax, if specified.</param>
 /// <param name="Parameter">Associated parameter for options that take values.</param>
 public record OptionNode(
-  string LongName,
+  string? LongName = null,
   string? ShortName = null,
   string? Description = null,
-  ParameterNode? Parameter = null) : SegmentNode;
+  ParameterNode? Parameter = null) : SegmentNode
+{
+  public override string ToString()
+  {
+    var sb = new System.Text.StringBuilder();
+    sb.Append("Option:");
+    if (LongName is not null) sb.Append(" longName='").Append(LongName).Append('\'');
+    if (ShortName is not null) sb.Append(" shortName='").Append(ShortName).Append('\'');
+    if (Parameter is not null) sb.Append(" hasParam=true");
+    if (Description is not null) sb.Append(" desc='").Append(Description).Append('\'');
+    return sb.ToString();
+  }
+}
 

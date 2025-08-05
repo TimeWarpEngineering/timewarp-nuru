@@ -76,9 +76,19 @@ internal sealed class ParsedRouteBuilder : RoutePatternVisitor<object?>
 
   public override object? VisitOption(OptionNode option)
   {
-    // Add to required options list
-    string optionName = option.LongName.StartsWith("--", StringComparison.Ordinal) ? option.LongName : $"--{option.LongName}";
-    RequiredOptions.Add(optionName);
+    string? optionName = option.ShortName ?? option.LongName;
+    if (string.IsNullOrEmpty(optionName))
+    {
+      throw new ParseException("Option must have a name");
+    }
+
+    // To get the syntax we need to prefix either '-' or '--'
+    // depending on whether it's a long or short option.
+    string optionSyntax = option.LongName is not null
+        ? $"--{option.LongName}"
+        : $"-{option.ShortName}";
+
+    RequiredOptions.Add(optionSyntax);
     Specificity += 10; // Options increase specificity
 
     // Determine if this option expects a value
@@ -99,7 +109,7 @@ internal sealed class ParsedRouteBuilder : RoutePatternVisitor<object?>
 
     // Create option segment
     var optionSegment = new OptionSegment(
-        optionName,
+        optionSyntax,
         expectsValue,
         valueParameterName,
         option.ShortName is not null ? $"-{option.ShortName}" : null,
@@ -109,4 +119,3 @@ internal sealed class ParsedRouteBuilder : RoutePatternVisitor<object?>
     return null;
   }
 }
-

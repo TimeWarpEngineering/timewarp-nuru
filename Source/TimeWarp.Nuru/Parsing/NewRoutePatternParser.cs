@@ -5,11 +5,17 @@ using TimeWarp.Nuru.Parsing.Ast;
 /// <summary>
 /// Recursive descent parser for route patterns.
 /// </summary>
-internal sealed class NewRoutePatternParser : IRoutePatternParser
+public sealed class NewRoutePatternParser : IRoutePatternParser
 {
   private IReadOnlyList<Token> Tokens = [];
   private int CurrentIndex;
   private readonly List<ParseError> Errors = [];
+
+  /// <summary>
+  /// Enable diagnostic output by setting environment variable NURU_DEBUG=true
+  /// </summary>
+  private static readonly bool EnableDiagnostics =
+    Environment.GetEnvironmentVariable("NURU_DEBUG") == "true";
 
   /// <inheritdoc />
   public ParseResult<RoutePatternAst> Parse(string pattern)
@@ -24,11 +30,22 @@ internal sealed class NewRoutePatternParser : IRoutePatternParser
     var lexer = new RoutePatternLexer(pattern);
     Tokens = lexer.Tokenize();
 
+    if (EnableDiagnostics)
+    {
+      WriteLine($"Parsing pattern: '{pattern}'");
+      WriteLine(RoutePatternLexer.DumpTokens(Tokens));
+    }
+
     // Parse tokens into AST
     try
     {
       List<SegmentNode> segments = ParsePattern();
       var ast = new RoutePatternAst(segments);
+
+      if (EnableDiagnostics && Errors.Count == 0)
+      {
+        WriteLine(DumpAst(ast));
+      }
 
       return Errors.Count == 0
         ? new ParseResult<RoutePatternAst>
@@ -51,6 +68,27 @@ internal sealed class NewRoutePatternParser : IRoutePatternParser
         Errors = Errors
       };
     }
+  }
+
+  /// <summary>
+  /// Returns a diagnostic dump of an AST for debugging.
+  /// </summary>
+  /// <param name="ast">The AST to dump.</param>
+  /// <returns>A formatted string showing the AST structure.</returns>
+  public static string DumpAst(RoutePatternAst ast)
+  {
+    ArgumentNullException.ThrowIfNull(ast);
+
+    var sb = new StringBuilder();
+    sb.Append("AST has ").Append(ast.Segments.Count).AppendLine(" segments:");
+
+    for (int i = 0; i < ast.Segments.Count; i++)
+    {
+      sb.Append("  [").Append(i).Append("] ");
+      sb.AppendLine(ast.Segments[i].ToString());
+    }
+
+    return sb.ToString();
   }
 
   private List<SegmentNode> ParsePattern()
@@ -154,22 +192,33 @@ internal sealed class NewRoutePatternParser : IRoutePatternParser
   private OptionNode ParseOption()
   {
     Token optionToken = Current();
+
     bool isLong = optionToken.Type == TokenType.DoubleDash;
     Advance(); // Consume the dash(es)
 
     int startPos = optionToken.Position;
 
     // Option name
-    Token nameToken = Consume(TokenType.Identifier, "Expected option name");
-    string longName = nameToken.Value;
+    Token optionNameToken = Consume(TokenType.Identifier, "Expected option name");
+
+    string? longName;
     string? shortName = null;
 
-    // Check for short alias
-    if (Match(TokenType.Comma))
+    if (isLong)
     {
-      Consume(TokenType.SingleDash, "Expected '-' after comma");
-      Token shortToken = Consume(TokenType.Identifier, "Expected short option name");
-      shortName = shortToken.Value;
+      longName = optionNameToken.Value;
+      // Check for short alias
+      if (Match(TokenType.Comma))
+      {
+        Consume(TokenType.SingleDash, "Expected '-' after comma");
+        Token shortToken = Consume(TokenType.Identifier, "Expected short option name");
+        shortName = shortToken.Value;
+      }
+    }
+    else
+    {
+      longName = null;
+      shortName = optionNameToken.Value;
     }
 
     // Description
@@ -338,18 +387,18 @@ internal sealed class NewRoutePatternParser : IRoutePatternParser
 
     return string.Join(" ", description);
   }
+}
 
-  /// <summary>
-  /// Exception thrown when parsing fails and cannot continue.
-  /// </summary>
-  public sealed class ParseException : Exception
+/// <summary>
+/// Exception thrown when parsing fails and cannot continue.
+/// </summary>
+public sealed class ParseException : Exception
+{
+  public ParseException(string message) : base(message) { }
+  public ParseException()
   {
-    public ParseException(string message) : base(message) { }
-    public ParseException()
-    {
-    }
-    public ParseException(string message, Exception innerException) : base(message, innerException)
-    {
-    }
+  }
+  public ParseException(string message, Exception innerException) : base(message, innerException)
+  {
   }
 }

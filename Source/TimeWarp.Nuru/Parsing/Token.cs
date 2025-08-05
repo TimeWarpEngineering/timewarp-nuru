@@ -95,4 +95,12 @@ public record Token(TokenType Type, string Value, int Position, int Length)
     ArgumentNullException.ThrowIfNull(value, nameof(value));
     return new(TokenType.Invalid, value, position, value.Length);
   }
+
+  /// <summary>
+  /// Returns a diagnostic string representation of the token.
+  /// </summary>
+  public override string ToString()
+  {
+    return $"[{Type}] '{Value}' at position {Position}";
+  }
 }

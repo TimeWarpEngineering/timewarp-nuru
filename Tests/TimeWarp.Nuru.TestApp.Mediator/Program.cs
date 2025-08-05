@@ -78,7 +78,7 @@ return await app.RunAsync(args).ConfigureAwait(false);
 // Test 1: Basic Commands
 internal sealed class StatusCommand : IRequest
 {
-  public class Handler : IRequestHandler<StatusCommand>
+  internal sealed class Handler : IRequestHandler<StatusCommand>
   {
     public Task Handle(StatusCommand request, CancellationToken cancellationToken)
     {
@@ -90,7 +90,7 @@ internal sealed class StatusCommand : IRequest
 
 internal sealed class VersionCommand : IRequest
 {
-  public class Handler : IRequestHandler<VersionCommand>
+  internal sealed class Handler : IRequestHandler<VersionCommand>
   {
     public Task Handle(VersionCommand request, CancellationToken cancellationToken)
     {
@@ -103,7 +103,7 @@ internal sealed class VersionCommand : IRequest
 // Test 2: Sub-Commands
 internal sealed class GitStatusCommand : IRequest
 {
-  public class Handler : IRequestHandler<GitStatusCommand>
+  internal sealed class Handler : IRequestHandler<GitStatusCommand>
   {
     public Task Handle(GitStatusCommand request, CancellationToken cancellationToken)
     {
@@ -115,7 +115,7 @@ internal sealed class GitStatusCommand : IRequest
 
 internal sealed class GitCommitCommand : IRequest
 {
-  public class Handler : IRequestHandler<GitCommitCommand>
+  internal sealed class Handler : IRequestHandler<GitCommitCommand>
   {
     public Task Handle(GitCommitCommand request, CancellationToken cancellationToken)
     {
@@ -127,7 +127,7 @@ internal sealed class GitCommitCommand : IRequest
 
 internal sealed class GitPushCommand : IRequest
 {
-  public class Handler : IRequestHandler<GitPushCommand>
+  internal sealed class Handler : IRequestHandler<GitPushCommand>
   {
     public Task Handle(GitPushCommand request, CancellationToken cancellationToken)
     {
@@ -140,7 +140,7 @@ internal sealed class GitPushCommand : IRequest
 // Test 3: Option-Based Routing
 internal sealed class GitCommitAmendCommand : IRequest
 {
-  public class Handler : IRequestHandler<GitCommitAmendCommand>
+  internal sealed class Handler : IRequestHandler<GitCommitAmendCommand>
   {
     public Task Handle(GitCommitAmendCommand request, CancellationToken cancellationToken)
     {
@@ -152,7 +152,7 @@ internal sealed class GitCommitAmendCommand : IRequest
 
 internal sealed class GitCommitAmendNoEditCommand : IRequest
 {
-  public class Handler : IRequestHandler<GitCommitAmendNoEditCommand>
+  internal sealed class Handler : IRequestHandler<GitCommitAmendNoEditCommand>
   {
     public Task Handle(GitCommitAmendNoEditCommand request, CancellationToken cancellationToken)
     {
@@ -167,7 +167,7 @@ internal sealed class GitLogCommand : IRequest
 {
   public int Count { get; set; }
 
-  public class Handler : IRequestHandler<GitLogCommand>
+  internal sealed class Handler : IRequestHandler<GitLogCommand>
   {
     public Task Handle(GitLogCommand request, CancellationToken cancellationToken)
     {
@@ -182,7 +182,7 @@ internal sealed class DockerRunEnhancedCommand : IRequest
 {
   public string Image { get; set; } = "";
 
-  public class Handler : IRequestHandler<DockerRunEnhancedCommand>
+  internal sealed class Handler : IRequestHandler<DockerRunEnhancedCommand>
   {
     public Task Handle(DockerRunEnhancedCommand request, CancellationToken cancellationToken)
     {
@@ -196,7 +196,7 @@ internal sealed class DockerRunCommand : IRequest
 {
   public string[] Args { get; set; } = [];
 
-  public class Handler : IRequestHandler<DockerRunCommand>
+  internal sealed class Handler : IRequestHandler<DockerRunCommand>
   {
     public Task Handle(DockerRunCommand request, CancellationToken cancellationToken)
     {
@@ -211,7 +211,7 @@ internal sealed class DockerBuildCommand : IRequest
 {
   public string[] Args { get; set; } = [];
 
-  public class Handler : IRequestHandler<DockerBuildCommand>
+  internal sealed class Handler : IRequestHandler<DockerBuildCommand>
   {
     public Task Handle(DockerBuildCommand request, CancellationToken cancellationToken)
     {
@@ -225,7 +225,7 @@ internal sealed class DockerPsCommand : IRequest
 {
   public string[] Args { get; set; } = [];
 
-  public class Handler : IRequestHandler<DockerPsCommand>
+  internal sealed class Handler : IRequestHandler<DockerPsCommand>
   {
     public Task Handle(DockerPsCommand request, CancellationToken cancellationToken)
     {
@@ -239,7 +239,7 @@ internal sealed class DockerCommand : IRequest
 {
   public string[] Args { get; set; } = [];
 
-  public class Handler : IRequestHandler<DockerCommand>
+  internal sealed class Handler : IRequestHandler<DockerCommand>
   {
     public Task Handle(DockerCommand request, CancellationToken cancellationToken)
     {
@@ -254,7 +254,7 @@ internal sealed class KubectlGetEnhancedCommand : IRequest
 {
   public string Resource { get; set; } = "";
 
-  public class Handler : IRequestHandler<KubectlGetEnhancedCommand>
+  internal sealed class Handler : IRequestHandler<KubectlGetEnhancedCommand>
   {
     public Task Handle(KubectlGetEnhancedCommand request, CancellationToken cancellationToken)
     {
@@ -268,7 +268,7 @@ internal sealed class KubectlGetWatchCommand : IRequest
 {
   public string Resource { get; set; } = "";
 
-  public class Handler : IRequestHandler<KubectlGetWatchCommand>
+  internal sealed class Handler : IRequestHandler<KubectlGetWatchCommand>
   {
     public Task Handle(KubectlGetWatchCommand request, CancellationToken cancellationToken)
     {
@@ -282,7 +282,7 @@ internal sealed class KubectlGetCommand : IRequest
 {
   public string Resource { get; set; } = "";
 
-  public class Handler : IRequestHandler<KubectlGetCommand>
+  internal sealed class Handler : IRequestHandler<KubectlGetCommand>
   {
     public Task Handle(KubectlGetCommand request, CancellationToken cancellationToken)
     {
@@ -296,7 +296,7 @@ internal sealed class KubectlApplyCommand : IRequest
 {
   public string File { get; set; } = "";
 
-  public class Handler : IRequestHandler<KubectlApplyCommand>
+  internal sealed class Handler : IRequestHandler<KubectlApplyCommand>
   {
     public Task Handle(KubectlApplyCommand request, CancellationToken cancellationToken)
     {
@@ -310,7 +310,7 @@ internal sealed class KubectlCommand : IRequest
 {
   public string[] Args { get; set; } = [];
 
-  public class Handler : IRequestHandler<KubectlCommand>
+  internal sealed class Handler : IRequestHandler<KubectlCommand>
   {
     public Task Handle(KubectlCommand request, CancellationToken cancellationToken)
     {
@@ -325,7 +325,7 @@ internal sealed class NpmInstallDevCommand : IRequest
 {
   public string Package { get; set; } = "";
 
-  public class Handler : IRequestHandler<NpmInstallDevCommand>
+  internal sealed class Handler : IRequestHandler<NpmInstallDevCommand>
   {
     public Task Handle(NpmInstallDevCommand request, CancellationToken cancellationToken)
     {
@@ -339,7 +339,7 @@ internal sealed class NpmInstallSaveCommand : IRequest
 {
   public string Package { get; set; } = "";
 
-  public class Handler : IRequestHandler<NpmInstallSaveCommand>
+  internal sealed class Handler : IRequestHandler<NpmInstallSaveCommand>
   {
     public Task Handle(NpmInstallSaveCommand request, CancellationToken cancellationToken)
     {
@@ -353,7 +353,7 @@ internal sealed class NpmInstallCommand : IRequest
 {
   public string Package { get; set; } = "";
 
-  public class Handler : IRequestHandler<NpmInstallCommand>
+  internal sealed class Handler : IRequestHandler<NpmInstallCommand>
   {
     public Task Handle(NpmInstallCommand request, CancellationToken cancellationToken)
     {
@@ -367,7 +367,7 @@ internal sealed class NpmRunCommand : IRequest
 {
   public string Script { get; set; } = "";
 
-  public class Handler : IRequestHandler<NpmRunCommand>
+  internal sealed class Handler : IRequestHandler<NpmRunCommand>
   {
     public Task Handle(NpmRunCommand request, CancellationToken cancellationToken)
     {
@@ -381,7 +381,7 @@ internal sealed class NpmCommand : IRequest
 {
   public string[] Args { get; set; } = [];
 
-  public class Handler : IRequestHandler<NpmCommand>
+  internal sealed class Handler : IRequestHandler<NpmCommand>
   {
     public Task Handle(NpmCommand request, CancellationToken cancellationToken)
     {
@@ -396,7 +396,7 @@ internal sealed class GitCommitMAmendCommand : IRequest
 {
   public string Message { get; set; } = "";
 
-  public class Handler : IRequestHandler<GitCommitMAmendCommand>
+  internal sealed class Handler : IRequestHandler<GitCommitMAmendCommand>
   {
     public Task Handle(GitCommitMAmendCommand request, CancellationToken cancellationToken)
     {
@@ -410,7 +410,7 @@ internal sealed class GitCommitAmendMCommand : IRequest
 {
   public string Message { get; set; } = "";
 
-  public class Handler : IRequestHandler<GitCommitAmendMCommand>
+  internal sealed class Handler : IRequestHandler<GitCommitAmendMCommand>
   {
     public Task Handle(GitCommitAmendMCommand request, CancellationToken cancellationToken)
     {
@@ -424,7 +424,7 @@ internal sealed class GitCommitAmendMessageCommand : IRequest
 {
   public string Message { get; set; } = "";
 
-  public class Handler : IRequestHandler<GitCommitAmendMessageCommand>
+  internal sealed class Handler : IRequestHandler<GitCommitAmendMessageCommand>
   {
     public Task Handle(GitCommitAmendMessageCommand request, CancellationToken cancellationToken)
     {
@@ -438,7 +438,7 @@ internal sealed class GitCommitMessageAmendCommand : IRequest
 {
   public string Message { get; set; } = "";
 
-  public class Handler : IRequestHandler<GitCommitMessageAmendCommand>
+  internal sealed class Handler : IRequestHandler<GitCommitMessageAmendCommand>
   {
     public Task Handle(GitCommitMessageAmendCommand request, CancellationToken cancellationToken)
     {
@@ -453,7 +453,7 @@ internal sealed class GitCommitMCommand : IRequest
 {
   public string Message { get; set; } = "";
 
-  public class Handler : IRequestHandler<GitCommitMCommand>
+  internal sealed class Handler : IRequestHandler<GitCommitMCommand>
   {
     public Task Handle(GitCommitMCommand request, CancellationToken cancellationToken)
     {
@@ -467,7 +467,7 @@ internal sealed class GitCommitMessageCommand : IRequest
 {
   public string Message { get; set; } = "";
 
-  public class Handler : IRequestHandler<GitCommitMessageCommand>
+  internal sealed class Handler : IRequestHandler<GitCommitMessageCommand>
   {
     public Task Handle(GitCommitMessageCommand request, CancellationToken cancellationToken)
     {
@@ -480,7 +480,7 @@ internal sealed class GitCommitMessageCommand : IRequest
 // Test 11: Async void methods
 internal sealed class AsyncTestCommand : IRequest
 {
-  public class Handler : IRequestHandler<AsyncTestCommand>
+  internal sealed class Handler : IRequestHandler<AsyncTestCommand>
   {
     public async Task Handle(AsyncTestCommand request, CancellationToken cancellationToken)
     {
@@ -496,7 +496,7 @@ internal sealed class DeployCommand : IRequest
   public string Env { get; set; } = "";
   public string? Tag { get; set; }
 
-  public class Handler : IRequestHandler<DeployCommand>
+  internal sealed class Handler : IRequestHandler<DeployCommand>
   {
     public Task Handle(DeployCommand request, CancellationToken cancellationToken)
     {
@@ -519,7 +519,7 @@ internal sealed class BackupCommand : IRequest
   public string Source { get; set; } = "";
   public string? Destination { get; set; }
 
-  public class Handler : IRequestHandler<BackupCommand>
+  internal sealed class Handler : IRequestHandler<BackupCommand>
   {
     public async Task Handle(BackupCommand request, CancellationToken cancellationToken)
     {
@@ -541,7 +541,7 @@ internal sealed class SleepCommand : IRequest
 {
   public int? Seconds { get; set; }
 
-  public class Handler : IRequestHandler<SleepCommand>
+  internal sealed class Handler : IRequestHandler<SleepCommand>
   {
     public Task Handle(SleepCommand request, CancellationToken cancellationToken)
     {
@@ -557,7 +557,7 @@ internal sealed class CatchAllCommand : IRequest
 {
   public string[] Everything { get; set; } = [];
 
-  public class Handler : IRequestHandler<CatchAllCommand>
+  internal sealed class Handler : IRequestHandler<CatchAllCommand>
   {
     public Task Handle(CatchAllCommand request, CancellationToken cancellationToken)
     {
@@ -570,7 +570,7 @@ internal sealed class CatchAllCommand : IRequest
 // Help command
 internal sealed class HelpCommand : IRequest
 {
-  public class Handler : IRequestHandler<HelpCommand>
+  internal sealed class Handler : IRequestHandler<HelpCommand>
   {
     public Task Handle(HelpCommand request, CancellationToken cancellationToken)
     {

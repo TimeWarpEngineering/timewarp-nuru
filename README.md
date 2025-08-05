@@ -258,7 +258,7 @@ public class FetchCommand : IRequest<string>
 { 
     public string Url { get; set; }
     
-    public class Handler : IRequestHandler<FetchCommand, string>
+    internal sealed class Handler : IRequestHandler<FetchCommand, string>
     {
         public async Task<string> Handle(FetchCommand cmd, CancellationToken ct)
         {

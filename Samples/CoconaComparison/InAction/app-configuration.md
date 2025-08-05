@@ -68,7 +68,7 @@ return await app.RunAsync(args);
 // Command that receives configuration through DI
 public class RunCommand : IRequest
 {
-    public class Handler : IRequestHandler<RunCommand>
+    internal sealed class Handler : IRequestHandler<RunCommand>
     {
         private readonly IConfiguration _configuration;
         

@@ -144,7 +144,7 @@ public class HelloCommand : IRequest
     public string Name { get; set; }
     public bool ToUpperCase { get; set; }
     
-    public class Handler : IRequestHandler<HelloCommand>
+    internal sealed class Handler : IRequestHandler<HelloCommand>
     {
         public async Task Handle(HelloCommand request, CancellationToken cancellationToken)
         {

@@ -41,7 +41,7 @@ return await app.RunAsync(args);
 // Command with multiple pipeline behaviors applied
 public class HelloCommand : IRequest
 {
-    public class Handler : IRequestHandler<HelloCommand>
+    internal sealed class Handler : IRequestHandler<HelloCommand>
     {
         public async Task Handle(HelloCommand request, CancellationToken cancellationToken)
         {

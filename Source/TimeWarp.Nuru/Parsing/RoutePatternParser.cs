@@ -1,102 +1,77 @@
 namespace TimeWarp.Nuru.Parsing;
 
+using TimeWarp.Nuru.Parsing.Ast;
+
 /// <summary>
-/// Parses route pattern strings into ParsedRoute objects.
+/// Parses route pattern strings into CompiledRoute objects.
 /// </summary>
 public static class RoutePatternParser
 {
-  // private static readonly Regex ParameterRegex = new(@"\{(\*)?([^}:|?]+)(\?)?(:([^}|]+))?(\|([^}]+))?\}", RegexOptions.Compiled);
-
-  /// <summary>
-  /// Tokenizes a route pattern, preserving descriptions that contain spaces.
-  /// </summary>
-  private static List<string> TokenizePattern(string pattern)
-  {
-    var tokens = new List<string>();
-    var currentToken = new System.Text.StringBuilder();
-    bool inBraces = false;
-    bool inOptionDescription = false;
-    int braceDepth = 0;
-
-    for (int i = 0; i < pattern.Length; i++)
-    {
-      char c = pattern[i];
-
-      if (c == '{')
-      {
-        inBraces = true;
-        braceDepth++;
-      }
-      else if (c == '}')
-      {
-        braceDepth--;
-        if (braceDepth == 0)
-        {
-          inBraces = false;
-          // If we were in an option description and hit the closing brace of a parameter,
-          // we need to check if the next character starts a new token
-          if (inOptionDescription && i + 1 < pattern.Length && pattern[i + 1] == '|')
-          {
-            // This is the case where we have --option {param}|Description
-            // The description continues after the parameter
-            currentToken.Append(c);
-            continue;
-          }
-        }
-      }
-      else if (c == '|' && !inBraces)
-      {
-        // Start of option description
-        inOptionDescription = true;
-      }
-      else if (c == ' ' && !inBraces && !inOptionDescription)
-      {
-        // Space outside of braces and descriptions - this is a token separator
-        if (currentToken.Length > 0)
-        {
-          tokens.Add(currentToken.ToString());
-          currentToken.Clear();
-        }
-
-        continue;
-      }
-      else if (c == ' ' && inOptionDescription)
-      {
-        // Check if we're at the start of a new option/parameter
-        if (i + 1 < pattern.Length && (pattern[i + 1] == '-' || pattern[i + 1] == '{'))
-        {
-          // This space ends the description
-          inOptionDescription = false;
-          if (currentToken.Length > 0)
-          {
-            tokens.Add(currentToken.ToString());
-            currentToken.Clear();
-          }
-
-          continue;
-        }
-      }
-
-      currentToken.Append(c);
-    }
-
-    // Add the last token
-    if (currentToken.Length > 0)
-    {
-      tokens.Add(currentToken.ToString());
-    }
-
-    return tokens;
-  }
+  private static readonly RouteParser Parser = new();
+  private static readonly RouteCompiler Compiler = new();
 
   /// <summary>
   /// Parses a route pattern string into a CompiledRoute object.
   /// </summary>
   /// <param name="routePattern">The route pattern to parse (e.g., "git commit --amend").</param>
   /// <returns>A compiled representation of the route.</returns>
+  /// <exception cref="ArgumentException">Thrown when the route pattern is invalid.</exception>
   public static CompiledRoute Parse(string routePattern)
   {
-    // Use the route parser facade
-    return RouteParserFacade.Parse(routePattern);
+    ArgumentNullException.ThrowIfNull(routePattern);
+
+    ParseResult<RouteSyntax> result = Parser.Parse(routePattern);
+
+    if (!result.Success)
+    {
+      // Format error messages for the exception
+      string[] errorMessages = [.. result.Errors.Select(FormatError)];
+      string combinedMessage = string.Join(Environment.NewLine, errorMessages);
+
+      throw new ArgumentException($"Invalid route pattern '{routePattern}': {Environment.NewLine}{combinedMessage}");
+    }
+
+    return Compiler.Compile(result.Value!);
+  }
+
+  /// <summary>
+  /// Tries to parse a route pattern string into a CompiledRoute object.
+  /// </summary>
+  /// <param name="routePattern">The route pattern to parse.</param>
+  /// <param name="compiledRoute">The compiled route if successful.</param>
+  /// <param name="errors">The parsing errors if unsuccessful.</param>
+  /// <returns>True if parsing was successful, false otherwise.</returns>
+  public static bool TryParse(string routePattern, out CompiledRoute? compiledRoute, out IReadOnlyList<ParseError> errors)
+  {
+    compiledRoute = null;
+    errors = [];
+
+    if (routePattern is null)
+    {
+      errors = [new ParseError("Route pattern cannot be null", 0, 0)];
+      return false;
+    }
+
+    ParseResult<RouteSyntax> result = Parser.Parse(routePattern);
+    errors = result.Errors;
+
+    if (result.Success)
+    {
+      compiledRoute = Compiler.Compile(result.Value!);
+      return true;
+    }
+
+    return false;
+  }
+
+  private static string FormatError(ParseError error)
+  {
+    string message = $"Error at position {error.Position}: {error.Message}";
+    if (error.Suggestion is not null)
+    {
+      message += $" (Suggestion: {error.Suggestion})";
+    }
+
+    return message;
   }
 }

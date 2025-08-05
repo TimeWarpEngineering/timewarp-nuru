@@ -131,62 +131,6 @@ public class RoutePatternLexer
     }
   }
 
-  private void ScanDescription()
-  {
-    throw new InvalidOperationException("ScanDescription should not be called!");
-#pragma warning disable CS0162 // Unreachable code detected
-    int start = Position;
-    var description = new StringBuilder();
-
-    // Check if we're inside a parameter by looking backwards for an unmatched '{'
-    bool insideParameter = false;
-    int braceCount = 0;
-    for (int i = Position - 1; i >= 0; i--)
-    {
-      if (Input[i] == '}') braceCount++;
-      else if (Input[i] == '{') braceCount--;
-    }
-
-    insideParameter = braceCount < 0;
-
-    // Description continues until:
-    // - Inside parameter: we hit '}'
-    // - Outside parameter: we hit space followed by '-' or '{'
-    while (!IsAtEnd())
-    {
-      char c = Peek();
-
-      if (insideParameter && c == '}')
-      {
-        // Stop at closing brace when inside parameter
-        break;
-      }
-      else if (!insideParameter && c == ' ')
-      {
-        // Check if next char starts a new segment
-        if (Position + 1 >= Input.Length)
-        {
-          break;
-        }
-
-        char next = PeekNext();
-        if (next == '-' || next == '{')
-        {
-          break;
-        }
-      }
-
-      description.Append(Advance());
-    }
-
-    string descriptionText = description.ToString().Trim();
-    if (descriptionText.Length > 0)
-    {
-      AddToken(TokenType.Description, descriptionText, start);
-    }
-#pragma warning restore CS0162
-  }
-
   private void ScanIdentifier()
   {
     int start = Position - 1;

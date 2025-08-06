@@ -74,11 +74,11 @@ public class RouteEndpoint
   /// </summary>
   public void ShowHelp()
   {
-    Console.WriteLine($"Usage: {RoutePattern}");
+    NuruConsole.WriteLine($"Usage: {RoutePattern}");
 
     if (!string.IsNullOrEmpty(Description))
     {
-      Console.WriteLine($"\n{Description}");
+      NuruConsole.WriteLine($"\n{Description}");
     }
 
     // Show positional arguments
@@ -93,7 +93,7 @@ public class RouteEndpoint
 
     if (positionalParams.Count > 0)
     {
-      Console.WriteLine("\nArguments:");
+      NuruConsole.WriteLine("\nArguments:");
       foreach (ParameterMatcher param in positionalParams)
       {
         // Check if parameter is optional by looking for '?' in pattern
@@ -102,14 +102,14 @@ public class RouteEndpoint
         string status = isOptional ? "(Optional)" : "(Required)";
         string type = param.Constraint ?? "string";
         string description = param.Description ?? "";
-        Console.WriteLine($"  {param.Name,-20} {status,-12} Type: {type,-10} {description}");
+        NuruConsole.WriteLine($"  {param.Name,-20} {status,-12} Type: {type,-10} {description}");
       }
     }
 
     // Show options
     if (CompiledRoute.OptionMatchers.Count > 0)
     {
-      Console.WriteLine("\nOptions:");
+      NuruConsole.WriteLine("\nOptions:");
       foreach (OptionMatcher option in CompiledRoute.OptionMatchers)
       {
         string optionName = option.MatchPattern.StartsWith("--", StringComparison.Ordinal) ? option.MatchPattern : $"--{option.MatchPattern}";
@@ -120,7 +120,7 @@ public class RouteEndpoint
 
         string paramInfo = option.ExpectsValue && option.ParameterName is not null ? $" <{option.ParameterName}>" : "";
         string description = option.Description ?? "";
-        Console.WriteLine($"  {optionName + paramInfo,-30} {description}");
+        NuruConsole.WriteLine($"  {optionName + paramInfo,-30} {description}");
       }
     }
   }

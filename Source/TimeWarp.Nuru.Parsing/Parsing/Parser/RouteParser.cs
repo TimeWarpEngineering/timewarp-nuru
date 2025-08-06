@@ -24,10 +24,10 @@ public sealed class RouteParser : IRouteParser
     var lexer = new RoutePatternLexer(pattern);
     Tokens = lexer.Tokenize();
 
-    if (EnableDiagnostics)
+    if (ParserConsole.EnableDiagnostics)
     {
-      WriteLine($"Parsing pattern: '{pattern}'");
-      WriteLine(RoutePatternLexer.DumpTokens(Tokens));
+      ParserConsole.WriteLine($"Parsing pattern: '{pattern}'");
+      ParserConsole.WriteLine(RoutePatternLexer.DumpTokens(Tokens));
     }
 
     // Parse tokens into AST
@@ -39,9 +39,9 @@ public sealed class RouteParser : IRouteParser
       // Perform semantic validation on the complete AST
       ValidateSemantics(ast);
 
-      if (EnableDiagnostics && Errors.Count == 0)
+      if (ParserConsole.EnableDiagnostics && Errors.Count == 0)
       {
-        WriteLine(DumpAst(ast));
+        ParserConsole.WriteLine(DumpAst(ast));
       }
 
       return Errors.Count == 0

@@ -25,7 +25,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\TimeWarp.Nuru.Parsing\TimeWarp.Nuru.Parsing.csproj" />
+    <PackageReference Include="TimeWarp.Nuru.Parsing">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>contentfiles;build</IncludeAssets>
+    </PackageReference>
   </ItemGroup>
 
   <ItemGroup>

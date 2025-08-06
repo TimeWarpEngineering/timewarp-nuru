@@ -36,6 +36,9 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
+      - name: Create LocalNuGetFeed directory
+        run: mkdir -p LocalNuGetFeed
+
       - name: Build and Test
         run: |
           echo "Running build script..."

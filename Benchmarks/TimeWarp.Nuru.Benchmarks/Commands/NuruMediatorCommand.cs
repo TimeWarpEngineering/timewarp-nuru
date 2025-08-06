@@ -33,7 +33,7 @@ public class TestCommand : IRequest
   public int IntOption { get; set; }
   public bool B { get; set; }
   
-  public class Handler : IRequestHandler<TestCommand>
+  internal sealed class Handler : IRequestHandler<TestCommand>
   {
     public Task Handle(TestCommand request, CancellationToken cancellationToken)
     {

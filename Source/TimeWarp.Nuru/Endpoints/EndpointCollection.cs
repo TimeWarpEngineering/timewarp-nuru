@@ -48,7 +48,7 @@ public class EndpointCollection : IEnumerable<RouteEndpoint>
       int orderComparison = b.Order.CompareTo(a.Order);
       return orderComparison != 0
                 ? orderComparison
-                : b.ParsedRoute.Specificity.CompareTo(a.ParsedRoute.Specificity);
+                : b.CompiledRoute.Specificity.CompareTo(a.CompiledRoute.Specificity);
     });
   }
 

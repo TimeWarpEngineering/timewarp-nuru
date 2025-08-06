@@ -19,16 +19,16 @@ public class DefaultEndpointCollectionBuilder : IEndpointCollectionBuilder
 
     ArgumentNullException.ThrowIfNull(handler);
 
-    ParsedRoute parsedRoute = RoutePatternParser.Parse(routePattern);
+    CompiledRoute compiledRoute = RoutePatternParser.Parse(routePattern);
     MethodInfo method = handler.Method;
 
     var endpoint = new RouteEndpoint
     {
       RoutePattern = routePattern,
-      ParsedRoute = parsedRoute,
+      CompiledRoute = compiledRoute,
       Handler = handler,
       Method = method,
-      Order = parsedRoute.Specificity,
+      Order = compiledRoute.Specificity,
       Description = description
     };
 

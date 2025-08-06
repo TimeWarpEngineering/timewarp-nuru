@@ -1,9 +1,9 @@
-namespace TimeWarp.Nuru.Parsing.Segments;
+namespace TimeWarp.Nuru.Parsing;
 
 /// <summary>
-/// Base class for all route segments (literals, parameters, etc.)
+/// Base class for all route matchers (literals, parameters, etc.)
 /// </summary>
-public abstract class RouteSegment
+public abstract class RouteMatcher
 {
   /// <summary>
   /// Attempts to match this segment against an argument.

@@ -57,6 +57,7 @@ builder.AddRoute("compare {x:double} {y:double}",
     });
 
 // Help
+
 builder.AddRoute("help", 
     () => WriteLine(
         "Calculator Commands:\n" +
@@ -143,7 +144,7 @@ public class StatsCommand : IRequest<StatsResponse>
 { 
     public string Values { get; set; } = "";
     
-    public class Handler : IRequestHandler<StatsCommand, StatsResponse>
+    internal sealed class Handler : IRequestHandler<StatsCommand, StatsResponse>
     {
         public Task<StatsResponse> Handle(StatsCommand request, CancellationToken cancellationToken)
         {

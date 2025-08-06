@@ -1,16 +1,16 @@
-namespace TimeWarp.Nuru.Parsing.Segments;
+namespace TimeWarp.Nuru.Parsing;
 
 /// <summary>
-/// Represents a literal segment in a route pattern that must match exactly.
+/// Represents a literal matcher in a route pattern that must match exactly.
 /// </summary>
-public class LiteralSegment : RouteSegment
+public class LiteralMatcher : RouteMatcher
 {
   /// <summary>
   /// Gets the literal value that must be matched.
   /// </summary>
   public string Value { get; }
 
-  public LiteralSegment(string value)
+  public LiteralMatcher(string value)
   {
     Value = value ?? throw new ArgumentNullException(nameof(value));
   }

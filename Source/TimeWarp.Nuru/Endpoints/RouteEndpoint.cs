@@ -11,9 +11,9 @@ public class RouteEndpoint
   /// </summary>
   public required string RoutePattern { get; set; }
   /// <summary>
-  /// Gets or sets the parsed representation of the route pattern for efficient matching.
+  /// Gets or sets the compiled representation of the route pattern for efficient matching.
   /// </summary>
-  public required ParsedRoute ParsedRoute { get; set; }
+  public required CompiledRoute CompiledRoute { get; set; }
   /// <summary>
   /// Gets or sets the handler delegate that will be invoked when this endpoint is matched.
   /// For Mediator commands, this will be null and CommandType will be used instead.
@@ -46,9 +46,9 @@ public class RouteEndpoint
     // Extract positional literals from the parsed route
     List<string> positionalParts = [];
 
-    foreach (RouteSegment segment in ParsedRoute.PositionalTemplate)
+    foreach (RouteMatcher segment in CompiledRoute.PositionalMatchers)
     {
-      if (segment is LiteralSegment literal)
+      if (segment is LiteralMatcher literal)
       {
         positionalParts.Add(literal.Value);
       }
@@ -82,10 +82,10 @@ public class RouteEndpoint
     }
 
     // Show positional arguments
-    List<ParameterSegment> positionalParams = [];
-    foreach (RouteSegment segment in ParsedRoute.PositionalTemplate)
+    List<ParameterMatcher> positionalParams = [];
+    foreach (RouteMatcher segment in CompiledRoute.PositionalMatchers)
     {
-      if (segment is ParameterSegment param)
+      if (segment is ParameterMatcher param)
       {
         positionalParams.Add(param);
       }
@@ -94,7 +94,7 @@ public class RouteEndpoint
     if (positionalParams.Count > 0)
     {
       Console.WriteLine("\nArguments:");
-      foreach (ParameterSegment param in positionalParams)
+      foreach (ParameterMatcher param in positionalParams)
       {
         // Check if parameter is optional by looking for '?' in pattern
         bool isOptional = RoutePattern.Contains($"{{{param.Name}?", StringComparison.Ordinal) ||
@@ -107,18 +107,18 @@ public class RouteEndpoint
     }
 
     // Show options
-    if (ParsedRoute.OptionSegments.Count > 0)
+    if (CompiledRoute.OptionMatchers.Count > 0)
     {
       Console.WriteLine("\nOptions:");
-      foreach (OptionSegment option in ParsedRoute.OptionSegments)
+      foreach (OptionMatcher option in CompiledRoute.OptionMatchers)
       {
-        string optionName = option.Name.StartsWith("--", StringComparison.Ordinal) ? option.Name : $"--{option.Name}";
-        if (option.ShortAlias is not null)
+        string optionName = option.MatchPattern.StartsWith("--", StringComparison.Ordinal) ? option.MatchPattern : $"--{option.MatchPattern}";
+        if (option.AlternateForm is not null)
         {
-          optionName = $"{optionName},{option.ShortAlias}";
+          optionName = $"{optionName},{option.AlternateForm}";
         }
 
-        string paramInfo = option.ExpectsValue && option.ValueParameterName is not null ? $" <{option.ValueParameterName}>" : "";
+        string paramInfo = option.ExpectsValue && option.ParameterName is not null ? $" <{option.ParameterName}>" : "";
         string description = option.Description ?? "";
         Console.WriteLine($"  {optionName + paramInfo,-30} {description}");
       }

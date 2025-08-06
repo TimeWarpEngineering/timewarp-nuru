@@ -45,7 +45,7 @@ internal static class RouteBasedCommandResolver
         if (CheckRequiredOptions(endpoint, remainingArgs, extractedValues, out int optionsConsumed))
         {
           // For catch-all routes, we don't need to check if all args were consumed
-          if (endpoint.ParsedRoute.HasCatchAll)
+          if (endpoint.CompiledRoute.HasCatchAll)
           {
             return (endpoint, extractedValues);
           }
@@ -67,15 +67,15 @@ internal static class RouteBasedCommandResolver
       Dictionary<string, string> extractedValues, out int consumedArgs)
   {
     consumedArgs = 0;
-    IReadOnlyList<RouteSegment> template = endpoint.ParsedRoute.PositionalTemplate;
+    IReadOnlyList<RouteMatcher> template = endpoint.CompiledRoute.PositionalMatchers;
 
     // Match each segment in the template
     for (int i = 0; i < template.Count; i++)
     {
-      RouteSegment segment = template[i];
+      RouteMatcher segment = template[i];
 
       // For catch-all segment (must be last), consume all remaining
-      if (segment is ParameterSegment param && param.IsCatchAll)
+      if (segment is ParameterMatcher param && param.IsCatchAll)
       {
         consumedArgs = args.Length;
         if (i < args.Length)
@@ -90,7 +90,7 @@ internal static class RouteBasedCommandResolver
       if (i >= args.Length)
       {
         // Check if this is an optional parameter
-        if (segment is ParameterSegment optionalParam && optionalParam.IsOptional)
+        if (segment is ParameterMatcher optionalParam && optionalParam.IsOptional)
         {
           // Optional parameter with no value - skip it
           continue;
@@ -102,7 +102,7 @@ internal static class RouteBasedCommandResolver
       if (args[i].StartsWith(CommonStrings.SingleDash, StringComparison.Ordinal))
       {
         // Hit an option - check if current segment is optional
-        if (segment is ParameterSegment optionalParam && optionalParam.IsOptional)
+        if (segment is ParameterMatcher optionalParam && optionalParam.IsOptional)
         {
           // Optional parameter followed by an option - skip it
           continue;
@@ -114,7 +114,7 @@ internal static class RouteBasedCommandResolver
       if (!segment.TryMatch(args[i], out string? value))
         return false;
 
-      if (value is not null && segment is ParameterSegment ps)
+      if (value is not null && segment is ParameterMatcher ps)
         extractedValues[ps.Name] = value;
 
       consumedArgs++;
@@ -127,14 +127,14 @@ internal static class RouteBasedCommandResolver
       Dictionary<string, string> extractedValues, out int optionsConsumed)
   {
     optionsConsumed = 0;
-    IReadOnlyList<OptionSegment> optionSegments = endpoint.ParsedRoute.OptionSegments;
+    IReadOnlyList<OptionMatcher> optionSegments = endpoint.CompiledRoute.OptionMatchers;
 
     // If no required options, we're good
     if (optionSegments.Count == 0)
       return true;
 
     // Check each required option segment
-    foreach (OptionSegment optionSegment in optionSegments)
+    foreach (OptionMatcher optionSegment in optionSegments)
     {
       bool found = false;
 
@@ -156,9 +156,9 @@ internal static class RouteBasedCommandResolver
             }
 
             // Extract the option value
-            if (optionSegment.ValueParameterName is not null)
+            if (optionSegment.ParameterName is not null)
             {
-              extractedValues[optionSegment.ValueParameterName] = remainingArgs[i + 1];
+              extractedValues[optionSegment.ParameterName] = remainingArgs[i + 1];
             }
 
             optionsConsumed += 2; // Option + value

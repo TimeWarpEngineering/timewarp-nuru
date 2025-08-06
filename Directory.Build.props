@@ -25,7 +25,7 @@
     <ReportAnalyzer>true</ReportAnalyzer>
     
     <!-- Fail build on analyzer warnings since TreatWarningsAsErrors is true -->
-    <CodeAnalysisTreatWarningsAsErrors>false</CodeAnalysisTreatWarningsAsErrors>
+    <CodeAnalysisTreatWarningsAsErrors>true</CodeAnalysisTreatWarningsAsErrors>
     
     <!-- Use local packages directory instead of global cache -->    <RestorePackagesPath>$(MSBuildThisFileDirectory)LocalNuGetCache</RestorePackagesPath>
     

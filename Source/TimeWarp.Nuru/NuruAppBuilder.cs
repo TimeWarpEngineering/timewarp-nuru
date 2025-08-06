@@ -86,7 +86,7 @@ public class NuruAppBuilder
     var endpoint = new RouteEndpoint
     {
       RoutePattern = pattern,
-      ParsedRoute = RoutePatternParser.Parse(pattern),
+      CompiledRoute = RoutePatternParser.Parse(pattern),
       Handler = handler,
       Method = handler.Method,
       Description = description
@@ -126,7 +126,7 @@ public class NuruAppBuilder
     var endpoint = new RouteEndpoint
     {
       RoutePattern = pattern,
-      ParsedRoute = RoutePatternParser.Parse(pattern),
+      CompiledRoute = RoutePatternParser.Parse(pattern),
       Description = description,
       CommandType = commandType
     };
@@ -238,9 +238,9 @@ public class NuruAppBuilder
   {
     List<string> parts = [];
 
-    foreach (RouteSegment segment in endpoint.ParsedRoute.PositionalTemplate)
+    foreach (RouteMatcher segment in endpoint.CompiledRoute.PositionalMatchers)
     {
-      if (segment is LiteralSegment literal)
+      if (segment is LiteralMatcher literal)
       {
         parts.Add(literal.Value);
       }
@@ -274,9 +274,9 @@ public class NuruAppBuilder
     Console.WriteLine("\nArguments:");
     foreach (RouteEndpoint endpoint in endpoints)
     {
-      foreach (RouteSegment segment in endpoint.ParsedRoute.PositionalTemplate)
+      foreach (RouteMatcher segment in endpoint.CompiledRoute.PositionalMatchers)
       {
-        if (segment is ParameterSegment param && shownParams.Add(param.Name))
+        if (segment is ParameterMatcher param && shownParams.Add(param.Name))
         {
           bool isOptional = endpoint.RoutePattern.Contains($"{{{param.Name}?", StringComparison.Ordinal) ||
                            (endpoint.RoutePattern.Contains($"{{{param.Name}:", StringComparison.Ordinal) &&
@@ -297,22 +297,22 @@ public class NuruAppBuilder
 
     HashSet<string> shownOptions = [];
 
-    if (endpoints.Any(e => e.ParsedRoute.OptionSegments.Count > 0))
+    if (endpoints.Any(e => e.CompiledRoute.OptionMatchers.Count > 0))
     {
       Console.WriteLine("\nOptions:");
       foreach (RouteEndpoint endpoint in endpoints)
       {
-        foreach (OptionSegment option in endpoint.ParsedRoute.OptionSegments)
+        foreach (OptionMatcher option in endpoint.CompiledRoute.OptionMatchers)
         {
-          if (shownOptions.Add(option.Name))
+          if (shownOptions.Add(option.MatchPattern))
           {
-            string optionName = option.Name.StartsWith("--", StringComparison.Ordinal) ? option.Name : $"--{option.Name}";
-            if (option.ShortAlias is not null)
+            string optionName = option.MatchPattern.StartsWith("--", StringComparison.Ordinal) ? option.MatchPattern : $"--{option.MatchPattern}";
+            if (option.AlternateForm is not null)
             {
-              optionName = $"{optionName},{option.ShortAlias}";
+              optionName = $"{optionName},{option.AlternateForm}";
             }
 
-            string paramInfo = option.ExpectsValue && option.ValueParameterName is not null ? $" <{option.ValueParameterName}>" : "";
+            string paramInfo = option.ExpectsValue && option.ParameterName is not null ? $" <{option.ParameterName}>" : "";
 
             if (option.Description is not null)
             {

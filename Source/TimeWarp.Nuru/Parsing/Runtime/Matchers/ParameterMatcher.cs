@@ -1,9 +1,9 @@
-namespace TimeWarp.Nuru.Parsing.Segments;
+namespace TimeWarp.Nuru.Parsing;
 
 /// <summary>
-/// Represents a parameter segment in a route pattern that extracts a value.
+/// Represents a parameter matcher in a route pattern that extracts a value.
 /// </summary>
-public class ParameterSegment : RouteSegment
+public class ParameterMatcher : RouteMatcher
 {
   /// <summary>
   /// Gets the name of the parameter.
@@ -26,7 +26,7 @@ public class ParameterSegment : RouteSegment
   /// </summary>
   public bool IsOptional { get; }
 
-  public ParameterSegment(string name, bool isCatchAll = false, string? constraint = null, string? description = null, bool isOptional = false)
+  public ParameterMatcher(string name, bool isCatchAll = false, string? constraint = null, string? description = null, bool isOptional = false)
   {
     Name = name ?? throw new ArgumentNullException(nameof(name));
     IsCatchAll = isCatchAll;

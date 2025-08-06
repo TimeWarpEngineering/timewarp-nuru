@@ -26,9 +26,9 @@ public static class RoutePatternParser
     {
       // Format error messages for the exception
       string[] errorMessages = [.. result.Errors.Select(FormatError)];
-      string combinedMessage = string.Join(ParserConsole.NewLine, errorMessages);
+      string combinedMessage = string.Join("\n", errorMessages);
 
-      throw new ArgumentException($"Invalid route pattern '{routePattern}': {ParserConsole.NewLine}{combinedMessage}");
+      throw new ArgumentException($"Invalid route pattern '{routePattern}': \n{combinedMessage}");
     }
 
     return Compiler.Compile(result.Value!);

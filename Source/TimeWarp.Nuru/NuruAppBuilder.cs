@@ -83,6 +83,14 @@ public class NuruAppBuilder
   {
     ArgumentNullException.ThrowIfNull(handler);
 
+    // Log route registration
+    if (EndpointCollection.Count == 0)
+    {
+      NuruLogger.Registration.Info("Starting route registration");
+    }
+
+    NuruLogger.Registration.Debug($"Registering route: '{pattern}'");
+
     var endpoint = new RouteEndpoint
     {
       RoutePattern = pattern,

@@ -24,10 +24,10 @@ public sealed class RouteParser : IRouteParser
     var lexer = new RoutePatternLexer(pattern);
     Tokens = lexer.Tokenize();
 
-    if (ParserConsole.EnableDiagnostics)
+    NuruLogger.Parser.Debug($"Parsing pattern: '{pattern}'");
+    if (NuruLogger.Parser.IsTraceEnabled)
     {
-      ParserConsole.WriteLine($"Parsing pattern: '{pattern}'");
-      ParserConsole.WriteLine(RoutePatternLexer.DumpTokens(Tokens));
+      NuruLogger.Parser.Trace(RoutePatternLexer.DumpTokens(Tokens));
     }
 
     // Parse tokens into AST
@@ -39,9 +39,9 @@ public sealed class RouteParser : IRouteParser
       // Perform semantic validation on the complete AST
       ValidateSemantics(ast);
 
-      if (ParserConsole.EnableDiagnostics && Errors.Count == 0)
+      if (NuruLogger.Parser.IsDebugEnabled && Errors.Count == 0)
       {
-        ParserConsole.WriteLine(DumpAst(ast));
+        NuruLogger.Parser.Debug(DumpAst(ast));
       }
 
       return Errors.Count == 0
@@ -77,13 +77,16 @@ public sealed class RouteParser : IRouteParser
     ArgumentNullException.ThrowIfNull(ast);
 
     var sb = new StringBuilder();
-    sb.Append("AST has ").Append(ast.Segments.Count).AppendLine(" segments:");
+    sb.Append("    → ").Append(ast.Segments.Count).Append(" segments: ");
 
+    // Build inline segment list
+    var segmentList = new List<string>();
     for (int i = 0; i < ast.Segments.Count; i++)
     {
-      sb.Append("  [").Append(i).Append("] ");
-      sb.AppendLine(ast.Segments[i].ToString());
+      segmentList.Add(ast.Segments[i].ToString());
     }
+
+    sb.AppendJoin(", ", segmentList).AppendLine();
 
     return sb.ToString();
   }

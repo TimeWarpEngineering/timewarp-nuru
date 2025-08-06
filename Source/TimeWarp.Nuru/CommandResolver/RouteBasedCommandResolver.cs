@@ -11,6 +11,9 @@ internal static class RouteBasedCommandResolver
     ArgumentNullException.ThrowIfNull(endpoints);
     ArgumentNullException.ThrowIfNull(typeConverterRegistry);
 
+    ParserConsole.WriteLine($"\nResolving command: '{string.Join(" ", args)}'");
+    ParserConsole.WriteLine($"Total endpoints to check: {endpoints.Count}");
+
     // Try to match against route endpoints
     (RouteEndpoint endpoint, Dictionary<string, string> extractedValues)? matchResult = MatchRoute(args, endpoints);
 
@@ -35,8 +38,13 @@ internal static class RouteBasedCommandResolver
   {
     var extractedValues = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
+    int endpointIndex = 0;
     foreach (RouteEndpoint endpoint in endpoints)
     {
+      endpointIndex++;
+      ParserConsole.WriteLine($"\n[{endpointIndex}] Checking endpoint: '{endpoint.RoutePattern}'");
+      extractedValues.Clear(); // Clear for each attempt
+
       // Check positional segments
       if (MatchPositionalSegments(endpoint, args, extractedValues, out int consumedArgs))
       {
@@ -47,6 +55,8 @@ internal static class RouteBasedCommandResolver
           // For catch-all routes, we don't need to check if all args were consumed
           if (endpoint.CompiledRoute.HasCatchAll)
           {
+            ParserConsole.WriteLine("  ✓ MATCH! Catch-all route matched");
+            LogExtractedValues(extractedValues);
             return (endpoint, extractedValues);
           }
 
@@ -54,13 +64,40 @@ internal static class RouteBasedCommandResolver
           int totalConsumed = consumedArgs + optionsConsumed;
           if (totalConsumed == args.Length)
           {
+            ParserConsole.WriteLine($"  ✓ MATCH! All {totalConsumed} arguments consumed");
+            LogExtractedValues(extractedValues);
             return (endpoint, extractedValues);
           }
+          else
+          {
+            ParserConsole.WriteLine($"  ✗ Not all args consumed: {totalConsumed}/{args.Length}");
+          }
         }
+        else
+        {
+          ParserConsole.WriteLine("  ✗ Required options not matched");
+        }
+      }
+      else
+      {
+        ParserConsole.WriteLine("  ✗ Positional segments not matched");
       }
     }
 
+    ParserConsole.WriteLine($"\n✗ No matching route found for: '{string.Join(" ", args)}'");
     return null;
+  }
+
+  private static void LogExtractedValues(Dictionary<string, string> extractedValues)
+  {
+    if (extractedValues.Count > 0)
+    {
+      ParserConsole.WriteLine("  Extracted values:");
+      foreach (KeyValuePair<string, string> kvp in extractedValues)
+      {
+        ParserConsole.WriteLine($"    {kvp.Key} = '{kvp.Value}'");
+      }
+    }
   }
 
   private static bool MatchPositionalSegments(RouteEndpoint endpoint, string[] args,
@@ -68,6 +105,8 @@ internal static class RouteBasedCommandResolver
   {
     consumedArgs = 0;
     IReadOnlyList<RouteMatcher> template = endpoint.CompiledRoute.PositionalMatchers;
+
+    ParserConsole.WriteLine($"  Matching {template.Count} positional segments against {args.Length} arguments");
 
     // Match each segment in the template
     for (int i = 0; i < template.Count; i++)
@@ -80,7 +119,13 @@ internal static class RouteBasedCommandResolver
         consumedArgs = args.Length;
         if (i < args.Length)
         {
-          extractedValues[param.Name] = string.Join(CommonStrings.Space, args.Skip(i));
+          string catchAllValue = string.Join(CommonStrings.Space, args.Skip(i));
+          extractedValues[param.Name] = catchAllValue;
+          ParserConsole.WriteLine($"    [{i}] Catch-all '{param.Name}' = '{catchAllValue}'");
+        }
+        else
+        {
+          ParserConsole.WriteLine($"    [{i}] Catch-all '{param.Name}' = (no args to consume)");
         }
 
         return true;
@@ -93,9 +138,11 @@ internal static class RouteBasedCommandResolver
         if (segment is ParameterMatcher optionalParam && optionalParam.IsOptional)
         {
           // Optional parameter with no value - skip it
+          ParserConsole.WriteLine($"    [{i}] Optional parameter '{optionalParam.Name}' - no value provided");
           continue;
         }
 
+        ParserConsole.WriteLine($"    [{i}] Not enough args for segment '{segment.ToDisplayString()}'");
         return false; // Not enough args
       }
 
@@ -105,21 +152,37 @@ internal static class RouteBasedCommandResolver
         if (segment is ParameterMatcher optionalParam && optionalParam.IsOptional)
         {
           // Optional parameter followed by an option - skip it
+          ParserConsole.WriteLine($"    [{i}] Optional parameter '{optionalParam.Name}' - skipped (hit option '{args[i]}')");
           continue;
         }
 
+        ParserConsole.WriteLine($"    [{i}] Required segment '{segment.ToDisplayString()}' but hit option '{args[i]}'");
         return false; // Required parameter but hit an option
       }
 
-      if (!segment.TryMatch(args[i], out string? value))
+      string argToMatch = args[i];
+      ParserConsole.WriteLine($"    [{i}] Trying to match '{argToMatch}' against {segment.ToDisplayString()}");
+
+      if (!segment.TryMatch(argToMatch, out string? value))
+      {
+        ParserConsole.WriteLine("        ✗ No match");
         return false;
+      }
 
       if (value is not null && segment is ParameterMatcher ps)
+      {
         extractedValues[ps.Name] = value;
+        ParserConsole.WriteLine($"        ✓ Matched! Extracted '{ps.Name}' = '{value}'");
+      }
+      else if (segment is LiteralMatcher)
+      {
+        ParserConsole.WriteLine("        ✓ Literal matched");
+      }
 
       consumedArgs++;
     }
 
+    ParserConsole.WriteLine($"  Positional matching complete. Consumed {consumedArgs} args.");
     return true;
   }
 
@@ -165,6 +228,13 @@ internal static class RouteBasedCommandResolver
           }
           else
           {
+            // Boolean option - no value needed
+            if (optionSegment.ParameterName is not null)
+            {
+              extractedValues[optionSegment.ParameterName] = "true";
+              ParserConsole.WriteLine($"        Boolean option '{optionSegment.ParameterName}' = true");
+            }
+
             optionsConsumed++; // Just the option
           }
 
@@ -174,10 +244,12 @@ internal static class RouteBasedCommandResolver
 
       if (!found)
       {
+        ParserConsole.WriteLine($"      ✗ Required option not found: {optionSegment.ToDisplayString()}");
         return false;
       }
     }
 
+    ParserConsole.WriteLine($"  Options matching complete. Consumed {optionsConsumed} args.");
     return true;
   }
 }

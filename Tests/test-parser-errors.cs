@@ -35,14 +35,14 @@ void TestPattern(string pattern)
 {
     try
     {
-        var route = RoutePatternParser.Parse(pattern);
+        CompiledRoute route = RoutePatternParser.Parse(pattern);
         WriteLine($"✓ '{pattern}' parsed successfully");
     }
     catch (ArgumentException ex)
     {
         WriteLine($"✗ '{pattern}' failed:");
-        var lines = ex.Message.Split('\n');
-        foreach (var line in lines)
+        string[] lines = ex.Message.Split('\n');
+        foreach (string line in lines)
         {
             if (!string.IsNullOrWhiteSpace(line))
                 WriteLine($"  {line}");

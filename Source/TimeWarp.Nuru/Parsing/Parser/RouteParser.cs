@@ -125,7 +125,8 @@ public sealed class RouteParser : IRouteParser
       TokenType.DoubleDash or TokenType.SingleDash => ParseOption(),
       TokenType.Identifier => ParseLiteral(),
       TokenType.Invalid => ParseInvalidToken(),
-      _ => null
+      TokenType.RightBrace => HandleUnexpectedRightBrace(),
+      _ => HandleUnexpectedToken()
     };
   }
 
@@ -263,6 +264,22 @@ public sealed class RouteParser : IRouteParser
     }
 
     return null; // Skip invalid tokens
+  }
+
+  private SegmentSyntax? HandleUnexpectedRightBrace()
+  {
+    Token token = Advance(); // Consume the right brace to avoid infinite loop
+    AddError("Unexpected '}' - closing brace without matching opening brace",
+      token.Position, token.Length);
+    return null;
+  }
+
+  private SegmentSyntax? HandleUnexpectedToken()
+  {
+    Token token = Advance(); // Consume the unexpected token to avoid infinite loop
+    AddError($"Unexpected token '{token.Value}' of type {token.Type}",
+      token.Position, token.Length);
+    return null;
   }
 
   // Helper methods for parsing

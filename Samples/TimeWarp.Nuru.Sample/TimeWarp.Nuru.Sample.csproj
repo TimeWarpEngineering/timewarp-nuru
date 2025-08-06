@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj" />
+    <ProjectReference Include="../../Source/TimeWarp.Nuru.Analyzers/TimeWarp.Nuru.Analyzers.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
   </ItemGroup>
 
 </Project>

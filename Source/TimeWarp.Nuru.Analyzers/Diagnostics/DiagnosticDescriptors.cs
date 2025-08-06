@@ -4,6 +4,16 @@ internal static class DiagnosticDescriptors
 {
     private const string Category = "RoutePattern";
 
+    // Temporary diagnostic for debugging
+    public static readonly DiagnosticDescriptor RouteFound = new(
+        id: "NURU_DEBUG",
+        title: "Route pattern found",
+        messageFormat: "Found route: '{0}'",
+        category: "Debug",
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        description: "Temporary diagnostic to verify route detection is working.");
+
     // Syntax Errors
     public static readonly DiagnosticDescriptor InvalidParameterSyntax = new(
         id: "NURU001",

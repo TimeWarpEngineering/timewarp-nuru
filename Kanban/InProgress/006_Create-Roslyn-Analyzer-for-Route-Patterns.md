@@ -174,23 +174,28 @@ app.AddRoute("test --verbose,-v,-v", ...)   // NURU009: Duplicate short form '-v
    - No separate parser library needed since we're targeting .NET 9
    - Can use all modern C# features and parsing code directly
 
+### Completed (2025-08-06 Session 2)
+- ✅ Implemented IsAddRouteInvocation predicate
+  - Detects both regular and generic AddRoute calls
+  - Works with member access pattern (builder.AddRoute)
+- ✅ Implemented GetRouteInfo extraction
+  - Extracts route pattern from first string literal argument
+  - Captures precise location for error reporting
+- ✅ Added temporary debug diagnostic (NURU_DEBUG)
+  - Verified analyzer detects all routes correctly
+  - Tested on sample project: found 4 routes including generic AddRoute
+
 ### Next Steps for Implementation
-1. **Implement IsAddRouteInvocation predicate**
-   - Check for InvocationExpressionSyntax
-   - Match "AddRoute" method name
-   - Consider extension method usage pattern
-
-2. **Implement GetRouteInfo extraction**
-   - Extract first string literal argument from AddRoute call
-   - Create equatable RouteInfo record with pattern and Location
-   - Handle edge cases (non-literal arguments, missing arguments)
-
-3. **Implement AnalyzeRoutePattern validation**
+1. **Implement AnalyzeRoutePattern validation** (PRIORITY)
    - Use TimeWarp.Nuru.Parsing.RoutePatternParser
    - Map ParseError results to appropriate diagnostic descriptors
    - Calculate precise Location spans for error squiggles
 
-4. **Create RouteInfo equatable model**
+2. **Remove debug diagnostic and implement real diagnostics**
+   - Remove NURU_DEBUG
+   - Implement NURU001-NURU009 based on parser errors
+
+3. **Create RouteInfo equatable model**
    - Must implement proper equality for incremental caching
    - Include pattern string and source location
    - Consider adding parsed result caching

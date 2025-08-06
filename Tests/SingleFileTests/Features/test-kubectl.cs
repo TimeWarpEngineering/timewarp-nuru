@@ -3,7 +3,7 @@
 
 using TimeWarp.Nuru;
 using TimeWarp.Nuru.Parsing;
-using TimeWarp.Nuru.Parsing.Ast;
+using TimeWarp.Nuru.Parsing;
 using static System.Console;
 using System.Diagnostics;
 

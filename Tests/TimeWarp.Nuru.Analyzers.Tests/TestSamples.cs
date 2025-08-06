@@ -37,11 +37,25 @@ public static class TestSamples
 
         // NURU004: Invalid type constraint
         builder.AddRoute("wait {seconds:integer}", () => { });
-        
+
         // NURU004: Should be DateTime not Date
         builder.AddRoute("schedule {when:Date}", () => { });
-        
+
         // NURU004: float is not supported (yet)
         builder.AddRoute("calculate {value:float}", () => { });
+    }
+
+    public static void CatchAllNotAtEnd()
+    {
+        var builder = new NuruAppBuilder();
+
+        // NURU005: Catch-all must be last
+        builder.AddRoute("docker {*args} --verbose", () => { });
+
+        // NURU005: Catch-all must be last
+        builder.AddRoute("kubectl {*commands} apply", () => { });
+
+        // This is OK - catch-all is at the end
+        builder.AddRoute("docker run {*args}", () => { });
     }
 }

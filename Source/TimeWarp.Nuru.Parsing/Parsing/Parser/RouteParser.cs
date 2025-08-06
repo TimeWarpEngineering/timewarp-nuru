@@ -1,6 +1,6 @@
 namespace TimeWarp.Nuru.Parsing;
 
-using TimeWarp.Nuru.Parsing.Ast;
+using TimeWarp.Nuru.Parsing;
 
 /// <summary>
 /// Recursive descent parser for route patterns.
@@ -35,6 +35,9 @@ public sealed class RouteParser : IRouteParser
     {
       List<SegmentSyntax> segments = ParsePattern();
       var ast = new RouteSyntax(segments);
+
+      // Perform semantic validation on the complete AST
+      ValidateSemantics(ast);
 
       if (EnableDiagnostics && Errors.Count == 0)
       {
@@ -433,6 +436,25 @@ public sealed class RouteParser : IRouteParser
       "TimeSpan" => true,
       _ => false
     };
+  }
+
+  private void ValidateSemantics(RouteSyntax ast)
+  {
+    // NURU005: Check if catch-all parameter is at the end
+    for (int i = 0; i < ast.Segments.Count; i++)
+    {
+      if (ast.Segments[i] is ParameterSyntax param && param.IsCatchAll)
+      {
+        // If it's not the last segment, it's an error
+        if (i < ast.Segments.Count - 1)
+        {
+          AddError($"Catch-all parameter '{param.Name}' must be the last segment in the route",
+            param.Position,
+            param.Length,
+            ParseErrorType.CatchAllNotAtEnd);
+        }
+      }
+    }
   }
 }
 

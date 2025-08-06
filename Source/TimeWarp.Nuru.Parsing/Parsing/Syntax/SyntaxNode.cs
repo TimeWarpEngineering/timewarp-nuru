@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru.Parsing.Ast;
+namespace TimeWarp.Nuru.Parsing;
 
 /// <summary>
 /// Base class for all AST nodes in route pattern parsing.

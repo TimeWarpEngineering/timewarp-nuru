@@ -96,6 +96,12 @@ dotnet run -c Release
 - Follow Roslynator rules configured in Directory.Build.props
 - All warnings are treated as errors
 
+# ⚠️ IMPORTANT: NO TRAILING WHITESPACE ⚠️
+### DO NOT ADD TRAILING WHITESPACE AT THE END OF LINES
+### DO NOT ADD EXTRA BLANK LINES WITH SPACES
+### CLEAN UP ANY WHITESPACE AFTER CODE CHANGES
+### THE BUILD WILL FAIL WITH RCS1037 IF YOU LEAVE TRAILING SPACES
+
 ### Testing
 - Integration tests validate both Direct and Mediator approaches
 - Test script runs 37 complex CLI scenarios for each implementation

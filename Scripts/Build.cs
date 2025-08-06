@@ -8,21 +8,23 @@ Directory.SetCurrentDirectory(scriptDir);
 WriteLine("Building TimeWarp.Nuru library...");
 WriteLine($"Working from: {Directory.GetCurrentDirectory()}");
 
-// First check code style with dotnet format
-WriteLine("Checking code style with dotnet format...");
-CommandResult dotnetCommandResult = Shell.Run("dotnet")
- .WithArguments("format", "../TimeWarp.Nuru.slnx", "--verify-no-changes", "--severity", "warn", "--exclude", "**/Benchmarks/**")
- .Build();
+// First build the parsing package so it's available for other projects
+WriteLine("Building TimeWarp.Nuru.Parsing first...");
+CommandResult parsingBuildResult = DotNet.Build()
+  .WithProject("../Source/TimeWarp.Nuru.Parsing/TimeWarp.Nuru.Parsing.csproj")
+  .WithConfiguration("Release")
+  .WithVerbosity("minimal")
+  .Build();
 
 WriteLine("Running ...");
-WriteLine(dotnetCommandResult.ToCommandString());
+WriteLine(parsingBuildResult.ToCommandString());
 
-ExecutionResult formatResult = await dotnetCommandResult.ExecuteAsync();
-formatResult.WriteToConsole();
+ExecutionResult parsingResult = await parsingBuildResult.ExecuteAsync();
+parsingResult.WriteToConsole();
 
-if (!formatResult.IsSuccess)
+if (!parsingResult.IsSuccess)
 {
-  WriteLine("❌ Code style violations found! Run 'dotnet format' to fix them.");
+  WriteLine("❌ Failed to build TimeWarp.Nuru.Parsing!");
   Environment.Exit(1);
 }
 

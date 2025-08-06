@@ -75,15 +75,35 @@ public class NuruRouteAnalyzer : IIncrementalGenerator
     }
     private static DiagnosticResult AnalyzeRoutePattern(RouteInfo routeInfo, CancellationToken cancellationToken)
     {
-        _ = cancellationToken; // TODO: Forward to parser when available
+        _ = cancellationToken; // Parser is synchronous
 
         List<Diagnostic> diagnostics = [];
 
-        // Quick checks for common syntax errors
+        // Use the actual parser to validate the route pattern
+        bool parseSuccess = RoutePatternParser.TryParse(
+            routeInfo.Pattern,
+            out _,
+            out IReadOnlyList<ParseError> parseErrors);
+
+        if (!parseSuccess)
+        {
+            // Map parser errors to our diagnostics
+            foreach (ParseError error in parseErrors)
+            {
+                Diagnostic? diagnostic = MapParseErrorToDiagnostic(error, routeInfo);
+                if (diagnostic is not null)
+                {
+                    diagnostics.Add(diagnostic);
+                }
+            }
+        }
+
+        // Quick checks for syntax errors that might not be caught by parser
+        // or that we want to report with specific diagnostics
+
+        // NURU001: Check for angle bracket parameters
         if (routeInfo.Pattern.Contains('<', StringComparison.Ordinal) && routeInfo.Pattern.Contains('>', StringComparison.Ordinal))
         {
-            // NURU001: Invalid parameter syntax
-            // Find the parameter part for the message
             int start = routeInfo.Pattern.IndexOf('<', StringComparison.Ordinal);
             int end = routeInfo.Pattern.IndexOf('>', StringComparison.Ordinal);
             string paramPart = routeInfo.Pattern.Substring(start, end - start + 1);
@@ -96,33 +116,48 @@ public class NuruRouteAnalyzer : IIncrementalGenerator
                 suggestion));
         }
 
-        // Check for unbalanced braces
-        int openBraces = routeInfo.Pattern.Count(c => c == '{');
-        int closeBraces = routeInfo.Pattern.Count(c => c == '}');
-        if (openBraces != closeBraces)
-        {
-            // NURU002: Unbalanced braces
-            diagnostics.Add(Diagnostic.Create(
-                DiagnosticDescriptors.UnbalancedBraces,
-                routeInfo.Location,
-                routeInfo.Pattern));
-        }
-
-        // Check for invalid option format
-        if (routeInfo.Pattern.Contains(" -", StringComparison.Ordinal) && !routeInfo.Pattern.Contains(" --", StringComparison.Ordinal))
+        // NURU003: Check for invalid option format (single dash with word)
+        if (routeInfo.Pattern.Contains(" -", StringComparison.Ordinal))
         {
             int index = routeInfo.Pattern.IndexOf(" -", StringComparison.Ordinal);
-            if (index + 2 < routeInfo.Pattern.Length && routeInfo.Pattern[index + 2] != '-')
+            if (index + 2 < routeInfo.Pattern.Length &&
+                routeInfo.Pattern[index + 2] != '-' &&
+                char.IsLetter(routeInfo.Pattern[index + 2]) &&
+                index + 3 < routeInfo.Pattern.Length &&
+                char.IsLetter(routeInfo.Pattern[index + 3]))
             {
-                // NURU003: Invalid option format
+                // Find the end of the option
+                int endIndex = index + 2;
+                while (endIndex < routeInfo.Pattern.Length && !char.IsWhiteSpace(routeInfo.Pattern[endIndex]))
+                {
+                    endIndex++;
+                }
+
                 diagnostics.Add(Diagnostic.Create(
                     DiagnosticDescriptors.InvalidOptionFormat,
                     routeInfo.Location,
-                    routeInfo.Pattern.Substring(index + 1)));
+                    routeInfo.Pattern.Substring(index + 1, endIndex - index - 1)));
             }
         }
 
         return new DiagnosticResult(diagnostics.ToArray());
+    }
+
+    private static Diagnostic? MapParseErrorToDiagnostic(ParseError error, RouteInfo routeInfo)
+    {
+        // Map parser error messages to our diagnostic codes
+        if (error.Message.Contains("closing brace without matching opening", StringComparison.OrdinalIgnoreCase) ||
+            error.Message.Contains("unbalanced", StringComparison.OrdinalIgnoreCase))
+        {
+            return Diagnostic.Create(
+                DiagnosticDescriptors.UnbalancedBraces,
+                routeInfo.Location,
+                routeInfo.Pattern);
+        }
+
+        // For now, we'll report other parser errors as compiler errors
+        // This ensures users see all validation issues
+        return null;
     }
 }
 

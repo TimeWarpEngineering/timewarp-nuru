@@ -9,7 +9,6 @@ global using System.Globalization;
 global using System.Reflection;
 global using System.Text;
 global using System.Text.Json;
-global using static System.Console;
 // TimeWarp namespaces
 global using TimeWarp.Mediator;
 global using TimeWarp.Nuru.CommandResolver;

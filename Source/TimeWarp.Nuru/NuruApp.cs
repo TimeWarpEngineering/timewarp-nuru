@@ -45,7 +45,7 @@ public class NuruApp
 
       if (!result.Success || result.MatchedEndpoint is null)
       {
-        await Console.Error.WriteLineAsync(
+        await NuruConsole.WriteErrorLineAsync(
           result.ErrorMessage ?? "No matching command found."
         ).ConfigureAwait(false);
 
@@ -73,7 +73,7 @@ public class NuruApp
         return await ExecuteDelegateAsync(del, result.ExtractedValues, result.MatchedEndpoint).ConfigureAwait(false);
       }
 
-      await Console.Error.WriteLineAsync(
+      await NuruConsole.WriteErrorLineAsync(
         "No valid handler found for the matched route."
       ).ConfigureAwait(false);
 
@@ -85,7 +85,7 @@ public class NuruApp
     catch (Exception ex)
 #pragma warning restore CA1031
     {
-      await Console.Error.WriteLineAsync($"Error: {ex.Message}").ConfigureAwait(false);
+      await NuruConsole.WriteErrorLineAsync($"Error: {ex.Message}").ConfigureAwait(false);
       return 1;
     }
   }
@@ -172,7 +172,7 @@ public class NuruApp
     catch (Exception ex)
 #pragma warning restore CA1031
     {
-      await Console.Error.WriteLineAsync(
+      await NuruConsole.WriteErrorLineAsync(
         $"Error executing handler: {ex.Message}"
       ).ConfigureAwait(false);
 
@@ -294,7 +294,7 @@ public class NuruApp
 
   private void ShowAvailableCommands()
   {
-    Console.WriteLine(RouteHelpProvider.GetHelpText(Endpoints));
+    NuruConsole.WriteLine(RouteHelpProvider.GetHelpText(Endpoints));
   }
 
   private static bool IsOptionalParameter(string parameterName, RouteEndpoint endpoint)

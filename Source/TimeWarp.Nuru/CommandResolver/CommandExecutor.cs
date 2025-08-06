@@ -112,18 +112,18 @@ public class CommandExecutor
     if (toStringMethod is not null && toStringMethod.DeclaringType != typeof(object))
     {
       // Use custom ToString
-      System.Console.WriteLine(response.ToString());
+      NuruConsole.WriteLine(response.ToString());
     }
     else if (responseType.IsPrimitive || responseType == typeof(string) || responseType == typeof(decimal))
     {
       // Simple types - just display directly
-      System.Console.WriteLine(response);
+      NuruConsole.WriteLine(response.ToString());
     }
     else
     {
       // Complex object - serialize to JSON for display
       string json = JsonSerializer.Serialize(response, JsonOptions);
-      System.Console.WriteLine(json);
+      NuruConsole.WriteLine(json);
     }
   }
 }

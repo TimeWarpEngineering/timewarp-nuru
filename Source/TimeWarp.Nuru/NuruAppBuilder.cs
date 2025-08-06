@@ -228,7 +228,7 @@ public class NuruAppBuilder
     {
       AddRoute("--help", () =>
       {
-        Console.WriteLine(RouteHelpProvider.GetHelpText(EndpointCollection));
+        NuruConsole.WriteLine(RouteHelpProvider.GetHelpText(EndpointCollection));
       },
       description: "Show available commands");
     }
@@ -256,22 +256,22 @@ public class NuruAppBuilder
 
   private static void ShowCommandGroupHelp(string commandPrefix, List<RouteEndpoint> endpoints)
   {
-    Console.WriteLine($"Usage patterns for '{commandPrefix}':");
-    Console.WriteLine();
+    NuruConsole.WriteLine($"Usage patterns for '{commandPrefix}':");
+    NuruConsole.WriteLine(string.Empty);
 
     foreach (RouteEndpoint endpoint in endpoints)
     {
-      Console.WriteLine($"  {endpoint.RoutePattern}");
+      NuruConsole.WriteLine($"  {endpoint.RoutePattern}");
       if (!string.IsNullOrEmpty(endpoint.Description))
       {
-        Console.WriteLine($"    {endpoint.Description}");
+        NuruConsole.WriteLine($"    {endpoint.Description}");
       }
     }
 
     // Show consolidated argument and option information
     HashSet<string> shownParams = [];
 
-    Console.WriteLine("\nArguments:");
+    NuruConsole.WriteLine("\nArguments:");
     foreach (RouteEndpoint endpoint in endpoints)
     {
       foreach (RouteMatcher segment in endpoint.CompiledRoute.PositionalMatchers)
@@ -285,11 +285,11 @@ public class NuruAppBuilder
           string typeInfo = $"Type: {param.Constraint ?? "string"}";
           if (param.Description is not null)
           {
-            Console.WriteLine($"  {param.Name,-20} {status,-12} {typeInfo,-15} {param.Description}");
+            NuruConsole.WriteLine($"  {param.Name,-20} {status,-12} {typeInfo,-15} {param.Description}");
           }
           else
           {
-            Console.WriteLine($"  {param.Name,-20} {status,-12} {typeInfo}");
+            NuruConsole.WriteLine($"  {param.Name,-20} {status,-12} {typeInfo}");
           }
         }
       }
@@ -299,7 +299,7 @@ public class NuruAppBuilder
 
     if (endpoints.Any(e => e.CompiledRoute.OptionMatchers.Count > 0))
     {
-      Console.WriteLine("\nOptions:");
+      NuruConsole.WriteLine("\nOptions:");
       foreach (RouteEndpoint endpoint in endpoints)
       {
         foreach (OptionMatcher option in endpoint.CompiledRoute.OptionMatchers)
@@ -316,11 +316,11 @@ public class NuruAppBuilder
 
             if (option.Description is not null)
             {
-              Console.WriteLine($"  {optionName + paramInfo,-30} {option.Description}");
+              NuruConsole.WriteLine($"  {optionName + paramInfo,-30} {option.Description}");
             }
             else
             {
-              Console.WriteLine($"  {optionName}{paramInfo}");
+              NuruConsole.WriteLine($"  {optionName}{paramInfo}");
             }
           }
         }

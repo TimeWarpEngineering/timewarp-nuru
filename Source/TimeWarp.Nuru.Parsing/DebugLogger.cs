@@ -3,7 +3,7 @@ namespace TimeWarp.Nuru.Parsing;
 /// <summary>
 /// Simple debug logger that conditionally outputs based on compilation context.
 /// </summary>
-internal static class DebugLogger
+internal static class ParserConsole
 {
   /// <summary>
   /// Platform-independent newline constant.

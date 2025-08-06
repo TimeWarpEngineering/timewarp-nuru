@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageOutputPath>../../LocalNuGetFeed</PackageOutputPath>
     <Description>Route-based CLI framework for .NET - bringing web-style routing to command-line applications</Description>
     <PackageTags>cli;command-line;routing;framework;dotnet;console;consoleappframework;commandlineparser;mcmaster;cocona;spectre;system-commandline;clipr;commanddotnet</PackageTags>
     <!-- Disable localization warning as CLI frameworks don't typically need localization -->

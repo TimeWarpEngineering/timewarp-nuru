@@ -443,6 +443,9 @@ public sealed class RouteParser : IRouteParser
     // Track parameter names for duplicate detection
     var parameterNames = new Dictionary<string, ParameterSyntax>();
 
+    // Track consecutive optional parameters
+    ParameterSyntax? lastOptionalParam = null;
+
     // NURU005: Check if catch-all parameter is at the end
     for (int i = 0; i < ast.Segments.Count; i++)
     {
@@ -461,6 +464,26 @@ public sealed class RouteParser : IRouteParser
           parameterNames[param.Name] = param;
         }
 
+        // NURU007: Check for consecutive optional positional parameters
+        if (param.IsOptional && !param.IsCatchAll)
+        {
+          if (lastOptionalParam is not null)
+          {
+            // Found consecutive optional parameters
+            AddError($"Multiple consecutive optional positional parameters create ambiguity: {lastOptionalParam.Name}? {param.Name}?",
+              param.Position,
+              param.Length,
+              ParseErrorType.ConflictingOptionalParameters);
+          }
+
+          lastOptionalParam = param;
+        }
+        else
+        {
+          // Reset when we hit a required parameter
+          lastOptionalParam = null;
+        }
+
         // NURU005: Check if catch-all is at the end
         if (param.IsCatchAll && i < ast.Segments.Count - 1)
         {
@@ -469,6 +492,11 @@ public sealed class RouteParser : IRouteParser
             param.Length,
             ParseErrorType.CatchAllNotAtEnd);
         }
+      }
+      else
+      {
+        // Reset when we hit a non-parameter segment (literal or option)
+        lastOptionalParam = null;
       }
     }
   }

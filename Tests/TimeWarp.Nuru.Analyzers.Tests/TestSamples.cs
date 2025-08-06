@@ -72,4 +72,21 @@ public static class TestSamples
         // This is OK - different parameter names
         builder.AddRoute("deploy {env} {tag}", () => { });
     }
+
+    public static void ConflictingOptionalParameters()
+    {
+        var builder = new NuruAppBuilder();
+
+        // NURU007: Consecutive optional parameters
+        builder.AddRoute("deploy {env?} {tag?}", () => { });
+
+        // NURU007: Three consecutive optional parameters
+        builder.AddRoute("backup {source?} {dest?} {format?}", () => { });
+
+        // This is OK - required parameter before optional
+        builder.AddRoute("deploy {env} {tag?}", () => { });
+
+        // This is OK - literal between optional parameters
+        builder.AddRoute("copy {source?} to {dest?}", () => { });
+    }
 }

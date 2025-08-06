@@ -175,7 +175,7 @@ public sealed class RouteParser : IRouteParser
       description = ConsumeDescription(stopAtRightBrace: true);
     }
 
-    Token rightBrace = Consume(TokenType.RightBrace, "Expected '}'");
+    Token rightBrace = Consume(TokenType.RightBrace, "Expected '}'", ParseErrorType.UnbalancedBraces);
 
     return new ParameterSyntax(paramName, isCatchAll, isOptional, typeConstraint, description)
     {
@@ -214,6 +214,15 @@ public sealed class RouteParser : IRouteParser
     {
       longForm = null;
       shortForm = optionNameToken.Value;
+
+      // Validate single dash options should be single character
+      if (shortForm.Length > 1)
+      {
+        AddError($"Invalid option format '-{shortForm}'. Single dash options must be single character (use --{shortForm} for long form)",
+          optionNameToken.Position - 1, // Include the dash
+          optionNameToken.Length + 1,
+          ParseErrorType.InvalidOptionFormat);
+      }
     }
 
     // Description
@@ -250,11 +259,11 @@ public sealed class RouteParser : IRouteParser
       string suggestion = $"{{{paramName}}}";
 
       AddError($"Invalid parameter syntax '{token.Value}'. Use curly braces for parameters.",
-        token.Position, token.Length, suggestion);
+        token.Position, token.Length, ParseErrorType.InvalidParameterSyntax, suggestion);
     }
     else
     {
-      AddError($"Invalid character '{token.Value}'", token.Position, token.Length);
+      AddError($"Invalid character '{token.Value}'", token.Position, token.Length, ParseErrorType.Generic);
     }
 
     return null; // Skip invalid tokens
@@ -264,7 +273,7 @@ public sealed class RouteParser : IRouteParser
   {
     Token token = Advance(); // Consume the right brace to avoid infinite loop
     AddError("Unexpected '}' - closing brace without matching opening brace",
-      token.Position, token.Length);
+      token.Position, token.Length, ParseErrorType.UnbalancedBraces);
     return null;
   }
 
@@ -272,7 +281,7 @@ public sealed class RouteParser : IRouteParser
   {
     Token token = Advance(); // Consume the unexpected token to avoid infinite loop
     AddError($"Unexpected token '{token.Value}' of type {token.Type}",
-      token.Position, token.Length);
+      token.Position, token.Length, ParseErrorType.Generic);
     return null;
   }
 
@@ -323,7 +332,7 @@ public sealed class RouteParser : IRouteParser
     return Tokens[CurrentIndex];
   }
 
-  private Token Consume(TokenType type, string message)
+  private Token Consume(TokenType type, string message, ParseErrorType errorType = ParseErrorType.Generic)
   {
     if (Check(type))
     {
@@ -331,13 +340,13 @@ public sealed class RouteParser : IRouteParser
     }
 
     Token token = Peek();
-    AddError(message, token.Position, token.Length);
+    AddError(message, token.Position, token.Length, errorType);
     throw new ParseException(message);
   }
 
-  private void AddError(string message, int position, int length, string? suggestion = null)
+  private void AddError(string message, int position, int length, ParseErrorType errorType = ParseErrorType.Generic, string? suggestion = null)
   {
-    Errors.Add(new ParseError(message, position, length, suggestion));
+    Errors.Add(new ParseError(message, position, length, errorType, suggestion));
   }
 
   private void Synchronize()

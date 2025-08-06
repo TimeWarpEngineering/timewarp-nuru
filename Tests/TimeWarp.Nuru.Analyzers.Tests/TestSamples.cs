@@ -58,4 +58,18 @@ public static class TestSamples
         // This is OK - catch-all is at the end
         builder.AddRoute("docker run {*args}", () => { });
     }
+
+    public static void DuplicateParameterNames()
+    {
+        var builder = new NuruAppBuilder();
+
+        // NURU006: Duplicate parameter name 'env'
+        builder.AddRoute("deploy {env} to {env}", () => { });
+
+        // NURU006: Duplicate parameter name 'file'
+        builder.AddRoute("copy {file} {dest} {file}", () => { });
+
+        // This is OK - different parameter names
+        builder.AddRoute("deploy {env} {tag}", () => { });
+    }
 }

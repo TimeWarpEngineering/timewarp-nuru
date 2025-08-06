@@ -27,7 +27,7 @@ public class NuruRouteAnalyzer : IIncrementalGenerator
     });
   }
 
-  private static bool IsAddRouteInvocation(SyntaxNode node)
+  private static bool IsAddRouteInvocation(Microsoft.CodeAnalysis.SyntaxNode node)
   {
     // Check if this is an invocation expression
     if (node is not InvocationExpressionSyntax invocation)

@@ -440,13 +440,29 @@ public sealed class RouteParser : IRouteParser
 
   private void ValidateSemantics(RouteSyntax ast)
   {
+    // Track parameter names for duplicate detection
+    var parameterNames = new Dictionary<string, ParameterSyntax>();
+
     // NURU005: Check if catch-all parameter is at the end
     for (int i = 0; i < ast.Segments.Count; i++)
     {
-      if (ast.Segments[i] is ParameterSyntax param && param.IsCatchAll)
+      if (ast.Segments[i] is ParameterSyntax param)
       {
-        // If it's not the last segment, it's an error
-        if (i < ast.Segments.Count - 1)
+        // NURU006: Check for duplicate parameter names
+        if (parameterNames.TryGetValue(param.Name, out ParameterSyntax? existingParam))
+        {
+          AddError($"Duplicate parameter name '{param.Name}' found in route pattern",
+            param.Position,
+            param.Length,
+            ParseErrorType.DuplicateParameterNames);
+        }
+        else
+        {
+          parameterNames[param.Name] = param;
+        }
+
+        // NURU005: Check if catch-all is at the end
+        if (param.IsCatchAll && i < ast.Segments.Count - 1)
         {
           AddError($"Catch-all parameter '{param.Name}' must be the last segment in the route",
             param.Position,

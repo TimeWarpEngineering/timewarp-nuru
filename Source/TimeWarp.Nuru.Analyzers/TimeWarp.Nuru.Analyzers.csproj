@@ -28,9 +28,6 @@
     </PackageReference>
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\TimeWarp.Nuru\TimeWarp.Nuru.csproj" PrivateAssets="all" GeneratePathProperty="true" />
-  </ItemGroup>
 
   <!-- Include parsing source files directly -->
   <ItemGroup>
@@ -39,7 +36,6 @@
 
   <ItemGroup>
     <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
-    <None Include="$(PkgTimeWarp_Nuru)\lib\$(TargetFramework)\*.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
   </ItemGroup>
 
   <ItemGroup>

@@ -14,11 +14,11 @@
     <Using Include="System.Diagnostics" />
     <Using Include="System.Runtime.CompilerServices" />
     <Using Include="System.Text.Json" />
-    <Using Include="TimeWarp.Cli" />
+    <Using Include="TimeWarp.Amuru" />
     <Using Include="System.Console" Static="true" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="TimeWarp.Cli" />
+    <PackageReference Include="TimeWarp.Amuru" />
   </ItemGroup>
 </Project>

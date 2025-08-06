@@ -39,7 +39,7 @@ jobs:
       - name: Build and Test
         run: |
           echo "Running build script..."
-          ./Scripts/Build.cs
+          dotnet ${{ github.workspace }}/Scripts/Build.cs
           
           echo "Running integration tests..."
           cd Tests
@@ -47,7 +47,7 @@ jobs:
 
       - name: Check if version already published (Releases only)
         if: github.event_name == 'release'
-        run: ./Scripts/CheckVersion.cs
+        run: dotnet ${{ github.workspace }}/Scripts/CheckVersion.cs
 
       - name: Publish to NuGet.org (Releases only)
         if: github.event_name == 'release'

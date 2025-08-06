@@ -5,7 +5,7 @@
 
 Rule ID | Category | Severity | Notes
 --------|----------|----------|-------
-NURU_DEBUG | Debug | Warning | Temporary route detection diagnostic
+NURU_DEBUG | Debug | Hidden | Development route detection diagnostic
 NURU001 | RoutePattern | Error | Invalid parameter syntax
 NURU002 | RoutePattern | Error | Unbalanced braces in route pattern
 NURU003 | RoutePattern | Error | Invalid option format

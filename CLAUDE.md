@@ -132,6 +132,12 @@ dotnet publish -c Release -r linux-x64 -p:PublishAot=true -p:TrimMode=partial
 - Local NuGet cache configured in Directory.Build.props
 - Supports .NET 10 script mode (see README examples)
 
+## Testing Approach
+
+**IMPORTANT: This repository does NOT use xUnit, NUnit, MSTest or any traditional testing frameworks.**
+
+Tests are implemented as single-file C# applications (new in .NET 10). You can find 50+ test files by searching for "test" in file names. The analyzer tests are located in `/Tests/TimeWarp.Nuru.Analyzers.Tests/TimeWarp.Nuru.Analyzers.Tests.csproj`.
+
 ## Cocona Comparison Documentation
 
 When working with Cocona comparison documents in `/Samples/CoconaComparison/`:

@@ -5,15 +5,15 @@ internal static class DiagnosticDescriptors
   private const string Category = "RoutePattern";
 
   // Syntax Errors
-  // Temporary debug diagnostic
+  // Debug diagnostic for development
   public static readonly DiagnosticDescriptor DebugRouteFound = new(
       id: "NURU_DEBUG",
       title: "Route pattern found",
       messageFormat: "Found route: '{0}'",
       category: "Debug",
-      defaultSeverity: DiagnosticSeverity.Warning,
+      defaultSeverity: DiagnosticSeverity.Hidden,
       isEnabledByDefault: true,
-      description: "Temporary diagnostic to verify route detection.");
+      description: "Debug diagnostic to verify route detection during development.");
 
   public static readonly DiagnosticDescriptor InvalidParameterSyntax = new(
       id: "NURU001",

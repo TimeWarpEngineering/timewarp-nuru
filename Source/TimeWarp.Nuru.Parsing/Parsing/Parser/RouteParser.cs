@@ -446,6 +446,13 @@ public sealed class RouteParser : IRouteParser
     // Track consecutive optional parameters
     ParameterSyntax? lastOptionalParam = null;
 
+    // Track for NURU008: Mixed catch-all with optional parameters
+    bool hasOptionalParameters = false;
+    bool hasCatchAllParameter = false;
+
+    // Track for NURU009: Option aliases
+    var optionAliases = new Dictionary<string, OptionSyntax>();
+
     // NURU005: Check if catch-all parameter is at the end
     for (int i = 0; i < ast.Segments.Count; i++)
     {
@@ -462,6 +469,17 @@ public sealed class RouteParser : IRouteParser
         else
         {
           parameterNames[param.Name] = param;
+        }
+
+        // Track parameter types for NURU008
+        if (param.IsOptional && !param.IsCatchAll)
+        {
+          hasOptionalParameters = true;
+        }
+
+        if (param.IsCatchAll)
+        {
+          hasCatchAllParameter = true;
         }
 
         // NURU007: Check for consecutive optional positional parameters
@@ -493,11 +511,41 @@ public sealed class RouteParser : IRouteParser
             ParseErrorType.CatchAllNotAtEnd);
         }
       }
+      else if (ast.Segments[i] is OptionSyntax option)
+      {
+        // Reset optional parameter tracking when we hit an option
+        lastOptionalParam = null;
+
+        // NURU009: Check for duplicate option aliases
+        if (option.ShortForm is not null)
+        {
+          if (optionAliases.TryGetValue(option.ShortForm, out OptionSyntax? existingOption))
+          {
+            AddError($"Duplicate option short form '-{option.ShortForm}' already used by '{existingOption.LongForm ?? existingOption.ShortForm}'",
+              option.Position,
+              option.Length,
+              ParseErrorType.DuplicateOptionAlias);
+          }
+          else
+          {
+            optionAliases[option.ShortForm] = option;
+          }
+        }
+      }
       else
       {
-        // Reset when we hit a non-parameter segment (literal or option)
+        // Reset when we hit a non-parameter segment (literal)
         lastOptionalParam = null;
       }
+    }
+
+    // NURU008: Check for mixed catch-all with optional parameters
+    if (hasOptionalParameters && hasCatchAllParameter)
+    {
+      AddError("Cannot mix optional parameters with catch-all parameter in the same route",
+        0,
+        0,
+        ParseErrorType.MixedCatchAllWithOptional);
     }
   }
 }

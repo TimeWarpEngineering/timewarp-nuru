@@ -89,4 +89,38 @@ public static class TestSamples
         // This is OK - literal between optional parameters
         builder.AddRoute("copy {source?} to {dest?}", () => { });
     }
+
+    public static void MixedCatchAllWithOptional()
+    {
+        var builder = new NuruAppBuilder();
+
+        // NURU008: Cannot mix optional with catch-all
+        builder.AddRoute("deploy {env?} {*args}", () => { });
+
+        // NURU008: Cannot mix optional with catch-all (different order)
+        builder.AddRoute("run {script} {config?} {*args}", () => { });
+
+        // This is OK - required parameter with catch-all
+        builder.AddRoute("docker {command} {*args}", () => { });
+
+        // This is OK - only catch-all
+        builder.AddRoute("exec {*args}", () => { });
+    }
+
+    public static void DuplicateOptionAlias()
+    {
+        var builder = new NuruAppBuilder();
+
+        // NURU009: Both options use -v
+        builder.AddRoute("test --verbose,-v --version,-v", () => { });
+
+        // NURU009: Three options with same short form -d
+        builder.AddRoute("build --debug,-d --deploy,-d --dry-run,-d", () => { });
+
+        // This is OK - different short forms
+        builder.AddRoute("run --verbose,-v --debug,-d", () => { });
+
+        // This is OK - one has short form, other doesn't
+        builder.AddRoute("deploy --verbose,-v --force", () => { });
+    }
 }

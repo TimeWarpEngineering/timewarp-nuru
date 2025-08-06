@@ -1,6 +1,6 @@
 namespace TimeWarp.Nuru.Parsing;
 
-using TimeWarp.Nuru.Parsing.Ast;
+using TimeWarp.Nuru.Parsing;
 
 /// <summary>
 /// Parses route pattern strings into CompiledRoute objects.
@@ -26,9 +26,9 @@ public static class RoutePatternParser
     {
       // Format error messages for the exception
       string[] errorMessages = [.. result.Errors.Select(FormatError)];
-      string combinedMessage = string.Join(Environment.NewLine, errorMessages);
+      string combinedMessage = string.Join(NewLine, errorMessages);
 
-      throw new ArgumentException($"Invalid route pattern '{routePattern}': {Environment.NewLine}{combinedMessage}");
+      throw new ArgumentException($"Invalid route pattern '{routePattern}': {NewLine}{combinedMessage}");
     }
 
     return Compiler.Compile(result.Value!);

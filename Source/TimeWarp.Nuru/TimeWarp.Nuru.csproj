@@ -25,6 +25,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\TimeWarp.Nuru.Parsing\TimeWarp.Nuru.Parsing.csproj" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Include="..\..\Assets\Logo.png" Pack="true" PackagePath="" />
     <None Include="..\..\README.md" Pack="true" PackagePath="" />
   </ItemGroup>

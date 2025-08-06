@@ -1,6 +1,6 @@
 namespace TimeWarp.Nuru.Parsing;
 
-using TimeWarp.Nuru.Parsing.Ast;
+using TimeWarp.Nuru.Parsing;
 
 /// <summary>
 /// Recursive descent parser for route patterns.
@@ -10,12 +10,6 @@ public sealed class RouteParser : IRouteParser
   private IReadOnlyList<Token> Tokens = [];
   private int CurrentIndex;
   private readonly List<ParseError> Errors = [];
-
-  /// <summary>
-  /// Enable diagnostic output by setting environment variable NURU_DEBUG=true
-  /// </summary>
-  private static readonly bool EnableDiagnostics =
-    Environment.GetEnvironmentVariable("NURU_DEBUG") == "true";
 
   /// <inheritdoc />
   public ParseResult<RouteSyntax> Parse(string pattern)
@@ -41,6 +35,9 @@ public sealed class RouteParser : IRouteParser
     {
       List<SegmentSyntax> segments = ParsePattern();
       var ast = new RouteSyntax(segments);
+
+      // Perform semantic validation on the complete AST
+      ValidateSemantics(ast);
 
       if (EnableDiagnostics && Errors.Count == 0)
       {
@@ -172,6 +169,16 @@ public sealed class RouteParser : IRouteParser
         isOptional = true;
         typeConstraint += "?";
       }
+
+      // Validate type constraint (NURU004)
+      string baseType = typeConstraint.TrimEnd('?');
+      if (!IsValidTypeConstraint(baseType))
+      {
+        AddError($"Invalid type constraint '{baseType}'. Supported types: string, int, double, bool, DateTime, Guid, long, decimal, TimeSpan",
+          typeToken.Position,
+          typeToken.Length,
+          ParseErrorType.InvalidTypeConstraint);
+      }
     }
 
     // Description
@@ -181,7 +188,7 @@ public sealed class RouteParser : IRouteParser
       description = ConsumeDescription(stopAtRightBrace: true);
     }
 
-    Token rightBrace = Consume(TokenType.RightBrace, "Expected '}'");
+    Token rightBrace = Consume(TokenType.RightBrace, "Expected '}'", ParseErrorType.UnbalancedBraces);
 
     return new ParameterSyntax(paramName, isCatchAll, isOptional, typeConstraint, description)
     {
@@ -220,6 +227,15 @@ public sealed class RouteParser : IRouteParser
     {
       longForm = null;
       shortForm = optionNameToken.Value;
+
+      // Validate single dash options should be single character
+      if (shortForm.Length > 1)
+      {
+        AddError($"Invalid option format '-{shortForm}'. Single dash options must be single character (use --{shortForm} for long form)",
+          optionNameToken.Position - 1, // Include the dash
+          optionNameToken.Length + 1,
+          ParseErrorType.InvalidOptionFormat);
+      }
     }
 
     // Description
@@ -256,11 +272,11 @@ public sealed class RouteParser : IRouteParser
       string suggestion = $"{{{paramName}}}";
 
       AddError($"Invalid parameter syntax '{token.Value}'. Use curly braces for parameters.",
-        token.Position, token.Length, suggestion);
+        token.Position, token.Length, ParseErrorType.InvalidParameterSyntax, suggestion);
     }
     else
     {
-      AddError($"Invalid character '{token.Value}'", token.Position, token.Length);
+      AddError($"Invalid character '{token.Value}'", token.Position, token.Length, ParseErrorType.Generic);
     }
 
     return null; // Skip invalid tokens
@@ -270,7 +286,7 @@ public sealed class RouteParser : IRouteParser
   {
     Token token = Advance(); // Consume the right brace to avoid infinite loop
     AddError("Unexpected '}' - closing brace without matching opening brace",
-      token.Position, token.Length);
+      token.Position, token.Length, ParseErrorType.UnbalancedBraces);
     return null;
   }
 
@@ -278,7 +294,7 @@ public sealed class RouteParser : IRouteParser
   {
     Token token = Advance(); // Consume the unexpected token to avoid infinite loop
     AddError($"Unexpected token '{token.Value}' of type {token.Type}",
-      token.Position, token.Length);
+      token.Position, token.Length, ParseErrorType.Generic);
     return null;
   }
 
@@ -329,7 +345,7 @@ public sealed class RouteParser : IRouteParser
     return Tokens[CurrentIndex];
   }
 
-  private Token Consume(TokenType type, string message)
+  private Token Consume(TokenType type, string message, ParseErrorType errorType = ParseErrorType.Generic)
   {
     if (Check(type))
     {
@@ -337,13 +353,13 @@ public sealed class RouteParser : IRouteParser
     }
 
     Token token = Peek();
-    AddError(message, token.Position, token.Length);
+    AddError(message, token.Position, token.Length, errorType);
     throw new ParseException(message);
   }
 
-  private void AddError(string message, int position, int length, string? suggestion = null)
+  private void AddError(string message, int position, int length, ParseErrorType errorType = ParseErrorType.Generic, string? suggestion = null)
   {
-    Errors.Add(new ParseError(message, position, length, suggestion));
+    Errors.Add(new ParseError(message, position, length, errorType, suggestion));
   }
 
   private void Synchronize()
@@ -403,6 +419,134 @@ public sealed class RouteParser : IRouteParser
     }
 
     return string.Join(" ", description);
+  }
+
+  private static bool IsValidTypeConstraint(string type)
+  {
+    return type switch
+    {
+      "string" => true,
+      "int" => true,
+      "long" => true,
+      "double" => true,
+      "decimal" => true,
+      "bool" => true,
+      "DateTime" => true,
+      "Guid" => true,
+      "TimeSpan" => true,
+      _ => false
+    };
+  }
+
+  private void ValidateSemantics(RouteSyntax ast)
+  {
+    // Track parameter names for duplicate detection
+    var parameterNames = new Dictionary<string, ParameterSyntax>();
+
+    // Track consecutive optional parameters
+    ParameterSyntax? lastOptionalParam = null;
+
+    // Track for NURU008: Mixed catch-all with optional parameters
+    bool hasOptionalParameters = false;
+    bool hasCatchAllParameter = false;
+
+    // Track for NURU009: Option aliases
+    var optionAliases = new Dictionary<string, OptionSyntax>();
+
+    // NURU005: Check if catch-all parameter is at the end
+    for (int i = 0; i < ast.Segments.Count; i++)
+    {
+      if (ast.Segments[i] is ParameterSyntax param)
+      {
+        // NURU006: Check for duplicate parameter names
+        if (parameterNames.TryGetValue(param.Name, out ParameterSyntax? existingParam))
+        {
+          AddError($"Duplicate parameter name '{param.Name}' found in route pattern",
+            param.Position,
+            param.Length,
+            ParseErrorType.DuplicateParameterNames);
+        }
+        else
+        {
+          parameterNames[param.Name] = param;
+        }
+
+        // Track parameter types for NURU008
+        if (param.IsOptional && !param.IsCatchAll)
+        {
+          hasOptionalParameters = true;
+        }
+
+        if (param.IsCatchAll)
+        {
+          hasCatchAllParameter = true;
+        }
+
+        // NURU007: Check for consecutive optional positional parameters
+        if (param.IsOptional && !param.IsCatchAll)
+        {
+          if (lastOptionalParam is not null)
+          {
+            // Found consecutive optional parameters
+            AddError($"Multiple consecutive optional positional parameters create ambiguity: {lastOptionalParam.Name}? {param.Name}?",
+              param.Position,
+              param.Length,
+              ParseErrorType.ConflictingOptionalParameters);
+          }
+
+          lastOptionalParam = param;
+        }
+        else
+        {
+          // Reset when we hit a required parameter
+          lastOptionalParam = null;
+        }
+
+        // NURU005: Check if catch-all is at the end
+        if (param.IsCatchAll && i < ast.Segments.Count - 1)
+        {
+          AddError($"Catch-all parameter '{param.Name}' must be the last segment in the route",
+            param.Position,
+            param.Length,
+            ParseErrorType.CatchAllNotAtEnd);
+        }
+      }
+      else if (ast.Segments[i] is OptionSyntax option)
+      {
+        // Reset optional parameter tracking when we hit an option
+        lastOptionalParam = null;
+
+        // NURU009: Check for duplicate option aliases
+        if (option.ShortForm is not null)
+        {
+          if (optionAliases.TryGetValue(option.ShortForm, out OptionSyntax? existingOption))
+          {
+            AddError($"Duplicate option short form '-{option.ShortForm}' already used by '{existingOption.LongForm ?? existingOption.ShortForm}'",
+              option.Position,
+              option.Length,
+              ParseErrorType.DuplicateOptionAlias);
+          }
+          else
+          {
+            optionAliases[option.ShortForm] = option;
+          }
+        }
+      }
+      else
+      {
+        // Reset when we hit a non-parameter segment (literal)
+        lastOptionalParam = null;
+      }
+    }
+
+    // NURU008: Check for mixed catch-all with optional parameters
+    if (hasOptionalParameters && hasCatchAllParameter)
+    {
+      AddError("Cannot mix optional parameters with catch-all parameter in the same route",
+        0,
+        0,
+        ParseErrorType.MixedCatchAllWithOptional);
+    }
   }
 }
 

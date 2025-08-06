@@ -2,7 +2,7 @@
 #:project ../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
 
 using TimeWarp.Nuru.Parsing;
-using TimeWarp.Nuru.Parsing.Ast;
+using TimeWarp.Nuru.Parsing;
 using static System.Console;
 
 WriteLine("Testing parser with single failing pattern:");

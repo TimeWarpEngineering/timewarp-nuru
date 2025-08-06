@@ -1,0 +1,50 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+    <IsRoslynComponent>true</IsRoslynComponent>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <DevelopmentDependency>true</DevelopmentDependency>
+    <!-- Suppress RS1041 since we're intentionally targeting .NET 9 for CLI usage -->
+    <!-- Suppress CA1805, CA1802, RCS1163 for parsing code that's compiled in -->
+    <NoWarn>$(NoWarn);RS1041;CA1805;CA1802;RCS1163</NoWarn>
+    <!-- Define ANALYZER_BUILD for conditional compilation -->
+    <DefineConstants>$(DefineConstants);ANALYZER_BUILD</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <PackageId>TimeWarp.Nuru.Analyzers</PackageId>
+    <Description>Roslyn analyzers for TimeWarp.Nuru route pattern validation</Description>
+    <PackageTags>TimeWarp;Nuru;Analyzers;Roslyn;CLI</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
+    <PackageReference Include="Microsoft.CodeAnalysis.Analyzers">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TimeWarp.Nuru\TimeWarp.Nuru.csproj" PrivateAssets="all" GeneratePathProperty="true" />
+  </ItemGroup>
+
+  <!-- Include parsing source files directly -->
+  <ItemGroup>
+    <Compile Include="..\TimeWarp.Nuru.Parsing\**\*.cs" Exclude="..\TimeWarp.Nuru.Parsing\obj\**;..\TimeWarp.Nuru.Parsing\bin\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+    <None Include="$(PkgTimeWarp_Nuru)\lib\$(TargetFramework)\*.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\Assets\Logo.png" Pack="true" PackagePath="" />
+    <None Include="..\..\README.md" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+</Project>

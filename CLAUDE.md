@@ -96,6 +96,12 @@ dotnet run -c Release
 - Follow Roslynator rules configured in Directory.Build.props
 - All warnings are treated as errors
 
+# ⚠️ IMPORTANT: NO TRAILING WHITESPACE ⚠️
+### DO NOT ADD TRAILING WHITESPACE AT THE END OF LINES
+### DO NOT ADD EXTRA BLANK LINES WITH SPACES
+### CLEAN UP ANY WHITESPACE AFTER CODE CHANGES
+### THE BUILD WILL FAIL WITH RCS1037 IF YOU LEAVE TRAILING SPACES
+
 ### Testing
 - Integration tests validate both Direct and Mediator approaches
 - Test script runs 37 complex CLI scenarios for each implementation
@@ -125,6 +131,12 @@ dotnet publish -c Release -r linux-x64 -p:PublishAot=true -p:TrimMode=partial
 - Central package management via Directory.Packages.props
 - Local NuGet cache configured in Directory.Build.props
 - Supports .NET 10 script mode (see README examples)
+
+## Testing Approach
+
+**IMPORTANT: This repository does NOT use xUnit, NUnit, MSTest or any traditional testing frameworks.**
+
+Tests are implemented as single-file C# applications (new in .NET 10). You can find 50+ test files by searching for "test" in file names. The analyzer tests are located in `/Tests/TimeWarp.Nuru.Analyzers.Tests/TimeWarp.Nuru.Analyzers.Tests.csproj`.
 
 ## Cocona Comparison Documentation
 

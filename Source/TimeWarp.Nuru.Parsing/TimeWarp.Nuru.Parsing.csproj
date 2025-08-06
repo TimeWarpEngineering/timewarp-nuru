@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <ContentTargetFolders>content</ContentTargetFolders>
+    <DevelopmentDependency>true</DevelopmentDependency>
+    <NoWarn>$(NoWarn);NU5128</NoWarn>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <PackageId>TimeWarp.Nuru.Parsing</PackageId>
+    <Description>Source-only package containing route pattern parsing for TimeWarp.Nuru</Description>
+    <PackageTags>TimeWarp;Nuru;Parsing;Source;Analyzer</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- All .cs files will be included as content -->
+    <Content Include="**/*.cs" Exclude="obj/**;bin/**">
+      <Pack>true</Pack>
+      <PackagePath>contentFiles/cs/any/TimeWarp.Nuru.Parsing/</PackagePath>
+      <BuildAction>Compile</BuildAction>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="../../Assets/Logo.png" Pack="true" PackagePath="" />
+    <None Include="README.md" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+</Project>

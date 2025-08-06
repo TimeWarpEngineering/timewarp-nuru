@@ -150,3 +150,107 @@ app.AddRoute("test --verbose,-v,-v", ...)   // NURU009: Duplicate short form '-v
 - Proper caching behavior - only re-analyzes changed AddRoute calls
 - Works efficiently in large codebases with thousands of routes
 - Integrates seamlessly with IDEs for real-time feedback
+
+## Implementation Status (2025-08-06)
+
+### Completed
+- ✅ Created TimeWarp.Nuru.Analyzers project structure
+- ✅ Targeted .NET 9 instead of .NET Standard 2.0 (decision: trade IDE support for cleaner implementation)
+- ✅ Set up incremental generator foundation with IIncrementalGenerator
+- ✅ Defined all 9 diagnostic descriptors (NURU001-NURU009)
+- ✅ Added analyzer release tracking files
+- ✅ Configured proper NuGet packaging
+- ✅ Suppressed RS1041 warning (targeting .NET 9 is intentional)
+- ✅ Updated Microsoft.CodeAnalysis packages to 4.14.0
+- ✅ All tests pass after package updates (44/44 for all implementations)
+
+### Key Decisions Made
+1. **Target .NET 9 instead of .NET Standard 2.0**
+   - Pros: Cleaner code, no polyfills needed, works with CLI and modern IDEs (Rider)
+   - Cons: No VS/VS Code IntelliSense support (analyzer runs at build time only)
+   - Rationale: Users can opt-in to analyzer package; main library unaffected
+
+2. **Direct reference to TimeWarp.Nuru project**
+   - No separate parser library needed since we're targeting .NET 9
+   - Can use all modern C# features and parsing code directly
+
+### Completed (2025-08-06 Session 2)
+- ✅ Implemented IsAddRouteInvocation predicate
+  - Detects both regular and generic AddRoute calls
+  - Works with member access pattern (builder.AddRoute)
+- ✅ Implemented GetRouteInfo extraction
+  - Extracts route pattern from first string literal argument
+  - Captures precise location for error reporting
+- ✅ Added temporary debug diagnostic (NURU_DEBUG)
+  - Verified analyzer detects all routes correctly
+  - Tested on sample project: found 4 routes including generic AddRoute
+
+### Next Steps for Implementation
+1. **Implement AnalyzeRoutePattern validation** (PRIORITY)
+   - Use TimeWarp.Nuru.Parsing.RoutePatternParser
+   - Map ParseError results to appropriate diagnostic descriptors
+   - Calculate precise Location spans for error squiggles
+
+2. **Remove debug diagnostic and implement real diagnostics**
+   - Remove NURU_DEBUG
+   - Implement NURU001-NURU009 based on parser errors
+
+3. **Create RouteInfo equatable model**
+   - Must implement proper equality for incremental caching
+   - Include pattern string and source location
+   - Consider adding parsed result caching
+
+5. **Add code fix providers**
+   - NURU001: Replace angle brackets with curly braces
+   - NURU003: Add missing dash for options
+   - NURU005: Move catch-all to end
+   - Others as appropriate
+
+### Technical Notes
+- RoutePatternParser is in TimeWarp.Nuru.Parsing namespace
+- Parser returns ParseResult with Errors collection
+- Need to map parser error types to our diagnostic codes
+- Consider caching parsed results in RouteInfo for performance
+
+### Completed (2025-08-06 Session 3 - Post Context Reset)
+- ✅ Fixed analyzer whitespace issues after context reset
+- ✅ Implemented AnalyzeRoutePattern with basic validation
+  - NURU001: Detects angle brackets and suggests curly braces
+  - NURU002: Detects unbalanced braces
+  - NURU003: Detects invalid option format (e.g., `-verbose` instead of `--verbose`)
+- ✅ Created test samples to verify diagnostics
+  - All three diagnostics correctly detected during build
+  - Proper error messages with locations
+  - Fixed NURU001 to show only parameter part (e.g., `<env>` not `deploy <env>`)
+- ✅ Verified analyzer is working end-to-end
+  - Builds successfully with .NET 9 targeting
+  - Test project correctly references analyzer
+  - Diagnostics appear as build errors
+
+### Current State
+The analyzer is functional with basic syntax validation (NURU001-003). The foundation is solid:
+- IIncrementalGenerator pipeline is working
+- Route detection is accurate (both regular and generic AddRoute)
+- Basic validations are implemented and tested
+- NuGet packaging is configured
+
+### Remaining Work
+1. **Integrate RoutePatternParser for comprehensive validation**
+   - Parser exists at `TimeWarp.Nuru.Parsing.RoutePatternParser`
+   - Need to use `TryParse` method and map ParseErrors to diagnostics
+   - Implement NURU004-009 based on parser's semantic validation
+
+2. **Add proper unit tests**
+   - Use Microsoft.CodeAnalysis.Testing framework
+   - Test each diagnostic individually
+   - Verify incremental compilation behavior
+
+3. **Create code fix providers**
+   - Start with simple fixes (NURU001, NURU003)
+   - More complex fixes can be added later
+
+### Testing Approach
+- Create test project using Microsoft.CodeAnalysis.Testing
+- Test each diagnostic rule with valid/invalid examples
+- Verify incremental behavior (unchanged files not re-analyzed)
+- Test edge cases: non-string literals, concatenated strings, etc.

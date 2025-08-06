@@ -50,6 +50,9 @@ jobs:
           echo "Building TimeWarp.Nuru..."
           dotnet build Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj --configuration Release
           
+          echo "Building TimeWarp.Nuru.Analyzers..."
+          dotnet build Source/TimeWarp.Nuru.Analyzers/TimeWarp.Nuru.Analyzers.csproj --configuration Release
+          
           echo "Running integration tests..."
           cd Tests
           ./test-both-versions.sh
@@ -59,22 +62,36 @@ jobs:
         run: |
           echo "Building TimeWarp.Nuru for release (GeneratePackageOnBuild=true)..."
           dotnet build Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj --configuration Release
-          echo "Copying NuGet package to LocalNuGetFeed..."
+          
+          echo "Building TimeWarp.Nuru.Analyzers for release (GeneratePackageOnBuild=true)..."
+          dotnet build Source/TimeWarp.Nuru.Analyzers/TimeWarp.Nuru.Analyzers.csproj --configuration Release
+          
+          echo "Copying NuGet packages to LocalNuGetFeed..."
           cp Source/TimeWarp.Nuru/bin/Release/*.nupkg LocalNuGetFeed/
+          cp Source/TimeWarp.Nuru.Analyzers/bin/Release/*.nupkg LocalNuGetFeed/
 
       - name: Check if version already published (Releases only)
         if: github.event_name == 'release'
         run: |
           VERSION=$(grep '<Version>' Directory.Build.props | sed 's/.*<Version>\(.*\)<\/Version>.*/\1/')
-          echo "Checking if TimeWarp.Nuru $VERSION is already published on NuGet.org..."
+          echo "Checking if packages with version $VERSION are already published on NuGet.org..."
           
           # Check TimeWarp.Nuru using package search - only check NuGet.org source
           if dotnet package search TimeWarp.Nuru --exact-match --prerelease --source https://api.nuget.org/v3/index.json | grep -q "| $VERSION |"; then
             echo "⚠️ WARNING: TimeWarp.Nuru $VERSION is already published to NuGet.org"
-            echo "❌ This version cannot be republished. Please increment the version in TimeWarp.Nuru.csproj"
+            echo "❌ This version cannot be republished. Please increment the version in Directory.Build.props"
             exit 1
           else
             echo "✅ TimeWarp.Nuru $VERSION is not yet published on NuGet.org"
+          fi
+          
+          # Check TimeWarp.Nuru.Analyzers using package search - only check NuGet.org source
+          if dotnet package search TimeWarp.Nuru.Analyzers --exact-match --prerelease --source https://api.nuget.org/v3/index.json | grep -q "| $VERSION |"; then
+            echo "⚠️ WARNING: TimeWarp.Nuru.Analyzers $VERSION is already published to NuGet.org"
+            echo "❌ This version cannot be republished. Please increment the version in Directory.Build.props"
+            exit 1
+          else
+            echo "✅ TimeWarp.Nuru.Analyzers $VERSION is not yet published on NuGet.org"
           fi
 
       - name: Publish to NuGet.org (Releases only)

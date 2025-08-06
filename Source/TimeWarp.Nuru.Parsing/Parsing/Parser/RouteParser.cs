@@ -11,12 +11,6 @@ public sealed class RouteParser : IRouteParser
   private int CurrentIndex;
   private readonly List<ParseError> Errors = [];
 
-  /// <summary>
-  /// Enable diagnostic output by setting environment variable NURU_DEBUG=true
-  /// </summary>
-  private static readonly bool EnableDiagnostics =
-    Environment.GetEnvironmentVariable("NURU_DEBUG") == "true";
-
   /// <inheritdoc />
   public ParseResult<RouteSyntax> Parse(string pattern)
   {

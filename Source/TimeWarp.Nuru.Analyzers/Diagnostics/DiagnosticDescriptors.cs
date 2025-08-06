@@ -45,7 +45,7 @@ internal static class DiagnosticDescriptors
   public static readonly DiagnosticDescriptor InvalidTypeConstraint = new(
       id: "NURU004",
       title: "Invalid type constraint",
-      messageFormat: "Invalid type constraint '{0}' - supported types: string, int, double, bool, DateTime, Guid, long, float, decimal",
+      messageFormat: "Invalid type constraint '{0}' - supported types: string, int, double, bool, DateTime, Guid, long, decimal, TimeSpan",
       category: Category,
       defaultSeverity: DiagnosticSeverity.Error,
       isEnabledByDefault: true,

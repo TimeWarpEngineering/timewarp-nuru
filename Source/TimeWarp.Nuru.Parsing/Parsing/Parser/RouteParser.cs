@@ -166,6 +166,16 @@ public sealed class RouteParser : IRouteParser
         isOptional = true;
         typeConstraint += "?";
       }
+
+      // Validate type constraint (NURU004)
+      string baseType = typeConstraint.TrimEnd('?');
+      if (!IsValidTypeConstraint(baseType))
+      {
+        AddError($"Invalid type constraint '{baseType}'. Supported types: string, int, double, bool, DateTime, Guid, long, decimal, TimeSpan",
+          typeToken.Position,
+          typeToken.Length,
+          ParseErrorType.InvalidTypeConstraint);
+      }
     }
 
     // Description
@@ -406,6 +416,23 @@ public sealed class RouteParser : IRouteParser
     }
 
     return string.Join(" ", description);
+  }
+
+  private static bool IsValidTypeConstraint(string type)
+  {
+    return type switch
+    {
+      "string" => true,
+      "int" => true,
+      "long" => true,
+      "double" => true,
+      "decimal" => true,
+      "bool" => true,
+      "DateTime" => true,
+      "Guid" => true,
+      "TimeSpan" => true,
+      _ => false
+    };
   }
 }
 

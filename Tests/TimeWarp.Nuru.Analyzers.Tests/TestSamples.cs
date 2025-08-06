@@ -30,4 +30,18 @@ public static class TestSamples
         // NURU003: Should be --verbose or -v
         builder.AddRoute("test -verbose", () => { });
     }
+
+    public static void InvalidTypeConstraint()
+    {
+        var builder = new NuruAppBuilder();
+
+        // NURU004: Invalid type constraint
+        builder.AddRoute("wait {seconds:integer}", () => { });
+        
+        // NURU004: Should be DateTime not Date
+        builder.AddRoute("schedule {when:Date}", () => { });
+        
+        // NURU004: float is not supported (yet)
+        builder.AddRoute("calculate {value:float}", () => { });
+    }
 }

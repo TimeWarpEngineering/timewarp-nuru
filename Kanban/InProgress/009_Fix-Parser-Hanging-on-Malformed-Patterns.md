@@ -33,10 +33,17 @@ These patterns properly return errors without hanging:
 
 ## Root Cause Analysis
 
-Likely causes:
-1. Infinite loop or excessive backtracking in lexer when encountering unexpected closing braces
-2. Parser attempting to parse nested parameter syntax indefinitely
-3. Missing validation for brace matching before parsing
+Debug output with NURU_DEBUG=true reveals:
+1. **Lexer works correctly** - produces proper tokens for all patterns
+2. **Parser is where hanging occurs** - after receiving tokens from lexer
+3. **Specific trigger**: Parser hangs when encountering `RightBrace` tokens in unexpected contexts
+
+Patterns confirmed to hang:
+- `build config}` - RightBrace without matching LeftBrace
+- `deploy }` - Solo RightBrace token
+- `{{test}}` - Double braces (previously undetected)
+
+The parser likely enters an infinite loop when trying to handle unmatched closing braces.
 
 ## Implementation Steps
 

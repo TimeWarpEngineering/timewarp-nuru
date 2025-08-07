@@ -2,6 +2,7 @@ namespace TimeWarp.Nuru;
 
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using TimeWarp.Nuru.Logging;
 
 /// <summary>
 /// Unified builder for configuring Nuru applications with or without dependency injection.
@@ -99,13 +100,17 @@ public class NuruAppBuilder
   {
     ArgumentNullException.ThrowIfNull(handler);
 
-    // Log route registration
-    if (EndpointCollection.Count == 0)
+    // Log route registration if logger is available
+    if (LoggerFactory is not null)
     {
-      NuruLogger.Registration.Info("Starting route registration");
-    }
+      ILogger<NuruAppBuilder> logger = LoggerFactory.CreateLogger<NuruAppBuilder>();
+      if (EndpointCollection.Count == 0)
+      {
+        LoggerMessages.StartingRouteRegistration(logger, null);
+      }
 
-    NuruLogger.Registration.Debug($"Registering route: '{pattern}'");
+      LoggerMessages.RegisteringRoute(logger, pattern, null);
+    }
 
     var endpoint = new RouteEndpoint
     {

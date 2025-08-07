@@ -1,5 +1,8 @@
 namespace TimeWarp.Nuru;
 
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
+
 /// <summary>
 /// Unified builder for configuring Nuru applications with or without dependency injection.
 /// </summary>
@@ -8,6 +11,7 @@ public class NuruAppBuilder
   private readonly TypeConverterRegistry TypeConverterRegistry = new();
   private ServiceCollection? ServiceCollection;
   private bool AutoHelpEnabled;
+  private ILoggerFactory? LoggerFactory;
 
   /// <summary>
   /// Gets the collection of registered endpoints.
@@ -30,6 +34,18 @@ public class NuruAppBuilder
 
       return ServiceCollection;
     }
+  }
+
+  /// <summary>
+  /// Configures logging for the application using the provided ILoggerFactory.
+  /// If not called, NullLoggerFactory is used (zero overhead).
+  /// </summary>
+  /// <param name="loggerFactory">The logger factory to use for creating loggers.</param>
+  public NuruAppBuilder UseLogging(ILoggerFactory loggerFactory)
+  {
+    ArgumentNullException.ThrowIfNull(loggerFactory);
+    LoggerFactory = loggerFactory;
+    return this;
   }
 
   /// <summary>
@@ -176,16 +192,20 @@ public class NuruAppBuilder
 
     EndpointCollection.Sort();
 
+    // Use NullLoggerFactory if none provided (zero overhead)
+    ILoggerFactory loggerFactory = LoggerFactory ?? NullLoggerFactory.Instance;
+
     if (ServiceCollection is not null)
     {
-      // DI path - build service provider and return DI-enabled app
+      // DI path - register logger factory and build service provider
+      ServiceCollection.AddSingleton(loggerFactory);
       ServiceProvider serviceProvider = ServiceCollection.BuildServiceProvider();
       return new NuruApp(serviceProvider);
     }
     else
     {
-      // Direct path - return lightweight app without DI
-      return new NuruApp(EndpointCollection, TypeConverterRegistry);
+      // Direct path - return lightweight app without DI (pass logger factory for future use)
+      return new NuruApp(EndpointCollection, TypeConverterRegistry, loggerFactory);
     }
   }
 

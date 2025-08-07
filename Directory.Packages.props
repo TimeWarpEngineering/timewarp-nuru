@@ -26,6 +26,7 @@
     <PackageVersion Include="ConsoleAppFramework" Version="5.5.0" />
     <PackageVersion Include="Microsoft.Extensions.Hosting" Version="9.0.8" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Console" Version="9.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.0" />
     <PackageVersion Include="McMaster.Extensions.CommandLineUtils" Version="4.1.1" />
     <PackageVersion Include="PowerArgs" Version="4.0.3" />
     <PackageVersion Include="Spectre.Console.Cli" Version="0.50.0" />

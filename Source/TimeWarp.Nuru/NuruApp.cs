@@ -1,5 +1,7 @@
 namespace TimeWarp.Nuru;
 
+using Microsoft.Extensions.Logging;
+
 /// <summary>
 /// A unified CLI app that supports both direct execution and dependency injection.
 /// </summary>
@@ -8,6 +10,7 @@ public class NuruApp
   private readonly IServiceProvider? ServiceProvider;
   private readonly ITypeConverterRegistry TypeConverterRegistry;
   private readonly CommandExecutor? CommandExecutor;
+  private readonly ILoggerFactory LoggerFactory;
 
   /// <summary>
   /// Gets the collection of registered endpoints.
@@ -17,10 +20,11 @@ public class NuruApp
   /// <summary>
   /// Direct constructor - no dependency injection.
   /// </summary>
-  public NuruApp(EndpointCollection endpoints, ITypeConverterRegistry typeConverterRegistry)
+  public NuruApp(EndpointCollection endpoints, ITypeConverterRegistry typeConverterRegistry, ILoggerFactory? loggerFactory = null)
   {
     Endpoints = endpoints ?? throw new ArgumentNullException(nameof(endpoints));
     TypeConverterRegistry = typeConverterRegistry ?? throw new ArgumentNullException(nameof(typeConverterRegistry));
+    LoggerFactory = loggerFactory ?? Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance;
   }
 
   /// <summary>
@@ -32,6 +36,7 @@ public class NuruApp
     Endpoints = serviceProvider.GetRequiredService<EndpointCollection>();
     TypeConverterRegistry = serviceProvider.GetRequiredService<ITypeConverterRegistry>();
     CommandExecutor = serviceProvider.GetRequiredService<CommandExecutor>();
+    LoggerFactory = serviceProvider.GetService<ILoggerFactory>() ?? Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance;
   }
 
   public async Task<int> RunAsync(string[] args)

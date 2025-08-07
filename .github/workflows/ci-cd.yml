@@ -55,7 +55,11 @@ jobs:
       - name: Publish to NuGet.org (Releases only)
         if: github.event_name == 'release'
         run: |
-          dotnet nuget push LocalNuGetFeed/*.nupkg \
+          dotnet nuget push LocalNuGetFeed/TimeWarp.Nuru.${{ env.VERSION }}.nupkg \
+            --api-key ${{ secrets.NUGET_API_KEY }} \
+            --source https://api.nuget.org/v3/index.json \
+            --skip-duplicate
+          dotnet nuget push LocalNuGetFeed/TimeWarp.Nuru.Analyzers.${{ env.VERSION }}.nupkg \
             --api-key ${{ secrets.NUGET_API_KEY }} \
             --source https://api.nuget.org/v3/index.json \
             --skip-duplicate

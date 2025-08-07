@@ -7,9 +7,17 @@ using TimeWarp.Nuru.Parsing;
 /// </summary>
 public sealed class RouteParser : IRouteParser
 {
+  private readonly ILogger<RouteParser> Logger;
   private IReadOnlyList<Token> Tokens = [];
   private int CurrentIndex;
   private readonly List<ParseError> Errors = [];
+
+  public RouteParser() : this(null) { }
+
+  public RouteParser(ILogger<RouteParser>? logger = null)
+  {
+    Logger = logger ?? NullLogger<RouteParser>.Instance;
+  }
 
   /// <inheritdoc />
   public ParseResult<RouteSyntax> Parse(string pattern)
@@ -24,11 +32,11 @@ public sealed class RouteParser : IRouteParser
     var lexer = new RoutePatternLexer(pattern);
     Tokens = lexer.Tokenize();
 
-    NuruLogger.Parser.Debug($"Parsing pattern: '{pattern}'");
-    if (NuruLogger.Parser.IsTraceEnabled)
-    {
-      NuruLogger.Parser.Trace(RoutePatternLexer.DumpTokens(Tokens));
-    }
+    // LoggerMessages.ParsingPattern(Logger, pattern, null);
+    // if (Logger.IsEnabled(LogLevel.Trace))
+    // {
+    //   LoggerMessages.DumpingTokens(Logger, RoutePatternLexer.DumpTokens(Tokens), null);
+    // }
 
     // Parse tokens into AST
     try
@@ -39,10 +47,10 @@ public sealed class RouteParser : IRouteParser
       // Perform semantic validation on the complete AST
       ValidateSemantics(ast);
 
-      if (NuruLogger.Parser.IsDebugEnabled && Errors.Count == 0)
-      {
-        NuruLogger.Parser.Debug(DumpAst(ast));
-      }
+      // if (Logger.IsEnabled(LogLevel.Debug) && Errors.Count == 0)
+      // {
+      //   LoggerMessages.DumpingAst(Logger, DumpAst(ast), null);
+      // }
 
       return Errors.Count == 0
         ? new ParseResult<RouteSyntax>

@@ -21,6 +21,12 @@ on:
       - '.github/workflows/**'
   release:
     types: [published] # Triggered when a release is published via GitHub Releases UI or gh CLI
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (e.g., 2.1.0-beta.6)'
+        required: false
+        type: string
 
 jobs:
   build-and-publish:
@@ -53,13 +59,23 @@ jobs:
         run: dotnet ${{ github.workspace }}/Scripts/CheckVersion.cs
 
       - name: Publish to NuGet.org (Releases only)
-        if: github.event_name == 'release'
+        if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && github.event.inputs.version != '')
         run: |
-          dotnet nuget push LocalNuGetFeed/TimeWarp.Nuru.${{ env.VERSION }}.nupkg \
+          # Get version from either release tag or manual input
+          if [ "${{ github.event_name }}" == "release" ]; then
+            VERSION="${{ github.event.release.tag_name }}"
+            VERSION="${VERSION#v}"  # Remove 'v' prefix if present
+          else
+            VERSION="${{ github.event.inputs.version }}"
+          fi
+          
+          echo "Publishing version: $VERSION"
+          
+          dotnet nuget push LocalNuGetFeed/TimeWarp.Nuru.$VERSION.nupkg \
             --api-key ${{ secrets.NUGET_API_KEY }} \
             --source https://api.nuget.org/v3/index.json \
             --skip-duplicate
-          dotnet nuget push LocalNuGetFeed/TimeWarp.Nuru.Analyzers.${{ env.VERSION }}.nupkg \
+          dotnet nuget push LocalNuGetFeed/TimeWarp.Nuru.Analyzers.$VERSION.nupkg \
             --api-key ${{ secrets.NUGET_API_KEY }} \
             --source https://api.nuget.org/v3/index.json \
             --skip-duplicate

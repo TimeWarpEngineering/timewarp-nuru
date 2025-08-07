@@ -46,7 +46,8 @@ public class NuruApp
     try
     {
       // Parse and match route
-      ResolverResult result = RouteBasedCommandResolver.Resolve(args, Endpoints, TypeConverterRegistry);
+      ILogger logger = LoggerFactory.CreateLogger("RouteBasedCommandResolver");
+      ResolverResult result = RouteBasedCommandResolver.Resolve(args, Endpoints, TypeConverterRegistry, logger);
 
       if (!result.Success || result.MatchedEndpoint is null)
       {

@@ -97,6 +97,14 @@ internal sealed class RouteCompiler : SyntaxVisitor<object?>
     bool expectsValue = option.Parameter is not null;
     string? valueParameterName = option.Parameter?.Name;
 
+    // For boolean options (no parameter), use the option name as the parameter name
+    if (valueParameterName is null && !expectsValue)
+    {
+      // Extract the option name from the syntax (remove leading dashes)
+      valueParameterName = option.LongForm ?? option.ShortForm;
+      NuruLogger.Parser.Debug($"Setting boolean option parameter name to: '{valueParameterName}'");
+    }
+
     if (option.Parameter is not null)
     {
       if (option.Parameter.IsCatchAll)

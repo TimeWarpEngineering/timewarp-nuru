@@ -16,12 +16,16 @@ public static class RoutePatternParser
   /// <exception cref="ArgumentException">Thrown when the route pattern is invalid.</exception>
   public static CompiledRoute Parse(string routePattern)
   {
+    return Parse(routePattern, null);
+  }
+
+  public static CompiledRoute Parse(string routePattern, ILogger? logger)
+  {
     ArgumentNullException.ThrowIfNull(routePattern);
 
-    // Create parser and compiler without logger for now
-    var parser = new RouteParser();
-    var compiler = new RouteCompiler();
-    
+    // Create parser and compiler with logger if provided
+    var parser = new RouteParser(logger as ILogger<RouteParser>);
+    var compiler = new RouteCompiler(logger as ILogger<RouteCompiler>);
     ParseResult<RouteSyntax> result = parser.Parse(routePattern);
 
     if (!result.Success)

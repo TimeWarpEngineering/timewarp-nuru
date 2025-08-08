@@ -110,7 +110,7 @@ internal sealed class RouteCompiler : SyntaxVisitor<object?>
     {
       // Extract the option name from the syntax (remove leading dashes)
       valueParameterName = option.LongForm ?? option.ShortForm;
-      // LoggerMessages.SettingBooleanOptionParameter(Logger, valueParameterName!, null);
+      LoggerMessages.SettingBooleanOptionParameter(Logger, valueParameterName!, null);
     }
 
     if (option.Parameter is not null)

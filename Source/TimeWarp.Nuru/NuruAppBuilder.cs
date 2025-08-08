@@ -2,7 +2,7 @@ namespace TimeWarp.Nuru;
 
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using TimeWarp.Nuru.Logging;
+using TimeWarp.Nuru.Parsing;
 
 /// <summary>
 /// Unified builder for configuring Nuru applications with or without dependency injection.
@@ -112,10 +112,13 @@ public class NuruAppBuilder
       LoggerMessages.RegisteringRoute(logger, pattern, null);
     }
 
+    // Pass logger to parser if available for detailed parsing logs
+    ILogger? parserLogger = LoggerFactory?.CreateLogger("TimeWarp.Nuru.Parsing");
+
     var endpoint = new RouteEndpoint
     {
       RoutePattern = pattern,
-      CompiledRoute = RoutePatternParser.Parse(pattern),
+      CompiledRoute = RoutePatternParser.Parse(pattern, parserLogger),
       Handler = handler,
       Method = handler.Method,
       Description = description
@@ -152,10 +155,13 @@ public class NuruAppBuilder
       throw new InvalidOperationException("Dependency injection must be added before using Mediator commands. Call AddDependencyInjection() first.");
     }
 
+    // Pass logger to parser if available for detailed parsing logs
+    ILogger? parserLogger = LoggerFactory?.CreateLogger("TimeWarp.Nuru.Parsing");
+
     var endpoint = new RouteEndpoint
     {
       RoutePattern = pattern,
-      CompiledRoute = RoutePatternParser.Parse(pattern),
+      CompiledRoute = RoutePatternParser.Parse(pattern, parserLogger),
       Description = description,
       CommandType = commandType
     };

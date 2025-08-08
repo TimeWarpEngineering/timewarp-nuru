@@ -1,6 +1,6 @@
 namespace TimeWarp.Nuru.CommandResolver;
 
-using TimeWarp.Nuru.Logging;
+using TimeWarp.Nuru.Parsing;
 
 /// <summary>
 /// A command resolver that uses route patterns to match commands.

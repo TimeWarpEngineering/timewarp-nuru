@@ -32,11 +32,11 @@ public sealed class RouteParser : IRouteParser
     var lexer = new RoutePatternLexer(pattern);
     Tokens = lexer.Tokenize();
 
-    // LoggerMessages.ParsingPattern(Logger, pattern, null);
-    // if (Logger.IsEnabled(LogLevel.Trace))
-    // {
-    //   LoggerMessages.DumpingTokens(Logger, RoutePatternLexer.DumpTokens(Tokens), null);
-    // }
+    LoggerMessages.ParsingPattern(Logger, pattern, null);
+    if (Logger.IsEnabled(Microsoft.Extensions.Logging.LogLevel.Trace))
+    {
+      LoggerMessages.DumpingTokens(Logger, RoutePatternLexer.DumpTokens(Tokens), null);
+    }
 
     // Parse tokens into AST
     try
@@ -47,10 +47,10 @@ public sealed class RouteParser : IRouteParser
       // Perform semantic validation on the complete AST
       ValidateSemantics(ast);
 
-      // if (Logger.IsEnabled(LogLevel.Debug) && Errors.Count == 0)
-      // {
-      //   LoggerMessages.DumpingAst(Logger, DumpAst(ast), null);
-      // }
+      if (Logger.IsEnabled(Microsoft.Extensions.Logging.LogLevel.Debug) && Errors.Count == 0)
+      {
+        LoggerMessages.DumpingAst(Logger, DumpAst(ast), null);
+      }
 
       return Errors.Count == 0
         ? new ParseResult<RouteSyntax>

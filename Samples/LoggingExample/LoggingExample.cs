@@ -1,6 +1,6 @@
-#!/usr/bin/env dotnet run
-#:package TimeWarp.Nuru
-#:package TimeWarp.Nuru.Logging
+#!/usr/bin/dotnet --
+#:project ../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
+#:project ../../Source/TimeWarp.Nuru.Logging/TimeWarp.Nuru.Logging.csproj
 #:package Microsoft.Extensions.Logging
 
 using TimeWarp.Nuru;

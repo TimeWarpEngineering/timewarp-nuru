@@ -8,15 +8,17 @@ using TimeWarp.Nuru.Parsing;
 public sealed class RouteParser : IRouteParser
 {
   private readonly ILogger<RouteParser> Logger;
+  private readonly ILoggerFactory? LoggerFactory;
   private IReadOnlyList<Token> Tokens = [];
   private int CurrentIndex;
   private readonly List<ParseError> Errors = [];
 
-  public RouteParser() : this(null) { }
+  public RouteParser() : this(null, null) { }
 
-  public RouteParser(ILogger<RouteParser>? logger = null)
+  public RouteParser(ILogger<RouteParser>? logger = null, ILoggerFactory? loggerFactory = null)
   {
     Logger = logger ?? NullLogger<RouteParser>.Instance;
+    LoggerFactory = loggerFactory;
   }
 
   /// <inheritdoc />
@@ -29,7 +31,9 @@ public sealed class RouteParser : IRouteParser
     Errors.Clear();
 
     // Tokenize input
-    var lexer = new RoutePatternLexer(pattern);
+    RoutePatternLexer lexer = LoggerFactory is not null
+      ? new RoutePatternLexer(pattern, LoggerFactory.CreateLogger<RoutePatternLexer>())
+      : new RoutePatternLexer(pattern);
     Tokens = lexer.Tokenize();
 
     LoggerMessages.ParsingPattern(Logger, pattern, null);
@@ -85,7 +89,7 @@ public sealed class RouteParser : IRouteParser
     ArgumentNullException.ThrowIfNull(ast);
 
     var sb = new StringBuilder();
-    sb.Append("    → ").Append(ast.Segments.Count).Append(" segments: ");
+    sb.Append("→ ").Append(ast.Segments.Count).Append(" segments: ");
 
     // Build inline segment list
     var segmentList = new List<string>();
@@ -94,7 +98,7 @@ public sealed class RouteParser : IRouteParser
       segmentList.Add(ast.Segments[i].ToString());
     }
 
-    sb.AppendJoin(", ", segmentList).AppendLine();
+    sb.AppendJoin(", ", segmentList);
 
     return sb.ToString();
   }

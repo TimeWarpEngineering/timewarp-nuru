@@ -21,6 +21,19 @@ internal static class LoggerMessages
       new EventId(1001, "RegisteringRoute"),
       "Registering route: '{RoutePattern}'");
 
+  // ===== Lexer Messages (1050-1099) =====
+  internal static readonly Action<ILogger, string, Exception?> StartingLexicalAnalysis =
+    LoggerMessage.Define<string>(
+      LogLevel.Trace,
+      new EventId(1050, "StartingLexicalAnalysis"),
+      "Starting lexical analysis of: '{Input}'");
+
+  internal static readonly Action<ILogger, int, Exception?> CompletedLexicalAnalysis =
+    LoggerMessage.Define<int>(
+      LogLevel.Trace,
+      new EventId(1051, "CompletedLexicalAnalysis"),
+      "Lexical analysis complete. Generated {TokenCount} tokens");
+
   // ===== Parser Messages (1100-1199) =====
   internal static readonly Action<ILogger, string, Exception?> ParsingPattern =
     LoggerMessage.Define<string>(

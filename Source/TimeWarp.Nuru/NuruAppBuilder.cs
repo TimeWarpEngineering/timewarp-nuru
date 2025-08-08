@@ -112,13 +112,10 @@ public class NuruAppBuilder
       LoggerMessages.RegisteringRoute(logger, pattern, null);
     }
 
-    // Pass logger to parser if available for detailed parsing logs
-    ILogger? parserLogger = LoggerFactory?.CreateLogger("TimeWarp.Nuru.Parsing");
-
     var endpoint = new RouteEndpoint
     {
       RoutePattern = pattern,
-      CompiledRoute = RoutePatternParser.Parse(pattern, parserLogger),
+      CompiledRoute = RoutePatternParser.Parse(pattern, LoggerFactory),
       Handler = handler,
       Method = handler.Method,
       Description = description
@@ -155,13 +152,10 @@ public class NuruAppBuilder
       throw new InvalidOperationException("Dependency injection must be added before using Mediator commands. Call AddDependencyInjection() first.");
     }
 
-    // Pass logger to parser if available for detailed parsing logs
-    ILogger? parserLogger = LoggerFactory?.CreateLogger("TimeWarp.Nuru.Parsing");
-
     var endpoint = new RouteEndpoint
     {
       RoutePattern = pattern,
-      CompiledRoute = RoutePatternParser.Parse(pattern, parserLogger),
+      CompiledRoute = RoutePatternParser.Parse(pattern, LoggerFactory),
       Description = description,
       CommandType = commandType
     };

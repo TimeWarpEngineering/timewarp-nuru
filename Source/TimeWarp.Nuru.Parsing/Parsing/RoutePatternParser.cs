@@ -19,13 +19,17 @@ public static class RoutePatternParser
     return Parse(routePattern, null);
   }
 
-  public static CompiledRoute Parse(string routePattern, ILogger? logger)
+  public static CompiledRoute Parse(string routePattern, ILoggerFactory? loggerFactory)
   {
     ArgumentNullException.ThrowIfNull(routePattern);
 
-    // Create parser and compiler with logger if provided
-    var parser = new RouteParser(logger as ILogger<RouteParser>);
-    var compiler = new RouteCompiler(logger as ILogger<RouteCompiler>);
+    // Create parser and compiler with typed loggers if factory provided
+    RouteParser parser = loggerFactory is not null
+      ? new RouteParser(loggerFactory.CreateLogger<RouteParser>(), loggerFactory)
+      : new RouteParser();
+    RouteCompiler compiler = loggerFactory is not null
+      ? new RouteCompiler(loggerFactory.CreateLogger<RouteCompiler>())
+      : new RouteCompiler();
     ParseResult<RouteSyntax> result = parser.Parse(routePattern);
 
     if (!result.Success)

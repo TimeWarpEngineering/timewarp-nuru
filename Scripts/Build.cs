@@ -28,6 +28,15 @@ if (!parsingResult.IsSuccess)
   Environment.Exit(1);
 }
 
+// Clear the local NuGet cache for the source-only parsing package
+// This ensures the latest source files are included when building dependent projects
+string localCachePath = Path.Combine("..", "LocalNuGetCache", "timewarp.nuru.parsing");
+if (Directory.Exists(localCachePath))
+{
+  WriteLine($"Clearing local cache: {localCachePath}");
+  Directory.Delete(localCachePath, recursive: true);
+}
+
 // Build the solution
 try
 {

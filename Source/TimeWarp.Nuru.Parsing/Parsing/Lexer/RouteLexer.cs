@@ -7,6 +7,7 @@ using System.Text;
 /// </summary>
 public class RoutePatternLexer
 {
+  private readonly ILogger<RoutePatternLexer> Logger;
   private readonly string Input;
   private int Position;
   private readonly List<Token> Tokens = [];
@@ -15,9 +16,12 @@ public class RoutePatternLexer
   /// Initializes a new instance of the <see cref="RoutePatternLexer"/> class.
   /// </summary>
   /// <param name="input">The input string to tokenize.</param>
-  public RoutePatternLexer(string input)
+  public RoutePatternLexer(string input) : this(input, null) { }
+
+  public RoutePatternLexer(string input, ILogger<RoutePatternLexer>? logger = null)
   {
     this.Input = input ?? throw new ArgumentNullException(nameof(input));
+    Logger = logger ?? NullLogger<RoutePatternLexer>.Instance;
   }
 
   /// <summary>
@@ -29,12 +33,21 @@ public class RoutePatternLexer
     Tokens.Clear();
     Position = 0;
 
+    LoggerMessages.StartingLexicalAnalysis(Logger, Input, null);
+
     while (!IsAtEnd())
     {
       ScanToken();
     }
 
     Tokens.Add(Token.EndOfInput(Position));
+
+    if (Logger.IsEnabled(LogLevel.Trace))
+    {
+      LoggerMessages.CompletedLexicalAnalysis(Logger, Tokens.Count, null);
+      LoggerMessages.DumpingTokens(Logger, DumpTokens(Tokens), null);
+    }
+
     return Tokens;
   }
 
@@ -48,12 +61,15 @@ public class RoutePatternLexer
     ArgumentNullException.ThrowIfNull(tokens);
 
     var sb = new StringBuilder();
-    sb.Append("Tokens (").Append(tokens.Count).AppendLine("):");
+    sb.Append("Tokens (").Append(tokens.Count).Append("): ");
 
+    List<string> tokenStrings = [];
     foreach (Token token in tokens)
     {
-      sb.Append("  ").AppendLine(token.ToString());
+      tokenStrings.Add(token.ToString());
     }
+
+    sb.AppendJoin(" | ", tokenStrings);
 
     return sb.ToString();
   }

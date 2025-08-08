@@ -7,9 +7,19 @@ using TimeWarp.Nuru.Parsing;
 /// </summary>
 public sealed class RouteParser : IRouteParser
 {
+  private readonly ILogger<RouteParser> Logger;
+  private readonly ILoggerFactory? LoggerFactory;
   private IReadOnlyList<Token> Tokens = [];
   private int CurrentIndex;
   private readonly List<ParseError> Errors = [];
+
+  public RouteParser() : this(null, null) { }
+
+  public RouteParser(ILogger<RouteParser>? logger = null, ILoggerFactory? loggerFactory = null)
+  {
+    Logger = logger ?? NullLogger<RouteParser>.Instance;
+    LoggerFactory = loggerFactory;
+  }
 
   /// <inheritdoc />
   public ParseResult<RouteSyntax> Parse(string pattern)
@@ -21,13 +31,15 @@ public sealed class RouteParser : IRouteParser
     Errors.Clear();
 
     // Tokenize input
-    var lexer = new RoutePatternLexer(pattern);
+    RoutePatternLexer lexer = LoggerFactory is not null
+      ? new RoutePatternLexer(pattern, LoggerFactory.CreateLogger<RoutePatternLexer>())
+      : new RoutePatternLexer(pattern);
     Tokens = lexer.Tokenize();
 
-    NuruLogger.Parser.Debug($"Parsing pattern: '{pattern}'");
-    if (NuruLogger.Parser.IsTraceEnabled)
+    LoggerMessages.ParsingPattern(Logger, pattern, null);
+    if (Logger.IsEnabled(Microsoft.Extensions.Logging.LogLevel.Trace))
     {
-      NuruLogger.Parser.Trace(RoutePatternLexer.DumpTokens(Tokens));
+      LoggerMessages.DumpingTokens(Logger, RoutePatternLexer.DumpTokens(Tokens), null);
     }
 
     // Parse tokens into AST
@@ -39,9 +51,9 @@ public sealed class RouteParser : IRouteParser
       // Perform semantic validation on the complete AST
       ValidateSemantics(ast);
 
-      if (NuruLogger.Parser.IsDebugEnabled && Errors.Count == 0)
+      if (Logger.IsEnabled(Microsoft.Extensions.Logging.LogLevel.Debug) && Errors.Count == 0)
       {
-        NuruLogger.Parser.Debug(DumpAst(ast));
+        LoggerMessages.DumpingAst(Logger, DumpAst(ast), null);
       }
 
       return Errors.Count == 0
@@ -77,7 +89,7 @@ public sealed class RouteParser : IRouteParser
     ArgumentNullException.ThrowIfNull(ast);
 
     var sb = new StringBuilder();
-    sb.Append("    → ").Append(ast.Segments.Count).Append(" segments: ");
+    sb.Append("→ ").Append(ast.Segments.Count).Append(" segments: ");
 
     // Build inline segment list
     var segmentList = new List<string>();
@@ -86,7 +98,7 @@ public sealed class RouteParser : IRouteParser
       segmentList.Add(ast.Segments[i].ToString());
     }
 
-    sb.AppendJoin(", ", segmentList).AppendLine();
+    sb.AppendJoin(", ", segmentList);
 
     return sb.ToString();
   }

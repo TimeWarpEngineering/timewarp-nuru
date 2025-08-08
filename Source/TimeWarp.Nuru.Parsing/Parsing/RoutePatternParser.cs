@@ -7,8 +7,6 @@ using TimeWarp.Nuru.Parsing;
 /// </summary>
 public static class RoutePatternParser
 {
-  private static readonly RouteParser Parser = new();
-  private static readonly RouteCompiler Compiler = new();
 
   /// <summary>
   /// Parses a route pattern string into a CompiledRoute object.
@@ -18,9 +16,21 @@ public static class RoutePatternParser
   /// <exception cref="ArgumentException">Thrown when the route pattern is invalid.</exception>
   public static CompiledRoute Parse(string routePattern)
   {
+    return Parse(routePattern, null);
+  }
+
+  public static CompiledRoute Parse(string routePattern, ILoggerFactory? loggerFactory)
+  {
     ArgumentNullException.ThrowIfNull(routePattern);
 
-    ParseResult<RouteSyntax> result = Parser.Parse(routePattern);
+    // Create parser and compiler with typed loggers if factory provided
+    RouteParser parser = loggerFactory is not null
+      ? new RouteParser(loggerFactory.CreateLogger<RouteParser>(), loggerFactory)
+      : new RouteParser();
+    RouteCompiler compiler = loggerFactory is not null
+      ? new RouteCompiler(loggerFactory.CreateLogger<RouteCompiler>())
+      : new RouteCompiler();
+    ParseResult<RouteSyntax> result = parser.Parse(routePattern);
 
     if (!result.Success)
     {
@@ -31,7 +41,7 @@ public static class RoutePatternParser
       throw new ArgumentException($"Invalid route pattern '{routePattern}': \n{combinedMessage}");
     }
 
-    return Compiler.Compile(result.Value!);
+    return compiler.Compile(result.Value!);
   }
 
   /// <summary>
@@ -52,12 +62,15 @@ public static class RoutePatternParser
       return false;
     }
 
-    ParseResult<RouteSyntax> result = Parser.Parse(routePattern);
+    // Create parser and compiler without logger for now
+    var parser = new RouteParser();
+    var compiler = new RouteCompiler();
+    ParseResult<RouteSyntax> result = parser.Parse(routePattern);
     errors = result.Errors;
 
     if (result.Success)
     {
-      compiledRoute = Compiler.Compile(result.Value!);
+      compiledRoute = compiler.Compile(result.Value!);
       return true;
     }
 

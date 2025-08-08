@@ -8,11 +8,19 @@ using TimeWarp.Nuru.Parsing;
 /// </summary>
 internal sealed class RouteCompiler : SyntaxVisitor<object?>
 {
+  private readonly ILogger<RouteCompiler> Logger;
   private readonly List<RouteMatcher> Segments = [];
   private readonly List<string> RequiredOptionPatterns = [];
   private readonly List<OptionMatcher> OptionMatchers = [];
   private string? CatchAllParameterName;
   private int Specificity;
+
+  public RouteCompiler() : this(null) { }
+
+  public RouteCompiler(ILogger<RouteCompiler>? logger = null)
+  {
+    Logger = logger ?? NullLogger<RouteCompiler>.Instance;
+  }
 
   /// <summary>
   /// Compiles a route pattern syntax tree to a CompiledRoute.
@@ -102,7 +110,7 @@ internal sealed class RouteCompiler : SyntaxVisitor<object?>
     {
       // Extract the option name from the syntax (remove leading dashes)
       valueParameterName = option.LongForm ?? option.ShortForm;
-      NuruLogger.Parser.Debug($"Setting boolean option parameter name to: '{valueParameterName}'");
+      LoggerMessages.SettingBooleanOptionParameter(Logger, valueParameterName!, null);
     }
 
     if (option.Parameter is not null)

@@ -1,5 +1,9 @@
 namespace TimeWarp.Nuru;
 
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
+using TimeWarp.Nuru.Parsing;
+
 /// <summary>
 /// Unified builder for configuring Nuru applications with or without dependency injection.
 /// </summary>
@@ -8,6 +12,7 @@ public class NuruAppBuilder
   private readonly TypeConverterRegistry TypeConverterRegistry = new();
   private ServiceCollection? ServiceCollection;
   private bool AutoHelpEnabled;
+  private ILoggerFactory? LoggerFactory;
 
   /// <summary>
   /// Gets the collection of registered endpoints.
@@ -30,6 +35,18 @@ public class NuruAppBuilder
 
       return ServiceCollection;
     }
+  }
+
+  /// <summary>
+  /// Configures logging for the application using the provided ILoggerFactory.
+  /// If not called, NullLoggerFactory is used (zero overhead).
+  /// </summary>
+  /// <param name="loggerFactory">The logger factory to use for creating loggers.</param>
+  public NuruAppBuilder UseLogging(ILoggerFactory loggerFactory)
+  {
+    ArgumentNullException.ThrowIfNull(loggerFactory);
+    LoggerFactory = loggerFactory;
+    return this;
   }
 
   /// <summary>
@@ -83,18 +100,22 @@ public class NuruAppBuilder
   {
     ArgumentNullException.ThrowIfNull(handler);
 
-    // Log route registration
-    if (EndpointCollection.Count == 0)
+    // Log route registration if logger is available
+    if (LoggerFactory is not null)
     {
-      NuruLogger.Registration.Info("Starting route registration");
-    }
+      ILogger<NuruAppBuilder> logger = LoggerFactory.CreateLogger<NuruAppBuilder>();
+      if (EndpointCollection.Count == 0)
+      {
+        LoggerMessages.StartingRouteRegistration(logger, null);
+      }
 
-    NuruLogger.Registration.Debug($"Registering route: '{pattern}'");
+      LoggerMessages.RegisteringRoute(logger, pattern, null);
+    }
 
     var endpoint = new RouteEndpoint
     {
       RoutePattern = pattern,
-      CompiledRoute = RoutePatternParser.Parse(pattern),
+      CompiledRoute = RoutePatternParser.Parse(pattern, LoggerFactory),
       Handler = handler,
       Method = handler.Method,
       Description = description
@@ -134,7 +155,7 @@ public class NuruAppBuilder
     var endpoint = new RouteEndpoint
     {
       RoutePattern = pattern,
-      CompiledRoute = RoutePatternParser.Parse(pattern),
+      CompiledRoute = RoutePatternParser.Parse(pattern, LoggerFactory),
       Description = description,
       CommandType = commandType
     };
@@ -176,16 +197,20 @@ public class NuruAppBuilder
 
     EndpointCollection.Sort();
 
+    // Use NullLoggerFactory if none provided (zero overhead)
+    ILoggerFactory loggerFactory = LoggerFactory ?? NullLoggerFactory.Instance;
+
     if (ServiceCollection is not null)
     {
-      // DI path - build service provider and return DI-enabled app
+      // DI path - register logger factory and build service provider
+      ServiceCollection.AddSingleton(loggerFactory);
       ServiceProvider serviceProvider = ServiceCollection.BuildServiceProvider();
       return new NuruApp(serviceProvider);
     }
     else
     {
-      // Direct path - return lightweight app without DI
-      return new NuruApp(EndpointCollection, TypeConverterRegistry);
+      // Direct path - return lightweight app without DI (pass logger factory for future use)
+      return new NuruApp(EndpointCollection, TypeConverterRegistry, loggerFactory);
     }
   }
 

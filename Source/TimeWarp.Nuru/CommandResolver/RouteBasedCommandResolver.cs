@@ -1,21 +1,25 @@
 namespace TimeWarp.Nuru.CommandResolver;
 
+using TimeWarp.Nuru.Parsing;
+
 /// <summary>
 /// A command resolver that uses route patterns to match commands.
 /// </summary>
 internal static class RouteBasedCommandResolver
 {
-  public static ResolverResult Resolve(string[] args, EndpointCollection endpoints, ITypeConverterRegistry typeConverterRegistry)
+  public static ResolverResult Resolve(string[] args, EndpointCollection endpoints, ITypeConverterRegistry typeConverterRegistry, ILogger? logger = null)
   {
     ArgumentNullException.ThrowIfNull(args);
     ArgumentNullException.ThrowIfNull(endpoints);
     ArgumentNullException.ThrowIfNull(typeConverterRegistry);
 
-    NuruLogger.Matcher.Info($"Resolving command: '{string.Join(" ", args)}'");
-    NuruLogger.Matcher.Debug($"Checking {endpoints.Count} available routes");
+    logger ??= NullLogger.Instance;
+
+    LoggerMessages.ResolvingCommand(logger, string.Join(" ", args), null);
+    LoggerMessages.CheckingAvailableRoutes(logger, endpoints.Count, null);
 
     // Try to match against route endpoints
-    (RouteEndpoint endpoint, Dictionary<string, string> extractedValues)? matchResult = MatchRoute(args, endpoints);
+    (RouteEndpoint endpoint, Dictionary<string, string> extractedValues)? matchResult = MatchRoute(args, endpoints, logger);
 
     if (matchResult is not null)
     {
@@ -34,7 +38,7 @@ internal static class RouteBasedCommandResolver
     );
   }
 
-  private static (RouteEndpoint endpoint, Dictionary<string, string> extractedValues)? MatchRoute(string[] args, EndpointCollection endpoints)
+  private static (RouteEndpoint endpoint, Dictionary<string, string> extractedValues)? MatchRoute(string[] args, EndpointCollection endpoints, ILogger logger)
   {
     var extractedValues = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
@@ -42,21 +46,21 @@ internal static class RouteBasedCommandResolver
     foreach (RouteEndpoint endpoint in endpoints)
     {
       endpointIndex++;
-      NuruLogger.Matcher.Trace($"[{endpointIndex}/{endpoints.Count}] Checking route: '{endpoint.RoutePattern}'");
+      LoggerMessages.CheckingRoute(logger, endpointIndex, endpoints.Count, endpoint.RoutePattern, null);
       extractedValues.Clear(); // Clear for each attempt
 
       // Check positional segments
-      if (MatchPositionalSegments(endpoint, args, extractedValues, out int consumedArgs))
+      if (MatchPositionalSegments(endpoint, args, extractedValues, logger, out int consumedArgs))
       {
         // Check if remaining args match required options
         var remainingArgs = new ArraySegment<string>(args, consumedArgs, args.Length - consumedArgs);
-        if (CheckRequiredOptions(endpoint, remainingArgs, extractedValues, out int optionsConsumed))
+        if (CheckRequiredOptions(endpoint, remainingArgs, extractedValues, logger, out int optionsConsumed))
         {
           // For catch-all routes, we don't need to check if all args were consumed
           if (endpoint.CompiledRoute.HasCatchAll)
           {
-            NuruLogger.Matcher.Debug($"✓ Matched catch-all route: '{endpoint.RoutePattern}'");
-            LogExtractedValues(extractedValues);
+            LoggerMessages.MatchedCatchAllRoute(logger, endpoint.RoutePattern, null);
+            LogExtractedValues(extractedValues, logger);
             return (endpoint, extractedValues);
           }
 
@@ -64,49 +68,49 @@ internal static class RouteBasedCommandResolver
           int totalConsumed = consumedArgs + optionsConsumed;
           if (totalConsumed == args.Length)
           {
-            NuruLogger.Matcher.Debug($"✓ Matched route: '{endpoint.RoutePattern}'");
-            LogExtractedValues(extractedValues);
+            LoggerMessages.MatchedRoute(logger, endpoint.RoutePattern, null);
+            LogExtractedValues(extractedValues, logger);
             return (endpoint, extractedValues);
           }
           else
           {
-            NuruLogger.Matcher.Trace($"Route '{endpoint.RoutePattern}' consumed only {totalConsumed}/{args.Length} args");
+            LoggerMessages.RouteConsumedPartialArgs(logger, endpoint.RoutePattern, totalConsumed, args.Length, null);
           }
         }
         else
         {
-          NuruLogger.Matcher.Trace($"Route '{endpoint.RoutePattern}' failed at option matching");
+          LoggerMessages.RouteFailedAtOptionMatching(logger, endpoint.RoutePattern, null);
         }
       }
       else
       {
-        NuruLogger.Matcher.Trace($"Route '{endpoint.RoutePattern}' failed at positional matching");
+        LoggerMessages.RouteFailedAtPositionalMatching(logger, endpoint.RoutePattern, null);
       }
     }
 
-    NuruLogger.Matcher.Info($"No matching route found for: '{string.Join(" ", args)}'");
+    LoggerMessages.NoMatchingRouteFound(logger, string.Join(" ", args), null);
     return null;
   }
 
-  private static void LogExtractedValues(Dictionary<string, string> extractedValues)
+  private static void LogExtractedValues(Dictionary<string, string> extractedValues, ILogger logger)
   {
     if (extractedValues.Count > 0)
     {
-      NuruLogger.Matcher.Debug("Extracted values:");
+      LoggerMessages.ExtractedValues(logger, null);
       foreach (KeyValuePair<string, string> kvp in extractedValues)
       {
-        NuruLogger.Matcher.Debug($"  {kvp.Key} = '{kvp.Value}'");
+        LoggerMessages.ExtractedValue(logger, kvp.Key, kvp.Value, null);
       }
     }
   }
 
   private static bool MatchPositionalSegments(RouteEndpoint endpoint, string[] args,
-      Dictionary<string, string> extractedValues, out int consumedArgs)
+      Dictionary<string, string> extractedValues, ILogger logger, out int consumedArgs)
   {
     consumedArgs = 0;
     IReadOnlyList<RouteMatcher> template = endpoint.CompiledRoute.PositionalMatchers;
 
-    NuruLogger.Matcher.Trace($"Matching {template.Count} positional segments against {args.Length} arguments");
+    LoggerMessages.MatchingPositionalSegments(logger, template.Count, args.Length, null);
 
     // Match each segment in the template
     for (int i = 0; i < template.Count; i++)
@@ -121,11 +125,11 @@ internal static class RouteBasedCommandResolver
         {
           string catchAllValue = string.Join(CommonStrings.Space, args.Skip(i));
           extractedValues[param.Name] = catchAllValue;
-          NuruLogger.Matcher.Trace($"Catch-all parameter '{param.Name}' captured: '{catchAllValue}'");
+          LoggerMessages.CatchAllParameterCaptured(logger, param.Name, catchAllValue, null);
         }
         else
         {
-          NuruLogger.Matcher.Trace($"Catch-all parameter '{param.Name}' has no args to consume");
+          LoggerMessages.CatchAllParameterNoArgs(logger, param.Name, null);
         }
 
         return true;
@@ -138,11 +142,11 @@ internal static class RouteBasedCommandResolver
         if (segment is ParameterMatcher optionalParam && optionalParam.IsOptional)
         {
           // Optional parameter with no value - skip it
-          NuruLogger.Matcher.Trace($"Optional parameter '{optionalParam.Name}' - no value provided");
+          LoggerMessages.OptionalParameterNoValue(logger, optionalParam.Name, null);
           continue;
         }
 
-        NuruLogger.Matcher.Trace($"Not enough arguments for segment '{segment.ToDisplayString()}'");
+        LoggerMessages.NotEnoughArgumentsForSegment(logger, segment.ToDisplayString(), null);
         return false; // Not enough args
       }
 
@@ -152,42 +156,42 @@ internal static class RouteBasedCommandResolver
         if (segment is ParameterMatcher optionalParam && optionalParam.IsOptional)
         {
           // Optional parameter followed by an option - skip it
-          NuruLogger.Matcher.Trace($"Optional parameter '{optionalParam.Name}' skipped - hit option '{args[i]}'");
+          LoggerMessages.OptionalParameterSkippedHitOption(logger, optionalParam.Name, args[i], null);
           continue;
         }
 
-        NuruLogger.Matcher.Trace($"Required segment '{segment.ToDisplayString()}' expected but found option '{args[i]}'");
+        LoggerMessages.RequiredSegmentExpectedButFoundOption(logger, segment.ToDisplayString(), args[i], null);
         return false; // Required parameter but hit an option
       }
 
       string argToMatch = args[i];
-      NuruLogger.Matcher.Trace($"Attempting to match '{argToMatch}' against {segment.ToDisplayString()}");
+      LoggerMessages.AttemptingToMatch(logger, argToMatch, segment.ToDisplayString(), null);
 
       if (!segment.TryMatch(argToMatch, out string? value))
       {
-        NuruLogger.Matcher.Trace($"  Failed to match '{argToMatch}' against {segment.ToDisplayString()}");
+        LoggerMessages.FailedToMatch(logger, argToMatch, segment.ToDisplayString(), null);
         return false;
       }
 
       if (value is not null && segment is ParameterMatcher ps)
       {
         extractedValues[ps.Name] = value;
-        NuruLogger.Matcher.Trace($"  Extracted parameter '{ps.Name}' = '{value}'");
+        LoggerMessages.ExtractedParameter(logger, ps.Name, value, null);
       }
       else if (segment is LiteralMatcher)
       {
-        NuruLogger.Matcher.Trace($"  Literal '{segment.ToDisplayString()}' matched");
+        LoggerMessages.LiteralMatched(logger, segment.ToDisplayString(), null);
       }
 
       consumedArgs++;
     }
 
-    NuruLogger.Matcher.Trace($"Positional matching complete. Consumed {consumedArgs} arguments.");
+    LoggerMessages.PositionalMatchingComplete(logger, consumedArgs, null);
     return true;
   }
 
   private static bool CheckRequiredOptions(RouteEndpoint endpoint, IReadOnlyList<string> remainingArgs,
-      Dictionary<string, string> extractedValues, out int optionsConsumed)
+      Dictionary<string, string> extractedValues, ILogger logger, out int optionsConsumed)
   {
     optionsConsumed = 0;
     IReadOnlyList<OptionMatcher> optionSegments = endpoint.CompiledRoute.OptionMatchers;
@@ -232,7 +236,7 @@ internal static class RouteBasedCommandResolver
             if (optionSegment.ParameterName is not null)
             {
               extractedValues[optionSegment.ParameterName] = "true";
-              NuruLogger.Matcher.Trace($"Boolean option '{optionSegment.ParameterName}' = true");
+              LoggerMessages.BooleanOptionSet(logger, optionSegment.ParameterName, null);
             }
 
             optionsConsumed++; // Just the option
@@ -244,12 +248,12 @@ internal static class RouteBasedCommandResolver
 
       if (!found)
       {
-        NuruLogger.Matcher.Trace($"Required option not found: {optionSegment.ToDisplayString()}");
+        LoggerMessages.RequiredOptionNotFound(logger, optionSegment.ToDisplayString(), null);
         return false;
       }
     }
 
-    NuruLogger.Matcher.Trace($"Options matching complete. Consumed {optionsConsumed} args.");
+    LoggerMessages.OptionsMatchingComplete(logger, optionsConsumed, null);
     return true;
   }
 }

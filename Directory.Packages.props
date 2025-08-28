@@ -17,6 +17,7 @@
     <PackageVersion Include="TimeWarp.Mediator" Version="13.0.0" />
     <PackageVersion Include="TimeWarp.Amuru" Version="1.0.0-beta.1" />
     <PackageVersion Include="TimeWarp.Nuru.Parsing" Version="$(Version)" />
+    <PackageVersion Include="TimeWarp.Nuru.Analyzers" Version="$(Version)" />
     <!-- Benchmark packages -->
     <PackageVersion Include="BenchmarkDotNet" Version="0.15.2" />
     <PackageVersion Include="CliFx" Version="2.3.6" />

@@ -11,6 +11,8 @@ builder.Logging.AddConsole(o => o.LogToStandardErrorThreshold = LogLevel.Trace);
 builder.Services
     .AddMcpServer()
     .WithStdioServerTransport()
-    .WithTools<RandomNumberTools>();
+    .WithTools<RandomNumberTools>()
+    .WithTools<TimeWarp.Nuru.Mcp.Tools.GetExampleTool>()
+    .WithTools<TimeWarp.Nuru.Mcp.Tools.CacheManagementTool>();
 
 await builder.Build().RunAsync().ConfigureAwait(false);

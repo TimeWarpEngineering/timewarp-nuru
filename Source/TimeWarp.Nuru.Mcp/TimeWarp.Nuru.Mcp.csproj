@@ -31,4 +31,8 @@
     <PackageReference Include="ModelContextProtocol" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\TimeWarp.Nuru\TimeWarp.Nuru.csproj" />
+  </ItemGroup>
+
 </Project>

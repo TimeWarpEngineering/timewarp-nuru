@@ -13,6 +13,7 @@ builder.Services
     .WithStdioServerTransport()
     .WithTools<RandomNumberTools>()
     .WithTools<TimeWarp.Nuru.Mcp.Tools.GetExampleTool>()
-    .WithTools<TimeWarp.Nuru.Mcp.Tools.CacheManagementTool>();
+    .WithTools<TimeWarp.Nuru.Mcp.Tools.CacheManagementTool>()
+    .WithTools<TimeWarp.Nuru.Mcp.Tools.ValidateRouteTool>();
 
 await builder.Build().RunAsync().ConfigureAwait(false);

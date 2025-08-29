@@ -8,7 +8,7 @@ using System.Text.Json;
 WriteLine("Testing TimeWarp.Nuru.Mcp Server...\n");
 
 // Start the MCP server process
-string mcpPath = Path.GetFullPath(Path.Combine("..", "Source", "TimeWarp.Nuru.Mcp"));
+string mcpPath = Path.GetFullPath(Path.Combine("..", "..", "Source", "TimeWarp.Nuru.Mcp"));
 WriteLine($"Starting MCP server from: {mcpPath}");
 
 ProcessStartInfo psi = new()

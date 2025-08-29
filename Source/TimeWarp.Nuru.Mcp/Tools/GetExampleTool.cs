@@ -8,8 +8,10 @@ internal sealed class GetExampleTool
     private static readonly HttpClient HttpClient = new() { Timeout = TimeSpan.FromSeconds(10) };
     private static readonly Dictionary<string, CachedExample> MemoryCache = [];
     private static readonly TimeSpan CacheTtl = TimeSpan.FromHours(1);
+    private static readonly TimeSpan ManifestCacheTtl = TimeSpan.FromHours(24);
 
-    private static readonly Dictionary<string, ExampleInfo> Examples = new()
+    // Fallback examples in case manifest fetch fails
+    private static readonly Dictionary<string, ExampleInfo> FallbackExamples = new()
     {
         ["basic"] = new("Samples/TimeWarp.Nuru.Sample/Program.cs", "Basic TimeWarp.Nuru application with various route patterns"),
         ["async"] = new("Samples/AsyncExamples/Program.cs", "Async command examples with Task-based routes"),
@@ -18,6 +20,9 @@ internal sealed class GetExampleTool
         ["mediator"] = new("Tests/TimeWarp.Nuru.TestApp.Mediator/Program.cs", "Mediator pattern implementation"),
         ["delegates"] = new("Tests/TimeWarp.Nuru.TestApp.Delegates/Program.cs", "Direct delegate routing implementation"),
     };
+
+    private static Dictionary<string, ExampleInfo>? _dynamicExamples;
+    private static DateTime _manifestLastFetched = DateTime.MinValue;
 
     private static string CacheDirectory => Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
@@ -29,17 +34,20 @@ internal sealed class GetExampleTool
     [McpServerTool]
     [Description("Get TimeWarp.Nuru code examples from the repository")]
     public static async Task<string> GetExampleAsync(
-        [Description("Example name (basic, async, console-logging, serilog, mediator, delegates) or 'list' to see all")] string name = "list",
+        [Description("Example name or 'list' to see all available examples")] string name = "list",
         [Description("Force refresh from GitHub, bypassing cache")] bool forceRefresh = false)
     {
+        // Get examples (dynamic or fallback)
+        Dictionary<string, ExampleInfo> examples = await GetExamplesAsync(forceRefresh);
+
         if (string.Equals(name, "list", StringComparison.OrdinalIgnoreCase))
         {
-            return "Available examples:\n" + string.Join("\n", Examples.Select(kvp => $"- {kvp.Key}: {kvp.Value.Description}"));
+            return "Available examples:\n" + string.Join("\n", examples.Select(kvp => $"- {kvp.Key}: {kvp.Value.Description}"));
         }
 
-        if (!Examples.TryGetValue(name.ToLowerInvariant(), out ExampleInfo? example))
+        if (!examples.TryGetValue(name.ToLowerInvariant(), out ExampleInfo? example))
         {
-            return $"Example '{name}' not found. Available examples: {string.Join(", ", Examples.Keys)}";
+            return $"Example '{name}' not found. Available examples: {string.Join(", ", examples.Keys)}";
         }
 
         // Check memory cache first (unless force refresh)
@@ -91,10 +99,11 @@ internal sealed class GetExampleTool
 
     [McpServerTool]
     [Description("List all available TimeWarp.Nuru examples")]
-    public static string ListExamples()
+    public static async Task<string> ListExamplesAsync()
     {
+        Dictionary<string, ExampleInfo> examples = await GetExamplesAsync(false);
         return "Available TimeWarp.Nuru examples:\n\n" +
-               string.Join("\n", Examples.Select(kvp =>
+               string.Join("\n", examples.Select(kvp =>
                    $"**{kvp.Key}**\n  {kvp.Value.Description}\n  File: {kvp.Value.Path}\n"));
     }
 
@@ -167,7 +176,73 @@ internal sealed class GetExampleTool
         return $"// {fileName}\n// {description}\n// Path: {path}\n\n{content}";
     }
 
+    private static async Task<Dictionary<string, ExampleInfo>> GetExamplesAsync(bool forceRefresh)
+    {
+        // Check if we need to refresh the manifest
+        if (!forceRefresh &&
+            _dynamicExamples is not null &&
+            DateTime.UtcNow - _manifestLastFetched < ManifestCacheTtl)
+        {
+            return _dynamicExamples;
+        }
+
+        try
+        {
+            // Fetch manifest from GitHub
+            Uri manifestUrl = new("https://raw.githubusercontent.com/TimeWarpEngineering/timewarp-nuru/master/Samples/examples.json");
+            HttpResponseMessage response = await HttpClient.GetAsync(manifestUrl);
+
+            if (response.IsSuccessStatusCode)
+            {
+                string json = await response.Content.ReadAsStringAsync();
+                ExampleManifest? manifest = JsonSerializer.Deserialize<ExampleManifest>(json);
+
+                if (manifest?.Examples is not null)
+                {
+                    _dynamicExamples = manifest.Examples.ToDictionary(
+                        e => e.Id,
+                        e => new ExampleInfo(e.Path, e.Description)
+                    );
+                    _manifestLastFetched = DateTime.UtcNow;
+                    return _dynamicExamples;
+                }
+            }
+        }
+        catch (HttpRequestException)
+        {
+            // Fall through to use fallback examples
+        }
+        catch (TaskCanceledException)
+        {
+            // Fall through to use fallback examples
+        }
+        catch (JsonException)
+        {
+            // Fall through to use fallback examples if JSON parsing fails
+        }
+
+        // Return fallback examples if manifest fetch fails
+        return FallbackExamples;
+    }
+
     private sealed record ExampleInfo(string Path, string Description);
+
+    private sealed class ExampleManifest
+    {
+        public string? Version { get; set; }
+        public string? Description { get; set; }
+        public List<ExampleEntry>? Examples { get; set; }
+    }
+
+    private sealed class ExampleEntry
+    {
+        public string Id { get; set; } = "";
+        public string Name { get; set; } = "";
+        public string Description { get; set; } = "";
+        public string Path { get; set; } = "";
+        public List<string>? Tags { get; set; }
+        public string? Difficulty { get; set; }
+    }
 
     private sealed class CachedExample
     {

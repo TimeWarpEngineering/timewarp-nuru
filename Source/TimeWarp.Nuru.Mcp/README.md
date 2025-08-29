@@ -1,35 +1,89 @@
-# MCP Server
+# TimeWarp.Nuru MCP Server
 
-This README was created using the C# MCP server project template. It demonstrates how you can easily create an MCP server using C# and publish it as a NuGet package.
+An MCP (Model Context Protocol) server that provides tools for working with TimeWarp.Nuru, a route-based CLI framework for .NET.
 
-See [aka.ms/nuget/mcp/guide](https://aka.ms/nuget/mcp/guide) for the full guide.
+## Features
 
-Please note that this template is currently in an early preview stage. If you have feedback, please take a [brief survey](http://aka.ms/dotnet-mcp-template-survey).
+### Available Tools
 
-## Checklist before publishing to NuGet.org
+#### 1. `get_example`
+Fetches TimeWarp.Nuru code examples from the GitHub repository with intelligent caching.
 
-- Test the MCP server locally using the steps below.
-- Update the package metadata in the .csproj file, in particular the `<PackageId>`.
-- Update `.mcp/server.json` to declare your MCP server's inputs.
-  - See [configuring inputs](https://aka.ms/nuget/mcp/guide/configuring-inputs) for more details.
-- Pack the project using `dotnet pack`.
+**Parameters:**
+- `name`: Example name (basic, async, console-logging, serilog, mediator, delegates) or 'list' to see all
+- `forceRefresh`: Force refresh from GitHub, bypassing cache (default: false)
 
-The `bin/Release` directory will contain the package file (.nupkg), which can be [published to NuGet.org](https://learn.microsoft.com/nuget/nuget-org/publish-a-package).
+**Sample Prompts:**
+```
+"Show me the basic TimeWarp.Nuru example"
+"Get the serilog logging example from TimeWarp.Nuru"
+"List all available TimeWarp.Nuru examples"
+"Refresh and show me the mediator pattern example"
+```
 
-## Developing locally
+#### 2. `list_examples`
+Lists all available TimeWarp.Nuru examples with descriptions.
 
-To test this MCP server from source code (locally) without using a built MCP server package, you can configure your IDE to run the project directly using `dotnet run`.
+**Sample Prompts:**
+```
+"What TimeWarp.Nuru examples are available?"
+"Show me all the example types"
+```
+
+#### 3. `validate_route`
+Validates a TimeWarp.Nuru route pattern and provides detailed information about its structure.
+
+**Parameters:**
+- `pattern`: The route pattern to validate (e.g., 'deploy {env} --dry-run')
+
+**Sample Prompts:**
+```
+"Validate the route pattern 'deploy {env} {tag?}'"
+"Check if 'git commit --amend -m {message}' is a valid route"
+"What's wrong with the pattern 'prompt <input>'"
+"Show me the structure of 'docker {*args}'"
+```
+
+#### 4. `cache_status`
+Shows the current cache status including cached examples and their expiration times.
+
+**Sample Prompts:**
+```
+"Show me the cache status"
+"What examples are cached?"
+"Check the MCP cache"
+```
+
+#### 5. `clear_cache`
+Clears all cached TimeWarp.Nuru examples.
+
+**Sample Prompts:**
+```
+"Clear the MCP cache"
+"Remove all cached examples"
+```
+
+#### 6. `get_random_number`
+Generates a random number between specified bounds (demo tool).
+
+**Parameters:**
+- `min`: Minimum value (inclusive, default: 0)
+- `max`: Maximum value (exclusive, default: 100)
+
+## Developing Locally
+
+To test this MCP server from source code without building a package:
 
 ```json
 {
   "servers": {
-    "TimeWarp.Nuru.Mcp": {
+    "timewarp-nuru": {
       "type": "stdio",
       "command": "dotnet",
       "args": [
         "run",
         "--project",
-        "<PATH TO PROJECT DIRECTORY>"
+        "/path/to/TimeWarp.Nuru.Mcp/TimeWarp.Nuru.Mcp.csproj"
       ]
     }
   }
@@ -38,48 +92,83 @@ To test this MCP server from source code (locally) without using a built MCP ser
 
 ## Testing the MCP Server
 
-Once configured, you can ask Copilot Chat for a random number, for example, `Give me 3 random numbers`. It should prompt you to use the `get_random_number` tool on the `TimeWarp.Nuru.Mcp` MCP server and show you the results.
+```bash
+# Run the test script
+cd Tests/TimeWarp.Nuru.Mcp.Tests
+./test-mcp-server.cs
 
-## Publishing to NuGet.org
+# Test individual tools
+./test-validate-route.cs
+```
 
-1. Run `dotnet pack -c Release` to create the NuGet package
-2. Publish to NuGet.org with `dotnet nuget push bin/Release/*.nupkg --api-key <your-api-key> --source https://api.nuget.org/v3/index.json`
+## Caching
 
-## Using the MCP Server from NuGet.org
+Examples are cached in two layers:
+1. **Memory cache**: Immediate access during the session
+2. **Disk cache**: Persists between sessions with 1-hour TTL
 
-Once the MCP server package is published to NuGet.org, you can configure it in your preferred IDE. Both VS Code and Visual Studio use the `dnx` command to download and install the MCP server package from NuGet.org.
+Cache location:
+- **Linux/macOS**: `~/.local/share/TimeWarp.Nuru.Mcp/cache/examples/`
+- **Windows**: `%LOCALAPPDATA%\TimeWarp.Nuru.Mcp\cache\examples\`
 
-- **VS Code**: Create a `<WORKSPACE DIRECTORY>/.vscode/mcp.json` file
-- **Visual Studio**: Create a `<SOLUTION DIRECTORY>\.mcp.json` file
+## Use Cases
 
-For both VS Code and Visual Studio, the configuration file uses the following server definition:
+### Learning TimeWarp.Nuru
+```
+"Show me how to create a basic CLI app with TimeWarp.Nuru"
+"Get the async command example and explain how it works"
+"What's the difference between the delegates and mediator examples?"
+```
+
+### Building CLI Applications
+```
+"I want to build a git-like CLI. Show me the basic example and validate my route 'repo init {name} --bare'"
+"Help me create routes for a deployment tool. Start with validating 'deploy {env} --version {tag}'"
+```
+
+### Route Pattern Development
+```
+"Validate this route and tell me its specificity: 'npm install {package} --save-dev'"
+"What's wrong with my route pattern 'build <target>'"
+"Show me the structure of 'kubectl get {resource} --watch --enhanced'"
+```
+
+## Building and Publishing
+
+### Build the Package
+```bash
+dotnet pack -c Release
+```
+
+### Publish to NuGet.org
+```bash
+dotnet nuget push bin/Release/*.nupkg --api-key <your-api-key> --source https://api.nuget.org/v3/index.json
+```
+
+## Using from NuGet.org
+
+Once published, configure in your IDE:
 
 ```json
 {
   "servers": {
-    "TimeWarp.Nuru.Mcp": {
+    "timewarp-nuru": {
       "type": "stdio",
       "command": "dnx",
-      "args": [
-        "<your package ID here>",
-        "--version",
-        "<your package version here>",
-        "--yes"
-      ]
+      "args": ["mcp", "TimeWarp.Nuru.Mcp"]
     }
   }
 }
 ```
 
-## More information
+## Future Enhancements
 
-.NET MCP servers use the [ModelContextProtocol](https://www.nuget.org/packages/ModelContextProtocol) C# SDK. For more information about MCP:
+- [ ] Dynamic example discovery from GitHub
+- [ ] Route pattern syntax documentation tool  
+- [ ] Pseudo source generators for common CLI patterns
+- [ ] Route conflict detection
+- [ ] Parameter type validation
 
-- [Official Documentation](https://modelcontextprotocol.io/)
-- [Protocol Specification](https://spec.modelcontextprotocol.io/)
-- [GitHub Organization](https://github.com/modelcontextprotocol)
+## Contributing
 
-Refer to the VS Code or Visual Studio documentation for more information on configuring and using MCP servers:
-
-- [Use MCP servers in VS Code (Preview)](https://code.visualstudio.com/docs/copilot/chat/mcp-servers)
-- [Use MCP servers in Visual Studio (Preview)](https://learn.microsoft.com/visualstudio/ide/mcp-servers)
+See the main [TimeWarp.Nuru repository](https://github.com/TimeWarpEngineering/timewarp-nuru) for contribution guidelines.

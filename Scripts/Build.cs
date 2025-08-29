@@ -1,4 +1,6 @@
 #!/usr/bin/dotnet --
+#:property LangVersion=preview
+#:property EnablePreviewFeatures=true
 // Build.cs - Build the TimeWarp.Nuru library
 
 // Change to script directory for relative paths
@@ -19,10 +21,7 @@ CommandResult parsingBuildResult = DotNet.Build()
 WriteLine("Running ...");
 WriteLine(parsingBuildResult.ToCommandString());
 
-ExecutionResult parsingResult = await parsingBuildResult.ExecuteAsync();
-parsingResult.WriteToConsole();
-
-if (!parsingResult.IsSuccess)
+if (await parsingBuildResult.RunAsync() != 0)
 {
   WriteLine("❌ Failed to build TimeWarp.Nuru.Parsing!");
   Environment.Exit(1);
@@ -37,22 +36,40 @@ if (Directory.Exists(localCachePath))
   Directory.Delete(localCachePath, recursive: true);
 }
 
-// Build the solution
+// Build each project individually to avoid framework resolution issues
+string[] projectsToBuild = [
+  "../Source/TimeWarp.Nuru.Parsing/TimeWarp.Nuru.Parsing.csproj",
+  "../Source/TimeWarp.Nuru.Analyzers/TimeWarp.Nuru.Analyzers.csproj",
+  "../Source/TimeWarp.Nuru.Logging/TimeWarp.Nuru.Logging.csproj",
+  "../Source/TimeWarp.Nuru.Mcp/TimeWarp.Nuru.Mcp.csproj",
+  "../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj",
+  "../Benchmarks/TimeWarp.Nuru.Benchmarks/TimeWarp.Nuru.Benchmarks.csproj",
+  "../Tests/TimeWarp.Nuru.TestApp.Mediator/TimeWarp.Nuru.TestApp.Mediator.csproj",
+  "../Tests/TimeWarp.Nuru.TestApp.Delegates/TimeWarp.Nuru.TestApp.Delegates.csproj",
+  // "../Tests/TimeWarp.Nuru.Analyzers.Tests/TimeWarp.Nuru.Analyzers.Tests.csproj",
+  "../Samples/TimeWarp.Nuru.Sample/TimeWarp.Nuru.Sample.csproj"
+];
+
 try
 {
-  CommandResult buildCommandResult = DotNet.Build()
-    .WithProject("../TimeWarp.Nuru.slnx")
-    .WithConfiguration("Release")
-    .WithVerbosity("minimal")
-    .WithNoIncremental()
-    .WithNoValidation()
-    .Build();
+  foreach (string projectPath in projectsToBuild)
+  {
+    WriteLine($"Building {projectPath}...");
+    CommandResult buildCommandResult = DotNet.Build()
+      .WithProject(projectPath)
+      .WithConfiguration("Release")
+      .WithVerbosity("minimal")
+      .Build();
 
-  WriteLine("Running ...");
-  WriteLine(buildCommandResult.ToCommandString());
+    WriteLine("Running ...");
+    WriteLine(buildCommandResult.ToCommandString());
 
-  ExecutionResult result = await buildCommandResult.ExecuteAsync();
-  result.WriteToConsole();
+    if (await buildCommandResult.RunAsync() != 0)
+    {
+      WriteLine($"❌ Failed to build {projectPath}!");
+      Environment.Exit(1);
+    }
+  }
 }
 catch (Exception ex)
 {

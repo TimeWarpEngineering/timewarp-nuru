@@ -7,27 +7,27 @@ using static System.Console;
 WriteLine("Testing ValidateRouteTool:");
 WriteLine();
 
-// Test various patterns
-TestPattern("status");
-TestPattern("git commit");
-TestPattern("deploy {env}");
-TestPattern("deploy {env} {tag?}");
-TestPattern("delay {ms:int}");
-TestPattern("docker {*args}");
-TestPattern("build --verbose");
-TestPattern("build --config {mode}");
-TestPattern("deploy {env|Environment} --dry-run,-d|Preview");
+// Test various route patterns
+TestRoutePattern("status");
+TestRoutePattern("git commit");
+TestRoutePattern("deploy {env}");
+TestRoutePattern("deploy {env} {tag?}");
+TestRoutePattern("delay {ms:int}");
+TestRoutePattern("docker {*args}");
+TestRoutePattern("build --verbose");
+TestRoutePattern("build --config {mode}");
+TestRoutePattern("deploy {env|Environment} --dry-run,-d|Preview");
 
-// Test invalid patterns
-WriteLine("\nTesting invalid patterns:");
-TestPattern("deploy {env");
-TestPattern("prompt <input>");
+// Test invalid route patterns
+WriteLine("\nTesting invalid route patterns:");
+TestRoutePattern("deploy {env");
+TestRoutePattern("prompt <input>");
 
-void TestPattern(string pattern)
+void TestRoutePattern(string routePattern)
 {
-    WriteLine($"Pattern: '{pattern}'");
+    WriteLine($"Route Pattern: '{routePattern}'");
     WriteLine(new string('-', 50));
-    string result = ValidateRouteTool.ValidateRoute(pattern);
+    string result = ValidateRouteTool.ValidateRoute(routePattern);
     WriteLine(result);
     WriteLine();
 }

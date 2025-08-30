@@ -182,10 +182,19 @@ echo ""
 echo "Running tests..."
 echo ""
 
+# Discover target framework from Directory.Build.props
+TARGET_FRAMEWORK=$(grep -oP '<TargetFramework>\K[^<]+' Directory.Build.props | head -1)
+if [ -z "$TARGET_FRAMEWORK" ]; then
+    echo -e "${RED}Could not determine target framework from Directory.Build.props${NC}"
+    exit 1
+fi
+echo "Using target framework: $TARGET_FRAMEWORK"
+echo ""
+
 # Test Delegate JIT
 echo -e "${BLUE}1. Delegate-based routing (JIT)${NC}"
 echo "================================="
-EXECUTABLE="./Tests/TimeWarp.Nuru.TestApp.Delegates/bin/Release/net9.0/TimeWarp.Nuru.TestApp.Delegates"
+EXECUTABLE="./Tests/TimeWarp.Nuru.TestApp.Delegates/bin/Release/$TARGET_FRAMEWORK/TimeWarp.Nuru.TestApp.Delegates"
 START_TIME=$(date +%s.%N)
 run_all_tests
 END_TIME=$(date +%s.%N)
@@ -198,7 +207,7 @@ echo "Execution time: ${DELEGATE_JIT_TIME}s"
 echo ""
 echo -e "${BLUE}2. Mediator-based routing (JIT)${NC}"
 echo "================================="
-EXECUTABLE="./Tests/TimeWarp.Nuru.TestApp.Mediator/bin/Release/net9.0/TimeWarp.Nuru.TestApp.Mediator"
+EXECUTABLE="./Tests/TimeWarp.Nuru.TestApp.Mediator/bin/Release/$TARGET_FRAMEWORK/TimeWarp.Nuru.TestApp.Mediator"
 START_TIME=$(date +%s.%N)
 run_all_tests
 END_TIME=$(date +%s.%N)

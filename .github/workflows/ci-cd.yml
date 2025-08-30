@@ -83,6 +83,10 @@ jobs:
             --api-key ${{ secrets.NUGET_API_KEY }} \
             --source https://api.nuget.org/v3/index.json \
             --skip-duplicate
+          dotnet nuget push LocalNuGetFeed/TimeWarp.Nuru.Mcp.$VERSION.nupkg \
+            --api-key ${{ secrets.NUGET_API_KEY }} \
+            --source https://api.nuget.org/v3/index.json \
+            --skip-duplicate
         env:
           DOTNET_NUGET_SIGNATURE_VERIFICATION: false
 

@@ -6,7 +6,7 @@
     {
       "registry_name": "nuget",
       "name": "TimeWarp.Nuru.Mcp",
-      "version": "2.1.0-beta.9",
+      "version": "2.1.0-beta.10",
       "package_arguments": [],
       "environment_variables": []
     }
@@ -16,6 +16,6 @@
     "source": "github"
   },
   "version_detail": {
-    "version": "2.1.0-beta.9"
+    "version": "2.1.0-beta.10"
   }
 }

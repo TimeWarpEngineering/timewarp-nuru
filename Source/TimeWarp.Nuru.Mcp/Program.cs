@@ -14,6 +14,8 @@ builder.Services
     .WithTools<RandomNumberTools>()
     .WithTools<TimeWarp.Nuru.Mcp.Tools.GetExampleTool>()
     .WithTools<TimeWarp.Nuru.Mcp.Tools.CacheManagementTool>()
-    .WithTools<TimeWarp.Nuru.Mcp.Tools.ValidateRouteTool>();
+    .WithTools<TimeWarp.Nuru.Mcp.Tools.ValidateRouteTool>()
+    .WithTools<TimeWarp.Nuru.Mcp.Tools.GetSyntaxTool>()
+    .WithTools<TimeWarp.Nuru.Mcp.Tools.GenerateHandlerTool>();
 
 await builder.Build().RunAsync().ConfigureAwait(false);

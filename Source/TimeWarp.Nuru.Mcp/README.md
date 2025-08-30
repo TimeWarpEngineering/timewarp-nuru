@@ -63,7 +63,52 @@ Clears all cached TimeWarp.Nuru examples.
 "Remove all cached examples"
 ```
 
-#### 6. `get_random_number`
+#### 6. `get_syntax`
+Provides TimeWarp.Nuru route pattern syntax documentation.
+
+**Parameters:**
+- `element`: Syntax element to get documentation for (default: 'all')
+  - Options: literals, parameters, types, optional, catchall, options, descriptions, all
+
+**Sample Prompts:**
+```
+"Show me the route pattern syntax for parameters"
+"How do I use optional parameters in TimeWarp.Nuru?"
+"Get the syntax documentation for catch-all parameters"
+"Show me all route pattern syntax"
+```
+
+#### 7. `get_pattern_examples`
+Provides examples of specific route pattern features.
+
+**Parameters:**
+- `feature`: Pattern feature to get examples for (default: 'basic')
+  - Options: basic, typed, optional, catchall, options, complex
+
+**Sample Prompts:**
+```
+"Show me examples of typed parameters in routes"
+"Get examples of routes with options"
+"Show me complex route pattern examples"
+"How do I use catch-all parameters? Show examples"
+```
+
+#### 8. `generate_handler`
+Generates handler code from a route pattern.
+
+**Parameters:**
+- `pattern`: The route pattern to generate a handler for
+- `useMediator`: Whether to generate mediator pattern code (default: false)
+
+**Sample Prompts:**
+```
+"Generate a handler for the route 'deploy {env} --dry-run'"
+"Create a mediator handler for 'backup {source} {dest?}'"
+"Generate code for 'test {project} --verbose --filter {pattern}'"
+"Show me the handler signature for 'docker {*args}'"
+```
+
+#### 9. `get_random_number`
 Generates a random number between specified bounds (demo tool).
 
 **Parameters:**
@@ -99,6 +144,9 @@ cd Tests/TimeWarp.Nuru.Mcp.Tests
 
 # Test individual tools
 ./test-validate-route.cs
+./test-get-syntax.cs
+./test-generate-handler.cs
+./test-dynamic-examples.cs
 ```
 
 ## Caching
@@ -118,15 +166,25 @@ Cache location:
 "Show me how to create a basic CLI app with TimeWarp.Nuru"
 "Get the async command example and explain how it works"
 "What's the difference between the delegates and mediator examples?"
+"Show me the syntax for optional parameters and give me examples"
 ```
 
 ### Building CLI Applications
 ```
 "I want to build a git-like CLI. Show me the basic example and validate my route 'repo init {name} --bare'"
 "Help me create routes for a deployment tool. Start with validating 'deploy {env} --version {tag}'"
+"Generate a handler for 'backup {source} {dest?} --compress --verbose'"
+"Create mediator pattern code for 'migrate {database} --rollback {version?}'"
 ```
 
 ### Route Pattern Development
+```
+"Show me examples of typed parameters and generate a handler for 'wait {seconds:int}'"
+"Get the syntax for catch-all parameters and create code for 'docker {*args}'"
+"Generate both direct and mediator handlers for 'test {project} --verbose'"
+```
+
+### Code Generation
 ```
 "Validate this route and tell me its specificity: 'npm install {package} --save-dev'"
 "What's wrong with my route pattern 'build <target>'"

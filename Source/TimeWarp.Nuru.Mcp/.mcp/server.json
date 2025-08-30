@@ -1,0 +1,21 @@
+{
+  "$schema": "https://modelcontextprotocol.io/schemas/draft/2025-07-09/server.json",
+  "description": "MCP server for TimeWarp.Nuru providing route validation, syntax documentation, example code, and handler generation for AI-assisted CLI development",
+  "name": "io.github.TimeWarpEngineering/timewarp-nuru-mcp",
+  "packages": [
+    {
+      "registry_name": "nuget",
+      "name": "TimeWarp.Nuru.Mcp",
+      "version": "2.1.0-beta.10",
+      "package_arguments": [],
+      "environment_variables": []
+    }
+  ],
+  "repository": {
+    "url": "https://github.com/TimeWarpEngineering/timewarp-nuru",
+    "source": "github"
+  },
+  "version_detail": {
+    "version": "2.1.0-beta.10"
+  }
+}

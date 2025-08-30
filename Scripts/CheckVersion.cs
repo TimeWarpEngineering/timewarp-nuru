@@ -21,7 +21,7 @@ if (string.IsNullOrEmpty(version))
 WriteLine($"Checking if packages with version {version} are already published on NuGet.org...");
 
 // Packages to check
-string[] packages = ["TimeWarp.Nuru", "TimeWarp.Nuru.Analyzers"];
+string[] packages = ["TimeWarp.Nuru", "TimeWarp.Nuru.Analyzers", "TimeWarp.Nuru.Logging", "TimeWarp.Nuru.Mcp"];
 bool anyPublished = false;
 
 foreach (string package in packages)

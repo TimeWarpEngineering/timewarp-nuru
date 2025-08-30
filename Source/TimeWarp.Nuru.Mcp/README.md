@@ -2,6 +2,40 @@
 
 An MCP (Model Context Protocol) server that provides tools for working with TimeWarp.Nuru, a route-based CLI framework for .NET.
 
+## Installation
+
+### As a .NET Global Tool
+
+```bash
+# Install from NuGet (when published)
+dotnet tool install --global TimeWarp.Nuru.Mcp
+
+# Or install from local package during development
+dotnet tool install --global --add-source ./Source/TimeWarp.Nuru.Mcp/bin/Release/ TimeWarp.Nuru.Mcp --version 2.1.0-beta.9
+
+# Uninstall
+dotnet tool uninstall --global TimeWarp.Nuru.Mcp
+```
+
+### Configure in Your MCP Client
+
+After installing the tool, configure it in your MCP-compatible client (Claude Code, Roo Code, Continue, etc.):
+
+Add the following MCP server configuration:
+
+```json
+{
+  "servers": {
+    "timewarp-nuru": {
+      "type": "stdio",
+      "command": "timewarp-nuru-mcp"
+    }
+  }
+}
+```
+
+Most MCP clients will automatically detect and load the server after restarting.
+
 ## Features
 
 ### Available Tools
@@ -115,14 +149,14 @@ Generates a random number between specified bounds (demo tool).
 - `min`: Minimum value (inclusive, default: 0)
 - `max`: Maximum value (exclusive, default: 100)
 
-## Developing Locally
+## Developing from Source
 
-To test this MCP server from source code without building a package:
+To run the MCP server directly from source code during development:
 
 ```json
 {
   "servers": {
-    "timewarp-nuru": {
+    "timewarp-nuru-dev": {
       "type": "stdio",
       "command": "dotnet",
       "args": [

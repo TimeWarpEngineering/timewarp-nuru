@@ -1,4 +1,5 @@
 #!/usr/bin/dotnet --
+#:property EnablePreviewFeatures=true
 // CheckVersion.cs - Check if NuGet packages are already published
 
 using System.Xml.Linq;
@@ -28,16 +29,15 @@ foreach (string package in packages)
 {
     WriteLine($"\nChecking {package}...");
 
-    CommandResult searchResult = DotNet.PackageSearch(package)
+    CommandOutput result = await DotNet.PackageSearch(package)
         .WithExactMatch()
         .WithPrerelease()
         .WithSource("https://api.nuget.org/v3/index.json")
-        .Build();
-
-    ExecutionResult result = await searchResult.ExecuteAsync();
+        .Build()
+        .CaptureAsync();
 
     // Check if the version appears in the output
-    if (result.StandardOutput.Contains($"| {version} |", StringComparison.Ordinal))
+    if (result.Stdout.Contains($"| {version} |", StringComparison.Ordinal))
     {
         WriteLine($"⚠️  WARNING: {package} {version} is already published to NuGet.org");
         anyPublished = true;

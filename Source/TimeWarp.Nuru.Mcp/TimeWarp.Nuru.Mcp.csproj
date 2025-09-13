@@ -7,6 +7,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageOutputPath>../../LocalNuGetFeed</PackageOutputPath>
 
     <!-- Set up the NuGet package to be an MCP server -->
     <PackAsTool>true</PackAsTool>

@@ -142,7 +142,53 @@ Generates handler code from a route pattern.
 "Show me the handler signature for 'docker {*args}'"
 ```
 
-#### 9. `get_random_number`
+#### 9. `get_error_handling_info`
+Provides information about TimeWarp.Nuru error handling with different focus areas.
+
+**Parameters:**
+- `area`: Specific area to get information about (default: 'overview')
+  - Options: overview, architecture, philosophy
+- `forceRefresh`: Force refresh from GitHub, bypassing cache (default: false)
+
+**Sample Prompts:**
+```
+"Explain TimeWarp.Nuru's error handling approach"
+"Show me the error handling architecture in TimeWarp.Nuru"
+"What's the philosophy behind error handling in Nuru?"
+"Get the latest error handling documentation"
+```
+
+#### 10. `get_error_scenarios`
+Provides information about specific error scenarios in TimeWarp.Nuru.
+
+**Parameters:**
+- `scenario`: Specific error scenario to get information about (default: 'all')
+  - Options: parsing, binding, conversion, execution, matching, all
+- `forceRefresh`: Force refresh from GitHub, bypassing cache (default: false)
+
+**Sample Prompts:**
+```
+"What are the common error scenarios in TimeWarp.Nuru?"
+"How does TimeWarp.Nuru handle parsing errors?"
+"Explain parameter binding errors in Nuru"
+"Show me all error scenarios in TimeWarp.Nuru"
+```
+
+#### 11. `get_error_handling_best_practices`
+Provides best practices for error handling in TimeWarp.Nuru applications.
+
+**Parameters:**
+- `forceRefresh`: Force refresh from GitHub, bypassing cache (default: false)
+
+**Sample Prompts:**
+```
+"What are the best practices for error handling in TimeWarp.Nuru?"
+"Show me error handling recommendations for Nuru apps"
+"How should I handle errors in my TimeWarp.Nuru application?"
+"Get the latest error handling best practices"
+```
+
+#### 12. `get_random_number`
 Generates a random number between specified bounds (demo tool).
 
 **Parameters:**

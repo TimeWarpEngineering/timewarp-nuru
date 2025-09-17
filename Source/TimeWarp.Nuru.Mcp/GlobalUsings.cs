@@ -10,3 +10,5 @@ global using ModelContextProtocol.Server;
 [assembly: InternalsVisibleTo("test-get-syntax")]
 [assembly: InternalsVisibleTo("test-syntax-debug")]
 [assembly: InternalsVisibleTo("test-generate-handler")]
+[assembly: InternalsVisibleTo("test-error-handling-tool")]
+[assembly: InternalsVisibleTo("test-error-handling")]

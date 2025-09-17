@@ -188,13 +188,6 @@ Provides best practices for error handling in TimeWarp.Nuru applications.
 "Get the latest error handling best practices"
 ```
 
-#### 12. `get_random_number`
-Generates a random number between specified bounds (demo tool).
-
-**Parameters:**
-- `min`: Minimum value (inclusive, default: 0)
-- `max`: Maximum value (exclusive, default: 100)
-
 ## Developing from Source
 
 To run the MCP server directly from source code during development:

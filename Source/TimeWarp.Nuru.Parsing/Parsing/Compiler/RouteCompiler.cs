@@ -129,7 +129,8 @@ internal sealed class RouteCompiler : SyntaxVisitor<object?>
         expectsValue: expectsValue,
         parameterName: valueParameterName,
         alternateForm: optionShortSyntax,
-        description: option.Description
+        description: option.Description,
+        isOptional: option.IsOptional
       );
 
     OptionMatchers.Add(optionMatcher);

@@ -253,6 +253,9 @@ public sealed class RouteParser : IRouteParser
       }
     }
 
+    // Check for optional modifier (?)
+    bool isOptional = Match(TokenType.Question);
+
     // Description
     string? description = null;
     if (Match(TokenType.Pipe))
@@ -269,7 +272,7 @@ public sealed class RouteParser : IRouteParser
 
     int endPos = Previous().EndPosition;
 
-    return new OptionSyntax(longForm, shortForm, description, parameter)
+    return new OptionSyntax(longForm, shortForm, description, parameter, isOptional)
     {
       Position = startPos,
       Length = endPos - startPos

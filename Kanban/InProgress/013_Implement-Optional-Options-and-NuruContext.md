@@ -374,12 +374,16 @@ This might need to be a separate analyzer or a Phase 5b if too complex.
   - Deleted obsolete test using old APIs
 - ✅ **Key Finding**: Lexer already tokenizes `?` and `*` correctly - no lexer changes needed!
 
+### Completed (2025-09-18 continued)
+- ✅ **Phase 1 COMPLETE**: Parser now recognizes `?` on flags
+   - Added `IsOptional` property to `OptionSyntax` record
+   - Updated `ParseOption` method to check for `?` token after option name
+   - **Test result**: `test-parser-optional-flags.cs` - ALL patterns with `--flag?` now parse successfully!
+
 ### Next Steps
-1. **Phase 1**: Update parser to recognize `?` on flags
-   - Modify RouteParser to handle Question token after flags
-   - Add IsOptional property to OptionSyntax
-2. **Phase 2**: Update RouteCompiler to create OptionMatcher with IsOptional
-3. **Phase 3**: Update RouteBasedCommandResolver to check IsOptional property
+1. **Phase 2**: Update RouteCompiler to create OptionMatcher with IsOptional
+2. **Phase 3**: Update RouteBasedCommandResolver to check IsOptional property
+3. **Phase 4**: Update parser to support `*` for repeated options
 4. Continue with remaining phases...
 
 ## Success Criteria

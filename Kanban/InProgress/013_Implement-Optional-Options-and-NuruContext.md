@@ -1,5 +1,16 @@
 # Implement Optional Options and NuruContext
 
+## Architecture Design Document
+
+**See: [Route Syntax and Specificity Design](../../Documentation/Developer/Design/route-syntax-and-specificity.md)**
+
+This document defines the complete syntax and behavior for:
+- Optional flags with `?` modifier
+- Repeated options with `*` modifier
+- Positional parameter rules
+- Arrays and catch-all patterns
+- Command interception patterns
+
 ## Problem Statement
 
 Currently, Nuru requires options defined in a route pattern to be present for the route to match. This leads to factorial explosion when multiple optional options are needed:
@@ -8,9 +19,16 @@ Currently, Nuru requires options defined in a route pattern to be present for th
 
 Additionally, some advanced scenarios (like progressively overriding existing CLI commands) need access to the full parsing context, not just the matched parameters.
 
-## Core Insight
+## Core Design Decisions
 
-Options should be optional by default - that's why they're called "options"! Required inputs should be positional parameters. This aligns with every major CLI framework (Click, Cobra, etc.).
+1. **Explicit Flag Modifiers**: Route patterns are self-contained
+   - `--flag` = Required flag
+   - `--flag?` = Optional flag
+   - `--flag {param}*` = Repeated flag (array)
+
+2. **Required Options ARE Valid**: Many CLIs have required options (e.g., `git commit -m`)
+   - If flag has no `?`, it's required
+   - This supports intercepting existing commands accurately
 
 ## Proposed Solution
 
@@ -333,6 +351,36 @@ This might need to be a separate analyzer or a Phase 5b if too complex.
 - Provides access to parse info without declaring every possible option
 - Allows checking for undeclared options without factorial explosion
 - Similar to ASP.NET Core's HttpContext pattern
+
+## Progress Update (2025-09-18)
+
+### Completed
+- ✅ Created comprehensive design documents:
+  - `route-syntax-and-specificity.md` - Complete syntax specification
+  - `greenfield-route-syntax.md` - Focused greenfield approach
+- ✅ Created test matrix and test files:
+  - **Application-level tests** in `/Tests/SingleFileTests/test-matrix/`:
+    - 12 test files covering all patterns (optional flags, repeated options, arrays, etc.)
+  - **Parser tests** in `/Tests/SingleFileTests/Parser/`:
+    - `test-parser-optional-flags.cs` - Tests for `?` modifier
+    - `test-parser-repeated-options.cs` - Tests for `*` modifier
+    - `test-parser-mixed-modifiers.cs` - Combined modifiers
+    - `test-parser-error-cases.cs` - Invalid patterns
+  - **Lexer tests** in `/Tests/SingleFileTests/Lexer/`:
+    - `test-lexer-optional-modifiers.cs` - Verified lexer already handles `?` and `*`
+- ✅ Established baseline for existing tests:
+  - Fixed project paths in all parser/lexer tests
+  - Documented current test status
+  - Deleted obsolete test using old APIs
+- ✅ **Key Finding**: Lexer already tokenizes `?` and `*` correctly - no lexer changes needed!
+
+### Next Steps
+1. **Phase 1**: Update parser to recognize `?` on flags
+   - Modify RouteParser to handle Question token after flags
+   - Add IsOptional property to OptionSyntax
+2. **Phase 2**: Update RouteCompiler to create OptionMatcher with IsOptional
+3. **Phase 3**: Update RouteBasedCommandResolver to check IsOptional property
+4. Continue with remaining phases...
 
 ## Success Criteria
 

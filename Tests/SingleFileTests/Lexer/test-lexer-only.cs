@@ -1,5 +1,7 @@
 #!/usr/bin/dotnet --
-#:project ../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
+#:project ../../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
+
+#pragma warning disable CA1031 // Do not catch general exception types - OK for tests
 
 using TimeWarp.Nuru.Parsing;
 using static System.Console;
@@ -82,16 +84,16 @@ foreach (var (pattern, description) in testCases)
     try
     {
         var lexer = new RoutePatternLexer(pattern);
-        var tokens = lexer.Tokenize();
+        IReadOnlyList<Token> tokens = lexer.Tokenize();
         
         WriteLine($"Tokens ({tokens.Count}):");
-        foreach (var token in tokens)
+        foreach (Token token in tokens)
         {
             WriteLine($"  [{token.Type,-12}] '{token.Value}' at position {token.Position} (length {token.Length})");
         }
         
         // Verify last token is always EndOfInput
-        var lastToken = tokens[tokens.Count - 1];
+        Token lastToken = tokens[tokens.Count - 1];
         if (lastToken.Type != TokenType.EndOfInput)
         {
             WriteLine($"  ❌ ERROR: Last token should be EndOfInput, but was {lastToken.Type}");
@@ -99,7 +101,7 @@ foreach (var (pattern, description) in testCases)
         }
         else
         {
-            WriteLine($"  ✓ Success");
+            WriteLine("  ✓ Success");
             passed++;
         }
     }
@@ -123,7 +125,7 @@ void ExpectTokens(string pattern, params (TokenType type, string value)[] expect
 {
     WriteLine($"Pattern: '{pattern}'");
     var lexer = new RoutePatternLexer(pattern);
-    var tokens = lexer.Tokenize();
+    IReadOnlyList<Token> tokens = lexer.Tokenize();
     
     // Remove EndOfInput for comparison
     var actualTokens = tokens.Take(tokens.Count - 1).ToList();
@@ -137,7 +139,7 @@ void ExpectTokens(string pattern, params (TokenType type, string value)[] expect
     bool allMatch = true;
     for (int i = 0; i < expectedTokens.Length; i++)
     {
-        var actual = actualTokens[i];
+        Token actual = actualTokens[i];
         var expected = expectedTokens[i];
         
         if (actual.Type != expected.type || actual.Value != expected.value)
@@ -149,7 +151,7 @@ void ExpectTokens(string pattern, params (TokenType type, string value)[] expect
     
     if (allMatch)
     {
-        WriteLine($"  ✓ All tokens match expected");
+        WriteLine("  ✓ All tokens match expected");
     }
 }
 

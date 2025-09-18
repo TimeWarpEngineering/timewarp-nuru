@@ -25,14 +25,16 @@ internal static class RouteBasedCommandResolver
     {
       (RouteEndpoint endpoint, Dictionary<string, string> extractedValues) = matchResult.Value;
 
-      return new ResolverResult(
+      return new ResolverResult
+      (
         success: true,
         matchedEndpoint: endpoint,
         extractedValues: extractedValues
       );
     }
 
-    return new ResolverResult(
+    return new ResolverResult
+    (
       success: false,
       errorMessage: "No matching command found"
     );
@@ -248,6 +250,28 @@ internal static class RouteBasedCommandResolver
 
       if (!found)
       {
+        // Check if this option is optional
+        if (optionSegment.IsOptional)
+        {
+          // Optional option not provided - that's OK, just set it to false/null
+          if (optionSegment.ParameterName is not null)
+          {
+            // For boolean options, set to "false" when not provided
+            if (!optionSegment.ExpectsValue)
+            {
+              extractedValues[optionSegment.ParameterName] = "false";
+              LoggerMessages.OptionalBooleanOptionNotProvided(logger, optionSegment.ParameterName, null);
+            }
+            // For value options, the parameter will be null (handled by binding)
+            else
+            {
+              LoggerMessages.OptionalValueOptionNotProvided(logger, optionSegment.ParameterName, null);
+            }
+          }
+
+          continue; // Skip to next option
+        }
+
         LoggerMessages.RequiredOptionNotFound(logger, optionSegment.ToDisplayString(), null);
         return false;
       }

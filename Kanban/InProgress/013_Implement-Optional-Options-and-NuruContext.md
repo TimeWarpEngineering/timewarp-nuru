@@ -380,11 +380,23 @@ This might need to be a separate analyzer or a Phase 5b if too complex.
    - Updated `ParseOption` method to check for `?` token after option name
    - **Test result**: `test-parser-optional-flags.cs` - ALL patterns with `--flag?` now parse successfully!
 
+### Completed (2025-09-19)
+- ✅ **Phase 2 COMPLETE**: RouteCompiler passes IsOptional to OptionMatcher
+   - Added `IsOptional` property to `OptionMatcher` class
+   - Updated `RouteCompiler` to pass `IsOptional` from syntax to matcher
+- ✅ **Phase 3 COMPLETE**: RouteBasedCommandResolver honors IsOptional
+   - Updated `CheckRequiredOptions` to skip optional options when not provided
+   - Added new logger messages for optional option handling
+- ✅ **Test Matrix Complete**: Created all 22 test files for complete coverage
+   - All features from route-syntax-and-specificity.md now have tests
+   - Test files in `/Tests/SingleFileTests/test-matrix/`
+   - test-matrix.md updated with 100% coverage status
+
 ### Next Steps
-1. **Phase 2**: Update RouteCompiler to create OptionMatcher with IsOptional
-2. **Phase 3**: Update RouteBasedCommandResolver to check IsOptional property
-3. **Phase 4**: Update parser to support `*` for repeated options
-4. Continue with remaining phases...
+1. **Phase 4**: Update parser to support `*` for repeated options
+2. **Phase 5**: Add NuruContext support
+3. **Phase 6**: Update parameter binding logic (needed for tests to fully pass)
+4. **Phase 7**: Run all tests to verify implementation
 
 ## Success Criteria
 

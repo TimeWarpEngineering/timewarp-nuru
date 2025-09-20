@@ -135,6 +135,7 @@ public sealed class RouteParser : IRouteParser
     {
       TokenType.LeftBrace => ParseParameter(),
       TokenType.DoubleDash or TokenType.SingleDash => ParseOption(),
+      TokenType.EndOfOptions => ParseEndOfOptions(),
       TokenType.Identifier => ParseLiteral(),
       TokenType.Invalid => ParseInvalidToken(),
       TokenType.RightBrace => HandleUnexpectedRightBrace(),
@@ -146,6 +147,18 @@ public sealed class RouteParser : IRouteParser
   {
     Token token = Consume(TokenType.Identifier, "Expected identifier");
     return new LiteralSyntax(token.Value)
+    {
+      Position = token.Position,
+      Length = token.Length
+    };
+  }
+
+  private LiteralSyntax ParseEndOfOptions()
+  {
+    Token token = Consume(TokenType.EndOfOptions, "Expected '--'");
+
+    // Create a literal segment for the -- separator
+    return new LiteralSyntax("--")
     {
       Position = token.Position,
       Length = token.Length
@@ -205,7 +218,7 @@ public sealed class RouteParser : IRouteParser
 
     Token rightBrace = Consume(TokenType.RightBrace, "Expected '}'", ParseErrorType.UnbalancedBraces);
 
-    return new ParameterSyntax(paramName, isCatchAll, isOptional, typeConstraint, description)
+    return new ParameterSyntax(paramName, isCatchAll, isOptional, false, typeConstraint, description)
     {
       Position = startPos,
       Length = rightBrace.EndPosition - startPos
@@ -268,6 +281,23 @@ public sealed class RouteParser : IRouteParser
     if (Check(TokenType.LeftBrace))
     {
       parameter = ParseParameter();
+
+      // Validate that catch-all is not used in options
+      if (parameter.IsCatchAll)
+      {
+        AddError($"Catch-all parameter '{parameter.Name}' cannot be used in options. Catch-all is only valid for positional parameters.",
+          parameter.Position,
+          parameter.Length,
+          ParseErrorType.InvalidParameterSyntax);
+      }
+
+      // Check for repeated modifier (*) after the parameter
+      // e.g., --tag {value}* means the option can be repeated
+      if (Match(TokenType.Asterisk))
+      {
+        // Mark the parameter as repeated
+        parameter = parameter with { IsRepeated = true };
+      }
     }
 
     int endPos = Previous().EndPosition;
@@ -471,6 +501,10 @@ public sealed class RouteParser : IRouteParser
     // Track for NURU009: Option aliases
     var optionAliases = new Dictionary<string, OptionSyntax>();
 
+    // Track if we've seen the end-of-options separator
+    bool seenEndOfOptions = false;
+    int endOfOptionsIndex = -1;
+
     // NURU005: Check if catch-all parameter is at the end
     for (int i = 0; i < ast.Segments.Count; i++)
     {
@@ -534,6 +568,15 @@ public sealed class RouteParser : IRouteParser
         // Reset optional parameter tracking when we hit an option
         lastOptionalParam = null;
 
+        // Check if option appears after end-of-options separator
+        if (seenEndOfOptions)
+        {
+          AddError("Options cannot appear after '--' separator",
+            option.Position,
+            option.Length,
+            ParseErrorType.InvalidParameterSyntax);
+        }
+
         // NURU009: Check for duplicate option aliases
         if (option.ShortForm is not null)
         {
@@ -547,6 +590,33 @@ public sealed class RouteParser : IRouteParser
           else
           {
             optionAliases[option.ShortForm] = option;
+          }
+        }
+      }
+      else if (ast.Segments[i] is LiteralSyntax literal && literal.Value == "--")
+      {
+        // Found end-of-options separator
+        seenEndOfOptions = true;
+        endOfOptionsIndex = i;
+
+        // Validate that the next segment (if any) is a catch-all parameter
+        if (i == ast.Segments.Count - 1)
+        {
+          // -- is the last segment with nothing after it
+          AddError("End-of-options separator '--' must be followed by a catch-all parameter",
+            literal.Position,
+            literal.Length,
+            ParseErrorType.InvalidParameterSyntax);
+        }
+        else if (i + 1 < ast.Segments.Count)
+        {
+          SegmentSyntax nextSegment = ast.Segments[i + 1];
+          if (nextSegment is not ParameterSyntax nextParam || !nextParam.IsCatchAll)
+          {
+            AddError("End-of-options separator '--' must be followed by a catch-all parameter",
+              literal.Position,
+              literal.Length,
+              ParseErrorType.InvalidParameterSyntax);
           }
         }
       }

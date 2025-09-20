@@ -97,7 +97,40 @@ internal sealed class GetSyntaxTool
 
             // Multiple options
             .AddRoute("deploy {env} --dry-run --force", (string env, bool dryRun, bool force) => ...)
+
+            // Repeated options (collect multiple values)
+            .AddRoute("docker build --build-arg {args}*", (string[] args) => ...)
+            // Matches: docker build --build-arg KEY1=val1 --build-arg KEY2=val2
+            // args = ["KEY1=val1", "KEY2=val2"]
             ```
+            """,
+
+        ["separator"] = """
+            ## End-of-Options Separator (--)
+
+            The double dash `--` serves as an end-of-options marker (POSIX standard) that signals
+            all following arguments should be treated as positional parameters:
+
+            ```csharp
+            // Pass remaining args to command (prevents option interpretation)
+            .AddRoute("exec {cmd} -- {*args}", (string cmd, string[] args) => Shell.Run(cmd, args))
+            // Matches: exec npm -- run build --watch
+            // cmd = "npm", args = ["run", "build", "--watch"]
+
+            // Docker exec pattern
+            .AddRoute("docker exec {container} -- {*cmd}",
+                (string container, string[] cmd) => Docker.Exec(container, cmd))
+            // Matches: docker exec web -- npm test --coverage
+
+            // Combined with repeated options
+            .AddRoute("exec --env {e}* -- {*cmd}", (string[] e, string[] cmd) => ...)
+            // Matches: exec --env PATH=/bin --env USER=root -- ls -la
+            ```
+
+            Rules:
+            - `--` must be followed by a catch-all parameter
+            - No options can appear after `--`
+            - Arguments after `--` preserve their literal form (dashes not interpreted)
             """,
 
         ["descriptions"] = """
@@ -140,6 +173,8 @@ internal sealed class GetSyntaxTool
             - **Optional**: `{tag?}`, `{count:int?}`
             - **Catch-all**: `{*args}`
             - **Options**: `--verbose`, `-v`, `--config {mode}`
+            - **Repeated Options**: `--tag {t}*` (can be used multiple times)
+            - **End-of-Options**: `-- {*args}` (stop option processing)
             - **Descriptions**: `{env|Environment name}`, `--force|Skip confirmations`
 
             ## Common Patterns
@@ -198,7 +233,7 @@ internal sealed class GetSyntaxTool
     [McpServerTool]
     [Description("Get examples of specific route pattern features")]
     public static string GetPatternExamples(
-        [Description("Pattern feature (basic, typed, optional, catchall, options, complex)")] string feature = "basic")
+        [Description("Pattern feature (basic, typed, optional, catchall, options, repeated, separator, complex)")] string feature = "basic")
     {
         return feature.ToLowerInvariant() switch
         {
@@ -338,7 +373,54 @@ internal sealed class GetSyntaxTool
                 ```
                 """,
 
-            _ => $"Unknown feature '{feature}'. Available features: basic, typed, optional, catchall, options, complex"
+            "repeated" => """
+                ## Repeated Option Patterns
+
+                Repeated options allow collecting multiple values from the same option:
+
+                ```csharp
+                // Docker build with multiple build args
+                .AddRoute("docker build --build-arg {args}* {path}",
+                    (string[] args, string path) => DockerBuild(args, path))
+                // Matches: docker build --build-arg KEY1=val1 --build-arg KEY2=val2 .
+
+                // Curl with multiple headers
+                .AddRoute("curl {url} --header {headers}*",
+                    (string url, string[] headers) => Curl(url, headers))
+                // Matches: curl api.com --header "Accept: json" --header "Auth: Bearer token"
+
+                // Combined with other options
+                .AddRoute("kubectl apply -f {file} --label {labels}* --dry-run?",
+                    (string file, string[] labels, bool dryRun) => KubectlApply(file, labels, dryRun))
+                // Matches: kubectl apply -f app.yaml --label env=prod --label app=web --dry-run
+                ```
+                """,
+
+            "separator" => """
+                ## End-of-Options Separator (--)
+
+                The -- separator stops option processing, treating everything after as positional arguments:
+
+                ```csharp
+                // Execute command with arguments that might start with dashes
+                .AddRoute("exec {cmd} -- {*args}",
+                    (string cmd, string[] args) => Shell.Run(cmd, args))
+                // Matches: exec npm -- run build --watch
+                // cmd = "npm", args = ["run", "build", "--watch"]
+
+                // Docker exec with command
+                .AddRoute("docker exec {container} -- {*cmd}",
+                    (string container, string[] cmd) => DockerExec(container, cmd))
+                // Matches: docker exec web -- ls -la /app
+
+                // Combined with options
+                .AddRoute("run --env {vars}* -- {*cmd}",
+                    (string[] vars, string[] cmd) => RunWithEnv(vars, cmd))
+                // Matches: run --env PATH=/bin --env USER=root -- python -m server
+                ```
+                """,
+
+            _ => $"Unknown feature '{feature}'. Available features: basic, typed, optional, catchall, options, repeated, separator, complex"
         };
     }
 }

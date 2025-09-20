@@ -46,6 +46,10 @@ public enum TokenType
   /// </summary>
   Comma,
   /// <summary>
+  /// End of options separator '--' (standalone double dash).
+  /// </summary>
+  EndOfOptions,
+  /// <summary>
   /// An identifier (parameter name, option name, type name).
   /// </summary>
   Identifier,

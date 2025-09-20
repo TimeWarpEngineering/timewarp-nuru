@@ -121,6 +121,48 @@ Nuru handles arrays through the **catch-all** parameter syntax `{*param}`:
 4. Cannot mix with optional positional parameters
 5. Currently only supports `string[]` type
 
+### End-of-Options Separator (--)
+
+The double dash `--` serves as an end-of-options marker (POSIX standard) that signals all following arguments should be treated as positional parameters, even if they start with `-` or `--`.
+
+```csharp
+// Pass remaining args to command (prevents option interpretation)
+.AddRoute("exec {cmd} -- {*args}",
+    (string cmd, string[] args) => Shell.Run(cmd, args))
+// Matches: exec npm -- run build --watch
+// cmd = "npm", args = ["run", "build", "--watch"]
+
+// Git-style file disambiguation
+.AddRoute("git log -- {*files}",
+    (string[] files) => Git.Log(files))
+// Matches: git log -- -README.md --version.txt
+// files = ["-README.md", "--version.txt"] (dashes preserved as literals)
+
+// Docker exec pattern
+.AddRoute("docker exec {container} -- {*cmd}",
+    (string container, string[] cmd) => Docker.Exec(container, cmd))
+// Matches: docker exec web -- npm test --coverage
+// container = "web", cmd = ["npm", "test", "--coverage"]
+
+// Combined with options
+.AddRoute("exec --env {e}* -- {*cmd}",
+    (string[] e, string[] cmd) => ...)
+// Matches: exec --env PATH=/bin --env USER=root -- ls -la
+// e = ["PATH=/bin", "USER=root"], cmd = ["ls", "-la"]
+```
+
+**Rules for `--` Separator**:
+1. `--` must be followed by a catch-all parameter (`{*param}`)
+2. No options can appear after `--`
+3. Everything after `--` is treated as positional arguments
+4. The `--` itself is not included in the captured arguments
+5. Arguments after `--` preserve their literal form (dashes are not interpreted)
+
+**Implementation Details**:
+- Lexer tokenizes standalone `--` as `TokenType.EndOfOptions`
+- Parser validates that only catch-all parameters follow `--`
+- Route matching stops option processing after encountering `--`
+
 ### Arrays in Options - Design for Command Interception
 
 Since Nuru's goal includes intercepting existing CLI commands, we need to handle common real-world patterns:

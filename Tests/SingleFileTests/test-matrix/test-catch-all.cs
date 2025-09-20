@@ -23,7 +23,7 @@ NuruAppBuilder builder = new();
 builder.AddRoute("git add {*files}", (string[] files) =>
 {
     WriteLine($"✓ Git add executed with {files.Length} files:");
-    foreach (var file in files)
+    foreach (string file in files)
     {
         WriteLine($"  - {file}");
     }

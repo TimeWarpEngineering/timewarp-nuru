@@ -114,7 +114,16 @@ public class RoutePatternLexer
       case '-':
         if (Match('-'))
         {
-          AddToken(TokenType.DoubleDash, "--");
+          // Check if this is standalone -- (end-of-options separator)
+          // It should be followed by whitespace or end of input
+          if (IsAtEnd() || Peek() == ' ')
+          {
+            AddToken(TokenType.EndOfOptions, "--");
+          }
+          else
+          {
+            AddToken(TokenType.DoubleDash, "--");
+          }
         }
         else
         {

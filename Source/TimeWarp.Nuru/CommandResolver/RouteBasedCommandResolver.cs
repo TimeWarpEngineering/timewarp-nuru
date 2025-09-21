@@ -114,10 +114,19 @@ internal static class RouteBasedCommandResolver
 
     LoggerMessages.MatchingPositionalSegments(logger, template.Count, args.Length, null);
 
+    // Track if we've seen the end-of-options separator
+    bool seenEndOfOptions = false;
+
     // Match each segment in the template
     for (int i = 0; i < template.Count; i++)
     {
       RouteMatcher segment = template[i];
+
+      // Check if current segment is the end-of-options separator "--"
+      if (segment is LiteralMatcher literal && literal.Value == "--")
+      {
+        seenEndOfOptions = true;
+      }
 
       // For catch-all segment (must be last), consume all remaining
       if (segment is ParameterMatcher param && param.IsCatchAll)
@@ -152,7 +161,8 @@ internal static class RouteBasedCommandResolver
         return false; // Not enough args
       }
 
-      if (args[i].StartsWith(CommonStrings.SingleDash, StringComparison.Ordinal))
+      // After --, don't check for options - everything is treated as positional arguments
+      if (!seenEndOfOptions && args[i].StartsWith(CommonStrings.SingleDash, StringComparison.Ordinal))
       {
         // Hit an option - check if current segment is optional
         if (segment is ParameterMatcher optionalParam && optionalParam.IsOptional)
@@ -206,6 +216,7 @@ internal static class RouteBasedCommandResolver
     foreach (OptionMatcher optionSegment in optionSegments)
     {
       bool found = false;
+      var collectedValues = new List<string>(); // For repeated options
 
       // Look through remaining args for this option
       for (int i = 0; i < remainingArgs.Count; i++)
@@ -227,7 +238,16 @@ internal static class RouteBasedCommandResolver
             // Extract the option value
             if (optionSegment.ParameterName is not null)
             {
-              extractedValues[optionSegment.ParameterName] = remainingArgs[i + 1];
+              if (optionSegment.IsRepeated)
+              {
+                // For repeated options, collect values
+                collectedValues.Add(remainingArgs[i + 1]);
+              }
+              else
+              {
+                // Single value option
+                extractedValues[optionSegment.ParameterName] = remainingArgs[i + 1];
+              }
             }
 
             optionsConsumed += 2; // Option + value
@@ -244,8 +264,19 @@ internal static class RouteBasedCommandResolver
             optionsConsumed++; // Just the option
           }
 
-          break;
+          // For repeated options, continue looking for more occurrences
+          if (!optionSegment.IsRepeated)
+          {
+            break;
+          }
         }
+      }
+
+      // For repeated options, store the collected values
+      if (optionSegment.IsRepeated && collectedValues.Count > 0 && optionSegment.ParameterName is not null)
+      {
+        // Store as space-separated for now (will be split by parameter binder)
+        extractedValues[optionSegment.ParameterName] = string.Join(" ", collectedValues);
       }
 
       if (!found)

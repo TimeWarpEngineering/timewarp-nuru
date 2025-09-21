@@ -29,6 +29,10 @@ public class OptionMatcher : RouteMatcher
   /// Gets whether this option is optional (can be omitted).
   /// </summary>
   public bool IsOptional { get; }
+  /// <summary>
+  /// Gets whether this option can be repeated to collect multiple values.
+  /// </summary>
+  public bool IsRepeated { get; }
 
   public OptionMatcher
   (
@@ -37,7 +41,8 @@ public class OptionMatcher : RouteMatcher
     string? parameterName = null,
     string? alternateForm = null,
     string? description = null,
-    bool isOptional = false
+    bool isOptional = false,
+    bool isRepeated = false
   )
   {
     MatchPattern = matchPattern ?? throw new ArgumentNullException(nameof(matchPattern));
@@ -46,6 +51,7 @@ public class OptionMatcher : RouteMatcher
     AlternateForm = alternateForm;
     Description = description;
     IsOptional = isOptional;
+    IsRepeated = isRepeated;
   }
 
   public override bool TryMatch(string arg, out string? extractedValue)

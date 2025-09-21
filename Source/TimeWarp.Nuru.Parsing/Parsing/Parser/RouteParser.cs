@@ -228,21 +228,40 @@ public sealed class RouteParser : IRouteParser
   private OptionSyntax ParseOption()
   {
     Token optionToken = Current();
-
     bool isLong = optionToken.Type == TokenType.DoubleDash;
     Advance(); // Consume the dash(es)
 
     int startPos = optionToken.Position;
-
-    // Option name
     Token optionNameToken = Consume(TokenType.Identifier, "Expected option name");
 
-    string? longForm;
-    string? shortForm = null;
+    // Parse option forms (long/short)
+    (string? longForm, string? shortForm) = ParseOptionForms(isLong, optionNameToken);
 
+    // Check for optional modifier (?)
+    bool isOptional = Match(TokenType.Question);
+
+    // Parse description if present
+    string? description = ParseOptionDescription();
+
+    // Parse option parameter if present
+    ParameterSyntax? parameter = ParseOptionParameter();
+
+    int endPos = Previous().EndPosition;
+
+    return new OptionSyntax(longForm, shortForm, description, parameter, isOptional)
+    {
+      Position = startPos,
+      Length = endPos - startPos
+    };
+  }
+
+  private (string? longForm, string? shortForm) ParseOptionForms(bool isLong, Token optionNameToken)
+  {
     if (isLong)
     {
-      longForm = optionNameToken.Value;
+      string longForm = optionNameToken.Value;
+      string? shortForm = null;
+
       // Check for short alias
       if (Match(TokenType.Comma))
       {
@@ -250,11 +269,12 @@ public sealed class RouteParser : IRouteParser
         Token shortToken = Consume(TokenType.Identifier, "Expected short option name");
         shortForm = shortToken.Value;
       }
+
+      return (longForm, shortForm);
     }
     else
     {
-      longForm = null;
-      shortForm = optionNameToken.Value;
+      string shortForm = optionNameToken.Value;
 
       // Validate single dash options should be single character
       if (shortForm.Length > 1)
@@ -264,49 +284,47 @@ public sealed class RouteParser : IRouteParser
           optionNameToken.Length + 1,
           ParseErrorType.InvalidOptionFormat);
       }
+
+      return (null, shortForm);
     }
+  }
 
-    // Check for optional modifier (?)
-    bool isOptional = Match(TokenType.Question);
-
-    // Description
-    string? description = null;
+  private string? ParseOptionDescription()
+  {
     if (Match(TokenType.Pipe))
     {
-      description = ConsumeDescription(stopAtRightBrace: false);
+      return ConsumeDescription(stopAtRightBrace: false);
     }
 
-    // Parameter for option
-    ParameterSyntax? parameter = null;
-    if (Check(TokenType.LeftBrace))
+    return null;
+  }
+
+  private ParameterSyntax? ParseOptionParameter()
+  {
+    if (!Check(TokenType.LeftBrace))
     {
-      parameter = ParseParameter();
-
-      // Validate that catch-all is not used in options
-      if (parameter.IsCatchAll)
-      {
-        AddError($"Catch-all parameter '{parameter.Name}' cannot be used in options. Catch-all is only valid for positional parameters.",
-          parameter.Position,
-          parameter.Length,
-          ParseErrorType.InvalidParameterSyntax);
-      }
-
-      // Check for repeated modifier (*) after the parameter
-      // e.g., --tag {value}* means the option can be repeated
-      if (Match(TokenType.Asterisk))
-      {
-        // Mark the parameter as repeated
-        parameter = parameter with { IsRepeated = true };
-      }
+      return null;
     }
 
-    int endPos = Previous().EndPosition;
+    ParameterSyntax parameter = ParseParameter();
 
-    return new OptionSyntax(longForm, shortForm, description, parameter, isOptional)
+    // Validate that catch-all is not used in options
+    if (parameter.IsCatchAll)
     {
-      Position = startPos,
-      Length = endPos - startPos
-    };
+      AddError($"Catch-all parameter '{parameter.Name}' cannot be used in options. Catch-all is only valid for positional parameters.",
+        parameter.Position,
+        parameter.Length,
+        ParseErrorType.InvalidParameterSyntax);
+    }
+
+    // Check for repeated modifier (*) after the parameter
+    // e.g., --tag {value}* means the option can be repeated
+    if (Match(TokenType.Asterisk))
+    {
+      parameter = parameter with { IsRepeated = true };
+    }
+
+    return parameter;
   }
 
   private SegmentSyntax? ParseInvalidToken()

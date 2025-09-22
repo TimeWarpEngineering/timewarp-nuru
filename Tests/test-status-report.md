@@ -1,11 +1,6 @@
 # Test Status Report
 
-## Summary
-- Total Tests: 54
-- Passing: 29 (53.7%)
-- Failing: 25 (46.3%)
-
-## Lexer Tests (4/4 - 100% PASS)
+## Lexer Tests
 | Test File | Status |
 |-----------|--------|
 | test-lexer-double-dash-separator.cs | ✓ PASS |
@@ -13,7 +8,7 @@
 | test-lexer-only.cs | ✓ PASS |
 | test-lexer-optional-modifiers.cs | ✓ PASS |
 
-## Parser Tests (10/10 - 100% PASS)
+## Parser Tests
 | Test File | Status |
 |-----------|--------|
 | test-analyzer-patterns.cs | ✓ PASS |
@@ -27,14 +22,14 @@
 | test-parser-repeated-options.cs | ✓ PASS |
 | test-specific-hanging.cs | ✓ PASS |
 
-## Routing Tests (0/3 - 0% PASS)
+## Routing Tests
 | Test File | Status |
 |-----------|--------|
-| test-all-routes.cs | ✗ FAIL |
+| test-all-routes.cs | ✓ PASS |
 | test-boolean-option.cs | ✗ FAIL |
 | test-route-matching.cs | ✗ FAIL |
 
-## Features Tests (4/11 - 36.4% PASS)
+## Features Tests
 | Test File | Status |
 |-----------|--------|
 | test-auto-help.cs | ✗ FAIL |
@@ -49,7 +44,7 @@
 | test-shell-behavior.cs | ✗ FAIL |
 | test-truly-optional-options.cs | ✓ PASS |
 
-## Options Tests (test-matrix) (7/20 - 35% PASS)
+## Options Tests (test-matrix)
 | Test File | Status |
 |-----------|--------|
 | test-array-parameters.cs | ✓ PASS |
@@ -73,7 +68,7 @@
 | test-typed-optional-parameters.cs | ✗ FAIL |
 | test-typed-parameters.cs | ✗ FAIL |
 
-## MCP Tests (4/6 - 66.7% PASS)
+## MCP Tests
 | Test File | Status |
 |-----------|--------|
 | test-dynamic-examples.cs | ✗ FAIL |
@@ -83,8 +78,8 @@
 | test-mcp-server.cs | ✗ FAIL |
 | test-validate-route.cs | ✓ PASS |
 
-## Failed Tests List (25 total)
-2. Routing/test-all-routes.cs
+## Failed Tests List
+1. Routing/test-boolean-option.cs
 3. Routing/test-boolean-option.cs
 4. Routing/test-route-matching.cs
 5. Features/test-auto-help.cs

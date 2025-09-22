@@ -30,7 +30,7 @@ builder.AddRoute("{*args}", (string[] args) =>
     }
 
     // Pass through to shell
-    WriteLine($"  → Passing through to shell...");
+    WriteLine("  → Passing through to shell...");
     var process = new Process
     {
         StartInfo = new ProcessStartInfo
@@ -48,7 +48,7 @@ builder.AddRoute("{*args}", (string[] args) =>
 // Stage 2: Intercept specific commands
 builder.AddRoute("ls {path?} --all?", (string? path, bool all) =>
 {
-    WriteLine($"✓ Native ls implementation:");
+    WriteLine("✓ Native ls implementation:");
     WriteLine($"  Path: {path ?? "."}");
     WriteLine($"  Show all: {all}");
     // Native implementation here
@@ -57,7 +57,7 @@ builder.AddRoute("ls {path?} --all?", (string? path, bool all) =>
 // Stage 3: Intercept with options
 builder.AddRoute("grep {pattern} {*files} --ignore-case?", (string pattern, string[] files, bool ignoreCase) =>
 {
-    WriteLine($"✓ Native grep implementation:");
+    WriteLine("✓ Native grep implementation:");
     WriteLine($"  Pattern: {pattern}");
     WriteLine($"  Files: {string.Join(", ", files)}");
     WriteLine($"  Ignore case: {ignoreCase}");

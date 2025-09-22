@@ -1,10 +1,13 @@
 #!/usr/bin/dotnet --
 #:property LangVersion=preview
 #:property EnablePreviewFeatures=true
+#:package TimeWarp.Amuru
 
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Text;
+using TimeWarp.Amuru;
+using static System.Console;
 
 // Get script directory
 string scriptDir = Path.GetDirectoryName(AppContext.GetData("EntryPointFileDirectoryPath") as string)!;
@@ -19,8 +22,8 @@ string? category = args.FirstOrDefault(a => a.StartsWith("--category=", StringCo
 
 if (verbose)
 {
-    Console.WriteLine($"Script dir: {scriptDir}");
-    Console.WriteLine($"Tests root: {testsRoot}");
+    WriteLine($"Script dir: {scriptDir}");
+    WriteLine($"Tests root: {testsRoot}");
 }
 
 // Color codes for output
@@ -32,12 +35,12 @@ const string Blue = "\u001b[34m";
 const string Cyan = "\u001b[36m";
 
 // Header
-Console.WriteLine($"{Blue}========================================{Reset}");
-Console.WriteLine($"{Blue}TimeWarp.Nuru Test Suite{Reset}");
-Console.WriteLine($"{Blue}========================================{Reset}");
-Console.WriteLine($"Configuration: {(parallel ? "Parallel" : "Sequential")} | {(verbose ? "Verbose" : "Normal")}");
-Console.WriteLine($"{Blue}========================================{Reset}");
-Console.WriteLine();
+WriteLine($"{Blue}========================================{Reset}");
+WriteLine($"{Blue}TimeWarp.Nuru Test Suite{Reset}");
+WriteLine($"{Blue}========================================{Reset}");
+WriteLine($"Configuration: {(parallel ? "Parallel" : "Sequential")} | {(verbose ? "Verbose" : "Normal")}");
+WriteLine($"{Blue}========================================{Reset}");
+WriteLine();
 
 // Discover test files
 var testCategories = new Dictionary<string, List<string>>
@@ -59,55 +62,48 @@ if (category is not null)
 
     if (testCategories.Count == 0)
     {
-        Console.WriteLine($"{Red}Error: No tests found for category '{category}'{Reset}");
-        Console.WriteLine($"Available categories: {string.Join(", ", testCategories.Keys)}");
+        WriteLine($"{Red}Error: No tests found for category '{category}'{Reset}");
+        WriteLine($"Available categories: {string.Join(", ", testCategories.Keys)}");
         return 1;
     }
 }
 
 // Count total tests
 int totalTests = testCategories.Sum(kvp => kvp.Value.Count);
-Console.WriteLine($"Found {totalTests} tests in {testCategories.Count} categories");
-Console.WriteLine();
+WriteLine($"Found {totalTests} tests in {testCategories.Count} categories");
+WriteLine();
 
 // Run tests
 var results = new ConcurrentBag<TestResult>();
 var stopwatch = Stopwatch.StartNew();
-bool shouldStop = false;
 
 if (parallel && !stopOnFail)
 {
     // Parallel execution
-    var options = new ParallelOptions
+    var tasks = new List<Task>();
+    foreach (KeyValuePair<string, List<string>> categoryKvp in testCategories)
     {
-        MaxDegreeOfParallelism = Environment.ProcessorCount
-    };
+        tasks.Add(RunCategoryTests(categoryKvp.Key, categoryKvp.Value, results, verbose, stopOnFail));
+    }
 
-    Parallel.ForEach(testCategories, options, categoryKvp =>
-    {
-        if (!shouldStop)
-        {
-            RunCategoryTests(categoryKvp.Key, categoryKvp.Value, results, verbose, ref shouldStop, stopOnFail);
-        }
-    });
+    await Task.WhenAll(tasks);
 }
 else
 {
     // Sequential execution
     foreach (KeyValuePair<string, List<string>> categoryKvp in testCategories)
     {
-        if (shouldStop) break;
-        RunCategoryTests(categoryKvp.Key, categoryKvp.Value, results, verbose, ref shouldStop, stopOnFail);
+        await RunCategoryTests(categoryKvp.Key, categoryKvp.Value, results, verbose, stopOnFail);
     }
 }
 
 stopwatch.Stop();
 
 // Generate summary
-Console.WriteLine();
-Console.WriteLine($"{Blue}========================================{Reset}");
-Console.WriteLine($"{Blue}SUMMARY{Reset}");
-Console.WriteLine($"{Blue}========================================{Reset}");
+WriteLine();
+WriteLine($"{Blue}========================================{Reset}");
+WriteLine($"{Blue}SUMMARY{Reset}");
+WriteLine($"{Blue}========================================{Reset}");
 
 // Group results by category for summary
 IOrderedEnumerable<IGrouping<string, TestResult>> resultsByCategory = results.GroupBy(r => r.Category).OrderBy(g => g.Key);
@@ -119,137 +115,149 @@ foreach (IGrouping<string, TestResult> categoryGroup in resultsByCategory)
     double percentage = total > 0 ? (passed * 100.0 / total) : 0;
     string color = passed == total ? Green : (passed > 0 ? Yellow : Red);
 
-    Console.WriteLine($"{categoryGroup.Key,-15} {color}{passed}/{total} ({percentage:F1}%){Reset}");
+    WriteLine($"{categoryGroup.Key,-15} {color}{passed}/{total} ({percentage:F1}%){Reset}");
 }
 
-Console.WriteLine();
+WriteLine();
 
 // Overall summary
 int totalPassed = results.Count(r => r.Success);
 int totalFailed = results.Count(r => !r.Success);
 double overallPercentage = totalTests > 0 ? (totalPassed * 100.0 / totalTests) : 0;
 
-Console.WriteLine($"Total: {totalPassed}/{totalTests} tests passed ({overallPercentage:F1}%) in {stopwatch.Elapsed.TotalSeconds:F1}s");
+WriteLine($"Total: {totalPassed}/{totalTests} tests passed ({overallPercentage:F1}%) in {stopwatch.Elapsed.TotalSeconds:F1}s");
 
 // List failed tests
 if (totalFailed > 0)
 {
-    Console.WriteLine();
-    Console.WriteLine($"{Red}Failed Tests:{Reset}");
-    foreach (TestResult failed in results.Where(r => !r.Success))
+    WriteLine();
+
+    // Separate compilation errors from test failures
+    var compilationErrors = results.Where(r => r.ExitCode == -999).ToList();
+    var testFailures = results.Where(r => !r.Success && r.ExitCode != -999).ToList();
+
+    if (compilationErrors.Count > 0)
     {
-        Console.WriteLine($"  {Red}✗{Reset} {failed.Category}/{Path.GetFileName(failed.TestFile)}");
-        if (verbose && !string.IsNullOrEmpty(failed.Output))
+        WriteLine($"{Yellow}Compilation Errors:{Reset}");
+        foreach (TestResult failed in compilationErrors)
         {
-            IEnumerable<string> lines = failed.Output.Split('\n').Take(5);
-            foreach (string line in lines)
+            WriteLine($"  {Yellow}⚠{Reset} {failed.Category}/{Path.GetFileName(failed.TestFile)}");
+        }
+
+        WriteLine();
+    }
+
+    if (testFailures.Count > 0)
+    {
+        WriteLine($"{Red}Failed Tests:{Reset}");
+        foreach (TestResult failed in testFailures)
+        {
+            WriteLine($"  {Red}✗{Reset} {failed.Category}/{Path.GetFileName(failed.TestFile)}");
+            if (verbose && !string.IsNullOrEmpty(failed.Output))
             {
-                Console.WriteLine($"    {line}");
+                IEnumerable<string> lines = failed.Output.Split('\n').Take(5);
+                foreach (string line in lines)
+                {
+                    WriteLine($"    {line}");
+                }
             }
         }
     }
 }
 
-Console.WriteLine($"{Blue}========================================{Reset}");
+WriteLine($"{Blue}========================================{Reset}");
 
 return totalFailed > 0 ? 1 : 0;
 
 // Helper functions
 
-void RunCategoryTests(string category, List<string> testFiles, ConcurrentBag<TestResult> results, bool verbose, ref bool shouldStop, bool stopOnFail)
+async Task RunCategoryTests(string category, List<string> testFiles, ConcurrentBag<TestResult> results, bool verbose, bool stopOnFail)
 {
-    Console.WriteLine($"{Cyan}Running {category} ({testFiles.Count} tests)...{Reset}");
+    WriteLine($"{Cyan}Running {category} ({testFiles.Count} tests)...{Reset}");
 
     foreach (string testFile in testFiles)
     {
-        if (shouldStop) break;
 
-        TestResult result = RunTest(testFile, category, verbose);
+        TestResult result = await RunTest(testFile, category, verbose);
         results.Add(result);
 
-        string symbol = result.Success ? $"{Green}✓{Reset}" : $"{Red}✗{Reset}";
+        string symbol = result.Success ? $"{Green}✓{Reset}" :
+                       result.ExitCode == -999 ? $"{Yellow}⚠{Reset}" : $"{Red}✗{Reset}";
+        string status = result.ExitCode == -999 ? "NO COMPILE" : "";
         string fileName = Path.GetFileName(testFile);
-        Console.WriteLine($"  {symbol} {fileName,-40} ({result.Duration.TotalMilliseconds:F0}ms)");
+        WriteLine($"  {symbol} {fileName,-40} ({result.Duration.TotalMilliseconds:F0}ms) {status}");
 
         if (!result.Success && stopOnFail)
         {
-            shouldStop = true;
-            Console.WriteLine($"{Red}Stopping on first failure{Reset}");
+            WriteLine($"{Red}Stopping on first failure{Reset}");
             break;
         }
     }
 }
 
-TestResult RunTest(string testFile, string category, bool verbose)
+async Task<TestResult> RunTest(string testFile, string category, bool verbose)
 {
     var stopwatch = Stopwatch.StartNew();
-    var output = new StringBuilder();
 
     try
     {
         // Make test file executable if needed
         if (OperatingSystem.IsLinux() || OperatingSystem.IsMacOS())
         {
-            Process.Start("chmod", $"+x {testFile}")?.WaitForExit(1000);
+            await Shell.Builder("chmod").WithArguments("+x", testFile).RunAsync();
         }
 
-        var startInfo = new ProcessStartInfo
-        {
-            FileName = testFile,
-            UseShellExecute = false,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            WorkingDirectory = Path.GetDirectoryName(testFile)
-        };
-
-        using var process = Process.Start(startInfo);
-        if (process is null)
-        {
-            return new TestResult(testFile, category, false, -1, stopwatch.Elapsed, "Failed to start process");
-        }
-
-        // Capture output
-        var outputTask = Task.Run(() =>
-        {
-            string? line;
-            while ((line = process.StandardOutput.ReadLine()) is not null)
-            {
-                output.AppendLine(line);
-                if (verbose)
-                {
-                    Console.WriteLine($"    {line}");
-                }
-            }
-        });
-
-        var errorTask = Task.Run(() =>
-        {
-            string? line;
-            while ((line = process.StandardError.ReadLine()) is not null)
-            {
-                output.AppendLine(System.Globalization.CultureInfo.InvariantCulture, $"[ERROR] {line}");
-                if (verbose)
-                {
-                    Console.WriteLine($"    {Red}[ERROR]{Reset} {line}");
-                }
-            }
-        });
-
-        // Wait for completion with timeout
-        bool completed = process.WaitForExit(30000); // 30 second timeout
-
-        if (!completed)
-        {
-            process.Kill();
-            return new TestResult(testFile, category, false, -1, stopwatch.Elapsed, "Test timeout (30s)");
-        }
-
-        Task.WaitAll(outputTask, errorTask);
+        // Run the test using Amuru
+        CommandOutput result = await Shell.Builder(testFile)
+            .WithWorkingDirectory(Path.GetDirectoryName(testFile)!)
+            .WithNoValidation()
+            .CaptureAsync();
 
         stopwatch.Stop();
-        return new TestResult(testFile, category, process.ExitCode == 0, process.ExitCode, stopwatch.Elapsed, output.ToString());
+
+        // Check if it's a compilation error
+        bool isCompilationError = result.Stderr.Contains("build failed", StringComparison.OrdinalIgnoreCase) ||
+                                 result.Stderr.Contains("Build FAILED", StringComparison.OrdinalIgnoreCase) ||
+                                 result.Stdout.Contains("build failed", StringComparison.OrdinalIgnoreCase) ||
+                                 result.Stdout.Contains("Build FAILED", StringComparison.OrdinalIgnoreCase);
+
+        if (verbose)
+        {
+            if (!string.IsNullOrEmpty(result.Stdout))
+            {
+                foreach (string line in result.Stdout.Split('\n'))
+                {
+                    WriteLine($"    {line}");
+                }
+            }
+
+            if (!string.IsNullOrEmpty(result.Stderr))
+            {
+                foreach (string line in result.Stderr.Split('\n'))
+                {
+                    WriteLine($"    {Red}[ERROR]{Reset} {line}");
+                }
+            }
+        }
+
+        string output = result.Stdout;
+        if (!string.IsNullOrEmpty(result.Stderr))
+        {
+            output += Environment.NewLine + "[STDERR]" + Environment.NewLine + result.Stderr;
+        }
+
+        // Use -999 as exit code for compilation errors
+        int exitCode = isCompilationError ? -999 : result.ExitCode;
+        bool success = result.Success && !isCompilationError;
+
+        return new TestResult(testFile, category, success, exitCode, stopwatch.Elapsed, output);
     }
-    catch (System.InvalidOperationException ex)
+    catch (TimeoutException)
+    {
+        stopwatch.Stop();
+        return new TestResult(testFile, category, false, -1, stopwatch.Elapsed, "Test timeout (30s)");
+    }
+    catch (InvalidOperationException ex)
     {
         stopwatch.Stop();
         return new TestResult(testFile, category, false, -1, stopwatch.Elapsed, $"Exception: {ex.Message}");
@@ -260,7 +268,7 @@ List<string> GetTestFiles(string directory)
 {
     if (!Directory.Exists(directory))
     {
-        Console.WriteLine($"Directory does not exist: {directory}");
+        WriteLine($"Directory does not exist: {directory}");
         return [];
     }
 
@@ -271,11 +279,11 @@ List<string> GetTestFiles(string directory)
 
     if (verbose && files.Count == 0)
     {
-        Console.WriteLine($"No test files found in: {directory}");
+        WriteLine($"No test files found in: {directory}");
         if (Directory.Exists(directory))
         {
             int allFiles = Directory.GetFiles(directory, "*.cs", SearchOption.AllDirectories).Length;
-            Console.WriteLine($"  Total .cs files in directory: {allFiles}");
+            WriteLine($"  Total .cs files in directory: {allFiles}");
         }
     }
 

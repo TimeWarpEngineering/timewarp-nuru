@@ -1,0 +1,109 @@
+[34m========================================[0m
+[34mTimeWarp.Nuru Test Suite[0m
+[34m========================================[0m
+Configuration: Sequential | Normal
+[34m========================================[0m
+
+Found 54 tests in 6 categories
+
+[36mRunning Lexer (4 tests)...[0m
+  [32m✓[0m test-lexer-double-dash-separator.cs      (547ms)
+  [32m✓[0m test-lexer-hang.cs                       (605ms)
+  [32m✓[0m test-lexer-only.cs                       (558ms)
+  [32m✓[0m test-lexer-optional-modifiers.cs         (489ms)
+[36mRunning Parser (10 tests)...[0m
+  [32m✓[0m test-analyzer-patterns.cs                (545ms)
+  [32m✓[0m test-hanging-patterns-fixed.cs           (536ms)
+  [32m✓[0m test-hanging-patterns.cs                 (525ms)
+  [32m✓[0m test-parser-end-of-options.cs            (618ms)
+  [32m✓[0m test-parser-error-cases.cs               (577ms)
+  [32m✓[0m test-parser-errors.cs                    (607ms)
+  [32m✓[0m test-parser-mixed-modifiers.cs           (466ms)
+  [32m✓[0m test-parser-optional-flags.cs            (614ms)
+  [32m✓[0m test-parser-repeated-options.cs          (580ms)
+  [31m✗[0m test-specific-hanging.cs                 (2567ms)
+[36mRunning Routing (3 tests)...[0m
+  [31m✗[0m test-all-routes.cs                       (2800ms)
+  [31m✗[0m test-boolean-option.cs                   (504ms)
+  [31m✗[0m test-route-matching.cs                   (487ms)
+[36mRunning Features (11 tests)...[0m
+  [31m✗[0m test-auto-help.cs                        (450ms)
+  [31m✗[0m test-desc.cs                             (438ms)
+  [31m✗[0m test-four-optional-options.cs            (2556ms)
+  [31m✗[0m test-kubectl.cs                          (314ms)
+  [31m✗[0m test-logging.cs                          (475ms)
+  [32m✓[0m test-mixed-options.cs                    (498ms)
+  [32m✓[0m test-option-combinations.cs              (475ms)
+  [31m✗[0m test-option-params.cs                    (450ms)
+  [32m✓[0m test-optional-option-params.cs           (486ms)
+  [31m✗[0m test-shell-behavior.cs                   (327ms)
+  [32m✓[0m test-truly-optional-options.cs           (413ms)
+[36mRunning Options (20 tests)...[0m
+  [32m✓[0m test-array-parameters.cs                 (408ms)
+  [32m✓[0m test-boolean-flags.cs                    (452ms)
+  [31m✗[0m test-catch-all-with-options.cs           (2200ms)
+  [32m✓[0m test-catch-all.cs                        (394ms)
+  [32m✓[0m test-catchall-validation.cs              (443ms)
+  [31m✗[0m test-combined-patterns.cs                (2577ms)
+  [31m✗[0m test-interception-patterns.cs            (2370ms)
+  [31m✗[0m test-invalid-positional-patterns.cs      (2552ms)
+  [31m✗[0m test-mixed-required-optional.cs          (2347ms)
+  [31m✗[0m test-nurucontext.cs                      (2339ms)
+  [31m✗[0m test-optional-flag-optional-value.cs     (2515ms)
+  [31m✗[0m test-optional-flag-required-value.cs     (2497ms)
+  [32m✓[0m test-optional-flags-syntax.cs            (447ms)
+  [31m✗[0m test-positional-optional-after-required.cs (2522ms)
+  [31m✗[0m test-repeated-options.cs                 (2377ms)
+  [31m✗[0m test-required-flag-optional-value.cs     (2234ms)
+  [32m✓[0m test-required-flag-required-value.cs     (484ms)
+  [32m✓[0m test-specificity-ordering.cs             (501ms)
+  [31m✗[0m test-typed-optional-parameters.cs        (2287ms)
+  [31m✗[0m test-typed-parameters.cs                 (2281ms)
+[36mRunning MCP (6 tests)...[0m
+  [31m✗[0m test-dynamic-examples.cs                 (1231ms)
+  [32m✓[0m test-error-handling.cs                   (990ms)
+  [32m✓[0m test-generate-handler.cs                 (441ms)
+  [32m✓[0m test-get-syntax.cs                       (423ms)
+  [31m✗[0m test-mcp-server.cs                       (1655ms)
+  [32m✓[0m test-validate-route.cs                   (433ms)
+
+[34m========================================[0m
+[34mSUMMARY[0m
+[34m========================================[0m
+Features        [33m4/11 (36.4%)[0m
+Lexer           [32m4/4 (100.0%)[0m
+MCP             [33m4/6 (66.7%)[0m
+Options         [33m7/20 (35.0%)[0m
+Parser          [33m9/10 (90.0%)[0m
+Routing         [31m0/3 (0.0%)[0m
+
+Total: 28/54 tests passed (51.9%) in 59.9s
+
+[31mFailed Tests:[0m
+  [31m✗[0m MCP/test-mcp-server.cs
+  [31m✗[0m MCP/test-dynamic-examples.cs
+  [31m✗[0m Options/test-typed-parameters.cs
+  [31m✗[0m Options/test-typed-optional-parameters.cs
+  [31m✗[0m Options/test-required-flag-optional-value.cs
+  [31m✗[0m Options/test-repeated-options.cs
+  [31m✗[0m Options/test-positional-optional-after-required.cs
+  [31m✗[0m Options/test-optional-flag-required-value.cs
+  [31m✗[0m Options/test-optional-flag-optional-value.cs
+  [31m✗[0m Options/test-nurucontext.cs
+  [31m✗[0m Options/test-mixed-required-optional.cs
+  [31m✗[0m Options/test-invalid-positional-patterns.cs
+  [31m✗[0m Options/test-interception-patterns.cs
+  [31m✗[0m Options/test-combined-patterns.cs
+  [31m✗[0m Options/test-catch-all-with-options.cs
+  [31m✗[0m Features/test-shell-behavior.cs
+  [31m✗[0m Features/test-option-params.cs
+  [31m✗[0m Features/test-logging.cs
+  [31m✗[0m Features/test-kubectl.cs
+  [31m✗[0m Features/test-four-optional-options.cs
+  [31m✗[0m Features/test-desc.cs
+  [31m✗[0m Features/test-auto-help.cs
+  [31m✗[0m Routing/test-route-matching.cs
+  [31m✗[0m Routing/test-boolean-option.cs
+  [31m✗[0m Routing/test-all-routes.cs
+  [31m✗[0m Parser/test-specific-hanging.cs
+[34m========================================[0m

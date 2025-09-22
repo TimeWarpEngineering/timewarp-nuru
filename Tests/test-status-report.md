@@ -26,8 +26,7 @@
 | Test File | Status |
 |-----------|--------|
 | test-all-routes.cs | ✓ PASS |
-| test-boolean-option.cs | ✗ FAIL |
-| test-route-matching.cs | ✗ FAIL |
+| test-boolean-option.cs | ✓ PASS |
 
 ## Features Tests
 | Test File | Status |
@@ -79,9 +78,6 @@
 | test-validate-route.cs | ✓ PASS |
 
 ## Failed Tests List
-1. Routing/test-boolean-option.cs
-3. Routing/test-boolean-option.cs
-4. Routing/test-route-matching.cs
 5. Features/test-auto-help.cs
 6. Features/test-desc.cs
 7. Features/test-four-optional-options.cs

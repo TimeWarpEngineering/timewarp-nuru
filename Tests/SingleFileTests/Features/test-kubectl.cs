@@ -1,8 +1,9 @@
 #!/usr/bin/dotnet --
-#:project ../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
+#:project ../../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
+
+#pragma warning disable CA1031 // Do not catch general exception types - OK for tests
 
 using TimeWarp.Nuru;
-using TimeWarp.Nuru.Parsing;
 using TimeWarp.Nuru.Parsing;
 using static System.Console;
 using System.Diagnostics;

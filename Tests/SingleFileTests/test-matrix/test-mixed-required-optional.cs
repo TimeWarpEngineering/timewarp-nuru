@@ -1,6 +1,8 @@
 #!/usr/bin/dotnet --
 #:project ../../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
 
+#pragma warning disable CA1031 // Do not catch general exception types - OK for tests
+
 using TimeWarp.Nuru;
 using static System.Console;
 
@@ -20,10 +22,10 @@ NuruAppBuilder builder = new();
 builder.AddRoute("deploy --env {env} --version? {ver?} --dry-run",
     (string env, string? ver, bool dryRun) =>
 {
-    WriteLine($"✓ Deploy executed:");
-    WriteLine($"  Environment: {env}");
+    WriteLine("✓ Deploy executed:");
+    WriteLine("  Environment: " + env);
     WriteLine($"  Version: {ver ?? "(latest)"}");
-    WriteLine($"  Dry Run: {dryRun}");
+    WriteLine("  Dry Run: " + dryRun);
 });
 
 NuruApp app = builder.Build();

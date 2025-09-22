@@ -24,7 +24,7 @@ NuruAppBuilder builder = new();
 builder.AddRoute("kubectl get {*resources} --namespace? {ns?} --output? {format?}",
     (string[] resources, string? ns, string? format) =>
 {
-    WriteLine($"✓ kubectl get:");
+    WriteLine("✓ kubectl get:");
     WriteLine($"  Resources: [{string.Join(", ", resources)}]");
     WriteLine($"  Namespace: {ns ?? "(default)"}");
     WriteLine($"  Output: {format ?? "default"}");
@@ -34,7 +34,7 @@ builder.AddRoute("kubectl get {*resources} --namespace? {ns?} --output? {format?
 builder.AddRoute("git add {*files} --force? --dry-run?",
     (string[] files, bool force, bool dryRun) =>
 {
-    WriteLine($"✓ git add:");
+    WriteLine("✓ git add:");
     WriteLine($"  Files: [{string.Join(", ", files)}]");
     WriteLine($"  Force: {force}");
     WriteLine($"  Dry run: {dryRun}");

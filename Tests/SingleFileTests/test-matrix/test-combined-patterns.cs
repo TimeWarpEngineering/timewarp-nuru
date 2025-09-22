@@ -1,8 +1,6 @@
 #!/usr/bin/dotnet --
 #:project ../../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
 
-#pragma warning disable CA1031 // Do not catch general exception types - OK for tests
-
 using TimeWarp.Nuru;
 using static System.Console;
 
@@ -21,7 +19,7 @@ NuruAppBuilder builder = new();
 builder.AddRoute("docker run {image} {*cmd} --env {var}* --volume {vol}* --detach?",
     (string image, string[] cmd, string[] vars, string[] vols, bool detach) =>
 {
-    WriteLine($"✓ Docker run:");
+    WriteLine("✓ Docker run:");
     WriteLine($"  Image: {image}");
     WriteLine($"  Command: {string.Join(" ", cmd)}");
     WriteLine($"  Environment: {string.Join(", ", vars)}");
@@ -33,12 +31,12 @@ builder.AddRoute("docker run {image} {*cmd} --env {var}* --volume {vol}* --detac
 builder.AddRoute("git log {ref?} --oneline? --graph? --all? -n {count:int?}",
     (string? gitRef, bool oneline, bool graph, bool all, int? count) =>
 {
-    WriteLine($"✓ Git log:");
+    WriteLine("✓ Git log:");
     WriteLine($"  Ref: {gitRef ?? "HEAD"}");
     WriteLine($"  Oneline: {oneline}");
     WriteLine($"  Graph: {graph}");
     WriteLine($"  All: {all}");
-    WriteLine($"  Count: {count?.ToString() ?? "all"}");
+    WriteLine($"  Count: {count?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "all"}");
 });
 
 // Kubectl with positional, options, and catch-all

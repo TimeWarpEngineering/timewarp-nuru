@@ -19,7 +19,7 @@ WriteLine
 NuruAppBuilder builder = new();
 
 // Stage 1: Pass through everything to shell
-builder.AddRoute("{*args}", async (string[] args, NuruContext context) =>
+builder.AddRoute("{*args}", (string[] args) =>
 {
     WriteLine($"📡 Intercepted: {string.Join(" ", args)}");
 

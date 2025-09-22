@@ -169,10 +169,42 @@ public class RoutePatternLexer
       {
         identifier.Append(Advance());
       }
-      else if (c == '-' && Position + 1 < Input.Length && IsAlphaNumeric(Input[Position + 1]))
+      else if (c == '-')
       {
-        // Include dash if followed by alphanumeric (compound identifiers like "no-edit")
-        identifier.Append(Advance());
+        // Check for various dash patterns
+        if (Position + 1 >= Input.Length)
+        {
+          // Trailing dash at end of input: "test-"
+          identifier.Append(Advance());
+          AddToken(TokenType.Invalid, identifier.ToString(), start);
+          return;
+        }
+
+        char next = Input[Position + 1];
+        if (next == '-')
+        {
+          // Double dash within identifier: "test--case"
+          // Scan the rest as invalid
+          while (!IsAtEnd() && (IsAlphaNumeric(Peek()) || Peek() == '-'))
+          {
+            identifier.Append(Advance());
+          }
+
+          AddToken(TokenType.Invalid, identifier.ToString(), start);
+          return;
+        }
+        else if (IsAlphaNumeric(next))
+        {
+          // Valid compound identifier: "no-edit"
+          identifier.Append(Advance());
+        }
+        else
+        {
+          // Trailing dash before space or other char: "test- " or "test-}"
+          identifier.Append(Advance());
+          AddToken(TokenType.Invalid, identifier.ToString(), start);
+          return;
+        }
       }
       else
       {

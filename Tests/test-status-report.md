@@ -2,8 +2,8 @@
 
 ## Summary
 - Total Tests: 54
-- Passing: 28 (51.9%)
-- Failing: 26 (48.1%)
+- Passing: 29 (53.7%)
+- Failing: 25 (46.3%)
 
 ## Lexer Tests (4/4 - 100% PASS)
 | Test File | Status |
@@ -13,7 +13,7 @@
 | test-lexer-only.cs | ✓ PASS |
 | test-lexer-optional-modifiers.cs | ✓ PASS |
 
-## Parser Tests (9/10 - 90% PASS)
+## Parser Tests (10/10 - 100% PASS)
 | Test File | Status |
 |-----------|--------|
 | test-analyzer-patterns.cs | ✓ PASS |
@@ -25,7 +25,7 @@
 | test-parser-mixed-modifiers.cs | ✓ PASS |
 | test-parser-optional-flags.cs | ✓ PASS |
 | test-parser-repeated-options.cs | ✓ PASS |
-| test-specific-hanging.cs | ✗ FAIL |
+| test-specific-hanging.cs | ✓ PASS |
 
 ## Routing Tests (0/3 - 0% PASS)
 | Test File | Status |
@@ -83,8 +83,7 @@
 | test-mcp-server.cs | ✗ FAIL |
 | test-validate-route.cs | ✓ PASS |
 
-## Failed Tests List (26 total)
-1. Parser/test-specific-hanging.cs
+## Failed Tests List (25 total)
 2. Routing/test-all-routes.cs
 3. Routing/test-boolean-option.cs
 4. Routing/test-route-matching.cs

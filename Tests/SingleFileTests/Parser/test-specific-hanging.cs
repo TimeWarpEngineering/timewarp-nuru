@@ -1,6 +1,8 @@
 #!/usr/bin/dotnet --
 #:project ../../../Source/TimeWarp.Nuru.Parsing/TimeWarp.Nuru.Parsing.csproj
 
+#pragma warning disable CA1031 // Do not catch general exception types - OK for tests
+
 using TimeWarp.Nuru.Parsing;
 using static System.Console;
 
@@ -19,13 +21,16 @@ WriteLine();
 try
 {
     CompiledRoute route = RoutePatternParser.Parse(pattern);
-    WriteLine("SUCCESS: Pattern parsed without hanging!");
+    WriteLine("FAIL: Pattern parsed without error (should have thrown ArgumentException)!");
+    return 1; // Test failed - should have thrown
 }
 catch (ArgumentException ex)
 {
-    WriteLine($"ERROR (expected): {ex.Message}");
+    WriteLine($"PASS: Got expected error: {ex.Message}");
+    return 0; // Test passed - got expected exception
 }
 catch (Exception ex)
 {
-    WriteLine($"UNEXPECTED ERROR: {ex.GetType().Name}: {ex.Message}");
+    WriteLine($"FAIL: Wrong exception type: {ex.GetType().Name}: {ex.Message}");
+    return 1; // Test failed - wrong exception type
 }

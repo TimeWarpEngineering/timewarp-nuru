@@ -572,13 +572,29 @@ public sealed class RouteParser : IRouteParser
           lastOptionalParam = null;
         }
 
-        // NURU005: Check if catch-all is at the end
-        if (param.IsCatchAll && i < ast.Segments.Count - 1)
+        // NURU005: Check if catch-all has positional segments after it
+        // Options are allowed after catch-all since they're distinguishable by their -- prefix
+        if (param.IsCatchAll)
         {
-          AddError($"Catch-all parameter '{param.Name}' must be the last segment in the route",
-            param.Position,
-            param.Length,
-            ParseErrorType.CatchAllNotAtEnd);
+          bool hasPositionalAfterCatchAll = false;
+          for (int j = i + 1; j < ast.Segments.Count; j++)
+          {
+            // Check if this is a positional segment (not an option or end-of-options)
+            if (ast.Segments[j] is ParameterSyntax ||
+                (ast.Segments[j] is LiteralSyntax lit && lit.Value != "--"))
+            {
+              hasPositionalAfterCatchAll = true;
+              break;
+            }
+          }
+
+          if (hasPositionalAfterCatchAll)
+          {
+            AddError($"Catch-all parameter '{param.Name}' must be the last positional segment in the route",
+              param.Position,
+              param.Length,
+              ParseErrorType.CatchAllNotAtEnd);
+          }
         }
       }
       else if (ast.Segments[i] is OptionSyntax option)

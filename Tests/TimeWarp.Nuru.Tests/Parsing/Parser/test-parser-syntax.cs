@@ -1,17 +1,15 @@
 #!/usr/bin/dotnet --
 #:project ../../../../Source/TimeWarp.Nuru.Parsing/TimeWarp.Nuru.Parsing.csproj
 
-#pragma warning disable CA1031 // Do not catch general exception types - OK for tests
-
 using TimeWarp.Nuru.Parsing;
 using static System.Console;
 
 WriteLine
 (
   """
-  Testing Route Pattern Parser Validation
-  ========================================
-
+  Testing Route Pattern Parser Syntax
+  ====================================
+  Tests for syntactic parsing errors and valid patterns
   """
 );
 
@@ -22,10 +20,27 @@ int failed = 0;
 WriteLine
 (
   """
+
   Valid Patterns (should parse):
   -------------------------------
   """
 );
+
+void TestValid(string pattern)
+{
+    Write($"  {pattern,-45} ");
+    try
+    {
+        CompiledRoute route = RoutePatternParser.Parse(pattern);
+        WriteLine("✓ Parsed");
+        passed++;
+    }
+    catch (Exception ex)
+    {
+        WriteLine($"✗ FAILED: {ex.Message}");
+        failed++;
+    }
+}
 
 TestValid("status");
 TestValid("git commit");
@@ -37,26 +52,70 @@ TestValid("build --verbose");
 TestValid("build --config {mode}");
 TestValid("deploy {env|Environment} --dry-run,-d|Preview");
 
+// Test invalid patterns that should fail
 WriteLine
 (
   """
 
   Invalid Patterns (should fail):
-  -------------------------------
+  --------------------------------
+  """
+);
 
-  Syntax Errors:
+void TestInvalid(string pattern, string expectedError)
+{
+    Write($"  {pattern,-45} ");
+    try
+    {
+        CompiledRoute route = RoutePatternParser.Parse(pattern);
+        WriteLine("✗ SHOULD HAVE FAILED!");
+        WriteLine($"    Expected: {expectedError}");
+        failed++;
+    }
+    catch (Exception ex)
+    {
+        // Check the full error message for the expected error
+        bool hasExpectedError = ex.Message.Contains(expectedError, StringComparison.OrdinalIgnoreCase);
+
+        if (hasExpectedError)
+        {
+            WriteLine("✓ Failed correctly");
+            passed++;
+        }
+        else
+        {
+            WriteLine("⚠ Failed (different error)");
+            WriteLine($"    Expected: {expectedError}");
+            string firstError = ex.Message.Split('\n')[0];
+            WriteLine($"    Actual:   {firstError}");
+            // Still counts as passed since it failed, just not with expected message
+            passed++;
+        }
+    }
+}
+
+WriteLine
+(
+  """
+
+  Basic Syntax Errors:
+  --------------------
   """
 );
 TestInvalid("prompt <input>", "Invalid parameter syntax");
 TestInvalid("deploy {env", "Expected '}'");
 TestInvalid("build --config {", "Expected parameter name");
 TestInvalid("test }", "Unexpected '}'");
+TestInvalid("run {", "Expected parameter name");
+TestInvalid("test { }", "Expected parameter name");
+TestInvalid("build {123abc}", "Expected parameter name");  // Invalid identifier
 
 WriteLine
 (
   """
 
-  Modifier Errors:
+  Modifier Syntax Errors:
+  -----------------------
   """
 );
 
@@ -89,35 +148,34 @@ WriteLine
 (
   """
 
-  Semantic Errors:
+  Invalid Parameter Modifiers:
+  ----------------------------
   """
 );
-
-// Invalid combinations
 TestInvalid("--env? {*var}", "asterisk in wrong place");
 TestInvalid("--flag {?param}", "question mark in wrong place");
 TestInvalid("test {param}? --flag", "modifier on positional");
-TestInvalid("build {src}* {dst}", "repeated not at end");
-
-// Conflicting semantics
-TestInvalid("test {file}* {other}", "parameter after repeated");
-TestInvalid("run {args}* --flag", "option after repeated positional");
-TestInvalid("exec {cmd}* {env} {*rest}", "multiple arrays");
-TestInvalid("deploy {*all} {more}", "parameter after catch-all");
-
-// Duplicate parameters
-TestInvalid("deploy {env} {env}", "duplicate parameter");
-TestInvalid("build {src} --output {src}", "duplicate parameter");
-TestInvalid("test {file} {file}*", "duplicate parameter");
 
 WriteLine
 (
   """
 
-  ========================================
+  Type Constraint Errors:
+  -----------------------
   """
 );
-WriteLine($"Summary: {passed} passed, {failed} failed");
+TestInvalid("test {value:invalid}", "Invalid type constraint");
+TestInvalid("run {id:integer}", "Invalid type constraint");  // Should be 'int'
+TestInvalid("calc {num:float}", "Invalid type constraint");   // Not supported yet
+
+WriteLine
+(
+  $"""
+
+  ========================================
+  Summary: {passed} passed, {failed} failed
+  """
+);
 
 if (failed > 0)
 {
@@ -131,53 +189,4 @@ if (failed > 0)
     );
 }
 
-return failed > 0 ? 1 : 0;
-
-void TestValid(string pattern)
-{
-    Write($"  {pattern,-45} ");
-    try
-    {
-        CompiledRoute route = RoutePatternParser.Parse(pattern);
-        WriteLine("✓ Parsed");
-        passed++;
-    }
-    catch (Exception ex)
-    {
-        WriteLine("✗ SHOULD HAVE PARSED!");
-        WriteLine($"    Error: {ex.Message.Split('\n')[0]}");
-        failed++;
-    }
-}
-
-void TestInvalid(string pattern, string expectedError)
-{
-    Write($"  {pattern,-35} ");
-    try
-    {
-        CompiledRoute route = RoutePatternParser.Parse(pattern);
-        WriteLine("✗ SHOULD HAVE FAILED!");
-        WriteLine($"    Expected: {expectedError}");
-        failed++;
-    }
-    catch (Exception ex)
-    {
-        // Check the full error message, not just the first line
-        bool hasExpectedError = ex.Message.Contains(expectedError, StringComparison.OrdinalIgnoreCase);
-
-        if (hasExpectedError)
-        {
-            WriteLine("✓ Failed correctly");
-            passed++;
-        }
-        else
-        {
-            WriteLine("⚠ Failed (different error)");
-            WriteLine($"    Expected: {expectedError}");
-            string firstError = ex.Message.Split('\n')[0];
-            WriteLine($"    Actual:   {firstError}");
-            // Still counts as passed since it failed, just not with expected message
-            passed++;
-        }
-    }
-}
+Environment.Exit(failed > 0 ? 1 : 0);

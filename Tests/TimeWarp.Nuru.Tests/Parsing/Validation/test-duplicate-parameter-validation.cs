@@ -74,9 +74,9 @@ TestDuplicateDetection(
     "Positional and option with value");
 
 TestDuplicateDetection(
-    "run {name} --name {value}",
+    "run {name} --name {name}",
     true,
-    "Same name different contexts");
+    "Same name in positional and option param");
 
 // Test cases that should NOT detect duplicates
 TestDuplicateDetection(
@@ -88,6 +88,11 @@ TestDuplicateDetection(
     "build {source} --output {dest}",
     false,
     "Different names pos/opt");
+
+TestDuplicateDetection(
+    "run {name} --name {value}",
+    false,
+    "Option param has different name");
 
 TestDuplicateDetection(
     "test --input {file} --output {result}",

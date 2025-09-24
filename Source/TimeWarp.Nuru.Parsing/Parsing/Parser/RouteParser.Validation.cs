@@ -6,9 +6,9 @@ using System.Collections.Generic;
 public sealed partial class RouteParser
 {
   /// <summary>
-  /// Refactored validation method with reduced complexity and better organization.
+  /// Validates the semantic correctness of the parsed route syntax tree.
   /// </summary>
-  private void ValidateSemanticsRefactored(RouteSyntax ast)
+  private void ValidateSemantics(RouteSyntax ast)
   {
     var context = new ValidationContext();
 

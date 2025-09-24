@@ -6,16 +6,26 @@
 using TimeWarp.Nuru.Parsing;
 using static System.Console;
 
-WriteLine("Testing Route Pattern Parser Validation");
-WriteLine("========================================");
-WriteLine();
+WriteLine
+(
+  """
+  Testing Route Pattern Parser Validation
+  ========================================
+
+  """
+);
 
 int passed = 0;
 int failed = 0;
 
 // Test valid patterns that should parse successfully
-WriteLine("Valid Patterns (should parse):");
-WriteLine("-------------------------------");
+WriteLine
+(
+  """
+  Valid Patterns (should parse):
+  -------------------------------
+  """
+);
 
 TestValid("status");
 TestValid("git commit");
@@ -27,20 +37,28 @@ TestValid("build --verbose");
 TestValid("build --config {mode}");
 TestValid("deploy {env|Environment} --dry-run,-d|Preview");
 
-WriteLine();
-WriteLine("Invalid Patterns (should fail):");
-WriteLine("-------------------------------");
-WriteLine();
+WriteLine
+(
+  """
 
-// Basic syntax errors
-WriteLine("Syntax Errors:");
+  Invalid Patterns (should fail):
+  -------------------------------
+
+  Syntax Errors:
+  """
+);
 TestInvalid("prompt <input>", "Invalid parameter syntax");
 TestInvalid("deploy {env", "Expected '}'");
 TestInvalid("build --config {", "Expected parameter name");
 TestInvalid("test }", "Unexpected '}'");
 
-WriteLine();
-WriteLine("Modifier Errors:");
+WriteLine
+(
+  """
+
+  Modifier Errors:
+  """
+);
 
 // Double modifiers
 TestInvalid("--flag??", "duplicate modifier");
@@ -67,8 +85,13 @@ TestInvalid("test {file*?}", "wrong modifier order");
 TestInvalid("build {?target}", "invalid position");
 TestInvalid("run {*?args}", "invalid position");
 
-WriteLine();
-WriteLine("Semantic Errors:");
+WriteLine
+(
+  """
+
+  Semantic Errors:
+  """
+);
 
 // Invalid combinations
 TestInvalid("--env? {*var}", "asterisk in wrong place");
@@ -87,15 +110,25 @@ TestInvalid("deploy {env} {env}", "duplicate parameter");
 TestInvalid("build {src} --output {src}", "duplicate parameter");
 TestInvalid("test {file} {file}*", "duplicate parameter");
 
-WriteLine();
-WriteLine("========================================");
+WriteLine
+(
+  """
+
+  ========================================
+  """
+);
 WriteLine($"Summary: {passed} passed, {failed} failed");
 
 if (failed > 0)
 {
-    WriteLine();
-    WriteLine("Note: Some error messages are generic.");
-    WriteLine("Parser could be improved to provide more specific error messages.");
+    WriteLine
+    (
+      """
+
+      Note: Some error messages are generic.
+      Parser could be improved to provide more specific error messages.
+      """
+    );
 }
 
 return failed > 0 ? 1 : 0;

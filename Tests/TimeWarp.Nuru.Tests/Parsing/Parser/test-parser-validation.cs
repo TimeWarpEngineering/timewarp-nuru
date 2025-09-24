@@ -162,8 +162,8 @@ void TestInvalid(string pattern, string expectedError)
     }
     catch (Exception ex)
     {
-        string firstError = ex.Message.Split('\n')[0];
-        bool hasExpectedError = firstError.Contains(expectedError, StringComparison.OrdinalIgnoreCase);
+        // Check the full error message, not just the first line
+        bool hasExpectedError = ex.Message.Contains(expectedError, StringComparison.OrdinalIgnoreCase);
 
         if (hasExpectedError)
         {
@@ -174,6 +174,7 @@ void TestInvalid(string pattern, string expectedError)
         {
             WriteLine("⚠ Failed (different error)");
             WriteLine($"    Expected: {expectedError}");
+            string firstError = ex.Message.Split('\n')[0];
             WriteLine($"    Actual:   {firstError}");
             // Still counts as passed since it failed, just not with expected message
             passed++;

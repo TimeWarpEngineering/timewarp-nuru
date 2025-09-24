@@ -167,12 +167,12 @@ The double dash `--` serves as an end-of-options marker (POSIX standard) that si
 
 Since Nuru's goal includes intercepting existing CLI commands, we need to handle common real-world patterns:
 
-#### Pattern 1: Repeated Options (SHOULD SUPPORT)
+#### Pattern 1: Repeated Options (IMPLEMENTED)
 
 Most common pattern in real CLIs. Same flag appears multiple times:
 
 ```csharp
-// Proposed syntax: {param}* indicates array from repeated flags
+// Syntax: {param}* indicates array from repeated flags
 .AddRoute("docker build --build-arg {args}* {path}",
     (string[] args, string path) => ...)
 // Intercepts: docker build --build-arg KEY1=val1 --build-arg KEY2=val2 .

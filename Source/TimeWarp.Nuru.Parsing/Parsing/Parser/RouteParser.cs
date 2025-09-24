@@ -5,7 +5,7 @@ using TimeWarp.Nuru.Parsing;
 /// <summary>
 /// Recursive descent parser for route patterns.
 /// </summary>
-public sealed class RouteParser : IRouteParser
+public sealed partial class RouteParser : IRouteParser
 {
   private readonly ILogger<RouteParser> Logger;
   private readonly ILoggerFactory? LoggerFactory;
@@ -49,7 +49,8 @@ public sealed class RouteParser : IRouteParser
       var ast = new RouteSyntax(segments);
 
       // Perform semantic validation on the complete AST
-      ValidateSemantics(ast);
+      // Switch to refactored validation for testing
+      ValidateSemanticsRefactored(ast);
 
       if (Logger.IsEnabled(Microsoft.Extensions.Logging.LogLevel.Debug) && Errors.Count == 0)
       {

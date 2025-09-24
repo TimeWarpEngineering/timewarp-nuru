@@ -1,5 +1,5 @@
 #!/usr/bin/dotnet --
-#:project ../../../Source/TimeWarp.Nuru.Parsing/TimeWarp.Nuru.Parsing.csproj
+#:project ../../../../Source/TimeWarp.Nuru.Parsing/TimeWarp.Nuru.Parsing.csproj
 
 #pragma warning disable CA1031 // Do not catch general exception types - OK for tests
 #pragma warning disable CA1307 // Specify StringComparison

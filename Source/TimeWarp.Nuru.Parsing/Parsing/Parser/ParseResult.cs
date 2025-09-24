@@ -1,5 +1,7 @@
 namespace TimeWarp.Nuru.Parsing;
 
+using TimeWarp.Nuru.Parsing.Validation;
+
 /// <summary>
 /// Represents the result of a parsing operation.
 /// </summary>
@@ -15,9 +17,13 @@ public class ParseResult<T>
   /// </summary>
   public bool Success { get; init; }
   /// <summary>
-  /// List of errors encountered during parsing.
+  /// List of parse errors encountered during parsing.
   /// </summary>
   public IReadOnlyList<ParseError> Errors { get; init; } = [];
+  /// <summary>
+  /// List of semantic errors encountered during validation.
+  /// </summary>
+  public IReadOnlyList<SemanticError> SemanticErrors { get; init; } = [];
 }
 
 /// <summary>

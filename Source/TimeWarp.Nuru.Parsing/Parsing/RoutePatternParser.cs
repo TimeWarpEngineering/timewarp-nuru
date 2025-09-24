@@ -1,7 +1,5 @@
 namespace TimeWarp.Nuru.Parsing;
 
-using TimeWarp.Nuru.Parsing;
-
 /// <summary>
 /// Parses route pattern strings into CompiledRoute objects.
 /// </summary>
@@ -35,8 +33,10 @@ public static class RoutePatternParser
     if (!result.Success)
     {
       // Format error messages for the exception
-      string[] errorMessages = [.. result.Errors.Select(FormatError)];
-      string combinedMessage = string.Join("\n", errorMessages);
+      var allErrors = new List<string>();
+      allErrors.AddRange(result.Errors.Select(FormatError));
+      allErrors.AddRange(result.SemanticErrors.Select(FormatSemanticError));
+      string combinedMessage = string.Join("\n", allErrors);
 
       throw new ArgumentException($"Invalid route pattern '{routePattern}': \n{combinedMessage}");
     }
@@ -50,11 +50,13 @@ public static class RoutePatternParser
   /// <param name="routePattern">The route pattern to parse.</param>
   /// <param name="compiledRoute">The compiled route if successful.</param>
   /// <param name="errors">The parsing errors if unsuccessful.</param>
+  /// <param name="semanticErrors">The semantic errors if unsuccessful.</param>
   /// <returns>True if parsing was successful, false otherwise.</returns>
-  public static bool TryParse(string routePattern, out CompiledRoute? compiledRoute, out IReadOnlyList<ParseError> errors)
+  public static bool TryParse(string routePattern, out CompiledRoute? compiledRoute, out IReadOnlyList<ParseError> errors, out IReadOnlyList<SemanticError> semanticErrors)
   {
     compiledRoute = null;
     errors = [];
+    semanticErrors = [];
 
     if (routePattern is null)
     {
@@ -67,6 +69,7 @@ public static class RoutePatternParser
     var compiler = new RouteCompiler();
     ParseResult<RouteSyntax> result = parser.Parse(routePattern);
     errors = result.Errors;
+    semanticErrors = result.SemanticErrors;
 
     if (result.Success)
     {
@@ -86,5 +89,10 @@ public static class RoutePatternParser
     }
 
     return message;
+  }
+
+  private static string FormatSemanticError(SemanticError error)
+  {
+    return $"Semantic error at position {error.Position}: {error.Message}";
   }
 }

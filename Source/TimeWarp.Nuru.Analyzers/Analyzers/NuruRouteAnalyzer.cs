@@ -89,7 +89,8 @@ public class NuruRouteAnalyzer : IIncrementalGenerator
     bool parseSuccess = RoutePatternParser.TryParse(
         routeInfo.Pattern,
         out _,
-        out IReadOnlyList<ParseError> parseErrors);
+        out IReadOnlyList<ParseError> parseErrors,
+        out IReadOnlyList<SemanticError> semanticErrors);
 
     if (!parseSuccess)
     {
@@ -97,6 +98,16 @@ public class NuruRouteAnalyzer : IIncrementalGenerator
       foreach (ParseError error in parseErrors)
       {
         Diagnostic? diagnostic = MapParseErrorToDiagnostic(error, routeInfo);
+        if (diagnostic is not null)
+        {
+          diagnostics.Add(diagnostic);
+        }
+      }
+
+      // Map semantic errors to our diagnostics
+      foreach (SemanticError error in semanticErrors)
+      {
+        Diagnostic? diagnostic = MapSemanticErrorToDiagnostic(error, routeInfo);
         if (diagnostic is not null)
         {
           diagnostics.Add(diagnostic);
@@ -164,6 +175,42 @@ public class NuruRouteAnalyzer : IIncrementalGenerator
       // Generic errors we don't map to specific diagnostics
       ParseErrorType.Generic => null,
 
+      // Default case for any new error types
+      _ => null
+    };
+  }
+
+  private static Diagnostic? MapSemanticErrorToDiagnostic(SemanticError error, RouteInfo routeInfo)
+  {
+    // Map semantic error types to diagnostic codes
+    return error.ErrorType switch
+    {
+      SemanticErrorType.DuplicateParameterNames => Diagnostic.Create(
+          DiagnosticDescriptors.DuplicateParameterNames,
+          routeInfo.Location,
+          error.Message),
+      SemanticErrorType.ConflictingOptionalParameters => Diagnostic.Create(
+          DiagnosticDescriptors.ConflictingOptionalParameters,
+          routeInfo.Location,
+          error.Message),
+      SemanticErrorType.CatchAllNotAtEnd => Diagnostic.Create(
+          DiagnosticDescriptors.CatchAllNotAtEnd,
+          routeInfo.Location,
+          error.Message),
+      SemanticErrorType.MixedCatchAllWithOptional => Diagnostic.Create(
+          DiagnosticDescriptors.MixedCatchAllWithOptional,
+          routeInfo.Location,
+          error.Message),
+      SemanticErrorType.DuplicateOptionAlias => Diagnostic.Create(
+          DiagnosticDescriptors.DuplicateOptionAlias,
+          routeInfo.Location,
+          error.Message),
+      // Semantic errors that don't have specific diagnostics yet
+      SemanticErrorType.OptionalBeforeRequired => null,
+      SemanticErrorType.InvalidEndOfOptionsSeparator => null,
+      SemanticErrorType.OptionsAfterEndOfOptionsSeparator => null,
+      SemanticErrorType.ParameterAfterCatchAll => null,
+      SemanticErrorType.ParameterAfterRepeated => null,
       // Default case for any new error types
       _ => null
     };

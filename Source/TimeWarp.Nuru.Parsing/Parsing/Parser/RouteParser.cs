@@ -1,7 +1,5 @@
 namespace TimeWarp.Nuru.Parsing;
 
-using TimeWarp.Nuru.Parsing;
-
 /// <summary>
 /// Recursive descent parser for route patterns.
 /// </summary>
@@ -48,24 +46,28 @@ public sealed partial class RouteParser : IRouteParser
       List<SegmentSyntax> segments = ParsePattern();
       var ast = new RouteSyntax(segments);
 
-      // Perform semantic validation on the complete AST
-      ValidateSemantics(ast);
+      // Perform semantic validation using the SemanticValidator
+      var validator = new SemanticValidator();
+      IReadOnlyList<SemanticError> semanticErrors = validator.Validate(ast);
 
-      if (Logger.IsEnabled(Microsoft.Extensions.Logging.LogLevel.Debug) && Errors.Count == 0)
+      if (Logger.IsEnabled(Microsoft.Extensions.Logging.LogLevel.Debug) && Errors.Count == 0 && semanticErrors.Count == 0)
       {
         LoggerMessages.DumpingAst(Logger, DumpAst(ast), null);
       }
 
-      return Errors.Count == 0
+      return (Errors.Count == 0 && semanticErrors.Count == 0)
         ? new ParseResult<RouteSyntax>
         {
           Value = ast,
-          Success = true
+          Success = true,
+          Errors = [],
+          SemanticErrors = []
         }
         : new ParseResult<RouteSyntax>
         {
           Success = false,
-          Errors = Errors
+          Errors = Errors,
+          SemanticErrors = semanticErrors
         };
     }
     catch (ParseException)

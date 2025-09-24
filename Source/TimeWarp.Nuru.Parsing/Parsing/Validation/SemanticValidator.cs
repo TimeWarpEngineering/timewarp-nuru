@@ -1,15 +1,23 @@
-namespace TimeWarp.Nuru.Parsing;
+namespace TimeWarp.Nuru.Parsing.Validation;
 
-using System.Collections.Generic;
-
-// Partial class containing the refactored validation logic
-public sealed partial class RouteParser
+/// <summary>
+/// Validates the semantic correctness of route patterns.
+/// Checks for logical errors that are syntactically valid but semantically incorrect.
+/// </summary>
+public sealed class SemanticValidator
 {
+  private readonly List<SemanticError> SemanticErrors = [];
+
   /// <summary>
-  /// Validates the semantic correctness of the parsed route syntax tree.
+  /// Validates a route syntax tree for semantic correctness.
   /// </summary>
-  private void ValidateSemantics(RouteSyntax ast)
+  /// <param name="ast">The syntax tree to validate.</param>
+  /// <returns>List of semantic errors found, empty if valid.</returns>
+  public IReadOnlyList<SemanticError> Validate(RouteSyntax ast)
   {
+    ArgumentNullException.ThrowIfNull(ast);
+
+    SemanticErrors.Clear();
     var context = new ValidationContext();
 
     // First pass: collect all segments and their metadata
@@ -22,19 +30,8 @@ public sealed partial class RouteParser
     ValidateEndOfOptionsSeparator(context);
     ValidateDuplicateOptionAliases(context);
     ValidateMixedCatchAllWithOptional(context);
-  }
 
-  private sealed class ValidationContext
-  {
-    public Dictionary<string, List<SegmentSyntax>> ParametersByName { get; } = [];
-    public Dictionary<string, OptionSyntax> OptionAliases { get; } = [];
-    public List<ParameterSyntax> Parameters { get; } = [];
-    public List<OptionSyntax> Options { get; } = [];
-    public List<LiteralSyntax> Literals { get; } = [];
-    public List<SegmentSyntax> AllSegments { get; } = [];
-    public int? EndOfOptionsIndex { get; set; }
-    public bool HasOptionalParameters { get; set; }
-    public bool HasCatchAllParameter { get; set; }
+    return [.. SemanticErrors];
   }
 
   private static void CollectSegmentMetadata(RouteSyntax ast, ValidationContext context)
@@ -77,6 +74,7 @@ public sealed partial class RouteParser
               context.ParametersByName[option.Parameter.Name] = paramList;
             }
 
+            // Store the option, not just its parameter, for better error messages
             paramList.Add(option);
           }
 
@@ -122,7 +120,7 @@ public sealed partial class RouteParser
         AddError($"Duplicate parameter name '{kvp.Key}' found in {firstLocation} and {secondLocation}",
           second.Position,
           second.Length,
-          ParseErrorType.DuplicateParameterNames);
+          SemanticErrorType.DuplicateParameterNames);
       }
     }
   }
@@ -143,7 +141,7 @@ public sealed partial class RouteParser
             AddError($"Multiple consecutive optional positional parameters create ambiguity: {lastOptionalParam.Name}? {param.Name}?",
               param.Position,
               param.Length,
-              ParseErrorType.ConflictingOptionalParameters);
+              SemanticErrorType.ConflictingOptionalParameters);
           }
 
           lastOptionalParam = param;
@@ -182,7 +180,7 @@ public sealed partial class RouteParser
             AddError($"Catch-all parameter '{param.Name}' must be the last positional segment in the route",
               param.Position,
               param.Length,
-              ParseErrorType.CatchAllNotAtEnd);
+              SemanticErrorType.CatchAllNotAtEnd);
             break;
           }
         }
@@ -207,7 +205,7 @@ public sealed partial class RouteParser
         AddError("Options cannot appear after '--' separator",
           option.Position,
           option.Length,
-          ParseErrorType.InvalidParameterSyntax);
+          SemanticErrorType.OptionsAfterEndOfOptionsSeparator);
       }
     }
 
@@ -217,7 +215,7 @@ public sealed partial class RouteParser
       AddError("End-of-options separator '--' must be followed by a catch-all parameter",
         separator.Position,
         separator.Length,
-        ParseErrorType.InvalidParameterSyntax);
+        SemanticErrorType.InvalidEndOfOptionsSeparator);
     }
     else if (index + 1 < context.AllSegments.Count)
     {
@@ -227,7 +225,7 @@ public sealed partial class RouteParser
         AddError("End-of-options separator '--' must be followed by a catch-all parameter",
           separator.Position,
           separator.Length,
-          ParseErrorType.InvalidParameterSyntax);
+          SemanticErrorType.InvalidEndOfOptionsSeparator);
       }
     }
   }
@@ -246,7 +244,7 @@ public sealed partial class RouteParser
           AddError($"Duplicate option short form '-{option.ShortForm}' already used by '{existing.LongForm ?? existing.ShortForm}'",
             option.Position,
             option.Length,
-            ParseErrorType.DuplicateOptionAlias);
+            SemanticErrorType.DuplicateOptionAlias);
         }
         else
         {
@@ -264,7 +262,12 @@ public sealed partial class RouteParser
       AddError("Cannot mix optional parameters with catch-all parameter in the same route",
         0,
         0,
-        ParseErrorType.MixedCatchAllWithOptional);
+        SemanticErrorType.MixedCatchAllWithOptional);
     }
+  }
+
+  private void AddError(string message, int position, int length, SemanticErrorType errorType)
+  {
+    SemanticErrors.Add(new SemanticError(message, position, length, errorType));
   }
 }

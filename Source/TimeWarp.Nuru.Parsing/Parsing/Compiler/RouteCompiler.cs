@@ -130,7 +130,7 @@ internal sealed class RouteCompiler : SyntaxVisitor<object?>
         parameterName: valueParameterName,
         alternateForm: optionShortSyntax,
         description: option.Description,
-        isOptional: option.IsOptional,
+        isOptional: option.IsOptional || !expectsValue,  // Boolean flags are always optional
         isRepeated: option.Parameter?.IsRepeated ?? false
       );
 

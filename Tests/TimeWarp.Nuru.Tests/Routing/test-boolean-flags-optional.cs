@@ -9,11 +9,10 @@ using static System.Console;
 WriteLine
 (
   """
-  Testing Boolean Flags (Currently NOT Optional)
-  ================================================
-  Pattern: --verbose --debug
-  Current Behavior: ALL boolean flags in pattern must be present
-  Target Behavior: Boolean flags should be optional
+  Testing Boolean Flags
+  =====================
+  Pattern: test --verbose --debug
+  Expectation: Boolean flags should always be optional
   """
 );
 
@@ -38,11 +37,11 @@ WriteLine
 try
 {
     await app.RunAsync(["test"]);
-    WriteLine("✓ PASS: Works as expected");
 }
 catch (Exception ex)
 {
     WriteLine($"✗ FAILED: {ex.Message}");
+    WriteLine("  Boolean flags should be optional per design");
 }
 
 WriteLine
@@ -56,11 +55,11 @@ WriteLine
 try
 {
     await app.RunAsync(["test", "--verbose"]);
-    WriteLine("✓ PASS: Works as expected");
 }
 catch (Exception ex)
 {
     WriteLine($"✗ FAILED: {ex.Message}");
+    WriteLine("  Boolean flags should be optional per design");
 }
 
 WriteLine
@@ -74,11 +73,11 @@ WriteLine
 try
 {
     await app.RunAsync(["test", "--debug"]);
-    WriteLine("✓ PASS: Works as expected");
 }
 catch (Exception ex)
 {
     WriteLine($"✗ FAILED: {ex.Message}");
+    WriteLine("  Boolean flags should be optional per design");
 }
 
 WriteLine
@@ -92,7 +91,6 @@ WriteLine
 try
 {
     await app.RunAsync(["test", "--verbose", "--debug"]);
-    WriteLine("✓ PASS: Works as expected");
 }
 catch (Exception ex)
 {
@@ -105,8 +103,7 @@ WriteLine
 
   ========================================
   Summary:
-  Boolean flags are currently NOT optional - ALL flags in the pattern must be present.
-  Only Test 4 (with all flags) actually executes the handler.
-  Tests 1-3 fail to match the route.
+  Per design documentation, boolean flags should always be optional.
+  Tests demonstrate that all flags in the pattern must be present.
   """
 );

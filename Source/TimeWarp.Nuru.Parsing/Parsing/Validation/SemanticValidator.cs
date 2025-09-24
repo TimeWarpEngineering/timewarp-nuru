@@ -25,6 +25,7 @@ public sealed class SemanticValidator
 
     // Run validation rules
     ValidateDuplicateParameters(context);
+    ValidateOptionalBeforeRequired(context);
     ValidateConsecutiveOptionalParameters(context);
     ValidateCatchAllPosition(context);
     ValidateEndOfOptionsSeparator(context);
@@ -121,6 +122,40 @@ public sealed class SemanticValidator
           second.Position,
           second.Length,
           SemanticErrorType.DuplicateParameterNames);
+      }
+    }
+  }
+
+  // NURU007: Check for optional parameters before required ones
+  private void ValidateOptionalBeforeRequired(ValidationContext context)
+  {
+    bool foundOptional = false;
+    ParameterSyntax? lastOptionalParam = null;
+
+    foreach (SegmentSyntax segment in context.AllSegments)
+    {
+      if (segment is ParameterSyntax param && !param.IsCatchAll)
+      {
+        if (param.IsOptional)
+        {
+          foundOptional = true;
+          lastOptionalParam = param;
+        }
+        else if (foundOptional)
+        {
+          // Found a required parameter after an optional one
+          AddError($"Optional parameter '{lastOptionalParam!.Name}?' cannot appear before required parameter '{param.Name}'",
+            lastOptionalParam.Position,
+            lastOptionalParam.Length,
+            SemanticErrorType.OptionalBeforeRequired);
+          break; // Only report the first occurrence
+        }
+      }
+      else if (segment is OptionSyntax || segment is LiteralSyntax)
+      {
+        // Reset when we hit non-parameter segments (options or literals break the positional sequence)
+        foundOptional = false;
+        lastOptionalParam = null;
       }
     }
   }

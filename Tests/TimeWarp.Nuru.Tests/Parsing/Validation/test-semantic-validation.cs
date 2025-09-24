@@ -94,8 +94,8 @@ WriteLine
   ------------------------
   """
 );
-// These tests would check optional before required validation once implemented
-// TestInvalid("deploy {env?} {tag}", "optional before required");
+// Test optional before required validation
+TestInvalid("deploy {env?} {tag}", "optional before required");
 
 WriteLine
 (

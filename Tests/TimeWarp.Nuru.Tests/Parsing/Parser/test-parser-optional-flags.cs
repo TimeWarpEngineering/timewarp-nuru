@@ -1,5 +1,5 @@
 #!/usr/bin/dotnet --
-#:project ../../../Source/TimeWarp.Nuru.Parsing/TimeWarp.Nuru.Parsing.csproj
+#:project ../../../../Source/TimeWarp.Nuru.Parsing/TimeWarp.Nuru.Parsing.csproj
 
 #pragma warning disable CA1031 // Do not catch general exception types - OK for tests
 
@@ -25,10 +25,6 @@ void TestPattern(string pattern, bool shouldSucceed, string description)
         if (shouldSucceed)
         {
             WriteLine("✓ Parsed");
-
-            // Check if the route has optional flags
-            // This will need to be implemented
-            // For now, just show it parsed
         }
         else
         {

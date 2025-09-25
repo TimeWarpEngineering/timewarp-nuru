@@ -128,13 +128,30 @@ internal static class RouteBasedCommandResolver
         seenEndOfOptions = true;
       }
 
-      // For catch-all segment (must be last), consume all remaining
+      // For catch-all segment (must be last), consume positional args until we hit an option
       if (segment is ParameterMatcher param && param.IsCatchAll)
       {
-        consumedArgs = args.Length;
-        if (i < args.Length)
+        // Collect positional arguments until we encounter an option
+        var catchAllArgs = new List<string>();
+        int j = i; // Start from current position in args
+        while (j < args.Length)
         {
-          string catchAllValue = string.Join(CommonStrings.Space, args.Skip(i));
+          string arg = args[j];
+          // Stop if we encounter an option (starts with - or --)
+          if (arg.StartsWith(CommonStrings.SingleDash, StringComparison.Ordinal))
+          {
+            break;
+          }
+
+          catchAllArgs.Add(arg);
+          j++;
+        }
+
+        consumedArgs = i + catchAllArgs.Count;
+
+        if (catchAllArgs.Count > 0)
+        {
+          string catchAllValue = string.Join(CommonStrings.Space, catchAllArgs);
           extractedValues[param.Name] = catchAllValue;
           LoggerMessages.CatchAllParameterCaptured(logger, param.Name, catchAllValue, null);
         }

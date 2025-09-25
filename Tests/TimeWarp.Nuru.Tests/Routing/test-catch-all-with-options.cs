@@ -31,7 +31,7 @@ builder.AddRoute("kubectl get {*resources} --namespace? {ns?} --output? {format?
 });
 
 // Another example: git add with options
-builder.AddRoute("git add {*files} --force? --dry-run?",
+builder.AddRoute("git add {*files} --force --dry-run",
     (string[] files, bool force, bool dryRun) =>
 {
     WriteLine("✓ git add:");

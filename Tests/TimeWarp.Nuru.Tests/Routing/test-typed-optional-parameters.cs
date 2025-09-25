@@ -63,7 +63,7 @@ builder.AddRoute("build {project} --threads? {count:int?} --config? {mode?}",
     (string project, int? count, string? mode) =>
 {
     WriteLine($"✓ Building {project}:");
-    WriteLine($"  Threads: {(count.HasValue ? count.Value.ToString() : "default")}");
+    WriteLine($"  Threads: {(count.HasValue ? count.Value.ToString(System.Globalization.CultureInfo.InvariantCulture) : "default")}");
     WriteLine($"  Config: {mode ?? "Release"}");
 });
 

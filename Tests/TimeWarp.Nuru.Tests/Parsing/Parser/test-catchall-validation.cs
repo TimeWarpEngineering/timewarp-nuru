@@ -1,5 +1,5 @@
 #!/usr/bin/dotnet --
-#:project ../../../Source/TimeWarp.Nuru.Parsing/TimeWarp.Nuru.Parsing.csproj
+#:project ../../../../Source/TimeWarp.Nuru.Parsing/TimeWarp.Nuru.Parsing.csproj
 
 using static System.Console;
 using TimeWarp.Nuru.Parsing;

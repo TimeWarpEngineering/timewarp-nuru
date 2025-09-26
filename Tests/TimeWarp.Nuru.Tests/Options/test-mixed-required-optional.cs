@@ -69,14 +69,14 @@ WriteLine
   Expected: No match (missing required --env)
   """
 );
-try
+int result = await app.RunAsync(["deploy", "--version", "v1.0"]);
+if (result != 0)
 {
-    await app.RunAsync(["deploy", "--version", "v1.0"]);
-    WriteLine("✗ UNEXPECTED: Should have failed - missing required --env!");
+    WriteLine("✓ Correctly failed - missing required --env");
 }
-catch (Exception ex)
+else
 {
-    WriteLine($"✓ Correctly failed: {ex.Message}");
+    WriteLine("✗ UNEXPECTED: Should have failed!");
 }
 
 WriteLine
@@ -87,15 +87,7 @@ WriteLine
   Expected: Match with env="staging", version=null, dryRun=true
   """
 );
-try
-{
-    await app.RunAsync(["deploy", "--env", "staging", "--dry-run"]);
-}
-catch (Exception ex)
-{
-    WriteLine($"✗ FAILED: {ex.Message}");
-    WriteLine("  Currently fails because --version is incorrectly required");
-}
+await app.RunAsync(["deploy", "--env", "staging", "--dry-run"]);
 
 WriteLine();
 WriteLine("========================================");

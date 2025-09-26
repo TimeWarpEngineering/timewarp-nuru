@@ -6,4 +6,10 @@
     <!-- Suppress localization warnings for test projects -->
     <NoWarn>$(NoWarn);CA1303;CA2007;CA1031</NoWarn>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Make Shouldly available for all test projects -->
+    <PackageReference Include="Shouldly" />
+    <Using Include="Shouldly" />
+  </ItemGroup>
 </Project>

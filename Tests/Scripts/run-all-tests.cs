@@ -45,10 +45,8 @@ WriteLine();
 // Discover test files
 var testCategories = new Dictionary<string, List<string>>
 {
-    ["Lexer"] = [.. GetTestFiles(Path.Combine(testsRoot, "SingleFileTests/Lexer")),
-                 .. GetTestFiles(Path.Combine(testsRoot, "TimeWarp.Nuru.Tests/Lexer"))],
-    ["Parser"] = [.. GetTestFiles(Path.Combine(testsRoot, "SingleFileTests/Parser")),
-                  .. GetTestFiles(Path.Combine(testsRoot, "TimeWarp.Nuru.Tests/Parsing/Parser"))],
+    ["Lexer"] = [.. GetTestFiles(Path.Combine(testsRoot, "TimeWarp.Nuru.Tests/Lexer"))],
+    ["Parser"] = [.. GetTestFiles(Path.Combine(testsRoot, "TimeWarp.Nuru.Tests/Parsing/Parser"))],
     ["Validation"] = GetTestFiles(Path.Combine(testsRoot, "TimeWarp.Nuru.Tests/Parsing/Validation")),
     ["Routing"] = [.. GetTestFiles(Path.Combine(testsRoot, "SingleFileTests/Routing")),
                    .. GetTestFiles(Path.Combine(testsRoot, "TimeWarp.Nuru.Tests/Routing"))],

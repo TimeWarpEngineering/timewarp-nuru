@@ -6,11 +6,6 @@ namespace TimeWarp.Nuru.CommandResolver;
 /// </summary>
 public class CommandExecutor
 {
-  private static readonly JsonSerializerOptions JsonOptions = new()
-  {
-    WriteIndented = true,
-    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-  };
 
   private readonly IServiceProvider ServiceProvider;
   private readonly ITypeConverterRegistry TypeConverterRegistry;
@@ -122,7 +117,7 @@ public class CommandExecutor
     else
     {
       // Complex object - serialize to JSON for display
-      string json = JsonSerializer.Serialize(response, JsonOptions);
+      string json = JsonSerializer.Serialize(response, NuruJsonSerializerContext.Default.Options);
       NuruConsole.WriteLine(json);
     }
   }

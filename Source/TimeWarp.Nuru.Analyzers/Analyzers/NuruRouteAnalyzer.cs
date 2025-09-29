@@ -145,24 +145,53 @@ public class NuruRouteAnalyzer : IIncrementalGenerator
           e.Suggestion
         ),
 
-      UnbalancedBracesError e => Diagnostic.Create(
+      UnbalancedBracesError e =>
+        Diagnostic.Create
+        (
           DiagnosticDescriptors.UnbalancedBraces,
           routeInfo.Location,
-          e.Pattern),
+          e.Pattern
+        ),
 
-      InvalidOptionFormatError e => Diagnostic.Create(
+      InvalidOptionFormatError e =>
+        Diagnostic.Create
+        (
           DiagnosticDescriptors.InvalidOptionFormat,
           routeInfo.Location,
-          e.InvalidOption),
+          e.InvalidOption
+        ),
 
-      InvalidTypeConstraintError e => Diagnostic.Create(
+      InvalidTypeConstraintError e =>
+        Diagnostic.Create
+        (
           DiagnosticDescriptors.InvalidTypeConstraint,
           routeInfo.Location,
-          e.InvalidType),
+          e.InvalidType
+        ),
 
-      InvalidCharacterError => null,  // Not mapped to a specific diagnostic
+      InvalidCharacterError e =>
+        Diagnostic.Create
+        (
+          DiagnosticDescriptors.InvalidCharacter,
+          routeInfo.Location,
+          e.Character
+        ),
 
-      NullPatternError => null,  // Not mapped to a specific diagnostic
+      UnexpectedTokenError e =>
+        Diagnostic.Create
+        (
+          DiagnosticDescriptors.UnexpectedToken,
+          routeInfo.Location,
+          e.Expected,
+          e.Found
+        ),
+
+      NullPatternError =>
+        Diagnostic.Create
+        (
+          DiagnosticDescriptors.NullPattern,
+          routeInfo.Location
+        ),
 
       // Default case for any new error types
       _ => null
@@ -174,36 +203,91 @@ public class NuruRouteAnalyzer : IIncrementalGenerator
     // Map semantic error types to diagnostic codes using pattern matching
     return error switch
     {
-      DuplicateParameterNamesError e => Diagnostic.Create(
+      DuplicateParameterNamesError e =>
+        Diagnostic.Create
+        (
           DiagnosticDescriptors.DuplicateParameterNames,
           routeInfo.Location,
-          e.ParameterName),
+          e.ParameterName
+        ),
 
-      ConflictingOptionalParametersError e => Diagnostic.Create(
+      ConflictingOptionalParametersError e =>
+        Diagnostic.Create
+        (
           DiagnosticDescriptors.ConflictingOptionalParameters,
           routeInfo.Location,
-          string.Join(", ", e.ConflictingParameters)),
+          string.Join(", ", e.ConflictingParameters)
+        ),
 
-      CatchAllNotAtEndError e => Diagnostic.Create(
+      CatchAllNotAtEndError e =>
+        Diagnostic.Create
+        (
           DiagnosticDescriptors.CatchAllNotAtEnd,
           routeInfo.Location,
-          e.CatchAllParameter),
+          e.CatchAllParameter,
+          e.FollowingSegment
+        ),
 
-      MixedCatchAllWithOptionalError => Diagnostic.Create(
+      MixedCatchAllWithOptionalError e =>
+        Diagnostic.Create
+        (
           DiagnosticDescriptors.MixedCatchAllWithOptional,
-          routeInfo.Location),
+          routeInfo.Location,
+          string.Join(", ", e.OptionalParams),
+          e.CatchAllParam
+        ),
 
-      DuplicateOptionAliasError e => Diagnostic.Create(
+      DuplicateOptionAliasError e =>
+        Diagnostic.Create
+        (
           DiagnosticDescriptors.DuplicateOptionAlias,
           routeInfo.Location,
-          e.Alias),
+          e.Alias,
+          string.Join(", ", e.ConflictingOptions)
+        ),
 
-      // Semantic errors that don't have specific diagnostics yet
-      OptionalBeforeRequiredError => null,
-      InvalidEndOfOptionsSeparatorError => null,
-      OptionsAfterEndOfOptionsSeparatorError => null,
-      ParameterAfterCatchAllError => null,
-      ParameterAfterRepeatedError => null,
+      OptionalBeforeRequiredError e =>
+        Diagnostic.Create
+        (
+          DiagnosticDescriptors.OptionalBeforeRequired,
+          routeInfo.Location,
+          e.OptionalParam,
+          e.RequiredParam
+        ),
+
+      InvalidEndOfOptionsSeparatorError e =>
+        Diagnostic.Create
+        (
+          DiagnosticDescriptors.InvalidEndOfOptionsSeparator,
+          routeInfo.Location,
+          e.Reason
+        ),
+
+      OptionsAfterEndOfOptionsSeparatorError e =>
+        Diagnostic.Create
+        (
+          DiagnosticDescriptors.OptionsAfterEndOfOptionsSeparator,
+          routeInfo.Location,
+          e.Option
+        ),
+
+      ParameterAfterCatchAllError e =>
+        Diagnostic.Create
+        (
+          DiagnosticDescriptors.ParameterAfterCatchAll,
+          routeInfo.Location,
+          e.Parameter,
+          e.CatchAll
+        ),
+
+      ParameterAfterRepeatedError e =>
+        Diagnostic.Create
+        (
+          DiagnosticDescriptors.ParameterAfterRepeated,
+          routeInfo.Location,
+          e.Parameter,
+          e.RepeatedParam
+        ),
 
       // Default case for any new error types
       _ => null

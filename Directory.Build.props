@@ -1,8 +1,8 @@
 <Project>
   <PropertyGroup>
+    <RepositoryRoot>$(MSBuildThisFileDirectory)</RepositoryRoot>
     <!-- Enable Central Package Management -->
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
-    
     <!-- Package Metadata -->
     <Version>2.1.0-beta.11</Version>
     <Authors>Steven T. Cramer</Authors>
@@ -10,37 +10,38 @@
     <PackageLicenseExpression>Unlicense</PackageLicenseExpression>
     <PackageIcon>Logo.png</PackageIcon>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    
+
     <!-- Analyzer Settings -->
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <WarningLevel>5</WarningLevel>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <AnalysisMode>All</AnalysisMode>
     <AnalysisLevel>latest-all</AnalysisLevel>
-    
+
     <!-- Enable .NET Analyzers -->
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
-    
+
     <!-- Report analyzer issues in build output -->
     <ReportAnalyzer>true</ReportAnalyzer>
-    
+
     <!-- Fail build on analyzer warnings since TreatWarningsAsErrors is true -->
     <CodeAnalysisTreatWarningsAsErrors>true</CodeAnalysisTreatWarningsAsErrors>
-    
-    <!-- Use local packages directory instead of global cache -->    <RestorePackagesPath>$(MSBuildThisFileDirectory)LocalNuGetCache</RestorePackagesPath>
-    
+
+    <!-- Use local packages directory instead of global cache -->
+    <RestorePackagesPath>$(MSBuildThisFileDirectory)LocalNuGetCache</RestorePackagesPath>
+
     <!-- Common Project Settings -->
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
-    
+
     <!-- Suppress CA1812 - false positives for DI-instantiated classes -->
     <!-- Suppress CA1014 - We don't need CLS compliance for this library -->
     <!-- Suppress AOT warnings until we implement proper AOT support -->
     <NoWarn>$(NoWarn);CA1812;CA1014;IL2026;IL2067;IL2070;IL2075;IL3050;IL2104;IL3053</NoWarn>
   </PropertyGroup>
-  
+
   <ItemGroup>
     <!-- Code Analyzers -->
     <PackageReference Include="Roslynator.Analyzers" PrivateAssets="all" />

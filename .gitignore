@@ -424,3 +424,6 @@ LocalNuGetCache/
 
 # Test logs
 Tests/logs/
+
+# Agent workspace for temporary files
+.agent/workspace/

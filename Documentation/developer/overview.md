@@ -54,12 +54,12 @@ Architectural Vision
 
 ### Documentation Access Control
 
-| Role | Can Read | Can Write | Restrictions |
-|------|----------|-----------|-------------|
-| **Architect Mode** | All sections | Design, Roadmap | Only role that modifies Design |
-| **Reference Writer Mode** | Source code, Reference | Reference | MUST NOT read Design docs |
-| **Developer Mode** | All sections | Guides, Standards updates | Cannot modify Design or Reference |
-| **Implementation Mode** | All sections | Source code | Must follow Design, update Reference |
+| Role                      | Can Read               | Can Write                 | Restrictions                         |
+| ------------------------- | ---------------------- | ------------------------- | ------------------------------------ |
+| **Architect Mode**        | All sections           | Design, Roadmap           | Only role that modifies Design       |
+| **Reference Writer Mode** | Source code, Reference | Reference                 | MUST NOT read Design docs            |
+| **Developer Mode**        | All sections           | Guides, Standards updates | Cannot modify Design or Reference    |
+| **Implementation Mode**   | All sections           | Source code               | Must follow Design, update Reference |
 
 ## Key Principles
 
@@ -70,14 +70,10 @@ Architectural Vision
 
 ## Where to Find Information
 
-| Looking for... | Check section | Example |
-|----------------|---------------|----------|
-| How a feature actually works | Reference | Current route syntax |
-| Why something was designed a certain way | Design | Greenfield patterns philosophy |
-| What's coming next | Roadmap | Parser restructure plans |
-| Coding conventions | Standards | C# style guide |
-| How to implement a feature | Guides | Adding help to routes |
-
-## Conceptual Documentation
-
-The [Conceptual](./Conceptual/) folder contains deep-dive design documents that explore the "why" behind Nuru's approach. These bridge between high-level design and practical implementation.
+| Looking for...                           | Check section | Example                        |
+| ---------------------------------------- | ------------- | ------------------------------ |
+| How a feature actually works             | Reference     | Current route syntax           |
+| Why something was designed a certain way | Design        | Greenfield patterns philosophy |
+| What's coming next                       | Roadmap       | Parser restructure plans       |
+| Coding conventions                       | Standards     | C# style guide                 |
+| How to implement a feature               | Guides        | Adding help to routes          |

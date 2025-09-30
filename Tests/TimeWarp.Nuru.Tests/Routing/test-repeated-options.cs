@@ -1,8 +1,6 @@
 #!/usr/bin/dotnet --
 #:project ../../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
 
-#pragma warning disable CA1031 // Do not catch general exception types - OK for tests
-
 using TimeWarp.Nuru;
 using static System.Console;
 
@@ -11,18 +9,18 @@ WriteLine
   """
   Testing Repeated Options (--flag {value}*)
   ===========================================
-  Pattern: docker run --env {var}*
-  Expectation: Can specify --env multiple times
+  Pattern: docker run --env {vars}*
+  Expectation: --env is REQUIRED and can be specified multiple times
   """
 );
 
 NuruAppBuilder builder = new();
 
 // Test route with repeated option
-builder.AddRoute("docker run --env {var}*", (string[] vars) =>
+builder.AddRoute("docker run --env {vars}*", (string[] vars) =>
 {
     WriteLine($"✓ Docker run executed with {vars.Length} environment variables:");
-    foreach (var v in vars)
+    foreach (string v in vars)
     {
         WriteLine($"  - {v}");
     }
@@ -35,17 +33,17 @@ WriteLine
   """
 
   Test 1: docker run
-  Expected: Match with empty array
+  Expected: No match (--env is required)
   """
 );
-try
+int exitCode1 = await app.RunAsync(["docker", "run"]);
+if (exitCode1 == 1)
 {
-    await app.RunAsync(["docker", "run"]);
+    WriteLine("✓ PASSED: Correctly rejected - --env is required");
 }
-catch (Exception ex)
+else
 {
-    WriteLine($"✗ FAILED: {ex.Message}");
-    WriteLine("  Currently fails because * syntax not implemented yet");
+    WriteLine("✗ FAILED: Should not have matched without --env");
 }
 
 WriteLine
@@ -59,11 +57,11 @@ WriteLine
 try
 {
     await app.RunAsync(["docker", "run", "--env", "PATH=/usr/bin"]);
+    WriteLine("  (Handler output above shows success)");
 }
 catch (Exception ex)
 {
     WriteLine($"✗ FAILED: {ex.Message}");
-    WriteLine("  Currently fails because * syntax not implemented yet");
 }
 
 WriteLine
@@ -77,11 +75,11 @@ WriteLine
 try
 {
     await app.RunAsync(["docker", "run", "--env", "USER=john", "--env", "HOME=/home/john", "--env", "SHELL=/bin/bash"]);
+    WriteLine("  (Handler output above shows success)");
 }
 catch (Exception ex)
 {
     WriteLine($"✗ FAILED: {ex.Message}");
-    WriteLine("  Currently fails because * syntax not implemented yet");
 }
 
 WriteLine
@@ -91,8 +89,12 @@ WriteLine
   ========================================
   Summary:
   This test demonstrates the --flag {value}* pattern where:
-  - The same flag can be specified multiple times
+  - The flag is REQUIRED (no ? modifier)
+  - The same flag can be specified multiple times (1 or more)
   - All values are collected into an array
   - Useful for environment variables, volumes, ports, etc.
+
+  Note: For optional repeated flags, use --flag? {value}*
+        This allows zero or more occurrences.
   """
 );

@@ -22,7 +22,7 @@ Reference documentation describes **what IS** - the current reality of the codeb
 - [Error Handling](error-handling.md) - How errors are actually handled in the framework
 
 ### Parser Implementation
-- [Parser Classes: Syntax vs Semantics](ParserClassesSyntaxVsSemantics.md) - Current parser architecture
+- [Parser Classes: Syntax vs Semantics](parser-classes-syntax-vs-semantics.md) - Current parser architecture
 - [Parsing Flow Dependency Analysis](ParsingFlowDependencyAnalysis.md) - How parsing currently works
 
 ### Tools and Extensions

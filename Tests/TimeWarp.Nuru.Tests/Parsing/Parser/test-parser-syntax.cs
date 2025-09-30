@@ -2,6 +2,8 @@
 #:project ../../../../Source/TimeWarp.Nuru.Parsing/TimeWarp.Nuru.Parsing.csproj
 
 using TimeWarp.Nuru.Parsing;
+using System;
+using System.Linq;
 using static System.Console;
 
 WriteLine
@@ -28,18 +30,18 @@ WriteLine
 
 void TestValid(string pattern)
 {
-    Write($"  {pattern,-45} ");
-    try
-    {
-        CompiledRoute route = RoutePatternParser.Parse(pattern);
-        WriteLine("✓ Parsed");
-        passed++;
-    }
-    catch (Exception ex)
-    {
-        WriteLine($"✗ FAILED: {ex.Message}");
-        failed++;
-    }
+  Write($"  {pattern,-45} ");
+  try
+  {
+    CompiledRoute route = RoutePatternParser.Parse(pattern);
+    WriteLine("✓ Parsed");
+    passed++;
+  }
+  catch (Exception ex)
+  {
+    WriteLine($"✗ FAILED: {ex.Message}");
+    failed++;
+  }
 }
 
 TestValid("status");
@@ -64,33 +66,78 @@ WriteLine
 
 void TestInvalid(string pattern, string expectedError)
 {
+  Write($"  {pattern,-45} ");
+
+  try
+  {
+    RoutePatternException exception = Should.Throw<RoutePatternException>(() =>
+    {
+      CompiledRoute route = RoutePatternParser.Parse(pattern);
+    });
+
+    // Check if the actual error message contains what we expect
+    if (exception.Message.Contains(expectedError, StringComparison.InvariantCultureIgnoreCase))
+    {
+      WriteLine("✓ Failed correctly");
+      passed++;
+    }
+    else
+    {
+      // Wrong error message
+      WriteLine("⚠ Wrong error message");
+      WriteLine($"    Expected substring: {expectedError}");
+      WriteLine($"    Full message: {exception.Message}");
+      WriteLine();
+      failed++;
+    }
+  }
+  catch (ShouldAssertException)
+  {
+    // Should.Throw failed - means no exception was thrown
+    WriteLine("✗ SHOULD HAVE FAILED!");
+    WriteLine($"    Expected: {expectedError}");
+    failed++;
+  }
+}
+
+void TestInvalidByType(string pattern, Type expectedParseErrorType)
+{
     Write($"  {pattern,-45} ");
+
+    RoutePatternException? exception = null;
     try
     {
-        CompiledRoute route = RoutePatternParser.Parse(pattern);
-        WriteLine("✗ SHOULD HAVE FAILED!");
-        WriteLine($"    Expected: {expectedError}");
-        failed++;
+        exception = Should.Throw<RoutePatternException>(() =>
+        {
+            CompiledRoute route = RoutePatternParser.Parse(pattern);
+        });
     }
-    catch (Exception ex)
+    catch (ShouldAssertException)
     {
-        // Check the full error message for the expected error
-        bool hasExpectedError = ex.Message.Contains(expectedError, StringComparison.OrdinalIgnoreCase);
+        WriteLine("✗ SHOULD HAVE THROWN AN EXCEPTION!");
+        failed++;
+        return;
+    }
 
-        if (hasExpectedError)
-        {
-            WriteLine("✓ Failed correctly");
-            passed++;
-        }
-        else
-        {
-            WriteLine("⚠ Failed (different error)");
-            WriteLine($"    Expected: {expectedError}");
-            string firstError = ex.Message.Split('\n')[0];
-            WriteLine($"    Actual:   {firstError}");
-            // Still counts as passed since it failed, just not with expected message
-            passed++;
-        }
+    // Now check the exception properties
+    try
+    {
+        exception.ParseErrors.ShouldNotBeNull();
+        exception.ParseErrors.ShouldNotBeEmpty();
+        ParseError parseError = exception.ParseErrors[0];
+        parseError.ShouldBeOfType(expectedParseErrorType);
+        exception.SemanticErrors.ShouldBeNull
+        ($"SemanticErrors should be null but was a collection with {exception.SemanticErrors!.Count} items");
+
+        WriteLine("✓ Failed correctly (parse type)");
+        passed++;
+    }
+    catch (ShouldAssertException ex)
+    {
+        WriteLine("⚠ Wrong error type or structure");
+        WriteLine($"    Expected type: {expectedParseErrorType.Name}");
+        WriteLine($"    Assertion failed: {ex.Message}");
+        failed++;
     }
 }
 
@@ -120,7 +167,7 @@ WriteLine
 );
 
 // Double modifiers
-TestInvalid("--flag??", "duplicate modifier");
+TestInvalidByType("--flag??", typeof(InvalidCharacterError));
 TestInvalid("--env {var}**", "duplicate modifier");
 TestInvalid("--opt?? {val}", "duplicate modifier");
 TestInvalid("--port {p}**", "duplicate modifier");
@@ -179,14 +226,14 @@ WriteLine
 
 if (failed > 0)
 {
-    WriteLine
-    (
-      """
+  WriteLine
+  (
+    """
 
       Note: Some error messages are generic.
       Parser could be improved to provide more specific error messages.
       """
-    );
+  );
 }
 
 Environment.Exit(failed > 0 ? 1 : 0);

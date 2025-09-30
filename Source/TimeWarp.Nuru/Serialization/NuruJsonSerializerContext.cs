@@ -7,6 +7,9 @@ using TimeWarp.Nuru.Parsing;
 /// For user-defined types, create your own JsonSerializerContext in your application.
 /// </summary>
 // Exceptions and Errors
+[JsonSerializable(typeof(Exception))]
+[JsonSerializable(typeof(InvalidOperationException))]
+[JsonSerializable(typeof(ArgumentException))]
 [JsonSerializable(typeof(ParseException))]
 [JsonSerializable(typeof(RoutePatternException))]
 [JsonSerializable(typeof(SemanticError))]
@@ -18,8 +21,6 @@ using TimeWarp.Nuru.Parsing;
 [JsonSerializable(typeof(OptionalBeforeRequiredError))]
 [JsonSerializable(typeof(InvalidEndOfOptionsSeparatorError))]
 [JsonSerializable(typeof(OptionsAfterEndOfOptionsSeparatorError))]
-[JsonSerializable(typeof(ParameterAfterCatchAllError))]
-[JsonSerializable(typeof(ParameterAfterRepeatedError))]
 [JsonSerializable(typeof(ParseError))]
 [JsonSerializable(typeof(InvalidParameterSyntaxError))]
 [JsonSerializable(typeof(UnbalancedBracesError))]

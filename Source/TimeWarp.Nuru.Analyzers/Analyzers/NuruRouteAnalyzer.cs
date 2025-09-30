@@ -271,24 +271,6 @@ public class NuruRouteAnalyzer : IIncrementalGenerator
           e.Option
         ),
 
-      ParameterAfterCatchAllError e =>
-        Diagnostic.Create
-        (
-          DiagnosticDescriptors.ParameterAfterCatchAll,
-          routeInfo.Location,
-          e.Parameter,
-          e.CatchAll
-        ),
-
-      ParameterAfterRepeatedError e =>
-        Diagnostic.Create
-        (
-          DiagnosticDescriptors.ParameterAfterRepeated,
-          routeInfo.Location,
-          e.Parameter,
-          e.RepeatedParam
-        ),
-
       // Default case for any new error types
       _ => null
     };

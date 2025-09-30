@@ -21,5 +21,3 @@ NURU_S005 | RoutePattern.Semantic | Error | Option with duplicate alias
 NURU_S006 | RoutePattern.Semantic | Error | Optional parameter before required parameter
 NURU_S007 | RoutePattern.Semantic | Error | Invalid end-of-options separator
 NURU_S008 | RoutePattern.Semantic | Error | Options after end-of-options separator
-NURU_S009 | RoutePattern.Semantic | Error | Parameter after catch-all
-NURU_S010 | RoutePattern.Semantic | Error | Parameter after repeated parameter

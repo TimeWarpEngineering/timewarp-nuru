@@ -76,22 +76,4 @@ internal static partial class DiagnosticDescriptors
       defaultSeverity: DiagnosticSeverity.Error,
       isEnabledByDefault: true,
       description: "Options cannot appear after the end-of-options separator.");
-
-  public static readonly DiagnosticDescriptor ParameterAfterCatchAll = new(
-      id: "NURU_S009",
-      title: "Parameter after catch-all",
-      messageFormat: "Parameter '{0}' appears after catch-all parameter '{1}'",
-      category: SemanticCategory,
-      defaultSeverity: DiagnosticSeverity.Error,
-      isEnabledByDefault: true,
-      description: "No parameters can appear after a catch-all parameter.");
-
-  public static readonly DiagnosticDescriptor ParameterAfterRepeated = new(
-      id: "NURU_S010",
-      title: "Parameter after repeated parameter",
-      messageFormat: "Parameter '{0}' appears after repeated parameter '{1}'",
-      category: SemanticCategory,
-      defaultSeverity: DiagnosticSeverity.Error,
-      isEnabledByDefault: true,
-      description: "No parameters can appear after a repeated parameter.");
 }

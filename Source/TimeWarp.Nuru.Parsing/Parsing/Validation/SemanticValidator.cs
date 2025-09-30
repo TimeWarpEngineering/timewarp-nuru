@@ -6,33 +6,33 @@ namespace TimeWarp.Nuru.Parsing.Validation;
 /// </summary>
 public sealed class SemanticValidator
 {
-  private readonly List<SemanticError> SemanticErrors = [];
+  private const string EndOfOptionsSeparator = "--";
 
   /// <summary>
   /// Validates a route syntax tree for semantic correctness.
   /// </summary>
   /// <param name="ast">The syntax tree to validate.</param>
-  /// <returns>List of semantic errors found, empty if valid.</returns>
-  public IReadOnlyList<SemanticError> Validate(RouteSyntax ast)
+  /// <returns>List of semantic errors found, null if valid.</returns>
+  public static IReadOnlyList<SemanticError>? Validate(RouteSyntax ast)
   {
     ArgumentNullException.ThrowIfNull(ast);
 
-    SemanticErrors.Clear();
+    List<SemanticError> semanticErrors = [];
     var context = new ValidationContext();
 
     // First pass: collect all segments and their metadata
     CollectSegmentMetadata(ast, context);
 
     // Run validation rules
-    ValidateDuplicateParameters(context);
-    ValidateOptionalBeforeRequired(context);
-    ValidateConsecutiveOptionalParameters(context);
-    ValidateCatchAllPosition(context);
-    ValidateEndOfOptionsSeparator(context);
-    ValidateDuplicateOptionAliases(context);
-    ValidateMixedCatchAllWithOptional(context);
+    ValidateDuplicateParameters(context, semanticErrors);
+    ValidateOptionalBeforeRequired(context, semanticErrors);
+    ValidateConsecutiveOptionalParameters(context, semanticErrors);
+    ValidateCatchAllPosition(context, semanticErrors);
+    ValidateEndOfOptionsSeparator(context, semanticErrors);
+    ValidateDuplicateOptionAliases(context, semanticErrors);
+    ValidateMixedCatchAllWithOptional(context, semanticErrors);
 
-    return [.. SemanticErrors];
+    return semanticErrors.Count > 0 ? [.. semanticErrors] : null;
   }
 
   private static void CollectSegmentMetadata(RouteSyntax ast, ValidationContext context)
@@ -86,15 +86,15 @@ public sealed class SemanticValidator
 
         case LiteralSyntax literal:
           context.Literals.Add(literal);
-          if (literal.Value == "--")
+          if (literal.Value == EndOfOptionsSeparator)
             context.EndOfOptionsIndex = i;
           break;
       }
     }
   }
 
-  // NURU006: Check for duplicate parameter names (including across positional and options)
-  private void ValidateDuplicateParameters(ValidationContext context)
+  // NURU_S001: Check for duplicate parameter names (including across positional and options)
+  private static void ValidateDuplicateParameters(ValidationContext context, List<SemanticError> semanticErrors)
   {
     foreach (KeyValuePair<string, List<SegmentSyntax>> kvp in context.ParametersByName)
     {
@@ -118,16 +118,16 @@ public sealed class SemanticValidator
           _ => "unknown"
         };
 
-        AddError($"Duplicate parameter name '{kvp.Key}' found in {firstLocation} and {secondLocation}",
+        semanticErrors.Add(new DuplicateParameterNamesError(
           second.Position,
           second.Length,
-          SemanticErrorType.DuplicateParameterNames);
+          kvp.Key));
       }
     }
   }
 
-  // NURU007: Check for optional parameters before required ones
-  private void ValidateOptionalBeforeRequired(ValidationContext context)
+  // NURU_S006: Check for optional parameters before required ones
+  private static void ValidateOptionalBeforeRequired(ValidationContext context, List<SemanticError> semanticErrors)
   {
     bool foundOptional = false;
     ParameterSyntax? lastOptionalParam = null;
@@ -144,10 +144,11 @@ public sealed class SemanticValidator
         else if (foundOptional)
         {
           // Found a required parameter after an optional one
-          AddError($"Optional parameter '{lastOptionalParam!.Name}?' cannot appear before required parameter '{param.Name}'",
-            lastOptionalParam.Position,
+          semanticErrors.Add(new OptionalBeforeRequiredError(
+            lastOptionalParam!.Position,
             lastOptionalParam.Length,
-            SemanticErrorType.OptionalBeforeRequired);
+            lastOptionalParam.Name,
+            param.Name));
           break; // Only report the first occurrence
         }
       }
@@ -160,8 +161,8 @@ public sealed class SemanticValidator
     }
   }
 
-  // NURU007: Check for consecutive optional positional parameters
-  private void ValidateConsecutiveOptionalParameters(ValidationContext context)
+  // NURU_S002: Check for consecutive optional positional parameters
+  private static void ValidateConsecutiveOptionalParameters(ValidationContext context, List<SemanticError> semanticErrors)
   {
     ParameterSyntax? lastOptionalParam = null;
 
@@ -173,10 +174,10 @@ public sealed class SemanticValidator
         {
           if (lastOptionalParam is not null)
           {
-            AddError($"Multiple consecutive optional positional parameters create ambiguity: {lastOptionalParam.Name}? {param.Name}?",
+            semanticErrors.Add(new ConflictingOptionalParametersError(
               param.Position,
               param.Length,
-              SemanticErrorType.ConflictingOptionalParameters);
+              [lastOptionalParam.Name, param.Name]));
           }
 
           lastOptionalParam = param;
@@ -194,8 +195,8 @@ public sealed class SemanticValidator
     }
   }
 
-  // NURU005: Check if catch-all has positional segments after it
-  private void ValidateCatchAllPosition(ValidationContext context)
+  // NURU_S003: Check if catch-all has positional segments after it
+  private static void ValidateCatchAllPosition(ValidationContext context, List<SemanticError> semanticErrors)
   {
     for (int i = 0; i < context.AllSegments.Count; i++)
     {
@@ -208,14 +209,23 @@ public sealed class SemanticValidator
 
           // Check if this is a positional segment (not an option or end-of-options)
           bool isPositional = nextSegment is ParameterSyntax ||
-            (nextSegment is LiteralSyntax lit && lit.Value != "--");
+            (nextSegment is LiteralSyntax lit && lit.Value != EndOfOptionsSeparator);
 
           if (isPositional)
           {
-            AddError($"Catch-all parameter '{param.Name}' must be the last positional segment in the route",
+            // Get a description of what follows the catch-all
+            string followingSegmentDescription = nextSegment switch
+            {
+              ParameterSyntax p => p.Name,
+              LiteralSyntax l => $"'{l.Value}'",
+              _ => nextSegment.GetType().Name
+            };
+
+            semanticErrors.Add(new CatchAllNotAtEndError(
               param.Position,
               param.Length,
-              SemanticErrorType.CatchAllNotAtEnd);
+              param.Name,
+              followingSegmentDescription));
             break;
           }
         }
@@ -223,8 +233,8 @@ public sealed class SemanticValidator
     }
   }
 
-  // Validate end-of-options separator usage
-  private void ValidateEndOfOptionsSeparator(ValidationContext context)
+  // NURU_S007, NURU_S008: Validate end-of-options separator usage
+  private static void ValidateEndOfOptionsSeparator(ValidationContext context, List<SemanticError> semanticErrors)
   {
     if (context.EndOfOptionsIndex is null)
       return;
@@ -237,36 +247,36 @@ public sealed class SemanticValidator
     {
       if (context.AllSegments[i] is OptionSyntax option)
       {
-        AddError("Options cannot appear after '--' separator",
+        semanticErrors.Add(new OptionsAfterEndOfOptionsSeparatorError(
           option.Position,
           option.Length,
-          SemanticErrorType.OptionsAfterEndOfOptionsSeparator);
+          option.LongForm ?? $"-{option.ShortForm}"));
       }
     }
 
     // Check if -- is followed by catch-all
     if (index == context.AllSegments.Count - 1)
     {
-      AddError("End-of-options separator '--' must be followed by a catch-all parameter",
+      semanticErrors.Add(new InvalidEndOfOptionsSeparatorError(
         separator.Position,
         separator.Length,
-        SemanticErrorType.InvalidEndOfOptionsSeparator);
+        "must be followed by a catch-all parameter"));
     }
     else if (index + 1 < context.AllSegments.Count)
     {
       SegmentSyntax nextSegment = context.AllSegments[index + 1];
       if (!(nextSegment is ParameterSyntax nextParam) || !nextParam.IsCatchAll)
       {
-        AddError("End-of-options separator '--' must be followed by a catch-all parameter",
+        semanticErrors.Add(new InvalidEndOfOptionsSeparatorError(
           separator.Position,
           separator.Length,
-          SemanticErrorType.InvalidEndOfOptionsSeparator);
+          "must be followed by a catch-all parameter"));
       }
     }
   }
 
-  // NURU009: Check for duplicate option aliases
-  private void ValidateDuplicateOptionAliases(ValidationContext context)
+  // NURU_S005: Check for duplicate option aliases
+  private static void ValidateDuplicateOptionAliases(ValidationContext context, List<SemanticError> semanticErrors)
   {
     var seen = new Dictionary<string, OptionSyntax>();
 
@@ -276,10 +286,11 @@ public sealed class SemanticValidator
       {
         if (seen.TryGetValue(option.ShortForm, out OptionSyntax? existing))
         {
-          AddError($"Duplicate option short form '-{option.ShortForm}' already used by '{existing.LongForm ?? existing.ShortForm}'",
+          semanticErrors.Add(new DuplicateOptionAliasError(
             option.Position,
             option.Length,
-            SemanticErrorType.DuplicateOptionAlias);
+            option.ShortForm!,
+            [existing.LongForm ?? existing.ShortForm!]));
         }
         else
         {
@@ -289,20 +300,29 @@ public sealed class SemanticValidator
     }
   }
 
-  // NURU008: Check for mixed catch-all with optional parameters
-  private void ValidateMixedCatchAllWithOptional(ValidationContext context)
+  // NURU_S004: Check for mixed catch-all with optional parameters
+  private static void ValidateMixedCatchAllWithOptional(ValidationContext context, List<SemanticError> semanticErrors)
   {
     if (context.HasOptionalParameters && context.HasCatchAllParameter)
     {
-      AddError("Cannot mix optional parameters with catch-all parameter in the same route",
-        0,
-        0,
-        SemanticErrorType.MixedCatchAllWithOptional);
+      ParameterSyntax? catchAllParam = context.Parameters.FirstOrDefault(p => p.IsCatchAll);
+
+      // This should never happen if HasCatchAllParameter is true, but let's be defensive
+      if (catchAllParam is null)
+      {
+        throw new InvalidOperationException(
+          "Internal error: HasCatchAllParameter is true but no catch-all parameter found in context");
+      }
+
+      var optionalParams = context.Parameters.Where(p => p.IsOptional && !p.IsCatchAll).Select(p => p.Name).ToList();
+
+      semanticErrors.Add(new MixedCatchAllWithOptionalError(
+        catchAllParam.Position,
+        catchAllParam.Length,
+        catchAllParam.Name,
+        optionalParams));
     }
   }
 
-  private void AddError(string message, int position, int length, SemanticErrorType errorType)
-  {
-    SemanticErrors.Add(new SemanticError(message, position, length, errorType));
-  }
+  // AddError method removed - create specific error types directly
 }

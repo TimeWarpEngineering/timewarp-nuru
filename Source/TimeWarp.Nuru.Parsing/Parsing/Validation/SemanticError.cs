@@ -120,30 +120,3 @@ public record OptionsAfterEndOfOptionsSeparatorError(
     $"Semantic Error at position {Position}: Option '{Option}' appears after end-of-options separator '--'";
 }
 
-/// <summary>
-/// Parameter after catch-all error.
-/// </summary>
-public record ParameterAfterCatchAllError(
-  int Position,
-  int Length,
-  string Parameter,
-  string CatchAll
-) : SemanticError(Position, Length)
-{
-  public override string ToString() =>
-    $"Semantic Error at position {Position}: Parameter '{Parameter}' appears after catch-all '{CatchAll}'";
-}
-
-/// <summary>
-/// Parameter after repeated parameter error.
-/// </summary>
-public record ParameterAfterRepeatedError(
-  int Position,
-  int Length,
-  string Parameter,
-  string RepeatedParam
-) : SemanticError(Position, Length)
-{
-  public override string ToString() =>
-    $"Semantic Error at position {Position}: Parameter '{Parameter}' appears after repeated parameter '{RepeatedParam}'";
-}

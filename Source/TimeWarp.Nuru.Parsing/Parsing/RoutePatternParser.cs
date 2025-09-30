@@ -32,13 +32,7 @@ public static class RoutePatternParser
 
     if (!result.Success)
     {
-      // Format error messages for the exception
-      var allErrors = new List<string>();
-      allErrors.AddRange(result.Errors.Select(FormatError));
-      allErrors.AddRange(result.SemanticErrors.Select(FormatSemanticError));
-      string combinedMessage = string.Join("\n", allErrors);
-
-      throw new ArgumentException($"Invalid route pattern '{routePattern}': \n{combinedMessage}");
+      throw new RoutePatternException(routePattern, result.ParseErrors, result.SemanticErrors);
     }
 
     return compiler.Compile(result.Value!);
@@ -52,15 +46,15 @@ public static class RoutePatternParser
   /// <param name="errors">The parsing errors if unsuccessful.</param>
   /// <param name="semanticErrors">The semantic errors if unsuccessful.</param>
   /// <returns>True if parsing was successful, false otherwise.</returns>
-  public static bool TryParse(string routePattern, out CompiledRoute? compiledRoute, out IReadOnlyList<ParseError> errors, out IReadOnlyList<SemanticError> semanticErrors)
+  public static bool TryParse(string routePattern, out CompiledRoute? compiledRoute, out IReadOnlyList<ParseError>? errors, out IReadOnlyList<SemanticError>? semanticErrors)
   {
     compiledRoute = null;
-    errors = [];
-    semanticErrors = [];
+    errors = null;
+    semanticErrors = null;
 
     if (routePattern is null)
     {
-      errors = [new ParseError("Route pattern cannot be null", 0, 0)];
+      errors = [new NullPatternError(0, 0)];
       return false;
     }
 
@@ -68,7 +62,7 @@ public static class RoutePatternParser
     var parser = new RouteParser();
     var compiler = new RouteCompiler();
     ParseResult<RouteSyntax> result = parser.Parse(routePattern);
-    errors = result.Errors;
+    errors = result.ParseErrors;
     semanticErrors = result.SemanticErrors;
 
     if (result.Success)
@@ -78,21 +72,5 @@ public static class RoutePatternParser
     }
 
     return false;
-  }
-
-  private static string FormatError(ParseError error)
-  {
-    string message = $"Error at position {error.Position}: {error.Message}";
-    if (error.Suggestion is not null)
-    {
-      message += $" (Suggestion: {error.Suggestion})";
-    }
-
-    return message;
-  }
-
-  private static string FormatSemanticError(SemanticError error)
-  {
-    return $"Semantic error at position {error.Position}: {error.Message}";
   }
 }

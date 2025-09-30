@@ -9,7 +9,7 @@ public sealed partial class RouteParser : IRouteParser
   private readonly ILoggerFactory? LoggerFactory;
   private IReadOnlyList<Token> Tokens = [];
   private int CurrentIndex;
-  private readonly List<ParseError> Errors = [];
+  private List<ParseError>? ParseErrors;
 
   public RouteParser() : this(null, null) { }
 
@@ -26,7 +26,7 @@ public sealed partial class RouteParser : IRouteParser
 
     // Reset state
     CurrentIndex = 0;
-    Errors.Clear();
+    ParseErrors = null;
 
     // Tokenize input
     RoutePatternLexer lexer = LoggerFactory is not null
@@ -41,44 +41,27 @@ public sealed partial class RouteParser : IRouteParser
     }
 
     // Parse tokens into AST
-    try
+
+    List<SegmentSyntax> segments = ParsePattern();
+    var ast = new RouteSyntax(segments);
+
+    // Perform semantic validation using the SemanticValidator
+    IReadOnlyList<SemanticError>? semanticErrors = SemanticValidator.Validate(ast);
+
+    var result = new ParseResult<RouteSyntax>
     {
-      List<SegmentSyntax> segments = ParsePattern();
-      var ast = new RouteSyntax(segments);
+      Value = ast,
+      Success = true,
+      ParseErrors = ParseErrors,
+      SemanticErrors = semanticErrors
+    };
 
-      // Perform semantic validation using the SemanticValidator
-      var validator = new SemanticValidator();
-      IReadOnlyList<SemanticError> semanticErrors = validator.Validate(ast);
-
-      if (Logger.IsEnabled(Microsoft.Extensions.Logging.LogLevel.Debug) && Errors.Count == 0 && semanticErrors.Count == 0)
-      {
-        LoggerMessages.DumpingAst(Logger, DumpAst(ast), null);
-      }
-
-      return (Errors.Count == 0 && semanticErrors.Count == 0)
-        ? new ParseResult<RouteSyntax>
-        {
-          Value = ast,
-          Success = true,
-          Errors = [],
-          SemanticErrors = []
-        }
-        : new ParseResult<RouteSyntax>
-        {
-          Success = false,
-          Errors = Errors,
-          SemanticErrors = semanticErrors
-        };
-    }
-    catch (ParseException)
+    if (result.Success && Logger.IsEnabled(LogLevel.Debug))
     {
-      // Parsing failed completely
-      return new ParseResult<RouteSyntax>
-      {
-        Success = false,
-        Errors = Errors
-      };
+      LoggerMessages.DumpingAst(Logger, DumpAst(ast), null);
     }
+
+    return result;
   }
 
   /// <summary>
@@ -204,10 +187,15 @@ public sealed partial class RouteParser : IRouteParser
       string baseType = typeConstraint.TrimEnd('?');
       if (!IsValidTypeConstraint(baseType))
       {
-        AddError($"Invalid type constraint '{baseType}'. Supported types: string, int, double, bool, DateTime, Guid, long, decimal, TimeSpan",
-          typeToken.Position,
-          typeToken.Length,
-          ParseErrorType.InvalidTypeConstraint);
+        AddParseError
+        (
+          new InvalidTypeConstraintError
+          (
+            typeToken.Position,
+            typeToken.Length,
+            baseType
+          )
+        );
       }
     }
 
@@ -218,7 +206,7 @@ public sealed partial class RouteParser : IRouteParser
       description = ConsumeDescription(stopAtRightBrace: true);
     }
 
-    Token rightBrace = Consume(TokenType.RightBrace, "Expected '}'", ParseErrorType.UnbalancedBraces);
+    Token rightBrace = Consume(TokenType.RightBrace, "Expected '}'");
 
     return new ParameterSyntax(paramName, isCatchAll, isOptional, false, typeConstraint, description)
     {
@@ -281,10 +269,14 @@ public sealed partial class RouteParser : IRouteParser
       // Validate single dash options should be single character
       if (shortForm.Length > 1)
       {
-        AddError($"Invalid option format '-{shortForm}'. Single dash options must be single character (use --{shortForm} for long form)",
-          optionNameToken.Position - 1, // Include the dash
-          optionNameToken.Length + 1,
-          ParseErrorType.InvalidOptionFormat);
+        AddParseError
+        (
+          new InvalidOptionFormatError
+          (
+            optionNameToken.Position - 1, // Include the dash
+            optionNameToken.Length + 1,
+            $"-{shortForm}")
+          );
       }
 
       return (null, shortForm);
@@ -313,10 +305,17 @@ public sealed partial class RouteParser : IRouteParser
     // Validate that catch-all is not used in options
     if (parameter.IsCatchAll)
     {
-      AddError($"Catch-all parameter '{parameter.Name}' cannot be used in options. Catch-all is only valid for positional parameters.",
-        parameter.Position,
-        parameter.Length,
-        ParseErrorType.InvalidParameterSyntax);
+      // Catch-all in options is invalid parameter syntax
+      AddParseError
+      (
+        new InvalidParameterSyntaxError
+        (
+          parameter.Position,
+          parameter.Length,
+          $"{{*{parameter.Name}}}",
+          parameter.Name
+        )
+      );
     }
 
     // Check for repeated modifier (*) after the parameter
@@ -339,12 +338,28 @@ public sealed partial class RouteParser : IRouteParser
       string paramName = token.Value[1..^1]; // Remove < and >
       string suggestion = $"{{{paramName}}}";
 
-      AddError($"Invalid parameter syntax '{token.Value}'. Use curly braces for parameters.",
-        token.Position, token.Length, ParseErrorType.InvalidParameterSyntax, suggestion);
+      AddParseError
+      (
+        new InvalidParameterSyntaxError
+        (
+          token.Position,
+          token.Length,
+          token.Value,
+          suggestion
+        )
+      );
     }
     else
     {
-      AddError($"Invalid character '{token.Value}'", token.Position, token.Length, ParseErrorType.Generic);
+      AddParseError
+      (
+        new InvalidCharacterError
+        (
+          token.Position,
+          token.Length,
+          token.Value
+        )
+      );
     }
 
     return null; // Skip invalid tokens
@@ -353,16 +368,34 @@ public sealed partial class RouteParser : IRouteParser
   private SegmentSyntax? HandleUnexpectedRightBrace()
   {
     Token token = Advance(); // Consume the right brace to avoid infinite loop
-    AddError("Unexpected '}' - closing brace without matching opening brace",
-      token.Position, token.Length, ParseErrorType.UnbalancedBraces);
+    AddParseError
+    (
+      new UnexpectedTokenError
+      (
+        token.Position,
+        token.Length,
+        "}",
+        "Unexpected '}'"
+      )
+    );
+
     return null;
   }
 
   private SegmentSyntax? HandleUnexpectedToken()
   {
     Token token = Advance(); // Consume the unexpected token to avoid infinite loop
-    AddError($"Unexpected token '{token.Value}' of type {token.Type}",
-      token.Position, token.Length, ParseErrorType.Generic);
+    // Unexpected token - truly unexpected case
+    AddParseError
+    (
+      new InvalidCharacterError
+      (
+        token.Position,
+        token.Length,
+        token.Value
+      )
+    );
+
     return null;
   }
 
@@ -413,21 +446,12 @@ public sealed partial class RouteParser : IRouteParser
     return Tokens[CurrentIndex];
   }
 
-  private Token Consume(TokenType type, string message, ParseErrorType errorType = ParseErrorType.Generic)
+  private Token Consume(TokenType type, string message)
   {
-    if (Check(type))
-    {
-      return Advance();
-    }
-
+    if (Check(type)) return Advance();
     Token token = Peek();
-    AddError(message, token.Position, token.Length, errorType);
+    AddParseError(new UnexpectedTokenError(token.Position, token.Length, token.Value, message));
     throw new ParseException(message);
-  }
-
-  private void AddError(string message, int position, int length, ParseErrorType errorType = ParseErrorType.Generic, string? suggestion = null)
-  {
-    Errors.Add(new ParseError(message, position, length, errorType, suggestion));
   }
 
   private void Synchronize()
@@ -489,6 +513,12 @@ public sealed partial class RouteParser : IRouteParser
     return string.Join(" ", description);
   }
 
+  private void AddParseError(ParseError error)
+  {
+    ParseErrors ??= [];
+    ParseErrors.Add(error);
+  }
+
   private static bool IsValidTypeConstraint(string type)
   {
     return type switch
@@ -506,18 +536,4 @@ public sealed partial class RouteParser : IRouteParser
     };
   }
 
-}
-
-/// <summary>
-/// Exception thrown when parsing fails and cannot continue.
-/// </summary>
-public sealed class ParseException : Exception
-{
-  public ParseException(string message) : base(message) { }
-  public ParseException()
-  {
-  }
-  public ParseException(string message, Exception innerException) : base(message, innerException)
-  {
-  }
 }

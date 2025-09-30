@@ -183,6 +183,6 @@ We're working on:
 
 ## See Also
 
-- [Route Pattern Syntax](RoutePatternSyntax.md)
-- [Glossary](Glossary.md) - Complete terminology reference
+- [Route Pattern Syntax](route-pattern-syntax.md)
+- [Glossary](../reference/glossary.md) - Complete terminology reference
 - [GitHub Issues](https://github.com/TimeWarpEngineering/timewarp-nuru/issues) - Report analyzer bugs

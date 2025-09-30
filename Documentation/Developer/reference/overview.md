@@ -24,8 +24,6 @@ Reference documentation describes **what IS** - the current reality of the codeb
 - [Parser Classes: Syntax vs Semantics](parser-classes-syntax-vs-semantics.md) - Current parser architecture
 - [Parsing Flow Dependency Analysis](parsing-flow-dependency-analysis.md) - How parsing currently works
 
-### Tools and Extensions
-- [Using TimeWarp.Nuru Analyzers](UsingAnalyzers.md) - Available compile-time analyzers
 
 ## Important Note
 

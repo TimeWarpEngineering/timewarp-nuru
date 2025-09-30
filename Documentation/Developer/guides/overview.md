@@ -13,6 +13,9 @@ Learn how to add help functionality to your CLI applications, from simple manual
 ### [Logging System](logging.md)
 Configure and use TimeWarp.Nuru's high-performance logging system with Microsoft.Extensions.Logging, including integration with Serilog, NLog, and other providers.
 
+### [Using Analyzers](using-analyzers.md)
+Compile-time validation of route patterns with built-in analyzers that catch common mistakes before runtime.
+
 ### [Debugging Guide](debugging.md)
 Comprehensive debugging techniques for TimeWarp.Nuru applications, including trace logging, route matching analysis, and troubleshooting common issues.
 

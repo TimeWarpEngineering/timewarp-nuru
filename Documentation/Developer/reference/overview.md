@@ -18,7 +18,6 @@ Reference documentation describes **what IS** - the current reality of the codeb
 
 ### Core Framework
 - [Glossary](glossary.md) - Terminology definitions used in the actual codebase
-- [Route Pattern Syntax](RoutePatternSyntax.md) - Currently supported route syntax
 - [Error Handling](error-handling.md) - How errors are actually handled in the framework
 
 ### Parser Implementation

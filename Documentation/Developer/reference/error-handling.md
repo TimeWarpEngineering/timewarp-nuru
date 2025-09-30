@@ -1,6 +1,6 @@
 # Error Handling in TimeWarp.Nuru
 
-This document explains how TimeWarp.Nuru handles errors through its multi-layered approach that prioritizes clear error messages and graceful failure while maintaining simplicity.
+Documentation of the actual error handling implementation in TimeWarp.Nuru.
 
 ## Error Handling Architecture
 
@@ -102,12 +102,9 @@ When no route matches the input:
 - Prevents error messages from polluting command output
 - Enables proper piping and scripting workflows
 
-## Error Handling Philosophy
+## Implementation Details
 
-Nuru follows a **"fail fast with clear messages"** approach:
-
-1. **Simplicity First**: Avoids complex error recovery mechanisms
-2. **Clear Communication**: Provides specific, actionable error messages
-3. **Graceful Degradation**: Shows help when commands are invalid
-4. **Stream Separation**: Keeps errors separate from normal output
-5. **Exit Codes**: Uses standard exit codes (0 = success, 1 = error)
+- Uses standard exit codes (0 = success, 1 = error)
+- Separates error output (stderr) from normal output (stdout)
+- Shows help automatically when commands are invalid
+- Provides specific error messages with parameter names and values

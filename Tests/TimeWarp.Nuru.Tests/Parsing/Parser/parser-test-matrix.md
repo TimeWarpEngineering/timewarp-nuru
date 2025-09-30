@@ -1,6 +1,6 @@
 # Parser Test Matrix for Optional and Repeated Syntax
 
-## New Syntax Features to Test
+## Syntax Features
 
 ### 1. Optional Flag Modifiers (`?`)
 
@@ -19,7 +19,6 @@
 | Pattern | Description | Should Parse? | Expected Result |
 |---------|------------|---------------|-----------------|
 | `--env {var}*` | Repeated option with parameter | ✅ Yes | OptionMatcher with IsRepeated=true |
-| `--flag*` | Repeated boolean flag | ✅ Yes | OptionMatcher with IsRepeated=true |
 | `--port {num:int}*` | Repeated typed parameter | ✅ Yes | Typed repeated option |
 | `--env {var}**` | Double asterisk | ❌ No | Parse error |
 | `--env* {var}` | Asterisk on flag not parameter | ❌ No | Parse error |
@@ -43,20 +42,19 @@
 | `build --config? {mode} --verbose?` | Mix of required and optional | ✅ Yes | Mixed options |
 | `test {file} --repeat {n:int}* --verbose?` | Typed repeated with optional | ✅ Yes | Complex combination |
 
-## Test Files to Create
+## Test Files
 
 1. **test-parser-optional-flags.cs** - Tests for `?` modifier on flags
 2. **test-parser-repeated-options.cs** - Tests for `*` modifier on parameters
 3. **test-parser-mixed-modifiers.cs** - Tests for combined `?` and `*`
-4. **test-parser-error-cases.cs** - Invalid syntax that should fail
 
-## Parser Components to Modify
+## Parser Components
 
-1. **RouteParser** - Recognize `?` and `*` modifiers
-2. **OptionSyntax** - Add IsOptional and IsRepeated properties
-3. **ParameterSyntax** - Add IsRepeated property
-4. **RouteCompiler** - Create appropriate matchers based on modifiers
-5. **OptionMatcher** - Add IsOptional and IsRepeated properties
+1. **RouteParser** - Recognizes `?` and `*` modifiers
+2. **OptionSyntax** - Has IsOptional property
+3. **ParameterSyntax** - Has IsRepeated property
+4. **RouteCompiler** - Creates appropriate matchers based on modifiers
+5. **OptionMatcher** - Has IsOptional and IsRepeated properties
 
 ## Validation Rules
 

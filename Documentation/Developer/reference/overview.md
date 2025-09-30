@@ -17,7 +17,7 @@ Reference documentation describes **what IS** - the current reality of the codeb
 ## Available References
 
 ### Core Framework
-- [Glossary](Glossary.md) - Terminology definitions used in the actual codebase
+- [Glossary](glossary.md) - Terminology definitions used in the actual codebase
 - [Route Pattern Syntax](RoutePatternSyntax.md) - Currently supported route syntax
 - [Error Handling](ErrorHandling.md) - How errors are actually handled in the framework
 - [Logging System](Logging.md) - Current logging implementation

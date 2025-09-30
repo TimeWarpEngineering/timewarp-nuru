@@ -1,10 +1,10 @@
 <Project>
   <!-- Import parent Directory.Build.props -->
   <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
-  
+
   <PropertyGroup>
     <!-- Suppress localization warnings for test projects -->
-    <NoWarn>$(NoWarn);CA1303;CA2007;CA1031</NoWarn>
+    <NoWarn>$(NoWarn);CA1303;CA1307;CA2007;CA1031</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

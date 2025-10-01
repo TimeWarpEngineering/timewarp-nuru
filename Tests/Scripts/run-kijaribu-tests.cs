@@ -23,6 +23,7 @@ int passedTests = 0;
 string[] testFiles = [
   Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Parsing/Parser/test-catchall-validation.cs"),
   Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Parsing/Parser/test-parser-end-of-options.cs"),
+  Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Lexer/test-route-pattern-tokenization-kijaribu.cs"),
 ];
 
 foreach (string testFile in testFiles)

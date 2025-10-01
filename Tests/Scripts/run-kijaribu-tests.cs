@@ -50,6 +50,7 @@ string[] testFiles = [
   Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Lexer/test-end-of-options-separator-kijaribu.cs"),
   Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Lexer/test-invalid-token-detection-kijaribu.cs"),
   Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Lexer/test-compound-identifier-tokenization-kijaribu.cs"),
+  Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Lexer/test-description-tokenization-kijaribu.cs"),
 ];
 
 foreach (string testFile in testFiles)

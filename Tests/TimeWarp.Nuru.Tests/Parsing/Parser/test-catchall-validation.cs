@@ -6,7 +6,8 @@ using TimeWarp.Nuru.Parsing;
 using Shouldly;
 using TimeWarp.Kijaribu;
 
-await TestRunner.RunTests<CatchAllValidationTests>();
+// Clear cache to ensure parser changes are picked up (parsing is source-compiled)
+await TestRunner.RunTests<CatchAllValidationTests>(clearCache: true);
 
 public class CatchAllValidationTests
 {

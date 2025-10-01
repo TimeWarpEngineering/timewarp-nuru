@@ -15,8 +15,26 @@ public static class TestRunner
   /// Runs all public static async Task methods in the specified test class.
   /// </summary>
   /// <typeparam name="T">The test class containing test methods.</typeparam>
-  public static async Task RunTests<T>() where T : class
+  /// <param name="clearCache">Whether to clear .NET runfile cache before running tests. Defaults to false for performance. Set true to ensure latest source changes are picked up.</param>
+  public static async Task RunTests<T>(bool? clearCache = null) where T : class
   {
+    // Determine whether to clear cache: attribute wins, then parameter, then default (false)
+    bool shouldClearCache = false;
+    ClearRunfileCacheAttribute? cacheAttr = typeof(T).GetCustomAttribute<ClearRunfileCacheAttribute>();
+    if (cacheAttr != null)
+    {
+      shouldClearCache = cacheAttr.Enabled;
+    }
+    else if (clearCache.HasValue)
+    {
+      shouldClearCache = clearCache.Value;
+    }
+
+    if (shouldClearCache)
+    {
+      ClearRunfileCache();
+    }
+
     string testClassName = typeof(T).Name.Replace("Tests", "", StringComparison.Ordinal);
     Console.WriteLine($"🧪 Testing {testClassName}...");
     Console.WriteLine();
@@ -123,5 +141,49 @@ public static class TestRunner
     }
 
     Console.WriteLine();
+  }
+
+  /// <summary>
+  /// Clears the .NET runfile cache to ensure tests pick up latest source changes.
+  /// Skips the currently executing test to avoid deleting itself.
+  /// </summary>
+  private static void ClearRunfileCache()
+  {
+    string runfileCacheRoot = Path.Combine(
+      Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+      ".local", "share", "dotnet", "runfile"
+    );
+
+    if (!Directory.Exists(runfileCacheRoot))
+    {
+      return;
+    }
+
+    string? currentExeDir = AppContext.BaseDirectory;
+    bool anyDeleted = false;
+
+    foreach (string cacheDir in Directory.GetDirectories(runfileCacheRoot))
+    {
+      // Don't delete if currentExeDir STARTS WITH cacheDir (parent-child relationship)
+      if (currentExeDir?.StartsWith(cacheDir, StringComparison.OrdinalIgnoreCase) == true)
+      {
+        continue;
+      }
+
+      if (!anyDeleted)
+      {
+        Console.WriteLine("✓ Clearing runfile cache:");
+        anyDeleted = true;
+      }
+
+      string cacheDirName = Path.GetFileName(cacheDir);
+      Directory.Delete(cacheDir, recursive: true);
+      Console.WriteLine($"  - {cacheDirName}");
+    }
+
+    if (anyDeleted)
+    {
+      Console.WriteLine();
+    }
   }
 }

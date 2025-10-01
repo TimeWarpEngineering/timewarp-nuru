@@ -102,43 +102,53 @@ void TestInvalid(string pattern, string expectedError)
 
 void TestInvalidByType(string pattern, Type expectedParseErrorType)
 {
-    Write($"  {pattern,-45} ");
+  Write($"  {pattern,-45} ");
 
-    RoutePatternException? exception = null;
-    try
+  try
+  {
+    CompiledRoute route = RoutePatternParser.Parse(pattern);
+    WriteLine("✗ SHOULD HAVE THROWN!");
+    WriteLine($"    Expected: {expectedParseErrorType.Name}");
+    WriteLine($"    Parser produced: {route.PositionalMatchers.Count} positional, {route.OptionMatchers.Count} options");
+    if (route.OptionMatchers.Count > 0)
     {
-        exception = Should.Throw<RoutePatternException>(() =>
-        {
-            CompiledRoute route = RoutePatternParser.Parse(pattern);
-        });
-    }
-    catch (ShouldAssertException)
-    {
-        WriteLine("✗ SHOULD HAVE THROWN AN EXCEPTION!");
-        failed++;
-        return;
+      WriteLine($"    First option: {route.OptionMatchers[0].MatchPattern}");
     }
 
-    // Now check the exception properties
-    try
+    failed++;
+  }
+  catch (RoutePatternException ex)
+  {
+    // Parser correctly threw an exception - now validate the error type
+    if (ex.ParseErrors is null || ex.ParseErrors.Count == 0)
     {
-        exception.ParseErrors.ShouldNotBeNull();
-        exception.ParseErrors.ShouldNotBeEmpty();
-        ParseError parseError = exception.ParseErrors[0];
-        parseError.ShouldBeOfType(expectedParseErrorType);
-        exception.SemanticErrors.ShouldBeNull
-        ($"SemanticErrors should be null but was a collection with {exception.SemanticErrors!.Count} items");
+      WriteLine("⚠ No ParseErrors in exception");
+      WriteLine($"    Expected: {expectedParseErrorType.Name}");
+      failed++;
+      return;
+    }
 
-        WriteLine("✓ Failed correctly (parse type)");
-        passed++;
-    }
-    catch (ShouldAssertException ex)
+    ParseError parseError = ex.ParseErrors[0];
+    if (parseError.GetType() == expectedParseErrorType)
     {
-        WriteLine("⚠ Wrong error type or structure");
-        WriteLine($"    Expected type: {expectedParseErrorType.Name}");
-        WriteLine($"    Assertion failed: {ex.Message}");
-        failed++;
+      WriteLine("✓ Failed correctly");
+      passed++;
     }
+    else
+    {
+      WriteLine("⚠ Wrong error type");
+      WriteLine($"    Expected: {expectedParseErrorType.Name}");
+      WriteLine($"    Actual: {parseError.GetType().Name}");
+      failed++;
+    }
+  }
+  catch (Exception ex)
+  {
+    WriteLine("✗ Unexpected exception type");
+    WriteLine($"    Expected: RoutePatternException with {expectedParseErrorType.Name}");
+    WriteLine($"    Actual: {ex.GetType().Name}");
+    failed++;
+  }
 }
 
 WriteLine

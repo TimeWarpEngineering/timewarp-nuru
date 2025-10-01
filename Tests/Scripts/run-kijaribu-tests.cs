@@ -1,51 +1,13 @@
 #!/usr/bin/dotnet --
 #:property LangVersion=preview
 #:property EnablePreviewFeatures=true
-#:project ../../Source/TimeWarp.Kijaribu/TimeWarp.Kijaribu.csproj
 #:package TimeWarp.Amuru
 
 using static System.Console;
-using static TimeWarp.Amuru.Native.FileSystem.Direct;
 
 // Run all Kijaribu-based tests
 WriteLine("🧪 Running Kijaribu-based Parser Tests...");
 WriteLine();
-
-// Clear runfile cache (except for this currently running script)
-string runfileCacheRoot = Path.Combine(
-  Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-  ".local", "share", "dotnet", "runfile"
-);
-
-if (Directory.Exists(runfileCacheRoot))
-{
-  string? currentExeDir = AppContext.BaseDirectory;
-  WriteLine("Clearing runfile cache (except current executable)...");
-
-  int deletedCount = 0;
-  foreach (string cacheDir in Directory.GetDirectories(runfileCacheRoot))
-  {
-    // Don't delete if currentExeDir STARTS WITH cacheDir (parent-child relationship)
-    if (currentExeDir?.StartsWith(cacheDir, StringComparison.OrdinalIgnoreCase) == true)
-    {
-      WriteLine($"  [SKIP] {Path.GetFileName(cacheDir)} (current executable)");
-      continue;
-    }
-
-    try
-    {
-      RemoveItem(cacheDir, recursive: true);
-      deletedCount++;
-    }
-    catch (Exception ex)
-    {
-      WriteLine($"  [ERROR] {Path.GetFileName(cacheDir)}: {ex.Message}");
-    }
-  }
-
-  WriteLine($"✓ Cleared {deletedCount} cached test entries");
-  WriteLine();
-}
 
 // Track overall results
 int totalTests = 0;

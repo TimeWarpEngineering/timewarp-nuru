@@ -1,20 +1,11 @@
 #!/usr/bin/dotnet --
 #:property LangVersion=preview
 #:property EnablePreviewFeatures=true
+#:project ../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
 #:package TimeWarp.Amuru
 
 using TimeWarp.Amuru;
-
-// Parse command line arguments
-string? filterTag = null;
-
-foreach (string arg in args)
-{
-  if (arg.StartsWith("--tag=", StringComparison.OrdinalIgnoreCase))
-  {
-    filterTag = arg.Substring("--tag=".Length);
-  }
-}
+using TimeWarp.Nuru;
 
 // Get script directory to build correct paths
 string scriptDir = AppContext.GetData("EntryPointFileDirectoryPath") as string
@@ -22,19 +13,34 @@ string scriptDir = AppContext.GetData("EntryPointFileDirectoryPath") as string
 
 string testsDir = Path.GetDirectoryName(scriptDir)!;
 
-// Run all Kijaribu-based tests
-WriteLine("🧪 Running Kijaribu-based Tests");
+// Configure Nuru app with routing
+var builder = new NuruAppBuilder();
 
-if (filterTag is not null)
+// TODO: Bug in Nuru - optional flag with required param doesn't work without args
+// Should be: builder.AddRoute("--tag? {tag}", (string? tag) => RunTests(tag), ...);
+// Workaround: Use two routes until optional flag bug is fixed
+
+builder.AddDefaultRoute(() => RunTests(null), "Run all Kijaribu tests");
+builder.AddRoute("--tag {tag}", (string tag) => RunTests(tag), "Run tests filtered by tag (Lexer, Parser)");
+
+NuruApp app = builder.Build();
+return await app.RunAsync(args);
+
+async Task<int> RunTests(string? filterTag)
 {
-  WriteLine($"   Filtering by tag: {filterTag}");
-}
+  // Run all Kijaribu-based tests
+  WriteLine("🧪 Running Kijaribu-based Tests");
 
-WriteLine();
+  if (filterTag is not null)
+  {
+    WriteLine($"   Filtering by tag: {filterTag}");
+  }
 
-// Track overall results
-int totalTests = 0;
-int passedTests = 0;
+  WriteLine();
+
+  // Track overall results
+  int totalTests = 0;
+  int passedTests = 0;
 
 // List of Kijaribu-based test files (relative to Tests directory)
 string[] testFiles = [
@@ -91,9 +97,10 @@ foreach (string testFile in testFiles)
   WriteLine();
 }
 
-// Summary
-WriteLine($"{'═',-60}");
-WriteLine($"Results: {passedTests}/{totalTests} test files passed");
-WriteLine($"{'═',-60}");
+  // Summary
+  WriteLine($"{'═',-60}");
+  WriteLine($"Results: {passedTests}/{totalTests} test files passed");
+  WriteLine($"{'═',-60}");
 
-Environment.Exit(passedTests == totalTests ? 0 : 1);
+  return passedTests == totalTests ? 0 : 1;
+}

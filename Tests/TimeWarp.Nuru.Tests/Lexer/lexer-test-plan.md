@@ -10,8 +10,8 @@ The lexer's primary responsibility is to reject nonsensical character sequences 
 **Test File**: `lexer-01-basic-token-types.cs`
 **Purpose**: Verify each token type is correctly identified
 
-- [x] **Identifier tokens** - plain text words like `status`, `version`, `help` - `Should_tokenize_literal_words`
-- [ ] **Identifier tokens with dashes** - compound names like `dry-run`, `no-edit`
+- [x] **Identifier tokens** - plain text words like `status`, `version`, `help` - `Should_tokenize_plain_identifiers`
+- [x] **Identifier tokens with dashes** - compound names like `dry-run`, `no-edit` - `Should_tokenize_compound_identifiers`
 - [ ] **LeftBrace** - `{` character
 - [ ] **RightBrace** - `}` character
 - [ ] **Colon** - `:` character

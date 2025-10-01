@@ -5,21 +5,31 @@ return await RunTests<BasicTokenTypesTests>();
 [TestTag("Lexer")]
 public class BasicTokenTypesTests
 {
-
+  // Plain identifiers
   [Input("status")]
   [Input("version")]
   [Input("help")]
   [Input("build")]
+  public static async Task Should_tokenize_plain_identifiers(string pattern)
+    => await TokenizeSingleIdentifier(pattern);
 
-  public static async Task Should_tokenize_literal_words(string pattern)
+  // Compound identifiers with dashes
+  [Input("dry-run")]
+  [Input("no-edit")]
+  [Input("save-dev")]
+  [Input("my-long-command-name")]
+  public static async Task Should_tokenize_compound_identifiers(string pattern)
+    => await TokenizeSingleIdentifier(pattern);
+
+  private static async Task TokenizeSingleIdentifier(string pattern)
   {
     // Arrange
     RoutePatternLexer lexer = CreateLexer(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     // Assert
-    tokens.Count.ShouldBe(2); // token + EndOfInput
-    tokens[0].Type.ShouldBe(TokenType.Identifier); // Lexer returns Identifier, not Literal
+    tokens.Count.ShouldBe(2); // identifier + EndOfInput
+    tokens[0].Type.ShouldBe(TokenType.Identifier);
     tokens[0].Value.ShouldBe(pattern);
     tokens[1].Type.ShouldBe(TokenType.EndOfInput);
 

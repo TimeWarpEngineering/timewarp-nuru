@@ -5,6 +5,11 @@
 
 using static System.Console;
 
+// Get script directory to build correct paths
+string scriptDir = AppContext.GetData("EntryPointFileDirectoryPath") as string
+  ?? throw new InvalidOperationException("Could not get entry point directory");
+string testsDir = Path.GetDirectoryName(scriptDir)!;
+
 // Run all Kijaribu-based tests
 WriteLine("🧪 Running Kijaribu-based Parser Tests...");
 WriteLine();
@@ -13,9 +18,9 @@ WriteLine();
 int totalTests = 0;
 int passedTests = 0;
 
-// List of Kijaribu-based test files (relative to current working directory)
+// List of Kijaribu-based test files (relative to Tests directory)
 string[] testFiles = [
-  "Tests/TimeWarp.Nuru.Tests/Parsing/Parser/test-catchall-validation.cs",
+  Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Parsing/Parser/test-catchall-validation.cs"),
 ];
 
 foreach (string testFile in testFiles)

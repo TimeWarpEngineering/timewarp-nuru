@@ -16,8 +16,23 @@ public static class TestRunner
   /// </summary>
   /// <typeparam name="T">The test class containing test methods.</typeparam>
   /// <param name="clearCache">Whether to clear .NET runfile cache before running tests. Defaults to false for performance. Set true to ensure latest source changes are picked up.</param>
-  public static async Task RunTests<T>(bool? clearCache = null) where T : class
+  /// <param name="filterTag">Optional tag to filter tests. Only runs tests with this tag. Checks both class-level and method-level TestTag attributes. If not specified, checks KIJARIBU_FILTER_TAG environment variable.</param>
+  public static async Task RunTests<T>(bool? clearCache = null, string? filterTag = null) where T : class
   {
+    // Check environment variable if filterTag not explicitly provided
+    filterTag ??= Environment.GetEnvironmentVariable("KIJARIBU_FILTER_TAG");
+
+    // Check if test class matches filter tag (if specified)
+    if (filterTag != null)
+    {
+      TestTagAttribute[] classTags = typeof(T).GetCustomAttributes<TestTagAttribute>().ToArray();
+      if (classTags.Length > 0 && !classTags.Any(t => t.Tag.Equals(filterTag, StringComparison.OrdinalIgnoreCase)))
+      {
+        // Class has tags but none match the filter - skip entire class
+        return;
+      }
+    }
+
     // Determine whether to clear cache: attribute wins, then parameter, then default (false)
     bool shouldClearCache = false;
     ClearRunfileCacheAttribute? cacheAttr = typeof(T).GetCustomAttribute<ClearRunfileCacheAttribute>();
@@ -37,6 +52,12 @@ public static class TestRunner
 
     string testClassName = typeof(T).Name.Replace("Tests", "", StringComparison.Ordinal);
     Console.WriteLine($"🧪 Testing {testClassName}...");
+
+    if (filterTag != null)
+    {
+      Console.WriteLine($"   (filtered by tag: {filterTag})");
+    }
+
     Console.WriteLine();
 
     // Get all public static methods in the class

@@ -5,6 +5,17 @@
 
 using TimeWarp.Amuru;
 
+// Parse command line arguments
+string? filterTag = null;
+
+foreach (string arg in args)
+{
+  if (arg.StartsWith("--tag=", StringComparison.OrdinalIgnoreCase))
+  {
+    filterTag = arg.Substring("--tag=".Length);
+  }
+}
+
 // Get script directory to build correct paths
 string scriptDir = AppContext.GetData("EntryPointFileDirectoryPath") as string
   ?? throw new InvalidOperationException("Could not get entry point directory");
@@ -12,7 +23,13 @@ string scriptDir = AppContext.GetData("EntryPointFileDirectoryPath") as string
 string testsDir = Path.GetDirectoryName(scriptDir)!;
 
 // Run all Kijaribu-based tests
-WriteLine("🧪 Running Kijaribu-based Parser Tests...");
+WriteLine("🧪 Running Kijaribu-based Tests");
+
+if (filterTag is not null)
+{
+  WriteLine($"   Filtering by tag: {filterTag}");
+}
+
 WriteLine();
 
 // Track overall results
@@ -44,10 +61,17 @@ foreach (string testFile in testFiles)
     await Shell.Builder("chmod").WithArguments("+x", fullPath).RunAsync();
   }
 
-  CommandOutput result = await Shell.Builder(fullPath)
-    .WithWorkingDirectory(Path.GetDirectoryName(fullPath)!)
-    .WithNoValidation()
-    .CaptureAsync();
+  // Build shell command with optional tag filter environment variable
+  CommandOutput result = filterTag is not null
+    ? await Shell.Builder(fullPath)
+        .WithWorkingDirectory(Path.GetDirectoryName(fullPath)!)
+        .WithNoValidation()
+        .WithEnvironmentVariable("KIJARIBU_FILTER_TAG", filterTag)
+        .CaptureAsync()
+    : await Shell.Builder(fullPath)
+        .WithWorkingDirectory(Path.GetDirectoryName(fullPath)!)
+        .WithNoValidation()
+        .CaptureAsync();
 
   if (result.Success)
   {

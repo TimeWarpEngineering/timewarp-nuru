@@ -6,7 +6,7 @@ using TimeWarp.Nuru.Parsing;
 using Shouldly;
 using TimeWarp.Kijaribu;
 
-await TestRunner.RunTests<InvalidTokenDetectionTests>();
+return await TestRunner.RunTests<InvalidTokenDetectionTests>();
 
 [TestTag("Lexer")]
 public class InvalidTokenDetectionTests

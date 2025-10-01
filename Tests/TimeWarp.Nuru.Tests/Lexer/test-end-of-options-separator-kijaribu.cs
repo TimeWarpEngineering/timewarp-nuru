@@ -6,7 +6,7 @@ using TimeWarp.Nuru.Parsing;
 using Shouldly;
 using TimeWarp.Kijaribu;
 
-await TestRunner.RunTests<EndOfOptionsSeparatorTests>();
+return await TestRunner.RunTests<EndOfOptionsSeparatorTests>();
 
 [TestTag("Lexer")]
 public class EndOfOptionsSeparatorTests

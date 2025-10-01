@@ -17,26 +17,27 @@ public static class TestRunner
   /// <typeparam name="T">The test class containing test methods.</typeparam>
   /// <param name="clearCache">Whether to clear .NET runfile cache before running tests. Defaults to false for performance. Set true to ensure latest source changes are picked up.</param>
   /// <param name="filterTag">Optional tag to filter tests. Only runs tests with this tag. Checks both class-level and method-level TestTag attributes. If not specified, checks KIJARIBU_FILTER_TAG environment variable.</param>
-  public static async Task RunTests<T>(bool? clearCache = null, string? filterTag = null) where T : class
+  /// <returns>Exit code: 0 if all tests passed, 1 if any tests failed.</returns>
+  public static async Task<int> RunTests<T>(bool? clearCache = null, string? filterTag = null) where T : class
   {
     // Check environment variable if filterTag not explicitly provided
     filterTag ??= Environment.GetEnvironmentVariable("KIJARIBU_FILTER_TAG");
 
     // Check if test class matches filter tag (if specified)
-    if (filterTag != null)
+    if (filterTag is not null)
     {
       TestTagAttribute[] classTags = typeof(T).GetCustomAttributes<TestTagAttribute>().ToArray();
       if (classTags.Length > 0 && !classTags.Any(t => t.Tag.Equals(filterTag, StringComparison.OrdinalIgnoreCase)))
       {
         // Class has tags but none match the filter - skip entire class
-        return;
+        return 0;
       }
     }
 
     // Determine whether to clear cache: attribute wins, then parameter, then default (false)
     bool shouldClearCache = false;
     ClearRunfileCacheAttribute? cacheAttr = typeof(T).GetCustomAttribute<ClearRunfileCacheAttribute>();
-    if (cacheAttr != null)
+    if (cacheAttr is not null)
     {
       shouldClearCache = cacheAttr.Enabled;
     }
@@ -53,7 +54,7 @@ public static class TestRunner
     string testClassName = typeof(T).Name.Replace("Tests", "", StringComparison.Ordinal);
     Console.WriteLine($"🧪 Testing {testClassName}...");
 
-    if (filterTag != null)
+    if (filterTag is not null)
     {
       Console.WriteLine($"   (filtered by tag: {filterTag})");
     }
@@ -71,10 +72,7 @@ public static class TestRunner
 
     // Call cleanup method if it exists
     MethodInfo? cleanupMethod = typeof(T).GetMethod("CleanUp", BindingFlags.Public | BindingFlags.Static);
-    if (cleanupMethod != null)
-    {
-      cleanupMethod.Invoke(null, null);
-    }
+    cleanupMethod?.Invoke(null, null);
 
     // Summary
     Console.WriteLine();
@@ -82,7 +80,7 @@ public static class TestRunner
     Console.WriteLine($"Results: {PassCount}/{TotalTests} tests passed");
     Console.WriteLine("========================================");
 
-    Environment.Exit(PassCount == TotalTests ? 0 : 1);
+    return PassCount == TotalTests ? 0 : 1;
   }
 
   private static async Task RunTest(MethodInfo method)
@@ -98,7 +96,7 @@ public static class TestRunner
 
     // Check for [Skip] attribute
     SkipAttribute? skipAttr = method.GetCustomAttribute<SkipAttribute>();
-    if (skipAttr != null)
+    if (skipAttr is not null)
     {
       TotalTests++;
       string testName = method.Name;
@@ -141,7 +139,7 @@ public static class TestRunner
     try
     {
       var task = method.Invoke(null, parameters) as Task;
-      if (task != null)
+      if (task is not null)
       {
         await task;
       }
@@ -149,7 +147,7 @@ public static class TestRunner
       PassCount++;
       Console.WriteLine($"  ✓ PASSED");
     }
-    catch (TargetInvocationException ex) when (ex.InnerException != null)
+    catch (TargetInvocationException ex) when (ex.InnerException is not null)
     {
       // Unwrap the TargetInvocationException to get the actual exception
       Console.WriteLine($"  ✗ FAILED: {ex.InnerException.GetType().Name}");

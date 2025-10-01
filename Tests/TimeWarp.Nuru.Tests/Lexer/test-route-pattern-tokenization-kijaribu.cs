@@ -1,22 +1,28 @@
 #!/usr/bin/dotnet --
-#:project ../../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
+#:project ../../../Source/TimeWarp.Nuru.Parsing/TimeWarp.Nuru.Parsing.csproj
 #:project ../../../Source/TimeWarp.Kijaribu/TimeWarp.Kijaribu.csproj
 
 using TimeWarp.Nuru.Parsing;
+using Shouldly;
 using TimeWarp.Kijaribu;
 
-await TestRunner.RunTests<RoutePatternTokenizationTests>();
+int exitCode = 0;
+exitCode |= await TestRunner.RunTests<RoutePatternTokenizationTests>();
+exitCode |= await TestRunner.RunTests<SpecificTokenSequenceTests>();
+return exitCode;
 
 [TestTag("Lexer")]
 public class RoutePatternTokenizationTests
 {
-  // All patterns should tokenize successfully with EndOfInput as last token
+  // Basic literals
   [Input("status")]
   [Input("git status")]
   [Input("git commit push")]
+  // Compound identifiers with dashes
   [Input("async-test")]
   [Input("no-edit")]
   [Input("my-long-command-name")]
+  // Parameters
   [Input("{name}")]
   [Input("{name:string}")]
   [Input("{count:int}")]
@@ -25,10 +31,12 @@ public class RoutePatternTokenizationTests
   [Input("{*args}")]
   [Input("{name|Description}")]
   [Input("{count:int|Number of items}")]
+  // Options
   [Input("--help")]
   [Input("-h")]
   [Input("--no-edit")]
   [Input("--max-count")]
+  // Complex patterns
   [Input("git commit --amend")]
   [Input("git commit --amend --no-edit")]
   [Input("git commit -m {message}")]
@@ -41,9 +49,11 @@ public class RoutePatternTokenizationTests
   [Input("git commit --amend -m {message}")]
   [Input("git commit --amend --message {message}")]
   [Input("git commit --message {message} --amend")]
+  // Mixed patterns
   [Input("deploy {env} --dry-run")]
   [Input("deploy {env} --version {ver}")]
   [Input("kubectl get {resource} --watch --enhanced")]
+  // Edge cases
   [Input("")]
   [Input("   ")]
   [Input("--")]
@@ -53,171 +63,224 @@ public class RoutePatternTokenizationTests
   [Input("test<input>")]
   [Input("test{param}test")]
   [Input("--option={value}")]
-  public static async Task PatternShouldTokenizeWithEndOfInput(string pattern)
+  public static async Task ShouldTokenizeWithoutException(string pattern)
   {
-    // Act
-    var lexer = new RoutePatternLexer(pattern);
+    // Arrange & Act
+    RoutePatternLexer lexer = new(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     // Assert
     tokens.ShouldNotBeEmpty();
-    tokens[^1].Type.ShouldBe(TokenType.EndOfInput, $"Pattern '{pattern}' should end with EndOfInput token");
+    tokens[tokens.Count - 1].Type.ShouldBe(TokenType.EndOfInput, "Last token should always be EndOfInput");
 
     await Task.CompletedTask;
   }
+}
 
-  public static async Task AsyncTestShouldTokenizeAsCompoundIdentifier()
+[TestTag("Lexer")]
+public class SpecificTokenSequenceTests
+{
+  public static async Task CompoundIdentifier()
   {
     // Arrange
-    var lexer = new RoutePatternLexer("async-test");
-
-    // Act
+    RoutePatternLexer lexer = new("async-test");
     IReadOnlyList<Token> tokens = lexer.Tokenize();
+    Token[] actualTokens = [.. tokens.Take(tokens.Count - 1)];
 
     // Assert
-    var actualTokens = tokens.Take(tokens.Count - 1).ToList();
-    actualTokens.Count.ShouldBe(1);
+    actualTokens.Length.ShouldBe(1);
     actualTokens[0].Type.ShouldBe(TokenType.Identifier);
     actualTokens[0].Value.ShouldBe("async-test");
 
     await Task.CompletedTask;
   }
 
-  public static async Task GitCommitWithNoEditShouldTokenizeCorrectly()
+  public static async Task CommandWithLongOptionWithDash()
   {
     // Arrange
-    var lexer = new RoutePatternLexer("git commit --no-edit");
-
-    // Act
+    RoutePatternLexer lexer = new("git commit --no-edit");
     IReadOnlyList<Token> tokens = lexer.Tokenize();
+    Token[] actualTokens = [.. tokens.Take(tokens.Count - 1)];
 
     // Assert
-    var actualTokens = tokens.Take(tokens.Count - 1).ToList();
-    actualTokens.Count.ShouldBe(4);
-    actualTokens[0].ShouldSatisfyAllConditions(
-      t => t.Type.ShouldBe(TokenType.Identifier),
-      t => t.Value.ShouldBe("git"));
-    actualTokens[1].ShouldSatisfyAllConditions(
-      t => t.Type.ShouldBe(TokenType.Identifier),
-      t => t.Value.ShouldBe("commit"));
-    actualTokens[2].ShouldSatisfyAllConditions(
-      t => t.Type.ShouldBe(TokenType.DoubleDash),
-      t => t.Value.ShouldBe("--"));
-    actualTokens[3].ShouldSatisfyAllConditions(
-      t => t.Type.ShouldBe(TokenType.Identifier),
-      t => t.Value.ShouldBe("no-edit"));
+    actualTokens.Length.ShouldBe(4);
+    actualTokens[0].Type.ShouldBe(TokenType.Identifier);
+    actualTokens[0].Value.ShouldBe("git");
+    actualTokens[1].Type.ShouldBe(TokenType.Identifier);
+    actualTokens[1].Value.ShouldBe("commit");
+    actualTokens[2].Type.ShouldBe(TokenType.DoubleDash);
+    actualTokens[2].Value.ShouldBe("--");
+    actualTokens[3].Type.ShouldBe(TokenType.Identifier);
+    actualTokens[3].Value.ShouldBe("no-edit");
 
     await Task.CompletedTask;
   }
 
-  public static async Task GitCommitShortOptionShouldTokenizeCorrectly()
+  public static async Task ShortOptionWithParameter()
   {
     // Arrange
-    var lexer = new RoutePatternLexer("git commit -m {message}");
-
-    // Act
+    RoutePatternLexer lexer = new("git commit -m {message}");
     IReadOnlyList<Token> tokens = lexer.Tokenize();
+    Token[] actualTokens = [.. tokens.Take(tokens.Count - 1)];
 
     // Assert
-    var actualTokens = tokens.Take(tokens.Count - 1).ToList();
-    actualTokens.Count.ShouldBe(7);
+    actualTokens.Length.ShouldBe(7);
+    actualTokens[0].Type.ShouldBe(TokenType.Identifier);
     actualTokens[0].Value.ShouldBe("git");
+    actualTokens[1].Type.ShouldBe(TokenType.Identifier);
     actualTokens[1].Value.ShouldBe("commit");
     actualTokens[2].Type.ShouldBe(TokenType.SingleDash);
+    actualTokens[2].Value.ShouldBe("-");
+    actualTokens[3].Type.ShouldBe(TokenType.Identifier);
     actualTokens[3].Value.ShouldBe("m");
     actualTokens[4].Type.ShouldBe(TokenType.LeftBrace);
+    actualTokens[4].Value.ShouldBe("{");
+    actualTokens[5].Type.ShouldBe(TokenType.Identifier);
     actualTokens[5].Value.ShouldBe("message");
     actualTokens[6].Type.ShouldBe(TokenType.RightBrace);
+    actualTokens[6].Value.ShouldBe("}");
 
     await Task.CompletedTask;
   }
 
-  public static async Task GitLogTypedParameterShouldTokenizeCorrectly()
+  public static async Task LongOptionWithTypedParameter()
   {
     // Arrange
-    var lexer = new RoutePatternLexer("git log --max-count {count:int}");
-
-    // Act
+    RoutePatternLexer lexer = new("git log --max-count {count:int}");
     IReadOnlyList<Token> tokens = lexer.Tokenize();
+    Token[] actualTokens = [.. tokens.Take(tokens.Count - 1)];
 
     // Assert
-    var actualTokens = tokens.Take(tokens.Count - 1).ToList();
-    actualTokens.Count.ShouldBe(9);
+    actualTokens.Length.ShouldBe(9);
+    actualTokens[0].Type.ShouldBe(TokenType.Identifier);
     actualTokens[0].Value.ShouldBe("git");
+    actualTokens[1].Type.ShouldBe(TokenType.Identifier);
     actualTokens[1].Value.ShouldBe("log");
     actualTokens[2].Type.ShouldBe(TokenType.DoubleDash);
+    actualTokens[2].Value.ShouldBe("--");
+    actualTokens[3].Type.ShouldBe(TokenType.Identifier);
     actualTokens[3].Value.ShouldBe("max-count");
     actualTokens[4].Type.ShouldBe(TokenType.LeftBrace);
+    actualTokens[4].Value.ShouldBe("{");
+    actualTokens[5].Type.ShouldBe(TokenType.Identifier);
     actualTokens[5].Value.ShouldBe("count");
     actualTokens[6].Type.ShouldBe(TokenType.Colon);
+    actualTokens[6].Value.ShouldBe(":");
+    actualTokens[7].Type.ShouldBe(TokenType.Identifier);
     actualTokens[7].Value.ShouldBe("int");
     actualTokens[8].Type.ShouldBe(TokenType.RightBrace);
+    actualTokens[8].Value.ShouldBe("}");
 
     await Task.CompletedTask;
   }
 
-  public static async Task DockerEnhanceLogsShouldTokenizeCorrectly()
+  public static async Task DockerWithEnhancedLogsOption()
   {
     // Arrange
-    var lexer = new RoutePatternLexer("docker run --enhance-logs {image}");
-
-    // Act
+    RoutePatternLexer lexer = new("docker run --enhance-logs {image}");
     IReadOnlyList<Token> tokens = lexer.Tokenize();
+    Token[] actualTokens = [.. tokens.Take(tokens.Count - 1)];
 
     // Assert
-    var actualTokens = tokens.Take(tokens.Count - 1).ToList();
-    actualTokens.Count.ShouldBe(7);
+    actualTokens.Length.ShouldBe(7);
+    actualTokens[0].Type.ShouldBe(TokenType.Identifier);
+    actualTokens[0].Value.ShouldBe("docker");
+    actualTokens[1].Type.ShouldBe(TokenType.Identifier);
+    actualTokens[1].Value.ShouldBe("run");
+    actualTokens[2].Type.ShouldBe(TokenType.DoubleDash);
+    actualTokens[2].Value.ShouldBe("--");
+    actualTokens[3].Type.ShouldBe(TokenType.Identifier);
     actualTokens[3].Value.ShouldBe("enhance-logs");
+    actualTokens[4].Type.ShouldBe(TokenType.LeftBrace);
+    actualTokens[4].Value.ShouldBe("{");
+    actualTokens[5].Type.ShouldBe(TokenType.Identifier);
+    actualTokens[5].Value.ShouldBe("image");
+    actualTokens[6].Type.ShouldBe(TokenType.RightBrace);
+    actualTokens[6].Value.ShouldBe("}");
 
     await Task.CompletedTask;
   }
 
-  public static async Task KubectlApplyShouldTokenizeCorrectly()
+  public static async Task KubectlApplyShortOption()
   {
     // Arrange
-    var lexer = new RoutePatternLexer("kubectl apply -f {file}");
-
-    // Act
+    RoutePatternLexer lexer = new("kubectl apply -f {file}");
     IReadOnlyList<Token> tokens = lexer.Tokenize();
+    Token[] actualTokens = [.. tokens.Take(tokens.Count - 1)];
 
     // Assert
-    var actualTokens = tokens.Take(tokens.Count - 1).ToList();
-    actualTokens.Count.ShouldBe(7);
+    actualTokens.Length.ShouldBe(7);
+    actualTokens[0].Type.ShouldBe(TokenType.Identifier);
+    actualTokens[0].Value.ShouldBe("kubectl");
+    actualTokens[1].Type.ShouldBe(TokenType.Identifier);
+    actualTokens[1].Value.ShouldBe("apply");
     actualTokens[2].Type.ShouldBe(TokenType.SingleDash);
+    actualTokens[2].Value.ShouldBe("-");
+    actualTokens[3].Type.ShouldBe(TokenType.Identifier);
     actualTokens[3].Value.ShouldBe("f");
+    actualTokens[4].Type.ShouldBe(TokenType.LeftBrace);
+    actualTokens[4].Value.ShouldBe("{");
+    actualTokens[5].Type.ShouldBe(TokenType.Identifier);
+    actualTokens[5].Value.ShouldBe("file");
+    actualTokens[6].Type.ShouldBe(TokenType.RightBrace);
+    actualTokens[6].Value.ShouldBe("}");
 
     await Task.CompletedTask;
   }
 
-  public static async Task NpmInstallSaveDevShouldTokenizeCorrectly()
+  public static async Task NpmInstallWithSaveDevOption()
   {
     // Arrange
-    var lexer = new RoutePatternLexer("npm install {package} --save-dev");
-
-    // Act
+    RoutePatternLexer lexer = new("npm install {package} --save-dev");
     IReadOnlyList<Token> tokens = lexer.Tokenize();
+    Token[] actualTokens = [.. tokens.Take(tokens.Count - 1)];
 
     // Assert
-    var actualTokens = tokens.Take(tokens.Count - 1).ToList();
-    actualTokens.Count.ShouldBe(7);
+    actualTokens.Length.ShouldBe(7);
+    actualTokens[0].Type.ShouldBe(TokenType.Identifier);
+    actualTokens[0].Value.ShouldBe("npm");
+    actualTokens[1].Type.ShouldBe(TokenType.Identifier);
+    actualTokens[1].Value.ShouldBe("install");
+    actualTokens[2].Type.ShouldBe(TokenType.LeftBrace);
+    actualTokens[2].Value.ShouldBe("{");
+    actualTokens[3].Type.ShouldBe(TokenType.Identifier);
+    actualTokens[3].Value.ShouldBe("package");
+    actualTokens[4].Type.ShouldBe(TokenType.RightBrace);
+    actualTokens[4].Value.ShouldBe("}");
     actualTokens[5].Type.ShouldBe(TokenType.DoubleDash);
+    actualTokens[5].Value.ShouldBe("--");
+    actualTokens[6].Type.ShouldBe(TokenType.Identifier);
     actualTokens[6].Value.ShouldBe("save-dev");
 
     await Task.CompletedTask;
   }
 
-  public static async Task GitCommitMessageThenAmendShouldTokenizeCorrectly()
+  public static async Task GitCommitShortOptionThenBooleanOption()
   {
     // Arrange
-    var lexer = new RoutePatternLexer("git commit -m {message} --amend");
-
-    // Act
+    RoutePatternLexer lexer = new("git commit -m {message} --amend");
     IReadOnlyList<Token> tokens = lexer.Tokenize();
+    Token[] actualTokens = [.. tokens.Take(tokens.Count - 1)];
 
     // Assert
-    var actualTokens = tokens.Take(tokens.Count - 1).ToList();
-    actualTokens.Count.ShouldBe(9);
+    actualTokens.Length.ShouldBe(9);
+    actualTokens[0].Type.ShouldBe(TokenType.Identifier);
+    actualTokens[0].Value.ShouldBe("git");
+    actualTokens[1].Type.ShouldBe(TokenType.Identifier);
+    actualTokens[1].Value.ShouldBe("commit");
+    actualTokens[2].Type.ShouldBe(TokenType.SingleDash);
+    actualTokens[2].Value.ShouldBe("-");
+    actualTokens[3].Type.ShouldBe(TokenType.Identifier);
+    actualTokens[3].Value.ShouldBe("m");
+    actualTokens[4].Type.ShouldBe(TokenType.LeftBrace);
+    actualTokens[4].Value.ShouldBe("{");
+    actualTokens[5].Type.ShouldBe(TokenType.Identifier);
+    actualTokens[5].Value.ShouldBe("message");
+    actualTokens[6].Type.ShouldBe(TokenType.RightBrace);
+    actualTokens[6].Value.ShouldBe("}");
     actualTokens[7].Type.ShouldBe(TokenType.DoubleDash);
+    actualTokens[7].Value.ShouldBe("--");
+    actualTokens[8].Type.ShouldBe(TokenType.Identifier);
     actualTokens[8].Value.ShouldBe("amend");
 
     await Task.CompletedTask;

@@ -4,15 +4,33 @@
 
   <PropertyGroup>
     <!-- Suppress localization warnings for test projects -->
-    <NoWarn>$(NoWarn);CA1303;CA1307;CA2007;CA1031;CA1515;CA1050;RCS1046;CA1052;RCS1102</NoWarn>
+    <NoWarn>$(NoWarn);CA1303;CA1307;CA2007;CA1031;CA1515;CA1050;RCS1046;CA1052;RCS1102;CA1707</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Make Shouldly available for all test projects -->
+    <!-- Make common packages available for all test projects -->
     <PackageReference Include="Shouldly" />
+    <PackageReference Include="Microsoft.Extensions.Logging" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" />
     <Using Include="Shouldly" />
     <Using Include="System.Console" Static="true" />
     <Using Include="System.Collections.Concurrent" />
     <Using Include="System.Diagnostics" />
+    <Using Include="TimeWarp.Kijaribu" />
+    <Using Include="TimeWarp.Kijaribu.TestRunner" Static="true" />
+    <Using Include="TimeWarp.Nuru.Parsing" />
+    <Using Include="TimeWarp.Nuru.Tests.Lexer.LexerTestHelper" Static="true" />
+    <Using Include="Microsoft.Extensions.Logging" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Common project references for all test projects -->
+    <ProjectReference Include="$(MSBuildThisFileDirectory)../Source/TimeWarp.Kijaribu/TimeWarp.Kijaribu.csproj" />
+    <ProjectReference Include="$(MSBuildThisFileDirectory)../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Include shared lexer test helper -->
+    <Compile Include="$(MSBuildThisFileDirectory)TimeWarp.Nuru.Tests/Lexer/LexerTestHelper.cs" Link="Shared/LexerTestHelper.cs" />
   </ItemGroup>
 </Project>

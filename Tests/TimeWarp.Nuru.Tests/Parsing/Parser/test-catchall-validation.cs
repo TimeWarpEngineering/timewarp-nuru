@@ -1,39 +1,47 @@
 #!/usr/bin/dotnet --
 #:project ../../../../Source/TimeWarp.Nuru.Parsing/TimeWarp.Nuru.Parsing.csproj
+#:project ../../../../Source/TimeWarp.Kijaribu/TimeWarp.Kijaribu.csproj
 
-using static System.Console;
 using TimeWarp.Nuru.Parsing;
+using Shouldly;
+using TimeWarp.Kijaribu;
 
-WriteLine("Testing catch-all validation in options:");
+await TestRunner.RunTests<CatchAllValidationTests>();
 
-try
+public class CatchAllValidationTests
 {
-  CompiledRoute route = RoutePatternParser.Parse("test --exclude {*pattern}");
-  WriteLine("✗ UNEXPECTED: Should have failed - catch-all in option!");
-}
-catch (Exception ex)
-{
-  WriteLine($"✓ Correctly failed: {ex.Message}");
-}
+  public static async Task CatchAllInOptionParameterShouldBeRejected()
+  {
+    // Act & Assert
+    RoutePatternException ex = Should.Throw<RoutePatternException>(() =>
+    {
+      CompiledRoute route = RoutePatternParser.Parse("test --exclude {*pattern}");
+    });
 
-try
-{
-  CompiledRoute route = RoutePatternParser.Parse("test --exclude {pattern}*");
-  WriteLine("✓ Correctly parsed: repeated option parameter");
-}
-catch (Exception ex)
-{
-  WriteLine($"✗ FAILED: {ex.Message}");
-}
+    // Verify exception has errors
+    bool hasErrors = (ex.ParseErrors?.Count > 0) || (ex.SemanticErrors?.Count > 0);
+    hasErrors.ShouldBeTrue();
 
-WriteLine("\nTesting optional catch-all syntax:");
+    await Task.CompletedTask;
+  }
 
-try
-{
-  CompiledRoute route = RoutePatternParser.Parse("git add {*files?}");
-  WriteLine("✓ Parsed {*files?}: optional catch-all syntax accepted by parser");
-}
-catch (Exception ex)
-{
-  WriteLine($"✗ Failed to parse {{*files?}}: {ex.Message}");
+  public static async Task RepeatedOptionParameterShouldSucceed()
+  {
+    // Act
+    CompiledRoute route = RoutePatternParser.Parse("test --exclude {pattern}*");
+
+    // Assert
+    route.ShouldNotBeNull();
+    await Task.CompletedTask;
+  }
+
+  public static async Task OptionalCatchAllSyntaxShouldSucceed()
+  {
+    // Act
+    CompiledRoute route = RoutePatternParser.Parse("git add {*files?}");
+
+    // Assert
+    route.ShouldNotBeNull();
+    await Task.CompletedTask;
+  }
 }

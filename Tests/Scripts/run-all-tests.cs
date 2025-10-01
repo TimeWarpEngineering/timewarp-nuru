@@ -3,11 +3,8 @@
 #:property EnablePreviewFeatures=true
 #:package TimeWarp.Amuru
 
-using System.Collections.Concurrent;
-using System.Diagnostics;
-using System.Text;
 using TimeWarp.Amuru;
-using static System.Console;
+using static TimeWarp.Amuru.Native.FileSystem.Direct;
 
 // Get script directory
 string scriptDir = Path.GetDirectoryName(AppContext.GetData("EntryPointFileDirectoryPath") as string)!;
@@ -38,6 +35,46 @@ const string Cyan = "\u001b[36m";
 WriteLine($"{Blue}========================================{Reset}");
 WriteLine($"{Blue}TimeWarp.Nuru Test Suite{Reset}");
 WriteLine($"{Blue}========================================{Reset}");
+
+// Clear runfile cache (except for this currently running script) to ensure test scripts pick up latest source
+string runfileCacheRoot = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".local", "share", "dotnet", "runfile");
+if (Directory.Exists(runfileCacheRoot))
+{
+  // Get the current executable's directory to avoid deleting ourselves
+  string? currentExeDir = AppContext.BaseDirectory;
+
+  WriteLine($"Current executable directory: {currentExeDir}");
+  WriteLine("Runfile cache entries:");
+
+  int deletedCount = 0;
+  foreach (string cacheDir in Directory.GetDirectories(runfileCacheRoot))
+  {
+    // Don't delete the directory containing the currently running executable
+    // currentExeDir will be something like: /path/runfile/script-hash/bin/debug/
+    // cacheDir will be: /path/runfile/script-hash/
+    // So check if currentExeDir STARTS WITH cacheDir
+    if (currentExeDir?.StartsWith(cacheDir, StringComparison.OrdinalIgnoreCase) == true)
+    {
+      WriteLine($"  [SKIP] {Path.GetFileName(cacheDir)} (current executable)");
+      continue;
+    }
+
+    try
+    {
+      WriteLine($"  [DELETE] {Path.GetFileName(cacheDir)}");
+      RemoveItem(cacheDir, recursive: true);
+      deletedCount++;
+    }
+    catch (Exception ex)
+    {
+      WriteLine($"  [ERROR] {Path.GetFileName(cacheDir)}: {ex.Message}");
+    }
+  }
+
+  WriteLine($"✓ Cleared {deletedCount} cached test entries from runfile cache");
+}
+
+WriteLine();
 WriteLine($"Configuration: {(parallel ? "Parallel" : "Sequential")} | {(verbose ? "Verbose" : "Normal")}");
 WriteLine($"{Blue}========================================{Reset}");
 WriteLine();

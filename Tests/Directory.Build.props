@@ -4,12 +4,15 @@
 
   <PropertyGroup>
     <!-- Suppress localization warnings for test projects -->
-    <NoWarn>$(NoWarn);CA1303;CA1307;CA2007;CA1031</NoWarn>
+    <NoWarn>$(NoWarn);CA1303;CA1307;CA2007;CA1031;CA1515;CA1050;RCS1046;CA1052;RCS1102</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
     <!-- Make Shouldly available for all test projects -->
     <PackageReference Include="Shouldly" />
     <Using Include="Shouldly" />
+    <Using Include="System.Console" Static="true" />
+    <Using Include="System.Collections.Concurrent" />
+    <Using Include="System.Diagnostics" />
   </ItemGroup>
 </Project>

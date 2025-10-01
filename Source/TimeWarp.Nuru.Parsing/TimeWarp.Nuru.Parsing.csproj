@@ -1,34 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <IncludeBuildOutput>false</IncludeBuildOutput>
-    <DevelopmentDependency>true</DevelopmentDependency>
-    <NoWarn>$(NoWarn);NU5128</NoWarn>
-    <PackageOutputPath>../../LocalNuGetFeed</PackageOutputPath>
+    <Description>Route pattern parsing library for TimeWarp.Nuru (internal use only - compiled directly into consuming projects)</Description>
   </PropertyGroup>
-
-  <PropertyGroup>
-    <PackageId>TimeWarp.Nuru.Parsing</PackageId>
-    <Description>Route pattern parsing library for TimeWarp.Nuru</Description>
-    <PackageTags>TimeWarp;Nuru;Parsing;Source;Analyzer</PackageTags>
-    <PackageReadmeFile>README.md</PackageReadmeFile>
-  </PropertyGroup>
-
-
-  <ItemGroup>
-    <!-- Include all source files as content -->
-    <Content Include="**/*.cs" Exclude="obj/**;bin/**">
-      <Pack>true</Pack>
-      <PackagePath>contentFiles/cs/any/TimeWarp.Nuru.Parsing/</PackagePath>
-      <BuildAction>Compile</BuildAction>
-    </Content>
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="../../Assets/Logo.png" Pack="true" PackagePath="" />
-    <None Include="README.md" Pack="true" PackagePath="" />
-  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />

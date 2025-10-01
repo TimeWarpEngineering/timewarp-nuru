@@ -9,6 +9,7 @@ using TimeWarp.Kijaribu;
 // Clear cache to ensure parser changes are picked up (parsing is source-compiled)
 await TestRunner.RunTests<EndOfOptionsTests>(clearCache: true);
 
+[TestTag("Parser")]
 public class EndOfOptionsTests
 {
   // Valid patterns with -- separator

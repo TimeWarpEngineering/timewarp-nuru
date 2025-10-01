@@ -3,11 +3,11 @@
 #:project ../../../Source/TimeWarp.Kijaribu/TimeWarp.Kijaribu.csproj
 
 using TimeWarp.Nuru.Parsing;
-using Shouldly;
 using TimeWarp.Kijaribu;
 
 await TestRunner.RunTests<RoutePatternTokenizationTests>();
 
+[TestTag("Lexer")]
 public class RoutePatternTokenizationTests
 {
   // All patterns should tokenize successfully with EndOfInput as last token

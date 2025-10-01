@@ -3,11 +3,12 @@
 #:property EnablePreviewFeatures=true
 #:package TimeWarp.Amuru
 
-using static System.Console;
+using TimeWarp.Amuru;
 
 // Get script directory to build correct paths
 string scriptDir = AppContext.GetData("EntryPointFileDirectoryPath") as string
   ?? throw new InvalidOperationException("Could not get entry point directory");
+
 string testsDir = Path.GetDirectoryName(scriptDir)!;
 
 // Run all Kijaribu-based tests
@@ -21,6 +22,7 @@ int passedTests = 0;
 // List of Kijaribu-based test files (relative to Tests directory)
 string[] testFiles = [
   Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Parsing/Parser/test-catchall-validation.cs"),
+  Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Parsing/Parser/test-parser-end-of-options.cs"),
 ];
 
 foreach (string testFile in testFiles)
@@ -38,10 +40,10 @@ foreach (string testFile in testFiles)
   // Make test file executable if needed
   if (OperatingSystem.IsLinux() || OperatingSystem.IsMacOS())
   {
-    await TimeWarp.Amuru.Shell.Builder("chmod").WithArguments("+x", fullPath).RunAsync();
+    await Shell.Builder("chmod").WithArguments("+x", fullPath).RunAsync();
   }
 
-  TimeWarp.Amuru.CommandOutput result = await TimeWarp.Amuru.Shell.Builder(fullPath)
+  CommandOutput result = await Shell.Builder(fullPath)
     .WithWorkingDirectory(Path.GetDirectoryName(fullPath)!)
     .WithNoValidation()
     .CaptureAsync();

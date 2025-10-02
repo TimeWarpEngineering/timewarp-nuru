@@ -84,10 +84,10 @@ The lexer's primary responsibility is to reject nonsensical character sequences 
 **Test File**: `lexer-07-invalid-angle-brackets.cs`
 **Purpose**: Catch common mistake of using `<>` instead of `{}`
 
-- [ ] `test<param>` → `[Identifier]`, `[Invalid]`
-- [ ] `<param>` → `[Invalid]`
-- [ ] `{param}` → valid (ensure angle brackets specifically invalid)
-- [ ] Mixed brackets: `{param>` or `<param}`
+- [x] `test<param>` → `[Identifier]`, `[Invalid]` - `Should_reject_angle_brackets_after_identifier`
+- [x] `<param>` → `[Invalid]` - `Should_reject_angle_brackets_at_start`
+- [x] `{param}` → valid (ensure angle brackets specifically invalid) - `Should_accept_curly_braces`
+- [x] Mixed brackets: `{param>` - `Should_reject_mixed_bracket_syntax`
 
 ## 8. Whitespace Handling
 **Test File**: `lexer-08-whitespace-handling.cs`

@@ -147,18 +147,19 @@ The lexer's primary responsibility is to reject nonsensical character sequences 
 - [x] Description with braces: `cmd | use {syntax} here` - `Should_tokenize_description_with_braces`
 - [x] Trailing whitespace in description - `Should_handle_trailing_whitespace_in_description`
 
-## 13. Parameter Context Tests
+## 13. Parameter Context Tests ✓
 **Test File**: `lexer-13-parameter-context.cs`
 **Purpose**: Ensure tokens inside `{}` are handled correctly
 
-- [ ] `{name}` → proper tokenization
-- [ ] `{name:int}` → proper tokenization with colon
-- [ ] `{name?}` → proper tokenization with question
-- [ ] `{*args}` → proper tokenization with asterisk
-- [ ] `{invalid--name}` → should invalid be detected inside braces?
-- [ ] `{name:type?}` → combined type and optional
-- [ ] `{name:enum1|enum2|enum3}` → enum values with pipes
-- [ ] Nested or malformed braces: `{{name}}`, `{name`
+- [x] `{name}` → proper tokenization - `Should_tokenize_simple_parameter`
+- [x] `{name:int}` → proper tokenization with colon - `Should_tokenize_typed_parameter`
+- [x] `{name?}` → proper tokenization with question - `Should_tokenize_optional_parameter`
+- [x] `{*args}` → proper tokenization with asterisk - `Should_tokenize_catchall_parameter`
+- [x] `{invalid--name}` → entire identifier invalid - `Should_detect_invalid_double_dash_in_parameter`
+- [x] `{name:type?}` → combined type and optional - `Should_tokenize_combined_type_and_optional`
+- [x] `{mode:dev|staging|prod}` → enum values with pipes - `Should_tokenize_enum_values_with_pipes`
+- [x] `{{name}}` → nested braces - `Should_detect_nested_braces`
+- [x] `{name` → unclosed brace - `Should_detect_unclosed_brace`
 
 ## 14. Token Position and Span Tests
 **Test File**: `lexer-14-token-position.cs`

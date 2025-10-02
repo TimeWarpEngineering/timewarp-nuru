@@ -30,15 +30,15 @@ The lexer's primary responsibility is to reject nonsensical character sequences 
 **Purpose**: Verify correct tokenization of short and long options
 
 **Long Options:**
-- [ ] `--dry-run` → `[DoubleDash]`, `[Identifier]`
-- [ ] `--no-edit` → `[DoubleDash]`, `[Identifier]`
-- [ ] `--save-dev` → `[DoubleDash]`, `[Identifier]`
-- [ ] `--v` → `[DoubleDash]`, `[Identifier]` (single char after --)
+- [x] `--dry-run` → `[DoubleDash]`, `[Identifier]` - `Should_tokenize_long_options`
+- [x] `--no-edit` → `[DoubleDash]`, `[Identifier]` - `Should_tokenize_long_options`
+- [x] `--save-dev` → `[DoubleDash]`, `[Identifier]` - `Should_tokenize_long_options`
+- [x] `--v` → `[DoubleDash]`, `[Identifier]` (single char after --) - `Should_tokenize_long_options`
 
 **Short Options:**
-- [ ] `-h` → `[SingleDash]`, `[Identifier]`
-- [ ] `-v` → `[SingleDash]`, `[Identifier]`
-- [ ] `-x` → `[SingleDash]`, `[Identifier]`
+- [x] `-h` → `[SingleDash]`, `[Identifier]` - `Should_tokenize_short_options`
+- [x] `-v` → `[SingleDash]`, `[Identifier]` - `Should_tokenize_short_options`
+- [x] `-x` → `[SingleDash]`, `[Identifier]` - `Should_tokenize_short_options`
 
 ## 3. Invalid: Double Dashes Within Text
 **Test File**: `lexer-03-invalid-double-dashes.cs`

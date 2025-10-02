@@ -105,12 +105,12 @@ The lexer's primary responsibility is to reject nonsensical character sequences 
 **Test File**: `lexer-09-complex-patterns.cs`
 **Purpose**: Real-world patterns combining multiple token types
 
-- [ ] `deploy {env} --dry-run` → proper tokenization
-- [ ] `git commit -m {message}` → proper tokenization
-- [ ] `build --config {mode:string}` → proper tokenization
-- [ ] `exec -- {*args}` → proper tokenization
-- [ ] `greet {name?} | Say hello` → proper tokenization with description
-- [ ] `cmd {a} {b:int} --flag {c?} | description` → comprehensive pattern
+- [x] `deploy {env} --dry-run` → proper tokenization - `Should_tokenize_deploy_pattern_with_option`
+- [x] `git commit -m {message}` → proper tokenization - `Should_tokenize_git_commit_with_short_option`
+- [x] `build --config {mode:string}` → proper tokenization - `Should_tokenize_build_with_typed_parameter`
+- [x] `exec -- {*args}` → proper tokenization - `Should_tokenize_exec_with_catchall`
+- [x] `greet {name?} | Say hello` → proper tokenization with description - `Should_tokenize_pattern_with_optional_and_description`
+- [x] `cmd {a} {b:int} --flag {c?} | description` → comprehensive pattern - `Should_tokenize_comprehensive_complex_pattern`
 
 ## 10. Edge Cases
 **Test File**: `lexer-10-edge-cases.cs`

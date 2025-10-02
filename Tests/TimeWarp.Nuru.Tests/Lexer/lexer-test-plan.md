@@ -19,7 +19,7 @@ The lexer's primary responsibility is to reject nonsensical character sequences 
 - [x] **Asterisk** - `*` character - `Should_tokenize_asterisk`
 - [x] **Pipe** - `|` character - `Should_tokenize_pipe`
 - [x] **Comma** - `,` character - `Should_tokenize_comma`
-- [ ] **DoubleDash** - `--` at start of option
+- [x] **DoubleDash** - `--` at start of option - `Should_tokenize_double_dash`
 - [ ] **SingleDash** - `-` at start of short option
 - [ ] **EndOfOptions** - standalone `--`
 - [ ] **Description** - text after `|`

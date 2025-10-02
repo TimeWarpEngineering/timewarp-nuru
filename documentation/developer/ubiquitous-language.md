@@ -121,7 +121,7 @@ Token { Type = EndOfInput, Value = "", Position = 12, Length = 0 }
 - `EndOfInput` - Marks end of input string
 - `Invalid` - Malformed or unrecognized character sequence
 
-**Related Terms:** Token, Delimiter, Operator
+**Related Terms:** Token, Delimiter, Modifier
 
 ---
 
@@ -239,7 +239,7 @@ Token { Type = EndOfInput, Value = "", Position = <end>, Length = 0 }
 // Delimiters: { : | }
 ```
 
-**Related Terms:** TokenType, Operator
+**Related Terms:** TokenType, Modifier
 
 ---
 
@@ -270,20 +270,20 @@ Token { Type = EndOfInput, Value = "", Position = <end>, Length = 0 }
 
 ---
 
-### Operator
-**Definition:** Symbols that modify the meaning of adjacent tokens. Operators change behavior or requirements.
+### Modifier
+**Definition:** Symbols that modify the meaning of adjacent tokens. Modifiers change parameter behavior or requirements.
 
 **Token Types:**
-- `Question` (`?`) - Marks optional
-- `Asterisk` (`*`) - Marks catch-all/variadic
+- `Question` (`?`) - Marks parameter or option as optional
+- `Asterisk` (`*`) - Marks parameter as catch-all/variadic
 
 **Example:**
 ```csharp
 // Input: "{env?} {*args}"
-// Operators: ? (optional modifier), * (catch-all modifier)
+// Modifiers: ? (optional), * (catch-all)
 ```
 
-**Related Terms:** TokenType, Delimiter
+**Related Terms:** TokenType, Delimiter, Parameter Modifiers, Option Modifiers
 
 ---
 
@@ -620,6 +620,7 @@ These terms are **NOT** part of our Ubiquitous Language. Do not use them in desi
 | **Character Stream** | Implementation detail, unnecessarily low-level | **Input** |
 | **Lexeme** | Academic term for "token value", unnecessary distinction | **Token.Value** or just **Token** |
 | **Literal Token** | Confusing - "Literal" is a Parser/semantic concept, not Lexer | **Identifier** (from Lexer) which becomes **Literal Segment** (in Parser) |
+| **Operator** | Implies arithmetic/logical operations (confusing) | **Modifier** (`?` and `*` modify parameters/options) |
 
 ---
 

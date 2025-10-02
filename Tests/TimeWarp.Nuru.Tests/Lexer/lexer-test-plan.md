@@ -44,10 +44,10 @@ The lexer's primary responsibility is to reject nonsensical character sequences 
 **Test File**: `lexer-03-invalid-double-dashes.cs`
 **Purpose**: Detect malformed identifiers with embedded `--`
 
-- [ ] `test--case` → `[Invalid]` (not split into 3 tokens)
-- [ ] `foo--bar--baz` → `[Invalid]` (multiple double dashes)
-- [ ] `my--option` → `[Invalid]` (double dash not at start)
-- [ ] `a--b` → `[Invalid]` (minimal case)
+- [x] `test--case` → `[Invalid]` (not split into 3 tokens) - `Should_reject_double_dashes_within_identifiers`
+- [x] `foo--bar--baz` → `[Invalid]` (multiple double dashes) - `Should_reject_double_dashes_within_identifiers`
+- [x] `my--option` → `[Invalid]` (double dash not at start) - `Should_reject_double_dashes_within_identifiers`
+- [x] `a--b` → `[Invalid]` (minimal case) - `Should_reject_double_dashes_within_identifiers`
 
 ## 4. Invalid: Trailing Dashes
 **Test File**: `lexer-04-invalid-trailing-dashes.cs`

@@ -161,16 +161,16 @@ The lexer's primary responsibility is to reject nonsensical character sequences 
 - [x] `{{name}}` → nested braces - `Should_detect_nested_braces`
 - [x] `{name` → unclosed brace - `Should_detect_unclosed_brace`
 
-## 14. Token Position and Span Tests
+## 14. Token Position and Span Tests ✓
 **Test File**: `lexer-14-token-position.cs`
 **Purpose**: Verify accurate source location tracking
 
-- [ ] Token start position is correct
-- [ ] Token end position is correct
-- [ ] Token length matches actual text
-- [ ] Position tracking across whitespace
-- [ ] Position tracking for multi-char tokens (`--`, `EndOfOptions`)
-- [ ] Position tracking for invalid tokens
+- [x] Token start position is correct - `Should_track_token_start_positions_correctly`
+- [x] Token end position is correct - `Should_track_token_end_positions_correctly`
+- [x] Token length matches actual text - `Should_track_token_length_matches_value`
+- [x] Position tracking across whitespace - `Should_track_positions_across_whitespace`
+- [x] Position tracking for multi-char tokens (`--`, `EndOfOptions`) - `Should_track_multi_char_token_positions`
+- [x] Position tracking for invalid tokens - `Should_track_invalid_token_positions`
 
 ---
 

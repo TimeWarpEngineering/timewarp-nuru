@@ -73,12 +73,12 @@ The lexer's primary responsibility is to reject nonsensical character sequences 
 **Test File**: `lexer-06-end-of-options.cs`
 **Purpose**: Distinguish standalone `--` from option prefix
 
-- [ ] `git log --` → `[Identifier]`, `[Identifier]`, `[EndOfOptions]`
-- [ ] `exec -- {*args}` → proper tokenization with `[EndOfOptions]`
-- [ ] `-- something` → `[EndOfOptions]`, `[Identifier]`
-- [ ] Trailing `--` at end of pattern
-- [ ] `--` followed by EOF
-- [ ] Multiple `--` separators in single pattern
+- [x] `git log --` → `[Identifier]`, `[Identifier]`, `[EndOfOptions]` - `Should_tokenize_end_of_options_after_commands`
+- [x] `exec -- {*args}` → proper tokenization with `[EndOfOptions]` - `Should_tokenize_end_of_options_in_middle_of_pattern`
+- [x] `-- something` → `[EndOfOptions]`, `[Identifier]` - `Should_tokenize_end_of_options_at_start`
+- [x] Trailing `--` at end of pattern - covered by `Should_tokenize_end_of_options_after_commands`
+- [x] `--` followed by EOF - covered by Section 1's `Should_tokenize_end_of_options`
+- [x] Multiple `--` separators in single pattern - `Should_tokenize_multiple_end_of_options_separators`
 
 ## 7. Invalid: Angle Brackets
 **Test File**: `lexer-07-invalid-angle-brackets.cs`

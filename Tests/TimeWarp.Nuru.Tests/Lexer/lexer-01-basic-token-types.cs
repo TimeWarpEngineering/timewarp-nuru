@@ -18,6 +18,7 @@ public class BasicTokenTypesTests
   [Input("no-edit")]
   [Input("save-dev")]
   [Input("my-long-command-name")]
+  [Input("this-is-a-long-name")]
   public static async Task Should_tokenize_compound_identifiers(string pattern)
     => await TokenizeSingleIdentifier(pattern);
 

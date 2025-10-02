@@ -11,7 +11,7 @@ The lexer's primary responsibility is to reject nonsensical character sequences 
 **Purpose**: Verify each token type is correctly identified
 
 - [x] **Identifier tokens** - plain text words like `status`, `version`, `help` - `Should_tokenize_plain_identifiers`
-- [x] **Identifier tokens with dashes** - compound names like `dry-run`, `no-edit` - `Should_tokenize_compound_identifiers`
+- [x] **Identifier tokens with dashes** - compound names with 1-3 internal dashes like `dry-run`, `no-edit`, `this-is-a-long-name` - `Should_tokenize_compound_identifiers`
 - [x] **LeftBrace** - `{` character - `Should_tokenize_left_brace`
 - [x] **RightBrace** - `}` character - `Should_tokenize_right_brace`
 - [x] **Colon** - `:` character - `Should_tokenize_colon`
@@ -25,18 +25,8 @@ The lexer's primary responsibility is to reject nonsensical character sequences 
 - [x] **Description** - text after `|` (lexer continues normal tokenization, parser handles description) - `Should_tokenize_description`
 - [x] **EndOfInput** - EOF marker (always present, even with empty input) - `Should_tokenize_end_of_input`
 
-## 2. Valid Compound Identifier Tests
-**Test File**: `lexer-02-valid-compound-identifiers.cs`
-**Purpose**: Ensure single internal dashes are accepted
-
-- [ ] `dry-run` → single `Identifier` token
-- [ ] `no-edit` → single `Identifier` token
-- [ ] `save-dev` → single `Identifier` token
-- [ ] `my-long-command-name` → single `Identifier` token
-- [ ] Multiple dashes: `this-is-a-long-name` → single `Identifier`
-
-## 3. Valid Option Tests
-**Test File**: `lexer-03-valid-options.cs`
+## 2. Valid Option Tests
+**Test File**: `lexer-02-valid-options.cs`
 **Purpose**: Verify correct tokenization of short and long options
 
 **Long Options:**
@@ -50,8 +40,8 @@ The lexer's primary responsibility is to reject nonsensical character sequences 
 - [ ] `-v` → `[SingleDash]`, `[Identifier]`
 - [ ] `-x` → `[SingleDash]`, `[Identifier]`
 
-## 4. Invalid: Double Dashes Within Text
-**Test File**: `lexer-04-invalid-double-dashes.cs`
+## 3. Invalid: Double Dashes Within Text
+**Test File**: `lexer-03-invalid-double-dashes.cs`
 **Purpose**: Detect malformed identifiers with embedded `--`
 
 - [ ] `test--case` → `[Invalid]` (not split into 3 tokens)
@@ -59,8 +49,8 @@ The lexer's primary responsibility is to reject nonsensical character sequences 
 - [ ] `my--option` → `[Invalid]` (double dash not at start)
 - [ ] `a--b` → `[Invalid]` (minimal case)
 
-## 5. Invalid: Trailing Dashes
-**Test File**: `lexer-05-invalid-trailing-dashes.cs`
+## 4. Invalid: Trailing Dashes
+**Test File**: `lexer-04-invalid-trailing-dashes.cs`
 **Purpose**: Detect incomplete/malformed identifiers
 
 - [ ] `test-` → `[Invalid]` (trailing single dash)
@@ -68,8 +58,8 @@ The lexer's primary responsibility is to reject nonsensical character sequences 
 - [ ] `foo---` → `[Invalid]` (multiple trailing dashes)
 - [ ] `my-command-` → `[Invalid]` (compound with trailing dash)
 
-## 6. Invalid: Leading Single Dash with Multi-Character
-**Test File**: `lexer-06-invalid-leading-dash.cs`
+## 5. Invalid: Leading Single Dash with Multi-Character
+**Test File**: `lexer-05-invalid-leading-dash.cs`
 **Purpose**: Detect ambiguous option patterns
 
 - [ ] `-test` → `[Invalid]` or `[SingleDash]`, `[Identifier]` (document current behavior, decide if should be invalid)
@@ -78,8 +68,8 @@ The lexer's primary responsibility is to reject nonsensical character sequences 
 
 **Note**: Need to determine desired behavior - should `-multi` be invalid or split into `[SingleDash]`, `[Identifier]`?
 
-## 7. EndOfOptions Separator Tests
-**Test File**: `lexer-07-end-of-options.cs`
+## 6. EndOfOptions Separator Tests
+**Test File**: `lexer-06-end-of-options.cs`
 **Purpose**: Distinguish standalone `--` from option prefix
 
 - [ ] `git log --` → `[Identifier]`, `[Identifier]`, `[EndOfOptions]`
@@ -89,8 +79,8 @@ The lexer's primary responsibility is to reject nonsensical character sequences 
 - [ ] `--` followed by EOF
 - [ ] Multiple `--` separators in single pattern
 
-## 8. Invalid: Angle Brackets
-**Test File**: `lexer-08-invalid-angle-brackets.cs`
+## 7. Invalid: Angle Brackets
+**Test File**: `lexer-07-invalid-angle-brackets.cs`
 **Purpose**: Catch common mistake of using `<>` instead of `{}`
 
 - [ ] `test<param>` → `[Identifier]`, `[Invalid]`
@@ -98,8 +88,8 @@ The lexer's primary responsibility is to reject nonsensical character sequences 
 - [ ] `{param}` → valid (ensure angle brackets specifically invalid)
 - [ ] Mixed brackets: `{param>` or `<param}`
 
-## 9. Whitespace Handling
-**Test File**: `lexer-09-whitespace-handling.cs`
+## 8. Whitespace Handling
+**Test File**: `lexer-08-whitespace-handling.cs`
 **Purpose**: Verify whitespace properly separates tokens
 
 - [ ] Single space between tokens
@@ -110,8 +100,8 @@ The lexer's primary responsibility is to reject nonsensical character sequences 
 - [ ] Whitespace around special characters (`{`, `}`, `|`, etc.)
 - [ ] No whitespace between adjacent special chars
 
-## 10. Complex Pattern Integration Tests
-**Test File**: `lexer-10-complex-patterns.cs`
+## 9. Complex Pattern Integration Tests
+**Test File**: `lexer-09-complex-patterns.cs`
 **Purpose**: Real-world patterns combining multiple token types
 
 - [ ] `deploy {env} --dry-run` → proper tokenization
@@ -121,8 +111,8 @@ The lexer's primary responsibility is to reject nonsensical character sequences 
 - [ ] `greet {name?} | Say hello` → proper tokenization with description
 - [ ] `cmd {a} {b:int} --flag {c?} | description` → comprehensive pattern
 
-## 11. Edge Cases
-**Test File**: `lexer-11-edge-cases.cs`
+## 10. Edge Cases
+**Test File**: `lexer-10-edge-cases.cs`
 **Purpose**: Boundary conditions and unusual inputs
 
 - [ ] Empty string → `[EndOfInput]`
@@ -133,8 +123,8 @@ The lexer's primary responsibility is to reject nonsensical character sequences 
 - [ ] Mixed valid/invalid patterns
 - [ ] Unicode characters in identifiers (if supported)
 
-## 12. Error Reporting Tests
-**Test File**: `lexer-12-error-reporting.cs`
+## 11. Error Reporting Tests
+**Test File**: `lexer-11-error-reporting.cs`
 **Purpose**: Verify clear error messages for invalid tokens
 
 - [ ] Invalid token includes position information
@@ -144,8 +134,8 @@ The lexer's primary responsibility is to reject nonsensical character sequences 
 - [ ] Invalid token at end of pattern
 - [ ] Invalid token in middle of pattern
 
-## 13. Description Tokenization
-**Test File**: `lexer-13-description-tokenization.cs`
+## 12. Description Tokenization
+**Test File**: `lexer-12-description-tokenization.cs`
 **Purpose**: Verify text after `|` is captured correctly
 
 - [ ] Simple description: `command | help text`
@@ -156,8 +146,8 @@ The lexer's primary responsibility is to reject nonsensical character sequences 
 - [ ] Description with braces: `cmd | use {syntax} here`
 - [ ] Trailing whitespace in description
 
-## 14. Parameter Context Tests
-**Test File**: `lexer-14-parameter-context.cs`
+## 13. Parameter Context Tests
+**Test File**: `lexer-13-parameter-context.cs`
 **Purpose**: Ensure tokens inside `{}` are handled correctly
 
 - [ ] `{name}` → proper tokenization
@@ -169,8 +159,8 @@ The lexer's primary responsibility is to reject nonsensical character sequences 
 - [ ] `{name:enum1|enum2|enum3}` → enum values with pipes
 - [ ] Nested or malformed braces: `{{name}}`, `{name`
 
-## 15. Token Position and Span Tests
-**Test File**: `lexer-15-token-position.cs`
+## 14. Token Position and Span Tests
+**Test File**: `lexer-14-token-position.cs`
 **Purpose**: Verify accurate source location tracking
 
 - [ ] Token start position is correct
@@ -187,23 +177,22 @@ The lexer's primary responsibility is to reject nonsensical character sequences 
 | # | Category | Test File | Purpose | Estimated Tests |
 |---|----------|-----------|---------|----------------|
 | 1 | Basic Token Types | `lexer-01-basic-token-types.cs` | Core token identification | 14 |
-| 2 | Valid Compound Identifiers | `lexer-02-valid-compound-identifiers.cs` | Dash handling in names | 5 |
-| 3 | Valid Options | `lexer-03-valid-options.cs` | Short/long option parsing | 7 |
-| 4 | Invalid Double Dashes | `lexer-04-invalid-double-dashes.cs` | Malformed identifiers | 4 |
-| 5 | Invalid Trailing Dashes | `lexer-05-invalid-trailing-dashes.cs` | Incomplete identifiers | 4 |
-| 6 | Invalid Leading Dash | `lexer-06-invalid-leading-dash.cs` | Ambiguous patterns | 3 |
-| 7 | EndOfOptions | `lexer-07-end-of-options.cs` | Separator handling | 6 |
-| 8 | Invalid Angle Brackets | `lexer-08-invalid-angle-brackets.cs` | Common mistakes | 4 |
-| 9 | Whitespace | `lexer-09-whitespace-handling.cs` | Token separation | 7 |
-| 10 | Complex Integration | `lexer-10-complex-patterns.cs` | Real patterns | 6 |
-| 11 | Edge Cases | `lexer-11-edge-cases.cs` | Boundaries | 7 |
-| 12 | Error Reporting | `lexer-12-error-reporting.cs` | Diagnostics | 6 |
-| 13 | Descriptions | `lexer-13-description-tokenization.cs` | Help text | 7 |
-| 14 | Parameter Context | `lexer-14-parameter-context.cs` | Inside braces | 8 |
-| 15 | Token Position | `lexer-15-token-position.cs` | Source tracking | 6 |
+| 2 | Valid Options | `lexer-02-valid-options.cs` | Short/long option parsing | 7 |
+| 3 | Invalid Double Dashes | `lexer-03-invalid-double-dashes.cs` | Malformed identifiers | 4 |
+| 4 | Invalid Trailing Dashes | `lexer-04-invalid-trailing-dashes.cs` | Incomplete identifiers | 4 |
+| 5 | Invalid Leading Dash | `lexer-05-invalid-leading-dash.cs` | Ambiguous patterns | 3 |
+| 6 | EndOfOptions | `lexer-06-end-of-options.cs` | Separator handling | 6 |
+| 7 | Invalid Angle Brackets | `lexer-07-invalid-angle-brackets.cs` | Common mistakes | 4 |
+| 8 | Whitespace | `lexer-08-whitespace-handling.cs` | Token separation | 7 |
+| 9 | Complex Integration | `lexer-09-complex-patterns.cs` | Real patterns | 6 |
+| 10 | Edge Cases | `lexer-10-edge-cases.cs` | Boundaries | 7 |
+| 11 | Error Reporting | `lexer-11-error-reporting.cs` | Diagnostics | 6 |
+| 12 | Descriptions | `lexer-12-description-tokenization.cs` | Help text | 7 |
+| 13 | Parameter Context | `lexer-13-parameter-context.cs` | Inside braces | 8 |
+| 14 | Token Position | `lexer-14-token-position.cs` | Source tracking | 6 |
 
-**Total Test Categories**: 15
-**Estimated Individual Test Cases**: 94
+**Total Test Categories**: 14
+**Estimated Individual Test Cases**: 89
 
 ## Implementation Notes
 

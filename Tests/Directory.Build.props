@@ -4,7 +4,7 @@
 
   <PropertyGroup>
     <!-- Suppress localization warnings for test projects -->
-    <NoWarn>$(NoWarn);CA1303;CA1307;CA2007;CA1031;CA1515;CA1050;RCS1046;CA1052;RCS1102;CA1707</NoWarn>
+    <NoWarn>$(NoWarn);CA1303;CA1307;CA2007;CA1031;CA1515;CA1050;CA1052;CA1707;RCS1046;RCS1102;RCS1110</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

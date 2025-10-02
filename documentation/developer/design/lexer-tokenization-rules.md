@@ -74,10 +74,12 @@ These are incomplete/malformed:
 
 ### Leading Single Dash with Multi-Character
 
-While `-h` is valid (short option), these are ambiguous:
-- ⚠️ `-test` - Currently tokenized as `[SingleDash] -`, `[Identifier] test`
-  - Could mean `-t est` or is it a typo for `--test`?
-  - Consider making this `Invalid` if identifier after single dash is multi-character
+Single dash can be followed by multi-character identifiers:
+- ✅ `-bl` → `[SingleDash] -`, `[Identifier] bl` (e.g., `dotnet run -bl` for binary logger)
+- ✅ `-test` → `[SingleDash] -`, `[Identifier] test`
+- ✅ `-verbosity` → `[SingleDash] -`, `[Identifier] verbosity`
+
+**Rationale**: Real-world CLI tools (like dotnet CLI, msbuild) use multi-character short options. While this could be ambiguous (is `-test` a typo for `--test`?), rejecting these patterns would prevent legitimate use cases. The parser can provide helpful suggestions if the option doesn't match any defined routes.
 
 ## Special Cases
 
@@ -104,8 +106,7 @@ Character sequence starting with '--':
 └── In middle of text? → Invalid
 
 Character sequence starting with '-':
-├── Followed by single char then space/EOF? → SingleDash + Identifier
-├── Followed by multi-char? → Consider Invalid (ambiguous)
+├── Followed by alphanumeric? → SingleDash + Identifier (single or multi-char)
 └── At end of identifier? → Invalid
 
 Identifier with dashes:
@@ -127,17 +128,18 @@ The lexer should be updated to:
 
 1. Detect double dashes within identifiers and produce `Invalid` tokens
 2. Detect trailing dashes and produce `Invalid` tokens
-3. Consider making `-multichar` produce `Invalid` (or at least a warning)
+3. Allow `-multichar` patterns (tokenize as `[SingleDash]` + `[Identifier]`) to support real-world CLI tools
 4. Provide clear error messages indicating why a token is invalid
 
 ## Examples
 
-| Input | Current Tokenization | Proposed Tokenization |
+| Input | Current Tokenization | Desired Tokenization |
 |-------|---------------------|----------------------|
 | `test--case` | `[Id] test`, `[DD] --`, `[Id] case` | `[Invalid] test--case` |
 | `test-` | `[Id] test`, `[SD] -` | `[Invalid] test-` |
 | `foo--` | `[Id] foo`, `[DD] --` | `[Invalid] foo--` |
 | `my--name` | `[Id] my`, `[DD] --`, `[Id] name` | `[Invalid] my--name` |
-| `-test` | `[SD] -`, `[Id] test` | `[Invalid] -test` or warning |
+| `-test` | `[Invalid] -test` | `[SD] -`, `[Id] test` (valid multi-char short option) |
+| `-bl` | `[Invalid] -bl` | `[SD] -`, `[Id] bl` (valid multi-char short option) |
 | `--dry-run` | `[DD] --`, `[Id] dry-run` | No change (valid) |
 | `dry-run` | `[Id] dry-run` | No change (valid) |

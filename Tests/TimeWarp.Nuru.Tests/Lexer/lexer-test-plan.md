@@ -58,15 +58,16 @@ The lexer's primary responsibility is to reject nonsensical character sequences 
 - [x] `foo---` → `[Invalid]` (multiple trailing dashes) - `Should_reject_trailing_dashes`
 - [x] `my-command-` → `[Invalid]` (compound with trailing dash) - `Should_reject_trailing_dashes`
 
-## 5. Invalid: Leading Single Dash with Multi-Character
-**Test File**: `lexer-05-invalid-leading-dash.cs`
-**Purpose**: Detect ambiguous option patterns
+## 5. Valid: Multi-Character Short Options
+**Test File**: `lexer-05-multi-char-short-options.cs`
+**Purpose**: Verify multi-character short options are accepted (e.g., `dotnet run -bl`)
 
-- [ ] `-test` → `[Invalid]` or `[SingleDash]`, `[Identifier]` (document current behavior, decide if should be invalid)
-- [ ] `-abc` → same as above
-- [ ] `-multi-word` → same as above
+- [ ] `-test` → `[SingleDash]`, `[Identifier]`
+- [ ] `-bl` → `[SingleDash]`, `[Identifier]` (real-world example: dotnet binary logger)
+- [ ] `-verbosity` → `[SingleDash]`, `[Identifier]`
+- [ ] `-abc` → `[SingleDash]`, `[Identifier]`
 
-**Note**: Need to determine desired behavior - should `-multi` be invalid or split into `[SingleDash]`, `[Identifier]`?
+**Rationale**: Real-world CLI tools use multi-character short options. Rejecting these would prevent legitimate use cases.
 
 ## 6. EndOfOptions Separator Tests
 **Test File**: `lexer-06-end-of-options.cs`
@@ -180,7 +181,7 @@ The lexer's primary responsibility is to reject nonsensical character sequences 
 | 2 | Valid Options | `lexer-02-valid-options.cs` | Short/long option parsing | 7 |
 | 3 | Invalid Double Dashes | `lexer-03-invalid-double-dashes.cs` | Malformed identifiers | 4 |
 | 4 | Invalid Trailing Dashes | `lexer-04-invalid-trailing-dashes.cs` | Incomplete identifiers | 4 |
-| 5 | Invalid Leading Dash | `lexer-05-invalid-leading-dash.cs` | Ambiguous patterns | 3 |
+| 5 | Multi-Char Short Options | `lexer-05-multi-char-short-options.cs` | Real-world patterns | 4 |
 | 6 | EndOfOptions | `lexer-06-end-of-options.cs` | Separator handling | 6 |
 | 7 | Invalid Angle Brackets | `lexer-07-invalid-angle-brackets.cs` | Common mistakes | 4 |
 | 8 | Whitespace | `lexer-08-whitespace-handling.cs` | Token separation | 7 |
@@ -192,7 +193,7 @@ The lexer's primary responsibility is to reject nonsensical character sequences 
 | 14 | Token Position | `lexer-14-token-position.cs` | Source tracking | 6 |
 
 **Total Test Categories**: 14
-**Estimated Individual Test Cases**: 89
+**Estimated Individual Test Cases**: 90
 
 ## Implementation Notes
 

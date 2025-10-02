@@ -53,10 +53,10 @@ The lexer's primary responsibility is to reject nonsensical character sequences 
 **Test File**: `lexer-04-invalid-trailing-dashes.cs`
 **Purpose**: Detect incomplete/malformed identifiers
 
-- [ ] `test-` → `[Invalid]` (trailing single dash)
-- [ ] `test--` → `[Invalid]` (trailing double dash)
-- [ ] `foo---` → `[Invalid]` (multiple trailing dashes)
-- [ ] `my-command-` → `[Invalid]` (compound with trailing dash)
+- [x] `test-` → `[Invalid]` (trailing single dash) - `Should_reject_trailing_dashes`
+- [x] `test--` → `[Invalid]` (trailing double dash) - `Should_reject_trailing_dashes`
+- [x] `foo---` → `[Invalid]` (multiple trailing dashes) - `Should_reject_trailing_dashes`
+- [x] `my-command-` → `[Invalid]` (compound with trailing dash) - `Should_reject_trailing_dashes`
 
 ## 5. Invalid: Leading Single Dash with Multi-Character
 **Test File**: `lexer-05-invalid-leading-dash.cs`

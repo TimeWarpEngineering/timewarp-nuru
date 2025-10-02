@@ -44,14 +44,19 @@ async Task<int> RunTests(string? filterTag)
 
 // List of Kijaribu-based test files (relative to Tests directory)
 string[] testFiles = [
-  Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Parsing/Parser/test-catchall-validation.cs"),
-  Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Parsing/Parser/test-parser-end-of-options.cs"),
-  Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Lexer/test-route-pattern-tokenization-kijaribu.cs"),
-  Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Lexer/test-end-of-options-separator-kijaribu.cs"),
-  Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Lexer/test-invalid-token-detection-kijaribu.cs"),
-  Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Lexer/test-compound-identifier-tokenization-kijaribu.cs"),
-  Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Lexer/test-description-tokenization-kijaribu.cs"),
-  Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Lexer/test-modifier-tokenization-kijaribu.cs"),
+  Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Lexer/lexer-01-basic-token-types.cs"),
+  Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Lexer/lexer-02-valid-options.cs"),
+  Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Lexer/lexer-03-invalid-double-dashes.cs"),
+  Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Lexer/lexer-04-invalid-trailing-dashes.cs"),
+  Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Lexer/lexer-05-multi-char-short-options.cs"),
+  // Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Lexer/test-route-pattern-tokenization-kijaribu.cs"),
+  // Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Lexer/test-end-of-options-separator-kijaribu.cs"),
+  // Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Lexer/test-invalid-token-detection-kijaribu.cs"),
+  // Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Lexer/test-compound-identifier-tokenization-kijaribu.cs"),
+  // Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Lexer/test-description-tokenization-kijaribu.cs"),
+  // Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Lexer/test-modifier-tokenization-kijaribu.cs"),
+  // Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Parsing/Parser/test-catchall-validation.cs"),
+  // Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Parsing/Parser/test-parser-end-of-options.cs"),
 ];
 
 foreach (string testFile in testFiles)

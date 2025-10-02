@@ -62,10 +62,10 @@ The lexer's primary responsibility is to reject nonsensical character sequences 
 **Test File**: `lexer-05-multi-char-short-options.cs`
 **Purpose**: Verify multi-character short options are accepted (e.g., `dotnet run -bl`)
 
-- [ ] `-test` → `[SingleDash]`, `[Identifier]`
-- [ ] `-bl` → `[SingleDash]`, `[Identifier]` (real-world example: dotnet binary logger)
-- [ ] `-verbosity` → `[SingleDash]`, `[Identifier]`
-- [ ] `-abc` → `[SingleDash]`, `[Identifier]`
+- [x] `-test` → `[SingleDash]`, `[Identifier]` - `Should_tokenize_multi_char_short_options`
+- [x] `-bl` → `[SingleDash]`, `[Identifier]` (real-world example: dotnet binary logger) - `Should_tokenize_multi_char_short_options`
+- [x] `-verbosity` → `[SingleDash]`, `[Identifier]` - `Should_tokenize_multi_char_short_options`
+- [x] `-abc` → `[SingleDash]`, `[Identifier]` - `Should_tokenize_multi_char_short_options`
 
 **Rationale**: Real-world CLI tools use multi-character short options. Rejecting these would prevent legitimate use cases.
 

@@ -127,36 +127,9 @@ public class RoutePatternLexer
         }
         else
         {
-          // Single dash - check what follows
-          if (!IsAtEnd() && IsAlphaNumeric(Peek()))
-          {
-            // Look ahead to see if it's more than one character
-            int startPos = Position - 1;  // Position of the '-'
-            int lookahead = Position;
-            var identifier = new StringBuilder();
-
-            // Collect the identifier after the dash
-            while (lookahead < Input.Length && (IsAlphaNumeric(Input[lookahead]) || Input[lookahead] == '-'))
-            {
-              identifier.Append(Input[lookahead]);
-              lookahead++;
-            }
-
-            // If more than one character, it's invalid
-            if (identifier.Length > 1)
-            {
-              // Multi-character identifier after single dash: "-test" or "-foo-bar"
-              // Consume all the characters we looked ahead at
-              for (int i = 0; i < identifier.Length; i++)
-              {
-                Advance();
-              }
-
-              AddToken(TokenType.Invalid, "-" + identifier.ToString(), startPos);
-              return;
-            }
-          }
-
+          // Single dash - valid for both single and multi-character options
+          // Examples: -h, -v, -bl, -verbosity
+          // Real-world tools like dotnet CLI use multi-char short options: dotnet run -bl
           AddToken(TokenType.SingleDash, "-");
         }
 

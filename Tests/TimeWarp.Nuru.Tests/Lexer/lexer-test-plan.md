@@ -135,17 +135,17 @@ The lexer's primary responsibility is to reject nonsensical character sequences 
 - [x] Invalid token at end of pattern - `Should_detect_invalid_token_at_end`
 - [x] Invalid token in middle of pattern - `Should_detect_invalid_token_in_middle`
 
-## 12. Description Tokenization
+## 12. Description Tokenization ✓
 **Test File**: `lexer-12-description-tokenization.cs`
 **Purpose**: Verify text after `|` is captured correctly
 
-- [ ] Simple description: `command | help text`
-- [ ] Description with special chars: `cmd | use --force carefully`
-- [ ] Description at end of complex pattern
-- [ ] Multiple `|` characters (should only first be separator?)
-- [ ] Empty description after `|`
-- [ ] Description with braces: `cmd | use {syntax} here`
-- [ ] Trailing whitespace in description
+- [x] Simple description: `command | help text` - `Should_tokenize_simple_description`
+- [x] Description with special chars: `cmd | use --force carefully` - `Should_tokenize_description_with_special_chars`
+- [x] Description at end of complex pattern - `Should_tokenize_description_at_end_of_complex_pattern`
+- [x] Multiple `|` characters - `Should_tokenize_multiple_pipes` (both pipes tokenized as Pipe tokens)
+- [x] Empty description after `|` - `Should_tokenize_empty_description_after_pipe`
+- [x] Description with braces: `cmd | use {syntax} here` - `Should_tokenize_description_with_braces`
+- [x] Trailing whitespace in description - `Should_handle_trailing_whitespace_in_description`
 
 ## 13. Parameter Context Tests
 **Test File**: `lexer-13-parameter-context.cs`

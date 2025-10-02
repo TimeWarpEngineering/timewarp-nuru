@@ -14,7 +14,7 @@ The lexer's primary responsibility is to reject nonsensical character sequences 
 - [x] **Identifier tokens with dashes** - compound names like `dry-run`, `no-edit` - `Should_tokenize_compound_identifiers`
 - [x] **LeftBrace** - `{` character - `Should_tokenize_left_brace`
 - [x] **RightBrace** - `}` character - `Should_tokenize_right_brace`
-- [ ] **Colon** - `:` character
+- [x] **Colon** - `:` character - `Should_tokenize_colon`
 - [ ] **Question** - `?` character
 - [ ] **Asterisk** - `*` character
 - [ ] **Pipe** - `|` character

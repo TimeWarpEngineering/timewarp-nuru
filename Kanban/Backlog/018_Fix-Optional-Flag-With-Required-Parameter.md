@@ -52,7 +52,7 @@ builder.AddRoute("--tag {tag}", (string tag) => RunTests(tag), "Filter by tag");
 
 - `Tests/Scripts/run-kijaribu-tests.cs` - Contains workaround and TODO comment
 - `Source/TimeWarp.Nuru.Parsing/` - Parser logic that needs fixing
-- `documentation/developer/design/route-syntax-and-specificity.md` - Design spec for optional syntax
+- `documentation/developer/design/syntax-rules.md` - Design spec for optional syntax
 
 ## Notes
 

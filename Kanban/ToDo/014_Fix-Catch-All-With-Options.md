@@ -9,7 +9,7 @@ Error at position 12: Catch-all parameter 'resources' must be the last segment i
 ```
 
 ## Expected Behavior
-According to `/Documentation/Developer/Design/route-syntax-and-specificity.md`, this pattern should work:
+According to `/Documentation/Developer/Design/syntax-rules.md`, this pattern should work:
 ```csharp
 // ✅ WORKS: Catch-all for multiple resources
 .AddRoute("kubectl get {*resources} --namespace? {ns?} --output? {format?}",

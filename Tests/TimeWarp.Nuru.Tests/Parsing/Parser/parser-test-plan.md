@@ -14,7 +14,8 @@ The plan follows the systematic approach used in lexer testing, organized into 1
 ## Design Document References
 
 - `greenfield-route-syntax.md` - Self-contained pattern philosophy
-- `route-syntax-and-specificity.md` - Comprehensive syntax rules and specificity
+- `syntax-rules.md` - Route pattern syntax rules and validation (Parser)
+- `specificity-algorithm.md` - Route matching and scoring algorithm (Resolver)
 - `parameter-optionality.md` - Nullability-based optional/required design
 
 ---

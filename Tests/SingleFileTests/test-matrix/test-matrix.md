@@ -1,6 +1,6 @@
 # Test Matrix for Optional Options Implementation
 
-Based on Documentation/Developer/Design/route-syntax-and-specificity.md
+Based on Documentation/Developer/Design/syntax-rules.md
 
 ## Coverage Summary
 

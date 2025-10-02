@@ -53,6 +53,7 @@ string[] testFiles = [
   Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Lexer/lexer-07-invalid-angle-brackets.cs"),
   Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Lexer/lexer-08-whitespace-handling.cs"),
   Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Lexer/lexer-09-complex-patterns.cs"),
+  Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Lexer/lexer-10-edge-cases.cs"),
   // Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Lexer/test-route-pattern-tokenization-kijaribu.cs"),
   // Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Lexer/test-end-of-options-separator-kijaribu.cs"),
   // Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Lexer/test-invalid-token-detection-kijaribu.cs"),

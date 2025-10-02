@@ -112,17 +112,17 @@ The lexer's primary responsibility is to reject nonsensical character sequences 
 - [x] `greet {name?} | Say hello` → proper tokenization with description - `Should_tokenize_pattern_with_optional_and_description`
 - [x] `cmd {a} {b:int} --flag {c?} | description` → comprehensive pattern - `Should_tokenize_comprehensive_complex_pattern`
 
-## 10. Edge Cases
+## 10. Edge Cases ✓
 **Test File**: `lexer-10-edge-cases.cs`
 **Purpose**: Boundary conditions and unusual inputs
 
-- [ ] Empty string → `[EndOfInput]`
-- [ ] Only whitespace → `[EndOfInput]`
-- [ ] Single character tokens
-- [ ] Very long identifiers (100+ chars)
-- [ ] Adjacent special characters: `{}`, `{?}`, `{*}`, `{:}`
-- [ ] Mixed valid/invalid patterns
-- [ ] Unicode characters in identifiers (if supported)
+- [x] Empty string → `[EndOfInput]` - `Should_tokenize_empty_string`
+- [x] Only whitespace → `[EndOfInput]` - `Should_tokenize_only_whitespace` (5 parameterized inputs)
+- [x] Single character tokens - `Should_tokenize_single_character_tokens`
+- [x] Very long identifiers (150 chars) - `Should_tokenize_very_long_identifier`
+- [x] Adjacent special characters: `{}`, `{?}`, `{*}`, `{:}` - `Should_tokenize_adjacent_special_characters`
+- [x] Mixed valid/invalid patterns - `Should_handle_mixed_valid_invalid_patterns`
+- [x] Unicode characters in identifiers - `Should_tokenize_unicode_identifiers` (Chinese, Greek, French)
 
 ## 11. Error Reporting Tests
 **Test File**: `lexer-11-error-reporting.cs`

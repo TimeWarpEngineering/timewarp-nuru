@@ -21,7 +21,7 @@ The lexer's primary responsibility is to reject nonsensical character sequences 
 - [x] **Comma** - `,` character - `Should_tokenize_comma`
 - [x] **DoubleDash** - `--` at start of option - `Should_tokenize_double_dash`
 - [x] **SingleDash** - `-` at start of short option - `Should_tokenize_single_dash`
-- [ ] **EndOfOptions** - standalone `--`
+- [x] **EndOfOptions** - standalone `--` - `Should_tokenize_end_of_options`
 - [ ] **Description** - text after `|`
 - [ ] **EndOfInput** - EOF marker
 

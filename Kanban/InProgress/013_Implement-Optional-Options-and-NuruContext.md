@@ -357,7 +357,7 @@ This might need to be a separate analyzer or a Phase 5b if too complex.
 ### Completed
 - ✅ Created comprehensive design documents:
   - `syntax-rules.md` - Complete syntax specification
-  - `greenfield-route-syntax.md` - Focused greenfield approach
+  - `building-new-cli-apps.md (moved to guides/)` - Focused greenfield approach
 - ✅ Created test matrix and test files:
   - **Application-level tests** in `/Tests/SingleFileTests/test-matrix/`:
     - 12 test files covering all patterns (optional flags, repeated options, arrays, etc.)

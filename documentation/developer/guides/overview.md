@@ -1,30 +1,39 @@
-# How-To Guides
+# Developer Guides
 
-Practical guides for common tasks in TimeWarp.Nuru development.
+Practical guides for building CLI applications with TimeWarp.Nuru.
 
 ## Available Guides
 
-### [Route Pattern Syntax](route-pattern-syntax.md)
-Complete guide to defining CLI routes in TimeWarp.Nuru, including parameters, options, descriptions, and best practices.
+- **[building-new-cli-apps.md](building-new-cli-apps.md)** - Best practices for greenfield CLI applications
+  * Self-contained route patterns that minimize route definitions
+  * Progressive enhancement patterns
+  * Avoiding factorial explosion with optional parameters
+  * Command pattern support
 
-### [Implementing Help Commands](implementing-help.md)
-Learn how to add help functionality to your CLI applications, from simple manual help to sophisticated automatic help generation using TimeWarp.Nuru's built-in capabilities.
+## Guide Categories (Planned)
 
-### [Logging System](logging.md)
-Configure and use TimeWarp.Nuru's high-performance logging system with Microsoft.Extensions.Logging, including integration with Serilog, NLog, and other providers.
+### Getting Started
+- Quick start guide
+- Your first Nuru CLI app
+- Migrating from other CLI frameworks
 
-### [Using Analyzers](using-analyzers.md)
-Compile-time validation of route patterns with built-in analyzers that catch common mistakes before runtime.
+### Core Concepts
+- Route pattern syntax guide
+- Parameter binding explained
+- Type conversion system
 
-### [Debugging Guide](debugging.md)
-Comprehensive debugging techniques for TimeWarp.Nuru applications, including trace logging, route matching analysis, and troubleshooting common issues.
+### Advanced Patterns
+- Command interception strategies
+- Building plugin architectures
+- AOT compilation guide
 
-## Coming Soon
+### Integration
+- Dependency injection setup
+- Mediator pattern integration
+- Logging and diagnostics
 
-- Building Multi-Command CLIs
-- Implementing Custom Type Converters
-- Testing CLI Applications
-- Building Interactive CLIs
-- Handling Configuration Files
-- Implementing Progress Indicators
-- Building Plugin Systems
+## Related Documentation
+
+- **[Design Documents](../design/overview.md)** - Architecture and design decisions
+- **[Ubiquitous Language](../ubiquitous-language.md)** - Canonical terminology
+- **[Reference](../reference/)** - API documentation and current implementation

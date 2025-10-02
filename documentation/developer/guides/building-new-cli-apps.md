@@ -1,4 +1,6 @@
-# Greenfield Route Syntax - Self-Contained Patterns
+# Building New CLI Apps - Best Practices
+
+**Guide for developers building new command-line applications using Nuru.**
 
 ## Core Principle
 

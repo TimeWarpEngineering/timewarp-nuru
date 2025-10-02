@@ -16,7 +16,7 @@ The lexer's primary responsibility is to reject nonsensical character sequences 
 - [x] **RightBrace** - `}` character - `Should_tokenize_right_brace`
 - [x] **Colon** - `:` character - `Should_tokenize_colon`
 - [x] **Question** - `?` character - `Should_tokenize_question`
-- [ ] **Asterisk** - `*` character
+- [x] **Asterisk** - `*` character - `Should_tokenize_asterisk`
 - [ ] **Pipe** - `|` character
 - [ ] **Comma** - `,` character
 - [ ] **DoubleDash** - `--` at start of option

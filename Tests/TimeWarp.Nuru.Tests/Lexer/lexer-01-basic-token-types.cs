@@ -186,6 +186,32 @@ public class BasicTokenTypesTests
     await Task.CompletedTask;
   }
 
+  [Input("greet {name} | Say hello")]
+  public static async Task Should_tokenize_description(string pattern)
+  {
+    // Arrange
+    RoutePatternLexer lexer = CreateLexer(pattern);
+    IReadOnlyList<Token> tokens = lexer.Tokenize();
+
+    // Assert
+    // Lexer continues normal tokenization after pipe - parser handles description
+    tokens.Count.ShouldBe(8);
+    tokens[0].Type.ShouldBe(TokenType.Identifier);
+    tokens[0].Value.ShouldBe("greet");
+    tokens[1].Type.ShouldBe(TokenType.LeftBrace);
+    tokens[2].Type.ShouldBe(TokenType.Identifier);
+    tokens[2].Value.ShouldBe("name");
+    tokens[3].Type.ShouldBe(TokenType.RightBrace);
+    tokens[4].Type.ShouldBe(TokenType.Pipe);
+    tokens[5].Type.ShouldBe(TokenType.Identifier);
+    tokens[5].Value.ShouldBe("Say");
+    tokens[6].Type.ShouldBe(TokenType.Identifier);
+    tokens[6].Value.ShouldBe("hello");
+    tokens[7].Type.ShouldBe(TokenType.EndOfInput);
+
+    await Task.CompletedTask;
+  }
+
   private static async Task TokenizeSingleIdentifier(string pattern)
   {
     // Arrange

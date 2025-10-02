@@ -22,7 +22,7 @@ The lexer's primary responsibility is to reject nonsensical character sequences 
 - [x] **DoubleDash** - `--` at start of option - `Should_tokenize_double_dash`
 - [x] **SingleDash** - `-` at start of short option - `Should_tokenize_single_dash`
 - [x] **EndOfOptions** - standalone `--` - `Should_tokenize_end_of_options`
-- [ ] **Description** - text after `|`
+- [x] **Description** - text after `|` (lexer continues normal tokenization, parser handles description) - `Should_tokenize_description`
 - [ ] **EndOfInput** - EOF marker
 
 ## 2. Valid Compound Identifier Tests

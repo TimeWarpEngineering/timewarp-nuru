@@ -93,13 +93,13 @@ The lexer's primary responsibility is to reject nonsensical character sequences 
 **Test File**: `lexer-08-whitespace-handling.cs`
 **Purpose**: Verify whitespace properly separates tokens
 
-- [ ] Single space between tokens
-- [ ] Multiple spaces between tokens
-- [ ] Tab characters
-- [ ] Leading whitespace
-- [ ] Trailing whitespace
-- [ ] Whitespace around special characters (`{`, `}`, `|`, etc.)
-- [ ] No whitespace between adjacent special chars
+- [x] Single space between tokens - `Should_produce_identical_tokens_regardless_of_whitespace`
+- [x] Multiple spaces between tokens - `Should_produce_identical_tokens_regardless_of_whitespace`
+- [x] Tab characters - `Should_produce_identical_tokens_regardless_of_whitespace`
+- [x] Leading whitespace - `Should_produce_identical_tokens_regardless_of_whitespace`
+- [x] Trailing whitespace - `Should_produce_identical_tokens_regardless_of_whitespace`
+- [x] Whitespace around special characters (`{`, `}`, `|`, etc.) - `Should_handle_whitespace_around_special_characters`
+- [x] No whitespace between adjacent special chars - `Should_handle_no_whitespace_between_special_characters`
 
 ## 9. Complex Pattern Integration Tests
 **Test File**: `lexer-09-complex-patterns.cs`

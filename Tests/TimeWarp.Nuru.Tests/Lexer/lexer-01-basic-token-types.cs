@@ -152,6 +152,24 @@ public class BasicTokenTypesTests
     await Task.CompletedTask;
   }
 
+  [Input("-h")]
+  public static async Task Should_tokenize_single_dash(string pattern)
+  {
+    // Arrange
+    RoutePatternLexer lexer = CreateLexer(pattern);
+    IReadOnlyList<Token> tokens = lexer.Tokenize();
+
+    // Assert
+    tokens.Count.ShouldBe(3);
+    tokens[0].Type.ShouldBe(TokenType.SingleDash);
+    tokens[0].Value.ShouldBe("-");
+    tokens[1].Type.ShouldBe(TokenType.Identifier);
+    tokens[1].Value.ShouldBe("h");
+    tokens[2].Type.ShouldBe(TokenType.EndOfInput);
+
+    await Task.CompletedTask;
+  }
+
   private static async Task TokenizeSingleIdentifier(string pattern)
   {
     // Arrange

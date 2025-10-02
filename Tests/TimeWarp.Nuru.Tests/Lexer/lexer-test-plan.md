@@ -124,16 +124,16 @@ The lexer's primary responsibility is to reject nonsensical character sequences 
 - [x] Mixed valid/invalid patterns - `Should_handle_mixed_valid_invalid_patterns`
 - [x] Unicode characters in identifiers - `Should_tokenize_unicode_identifiers` (Chinese, Greek, French)
 
-## 11. Error Reporting Tests
+## 11. Error Reporting Tests ✓
 **Test File**: `lexer-11-error-reporting.cs`
 **Purpose**: Verify clear error messages for invalid tokens
 
-- [ ] Invalid token includes position information
-- [ ] Error message explains why token is invalid
-- [ ] Multiple invalid tokens in single pattern
-- [ ] Invalid token at start of pattern
-- [ ] Invalid token at end of pattern
-- [ ] Invalid token in middle of pattern
+- [x] Invalid token includes position information - `Should_include_position_in_invalid_token`
+- [x] Error message explains why token is invalid - `Should_have_descriptive_toString_for_invalid_token`
+- [x] Multiple invalid tokens in single pattern - `Should_tokenize_multiple_invalid_tokens`
+- [x] Invalid token at start of pattern - `Should_detect_invalid_token_at_start`
+- [x] Invalid token at end of pattern - `Should_detect_invalid_token_at_end`
+- [x] Invalid token in middle of pattern - `Should_detect_invalid_token_in_middle`
 
 ## 12. Description Tokenization
 **Test File**: `lexer-12-description-tokenization.cs`

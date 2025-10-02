@@ -4,7 +4,7 @@ Structured documentation for TimeWarp.Nuru developers, organized by purpose and 
 
 ## Documentation Categories
 
-### [Reference](./Reference/) - What IS
+### [Reference](./reference/) - What IS
 **The actual implementation as it exists in source code**
 - API documentation derived from actual source files
 - Current feature capabilities and limitations

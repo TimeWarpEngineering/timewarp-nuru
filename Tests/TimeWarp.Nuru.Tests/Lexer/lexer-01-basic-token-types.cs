@@ -212,6 +212,21 @@ public class BasicTokenTypesTests
     await Task.CompletedTask;
   }
 
+  [Input("")]
+  public static async Task Should_tokenize_end_of_input(string pattern)
+  {
+    // Arrange
+    RoutePatternLexer lexer = CreateLexer(pattern);
+    IReadOnlyList<Token> tokens = lexer.Tokenize();
+
+    // Assert
+    tokens.Count.ShouldBe(1);
+    tokens[0].Type.ShouldBe(TokenType.EndOfInput);
+    tokens[0].Value.ShouldBe("");
+
+    await Task.CompletedTask;
+  }
+
   private static async Task TokenizeSingleIdentifier(string pattern)
   {
     // Arrange

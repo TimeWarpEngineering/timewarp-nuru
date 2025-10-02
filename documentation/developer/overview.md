@@ -43,14 +43,24 @@ Structured documentation for TimeWarp.Nuru developers, organized by purpose and 
 
 ### Unidirectional Flow
 ```
-SOURCE CODE ──────→ Reference Documentation
-     ↑                    (never from Design)
-     │
-Design Documents
-     ↑
-     │
-Architectural Vision
+Architectural Vision + Ubiquitous Language
+     ↓
+Design Documents (use ONLY UL terms)
+     ↓
+Source Code (implements Design)
+     ↓
+Reference Documentation (describes what IS, never from Design)
 ```
+
+**Key Insight:** The [Ubiquitous Language](./ubiquitous-language.md) defines the canonical terminology used throughout the project. It sits at the foundation alongside Architectural Vision, driving consistent terminology through Design Documents into Source Code.
+
+**Flow Explanation:**
+1. **Ubiquitous Language** - Defines the terms (Lexer, Token, Parser, etc.)
+2. **Design Documents** - Use ONLY these terms to describe architecture and goals
+3. **Source Code** - Implements the Design using UL terms (class names, namespaces match UL)
+4. **Reference Documentation** - Describes what exists using the same UL terms (generated from code, never from Design)
+
+When UL changes, the change cascades downward: UL → Design → Code → Reference.
 
 ### Documentation Access Control
 
@@ -70,10 +80,11 @@ Architectural Vision
 
 ## Where to Find Information
 
-| Looking for...                           | Check section | Example                        |
-| ---------------------------------------- | ------------- | ------------------------------ |
-| How a feature actually works             | Reference     | Current route syntax           |
-| Why something was designed a certain way | Design        | Greenfield patterns philosophy |
-| What's coming next                       | Roadmap       | Parser restructure plans       |
-| Coding conventions                       | Standards     | C# style guide                 |
-| How to implement a feature               | Guides        | Adding help to routes          |
+| Looking for...                           | Check section        | Example                                   |
+| ---------------------------------------- | -------------------- | ----------------------------------------- |
+| Definition of a term (Lexer, Token)      | Ubiquitous Language  | What is a "Token"? What is "Tokenization"? |
+| How a feature actually works             | Reference            | Current route syntax                      |
+| Why something was designed a certain way | Design               | Greenfield patterns philosophy            |
+| What's coming next                       | Roadmap              | Parser restructure plans                  |
+| Coding conventions                       | Standards            | C# style guide                            |
+| How to implement a feature               | Guides               | Adding help to routes                     |

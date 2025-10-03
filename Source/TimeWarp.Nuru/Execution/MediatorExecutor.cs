@@ -4,13 +4,13 @@ namespace TimeWarp.Nuru;
 /// <summary>
 /// Executes command objects through Mediator after populating them from route parameters.
 /// </summary>
-public class CommandExecutor
+public class MediatorExecutor
 {
 
   private readonly IServiceProvider ServiceProvider;
   private readonly ITypeConverterRegistry TypeConverterRegistry;
 
-  public CommandExecutor(IServiceProvider serviceProvider, ITypeConverterRegistry typeConverterRegistry)
+  public MediatorExecutor(IServiceProvider serviceProvider, ITypeConverterRegistry typeConverterRegistry)
   {
     ServiceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
     TypeConverterRegistry = typeConverterRegistry ?? throw new ArgumentNullException(nameof(typeConverterRegistry));

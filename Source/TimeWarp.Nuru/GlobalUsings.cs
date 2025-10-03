@@ -14,7 +14,6 @@ global using System.Text.Json;
 global using System.Text.Json.Serialization;
 // TimeWarp namespaces
 global using TimeWarp.Mediator;
-global using TimeWarp.Nuru.CommandResolver;
 global using TimeWarp.Nuru.Endpoints;
 global using TimeWarp.Nuru.Help;
 global using TimeWarp.Nuru.Parsing;

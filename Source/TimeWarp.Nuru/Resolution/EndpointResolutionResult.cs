@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru.CommandResolver;
+namespace TimeWarp.Nuru;
 
 /// <summary>
 /// Result of command resolution.

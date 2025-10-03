@@ -1,5 +1,5 @@
 
-namespace TimeWarp.Nuru.ParameterBinding;
+namespace TimeWarp.Nuru;
 
 /// <summary>
 /// Binds extracted route values to delegate parameters.

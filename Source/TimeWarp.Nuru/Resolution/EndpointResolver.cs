@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru.CommandResolver;
+namespace TimeWarp.Nuru;
 
 /// <summary>
 /// A command resolver that uses route patterns to match commands.

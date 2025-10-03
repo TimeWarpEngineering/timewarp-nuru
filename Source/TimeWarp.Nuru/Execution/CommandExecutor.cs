@@ -1,5 +1,5 @@
 
-namespace TimeWarp.Nuru.CommandResolver;
+namespace TimeWarp.Nuru;
 
 /// <summary>
 /// Executes command objects through Mediator after populating them from route parameters.

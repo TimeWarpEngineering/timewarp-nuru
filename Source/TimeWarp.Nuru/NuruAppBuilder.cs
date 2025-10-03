@@ -80,6 +80,37 @@ public class NuruAppBuilder
   }
 
   /// <summary>
+  /// Adds standard .NET configuration sources to the application.
+  /// This includes appsettings.json, environment-specific settings, environment variables, and command line arguments.
+  /// </summary>
+  /// <param name="args">Optional command line arguments to include in configuration.</param>
+  /// <returns>The builder for chaining.</returns>
+  public NuruAppBuilder AddConfiguration(string[]? args = null)
+  {
+    // Ensure DI is enabled
+    if (ServiceCollection is null)
+    {
+      throw new InvalidOperationException("Configuration requires dependency injection. Call AddDependencyInjection() first.");
+    }
+
+    IConfigurationBuilder configuration = new ConfigurationBuilder()
+      .SetBasePath(Directory.GetCurrentDirectory())
+      .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+      .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? "Production"}.json", optional: true, reloadOnChange: true)
+      .AddEnvironmentVariables();
+
+    if (args?.Length > 0)
+    {
+      configuration.AddCommandLine(args);
+    }
+
+    IConfigurationRoot configurationRoot = configuration.Build();
+    ServiceCollection.AddSingleton<IConfiguration>(configurationRoot);
+
+    return this;
+  }
+
+  /// <summary>
   /// Adds a default route that executes when no arguments are provided.
   /// </summary>
   public NuruAppBuilder AddDefaultRoute(Delegate handler, string? description = null)

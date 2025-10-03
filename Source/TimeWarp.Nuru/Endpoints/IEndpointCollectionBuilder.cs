@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru.Endpoints;
+namespace TimeWarp.Nuru;
 
 /// <summary>
 /// Defines the interface for building a collection of route endpoints.

@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru.Serialization;
+namespace TimeWarp.Nuru;
 
 using TimeWarp.Nuru.Parsing;
 

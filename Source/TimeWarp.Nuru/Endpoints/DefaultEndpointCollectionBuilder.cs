@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru.Endpoints;
+namespace TimeWarp.Nuru;
 
 /// <summary>
 /// Default implementation of IEndpointCollectionBuilder.

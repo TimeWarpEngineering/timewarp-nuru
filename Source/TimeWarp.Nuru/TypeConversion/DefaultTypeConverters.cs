@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru.TypeConversion;
+namespace TimeWarp.Nuru;
 
 /// <summary>
 /// Provides zero-allocation type conversions for built-in types.

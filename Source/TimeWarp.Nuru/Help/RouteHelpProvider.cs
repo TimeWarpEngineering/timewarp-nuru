@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru.Help;
+namespace TimeWarp.Nuru;
 
 /// <summary>
 /// Provides help display functionality for route-based commands.

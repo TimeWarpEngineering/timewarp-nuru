@@ -1,5 +1,5 @@
 
-namespace TimeWarp.Nuru.Endpoints;
+namespace TimeWarp.Nuru;
 
 /// <summary>
 /// A collection of route endpoints ordered by specificity for efficient matching.

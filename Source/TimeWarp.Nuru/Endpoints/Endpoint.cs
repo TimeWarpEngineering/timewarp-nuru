@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru.Endpoints;
+namespace TimeWarp.Nuru;
 
 /// <summary>
 /// Represents an endpoint that can be matched by a route pattern.

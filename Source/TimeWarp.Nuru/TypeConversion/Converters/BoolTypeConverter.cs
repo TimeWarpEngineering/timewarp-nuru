@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru.TypeConversion.Converters;
+namespace TimeWarp.Nuru;
 
 /// <summary>
 /// Converts string values to booleans.

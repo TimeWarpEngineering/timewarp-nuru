@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru.TypeConversion;
+namespace TimeWarp.Nuru;
 
 /// <summary>
 /// Defines a registry for managing type converters.

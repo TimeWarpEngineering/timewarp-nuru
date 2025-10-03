@@ -169,9 +169,38 @@ internal sealed class ErrorHandlingTool
 
                     1. **Use Top-Level Try-Catch Blocks** - Catch all unhandled exceptions
                     2. **Validate Command Input Early** - Check for invalid input as early as possible
-                    3. **Use NuruConsole for Error Output** - Write errors to stderr
+                    3. **Separate Output Streams** - Normal output to stdout, errors to stderr
                     4. **Return Appropriate Exit Codes** - 0 for success, 1 for errors
-                    5. **Provide Helpful Error Messages** - Include context in error messages
+                    5. **Provide Helpful Error Messages** - Include context, parameters, and suggested fixes
+                    6. **Handle Async Properly** - Use async/await for I/O operations, ConfigureAwait(false) in libraries
+
+                    ## Example Pattern
+
+                    ```csharp
+                    .AddRoute("deploy {environment}", async (string environment) =>
+                    {
+                        try
+                        {
+                            // Validate early
+                            if (!IsValidEnvironment(environment))
+                            {
+                                await Console.Error.WriteLineAsync($"Invalid environment: {environment}");
+                                await Console.Error.WriteLineAsync("Valid environments: dev, staging, prod");
+                                return 1;
+                            }
+
+                            // Execute
+                            await DeployAsync(environment);
+                            await Console.Out.WriteLineAsync($"Successfully deployed to {environment}");
+                            return 0;
+                        }
+                        catch (Exception ex)
+                        {
+                            await Console.Error.WriteLineAsync($"Deployment failed: {ex.Message}");
+                            return 1;
+                        }
+                    });
+                    ```
                     """;
             }
             // Add a best practices header

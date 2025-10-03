@@ -32,16 +32,47 @@ graph TD
 ## Key Error Handling Mechanisms
 
 ### 1. **Top-Level Exception Handling**
+
+The framework catches all unhandled exceptions and writes to stderr:
+
 ```csharp
+// Framework handles this internally
+try
+{
+    return await ExecuteHandlerAsync(...);
+}
 catch (Exception ex)
 {
-    await NuruConsole.WriteErrorLineAsync($"Error: {ex.Message}").ConfigureAwait(false);
+    await Console.Error.WriteLineAsync($"Error: {ex.Message}");
     return 1;
 }
 ```
-- Catches all unhandled exceptions
-- Writes error messages to stderr (separate from normal output)
-- Returns exit code 1 to indicate failure
+
+**User handlers** should follow similar patterns:
+
+```csharp
+// In your command handlers
+.AddRoute("process {file}", async (string file) =>
+{
+    try
+    {
+        // Your logic
+        await ProcessFileAsync(file);
+        await Console.Out.WriteLineAsync($"Processed {file}");
+        return 0;
+    }
+    catch (Exception ex)
+    {
+        await Console.Error.WriteLineAsync($"Error: {ex.Message}");
+        return 1;
+    }
+});
+```
+
+**Key principles:**
+- Normal output → `Console.Out` / `Console.WriteLine()`
+- Errors → `Console.Error` / `Console.Error.WriteLine()`
+- Exit codes: 0 = success, 1 = failure
 
 ### 2. **Route Parsing Errors**
 The `RouteParser` provides comprehensive parsing error handling:
@@ -78,7 +109,7 @@ Separate error handling for delegate vs Mediator commands:
 ```csharp
 catch (Exception ex)
 {
-    await NuruConsole.WriteErrorLineAsync(
+    await Console.Error.WriteLineAsync(
         $"Error executing handler: {ex.Message}"
     ).ConfigureAwait(false);
     return 1;

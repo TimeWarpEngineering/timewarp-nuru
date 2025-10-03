@@ -1,24 +1,45 @@
 namespace TimeWarp.Nuru;
 
 /// <summary>
-/// Provides abstraction over console output for testing and customization.
+/// Internal abstraction for framework console output.
+/// User handlers should write to Console directly or return values for framework display.
 /// </summary>
-public static class NuruConsole
+internal static class NuruConsole
 {
+  private static Action<string?> WriteLineAction = System.Console.WriteLine;
+  private static Action<string?> WriteErrorLineAction = System.Console.Error.WriteLine;
+  private static Func<string?, Task> WriteErrorLineAsyncFunc = System.Console.Error.WriteLineAsync;
+
   /// <summary>
   /// Gets or sets the action used to write a line to standard output.
   /// </summary>
-  public static Action<string?> WriteLine { get; set; } = System.Console.WriteLine;
+  internal static Action<string?> WriteLine
+  {
+    get => WriteLineAction;
+    set => WriteLineAction = value ?? throw new ArgumentNullException(nameof(value));
+  }
+
   /// <summary>
   /// Gets or sets the action used to write a line to standard error.
   /// </summary>
-  public static Action<string?> WriteErrorLine { get; set; } = System.Console.Error.WriteLine;
+  internal static Action<string?> WriteErrorLine
+  {
+    get => WriteErrorLineAction;
+    set => WriteErrorLineAction = value ?? throw new ArgumentNullException(nameof(value));
+  }
+
   /// <summary>
   /// Gets or sets the async function used to write a line to standard error.
   /// </summary>
-  public static Func<string?, Task> WriteErrorLineAsync { get; set; } = System.Console.Error.WriteLineAsync;
+  internal static Func<string?, Task> WriteErrorLineAsync
+  {
+    get => WriteErrorLineAsyncFunc;
+    set => WriteErrorLineAsyncFunc = value ?? throw new ArgumentNullException(nameof(value));
+  }
+
   /// <summary>
-  /// Gets or sets the async function used to write a line to standard output.
+  /// Asynchronously writes a line to standard output.
   /// </summary>
-  public static Func<string?, ValueTask> WriteLineAsync { get; set; } = message => System.Console.WriteLineAsync(message);
+  internal static Task WriteLineAsync(string? message)
+    => System.Console.Out.WriteLineAsync(message);
 }

@@ -13,9 +13,9 @@ The plan follows the systematic approach used in lexer testing, organized into 1
 
 ## Design Document References
 
-- `syntax-rules.md` - Route pattern syntax rules and validation (Parser)
-- `specificity-algorithm.md` - Route matching and scoring algorithm (Resolver)
-- `parameter-optionality.md` - Nullability-based optional/required design
+- `design/parser/syntax-rules.md` - Route pattern syntax rules and validation (Parser)
+- `design/resolver/specificity-algorithm.md` - Route matching and scoring algorithm (Resolver)
+- `design/cross-cutting/parameter-optionality.md` - Nullability-based optional/required design
 
 See also: `guides/building-new-cli-apps.md` - Best practices for new CLI applications
 

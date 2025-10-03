@@ -256,5 +256,5 @@ Boolean flags are scored but always optional:
 
 ## Related Documents
 
-See [syntax-rules.md](syntax-rules.md) for route pattern syntax and validation rules.
-See [parameter-optionality.md](parameter-optionality.md) for nullability-based optionality design.
+See [syntax-rules.md](../parser/syntax-rules.md) for route pattern syntax and validation rules.
+See [parameter-optionality.md](../cross-cutting/parameter-optionality.md) for nullability-based optionality design.

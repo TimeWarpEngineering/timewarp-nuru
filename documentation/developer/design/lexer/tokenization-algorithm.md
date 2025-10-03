@@ -227,7 +227,7 @@ Each token records:
 
 ## Related Concepts
 
-**From [token-types.md](token-types.md):**
+**From [token-types.md](../lexer/token-types.md):**
 - All TokenType definitions
 - Token validation rules
 - Invalid token categories

@@ -1,6 +1,6 @@
 # Test Matrix for Optional Options Implementation
 
-Based on Documentation/Developer/Design/syntax-rules.md
+Based on Documentation/Developer/Design/design/parser/syntax-rules.md
 
 ## Coverage Summary
 

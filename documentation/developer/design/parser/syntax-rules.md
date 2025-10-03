@@ -362,5 +362,5 @@ Some CLIs have unusual syntaxes, but we can still intercept them with creative r
 
 ## Related Documents
 
-See [specificity-algorithm.md](specificity-algorithm.md) for how route patterns are scored and matched.
-See [parameter-optionality.md](parameter-optionality.md) for nullability-based optionality design.
+See [specificity-algorithm.md](../resolver/specificity-algorithm.md) for how route patterns are scored and matched.
+See [parameter-optionality.md](../cross-cutting/parameter-optionality.md) for nullability-based optionality design.

@@ -2,7 +2,7 @@
 
 ## Architecture Design Document
 
-**See: [Route Syntax and Specificity Design](../../Documentation/Developer/Design/syntax-rules.md)**
+**See: [Route Syntax and Specificity Design](../../Documentation/Developer/Design/design/parser/syntax-rules.md)**
 
 This document defines the complete syntax and behavior for:
 - Optional flags with `?` modifier
@@ -356,7 +356,7 @@ This might need to be a separate analyzer or a Phase 5b if too complex.
 
 ### Completed
 - ✅ Created comprehensive design documents:
-  - `syntax-rules.md` - Complete syntax specification
+  - `design/parser/syntax-rules.md` - Complete syntax specification
   - `building-new-cli-apps.md (moved to guides/)` - Focused greenfield approach
 - ✅ Created test matrix and test files:
   - **Application-level tests** in `/Tests/SingleFileTests/test-matrix/`:
@@ -388,7 +388,7 @@ This might need to be a separate analyzer or a Phase 5b if too complex.
    - Updated `CheckRequiredOptions` to skip optional options when not provided
    - Added new logger messages for optional option handling
 - ✅ **Test Matrix Complete**: Created all 22 test files for complete coverage
-   - All features from syntax-rules.md now have tests
+   - All features from design/parser/syntax-rules.md now have tests
    - Test files in `/Tests/SingleFileTests/test-matrix/`
    - test-matrix.md updated with 100% coverage status
 

@@ -300,7 +300,7 @@ public class NuruApp
 
   private void ShowAvailableCommands()
   {
-    NuruConsole.WriteLine(RouteHelpProvider.GetHelpText(Endpoints));
+    NuruConsole.WriteLine(HelpProvider.GetHelpText(Endpoints));
   }
 
   private static bool IsOptionalParameter(string parameterName, Endpoint endpoint)

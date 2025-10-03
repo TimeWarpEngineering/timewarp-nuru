@@ -292,7 +292,7 @@ public class NuruAppBuilder
     {
       AddRoute("--help", () =>
       {
-        NuruConsole.WriteLine(RouteHelpProvider.GetHelpText(EndpointCollection));
+        NuruConsole.WriteLine(HelpProvider.GetHelpText(EndpointCollection));
       },
       description: "Show available commands");
     }

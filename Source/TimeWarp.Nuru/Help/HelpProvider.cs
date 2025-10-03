@@ -1,9 +1,9 @@
 namespace TimeWarp.Nuru;
 
 /// <summary>
-/// Provides help display functionality for route-based commands.
+/// Provides help display functionality for commands.
 /// </summary>
-public static class RouteHelpProvider
+public static class HelpProvider
 {
 
   /// <summary>

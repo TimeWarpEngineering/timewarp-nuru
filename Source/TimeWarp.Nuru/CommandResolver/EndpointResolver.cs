@@ -5,7 +5,7 @@ namespace TimeWarp.Nuru.CommandResolver;
 /// </summary>
 internal static class EndpointResolver
 {
-  public static ResolverResult Resolve
+  public static EndpointResolutionResult Resolve
   (
     string[] args,
     EndpointCollection endpoints,
@@ -30,7 +30,7 @@ internal static class EndpointResolver
     {
       (Endpoint endpoint, Dictionary<string, string> extractedValues) = matchResult.Value;
 
-      return new ResolverResult
+      return new EndpointResolutionResult
       (
         success: true,
         matchedEndpoint: endpoint,
@@ -38,7 +38,7 @@ internal static class EndpointResolver
       );
     }
 
-    return new ResolverResult
+    return new EndpointResolutionResult
     (
       success: false,
       errorMessage: "No matching command found"

@@ -47,7 +47,7 @@ public class NuruApp
     {
       // Parse and match route
       ILogger logger = LoggerFactory.CreateLogger("RouteBasedCommandResolver");
-      ResolverResult result = EndpointResolver.Resolve(args, Endpoints, TypeConverterRegistry, logger);
+      EndpointResolutionResult result = EndpointResolver.Resolve(args, Endpoints, TypeConverterRegistry, logger);
 
       if (!result.Success || result.MatchedEndpoint is null)
       {
@@ -96,7 +96,7 @@ public class NuruApp
     }
   }
 
-  private async Task<int> ExecuteMediatorCommandAsync(Type commandType, ResolverResult result)
+  private async Task<int> ExecuteMediatorCommandAsync(Type commandType, EndpointResolutionResult result)
   {
     if (CommandExecutor is null)
     {

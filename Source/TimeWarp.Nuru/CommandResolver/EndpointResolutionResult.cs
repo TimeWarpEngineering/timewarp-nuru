@@ -6,7 +6,7 @@ namespace TimeWarp.Nuru.CommandResolver;
 #pragma warning disable CA1815 // Override equals and operator equals on value types
 // This is a one-time result object that's never compared. It exists only to pass
 // resolution results from the resolver to the execution logic. No equality operations needed.
-public readonly struct ResolverResult
+public readonly struct EndpointResolutionResult
 #pragma warning restore CA1815
 {
   public bool Success { get; }
@@ -14,7 +14,7 @@ public readonly struct ResolverResult
   public Dictionary<string, string>? ExtractedValues { get; }
   public string? ErrorMessage { get; }
 
-  public ResolverResult(bool success, Endpoint? matchedEndpoint = null,
+  public EndpointResolutionResult(bool success, Endpoint? matchedEndpoint = null,
     Dictionary<string, string>? extractedValues = null, string? errorMessage = null)
   {
     Success = success;

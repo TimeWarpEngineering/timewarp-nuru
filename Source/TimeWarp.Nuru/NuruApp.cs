@@ -20,7 +20,12 @@ public class NuruApp
   /// <summary>
   /// Direct constructor - no dependency injection.
   /// </summary>
-  public NuruApp(EndpointCollection endpoints, ITypeConverterRegistry typeConverterRegistry, ILoggerFactory? loggerFactory = null)
+  public NuruApp
+  (
+    EndpointCollection endpoints,
+    ITypeConverterRegistry typeConverterRegistry,
+    ILoggerFactory? loggerFactory = null
+  )
   {
     Endpoints = endpoints ?? throw new ArgumentNullException(nameof(endpoints));
     TypeConverterRegistry = typeConverterRegistry ?? throw new ArgumentNullException(nameof(typeConverterRegistry));

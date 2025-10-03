@@ -17,4 +17,8 @@ public static class NuruConsole
   /// Gets or sets the async function used to write a line to standard error.
   /// </summary>
   public static Func<string?, Task> WriteErrorLineAsync { get; set; } = System.Console.Error.WriteLineAsync;
+  /// <summary>
+  /// Gets or sets the async function used to write a line to standard output.
+  /// </summary>
+  public static Func<string?, ValueTask> WriteLineAsync { get; set; } = message => System.Console.WriteLineAsync(message);
 }

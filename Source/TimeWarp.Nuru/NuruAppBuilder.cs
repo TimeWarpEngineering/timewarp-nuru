@@ -112,7 +112,7 @@ public class NuruAppBuilder
       LoggerMessages.RegisteringRoute(logger, pattern, null);
     }
 
-    var endpoint = new RouteEndpoint
+    var endpoint = new Endpoint
     {
       RoutePattern = pattern,
       CompiledRoute = RoutePatternParser.Parse(pattern, LoggerFactory),
@@ -152,7 +152,7 @@ public class NuruAppBuilder
       throw new InvalidOperationException("Dependency injection must be added before using Mediator commands. Call AddDependencyInjection() first.");
     }
 
-    var endpoint = new RouteEndpoint
+    var endpoint = new Endpoint
     {
       RoutePattern = pattern,
       CompiledRoute = RoutePatternParser.Parse(pattern, LoggerFactory),
@@ -217,16 +217,16 @@ public class NuruAppBuilder
   private void GenerateHelpRoutes()
   {
     // Get a snapshot of existing endpoints (before we add help routes)
-    List<RouteEndpoint> existingEndpoints = [.. EndpointCollection.Endpoints];
+    List<Endpoint> existingEndpoints = [.. EndpointCollection.Endpoints];
 
     // Group endpoints by their command prefix
-    Dictionary<string, List<RouteEndpoint>> commandGroups = [];
+    Dictionary<string, List<Endpoint>> commandGroups = [];
 
-    foreach (RouteEndpoint endpoint in existingEndpoints)
+    foreach (Endpoint endpoint in existingEndpoints)
     {
       string commandPrefix = GetCommandPrefix(endpoint);
 
-      if (!commandGroups.TryGetValue(commandPrefix, out List<RouteEndpoint>? group))
+      if (!commandGroups.TryGetValue(commandPrefix, out List<Endpoint>? group))
       {
         group = [];
         commandGroups[commandPrefix] = group;
@@ -236,7 +236,7 @@ public class NuruAppBuilder
     }
 
     // Add help routes for each command group
-    foreach ((string prefix, List<RouteEndpoint> endpoints) in commandGroups)
+    foreach ((string prefix, List<Endpoint> endpoints) in commandGroups)
     {
       if (string.IsNullOrEmpty(prefix))
       {
@@ -251,7 +251,7 @@ public class NuruAppBuilder
       if (!existingEndpoints.Any(e => e.RoutePattern == helpRoute))
       {
         // Capture endpoints by value to avoid issues with collection modification
-        List<RouteEndpoint> capturedEndpoints = [.. endpoints];
+        List<Endpoint> capturedEndpoints = [.. endpoints];
         AddRoute(helpRoute, () => ShowCommandGroupHelp(prefix, capturedEndpoints), description);
       }
     }
@@ -267,7 +267,7 @@ public class NuruAppBuilder
     }
   }
 
-  private static string GetCommandPrefix(RouteEndpoint endpoint)
+  private static string GetCommandPrefix(Endpoint endpoint)
   {
     List<string> parts = [];
 
@@ -287,12 +287,12 @@ public class NuruAppBuilder
     return string.Join(" ", parts);
   }
 
-  private static void ShowCommandGroupHelp(string commandPrefix, List<RouteEndpoint> endpoints)
+  private static void ShowCommandGroupHelp(string commandPrefix, List<Endpoint> endpoints)
   {
     NuruConsole.WriteLine($"Usage patterns for '{commandPrefix}':");
     NuruConsole.WriteLine(string.Empty);
 
-    foreach (RouteEndpoint endpoint in endpoints)
+    foreach (Endpoint endpoint in endpoints)
     {
       NuruConsole.WriteLine($"  {endpoint.RoutePattern}");
       if (!string.IsNullOrEmpty(endpoint.Description))
@@ -305,7 +305,7 @@ public class NuruAppBuilder
     HashSet<string> shownParams = [];
 
     NuruConsole.WriteLine("\nArguments:");
-    foreach (RouteEndpoint endpoint in endpoints)
+    foreach (Endpoint endpoint in endpoints)
     {
       foreach (RouteMatcher segment in endpoint.CompiledRoute.PositionalMatchers)
       {
@@ -333,7 +333,7 @@ public class NuruAppBuilder
     if (endpoints.Any(e => e.CompiledRoute.OptionMatchers.Count > 0))
     {
       NuruConsole.WriteLine("\nOptions:");
-      foreach (RouteEndpoint endpoint in endpoints)
+      foreach (Endpoint endpoint in endpoints)
       {
         foreach (OptionMatcher option in endpoint.CompiledRoute.OptionMatchers)
         {

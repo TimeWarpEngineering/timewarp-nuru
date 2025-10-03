@@ -47,7 +47,7 @@ public class NuruApp
     {
       // Parse and match route
       ILogger logger = LoggerFactory.CreateLogger("RouteBasedCommandResolver");
-      ResolverResult result = RouteBasedCommandResolver.Resolve(args, Endpoints, TypeConverterRegistry, logger);
+      ResolverResult result = EndpointResolver.Resolve(args, Endpoints, TypeConverterRegistry, logger);
 
       if (!result.Success || result.MatchedEndpoint is null)
       {
@@ -126,7 +126,7 @@ public class NuruApp
     return 0;
   }
 
-  private async Task<int> ExecuteDelegateAsync(Delegate del, Dictionary<string, string> extractedValues, RouteEndpoint endpoint)
+  private async Task<int> ExecuteDelegateAsync(Delegate del, Dictionary<string, string> extractedValues, Endpoint endpoint)
   {
     try
     {
@@ -186,7 +186,7 @@ public class NuruApp
     }
   }
 
-  private object?[] BindParameters(MethodInfo method, Dictionary<string, string> extractedValues, RouteEndpoint endpoint)
+  private object?[] BindParameters(MethodInfo method, Dictionary<string, string> extractedValues, Endpoint endpoint)
   {
     ParameterInfo[] parameters = method.GetParameters();
     object?[] args = new object?[parameters.Length];
@@ -242,7 +242,7 @@ public class NuruApp
     return args;
   }
 
-  private object?[] BindParametersWithDI(MethodInfo method, Dictionary<string, string> extractedValues, RouteEndpoint endpoint)
+  private object?[] BindParametersWithDI(MethodInfo method, Dictionary<string, string> extractedValues, Endpoint endpoint)
   {
     // Use DelegateParameterBinder when DI is available
     // This handles DI injection for parameters
@@ -303,7 +303,7 @@ public class NuruApp
     NuruConsole.WriteLine(RouteHelpProvider.GetHelpText(Endpoints));
   }
 
-  private static bool IsOptionalParameter(string parameterName, RouteEndpoint endpoint)
+  private static bool IsOptionalParameter(string parameterName, Endpoint endpoint)
   {
     // Check positional parameters
     foreach (RouteMatcher segment in endpoint.CompiledRoute.PositionalMatchers)

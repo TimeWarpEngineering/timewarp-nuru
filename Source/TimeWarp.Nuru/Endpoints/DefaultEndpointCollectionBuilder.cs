@@ -22,7 +22,7 @@ public class DefaultEndpointCollectionBuilder : IEndpointCollectionBuilder
     CompiledRoute compiledRoute = RoutePatternParser.Parse(routePattern);
     MethodInfo method = handler.Method;
 
-    var endpoint = new RouteEndpoint
+    var endpoint = new Endpoint
     {
       RoutePattern = routePattern,
       CompiledRoute = compiledRoute,

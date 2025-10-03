@@ -4,7 +4,7 @@ namespace TimeWarp.Nuru.Endpoints;
 /// Represents an endpoint that can be matched by a route pattern.
 /// Similar to ASP.NET Core's RouteEndpoint but adapted for CLI scenarios.
 /// </summary>
-public class RouteEndpoint
+public class Endpoint
 {
   /// <summary>
   /// Gets or sets the route pattern string (e.g., "git commit --amend").

@@ -1,13 +1,17 @@
 namespace TimeWarp.Nuru.CommandResolver;
 
-using TimeWarp.Nuru.Parsing;
-
 /// <summary>
 /// A command resolver that uses route patterns to match commands.
 /// </summary>
-internal static class RouteBasedCommandResolver
+internal static class EndpointResolver
 {
-  public static ResolverResult Resolve(string[] args, EndpointCollection endpoints, ITypeConverterRegistry typeConverterRegistry, ILogger? logger = null)
+  public static ResolverResult Resolve
+  (
+    string[] args,
+    EndpointCollection endpoints,
+    ITypeConverterRegistry typeConverterRegistry,
+    ILogger? logger = null
+  )
   {
     ArgumentNullException.ThrowIfNull(args);
     ArgumentNullException.ThrowIfNull(endpoints);
@@ -19,11 +23,12 @@ internal static class RouteBasedCommandResolver
     LoggerMessages.CheckingAvailableRoutes(logger, endpoints.Count, null);
 
     // Try to match against route endpoints
-    (RouteEndpoint endpoint, Dictionary<string, string> extractedValues)? matchResult = MatchRoute(args, endpoints, logger);
+    (Endpoint endpoint, Dictionary<string, string> extractedValues)? matchResult =
+      MatchRoute(args, endpoints, logger);
 
     if (matchResult is not null)
     {
-      (RouteEndpoint endpoint, Dictionary<string, string> extractedValues) = matchResult.Value;
+      (Endpoint endpoint, Dictionary<string, string> extractedValues) = matchResult.Value;
 
       return new ResolverResult
       (
@@ -40,12 +45,13 @@ internal static class RouteBasedCommandResolver
     );
   }
 
-  private static (RouteEndpoint endpoint, Dictionary<string, string> extractedValues)? MatchRoute(string[] args, EndpointCollection endpoints, ILogger logger)
+  private static (Endpoint endpoint, Dictionary<string, string> extractedValues)?
+    MatchRoute(string[] args, EndpointCollection endpoints, ILogger logger)
   {
     var extractedValues = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
     int endpointIndex = 0;
-    foreach (RouteEndpoint endpoint in endpoints)
+    foreach (Endpoint endpoint in endpoints)
     {
       endpointIndex++;
       LoggerMessages.CheckingRoute(logger, endpointIndex, endpoints.Count, endpoint.RoutePattern, null);
@@ -106,7 +112,7 @@ internal static class RouteBasedCommandResolver
     }
   }
 
-  private static bool MatchPositionalSegments(RouteEndpoint endpoint, string[] args,
+  private static bool MatchPositionalSegments(Endpoint endpoint, string[] args,
       Dictionary<string, string> extractedValues, ILogger logger, out int consumedArgs)
   {
     consumedArgs = 0;
@@ -219,7 +225,7 @@ internal static class RouteBasedCommandResolver
     return true;
   }
 
-  private static bool CheckRequiredOptions(RouteEndpoint endpoint, IReadOnlyList<string> remainingArgs,
+  private static bool CheckRequiredOptions(Endpoint endpoint, IReadOnlyList<string> remainingArgs,
       Dictionary<string, string> extractedValues, ILogger logger, out int optionsConsumed)
   {
     optionsConsumed = 0;

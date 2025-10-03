@@ -10,11 +10,11 @@ public readonly struct ResolverResult
 #pragma warning restore CA1815
 {
   public bool Success { get; }
-  public RouteEndpoint? MatchedEndpoint { get; }
+  public Endpoint? MatchedEndpoint { get; }
   public Dictionary<string, string>? ExtractedValues { get; }
   public string? ErrorMessage { get; }
 
-  public ResolverResult(bool success, RouteEndpoint? matchedEndpoint = null,
+  public ResolverResult(bool success, Endpoint? matchedEndpoint = null,
     Dictionary<string, string>? extractedValues = null, string? errorMessage = null)
   {
     Success = success;

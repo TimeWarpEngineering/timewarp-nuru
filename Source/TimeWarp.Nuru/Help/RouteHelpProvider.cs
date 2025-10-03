@@ -12,7 +12,7 @@ public static class RouteHelpProvider
   public static string GetHelpText(EndpointCollection endpoints)
   {
     ArgumentNullException.ThrowIfNull(endpoints);
-    IReadOnlyList<RouteEndpoint> routes = endpoints.Endpoints;
+    IReadOnlyList<Endpoint> routes = endpoints.Endpoints;
 
     if (routes.Count == 0)
     {
@@ -24,12 +24,12 @@ public static class RouteHelpProvider
     sb.AppendLine();
 
     // Group routes by their command prefix
-    Dictionary<string, List<RouteEndpoint>> groupedRoutes = GroupRoutesByPrefix(routes);
+    Dictionary<string, List<Endpoint>> groupedRoutes = GroupRoutesByPrefix(routes);
 
     // Display ungrouped routes first
-    if (groupedRoutes.TryGetValue("", out List<RouteEndpoint>? ungroupedRoutes))
+    if (groupedRoutes.TryGetValue("", out List<Endpoint>? ungroupedRoutes))
     {
-      foreach (RouteEndpoint route in ungroupedRoutes)
+      foreach (Endpoint route in ungroupedRoutes)
       {
         AppendRoute(sb, route);
       }
@@ -41,10 +41,10 @@ public static class RouteHelpProvider
     }
 
     // Display grouped routes
-    foreach (KeyValuePair<string, List<RouteEndpoint>> group in groupedRoutes.Where(g => !string.IsNullOrEmpty(g.Key)).OrderBy(g => g.Key))
+    foreach (KeyValuePair<string, List<Endpoint>> group in groupedRoutes.Where(g => !string.IsNullOrEmpty(g.Key)).OrderBy(g => g.Key))
     {
       sb.AppendLine(CultureInfo.InvariantCulture, $"{group.Key} Commands:");
-      foreach (RouteEndpoint? route in group.Value)
+      foreach (Endpoint? route in group.Value)
       {
         AppendRoute(sb, route, indent: true);
       }
@@ -55,7 +55,7 @@ public static class RouteHelpProvider
     return sb.ToString().TrimEnd();
   }
 
-  private static void AppendRoute(System.Text.StringBuilder sb, RouteEndpoint route, bool indent = false)
+  private static void AppendRoute(System.Text.StringBuilder sb, Endpoint route, bool indent = false)
   {
     string prefix = indent ? "  " : "";
     string pattern = route.RoutePattern;
@@ -75,15 +75,15 @@ public static class RouteHelpProvider
     }
   }
 
-  private static Dictionary<string, List<RouteEndpoint>> GroupRoutesByPrefix(IReadOnlyList<RouteEndpoint> routes)
+  private static Dictionary<string, List<Endpoint>> GroupRoutesByPrefix(IReadOnlyList<Endpoint> routes)
   {
-    var groups = new Dictionary<string, List<RouteEndpoint>>();
+    var groups = new Dictionary<string, List<Endpoint>>();
 
-    foreach (RouteEndpoint? route in routes.OrderBy(r => r.RoutePattern))
+    foreach (Endpoint? route in routes.OrderBy(r => r.RoutePattern))
     {
       string prefix = GetCommandPrefix(route.RoutePattern);
 
-      if (!groups.TryGetValue(prefix, out List<RouteEndpoint>? list))
+      if (!groups.TryGetValue(prefix, out List<Endpoint>? list))
       {
         list = [];
         groups[prefix] = list;

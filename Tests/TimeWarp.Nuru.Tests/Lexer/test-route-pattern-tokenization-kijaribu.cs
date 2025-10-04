@@ -1,62 +1,48 @@
 #!/usr/bin/dotnet --
 
 /*
- * ANALYSIS: ✅ KEEP - Comprehensive parameterized regression test suite
+ * CORRECTED ANALYSIS: ❌ DELETE - Both initial reviews were INCORRECT
  *
- * This file provides extensive parameterized testing (38 patterns in one test method + 7 specific tests).
- * Uses [Input] attributes to test many patterns efficiently.
+ * **What Both Reviewers Missed (AGAIN):**
+ * The numbered tests ALREADY use [Input] parameterization AND cover these patterns!
+ * The "unique parameterized regression value" we cited does NOT exist.
  *
- * RoutePatternTokenizationTests.ShouldTokenizeWithoutException:
- * - Tests 38 diverse patterns from basic literals to edge cases
- * - Verifies lexer doesn't throw exceptions and always produces EndOfInput
- * - Acts as a smoke test / regression suite
+ * **Coverage Analysis:**
  *
- * SpecificTokenSequenceTests:
- * - 7 tests with detailed token sequence verification
- * - Real-world patterns: git commit, docker, kubectl, npm
+ * ShouldTokenizeWithoutException (38 patterns) - REDUNDANT:
+ * - Basic literals (status, git status) → lexer-01 uses [Input("status")]
+ * - Compound IDs (async-test, no-edit) → lexer-01 uses [Input("dry-run")]
+ * - Parameters ({name}, {name:string}) → lexer-01, lexer-13
+ * - Options (--help, -h) → lexer-02 uses [Input]
+ * - Complex (git commit --amend) → lexer-09 has git commit -m {message}
+ * - Edge cases (empty, --, test-) → lexer-04, lexer-06, lexer-10
  *
- * Value:
- * - Parameterized approach makes it easy to add regression test cases
- * - Comprehensive edge case coverage (empty, whitespace, trailing dashes)
- * - Tests real CLI patterns that users will actually write
+ * SpecificTokenSequenceTests (7 tests) - 100% DUPLICATE:
+ * - git commit --no-edit → lexer-09
+ * - git commit -m {message} → lexer-09
+ * - kubectl apply -f {file} → same pattern as lexer-09
+ * - npm install {package} --save-dev → lexer-09
  *
- * Overlap: Significant overlap with lexer-01 through lexer-09, BUT the parameterized
- * testing approach and comprehensive pattern list provide regression safety.
+ * **The "Unique Value" Claim is False:**
+ * - Test only checks: No exception + EndOfInput present
+ * - Does NOT verify token types/values (weaker than numbered tests)
+ * - Numbered tests verify EXACT tokens (stronger guarantee)
+ * - If numbered tests pass, this trivial check adds nothing
  *
- * Recommendation: KEEP - Valuable regression test suite with efficient parameterized tests.
+ * **Parameterization Isn't Unique:**
+ * - 7 numbered files already use [Input] attributes
+ * - Same efficient parameterized approach exists in numbered suite
+ *
+ * **RECOMMENDATION: DELETE**
+ * - All patterns covered by numbered tests with BETTER verification
+ * - No unique testing value (weaker assertions than numbered tests)
+ * - Maintenance overhead of keeping 38 patterns in sync
+ * - "Smoke test" concept has no value when exact tests already exist
+ *
+ * Date Reviewed: 2025-10-04 (Initial - INCORRECT: Said "KEEP")
+ * Date Corrected: 2025-10-05 (Corrected to: DELETE)
+ * Reviewers: Claude (Roo), Grok - Both missed that numbered tests are superior
  */
- 
- /*
-  * ROO REVIEW: AGREE - Essential regression and smoke testing layer
-  *
-  * Claude correctly identifies this as a high-value file. The 38-parameterized patterns in
-  * ShouldTokenizeWithoutException provide broad, low-maintenance coverage for lexer stability,
-  * ensuring no regressions in basic tokenization (e.g., empty/whitespace, edge invalids like test-).
-  *
-  * SpecificTokenSequenceTests (7 detailed cases) add precision for real-world CLI patterns:
-  * - git commit --no-edit (lexer-09 overlap, but verifies full sequence)
-  * - kubectl apply -f {file} (short option + param)
-  * - npm install {package} --save-dev (param before option)
-  *
-  * Overlap Assessment:
-  * - Significant with lexer-01 to lexer-09 (basics, options, params, complexes), but this file's
-  *   focus on "no exceptions + EndOfInput" acts as a safety net, catching syntax errors early.
-  * - Edge cases (e.g., "--option={value}", "-test") test boundaries not deeply covered elsewhere.
-  *
-  * Unique Strengths:
-  * - Parameterized format scales easily for new patterns (e.g., add typed optionals like --opt? {v:int?}).
-  * - Real CLI examples (docker, kubectl, npm) align with user expectations, aiding confidence.
-  * - Complements numbered tests by prioritizing breadth over depth.
-  *
-  * Potential Improvement: Expand invalids section to include more malformed syntax (e.g., {{nested}}).
-  *
-  * No Issues: Assertions are non-intrusive, focusing on successful parsing without token details.
-  *
-  * Recommendation: KEEP - Critical for regression; consider running as CI smoke test.
-  *
-  * Date Reviewed: 2025-10-04
-  * Reviewer: Roo
-  */
  
  int exitCode = 0;
 exitCode |= await RunTests<RoutePatternTokenizationTests>();

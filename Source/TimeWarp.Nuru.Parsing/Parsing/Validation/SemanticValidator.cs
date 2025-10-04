@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru.Parsing.Validation;
+namespace TimeWarp.Nuru.Parsing;
 
 /// <summary>
 /// Validates the semantic correctness of route patterns.
@@ -13,7 +13,7 @@ public sealed class SemanticValidator
   /// </summary>
   /// <param name="ast">The syntax tree to validate.</param>
   /// <returns>List of semantic errors found, null if valid.</returns>
-  public static IReadOnlyList<SemanticError>? Validate(RouteSyntax ast)
+  public static IReadOnlyList<SemanticError>? Validate(Syntax ast)
   {
     ArgumentNullException.ThrowIfNull(ast);
 
@@ -35,7 +35,7 @@ public sealed class SemanticValidator
     return semanticErrors.Count > 0 ? [.. semanticErrors] : null;
   }
 
-  private static void CollectSegmentMetadata(RouteSyntax ast, ValidationContext context)
+  private static void CollectSegmentMetadata(Syntax ast, ValidationContext context)
   {
     for (int i = 0; i < ast.Segments.Count; i++)
     {

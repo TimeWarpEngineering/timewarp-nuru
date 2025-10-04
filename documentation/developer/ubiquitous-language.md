@@ -52,11 +52,11 @@ The **Lexer** is the first stage of the processing pipeline. It converts a route
 ### Lexer
 **Definition:** Component that converts a route pattern string into a sequence of tokens through the process of tokenization.
 
-**Code Artifact:** `RoutePatternLexer` class
+**Code Artifact:** `Lexer` class
 
 **Example:**
 ```csharp
-var lexer = new RoutePatternLexer("deploy {env} --force");
+var lexer = new Lexer("deploy {env} --force");
 IReadOnlyList<Token> tokens = lexer.Tokenize();
 ```
 
@@ -158,12 +158,12 @@ Output: [
 ### Input
 **Definition:** The route pattern string being tokenized by the Lexer. This is the raw character sequence before processing.
 
-**Code Artifact:** `string Input` field in `RoutePatternLexer`
+**Code Artifact:** `string Input` field in `Lexer`
 
 **Example:**
 ```csharp
 string input = "deploy {env} --force";
-var lexer = new RoutePatternLexer(input);
+var lexer = new Lexer(input);
 ```
 
 **Related Terms:** Route Pattern, Position
@@ -187,7 +187,7 @@ var lexer = new RoutePatternLexer(input);
 ### Position
 **Definition:** Zero-based character index in the input string. Used to track where each token begins and to report error locations.
 
-**Code Artifact:** `int Position` field in `RoutePatternLexer`, `int Position` property in `Token`
+**Code Artifact:** `int Position` field in `Lexer`, `int Position` property in `Token`
 
 **Example:**
 ```csharp

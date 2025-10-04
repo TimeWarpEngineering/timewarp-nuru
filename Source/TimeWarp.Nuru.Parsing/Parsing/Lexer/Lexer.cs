@@ -3,23 +3,23 @@ namespace TimeWarp.Nuru.Parsing;
 /// <summary>
 /// Lexer for tokenizing route pattern strings.
 /// </summary>
-public class RoutePatternLexer
+public class Lexer
 {
-  private readonly ILogger<RoutePatternLexer> Logger;
+  private readonly ILogger<Lexer> Logger;
   private readonly string Input;
   private int Position;
   private readonly List<Token> Tokens = [];
 
   /// <summary>
-  /// Initializes a new instance of the <see cref="RoutePatternLexer"/> class.
+  /// Initializes a new instance of the <see cref="Lexer"/> class.
   /// </summary>
   /// <param name="input">The input string to tokenize.</param>
-  public RoutePatternLexer(string input) : this(input, null) { }
+  public Lexer(string input) : this(input, null) { }
 
-  public RoutePatternLexer(string input, ILogger<RoutePatternLexer>? logger = null)
+  public Lexer(string input, ILogger<Lexer>? logger = null)
   {
     this.Input = input ?? throw new ArgumentNullException(nameof(input));
-    Logger = logger ?? NullLogger<RoutePatternLexer>.Instance;
+    Logger = logger ?? NullLogger<Lexer>.Instance;
   }
 
   /// <summary>

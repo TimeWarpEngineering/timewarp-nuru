@@ -13,7 +13,7 @@ public interface ISyntaxVisitor<T>
   /// </summary>
   /// <param name="pattern">The route syntax tree.</param>
   /// <returns>The result of visiting this node.</returns>
-  T VisitPattern(RouteSyntax pattern);
+  T VisitPattern(Syntax pattern);
   /// <summary>
   /// Visits a literal segment node.
   /// </summary>
@@ -41,7 +41,7 @@ public interface ISyntaxVisitor<T>
 public abstract class SyntaxVisitor<T> : ISyntaxVisitor<T>
 {
   /// <inheritdoc />
-  public virtual T VisitPattern(RouteSyntax pattern)
+  public virtual T VisitPattern(Syntax pattern)
   {
     ArgumentNullException.ThrowIfNull(pattern, nameof(pattern));
 

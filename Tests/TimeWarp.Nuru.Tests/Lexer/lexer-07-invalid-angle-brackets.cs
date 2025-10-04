@@ -10,7 +10,7 @@ public class InvalidAngleBracketsTests
   {
     // Arrange
     string pattern = "test<param>";
-    RoutePatternLexer lexer = CreateLexer(pattern);
+    Lexer lexer = CreateLexer(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     // Assert
@@ -27,7 +27,7 @@ public class InvalidAngleBracketsTests
   {
     // Arrange
     string pattern = "<param>";
-    RoutePatternLexer lexer = CreateLexer(pattern);
+    Lexer lexer = CreateLexer(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     // Assert
@@ -42,7 +42,7 @@ public class InvalidAngleBracketsTests
   {
     // Arrange
     string pattern = "{param}";
-    RoutePatternLexer lexer = CreateLexer(pattern);
+    Lexer lexer = CreateLexer(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     // Assert - positive test: ensure valid syntax still works
@@ -60,7 +60,7 @@ public class InvalidAngleBracketsTests
   {
     // Arrange
     string pattern = "{param>";
-    RoutePatternLexer lexer = CreateLexer(pattern);
+    Lexer lexer = CreateLexer(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     // Assert

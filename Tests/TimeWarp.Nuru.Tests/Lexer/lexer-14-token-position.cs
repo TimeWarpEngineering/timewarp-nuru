@@ -16,7 +16,7 @@ public class TokenPositionTests
     // Pattern: "cmd {name} --flag"
     // Positions: 0123456789012345678
     string pattern = "cmd {name} --flag";
-    RoutePatternLexer lexer = CreateLexer(pattern);
+    Lexer lexer = CreateLexer(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     // Verify each token's starting position
@@ -64,7 +64,7 @@ public class TokenPositionTests
   public static async Task Should_track_token_end_positions_correctly()
   {
     string pattern = "cmd {name}";
-    RoutePatternLexer lexer = CreateLexer(pattern);
+    Lexer lexer = CreateLexer(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     // Verify EndPosition = Position + Length for each token
@@ -113,7 +113,7 @@ public class TokenPositionTests
   public static async Task Should_track_token_length_matches_value()
   {
     string pattern = "test {parameter:int} --verbose";
-    RoutePatternLexer lexer = CreateLexer(pattern);
+    Lexer lexer = CreateLexer(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     // Verify Length = Value.Length for all tokens
@@ -167,7 +167,7 @@ public class TokenPositionTests
     // Pattern with varying amounts of whitespace
     string pattern = "cmd   {name}  --flag";
     // Positions:     012   3456789  10111213141516171819
-    RoutePatternLexer lexer = CreateLexer(pattern);
+    Lexer lexer = CreateLexer(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     tokens.Count.ShouldBe(7);
@@ -212,7 +212,7 @@ public class TokenPositionTests
   {
     string pattern = "git log --";
     // Positions:     012 3456 78910
-    RoutePatternLexer lexer = CreateLexer(pattern);
+    Lexer lexer = CreateLexer(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     tokens.Count.ShouldBe(4);
@@ -256,7 +256,7 @@ public class TokenPositionTests
   {
     string pattern = "cmd @ --flag # value";
     // Positions:     012 3 4 567891011 12 131415161718192021
-    RoutePatternLexer lexer = CreateLexer(pattern);
+    Lexer lexer = CreateLexer(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     // Find all Invalid tokens

@@ -4,7 +4,7 @@ namespace TimeWarp.Nuru.Parsing;
 /// Exception thrown when a route pattern cannot be parsed or validated.
 /// </summary>
 [SuppressMessage("Design", "CA1032:Implement standard exception constructors", Justification = "This is a domain-specific exception only thrown by RoutePatternParser")]
-public class RoutePatternException : Exception
+public class PatternException : Exception
 {
   /// <summary>
   /// The route pattern that caused the error.
@@ -22,7 +22,7 @@ public class RoutePatternException : Exception
   /// <summary>
   /// Creates a new RoutePatternException with parsing errors.
   /// </summary>
-  public RoutePatternException
+  public PatternException
   (
     string routePattern,
     IReadOnlyList<ParseError>? parseErrors,

@@ -14,7 +14,7 @@ public class EndOfOptionsSeparatorTests
   public static async Task StandaloneDoubleDashShouldBeEndOfOptions()
   {
     // Arrange
-    var lexer = new RoutePatternLexer("--");
+    var lexer = new Lexer("--");
 
     // Act
     IReadOnlyList<Token> tokens = lexer.Tokenize();
@@ -31,7 +31,7 @@ public class EndOfOptionsSeparatorTests
   public static async Task CommandFollowedByDoubleDashShouldBeEndOfOptions()
   {
     // Arrange
-    var lexer = new RoutePatternLexer("exec --");
+    var lexer = new Lexer("exec --");
 
     // Act
     IReadOnlyList<Token> tokens = lexer.Tokenize();
@@ -52,7 +52,7 @@ public class EndOfOptionsSeparatorTests
   public static async Task DoubleDashSeparatorWithCatchAllShouldTokenize()
   {
     // Arrange
-    var lexer = new RoutePatternLexer("exec -- {*cmd}");
+    var lexer = new Lexer("exec -- {*cmd}");
 
     // Act
     IReadOnlyList<Token> tokens = lexer.Tokenize();
@@ -75,7 +75,7 @@ public class EndOfOptionsSeparatorTests
   public static async Task GitLogWithDoubleDashSeparatorShouldTokenize()
   {
     // Arrange
-    var lexer = new RoutePatternLexer("git log -- {*files}");
+    var lexer = new Lexer("git log -- {*files}");
 
     // Act
     IReadOnlyList<Token> tokens = lexer.Tokenize();
@@ -95,7 +95,7 @@ public class EndOfOptionsSeparatorTests
   public static async Task DoubleDashHelpShouldRemainAsOption()
   {
     // Arrange
-    var lexer = new RoutePatternLexer("--help");
+    var lexer = new Lexer("--help");
 
     // Act
     IReadOnlyList<Token> tokens = lexer.Tokenize();
@@ -114,7 +114,7 @@ public class EndOfOptionsSeparatorTests
   public static async Task DoubleDashEnvShouldRemainAsOption()
   {
     // Arrange
-    var lexer = new RoutePatternLexer("exec --env {e}");
+    var lexer = new Lexer("exec --env {e}");
 
     // Act
     IReadOnlyList<Token> tokens = lexer.Tokenize();
@@ -134,7 +134,7 @@ public class EndOfOptionsSeparatorTests
   public static async Task OptionThenSeparatorShouldTokenizeCorrectly()
   {
     // Arrange
-    var lexer = new RoutePatternLexer("exec --env {e}* -- {*cmd}");
+    var lexer = new Lexer("exec --env {e}* -- {*cmd}");
 
     // Act
     IReadOnlyList<Token> tokens = lexer.Tokenize();

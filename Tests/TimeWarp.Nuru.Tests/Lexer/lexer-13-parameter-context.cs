@@ -14,7 +14,7 @@ public class ParameterContextTests
   public static async Task Should_tokenize_simple_parameter()
   {
     string pattern = "{name}";
-    RoutePatternLexer lexer = CreateLexer(pattern);
+    Lexer lexer = CreateLexer(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     tokens.Count.ShouldBe(4);
@@ -37,7 +37,7 @@ public class ParameterContextTests
   public static async Task Should_tokenize_typed_parameter()
   {
     string pattern = "{count:int}";
-    RoutePatternLexer lexer = CreateLexer(pattern);
+    Lexer lexer = CreateLexer(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     tokens.Count.ShouldBe(6);
@@ -62,7 +62,7 @@ public class ParameterContextTests
   public static async Task Should_tokenize_optional_parameter()
   {
     string pattern = "{value?}";
-    RoutePatternLexer lexer = CreateLexer(pattern);
+    Lexer lexer = CreateLexer(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     tokens.Count.ShouldBe(5);
@@ -85,7 +85,7 @@ public class ParameterContextTests
   public static async Task Should_tokenize_catchall_parameter()
   {
     string pattern = "{*args}";
-    RoutePatternLexer lexer = CreateLexer(pattern);
+    Lexer lexer = CreateLexer(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     tokens.Count.ShouldBe(5);
@@ -109,7 +109,7 @@ public class ParameterContextTests
   public static async Task Should_detect_invalid_double_dash_in_parameter()
   {
     string pattern = "{invalid--name}";
-    RoutePatternLexer lexer = CreateLexer(pattern);
+    Lexer lexer = CreateLexer(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     // Should tokenize: { [Invalid]invalid--name }
@@ -133,7 +133,7 @@ public class ParameterContextTests
   public static async Task Should_tokenize_combined_type_and_optional()
   {
     string pattern = "{seconds:int?}";
-    RoutePatternLexer lexer = CreateLexer(pattern);
+    Lexer lexer = CreateLexer(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     // Should tokenize: { seconds : int ? }
@@ -160,7 +160,7 @@ public class ParameterContextTests
   public static async Task Should_tokenize_enum_values_with_pipes()
   {
     string pattern = "{mode:dev|staging|prod}";
-    RoutePatternLexer lexer = CreateLexer(pattern);
+    Lexer lexer = CreateLexer(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     // Lexer doesn't know about enum syntax - just tokenizes pipes normally
@@ -193,7 +193,7 @@ public class ParameterContextTests
   public static async Task Should_detect_nested_braces()
   {
     string pattern = "{{name}}";
-    RoutePatternLexer lexer = CreateLexer(pattern);
+    Lexer lexer = CreateLexer(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     // Lexer tokenizes each brace separately
@@ -218,7 +218,7 @@ public class ParameterContextTests
   public static async Task Should_detect_unclosed_brace()
   {
     string pattern = "{name";
-    RoutePatternLexer lexer = CreateLexer(pattern);
+    Lexer lexer = CreateLexer(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     // Lexer produces tokens, missing closing brace

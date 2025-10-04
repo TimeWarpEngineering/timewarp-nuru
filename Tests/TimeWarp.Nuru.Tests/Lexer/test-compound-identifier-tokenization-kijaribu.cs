@@ -19,7 +19,7 @@ public class CompoundIdentifierTokenizationTests
   public static async Task SimpleCompoundIdentifiersShouldBeSingleTokens(string pattern)
   {
     // Arrange
-    RoutePatternLexer lexer = new(pattern);
+    Lexer lexer = new(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();
     Token[] actualTokens = [.. tokens.Take(tokens.Count - 1)];
 
@@ -35,7 +35,7 @@ public class CompoundIdentifierTokenizationTests
   public static async Task NoEditOption()
   {
     // Arrange
-    RoutePatternLexer lexer = new("--no-edit");
+    Lexer lexer = new("--no-edit");
     IReadOnlyList<Token> tokens = lexer.Tokenize();
     Token[] actualTokens = [.. tokens.Take(tokens.Count - 1)];
 
@@ -52,7 +52,7 @@ public class CompoundIdentifierTokenizationTests
   public static async Task DryRunOption()
   {
     // Arrange
-    RoutePatternLexer lexer = new("--dry-run");
+    Lexer lexer = new("--dry-run");
     IReadOnlyList<Token> tokens = lexer.Tokenize();
     Token[] actualTokens = [.. tokens.Take(tokens.Count - 1)];
 
@@ -69,7 +69,7 @@ public class CompoundIdentifierTokenizationTests
   public static async Task MaxCountOption()
   {
     // Arrange
-    RoutePatternLexer lexer = new("--max-count");
+    Lexer lexer = new("--max-count");
     IReadOnlyList<Token> tokens = lexer.Tokenize();
     Token[] actualTokens = [.. tokens.Take(tokens.Count - 1)];
 
@@ -86,7 +86,7 @@ public class CompoundIdentifierTokenizationTests
   public static async Task SaveDevOption()
   {
     // Arrange
-    RoutePatternLexer lexer = new("--save-dev");
+    Lexer lexer = new("--save-dev");
     IReadOnlyList<Token> tokens = lexer.Tokenize();
     Token[] actualTokens = [.. tokens.Take(tokens.Count - 1)];
 
@@ -103,7 +103,7 @@ public class CompoundIdentifierTokenizationTests
   public static async Task EnhanceLogsOption()
   {
     // Arrange
-    RoutePatternLexer lexer = new("--enhance-logs");
+    Lexer lexer = new("--enhance-logs");
     IReadOnlyList<Token> tokens = lexer.Tokenize();
     Token[] actualTokens = [.. tokens.Take(tokens.Count - 1)];
 
@@ -121,7 +121,7 @@ public class CompoundIdentifierTokenizationTests
   public static async Task TrailingDashProducesInvalidToken()
   {
     // Arrange
-    RoutePatternLexer lexer = new("test-");
+    Lexer lexer = new("test-");
     IReadOnlyList<Token> tokens = lexer.Tokenize();
     Token[] actualTokens = [.. tokens.Take(tokens.Count - 1)];
 
@@ -136,7 +136,7 @@ public class CompoundIdentifierTokenizationTests
   public static async Task LeadingDashProducesInvalidToken()
   {
     // Arrange
-    RoutePatternLexer lexer = new("-test");
+    Lexer lexer = new("-test");
     IReadOnlyList<Token> tokens = lexer.Tokenize();
     Token[] actualTokens = [.. tokens.Take(tokens.Count - 1)];
 
@@ -151,7 +151,7 @@ public class CompoundIdentifierTokenizationTests
   public static async Task JustDash()
   {
     // Arrange
-    RoutePatternLexer lexer = new("-");
+    Lexer lexer = new("-");
     IReadOnlyList<Token> tokens = lexer.Tokenize();
     Token[] actualTokens = [.. tokens.Take(tokens.Count - 1)];
 
@@ -166,7 +166,7 @@ public class CompoundIdentifierTokenizationTests
   public static async Task MultipleConsecutiveDashesProduceInvalidToken()
   {
     // Arrange
-    RoutePatternLexer lexer = new("test--case");
+    Lexer lexer = new("test--case");
     IReadOnlyList<Token> tokens = lexer.Tokenize();
     Token[] actualTokens = [.. tokens.Take(tokens.Count - 1)];
 
@@ -182,7 +182,7 @@ public class CompoundIdentifierTokenizationTests
   public static async Task GitCommitNoEdit()
   {
     // Arrange
-    RoutePatternLexer lexer = new("git commit --no-edit");
+    Lexer lexer = new("git commit --no-edit");
     IReadOnlyList<Token> tokens = lexer.Tokenize();
     Token[] actualTokens = [.. tokens.Take(tokens.Count - 1)];
 
@@ -203,7 +203,7 @@ public class CompoundIdentifierTokenizationTests
   public static async Task DockerRunSaveDevWithParameter()
   {
     // Arrange
-    RoutePatternLexer lexer = new("docker run --save-dev {image}");
+    Lexer lexer = new("docker run --save-dev {image}");
     IReadOnlyList<Token> tokens = lexer.Tokenize();
     Token[] actualTokens = [.. tokens.Take(tokens.Count - 1)];
 
@@ -230,7 +230,7 @@ public class CompoundIdentifierTokenizationTests
   public static async Task GitLogMaxCountWithTypedParameter()
   {
     // Arrange
-    RoutePatternLexer lexer = new("git log --max-count {count:int}");
+    Lexer lexer = new("git log --max-count {count:int}");
     IReadOnlyList<Token> tokens = lexer.Tokenize();
     Token[] actualTokens = [.. tokens.Take(tokens.Count - 1)];
 
@@ -261,7 +261,7 @@ public class CompoundIdentifierTokenizationTests
   public static async Task NpmInstallSaveDevAfterParameter()
   {
     // Arrange
-    RoutePatternLexer lexer = new("npm install {package} --save-dev");
+    Lexer lexer = new("npm install {package} --save-dev");
     IReadOnlyList<Token> tokens = lexer.Tokenize();
     Token[] actualTokens = [.. tokens.Take(tokens.Count - 1)];
 

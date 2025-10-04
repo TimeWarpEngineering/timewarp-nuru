@@ -15,7 +15,7 @@ public class ModifierTokenizationTests
   public static async Task OptionalVerboseFlag()
   {
     // Arrange
-    RoutePatternLexer lexer = new("--verbose?");
+    Lexer lexer = new("--verbose?");
     IReadOnlyList<Token> tokens = lexer.Tokenize();
     Token[] actualTokens = [.. tokens.Take(tokens.Count - 1)];
 
@@ -34,7 +34,7 @@ public class ModifierTokenizationTests
   public static async Task OptionalDryRunFlag()
   {
     // Arrange
-    RoutePatternLexer lexer = new("--dry-run?");
+    Lexer lexer = new("--dry-run?");
     IReadOnlyList<Token> tokens = lexer.Tokenize();
     Token[] actualTokens = [.. tokens.Take(tokens.Count - 1)];
 
@@ -53,7 +53,7 @@ public class ModifierTokenizationTests
   public static async Task OptionalShortFlag()
   {
     // Arrange
-    RoutePatternLexer lexer = new("-v?");
+    Lexer lexer = new("-v?");
     IReadOnlyList<Token> tokens = lexer.Tokenize();
     Token[] actualTokens = [.. tokens.Take(tokens.Count - 1)];
 
@@ -72,7 +72,7 @@ public class ModifierTokenizationTests
   public static async Task OptionalFlagWithParameter()
   {
     // Arrange
-    RoutePatternLexer lexer = new("--config? {mode}");
+    Lexer lexer = new("--config? {mode}");
     IReadOnlyList<Token> tokens = lexer.Tokenize();
     Token[] actualTokens = [.. tokens.Take(tokens.Count - 1)];
 
@@ -93,7 +93,7 @@ public class ModifierTokenizationTests
   public static async Task OptionalFlagWithOptionalParameter()
   {
     // Arrange
-    RoutePatternLexer lexer = new("--env? {name?}");
+    Lexer lexer = new("--env? {name?}");
     IReadOnlyList<Token> tokens = lexer.Tokenize();
     Token[] actualTokens = [.. tokens.Take(tokens.Count - 1)];
 
@@ -116,7 +116,7 @@ public class ModifierTokenizationTests
   public static async Task RepeatedParameter()
   {
     // Arrange
-    RoutePatternLexer lexer = new("--env {var}*");
+    Lexer lexer = new("--env {var}*");
     IReadOnlyList<Token> tokens = lexer.Tokenize();
     Token[] actualTokens = [.. tokens.Take(tokens.Count - 1)];
 
@@ -137,7 +137,7 @@ public class ModifierTokenizationTests
   public static async Task RepeatedTypedParameter()
   {
     // Arrange
-    RoutePatternLexer lexer = new("--port {p:int}*");
+    Lexer lexer = new("--port {p:int}*");
     IReadOnlyList<Token> tokens = lexer.Tokenize();
     Token[] actualTokens = [.. tokens.Take(tokens.Count - 1)];
 
@@ -161,7 +161,7 @@ public class ModifierTokenizationTests
   public static async Task MultipleRepeatedParameters()
   {
     // Arrange
-    RoutePatternLexer lexer = new("--label {l}* --tag {t}*");
+    Lexer lexer = new("--label {l}* --tag {t}*");
     IReadOnlyList<Token> tokens = lexer.Tokenize();
     Token[] actualTokens = [.. tokens.Take(tokens.Count - 1)];
 
@@ -181,7 +181,7 @@ public class ModifierTokenizationTests
   public static async Task OptionalFlagWithRepeatedParameter()
   {
     // Arrange
-    RoutePatternLexer lexer = new("--env? {var}*");
+    Lexer lexer = new("--env? {var}*");
     IReadOnlyList<Token> tokens = lexer.Tokenize();
     Token[] actualTokens = [.. tokens.Take(tokens.Count - 1)];
 
@@ -201,7 +201,7 @@ public class ModifierTokenizationTests
   public static async Task ComplexOptionalRepeatedCombination()
   {
     // Arrange
-    RoutePatternLexer lexer = new("--opt? {val?}*");
+    Lexer lexer = new("--opt? {val?}*");
     IReadOnlyList<Token> tokens = lexer.Tokenize();
     Token[] actualTokens = [.. tokens.Take(tokens.Count - 1)];
 
@@ -220,7 +220,7 @@ public class ModifierTokenizationTests
   public static async Task OptionalRepeatedFlag()
   {
     // Arrange
-    RoutePatternLexer lexer = new("--flag?*");
+    Lexer lexer = new("--flag?*");
     IReadOnlyList<Token> tokens = lexer.Tokenize();
     Token[] actualTokens = [.. tokens.Take(tokens.Count - 1)];
 
@@ -238,7 +238,7 @@ public class ModifierTokenizationTests
   public static async Task DeployWithMultipleOptionalFlags()
   {
     // Arrange
-    RoutePatternLexer lexer = new("deploy {env} --force? --dry-run?");
+    Lexer lexer = new("deploy {env} --force? --dry-run?");
     IReadOnlyList<Token> tokens = lexer.Tokenize();
     Token[] actualTokens = [.. tokens.Take(tokens.Count - 1)];
 
@@ -257,7 +257,7 @@ public class ModifierTokenizationTests
   public static async Task DockerWithOptionalRepeatedAndCatchAll()
   {
     // Arrange
-    RoutePatternLexer lexer = new("docker --env? {e}* {*cmd}");
+    Lexer lexer = new("docker --env? {e}* {*cmd}");
     IReadOnlyList<Token> tokens = lexer.Tokenize();
     Token[] actualTokens = [.. tokens.Take(tokens.Count - 1)];
 

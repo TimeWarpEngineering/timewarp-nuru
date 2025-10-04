@@ -21,7 +21,7 @@ void TestLexer(string testPattern)
     try
     {
         WriteLine($"\nTesting: {testPattern}");
-        var lexer = new RoutePatternLexer(testPattern);
+        var lexer = new Lexer(testPattern);
         IReadOnlyList<Token> tokens = lexer.Tokenize();
         WriteLine($"Found {tokens.Count} tokens:");
         foreach (Token token in tokens)

@@ -91,7 +91,7 @@ public class NuruRouteAnalyzer : IIncrementalGenerator
 
     // Use the actual parser to validate the route pattern
     bool parseSuccess =
-      RoutePatternParser.TryParse
+      PatternParser.TryParse
       (
         routeInfo.Pattern,
         out _,

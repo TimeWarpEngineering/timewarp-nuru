@@ -66,7 +66,7 @@ public class RoutePatternTokenizationTests
   public static async Task ShouldTokenizeWithoutException(string pattern)
   {
     // Arrange & Act
-    RoutePatternLexer lexer = new(pattern);
+    Lexer lexer = new(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     // Assert
@@ -83,7 +83,7 @@ public class SpecificTokenSequenceTests
   public static async Task CompoundIdentifier()
   {
     // Arrange
-    RoutePatternLexer lexer = new("async-test");
+    Lexer lexer = new("async-test");
     IReadOnlyList<Token> tokens = lexer.Tokenize();
     Token[] actualTokens = [.. tokens.Take(tokens.Count - 1)];
 
@@ -98,7 +98,7 @@ public class SpecificTokenSequenceTests
   public static async Task CommandWithLongOptionWithDash()
   {
     // Arrange
-    RoutePatternLexer lexer = new("git commit --no-edit");
+    Lexer lexer = new("git commit --no-edit");
     IReadOnlyList<Token> tokens = lexer.Tokenize();
     Token[] actualTokens = [.. tokens.Take(tokens.Count - 1)];
 
@@ -119,7 +119,7 @@ public class SpecificTokenSequenceTests
   public static async Task ShortOptionWithParameter()
   {
     // Arrange
-    RoutePatternLexer lexer = new("git commit -m {message}");
+    Lexer lexer = new("git commit -m {message}");
     IReadOnlyList<Token> tokens = lexer.Tokenize();
     Token[] actualTokens = [.. tokens.Take(tokens.Count - 1)];
 
@@ -146,7 +146,7 @@ public class SpecificTokenSequenceTests
   public static async Task LongOptionWithTypedParameter()
   {
     // Arrange
-    RoutePatternLexer lexer = new("git log --max-count {count:int}");
+    Lexer lexer = new("git log --max-count {count:int}");
     IReadOnlyList<Token> tokens = lexer.Tokenize();
     Token[] actualTokens = [.. tokens.Take(tokens.Count - 1)];
 
@@ -177,7 +177,7 @@ public class SpecificTokenSequenceTests
   public static async Task DockerWithEnhancedLogsOption()
   {
     // Arrange
-    RoutePatternLexer lexer = new("docker run --enhance-logs {image}");
+    Lexer lexer = new("docker run --enhance-logs {image}");
     IReadOnlyList<Token> tokens = lexer.Tokenize();
     Token[] actualTokens = [.. tokens.Take(tokens.Count - 1)];
 
@@ -204,7 +204,7 @@ public class SpecificTokenSequenceTests
   public static async Task KubectlApplyShortOption()
   {
     // Arrange
-    RoutePatternLexer lexer = new("kubectl apply -f {file}");
+    Lexer lexer = new("kubectl apply -f {file}");
     IReadOnlyList<Token> tokens = lexer.Tokenize();
     Token[] actualTokens = [.. tokens.Take(tokens.Count - 1)];
 
@@ -231,7 +231,7 @@ public class SpecificTokenSequenceTests
   public static async Task NpmInstallWithSaveDevOption()
   {
     // Arrange
-    RoutePatternLexer lexer = new("npm install {package} --save-dev");
+    Lexer lexer = new("npm install {package} --save-dev");
     IReadOnlyList<Token> tokens = lexer.Tokenize();
     Token[] actualTokens = [.. tokens.Take(tokens.Count - 1)];
 
@@ -258,7 +258,7 @@ public class SpecificTokenSequenceTests
   public static async Task GitCommitShortOptionThenBooleanOption()
   {
     // Arrange
-    RoutePatternLexer lexer = new("git commit -m {message} --amend");
+    Lexer lexer = new("git commit -m {message} --amend");
     IReadOnlyList<Token> tokens = lexer.Tokenize();
     Token[] actualTokens = [.. tokens.Take(tokens.Count - 1)];
 

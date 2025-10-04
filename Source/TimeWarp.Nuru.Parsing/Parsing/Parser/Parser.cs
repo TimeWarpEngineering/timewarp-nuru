@@ -3,24 +3,24 @@ namespace TimeWarp.Nuru.Parsing;
 /// <summary>
 /// Recursive descent parser for route patterns.
 /// </summary>
-public sealed partial class RouteParser : IRouteParser
+public sealed partial class Parser : IParser
 {
-  private readonly ILogger<RouteParser> Logger;
+  private readonly ILogger<Parser> Logger;
   private readonly ILoggerFactory? LoggerFactory;
   private IReadOnlyList<Token> Tokens = [];
   private int CurrentIndex;
   private List<ParseError>? ParseErrors;
 
-  public RouteParser() : this(null, null) { }
+  public Parser() : this(null, null) { }
 
-  public RouteParser(ILogger<RouteParser>? logger = null, ILoggerFactory? loggerFactory = null)
+  public Parser(ILogger<Parser>? logger = null, ILoggerFactory? loggerFactory = null)
   {
-    Logger = logger ?? NullLogger<RouteParser>.Instance;
+    Logger = logger ?? NullLogger<Parser>.Instance;
     LoggerFactory = loggerFactory;
   }
 
   /// <inheritdoc />
-  public ParseResult<RouteSyntax> Parse(string pattern)
+  public ParseResult<Syntax> Parse(string pattern)
   {
     ArgumentNullException.ThrowIfNull(pattern);
 
@@ -29,26 +29,26 @@ public sealed partial class RouteParser : IRouteParser
     ParseErrors = null;
 
     // Tokenize input
-    RoutePatternLexer lexer = LoggerFactory is not null
-      ? new RoutePatternLexer(pattern, LoggerFactory.CreateLogger<RoutePatternLexer>())
-      : new RoutePatternLexer(pattern);
+    Lexer lexer = LoggerFactory is not null
+      ? new Lexer(pattern, LoggerFactory.CreateLogger<Lexer>())
+      : new Lexer(pattern);
     Tokens = lexer.Tokenize();
 
     LoggerMessages.ParsingPattern(Logger, pattern, null);
     if (Logger.IsEnabled(Microsoft.Extensions.Logging.LogLevel.Trace))
     {
-      LoggerMessages.DumpingTokens(Logger, RoutePatternLexer.DumpTokens(Tokens), null);
+      LoggerMessages.DumpingTokens(Logger, Lexer.DumpTokens(Tokens), null);
     }
 
     // Parse tokens into AST
 
     List<SegmentSyntax> segments = ParsePattern();
-    var ast = new RouteSyntax(segments);
+    var ast = new Syntax(segments);
 
     // Perform semantic validation using the SemanticValidator
     IReadOnlyList<SemanticError>? semanticErrors = SemanticValidator.Validate(ast);
 
-    var result = new ParseResult<RouteSyntax>
+    var result = new ParseResult<Syntax>
     {
       Value = ast,
       Success = true,
@@ -69,7 +69,7 @@ public sealed partial class RouteParser : IRouteParser
   /// </summary>
   /// <param name="ast">The syntax tree to dump.</param>
   /// <returns>A formatted string showing the syntax tree structure.</returns>
-  public static string DumpAst(RouteSyntax ast)
+  public static string DumpAst(Syntax ast)
   {
     ArgumentNullException.ThrowIfNull(ast);
 

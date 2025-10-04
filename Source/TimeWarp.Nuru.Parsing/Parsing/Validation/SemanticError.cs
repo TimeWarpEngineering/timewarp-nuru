@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru.Parsing.Validation;
+namespace TimeWarp.Nuru.Parsing;
 
 /// <summary>
 /// Base class for all semantic validation errors in route patterns.

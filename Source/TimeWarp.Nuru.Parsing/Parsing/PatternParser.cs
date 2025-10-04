@@ -3,7 +3,7 @@ namespace TimeWarp.Nuru.Parsing;
 /// <summary>
 /// Parses route pattern strings into CompiledRoute objects.
 /// </summary>
-public static class RoutePatternParser
+public static class PatternParser
 {
 
   /// <summary>
@@ -22,17 +22,17 @@ public static class RoutePatternParser
     ArgumentNullException.ThrowIfNull(routePattern);
 
     // Create parser and compiler with typed loggers if factory provided
-    RouteParser parser = loggerFactory is not null
-      ? new RouteParser(loggerFactory.CreateLogger<RouteParser>(), loggerFactory)
-      : new RouteParser();
-    RouteCompiler compiler = loggerFactory is not null
-      ? new RouteCompiler(loggerFactory.CreateLogger<RouteCompiler>())
-      : new RouteCompiler();
-    ParseResult<RouteSyntax> result = parser.Parse(routePattern);
+    Parser parser = loggerFactory is not null
+      ? new Parser(loggerFactory.CreateLogger<Parser>(), loggerFactory)
+      : new Parser();
+    Compiler compiler = loggerFactory is not null
+      ? new Compiler(loggerFactory.CreateLogger<Compiler>())
+      : new Compiler();
+    ParseResult<Syntax> result = parser.Parse(routePattern);
 
     if (!result.Success)
     {
-      throw new RoutePatternException(routePattern, result.ParseErrors, result.SemanticErrors);
+      throw new PatternException(routePattern, result.ParseErrors, result.SemanticErrors);
     }
 
     return compiler.Compile(result.Value!);
@@ -59,9 +59,9 @@ public static class RoutePatternParser
     }
 
     // Create parser and compiler without logger for now
-    var parser = new RouteParser();
-    var compiler = new RouteCompiler();
-    ParseResult<RouteSyntax> result = parser.Parse(routePattern);
+    var parser = new Parser();
+    var compiler = new Compiler();
+    ParseResult<Syntax> result = parser.Parse(routePattern);
     errors = result.ParseErrors;
     semanticErrors = result.SemanticErrors;
 

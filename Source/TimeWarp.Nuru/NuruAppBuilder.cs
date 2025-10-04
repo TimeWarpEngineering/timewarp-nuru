@@ -146,7 +146,7 @@ public class NuruAppBuilder
     var endpoint = new Endpoint
     {
       RoutePattern = pattern,
-      CompiledRoute = RoutePatternParser.Parse(pattern, LoggerFactory),
+      CompiledRoute = PatternParser.Parse(pattern, LoggerFactory),
       Handler = handler,
       Method = handler.Method,
       Description = description
@@ -186,7 +186,7 @@ public class NuruAppBuilder
     var endpoint = new Endpoint
     {
       RoutePattern = pattern,
-      CompiledRoute = RoutePatternParser.Parse(pattern, LoggerFactory),
+      CompiledRoute = PatternParser.Parse(pattern, LoggerFactory),
       Description = description,
       CommandType = commandType
     };

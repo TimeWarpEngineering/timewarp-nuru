@@ -10,7 +10,7 @@ public class ComplexPatternsTests
   {
     // Arrange
     string pattern = "deploy {env} --dry-run";
-    RoutePatternLexer lexer = CreateLexer(pattern);
+    Lexer lexer = CreateLexer(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     // Assert
@@ -33,7 +33,7 @@ public class ComplexPatternsTests
   {
     // Arrange
     string pattern = "git commit -m {message}";
-    RoutePatternLexer lexer = CreateLexer(pattern);
+    Lexer lexer = CreateLexer(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     // Assert
@@ -58,7 +58,7 @@ public class ComplexPatternsTests
   {
     // Arrange
     string pattern = "build --config {mode:string}";
-    RoutePatternLexer lexer = CreateLexer(pattern);
+    Lexer lexer = CreateLexer(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     // Assert
@@ -84,7 +84,7 @@ public class ComplexPatternsTests
   {
     // Arrange
     string pattern = "exec -- {*args}";
-    RoutePatternLexer lexer = CreateLexer(pattern);
+    Lexer lexer = CreateLexer(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     // Assert
@@ -106,7 +106,7 @@ public class ComplexPatternsTests
   {
     // Arrange
     string pattern = "greet {name?} | Say hello";
-    RoutePatternLexer lexer = CreateLexer(pattern);
+    Lexer lexer = CreateLexer(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     // Assert
@@ -132,7 +132,7 @@ public class ComplexPatternsTests
   {
     // Arrange
     string pattern = "cmd {a} {b:int} --flag {c?} | description";
-    RoutePatternLexer lexer = CreateLexer(pattern);
+    Lexer lexer = CreateLexer(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     // Assert - validates ALL features together

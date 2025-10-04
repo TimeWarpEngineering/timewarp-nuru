@@ -10,7 +10,7 @@ public class EndOfOptionsTests
   {
     // Arrange
     string pattern = "git log --";
-    RoutePatternLexer lexer = CreateLexer(pattern);
+    Lexer lexer = CreateLexer(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     // Assert
@@ -30,7 +30,7 @@ public class EndOfOptionsTests
   {
     // Arrange
     string pattern = "exec -- {*args}";
-    RoutePatternLexer lexer = CreateLexer(pattern);
+    Lexer lexer = CreateLexer(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     // Assert
@@ -53,7 +53,7 @@ public class EndOfOptionsTests
   {
     // Arrange
     string pattern = "-- something";
-    RoutePatternLexer lexer = CreateLexer(pattern);
+    Lexer lexer = CreateLexer(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     // Assert
@@ -71,7 +71,7 @@ public class EndOfOptionsTests
   {
     // Arrange
     string pattern = "git log -- foo -- bar";
-    RoutePatternLexer lexer = CreateLexer(pattern);
+    Lexer lexer = CreateLexer(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     // Assert

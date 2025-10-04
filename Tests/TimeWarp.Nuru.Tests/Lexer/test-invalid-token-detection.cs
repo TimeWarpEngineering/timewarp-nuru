@@ -22,7 +22,7 @@ void TestPattern(string pattern, bool expectInvalid, string description)
 
     try
     {
-        var lexer = new RoutePatternLexer(pattern);
+        var lexer = new Lexer(pattern);
         IReadOnlyList<Token> tokens = lexer.Tokenize();
 
         bool hasInvalidToken = tokens.Any(t => t.Type == TokenType.Invalid);

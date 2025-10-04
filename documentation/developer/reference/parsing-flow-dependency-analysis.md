@@ -27,7 +27,7 @@ This document provides a detailed analysis of the method dependencies in the Tim
    - Calls `ParsePattern()` to build AST
    - Returns AST
 
-7. **RoutePatternLexer.Tokenize()**
+7. **Lexer.Tokenize()**
    - Breaks input into tokens (Identifier, DoubleDash, LeftBrace, etc.)
 
 8. **ParsedRouteBuilder.Build()**
@@ -36,7 +36,7 @@ This document provides a detailed analysis of the method dependencies in the Tim
 
 ## Detailed Method Dependencies
 
-### RoutePatternLexer
+### Lexer
 
 **Class Dependencies:**
 - `Token` class (creates instances)
@@ -63,7 +63,7 @@ This document provides a detailed analysis of the method dependencies in the Tim
 ### NewRoutePatternParser
 
 **Class Dependencies:**
-- `RoutePatternLexer` class
+- `Lexer` class
 - `Token` class
 - `TokenType` enum
 - AST node classes (`LiteralNode`, `ParameterNode`, `OptionNode`)
@@ -75,7 +75,7 @@ This document provides a detailed analysis of the method dependencies in the Tim
 
 | Method | Calls |
 |--------|-------|
-| **Parse()** | `RoutePatternLexer.Tokenize()`, `ParsePattern()` |
+| **Parse()** | `Lexer.Tokenize()`, `ParsePattern()` |
 | **ParsePattern()** | `IsAtEnd()`, `ParseSegment()`, `Synchronize()` |
 | **ParseSegment()** | `Peek()`, `ParseParameter()`, `ParseOption()`, `ParseLiteral()`, `ParseInvalidToken()` |
 | **ParseLiteral()** | `Consume()`, `LiteralNode` constructor |
@@ -119,7 +119,7 @@ This document provides a detailed analysis of the method dependencies in the Tim
 
 These methods do not call any other methods in the parsing flow:
 
-### RoutePatternLexer
+### Lexer
 - **Advance()** - `return Input[Position++]`
 - **PeekNext()** - `return Position + 1 >= Input.Length ? '\0' : Input[Position + 1]`
 - **IsAtEnd()** - `return Position >= Input.Length`

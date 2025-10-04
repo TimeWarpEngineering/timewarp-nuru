@@ -14,7 +14,7 @@ void TestPattern(string pattern, (TokenType type, string value)[] expected, stri
   WriteLine($"Pattern: '{pattern}'");
   WriteLine($"Test: {description}");
 
-  var lexer = new RoutePatternLexer(pattern);
+  var lexer = new Lexer(pattern);
   IReadOnlyList<Token> tokens = lexer.Tokenize();
 
   // Remove EndOfInput for comparison

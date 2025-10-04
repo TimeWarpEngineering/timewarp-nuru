@@ -4,7 +4,6 @@
 #pragma warning disable CA1031 // Do not catch general exception types - OK for tests
 
 using TimeWarp.Nuru.Parsing;
-using TimeWarp.Nuru.Parsing.Validation;
 using static System.Console;
 
 WriteLine

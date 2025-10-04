@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru.Parsing.Validation;
+namespace TimeWarp.Nuru.Parsing;
 
 /// <summary>
 /// Context that holds metadata collected during semantic validation.

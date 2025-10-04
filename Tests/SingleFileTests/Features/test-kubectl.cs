@@ -23,7 +23,7 @@ WriteLine();
 // Step 1: Test the Lexer
 WriteLine("Step 1: Lexer Analysis");
 WriteLine("----------------------");
-var lexer = new RoutePatternLexer(routePattern);
+var lexer = new Lexer(routePattern);
 var tokens = lexer.Tokenize();
 WriteLine($"Tokens ({tokens.Count}):");
 foreach (var token in tokens)

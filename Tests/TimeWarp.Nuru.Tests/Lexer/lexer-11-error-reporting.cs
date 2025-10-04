@@ -14,7 +14,7 @@ public class ErrorReportingTests
   {
     // Pattern with @ at position 4 (0-indexed: c=0, m=1, d=2, space=3, @=4)
     string pattern = "cmd @ option";
-    RoutePatternLexer lexer = CreateLexer(pattern);
+    Lexer lexer = CreateLexer(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     // Find the Invalid token
@@ -39,7 +39,7 @@ public class ErrorReportingTests
   {
     // Pattern with # at position 5
     string pattern = "test # value";
-    RoutePatternLexer lexer = CreateLexer(pattern);
+    Lexer lexer = CreateLexer(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     Token? invalidToken = tokens.FirstOrDefault(t => t.Type == TokenType.Invalid);
@@ -64,7 +64,7 @@ public class ErrorReportingTests
     // Pattern: "cmd @ param # value"
     // Positions: c=0,m=1,d=2, =3,@=4, =5,p=6,a=7,r=8,a=9,m=10, =11,#=12
     string pattern = "cmd @ param # value";
-    RoutePatternLexer lexer = CreateLexer(pattern);
+    Lexer lexer = CreateLexer(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     // Should have two Invalid tokens
@@ -90,7 +90,7 @@ public class ErrorReportingTests
   {
     // Pattern starts with invalid character
     string pattern = "@cmd {param}";
-    RoutePatternLexer lexer = CreateLexer(pattern);
+    Lexer lexer = CreateLexer(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     // First token should be the Invalid token
@@ -115,7 +115,7 @@ public class ErrorReportingTests
     // Pattern: "cmd {param} @"
     // Last character is invalid
     string pattern = "cmd {param} @";
-    RoutePatternLexer lexer = CreateLexer(pattern);
+    Lexer lexer = CreateLexer(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     // Find Invalid token
@@ -142,7 +142,7 @@ public class ErrorReportingTests
     // Pattern: "deploy {env} @ --force"
     // Valid tokens before and after the invalid @
     string pattern = "deploy {env} @ --force";
-    RoutePatternLexer lexer = CreateLexer(pattern);
+    Lexer lexer = CreateLexer(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     // Should have valid tokens before invalid

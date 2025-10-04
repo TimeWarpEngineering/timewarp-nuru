@@ -8,7 +8,7 @@ This document clarifies which parser classes represent **syntax** (the literal r
 |-------|------|-------------|
 | `Token` | **Syntax** | Raw textual tokens from input (e.g., `-`, `m`, `{`, `}`) |
 | `TokenType` | **Syntax** | Categories of raw tokens (SingleDash, DoubleDash, Identifier, etc.) |
-| `RoutePatternLexer` | **Syntax** | Breaks input string into syntactic tokens |
+| `Lexer` | **Syntax** | Breaks input string into syntactic tokens |
 
 ## AST Layer (Mixed)
 

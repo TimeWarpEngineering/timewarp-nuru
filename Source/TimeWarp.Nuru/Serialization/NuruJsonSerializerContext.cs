@@ -11,7 +11,7 @@ using TimeWarp.Nuru.Parsing;
 [JsonSerializable(typeof(InvalidOperationException))]
 [JsonSerializable(typeof(ArgumentException))]
 [JsonSerializable(typeof(ParseException))]
-[JsonSerializable(typeof(RoutePatternException))]
+[JsonSerializable(typeof(PatternException))]
 [JsonSerializable(typeof(SemanticError))]
 [JsonSerializable(typeof(DuplicateParameterNamesError))]
 [JsonSerializable(typeof(ConflictingOptionalParametersError))]

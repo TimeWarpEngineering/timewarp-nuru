@@ -14,7 +14,7 @@ The Lexer uses a **character-by-character, left-to-right scanning algorithm**:
 4. **Fault Tolerant**: Invalid sequences become Invalid tokens (no exceptions)
 5. **Position Tracking**: Every token records start position and length
 
-**Implementation:** `RoutePatternLexer` in `Source/TimeWarp.Nuru.Parsing/Parsing/Lexer/RoutePatternLexer.cs`
+**Implementation:** `Lexer` in `Source/TimeWarp.Nuru.Parsing/Parsing/Lexer/Lexer.cs`
 
 ## Core Operations
 

@@ -27,7 +27,7 @@ public class BasicTokenTypesTests
   public static async Task Should_tokenize_left_brace(string pattern)
   {
     // Arrange
-    RoutePatternLexer lexer = CreateLexer(pattern);
+    Lexer lexer = CreateLexer(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     // Assert
@@ -43,7 +43,7 @@ public class BasicTokenTypesTests
   public static async Task Should_tokenize_right_brace(string pattern)
   {
     // Arrange
-    RoutePatternLexer lexer = CreateLexer(pattern);
+    Lexer lexer = CreateLexer(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     // Assert
@@ -59,7 +59,7 @@ public class BasicTokenTypesTests
   public static async Task Should_tokenize_colon(string pattern)
   {
     // Arrange
-    RoutePatternLexer lexer = CreateLexer(pattern);
+    Lexer lexer = CreateLexer(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     // Assert
@@ -75,7 +75,7 @@ public class BasicTokenTypesTests
   public static async Task Should_tokenize_question(string pattern)
   {
     // Arrange
-    RoutePatternLexer lexer = CreateLexer(pattern);
+    Lexer lexer = CreateLexer(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     // Assert
@@ -91,7 +91,7 @@ public class BasicTokenTypesTests
   public static async Task Should_tokenize_asterisk(string pattern)
   {
     // Arrange
-    RoutePatternLexer lexer = CreateLexer(pattern);
+    Lexer lexer = CreateLexer(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     // Assert
@@ -107,7 +107,7 @@ public class BasicTokenTypesTests
   public static async Task Should_tokenize_pipe(string pattern)
   {
     // Arrange
-    RoutePatternLexer lexer = CreateLexer(pattern);
+    Lexer lexer = CreateLexer(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     // Assert
@@ -123,7 +123,7 @@ public class BasicTokenTypesTests
   public static async Task Should_tokenize_comma(string pattern)
   {
     // Arrange
-    RoutePatternLexer lexer = CreateLexer(pattern);
+    Lexer lexer = CreateLexer(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     // Assert
@@ -139,7 +139,7 @@ public class BasicTokenTypesTests
   public static async Task Should_tokenize_double_dash(string pattern)
   {
     // Arrange
-    RoutePatternLexer lexer = CreateLexer(pattern);
+    Lexer lexer = CreateLexer(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     // Assert
@@ -157,7 +157,7 @@ public class BasicTokenTypesTests
   public static async Task Should_tokenize_single_dash(string pattern)
   {
     // Arrange
-    RoutePatternLexer lexer = CreateLexer(pattern);
+    Lexer lexer = CreateLexer(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     // Assert
@@ -175,7 +175,7 @@ public class BasicTokenTypesTests
   public static async Task Should_tokenize_end_of_options(string pattern)
   {
     // Arrange
-    RoutePatternLexer lexer = CreateLexer(pattern);
+    Lexer lexer = CreateLexer(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     // Assert
@@ -191,7 +191,7 @@ public class BasicTokenTypesTests
   public static async Task Should_tokenize_description(string pattern)
   {
     // Arrange
-    RoutePatternLexer lexer = CreateLexer(pattern);
+    Lexer lexer = CreateLexer(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     // Assert
@@ -217,7 +217,7 @@ public class BasicTokenTypesTests
   public static async Task Should_tokenize_end_of_input(string pattern)
   {
     // Arrange
-    RoutePatternLexer lexer = CreateLexer(pattern);
+    Lexer lexer = CreateLexer(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     // Assert
@@ -231,7 +231,7 @@ public class BasicTokenTypesTests
   private static async Task TokenizeSingleIdentifier(string pattern)
   {
     // Arrange
-    RoutePatternLexer lexer = CreateLexer(pattern);
+    Lexer lexer = CreateLexer(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     // Assert

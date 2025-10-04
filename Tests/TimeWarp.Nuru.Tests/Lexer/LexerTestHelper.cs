@@ -9,11 +9,11 @@ using TimeWarp.Nuru.Parsing;
 public static class LexerTestHelper
 {
   /// <summary>
-  /// Creates a RoutePatternLexer with optional trace logging enabled via TRACE_LEXER=1 environment variable.
+  /// Creates a Lexer with optional trace logging enabled via TRACE_LEXER=1 environment variable.
   /// </summary>
-  public static RoutePatternLexer CreateLexer(string pattern)
+  public static Lexer CreateLexer(string pattern)
   {
-    ILogger<RoutePatternLexer>? logger = null;
+    ILogger<Lexer>? logger = null;
 
     if (Environment.GetEnvironmentVariable("TRACE_LEXER") == "1")
     {
@@ -22,10 +22,10 @@ public static class LexerTestHelper
         builder.SetMinimumLevel(LogLevel.Trace);
         builder.AddConsole();
       });
-      logger = loggerFactory.CreateLogger<RoutePatternLexer>();
+      logger = loggerFactory.CreateLogger<Lexer>();
     }
 
-    return new RoutePatternLexer(pattern, logger);
+    return new Lexer(pattern, logger);
   }
 
   /// <summary>
@@ -33,7 +33,7 @@ public static class LexerTestHelper
   /// </summary>
   public static IReadOnlyList<Token> Tokenize(string pattern)
   {
-    RoutePatternLexer lexer = CreateLexer(pattern);
+    Lexer lexer = CreateLexer(pattern);
     return lexer.Tokenize();
   }
 }

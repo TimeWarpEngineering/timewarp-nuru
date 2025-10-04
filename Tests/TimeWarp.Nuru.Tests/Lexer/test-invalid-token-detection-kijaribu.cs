@@ -28,7 +28,7 @@ public class InvalidTokenDetectionTests
   public static async Task ValidPatternsShouldNotProduceInvalidTokens(string pattern)
   {
     // Arrange
-    var lexer = new RoutePatternLexer(pattern);
+    var lexer = new Lexer(pattern);
 
     // Act
     IReadOnlyList<Token> tokens = lexer.Tokenize();
@@ -54,7 +54,7 @@ public class InvalidTokenDetectionTests
   public static async Task InvalidPatternsShouldProduceInvalidTokens(string pattern)
   {
     // Arrange
-    var lexer = new RoutePatternLexer(pattern);
+    var lexer = new Lexer(pattern);
 
     // Act
     IReadOnlyList<Token> tokens = lexer.Tokenize();

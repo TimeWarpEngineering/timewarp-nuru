@@ -13,7 +13,7 @@ public class InvalidDoubleDashesTests
   public static async Task Should_reject_double_dashes_within_identifiers(string pattern)
   {
     // Arrange
-    RoutePatternLexer lexer = CreateLexer(pattern);
+    Lexer lexer = CreateLexer(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     // Assert

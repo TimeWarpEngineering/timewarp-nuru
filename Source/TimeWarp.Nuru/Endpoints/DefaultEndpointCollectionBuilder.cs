@@ -19,7 +19,7 @@ public class DefaultEndpointCollectionBuilder : IEndpointCollectionBuilder
 
     ArgumentNullException.ThrowIfNull(handler);
 
-    CompiledRoute compiledRoute = RoutePatternParser.Parse(routePattern);
+    CompiledRoute compiledRoute = PatternParser.Parse(routePattern);
     MethodInfo method = handler.Method;
 
     var endpoint = new Endpoint

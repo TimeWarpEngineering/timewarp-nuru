@@ -14,7 +14,7 @@ internal sealed class ValidateRouteTool
     {
         try
         {
-            CompiledRoute route = RoutePatternParser.Parse(pattern);
+            CompiledRoute route = PatternParser.Parse(pattern);
 
             List<string> details = [];
 

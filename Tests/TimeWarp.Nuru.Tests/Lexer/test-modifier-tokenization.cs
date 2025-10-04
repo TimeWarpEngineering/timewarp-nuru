@@ -23,7 +23,7 @@ void TestTokenization(string pattern, string expectedTokens)
     Write($"  {pattern,-35} ");
     try
     {
-        RoutePatternLexer lexer = new(pattern);
+        Lexer lexer = new(pattern);
         IReadOnlyList<Token> tokens = lexer.Tokenize();
 
         string tokenString = string.Join(" ", tokens

@@ -6,20 +6,20 @@ using TimeWarp.Nuru.Parsing;
 /// Compiler that converts route pattern syntax tree to the runtime CompiledRoute structure.
 /// This maintains backward compatibility with the current system.
 /// </summary>
-internal sealed class RouteCompiler : SyntaxVisitor<object?>
+internal sealed class Compiler : SyntaxVisitor<object?>
 {
-  private readonly ILogger<RouteCompiler> Logger;
+  private readonly ILogger<Compiler> Logger;
   private readonly List<RouteMatcher> Segments = [];
   private readonly List<string> RequiredOptionPatterns = [];
   private readonly List<OptionMatcher> OptionMatchers = [];
   private string? CatchAllParameterName;
   private int Specificity;
 
-  public RouteCompiler() : this(null) { }
+  public Compiler() : this(null) { }
 
-  public RouteCompiler(ILogger<RouteCompiler>? logger = null)
+  public Compiler(ILogger<Compiler>? logger = null)
   {
-    Logger = logger ?? NullLogger<RouteCompiler>.Instance;
+    Logger = logger ?? NullLogger<Compiler>.Instance;
   }
 
   /// <summary>
@@ -27,7 +27,7 @@ internal sealed class RouteCompiler : SyntaxVisitor<object?>
   /// </summary>
   /// <param name="syntax">The syntax tree to compile.</param>
   /// <returns>A CompiledRoute compatible with the existing system.</returns>
-  public CompiledRoute Compile(RouteSyntax syntax)
+  public CompiledRoute Compile(Syntax syntax)
   {
     // Reset state
     Segments.Clear();

@@ -6,7 +6,7 @@
 using TimeWarp.Nuru.Parsing;
 using static System.Console;
 
-WriteLine("Testing RoutePatternLexer:");
+WriteLine("Testing Lexer:");
 WriteLine();
 
 // Test cases for the lexer
@@ -83,7 +83,7 @@ foreach ((string pattern, string description) in testCases)
 
   try
   {
-    var lexer = new RoutePatternLexer(pattern);
+    var lexer = new Lexer(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     WriteLine($"Tokens ({tokens.Count}):");
@@ -124,7 +124,7 @@ WriteLine(new string('=', 50) + "\n");
 void ExpectTokens(string pattern, params (TokenType type, string value)[] expectedTokens)
 {
   WriteLine($"Pattern: '{pattern}'");
-  var lexer = new RoutePatternLexer(pattern);
+  var lexer = new Lexer(pattern);
   IReadOnlyList<Token> tokens = lexer.Tokenize();
 
   // Remove EndOfInput for comparison

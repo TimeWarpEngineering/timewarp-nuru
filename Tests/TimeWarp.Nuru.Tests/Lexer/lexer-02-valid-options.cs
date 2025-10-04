@@ -13,7 +13,7 @@ public class ValidOptionsTests
   public static async Task Should_tokenize_long_options(string pattern, string expectedOption)
   {
     // Arrange
-    RoutePatternLexer lexer = CreateLexer(pattern);
+    Lexer lexer = CreateLexer(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     // Assert
@@ -34,7 +34,7 @@ public class ValidOptionsTests
   public static async Task Should_tokenize_short_options(string pattern, string expectedOption)
   {
     // Arrange
-    RoutePatternLexer lexer = CreateLexer(pattern);
+    Lexer lexer = CreateLexer(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     // Assert

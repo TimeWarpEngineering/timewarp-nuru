@@ -15,7 +15,7 @@ public class WhitespaceHandlingTests
   public static async Task Should_produce_identical_tokens_regardless_of_whitespace(string pattern)
   {
     // Arrange
-    RoutePatternLexer lexer = CreateLexer(pattern);
+    Lexer lexer = CreateLexer(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     // Assert - whitespace quantity and type don't affect tokenization
@@ -33,7 +33,7 @@ public class WhitespaceHandlingTests
   {
     // Arrange
     string pattern = "{ param }";
-    RoutePatternLexer lexer = CreateLexer(pattern);
+    Lexer lexer = CreateLexer(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     // Assert - whitespace separates special chars from identifiers
@@ -51,7 +51,7 @@ public class WhitespaceHandlingTests
   {
     // Arrange
     string pattern = "{}";
-    RoutePatternLexer lexer = CreateLexer(pattern);
+    Lexer lexer = CreateLexer(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     // Assert - special chars are self-delimiting

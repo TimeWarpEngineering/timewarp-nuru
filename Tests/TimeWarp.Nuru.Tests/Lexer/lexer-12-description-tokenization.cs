@@ -14,7 +14,7 @@ public class DescriptionTokenizationTests
   public static async Task Should_tokenize_simple_description()
   {
     string pattern = "command | help text";
-    RoutePatternLexer lexer = CreateLexer(pattern);
+    Lexer lexer = CreateLexer(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     // Lexer treats description as normal identifiers after pipe
@@ -40,7 +40,7 @@ public class DescriptionTokenizationTests
   public static async Task Should_tokenize_description_with_special_chars()
   {
     string pattern = "cmd | use --force carefully";
-    RoutePatternLexer lexer = CreateLexer(pattern);
+    Lexer lexer = CreateLexer(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     // Special characters in description are tokenized normally
@@ -69,7 +69,7 @@ public class DescriptionTokenizationTests
   public static async Task Should_tokenize_description_at_end_of_complex_pattern()
   {
     string pattern = "deploy {env} --dry-run | Deploy to environment";
-    RoutePatternLexer lexer = CreateLexer(pattern);
+    Lexer lexer = CreateLexer(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     // All tokens before pipe, then pipe, then description tokens
@@ -110,7 +110,7 @@ public class DescriptionTokenizationTests
   {
     // Pattern with pipe in parameter AND at pattern level
     string pattern = "cmd {a|param desc} | pattern desc";
-    RoutePatternLexer lexer = CreateLexer(pattern);
+    Lexer lexer = CreateLexer(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     // Both pipes should be tokenized as Pipe tokens
@@ -135,7 +135,7 @@ public class DescriptionTokenizationTests
   public static async Task Should_tokenize_empty_description_after_pipe()
   {
     string pattern = "command |";
-    RoutePatternLexer lexer = CreateLexer(pattern);
+    Lexer lexer = CreateLexer(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     // Pipe followed immediately by EndOfInput
@@ -157,7 +157,7 @@ public class DescriptionTokenizationTests
   public static async Task Should_tokenize_description_with_braces()
   {
     string pattern = "cmd | use {syntax} here";
-    RoutePatternLexer lexer = CreateLexer(pattern);
+    Lexer lexer = CreateLexer(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     // Braces in description are tokenized normally
@@ -189,7 +189,7 @@ public class DescriptionTokenizationTests
   {
     // Pattern with trailing spaces after description text
     string pattern = "cmd | text   ";
-    RoutePatternLexer lexer = CreateLexer(pattern);
+    Lexer lexer = CreateLexer(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     // Trailing whitespace should not create additional tokens

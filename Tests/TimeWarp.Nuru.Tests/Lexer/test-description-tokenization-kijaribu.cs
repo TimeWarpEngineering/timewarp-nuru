@@ -14,7 +14,7 @@ public class DescriptionTokenizationTests
   public static async Task ParameterWithDescription()
   {
     // Arrange
-    RoutePatternLexer lexer = new("deploy {env|Environment}");
+    Lexer lexer = new("deploy {env|Environment}");
     IReadOnlyList<Token> tokens = lexer.Tokenize();
     Token[] actualTokens = [.. tokens.Take(tokens.Count - 1)];
 
@@ -39,7 +39,7 @@ public class DescriptionTokenizationTests
   public static async Task OptionWithDescription()
   {
     // Arrange
-    RoutePatternLexer lexer = new("--dry-run,-d|Preview");
+    Lexer lexer = new("--dry-run,-d|Preview");
     IReadOnlyList<Token> tokens = lexer.Tokenize();
     Token[] actualTokens = [.. tokens.Take(tokens.Count - 1)];
 
@@ -66,7 +66,7 @@ public class DescriptionTokenizationTests
   public static async Task ComplexPatternWithDescriptions()
   {
     // Arrange
-    RoutePatternLexer lexer = new("deploy {env|Environment} --dry-run,-d|Preview");
+    Lexer lexer = new("deploy {env|Environment} --dry-run,-d|Preview");
     IReadOnlyList<Token> tokens = lexer.Tokenize();
     Token[] actualTokens = [.. tokens.Take(tokens.Count - 1)];
 

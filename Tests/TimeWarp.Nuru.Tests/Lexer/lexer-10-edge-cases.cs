@@ -13,7 +13,7 @@ public class EdgeCasesTests
   public static async Task Should_tokenize_empty_string()
   {
     string pattern = "";
-    RoutePatternLexer lexer = CreateLexer(pattern);
+    Lexer lexer = CreateLexer(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     tokens.Count.ShouldBe(1);
@@ -33,7 +33,7 @@ public class EdgeCasesTests
   [Input(" \n\t ")]     // mixed whitespace with newline
   public static async Task Should_tokenize_only_whitespace(string pattern)
   {
-    RoutePatternLexer lexer = CreateLexer(pattern);
+    Lexer lexer = CreateLexer(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     tokens.Count.ShouldBe(1);
@@ -50,7 +50,7 @@ public class EdgeCasesTests
   {
     // Test pattern with all single-char special tokens separated by spaces
     string pattern = "{ } : ? * |";
-    RoutePatternLexer lexer = CreateLexer(pattern);
+    Lexer lexer = CreateLexer(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     tokens.Count.ShouldBe(7);  // 6 tokens + EndOfInput
@@ -75,7 +75,7 @@ public class EdgeCasesTests
     // Create 150-character identifier (exceeds most buffer sizes)
     string longIdentifier = new string('a', 150);
     string pattern = $"cmd {longIdentifier}";
-    RoutePatternLexer lexer = CreateLexer(pattern);
+    Lexer lexer = CreateLexer(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     tokens.Count.ShouldBe(3);
@@ -97,7 +97,7 @@ public class EdgeCasesTests
   {
     // Test various combinations of adjacent special characters
     string pattern = "{}{?}{*}{:}";
-    RoutePatternLexer lexer = CreateLexer(pattern);
+    Lexer lexer = CreateLexer(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     // Should produce: { } { ? } { * } { : } EndOfInput = 12 tokens
@@ -126,7 +126,7 @@ public class EdgeCasesTests
   {
     // Pattern with valid tokens followed by invalid character (@) then more valid tokens
     string pattern = "cmd {param} @ --flag";
-    RoutePatternLexer lexer = CreateLexer(pattern);
+    Lexer lexer = CreateLexer(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     // Should tokenize: cmd, {, param, }, Invalid(@), --, flag, EndOfInput
@@ -156,7 +156,7 @@ public class EdgeCasesTests
   {
     // Test various unicode identifier scenarios
     string pattern = "部署 {名称} αβγ {δ} café";
-    RoutePatternLexer lexer = CreateLexer(pattern);
+    Lexer lexer = CreateLexer(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     // Should recognize unicode characters as valid identifiers

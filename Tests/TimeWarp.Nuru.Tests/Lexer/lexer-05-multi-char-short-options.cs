@@ -14,7 +14,7 @@ public class MultiCharShortOptionsTests
   public static async Task Should_tokenize_multi_char_short_options(string pattern, string expectedIdentifier)
   {
     // Arrange
-    RoutePatternLexer lexer = CreateLexer(pattern);
+    Lexer lexer = CreateLexer(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     // Assert

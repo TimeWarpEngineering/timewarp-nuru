@@ -40,6 +40,7 @@
     <!-- Suppress CA1014 - We don't need CLS compliance for this library -->
     <!-- Suppress AOT warnings until we implement proper AOT support -->
     <NoWarn>$(NoWarn);CA1014;CA1724;CA1812;IL2026;IL2067;IL2070;IL2075;IL3050;IL2104;IL3053</NoWarn>
+    <SuppressNETCoreSdkPreviewMessage>true</SuppressNETCoreSdkPreviewMessage>
   </PropertyGroup>
 
   <ItemGroup>

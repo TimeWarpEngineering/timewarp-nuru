@@ -1,6 +1,50 @@
 #!/usr/bin/dotnet --
 
-using TimeWarp.Nuru.Parsing;
+/*
+ * THIS FILE IS REDUNDANT AND SCHEDULED FOR DELETION
+ *
+ * Reason for Deletion:
+ * This Kijaribu-structured test duplicates coverage for compound identifiers and options, centralized in:
+ * - lexer-01-basic-token-types.cs (plain/compound IDs like async-test, no-edit)
+ * - lexer-02-valid-options.cs and lexer-05-multi-char-short-options.cs (options like --no-edit, --dry-run)
+ * - lexer-03-invalid-double-dashes.cs and lexer-04-invalid-trailing-dashes.cs (invalids like test--case, test-)
+ * - lexer-09-complex-patterns.cs (CLI mixes like git commit --no-edit, npm install {package} --save-dev)
+ * Unique edge like -test as invalid conflicts with lexer-05 (valid multi-char short); align or integrate if needed.
+ * After review, this file can be safely deleted to reduce redundancy.
+ *
+ * Date Reviewed: 2025-10-04
+ * Reviewer: Roo (AI Assistant)
+ * Recommendation: Delete – no unique value beyond numbered tests.
+ */
+ 
+ /*
+  * ROO REVIEW: AGREE - Redundant with existing numbered lexer tests
+  *
+  * Claude's analysis is accurate. This file's coverage for compound identifiers,
+  * dashed options (--no-edit, --dry-run), and invalid dash patterns (test-, test--case)
+  * is fully covered in:
+  * - lexer-01-basic-token-types.cs: Plain and compound identifiers (dry-run, no-edit, etc.)
+  * - lexer-02-valid-options.cs: Valid long options with compounds
+  * - lexer-03-invalid-double-dashes.cs: Consecutive dashes (test--case)
+  * - lexer-04-invalid-trailing-dashes.cs: Trailing dashes (test-)
+  * - lexer-05-multi-char-short-options.cs: Short options, which conflicts with treating -test as invalid here
+  * - lexer-09-complex-patterns.cs: Real CLI mixes like git commit --no-edit
+  *
+  * The complex pattern tests (GitCommitNoEdit, NpmInstallSaveDevAfterParameter) duplicate
+  * lexer-09's coverage without adding unique assertions or edge cases.
+  *
+  * Potential Issue: Treating "-test" as invalid (in TrailingDashProducesInvalidToken variant)
+  * conflicts with lexer-05's valid multi-char shorts. This file's logic assumes single-char
+  * shorts only, but Nuru supports multi-char shorts per design docs.
+  *
+  * Recommendation: CONFIRM DELETE - No unique value; resolve any short option conflicts
+  * in core lexer tests first if needed. Reduces test maintenance overhead.
+  *
+  * Date Reviewed: 2025-10-04
+  * Reviewer: Roo
+  */
+ 
+ using TimeWarp.Nuru.Parsing;
 using Shouldly;
 using TimeWarp.Kijaribu;
 

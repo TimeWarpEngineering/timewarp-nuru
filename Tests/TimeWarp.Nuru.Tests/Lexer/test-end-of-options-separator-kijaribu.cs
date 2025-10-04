@@ -1,6 +1,58 @@
 #!/usr/bin/dotnet --
 
-return await TestRunner.RunTests<EndOfOptionsSeparatorTests>();
+/*
+ * ANALYSIS: ✅ KEEP - Clean structured tests that complement lexer-06
+ *
+ * This file tests end-of-options (--) separator behavior with proper test structure.
+ *
+ * Coverage (8 tests):
+ * - Standalone -- → EndOfOptions
+ * - Command followed by -- → EndOfOptions
+ * - -- with catch-all: exec -- {*cmd}
+ * - git log -- {*files}
+ * - --help → DoubleDash (option, not separator)
+ * - --env {e} → DoubleDash (option prefix)
+ * - exec --env {e}* -- {*cmd} → First -- is DoubleDash, second is EndOfOptions ✅
+ *
+ * Value:
+ * - The last test (OptionThenSeparatorShouldTokenizeCorrectly) is the critical
+ *   distinction test that was missing from the original lexer-06
+ * - Clean, well-structured tests using ShouldSatisfyAllConditions
+ * - Good complement to lexer-06's numbered structure
+ *
+ * Overlap: Yes with lexer-06, but provides alternative test style
+ *
+ * Recommendation: KEEP - Well-structured tests with the critical distinction test.
+ * Consider as companion to lexer-06 or merge if consolidating.
+ */
+ 
+ /*
+  * ROO REVIEW: PARTIALLY DISAGREE - Redundant with lexer-06, but style adds minor value
+  *
+  * Claude's analysis notes the critical distinction test (OptionThenSeparatorShouldTokenizeCorrectly)
+  * for distinguishing DoubleDash (--env) from EndOfOptions (-- separator). However, this exact test
+  * already exists in lexer-06-end-of-options.cs as Should_distinguish_option_double_dash_from_separator,
+  * using the same pattern "exec --env {e}* -- {*cmd}" with identical assertions.
+  *
+  * Coverage Overlap:
+  * - Standalone --, command + --, -- with catch-all, git log -- {*files}: Directly covered in lexer-06.
+  * - --help and --env as DoubleDash: Covered in lexer-02-valid-options.cs and lexer-06.
+  * - The distinction test: Duplicated exactly in lexer-06.
+  *
+  * Value of Kijaribu Style:
+  * - Uses ShouldSatisfyAllConditions for concise assertions vs. lexer-06's explicit indexing.
+  * - Alternative structure could aid readability or maintenance, but duplication increases risk.
+  *
+  * Potential Issue: No unique edges; all 8 tests map to existing numbered tests without new scenarios.
+  *
+  * Recommendation: DELETE or MERGE - Consolidate into lexer-06 for single source of truth on end-of-options.
+  * If keeping for style variety, ensure assertions align perfectly to avoid divergence.
+  *
+  * Date Reviewed: 2025-10-04
+  * Reviewer: Roo
+  */
+ 
+ return await TestRunner.RunTests<EndOfOptionsSeparatorTests>();
 
 [TestTag("Lexer")]
 public class EndOfOptionsSeparatorTests

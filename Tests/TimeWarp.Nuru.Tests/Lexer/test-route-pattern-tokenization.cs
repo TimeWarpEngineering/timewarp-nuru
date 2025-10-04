@@ -1,5 +1,48 @@
 #!/usr/bin/dotnet --
-WriteLine("Testing Lexer:");
+
+/*
+ * ANALYSIS: ⚠️ REDUNDANT - Console exploration script
+ *
+ * This is a console-style exploration script that tests the same patterns as
+ * test-route-pattern-tokenization-kijaribu.cs but with WriteLine output instead
+ * of proper assertions.
+ *
+ * Coverage: Same 38 patterns + critical test cases as the kijaribu version
+ *
+ * Issues:
+ * - Uses WriteLine for output instead of proper test assertions
+ * - Less structured than kijaribu equivalent
+ * - Duplicate of test-route-pattern-tokenization-kijaribu.cs functionality
+ *
+ * Recommendation: DELETE - The kijaribu version provides the same coverage
+ * with proper test framework integration and better structure.
+ */
+ 
+ /*
+  * ROO REVIEW: FULLY AGREE - Purely redundant exploration script
+  *
+  * Claude's analysis is precise. This file serves as an ad-hoc console diagnostic tool,
+  * manually printing token output for the exact same 38 patterns + 7 specific sequences
+  * as test-route-pattern-tokenization-kijaribu.cs, but without any assertions, failure
+  * reporting, or integration into the test runner.
+  *
+  * Key Issues:
+  * - Relies on manual inspection of WriteLine output; no automated verification (e.g., no Shouldly checks).
+  * - Duplicates coverage entirely: Same patterns (basics, params, options, edges) and expectations (e.g., EndOfInput always last).
+  * - The ExpectTokens method mimics assertions but only logs mismatches—no test failure.
+  * - Return value (0/1 based on 'failed' count) isn't used in test context; it's exploratory.
+  *
+  * Overlap: 100% with the kijaribu file's ShouldTokenizeWithoutException and SpecificTokenSequenceTests.
+  * No unique value: If debugging is needed, use the proper test output or add logging to Lexer.
+  *
+  * Recommendation: DELETE - Replace with running the kijaribu version or enhancing lexer-01 to -09 for any missing edges.
+  * This reduces noise in the test directory and focuses on automated, maintainable tests.
+  *
+  * Date Reviewed: 2025-10-04
+  * Reviewer: Roo
+  */
+ 
+ WriteLine("Testing Lexer:");
 WriteLine();
 
 // Test cases for the lexer

@@ -1,10 +1,4 @@
 #!/usr/bin/dotnet --
-#:project ../../../../Source/TimeWarp.Nuru.Parsing/TimeWarp.Nuru.Parsing.csproj
-
-using TimeWarp.Nuru.Parsing;
-using System;
-using System.Linq;
-using static System.Console;
 
 WriteLine
 (
@@ -33,7 +27,7 @@ void TestValid(string pattern)
   Write($"  {pattern,-45} ");
   try
   {
-    CompiledRoute route = RoutePatternParser.Parse(pattern);
+    CompiledRoute route = PatternParser.Parse(pattern);
     WriteLine("✓ Parsed");
     passed++;
   }
@@ -70,9 +64,9 @@ void TestInvalid(string pattern, string expectedError)
 
   try
   {
-    RoutePatternException exception = Should.Throw<RoutePatternException>(() =>
+    PatternException exception = Should.Throw<PatternException>(() =>
     {
-      CompiledRoute route = RoutePatternParser.Parse(pattern);
+      CompiledRoute route = PatternParser.Parse(pattern);
     });
 
     // Check if the actual error message contains what we expect
@@ -106,7 +100,7 @@ void TestInvalidByType(string pattern, Type expectedParseErrorType)
 
   try
   {
-    CompiledRoute route = RoutePatternParser.Parse(pattern);
+    CompiledRoute route = PatternParser.Parse(pattern);
     WriteLine("✗ SHOULD HAVE THROWN!");
     WriteLine($"    Expected: {expectedParseErrorType.Name}");
     WriteLine($"    Parser produced: {route.PositionalMatchers.Count} positional, {route.OptionMatchers.Count} options");
@@ -117,7 +111,7 @@ void TestInvalidByType(string pattern, Type expectedParseErrorType)
 
     failed++;
   }
-  catch (RoutePatternException ex)
+  catch (PatternException ex)
   {
     // Parser correctly threw an exception - now validate the error type
     if (ex.ParseErrors is null || ex.ParseErrors.Count == 0)

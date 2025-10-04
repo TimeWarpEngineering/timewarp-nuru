@@ -1,14 +1,8 @@
 #!/usr/bin/dotnet --
-#:project ../../../Source/TimeWarp.Nuru.Parsing/TimeWarp.Nuru.Parsing.csproj
-#:project ../../../Source/TimeWarp.Kijaribu/TimeWarp.Kijaribu.csproj
-
-using TimeWarp.Nuru.Parsing;
-using Shouldly;
-using TimeWarp.Kijaribu;
 
 int exitCode = 0;
-exitCode |= await TestRunner.RunTests<RoutePatternTokenizationTests>();
-exitCode |= await TestRunner.RunTests<SpecificTokenSequenceTests>();
+exitCode |= await RunTests<RoutePatternTokenizationTests>();
+exitCode |= await RunTests<SpecificTokenSequenceTests>();
 return exitCode;
 
 [TestTag("Lexer")]

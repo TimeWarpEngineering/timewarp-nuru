@@ -1,10 +1,4 @@
 #!/usr/bin/dotnet --
-#:project ../../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
-
-#pragma warning disable CA1031 // Do not catch general exception types - OK for tests
-
-using TimeWarp.Nuru.Parsing;
-using static System.Console;
 
 // Enable diagnostic output
 Environment.SetEnvironmentVariable("NURU_DEBUG", "true");
@@ -70,7 +64,7 @@ foreach (string route in routes)
 {
     try
     {
-        CompiledRoute parsed = RoutePatternParser.Parse(route);
+        CompiledRoute parsed = PatternParser.Parse(route);
         WriteLine($"✓ '{route}' - OK");
 
         // Show parsed route structure

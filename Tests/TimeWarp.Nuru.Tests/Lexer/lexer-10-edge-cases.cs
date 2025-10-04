@@ -3,7 +3,6 @@
 return await RunTests<EdgeCasesTests>();
 
 [TestTag("Lexer")]
-[ClearRunfileCache]
 public class EdgeCasesTests
 {
   /// <summary>

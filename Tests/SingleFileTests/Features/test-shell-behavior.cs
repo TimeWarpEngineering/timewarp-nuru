@@ -1,7 +1,4 @@
 #!/usr/bin/dotnet --
-#:project ../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
-
-using static System.Console;
 
 WriteLine("Testing how shell passes arguments:");
 WriteLine();

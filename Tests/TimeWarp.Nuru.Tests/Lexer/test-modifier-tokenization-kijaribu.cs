@@ -1,12 +1,6 @@
 #!/usr/bin/dotnet --
-#:project ../../../Source/TimeWarp.Nuru.Parsing/TimeWarp.Nuru.Parsing.csproj
-#:project ../../../Source/TimeWarp.Kijaribu/TimeWarp.Kijaribu.csproj
 
-using TimeWarp.Nuru.Parsing;
-using Shouldly;
-using TimeWarp.Kijaribu;
-
-return await TestRunner.RunTests<ModifierTokenizationTests>();
+return await RunTests<ModifierTokenizationTests>();
 
 [TestTag("Lexer")]
 public class ModifierTokenizationTests

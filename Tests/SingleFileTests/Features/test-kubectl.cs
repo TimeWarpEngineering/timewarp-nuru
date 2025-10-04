@@ -1,12 +1,4 @@
 #!/usr/bin/dotnet --
-#:project ../../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
-
-#pragma warning disable CA1031 // Do not catch general exception types - OK for tests
-
-using TimeWarp.Nuru;
-using TimeWarp.Nuru.Parsing;
-using static System.Console;
-using System.Diagnostics;
 
 WriteLine("Testing kubectl apply -f deployment.yaml");
 WriteLine("==========================================");
@@ -24,61 +16,68 @@ WriteLine();
 WriteLine("Step 1: Lexer Analysis");
 WriteLine("----------------------");
 var lexer = new Lexer(routePattern);
-var tokens = lexer.Tokenize();
+IReadOnlyList<Token> tokens = lexer.Tokenize();
 WriteLine($"Tokens ({tokens.Count}):");
-foreach (var token in tokens)
+foreach (Token token in tokens)
 {
-    WriteLine($"  [{token.Type,-12}] '{token.Value}' at position {token.Position}");
+  WriteLine($"  [{token.Type,-12}] '{token.Value}' at position {token.Position}");
 }
+
 WriteLine();
 
 // Step 2: Test the Parser
 WriteLine("Step 2: Parser Analysis");
 WriteLine("-----------------------");
-var parser = new NewRoutePatternParser();
-var parseResult = parser.Parse(routePattern);
+var parser = new Parser();
+ParseResult<Syntax> parseResult = parser.Parse(routePattern);
 
 if (!parseResult.Success)
 {
-    WriteLine("❌ Parse failed:");
-    foreach (var error in parseResult.Errors)
+  WriteLine("❌ Parse failed:");
+  if (parseResult.ParseErrors is not null)
+  {
+    foreach (ParseError error in parseResult.ParseErrors)
     {
-        WriteLine($"  {error.Message} at position {error.Position}");
+      WriteLine($" error at position {error.Position}");
     }
-    return 1;
+  }
+
+  return 1;
 }
 
 WriteLine("✓ Parse succeeded");
-var ast = parseResult.Value!;
+Syntax? ast = parseResult.Value!;
 WriteLine($"AST has {ast.Segments.Count} segments:");
 
 int segmentIndex = 0;
-foreach (var segment in ast.Segments)
+foreach (SegmentSyntax segment in ast.Segments)
 {
-    Write($"  [{segmentIndex++}] ");
-    switch (segment)
-    {
-        case LiteralNode lit:
-            WriteLine($"Literal: '{lit.Value}'");
-            break;
-            
-        case ParameterNode param:
-            WriteLine($"Parameter: name='{param.Name}', type='{param.Type}', optional={param.IsOptional}");
-            break;
-            
-        case OptionNode opt:
-            WriteLine($"Option: longName='{opt.LongName}', shortName='{opt.ShortName}', hasParam={opt.Parameter != null}");
-            if (opt.Parameter != null)
-            {
-                WriteLine($"      Option parameter: name='{opt.Parameter.Name}', type='{opt.Parameter.Type}'");
-            }
-            break;
-            
-        default:
-            WriteLine($"Unknown segment type: {segment.GetType().Name}");
-            break;
-    }
+  Write($"  [{segmentIndex++}] ");
+  switch (segment)
+  {
+    case LiteralSyntax lit:
+      WriteLine($"Literal: '{lit.Value}'");
+      break;
+
+    case ParameterSyntax param:
+      WriteLine($"Parameter: name='{param.Name}', type='{param.Type}', optional={param.IsOptional}");
+      break;
+
+    case OptionSyntax opt:
+      WriteLine($"Option: longName='{opt.LongForm}', shortName='{opt.ShortForm}', hasParam={opt.Parameter is not null}");
+      if (opt.Parameter is not null)
+      {
+        WriteLine($"      Option parameter: name='{opt.Parameter.Name}', type='{opt.Parameter.Type}'");
+      }
+
+      break;
+
+    default:
+      WriteLine($"Unknown segment type: {segment.GetType().Name}");
+      break;
+  }
 }
+
 WriteLine();
 
 // Step 3: Test ParsedRoute conversion
@@ -86,33 +85,33 @@ WriteLine("Step 3: ParsedRoute Analysis");
 WriteLine("----------------------------");
 try
 {
-    var parsed = RoutePatternParser.Parse(routePattern);
-    
-    WriteLine($"Positional segments ({parsed.PositionalTemplate.Count}):");
-    foreach (var seg in parsed.PositionalTemplate)
-    {
-        WriteLine($"  {seg.GetType().Name}: '{seg.ToDisplayString()}'");
-    }
-    
-    WriteLine($"\nOption segments ({parsed.OptionSegments.Count}):");
-    foreach (var opt in parsed.OptionSegments)
-    {
-        WriteLine($"  Name: '{opt.Name}'");
-        WriteLine($"    ExpectsValue: {opt.ExpectsValue}");
-        WriteLine($"    ValueParameterName: '{opt.ValueParameterName}'");
-        WriteLine($"    ShortAlias: '{opt.ShortAlias}'");
-    }
-    
-    WriteLine($"\nRequired options ({parsed.RequiredOptions.Count}):");
-    foreach (var opt in parsed.RequiredOptions)
-    {
-        WriteLine($"  '{opt}'");
-    }
+  CompiledRoute parsed = PatternParser.Parse(routePattern);
+
+  WriteLine($"Positional segments ({parsed.PositionalMatchers.Count}):");
+  foreach (RouteMatcher seg in parsed.PositionalMatchers)
+  {
+    WriteLine($"  {seg.GetType().Name}: '{seg.ToDisplayString()}'");
+  }
+
+  WriteLine($"\nOption segments ({parsed.OptionMatchers.Count}):");
+  foreach (OptionMatcher option in parsed.OptionMatchers)
+  {
+    WriteLine($"    MatchPattern: '{option.MatchPattern}'");
+    WriteLine($"    ExpectsValue: {option.ExpectsValue}");
+    WriteLine($"    ParameterName: '{option.ParameterName}'");
+    WriteLine($"    AlternateForm: '{option.AlternateForm}'");
+  }
+
+  WriteLine($"\nRequired options ({parsed.RequiredOptionPatterns.Count}):");
+  foreach (string opt in parsed.RequiredOptionPatterns)
+  {
+    WriteLine($"  '{opt}'");
+  }
 }
 catch (Exception ex)
 {
-    WriteLine($"❌ Error: {ex.Message}");
-    return 1;
+  WriteLine($"❌ Error: {ex.Message}");
+  return 1;
 }
 
 // Step 4: Test actual route matching
@@ -122,18 +121,18 @@ var builder = new NuruAppBuilder();
 builder.AddRoute(routePattern, (string file) =>
     WriteLine($"✓ deployment.apps/{file} configured"));
 
-var app = builder.Build();
+NuruApp app = builder.Build();
 
 try
 {
-    WriteLine($"Running with args: [{string.Join(", ", testArgs.Select(a => $"'{a}'"))}]");
-    var result = await app.RunAsync(testArgs);
-    WriteLine($"Result code: {result}");
+  WriteLine($"Running with args: [{string.Join(", ", testArgs.Select(a => $"'{a}'"))}]");
+  int result = await app.RunAsync(testArgs);
+  WriteLine($"Result code: {result}");
 }
 catch (Exception ex)
 {
-    WriteLine($"❌ ERROR: {ex.Message}");
-    WriteLine($"Stack: {ex.StackTrace}");
+  WriteLine($"❌ ERROR: {ex.Message}");
+  WriteLine($"Stack: {ex.StackTrace}");
 }
 
 // Step 5: Test using actual shell execution
@@ -142,45 +141,43 @@ WriteLine("----------------------------");
 WriteLine("Building test app...");
 
 // Create a simple test app
-var testAppPath = "kubectl-test-app.cs";
+string testAppPath = "kubectl-test-app.cs";
 await File.WriteAllTextAsync(testAppPath, @"#!/usr/bin/dotnet --
-#:project ../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
-
-using TimeWarp.Nuru;
-
-var builder = new NuruAppBuilder();
+NuruAppBuilder builder = new();
 builder.AddRoute(""kubectl apply -f {file}"", (string file) =>
     Console.WriteLine($""deployment.apps/{file} configured""));
 
-var app = builder.Build();
+NuruApp app = builder.Build();
 return await app.RunAsync(args);
 ");
 
 // Make it executable
+#pragma warning disable CA1849 // Call async methods when in an async method
 Process.Start("chmod", ["+x", testAppPath]).WaitForExit();
+#pragma warning restore CA1849 // Call async methods when in an async method
 
 // Test with shell
 var psi = new ProcessStartInfo
 {
-    FileName = "/bin/bash",
-    Arguments = $"-c \"./kubectl-test-app.cs kubectl apply -f deployment.yaml\"",
-    RedirectStandardOutput = true,
-    RedirectStandardError = true,
-    UseShellExecute = false
+  FileName = "/bin/bash",
+  Arguments = "-c \"./kubectl-test-app.cs kubectl apply -f deployment.yaml\"",
+  RedirectStandardOutput = true,
+  RedirectStandardError = true,
+  UseShellExecute = false
 };
 
 var process = Process.Start(psi);
-if (process != null)
+if (process is not null)
 {
-    var output = await process.StandardOutput.ReadToEndAsync();
-    var error = await process.StandardError.ReadToEndAsync();
-    await process.WaitForExitAsync();
-    
-    WriteLine($"Exit code: {process.ExitCode}");
-    if (!string.IsNullOrEmpty(output))
-        WriteLine($"Output: {output.Trim()}");
-    if (!string.IsNullOrEmpty(error))
-        WriteLine($"Error: {error.Trim()}");
+  string output = await process.StandardOutput.ReadToEndAsync();
+  string error = await process.StandardError.ReadToEndAsync();
+  await process.WaitForExitAsync();
+
+  WriteLine($"Exit code: {process.ExitCode}");
+  if (!string.IsNullOrEmpty(output))
+    WriteLine($"Output: {output.Trim()}");
+  if (!string.IsNullOrEmpty(error))
+    WriteLine($"Error: {error.Trim()}");
 }
 
 // Cleanup

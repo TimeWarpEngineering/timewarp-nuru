@@ -3,6 +3,7 @@
 return await RunTests<BasicTokenTypesTests>();
 
 [TestTag("Lexer")]
+[ClearRunfileCache]
 public class BasicTokenTypesTests
 {
   // Plain identifiers

@@ -1,11 +1,5 @@
 #!/usr/bin/dotnet --
 // test-boolean-option.cs - Test boolean option binding
-#:project ../../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
-
-#pragma warning disable CA1031 // Do not catch general exception types - OK for tests
-
-using TimeWarp.Nuru;
-using static System.Console;
 
 // Enable more logging
 Environment.SetEnvironmentVariable("NURU_LOG_MATCHER", "trace");

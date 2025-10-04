@@ -3,7 +3,6 @@
 return await RunTests<MultiCharShortOptionsTests>();
 
 [TestTag("Lexer")]
-[ClearRunfileCache]
 public class MultiCharShortOptionsTests
 {
   // Multi-character short options (real-world patterns like dotnet -bl)

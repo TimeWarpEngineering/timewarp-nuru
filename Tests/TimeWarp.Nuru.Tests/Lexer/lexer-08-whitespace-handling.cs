@@ -3,7 +3,6 @@
 return await RunTests<WhitespaceHandlingTests>();
 
 [TestTag("Lexer")]
-[ClearRunfileCache]
 public class WhitespaceHandlingTests
 {
   // All whitespace variations should produce identical token sequences

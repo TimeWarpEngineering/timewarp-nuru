@@ -3,7 +3,6 @@
 return await RunTests<InvalidAngleBracketsTests>();
 
 [TestTag("Lexer")]
-[ClearRunfileCache]
 public class InvalidAngleBracketsTests
 {
   public static async Task Should_reject_angle_brackets_after_identifier()

@@ -1,12 +1,8 @@
 #!/usr/bin/dotnet --
-#:project ../../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
 
 // Test: Optional Positional Parameters After Required
 // Pattern: command {required} {optional?}
 // Validates that optional positional parameters work correctly when placed after required ones
-
-using TimeWarp.Nuru;
-using static System.Console;
 
 WriteLine
 (

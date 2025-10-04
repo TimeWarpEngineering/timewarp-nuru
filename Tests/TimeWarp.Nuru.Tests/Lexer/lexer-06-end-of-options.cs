@@ -3,7 +3,6 @@
 return await RunTests<EndOfOptionsTests>();
 
 [TestTag("Lexer")]
-[ClearRunfileCache]
 public class EndOfOptionsTests
 {
   public static async Task Should_tokenize_end_of_options_after_commands()

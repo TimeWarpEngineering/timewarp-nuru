@@ -1,11 +1,9 @@
 #!/usr/bin/dotnet --
 #:property LangVersion=preview
 #:property EnablePreviewFeatures=true
-#:project ../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
 #:package TimeWarp.Amuru
 
 using TimeWarp.Amuru;
-using TimeWarp.Nuru;
 
 // Get script directory to build correct paths
 string scriptDir = AppContext.GetData("EntryPointFileDirectoryPath") as string

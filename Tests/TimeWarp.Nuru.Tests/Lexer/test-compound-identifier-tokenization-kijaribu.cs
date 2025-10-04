@@ -1,6 +1,4 @@
 #!/usr/bin/dotnet --
-#:project ../../../Source/TimeWarp.Nuru.Parsing/TimeWarp.Nuru.Parsing.csproj
-#:project ../../../Source/TimeWarp.Kijaribu/TimeWarp.Kijaribu.csproj
 
 using TimeWarp.Nuru.Parsing;
 using Shouldly;
@@ -129,21 +127,6 @@ public class CompoundIdentifierTokenizationTests
     actualTokens.Length.ShouldBe(1);
     actualTokens[0].Type.ShouldBe(TokenType.Invalid);
     actualTokens[0].Value.ShouldBe("test-");
-
-    await Task.CompletedTask;
-  }
-
-  public static async Task LeadingDashProducesInvalidToken()
-  {
-    // Arrange
-    Lexer lexer = new("-test");
-    IReadOnlyList<Token> tokens = lexer.Tokenize();
-    Token[] actualTokens = [.. tokens.Take(tokens.Count - 1)];
-
-    // Assert - leading single dash with multi-char name is invalid
-    actualTokens.Length.ShouldBe(1);
-    actualTokens[0].Type.ShouldBe(TokenType.Invalid);
-    actualTokens[0].Value.ShouldBe("-test");
 
     await Task.CompletedTask;
   }

@@ -1,8 +1,4 @@
 #!/usr/bin/dotnet --
-#:project ../../../../Source/TimeWarp.Nuru.Parsing/TimeWarp.Nuru.Parsing.csproj
-
-using TimeWarp.Nuru.Parsing;
-using static System.Console;
 
 WriteLine
 (
@@ -21,7 +17,7 @@ void TestInvalid(string pattern, string expectedError)
     Write($"  {pattern,-45} ");
     try
     {
-        CompiledRoute route = RoutePatternParser.Parse(pattern);
+        CompiledRoute route = PatternParser.Parse(pattern);
         WriteLine("✗ SHOULD HAVE FAILED!");
         WriteLine($"    Expected: {expectedError}");
         failed++;

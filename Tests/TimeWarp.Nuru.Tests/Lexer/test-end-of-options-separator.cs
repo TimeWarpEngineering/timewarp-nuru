@@ -1,8 +1,4 @@
 #!/usr/bin/dotnet --
-#:project ../../../Source/TimeWarp.Nuru.Parsing/TimeWarp.Nuru.Parsing.csproj
-
-using TimeWarp.Nuru.Parsing;
-using static System.Console;
 
 WriteLine("Testing Lexer Support for -- (End-of-Options) Separator:");
 WriteLine("==========================================================");

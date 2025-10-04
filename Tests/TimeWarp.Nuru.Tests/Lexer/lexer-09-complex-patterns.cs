@@ -3,7 +3,6 @@
 return await RunTests<ComplexPatternsTests>();
 
 [TestTag("Lexer")]
-[ClearRunfileCache]
 public class ComplexPatternsTests
 {
   public static async Task Should_tokenize_deploy_pattern_with_option()

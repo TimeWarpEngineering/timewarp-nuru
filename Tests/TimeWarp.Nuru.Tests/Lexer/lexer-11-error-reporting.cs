@@ -3,7 +3,6 @@
 return await RunTests<ErrorReportingTests>();
 
 [TestTag("Lexer")]
-[ClearRunfileCache]
 public class ErrorReportingTests
 {
   /// <summary>

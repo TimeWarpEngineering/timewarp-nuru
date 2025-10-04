@@ -1,10 +1,4 @@
 #!/usr/bin/dotnet --
-#:project ../../../../Source/TimeWarp.Nuru.Parsing/TimeWarp.Nuru.Parsing.csproj
-
-#pragma warning disable CA1031 // Do not catch general exception types - OK for tests
-
-using TimeWarp.Nuru.Parsing;
-using static System.Console;
 
 WriteLine
 (
@@ -22,34 +16,33 @@ int failed = 0;
 // Test helper
 void TestDuplicateDetection(string pattern, bool shouldHaveDuplicate, string description)
 {
-    Write($"  {pattern,-40} - {description,-40} ");
+  Write($"  {pattern,-40} - {description,-40} ");
 
-    RouteParser parser = new();
-    ParseResult<RouteSyntax> result = parser.Parse(pattern);
+  Parser parser = new();
+  ParseResult<Syntax> result = parser.Parse(pattern);
+  bool hasDuplicateError = result.SemanticErrors?.Any(e =>
+      e is DuplicateParameterNamesError) ?? false;
 
-    bool hasDuplicateError = result.SemanticErrors.Any(e =>
-        e.ErrorType == SemanticErrorType.DuplicateParameterNames);
-
-    if (shouldHaveDuplicate && hasDuplicateError)
-    {
-        WriteLine("✓ Correctly detected duplicate");
-        passed++;
-    }
-    else if (!shouldHaveDuplicate && !hasDuplicateError)
-    {
-        WriteLine("✓ Correctly allowed (no duplicate)");
-        passed++;
-    }
-    else if (shouldHaveDuplicate && !hasDuplicateError)
-    {
-        WriteLine("✗ FAILED: Should detect duplicate!");
-        failed++;
-    }
-    else
-    {
-        WriteLine("✗ FAILED: False positive!");
-        failed++;
-    }
+  if (shouldHaveDuplicate && hasDuplicateError)
+  {
+    WriteLine("✓ Correctly detected duplicate");
+    passed++;
+  }
+  else if (!shouldHaveDuplicate && !hasDuplicateError)
+  {
+    WriteLine("✓ Correctly allowed (no duplicate)");
+    passed++;
+  }
+  else if (shouldHaveDuplicate && !hasDuplicateError)
+  {
+    WriteLine("✗ FAILED: Should detect duplicate!");
+    failed++;
+  }
+  else
+  {
+    WriteLine("✗ FAILED: False positive!");
+    failed++;
+  }
 }
 
 WriteLine();
@@ -104,5 +97,5 @@ WriteLine($"Summary: {passed} passed, {failed} failed");
 
 if (failed > 0)
 {
-    Environment.Exit(1);
+  Environment.Exit(1);
 }

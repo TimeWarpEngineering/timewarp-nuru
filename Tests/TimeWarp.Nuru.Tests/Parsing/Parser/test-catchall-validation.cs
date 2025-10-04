@@ -1,10 +1,4 @@
 #!/usr/bin/dotnet --
-#:project ../../../../Source/TimeWarp.Nuru.Parsing/TimeWarp.Nuru.Parsing.csproj
-#:project ../../../../Source/TimeWarp.Kijaribu/TimeWarp.Kijaribu.csproj
-
-using TimeWarp.Nuru.Parsing;
-using Shouldly;
-using TimeWarp.Kijaribu;
 
 // Clear cache to ensure parser changes are picked up (parsing is source-compiled)
 await TestRunner.RunTests<CatchAllValidationTests>(clearCache: true);
@@ -15,9 +9,9 @@ public class CatchAllValidationTests
   public static async Task CatchAllInOptionParameterShouldBeRejected()
   {
     // Act & Assert
-    RoutePatternException ex = Should.Throw<RoutePatternException>(() =>
+    PatternException ex = Should.Throw<PatternException>(() =>
     {
-      CompiledRoute route = RoutePatternParser.Parse("test --exclude {*pattern}");
+      CompiledRoute route = PatternParser.Parse("test --exclude {*pattern}");
     });
 
     // Verify exception has errors
@@ -30,7 +24,7 @@ public class CatchAllValidationTests
   public static async Task RepeatedOptionParameterShouldSucceed()
   {
     // Act
-    CompiledRoute route = RoutePatternParser.Parse("test --exclude {pattern}*");
+    CompiledRoute route = PatternParser.Parse("test --exclude {pattern}*");
 
     // Assert
     route.ShouldNotBeNull();
@@ -40,7 +34,7 @@ public class CatchAllValidationTests
   public static async Task OptionalCatchAllSyntaxShouldSucceed()
   {
     // Act
-    CompiledRoute route = RoutePatternParser.Parse("git add {*files?}");
+    CompiledRoute route = PatternParser.Parse("git add {*files?}");
 
     // Assert
     route.ShouldNotBeNull();

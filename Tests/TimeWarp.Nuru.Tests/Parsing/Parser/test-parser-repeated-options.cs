@@ -1,10 +1,4 @@
 #!/usr/bin/dotnet --
-#:project ../../../../Source/TimeWarp.Nuru.Parsing/TimeWarp.Nuru.Parsing.csproj
-
-#pragma warning disable CA1031 // Do not catch general exception types - OK for tests
-
-using TimeWarp.Nuru.Parsing;
-using static System.Console;
 
 WriteLine
 (
@@ -21,7 +15,7 @@ void TestPattern(string pattern, bool shouldSucceed, string description)
     Write($"  {pattern,-45} - {description,-35} ");
     try
     {
-        CompiledRoute route = RoutePatternParser.Parse(pattern);
+        CompiledRoute route = PatternParser.Parse(pattern);
         if (shouldSucceed)
         {
             WriteLine("✓ Parsed");

@@ -1,10 +1,4 @@
 #!/usr/bin/dotnet --
-#:project ../../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
-#:project ../../../Source/TimeWarp.Kijaribu/TimeWarp.Kijaribu.csproj
-
-using TimeWarp.Nuru.Parsing;
-using Shouldly;
-using TimeWarp.Kijaribu;
 
 return await TestRunner.RunTests<InvalidTokenDetectionTests>();
 
@@ -49,8 +43,6 @@ public class InvalidTokenDetectionTests
   [Input("foo---")]
   [Input("test<param>")]
   [Input("<input>")]
-  [Input("-test")]
-  [Input("-foo-bar")]
   public static async Task InvalidPatternsShouldProduceInvalidTokens(string pattern)
   {
     // Arrange

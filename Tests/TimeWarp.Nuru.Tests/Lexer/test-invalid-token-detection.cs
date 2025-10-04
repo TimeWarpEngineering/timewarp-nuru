@@ -1,10 +1,4 @@
 #!/usr/bin/dotnet --
-#:project ../../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
-
-#pragma warning disable CA1031 // Do not catch general exception types - OK for tests
-
-using TimeWarp.Nuru.Parsing;
-using static System.Console;
 
 WriteLine("Testing Invalid Token Detection:");
 WriteLine("=================================");
@@ -88,13 +82,6 @@ TestPattern("foo---", true, "Multiple trailing dashes");
 // Already working invalid patterns
 TestPattern("test<param>", true, "Angle brackets (already works)");
 TestPattern("<input>", true, "Just angle brackets");
-
-// Ambiguous patterns that might need to be invalid
-WriteLine();
-WriteLine("AMBIGUOUS Patterns (consider making Invalid):");
-WriteLine("----------------------------------------------");
-TestPattern("-test", true, "Single dash with multi-char");
-TestPattern("-foo-bar", true, "Single dash with compound");
 
 WriteLine();
 WriteLine("========================================");

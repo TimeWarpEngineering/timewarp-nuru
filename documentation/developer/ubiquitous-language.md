@@ -36,7 +36,7 @@ The Ubiquitous Language is an **input** to Design - when we change UL, we cascad
 The Nuru framework processes CLI commands through a pipeline of distinct stages:
 
 ```
-Route Pattern String → [Lexer] → Tokens → [Parser] → AST → [Compiler] → Matchers → [Resolver] → Matched Route → [Executor] → Result
+Route Pattern String → [Lexer] → Tokens → [Parser] → AST → [Compiler] → Matchers → [Resolver] → Matched Endpoint → [Executor] → Result
 ```
 
 Each stage has its own ubiquitous language defined below.

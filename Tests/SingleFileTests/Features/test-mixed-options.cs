@@ -1,8 +1,4 @@
 #!/usr/bin/dotnet --
-#:project ../../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
-
-using TimeWarp.Nuru;
-using static System.Console;
 
 WriteLine("Testing mixed option types (boolean vs value options):");
 WriteLine("======================================================");

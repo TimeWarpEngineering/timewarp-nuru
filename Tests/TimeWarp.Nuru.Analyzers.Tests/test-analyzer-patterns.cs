@@ -1,5 +1,4 @@
 #!/usr/bin/dotnet --
-#:project ../../Source/TimeWarp.Nuru.Parsing/TimeWarp.Nuru.Parsing.csproj
 
 // This test file validates that the parser correctly rejects invalid route patterns
 // that correspond to Roslyn analyzer diagnostics NURU001-NURU009.
@@ -16,9 +15,6 @@
 //
 // This helps ensure consistency between compile-time analyzer warnings
 // and runtime parser validation.
-
-using TimeWarp.Nuru.Parsing;
-using static System.Console;
 
 WriteLine
 (
@@ -242,7 +238,7 @@ static void TestPair
   Write($"  ✗ Invalid: '{invalid}' - ");
   try
   {
-    CompiledRoute route = RoutePatternParser.Parse(invalid);
+    CompiledRoute route = PatternParser.Parse(invalid);
     WriteLine("UNEXPECTED: Pattern parsed successfully!");
   }
   catch (ArgumentException ex)
@@ -254,7 +250,7 @@ static void TestPair
   Write($"  ✓ Valid:   '{valid}' - ");
   try
   {
-    CompiledRoute route = RoutePatternParser.Parse(valid);
+    CompiledRoute route = PatternParser.Parse(valid);
     WriteLine("Parses correctly");
   }
   catch (ArgumentException ex)

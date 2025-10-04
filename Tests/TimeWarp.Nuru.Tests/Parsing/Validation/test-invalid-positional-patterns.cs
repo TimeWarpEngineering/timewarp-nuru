@@ -1,12 +1,10 @@
 #!/usr/bin/dotnet --
-#:project ../../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
 
 // Test: Invalid Positional Parameter Patterns
 // Tests patterns that should be rejected by analyzer rules NURU007 and NURU008
 // These patterns create ambiguity and should not be allowed
 
 using TimeWarp.Nuru;
-using static System.Console;
 
 WriteLine
 (

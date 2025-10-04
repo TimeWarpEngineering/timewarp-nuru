@@ -16,9 +16,11 @@
     <Using Include="System.Console" Static="true" />
     <Using Include="System.Collections.Concurrent" />
     <Using Include="System.Diagnostics" />
+    <Using Include="System.Globalization" />
     <Using Include="TimeWarp.Kijaribu" />
     <Using Include="TimeWarp.Kijaribu.TestRunner" Static="true" />
     <Using Include="TimeWarp.Nuru.Parsing" />
+    <Using Include="TimeWarp.Nuru" />
     <Using Include="Microsoft.Extensions.Logging" />
   </ItemGroup>
 

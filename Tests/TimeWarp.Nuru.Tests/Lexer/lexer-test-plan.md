@@ -172,6 +172,36 @@ The lexer's primary responsibility is to reject nonsensical character sequences 
 - [x] Position tracking for multi-char tokens (`--`, `EndOfOptions`) - `Should_track_multi_char_token_positions`
 - [x] Position tracking for invalid tokens - `Should_track_invalid_token_positions`
 
+## 15. Advanced Features ✓
+**Test File**: `lexer-15-advanced-features.cs`
+**Purpose**: Consolidate advanced tokenization features (element descriptions and modifiers)
+
+**Element-Level Descriptions (internal pipe syntax):**
+- [x] Parameter with description: `{env|Environment}` - `Should_tokenize_parameter_with_description`
+- [x] Option with description: `--dry-run,-d|Preview` - `Should_tokenize_option_with_description`
+- [x] Complex pattern with descriptions - `Should_tokenize_complex_pattern_with_descriptions`
+
+**Optional Flag Modifiers (`?` after option):**
+- [x] `--verbose?` → optional long flag - `Should_tokenize_optional_verbose_flag`
+- [x] `--dry-run?` → optional compound flag - `Should_tokenize_optional_dry_run_flag`
+- [x] `-v?` → optional short flag - `Should_tokenize_optional_short_flag`
+- [x] `--config? {mode}` → optional flag with parameter - `Should_tokenize_optional_flag_with_parameter`
+- [x] `--env? {name?}` → optional flag with optional parameter - `Should_tokenize_optional_flag_with_optional_parameter`
+
+**Repeated Parameter Modifiers (`*` after parameter):**
+- [x] `--env {var}*` → repeatable parameter - `Should_tokenize_repeated_parameter`
+- [x] `--port {p:int}*` → repeatable typed parameter - `Should_tokenize_repeated_typed_parameter`
+- [x] `--label {l}* --tag {t}*` → multiple repeated parameters - `Should_tokenize_multiple_repeated_parameters`
+
+**Combined Modifiers:**
+- [x] `--env? {var}*` → optional flag with repeated parameter - `Should_tokenize_optional_flag_with_repeated_parameter`
+- [x] `--opt? {val?}*` → complex combination - `Should_tokenize_complex_optional_repeated_combination`
+- [x] `--flag?*` → optional repeated flag - `Should_tokenize_optional_repeated_flag`
+
+**Complex Real-World Patterns:**
+- [x] `deploy {env} --force? --dry-run?` → multiple optional flags - `Should_tokenize_deploy_with_multiple_optional_flags`
+- [x] `docker --env? {e}* {*cmd}` → optional, repeated, and catch-all - `Should_tokenize_docker_with_optional_repeated_and_catchall`
+
 ---
 
 ## Test Categories Summary
@@ -192,9 +222,10 @@ The lexer's primary responsibility is to reject nonsensical character sequences 
 | 12 | Descriptions | `lexer-12-description-tokenization.cs` | Help text | 7 |
 | 13 | Parameter Context | `lexer-13-parameter-context.cs` | Inside braces | 8 |
 | 14 | Token Position | `lexer-14-token-position.cs` | Source tracking | 6 |
+| 15 | Advanced Features | `lexer-15-advanced-features.cs` | Modifiers & descriptions | 18 |
 
-**Total Test Categories**: 14
-**Estimated Individual Test Cases**: 90
+**Total Test Categories**: 15
+**Estimated Individual Test Cases**: 108
 
 ## Implementation Notes
 
@@ -204,10 +235,24 @@ The lexer's primary responsibility is to reject nonsensical character sequences 
 4. **Error Messages**: Include expected error message text in invalid token tests
 5. **Performance**: Include a benchmark test for lexing large patterns
 
-## Open Questions
+## Resolved Questions
 
-1. Should `-test` be treated as invalid or split into `[SingleDash]`, `[Identifier]`?
-2. Should invalid patterns inside `{}` be caught by lexer or parser?
-3. What's the maximum supported identifier length?
-4. Should the lexer support Unicode identifiers?
-5. How should multiple `|` characters be handled (first wins vs error)?
+1. ✅ **Should `-test` be treated as invalid or split into `[SingleDash]`, `[Identifier]`?**
+   - **Answer**: Split into tokens. Multi-character short options are now valid per updated design.
+   - **Coverage**: lexer-05-multi-char-short-options.cs
+
+2. **Should invalid patterns inside `{}` be caught by lexer or parser?**
+   - **Current**: Lexer detects some invalids (e.g., `{invalid--name}`)
+   - **Coverage**: lexer-13-parameter-context.cs
+
+3. **What's the maximum supported identifier length?**
+   - **Tested**: 150 characters in lexer-10-edge-cases.cs
+   - **No hard limit enforced**
+
+4. ✅ **Should the lexer support Unicode identifiers?**
+   - **Answer**: Yes, Unicode identifiers are supported
+   - **Coverage**: lexer-10-edge-cases.cs (Chinese, Greek, French)
+
+5. **How should multiple `|` characters be handled (first wins vs error)?**
+   - **Current**: All pipes tokenized as Pipe tokens; parser determines semantic meaning
+   - **Coverage**: lexer-12-description-tokenization.cs

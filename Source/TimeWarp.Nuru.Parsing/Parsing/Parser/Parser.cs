@@ -3,7 +3,7 @@ namespace TimeWarp.Nuru.Parsing;
 /// <summary>
 /// Recursive descent parser for route patterns.
 /// </summary>
-public sealed partial class Parser : IParser
+internal sealed partial class Parser : IParser
 {
   private readonly ILogger<Parser> Logger;
   private readonly ILoggerFactory? LoggerFactory;

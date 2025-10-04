@@ -4,7 +4,7 @@ namespace TimeWarp.Nuru.Parsing;
 /// Validates the semantic correctness of route patterns.
 /// Checks for logical errors that are syntactically valid but semantically incorrect.
 /// </summary>
-public sealed class SemanticValidator
+internal sealed class SemanticValidator
 {
   private const string EndOfOptionsSeparator = "--";
 

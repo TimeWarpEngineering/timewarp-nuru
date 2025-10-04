@@ -11,7 +11,7 @@ using System.Text;
 /// <param name="Description">Option description from pipe syntax, if specified.</param>
 /// <param name="Parameter">Associated parameter for options that take values.</param>
 /// <param name="IsOptional">True if this option is optional (--flag?).</param>
-public record OptionSyntax
+internal record OptionSyntax
 (
   string? LongForm = null,
   string? ShortForm = null,

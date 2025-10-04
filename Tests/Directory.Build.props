@@ -4,7 +4,7 @@
 
   <PropertyGroup>
     <!-- Suppress localization warnings for test projects -->
-    <NoWarn>$(NoWarn);CA1303;CA1307;CA2007;CA1031;CA1515;CA1050;CA1052;CA1707;RCS1046;RCS1102;RCS1110</NoWarn>
+    <NoWarn>$(NoWarn);CA1303;CA1307;CA2007;CA1031;CA1515;CA1050;CA1052;CA1707;CS0050;RCS1046;RCS1102;RCS1110</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
@@ -19,7 +19,6 @@
     <Using Include="TimeWarp.Kijaribu" />
     <Using Include="TimeWarp.Kijaribu.TestRunner" Static="true" />
     <Using Include="TimeWarp.Nuru.Parsing" />
-    <Using Include="TimeWarp.Nuru.Tests.Lexer.LexerTestHelper" Static="true" />
     <Using Include="Microsoft.Extensions.Logging" />
   </ItemGroup>
 
@@ -27,10 +26,5 @@
     <!-- Common project references for all test projects -->
     <ProjectReference Include="$(MSBuildThisFileDirectory)../Source/TimeWarp.Kijaribu/TimeWarp.Kijaribu.csproj" />
     <ProjectReference Include="$(MSBuildThisFileDirectory)../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <!-- Include shared lexer test helper -->
-    <Compile Include="$(MSBuildThisFileDirectory)TimeWarp.Nuru.Tests/Lexer/LexerTestHelper.cs" Link="Shared/LexerTestHelper.cs" />
   </ItemGroup>
 </Project>

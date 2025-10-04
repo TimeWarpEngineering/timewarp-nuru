@@ -4,7 +4,7 @@ namespace TimeWarp.Nuru.Parsing;
 /// Represents the result of a parsing operation.
 /// </summary>
 /// <typeparam name="T">The type of the parsed value.</typeparam>
-public class ParseResult<T>
+internal class ParseResult<T>
 {
   /// <summary>
   /// The parsed value, if parsing was successful.

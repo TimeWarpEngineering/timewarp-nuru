@@ -6,7 +6,7 @@ using TimeWarp.Nuru.Parsing;
 /// Visitor interface for processing route pattern syntax nodes.
 /// </summary>
 /// <typeparam name="T">The return type of visitor methods.</typeparam>
-public interface ISyntaxVisitor<T>
+internal interface ISyntaxVisitor<T>
 {
   /// <summary>
   /// Visits the root pattern node.
@@ -38,7 +38,7 @@ public interface ISyntaxVisitor<T>
 /// Base visitor class that provides default implementations.
 /// </summary>
 /// <typeparam name="T">The return type of visitor methods.</typeparam>
-public abstract class SyntaxVisitor<T> : ISyntaxVisitor<T>
+internal abstract class SyntaxVisitor<T> : ISyntaxVisitor<T>
 {
   /// <inheritdoc />
   public virtual T VisitPattern(Syntax pattern)

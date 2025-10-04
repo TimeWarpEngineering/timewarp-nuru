@@ -10,7 +10,7 @@ namespace TimeWarp.Nuru.Parsing;
 /// <param name="IsRepeated">True if this parameter can be repeated ({value}* in options).</param>
 /// <param name="Type">The type constraint (e.g., "int", "double"), if specified.</param>
 /// <param name="Description">Parameter description from pipe syntax, if specified.</param>
-public record ParameterSyntax
+internal record ParameterSyntax
 (
   string Name,
   bool IsCatchAll = false,

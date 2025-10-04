@@ -3,7 +3,7 @@ namespace TimeWarp.Nuru.Parsing;
 /// <summary>
 /// Lexer for tokenizing route pattern strings.
 /// </summary>
-public class Lexer
+internal class Lexer
 {
   private readonly ILogger<Lexer> Logger;
   private readonly string Input;

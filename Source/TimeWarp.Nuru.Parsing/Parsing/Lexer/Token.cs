@@ -3,7 +3,7 @@ namespace TimeWarp.Nuru.Parsing;
 /// <summary>
 /// Represents the different types of tokens in route patterns.
 /// </summary>
-public enum TokenType
+internal enum TokenType
 {
   /// <summary>
   /// A literal string that must match exactly.
@@ -74,7 +74,7 @@ public enum TokenType
 /// <param name="Value">The text value of the token.</param>
 /// <param name="Position">The starting position in the input string.</param>
 /// <param name="Length">The length of the token in characters.</param>
-public record Token(TokenType Type, string Value, int Position, int Length)
+internal record Token(TokenType Type, string Value, int Position, int Length)
 {
   /// <summary>
   /// Gets the end position of this token (Position + Length).

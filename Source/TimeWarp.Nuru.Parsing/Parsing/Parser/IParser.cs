@@ -5,7 +5,7 @@ using TimeWarp.Nuru.Parsing;
 /// <summary>
 /// Interface for parsing route patterns into Abstract Syntax Trees.
 /// </summary>
-public interface IParser
+internal interface IParser
 {
   /// <summary>
   /// Parses a route pattern string into a syntax tree.

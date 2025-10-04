@@ -1,4 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
 using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 
@@ -82,7 +81,7 @@ internal sealed class StatusCommand : IRequest
   {
     public Task Handle(StatusCommand request, CancellationToken cancellationToken)
     {
-      Console.WriteLine("✓ System is running");
+      WriteLine("✓ System is running");
       return Task.CompletedTask;
     }
   }
@@ -94,7 +93,7 @@ internal sealed class VersionCommand : IRequest
   {
     public Task Handle(VersionCommand request, CancellationToken cancellationToken)
     {
-      Console.WriteLine("TimeWarp.Nuru v1.0.0");
+      WriteLine("TimeWarp.Nuru v1.0.0");
       return Task.CompletedTask;
     }
   }
@@ -107,7 +106,7 @@ internal sealed class GitStatusCommand : IRequest
   {
     public Task Handle(GitStatusCommand request, CancellationToken cancellationToken)
     {
-      Console.WriteLine("On branch main\nYour branch is up to date");
+      WriteLine("On branch main\nYour branch is up to date");
       return Task.CompletedTask;
     }
   }
@@ -119,7 +118,7 @@ internal sealed class GitCommitCommand : IRequest
   {
     public Task Handle(GitCommitCommand request, CancellationToken cancellationToken)
     {
-      Console.WriteLine("Nothing to commit, working tree clean");
+      WriteLine("Nothing to commit, working tree clean");
       return Task.CompletedTask;
     }
   }
@@ -131,7 +130,7 @@ internal sealed class GitPushCommand : IRequest
   {
     public Task Handle(GitPushCommand request, CancellationToken cancellationToken)
     {
-      Console.WriteLine("Everything up-to-date");
+      WriteLine("Everything up-to-date");
       return Task.CompletedTask;
     }
   }
@@ -144,7 +143,7 @@ internal sealed class GitCommitAmendCommand : IRequest
   {
     public Task Handle(GitCommitAmendCommand request, CancellationToken cancellationToken)
     {
-      Console.WriteLine("Amending previous commit");
+      WriteLine("Amending previous commit");
       return Task.CompletedTask;
     }
   }
@@ -156,7 +155,7 @@ internal sealed class GitCommitAmendNoEditCommand : IRequest
   {
     public Task Handle(GitCommitAmendNoEditCommand request, CancellationToken cancellationToken)
     {
-      Console.WriteLine("Amending without editing message");
+      WriteLine("Amending without editing message");
       return Task.CompletedTask;
     }
   }
@@ -171,7 +170,7 @@ internal sealed class GitLogCommand : IRequest
   {
     public Task Handle(GitLogCommand request, CancellationToken cancellationToken)
     {
-      Console.WriteLine($"Showing last {request.Count} commits");
+      WriteLine($"Showing last {request.Count} commits");
       return Task.CompletedTask;
     }
   }
@@ -186,7 +185,7 @@ internal sealed class DockerRunEnhancedCommand : IRequest
   {
     public Task Handle(DockerRunEnhancedCommand request, CancellationToken cancellationToken)
     {
-      Console.WriteLine($"🚀 Running {request.Image} with enhanced logging");
+      WriteLine($"🚀 Running {request.Image} with enhanced logging");
       return Task.CompletedTask;
     }
   }
@@ -200,7 +199,7 @@ internal sealed class DockerRunCommand : IRequest
   {
     public Task Handle(DockerRunCommand request, CancellationToken cancellationToken)
     {
-      Console.WriteLine($"docker run {string.Join(" ", request.Args)}");
+      WriteLine($"docker run {string.Join(" ", request.Args)}");
       return Task.CompletedTask;
     }
   }
@@ -215,7 +214,7 @@ internal sealed class DockerBuildCommand : IRequest
   {
     public Task Handle(DockerBuildCommand request, CancellationToken cancellationToken)
     {
-      Console.WriteLine($"docker build {string.Join(" ", request.Args)}");
+      WriteLine($"docker build {string.Join(" ", request.Args)}");
       return Task.CompletedTask;
     }
   }
@@ -229,7 +228,7 @@ internal sealed class DockerPsCommand : IRequest
   {
     public Task Handle(DockerPsCommand request, CancellationToken cancellationToken)
     {
-      Console.WriteLine($"docker ps {string.Join(" ", request.Args)}");
+      WriteLine($"docker ps {string.Join(" ", request.Args)}");
       return Task.CompletedTask;
     }
   }
@@ -243,7 +242,7 @@ internal sealed class DockerCommand : IRequest
   {
     public Task Handle(DockerCommand request, CancellationToken cancellationToken)
     {
-      Console.WriteLine($"docker {string.Join(" ", request.Args)}");
+      WriteLine($"docker {string.Join(" ", request.Args)}");
       return Task.CompletedTask;
     }
   }
@@ -258,7 +257,7 @@ internal sealed class KubectlGetEnhancedCommand : IRequest
   {
     public Task Handle(KubectlGetEnhancedCommand request, CancellationToken cancellationToken)
     {
-      Console.WriteLine($"⚡ Enhanced watch for {request.Resource}");
+      WriteLine($"⚡ Enhanced watch for {request.Resource}");
       return Task.CompletedTask;
     }
   }
@@ -272,7 +271,7 @@ internal sealed class KubectlGetWatchCommand : IRequest
   {
     public Task Handle(KubectlGetWatchCommand request, CancellationToken cancellationToken)
     {
-      Console.WriteLine($"Watching {request.Resource}...");
+      WriteLine($"Watching {request.Resource}...");
       return Task.CompletedTask;
     }
   }
@@ -286,7 +285,7 @@ internal sealed class KubectlGetCommand : IRequest
   {
     public Task Handle(KubectlGetCommand request, CancellationToken cancellationToken)
     {
-      Console.WriteLine($"NAME                  READY   STATUS    RESTARTS   AGE\n{request.Resource}-sample    1/1     Running   0          5m");
+      WriteLine($"NAME                  READY   STATUS    RESTARTS   AGE\n{request.Resource}-sample    1/1     Running   0          5m");
       return Task.CompletedTask;
     }
   }
@@ -300,7 +299,7 @@ internal sealed class KubectlApplyCommand : IRequest
   {
     public Task Handle(KubectlApplyCommand request, CancellationToken cancellationToken)
     {
-      Console.WriteLine($"deployment.apps/{request.File} configured");
+      WriteLine($"deployment.apps/{request.File} configured");
       return Task.CompletedTask;
     }
   }
@@ -314,7 +313,7 @@ internal sealed class KubectlCommand : IRequest
   {
     public Task Handle(KubectlCommand request, CancellationToken cancellationToken)
     {
-      Console.WriteLine($"kubectl {string.Join(" ", request.Args)}");
+      WriteLine($"kubectl {string.Join(" ", request.Args)}");
       return Task.CompletedTask;
     }
   }
@@ -329,7 +328,7 @@ internal sealed class NpmInstallDevCommand : IRequest
   {
     public Task Handle(NpmInstallDevCommand request, CancellationToken cancellationToken)
     {
-      Console.WriteLine($"📦 Installing {request.Package} as dev dependency");
+      WriteLine($"📦 Installing {request.Package} as dev dependency");
       return Task.CompletedTask;
     }
   }
@@ -343,7 +342,7 @@ internal sealed class NpmInstallSaveCommand : IRequest
   {
     public Task Handle(NpmInstallSaveCommand request, CancellationToken cancellationToken)
     {
-      Console.WriteLine($"📦 Installing {request.Package} as dependency");
+      WriteLine($"📦 Installing {request.Package} as dependency");
       return Task.CompletedTask;
     }
   }
@@ -357,7 +356,7 @@ internal sealed class NpmInstallCommand : IRequest
   {
     public Task Handle(NpmInstallCommand request, CancellationToken cancellationToken)
     {
-      Console.WriteLine($"📦 Installing {request.Package}");
+      WriteLine($"📦 Installing {request.Package}");
       return Task.CompletedTask;
     }
   }
@@ -371,7 +370,7 @@ internal sealed class NpmRunCommand : IRequest
   {
     public Task Handle(NpmRunCommand request, CancellationToken cancellationToken)
     {
-      Console.WriteLine($"🏃 Running script: {request.Script}");
+      WriteLine($"🏃 Running script: {request.Script}");
       return Task.CompletedTask;
     }
   }
@@ -385,7 +384,7 @@ internal sealed class NpmCommand : IRequest
   {
     public Task Handle(NpmCommand request, CancellationToken cancellationToken)
     {
-      Console.WriteLine($"npm {string.Join(" ", request.Args)}");
+      WriteLine($"npm {string.Join(" ", request.Args)}");
       return Task.CompletedTask;
     }
   }
@@ -400,7 +399,7 @@ internal sealed class GitCommitMAmendCommand : IRequest
   {
     public Task Handle(GitCommitMAmendCommand request, CancellationToken cancellationToken)
     {
-      Console.WriteLine($"Amending with message: {request.Message}");
+      WriteLine($"Amending with message: {request.Message}");
       return Task.CompletedTask;
     }
   }
@@ -414,7 +413,7 @@ internal sealed class GitCommitAmendMCommand : IRequest
   {
     public Task Handle(GitCommitAmendMCommand request, CancellationToken cancellationToken)
     {
-      Console.WriteLine($"Amending with message: {request.Message}");
+      WriteLine($"Amending with message: {request.Message}");
       return Task.CompletedTask;
     }
   }
@@ -428,7 +427,7 @@ internal sealed class GitCommitAmendMessageCommand : IRequest
   {
     public Task Handle(GitCommitAmendMessageCommand request, CancellationToken cancellationToken)
     {
-      Console.WriteLine($"Amending with message: {request.Message}");
+      WriteLine($"Amending with message: {request.Message}");
       return Task.CompletedTask;
     }
   }
@@ -442,7 +441,7 @@ internal sealed class GitCommitMessageAmendCommand : IRequest
   {
     public Task Handle(GitCommitMessageAmendCommand request, CancellationToken cancellationToken)
     {
-      Console.WriteLine($"Amending with message: {request.Message}");
+      WriteLine($"Amending with message: {request.Message}");
       return Task.CompletedTask;
     }
   }
@@ -457,7 +456,7 @@ internal sealed class GitCommitMCommand : IRequest
   {
     public Task Handle(GitCommitMCommand request, CancellationToken cancellationToken)
     {
-      Console.WriteLine($"Creating commit with message: {request.Message} (using -m shorthand)");
+      WriteLine($"Creating commit with message: {request.Message} (using -m shorthand)");
       return Task.CompletedTask;
     }
   }
@@ -471,7 +470,7 @@ internal sealed class GitCommitMessageCommand : IRequest
   {
     public Task Handle(GitCommitMessageCommand request, CancellationToken cancellationToken)
     {
-      Console.WriteLine($"Creating commit with message: {request.Message} (using --message flag)");
+      WriteLine($"Creating commit with message: {request.Message} (using --message flag)");
       return Task.CompletedTask;
     }
   }
@@ -485,7 +484,7 @@ internal sealed class AsyncTestCommand : IRequest
     public async Task Handle(AsyncTestCommand request, CancellationToken cancellationToken)
     {
       await Task.Delay(100, cancellationToken);
-      Console.WriteLine("Async operation completed");
+      WriteLine("Async operation completed");
     }
   }
 }
@@ -502,11 +501,11 @@ internal sealed class DeployCommand : IRequest
     {
       if (string.IsNullOrEmpty(request.Tag))
       {
-        Console.WriteLine($"Deploying to {request.Env} with latest tag");
+        WriteLine($"Deploying to {request.Env} with latest tag");
       }
       else
       {
-        Console.WriteLine($"Deploying to {request.Env} with tag {request.Tag}");
+        WriteLine($"Deploying to {request.Env} with tag {request.Tag}");
       }
 
       return Task.CompletedTask;
@@ -526,11 +525,11 @@ internal sealed class BackupCommand : IRequest
       await Task.Delay(50, cancellationToken);
       if (string.IsNullOrEmpty(request.Destination))
       {
-        Console.WriteLine($"Backing up {request.Source} to default location");
+        WriteLine($"Backing up {request.Source} to default location");
       }
       else
       {
-        Console.WriteLine($"Backing up {request.Source} to {request.Destination}");
+        WriteLine($"Backing up {request.Source} to {request.Destination}");
       }
     }
   }
@@ -546,7 +545,7 @@ internal sealed class SleepCommand : IRequest
     public Task Handle(SleepCommand request, CancellationToken cancellationToken)
     {
       int sleepTime = request.Seconds ?? 1;
-      Console.WriteLine($"Sleeping for {sleepTime} seconds");
+      WriteLine($"Sleeping for {sleepTime} seconds");
       return Task.CompletedTask;
     }
   }
@@ -561,7 +560,7 @@ internal sealed class CatchAllCommand : IRequest
   {
     public Task Handle(CatchAllCommand request, CancellationToken cancellationToken)
     {
-      Console.WriteLine($"Unknown command: {string.Join(" ", request.Everything)}");
+      WriteLine($"Unknown command: {string.Join(" ", request.Everything)}");
       return Task.CompletedTask;
     }
   }
@@ -574,17 +573,17 @@ internal sealed class HelpCommand : IRequest
   {
     public Task Handle(HelpCommand request, CancellationToken cancellationToken)
     {
-      Console.WriteLine("TimeWarp.Nuru Integration Tests");
-      Console.WriteLine("==================================");
-      Console.WriteLine("Available test scenarios:");
-      Console.WriteLine("  status                          - Basic status command");
-      Console.WriteLine("  version                         - Show version");
-      Console.WriteLine("  git status                      - Git status");
-      Console.WriteLine("  git commit [options]            - Git commit with various options");
-      Console.WriteLine("  docker run [options] {image}    - Docker run with enhancements");
-      Console.WriteLine("  kubectl get {resource}          - Kubectl commands");
-      Console.WriteLine("  npm install {package} [options] - NPM commands");
-      Console.WriteLine("  --help                          - Show this help");
+      WriteLine("TimeWarp.Nuru Integration Tests");
+      WriteLine("==================================");
+      WriteLine("Available test scenarios:");
+      WriteLine("  status                          - Basic status command");
+      WriteLine("  version                         - Show version");
+      WriteLine("  git status                      - Git status");
+      WriteLine("  git commit [options]            - Git commit with various options");
+      WriteLine("  docker run [options] {image}    - Docker run with enhancements");
+      WriteLine("  kubectl get {resource}          - Kubectl commands");
+      WriteLine("  npm install {package} [options] - NPM commands");
+      WriteLine("  --help                          - Show this help");
       return Task.CompletedTask;
     }
   }

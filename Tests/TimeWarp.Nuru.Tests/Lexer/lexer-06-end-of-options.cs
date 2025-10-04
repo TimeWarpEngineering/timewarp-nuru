@@ -91,4 +91,41 @@ public class EndOfOptionsTests
 
     await Task.CompletedTask;
   }
+
+  public static async Task Should_distinguish_option_double_dash_from_separator()
+  {
+    // Arrange
+    // Critical test: First -- is part of option (DoubleDash), second -- is separator (EndOfOptions)
+    string pattern = "exec --env {e}* -- {*cmd}";
+    Lexer lexer = CreateLexer(pattern);
+    IReadOnlyList<Token> tokens = lexer.Tokenize();
+
+    // Assert
+    tokens.Count.ShouldBe(13);
+    tokens[0].Type.ShouldBe(TokenType.Identifier);
+    tokens[0].Value.ShouldBe("exec");
+
+    // First -- is DoubleDash (option prefix)
+    tokens[1].Type.ShouldBe(TokenType.DoubleDash);
+    tokens[1].Value.ShouldBe("--");
+    tokens[2].Type.ShouldBe(TokenType.Identifier);
+    tokens[2].Value.ShouldBe("env");
+    tokens[3].Type.ShouldBe(TokenType.LeftBrace);
+    tokens[4].Type.ShouldBe(TokenType.Identifier);
+    tokens[4].Value.ShouldBe("e");
+    tokens[5].Type.ShouldBe(TokenType.RightBrace);
+    tokens[6].Type.ShouldBe(TokenType.Asterisk);
+
+    // Second -- is EndOfOptions (separator)
+    tokens[7].Type.ShouldBe(TokenType.EndOfOptions);
+    tokens[7].Value.ShouldBe("--");
+    tokens[8].Type.ShouldBe(TokenType.LeftBrace);
+    tokens[9].Type.ShouldBe(TokenType.Asterisk);
+    tokens[10].Type.ShouldBe(TokenType.Identifier);
+    tokens[10].Value.ShouldBe("cmd");
+    tokens[11].Type.ShouldBe(TokenType.RightBrace);
+    tokens[12].Type.ShouldBe(TokenType.EndOfInput);
+
+    await Task.CompletedTask;
+  }
 }

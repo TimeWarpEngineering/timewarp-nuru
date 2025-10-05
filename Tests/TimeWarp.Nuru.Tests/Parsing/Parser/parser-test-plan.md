@@ -116,7 +116,7 @@ See also: `guides/building-new-cli-apps.md` - Best practices for new CLI applica
 
 ---
 
-## Section 4: Required-Before-Optional Rule (NURU001)
+## Section 4: Required-Before-Optional Rule (NURU_S006)
 
 **Purpose**: Enforce that optional positional parameters must come after required ones.
 
@@ -129,7 +129,7 @@ See also: `guides/building-new-cli-apps.md` - Best practices for new CLI applica
 
 2. **Invalid: Optional Before Required**
    - Pattern: `copy {source?} {dest}`
-   - Expected: ❌ NURU001 error
+   - Expected: ❌ NURU_S006 error
    - Error: "Optional parameter 'source' cannot appear before required parameter 'dest'"
    - Reason: Ambiguous - input "copy file.txt" could be source or dest
 
@@ -145,12 +145,12 @@ See also: `guides/building-new-cli-apps.md` - Best practices for new CLI applica
 
 5. **Invalid: Multiple Optional After One Required**
    - Pattern: `run {script} {arg1?} {arg2?}`
-   - Expected: ❌ NURU002 error (next section covers this)
+   - Expected: ❌ NURU_S002 error (next section covers this)
    - Reason: Multiple consecutive optionals not allowed
 
 ---
 
-## Section 5: Single Optional Positional Rule (NURU002)
+## Section 5: Single Optional Positional Rule (NURU_S002)
 
 **Purpose**: Enforce that only ONE optional positional parameter is allowed (no consecutive optionals).
 
@@ -163,19 +163,19 @@ See also: `guides/building-new-cli-apps.md` - Best practices for new CLI applica
 
 2. **Invalid: Two Consecutive Optionals**
    - Pattern: `deploy {env?} {version?}`
-   - Expected: ❌ NURU002 error
+   - Expected: ❌ NURU_S002 error
    - Error: "Only one optional positional parameter allowed. Found: env, version"
    - Reason: Input "deploy v2.0" is ambiguous - is v2.0 the env or version?
 
 3. **Invalid: Three Consecutive Optionals**
    - Pattern: `run {script?} {arg1?} {arg2?}`
-   - Expected: ❌ NURU002 error
+   - Expected: ❌ NURU_S002 error
    - Reason: Extreme ambiguity with multiple optionals
 
 4. **Valid: Required-Optional-Required Pattern Not Possible**
-   - This pattern is already blocked by NURU001 (optional before required)
+   - This pattern is already blocked by NURU_S006 (optional before required)
    - Pattern: `run {script} {arg?} {timeout}`
-   - Expected: ❌ NURU001 error (optional before required)
+   - Expected: ❌ NURU_S006 error (optional before required)
 
 5. **Edge Case: Single Optional Only**
    - Pattern: `status {format?}`
@@ -184,7 +184,7 @@ See also: `guides/building-new-cli-apps.md` - Best practices for new CLI applica
 
 ---
 
-## Section 6: Catch-all Last Rule (NURU003)
+## Section 6: Catch-all Last Rule (NURU_S003)
 
 **Purpose**: Enforce that catch-all parameters must be the last positional parameter.
 
@@ -202,12 +202,12 @@ See also: `guides/building-new-cli-apps.md` - Best practices for new CLI applica
 
 3. **Invalid: Catch-all Before Parameter**
    - Pattern: `run {*args} {script}`
-   - Expected: ❌ NURU003 error
+   - Expected: ❌ NURU_S003 error
    - Error: "Catch-all parameter '*args' must be last positional parameter"
 
 4. **Invalid: Catch-all in Middle**
    - Pattern: `run {script} {*args} {timeout}`
-   - Expected: ❌ NURU003 error
+   - Expected: ❌ NURU_S003 error
    - Reason: Catch-all consumes all remaining args, nothing left for timeout
 
 5. **Valid: Catch-all with Options**
@@ -217,7 +217,7 @@ See also: `guides/building-new-cli-apps.md` - Best practices for new CLI applica
 
 ---
 
-## Section 7: No Optional with Catch-all Rule (NURU008)
+## Section 7: No Optional with Catch-all Rule (NURU_S004)
 
 **Purpose**: Enforce that optional parameters cannot be mixed with catch-all parameters.
 
@@ -225,7 +225,7 @@ See also: `guides/building-new-cli-apps.md` - Best practices for new CLI applica
 
 1. **Invalid: Optional Before Catch-all**
    - Pattern: `run {script?} {*args}`
-   - Expected: ❌ NURU008 error
+   - Expected: ❌ NURU_S004 error
    - Error: "Cannot mix optional parameters with catch-all parameter"
    - Reason: Ambiguous - where does optional end and catch-all begin?
 
@@ -244,7 +244,7 @@ See also: `guides/building-new-cli-apps.md` - Best practices for new CLI applica
 
 5. **Invalid: Multiple Required, One Optional, Catch-all**
    - Pattern: `run {cmd} {arg?} {*rest}`
-   - Expected: ❌ NURU008 error
+   - Expected: ❌ NURU_S004 error
    - Reason: Optional cannot appear with catch-all
 
 ---
@@ -398,12 +398,12 @@ See also: `guides/building-new-cli-apps.md` - Best practices for new CLI applica
 
 3. **Invalid: End-of-Options Without Catch-all**
    - Pattern: `run --`
-   - Expected: ❌ Error (likely NURU004)
+   - Expected: ❌ Error (likely NURU_S007)
    - Reason: `--` must be followed by catch-all parameter
 
 4. **Invalid: Options After End-of-Options**
    - Pattern: `run -- {*args} --verbose`
-   - Expected: ❌ Error (likely NURU005)
+   - Expected: ❌ Error (likely NURU_S008)
    - Reason: No options allowed after `--` separator
 
 5. **Edge Case: Empty Args After Separator**
@@ -593,29 +593,69 @@ See also: `guides/building-new-cli-apps.md` - Best practices for new CLI applica
 
 ### Error Code Coverage
 
-1. **NURU001: Optional Before Required**
-   - Pattern: `run {arg?} {script}`
-   - Error: "Optional parameter 'arg' cannot appear before required parameter 'script'"
+**Semantic Errors (NURU_S###):**
 
-2. **NURU002: Multiple Optional Positionals**
+1. **NURU_S001: Duplicate Parameter Names**
+   - Pattern: `run {arg} {arg}`
+   - Error: "Duplicate parameter names in route"
+
+2. **NURU_S002: Conflicting Optional Parameters**
    - Pattern: `run {arg1?} {arg2?}`
    - Error: "Only one optional positional parameter allowed"
 
-3. **NURU003: Catch-all Not Last**
+3. **NURU_S003: Catch-all Not Last**
    - Pattern: `run {*args} {script}`
    - Error: "Catch-all parameter must be last positional parameter"
 
-4. **NURU004: End-of-Options Without Catch-all** (assumed)
+4. **NURU_S004: Mixed Catch-all with Optional**
+   - Pattern: `run {script?} {*args}`
+   - Error: "Cannot mix optional parameters with catch-all parameter"
+
+5. **NURU_S005: Option with Duplicate Alias**
+   - Pattern: `build --config,-c {m} --count,-c {n}`
+   - Error: "Option with duplicate alias"
+
+6. **NURU_S006: Optional Before Required**
+   - Pattern: `run {arg?} {script}`
+   - Error: "Optional parameter 'arg' cannot appear before required parameter 'script'"
+
+7. **NURU_S007: Invalid End-of-Options Separator**
    - Pattern: `run --`
    - Error: "End-of-options separator '--' must be followed by catch-all parameter"
 
-5. **NURU005: Options After End-of-Options** (assumed)
+8. **NURU_S008: Options After End-of-Options Separator**
    - Pattern: `run -- {*args} --verbose`
    - Error: "Options cannot appear after end-of-options separator '--'"
 
-6. **NURU008: Optional with Catch-all**
-   - Pattern: `run {script?} {*args}`
-   - Error: "Cannot mix optional parameters with catch-all parameter"
+**Parse Errors (NURU_P###):**
+
+1. **NURU_P001: Invalid Parameter Syntax**
+   - Pattern: `prompt <input>`
+   - Error: "Invalid parameter syntax"
+
+2. **NURU_P002: Unbalanced Braces**
+   - Pattern: `deploy {env`
+   - Error: "Expected '}'"
+
+3. **NURU_P003: Invalid Option Format**
+   - Pattern: `build ---config`
+   - Error: "Invalid option format"
+
+4. **NURU_P004: Invalid Type Constraint**
+   - Pattern: `run {id:invalidtype}`
+   - Error: "Invalid type constraint"
+
+5. **NURU_P005: Invalid Character**
+   - Pattern: `test @param`
+   - Error: "Invalid character in route pattern"
+
+6. **NURU_P006: Unexpected Token**
+   - Pattern: `test }`
+   - Error: "Unexpected token in route pattern"
+
+7. **NURU_P007: Null Route Pattern**
+   - Pattern: `null`
+   - Error: "Null route pattern"
 
 ### Edge Cases
 
@@ -638,15 +678,15 @@ See also: `guides/building-new-cli-apps.md` - Best practices for new CLI applica
 
 5. **Duplicate Parameter Names**
    - Pattern: `run {arg} {arg}`
-   - Expected: ❌ Error (duplicate parameter 'arg')
+   - Expected: ❌ NURU_S001 error (duplicate parameter 'arg')
 
-6. **Duplicate Option Names**
-   - Pattern: `build --config {c} --config {c2}`
-   - Expected: ❌ Error (duplicate option '--config')
+6. **Duplicate Option Aliases**
+   - Pattern: `build --config,-c {m} --count,-c {n}`
+   - Expected: ❌ NURU_S005 error (duplicate alias '-c')
 
 7. **Invalid Type Constraint**
    - Pattern: `run {id:invalidtype}`
-   - Expected: ❌ Error (unknown type 'invalidtype')
+   - Expected: ❌ NURU_P004 error (unknown type 'invalidtype')
 
 8. **Option Without Value**
    - Pattern: `build --config`
@@ -655,12 +695,12 @@ See also: `guides/building-new-cli-apps.md` - Best practices for new CLI applica
 
 9. **Malformed Option**
    - Pattern: `build --` (just separator, no catch-all)
-   - Expected: ❌ NURU004 error
+   - Expected: ❌ NURU_S007 error
 
 10. **Complex Validation Combo**
     - Pattern: `run {a?} {b} {*c}`
-    - Errors: NURU001 (optional before required) AND NURU008 (optional with catch-all)
-    - Expected: Report first error encountered (NURU001)
+    - Errors: NURU_S006 (optional before required) AND NURU_S004 (optional with catch-all)
+    - Expected: Report first error encountered (NURU_S006)
 
 ---
 

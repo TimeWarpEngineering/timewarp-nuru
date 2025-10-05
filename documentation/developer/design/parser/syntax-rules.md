@@ -2,6 +2,144 @@
 
 Route pattern syntax rules enforced by the Parser. These rules prevent ambiguous or malformed patterns.
 
+## Error Categories
+
+Nuru validates route patterns in two phases:
+
+1. **Parse Errors (NURU_P###)**: Syntax errors detected during parsing - malformed syntax that cannot be parsed into valid AST
+2. **Semantic Errors (NURU_S###)**: Validation errors detected after parsing - logically invalid patterns that create ambiguity
+
+---
+
+## Parse Errors (NURU_P###)
+
+Parse errors are detected during lexical analysis and parsing, before semantic validation runs. These represent malformed syntax that cannot be parsed into a valid Abstract Syntax Tree (AST).
+
+### NURU_P001: Invalid Parameter Syntax
+
+Parameters must use curly braces `{}`, not angle brackets `<>`.
+
+```csharp
+// ❌ Error: Invalid parameter syntax
+.AddRoute("deploy <env>", handler);
+
+// ✅ Correct: Use curly braces
+.AddRoute("deploy {env}", handler);
+```
+
+**Why:** Curly braces are the standard syntax for parameters in route patterns. Angle brackets are reserved for other uses.
+
+### NURU_P002: Unbalanced Braces
+
+All opening braces `{` must have matching closing braces `}`.
+
+```csharp
+// ❌ Error: Missing closing brace
+.AddRoute("deploy {env", handler);
+
+// ❌ Error: Missing opening brace
+.AddRoute("deploy env}", handler);
+
+// ✅ Correct: Balanced braces
+.AddRoute("deploy {env}", handler);
+```
+
+**Why:** Unbalanced braces create ambiguity about where parameters begin and end.
+
+### NURU_P003: Invalid Option Format
+
+Multi-character options must use double dash `--`. Single dash `-` is only for single-character options.
+
+```csharp
+// ❌ Error: Multi-character with single dash
+.AddRoute("build -verbose", handler);
+
+// ✅ Correct: Double dash for multi-character
+.AddRoute("build --verbose", handler);
+
+// ✅ Correct: Single dash for single character
+.AddRoute("build -v", handler);
+```
+
+**Why:** This follows POSIX conventions where `-v` and `--verbose` are distinct but related options.
+
+### NURU_P004: Invalid Type Constraint
+
+Type constraints must be one of the supported types.
+
+**Supported types:** `string`, `int`, `double`, `bool`, `DateTime`, `Guid`, `long`, `decimal`, `TimeSpan`
+
+```csharp
+// ❌ Error: Unsupported type 'integer'
+.AddRoute("process {id:integer}", handler);
+
+// ❌ Error: Unsupported type 'float'
+.AddRoute("calc {value:float}", handler);
+
+// ✅ Correct: Use 'int'
+.AddRoute("process {id:int}", handler);
+
+// ✅ Correct: Use 'double' for floating point
+.AddRoute("calc {value:double}", handler);
+```
+
+**Why:** Only explicitly supported types ensure proper parameter binding and type conversion.
+
+### NURU_P005: Invalid Character
+
+Route patterns must contain only valid characters. Unsupported special characters are rejected.
+
+```csharp
+// ❌ Error: Invalid character '@'
+.AddRoute("test @param", handler);
+
+// ❌ Error: Invalid character '#'
+.AddRoute("build #target", handler);
+
+// ✅ Correct: Use parameters for dynamic values
+.AddRoute("test {param}", handler);
+```
+
+**Why:** Restricts syntax to prevent ambiguity and ensure patterns are parseable.
+
+### NURU_P006: Unexpected Token
+
+Parser encountered unexpected syntax during pattern parsing.
+
+```csharp
+// ❌ Error: Unexpected '}'
+.AddRoute("test }", handler);
+
+// ❌ Error: Expected parameter name
+.AddRoute("build --config {}", handler);
+
+// ✅ Correct: Complete parameter syntax
+.AddRoute("build --config {mode}", handler);
+```
+
+**Why:** Indicates incomplete or malformed syntax that doesn't match expected grammar.
+
+### NURU_P007: Null Route Pattern
+
+Route pattern string cannot be null.
+
+```csharp
+// ❌ Error: Null pattern
+string? pattern = null;
+builder.AddRoute(pattern!, handler);
+
+// ✅ Correct: Valid pattern string
+builder.AddRoute("valid-pattern", handler);
+```
+
+**Why:** Null patterns have no semantic meaning and indicate a programming error.
+
+---
+
+## Semantic Errors (NURU_S###)
+
+Semantic errors are detected after successful parsing, during validation of the route's logical structure. These patterns are syntactically valid but create ambiguity or conflicts.
+
 ## Core Syntax Rules
 
 ### Parameter Modifiers
@@ -16,40 +154,78 @@ Route pattern syntax rules enforced by the Parser. These rules prevent ambiguous
 
 ### Positional Parameter Rules
 
-1. **Optional parameters must come after all required parameters**
-   ```csharp
-   // ✅ Valid: Required before optional
-   .AddRoute("copy {source} {dest?}", (string source, string? dest) => ...)
+#### NURU_S006: Optional Parameters Must Come After Required
 
-   // ❌ Invalid: Optional before required
-   .AddRoute("copy {source?} {dest}", (string? source, string dest) => ...)
-   ```
+Optional positional parameters must appear after all required parameters.
 
-2. **Only ONE optional positional parameter allowed (no consecutive optionals)**
-   ```csharp
-   // ✅ Valid: Single optional at end
-   .AddRoute("deploy {env} {version?}", (string env, string? version) => ...)
+```csharp
+// ✅ Valid: Required before optional
+.AddRoute("copy {source} {dest?}", (string source, string? dest) => ...)
 
-   // ❌ Invalid: Multiple consecutive optionals (ambiguous)
-   .AddRoute("deploy {env?} {version?}", (string? env, string? version) => ...)
-   // Which arg is env vs version? "deploy v2.0" is ambiguous
-   ```
+// ❌ Error NURU_S006: Optional before required
+.AddRoute("copy {source?} {dest}", (string? source, string dest) => ...)
+```
 
-3. **Catch-all must be last**
-   ```csharp
-   // ✅ Valid: Catch-all at end
-   .AddRoute("exec {cmd} {*args}", (string cmd, string[] args) => ...)
+**Why:** Ambiguity - input `"copy file.txt"` could be source (with dest omitted) or dest (with source omitted).
 
-   // ❌ Invalid: Catch-all not at end
-   .AddRoute("exec {*args} {cmd}", (string[] args, string cmd) => ...)
-   ```
+#### NURU_S002: Only ONE Optional Positional Parameter Allowed
 
-4. **Cannot mix optional parameters with catch-all**
-   ```csharp
-   // ❌ Invalid: Optional param with catch-all (NURU008)
-   .AddRoute("run {script?} {*args}", (string? script, string[] args) => ...)
-   // Use one or the other, not both
-   ```
+Having multiple consecutive optional parameters creates parsing ambiguity.
+
+```csharp
+// ✅ Valid: Single optional at end
+.AddRoute("deploy {env} {version?}", (string env, string? version) => ...)
+
+// ❌ Error NURU_S002: Multiple consecutive optionals
+.AddRoute("deploy {env?} {version?}", (string? env, string? version) => ...)
+```
+
+**Why:** Input `"deploy v2.0"` is ambiguous - is `v2.0` the env (with version omitted) or version (with env omitted)?
+
+#### NURU_S003: Catch-all Must Be Last
+
+Catch-all parameters must appear as the last positional parameter in the route.
+
+```csharp
+// ✅ Valid: Catch-all at end
+.AddRoute("exec {cmd} {*args}", (string cmd, string[] args) => ...)
+
+// ❌ Error NURU_S003: Catch-all not at end
+.AddRoute("exec {*args} {cmd}", (string[] args, string cmd) => ...)
+```
+
+**Why:** Catch-all consumes all remaining arguments, leaving nothing for subsequent parameters.
+
+#### NURU_S004: Cannot Mix Optional Parameters with Catch-all
+
+Routes cannot contain both optional parameters and catch-all parameters.
+
+```csharp
+// ❌ Error NURU_S004: Optional with catch-all
+.AddRoute("run {script?} {*args}", (string? script, string[] args) => ...)
+
+// ✅ Valid: Required with catch-all
+.AddRoute("run {script} {*args}", (string script, string[] args) => ...)
+
+// ✅ Valid: Just optional (no catch-all)
+.AddRoute("run {script?}", (string? script) => ...)
+```
+
+**Why:** Ambiguity - where does the optional parameter end and the catch-all begin?
+
+#### NURU_S001: Duplicate Parameter Names
+
+Each parameter name must be unique within a route pattern.
+
+```csharp
+// ❌ Error NURU_S001: Duplicate parameter 'arg'
+.AddRoute("run {arg} {arg}", handler);
+
+// ✅ Valid: Unique parameter names
+.AddRoute("run {source} {dest}", handler);
+```
+
+**Why:** Parameters must have unique names for proper binding to handler arguments.
 
 ### Why These Rules Exist
 
@@ -153,16 +329,45 @@ The double dash `--` serves as an end-of-options marker (POSIX standard) that si
 // e = ["PATH=/bin", "USER=root"], cmd = ["ls", "-la"]
 ```
 
-**Rules for `--` Separator**:
-1. `--` must be followed by a catch-all parameter (`{*param}`)
-2. No options can appear after `--`
-3. Everything after `--` is treated as positional arguments
-4. The `--` itself is not included in the captured arguments
-5. Arguments after `--` preserve their literal form (dashes are not interpreted)
+**Semantic Validation Rules for `--` Separator**:
+
+#### NURU_S007: Invalid End-of-Options Separator
+
+The `--` separator must be followed by a catch-all parameter.
+
+```csharp
+// ❌ Error NURU_S007: No catch-all after --
+.AddRoute("run --", handler);
+
+// ✅ Valid: -- followed by catch-all
+.AddRoute("run -- {*args}", handler);
+```
+
+**Why:** The `--` separator's purpose is to pass remaining arguments to the catch-all parameter.
+
+#### NURU_S008: Options After End-of-Options Separator
+
+Options cannot appear after the `--` separator.
+
+```csharp
+// ❌ Error NURU_S008: Option after --
+.AddRoute("run -- {*args} --verbose", handler);
+
+// ✅ Valid: Options before --
+.AddRoute("run --verbose -- {*args}", handler);
+```
+
+**Why:** The `--` separator marks the end of option processing; everything after is treated as literal arguments.
+
+**Additional Rules**:
+1. Everything after `--` is treated as positional arguments
+2. The `--` itself is not included in the captured arguments
+3. Arguments after `--` preserve their literal form (dashes are not interpreted)
 
 **Implementation Details**:
 - Lexer tokenizes standalone `--` as `TokenType.EndOfOptions`
-- Parser validates that only catch-all parameters follow `--`
+- Parser validates that only catch-all parameters follow `--` (NURU_S007)
+- Parser validates that no options appear after `--` (NURU_S008)
 - Route matching stops option processing after encountering `--`
 
 ### Arrays in Options - Design for Command Interception
@@ -306,6 +511,25 @@ Some CLIs have unusual syntaxes, but we can still intercept them with creative r
 | `--flag {value?}` | Required flag with optional value | `build --config {mode?}` | `build --config debug`<br>`build --config` | `build` |
 | `--flag? {value}` | Optional flag with required value (if present) | `build --config? {mode}` | `build`<br>`build --config debug` | `build --config` |
 | `--flag? {value?}` | Optional flag with optional value | `build --config? {mode?}` | `build`<br>`build --config`<br>`build --config debug` | - |
+
+#### NURU_S005: Option with Duplicate Alias
+
+Options cannot have the same short form (alias) specified multiple times.
+
+```csharp
+// ❌ Error NURU_S005: Duplicate alias '-c'
+.AddRoute("build --config,-c {m} --count,-c {n}", handler);
+
+// ✅ Valid: Unique aliases
+.AddRoute("build --config,-c {m} --count,-n {n}", handler);
+
+// ✅ Valid: Option aliases allow both forms
+.AddRoute("build --verbose,-v", handler);
+// Matches: build --verbose
+// Matches: build -v
+```
+
+**Why:** Short form aliases must be unique to avoid ambiguity when parsing command-line arguments.
 
 ## Required vs Optional Options - Explicit Syntax
 

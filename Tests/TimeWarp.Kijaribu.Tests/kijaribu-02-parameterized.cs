@@ -1,9 +1,12 @@
-namespace TimeWarp.Kijaribu.Tests;
+#!/usr/bin/dotnet --
 
 using System;
 using System.Threading.Tasks;
 using TimeWarp.Kijaribu;
 
+return await RunTests<ParamTests>(clearCache: true);
+
+[TestTag("Kijaribu")]
 public class ParamTests
 {
     /// <summary>
@@ -73,8 +76,9 @@ public class ParamTests
         {
             throw new InvalidOperationException("Null mismatch");
         }
-await Task.CompletedTask;
-}
+
+        await Task.CompletedTask;
+    }
 
     /// <summary>
     /// PARAM-EDGE-01: [Input] with 0 params for method expecting 2.

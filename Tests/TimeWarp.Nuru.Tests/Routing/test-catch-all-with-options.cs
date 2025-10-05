@@ -1,12 +1,8 @@
 #!/usr/bin/dotnet --
-#:project ../../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
 
 // Test: Catch-all Parameters with Options
 // Pattern: command {*args} --flag? {value?}
 // Validates that options can be parsed correctly even when mixed with catch-all parameters
-
-using TimeWarp.Nuru;
-using static System.Console;
 
 WriteLine
 (

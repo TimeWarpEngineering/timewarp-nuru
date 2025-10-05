@@ -1,13 +1,8 @@
 #!/usr/bin/dotnet --
-#:project ../../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
 
 // Test: Typed Optional Parameters
 // Pattern: {param:type?}
 // Validates that parameters can be both typed AND optional
-
-using TimeWarp.Nuru;
-using static System.Console;
-
 WriteLine
 (
   """

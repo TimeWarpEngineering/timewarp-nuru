@@ -1,13 +1,19 @@
 namespace TimeWarp.Nuru.Parsing;
 
-using TimeWarp.Nuru.Parsing;
-
 /// <summary>
 /// Compiler that converts route pattern syntax tree to the runtime CompiledRoute structure.
 /// This maintains backward compatibility with the current system.
 /// </summary>
 internal sealed class Compiler : SyntaxVisitor<object?>
 {
+  // Specificity scoring constants
+  // Higher values indicate more specific routes that should be tried first
+  private const int SpecificityLiteralSegment = 15;
+  private const int SpecificityPositionalParameter = 2;
+  private const int SpecificityOption = 10;
+  private const int SpecificityOptionParameter = 5;
+  private const int SpecificityCatchAllPenalty = -20;
+
   private readonly ILogger<Compiler> Logger;
   private readonly List<RouteMatcher> Segments = [];
   private readonly List<string> RequiredOptionPatterns = [];
@@ -53,7 +59,7 @@ internal sealed class Compiler : SyntaxVisitor<object?>
   public override object? VisitLiteral(LiteralSyntax literal)
   {
     Segments.Add(new LiteralMatcher(literal.Value));
-    Specificity += 15; // Literal segments greatly increase specificity
+    Specificity += SpecificityLiteralSegment;
     return null;
   }
 
@@ -62,11 +68,11 @@ internal sealed class Compiler : SyntaxVisitor<object?>
     if (parameter.IsCatchAll)
     {
       CatchAllParameterName = parameter.Name;
-      Specificity -= 20; // Catch-all reduces specificity
+      Specificity += SpecificityCatchAllPenalty;
     }
     else
     {
-      Specificity += 2; // Positional parameters slightly increase specificity
+      Specificity += SpecificityPositionalParameter;
     }
 
     // Create parameter matcher
@@ -99,7 +105,7 @@ internal sealed class Compiler : SyntaxVisitor<object?>
       ?? throw new ParseException("Option must have a syntax");
 
     RequiredOptionPatterns.Add(optionSyntax);
-    Specificity += 10; // Options increase specificity
+    Specificity += SpecificityOption;
 
     // Determine if this option expects a value
     bool expectsValue = option.Parameter is not null;
@@ -118,7 +124,7 @@ internal sealed class Compiler : SyntaxVisitor<object?>
       if (option.Parameter.IsCatchAll)
         CatchAllParameterName = option.Parameter.Name;
       else
-        Specificity += 5; // Option parameters increase specificity
+        Specificity += SpecificityOptionParameter;
     }
 
     // Create option matcher

@@ -414,68 +414,137 @@ See also: `guides/building-new-cli-apps.md` - Best practices for new CLI applica
 
 ---
 
-## Section 12: Specificity Calculation
+## Section 12: Specificity Ranking (Relative Ordering)
 
-**Purpose**: Verify the 7-tier specificity scoring system is correctly calculated.
+**Purpose**: Verify that route specificity correctly determines priority when multiple routes could match.
 
-### Specificity Score Table (from design docs)
+**Approach**: Test RELATIVE ordering (route1 > route2), NOT exact point values.
 
-| Element | Score | Example |
-|---------|-------|---------|
-| Literal | 100 | `deploy`, `status` |
-| Required Option | 50 | `--config {mode}`, `--verbose` |
-| Optional Option | 25 | `--config? {mode?}` (NOT SUPPORTED) |
-| Typed Parameter | 20 | `{id:int}`, `{when:datetime}` |
-| Untyped Parameter | 10 | `{name}`, `{value}` |
-| Optional Parameter | 5 | `{tag?}`, `{id:int?}` |
-| Catch-all | 1 | `{*args}`, `{*rest}` |
+### Test Cases from Design Document Examples
 
-### Test Cases
+#### Git Commit Progressive Interception
 
-1. **Pure Literal Route**
-   - Pattern: `git status`
-   - Score: 200 (100 + 100)
+Tests the git commit example from [specificity-algorithm.md](../../../documentation/developer/design/resolver/specificity-algorithm.md#example-1-git-commit-interception).
 
-2. **Literal + Required Parameter**
-   - Pattern: `greet {name}`
-   - Score: 110 (100 + 10)
+1. **Most Specific Wins**
+   ```csharp
+   var mostSpecific = PatternParser.Parse("git commit --message {msg} --amend");
+   var lessSpecific = PatternParser.Parse("git commit --message {msg}");
 
-3. **Literal + Typed Parameter**
-   - Pattern: `delay {ms:int}`
-   - Score: 120 (100 + 20)
+   // Assertion: 2 options + param > 1 option + param
+   mostSpecific.Specificity.ShouldBeGreaterThan(lessSpecific.Specificity);
+   ```
 
-4. **Literal + Optional Parameter**
-   - Pattern: `deploy {env?}`
-   - Score: 105 (100 + 5)
+2. **Options Beat Literals**
+   ```csharp
+   var withOption = PatternParser.Parse("git commit --amend");
+   var literalOnly = PatternParser.Parse("git commit");
 
-5. **Literal + Catch-all**
-   - Pattern: `docker {*args}`
-   - Score: 101 (100 + 1)
+   // Assertion: Options increase specificity
+   withOption.Specificity.ShouldBeGreaterThan(literalOnly.Specificity);
+   ```
 
-6. **Required Options**
-   - Pattern: `build --config {mode} --verbose`
-   - Score: 100 (50 + 50)
+3. **Literals Beat Catch-all**
+   ```csharp
+   var specific = PatternParser.Parse("git commit");
+   var catchAll = PatternParser.Parse("git {*args}");
+   var universal = PatternParser.Parse("{*args}");
 
-7. **Mixed: Literal + Typed + Required Option**
-   - Pattern: `deploy {env} --tag {t} --verbose`
-   - Score: 160 (100 + 10 + 50)
-   - Breakdown: "deploy"(100) + {env}(10) + --tag(50) + --verbose(50) = 210
-   - Correction: Score: 210
+   // Assertion: Literals rank higher than catch-all
+   specific.Specificity.ShouldBeGreaterThan(catchAll.Specificity);
+   catchAll.Specificity.ShouldBeGreaterThan(universal.Specificity);
+   ```
 
-8. **Complex: Multiple Literals and Parameters**
-   - Pattern: `git commit -m {msg} --amend`
-   - Score: 310 (100 + 100 + 50 + 50 + 10)
-   - Breakdown: "git"(100) + "commit"(100) + -m(50) + --amend(50) + {msg}(10)
+4. **Full Git Commit Hierarchy**
+   ```csharp
+   // Parse all 7 routes from the design doc example
+   var r1 = PatternParser.Parse("git commit --message {msg} --amend");
+   var r2 = PatternParser.Parse("git commit --message {msg}");
+   var r3 = PatternParser.Parse("git commit --amend --no-edit");
+   var r4 = PatternParser.Parse("git commit --amend");
+   var r5 = PatternParser.Parse("git commit");
+   var r6 = PatternParser.Parse("git {*args}");
+   var r7 = PatternParser.Parse("{*args}");
 
-9. **Optional Parameter Scoring**
-   - Pattern: `copy {source} {dest?}`
-   - Score: 15 (10 + 5)
-   - Note: Optional scores LOWER than typed (5 vs 20)
+   // Assertions verify complete ordering
+   r1.Specificity.ShouldBeGreaterThan(r2.Specificity);  // More options wins
+   r2.Specificity.ShouldBeGreaterThan(r4.Specificity);  // Param + option > option alone
+   r4.Specificity.ShouldBeGreaterThan(r5.Specificity);  // Option > no option
+   r5.Specificity.ShouldBeGreaterThan(r6.Specificity);  // Literals > catch-all
+   r6.Specificity.ShouldBeGreaterThan(r7.Specificity);  // Literal + catch-all > catch-all alone
+   ```
 
-10. **Optional Typed Parameter**
-    - Pattern: `delay {ms:int?}`
-    - Score: 5 (optional trumps typed)
-    - Note: Optional status determines score, not type
+#### Deploy Command Evolution
+
+Tests the deploy example showing progressive feature addition.
+
+5. **Literal Parameter Beats Catch-all**
+   ```csharp
+   var specific = PatternParser.Parse("deploy production --force");
+   var general = PatternParser.Parse("deploy {env}");
+   var catchAll = PatternParser.Parse("deploy {env} {*flags}");
+
+   // Assertions
+   specific.Specificity.ShouldBeGreaterThan(general.Specificity);  // Literal value > parameter
+   general.Specificity.ShouldBeGreaterThan(catchAll.Specificity);  // Parameter > catch-all
+   ```
+
+6. **Options Increase Specificity**
+   ```csharp
+   var withOptions = PatternParser.Parse("deploy {env} --dry-run");
+   var withoutOptions = PatternParser.Parse("deploy {env}");
+
+   // Assertion: Adding option increases ranking
+   withOptions.Specificity.ShouldBeGreaterThan(withoutOptions.Specificity);
+   ```
+
+#### Docker Command Hierarchy
+
+7. **Specific Beats General Beats Universal**
+   ```csharp
+   var specific = PatternParser.Parse("docker run {image} --detach");
+   var general = PatternParser.Parse("docker {cmd} {*args}");
+   var universal = PatternParser.Parse("{cmd} {*args}");
+
+   // Assertions verify 3-level hierarchy
+   specific.Specificity.ShouldBeGreaterThan(general.Specificity);
+   general.Specificity.ShouldBeGreaterThan(universal.Specificity);
+   ```
+
+### Conceptual Validation
+
+8. **Literal > Parameter > Catch-all**
+   ```csharp
+   var literal = PatternParser.Parse("status");
+   var param = PatternParser.Parse("{command}");
+   var catchAll = PatternParser.Parse("{*args}");
+
+   // Fundamental hierarchy
+   literal.Specificity.ShouldBeGreaterThan(param.Specificity);
+   param.Specificity.ShouldBeGreaterThan(catchAll.Specificity);
+   ```
+
+9. **Multiple Elements Stack**
+   ```csharp
+   var twoLiterals = PatternParser.Parse("git status");
+   var oneLiteral = PatternParser.Parse("status");
+
+   // More specificity elements = higher rank
+   twoLiterals.Specificity.ShouldBeGreaterThan(oneLiteral.Specificity);
+   ```
+
+10. **Options Contribute to Ranking**
+    ```csharp
+    var twoOptions = PatternParser.Parse("build --verbose --watch");
+    var oneOption = PatternParser.Parse("build --verbose");
+    var noOptions = PatternParser.Parse("build");
+
+    // More options = more specific
+    twoOptions.Specificity.ShouldBeGreaterThan(oneOption.Specificity);
+    oneOption.Specificity.ShouldBeGreaterThan(noOptions.Specificity);
+    ```
+
+**Note**: These tests validate the DESIGN INTENT (routing priority), not implementation details (exact point values). If we change scoring constants, tests remain valid as long as relative ordering stays correct
 
 ---
 
@@ -746,6 +815,47 @@ See also: `guides/building-new-cli-apps.md` - Best practices for new CLI applica
 ---
 
 ## Testing Approach
+
+### Progressive Test Structure
+
+Tests build from simple compilation checks to complex behavioral validation:
+
+**Sections 1-3 (parser-01 to parser-03): Compilation Verification**
+- Focus: Do these patterns parse successfully?
+- Assertions: Route not null, correct segment counts, basic structure
+- NO specificity value testing (implementation detail)
+- NO exact point calculations
+
+**Sections 4-11 (parser-04 to parser-11): Semantic Validation**
+- Focus: Do validation rules catch errors correctly?
+- Assertions: PatternException thrown with correct NURU_S### error code
+- Tests both valid patterns (parse successfully) and invalid patterns (throw errors)
+
+**Section 12 (parser-12-specificity-ranking): Relative Specificity**
+- Focus: Which route ranks higher when multiple routes could match?
+- Uses real-world examples from design doc (git commit, deploy commands)
+- Assertions: `route1.Specificity > route2.Specificity` (relative ordering)
+- Tests design intent (priority), not implementation details (exact values)
+
+**Section 13 (parser-13-route-matching): Priority Selection**
+- Focus: Route specificity determines matching priority
+- Tests that more specific routes are tried before general ones
+- Validates the conceptual model from the design document
+
+**Sections 14-15 (parser-14, parser-15): Integration & Errors**
+- Complex real-world patterns (docker, git, kubectl)
+- Comprehensive error code coverage (all NURU_P### and NURU_S###)
+- Edge cases (unicode, empty patterns, complex combinations)
+
+### Why This Structure?
+
+1. **Tests design intent, not implementation**: Relative ordering matters, exact point values don't
+2. **Resilient to refactoring**: Can change scoring values without breaking tests
+3. **Clear failure messages**: "route1 should rank higher than route2" vs "expected 47 but got 45"
+4. **Matches documentation**: Uses same examples from specificity-algorithm.md
+5. **Progressive complexity**: Simple checks first, complex behavior last
+
+## Testing Approach (Detailed)
 
 Following the successful lexer testing methodology:
 

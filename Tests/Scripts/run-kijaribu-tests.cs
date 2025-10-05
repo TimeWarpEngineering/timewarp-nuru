@@ -69,6 +69,7 @@ string[] testFiles = [
   Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Parsing/Parser/parser-10-specificity-ranking.cs"),
   Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Parsing/Parser/parser-11-complex-integration.cs"),
   Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Parsing/Parser/parser-12-error-reporting.cs"),
+  Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Parsing/Parser/parser-13-syntax-errors.cs"),
   // Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Lexer/test-route-pattern-tokenization-kijaribu.cs"),
   // Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Lexer/test-end-of-options-separator-kijaribu.cs"),
   // Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Lexer/test-invalid-token-detection-kijaribu.cs"),

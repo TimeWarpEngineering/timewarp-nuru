@@ -99,10 +99,17 @@ internal sealed class Compiler : SyntaxVisitor<object?>
       ? $"--{option.LongForm}"
       : null;
 
+    // Prefer long form as primary pattern, short form as fallback
     string optionSyntax =
-      optionShortSyntax
-      ?? optionLongSyntax
+      optionLongSyntax
+      ?? optionShortSyntax
       ?? throw new ParseException("Option must have a syntax");
+
+    // Alternate form is short form when both exist
+    string? alternateForm =
+      (optionLongSyntax is not null && optionShortSyntax is not null)
+      ? optionShortSyntax
+      : null;
 
     RequiredOptionPatterns.Add(optionSyntax);
     Specificity += SpecificityOption;
@@ -134,7 +141,7 @@ internal sealed class Compiler : SyntaxVisitor<object?>
         matchPattern: optionSyntax,
         expectsValue: expectsValue,
         parameterName: valueParameterName,
-        alternateForm: optionShortSyntax,
+        alternateForm: alternateForm,
         description: option.Description,
         isOptional: option.IsOptional || !expectsValue,  // Boolean flags are always optional
         isRepeated: option.Parameter?.IsRepeated ?? false

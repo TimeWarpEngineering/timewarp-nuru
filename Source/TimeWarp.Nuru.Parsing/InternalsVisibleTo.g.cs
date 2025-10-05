@@ -27,6 +27,7 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("parser-05-consecutive-optionals")]
 [assembly: InternalsVisibleTo("parser-06-catchall-position")]
 [assembly: InternalsVisibleTo("parser-07-catchall-optional-conflict")]
+[assembly: InternalsVisibleTo("parser-08-option-modifiers")]
 [assembly: InternalsVisibleTo("parser-12-specificity-ranking")]
 [assembly: InternalsVisibleTo("Program")]
 [assembly: InternalsVisibleTo("Program")]

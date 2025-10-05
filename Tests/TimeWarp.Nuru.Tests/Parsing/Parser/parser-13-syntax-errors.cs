@@ -74,4 +74,18 @@ public class SyntaxErrorTests
 
     await Task.CompletedTask;
   }
+
+  public static async Task Should_reject_combined_catchall_and_optional_modifiers()
+  {
+    // Cannot combine * and ? modifiers in same parameter
+    // Grammar only allows ONE modifier: either {*param} OR {param?}, not both
+    PatternException exception = Should.Throw<PatternException>(() =>
+      PatternParser.Parse("deploy {*files?}")
+    );
+
+    exception.ParseErrors.ShouldNotBeNull();
+    exception.ParseErrors.Count.ShouldBeGreaterThan(0);
+
+    await Task.CompletedTask;
+  }
 }

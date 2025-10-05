@@ -172,4 +172,60 @@ public class OptionModifiersTests
 
     await Task.CompletedTask;
   }
+
+  public static async Task Should_parse_repeated_option()
+  {
+    // Arrange & Act
+    CompiledRoute route = PatternParser.Parse("docker --env {var}*");
+
+    // Assert - Repeated option collects multiple values into array
+    route.ShouldNotBeNull();
+    route.OptionMatchers.Count.ShouldBe(1);
+
+    OptionMatcher envOption = route.OptionMatchers[0];
+    envOption.MatchPattern.ShouldBe("--env");
+    envOption.ExpectsValue.ShouldBeTrue();
+    envOption.ParameterName.ShouldBe("var");
+    envOption.IsRepeated.ShouldBeTrue();
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_parse_repeated_typed_option()
+  {
+    // Arrange & Act
+    CompiledRoute route = PatternParser.Parse("server --port {num:int}*");
+
+    // Assert - Repeated option with type constraint
+    route.ShouldNotBeNull();
+    route.OptionMatchers.Count.ShouldBe(1);
+
+    OptionMatcher portOption = route.OptionMatchers[0];
+    portOption.MatchPattern.ShouldBe("--port");
+    portOption.ExpectsValue.ShouldBeTrue();
+    portOption.ParameterName.ShouldBe("num");
+    portOption.IsRepeated.ShouldBeTrue();
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_parse_multiple_repeated_options()
+  {
+    // Arrange & Act
+    CompiledRoute route = PatternParser.Parse("build --define {key}* --exclude {pattern}*");
+
+    // Assert - Multiple repeated options in same route
+    route.ShouldNotBeNull();
+    route.OptionMatchers.Count.ShouldBe(2);
+
+    OptionMatcher defineOption = route.OptionMatchers[0];
+    defineOption.MatchPattern.ShouldBe("--define");
+    defineOption.IsRepeated.ShouldBeTrue();
+
+    OptionMatcher excludeOption = route.OptionMatchers[1];
+    excludeOption.MatchPattern.ShouldBe("--exclude");
+    excludeOption.IsRepeated.ShouldBeTrue();
+
+    await Task.CompletedTask;
+  }
 }

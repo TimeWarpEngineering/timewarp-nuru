@@ -44,13 +44,13 @@ public class TypedParameterParsingTests
   public static async Task Should_parse_datetime_typed_parameter()
   {
     // Arrange & Act
-    CompiledRoute route = PatternParser.Parse("schedule {when:datetime}");
+    CompiledRoute route = PatternParser.Parse("schedule {when:DateTime}");
 
-    // Assert - Verify datetime type
+    // Assert - Verify DateTime type (Pascal case)
     route.ShouldNotBeNull();
     var param = (ParameterMatcher)route.PositionalMatchers[1];
     param.Name.ShouldBe("when");
-    param.Constraint.ShouldBe("datetime");
+    param.Constraint.ShouldBe("DateTime");
 
     await Task.CompletedTask;
   }

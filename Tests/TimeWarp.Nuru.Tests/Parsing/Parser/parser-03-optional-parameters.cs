@@ -62,22 +62,20 @@ public class OptionalParameterParsingTests
     await Task.CompletedTask;
   }
 
-  public static async Task Should_parse_multiple_optional_parameters()
+  public static async Task Should_reject_consecutive_optional_parameters()
   {
     // Arrange & Act
-    CompiledRoute route = PatternParser.Parse("configure {env?} {region?}");
+    PatternException exception = Should.Throw<PatternException>(() =>
+      PatternParser.Parse("configure {env?} {region?}")
+    );
 
-    // Assert - Verify both are optional
-    route.ShouldNotBeNull();
-    route.PositionalMatchers.Count.ShouldBe(3);
+    // Assert - Consecutive optional parameters create ambiguity
+    exception.SemanticErrors.ShouldNotBeNull();
+    exception.SemanticErrors[0].ShouldBeOfType<ConflictingOptionalParametersError>();
 
-    var envParam = (ParameterMatcher)route.PositionalMatchers[1];
-    envParam.Name.ShouldBe("env");
-    envParam.IsOptional.ShouldBeTrue();
-
-    var regionParam = (ParameterMatcher)route.PositionalMatchers[2];
-    regionParam.Name.ShouldBe("region");
-    regionParam.IsOptional.ShouldBeTrue();
+    var error = (ConflictingOptionalParametersError)exception.SemanticErrors[0];
+    error.ConflictingParameters.ShouldContain("env");
+    error.ConflictingParameters.ShouldContain("region");
 
     await Task.CompletedTask;
   }

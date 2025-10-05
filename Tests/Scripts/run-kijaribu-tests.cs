@@ -56,6 +56,12 @@ string[] testFiles = [
   Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Lexer/lexer-12-description-tokenization.cs"),
   Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Lexer/lexer-13-parameter-context.cs"),
   Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Lexer/lexer-14-token-position.cs"),
+  // Parser tests (numbered)
+  Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Parsing/Parser/parser-01-basic-parameters.cs"),
+  Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Parsing/Parser/parser-02-typed-parameters.cs"),
+  Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Parsing/Parser/parser-03-optional-parameters.cs"),
+  Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Parsing/Parser/parser-04-duplicate-parameters.cs"),
+  Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Parsing/Parser/parser-12-specificity-ranking.cs"),
   // Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Lexer/test-route-pattern-tokenization-kijaribu.cs"),
   // Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Lexer/test-end-of-options-separator-kijaribu.cs"),
   // Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Lexer/test-invalid-token-detection-kijaribu.cs"),

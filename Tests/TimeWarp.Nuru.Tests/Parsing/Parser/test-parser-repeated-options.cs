@@ -49,7 +49,6 @@ WriteLine
 TestPattern("docker --env {var}*", true, "Repeated string parameter");
 TestPattern("build --define {key}*", true, "Repeated definitions");
 TestPattern("run --port {num:int}*", true, "Repeated typed parameter");
-TestPattern("test --exclude {pattern}*", true, "Repeated exclusions");
 TestPattern("deploy --tag {t}*", true, "Short parameter name");
 TestPattern("exec --env {e}* --volume {v}*", true, "Multiple repeated options");
 

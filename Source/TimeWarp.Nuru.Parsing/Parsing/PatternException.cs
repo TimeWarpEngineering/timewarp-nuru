@@ -20,7 +20,7 @@ public class PatternException : Exception
   public IReadOnlyList<SemanticError>? SemanticErrors { get; }
 
   /// <summary>
-  /// Creates a new RoutePatternException with parsing errors.
+  /// Creates a new <see cref="PatternException"/> with parsing errors.
   /// </summary>
   public PatternException
   (

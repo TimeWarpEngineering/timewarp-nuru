@@ -107,4 +107,73 @@ public class EndOfOptionsParserTests
 
     await Task.CompletedTask;
   }
+
+  public static async Task Should_parse_standalone_end_of_options()
+  {
+    // Arrange & Act
+    CompiledRoute route = PatternParser.Parse("-- {*args}");
+
+    // Assert - Just separator and catch-all, no command before
+    route.ShouldNotBeNull();
+    route.HasCatchAll.ShouldBeTrue();
+    route.CatchAllParameterName.ShouldBe("args");
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_reject_optional_param_after_end_of_options()
+  {
+    // Arrange & Act & Assert
+    PatternException exception = Should.Throw<PatternException>(() =>
+      PatternParser.Parse("exec -- {param?}")
+    );
+
+    // Only catch-all allowed after --, not optional parameters
+    exception.SemanticErrors.ShouldNotBeNull();
+    exception.SemanticErrors.Count.ShouldBeGreaterThan(0);
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_reject_typed_param_after_end_of_options()
+  {
+    // Arrange & Act & Assert
+    PatternException exception = Should.Throw<PatternException>(() =>
+      PatternParser.Parse("exec -- {param:int}")
+    );
+
+    // Only catch-all allowed after --, not typed parameters
+    exception.SemanticErrors.ShouldNotBeNull();
+    exception.SemanticErrors.Count.ShouldBeGreaterThan(0);
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_reject_multiple_params_after_end_of_options()
+  {
+    // Arrange & Act & Assert
+    PatternException exception = Should.Throw<PatternException>(() =>
+      PatternParser.Parse("exec -- {*args} {other}")
+    );
+
+    // Only one catch-all allowed, nothing can follow it
+    exception.SemanticErrors.ShouldNotBeNull();
+    exception.SemanticErrors.Count.ShouldBeGreaterThan(0);
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_reject_standalone_separator_without_catchall()
+  {
+    // Arrange & Act & Assert
+    PatternException exception = Should.Throw<PatternException>(() =>
+      PatternParser.Parse("--")
+    );
+
+    // Standalone -- with no catch-all is invalid
+    exception.SemanticErrors.ShouldNotBeNull();
+    exception.SemanticErrors.Count.ShouldBeGreaterThan(0);
+
+    await Task.CompletedTask;
+  }
 }

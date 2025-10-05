@@ -13,7 +13,9 @@ The parser is responsible for:
 3. **Specificity Calculation** - Computing route specificity scores
 4. **Semantic Validation** - Enforcing NURU_S001-S008 rules
 
-Organized into 15 focused sections with 90+ individual test cases.
+Organized into 12 focused sections with 90+ individual test cases.
+
+**Note**: Sections covering runtime behavior (option matching, route selection, parameter binding) have been moved to [Routing Test Plan](../../Routing/routing-test-plan.md) for proper layer separation.
 
 ## Design Document References
 
@@ -298,125 +300,45 @@ Organized into 15 focused sections with 90+ individual test cases.
    - Expected: Both forms take the same value parameter
    - Specificity: 50
 
----
-
-## Section 9: Required vs Optional Options
-
-**Purpose**: Verify nullability-based required/optional option logic.
-
-### Test Cases
-
-1. **Non-nullable Parameter = Required Option**
-   - Pattern: `build --config {mode}`
-   - Handler: `(string mode) => ...`
-   - Input `build` (missing --config): ❌ Route doesn't match
-   - Input `build --config debug`: ✅ Matches, mode="debug"
-
-2. **Nullable Parameter = Optional Option**
-   - Pattern: `build --config {mode?}`
-   - Handler: `(string? mode) => ...`
-   - Input `build`: ✅ Matches, mode=null
-   - Input `build --config debug`: ✅ Matches, mode="debug"
-
-3. **Boolean Always Optional**
-   - Pattern: `build --verbose`
-   - Handler: `(bool verbose) => ...`
-   - Input `build`: ✅ Matches, verbose=false
-   - Input `build --verbose`: ✅ Matches, verbose=true
-
-4. **Mixed Required and Optional Options**
-   - Pattern: `deploy --env {e} --tag {t?} --verbose`
-   - Handler: `(string e, string? t, bool verbose) => ...`
-   - Input `deploy --env prod`: ✅ Matches (tag=null, verbose=false)
-   - Input `deploy`: ❌ Doesn't match (missing required --env)
-
-5. **Required Option with Optional Value Edge Case**
-   - Pattern: `log --level {lvl?}`
-   - Handler: `(string? lvl) => ...`
-   - Input `log --level`: ✅ Matches, lvl=null (flag present, value omitted)
-   - Input `log --level debug`: ✅ Matches, lvl="debug"
-   - Input `log`: ❌ Doesn't match (flag itself is required)
+> **Note**: Option modifier STRUCTURE (parsing, validation) is tested in Section 8 above and implemented in [parser-08-option-modifiers.cs](parser-08-option-modifiers.cs). Runtime BEHAVIOR (matching, binding, nullability) is tested in the [Routing Test Plan](../../Routing/routing-test-plan.md) Sections 5-6.
 
 ---
 
-## Section 10: Repeated Options (Arrays)
+## Section 9: End-of-Options Separator (Parsing)
 
-**Purpose**: Verify repeated option syntax for collecting multiple values.
+**Purpose**: Verify `--` end-of-options separator is correctly parsed and validated.
 
-### Test Cases
+**Implementation**: [parser-11-end-of-options.cs](parser-11-end-of-options.cs)
 
-1. **Basic Repeated Option**
-   - Pattern: `docker run --env {e}*`
-   - Expected: Array parameter, can appear multiple times
-   - Input: `docker run --env A --env B --env C`
-   - Bound to: `string[] e = ["A", "B", "C"]`
+### Parser-Level Tests
 
-2. **Typed Repeated Option**
-   - Pattern: `process --id {id:int}*`
-   - Expected: Typed array parameter
-   - Input: `process --id 1 --id 2 --id 3`
-   - Bound to: `int[] id = [1, 2, 3]`
+The parser verifies compile-time rules for the `--` separator:
 
-3. **Repeated Option with Alias**
-   - Pattern: `docker run --env,-e {e}*`
-   - Expected: Both forms contribute to same array
-   - Input: `docker run --env A -e B --env C`
-   - Bound to: `string[] e = ["A", "B", "C"]`
-
-4. **Zero Occurrences of Repeated Option**
-   - Pattern: `docker run --env {e}*`
-   - Input: `docker run` (no --env)
-   - Bound to: `string[] e = []` (empty array)
-   - Route matches: ✅ (repeated options implicitly optional)
-
-5. **Mixed Repeated and Single Options**
-   - Pattern: `deploy --env {e} --tag {t}* --verbose`
-   - Input: `deploy --env prod --tag v1 --tag v2 --verbose`
-   - Bound to: `(string e, string[] t, bool verbose)`
-
-6. **Repeated Option Specificity**
-   - Pattern: `run --flag {f}*`
-   - Specificity: 50 (required option score, repetition doesn't change)
-
----
-
-## Section 11: End-of-Options Separator
-
-**Purpose**: Verify `--` end-of-options separator handling.
-
-### Test Cases
-
-1. **End-of-Options with Catch-all**
+1. **Valid: End-of-Options with Catch-all**
    - Pattern: `run -- {*args}`
-   - Expected: `--` token followed by catch-all parameter
-   - Input: `run -- --not-a-flag file.txt`
-   - Bound to: `string[] args = ["--not-a-flag", "file.txt"]`
-   - Reason: Everything after `--` treated as literals, not options
+   - Expected: ✅ Parses successfully
+   - Validation: `--` token followed by catch-all parameter
 
-2. **Required Parameter Then End-of-Options**
-   - Pattern: `execute {script} -- {*args}`
-   - Input: `execute run.sh -- --verbose file.txt`
-   - Bound to: `(string script, string[] args)` where script="run.sh", args=["--verbose", "file.txt"]
-
-3. **Invalid: End-of-Options Without Catch-all**
+2. **Invalid: End-of-Options Without Catch-all**
    - Pattern: `run --`
-   - Expected: ❌ Error (likely NURU_S007)
+   - Expected: ❌ NURU_S007 semantic error
    - Reason: `--` must be followed by catch-all parameter
 
-4. **Invalid: Options After End-of-Options**
+3. **Invalid: Options After End-of-Options**
    - Pattern: `run -- {*args} --verbose`
-   - Expected: ❌ Error (likely NURU_S008)
+   - Expected: ❌ NURU_S008 semantic error
    - Reason: No options allowed after `--` separator
 
-5. **Edge Case: Empty Args After Separator**
-   - Pattern: `run -- {*args}`
-   - Input: `run --`
-   - Bound to: `string[] args = []` (empty array)
-   - Valid: ✅ Separator present, no args following
+4. **Valid: Options Before End-of-Options**
+   - Pattern: `docker run --detach -- {*cmd}`
+   - Expected: ✅ Parses successfully
+   - Validation: Options before `--` are allowed
+
+> **Note**: Runtime behavior of `--` (literal capture, argument binding) is tested in [Routing Test Plan](../../Routing/routing-test-plan.md) Section 8.
 
 ---
 
-## Section 12: Specificity Ranking (Relative Ordering)
+## Section 10: Specificity Ranking (Relative Ordering)
 
 **Purpose**: Verify that route specificity correctly determines priority when multiple routes could match.
 
@@ -548,72 +470,11 @@ Tests the deploy example showing progressive feature addition.
 
 **Note**: These tests validate the DESIGN INTENT (routing priority), not implementation details (exact point values). If we change scoring constants, tests remain valid as long as relative ordering stays correct
 
----
-
-## Section 13: Route Matching & Selection
-
-**Purpose**: Verify route matching logic and specificity-based selection.
-
-### Test Cases
-
-1. **Exact Match vs Catch-all**
-   - Routes: `status` (200), `{*args}` (1)
-   - Input: `status`
-   - Selected: `status` (higher specificity)
-
-2. **Typed vs Untyped Parameter**
-   - Routes: `delay {ms:int}` (120), `delay {duration}` (110)
-   - Input: `delay 500`
-   - Selected: `delay {ms:int}` (120 > 110)
-
-3. **Required vs Optional Parameter**
-   - Routes: `deploy {env}` (110), `deploy {env?}` (105)
-   - Input: `deploy prod`
-   - Selected: `deploy {env}` (110 > 105)
-
-4. **Literal Beats Parameter**
-   - Routes: `git status` (200), `git {command}` (110)
-   - Input: `git status`
-   - Selected: `git status` (200 > 110)
-
-5. **Equal Specificity: First Registered Wins**
-   - Routes: `greet {name}` (110), `hello {person}` (110)
-   - Input: `greet Alice`
-   - Selected: First matching route (if both match, first wins)
-   - Note: Different literals, so only first matches input "greet"
-
-6. **Options Increase Specificity**
-   - Routes: `build` (100), `build --verbose` (150)
-   - Input: `build --verbose`
-   - Selected: `build --verbose` (150 > 100)
-
-7. **Required Option Doesn't Match Without Option**
-   - Routes: `build --config {m}` (150), `build` (100)
-   - Input: `build`
-   - Selected: `build` (100) - first route requires --config, doesn't match
-
-8. **Partial Option Match**
-   - Routes: `deploy --env {e} --tag {t}` (200), `deploy --env {e}` (150)
-   - Input: `deploy --env prod`
-   - Selected: `deploy --env {e}` (150) - first route requires both options
-
-9. **Catch-all as Fallback**
-   - Routes: `git status` (200), `git commit` (200), `git {*args}` (101)
-   - Input: `git push`
-   - Selected: `git {*args}` (only matching route)
-
-10. **Complex Multi-Route Selection**
-    - Routes:
-      - `deploy {env} --tag {t} --verbose` (210)
-      - `deploy {env} --tag {t}` (160)
-      - `deploy {env}` (110)
-      - `deploy` (100)
-    - Input: `deploy prod --tag v1.0`
-    - Selected: `deploy {env} --tag {t}` (160, highest matching specificity)
+> **Note**: Route selection (matching, choosing best route) is runtime behavior tested in [Routing Test Plan](../../Routing/routing-test-plan.md) Section 7.
 
 ---
 
-## Section 14: Complex Pattern Integration
+## Section 11: Complex Pattern Integration
 
 **Purpose**: Verify parser handles real-world complex CLI patterns correctly.
 
@@ -658,7 +519,7 @@ Tests the deploy example showing progressive feature addition.
 
 ---
 
-## Section 15: Error Reporting & Edge Cases
+## Section 12: Error Reporting & Edge Cases
 
 **Purpose**: Verify comprehensive error reporting and edge case handling.
 

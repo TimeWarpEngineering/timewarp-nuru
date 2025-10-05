@@ -24,6 +24,7 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("parser-02-typed-parameters")]
 [assembly: InternalsVisibleTo("parser-03-optional-parameters")]
 [assembly: InternalsVisibleTo("parser-04-duplicate-parameters")]
+[assembly: InternalsVisibleTo("parser-05-consecutive-optionals")]
 [assembly: InternalsVisibleTo("parser-12-specificity-ranking")]
 [assembly: InternalsVisibleTo("Program")]
 [assembly: InternalsVisibleTo("Program")]

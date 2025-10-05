@@ -1,7 +1,7 @@
 #!/usr/bin/dotnet --
 
 // Clear cache to ensure parser changes are picked up (parsing is source-compiled)
-await TestRunner.RunTests<SpecificityRankingTests>(clearCache: true);
+return await RunTests<SpecificityRankingTests>(clearCache: true);
 
 [TestTag("Parser")]
 [ClearRunfileCache]

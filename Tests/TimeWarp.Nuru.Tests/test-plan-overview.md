@@ -120,7 +120,7 @@ Each test file uses the Kijaribu test framework:
 ```csharp
 #!/usr/bin/dotenv --
 
-await TestRunner.RunTests<TestClassName>(clearCache: true);
+return await RunTests<TestClassName>(clearCache: true);
 
 [TestTag("Lexer")] // or "Parser" or "Routing"
 [ClearRunfileCache]

@@ -1,7 +1,7 @@
 #!/usr/bin/dotnet --
 
 // Clear cache to ensure parser changes are picked up (parsing is source-compiled)
-await TestRunner.RunTests<CatchAllValidationTests>(clearCache: true);
+return await RunTests<CatchAllValidationTests>(clearCache: true);
 
 [TestTag("Parser")]
 public class CatchAllValidationTests

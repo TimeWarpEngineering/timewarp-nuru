@@ -1,7 +1,7 @@
 #!/usr/bin/dotnet --
 
 // Clear cache to ensure parser changes are picked up (parsing is source-compiled)
-await TestRunner.RunTests<EndOfOptionsParserTests>(clearCache: true);
+return await RunTests<EndOfOptionsParserTests>(clearCache: true);
 
 [TestTag("Parser")]
 [ClearRunfileCache]

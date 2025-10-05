@@ -636,44 +636,73 @@ Tests the deploy example showing progressive feature addition.
 
 ---
 
-## Implementation Strategy
+## Section 13: Syntax Validation Errors
 
-### Phase 1: Core Parsing (Sections 1-3)
-- Implement basic parameter parsing
-- Add type constraint support
-- Handle optional parameters
+**Purpose**: Verify parser correctly rejects invalid syntax patterns at the lexical/parsing level.
 
-### Phase 2: Validation (Sections 4-7)
-- Implement all 4 validation rules
-- Comprehensive error reporting
-- NURU error codes
+**Implementation**: [parser-13-syntax-errors.cs](parser-13-syntax-errors.cs)
 
-### Phase 3: Options (Sections 8-10)
-- Option modifier parsing
-- Required/optional option logic
-- Repeated options (arrays)
+### Test Cases
 
-### Phase 4: Advanced (Sections 11-13)
-- End-of-options separator
-- Specificity calculation
-- Route matching and selection
+1. **Invalid Identifier Starting with Number**
+   - Pattern: `build {123abc}`
+   - Expected: ❌ Parse error
+   - Reason: Identifiers must start with letter or underscore, not digit
+   - **Status**: ❌ FAILING - Parser currently accepts this (BUG)
 
-### Phase 5: Integration (Sections 14-15)
-- Complex real-world patterns
-- Edge cases and error scenarios
-- Full error code coverage
+2. **Incomplete Parameter (Opening Brace Only)**
+   - Pattern: `run {`
+   - Expected: ❌ Parse error
+   - Reason: Missing parameter name and closing brace
+   - **Status**: ✅ PASSING
+
+3. **Empty Parameter Braces**
+   - Pattern: `test { }`
+   - Expected: ❌ Parse error
+   - Reason: Parameter name required between braces
+   - **Status**: ✅ PASSING
+
+4. **Incomplete Option Parameter**
+   - Pattern: `build --config {`
+   - Expected: ❌ Parse error
+   - Reason: Option parameter started but not completed
+   - **Status**: ✅ PASSING
+
+5. **Unexpected Closing Brace**
+   - Pattern: `test }`
+   - Expected: ❌ Parse error
+   - Reason: Closing brace without corresponding opening brace
+   - **Status**: ✅ PASSING
+
+**Results**: 4/5 tests passing. Test #1 identifies a critical parser bug where numeric-starting identifiers are incorrectly accepted.
 
 ---
 
-## Success Criteria
+## Implementation Strategy
 
-- [ ] All 15 sections implemented
-- [ ] 120-150 individual test cases passing
-- [ ] 100% coverage of validation rules (NURU001-NURU008+)
-- [ ] Complete specificity scoring verification
-- [ ] All option modifier combinations tested
-- [ ] Real-world CLI pattern validation
-- [ ] Comprehensive error reporting verified
+### Phase 1: Core Parsing (Sections 1-3)
+- ✅ parser-01: Basic parameter parsing
+- ✅ parser-02: Type constraint support
+- ✅ parser-03: Optional parameters
+
+### Phase 2: Validation (Sections 4-7)
+- ✅ parser-04: Duplicate parameter detection
+- ✅ parser-05: Consecutive optional parameters
+- ✅ parser-06: Catch-all position validation
+- ✅ parser-07: Catch-all + optional conflict detection
+
+### Phase 3: Options (Section 8)
+- ✅ parser-08: Option modifiers (boolean flags, required/optional values, aliases)
+
+### Phase 4: Advanced Routing (Sections 9-11)
+- ✅ parser-09: End-of-options separator (`--`)
+- ✅ parser-10: Specificity ranking algorithm
+- ✅ parser-11: Complex real-world integration patterns
+
+### Phase 5: Error Reporting (Sections 12-13)
+- ✅ parser-12: Comprehensive error reporting (semantic + parse errors + modifier syntax validation)
+- ✅ parser-13: Syntax validation errors (lexical/parsing edge cases)
+- ⚠️ **Known Issue**: parser-13 identifies identifier validation bug (`{123abc}` incorrectly accepted)
 
 ---
 
@@ -689,26 +718,32 @@ Tests build from simple compilation checks to complex behavioral validation:
 - NO specificity value testing (implementation detail)
 - NO exact point calculations
 
-**Sections 4-11 (parser-04 to parser-11): Semantic Validation**
+**Sections 4-7 (parser-04 to parser-07): Semantic Validation**
 - Focus: Do validation rules catch errors correctly?
 - Assertions: PatternException thrown with correct NURU_S### error code
-- Tests both valid patterns (parse successfully) and invalid patterns (throw errors)
+- Tests duplicate parameters, optional ordering, catch-all placement
 
-**Section 12 (parser-12-specificity-ranking): Relative Specificity**
+**Section 8 (parser-08): Option Parsing**
+- Focus: Boolean flags, required/optional values, aliases
+- Tests all option modifier combinations
+
+**Section 9 (parser-09): End-of-Options Separator**
+- Focus: `--` separator parsing and validation
+- Tests placement rules and semantic errors
+
+**Section 10 (parser-10): Relative Specificity**
 - Focus: Which route ranks higher when multiple routes could match?
-- Uses real-world examples from design doc (git commit, deploy commands)
+- Uses real-world examples (git, deploy commands)
 - Assertions: `route1.Specificity > route2.Specificity` (relative ordering)
-- Tests design intent (priority), not implementation details (exact values)
 
-**Section 13 (parser-13-route-matching): Priority Selection**
-- Focus: Route specificity determines matching priority
-- Tests that more specific routes are tried before general ones
-- Validates the conceptual model from the design document
+**Section 11 (parser-11): Complex Integration**
+- Focus: Real-world CLI patterns (docker, git, kubectl, npm)
+- Tests multiple features working together
 
-**Sections 14-15 (parser-14, parser-15): Integration & Errors**
-- Complex real-world patterns (docker, git, kubectl)
-- Comprehensive error code coverage (all NURU_P### and NURU_S###)
-- Edge cases (unicode, empty patterns, complex combinations)
+**Sections 12-13 (parser-12, parser-13): Error Reporting**
+- parser-12: Comprehensive error coverage (semantic + parse + modifier syntax)
+- parser-13: Syntax validation edge cases (incomplete patterns, invalid identifiers)
+- All NURU_P### and NURU_S### error codes tested
 
 ### Why This Structure?
 
@@ -718,35 +753,12 @@ Tests build from simple compilation checks to complex behavioral validation:
 4. **Matches documentation**: Uses same examples from specificity-algorithm.md
 5. **Progressive complexity**: Simple checks first, complex behavior last
 
-## Testing Approach (Detailed)
+### Methodology
 
-Following the successful lexer testing methodology:
+Following successful lexer testing approach:
 
-1. **Test-Driven Development**: Write tests before implementation
-2. **Single-file Scripts**: Use .NET 10 file-based apps with `#!/usr/bin/dotnet --`
-3. **Systematic Coverage**: One section at a time, complete before moving on
-4. **Clear Test Names**: Descriptive names indicating what is tested
-5. **Both Positive and Negative**: Valid patterns AND error cases
-6. **Real-world Examples**: Use actual CLI patterns from popular tools
-
----
-
-## Estimated Timeline
-
-- **Section 1-3** (Core): ~3-4 hours
-- **Section 4-7** (Validation): ~4-5 hours
-- **Section 8-10** (Options): ~4-5 hours
-- **Section 11-13** (Advanced): ~3-4 hours
-- **Section 14-15** (Integration): ~3-4 hours
-
-**Total**: ~17-22 hours for complete parser test coverage
-
----
-
-## Notes
-
-- Lexer tests achieved 100% coverage with 14 sections and ~100 tests
-- Parser is more complex: 15 sections, 120-150 tests estimated
-- Focus on validation rules - these are the most error-prone areas
-- Specificity calculation is critical for route selection
-- Real-world patterns validate the entire system works together
+1. **Single-file Scripts**: Use .NET 10 file-based apps with `#!/usr/bin/dotnet --`
+2. **Systematic Coverage**: One section at a time, complete before moving on
+3. **Clear Test Names**: Descriptive names indicating what is tested
+4. **Both Positive and Negative**: Valid patterns AND error cases
+5. **Real-world Examples**: Actual CLI patterns from popular tools

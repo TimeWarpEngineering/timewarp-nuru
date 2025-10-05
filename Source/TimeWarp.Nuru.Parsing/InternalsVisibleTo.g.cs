@@ -32,6 +32,7 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("parser-10-specificity-ranking")]
 [assembly: InternalsVisibleTo("parser-11-complex-integration")]
 [assembly: InternalsVisibleTo("parser-12-error-reporting")]
+[assembly: InternalsVisibleTo("parser-13-syntax-errors")]
 [assembly: InternalsVisibleTo("Program")]
 [assembly: InternalsVisibleTo("Program")]
 [assembly: InternalsVisibleTo("run-all-tests")]

@@ -67,7 +67,7 @@ public static class TestRunner
     // Run them as tests
     foreach (MethodInfo method in testMethods)
     {
-      await RunTest(method);
+      await RunTest(method, filterTag);
     }
 
     // Call cleanup method if it exists
@@ -83,7 +83,7 @@ public static class TestRunner
     return PassCount == TotalTests ? 0 : 1;
   }
 
-  private static async Task RunTest(MethodInfo method)
+  private static async Task RunTest(MethodInfo method, string? filterTag)
   {
     // Skip non-test methods (not public, not static, not Task, or named CleanUp/Setup)
     if (!method.IsPublic ||
@@ -92,6 +92,20 @@ public static class TestRunner
         method.Name is "CleanUp" or "Setup")
     {
       return;
+    }
+
+    // Check for method tag filter if specified
+    if (filterTag is not null)
+    {
+      TestTagAttribute[] methodTags = method.GetCustomAttributes<TestTagAttribute>().ToArray();
+      if (methodTags.Length > 0 && !methodTags.Any(t => t.Tag.Equals(filterTag, StringComparison.OrdinalIgnoreCase)))
+      {
+        TotalTests++;
+        Console.WriteLine($"Test: {TestHelpers.FormatTestName(method.Name)}");
+        Console.WriteLine($"  ⚠ SKIPPED: No matching tag '{filterTag}'");
+        Console.WriteLine();
+        return;
+      }
     }
 
     // Check for [Skip] attribute

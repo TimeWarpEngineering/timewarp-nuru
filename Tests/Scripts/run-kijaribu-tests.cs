@@ -42,6 +42,15 @@ async Task<int> RunTests(string? filterTag)
 
 // List of Kijaribu-based test files (relative to Tests directory)
 string[] testFiles = [
+  // Kijaribu self-tests
+  Path.Combine(testsDir, "TimeWarp.Kijaribu.Tests/kijaribu-01-discovery.cs"),
+  Path.Combine(testsDir, "TimeWarp.Kijaribu.Tests/kijaribu-02-parameterized.cs"),
+  Path.Combine(testsDir, "TimeWarp.Kijaribu.Tests/kijaribu-03-tag-filtering.cs"),
+  Path.Combine(testsDir, "TimeWarp.Kijaribu.Tests/kijaribu-04-skipping-exceptions.cs"),
+  Path.Combine(testsDir, "TimeWarp.Kijaribu.Tests/kijaribu-05-cache-clearing.cs"),
+  Path.Combine(testsDir, "TimeWarp.Kijaribu.Tests/kijaribu-06-reporting-cleanup.cs"),
+  Path.Combine(testsDir, "TimeWarp.Kijaribu.Tests/kijaribu-07-edges.cs"),
+  // Nuru tests
   Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Lexer/lexer-01-basic-token-types.cs"),
   Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Lexer/lexer-02-valid-options.cs"),
   Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Lexer/lexer-03-invalid-double-dashes.cs"),
@@ -79,7 +88,7 @@ string[] testFiles = [
   // Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Lexer/test-modifier-tokenization-kijaribu.cs"),
   // Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Parsing/Parser/test-catchall-validation.cs"),
   // Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Parsing/Parser/test-parser-end-of-options.cs"),
-];
+ ];
 
 foreach (string testFile in testFiles)
 {
@@ -126,6 +135,39 @@ foreach (string testFile in testFiles)
   }
 
   WriteLine();
+}
+
+// Run Kijaribu self-tests
+WriteLine("🧪 Running Kijaribu Self-Tests");
+string selfTestProject = Path.Combine(testsDir, "TimeWarp.Kijaribu.Tests/TimeWarp.Kijaribu.Tests.csproj");
+if (File.Exists(selfTestProject))
+{
+  totalTests++;
+  WriteLine("Running: Kijaribu Self-Tests");
+
+  CommandOutput selfResult = filterTag is not null
+    ? await Shell.Builder("dotnet").WithArguments("run", "--project", selfTestProject, "--", "--tag", filterTag).WithNoValidation().CaptureAsync()
+    : await Shell.Builder("dotnet").WithArguments("run", "--project", selfTestProject).WithNoValidation().CaptureAsync();
+
+  if (selfResult.Success)
+  {
+    passedTests++;
+    WriteLine("✅ PASSED");
+  }
+  else
+  {
+    WriteLine("❌ FAILED");
+    if (!string.IsNullOrWhiteSpace(selfResult.Stdout))
+      WriteLine(selfResult.Stdout);
+    if (!string.IsNullOrWhiteSpace(selfResult.Stderr))
+      WriteLine($"Stderr: {selfResult.Stderr}");
+  }
+
+  WriteLine();
+}
+else
+{
+  WriteLine("⚠ Kijaribu self-test project not found");
 }
 
   // Summary

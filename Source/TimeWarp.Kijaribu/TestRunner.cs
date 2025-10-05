@@ -65,6 +65,8 @@ public static class TestRunner
     MethodInfo[] testMethods = typeof(T).GetMethods(BindingFlags.Public | BindingFlags.Static);
 
     // Run them as tests
+    await InvokeSetup<T>();
+
     foreach (MethodInfo method in testMethods)
     {
       await RunTest(method, filterTag);
@@ -174,6 +176,18 @@ public static class TestRunner
     }
 
     Console.WriteLine();
+  }
+
+  private static async Task InvokeSetup<T>() where T : class
+  {
+    MethodInfo? setupMethod = typeof(T).GetMethod("Setup", BindingFlags.Public | BindingFlags.Static);
+    if (setupMethod is not null && setupMethod.ReturnType == typeof(Task))
+    {
+      if (setupMethod.Invoke(null, null) is Task task)
+      {
+        await task;
+      }
+    }
   }
 
   /// <summary>

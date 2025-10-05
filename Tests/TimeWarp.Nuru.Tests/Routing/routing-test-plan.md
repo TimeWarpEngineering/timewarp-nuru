@@ -1,21 +1,20 @@
 # Routing Test Plan
 
-This test plan covers **runtime routing, matching, and parameter binding** functionality. These tests verify that parsed routes correctly match input arguments and bind values to handler parameters.
+> **See also**: [Test Plan Overview](../test-plan-overview.md) for the three-layer testing architecture and shared philosophy.
 
-## Philosophy
+This test plan covers **Layer 3: Routing (Matching & Binding)** - matching input arguments against compiled routes and binding values to handler parameters.
 
-The test suite is organized into three distinct layers, mirroring the processing pipeline:
+## Scope
 
-- **Lexer tests** (lexer-XX) verify tokenization of route patterns into lexical elements (literals, parameters, options, etc.)
-- **Parser tests** (parser-XX) verify compile-time parsing and semantic validation of token streams into structured routes
-- **Routing tests** (routing-XX) verify runtime matching, selection, and parameter binding against actual input arguments
+The routing layer is responsible for:
 
-Each layer builds on the previous:
-1. **Lexer**: Text → Tokens
-2. **Parser**: Tokens → CompiledRoute
-3. **Routing**: CompiledRoute + Args → Match + Bound Parameters
+1. **Route Matching** - Finding routes that match input arguments
+2. **Route Selection** - Choosing the best match when multiple routes match (specificity-based)
+3. **Parameter Binding** - Extracting values and converting types
+4. **Nullability Validation** - Enforcing required vs optional at runtime
+5. **Error Handling** - Type conversion failures, missing required values
 
-Tests use numbered files (routing-01, routing-02, etc.) for systematic coverage, with each section mapping to specific routing capabilities.
+Tests use numbered files (routing-01, routing-02, etc.) for systematic coverage, with 11 sections covering ~50 test scenarios.
 
 ---
 

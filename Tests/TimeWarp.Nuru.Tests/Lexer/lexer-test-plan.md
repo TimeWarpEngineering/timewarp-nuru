@@ -1,10 +1,14 @@
 # Lexer Tokenization Test Plan
 
-This test plan provides comprehensive coverage for the lexer tokenization rules defined in [documentation/developer/design/lexer-tokenization-rules.md](../../../documentation/developer/design/lexer-tokenization-rules.md).
+> **See also**: [Test Plan Overview](../test-plan-overview.md) for the three-layer testing architecture and shared philosophy.
 
-## Testing Strategy
+This test plan covers **Layer 1: Lexer (Tokenization)** - converting route pattern text into tokens.
+
+## Scope
 
 The lexer's primary responsibility is to reject nonsensical character sequences early, making the parser's job simpler. Tests follow a progressive complexity model: basic single-token tests → valid compounds → invalid patterns → integration tests.
+
+**Design Reference**: [lexer-tokenization-rules.md](../../../documentation/developer/design/lexer-tokenization-rules.md)
 
 ## 1. Basic Token Type Tests
 **Test File**: `lexer-01-basic-token-types.cs`

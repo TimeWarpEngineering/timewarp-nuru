@@ -1,23 +1,25 @@
 # Parser Test Plan
 
-## Overview
+> **See also**: [Test Plan Overview](../../test-plan-overview.md) for the three-layer testing architecture and shared philosophy.
 
-This test plan ensures comprehensive coverage of the Nuru route pattern parser. The parser is responsible for:
+This test plan covers **Layer 2: Parser (Compilation & Validation)** - building structured routes from token streams and validating semantic rules.
+
+## Scope
+
+The parser is responsible for:
 
 1. **Syntax Validation** - Enforcing all parameter and option rules
 2. **AST Construction** - Building abstract syntax tree from tokens
 3. **Specificity Calculation** - Computing route specificity scores
-4. **Route Matching** - Selecting the best matching route
+4. **Semantic Validation** - Enforcing NURU_S001-S008 rules
 
-The plan follows the systematic approach used in lexer testing, organized into 15 focused sections with an estimated 120-150 individual test cases.
+Organized into 15 focused sections with 90+ individual test cases.
 
 ## Design Document References
 
-- `design/parser/syntax-rules.md` - Route pattern syntax rules and validation (Parser)
-- `design/resolver/specificity-algorithm.md` - Route matching and scoring algorithm (Resolver)
-- `design/cross-cutting/parameter-optionality.md` - Nullability-based optional/required design
-
-See also: `guides/building-new-cli-apps.md` - Best practices for new CLI applications
+- `design/parser/syntax-rules.md` - Route pattern syntax and validation
+- `design/resolver/specificity-algorithm.md` - Specificity calculation
+- `design/cross-cutting/parameter-optionality.md` - Nullability-based optionality
 
 ---
 

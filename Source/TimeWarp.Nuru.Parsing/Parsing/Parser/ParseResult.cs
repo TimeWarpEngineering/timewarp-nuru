@@ -11,10 +11,6 @@ internal class ParseResult<T>
   /// </summary>
   public T? Value { get; init; }
   /// <summary>
-  /// True if parsing was successful, false otherwise.
-  /// </summary>
-  public bool Success { get; init; }
-  /// <summary>
   /// List of parse errors encountered during parsing.
   /// </summary>
   public IReadOnlyList<ParseError>? ParseErrors { get; init; }
@@ -22,4 +18,8 @@ internal class ParseResult<T>
   /// List of semantic errors encountered during validation.
   /// </summary>
   public IReadOnlyList<SemanticError>? SemanticErrors { get; init; }
+  /// <summary>
+  /// True if parsing was successful (no parse or semantic errors), false otherwise.
+  /// </summary>
+  public bool Success => ParseErrors is null && SemanticErrors is null;
 }

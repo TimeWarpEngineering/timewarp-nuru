@@ -35,7 +35,7 @@ internal sealed partial class Parser : IParser
     Tokens = lexer.Tokenize();
 
     LoggerMessages.ParsingPattern(Logger, pattern, null);
-    if (Logger.IsEnabled(Microsoft.Extensions.Logging.LogLevel.Trace))
+    if (Logger.IsEnabled(LogLevel.Trace))
     {
       LoggerMessages.DumpingTokens(Logger, Lexer.DumpTokens(Tokens), null);
     }
@@ -51,7 +51,6 @@ internal sealed partial class Parser : IParser
     var result = new ParseResult<Syntax>
     {
       Value = ast,
-      Success = true,
       ParseErrors = ParseErrors,
       SemanticErrors = semanticErrors
     };

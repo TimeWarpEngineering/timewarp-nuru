@@ -117,7 +117,7 @@ catch (Exception ex)
 // Step 4: Test actual route matching
 WriteLine("\nStep 4: Route Matching Test");
 WriteLine("---------------------------");
-var builder = new NuruAppBuilder();
+NuruAppBuilder builder = new();
 builder.AddRoute(routePattern, (string file) =>
     WriteLine($"✓ deployment.apps/{file} configured"));
 

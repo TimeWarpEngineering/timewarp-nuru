@@ -306,7 +306,7 @@ public class StatusCommand : IRequest
 
 **Examples**:
 ```csharp
-var builder = new NuruAppBuilder();
+NuruAppBuilder builder = new();
 
 // Simple commands: Direct Approach (fast)
 builder.AddRoute("ping", () => Console.WriteLine("pong"))

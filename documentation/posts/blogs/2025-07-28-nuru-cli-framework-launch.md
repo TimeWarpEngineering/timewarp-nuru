@@ -75,7 +75,7 @@ The kicker? You can use both in the same app. Simple commands stay simple. Compl
 Here's a deployment tool I built last week:
 
 ```csharp
-var builder = new NuruAppBuilder();
+NuruAppBuilder builder = new();
 
 // Simple commands: Direct
 builder.AddRoute("status", () => ShowStatus());

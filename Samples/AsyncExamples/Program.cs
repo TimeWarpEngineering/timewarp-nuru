@@ -1,7 +1,7 @@
 using TimeWarp.Nuru;
 
 // Create builder
-var builder = new NuruAppBuilder();
+NuruAppBuilder builder = new();
 
 // Simple async route without parameters
 builder.AddRoute("ping", async () =>

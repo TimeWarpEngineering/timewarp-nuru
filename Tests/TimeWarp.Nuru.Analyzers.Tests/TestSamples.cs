@@ -6,7 +6,7 @@ public static class TestSamples
 {
     public static void InvalidParameterSyntax()
     {
-        var builder = new NuruAppBuilder();
+        NuruAppBuilder builder = new();
 
         // NURU001: Should suggest {env} instead of <env>
         builder.AddRoute("deploy <env>", () => { });
@@ -14,7 +14,7 @@ public static class TestSamples
 
     public static void UnbalancedBraces()
     {
-        var builder = new NuruAppBuilder();
+        NuruAppBuilder builder = new();
 
         // NURU002: Missing closing brace
         builder.AddRoute("deploy {env", () => { });
@@ -25,7 +25,7 @@ public static class TestSamples
 
     public static void InvalidOptionFormat()
     {
-        var builder = new NuruAppBuilder();
+        NuruAppBuilder builder = new();
 
         // NURU003: Should be --verbose or -v
         builder.AddRoute("test -verbose", () => { });
@@ -33,7 +33,7 @@ public static class TestSamples
 
     public static void InvalidTypeConstraint()
     {
-        var builder = new NuruAppBuilder();
+        NuruAppBuilder builder = new();
 
         // NURU004: Invalid type constraint
         builder.AddRoute("wait {seconds:integer}", () => { });
@@ -47,7 +47,7 @@ public static class TestSamples
 
     public static void CatchAllNotAtEnd()
     {
-        var builder = new NuruAppBuilder();
+        NuruAppBuilder builder = new();
 
         // NURU005: Catch-all must be last
         builder.AddRoute("docker {*args} --verbose", () => { });
@@ -61,7 +61,7 @@ public static class TestSamples
 
     public static void DuplicateParameterNames()
     {
-        var builder = new NuruAppBuilder();
+        NuruAppBuilder builder = new();
 
         // NURU006: Duplicate parameter name 'env'
         builder.AddRoute("deploy {env} to {env}", () => { });
@@ -75,7 +75,7 @@ public static class TestSamples
 
     public static void ConflictingOptionalParameters()
     {
-        var builder = new NuruAppBuilder();
+        NuruAppBuilder builder = new();
 
         // NURU007: Consecutive optional parameters
         builder.AddRoute("deploy {env?} {tag?}", () => { });
@@ -92,7 +92,7 @@ public static class TestSamples
 
     public static void MixedCatchAllWithOptional()
     {
-        var builder = new NuruAppBuilder();
+        NuruAppBuilder builder = new();
 
         // NURU008: Cannot mix optional with catch-all
         builder.AddRoute("deploy {env?} {*args}", () => { });
@@ -109,7 +109,7 @@ public static class TestSamples
 
     public static void DuplicateOptionAlias()
     {
-        var builder = new NuruAppBuilder();
+        NuruAppBuilder builder = new();
 
         // NURU009: Both options use -v
         builder.AddRoute("test --verbose,-v --version,-v", () => { });

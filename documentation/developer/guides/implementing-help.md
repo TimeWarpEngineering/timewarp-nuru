@@ -26,7 +26,7 @@ TimeWarp.Nuru provides flexible options for implementing help functionality:
 The most straightforward approach is to add a dedicated help route:
 
 ```csharp
-var builder = new NuruAppBuilder();
+NuruAppBuilder builder = new();
 
 // Basic help command
 builder.AddRoute("help", () => Console.WriteLine(
@@ -94,7 +94,7 @@ TimeWarp.Nuru includes a built-in `RouteHelpProvider` static class that generate
 ```csharp
 using TimeWarp.Nuru.Help;
 
-var builder = new NuruAppBuilder();
+NuruAppBuilder builder = new();
 
 // Register routes with descriptions
 builder.AddRoute("status", ShowStatus, "Show application status");

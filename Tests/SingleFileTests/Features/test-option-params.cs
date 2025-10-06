@@ -3,7 +3,7 @@
 WriteLine("Testing option parameter matching:");
 WriteLine();
 
-var builder = new NuruAppBuilder();
+NuruAppBuilder builder = new();
 
 // Add test routes
 builder.AddRoute("git commit -m {message}", (string message) =>

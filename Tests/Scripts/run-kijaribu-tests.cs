@@ -12,7 +12,7 @@ string scriptDir = AppContext.GetData("EntryPointFileDirectoryPath") as string
 string testsDir = Path.GetDirectoryName(scriptDir)!;
 
 // Configure Nuru app with routing
-var builder = new NuruAppBuilder();
+NuruAppBuilder builder = new();
 
 // TODO: Bug in Nuru - optional flag with required param doesn't work without args
 // Should be: builder.AddRoute("--tag? {tag}", (string? tag) => RunTests(tag), ...);
@@ -80,6 +80,18 @@ string[] testFiles = [
   Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Parsing/Parser/parser-12-error-reporting.cs"),
   Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Parsing/Parser/parser-13-syntax-errors.cs"),
   Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Parsing/Parser/parser-14-mixed-modifiers.cs"),
+  // Routing tests (numbered)
+  Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Routing/routing-01-basic-matching.cs"),
+  Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Routing/routing-02-parameter-binding.cs"),
+  Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Routing/routing-03-optional-parameters.cs"),
+  Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Routing/routing-04-catch-all.cs"),
+  Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Routing/routing-05-option-matching.cs"),
+  Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Routing/routing-06-repeated-options.cs"),
+  Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Routing/routing-07-route-selection.cs"),
+  Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Routing/routing-08-end-of-options.cs"),
+  Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Routing/routing-09-complex-integration.cs"),
+  Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Routing/routing-10-error-cases.cs"),
+  Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Routing/routing-11-delegate-mediator.cs"),
  ];
 
 foreach (string testFile in testFiles)

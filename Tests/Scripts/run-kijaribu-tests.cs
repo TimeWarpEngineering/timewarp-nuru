@@ -18,8 +18,8 @@ var builder = new NuruAppBuilder();
 // Should be: builder.AddRoute("--tag? {tag}", (string? tag) => RunTests(tag), ...);
 // Workaround: Use two routes until optional flag bug is fixed
 
-builder.AddDefaultRoute(() => RunTests(null), "Run all Kijaribu tests");
-builder.AddRoute("--tag {tag}", (string tag) => RunTests(tag), "Run tests filtered by tag (Lexer, Parser)");
+// builder.AddDefaultRoute(() => RunTests(null), "Run all Kijaribu tests");
+builder.AddRoute("--tag? {tag?}", (string? tag) => RunTests(tag), "Run tests filtered by tag (Lexer, Parser)");
 
 NuruApp app = builder.Build();
 return await app.RunAsync(args);
@@ -80,14 +80,6 @@ string[] testFiles = [
   Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Parsing/Parser/parser-12-error-reporting.cs"),
   Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Parsing/Parser/parser-13-syntax-errors.cs"),
   Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Parsing/Parser/parser-14-mixed-modifiers.cs"),
-  // Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Lexer/test-route-pattern-tokenization-kijaribu.cs"),
-  // Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Lexer/test-end-of-options-separator-kijaribu.cs"),
-  // Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Lexer/test-invalid-token-detection-kijaribu.cs"),
-  // Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Lexer/test-compound-identifier-tokenization-kijaribu.cs"),
-  // Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Lexer/test-description-tokenization-kijaribu.cs"),
-  // Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Lexer/test-modifier-tokenization-kijaribu.cs"),
-  // Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Parsing/Parser/test-catchall-validation.cs"),
-  // Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Parsing/Parser/test-parser-end-of-options.cs"),
  ];
 
 foreach (string testFile in testFiles)

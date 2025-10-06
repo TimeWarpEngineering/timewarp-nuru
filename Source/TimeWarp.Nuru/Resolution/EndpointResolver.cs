@@ -143,90 +143,40 @@ internal static class EndpointResolver
       // For catch-all segment (must be last), consume positional args until we hit a defined option
       if (segment is ParameterMatcher param && param.IsCatchAll)
       {
-        // Collect positional arguments until we encounter a defined option from the route
-        var catchAllArgs = new List<string>();
-        int j = consumedArgs; // Start from current position in args
-        while (j < args.Length)
-        {
-          string arg = args[j];
-          // Stop if we encounter a defined option in the route pattern
-          if (arg.StartsWith(CommonStrings.SingleDash, StringComparison.Ordinal) &&
-              IsDefinedOption(arg, endpoint.CompiledRoute.OptionMatchers))
-          {
-            break;
-          }
-
-          catchAllArgs.Add(arg);
-          j++;
-        }
-
-        consumedArgs = j; // Update to position after all catch-all args
-
-        // Always store catch-all value (even if empty) so parameter binding succeeds
-        string catchAllValue = catchAllArgs.Count > 0
-          ? string.Join(CommonStrings.Space, catchAllArgs)
-          : string.Empty;
-        extractedValues[param.Name] = catchAllValue;
-
-        if (catchAllArgs.Count > 0)
-        {
-          LoggerMessages.CatchAllParameterCaptured(logger, param.Name, catchAllValue, null);
-        }
-        else
-        {
-          LoggerMessages.CatchAllParameterNoArgs(logger, param.Name, null);
-        }
-
+        consumedArgs = HandleCatchAllSegment(
+          param,
+          args,
+          consumedArgs,
+          endpoint.CompiledRoute.OptionMatchers,
+          extractedValues,
+          logger
+        );
         return true;
       }
 
-      // Regular segment matching
-      if (i >= args.Length)
-      {
-        // Check if this is an optional parameter
-        if (segment is ParameterMatcher optionalParam && optionalParam.IsOptional)
-        {
-          // Optional parameter with no value - skip it
-          LoggerMessages.OptionalParameterNoValue(logger, optionalParam.Name, null);
-          continue;
-        }
+      // Validate argument availability and check for optional skipping
+      SegmentValidationResult validationResult = ValidateSegmentAvailability(
+        segment,
+        args,
+        i,
+        seenEndOfOptions,
+        logger
+      );
 
-        LoggerMessages.NotEnoughArgumentsForSegment(logger, segment.ToDisplayString(), null);
-        return false; // Not enough args
+      if (validationResult == SegmentValidationResult.Skip)
+      {
+        continue;
       }
 
-      // After --, don't check for options - everything is treated as positional arguments
-      if (!seenEndOfOptions && args[i].StartsWith(CommonStrings.SingleDash, StringComparison.Ordinal))
+      if (validationResult == SegmentValidationResult.Fail)
       {
-        // Hit an option - check if current segment is optional
-        if (segment is ParameterMatcher optionalParam && optionalParam.IsOptional)
-        {
-          // Optional parameter followed by an option - skip it
-          LoggerMessages.OptionalParameterSkippedHitOption(logger, optionalParam.Name, args[i], null);
-          continue;
-        }
-
-        LoggerMessages.RequiredSegmentExpectedButFoundOption(logger, segment.ToDisplayString(), args[i], null);
-        return false; // Required parameter but hit an option
-      }
-
-      string argToMatch = args[i];
-      LoggerMessages.AttemptingToMatch(logger, argToMatch, segment.ToDisplayString(), null);
-
-      if (!segment.TryMatch(argToMatch, out string? value))
-      {
-        LoggerMessages.FailedToMatch(logger, argToMatch, segment.ToDisplayString(), null);
         return false;
       }
 
-      if (value is not null && segment is ParameterMatcher ps)
+      // Match the segment against the argument
+      if (!MatchRegularSegment(segment, args[i], extractedValues, logger))
       {
-        extractedValues[ps.Name] = value;
-        LoggerMessages.ExtractedParameter(logger, ps.Name, value, null);
-      }
-      else if (segment is LiteralMatcher)
-      {
-        LoggerMessages.LiteralMatched(logger, segment.ToDisplayString(), null);
+        return false;
       }
 
       consumedArgs++;
@@ -234,6 +184,129 @@ internal static class EndpointResolver
 
     LoggerMessages.PositionalMatchingComplete(logger, consumedArgs, null);
     return true;
+  }
+
+  private enum SegmentValidationResult
+  {
+    Proceed,  // Argument is available and should be matched
+    Skip,     // Skip this segment (optional parameter)
+    Fail      // Validation failed, stop matching
+  }
+
+  private static SegmentValidationResult ValidateSegmentAvailability
+  (
+    RouteMatcher segment,
+    string[] args,
+    int argIndex,
+    bool seenEndOfOptions,
+    ILogger logger
+  )
+  {
+    // Check if we have enough arguments
+    if (argIndex >= args.Length)
+    {
+      // Check if this is an optional parameter
+      if (segment is ParameterMatcher optionalParam && optionalParam.IsOptional)
+      {
+        // Optional parameter with no value - skip it
+        LoggerMessages.OptionalParameterNoValue(logger, optionalParam.Name, null);
+        return SegmentValidationResult.Skip;
+      }
+
+      LoggerMessages.NotEnoughArgumentsForSegment(logger, segment.ToDisplayString(), null);
+      return SegmentValidationResult.Fail;
+    }
+
+    // After --, don't check for options - everything is treated as positional arguments
+    if (!seenEndOfOptions && args[argIndex].StartsWith(CommonStrings.SingleDash, StringComparison.Ordinal))
+    {
+      // Hit an option - check if current segment is optional
+      if (segment is ParameterMatcher optionalParam && optionalParam.IsOptional)
+      {
+        // Optional parameter followed by an option - skip it
+        LoggerMessages.OptionalParameterSkippedHitOption(logger, optionalParam.Name, args[argIndex], null);
+        return SegmentValidationResult.Skip;
+      }
+
+      LoggerMessages.RequiredSegmentExpectedButFoundOption(logger, segment.ToDisplayString(), args[argIndex], null);
+      return SegmentValidationResult.Fail;
+    }
+
+    return SegmentValidationResult.Proceed;
+  }
+
+  private static bool MatchRegularSegment
+  (
+    RouteMatcher segment,
+    string arg,
+    Dictionary<string, string> extractedValues,
+    ILogger logger
+  )
+  {
+    LoggerMessages.AttemptingToMatch(logger, arg, segment.ToDisplayString(), null);
+
+    if (!segment.TryMatch(arg, out string? value))
+    {
+      LoggerMessages.FailedToMatch(logger, arg, segment.ToDisplayString(), null);
+      return false;
+    }
+
+    if (value is not null && segment is ParameterMatcher ps)
+    {
+      extractedValues[ps.Name] = value;
+      LoggerMessages.ExtractedParameter(logger, ps.Name, value, null);
+    }
+    else if (segment is LiteralMatcher)
+    {
+      LoggerMessages.LiteralMatched(logger, segment.ToDisplayString(), null);
+    }
+
+    return true;
+  }
+
+  private static int HandleCatchAllSegment
+  (
+    ParameterMatcher param,
+    string[] args,
+    int startPosition,
+    IReadOnlyList<OptionMatcher> optionMatchers,
+    Dictionary<string, string> extractedValues,
+    ILogger logger
+  )
+  {
+    // Collect positional arguments until we encounter a defined option from the route
+    var catchAllArgs = new List<string>();
+    int j = startPosition;
+    while (j < args.Length)
+    {
+      string arg = args[j];
+      // Stop if we encounter a defined option in the route pattern
+      if (arg.StartsWith(CommonStrings.SingleDash, StringComparison.Ordinal) &&
+          IsDefinedOption(arg, optionMatchers))
+      {
+        break;
+      }
+
+      catchAllArgs.Add(arg);
+      j++;
+    }
+
+    // Always store catch-all value (even if empty) so parameter binding succeeds
+    string catchAllValue = catchAllArgs.Count > 0
+      ? string.Join(CommonStrings.Space, catchAllArgs)
+      : string.Empty;
+    extractedValues[param.Name] = catchAllValue;
+
+    if (catchAllArgs.Count > 0)
+    {
+      LoggerMessages.CatchAllParameterCaptured(logger, param.Name, catchAllValue, null);
+    }
+    else
+    {
+      LoggerMessages.CatchAllParameterNoArgs(logger, param.Name, null);
+    }
+
+    return j; // Return position after all catch-all args
   }
 
   private static bool IsDefinedOption(string arg, IReadOnlyList<OptionMatcher> optionMatchers)

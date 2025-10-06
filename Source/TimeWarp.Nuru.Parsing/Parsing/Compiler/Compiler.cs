@@ -19,8 +19,6 @@ internal sealed class Compiler : SyntaxVisitor<object?>
 
   private readonly ILogger<Compiler> Logger;
   private readonly List<RouteMatcher> Segments = [];
-  private readonly List<string> RequiredOptionPatterns = [];
-  private readonly List<OptionMatcher> OptionMatchers = [];
   private string? CatchAllParameterName;
   private int Specificity;
 
@@ -40,8 +38,6 @@ internal sealed class Compiler : SyntaxVisitor<object?>
   {
     // Reset state
     Segments.Clear();
-    RequiredOptionPatterns.Clear();
-    OptionMatchers.Clear();
     CatchAllParameterName = null;
     Specificity = 0;
 
@@ -51,9 +47,7 @@ internal sealed class Compiler : SyntaxVisitor<object?>
     // Build the CompiledRoute
     return new CompiledRoute
     {
-      PositionalMatchers = Segments.ToArray(),
-      RequiredOptionPatterns = RequiredOptionPatterns.ToArray(),
-      OptionMatchers = OptionMatchers.ToArray(),
+      Segments = Segments.ToArray(),
       CatchAllParameterName = CatchAllParameterName,
       Specificity = Specificity
     };
@@ -122,8 +116,6 @@ internal sealed class Compiler : SyntaxVisitor<object?>
       ? optionShortSyntax
       : null;
 
-    RequiredOptionPatterns.Add(optionSyntax);
-
     // Determine if this option expects a value
     bool expectsValue = option.Parameter is not null;
     string? valueParameterName = option.Parameter?.Name;
@@ -168,7 +160,7 @@ internal sealed class Compiler : SyntaxVisitor<object?>
       }
     }
 
-    // Create option matcher
+    // Create option matcher and add to segments in position
     var optionMatcher =
       new OptionMatcher
       (
@@ -182,7 +174,7 @@ internal sealed class Compiler : SyntaxVisitor<object?>
         parameterIsOptional: option.Parameter?.IsOptional ?? false
       );
 
-    OptionMatchers.Add(optionMatcher);
+    Segments.Add(optionMatcher);
     return null;
   }
 }

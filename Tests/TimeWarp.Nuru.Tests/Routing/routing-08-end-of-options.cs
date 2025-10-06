@@ -75,6 +75,7 @@ public class EndOfOptionsTests
   {
     // Arrange
     NuruAppBuilder builder = new();
+    builder.UseDebugLogging();
     bool boundDetach = false;
     string[]? boundCmd = null;
     builder.AddRoute("docker run --detach -- {*cmd}", (bool detach, string[] cmd) => { boundDetach = detach; boundCmd = cmd; return 0; });

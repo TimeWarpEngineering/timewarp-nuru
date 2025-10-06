@@ -66,40 +66,30 @@ internal static class EndpointResolver
       LoggerMessages.CheckingRoute(logger, endpointIndex, endpoints.Count, endpoint.RoutePattern, null);
       extractedValues.Clear(); // Clear for each attempt
 
-      // Check positional segments
-      if (MatchPositionalSegments(endpoint, args, extractedValues, logger, out int consumedArgs))
+      // Match all segments sequentially (literals, parameters, and options)
+      if (MatchSegments(endpoint, args, extractedValues, logger, out int consumedArgs, out int defaultsUsed, out int totalConsumed))
       {
-        // Check if remaining args match required options
-        var remainingArgs = new ArraySegment<string>(args, consumedArgs, args.Length - consumedArgs);
-        if (CheckRequiredOptions(endpoint, remainingArgs, extractedValues, logger, out int optionsConsumed, out int defaultsUsed))
+        // For catch-all routes, we don't need to check if all args were consumed
+        if (endpoint.CompiledRoute.HasCatchAll)
         {
-          // For catch-all routes, we don't need to check if all args were consumed
-          if (endpoint.CompiledRoute.HasCatchAll)
-          {
-            LoggerMessages.MatchedCatchAllRoute(logger, endpoint.RoutePattern, null);
-            LogExtractedValues(extractedValues, logger);
-            // Store this match and continue checking other routes
-            matches.Add(new RouteMatch(endpoint, new Dictionary<string, string>(extractedValues, StringComparer.OrdinalIgnoreCase), defaultsUsed));
-            continue;
-          }
+          LoggerMessages.MatchedCatchAllRoute(logger, endpoint.RoutePattern, null);
+          LogExtractedValues(extractedValues, logger);
+          // Store this match and continue checking other routes
+          matches.Add(new RouteMatch(endpoint, new Dictionary<string, string>(extractedValues, StringComparer.OrdinalIgnoreCase), defaultsUsed));
+          continue;
+        }
 
-          // For non-catch-all routes, ensure all arguments were consumed
-          int totalConsumed = consumedArgs + optionsConsumed;
-          if (totalConsumed == args.Length)
-          {
-            LoggerMessages.MatchedRoute(logger, endpoint.RoutePattern, null);
-            LogExtractedValues(extractedValues, logger);
-            // Store this match and continue checking other routes
-            matches.Add(new RouteMatch(endpoint, new Dictionary<string, string>(extractedValues, StringComparer.OrdinalIgnoreCase), defaultsUsed));
-          }
-          else
-          {
-            LoggerMessages.RouteConsumedPartialArgs(logger, endpoint.RoutePattern, totalConsumed, args.Length, null);
-          }
+        // For non-catch-all routes, ensure all arguments were consumed
+        if (totalConsumed == args.Length)
+        {
+          LoggerMessages.MatchedRoute(logger, endpoint.RoutePattern, null);
+          LogExtractedValues(extractedValues, logger);
+          // Store this match and continue checking other routes
+          matches.Add(new RouteMatch(endpoint, new Dictionary<string, string>(extractedValues, StringComparer.OrdinalIgnoreCase), defaultsUsed));
         }
         else
         {
-          LoggerMessages.RouteFailedAtOptionMatching(logger, endpoint.RoutePattern, null);
+          LoggerMessages.RouteConsumedPartialArgs(logger, endpoint.RoutePattern, totalConsumed, args.Length, null);
         }
       }
       else
@@ -139,19 +129,35 @@ internal static class EndpointResolver
     }
   }
 
-  private static bool MatchPositionalSegments
+  private static bool MatchSegments
   (
     Endpoint endpoint,
     string[] args,
     Dictionary<string, string> extractedValues,
     ILogger logger,
-    out int consumedArgs
+    out int consumedArgs,
+    out int defaultsUsed,
+    out int totalConsumed
   )
   {
     consumedArgs = 0;
-    IReadOnlyList<RouteMatcher> template = endpoint.CompiledRoute.PositionalMatchers;
+    defaultsUsed = 0;
+    IReadOnlyList<RouteMatcher> template = endpoint.CompiledRoute.Segments;
 
     LoggerMessages.MatchingPositionalSegments(logger, template.Count, args.Length, null);
+
+    // Pre-pass: Handle repeated options first and mark consumed indices
+    var consumedIndices = new HashSet<int>();
+    var repeatedOptions = template.OfType<OptionMatcher>().Where(o => o.IsRepeated).ToList();
+
+    foreach (OptionMatcher repeatedOption in repeatedOptions)
+    {
+      if (!MatchRepeatedOptionWithIndices(repeatedOption, args, consumedIndices, extractedValues, logger, ref defaultsUsed))
+      {
+        totalConsumed = consumedIndices.Count;
+        return false;
+      }
+    }
 
     // Track if we've seen the end-of-options separator
     bool seenEndOfOptions = false;
@@ -161,13 +167,31 @@ internal static class EndpointResolver
     {
       RouteMatcher segment = template[i];
 
+      // Skip repeated options - already handled in pre-pass
+      if (segment is OptionMatcher { IsRepeated: true })
+      {
+        continue;
+      }
+
       // Check if current segment is the end-of-options separator "--"
       if (segment is LiteralMatcher literal && literal.Value == "--")
       {
         seenEndOfOptions = true;
       }
 
-      // For catch-all segment (must be last), consume positional args until we hit a defined option
+      // Handle non-repeated option segments
+      if (segment is OptionMatcher option)
+      {
+        if (!MatchOptionSegment(option, args, ref consumedArgs, extractedValues, seenEndOfOptions, logger, ref defaultsUsed, consumedIndices))
+        {
+          totalConsumed = consumedIndices.Count;
+          return false;
+        }
+
+        continue; // Option handled, move to next segment
+      }
+
+      // For catch-all segment (must be last), consume remaining positional args
       if (segment is ParameterMatcher param && param.IsCatchAll)
       {
         consumedArgs = HandleCatchAllSegment(
@@ -178,14 +202,27 @@ internal static class EndpointResolver
           extractedValues,
           logger
         );
+        // Mark all consumed args
+        for (int idx = 0; idx < consumedArgs; idx++)
+        {
+          consumedIndices.Add(idx);
+        }
+
+        totalConsumed = consumedIndices.Count;
         return true;
       }
 
-      // Validate argument availability and check for optional skipping
+      // Skip args that were consumed by repeated options
+      while (consumedArgs < args.Length && consumedIndices.Contains(consumedArgs))
+      {
+        consumedArgs++;
+      }
+
+      // Validate argument availability for positional segments
       SegmentValidationResult validationResult = ValidateSegmentAvailability(
         segment,
         args,
-        i,
+        consumedArgs,
         seenEndOfOptions,
         logger
       );
@@ -197,18 +234,22 @@ internal static class EndpointResolver
 
       if (validationResult == SegmentValidationResult.Fail)
       {
+        totalConsumed = consumedIndices.Count;
         return false;
       }
 
-      // Match the segment against the argument
-      if (!MatchRegularSegment(segment, args[i], extractedValues, logger))
+      // Match the positional segment against the argument
+      if (!MatchRegularSegment(segment, args[consumedArgs], extractedValues, logger))
       {
+        totalConsumed = consumedIndices.Count;
         return false;
       }
 
+      consumedIndices.Add(consumedArgs); // Track this index as consumed
       consumedArgs++;
     }
 
+    totalConsumed = consumedIndices.Count;
     LoggerMessages.PositionalMatchingComplete(logger, consumedArgs, null);
     return true;
   }
@@ -347,6 +388,211 @@ internal static class EndpointResolver
     }
 
     return false;
+  }
+
+  private static bool MatchOptionSegment
+  (
+    OptionMatcher option,
+    string[] args,
+    ref int consumedArgs,
+    Dictionary<string, string> extractedValues,
+    bool seenEndOfOptions,
+    ILogger logger,
+    ref int defaultsUsed,
+    HashSet<int> consumedIndices
+  )
+  {
+    // After --, don't match options - everything is positional
+    if (seenEndOfOptions)
+    {
+      // Option appears in pattern after --, but we're in positional mode
+      // This is a pattern error, but treat as optional option not found
+      if (option.IsOptional)
+      {
+        defaultsUsed++;
+        SetDefaultOptionValue(option, extractedValues, logger);
+        return true;
+      }
+
+      LoggerMessages.RequiredOptionNotFound(logger, option.ToDisplayString(), null);
+      return false;
+    }
+
+    // Skip indices consumed by repeated options
+    while (consumedArgs < args.Length && consumedIndices.Contains(consumedArgs))
+    {
+      consumedArgs++;
+    }
+
+    // Check if current arg matches this option
+    if (consumedArgs < args.Length && option.TryMatch(args[consumedArgs], out _))
+    {
+      // Option matched at current position
+      int optionIndex = consumedArgs;
+      consumedIndices.Add(optionIndex); // Mark option flag as consumed
+      consumedArgs++; // Consume the option flag
+
+      if (option.ExpectsValue)
+      {
+        // Option expects a value
+        bool valueIsAvailable = consumedArgs < args.Length &&
+                                !args[consumedArgs].StartsWith(CommonStrings.SingleDash, StringComparison.Ordinal);
+
+        if (!valueIsAvailable)
+        {
+          // No value available
+          if (!option.ParameterIsOptional)
+          {
+            // Value is required but not provided
+            LoggerMessages.RequiredOptionValueNotProvided(logger, option.ToDisplayString(), null);
+            return false;
+          }
+          // Value is optional and not provided - parameter will be null
+          LoggerMessages.OptionalValueOptionNotProvided(logger, option.ParameterName ?? "", null);
+        }
+        else
+        {
+          // Value is available - extract it
+          if (option.ParameterName is not null)
+          {
+            extractedValues[option.ParameterName] = args[consumedArgs];
+            LoggerMessages.ExtractedParameter(logger, option.ParameterName, args[consumedArgs], null);
+          }
+
+          consumedIndices.Add(consumedArgs); // Mark option value as consumed
+          consumedArgs++; // Consume the value
+        }
+      }
+      else
+      {
+        // Boolean option - no value needed
+        if (option.ParameterName is not null)
+        {
+          extractedValues[option.ParameterName] = "true";
+          LoggerMessages.BooleanOptionSet(logger, option.ParameterName, null);
+        }
+      }
+
+      return true;
+    }
+
+    // Option not found at current position
+    if (option.IsOptional)
+    {
+      // Optional option not provided
+      defaultsUsed++;
+      SetDefaultOptionValue(option, extractedValues, logger);
+      return true;
+    }
+
+    // Required option not found
+    LoggerMessages.RequiredOptionNotFound(logger, option.ToDisplayString(), null);
+    return false;
+  }
+
+  private static bool MatchRepeatedOptionWithIndices
+  (
+    OptionMatcher option,
+    string[] args,
+    HashSet<int> consumedIndices,
+    Dictionary<string, string> extractedValues,
+    ILogger logger,
+    ref int defaultsUsed
+  )
+  {
+    var collectedValues = new List<string>();
+
+    // Scan all args for occurrences of this repeated option
+    for (int i = 0; i < args.Length; i++)
+    {
+      // Skip if already consumed
+      if (consumedIndices.Contains(i))
+        continue;
+
+      // Check if current arg matches the option
+      if (option.TryMatch(args[i], out _))
+      {
+        consumedIndices.Add(i); // Mark this index as consumed
+
+        if (option.ExpectsValue)
+        {
+          // Option expects a value
+          bool valueIsAvailable = i + 1 < args.Length &&
+                                  !args[i + 1].StartsWith(CommonStrings.SingleDash, StringComparison.Ordinal);
+
+          if (!valueIsAvailable)
+          {
+            // No value available
+            if (!option.ParameterIsOptional)
+            {
+              // Value is required but not provided
+              LoggerMessages.RequiredOptionValueNotProvided(logger, option.ToDisplayString(), null);
+              return false;
+            }
+            // Value is optional - skip this occurrence
+          }
+          else
+          {
+            // Collect the value and mark its index as consumed
+            collectedValues.Add(args[i + 1]);
+            consumedIndices.Add(i + 1);
+          }
+        }
+        else
+        {
+          // Boolean repeated option - just count occurrences
+          collectedValues.Add("true");
+        }
+      }
+    }
+
+    // Store collected values
+    if (collectedValues.Count > 0 && option.ParameterName is not null)
+    {
+      // Store as space-separated (will be split by parameter binder)
+      extractedValues[option.ParameterName] = string.Join(" ", collectedValues);
+      return true;
+    }
+
+    // No occurrences found
+    if (option.IsOptional)
+    {
+      defaultsUsed++;
+      SetDefaultOptionValue(option, extractedValues, logger);
+      return true;
+    }
+
+    LoggerMessages.RequiredOptionNotFound(logger, option.ToDisplayString(), null);
+    return false;
+  }
+
+  private static void SetDefaultOptionValue
+  (
+    OptionMatcher option,
+    Dictionary<string, string> extractedValues,
+    ILogger logger
+  )
+  {
+    if (option.ParameterName is null)
+      return;
+
+    if (!option.ExpectsValue)
+    {
+      // Boolean option defaults to false
+      extractedValues[option.ParameterName] = "false";
+      LoggerMessages.OptionalBooleanOptionNotProvided(logger, option.ParameterName, null);
+    }
+    else if (option.IsRepeated)
+    {
+      // Repeated option defaults to empty array
+      extractedValues[option.ParameterName] = "";
+      LoggerMessages.OptionalValueOptionNotProvided(logger, option.ParameterName, null);
+    }
+    else
+    {
+      // Other value options default to null (handled by binding)
+      LoggerMessages.OptionalValueOptionNotProvided(logger, option.ParameterName, null);
+    }
   }
 
   private static bool CheckRequiredOptions(Endpoint endpoint, IReadOnlyList<string> remainingArgs,

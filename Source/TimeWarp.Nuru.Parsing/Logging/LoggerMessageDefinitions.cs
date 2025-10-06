@@ -230,6 +230,12 @@ internal static class LoggerMessages
       new EventId(1354, "OptionsMatchingComplete"),
       "Options matching complete. Consumed {ConsumedCount} args.");
 
+  internal static readonly Action<ILogger, string, Exception?> RequiredOptionValueNotProvided =
+    LoggerMessage.Define<string>(
+      LogLevel.Trace,
+      new EventId(1355, "RequiredOptionValueNotProvided"),
+      "Required option '{Option}' expects a value but none was provided");
+
   // ===== Binder Messages (1400-1499) =====
   // Currently no binder messages, but reserved for future use
 

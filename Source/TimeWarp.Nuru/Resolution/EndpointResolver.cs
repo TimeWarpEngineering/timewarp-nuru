@@ -140,17 +140,18 @@ internal static class EndpointResolver
         seenEndOfOptions = true;
       }
 
-      // For catch-all segment (must be last), consume positional args until we hit an option
+      // For catch-all segment (must be last), consume positional args until we hit a defined option
       if (segment is ParameterMatcher param && param.IsCatchAll)
       {
-        // Collect positional arguments until we encounter an option
+        // Collect positional arguments until we encounter a defined option from the route
         var catchAllArgs = new List<string>();
-        int j = i; // Start from current position in args
+        int j = consumedArgs; // Start from current position in args
         while (j < args.Length)
         {
           string arg = args[j];
-          // Stop if we encounter an option (starts with - or --)
-          if (arg.StartsWith(CommonStrings.SingleDash, StringComparison.Ordinal))
+          // Stop if we encounter a defined option in the route pattern
+          if (arg.StartsWith(CommonStrings.SingleDash, StringComparison.Ordinal) &&
+              IsDefinedOption(arg, endpoint.CompiledRoute.OptionMatchers))
           {
             break;
           }
@@ -159,12 +160,16 @@ internal static class EndpointResolver
           j++;
         }
 
-        consumedArgs = i + catchAllArgs.Count;
+        consumedArgs = j; // Update to position after all catch-all args
+
+        // Always store catch-all value (even if empty) so parameter binding succeeds
+        string catchAllValue = catchAllArgs.Count > 0
+          ? string.Join(CommonStrings.Space, catchAllArgs)
+          : string.Empty;
+        extractedValues[param.Name] = catchAllValue;
 
         if (catchAllArgs.Count > 0)
         {
-          string catchAllValue = string.Join(CommonStrings.Space, catchAllArgs);
-          extractedValues[param.Name] = catchAllValue;
           LoggerMessages.CatchAllParameterCaptured(logger, param.Name, catchAllValue, null);
         }
         else
@@ -229,6 +234,19 @@ internal static class EndpointResolver
 
     LoggerMessages.PositionalMatchingComplete(logger, consumedArgs, null);
     return true;
+  }
+
+  private static bool IsDefinedOption(string arg, IReadOnlyList<OptionMatcher> optionMatchers)
+  {
+    foreach (OptionMatcher option in optionMatchers)
+    {
+      if (option.TryMatch(arg, out _))
+      {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   private static bool CheckRequiredOptions(Endpoint endpoint, IReadOnlyList<string> remainingArgs,

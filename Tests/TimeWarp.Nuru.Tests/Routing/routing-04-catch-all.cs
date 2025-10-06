@@ -3,6 +3,7 @@
 return await RunTests<CatchAllTests>(clearCache: true);
 
 [TestTag("Routing")]
+[ClearRunfileCache]
 public class CatchAllTests
 {
   public static async Task Should_match_basic_catch_all_run_one_two_three()

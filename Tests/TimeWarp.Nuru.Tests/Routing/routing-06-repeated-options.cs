@@ -3,6 +3,7 @@
 return await RunTests<RepeatedOptionsTests>(clearCache: true);
 
 [TestTag("Routing")]
+[ClearRunfileCache]
 public class RepeatedOptionsTests
 {
   public static async Task Should_match_basic_repeated_option_docker_run_env_A_B_C()

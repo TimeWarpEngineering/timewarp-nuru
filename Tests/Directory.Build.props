@@ -22,6 +22,7 @@
     <Using Include="TimeWarp.Kijaribu.TestRunner" Static="true" />
     <Using Include="TimeWarp.Nuru.Parsing" />
     <Using Include="TimeWarp.Nuru" />
+    <Using Include="TimeWarp.Nuru.Logging" />
     <Using Include="Microsoft.Extensions.Logging" />
     <Using Include="TimeWarp.Mediator" />
   </ItemGroup>
@@ -30,5 +31,6 @@
     <!-- Common project references for all test projects -->
     <ProjectReference Include="$(MSBuildThisFileDirectory)../Source/TimeWarp.Kijaribu/TimeWarp.Kijaribu.csproj" />
     <ProjectReference Include="$(MSBuildThisFileDirectory)../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj" />
+    <ProjectReference Include="$(MSBuildThisFileDirectory)../Source/TimeWarp.Nuru.Logging/TimeWarp.Nuru.Logging.csproj" />
   </ItemGroup>
 </Project>

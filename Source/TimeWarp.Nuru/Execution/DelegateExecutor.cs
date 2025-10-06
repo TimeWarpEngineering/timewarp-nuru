@@ -99,19 +99,44 @@ public static class DelegateExecutor
       // Try to get value from extracted values
       if (extractedValues.TryGetValue(param.Name!, out string? stringValue))
       {
-        // Handle arrays (catch-all parameters)
+        // Handle arrays (catch-all and repeated parameters)
         if (param.ParameterType.IsArray)
         {
           Type elementType = param.ParameterType.GetElementType()!;
+          string[] parts = stringValue.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
           if (elementType == typeof(string))
           {
-            // Split the value for string arrays
-            args[i] = stringValue.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            // String arrays - no conversion needed
+            args[i] = parts;
           }
           else
           {
-            // For other array types, we'd need more complex handling
-            throw new NotSupportedException($"Array type {param.ParameterType} is not supported yet");
+            // Other array types - convert each element
+            var typedArray = Array.CreateInstance(elementType, parts.Length);
+            for (int j = 0; j < parts.Length; j++)
+            {
+              if (typeConverterRegistry.TryConvert(parts[j], elementType, out object? convertedElement))
+              {
+                typedArray.SetValue(convertedElement, j);
+              }
+              else
+              {
+                // Fallback to Convert.ChangeType
+                try
+                {
+                  object converted = Convert.ChangeType(parts[j], elementType, CultureInfo.InvariantCulture);
+                  typedArray.SetValue(converted, j);
+                }
+                catch
+                {
+                  throw new InvalidOperationException(
+                      $"Cannot convert '{parts[j]}' to type {elementType} for array parameter '{param.Name}'");
+                }
+              }
+            }
+
+            args[i] = typedArray;
           }
         }
         else

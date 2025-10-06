@@ -104,3 +104,29 @@ public record NullPatternError(
   public override string ToString() =>
     "Route pattern cannot be null";
 }
+
+/// <summary>
+/// Invalid identifier error (e.g., identifier starting with a digit).
+/// </summary>
+public record InvalidIdentifierError(
+  int Position,
+  int Length,
+  string InvalidIdentifier
+) : ParseError(Position, Length)
+{
+  public override string ToString() =>
+    $"Error at position {Position}: Invalid identifier '{InvalidIdentifier}' - identifiers must start with a letter or underscore";
+}
+
+/// <summary>
+/// Invalid modifier combination error (e.g., both catch-all and optional modifiers).
+/// </summary>
+public record InvalidModifierCombinationError(
+  int Position,
+  int Length,
+  string ParameterName
+) : ParseError(Position, Length)
+{
+  public override string ToString() =>
+    $"Error at position {Position}: Invalid modifier combination in parameter '{ParameterName}' - cannot combine catch-all (*) and optional (?) modifiers";
+}

@@ -165,8 +165,36 @@ internal sealed partial class Parser : IParser
     Token nameToken = Consume(TokenType.Identifier, "Expected parameter name");
     string paramName = nameToken.Value;
 
+    // Validate identifier starts with letter or underscore
+    if (!IsValidIdentifier(paramName))
+    {
+      AddParseError
+      (
+        new InvalidIdentifierError
+        (
+          nameToken.Position,
+          nameToken.Length,
+          paramName
+        )
+      );
+    }
+
     // Optional marker
     bool isOptional = Match(TokenType.Question);
+
+    // Validate that catch-all and optional are not combined
+    if (isCatchAll && isOptional)
+    {
+      AddParseError
+      (
+        new InvalidModifierCombinationError
+        (
+          startPos,
+          nameToken.EndPosition - startPos,
+          paramName
+        )
+      );
+    }
 
     // Type constraint
     string? typeConstraint = null;
@@ -533,6 +561,18 @@ internal sealed partial class Parser : IParser
       "TimeSpan" => true,
       _ => false
     };
+  }
+
+  private static bool IsValidIdentifier(string identifier)
+  {
+    if (string.IsNullOrEmpty(identifier))
+    {
+      return false;
+    }
+
+    // First character must be letter or underscore
+    char first = identifier[0];
+    return char.IsLetter(first) || first == '_';
   }
 
 }

@@ -8,11 +8,14 @@ internal sealed class Compiler : SyntaxVisitor<object?>
 {
   // Specificity scoring constants
   // Higher values indicate more specific routes that should be tried first
-  private const int SpecificityLiteralSegment = 15;
-  private const int SpecificityPositionalParameter = 2;
-  private const int SpecificityOption = 10;
-  private const int SpecificityOptionParameter = 5;
-  private const int SpecificityCatchAllPenalty = -20;
+  // See: documentation/developer/design/resolver/specificity-algorithm.md
+  private const int SpecificityLiteralSegment = 100;
+  private const int SpecificityRequiredOption = 50;
+  private const int SpecificityOptionalOption = 25;
+  private const int SpecificityTypedParameter = 20;
+  private const int SpecificityUntypedParameter = 10;
+  private const int SpecificityOptionalParameter = 5;
+  private const int SpecificityCatchAll = 1;
 
   private readonly ILogger<Compiler> Logger;
   private readonly List<RouteMatcher> Segments = [];
@@ -68,11 +71,19 @@ internal sealed class Compiler : SyntaxVisitor<object?>
     if (parameter.IsCatchAll)
     {
       CatchAllParameterName = parameter.Name;
-      Specificity += SpecificityCatchAllPenalty;
+      Specificity += SpecificityCatchAll;
+    }
+    else if (parameter.IsOptional)
+    {
+      Specificity += SpecificityOptionalParameter;
+    }
+    else if (!string.IsNullOrEmpty(parameter.Type))
+    {
+      Specificity += SpecificityTypedParameter;
     }
     else
     {
-      Specificity += SpecificityPositionalParameter;
+      Specificity += SpecificityUntypedParameter;
     }
 
     // Create parameter matcher
@@ -112,7 +123,6 @@ internal sealed class Compiler : SyntaxVisitor<object?>
       : null;
 
     RequiredOptionPatterns.Add(optionSyntax);
-    Specificity += SpecificityOption;
 
     // Determine if this option expects a value
     bool expectsValue = option.Parameter is not null;
@@ -126,12 +136,36 @@ internal sealed class Compiler : SyntaxVisitor<object?>
       LoggerMessages.SettingBooleanOptionParameter(Logger, valueParameterName!, null);
     }
 
+    // Determine if option is optional (runtime behavior)
+    bool isRepeated = option.Parameter?.IsRepeated ?? false;
+    bool isOptional = option.IsOptional || !expectsValue || isRepeated;  // Boolean flags and repeated options are always optional
+
+    // Score the option flag itself (specificity scoring)
+    // Only explicitly optional flags (with ?) get lower specificity
+    // Boolean flags and repeated options are optional at runtime but still score as required for specificity
+    bool isOptionalForSpecificity = option.IsOptional;
+    Specificity += isOptionalForSpecificity ? SpecificityOptionalOption : SpecificityRequiredOption;
+
+    // Score the option's parameter value if present
     if (option.Parameter is not null)
     {
       if (option.Parameter.IsCatchAll)
+      {
         CatchAllParameterName = option.Parameter.Name;
+        Specificity += SpecificityCatchAll;
+      }
+      else if (option.Parameter.IsOptional)
+      {
+        Specificity += SpecificityOptionalParameter;
+      }
+      else if (!string.IsNullOrEmpty(option.Parameter.Type))
+      {
+        Specificity += SpecificityTypedParameter;
+      }
       else
-        Specificity += SpecificityOptionParameter;
+      {
+        Specificity += SpecificityUntypedParameter;
+      }
     }
 
     // Create option matcher
@@ -143,8 +177,8 @@ internal sealed class Compiler : SyntaxVisitor<object?>
         parameterName: valueParameterName,
         alternateForm: alternateForm,
         description: option.Description,
-        isOptional: option.IsOptional || !expectsValue,  // Boolean flags are always optional
-        isRepeated: option.Parameter?.IsRepeated ?? false,
+        isOptional: isOptional,
+        isRepeated: isRepeated,
         parameterIsOptional: option.Parameter?.IsOptional ?? false
       );
 

@@ -5,6 +5,14 @@ namespace TimeWarp.Nuru;
 /// </summary>
 internal static class EndpointResolver
 {
+  /// <summary>
+  /// Represents a route match with quality metrics for ranking.
+  /// </summary>
+  private record RouteMatch(
+    Endpoint Endpoint,
+    Dictionary<string, string> ExtractedValues,
+    int DefaultsUsed  // Count of optional parameters that used default values
+  );
   public static EndpointResolutionResult Resolve
   (
     string[] args,
@@ -48,6 +56,7 @@ internal static class EndpointResolver
   private static (Endpoint endpoint, Dictionary<string, string> extractedValues)?
     MatchRoute(string[] args, EndpointCollection endpoints, ILogger logger)
   {
+    var matches = new List<RouteMatch>();
     var extractedValues = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
     int endpointIndex = 0;
@@ -62,14 +71,16 @@ internal static class EndpointResolver
       {
         // Check if remaining args match required options
         var remainingArgs = new ArraySegment<string>(args, consumedArgs, args.Length - consumedArgs);
-        if (CheckRequiredOptions(endpoint, remainingArgs, extractedValues, logger, out int optionsConsumed))
+        if (CheckRequiredOptions(endpoint, remainingArgs, extractedValues, logger, out int optionsConsumed, out int defaultsUsed))
         {
           // For catch-all routes, we don't need to check if all args were consumed
           if (endpoint.CompiledRoute.HasCatchAll)
           {
             LoggerMessages.MatchedCatchAllRoute(logger, endpoint.RoutePattern, null);
             LogExtractedValues(extractedValues, logger);
-            return (endpoint, extractedValues);
+            // Store this match and continue checking other routes
+            matches.Add(new RouteMatch(endpoint, new Dictionary<string, string>(extractedValues, StringComparer.OrdinalIgnoreCase), defaultsUsed));
+            continue;
           }
 
           // For non-catch-all routes, ensure all arguments were consumed
@@ -78,7 +89,8 @@ internal static class EndpointResolver
           {
             LoggerMessages.MatchedRoute(logger, endpoint.RoutePattern, null);
             LogExtractedValues(extractedValues, logger);
-            return (endpoint, extractedValues);
+            // Store this match and continue checking other routes
+            matches.Add(new RouteMatch(endpoint, new Dictionary<string, string>(extractedValues, StringComparer.OrdinalIgnoreCase), defaultsUsed));
           }
           else
           {
@@ -96,8 +108,23 @@ internal static class EndpointResolver
       }
     }
 
-    LoggerMessages.NoMatchingRouteFound(logger, string.Join(" ", args), null);
-    return null;
+    // If no matches found, return null
+    if (matches.Count == 0)
+    {
+      LoggerMessages.NoMatchingRouteFound(logger, string.Join(" ", args), null);
+      return null;
+    }
+
+    // Select the best match:
+    // 1. Prefer exact matches (0 defaults) over partial matches
+    // 2. Among partial matches, prefer fewer defaults
+    // 3. Among matches with same defaults, prefer higher specificity (already sorted by endpoints collection)
+    RouteMatch bestMatch = matches
+      .OrderBy(m => m.DefaultsUsed)  // Fewer defaults is better
+      .ThenByDescending(m => m.Endpoint.CompiledRoute.Specificity)  // Higher specificity is better
+      .First();
+
+    return (bestMatch.Endpoint, bestMatch.ExtractedValues);
   }
 
   private static void LogExtractedValues(Dictionary<string, string> extractedValues, ILogger logger)
@@ -323,9 +350,10 @@ internal static class EndpointResolver
   }
 
   private static bool CheckRequiredOptions(Endpoint endpoint, IReadOnlyList<string> remainingArgs,
-      Dictionary<string, string> extractedValues, ILogger logger, out int optionsConsumed)
+      Dictionary<string, string> extractedValues, ILogger logger, out int optionsConsumed, out int defaultsUsed)
   {
     optionsConsumed = 0;
+    defaultsUsed = 0;
     IReadOnlyList<OptionMatcher> optionSegments = endpoint.CompiledRoute.OptionMatchers;
 
     // If no required options, we're good
@@ -416,7 +444,8 @@ internal static class EndpointResolver
         // Check if this option is optional
         if (optionSegment.IsOptional)
         {
-          // Optional option not provided - that's OK, just set it to false/null
+          // Optional option not provided - that's OK, just set it to false/null/empty
+          defaultsUsed++; // Track that we're using a default value
           if (optionSegment.ParameterName is not null)
           {
             // For boolean options, set to "false" when not provided
@@ -425,7 +454,13 @@ internal static class EndpointResolver
               extractedValues[optionSegment.ParameterName] = "false";
               LoggerMessages.OptionalBooleanOptionNotProvided(logger, optionSegment.ParameterName, null);
             }
-            // For value options, the parameter will be null (handled by binding)
+            // For repeated options, set to empty string (will be parsed as empty array)
+            else if (optionSegment.IsRepeated)
+            {
+              extractedValues[optionSegment.ParameterName] = "";
+              LoggerMessages.OptionalValueOptionNotProvided(logger, optionSegment.ParameterName, null);
+            }
+            // For other value options, the parameter will be null (handled by binding)
             else
             {
               LoggerMessages.OptionalValueOptionNotProvided(logger, optionSegment.ParameterName, null);

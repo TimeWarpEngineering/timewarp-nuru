@@ -1,8 +1,10 @@
 #!/usr/bin/dotnet --
+#pragma warning disable RCS1163 // Unused parameter - parameters must match route pattern names for binding
 
 return await RunTests<RouteSelectionTests>(clearCache: true);
 
 [TestTag("Routing")]
+[ClearRunfileCache]
 public class RouteSelectionTests
 {
   public static async Task Should_select_literal_over_parameter_git_status()
@@ -12,7 +14,7 @@ public class RouteSelectionTests
     bool literalSelected = false;
     bool parameterSelected = false;
     builder.AddRoute("git status", () => { literalSelected = true; return 0; });
-    builder.AddRoute("git {command}", (string _) => { parameterSelected = true; return 0; });
+    builder.AddRoute("git {command}", (string command) => { parameterSelected = true; return 0; });
 
     NuruApp app = builder.Build();
 
@@ -33,8 +35,8 @@ public class RouteSelectionTests
     NuruAppBuilder builder = new();
     bool typedSelected = false;
     bool untypedSelected = false;
-    builder.AddRoute("delay {ms:int}", (int _) => { typedSelected = true; return 0; });
-    builder.AddRoute("delay {duration}", (string _) => { untypedSelected = true; return 0; });
+    builder.AddRoute("delay {ms:int}", (int ms) => { typedSelected = true; return 0; });
+    builder.AddRoute("delay {duration}", (string duration) => { untypedSelected = true; return 0; });
 
     NuruApp app = builder.Build();
 
@@ -55,8 +57,8 @@ public class RouteSelectionTests
     NuruAppBuilder builder = new();
     bool requiredSelected = false;
     bool optionalSelected = false;
-    builder.AddRoute("deploy {env}", (string _) => { requiredSelected = true; return 0; });
-    builder.AddRoute("deploy {env?}", (string? _) => { optionalSelected = true; return 0; });
+    builder.AddRoute("deploy {env}", (string env) => { requiredSelected = true; return 0; });
+    builder.AddRoute("deploy {env?}", (string? env) => { optionalSelected = true; return 0; });
 
     NuruApp app = builder.Build();
 
@@ -77,8 +79,8 @@ public class RouteSelectionTests
     NuruAppBuilder builder = new();
     bool moreOptionsSelected = false;
     bool fewerOptionsSelected = false;
-    builder.AddRoute("build --verbose --watch", (bool _, bool _) => { moreOptionsSelected = true; return 0; });
-    builder.AddRoute("build --verbose", (bool _) => { fewerOptionsSelected = true; return 0; });
+    builder.AddRoute("build --verbose --watch", (bool verbose, bool watch) => { moreOptionsSelected = true; return 0; });
+    builder.AddRoute("build --verbose", (bool verbose) => { fewerOptionsSelected = true; return 0; });
 
     NuruApp app = builder.Build();
 
@@ -100,7 +102,7 @@ public class RouteSelectionTests
     bool noOptionSelected = false;
     bool requiredOptionSelected = false;
     builder.AddRoute("build", () => { noOptionSelected = true; return 0; });
-    builder.AddRoute("build --config {m}", (string _) => { requiredOptionSelected = true; return 0; });
+    builder.AddRoute("build --config {m}", (string m) => { requiredOptionSelected = true; return 0; });
 
     NuruApp app = builder.Build();
 
@@ -124,7 +126,7 @@ public class RouteSelectionTests
     bool catchAllSelected = false;
     builder.AddRoute("git status", () => { statusSelected = true; return 0; });
     builder.AddRoute("git commit", () => { commitSelected = true; return 0; });
-    builder.AddRoute("git {*args}", (string[] _) => { catchAllSelected = true; return 0; });
+    builder.AddRoute("git {*args}", (string[] args) => { catchAllSelected = true; return 0; });
 
     NuruApp app = builder.Build();
 
@@ -146,8 +148,8 @@ public class RouteSelectionTests
     NuruAppBuilder builder = new();
     bool firstSelected = false;
     bool secondSelected = false;
-    builder.AddRoute("greet {name}", (string _) => { firstSelected = true; return 0; });
-    builder.AddRoute("hello {person}", (string _) => { secondSelected = true; return 0; });
+    builder.AddRoute("greet {name}", (string name) => { firstSelected = true; return 0; });
+    builder.AddRoute("hello {person}", (string person) => { secondSelected = true; return 0; });
 
     NuruApp app = builder.Build();
 
@@ -170,9 +172,9 @@ public class RouteSelectionTests
     bool mediumSelected = false;
     bool lessSpecificSelected = false;
     bool leastSpecificSelected = false;
-    builder.AddRoute("deploy {env} --tag {t} --verbose", (string _, string _, bool _) => { mostSpecificSelected = true; return 0; });
-    builder.AddRoute("deploy {env} --tag {t}", (string _, string _) => { mediumSelected = true; return 0; });
-    builder.AddRoute("deploy {env}", (string _) => { lessSpecificSelected = true; return 0; });
+    builder.AddRoute("deploy {env} --tag {t} --verbose", (string env, string t, bool verbose) => { mostSpecificSelected = true; return 0; });
+    builder.AddRoute("deploy {env} --tag {t}", (string env, string t) => { mediumSelected = true; return 0; });
+    builder.AddRoute("deploy {env}", (string env) => { lessSpecificSelected = true; return 0; });
     builder.AddRoute("deploy", () => { leastSpecificSelected = true; return 0; });
 
     NuruApp app = builder.Build();

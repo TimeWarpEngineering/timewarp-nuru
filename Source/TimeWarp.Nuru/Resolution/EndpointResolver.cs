@@ -112,8 +112,14 @@ internal static class EndpointResolver
     }
   }
 
-  private static bool MatchPositionalSegments(Endpoint endpoint, string[] args,
-      Dictionary<string, string> extractedValues, ILogger logger, out int consumedArgs)
+  private static bool MatchPositionalSegments
+  (
+    Endpoint endpoint,
+    string[] args,
+    Dictionary<string, string> extractedValues,
+    ILogger logger,
+    out int consumedArgs
+  )
   {
     consumedArgs = 0;
     IReadOnlyList<RouteMatcher> template = endpoint.CompiledRoute.PositionalMatchers;

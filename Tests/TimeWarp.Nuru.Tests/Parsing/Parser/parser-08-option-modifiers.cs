@@ -63,6 +63,49 @@ public class OptionModifiersTests
     await Task.CompletedTask;
   }
 
+  public static async Task Should_parse_optional_flag_with_required_value()
+  {
+    // Arrange & Act
+    CompiledRoute route = PatternParser.Parse("--tag? {tag}");
+
+    // Assert - Flag is optional (? modifier), but value is required if flag present
+    // Pattern: --flag? {value} (per syntax-rules.md and parameter-optionality.md)
+    // Use case: ./script (tag=null) OR ./script --tag Lexer (tag="Lexer")
+    route.ShouldNotBeNull();
+    route.OptionMatchers.Count.ShouldBe(1);
+
+    OptionMatcher tagOption = route.OptionMatchers[0];
+    tagOption.MatchPattern.ShouldBe("--tag");
+    tagOption.ExpectsValue.ShouldBeTrue();
+    tagOption.ParameterName.ShouldBe("tag");
+    tagOption.IsOptional.ShouldBeTrue(); // ← Flag itself is optional (can be omitted entirely)
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_parse_optional_flag_with_optional_value()
+  {
+    // Arrange & Act
+    CompiledRoute route = PatternParser.Parse("--config? {mode?}");
+
+    // Assert - Both flag and value are optional (? on both)
+    // Pattern: --flag? {value?} (per syntax-rules.md and parameter-optionality.md)
+    // Use case: command (mode=null), command --config (mode=null), command --config debug (mode="debug")
+    route.ShouldNotBeNull();
+    route.OptionMatchers.Count.ShouldBe(1);
+
+    OptionMatcher configOption = route.OptionMatchers[0];
+    configOption.MatchPattern.ShouldBe("--config");
+    configOption.ExpectsValue.ShouldBeTrue();
+    configOption.ParameterName.ShouldBe("mode");
+    configOption.IsOptional.ShouldBeTrue(); // ← Flag is optional
+
+    // Note: Parameter optionality (the ? in {mode?}) is handled during parameter binding,
+    // not stored on OptionMatcher. The router will check handler parameter nullability.
+
+    await Task.CompletedTask;
+  }
+
   public static async Task Should_parse_short_option_flag()
   {
     // Arrange & Act

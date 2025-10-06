@@ -276,26 +276,35 @@ Organized into 12 focused sections with 90+ individual test cases.
 
 4. **Optional Flag with Optional Value**
    - Pattern: `build --config? {mode?}`
-   - Expected: ❌ NOT SUPPORTED per parameter-optionality.md
-   - Reason: Can't mark flag as optional in pattern - use nullable param instead
-   - Alternative: `build --config {mode?}` (flag required, value optional)
+   - Expected: ✅ Both flag and value optional (per syntax-rules.md and parameter-optionality.md)
+   - Specificity: 25 (optional option with optional value)
+   - Use Case: Progressive override - route matches with no flag, flag only, or flag with value
+   - Valid invocations: `build` (mode=null), `build --config` (mode=null), `build --config debug` (mode="debug")
 
-5. **Short Option Flag**
+5. **Optional Flag with Required Value**
+   - Pattern: `--tag? {tag}`
+   - Expected: ✅ Flag optional, but if present, value is required (per syntax-rules.md and parameter-optionality.md)
+   - Specificity: 25 (optional option)
+   - Use Case: Conditional enhancement - only intercept when flag provided WITH value
+   - Valid invocations: `command` (tag=null), `command --tag Lexer` (tag="Lexer")
+   - Invalid invocation: `command --tag` (flag present but missing required value)
+
+6. **Short Option Flag**
    - Pattern: `build -v`
    - Expected: Boolean flag, short form
    - Specificity: 50
 
-6. **Short Option with Value**
+7. **Short Option with Value**
    - Pattern: `build -c {mode}`
    - Expected: Short option with required value
    - Specificity: 50
 
-7. **Option with Alias**
+8. **Option with Alias**
    - Pattern: `build --verbose,-v`
    - Expected: Long and short forms parsed as aliases
    - Both match the same option
 
-8. **Option Alias with Value**
+9. **Option Alias with Value**
    - Pattern: `build --config,-c {mode}`
    - Expected: Both forms take the same value parameter
    - Specificity: 50

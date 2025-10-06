@@ -1,6 +1,7 @@
 namespace TimeWarp.Kijaribu;
 
 using System.Reflection;
+using static System.Console;
 
 /// <summary>
 /// Simple test runner for single-file C# programs.
@@ -52,14 +53,14 @@ public static class TestRunner
     }
 
     string testClassName = typeof(T).Name.Replace("Tests", "", StringComparison.Ordinal);
-    Console.WriteLine($"🧪 Testing {testClassName}...");
+    WriteLine($"🧪 Testing {testClassName}...");
 
     if (filterTag is not null)
     {
-      Console.WriteLine($"   (filtered by tag: {filterTag})");
+      WriteLine($"   (filtered by tag: {filterTag})");
     }
 
-    Console.WriteLine();
+    WriteLine();
 
     // Get all public static methods in the class
     MethodInfo[] testMethods = typeof(T).GetMethods(BindingFlags.Public | BindingFlags.Static);
@@ -72,15 +73,13 @@ public static class TestRunner
       await RunTest(method, filterTag);
     }
 
-    // Call cleanup method if it exists
-    MethodInfo? cleanupMethod = typeof(T).GetMethod("CleanUp", BindingFlags.Public | BindingFlags.Static);
-    cleanupMethod?.Invoke(null, null);
+    await InvokeCleanup<T>();
 
     // Summary
-    Console.WriteLine();
-    Console.WriteLine("========================================");
-    Console.WriteLine($"Results: {PassCount}/{TotalTests} tests passed");
-    Console.WriteLine("========================================");
+    WriteLine();
+    WriteLine("========================================");
+    WriteLine($"Results: {PassCount}/{TotalTests} tests passed");
+    WriteLine("========================================");
 
     return PassCount == TotalTests ? 0 : 1;
   }
@@ -103,9 +102,9 @@ public static class TestRunner
       if (methodTags.Length > 0 && !methodTags.Any(t => t.Tag.Equals(filterTag, StringComparison.OrdinalIgnoreCase)))
       {
         TotalTests++;
-        Console.WriteLine($"Test: {TestHelpers.FormatTestName(method.Name)}");
-        Console.WriteLine($"  ⚠ SKIPPED: No matching tag '{filterTag}'");
-        Console.WriteLine();
+        WriteLine($"Test: {TestHelpers.FormatTestName(method.Name)}");
+        TestHelpers.TestSkipped($"No matching tag '{filterTag}'");
+        WriteLine();
         return;
       }
     }
@@ -116,9 +115,9 @@ public static class TestRunner
     {
       TotalTests++;
       string testName = method.Name;
-      Console.WriteLine($"Test: {TestHelpers.FormatTestName(testName)}");
-      Console.WriteLine($"  ⚠ SKIPPED: {skipAttr.Reason}");
-      Console.WriteLine();
+      WriteLine($"Test: {TestHelpers.FormatTestName(testName)}");
+      TestHelpers.TestSkipped(skipAttr.Reason);
+      WriteLine();
       return;
     }
 
@@ -150,32 +149,48 @@ public static class TestRunner
       ? $"{TestHelpers.FormatTestName(testName)} ({string.Join(", ", parameters.Select(p => p?.ToString() ?? "null"))})"
       : TestHelpers.FormatTestName(testName);
 
-    Console.WriteLine($"Test: {displayName}");
+    WriteLine($"Test: {displayName}");
 
     try
     {
-      var task = method.Invoke(null, parameters) as Task;
-      if (task is not null)
+      var testTask = method.Invoke(null, parameters) as Task;
+      if (testTask is not null)
       {
-        await task;
+        TimeoutAttribute? timeoutAttr = method.GetCustomAttribute<TimeoutAttribute>();
+        if (timeoutAttr is not null)
+        {
+          var timeoutTask = Task.Delay(timeoutAttr.Milliseconds);
+          Task completedTask = await Task.WhenAny(testTask, timeoutTask);
+          if (completedTask == timeoutTask)
+          {
+            TestHelpers.TestFailed($"Timeout after {timeoutAttr.Milliseconds}ms");
+            WriteLine();
+            return;
+          }
+
+          await testTask; // Propagate any exceptions from the test task
+
+        }
+        else
+        {
+          await testTask;
+        }
       }
 
       PassCount++;
-      Console.WriteLine($"  ✓ PASSED");
+      TestHelpers.TestPassed();
     }
     catch (TargetInvocationException ex) when (ex.InnerException is not null)
     {
       // Unwrap the TargetInvocationException to get the actual exception
-      Console.WriteLine($"  ✗ FAILED: {ex.InnerException.GetType().Name}");
-      Console.WriteLine($"           {ex.InnerException.Message}");
+      TestHelpers.TestFailed($"{ex.InnerException.GetType().Name}: {ex.InnerException.Message}");
     }
     catch (Exception ex)
     {
-      Console.WriteLine($"  ✗ FAILED: {ex.GetType().Name}");
-      Console.WriteLine($"           {ex.Message}");
+      TestHelpers.TestFailed($"{ex.GetType().Name}: {ex.Message}");
     }
 
-    Console.WriteLine();
+    WriteLine();
   }
 
   private static async Task InvokeSetup<T>() where T : class
@@ -184,6 +199,18 @@ public static class TestRunner
     if (setupMethod is not null && setupMethod.ReturnType == typeof(Task))
     {
       if (setupMethod.Invoke(null, null) is Task task)
+      {
+        await task;
+      }
+    }
+  }
+
+  private static async Task InvokeCleanup<T>() where T : class
+  {
+    MethodInfo? cleanupMethod = typeof(T).GetMethod("CleanUp", BindingFlags.Public | BindingFlags.Static);
+    if (cleanupMethod is not null && cleanupMethod.ReturnType == typeof(Task))
+    {
+      if (cleanupMethod.Invoke(null, null) is Task task)
       {
         await task;
       }
@@ -219,18 +246,18 @@ public static class TestRunner
 
       if (!anyDeleted)
       {
-        Console.WriteLine("✓ Clearing runfile cache:");
+        WriteLine("✓ Clearing runfile cache:");
         anyDeleted = true;
       }
 
       string cacheDirName = Path.GetFileName(cacheDir);
       Directory.Delete(cacheDir, recursive: true);
-      Console.WriteLine($"  - {cacheDirName}");
+      WriteLine($"  - {cacheDirName}");
     }
 
     if (anyDeleted)
     {
-      Console.WriteLine();
+      WriteLine();
     }
   }
 }

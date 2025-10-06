@@ -17,14 +17,23 @@ public static partial class TestHelpers
   /// <summary>
   /// Logs a test pass with formatted output.
   /// </summary>
-  public static void TestPassed(string testName) =>
-    Console.WriteLine($"✅ {FormatTestName(testName)}");
+  /// <summary>
+  /// Logs a test pass status.
+  /// </summary>
+  public static void TestPassed() =>
+    Console.WriteLine("  ✓ PASSED");
 
   /// <summary>
-  /// Logs a test failure with formatted output and reason.
+  /// Logs a test failure status with reason.
   /// </summary>
-  public static void TestFailed(string testName, string reason) =>
-    Console.WriteLine($"❌ {FormatTestName(testName)}: {reason}");
+  public static void TestFailed(string reason) =>
+    Console.WriteLine($"  ✗ FAILED: {reason}");
+
+  /// <summary>
+  /// Logs a test skipped status with reason.
+  /// </summary>
+  public static void TestSkipped(string reason) =>
+    Console.WriteLine($"  ⚠ SKIPPED: {reason}");
 
   [GeneratedRegex("([A-Z])")]
   private static partial Regex PascalCaseRegex();

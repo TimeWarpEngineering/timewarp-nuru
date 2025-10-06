@@ -2,6 +2,8 @@
 
 Route pattern syntax rules enforced by the Parser. These rules prevent ambiguous or malformed patterns.
 
+> **See Also**: [Route Pattern Anatomy](route-pattern-anatomy.md) - Comprehensive terminology reference for all pattern syntax elements
+
 ## Error Categories
 
 Nuru validates route patterns in two phases:
@@ -504,13 +506,23 @@ Some CLIs have unusual syntaxes, but we can still intercept them with creative r
 
 ### Option Modifiers
 
-| Syntax | Meaning | Example | Valid | Invalid |
-|--------|---------|---------|-------|---------|
-| `--flag` | Boolean flag (always optional) | `build --verbose` | `build`<br>`build --verbose` | - |
-| `--flag {value}` | Required flag with required value | `build --config {mode}` | `build --config debug` | `build`<br>`build --config` |
-| `--flag {value?}` | Required flag with optional value | `build --config {mode?}` | `build --config debug`<br>`build --config` | `build` |
-| `--flag? {value}` | Optional flag with required value (if present) | `build --config? {mode}` | `build`<br>`build --config debug` | `build --config` |
-| `--flag? {value?}` | Optional flag with optional value | `build --config? {mode?}` | `build`<br>`build --config`<br>`build --config debug` | - |
+Options can have modifiers that control their optionality and value requirements:
+
+- `?` after flag name (`--flag?`) = flag itself is optional
+- `?` after parameter (`{value?}`) = value is optional (nullable)
+
+**Quick Reference:**
+- `--flag` = Boolean flag (always optional)
+- `--flag {value}` = Required flag with required value
+- `--flag {value?}` = Required flag with optional value
+- `--flag? {value}` = Optional flag with required value (if present)
+- `--flag? {value?}` = Optional flag with optional value
+
+**For complete details**, see [Parameter Optionality Design](../cross-cutting/parameter-optionality.md), which covers:
+- Full syntax table with valid/invalid invocations
+- Handler signatures and binding logic
+- Gradual refactoring patterns (shell → native)
+- Use cases for each pattern
 
 #### NURU_S005: Option with Duplicate Alias
 
@@ -531,60 +543,7 @@ Options cannot have the same short form (alias) specified multiple times.
 
 **Why:** Short form aliases must be unique to avoid ambiguity when parsing command-line arguments.
 
-## Required vs Optional Options - Explicit Syntax
-
-### Self-Contained Route Patterns
-
-```csharp
-// Required flag: No ? on flag
-.AddRoute("deploy --env {env}", (string env) => ...)
-// Must provide: deploy --env production
-// Won't match: deploy
-
-// Optional flag: ? on flag
-.AddRoute("deploy --env? {env}", (string? env) => ...)
-// Can provide: deploy --env production (env = "production")
-// Can omit: deploy (env = null)
-
-// Optional flag with optional value
-.AddRoute("deploy --env? {env?}", (string? env) => ...)
-// Can omit flag: deploy (env = null)
-// Can provide flag only: deploy --env (env = null)
-// Can provide both: deploy --env production (env = "production")
-
-// Mixed requirement levels
-.AddRoute("deploy --env {env} --config? {cfg?} --force",
-    (string env, string? cfg, bool force) => ...)
-// Required: --env with value (no ? on flag)
-// Optional: --config flag and value (? on both)
-// Optional: --force (booleans always optional)
-```
-
-### Why This Works for Interception
-
-```csharp
-// Specific handler for production deploys (higher specificity)
-.AddRoute("deploy --env production --force", (bool force) => {
-    // Intercept production deploys
-    if (!force && !Confirm("Deploy to prod?")) return;
-    ProductionDeploy();
-})
-
-// General handler for other environments (lower specificity)
-.AddRoute("deploy --env {env}", (string env) => {
-    // Standard deploy path
-    StandardDeploy(env);
-})
-
-// Fallback for deploy without options
-.AddRoute("deploy {env?}", (string? env) => {
-    // Legacy positional parameter support
-    var target = env ?? "staging";
-    StandardDeploy(target);
-})
-```
-
 ## Related Documents
 
-See [specificity-algorithm.md](../resolver/specificity-algorithm.md) for how route patterns are scored and matched.
-See [parameter-optionality.md](../cross-cutting/parameter-optionality.md) for nullability-based optionality design.
+- [Parameter Optionality Design](../cross-cutting/parameter-optionality.md) - Nullability-based optionality, refactoring patterns, and detailed use cases
+- [Specificity Algorithm](../resolver/specificity-algorithm.md) - How route patterns are scored and matched

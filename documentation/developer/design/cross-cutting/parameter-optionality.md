@@ -1,5 +1,9 @@
 # Optional Options Design - Nuru Implementation
 
+> **Note**: This is the **authoritative source** for option modifier syntax and semantics. The [Syntax Rules](../parser/syntax-rules.md) document provides a quick reference but defers to this document for complete details.
+>
+> **See Also**: [Route Pattern Anatomy](../parser/route-pattern-anatomy.md) - Comprehensive terminology and visual breakdown of all pattern syntax elements
+
 ## Overview
 
 This document defines how Nuru handles required vs optional options based on parameter nullability, supporting gradual refactoring scenarios where custom handlers progressively replace shell passthrough.

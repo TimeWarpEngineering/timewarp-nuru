@@ -190,27 +190,63 @@ Tests use numbered files (routing-01, routing-02, etc.) for systematic coverage,
 
 ## Section 5: Option Matching (Required vs Optional)
 
-**Purpose**: Verify option matching based on parameter nullability.
+**Purpose**: Verify option matching behavior with different option/parameter modifier combinations.
+
+**Note**: See [parameter-optionality.md](../../../documentation/developer/design/cross-cutting/parameter-optionality.md) for authoritative design.
+
+### Coverage Matrix
+
+This section tests all 5 option behaviors defined in the design document:
+
+| # | Syntax | Flag Required? | Value Required? | Valid Examples | Invalid Examples | Use Case |
+|---|--------|----------------|-----------------|----------------|------------------|----------|
+| 1 | `--config {mode}` | ✅ Yes | ✅ Yes | `cmd --config debug` | `cmd`<br>`cmd --config` | Standard required option |
+| 2 | `--config {mode?}` | ✅ Yes | ❌ No | `cmd --config debug`<br>`cmd --config` | `cmd` | Flag must exist, value optional (e.g., `--verbose` with optional level) |
+| 3 | `--config? {mode?}` | ❌ No | ❌ No | `cmd`<br>`cmd --config`<br>`cmd --config debug` | None | Fully optional (progressive enhancement) |
+| 4 | `--config? {mode}` | ❌ No | ✅ Yes | `cmd`<br>`cmd --config debug` | `cmd --config` | Flag optional, but if provided must have value |
+| 5 | `--verbose` | ❌ No | N/A | `cmd`<br>`cmd --verbose` | None | Boolean flag (always optional) |
 
 ### Test Cases
 
-1. **Required Option with Non-Nullable Parameter**
+1. **Required Flag + Required Value** (Behavior #1)
    - Route: `build --config {mode}`
-   - Handler: `(string mode) => ...` (non-nullable)
+   - Handler: `(string mode) => ...`
    - Input: `build --config debug`
    - Expected: ✅ Match, `mode = "debug"`
    - Input: `build`
-   - Expected: ❌ No match (missing required option)
+   - Expected: ❌ No match (missing required flag)
 
-2. **Optional Option with Nullable Parameter**
+2. **Required Flag + Optional Value** (Behavior #2)
    - Route: `build --config {mode?}`
-   - Handler: `(string? mode) => ...` (nullable)
-   - Input: `build --config release`
-   - Expected: ✅ Match, `mode = "release"`
+   - Handler: `(string? mode) => ...`
+   - Input: `build --config debug`
+   - Expected: ✅ Match, `mode = "debug"`
+   - Input: `build --config`
+   - Expected: ✅ Match, `mode = null` (flag present, value omitted)
    - Input: `build`
-   - Expected: ✅ Match, `mode = null` (option omitted)
+   - Expected: ❌ No match (missing required flag)
 
-3. **Boolean Flag (Always Optional)**
+3. **Optional Flag + Optional Value** (Behavior #3)
+   - Route: `build --config? {mode?}`
+   - Handler: `(string? mode) => ...`
+   - Input: `build --config debug`
+   - Expected: ✅ Match, `mode = "debug"`
+   - Input: `build --config`
+   - Expected: ✅ Match, `mode = null` (flag present, value omitted)
+   - Input: `build`
+   - Expected: ✅ Match, `mode = null` (entire option omitted)
+
+4. **Optional Flag + Required Value** (Behavior #4)
+   - Route: `build --config? {mode}`
+   - Handler: `(string? mode) => ...`
+   - Input: `build --config debug`
+   - Expected: ✅ Match, `mode = "debug"`
+   - Input: `build`
+   - Expected: ✅ Match, `mode = null` (entire option omitted)
+   - Input: `build --config`
+   - Expected: ❌ No match (flag present but missing required value)
+
+5. **Boolean Flag** (Behavior #5)
    - Route: `build --verbose`
    - Handler: `(bool verbose) => ...`
    - Input: `build --verbose`
@@ -218,8 +254,8 @@ Tests use numbered files (routing-01, routing-02, etc.) for systematic coverage,
    - Input: `build`
    - Expected: ✅ Match, `verbose = false` (flag omitted)
 
-4. **Mixed Required and Optional Options**
-   - Route: `deploy --env {e} --tag {t?} --verbose`
+6. **Mixed Required and Optional Options**
+   - Route: `deploy --env {e} --tag? {t?} --verbose`
    - Handler: `(string e, string? t, bool verbose) => ...`
    - Input: `deploy --env prod --tag v1.0 --verbose`
    - Expected: ✅ Match, `e = "prod"`, `t = "v1.0"`, `verbose = true`
@@ -228,7 +264,7 @@ Tests use numbered files (routing-01, routing-02, etc.) for systematic coverage,
    - Input: `deploy --tag v1.0`
    - Expected: ❌ No match (missing required `--env`)
 
-5. **Option with Typed Parameter**
+7. **Option with Typed Parameter**
    - Route: `server --port {num:int}`
    - Handler: `(int num) => ...`
    - Input: `server --port 8080`
@@ -236,13 +272,13 @@ Tests use numbered files (routing-01, routing-02, etc.) for systematic coverage,
    - Input: `server --port abc`
    - Expected: ❌ No match (type conversion fails)
 
-6. **Option Alias Matching**
+8. **Option Alias Matching**
    - Route: `build --verbose,-v`
    - Handler: `(bool verbose) => ...`
    - Input: `build --verbose`
    - Expected: ✅ Match, `verbose = true`
    - Input: `build -v`
-   - Expected: ✅ Match, `verbose = true` (alias works)
+   - Expected: ✅ Match, `verbose = true`
 
 ---
 

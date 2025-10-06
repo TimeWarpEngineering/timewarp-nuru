@@ -97,15 +97,6 @@ The design explicitly supports incremental migration from shell commands to nati
 - Keeps syntax minimal and familiar to C# developers
 - `{param}` = required, `{param?}` = optional (matches C# nullable syntax)
 
-### Special Cases
-
-| Pattern | Meaning | Note |
-|---------|---------|------|
-| `--flag {param}` | Required flag with required value | Non-nullable param |
-| `--flag {param?}` | Required flag with optional value | Nullable param |
-| `--flag? {param?}` | **NOT SUPPORTED** | Can't mark flag as optional in pattern - use nullable param |
-| `--verbose` | Optional boolean flag | Booleans always optional |
-
 ### Note on Required Options
 
 While "required option" may sound like an oxymoron, it's a common pattern in CLI tools:

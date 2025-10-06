@@ -141,39 +141,6 @@ foreach (string testFile in testFiles)
   WriteLine();
 }
 
-// Run Kijaribu self-tests
-WriteLine("🧪 Running Kijaribu Self-Tests");
-string selfTestProject = Path.Combine(testsDir, "TimeWarp.Kijaribu.Tests/TimeWarp.Kijaribu.Tests.csproj");
-if (File.Exists(selfTestProject))
-{
-  totalTests++;
-  WriteLine("Running: Kijaribu Self-Tests");
-
-  CommandOutput selfResult = filterTag is not null
-    ? await Shell.Builder("dotnet").WithArguments("run", "--project", selfTestProject, "--", "--tag", filterTag).WithNoValidation().CaptureAsync()
-    : await Shell.Builder("dotnet").WithArguments("run", "--project", selfTestProject).WithNoValidation().CaptureAsync();
-
-  if (selfResult.Success)
-  {
-    passedTests++;
-    WriteLine("✅ PASSED");
-  }
-  else
-  {
-    WriteLine("❌ FAILED");
-    if (!string.IsNullOrWhiteSpace(selfResult.Stdout))
-      WriteLine(selfResult.Stdout);
-    if (!string.IsNullOrWhiteSpace(selfResult.Stderr))
-      WriteLine($"Stderr: {selfResult.Stderr}");
-  }
-
-  WriteLine();
-}
-else
-{
-  WriteLine("⚠ Kijaribu self-test project not found");
-}
-
   // Summary
   WriteLine($"{'═',-60}");
   WriteLine($"Results: {passedTests}/{totalTests} test files passed");

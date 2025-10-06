@@ -41,8 +41,9 @@ public class OptionMatchingTests
     await Task.CompletedTask;
   }
 
-  public static async Task Should_match_optional_option_build_config_release()
+  public static async Task Should_match_required_flag_optional_value_build_config_release()
   {
+    // Behavior #2: Required flag + Optional value (--config {mode?})
     // Arrange
     NuruAppBuilder builder = new();
     string? boundMode = null;
@@ -60,12 +61,91 @@ public class OptionMatchingTests
     await Task.CompletedTask;
   }
 
-  public static async Task Should_match_optional_option_build_null()
+  public static async Task Should_match_required_flag_optional_value_build_config_no_value()
   {
+    // Behavior #2: Flag present without value should bind null
     // Arrange
     NuruAppBuilder builder = new();
     string? boundMode = "unexpected";
     builder.AddRoute("build --config {mode?}", (string? mode) => { boundMode = mode; return 0; });
+
+    NuruApp app = builder.Build();
+
+    // Act
+    int exitCode = await app.RunAsync(["build", "--config"]);
+
+    // Assert
+    exitCode.ShouldBe(0);
+    boundMode.ShouldBeNull();
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_not_match_required_flag_optional_value_build_missing_flag()
+  {
+    // Behavior #2: Missing required flag should not match
+    // Arrange
+    NuruAppBuilder builder = new();
+    builder.AddRoute("build --config {mode?}", (string? _) => 0);
+
+    NuruApp app = builder.Build();
+
+    // Act
+    int exitCode = await app.RunAsync(["build"]);
+
+    // Assert
+    exitCode.ShouldBe(1); // Missing required flag
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_match_optional_flag_optional_value_build_config_release()
+  {
+    // Behavior #3: Optional flag + Optional value (--config? {mode?})
+    // Arrange
+    NuruAppBuilder builder = new();
+    string? boundMode = null;
+    builder.AddRoute("build --config? {mode?}", (string? mode) => { boundMode = mode; return 0; });
+
+    NuruApp app = builder.Build();
+
+    // Act
+    int exitCode = await app.RunAsync(["build", "--config", "release"]);
+
+    // Assert
+    exitCode.ShouldBe(0);
+    boundMode.ShouldBe("release");
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_match_optional_flag_optional_value_build_config_no_value()
+  {
+    // Behavior #3: Optional flag present without value
+    // Arrange
+    NuruAppBuilder builder = new();
+    string? boundMode = "unexpected";
+    builder.AddRoute("build --config? {mode?}", (string? mode) => { boundMode = mode; return 0; });
+
+    NuruApp app = builder.Build();
+
+    // Act
+    int exitCode = await app.RunAsync(["build", "--config"]);
+
+    // Assert
+    exitCode.ShouldBe(0);
+    boundMode.ShouldBeNull();
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_match_optional_flag_optional_value_build_missing_flag()
+  {
+    // Behavior #3: Optional flag omitted entirely
+    // Arrange
+    NuruAppBuilder builder = new();
+    string? boundMode = "unexpected";
+    builder.AddRoute("build --config? {mode?}", (string? mode) => { boundMode = mode; return 0; });
 
     NuruApp app = builder.Build();
 
@@ -75,6 +155,64 @@ public class OptionMatchingTests
     // Assert
     exitCode.ShouldBe(0);
     boundMode.ShouldBeNull();
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_match_optional_flag_required_value_build_config_debug()
+  {
+    // Behavior #4: Optional flag + Required value (--config? {mode})
+    // Arrange
+    NuruAppBuilder builder = new();
+    string? boundMode = null;
+    builder.AddRoute("build --config? {mode}", (string? mode) => { boundMode = mode; return 0; });
+
+    NuruApp app = builder.Build();
+
+    // Act
+    int exitCode = await app.RunAsync(["build", "--config", "debug"]);
+
+    // Assert
+    exitCode.ShouldBe(0);
+    boundMode.ShouldBe("debug");
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_match_optional_flag_required_value_build_missing_flag()
+  {
+    // Behavior #4: Optional flag omitted entirely
+    // Arrange
+    NuruAppBuilder builder = new();
+    string? boundMode = "unexpected";
+    builder.AddRoute("build --config? {mode}", (string? mode) => { boundMode = mode; return 0; });
+
+    NuruApp app = builder.Build();
+
+    // Act
+    int exitCode = await app.RunAsync(["build"]);
+
+    // Assert
+    exitCode.ShouldBe(0);
+    boundMode.ShouldBeNull();
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_not_match_optional_flag_required_value_build_config_no_value()
+  {
+    // Behavior #4: Flag present without required value should not match
+    // Arrange
+    NuruAppBuilder builder = new();
+    builder.AddRoute("build --config? {mode}", (string? _) => 0);
+
+    NuruApp app = builder.Build();
+
+    // Act
+    int exitCode = await app.RunAsync(["build", "--config"]);
+
+    // Assert
+    exitCode.ShouldBe(1); // Flag present but missing required value
 
     await Task.CompletedTask;
   }
@@ -147,7 +285,7 @@ public class OptionMatchingTests
     string? boundE = null;
     string? boundT = "unexpected";
     bool boundVerbose = true;
-    builder.AddRoute("deploy --env {e} --tag {t?} --verbose", (string e, string? t, bool verbose) => { boundE = e; boundT = t; boundVerbose = verbose; return 0; });
+    builder.AddRoute("deploy --env {e} --tag? {t?} --verbose", (string e, string? t, bool verbose) => { boundE = e; boundT = t; boundVerbose = verbose; return 0; });
 
     NuruApp app = builder.Build();
 
@@ -167,7 +305,7 @@ public class OptionMatchingTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.AddRoute("deploy --env {e} --tag {t?} --verbose", (string _, string? _, bool _) => 0);
+    builder.AddRoute("deploy --env {e} --tag? {t?} --verbose", (string _, string? _, bool _) => 0);
 
     NuruApp app = builder.Build();
 

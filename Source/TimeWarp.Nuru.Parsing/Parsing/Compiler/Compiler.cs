@@ -144,7 +144,8 @@ internal sealed class Compiler : SyntaxVisitor<object?>
         alternateForm: alternateForm,
         description: option.Description,
         isOptional: option.IsOptional || !expectsValue,  // Boolean flags are always optional
-        isRepeated: option.Parameter?.IsRepeated ?? false
+        isRepeated: option.Parameter?.IsRepeated ?? false,
+        parameterIsOptional: option.Parameter?.IsOptional ?? false
       );
 
     OptionMatchers.Add(optionMatcher);

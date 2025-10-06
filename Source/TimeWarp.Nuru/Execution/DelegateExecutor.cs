@@ -188,11 +188,10 @@ public static class DelegateExecutor
     {
       if (option.ParameterName == parameterName)
       {
-        // Option parameters are optional if the parameter is marked as optional
-        // We need to check the route pattern for this
-        return endpoint.RoutePattern.Contains($"{{{parameterName}?", StringComparison.Ordinal) ||
-               (endpoint.RoutePattern.Contains($"{{{parameterName}:", StringComparison.Ordinal) &&
-                endpoint.RoutePattern.Contains("?}", StringComparison.Ordinal));
+        // Option parameter is optional if either:
+        // 1. The option flag itself is optional (--config? means entire option can be omitted)
+        // 2. The parameter value is optional (--config {mode?} means value can be omitted)
+        return option.IsOptional || option.ParameterIsOptional;
       }
     }
 

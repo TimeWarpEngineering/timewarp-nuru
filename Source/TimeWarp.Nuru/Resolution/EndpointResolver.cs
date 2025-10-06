@@ -350,27 +350,39 @@ internal static class EndpointResolver
           // If this option expects a value, verify one exists and extract it
           if (optionSegment.ExpectsValue)
           {
-            if (i + 1 >= remainingArgs.Count || remainingArgs[i + 1].StartsWith(CommonStrings.SingleDash, StringComparison.Ordinal))
-            {
-              return false;
-            }
+            bool valueIsAvailable = i + 1 < remainingArgs.Count &&
+                                    !remainingArgs[i + 1].StartsWith(CommonStrings.SingleDash, StringComparison.Ordinal);
 
-            // Extract the option value
-            if (optionSegment.ParameterName is not null)
+            if (!valueIsAvailable)
             {
-              if (optionSegment.IsRepeated)
+              // No value available - check if value is optional
+              if (!optionSegment.ParameterIsOptional)
               {
-                // For repeated options, collect values
-                collectedValues.Add(remainingArgs[i + 1]);
+                // Value is required but not provided
+                return false;
               }
-              else
-              {
-                // Single value option
-                extractedValues[optionSegment.ParameterName] = remainingArgs[i + 1];
-              }
+              // Value is optional and not provided - that's OK, parameter will be null
+              optionsConsumed++; // Just the option flag
             }
+            else
+            {
+              // Value is available - extract it
+              if (optionSegment.ParameterName is not null)
+              {
+                if (optionSegment.IsRepeated)
+                {
+                  // For repeated options, collect values
+                  collectedValues.Add(remainingArgs[i + 1]);
+                }
+                else
+                {
+                  // Single value option
+                  extractedValues[optionSegment.ParameterName] = remainingArgs[i + 1];
+                }
+              }
 
-            optionsConsumed += 2; // Option + value
+              optionsConsumed += 2; // Option + value
+            }
           }
           else
           {

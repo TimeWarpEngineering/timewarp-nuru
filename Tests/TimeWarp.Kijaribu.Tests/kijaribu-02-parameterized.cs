@@ -10,7 +10,7 @@ return await RunTests<ParamTests>(clearCache: true);
 public class ParamTests
 {
     /// <summary>
-    /// PARAM-03: No [Input] - should run once with empty parameters.
+    /// No [Input] - should run once with empty parameters.
     /// </summary>
     public static async Task NoInputTest()
     {
@@ -20,7 +20,7 @@ public class ParamTests
     }
 
     /// <summary>
-    /// PARAM-01: Single [Input] with string and int args.
+    /// Single [Input] with string and int args.
     /// Expects string param1, int param2.
     /// </summary>
     [Input("hello", 42)]
@@ -39,7 +39,7 @@ public class ParamTests
         await Task.CompletedTask;
     }
     /// <summary>
-    /// PARAM-02: Multiple [Input] - two invocations.
+    /// Multiple [Input] - two invocations.
     /// </summary>
     [Input("first", 1)]
     [Input("second", 2)]
@@ -51,7 +51,7 @@ public class ParamTests
     }
 
     /// <summary>
-    /// PARAM-04: Type mismatch - expects int but [Input] provides string.
+    /// Type mismatch - expects int but [Input] provides string.
     /// Should fail invocation.
     /// </summary>
     [Input("not-an-int")]
@@ -63,7 +63,7 @@ public class ParamTests
     }
 
     /// <summary>
-    /// PARAM-05: Null params for nullable types.
+    /// Null params for nullable types.
     /// </summary>
     [Input(null, null)]
     public static async Task NullParamTest(string? param1, int? param2)
@@ -81,7 +81,7 @@ public class ParamTests
     }
 
     /// <summary>
-    /// PARAM-EDGE-01: [Input] with 0 params for method expecting 2.
+    /// [Input] with 0 params for method expecting 2.
     /// Should fail or run with defaults/nulls.
     /// </summary>
     [Input]

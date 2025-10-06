@@ -1,11 +1,12 @@
 #!/usr/bin/dotnet --
+
 return await RunTests<EdgeTests>(clearCache: true);
 
 [TestTag("Kijaribu")]
 public class EdgeTests
 {
   /// <summary>
-  /// DISC-EDGE-01: Generic test method - reflection should handle generics.
+  /// Generic test method - reflection should handle generics.
   /// </summary>
   public static async Task GenericTest<T>()
   {
@@ -14,7 +15,7 @@ public class EdgeTests
   }
 
   /// <summary>
-  /// PARAM-EDGE-01: Additional edge for [Input] with mismatched count (0 for 3 params).
+  /// Additional edge for [Input] with mismatched count (0 for 3 params).
   /// Should fail gracefully.
   /// </summary>
   [Input]
@@ -25,7 +26,7 @@ public class EdgeTests
   }
 
   /// <summary>
-  /// TAG-EDGE-01: Method with multiple tags - already in TagTests, but additional with no match.
+  /// Method with multiple tags - already in TagTests, but additional with no match.
   /// </summary>
   [TestTag("no-match1")]
   [TestTag("no-match2")]
@@ -36,7 +37,7 @@ public class EdgeTests
   }
 
   /// <summary>
-  /// CACHE-EDGE-01: Simulate permission issue - hard to automate, log for manual.
+  /// Simulate permission issue - hard to automate, log for manual.
   /// </summary>
   public static async Task CachePermissionEdge()
   {
@@ -46,7 +47,7 @@ public class EdgeTests
   }
 
   /// <summary>
-  /// REPORT-EDGE-01: Class with 0 qualifying tests - summary "0/0", exit=0.
+  /// Class with 0 qualifying tests - summary "0/0", exit=0.
   /// Include non-qualifying methods only.
   /// </summary>
   // No qualifying methods here - this class tests zero tests scenario
@@ -75,6 +76,7 @@ public class EdgeTests
   /// <summary>
   /// Edge: Hanging test simulation (no timeout implemented).
   /// </summary>
+  [Timeout(5000)]
   public static async Task HangingTestEdge()
   {
     // Infinite loop or long delay - manual timeout check

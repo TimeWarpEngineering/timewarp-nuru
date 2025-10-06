@@ -6,7 +6,7 @@ return await RunTests<SkipExceptionTests>(clearCache: true);
 public class SkipExceptionTests
 {
   /// <summary>
-  /// SKIP-01: Skipped test with reason - should skip and report reason.
+  /// Skipped test with reason - should skip and report reason.
   /// </summary>
   [Skip("WIP - Work in progress")]
   public static async Task SkippedTest()
@@ -16,7 +16,7 @@ public class SkipExceptionTests
   }
 
   /// <summary>
-  /// SKIP-02: Runtime exception - ArgumentException.
+  /// Runtime exception - ArgumentException.
   /// </summary>
   public static async Task ExceptionTest()
   {
@@ -25,7 +25,7 @@ public class SkipExceptionTests
   }
 
   /// <summary>
-  /// SKIP-03: TargetInvocationException - wrapped exception.
+  /// TargetInvocationException - wrapped exception.
   /// </summary>
   public static async Task InvocationExceptionTest()
   {
@@ -35,7 +35,7 @@ public class SkipExceptionTests
   }
 
   /// <summary>
-  /// SKIP-04: Async exception after await.
+  /// Async exception after await.
   /// </summary>
   public static async Task AsyncExceptionTest()
   {

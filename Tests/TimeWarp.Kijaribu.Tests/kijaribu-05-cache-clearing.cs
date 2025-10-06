@@ -10,7 +10,7 @@ await RunTests<EmptyCacheTest>();
 public class CacheClearTest
 {
   /// <summary>
-  /// CACHE-01: Class with [ClearRunfileCache(Enabled=true)] - should clear cache and log.
+  /// Class with [ClearRunfileCache(Enabled=true)] - should clear cache and log.
   /// Verify output shows "✓ Clearing runfile cache:".
   /// </summary>
   public static async Task ClearTestMethod()
@@ -24,7 +24,7 @@ public class CacheClearTest
 public class NoCacheTest
 {
   /// <summary>
-  /// CACHE-02: No attribute, default false - no clearing output.
+  /// No attribute, default false - no clearing output.
   /// </summary>
   public static async Task NoClearTestMethod()
   {
@@ -38,7 +38,7 @@ public class NoCacheTest
 public class CurrentAssemblySkipTest
 {
   /// <summary>
-  /// CACHE-03: Clear enabled - should skip deleting current assembly's cache dir.
+  /// Clear enabled - should skip deleting current assembly's cache dir.
   /// Verify no deletion of current exe dir.
   /// </summary>
   public static async Task SkipCurrentTest()
@@ -53,7 +53,7 @@ public class CurrentAssemblySkipTest
 public class EmptyCacheTest
 {
   /// <summary>
-  /// CACHE-04: Run with clear=true param - handles empty cache dir gracefully.
+  /// Run with clear=true param - handles empty cache dir gracefully.
   /// </summary>
   public static async Task EmptyCacheMethod()
   {
@@ -62,7 +62,7 @@ public class EmptyCacheTest
   }
 
   /// <summary>
-  /// CACHE-EDGE-01: Simulate permission issue (manual verification needed).
+  /// Simulate permission issue (manual verification needed).
   /// </summary>
   public static async Task PermissionEdge()
   {

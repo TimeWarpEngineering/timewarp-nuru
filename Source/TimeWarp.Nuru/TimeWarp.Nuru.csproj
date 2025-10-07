@@ -26,11 +26,9 @@
     <PackageReference Include="TimeWarp.Mediator" />
   </ItemGroup>
 
+  <!-- Include parsing source files directly -->
   <ItemGroup>
-    <PackageReference Include="TimeWarp.Nuru.Parsing">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>contentfiles;build</IncludeAssets>
-    </PackageReference>
+    <Compile Include="..\TimeWarp.Nuru.Parsing\**\*.cs" Exclude="..\TimeWarp.Nuru.Parsing\obj\**;..\TimeWarp.Nuru.Parsing\bin\**" />
   </ItemGroup>
 
   <ItemGroup>

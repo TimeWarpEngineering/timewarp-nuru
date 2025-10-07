@@ -102,55 +102,12 @@ try
                         WriteLine("\nTools List Response:");
                         WriteLine(toolResponse);
 
-                        // Test 3: Call get_random_number tool
+                        // Test 3: Call list_examples tool
                         WriteLine("\n" + new string('-', 50));
-                        WriteLine("\nTest 3: Calling get_random_number tool...");
-
-                        string callToolRequest = """
-                        {"jsonrpc":"2.0","method":"tools/call","params":{"name":"get_random_number","arguments":{"min":10,"max":50}},"id":3}
-                        """;
-
-                        await process.StandardInput.WriteLineAsync(callToolRequest);
-                        await process.StandardInput.FlushAsync();
-
-                        // Read the tool execution response
-                        using (CancellationTokenSource callCts = new(TimeSpan.FromSeconds(5)))
-                        {
-                            Task<string?> callReadTask = Task.Run(() => process.StandardOutput.ReadLineAsync());
-
-                            try
-                            {
-                                string? callResponse = await callReadTask.WaitAsync(callCts.Token);
-                                if (callResponse is not null)
-                                {
-                                    WriteLine("\n✅ Got tool execution response!");
-                                    WriteLine("\nTool Execution Response:");
-                                    WriteLine(callResponse);
-
-                                    // Parse to verify it has a result
-                                    try
-                                    {
-                                        var callJson = JsonDocument.Parse(callResponse);
-                                        if (callJson.RootElement.TryGetProperty("result", out JsonElement callResult))
-                                        {
-                                            WriteLine("\n✅ Tool executed successfully! Random number generated.");
-                                        }
-                                    }
-                                    catch { }
-                                }
-                            }
-                            catch (OperationCanceledException)
-                            {
-                                WriteLine("⚠️ Timeout waiting for tool execution response");
-                            }
-                        }
-
-                        // Test 4: Call list_examples tool
-                        WriteLine("\n" + new string('-', 50));
-                        WriteLine("\nTest 4: Calling list_examples tool...");
+                        WriteLine("\nTest 3: Calling list_examples tool...");
 
                         string listExamplesRequest = """
-                        {"jsonrpc":"2.0","method":"tools/call","params":{"name":"list_examples","arguments":{}},"id":4}
+                        {"jsonrpc":"2.0","method":"tools/call","params":{"name":"list_examples","arguments":{}},"id":3}
                         """;
 
                         await process.StandardInput.WriteLineAsync(listExamplesRequest);
@@ -180,12 +137,12 @@ try
                             }
                         }
 
-                        // Test 5: Call get_example with specific example
+                        // Test 4: Call get_example with specific example
                         WriteLine("\n" + new string('-', 50));
-                        WriteLine("\nTest 5: Getting 'basic' example...");
+                        WriteLine("\nTest 4: Getting 'basic' example...");
 
                         string getExampleRequest = """
-                        {"jsonrpc":"2.0","method":"tools/call","params":{"name":"get_example","arguments":{"name":"basic"}},"id":5}
+                        {"jsonrpc":"2.0","method":"tools/call","params":{"name":"get_example","arguments":{"name":"basic"}},"id":4}
                         """;
 
                         await process.StandardInput.WriteLineAsync(getExampleRequest);
@@ -215,12 +172,12 @@ try
                             }
                         }
 
-                        // Test 6: Check cache status
+                        // Test 5: Check cache status
                         WriteLine("\n" + new string('-', 50));
-                        WriteLine("\nTest 6: Checking cache status...");
+                        WriteLine("\nTest 5: Checking cache status...");
 
                         string cacheStatusRequest = """
-                        {"jsonrpc":"2.0","method":"tools/call","params":{"name":"cache_status","arguments":{}},"id":6}
+                        {"jsonrpc":"2.0","method":"tools/call","params":{"name":"cache_status","arguments":{}},"id":5}
                         """;
 
                         await process.StandardInput.WriteLineAsync(cacheStatusRequest);
@@ -265,12 +222,12 @@ try
                             }
                         }
 
-                        // Test 7: Clear cache
+                        // Test 6: Clear cache
                         WriteLine("\n" + new string('-', 50));
-                        WriteLine("\nTest 7: Clearing cache...");
+                        WriteLine("\nTest 6: Clearing cache...");
 
                         string clearCacheRequest = """
-                        {"jsonrpc":"2.0","method":"tools/call","params":{"name":"clear_cache","arguments":{}},"id":7}
+                        {"jsonrpc":"2.0","method":"tools/call","params":{"name":"clear_cache","arguments":{}},"id":6}
                         """;
 
                         await process.StandardInput.WriteLineAsync(clearCacheRequest);

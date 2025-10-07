@@ -14,7 +14,7 @@ internal sealed class ValidateRouteTool
     {
         try
         {
-            CompiledRoute route = RoutePatternParser.Parse(pattern);
+            CompiledRoute route = PatternParser.Parse(pattern);
 
             List<string> details = [];
 
@@ -57,12 +57,13 @@ internal sealed class ValidateRouteTool
             }
 
             // Required options
-            if (route.RequiredOptionPatterns.Count > 0)
+            var requiredOptions = route.OptionMatchers.Where(o => !o.IsOptional).ToList();
+            if (requiredOptions.Count > 0)
             {
-                details.Add("**Required Option Patterns:**");
-                foreach (string reqOption in route.RequiredOptionPatterns)
+                details.Add("**Required Options:**");
+                foreach (OptionMatcher reqOption in requiredOptions)
                 {
-                    details.Add($"  {reqOption}");
+                    details.Add($"  {reqOption.ToDisplayString()}");
                 }
 
                 details.Add("");
@@ -71,7 +72,8 @@ internal sealed class ValidateRouteTool
             // Summary
             details.Add("**Summary:**");
             details.Add($"  Specificity Score: {route.Specificity}");
-            details.Add($"  Minimum Required Args: {route.MinimumRequiredArgs}");
+            int minRequiredArgs = route.PositionalMatchers.Count(m => m is not ParameterMatcher { IsOptional: true });
+            details.Add($"  Minimum Required Args: {minRequiredArgs}");
 
             return string.Join("\n", details);
         }

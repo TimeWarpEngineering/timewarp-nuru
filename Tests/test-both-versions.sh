@@ -142,37 +142,37 @@ echo ""
 # Build all versions first
 echo "Building projects..."
 echo -n "  Delegate version (JIT)... "
-if (cd Tests/TimeWarp.Nuru.TestApp.Delegates && dotnet build -c Release --nologo --verbosity quiet > /dev/null 2>&1); then
+if (cd Tests/TestApps/TimeWarp.Nuru.TestApp.Delegates && dotnet build -c Release --nologo --verbosity quiet > /dev/null 2>&1); then
     echo -e "${GREEN}✓${NC}"
 else
     echo -e "${RED}✗ Build failed${NC}"
     echo "Build error output:"
-    (cd Tests/TimeWarp.Nuru.TestApp.Delegates && dotnet build -c Release --nologo)
+    (cd Tests/TestApps/TimeWarp.Nuru.TestApp.Delegates && dotnet build -c Release --nologo)
     exit 1
 fi
 
 echo -n "  Mediator version (JIT)... "
-if (cd Tests/TimeWarp.Nuru.TestApp.Mediator && dotnet build -c Release --nologo --verbosity quiet > /dev/null 2>&1); then
+if (cd Tests/TestApps/TimeWarp.Nuru.TestApp.Mediator && dotnet build -c Release --nologo --verbosity quiet > /dev/null 2>&1); then
     echo -e "${GREEN}✓${NC}"
 else
     echo -e "${RED}✗ Build failed${NC}"
     echo "Build error output:"
-    (cd Tests/TimeWarp.Nuru.TestApp.Mediator && dotnet build -c Release --nologo)
+    (cd Tests/TestApps/TimeWarp.Nuru.TestApp.Mediator && dotnet build -c Release --nologo)
     exit 1
 fi
 
 echo -n "  Delegate version (AOT)... "
-if (cd Tests/TimeWarp.Nuru.TestApp.Delegates && dotnet publish -c Release -r linux-x64 -p:PublishAot=true -o ./aot-output --nologo --verbosity quiet > /dev/null 2>&1); then
+if (cd Tests/TestApps/TimeWarp.Nuru.TestApp.Delegates && dotnet publish -c Release -r linux-x64 -p:PublishAot=true -o ./aot-output --nologo --verbosity quiet > /dev/null 2>&1); then
     echo -e "${GREEN}✓${NC}"
 else
     echo -e "${RED}✗ AOT build failed${NC}"
     echo "Build error output:"
-    (cd Tests/TimeWarp.Nuru.TestApp.Delegates && dotnet publish -c Release -r linux-x64 -p:PublishAot=true -o ./aot-output --nologo)
+    (cd Tests/TestApps/TimeWarp.Nuru.TestApp.Delegates && dotnet publish -c Release -r linux-x64 -p:PublishAot=true -o ./aot-output --nologo)
     exit 1
 fi
 
 echo -n "  Mediator version (AOT)... "
-if (cd Tests/TimeWarp.Nuru.TestApp.Mediator && dotnet publish -c Release -r linux-x64 -p:PublishAot=true -o ./aot-output --nologo --verbosity quiet > /dev/null 2>&1); then
+if (cd Tests/TestApps/TimeWarp.Nuru.TestApp.Mediator && dotnet publish -c Release -r linux-x64 -p:PublishAot=true -o ./aot-output --nologo --verbosity quiet > /dev/null 2>&1); then
     echo -e "${GREEN}✓${NC}"
 else
     echo -e "${RED}✗ AOT build failed (likely due to reflection warnings)${NC}"
@@ -194,7 +194,7 @@ echo ""
 # Test Delegate JIT
 echo -e "${BLUE}1. Delegate-based routing (JIT)${NC}"
 echo "================================="
-EXECUTABLE="./Tests/TimeWarp.Nuru.TestApp.Delegates/bin/Release/$TARGET_FRAMEWORK/TimeWarp.Nuru.TestApp.Delegates"
+EXECUTABLE="./Tests/TestApps/TimeWarp.Nuru.TestApp.Delegates/bin/Release/$TARGET_FRAMEWORK/TimeWarp.Nuru.TestApp.Delegates"
 START_TIME=$(date +%s.%N)
 run_all_tests
 END_TIME=$(date +%s.%N)
@@ -207,7 +207,7 @@ echo "Execution time: ${DELEGATE_JIT_TIME}s"
 echo ""
 echo -e "${BLUE}2. Mediator-based routing (JIT)${NC}"
 echo "================================="
-EXECUTABLE="./Tests/TimeWarp.Nuru.TestApp.Mediator/bin/Release/$TARGET_FRAMEWORK/TimeWarp.Nuru.TestApp.Mediator"
+EXECUTABLE="./Tests/TestApps/TimeWarp.Nuru.TestApp.Mediator/bin/Release/$TARGET_FRAMEWORK/TimeWarp.Nuru.TestApp.Mediator"
 START_TIME=$(date +%s.%N)
 run_all_tests
 END_TIME=$(date +%s.%N)
@@ -220,7 +220,7 @@ echo "Execution time: ${MEDIATOR_JIT_TIME}s"
 echo ""
 echo -e "${BLUE}3. Delegate-based routing (AOT)${NC}"
 echo "================================="
-EXECUTABLE="./Tests/TimeWarp.Nuru.TestApp.Delegates/aot-output/TimeWarp.Nuru.TestApp.Delegates"
+EXECUTABLE="./Tests/TestApps/TimeWarp.Nuru.TestApp.Delegates/aot-output/TimeWarp.Nuru.TestApp.Delegates"
 if [ -f "$EXECUTABLE" ]; then
     START_TIME=$(date +%s.%N)
     run_all_tests
@@ -238,7 +238,7 @@ fi
 echo ""
 echo -e "${BLUE}4. Mediator-based routing (AOT)${NC}"
 echo "================================="
-EXECUTABLE="./Tests/TimeWarp.Nuru.TestApp.Mediator/aot-output/TimeWarp.Nuru.TestApp.Mediator"
+EXECUTABLE="./Tests/TestApps/TimeWarp.Nuru.TestApp.Mediator/aot-output/TimeWarp.Nuru.TestApp.Mediator"
 if [ -f "$EXECUTABLE" ]; then
     START_TIME=$(date +%s.%N)
     run_all_tests
@@ -291,12 +291,12 @@ fi
 # Check binary sizes
 echo ""
 echo "Binary Sizes:"
-if [ -f "./Tests/TimeWarp.Nuru.TestApp.Delegates/aot-output/TimeWarp.Nuru.TestApp.Delegates" ]; then
-    DELEGATE_SIZE=$(ls -lh "./Tests/TimeWarp.Nuru.TestApp.Delegates/aot-output/TimeWarp.Nuru.TestApp.Delegates" | awk '{print $5}')
+if [ -f "./Tests/TestApps/TimeWarp.Nuru.TestApp.Delegates/aot-output/TimeWarp.Nuru.TestApp.Delegates" ]; then
+    DELEGATE_SIZE=$(ls -lh "./Tests/TestApps/TimeWarp.Nuru.TestApp.Delegates/aot-output/TimeWarp.Nuru.TestApp.Delegates" | awk '{print $5}')
     echo "- Delegate AOT: $DELEGATE_SIZE"
 fi
-if [ -f "./Tests/TimeWarp.Nuru.TestApp.Mediator/aot-output/TimeWarp.Nuru.TestApp.Mediator" ]; then
-    MEDIATOR_SIZE=$(ls -lh "./Tests/TimeWarp.Nuru.TestApp.Mediator/aot-output/TimeWarp.Nuru.TestApp.Mediator" | awk '{print $5}')
+if [ -f "./Tests/TestApps/TimeWarp.Nuru.TestApp.Mediator/aot-output/TimeWarp.Nuru.TestApp.Mediator" ]; then
+    MEDIATOR_SIZE=$(ls -lh "./Tests/TestApps/TimeWarp.Nuru.TestApp.Mediator/aot-output/TimeWarp.Nuru.TestApp.Mediator" | awk '{print $5}')
     echo "- Mediator AOT: $MEDIATOR_SIZE"
 fi
 

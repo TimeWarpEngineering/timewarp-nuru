@@ -212,11 +212,29 @@ internal static class LoggerMessages
       new EventId(1351, "RequiredOptionNotFound"),
       "Required option not found: {Option}");
 
+  internal static readonly Action<ILogger, string, Exception?> OptionalBooleanOptionNotProvided =
+    LoggerMessage.Define<string>(
+      LogLevel.Trace,
+      new EventId(1352, "OptionalBooleanOptionNotProvided"),
+      "Optional boolean option '{OptionName}' not provided, defaulting to false");
+
+  internal static readonly Action<ILogger, string, Exception?> OptionalValueOptionNotProvided =
+    LoggerMessage.Define<string>(
+      LogLevel.Trace,
+      new EventId(1353, "OptionalValueOptionNotProvided"),
+      "Optional value option '{OptionName}' not provided, will be null");
+
   internal static readonly Action<ILogger, int, Exception?> OptionsMatchingComplete =
     LoggerMessage.Define<int>(
       LogLevel.Trace,
-      new EventId(1352, "OptionsMatchingComplete"),
+      new EventId(1354, "OptionsMatchingComplete"),
       "Options matching complete. Consumed {ConsumedCount} args.");
+
+  internal static readonly Action<ILogger, string, Exception?> RequiredOptionValueNotProvided =
+    LoggerMessage.Define<string>(
+      LogLevel.Trace,
+      new EventId(1355, "RequiredOptionValueNotProvided"),
+      "Required option '{Option}' expects a value but none was provided");
 
   // ===== Binder Messages (1400-1499) =====
   // Currently no binder messages, but reserved for future use

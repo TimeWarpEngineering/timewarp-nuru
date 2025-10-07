@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru.TypeConversion;
+namespace TimeWarp.Nuru;
 
 /// <summary>
 /// Registry for managing type converters used in route parameter conversion.

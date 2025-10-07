@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru.TypeConversion.Converters;
+namespace TimeWarp.Nuru;
 
 /// <summary>
 /// Generic type converter for enum types.

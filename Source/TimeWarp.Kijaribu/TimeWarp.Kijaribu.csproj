@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Description>Lightweight testing helpers for single-file C# programs and scripts. Kijaribu (Swahili: test/trial) provides TestRunner pattern and assertion helpers for executable .cs files.</Description>
+    <PackageTags>testing;test-runner;single-file;csharp-scripts;test-helpers;assertions</PackageTags>
+    <!-- Suppress analyzers that don't apply to test frameworks -->
+    <NoWarn>$(NoWarn);RCS1046;CA1303;CA2007;CA1031;RCS1214;RCS1248;RCS1146;IDE0305</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Shouldly" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\Assets\Logo.png" Pack="true" PackagePath="" />
+    <None Include="..\..\README.md" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+</Project>

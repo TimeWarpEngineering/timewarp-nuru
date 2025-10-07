@@ -1,29 +1,29 @@
 
-namespace TimeWarp.Nuru.Endpoints;
+namespace TimeWarp.Nuru;
 
 /// <summary>
 /// A collection of route endpoints ordered by specificity for efficient matching.
 /// Thread-safety is not needed as routes are configured once at startup in CLI apps.
 /// </summary>
-public class EndpointCollection : IEnumerable<RouteEndpoint>
+public class EndpointCollection : IEnumerable<Endpoint>
 {
-  private readonly List<RouteEndpoint> EndpointsList = [];
+  private readonly List<Endpoint> EndpointsList = [];
 
   /// <summary>
   /// Gets all endpoints in the collection, ordered by specificity (most specific first).
   /// </summary>
-  public IReadOnlyList<RouteEndpoint> Endpoints => EndpointsList;
+  public IReadOnlyList<Endpoint> Endpoints => EndpointsList;
 
   /// <summary>
   /// Adds a new endpoint to the collection and re-sorts by specificity.
   /// </summary>
   /// <param name="endpoint">The endpoint to add.</param>
-  public void Add(RouteEndpoint endpoint)
+  public void Add(Endpoint endpoint)
   {
     ArgumentNullException.ThrowIfNull(endpoint);
 
     // Check for duplicate routes
-    RouteEndpoint? existingRoute = EndpointsList.FirstOrDefault(e =>
+    Endpoint? existingRoute = EndpointsList.FirstOrDefault(e =>
               e.RoutePattern.Equals(endpoint.RoutePattern, StringComparison.OrdinalIgnoreCase));
 
     if (existingRoute is not null)
@@ -57,7 +57,7 @@ public class EndpointCollection : IEnumerable<RouteEndpoint>
   /// </summary>
   public int Count => EndpointsList.Count;
 
-  public IEnumerator<RouteEndpoint> GetEnumerator()
+  public IEnumerator<Endpoint> GetEnumerator()
   {
     // No need to copy - the list won't be modified during enumeration in a CLI app
     return EndpointsList.GetEnumerator();

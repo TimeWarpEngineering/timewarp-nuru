@@ -7,18 +7,10 @@ namespace TimeWarp.Nuru.Parsing;
 public class CompiledRoute
 {
   /// <summary>
-  /// Gets or sets the positional matchers - the ordered segments (literals and parameters)
-  /// that must be matched before any options.
+  /// Gets or sets the ordered segments (literals, parameters, and options) that must be matched sequentially.
+  /// This preserves the positional order from the route pattern AST.
   /// </summary>
-  public required IReadOnlyList<RouteMatcher> PositionalMatchers { get; set; }
-  /// <summary>
-  /// Gets or sets the required option patterns that must be present (e.g., ["--amend"]).
-  /// </summary>
-  public IReadOnlyList<string> RequiredOptionPatterns { get; set; } = Array.Empty<string>();
-  /// <summary>
-  /// Gets or sets the option matchers that must be matched.
-  /// </summary>
-  public IReadOnlyList<OptionMatcher> OptionMatchers { get; set; } = Array.Empty<OptionMatcher>();
+  public required IReadOnlyList<RouteMatcher> Segments { get; set; }
   /// <summary>
   /// Gets or sets the name of the catch-all parameter if present (e.g., "args" for {*args}).
   /// </summary>
@@ -33,9 +25,15 @@ public class CompiledRoute
   /// </summary>
   public int Specificity { get; set; }
   /// <summary>
-  /// Gets the minimum number of positional arguments required to match this route.
-  /// For routes with catch-all, this is the number of segments minus one.
-  /// For routes without catch-all, this is the exact number of segments.
+  /// Gets the positional matchers (literals and parameters) for backward compatibility.
+  /// This filters out OptionMatchers from the Segments list.
   /// </summary>
-  public int MinimumRequiredArgs => CatchAllParameterName is not null ? PositionalMatchers.Count - 1 : PositionalMatchers.Count;
+  public IReadOnlyList<RouteMatcher> PositionalMatchers =>
+    Segments.Where(s => s is not OptionMatcher).ToArray();
+  /// <summary>
+  /// Gets the option matchers for backward compatibility.
+  /// This filters OptionMatchers from the Segments list.
+  /// </summary>
+  public IReadOnlyList<OptionMatcher> OptionMatchers =>
+    Segments.OfType<OptionMatcher>().ToArray();
 }

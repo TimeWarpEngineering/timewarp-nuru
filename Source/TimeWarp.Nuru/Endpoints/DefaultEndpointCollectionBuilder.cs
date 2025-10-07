@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru.Endpoints;
+namespace TimeWarp.Nuru;
 
 /// <summary>
 /// Default implementation of IEndpointCollectionBuilder.
@@ -19,10 +19,10 @@ public class DefaultEndpointCollectionBuilder : IEndpointCollectionBuilder
 
     ArgumentNullException.ThrowIfNull(handler);
 
-    CompiledRoute compiledRoute = RoutePatternParser.Parse(routePattern);
+    CompiledRoute compiledRoute = PatternParser.Parse(routePattern);
     MethodInfo method = handler.Method;
 
-    var endpoint = new RouteEndpoint
+    var endpoint = new Endpoint
     {
       RoutePattern = routePattern,
       CompiledRoute = compiledRoute,

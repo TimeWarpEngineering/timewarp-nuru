@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>TimeWarp.Nuru.TestApp.Mediator</AssemblyName>
+    <!-- AOT Configuration - Use partial trimming to preserve user code reflection -->
+    <PublishAot>true</PublishAot>
+    <TrimMode>partial</TrimMode>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="TimeWarp.Mediator" />
+  </ItemGroup>
+</Project>

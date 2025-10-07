@@ -14,7 +14,7 @@ internal sealed class GenerateHandlerTool
     {
         try
         {
-            CompiledRoute route = RoutePatternParser.Parse(pattern);
+            CompiledRoute route = PatternParser.Parse(pattern);
 
             if (useMediator)
             {

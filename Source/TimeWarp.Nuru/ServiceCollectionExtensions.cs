@@ -18,8 +18,8 @@ public static class ServiceCollectionExtensions
     // Register type conversion
     services.TryAddSingleton<ITypeConverterRegistry, TypeConverterRegistry>();
 
-    // Register command executor for Mediator integration
-    services.TryAddSingleton<CommandExecutor>();
+    // Register mediator executor for Mediator integration
+    services.TryAddSingleton<MediatorExecutor>();
 
     return services;
   }

@@ -3,11 +3,12 @@
 #:project ../../Source/TimeWarp.Nuru.Mcp/TimeWarp.Nuru.Mcp.csproj
 
 using TimeWarp.Nuru.Mcp.Tools;
+using static System.Console;
 
-Console.WriteLine("Testing GenerateHandlerTool...\n");
+WriteLine("Testing GenerateHandlerTool...\n");
 
 // Test direct handler generation
-Console.WriteLine("=== Direct Handler Generation ===\n");
+WriteLine("=== Direct Handler Generation ===\n");
 
 string[] testPatterns = [
     "status",
@@ -22,14 +23,14 @@ string[] testPatterns = [
 
 foreach (string pattern in testPatterns)
 {
-    Console.WriteLine($"Pattern: {pattern}");
-    Console.WriteLine("Generated code:");
-    Console.WriteLine(GenerateHandlerTool.GenerateHandler(pattern, false));
-    Console.WriteLine();
+  WriteLine($"Pattern: {pattern}");
+  WriteLine("Generated code:");
+  WriteLine(GenerateHandlerTool.GenerateHandler(pattern, false));
+  WriteLine();
 }
 
 // Test mediator handler generation
-Console.WriteLine("=== Mediator Handler Generation ===\n");
+WriteLine("=== Mediator Handler Generation ===\n");
 
 string[] mediatorPatterns = [
     "deploy {env}",
@@ -39,14 +40,14 @@ string[] mediatorPatterns = [
 
 foreach (string pattern in mediatorPatterns)
 {
-    Console.WriteLine($"Pattern: {pattern}");
-    Console.WriteLine("Generated code:");
-    Console.WriteLine(GenerateHandlerTool.GenerateHandler(pattern, true));
-    Console.WriteLine();
+  WriteLine($"Pattern: {pattern}");
+  WriteLine("Generated code:");
+  WriteLine(GenerateHandlerTool.GenerateHandler(pattern, true));
+  WriteLine();
 }
 
 // Test error handling
-Console.WriteLine("=== Error Handling ===\n");
+WriteLine("=== Error Handling ===\n");
 
 string[] invalidPatterns = [
     "{missing-literal}",
@@ -56,16 +57,16 @@ string[] invalidPatterns = [
 
 foreach (string pattern in invalidPatterns)
 {
-    Console.WriteLine($"Invalid pattern: {pattern}");
+  WriteLine($"Invalid pattern: {pattern}");
     string result = GenerateHandlerTool.GenerateHandler(pattern);
     if (result.Contains("// Error", StringComparison.Ordinal))
     {
-        Console.WriteLine("  ✅ Error handled correctly");
+    WriteLine("  ✅ Error handled correctly");
     }
     else
     {
-        Console.WriteLine("  ❌ Error not handled");
+    WriteLine("  ❌ Error not handled");
     }
 }
 
-Console.WriteLine("\n✅ All GenerateHandlerTool tests completed!");
+WriteLine("\n✅ All GenerateHandlerTool tests completed!");

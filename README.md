@@ -30,7 +30,7 @@ Build a powerful calculator CLI that mixes performance and flexibility:
 using TimeWarp.Nuru;
 using TimeWarp.Mediator;
 
-var builder = new NuruAppBuilder();
+NuruAppBuilder builder = new();
 
 // Simple operations: Direct approach (maximum speed)
 builder.AddRoute("add {x:double} {y:double}", 
@@ -76,7 +76,7 @@ dotnet run -- factorial 5
 ### Mix Direct and Mediator Approaches in One App
 Choose the right tool for each command:
 ```csharp
-var builder = new NuruAppBuilder();
+NuruAppBuilder builder = new();
 
 // Direct delegates for simple operations (fast, no overhead)
 builder.AddRoute("ping", () => Console.WriteLine("pong"));
@@ -122,7 +122,7 @@ builder.AddRoute<DeployCommand>("deploy {env} --strategy {strategy}");
 
 **⚡ Mixed** - Best of both worlds (recommended)
 ```csharp
-var builder = new NuruAppBuilder();
+NuruAppBuilder builder = new();
 // Simple commands: Direct (speed)
 builder.AddRoute("status", () => ShowStatus());
 

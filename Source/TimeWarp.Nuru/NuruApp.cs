@@ -9,7 +9,7 @@ public class NuruApp
 {
   private readonly IServiceProvider? ServiceProvider;
   private readonly ITypeConverterRegistry TypeConverterRegistry;
-  private readonly CommandExecutor? CommandExecutor;
+  private readonly MediatorExecutor? MediatorExecutor;
   private readonly ILoggerFactory LoggerFactory;
 
   /// <summary>
@@ -20,7 +20,12 @@ public class NuruApp
   /// <summary>
   /// Direct constructor - no dependency injection.
   /// </summary>
-  public NuruApp(EndpointCollection endpoints, ITypeConverterRegistry typeConverterRegistry, ILoggerFactory? loggerFactory = null)
+  public NuruApp
+  (
+    EndpointCollection endpoints,
+    ITypeConverterRegistry typeConverterRegistry,
+    ILoggerFactory? loggerFactory = null
+  )
   {
     Endpoints = endpoints ?? throw new ArgumentNullException(nameof(endpoints));
     TypeConverterRegistry = typeConverterRegistry ?? throw new ArgumentNullException(nameof(typeConverterRegistry));
@@ -35,7 +40,7 @@ public class NuruApp
     ServiceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
     Endpoints = serviceProvider.GetRequiredService<EndpointCollection>();
     TypeConverterRegistry = serviceProvider.GetRequiredService<ITypeConverterRegistry>();
-    CommandExecutor = serviceProvider.GetRequiredService<CommandExecutor>();
+    MediatorExecutor = serviceProvider.GetRequiredService<MediatorExecutor>();
     LoggerFactory = serviceProvider.GetService<ILoggerFactory>() ?? Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance;
   }
 
@@ -47,7 +52,7 @@ public class NuruApp
     {
       // Parse and match route
       ILogger logger = LoggerFactory.CreateLogger("RouteBasedCommandResolver");
-      ResolverResult result = RouteBasedCommandResolver.Resolve(args, Endpoints, TypeConverterRegistry, logger);
+      EndpointResolutionResult result = EndpointResolver.Resolve(args, Endpoints, TypeConverterRegistry, logger);
 
       if (!result.Success || result.MatchedEndpoint is null)
       {
@@ -96,11 +101,11 @@ public class NuruApp
     }
   }
 
-  private async Task<int> ExecuteMediatorCommandAsync(Type commandType, ResolverResult result)
+  private async Task<int> ExecuteMediatorCommandAsync(Type commandType, EndpointResolutionResult result)
   {
-    if (CommandExecutor is null)
+    if (MediatorExecutor is null)
     {
-      throw new InvalidOperationException("CommandExecutor is not available. Ensure DI is configured.");
+      throw new InvalidOperationException("MediatorExecutor is not available. Ensure DI is configured.");
     }
 
     if (result.ExtractedValues is null)
@@ -108,14 +113,14 @@ public class NuruApp
       throw new InvalidOperationException("ExtractedValues cannot be null for a successful match.");
     }
 
-    object? returnValue = await CommandExecutor.ExecuteCommandAsync(
+    object? returnValue = await MediatorExecutor.ExecuteCommandAsync(
       commandType,
       result.ExtractedValues,
       CancellationToken.None
     ).ConfigureAwait(false);
 
     // Display the response (if any)
-    CommandExecutor.DisplayResponse(returnValue);
+    MediatorExecutor.DisplayResponse(returnValue);
 
     // Handle int return values
     if (returnValue is int exitCode)
@@ -126,184 +131,21 @@ public class NuruApp
     return 0;
   }
 
-  private async Task<int> ExecuteDelegateAsync(Delegate del, Dictionary<string, string> extractedValues, RouteEndpoint endpoint)
-  {
-    try
-    {
-      object?[] args = ServiceProvider is not null
-        ? BindParametersWithDI(del.Method, extractedValues, endpoint)
-        : BindParameters(del.Method, extractedValues, endpoint);
-
-      object? returnValue = del.DynamicInvoke(args);
-
-      // Handle async delegates
-      if (returnValue is Task task)
-      {
-        await task.ConfigureAwait(false);
-
-        // For Task<T>, get the result
-        Type taskType = task.GetType();
-        if (taskType.IsGenericType)
-        {
-          PropertyInfo? resultProperty = taskType.GetProperty("Result");
-          if (resultProperty is not null)
-          {
-            object? result = resultProperty.GetValue(task);
-            // Check if this is VoidTaskResult (used internally for void async methods)
-            if (result?.GetType().Name == "VoidTaskResult")
-            {
-              returnValue = null;
-            }
-            else
-            {
-              returnValue = result;
-            }
-          }
-        }
-        else
-        {
-          // For non-generic Task (void async), set to null to avoid displaying VoidTaskResult
-          returnValue = null;
-        }
-      }
-
-      // Display the response (if any)
-      CommandExecutor.DisplayResponse(returnValue);
-
-      return 0;
-    }
-#pragma warning disable CA1031 // Do not catch general exception types
-    // We catch all exceptions here to provide consistent error handling for delegate execution.
-    // The CLI should not crash due to handler exceptions.
-    catch (Exception ex)
-#pragma warning restore CA1031
-    {
-      await NuruConsole.WriteErrorLineAsync(
-        $"Error executing handler: {ex.Message}"
-      ).ConfigureAwait(false);
-
-      return 1;
-    }
-  }
-
-  private object?[] BindParameters(MethodInfo method, Dictionary<string, string> extractedValues, RouteEndpoint endpoint)
-  {
-    ParameterInfo[] parameters = method.GetParameters();
-    object?[] args = new object?[parameters.Length];
-
-    for (int i = 0; i < parameters.Length; i++)
-    {
-      ParameterInfo param = parameters[i];
-
-      if (extractedValues.TryGetValue(param.Name!, out string? stringValue))
-      {
-        // Simple type conversion only - no DI
-        if (TypeConverterRegistry.TryConvert(
-          stringValue,
-          param.ParameterType,
-          out object? convertedValue
-        ))
-        {
-          args[i] = convertedValue;
-        }
-        else if (param.ParameterType == typeof(string))
-        {
-          args[i] = stringValue;
-        }
-        else if (param.ParameterType == typeof(string[]))
-        {
-          // Split space-delimited string into array for catch-all parameters
-          args[i] = stringValue.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        }
-        else
-        {
-          throw new InvalidOperationException(
-            $"Cannot convert '{stringValue}' to type {param.ParameterType} for parameter '{param.Name}'"
-          );
-        }
-      }
-      else if (param.HasDefaultValue)
-      {
-        args[i] = param.DefaultValue;
-      }
-      else if (IsOptionalParameter(param.Name!, endpoint))
-      {
-        // Optional parameter without a value - set to null
-        args[i] = null;
-      }
-      else
-      {
-        throw new InvalidOperationException(
-          $"No value provided for required parameter '{param.Name}'"
-        );
-      }
-    }
-
-    return args;
-  }
-
-  private object?[] BindParametersWithDI(MethodInfo method, Dictionary<string, string> extractedValues, RouteEndpoint endpoint)
-  {
-    // Use DelegateParameterBinder when DI is available
-    // This handles DI injection for parameters
-    ParameterInfo[] parameters = method.GetParameters();
-    object?[] args = new object?[parameters.Length];
-
-    for (int i = 0; i < parameters.Length; i++)
-    {
-      ParameterInfo param = parameters[i];
-
-      // First try extracted values
-      if (extractedValues.TryGetValue(param.Name!, out string? stringValue))
-      {
-        if (TypeConverterRegistry.TryConvert(
-          stringValue,
-          param.ParameterType,
-          out object? convertedValue
-        ))
-        {
-          args[i] = convertedValue;
-        }
-        else if (param.ParameterType == typeof(string))
-        {
-          args[i] = stringValue;
-        }
-        else if (param.ParameterType == typeof(string[]))
-        {
-          args[i] = stringValue.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        }
-      }
-      // Then try DI for non-value parameters
-      else if (ServiceProvider!.GetService(param.ParameterType) is object service)
-      {
-        args[i] = service;
-      }
-      else if (param.HasDefaultValue)
-      {
-        args[i] = param.DefaultValue;
-      }
-      else if (IsOptionalParameter(param.Name!, endpoint))
-      {
-        // Optional parameter without a value - set to null
-        args[i] = null;
-      }
-      else
-      {
-        throw new InvalidOperationException(
-          $"No value provided for required parameter '{param.Name}'"
-        );
-      }
-    }
-
-    return args;
-  }
+  private Task<int> ExecuteDelegateAsync(Delegate del, Dictionary<string, string> extractedValues, Endpoint endpoint)
+    => DelegateExecutor.ExecuteAsync(
+      del,
+      extractedValues,
+      TypeConverterRegistry,
+      ServiceProvider ?? EmptyServiceProvider.Instance,
+      endpoint
+    );
 
   private void ShowAvailableCommands()
   {
-    NuruConsole.WriteLine(RouteHelpProvider.GetHelpText(Endpoints));
+    NuruConsole.WriteLine(HelpProvider.GetHelpText(Endpoints));
   }
 
-  private static bool IsOptionalParameter(string parameterName, RouteEndpoint endpoint)
+  private static bool IsOptionalParameter(string parameterName, Endpoint endpoint)
   {
     // Check positional parameters
     foreach (RouteMatcher segment in endpoint.CompiledRoute.PositionalMatchers)
@@ -329,4 +171,16 @@ public class NuruApp
 
     return false;
   }
+}
+
+/// <summary>
+/// Provides an empty service provider for scenarios without dependency injection.
+/// </summary>
+internal sealed class EmptyServiceProvider : IServiceProvider
+{
+  public static readonly EmptyServiceProvider Instance = new();
+
+  private EmptyServiceProvider() { }
+
+  public object? GetService(Type serviceType) => null;
 }

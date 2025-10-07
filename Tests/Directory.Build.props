@@ -1,9 +1,36 @@
 <Project>
   <!-- Import parent Directory.Build.props -->
   <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
-  
+
   <PropertyGroup>
     <!-- Suppress localization warnings for test projects -->
-    <NoWarn>$(NoWarn);CA1303;CA2007</NoWarn>
+    <NoWarn>$(NoWarn);CA1303;CA1307;CA2007;CA1031;CA1515;CA1050;CA1052;CA1707;CS0050;RCS1046;RCS1102;RCS1110</NoWarn>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Make common packages available for all test projects -->
+    <PackageReference Include="Shouldly" />
+    <PackageReference Include="Microsoft.Extensions.Logging" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" />
+    <PackageReference Include="TimeWarp.Mediator" />
+    <Using Include="Shouldly" />
+    <Using Include="System.Console" Static="true" />
+    <Using Include="System.Collections.Concurrent" />
+    <Using Include="System.Diagnostics" />
+    <Using Include="System.Globalization" />
+    <Using Include="TimeWarp.Kijaribu" />
+    <Using Include="TimeWarp.Kijaribu.TestRunner" Static="true" />
+    <Using Include="TimeWarp.Nuru.Parsing" />
+    <Using Include="TimeWarp.Nuru" />
+    <Using Include="TimeWarp.Nuru.Logging" />
+    <Using Include="Microsoft.Extensions.Logging" />
+    <Using Include="TimeWarp.Mediator" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Common project references for all test projects -->
+    <ProjectReference Include="$(MSBuildThisFileDirectory)../Source/TimeWarp.Kijaribu/TimeWarp.Kijaribu.csproj" />
+    <ProjectReference Include="$(MSBuildThisFileDirectory)../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj" />
+    <ProjectReference Include="$(MSBuildThisFileDirectory)../Source/TimeWarp.Nuru.Logging/TimeWarp.Nuru.Logging.csproj" />
+  </ItemGroup>
 </Project>

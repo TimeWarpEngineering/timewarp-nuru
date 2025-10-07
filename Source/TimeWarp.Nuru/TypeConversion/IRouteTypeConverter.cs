@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru.TypeConversion;
+namespace TimeWarp.Nuru;
 
 /// <summary>
 /// Interface for converting string values from route parameters to strongly typed values.

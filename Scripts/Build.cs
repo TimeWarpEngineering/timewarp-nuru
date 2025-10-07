@@ -19,8 +19,8 @@ string[] projectsToBuild = [
   "../Source/TimeWarp.Nuru.Mcp/TimeWarp.Nuru.Mcp.csproj",
   "../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj",
   "../Benchmarks/TimeWarp.Nuru.Benchmarks/TimeWarp.Nuru.Benchmarks.csproj",
-  "../Tests/TimeWarp.Nuru.TestApp.Mediator/TimeWarp.Nuru.TestApp.Mediator.csproj",
-  "../Tests/TimeWarp.Nuru.TestApp.Delegates/TimeWarp.Nuru.TestApp.Delegates.csproj",
+  "../Tests/TestApps/TimeWarp.Nuru.TestApp.Mediator/TimeWarp.Nuru.TestApp.Mediator.csproj",
+  "../Tests/TestApps/TimeWarp.Nuru.TestApp.Delegates/TimeWarp.Nuru.TestApp.Delegates.csproj",
   // "../Tests/TimeWarp.Nuru.Analyzers.Tests/TimeWarp.Nuru.Analyzers.Tests.csproj",
   "../Samples/TimeWarp.Nuru.Sample/TimeWarp.Nuru.Sample.csproj"
 ];

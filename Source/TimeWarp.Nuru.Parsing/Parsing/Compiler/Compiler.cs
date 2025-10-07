@@ -123,8 +123,8 @@ internal sealed class Compiler : SyntaxVisitor<object?>
     // For boolean options (no parameter), use the option name as the parameter name
     if (valueParameterName is null && !expectsValue)
     {
-      // Extract the option name from the syntax (remove leading dashes)
-      valueParameterName = option.LongForm ?? option.ShortForm;
+      // Extract the option name from the syntax (remove leading dashes) and convert to camelCase
+      valueParameterName = ToCamelCase(option.LongForm ?? option.ShortForm ?? "");
       LoggerMessages.SettingBooleanOptionParameter(Logger, valueParameterName!, null);
     }
 
@@ -176,5 +176,17 @@ internal sealed class Compiler : SyntaxVisitor<object?>
 
     Segments.Add(optionMatcher);
     return null;
+  }
+
+  private static string ToCamelCase(string input)
+  {
+    if (string.IsNullOrEmpty(input))
+      return input;
+
+    string cleaned = input.Replace("-", "", StringComparison.Ordinal).Replace("_", "", StringComparison.Ordinal);
+    if (cleaned.Length == 0)
+      return input;
+
+    return char.ToLowerInvariant(cleaned[0]) + cleaned[1..];
   }
 }

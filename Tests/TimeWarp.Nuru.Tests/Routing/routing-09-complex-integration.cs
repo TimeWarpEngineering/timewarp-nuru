@@ -68,7 +68,7 @@ public class ComplexIntegrationTests
     string? boundCfg = null;
     bool boundVerbose = false;
     bool boundWatch = false;
-    builder.AddRoute("build {project?} --config {cfg?} --verbose --watch", (string? project, string? cfg, bool verbose, bool watch) => { boundProject = project; boundCfg = cfg; boundVerbose = verbose; boundWatch = watch; return 0; });
+    builder.AddRoute("build {project?} --config? {cfg?} --verbose --watch", (string? project, string? cfg, bool verbose, bool watch) => { boundProject = project; boundCfg = cfg; boundVerbose = verbose; boundWatch = watch; return 0; });
 
     NuruApp app = builder.Build();
 

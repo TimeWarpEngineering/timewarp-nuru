@@ -18,8 +18,8 @@
     <Using Include="System.Collections.Concurrent" />
     <Using Include="System.Diagnostics" />
     <Using Include="System.Globalization" />
-    <Using Include="TimeWarp.Kijaribu" />
-    <Using Include="TimeWarp.Kijaribu.TestRunner" Static="true" />
+    <Using Include="TimeWarp.Jaribu" />
+    <Using Include="TimeWarp.Jaribu.TestRunner" Static="true" />
     <Using Include="TimeWarp.Nuru.Parsing" />
     <Using Include="TimeWarp.Nuru" />
     <Using Include="TimeWarp.Nuru.Logging" />
@@ -29,7 +29,7 @@
 
   <ItemGroup>
     <!-- Common project references for all test projects -->
-    <ProjectReference Include="$(MSBuildThisFileDirectory)../Source/TimeWarp.Kijaribu/TimeWarp.Kijaribu.csproj" />
+    <PackageReference Include="TimeWarp.Jaribu" />
     <ProjectReference Include="$(MSBuildThisFileDirectory)../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj" />
     <ProjectReference Include="$(MSBuildThisFileDirectory)../Source/TimeWarp.Nuru.Logging/TimeWarp.Nuru.Logging.csproj" />
   </ItemGroup>

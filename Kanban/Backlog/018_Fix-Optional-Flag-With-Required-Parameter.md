@@ -4,7 +4,7 @@
 
 The parser incorrectly handles the pattern `--flag? {param}` (optional flag with required parameter). When no arguments are provided, the parser throws an error instead of matching the route with a null parameter value.
 
-**Discovered through:** Dogfooding Nuru in run-kijaribu-tests.cs
+**Discovered through:** Dogfooding Nuru in run-jaribu-tests.cs
 
 ## Current Behavior
 
@@ -39,7 +39,7 @@ builder.AddRoute("--tag {tag}", (string tag) => RunTests(tag), "Filter by tag");
 - [ ] When flag is omitted, parameter receives null (nullable type)
 - [ ] When flag is present, parameter receives the provided value
 - [ ] Update tests to validate this pattern works
-- [ ] Remove workaround from run-kijaribu-tests.cs
+- [ ] Remove workaround from run-jaribu-tests.cs
 
 ## Test Cases
 
@@ -50,7 +50,7 @@ builder.AddRoute("--tag {tag}", (string tag) => RunTests(tag), "Filter by tag");
 
 ## Related Files
 
-- `Tests/Scripts/run-kijaribu-tests.cs` - Contains workaround and TODO comment
+- `Tests/Scripts/run-jaribu-tests.cs` - Contains workaround and TODO comment
 - `Source/TimeWarp.Nuru.Parsing/` - Parser logic that needs fixing
 - `documentation/developer/design/design/parser/syntax-rules.md` - Design spec for optional syntax
 

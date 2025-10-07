@@ -9,9 +9,7 @@
     <PublishAot>true</PublishAot>
     <TrimMode>partial</TrimMode>
   </PropertyGroup>
-
   <ItemGroup>
-    <ProjectReference Include="../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj" />
+    <PackageReference Include="TimeWarp.Mediator" />
   </ItemGroup>
-
 </Project>

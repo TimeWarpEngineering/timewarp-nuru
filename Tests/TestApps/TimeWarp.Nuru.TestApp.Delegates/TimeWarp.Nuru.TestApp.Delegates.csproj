@@ -11,8 +11,4 @@
     <TrimMode>partial</TrimMode>
   </PropertyGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj" />
-  </ItemGroup>
-
 </Project>

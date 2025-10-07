@@ -1,5 +1,6 @@
-using TimeWarp.Mediator;
 using TimeWarp.Nuru;
+using TimeWarp.Mediator;
+using static System.Console;
 
 NuruAppBuilder builder = new NuruAppBuilder()
     .AddDependencyInjection(config => config.RegisterServicesFromAssembly(typeof(StatusCommand).Assembly));

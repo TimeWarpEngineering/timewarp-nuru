@@ -42,8 +42,8 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
-      - name: Create LocalNuGetFeed directory
-        run: mkdir -p LocalNuGetFeed
+      - name: Create artifacts directory
+        run: mkdir -p artifacts/packages
 
       - name: Build and Test
         run: |
@@ -70,20 +70,20 @@ jobs:
           fi
           
           echo "Publishing version: $VERSION"
-          
-          dotnet nuget push LocalNuGetFeed/TimeWarp.Nuru.$VERSION.nupkg \
+
+          dotnet nuget push artifacts/packages/TimeWarp.Nuru.$VERSION.nupkg \
             --api-key ${{ secrets.NUGET_API_KEY }} \
             --source https://api.nuget.org/v3/index.json \
             --skip-duplicate
-          dotnet nuget push LocalNuGetFeed/TimeWarp.Nuru.Analyzers.$VERSION.nupkg \
+          dotnet nuget push artifacts/packages/TimeWarp.Nuru.Analyzers.$VERSION.nupkg \
             --api-key ${{ secrets.NUGET_API_KEY }} \
             --source https://api.nuget.org/v3/index.json \
             --skip-duplicate
-          dotnet nuget push LocalNuGetFeed/TimeWarp.Nuru.Logging.$VERSION.nupkg \
+          dotnet nuget push artifacts/packages/TimeWarp.Nuru.Logging.$VERSION.nupkg \
             --api-key ${{ secrets.NUGET_API_KEY }} \
             --source https://api.nuget.org/v3/index.json \
             --skip-duplicate
-          dotnet nuget push LocalNuGetFeed/TimeWarp.Nuru.Mcp.$VERSION.nupkg \
+          dotnet nuget push artifacts/packages/TimeWarp.Nuru.Mcp.$VERSION.nupkg \
             --api-key ${{ secrets.NUGET_API_KEY }} \
             --source https://api.nuget.org/v3/index.json \
             --skip-duplicate
@@ -94,4 +94,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Packages-${{ github.run_number }}
-          path: LocalNuGetFeed/*.nupkg
+          path: artifacts/packages/*.nupkg

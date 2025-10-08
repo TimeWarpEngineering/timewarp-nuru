@@ -6,8 +6,6 @@
     <IsRoslynComponent>true</IsRoslynComponent>
     <IncludeBuildOutput>false</IncludeBuildOutput>
     <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <PackageOutputPath>../../LocalNuGetFeed</PackageOutputPath>
     <DevelopmentDependency>true</DevelopmentDependency>
     <!-- Suppress RS1041 since we're intentionally targeting .NET 9 for CLI usage -->
     <!-- Suppress CA1805, CA1802, RCS1163 for parsing code that's compiled in -->
@@ -48,8 +46,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="..\..\Assets\Logo.png" Pack="true" PackagePath="" />
-    <None Include="..\..\README.md" Pack="true" PackagePath="" />
+    <None Include="$(RepositoryRoot)Assets\Logo.png" Pack="true" PackagePath="" />
+    <None Include="$(RepositoryRoot)README.md" Pack="true" PackagePath="" />
   </ItemGroup>
 
 </Project>

@@ -1,6 +1,6 @@
 <Project>
   <!-- Don't import parent Directory.Build.props - we want simpler rules for samples -->
-  
+
   <PropertyGroup>
     <!-- Basic settings for samples -->
     <TargetFramework>net10.0</TargetFramework>
@@ -11,5 +11,11 @@
     <!-- Disable code analysis for samples -->
     <EnableNETAnalyzers>false</EnableNETAnalyzers>
     <EnforceCodeStyleInBuild>false</EnforceCodeStyleInBuild>
+  </PropertyGroup>
+
+  <!-- Define path variables for project references -->
+  <PropertyGroup>
+    <RepositoryRoot>$(MSBuildThisFileDirectory)../</RepositoryRoot>
+    <SourceDirectory>$(RepositoryRoot)Source/</SourceDirectory>
   </PropertyGroup>
 </Project>

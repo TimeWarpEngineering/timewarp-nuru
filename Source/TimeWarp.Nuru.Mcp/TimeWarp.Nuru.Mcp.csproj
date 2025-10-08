@@ -6,8 +6,6 @@
     <OutputType>Exe</OutputType>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <PackageOutputPath>../../LocalNuGetFeed</PackageOutputPath>
 
     <!-- Set up the NuGet package to be an MCP server -->
     <PackAsTool>true</PackAsTool>
@@ -31,7 +29,7 @@
   <ItemGroup>
     <None Include=".mcp\server.json" Pack="true" PackagePath="/.mcp/" />
     <None Include="README.md" Pack="true" PackagePath="/" />
-    <None Include="..\..\Assets\Logo.png" Pack="true" PackagePath="" />
+    <None Include="$(RepositoryRoot)Assets\Logo.png" Pack="true" PackagePath="" />
   </ItemGroup>
 
   <ItemGroup>

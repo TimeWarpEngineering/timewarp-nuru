@@ -4,13 +4,13 @@
   <PropertyGroup Label="Custom Repository Variables">
     <RepositoryName>timewarp-nuru</RepositoryName>
     <RepositoryRoot>$(MSBuildThisFileDirectory)</RepositoryRoot>
-    <SourceDirectory>$(RepositoryRoot)Source</SourceDirectory>
-    <TestsDirectory>$(RepositoryRoot)Tests</TestsDirectory>
-    <SamplesDirectory>$(RepositoryRoot)Samples</SamplesDirectory>
-    <ArtifactsDirectory>$(RepositoryRoot)artifacts</ArtifactsDirectory>
+    <SourceDirectory>$(RepositoryRoot)Source/</SourceDirectory>
+    <TestsDirectory>$(RepositoryRoot)Tests/</TestsDirectory>
+    <SamplesDirectory>$(RepositoryRoot)Samples/</SamplesDirectory>
+    <ArtifactsDirectory>$(RepositoryRoot)artifacts/</ArtifactsDirectory>
     <SolutionFile>$(RepositoryRoot)TimeWarp.Nuru.sln</SolutionFile>
-    <LocalNuGetFeed>$(ArtifactsDirectory)packages</LocalNuGetFeed>
-    <LocalNuGetCache>$(RepositoryRoot)LocalNuGetCache</LocalNuGetCache>
+    <LocalNuGetFeed>$(ArtifactsDirectory)packages/</LocalNuGetFeed>
+    <LocalNuGetCache>$(RepositoryRoot)LocalNuGetCache/</LocalNuGetCache>
   </PropertyGroup>
 
   <!-- MSBuild and NuGet behavior configuration -->

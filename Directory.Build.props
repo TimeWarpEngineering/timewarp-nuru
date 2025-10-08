@@ -1,6 +1,30 @@
 <Project>
-  <PropertyGroup>
+
+  <PropertyGroup Label="Custom Repository Variables">
+    <RepositoryName>timewarp-nuru</RepositoryName>
+    <!-- Our custom path definitions -->
     <RepositoryRoot>$(MSBuildThisFileDirectory)</RepositoryRoot>
+    <SourceDirectory>$(RepositoryRoot)Source</SourceDirectory>
+    <TestsDirectory>$(RepositoryRoot)Tests</TestsDirectory>
+    <SamplesDirectory>$(RepositoryRoot)Samples</SamplesDirectory>
+    <ArtifactsDirectory>$(RepositoryRoot)artifacts</ArtifactsDirectory>
+    <SolutionFile>$(RepositoryRoot)TimeWarp.Nuru.sln</SolutionFile>
+    <LocalNuGetFeed>$(ArtifactsDirectory)packages</LocalNuGetFeed>
+    <LocalNuGetCache>$(RepositoryRoot)LocalNuGetCache</LocalNuGetCache>
+  </PropertyGroup>
+
+  <PropertyGroup Label="MSBuild/NuGet Settings">
+    <!-- Enable package generation on build -->
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+
+    <!-- Output packages to our local feed directory -->
+    <PackageOutputPath>$(LocalNuGetFeed)</PackageOutputPath>
+
+    <!-- Use local packages directory instead of global cache -->
+    <RestorePackagesPath>$(LocalNuGetCache)</RestorePackagesPath>
+  </PropertyGroup>
+
+  <PropertyGroup>
     <!-- Enable Central Package Management -->
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     <!-- Package Metadata -->
@@ -27,8 +51,6 @@
     <!-- Fail build on analyzer warnings since TreatWarningsAsErrors is true -->
     <CodeAnalysisTreatWarningsAsErrors>true</CodeAnalysisTreatWarningsAsErrors>
 
-    <!-- Use local packages directory instead of global cache -->
-    <RestorePackagesPath>$(MSBuildThisFileDirectory)LocalNuGetCache</RestorePackagesPath>
 
     <!-- Common Project Settings -->
     <TargetFramework>net10.0</TargetFramework>

@@ -1,14 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <PackageOutputPath>../../LocalNuGetFeed</PackageOutputPath>
     <Description>Route-based CLI framework for .NET - bringing web-style routing to command-line applications</Description>
     <PackageTags>cli;command-line;routing;framework;dotnet;console;consoleappframework;commandlineparser;mcmaster;cocona;spectre;system-commandline;clipr;commanddotnet</PackageTags>
     <!-- Disable localization warning as CLI frameworks don't typically need localization -->
     <NoWarn>$(NoWarn);CA1303</NoWarn>
-    <!-- Enforce code style rules during build -->
-    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
   </PropertyGroup>
 
   <ItemGroup>
@@ -32,8 +28,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="..\..\Assets\Logo.png" Pack="true" PackagePath="" />
-    <None Include="..\..\README.md" Pack="true" PackagePath="" />
+    <None Include="$(RepositoryRoot)Assets\Logo.png" Pack="true" PackagePath="" />
+    <None Include="$(RepositoryRoot)README.md" Pack="true" PackagePath="" />
   </ItemGroup>
 
   <!-- Include the analyzer in the main package as a development dependency -->

@@ -1,3 +1,9 @@
 <Project>
   <!-- This file intentionally does not import parent Directory.Build.props to avoid analyzer settings -->
+
+  <!-- Define path variables for project references -->
+  <PropertyGroup>
+    <RepositoryRoot>$(MSBuildThisFileDirectory)../</RepositoryRoot>
+    <SourceDirectory>$(RepositoryRoot)Source/</SourceDirectory>
+  </PropertyGroup>
 </Project>

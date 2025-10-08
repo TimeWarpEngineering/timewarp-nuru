@@ -3,6 +3,8 @@
   <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
 
   <PropertyGroup>
+    <!-- Tests should not be packaged -->
+    <IsPackable>false</IsPackable>
     <!-- Suppress localization warnings for test projects -->
     <NoWarn>$(NoWarn);CA1303;CA1307;CA2007;CA1031;CA1515;CA1050;CA1052;CA1707;CS0050;RCS1046;RCS1102;RCS1110</NoWarn>
   </PropertyGroup>
@@ -18,8 +20,8 @@
     <Using Include="System.Collections.Concurrent" />
     <Using Include="System.Diagnostics" />
     <Using Include="System.Globalization" />
-    <Using Include="TimeWarp.Kijaribu" />
-    <Using Include="TimeWarp.Kijaribu.TestRunner" Static="true" />
+    <Using Include="TimeWarp.Jaribu" />
+    <Using Include="TimeWarp.Jaribu.TestRunner" Static="true" />
     <Using Include="TimeWarp.Nuru.Parsing" />
     <Using Include="TimeWarp.Nuru" />
     <Using Include="TimeWarp.Nuru.Logging" />
@@ -29,7 +31,7 @@
 
   <ItemGroup>
     <!-- Common project references for all test projects -->
-    <ProjectReference Include="$(MSBuildThisFileDirectory)../Source/TimeWarp.Kijaribu/TimeWarp.Kijaribu.csproj" />
+    <PackageReference Include="TimeWarp.Jaribu" />
     <ProjectReference Include="$(MSBuildThisFileDirectory)../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj" />
     <ProjectReference Include="$(MSBuildThisFileDirectory)../Source/TimeWarp.Nuru.Logging/TimeWarp.Nuru.Logging.csproj" />
   </ItemGroup>

@@ -526,7 +526,7 @@ For each test case in Sections 1-10, verify:
 
 - Number files sequentially: `routing-01-basic-matching.cs`, `routing-02-parameter-binding.cs`, etc.
 - Each file contains 5-10 focused test methods
-- Use Kijaribu test framework for consistency with parser tests
+- Use Jaribu test framework for consistency with parser tests
 - Clear cache between runs: `[ClearRunfileCache]`
 
 ### Test Structure

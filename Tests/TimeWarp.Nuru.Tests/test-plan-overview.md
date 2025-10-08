@@ -115,7 +115,7 @@ All test files follow a numbered naming scheme for systematic coverage:
 
 ### File Structure
 
-Each test file uses the Kijaribu test framework:
+Each test file uses the Jaribu test framework:
 
 ```csharp
 #!/usr/bin/dotenv --
@@ -138,7 +138,7 @@ public class TestClassName
 
 ### Test Runner
 
-All tests are executed via `Tests/Scripts/run-kijaribu-tests.cs`, which:
+All tests are executed via `Tests/Scripts/run-jaribu-tests.cs`, which:
 - Runs all lexer tests sequentially
 - Runs all parser tests sequentially
 - Runs all routing tests sequentially
@@ -228,6 +228,6 @@ When adding new features to Nuru:
 2. **Add parser tests** for compile-time validation rules
 3. **Add routing tests** for runtime behavior
 4. **Update test plans** to document new test sections
-5. **Run full suite** via `Tests/Scripts/run-kijaribu-tests.cs`
+5. **Run full suite** via `Tests/Scripts/run-jaribu-tests.cs`
 
 Each layer's test plan provides detailed section-by-section guidance for that layer's specific concerns.

@@ -18,7 +18,7 @@ NuruAppBuilder builder = new();
 // Should be: builder.AddRoute("--tag? {tag}", (string? tag) => RunTests(tag), ...);
 // Workaround: Use two routes until optional flag bug is fixed
 
-// builder.AddDefaultRoute(() => RunTests(null), "Run all Kijaribu tests");
+// builder.AddDefaultRoute(() => RunTests(null), "Run all Jaribu tests");
 builder.AddRoute("--tag? {tag?}", (string? tag) => RunTests(tag), "Run tests filtered by tag (Lexer, Parser)");
 
 NuruApp app = builder.Build();
@@ -26,8 +26,8 @@ return await app.RunAsync(args);
 
 async Task<int> RunTests(string? filterTag)
 {
-  // Run all Kijaribu-based tests
-  WriteLine("🧪 Running Kijaribu-based Tests");
+  // Run all Jaribu-based tests
+  WriteLine("🧪 Running Jaribu-based Tests");
 
   if (filterTag is not null)
   {
@@ -40,16 +40,16 @@ async Task<int> RunTests(string? filterTag)
   int totalTests = 0;
   int passedTests = 0;
 
-// List of Kijaribu-based test files (relative to Tests directory)
+// List of Jaribu-based test files (relative to Tests directory)
 string[] testFiles = [
-  // Kijaribu self-tests
-  Path.Combine(testsDir, "TimeWarp.Kijaribu.Tests/kijaribu-01-discovery.cs"),
-  Path.Combine(testsDir, "TimeWarp.Kijaribu.Tests/kijaribu-02-parameterized.cs"),
-  Path.Combine(testsDir, "TimeWarp.Kijaribu.Tests/kijaribu-03-tag-filtering.cs"),
-  Path.Combine(testsDir, "TimeWarp.Kijaribu.Tests/kijaribu-04-skipping-exceptions.cs"),
-  Path.Combine(testsDir, "TimeWarp.Kijaribu.Tests/kijaribu-05-cache-clearing.cs"),
-  Path.Combine(testsDir, "TimeWarp.Kijaribu.Tests/kijaribu-06-reporting-cleanup.cs"),
-  Path.Combine(testsDir, "TimeWarp.Kijaribu.Tests/kijaribu-07-edges.cs"),
+  // Jaribu self-tests
+  Path.Combine(testsDir, "TimeWarp.Jaribu.Tests/jaribu-01-discovery.cs"),
+  Path.Combine(testsDir, "TimeWarp.Jaribu.Tests/jaribu-02-parameterized.cs"),
+  Path.Combine(testsDir, "TimeWarp.Jaribu.Tests/jaribu-03-tag-filtering.cs"),
+  Path.Combine(testsDir, "TimeWarp.Jaribu.Tests/jaribu-04-skipping-exceptions.cs"),
+  Path.Combine(testsDir, "TimeWarp.Jaribu.Tests/jaribu-05-cache-clearing.cs"),
+  Path.Combine(testsDir, "TimeWarp.Jaribu.Tests/jaribu-06-reporting-cleanup.cs"),
+  Path.Combine(testsDir, "TimeWarp.Jaribu.Tests/jaribu-07-edges.cs"),
   // Nuru tests
   Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Lexer/lexer-01-basic-token-types.cs"),
   Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Lexer/lexer-02-valid-options.cs"),
@@ -117,7 +117,7 @@ foreach (string testFile in testFiles)
     ? await Shell.Builder(fullPath)
         .WithWorkingDirectory(Path.GetDirectoryName(fullPath)!)
         .WithNoValidation()
-        .WithEnvironmentVariable("KIJARIBU_FILTER_TAG", filterTag)
+        .WithEnvironmentVariable("JARIBU_FILTER_TAG", filterTag)
         .CaptureAsync()
     : await Shell.Builder(fullPath)
         .WithWorkingDirectory(Path.GetDirectoryName(fullPath)!)

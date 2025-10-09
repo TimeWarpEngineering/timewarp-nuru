@@ -5,7 +5,7 @@
 using TimeWarp.Nuru;
 using static System.Console;
 
-// Calculator using Direct approach for maximum performance
+// Calculator using Delegate approach for maximum performance
 var app = new NuruAppBuilder()
     .AddAutoHelp() // Automatically add a help command
 
@@ -13,19 +13,22 @@ var app = new NuruAppBuilder()
     .AddRoute
     (
       "add {x:double} {y:double}",
-      (double x, double y) => WriteLine($"{x} + {y} = {x + y}")
+      (double x, double y) => WriteLine($"{x} + {y} = {x + y}"),
+      "Add two numbers together"
     )
 
     .AddRoute
     (
       "subtract {x:double} {y:double}",
-      (double x, double y) => WriteLine($"{x} - {y} = {x - y}")
+      (double x, double y) => WriteLine($"{x} - {y} = {x - y}"),
+      "Subtract the second number from the first"
     )
 
     .AddRoute
     (
       "multiply {x:double} {y:double}",
-      (double x, double y) => WriteLine($"{x} × {y} = {x * y}")
+      (double x, double y) => WriteLine($"{x} × {y} = {x * y}"),
+      "Multiply two numbers together"
     )
 
     .AddRoute
@@ -39,7 +42,8 @@ var app = new NuruAppBuilder()
             return;
           }
           WriteLine($"{x} ÷ {y} = {x / y}");
-        }
+        },
+        "Divide the first number by the second"
       )
 
     // Rounding with options
@@ -65,14 +69,16 @@ var app = new NuruAppBuilder()
         }
 
         WriteLine($"Round({value}, {mode}) = {result}");
-      }
+      },
+      "Round a number using specified mode (up, down, nearest, banker/accountancy)"
     )
 
     // Default rounding (nearest)
     .AddRoute
     (
       "round {value:double}",
-      (double value) => WriteLine($"Round({value}) = {Math.Round(value)}")
+      (double value) => WriteLine($"Round({value}) = {Math.Round(value)}"),
+      "Round a number to the nearest integer"
     )
 
     .Build();

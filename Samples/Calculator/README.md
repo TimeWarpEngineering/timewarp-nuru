@@ -8,47 +8,47 @@ This directory contains three calculator implementations demonstrating different
 
 Simply run any calculator directly:
 
-### calc-delegate - Maximum Performance
+### calc-delegate.cs - Maximum Performance
 ```bash
-./calc-delegate add 3 5
+./calc-delegate.cs add 3 5
 # Output: 3 + 5 = 8
 
-./calc-delegate multiply 5 6
+./calc-delegate.cs multiply 5 6
 # Output: 5 × 6 = 30
 
-./calc-delegate round 3.7 --mode up
+./calc-delegate.cs round 3.7 --mode up
 # Output: Round(3.7, up) = 4
 
-./calc-delegate help
+./calc-delegate.cs --help
 # Shows all available commands
 ```
 
-### calc-mediator - Enterprise Patterns
+### calc-mediator.cs - Enterprise Patterns
 ```bash
-./calc-mediator add 10 20
+./calc-mediator.cs add 10 20
 # Output: 10 + 20 = 30
 
-./calc-mediator divide 10 0
+./calc-mediator.cs divide 10 0
 # Output: Error: Division by zero
 
-./calc-mediator round 3.5 --mode banker
+./calc-mediator.cs round 3.5 --mode banker
 # Output: Round(3.5, banker) = 4
 ```
 
-### calc-mixed - Best of Both Worlds
+### calc-mixed.cs - Best of Both Worlds
 ```bash
 # Simple operations use Direct (fast)
-./calc-mixed add 100 200
+./calc-mixed.cs add 100 200
 # Output: 100 + 200 = 300
 
 # Complex operations use Mediator (testable, DI)
-./calc-mixed factorial 5
+./calc-mixed.cs factorial 5
 # Output: 5! = 120
 
-./calc-mixed isprime 17
+./calc-mixed.cs isprime 17
 # Output: 17 is prime
 
-./calc-mixed fibonacci 10
+./calc-mixed.cs fibonacci 10
 # Output: Fibonacci(10) = 55
 ```
 

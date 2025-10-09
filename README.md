@@ -376,15 +376,15 @@ Don't just read about it - **run the code**:
 
 ### [📁 Calculator Samples](Samples/Calculator/)
 Three complete implementations you can run immediately:
-- **calc-delegate** - Pure performance (Delegate approach)
-- **calc-mediator** - Enterprise patterns (Mediator with DI)
-- **calc-mixed** - Hybrid approach (best of both)
+- **calc-delegate.cs** - Pure performance (Delegate approach)
+- **calc-mediator.cs** - Enterprise patterns (Mediator with DI)
+- **calc-mixed.cs** - Hybrid approach (best of both)
 
 ```bash
 # Try them now:
-./Samples/Calculator/calc-mixed add 10 20     # Direct: fast
-./Samples/Calculator/calc-mixed factorial 5   # Mediator: structured  
-./Samples/Calculator/calc-mixed fibonacci 10  # Output: Fibonacci(10) = 55
+./Samples/Calculator/calc-mixed.cs add 10 20     # Direct: fast
+./Samples/Calculator/calc-mixed.cs factorial 5   # Mediator: structured
+./Samples/Calculator/calc-mixed.cs fibonacci 10  # Output: Fibonacci(10) = 55
 ```
 
 ### Key Patterns Demonstrated

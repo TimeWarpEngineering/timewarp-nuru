@@ -1,5 +1,5 @@
 #!/usr/bin/dotnet --
-// calc-direct - Calculator using Direct approach for maximum performance
+// calc-delegate - Calculator using Delegate approach for maximum performance
 #:project ../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
 
 using TimeWarp.Nuru;
@@ -57,11 +57,11 @@ var app = new NuruAppBuilder()
 
     // Help commands
     .AddRoute("add help",
-        () => WriteLine("Usage: ./calc-direct add <x> <y>\nAdds two numbers together."))
+        () => WriteLine("Usage: ./calc-delegate add <x> <y>\nAdds two numbers together."))
 
     .AddRoute("round help",
         () => WriteLine(
-            "Usage: ./calc-direct round <value> [--mode <mode>]\n" +
+            "Usage: ./calc-delegate round <value> [--mode <mode>]\n" +
             "Rounds a number using the specified mode.\n" +
             "Modes:\n" +
             "  up         - Always round up (ceiling)\n" +

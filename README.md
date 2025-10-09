@@ -376,7 +376,7 @@ Don't just read about it - **run the code**:
 
 ### [📁 Calculator Samples](Samples/Calculator/)
 Three complete implementations you can run immediately:
-- **calc-direct** - Pure performance (Direct approach)
+- **calc-delegate** - Pure performance (Delegate approach)
 - **calc-mediator** - Enterprise patterns (Mediator with DI)
 - **calc-mixed** - Hybrid approach (best of both)
 

@@ -8,18 +8,18 @@ This directory contains three calculator implementations demonstrating different
 
 Simply run any calculator directly:
 
-### calc-direct - Maximum Performance
+### calc-delegate - Maximum Performance
 ```bash
-./calc-direct add 3 5
+./calc-delegate add 3 5
 # Output: 3 + 5 = 8
 
-./calc-direct multiply 5 6
+./calc-delegate multiply 5 6
 # Output: 5 × 6 = 30
 
-./calc-direct round 3.7 --mode up
+./calc-delegate round 3.7 --mode up
 # Output: Round(3.7, up) = 4
 
-./calc-direct help
+./calc-delegate help
 # Shows all available commands
 ```
 

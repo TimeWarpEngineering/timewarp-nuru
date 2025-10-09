@@ -11,23 +11,31 @@ using System.Linq;
 using static System.Console;
 
 var builder = new NuruAppBuilder()
-    .AddDependencyInjection(config => config.RegisterServicesFromAssembly(typeof(FactorialCommand).Assembly));
+    .AddDependencyInjection(config => config.RegisterServicesFromAssembly(typeof(FactorialCommand).Assembly))
+    .AddAutoHelp(); // Automatically add help command
 
 // Register services for complex operations
 builder.Services.AddSingleton<IScientificCalculator, ScientificCalculator>();
 
-// Use Direct approach for simple operations (performance)
-builder.AddRoute("add {x:double} {y:double}", 
-    (double x, double y) => WriteLine($"{x} + {y} = {x + y}"));
+// Use Delegate approach for simple operations (performance)
+builder.AddRoute(
+    pattern: "add {x:double} {y:double}",
+    handler: (double x, double y) => WriteLine($"{x} + {y} = {x + y}"),
+    description: "Add two numbers together");
 
-builder.AddRoute("subtract {x:double} {y:double}", 
-    (double x, double y) => WriteLine($"{x} - {y} = {x - y}"));
+builder.AddRoute(
+    pattern: "subtract {x:double} {y:double}",
+    handler: (double x, double y) => WriteLine($"{x} - {y} = {x - y}"),
+    description: "Subtract the second number from the first");
 
-builder.AddRoute("multiply {x:double} {y:double}", 
-    (double x, double y) => WriteLine($"{x} × {y} = {x * y}"));
+builder.AddRoute(
+    pattern: "multiply {x:double} {y:double}",
+    handler: (double x, double y) => WriteLine($"{x} × {y} = {x * y}"),
+    description: "Multiply two numbers together");
 
-builder.AddRoute("divide {x:double} {y:double}", 
-    (double x, double y) =>
+builder.AddRoute(
+    pattern: "divide {x:double} {y:double}",
+    handler: (double x, double y) =>
     {
         if (y == 0)
         {
@@ -35,46 +43,29 @@ builder.AddRoute("divide {x:double} {y:double}",
             return;
         }
         WriteLine($"{x} ÷ {y} = {x / y}");
-    });
+    },
+    description: "Divide the first number by the second");
 
 // Use Mediator for complex operations (testability, DI)
-builder.AddRoute<FactorialCommand>("factorial {n:int}");
-builder.AddRoute<PrimeCheckCommand>("isprime {n:int}");
-builder.AddRoute<FibonacciCommand>("fibonacci {n:int}");
+builder.AddRoute<FactorialCommand>("factorial {n:int}", "Calculate factorial (n!)");
+builder.AddRoute<PrimeCheckCommand>("isprime {n:int}", "Check if a number is prime");
+builder.AddRoute<FibonacciCommand>("fibonacci {n:int}", "Calculate the nth Fibonacci number");
 
 // Example: Mediator command that returns a response object
-builder.AddRoute<StatsCommand, StatsResponse>("stats {*values}");
+builder.AddRoute<StatsCommand, StatsResponse>("stats {*values}", "Calculate statistics for a set of numbers (returns JSON)");
 
 // Example: Delegate that returns an object
-builder.AddRoute("compare {x:double} {y:double}", 
-    (double x, double y) => new ComparisonResult 
-    { 
-        X = x, 
-        Y = y, 
+builder.AddRoute(
+    pattern: "compare {x:double} {y:double}",
+    handler: (double x, double y) => new ComparisonResult
+    {
+        X = x,
+        Y = y,
         IsEqual = x == y,
         Difference = x - y,
         Ratio = y != 0 ? x / y : double.NaN
-    });
-
-// Help
-
-builder.AddRoute("help", 
-    () => WriteLine(
-        "Calculator Commands:\n" +
-        "Basic (Direct - Fast):\n" +
-        "  add <x> <y>              - Add two numbers\n" +
-        "  subtract <x> <y>         - Subtract y from x\n" +
-        "  multiply <x> <y>         - Multiply two numbers\n" +
-        "  divide <x> <y>           - Divide x by y\n" +
-        "\n" +
-        "Scientific (Mediator - Testable):\n" +
-        "  factorial <n>            - Calculate n!\n" +
-        "  isprime <n>              - Check if n is prime\n" +
-        "  fibonacci <n>            - Calculate nth Fibonacci number\n" +
-        "  stats <values...>        - Calculate statistics (returns JSON)\n" +
-        "\n" +
-        "Comparison (Direct - Returns Object):\n" +
-        "  compare <x> <y>          - Compare two numbers (returns JSON)"));
+    },
+    description: "Compare two numbers and return detailed comparison (returns JSON)");
 
 var app = builder.Build();
 return await app.RunAsync(args);

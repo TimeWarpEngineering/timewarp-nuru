@@ -7,17 +7,30 @@ using static System.Console;
 
 // Calculator using Direct approach for maximum performance
 var app = new NuruAppBuilder()
+    .AddAutoHelp() // Automatically add a help command
+
     // Basic operations
-    .AddRoute("add {x:double} {y:double}",
-        (double x, double y) => WriteLine($"{x} + {y} = {x + y}"))
+    .AddRoute
+    (
+      "add {x:double} {y:double}",
+      (double x, double y) => WriteLine($"{x} + {y} = {x + y}")
+    )
 
-    .AddRoute("subtract {x:double} {y:double}",
-        (double x, double y) => WriteLine($"{x} - {y} = {x - y}"))
+    .AddRoute
+    (
+      "subtract {x:double} {y:double}",
+      (double x, double y) => WriteLine($"{x} - {y} = {x - y}")
+    )
 
-    .AddRoute("multiply {x:double} {y:double}",
-        (double x, double y) => WriteLine($"{x} × {y} = {x * y}"))
+    .AddRoute
+    (
+      "multiply {x:double} {y:double}",
+      (double x, double y) => WriteLine($"{x} × {y} = {x * y}")
+    )
 
-    .AddRoute("divide {x:double} {y:double}",
+    .AddRoute
+    (
+      "divide {x:double} {y:double}",
         (double x, double y) =>
         {
           if (y == 0)
@@ -26,59 +39,41 @@ var app = new NuruAppBuilder()
             return;
           }
           WriteLine($"{x} ÷ {y} = {x / y}");
-        })
+        }
+      )
 
     // Rounding with options
-    .AddRoute("round {value:double} --mode {mode}",
-        (double value, string mode) =>
+    .AddRoute
+    (
+      "round {value:double} --mode {mode}",
+      (double value, string mode) =>
+      {
+        var result = mode.ToLower() switch
         {
-          var result = mode.ToLower() switch
-          {
-            "up" => Math.Ceiling(value),
-            "down" => Math.Floor(value),
-            "nearest" => Math.Round(value),
-            "banker" or "accountancy" => Math.Round(value, MidpointRounding.ToEven),
-            _ => double.NaN
-          };
+          "up" => Math.Ceiling(value),
+          "down" => Math.Floor(value),
+          "nearest" => Math.Round(value),
+          "banker" or "accountancy" => Math.Round(value, MidpointRounding.ToEven),
+          _ => double.NaN
+        };
 
-          if (double.IsNaN(result))
-          {
-            WriteLine($"Error: Unknown rounding mode '{mode}'");
-            WriteLine("Valid modes: up, down, nearest, banker/accountancy");
-            return;
-          }
+        if (double.IsNaN(result))
+        {
+          WriteLine($"Error: Unknown rounding mode '{mode}'");
+          WriteLine("Valid modes: up, down, nearest, banker/accountancy");
+          return;
+        }
 
-          WriteLine($"Round({value}, {mode}) = {result}");
-        })
+        WriteLine($"Round({value}, {mode}) = {result}");
+      }
+    )
 
     // Default rounding (nearest)
-    .AddRoute("round {value:double}",
-        (double value) => WriteLine($"Round({value}) = {Math.Round(value)}"))
-
-    // Help commands
-    .AddRoute("add help",
-        () => WriteLine("Usage: ./calc-delegate add <x> <y>\nAdds two numbers together."))
-
-    .AddRoute("round help",
-        () => WriteLine(
-            "Usage: ./calc-delegate round <value> [--mode <mode>]\n" +
-            "Rounds a number using the specified mode.\n" +
-            "Modes:\n" +
-            "  up         - Always round up (ceiling)\n" +
-            "  down       - Always round down (floor)\n" +
-            "  nearest    - Round to nearest integer (default)\n" +
-            "  banker     - Banker's rounding (round half to even)"))
-
-    .AddRoute("help",
-        () => WriteLine(
-            "Calculator Commands:\n" +
-            "  add <x> <y>              - Add two numbers\n" +
-            "  subtract <x> <y>         - Subtract y from x\n" +
-            "  multiply <x> <y>         - Multiply two numbers\n" +
-            "  divide <x> <y>           - Divide x by y\n" +
-            "  round <value> --mode (up|down|nearest|banker)   - Round a number\n" +
-            "\n" +
-            "Add 'help' after any command for detailed usage."))
+    .AddRoute
+    (
+      "round {value:double}",
+      (double value) => WriteLine($"Round({value}) = {Math.Round(value)}")
+    )
 
     .Build();
 

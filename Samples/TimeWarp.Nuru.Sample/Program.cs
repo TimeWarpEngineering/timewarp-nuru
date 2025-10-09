@@ -1,30 +1,36 @@
-using Microsoft.Extensions.DependencyInjection;
 using System.Globalization;
 using TimeWarp.Mediator;
 using TimeWarp.Nuru;
+using static System.Console;
 
 // Build the app
-var builder = new NuruAppBuilder()
-    .AddDependencyInjection(config => 
-    {
-        config.RegisterServicesFromAssembly(typeof(CalculateHandler).Assembly);
-    });
+NuruAppBuilder builder =
+  new NuruAppBuilder()
+    // If using Mediator Commands/Handlers, add dependency injection
+    .AddDependencyInjection(config => config.RegisterServicesFromAssembly(typeof(CalculateHandler).Assembly));
 
 // Add routes
-builder.AddRoute("status", () => Console.WriteLine("✓ System is running"), "Check system status");
+builder.AddDefaultRoute // Default route when no command is specified
+(
+  () => WriteLine("Welcome to the Nuru sample app! Use --help to see available commands."),
+  "Default welcome message"
+);
 
-builder.AddRoute("echo {message}", (string message) =>
-{
-  Console.WriteLine($"Echo: {message}");
-}, "Echo a message back");
+builder.AddRoute("status", () => WriteLine("✓ System is running"), "Check system status");
+builder.AddRoute("echo {message}", (string message) => WriteLine($"Echo: {message}"), "Echo a message back");
 
-builder.AddRoute("proxy {command} {*args}", (string command, string[] args) =>
-{
-  Console.WriteLine($"Would execute: {command} {string.Join(" ", args)}");
-}, "Proxy command execution");
+builder.AddRoute
+(
+  "proxy {command} {*args}",
+  (string command, string[] args) => WriteLine($"Would execute: {command} {string.Join(" ", args)}"),
+  "Proxy command execution"
+);
 
-builder.AddRoute<CalculateCommand, CalculateResponse>("calc {value1:double} {value2:double} --operation {operation}",
-    "Perform calculation (operations: add, subtract, multiply, divide)");
+builder.AddRoute<CalculateCommand, CalculateResponse>
+(
+  "calc {value1:double} {value2:double} --operation {operation}",
+  "Perform calculation (operations: add, subtract, multiply, divide)"
+);
 
 // Build and run
 NuruApp app = builder.Build();

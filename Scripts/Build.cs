@@ -1,6 +1,4 @@
 #!/usr/bin/dotnet --
-#:property LangVersion=preview
-#:property EnablePreviewFeatures=true
 
 // Build.cs - Build the TimeWarp.Nuru library
 

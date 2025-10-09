@@ -7,11 +7,10 @@ using TimeWarp.Mediator;
 using Microsoft.Extensions.DependencyInjection;
 using static System.Console;
 
-// Calculator using Mediator pattern for testability and dependency injection
 NuruAppBuilder builder =
   new NuruAppBuilder()
-    .AddDependencyInjection(config => config.RegisterServicesFromAssembly(typeof(AddCommand).Assembly))
-    .AddAutoHelp();
+  .AddDependencyInjection(config => config.RegisterServicesFromAssembly(typeof(AddCommand).Assembly))
+  .AddAutoHelp();
 
 builder.Services.AddSingleton<ICalculatorService, CalculatorService>();
 

@@ -17,86 +17,76 @@ NuruAppBuilder builder =
 // Register services for complex operations
 builder.Services.AddSingleton<IScientificCalculator, ScientificCalculator>();
 
-// Use Delegate approach for simple operations (performance)
-builder.AddRoute
-(
-  pattern: "add {x:double} {y:double}",
-  handler: (double x, double y) => WriteLine($"{x} + {y} = {x + y}"),
-  description: "Add two numbers together"
-);
-
-builder.AddRoute
-(
-  pattern: "subtract {x:double} {y:double}",
-  handler: (double x, double y) => WriteLine($"{x} - {y} = {x - y}"),
-  description: "Subtract the second number from the first"
-);
-
-builder.AddRoute
-(
-  pattern: "multiply {x:double} {y:double}",
-  handler: (double x, double y) => WriteLine($"{x} × {y} = {x * y}"),
-  description: "Multiply two numbers together"
-);
-
-builder.AddRoute
-(
-  pattern: "divide {x:double} {y:double}",
-  handler: (double x, double y) =>
-  {
-    if (y == 0)
+NuruApp app =
+  builder
+  .AddRoute // Use Delegate approach for simple operations (performance)
+  (
+    pattern: "add {x:double} {y:double}",
+    handler: (double x, double y) => WriteLine($"{x} + {y} = {x + y}"),
+    description: "Add two numbers together"
+  )
+  .AddRoute
+  (
+    pattern: "subtract {x:double} {y:double}",
+    handler: (double x, double y) => WriteLine($"{x} - {y} = {x - y}"),
+    description: "Subtract the second number from the first"
+  )
+  .AddRoute
+  (
+    pattern: "multiply {x:double} {y:double}",
+    handler: (double x, double y) => WriteLine($"{x} × {y} = {x * y}"),
+    description: "Multiply two numbers together"
+  )
+  .AddRoute
+  (
+    pattern: "divide {x:double} {y:double}",
+    handler: (double x, double y) =>
     {
-      WriteLine("Error: Division by zero");
-      return;
-    }
+      if (y == 0)
+      {
+        WriteLine("Error: Division by zero");
+        return;
+      }
 
-    WriteLine($"{x} ÷ {y} = {x / y}");
-  },
-  description: "Divide the first number by the second"
-);
+      WriteLine($"{x} ÷ {y} = {x / y}");
+    },
+    description: "Divide the first number by the second"
+  )
+  .AddRoute<FactorialCommand> // Use Mediator for complex operations (testability, DI)
+  (
+    pattern: "factorial {n:int}",
+    description: "Calculate factorial (n!)"
+  )
+  .AddRoute<PrimeCheckCommand>
+  (
+    pattern: "isprime {n:int}",
+    description: "Check if a number is prime"
+  )
+  .AddRoute<FibonacciCommand>
+  (
+    pattern: "fibonacci {n:int}",
+    description: "Calculate the nth Fibonacci number"
+  )
+  .AddRoute<StatsCommand, StatsResponse> // Example: Mediator command that returns a response object
+  (
+    pattern: "stats {*values}",
+    description: "Calculate statistics for a set of numbers (returns JSON)"
+  )
+  .AddRoute // Example: Delegate that returns an object
+  (
+    pattern: "compare {x:double} {y:double}",
+    handler: (double x, double y) => new ComparisonResult
+    {
+      X = x,
+      Y = y,
+      IsEqual = x == y,
+      Difference = x - y,
+      Ratio = y != 0 ? x / y : double.NaN
+    },
+    description: "Compare two numbers and return detailed comparison (returns JSON)"
+  )
+  .Build();
 
-// Use Mediator for complex operations (testability, DI)
-builder.AddRoute<FactorialCommand>
-(
-  pattern: "factorial {n:int}",
-  description: "Calculate factorial (n!)"
-);
-
-builder.AddRoute<PrimeCheckCommand>
-(
-  pattern: "isprime {n:int}",
-  description: "Check if a number is prime"
-);
-
-builder.AddRoute<FibonacciCommand>
-(
-  pattern: "fibonacci {n:int}",
-  description: "Calculate the nth Fibonacci number"
-);
-
-// Example: Mediator command that returns a response object
-builder.AddRoute<StatsCommand, StatsResponse>
-(
-  pattern: "stats {*values}",
-  description: "Calculate statistics for a set of numbers (returns JSON)"
-);
-
-// Example: Delegate that returns an object
-builder.AddRoute
-(
-  pattern: "compare {x:double} {y:double}",
-  handler: (double x, double y) => new ComparisonResult
-  {
-    X = x,
-    Y = y,
-    IsEqual = x == y,
-    Difference = x - y,
-    Ratio = y != 0 ? x / y : double.NaN
-  },
-  description: "Compare two numbers and return detailed comparison (returns JSON)"
-);
-
-NuruApp app = builder.Build();
 return await app.RunAsync(args);
 
 // Complex operations using Mediator pattern with nested handlers

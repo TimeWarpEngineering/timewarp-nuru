@@ -5,11 +5,10 @@
 using TimeWarp.Nuru;
 using static System.Console;
 
-// Calculator using Delegate approach for maximum performance
 NuruApp app =
   new NuruAppBuilder()
-  .AddAutoHelp() // Automatically add a help command
-  .AddRoute   // Basic operations
+  .AddAutoHelp()
+  .AddRoute // Basic operations
   (
     pattern: "add {x:double} {y:double}",
     handler: (double x, double y) => WriteLine($"{x} + {y} = {x + y}"),

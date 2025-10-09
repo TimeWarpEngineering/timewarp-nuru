@@ -13,16 +13,16 @@ internal sealed class GetExampleTool
     // Fallback examples in case manifest fetch fails
     private static readonly Dictionary<string, ExampleInfo> FallbackExamples = new()
     {
-        ["basic"] = new("Samples/TimeWarp.Nuru.Sample/Program.cs", "Basic TimeWarp.Nuru application with various route patterns"),
-        ["async"] = new("Samples/AsyncExamples/Program.cs", "Async command examples with Task-based routes"),
+        ["basic"] = new("Samples/Calculator/calc-mixed.cs", "Calculator mixing Delegate and Mediator patterns - best of both worlds"),
+        ["mixed"] = new("Samples/Calculator/calc-mixed.cs", "Mixed approach combining delegate performance with mediator structure"),
+        ["delegate"] = new("Samples/Calculator/calc-delegate.cs", "Pure delegate routing for maximum performance with no DI overhead"),
+        ["mediator"] = new("Samples/Calculator/calc-mediator.cs", "Mediator pattern with DI for testability and enterprise patterns"),
         ["console-logging"] = new("Samples/Logging/ConsoleLogging.cs", "Console logging integration example"),
         ["serilog"] = new("Samples/Logging/SerilogLogging.cs", "Serilog integration with structured logging"),
-        ["mediator"] = new("Tests/TimeWarp.Nuru.TestApp.Mediator/Program.cs", "Mediator pattern implementation"),
-        ["delegates"] = new("Tests/TimeWarp.Nuru.TestApp.Delegates/Program.cs", "Direct delegate routing implementation"),
     };
 
-    private static Dictionary<string, ExampleInfo>? _dynamicExamples;
-    private static DateTime _manifestLastFetched = DateTime.MinValue;
+    private static Dictionary<string, ExampleInfo>? DynamicExamples;
+    private static DateTime ManifestLastFetched = DateTime.MinValue;
 
     private static string CacheDirectory => Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
@@ -180,10 +180,10 @@ internal sealed class GetExampleTool
     {
         // Check if we need to refresh the manifest
         if (!forceRefresh &&
-            _dynamicExamples is not null &&
-            DateTime.UtcNow - _manifestLastFetched < ManifestCacheTtl)
+            DynamicExamples is not null &&
+            DateTime.UtcNow - ManifestLastFetched < ManifestCacheTtl)
         {
-            return _dynamicExamples;
+            return DynamicExamples;
         }
 
         try
@@ -199,12 +199,12 @@ internal sealed class GetExampleTool
 
                 if (manifest?.Examples is not null)
                 {
-                    _dynamicExamples = manifest.Examples.ToDictionary(
+                    DynamicExamples = manifest.Examples.ToDictionary(
                         e => e.Id,
                         e => new ExampleInfo(e.Path, e.Description)
                     );
-                    _manifestLastFetched = DateTime.UtcNow;
-                    return _dynamicExamples;
+                    ManifestLastFetched = DateTime.UtcNow;
+                    return DynamicExamples;
                 }
             }
         }

@@ -15,9 +15,6 @@
 
   <!-- MSBuild and NuGet behavior configuration -->
   <PropertyGroup Label="MSBuild/NuGet Configuration">
-    <!-- Enable Central Package Management -->
-    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
-
     <!-- Enable package generation on build -->
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 

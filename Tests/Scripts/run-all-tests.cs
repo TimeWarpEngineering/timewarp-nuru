@@ -313,8 +313,11 @@ List<string> GetTestFiles(string directory)
         return [];
     }
 
-    var files = Directory.GetFiles(directory, "test*.cs", SearchOption.AllDirectories)
-        .Where(f => !f.Contains("/obj/", StringComparison.Ordinal) && !f.Contains("/bin/", StringComparison.Ordinal) && !f.EndsWith(".csproj", StringComparison.Ordinal))
+    var files = Directory.GetFiles(directory, "*.cs", SearchOption.AllDirectories)
+        .Where(f => !f.Contains("/obj/", StringComparison.Ordinal) &&
+                    !f.Contains("/bin/", StringComparison.Ordinal) &&
+                    !f.EndsWith(".csproj", StringComparison.Ordinal) &&
+                    !Path.GetFileName(f).StartsWith("run-", StringComparison.Ordinal)) // Exclude test runners
         .Order()
         .ToList();
 

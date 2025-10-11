@@ -391,4 +391,238 @@ public class OptionMatchingTests
 
     await Task.CompletedTask;
   }
+
+  public static async Task Should_match_optional_flag_with_alias_boolean_long_form()
+  {
+    // Arrange - Test optional boolean flag with alias using long form
+    // Pattern: --verbose,-v? (per optional-flag-alias-syntax.md)
+    NuruAppBuilder builder = new();
+    bool boundVerbose = false;
+    builder.AddRoute("build --verbose,-v?", (bool verbose) => { boundVerbose = verbose; return 0; });
+
+    NuruApp app = builder.Build();
+
+    // Act
+    int exitCode = await app.RunAsync(["build", "--verbose"]);
+
+    // Assert
+    exitCode.ShouldBe(0);
+    boundVerbose.ShouldBeTrue();
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_match_optional_flag_with_alias_boolean_short_form()
+  {
+    // Arrange - Test optional boolean flag with alias using short form
+    // Pattern: --verbose,-v? (per optional-flag-alias-syntax.md)
+    NuruAppBuilder builder = new();
+    bool boundVerbose = false;
+    builder.AddRoute("build --verbose,-v?", (bool verbose) => { boundVerbose = verbose; return 0; });
+
+    NuruApp app = builder.Build();
+
+    // Act
+    int exitCode = await app.RunAsync(["build", "-v"]);
+
+    // Assert
+    exitCode.ShouldBe(0);
+    boundVerbose.ShouldBeTrue();
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_match_optional_flag_with_alias_boolean_omitted()
+  {
+    // Arrange - Test optional boolean flag with alias omitted
+    // Pattern: --verbose,-v? (per optional-flag-alias-syntax.md)
+    NuruAppBuilder builder = new();
+    bool boundVerbose = true;
+    builder.AddRoute("build --verbose,-v?", (bool verbose) => { boundVerbose = verbose; return 0; });
+
+    NuruApp app = builder.Build();
+
+    // Act
+    int exitCode = await app.RunAsync(["build"]);
+
+    // Assert
+    exitCode.ShouldBe(0);
+    boundVerbose.ShouldBeFalse();
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_match_optional_flag_with_alias_and_value_long_form()
+  {
+    // Arrange - Test optional flag with alias and value using long form
+    // Pattern: --output,-o? {file} (per optional-flag-alias-syntax.md)
+    NuruAppBuilder builder = new();
+    string? boundFile = null;
+#pragma warning disable RCS1163 // Unused parameter
+    builder.AddRoute("backup {source} --output,-o? {file}",
+      (string source, string? file) => { boundFile = file; return 0; });
+#pragma warning restore RCS1163 // Unused parameter
+
+    NuruApp app = builder.Build();
+
+    // Act
+    int exitCode = await app.RunAsync(["backup", "/data", "--output", "result.tar"]);
+
+    // Assert
+    exitCode.ShouldBe(0);
+    boundFile.ShouldBe("result.tar");
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_match_optional_flag_with_alias_and_value_short_form()
+  {
+    // Arrange - Test optional flag with alias and value using short form
+    // Pattern: --output,-o? {file} (per optional-flag-alias-syntax.md)
+    NuruAppBuilder builder = new();
+    string? boundFile = null;
+#pragma warning disable RCS1163 // Unused parameter
+    builder.AddRoute("backup {source} --output,-o? {file}",
+      (string source, string? file) => { boundFile = file; return 0; });
+#pragma warning restore RCS1163 // Unused parameter
+
+    NuruApp app = builder.Build();
+
+    // Act
+    int exitCode = await app.RunAsync(["backup", "/data", "-o", "result.tar"]);
+
+    // Assert
+    exitCode.ShouldBe(0);
+    boundFile.ShouldBe("result.tar");
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_match_optional_flag_with_alias_and_value_omitted()
+  {
+    // Arrange - Test optional flag with alias omitted entirely
+    // Pattern: --output,-o? {file} (per optional-flag-alias-syntax.md)
+    NuruAppBuilder builder = new();
+    string? boundFile = "unexpected";
+#pragma warning disable RCS1163 // Unused parameter
+    builder.AddRoute("backup {source} --output,-o? {file}",
+      (string source, string? file) => { boundFile = file; return 0; });
+#pragma warning restore RCS1163 // Unused parameter
+
+    NuruApp app = builder.Build();
+
+    // Act
+    int exitCode = await app.RunAsync(["backup", "/data"]);
+
+    // Assert
+    exitCode.ShouldBe(0);
+    boundFile.ShouldBeNull();
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_match_optional_flag_with_alias_and_optional_value_long_form()
+  {
+    // Arrange - Test optional flag with alias and optional value using long form
+    // Pattern: --config,-c? {mode?} (per optional-flag-alias-syntax.md)
+    NuruAppBuilder builder = new();
+    string? boundMode = null;
+    builder.AddRoute("build --config,-c? {mode?}",
+      (string? mode) => { boundMode = mode; return 0; });
+
+    NuruApp app = builder.Build();
+
+    // Act
+    int exitCode = await app.RunAsync(["build", "--config", "debug"]);
+
+    // Assert
+    exitCode.ShouldBe(0);
+    boundMode.ShouldBe("debug");
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_match_optional_flag_with_alias_and_optional_value_short_form()
+  {
+    // Arrange - Test optional flag with alias and optional value using short form
+    // Pattern: --config,-c? {mode?} (per optional-flag-alias-syntax.md)
+    NuruAppBuilder builder = new();
+    string? boundMode = null;
+    builder.AddRoute("build --config,-c? {mode?}",
+      (string? mode) => { boundMode = mode; return 0; });
+
+    NuruApp app = builder.Build();
+
+    // Act
+    int exitCode = await app.RunAsync(["build", "-c", "release"]);
+
+    // Assert
+    exitCode.ShouldBe(0);
+    boundMode.ShouldBe("release");
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_match_optional_flag_with_alias_and_optional_value_flag_omitted()
+  {
+    // Arrange - Test optional flag with alias and optional value with flag omitted
+    // Pattern: --config,-c? {mode?} (per optional-flag-alias-syntax.md)
+    NuruAppBuilder builder = new();
+    string? boundMode = "unexpected";
+    builder.AddRoute("build --config,-c? {mode?}",
+      (string? mode) => { boundMode = mode; return 0; });
+
+    NuruApp app = builder.Build();
+
+    // Act
+    int exitCode = await app.RunAsync(["build"]);
+
+    // Assert
+    exitCode.ShouldBe(0);
+    boundMode.ShouldBeNull();
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_match_optional_flag_with_alias_and_optional_value_value_omitted_long()
+  {
+    // Arrange - Test optional flag present without value (long form)
+    // Pattern: --config,-c? {mode?} (per optional-flag-alias-syntax.md)
+    NuruAppBuilder builder = new();
+    string? boundMode = "unexpected";
+    builder.AddRoute("build --config,-c? {mode?}",
+      (string? mode) => { boundMode = mode; return 0; });
+
+    NuruApp app = builder.Build();
+
+    // Act
+    int exitCode = await app.RunAsync(["build", "--config"]);
+
+    // Assert
+    exitCode.ShouldBe(0);
+    boundMode.ShouldBeNull();
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_match_optional_flag_with_alias_and_optional_value_value_omitted_short()
+  {
+    // Arrange - Test optional flag present without value (short form)
+    // Pattern: --config,-c? {mode?} (per optional-flag-alias-syntax.md)
+    NuruAppBuilder builder = new();
+    string? boundMode = "unexpected";
+    builder.AddRoute("build --config,-c? {mode?}",
+      (string? mode) => { boundMode = mode; return 0; });
+
+    NuruApp app = builder.Build();
+
+    // Act
+    int exitCode = await app.RunAsync(["build", "-c"]);
+
+    // Assert
+    exitCode.ShouldBe(0);
+    boundMode.ShouldBeNull();
+
+    await Task.CompletedTask;
+  }
 }

@@ -271,4 +271,67 @@ public class OptionModifiersTests
 
     await Task.CompletedTask;
   }
+
+  public static async Task Should_parse_optional_flag_with_alias_boolean()
+  {
+    // Arrange & Act - Optional boolean flag with alias
+    // Pattern: --verbose,-v? (per optional-flag-alias-syntax.md)
+    // The ? after alias applies to BOTH forms (--verbose and -v are both optional)
+    CompiledRoute route = PatternParser.Parse("build --verbose,-v?");
+
+    // Assert
+    route.ShouldNotBeNull();
+    route.OptionMatchers.Count.ShouldBe(1);
+
+    OptionMatcher verboseOption = route.OptionMatchers[0];
+    verboseOption.MatchPattern.ShouldBe("--verbose");
+    verboseOption.AlternateForm.ShouldBe("-v");
+    verboseOption.ExpectsValue.ShouldBeFalse(); // Boolean flag
+    verboseOption.IsOptional.ShouldBeTrue(); // Flag is optional (? applies to both forms)
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_parse_optional_flag_with_alias_and_value()
+  {
+    // Arrange & Act - Optional flag with alias and required value
+    // Pattern: --output,-o? {file} (per optional-flag-alias-syntax.md)
+    // The ? after alias makes flag optional, but value is required IF flag is present
+    CompiledRoute route = PatternParser.Parse("backup {source} --output,-o? {file}");
+
+    // Assert
+    route.ShouldNotBeNull();
+    route.OptionMatchers.Count.ShouldBe(1);
+
+    OptionMatcher outputOption = route.OptionMatchers[0];
+    outputOption.MatchPattern.ShouldBe("--output");
+    outputOption.AlternateForm.ShouldBe("-o");
+    outputOption.ExpectsValue.ShouldBeTrue(); // Has parameter
+    outputOption.ParameterName.ShouldBe("file");
+    outputOption.IsOptional.ShouldBeTrue(); // Flag is optional (? applies to both forms)
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_parse_optional_flag_with_alias_and_optional_value()
+  {
+    // Arrange & Act - Optional flag with alias and optional value
+    // Pattern: --config,-c? {mode?} (per optional-flag-alias-syntax.md)
+    // The ? after alias makes flag optional, the ? in parameter makes value optional
+    CompiledRoute route = PatternParser.Parse("build --config,-c? {mode?}");
+
+    // Assert
+    route.ShouldNotBeNull();
+    route.OptionMatchers.Count.ShouldBe(1);
+
+    OptionMatcher configOption = route.OptionMatchers[0];
+    configOption.MatchPattern.ShouldBe("--config");
+    configOption.AlternateForm.ShouldBe("-c");
+    configOption.ExpectsValue.ShouldBeTrue(); // Has parameter
+    configOption.ParameterName.ShouldBe("mode");
+    configOption.IsOptional.ShouldBeTrue(); // Flag is optional (? applies to both forms)
+    // Note: Parameter optionality ({mode?}) is checked during binding, not stored here
+
+    await Task.CompletedTask;
+  }
 }

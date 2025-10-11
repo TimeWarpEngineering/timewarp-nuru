@@ -511,18 +511,28 @@ Options can have modifiers that control their optionality and value requirements
 - `?` after flag name (`--flag?`) = flag itself is optional
 - `?` after parameter (`{value?}`) = value is optional (nullable)
 
-**Quick Reference:**
+**Quick Reference (without aliases):**
 - `--flag` = Boolean flag (always optional)
 - `--flag {value}` = Required flag with required value
 - `--flag {value?}` = Required flag with optional value
 - `--flag? {value}` = Optional flag with required value (if present)
 - `--flag? {value?}` = Optional flag with optional value
 
-**For complete details**, see [Parameter Optionality Design](../cross-cutting/parameter-optionality.md), which covers:
-- Full syntax table with valid/invalid invocations
-- Handler signatures and binding logic
-- Gradual refactoring patterns (shell → native)
-- Use cases for each pattern
+**Quick Reference (with aliases):**
+- `--verbose,-v` = Boolean flag with alias (always optional)
+- `--output,-o {file}` = Required flag with alias and required value
+- `--output,-o {file?}` = Required flag with alias and optional value
+- `--output,-o? {file}` = Optional flag with alias and required value
+- `--output,-o? {file?}` = Optional flag with alias and optional value
+
+**Alias Modifier Placement:**
+- ✅ `--long,-short?` - Correct: `?` after alias applies to both forms
+- ❌ `--long?,-short` - Incorrect: ambiguous placement
+- ❌ `--long?,-short?` - Incorrect: redundant modifiers
+
+**For complete details**, see:
+- [Optional Flag Alias Syntax](optional-flag-alias-syntax.md) - Design rationale and examples
+- [Parameter Optionality Design](../cross-cutting/parameter-optionality.md) - Full behavior specification
 
 #### NURU_S005: Option with Duplicate Alias
 

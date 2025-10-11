@@ -9,6 +9,10 @@ internal sealed class GetExampleTool
     private static readonly Dictionary<string, CachedExample> MemoryCache = [];
     private static readonly TimeSpan CacheTtl = TimeSpan.FromHours(1);
     private static readonly TimeSpan ManifestCacheTtl = TimeSpan.FromHours(24);
+    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
+    {
+        TypeInfoResolver = new System.Text.Json.Serialization.Metadata.DefaultJsonTypeInfoResolver()
+    };
 
     // Fallback examples in case manifest fetch fails
     private static readonly Dictionary<string, ExampleInfo> FallbackExamples = new()
@@ -195,7 +199,7 @@ internal sealed class GetExampleTool
             if (response.IsSuccessStatusCode)
             {
                 string json = await response.Content.ReadAsStringAsync();
-                ExampleManifest? manifest = JsonSerializer.Deserialize<ExampleManifest>(json);
+                ExampleManifest? manifest = JsonSerializer.Deserialize<ExampleManifest>(json, JsonOptions);
 
                 if (manifest?.Examples is not null)
                 {

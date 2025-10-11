@@ -9,6 +9,9 @@ using TimeWarp.Amuru;
 string scriptDir = AppContext.GetData("EntryPointFileDirectoryPath") as string
   ?? throw new InvalidOperationException("Could not get entry point directory");
 
+// Test files are in TimeWarp.Nuru.Mcp.Tests directory
+string testDir = Path.Combine(scriptDir, "..", "TimeWarp.Nuru.Mcp.Tests");
+
 // Configure Nuru app
 NuruAppBuilder builder = new();
 builder.AddDefaultRoute(() => RunTests(), "Run all MCP tests");
@@ -27,11 +30,11 @@ async Task<int> RunTests()
 
   // List of MCP test files (01-05 use Jaribu, 06 is integration test)
   string[] testFiles = [
-    Path.Combine(scriptDir, "mcp-01-example-retrieval.cs"),
-    Path.Combine(scriptDir, "mcp-02-syntax-documentation.cs"),
-    Path.Combine(scriptDir, "mcp-03-route-validation.cs"),
-    Path.Combine(scriptDir, "mcp-04-handler-generation.cs"),
-    Path.Combine(scriptDir, "mcp-05-error-documentation.cs"),
+    Path.Combine(testDir, "mcp-01-example-retrieval.cs"),
+    Path.Combine(testDir, "mcp-02-syntax-documentation.cs"),
+    Path.Combine(testDir, "mcp-03-route-validation.cs"),
+    Path.Combine(testDir, "mcp-04-handler-generation.cs"),
+    Path.Combine(testDir, "mcp-05-error-documentation.cs"),
   ];
 
   foreach (string testFile in testFiles)
@@ -47,7 +50,10 @@ async Task<int> RunTests()
     Write($"Running {testName}... ");
 
     // Run test via Shell
-    ShellResult result = await Shell.Builder("dotnet", "run", "--", fullPath).CaptureAsync();
+    CommandOutput result = await Shell.Builder(fullPath)
+      .WithWorkingDirectory(Path.GetDirectoryName(fullPath)!)
+      .WithNoValidation()
+      .CaptureAsync();
 
     if (result.ExitCode == 0)
     {

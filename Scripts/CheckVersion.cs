@@ -8,14 +8,14 @@ using System.Xml.Linq;
 string scriptDir = (AppContext.GetData("EntryPointFileDirectoryPath") as string)!;
 Directory.SetCurrentDirectory(scriptDir);
 
-// Read version from Directory.Build.props
-string propsPath = "../Directory.Build.props";
+// Read version from Source/Directory.Build.props
+string propsPath = "../Source/Directory.Build.props";
 var doc = XDocument.Load(propsPath);
 string? version = doc.Descendants("Version").FirstOrDefault()?.Value;
 
 if (string.IsNullOrEmpty(version))
 {
-    WriteLine("❌ Could not find version in Directory.Build.props");
+    WriteLine("❌ Could not find version in Source/Directory.Build.props");
     Environment.Exit(1);
 }
 
@@ -50,7 +50,7 @@ foreach (string package in packages)
 
 if (anyPublished)
 {
-    WriteLine("\n❌ One or more packages are already published. Please increment the version in Directory.Build.props");
+    WriteLine("\n❌ One or more packages are already published. Please increment the version in Source/Directory.Build.props");
     Environment.Exit(1);
 }
 

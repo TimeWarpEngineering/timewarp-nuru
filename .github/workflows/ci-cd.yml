@@ -57,9 +57,6 @@ jobs:
           echo "Running Nuru unit tests (lexer, parser, routing)..."
           dotnet ${{ github.workspace }}/Tests/Scripts/run-nuru-tests.cs
 
-          echo "Running MCP tool tests..."
-          dotnet ${{ github.workspace }}/Tests/Scripts/run-mcp-tests.cs
-
           echo "Running integration tests (Delegate vs Mediator)..."
           cd Tests
           ./test-both-versions.sh

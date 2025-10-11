@@ -518,7 +518,7 @@ public class ExampleRetrievalTests
 
 ### Test Runner
 
-MCP tests (01-05) are executed via `Tests/TimeWarp.Nuru.Mcp.Tests/run-mcp-tests.cs`, which:
+MCP tests (01-05) are executed via `Tests/Scripts/run-mcp-tests.cs`, which:
 - Runs all mcp-01 through mcp-05 tests sequentially
 - Reports aggregate pass/fail counts
 - Skips mcp-06 (server integration runs separately)
@@ -587,7 +587,7 @@ When adding new MCP tools or features:
 1. **Add tool tests** in appropriate numbered file (or create new mcp-0X file)
 2. **Update test plan** to document new test sections
 3. **Update run-mcp-tests.cs** to include new test files
-4. **Run full suite** via `Tests/TimeWarp.Nuru.Mcp.Tests/run-mcp-tests.cs`
+4. **Run full suite** via `Tests/Scripts/run-mcp-tests.cs`
 5. **Test server integration** via `mcp-06-server-integration.cs`
 
 Each tool's tests provide detailed validation of that tool's specific capabilities and error handling.

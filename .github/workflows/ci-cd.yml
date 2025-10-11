@@ -58,7 +58,7 @@ jobs:
           dotnet ${{ github.workspace }}/Tests/Scripts/run-nuru-tests.cs
 
           echo "Running MCP tool tests..."
-          dotnet ${{ github.workspace }}/Tests/TimeWarp.Nuru.Mcp.Tests/run-mcp-tests.cs
+          dotnet ${{ github.workspace }}/Tests/Scripts/run-mcp-tests.cs
 
           echo "Running integration tests (Delegate vs Mediator)..."
           cd Tests

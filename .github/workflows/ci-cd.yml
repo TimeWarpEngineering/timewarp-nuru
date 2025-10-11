@@ -53,8 +53,11 @@ jobs:
         run: |
           echo "Running build script..."
           dotnet ${{ github.workspace }}/Scripts/Build.cs
-          
-          echo "Running integration tests..."
+
+          echo "Running Nuru unit tests (lexer, parser, routing)..."
+          dotnet ${{ github.workspace }}/Tests/Scripts/run-nuru-tests.cs
+
+          echo "Running integration tests (Delegate vs Mediator)..."
           cd Tests
           ./test-both-versions.sh
 

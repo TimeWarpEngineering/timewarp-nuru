@@ -18,16 +18,16 @@ NuruAppBuilder builder = new();
 // Should be: builder.AddRoute("--tag? {tag}", (string? tag) => RunTests(tag), ...);
 // Workaround: Use two routes until optional flag bug is fixed
 
-// builder.AddDefaultRoute(() => RunTests(null), "Run all Jaribu tests");
-builder.AddRoute("--tag? {tag?}", (string? tag) => RunTests(tag), "Run tests filtered by tag (Lexer, Parser)");
+// builder.AddDefaultRoute(() => RunTests(null), "Run all Nuru unit tests");
+builder.AddRoute("--tag? {tag?}", (string? tag) => RunTests(tag), "Run Nuru unit tests (Lexer, Parser, Routing) filtered by tag");
 
 NuruApp app = builder.Build();
 return await app.RunAsync(args);
 
 async Task<int> RunTests(string? filterTag)
 {
-  // Run all Jaribu-based tests
-  WriteLine("🧪 Running Jaribu-based Tests");
+  // Run all Nuru unit tests using Jaribu test framework
+  WriteLine("🧪 Running Nuru Unit Tests (Lexer, Parser, Routing)");
 
   if (filterTag is not null)
   {
@@ -40,17 +40,9 @@ async Task<int> RunTests(string? filterTag)
   int totalTests = 0;
   int passedTests = 0;
 
-// List of Jaribu-based test files (relative to Tests directory)
+// List of Nuru unit test files (Jaribu framework tests moved to separate repo)
 string[] testFiles = [
-  // Jaribu self-tests
-  Path.Combine(testsDir, "TimeWarp.Jaribu.Tests/jaribu-01-discovery.cs"),
-  Path.Combine(testsDir, "TimeWarp.Jaribu.Tests/jaribu-02-parameterized.cs"),
-  Path.Combine(testsDir, "TimeWarp.Jaribu.Tests/jaribu-03-tag-filtering.cs"),
-  Path.Combine(testsDir, "TimeWarp.Jaribu.Tests/jaribu-04-skipping-exceptions.cs"),
-  Path.Combine(testsDir, "TimeWarp.Jaribu.Tests/jaribu-05-cache-clearing.cs"),
-  Path.Combine(testsDir, "TimeWarp.Jaribu.Tests/jaribu-06-reporting-cleanup.cs"),
-  Path.Combine(testsDir, "TimeWarp.Jaribu.Tests/jaribu-07-edges.cs"),
-  // Nuru tests
+  // Lexer tests
   Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Lexer/lexer-01-basic-token-types.cs"),
   Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Lexer/lexer-02-valid-options.cs"),
   Path.Combine(testsDir, "TimeWarp.Nuru.Tests/Lexer/lexer-03-invalid-double-dashes.cs"),

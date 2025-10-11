@@ -261,6 +261,62 @@ Route Pattern (entire string)
 - Users can use either form
 - Both bind to same parameter
 
+##### 6.4.1 Option Alias with Optionality Modifier
+
+**Definition:** When combining aliases with the optionality modifier (`?`), the `?` is placed **after the alias group** and applies to **both forms**.
+
+**Canonical Syntax:** `--long,-short? {param}`
+
+**Examples:**
+
+**Optional Boolean Flag with Alias:**
+```csharp
+// Pattern
+builder.AddRoute("build --verbose,-v?", (bool verbose) => ...);
+
+// All valid invocations:
+// build              → verbose = false
+// build --verbose    → verbose = true  (long form)
+// build -v           → verbose = true  (short form)
+```
+
+**Optional Flag with Required Value:**
+```csharp
+// Pattern
+builder.AddRoute("backup {source} --output,-o? {file}",
+    (string source, string? file) => ...);
+
+// Valid invocations:
+// backup /data                    → file = null (flag omitted)
+// backup /data --output result.tar → file = "result.tar" (long form)
+// backup /data -o result.tar       → file = "result.tar" (short form)
+
+// Invalid - flag present requires value:
+// backup /data --output            → Error
+// backup /data -o                  → Error
+```
+
+**Optional Flag with Optional Value:**
+```csharp
+// Pattern
+builder.AddRoute("build --config,-c? {mode?}",
+    (string? mode) => ...);
+
+// All valid invocations:
+// build                → mode = null (flag omitted)
+// build --config       → mode = null (flag present, value omitted)
+// build --config debug → mode = "debug" (both present)
+// build -c             → mode = null (short form, value omitted)
+// build -c release     → mode = "release" (short form with value)
+```
+
+**Placement Rule:**
+- ✅ `--output,-o? {file}` - Correct: `?` after alias applies to both forms
+- ❌ `--output?,-o {file}` - Incorrect: ambiguous placement
+- ❌ `--output?,-o? {file}` - Incorrect: redundant `?` modifiers
+
+**See Also:** [Optional Flag Alias Syntax](optional-flag-alias-syntax.md) for complete design rationale
+
 #### 6.5 Option Modifiers
 
 **Definition:** Symbols that modify option behavior.
@@ -376,13 +432,19 @@ OptionsSection   = { Option }
 Segment          = Literal | Parameter
 Literal          = Identifier
 Parameter        = "{" [ "*" ] Name [ ":" Type ] [ "?" ] "}"
-Option           = OptionName [ "," OptionAlias ] [ "{" Name [ ":" Type ] [ "?" ] "}" [ "*" ] ] [ "?" ]
+Option           = OptionName [ "," OptionAlias ] [ "?" ] [ "{" Name [ ":" Type ] [ "?" ] "}" [ "*" ] ]
 OptionName       = "--" MultiCharIdent | "-" SingleChar
 Name             = Identifier
 Type             = "string" | "int" | "double" | "bool" | "DateTime" | "Guid" | "long" | "decimal" | "TimeSpan"
 CatchAll         = "{" "*" Name "}"
 EndOfOptions     = "--"
 ```
+
+**Note on Option Grammar:** The `[ "?" ]` modifier appears **after** the optional alias (`[ "," OptionAlias ]`) and **before** the optional parameter. This means:
+- `--flag?` - Optional boolean flag (no parameter)
+- `--flag,-f?` - Optional flag with alias (? applies to both forms)
+- `--flag? {value}` - Optional flag with required value
+- `--flag,-f? {value?}` - Optional flag with alias and optional value
 
 ---
 

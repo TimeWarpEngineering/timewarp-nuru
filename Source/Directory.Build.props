@@ -25,4 +25,9 @@
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <DebugType>embedded</DebugType>
   </PropertyGroup>
+
+  <ItemGroup Label="Shared Package Assets">
+    <None Include="$(RepositoryRoot)Assets/Logo.png" Pack="true" PackagePath="" />
+  </ItemGroup>
+
 </Project>

@@ -29,23 +29,14 @@
 
   <!-- Code quality, analyzers, and warning configuration -->
   <PropertyGroup Label="Code Quality and Analysis">
-    <!-- Treat all warnings as errors -->
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <CodeAnalysisTreatWarningsAsErrors>true</CodeAnalysisTreatWarningsAsErrors>
     <WarningLevel>5</WarningLevel>
-
-    <!-- Enable code style enforcement during build -->
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
-
-    <!-- Enable all analyzers with latest rules -->
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
     <AnalysisMode>All</AnalysisMode>
     <AnalysisLevel>latest-all</AnalysisLevel>
-
-    <!-- Report analyzer diagnostics in build output -->
     <ReportAnalyzer>true</ReportAnalyzer>
-
-    <!-- Fail build on analyzer warnings (consistent with TreatWarningsAsErrors) -->
-    <CodeAnalysisTreatWarningsAsErrors>true</CodeAnalysisTreatWarningsAsErrors>
 
     <!-- Suppress specific warnings -->
     <!-- CA1014: CLS compliance not required for this library -->

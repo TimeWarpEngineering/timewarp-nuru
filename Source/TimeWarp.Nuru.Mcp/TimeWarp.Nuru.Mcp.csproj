@@ -35,4 +35,8 @@
     <ProjectReference Include="../TimeWarp.Nuru/TimeWarp.Nuru.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="../../Samples/SyntaxExamples.cs" LogicalName="TimeWarp.Nuru.Mcp.SyntaxExamples.cs" />
+  </ItemGroup>
+
 </Project>

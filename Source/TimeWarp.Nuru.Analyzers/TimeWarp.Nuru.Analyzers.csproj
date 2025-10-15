@@ -35,7 +35,7 @@
 
   <!-- Include parsing source files directly -->
   <ItemGroup>
-    <Compile Include="..\TimeWarp.Nuru.Parsing\**\*.cs" Exclude="..\TimeWarp.Nuru.Parsing\obj\**;..\TimeWarp.Nuru.Parsing\bin\**" />
+    <Compile Include="$(SourceDirectory)TimeWarp.Nuru.Parsing/**/*.cs" Exclude="$(SourceDirectory)TimeWarp.Nuru.Parsing/obj/**;$(SourceDirectory)TimeWarp.Nuru.Parsing/bin/**" />
   </ItemGroup>
 
   <ItemGroup>

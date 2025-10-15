@@ -10,7 +10,6 @@
     <ArtifactsDirectory>$(RepositoryRoot)artifacts/</ArtifactsDirectory>
     <SolutionFile>$(RepositoryRoot)TimeWarp.Nuru.sln</SolutionFile>
     <LocalNuGetFeed>$(ArtifactsDirectory)packages/</LocalNuGetFeed>
-    <LocalNuGetCache>$(RepositoryRoot)LocalNuGetCache/</LocalNuGetCache>
   </PropertyGroup>
 
   <!-- MSBuild and NuGet behavior configuration -->
@@ -20,9 +19,6 @@
 
     <!-- Output packages to our local feed directory -->
     <PackageOutputPath>$(LocalNuGetFeed)</PackageOutputPath>
-
-    <!-- Use local packages directory instead of global cache -->
-    <RestorePackagesPath>$(LocalNuGetCache)</RestorePackagesPath>
 
     <!-- Suppress .NET preview SDK message -->
     <SuppressNETCoreSdkPreviewMessage>true</SuppressNETCoreSdkPreviewMessage>

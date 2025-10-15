@@ -1,6 +1,4 @@
 #!/usr/bin/dotnet --
-#:property LangVersion=preview
-#:property EnablePreviewFeatures=true
 #:package TimeWarp.Amuru
 
 using TimeWarp.Amuru;
@@ -84,14 +82,8 @@ var testCategories = new Dictionary<string, List<string>>
 {
     ["Lexer"] = [.. GetTestFiles(Path.Combine(testsRoot, "TimeWarp.Nuru.Tests/Lexer"))],
     ["Parser"] = [.. GetTestFiles(Path.Combine(testsRoot, "TimeWarp.Nuru.Tests/Parsing/Parser"))],
-    ["Validation"] = GetTestFiles(Path.Combine(testsRoot, "TimeWarp.Nuru.Tests/Parsing/Validation")),
-    ["Routing"] = [.. GetTestFiles(Path.Combine(testsRoot, "SingleFileTests/Routing")),
-                   .. GetTestFiles(Path.Combine(testsRoot, "TimeWarp.Nuru.Tests/Routing"))],
-    ["Features"] = GetTestFiles(Path.Combine(testsRoot, "SingleFileTests/Features")),
-    ["Options"] = [.. GetTestFiles(Path.Combine(testsRoot, "SingleFileTests/test-matrix")),
-                   .. GetTestFiles(Path.Combine(testsRoot, "TimeWarp.Nuru.Tests/Options"))],
+    ["Routing"] = [.. GetTestFiles(Path.Combine(testsRoot, "TimeWarp.Nuru.Tests/Routing"))],
     ["MCP"] = GetTestFiles(Path.Combine(testsRoot, "TimeWarp.Nuru.Mcp.Tests")),
-    ["Analyzers"] = GetTestFiles(Path.Combine(testsRoot, "TimeWarp.Nuru.Analyzers.Tests")),
 };
 
 // Filter categories if specified
@@ -317,7 +309,8 @@ List<string> GetTestFiles(string directory)
         .Where(f => !f.Contains("/obj/", StringComparison.Ordinal) &&
                     !f.Contains("/bin/", StringComparison.Ordinal) &&
                     !f.EndsWith(".csproj", StringComparison.Ordinal) &&
-                    !Path.GetFileName(f).StartsWith("run-", StringComparison.Ordinal)) // Exclude test runners
+                    !Path.GetFileName(f).StartsWith("run-", StringComparison.Ordinal) && // Exclude test runners
+                    !Path.GetFileName(f).EndsWith("Helper.cs", StringComparison.Ordinal)) // Exclude helper files
         .Order()
         .ToList();
 

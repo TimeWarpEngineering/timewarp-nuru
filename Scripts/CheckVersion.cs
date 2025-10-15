@@ -1,5 +1,4 @@
 #!/usr/bin/dotnet --
-#:property EnablePreviewFeatures=true
 // CheckVersion.cs - Check if NuGet packages are already published
 
 using System.Xml.Linq;

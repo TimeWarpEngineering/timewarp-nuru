@@ -1,6 +1,4 @@
 #!/usr/bin/dotnet --
-#:property LangVersion=preview
-#:property EnablePreviewFeatures=true
 
 using System.Globalization;
 using System.Text;

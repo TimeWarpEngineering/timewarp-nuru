@@ -1,6 +1,4 @@
 #!/usr/bin/dotnet --
-#:property LangVersion=preview
-#:property EnablePreviewFeatures=true
 #:package TimeWarp.Amuru
 
 using TimeWarp.Amuru;
@@ -28,7 +26,8 @@ async Task<int> RunTests()
   int totalTests = 0;
   int passedTests = 0;
 
-  // List of MCP test files (01-05 use Jaribu, 06 is integration test)
+  // List of MCP test files (01-05 use Jaribu framework)
+  // Note: mcp-06 (server integration test) is at Tests/Scripts/test-mcp-server.cs
   string[] testFiles = [
     Path.Combine(testDir, "mcp-01-example-retrieval.cs"),
     Path.Combine(testDir, "mcp-02-syntax-documentation.cs"),

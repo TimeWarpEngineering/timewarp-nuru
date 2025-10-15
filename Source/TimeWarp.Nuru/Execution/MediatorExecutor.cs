@@ -19,7 +19,17 @@ public class MediatorExecutor
   /// <summary>
   /// Creates a command instance, populates it with extracted values, and executes it through Mediator.
   /// </summary>
-  public Task<object?> ExecuteCommandAsync(Type commandType, Dictionary<string, string> extractedValues, CancellationToken cancellationToken)
+  /// <remarks>
+  /// This method uses reflection to create command instances and populate properties.
+  /// When using NativeAOT, ensure command types are preserved with [DynamicDependency] or similar attributes.
+  /// </remarks>
+  [RequiresUnreferencedCode("Command types are created and populated dynamically. Ensure command constructors and properties are preserved.")]
+  [RequiresDynamicCode("Command instantiation may require dynamic code generation.")]
+  public Task<object?> ExecuteCommandAsync(
+      [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+      Type commandType,
+      Dictionary<string, string> extractedValues,
+      CancellationToken cancellationToken)
   {
     ArgumentNullException.ThrowIfNull(commandType);
     ArgumentNullException.ThrowIfNull(extractedValues);
@@ -36,7 +46,13 @@ public class MediatorExecutor
     return mediator.Send(command, cancellationToken);
   }
 
-  private void PopulateCommand(object command, Type commandType, Dictionary<string, string> extractedValues)
+  [UnconditionalSuppressMessage("Trimming", "IL2072:UnrecognizedReflectionPattern",
+      Justification = "Command properties are preserved through DynamicallyAccessedMembers annotation on commandType parameter")]
+  private void PopulateCommand(
+      object command,
+      [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
+      Type commandType,
+      Dictionary<string, string> extractedValues)
   {
     foreach ((string paramName, string value) in extractedValues)
     {
@@ -91,6 +107,13 @@ public class MediatorExecutor
   /// <summary>
   /// Formats the command response for console output.
   /// </summary>
+  /// <remarks>
+  /// This method may serialize unknown response types to JSON, which requires reflection
+  /// and is not fully compatible with Native AOT. For best AOT support, return primitive types
+  /// or types with custom ToString implementations from mediator commands.
+  /// </remarks>
+  [RequiresUnreferencedCode("Response serialization may require types not known at compile time")]
+  [RequiresDynamicCode("JSON serialization of unknown response types may require dynamic code generation")]
   public static void DisplayResponse(object? response)
   {
     if (response is null)
@@ -102,23 +125,27 @@ public class MediatorExecutor
     if (responseType.Name == "Unit" && responseType.Namespace == "TimeWarp.Mediator")
       return;
 
-    // Check if the response has a custom ToString() implementation
-    MethodInfo? toStringMethod = responseType.GetMethod("ToString", Type.EmptyTypes);
-    if (toStringMethod is not null && toStringMethod.DeclaringType != typeof(object))
+    // Simple types - display directly
+    if (responseType.IsPrimitive || responseType == typeof(string) || responseType == typeof(decimal))
     {
-      // Use custom ToString
       NuruConsole.WriteLine(response.ToString());
+      return;
     }
-    else if (responseType.IsPrimitive || responseType == typeof(string) || responseType == typeof(decimal))
+
+    // For complex objects, check if ToString is overridden by testing the output
+    string stringValue = response.ToString() ?? "";
+
+    // If ToString returns the default type name, use JSON instead
+    if (stringValue == responseType.FullName || stringValue == responseType.Name)
     {
-      // Simple types - just display directly
-      NuruConsole.WriteLine(response.ToString());
+      // Complex object without custom ToString - serialize to JSON for display
+      string json = JsonSerializer.Serialize(response, NuruJsonSerializerContext.Default.Options);
+      NuruConsole.WriteLine(json);
     }
     else
     {
-      // Complex object - serialize to JSON for display
-      string json = JsonSerializer.Serialize(response, NuruJsonSerializerContext.Default.Options);
-      NuruConsole.WriteLine(json);
+      // Custom ToString - use it
+      NuruConsole.WriteLine(stringValue);
     }
   }
 }

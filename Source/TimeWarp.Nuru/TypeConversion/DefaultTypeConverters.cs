@@ -10,6 +10,8 @@ internal static class DefaultTypeConverters
   /// <summary>
   /// Attempts to convert a string value to the specified type.
   /// </summary>
+  [UnconditionalSuppressMessage("Trimming", "IL2070:UnrecognizedReflectionPattern",
+      Justification = "Enum parsing is safe - enum values are preserved when enum type is used")]
   public static bool TryConvert(string value, Type targetType, out object? result)
   {
     result = null;

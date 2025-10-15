@@ -12,4 +12,22 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
+  <PropertyGroup Label="MsBuild Packaging Defaults">
+    <IsPackable>true</IsPackable>
+    <PackageOutputPath>$(ArtifactsDirectory)packages/</PackageOutputPath>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+  </PropertyGroup>
+
+  <PropertyGroup Label="Source Link Settings">
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <DebugType>embedded</DebugType>
+  </PropertyGroup>
+
+  <ItemGroup Label="Shared Package Assets">
+    <None Include="$(RepositoryRoot)Assets/Logo.png" Pack="true" PackagePath="" />
+  </ItemGroup>
+
 </Project>

@@ -5,6 +5,13 @@
     <PackageTags>cli;command-line;routing;framework;dotnet;console;consoleappframework;commandlineparser;mcmaster;cocona;spectre;system-commandline;clipr;commanddotnet</PackageTags>
     <!-- Disable localization warning as CLI frameworks don't typically need localization -->
     <NoWarn>$(NoWarn);CA1303</NoWarn>
+
+    <!-- AOT Compatibility -->
+    <!-- Mark library as AOT-compatible with warnings for reflection usage -->
+    <IsAotCompatible>true</IsAotCompatible>
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+    <EnableAotAnalyzer>true</EnableAotAnalyzer>
+    <!-- Note: Direct delegate routing works with full AOT. Mediator routing requires partial trim mode (TrimMode=partial) -->
   </PropertyGroup>
 
   <ItemGroup>
@@ -24,29 +31,27 @@
 
   <!-- Include parsing source files directly -->
   <ItemGroup>
-    <Compile Include="..\TimeWarp.Nuru.Parsing\**\*.cs" Exclude="..\TimeWarp.Nuru.Parsing\obj\**;..\TimeWarp.Nuru.Parsing\bin\**" />
+    <Compile Include="../TimeWarp.Nuru.Parsing/**/*.cs" Exclude="../TimeWarp.Nuru.Parsing/obj/**;../TimeWarp.Nuru.Parsing/bin/**" />
   </ItemGroup>
-
   <ItemGroup>
-    <None Include="$(RepositoryRoot)Assets\Logo.png" Pack="true" PackagePath="" />
     <None Include="$(RepositoryRoot)README.md" Pack="true" PackagePath="" />
   </ItemGroup>
 
   <!-- Include the analyzer in the main package as a development dependency -->
   <ItemGroup>
     <!-- Reference the analyzer project for building -->
-    <ProjectReference Include="..\TimeWarp.Nuru.Analyzers\TimeWarp.Nuru.Analyzers.csproj"
+    <ProjectReference Include="../TimeWarp.Nuru.Analyzers/TimeWarp.Nuru.Analyzers.csproj"
                       ReferenceOutputAssembly="false"
                       PrivateAssets="all" />
-    
+
     <!-- Include analyzer DLL in the package -->
-    <None Include="..\TimeWarp.Nuru.Analyzers\bin\$(Configuration)\$(TargetFramework)\TimeWarp.Nuru.Analyzers.dll"
+    <None Include="../TimeWarp.Nuru.Analyzers/bin/$(Configuration)/$(TargetFramework)/TimeWarp.Nuru.Analyzers.dll"
           Pack="true"
           PackagePath="analyzers/dotnet/cs"
           Visible="false" />
-    
+
     <!-- Include the logging dependency for the analyzer -->
-    <None Include="$(PkgMicrosoft_Extensions_Logging_Abstractions)\lib\net9.0\Microsoft.Extensions.Logging.Abstractions.dll"
+    <None Include="$(PkgMicrosoft_Extensions_Logging_Abstractions)/lib/net9.0/Microsoft.Extensions.Logging.Abstractions.dll"
           Pack="true"
           PackagePath="analyzers/dotnet/cs"
           Visible="false" />

@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <Description>Route pattern parsing library for TimeWarp.Nuru (internal use only - compiled directly into consuming projects)</Description>
+    <IsPackable>false</IsPackable>
   </PropertyGroup>
 
   <ItemGroup>

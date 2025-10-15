@@ -4,26 +4,16 @@
   <PropertyGroup Label="Custom Repository Variables">
     <RepositoryName>timewarp-nuru</RepositoryName>
     <RepositoryRoot>$(MSBuildThisFileDirectory)</RepositoryRoot>
+    <SolutionFile>$(RepositoryRoot)TimeWarp.Nuru.sln</SolutionFile>
     <SourceDirectory>$(RepositoryRoot)Source/</SourceDirectory>
     <TestsDirectory>$(RepositoryRoot)Tests/</TestsDirectory>
     <SamplesDirectory>$(RepositoryRoot)Samples/</SamplesDirectory>
     <ArtifactsDirectory>$(RepositoryRoot)artifacts/</ArtifactsDirectory>
-    <SolutionFile>$(RepositoryRoot)TimeWarp.Nuru.sln</SolutionFile>
-    <LocalNuGetFeed>$(ArtifactsDirectory)packages/</LocalNuGetFeed>
-    <LocalNuGetCache>$(RepositoryRoot)LocalNuGetCache/</LocalNuGetCache>
+    <PackagesDirectory>$(ArtifactsDirectory)packages/</PackagesDirectory>
   </PropertyGroup>
 
   <!-- MSBuild and NuGet behavior configuration -->
   <PropertyGroup Label="MSBuild/NuGet Configuration">
-    <!-- Enable package generation on build -->
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-
-    <!-- Output packages to our local feed directory -->
-    <PackageOutputPath>$(LocalNuGetFeed)</PackageOutputPath>
-
-    <!-- Use local packages directory instead of global cache -->
-    <RestorePackagesPath>$(LocalNuGetCache)</RestorePackagesPath>
-
     <!-- Suppress .NET preview SDK message -->
     <SuppressNETCoreSdkPreviewMessage>true</SuppressNETCoreSdkPreviewMessage>
   </PropertyGroup>
@@ -34,27 +24,19 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
+    <IsPackable>false</IsPackable>
   </PropertyGroup>
 
   <!-- Code quality, analyzers, and warning configuration -->
   <PropertyGroup Label="Code Quality and Analysis">
-    <!-- Treat all warnings as errors -->
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <CodeAnalysisTreatWarningsAsErrors>true</CodeAnalysisTreatWarningsAsErrors>
     <WarningLevel>5</WarningLevel>
-
-    <!-- Enable code style enforcement during build -->
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
-
-    <!-- Enable all analyzers with latest rules -->
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
     <AnalysisMode>All</AnalysisMode>
     <AnalysisLevel>latest-all</AnalysisLevel>
-
-    <!-- Report analyzer diagnostics in build output -->
     <ReportAnalyzer>true</ReportAnalyzer>
-
-    <!-- Fail build on analyzer warnings (consistent with TreatWarningsAsErrors) -->
-    <CodeAnalysisTreatWarningsAsErrors>true</CodeAnalysisTreatWarningsAsErrors>
 
     <!-- Suppress specific warnings -->
     <!-- CA1014: CLS compliance not required for this library -->

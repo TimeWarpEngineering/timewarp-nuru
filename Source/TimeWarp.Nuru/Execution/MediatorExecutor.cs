@@ -19,7 +19,17 @@ public class MediatorExecutor
   /// <summary>
   /// Creates a command instance, populates it with extracted values, and executes it through Mediator.
   /// </summary>
-  public Task<object?> ExecuteCommandAsync(Type commandType, Dictionary<string, string> extractedValues, CancellationToken cancellationToken)
+  /// <remarks>
+  /// This method uses reflection to create command instances and populate properties.
+  /// When using NativeAOT, ensure command types are preserved with [DynamicDependency] or similar attributes.
+  /// </remarks>
+  [RequiresUnreferencedCode("Command types are created and populated dynamically. Ensure command constructors and properties are preserved.")]
+  [RequiresDynamicCode("Command instantiation may require dynamic code generation.")]
+  public Task<object?> ExecuteCommandAsync(
+      [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+      Type commandType,
+      Dictionary<string, string> extractedValues,
+      CancellationToken cancellationToken)
   {
     ArgumentNullException.ThrowIfNull(commandType);
     ArgumentNullException.ThrowIfNull(extractedValues);
@@ -36,7 +46,13 @@ public class MediatorExecutor
     return mediator.Send(command, cancellationToken);
   }
 
-  private void PopulateCommand(object command, Type commandType, Dictionary<string, string> extractedValues)
+  [UnconditionalSuppressMessage("Trimming", "IL2072:UnrecognizedReflectionPattern",
+      Justification = "Command properties are preserved through DynamicallyAccessedMembers annotation on commandType parameter")]
+  private void PopulateCommand(
+      object command,
+      [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
+      Type commandType,
+      Dictionary<string, string> extractedValues)
   {
     foreach ((string paramName, string value) in extractedValues)
     {
@@ -91,6 +107,10 @@ public class MediatorExecutor
   /// <summary>
   /// Formats the command response for console output.
   /// </summary>
+  [UnconditionalSuppressMessage("Trimming", "IL2070:UnrecognizedReflectionPattern",
+      Justification = "ToString method lookup is safe - all types have ToString")]
+  [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode",
+      Justification = "JSON serialization uses source-generated context for known types")]
   public static void DisplayResponse(object? response)
   {
     if (response is null)

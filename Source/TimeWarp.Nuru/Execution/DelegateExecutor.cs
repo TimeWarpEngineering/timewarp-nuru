@@ -9,6 +9,12 @@ public static class DelegateExecutor
   /// <summary>
   /// Executes a delegate with parameters bound from extracted route values.
   /// </summary>
+  /// <remarks>
+  /// This method uses reflection to inspect delegate parameters and invoke the handler.
+  /// When using NativeAOT, ensure delegate types are preserved in your application.
+  /// </remarks>
+  [RequiresUnreferencedCode("Delegates are invoked dynamically. Ensure all delegate parameter types and return types are preserved.")]
+  [RequiresDynamicCode("Delegate invocation may require dynamic code generation.")]
   public static async Task<int> ExecuteAsync(
       Delegate handler,
       Dictionary<string, string> extractedValues,
@@ -83,6 +89,10 @@ public static class DelegateExecutor
     }
   }
 
+  [UnconditionalSuppressMessage("Trimming", "IL2070:UnrecognizedReflectionPattern",
+      Justification = "Parameter types are preserved through delegate registration")]
+  [UnconditionalSuppressMessage("AOT", "IL3050:RequiresDynamicCode",
+      Justification = "Array type creation is safe for known parameter types")]
   private static object?[] BindParameters(
       ParameterInfo[] parameters,
       Dictionary<string, string> extractedValues,
@@ -223,6 +233,8 @@ public static class DelegateExecutor
     return false;
   }
 
+  [UnconditionalSuppressMessage("Trimming", "IL2070:UnrecognizedReflectionPattern",
+      Justification = "Type checking for service parameters uses safe type comparisons")]
   private static bool IsServiceParameter(ParameterInfo parameter)
   {
     Type type = parameter.ParameterType;

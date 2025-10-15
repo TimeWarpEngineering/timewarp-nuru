@@ -101,6 +101,10 @@ public class NuruApp
     }
   }
 
+  [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode",
+      Justification = "Command type reflection is necessary for mediator pattern - users must preserve command types")]
+  [UnconditionalSuppressMessage("AOT", "IL3050:RequiresDynamicCode",
+      Justification = "Command instantiation through mediator pattern requires reflection")]
   private async Task<int> ExecuteMediatorCommandAsync(Type commandType, EndpointResolutionResult result)
   {
     if (MediatorExecutor is null)
@@ -131,6 +135,10 @@ public class NuruApp
     return 0;
   }
 
+  [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode",
+      Justification = "Delegate execution requires reflection - delegate types are preserved through registration")]
+  [UnconditionalSuppressMessage("AOT", "IL3050:RequiresDynamicCode",
+      Justification = "Delegate invocation may require dynamic code generation")]
   private Task<int> ExecuteDelegateAsync(Delegate del, Dictionary<string, string> extractedValues, Endpoint endpoint)
     => DelegateExecutor.ExecuteAsync(
       del,

@@ -3,8 +3,8 @@
   <!-- Custom path definitions for repository structure -->
   <PropertyGroup Label="Custom Repository Variables">
     <RepositoryName>timewarp-nuru</RepositoryName>
-    <RepositoryRoot>$(MSBuildThisFileDirectory)</RepositoryRoot>
     <SolutionFile>$(RepositoryRoot)TimeWarp.Nuru.sln</SolutionFile>
+    <RepositoryRoot>$(MSBuildThisFileDirectory)</RepositoryRoot>
     <SourceDirectory>$(RepositoryRoot)Source/</SourceDirectory>
     <TestsDirectory>$(RepositoryRoot)Tests/</TestsDirectory>
     <SamplesDirectory>$(RepositoryRoot)Samples/</SamplesDirectory>
@@ -14,6 +14,9 @@
 
   <!-- MSBuild and NuGet behavior configuration -->
   <PropertyGroup Label="MSBuild/NuGet Configuration">
+    <!-- Output packages to our local feed directory -->
+    <PackageOutputPath>$(PackagesDirectory)</PackageOutputPath>
+
     <!-- Suppress .NET preview SDK message -->
     <SuppressNETCoreSdkPreviewMessage>true</SuppressNETCoreSdkPreviewMessage>
   </PropertyGroup>
@@ -29,14 +32,17 @@
 
   <!-- Code quality, analyzers, and warning configuration -->
   <PropertyGroup Label="Code Quality and Analysis">
+    <!-- Treat all warnings as errors -->
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <CodeAnalysisTreatWarningsAsErrors>true</CodeAnalysisTreatWarningsAsErrors>
     <WarningLevel>5</WarningLevel>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
     <AnalysisMode>All</AnalysisMode>
     <AnalysisLevel>latest-all</AnalysisLevel>
+
+    <!-- Report analyzer diagnostics in build output -->
     <ReportAnalyzer>true</ReportAnalyzer>
+    <CodeAnalysisTreatWarningsAsErrors>true</CodeAnalysisTreatWarningsAsErrors>
 
     <!-- Suppress specific warnings -->
     <!-- CA1014: CLS compliance not required for this library -->

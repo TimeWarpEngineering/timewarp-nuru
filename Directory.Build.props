@@ -4,22 +4,16 @@
   <PropertyGroup Label="Custom Repository Variables">
     <RepositoryName>timewarp-nuru</RepositoryName>
     <RepositoryRoot>$(MSBuildThisFileDirectory)</RepositoryRoot>
+    <SolutionFile>$(RepositoryRoot)TimeWarp.Nuru.sln</SolutionFile>
     <SourceDirectory>$(RepositoryRoot)Source/</SourceDirectory>
     <TestsDirectory>$(RepositoryRoot)Tests/</TestsDirectory>
     <SamplesDirectory>$(RepositoryRoot)Samples/</SamplesDirectory>
     <ArtifactsDirectory>$(RepositoryRoot)artifacts/</ArtifactsDirectory>
-    <SolutionFile>$(RepositoryRoot)TimeWarp.Nuru.sln</SolutionFile>
-    <LocalNuGetFeed>$(ArtifactsDirectory)packages/</LocalNuGetFeed>
+    <PackagesDirectory>$(ArtifactsDirectory)packages/</PackagesDirectory>
   </PropertyGroup>
 
   <!-- MSBuild and NuGet behavior configuration -->
   <PropertyGroup Label="MSBuild/NuGet Configuration">
-    <!-- Enable package generation on build -->
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-
-    <!-- Output packages to our local feed directory -->
-    <PackageOutputPath>$(LocalNuGetFeed)</PackageOutputPath>
-
     <!-- Suppress .NET preview SDK message -->
     <SuppressNETCoreSdkPreviewMessage>true</SuppressNETCoreSdkPreviewMessage>
   </PropertyGroup>

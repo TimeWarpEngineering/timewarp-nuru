@@ -12,4 +12,10 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
+  <PropertyGroup Label="MsBuild Packaging Defaults">
+    <IsPackable>true</IsPackable>
+    <PackageOutputPath>$(ArtifactsDirectory)packages/</PackageOutputPath>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+  </PropertyGroup>
+
 </Project>

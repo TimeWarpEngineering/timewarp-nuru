@@ -68,5 +68,6 @@ using TimeWarp.Nuru.Parsing;
 [JsonSourceGenerationOptions(
     WriteIndented = true,
     PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase,
-    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull)]
+    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+    Converters = [typeof(SafeExceptionConverter)])]
 public partial class NuruJsonSerializerContext : JsonSerializerContext;

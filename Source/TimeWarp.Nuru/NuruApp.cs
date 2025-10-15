@@ -105,7 +105,10 @@ public class NuruApp
       Justification = "Command type reflection is necessary for mediator pattern - users must preserve command types")]
   [UnconditionalSuppressMessage("AOT", "IL3050:RequiresDynamicCode",
       Justification = "Command instantiation through mediator pattern requires reflection")]
-  private async Task<int> ExecuteMediatorCommandAsync(Type commandType, EndpointResolutionResult result)
+  private async Task<int> ExecuteMediatorCommandAsync(
+      [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+      Type commandType,
+      EndpointResolutionResult result)
   {
     if (MediatorExecutor is null)
     {

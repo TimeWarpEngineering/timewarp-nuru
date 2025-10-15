@@ -36,6 +36,7 @@ public class Endpoint
   /// Gets or sets the command type if this is a command-based route (using Mediator pattern).
   /// If null, this is a delegate-based route.
   /// </summary>
+  [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
   public Type? CommandType { get; set; }
 
   /// <summary>

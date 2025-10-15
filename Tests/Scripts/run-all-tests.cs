@@ -317,7 +317,8 @@ List<string> GetTestFiles(string directory)
         .Where(f => !f.Contains("/obj/", StringComparison.Ordinal) &&
                     !f.Contains("/bin/", StringComparison.Ordinal) &&
                     !f.EndsWith(".csproj", StringComparison.Ordinal) &&
-                    !Path.GetFileName(f).StartsWith("run-", StringComparison.Ordinal)) // Exclude test runners
+                    !Path.GetFileName(f).StartsWith("run-", StringComparison.Ordinal) && // Exclude test runners
+                    !Path.GetFileName(f).EndsWith("Helper.cs", StringComparison.Ordinal)) // Exclude helper files
         .Order()
         .ToList();
 

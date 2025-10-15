@@ -107,10 +107,13 @@ public class MediatorExecutor
   /// <summary>
   /// Formats the command response for console output.
   /// </summary>
-  [UnconditionalSuppressMessage("Trimming", "IL2070:UnrecognizedReflectionPattern",
-      Justification = "ToString method lookup is safe - all types have ToString")]
-  [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode",
-      Justification = "JSON serialization uses source-generated context for known types")]
+  /// <remarks>
+  /// This method may serialize unknown response types to JSON, which requires reflection
+  /// and is not fully compatible with Native AOT. For best AOT support, return primitive types
+  /// or types with custom ToString implementations from mediator commands.
+  /// </remarks>
+  [RequiresUnreferencedCode("Response serialization may require types not known at compile time")]
+  [RequiresDynamicCode("JSON serialization of unknown response types may require dynamic code generation")]
   public static void DisplayResponse(object? response)
   {
     if (response is null)
@@ -122,23 +125,27 @@ public class MediatorExecutor
     if (responseType.Name == "Unit" && responseType.Namespace == "TimeWarp.Mediator")
       return;
 
-    // Check if the response has a custom ToString() implementation
-    MethodInfo? toStringMethod = responseType.GetMethod("ToString", Type.EmptyTypes);
-    if (toStringMethod is not null && toStringMethod.DeclaringType != typeof(object))
+    // Simple types - display directly
+    if (responseType.IsPrimitive || responseType == typeof(string) || responseType == typeof(decimal))
     {
-      // Use custom ToString
       NuruConsole.WriteLine(response.ToString());
+      return;
     }
-    else if (responseType.IsPrimitive || responseType == typeof(string) || responseType == typeof(decimal))
+
+    // For complex objects, check if ToString is overridden by testing the output
+    string stringValue = response.ToString() ?? "";
+
+    // If ToString returns the default type name, use JSON instead
+    if (stringValue == responseType.FullName || stringValue == responseType.Name)
     {
-      // Simple types - just display directly
-      NuruConsole.WriteLine(response.ToString());
+      // Complex object without custom ToString - serialize to JSON for display
+      string json = JsonSerializer.Serialize(response, NuruJsonSerializerContext.Default.Options);
+      NuruConsole.WriteLine(json);
     }
     else
     {
-      // Complex object - serialize to JSON for display
-      string json = JsonSerializer.Serialize(response, NuruJsonSerializerContext.Default.Options);
-      NuruConsole.WriteLine(json);
+      // Custom ToString - use it
+      NuruConsole.WriteLine(stringValue);
     }
   }
 }

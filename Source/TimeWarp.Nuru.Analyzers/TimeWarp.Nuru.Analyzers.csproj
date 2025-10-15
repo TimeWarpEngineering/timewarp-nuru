@@ -11,6 +11,8 @@
     <NoWarn>$(NoWarn);RS1041;CA1805;CA1802;RCS1163</NoWarn>
     <!-- Define ANALYZER_BUILD for conditional compilation -->
     <DefineConstants>$(DefineConstants);ANALYZER_BUILD</DefineConstants>
+    <IncludeSymbols>false</IncludeSymbols>
+    <IncludeSource>false</IncludeSource>
   </PropertyGroup>
 
   <PropertyGroup>

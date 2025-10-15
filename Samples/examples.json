@@ -4,17 +4,41 @@
   "examples": [
     {
       "id": "basic",
-      "name": "Basic TimeWarp.Nuru Application",
-      "description": "Basic TimeWarp.Nuru application with various route patterns including literals, parameters, and options",
-      "path": "TimeWarp.Nuru.Sample/Program.cs",
-      "tags": ["basics", "routing", "getting-started"],
+      "name": "Mixed Calculator Example",
+      "description": "Calculator mixing Delegate and Mediator patterns - best of both worlds",
+      "path": "Samples/Calculator/calc-mixed.cs",
+      "tags": ["basics", "routing", "getting-started", "calculator", "mixed"],
       "difficulty": "beginner"
+    },
+    {
+      "id": "mixed",
+      "name": "Mixed Pattern Calculator",
+      "description": "Mixed approach combining delegate performance with mediator structure",
+      "path": "Samples/Calculator/calc-mixed.cs",
+      "tags": ["calculator", "mixed", "delegate", "mediator"],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "delegate",
+      "name": "Delegate Calculator",
+      "description": "Pure delegate routing for maximum performance with no DI overhead",
+      "path": "Samples/Calculator/calc-delegate.cs",
+      "tags": ["calculator", "delegate", "performance", "minimal"],
+      "difficulty": "beginner"
+    },
+    {
+      "id": "mediator",
+      "name": "Mediator Calculator",
+      "description": "Mediator pattern with DI for testability and enterprise patterns",
+      "path": "Samples/Calculator/calc-mediator.cs",
+      "tags": ["calculator", "mediator", "dependency-injection", "enterprise"],
+      "difficulty": "intermediate"
     },
     {
       "id": "async",
       "name": "Async Command Examples",
       "description": "Demonstrates async command handlers with Task-based routes and async/await patterns",
-      "path": "AsyncExamples/Program.cs",
+      "path": "Samples/AsyncExamples/Program.cs",
       "tags": ["async", "tasks", "advanced"],
       "difficulty": "intermediate"
     },
@@ -22,7 +46,7 @@
       "id": "console-logging",
       "name": "Console Logging Integration",
       "description": "Shows how to integrate Microsoft.Extensions.Logging with console output",
-      "path": "Logging/ConsoleLogging.cs",
+      "path": "Samples/Logging/ConsoleLogging.cs",
       "tags": ["logging", "console", "diagnostics"],
       "difficulty": "beginner"
     },
@@ -30,24 +54,8 @@
       "id": "serilog",
       "name": "Serilog Integration",
       "description": "Demonstrates Serilog integration with structured logging and trace-level output",
-      "path": "Logging/SerilogLogging.cs",
+      "path": "Samples/Logging/SerilogLogging.cs",
       "tags": ["logging", "serilog", "structured-logging", "diagnostics"],
-      "difficulty": "intermediate"
-    },
-    {
-      "id": "mediator",
-      "name": "Mediator Pattern Implementation",
-      "description": "Shows how to use TimeWarp.Mediator for command handling with dependency injection",
-      "path": "../Tests/TimeWarp.Nuru.TestApp.Mediator/Program.cs",
-      "tags": ["mediator", "patterns", "dependency-injection", "enterprise"],
-      "difficulty": "advanced"
-    },
-    {
-      "id": "delegates",
-      "name": "Direct Delegate Routing",
-      "description": "Demonstrates direct delegate routing for maximum performance without DI overhead",
-      "path": "../Tests/TimeWarp.Nuru.TestApp.Delegates/Program.cs",
-      "tags": ["delegates", "performance", "minimal"],
       "difficulty": "intermediate"
     }
   ]

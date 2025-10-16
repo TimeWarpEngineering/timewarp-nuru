@@ -4,7 +4,7 @@
 
   <!-- Default package metadata (can be overridden in individual projects) -->
   <PropertyGroup Label="Package Metadata">
-    <Version>2.1.0-beta.18</Version>
+    <Version>2.1.0-beta.19</Version>
     <Authors>Steven T. Cramer</Authors>
     <RepositoryUrl>https://github.com/TimeWarpEngineering/timewarp-nuru</RepositoryUrl>
     <PackageLicenseExpression>Unlicense</PackageLicenseExpression>
@@ -21,8 +21,7 @@
   <PropertyGroup Label="Source Link Settings">
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
-    <IncludeSymbols>true</IncludeSymbols>
-    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <IncludeSymbols>false</IncludeSymbols>
     <DebugType>embedded</DebugType>
   </PropertyGroup>
 

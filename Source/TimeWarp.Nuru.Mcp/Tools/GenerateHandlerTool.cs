@@ -25,7 +25,7 @@ internal sealed class GenerateHandlerTool
                 return GenerateDirectHandler(pattern, route);
             }
         }
-        catch (ArgumentException ex)
+        catch (PatternException ex)
         {
             return $"// Error parsing pattern: {ex.Message}\n" +
                    $"// Pattern: {pattern}\n" +

@@ -141,12 +141,12 @@ builder.UseErrorHandler((ex, commandContext) => {
 
 #### Option 2: Result-based Commands
 ```csharp
-public class ProcessCommand : IRequest<Result<int>>
+public sealed class ProcessCommand : IRequest<Result<int>>
 {
     public string File { get; set; }
 }
 
-public class Handler : IRequestHandler<ProcessCommand, Result<int>>
+public sealed class Handler : IRequestHandler<ProcessCommand, Result<int>>
 {
     public Task<Result<int>> Handle(ProcessCommand cmd, CancellationToken ct)
     {

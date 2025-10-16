@@ -257,7 +257,7 @@ public class ComputeCommand : IRequest<double>
     public double X { get; set; }
     public double Y { get; set; }
 
-    public class Handler : IRequestHandler<ComputeCommand, double>
+    public sealed class Handler : IRequestHandler<ComputeCommand, double>
     {
         public Task<double> Handle(ComputeCommand cmd, CancellationToken ct)
             => Task.FromResult(cmd.X + cmd.Y);
@@ -269,7 +269,7 @@ public class FetchDataCommand : IRequest<string>
 {
     public string Url { get; set; }
 
-    public class Handler(HttpClient http) : IRequestHandler<FetchDataCommand, string>
+    public sealed class Handler(HttpClient http) : IRequestHandler<FetchDataCommand, string>
     {
         public async Task<string> Handle(FetchDataCommand cmd, CancellationToken ct)
         {
@@ -288,7 +288,7 @@ builder.AddDependencyInjection()
 // Alternative registration for commands without response
 public class StatusCommand : IRequest
 {
-    public class Handler : IRequestHandler<StatusCommand>
+    public sealed class Handler : IRequestHandler<StatusCommand>
     {
         public Task Handle(StatusCommand cmd, CancellationToken ct)
         {
@@ -611,7 +611,7 @@ public class DeployCommand : IRequest
 {
     public string Environment { get; set; }
 
-    public class Handler(ILogger logger, HttpClient http, IValidationService validator) 
+    public sealed class Handler(ILogger logger, HttpClient http, IValidationService validator) 
         : IRequestHandler<DeployCommand>
     {
         public async Task Handle(DeployCommand cmd, CancellationToken ct)

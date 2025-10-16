@@ -29,7 +29,7 @@ var app = new NuruAppBuilder()
 return await app.RunAsync(args);
 
 // Top-level commands
-public class HelloCommand : IRequest
+public sealed class HelloCommand : IRequest
 {
     public string Name { get; set; } = string.Empty;
     public bool ToUpperCase { get; set; }
@@ -44,7 +44,7 @@ public class HelloCommand : IRequest
     }
 }
 
-public class ByeCommand : IRequest
+public sealed class ByeCommand : IRequest
 {
     public string Name { get; set; } = string.Empty;
     public bool ToLowerCase { get; set; }
@@ -60,7 +60,7 @@ public class ByeCommand : IRequest
 }
 
 // Sub-commands
-public class KonnichiwaCommand : IRequest
+public sealed class KonnichiwaCommand : IRequest
 {
     public Member Member { get; set; }
     
@@ -74,7 +74,7 @@ public class KonnichiwaCommand : IRequest
     }
 }
 
-public class SubHelloCommand : IRequest
+public sealed class SubHelloCommand : IRequest
 {
     internal sealed class Handler : IRequestHandler<SubHelloCommand>
     {
@@ -87,7 +87,7 @@ public class SubHelloCommand : IRequest
 }
 
 // Sub-sub-commands
-public class FoobarCommand : IRequest
+public sealed class FoobarCommand : IRequest
 {
     internal sealed class Handler : IRequestHandler<FoobarCommand>
     {
@@ -99,7 +99,7 @@ public class FoobarCommand : IRequest
     }
 }
 
-public class PrimaryCommand : IRequest
+public sealed class PrimaryCommand : IRequest
 {
     public string Value { get; set; } = string.Empty;
     

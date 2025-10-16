@@ -139,7 +139,7 @@ var app = new NuruAppBuilder()
     .Build();
 
 // Command classes follow Mediator pattern
-public class HelloCommand : IRequest
+public sealed class HelloCommand : IRequest
 {
     public string Name { get; set; }
     public bool ToUpperCase { get; set; }

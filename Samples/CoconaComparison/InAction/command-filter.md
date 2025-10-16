@@ -77,7 +77,7 @@ var app = builder
 return await app.RunAsync(args);
 
 // Command with multiple pipeline behaviors applied
-public class HelloCommand : IRequest
+public sealed class HelloCommand : IRequest
 {
     internal sealed class Handler : IRequestHandler<HelloCommand>
     {
@@ -90,7 +90,7 @@ public class HelloCommand : IRequest
 }
 
 // Logging behavior (similar to CommandFilter)
-public class LoggingBehavior<TRequest, TResponse> : TimeWarp.Mediator.IPipelineBehavior<TRequest, TResponse>
+public sealed class LoggingBehavior<TRequest, TResponse> : TimeWarp.Mediator.IPipelineBehavior<TRequest, TResponse>
     where TRequest : IRequest
 {
     private readonly ILogger<LoggingBehavior<TRequest, TResponse>> _logger;

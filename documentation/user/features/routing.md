@@ -20,12 +20,14 @@ TimeWarp.Nuru supports intuitive route patterns:
 Parameters are automatically converted to the correct types:
 
 ```csharp
-// Supports common types out of the box
-.AddRoute("wait {seconds:int}", (int s) => Thread.Sleep(s * 1000))
-.AddRoute("download {url:uri}", (Uri url) => Download(url))
-.AddRoute("verbose {enabled:bool}", (bool v) => SetVerbose(v))
-.AddRoute("process {date:datetime}", (DateTime d) => Process(d))
-.AddRoute("scale {factor:double}", (double f) => Scale(f))
+var app = new NuruAppBuilder()
+  // Supports common types out of the box
+  .AddRoute("wait {seconds:int}", (int s) => Thread.Sleep(s * 1000))
+  .AddRoute("download {url:uri}", (Uri url) => Download(url))
+  .AddRoute("verbose {enabled:bool}", (bool v) => SetVerbose(v))
+  .AddRoute("process {date:datetime}", (DateTime d) => Process(d))
+  .AddRoute("scale {factor:double}", (double f) => Scale(f))
+  .Build();
 ```
 
 ### Supported Types
@@ -69,11 +71,17 @@ builder.AddRoute("git status", () => GitStatus());  // Multi-word literal
 Parameters capture values from command-line arguments:
 
 ```csharp
-builder.AddRoute("greet {name}", (string name) =>
-    Console.WriteLine($"Hello, {name}!"));
+builder.AddRoute
+(
+  "greet {name}",
+  (string name) => Console.WriteLine($"Hello, {name}!")
+);
 
-builder.AddRoute("add {x:double} {y:double}", (double x, double y) =>
-    Console.WriteLine($"{x} + {y} = {x + y}"));
+builder.AddRoute
+(
+  "add {x:double} {y:double}",
+  (double x, double y) => Console.WriteLine($"{x} + {y} = {x + y}")
+);
 ```
 
 ```bash
@@ -94,12 +102,16 @@ builder.AddRoute("add {x:double} {y:double}", (double x, double y) =>
 Parameters marked with `?` are optional:
 
 ```csharp
-builder.AddRoute("deploy {env} {tag?}", (string env, string? tag) =>
-{
+builder.AddRoute
+(
+  "deploy {env} {tag?}",
+  (string env, string? tag) =>
+  {
     Console.WriteLine($"Deploying to {env}");
     if (tag != null)
-        Console.WriteLine($"Version: {tag}");
-});
+      Console.WriteLine($"Version: {tag}");
+  }
+);
 ```
 
 ```bash
@@ -127,8 +139,11 @@ builder.AddRoute("list -l", () => ListDetailed());
 builder.AddRoute("serve --port {port:int}", (int port) => StartServer(port));
 
 // Optional options
-builder.AddRoute("build --config? {mode?}", (string? mode) =>
-    Build(mode ?? "Release"));
+builder.AddRoute
+(
+  "build --config? {mode?}",
+  (string? mode) => Build(mode ?? "Release")
+);
 ```
 
 ```bash
@@ -144,8 +159,11 @@ builder.AddRoute("build --config? {mode?}", (string? mode) =>
 Options can have both long and short forms:
 
 ```csharp
-builder.AddRoute("backup {source} --compress,-c", (string source, bool compress) =>
-    Backup(source, compress));
+builder.AddRoute
+(
+  "backup {source} --compress,-c",
+  (string source, bool compress) => Backup(source, compress)
+);
 ```
 
 ```bash
@@ -159,11 +177,13 @@ builder.AddRoute("backup {source} --compress,-c", (string source, bool compress)
 Catch-all parameters capture all remaining arguments:
 
 ```csharp
-builder.AddRoute("echo {*words}", (string[] words) =>
-    Console.WriteLine(string.Join(" ", words)));
+builder.AddRoute
+(
+  "echo {*words}",
+  (string[] words) => Console.WriteLine(string.Join(" ", words))
+);
 
-builder.AddRoute("git add {*files}", (string[] files) =>
-    StageFiles(files));
+builder.AddRoute("git add {*files}", (string[] files) => StageFiles(files));
 ```
 
 ```bash
@@ -208,17 +228,25 @@ builder.AddRoute("git push --force", () => GitPushForce());
 Complex option combinations:
 
 ```csharp
-builder.AddRoute("run {image}", (string image) =>
-    Docker.Run(image));
+builder.AddRoute("run {image}", (string image) => Docker.Run(image));
 
-builder.AddRoute("run {image} --port {port:int}", (string image, int port) =>
-    Docker.Run(image, port: port));
+builder.AddRoute
+(
+  "run {image} --port {port:int}",
+  (string image, int port) => Docker.Run(image, port: port)
+);
 
-builder.AddRoute("run {image} --port {port:int} --detach", (string image, int port) =>
-    Docker.Run(image, port: port, detached: true));
+builder.AddRoute
+(
+  "run {image} --port {port:int} --detach",
+  (string image, int port) => Docker.Run(image, port: port, detached: true)
+);
 
-builder.AddRoute("run {image} --env {*vars}", (string image, string[] vars) =>
-    Docker.Run(image, envVars: vars));
+builder.AddRoute
+(
+  "run {image} --env {*vars}",
+  (string image, string[] vars) => Docker.Run(image, envVars: vars)
+);
 ```
 
 ### Conditional Routing Based on Options
@@ -227,16 +255,25 @@ Different handlers for different option combinations:
 
 ```csharp
 // Dry run
-builder.AddRoute("deploy {app} --env {environment} --dry-run",
-    (string app, string env) => DeployDryRun(app, env));
+builder.AddRoute
+(
+  "deploy {app} --env {environment} --dry-run",
+  (string app, string env) => DeployDryRun(app, env)
+);
 
 // Actual deployment
-builder.AddRoute("deploy {app} --env {environment}",
-    (string app, string env) => DeployReal(app, env));
+builder.AddRoute
+(
+  "deploy {app} --env {environment}",
+  (string app, string env) => DeployReal(app, env)
+);
 
 // Force deployment
-builder.AddRoute("deploy {app} --env {environment} --force",
-    (string app, string env) => DeployForce(app, env));
+builder.AddRoute
+(
+  "deploy {app} --env {environment} --force",
+  (string app, string env) => DeployForce(app, env)
+);
 ```
 
 ## Route Specificity and Matching

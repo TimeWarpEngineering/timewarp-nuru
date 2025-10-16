@@ -23,14 +23,18 @@ builder.AddRoute("info", () => new {
 Use for **diagnostics, progress, and errors** that humans read:
 
 ```csharp
-builder.AddRoute("process {file}", (string file) =>
-{
+builder.AddRoute
+(
+  "process {file}",
+  (string file) =>
+  {
     Console.Error.WriteLine($"Processing {file}...");  // Progress → stderr
     Thread.Sleep(1000);
     Console.Error.WriteLine("Complete!");              // Status → stderr
 
     return new { File = file, Lines = 42 };             // Data → stdout
-});
+  }
+);
 ```
 
 ## Why Separate Streams?
@@ -63,20 +67,25 @@ public record AnalysisResult(
     string Status
 );
 
-builder.AddRoute("analyze {file}", (string file) =>
-{
+builder.AddRoute
+(
+  "analyze {file}",
+  (string file) =>
+  {
     Console.Error.WriteLine($"Analyzing {file}...");
 
     var result = AnalyzeFile(file);
 
     // Returned object → JSON to stdout
-    return new AnalysisResult(
-        File: file,
-        Lines: result.LineCount,
-        Errors: result.ErrorCount,
-        Status: "Complete"
+    return new AnalysisResult
+    (
+      File: file,
+      Lines: result.LineCount,
+      Errors: result.ErrorCount,
+      Status: "Complete"
     );
-});
+  }
+);
 ```
 
 ```bash
@@ -122,23 +131,25 @@ public sealed class AnalyzeCommand : IRequest<AnalysisResult>
     public string Path { get; set; }
 
     public sealed class Handler(
-        IAnalyzer analyzer,
-        ILogger<Handler> logger) : IRequestHandler<AnalyzeCommand, AnalysisResult>
+      IAnalyzer analyzer,
+      ILogger<Handler> logger) : IRequestHandler<AnalyzeCommand, AnalysisResult>
     {
-        public async Task<AnalysisResult> Handle(
-            AnalyzeCommand cmd,
-            CancellationToken ct)
-        {
-            // Structured logging → stderr
-            logger.LogInformation("Starting analysis of {Path}", cmd.Path);
+      public async Task<AnalysisResult> Handle
+      (
+        AnalyzeCommand cmd,
+        CancellationToken ct
+      )
+      {
+        // Structured logging → stderr
+        logger.LogInformation("Starting analysis of {Path}", cmd.Path);
 
-            var result = await analyzer.AnalyzeAsync(cmd.Path);
+        var result = await analyzer.AnalyzeAsync(cmd.Path);
 
-            logger.LogInformation("Analysis complete. Found {Count} issues", result.IssueCount);
+        logger.LogInformation("Analysis complete. Found {Count} issues", result.IssueCount);
 
-            // Returned object → JSON to stdout
-            return result;
-        }
+        // Returned object → JSON to stdout
+        return result;
+      }
     }
 }
 ```
@@ -148,50 +159,65 @@ public sealed class AnalyzeCommand : IRequest<AnalysisResult>
 ### Progress Reporting
 
 ```csharp
-builder.AddRoute("download {url}", async (string url) =>
-{
+builder.AddRoute
+(
+  "download {url}",
+  async (string url) =>
+  {
     Console.Error.WriteLine($"Downloading {url}...");
 
-    var data = await DownloadAsync(url, progress =>
-    {
+    var data = await DownloadAsync
+    (
+      url,
+      progress =>
+      {
         Console.Error.WriteLine($"Progress: {progress}%");  // stderr
-    });
+      }
+    );
 
     Console.Error.WriteLine("Download complete!");
 
     return new { Url = url, Size = data.Length, Status = "Success" };  // stdout
-});
+  }
+);
 ```
 
 ### Error Reporting
 
 ```csharp
-builder.AddRoute("validate {file}", (string file) =>
-{
+builder.AddRoute
+(
+  "validate {file}",
+  (string file) =>
+  {
     Console.Error.WriteLine($"Validating {file}...");
 
     var errors = Validate(file);
 
     if (errors.Any())
     {
-        Console.Error.WriteLine($"❌ Found {errors.Count} errors");
-        foreach (var error in errors)
-        {
-            Console.Error.WriteLine($"  Line {error.Line}: {error.Message}");
-        }
-        return 1;  // Exit code for errors
+      Console.Error.WriteLine($"❌ Found {errors.Count} errors");
+      foreach (var error in errors)
+      {
+        Console.Error.WriteLine($"  Line {error.Line}: {error.Message}");
+      }
+      return 1;  // Exit code for errors
     }
 
     Console.Error.WriteLine("✅ Validation passed");
     return new { File = file, Status = "Valid" };
-});
+  }
+);
 ```
 
 ### Multi-Step Operations
 
 ```csharp
-builder.AddRoute("deploy {env}", async (string env) =>
-{
+builder.AddRoute
+(
+  "deploy {env}",
+  async (string env) =>
+  {
     Console.Error.WriteLine($"Deploying to {env}...");
 
     Console.Error.WriteLine("Step 1/3: Building...");
@@ -205,13 +231,15 @@ builder.AddRoute("deploy {env}", async (string env) =>
 
     Console.Error.WriteLine("✅ Deployment complete");
 
-    return new {
-        Environment = env,
-        Version = result.Version,
-        Url = result.Url,
-        DeployedAt = DateTime.UtcNow
+    return new
+    {
+      Environment = env,
+      Version = result.Version,
+      Url = result.Url,
+      DeployedAt = DateTime.UtcNow
     };
-});
+  }
+);
 ```
 
 ## Output Control
@@ -219,38 +247,50 @@ builder.AddRoute("deploy {env}", async (string env) =>
 ### Verbose Mode
 
 ```csharp
-builder.AddRoute("process {file} --verbose", (string file, bool verbose) =>
-{
+builder.AddRoute
+(
+  "process {file} --verbose",
+  (string file, bool verbose) =>
+  {
     if (verbose)
-        Console.Error.WriteLine("Verbose mode enabled");
+      Console.Error.WriteLine("Verbose mode enabled");
 
     Console.Error.WriteLine($"Processing {file}...");
 
-    var result = Process(file, (step) =>
-    {
+    var result = Process
+    (
+      file,
+      (step) =>
+      {
         if (verbose)
-            Console.Error.WriteLine($"  {step}");
-    });
+          Console.Error.WriteLine($"  {step}");
+      }
+    );
 
     return result;
-});
+  }
+);
 ```
 
 ### Quiet Mode
 
 ```csharp
-builder.AddRoute("backup {source} --quiet", (string source, bool quiet) =>
-{
+builder.AddRoute
+(
+  "backup {source} --quiet",
+  (string source, bool quiet) =>
+  {
     if (!quiet)
-        Console.Error.WriteLine($"Backing up {source}...");
+      Console.Error.WriteLine($"Backing up {source}...");
 
     var result = Backup(source);
 
     if (!quiet)
-        Console.Error.WriteLine("Backup complete");
+      Console.Error.WriteLine("Backup complete");
 
     return result;
-});
+  }
+);
 ```
 
 ## Best Practices
@@ -311,17 +351,21 @@ Console.Error.WriteLine(jsonData);  // Bad: data on stderr
 Return exit codes for shell scripting:
 
 ```csharp
-builder.AddRoute("check {file}", (string file) =>
-{
+builder.AddRoute
+(
+  "check {file}",
+  (string file) =>
+  {
     if (!File.Exists(file))
     {
-        Console.Error.WriteLine($"❌ File not found: {file}");
-        return 1;  // Error exit code
+      Console.Error.WriteLine($"❌ File not found: {file}");
+      return 1;  // Error exit code
     }
 
     Console.Error.WriteLine("✅ File exists");
     return 0;  // Success
-});
+  }
+);
 ```
 
 ```bash

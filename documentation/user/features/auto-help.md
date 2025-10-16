@@ -8,10 +8,10 @@ Add `.AddAutoHelp()` to your application builder:
 
 ```csharp
 var app = new NuruAppBuilder()
-    .AddRoute("deploy {env}", (string env) => Deploy(env))
-    .AddRoute("backup {source}", (string source) => Backup(source))
-    .AddAutoHelp()  // Enable automatic help
-    .Build();
+  .AddRoute("deploy {env}", (string env) => Deploy(env))
+  .AddRoute("backup {source}", (string source) => Backup(source))
+  .AddAutoHelp()  // Enable automatic help
+  .Build();
 ```
 
 This automatically creates:
@@ -38,14 +38,18 @@ Use the pipe (`|`) syntax to add descriptions to parameters and options:
 
 ```csharp
 var app = new NuruAppBuilder()
-    .AddRoute(
-        "deploy {env|Target environment} {tag?|Optional version tag}",
-        (string env, string? tag) => Deploy(env, tag))
-    .AddRoute(
-        "backup {source|Source directory} --compress,-c|Enable compression",
-        (string source, bool compress) => Backup(source, compress))
-    .AddAutoHelp()
-    .Build();
+  .AddRoute
+  (
+    "deploy {env|Target environment} {tag?|Optional version tag}",
+    (string env, string? tag) => Deploy(env, tag)
+  )
+  .AddRoute
+  (
+    "backup {source|Source directory} --compress,-c|Enable compression",
+    (string source, bool compress) => Backup(source, compress)
+  )
+  .AddAutoHelp()
+  .Build();
 ```
 
 ### Command-Level Help
@@ -88,20 +92,28 @@ Options:
 using TimeWarp.Nuru;
 
 var app = new NuruAppBuilder()
-    .AddRoute(
-        "version|Show application version",
-        () => Console.WriteLine("MyApp v1.0.0"))
-    .AddRoute(
-        "deploy {env|Environment (prod/staging/dev)} {tag?|Version tag}",
-        (string env, string? tag) => Deploy(env, tag))
-    .AddRoute(
-        "backup {source|Source path} {dest?|Destination path} --compress,-c|Compress backup",
-        (string source, string? dest, bool compress) => Backup(source, dest, compress))
-    .AddRoute(
-        "logs {service|Service name} --tail,-t {lines:int|Number of lines}",
-        (string service, int lines) => ShowLogs(service, lines))
-    .AddAutoHelp()
-    .Build();
+  .AddRoute
+  (
+    "version|Show application version",
+    () => Console.WriteLine("MyApp v1.0.0")
+  )
+  .AddRoute
+  (
+    "deploy {env|Environment (prod/staging/dev)} {tag?|Version tag}",
+    (string env, string? tag) => Deploy(env, tag)
+  )
+  .AddRoute
+  (
+    "backup {source|Source path} {dest?|Destination path} --compress,-c|Compress backup",
+    (string source, string? dest, bool compress) => Backup(source, dest, compress)
+  )
+  .AddRoute
+  (
+    "logs {service|Service name} --tail,-t {lines:int|Number of lines}",
+    (string service, int lines) => ShowLogs(service, lines)
+  )
+  .AddAutoHelp()
+  .Build();
 
 return await app.RunAsync(args);
 ```
@@ -247,12 +259,14 @@ builder.AddRoute("git push --help", () => ShowGitPushHelp());
 Group related options in help text:
 
 ```csharp
-builder.AddRoute(
-    "serve {port:int|Port number} " +
-    "--host {addr|Host address} " +
-    "--ssl|Enable SSL " +
-    "--cert {path|Certificate path}",
-    handler);
+builder.AddRoute
+(
+  "serve {port:int|Port number} " +
+  "--host {addr|Host address} " +
+  "--ssl|Enable SSL " +
+  "--cert {path|Certificate path}",
+  handler
+);
 ```
 
 Help output shows options logically grouped.

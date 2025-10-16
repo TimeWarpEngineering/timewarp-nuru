@@ -56,24 +56,28 @@ builder.AddRoute("restart_server", RestartServer);
 ### Return Exit Codes
 
 ```csharp
-builder.AddRoute("validate {file}", (string file) =>
-{
+builder.AddRoute
+(
+  "validate {file}",
+  (string file) =>
+  {
     if (!File.Exists(file))
     {
-        Console.Error.WriteLine($"❌ File not found: {file}");
-        return 1;
+      Console.Error.WriteLine($"❌ File not found: {file}");
+      return 1;
     }
 
     var errors = Validate(file);
     if (errors.Any())
     {
-        Console.Error.WriteLine($"❌ {errors.Count} validation errors");
-        return 1;
+      Console.Error.WriteLine($"❌ {errors.Count} validation errors");
+      return 1;
     }
 
     Console.Error.WriteLine("✅ Validation passed");
     return 0;
-});
+  }
+);
 ```
 
 ### User-Friendly Messages
@@ -90,25 +94,29 @@ Console.Error.WriteLine("SqlException: Connection timeout expired");
 ### Async Error Handling
 
 ```csharp
-builder.AddRoute("deploy {env}", async (string env) =>
-{
+builder.AddRoute
+(
+  "deploy {env}",
+  async (string env) =>
+  {
     try
     {
-        await DeployAsync(env);
-        return 0;
+      await DeployAsync(env);
+      return 0;
     }
     catch (DeploymentException ex)
     {
-        Console.Error.WriteLine($"❌ Deployment failed: {ex.Message}");
-        return 1;
+      Console.Error.WriteLine($"❌ Deployment failed: {ex.Message}");
+      return 1;
     }
     catch (Exception ex)
     {
-        Console.Error.WriteLine($"❌ Unexpected error: {ex.Message}");
-        logger.LogError(ex, "Deployment failed");
-        return 1;
+      Console.Error.WriteLine($"❌ Unexpected error: {ex.Message}");
+      logger.LogError(ex, "Deployment failed");
+      return 1;
     }
-});
+  }
+);
 ```
 
 ## Output Best Practices
@@ -117,41 +125,58 @@ builder.AddRoute("deploy {env}", async (string env) =>
 
 ```csharp
 // ✅ Progress → stderr, data → stdout
-builder.AddRoute("process {file}", (string file) =>
-{
+builder.AddRoute
+(
+  "process {file}",
+  (string file) =>
+  {
     Console.Error.WriteLine($"Processing {file}...");  // stderr
     var result = Process(file);
     Console.Error.WriteLine("Complete!");              // stderr
     return result;                                     // stdout (JSON)
-});
+  }
+);
 
 // ❌ Mixed output
-builder.AddRoute("process {file}", (string file) =>
-{
+builder.AddRoute
+(
+  "process {file}",
+  (string file) =>
+  {
     Console.WriteLine($"Processing {file}...");  // stdout (breaks piping)
     var result = Process(file);
     Console.WriteLine(JsonSerializer.Serialize(result));  // stdout
     return result;
-});
+  }
+);
 ```
 
 ### Structured Output
 
 ```csharp
 // ✅ Return objects for JSON
-builder.AddRoute("status", () => new {
+builder.AddRoute
+(
+  "status",
+  () => new
+  {
     Version = "1.0.0",
     Uptime = GetUptime(),
     Status = "Running"
-});
+  }
+);
 
 // ❌ Manual JSON construction
-builder.AddRoute("status", () =>
-{
+builder.AddRoute
+(
+  "status",
+  () =>
+  {
     Console.WriteLine("{");
     Console.WriteLine($"  \"version\": \"{GetVersion()}\",");
     // Error-prone and hard to maintain
-});
+  }
+);
 ```
 
 ## Performance
@@ -199,16 +224,16 @@ builder.AddRoute<DeployCommand>("deploy {env}");
 [Fact]
 public async Task DeployCommand_ValidEnvironment_Succeeds()
 {
-    // Arrange
-    var mockService = new Mock<IDeploymentService>();
-    var handler = new DeployCommand.Handler(mockService.Object);
-    var command = new DeployCommand { Environment = "test" };
+  // Arrange
+  var mockService = new Mock<IDeploymentService>();
+  var handler = new DeployCommand.Handler(mockService.Object);
+  var command = new DeployCommand { Environment = "test" };
 
-    // Act
-    await handler.Handle(command, CancellationToken.None);
+  // Act
+  await handler.Handle(command, CancellationToken.None);
 
-    // Assert
-    mockService.Verify(x => x.DeployAsync("test"), Times.Once);
+  // Assert
+  mockService.Verify(x => x.DeployAsync("test"), Times.Once);
 }
 ```
 
@@ -248,12 +273,12 @@ public sealed class DeployCommand : IRequest
 
     // Handler nested with command
     public sealed class Handler(IDeploymentService deployment)
-        : IRequestHandler<DeployCommand>
+      : IRequestHandler<DeployCommand>
     {
-        public async Task Handle(DeployCommand cmd, CancellationToken ct)
-        {
-            await deployment.DeployAsync(cmd.Environment);
-        }
+      public async Task Handle(DeployCommand cmd, CancellationToken ct)
+      {
+        await deployment.DeployAsync(cmd.Environment);
+      }
     }
 }
 ```
@@ -269,8 +294,10 @@ public class AppOptions
     public int Timeout { get; set; }
 }
 
-builder.Services.Configure<AppOptions>(
-    builder.Configuration.GetSection("App"));
+builder.Services.Configure<AppOptions>
+(
+  builder.Configuration.GetSection("App")
+);
 ```
 
 ### Environment-Specific Settings
@@ -288,8 +315,12 @@ builder.Configuration
 
 ```csharp
 // ✅ Structured
-logger.LogInformation("Deployed to {Environment} at {Time}",
-    env, DateTime.UtcNow);
+logger.LogInformation
+(
+  "Deployed to {Environment} at {Time}",
+  env,
+  DateTime.UtcNow
+);
 
 // ❌ String interpolation
 logger.LogInformation($"Deployed to {env} at {DateTime.UtcNow}");
@@ -320,19 +351,23 @@ logger.LogInformation("Connecting to database");
 ### Validate Input
 
 ```csharp
-builder.AddRoute("deploy {env}", (string env) =>
-{
+builder.AddRoute
+(
+  "deploy {env}",
+  (string env) =>
+  {
     // Validate against allowed environments
     var allowed = new[] { "dev", "staging", "prod" };
     if (!allowed.Contains(env))
     {
-        Console.Error.WriteLine($"❌ Invalid environment. Allowed: {string.Join(", ", allowed)}");
-        return 1;
+      Console.Error.WriteLine($"❌ Invalid environment. Allowed: {string.Join(", ", allowed)}");
+      return 1;
     }
 
     Deploy(env);
     return 0;
-});
+  }
+);
 ```
 
 ## Documentation
@@ -340,18 +375,20 @@ builder.AddRoute("deploy {env}", (string env) =>
 ### Add Descriptions
 
 ```csharp
-builder.AddRoute(
-    "deploy {env|Target environment (dev/staging/prod)} {version?|Version tag}",
-    handler);
+builder.AddRoute
+(
+  "deploy {env|Target environment (dev/staging/prod)} {version?|Version tag}",
+  handler
+);
 ```
 
 ### Include Help
 
 ```csharp
 var app = new NuruAppBuilder()
-    .AddRoute("deploy {env|Environment} {version?|Version}", handler)
-    .AddAutoHelp()
-    .Build();
+  .AddRoute("deploy {env|Environment} {version?|Version}", handler)
+  .AddAutoHelp()
+  .Build();
 ```
 
 ### Provide Examples

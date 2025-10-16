@@ -24,9 +24,11 @@ TimeWarp.Nuru includes converters for common .NET types:
 ### String (Default)
 
 ```csharp
-// Type annotation optional for strings
-.AddRoute("greet {name}", (string name) => $"Hello, {name}!")
-.AddRoute("echo {message:string}", (string msg) => msg)
+var app = new NuruAppBuilder()
+  // Type annotation optional for strings
+  .AddRoute("greet {name}", (string name) => $"Hello, {name}!")
+  .AddRoute("echo {message:string}", (string msg) => msg)
+  .Build();
 ```
 
 ```bash
@@ -37,12 +39,18 @@ TimeWarp.Nuru includes converters for common .NET types:
 ### Integer
 
 ```csharp
-.AddRoute("wait {seconds:int}", (int sec) => Thread.Sleep(sec * 1000))
-.AddRoute("repeat {times:int} {text}", (int times, string text) =>
-{
-    for (int i = 0; i < times; i++)
+var app = new NuruAppBuilder()
+  .AddRoute("wait {seconds:int}", (int sec) => Thread.Sleep(sec * 1000))
+  .AddRoute
+  (
+    "repeat {times:int} {text}",
+    (int times, string text) =>
+    {
+      for (int i = 0; i < times; i++)
         Console.WriteLine(text);
-})
+    }
+  )
+  .Build();
 ```
 
 ```bash
@@ -53,8 +61,10 @@ TimeWarp.Nuru includes converters for common .NET types:
 ### Double
 
 ```csharp
-.AddRoute("calc {x:double} {y:double}", (double x, double y) => x + y)
-.AddRoute("scale {factor:double}", (double f) => Scale(f))
+var app = new NuruAppBuilder()
+  .AddRoute("calc {x:double} {y:double}", (double x, double y) => x + y)
+  .AddRoute("scale {factor:double}", (double f) => Scale(f))
+  .Build();
 ```
 
 ```bash
@@ -65,8 +75,13 @@ TimeWarp.Nuru includes converters for common .NET types:
 ### Boolean
 
 ```csharp
-.AddRoute("set {key} {value:bool}", (string key, bool value) =>
-    Config.Set(key, value))
+var app = new NuruAppBuilder()
+  .AddRoute
+  (
+    "set {key} {value:bool}",
+    (string key, bool value) => Config.Set(key, value)
+  )
+  .Build();
 ```
 
 ```bash
@@ -77,8 +92,13 @@ TimeWarp.Nuru includes converters for common .NET types:
 ### DateTime
 
 ```csharp
-.AddRoute("schedule {when:DateTime}", (DateTime dt) =>
-    Console.WriteLine($"Scheduled for {dt}"))
+var app = new NuruAppBuilder()
+  .AddRoute
+  (
+    "schedule {when:DateTime}",
+    (DateTime dt) => Console.WriteLine($"Scheduled for {dt}")
+  )
+  .Build();
 ```
 
 ```bash
@@ -89,8 +109,10 @@ TimeWarp.Nuru includes converters for common .NET types:
 ### Guid
 
 ```csharp
-.AddRoute("get {id:Guid}", (Guid id) => GetRecord(id))
-.AddRoute("delete {userId:Guid}", (Guid userId) => DeleteUser(userId))
+var app = new NuruAppBuilder()
+  .AddRoute("get {id:Guid}", (Guid id) => GetRecord(id))
+  .AddRoute("delete {userId:Guid}", (Guid userId) => DeleteUser(userId))
+  .Build();
 ```
 
 ```bash
@@ -100,7 +122,9 @@ TimeWarp.Nuru includes converters for common .NET types:
 ### Long
 
 ```csharp
-.AddRoute("allocate {bytes:long}", (long bytes) => Allocate(bytes))
+var app = new NuruAppBuilder()
+  .AddRoute("allocate {bytes:long}", (long bytes) => Allocate(bytes))
+  .Build();
 ```
 
 ```bash
@@ -110,8 +134,13 @@ TimeWarp.Nuru includes converters for common .NET types:
 ### Decimal
 
 ```csharp
-.AddRoute("pay {amount:decimal}", (decimal amt) =>
-    ProcessPayment(amt))
+var app = new NuruAppBuilder()
+  .AddRoute
+  (
+    "pay {amount:decimal}",
+    (decimal amt) => ProcessPayment(amt)
+  )
+  .Build();
 ```
 
 ```bash
@@ -121,8 +150,13 @@ TimeWarp.Nuru includes converters for common .NET types:
 ### TimeSpan
 
 ```csharp
-.AddRoute("timeout {duration:TimeSpan}", (TimeSpan ts) =>
-    SetTimeout(ts))
+var app = new NuruAppBuilder()
+  .AddRoute
+  (
+    "timeout {duration:TimeSpan}",
+    (TimeSpan ts) => SetTimeout(ts)
+  )
+  .Build();
 ```
 
 ```bash
@@ -133,7 +167,9 @@ TimeWarp.Nuru includes converters for common .NET types:
 ### Uri
 
 ```csharp
-.AddRoute("download {url:uri}", (Uri url) => Download(url))
+var app = new NuruAppBuilder()
+  .AddRoute("download {url:uri}", (Uri url) => Download(url))
+  .Build();
 ```
 
 ```bash
@@ -145,18 +181,27 @@ TimeWarp.Nuru includes converters for common .NET types:
 Use nullable types for optional parameters:
 
 ```csharp
-.AddRoute("deploy {env} {version?}", (string env, string? version) =>
-{
-    Console.WriteLine($"Deploying to {env}");
-    if (version != null)
+var app = new NuruAppBuilder()
+  .AddRoute
+  (
+    "deploy {env} {version?}",
+    (string env, string? version) =>
+    {
+      Console.WriteLine($"Deploying to {env}");
+      if (version != null)
         Console.WriteLine($"Version: {version}");
-})
-
-.AddRoute("wait {seconds:int?}", (int? seconds) =>
-{
-    var delay = seconds ?? 5;  // Default to 5
-    Thread.Sleep(delay * 1000);
-})
+    }
+  )
+  .AddRoute
+  (
+    "wait {seconds:int?}",
+    (int? seconds) =>
+    {
+      var delay = seconds ?? 5;  // Default to 5
+      Thread.Sleep(delay * 1000);
+    }
+  )
+  .Build();
 ```
 
 ## Arrays (Catch-All)
@@ -164,14 +209,22 @@ Use nullable types for optional parameters:
 Use `string[]` for catch-all parameters:
 
 ```csharp
-.AddRoute("echo {*words}", (string[] words) =>
-    Console.WriteLine(string.Join(" ", words)))
-
-.AddRoute("add {*files}", (string[] files) =>
-{
-    foreach (var file in files)
+var app = new NuruAppBuilder()
+  .AddRoute
+  (
+    "echo {*words}",
+    (string[] words) => Console.WriteLine(string.Join(" ", words))
+  )
+  .AddRoute
+  (
+    "add {*files}",
+    (string[] files) =>
+    {
+      foreach (var file in files)
         ProcessFile(file);
-})
+    }
+  )
+  .Build();
 ```
 
 ```bash
@@ -198,16 +251,16 @@ You can add custom type converters for your own types:
 ```csharp
 public class ColorConverter : ITypeConverter<Color>
 {
-    public Color Convert(string value)
+  public Color Convert(string value)
+  {
+    return value.ToLower() switch
     {
-        return value.ToLower() switch
-        {
-            "red" => Color.Red,
-            "green" => Color.Green,
-            "blue" => Color.Blue,
-            _ => throw new ArgumentException($"Unknown color: {value}")
-        };
-    }
+      "red" => Color.Red,
+      "green" => Color.Green,
+      "blue" => Color.Blue,
+      _ => throw new ArgumentException($"Unknown color: {value}")
+    };
+  }
 }
 
 // Register converter
@@ -247,12 +300,18 @@ See [Analyzer Documentation](../features/analyzer.md) for more details.
 .AddRoute("wait {seconds:int}", (int sec) => ...)
 
 // ❌ String requires manual validation
-.AddRoute("wait {seconds}", (string sec) =>
-{
-    if (!int.TryParse(sec, out var value))
+var badApp = new NuruAppBuilder()
+  .AddRoute
+  (
+    "wait {seconds}",
+    (string sec) =>
+    {
+      if (!int.TryParse(sec, out var value))
         throw new ArgumentException("Invalid number");
-    ...
-})
+      // ...
+    }
+  )
+  .Build();
 ```
 
 ### Nullable for Optional

@@ -28,9 +28,12 @@ dotnet add package TimeWarp.Nuru
 using TimeWarp.Nuru;
 
 var app = new NuruAppBuilder()
-    .AddRoute("add {x:double} {y:double}",
-        (double x, double y) => Console.WriteLine($"{x} + {y} = {x + y}"))
-    .Build();
+  .AddRoute
+  (
+    "add {x:double} {y:double}",
+    (double x, double y) => Console.WriteLine($"{x} + {y} = {x + y}")
+  )
+  .Build();
 
 return await app.RunAsync(args);
 ```
@@ -86,25 +89,38 @@ Build modern command-line tools from scratch:
 
 ```csharp
 var app = new NuruAppBuilder()
-    .AddRoute("deploy {env} --version {tag?}",
-        (string env, string? tag) => Deploy(env, tag))
-    .AddRoute("backup {source} {dest?} --compress",
-        (string source, string? dest, bool compress) => Backup(source, dest, compress))
-    .Build();
+  .AddRoute
+  (
+    "deploy {env} --version {tag?}",
+    (string env, string? tag) => Deploy(env, tag)
+  )
+  .AddRoute
+  (
+    "backup {source} {dest?} --compress",
+    (string source, string? dest, bool compress) => Backup(source, dest, compress)
+  )
+  .Build();
 ```
 
 ### 🔄 Progressive Enhancement
 Wrap existing CLIs to add auth, logging, or validation:
 
 ```csharp
-builder.AddRoute("deploy prod", async () =>
-{
+builder.AddRoute
+(
+  "deploy prod",
+  async () =>
+  {
     if (!await ValidateAccess()) return 1;
     return await Shell.ExecuteAsync("existing-cli", "deploy", "prod");
-});
+  }
+);
 
-builder.AddRoute("{*args}", async (string[] args) =>
-    await Shell.ExecuteAsync("existing-cli", args));
+builder.AddRoute
+(
+  "{*args}",
+  async (string[] args) => await Shell.ExecuteAsync("existing-cli", args)
+);
 ```
 
 **→ [Detailed Use Cases with Examples](documentation/user/use-cases.md)**

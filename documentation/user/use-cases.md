@@ -14,11 +14,11 @@ Build modern command-line tools from scratch with clean architecture and progres
 using TimeWarp.Nuru;
 
 var app = new NuruAppBuilder()
-    .AddRoute("version", () => Console.WriteLine("MyTool v1.0.0"))
-    .AddRoute("status", () => ShowSystemStatus())
-    .AddRoute("config get {key}", (string key) => Console.WriteLine(GetConfig(key)))
-    .AddRoute("config set {key} {value}", (string key, string value) => SetConfig(key, value))
-    .Build();
+  .AddRoute("version", () => Console.WriteLine("MyTool v1.0.0"))
+  .AddRoute("status", () => ShowSystemStatus())
+  .AddRoute("config get {key}", (string key) => Console.WriteLine(GetConfig(key)))
+  .AddRoute("config set {key} {value}", (string key, string value) => SetConfig(key, value))
+  .Build();
 
 return await app.RunAsync(args);
 ```
@@ -72,16 +72,25 @@ return await app.RunAsync(args);
 NuruAppBuilder builder = new();
 
 // Repository management
-builder.AddRoute("repo init {name} --bare", (string name, bool bare) =>
-    InitializeRepository(name, bare));
-builder.AddRoute("repo clone {url} {path?}", (string url, string? path) =>
-    CloneRepository(url, path));
+builder.AddRoute
+(
+  "repo init {name} --bare",
+  (string name, bool bare) => InitializeRepository(name, bare)
+);
+builder.AddRoute
+(
+  "repo clone {url} {path?}",
+  (string url, string? path) => CloneRepository(url, path)
+);
 builder.AddRoute("repo list", () => ListRepositories());
 
 // Branch operations
 builder.AddRoute("branch create {name}", (string name) => CreateBranch(name));
-builder.AddRoute("branch delete {name} --force", (string name, bool force) =>
-    DeleteBranch(name, force));
+builder.AddRoute
+(
+  "branch delete {name} --force",
+  (string name, bool force) => DeleteBranch(name, force)
+);
 builder.AddRoute("branch list --all", (bool all) => ListBranches(all));
 
 // File operations
@@ -113,23 +122,31 @@ using TimeWarp.Nuru;
 var builder = new NuruAppBuilder();
 
 // Intercept production deployments for auth check
-builder.AddRoute("deploy prod {*args}", async (string[] args) =>
-{
+builder.AddRoute
+(
+  "deploy prod {*args}",
+  async (string[] args) =>
+  {
     if (!await ValidateProductionAccess())
     {
-        Console.Error.WriteLine("❌ Production access denied");
-        return 1;
+      Console.Error.WriteLine("❌ Production access denied");
+      return 1;
     }
 
     Console.WriteLine("✅ Access granted, deploying to production...");
     return await Shell.ExecuteAsync("existing-deploy-tool", ["deploy", "prod", ..args]);
-});
+  }
+);
 
 // Other environments pass through
-builder.AddRoute("deploy {env} {*args}", async (string env, string[] args) =>
-{
+builder.AddRoute
+(
+  "deploy {env} {*args}",
+  async (string env, string[] args) =>
+  {
     return await Shell.ExecuteAsync("existing-deploy-tool", ["deploy", env, ..args]);
-});
+  }
+);
 
 var app = builder.Build();
 return await app.RunAsync(args);
@@ -146,33 +163,41 @@ return await app.RunAsync(args);
 **Use Case**: Add safety checks to dangerous operations
 
 ```csharp
-builder.AddRoute("delete database {name} --confirm", async (string name, bool confirm) =>
-{
+builder.AddRoute
+(
+  "delete database {name} --confirm",
+  async (string name, bool confirm) =>
+  {
     if (!confirm)
     {
-        Console.Error.WriteLine("❌ Must use --confirm flag to delete database");
-        return 1;
+      Console.Error.WriteLine("❌ Must use --confirm flag to delete database");
+      return 1;
     }
 
     // Validate database name against pattern
     if (!ValidateDatabaseName(name))
     {
-        Console.Error.WriteLine($"❌ Invalid database name: {name}");
-        return 1;
+      Console.Error.WriteLine($"❌ Invalid database name: {name}");
+      return 1;
     }
 
     // Log before execution
     await LogAuditEvent("database.delete", name);
 
     return await Shell.ExecuteAsync("original-cli", "delete", "database", name);
-});
+  }
+);
 
 // Add dry-run capability not in original tool
-builder.AddRoute("delete database {name} --dry-run", (string name) =>
-{
+builder.AddRoute
+(
+  "delete database {name} --dry-run",
+  (string name) =>
+  {
     Console.WriteLine($"[DRY RUN] Would delete database: {name}");
     return 0;
-});
+  }
+);
 ```
 
 **Benefits**:
@@ -187,32 +212,46 @@ builder.AddRoute("delete database {name} --dry-run", (string name) =>
 
 ```csharp
 // New simplified interface
-builder.AddRoute("build {project}", async (string project) =>
-{
+builder.AddRoute
+(
+  "build {project}",
+  async (string project) =>
+  {
     // Transform to old CLI syntax
-    return await Shell.ExecuteAsync("legacy-tool",
-        "--project", project,
-        "--config", "Release",
-        "--verbose");
-});
+    return await Shell.ExecuteAsync
+    (
+      "legacy-tool",
+      "--project", project,
+      "--config", "Release",
+      "--verbose"
+    );
+  }
+);
 
 // New interface with options
-builder.AddRoute("build {project} --debug --quiet",
-    async (string project, bool debug, bool quiet) =>
-{
+builder.AddRoute
+(
+  "build {project} --debug --quiet",
+  async (string project, bool debug, bool quiet) =>
+  {
     var args = new List<string> { "--project", project };
     args.Add("--config");
     args.Add(debug ? "Debug" : "Release");
     if (!quiet) args.Add("--verbose");
 
     return await Shell.ExecuteAsync("legacy-tool", args.ToArray());
-});
+  }
+);
 
 // Pass through for advanced users needing old syntax
-builder.AddRoute("{*args}", async (string[] args) =>
-{
+builder.AddRoute
+(
+  "{*args}",
+  async (string[] args) =>
+  {
     return await Shell.ExecuteAsync("legacy-tool", args);
-});
+  }
+);
 ```
 
 **Benefits**:
@@ -237,32 +276,35 @@ public sealed class MonitoredCommand : IRequest<int>
 
     public sealed class Handler(ITelemetryService telemetry) : IRequestHandler<MonitoredCommand, int>
     {
-        public async Task<int> Handle(MonitoredCommand cmd, CancellationToken ct)
+      public async Task<int> Handle(MonitoredCommand cmd, CancellationToken ct)
+      {
+        var sw = Stopwatch.StartNew();
+        var command = string.Join(" ", cmd.Args);
+
+        try
         {
-            var sw = Stopwatch.StartNew();
-            var command = string.Join(" ", cmd.Args);
+          var result = await Shell.ExecuteAsync("original-tool", cmd.Args);
+          sw.Stop();
 
-            try
+          await telemetry.TrackCommandAsync
+          (
+            new CommandMetrics
             {
-                var result = await Shell.ExecuteAsync("original-tool", cmd.Args);
-                sw.Stop();
-
-                await telemetry.TrackCommandAsync(new CommandMetrics
-                {
-                    Command = command,
-                    Duration = sw.Elapsed,
-                    Success = result == 0,
-                    Timestamp = DateTime.UtcNow
-                });
-
-                return result;
+              Command = command,
+              Duration = sw.Elapsed,
+              Success = result == 0,
+              Timestamp = DateTime.UtcNow
             }
-            catch (Exception ex)
-            {
-                await telemetry.TrackErrorAsync(command, ex);
-                throw;
-            }
+          );
+
+          return result;
         }
+        catch (Exception ex)
+        {
+          await telemetry.TrackErrorAsync(command, ex);
+          throw;
+        }
+      }
     }
 }
 ```
@@ -297,8 +339,11 @@ builder.AddRoute<RollbackCommand>("rollback {env} --to {version}");
 builder.AddRoute<ValidateCommand>("validate {env}");
 
 // Wrap existing tool for migration
-builder.AddRoute("legacy {*args}", async (string[] args) =>
-    await Shell.ExecuteAsync("old-deploy-tool", args));
+builder.AddRoute
+(
+  "legacy {*args}",
+  async (string[] args) => await Shell.ExecuteAsync("old-deploy-tool", args)
+);
 ```
 
 ### Database Management CLI

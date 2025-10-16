@@ -22,11 +22,14 @@ Maximum performance with minimal overhead.
 **Example:**
 ```csharp
 var app = new NuruAppBuilder()
-    .AddRoute("version", () => Console.WriteLine("v1.0.0"))
-    .AddRoute("ping", () => Console.WriteLine("pong"))
-    .AddRoute("add {x:double} {y:double}",
-        (double x, double y) => Console.WriteLine(x + y))
-    .Build();
+  .AddRoute("version", () => Console.WriteLine("v1.0.0"))
+  .AddRoute("ping", () => Console.WriteLine("pong"))
+  .AddRoute
+  (
+    "add {x:double} {y:double}",
+    (double x, double y) => Console.WriteLine(x + y)
+  )
+  .Build();
 ```
 
 ### 🏗️ Mediator Approach
@@ -135,13 +138,17 @@ See [Performance Reference](../reference/performance.md) for detailed benchmarks
 **Direct:**
 ```csharp
 // All in one place
-builder.AddRoute("deploy {env}", (string env) =>
-{
+builder.AddRoute
+(
+  "deploy {env}",
+  (string env) =>
+  {
     ValidateEnvironment(env);
     var config = LoadConfig(env);
     ExecuteDeployment(config);
     LogSuccess(env);
-});
+  }
+);
 ```
 
 **Mediator:**
@@ -152,18 +159,18 @@ public sealed class DeployCommand : IRequest
     public string Environment { get; set; }
 
     public sealed class Handler(
-        IValidator validator,
-        IConfigService config,
-        IDeploymentService deployment,
-        ILogger logger) : IRequestHandler<DeployCommand>
+      IValidator validator,
+      IConfigService config,
+      IDeploymentService deployment,
+      ILogger logger) : IRequestHandler<DeployCommand>
     {
-        public async Task Handle(DeployCommand cmd, CancellationToken ct)
-        {
-            await validator.ValidateAsync(cmd.Environment);
-            var cfg = await config.LoadAsync(cmd.Environment);
-            await deployment.ExecuteAsync(cfg);
-            logger.LogInformation("Deployed to {Env}", cmd.Environment);
-        }
+      public async Task Handle(DeployCommand cmd, CancellationToken ct)
+      {
+        await validator.ValidateAsync(cmd.Environment);
+        var cfg = await config.LoadAsync(cmd.Environment);
+        await deployment.ExecuteAsync(cfg);
+        logger.LogInformation("Deployed to {Env}", cmd.Environment);
+      }
     }
 }
 ```
@@ -180,11 +187,13 @@ Assert.Equal(0, result);
 **Mediator:**
 ```csharp
 // Test handler in isolation
-var handler = new DeployCommand.Handler(
-    mockValidator,
-    mockConfig,
-    mockDeployment,
-    mockLogger);
+var handler = new DeployCommand.Handler
+(
+  mockValidator,
+  mockConfig,
+  mockDeployment,
+  mockLogger
+);
 
 var command = new DeployCommand { Environment = "test" };
 await handler.Handle(command, CancellationToken.None);
@@ -199,8 +208,8 @@ mockDeployment.Verify(x => x.ExecuteAsync(It.IsAny<Config>()), Times.Once);
 ```csharp
 // Phase 1: Start simple
 var app = new NuruAppBuilder()
-    .AddRoute("deploy {env}", (string env) => Deploy(env))
-    .Build();
+  .AddRoute("deploy {env}", (string env) => Deploy(env))
+  .Build();
 
 // Phase 2: Add DI for new complex command
 NuruAppBuilder builder = new();
@@ -210,7 +219,7 @@ builder.AddDependencyInjection();
 builder.Services.AddScoped<IAnalyzer, Analyzer>();
 builder.AddRoute<AnalyzeCommand>("analyze {*files}");  // New complex command
 
-var app = builder.Build();
+var app2 = builder.Build();
 
 // Phase 3: Migrate deploy to mediator if needed
 builder.AddRoute<DeployCommand>("deploy {env}");  // Now uses DI/mediator
@@ -240,10 +249,10 @@ var app = builder.Build();
 
 ```csharp
 var app = new NuruAppBuilder()
-    .AddRoute("encode {text}", (string text) => Base64.Encode(text))
-    .AddRoute("decode {text}", (string text) => Base64.Decode(text))
-    .AddRoute("hash {file}", (string file) => ComputeHash(file))
-    .Build();
+  .AddRoute("encode {text}", (string text) => Base64.Encode(text))
+  .AddRoute("decode {text}", (string text) => Base64.Decode(text))
+  .AddRoute("hash {file}", (string file) => ComputeHash(file))
+  .Build();
 ```
 
 ### Enterprise CLI (100+ commands, team of 5+)
@@ -296,8 +305,8 @@ var app = builder.Build();
 ```csharp
 // ✅ Start with direct approach
 var app = new NuruAppBuilder()
-    .AddRoute("greet {name}", (string name) => $"Hello, {name}!")
-    .Build();
+  .AddRoute("greet {name}", (string name) => $"Hello, {name}!")
+  .Build();
 
 // ❌ Don't over-engineer from the start
 NuruAppBuilder builder = new();

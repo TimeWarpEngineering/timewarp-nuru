@@ -106,21 +106,22 @@ NuruApp app = new NuruAppBuilder()
 Wrap existing CLIs to add auth, logging, or validation:
 
 ```csharp
-builder.AddRoute
-(
-  "deploy prod",
-  async () =>
-  {
-    if (!await ValidateAccess()) return 1;
-    return await Shell.ExecuteAsync("existing-cli", "deploy", "prod");
-  }
-);
-
-builder.AddRoute
-(
-  "{*args}",
-  async (string[] args) => await Shell.ExecuteAsync("existing-cli", args)
-);
+NuruApp app = new NuruAppBuilder()
+  .AddRoute
+  (
+    "deploy prod",
+    async () =>
+    {
+      if (!await ValidateAccess()) return 1;
+      return await Shell.ExecuteAsync("existing-cli", "deploy", "prod");
+    }
+  )
+  .AddRoute
+  (
+    "{*args}",
+    async (string[] args) => await Shell.ExecuteAsync("existing-cli", args)
+  )
+  .Build();
 ```
 
 **→ [Detailed Use Cases with Examples](documentation/user/use-cases.md)**

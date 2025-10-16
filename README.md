@@ -24,43 +24,73 @@ dotnet add package TimeWarp.Nuru
 
 ## 🚀 Quick Start
 
-Build a powerful calculator CLI that mixes performance and flexibility:
+### Delegate Approach
+
+Maximum performance with zero overhead:
+
+```csharp
+using TimeWarp.Nuru;
+
+var app = new NuruAppBuilder()
+  .AddRoute
+  (
+    "add {x:double} {y:double}",
+    (double x, double y) => Console.WriteLine($"{x} + {y} = {x + y}")
+  )
+  .AddRoute
+  (
+    "multiply {x:double} {y:double}",
+    (double x, double y) => Console.WriteLine($"{x} × {y} = {x * y}")
+  )
+  .Build();
+
+return await app.RunAsync(args);
+```
+
+```bash
+dotnet run -- add 15 25
+# Output: 15 + 25 = 40
+```
+
+### Mediator Approach
+
+Enterprise patterns with dependency injection:
 
 ```csharp
 using TimeWarp.Nuru;
 using TimeWarp.Mediator;
 
 NuruAppBuilder builder = new();
-
-// Simple operations: Direct approach (maximum speed)
-builder.AddRoute("add {x:double} {y:double}", 
-    (double x, double y) => Console.WriteLine($"{x} + {y} = {x + y}"));
-
-builder.AddRoute("multiply {x:double} {y:double}", 
-    (double x, double y) => Console.WriteLine($"{x} × {y} = {x * y}"));
-
-// Enable DI for complex operations
 builder.AddDependencyInjection();
 
-// Complex operations: Mediator approach (testable, DI)
 builder.Services.AddSingleton<ICalculator, Calculator>();
 builder.AddRoute<FactorialCommand>("factorial {n:int}");
-builder.AddRoute<FibonacciCommand>("fibonacci {n:int}");
 
 var app = builder.Build();
 return await app.RunAsync(args);
+
+// Command and handler as separate classes
+public sealed class FactorialCommand : IRequest
+{
+  public int N { get; set; }
+}
+
+public sealed class FactorialCommandHandler(ICalculator calc) : IRequestHandler<FactorialCommand>
+{
+  public Task Handle(FactorialCommand cmd, CancellationToken ct)
+  {
+      Console.WriteLine($"{cmd.N}! = {calc.Factorial(cmd.N)}");
+      return Task.CompletedTask;
+  }
+}
 ```
 
-Run it:
 ```bash
-# Fast operations
-dotnet run -- add 15 25
-# Output: 15 + 25 = 40
-
-# Complex operations with full DI
-dotnet run -- factorial 5  
+dotnet run -- factorial 5
 # Output: 5! = 120
 ```
+
+> **💡 Tip:** Handlers can be nested inside commands for better organization. See [Calculator Samples](Samples/Calculator/) for nested handler examples.
 
 **🎯 Create .NET 10 single-file executables** (requires .NET 10 Preview 6+):
 ```bash
@@ -85,8 +115,8 @@ builder.AddRoute("ping", () => Console.WriteLine("pong"));
 builder.AddDependencyInjection();
 
 // Mediator pattern for complex operations (testable, DI, structured)
-builder.Services.AddSingleton<IDatabase, Database>();
-builder.AddRoute<QueryCommand>("query {sql}");
+builder.Services.AddSingleton<IEmployeeRepository, EmployeeRepository>();
+builder.AddRoute<GetEmployee.Query>("employee get {id:int}");
 ```
 
 ### Web-Style Route Patterns for CLI
@@ -108,15 +138,15 @@ builder.AddRoute("backup {*files}", (string[] files) => BackupFiles(files));
 **🚀 Direct** - Maximum performance, zero overhead
 ```csharp
 var app = new NuruAppBuilder()
-    .AddRoute("deploy {env}", (string env) => Deploy(env))
-    .Build(); // ~4KB memory, blazing fast
+  .AddRoute("deploy {env}", (string env) => Deploy(env))
+  .Build(); // ~4KB memory, blazing fast
 ```
 
 **🏗️ Mediator** - Enterprise patterns, full DI
 ```csharp
 var builder = new NuruAppBuilder()
-    .AddDependencyInjection(); // Enable DI and Mediator support
-builder.AddRoute<DeployCommand>("deploy {env} --strategy {strategy}");
+  .AddDependencyInjection() // Enable DI and Mediator support
+  .AddRoute<DeployCommand>("deploy {env} --strategy {strategy}");
 // Testable handlers, dependency injection, complex logic
 ```
 
@@ -172,14 +202,24 @@ builder.AddRoute("git commit -m {message}", (string msg) => Git.Commit(msg));
 builder.AddRoute("git push --force", () => Git.ForcePush());
 
 // Docker-style with options
-builder.AddRoute("run {image} --port {port:int} --detach", 
-    (string image, int port) => Docker.Run(image, port, detached: true));
+builder.AddRoute
+(
+  "run {image} --port {port:int} --detach", 
+  (string image, int port) => Docker.Run(image, port, detached: true)
+);
 
 // Conditional routing based on options
-builder.AddRoute("deploy {app} --env {environment} --dry-run", 
-    (string app, string env) => DeployDryRun(app, env));
-builder.AddRoute("deploy {app} --env {environment}", 
-    (string app, string env) => DeployReal(app, env));
+builder.AddRoute
+(
+  "deploy {app} --env {environment} --dry-run", 
+  (string app, string env) => DeployDryRun(app, env)
+);
+
+builder.AddRoute
+(
+  "deploy {app} --env {environment}", 
+  (string app, string env) => DeployReal(app, env)
+);
 ```
 
 ### Automatic Help Generation
@@ -188,12 +228,18 @@ Enable automatic help for all your commands:
 
 ```csharp
 var app = new NuruAppBuilder()
-    .AddRoute("deploy {env|Target environment} {tag?|Optional version tag}", 
-        (string env, string? tag) => Deploy(env, tag))
-    .AddRoute("backup {source} --compress,-c|Enable compression", 
-        (string source, bool compress) => Backup(source, compress))
-    .AddAutoHelp()  // Generates help for all commands
-    .Build();
+  .AddRoute
+  (
+    "deploy {env|Target environment} {tag?|Optional version tag}", 
+    (string env, string? tag) => Deploy(env, tag)
+  )
+  .AddRoute
+  (
+    "backup {source} --compress,-c|Enable compression", 
+    (string source, bool compress) => Backup(source, compress)
+  )
+  .AddAutoHelp()  // Generates help for all commands
+  .Build();
 ```
 
 This automatically creates:
@@ -209,22 +255,22 @@ Scale from simple scripts to complex applications:
 // Commands as classes with nested handlers - perfect for complex logic
 public class DeployCommand : IRequest
 {
-    public string Environment { get; set; }
-    public string? Version { get; set; }
-    public bool DryRun { get; set; }
-    
-    // Handler nested inside command for better organization
-    public sealed class Handler(IDeploymentService deployment, ILogger logger) 
-        : IRequestHandler<DeployCommand>
+  public string Environment { get; set; }
+  public string? Version { get; set; }
+  public bool DryRun { get; set; }
+  
+  // Handler nested inside command for better organization
+  public sealed class Handler(IDeploymentService deployment, ILogger logger) 
+    : IRequestHandler<DeployCommand>
+  {
+    public async Task Handle(DeployCommand cmd, CancellationToken ct)
     {
-        public async Task Handle(DeployCommand cmd, CancellationToken ct)
-        {
-            if (cmd.DryRun)
-                await deployment.ValidateAsync(cmd.Environment, cmd.Version);
-            else  
-                await deployment.ExecuteAsync(cmd.Environment, cmd.Version);
-        }
+      if (cmd.DryRun)
+        await deployment.ValidateAsync(cmd.Environment, cmd.Version);
+      else  
+        await deployment.ExecuteAsync(cmd.Environment, cmd.Version);
     }
+  }
 }
 
 // Enable DI and register services
@@ -248,24 +294,29 @@ builder.AddRoute("process {date:datetime}", (DateTime d) => Process(d));
 ### Async Support
 ```csharp
 // Full async support for both Direct and Mediator approaches
-builder.AddRoute("fetch {url}", async (string url) => {
+builder.AddRoute
+(
+  "fetch {url}", 
+  async (string url) => 
+  {
     var data = await httpClient.GetStringAsync(url);
     await File.WriteAllTextAsync("result.txt", data);
-});
+  }
+);
 
 // Async Mediator commands with nested handler
 public sealed class FetchCommand : IRequest<string> 
 { 
-    public string Url { get; set; }
-    
-    internal sealed class Handler : IRequestHandler<FetchCommand, string>
+  public string Url { get; set; }
+  
+  internal sealed class Handler : IRequestHandler<FetchCommand, string>
+  {
+    public async Task<string> Handle(FetchCommand cmd, CancellationToken ct)
     {
-        public async Task<string> Handle(FetchCommand cmd, CancellationToken ct)
-        {
-            using var client = new HttpClient();
-            return await client.GetStringAsync(cmd.Url, ct);
-        }
+      using var client = new HttpClient();
+      return await client.GetStringAsync(cmd.Url, ct);
     }
+  }
 }
 ```
 
@@ -283,10 +334,10 @@ builder.AddRoute("info", () => new { Name = "MyApp", Version = "1.0" });
 // Separate concerns: diagnostics to stderr, data to stdout
 builder.AddRoute("process {file}", (string file) => 
 {
-    Console.Error.WriteLine($"Processing {file}...");  // Progress to stderr
-    Thread.Sleep(1000);
-    Console.Error.WriteLine("Complete!");
-    return new { File = file, Lines = 42, Status = "OK" };  // Result as JSON to stdout
+  Console.Error.WriteLine($"Processing {file}...");  // Progress to stderr
+  Thread.Sleep(1000);
+  Console.Error.WriteLine("Complete!");
+  return new { File = file, Lines = 42, Status = "OK" };  // Result as JSON to stdout
 });
 
 // With DI and logging
@@ -295,17 +346,17 @@ builder.Services.AddLogging(); // Add logging services
 
 public sealed class AnalyzeCommand : IRequest<AnalyzeResult>
 {
-    public string Path { get; set; }
-    
-    public sealed class Handler(ILogger<Handler> logger) : IRequestHandler<AnalyzeCommand, AnalyzeResult>
+  public string Path { get; set; }
+  
+  public sealed class Handler(ILogger<Handler> logger) : IRequestHandler<AnalyzeCommand, AnalyzeResult>
+  {
+    public async Task<AnalyzeResult> Handle(AnalyzeCommand cmd, CancellationToken ct)
     {
-        public async Task<AnalyzeResult> Handle(AnalyzeCommand cmd, CancellationToken ct)
-        {
-            logger.LogInformation("Starting analysis of {Path}", cmd.Path);  // Structured logging
-            var result = await AnalyzeAsync(cmd.Path);
-            return result;  // Returned object → JSON to stdout
-        }
+      logger.LogInformation("Starting analysis of {Path}", cmd.Path);  // Structured logging
+      var result = await AnalyzeAsync(cmd.Path);
+      return result;  // Returned object → JSON to stdout
     }
+  }
 }
 ```
 
@@ -339,7 +390,7 @@ dotnet publish -c Release -r linux-x64
 ./myapp --help  # Instant startup, 3.3MB binary
 ```
 
-**Plus .NET 10 Script Mode:**
+**Plus .NET 10 RunFiles:**
 ```bash
 #!/usr/bin/dotnet --
 #:project TimeWarp.Nuru.csproj
@@ -357,12 +408,12 @@ TimeWarp.Nuru delivers where it counts:
 
 ### Real-World Performance: 37 Integration Tests
 
-| Implementation | Test Results | Execution Time | Speed Improvement |
-|----------------|--------------|----------------|-------------------|
-| **Direct (JIT)** | 37/37 ✓ | 2.49s | Baseline |
-| **Mediator (JIT)** | 37/37 ✓ | 6.52s | 161% slower |
-| **Direct (AOT)** | 37/37 ✓ | **0.30s** 🚀 | 88% faster than JIT |
-| **Mediator (AOT)** | 37/37 ✓ | **0.42s** 🚀 | 93% faster than JIT |
+| Implementation     | Test Results | Execution Time | Speed Improvement   |
+| ------------------ | ------------ | -------------- | ------------------- |
+| **Direct (JIT)**   | 37/37 ✓      | 2.49s          | Baseline            |
+| **Mediator (JIT)** | 37/37 ✓      | 6.52s          | 161% slower         |
+| **Direct (AOT)**   | 37/37 ✓      | **0.30s** 🚀    | 88% faster than JIT |
+| **Mediator (AOT)** | 37/37 ✓      | **0.42s** 🚀    | 93% faster than JIT |
 
 **Key Insights:**
 - **AOT is ridiculously fast**: Sub-second execution for 37 complex CLI tests

@@ -20,7 +20,7 @@ TimeWarp.Nuru supports intuitive route patterns:
 Parameters are automatically converted to the correct types:
 
 ```csharp
-var app = new NuruAppBuilder()
+NuruApp app = new NuruAppBuilder()
   // Supports common types out of the box
   .AddRoute("wait {seconds:int}", (int s) => Thread.Sleep(s * 1000))
   .AddRoute("download {url:uri}", (Uri url) => Download(url))

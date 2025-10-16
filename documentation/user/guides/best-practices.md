@@ -67,7 +67,7 @@ builder.AddRoute
       return 1;
     }
 
-    var errors = Validate(file);
+    List<ValidationError> errors = Validate(file);
     if (errors.Any())
     {
       Console.Error.WriteLine($"❌ {errors.Count} validation errors");
@@ -131,7 +131,7 @@ builder.AddRoute
   (string file) =>
   {
     Console.Error.WriteLine($"Processing {file}...");  // stderr
-    var result = Process(file);
+    ProcessResult result = Process(file);
     Console.Error.WriteLine("Complete!");              // stderr
     return result;                                     // stdout (JSON)
   }
@@ -144,7 +144,7 @@ builder.AddRoute
   (string file) =>
   {
     Console.WriteLine($"Processing {file}...");  // stdout (breaks piping)
-    var result = Process(file);
+    ProcessResult result = Process(file);
     Console.WriteLine(JsonSerializer.Serialize(result));  // stdout
     return result;
   }
@@ -194,6 +194,8 @@ builder.AddRoute("version", () => "1.0.0");
 builder.AddDependencyInjection();
 builder.Services.AddScoped<IDeploymentService, DeploymentService>();
 builder.AddRoute<DeployCommand>("deploy {env}");
+
+NuruApp app = builder.Build();
 ```
 
 ### Minimize Allocations
@@ -225,9 +227,9 @@ builder.AddRoute<DeployCommand>("deploy {env}");
 public async Task DeployCommand_ValidEnvironment_Succeeds()
 {
   // Arrange
-  var mockService = new Mock<IDeploymentService>();
-  var handler = new DeployCommand.Handler(mockService.Object);
-  var command = new DeployCommand { Environment = "test" };
+  Mock<IDeploymentService> mockService = new();
+  DeployCommand.Handler handler = new(mockService.Object);
+  DeployCommand command = new() { Environment = "test" };
 
   // Act
   await handler.Handle(command, CancellationToken.None);
@@ -243,8 +245,8 @@ public async Task DeployCommand_ValidEnvironment_Succeeds()
 [Fact]
 public async Task Application_DeployCommand_Works()
 {
-    var app = BuildApp();
-    var result = await app.RunAsync(new[] { "deploy", "test" });
+    NuruApp app = BuildApp();
+    int result = await app.RunAsync(new[] { "deploy", "test" });
     Assert.Equal(0, result);
 }
 ```
@@ -357,7 +359,7 @@ builder.AddRoute
   (string env) =>
   {
     // Validate against allowed environments
-    var allowed = new[] { "dev", "staging", "prod" };
+    string[] allowed = ["dev", "staging", "prod"];
     if (!allowed.Contains(env))
     {
       Console.Error.WriteLine($"❌ Invalid environment. Allowed: {string.Join(", ", allowed)}");
@@ -385,7 +387,7 @@ builder.AddRoute
 ### Include Help
 
 ```csharp
-var app = new NuruAppBuilder()
+NuruApp app = new NuruAppBuilder()
   .AddRoute("deploy {env|Environment} {version?|Version}", handler)
   .AddAutoHelp()
   .Build();

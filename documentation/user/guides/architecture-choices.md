@@ -21,7 +21,7 @@ Maximum performance with minimal overhead.
 
 **Example:**
 ```csharp
-var app = new NuruAppBuilder()
+NuruApp app = new NuruAppBuilder()
   .AddRoute("version", () => Console.WriteLine("v1.0.0"))
   .AddRoute("ping", () => Console.WriteLine("pong"))
   .AddRoute
@@ -60,7 +60,7 @@ builder.Services.AddScoped<IAnalyzer, Analyzer>();
 builder.AddRoute<QueryCommand>("query {sql}");
 builder.AddRoute<AnalyzeCommand>("analyze {*files}");
 
-var app = builder.Build();
+NuruApp app = builder.Build();
 ```
 
 ### ⚡ Mixed Approach (Recommended)
@@ -93,7 +93,7 @@ builder.Services.AddScoped<IDeploymentService, DeploymentService>();
 builder.AddRoute<DeployCommand>("deploy {env} --dry-run");
 builder.AddRoute<AnalyzeCommand>("analyze {*files}");
 
-var app = builder.Build();
+NuruApp app = builder.Build();
 ```
 
 ## Decision Guide
@@ -144,7 +144,7 @@ builder.AddRoute
   (string env) =>
   {
     ValidateEnvironment(env);
-    var config = LoadConfig(env);
+    DeploymentConfig config = LoadConfig(env);
     ExecuteDeployment(config);
     LogSuccess(env);
   }
@@ -167,7 +167,7 @@ public sealed class DeployCommand : IRequest
       public async Task Handle(DeployCommand cmd, CancellationToken ct)
       {
         await validator.ValidateAsync(cmd.Environment);
-        var cfg = await config.LoadAsync(cmd.Environment);
+        DeploymentConfig cfg = await config.LoadAsync(cmd.Environment);
         await deployment.ExecuteAsync(cfg);
         logger.LogInformation("Deployed to {Env}", cmd.Environment);
       }
@@ -180,14 +180,14 @@ public sealed class DeployCommand : IRequest
 **Direct:**
 ```csharp
 // Test by invoking the app
-var result = await app.RunAsync(new[] { "deploy", "test" });
+int result = await app.RunAsync(new[] { "deploy", "test" });
 Assert.Equal(0, result);
 ```
 
 **Mediator:**
 ```csharp
 // Test handler in isolation
-var handler = new DeployCommand.Handler
+DeployCommand.Handler handler = new
 (
   mockValidator,
   mockConfig,
@@ -195,7 +195,7 @@ var handler = new DeployCommand.Handler
   mockLogger
 );
 
-var command = new DeployCommand { Environment = "test" };
+DeployCommand command = new() { Environment = "test" };
 await handler.Handle(command, CancellationToken.None);
 
 mockDeployment.Verify(x => x.ExecuteAsync(It.IsAny<Config>()), Times.Once);
@@ -207,7 +207,7 @@ mockDeployment.Verify(x => x.ExecuteAsync(It.IsAny<Config>()), Times.Once);
 
 ```csharp
 // Phase 1: Start simple
-var app = new NuruAppBuilder()
+NuruApp app = new NuruAppBuilder()
   .AddRoute("deploy {env}", (string env) => Deploy(env))
   .Build();
 
@@ -219,7 +219,7 @@ builder.AddDependencyInjection();
 builder.Services.AddScoped<IAnalyzer, Analyzer>();
 builder.AddRoute<AnalyzeCommand>("analyze {*files}");  // New complex command
 
-var app2 = builder.Build();
+NuruApp app2 = builder.Build();
 
 // Phase 3: Migrate deploy to mediator if needed
 builder.AddRoute<DeployCommand>("deploy {env}");  // Now uses DI/mediator
@@ -238,7 +238,7 @@ builder.AddRoute<AnalyzeCommand>("analyze {*files}");
 // Optimize hot path with direct approach
 builder.AddRoute("ping", () => "pong");  // Called frequently, needs speed
 
-var app = builder.Build();
+NuruApp app = builder.Build();
 ```
 
 ## Real-World Scenarios
@@ -248,7 +248,7 @@ var app = builder.Build();
 **Recommendation: Direct**
 
 ```csharp
-var app = new NuruAppBuilder()
+NuruApp app = new NuruAppBuilder()
   .AddRoute("encode {text}", (string text) => Base64.Encode(text))
   .AddRoute("decode {text}", (string text) => Base64.Decode(text))
   .AddRoute("hash {file}", (string file) => ComputeHash(file))
@@ -273,7 +273,7 @@ builder.AddRoute<UserCreateCommand>("user create {email}");
 builder.AddRoute<ReportGenerateCommand>("report generate {type}");
 // ... 98 more commands
 
-var app = builder.Build();
+NuruApp app = builder.Build();
 ```
 
 ### DevOps Tool (mixed complexity)
@@ -295,7 +295,7 @@ builder.Services.AddMonitoring();
 builder.AddRoute<DeployCommand>("deploy {env} --dry-run");
 builder.AddRoute<RollbackCommand>("rollback {env} --to {version}");
 
-var app = builder.Build();
+NuruApp app = builder.Build();
 ```
 
 ## Best Practices
@@ -304,7 +304,7 @@ var app = builder.Build();
 
 ```csharp
 // ✅ Start with direct approach
-var app = new NuruAppBuilder()
+NuruApp app = new NuruAppBuilder()
   .AddRoute("greet {name}", (string name) => $"Hello, {name}!")
   .Build();
 
@@ -340,7 +340,7 @@ builder.Services.AddComplexServices();
 builder.AddRoute<ComplexCommand>("complex {arg}");
 
 // Both in same app - totally fine!
-var app = builder.Build();
+NuruApp app = builder.Build();
 ```
 
 ## Related Documentation

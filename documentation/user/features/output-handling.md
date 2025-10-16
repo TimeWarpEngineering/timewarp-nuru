@@ -74,7 +74,7 @@ builder.AddRoute
   {
     Console.Error.WriteLine($"Analyzing {file}...");
 
-    var result = AnalyzeFile(file);
+    AnalysisResult result = AnalyzeFile(file);
 
     // Returned object → JSON to stdout
     return new AnalysisResult
@@ -123,7 +123,7 @@ builder.UseConsoleLogging();  // Logs → stderr
 builder.Services.AddScoped<IAnalyzer, Analyzer>();
 builder.AddRoute<AnalyzeCommand>("analyze {path}");
 
-var app = builder.Build();
+NuruApp app = builder.Build();
 return await app.RunAsync(args);
 
 public sealed class AnalyzeCommand : IRequest<AnalysisResult>
@@ -143,7 +143,7 @@ public sealed class AnalyzeCommand : IRequest<AnalysisResult>
         // Structured logging → stderr
         logger.LogInformation("Starting analysis of {Path}", cmd.Path);
 
-        var result = await analyzer.AnalyzeAsync(cmd.Path);
+        AnalysisResult result = await analyzer.AnalyzeAsync(cmd.Path);
 
         logger.LogInformation("Analysis complete. Found {Count} issues", result.IssueCount);
 
@@ -166,7 +166,7 @@ builder.AddRoute
   {
     Console.Error.WriteLine($"Downloading {url}...");
 
-    var data = await DownloadAsync
+    byte[] data = await DownloadAsync
     (
       url,
       progress =>
@@ -192,12 +192,12 @@ builder.AddRoute
   {
     Console.Error.WriteLine($"Validating {file}...");
 
-    var errors = Validate(file);
+    List<ValidationError> errors = Validate(file);
 
     if (errors.Any())
     {
       Console.Error.WriteLine($"❌ Found {errors.Count} errors");
-      foreach (var error in errors)
+      foreach (ValidationError error in errors)
       {
         Console.Error.WriteLine($"  Line {error.Line}: {error.Message}");
       }
@@ -227,7 +227,7 @@ builder.AddRoute
     await TestAsync();
 
     Console.Error.WriteLine("Step 3/3: Uploading...");
-    var result = await UploadAsync(env);
+    DeploymentResult result = await UploadAsync(env);
 
     Console.Error.WriteLine("✅ Deployment complete");
 
@@ -257,7 +257,7 @@ builder.AddRoute
 
     Console.Error.WriteLine($"Processing {file}...");
 
-    var result = Process
+    ProcessResult result = Process
     (
       file,
       (step) =>
@@ -283,7 +283,7 @@ builder.AddRoute
     if (!quiet)
       Console.Error.WriteLine($"Backing up {source}...");
 
-    var result = Backup(source);
+    BackupResult result = Backup(source);
 
     if (!quiet)
       Console.Error.WriteLine("Backup complete");

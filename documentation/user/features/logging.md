@@ -10,7 +10,7 @@ By default, logging is disabled (zero overhead). To enable console logging:
 using TimeWarp.Nuru;
 using TimeWarp.Nuru.Logging;
 
-var app = new NuruAppBuilder()
+NuruApp app = new NuruAppBuilder()
     .UseConsoleLogging()  // Enable console logging
     .AddRoute("test", () => Console.WriteLine("Test"))
     .Build();
@@ -87,7 +87,7 @@ Log.Logger = new LoggerConfiguration()
     .WriteTo.File("logs/app.log", rollingInterval: RollingInterval.Day)
     .CreateLogger();
 
-var app = new NuruAppBuilder()
+NuruApp app = new NuruAppBuilder()
     .UseLogging(new SerilogLoggerFactory(Log.Logger))
     .AddRoute("test", () => Console.WriteLine("Test"))
     .Build();
@@ -98,12 +98,12 @@ var app = new NuruAppBuilder()
 ```csharp
 using NLog.Extensions.Logging;
 
-var loggerFactory = LoggerFactory.Create(builder =>
+ILoggerFactory loggerFactory = LoggerFactory.Create(builder =>
 {
     builder.AddNLog();
 });
 
-var app = new NuruAppBuilder()
+NuruApp app = new NuruAppBuilder()
     .UseLogging(loggerFactory)
     .AddRoute("test", () => Console.WriteLine("Test"))
     .Build();
@@ -114,12 +114,12 @@ var app = new NuruAppBuilder()
 ```csharp
 using Microsoft.Extensions.Logging.ApplicationInsights;
 
-var loggerFactory = LoggerFactory.Create(builder =>
+ILoggerFactory loggerFactory = LoggerFactory.Create(builder =>
 {
     builder.AddApplicationInsights("InstrumentationKey");
 });
 
-var app = new NuruAppBuilder()
+NuruApp app = new NuruAppBuilder()
     .UseLogging(loggerFactory)
     .AddRoute("test", () => Console.WriteLine("Test"))
     .Build();
@@ -220,17 +220,17 @@ When no logger is configured:
 
 Load configuration:
 ```csharp
-var configuration = new ConfigurationBuilder()
+IConfigurationRoot configuration = new ConfigurationBuilder()
     .AddJsonFile("appsettings.json")
     .Build();
 
-var loggerFactory = LoggerFactory.Create(builder =>
+ILoggerFactory loggerFactory = LoggerFactory.Create(builder =>
 {
     builder.AddConfiguration(configuration.GetSection("Logging"));
     builder.AddConsole();
 });
 
-var app = new NuruAppBuilder()
+NuruApp app = new NuruAppBuilder()
     .UseLogging(loggerFactory)
     .Build();
 ```
@@ -312,12 +312,12 @@ public class CustomLogger : ILogger
 }
 
 // Use it:
-var loggerFactory = LoggerFactory.Create(builder =>
+ILoggerFactory loggerFactory = LoggerFactory.Create(builder =>
 {
     builder.AddProvider(new CustomLoggerProvider());
 });
 
-var app = new NuruAppBuilder()
+NuruApp app = new NuruAppBuilder()
     .UseLogging(loggerFactory)
     .Build();
 ```

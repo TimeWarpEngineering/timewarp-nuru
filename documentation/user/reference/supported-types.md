@@ -24,7 +24,7 @@ TimeWarp.Nuru includes converters for common .NET types:
 ### String (Default)
 
 ```csharp
-var app = new NuruAppBuilder()
+NuruApp app = new NuruAppBuilder()
   // Type annotation optional for strings
   .AddRoute("greet {name}", (string name) => $"Hello, {name}!")
   .AddRoute("echo {message:string}", (string msg) => msg)
@@ -39,7 +39,7 @@ var app = new NuruAppBuilder()
 ### Integer
 
 ```csharp
-var app = new NuruAppBuilder()
+NuruApp app = new NuruAppBuilder()
   .AddRoute("wait {seconds:int}", (int sec) => Thread.Sleep(sec * 1000))
   .AddRoute
   (
@@ -61,7 +61,7 @@ var app = new NuruAppBuilder()
 ### Double
 
 ```csharp
-var app = new NuruAppBuilder()
+NuruApp app = new NuruAppBuilder()
   .AddRoute("calc {x:double} {y:double}", (double x, double y) => x + y)
   .AddRoute("scale {factor:double}", (double f) => Scale(f))
   .Build();
@@ -75,7 +75,7 @@ var app = new NuruAppBuilder()
 ### Boolean
 
 ```csharp
-var app = new NuruAppBuilder()
+NuruApp app = new NuruAppBuilder()
   .AddRoute
   (
     "set {key} {value:bool}",
@@ -92,7 +92,7 @@ var app = new NuruAppBuilder()
 ### DateTime
 
 ```csharp
-var app = new NuruAppBuilder()
+NuruApp app = new NuruAppBuilder()
   .AddRoute
   (
     "schedule {when:DateTime}",
@@ -109,7 +109,7 @@ var app = new NuruAppBuilder()
 ### Guid
 
 ```csharp
-var app = new NuruAppBuilder()
+NuruApp app = new NuruAppBuilder()
   .AddRoute("get {id:Guid}", (Guid id) => GetRecord(id))
   .AddRoute("delete {userId:Guid}", (Guid userId) => DeleteUser(userId))
   .Build();
@@ -122,7 +122,7 @@ var app = new NuruAppBuilder()
 ### Long
 
 ```csharp
-var app = new NuruAppBuilder()
+NuruApp app = new NuruAppBuilder()
   .AddRoute("allocate {bytes:long}", (long bytes) => Allocate(bytes))
   .Build();
 ```
@@ -134,7 +134,7 @@ var app = new NuruAppBuilder()
 ### Decimal
 
 ```csharp
-var app = new NuruAppBuilder()
+NuruApp app = new NuruAppBuilder()
   .AddRoute
   (
     "pay {amount:decimal}",
@@ -150,7 +150,7 @@ var app = new NuruAppBuilder()
 ### TimeSpan
 
 ```csharp
-var app = new NuruAppBuilder()
+NuruApp app = new NuruAppBuilder()
   .AddRoute
   (
     "timeout {duration:TimeSpan}",
@@ -167,7 +167,7 @@ var app = new NuruAppBuilder()
 ### Uri
 
 ```csharp
-var app = new NuruAppBuilder()
+NuruApp app = new NuruAppBuilder()
   .AddRoute("download {url:uri}", (Uri url) => Download(url))
   .Build();
 ```
@@ -181,7 +181,7 @@ var app = new NuruAppBuilder()
 Use nullable types for optional parameters:
 
 ```csharp
-var app = new NuruAppBuilder()
+NuruApp app = new NuruAppBuilder()
   .AddRoute
   (
     "deploy {env} {version?}",
@@ -197,7 +197,7 @@ var app = new NuruAppBuilder()
     "wait {seconds:int?}",
     (int? seconds) =>
     {
-      var delay = seconds ?? 5;  // Default to 5
+      int delay = seconds ?? 5;  // Default to 5
       Thread.Sleep(delay * 1000);
     }
   )
@@ -209,7 +209,7 @@ var app = new NuruAppBuilder()
 Use `string[]` for catch-all parameters:
 
 ```csharp
-var app = new NuruAppBuilder()
+NuruApp app = new NuruAppBuilder()
   .AddRoute
   (
     "echo {*words}",
@@ -220,7 +220,7 @@ var app = new NuruAppBuilder()
     "add {*files}",
     (string[] files) =>
     {
-      foreach (var file in files)
+      foreach (string file in files)
         ProcessFile(file);
     }
   )
@@ -300,13 +300,13 @@ See [Analyzer Documentation](../features/analyzer.md) for more details.
 .AddRoute("wait {seconds:int}", (int sec) => ...)
 
 // ❌ String requires manual validation
-var badApp = new NuruAppBuilder()
+NuruApp badApp = new NuruAppBuilder()
   .AddRoute
   (
     "wait {seconds}",
     (string sec) =>
     {
-      if (!int.TryParse(sec, out var value))
+      if (!int.TryParse(sec, out int value))
         throw new ArgumentException("Invalid number");
       // ...
     }

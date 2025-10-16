@@ -130,7 +130,7 @@ builder.Services.AddSingleton<ICalculator, Calculator>();
 // Register command with handler
 builder.AddRoute<FactorialCommand>("factorial {n:int}");
 
-var app = builder.Build();
+NuruApp app = builder.Build();
 return await app.RunAsync(args);
 ```
 
@@ -173,7 +173,7 @@ See the [Mixed approach example](../../Samples/Calculator/calc-mixed.cs).
 Enable automatic help generation:
 
 ```csharp
-var app = new NuruAppBuilder()
+NuruApp app = new NuruAppBuilder()
     .AddRoute("deploy {env|Target environment} {tag?|Optional version}",
         (string env, string? tag) => Deploy(env, tag))
     .AddAutoHelp()

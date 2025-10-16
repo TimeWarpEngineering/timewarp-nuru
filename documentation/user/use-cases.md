@@ -13,7 +13,7 @@ Build modern command-line tools from scratch with clean architecture and progres
 ```csharp
 using TimeWarp.Nuru;
 
-var app = new NuruAppBuilder()
+NuruApp app = new NuruAppBuilder()
   .AddRoute("version", () => Console.WriteLine("MyTool v1.0.0"))
   .AddRoute("status", () => ShowSystemStatus())
   .AddRoute("config get {key}", (string key) => Console.WriteLine(GetConfig(key)))
@@ -54,7 +54,7 @@ builder.AddRoute<QueryCommand>("query {sql}");
 builder.AddRoute<DeployCommand>("deploy {env} --version {tag?} --dry-run");
 builder.AddRoute<GenerateReportCommand>("report generate {type} --format {fmt}");
 
-var app = builder.Build();
+NuruApp app = builder.Build();
 return await app.RunAsync(args);
 ```
 
@@ -98,7 +98,7 @@ builder.AddRoute("add {*files}", (string[] files) => StageFiles(files));
 builder.AddRoute("commit -m {message}", (string message) => Commit(message));
 builder.AddRoute("push --force", (bool force) => Push(force));
 
-var app = builder.Build();
+NuruApp app = builder.Build();
 return await app.RunAsync(args);
 ```
 
@@ -119,7 +119,7 @@ Wrap existing command-line tools to add authentication, logging, validation, or 
 ```csharp
 using TimeWarp.Nuru;
 
-var builder = new NuruAppBuilder();
+NuruAppBuilder builder = new();
 
 // Intercept production deployments for auth check
 builder.AddRoute
@@ -148,7 +148,7 @@ builder.AddRoute
   }
 );
 
-var app = builder.Build();
+NuruApp app = builder.Build();
 return await app.RunAsync(args);
 ```
 
@@ -234,7 +234,7 @@ builder.AddRoute
   "build {project} --debug --quiet",
   async (string project, bool debug, bool quiet) =>
   {
-    var args = new List<string> { "--project", project };
+    List<string> args = new() { "--project", project };
     args.Add("--config");
     args.Add(debug ? "Debug" : "Release");
     if (!quiet) args.Add("--verbose");
@@ -278,12 +278,12 @@ public sealed class MonitoredCommand : IRequest<int>
     {
       public async Task<int> Handle(MonitoredCommand cmd, CancellationToken ct)
       {
-        var sw = Stopwatch.StartNew();
-        var command = string.Join(" ", cmd.Args);
+        Stopwatch sw = Stopwatch.StartNew();
+        string command = string.Join(" ", cmd.Args);
 
         try
         {
-          var result = await Shell.ExecuteAsync("original-tool", cmd.Args);
+          int result = await Shell.ExecuteAsync("original-tool", cmd.Args);
           sw.Stop();
 
           await telemetry.TrackCommandAsync
@@ -344,6 +344,8 @@ builder.AddRoute
   "legacy {*args}",
   async (string[] args) => await Shell.ExecuteAsync("old-deploy-tool", args)
 );
+
+NuruApp app = builder.Build();
 ```
 
 ### Database Management CLI
@@ -360,6 +362,8 @@ builder.Services.AddSingleton<IDatabaseService, DatabaseService>();
 builder.AddRoute<BackupCommand>("db backup {name} --compress");
 builder.AddRoute<RestoreCommand>("db restore {name} --from {file}");
 builder.AddRoute<MigrateCommand>("db migrate {name} --version {ver?}");
+
+NuruApp app = builder.Build();
 ```
 
 ## Choosing Your Approach

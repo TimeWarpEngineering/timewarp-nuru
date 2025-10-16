@@ -27,7 +27,7 @@ dotnet add package TimeWarp.Nuru
 ```csharp
 using TimeWarp.Nuru;
 
-var app = new NuruAppBuilder()
+NuruApp app = new NuruAppBuilder()
   .AddRoute
   (
     "add {x:double} {y:double}",
@@ -88,7 +88,7 @@ dotnet run -- add 15 25
 Build modern command-line tools from scratch:
 
 ```csharp
-var app = new NuruAppBuilder()
+NuruApp app = new NuruAppBuilder()
   .AddRoute
   (
     "deploy {env} --version {tag?}",

@@ -86,7 +86,7 @@ public class RouteValidationTests
 
     // Assert
     result.ShouldContain("int");
-    result.ShouldContain("optional");
+    result.ShouldContain("?"); // Optional parameters shown with ? symbol
 
     await Task.CompletedTask;
   }

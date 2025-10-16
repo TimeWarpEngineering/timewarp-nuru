@@ -77,7 +77,7 @@ internal sealed class ValidateRouteTool
 
             return string.Join("\n", details);
         }
-        catch (ArgumentException ex)
+        catch (PatternException ex)
         {
             return $"❌ Invalid route pattern: '{pattern}'\n\nError: {ex.Message}\n\n" +
                    "**Common issues:**\n" +

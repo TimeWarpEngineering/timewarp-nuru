@@ -8,7 +8,7 @@ internal sealed class ErrorHandlingTool
     private static readonly HttpClient HttpClient = new() { Timeout = TimeSpan.FromSeconds(10) };
     private static readonly Dictionary<string, CachedContent> MemoryCache = [];
     private static readonly TimeSpan CacheTtl = TimeSpan.FromHours(1);
-    private const string ErrorHandlingDocPath = "Documentation/Developer/Reference/ErrorHandling.md";
+    private const string ErrorHandlingDocPath = "documentation/developer/reference/error-handling.md";
     private const string GitHubRawBaseUrl = "https://raw.githubusercontent.com/TimeWarpEngineering/timewarp-nuru/master/";
 
     // Sections in the error handling documentation

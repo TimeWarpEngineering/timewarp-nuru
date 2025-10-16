@@ -214,7 +214,7 @@ public class DeployCommand : IRequest
     public bool DryRun { get; set; }
     
     // Handler nested inside command for better organization
-    public class Handler(IDeploymentService deployment, ILogger logger) 
+    public sealed class Handler(IDeploymentService deployment, ILogger logger) 
         : IRequestHandler<DeployCommand>
     {
         public async Task Handle(DeployCommand cmd, CancellationToken ct)
@@ -254,7 +254,7 @@ builder.AddRoute("fetch {url}", async (string url) => {
 });
 
 // Async Mediator commands with nested handler
-public class FetchCommand : IRequest<string> 
+public sealed class FetchCommand : IRequest<string> 
 { 
     public string Url { get; set; }
     
@@ -293,11 +293,11 @@ builder.AddRoute("process {file}", (string file) =>
 builder.AddDependencyInjection();
 builder.Services.AddLogging(); // Add logging services
 
-public class AnalyzeCommand : IRequest<AnalyzeResult>
+public sealed class AnalyzeCommand : IRequest<AnalyzeResult>
 {
     public string Path { get; set; }
     
-    public class Handler(ILogger<Handler> logger) : IRequestHandler<AnalyzeCommand, AnalyzeResult>
+    public sealed class Handler(ILogger<Handler> logger) : IRequestHandler<AnalyzeCommand, AnalyzeResult>
     {
         public async Task<AnalyzeResult> Handle(AnalyzeCommand cmd, CancellationToken ct)
         {

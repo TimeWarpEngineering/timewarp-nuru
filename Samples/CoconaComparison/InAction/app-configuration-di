@@ -27,7 +27,7 @@ var app = new NuruAppBuilder()
 return await app.RunAsync(args);
 
 // Command that receives configuration through DI
-public class RunCommand : IRequest
+public sealed class RunCommand : IRequest
 {
     internal sealed class Handler : IRequestHandler<RunCommand>
     {

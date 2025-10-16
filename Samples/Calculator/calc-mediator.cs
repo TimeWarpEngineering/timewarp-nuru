@@ -51,12 +51,12 @@ NuruApp app =
 return await app.RunAsync(args);
 
 // Command definitions with nested handlers
-public class AddCommand : IRequest
+public sealed class AddCommand : IRequest
 {
   public double X { get; set; }
   public double Y { get; set; }
 
-  public class Handler(ICalculatorService calc) : IRequestHandler<AddCommand>
+  public sealed class Handler(ICalculatorService calc) : IRequestHandler<AddCommand>
   {
     public async Task Handle(AddCommand request, CancellationToken cancellationToken)
     {
@@ -67,12 +67,12 @@ public class AddCommand : IRequest
   }
 }
 
-public class SubtractCommand : IRequest
+public sealed class SubtractCommand : IRequest
 {
   public double X { get; set; }
   public double Y { get; set; }
 
-  public class Handler(ICalculatorService calc) : IRequestHandler<SubtractCommand>
+  public sealed class Handler(ICalculatorService calc) : IRequestHandler<SubtractCommand>
   {
     public async Task Handle(SubtractCommand request, CancellationToken cancellationToken)
     {
@@ -83,12 +83,12 @@ public class SubtractCommand : IRequest
   }
 }
 
-public class MultiplyCommand : IRequest
+public sealed class MultiplyCommand : IRequest
 {
   public double X { get; set; }
   public double Y { get; set; }
 
-  public class Handler(ICalculatorService calc) : IRequestHandler<MultiplyCommand>
+  public sealed class Handler(ICalculatorService calc) : IRequestHandler<MultiplyCommand>
   {
     public async Task Handle(MultiplyCommand request, CancellationToken cancellationToken)
     {
@@ -99,12 +99,12 @@ public class MultiplyCommand : IRequest
   }
 }
 
-public class DivideCommand : IRequest
+public sealed class DivideCommand : IRequest
 {
   public double X { get; set; }
   public double Y { get; set; }
 
-  public class Handler(ICalculatorService calc) : IRequestHandler<DivideCommand>
+  public sealed class Handler(ICalculatorService calc) : IRequestHandler<DivideCommand>
   {
     public async Task Handle(DivideCommand request, CancellationToken cancellationToken)
     {
@@ -118,12 +118,12 @@ public class DivideCommand : IRequest
   }
 }
 
-public class RoundCommand : IRequest
+public sealed class RoundCommand : IRequest
 {
   public double Value { get; set; }
   public string? Mode { get; set; } = "nearest";
 
-  public class Handler(ICalculatorService calc) : IRequestHandler<RoundCommand>
+  public sealed class Handler(ICalculatorService calc) : IRequestHandler<RoundCommand>
   {
     public async Task Handle(RoundCommand request, CancellationToken cancellationToken)
     {

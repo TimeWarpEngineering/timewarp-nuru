@@ -27,7 +27,7 @@ public static class NuruMediatorCommand
   }
 }
 
-public class TestCommand : IRequest
+public sealed class TestCommand : IRequest
 {
   public string Str { get; set; } = string.Empty;
   public int IntOption { get; set; }

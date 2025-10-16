@@ -221,7 +221,7 @@ public class HelpCommand : IRequest
 {
     public string? Topic { get; set; }
     
-    public class Handler(EndpointCollection endpoints) : IRequestHandler<HelpCommand>
+    public sealed class Handler(EndpointCollection endpoints) : IRequestHandler<HelpCommand>
     {
         public Task Handle(HelpCommand request, CancellationToken cancellationToken)
         {

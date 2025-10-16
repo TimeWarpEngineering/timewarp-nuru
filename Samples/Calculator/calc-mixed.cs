@@ -90,11 +90,11 @@ NuruApp app =
 return await app.RunAsync(args);
 
 // Complex operations using Mediator pattern with nested handlers
-public class FactorialCommand : IRequest
+public sealed class FactorialCommand : IRequest
 {
   public int N { get; set; }
 
-  public class Handler(IScientificCalculator calc) : IRequestHandler<FactorialCommand>
+  public sealed class Handler(IScientificCalculator calc) : IRequestHandler<FactorialCommand>
   {
     public async Task Handle(FactorialCommand request, CancellationToken cancellationToken)
     {
@@ -117,7 +117,7 @@ public class PrimeCheckCommand : IRequest
 {
   public int N { get; set; }
 
-  public class Handler(IScientificCalculator calc) : IRequestHandler<PrimeCheckCommand>
+  public sealed class Handler(IScientificCalculator calc) : IRequestHandler<PrimeCheckCommand>
   {
     public async Task Handle(PrimeCheckCommand request, CancellationToken cancellationToken)
     {
@@ -132,7 +132,7 @@ public class FibonacciCommand : IRequest
 {
   public int N { get; set; }
 
-  public class Handler(IScientificCalculator calc) : IRequestHandler<FibonacciCommand>
+  public sealed class Handler(IScientificCalculator calc) : IRequestHandler<FibonacciCommand>
   {
     public async Task Handle(FibonacciCommand request, CancellationToken cancellationToken)
     {

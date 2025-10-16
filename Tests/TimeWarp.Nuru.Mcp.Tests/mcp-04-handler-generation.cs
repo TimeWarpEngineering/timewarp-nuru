@@ -5,7 +5,7 @@ return await RunTests<HandlerGenerationTests>(clearCache: true);
 
 [TestTag("MCP")]
 [ClearRunfileCache]
-public class HandlerGenerationTests
+public sealed class HandlerGenerationTests
 {
   public static async Task Should_generate_delegate_handler_for_simple_literal()
   {
@@ -153,7 +153,7 @@ public class HandlerGenerationTests
     string result = GenerateHandlerTool.GenerateHandler(pattern, useMediator: true);
 
     // Assert
-    result.ShouldContain("public record");
+    result.ShouldContain("public sealed class");
     result.ShouldContain("IRequest");
     result.ShouldContain("IRequestHandler");
     result.ShouldContain("AddRoute<");
@@ -172,7 +172,7 @@ public class HandlerGenerationTests
     string result = GenerateHandlerTool.GenerateHandler(pattern, useMediator: true);
 
     // Assert
-    result.ShouldContain("public record");
+    result.ShouldContain("public sealed class");
     result.ShouldContain("string? dest");
     result.ShouldContain("IRequest");
     result.ShouldNotContain("// Error");
@@ -189,7 +189,7 @@ public class HandlerGenerationTests
     string result = GenerateHandlerTool.GenerateHandler(pattern, useMediator: true);
 
     // Assert
-    result.ShouldContain("public record");
+    result.ShouldContain("public sealed class");
     result.ShouldContain("string project");
     result.ShouldContain("bool verbose");
     result.ShouldContain("string pattern");
@@ -199,9 +199,9 @@ public class HandlerGenerationTests
     await Task.CompletedTask;
   }
 
-  [Input("{missing-literal}")]
   [Input("test {param {nested}")]
   [Input("invalid --")]
+  [Input("deploy {env")]
   public static async Task Should_handle_invalid_patterns_gracefully(string pattern)
   {
     // Arrange & Act

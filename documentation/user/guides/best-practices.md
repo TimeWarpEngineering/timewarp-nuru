@@ -184,18 +184,19 @@ builder.AddRoute
 ### Choose Right Approach per Command
 
 ```csharp
-NuruAppBuilder builder = new();
+NuruAppBuilder builder = new NuruAppBuilder()
+  .AddDependencyInjection();
 
-// Direct for hot paths
-builder.AddRoute("ping", () => "pong");
-builder.AddRoute("version", () => "1.0.0");
-
-// Mediator for complex operations
-builder.AddDependencyInjection();
+// Register services (breaks fluent chain - this is intentional)
 builder.Services.AddScoped<IDeploymentService, DeploymentService>();
-builder.AddRoute<DeployCommand>("deploy {env}");
 
-NuruApp app = builder.Build();
+NuruApp app = builder
+  // Direct for hot paths
+  .AddRoute("ping", () => "pong")
+  .AddRoute("version", () => "1.0.0")
+  // Mediator for complex operations
+  .AddRoute<DeployCommand>("deploy {env}")
+  .Build();
 ```
 
 ### Minimize Allocations

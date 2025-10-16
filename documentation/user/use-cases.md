@@ -37,24 +37,24 @@ return await app.RunAsync(args);
 using TimeWarp.Nuru;
 using TimeWarp.Mediator;
 
-NuruAppBuilder builder = new();
-builder.AddDependencyInjection();
+NuruAppBuilder builder = new NuruAppBuilder()
+  .AddDependencyInjection();
 
-// Register services
+// Register services (breaks fluent chain - this is intentional)
 builder.Services.AddSingleton<IDatabaseService, DatabaseService>();
 builder.Services.AddSingleton<IAuthService, AuthService>();
 builder.Services.AddScoped<IReportGenerator, ReportGenerator>();
 
-// Simple commands remain direct
-builder.AddRoute("version", () => Console.WriteLine("v1.0.0"));
-builder.AddRoute("ping", () => Console.WriteLine("pong"));
+NuruApp app = builder
+  // Simple commands remain direct
+  .AddRoute("version", () => Console.WriteLine("v1.0.0"))
+  .AddRoute("ping", () => Console.WriteLine("pong"))
+  // Complex commands use mediator pattern
+  .AddRoute<QueryCommand>("query {sql}")
+  .AddRoute<DeployCommand>("deploy {env} --version {tag?} --dry-run")
+  .AddRoute<GenerateReportCommand>("report generate {type} --format {fmt}")
+  .Build();
 
-// Complex commands use mediator pattern
-builder.AddRoute<QueryCommand>("query {sql}");
-builder.AddRoute<DeployCommand>("deploy {env} --version {tag?} --dry-run");
-builder.AddRoute<GenerateReportCommand>("report generate {type} --format {fmt}");
-
-NuruApp app = builder.Build();
 return await app.RunAsync(args);
 ```
 
@@ -69,36 +69,33 @@ return await app.RunAsync(args);
 **Use Case**: Git-like tools with subcommands and complex options
 
 ```csharp
-NuruAppBuilder builder = new();
+NuruApp app = new NuruAppBuilder()
+  // Repository management
+  .AddRoute
+  (
+    "repo init {name} --bare",
+    (string name, bool bare) => InitializeRepository(name, bare)
+  )
+  .AddRoute
+  (
+    "repo clone {url} {path?}",
+    (string url, string? path) => CloneRepository(url, path)
+  )
+  .AddRoute("repo list", () => ListRepositories())
+  // Branch operations
+  .AddRoute("branch create {name}", (string name) => CreateBranch(name))
+  .AddRoute
+  (
+    "branch delete {name} --force",
+    (string name, bool force) => DeleteBranch(name, force)
+  )
+  .AddRoute("branch list --all", (bool all) => ListBranches(all))
+  // File operations
+  .AddRoute("add {*files}", (string[] files) => StageFiles(files))
+  .AddRoute("commit -m {message}", (string message) => Commit(message))
+  .AddRoute("push --force", (bool force) => Push(force))
+  .Build();
 
-// Repository management
-builder.AddRoute
-(
-  "repo init {name} --bare",
-  (string name, bool bare) => InitializeRepository(name, bare)
-);
-builder.AddRoute
-(
-  "repo clone {url} {path?}",
-  (string url, string? path) => CloneRepository(url, path)
-);
-builder.AddRoute("repo list", () => ListRepositories());
-
-// Branch operations
-builder.AddRoute("branch create {name}", (string name) => CreateBranch(name));
-builder.AddRoute
-(
-  "branch delete {name} --force",
-  (string name, bool force) => DeleteBranch(name, force)
-);
-builder.AddRoute("branch list --all", (bool all) => ListBranches(all));
-
-// File operations
-builder.AddRoute("add {*files}", (string[] files) => StageFiles(files));
-builder.AddRoute("commit -m {message}", (string message) => Commit(message));
-builder.AddRoute("push --force", (bool force) => Push(force));
-
-NuruApp app = builder.Build();
 return await app.RunAsync(args);
 ```
 
@@ -119,36 +116,34 @@ Wrap existing command-line tools to add authentication, logging, validation, or 
 ```csharp
 using TimeWarp.Nuru;
 
-NuruAppBuilder builder = new();
-
-// Intercept production deployments for auth check
-builder.AddRoute
-(
-  "deploy prod {*args}",
-  async (string[] args) =>
-  {
-    if (!await ValidateProductionAccess())
+NuruApp app = new NuruAppBuilder()
+  // Intercept production deployments for auth check
+  .AddRoute
+  (
+    "deploy prod {*args}",
+    async (string[] args) =>
     {
-      Console.Error.WriteLine("❌ Production access denied");
-      return 1;
+      if (!await ValidateProductionAccess())
+      {
+        Console.Error.WriteLine("❌ Production access denied");
+        return 1;
+      }
+
+      Console.WriteLine("✅ Access granted, deploying to production...");
+      return await Shell.ExecuteAsync("existing-deploy-tool", ["deploy", "prod", ..args]);
     }
+  )
+  // Other environments pass through
+  .AddRoute
+  (
+    "deploy {env} {*args}",
+    async (string env, string[] args) =>
+    {
+      return await Shell.ExecuteAsync("existing-deploy-tool", ["deploy", env, ..args]);
+    }
+  )
+  .Build();
 
-    Console.WriteLine("✅ Access granted, deploying to production...");
-    return await Shell.ExecuteAsync("existing-deploy-tool", ["deploy", "prod", ..args]);
-  }
-);
-
-// Other environments pass through
-builder.AddRoute
-(
-  "deploy {env} {*args}",
-  async (string env, string[] args) =>
-  {
-    return await Shell.ExecuteAsync("existing-deploy-tool", ["deploy", env, ..args]);
-  }
-);
-
-NuruApp app = builder.Build();
 return await app.RunAsync(args);
 ```
 
@@ -265,10 +260,15 @@ builder.AddRoute
 **Use Case**: Add telemetry to existing tools
 
 ```csharp
-builder.AddDependencyInjection();
+NuruAppBuilder builder = new NuruAppBuilder()
+  .AddDependencyInjection();
+
+// Register services (breaks fluent chain - this is intentional)
 builder.Services.AddSingleton<ITelemetryService, TelemetryService>();
 
-builder.AddRoute<MonitoredCommand>("{*args}");
+NuruApp app = builder
+  .AddRoute<MonitoredCommand>("{*args}")
+  .Build();
 
 public sealed class MonitoredCommand : IRequest<int>
 {
@@ -322,48 +322,48 @@ public sealed class MonitoredCommand : IRequest<int>
 Combine both patterns:
 
 ```csharp
-NuruAppBuilder builder = new();
+NuruAppBuilder builder = new NuruAppBuilder()
+  .AddDependencyInjection();
 
-// Simple commands - Direct
-builder.AddRoute("version", () => Console.WriteLine("DeployTool v2.0"));
-builder.AddRoute("ping {host}", (string host) => PingHost(host));
-
-// Enable DI for complex operations
-builder.AddDependencyInjection();
+// Register services (breaks fluent chain - this is intentional)
 builder.Services.AddSingleton<IDeploymentService, DeploymentService>();
 builder.Services.AddSingleton<IConfigurationService, ConfigurationService>();
 
-// Complex commands - Mediator
-builder.AddRoute<DeployCommand>("deploy {env} --version {tag?} --dry-run");
-builder.AddRoute<RollbackCommand>("rollback {env} --to {version}");
-builder.AddRoute<ValidateCommand>("validate {env}");
-
-// Wrap existing tool for migration
-builder.AddRoute
-(
-  "legacy {*args}",
-  async (string[] args) => await Shell.ExecuteAsync("old-deploy-tool", args)
-);
-
-NuruApp app = builder.Build();
+NuruApp app = builder
+  // Simple commands - Direct
+  .AddRoute("version", () => Console.WriteLine("DeployTool v2.0"))
+  .AddRoute("ping {host}", (string host) => PingHost(host))
+  // Complex commands - Mediator
+  .AddRoute<DeployCommand>("deploy {env} --version {tag?} --dry-run")
+  .AddRoute<RollbackCommand>("rollback {env} --to {version}")
+  .AddRoute<ValidateCommand>("validate {env}")
+  // Wrap existing tool for migration
+  .AddRoute
+  (
+    "legacy {*args}",
+    async (string[] args) => await Shell.ExecuteAsync("old-deploy-tool", args)
+  )
+  .Build();
 ```
 
 ### Database Management CLI
 
 ```csharp
-// Direct for queries
-builder.AddRoute("db list", () => ListDatabases());
-builder.AddRoute("db status {name}", (string name) => ShowDatabaseStatus(name));
+NuruAppBuilder builder = new NuruAppBuilder()
+  .AddDependencyInjection();
 
-// Mediator for complex operations
-builder.AddDependencyInjection();
+// Register services (breaks fluent chain - this is intentional)
 builder.Services.AddSingleton<IDatabaseService, DatabaseService>();
 
-builder.AddRoute<BackupCommand>("db backup {name} --compress");
-builder.AddRoute<RestoreCommand>("db restore {name} --from {file}");
-builder.AddRoute<MigrateCommand>("db migrate {name} --version {ver?}");
-
-NuruApp app = builder.Build();
+NuruApp app = builder
+  // Direct for queries
+  .AddRoute("db list", () => ListDatabases())
+  .AddRoute("db status {name}", (string name) => ShowDatabaseStatus(name))
+  // Mediator for complex operations
+  .AddRoute<BackupCommand>("db backup {name} --compress")
+  .AddRoute<RestoreCommand>("db restore {name} --from {file}")
+  .AddRoute<MigrateCommand>("db migrate {name} --version {ver?}")
+  .Build();
 ```
 
 ## Choosing Your Approach

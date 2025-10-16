@@ -116,14 +116,17 @@ using TimeWarp.Nuru;
 using TimeWarp.Nuru.Logging;
 using TimeWarp.Mediator;
 
-NuruAppBuilder builder = new();
-builder.AddDependencyInjection();
-builder.UseConsoleLogging();  // Logs → stderr
+NuruAppBuilder builder = new NuruAppBuilder()
+  .AddDependencyInjection()
+  .UseConsoleLogging();  // Logs → stderr
 
+// Register services (breaks fluent chain - this is intentional)
 builder.Services.AddScoped<IAnalyzer, Analyzer>();
-builder.AddRoute<AnalyzeCommand>("analyze {path}");
 
-NuruApp app = builder.Build();
+NuruApp app = builder
+  .AddRoute<AnalyzeCommand>("analyze {path}")
+  .Build();
+
 return await app.RunAsync(args);
 
 public sealed class AnalyzeCommand : IRequest<AnalysisResult>

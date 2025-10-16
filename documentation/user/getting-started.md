@@ -23,11 +23,16 @@ using TimeWarp.Nuru;
 using static System.Console;
 
 NuruApp app = new NuruAppBuilder()
-    .AddRoute("add {x:double} {y:double}",
-        (double x, double y) => WriteLine($"{x} + {y} = {x + y}"))
-    .AddRoute("multiply {x:double} {y:double}",
-        (double x, double y) => WriteLine($"{x} × {y} = {x * y}"))
-    .Build();
+    .AddRoute
+    (
+      "add {x:double} {y:double}",
+      (double x, double y) => WriteLine($"{x} + {y} = {x + y}")
+    )
+    .AddRoute
+    (
+      "multiply {x:double} {y:double}",
+      (double x, double y) => WriteLine($"{x} × {y} = {x * y}")
+    ).Build();
 
 return await app.RunAsync(args);
 ```
@@ -69,9 +74,11 @@ dotnet run -- multiply 3 7
 ### Optional Parameters
 
 ```csharp
-.AddRoute("greet {name} {greeting?}",
-    (string name, string? greeting) =>
-        WriteLine($"{greeting ?? "Hello"}, {name}!"))
+.AddRoute
+(
+  "greet {name} {greeting?}",
+  (string name, string? greeting) => WriteLine($"{greeting ?? "Hello"}, {name}!")
+)
 ```
 
 ```bash
@@ -85,10 +92,9 @@ dotnet run -- greet Bob "Good morning"
 ### Options (Flags)
 
 ```csharp
-.AddRoute("list --verbose",
-    () => WriteLine("Listing files with detailed information..."))
-.AddRoute("list",
-    () => WriteLine("Listing files..."))
+.AddRoute("list --verbose", () => WriteLine("Listing files with detailed information...")
+)
+.AddRoute("list", () => WriteLine("Listing files..."))
 ```
 
 ```bash
@@ -102,8 +108,11 @@ dotnet run -- list --verbose
 ### Catch-All Parameters
 
 ```csharp
-.AddRoute("echo {*words}",
-    (string[] words) => WriteLine(string.Join(" ", words)))
+.AddRoute
+(
+  "echo {*words}",
+  (string[] words) => WriteLine(string.Join(" ", words))
+)
 ```
 
 ```bash
@@ -121,16 +130,16 @@ For more complex scenarios, enable DI and use the Mediator pattern:
 using TimeWarp.Nuru;
 using TimeWarp.Mediator;
 
-NuruAppBuilder builder = new();
-builder.AddDependencyInjection();
+NuruAppBuilder builder = new NuruAppBuilder()
+  .AddDependencyInjection();
 
-// Register services
+// Register services (breaks fluent chain - this is intentional)
 builder.Services.AddSingleton<ICalculator, Calculator>();
 
-// Register command with handler
-builder.AddRoute<FactorialCommand>("factorial {n:int}");
+NuruApp app = builder
+  .AddRoute<FactorialCommand>("factorial {n:int}")
+  .Build();
 
-NuruApp app = builder.Build();
 return await app.RunAsync(args);
 ```
 

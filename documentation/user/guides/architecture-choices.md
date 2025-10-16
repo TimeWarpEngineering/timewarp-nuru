@@ -51,16 +51,17 @@ Enterprise patterns with full dependency injection.
 
 **Example:**
 ```csharp
-NuruAppBuilder builder = new();
-builder.AddDependencyInjection();
+NuruAppBuilder builder = new NuruAppBuilder()
+  .AddDependencyInjection();
 
+// Register services (breaks fluent chain - this is intentional)
 builder.Services.AddSingleton<IDatabase, Database>();
 builder.Services.AddScoped<IAnalyzer, Analyzer>();
 
-builder.AddRoute<QueryCommand>("query {sql}");
-builder.AddRoute<AnalyzeCommand>("analyze {*files}");
-
-NuruApp app = builder.Build();
+NuruApp app = builder
+  .AddRoute<QueryCommand>("query {sql}")
+  .AddRoute<AnalyzeCommand>("analyze {*files}")
+  .Build();
 ```
 
 ### ⚡ Mixed Approach (Recommended)
@@ -79,21 +80,20 @@ Use the right tool for each command.
 
 **Example:**
 ```csharp
-NuruAppBuilder builder = new();
+NuruAppBuilder builder = new NuruAppBuilder()
+  .AddDependencyInjection();
 
-// Direct: Simple, fast commands
-builder.AddRoute("version", () => Console.WriteLine("v1.0"));
-builder.AddRoute("ping", () => Console.WriteLine("pong"));
-
-// Enable DI
-builder.AddDependencyInjection();
+// Register services (breaks fluent chain - this is intentional)
 builder.Services.AddScoped<IDeploymentService, DeploymentService>();
 
-// Mediator: Complex commands with DI
-builder.AddRoute<DeployCommand>("deploy {env} --dry-run");
-builder.AddRoute<AnalyzeCommand>("analyze {*files}");
-
-NuruApp app = builder.Build();
+NuruApp app = builder
+  // Direct: Simple, fast commands
+  .AddRoute("version", () => Console.WriteLine("v1.0"))
+  .AddRoute("ping", () => Console.WriteLine("pong"))
+  // Mediator: Complex commands with DI
+  .AddRoute<DeployCommand>("deploy {env} --dry-run")
+  .AddRoute<AnalyzeCommand>("analyze {*files}")
+  .Build();
 ```
 
 ## Decision Guide
@@ -212,33 +212,34 @@ NuruApp app = new NuruAppBuilder()
   .Build();
 
 // Phase 2: Add DI for new complex command
-NuruAppBuilder builder = new();
-builder.AddRoute("deploy {env}", (string env) => Deploy(env));  // Keep existing
+NuruAppBuilder builder = new NuruAppBuilder()
+  .AddDependencyInjection();
 
-builder.AddDependencyInjection();
+// Register services (breaks fluent chain - this is intentional)
 builder.Services.AddScoped<IAnalyzer, Analyzer>();
-builder.AddRoute<AnalyzeCommand>("analyze {*files}");  // New complex command
 
-NuruApp app2 = builder.Build();
+NuruApp app2 = builder
+  .AddRoute("deploy {env}", (string env) => Deploy(env))  // Keep existing
+  .AddRoute<AnalyzeCommand>("analyze {*files}")  // New complex command
+  .Build();
 
 // Phase 3: Migrate deploy to mediator if needed
-builder.AddRoute<DeployCommand>("deploy {env}");  // Now uses DI/mediator
+// (Replace the direct route with mediator route)
 ```
 
 ### Start Mediator, Optimize Hot Paths
 
 ```csharp
-NuruAppBuilder builder = new();
-builder.AddDependencyInjection();
+NuruAppBuilder builder = new NuruAppBuilder()
+  .AddDependencyInjection();
 
-// Most commands use mediator
-builder.AddRoute<DeployCommand>("deploy {env}");
-builder.AddRoute<AnalyzeCommand>("analyze {*files}");
-
-// Optimize hot path with direct approach
-builder.AddRoute("ping", () => "pong");  // Called frequently, needs speed
-
-NuruApp app = builder.Build();
+NuruApp app = builder
+  // Most commands use mediator
+  .AddRoute<DeployCommand>("deploy {env}")
+  .AddRoute<AnalyzeCommand>("analyze {*files}")
+  // Optimize hot path with direct approach
+  .AddRoute("ping", () => "pong")  // Called frequently, needs speed
+  .Build();
 ```
 
 ## Real-World Scenarios
@@ -260,20 +261,20 @@ NuruApp app = new NuruAppBuilder()
 **Recommendation: Mediator**
 
 ```csharp
-NuruAppBuilder builder = new();
-builder.AddDependencyInjection();
+NuruAppBuilder builder = new NuruAppBuilder()
+  .AddDependencyInjection();
 
-// Register all services
+// Register all services (breaks fluent chain - this is intentional)
 builder.Services.AddDatabase();
 builder.Services.AddAuthentication();
 builder.Services.AddTelemetry();
 
-// All commands use mediator
-builder.AddRoute<UserCreateCommand>("user create {email}");
-builder.AddRoute<ReportGenerateCommand>("report generate {type}");
-// ... 98 more commands
-
-NuruApp app = builder.Build();
+NuruApp app = builder
+  // All commands use mediator
+  .AddRoute<UserCreateCommand>("user create {email}")
+  .AddRoute<ReportGenerateCommand>("report generate {type}")
+  // ... 98 more commands
+  .Build();
 ```
 
 ### DevOps Tool (mixed complexity)
@@ -281,21 +282,21 @@ NuruApp app = builder.Build();
 **Recommendation: Mixed**
 
 ```csharp
-NuruAppBuilder builder = new();
+NuruAppBuilder builder = new NuruAppBuilder()
+  .AddDependencyInjection();
 
-// Simple direct commands
-builder.AddRoute("version", () => Console.WriteLine("v2.0"));
-builder.AddRoute("status", () => ShowStatus());
-
-// Complex commands with DI
-builder.AddDependencyInjection();
+// Register services (breaks fluent chain - this is intentional)
 builder.Services.AddDeploymentServices();
 builder.Services.AddMonitoring();
 
-builder.AddRoute<DeployCommand>("deploy {env} --dry-run");
-builder.AddRoute<RollbackCommand>("rollback {env} --to {version}");
-
-NuruApp app = builder.Build();
+NuruApp app = builder
+  // Simple direct commands
+  .AddRoute("version", () => Console.WriteLine("v2.0"))
+  .AddRoute("status", () => ShowStatus())
+  // Complex commands with DI
+  .AddRoute<DeployCommand>("deploy {env} --dry-run")
+  .AddRoute<RollbackCommand>("rollback {env} --to {version}")
+  .Build();
 ```
 
 ## Best Practices
@@ -309,11 +310,16 @@ NuruApp app = new NuruAppBuilder()
   .Build();
 
 // ❌ Don't over-engineer from the start
-NuruAppBuilder builder = new();
-builder.AddDependencyInjection();
+NuruAppBuilder builder = new NuruAppBuilder()
+  .AddDependencyInjection();
+
+// Register services (breaks fluent chain - this is intentional)
 builder.Services.AddScoped<IGreetingService, GreetingService>();
 builder.Services.AddScoped<IGreetingFormatter, GreetingFormatter>();
-builder.AddRoute<GreetCommand>("greet {name}");  // Overkill for simple greeting
+
+NuruApp app = builder
+  .AddRoute<GreetCommand>("greet {name}")  // Overkill for simple greeting
+  .Build();
 ```
 
 ### Add Structure When Needed
@@ -328,19 +334,20 @@ Migrate to mediator when:
 ### Mix Freely
 
 ```csharp
-NuruAppBuilder builder = new();
+NuruAppBuilder builder = new NuruAppBuilder()
+  .AddDependencyInjection();
 
-// Direct for simple operations
-builder.AddRoute("ping", () => "pong");
-builder.AddRoute("version", () => "1.0");
-
-// Mediator for complex operations
-builder.AddDependencyInjection();
+// Register services (breaks fluent chain - this is intentional)
 builder.Services.AddComplexServices();
-builder.AddRoute<ComplexCommand>("complex {arg}");
 
-// Both in same app - totally fine!
-NuruApp app = builder.Build();
+NuruApp app = builder
+  // Direct for simple operations
+  .AddRoute("ping", () => "pong")
+  .AddRoute("version", () => "1.0")
+  // Mediator for complex operations
+  .AddRoute<ComplexCommand>("complex {arg}")
+  // Both in same app - totally fine!
+  .Build();
 ```
 
 ## Related Documentation

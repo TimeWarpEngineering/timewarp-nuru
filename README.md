@@ -30,17 +30,18 @@ Maximum performance with zero overhead:
 
 ```csharp
 using TimeWarp.Nuru;
+using static System.Console;
 
-var app = new NuruAppBuilder()
+NuruApp app = new NuruAppBuilder()
   .AddRoute
   (
     "add {x:double} {y:double}",
-    (double x, double y) => Console.WriteLine($"{x} + {y} = {x + y}")
+    (double x, double y) => WriteLine($"{x} + {y} = {x + y}")
   )
   .AddRoute
   (
     "multiply {x:double} {y:double}",
-    (double x, double y) => Console.WriteLine($"{x} × {y} = {x * y}")
+    (double x, double y) => WriteLine($"{x} × {y} = {x * y}")
   )
   .Build();
 
@@ -61,12 +62,11 @@ using TimeWarp.Nuru;
 using TimeWarp.Mediator;
 
 NuruAppBuilder builder = new();
-builder.AddDependencyInjection();
-
 builder.Services.AddSingleton<ICalculator, Calculator>();
-builder.AddRoute<FactorialCommand>("factorial {n:int}");
+var app = builder.AddDependencyInjection();
+  .AddRoute<FactorialCommand>("factorial {n:int}");
+  .Build();
 
-var app = builder.Build();
 return await app.RunAsync(args);
 
 // Command and handler as separate classes
@@ -92,76 +92,91 @@ dotnet run -- factorial 5
 
 > **💡 Tip:** Handlers can be nested inside commands for better organization. See [Calculator Samples](Samples/Calculator/) for nested handler examples.
 
-**🎯 Create .NET 10 single-file executables** (requires .NET 10 Preview 6+):
+**🎯 Create .NET 10 runfile executables** (requires .NET 10):
 ```bash
 #!/usr/bin/dotnet --
 #:project path/to/TimeWarp.Nuru.csproj
-// Add your code above and run directly: ./mycalc add 10 20
+// Add code from above and run directly: ./mycalc add 10 20
 ```
 
 > **💡 Explore complete working examples: [Calculator Samples](Samples/Calculator/) →**
 
 ## 🎯 Why TimeWarp.Nuru?
 
-### Mix Direct and Mediator Approaches in One App
-Choose the right tool for each command:
+### Two Powerful Use Cases
+
+**🆕 Greenfield CLI Applications**
+Build new command-line tools from scratch with modern patterns:
 ```csharp
 NuruAppBuilder builder = new();
 
-// Direct delegates for simple operations (fast, no overhead)
+// Start with direct routes for simple commands
+builder.AddRoute("version", () => Console.WriteLine("v1.0.0"));
 builder.AddRoute("ping", () => Console.WriteLine("pong"));
 
-// Add DI when you need it
+// Add DI when complexity grows
 builder.AddDependencyInjection();
-
-// Mediator pattern for complex operations (testable, DI, structured)
 builder.Services.AddSingleton<IEmployeeRepository, EmployeeRepository>();
+
+// Use mediator for enterprise features
 builder.AddRoute<GetEmployee.Query>("employee get {id:int}");
+builder.AddRoute<AnalyzeCommand>("analyze {*files}");
 ```
 
-### Web-Style Route Patterns for CLI
+**🔄 Progressive Enhancement of Existing CLIs**
+Wrap existing command-line tools to add routing, validation, or special handling:
 ```csharp
-// Familiar syntax from web development
+var builder = new NuruAppBuilder();
+
+// Intercept specific commands for special handling
+builder.AddRoute("deploy prod", async () =>
+{
+  // Custom validation and logging
+  if (!await ValidateProductionAccess()) return;
+  await Shell.ExecuteAsync("existing-cli", "deploy", "prod");
+});
+
+// Pass through all other commands to existing tool
+builder.AddRoute("{*args}", async (string[] args) =>
+{
+  await Shell.ExecuteAsync("existing-cli", args);
+});
+```
+
+### Flexible Architecture
+
+**Choose the right approach per command** - mix Direct and Mediator in the same app:
+
+| Approach     | Best For                       | Memory   | Features                                     |
+| ------------ | ------------------------------ | -------- | -------------------------------------------- |
+| **Direct**   | Simple commands, maximum speed | ~4KB     | Zero overhead, inline logic                  |
+| **Mediator** | Complex logic, testability     | Moderate | DI, structured handlers, enterprise patterns |
+| **Mixed**    | Real applications              | Optimal  | Use Direct for simple, Mediator for complex  |
+
+```csharp
+// Mixed approach example
+NuruAppBuilder builder = new();
+
+// Direct: Fast paths for simple operations
+builder.AddRoute("status", () => ShowStatus());
+builder.AddRoute("version", () => Console.WriteLine("1.0"));
+
+// Enable DI for complex operations
+builder.AddDependencyInjection();
+builder.Services.AddScoped<IAnalyzer, Analyzer>();
+
+// Mediator: Structured logic with DI
+builder.AddRoute<AnalyzeCommand>("analyze {*files}");
+builder.AddRoute<DeployCommand>("deploy {env} --dry-run");
+```
+
+### Web-Style Route Patterns
+Bring familiar web routing syntax to the command line:
+```csharp
 builder.AddRoute("deploy {env} --version {tag}", (string env, string tag) => Deploy(env, tag));
 builder.AddRoute("serve --port {port:int} --host {host?}", (int port, string? host) => StartServer(port, host));
 builder.AddRoute("backup {*files}", (string[] files) => BackupFiles(files));
 ```
-
-### Flexibility: Mix Approaches in the Same App
-**Choose the right approach for each command**:
-- Simple commands → Direct delegates (fast, zero overhead)
-- Complex commands → Mediator pattern (testable, DI, structured)
-- Both in the same app → Maximum flexibility
-
-### Choose Your Approach Per Command
-
-**🚀 Direct** - Maximum performance, zero overhead
-```csharp
-var app = new NuruAppBuilder()
-  .AddRoute("deploy {env}", (string env) => Deploy(env))
-  .Build(); // ~4KB memory, blazing fast
-```
-
-**🏗️ Mediator** - Enterprise patterns, full DI
-```csharp
-var builder = new NuruAppBuilder()
-  .AddDependencyInjection() // Enable DI and Mediator support
-  .AddRoute<DeployCommand>("deploy {env} --strategy {strategy}");
-// Testable handlers, dependency injection, complex logic
-```
-
-**⚡ Mixed** - Best of both worlds (recommended)
-```csharp
-NuruAppBuilder builder = new();
-// Simple commands: Direct (speed)
-builder.AddRoute("status", () => ShowStatus());
-
-// Enable DI for complex commands
-builder.AddDependencyInjection();
-// Complex commands: Mediator (structure)
-builder.AddRoute<AnalyzeCommand>("analyze {*files}");
-```
-*Use Direct for simple operations, Mediator for complex business logic*
 
 ## 📖 Core Concepts
 

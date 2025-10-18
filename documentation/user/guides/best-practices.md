@@ -184,13 +184,12 @@ builder.AddRoute
 ### Choose Right Approach per Command
 
 ```csharp
-NuruAppBuilder builder = new NuruAppBuilder()
-  .AddDependencyInjection();
-
-// Register services (breaks fluent chain - this is intentional)
-builder.Services.AddScoped<IDeploymentService, DeploymentService>();
-
-NuruApp app = builder
+NuruApp app = new NuruAppBuilder()
+  .AddDependencyInjection()
+  .ConfigureServices(services =>
+  {
+    services.AddScoped<IDeploymentService, DeploymentService>();
+  })
   // Direct for hot paths
   .AddRoute("ping", () => "pong")
   .AddRoute("version", () => "1.0.0")
@@ -297,19 +296,52 @@ public class AppOptions
     public int Timeout { get; set; }
 }
 
-builder.Services.Configure<AppOptions>
-(
-  builder.Configuration.GetSection("App")
-);
+// Configure options through appsettings.json
+// The options will be available via IOptions<AppOptions> in your handlers
+NuruApp app = new NuruAppBuilder()
+  .AddDependencyInjection()
+  .AddConfiguration()  // Loads appsettings.json, environment variables, etc.
+  .ConfigureServices(services =>
+  {
+    // Bind AppOptions to "App" section in appsettings.json
+    services.AddOptions<AppOptions>()
+      .BindConfiguration("App");
+  })
+  .AddRoute<SomeCommand>("some-command")
+  .Build();
+
+// In your command handler, inject IOptions<AppOptions>
+public class SomeCommand : IRequest
+{
+  public class Handler(IOptions<AppOptions> options) : IRequestHandler<SomeCommand>
+  {
+    public Task Handle(SomeCommand request, CancellationToken ct)
+    {
+      string connection = options.Value.DatabaseConnection;
+      // Use configuration...
+      return Task.CompletedTask;
+    }
+  }
+}
 ```
 
 ### Environment-Specific Settings
 
 ```csharp
-builder.Configuration
-    .AddJsonFile("appsettings.json")
-    .AddJsonFile($"appsettings.{env}.json", optional: true)
-    .AddEnvironmentVariables();
+// AddConfiguration() automatically loads:
+// - appsettings.json
+// - appsettings.{Environment}.json (via ASPNETCORE_ENVIRONMENT or DOTNET_ENVIRONMENT)
+// - Environment variables
+// - Command line arguments (if passed to AddConfiguration(args))
+NuruApp app = new NuruAppBuilder()
+  .AddDependencyInjection()
+  .AddConfiguration(args)  // Automatically handles environment-specific configuration
+  .ConfigureServices(services =>
+  {
+    services.AddOptions<DatabaseOptions>().BindConfiguration("Database");
+  })
+  .AddRoute<QueryCommand>("query {sql}")
+  .Build();
 ```
 
 ## Logging

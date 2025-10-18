@@ -12,6 +12,10 @@
     <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
     <EnableAotAnalyzer>true</EnableAotAnalyzer>
     <!-- Note: Direct delegate routing works with full AOT. Mediator routing requires partial trim mode (TrimMode=partial) -->
+
+    <!-- Output generated source files to generated directory -->
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    <CompilerGeneratedFilesOutputPath>$(MSBuildProjectDirectory)/generated</CompilerGeneratedFilesOutputPath>
   </PropertyGroup>
 
   <ItemGroup>
@@ -32,6 +36,11 @@
   <!-- Include parsing source files directly -->
   <ItemGroup>
     <Compile Include="../TimeWarp.Nuru.Parsing/**/*.cs" Exclude="../TimeWarp.Nuru.Parsing/obj/**;../TimeWarp.Nuru.Parsing/bin/**" />
+  </ItemGroup>
+
+  <!-- Exclude generated files from compilation (they're already included by the source generator) -->
+  <ItemGroup>
+    <Compile Remove="generated/**/*.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="$(RepositoryRoot)README.md" Pack="true" PackagePath="" />

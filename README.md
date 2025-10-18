@@ -61,10 +61,13 @@ Enterprise patterns with dependency injection:
 using TimeWarp.Nuru;
 using TimeWarp.Mediator;
 
-NuruAppBuilder builder = new();
-builder.Services.AddSingleton<ICalculator, Calculator>();
-var app = builder.AddDependencyInjection();
-  .AddRoute<FactorialCommand>("factorial {n:int}");
+NuruApp app = new NuruAppBuilder()
+  .AddDependencyInjection()
+  .ConfigureServices(services =>
+  {
+    services.AddSingleton<ICalculator, Calculator>();
+  })
+  .AddRoute<FactorialCommand>("factorial {n:int}")
   .Build();
 
 return await app.RunAsync(args);
@@ -108,19 +111,20 @@ dotnet run -- factorial 5
 **🆕 Greenfield CLI Applications**
 Build new command-line tools from scratch with modern patterns:
 ```csharp
-NuruAppBuilder builder = new();
-
-// Start with direct routes for simple commands
-builder.AddRoute("version", () => Console.WriteLine("v1.0.0"));
-builder.AddRoute("ping", () => Console.WriteLine("pong"));
-
-// Add DI when complexity grows
-builder.AddDependencyInjection();
-builder.Services.AddSingleton<IEmployeeRepository, EmployeeRepository>();
-
-// Use mediator for enterprise features
-builder.AddRoute<GetEmployee.Query>("employee get {id:int}");
-builder.AddRoute<AnalyzeCommand>("analyze {*files}");
+NuruApp app = new NuruAppBuilder()
+  // Start with direct routes for simple commands
+  .AddRoute("version", () => Console.WriteLine("v1.0.0"))
+  .AddRoute("ping", () => Console.WriteLine("pong"))
+  // Add DI when complexity grows
+  .AddDependencyInjection()
+  .ConfigureServices(services =>
+  {
+    services.AddSingleton<IEmployeeRepository, EmployeeRepository>();
+  })
+  // Use mediator for enterprise features
+  .AddRoute<GetEmployee.Query>("employee get {id:int}")
+  .AddRoute<AnalyzeCommand>("analyze {*files}")
+  .Build();
 ```
 
 **🔄 Progressive Enhancement of Existing CLIs**
@@ -155,19 +159,20 @@ builder.AddRoute("{*args}", async (string[] args) =>
 
 ```csharp
 // Mixed approach example
-NuruAppBuilder builder = new();
-
-// Direct: Fast paths for simple operations
-builder.AddRoute("status", () => ShowStatus());
-builder.AddRoute("version", () => Console.WriteLine("1.0"));
-
-// Enable DI for complex operations
-builder.AddDependencyInjection();
-builder.Services.AddScoped<IAnalyzer, Analyzer>();
-
-// Mediator: Structured logic with DI
-builder.AddRoute<AnalyzeCommand>("analyze {*files}");
-builder.AddRoute<DeployCommand>("deploy {env} --dry-run");
+NuruApp app = new NuruAppBuilder()
+  // Direct: Fast paths for simple operations
+  .AddRoute("status", () => ShowStatus())
+  .AddRoute("version", () => Console.WriteLine("1.0"))
+  // Enable DI for complex operations
+  .AddDependencyInjection()
+  .ConfigureServices(services =>
+  {
+    services.AddScoped<IAnalyzer, Analyzer>();
+  })
+  // Mediator: Structured logic with DI
+  .AddRoute<AnalyzeCommand>("analyze {*files}")
+  .AddRoute<DeployCommand>("deploy {env} --dry-run")
+  .Build();
 ```
 
 ### Web-Style Route Patterns
@@ -289,11 +294,14 @@ public class DeployCommand : IRequest
 }
 
 // Enable DI and register services
-builder.AddDependencyInjection();
-builder.Services.AddSingleton<IDeploymentService, DeploymentService>();
-
-// Simple registration
-builder.AddRoute<DeployCommand>("deploy {environment} --version {version?} --dry-run");
+NuruApp app = new NuruAppBuilder()
+  .AddDependencyInjection()
+  .ConfigureServices(services =>
+  {
+    services.AddSingleton<IDeploymentService, DeploymentService>();
+  })
+  .AddRoute<DeployCommand>("deploy {environment} --version {version?} --dry-run")
+  .Build();
 ```
 
 ## 🔧 Advanced Features
@@ -340,29 +348,32 @@ public sealed class FetchCommand : IRequest<string>
 TimeWarp.Nuru gives you full control over output handling:
 
 ```csharp
-// Simple console output (stdout)
-builder.AddRoute("hello", () => Console.WriteLine("Hello!"));
-
-// Structured data - automatically serialized to JSON (stdout)
-builder.AddRoute("info", () => new { Name = "MyApp", Version = "1.0" });
-
-// Separate concerns: diagnostics to stderr, data to stdout
-builder.AddRoute("process {file}", (string file) => 
-{
-  Console.Error.WriteLine($"Processing {file}...");  // Progress to stderr
-  Thread.Sleep(1000);
-  Console.Error.WriteLine("Complete!");
-  return new { File = file, Lines = 42, Status = "OK" };  // Result as JSON to stdout
-});
-
-// With DI and logging
-builder.AddDependencyInjection();
-builder.Services.AddLogging(); // Add logging services
+NuruApp app = new NuruAppBuilder()
+  // Simple console output (stdout)
+  .AddRoute("hello", () => Console.WriteLine("Hello!"))
+  // Structured data - automatically serialized to JSON (stdout)
+  .AddRoute("info", () => new { Name = "MyApp", Version = "1.0" })
+  // Separate concerns: diagnostics to stderr, data to stdout
+  .AddRoute("process {file}", (string file) =>
+  {
+    Console.Error.WriteLine($"Processing {file}...");  // Progress to stderr
+    Thread.Sleep(1000);
+    Console.Error.WriteLine("Complete!");
+    return new { File = file, Lines = 42, Status = "OK" };  // Result as JSON to stdout
+  })
+  // With DI and logging
+  .AddDependencyInjection()
+  .ConfigureServices(services =>
+  {
+    services.AddLogging();  // Add logging services
+  })
+  .AddRoute<AnalyzeCommand>("analyze {path}")
+  .Build();
 
 public sealed class AnalyzeCommand : IRequest<AnalyzeResult>
 {
   public string Path { get; set; }
-  
+
   public sealed class Handler(ILogger<Handler> logger) : IRequestHandler<AnalyzeCommand, AnalyzeResult>
   {
     public async Task<AnalyzeResult> Handle(AnalyzeCommand cmd, CancellationToken ct)

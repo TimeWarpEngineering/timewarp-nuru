@@ -115,15 +115,15 @@ Structured logging goes to stderr, results to stdout:
 using TimeWarp.Nuru;
 using TimeWarp.Nuru.Logging;
 using TimeWarp.Mediator;
+using Microsoft.Extensions.DependencyInjection;
 
-NuruAppBuilder builder = new NuruAppBuilder()
+NuruApp app = new NuruAppBuilder()
   .AddDependencyInjection()
-  .UseConsoleLogging();  // Logs → stderr
-
-// Register services (breaks fluent chain - this is intentional)
-builder.Services.AddScoped<IAnalyzer, Analyzer>();
-
-NuruApp app = builder
+  .UseConsoleLogging()  // Logs → stderr
+  .ConfigureServices(services =>
+  {
+    services.AddScoped<IAnalyzer, Analyzer>();
+  })
   .AddRoute<AnalyzeCommand>("analyze {path}")
   .Build();
 

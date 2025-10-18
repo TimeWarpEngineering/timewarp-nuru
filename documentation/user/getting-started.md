@@ -129,14 +129,14 @@ For more complex scenarios, enable DI and use the Mediator pattern:
 ```csharp
 using TimeWarp.Nuru;
 using TimeWarp.Mediator;
+using Microsoft.Extensions.DependencyInjection;
 
-NuruAppBuilder builder = new NuruAppBuilder()
-  .AddDependencyInjection();
-
-// Register services (breaks fluent chain - this is intentional)
-builder.Services.AddSingleton<ICalculator, Calculator>();
-
-NuruApp app = builder
+NuruApp app = new NuruAppBuilder()
+  .AddDependencyInjection()
+  .ConfigureServices(services =>
+  {
+    services.AddSingleton<ICalculator, Calculator>();
+  })
   .AddRoute<FactorialCommand>("factorial {n:int}")
   .Build();
 

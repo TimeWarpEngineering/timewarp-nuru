@@ -306,19 +306,20 @@ public class StatusCommand : IRequest
 
 **Examples**:
 ```csharp
-NuruAppBuilder builder = new();
-
-// Simple commands: Direct Approach (fast)
-builder.AddRoute("ping", () => Console.WriteLine("pong"))
-       .AddRoute("status", () => Console.WriteLine("OK"));
-
-// Enable DI for complex commands
-builder.AddDependencyInjection();
-builder.Services.AddScoped<ICalculator, Calculator>();
-
-// Complex commands: Mediator Approach (structured)
-builder.AddRoute<FactorialCommand>("factorial {n:int}")
-       .AddRoute<DeployCommand>("deploy {env} --version {version?}");
+NuruApp app = new NuruAppBuilder()
+  // Simple commands: Direct Approach (fast)
+  .AddRoute("ping", () => Console.WriteLine("pong"))
+  .AddRoute("status", () => Console.WriteLine("OK"))
+  // Enable DI for complex commands
+  .AddDependencyInjection()
+  .ConfigureServices(services =>
+  {
+    services.AddScoped<ICalculator, Calculator>();
+  })
+  // Complex commands: Mediator Approach (structured)
+  .AddRoute<FactorialCommand>("factorial {n:int}")
+  .AddRoute<DeployCommand>("deploy {env} --version {version?}")
+  .Build();
 ```
 
 **Benefits**:
@@ -597,14 +598,17 @@ builder.AddRoute("git {*args}", handler)
 
 **Setup**:
 ```csharp
-// Enable DI
-builder.AddDependencyInjection();
-
-// Register services
-builder.Services
-    .AddSingleton<ILogger, ConsoleLogger>()
-    .AddHttpClient()
-    .AddScoped<IValidationService, ValidationService>();
+// Enable DI and register services
+NuruApp app = new NuruAppBuilder()
+  .AddDependencyInjection()
+  .ConfigureServices(services =>
+  {
+    services.AddSingleton<ILogger, ConsoleLogger>();
+    services.AddHttpClient();
+    services.AddScoped<IValidationService, ValidationService>();
+  })
+  .AddRoute<DeployCommand>("deploy {env}")
+  .Build();
 
 // Inject into handlers
 public class DeployCommand : IRequest

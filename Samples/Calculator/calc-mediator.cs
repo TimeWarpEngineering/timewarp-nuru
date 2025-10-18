@@ -7,15 +7,14 @@ using TimeWarp.Mediator;
 using Microsoft.Extensions.DependencyInjection;
 using static System.Console;
 
-NuruAppBuilder builder =
+NuruApp app =
   new NuruAppBuilder()
   .AddDependencyInjection(config => config.RegisterServicesFromAssembly(typeof(AddCommand).Assembly))
-  .AddAutoHelp();
-
-builder.Services.AddSingleton<ICalculatorService, CalculatorService>();
-
-NuruApp app =
-  builder
+  .AddAutoHelp()
+  .ConfigureServices(services =>
+  {
+    services.AddSingleton<ICalculatorService, CalculatorService>();
+  })
   .AddRoute<AddCommand>
   (
     pattern: "add {x:double} {y:double}",

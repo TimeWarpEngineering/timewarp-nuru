@@ -36,16 +36,16 @@ return await app.RunAsync(args);
 ```csharp
 using TimeWarp.Nuru;
 using TimeWarp.Mediator;
+using Microsoft.Extensions.DependencyInjection;
 
-NuruAppBuilder builder = new NuruAppBuilder()
-  .AddDependencyInjection();
-
-// Register services (breaks fluent chain - this is intentional)
-builder.Services.AddSingleton<IDatabaseService, DatabaseService>();
-builder.Services.AddSingleton<IAuthService, AuthService>();
-builder.Services.AddScoped<IReportGenerator, ReportGenerator>();
-
-NuruApp app = builder
+NuruApp app = new NuruAppBuilder()
+  .AddDependencyInjection()
+  .ConfigureServices(services =>
+  {
+    services.AddSingleton<IDatabaseService, DatabaseService>();
+    services.AddSingleton<IAuthService, AuthService>();
+    services.AddScoped<IReportGenerator, ReportGenerator>();
+  })
   // Simple commands remain direct
   .AddRoute("version", () => Console.WriteLine("v1.0.0"))
   .AddRoute("ping", () => Console.WriteLine("pong"))
@@ -260,13 +260,12 @@ builder.AddRoute
 **Use Case**: Add telemetry to existing tools
 
 ```csharp
-NuruAppBuilder builder = new NuruAppBuilder()
-  .AddDependencyInjection();
-
-// Register services (breaks fluent chain - this is intentional)
-builder.Services.AddSingleton<ITelemetryService, TelemetryService>();
-
-NuruApp app = builder
+NuruApp app = new NuruAppBuilder()
+  .AddDependencyInjection()
+  .ConfigureServices(services =>
+  {
+    services.AddSingleton<ITelemetryService, TelemetryService>();
+  })
   .AddRoute<MonitoredCommand>("{*args}")
   .Build();
 
@@ -322,14 +321,13 @@ public sealed class MonitoredCommand : IRequest<int>
 Combine both patterns:
 
 ```csharp
-NuruAppBuilder builder = new NuruAppBuilder()
-  .AddDependencyInjection();
-
-// Register services (breaks fluent chain - this is intentional)
-builder.Services.AddSingleton<IDeploymentService, DeploymentService>();
-builder.Services.AddSingleton<IConfigurationService, ConfigurationService>();
-
-NuruApp app = builder
+NuruApp app = new NuruAppBuilder()
+  .AddDependencyInjection()
+  .ConfigureServices(services =>
+  {
+    services.AddSingleton<IDeploymentService, DeploymentService>();
+    services.AddSingleton<IConfigurationService, ConfigurationService>();
+  })
   // Simple commands - Direct
   .AddRoute("version", () => Console.WriteLine("DeployTool v2.0"))
   .AddRoute("ping {host}", (string host) => PingHost(host))
@@ -349,13 +347,12 @@ NuruApp app = builder
 ### Database Management CLI
 
 ```csharp
-NuruAppBuilder builder = new NuruAppBuilder()
-  .AddDependencyInjection();
-
-// Register services (breaks fluent chain - this is intentional)
-builder.Services.AddSingleton<IDatabaseService, DatabaseService>();
-
-NuruApp app = builder
+NuruApp app = new NuruAppBuilder()
+  .AddDependencyInjection()
+  .ConfigureServices(services =>
+  {
+    services.AddSingleton<IDatabaseService, DatabaseService>();
+  })
   // Direct for queries
   .AddRoute("db list", () => ListDatabases())
   .AddRoute("db status {name}", (string name) => ShowDatabaseStatus(name))

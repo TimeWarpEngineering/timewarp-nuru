@@ -8,11 +8,10 @@ public class OptionMatchingTests
   public static async Task Should_match_required_option_build_config_debug()
   {
     // Arrange
-    NuruAppBuilder builder = new();
     string? boundMode = null;
-    builder.AddRoute("build --config {mode}", (string mode) => { boundMode = mode; return 0; });
-
-    NuruApp app = builder.Build();
+    NuruApp app = new NuruAppBuilder()
+      .AddRoute("build --config {mode}", (string mode) => { boundMode = mode; return 0; })
+      .Build();
 
     // Act
     int exitCode = await app.RunAsync(["build", "--config", "debug"]);
@@ -27,10 +26,9 @@ public class OptionMatchingTests
   public static async Task Should_not_match_missing_required_option_build()
   {
     // Arrange
-    NuruAppBuilder builder = new();
-    builder.AddRoute("build --config {mode}", (string _) => 0);
-
-    NuruApp app = builder.Build();
+    NuruApp app = new NuruAppBuilder()
+      .AddRoute("build --config {mode}", (string _) => 0)
+      .Build();
 
     // Act
     int exitCode = await app.RunAsync(["build"]);
@@ -45,11 +43,10 @@ public class OptionMatchingTests
   {
     // Behavior #2: Required flag + Optional value (--config {mode?})
     // Arrange
-    NuruAppBuilder builder = new();
     string? boundMode = null;
-    builder.AddRoute("build --config {mode?}", (string? mode) => { boundMode = mode; return 0; });
-
-    NuruApp app = builder.Build();
+    NuruApp app = new NuruAppBuilder()
+      .AddRoute("build --config {mode?}", (string? mode) => { boundMode = mode; return 0; })
+      .Build();
 
     // Act
     int exitCode = await app.RunAsync(["build", "--config", "release"]);
@@ -65,11 +62,10 @@ public class OptionMatchingTests
   {
     // Behavior #2: Flag present without value should bind null
     // Arrange
-    NuruAppBuilder builder = new();
     string? boundMode = "unexpected";
-    builder.AddRoute("build --config {mode?}", (string? mode) => { boundMode = mode; return 0; });
-
-    NuruApp app = builder.Build();
+    NuruApp app = new NuruAppBuilder()
+      .AddRoute("build --config {mode?}", (string? mode) => { boundMode = mode; return 0; })
+      .Build();
 
     // Act
     int exitCode = await app.RunAsync(["build", "--config"]);
@@ -85,10 +81,9 @@ public class OptionMatchingTests
   {
     // Behavior #2: Missing required flag should not match
     // Arrange
-    NuruAppBuilder builder = new();
-    builder.AddRoute("build --config {mode?}", (string? _) => 0);
-
-    NuruApp app = builder.Build();
+    NuruApp app = new NuruAppBuilder()
+      .AddRoute("build --config {mode?}", (string? _) => 0)
+      .Build();
 
     // Act
     int exitCode = await app.RunAsync(["build"]);
@@ -103,11 +98,10 @@ public class OptionMatchingTests
   {
     // Behavior #3: Optional flag + Optional value (--config? {mode?})
     // Arrange
-    NuruAppBuilder builder = new();
     string? boundMode = null;
-    builder.AddRoute("build --config? {mode?}", (string? mode) => { boundMode = mode; return 0; });
-
-    NuruApp app = builder.Build();
+    NuruApp app = new NuruAppBuilder()
+      .AddRoute("build --config? {mode?}", (string? mode) => { boundMode = mode; return 0; })
+      .Build();
 
     // Act
     int exitCode = await app.RunAsync(["build", "--config", "release"]);
@@ -123,11 +117,10 @@ public class OptionMatchingTests
   {
     // Behavior #3: Optional flag present without value
     // Arrange
-    NuruAppBuilder builder = new();
     string? boundMode = "unexpected";
-    builder.AddRoute("build --config? {mode?}", (string? mode) => { boundMode = mode; return 0; });
-
-    NuruApp app = builder.Build();
+    NuruApp app = new NuruAppBuilder()
+      .AddRoute("build --config? {mode?}", (string? mode) => { boundMode = mode; return 0; })
+      .Build();
 
     // Act
     int exitCode = await app.RunAsync(["build", "--config"]);
@@ -143,11 +136,10 @@ public class OptionMatchingTests
   {
     // Behavior #3: Optional flag omitted entirely
     // Arrange
-    NuruAppBuilder builder = new();
     string? boundMode = "unexpected";
-    builder.AddRoute("build --config? {mode?}", (string? mode) => { boundMode = mode; return 0; });
-
-    NuruApp app = builder.Build();
+    NuruApp app = new NuruAppBuilder()
+      .AddRoute("build --config? {mode?}", (string? mode) => { boundMode = mode; return 0; })
+      .Build();
 
     // Act
     int exitCode = await app.RunAsync(["build"]);
@@ -163,11 +155,10 @@ public class OptionMatchingTests
   {
     // Behavior #4: Optional flag + Required value (--config? {mode})
     // Arrange
-    NuruAppBuilder builder = new();
     string? boundMode = null;
-    builder.AddRoute("build --config? {mode}", (string? mode) => { boundMode = mode; return 0; });
-
-    NuruApp app = builder.Build();
+    NuruApp app = new NuruAppBuilder()
+      .AddRoute("build --config? {mode}", (string? mode) => { boundMode = mode; return 0; })
+      .Build();
 
     // Act
     int exitCode = await app.RunAsync(["build", "--config", "debug"]);
@@ -183,11 +174,10 @@ public class OptionMatchingTests
   {
     // Behavior #4: Optional flag omitted entirely
     // Arrange
-    NuruAppBuilder builder = new();
     string? boundMode = "unexpected";
-    builder.AddRoute("build --config? {mode}", (string? mode) => { boundMode = mode; return 0; });
-
-    NuruApp app = builder.Build();
+    NuruApp app = new NuruAppBuilder()
+      .AddRoute("build --config? {mode}", (string? mode) => { boundMode = mode; return 0; })
+      .Build();
 
     // Act
     int exitCode = await app.RunAsync(["build"]);
@@ -203,10 +193,9 @@ public class OptionMatchingTests
   {
     // Behavior #4: Flag present without required value should not match
     // Arrange
-    NuruAppBuilder builder = new();
-    builder.AddRoute("build --config? {mode}", (string? _) => 0);
-
-    NuruApp app = builder.Build();
+    NuruApp app = new NuruAppBuilder()
+      .AddRoute("build --config? {mode}", (string? _) => 0)
+      .Build();
 
     // Act
     int exitCode = await app.RunAsync(["build", "--config"]);
@@ -220,11 +209,10 @@ public class OptionMatchingTests
   public static async Task Should_match_boolean_flag_build_verbose_true()
   {
     // Arrange
-    NuruAppBuilder builder = new();
     bool boundVerbose = false;
-    builder.AddRoute("build --verbose", (bool verbose) => { boundVerbose = verbose; return 0; });
-
-    NuruApp app = builder.Build();
+    NuruApp app = new NuruAppBuilder()
+      .AddRoute("build --verbose", (bool verbose) => { boundVerbose = verbose; return 0; })
+      .Build();
 
     // Act
     int exitCode = await app.RunAsync(["build", "--verbose"]);
@@ -239,11 +227,10 @@ public class OptionMatchingTests
   public static async Task Should_match_boolean_flag_build_false()
   {
     // Arrange
-    NuruAppBuilder builder = new();
     bool boundVerbose = true;
-    builder.AddRoute("build --verbose", (bool verbose) => { boundVerbose = verbose; return 0; });
-
-    NuruApp app = builder.Build();
+    NuruApp app = new NuruAppBuilder()
+      .AddRoute("build --verbose", (bool verbose) => { boundVerbose = verbose; return 0; })
+      .Build();
 
     // Act
     int exitCode = await app.RunAsync(["build"]);
@@ -258,13 +245,12 @@ public class OptionMatchingTests
   public static async Task Should_match_mixed_required_optional_deploy_env_prod_tag_v1_0_verbose()
   {
     // Arrange
-    NuruAppBuilder builder = new();
     string? boundE = null;
     string? boundT = null;
     bool boundVerbose = false;
-    builder.AddRoute("deploy --env {e} --tag {t?} --verbose", (string e, string? t, bool verbose) => { boundE = e; boundT = t; boundVerbose = verbose; return 0; });
-
-    NuruApp app = builder.Build();
+    NuruApp app = new NuruAppBuilder()
+      .AddRoute("deploy --env {e} --tag {t?} --verbose", (string e, string? t, bool verbose) => { boundE = e; boundT = t; boundVerbose = verbose; return 0; })
+      .Build();
 
     // Act
     int exitCode = await app.RunAsync(["deploy", "--env", "prod", "--tag", "v1.0", "--verbose"]);
@@ -281,13 +267,12 @@ public class OptionMatchingTests
   public static async Task Should_match_mixed_required_optional_deploy_env_prod_defaults()
   {
     // Arrange
-    NuruAppBuilder builder = new();
     string? boundE = null;
     string? boundT = "unexpected";
     bool boundVerbose = true;
-    builder.AddRoute("deploy --env {e} --tag? {t?} --verbose", (string e, string? t, bool verbose) => { boundE = e; boundT = t; boundVerbose = verbose; return 0; });
-
-    NuruApp app = builder.Build();
+    NuruApp app = new NuruAppBuilder()
+      .AddRoute("deploy --env {e} --tag? {t?} --verbose", (string e, string? t, bool verbose) => { boundE = e; boundT = t; boundVerbose = verbose; return 0; })
+      .Build();
 
     // Act
     int exitCode = await app.RunAsync(["deploy", "--env", "prod"]);
@@ -304,10 +289,9 @@ public class OptionMatchingTests
   public static async Task Should_not_match_mixed_missing_required_deploy_tag_v1_0()
   {
     // Arrange
-    NuruAppBuilder builder = new();
-    builder.AddRoute("deploy --env {e} --tag? {t?} --verbose", (string _, string? _, bool _) => 0);
-
-    NuruApp app = builder.Build();
+    NuruApp app = new NuruAppBuilder()
+      .AddRoute("deploy --env {e} --tag? {t?} --verbose", (string _, string? _, bool _) => 0)
+      .Build();
 
     // Act
     int exitCode = await app.RunAsync(["deploy", "--tag", "v1.0"]);
@@ -321,11 +305,10 @@ public class OptionMatchingTests
   public static async Task Should_match_typed_option_server_port_8080()
   {
     // Arrange
-    NuruAppBuilder builder = new();
     int boundNum = 0;
-    builder.AddRoute("server --port {num:int}", (int num) => { boundNum = num; return 0; });
-
-    NuruApp app = builder.Build();
+    NuruApp app = new NuruAppBuilder()
+      .AddRoute("server --port {num:int}", (int num) => { boundNum = num; return 0; })
+      .Build();
 
     // Act
     int exitCode = await app.RunAsync(["server", "--port", "8080"]);
@@ -340,10 +323,9 @@ public class OptionMatchingTests
   public static async Task Should_not_match_typed_option_server_port_abc()
   {
     // Arrange
-    NuruAppBuilder builder = new();
-    builder.AddRoute("server --port {num:int}", (int _) => 0);
-
-    NuruApp app = builder.Build();
+    NuruApp app = new NuruAppBuilder()
+      .AddRoute("server --port {num:int}", (int _) => 0)
+      .Build();
 
     // Act
     int exitCode = await app.RunAsync(["server", "--port", "abc"]);
@@ -357,11 +339,10 @@ public class OptionMatchingTests
   public static async Task Should_match_option_alias_build_verbose()
   {
     // Arrange
-    NuruAppBuilder builder = new();
     bool boundVerbose = false;
-    builder.AddRoute("build --verbose,-v", (bool verbose) => { boundVerbose = verbose; return 0; });
-
-    NuruApp app = builder.Build();
+    NuruApp app = new NuruAppBuilder()
+      .AddRoute("build --verbose,-v", (bool verbose) => { boundVerbose = verbose; return 0; })
+      .Build();
 
     // Act
     int exitCode = await app.RunAsync(["build", "--verbose"]);
@@ -376,11 +357,10 @@ public class OptionMatchingTests
   public static async Task Should_match_option_alias_build_v()
   {
     // Arrange
-    NuruAppBuilder builder = new();
     bool boundVerbose = false;
-    builder.AddRoute("build --verbose,-v", (bool verbose) => { boundVerbose = verbose; return 0; });
-
-    NuruApp app = builder.Build();
+    NuruApp app = new NuruAppBuilder()
+      .AddRoute("build --verbose,-v", (bool verbose) => { boundVerbose = verbose; return 0; })
+      .Build();
 
     // Act
     int exitCode = await app.RunAsync(["build", "-v"]);
@@ -396,11 +376,10 @@ public class OptionMatchingTests
   {
     // Arrange - Test optional boolean flag with alias using long form
     // Pattern: --verbose,-v? (per optional-flag-alias-syntax.md)
-    NuruAppBuilder builder = new();
     bool boundVerbose = false;
-    builder.AddRoute("build --verbose,-v?", (bool verbose) => { boundVerbose = verbose; return 0; });
-
-    NuruApp app = builder.Build();
+    NuruApp app = new NuruAppBuilder()
+      .AddRoute("build --verbose,-v?", (bool verbose) => { boundVerbose = verbose; return 0; })
+      .Build();
 
     // Act
     int exitCode = await app.RunAsync(["build", "--verbose"]);
@@ -416,11 +395,10 @@ public class OptionMatchingTests
   {
     // Arrange - Test optional boolean flag with alias using short form
     // Pattern: --verbose,-v? (per optional-flag-alias-syntax.md)
-    NuruAppBuilder builder = new();
     bool boundVerbose = false;
-    builder.AddRoute("build --verbose,-v?", (bool verbose) => { boundVerbose = verbose; return 0; });
-
-    NuruApp app = builder.Build();
+    NuruApp app = new NuruAppBuilder()
+      .AddRoute("build --verbose,-v?", (bool verbose) => { boundVerbose = verbose; return 0; })
+      .Build();
 
     // Act
     int exitCode = await app.RunAsync(["build", "-v"]);
@@ -436,11 +414,10 @@ public class OptionMatchingTests
   {
     // Arrange - Test optional boolean flag with alias omitted
     // Pattern: --verbose,-v? (per optional-flag-alias-syntax.md)
-    NuruAppBuilder builder = new();
     bool boundVerbose = true;
-    builder.AddRoute("build --verbose,-v?", (bool verbose) => { boundVerbose = verbose; return 0; });
-
-    NuruApp app = builder.Build();
+    NuruApp app = new NuruAppBuilder()
+      .AddRoute("build --verbose,-v?", (bool verbose) => { boundVerbose = verbose; return 0; })
+      .Build();
 
     // Act
     int exitCode = await app.RunAsync(["build"]);
@@ -456,14 +433,13 @@ public class OptionMatchingTests
   {
     // Arrange - Test optional flag with alias and value using long form
     // Pattern: --output,-o? {file} (per optional-flag-alias-syntax.md)
-    NuruAppBuilder builder = new();
     string? boundFile = null;
 #pragma warning disable RCS1163 // Unused parameter
-    builder.AddRoute("backup {source} --output,-o? {file}",
-      (string source, string? file) => { boundFile = file; return 0; });
+    NuruApp app = new NuruAppBuilder()
+      .AddRoute("backup {source} --output,-o? {file}",
+        (string source, string? file) => { boundFile = file; return 0; })
 #pragma warning restore RCS1163 // Unused parameter
-
-    NuruApp app = builder.Build();
+      .Build();
 
     // Act
     int exitCode = await app.RunAsync(["backup", "/data", "--output", "result.tar"]);
@@ -479,14 +455,13 @@ public class OptionMatchingTests
   {
     // Arrange - Test optional flag with alias and value using short form
     // Pattern: --output,-o? {file} (per optional-flag-alias-syntax.md)
-    NuruAppBuilder builder = new();
     string? boundFile = null;
 #pragma warning disable RCS1163 // Unused parameter
-    builder.AddRoute("backup {source} --output,-o? {file}",
-      (string source, string? file) => { boundFile = file; return 0; });
+    NuruApp app = new NuruAppBuilder()
+      .AddRoute("backup {source} --output,-o? {file}",
+        (string source, string? file) => { boundFile = file; return 0; })
 #pragma warning restore RCS1163 // Unused parameter
-
-    NuruApp app = builder.Build();
+      .Build();
 
     // Act
     int exitCode = await app.RunAsync(["backup", "/data", "-o", "result.tar"]);
@@ -502,14 +477,13 @@ public class OptionMatchingTests
   {
     // Arrange - Test optional flag with alias omitted entirely
     // Pattern: --output,-o? {file} (per optional-flag-alias-syntax.md)
-    NuruAppBuilder builder = new();
     string? boundFile = "unexpected";
 #pragma warning disable RCS1163 // Unused parameter
-    builder.AddRoute("backup {source} --output,-o? {file}",
-      (string source, string? file) => { boundFile = file; return 0; });
+    NuruApp app = new NuruAppBuilder()
+      .AddRoute("backup {source} --output,-o? {file}",
+        (string source, string? file) => { boundFile = file; return 0; })
 #pragma warning restore RCS1163 // Unused parameter
-
-    NuruApp app = builder.Build();
+      .Build();
 
     // Act
     int exitCode = await app.RunAsync(["backup", "/data"]);
@@ -525,12 +499,11 @@ public class OptionMatchingTests
   {
     // Arrange - Test optional flag with alias and optional value using long form
     // Pattern: --config,-c? {mode?} (per optional-flag-alias-syntax.md)
-    NuruAppBuilder builder = new();
     string? boundMode = null;
-    builder.AddRoute("build --config,-c? {mode?}",
-      (string? mode) => { boundMode = mode; return 0; });
-
-    NuruApp app = builder.Build();
+    NuruApp app = new NuruAppBuilder()
+      .AddRoute("build --config,-c? {mode?}",
+        (string? mode) => { boundMode = mode; return 0; })
+      .Build();
 
     // Act
     int exitCode = await app.RunAsync(["build", "--config", "debug"]);
@@ -546,12 +519,11 @@ public class OptionMatchingTests
   {
     // Arrange - Test optional flag with alias and optional value using short form
     // Pattern: --config,-c? {mode?} (per optional-flag-alias-syntax.md)
-    NuruAppBuilder builder = new();
     string? boundMode = null;
-    builder.AddRoute("build --config,-c? {mode?}",
-      (string? mode) => { boundMode = mode; return 0; });
-
-    NuruApp app = builder.Build();
+    NuruApp app = new NuruAppBuilder()
+      .AddRoute("build --config,-c? {mode?}",
+        (string? mode) => { boundMode = mode; return 0; })
+      .Build();
 
     // Act
     int exitCode = await app.RunAsync(["build", "-c", "release"]);
@@ -567,12 +539,11 @@ public class OptionMatchingTests
   {
     // Arrange - Test optional flag with alias and optional value with flag omitted
     // Pattern: --config,-c? {mode?} (per optional-flag-alias-syntax.md)
-    NuruAppBuilder builder = new();
     string? boundMode = "unexpected";
-    builder.AddRoute("build --config,-c? {mode?}",
-      (string? mode) => { boundMode = mode; return 0; });
-
-    NuruApp app = builder.Build();
+    NuruApp app = new NuruAppBuilder()
+      .AddRoute("build --config,-c? {mode?}",
+        (string? mode) => { boundMode = mode; return 0; })
+      .Build();
 
     // Act
     int exitCode = await app.RunAsync(["build"]);
@@ -588,12 +559,11 @@ public class OptionMatchingTests
   {
     // Arrange - Test optional flag present without value (long form)
     // Pattern: --config,-c? {mode?} (per optional-flag-alias-syntax.md)
-    NuruAppBuilder builder = new();
     string? boundMode = "unexpected";
-    builder.AddRoute("build --config,-c? {mode?}",
-      (string? mode) => { boundMode = mode; return 0; });
-
-    NuruApp app = builder.Build();
+    NuruApp app = new NuruAppBuilder()
+      .AddRoute("build --config,-c? {mode?}",
+        (string? mode) => { boundMode = mode; return 0; })
+      .Build();
 
     // Act
     int exitCode = await app.RunAsync(["build", "--config"]);
@@ -609,12 +579,11 @@ public class OptionMatchingTests
   {
     // Arrange - Test optional flag present without value (short form)
     // Pattern: --config,-c? {mode?} (per optional-flag-alias-syntax.md)
-    NuruAppBuilder builder = new();
     string? boundMode = "unexpected";
-    builder.AddRoute("build --config,-c? {mode?}",
-      (string? mode) => { boundMode = mode; return 0; });
-
-    NuruApp app = builder.Build();
+    NuruApp app = new NuruAppBuilder()
+      .AddRoute("build --config,-c? {mode?}",
+        (string? mode) => { boundMode = mode; return 0; })
+      .Build();
 
     // Act
     int exitCode = await app.RunAsync(["build", "-c"]);

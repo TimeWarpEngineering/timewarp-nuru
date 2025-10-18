@@ -63,9 +63,13 @@ builder.AddRoute("status", () => Console.WriteLine("All systems operational"))
 
 **Mediator approach**: For when you need structure
 ```csharp
-builder.AddDependencyInjection(); // Enable DI and Mediator support
-builder.Services.AddSingleton<IDeploymentService, DeploymentService>();
-builder.AddRoute<DeployCommand>("deploy {environment} --strategy {strategy}");
+builder
+  .AddDependencyInjection() // Enable DI and Mediator support
+  .ConfigureServices(services =>
+  {
+    services.AddSingleton<IDeploymentService, DeploymentService>();
+  })
+  .AddRoute<DeployCommand>("deploy {environment} --strategy {strategy}");
 ```
 
 The kicker? You can use both in the same app. Simple commands stay simple. Complex commands get the full treatment.
@@ -75,23 +79,22 @@ The kicker? You can use both in the same app. Simple commands stay simple. Compl
 Here's a deployment tool I built last week:
 
 ```csharp
-NuruAppBuilder builder = new();
+var app = new NuruAppBuilder()
+  // Simple commands: Direct
+  .AddRoute("status", () => ShowStatus())
+  .AddRoute("version", () => Console.WriteLine("v1.0.0"))
+  // Enable DI for complex commands
+  .AddDependencyInjection()
+  .ConfigureServices(services =>
+  {
+    services.AddSingleton<IKubernetesClient, KubernetesClient>();
+    services.AddSingleton<IDeploymentService, DeploymentService>();
+  })
+  // Complex commands: Mediator with DI
+  .AddRoute<DeployCommand>("deploy {cluster} {app} --tag {tag}")
+  .AddRoute<RollbackCommand>("rollback {cluster} {app} --to {version}")
+  .Build();
 
-// Simple commands: Direct
-builder.AddRoute("status", () => ShowStatus());
-builder.AddRoute("version", () => Console.WriteLine("v1.0.0"));
-
-// Enable DI for complex commands
-builder.AddDependencyInjection();
-
-// Complex commands: Mediator with DI
-builder.Services.AddSingleton<IKubernetesClient, KubernetesClient>();
-builder.Services.AddSingleton<IDeploymentService, DeploymentService>();
-
-builder.AddRoute<DeployCommand>("deploy {cluster} {app} --tag {tag}");
-builder.AddRoute<RollbackCommand>("rollback {cluster} {app} --to {version}");
-
-var app = builder.Build();
 return await app.RunAsync(args);
 ```
 

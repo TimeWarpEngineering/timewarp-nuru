@@ -8,11 +8,10 @@ public class EndOfOptionsTests
   public static async Task Should_match_end_of_options_with_catch_all_run_not_a_flag_file_txt()
   {
     // Arrange
-    NuruAppBuilder builder = new();
     string[]? boundArgs = null;
-    builder.AddRoute("run -- {*args}", (string[] args) => { boundArgs = args; return 0; });
-
-    NuruApp app = builder.Build();
+    NuruApp app = new NuruAppBuilder()
+      .AddRoute("run -- {*args}", (string[] args) => { boundArgs = args; return 0; })
+      .Build();
 
     // Act
     int exitCode = await app.RunAsync(["run", "--", "--not-a-flag", "file.txt"]);
@@ -30,12 +29,11 @@ public class EndOfOptionsTests
   public static async Task Should_match_parameter_before_end_of_options_execute_run_sh_verbose_file_txt()
   {
     // Arrange
-    NuruAppBuilder builder = new();
     string? boundScript = null;
     string[]? boundArgs = null;
-    builder.AddRoute("execute {script} -- {*args}", (string script, string[] args) => { boundScript = script; boundArgs = args; return 0; });
-
-    NuruApp app = builder.Build();
+    NuruApp app = new NuruAppBuilder()
+      .AddRoute("execute {script} -- {*args}", (string script, string[] args) => { boundScript = script; boundArgs = args; return 0; })
+      .Build();
 
     // Act
     int exitCode = await app.RunAsync(["execute", "run.sh", "--", "--verbose", "file.txt"]);
@@ -54,11 +52,10 @@ public class EndOfOptionsTests
   public static async Task Should_match_empty_args_after_separator_run()
   {
     // Arrange
-    NuruAppBuilder builder = new();
     string[]? boundArgs = null;
-    builder.AddRoute("run -- {*args}", (string[] args) => { boundArgs = args; return 0; });
-
-    NuruApp app = builder.Build();
+    NuruApp app = new NuruAppBuilder()
+      .AddRoute("run -- {*args}", (string[] args) => { boundArgs = args; return 0; })
+      .Build();
 
     // Act
     int exitCode = await app.RunAsync(["run", "--"]);
@@ -74,13 +71,12 @@ public class EndOfOptionsTests
   public static async Task Should_parse_options_before_separator_docker_run_detach_nginx_port_80()
   {
     // Arrange
-    NuruAppBuilder builder = new();
-    builder.UseDebugLogging();
     bool boundDetach = false;
     string[]? boundCmd = null;
-    builder.AddRoute("docker run --detach -- {*cmd}", (bool detach, string[] cmd) => { boundDetach = detach; boundCmd = cmd; return 0; });
-
-    NuruApp app = builder.Build();
+    NuruApp app = new NuruAppBuilder()
+      .UseDebugLogging()
+      .AddRoute("docker run --detach -- {*cmd}", (bool detach, string[] cmd) => { boundDetach = detach; boundCmd = cmd; return 0; })
+      .Build();
 
     // Act
     int exitCode = await app.RunAsync(["docker", "run", "--detach", "--", "nginx", "--port", "80"]);

@@ -111,6 +111,32 @@ public class NuruAppBuilder
   }
 
   /// <summary>
+  /// Configures services using the provided action, enabling fluent service registration
+  /// while maintaining the builder chain.
+  /// </summary>
+  /// <param name="configure">The action to configure services.</param>
+  /// <returns>The builder for chaining.</returns>
+  /// <example>
+  /// <code>
+  /// var app = new NuruAppBuilder()
+  ///   .AddDependencyInjection()
+  ///   .ConfigureServices(services =>
+  ///   {
+  ///     services.AddSingleton&lt;ICalculator, Calculator&gt;();
+  ///     services.AddLogging(config => config.AddConsole());
+  ///     services.Configure&lt;AppOptions&gt;(Configuration.GetSection("App"));
+  ///   })
+  ///   .AddRoute&lt;Command&gt;("route")
+  ///   .Build();
+  /// </code>
+  /// </example>
+  public NuruAppBuilder ConfigureServices(Action<IServiceCollection> configure)
+  {
+    configure?.Invoke(Services);
+    return this;
+  }
+
+  /// <summary>
   /// Adds a default route that executes when no arguments are provided.
   /// </summary>
   public NuruAppBuilder AddDefaultRoute(Delegate handler, string? description = null)

@@ -53,23 +53,22 @@ class SampleCommandFilterAttribute : CommandFilterAttribute
 ## Nuru Implementation (DI/Mediator)
 
 ```csharp
-// Create app with DI and pipeline behaviors
-var builder = new NuruAppBuilder()
-    .AddDependencyInjection(config => 
+// Create app with DI and pipeline behaviors - fully fluent!
+NuruApp app = new NuruAppBuilder()
+    .AddDependencyInjection(config =>
     {
         config.RegisterServicesFromAssembly(typeof(HelloCommand).Assembly);
-    });
-
-// Configure logging and add pipeline behaviors
-builder.Services.AddLogging(config => 
-{
-    config.AddConsole();
-    config.SetMinimumLevel(LogLevel.Information);
-});
-builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
-builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
-
-var app = builder
+    })
+    .ConfigureServices(services =>
+    {
+        services.AddLogging(config =>
+        {
+            config.AddConsole();
+            config.SetMinimumLevel(LogLevel.Information);
+        });
+        services.AddTransient(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
+        services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+    })
     .AddRoute<HelloCommand>("hello")
     .AddAutoHelp()
     .Build();

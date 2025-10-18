@@ -5,36 +5,30 @@
 #:property PublishAot=false
 
 using TimeWarp.Nuru;
-using TimeWarp.Nuru.Extensions;
 using TimeWarp.Mediator;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using static System.Console;
 
-// Create app with DI and pipeline behaviors
-var builder = new NuruAppBuilder()
-    .AddDependencyInjection(config => 
-    {
-        config.RegisterServicesFromAssembly(typeof(HelloCommand).Assembly);
-    });
-
-// Configure logging and add pipeline behaviors
-builder.Services.AddLogging(config => 
-{
-    config.AddConsole();
-    config.SetMinimumLevel(LogLevel.Information);
-});
-builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
-builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
-
-var app = builder
-    .AddRoute<HelloCommand>("hello")
-    .AddAutoHelp()
-    .Build();
-
-// Optional: Display pipeline info
-// var pipelineInfo = builder.Services.GetPipelineInfo();
-// WriteLine(pipelineInfo);
+// Create app with DI and pipeline behaviors - fully fluent!
+NuruApp app = new NuruAppBuilder()
+  .AddDependencyInjection(config =>
+  {
+      config.RegisterServicesFromAssembly(typeof(HelloCommand).Assembly);
+  })
+  .ConfigureServices(services =>
+  {
+      services.AddLogging(config =>
+      {
+          config.AddConsole();
+          config.SetMinimumLevel(LogLevel.Information);
+      });
+      services.AddTransient(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
+      services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+  })
+  .AddRoute<HelloCommand>("hello")
+  .AddAutoHelp()
+  .Build();
 
 return await app.RunAsync(args);
 

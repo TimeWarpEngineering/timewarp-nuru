@@ -8,11 +8,10 @@ public class BasicMatchingTests
   public static async Task Should_match_exact_literal_status_delegate()
   {
     // Arrange
-    NuruAppBuilder builder = new();
     bool matched = false;
-    builder.AddRoute("status", () => { matched = true; return 0; });
-
-    NuruApp app = builder.Build();
+    NuruApp app = new NuruAppBuilder()
+      .AddRoute("status", () => { matched = true; return 0; })
+      .Build();
 
     // Act
     int exitCode = await app.RunAsync(["status"]);
@@ -27,10 +26,9 @@ public class BasicMatchingTests
   public static async Task Should_not_match_different_literal_version_delegate()
   {
     // Arrange
-    NuruAppBuilder builder = new();
-    builder.AddRoute("status", () => 0);
-
-    NuruApp app = builder.Build();
+    NuruApp app = new NuruAppBuilder()
+      .AddRoute("status", () => 0)
+      .Build();
 
     // Act
     int exitCode = await app.RunAsync(["version"]);
@@ -44,11 +42,10 @@ public class BasicMatchingTests
   public static async Task Should_match_multi_literal_git_status_delegate()
   {
     // Arrange
-    NuruAppBuilder builder = new();
     bool matched = false;
-    builder.AddRoute("git status", () => { matched = true; return 0; });
-
-    NuruApp app = builder.Build();
+    NuruApp app = new NuruAppBuilder()
+      .AddRoute("git status", () => { matched = true; return 0; })
+      .Build();
 
     // Act
     int exitCode = await app.RunAsync(["git", "status"]);
@@ -63,10 +60,9 @@ public class BasicMatchingTests
   public static async Task Should_not_match_different_multi_literal_git_commit_delegate()
   {
     // Arrange
-    NuruAppBuilder builder = new();
-    builder.AddRoute("git status", () => 0);
-
-    NuruApp app = builder.Build();
+    NuruApp app = new NuruAppBuilder()
+      .AddRoute("git status", () => 0)
+      .Build();
 
     // Act
     int exitCode = await app.RunAsync(["git", "commit"]);
@@ -80,10 +76,9 @@ public class BasicMatchingTests
   public static async Task Should_not_match_case_insensitive_status_delegate()
   {
     // Arrange
-    NuruAppBuilder builder = new();
-    builder.AddRoute("status", () => 0);
-
-    NuruApp app = builder.Build();
+    NuruApp app = new NuruAppBuilder()
+      .AddRoute("status", () => 0)
+      .Build();
 
     // Act
     int exitCode = await app.RunAsync(["STATUS"]);
@@ -97,10 +92,9 @@ public class BasicMatchingTests
   public static async Task Should_not_match_too_few_arguments_git_status_delegate()
   {
     // Arrange
-    NuruAppBuilder builder = new();
-    builder.AddRoute("git status", () => 0);
-
-    NuruApp app = builder.Build();
+    NuruApp app = new NuruAppBuilder()
+      .AddRoute("git status", () => 0)
+      .Build();
 
     // Act
     int exitCode = await app.RunAsync(["git"]);
@@ -114,10 +108,9 @@ public class BasicMatchingTests
   public static async Task Should_not_match_extra_arguments_git_status_verbose_delegate()
   {
     // Arrange
-    NuruAppBuilder builder = new();
-    builder.AddRoute("git status", () => 0);
-
-    NuruApp app = builder.Build();
+    NuruApp app = new NuruAppBuilder()
+      .AddRoute("git status", () => 0)
+      .Build();
 
     // Act
     int exitCode = await app.RunAsync(["git", "status", "--verbose"]);
@@ -131,11 +124,10 @@ public class BasicMatchingTests
   public static async Task Should_match_empty_pattern_with_empty_input_delegate()
   {
     // Arrange
-    NuruAppBuilder builder = new();
     bool matched = false;
-    builder.AddDefaultRoute(() => { matched = true; return 0; });
-
-    NuruApp app = builder.Build();
+    NuruApp app = new NuruAppBuilder()
+      .AddDefaultRoute(() => { matched = true; return 0; })
+      .Build();
 
     // Act
     int exitCode = await app.RunAsync([]);
@@ -150,10 +142,9 @@ public class BasicMatchingTests
   public static async Task Should_not_match_empty_pattern_with_anything_delegate()
   {
     // Arrange
-    NuruAppBuilder builder = new();
-    builder.AddDefaultRoute(() => 0);
-
-    NuruApp app = builder.Build();
+    NuruApp app = new NuruAppBuilder()
+      .AddDefaultRoute(() => 0)
+      .Build();
 
     // Act
     int exitCode = await app.RunAsync(["anything"]);

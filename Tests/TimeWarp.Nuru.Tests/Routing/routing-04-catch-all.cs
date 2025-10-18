@@ -9,11 +9,10 @@ public class CatchAllTests
   public static async Task Should_match_basic_catch_all_run_one_two_three()
   {
     // Arrange
-    NuruAppBuilder builder = new();
     string[]? boundArgs = null;
-    builder.AddRoute("run {*args}", (string[] args) => { boundArgs = args; return 0; });
-
-    NuruApp app = builder.Build();
+    NuruApp app = new NuruAppBuilder()
+      .AddRoute("run {*args}", (string[] args) => { boundArgs = args; return 0; })
+      .Build();
 
     // Act
     int exitCode = await app.RunAsync(["run", "one", "two", "three"]);
@@ -32,11 +31,10 @@ public class CatchAllTests
   public static async Task Should_match_empty_catch_all_passthrough()
   {
     // Arrange
-    NuruAppBuilder builder = new();
     string[]? boundArgs = null;
-    builder.AddRoute("passthrough {*args}", (string[] args) => { boundArgs = args; return 0; });
-
-    NuruApp app = builder.Build();
+    NuruApp app = new NuruAppBuilder()
+      .AddRoute("passthrough {*args}", (string[] args) => { boundArgs = args; return 0; })
+      .Build();
 
     // Act
     int exitCode = await app.RunAsync(["passthrough"]);
@@ -52,11 +50,10 @@ public class CatchAllTests
   public static async Task Should_match_catch_all_after_literals_docker_run_nginx_port_8080()
   {
     // Arrange
-    NuruAppBuilder builder = new();
     string[]? boundCmd = null;
-    builder.AddRoute("docker run {*cmd}", (string[] cmd) => { boundCmd = cmd; return 0; });
-
-    NuruApp app = builder.Build();
+    NuruApp app = new NuruAppBuilder()
+      .AddRoute("docker run {*cmd}", (string[] cmd) => { boundCmd = cmd; return 0; })
+      .Build();
 
     // Act
     int exitCode = await app.RunAsync(["docker", "run", "nginx", "--port", "8080"]);
@@ -75,12 +72,11 @@ public class CatchAllTests
   public static async Task Should_match_catch_all_after_parameters_execute_test_sh_verbose_output_log_txt()
   {
     // Arrange
-    NuruAppBuilder builder = new();
     string? boundScript = null;
     string[]? boundArgs = null;
-    builder.AddRoute("execute {script} {*args}", (string script, string[] args) => { boundScript = script; boundArgs = args; return 0; });
-
-    NuruApp app = builder.Build();
+    NuruApp app = new NuruAppBuilder()
+      .AddRoute("execute {script} {*args}", (string script, string[] args) => { boundScript = script; boundArgs = args; return 0; })
+      .Build();
 
     // Act
     int exitCode = await app.RunAsync(["execute", "test.sh", "--verbose", "--output", "log.txt"]);
@@ -100,11 +96,10 @@ public class CatchAllTests
   public static async Task Should_match_catch_all_preserves_options_npm_install_save_dev_typescript()
   {
     // Arrange
-    NuruAppBuilder builder = new();
     string[]? boundArgs = null;
-    builder.AddRoute("npm {*args}", (string[] args) => { boundArgs = args; return 0; });
-
-    NuruApp app = builder.Build();
+    NuruApp app = new NuruAppBuilder()
+      .AddRoute("npm {*args}", (string[] args) => { boundArgs = args; return 0; })
+      .Build();
 
     // Act
     int exitCode = await app.RunAsync(["npm", "install", "--save-dev", "typescript"]);

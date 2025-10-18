@@ -427,3 +427,4 @@ Tests/logs/
 
 # Agent workspace for temporary files
 .agent/workspace/
+Source/TimeWarp.Nuru/generated/

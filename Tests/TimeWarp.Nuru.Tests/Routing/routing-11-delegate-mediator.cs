@@ -12,11 +12,10 @@ public class DelegateMediatorConsistencyTests
   public static async Task Should_identical_matching_basic_literal_delegate()
   {
     // Arrange - Delegate
-    NuruAppBuilder builder = new();
     bool matched = false;
-    builder.AddRoute("status", () => { matched = true; return 0; });
-
-    NuruApp app = builder.Build();
+    NuruApp app = new NuruAppBuilder()
+      .AddRoute("status", () => { matched = true; return 0; })
+      .Build();
 
     // Act
     int exitCode = await app.RunAsync(["status"]);
@@ -31,12 +30,14 @@ public class DelegateMediatorConsistencyTests
   public static async Task Should_identical_matching_basic_literal_mediator()
   {
     // Arrange - Mediator
-    NuruAppBuilder builder = new();
-    builder.AddDependencyInjection();
-    builder.AddRoute<StatusCommand>("status");
-    builder.Services.AddTransient<IRequestHandler<StatusCommand>>(_ => new StatusHandler());
-
-    NuruApp app = builder.Build();
+    NuruApp app = new NuruAppBuilder()
+      .AddDependencyInjection()
+      .ConfigureServices(services =>
+      {
+        services.AddTransient<IRequestHandler<StatusCommand>, StatusHandler>();
+      })
+      .AddRoute<StatusCommand>("status")
+      .Build();
 
     // Act
     int exitCode = await app.RunAsync(["status"]);
@@ -51,11 +52,10 @@ public class DelegateMediatorConsistencyTests
   public static async Task Should_identical_matching_string_parameter_delegate()
   {
     // Arrange - Delegate
-    NuruAppBuilder builder = new();
     string? boundName = null;
-    builder.AddRoute("greet {name}", (string name) => { boundName = name; return 0; });
-
-    NuruApp app = builder.Build();
+    NuruApp app = new NuruAppBuilder()
+      .AddRoute("greet {name}", (string name) => { boundName = name; return 0; })
+      .Build();
 
     // Act
     int exitCode = await app.RunAsync(["greet", "Alice"]);
@@ -70,12 +70,14 @@ public class DelegateMediatorConsistencyTests
   public static async Task Should_identical_matching_string_parameter_mediator()
   {
     // Arrange - Mediator
-    NuruAppBuilder builder = new();
-    builder.AddDependencyInjection();
-    builder.AddRoute<GreetCommand>("greet {name}");
-    builder.Services.AddTransient<IRequestHandler<GreetCommand>>(_ => new GreetHandler());
-
-    NuruApp app = builder.Build();
+    NuruApp app = new NuruAppBuilder()
+      .AddDependencyInjection()
+      .ConfigureServices(services =>
+      {
+        services.AddTransient<IRequestHandler<GreetCommand>, GreetHandler>();
+      })
+      .AddRoute<GreetCommand>("greet {name}")
+      .Build();
 
     // Act
     int exitCode = await app.RunAsync(["greet", "Alice"]);
@@ -90,10 +92,9 @@ public class DelegateMediatorConsistencyTests
   public static async Task Should_identical_error_type_mismatch_delegate()
   {
     // Arrange - Delegate
-    NuruAppBuilder builder = new();
-    builder.AddRoute("delay {ms:int}", (int _) => 0);
-
-    NuruApp app = builder.Build();
+    NuruApp app = new NuruAppBuilder()
+    .AddRoute("delay {ms:int}", (int _) => 0)
+    .Build();
 
     // Act
     int exitCode = await app.RunAsync(["delay", "abc"]);
@@ -107,12 +108,14 @@ public class DelegateMediatorConsistencyTests
   public static async Task Should_identical_error_type_mismatch_mediator()
   {
     // Arrange - Mediator
-    NuruAppBuilder builder = new();
-    builder.AddDependencyInjection();
-    builder.AddRoute<DelayCommand>("delay {ms:int}");
-    builder.Services.AddTransient<IRequestHandler<DelayCommand>>(_ => new DelayHandler());
-
-    NuruApp app = builder.Build();
+    NuruApp app = new NuruAppBuilder()
+      .AddDependencyInjection()
+      .ConfigureServices(services =>
+      {
+        services.AddTransient<IRequestHandler<DelayCommand>, DelayHandler>();
+      })
+      .AddRoute<DelayCommand>("delay {ms:int}")
+      .Build();
 
     // Act
     int exitCode = await app.RunAsync(["delay", "abc"]);
@@ -127,11 +130,10 @@ public class DelegateMediatorConsistencyTests
   public static async Task Should_identical_matching_optional_string_delegate()
   {
     // Arrange - Delegate
-    NuruAppBuilder builder = new();
     string? boundEnv = null;
-    builder.AddRoute("deploy {env?}", (string? env) => { boundEnv = env; return 0; });
-
-    NuruApp app = builder.Build();
+    NuruApp app = new NuruAppBuilder()
+      .AddRoute("deploy {env?}", (string? env) => { boundEnv = env; return 0; })
+      .Build();
 
     // Act
     int exitCode = await app.RunAsync(["deploy"]);
@@ -146,12 +148,14 @@ public class DelegateMediatorConsistencyTests
   public static async Task Should_identical_matching_optional_string_mediator()
   {
     // Arrange - Mediator
-    NuruAppBuilder builder = new();
-    builder.AddDependencyInjection();
-    builder.AddRoute<DeployCommand>("deploy {env?}");
-    builder.Services.AddTransient<IRequestHandler<DeployCommand>>(_ => new DeployHandler());
-
-    NuruApp app = builder.Build();
+    NuruApp app = new NuruAppBuilder()
+      .AddDependencyInjection()
+      .ConfigureServices(services =>
+      {
+        services.AddTransient<IRequestHandler<DeployCommand>, DeployHandler>();
+      })
+      .AddRoute<DeployCommand>("deploy {env?}")
+      .Build();
 
     // Act
     int exitCode = await app.RunAsync(["deploy"]);

@@ -8,14 +8,13 @@ public class ComplexIntegrationTests
   public static async Task Should_match_docker_style_command()
   {
     // Arrange
-    NuruAppBuilder builder = new();
     bool boundI = false;
     bool boundT = false;
     string[]? boundE = null;
     string[]? boundCmd = null;
-    builder.AddRoute("docker run -i -t --env {e}* -- {*cmd}", (bool i, bool t, string[] e, string[] cmd) => { boundI = i; boundT = t; boundE = e; boundCmd = cmd; return 0; });
-
-    NuruApp app = builder.Build();
+    NuruApp app = new NuruAppBuilder()
+      .AddRoute("docker run -i -t --env {e}* -- {*cmd}", (bool i, bool t, string[] e, string[] cmd) => { boundI = i; boundT = t; boundE = e; boundCmd = cmd; return 0; })
+      .Build();
 
     // Act
     int exitCode = await app.RunAsync(["docker", "run", "-i", "-t", "--env", "A=1", "--env", "B=2", "--", "nginx", "--port", "80"]);
@@ -40,13 +39,12 @@ public class ComplexIntegrationTests
   public static async Task Should_match_git_commit_with_aliases()
   {
     // Arrange
-    NuruAppBuilder builder = new();
     string? boundMsg = null;
     bool boundAmend = false;
     bool boundNoVerify = false;
-    builder.AddRoute("git commit --message,-m {msg} --amend --no-verify", (string msg, bool amend, bool noVerify) => { boundMsg = msg; boundAmend = amend; boundNoVerify = noVerify; return 0; });
-
-    NuruApp app = builder.Build();
+    NuruApp app = new NuruAppBuilder()
+      .AddRoute("git commit --message,-m {msg} --amend --no-verify", (string msg, bool amend, bool noVerify) => { boundMsg = msg; boundAmend = amend; boundNoVerify = noVerify; return 0; })
+      .Build();
 
     // Act
     int exitCode = await app.RunAsync(["git", "commit", "-m", "fix bug", "--amend"]);
@@ -63,14 +61,13 @@ public class ComplexIntegrationTests
   public static async Task Should_match_progressive_enhancement_build_verbose()
   {
     // Arrange
-    NuruAppBuilder builder = new();
     string? boundProject = null;
     string? boundCfg = null;
     bool boundVerbose = false;
     bool boundWatch = false;
-    builder.AddRoute("build {project?} --config? {cfg?} --verbose --watch", (string? project, string? cfg, bool verbose, bool watch) => { boundProject = project; boundCfg = cfg; boundVerbose = verbose; boundWatch = watch; return 0; });
-
-    NuruApp app = builder.Build();
+    NuruApp app = new NuruAppBuilder()
+      .AddRoute("build {project?} --config? {cfg?} --verbose --watch", (string? project, string? cfg, bool verbose, bool watch) => { boundProject = project; boundCfg = cfg; boundVerbose = verbose; boundWatch = watch; return 0; })
+      .Build();
 
     // Act
     int exitCode = await app.RunAsync(["build", "--verbose"]);
@@ -88,13 +85,12 @@ public class ComplexIntegrationTests
   public static async Task Should_match_multi_valued_with_types_process_id_1_2_tag_A_run_sh()
   {
     // Arrange
-    NuruAppBuilder builder = new();
     int[]? boundId = null;
     string[]? boundT = null;
     string? boundScript = null;
-    builder.AddRoute("process --id {id:int}* --tag {t}* {script}", (int[] id, string[] t, string script) => { boundId = id; boundT = t; boundScript = script; return 0; });
-
-    NuruApp app = builder.Build();
+    NuruApp app = new NuruAppBuilder()
+      .AddRoute("process --id {id:int}* --tag {t}* {script}", (int[] id, string[] t, string script) => { boundId = id; boundT = t; boundScript = script; return 0; })
+      .Build();
 
     // Act
     int exitCode = await app.RunAsync(["process", "--id", "1", "--id", "2", "--tag", "A", "run.sh"]);

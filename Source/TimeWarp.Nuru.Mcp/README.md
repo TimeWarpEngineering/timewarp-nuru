@@ -11,7 +11,7 @@ An MCP (Model Context Protocol) server that provides tools for working with Time
 dotnet tool install --global TimeWarp.Nuru.Mcp
 
 # Or install from local package during development
-dotnet tool install --global --add-source ./Source/TimeWarp.Nuru.Mcp/bin/Release/ TimeWarp.Nuru.Mcp --version 2.1.0-beta.9
+dotnet tool install --global --add-source ./Source/TimeWarp.Nuru.Mcp/bin/Release/ TimeWarp.Nuru.Mcp --version 2.1.0-beta.20
 
 # Uninstall
 dotnet tool uninstall --global TimeWarp.Nuru.Mcp

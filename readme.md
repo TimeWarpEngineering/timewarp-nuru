@@ -173,7 +173,6 @@ We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 **For Contributors:**
 - **[Developer Documentation](documentation/developer/overview.md)** - Architecture and design
 - **[Standards](documentation/developer/standards/)** - Coding conventions
-- **[Roadmap](documentation/developer/roadmap/)** - Future plans
 
 ## 📄 License
 

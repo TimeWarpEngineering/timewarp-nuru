@@ -6,12 +6,22 @@ using TimeWarp.Nuru.Parsing;
 /// JSON serialization context for TimeWarp.Nuru with source generation support.
 /// For user-defined types, create your own JsonSerializerContext in your application.
 /// </summary>
-// Exceptions and Errors
+/// <remarks>
+/// Exception types use SafeExceptionConverter to avoid TargetSite reflection issues in Native AOT.
+/// The source generator creates metadata for exception properties (including TargetSite), but this
+/// code is never executed because SafeExceptionConverter is checked first via TryGetTypeInfoForRuntimeCustomConverter.
+/// IL2026 warnings are suppressed because the generated property accessors are protected by the converter.
+/// </remarks>
+// Exception types (handled by SafeExceptionConverter at runtime)
+[UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode",
+    Justification = "Exception types use SafeExceptionConverter which handles serialization without accessing TargetSite. " +
+                    "The generated metadata that accesses TargetSite is protected by TryGetTypeInfoForRuntimeCustomConverter check and is never executed.")]
 [JsonSerializable(typeof(Exception))]
 [JsonSerializable(typeof(InvalidOperationException))]
 [JsonSerializable(typeof(ArgumentException))]
 [JsonSerializable(typeof(ParseException))]
 [JsonSerializable(typeof(PatternException))]
+// Errors (not exceptions - these are safe for source generation)
 [JsonSerializable(typeof(SemanticError))]
 [JsonSerializable(typeof(DuplicateParameterNamesError))]
 [JsonSerializable(typeof(ConflictingOptionalParametersError))]

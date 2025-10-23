@@ -49,13 +49,12 @@ using Microsoft.Extensions.Logging;
 
 // Active example - change which one is active by commenting/uncommenting:
 
-// Example A: DELEGATE routes with ILoggerFactory injection (NO DI container needed!)
+// Example A: DELEGATE routes with ILogger<T> injection (NO DI container needed!)
 // Demonstrates that delegates can use logging without the memory overhead of full DI
 NuruApp app = new NuruAppBuilder()
     .UseConsoleLogging()
-    .AddRoute("test", (ILoggerFactory loggerFactory) =>
+    .AddRoute("test", (ILogger<Program> logger) =>
     {
-      ILogger logger = loggerFactory.CreateLogger("TestDelegate");
       logger.LogTrace("This is a TRACE message (very detailed)");
       logger.LogDebug("This is a DEBUG message (detailed)");
       logger.LogInformation("This is an INFORMATION message - Test command executed!");
@@ -63,9 +62,8 @@ NuruApp app = new NuruAppBuilder()
       logger.LogError("This is an ERROR message");
       Console.WriteLine("✓ Test delegate completed");
     })
-    .AddRoute("greet {name}", (string name, ILoggerFactory loggerFactory) =>
+    .AddRoute("greet {name}", (string name, ILogger<Program> logger) =>
     {
-      ILogger logger = loggerFactory.CreateLogger("GreetDelegate");
       logger.LogInformation("Greeting user: {Name}", name);
       Console.WriteLine($"Hello, {name}!");
     })

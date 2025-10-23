@@ -32,7 +32,7 @@ public class NuruApp
     LoggerFactory = loggerFactory ?? Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance;
 
     // If logging is configured but DI is not, create a minimal service provider
-    // that can resolve ILoggerFactory for delegate parameter injection
+    // that can resolve ILoggerFactory and ILogger<T> for delegate parameter injection
     if (loggerFactory is not null && loggerFactory != Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance)
     {
       ServiceProvider = new LoggerServiceProvider(loggerFactory);
@@ -204,7 +204,7 @@ internal sealed class EmptyServiceProvider : IServiceProvider
 }
 
 /// <summary>
-/// Provides a minimal service provider that can resolve ILoggerFactory.
+/// Provides a minimal service provider that can resolve ILoggerFactory and ILogger&lt;T&gt;.
 /// Used when logging is configured but dependency injection is not enabled.
 /// </summary>
 internal sealed class LoggerServiceProvider : IServiceProvider
@@ -221,6 +221,14 @@ internal sealed class LoggerServiceProvider : IServiceProvider
     if (serviceType == typeof(ILoggerFactory))
     {
       return LoggerFactory;
+    }
+
+    // Handle ILogger<T> requests by creating Logger<T> instances
+    if (serviceType.IsGenericType && serviceType.GetGenericTypeDefinition() == typeof(ILogger<>))
+    {
+      Type categoryType = serviceType.GetGenericArguments()[0];
+      Type loggerType = typeof(Logger<>).MakeGenericType(categoryType);
+      return Activator.CreateInstance(loggerType, LoggerFactory)!;
     }
 
     return null;

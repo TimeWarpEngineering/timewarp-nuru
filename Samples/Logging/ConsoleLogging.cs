@@ -49,14 +49,37 @@ using Microsoft.Extensions.Logging;
 
 // Active example - change which one is active by commenting/uncommenting:
 
-// Example A: Default Information level (shows Info, Warning, Error)
+// Example A: DELEGATE routes with ILoggerFactory injection (NO DI container needed!)
+// Demonstrates that delegates can use logging without the memory overhead of full DI
 NuruApp app = new NuruAppBuilder()
     .UseConsoleLogging()
-    .AddDependencyInjection(config => config.RegisterServicesFromAssembly(typeof(TestCommand).Assembly))
-    .AddRoute<TestCommand>("test")
-    .AddRoute<GreetCommand>("greet {name}")
-    .AddAutoHelp()
+    .AddRoute("test", (ILoggerFactory loggerFactory) =>
+    {
+      ILogger logger = loggerFactory.CreateLogger("TestDelegate");
+      logger.LogTrace("This is a TRACE message (very detailed)");
+      logger.LogDebug("This is a DEBUG message (detailed)");
+      logger.LogInformation("This is an INFORMATION message - Test command executed!");
+      logger.LogWarning("This is a WARNING message");
+      logger.LogError("This is an ERROR message");
+      Console.WriteLine("✓ Test delegate completed");
+    })
+    .AddRoute("greet {name}", (string name, ILoggerFactory loggerFactory) =>
+    {
+      ILogger logger = loggerFactory.CreateLogger("GreetDelegate");
+      logger.LogInformation("Greeting user: {Name}", name);
+      Console.WriteLine($"Hello, {name}!");
+    })
     .Build();
+
+// Example A2: MEDIATOR commands with ILogger<T> injection (requires DI)
+// Uncomment to try:
+// NuruApp app = new NuruAppBuilder()
+//     .UseConsoleLogging()
+//     .AddDependencyInjection(config => config.RegisterServicesFromAssembly(typeof(TestCommand).Assembly))
+//     .AddRoute<TestCommand>("test")
+//     .AddRoute<GreetCommand>("greet {name}")
+//     .AddAutoHelp()
+//     .Build();
 
 // Example B: Debug level (shows Debug, Info, Warning, Error)
 // Uncomment to try:

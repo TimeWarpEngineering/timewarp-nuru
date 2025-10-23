@@ -16,6 +16,8 @@
     <PackageVersion Include="Microsoft.Extensions.Logging" Version="9.0.9" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Console" Version="9.0.9" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.9" />
+    <PackageVersion Include="Microsoft.Extensions.Options" Version="9.0.9" />
+    <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="9.0.9" />
   </ItemGroup>
 
   <ItemGroup Label="TimeWarp Packages">

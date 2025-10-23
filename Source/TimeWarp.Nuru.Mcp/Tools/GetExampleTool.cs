@@ -14,17 +14,6 @@ internal sealed class GetExampleTool
         TypeInfoResolver = new System.Text.Json.Serialization.Metadata.DefaultJsonTypeInfoResolver()
     };
 
-    // Fallback examples in case manifest fetch fails
-    private static readonly Dictionary<string, ExampleInfo> FallbackExamples = new()
-    {
-        ["basic"] = new("Samples/Calculator/calc-mixed.cs", "Calculator mixing Delegate and Mediator patterns - best of both worlds"),
-        ["mixed"] = new("Samples/Calculator/calc-mixed.cs", "Mixed approach combining delegate performance with mediator structure"),
-        ["delegate"] = new("Samples/Calculator/calc-delegate.cs", "Pure delegate routing for maximum performance with no DI overhead"),
-        ["mediator"] = new("Samples/Calculator/calc-mediator.cs", "Mediator pattern with DI for testability and enterprise patterns"),
-        ["console-logging"] = new("Samples/Logging/ConsoleLogging.cs", "Console logging integration example"),
-        ["serilog"] = new("Samples/Logging/SerilogLogging.cs", "Serilog integration with structured logging"),
-    };
-
     private static Dictionary<string, ExampleInfo>? DynamicExamples;
     private static DateTime ManifestLastFetched = DateTime.MinValue;
 
@@ -212,21 +201,20 @@ internal sealed class GetExampleTool
                 }
             }
         }
-        catch (HttpRequestException)
+        catch (HttpRequestException ex)
         {
-            // Fall through to use fallback examples
+            throw new InvalidOperationException($"Failed to fetch examples manifest from GitHub: {ex.Message}", ex);
         }
-        catch (TaskCanceledException)
+        catch (TaskCanceledException ex)
         {
-            // Fall through to use fallback examples
+            throw new InvalidOperationException($"Request timed out fetching examples manifest: {ex.Message}", ex);
         }
-        catch (JsonException)
+        catch (JsonException ex)
         {
-            // Fall through to use fallback examples if JSON parsing fails
+            throw new InvalidOperationException($"Failed to parse examples manifest JSON: {ex.Message}", ex);
         }
 
-        // Return fallback examples if manifest fetch fails
-        return FallbackExamples;
+        throw new InvalidOperationException("Examples manifest was empty or invalid");
     }
 
     private sealed record ExampleInfo(string Path, string Description);

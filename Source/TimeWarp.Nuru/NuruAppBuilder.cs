@@ -13,6 +13,7 @@ public class NuruAppBuilder
   private ServiceCollection? ServiceCollection;
   private bool AutoHelpEnabled;
   private ILoggerFactory? LoggerFactory;
+  private IConfiguration? Configuration;
 
   /// <summary>
   /// Gets the collection of registered endpoints.
@@ -93,11 +94,30 @@ public class NuruAppBuilder
       throw new InvalidOperationException("Configuration requires dependency injection. Call AddDependencyInjection() first.");
     }
 
+    string environmentName = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")
+      ?? Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT")
+      ?? "Production";
+
     IConfigurationBuilder configuration = new ConfigurationBuilder()
       .SetBasePath(Directory.GetCurrentDirectory())
       .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
-      .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? "Production"}.json", optional: true, reloadOnChange: true)
-      .AddEnvironmentVariables();
+      .AddJsonFile($"appsettings.{environmentName}.json", optional: true, reloadOnChange: true);
+
+    // Add application-specific settings files (matches .NET 10 convention from https://github.com/dotnet/runtime/pull/116987)
+    string? applicationName = System.Reflection.Assembly.GetEntryAssembly()?.GetName().Name;
+    if (!string.IsNullOrEmpty(applicationName))
+    {
+      // Sanitize path separators in application name (for file-based apps with paths)
+      string sanitizedApplicationName = applicationName
+        .Replace(Path.DirectorySeparatorChar, '_')
+        .Replace(Path.AltDirectorySeparatorChar, '_');
+
+      configuration
+        .AddJsonFile($"{sanitizedApplicationName}.settings.json", optional: true, reloadOnChange: true)
+        .AddJsonFile($"{sanitizedApplicationName}.settings.{environmentName}.json", optional: true, reloadOnChange: true);
+    }
+
+    configuration.AddEnvironmentVariables();
 
     if (args?.Length > 0)
     {
@@ -105,6 +125,7 @@ public class NuruAppBuilder
     }
 
     IConfigurationRoot configurationRoot = configuration.Build();
+    Configuration = configurationRoot;
     ServiceCollection.AddSingleton<IConfiguration>(configurationRoot);
 
     return this;
@@ -133,6 +154,35 @@ public class NuruAppBuilder
   public NuruAppBuilder ConfigureServices(Action<IServiceCollection> configure)
   {
     configure?.Invoke(Services);
+    return this;
+  }
+
+  /// <summary>
+  /// Configures services using the provided action with access to configuration,
+  /// enabling fluent service registration while maintaining the builder chain.
+  /// </summary>
+  /// <param name="configure">The action to configure services with access to configuration (may be null if AddConfiguration not called).</param>
+  /// <returns>The builder for chaining.</returns>
+  /// <example>
+  /// <code>
+  /// var app = new NuruAppBuilder()
+  ///   .AddDependencyInjection()
+  ///   .AddConfiguration(args)
+  ///   .ConfigureServices((services, config) =>
+  ///   {
+  ///     if (config != null)
+  ///     {
+  ///       services.AddDbContext&lt;MyDbContext&gt;(options =>
+  ///         options.UseSqlServer(config.GetConnectionString("Default")));
+  ///     }
+  ///   })
+  ///   .AddRoute&lt;Command&gt;("route")
+  ///   .Build();
+  /// </code>
+  /// </example>
+  public NuruAppBuilder ConfigureServices(Action<IServiceCollection, IConfiguration?> configure)
+  {
+    configure?.Invoke(Services, Configuration);
     return this;
   }
 

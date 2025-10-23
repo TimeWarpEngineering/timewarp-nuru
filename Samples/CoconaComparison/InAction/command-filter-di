@@ -1,10 +1,11 @@
 #!/usr/bin/dotnet --
 // command-filter-di - Nuru DI version demonstrating mediator pipeline behaviors
 #:project ../../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
-#:package Microsoft.Extensions.Logging.Console
+#:project ../../../Source/TimeWarp.Nuru.Logging/TimeWarp.Nuru.Logging.csproj
 #:property PublishAot=false
 
 using TimeWarp.Nuru;
+using TimeWarp.Nuru.Logging;
 using TimeWarp.Mediator;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -12,17 +13,13 @@ using static System.Console;
 
 // Create app with DI and pipeline behaviors - fully fluent!
 NuruApp app = new NuruAppBuilder()
+  .UseConsoleLogging()
   .AddDependencyInjection(config =>
   {
     config.RegisterServicesFromAssembly(typeof(HelloCommand).Assembly);
   })
   .ConfigureServices(services =>
   {
-    services.AddLogging(config =>
-    {
-      config.AddConsole();
-      config.SetMinimumLevel(LogLevel.Information);
-    });
     services.AddTransient(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
     services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
   })

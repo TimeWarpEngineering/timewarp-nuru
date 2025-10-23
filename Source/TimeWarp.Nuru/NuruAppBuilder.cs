@@ -261,6 +261,10 @@ public class NuruAppBuilder
     {
       // DI path - register logger factory and build service provider
       ServiceCollection.AddSingleton(loggerFactory);
+
+      // Register ILogger<T> generic implementation (matches Microsoft.Extensions.Logging behavior)
+      ServiceCollection.AddSingleton(typeof(ILogger<>), typeof(Logger<>));
+
       ServiceProvider serviceProvider = ServiceCollection.BuildServiceProvider();
       return new NuruApp(serviceProvider);
     }

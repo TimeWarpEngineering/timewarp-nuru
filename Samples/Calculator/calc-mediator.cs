@@ -11,8 +11,15 @@ NuruApp app =
   new NuruAppBuilder()
   .AddDependencyInjection(config => config.RegisterServicesFromAssembly(typeof(AddCommand).Assembly))
   .AddAutoHelp()
-  .ConfigureServices(services =>
+  // ConfigureServices has two overloads:
+  // 1. ConfigureServices(Action<IServiceCollection>) - when you don't need configuration
+  // 2. ConfigureServices(Action<IServiceCollection, IConfiguration?>) - when you need access to configuration
+  //    (Configuration is available if AddConfiguration() was called)
+  .ConfigureServices((services, config) =>
   {
+    // Example: could use config here if AddConfiguration() was called
+    // string? connectionString = config?.GetConnectionString("Default");
+
     services.AddSingleton<ICalculatorService, CalculatorService>();
   })
   .AddRoute<AddCommand>

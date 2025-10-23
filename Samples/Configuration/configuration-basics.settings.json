@@ -1,0 +1,15 @@
+{
+  "AppName": "Nuru Configuration Demo",
+  "Environment": "Development",
+  "Database": {
+    "Host": "localhost",
+    "Port": 5432,
+    "DatabaseName": "myapp_dev",
+    "Timeout": 30
+  },
+  "Api": {
+    "BaseUrl": "https://api.example.com",
+    "TimeoutSeconds": 30,
+    "RetryCount": 3
+  }
+}

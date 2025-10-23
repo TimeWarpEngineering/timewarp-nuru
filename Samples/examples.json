@@ -57,6 +57,14 @@
       "path": "Samples/Logging/SerilogLogging.cs",
       "tags": ["logging", "serilog", "structured-logging", "diagnostics"],
       "difficulty": "intermediate"
+    },
+    {
+      "id": "configuration",
+      "name": "Configuration Basics",
+      "description": "Demonstrates AOT-compatible AddConfiguration() with .settings.json files, strongly-typed options, and ConfigureServices with IConfiguration access",
+      "path": "Samples/Configuration/configuration-basics.cs",
+      "tags": ["configuration", "dependency-injection", "options-pattern", "appsettings", "aot-compatible", "settings-json"],
+      "difficulty": "intermediate"
     }
   ]
 }

@@ -1,10 +1,11 @@
 #!/usr/bin/dotnet --
 // command-filter-di - Nuru DI version demonstrating mediator pipeline behaviors
 #:project ../../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
-#:package Microsoft.Extensions.Logging.Console
+#:project ../../../Source/TimeWarp.Nuru.Logging/TimeWarp.Nuru.Logging.csproj
 #:property PublishAot=false
 
 using TimeWarp.Nuru;
+using TimeWarp.Nuru.Logging;
 using TimeWarp.Mediator;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -12,19 +13,15 @@ using static System.Console;
 
 // Create app with DI and pipeline behaviors - fully fluent!
 NuruApp app = new NuruAppBuilder()
+  .UseConsoleLogging()
   .AddDependencyInjection(config =>
   {
-      config.RegisterServicesFromAssembly(typeof(HelloCommand).Assembly);
+    config.RegisterServicesFromAssembly(typeof(HelloCommand).Assembly);
   })
   .ConfigureServices(services =>
   {
-      services.AddLogging(config =>
-      {
-          config.AddConsole();
-          config.SetMinimumLevel(LogLevel.Information);
-      });
-      services.AddTransient(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
-      services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+    services.AddTransient(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
+    services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
   })
   .AddRoute<HelloCommand>("hello")
   .AddAutoHelp()
@@ -35,64 +32,64 @@ return await app.RunAsync(args);
 // Command with multiple pipeline behaviors applied
 public sealed class HelloCommand : IRequest
 {
-    internal sealed class Handler : IRequestHandler<HelloCommand>
+  internal sealed class Handler : IRequestHandler<HelloCommand>
+  {
+    public async Task Handle(HelloCommand request, CancellationToken cancellationToken)
     {
-        public async Task Handle(HelloCommand request, CancellationToken cancellationToken)
-        {
-            WriteLine($"Hello Konnichiwa");
-            await Task.CompletedTask;
-        }
+      WriteLine($"Hello Konnichiwa");
+      await Task.CompletedTask;
     }
+  }
 }
 
 // Logging behavior (similar to CommandFilter)
 public sealed class LoggingBehavior<TRequest, TResponse> : TimeWarp.Mediator.IPipelineBehavior<TRequest, TResponse>
     where TRequest : IRequest
 {
-    private readonly ILogger<LoggingBehavior<TRequest, TResponse>> _logger;
+  private readonly ILogger<LoggingBehavior<TRequest, TResponse>> Logger;
 
-    public LoggingBehavior(ILogger<LoggingBehavior<TRequest, TResponse>> logger)
-    {
-        _logger = logger;
-    }
+  public LoggingBehavior(ILogger<LoggingBehavior<TRequest, TResponse>> logger)
+  {
+    Logger = logger;
+  }
 
-    public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
+  public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
+  {
+    var requestName = typeof(TRequest).Name;
+    Logger.LogInformation($"[LoggingBehavior] Before Command: {requestName}");
+
+    try
     {
-        var requestName = typeof(TRequest).Name;
-        _logger.LogInformation($"[LoggingBehavior] Before Command: {requestName}");
-        
-        try
-        {
-            var response = await next();
-            _logger.LogInformation($"[LoggingBehavior] After Command: {requestName}");
-            return response;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError($"[LoggingBehavior] Exception: {ex.GetType().FullName}: {ex.Message}");
-            throw;
-        }
+      var response = await next();
+      Logger.LogInformation($"[LoggingBehavior] After Command: {requestName}");
+      return response;
     }
+    catch (Exception ex)
+    {
+      Logger.LogError($"[LoggingBehavior] Exception: {ex.GetType().FullName}: {ex.Message}");
+      throw;
+    }
+  }
 }
 
 // Validation behavior (another cross-cutting concern)
 public sealed class ValidationBehavior<TRequest, TResponse> : TimeWarp.Mediator.IPipelineBehavior<TRequest, TResponse>
     where TRequest : IRequest
 {
-    private readonly ILogger<ValidationBehavior<TRequest, TResponse>> _logger;
+  private readonly ILogger<ValidationBehavior<TRequest, TResponse>> Logger;
 
-    public ValidationBehavior(ILogger<ValidationBehavior<TRequest, TResponse>> logger)
-    {
-        _logger = logger;
-    }
+  public ValidationBehavior(ILogger<ValidationBehavior<TRequest, TResponse>> logger)
+  {
+    Logger = logger;
+  }
 
-    public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
-    {
-        _logger.LogInformation($"[ValidationBehavior] Validating: {typeof(TRequest).Name}");
-        
-        // In a real application, you would perform validation here
-        // For example, using FluentValidation or custom validation logic
-        
-        return await next();
-    }
+  public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
+  {
+    Logger.LogInformation($"[ValidationBehavior] Validating: {typeof(TRequest).Name}");
+
+    // In a real application, you would perform validation here
+    // For example, using FluentValidation or custom validation logic
+
+    return await next();
+  }
 }

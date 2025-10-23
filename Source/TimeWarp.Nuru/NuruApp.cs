@@ -30,6 +30,13 @@ public class NuruApp
     Endpoints = endpoints ?? throw new ArgumentNullException(nameof(endpoints));
     TypeConverterRegistry = typeConverterRegistry ?? throw new ArgumentNullException(nameof(typeConverterRegistry));
     LoggerFactory = loggerFactory ?? Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance;
+
+    // If logging is configured but DI is not, create a minimal service provider
+    // that can resolve ILoggerFactory for delegate parameter injection
+    if (loggerFactory is not null && loggerFactory != Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance)
+    {
+      ServiceProvider = new LoggerServiceProvider(loggerFactory);
+    }
   }
 
   /// <summary>
@@ -194,4 +201,28 @@ internal sealed class EmptyServiceProvider : IServiceProvider
   private EmptyServiceProvider() { }
 
   public object? GetService(Type serviceType) => null;
+}
+
+/// <summary>
+/// Provides a minimal service provider that can resolve ILoggerFactory.
+/// Used when logging is configured but dependency injection is not enabled.
+/// </summary>
+internal sealed class LoggerServiceProvider : IServiceProvider
+{
+  private readonly ILoggerFactory LoggerFactory;
+
+  public LoggerServiceProvider(ILoggerFactory loggerFactory)
+  {
+    LoggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
+  }
+
+  public object? GetService(Type serviceType)
+  {
+    if (serviceType == typeof(ILoggerFactory))
+    {
+      return LoggerFactory;
+    }
+
+    return null;
+  }
 }

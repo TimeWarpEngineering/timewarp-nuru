@@ -17,17 +17,22 @@ public static class NuruLoggingExtensions
     ArgumentNullException.ThrowIfNull(builder);
 
 #pragma warning disable CA2000 // Dispose objects before losing scope - ILoggerFactory is owned by NuruApp
-    ILoggerFactory loggerFactory = LoggerFactory.Create(logging =>
-    {
-      logging
-        .SetMinimumLevel(minimumLevel)
-        .AddSimpleConsole(options =>
-        {
-          options.IncludeScopes = false;
-          options.TimestampFormat = "HH:mm:ss ";
-          options.SingleLine = true;
-        });
-    });
+    ILoggerFactory loggerFactory =
+      LoggerFactory.Create
+      (
+        logging =>
+          logging
+          .SetMinimumLevel(minimumLevel)
+          .AddSimpleConsole
+          (
+            options =>
+            {
+              options.IncludeScopes = false;
+              options.TimestampFormat = "HH:mm:ss ";
+              options.SingleLine = true;
+            }
+          )
+      );
 #pragma warning restore CA2000
 
     return builder.UseLogging(loggerFactory);

@@ -8,7 +8,13 @@ string scriptDir = AppContext.GetData("EntryPointFileDirectoryPath") as string
   ?? throw new InvalidOperationException("Could not get entry point directory");
 string repoRoot = Path.GetFullPath(Path.Combine(scriptDir, ".."));
 string testsDir = Path.Combine(repoRoot, "Tests");
-string outputFile = Path.Combine(repoRoot, "Source/TimeWarp.Nuru.Parsing/InternalsVisibleTo.g.cs");
+
+// Projects that need InternalsVisibleTo
+string[] outputFiles =
+[
+  Path.Combine(repoRoot, "Source/TimeWarp.Nuru.Parsing/InternalsVisibleTo.g.cs"),
+  Path.Combine(repoRoot, "Source/TimeWarp.Nuru.Mcp/InternalsVisibleTo.g.cs")
+];
 
 // Find all .cs files in Tests directory (single-file scripts)
 List<string> testFiles = Directory.GetFiles(testsDir, "*.cs", SearchOption.AllDirectories)
@@ -35,10 +41,15 @@ foreach (string testName in testFiles)
   sb.AppendLine();
 }
 
-// Write the file
-File.WriteAllText(outputFile, sb.ToString());
+string content = sb.ToString();
 
-Console.WriteLine($"Generated {outputFile}");
+// Write the file to all projects
+foreach (string outputFile in outputFiles)
+{
+  File.WriteAllText(outputFile, content);
+  Console.WriteLine($"Generated {outputFile}");
+}
+
 Console.WriteLine($"Added InternalsVisibleTo for {testFiles.Count} test assemblies");
 
 return 0;

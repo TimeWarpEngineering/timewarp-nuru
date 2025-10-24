@@ -13,15 +13,47 @@ The TimeWarp.Nuru MCP Server integrates with AI coding assistants (Claude Code, 
 
 ## Installation
 
-### Step 1: Install the Global Tool
+### For Claude Code
+
+Add the MCP server to Claude Code using the CLI:
+
+```bash
+claude mcp add --transport stdio --scope user timewarp-nuru -- dnx TimeWarp.Nuru.Mcp --prerelease --yes
+```
+
+This command:
+- Installs the `TimeWarp.Nuru.Mcp` .NET global tool (including prerelease versions)
+- Registers it with Claude Code as the `timewarp-nuru` MCP server
+- Configures it for your user account (not just the current project)
+
+After installation, restart Claude Code to load the MCP server.
+
+#### Removing from Claude Code
+
+To remove the MCP server from Claude Code:
+
+```bash
+claude mcp remove timewarp-nuru
+```
+
+This unregisters the server but does not uninstall the .NET global tool. To completely remove:
+
+```bash
+claude mcp remove timewarp-nuru
+dotnet tool uninstall --global TimeWarp.Nuru.Mcp
+```
+
+### For Other AI Assistants (Manual Configuration)
+
+#### Step 1: Install the Global Tool
 
 ```bash
 dotnet tool install --global TimeWarp.Nuru.Mcp
 ```
 
-### Step 2: Configure Your AI Assistant
+#### Step 2: Configure Your AI Assistant
 
-Add to your MCP client configuration (Claude Code, Roo Code, Continue, etc.):
+Add to your MCP client configuration (Roo Code, Continue, etc.):
 
 ```json
 {
@@ -34,7 +66,7 @@ Add to your MCP client configuration (Claude Code, Roo Code, Continue, etc.):
 }
 ```
 
-### Step 3: Restart Your IDE
+#### Step 3: Restart Your IDE
 
 The MCP server will automatically load and be available through your AI assistant.
 

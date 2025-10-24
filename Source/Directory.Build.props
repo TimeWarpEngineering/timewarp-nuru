@@ -4,7 +4,7 @@
 
   <!-- Default package metadata (can be overridden in individual projects) -->
   <PropertyGroup Label="Package Metadata">
-    <Version>2.1.0-beta.24</Version>
+    <Version>2.1.0-beta.25</Version>
     <Authors>Steven T. Cramer</Authors>
     <RepositoryUrl>https://github.com/TimeWarpEngineering/timewarp-nuru</RepositoryUrl>
     <PackageLicenseExpression>Unlicense</PackageLicenseExpression>
@@ -27,6 +27,10 @@
 
   <ItemGroup Label="Shared Package Assets">
     <None Include="$(RepositoryRoot)Assets/Logo.png" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+  <ItemGroup Label="Build Tasks">
+    <PackageReference Include="TimeWarp.Build.Tasks" />
   </ItemGroup>
 
 </Project>

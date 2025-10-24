@@ -16,6 +16,7 @@ builder.Services
     .WithTools<TimeWarp.Nuru.Mcp.Tools.ValidateRouteTool>()
     .WithTools<TimeWarp.Nuru.Mcp.Tools.GetSyntaxTool>()
     .WithTools<TimeWarp.Nuru.Mcp.Tools.GenerateHandlerTool>()
-    .WithTools<TimeWarp.Nuru.Mcp.Tools.ErrorHandlingTool>();
+    .WithTools<TimeWarp.Nuru.Mcp.Tools.ErrorHandlingTool>()
+    .WithTools<TimeWarp.Nuru.Mcp.Tools.GetVersionInfoTool>();
 
 await builder.Build().RunAsync().ConfigureAwait(false);

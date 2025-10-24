@@ -4,7 +4,37 @@ An MCP (Model Context Protocol) server that provides tools for working with Time
 
 ## Installation
 
-### As a .NET Global Tool
+### For Claude Code
+
+Add the MCP server to Claude Code using the CLI:
+
+```bash
+claude mcp add --transport stdio --scope user timewarp-nuru -- dnx TimeWarp.Nuru.Mcp --prerelease --yes
+```
+
+This command:
+- Installs the `TimeWarp.Nuru.Mcp` .NET global tool (including prerelease versions)
+- Registers it with Claude Code as the `timewarp-nuru` MCP server
+- Configures it for your user account (not just the current project)
+
+After installation, restart Claude Code to load the MCP server.
+
+#### Removing from Claude Code
+
+```bash
+claude mcp remove timewarp-nuru
+```
+
+This unregisters the server but does not uninstall the .NET global tool. To completely remove:
+
+```bash
+claude mcp remove timewarp-nuru
+dotnet tool uninstall --global TimeWarp.Nuru.Mcp
+```
+
+### For Other MCP Clients (Manual Configuration)
+
+#### Install the .NET Global Tool
 
 ```bash
 # Install from NuGet (when published)
@@ -17,9 +47,9 @@ dotnet tool install --global --add-source ./Source/TimeWarp.Nuru.Mcp/bin/Release
 dotnet tool uninstall --global TimeWarp.Nuru.Mcp
 ```
 
-### Configure in Your MCP Client
+#### Configure in Your MCP Client
 
-After installing the tool, configure it in your MCP-compatible client (Claude Code, Roo Code, Continue, etc.):
+After installing the tool, configure it in your MCP-compatible client (Roo Code, Continue, etc.):
 
 Add the following MCP server configuration:
 

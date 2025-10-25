@@ -344,6 +344,43 @@ NuruApp app = new NuruAppBuilder()
   .Build();
 ```
 
+### Validate Configuration at Startup
+
+Use `.ValidateOnStart()` for fail-fast configuration validation (matches ASP.NET Core behavior):
+
+```csharp
+using System.ComponentModel.DataAnnotations;
+
+public class DatabaseOptions
+{
+  [Required(ErrorMessage = "Connection string is required")]
+  public string ConnectionString { get; set; } = "";
+
+  [Range(1, 300, ErrorMessage = "Timeout must be between 1 and 300 seconds")]
+  public int CommandTimeout { get; set; } = 30;
+}
+
+NuruApp app = new NuruAppBuilder()
+  .AddDependencyInjection()
+  .AddConfiguration(args)
+  .ConfigureServices(services =>
+  {
+    services.AddOptions<DatabaseOptions>()
+      .BindConfiguration("Database")
+      .ValidateDataAnnotations()
+      .ValidateOnStart();  // ✅ Validates during Build(), not on first access
+  })
+  .AddRoute<QueryCommand>("query {sql}")
+  .Build();  // Throws OptionsValidationException if configuration is invalid
+```
+
+Benefits:
+- **Fail fast** - Invalid configuration discovered immediately at startup
+- **Clear errors** - Detailed validation messages from `OptionsValidationException`
+- **Works with** - DataAnnotations, custom validation, FluentValidation
+
+See **[configuration-validation.cs](../../../Samples/Configuration/configuration-validation.cs)** for complete examples.
+
 ## Logging
 
 ### Structured Logging

@@ -1,0 +1,21 @@
+{
+  "_comment": "This file contains INVALID configuration to demonstrate fail-fast validation",
+  "_usage": "Rename this to configuration-validation.settings.json to test validation failures",
+  "Server": {
+    "Host": "",
+    "Port": 99999,
+    "MaxConnections": -1,
+    "Timeout": 500
+  },
+  "Database": {
+    "Type": "PostgreSQL",
+    "ConnectionString": "Server=wrongformat"
+  },
+  "Api": {
+    "BaseUrl": "http://insecure.com",
+    "ApiKey": "too_short",
+    "TimeoutSeconds": 999,
+    "RetryCount": 50,
+    "RateLimitPerMinute": 5000
+  }
+}

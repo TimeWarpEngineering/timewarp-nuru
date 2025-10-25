@@ -1,0 +1,19 @@
+{
+  "Server": {
+    "Host": "api.myapp.com",
+    "Port": 443,
+    "MaxConnections": 500,
+    "Timeout": 60
+  },
+  "Database": {
+    "Type": "PostgreSQL",
+    "ConnectionString": "Host=db.myapp.com;Port=5432;Database=production;Username=app;Password=secret"
+  },
+  "Api": {
+    "BaseUrl": "https://external-api.example.com",
+    "ApiKey": "your-api-key-here-min-32-characters-required-for-validation",
+    "TimeoutSeconds": 45,
+    "RetryCount": 5,
+    "RateLimitPerMinute": 100
+  }
+}

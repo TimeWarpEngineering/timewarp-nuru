@@ -1,9 +1,5 @@
 namespace TimeWarp.Nuru;
 
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
-using TimeWarp.Nuru.Parsing;
-
 /// <summary>
 /// Unified builder for configuring Nuru applications with or without dependency injection.
 /// </summary>
@@ -316,6 +312,12 @@ public class NuruAppBuilder
       ServiceCollection.AddSingleton(typeof(ILogger<>), typeof(Logger<>));
 
       ServiceProvider serviceProvider = ServiceCollection.BuildServiceProvider();
+
+      // Invoke startup validators (matches Microsoft.Extensions.Hosting behavior)
+      // This enables .ValidateOnStart() to work as expected, providing fail-fast validation
+      IStartupValidator? startupValidator = serviceProvider.GetService<IStartupValidator>();
+      startupValidator?.Validate();
+
       return new NuruApp(serviceProvider);
     }
     else

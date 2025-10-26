@@ -61,6 +61,22 @@ public class NuruApp
       ILogger logger = LoggerFactory.CreateLogger("RouteBasedCommandResolver");
       EndpointResolutionResult result = EndpointResolver.Resolve(args, Endpoints, TypeConverterRegistry, logger);
 
+      // Validate configuration after route resolution but before execution
+      // Skip validation for help commands or if route resolution failed
+      if (!ShouldSkipValidation(args, result) && ServiceProvider is not null)
+      {
+        try
+        {
+          IStartupValidator? validator = ServiceProvider.GetService<IStartupValidator>();
+          validator?.Validate();
+        }
+        catch (OptionsValidationException ex)
+        {
+          await DisplayValidationErrorsAsync(ex).ConfigureAwait(false);
+          return 1;
+        }
+      }
+
       if (!result.Success || result.MatchedEndpoint is null)
       {
         await NuruConsole.WriteErrorLineAsync(
@@ -188,6 +204,39 @@ public class NuruApp
     }
 
     return false;
+  }
+
+  /// <summary>
+  /// Determines whether configuration validation should be skipped for the current command.
+  /// Validation is skipped for help commands and when route resolution fails.
+  /// </summary>
+  private static bool ShouldSkipValidation(string[] args, EndpointResolutionResult result)
+  {
+    // Skip validation if help flag is present
+    if (args.Any(arg => arg == "--help" || arg == "-h"))
+      return true;
+
+    // Skip validation if route resolution failed (shows "command not found" + available routes)
+    if (!result.Success)
+      return true;
+
+    return false;
+  }
+
+  /// <summary>
+  /// Displays configuration validation errors in a clean, user-friendly format.
+  /// </summary>
+  private static async Task DisplayValidationErrorsAsync(OptionsValidationException exception)
+  {
+    await NuruConsole.WriteErrorLineAsync("❌ Configuration validation failed:").ConfigureAwait(false);
+    await NuruConsole.WriteErrorLineAsync("").ConfigureAwait(false);
+
+    foreach (string failure in exception.Failures)
+    {
+      await NuruConsole.WriteErrorLineAsync($"  • {failure}").ConfigureAwait(false);
+    }
+
+    await NuruConsole.WriteErrorLineAsync("").ConfigureAwait(false);
   }
 }
 

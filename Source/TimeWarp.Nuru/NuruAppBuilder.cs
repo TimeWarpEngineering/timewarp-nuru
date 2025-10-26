@@ -313,11 +313,6 @@ public class NuruAppBuilder
 
       ServiceProvider serviceProvider = ServiceCollection.BuildServiceProvider();
 
-      // Invoke startup validators (matches Microsoft.Extensions.Hosting behavior)
-      // This enables .ValidateOnStart() to work as expected, providing fail-fast validation
-      IStartupValidator? startupValidator = serviceProvider.GetService<IStartupValidator>();
-      startupValidator?.Validate();
-
       return new NuruApp(serviceProvider);
     }
     else

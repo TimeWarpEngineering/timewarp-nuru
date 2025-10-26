@@ -61,9 +61,19 @@ public class NuruApp
       ILogger logger = LoggerFactory.CreateLogger("RouteBasedCommandResolver");
       EndpointResolutionResult result = EndpointResolver.Resolve(args, Endpoints, TypeConverterRegistry, logger);
 
-      // Validate configuration after route resolution but before execution
-      // Skip validation for help commands or if route resolution failed
-      if (!ShouldSkipValidation(args, result) && ServiceProvider is not null)
+      // Exit early if route resolution failed
+      if (!result.Success || result.MatchedEndpoint is null)
+      {
+        await NuruConsole.WriteErrorLineAsync(
+          result.ErrorMessage ?? "No matching command found."
+        ).ConfigureAwait(false);
+
+        ShowAvailableCommands();
+        return 1;
+      }
+
+      // Validate configuration before execution (skip for help commands)
+      if (!ShouldSkipValidation(args) && ServiceProvider is not null)
       {
         try
         {
@@ -75,16 +85,6 @@ public class NuruApp
           await DisplayValidationErrorsAsync(ex).ConfigureAwait(false);
           return 1;
         }
-      }
-
-      if (!result.Success || result.MatchedEndpoint is null)
-      {
-        await NuruConsole.WriteErrorLineAsync(
-          result.ErrorMessage ?? "No matching command found."
-        ).ConfigureAwait(false);
-
-        ShowAvailableCommands();
-        return 1;
       }
 
       // Execute based on endpoint strategy
@@ -177,19 +177,12 @@ public class NuruApp
 
   /// <summary>
   /// Determines whether configuration validation should be skipped for the current command.
-  /// Validation is skipped for help commands and when route resolution fails.
+  /// Validation is skipped for help commands.
   /// </summary>
-  private static bool ShouldSkipValidation(string[] args, EndpointResolutionResult result)
+  private static bool ShouldSkipValidation(string[] args)
   {
     // Skip validation if help flag is present
-    if (args.Any(arg => arg == "--help" || arg == "-h"))
-      return true;
-
-    // Skip validation if route resolution failed (shows "command not found" + available routes)
-    if (!result.Success)
-      return true;
-
-    return false;
+    return args.Any(arg => arg == "--help" || arg == "-h");
   }
 
   /// <summary>

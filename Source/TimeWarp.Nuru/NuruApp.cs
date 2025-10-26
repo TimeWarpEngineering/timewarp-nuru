@@ -87,26 +87,32 @@ public class NuruApp
         return 1;
       }
 
-      // Check if this is a Mediator command (CommandType is set)
-      Type? commandType = result.MatchedEndpoint.CommandType;
-
-      if (commandType is not null && ServiceProvider is not null)
+      // Execute based on endpoint strategy
+      return result.MatchedEndpoint.Strategy switch
       {
-        // Execute through Mediator
-        return await ExecuteMediatorCommandAsync(commandType, result).ConfigureAwait(false);
-      }
+        ExecutionStrategy.Mediator when ServiceProvider is null =>
+          throw new InvalidOperationException(
+            $"Command '{result.MatchedEndpoint.RoutePattern}' requires dependency injection. " +
+            "Call AddDependencyInjection() before Build()."),
 
-      // Execute as delegate
-      if (result.MatchedEndpoint.Handler is Delegate del)
-      {
-        return await ExecuteDelegateAsync(del, result.ExtractedValues!, result.MatchedEndpoint).ConfigureAwait(false);
-      }
+        ExecutionStrategy.Mediator =>
+          await ExecuteMediatorCommandAsync(
+            result.MatchedEndpoint.CommandType!,
+            result).ConfigureAwait(false),
 
-      await NuruConsole.WriteErrorLineAsync(
-        "No valid handler found for the matched route."
-      ).ConfigureAwait(false);
+        ExecutionStrategy.Delegate =>
+          await ExecuteDelegateAsync(
+            result.MatchedEndpoint.Handler!,
+            result.ExtractedValues!,
+            result.MatchedEndpoint).ConfigureAwait(false),
 
-      return 1;
+        ExecutionStrategy.Invalid =>
+          throw new InvalidOperationException(
+            $"Endpoint '{result.MatchedEndpoint.RoutePattern}' has invalid configuration. " +
+            "This is a framework bug."),
+
+        _ => throw new InvalidOperationException("Unknown execution strategy")
+      };
     }
 #pragma warning disable CA1031 // Do not catch general exception types
     // This is the top-level exception handler for the CLI app. We need to catch all exceptions

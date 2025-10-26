@@ -40,6 +40,14 @@ public class Endpoint
   public Type? CommandType { get; set; }
 
   /// <summary>
+  /// Gets the execution strategy for this endpoint based on its configuration.
+  /// </summary>
+  public ExecutionStrategy Strategy =>
+    CommandType is not null ? ExecutionStrategy.Mediator :
+    Handler is not null ? ExecutionStrategy.Delegate :
+    ExecutionStrategy.Invalid;
+
+  /// <summary>
   /// Gets the help route pattern for this endpoint (e.g., "hello --help").
   /// </summary>
   public string GetHelpRoute()

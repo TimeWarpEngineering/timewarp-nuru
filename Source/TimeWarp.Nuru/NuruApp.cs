@@ -99,12 +99,7 @@ public class NuruApp
       // Execute as delegate
       if (result.MatchedEndpoint.Handler is Delegate del)
       {
-        if (result.ExtractedValues is null)
-        {
-          throw new InvalidOperationException("ExtractedValues cannot be null for a successful match.");
-        }
-
-        return await ExecuteDelegateAsync(del, result.ExtractedValues, result.MatchedEndpoint).ConfigureAwait(false);
+        return await ExecuteDelegateAsync(del, result.ExtractedValues!, result.MatchedEndpoint).ConfigureAwait(false);
       }
 
       await NuruConsole.WriteErrorLineAsync(
@@ -138,14 +133,9 @@ public class NuruApp
       throw new InvalidOperationException("MediatorExecutor is not available. Ensure DI is configured.");
     }
 
-    if (result.ExtractedValues is null)
-    {
-      throw new InvalidOperationException("ExtractedValues cannot be null for a successful match.");
-    }
-
     object? returnValue = await MediatorExecutor.ExecuteCommandAsync(
       commandType,
-      result.ExtractedValues,
+      result.ExtractedValues!,
       CancellationToken.None
     ).ConfigureAwait(false);
 
@@ -177,33 +167,6 @@ public class NuruApp
   private void ShowAvailableCommands()
   {
     NuruConsole.WriteLine(HelpProvider.GetHelpText(Endpoints));
-  }
-
-  private static bool IsOptionalParameter(string parameterName, Endpoint endpoint)
-  {
-    // Check positional parameters
-    foreach (RouteMatcher segment in endpoint.CompiledRoute.PositionalMatchers)
-    {
-      if (segment is ParameterMatcher param && param.Name == parameterName)
-      {
-        return param.IsOptional;
-      }
-    }
-
-    // Check option parameters
-    foreach (OptionMatcher option in endpoint.CompiledRoute.OptionMatchers)
-    {
-      if (option.ParameterName == parameterName)
-      {
-        // Option parameters are optional if the parameter is marked as optional
-        // We need to check the route pattern for this
-        return endpoint.RoutePattern.Contains($"{{{parameterName}?", StringComparison.Ordinal) ||
-               (endpoint.RoutePattern.Contains($"{{{parameterName}:", StringComparison.Ordinal) &&
-                endpoint.RoutePattern.Contains("?}", StringComparison.Ordinal));
-      }
-    }
-
-    return false;
   }
 
   /// <summary>

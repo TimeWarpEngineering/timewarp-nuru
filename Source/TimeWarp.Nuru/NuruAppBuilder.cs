@@ -79,10 +79,15 @@ public class NuruAppBuilder
   /// <summary>
   /// Adds standard .NET configuration sources to the application.
   /// This includes appsettings.json, environment-specific settings, environment variables, and command line arguments.
+  /// For file-based apps, configuration files are located relative to the source file directory.
   /// </summary>
   /// <param name="args">Optional command line arguments to include in configuration.</param>
+  /// <param name="sourceFilePath">
+  /// Source file path (automatically populated via CallerFilePath).
+  /// Used to locate configuration files relative to the source file for file-based apps.
+  /// </param>
   /// <returns>The builder for chaining.</returns>
-  public NuruAppBuilder AddConfiguration(string[]? args = null)
+  public NuruAppBuilder AddConfiguration(string[]? args = null, [System.Runtime.CompilerServices.CallerFilePath] string sourceFilePath = "")
   {
     // Ensure DI is enabled
     if (ServiceCollection is null)
@@ -94,13 +99,15 @@ public class NuruAppBuilder
       ?? Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT")
       ?? "Production";
 
+    string? applicationName = Assembly.GetEntryAssembly()?.GetName().Name;
+    string basePath = DetermineConfigurationBasePath(sourceFilePath, applicationName);
+
     IConfigurationBuilder configuration = new ConfigurationBuilder()
-      .SetBasePath(Directory.GetCurrentDirectory())
+      .SetBasePath(basePath)
       .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
       .AddJsonFile($"appsettings.{environmentName}.json", optional: true, reloadOnChange: true);
 
     // Add application-specific settings files (matches .NET 10 convention from https://github.com/dotnet/runtime/pull/116987)
-    string? applicationName = System.Reflection.Assembly.GetEntryAssembly()?.GetName().Name;
     if (!string.IsNullOrEmpty(applicationName))
     {
       // Sanitize path separators in application name (for file-based apps with paths)
@@ -467,5 +474,50 @@ public class NuruAppBuilder
         }
       }
     }
+  }
+
+  /// <summary>
+  /// Determines the configuration base path using a fallback chain.
+  /// </summary>
+  /// <param name="sourceFilePath">Source file path from CallerFilePath attribute.</param>
+  /// <param name="applicationName">Application name from entry assembly.</param>
+  /// <returns>The configuration base path to use.</returns>
+  /// <remarks>
+  /// Fallback chain:
+  /// 1. Assembly directory (works for published executables with deployed config files)
+  /// 2. Source file directory (for file-based apps during development)
+  /// 3. Current directory (final fallback)
+  /// </remarks>
+  private static string DetermineConfigurationBasePath(string sourceFilePath, string? applicationName)
+  {
+    string basePath = AppContext.BaseDirectory;
+    bool configInAssemblyDir = false;
+
+    if (!string.IsNullOrEmpty(applicationName))
+    {
+      string sanitizedName = applicationName
+        .Replace(Path.DirectorySeparatorChar, '_')
+        .Replace(Path.AltDirectorySeparatorChar, '_');
+      string assemblyConfigPath = Path.Combine(basePath, $"{sanitizedName}.settings.json");
+      configInAssemblyDir = File.Exists(assemblyConfigPath) || File.Exists(Path.Combine(basePath, "appsettings.json"));
+    }
+
+    // If no config in assembly directory and we have source file path, try source directory
+    if (!configInAssemblyDir && !string.IsNullOrEmpty(sourceFilePath))
+    {
+      string? sourceDir = Path.GetDirectoryName(sourceFilePath);
+      if (!string.IsNullOrEmpty(sourceDir) && Directory.Exists(sourceDir))
+      {
+        basePath = sourceDir;
+      }
+    }
+
+    // Final fallback to current directory if assembly dir and source dir don't have configs
+    if (!configInAssemblyDir && basePath == AppContext.BaseDirectory)
+    {
+      basePath = Directory.GetCurrentDirectory();
+    }
+
+    return basePath;
   }
 }

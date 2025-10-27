@@ -78,11 +78,31 @@ public class NuruAppBuilder
 
   /// <summary>
   /// Adds standard .NET configuration sources to the application.
-  /// This includes appsettings.json, environment-specific settings, environment variables, and command line arguments.
+  /// This includes appsettings.json, environment-specific settings, user secrets (Development only),
+  /// environment variables, and command line arguments.
   /// For file-based apps, configuration files are located relative to the source file directory.
   /// </summary>
   /// <param name="args">Optional command line arguments to include in configuration.</param>
   /// <returns>The builder for chaining.</returns>
+  /// <remarks>
+  /// Configuration sources are loaded in this order (later sources override earlier ones):
+  /// 1. appsettings.json
+  /// 2. appsettings.{Environment}.json
+  /// 3. {ApplicationName}.settings.json
+  /// 4. {ApplicationName}.settings.{Environment}.json
+  /// 5. User secrets (Development environment only, requires UserSecretsId)
+  /// 6. Environment variables
+  /// 7. Command line arguments
+  ///
+  /// To use user secrets in runfiles, add:
+  /// <code>
+  /// #:property UserSecretsId=your-guid-here
+  /// </code>
+  /// Or use the assembly attribute:
+  /// <code>
+  /// [assembly: Microsoft.Extensions.Configuration.UserSecrets.UserSecretsId("your-guid-here")]
+  /// </code>
+  /// </remarks>
   public NuruAppBuilder AddConfiguration(string[]? args = null)
   {
     // Ensure DI is enabled
@@ -109,6 +129,12 @@ public class NuruAppBuilder
       configuration
         .AddJsonFile($"{sanitizedApplicationName}.settings.json", optional: true, reloadOnChange: true)
         .AddJsonFile($"{sanitizedApplicationName}.settings.{environmentName}.json", optional: true, reloadOnChange: true);
+    }
+
+    // Add user secrets in Development environment (optional parameter means it won't throw if UserSecretsId is missing)
+    if (environmentName == "Development")
+    {
+      configuration.AddUserSecrets(Assembly.GetEntryAssembly()!, optional: true, reloadOnChange: true);
     }
 
     configuration.AddEnvironmentVariables();

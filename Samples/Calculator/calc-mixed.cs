@@ -1,8 +1,6 @@
 #!/usr/bin/dotnet --
 // calc-mixed - Calculator mixing Direct and Mediator approaches
 #:project ../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
-#:property PublishAot=false
-#:property TrimMode=partial
 
 using TimeWarp.Nuru;
 using TimeWarp.Mediator;

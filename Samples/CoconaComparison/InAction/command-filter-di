@@ -2,7 +2,6 @@
 // command-filter-di - Nuru DI version demonstrating mediator pipeline behaviors
 #:project ../../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
 #:project ../../../Source/TimeWarp.Nuru.Logging/TimeWarp.Nuru.Logging.csproj
-#:property PublishAot=false
 
 using TimeWarp.Nuru;
 using TimeWarp.Nuru.Logging;

@@ -40,17 +40,10 @@ Modify `AddConfiguration()` to include user secrets in Development environment:
 
 ```csharp
 // After application-specific settings files
-if (environmentName == "Development" && !string.IsNullOrEmpty(sanitizedApplicationName))
+if (environmentName == "Development")
 {
-  // Try to add user secrets - silently skip if no UserSecretsId is configured
-  try
-  {
-    configuration.AddUserSecrets(Assembly.GetEntryAssembly()!, optional: true, reloadOnChange: true);
-  }
-  catch (InvalidOperationException)
-  {
-    // No UserSecretsId attribute found - this is fine
-  }
+  // Add user secrets - optional parameter means it won't throw if UserSecretsId is missing
+  configuration.AddUserSecrets(Assembly.GetEntryAssembly()!, optional: true, reloadOnChange: true);
 }
 
 configuration.AddEnvironmentVariables();
@@ -139,7 +132,7 @@ Create test scenarios:
 - [ ] Package dependency added
 - [ ] Configuration chain updated to include user secrets
 - [ ] Only loads in Development environment
-- [ ] Gracefully handles missing UserSecretsId
+- [ ] Uses `optional: true` parameter (default behavior, gracefully handles missing UserSecretsId)
 - [ ] Documentation updated with runfile examples
 - [ ] Tests created for all scenarios
 - [ ] Sample created demonstrating user secrets

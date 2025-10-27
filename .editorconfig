@@ -332,6 +332,9 @@ dotnet_naming_style.local_function_style.capitalization = pascal_case
 #### Analyizer settings ####
 dotnet_code_quality.null_check_validation_methods = NotNull
 
+# CA1034: Do not nest types - Nested types are valuable for encapsulation
+dotnet_diagnostic.CA1034.severity = none
+
 # CA1308: Normalize strings to uppercase
 dotnet_diagnostic.ca1308.severity = none
 

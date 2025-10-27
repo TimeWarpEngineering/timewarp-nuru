@@ -244,4 +244,11 @@ internal static class LoggerMessages
 
   // ===== Help Generation Messages (1600-1699) =====
   // Reserved for future help generation messages
+
+  // ===== Configuration Messages (1700-1799) =====
+  internal static readonly Action<ILogger, string, string, Exception?> ConfigurationBasePath =
+    LoggerMessage.Define<string, string>(
+      LogLevel.Debug,
+      new EventId(1700, "ConfigurationBasePath"),
+      "Configuration base path: {BasePath} (source: {Source})");
 }

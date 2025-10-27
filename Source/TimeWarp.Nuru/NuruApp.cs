@@ -61,6 +61,7 @@ public class NuruApp
       ILogger logger = LoggerFactory.CreateLogger("RouteBasedCommandResolver");
       EndpointResolutionResult result = EndpointResolver.Resolve(args, Endpoints, TypeConverterRegistry, logger);
 
+      // Exit early if route resolution failed
       if (!result.Success || result.MatchedEndpoint is null)
       {
         await NuruConsole.WriteErrorLineAsync(
@@ -71,31 +72,42 @@ public class NuruApp
         return 1;
       }
 
-      // Check if this is a Mediator command (CommandType is set)
-      Type? commandType = result.MatchedEndpoint.CommandType;
+      if (!await ValidateConfigurationAsync(args).ConfigureAwait(false)) return 1;
 
-      if (commandType is not null && ServiceProvider is not null)
+      // Execute based on endpoint strategy
+      return result.MatchedEndpoint.Strategy switch
       {
-        // Execute through Mediator
-        return await ExecuteMediatorCommandAsync(commandType, result).ConfigureAwait(false);
-      }
+        ExecutionStrategy.Mediator when ServiceProvider is null =>
+          throw new InvalidOperationException
+          (
+            $"Command '{result.MatchedEndpoint.RoutePattern}' requires dependency injection. " +
+            "Call AddDependencyInjection() before Build()."
+          ),
 
-      // Execute as delegate
-      if (result.MatchedEndpoint.Handler is Delegate del)
-      {
-        if (result.ExtractedValues is null)
-        {
-          throw new InvalidOperationException("ExtractedValues cannot be null for a successful match.");
-        }
+        ExecutionStrategy.Mediator =>
+          await ExecuteMediatorCommandAsync
+          (
+            result.MatchedEndpoint.CommandType!,
+            result
+          ).ConfigureAwait(false),
 
-        return await ExecuteDelegateAsync(del, result.ExtractedValues, result.MatchedEndpoint).ConfigureAwait(false);
-      }
+        ExecutionStrategy.Delegate =>
+          await ExecuteDelegateAsync
+          (
+            result.MatchedEndpoint.Handler!,
+            result.ExtractedValues!,
+            result.MatchedEndpoint
+          ).ConfigureAwait(false),
 
-      await NuruConsole.WriteErrorLineAsync(
-        "No valid handler found for the matched route."
-      ).ConfigureAwait(false);
+        ExecutionStrategy.Invalid =>
+          throw new InvalidOperationException
+          (
+            $"Endpoint '{result.MatchedEndpoint.RoutePattern}' has invalid configuration. " +
+            "This is a framework bug."
+          ),
 
-      return 1;
+        _ => throw new InvalidOperationException("Unknown execution strategy")
+      };
     }
 #pragma warning disable CA1031 // Do not catch general exception types
     // This is the top-level exception handler for the CLI app. We need to catch all exceptions
@@ -122,14 +134,9 @@ public class NuruApp
       throw new InvalidOperationException("MediatorExecutor is not available. Ensure DI is configured.");
     }
 
-    if (result.ExtractedValues is null)
-    {
-      throw new InvalidOperationException("ExtractedValues cannot be null for a successful match.");
-    }
-
     object? returnValue = await MediatorExecutor.ExecuteCommandAsync(
       commandType,
-      result.ExtractedValues,
+      result.ExtractedValues!,
       CancellationToken.None
     ).ConfigureAwait(false);
 
@@ -163,31 +170,54 @@ public class NuruApp
     NuruConsole.WriteLine(HelpProvider.GetHelpText(Endpoints));
   }
 
-  private static bool IsOptionalParameter(string parameterName, Endpoint endpoint)
+  /// <summary>
+  /// Validates configuration if validation is enabled and not skipped.
+  /// </summary>
+  /// <param name="args">Command line arguments.</param>
+  /// <returns>True if validation passed or was skipped, false if validation failed.</returns>
+  private async Task<bool> ValidateConfigurationAsync(string[] args)
   {
-    // Check positional parameters
-    foreach (RouteMatcher segment in endpoint.CompiledRoute.PositionalMatchers)
+    // Skip validation for help commands or if no ServiceProvider
+    if (ShouldSkipValidation(args) || ServiceProvider is null)
+      return true;
+
+    try
     {
-      if (segment is ParameterMatcher param && param.Name == parameterName)
-      {
-        return param.IsOptional;
-      }
+      IStartupValidator? validator = ServiceProvider.GetService<IStartupValidator>();
+      validator?.Validate();
+      return true;
+    }
+    catch (OptionsValidationException ex)
+    {
+      await DisplayValidationErrorsAsync(ex).ConfigureAwait(false);
+      return false;
+    }
+  }
+
+  /// <summary>
+  /// Determines whether configuration validation should be skipped for the current command.
+  /// Validation is skipped for help commands.
+  /// </summary>
+  private static bool ShouldSkipValidation(string[] args)
+  {
+    // Skip validation if help flag is present
+    return args.Any(arg => arg == "--help" || arg == "-h");
+  }
+
+  /// <summary>
+  /// Displays configuration validation errors in a clean, user-friendly format.
+  /// </summary>
+  private static async Task DisplayValidationErrorsAsync(OptionsValidationException exception)
+  {
+    await NuruConsole.WriteErrorLineAsync("❌ Configuration validation failed:").ConfigureAwait(false);
+    await NuruConsole.WriteErrorLineAsync("").ConfigureAwait(false);
+
+    foreach (string failure in exception.Failures)
+    {
+      await NuruConsole.WriteErrorLineAsync($"  • {failure}").ConfigureAwait(false);
     }
 
-    // Check option parameters
-    foreach (OptionMatcher option in endpoint.CompiledRoute.OptionMatchers)
-    {
-      if (option.ParameterName == parameterName)
-      {
-        // Option parameters are optional if the parameter is marked as optional
-        // We need to check the route pattern for this
-        return endpoint.RoutePattern.Contains($"{{{parameterName}?", StringComparison.Ordinal) ||
-               (endpoint.RoutePattern.Contains($"{{{parameterName}:", StringComparison.Ordinal) &&
-                endpoint.RoutePattern.Contains("?}", StringComparison.Ordinal));
-      }
-    }
-
-    return false;
+    await NuruConsole.WriteErrorLineAsync("").ConfigureAwait(false);
   }
 }
 

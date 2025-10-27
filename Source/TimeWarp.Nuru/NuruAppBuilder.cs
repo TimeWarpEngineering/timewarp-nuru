@@ -79,6 +79,7 @@ public class NuruAppBuilder
   /// <summary>
   /// Adds standard .NET configuration sources to the application.
   /// This includes appsettings.json, environment-specific settings, environment variables, and command line arguments.
+  /// For file-based apps, configuration files are located relative to the source file directory.
   /// </summary>
   /// <param name="args">Optional command line arguments to include in configuration.</param>
   /// <returns>The builder for chaining.</returns>
@@ -94,20 +95,17 @@ public class NuruAppBuilder
       ?? Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT")
       ?? "Production";
 
+    string? sanitizedApplicationName = GetSanitizedApplicationName();
+    string basePath = DetermineConfigurationBasePath();
+
     IConfigurationBuilder configuration = new ConfigurationBuilder()
-      .SetBasePath(Directory.GetCurrentDirectory())
+      .SetBasePath(basePath)
       .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
       .AddJsonFile($"appsettings.{environmentName}.json", optional: true, reloadOnChange: true);
 
     // Add application-specific settings files (matches .NET 10 convention from https://github.com/dotnet/runtime/pull/116987)
-    string? applicationName = System.Reflection.Assembly.GetEntryAssembly()?.GetName().Name;
-    if (!string.IsNullOrEmpty(applicationName))
+    if (!string.IsNullOrEmpty(sanitizedApplicationName))
     {
-      // Sanitize path separators in application name (for file-based apps with paths)
-      string sanitizedApplicationName = applicationName
-        .Replace(Path.DirectorySeparatorChar, '_')
-        .Replace(Path.AltDirectorySeparatorChar, '_');
-
       configuration
         .AddJsonFile($"{sanitizedApplicationName}.settings.json", optional: true, reloadOnChange: true)
         .AddJsonFile($"{sanitizedApplicationName}.settings.{environmentName}.json", optional: true, reloadOnChange: true);
@@ -313,11 +311,6 @@ public class NuruAppBuilder
 
       ServiceProvider serviceProvider = ServiceCollection.BuildServiceProvider();
 
-      // Invoke startup validators (matches Microsoft.Extensions.Hosting behavior)
-      // This enables .ValidateOnStart() to work as expected, providing fail-fast validation
-      IStartupValidator? startupValidator = serviceProvider.GetService<IStartupValidator>();
-      startupValidator?.Validate();
-
       return new NuruApp(serviceProvider);
     }
     else
@@ -472,5 +465,94 @@ public class NuruAppBuilder
         }
       }
     }
+  }
+
+  /// <summary>
+  /// Determines the configuration base path using a fallback chain.
+  /// </summary>
+  /// <returns>The configuration base path to use.</returns>
+  /// <remarks>
+  /// Fallback chain:
+  /// 1. Assembly directory (works for published executables with deployed config files)
+  /// 2. Source file directory from AppContext.EntryPointFileDirectoryPath() (runtime data, .NET 10 file-based apps)
+  /// 3. Source file directory from Path.EntryPointFileDirectoryPath() (compile-time CallerFilePath fallback)
+  /// 4. Current directory (final fallback)
+  ///
+  /// Logs configuration source at Debug level for troubleshooting.
+  /// Uses AppContext first since it's set at runtime for file-based apps, falls back to Path extension
+  /// which uses CallerFilePath (useful for published apps where AppContext data isn't set).
+  /// </remarks>
+  private string DetermineConfigurationBasePath()
+  {
+    ILogger logger = (LoggerFactory ?? NullLoggerFactory.Instance).CreateLogger<NuruAppBuilder>();
+    string basePath = AppContext.BaseDirectory;
+    bool configInAssemblyDir = false;
+
+    string? sanitizedName = GetSanitizedApplicationName();
+    if (!string.IsNullOrEmpty(sanitizedName))
+    {
+      string assemblyConfigPath = Path.Combine(basePath, $"{sanitizedName}.settings.json");
+      configInAssemblyDir = File.Exists(assemblyConfigPath) || File.Exists(Path.Combine(basePath, "appsettings.json"));
+    }
+
+    // If no config in assembly directory, try source directory from entry point
+    if (!configInAssemblyDir)
+    {
+      // Try AppContext first (runtime data for file-based apps), then Path extension (compile-time fallback)
+      string? sourceDir = AppContext.EntryPointFileDirectoryPath();
+      string source;
+
+      if (!string.IsNullOrEmpty(sourceDir))
+      {
+        source = "AppContext.EntryPointFileDirectoryPath (runtime)";
+      }
+      else
+      {
+        sourceDir = Path.EntryPointFileDirectoryPath();
+        source = "Path.EntryPointFileDirectoryPath (CallerFilePath)";
+      }
+
+      if (!string.IsNullOrEmpty(sourceDir) && Directory.Exists(sourceDir))
+      {
+        basePath = sourceDir;
+        LoggerMessages.ConfigurationBasePath(logger, basePath, source, null);
+        return basePath;
+      }
+    }
+    else
+    {
+      LoggerMessages.ConfigurationBasePath(logger, basePath, "Assembly directory", null);
+      return basePath;
+    }
+
+    // Final fallback to current directory if assembly dir and source dir don't have configs
+    if (!configInAssemblyDir && basePath == AppContext.BaseDirectory)
+    {
+      basePath = Directory.GetCurrentDirectory();
+      LoggerMessages.ConfigurationBasePath(logger, basePath, "Current directory - fallback", null);
+    }
+
+    return basePath;
+  }
+
+  /// <summary>
+  /// Gets the sanitized application name for use in file names.
+  /// </summary>
+  /// <returns>Sanitized application name safe for use in file names, or null if no entry assembly.</returns>
+  /// <remarks>
+  /// Retrieves the entry assembly name and replaces path separators with underscores.
+  /// File-based apps may have application names containing path separators (e.g., "path/to/app.cs").
+  /// This method ensures the name is safe for use in configuration file names.
+  /// </remarks>
+  private static string? GetSanitizedApplicationName()
+  {
+    string? applicationName = Assembly.GetEntryAssembly()?.GetName().Name;
+
+    if (string.IsNullOrEmpty(applicationName))
+      return applicationName;
+
+    return applicationName
+      .Replace(Path.DirectorySeparatorChar, '_')
+      .Replace(Path.AltDirectorySeparatorChar, '_');
   }
 }

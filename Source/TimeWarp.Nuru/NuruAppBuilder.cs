@@ -95,8 +95,8 @@ public class NuruAppBuilder
       ?? Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT")
       ?? "Production";
 
-    string? applicationName = Assembly.GetEntryAssembly()?.GetName().Name;
-    string basePath = DetermineConfigurationBasePath(applicationName);
+    string? sanitizedApplicationName = GetSanitizedApplicationName();
+    string basePath = DetermineConfigurationBasePath();
 
     IConfigurationBuilder configuration = new ConfigurationBuilder()
       .SetBasePath(basePath)
@@ -104,13 +104,8 @@ public class NuruAppBuilder
       .AddJsonFile($"appsettings.{environmentName}.json", optional: true, reloadOnChange: true);
 
     // Add application-specific settings files (matches .NET 10 convention from https://github.com/dotnet/runtime/pull/116987)
-    if (!string.IsNullOrEmpty(applicationName))
+    if (!string.IsNullOrEmpty(sanitizedApplicationName))
     {
-      // Sanitize path separators in application name (for file-based apps with paths)
-      string sanitizedApplicationName = applicationName
-        .Replace(Path.DirectorySeparatorChar, '_')
-        .Replace(Path.AltDirectorySeparatorChar, '_');
-
       configuration
         .AddJsonFile($"{sanitizedApplicationName}.settings.json", optional: true, reloadOnChange: true)
         .AddJsonFile($"{sanitizedApplicationName}.settings.{environmentName}.json", optional: true, reloadOnChange: true);
@@ -475,7 +470,6 @@ public class NuruAppBuilder
   /// <summary>
   /// Determines the configuration base path using a fallback chain.
   /// </summary>
-  /// <param name="applicationName">Application name from entry assembly.</param>
   /// <returns>The configuration base path to use.</returns>
   /// <remarks>
   /// Fallback chain:
@@ -488,17 +482,15 @@ public class NuruAppBuilder
   /// Uses AppContext first since it's set at runtime for file-based apps, falls back to Path extension
   /// which uses CallerFilePath (useful for published apps where AppContext data isn't set).
   /// </remarks>
-  private string DetermineConfigurationBasePath(string? applicationName)
+  private string DetermineConfigurationBasePath()
   {
     ILogger logger = (LoggerFactory ?? NullLoggerFactory.Instance).CreateLogger<NuruAppBuilder>();
     string basePath = AppContext.BaseDirectory;
     bool configInAssemblyDir = false;
 
-    if (!string.IsNullOrEmpty(applicationName))
+    string? sanitizedName = GetSanitizedApplicationName();
+    if (!string.IsNullOrEmpty(sanitizedName))
     {
-      string sanitizedName = applicationName
-        .Replace(Path.DirectorySeparatorChar, '_')
-        .Replace(Path.AltDirectorySeparatorChar, '_');
       string assemblyConfigPath = Path.Combine(basePath, $"{sanitizedName}.settings.json");
       configInAssemblyDir = File.Exists(assemblyConfigPath) || File.Exists(Path.Combine(basePath, "appsettings.json"));
     }
@@ -541,5 +533,26 @@ public class NuruAppBuilder
     }
 
     return basePath;
+  }
+
+  /// <summary>
+  /// Gets the sanitized application name for use in file names.
+  /// </summary>
+  /// <returns>Sanitized application name safe for use in file names, or null if no entry assembly.</returns>
+  /// <remarks>
+  /// Retrieves the entry assembly name and replaces path separators with underscores.
+  /// File-based apps may have application names containing path separators (e.g., "path/to/app.cs").
+  /// This method ensures the name is safe for use in configuration file names.
+  /// </remarks>
+  private static string? GetSanitizedApplicationName()
+  {
+    string? applicationName = Assembly.GetEntryAssembly()?.GetName().Name;
+
+    if (string.IsNullOrEmpty(applicationName))
+      return applicationName;
+
+    return applicationName
+      .Replace(Path.DirectorySeparatorChar, '_')
+      .Replace(Path.AltDirectorySeparatorChar, '_');
   }
 }

@@ -1,4 +1,6 @@
-User secrets now work in Nuru even with runfiles! Keep API keys and connection strings out of source control during development.
+# Title User Secrets in TimeWarp.Nuru
+
+User secrets now work in TimeWarp.Nuru even with runfiles! Keep API keys and connection strings out of source control during development.
 
 ```csharp
 #!/usr/bin/dotnet --
@@ -22,3 +24,5 @@ dotnet user-secrets set "ApiKey" "secret-123" --id my-app-guid
 Auto-loads in Development. Never loads in Production. Standard .NET behavior.
 
 Requires version 2.1.0-beta.28 or greater.
+
+[TimeWarp.State repo](https://github.com/TimeWarpEngineering/timewarp-nuru)

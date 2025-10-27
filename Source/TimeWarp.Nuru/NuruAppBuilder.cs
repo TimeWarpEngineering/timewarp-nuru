@@ -82,12 +82,8 @@ public class NuruAppBuilder
   /// For file-based apps, configuration files are located relative to the source file directory.
   /// </summary>
   /// <param name="args">Optional command line arguments to include in configuration.</param>
-  /// <param name="sourceFilePath">
-  /// Source file path (automatically populated via CallerFilePath).
-  /// Used to locate configuration files relative to the source file for file-based apps.
-  /// </param>
   /// <returns>The builder for chaining.</returns>
-  public NuruAppBuilder AddConfiguration(string[]? args = null, [System.Runtime.CompilerServices.CallerFilePath] string sourceFilePath = "")
+  public NuruAppBuilder AddConfiguration(string[]? args = null)
   {
     // Ensure DI is enabled
     if (ServiceCollection is null)
@@ -100,7 +96,7 @@ public class NuruAppBuilder
       ?? "Production";
 
     string? applicationName = Assembly.GetEntryAssembly()?.GetName().Name;
-    string basePath = DetermineConfigurationBasePath(sourceFilePath, applicationName);
+    string basePath = DetermineConfigurationBasePath(applicationName);
 
     IConfigurationBuilder configuration = new ConfigurationBuilder()
       .SetBasePath(basePath)
@@ -479,17 +475,22 @@ public class NuruAppBuilder
   /// <summary>
   /// Determines the configuration base path using a fallback chain.
   /// </summary>
-  /// <param name="sourceFilePath">Source file path from CallerFilePath attribute.</param>
   /// <param name="applicationName">Application name from entry assembly.</param>
   /// <returns>The configuration base path to use.</returns>
   /// <remarks>
   /// Fallback chain:
   /// 1. Assembly directory (works for published executables with deployed config files)
-  /// 2. Source file directory (for file-based apps during development)
-  /// 3. Current directory (final fallback)
+  /// 2. Source file directory from AppContext.EntryPointFileDirectoryPath() (runtime data, .NET 10 file-based apps)
+  /// 3. Source file directory from Path.EntryPointFileDirectoryPath() (compile-time CallerFilePath fallback)
+  /// 4. Current directory (final fallback)
+  ///
+  /// Logs configuration source at Debug level for troubleshooting.
+  /// Uses AppContext first since it's set at runtime for file-based apps, falls back to Path extension
+  /// which uses CallerFilePath (useful for published apps where AppContext data isn't set).
   /// </remarks>
-  private static string DetermineConfigurationBasePath(string sourceFilePath, string? applicationName)
+  private string DetermineConfigurationBasePath(string? applicationName)
   {
+    ILogger logger = (LoggerFactory ?? NullLoggerFactory.Instance).CreateLogger<NuruAppBuilder>();
     string basePath = AppContext.BaseDirectory;
     bool configInAssemblyDir = false;
 
@@ -502,20 +503,41 @@ public class NuruAppBuilder
       configInAssemblyDir = File.Exists(assemblyConfigPath) || File.Exists(Path.Combine(basePath, "appsettings.json"));
     }
 
-    // If no config in assembly directory and we have source file path, try source directory
-    if (!configInAssemblyDir && !string.IsNullOrEmpty(sourceFilePath))
+    // If no config in assembly directory, try source directory from entry point
+    if (!configInAssemblyDir)
     {
-      string? sourceDir = Path.GetDirectoryName(sourceFilePath);
+      // Try AppContext first (runtime data for file-based apps), then Path extension (compile-time fallback)
+      string? sourceDir = AppContext.EntryPointFileDirectoryPath();
+      string source;
+
+      if (!string.IsNullOrEmpty(sourceDir))
+      {
+        source = "AppContext.EntryPointFileDirectoryPath (runtime)";
+      }
+      else
+      {
+        sourceDir = Path.EntryPointFileDirectoryPath();
+        source = "Path.EntryPointFileDirectoryPath (CallerFilePath)";
+      }
+
       if (!string.IsNullOrEmpty(sourceDir) && Directory.Exists(sourceDir))
       {
         basePath = sourceDir;
+        LoggerMessages.ConfigurationBasePath(logger, basePath, source, null);
+        return basePath;
       }
+    }
+    else
+    {
+      LoggerMessages.ConfigurationBasePath(logger, basePath, "Assembly directory", null);
+      return basePath;
     }
 
     // Final fallback to current directory if assembly dir and source dir don't have configs
     if (!configInAssemblyDir && basePath == AppContext.BaseDirectory)
     {
       basePath = Directory.GetCurrentDirectory();
+      LoggerMessages.ConfigurationBasePath(logger, basePath, "Current directory - fallback", null);
     }
 
     return basePath;

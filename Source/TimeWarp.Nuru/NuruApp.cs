@@ -72,44 +72,39 @@ public class NuruApp
         return 1;
       }
 
-      // Validate configuration before execution (skip for help commands)
-      if (!ShouldSkipValidation(args) && ServiceProvider is not null)
-      {
-        try
-        {
-          IStartupValidator? validator = ServiceProvider.GetService<IStartupValidator>();
-          validator?.Validate();
-        }
-        catch (OptionsValidationException ex)
-        {
-          await DisplayValidationErrorsAsync(ex).ConfigureAwait(false);
-          return 1;
-        }
-      }
+      if (!await ValidateConfigurationAsync(args).ConfigureAwait(false)) return 1;
 
       // Execute based on endpoint strategy
       return result.MatchedEndpoint.Strategy switch
       {
         ExecutionStrategy.Mediator when ServiceProvider is null =>
-          throw new InvalidOperationException(
+          throw new InvalidOperationException
+          (
             $"Command '{result.MatchedEndpoint.RoutePattern}' requires dependency injection. " +
-            "Call AddDependencyInjection() before Build()."),
+            "Call AddDependencyInjection() before Build()."
+          ),
 
         ExecutionStrategy.Mediator =>
-          await ExecuteMediatorCommandAsync(
+          await ExecuteMediatorCommandAsync
+          (
             result.MatchedEndpoint.CommandType!,
-            result).ConfigureAwait(false),
+            result
+          ).ConfigureAwait(false),
 
         ExecutionStrategy.Delegate =>
-          await ExecuteDelegateAsync(
+          await ExecuteDelegateAsync
+          (
             result.MatchedEndpoint.Handler!,
             result.ExtractedValues!,
-            result.MatchedEndpoint).ConfigureAwait(false),
+            result.MatchedEndpoint
+          ).ConfigureAwait(false),
 
         ExecutionStrategy.Invalid =>
-          throw new InvalidOperationException(
+          throw new InvalidOperationException
+          (
             $"Endpoint '{result.MatchedEndpoint.RoutePattern}' has invalid configuration. " +
-            "This is a framework bug."),
+            "This is a framework bug."
+          ),
 
         _ => throw new InvalidOperationException("Unknown execution strategy")
       };
@@ -173,6 +168,30 @@ public class NuruApp
   private void ShowAvailableCommands()
   {
     NuruConsole.WriteLine(HelpProvider.GetHelpText(Endpoints));
+  }
+
+  /// <summary>
+  /// Validates configuration if validation is enabled and not skipped.
+  /// </summary>
+  /// <param name="args">Command line arguments.</param>
+  /// <returns>True if validation passed or was skipped, false if validation failed.</returns>
+  private async Task<bool> ValidateConfigurationAsync(string[] args)
+  {
+    // Skip validation for help commands or if no ServiceProvider
+    if (ShouldSkipValidation(args) || ServiceProvider is null)
+      return true;
+
+    try
+    {
+      IStartupValidator? validator = ServiceProvider.GetService<IStartupValidator>();
+      validator?.Validate();
+      return true;
+    }
+    catch (OptionsValidationException ex)
+    {
+      await DisplayValidationErrorsAsync(ex).ConfigureAwait(false);
+      return false;
+    }
   }
 
   /// <summary>

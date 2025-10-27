@@ -1,4 +1,4 @@
-AddConfiguration() auto-discovers both appsettings.json and application-specific config files (e.g., myapp.settings.json) for runfiles and published apps.
+TimeWarp.Nuru AddConfiguration() auto-discovers both appsettings.json and application-specific config files (e.g., myapp.settings.json) for runfiles and published apps.
 
 ```csharp
 #!/usr/bin/dotnet --
@@ -7,7 +7,7 @@ AddConfiguration() auto-discovers both appsettings.json and application-specific
 NuruApp app =
   new NuruAppBuilder()
   .AddDependencyInjection()
-  .AddConfiguration(args)  // ✅ Auto-discovers config files
+  .AddConfiguration(args)  // Auto-discovers config files
   .AddRoute("test", () => Console.WriteLine(app.Configuration["ApiKey"]))
   .Build();
 

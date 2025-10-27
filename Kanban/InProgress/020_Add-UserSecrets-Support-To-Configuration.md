@@ -51,13 +51,31 @@ configuration.AddEnvironmentVariables();
 
 ### 3. Documentation
 
-**For runfiles**, document how to use user secrets:
+**For runfiles**, document TWO ways to set UserSecretsId:
+
+**Option 1: Using #:property directive (recommended for runfiles)**:
+
+```csharp
+#!/usr/bin/dotnet --
+#:package TimeWarp.Nuru@2.1.0-beta.28
+#:property UserSecretsId=my-app-secrets-id
+
+NuruApp app =
+  new NuruAppBuilder()
+  .AddDependencyInjection()
+  .AddConfiguration(args)  // ✅ Loads user secrets in Development
+  .AddRoute("test", () => Console.WriteLine(app.Configuration["ApiKey"]))
+  .Build();
+
+await app.RunAsync(args);
+```
+
+**Option 2: Using assembly attribute**:
 
 ```csharp
 #!/usr/bin/dotnet --
 #:package TimeWarp.Nuru@2.1.0-beta.28
 
-// Add UserSecretsId attribute
 [assembly: Microsoft.Extensions.Configuration.UserSecrets.UserSecretsId("my-app-secrets-id")]
 
 NuruApp app =
@@ -66,6 +84,8 @@ NuruApp app =
   .AddConfiguration(args)  // ✅ Loads user secrets in Development
   .AddRoute("test", () => Console.WriteLine(app.Configuration["ApiKey"]))
   .Build();
+
+await app.RunAsync(args);
 ```
 
 **Initialize user secrets**:

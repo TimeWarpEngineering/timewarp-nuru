@@ -74,25 +74,51 @@ async Task ConnectToDatabaseAsync(IOptions<DatabaseOptions> dbOptions)
 })
 ```
 
-## Running the Example
+## Command-Line Configuration Overrides
+
+TimeWarp.Nuru supports **ASP.NET Core-style command-line configuration overrides** using the colon-separated syntax:
+
+```bash
+# Override single value
+./command-line-overrides.cs run --FooOptions:Url=https://override.example.com
+
+# Override multiple values
+./command-line-overrides.cs run \
+  --FooOptions:Url=https://prod.example.com \
+  --FooOptions:MaxItems=100 \
+  --FooOptions:Timeout=60
+
+# See interactive demonstration
+./command-line-overrides.cs demo
+```
+
+See [`command-line-overrides.cs`](command-line-overrides.cs) for a complete working example that answers [GitHub Issue #75](https://github.com/TimeWarpEngineering/timewarp-nuru/issues/75).
+
+**Key points:**
+- Command-line arguments have the **highest precedence** (override all other sources)
+- Use colon separator for hierarchical keys: `--Section:Key=Value`
+- Space separator also works: `--Section:Key Value`
+- Works identically to ASP.NET Core `AddCommandLine(args)`
+- No route pattern needed - handled automatically by the configuration system
+
+## Running the Examples
 
 ```bash
 cd Samples/Configuration
 
-# Show all configuration values
+# Configuration basics example
 ./configuration-basics.cs config show
-
-# Connect to database using configured settings
 ./configuration-basics.cs db connect
-
-# Call API endpoint
 ./configuration-basics.cs api call users
-
-# Send notification (uses environment-based service)
 ./configuration-basics.cs notify "Hello World"
 
-# Show help
-./configuration-basics.cs --help
+# Command-line overrides example (Issue #75)
+./command-line-overrides.cs run
+./command-line-overrides.cs show
+./command-line-overrides.cs demo
+
+# Configuration validation example
+./configuration-validation.cs run
 ```
 
 ## Configuration File Structure

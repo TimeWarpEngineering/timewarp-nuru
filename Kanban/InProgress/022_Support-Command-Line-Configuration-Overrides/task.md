@@ -43,7 +43,7 @@ EndpointResolutionResult result = EndpointResolver.Resolve(routeArgs, Endpoints,
 ## Checklist
 
 ### Implementation
-- [ ] Create sample to demonstrate expected behavior (`command-line-overrides.cs`)
+- [x] Create sample to demonstrate expected behavior (`command-line-overrides.cs`)
 - [ ] Modify `NuruApp.RunAsync()` to filter args before calling `EndpointResolver.Resolve()`
 - [ ] Add helper method or inline logic to separate route args from config args
 - [ ] Ensure original args array is preserved for configuration system
@@ -55,7 +55,7 @@ EndpointResolutionResult result = EndpointResolver.Resolve(routeArgs, Endpoints,
 - [ ] Test edge cases (arg values containing colons, etc.)
 
 ### Documentation
-- [ ] Update `Samples/Configuration/Overview.md` to document the new sample
+- [x] Update `Samples/Configuration/Overview.md` to document the new sample
 - [ ] Document the colon filtering behavior in architecture docs
 - [ ] Add note about limitation (can't use colons in custom route option names)
 - [ ] Update GitHub Issue #75 with solution and examples

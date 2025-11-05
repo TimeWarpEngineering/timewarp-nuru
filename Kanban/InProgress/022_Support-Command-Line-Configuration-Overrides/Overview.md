@@ -1,10 +1,10 @@
-# Task 020: Support Command-Line Configuration Overrides
+# Task 022: Support Command-Line Configuration Overrides
 
 This folder contains all materials related to implementing ASP.NET Core-style command-line configuration overrides in TimeWarp.Nuru.
 
 ## Contents
 
-- **[../020_Support-Command-Line-Configuration-Overrides.md](../020_Support-Command-Line-Configuration-Overrides.md)** - Main task document with requirements, checklist, and implementation plan
+- **[task.md](task.md)** - Main task document with requirements, checklist, and implementation plan
 - **[issue-75-analysis.md](issue-75-analysis.md)** - Comprehensive technical analysis of the problem, exploring the current architecture and solution approaches
 
 ## Quick Summary

@@ -58,7 +58,7 @@ EndpointResolutionResult result = EndpointResolver.Resolve(routeArgs, Endpoints,
 - [x] Update `Samples/Configuration/Overview.md` to document the new sample
 - [x] Document the colon filtering behavior in architecture docs
 - [x] Add note about limitation (can't use colons in custom route option names)
-- [ ] Update GitHub Issue #75 with solution and examples
+- [x] Update GitHub Issue #75 with solution and examples
 
 ## Notes
 

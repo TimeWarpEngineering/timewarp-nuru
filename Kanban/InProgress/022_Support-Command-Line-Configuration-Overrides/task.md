@@ -44,15 +44,15 @@ EndpointResolutionResult result = EndpointResolver.Resolve(routeArgs, Endpoints,
 
 ### Implementation
 - [x] Create sample to demonstrate expected behavior (`command-line-overrides.cs`)
-- [ ] Modify `NuruApp.RunAsync()` to filter args before calling `EndpointResolver.Resolve()`
-- [ ] Add helper method or inline logic to separate route args from config args
-- [ ] Ensure original args array is preserved for configuration system
+- [x] Modify `NuruApp.RunAsync()` to filter args before calling `EndpointResolver.Resolve()`
+- [x] Add helper method or inline logic to separate route args from config args
+- [x] Ensure original args array is preserved for configuration system
 
 ### Testing
-- [ ] Test that `command-line-overrides.cs` sample works with `--Section:Key=value` syntax
-- [ ] Verify existing route patterns with options still work correctly
-- [ ] Add test cases for mixed route options and config overrides
-- [ ] Test edge cases (arg values containing colons, etc.)
+- [x] Test that `command-line-overrides.cs` sample works with `--Section:Key=value` syntax
+- [x] Verify existing route patterns with options still work correctly
+- [x] Add test cases for mixed route options and config overrides
+- [x] Test edge cases (arg values containing colons, etc.)
 
 ### Documentation
 - [x] Update `Samples/Configuration/Overview.md` to document the new sample

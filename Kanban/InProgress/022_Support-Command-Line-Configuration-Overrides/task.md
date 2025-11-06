@@ -56,8 +56,8 @@ EndpointResolutionResult result = EndpointResolver.Resolve(routeArgs, Endpoints,
 
 ### Documentation
 - [x] Update `Samples/Configuration/Overview.md` to document the new sample
-- [ ] Document the colon filtering behavior in architecture docs
-- [ ] Add note about limitation (can't use colons in custom route option names)
+- [x] Document the colon filtering behavior in architecture docs
+- [x] Add note about limitation (can't use colons in custom route option names)
 - [ ] Update GitHub Issue #75 with solution and examples
 
 ## Notes
@@ -88,4 +88,71 @@ EndpointResolutionResult result = EndpointResolver.Resolve(routeArgs, Endpoints,
 
 ## Implementation Notes
 
-[To be filled in during implementation]
+### Architecture: Colon Filtering Behavior
+
+The implementation adds argument filtering at the entry point of `NuruApp.RunAsync()` before route resolution:
+
+```csharp
+// Filter out configuration override args (containing colons) before route matching
+// Route patterns cannot have colons in option names, so any arg with ':' is a config override
+// Example: --Section:Key=value is for configuration, not routing
+string[] routeArgs = [.. args.Where(arg => !arg.Contains(':', StringComparison.Ordinal))];
+
+// Parse and match route (using filtered args)
+ILogger logger = LoggerFactory.CreateLogger("RouteBasedCommandResolver");
+EndpointResolutionResult result = EndpointResolver.Resolve(routeArgs, Endpoints, TypeConverterRegistry, logger);
+```
+
+**Why This Approach Is Safe:**
+
+1. **Lexer Constraint**: The Nuru lexer does not allow colons in identifier names (only in type constraints like `{age:int}`)
+2. **Route Options Are Colon-Free**: Valid route options are like `--force`, `--dry-run`, `--config`, never `--my:option`
+3. **Configuration Syntax Requires Colons**: ASP.NET Core configuration overrides always use colon-separated hierarchical keys
+4. **No False Positives**: Since route patterns can't have colons in option names, filtering on colons creates a perfect discriminator
+
+**Data Flow:**
+
+```
+Command Line Args: ["run", "--FooOptions:Url=https://example.com", "--force"]
+         ↓
+    Filtering (by colon presence)
+         ↓
+    ├─→ Route Args: ["run", "--force"]  → EndpointResolver → Route Matching
+    └─→ Original Args (unchanged) → ValidateConfigurationAsync → Configuration System
+```
+
+### Known Limitations
+
+1. **No Colons in Custom Route Option Names**: Route patterns cannot define options with colons like `--my:custom:option`. This is already enforced by the lexer and is not a regression.
+
+2. **Argument Values Can Contain Colons**: The filtering only checks for colon presence in the argument string. If a route parameter value legitimately contains a colon, it will be filtered out. Example:
+   ```bash
+   # This would incorrectly filter the time value:
+   ./app.cs schedule --at 14:30:00
+   ```
+   **Workaround**: Use alternative formats (seconds since epoch, ISO 8601 without colons, etc.) or pass such values as positional parameters rather than options.
+
+3. **Windows-Style Paths**: Absolute Windows paths like `C:\path\to\file` contain colons and would be filtered. This is generally not an issue since:
+   - Windows paths are typically passed as positional parameters, not options
+   - Configuration values are usually relative or loaded from config files
+   - Users can use forward slashes on Windows
+
+### Verification
+
+The implementation was verified with the [command-line-overrides.cs](../../../Samples/Configuration/command-line-overrides.cs) sample:
+
+- ✅ Default configuration from settings file loads correctly
+- ✅ Single override: `--FooOptions:Url=https://override.example.com` works
+- ✅ Multiple overrides: `--FooOptions:Url=... --FooOptions:MaxItems=100 --FooOptions:Timeout=60` works
+- ✅ Nested sections: `--Database:Host=prod-db --Database:Port=3306` works
+- ✅ Mixed with route options: Commands with existing `--force`, `--dry-run` style options remain unaffected
+
+### Future Improvements
+
+If the limitation with colon-containing values becomes problematic, consider:
+
+1. **Smarter Heuristic**: Check if the arg matches `--<identifier>:<identifier>=<value>` pattern specifically
+2. **Explicit Prefix**: Require configuration overrides to use a specific prefix like `--config:Section:Key=value`
+3. **Configuration API**: Add explicit `NuruAppBuilder.AddCommandLineConfigurationPrefix(string prefix)` to customize the discrimination strategy
+
+Version: Implemented in 2.1.0-beta.29

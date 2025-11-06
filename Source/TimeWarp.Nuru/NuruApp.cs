@@ -57,9 +57,14 @@ public class NuruApp
 
     try
     {
-      // Parse and match route
+      // Filter out configuration override args (containing colons) before route matching
+      // Route patterns cannot have colons in option names, so any arg with ':' is a config override
+      // Example: --Section:Key=value is for configuration, not routing
+      string[] routeArgs = [.. args.Where(arg => !arg.Contains(':', StringComparison.Ordinal))];
+
+      // Parse and match route (using filtered args)
       ILogger logger = LoggerFactory.CreateLogger("RouteBasedCommandResolver");
-      EndpointResolutionResult result = EndpointResolver.Resolve(args, Endpoints, TypeConverterRegistry, logger);
+      EndpointResolutionResult result = EndpointResolver.Resolve(routeArgs, Endpoints, TypeConverterRegistry, logger);
 
       // Exit early if route resolution failed
       if (!result.Success || result.MatchedEndpoint is null)

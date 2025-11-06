@@ -1,0 +1,13 @@
+{
+  "FooOptions": {
+    "Url": "https://default.example.com",
+    "MaxItems": 10,
+    "Timeout": 30,
+    "Enabled": true
+  },
+  "Database": {
+    "Host": "localhost",
+    "Port": 5432,
+    "DatabaseName": "myapp"
+  }
+}

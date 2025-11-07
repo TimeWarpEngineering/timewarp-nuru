@@ -98,9 +98,25 @@ Different CLI ecosystems use alternative separators that Nuru cannot currently p
 ### Filtering Interaction
 
 4. **How should filtering interact with separators?**
-   - Current: Filter `--Section:Key=value` before route matching
-   - If we parse `-p:Config=Debug` as option `-p` with value `:Config=Debug`, does filtering still apply?
-   - Should filtering only apply to double-dash patterns?
+   - **CRITICAL CONSTRAINT**: Configuration override filtering happens BEFORE route matching
+   - Current implementation (Issue #77 fix): Filters `--Section:Key=value` patterns using regex `^--[\w-]+:[\w:-]`
+   - This means ANY argument matching `--Word:Word` pattern gets filtered out before routing
+   - **Problem**: If we want to support `--option:value` syntax for routes, it will be filtered as a config override!
+
+   **Examples of the conflict**:
+   ```bash
+   # Config override - should be filtered
+   myapp run --Logging:LogLevel=Debug
+
+   # Route option with colon syntax - would also be filtered (breaks routing!)
+   myapp build --property:Configuration=Release
+   ```
+
+   **Possible solutions**:
+   - Option A: Never support colon syntax for route options (preserve config override filtering)
+   - Option B: Check if `--option` is defined in ANY route before filtering (complex, slow)
+   - Option C: Use different separator for routes (e.g., only support `--option=value`, not `--option:value`)
+   - Option D: Require config overrides to have at least TWO colons: `--Section:Sub:Key=value`
 
 5. **Should catch-all parameters capture unparsed strings?**
    - Example: `docker {*args}` with input `run --name=app -p:8080`

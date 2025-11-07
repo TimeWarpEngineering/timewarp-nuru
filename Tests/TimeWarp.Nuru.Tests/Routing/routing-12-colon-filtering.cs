@@ -199,4 +199,74 @@ public class ColonFilteringTests
 
     await Task.CompletedTask;
   }
+
+  public static async Task Should_not_filter_option_with_url_containing_port()
+  {
+    // Arrange - Test false positive case: --url=https://host:port should NOT be filtered
+    string? capturedUrl = null;
+    NuruApp app = new NuruAppBuilder()
+      .AddRoute("fetch --url {url}", (string url) =>
+      {
+        capturedUrl = url;
+        return 0;
+      })
+      .Build();
+
+    // Act - Colon is in the option VALUE, not the config path structure
+    int exitCode = await app.RunAsync(["fetch", "--url", "https://api.example.com:8080/data"]);
+
+    // Assert - Should work because colon is in value, not in --Section:Key pattern
+    exitCode.ShouldBe(0);
+    capturedUrl.ShouldBe("https://api.example.com:8080/data");
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_not_filter_option_with_connection_string()
+  {
+    // Arrange - Test false positive case: --connection=Server=localhost:5432 should NOT be filtered
+    string? capturedConnection = null;
+    NuruApp app = new NuruAppBuilder()
+      .AddRoute("connect --connection {conn}", (string conn) =>
+      {
+        capturedConnection = conn;
+        return 0;
+      })
+      .Build();
+
+    // Act - Colon is in the option VALUE (connection string), not config path
+    int exitCode = await app.RunAsync(["connect", "--connection", "Server=localhost:5432;Database=mydb"]);
+
+    // Assert - Should work because this isn't a config override pattern
+    exitCode.ShouldBe(0);
+    capturedConnection.ShouldBe("Server=localhost:5432;Database=mydb");
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_filter_nested_config_override()
+  {
+    // Arrange
+    string? capturedParam = null;
+    NuruApp app = new NuruAppBuilder()
+      .AddRoute("run {param}", (string param) =>
+      {
+        capturedParam = param;
+        return 0;
+      })
+      .Build();
+
+    // Act - Nested config override --Logging:LogLevel:Default=Debug should be filtered
+    int exitCode = await app.RunAsync([
+      "run",
+      "myvalue",
+      "--Logging:LogLevel:Default=Debug"  // Should be filtered (nested config path)
+    ]);
+
+    // Assert
+    exitCode.ShouldBe(0);
+    capturedParam.ShouldBe("myvalue");
+
+    await Task.CompletedTask;
+  }
 }

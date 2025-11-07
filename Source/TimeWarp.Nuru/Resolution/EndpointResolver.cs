@@ -224,6 +224,7 @@ internal static class EndpointResolver
         args,
         consumedArgs,
         seenEndOfOptions,
+        endpoint.CompiledRoute.OptionMatchers,
         logger
       );
 
@@ -267,6 +268,7 @@ internal static class EndpointResolver
     string[] args,
     int argIndex,
     bool seenEndOfOptions,
+    IReadOnlyList<OptionMatcher> optionMatchers,
     ILogger logger
   )
   {
@@ -288,16 +290,23 @@ internal static class EndpointResolver
     // After --, don't check for options - everything is treated as positional arguments
     if (!seenEndOfOptions && args[argIndex].StartsWith(CommonStrings.SingleDash, StringComparison.Ordinal))
     {
-      // Hit an option - check if current segment is optional
-      if (segment is ParameterMatcher optionalParam && optionalParam.IsOptional)
+      // Check if this argument matches a DEFINED option in the route pattern
+      if (IsDefinedOption(args[argIndex], optionMatchers))
       {
-        // Optional parameter followed by an option - skip it
-        LoggerMessages.OptionalParameterSkippedHitOption(logger, optionalParam.Name, args[argIndex], null);
-        return SegmentValidationResult.Skip;
+        // It's a defined option - check if current segment is optional
+        if (segment is ParameterMatcher optionalParam && optionalParam.IsOptional)
+        {
+          // Optional parameter followed by an option - skip it
+          LoggerMessages.OptionalParameterSkippedHitOption(logger, optionalParam.Name, args[argIndex], null);
+          return SegmentValidationResult.Skip;
+        }
+
+        LoggerMessages.RequiredSegmentExpectedButFoundOption(logger, segment.ToDisplayString(), args[argIndex], null);
+        return SegmentValidationResult.Fail;
       }
 
-      LoggerMessages.RequiredSegmentExpectedButFoundOption(logger, segment.ToDisplayString(), args[argIndex], null);
-      return SegmentValidationResult.Fail;
+      // Not a defined option - treat as positional value
+      // This allows: negative numbers (-3), literals (-sometext), etc.
     }
 
     return SegmentValidationResult.Proceed;

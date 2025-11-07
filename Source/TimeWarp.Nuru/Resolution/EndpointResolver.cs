@@ -182,7 +182,7 @@ internal static class EndpointResolver
       // Handle non-repeated option segments
       if (segment is OptionMatcher option)
       {
-        if (!MatchOptionSegment(option, args, ref consumedArgs, extractedValues, seenEndOfOptions, logger, ref defaultsUsed, consumedIndices))
+        if (!MatchOptionSegment(option, args, ref consumedArgs, extractedValues, seenEndOfOptions, endpoint.CompiledRoute.OptionMatchers, logger, ref defaultsUsed, consumedIndices))
         {
           totalConsumed = consumedIndices.Count;
           return false;
@@ -406,6 +406,7 @@ internal static class EndpointResolver
     ref int consumedArgs,
     Dictionary<string, string> extractedValues,
     bool seenEndOfOptions,
+    IReadOnlyList<OptionMatcher> optionMatchers,
     ILogger logger,
     ref int defaultsUsed,
     HashSet<int> consumedIndices
@@ -444,8 +445,10 @@ internal static class EndpointResolver
       if (option.ExpectsValue)
       {
         // Option expects a value
+        // Check if next arg is available and is NOT a defined option
         bool valueIsAvailable = consumedArgs < args.Length &&
-                                !args[consumedArgs].StartsWith(CommonStrings.SingleDash, StringComparison.Ordinal);
+                                (!args[consumedArgs].StartsWith(CommonStrings.SingleDash, StringComparison.Ordinal) ||
+                                 !IsDefinedOption(args[consumedArgs], optionMatchers));
 
         if (!valueIsAvailable)
         {

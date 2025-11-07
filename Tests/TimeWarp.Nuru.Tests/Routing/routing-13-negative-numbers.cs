@@ -210,4 +210,27 @@ public class NegativeNumberTests
 
     await Task.CompletedTask;
   }
+
+  // TEST 9: Option with negative number value
+  public static async Task Should_accept_negative_number_as_option_value()
+  {
+    // Arrange
+    int? capturedAmount = null;
+    NuruApp app = new NuruAppBuilder()
+      .AddRoute("calc --amount {amount:int}", (int amount) =>
+      {
+        capturedAmount = amount;
+        return 0;
+      })
+      .Build();
+
+    // Act - negative number as option value: --amount -5
+    int exitCode = await app.RunAsync(["calc", "--amount", "-5"]);
+
+    // Assert
+    exitCode.ShouldBe(0);
+    capturedAmount.ShouldBe(-5);
+
+    await Task.CompletedTask;
+  }
 }

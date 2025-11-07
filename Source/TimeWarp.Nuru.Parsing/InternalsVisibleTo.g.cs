@@ -4,6 +4,7 @@
 
 using System.Runtime.CompilerServices;
 
+[assembly: InternalsVisibleTo("configuration-01-validate-on-start")]
 [assembly: InternalsVisibleTo("lexer-01-basic-token-types")]
 [assembly: InternalsVisibleTo("lexer-02-valid-options")]
 [assembly: InternalsVisibleTo("lexer-03-invalid-double-dashes")]
@@ -54,6 +55,7 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("routing-10-error-cases")]
 [assembly: InternalsVisibleTo("routing-11-delegate-mediator")]
 [assembly: InternalsVisibleTo("routing-12-colon-filtering")]
+[assembly: InternalsVisibleTo("routing-13-negative-numbers")]
 [assembly: InternalsVisibleTo("run-all-tests")]
 [assembly: InternalsVisibleTo("run-mcp-tests")]
 [assembly: InternalsVisibleTo("run-nuru-tests")]

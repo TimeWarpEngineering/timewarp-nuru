@@ -53,6 +53,7 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("routing-09-complex-integration")]
 [assembly: InternalsVisibleTo("routing-10-error-cases")]
 [assembly: InternalsVisibleTo("routing-11-delegate-mediator")]
+[assembly: InternalsVisibleTo("routing-12-colon-filtering")]
 [assembly: InternalsVisibleTo("run-all-tests")]
 [assembly: InternalsVisibleTo("run-mcp-tests")]
 [assembly: InternalsVisibleTo("run-nuru-tests")]

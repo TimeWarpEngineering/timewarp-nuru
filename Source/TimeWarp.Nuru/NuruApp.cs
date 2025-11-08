@@ -1,16 +1,23 @@
 namespace TimeWarp.Nuru;
 
 using Microsoft.Extensions.Logging;
+using System.Text.RegularExpressions;
 
 /// <summary>
 /// A unified CLI app that supports both direct execution and dependency injection.
 /// </summary>
-public class NuruApp
+public partial class NuruApp
 {
   private readonly IServiceProvider? ServiceProvider;
   private readonly ITypeConverterRegistry TypeConverterRegistry;
   private readonly MediatorExecutor? MediatorExecutor;
   private readonly ILoggerFactory LoggerFactory;
+
+  /// <summary>
+  /// Regex pattern to match .NET configuration overrides (e.g., --Logging:LogLevel:Default=Debug).
+  /// Pattern requires colon to appear in the configuration path structure, not just in option values.
+  /// </summary>
+  // private static readonly Regex ConfigOverridePattern = ConfigurationOverrideRegex();
 
   /// <summary>
   /// Gets the collection of registered endpoints.
@@ -57,10 +64,10 @@ public class NuruApp
 
     try
     {
-      // Filter out configuration override args (containing colons) before route matching
-      // Route patterns cannot have colons in option names, so any arg with ':' is a config override
-      // Example: --Section:Key=value is for configuration, not routing
-      string[] routeArgs = [.. args.Where(arg => !arg.Contains(':', StringComparison.Ordinal))];
+      // Filter out configuration override args before route matching
+      // Configuration overrides follow the pattern --Section:Key=value (must start with -- and contain :)
+      // This allows legitimate values with colons (e.g., connection strings like //host:port/db)
+      string[] routeArgs = [.. args.Where(arg => !(arg.StartsWith("--", StringComparison.Ordinal) && arg.Contains(':', StringComparison.Ordinal)))];
 
       // Parse and match route (using filtered args)
       ILogger logger = LoggerFactory.CreateLogger("RouteBasedCommandResolver");
@@ -224,6 +231,9 @@ public class NuruApp
 
     await NuruConsole.WriteErrorLineAsync("").ConfigureAwait(false);
   }
+
+  [GeneratedRegex(@"^--[\w-]+:[\w:-]", RegexOptions.Compiled)]
+  private static partial Regex ConfigurationOverrideRegex();
 }
 
 /// <summary>

@@ -363,7 +363,7 @@ dotnet_diagnostic.RCS1047.severity = warning # Non-asynchronous method name shou
 # Line breaks and formatting
 dotnet_diagnostic.RCS0051.severity = none # Add/remove new line before 'while' in 'do' statement
 dotnet_diagnostic.RCS0052.severity = none # Add/remove new line before equals sign
-dotnet_diagnostic.RCS0036.severity = warning # Remove blank line between single-line declarations
+dotnet_diagnostic.RCS0036.severity = none # Remove blank line between single-line declarations
 
 # Code quality and best practices
 dotnet_diagnostic.RCS1018.severity = warning # Add/remove accessibility modifiers

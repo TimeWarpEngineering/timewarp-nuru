@@ -2,8 +2,6 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
     <AssemblyName>TimeWarp.Nuru.TestApp.Mediator</AssemblyName>
     <!-- AOT Configuration - Use partial trimming to preserve user code reflection -->
     <PublishAot>true</PublishAot>

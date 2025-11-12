@@ -1,0 +1,225 @@
+#!/usr/bin/dotnet --
+
+using TimeWarp.Nuru;
+using TimeWarp.Nuru.Completion;
+using Shouldly;
+
+return await RunTests<ParameterTypeDetectionTests>(clearCache: true);
+
+[TestTag("Completion")]
+[ClearRunfileCache]
+public class ParameterTypeDetectionTests
+{
+  public static async Task Should_handle_string_parameters()
+  {
+    // Arrange
+    var builder = new NuruAppBuilder();
+    builder.AddRoute("greet {name}", (string name) => 0);
+
+    // Act
+    var generator = new CompletionScriptGenerator();
+    string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
+
+    // Assert - Script should be generated
+    bashScript.ShouldContain("greet");
+    bashScript.ShouldNotBeEmpty();
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_handle_int_parameters()
+  {
+    // Arrange
+    var builder = new NuruAppBuilder();
+    builder.AddRoute("delay {ms:int}", (int ms) => 0);
+
+    // Act
+    var generator = new CompletionScriptGenerator();
+    string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
+
+    // Assert
+    bashScript.ShouldContain("delay");
+    bashScript.ShouldNotBeEmpty();
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_handle_double_parameters()
+  {
+    // Arrange
+    var builder = new NuruAppBuilder();
+    builder.AddRoute("scale {factor:double}", (double factor) => 0);
+
+    // Act
+    var generator = new CompletionScriptGenerator();
+    string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
+
+    // Assert
+    bashScript.ShouldContain("scale");
+    bashScript.ShouldNotBeEmpty();
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_handle_bool_parameters()
+  {
+    // Arrange
+    var builder = new NuruAppBuilder();
+    builder.AddRoute("set {enabled:bool}", (bool enabled) => 0);
+
+    // Act
+    var generator = new CompletionScriptGenerator();
+    string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
+
+    // Assert
+    bashScript.ShouldContain("set");
+    bashScript.ShouldNotBeEmpty();
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_handle_optional_parameters()
+  {
+    // Arrange
+    var builder = new NuruAppBuilder();
+    builder.AddRoute("deploy {env} {tag?}", (string env, string? tag) => 0);
+
+    // Act
+    var generator = new CompletionScriptGenerator();
+    string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
+
+    // Assert
+    bashScript.ShouldContain("deploy");
+    bashScript.ShouldNotBeEmpty();
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_handle_catch_all_parameters()
+  {
+    // Arrange
+    var builder = new NuruAppBuilder();
+    builder.AddRoute("exec {*args}", (string[] args) => 0);
+
+    // Act
+    var generator = new CompletionScriptGenerator();
+    string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
+
+    // Assert
+    bashScript.ShouldContain("exec");
+    bashScript.ShouldNotBeEmpty();
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_handle_mixed_parameter_types()
+  {
+    // Arrange
+    var builder = new NuruAppBuilder();
+    builder.AddRoute("process {file} {count:int} {verbose:bool}",
+      (string file, int count, bool verbose) => 0);
+
+    // Act
+    var generator = new CompletionScriptGenerator();
+    string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
+
+    // Assert
+    bashScript.ShouldContain("process");
+    bashScript.ShouldNotBeEmpty();
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_handle_parameters_with_options()
+  {
+    // Arrange
+    var builder = new NuruAppBuilder();
+    builder.AddRoute("deploy {env} --force --tag {version}",
+      (string env, string version) => 0);
+
+    // Act
+    var generator = new CompletionScriptGenerator();
+    string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
+
+    // Assert
+    bashScript.ShouldContain("deploy");
+    bashScript.ShouldContain("--force");
+    bashScript.ShouldContain("--tag");
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_work_across_all_shell_types()
+  {
+    // Arrange
+    var builder = new NuruAppBuilder();
+    builder.AddRoute("test {value:int}", (int value) => 0);
+
+    var generator = new CompletionScriptGenerator();
+
+    // Act
+    string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
+    string zshScript = generator.GenerateZsh(builder.EndpointCollection, "testapp");
+    string pwshScript = generator.GeneratePowerShell(builder.EndpointCollection, "testapp");
+    string fishScript = generator.GenerateFish(builder.EndpointCollection, "testapp");
+
+    // Assert - All shells should generate valid scripts
+    bashScript.ShouldContain("test");
+    zshScript.ShouldContain("test");
+    pwshScript.ShouldContain("test");
+    fishScript.ShouldContain("test");
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_handle_datetime_parameters()
+  {
+    // Arrange
+    var builder = new NuruAppBuilder();
+    builder.AddRoute("schedule {when:DateTime}", (DateTime when) => 0);
+
+    // Act
+    var generator = new CompletionScriptGenerator();
+    string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
+
+    // Assert
+    bashScript.ShouldContain("schedule");
+    bashScript.ShouldNotBeEmpty();
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_handle_guid_parameters()
+  {
+    // Arrange
+    var builder = new NuruAppBuilder();
+    builder.AddRoute("lookup {id:Guid}", (Guid id) => 0);
+
+    // Act
+    var generator = new CompletionScriptGenerator();
+    string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
+
+    // Assert
+    bashScript.ShouldContain("lookup");
+    bashScript.ShouldNotBeEmpty();
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_handle_routes_with_only_parameters()
+  {
+    // Arrange
+    var builder = new NuruAppBuilder();
+    builder.AddRoute("{source} {destination}", (string source, string destination) => 0);
+
+    // Act
+    var generator = new CompletionScriptGenerator();
+    string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
+
+    // Assert - Should generate valid script even without literal commands
+    bashScript.ShouldNotBeEmpty();
+    bashScript.ShouldContain("# Bash completion for");
+
+    await Task.CompletedTask;
+  }
+}

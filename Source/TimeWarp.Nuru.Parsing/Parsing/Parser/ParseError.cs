@@ -60,10 +60,12 @@ public record InvalidTypeConstraintError(
   string InvalidType
 ) : ParseError(Position, Length)
 {
-  private const string SupportedTypes = "string, int, double, bool, DateTime, Guid, long, decimal, TimeSpan";
+  private const string SupportedTypes = "string, int, double, bool, DateTime, Guid, long, decimal, TimeSpan, Uri, FileInfo, DirectoryInfo, IPAddress, DateOnly, TimeOnly";
 
   public override string ToString() =>
-    $"Error at position {Position}: Invalid type constraint '{InvalidType}' - supported types: {SupportedTypes}";
+    $"Error at position {Position}: Invalid type constraint '{InvalidType}'. " +
+    $"Built-in types: {SupportedTypes}. " +
+    "For custom types, ensure you register an IRouteTypeConverter and use a valid identifier name (e.g., 'fileinfo', 'MyType').";
 }
 
 /// <summary>

@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="$(SourceDirectory)TimeWarp.Nuru/TimeWarp.Nuru.csproj" />
+    <ProjectReference Include="$(SourceDirectory)TimeWarp.Nuru.Completion/TimeWarp.Nuru.Completion.csproj" />
+  </ItemGroup>
+
+</Project>

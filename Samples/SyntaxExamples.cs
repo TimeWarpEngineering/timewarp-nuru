@@ -45,8 +45,23 @@ builder.AddRoute("enabled {flag:bool}", (bool flag) =>
 builder.AddRoute("schedule {date:DateTime}", (DateTime date) =>
     Console.WriteLine($"Scheduled for {date}"));
 
-// Supported types: string, int, long, short, byte, double, float, decimal,
-// bool, DateTime, DateOnly, TimeOnly, Guid
+// New built-in types for common CLI scenarios:
+builder.AddRoute("fetch {url:Uri}", (Uri url) =>
+    Console.WriteLine($"Fetching {url}"));
+builder.AddRoute("read {file:FileInfo}", (FileInfo file) =>
+    Console.WriteLine($"Reading {file.FullName}"));
+builder.AddRoute("list {dir:DirectoryInfo}", (DirectoryInfo dir) =>
+    Console.WriteLine($"Listing {dir.FullName}"));
+builder.AddRoute("connect {addr:IPAddress}", (IPAddress addr) =>
+    Console.WriteLine($"Connecting to {addr}"));
+builder.AddRoute("report {date:DateOnly}", (DateOnly date) =>
+    Console.WriteLine($"Report for {date}"));
+builder.AddRoute("alarm {time:TimeOnly}", (TimeOnly time) =>
+    Console.WriteLine($"Alarm set for {time}"));
+
+// Supported types: string, int, long, double, decimal, bool, DateTime, Guid, TimeSpan,
+// Uri, FileInfo, DirectoryInfo, IPAddress, DateOnly, TimeOnly
+// You can also register custom types via IRouteTypeConverter
 #endregion
 
 #region MCP:optional

@@ -52,6 +52,7 @@ dotnet run -- add 15 25
 | 🎯 **Web-Style Routing** | Familiar `"deploy {env} --version {tag}"` syntax | [Routing Guide](documentation/user/features/routing.md) |
 | ⚡ **Dual Approach** | Mix Direct (fast) + Mediator (structured) | [Architecture Choices](documentation/user/guides/architecture-choices.md) |
 | 🛡️ **Roslyn Analyzer** | Catch route errors at compile-time | [Analyzer Docs](documentation/user/features/analyzer.md) |
+| ⌨️ **Shell Completion** | Tab completion for bash, zsh, PowerShell, fish | [Shell Completion](#-shell-completion) |
 | 🤖 **MCP Server** | AI-assisted development with Claude | [MCP Server Guide](documentation/user/tools/mcp-server.md) |
 | 📊 **Logging Package** | Zero-overhead structured logging | [Logging Docs](documentation/user/features/logging.md) |
 | 🚀 **Native AOT** | 3.3 MB binaries, instant startup | [Deployment Guide](documentation/user/guides/deployment.md) |
@@ -165,6 +166,42 @@ Get instant help in Claude Code, Roo Code, or Continue:
 - Real-time error guidance
 
 **→ [MCP Server Setup Guide](documentation/user/tools/mcp-server.md)**
+
+## ⌨️ Shell Completion
+
+Enable tab completion for your CLI with one line of code:
+
+```csharp
+NuruApp app = new NuruAppBuilder()
+  .AddRoute("deploy {env} --version {tag}", (string env, string tag) => Deploy(env, tag))
+  .AddRoute("status", () => ShowStatus())
+  .EnableShellCompletion()  // ← Add this
+  .Build();
+```
+
+Generate completion scripts for your shell:
+
+```bash
+# Bash
+./myapp --generate-completion bash >> ~/.bashrc
+
+# Zsh
+./myapp --generate-completion zsh >> ~/.zshrc
+
+# PowerShell
+./myapp --generate-completion powershell >> $PROFILE
+
+# Fish
+./myapp --generate-completion fish > ~/.config/fish/completions/myapp.fish
+```
+
+**Supports:**
+- ✅ Command completion (`deploy`, `status`)
+- ✅ Option completion (`--version`, `--force`)
+- ✅ Short option aliases (`-v`, `-f`)
+- ✅ All 4 major shells (bash, zsh, PowerShell, fish)
+
+**See [ShellCompletionExample](Samples/ShellCompletionExample/) for a complete working example.**
 
 ## 🤝 Contributing
 

@@ -80,6 +80,64 @@ internal static class DefaultTypeConverters
         return true;
       }
     }
+    else if (targetType == typeof(Uri))
+    {
+      if (Uri.TryCreate(value, UriKind.RelativeOrAbsolute, out Uri? uriValue))
+      {
+        result = uriValue;
+        return true;
+      }
+    }
+    else if (targetType == typeof(FileInfo))
+    {
+      try
+      {
+        result = new FileInfo(value);
+        return true;
+      }
+      catch (ArgumentException)
+      {
+        // Invalid path
+        return false;
+      }
+    }
+    else if (targetType == typeof(DirectoryInfo))
+    {
+      try
+      {
+        result = new DirectoryInfo(value);
+        return true;
+      }
+      catch (ArgumentException)
+      {
+        // Invalid path
+        return false;
+      }
+    }
+    else if (targetType == typeof(IPAddress))
+    {
+      if (IPAddress.TryParse(value, out IPAddress? ipValue))
+      {
+        result = ipValue;
+        return true;
+      }
+    }
+    else if (targetType == typeof(DateOnly))
+    {
+      if (DateOnly.TryParse(value, out DateOnly dateOnlyValue))
+      {
+        result = dateOnlyValue;
+        return true;
+      }
+    }
+    else if (targetType == typeof(TimeOnly))
+    {
+      if (TimeOnly.TryParse(value, out TimeOnly timeOnlyValue))
+      {
+        result = timeOnlyValue;
+        return true;
+      }
+    }
     else if (targetType.IsEnum)
     {
       try
@@ -98,11 +156,11 @@ internal static class DefaultTypeConverters
   }
 
   /// <summary>
-  /// Gets the Type associated with a constraint name.
+  /// Gets the Type associated with a constraint name (case-insensitive).
   /// </summary>
   public static Type? GetTypeForConstraint(string constraintName)
   {
-    return constraintName switch
+    return constraintName.ToLowerInvariant() switch
     {
       "int" => typeof(int),
       "bool" => typeof(bool),
@@ -112,6 +170,12 @@ internal static class DefaultTypeConverters
       "guid" => typeof(Guid),
       "datetime" => typeof(DateTime),
       "timespan" => typeof(TimeSpan),
+      "uri" => typeof(Uri),
+      "fileinfo" => typeof(FileInfo),
+      "directoryinfo" => typeof(DirectoryInfo),
+      "ipaddress" => typeof(IPAddress),
+      "dateonly" => typeof(DateOnly),
+      "timeonly" => typeof(TimeOnly),
       _ => null
     };
   }

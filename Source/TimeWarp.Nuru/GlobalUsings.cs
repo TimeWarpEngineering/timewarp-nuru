@@ -1,4 +1,6 @@
 // System namespaces
+global using System.IO;
+global using System.Net;
 // Microsoft namespaces
 global using Microsoft.Extensions.Configuration;
 global using Microsoft.Extensions.DependencyInjection;

@@ -54,17 +54,66 @@ Remove the parsing package build step and cache clearing logic (lines 13-37)
 ## Checklist
 
 ### Implementation
-- [ ] Update TimeWarp.Nuru.csproj to use `<Compile Include>`
-- [ ] Remove PackageReference to TimeWarp.Nuru.Parsing from TimeWarp.Nuru.csproj
-- [ ] Simplify TimeWarp.Nuru.Parsing.csproj (remove packaging configuration)
-- [ ] Update Scripts/Build.cs to remove parsing package build and cache clearing
-- [ ] Verify build succeeds: `cd Scripts && ./Build.cs`
-- [ ] Verify tests pass: `cd Tests && ./test-both-versions.sh`
-- [ ] Verify analyzer still works correctly
+- [x] Update TimeWarp.Nuru.csproj to use `<Compile Include>`
+- [x] Remove PackageReference to TimeWarp.Nuru.Parsing from TimeWarp.Nuru.csproj
+- [x] Simplify TimeWarp.Nuru.Parsing.csproj (remove packaging configuration)
+- [x] Update Scripts/Build.cs to remove parsing package build and cache clearing
+- [x] Verify build succeeds: `cd Scripts && ./Build.cs`
+- [x] Verify tests pass: `cd Tests && ./test-both-versions.sh`
+- [x] Verify analyzer still works correctly
 
 ### Documentation
-- [ ] Update Documentation/developer/guides/source-only-packages.md to reflect new approach (or remove if no longer relevant)
-- [ ] Update CLAUDE.md if it references the source-only package pattern
+- [x] Update Documentation/developer/guides/source-only-packages.md to reflect new approach (or remove if no longer relevant)
+- [x] Update CLAUDE.md if it references the source-only package pattern
+
+## Completion Notes
+
+Task 017 completed successfully via commit b9e8d0e. The parsing source sharing was simplified from a source-only package approach to direct source compilation.
+
+### Changes Made
+
+1. **TimeWarp.Nuru.csproj** ([Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj:40-42](../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj#L40-L42))
+   ```xml
+   <!-- Include parsing source files directly -->
+   <ItemGroup>
+     <Compile Include="../TimeWarp.Nuru.Parsing/**/*.cs"
+              Exclude="../TimeWarp.Nuru.Parsing/obj/**;../TimeWarp.Nuru.Parsing/bin/**" />
+   </ItemGroup>
+   ```
+
+2. **TimeWarp.Nuru.Parsing.csproj** ([Source/TimeWarp.Nuru.Parsing/TimeWarp.Nuru.Parsing.csproj](../../Source/TimeWarp.Nuru.Parsing/TimeWarp.Nuru.Parsing.csproj))
+   - Removed `GeneratePackageOnBuild`
+   - Removed `IncludeBuildOutput`
+   - Removed `DevelopmentDependency`
+   - Removed `<Content Include>` packaging configuration
+   - Set `<IsPackable>false</IsPackable>`
+   - Added description: "internal use only - compiled directly into consuming projects"
+   - Simplified to just 12 lines
+
+3. **Scripts/Build.cs** ([Scripts/Build.cs:13](../../Scripts/Build.cs#L13))
+   - Removed parsing package build step
+   - Removed cache clearing logic
+   - Added comment: "TimeWarp.Nuru.Parsing is no longer built separately"
+
+### Benefits Achieved
+
+- ✅ **Simpler build process** - No intermediate package generation needed
+- ✅ **No cache management** - Source changes immediately picked up by consuming projects
+- ✅ **Consistent approach** - Both TimeWarp.Nuru and Analyzers use same `<Compile Include>` pattern
+- ✅ **Same runtime result** - All parsing types still compiled into TimeWarp.Nuru.dll
+- ✅ **Easier debugging** - Direct source references make stepping through code simpler
+- ✅ **Faster development cycle** - No package rebuild/cache clear dance
+
+### Additional Deliverable: TimeWarp.Kijaribu
+
+As a bonus, commit b9e8d0e also introduced TimeWarp.Kijaribu, a lightweight testing framework for single-file C# programs:
+- Reflection-based test discovery (public static Task methods)
+- Shouldly integration for fluent assertions
+- Test attributes: `[Skip]`, `[TestTag]`, `[Input]` for parameterized tests
+- PascalCase test name formatting for better readability
+- Used extensively throughout the test suite
+
+This testing framework has significantly improved the testing infrastructure for the project.
 
 ## Notes
 

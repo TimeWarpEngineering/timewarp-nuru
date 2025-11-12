@@ -83,6 +83,7 @@ var testCategories = new Dictionary<string, List<string>>
     ["Lexer"] = [.. GetTestFiles(Path.Combine(testsRoot, "TimeWarp.Nuru.Tests/Lexer"))],
     ["Parser"] = [.. GetTestFiles(Path.Combine(testsRoot, "TimeWarp.Nuru.Tests/Parsing/Parser"))],
     ["Routing"] = [.. GetTestFiles(Path.Combine(testsRoot, "TimeWarp.Nuru.Tests/Routing"))],
+    ["TypeConversion"] = [.. GetTestFiles(Path.Combine(testsRoot, "TimeWarp.Nuru.Tests/TypeConversion"))],
     ["MCP"] = GetTestFiles(Path.Combine(testsRoot, "TimeWarp.Nuru.Mcp.Tests")),
 };
 

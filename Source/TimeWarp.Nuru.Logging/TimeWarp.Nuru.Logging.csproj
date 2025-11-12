@@ -1,7 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
     <Description>Default console logging implementation for TimeWarp.Nuru CLI framework</Description>
     <PackageTags>cli;logging;console;timewarp;nuru</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>

@@ -2,8 +2,6 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
     <AssemblyName>TimeWarp.Nuru.TestApp.Delegates</AssemblyName>
     <!-- Enable AOT compilation -->
     <PublishAot>true</PublishAot>

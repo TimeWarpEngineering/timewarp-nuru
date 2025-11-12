@@ -1,16 +1,7 @@
 <Project>
 
-  <!-- Custom path definitions for repository structure -->
-  <PropertyGroup Label="Custom Repository Variables">
-    <RepositoryName>timewarp-nuru</RepositoryName>
-    <SolutionFile>$(RepositoryRoot)TimeWarp.Nuru.sln</SolutionFile>
-    <RepositoryRoot>$(MSBuildThisFileDirectory)</RepositoryRoot>
-    <SourceDirectory>$(RepositoryRoot)Source/</SourceDirectory>
-    <TestsDirectory>$(RepositoryRoot)Tests/</TestsDirectory>
-    <SamplesDirectory>$(RepositoryRoot)Samples/</SamplesDirectory>
-    <ArtifactsDirectory>$(RepositoryRoot)artifacts/</ArtifactsDirectory>
-    <PackagesDirectory>$(ArtifactsDirectory)packages/</PackagesDirectory>
-  </PropertyGroup>
+  <!-- Import repository path definitions -->
+  <Import Project="$(MSBuildThisFileDirectory)msbuild/repository.props" />
 
   <!-- MSBuild and NuGet behavior configuration -->
   <PropertyGroup Label="MSBuild/NuGet Configuration">

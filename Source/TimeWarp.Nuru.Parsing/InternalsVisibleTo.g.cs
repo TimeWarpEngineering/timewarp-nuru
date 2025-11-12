@@ -41,6 +41,7 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("parser-12-error-reporting")]
 [assembly: InternalsVisibleTo("parser-13-syntax-errors")]
 [assembly: InternalsVisibleTo("parser-14-mixed-modifiers")]
+[assembly: InternalsVisibleTo("parser-15-custom-type-constraints")]
 [assembly: InternalsVisibleTo("Program")]
 [assembly: InternalsVisibleTo("Program")]
 [assembly: InternalsVisibleTo("routing-01-basic-matching")]
@@ -85,3 +86,4 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("test-truly-optional-options")]
 [assembly: InternalsVisibleTo("test-typed-parameters")]
 [assembly: InternalsVisibleTo("TestSamples")]
+[assembly: InternalsVisibleTo("type-conversion-01-builtin-types")]

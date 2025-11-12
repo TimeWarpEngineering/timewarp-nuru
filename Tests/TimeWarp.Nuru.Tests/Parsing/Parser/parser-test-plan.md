@@ -687,6 +687,106 @@ Tests the deploy example showing progressive feature addition.
 
 ---
 
+## Section 14: Reserved for Future Use
+
+---
+
+## Section 15: Custom Type Constraints
+
+**Purpose**: Verify parser accepts custom type constraints for use with `IRouteTypeConverter` implementations.
+
+**Implementation**: [parser-15-custom-type-constraints.cs](parser-15-custom-type-constraints.cs)
+
+**Context**: Fixes issue #62 - Parser now accepts any valid C# identifier as a type constraint, enabling users to register custom type converters with `AddTypeConverter()`.
+
+### Test Cases
+
+1. **Custom Type Constraint (Lowercase)**
+   - Pattern: `process {file:fileinfo}`
+   - Expected: ✅ Parses successfully
+   - Reason: Custom types use valid identifier format
+   - **Status**: ✅ PASSING
+
+2. **Custom Type Constraint (PascalCase)**
+   - Pattern: `load {data:MyCustomType}`
+   - Expected: ✅ Parses successfully
+   - Reason: PascalCase is valid identifier format
+   - **Status**: ✅ PASSING
+
+3. **Custom Type with Underscores**
+   - Pattern: `parse {input:my_custom_type}`
+   - Expected: ✅ Parses successfully
+   - Reason: Underscores allowed in identifiers
+   - **Status**: ✅ PASSING
+
+4. **Custom Type Starting with Underscore**
+   - Pattern: `handle {value:_internal}`
+   - Expected: ✅ Parses successfully
+   - Reason: Valid C# identifier (private convention)
+   - **Status**: ✅ PASSING
+
+5. **Custom Type with Numbers**
+   - Pattern: `connect {addr:ipv4address}`
+   - Expected: ✅ Parses successfully
+   - Reason: Numbers allowed after first character
+   - **Status**: ✅ PASSING
+
+6. **Reject Type Starting with Number**
+   - Pattern: `invalid {x:123type}`
+   - Expected: ❌ Parse error (NURU_P004)
+   - Reason: Identifiers cannot start with numbers
+   - Error: "Invalid type constraint '123type'"
+   - **Status**: ✅ PASSING
+
+7. **Reject Type with Special Characters**
+   - Pattern: `invalid {x:my-type}`
+   - Expected: ❌ Parse error (NURU_P004)
+   - Reason: Hyphens not allowed in identifiers
+   - Error: "Invalid type constraint 'my-type'"
+   - **Status**: ✅ PASSING
+
+8. **Multiple Custom Type Constraints**
+   - Pattern: `copy {source:fileinfo} {dest:directoryinfo}`
+   - Expected: ✅ Parses successfully
+   - Reason: Multiple custom types in same pattern
+   - **Status**: ✅ PASSING
+
+9. **Custom Type with Optional Modifier**
+   - Pattern: `load {config:fileinfo?}`
+   - Expected: ✅ Parses successfully
+   - Reason: Custom types work with optional modifier
+   - **Status**: ✅ PASSING
+
+### Validation Rules
+
+**Valid Custom Type Identifiers:**
+- Must start with letter (a-z, A-Z) or underscore (_)
+- Remaining characters can be letters, digits (0-9), or underscores
+- Examples: `fileinfo`, `MyType`, `_internal`, `ipv4address`
+
+**Invalid Custom Type Identifiers:**
+- Cannot start with digit: `123type` ❌
+- Cannot contain special characters: `my-type`, `my.type`, `my$type` ❌
+- Cannot be empty or whitespace: ``, `  ` ❌
+
+### Integration with Type Conversion System
+
+Custom type constraints work with the `IRouteTypeConverter` system:
+
+```csharp
+// Register custom converter
+app.AddTypeConverter(new FileInfoTypeConverter());
+
+// Use in route pattern with type constraint
+app.AddRoute("process {file:fileinfo}", (FileInfo file) => { ... });
+```
+
+The parser validates the **format** of the type constraint (valid identifier), while the runtime validates that a **converter is registered** for that type.
+
+**Results**: 9/9 tests passing. Custom type constraint support fully functional.
+
+---
+
 ## Implementation Strategy
 
 ### Phase 1: Core Parsing (Sections 1-3)
@@ -712,6 +812,10 @@ Tests the deploy example showing progressive feature addition.
 - ✅ parser-12: Comprehensive error reporting (semantic + parse errors + modifier syntax validation)
 - ✅ parser-13: Syntax validation errors (lexical/parsing edge cases)
 - ⚠️ **Known Issue**: parser-13 identifies identifier validation bug (`{123abc}` incorrectly accepted)
+
+### Phase 6: Extensibility (Section 15)
+- ✅ parser-15: Custom type constraints for `IRouteTypeConverter` support (issue #62)
+- ✅ **9/9 tests passing** - Custom type validation fully functional
 
 ---
 

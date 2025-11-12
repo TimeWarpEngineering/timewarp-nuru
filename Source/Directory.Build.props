@@ -9,7 +9,7 @@
     <RepositoryUrl>https://github.com/TimeWarpEngineering/timewarp-nuru</RepositoryUrl>
     <PackageLicenseExpression>Unlicense</PackageLicenseExpression>
     <PackageIcon>Logo.png</PackageIcon>
-    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageReadmeFile>readme.md</PackageReadmeFile>
   </PropertyGroup>
 
   <PropertyGroup Label="MsBuild Packaging Defaults">

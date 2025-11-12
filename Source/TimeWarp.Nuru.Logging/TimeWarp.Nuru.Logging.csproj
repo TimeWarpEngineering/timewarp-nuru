@@ -3,7 +3,6 @@
   <PropertyGroup>
     <Description>Default console logging implementation for TimeWarp.Nuru CLI framework</Description>
     <PackageTags>cli;logging;console;timewarp;nuru</PackageTags>
-    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
   <ItemGroup>
@@ -16,7 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="README.md" Pack="true" PackagePath="" />
+    <None Include="$(RepositoryRoot)readme.md" Pack="true" PackagePath="" />
   </ItemGroup>
 
 </Project>

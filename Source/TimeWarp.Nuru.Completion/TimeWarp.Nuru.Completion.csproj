@@ -19,4 +19,8 @@
     <EmbeddedResource Include="Completion/Templates/*.fish" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="$(RepositoryRoot)readme.md" Pack="true" PackagePath="" />
+  </ItemGroup>
+
 </Project>

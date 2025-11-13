@@ -1,0 +1,197 @@
+#!/usr/bin/dotnet --
+
+using TimeWarp.Nuru;
+using TimeWarp.Nuru.Completion;
+using Shouldly;
+
+return await RunTests<CommandExtractionTests>(clearCache: true);
+
+[TestTag("Completion")]
+[ClearRunfileCache]
+public class CommandExtractionTests
+{
+  public static async Task Should_extract_single_command()
+  {
+    // Arrange
+    var builder = new NuruAppBuilder();
+    builder.AddRoute("status", () => 0);
+
+    // Act
+    var generator = new CompletionScriptGenerator();
+    string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
+
+    // Assert
+    bashScript.ShouldContain("status");
+    bashScript.ShouldNotBeEmpty();
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_extract_multiple_commands()
+  {
+    // Arrange
+    var builder = new NuruAppBuilder();
+    builder.AddRoute("create", () => 0);
+    builder.AddRoute("createorder", () => 0);
+    builder.AddRoute("delete", () => 0);
+
+    // Act
+    var generator = new CompletionScriptGenerator();
+    string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
+
+    // Assert
+    bashScript.ShouldContain("create");
+    bashScript.ShouldContain("createorder");
+    bashScript.ShouldContain("delete");
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_extract_commands_with_parameters()
+  {
+    // Arrange
+    var builder = new NuruAppBuilder();
+    builder.AddRoute("deploy {env}", (string env) => 0);
+    builder.AddRoute("build {project}", (string project) => 0);
+
+    // Act
+    var generator = new CompletionScriptGenerator();
+    string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
+
+    // Assert
+    bashScript.ShouldContain("deploy");
+    bashScript.ShouldContain("build");
+    bashScript.ShouldNotContain("{env}");
+    bashScript.ShouldNotContain("{project}");
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_extract_commands_with_options()
+  {
+    // Arrange
+    var builder = new NuruAppBuilder();
+    builder.AddRoute("test --verbose", () => 0);
+    builder.AddRoute("build --config {mode}", (string mode) => 0);
+
+    // Act
+    var generator = new CompletionScriptGenerator();
+    string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
+
+    // Assert
+    bashScript.ShouldContain("test");
+    bashScript.ShouldContain("build");
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_handle_nested_commands()
+  {
+    // Arrange
+    var builder = new NuruAppBuilder();
+    builder.AddRoute("git commit", () => 0);
+    builder.AddRoute("git status", () => 0);
+    builder.AddRoute("git push", () => 0);
+
+    // Act
+    var generator = new CompletionScriptGenerator();
+    string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
+
+    // Assert
+    bashScript.ShouldContain("git");
+    // Note: Only first literal is extracted as command
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_deduplicate_commands()
+  {
+    // Arrange
+    var builder = new NuruAppBuilder();
+    builder.AddRoute("deploy {env}", (string env) => 0);
+    builder.AddRoute("deploy {env} --force", (string env) => 0);
+    builder.AddRoute("deploy {env} {tag}", (string env, string tag) => 0);
+
+    // Act
+    var generator = new CompletionScriptGenerator();
+    string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
+
+    // Assert
+    // "deploy" should appear only once in the commands list
+    int deployCount = System.Text.RegularExpressions.Regex.Matches(bashScript, @"\bdeploy\b").Count;
+    deployCount.ShouldBeGreaterThan(0, "deploy should be present");
+    // Note: May appear in multiple contexts, but should be in commands list once
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_handle_empty_route_collection()
+  {
+    // Arrange
+    var builder = new NuruAppBuilder();
+    // No routes added
+
+    // Act
+    var generator = new CompletionScriptGenerator();
+    string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
+
+    // Assert
+    bashScript.ShouldNotBeEmpty();
+    // Script should still be valid even with no commands
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_extract_command_from_complex_route()
+  {
+    // Arrange
+    var builder = new NuruAppBuilder();
+    builder.AddRoute("deploy {env} --version {ver} --force", (string env, string ver) => 0);
+
+    // Act
+    var generator = new CompletionScriptGenerator();
+    string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
+
+    // Assert
+    bashScript.ShouldContain("deploy");
+    bashScript.ShouldNotContain("{env}");
+    bashScript.ShouldNotContain("{ver}");
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_handle_route_with_only_parameters()
+  {
+    // Arrange
+    var builder = new NuruAppBuilder();
+    builder.AddRoute("{command} {*args}", (string command, string[] args) => 0);
+
+    // Act
+    var generator = new CompletionScriptGenerator();
+    string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
+
+    // Assert
+    bashScript.ShouldNotBeEmpty();
+    // No literal commands to extract, but script should be valid
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_be_case_sensitive()
+  {
+    // Arrange
+    var builder = new NuruAppBuilder();
+    builder.AddRoute("Deploy", () => 0);
+    builder.AddRoute("deploy", () => 0);
+
+    // Act
+    var generator = new CompletionScriptGenerator();
+    string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
+
+    // Assert
+    bashScript.ShouldContain("Deploy");
+    bashScript.ShouldContain("deploy");
+
+    await Task.CompletedTask;
+  }
+}

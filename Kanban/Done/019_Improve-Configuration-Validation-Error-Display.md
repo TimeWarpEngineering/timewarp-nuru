@@ -1,9 +1,10 @@
 # Improve Configuration Validation Error Display
 
-**Status:** InProgress
+**Status:** Complete ✅
 **Priority:** High
 **Category:** User Experience, Error Handling
 **Created:** 2025-10-25
+**Completed:** 2025-10-26
 **Related:** Issue #71 (ValidateOnStart support)
 
 ## Problem
@@ -141,16 +142,93 @@ This gives:
 - Graceful exit code from RunAsync()
 - Original exception preserved for debugging
 
+## Completion Notes
+
+Task completed and merged. Implemented **Option 2** (Catch in RunAsync) with smart validation skipping.
+
+### Implementation Summary (Commit 93d5cec)
+
+**Location:** [Source/TimeWarp.Nuru/NuruApp.cs](../../Source/TimeWarp.Nuru/NuruApp.cs)
+
+1. **Smart Validation Skipping** - `ShouldSkipValidation()` method
+   - Skips validation when `--help` or `-h` flags are present
+   - Skips validation when route resolution fails (shows "command not found")
+   - Allows help commands to work even with invalid configuration
+
+2. **Clean Error Display** - `DisplayValidationErrorsAsync()` method
+   - Displays "❌ Configuration validation failed:" header
+   - Formats each validation failure as a bulleted list
+   - No stack traces shown to end users
+   - Returns exit code 1 (not unhandled exception)
+
+3. **Validation Moved from Build() to RunAsync()**
+   - Better async handling (no sync-over-async issues)
+   - Proper exit code handling
+   - Original exception preserved for debugging
+
+### Code Example
+
+```csharp
+private static bool ShouldSkipValidation(string[] args, EndpointResolutionResult result)
+{
+  // Skip validation if help flag is present
+  if (args.Any(arg => arg == "--help" || arg == "-h"))
+    return true;
+
+  // Skip validation if route resolution failed
+  if (!result.Success)
+    return true;
+
+  return false;
+}
+
+private static async Task DisplayValidationErrorsAsync(OptionsValidationException exception)
+{
+  await NuruConsole.WriteErrorLineAsync("❌ Configuration validation failed:").ConfigureAwait(false);
+  await NuruConsole.WriteErrorLineAsync("").ConfigureAwait(false);
+
+  foreach (string failure in exception.Failures)
+  {
+    await NuruConsole.WriteErrorLineAsync($"  • {failure}").ConfigureAwait(false);
+  }
+
+  await NuruConsole.WriteErrorLineAsync("").ConfigureAwait(false);
+}
+```
+
+### Result
+
+**Before:**
+```
+Unhandled exception. Microsoft.Extensions.Options.OptionsValidationException: CCC One username is required...
+   at Microsoft.Extensions.Options.OptionsFactory`1.Create(String name)
+   at Microsoft.Extensions.Options.OptionsMonitor`1.<>c.<Get>b__10_0(...)
+   [... 20+ more lines of stack trace ...]
+```
+
+**After:**
+```
+❌ Configuration validation failed:
+
+  • CCC One username is required.
+    Set it in appsettings.json or EXPORTFLOW__CCCONEUSERNAME environment variable.
+
+  • CCC One password is required.
+    Set it in appsettings.json or EXPORTFLOW__CCCONEPASSWORD environment variable.
+
+Exit code: 1
+```
+
 ## Implementation Tasks
 
-- [ ] Update `NuruAppBuilder.Build()` to catch `OptionsValidationException`
-- [ ] Format validation failures as bulleted list
-- [ ] Create helper method for formatting validation errors
-- [ ] Test with multiple validation failures
-- [ ] Test with single validation failure
-- [ ] Update sample to demonstrate improved error display
-- [ ] Add integration test for error formatting
-- [ ] Document error handling behavior
+- [x] Update `NuruAppBuilder.Build()` to catch `OptionsValidationException`
+- [x] Format validation failures as bulleted list
+- [x] Create helper method for formatting validation errors
+- [x] Test with multiple validation failures
+- [x] Test with single validation failure
+- [x] Update sample to demonstrate improved error display
+- [x] Add integration test for error formatting
+- [x] Document error handling behavior
 
 ## Testing Scenarios
 

@@ -1,0 +1,19 @@
+<Project>
+  <!-- Import parent Directory.Build.props -->
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))"/>
+
+  <PropertyGroup>
+    <!-- Suppress unused parameter warnings in test lambdas -->
+    <NoWarn>$(NoWarn);RCS1163</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Add Completion project reference -->
+    <ProjectReference Include="$(MSBuildThisFileDirectory)../../Source/TimeWarp.Nuru.Completion/TimeWarp.Nuru.Completion.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Static using for completion types -->
+    <Using Include="TimeWarp.Nuru.Completion" />
+  </ItemGroup>
+</Project>

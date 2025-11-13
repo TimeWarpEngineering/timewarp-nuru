@@ -25,6 +25,9 @@ public class CompletionProvider
     CompletionContext context,
     EndpointCollection endpoints)
   {
+    ArgumentNullException.ThrowIfNull(context);
+    ArgumentNullException.ThrowIfNull(endpoints);
+
     var candidates = new List<CompletionCandidate>();
 
     // If cursor is at position 0, we're completing the first command literal
@@ -40,7 +43,7 @@ public class CompletionProvider
       CompiledRoute route = endpoint.CompiledRoute;
 
       // Try to determine what kind of completion is expected at cursor position
-      var routeCandidates = GetCompletionsForRoute(route, context.Args, context.CursorPosition);
+      IEnumerable<CompletionCandidate> routeCandidates = GetCompletionsForRoute(route, context.Args, context.CursorPosition);
       candidates.AddRange(routeCandidates);
     }
 
@@ -54,7 +57,7 @@ public class CompletionProvider
   /// <summary>
   /// Get command literal completions (first segment matching).
   /// </summary>
-  private IEnumerable<CompletionCandidate> GetCommandCompletions(
+  private static IEnumerable<CompletionCandidate> GetCommandCompletions(
     EndpointCollection endpoints,
     string partialCommand)
   {
@@ -65,7 +68,7 @@ public class CompletionProvider
       CompiledRoute route = endpoint.CompiledRoute;
 
       // Get first literal segment
-      RouteMatcher? firstSegment = route.Segments.FirstOrDefault();
+      RouteMatcher? firstSegment = route.Segments.Count > 0 ? route.Segments[0] : null;
       if (firstSegment is LiteralMatcher literal)
       {
         // Match if partial command is empty or literal starts with partial
@@ -87,10 +90,12 @@ public class CompletionProvider
   /// <summary>
   /// Get completions for a specific route at the given cursor position.
   /// </summary>
-  private IEnumerable<CompletionCandidate> GetCompletionsForRoute(
+  private List<CompletionCandidate> GetCompletionsForRoute
+  (
     CompiledRoute route,
     string[] args,
-    int cursorPosition)
+    int cursorPosition
+  )
   {
     var candidates = new List<CompletionCandidate>();
 
@@ -115,8 +120,9 @@ public class CompletionProvider
         // Must match exactly
         if (argIndex >= args.Length || !literal.TryMatch(args[argIndex], out _))
         {
-          return Enumerable.Empty<CompletionCandidate>(); // Route doesn't match
+          return []; // Route doesn't match
         }
+
         argIndex++;
         segmentIndex++;
       }
@@ -127,6 +133,7 @@ public class CompletionProvider
         {
           argIndex++;
         }
+
         segmentIndex++;
       }
     }
@@ -166,9 +173,11 @@ public class CompletionProvider
   /// <summary>
   /// Get option completions (--long and -short forms).
   /// </summary>
-  private IEnumerable<CompletionCandidate> GetOptionCompletions(
+  private static IEnumerable<CompletionCandidate> GetOptionCompletions
+  (
     CompiledRoute route,
-    string[] args)
+    string[] args
+  )
   {
     var usedOptions = new HashSet<string>(args);
 
@@ -210,7 +219,7 @@ public class CompletionProvider
     // Get the target type for this constraint
     Type? targetType = GetTypeForConstraint(parameter.Constraint);
 
-    if (targetType == null)
+    if (targetType is null)
     {
       yield break;
     }
@@ -253,7 +262,7 @@ public class CompletionProvider
   {
     // Try to get converter from registry
     IRouteTypeConverter? converter = _typeConverterRegistry.GetConverterByConstraint(constraint);
-    if (converter != null)
+    if (converter is not null)
     {
       return converter.TargetType;
     }

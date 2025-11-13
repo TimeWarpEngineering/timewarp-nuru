@@ -2,6 +2,7 @@ namespace TimeWarp.Nuru.Completion;
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -17,18 +18,24 @@ public class CompletionScriptGenerator
   /// <summary>
   /// Generate bash completion script.
   /// </summary>
+  [System.Diagnostics.CodeAnalysis.SuppressMessage(
+    "Performance",
+    "CA1822:Mark members as static",
+    Justification = "Public API should remain instance-based for future extensibility")]
   public string GenerateBash(EndpointCollection endpoints, string appName)
   {
+    ArgumentNullException.ThrowIfNull(endpoints);
+
     string template = LoadTemplate("bash-completion.sh");
 
-    var commands = ExtractCommands(endpoints);
-    var options = ExtractOptions(endpoints);
+    HashSet<string> commands = ExtractCommands(endpoints);
+    HashSet<string> options = ExtractOptions(endpoints);
 
     // Replace placeholders
     string script = template
-      .Replace("{{APP_NAME}}", appName)
-      .Replace("{{COMMANDS}}", string.Join(" ", commands))
-      .Replace("{{OPTIONS}}", string.Join(" ", options));
+      .Replace("{{APP_NAME}}", appName, StringComparison.Ordinal)
+      .Replace("{{COMMANDS}}", string.Join(" ", commands), StringComparison.Ordinal)
+      .Replace("{{OPTIONS}}", string.Join(" ", options), StringComparison.Ordinal);
 
     return script;
   }
@@ -36,24 +43,30 @@ public class CompletionScriptGenerator
   /// <summary>
   /// Generate zsh completion script.
   /// </summary>
+  [System.Diagnostics.CodeAnalysis.SuppressMessage(
+    "Performance",
+    "CA1822:Mark members as static",
+    Justification = "Public API should remain instance-based for future extensibility")]
   public string GenerateZsh(EndpointCollection endpoints, string appName)
   {
+    ArgumentNullException.ThrowIfNull(endpoints);
+
     string template = LoadTemplate("zsh-completion.zsh");
 
-    var commands = ExtractCommands(endpoints);
-    var options = ExtractOptions(endpoints);
+    HashSet<string> commands = ExtractCommands(endpoints);
+    HashSet<string> options = ExtractOptions(endpoints);
 
     // Build _arguments specification
     var argsSpec = new StringBuilder();
     foreach (string option in options)
     {
-      argsSpec.AppendLine($"  '{option}[{option}]' \\");
+      argsSpec.AppendLine(CultureInfo.InvariantCulture, $"  '{option}[{option}]' \\");
     }
 
     string script = template
-      .Replace("{{APP_NAME}}", appName)
-      .Replace("{{COMMANDS}}", string.Join(" ", commands))
-      .Replace("{{ARGUMENTS_SPEC}}", argsSpec.ToString());
+      .Replace("{{APP_NAME}}", appName, StringComparison.Ordinal)
+      .Replace("{{COMMANDS}}", string.Join(" ", commands), StringComparison.Ordinal)
+      .Replace("{{ARGUMENTS_SPEC}}", argsSpec.ToString(), StringComparison.Ordinal);
 
     return script;
   }
@@ -61,23 +74,29 @@ public class CompletionScriptGenerator
   /// <summary>
   /// Generate PowerShell completion script.
   /// </summary>
+  [System.Diagnostics.CodeAnalysis.SuppressMessage(
+    "Performance",
+    "CA1822:Mark members as static",
+    Justification = "Public API should remain instance-based for future extensibility")]
   public string GeneratePowerShell(EndpointCollection endpoints, string appName)
   {
+    ArgumentNullException.ThrowIfNull(endpoints);
+
     string template = LoadTemplate("pwsh-completion.ps1");
 
-    var commands = ExtractCommands(endpoints);
-    var options = ExtractOptions(endpoints);
+    HashSet<string> commands = ExtractCommands(endpoints);
+    HashSet<string> options = ExtractOptions(endpoints);
 
     // Build PowerShell completion results
     var completions = new StringBuilder();
     foreach (string cmd in commands)
     {
-      completions.AppendLine($"    [CompletionResult]::new('{cmd}', '{cmd}', [CompletionResultType]::ParameterValue, '{cmd}')");
+      completions.AppendLine(CultureInfo.InvariantCulture, $"    [CompletionResult]::new('{cmd}', '{cmd}', [CompletionResultType]::ParameterValue, '{cmd}')");
     }
 
     string script = template
-      .Replace("{{APP_NAME}}", appName)
-      .Replace("{{COMPLETIONS}}", completions.ToString());
+      .Replace("{{APP_NAME}}", appName, StringComparison.Ordinal)
+      .Replace("{{COMPLETIONS}}", completions.ToString(), StringComparison.Ordinal);
 
     return script;
   }
@@ -85,28 +104,34 @@ public class CompletionScriptGenerator
   /// <summary>
   /// Generate fish completion script.
   /// </summary>
+  [System.Diagnostics.CodeAnalysis.SuppressMessage(
+    "Performance",
+    "CA1822:Mark members as static",
+    Justification = "Public API should remain instance-based for future extensibility")]
   public string GenerateFish(EndpointCollection endpoints, string appName)
   {
+    ArgumentNullException.ThrowIfNull(endpoints);
+
     string template = LoadTemplate("fish-completion.fish");
 
-    var commands = ExtractCommands(endpoints);
-    var options = ExtractOptions(endpoints);
+    HashSet<string> commands = ExtractCommands(endpoints);
+    HashSet<string> options = ExtractOptions(endpoints);
 
     // Build fish complete commands
     var completes = new StringBuilder();
     foreach (string cmd in commands)
     {
-      completes.AppendLine($"complete -c {appName} -a '{cmd}' -d 'Command: {cmd}'");
+      completes.AppendLine(CultureInfo.InvariantCulture, $"complete -c {appName} -a '{cmd}' -d 'Command: {cmd}'");
     }
 
     foreach (string option in options)
     {
-      completes.AppendLine($"complete -c {appName} -l {option.TrimStart('-')} -d 'Option: {option}'");
+      completes.AppendLine(CultureInfo.InvariantCulture, $"complete -c {appName} -l {option.TrimStart('-')} -d 'Option: {option}'");
     }
 
     string script = template
-      .Replace("{{APP_NAME}}", appName)
-      .Replace("{{COMPLETE_COMMANDS}}", completes.ToString());
+      .Replace("{{APP_NAME}}", appName, StringComparison.Ordinal)
+      .Replace("{{COMPLETE_COMMANDS}}", completes.ToString(), StringComparison.Ordinal);
 
     return script;
   }
@@ -114,7 +139,7 @@ public class CompletionScriptGenerator
   /// <summary>
   /// Extract all unique command literals from routes.
   /// </summary>
-  private HashSet<string> ExtractCommands(EndpointCollection endpoints)
+  private static HashSet<string> ExtractCommands(EndpointCollection endpoints)
   {
     var commands = new HashSet<string>();
 
@@ -123,7 +148,7 @@ public class CompletionScriptGenerator
       CompiledRoute route = endpoint.CompiledRoute;
 
       // Get first literal segment as command
-      RouteMatcher? firstSegment = route.Segments.FirstOrDefault();
+      RouteMatcher? firstSegment = route.Segments.Count > 0 ? route.Segments[0] : null;
       if (firstSegment is LiteralMatcher literal)
       {
         commands.Add(literal.Value);
@@ -136,7 +161,7 @@ public class CompletionScriptGenerator
   /// <summary>
   /// Extract all unique options from routes.
   /// </summary>
-  private HashSet<string> ExtractOptions(EndpointCollection endpoints)
+  private static HashSet<string> ExtractOptions(EndpointCollection endpoints)
   {
     var options = new HashSet<string>();
 
@@ -161,13 +186,13 @@ public class CompletionScriptGenerator
   /// <summary>
   /// Load embedded template resource.
   /// </summary>
-  private string LoadTemplate(string templateName)
+  private static string LoadTemplate(string templateName)
   {
     Assembly assembly = typeof(CompletionScriptGenerator).Assembly;
     string resourceName = $"TimeWarp.Nuru.Completion.Completion.Templates.{templateName}";
 
     using Stream? stream = assembly.GetManifestResourceStream(resourceName);
-    if (stream == null)
+    if (stream is null)
     {
       throw new InvalidOperationException($"Template not found: {templateName}");
     }

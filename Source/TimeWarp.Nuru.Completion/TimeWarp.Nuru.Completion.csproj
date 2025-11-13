@@ -3,8 +3,6 @@
   <PropertyGroup>
     <Description>Shell completion support for TimeWarp.Nuru CLI applications</Description>
     <PackageTags>cli;command-line;completion;tab-completion;bash;zsh;powershell;fish;shell</PackageTags>
-    <!-- Temporarily disable analyzers during initial development -->
-    <NoWarn>$(NoWarn);CA1062;CA1307;CA1822;IDE0301;IDE2003;CA1819;IDE0008;CA1305;RCS1248;CA1826</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

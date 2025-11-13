@@ -38,31 +38,26 @@ builder.AddRoute("createorder {product} {quantity:int}", (string product, int qu
   Console.WriteLine($"✅ Creating order:");
   Console.WriteLine($"   Product: {product}");
   Console.WriteLine($"   Quantity: {quantity}");
-  return 0;
 });
 
 builder.AddRoute("create {item}", (string item) =>
 {
   Console.WriteLine($"✅ Created: {item}");
-  return 0;
 });
 
 builder.AddRoute("status", () =>
 {
   Console.WriteLine("📊 System Status: OK");
-  return 0;
 });
 
 builder.AddRoute("deploy {env} --version {ver}", (string env, string ver) =>
 {
   Console.WriteLine($"🚀 Deploying version {ver} to {env}");
-  return 0;
 });
 
 builder.AddRoute("list {*items}", (string[] items) =>
 {
   Console.WriteLine($"📝 Items: {string.Join(", ", items)}");
-  return 0;
 });
 
 // ============================================================================

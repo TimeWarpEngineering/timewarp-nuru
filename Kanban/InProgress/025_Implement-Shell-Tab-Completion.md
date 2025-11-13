@@ -1,9 +1,10 @@
 # Implement Shell Tab Completion for Command Arguments
 
-## Status: IN PROGRESS - Phase 1 & 2 Complete
+## Status: IN PROGRESS - Implementation Complete, Documentation Pending
 ## Priority: Medium-High
 ## Category: Feature Enhancement
 ## Related Issue: [#30](https://github.com/TimeWarpEngineering/timewarp-nuru/issues/30)
+## Related Tasks: Task 026 (Dynamic Completion - Optional, Backlog)
 
 ## Progress Notes
 
@@ -64,9 +65,13 @@
 - 2bc65f7: feat: add ShellCompletionExample sample demonstrating Issue #30
 - f4dcada: fix: add Completion project to build and standardize README casing
 
-**Pending:**
-- Consider Phase 3 (dynamic completion) based on user feedback
-- Close Issue #30 with implementation summary
+**Remaining Work:**
+- [ ] Create Getting Started guide section for shell completion
+- [ ] Create comprehensive shell completion guide (if needed)
+- [ ] Create PR with all commits
+- [ ] Close Issue #30 with implementation summary and usage examples
+
+**Phase 3 Note:** Dynamic completion (runtime-computed suggestions) has been moved to separate Task 026 in Backlog. It's optional and only needed if users request it. Static completion (implemented here) covers 90%+ of use cases.
 
 ## Problem
 
@@ -273,40 +278,18 @@ For **static generation** (Phase 2):
   - String/custom types → no completion or custom provider
 - Include descriptions from route definitions in completion help text
 
-### Phase 3: Dynamic Completion (Optional, Future Enhancement)
+### ~~Phase 3: Dynamic Completion~~ → Moved to Task 026
 
-**For apps that need runtime-computed suggestions:**
+**Note:** Dynamic completion (runtime-computed suggestions) has been moved to separate **Task 026** in the Backlog. It's an optional enhancement only needed if users request runtime-computed completions. See `/Kanban/Backlog/026_Dynamic-Shell-Completion-Optional.md` for details.
 
-1. **ICompletionSource Interface**
-   ```csharp
-   public interface ICompletionSource
-   {
-       IEnumerable<CompletionCandidate> GetCompletions(CompletionContext context);
-   }
-   ```
+Static completion (Phase 1 & 2, implemented here) covers:
+- ✅ Command name completion
+- ✅ Option name completion
+- ✅ Enum value completion
+- ✅ File/directory path completion (delegated to shell)
+- ✅ All scenarios from Issue #30
 
-2. **Registration API**
-   ```csharp
-   .AddRoute("deploy {env}", ...)
-   .WithCompletionSource("env", new EnvironmentCompletionSource())
-   ```
-
-3. **Runtime Query Mechanism**
-   - App exports hidden route like `__complete {*args}` or `--complete {index} {*words}`
-   - Shell completion script calls app with special args
-   - App returns candidates to stdout (one per line, optionally tab-separated with descriptions)
-   - Shell filters based on current input
-
-**Example:**
-```bash
-# Shell calls: myapp --complete 1 deploy prod
-# App returns:
-production     Deploy to production environment
-preview        Deploy to preview environment
-staging        Deploy to staging environment
-```
-
-### Phase 4: Builder API Integration
+### Phase 4: Documentation and User Experience
 
 **User-facing API:**
 
@@ -487,16 +470,11 @@ source <(./myapp --generate-completion bash)
 **Updated:**
 - `/Source/TimeWarp.Nuru.Completion/CompletionExtensions.cs` (adds `EnableShellCompletion()`)
 
-### Phase 3 (Dynamic - Optional)
-**New:**
-- `/Source/TimeWarp.Nuru.Completion/Completion/ICompletionSource.cs`
-- `/Source/TimeWarp.Nuru.Completion/Completion/DynamicCompletionExtensions.cs`
+### ~~Phase 3 (Dynamic - Optional)~~ → Moved to Task 026
 
-**Updated:**
-- Shell script templates
-- Completion route registration
+See `/Kanban/Backlog/026_Dynamic-Shell-Completion-Optional.md` for implementation plan.
 
-### Phase 4 (Documentation & Samples)
+### Phase 4 (Documentation)
 **New:**
 - `/documentation/user/guide/shell-completion.md`
 - `/Samples/ShellCompletion/`
@@ -532,14 +510,11 @@ source <(./myapp --generate-completion bash)
 - [x] Manual testing confirms completion works in PowerShell
 - [x] Manual testing confirms completion works in fish
 
-### Phase 3 (Dynamic - Optional)
-- [ ] `ICompletionSource` interface defined
-- [ ] `.WithCompletionSource()` API works
-- [ ] Runtime query mechanism functional
-- [ ] Shell scripts call back to app correctly
-- [ ] Dynamic completions appear in shell
+### ~~Phase 3 (Dynamic - Optional)~~ → Moved to Task 026
 
-### Phase 4 (Documentation & Samples)
+See Task 026 in Backlog for dynamic completion implementation plan.
+
+### Phase 4 (Documentation)
 - [ ] Shell completion guide is comprehensive and clear (separate guide pending)
 - [x] Installation instructions work for all shells (in README)
 - [ ] Troubleshooting section covers common issues (pending)

@@ -1,5 +1,21 @@
-// Shell Completion Example
-// Demonstrates Issue #30: Tab completion for commands like createorder
+#!/usr/bin/dotnet --
+#:project ../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
+#:project ../../Source/TimeWarp.Nuru.Completion/TimeWarp.Nuru.Completion.csproj
+
+// ============================================================================
+// Shell Completion Example - Demonstrates Issue #30
+// ============================================================================
+// This runfile demonstrates tab completion for CLI commands.
+//
+// Usage:
+//   1. Make executable:    chmod +x ShellCompletionExample.cs
+//   2. Run directly:       ./ShellCompletionExample.cs
+//   3. Generate completion: ./ShellCompletionExample.cs --generate-completion bash
+//   4. Test completion:    source <(./ShellCompletionExample.cs --generate-completion bash)
+//                          ./ShellCompletionExample.cs cre<TAB>  # completes to "createorder"
+//
+// Issue #30: User requested tab completion so typing "cre<TAB>" completes to "createorder"
+// ============================================================================
 
 using TimeWarp.Nuru;
 using TimeWarp.Nuru.Completion;

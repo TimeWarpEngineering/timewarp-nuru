@@ -91,7 +91,7 @@ public class CompletionScriptGenerator
     var completions = new StringBuilder();
     foreach (string cmd in commands)
     {
-      completions.AppendLine(CultureInfo.InvariantCulture, $"    [CompletionResult]::new('{cmd}', '{cmd}', [CompletionResultType]::ParameterValue, '{cmd}')");
+      completions.AppendLine(CultureInfo.InvariantCulture, $"    [System.Management.Automation.CompletionResult]::new('{cmd}', '{cmd}', [System.Management.Automation.CompletionResultType]::ParameterValue, '{cmd}')");
     }
 
     string script = template

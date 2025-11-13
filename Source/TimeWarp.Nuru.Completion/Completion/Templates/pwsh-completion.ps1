@@ -8,6 +8,7 @@ Register-ArgumentCompleter -Native -CommandName {{APP_NAME}} -ScriptBlock {
 {{COMPLETIONS}}
     )
 
-    $completions.Where{ $_.CompletionText -like "$wordToComplete*" } |
-        Sort-Object -Property ListItemText
+    $completions | Where-Object { $_.CompletionText -like "$wordToComplete*" } |
+        Sort-Object -Property ListItemText |
+        ForEach-Object { $_ }
 }

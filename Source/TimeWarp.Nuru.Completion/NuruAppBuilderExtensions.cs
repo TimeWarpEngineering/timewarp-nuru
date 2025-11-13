@@ -71,7 +71,6 @@ public static class NuruAppBuilderExtensions
       };
 
       Console.WriteLine(script);
-      return 0;
     });
 
     return builder;

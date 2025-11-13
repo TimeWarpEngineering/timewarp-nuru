@@ -28,8 +28,8 @@ using TimeWarp.Nuru.Completion;
 
 var builder = new NuruAppBuilder();
 
-// Enable shell completion with app name
-builder.EnableShellCompletion("myapp");
+// Enable shell completion (auto-detects executable name)
+builder.EnableShellCompletion();
 
 // Register your routes as normal
 builder.AddRoute("createorder {product} {quantity:int}", (string product, int quantity) =>
@@ -44,7 +44,10 @@ NuruApp app = builder.Build();
 return await app.RunAsync(args);
 ```
 
-The `EnableShellCompletion()` method automatically registers a `--generate-completion {shell}` route.
+The `EnableShellCompletion()` method:
+- Automatically registers a `--generate-completion {shell}` route
+- Auto-detects the executable name at runtime (no hardcoded name needed)
+- Works correctly with renamed executables after publishing
 
 **Note:** This example uses .NET 10's runfile feature with `#:project` directives to reference local projects.
 
@@ -78,11 +81,44 @@ Options are automatically extracted from route patterns:
 builder.AddRoute("deploy {env} --version {ver}", ...);
 ```
 
-Typing `myapp deploy prod --v<TAB>` completes to `--version`.
+Typing `./ShellCompletionExample.cs deploy prod --v<TAB>` completes to `--version`.
+
+## Publishing for Production
+
+For production use, publish the runfile as an AOT-compiled executable:
+
+```bash
+cd Samples/ShellCompletionExample
+
+# Publish with Native AOT
+dotnet publish ShellCompletionExample.cs -c Release -r linux-x64 -p:PublishAot=true -o ./publish
+
+# Copy to your PATH with desired name (kebab-case recommended)
+cp ./publish/ShellCompletionExample ~/.local/bin/shell-completion-example
+
+# Verify it works
+shell-completion-example status
+# Output: 📊 System Status: OK
+```
+
+**Auto-Detection Benefit**: The completion script will automatically use "shell-completion-example" as the command name, matching the actual executable name. No need to specify the app name in code!
+
+### Publishing for Other Platforms
+
+```bash
+# Windows
+dotnet publish ShellCompletionExample.cs -c Release -r win-x64 -p:PublishAot=true -o ./publish
+
+# macOS (Intel)
+dotnet publish ShellCompletionExample.cs -c Release -r osx-x64 -p:PublishAot=true -o ./publish
+
+# macOS (Apple Silicon)
+dotnet publish ShellCompletionExample.cs -c Release -r osx-arm64 -p:PublishAot=true -o ./publish
+```
 
 ## Generating Completion Scripts
 
-Run the executable runfile to generate shell completion scripts:
+### From Runfile (Development)
 
 ```bash
 cd Samples/ShellCompletionExample
@@ -90,47 +126,75 @@ cd Samples/ShellCompletionExample
 # Make executable (first time only)
 chmod +x ShellCompletionExample.cs
 
-# Generate bash completion
+# Generate completion scripts
 ./ShellCompletionExample.cs --generate-completion bash
-
-# Generate zsh completion
 ./ShellCompletionExample.cs --generate-completion zsh
-
-# Generate PowerShell completion
 ./ShellCompletionExample.cs --generate-completion pwsh
-
-# Generate fish completion
 ./ShellCompletionExample.cs --generate-completion fish
 ```
 
-## Installing Completion Scripts
-
-### Bash
+### From Published Executable (Production)
 
 ```bash
-# Generate and save to bash completion directory
-./ShellCompletionExample.cs --generate-completion bash > ~/.bash_completion.d/myapp
-
-# Add to your ~/.bashrc
-source ~/.bash_completion.d/myapp
-
-# Or inline for current session
-source <(./ShellCompletionExample.cs --generate-completion bash)
+# Use the published executable name (completion will match this name automatically)
+shell-completion-example --generate-completion bash
+shell-completion-example --generate-completion zsh
+shell-completion-example --generate-completion pwsh
+shell-completion-example --generate-completion fish
 ```
 
-### Zsh
+**Important**: The generated completion script uses the actual executable name. If you rename your executable to `my-tool`, the completion script will register for `my-tool` automatically!
+
+## Installing Completion Scripts
+
+### Bash (Development - Runfile)
+
+```bash
+# Inline for current session (temporary)
+source <(./ShellCompletionExample.cs --generate-completion bash)
+
+# Or append to ~/.bashrc (permanent)
+./ShellCompletionExample.cs --generate-completion bash >> ~/.bashrc
+source ~/.bashrc
+```
+
+### Bash (Production - Published Executable)
+
+```bash
+# Generate and append to ~/.bashrc
+shell-completion-example --generate-completion bash >> ~/.bashrc
+source ~/.bashrc
+
+# Or save to bash completion directory
+mkdir -p ~/.bash_completion.d
+shell-completion-example --generate-completion bash > ~/.bash_completion.d/shell-completion-example
+echo "source ~/.bash_completion.d/shell-completion-example" >> ~/.bashrc
+```
+
+### Zsh (Development - Runfile)
+
+```bash
+# Inline for current session
+source <(./ShellCompletionExample.cs --generate-completion zsh)
+
+# Or append to ~/.zshrc
+./ShellCompletionExample.cs --generate-completion zsh >> ~/.zshrc
+source ~/.zshrc
+```
+
+### Zsh (Production - Published Executable)
 
 ```bash
 # Generate and save to zsh completions directory
 mkdir -p ~/.zsh/completions
-./ShellCompletionExample.cs --generate-completion zsh > ~/.zsh/completions/_myapp
+shell-completion-example --generate-completion zsh > ~/.zsh/completions/_shell-completion-example
 
 # Add to your ~/.zshrc (if not already present)
 fpath=(~/.zsh/completions $fpath)
 autoload -Uz compinit && compinit
 ```
 
-### PowerShell
+### PowerShell (Development - Runfile)
 
 ```powershell
 # Generate and append to your PowerShell profile
@@ -140,13 +204,30 @@ autoload -Uz compinit && compinit
 . $PROFILE
 ```
 
-**Note:** PowerShell's native completion requires the command to be in your PATH or defined as a function. For production use, publish your application as a proper executable.
+### PowerShell (Production - Published Executable)
 
-### Fish
+```powershell
+# Generate and append to your PowerShell profile
+shell-completion-example --generate-completion pwsh >> $PROFILE
+
+# Reload profile
+. $PROFILE
+```
+
+**Note:** PowerShell's `-Native` argument completer requires the executable to be in your PATH. Make sure `~/.local/bin` (or wherever you installed the executable) is in your PATH.
+
+### Fish (Development - Runfile)
+
+```bash
+# Inline for current session
+./ShellCompletionExample.cs --generate-completion fish | source
+```
+
+### Fish (Production - Published Executable)
 
 ```bash
 # Generate and save to fish completions directory
-./ShellCompletionExample.cs --generate-completion fish > ~/.config/fish/completions/myapp.fish
+shell-completion-example --generate-completion fish > ~/.config/fish/completions/shell-completion-example.fish
 
 # Fish automatically loads completions from this directory
 ```
@@ -155,12 +236,24 @@ autoload -Uz compinit && compinit
 
 After installing the completion script, test it:
 
+### With Runfile (Development)
+
 ```bash
 # Start typing and press Tab
-myapp cre<TAB>              # Should show: create, createorder
-myapp createorder <TAB>     # Shows parameter help
-myapp deploy <TAB>          # Shows parameter help
-myapp deploy prod --v<TAB>  # Completes to: --version
+./ShellCompletionExample.cs cre<TAB>              # Should show: create, createorder
+./ShellCompletionExample.cs createorder <TAB>     # Shows parameter help
+./ShellCompletionExample.cs deploy <TAB>          # Shows parameter help
+./ShellCompletionExample.cs deploy prod --v<TAB>  # Completes to: --version
+```
+
+### With Published Executable (Production)
+
+```bash
+# Tab completion with your published executable name
+shell-completion-example st<TAB>              # Completes to: status
+shell-completion-example cre<TAB>             # Should show: create, createorder
+shell-completion-example createorder <TAB>    # Shows parameter help
+shell-completion-example deploy prod --v<TAB> # Completes to: --version
 ```
 
 ## Sample Commands
@@ -277,10 +370,21 @@ rm -f ~/.zcompdump && compinit
 # Ensure PowerShell version 5.0 or higher
 $PSVersionTable.PSVersion
 
+# Check if the executable is in your PATH
+Get-Command shell-completion-example
+
 # Check if profile was loaded
 Test-Path $PROFILE
-Get-Content $PROFILE
+Get-Content $PROFILE | Select-String "shell-completion-example"
+
+# Test completion manually
+TabExpansion2 -inputScript 'shell-completion-example st' -cursorColumn 27
 ```
+
+**Common Issues:**
+- **Executable not in PATH**: PowerShell's `-Native` completer requires the command to be accessible
+- **Old buggy completion**: If you have an old version with `[CompletionResult]` (without `System.Management.Automation.`), regenerate it
+- **Trailing "0" in output**: Fixed in v2.1.0-beta.32 - update to latest version
 
 ### Completion not working in Fish
 

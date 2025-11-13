@@ -4,8 +4,7 @@ This example demonstrates how to add shell tab completion to TimeWarp.Nuru CLI a
 
 ## Files
 
-- `Program.cs` - Sample application with multiple commands demonstrating completion scenarios
-- `ShellCompletionExample.csproj` - Project file with TimeWarp.Nuru.Completion package reference
+- `ShellCompletionExample.cs` - .NET 10 runfile demonstrating shell completion scenarios
 
 ## What is Shell Completion?
 
@@ -20,6 +19,13 @@ Shell completion (also called tab completion) allows users to press the Tab key 
 ### 1. Enabling Shell Completion
 
 ```csharp
+#!/usr/bin/dotnet --
+#:project ../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
+#:project ../../Source/TimeWarp.Nuru.Completion/TimeWarp.Nuru.Completion.csproj
+
+using TimeWarp.Nuru;
+using TimeWarp.Nuru.Completion;
+
 var builder = new NuruAppBuilder();
 
 // Enable shell completion with app name
@@ -33,9 +39,14 @@ builder.AddRoute("createorder {product} {quantity:int}", (string product, int qu
     Console.WriteLine($"   Quantity: {quantity}");
     return 0;
 });
+
+NuruApp app = builder.Build();
+return await app.RunAsync(args);
 ```
 
 The `EnableShellCompletion()` method automatically registers a `--generate-completion {shell}` route.
+
+**Note:** This example uses .NET 10's runfile feature with `#:project` directives to reference local projects.
 
 ### 2. Supported Shells
 
@@ -71,23 +82,25 @@ Typing `myapp deploy prod --v<TAB>` completes to `--version`.
 
 ## Generating Completion Scripts
 
-Build and run the sample to generate shell completion scripts:
+Run the executable runfile to generate shell completion scripts:
 
 ```bash
 cd Samples/ShellCompletionExample
-dotnet build
+
+# Make executable (first time only)
+chmod +x ShellCompletionExample.cs
 
 # Generate bash completion
-dotnet run -- --generate-completion bash
+./ShellCompletionExample.cs --generate-completion bash
 
 # Generate zsh completion
-dotnet run -- --generate-completion zsh
+./ShellCompletionExample.cs --generate-completion zsh
 
 # Generate PowerShell completion
-dotnet run -- --generate-completion pwsh
+./ShellCompletionExample.cs --generate-completion pwsh
 
 # Generate fish completion
-dotnet run -- --generate-completion fish
+./ShellCompletionExample.cs --generate-completion fish
 ```
 
 ## Installing Completion Scripts
@@ -96,13 +109,13 @@ dotnet run -- --generate-completion fish
 
 ```bash
 # Generate and save to bash completion directory
-dotnet run -- --generate-completion bash > ~/.bash_completion.d/myapp
+./ShellCompletionExample.cs --generate-completion bash > ~/.bash_completion.d/myapp
 
 # Add to your ~/.bashrc
 source ~/.bash_completion.d/myapp
 
 # Or inline for current session
-source <(dotnet run -- --generate-completion bash)
+source <(./ShellCompletionExample.cs --generate-completion bash)
 ```
 
 ### Zsh
@@ -110,7 +123,7 @@ source <(dotnet run -- --generate-completion bash)
 ```bash
 # Generate and save to zsh completions directory
 mkdir -p ~/.zsh/completions
-dotnet run -- --generate-completion zsh > ~/.zsh/completions/_myapp
+./ShellCompletionExample.cs --generate-completion zsh > ~/.zsh/completions/_myapp
 
 # Add to your ~/.zshrc (if not already present)
 fpath=(~/.zsh/completions $fpath)
@@ -121,17 +134,19 @@ autoload -Uz compinit && compinit
 
 ```powershell
 # Generate and append to your PowerShell profile
-dotnet run -- --generate-completion pwsh >> $PROFILE
+./ShellCompletionExample.cs --generate-completion pwsh >> $PROFILE
 
 # Reload profile
 . $PROFILE
 ```
 
+**Note:** PowerShell's native completion requires the command to be in your PATH or defined as a function. For production use, publish your application as a proper executable.
+
 ### Fish
 
 ```bash
 # Generate and save to fish completions directory
-dotnet run -- --generate-completion fish > ~/.config/fish/completions/myapp.fish
+./ShellCompletionExample.cs --generate-completion fish > ~/.config/fish/completions/myapp.fish
 
 # Fish automatically loads completions from this directory
 ```
@@ -154,19 +169,19 @@ The example application includes these commands:
 
 ```bash
 # Create order (demonstrates Issue #30 use case)
-dotnet run -- createorder laptop 5
+./ShellCompletionExample.cs createorder laptop 5
 
 # Create generic item
-dotnet run -- create project
+./ShellCompletionExample.cs create project
 
 # Check status
-dotnet run -- status
+./ShellCompletionExample.cs status
 
 # Deploy with version
-dotnet run -- deploy production --version v1.2.3
+./ShellCompletionExample.cs deploy production --version v1.2.3
 
 # List items (catch-all parameter)
-dotnet run -- list apple banana cherry
+./ShellCompletionExample.cs list apple banana cherry
 ```
 
 ## Implementation Details
@@ -199,13 +214,21 @@ The completion provider supports type-aware suggestions:
 
 ## Package Architecture
 
-Shell completion is provided as a **separate optional package**:
+Shell completion is provided as a **separate optional package**.
 
+For projects, add the packages:
 ```xml
 <ItemGroup>
   <PackageReference Include="TimeWarp.Nuru" Version="2.1.0" />
   <PackageReference Include="TimeWarp.Nuru.Completion" Version="2.1.0" />
 </ItemGroup>
+```
+
+For .NET 10 runfiles, use `#:project` directives (as shown in this example):
+```csharp
+#!/usr/bin/dotnet --
+#:project ../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
+#:project ../../Source/TimeWarp.Nuru.Completion/TimeWarp.Nuru.Completion.csproj
 ```
 
 This keeps the core `TimeWarp.Nuru` package lightweight while allowing users to opt-in to completion support.

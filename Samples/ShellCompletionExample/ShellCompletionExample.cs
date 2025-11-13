@@ -23,10 +23,11 @@ using TimeWarp.Nuru.Completion;
 var builder = new NuruAppBuilder();
 
 // ============================================================================
-// Enable Shell Completion
+// Enable Shell Completion (Auto-detects executable name)
 // ============================================================================
 // This adds the --generate-completion {shell} route
-builder.EnableShellCompletion("myapp");
+// The app name is auto-detected from the executable name at runtime
+builder.EnableShellCompletion();
 
 // ============================================================================
 // Sample Commands - Issue #30 Use Case

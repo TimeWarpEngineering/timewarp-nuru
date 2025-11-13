@@ -258,6 +258,10 @@ public class CompletionProvider
   /// <summary>
   /// Get the Type for a given constraint name.
   /// </summary>
+  [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage(
+    "Trimming",
+    "IL2057:Unrecognized value passed to the parameter of method. It's not possible to guarantee the availability of the target type.",
+    Justification = "Type.GetType is a fallback for custom types. Standard types are handled by TypeConverterRegistry.")]
   private Type? GetTypeForConstraint(string constraint)
   {
     // Try to get converter from registry
@@ -268,6 +272,7 @@ public class CompletionProvider
     }
 
     // Fallback: try direct type lookup (for custom types)
+    // This path is only hit for custom types not registered in the converter registry
     return Type.GetType(constraint);
   }
 }

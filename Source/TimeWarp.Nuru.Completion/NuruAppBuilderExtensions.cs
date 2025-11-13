@@ -1,6 +1,8 @@
 namespace TimeWarp.Nuru.Completion;
 
 using System;
+using System.Diagnostics;
+using System.IO;
 using TimeWarp.Nuru;
 
 /// <summary>
@@ -14,7 +16,8 @@ public static class NuruAppBuilderExtensions
   /// <param name="builder">The NuruAppBuilder instance.</param>
   /// <param name="appName">
   /// Optional application name to use in generated scripts.
-  /// If null, attempts to use the entry assembly name.
+  /// If not provided, automatically detects the actual executable name at runtime.
+  /// This ensures completion scripts match the published executable name.
   /// </param>
   /// <returns>The builder for fluent chaining.</returns>
   public static NuruAppBuilder EnableShellCompletion(
@@ -23,20 +26,45 @@ public static class NuruAppBuilderExtensions
   {
     ArgumentNullException.ThrowIfNull(builder);
 
-    // Use provided name or fallback to entry assembly name
-    string effectiveAppName = appName ?? System.Reflection.Assembly.GetEntryAssembly()?.GetName().Name ?? "myapp";
+    // Auto-detect app name at generation time (not at build time)
+    // This is deferred until the --generate-completion route is actually called
+    string GetEffectiveAppName()
+    {
+      if (appName is not null)
+        return appName;
+
+      // Try to get the actual process name (works for published executables)
+      string? processPath = Environment.ProcessPath;
+      if (processPath is not null)
+      {
+        string fileName = Path.GetFileNameWithoutExtension(processPath);
+        if (!string.IsNullOrEmpty(fileName))
+          return fileName;
+      }
+
+      // Fallback: try Process.GetCurrentProcess()
+      using var currentProcess = Process.GetCurrentProcess();
+      if (!string.IsNullOrEmpty(currentProcess.ProcessName))
+        return currentProcess.ProcessName;
+
+      // Final fallback
+      return System.Reflection.Assembly.GetEntryAssembly()?.GetName().Name ?? "myapp";
+    }
 
     // Register the --generate-completion route
     builder.AddRoute("--generate-completion {shell}", (string shell) =>
     {
+      // Detect app name at runtime (when the command is actually executed)
+      string detectedAppName = GetEffectiveAppName();
+
       var generator = new CompletionScriptGenerator();
 
       string script = shell.ToLowerInvariant() switch
       {
-        "bash" => generator.GenerateBash(builder.EndpointCollection, effectiveAppName),
-        "zsh" => generator.GenerateZsh(builder.EndpointCollection, effectiveAppName),
-        "pwsh" or "powershell" => generator.GeneratePowerShell(builder.EndpointCollection, effectiveAppName),
-        "fish" => generator.GenerateFish(builder.EndpointCollection, effectiveAppName),
+        "bash" => generator.GenerateBash(builder.EndpointCollection, detectedAppName),
+        "zsh" => generator.GenerateZsh(builder.EndpointCollection, detectedAppName),
+        "pwsh" or "powershell" => generator.GeneratePowerShell(builder.EndpointCollection, detectedAppName),
+        "fish" => generator.GenerateFish(builder.EndpointCollection, detectedAppName),
         _ => throw new ArgumentException(
           $"Unknown shell: {shell}. Supported shells: bash, zsh, pwsh, fish",
           nameof(shell))

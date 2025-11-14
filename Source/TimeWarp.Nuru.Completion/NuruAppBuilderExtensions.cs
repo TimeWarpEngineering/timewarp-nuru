@@ -75,4 +75,72 @@ public static class NuruAppBuilderExtensions
 
     return builder;
   }
+
+  /// <summary>
+  /// Enables dynamic shell completion that queries the application at Tab-press time.
+  /// This is mutually exclusive with EnableShellCompletion() - use one or the other.
+  /// </summary>
+  /// <param name="builder">The NuruAppBuilder instance.</param>
+  /// <param name="appName">
+  /// Optional application name to use in generated scripts.
+  /// If not provided, automatically detects the actual executable name at runtime.
+  /// </param>
+  /// <param name="configure">
+  /// Optional action to configure completion sources.
+  /// Register completion sources for specific parameters or types.
+  /// </param>
+  /// <returns>The builder for fluent chaining.</returns>
+  public static NuruAppBuilder EnableDynamicCompletion(
+    this NuruAppBuilder builder,
+    string? appName = null,
+    Action<CompletionSourceRegistry>? configure = null)
+  {
+    ArgumentNullException.ThrowIfNull(builder);
+
+    // Create and configure the registry
+    var registry = new CompletionSourceRegistry();
+    configure?.Invoke(registry);
+
+    // Register the __complete callback route
+    builder.AddRoute("__complete {index:int} {*words}", (int index, string[] words) =>
+    {
+      return DynamicCompletionHandler.HandleCompletion(index, words, registry, builder.EndpointCollection);
+    });
+
+    // Auto-detect app name helper (same as EnableShellCompletion)
+    string GetEffectiveAppName()
+    {
+      if (appName is not null)
+        return appName;
+
+      string? processPath = Environment.ProcessPath;
+      if (processPath is not null)
+      {
+        string fileName = Path.GetFileNameWithoutExtension(processPath);
+        if (!string.IsNullOrEmpty(fileName))
+          return fileName;
+      }
+
+      using var currentProcess = Process.GetCurrentProcess();
+      if (!string.IsNullOrEmpty(currentProcess.ProcessName))
+        return currentProcess.ProcessName;
+
+      return System.Reflection.Assembly.GetEntryAssembly()?.GetName().Name ?? "myapp";
+    }
+
+    // Register the --generate-completion route with dynamic templates
+    // TODO: Implement dynamic completion script generator in Phase 2
+    builder.AddRoute("--generate-completion {shell}", (string shell) =>
+    {
+      string detectedAppName = GetEffectiveAppName();
+
+      // For MVP, generate a basic message
+      // Full implementation in Phase 2 will use dynamic templates
+      Console.WriteLine($"# Dynamic completion for {detectedAppName}");
+      Console.WriteLine($"# Shell: {shell}");
+      Console.WriteLine("# TODO: Generate actual dynamic completion script");
+    });
+
+    return builder;
+  }
 }

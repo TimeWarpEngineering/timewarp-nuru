@@ -2,6 +2,34 @@
 
 **Related**: Task 028 (Type-Aware Parameter Completion), Task 025 (Shell Tab Completion)
 
+## Status: In Progress
+
+### Progress
+
+- ✅ **Phase 1: Core Infrastructure** - COMPLETE (2025-11-14)
+  - Created `ICompletionSource` interface for dynamic completion sources
+  - Created `CompletionSourceRegistry` for parameter/type-based registration
+  - Created `DynamicCompletionHandler` for `__complete` callback processing
+  - Added `EnableDynamicCompletion()` method to `NuruAppBuilder`
+  - `__complete` route functional (returns empty results - Phase 2 will add logic)
+
+- ⏳ **Phase 2: Dynamic Shell Templates** - TODO
+- ⏳ **Phase 3: Built-in Completion Sources** - TODO
+- ⏳ **Phase 4: Example and Testing** - TODO
+
+### Performance Baseline (2025-11-14)
+
+✅ **AOT invocation performance validated** - Dynamic completion is highly feasible:
+
+- **Measured**: 7.60ms average (100 runs on ShellCompletionExample AOT)
+- **Target**: <100ms for complete dynamic completion flow
+- **Headroom**: 92.4% (92.40ms available for completion logic)
+- **p95**: 9.88ms (95% of invocations complete in <10ms)
+- **Tooling**: [benchmark-aot-invocation.cs](../../Tests/Scripts/benchmark-aot-invocation.cs)
+- **Baseline**: [aot-invocation-baseline.json](../../Tests/benchmarks/aot-invocation-baseline.json)
+
+**Conclusion**: Process invocation overhead is minimal. Plenty of budget for completion sources to query APIs, databases, or configuration.
+
 ## Problem
 
 Currently, `EnableShellCompletion()` generates **static** completion scripts that contain all completion candidates at generation time. This works well for simple cases but has fundamental limitations:

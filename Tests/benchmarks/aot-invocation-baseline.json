@@ -1,0 +1,20 @@
+{
+  "baseline_date": "2025-11-14T07:30:14Z",
+  "commit": "98c928b",
+  "executable": "ShellCompletionExample",
+  "platform": "linux-x64",
+  "scenarios": {
+    "status_command": {
+      "runs": 100,
+      "min_ms": 5.71,
+      "avg_ms": 7.6,
+      "median_ms": 6.82,
+      "p95_ms": 9.88,
+      "p99_ms": 44.12,
+      "max_ms": 44.12,
+      "stddev_ms": 3.86,
+      "target_ms": 100,
+      "passed": true
+    }
+  }
+}

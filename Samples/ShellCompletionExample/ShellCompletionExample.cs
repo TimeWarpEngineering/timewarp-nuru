@@ -33,33 +33,40 @@ builder.EnableShellCompletion();
 // Sample Commands - Issue #30 Use Case
 // ============================================================================
 
-builder.AddRoute("createorder {product} {quantity:int}", (string product, int quantity) =>
-{
-  Console.WriteLine($"✅ Creating order:");
-  Console.WriteLine($"   Product: {product}");
-  Console.WriteLine($"   Quantity: {quantity}");
-});
+builder.AddRoute
+(
+  "createorder {product} {quantity:int}",
+  (string product, int quantity) =>
+  {
+    Console.WriteLine($"✅ Creating order:");
+    Console.WriteLine($"   Product: {product}");
+    Console.WriteLine($"   Quantity: {quantity}");
+  }
+);
 
-builder.AddRoute("create {item}", (string item) =>
-{
-  Console.WriteLine($"✅ Created: {item}");
-});
+builder.AddRoute
+(
+  "create {item}",
+  (string item) => Console.WriteLine($"✅ Created: {item}")
+);
 
-builder.AddRoute("status", () =>
-{
-  Console.WriteLine("📊 System Status: OK");
-});
+builder.AddRoute
+(
+  "status",
+  () => Console.WriteLine("📊 System Status: OK")
+);
 
-builder.AddRoute("deploy {env} --version {ver}", (string env, string ver) =>
-{
-  Console.WriteLine($"🚀 Deploying version {ver} to {env}");
-});
+builder.AddRoute
+(
+  "deploy {env} --version {ver}",
+  (string env, string ver) => Console.WriteLine($"🚀 Deploying version {ver} to {env}")
+);
 
-builder.AddRoute("list {*items}", (string[] items) =>
-{
-  Console.WriteLine($"📝 Items: {string.Join(", ", items)}");
-});
-
+builder.AddRoute
+(
+  "list {*items}",
+  (string[] items) => Console.WriteLine($"📝 Items: {string.Join(", ", items)}")
+);
 // ============================================================================
 // Build and Run
 // ============================================================================

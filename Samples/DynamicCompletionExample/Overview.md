@@ -148,79 +148,115 @@ cd Samples/DynamicCompletionExample
 chmod +x DynamicCompletionExample.cs
 
 # Option A: AOT (Native, ~7ms invocation time)
+# Note: PublishDir is configured in the runfile (#:property PublishDir=../../artifacts/)
 dotnet publish DynamicCompletionExample.cs -c Release -r linux-x64 -p:PublishAot=true
-APP_PATH="./bin/Release/net10.0/linux-x64/publish/DynamicCompletionExample"
+APP_PATH="../../artifacts/DynamicCompletionExample"
 
 # Option B: JIT (Faster build, ~200ms invocation time)
 dotnet build DynamicCompletionExample.cs
 APP_PATH="./bin/Debug/net10.0/DynamicCompletionExample"
 ```
 
-### 2. Install Completion for Your Shell
+### 2. Install to PATH (Recommended)
+
+For convenience, copy the executable to a location that's already in your PATH:
+
+```bash
+# Copy to ~/.local/bin (typically already in PATH)
+cp ../../artifacts/DynamicCompletionExample ~/.local/bin/dynamic-completion-example
+
+# Verify it works
+dynamic-completion-example status
+# Output: 📊 System Status: OK
+```
+
+**Note**: If `~/.local/bin` is not in your PATH, add it to your shell profile:
+```bash
+# Add to ~/.bashrc or ~/.zshrc
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+source ~/.bashrc
+```
+
+After installing to PATH, you can use `dynamic-completion-example` instead of the full path.
+
+### 3. Install Completion for Your Shell
 
 #### Bash
 
 ```bash
-# Generate and source completion script
-source <($APP_PATH --generate-completion bash)
+# Generate and source completion script (using installed command name)
+source <(dynamic-completion-example --generate-completion bash)
 
 # Permanent installation (add to ~/.bashrc):
-$APP_PATH --generate-completion bash > ~/.bash_completion.d/dynamic-completion-example
+dynamic-completion-example --generate-completion bash > ~/.bash_completion.d/dynamic-completion-example
+
+# Or if using $APP_PATH directly without installing to PATH:
+# source <($APP_PATH --generate-completion bash)
 ```
 
 #### Zsh
 
 ```bash
-# Generate and source completion script
-source <($APP_PATH --generate-completion zsh)
+# Generate and source completion script (using installed command name)
+source <(dynamic-completion-example --generate-completion zsh)
 
 # Permanent installation (add to ~/.zshrc):
-$APP_PATH --generate-completion zsh > ~/.zsh/completions/_DynamicCompletionExample
-# Then run: compinit
+mkdir -p ~/.zsh/completions
+dynamic-completion-example --generate-completion zsh > ~/.zsh/completions/_dynamic-completion-example
+# Then add to ~/.zshrc: fpath=(~/.zsh/completions $fpath) && autoload -Uz compinit && compinit
 ```
 
 #### PowerShell
 
 ```powershell
-# Generate and source completion script
-& $APP_PATH --generate-completion pwsh | Out-String | Invoke-Expression
+# Generate and source completion script (using installed command name)
+& dynamic-completion-example --generate-completion pwsh | Out-String | Invoke-Expression
 
 # Permanent installation (add to $PROFILE):
-& $APP_PATH --generate-completion pwsh | Out-File -Append $PROFILE
+& dynamic-completion-example --generate-completion pwsh | Out-File -Append $PROFILE
 ```
+
+**Note**: PowerShell requires the executable to be in your PATH. Ensure `~/.local/bin` is in your PATH.
 
 #### Fish
 
 ```fish
-# Generate and source completion script
-$APP_PATH --generate-completion fish | source
+# Generate and source completion script (using installed command name)
+dynamic-completion-example --generate-completion fish | source
 
 # Permanent installation:
-$APP_PATH --generate-completion fish > ~/.config/fish/completions/DynamicCompletionExample.fish
+dynamic-completion-example --generate-completion fish > ~/.config/fish/completions/dynamic-completion-example.fish
 ```
 
-### 3. Test Dynamic Completion
+### 4. Test Dynamic Completion
+
+After installing to PATH and setting up completion scripts:
 
 ```bash
 # Complete environment names
-DynamicCompletionExample deploy <TAB>
+dynamic-completion-example deploy <TAB>
 # → production, staging, development, qa, demo
 
 # Complete version tags
-DynamicCompletionExample deploy production --version <TAB>
+dynamic-completion-example deploy production --version <TAB>
 # → v2.1.0, v2.0.5, v2.0.4, v1.9.12, latest
 
 # Complete deployment modes (enum values)
-DynamicCompletionExample deploy production --mode <TAB>
+dynamic-completion-example deploy production --mode <TAB>
 # → Fast, Standard, BlueGreen, Canary
 
 # Complete commands (from registered routes)
-DynamicCompletionExample <TAB>
+dynamic-completion-example <TAB>
 # → deploy, list-environments, list-tags, status
 
 # Complete options
-DynamicCompletionExample deploy production <TAB>
+dynamic-completion-example deploy production <TAB>
 # → --version, --mode
+```
+
+**Alternative**: If you haven't installed to PATH, use the full path with `$APP_PATH`:
+```bash
+$APP_PATH deploy <TAB>
 ```
 
 ## How It Works
@@ -230,7 +266,7 @@ DynamicCompletionExample deploy production <TAB>
 When you press Tab, the shell completion script executes:
 
 ```bash
-DynamicCompletionExample __complete 2 DynamicCompletionExample deploy
+dynamic-completion-example __complete 2 dynamic-completion-example deploy
 ```
 
 Where:
@@ -414,20 +450,25 @@ public class ApiCompletionSource : IAsyncCompletionSource
 
 ### Completion not working
 
-1. **Verify completion script is sourced**:
+1. **Verify executable is in PATH**:
    ```bash
-   type _DynamicCompletionExample  # Should show completion function
+   which dynamic-completion-example  # Should show ~/.local/bin/dynamic-completion-example
    ```
 
-2. **Test __complete route directly**:
+2. **Verify completion script is sourced**:
    ```bash
-   DynamicCompletionExample __complete 2 DynamicCompletionExample deploy
+   type _dynamic_completion_example  # Should show completion function
+   ```
+
+3. **Test __complete route directly**:
+   ```bash
+   dynamic-completion-example __complete 2 dynamic-completion-example deploy
    # Should output: production, staging, development, etc.
    ```
 
-3. **Check for errors in stderr**:
+4. **Check for errors in stderr**:
    ```bash
-   DynamicCompletionExample __complete 2 DynamicCompletionExample deploy 2>&1
+   dynamic-completion-example __complete 2 dynamic-completion-example deploy 2>&1
    # Should see "Completion ended with directive: NoFileComp"
    ```
 

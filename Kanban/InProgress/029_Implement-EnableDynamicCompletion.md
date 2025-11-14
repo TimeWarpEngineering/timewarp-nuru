@@ -2,7 +2,7 @@
 
 **Related**: Task 028 (Type-Aware Parameter Completion), Task 025 (Shell Tab Completion)
 
-## Status: In Progress
+## Status: Complete
 
 ### Progress
 
@@ -37,6 +37,18 @@
   - Created comprehensive Overview.md with usage, troubleshooting, and migration guide
   - Tested __complete route - confirmed command and option completion working
   - Ready for real shell testing and parameter-specific completion (Phase 5)
+
+- ✅ **Phase 5: Parameter-Specific Completion** - COMPLETE (2025-11-14)
+  - Implemented `TryGetParameterName()` - detects which parameter is being completed
+  - Implemented `TryMatchEndpoint()` - matches typed words against route patterns
+  - Added registry lookup in `GetCompletions()` - checks for custom sources first
+  - Supports positional parameters (e.g., `deploy {env}`)
+  - Supports option parameters (e.g., `--version {tag}`)
+  - Falls back to DefaultCompletionSource when no custom source registered
+  - **Verified working**: Custom completion sources now invoked correctly
+    * `deploy <TAB>` → returns production, staging, development (EnvironmentCompletionSource)
+    * `deploy prod --version <TAB>` → returns v2.1.0, latest, etc. (TagCompletionSource)
+    * `<TAB>` → returns deploy, list-environments, status (DefaultCompletionSource)
 
 ### Performance Baseline (2025-11-14)
 

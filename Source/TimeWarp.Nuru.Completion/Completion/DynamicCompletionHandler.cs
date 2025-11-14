@@ -1,6 +1,8 @@
 namespace TimeWarp.Nuru.Completion;
 
+using System.Linq;
 using TimeWarp.Nuru;
+using TimeWarp.Nuru.Parsing;
 
 /// <summary>
 /// Handles the __complete callback route for dynamic shell completion.
@@ -65,25 +67,130 @@ internal static class DynamicCompletionHandler
     CompletionContext context,
     CompletionSourceRegistry registry)
   {
-    // Phase 3: Simple implementation - use DefaultCompletionSource for now
-    // Phase 4 will add parameter-aware completion source lookup from registry
-    _ = registry; // Will be used in Phase 4 for custom completion sources
+    // Try to detect if we're completing a specific parameter
+    if (TryGetParameterName(context, out string? paramName) && paramName is not null)
+    {
+      // Check if a custom completion source is registered for this parameter
+      ICompletionSource? customSource = registry.GetSourceForParameter(paramName);
+      if (customSource is not null)
+      {
+        return customSource.GetCompletions(context);
+      }
+    }
 
-    // Try to detect what we're completing based on cursor position and context
-    // For now, just use the default source which analyzes registered routes
+    // Fall back to default source (analyzes registered routes)
     var defaultSource = new DefaultCompletionSource();
     return defaultSource.GetCompletions(context);
+  }
 
-    // Future enhancement: Check if we're completing a specific parameter
-    // and look up custom completion sources from the registry
-    // Example:
-    // if (TryGetParameterName(context, out string paramName))
-    // {
-    //   ICompletionSource? customSource = registry.GetSourceForParameter(paramName);
-    //   if (customSource is not null)
-    //   {
-    //     return customSource.GetCompletions(context);
-    //   }
-    // }
+  /// <summary>
+  /// Attempts to determine which parameter is being completed based on the context.
+  /// </summary>
+  /// <param name="context">The completion context.</param>
+  /// <param name="parameterName">The name of the parameter being completed, if detected.</param>
+  /// <returns>True if a parameter name was detected; otherwise, false.</returns>
+  private static bool TryGetParameterName(CompletionContext context, out string? parameterName)
+  {
+    parameterName = null;
+
+    // Need at least the app name and one command word
+    if (context.Args.Length < 2)
+    {
+      return false;
+    }
+
+    // Get the words typed so far (excluding app name at index 0)
+    string[] commandWords = [.. context.Args.Skip(1).Take(context.CursorPosition - 1)];
+
+    // Try to match against registered endpoints to find parameter names
+    foreach (Endpoint endpoint in context.Endpoints)
+    {
+      // Try to match the typed words against this endpoint's pattern
+      if (TryMatchEndpoint(endpoint, commandWords, out string? detectedParam))
+      {
+        parameterName = detectedParam;
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  /// <summary>
+  /// Attempts to match typed words against an endpoint pattern and detect the parameter being completed.
+  /// </summary>
+  private static bool TryMatchEndpoint(Endpoint endpoint, string[] typedWords, out string? parameterName)
+  {
+    parameterName = null;
+
+    int wordIndex = 0;
+    int matcherIndex = 0;
+
+    // Match positional segments (literals and parameters)
+    while (matcherIndex < endpoint.CompiledRoute.PositionalMatchers.Count && wordIndex < typedWords.Length)
+    {
+      RouteMatcher matcher = endpoint.CompiledRoute.PositionalMatchers[matcherIndex];
+
+      if (matcher is LiteralMatcher literal)
+      {
+        // Literal must match exactly
+        if (!string.Equals(typedWords[wordIndex], literal.Value, StringComparison.Ordinal))
+        {
+          return false; // Doesn't match this endpoint
+        }
+
+        wordIndex++;
+        matcherIndex++;
+      }
+      else if (matcher is ParameterMatcher parameter)
+      {
+        // Parameter consumes the word
+        wordIndex++;
+        matcherIndex++;
+      }
+      else
+      {
+        matcherIndex++;
+      }
+    }
+
+    // If the endpoint has a catch-all, we can't determine specific parameter
+    if (endpoint.CompiledRoute.HasCatchAll)
+    {
+      return false;
+    }
+
+    // Check if the next matcher is a parameter (what we're about to complete)
+    if (matcherIndex < endpoint.CompiledRoute.PositionalMatchers.Count)
+    {
+      RouteMatcher nextMatcher = endpoint.CompiledRoute.PositionalMatchers[matcherIndex];
+      if (nextMatcher is ParameterMatcher param)
+      {
+        parameterName = param.Name;
+        return true;
+      }
+    }
+
+    // Check if we're completing an option parameter (e.g., --version <value>)
+    if (typedWords.Length > 0)
+    {
+      string lastWord = typedWords[^1];
+      if (lastWord.StartsWith('-'))
+      {
+        // Find the option matcher for this flag
+        foreach (OptionMatcher option in endpoint.CompiledRoute.OptionMatchers)
+        {
+          if (option.ExpectsValue &&
+              (string.Equals(lastWord, option.MatchPattern, StringComparison.Ordinal) ||
+               (option.AlternateForm is not null && string.Equals(lastWord, option.AlternateForm, StringComparison.Ordinal))))
+          {
+            parameterName = option.ParameterName;
+            return true;
+          }
+        }
+      }
+    }
+
+    return false;
   }
 }

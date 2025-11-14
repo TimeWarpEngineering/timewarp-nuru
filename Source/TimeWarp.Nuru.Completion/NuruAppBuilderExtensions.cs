@@ -129,16 +129,22 @@ public static class NuruAppBuilderExtensions
     }
 
     // Register the --generate-completion route with dynamic templates
-    // TODO: Implement dynamic completion script generator in Phase 2
     builder.AddRoute("--generate-completion {shell}", (string shell) =>
     {
       string detectedAppName = GetEffectiveAppName();
 
-      // For MVP, generate a basic message
-      // Full implementation in Phase 2 will use dynamic templates
-      Console.WriteLine($"# Dynamic completion for {detectedAppName}");
-      Console.WriteLine($"# Shell: {shell}");
-      Console.WriteLine("# TODO: Generate actual dynamic completion script");
+      string script = shell.ToLowerInvariant() switch
+      {
+        "bash" => DynamicCompletionScriptGenerator.GenerateBash(detectedAppName),
+        "zsh" => DynamicCompletionScriptGenerator.GenerateZsh(detectedAppName),
+        "pwsh" or "powershell" => DynamicCompletionScriptGenerator.GeneratePowerShell(detectedAppName),
+        "fish" => DynamicCompletionScriptGenerator.GenerateFish(detectedAppName),
+        _ => throw new ArgumentException(
+          $"Unknown shell: {shell}. Supported shells: bash, zsh, pwsh, fish",
+          nameof(shell))
+      };
+
+      Console.WriteLine(script);
     });
 
     return builder;

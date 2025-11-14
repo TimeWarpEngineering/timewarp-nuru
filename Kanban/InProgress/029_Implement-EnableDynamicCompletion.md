@@ -11,9 +11,17 @@
   - Created `CompletionSourceRegistry` for parameter/type-based registration
   - Created `DynamicCompletionHandler` for `__complete` callback processing
   - Added `EnableDynamicCompletion()` method to `NuruAppBuilder`
-  - `__complete` route functional (returns empty results - Phase 2 will add logic)
+  - `__complete` route functional (returns empty results - Phase 3 will add logic)
 
-- ⏳ **Phase 2: Dynamic Shell Templates** - TODO
+- ✅ **Phase 2: Dynamic Shell Templates** - COMPLETE (2025-11-14)
+  - Created bash-completion-dynamic.sh template
+  - Created zsh-completion-dynamic.zsh template
+  - Created pwsh-completion-dynamic.ps1 template
+  - Created fish-completion-dynamic.fish template
+  - Created `DynamicCompletionScriptGenerator` to load templates and replace `{{APP_NAME}}`
+  - Updated `EnableDynamicCompletion()` to generate dynamic scripts instead of static
+  - All 4 shells now call back to `myapp __complete` at Tab-press time
+
 - ⏳ **Phase 3: Built-in Completion Sources** - TODO
 - ⏳ **Phase 4: Example and Testing** - TODO
 

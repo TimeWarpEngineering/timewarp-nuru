@@ -47,12 +47,18 @@ public class EnvironmentCompletionSource : ICompletionSource
 {
     public IEnumerable<CompletionCandidate> GetCompletions(CompletionContext context)
     {
-        // In real app: query configuration service or API
-        return GetEnvironments().Select(env => new CompletionCandidate(
-            Value: env,
-            Description: GetEnvironmentDescription(env),
-            Type: CompletionType.Parameter
-        ));
+      // In real app: query configuration service or API
+      return GetEnvironments()
+        .Select
+        (
+          env => 
+            new CompletionCandidate
+            (
+              Value: env,
+              Description: GetEnvironmentDescription(env),
+              Type: CompletionType.Parameter
+            )
+        );
     }
 
     private static string[] GetEnvironments() =>

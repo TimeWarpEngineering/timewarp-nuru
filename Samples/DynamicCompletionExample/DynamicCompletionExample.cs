@@ -1,6 +1,7 @@
 #!/usr/bin/dotnet --
 #:project ../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
 #:project ../../Source/TimeWarp.Nuru.Completion/TimeWarp.Nuru.Completion.csproj
+#:property PublishDir=../../artifacts/
 
 // ============================================================================
 // Dynamic Completion Example - Demonstrates Task #029

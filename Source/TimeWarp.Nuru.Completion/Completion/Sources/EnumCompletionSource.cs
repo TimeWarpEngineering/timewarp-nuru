@@ -2,6 +2,7 @@ namespace TimeWarp.Nuru.Completion;
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 /// <summary>
@@ -9,10 +10,10 @@ using System.Linq;
 /// Automatically suggests all enum values for a given enum type.
 /// </summary>
 /// <typeparam name="TEnum">The enum type to provide completions for.</typeparam>
-public sealed class EnumCompletionSource<TEnum> : ICompletionSource
+public sealed class EnumCompletionSource<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TEnum> : ICompletionSource
   where TEnum : struct, Enum
 {
-  private readonly bool _includeCaseInsensitive;
+  private readonly bool IncludeCaseInsensitive;
 
   /// <summary>
   /// Initializes a new instance of the <see cref="EnumCompletionSource{TEnum}"/> class.
@@ -23,7 +24,7 @@ public sealed class EnumCompletionSource<TEnum> : ICompletionSource
   /// </param>
   public EnumCompletionSource(bool includeCaseInsensitive = false)
   {
-    _includeCaseInsensitive = includeCaseInsensitive;
+    IncludeCaseInsensitive = includeCaseInsensitive;
   }
 
   /// <summary>
@@ -50,7 +51,7 @@ public sealed class EnumCompletionSource<TEnum> : ICompletionSource
       ));
 
       // Optionally add lowercase version
-      if (_includeCaseInsensitive && !name.Equals(name.ToLowerInvariant(), StringComparison.Ordinal))
+      if (IncludeCaseInsensitive && !name.Equals(name.ToLowerInvariant(), StringComparison.Ordinal))
       {
         candidates.Add(new CompletionCandidate(
           Value: name.ToLowerInvariant(),

@@ -12,9 +12,9 @@
 // Usage:
 //   1. Make executable:    chmod +x DynamicCompletionExample.cs
 //   2. Publish AOT:        dotnet publish DynamicCompletionExample.cs -c Release -r linux-x64 -p:PublishAot=true
-//   3. Run AOT:            ./bin/Release/net10.0/linux-x64/publish/DynamicCompletionExample
-//   4. Generate completion: ./bin/Release/net10.0/linux-x64/publish/DynamicCompletionExample --generate-completion bash
-//   5. Test completion:    source <(./bin/Release/net10.0/linux-x64/publish/DynamicCompletionExample --generate-completion bash)
+//   3. Run AOT:            ../../artifacts/DynamicCompletionExample
+//   4. Generate completion: ../../artifacts/DynamicCompletionExample --generate-completion bash
+//   5. Test completion:    source <(../../artifacts/DynamicCompletionExample --generate-completion bash)
 //                          DynamicCompletionExample deploy <TAB>  # queries app for environment list
 //
 // Task #029: Dynamic completion calls back to the app via __complete route

@@ -68,13 +68,26 @@ internal static class DynamicCompletionHandler
     CompletionSourceRegistry registry)
   {
     // Try to detect if we're completing a specific parameter
-    if (TryGetParameterName(context, out string? paramName) && paramName is not null)
+    if (TryGetParameterInfo(context, out string? paramName, out Type? paramType))
     {
-      // Check if a custom completion source is registered for this parameter
-      ICompletionSource? customSource = registry.GetSourceForParameter(paramName);
-      if (customSource is not null)
+      // First, check if a completion source is registered for this specific parameter name
+      if (paramName is not null)
       {
-        return customSource.GetCompletions(context);
+        ICompletionSource? customSource = registry.GetSourceForParameter(paramName);
+        if (customSource is not null)
+        {
+          return customSource.GetCompletions(context);
+        }
+      }
+
+      // Second, check if a completion source is registered for this parameter's type
+      if (paramType is not null)
+      {
+        ICompletionSource? typeSource = registry.GetSourceForType(paramType);
+        if (typeSource is not null)
+        {
+          return typeSource.GetCompletions(context);
+        }
       }
     }
 
@@ -88,10 +101,12 @@ internal static class DynamicCompletionHandler
   /// </summary>
   /// <param name="context">The completion context.</param>
   /// <param name="parameterName">The name of the parameter being completed, if detected.</param>
-  /// <returns>True if a parameter name was detected; otherwise, false.</returns>
-  private static bool TryGetParameterName(CompletionContext context, out string? parameterName)
+  /// <param name="parameterType">The type of the parameter being completed, if detected.</param>
+  /// <returns>True if a parameter was detected; otherwise, false.</returns>
+  private static bool TryGetParameterInfo(CompletionContext context, out string? parameterName, out Type? parameterType)
   {
     parameterName = null;
+    parameterType = null;
 
     // Need at least the app name and one command word
     if (context.Args.Length < 2)
@@ -102,13 +117,14 @@ internal static class DynamicCompletionHandler
     // Get the words typed so far (excluding app name at index 0)
     string[] commandWords = [.. context.Args.Skip(1).Take(context.CursorPosition - 1)];
 
-    // Try to match against registered endpoints to find parameter names
+    // Try to match against registered endpoints to find parameter info
     foreach (Endpoint endpoint in context.Endpoints)
     {
       // Try to match the typed words against this endpoint's pattern
-      if (TryMatchEndpoint(endpoint, commandWords, out string? detectedParam))
+      if (TryMatchEndpoint(endpoint, commandWords, out string? detectedParam, out Type? detectedType))
       {
         parameterName = detectedParam;
+        parameterType = detectedType;
         return true;
       }
     }
@@ -119,9 +135,10 @@ internal static class DynamicCompletionHandler
   /// <summary>
   /// Attempts to match typed words against an endpoint pattern and detect the parameter being completed.
   /// </summary>
-  private static bool TryMatchEndpoint(Endpoint endpoint, string[] typedWords, out string? parameterName)
+  private static bool TryMatchEndpoint(Endpoint endpoint, string[] typedWords, out string? parameterName, out Type? parameterType)
   {
     parameterName = null;
+    parameterType = null;
 
     int wordIndex = 0;
     int matcherIndex = 0;
@@ -167,6 +184,7 @@ internal static class DynamicCompletionHandler
       if (nextMatcher is ParameterMatcher param)
       {
         parameterName = param.Name;
+        parameterType = GetParameterType(endpoint, param.Name);
         return true;
       }
     }
@@ -185,6 +203,7 @@ internal static class DynamicCompletionHandler
                (option.AlternateForm is not null && string.Equals(lastWord, option.AlternateForm, StringComparison.Ordinal))))
           {
             parameterName = option.ParameterName;
+            parameterType = GetParameterType(endpoint, option.ParameterName);
             return true;
           }
         }
@@ -192,5 +211,22 @@ internal static class DynamicCompletionHandler
     }
 
     return false;
+  }
+
+  /// <summary>
+  /// Gets the parameter type from an endpoint's method signature.
+  /// </summary>
+  private static Type? GetParameterType(Endpoint endpoint, string? parameterName)
+  {
+    if (parameterName is null || endpoint.Method is null)
+    {
+      return null;
+    }
+
+    // Get the parameter from the method signature
+    System.Reflection.ParameterInfo? parameter = endpoint.Method.GetParameters()
+      .FirstOrDefault(p => string.Equals(p.Name, parameterName, StringComparison.OrdinalIgnoreCase));
+
+    return parameter?.ParameterType;
   }
 }

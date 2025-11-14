@@ -22,7 +22,13 @@
   - Updated `EnableDynamicCompletion()` to generate dynamic scripts instead of static
   - All 4 shells now call back to `myapp __complete` at Tab-press time
 
-- ⏳ **Phase 3: Built-in Completion Sources** - TODO
+- ✅ **Phase 3: Built-in Completion Sources** - COMPLETE (2025-11-14)
+  - Created `DefaultCompletionSource` - analyzes registered routes for commands and options
+  - Created `EnumCompletionSource<TEnum>` - automatic enum value completions with descriptions
+  - Updated `DynamicCompletionHandler` to use DefaultCompletionSource
+  - Dynamic completion now returns actual route-based suggestions (commands, options)
+  - Registry infrastructure in place for Phase 4 parameter-specific sources
+
 - ⏳ **Phase 4: Example and Testing** - TODO
 
 ### Performance Baseline (2025-11-14)

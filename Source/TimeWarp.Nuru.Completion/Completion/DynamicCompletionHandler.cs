@@ -30,10 +30,8 @@ internal static class DynamicCompletionHandler
       Endpoints: endpoints
     );
 
-    // For now, return empty completions (Phase 2 will implement actual completion logic)
-    // TODO: Implement route matching and parameter-aware completion using registry
-    _ = registry; // Suppress unused parameter warning - will be used in Phase 2
-    IEnumerable<CompletionCandidate> items = [];
+    // Get completions from the appropriate source
+    IEnumerable<CompletionCandidate> items = GetCompletions(context, registry);
 
     // Determine the directive to use (default to NoFileComp for string parameters)
     CompletionDirective directive = CompletionDirective.NoFileComp;
@@ -58,5 +56,34 @@ internal static class DynamicCompletionHandler
     Console.Error.WriteLine($"Completion ended with directive: {directive}");
 
     return 0;
+  }
+
+  /// <summary>
+  /// Gets completions for the current context by consulting the registry and falling back to defaults.
+  /// </summary>
+  private static IEnumerable<CompletionCandidate> GetCompletions(
+    CompletionContext context,
+    CompletionSourceRegistry registry)
+  {
+    // Phase 3: Simple implementation - use DefaultCompletionSource for now
+    // Phase 4 will add parameter-aware completion source lookup from registry
+    _ = registry; // Will be used in Phase 4 for custom completion sources
+
+    // Try to detect what we're completing based on cursor position and context
+    // For now, just use the default source which analyzes registered routes
+    var defaultSource = new DefaultCompletionSource();
+    return defaultSource.GetCompletions(context);
+
+    // Future enhancement: Check if we're completing a specific parameter
+    // and look up custom completion sources from the registry
+    // Example:
+    // if (TryGetParameterName(context, out string paramName))
+    // {
+    //   ICompletionSource? customSource = registry.GetSourceForParameter(paramName);
+    //   if (customSource is not null)
+    //   {
+    //     return customSource.GetCompletions(context);
+    //   }
+    // }
   }
 }

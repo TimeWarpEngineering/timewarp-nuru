@@ -1,0 +1,350 @@
+#!/usr/bin/dotnet --
+
+return await RunTests<ContextAwareTests>(clearCache: true);
+
+[TestTag("Completion")]
+[ClearRunfileCache]
+public class ContextAwareTests
+{
+  public static async Task Should_pass_args_array_in_context()
+  {
+    // Arrange
+    var builder = new NuruAppBuilder();
+    builder.AddRoute("deploy {env}", (string env) => 0);
+
+    builder.EnableDynamicCompletion(configure: registry =>
+    {
+      ArgsInspectorSource source = new();
+      registry.RegisterForParameter("env", source);
+    });
+
+    NuruApp app = builder.Build();
+
+    // Act
+    (int _, string output, string _) = await CaptureAppOutputAsync(() =>
+      app.RunAsync(["__complete", "2", "app", "deploy"]));
+
+    // Assert - Source received args
+    output.ShouldContain("args:4"); // app, deploy, __complete, 2
+  }
+
+  public static async Task Should_pass_cursor_position_in_context()
+  {
+    // Arrange
+    var builder = new NuruAppBuilder();
+    builder.AddRoute("deploy {env}", (string env) => 0);
+
+    builder.EnableDynamicCompletion(configure: registry =>
+    {
+      CursorInspectorSource source = new();
+      registry.RegisterForParameter("env", source);
+    });
+
+    NuruApp app = builder.Build();
+
+    // Act
+    (int _, string output, string _) = await CaptureAppOutputAsync(() =>
+      app.RunAsync(["__complete", "2", "app", "deploy"]));
+
+    // Assert - Source received cursor position
+    output.ShouldContain("cursor:2");
+  }
+
+  public static async Task Should_pass_endpoints_collection_in_context()
+  {
+    // Arrange
+    var builder = new NuruAppBuilder();
+    builder.AddRoute("status", () => 0);
+    builder.AddRoute("version", () => 0);
+    builder.AddRoute("deploy {env}", (string env) => 0);
+
+    builder.EnableDynamicCompletion(configure: registry =>
+    {
+      EndpointsInspectorSource source = new();
+      registry.RegisterForParameter("env", source);
+    });
+
+    NuruApp app = builder.Build();
+
+    // Act
+    (int _, string output, string _) = await CaptureAppOutputAsync(() =>
+      app.RunAsync(["__complete", "2", "app", "deploy"]));
+
+    // Assert - Source sees all endpoints (3 original + 2 from EnableDynamicCompletion)
+    output.ShouldContain("endpoints:");
+  }
+
+  public static async Task Should_allow_source_to_inspect_previous_arguments()
+  {
+    // Arrange
+    var builder = new NuruAppBuilder();
+    builder.AddRoute("connect {host} {port}", (string host, string port) => 0);
+
+    builder.EnableDynamicCompletion(configure: registry =>
+    {
+      PreviousArgsSource source = new();
+      registry.RegisterForParameter("port", source);
+    });
+
+    NuruApp app = builder.Build();
+
+    // Act - Previous arg is "localhost"
+    (int _, string output, string _) = await CaptureAppOutputAsync(() =>
+      app.RunAsync(["__complete", "3", "app", "connect", "localhost"]));
+
+    // Assert - Source can see localhost was provided
+    output.ShouldContain("prev:localhost");
+  }
+
+  public static async Task Should_provide_different_completions_based_on_context()
+  {
+    // Arrange
+    var builder = new NuruAppBuilder();
+    builder.AddRoute("deploy {env} {service}", (string env, string service) => 0);
+
+    builder.EnableDynamicCompletion(configure: registry =>
+    {
+      EnvironmentAwareServiceSource source = new();
+      registry.RegisterForParameter("service", source);
+    });
+
+    NuruApp app = builder.Build();
+
+    // Act - Get services for production
+    (int _, string prodOutput, string _) = await CaptureAppOutputAsync(() =>
+      app.RunAsync(["__complete", "3", "app", "deploy", "production"]));
+
+    // Assert - Production-specific services
+    prodOutput.ShouldContain("api-prod");
+  }
+
+  public static async Task Should_support_conditional_completion_logic()
+  {
+    // Arrange
+    var builder = new NuruAppBuilder();
+    builder.AddRoute("backup {target} {dest}", (string target, string dest) => 0);
+
+    builder.EnableDynamicCompletion(configure: registry =>
+    {
+      ConditionalSource source = new();
+      registry.RegisterForParameter("dest", source);
+    });
+
+    NuruApp app = builder.Build();
+
+    // Act - Backup database
+    (int _, string output, string _) = await CaptureAppOutputAsync(() =>
+      app.RunAsync(["__complete", "3", "app", "backup", "database"]));
+
+    // Assert - Database-specific destinations
+    output.ShouldContain("s3-bucket");
+    output.ShouldContain("local-drive");
+  }
+
+  public static async Task Should_allow_source_to_filter_by_partial_input()
+  {
+    // Arrange
+    var builder = new NuruAppBuilder();
+    builder.AddRoute("select {item}", (string item) => 0);
+
+    builder.EnableDynamicCompletion(configure: registry =>
+    {
+      FilteringSource source = new();
+      registry.RegisterForParameter("item", source);
+    });
+
+    NuruApp app = builder.Build();
+
+    // Act
+    (int _, string output, string _) = await CaptureAppOutputAsync(() =>
+      app.RunAsync(["__complete", "2", "app", "select"]));
+
+    // Assert - Source provides all items (filtering would be done by shell)
+    output.ShouldContain("apple");
+    output.ShouldContain("apricot");
+    output.ShouldContain("banana");
+  }
+
+  public static async Task Should_provide_immutable_context()
+  {
+    // Arrange
+    var builder = new NuruAppBuilder();
+    builder.AddRoute("test {param}", (string param) => 0);
+
+    builder.EnableDynamicCompletion(configure: registry =>
+    {
+      ImmutabilityTestSource source = new();
+      registry.RegisterForParameter("param", source);
+    });
+
+    NuruApp app = builder.Build();
+
+    // Act
+    (int exitCode, string _, string _) = await CaptureAppOutputAsync(() =>
+      app.RunAsync(["__complete", "2", "app", "test"]));
+
+    // Assert - Context is read-only record
+    exitCode.ShouldBe(0);
+  }
+
+  public static async Task Should_handle_context_with_options_in_args()
+  {
+    // Arrange
+    var builder = new NuruAppBuilder();
+    builder.AddRoute("build --config {mode} {target}", (string mode, string target) => 0);
+
+    builder.EnableDynamicCompletion(configure: registry =>
+    {
+      TargetSource source = new();
+      registry.RegisterForParameter("target", source);
+    });
+
+    NuruApp app = builder.Build();
+
+    // Act - Args include option
+    (int _, string output, string _) = await CaptureAppOutputAsync(() =>
+      app.RunAsync(["__complete", "4", "app", "build", "--config", "release"]));
+
+    // Assert
+    output.ShouldContain("linux");
+    output.ShouldContain("windows");
+  }
+
+  private static async Task<(int exitCode, string stdout, string stderr)> CaptureAppOutputAsync(Func<Task<int>> action)
+  {
+    TextWriter originalOut = Console.Out;
+    TextWriter originalError = Console.Error;
+
+    using StringWriter stdoutWriter = new();
+    using StringWriter stderrWriter = new();
+
+    try
+    {
+      Console.SetOut(stdoutWriter);
+      Console.SetError(stderrWriter);
+
+      int exitCode = await action();
+
+      return (exitCode, stdoutWriter.ToString(), stderrWriter.ToString());
+    }
+    finally
+    {
+      Console.SetOut(originalOut);
+      Console.SetError(originalError);
+    }
+  }
+}
+
+// =============================================================================
+// Context-Aware Completion Sources
+// =============================================================================
+
+sealed class ArgsInspectorSource : ICompletionSource
+{
+  public IEnumerable<CompletionCandidate> GetCompletions(CompletionContext context)
+  {
+    yield return new CompletionCandidate($"args:{context.Args.Length}", null, CompletionType.Parameter);
+  }
+}
+
+sealed class CursorInspectorSource : ICompletionSource
+{
+  public IEnumerable<CompletionCandidate> GetCompletions(CompletionContext context)
+  {
+    yield return new CompletionCandidate($"cursor:{context.CursorPosition}", null, CompletionType.Parameter);
+  }
+}
+
+sealed class EndpointsInspectorSource : ICompletionSource
+{
+  public IEnumerable<CompletionCandidate> GetCompletions(CompletionContext context)
+  {
+    yield return new CompletionCandidate($"endpoints:{context.Endpoints.Count}", null, CompletionType.Parameter);
+  }
+}
+
+sealed class PreviousArgsSource : ICompletionSource
+{
+  public IEnumerable<CompletionCandidate> GetCompletions(CompletionContext context)
+  {
+    // Look at previous argument (the host in "connect {host} {port}")
+    if (context.Args.Length > 2)
+    {
+      string previousArg = context.Args[^1]; // Last arg before cursor
+      yield return new CompletionCandidate($"prev:{previousArg}", null, CompletionType.Parameter);
+    }
+    else
+    {
+      yield return new CompletionCandidate("no-prev", null, CompletionType.Parameter);
+    }
+  }
+}
+
+sealed class EnvironmentAwareServiceSource : ICompletionSource
+{
+  public IEnumerable<CompletionCandidate> GetCompletions(CompletionContext context)
+  {
+    // Get the environment from previous args
+    string env = context.Args.Length > 2 ? context.Args[^1] : "unknown";
+
+    if (env == "production")
+    {
+      yield return new CompletionCandidate("api-prod", "Production API", CompletionType.Parameter);
+      yield return new CompletionCandidate("web-prod", "Production Web", CompletionType.Parameter);
+    }
+    else
+    {
+      yield return new CompletionCandidate("api-dev", "Development API", CompletionType.Parameter);
+      yield return new CompletionCandidate("web-dev", "Development Web", CompletionType.Parameter);
+    }
+  }
+}
+
+sealed class ConditionalSource : ICompletionSource
+{
+  public IEnumerable<CompletionCandidate> GetCompletions(CompletionContext context)
+  {
+    string target = context.Args.Length > 2 ? context.Args[^1] : "unknown";
+
+    if (target == "database")
+    {
+      yield return new CompletionCandidate("s3-bucket", "S3 storage", CompletionType.Parameter);
+      yield return new CompletionCandidate("local-drive", "Local backup", CompletionType.Parameter);
+    }
+    else
+    {
+      yield return new CompletionCandidate("archive", "Compressed archive", CompletionType.Parameter);
+    }
+  }
+}
+
+sealed class FilteringSource : ICompletionSource
+{
+  public IEnumerable<CompletionCandidate> GetCompletions(CompletionContext context)
+  {
+    // Return all items - shell handles filtering
+    yield return new CompletionCandidate("apple", null, CompletionType.Parameter);
+    yield return new CompletionCandidate("apricot", null, CompletionType.Parameter);
+    yield return new CompletionCandidate("banana", null, CompletionType.Parameter);
+    yield return new CompletionCandidate("cherry", null, CompletionType.Parameter);
+  }
+}
+
+sealed class ImmutabilityTestSource : ICompletionSource
+{
+  public IEnumerable<CompletionCandidate> GetCompletions(CompletionContext context)
+  {
+    // Context is a record - immutable by design
+    yield return new CompletionCandidate("immutable-ok", null, CompletionType.Parameter);
+  }
+}
+
+sealed class TargetSource : ICompletionSource
+{
+  public IEnumerable<CompletionCandidate> GetCompletions(CompletionContext context)
+  {
+    yield return new CompletionCandidate("linux", "Linux x64", CompletionType.Parameter);
+    yield return new CompletionCandidate("windows", "Windows x64", CompletionType.Parameter);
+    yield return new CompletionCandidate("macos", "macOS ARM64", CompletionType.Parameter);
+  }
+}

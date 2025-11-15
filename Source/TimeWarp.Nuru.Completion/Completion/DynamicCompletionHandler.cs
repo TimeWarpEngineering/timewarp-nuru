@@ -103,7 +103,7 @@ internal static class DynamicCompletionHandler
   /// <param name="parameterName">The name of the parameter being completed, if detected.</param>
   /// <param name="parameterType">The type of the parameter being completed, if detected.</param>
   /// <returns>True if a parameter was detected; otherwise, false.</returns>
-  private static bool TryGetParameterInfo(CompletionContext context, out string? parameterName, out Type? parameterType)
+  internal static bool TryGetParameterInfo(CompletionContext context, out string? parameterName, out Type? parameterType)
   {
     parameterName = null;
     parameterType = null;
@@ -135,7 +135,7 @@ internal static class DynamicCompletionHandler
   /// <summary>
   /// Attempts to match typed words against an endpoint pattern and detect the parameter being completed.
   /// </summary>
-  private static bool TryMatchEndpoint(Endpoint endpoint, string[] typedWords, out string? parameterName, out Type? parameterType)
+  internal static bool TryMatchEndpoint(Endpoint endpoint, string[] typedWords, out string? parameterName, out Type? parameterType)
   {
     parameterName = null;
     parameterType = null;

@@ -11,7 +11,8 @@ using TimeWarp.Nuru;
 public static class NuruAppBuilderExtensions
 {
   /// <summary>
-  /// Enables shell completion by automatically registering the `--generate-completion {shell}` route.
+  /// Enables static shell completion by automatically registering the `--generate-completion {shell}` route.
+  /// Static completion generates pre-computed scripts based on registered routes.
   /// </summary>
   /// <param name="builder">The NuruAppBuilder instance.</param>
   /// <param name="appName">
@@ -20,7 +21,7 @@ public static class NuruAppBuilderExtensions
   /// This ensures completion scripts match the published executable name.
   /// </param>
   /// <returns>The builder for fluent chaining.</returns>
-  public static NuruAppBuilder EnableShellCompletion(
+  public static NuruAppBuilder EnableStaticCompletion(
     this NuruAppBuilder builder,
     string? appName = null)
   {
@@ -78,7 +79,7 @@ public static class NuruAppBuilderExtensions
 
   /// <summary>
   /// Enables dynamic shell completion that queries the application at Tab-press time.
-  /// This is mutually exclusive with EnableShellCompletion() - use one or the other.
+  /// This is mutually exclusive with EnableStaticCompletion() - use one or the other.
   /// </summary>
   /// <param name="builder">The NuruAppBuilder instance.</param>
   /// <param name="appName">
@@ -107,7 +108,7 @@ public static class NuruAppBuilderExtensions
       return DynamicCompletionHandler.HandleCompletion(index, words, registry, builder.EndpointCollection);
     });
 
-    // Auto-detect app name helper (same as EnableShellCompletion)
+    // Auto-detect app name helper (same as EnableStaticCompletion)
     string GetEffectiveAppName()
     {
       if (appName is not null)

@@ -131,7 +131,7 @@ using TimeWarp.Nuru.Completion;
 NuruApp app = new NuruAppBuilder()
     .AddRoute("deploy {env} --version {tag}", (string env, string tag) => Deploy(env, tag))
     .AddRoute("status", () => ShowStatus())
-    .EnableShellCompletion()  // ← Add this
+    .EnableStaticCompletion()  // ← Add this
     .Build();
 ```
 

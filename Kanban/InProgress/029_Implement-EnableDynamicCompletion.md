@@ -65,7 +65,7 @@
 
 ## Problem
 
-Currently, `EnableShellCompletion()` generates **static** completion scripts that contain all completion candidates at generation time. This works well for simple cases but has fundamental limitations:
+Currently, `EnableStaticCompletion()` generates **static** completion scripts that contain all completion candidates at generation time. This works well for simple cases but has fundamental limitations:
 
 1. **Cannot query runtime data** - Environment names, deployment targets, resource lists from APIs/databases
 2. **No context awareness** - Cannot suggest completions based on previous arguments
@@ -113,7 +113,7 @@ Implement `EnableDynamicCompletion()` method that:
 2. **Provides `ICompletionSource` interface** - Users implement to provide dynamic completions
 3. **Generates dynamic shell scripts** - Shell scripts call back to app instead of using static data
 4. **Supports all 4 shells** - bash, zsh, PowerShell, fish
-5. **Mutually exclusive with EnableShellCompletion** - User opts into one or the other
+5. **Mutually exclusive with EnableStaticCompletion** - User opts into one or the other
 
 ### Architecture
 
@@ -289,7 +289,7 @@ complete -F _myapp_completions myapp
 
 **14. Update documentation**
    - Add dynamic completion section to README
-   - Document migration from `EnableShellCompletion()` to `EnableDynamicCompletion()`
+   - Document migration from `EnableStaticCompletion()` to `EnableDynamicCompletion()`
    - Document performance considerations (<100ms target)
    - Add troubleshooting guide for shell-specific issues
 
@@ -302,7 +302,7 @@ complete -F _myapp_completions myapp
 
 ### 2. Mutually Exclusive Methods
 - **Rationale**: Clear intent, different template generation, simpler implementation
-- **Alternative considered**: `EnableShellCompletion(dynamic: true)`
+- **Alternative considered**: `EnableStaticCompletion(dynamic: true)`
 - **Decision**: Separate methods - user chooses one
 
 ### 3. Performance Target: <100ms
@@ -465,7 +465,7 @@ builder.AddRoute("deploy {env}", (string env) => Deploy(env));
 ## References
 
 - **Industry Standard**: Cobra's `__complete` pattern (kubectl, gh, docker)
-- **Current Implementation**: `EnableShellCompletion()` in `NuruAppBuilderExtensions.cs`
+- **Current Implementation**: `EnableStaticCompletion()` in `NuruAppBuilderExtensions.cs`
 - **Target Use Case**: Replace System.CommandLine in Aspire CLI
 - **Related Tasks**: Task 028 (Type-Aware), Task 025 (Static Completion)
 
@@ -474,7 +474,7 @@ builder.AddRoute("deploy {env}", (string env) => Deploy(env));
 This feature is critical for positioning TimeWarp.Nuru as a **viable replacement for System.CommandLine and Spectre** in enterprise scenarios where dynamic data sources are common (databases, APIs, configuration services).
 
 The design follows the principle of **progressive enhancement**:
-1. Start with `EnableShellCompletion()` for simple cases
+1. Start with `EnableStaticCompletion()` for simple cases
 2. Upgrade to `EnableDynamicCompletion()` when runtime data needed
 3. Both use the same route patterns - no API changes required
 

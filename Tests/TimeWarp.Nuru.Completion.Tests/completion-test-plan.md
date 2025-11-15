@@ -32,7 +32,7 @@ Tests are implemented as single-file C# applications (new in .NET 10) following 
 - Route matching up to cursor
 
 ### 4. Integration with NuruAppBuilder
-- EnableShellCompletion() extension method
+- EnableStaticCompletion() extension method
 - Auto-registration of --generate-completion route
 - App name customization
 
@@ -177,11 +177,11 @@ Tests are implemented as single-file C# applications (new in .NET 10) following 
 - Works in fish shell
 
 ### completion-09-integration-enablecompletion.cs
-**Purpose:** Validate EnableShellCompletion() integration
+**Purpose:** Validate EnableStaticCompletion() integration
 
 **Scenarios:**
-- Call EnableShellCompletion() without app name (use default)
-- Call EnableShellCompletion("myapp") with custom name
+- Call EnableStaticCompletion() without app name (use default)
+- Call EnableStaticCompletion("myapp") with custom name
 - Verify --generate-completion route is registered
 - Test route with valid shells: bash, zsh, pwsh, fish
 - Test route with invalid shell → ArgumentException
@@ -276,7 +276,7 @@ Tests are implemented as single-file C# applications (new in .NET 10) following 
 ```csharp
 builder.AddRoute("createorder {product} {quantity:int}", ...);
 builder.AddRoute("create {item}", ...);
-builder.EnableShellCompletion("myapp");
+builder.EnableStaticCompletion("myapp");
 ```
 
 **Test:**
@@ -325,7 +325,7 @@ All tests should:
 - **Option Extraction:** 100% - All OptionMatcher scenarios
 - **Parameter Detection:** 100% - All parameter types
 - **Script Generation:** 100% - All 4 shells
-- **Integration:** 100% - EnableShellCompletion API
+- **Integration:** 100% - EnableStaticCompletion API
 - **Edge Cases:** 90% - Common edge cases covered
 
 ## Dependencies

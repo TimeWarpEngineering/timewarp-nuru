@@ -7,7 +7,7 @@ namespace TimeWarp.Nuru.Completion;
 /// </summary>
 /// <remarks>
 /// This interface is used for dynamic completion (EnableDynamicCompletion).
-/// The existing CompletionProvider handles static completion (EnableShellCompletion).
+/// The existing CompletionProvider handles static completion (EnableStaticCompletion).
 /// </remarks>
 public interface ICompletionSource
 {

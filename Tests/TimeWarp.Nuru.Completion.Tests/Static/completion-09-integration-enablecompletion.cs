@@ -4,11 +4,11 @@ using TimeWarp.Nuru;
 using TimeWarp.Nuru.Completion;
 using Shouldly;
 
-return await RunTests<EnableShellCompletionIntegrationTests>(clearCache: true);
+return await RunTests<EnableStaticCompletionIntegrationTests>(clearCache: true);
 
 [TestTag("Completion")]
 [ClearRunfileCache]
-public class EnableShellCompletionIntegrationTests
+public class EnableStaticCompletionIntegrationTests
 {
   public static async Task Should_register_completion_routes_for_all_shells()
   {
@@ -18,7 +18,7 @@ public class EnableShellCompletionIntegrationTests
     builder.AddRoute("version", () => 0);
 
     // Act
-    builder.EnableShellCompletion();
+    builder.EnableStaticCompletion();
 
     // Assert - Verify completion route was registered with shell parameter
     builder.EndpointCollection.Endpoints.ShouldContain(e => e.RoutePattern.Contains("--generate-completion"));
@@ -39,7 +39,7 @@ public class EnableShellCompletionIntegrationTests
     builder.AddRoute("deploy {env}", (string env) => 0);
 
     // Act
-    builder.EnableShellCompletion();
+    builder.EnableStaticCompletion();
 
     // Assert - Verify the specific pattern
     Endpoint? completionEndpoint = builder.EndpointCollection.Endpoints
@@ -63,7 +63,7 @@ public class EnableShellCompletionIntegrationTests
     int originalRouteCount = builder.EndpointCollection.Endpoints.Count;
 
     // Act
-    builder.EnableShellCompletion();
+    builder.EnableStaticCompletion();
 
     // Assert - Original routes should still exist
     builder.EndpointCollection.Endpoints.ShouldContain(e => e.RoutePattern == "status");
@@ -82,7 +82,7 @@ public class EnableShellCompletionIntegrationTests
     var builder = new NuruAppBuilder();
 
     // Act
-    builder.EnableShellCompletion();
+    builder.EnableStaticCompletion();
 
     // Assert - Should still register completion routes even with no app routes
     builder.EndpointCollection.Endpoints.ShouldContain(e => e.RoutePattern.Contains("--generate-completion"));
@@ -97,8 +97,8 @@ public class EnableShellCompletionIntegrationTests
     builder.AddRoute("status", () => 0);
 
     // Act
-    builder.EnableShellCompletion();
-    builder.EnableShellCompletion(); // Call twice
+    builder.EnableStaticCompletion();
+    builder.EnableStaticCompletion(); // Call twice
 
     // Assert - Should not duplicate routes
     var completionRoutes = builder.EndpointCollection.Endpoints
@@ -117,8 +117,8 @@ public class EnableShellCompletionIntegrationTests
     var builder = new NuruAppBuilder();
     builder.AddRoute("test", () => 0);
 
-    // Act - EnableShellCompletion before Build
-    builder.EnableShellCompletion();
+    // Act - EnableStaticCompletion before Build
+    builder.EnableStaticCompletion();
 
     // Assert - Routes should be visible in builder
     builder.EndpointCollection.Endpoints.ShouldContain(e => e.RoutePattern.Contains("--generate-completion"));
@@ -131,7 +131,7 @@ public class EnableShellCompletionIntegrationTests
     // Arrange
     var builder = new NuruAppBuilder();
     builder.AddRoute("status", () => 0);
-    builder.EnableShellCompletion();
+    builder.EnableStaticCompletion();
 
     // Assert - All supported shell types should be matchable
     Endpoint completionEndpoint = builder.EndpointCollection.Endpoints
@@ -152,7 +152,7 @@ public class EnableShellCompletionIntegrationTests
     builder.AddRoute("config set {key} {value?}", (string key, string? value) => 0);
 
     // Act
-    builder.EnableShellCompletion();
+    builder.EnableStaticCompletion();
 
     // Assert - Completion should work with all route types
     builder.EndpointCollection.Endpoints.ShouldContain(e => e.RoutePattern.Contains("--generate-completion"));
@@ -167,7 +167,7 @@ public class EnableShellCompletionIntegrationTests
     var builder = new NuruAppBuilder();
     builder.AddRoute("first", () => 0);
     builder.AddRoute("second", () => 0);
-    builder.EnableShellCompletion();
+    builder.EnableStaticCompletion();
     builder.AddRoute("third", () => 0);
 
     // Assert - Original routes should maintain their relative order
@@ -188,7 +188,7 @@ public class EnableShellCompletionIntegrationTests
     // Arrange & Act - Test fluent chaining
     NuruAppBuilder builder = new NuruAppBuilder()
       .AddRoute("status", () => 0)
-      .EnableShellCompletion()
+      .EnableStaticCompletion()
       .AddRoute("version", () => 0);
 
     // Assert

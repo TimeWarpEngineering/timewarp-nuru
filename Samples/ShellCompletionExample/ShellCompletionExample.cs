@@ -27,7 +27,7 @@ var builder = new NuruAppBuilder();
 // ============================================================================
 // This adds the --generate-completion {shell} route
 // The app name is auto-detected from the executable name at runtime
-builder.EnableShellCompletion();
+builder.EnableStaticCompletion();
 
 // ============================================================================
 // Sample Commands - Issue #30 Use Case

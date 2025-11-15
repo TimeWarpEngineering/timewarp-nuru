@@ -119,7 +119,7 @@ public class EnvironmentCompletionSource : ICompletionSource
 var app = new NuruAppBuilder()
     .AddRoute("deploy {env} --version {ver}", (string env, string ver) => Deploy(env, ver))
     .WithCompletionSource("env", new EnvironmentCompletionSource())
-    .EnableShellCompletion()  // Now includes dynamic support
+    .EnableStaticCompletion()  // Now includes dynamic support
     .Build();
 ```
 
@@ -180,7 +180,7 @@ _myapp_completion() {
 2. Create registry to map parameter names to completion sources
 3. Implement `--complete {index} {*words}` hidden route
 4. Add `.WithCompletionSource(paramName, source)` API
-5. Update `EnableShellCompletion()` to detect if any dynamic sources registered
+5. Update `EnableStaticCompletion()` to detect if any dynamic sources registered
 
 ### Phase 3b: Shell Script Updates
 
@@ -226,7 +226,7 @@ public class EnvironmentSource : ICompletionSource
 var app = new NuruAppBuilder()
     .AddRoute("deploy {env}", (string env) => Deploy(env))
     .WithCompletionSource("env", new EnvironmentSource())
-    .EnableShellCompletion()
+    .EnableStaticCompletion()
     .Build();
 ```
 

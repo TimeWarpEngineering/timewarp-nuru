@@ -13,10 +13,10 @@ Dynamic completion queries your application **at Tab-press time** instead of usi
 
 ## Comparison: Static vs Dynamic
 
-### Static Completion (`EnableShellCompletion()`)
+### Static Completion (`EnableStaticCompletion()`)
 
 ```csharp
-builder.EnableShellCompletion();
+builder.EnableStaticCompletion();
 // Completion script contains ALL possible values at generation time
 // ✅ Fast (no app invocation)
 // ❌ Cannot query runtime data
@@ -353,12 +353,12 @@ builder.EnableDynamicCompletion(configure: registry =>
 
 ## Migration from Static to Dynamic
 
-If you're currently using `EnableShellCompletion()` and want dynamic completion:
+If you're currently using `EnableStaticCompletion()` and want dynamic completion:
 
 ### Before (Static)
 
 ```csharp
-builder.EnableShellCompletion();
+builder.EnableStaticCompletion();
 
 builder.AddRoute("deploy {env}", (string env) => Deploy(env));
 ```

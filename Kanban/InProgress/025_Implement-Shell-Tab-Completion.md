@@ -83,7 +83,7 @@
 - Implemented `CompletionProvider` with type-aware completion logic
 - Implemented `CompletionScriptGenerator` for all 4 shells (bash, zsh, PowerShell, fish)
 - Created embedded resource templates for all shells
-- Added `EnableShellCompletion()` fluent API to `NuruAppBuilder`
+- Added `EnableStaticCompletion()` fluent API to `NuruAppBuilder`
 - Created `ShellCompletionExample` sample demonstrating Issue #30 use case
 - Verified script generation for all shells correctly includes "createorder" command
 
@@ -285,7 +285,7 @@ The excellent news: **Nuru has exceptional infrastructure already in place!**
 
 3. **Built-in Route for Generation**
    ```csharp
-   // Auto-registered when EnableShellCompletion() is called
+   // Auto-registered when EnableStaticCompletion() is called
    .AddRoute("--generate-completion {shell}", (string shell) => {
        // Validate shell is bash|zsh|pwsh|fish
        // Generate appropriate script
@@ -325,7 +325,7 @@ var app = new NuruAppBuilder()
     .AddRoute("createorder {product}", ...)
     .AddRoute("status", ...)
     .AddRoute("deploy {env} --version {ver}", ...)
-    .EnableShellCompletion()  // Adds --generate-completion route
+    .EnableStaticCompletion()  // Adds --generate-completion route
     .Build();
 
 await app.RunAsync(args);
@@ -396,7 +396,7 @@ source <(./myapp --generate-completion bash)
 - `/Source/TimeWarp.Nuru/Completion/Templates/fish-completion.fish` (embedded resource)
 
 **Files to Update:**
-- `/Source/TimeWarp.Nuru/NuruAppBuilder.cs` - Add `EnableShellCompletion()` method
+- `/Source/TimeWarp.Nuru/NuruAppBuilder.cs` - Add `EnableStaticCompletion()` method
 - `/Source/TimeWarp.Nuru/NuruApp.cs` - Auto-register `--generate-completion {shell}` route when enabled
 
 **Implementation:**
@@ -495,7 +495,7 @@ source <(./myapp --generate-completion bash)
 - `/Source/TimeWarp.Nuru.Completion/Completion/Templates/fish-completion.fish`
 
 **Updated:**
-- `/Source/TimeWarp.Nuru.Completion/CompletionExtensions.cs` (adds `EnableShellCompletion()`)
+- `/Source/TimeWarp.Nuru.Completion/CompletionExtensions.cs` (adds `EnableStaticCompletion()`)
 
 ### ~~Phase 3 (Dynamic - Optional)~~ → Moved to Task 026
 
@@ -580,7 +580,7 @@ See Task 026 in Backlog for dynamic completion implementation plan.
 - Core Nuru package unchanged (if using separate package approach)
 - No changes to existing route APIs
 - Purely additive functionality
-- Users opt-in via `EnableShellCompletion()`
+- Users opt-in via `EnableStaticCompletion()`
 
 ## Benefits
 

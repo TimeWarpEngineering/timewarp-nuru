@@ -13,7 +13,7 @@ TimeWarp.Nuru.Completion generates shell-specific completion scripts from your r
 - File and directory paths
 
 **Key Benefits:**
-- ⚡ **One line to enable**: `.EnableShellCompletion()`
+- ⚡ **One line to enable**: `.EnableStaticCompletion()`
 - 🎯 **Automatic**: Generates from your existing route definitions
 - 🌐 **Cross-platform**: Supports 4 major shells
 - 📦 **Static**: No runtime overhead, completions computed at build time
@@ -36,7 +36,7 @@ using TimeWarp.Nuru.Completion;
 NuruApp app = new NuruAppBuilder()
     .AddRoute("deploy {env} --version {tag}", (string env, string tag) => Deploy(env, tag))
     .AddRoute("status", () => ShowStatus())
-    .EnableShellCompletion()  // ← Add this one line
+    .EnableStaticCompletion()  // ← Add this one line
     .Build();
 
 return await app.RunAsync(args);
@@ -183,7 +183,7 @@ builder.AddRoute("createorder {product} {quantity:int}",
 
 builder.AddRoute("status", () => ShowStatus());
 
-builder.EnableShellCompletion();
+builder.EnableStaticCompletion();
 
 NuruApp app = builder.Build();
 return await app.RunAsync(args);
@@ -231,7 +231,7 @@ $ ./myapp git status --<TAB>
 public enum Environment { Development, Staging, Production }
 
 builder.AddRoute("deploy {env}", (Environment env) => Deploy(env));
-builder.EnableShellCompletion();
+builder.EnableStaticCompletion();
 ```
 
 **Tab completion behavior:**
@@ -338,7 +338,7 @@ TimeWarp.Nuru.Completion provides **static completion** by default:
 public enum LogLevel { Debug, Info, Warning, Error }
 
 builder.AddRoute("log --level {level}", (LogLevel level) => SetLogLevel(level));
-builder.EnableShellCompletion();
+builder.EnableStaticCompletion();
 ```
 
 The completion script contains: `Debug Info Warning Error`
@@ -505,12 +505,12 @@ builder.AddRoute("deploy --verbose", (bool verbose) => Deploy(verbose));
 
 ## API Reference
 
-### EnableShellCompletion()
+### EnableStaticCompletion()
 
 Enables shell completion support by registering the `--generate-completion` route:
 
 ```csharp
-public NuruAppBuilder EnableShellCompletion(string? appName = null)
+public NuruAppBuilder EnableStaticCompletion(string? appName = null)
 ```
 
 **Parameters:**
@@ -522,14 +522,14 @@ public NuruAppBuilder EnableShellCompletion(string? appName = null)
 
 ```csharp
 var builder = new NuruAppBuilder();
-builder.EnableShellCompletion();  // Uses executable name
+builder.EnableStaticCompletion();  // Uses executable name
 // or
-builder.EnableShellCompletion("myapp");  // Explicit name
+builder.EnableStaticCompletion("myapp");  // Explicit name
 ```
 
 ### Generated Route
 
-When you call `EnableShellCompletion()`, it registers this hidden route:
+When you call `EnableStaticCompletion()`, it registers this hidden route:
 
 ```csharp
 "--generate-completion {shell}"

@@ -29,7 +29,7 @@ using TimeWarp.Nuru.Completion;
 var builder = new NuruAppBuilder();
 
 // Enable shell completion (auto-detects executable name)
-builder.EnableShellCompletion();
+builder.EnableStaticCompletion();
 
 // Register your routes as normal
 builder.AddRoute("createorder {product} {quantity:int}", (string product, int quantity) =>
@@ -44,7 +44,7 @@ NuruApp app = builder.Build();
 return await app.RunAsync(args);
 ```
 
-The `EnableShellCompletion()` method:
+The `EnableStaticCompletion()` method:
 - Automatically registers a `--generate-completion {shell}` route
 - Auto-detects the executable name at runtime (no hardcoded name needed)
 - Works correctly with renamed executables after publishing

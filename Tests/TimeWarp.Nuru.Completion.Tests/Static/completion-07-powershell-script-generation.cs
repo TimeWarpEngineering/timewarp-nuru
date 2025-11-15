@@ -77,8 +77,8 @@ public class PowerShellScriptGenerationTests
     var generator = new CompletionScriptGenerator();
     string pwshScript = generator.GeneratePowerShell(builder.EndpointCollection, "testapp");
 
-    // Assert - PowerShell uses [CompletionResult]
-    pwshScript.ShouldContain("[CompletionResult]");
+    // Assert - PowerShell uses full type name [System.Management.Automation.CompletionResult]
+    pwshScript.ShouldContain("[System.Management.Automation.CompletionResult]");
 
     await Task.CompletedTask;
   }
@@ -182,8 +182,8 @@ public class PowerShellScriptGenerationTests
     var generator = new CompletionScriptGenerator();
     string pwshScript = generator.GeneratePowerShell(builder.EndpointCollection, "testapp");
 
-    // Assert - PowerShell uses [CompletionResultType]
-    pwshScript.ShouldContain("[CompletionResultType]");
+    // Assert - PowerShell uses full type name [System.Management.Automation.CompletionResultType]
+    pwshScript.ShouldContain("[System.Management.Automation.CompletionResultType]");
 
     await Task.CompletedTask;
   }

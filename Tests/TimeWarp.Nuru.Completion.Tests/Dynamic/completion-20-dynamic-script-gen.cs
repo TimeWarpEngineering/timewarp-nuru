@@ -124,7 +124,8 @@ public class DynamicScriptGenTests
     string bashScript = DynamicCompletionScriptGenerator.GenerateBash(appName);
 
     // Assert - Script should pass cursor position to __complete
-    bashScript.ShouldContain("COMP_CWORD");
+    // Uses _init_completion which sets local "cword" variable (not COMP_CWORD)
+    bashScript.ShouldContain("cword");
 
     await Task.CompletedTask;
   }
@@ -138,7 +139,8 @@ public class DynamicScriptGenTests
     string bashScript = DynamicCompletionScriptGenerator.GenerateBash(appName);
 
     // Assert - Script should pass words to __complete
-    bashScript.ShouldContain("COMP_WORDS");
+    // Uses _init_completion which sets local "words" variable (not COMP_WORDS)
+    bashScript.ShouldContain("words");
 
     await Task.CompletedTask;
   }

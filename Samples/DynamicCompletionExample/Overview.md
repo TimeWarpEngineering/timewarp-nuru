@@ -33,7 +33,7 @@ builder.EnableDynamicCompletion(configure: registry =>
 // Completion script calls app via __complete route at Tab-press time
 // ✅ Can query databases, APIs, configuration
 // ✅ Context-aware (based on previous args)
-// ❌ Slightly slower (app invocation overhead ~7-10ms)
+// ✅ Negligible overhead with AOT (~7-10ms, imperceptible to users)
 ```
 
 ## Example Custom Completion Sources

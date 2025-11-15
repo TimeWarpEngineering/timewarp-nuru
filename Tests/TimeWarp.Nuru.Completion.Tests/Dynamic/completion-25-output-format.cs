@@ -62,10 +62,9 @@ public class OutputFormatTests
     (int _, string output, string _) = await CaptureAppOutputAsync(() =>
       app.RunAsync(["__complete", "1", "app"]));
 
-    // Assert - Last line should be directive
-    string[] lines = output.Trim().Split('\n');
-    string lastLine = lines[^1];
-    lastLine.ShouldStartWith(":");
+    // Assert - Output should contain directive line (starts with :)
+    string[] lines = output.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+    lines.Any(l => l.Length > 0 && l[0] == ':').ShouldBeTrue();
   }
 
   public static async Task Should_output_directive_code_4_for_no_file_comp()

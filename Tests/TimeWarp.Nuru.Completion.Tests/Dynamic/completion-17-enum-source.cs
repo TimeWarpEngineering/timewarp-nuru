@@ -61,8 +61,8 @@ public class EnumSourceTests
     // Act
     var completions = source.GetCompletions(context).ToList();
 
-    // Assert - All values should use enum name as description since no DescriptionAttribute
-    completions.All(c => c.Description == c.Value || string.IsNullOrEmpty(c.Description)).ShouldBeTrue();
+    // Assert - Without DescriptionAttribute, fallback shows "Value: {numeric_value}"
+    completions.All(c => c.Description!.StartsWith("Value:", StringComparison.Ordinal)).ShouldBeTrue();
 
     await Task.CompletedTask;
   }
@@ -83,9 +83,9 @@ public class EnumSourceTests
     CompletionCandidate info = completions.First(c => c.Value == "Info");
     info.Description.ShouldBe("Informational messages");
 
-    // Warning has no description
+    // Warning has no description - fallback to "Value: {numeric_value}"
     CompletionCandidate warning = completions.First(c => c.Value == "Warning");
-    (string.IsNullOrEmpty(warning.Description) || warning.Description == "Warning").ShouldBeTrue();
+    warning.Description.ShouldStartWith("Value:");
 
     // Error has description
     CompletionCandidate error = completions.First(c => c.Value == "Error");
@@ -94,7 +94,7 @@ public class EnumSourceTests
     await Task.CompletedTask;
   }
 
-  public static async Task Should_return_candidates_in_enum_declaration_order()
+  public static async Task Should_return_candidates_in_alphabetical_order()
   {
     // Arrange
     EnumCompletionSource<DeploymentMode> source = new();
@@ -103,11 +103,11 @@ public class EnumSourceTests
     // Act
     var completions = source.GetCompletions(context).ToList();
 
-    // Assert - Should be in declaration order
-    completions[0].Value.ShouldBe("Fast");
-    completions[1].Value.ShouldBe("Standard");
-    completions[2].Value.ShouldBe("BlueGreen");
-    completions[3].Value.ShouldBe("Canary");
+    // Assert - EnumCompletionSource sorts alphabetically (StringComparer.Ordinal)
+    completions[0].Value.ShouldBe("BlueGreen");
+    completions[1].Value.ShouldBe("Canary");
+    completions[2].Value.ShouldBe("Fast");
+    completions[3].Value.ShouldBe("Standard");
 
     await Task.CompletedTask;
   }

@@ -221,12 +221,17 @@ dynamic-completion-example --generate-completion zsh > ~/.zsh/completions/_dynam
 #### Fish
 
 ```fish
-# Generate and source completion script (using installed command name)
-dynamic-completion-example --generate-completion fish | source
-
-# Permanent installation:
+# Permanent installation (recommended - Fish auto-loads from this directory):
+mkdir -p ~/.config/fish/completions
 dynamic-completion-example --generate-completion fish > ~/.config/fish/completions/dynamic-completion-example.fish
+
+# Or source directly for current session:
+source (dynamic-completion-example --generate-completion fish | psub)
 ```
+
+**Note**: Fish automatically loads completion scripts from `~/.config/fish/completions/` when you first use the command. The file must be named `<command-name>.fish`.
+
+**Important Fish behavior**: Fish uses **right arrow (→)** or **Ctrl+F** to accept grey autosuggestions. TAB shows the completion menu when there are multiple matches.
 
 ### 4. Test Dynamic Completion
 
@@ -455,21 +460,46 @@ public class ApiCompletionSource : IAsyncCompletionSource
    which dynamic-completion-example  # Should show ~/.local/bin/dynamic-completion-example
    ```
 
-2. **Verify completion script is sourced**:
+2. **Verify completion script is sourced** (Bash/Zsh):
    ```bash
    type _dynamic_completion_example  # Should show completion function
    ```
 
-3. **Test __complete route directly**:
+3. **Verify completion is registered** (Fish):
+   ```fish
+   complete -c dynamic-completion-example  # Should show completion rule
+   functions __fish_dynamic-completion-example_complete  # Should show function
+   ```
+
+4. **Test __complete route directly**:
    ```bash
    dynamic-completion-example __complete 2 dynamic-completion-example deploy
    # Should output: production, staging, development, etc.
    ```
 
-4. **Check for errors in stderr**:
+5. **Check for errors in stderr**:
    ```bash
    dynamic-completion-example __complete 2 dynamic-completion-example deploy 2>&1
    # Should see "Completion ended with directive: NoFileComp"
+   ```
+
+### Fish-specific issues
+
+1. **Grey text appears but doesn't complete**: Fish shows autosuggestions in grey. Press **right arrow (→)** or **Ctrl+F** to accept, not TAB.
+
+2. **Completion script not loading**: Fish auto-loads from `~/.config/fish/completions/`. Verify file exists:
+   ```fish
+   ls ~/.config/fish/completions/dynamic-completion-example.fish
+   ```
+
+3. **Debug Fish completion** (add logging temporarily):
+   ```fish
+   # Edit the function to add debug output
+   function __fish_dynamic-completion-example_complete
+       # ... existing code ...
+       echo "DEBUG: index=$index words=$words" >> /tmp/fish-debug.log
+       # ... rest of function ...
+   end
    ```
 
 ### Slow completion

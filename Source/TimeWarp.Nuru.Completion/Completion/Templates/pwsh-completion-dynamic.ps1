@@ -2,6 +2,16 @@
 # This completion script calls back to the application at Tab-press time
 # to get context-aware completion suggestions.
 
+# Cache the resolved path at registration time to avoid expensive PATH lookups on each Tab press
+# Use a hashtable to store paths by command name (handles hyphens and special chars)
+if (-not $script:__NuruCompletionPaths) {
+    $script:__NuruCompletionPaths = @{}
+}
+$script:__NuruCompletionPaths['{{APP_NAME}}'] = (Get-Command {{APP_NAME}} -ErrorAction SilentlyContinue).Source
+if (-not $script:__NuruCompletionPaths['{{APP_NAME}}']) {
+    $script:__NuruCompletionPaths['{{APP_NAME}}'] = "{{APP_NAME}}"
+}
+
 Register-ArgumentCompleter -Native -CommandName {{APP_NAME}} -ScriptBlock {
     param($wordToComplete, $commandAst, $cursorPosition)
 
@@ -17,45 +27,54 @@ Register-ArgumentCompleter -Native -CommandName {{APP_NAME}} -ScriptBlock {
         $position = $words.Count
     }
 
-    # Call application for dynamic completions
+    # Call application for dynamic completions using cached absolute path
     # Format: {{APP_NAME}} __complete <cursor_index> <word1> <word2> ...
-    $completions = & {{APP_NAME}} __complete $position $words 2>$null
+    $psi = [System.Diagnostics.ProcessStartInfo]::new()
+    $psi.FileName = $script:__NuruCompletionPaths['{{APP_NAME}}']
+    $psi.Arguments = "__complete $position $($words -join ' ')"
+    $psi.RedirectStandardOutput = $true
+    $psi.RedirectStandardError = $true
+    $psi.UseShellExecute = $false
+    $psi.CreateNoWindow = $true
+
+    try {
+        $proc = [System.Diagnostics.Process]::Start($psi)
+        $output = $proc.StandardOutput.ReadToEnd()
+        $proc.WaitForExit()
+        $completions = $output -split "`n" | Where-Object { $_ -ne '' }
+    } catch {
+        $completions = @()
+    }
 
     # Parse completions and extract directive
-    $directive = 0
-    $results = @()
+    # Use ArrayList for O(1) append instead of array concatenation O(n)
+    $results = [System.Collections.ArrayList]::new()
 
-    $completions | ForEach-Object {
-        # Check if this is a directive line (starts with :)
-        if ($_ -match '^:(\d+)$') {
-            $directive = [int]$matches[1]
-            return
-        }
-
-        # Skip exit code line (standalone number)
-        if ($_ -match '^\d+$') {
-            return
+    foreach ($line in $completions) {
+        # Skip directive line (starts with :) and exit code line (standalone number)
+        if ($line -match '^:' -or $line -match '^\d+$') {
+            continue
         }
 
         # Parse value and description (tab-separated)
-        if ($_ -match '^(.+?)\t(.+)$') {
-            $value = $matches[1]
-            $desc = $matches[2]
+        $parts = $line -split "`t", 2
+        if ($parts.Count -eq 2) {
+            $value = $parts[0]
+            $desc = $parts[1]
         } else {
-            $value = $_
-            $desc = $_
+            $value = $line
+            $desc = $line
         }
 
-        # Add to results
-        $results += [System.Management.Automation.CompletionResult]::new(
+        # Add to results (ArrayList.Add returns index, suppress with [void])
+        [void]$results.Add([System.Management.Automation.CompletionResult]::new(
             $value,
             $value,
             [System.Management.Automation.CompletionResultType]::ParameterValue,
             $desc
-        )
+        ))
     }
 
-    # Return results (PowerShell will fall back to file completion if empty,
-    # but that's acceptable behavior when no completions are available)
+    # Return results
     $results
 }

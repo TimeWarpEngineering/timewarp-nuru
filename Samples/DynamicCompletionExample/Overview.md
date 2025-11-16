@@ -249,8 +249,8 @@ dynamic-completion-example deploy production --mode <TAB>
 dynamic-completion-example <TAB>
 # → deploy, list-environments, list-tags, status
 
-# Complete options
-dynamic-completion-example deploy production <TAB>
+# Complete options (requires - prefix)
+dynamic-completion-example deploy production -<TAB>
 # → --version, --mode
 ```
 

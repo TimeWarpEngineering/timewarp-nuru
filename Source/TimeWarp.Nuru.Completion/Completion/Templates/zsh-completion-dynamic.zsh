@@ -10,10 +10,18 @@ _{{APP_NAME}}() {
 
     # Call application for dynamic completions
     # Format: {{APP_NAME}} __complete <cursor_index> <word1> <word2> ...
-    completions=(${(f)"$({{APP_NAME}} __complete $CURRENT "${words[@]}" 2>/dev/null)"})
+    # Note: Convert zsh's 1-based $CURRENT to 0-based index for C# handler
+    local output
+    output="$({{APP_NAME}} __complete $((CURRENT - 1)) "${words[@]}" 2>/dev/null)"
+    completions=(${(f)output})
 
-    # Remove directive line (last line starting with :)
+    # Remove directive line (last line starting with :) and exit code line
     local directive=0
+    # Remove exit code if it's a number on its own line
+    if [[ "${completions[-1]}" =~ ^[0-9]+$ ]]; then
+        completions=("${(@)completions[1,-2]}")
+    fi
+    # Remove directive line
     if [[ "${completions[-1]}" == :* ]]; then
         directive="${completions[-1]:1}"
         completions=("${(@)completions[1,-2]}")
@@ -36,4 +44,4 @@ _{{APP_NAME}}() {
     _describe '{{APP_NAME}}' formatted
 }
 
-_{{APP_NAME}} "$@"
+compdef _{{APP_NAME}} {{APP_NAME}}

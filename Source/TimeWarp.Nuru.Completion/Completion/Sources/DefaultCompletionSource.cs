@@ -72,10 +72,15 @@ public sealed class DefaultCompletionSource : ICompletionSource
 
   private static IEnumerable<CompletionCandidate> GetCommandCompletions(CompletionContext context)
   {
-    // Get the words typed so far (excluding the app name at index 0)
-    string[] typedWords = [.. context.Args.Skip(1).Take(context.CursorPosition - 1)];
+    // Get the word being completed (or empty if completing next word)
+    string currentWord = context.CursorPosition < context.Args.Length
+      ? context.Args[context.CursorPosition]
+      : string.Empty;
 
-    // Find routes that match the typed prefix
+    // Get the words fully typed so far (excluding the app name at index 0 and the partial word)
+    string[] completedWords = [.. context.Args.Skip(1).Take(context.CursorPosition - 1)];
+
+    // Find routes that match the completed prefix
     var commands = new HashSet<string>(StringComparer.Ordinal);
 
     foreach (Endpoint endpoint in context.Endpoints)
@@ -101,21 +106,27 @@ public sealed class DefaultCompletionSource : ICompletionSource
         continue; // No literal segments to suggest
       }
 
-      // Check if this route could match based on typed words
+      // Check if this route matches all completed words exactly
       bool matches = true;
-      for (int i = 0; i < typedWords.Length && i < literalSegments.Count; i++)
+      for (int i = 0; i < completedWords.Length && i < literalSegments.Count; i++)
       {
-        if (!string.Equals(typedWords[i], literalSegments[i], StringComparison.Ordinal))
+        if (!string.Equals(completedWords[i], literalSegments[i], StringComparison.Ordinal))
         {
           matches = false;
           break;
         }
       }
 
-      // If matches so far, suggest the next literal segment
-      if (matches && literalSegments.Count > typedWords.Length)
+      // If matches so far, suggest the next literal segment (if it matches the partial word)
+      if (matches && literalSegments.Count > completedWords.Length)
       {
-        commands.Add(literalSegments[typedWords.Length]);
+        string nextSegment = literalSegments[completedWords.Length];
+
+        // Only include if it starts with the current partial word (case-sensitive)
+        if (string.IsNullOrEmpty(currentWord) || nextSegment.StartsWith(currentWord, StringComparison.Ordinal))
+        {
+          commands.Add(nextSegment);
+        }
       }
     }
 

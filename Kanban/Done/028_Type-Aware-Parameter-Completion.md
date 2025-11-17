@@ -2,7 +2,19 @@
 
 **Related**: Task 025 (Shell Tab Completion)
 
-## Problem
+## Status: SUPERSEDED by Task 029 (EnableDynamicCompletion)
+
+**Resolution**: Dynamic completion (Task 029) solves this problem more elegantly:
+- `DynamicCompletionHandler` defaults to `CompletionDirective.NoFileComp`
+- String parameters no longer get file completion in dynamic mode
+- Custom `ICompletionSource` implementations provide type-aware completions
+- `EnumCompletionSource<T>` automatically completes enum values with descriptions
+
+Users should use `EnableDynamicCompletion()` instead of `EnableStaticCompletion()` for type-aware completion behavior.
+
+---
+
+## Original Problem
 
 Currently, shell completion scripts default to **file completion** for all parameters after the command. This is problematic because:
 

@@ -1,36 +1,12 @@
 # Dynamic PowerShell completion for {{APP_NAME}}
-# This completion script calls back to the application at Tab-press time
-# to get context-aware completion suggestions.
-
-# Cache the resolved path at registration time to avoid expensive PATH lookups on each Tab press
-# Use a hashtable to store paths by command name (handles hyphens and special chars)
-if (-not $script:__NuruCompletionPaths) {
-    $script:__NuruCompletionPaths = @{}
-}
-$script:__NuruCompletionPaths['{{APP_NAME}}'] = (Get-Command {{APP_NAME}} -ErrorAction SilentlyContinue).Source
-if (-not $script:__NuruCompletionPaths['{{APP_NAME}}']) {
-    $script:__NuruCompletionPaths['{{APP_NAME}}'] = "{{APP_NAME}}"
-}
+# Generated with absolute path: {{APP_PATH}}
 
 Register-ArgumentCompleter -Native -CommandName {{APP_NAME}} -ScriptBlock {
     param($wordToComplete, $commandAst, $cursorPosition)
-
-    # Parse command line into words
     $words = $commandAst.ToString() -split ' '
-
-    # Calculate cursor position (0-based index of word being completed)
-    # If completing a partial word, position is the index of that word (Count - 1)
-    # If cursor is after a space (completing next word), position is Count
-    if ($wordToComplete -ne '') {
-        $position = $words.Count - 1
-    } else {
-        $position = $words.Count
-    }
-
-    # Call application for dynamic completions using cached absolute path
-    # Format: {{APP_NAME}} __complete <cursor_index> <word1> <word2> ...
+    $position = if ($wordToComplete -ne '') { $words.Count - 1 } else { $words.Count }
     $psi = [System.Diagnostics.ProcessStartInfo]::new()
-    $psi.FileName = $script:__NuruCompletionPaths['{{APP_NAME}}']
+    $psi.FileName = "{{APP_PATH}}"
     $psi.Arguments = "__complete $position $($words -join ' ')"
     $psi.RedirectStandardOutput = $true
     $psi.RedirectStandardError = $true
@@ -66,13 +42,15 @@ Register-ArgumentCompleter -Native -CommandName {{APP_NAME}} -ScriptBlock {
             $desc = $line
         }
 
-        # Add to results (ArrayList.Add returns index, suppress with [void])
-        [void]$results.Add([System.Management.Automation.CompletionResult]::new(
-            $value,
-            $value,
-            [System.Management.Automation.CompletionResultType]::ParameterValue,
-            $desc
-        ))
+        # Filter by wordToComplete prefix (PowerShell doesn't filter automatically like bash/zsh/fish)
+        if (-not $wordToComplete -or $value -like "$wordToComplete*") {
+            [void]$results.Add([System.Management.Automation.CompletionResult]::new(
+                $value,
+                $value,
+                [System.Management.Automation.CompletionResultType]::ParameterValue,
+                $desc
+            ))
+        }
     }
 
     # Return results

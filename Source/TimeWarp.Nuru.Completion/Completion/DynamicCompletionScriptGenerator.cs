@@ -37,7 +37,10 @@ internal static class DynamicCompletionScriptGenerator
   public static string GeneratePowerShell(string appName)
   {
     string template = LoadEmbeddedResource(PwshTemplateName);
-    return template.Replace("{{APP_NAME}}", appName, StringComparison.Ordinal);
+    string appPath = Environment.ProcessPath ?? appName;
+    return template
+      .Replace("{{APP_NAME}}", appName, StringComparison.Ordinal)
+      .Replace("{{APP_PATH}}", appPath, StringComparison.Ordinal);
   }
 
   /// <summary>

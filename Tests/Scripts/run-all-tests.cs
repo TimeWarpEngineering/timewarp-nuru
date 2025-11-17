@@ -87,6 +87,7 @@ var testCategories = new Dictionary<string, List<string>>
     ["MCP"] = GetTestFiles(Path.Combine(testsRoot, "TimeWarp.Nuru.Mcp.Tests")),
     ["Completion"] = [.. GetTestFiles(Path.Combine(testsRoot, "TimeWarp.Nuru.Completion.Tests/Static")),
                       .. GetTestFiles(Path.Combine(testsRoot, "TimeWarp.Nuru.Completion.Tests/Dynamic"))],
+    ["Repl"] = [.. GetTestFiles(Path.Combine(testsRoot, "TimeWarp.Nuru.Repl.Tests"))],
 };
 
 // Filter categories if specified

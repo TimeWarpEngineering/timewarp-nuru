@@ -148,6 +148,21 @@ public static class NuruAppBuilderExtensions
       Console.WriteLine(script);
     });
 
+    // Register the --install-completion route for automatic installation
+    builder.AddRoute("--install-completion {shell?}", (string? shell) =>
+    {
+      string detectedAppName = GetEffectiveAppName();
+      InstallCompletionHandler.Install(detectedAppName, shell);
+    });
+
+    // Register the --install-completion --dry-run route for preview
+    builder.AddRoute("--install-completion --dry-run {shell?}", (string? shell) =>
+    {
+      string detectedAppName = GetEffectiveAppName();
+      InstallCompletionHandler.Install(detectedAppName, shell, dryRun: true);
+    });
+
     return builder;
   }
 }
+

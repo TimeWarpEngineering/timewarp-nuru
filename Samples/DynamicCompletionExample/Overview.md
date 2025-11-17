@@ -181,55 +181,87 @@ After installing to PATH, you can use `dynamic-completion-example` instead of th
 
 ### 3. Install Completion for Your Shell
 
-#### Bash
+#### Automatic Installation (Recommended) ✨
+
+**Single command** - no manual file management:
+
+```bash
+# Auto-detect shell and install
+dynamic-completion-example --install-completion
+
+# Or specify shell explicitly
+dynamic-completion-example --install-completion bash
+dynamic-completion-example --install-completion zsh
+dynamic-completion-example --install-completion fish
+dynamic-completion-example --install-completion pwsh
+```
+
+**Preview what will be installed** (dry-run):
+
+```bash
+dynamic-completion-example --install-completion --dry-run
+```
+
+The `--install-completion` command:
+- **Auto-detects** your shell from `$SHELL` environment variable
+- **Writes to standard locations** that auto-load (Bash, Fish) or provides one-time setup instructions (Zsh, PowerShell)
+- **Idempotent** - safe to run multiple times, just overwrites the file
+- **Creates directories** automatically if they don't exist
+
+**Installation Paths**:
+
+| Shell | Path | Auto-loads? |
+|-------|------|-------------|
+| **Bash** | `~/.local/share/bash-completion/completions/<appname>` | ✅ Yes |
+| **Fish** | `~/.config/fish/completions/<appname>.fish` | ✅ Yes |
+| **Zsh** | `~/.local/share/zsh/site-functions/_<appname>` | ⚠️ One-time fpath setup |
+| **PowerShell** | `~/.local/share/nuru/completions/<appname>.ps1` | ⚠️ One-time profile setup |
+
+#### Manual Installation (Alternative)
+
+If you prefer manual control:
+
+##### Bash
 
 ```bash
 # Generate and source completion script (using installed command name)
 source <(dynamic-completion-example --generate-completion bash)
 
-# Permanent installation (add to ~/.bashrc):
+# Or write to file manually:
 dynamic-completion-example --generate-completion bash > ~/.bash_completion.d/dynamic-completion-example
-
-# Or if using $APP_PATH directly without installing to PATH:
-# source <($APP_PATH --generate-completion bash)
 ```
 
-#### Zsh
+##### Zsh
 
 ```bash
-# Generate and source completion script (using installed command name)
+# Generate and source completion script
 source <(dynamic-completion-example --generate-completion zsh)
 
-# Permanent installation (add to ~/.zshrc):
+# Or write to file manually:
 mkdir -p ~/.zsh/completions
 dynamic-completion-example --generate-completion zsh > ~/.zsh/completions/_dynamic-completion-example
 # Then add to ~/.zshrc: fpath=(~/.zsh/completions $fpath) && autoload -Uz compinit && compinit
 ```
 
-#### PowerShell
+##### PowerShell
 
 ```powershell
-# Generate and source completion script (using installed command name)
+# Generate and source completion script
 & dynamic-completion-example --generate-completion pwsh | Out-String | Invoke-Expression
 
-# Permanent installation (add to $PROFILE):
+# Or write to file manually:
 & dynamic-completion-example --generate-completion pwsh | Out-File -Append $PROFILE
 ```
 
-**Note**: PowerShell requires the executable to be in your PATH. Ensure `~/.local/bin` is in your PATH.
+**Note**: PowerShell requires the executable to be in your PATH.
 
-#### Fish
+##### Fish
 
 ```fish
-# Permanent installation (recommended - Fish auto-loads from this directory):
+# Write to file manually (Fish auto-loads from this directory):
 mkdir -p ~/.config/fish/completions
 dynamic-completion-example --generate-completion fish > ~/.config/fish/completions/dynamic-completion-example.fish
-
-# Or source directly for current session:
-source (dynamic-completion-example --generate-completion fish | psub)
 ```
-
-**Note**: Fish automatically loads completion scripts from `~/.config/fish/completions/` when you first use the command. The file must be named `<command-name>.fish`.
 
 **Important Fish behavior**: Fish uses **right arrow (→)** or **Ctrl+F** to accept grey autosuggestions. TAB shows the completion menu when there are multiple matches.
 

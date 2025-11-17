@@ -1,0 +1,10 @@
+<Project>
+  <!-- Import parent Directory.Build.props -->
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+
+  <ItemGroup>
+    <!-- Reference the Repl project -->
+    <ProjectReference Include="$(MSBuildThisFileDirectory)../../Source/TimeWarp.Nuru.Repl/TimeWarp.Nuru.Repl.csproj" />
+    <Using Include="TimeWarp.Nuru.Repl" />
+  </ItemGroup>
+</Project>

@@ -46,7 +46,7 @@
     <Compile Remove="generated/**/*.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="$(RepositoryRoot)README.md" Pack="true" PackagePath="" />
+    <None Include="$(RepositoryRoot)readme.md" Pack="true" PackagePath="" />
   </ItemGroup>
 
   <!-- Include the analyzer in the main package as a development dependency -->

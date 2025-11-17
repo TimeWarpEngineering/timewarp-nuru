@@ -120,6 +120,62 @@ dotnet run -- echo Hello World from Nuru!
 # Output: Hello World from Nuru!
 ```
 
+### Shell Completion (Tab Completion)
+
+Enable tab completion for your CLI with one line of code:
+
+```csharp
+using TimeWarp.Nuru;
+using TimeWarp.Nuru.Completion;
+
+NuruApp app = new NuruAppBuilder()
+    .AddRoute("deploy {env} --version {tag}", (string env, string tag) => Deploy(env, tag))
+    .AddRoute("status", () => ShowStatus())
+    .EnableStaticCompletion()  // ← Add this
+    .Build();
+```
+
+**Install the completion package:**
+
+```bash
+dotnet add package TimeWarp.Nuru.Completion
+```
+
+**Generate and install completion scripts:**
+
+```bash
+# Bash (Linux/macOS)
+./myapp --generate-completion bash >> ~/.bashrc
+source ~/.bashrc
+
+# Zsh (macOS/Linux)
+./myapp --generate-completion zsh >> ~/.zshrc
+source ~/.zshrc
+
+# PowerShell (Windows)
+./myapp --generate-completion pwsh >> $PROFILE
+. $PROFILE
+
+# Fish (Linux/macOS)
+./myapp --generate-completion fish > ~/.config/fish/completions/myapp.fish
+```
+
+**Try it out:**
+
+```bash
+./myapp dep<TAB>        # Completes to: deploy
+./myapp deploy <TAB>    # Suggests: {env}
+./myapp deploy prod --<TAB>  # Completes to: --version
+```
+
+Tab completion automatically supports:
+- ✅ Command names (`deploy`, `status`)
+- ✅ Options (`--version`, `--verbose`)
+- ✅ Enum values (if your parameters use enums)
+- ✅ File paths (for string parameters)
+
+See the [Shell Completion Example](../../Samples/ShellCompletionExample/) for a complete working example.
+
 ## Next Steps
 
 ### Add Dependency Injection

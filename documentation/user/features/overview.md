@@ -43,6 +43,14 @@ Console stream management:
 - Piping and scripting support
 - Best practices
 
+### [Shell Completion](shell-completion.md)
+Automatic tab completion for CLI applications:
+- One-line enablement
+- Cross-platform support (bash, zsh, PowerShell, fish)
+- Command, option, and enum completion
+- Static (zero runtime overhead)
+- Type-aware parameter hints
+
 ## Feature Highlights
 
 | Feature | Benefit | Learn More |
@@ -51,6 +59,7 @@ Console stream management:
 | 🛡️ Compile-Time Validation | Catch errors before runtime | [Analyzer](analyzer.md) |
 | ⚡ Zero-Overhead Logging | Optional, high-performance | [Logging](logging.md) |
 | 📖 Auto-Help | No manual documentation | [Auto-Help](auto-help.md) |
+| ⌨️ Shell Completion | Tab completion in all shells | [Shell Completion](shell-completion.md) |
 | 🔒 Type Safety | Strong typing throughout | [Routing](routing.md#type-safety) |
 | 🚀 Native AOT | Fast startup, small binaries | [Deployment](../guides/deployment.md) |
 

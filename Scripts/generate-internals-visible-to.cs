@@ -13,7 +13,8 @@ string testsDir = Path.Combine(repoRoot, "Tests");
 string[] outputFiles =
 [
   Path.Combine(repoRoot, "Source/TimeWarp.Nuru.Parsing/InternalsVisibleTo.g.cs"),
-  Path.Combine(repoRoot, "Source/TimeWarp.Nuru.Mcp/InternalsVisibleTo.g.cs")
+  Path.Combine(repoRoot, "Source/TimeWarp.Nuru.Mcp/InternalsVisibleTo.g.cs"),
+  Path.Combine(repoRoot, "Source/TimeWarp.Nuru.Completion/InternalsVisibleTo.g.cs")
 ];
 
 // Find all .cs files in Tests directory (single-file scripts)

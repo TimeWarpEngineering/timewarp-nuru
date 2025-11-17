@@ -400,15 +400,91 @@ This might need to be a separate analyzer or a Phase 5b if too complex.
 
 ## Success Criteria
 
-- [ ] **Tests updated and passing that define the new behavior**
-- [ ] Single route can handle all combinations of optional options
-- [ ] No factorial explosion for multiple options
-- [ ] SyncCommand pattern (same command, different routes) merges cleanly
-- [ ] Context available when needed, not created when not needed
-- [ ] AOT compilation still works (no reflection)
-- [ ] Existing routes without context continue working
-- [ ] Clear migration path for existing users
-- [ ] Performance no worse than current implementation
+- [x] **Tests updated and passing that define the new behavior**
+- [x] Single route can handle all combinations of optional options
+- [x] No factorial explosion for multiple options
+- [x] SyncCommand pattern (same command, different routes) merges cleanly
+- [x] NuruContext deemed unnecessary - parameter optionality covers all use cases
+- [x] AOT compilation still works (no reflection)
+- [x] Existing routes without context continue working
+- [x] Clear migration path for existing users (backward compatible)
+- [x] Performance no worse than current implementation
+
+## Completion Notes
+
+Task 013 completed successfully. The optional options feature was fully implemented, and NuruContext was deemed unnecessary as the parameter optionality system covers all intended use cases.
+
+### Key Implementation (Commit 1b1d15b)
+
+**The Four Option Behaviors Supported:**
+1. `--config {mode}` - Required flag + Required value
+2. `--config {mode?}` - Required flag + Optional value (flag must exist, value can be omitted)
+3. `--config? {mode?}` - Optional flag + Optional value (fully optional)
+4. `--config? {mode}` - Optional flag + Required value (if provided, must have value)
+
+### Core Changes
+
+1. **Added ParameterIsOptional Property** (OptionMatcher)
+   - Tracks the `{param?}` modifier independently from flag optionality
+   - Enables distinguishing "expects value" vs "value is optional"
+
+2. **Updated Compiler** (Compiler.cs)
+   - Propagates `ParameterSyntax.IsOptional` during compilation
+   - Correctly handles all 4 option/parameter combinations
+
+3. **Fixed EndpointResolver** (EndpointResolver.cs)
+   - Matches routes when optional values are omitted
+   - Properly validates option presence vs value presence
+
+4. **Fixed DelegateExecutor** (DelegateExecutor.cs)
+   - Binds null for missing optional values
+   - Replaced fragile string parsing with proper null handling
+
+### Testing
+
+- **20/20 tests passing** in routing-05-option-matching.cs
+- Comprehensive coverage matrix in routing-test-plan.md
+- Tests cover all 4 option/parameter combinations
+- Progressive enhancement patterns validated
+
+### Design Decision: NuruContext Not Needed
+
+After implementing full parameter optionality, the team determined that NuruContext was unnecessary because:
+- The 4 option behaviors cover all practical CLI patterns
+- No factorial explosion - single route handles all combinations
+- Progressive enhancement works via optional flags/parameters
+- Keeps API surface simple and focused
+- Maintains AOT compatibility without additional complexity
+
+### Real-World Patterns Enabled
+
+```csharp
+// Optional verbosity level
+.AddRoute("deploy --verbose {level?}", (string? level) => ...)
+// Usage: deploy --verbose      (level = null)
+//        deploy --verbose info  (level = "info")
+
+// Optional config with required file
+.AddRoute("build --config? {file}", (string? file) => ...)
+// Usage: build                  (file = null)
+//        build --config app.json (file = "app.json")
+//        build --config          (ERROR - config requires value)
+
+// Fully optional
+.AddRoute("test --filter? {pattern?}", (string? pattern) => ...)
+// Usage: test                      (pattern = null)
+//        test --filter             (pattern = null)
+//        test --filter "*.Unit.*"  (pattern = "*.Unit.*")
+```
+
+### Benefits Delivered
+
+- ✅ Eliminated factorial explosion for multiple optional options
+- ✅ Single route handles all combinations (no duplicate routes needed)
+- ✅ Backward compatible with existing code
+- ✅ AOT compilation maintained
+- ✅ Comprehensive test coverage
+- ✅ Clear, documented behavior for all patterns
 
 ## Test Files to Update/Create
 

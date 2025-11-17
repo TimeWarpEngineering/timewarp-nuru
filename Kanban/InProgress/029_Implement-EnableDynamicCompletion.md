@@ -50,6 +50,21 @@
     * `deploy prod --version <TAB>` → returns v2.1.0, latest, etc. (TagCompletionSource)
     * `<TAB>` → returns deploy, list-environments, status (DefaultCompletionSource)
 
+- ✅ **Phase 6: Automatic Completion Installation** - COMPLETE (2025-11-17)
+  - Implemented `--install-completion` command for automatic setup
+  - Created `InstallCompletionHandler` with XDG-compliant paths
+  - **Installs for all shells** by default (bash, zsh, fish, pwsh)
+  - **Auto-configures shell profiles** (idempotent with marker comments)
+  - Writes to standard locations:
+    * Bash: `~/.local/share/bash-completion/completions/<app>` (auto-loads)
+    * Zsh: `~/.local/share/zsh/site-functions/_<app>` (fpath setup auto-added to ~/.zshrc)
+    * Fish: `~/.config/fish/completions/<app>.fish` (auto-loads)
+    * PowerShell: `~/.local/share/nuru/completions/<app>.ps1` (lazy loader auto-added to $PROFILE)
+  - Supports `--dry-run` for previewing changes
+  - Supports explicit shell argument: `--install-completion bash`
+  - Uses XDG-compliant paths on Linux/macOS, respects `$XDG_CONFIG_HOME`
+  - **Single command** reduces setup from 5-10 manual steps to just `myapp --install-completion`
+
 ### Performance Baseline (2025-11-14)
 
 ✅ **AOT invocation performance validated** - Dynamic completion is highly feasible:

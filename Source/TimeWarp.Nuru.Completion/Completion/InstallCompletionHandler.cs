@@ -16,32 +16,76 @@ public static class InstallCompletionHandler
   /// Installs the completion script for the specified shell.
   /// </summary>
   /// <param name="appName">The application name.</param>
-  /// <param name="shell">The shell to install for (bash, zsh, fish, pwsh). If null, auto-detects.</param>
+  /// <param name="shell">The shell to install for (bash, zsh, fish, pwsh). If null, installs for all shells.</param>
   /// <param name="dryRun">If true, shows what would be installed without writing files.</param>
   /// <returns>Exit code (0 for success, 1 for error).</returns>
   public static int Install(string appName, string? shell, bool dryRun = false)
   {
-    string detectedShell = shell ?? DetectShell();
-
-    if (string.IsNullOrEmpty(detectedShell))
+    // If no shell specified, install for all shells
+    if (string.IsNullOrEmpty(shell))
     {
-      Console.Error.WriteLine("❌ Could not detect shell. Please specify: --install-completion bash|zsh|fish|pwsh");
-      return 1;
+      return InstallAll(appName, dryRun);
     }
 
-    return detectedShell.ToLowerInvariant() switch
+    return shell.ToLowerInvariant() switch
     {
       "bash" => InstallBash(appName, dryRun),
       "zsh" => InstallZsh(appName, dryRun),
       "fish" => InstallFish(appName, dryRun),
       "pwsh" or "powershell" => InstallPowerShell(appName, dryRun),
-      _ => ReportUnknownShell(detectedShell)
+      _ => ReportUnknownShell(shell)
     };
+  }
+
+  private static int InstallAll(string appName, bool dryRun)
+  {
+    Console.WriteLine("Installing completions for all shells...");
+    Console.WriteLine();
+
+    int failures = 0;
+
+    // Install for each shell, collecting results
+    if (InstallBash(appName, dryRun) != 0)
+    {
+      failures++;
+    }
+
+    Console.WriteLine();
+
+    if (InstallZsh(appName, dryRun) != 0)
+    {
+      failures++;
+    }
+
+    Console.WriteLine();
+
+    if (InstallFish(appName, dryRun) != 0)
+    {
+      failures++;
+    }
+
+    Console.WriteLine();
+
+    if (InstallPowerShell(appName, dryRun) != 0)
+    {
+      failures++;
+    }
+
+    if (failures > 0)
+    {
+      Console.WriteLine();
+      Console.WriteLine("⚠️  " + failures + " shell(s) had issues during installation.");
+      return 1;
+    }
+
+    Console.WriteLine();
+    Console.WriteLine("✅ All shell completions installed successfully!");
+    return 0;
   }
 
   /// <summary>
   /// Auto-detects the current shell from environment variables.
-  /// Checks PowerShell-specific variables first, then falls back to $SHELL.
+  /// Checks shell-specific variables first, then falls back to $SHELL.
   /// </summary>
   private static string DetectShell()
   {
@@ -52,10 +96,22 @@ public static class InstallCompletionHandler
       return "pwsh";
     }
 
+    // Check for Zsh-specific variable
+    if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("ZSH_VERSION")))
+    {
+      return "zsh";
+    }
+
     // Check for Fish-specific variable
     if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("FISH_VERSION")))
     {
       return "fish";
+    }
+
+    // Check for Bash-specific variable
+    if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("BASH_VERSION")))
+    {
+      return "bash";
     }
 
     // Fall back to $SHELL (login shell, not necessarily current shell)

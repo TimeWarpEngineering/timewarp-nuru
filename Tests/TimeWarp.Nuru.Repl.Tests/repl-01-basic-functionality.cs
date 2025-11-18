@@ -10,6 +10,7 @@
 
 using TimeWarp.Nuru;
 using TimeWarp.Nuru.Repl;
+using TimeWarp.Nuru.Completion;
 
 return await RunTests<BasicReplTests>(clearCache: true);
 
@@ -20,7 +21,7 @@ public class BasicReplTests
   // Manual test - basic REPL startup and command acceptance
   // This serves as documentation of expected behavior
   [Input("version")]
-  public static async Task Should_start_repl_and_accept_commands(string command)
+  public static async Task Should_start_repl_and_accept_commands(string _)
   {
     NuruAppBuilder builder = new NuruAppBuilder()
       .AddRoute("version", () => Console.WriteLine("TimeWarp.Nuru v1.0.0"))

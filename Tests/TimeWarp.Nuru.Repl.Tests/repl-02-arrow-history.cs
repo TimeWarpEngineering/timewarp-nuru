@@ -1,5 +1,4 @@
 #!/usr/bin/dotnet --
-#!/usr/bin/dotnet --
 #:project ../../Source/TimeWarp.Nuru.Repl/TimeWarp.Nuru.Repl.csproj
 #:project ../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
 
@@ -9,6 +8,7 @@
 
 using TimeWarp.Nuru;
 using TimeWarp.Nuru.Repl;
+using TimeWarp.Nuru.Completion;
 
 return await RunTests<ArrowHistoryTests>(clearCache: true);
 

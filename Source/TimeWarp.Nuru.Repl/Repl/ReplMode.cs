@@ -1,5 +1,7 @@
 namespace TimeWarp.Nuru.Repl;
 
+using System.Diagnostics;
+
 /// <summary>
 /// Provides REPL (Read-Eval-Print Loop) mode for interactive command execution.
 /// </summary>
@@ -8,6 +10,7 @@ internal sealed class ReplMode
   private readonly NuruApp App;
   private readonly ReplOptions Options;
   private readonly List<string> History = [];
+  private readonly ITypeConverterRegistry TypeConverterRegistryField;
   private bool Running;
 
   /// <summary>
@@ -19,6 +22,7 @@ internal sealed class ReplMode
   {
     App = app ?? throw new ArgumentNullException(nameof(app));
     Options = options ?? new ReplOptions();
+    TypeConverterRegistryField = app.TypeConverterRegistry;
   }
 
   /// <summary>
@@ -51,10 +55,26 @@ internal sealed class ReplMode
       while (Running && !cancellationToken.IsCancellationRequested)
       {
         // Display prompt
-        Console.Write(Options.Prompt);
+        if (Options.EnableColors)
+        {
+          string coloredPrompt = "\x1b[32m" + Options.Prompt + "\x1b[0m";
+          Console.Write(coloredPrompt);
+        }
+        else
+        {
+          Console.Write(Options.Prompt);
+        }
 
         // Read input
-        string? input = Console.ReadLine();
+        string? input;
+        if (Options.EnableArrowHistory)
+        {
+          input = ReadInputWithHistory();
+        }
+        else
+        {
+          input = Console.ReadLine();
+        }
 
         // Handle EOF (Ctrl+D on Unix, Ctrl+Z on Windows)
         if (input is null)
@@ -86,25 +106,75 @@ internal sealed class ReplMode
           continue;
         }
 
+        var sw = Stopwatch.StartNew();
         try
         {
           lastExitCode = await App.RunAsync(args).ConfigureAwait(false);
+          sw.Stop();
 
           if (Options.ShowExitCode)
           {
-            Console.WriteLine($"Exit code: {lastExitCode}");
+            if (Options.EnableColors)
+            {
+              Console.WriteLine($"\x1b[90mExit code: {lastExitCode}\x1b[0m");
+            }
+            else
+            {
+              Console.WriteLine($"Exit code: {lastExitCode}");
+            }
+          }
+
+          if (Options.ShowTiming)
+          {
+            if (Options.EnableColors)
+            {
+              Console.WriteLine($"\x1b[90m({sw.ElapsedMilliseconds}ms)\x1b[0m");
+            }
+            else
+            {
+              Console.WriteLine($"({sw.ElapsedMilliseconds}ms)");
+            }
           }
 
           if (!Options.ContinueOnError && lastExitCode != 0)
           {
-            Console.WriteLine($"Command failed with exit code {lastExitCode}. Exiting REPL.");
+            if (Options.EnableColors)
+            {
+              Console.WriteLine($"\x1b[31mCommand failed with exit code {lastExitCode}. Exiting REPL.\x1b[0m");
+            }
+            else
+            {
+              Console.WriteLine($"Command failed with exit code {lastExitCode}. Exiting REPL.");
+            }
+
             break;
           }
         }
         catch (InvalidOperationException ex)
         {
-          Console.WriteLine($"Error executing command: {ex.Message}");
+          sw.Stop();
+          if (Options.EnableColors)
+          {
+            Console.WriteLine($"\x1b[31mError executing command: {ex.Message}\x1b[0m");
+          }
+          else
+          {
+            Console.WriteLine($"Error executing command: {ex.Message}");
+          }
+
           lastExitCode = 1;
+
+          if (Options.ShowTiming)
+          {
+            if (Options.EnableColors)
+            {
+              Console.WriteLine($"\x1b[90m({sw.ElapsedMilliseconds}ms)\x1b[0m");
+            }
+            else
+            {
+              Console.WriteLine($"({sw.ElapsedMilliseconds}ms)");
+            }
+          }
 
           if (!Options.ContinueOnError)
           {
@@ -113,8 +183,29 @@ internal sealed class ReplMode
         }
         catch (ArgumentException ex)
         {
-          Console.WriteLine($"Invalid argument: {ex.Message}");
+          sw.Stop();
+          if (Options.EnableColors)
+          {
+            Console.WriteLine($"\x1b[31mInvalid argument: {ex.Message}\x1b[0m");
+          }
+          else
+          {
+            Console.WriteLine($"Invalid argument: {ex.Message}");
+          }
+
           lastExitCode = 1;
+
+          if (Options.ShowTiming)
+          {
+            if (Options.EnableColors)
+            {
+              Console.WriteLine($"\x1b[90m({sw.ElapsedMilliseconds}ms)\x1b[0m");
+            }
+            else
+            {
+              Console.WriteLine($"({sw.ElapsedMilliseconds}ms)");
+            }
+          }
 
           if (!Options.ContinueOnError)
           {
@@ -141,6 +232,65 @@ internal sealed class ReplMode
     }
 
     return lastExitCode;
+  }
+
+  private string ReadInputWithHistory()
+  {
+    string currentLine = "";
+    int historyIndex = History.Count;
+
+    while (true)
+    {
+      ConsoleKeyInfo keyInfo = Console.ReadKey(true);
+
+      if (keyInfo.Key == ConsoleKey.Enter)
+      {
+        Console.WriteLine();
+        return currentLine;
+      }
+      else if (keyInfo.Key == ConsoleKey.UpArrow)
+      {
+        if (historyIndex > 0)
+        {
+          historyIndex--;
+          currentLine = History[historyIndex];
+          // Clear current line and rewrite
+          Console.SetCursorPosition(0, Console.CursorTop);
+          Console.Write(new string(' ', Console.WindowWidth));
+          Console.SetCursorPosition(0, Console.CursorTop);
+          Console.Write(currentLine);
+        }
+      }
+      else if (keyInfo.Key == ConsoleKey.DownArrow)
+      {
+        historyIndex++;
+        if (historyIndex >= History.Count)
+        {
+          historyIndex = History.Count;
+          currentLine = "";
+        }
+        else
+        {
+          currentLine = History[historyIndex];
+        }
+        // Clear and rewrite
+        Console.SetCursorPosition(0, Console.CursorTop);
+        Console.Write(new string(' ', Console.WindowWidth));
+        Console.SetCursorPosition(0, Console.CursorTop);
+        Console.Write(currentLine);
+      }
+      else if (keyInfo.Key == ConsoleKey.Backspace && currentLine.Length > 0)
+      {
+        currentLine = currentLine[0..^1];
+        Console.Write("\b \b");
+      }
+      else if (!char.IsControl(keyInfo.KeyChar))
+      {
+        currentLine += keyInfo.KeyChar;
+        Console.Write(keyInfo.KeyChar);
+      }
+      // Ignore other keys for basic implementation
+    }
   }
 
   private void OnCancelKeyPress(object? sender, ConsoleCancelEventArgs e)
@@ -186,17 +336,59 @@ internal sealed class ReplMode
     }
   }
 
-  private static void ShowReplHelp()
+  private void ShowReplHelp()
   {
-    Console.WriteLine("REPL Commands:");
+    if (Options.EnableColors)
+    {
+      Console.WriteLine("\x1b[1;34mREPL Commands:\x1b[0m");
+    }
+    else
+    {
+      Console.WriteLine("REPL Commands:");
+    }
+
     Console.WriteLine("  exit, quit, q     - Exit the REPL");
     Console.WriteLine("  help, ?           - Show this help");
     Console.WriteLine("  history           - Show command history");
     Console.WriteLine("  clear, cls        - Clear the screen");
     Console.WriteLine("  clear-history     - Clear command history");
     Console.WriteLine();
+
     Console.WriteLine("Any other input is executed as an application command.");
     Console.WriteLine("Use Ctrl+C to cancel current operation or Ctrl+D to exit.");
+
+    // Show available application commands using CompletionProvider
+    Console.WriteLine("\nAvailable Application Commands:");
+    try
+    {
+      CompletionProvider provider = new(TypeConverterRegistryField);
+      CompletionContext context = new(Args: [], CursorPosition: 0, Endpoints: App.Endpoints);
+      IEnumerable<CompletionCandidate> completionsEnumerable = provider.GetCompletions(context, App.Endpoints);
+      List<CompletionCandidate> completions = [.. completionsEnumerable];
+
+      if (completions.Count > 0)
+      {
+        foreach (CompletionCandidate cand in completions.OrderBy(c => c.Value))
+        {
+          string desc = string.IsNullOrEmpty(cand.Description) ? "" : $" - {cand.Description}";
+          Console.WriteLine($"  {cand.Value}{desc}");
+        }
+      }
+      else
+      {
+        Console.WriteLine("  No commands available.");
+      }
+    }
+    catch (InvalidOperationException)
+    {
+      // Ignore completion errors for basic help
+      Console.WriteLine("  (Completions unavailable - check configuration)");
+    }
+    catch (ArgumentException)
+    {
+      // Ignore completion errors for basic help
+      Console.WriteLine("  (Completions unavailable - check configuration)");
+    }
   }
 
   private void ShowHistory()
@@ -291,8 +483,18 @@ internal sealed class ReplMode
       return Options.HistoryFilePath;
     }
 
-    // Default to user's home directory
-    string homeDir = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-    return Path.Combine(homeDir, ".nuru_history");
+    // Use per-app history in ~/.nuru/history/ directory
+    string nuruDir = Path.Combine(
+      Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+      ".nuru"
+    );
+    string historyDir = Path.Combine(nuruDir, "history");
+
+    // Ensure directory exists
+    Directory.CreateDirectory(historyDir);
+
+    // Use consistent app name detection
+    string appName = AppNameDetector.GetEffectiveAppName();
+    return Path.Combine(historyDir, appName);
   }
 }

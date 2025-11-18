@@ -23,5 +23,4 @@ var options = new ReplOptions
   WelcomeMessage = "REPL Sample with Arrow History. Use up/down arrows to navigate history."
 };
 
-var repl = new ReplMode(app, options);
-await repl.RunAsync();
+await app.RunReplAsync(options);

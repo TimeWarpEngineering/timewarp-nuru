@@ -3,7 +3,7 @@ namespace TimeWarp.Nuru.Repl;
 /// <summary>
 /// Provides REPL (Read-Eval-Print Loop) mode for interactive command execution.
 /// </summary>
-public class ReplMode
+internal sealed class ReplMode
 {
   private readonly NuruApp _app;
   private readonly ReplOptions _options;

@@ -10,6 +10,7 @@ public class NuruAppBuilder
   private bool AutoHelpEnabled;
   private ILoggerFactory? LoggerFactory;
   private IConfiguration? Configuration;
+  private ReplOptions? ReplOptions;
 
   /// <summary>
   /// Gets the collection of registered endpoints.
@@ -313,6 +314,22 @@ public class NuruAppBuilder
   }
 
   /// <summary>
+  /// Adds REPL (Read-Eval-Print Loop) support to application.
+  /// This stores REPL configuration options for use when REPL mode is activated.
+  /// </summary>
+  /// <param name="configureOptions">Optional action to configure REPL options.</param>
+  /// <returns>The builder for chaining.</returns>
+  public NuruAppBuilder AddReplSupport(Action<ReplOptions>? configureOptions = null)
+  {
+    var replOptions = new ReplOptions();
+    configureOptions?.Invoke(replOptions);
+
+    ReplOptions = replOptions;
+
+    return this;
+  }
+
+  /// <summary>
   /// Builds and returns a runnable NuruApp.
   /// </summary>
   public NuruApp Build()
@@ -335,6 +352,12 @@ public class NuruAppBuilder
       // Register ILogger<T> generic implementation (matches Microsoft.Extensions.Logging behavior)
       ServiceCollection.AddSingleton(typeof(ILogger<>), typeof(Logger<>));
 
+      // Register REPL options if configured
+      if (ReplOptions is not null)
+      {
+        ServiceCollection.AddSingleton(ReplOptions);
+      }
+
       ServiceProvider serviceProvider = ServiceCollection.BuildServiceProvider();
 
       return new NuruApp(serviceProvider);
@@ -342,7 +365,7 @@ public class NuruAppBuilder
     else
     {
       // Direct path - return lightweight app without DI (pass logger factory for future use)
-      return new NuruApp(EndpointCollection, TypeConverterRegistry, loggerFactory);
+      return new NuruApp(EndpointCollection, TypeConverterRegistry, loggerFactory, ReplOptions);
     }
   }
 

@@ -32,8 +32,18 @@ internal sealed class ReplMode
   /// <returns>The exit code of the last executed command, or 0 if no commands were executed.</returns>
   public async Task<int> RunAsync(CancellationToken cancellationToken = default)
   {
+    InitializeRepl();
+
+    int result = await ProcessCommandLoopAsync(cancellationToken).ConfigureAwait(false);
+
+    CleanupRepl();
+
+    return result;
+  }
+
+  private void InitializeRepl()
+  {
     Running = true;
-    int lastExitCode = 0;
 
     // Display welcome message
     if (!string.IsNullOrEmpty(Options.WelcomeMessage))
@@ -49,189 +59,199 @@ internal sealed class ReplMode
 
     // Handle Ctrl+C gracefully
     Console.CancelKeyPress += OnCancelKeyPress;
+  }
+
+  private async Task<int> ProcessCommandLoopAsync(CancellationToken cancellationToken)
+  {
+    int lastExitCode = 0;
 
     try
     {
       while (Running && !cancellationToken.IsCancellationRequested)
       {
-        // Display prompt
-        if (Options.EnableColors)
-        {
-          string coloredPrompt = "\x1b[32m" + Options.Prompt + "\x1b[0m";
-          Console.Write(coloredPrompt);
-        }
-        else
-        {
-          Console.Write(Options.Prompt);
-        }
-
-        // Read input
-        string? input;
-        if (Options.EnableArrowHistory)
-        {
-          input = ReadInputWithHistory();
-        }
-        else
-        {
-          input = Console.ReadLine();
-        }
-
-        // Handle EOF (Ctrl+D on Unix, Ctrl+Z on Windows)
-        if (input is null)
-        {
-          Console.WriteLine();
-          break;
-        }
-
-        // Skip empty input
-        string trimmedInput = input.Trim();
-        if (string.IsNullOrEmpty(trimmedInput))
-        {
-          continue;
-        }
-
-        // Add to history
-        AddToHistory(trimmedInput);
-
-        // Check for special REPL commands
-        if (await HandleSpecialCommandAsync(trimmedInput).ConfigureAwait(false))
-        {
-          continue;
-        }
-
-        // Parse and execute command
-        string[] args = CommandLineParser.Parse(trimmedInput);
-        if (args.Length == 0)
-        {
-          continue;
-        }
-
-        var sw = Stopwatch.StartNew();
-        try
-        {
-          lastExitCode = await App.RunAsync(args).ConfigureAwait(false);
-          sw.Stop();
-
-          if (Options.ShowExitCode)
-          {
-            if (Options.EnableColors)
-            {
-              Console.WriteLine($"\x1b[90mExit code: {lastExitCode}\x1b[0m");
-            }
-            else
-            {
-              Console.WriteLine($"Exit code: {lastExitCode}");
-            }
-          }
-
-          if (Options.ShowTiming)
-          {
-            if (Options.EnableColors)
-            {
-              Console.WriteLine($"\x1b[90m({sw.ElapsedMilliseconds}ms)\x1b[0m");
-            }
-            else
-            {
-              Console.WriteLine($"({sw.ElapsedMilliseconds}ms)");
-            }
-          }
-
-          if (!Options.ContinueOnError && lastExitCode != 0)
-          {
-            if (Options.EnableColors)
-            {
-              Console.WriteLine($"\x1b[31mCommand failed with exit code {lastExitCode}. Exiting REPL.\x1b[0m");
-            }
-            else
-            {
-              Console.WriteLine($"Command failed with exit code {lastExitCode}. Exiting REPL.");
-            }
-
-            break;
-          }
-        }
-        catch (InvalidOperationException ex)
-        {
-          sw.Stop();
-          if (Options.EnableColors)
-          {
-            Console.WriteLine($"\x1b[31mError executing command: {ex.Message}\x1b[0m");
-          }
-          else
-          {
-            Console.WriteLine($"Error executing command: {ex.Message}");
-          }
-
-          lastExitCode = 1;
-
-          if (Options.ShowTiming)
-          {
-            if (Options.EnableColors)
-            {
-              Console.WriteLine($"\x1b[90m({sw.ElapsedMilliseconds}ms)\x1b[0m");
-            }
-            else
-            {
-              Console.WriteLine($"({sw.ElapsedMilliseconds}ms)");
-            }
-          }
-
-          if (!Options.ContinueOnError)
-          {
-            break;
-          }
-        }
-        catch (ArgumentException ex)
-        {
-          sw.Stop();
-          if (Options.EnableColors)
-          {
-            Console.WriteLine($"\x1b[31mInvalid argument: {ex.Message}\x1b[0m");
-          }
-          else
-          {
-            Console.WriteLine($"Invalid argument: {ex.Message}");
-          }
-
-          lastExitCode = 1;
-
-          if (Options.ShowTiming)
-          {
-            if (Options.EnableColors)
-            {
-              Console.WriteLine($"\x1b[90m({sw.ElapsedMilliseconds}ms)\x1b[0m");
-            }
-            else
-            {
-              Console.WriteLine($"({sw.ElapsedMilliseconds}ms)");
-            }
-          }
-
-          if (!Options.ContinueOnError)
-          {
-            break;
-          }
-        }
+        lastExitCode = await ProcessSingleCommandAsync().ConfigureAwait(false);
       }
     }
     finally
     {
-      Console.CancelKeyPress -= OnCancelKeyPress;
-
-      // Save history if persistence is enabled
-      if (Options.PersistHistory)
-      {
-        SaveHistory();
-      }
-
-      // Display goodbye message
-      if (!string.IsNullOrEmpty(Options.GoodbyeMessage))
-      {
-        Console.WriteLine(Options.GoodbyeMessage);
-      }
+      // Cleanup is handled in CleanupRepl()
     }
 
     return lastExitCode;
+  }
+
+  private async Task<int> ProcessSingleCommandAsync()
+  {
+    // Display prompt
+    DisplayPrompt();
+
+    // Read input
+    string? input = ReadCommandInput();
+
+    // Handle EOF (Ctrl+D on Unix, Ctrl+Z on Windows)
+    if (input is null)
+    {
+      Console.WriteLine();
+      Running = false;
+      return 0;
+    }
+
+    // Skip empty input
+    string trimmedInput = input.Trim();
+    if (string.IsNullOrEmpty(trimmedInput))
+    {
+      return 0;
+    }
+
+    // Add to history
+    AddToHistory(trimmedInput);
+
+    // Check for special REPL commands
+    if (await HandleSpecialCommandAsync(trimmedInput).ConfigureAwait(false))
+    {
+      return 0;
+    }
+
+    // Parse and execute command
+    string[] args = CommandLineParser.Parse(trimmedInput);
+    if (args.Length == 0)
+    {
+      return 0;
+    }
+
+    return await ExecuteCommandAsync(args).ConfigureAwait(false);
+  }
+
+  private void DisplayPrompt()
+  {
+    if (Options.EnableColors)
+    {
+      string coloredPrompt = "\x1b[32m" + Options.Prompt + "\x1b[0m";
+      Console.Write(coloredPrompt);
+    }
+    else
+    {
+      Console.Write(Options.Prompt);
+    }
+  }
+
+  private string? ReadCommandInput()
+  {
+    return Options.EnableArrowHistory
+      ? ReadInputWithHistory()
+      : Console.ReadLine();
+  }
+
+  private async Task<int> ExecuteCommandAsync(string[] args)
+  {
+    var sw = Stopwatch.StartNew();
+    try
+    {
+      int exitCode = await App.RunAsync(args).ConfigureAwait(false);
+      sw.Stop();
+
+      DisplayCommandResult(exitCode, sw.ElapsedMilliseconds, success: true);
+
+      if (!Options.ContinueOnError && exitCode != 0)
+      {
+        Running = false;
+      }
+
+      return exitCode;
+    }
+    catch (InvalidOperationException ex)
+    {
+      sw.Stop();
+      DisplayCommandResult(1, sw.ElapsedMilliseconds, success: false, ex.Message);
+
+      if (!Options.ContinueOnError)
+      {
+        Running = false;
+      }
+
+      return 1;
+    }
+    catch (ArgumentException ex)
+    {
+      sw.Stop();
+      DisplayCommandResult(1, sw.ElapsedMilliseconds, success: false, ex.Message);
+
+      if (!Options.ContinueOnError)
+      {
+        Running = false;
+      }
+
+      return 1;
+    }
+  }
+
+  private void DisplayCommandResult(int exitCode, long elapsedMs, bool success, string? errorMessage = null)
+  {
+    if (Options.ShowExitCode && success)
+    {
+      if (Options.EnableColors)
+      {
+        Console.WriteLine($"\x1b[90mExit code: {exitCode}\x1b[0m");
+      }
+      else
+      {
+        Console.WriteLine($"Exit code: {exitCode}");
+      }
+    }
+
+    if (Options.ShowTiming)
+    {
+      if (Options.EnableColors)
+      {
+        Console.WriteLine($"\x1b[90m({elapsedMs}ms)\x1b[0m");
+      }
+      else
+      {
+        Console.WriteLine($"({elapsedMs}ms)");
+      }
+    }
+
+    if (!success)
+    {
+      string message = errorMessage ?? $"Command failed with exit code {exitCode}";
+      if (Options.EnableColors)
+      {
+        Console.WriteLine($"\x1b[31m{message}\x1b[0m");
+      }
+      else
+      {
+        Console.WriteLine(message);
+      }
+    }
+    else if (!Options.ContinueOnError && exitCode != 0)
+    {
+      string message = $"Command failed with exit code {exitCode}. Exiting REPL.";
+      if (Options.EnableColors)
+      {
+        Console.WriteLine($"\x1b[31m{message}\x1b[0m");
+      }
+      else
+      {
+        Console.WriteLine(message);
+      }
+    }
+  }
+
+  private void CleanupRepl()
+  {
+    Console.CancelKeyPress -= OnCancelKeyPress;
+
+    // Save history if persistence is enabled
+    if (Options.PersistHistory)
+    {
+      SaveHistory();
+    }
+
+    // Display goodbye message
+    if (!string.IsNullOrEmpty(Options.GoodbyeMessage))
+    {
+      Console.WriteLine(Options.GoodbyeMessage);
+    }
   }
 
   private string ReadInputWithHistory()

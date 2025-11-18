@@ -26,7 +26,7 @@ public partial class NuruApp
   /// <summary>
   /// Gets the type converter registry.
   /// </summary>
-  public ITypeConverterRegistry TypeConverterRegistry { get; init; }
+  public ITypeConverterRegistry TypeConverterRegistry { get; }
 
   /// <summary>
   /// Direct constructor - no dependency injection.

@@ -48,4 +48,19 @@ public class ReplOptions
   /// Whether to display the exit code after each command execution.
   /// </summary>
   public bool ShowExitCode { get; set; }
+
+  /// <summary>
+  /// Whether to enable colored output for prompts and errors.
+  /// </summary>
+  public bool EnableColors { get; set; } = true;
+
+  /// <summary>
+  /// Whether to show execution time for each command.
+  /// </summary>
+  public bool ShowTiming { get; set; } = true;
+
+  /// <summary>
+  /// Whether to enable arrow key history navigation.
+  /// </summary>
+  public bool EnableArrowHistory { get; set; } = true;
 }

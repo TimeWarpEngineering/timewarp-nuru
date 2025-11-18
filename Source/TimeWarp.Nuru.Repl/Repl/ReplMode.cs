@@ -169,50 +169,34 @@ internal sealed class ReplMode
     if (ReplOptions.ShowExitCode && success)
     {
       if (ReplOptions.EnableColors)
-      {
         Console.WriteLine(AnsiGray + $"Exit code: {exitCode}" + AnsiReset);
-      }
       else
-      {
         Console.WriteLine($"Exit code: {exitCode}");
-      }
     }
 
     if (ReplOptions.ShowTiming)
     {
       if (ReplOptions.EnableColors)
-      {
         Console.WriteLine(AnsiGray + $"({elapsedMs}ms)" + AnsiReset);
-      }
       else
-      {
         Console.WriteLine($"({elapsedMs}ms)");
-      }
     }
 
     if (!success)
     {
       string message = errorMessage ?? $"Command failed with exit code {exitCode}";
       if (ReplOptions.EnableColors)
-      {
         Console.WriteLine(AnsiRed + message + AnsiReset);
-      }
       else
-      {
         Console.WriteLine(message);
-      }
     }
     else if (!ReplOptions.ContinueOnError && exitCode != 0)
     {
       string message = $"Command failed with exit code {exitCode}. Exiting REPL.";
       if (ReplOptions.EnableColors)
-      {
         Console.WriteLine(AnsiRed + message + AnsiReset);
-      }
       else
-      {
         Console.WriteLine(message);
-      }
     }
   }
 
@@ -222,15 +206,11 @@ internal sealed class ReplMode
 
     // Save history if persistence is enabled
     if (ReplOptions.PersistHistory)
-    {
       SaveHistory();
-    }
 
     // Display goodbye message
     if (!string.IsNullOrEmpty(ReplOptions.GoodbyeMessage))
-    {
       Console.WriteLine(ReplOptions.GoodbyeMessage);
-    }
   }
 
   private string ReadInputWithHistory()

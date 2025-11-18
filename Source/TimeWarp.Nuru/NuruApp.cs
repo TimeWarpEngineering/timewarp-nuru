@@ -29,18 +29,25 @@ public partial class NuruApp
   public ITypeConverterRegistry TypeConverterRegistry { get; }
 
   /// <summary>
+  /// Gets the REPL configuration options.
+  /// </summary>
+  public ReplOptions? ReplOptions { get; }
+
+  /// <summary>
   /// Direct constructor - no dependency injection.
   /// </summary>
   public NuruApp
   (
     EndpointCollection endpoints,
     ITypeConverterRegistry typeConverterRegistry,
-    ILoggerFactory? loggerFactory = null
+    ILoggerFactory? loggerFactory = null,
+    ReplOptions? replOptions = null
   )
   {
     Endpoints = endpoints ?? throw new ArgumentNullException(nameof(endpoints));
     TypeConverterRegistry = typeConverterRegistry ?? throw new ArgumentNullException(nameof(typeConverterRegistry));
     LoggerFactory = loggerFactory ?? Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance;
+    ReplOptions = replOptions;
 
     // If logging is configured but DI is not, create a minimal service provider
     // that can resolve ILoggerFactory and ILogger<T> for delegate parameter injection
@@ -60,6 +67,7 @@ public partial class NuruApp
     TypeConverterRegistry = serviceProvider.GetRequiredService<ITypeConverterRegistry>();
     MediatorExecutor = serviceProvider.GetRequiredService<MediatorExecutor>();
     LoggerFactory = serviceProvider.GetService<ILoggerFactory>() ?? Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance;
+    ReplOptions = serviceProvider.GetService<ReplOptions>();
   }
 
   public async Task<int> RunAsync(string[] args)

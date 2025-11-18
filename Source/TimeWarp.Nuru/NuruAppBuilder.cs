@@ -415,6 +415,13 @@ public class NuruAppBuilder
       AddRoute("--help", () => NuruConsole.WriteLine(HelpProvider.GetHelpText(EndpointCollection)),
       description: "Show available commands");
     }
+
+    // Add base help route if not already present (REPL-friendly)
+    if (!existingEndpoints.Any(e => e.RoutePattern == "help"))
+    {
+      AddRoute("help", () => NuruConsole.WriteLine(HelpProvider.GetHelpText(EndpointCollection)),
+      description: "Show available commands");
+    }
   }
 
   private static string GetCommandPrefix(Endpoint endpoint)

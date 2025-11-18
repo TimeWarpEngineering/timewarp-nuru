@@ -9,7 +9,6 @@ using System.Text.RegularExpressions;
 public partial class NuruApp
 {
   private readonly IServiceProvider? ServiceProvider;
-  private readonly ITypeConverterRegistry TypeConverterRegistry;
   private readonly MediatorExecutor? MediatorExecutor;
   private readonly ILoggerFactory LoggerFactory;
 
@@ -23,6 +22,11 @@ public partial class NuruApp
   /// Gets the collection of registered endpoints.
   /// </summary>
   public EndpointCollection Endpoints { get; }
+
+  /// <summary>
+  /// Gets the type converter registry.
+  /// </summary>
+  public ITypeConverterRegistry TypeConverterRegistry { get; init; }
 
   /// <summary>
   /// Direct constructor - no dependency injection.
@@ -232,7 +236,7 @@ public partial class NuruApp
     await NuruConsole.WriteErrorLineAsync("").ConfigureAwait(false);
   }
 
-  [GeneratedRegex(@"^--[\w-]+:[\w:-]", RegexOptions.Compiled)]
+  [GeneratedRegex(@"^--[\w-]+:[\w:-]+", RegexOptions.Compiled)]
   private static partial Regex ConfigurationOverrideRegex();
 }
 

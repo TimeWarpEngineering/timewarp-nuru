@@ -1007,5 +1007,66 @@ Keep Phase 1-4 focused. These are valuable but can be added incrementally based 
 - Integration with `CompletionProvider` for inline hints (not full tab completion)
 - Additional REPL commands (`status`, `routes`, etc.)
 
-### 2025-XX-XX: Phase 2 Started
-- ...
+### 2025-11-18: Phase 2 Started - Simple AddRoute Implementation
+
+**Problem:** REPL commands (`exit`, `help`, `history`, etc.) are currently handled as special cases in `ReplMode.cs` instead of being registered as routes using `AddRoute`.
+
+**Current State Analysis:**
+- ✅ `ReplOptions` moved to `TimeWarp.Nuru` core
+- ✅ `NuruAppBuilder.ReplOptions` property exists  
+- ✅ `AddReplSupport()` method exists but only stores options
+- ✅ `ReplContext` provides static access to `ReplMode`
+- ✅ REPL functionality works via `app.RunReplAsync()`
+- ❌ REPL commands are NOT registered via `AddRoute`
+- ❌ REPL commands handled directly in `ReplMode.cs:283-370`
+
+**Simple Solution Plan:**
+
+**The Solution:** Update `AddReplSupport()` to register REPL commands as routes:
+
+```csharp
+public NuruAppBuilder AddReplSupport(Action<ReplOptions>? configureOptions = null)
+{
+    var replOptions = new ReplOptions();
+    configureOptions?.Invoke(replOptions);
+
+    ReplOptions = replOptions;
+
+    // Register REPL commands as routes
+    builder.AddRoute("exit", () => ReplContext.ReplMode?.Exit(), "Exit the REPL");
+    builder.AddRoute("quit", () => ReplContext.ReplMode?.Exit(), "Exit the REPL");
+    builder.AddRoute("q", () => ReplContext.ReplMode?.Exit(), "Exit the REPL (shortcut)");
+    builder.AddRoute("help", () => ReplContext.ReplMode?.ShowReplHelp(), "Show REPL help");
+    builder.AddRoute("?", () => ReplContext.ReplMode?.ShowReplHelp(), "Show REPL help (shortcut)");
+    builder.AddRoute("history", () => ReplContext.ReplMode?.ShowHistory(), "Show command history");
+    builder.AddRoute("clear", () => Console.Clear(), "Clear the screen");
+    builder.AddRoute("cls", () => Console.Clear(), "Clear the screen (shortcut)");
+    builder.AddRoute("clear-history", () => ReplContext.ReplMode?.ClearHistory(), "Clear command history");
+
+    return builder;
+}
+```
+
+**Benefits:**
+1. ✅ Uses `AddRoute` as requested
+2. ✅ No static state issues (uses existing `ReplContext`)
+3. ✅ Simple implementation (~10 lines)
+4. ✅ REPL commands appear in help system
+5. ✅ Consistent with other commands
+
+**Implementation Steps:**
+1. Update `AddReplSupport()` in `NuruAppBuilder.cs:322-330`
+2. Remove special REPL command handling from `ReplMode.cs:283-370`
+3. Test that REPL commands work via route registration
+4. Verify help system includes REPL commands
+
+**Why This Simple Approach Works:**
+- `ReplContext.ReplMode` is already set during REPL execution
+- Route handlers can access REPL functionality via static context
+- No architectural complexity needed
+- Follows existing patterns in the codebase
+
+**Next Steps:**
+- Implement the route registration
+- Update tests to verify REPL commands work as routes
+- Update documentation if needed

@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../TimeWarp.Nuru/TimeWarp.Nuru.csproj" />
+    <ProjectReference Include="../TimeWarp.Nuru.Completion/TimeWarp.Nuru.Completion.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,0 +1,12 @@
+namespace TimeWarp.Nuru.Repl;
+
+/// <summary>
+/// Provides static access to current REPL mode instance.
+/// </summary>
+public static class ReplContext
+{
+  /// <summary>
+  /// Gets or sets current REPL mode instance.
+  /// </summary>
+  public static ReplMode? Current { get; set; }
+}

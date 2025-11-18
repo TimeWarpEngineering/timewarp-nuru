@@ -25,11 +25,13 @@ public static class NuruAppExtensions
   /// return await app.RunWithReplSupportAsync(args);
   /// </code>
   /// </example>
-  public static Task<int> RunWithReplSupportAsync(
+  public static Task<int> RunWithReplSupportAsync
+  (
     this NuruApp app,
     string[] args,
     Action<ReplOptions>? configureOptions = null,
-    CancellationToken cancellationToken = default)
+    CancellationToken cancellationToken = default
+  )
   {
     ArgumentNullException.ThrowIfNull(app);
     ArgumentNullException.ThrowIfNull(args);

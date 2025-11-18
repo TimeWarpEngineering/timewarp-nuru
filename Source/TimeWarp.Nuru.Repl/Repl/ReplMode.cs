@@ -10,7 +10,7 @@ internal sealed class ReplMode
   private readonly NuruApp App;
   private readonly ReplOptions Options;
   private readonly List<string> History = [];
-  private readonly ITypeConverterRegistry TypeConverterRegistryField;
+  private readonly ITypeConverterRegistry TypeConverterRegistry;
   private bool Running;
 
   /// <summary>
@@ -22,7 +22,7 @@ internal sealed class ReplMode
   {
     App = app ?? throw new ArgumentNullException(nameof(app));
     Options = options ?? new ReplOptions();
-    TypeConverterRegistryField = app.TypeConverterRegistry;
+    TypeConverterRegistry = app.TypeConverterRegistry;
   }
 
   /// <summary>
@@ -361,7 +361,7 @@ internal sealed class ReplMode
     Console.WriteLine("\nAvailable Application Commands:");
     try
     {
-      CompletionProvider provider = new(TypeConverterRegistryField);
+      CompletionProvider provider = new(TypeConverterRegistry);
       CompletionContext context = new(Args: [], CursorPosition: 0, Endpoints: App.Endpoints);
       IEnumerable<CompletionCandidate> completionsEnumerable = provider.GetCompletions(context, App.Endpoints);
       List<CompletionCandidate> completions = [.. completionsEnumerable];

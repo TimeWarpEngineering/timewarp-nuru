@@ -94,10 +94,7 @@ public static class NuruAppBuilderExtensions
     // Auto-detect app name helper (same as EnableStaticCompletion)
     string GetEffectiveAppName()
     {
-      if (appName is not null)
-        return appName;
-
-      return AppNameDetector.GetEffectiveAppName();
+      return appName ?? AppNameDetector.GetEffectiveAppName();
     }
 
     // Register the --generate-completion route with dynamic templates

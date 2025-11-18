@@ -29,8 +29,8 @@ public static class CommandLineParser
       return [];
     }
 
-    var arguments = new List<string>();
-    var currentArgument = new System.Text.StringBuilder();
+    List<string> arguments = [];
+    StringBuilder currentArgument = new();
     bool inQuotes = false;
     char quoteChar = '\0';
     bool escape = false;

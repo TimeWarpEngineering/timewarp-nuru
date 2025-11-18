@@ -5,10 +5,10 @@ namespace TimeWarp.Nuru.Repl;
 /// </summary>
 internal sealed class ReplMode
 {
-  private readonly NuruApp _app;
-  private readonly ReplOptions _options;
-  private readonly List<string> _history = [];
-  private bool _running;
+  private readonly NuruApp App;
+  private readonly ReplOptions Options;
+  private readonly List<string> History = [];
+  private bool Running;
 
   /// <summary>
   /// Creates a new REPL mode instance.
@@ -17,8 +17,8 @@ internal sealed class ReplMode
   /// <param name="options">Optional configuration for the REPL.</param>
   public ReplMode(NuruApp app, ReplOptions? options = null)
   {
-    _app = app ?? throw new ArgumentNullException(nameof(app));
-    _options = options ?? new ReplOptions();
+    App = app ?? throw new ArgumentNullException(nameof(app));
+    Options = options ?? new ReplOptions();
   }
 
   /// <summary>
@@ -28,17 +28,17 @@ internal sealed class ReplMode
   /// <returns>The exit code of the last executed command, or 0 if no commands were executed.</returns>
   public async Task<int> RunAsync(CancellationToken cancellationToken = default)
   {
-    _running = true;
+    Running = true;
     int lastExitCode = 0;
 
     // Display welcome message
-    if (!string.IsNullOrEmpty(_options.WelcomeMessage))
+    if (!string.IsNullOrEmpty(Options.WelcomeMessage))
     {
-      Console.WriteLine(_options.WelcomeMessage);
+      Console.WriteLine(Options.WelcomeMessage);
     }
 
     // Load history if persistence is enabled
-    if (_options.PersistHistory)
+    if (Options.PersistHistory)
     {
       LoadHistory();
     }
@@ -48,10 +48,10 @@ internal sealed class ReplMode
 
     try
     {
-      while (_running && !cancellationToken.IsCancellationRequested)
+      while (Running && !cancellationToken.IsCancellationRequested)
       {
         // Display prompt
-        Console.Write(_options.Prompt);
+        Console.Write(Options.Prompt);
 
         // Read input
         string? input = Console.ReadLine();
@@ -88,14 +88,14 @@ internal sealed class ReplMode
 
         try
         {
-          lastExitCode = await _app.RunAsync(args).ConfigureAwait(false);
+          lastExitCode = await App.RunAsync(args).ConfigureAwait(false);
 
-          if (_options.ShowExitCode)
+          if (Options.ShowExitCode)
           {
             Console.WriteLine($"Exit code: {lastExitCode}");
           }
 
-          if (!_options.ContinueOnError && lastExitCode != 0)
+          if (!Options.ContinueOnError && lastExitCode != 0)
           {
             Console.WriteLine($"Command failed with exit code {lastExitCode}. Exiting REPL.");
             break;
@@ -106,7 +106,7 @@ internal sealed class ReplMode
           Console.WriteLine($"Error executing command: {ex.Message}");
           lastExitCode = 1;
 
-          if (!_options.ContinueOnError)
+          if (!Options.ContinueOnError)
           {
             break;
           }
@@ -116,7 +116,7 @@ internal sealed class ReplMode
           Console.WriteLine($"Invalid argument: {ex.Message}");
           lastExitCode = 1;
 
-          if (!_options.ContinueOnError)
+          if (!Options.ContinueOnError)
           {
             break;
           }
@@ -128,15 +128,15 @@ internal sealed class ReplMode
       Console.CancelKeyPress -= OnCancelKeyPress;
 
       // Save history if persistence is enabled
-      if (_options.PersistHistory)
+      if (Options.PersistHistory)
       {
         SaveHistory();
       }
 
       // Display goodbye message
-      if (!string.IsNullOrEmpty(_options.GoodbyeMessage))
+      if (!string.IsNullOrEmpty(Options.GoodbyeMessage))
       {
-        Console.WriteLine(_options.GoodbyeMessage);
+        Console.WriteLine(Options.GoodbyeMessage);
       }
     }
 
@@ -146,7 +146,7 @@ internal sealed class ReplMode
   private void OnCancelKeyPress(object? sender, ConsoleCancelEventArgs e)
   {
     e.Cancel = true; // Prevent immediate termination
-    _running = false;
+    Running = false;
     Console.WriteLine();
   }
 
@@ -159,7 +159,7 @@ internal sealed class ReplMode
       case "exit":
       case "quit":
       case "q":
-        _running = false;
+        Running = false;
         return true;
 
       case "help":
@@ -177,7 +177,7 @@ internal sealed class ReplMode
         return true;
 
       case "clear-history":
-        _history.Clear();
+        History.Clear();
         Console.WriteLine("History cleared.");
         return true;
 
@@ -201,33 +201,33 @@ internal sealed class ReplMode
 
   private void ShowHistory()
   {
-    if (_history.Count == 0)
+    if (History.Count == 0)
     {
       Console.WriteLine("No commands in history.");
       return;
     }
 
     Console.WriteLine("Command History:");
-    for (int i = 0; i < _history.Count; i++)
+    for (int i = 0; i < History.Count; i++)
     {
-      Console.WriteLine($"  {i + 1}: {_history[i]}");
+      Console.WriteLine($"  {i + 1}: {History[i]}");
     }
   }
 
   private void AddToHistory(string command)
   {
     // Don't add if same as last command
-    if (_history.Count > 0 && _history[^1] == command)
+    if (History.Count > 0 && History[^1] == command)
     {
       return;
     }
 
-    _history.Add(command);
+    History.Add(command);
 
     // Trim history if it exceeds max size
-    while (_history.Count > _options.MaxHistorySize)
+    while (History.Count > Options.MaxHistorySize)
     {
-      _history.RemoveAt(0);
+      History.RemoveAt(0);
     }
   }
 
@@ -242,11 +242,11 @@ internal sealed class ReplMode
     try
     {
       string[] lines = File.ReadAllLines(historyPath);
-      foreach (string line in lines.TakeLast(_options.MaxHistorySize))
+      foreach (string line in lines.TakeLast(Options.MaxHistorySize))
       {
         if (!string.IsNullOrWhiteSpace(line))
         {
-          _history.Add(line);
+          History.Add(line);
         }
       }
     }
@@ -272,7 +272,7 @@ internal sealed class ReplMode
         Directory.CreateDirectory(directory);
       }
 
-      File.WriteAllLines(historyPath, _history);
+      File.WriteAllLines(historyPath, History);
     }
     catch (IOException ex)
     {
@@ -286,9 +286,9 @@ internal sealed class ReplMode
 
   private string GetHistoryFilePath()
   {
-    if (!string.IsNullOrEmpty(_options.HistoryFilePath))
+    if (!string.IsNullOrEmpty(Options.HistoryFilePath))
     {
-      return _options.HistoryFilePath;
+      return Options.HistoryFilePath;
     }
 
     // Default to user's home directory

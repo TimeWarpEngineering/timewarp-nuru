@@ -7,8 +7,8 @@ using System.Diagnostics;
 /// </summary>
 internal sealed class ReplMode
 {
-  private readonly NuruApp App;
-  private readonly ReplOptions Options;
+  private readonly NuruApp NuruApp;
+  private readonly ReplOptions ReplOptions;
   private readonly List<string> History = [];
   private readonly ITypeConverterRegistry TypeConverterRegistry;
   private bool Running;
@@ -16,13 +16,13 @@ internal sealed class ReplMode
   /// <summary>
   /// Creates a new REPL mode instance.
   /// </summary>
-  /// <param name="app">The NuruApp instance to execute commands against.</param>
-  /// <param name="options">Optional configuration for the REPL.</param>
-  public ReplMode(NuruApp app, ReplOptions? options = null)
+  /// <param name="nuruApp">The NuruApp instance to execute commands against.</param>
+  /// <param name="replOptions">Optional configuration for the REPL.</param>
+  public ReplMode(NuruApp nuruApp, ReplOptions? replOptions = null)
   {
-    App = app ?? throw new ArgumentNullException(nameof(app));
-    Options = options ?? new ReplOptions();
-    TypeConverterRegistry = app.TypeConverterRegistry;
+    NuruApp = nuruApp ?? throw new ArgumentNullException(nameof(nuruApp));
+    ReplOptions = replOptions ?? new ReplOptions();
+    TypeConverterRegistry = nuruApp.TypeConverterRegistry;
   }
 
   /// <summary>
@@ -46,16 +46,11 @@ internal sealed class ReplMode
     Running = true;
 
     // Display welcome message
-    if (!string.IsNullOrEmpty(Options.WelcomeMessage))
-    {
-      Console.WriteLine(Options.WelcomeMessage);
-    }
+    if (!string.IsNullOrEmpty(ReplOptions.WelcomeMessage))
+      Console.WriteLine(ReplOptions.WelcomeMessage);
 
     // Load history if persistence is enabled
-    if (Options.PersistHistory)
-    {
-      LoadHistory();
-    }
+    if (ReplOptions.PersistHistory) LoadHistory();
 
     // Handle Ctrl+C gracefully
     Console.CancelKeyPress += OnCancelKeyPress;
@@ -65,16 +60,9 @@ internal sealed class ReplMode
   {
     int lastExitCode = 0;
 
-    try
+    while (Running && !cancellationToken.IsCancellationRequested)
     {
-      while (Running && !cancellationToken.IsCancellationRequested)
-      {
-        lastExitCode = await ProcessSingleCommandAsync().ConfigureAwait(false);
-      }
-    }
-    finally
-    {
-      // Cleanup is handled in CleanupRepl()
+      lastExitCode = await ProcessSingleCommandAsync().ConfigureAwait(false);
     }
 
     return lastExitCode;
@@ -124,20 +112,20 @@ internal sealed class ReplMode
 
   private void DisplayPrompt()
   {
-    if (Options.EnableColors)
+    if (ReplOptions.EnableColors)
     {
-      string coloredPrompt = "\x1b[32m" + Options.Prompt + "\x1b[0m";
+      string coloredPrompt = "\x1b[32m" + ReplOptions.Prompt + "\x1b[0m";
       Console.Write(coloredPrompt);
     }
     else
     {
-      Console.Write(Options.Prompt);
+      Console.Write(ReplOptions.Prompt);
     }
   }
 
   private string? ReadCommandInput()
   {
-    return Options.EnableArrowHistory
+    return ReplOptions.EnableArrowHistory
       ? ReadInputWithHistory()
       : Console.ReadLine();
   }
@@ -147,12 +135,12 @@ internal sealed class ReplMode
     var sw = Stopwatch.StartNew();
     try
     {
-      int exitCode = await App.RunAsync(args).ConfigureAwait(false);
+      int exitCode = await NuruApp.RunAsync(args).ConfigureAwait(false);
       sw.Stop();
 
       DisplayCommandResult(exitCode, sw.ElapsedMilliseconds, success: true);
 
-      if (!Options.ContinueOnError && exitCode != 0)
+      if (!ReplOptions.ContinueOnError && exitCode != 0)
       {
         Running = false;
       }
@@ -164,7 +152,7 @@ internal sealed class ReplMode
       sw.Stop();
       DisplayCommandResult(1, sw.ElapsedMilliseconds, success: false, ex.Message);
 
-      if (!Options.ContinueOnError)
+      if (!ReplOptions.ContinueOnError)
       {
         Running = false;
       }
@@ -176,7 +164,7 @@ internal sealed class ReplMode
       sw.Stop();
       DisplayCommandResult(1, sw.ElapsedMilliseconds, success: false, ex.Message);
 
-      if (!Options.ContinueOnError)
+      if (!ReplOptions.ContinueOnError)
       {
         Running = false;
       }
@@ -187,9 +175,9 @@ internal sealed class ReplMode
 
   private void DisplayCommandResult(int exitCode, long elapsedMs, bool success, string? errorMessage = null)
   {
-    if (Options.ShowExitCode && success)
+    if (ReplOptions.ShowExitCode && success)
     {
-      if (Options.EnableColors)
+      if (ReplOptions.EnableColors)
       {
         Console.WriteLine($"\x1b[90mExit code: {exitCode}\x1b[0m");
       }
@@ -199,9 +187,9 @@ internal sealed class ReplMode
       }
     }
 
-    if (Options.ShowTiming)
+    if (ReplOptions.ShowTiming)
     {
-      if (Options.EnableColors)
+      if (ReplOptions.EnableColors)
       {
         Console.WriteLine($"\x1b[90m({elapsedMs}ms)\x1b[0m");
       }
@@ -214,7 +202,7 @@ internal sealed class ReplMode
     if (!success)
     {
       string message = errorMessage ?? $"Command failed with exit code {exitCode}";
-      if (Options.EnableColors)
+      if (ReplOptions.EnableColors)
       {
         Console.WriteLine($"\x1b[31m{message}\x1b[0m");
       }
@@ -223,10 +211,10 @@ internal sealed class ReplMode
         Console.WriteLine(message);
       }
     }
-    else if (!Options.ContinueOnError && exitCode != 0)
+    else if (!ReplOptions.ContinueOnError && exitCode != 0)
     {
       string message = $"Command failed with exit code {exitCode}. Exiting REPL.";
-      if (Options.EnableColors)
+      if (ReplOptions.EnableColors)
       {
         Console.WriteLine($"\x1b[31m{message}\x1b[0m");
       }
@@ -242,15 +230,15 @@ internal sealed class ReplMode
     Console.CancelKeyPress -= OnCancelKeyPress;
 
     // Save history if persistence is enabled
-    if (Options.PersistHistory)
+    if (ReplOptions.PersistHistory)
     {
       SaveHistory();
     }
 
     // Display goodbye message
-    if (!string.IsNullOrEmpty(Options.GoodbyeMessage))
+    if (!string.IsNullOrEmpty(ReplOptions.GoodbyeMessage))
     {
-      Console.WriteLine(Options.GoodbyeMessage);
+      Console.WriteLine(ReplOptions.GoodbyeMessage);
     }
   }
 
@@ -358,7 +346,7 @@ internal sealed class ReplMode
 
   private void ShowReplHelp()
   {
-    if (Options.EnableColors)
+    if (ReplOptions.EnableColors)
     {
       Console.WriteLine("\x1b[1;34mREPL Commands:\x1b[0m");
     }
@@ -382,8 +370,8 @@ internal sealed class ReplMode
     try
     {
       CompletionProvider provider = new(TypeConverterRegistry);
-      CompletionContext context = new(Args: [], CursorPosition: 0, Endpoints: App.Endpoints);
-      IEnumerable<CompletionCandidate> completionsEnumerable = provider.GetCompletions(context, App.Endpoints);
+      CompletionContext context = new(Args: [], CursorPosition: 0, Endpoints: NuruApp.Endpoints);
+      IEnumerable<CompletionCandidate> completionsEnumerable = provider.GetCompletions(context, NuruApp.Endpoints);
       List<CompletionCandidate> completions = [.. completionsEnumerable];
 
       if (completions.Count > 0)
@@ -437,7 +425,7 @@ internal sealed class ReplMode
     History.Add(command);
 
     // Trim history if it exceeds max size
-    while (History.Count > Options.MaxHistorySize)
+    while (History.Count > ReplOptions.MaxHistorySize)
     {
       History.RemoveAt(0);
     }
@@ -454,7 +442,7 @@ internal sealed class ReplMode
     try
     {
       string[] lines = File.ReadAllLines(historyPath);
-      foreach (string line in lines.TakeLast(Options.MaxHistorySize))
+      foreach (string line in lines.TakeLast(ReplOptions.MaxHistorySize))
       {
         if (!string.IsNullOrWhiteSpace(line))
         {
@@ -498,9 +486,9 @@ internal sealed class ReplMode
 
   private string GetHistoryFilePath()
   {
-    if (!string.IsNullOrEmpty(Options.HistoryFilePath))
+    if (!string.IsNullOrEmpty(ReplOptions.HistoryFilePath))
     {
-      return Options.HistoryFilePath;
+      return ReplOptions.HistoryFilePath;
     }
 
     // Use per-app history in ~/.nuru/history/ directory

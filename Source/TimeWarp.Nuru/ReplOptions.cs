@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru.Repl;
+namespace TimeWarp.Nuru;
 
 /// <summary>
 /// Configuration options for REPL (Read-Eval-Print Loop) mode.
@@ -45,7 +45,7 @@ public class ReplOptions
   public bool ContinueOnError { get; set; } = true;
 
   /// <summary>
-  /// Whether to display the exit code after each command execution.
+  /// Whether to display exit code after each command execution.
   /// </summary>
   public bool ShowExitCode { get; set; }
 

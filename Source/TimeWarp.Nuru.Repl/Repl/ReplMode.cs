@@ -1,11 +1,12 @@
 namespace TimeWarp.Nuru.Repl;
 
 using System.Diagnostics;
+using TimeWarp.Nuru;
 
 /// <summary>
 /// Provides REPL (Read-Eval-Print Loop) mode for interactive command execution.
 /// </summary>
-internal sealed class ReplMode
+public sealed class ReplMode
 {
   private readonly NuruApp NuruApp;
   private readonly ReplOptions ReplOptions;
@@ -97,10 +98,7 @@ internal sealed class ReplMode
 
     AddToHistory(trimmedInput);
 
-    // Check for special REPL commands
-    if (await HandleSpecialCommandAsync(trimmedInput).ConfigureAwait(false)) return 0;
-
-    // Parse and execute command
+    // Parse and execute command - routes handle everything including REPL commands
     string[] args = CommandLineParser.Parse(trimmedInput);
     if (args.Length == 0) return 0;
 
@@ -279,43 +277,10 @@ internal sealed class ReplMode
     Console.WriteLine();
   }
 
-  private async Task<bool> HandleSpecialCommandAsync(string input)
-  {
-    string command = input.ToLowerInvariant();
-
-    switch (command)
-    {
-      case "exit":
-      case "quit":
-      case "q":
-        Running = false;
-        return true;
-
-      case "help":
-      case "?":
-        ShowReplHelp();
-        return true;
-
-      case "history":
-        ShowHistory();
-        return true;
-
-      case "clear":
-      case "cls":
-        Console.Clear();
-        return true;
-
-      case "clear-history":
-        History.Clear();
-        Console.WriteLine("History cleared.");
-        return true;
-
-      default:
-        return false;
-    }
-  }
-
-  private void ShowReplHelp()
+  /// <summary>
+  /// Shows REPL help information.
+  /// </summary>
+  public void ShowReplHelp()
   {
     if (ReplOptions.EnableColors)
     {
@@ -370,7 +335,10 @@ internal sealed class ReplMode
     }
   }
 
-  private void ShowHistory()
+  /// <summary>
+  /// Shows command history.
+  /// </summary>
+  public void ShowHistory()
   {
     if (History.Count == 0)
     {
@@ -383,6 +351,22 @@ internal sealed class ReplMode
     {
       Console.WriteLine($"  {i + 1}: {History[i]}");
     }
+  }
+
+  /// <summary>
+  /// Exits the REPL loop.
+  /// </summary>
+  public void Exit()
+  {
+    Running = false;
+  }
+
+  /// <summary>
+  /// Clears the command history.
+  /// </summary>
+  public void ClearHistory()
+  {
+    History.Clear();
   }
 
   private void AddToHistory(string command)

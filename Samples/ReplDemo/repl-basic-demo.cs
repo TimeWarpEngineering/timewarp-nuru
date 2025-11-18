@@ -20,13 +20,14 @@ var app = new NuruAppBuilder()
   .AddRoute("echo {*message}", (string[] message) => WriteLine(string.Join(" ", message)))
   .AddRoute("add {a:int} {b:int}", (int a, int b) => WriteLine($"{a} + {b} = {a + b}"))
   .AddRoute("time", () => WriteLine($"Current time: {DateTime.Now:HH:mm:ss}"))
+  .AddReplSupport(options =>
+  {
+    options.Prompt = "demo> ";
+    options.WelcomeMessage = "Welcome to REPL demo! Try: greet World, status, add 5 3, time, or 'exit' to quit.";
+    options.GoodbyeMessage = "Thanks for trying the REPL demo!";
+    options.PersistHistory = false; // Don't persist history for demo
+  })
   .Build();
 
 // Start REPL mode directly
-return await app.RunReplAsync(new ReplOptions
-{
-  Prompt = "demo> ",
-  WelcomeMessage = "Welcome to the REPL demo! Try: greet World, status, add 5 3, time, or 'exit' to quit.",
-  GoodbyeMessage = "Thanks for trying the REPL demo!",
-  PersistHistory = false // Don't persist history for demo
-});
+return await app.RunReplAsync();

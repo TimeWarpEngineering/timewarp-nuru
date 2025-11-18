@@ -314,18 +314,16 @@ public class NuruAppBuilder
   }
 
   /// <summary>
-  /// Adds REPL (Read-Eval-Print Loop) support to application.
+  /// Adds REPL (Read-Eval-Print Loop) configuration options to application.
   /// This stores REPL configuration options for use when REPL mode is activated.
   /// </summary>
   /// <param name="configureOptions">Optional action to configure REPL options.</param>
   /// <returns>The builder for chaining.</returns>
-  public NuruAppBuilder AddReplSupport(Action<ReplOptions>? configureOptions = null)
+  public NuruAppBuilder AddReplOptions(Action<ReplOptions>? configureOptions = null)
   {
     var replOptions = new ReplOptions();
     configureOptions?.Invoke(replOptions);
-
     ReplOptions = replOptions;
-
     return this;
   }
 

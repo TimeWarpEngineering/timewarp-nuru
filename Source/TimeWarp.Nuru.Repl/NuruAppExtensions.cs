@@ -8,6 +8,44 @@ using TimeWarp.Nuru;
 public static class NuruAppExtensions
 {
   /// <summary>
+  /// Adds REPL (Read-Eval-Print Loop) command routes to application.
+  /// This registers built-in REPL commands as routes.
+  /// </summary>
+  /// <param name="builder">The NuruAppBuilder instance.</param>
+  /// <returns>The builder for chaining.</returns>
+  public static NuruAppBuilder AddReplRoutes(this NuruAppBuilder builder)
+  {
+    ArgumentNullException.ThrowIfNull(builder);
+
+    // Register REPL commands as routes
+    builder.AddRoute("exit", () => ReplContext.ReplMode?.Exit(), "Exit the REPL");
+    builder.AddRoute("quit", () => ReplContext.ReplMode?.Exit(), "Exit the REPL");
+    builder.AddRoute("q", () => ReplContext.ReplMode?.Exit(), "Exit the REPL (shortcut)");
+    builder.AddRoute("help", () => ReplContext.ReplMode?.ShowReplHelp(), "Show REPL help");
+    builder.AddRoute("history", () => ReplContext.ReplMode?.ShowHistory(), "Show command history");
+    builder.AddRoute("clear", () => Console.Clear(), "Clear the screen");
+    builder.AddRoute("cls", () => Console.Clear(), "Clear the screen (shortcut)");
+    builder.AddRoute("clear-history", () => ReplContext.ReplMode?.ClearHistory(), "Clear command history");
+
+    return builder;
+  }
+
+  /// <summary>
+  /// Adds REPL (Read-Eval-Print Loop) support to application.
+  /// This stores REPL configuration options and registers REPL commands as routes.
+  /// </summary>
+  /// <param name="builder">The NuruAppBuilder instance.</param>
+  /// <param name="configureOptions">Optional action to configure REPL options.</param>
+  /// <returns>The builder for chaining.</returns>
+  public static NuruAppBuilder AddReplSupport(
+    this NuruAppBuilder builder,
+    Action<ReplOptions>? configureOptions = null)
+  {
+    ArgumentNullException.ThrowIfNull(builder);
+    return builder.AddReplOptions(configureOptions).AddReplRoutes();
+  }
+
+  /// <summary>
   /// Runs the application with REPL support. If args contains "--repl", enters interactive mode.
   /// Otherwise, executes the command normally.
   /// </summary>

@@ -13,6 +13,13 @@ internal sealed class ReplMode
   private readonly ITypeConverterRegistry TypeConverterRegistry;
   private bool Running;
 
+  // ANSI escape codes for colored terminal output
+  private const string AnsiReset = "\x1b[0m";
+  private const string AnsiGreen = "\x1b[32m";
+  private const string AnsiRed = "\x1b[31m";
+  private const string AnsiGray = "\x1b[90m";
+  private const string AnsiBrightBlue = "\x1b[1;34m";
+
   /// <summary>
   /// Creates a new REPL mode instance.
   /// </summary>
@@ -104,7 +111,7 @@ internal sealed class ReplMode
   {
     if (ReplOptions.EnableColors)
     {
-      string coloredPrompt = "\x1b[32m" + ReplOptions.Prompt + "\x1b[0m";
+      string coloredPrompt = AnsiGreen + ReplOptions.Prompt + AnsiReset;
       Console.Write(coloredPrompt);
     }
     else
@@ -169,7 +176,7 @@ internal sealed class ReplMode
     {
       if (ReplOptions.EnableColors)
       {
-        Console.WriteLine($"\x1b[90mExit code: {exitCode}\x1b[0m");
+        Console.WriteLine(AnsiGray + $"Exit code: {exitCode}" + AnsiReset);
       }
       else
       {
@@ -181,7 +188,7 @@ internal sealed class ReplMode
     {
       if (ReplOptions.EnableColors)
       {
-        Console.WriteLine($"\x1b[90m({elapsedMs}ms)\x1b[0m");
+        Console.WriteLine(AnsiGray + $"({elapsedMs}ms)" + AnsiReset);
       }
       else
       {
@@ -194,7 +201,7 @@ internal sealed class ReplMode
       string message = errorMessage ?? $"Command failed with exit code {exitCode}";
       if (ReplOptions.EnableColors)
       {
-        Console.WriteLine($"\x1b[31m{message}\x1b[0m");
+        Console.WriteLine(AnsiRed + message + AnsiReset);
       }
       else
       {
@@ -206,7 +213,7 @@ internal sealed class ReplMode
       string message = $"Command failed with exit code {exitCode}. Exiting REPL.";
       if (ReplOptions.EnableColors)
       {
-        Console.WriteLine($"\x1b[31m{message}\x1b[0m");
+        Console.WriteLine(AnsiRed + message + AnsiReset);
       }
       else
       {
@@ -338,7 +345,7 @@ internal sealed class ReplMode
   {
     if (ReplOptions.EnableColors)
     {
-      Console.WriteLine("\x1b[1;34mREPL Commands:\x1b[0m");
+      Console.WriteLine(AnsiBrightBlue + "REPL Commands:" + AnsiReset);
     }
     else
     {

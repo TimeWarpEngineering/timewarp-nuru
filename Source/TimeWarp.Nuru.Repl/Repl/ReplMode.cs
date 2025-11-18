@@ -129,13 +129,13 @@ internal sealed class ReplMode
 
   private async Task<int> ExecuteCommandAsync(string[] args)
   {
-    var sw = Stopwatch.StartNew();
+    var stopwatch = Stopwatch.StartNew();
     try
     {
       int exitCode = await NuruApp.RunAsync(args).ConfigureAwait(false);
-      sw.Stop();
+      stopwatch.Stop();
 
-      DisplayCommandResult(exitCode, sw.ElapsedMilliseconds, success: true);
+      DisplayCommandResult(exitCode, stopwatch.ElapsedMilliseconds, success: true);
 
       if (!ReplOptions.ContinueOnError && exitCode != 0)
       {
@@ -146,28 +146,22 @@ internal sealed class ReplMode
     }
     catch (InvalidOperationException ex)
     {
-      sw.Stop();
-      DisplayCommandResult(1, sw.ElapsedMilliseconds, success: false, ex.Message);
-
-      if (!ReplOptions.ContinueOnError)
-      {
-        Running = false;
-      }
-
-      return 1;
+      return HandleCommandException(stopwatch, ex);
     }
     catch (ArgumentException ex)
     {
-      sw.Stop();
-      DisplayCommandResult(1, sw.ElapsedMilliseconds, success: false, ex.Message);
-
-      if (!ReplOptions.ContinueOnError)
-      {
-        Running = false;
-      }
-
-      return 1;
+      return HandleCommandException(stopwatch, ex);
     }
+  }
+
+  private int HandleCommandException(Stopwatch stopwatch, Exception ex)
+  {
+    stopwatch.Stop();
+    DisplayCommandResult(1, stopwatch.ElapsedMilliseconds, success: false, ex.Message);
+
+    if (!ReplOptions.ContinueOnError) Running = false;
+
+    return 1;
   }
 
   private void DisplayCommandResult(int exitCode, long elapsedMs, bool success, string? errorMessage = null)

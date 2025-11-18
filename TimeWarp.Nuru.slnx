@@ -8,9 +8,11 @@
   <Folder Name="/Source/">
     <Project Path="Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj" />
     <Project Path="Source/TimeWarp.Nuru.Analyzers/TimeWarp.Nuru.Analyzers.csproj" />
+    <Project Path="Source/TimeWarp.Nuru.Completion/TimeWarp.Nuru.Completion.csproj" />
     <Project Path="Source/TimeWarp.Nuru.Logging/TimeWarp.Nuru.Logging.csproj" />
     <Project Path="Source/TimeWarp.Nuru.Mcp/TimeWarp.Nuru.Mcp.csproj" />
     <Project Path="Source/TimeWarp.Nuru.Parsing/TimeWarp.Nuru.Parsing.csproj" />
+    <Project Path="Source/TimeWarp.Nuru.Repl/TimeWarp.Nuru.Repl.csproj" />
   </Folder>
   <Folder Name="/Tests/">
     <Project Path="Tests/TestApps/TimeWarp.Nuru.TestApp.Delegates/TimeWarp.Nuru.TestApp.Delegates.csproj" />

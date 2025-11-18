@@ -23,23 +23,18 @@ public static class NuruAppBuilderExtensions
   /// <returns>The builder for fluent chaining.</returns>
   public static NuruAppBuilder EnableStaticCompletion(
     this NuruAppBuilder builder,
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Roslynator", "RCS1163:Unused parameter", Justification = "Parameter kept for backward compatibility")]
     string? appName = null)
   {
     ArgumentNullException.ThrowIfNull(builder);
 
     // Auto-detect app name at generation time (not at build time)
-    // This is deferred until the --generate-completion route is actually called
-    string GetEffectiveAppName()
-    {
-      // Use explicit app name if set, otherwise use standard detection
-      return appName ?? AppNameDetector.GetEffectiveAppName();
-    }
 
     // Register the --generate-completion route
     builder.AddRoute("--generate-completion {shell}", (string shell) =>
     {
       // Detect app name at runtime (when the command is actually executed)
-      string detectedAppName = GetEffectiveAppName();
+      string detectedAppName = AppNameDetector.GetEffectiveAppName();
 
       var generator = new CompletionScriptGenerator();
 
@@ -76,6 +71,7 @@ public static class NuruAppBuilderExtensions
   /// <returns>The builder for fluent chaining.</returns>
   public static NuruAppBuilder EnableDynamicCompletion(
     this NuruAppBuilder builder,
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Roslynator", "RCS1163:Unused parameter", Justification = "Parameter kept for backward compatibility")]
     string? appName = null,
     Action<CompletionSourceRegistry>? configure = null)
   {
@@ -91,16 +87,10 @@ public static class NuruAppBuilderExtensions
       return DynamicCompletionHandler.HandleCompletion(index, words, registry, builder.EndpointCollection);
     });
 
-    // Auto-detect app name helper (same as EnableStaticCompletion)
-    string GetEffectiveAppName()
-    {
-      return appName ?? AppNameDetector.GetEffectiveAppName();
-    }
-
     // Register the --generate-completion route with dynamic templates
     builder.AddRoute("--generate-completion {shell}", (string shell) =>
     {
-      string detectedAppName = GetEffectiveAppName();
+      string detectedAppName = AppNameDetector.GetEffectiveAppName();
 
       string script = shell.ToLowerInvariant() switch
       {
@@ -119,14 +109,14 @@ public static class NuruAppBuilderExtensions
     // Register the --install-completion route for automatic installation
     builder.AddRoute("--install-completion {shell?}", (string? shell) =>
     {
-      string detectedAppName = GetEffectiveAppName();
+      string detectedAppName = AppNameDetector.GetEffectiveAppName();
       InstallCompletionHandler.Install(detectedAppName, shell);
     });
 
     // Register the --install-completion --dry-run route for preview
     builder.AddRoute("--install-completion --dry-run {shell?}", (string? shell) =>
     {
-      string detectedAppName = GetEffectiveAppName();
+      string detectedAppName = AppNameDetector.GetEffectiveAppName();
       InstallCompletionHandler.Install(detectedAppName, shell, dryRun: true);
     });
 

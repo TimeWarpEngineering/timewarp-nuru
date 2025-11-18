@@ -3,7 +3,7 @@ namespace TimeWarp.Nuru.Repl;
 /// <summary>
 /// Parses command line input strings into argument arrays, handling quotes and escapes.
 /// </summary>
-internal static class CommandLineParser
+public static class CommandLineParser
 {
   /// <summary>
   /// Parses a command line string into an array of arguments, respecting quoted strings.

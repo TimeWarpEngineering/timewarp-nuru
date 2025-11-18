@@ -19,7 +19,7 @@ public static class HelpProvider
       return "No routes are registered.";
     }
 
-    var sb = new System.Text.StringBuilder();
+    var sb = new StringBuilder();
     sb.AppendLine("Available Routes:");
     sb.AppendLine();
 
@@ -55,7 +55,7 @@ public static class HelpProvider
     return sb.ToString().TrimEnd();
   }
 
-  private static void AppendRoute(System.Text.StringBuilder sb, Endpoint route, bool indent = false)
+  private static void AppendRoute(StringBuilder sb, Endpoint route, bool indent = false)
   {
     string prefix = indent ? "  " : "";
     string pattern = route.RoutePattern;

@@ -412,10 +412,7 @@ public class NuruAppBuilder
     // Add base --help route if not already present
     if (!existingEndpoints.Any(e => e.RoutePattern == "--help"))
     {
-      AddRoute("--help", () =>
-      {
-        NuruConsole.WriteLine(HelpProvider.GetHelpText(EndpointCollection));
-      },
+      AddRoute("--help", () => NuruConsole.WriteLine(HelpProvider.GetHelpText(EndpointCollection)),
       description: "Show available commands");
     }
   }

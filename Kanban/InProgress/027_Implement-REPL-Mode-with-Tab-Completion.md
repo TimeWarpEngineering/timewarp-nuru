@@ -1055,10 +1055,11 @@ public NuruAppBuilder AddReplSupport(Action<ReplOptions>? configureOptions = nul
 5. ✅ Consistent with other commands
 
 **Implementation Steps:**
-1. Update `AddReplSupport()` in `NuruAppBuilder.cs:322-330`
-2. Remove special REPL command handling from `ReplMode.cs:283-370`
-3. Test that REPL commands work via route registration
-4. Verify help system includes REPL commands
+1. Move `AddReplSupport()` from core `TimeWarp.Nuru` to REPL `TimeWarp.Nuru.Repl` project
+2. Remove `AddReplSupport()` method from `Source/TimeWarp.Nuru/NuruAppBuilder.cs:322-330`
+3. Add `AddReplSupport()` as extension method in `Source/TimeWarp.Nuru.Repl/NuruAppExtensions.cs`
+4. Register REPL commands as routes using `builder.AddRoute()` calls
+5. Build and verify compilation
 
 **Why This Simple Approach Works:**
 - `ReplContext.ReplMode` is already set during REPL execution
@@ -1067,6 +1068,6 @@ public NuruAppBuilder AddReplSupport(Action<ReplOptions>? configureOptions = nul
 - Follows existing patterns in the codebase
 
 **Next Steps:**
-- Implement the route registration
+- Implement route registration in REPL project
 - Update tests to verify REPL commands work as routes
 - Update documentation if needed

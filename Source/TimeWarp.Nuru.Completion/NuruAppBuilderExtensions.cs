@@ -31,25 +31,8 @@ public static class NuruAppBuilderExtensions
     // This is deferred until the --generate-completion route is actually called
     string GetEffectiveAppName()
     {
-      if (appName is not null)
-        return appName;
-
-      // Try to get the actual process name (works for published executables)
-      string? processPath = Environment.ProcessPath;
-      if (processPath is not null)
-      {
-        string fileName = Path.GetFileNameWithoutExtension(processPath);
-        if (!string.IsNullOrEmpty(fileName))
-          return fileName;
-      }
-
-      // Fallback: try Process.GetCurrentProcess()
-      using var currentProcess = Process.GetCurrentProcess();
-      if (!string.IsNullOrEmpty(currentProcess.ProcessName))
-        return currentProcess.ProcessName;
-
-      // Final fallback
-      return System.Reflection.Assembly.GetEntryAssembly()?.GetName().Name ?? "myapp";
+      // Use explicit app name if set, otherwise use standard detection
+      return appName ?? AppNameDetector.GetEffectiveAppName();
     }
 
     // Register the --generate-completion route
@@ -114,19 +97,7 @@ public static class NuruAppBuilderExtensions
       if (appName is not null)
         return appName;
 
-      string? processPath = Environment.ProcessPath;
-      if (processPath is not null)
-      {
-        string fileName = Path.GetFileNameWithoutExtension(processPath);
-        if (!string.IsNullOrEmpty(fileName))
-          return fileName;
-      }
-
-      using var currentProcess = Process.GetCurrentProcess();
-      if (!string.IsNullOrEmpty(currentProcess.ProcessName))
-        return currentProcess.ProcessName;
-
-      return System.Reflection.Assembly.GetEntryAssembly()?.GetName().Name ?? "myapp";
+      return AppNameDetector.GetEffectiveAppName();
     }
 
     // Register the --generate-completion route with dynamic templates

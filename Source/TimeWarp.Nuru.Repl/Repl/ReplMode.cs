@@ -86,26 +86,16 @@ internal sealed class ReplMode
 
     // Skip empty input
     string trimmedInput = input.Trim();
-    if (string.IsNullOrEmpty(trimmedInput))
-    {
-      return 0;
-    }
+    if (string.IsNullOrEmpty(trimmedInput)) return 0;
 
-    // Add to history
     AddToHistory(trimmedInput);
 
     // Check for special REPL commands
-    if (await HandleSpecialCommandAsync(trimmedInput).ConfigureAwait(false))
-    {
-      return 0;
-    }
+    if (await HandleSpecialCommandAsync(trimmedInput).ConfigureAwait(false)) return 0;
 
     // Parse and execute command
     string[] args = CommandLineParser.Parse(trimmedInput);
-    if (args.Length == 0)
-    {
-      return 0;
-    }
+    if (args.Length == 0) return 0;
 
     return await ExecuteCommandAsync(args).ConfigureAwait(false);
   }

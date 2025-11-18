@@ -37,7 +37,7 @@ public static class NuruAppExtensions
     var repl = new ReplMode(app, replOptions);
 
     // Set static context for command handlers
-    ReplContext.Current = repl;
+    ReplContext.ReplMode = repl;
 
     try
     {
@@ -45,7 +45,7 @@ public static class NuruAppExtensions
     }
     finally
     {
-      ReplContext.Current = null;
+      ReplContext.ReplMode = null;
     }
   }
 }

@@ -8,5 +8,5 @@ public static class ReplContext
   /// <summary>
   /// Gets or sets current REPL mode instance.
   /// </summary>
-  public static ReplMode? Current { get; set; }
+  public static ReplMode? ReplMode { get; set; }
 }

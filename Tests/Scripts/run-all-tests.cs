@@ -13,7 +13,20 @@ string testsRoot = scriptDir;
 bool parallel = args.Contains("--parallel");
 bool verbose = args.Contains("--verbose");
 bool stopOnFail = args.Contains("--stop-on-fail");
-string? category = args.FirstOrDefault(a => a.StartsWith("--category=", StringComparison.Ordinal))?.Split('=')[1];
+
+// Handle --category CategoryName format
+string? category = null;
+int categoryIndex = Array.IndexOf(args, "--category");
+if (categoryIndex >= 0 && categoryIndex + 1 < args.Length)
+{
+    category = args[categoryIndex + 1];
+}
+
+if (verbose)
+{
+    WriteLine($"Parsed category: '{category}'");
+    WriteLine($"Args: {string.Join(", ", args)}");
+}
 
 if (verbose)
 {
@@ -93,6 +106,7 @@ var testCategories = new Dictionary<string, List<string>>
 // Filter categories if specified
 if (category is not null)
 {
+    var originalCategories = testCategories.Keys.ToList();
     testCategories = testCategories
         .Where(kvp => kvp.Key.Equals(category, StringComparison.OrdinalIgnoreCase))
         .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
@@ -100,7 +114,7 @@ if (category is not null)
     if (testCategories.Count == 0)
     {
         WriteLine($"{Red}Error: No tests found for category '{category}'{Reset}");
-        WriteLine($"Available categories: {string.Join(", ", testCategories.Keys)}");
+        WriteLine($"Available categories: {string.Join(", ", originalCategories)}");
         return 1;
     }
 }
@@ -108,6 +122,15 @@ if (category is not null)
 // Count total tests
 int totalTests = testCategories.Sum(kvp => kvp.Value.Count);
 WriteLine($"Found {totalTests} tests in {testCategories.Count} categories");
+
+if (verbose)
+{
+    foreach (KeyValuePair<string, List<string>> kvp in testCategories)
+    {
+        WriteLine($"  {kvp.Key}: {kvp.Value.Count} tests");
+    }
+}
+
 WriteLine();
 
 // Run tests

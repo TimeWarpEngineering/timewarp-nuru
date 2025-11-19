@@ -1,13 +1,5 @@
 namespace TimeWarp.Nuru.Repl.Input;
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using Microsoft.Extensions.Logging;
-using TimeWarp.Nuru;
-using TimeWarp.Nuru.Completion;
-using TimeWarp.Nuru.Logging;
-
 /// <summary>
 /// Provides advanced console input handling for REPL mode with tab completion and history navigation.
 /// </summary>
@@ -41,15 +33,20 @@ public sealed class ReplConsoleReader
     EndpointCollection endpoints,
     bool enableColors,
     string prompt,
-    ILoggerFactory? loggerFactory = null
+    ILoggerFactory loggerFactory
   )
   {
+    ArgumentNullException.ThrowIfNull(history);
+    ArgumentNullException.ThrowIfNull(completionProvider);
+    ArgumentNullException.ThrowIfNull(endpoints);
+    ArgumentNullException.ThrowIfNull(loggerFactory);
+
     History = history?.ToList() ?? throw new ArgumentNullException(nameof(history));
     CompletionProvider = completionProvider ?? throw new ArgumentNullException(nameof(completionProvider));
     Endpoints = endpoints ?? throw new ArgumentNullException(nameof(endpoints));
     EnableColors = enableColors;
     Prompt = prompt;
-    SyntaxHighlighter = new SyntaxHighlighter(endpoints);
+    SyntaxHighlighter = new SyntaxHighlighter(endpoints, loggerFactory);
     LoggerFactory = loggerFactory;
     Logger = LoggerFactory?.CreateLogger<ReplConsoleReader>() ?? throw new ArgumentNullException(nameof(loggerFactory));
   }
@@ -173,9 +170,7 @@ public sealed class ReplConsoleReader
     ReplLoggerMessages.CompletionContextCreated(Logger, args.Length, null);
 
     // Get completion candidates
-#pragma warning disable IDE0007 // Use implicit type
-    var candidates = CompletionProvider.GetCompletions(context, Endpoints).ToList();
-#pragma warning restore IDE0007 // Use implicit type
+    List<CompletionCandidate> candidates = [.. CompletionProvider.GetCompletions(context, Endpoints)];
 
     ReplLoggerMessages.CompletionCandidatesGenerated(Logger, candidates.Count, null);
 
@@ -435,20 +430,20 @@ public sealed class ReplConsoleReader
 
     // Update cursor position
     UpdateCursorPosition();
-}
-
-private void UpdateCursorPosition()
-{
-  // Calculate desired cursor position (after prompt)
-  int promptLength = Prompt.Length; // Use actual prompt length
-  int desiredLeft = promptLength + CursorPosition;
-
-  ReplLoggerMessages.CursorPositionUpdated(Logger, promptLength, CursorPosition, null);
-
-  // Set cursor position if within bounds
-  if (desiredLeft < Console.WindowWidth)
-  {
-    Console.SetCursorPosition(desiredLeft, Console.CursorTop);
   }
-}
+
+  private void UpdateCursorPosition()
+  {
+    // Calculate desired cursor position (after prompt)
+    int promptLength = Prompt.Length; // Use actual prompt length
+    int desiredLeft = promptLength + CursorPosition;
+
+    ReplLoggerMessages.CursorPositionUpdated(Logger, promptLength, CursorPosition, null);
+
+    // Set cursor position if within bounds
+    if (desiredLeft < Console.WindowWidth)
+    {
+      Console.SetCursorPosition(desiredLeft, Console.CursorTop);
+    }
+  }
 }

@@ -17,10 +17,13 @@ public sealed class SyntaxHighlighter
   private readonly Dictionary<string, bool> CommandCache = [];
   private readonly ILogger<SyntaxHighlighter> Logger;
 
-  public SyntaxHighlighter(EndpointCollection? endpoints = null, ILogger<SyntaxHighlighter>? logger = null)
+  public SyntaxHighlighter(EndpointCollection? endpoints, ILoggerFactory loggerFactory)
   {
+    ArgumentNullException.ThrowIfNull(loggerFactory);
+    ArgumentNullException.ThrowIfNull(endpoints);
+
     Endpoints = endpoints;
-    Logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    Logger = loggerFactory.CreateLogger<SyntaxHighlighter>();
   }
 
   public string Highlight(string input)

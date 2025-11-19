@@ -12,7 +12,7 @@ using TimeWarp.Nuru.Repl.Input;
 /// </summary>
 public sealed class ReplMode
 {
-  private readonly ILoggerFactory? LoggerFactory;
+  private readonly ILoggerFactory LoggerFactory;
   private readonly NuruApp NuruApp;
   private readonly ReplOptions ReplOptions;
   private readonly List<string> History = [];
@@ -27,8 +27,8 @@ public sealed class ReplMode
   public ReplMode
   (
     NuruApp nuruApp,
-    ReplOptions? replOptions = null,
-    ILoggerFactory? loggerFactory = null
+    ReplOptions replOptions,
+    ILoggerFactory loggerFactory
   )
   {
     NuruApp = nuruApp ?? throw new ArgumentNullException(nameof(nuruApp));
@@ -142,7 +142,8 @@ public sealed class ReplMode
             new CompletionProvider(TypeConverterRegistry, LoggerFactory),
             NuruApp.Endpoints,
             ReplOptions.EnableColors,
-            ReplOptions.Prompt
+            ReplOptions.Prompt,
+            LoggerFactory
           );
       return consoleReader.ReadLine(ReplOptions.Prompt);
     }

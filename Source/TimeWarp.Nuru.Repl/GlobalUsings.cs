@@ -6,3 +6,6 @@ global using System.Text;
 global using System.Threading.Tasks;
 global using TimeWarp.Nuru;
 global using TimeWarp.Nuru.Completion;
+global using TimeWarp.Nuru.Logging;
+global using System.Collections.ObjectModel;
+global using Microsoft.Extensions.Logging;

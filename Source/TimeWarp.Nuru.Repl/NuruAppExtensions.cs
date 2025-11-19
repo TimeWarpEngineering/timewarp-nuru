@@ -65,16 +65,18 @@ public static class NuruAppExtensions
   /// return await app.RunReplAsync();
   /// </code>
   /// </example>
-  public static async Task<int> RunReplAsync(
+  public static async Task<int> RunReplAsync
+  (
     this NuruApp app,
     ReplOptions? options = null,
-    CancellationToken cancellationToken = default)
+    CancellationToken cancellationToken = default
+  )
   {
     ArgumentNullException.ThrowIfNull(app);
 
     // Use configured REPL options or provided options
     ReplOptions replOptions = options ?? app.ReplOptions ?? new ReplOptions();
-    var repl = new ReplMode(app, replOptions);
+    var repl = new ReplMode(app, replOptions, app.LoggerFactory);
 
     // Set static context for command handlers
     ReplContext.ReplMode = repl;

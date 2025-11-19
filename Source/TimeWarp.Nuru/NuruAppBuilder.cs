@@ -322,7 +322,7 @@ public class NuruAppBuilder
   public NuruAppBuilder WithAppName(string appName)
   {
     AppMetadata ??= new ApplicationMetadata();
-    AppMetadata = new ApplicationMetadata(appName, AppMetadata.Description);
+    AppMetadata = new ApplicationMetadata { Name = appName, Description = AppMetadata.Description };
     return this;
   }
 
@@ -333,7 +333,7 @@ public class NuruAppBuilder
   public NuruAppBuilder WithDescription(string description)
   {
     AppMetadata ??= new ApplicationMetadata();
-    AppMetadata = new ApplicationMetadata(AppMetadata.Name, description);
+    AppMetadata = new ApplicationMetadata { Name = AppMetadata.Name, Description = description };
     return this;
   }
 

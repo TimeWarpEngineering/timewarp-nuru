@@ -4,15 +4,26 @@ namespace TimeWarp.Nuru;
 /// Holds application metadata for help display and other features.
 /// Consolidates name and description information in a single class.
 /// </summary>
-public class ApplicationMetadata(string? name = null, string? description = null)
+public class ApplicationMetadata
 {
   /// <summary>
   /// Gets the application name.
   /// </summary>
-  public string? Name { get; } = name;
+  public string? Name { get; init; }
 
   /// <summary>
   /// Gets the application description.
   /// </summary>
-  public string? Description { get; } = description;
+  public string? Description { get; init; }
+
+  /// <summary>
+  /// Initializes application metadata with optional values.
+  /// </summary>
+  /// <param name="name">The application name.</param>
+  /// <param name="description">The application description.</param>
+  public ApplicationMetadata(string? name = null, string? description = null)
+  {
+    Name = name;
+    Description = description;
+  }
 }

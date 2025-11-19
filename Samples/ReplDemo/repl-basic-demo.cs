@@ -15,12 +15,30 @@ WriteLine();
 
 // Build a simple CLI app
 var app = new NuruAppBuilder()
-  .WithMetadata(name: "repl-demo", description: "Interactive REPL demo application for TimeWarp.Nuru framework.")
-  .AddRoute("greet {name}", (string name) => WriteLine($"Hello, {name}!"))
-  .AddRoute("status", () => WriteLine("System is running OK"))
-  .AddRoute("echo {*message}", (string[] message) => WriteLine(string.Join(" ", message)))
-  .AddRoute("add {a:int} {b:int}", (int a, int b) => WriteLine($"{a} + {b} = {a + b}"))
-  .AddRoute("time", () => WriteLine($"Current time: {DateTime.Now:HH:mm:ss}"))
+  .WithMetadata(
+    name: "repl-demo",
+    description: "Interactive REPL demo application for TimeWarp.Nuru framework."
+  )
+  .AddRoute(
+    "greet {name}", 
+    (string name) => WriteLine($"Hello, {name}!")
+  )
+  .AddRoute(
+    "status", 
+    () => WriteLine("System is running OK")
+  )
+  .AddRoute(
+    "echo {*message}", 
+    (string[] message) => WriteLine(string.Join(" ", message))
+  )
+  .AddRoute(
+    "add {a:int} {b:int}", 
+    (int a, int b) => WriteLine($"{a} + {b} = {a + b}")
+  )
+  .AddRoute(
+    "time", 
+    () => WriteLine($"Current time: {DateTime.Now:HH:mm:ss}")
+  )
   .AddReplSupport(options =>
   {
     options.Prompt = "demo> ";

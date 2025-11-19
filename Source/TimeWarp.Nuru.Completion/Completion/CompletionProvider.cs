@@ -3,6 +3,7 @@ namespace TimeWarp.Nuru.Completion;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.Extensions.Logging;
 using TimeWarp.Nuru; // Endpoint, EndpointCollection, ITypeConverterRegistry, IRouteTypeConverter
 using TimeWarp.Nuru.Parsing; // CompiledRoute, RouteMatcher, LiteralMatcher, ParameterMatcher, OptionMatcher
 
@@ -11,19 +12,22 @@ using TimeWarp.Nuru.Parsing; // CompiledRoute, RouteMatcher, LiteralMatcher, Par
 /// </summary>
 public class CompletionProvider
 {
-  private readonly ITypeConverterRegistry _typeConverterRegistry;
-
-  public CompletionProvider(ITypeConverterRegistry typeConverterRegistry)
+  private readonly ILoggerFactory? LoggerFactory;
+  private readonly ITypeConverterRegistry TypeConverterRegistry;
+  public CompletionProvider(ITypeConverterRegistry typeConverterRegistry, ILoggerFactory? loggerFactory = null)
   {
-    _typeConverterRegistry = typeConverterRegistry;
+    TypeConverterRegistry = typeConverterRegistry;
+    LoggerFactory = loggerFactory;
   }
 
   /// <summary>
   /// Get completion candidates for the given context.
   /// </summary>
-  public IEnumerable<CompletionCandidate> GetCompletions(
+  public IEnumerable<CompletionCandidate> GetCompletions
+  (
     CompletionContext context,
-    EndpointCollection endpoints)
+    EndpointCollection endpoints
+  )
   {
     ArgumentNullException.ThrowIfNull(context);
     ArgumentNullException.ThrowIfNull(endpoints);
@@ -265,7 +269,7 @@ public class CompletionProvider
   private Type? GetTypeForConstraint(string constraint)
   {
     // Try to get converter from registry
-    IRouteTypeConverter? converter = _typeConverterRegistry.GetConverterByConstraint(constraint);
+    IRouteTypeConverter? converter = TypeConverterRegistry.GetConverterByConstraint(constraint);
     if (converter is not null)
     {
       return converter.TargetType;

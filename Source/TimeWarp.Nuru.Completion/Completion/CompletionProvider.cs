@@ -35,8 +35,8 @@ public class CompletionProvider
 
     var candidates = new List<CompletionCandidate>();
 
-    // If cursor is at position 0, we're completing the first command literal
-    if (context.CursorPosition == 0 || context.Args.Length == 0)
+    // If cursor is at position 0 or 1, we're completing the first command literal
+    if (context.CursorPosition <= 1 || context.Args.Length == 0)
     {
       candidates.AddRange(GetCommandCompletions(endpoints, context.Args.ElementAtOrDefault(0) ?? ""));
       return [.. candidates];
@@ -146,7 +146,7 @@ public class CompletionProvider
       }
     }
 
-    // Now we're at cursor position - what can complete here?
+// Now we're at cursor position - what can complete here?
 
     // Always offer options
     candidates.AddRange(GetOptionCompletions(route, args));

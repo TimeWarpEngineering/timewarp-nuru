@@ -261,19 +261,13 @@ public partial class NuruApp
   }
 
   /// <summary>
-  /// Gets the default application name from the entry point.
+  /// Gets the default application name using the centralized app name detector.
   /// </summary>
   private static string GetDefaultAppName()
   {
     try
     {
-      string entryAssembly = System.Reflection.Assembly.GetEntryAssembly()?.GetName().Name ?? "nuru-app";
-      // Remove common extensions and clean up the name
-      return Path.GetFileNameWithoutExtension(entryAssembly).Replace(".", "-", StringComparison.Ordinal);
-    }
-    catch (ArgumentException)
-    {
-      return "nuru-app";
+      return AppNameDetector.GetEffectiveAppName();
     }
     catch (InvalidOperationException)
     {

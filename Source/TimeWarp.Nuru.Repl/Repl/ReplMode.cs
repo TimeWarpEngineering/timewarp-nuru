@@ -107,15 +107,24 @@ public sealed class ReplMode
 
   private void DisplayPrompt()
   {
-    if (ReplOptions.EnableColors)
-    {
-      string coloredPrompt = AnsiGreen + ReplOptions.Prompt + AnsiReset;
-      Console.Write(coloredPrompt);
-    }
-    else
-    {
-      Console.Write(ReplOptions.Prompt);
-    }
+    Console.Write(GetFormattedPrompt());
+  }
+
+  private string GetFormattedPrompt()
+  {
+    return ReplOptions.EnableColors
+      ? AnsiGreen + ReplOptions.Prompt + AnsiReset
+      : ReplOptions.Prompt;
+  }
+
+  private void RewriteLineWithPrompt(string content)
+  {
+    string prompt = GetFormattedPrompt();
+    // Clear current line and rewrite with prompt
+    Console.SetCursorPosition(0, Console.CursorTop);
+    Console.Write(new string(' ', Console.WindowWidth));
+    Console.SetCursorPosition(0, Console.CursorTop);
+    Console.Write(prompt + content);
   }
 
   private string? ReadCommandInput()
@@ -231,11 +240,7 @@ public sealed class ReplMode
         {
           historyIndex--;
           currentLine = History[historyIndex];
-          // Clear current line and rewrite
-          Console.SetCursorPosition(0, Console.CursorTop);
-          Console.Write(new string(' ', Console.WindowWidth));
-          Console.SetCursorPosition(0, Console.CursorTop);
-          Console.Write(currentLine);
+          RewriteLineWithPrompt(currentLine);
         }
       }
       else if (keyInfo.Key == ConsoleKey.DownArrow)
@@ -250,11 +255,8 @@ public sealed class ReplMode
         {
           currentLine = History[historyIndex];
         }
-        // Clear and rewrite
-        Console.SetCursorPosition(0, Console.CursorTop);
-        Console.Write(new string(' ', Console.WindowWidth));
-        Console.SetCursorPosition(0, Console.CursorTop);
-        Console.Write(currentLine);
+
+        RewriteLineWithPrompt(currentLine);
       }
       else if (keyInfo.Key == ConsoleKey.Backspace && currentLine.Length > 0)
       {

@@ -315,29 +315,6 @@ public class NuruAppBuilder
   }
 
   /// <summary>
-  /// Sets the application name for help display.
-  /// If not set, will be auto-detected from entry point.
-  /// </summary>
-  /// <param name="appName">The application name.</param>
-  public NuruAppBuilder WithAppName(string appName)
-  {
-    AppMetadata ??= new ApplicationMetadata();
-    AppMetadata = new ApplicationMetadata { Name = appName, Description = AppMetadata.Description };
-    return this;
-  }
-
-  /// <summary>
-  /// Sets the application description for help display.
-  /// </summary>
-  /// <param name="description">The application description.</param>
-  public NuruAppBuilder WithDescription(string description)
-  {
-    AppMetadata ??= new ApplicationMetadata();
-    AppMetadata = new ApplicationMetadata { Name = AppMetadata.Name, Description = description };
-    return this;
-  }
-
-  /// <summary>
   /// Registers a custom type converter for parameter conversion.
   /// </summary>
   /// <param name="converter">The type converter to register.</param>

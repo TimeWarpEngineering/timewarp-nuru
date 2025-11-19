@@ -3,20 +3,24 @@ namespace TimeWarp.Nuru.Repl.Input;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Microsoft.Extensions.Logging;
 using TimeWarp.Nuru;
 using TimeWarp.Nuru.Completion;
+using TimeWarp.Nuru.Logging;
 
 /// <summary>
 /// Provides syntax highlighting for command line input based on route patterns.
 /// </summary>
 public sealed class SyntaxHighlighter
 {
-  private readonly EndpointCollection? endpoints;
-  private readonly Dictionary<string, bool> commandCache = [];
+  private readonly EndpointCollection? Endpoints;
+  private readonly Dictionary<string, bool> CommandCache = [];
+  private readonly ILogger<SyntaxHighlighter> Logger;
 
-  public SyntaxHighlighter(EndpointCollection? endpoints = null)
+  public SyntaxHighlighter(EndpointCollection? endpoints = null, ILogger<SyntaxHighlighter>? logger = null)
   {
-    this.endpoints = endpoints;
+    Endpoints = endpoints;
+    Logger = logger ?? throw new ArgumentNullException(nameof(logger));
   }
 
   public string Highlight(string input)
@@ -24,15 +28,22 @@ public sealed class SyntaxHighlighter
     if (string.IsNullOrEmpty(input))
       return input;
 
+    ReplLoggerMessages.SyntaxHighlightingStarted(Logger, input, null);
+
     List<CommandLineToken> tokens = CommandLineParser.ParseWithPositions(input);
+    ReplLoggerMessages.TokensGenerated(Logger, tokens.Count, null);
+
     var highlighted = new StringBuilder();
 
     foreach (CommandLineToken token in tokens)
     {
+      ReplLoggerMessages.TokenProcessed(Logger, token.Type.ToString(), token.Text, null);
       highlighted.Append(GetHighlightedToken(token));
     }
 
-    return highlighted.ToString();
+    string result = highlighted.ToString();
+    ReplLoggerMessages.HighlightedTextGenerated(Logger, result, null);
+    return result;
   }
 
   public static int GetVisualLength(string input)
@@ -62,7 +73,7 @@ public sealed class SyntaxHighlighter
   private string DetermineArgumentHighlighting(CommandLineToken token)
   {
     // Check if this argument is actually a command
-    if (endpoints is not null && IsKnownCommand(token.Text))
+    if (Endpoints is not null && IsKnownCommand(token.Text))
     {
       return SyntaxColors.CommandColor + token.Text + AnsiColors.Reset;
     }
@@ -79,14 +90,22 @@ public sealed class SyntaxHighlighter
 
   private bool IsKnownCommand(string token)
   {
-    if (commandCache.TryGetValue(token, out bool cached))
+    if (CommandCache.TryGetValue(token, out bool cached))
+    {
+      ReplLoggerMessages.CommandRecognitionChecked(Logger, token, cached, null);
       return cached;
+    }
 
-    bool isKnown = endpoints!.Any(e =>
-        e.RoutePattern.StartsWith(token + " ", StringComparison.Ordinal) ||
-        e.RoutePattern == token);
+    bool isKnown =
+      Endpoints!.Any
+      (
+        e =>
+          e.RoutePattern.StartsWith(token + " ", StringComparison.Ordinal) ||
+          e.RoutePattern == token
+      );
 
-    commandCache[token] = isKnown;
+    CommandCache[token] = isKnown;
+    ReplLoggerMessages.CommandRecognitionChecked(Logger, token, isKnown, null);
     return isKnown;
   }
 }

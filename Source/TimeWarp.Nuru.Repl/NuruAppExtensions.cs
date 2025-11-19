@@ -29,7 +29,7 @@ public static class NuruAppExtensions
       .AddRoute("clear-history", () => ReplContext.ReplMode?.ClearHistory(), "Clear command history")
       .AddAutoHelp();
 
-      return builder;
+    return builder;
   }
 
   /// <summary>

@@ -2,6 +2,8 @@ namespace TimeWarp.Nuru.Repl;
 
 using System.Diagnostics;
 using TimeWarp.Nuru;
+using TimeWarp.Nuru.Completion;
+using TimeWarp.Nuru.Repl.Input;
 
 /// <summary>
 /// Provides REPL (Read-Eval-Print Loop) mode for interactive command execution.
@@ -79,7 +81,7 @@ public sealed class ReplMode
   private async Task<int> ProcessSingleCommandAsync()
   {
     // Display prompt
-    DisplayPrompt();
+    // DisplayPrompt();
 
     // Read input
     string? input = ReadCommandInput();
@@ -129,9 +131,21 @@ public sealed class ReplMode
 
   private string? ReadCommandInput()
   {
-    return ReplOptions.EnableArrowHistory
-      ? ReadInputWithHistory()
-      : Console.ReadLine();
+    if (ReplOptions.EnableArrowHistory)
+    {
+      var consoleReader =
+        new ReplConsoleReader
+        (
+          History,
+          new CompletionProvider(TypeConverterRegistry),
+          NuruApp.Endpoints,
+          ReplOptions.EnableColors,
+          ReplOptions.Prompt
+        );
+      return consoleReader.ReadLine(ReplOptions.Prompt);
+    }
+
+    return Console.ReadLine();
   }
 
   private async Task<int> ExecuteCommandAsync(string[] args)

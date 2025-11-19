@@ -15,17 +15,13 @@ public sealed class ReplConsoleReader
   private readonly CompletionProvider CompletionProvider;
   private readonly EndpointCollection Endpoints;
   private readonly bool EnableColors;
-
-  private string CurrentLine = string.Empty;
+  private readonly string Prompt;
+  private readonly SyntaxHighlighter SyntaxHighlighter;
+  private string UserInput = string.Empty;
   private int CursorPosition;
   private int HistoryIndex = -1;
   private List<string> CompletionCandidates = [];
   private int CompletionIndex = -1;
-
-  // ANSI escape codes for colored terminal output
-  private const string AnsiReset = "\x1b[0m";
-  private const string AnsiGreen = "\x1b[32m";
-  private const string AnsiGray = "\x1b[90m";
 
   /// <summary>
   /// Creates a new REPL console reader.
@@ -34,16 +30,21 @@ public sealed class ReplConsoleReader
   /// <param name="completionProvider">The completion provider for tab completion.</param>
   /// <param name="endpoints">The endpoint collection for completion.</param>
   /// <param name="enableColors">Whether to enable colored output.</param>
-  public ReplConsoleReader(
+  public ReplConsoleReader
+  (
     IEnumerable<string> history,
     CompletionProvider completionProvider,
     EndpointCollection endpoints,
-    bool enableColors = true)
+    bool enableColors,
+    string prompt
+  )
   {
     History = history?.ToList() ?? throw new ArgumentNullException(nameof(history));
     CompletionProvider = completionProvider ?? throw new ArgumentNullException(nameof(completionProvider));
     Endpoints = endpoints ?? throw new ArgumentNullException(nameof(endpoints));
     EnableColors = enableColors;
+    Prompt = prompt;
+    SyntaxHighlighter = new SyntaxHighlighter(endpoints);
   }
 
   /// <summary>
@@ -53,23 +54,26 @@ public sealed class ReplConsoleReader
   /// <returns>The input line from user.</returns>
   public string ReadLine(string prompt)
   {
-    System.Console.Write(GetFormattedPrompt(prompt));
+    ArgumentException.ThrowIfNullOrEmpty(prompt);
 
-    CurrentLine = string.Empty;
-    CursorPosition = 0;
+    string formattedPrompt = GetFormattedPrompt(prompt);
+    Console.Write(formattedPrompt);
+
+    UserInput = string.Empty;  // Store only user input, not prompt
+    CursorPosition = 0;        // Position relative to user input only
     HistoryIndex = History.Count;
     CompletionCandidates.Clear();
     CompletionIndex = -1;
 
     while (true)
     {
-      ConsoleKeyInfo keyInfo = System.Console.ReadKey(true);
+      ConsoleKeyInfo keyInfo = Console.ReadKey(true);
 
       switch (keyInfo.Key)
       {
         case ConsoleKey.Enter:
           HandleEnter();
-          return CurrentLine;
+          return UserInput;
 
         case ConsoleKey.Tab:
           HandleTabCompletion(keyInfo.Modifiers.HasFlag(ConsoleModifiers.Shift));
@@ -124,19 +128,19 @@ public sealed class ReplConsoleReader
 
   private string GetFormattedPrompt(string prompt)
   {
-    return EnableColors ? AnsiGreen + prompt + AnsiReset : prompt;
+    return EnableColors ? AnsiColors.Green + prompt + AnsiColors.Reset : prompt;
   }
 
   private void HandleEnter()
   {
-    System.Console.WriteLine();
+    Console.WriteLine();
 
     // Add to history if not empty and not duplicate of last entry
-    if (!string.IsNullOrWhiteSpace(CurrentLine))
+    if (!string.IsNullOrWhiteSpace(UserInput))
     {
-      if (History.Count == 0 || History[History.Count - 1] != CurrentLine)
+      if (History.Count == 0 || History[^1] != UserInput)
       {
-        History.Add(CurrentLine);
+        History.Add(UserInput);
       }
     }
   }
@@ -144,7 +148,7 @@ public sealed class ReplConsoleReader
   private void HandleTabCompletion(bool reverse)
   {
     // Parse current line into arguments for completion context
-    string[] args = CommandLineParser.Parse(CurrentLine[..CursorPosition]);
+    string[] args = CommandLineParser.Parse(UserInput[..CursorPosition]);
 
     // Build completion context
     var context = new CompletionContext(
@@ -191,10 +195,10 @@ public sealed class ReplConsoleReader
   private void ApplyCompletion(CompletionCandidate candidate)
   {
     // Find the start position of the word to complete
-    int wordStart = FindWordStart(CurrentLine, CursorPosition);
+    int wordStart = FindWordStart(UserInput, CursorPosition);
 
     // Replace the word with the completion
-    CurrentLine = CurrentLine[..wordStart] + candidate.Value + CurrentLine[CursorPosition..];
+    UserInput = UserInput[..wordStart] + candidate.Value + UserInput[CursorPosition..];
     CursorPosition = wordStart + candidate.Value.Length;
 
     // Redraw the line
@@ -215,44 +219,44 @@ public sealed class ReplConsoleReader
 
   private void ShowCompletionCandidates(List<CompletionCandidate> candidates)
   {
-    System.Console.WriteLine();
+    Console.WriteLine();
     if (EnableColors)
     {
-      System.Console.WriteLine(AnsiGray + "Available completions:" + AnsiReset);
+      Console.WriteLine(AnsiColors.Gray + "Available completions:" + AnsiColors.Reset);
     }
     else
     {
-      System.Console.WriteLine("Available completions:");
+      Console.WriteLine("Available completions:");
     }
 
     // Display nicely in columns
     int maxLen = candidates.Max(c => c.Value.Length) + 2;
-    int columns = Math.Max(1, System.Console.WindowWidth / maxLen);
+    int columns = Math.Max(1, Console.WindowWidth / maxLen);
 
     for (int i = 0; i < candidates.Count; i++)
     {
       CompletionCandidate candidate = candidates[i];
       string padded = candidate.Value.PadRight(maxLen);
 
-      System.Console.Write(padded);
+      Console.Write(padded);
 
       if ((i + 1) % columns == 0)
-        System.Console.WriteLine();
+        Console.WriteLine();
     }
 
     if (candidates.Count % columns != 0)
-      System.Console.WriteLine();
+      Console.WriteLine();
 
     // Redraw the prompt and current line
-    System.Console.Write(GetFormattedPrompt("> "));
-    System.Console.Write(CurrentLine);
+    Console.Write(GetFormattedPrompt(Prompt));
+    Console.Write(UserInput);
   }
 
   private void HandleBackspace()
   {
     if (CursorPosition > 0)
     {
-      CurrentLine = CurrentLine[..(CursorPosition - 1)] + CurrentLine[CursorPosition..];
+      UserInput = UserInput[..(CursorPosition - 1)] + UserInput[CursorPosition..];
       CursorPosition--;
       RedrawLine();
     }
@@ -260,9 +264,9 @@ public sealed class ReplConsoleReader
 
   private void HandleDelete()
   {
-    if (CursorPosition < CurrentLine.Length)
+    if (CursorPosition < UserInput.Length)
     {
-      CurrentLine = CurrentLine[..CursorPosition] + CurrentLine[(CursorPosition + 1)..];
+      UserInput = UserInput[..CursorPosition] + UserInput[(CursorPosition + 1)..];
       RedrawLine();
     }
   }
@@ -273,9 +277,9 @@ public sealed class ReplConsoleReader
     {
       // Move to previous word
       int newPos = CursorPosition;
-      while (newPos > 0 && char.IsWhiteSpace(CurrentLine[newPos - 1]))
+      while (newPos > 0 && char.IsWhiteSpace(UserInput[newPos - 1]))
         newPos--;
-      while (newPos > 0 && !char.IsWhiteSpace(CurrentLine[newPos - 1]))
+      while (newPos > 0 && !char.IsWhiteSpace(UserInput[newPos - 1]))
         newPos--;
       CursorPosition = newPos;
     }
@@ -295,16 +299,16 @@ public sealed class ReplConsoleReader
     {
       // Move to next word
       int newPos = CursorPosition;
-      while (newPos < CurrentLine.Length && !char.IsWhiteSpace(CurrentLine[newPos]))
+      while (newPos < UserInput.Length && !char.IsWhiteSpace(UserInput[newPos]))
         newPos++;
-      while (newPos < CurrentLine.Length && char.IsWhiteSpace(CurrentLine[newPos]))
+      while (newPos < UserInput.Length && char.IsWhiteSpace(UserInput[newPos]))
         newPos++;
       CursorPosition = newPos;
     }
     else
     {
       // Move one character right
-      if (CursorPosition < CurrentLine.Length)
+      if (CursorPosition < UserInput.Length)
         CursorPosition++;
     }
 
@@ -319,7 +323,7 @@ public sealed class ReplConsoleReader
 
   private void HandleEnd()
   {
-    CursorPosition = CurrentLine.Length;
+    CursorPosition = UserInput.Length;
     UpdateCursorPosition();
   }
 
@@ -328,8 +332,8 @@ public sealed class ReplConsoleReader
     if (HistoryIndex > 0)
     {
       HistoryIndex--;
-      CurrentLine = History[HistoryIndex];
-      CursorPosition = CurrentLine.Length;
+      UserInput = History[HistoryIndex];
+      CursorPosition = UserInput.Length;
       RedrawLine();
     }
   }
@@ -339,14 +343,14 @@ public sealed class ReplConsoleReader
     if (HistoryIndex < History.Count - 1)
     {
       HistoryIndex++;
-      CurrentLine = History[HistoryIndex];
-      CursorPosition = CurrentLine.Length;
+      UserInput = History[HistoryIndex];
+      CursorPosition = UserInput.Length;
       RedrawLine();
     }
     else if (HistoryIndex == History.Count - 1)
     {
       HistoryIndex = History.Count;
-      CurrentLine = string.Empty;
+      UserInput = string.Empty;
       CursorPosition = 0;
       RedrawLine();
     }
@@ -361,7 +365,7 @@ public sealed class ReplConsoleReader
 
   private void HandleCharacter(char charToInsert)
   {
-    CurrentLine = CurrentLine[..CursorPosition] + charToInsert + CurrentLine[CursorPosition..];
+    UserInput = UserInput[..CursorPosition] + charToInsert + UserInput[CursorPosition..];
     CursorPosition++;
     RedrawLine();
   }
@@ -369,17 +373,26 @@ public sealed class ReplConsoleReader
   private void RedrawLine()
   {
     // Move cursor to beginning of line
-    System.Console.SetCursorPosition(0, System.Console.CursorTop);
+    Console.SetCursorPosition(0, Console.CursorTop);
 
     // Clear the line
-    System.Console.Write(new string(' ', System.Console.WindowWidth));
+    Console.Write(new string(' ', Console.WindowWidth));
 
     // Move back to beginning
-    System.Console.SetCursorPosition(0, System.Console.CursorTop);
+    Console.SetCursorPosition(0, Console.CursorTop);
 
     // Redraw the prompt and current line
-    System.Console.Write(GetFormattedPrompt("> "));
-    System.Console.Write(CurrentLine);
+    Console.Write(GetFormattedPrompt(Prompt));
+
+    if (EnableColors && Endpoints is not null)
+    {
+      string highlightedText = SyntaxHighlighter.Highlight(UserInput);
+      Console.Write(highlightedText);
+    }
+    else
+    {
+      Console.Write(UserInput);
+    }
 
     // Update cursor position
     UpdateCursorPosition();
@@ -388,13 +401,13 @@ public sealed class ReplConsoleReader
   private void UpdateCursorPosition()
   {
     // Calculate desired cursor position (after prompt)
-    int promptLength = 2; // "> " length
+    int promptLength = Prompt.Length; // Use actual prompt length
     int desiredLeft = promptLength + CursorPosition;
 
     // Set cursor position if within bounds
-    if (desiredLeft < System.Console.WindowWidth)
+    if (desiredLeft < Console.WindowWidth)
     {
-      System.Console.SetCursorPosition(desiredLeft, System.Console.CursorTop);
+      Console.SetCursorPosition(desiredLeft, Console.CursorTop);
     }
   }
 }

@@ -1,8 +1,5 @@
 # Dynamic Shell Completion (Optional Enhancement)
 
-## Status: BACKLOG
-## Priority: Low
-## Category: Feature Enhancement - Optional
 ## Related Issue: [#30](https://github.com/TimeWarpEngineering/timewarp-nuru/issues/30)
 ## Depends On: Task 025 (Shell Tab Completion)
 

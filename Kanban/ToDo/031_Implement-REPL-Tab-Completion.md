@@ -1,7 +1,5 @@
 # Task 031: Implement REPL Tab Completion
 
-## Category: Feature Enhancement
-
 ## Problem
 
 TimeWarp.Nuru has a working REPL mode (Task 027) but lacks in-REPL tab completion. Users expect tab completion in interactive sessions to discover commands, parameters, and options without leaving the REPL environment.

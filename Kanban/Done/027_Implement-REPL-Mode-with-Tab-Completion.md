@@ -1,7 +1,5 @@
 # Implement Interactive REPL Mode with Tab Completion
 
-## Category: Feature Enhancement
-
 ## REPL Tab Completion Limitation
 
 **Tab completion in REPL is not implemented** - this feature has been split into **Task 031: Implement REPL Tab Completion** due to technical challenges:

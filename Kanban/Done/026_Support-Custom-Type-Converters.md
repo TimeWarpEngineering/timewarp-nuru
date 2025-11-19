@@ -1,6 +1,5 @@
 # Support Custom Type Converters and Add Common CLI Types
 
-## Category: Bug Fix + Feature Enhancement
 ## Related Issue: [#62](https://github.com/TimeWarpEngineering/timewarp-nuru/issues/62)
 
 ## Problem

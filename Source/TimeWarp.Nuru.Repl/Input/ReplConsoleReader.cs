@@ -3,8 +3,10 @@ namespace TimeWarp.Nuru.Repl.Input;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.Extensions.Logging;
 using TimeWarp.Nuru;
 using TimeWarp.Nuru.Completion;
+using TimeWarp.Nuru.Logging;
 
 /// <summary>
 /// Provides advanced console input handling for REPL mode with tab completion and history navigation.
@@ -17,6 +19,8 @@ public sealed class ReplConsoleReader
   private readonly bool EnableColors;
   private readonly string Prompt;
   private readonly SyntaxHighlighter SyntaxHighlighter;
+  private readonly ILogger<ReplConsoleReader> Logger;
+  private readonly ILoggerFactory? LoggerFactory;
   private string UserInput = string.Empty;
   private int CursorPosition;
   private int HistoryIndex = -1;
@@ -36,7 +40,8 @@ public sealed class ReplConsoleReader
     CompletionProvider completionProvider,
     EndpointCollection endpoints,
     bool enableColors,
-    string prompt
+    string prompt,
+    ILoggerFactory? loggerFactory = null
   )
   {
     History = history?.ToList() ?? throw new ArgumentNullException(nameof(history));
@@ -45,6 +50,8 @@ public sealed class ReplConsoleReader
     EnableColors = enableColors;
     Prompt = prompt;
     SyntaxHighlighter = new SyntaxHighlighter(endpoints);
+    LoggerFactory = loggerFactory;
+    Logger = LoggerFactory?.CreateLogger<ReplConsoleReader>() ?? throw new ArgumentNullException(nameof(loggerFactory));
   }
 
   /// <summary>
@@ -55,6 +62,8 @@ public sealed class ReplConsoleReader
   public string ReadLine(string prompt)
   {
     ArgumentException.ThrowIfNullOrEmpty(prompt);
+
+    ReplLoggerMessages.ReadLineStarted(Logger, prompt, History.Count, null);
 
     string formattedPrompt = GetFormattedPrompt(prompt);
     Console.Write(formattedPrompt);
@@ -68,6 +77,8 @@ public sealed class ReplConsoleReader
     while (true)
     {
       ConsoleKeyInfo keyInfo = Console.ReadKey(true);
+
+      ReplLoggerMessages.KeyPressed(Logger, keyInfo.Key.ToString(), CursorPosition, null);
 
       switch (keyInfo.Key)
       {
@@ -150,6 +161,8 @@ public sealed class ReplConsoleReader
     // Parse current line into arguments for completion context
     string[] args = CommandLineParser.Parse(UserInput[..CursorPosition]);
 
+    ReplLoggerMessages.TabCompletionTriggered(Logger, UserInput, CursorPosition, args, null);
+
     // Build completion context
     var context = new CompletionContext(
       Args: args,
@@ -157,10 +170,14 @@ public sealed class ReplConsoleReader
       Endpoints: Endpoints
     );
 
+    ReplLoggerMessages.CompletionContextCreated(Logger, args.Length, null);
+
     // Get completion candidates
 #pragma warning disable IDE0007 // Use implicit type
     var candidates = CompletionProvider.GetCompletions(context, Endpoints).ToList();
 #pragma warning restore IDE0007 // Use implicit type
+
+    ReplLoggerMessages.CompletionCandidatesGenerated(Logger, candidates.Count, null);
 
     if (candidates.Count == 0)
       return;
@@ -187,6 +204,7 @@ public sealed class ReplConsoleReader
           ? (CompletionIndex - 1 + candidates.Count) % candidates.Count
           : (CompletionIndex + 1) % candidates.Count;
 
+        ReplLoggerMessages.CompletionCycling(Logger, CompletionIndex, candidates.Count, null);
         ApplyCompletion(candidates[CompletionIndex]);
       }
     }
@@ -197,10 +215,13 @@ public sealed class ReplConsoleReader
     // Find the start position of the word to complete
     int wordStart = FindWordStart(UserInput, CursorPosition);
 
+    ReplLoggerMessages.CompletionApplied(Logger, candidate.Value, wordStart, null);
+
     // Replace the word with the completion
     UserInput = UserInput[..wordStart] + candidate.Value + UserInput[CursorPosition..];
     CursorPosition = wordStart + candidate.Value.Length;
 
+    ReplLoggerMessages.UserInputChanged(Logger, UserInput, CursorPosition, null);
     // Redraw the line
     RedrawLine();
   }
@@ -219,6 +240,8 @@ public sealed class ReplConsoleReader
 
   private void ShowCompletionCandidates(List<CompletionCandidate> candidates)
   {
+    ReplLoggerMessages.ShowCompletionCandidatesStarted(Logger, UserInput, null);
+
     Console.WriteLine();
     if (EnableColors)
     {
@@ -238,6 +261,8 @@ public sealed class ReplConsoleReader
       CompletionCandidate candidate = candidates[i];
       string padded = candidate.Value.PadRight(maxLen);
 
+      ReplLoggerMessages.CompletionCandidateDetails(Logger, candidate.Value, null);
+
       Console.Write(padded);
 
       if ((i + 1) % columns == 0)
@@ -256,8 +281,12 @@ public sealed class ReplConsoleReader
   {
     if (CursorPosition > 0)
     {
+      ReplLoggerMessages.BackspacePressed(Logger, CursorPosition, null);
+
       UserInput = UserInput[..(CursorPosition - 1)] + UserInput[CursorPosition..];
       CursorPosition--;
+
+      ReplLoggerMessages.UserInputChanged(Logger, UserInput, CursorPosition, null);
       RedrawLine();
     }
   }
@@ -266,7 +295,11 @@ public sealed class ReplConsoleReader
   {
     if (CursorPosition < UserInput.Length)
     {
+      ReplLoggerMessages.DeletePressed(Logger, CursorPosition, null);
+
       UserInput = UserInput[..CursorPosition] + UserInput[(CursorPosition + 1)..];
+
+      ReplLoggerMessages.UserInputChanged(Logger, UserInput, CursorPosition, null);
       RedrawLine();
     }
   }
@@ -365,17 +398,23 @@ public sealed class ReplConsoleReader
 
   private void HandleCharacter(char charToInsert)
   {
+    ReplLoggerMessages.CharacterInserted(Logger, charToInsert, CursorPosition, null);
+
     UserInput = UserInput[..CursorPosition] + charToInsert + UserInput[CursorPosition..];
     CursorPosition++;
+
+    ReplLoggerMessages.UserInputChanged(Logger, UserInput, CursorPosition, null);
     RedrawLine();
   }
 
   private void RedrawLine()
   {
+    ReplLoggerMessages.LineRedrawn(Logger, UserInput, null);
+
     // Move cursor to beginning of line
     Console.SetCursorPosition(0, Console.CursorTop);
 
-    // Clear the line
+    // Clear line
     Console.Write(new string(' ', Console.WindowWidth));
 
     // Move back to beginning
@@ -396,18 +435,20 @@ public sealed class ReplConsoleReader
 
     // Update cursor position
     UpdateCursorPosition();
-  }
+}
 
-  private void UpdateCursorPosition()
+private void UpdateCursorPosition()
+{
+  // Calculate desired cursor position (after prompt)
+  int promptLength = Prompt.Length; // Use actual prompt length
+  int desiredLeft = promptLength + CursorPosition;
+
+  ReplLoggerMessages.CursorPositionUpdated(Logger, promptLength, CursorPosition, null);
+
+  // Set cursor position if within bounds
+  if (desiredLeft < Console.WindowWidth)
   {
-    // Calculate desired cursor position (after prompt)
-    int promptLength = Prompt.Length; // Use actual prompt length
-    int desiredLeft = promptLength + CursorPosition;
-
-    // Set cursor position if within bounds
-    if (desiredLeft < Console.WindowWidth)
-    {
-      Console.SetCursorPosition(desiredLeft, Console.CursorTop);
-    }
+    Console.SetCursorPosition(desiredLeft, Console.CursorTop);
   }
+}
 }

@@ -1,8 +1,5 @@
 namespace TimeWarp.Nuru;
 
-using Microsoft.Extensions.Logging;
-using System.Text.RegularExpressions;
-
 /// <summary>
 /// A unified CLI app that supports both direct execution and dependency injection.
 /// </summary>
@@ -10,13 +7,11 @@ public partial class NuruApp
 {
   private readonly IServiceProvider? ServiceProvider;
   private readonly MediatorExecutor? MediatorExecutor;
-  private readonly ILoggerFactory LoggerFactory;
 
   /// <summary>
-  /// Regex pattern to match .NET configuration overrides (e.g., --Logging:LogLevel:Default=Debug).
-  /// Pattern requires colon to appear in the configuration path structure, not just in option values.
+  /// Gets the logger factory.
   /// </summary>
-  // private static readonly Regex ConfigOverridePattern = ConfigurationOverrideRegex();
+  public ILoggerFactory LoggerFactory { get; }
 
   /// <summary>
   /// Gets the collection of registered endpoints.

@@ -2,6 +2,7 @@
 global using System.Diagnostics;
 global using System.IO;
 global using System.Net;
+global using System.Text.RegularExpressions;
 // Microsoft namespaces
 global using Microsoft.Extensions.Configuration;
 global using Microsoft.Extensions.DependencyInjection;

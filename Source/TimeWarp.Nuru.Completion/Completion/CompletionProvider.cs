@@ -2,6 +2,7 @@ namespace TimeWarp.Nuru.Completion;
 
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using Microsoft.Extensions.Logging;
 using TimeWarp.Nuru; // Endpoint, EndpointCollection, ITypeConverterRegistry, IRouteTypeConverter
@@ -23,7 +24,7 @@ public class CompletionProvider
   /// <summary>
   /// Get completion candidates for the given context.
   /// </summary>
-  public IEnumerable<CompletionCandidate> GetCompletions
+  public ReadOnlyCollection<CompletionCandidate> GetCompletions
   (
     CompletionContext context,
     EndpointCollection endpoints
@@ -38,7 +39,7 @@ public class CompletionProvider
     if (context.CursorPosition == 0 || context.Args.Length == 0)
     {
       candidates.AddRange(GetCommandCompletions(endpoints, context.Args.ElementAtOrDefault(0) ?? ""));
-      return candidates;
+      return [.. candidates];
     }
 
     // Get all possible routes and try to match against current args
@@ -52,10 +53,13 @@ public class CompletionProvider
     }
 
     // Remove duplicates
-    return candidates
+    return
+    [
+      .. candidates
       .GroupBy(c => c.Value)
       .Select(g => g.First())
-      .OrderBy(c => c.Value);
+      .OrderBy(c => c.Value)
+    ];
   }
 
   /// <summary>

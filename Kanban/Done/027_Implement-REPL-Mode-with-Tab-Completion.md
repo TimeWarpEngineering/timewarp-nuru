@@ -1,8 +1,17 @@
 # Implement Interactive REPL Mode with Tab Completion
 
-## Status: IN PROGRESS (Phase 1 Complete)
-## Priority: Medium
+## Status: COMPLETED ✅
 ## Category: Feature Enhancement
+
+## REPL Tab Completion Limitation
+
+**Tab completion in REPL is not implemented** - this feature has been split into **Task 031: Implement REPL Tab Completion** due to technical challenges:
+
+- ReadLine library is abandoned (7+ years old)  
+- Spectre.Console doesn't have native tab completion
+- Manual `Console.ReadKey()` implementation would require 200-300 lines of fragile code
+
+**Current REPL functionality works well** for interactive command execution, history, and help. Tab completion remains available via shell integration (Task 025).
 
 ## Problem
 

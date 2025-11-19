@@ -148,8 +148,15 @@ public class CompletionProvider
 
 // Now we're at cursor position - what can complete here?
 
-    // Always offer options
-    candidates.AddRange(GetOptionCompletions(route, args));
+// Get current word being completed
+    string currentWord = cursorPosition < args.Length ? args[cursorPosition] :
+                          (cursorPosition > 0 && args.Length > cursorPosition ? args[cursorPosition - 1] : "");
+
+    // Only offer options if current word starts with option indicator
+    if (currentWord.StartsWith('-'))
+    {
+      candidates.AddRange(GetOptionCompletions(route, args, currentWord));
+    }
 
     // If we have a remaining segment, offer completions for it
     if (segmentIndex < route.Segments.Count)
@@ -184,15 +191,20 @@ public class CompletionProvider
   private static IEnumerable<CompletionCandidate> GetOptionCompletions
   (
     CompiledRoute route,
-    string[] args
+    string[] args,
+    string currentWord
   )
   {
     var usedOptions = new HashSet<string>(args);
 
     foreach (OptionMatcher option in route.OptionMatchers)
     {
-      // Only suggest if not already used (unless repeatable)
-      if (!usedOptions.Contains(option.MatchPattern) || option.IsRepeated)
+      // Only suggest if not already used (unless repeatable) AND matches current word
+      bool matchesCurrentWord = string.IsNullOrEmpty(currentWord) ||
+        option.MatchPattern.StartsWith(currentWord, StringComparison.OrdinalIgnoreCase) ||
+        (!string.IsNullOrEmpty(option.AlternateForm) && option.AlternateForm.StartsWith(currentWord, StringComparison.OrdinalIgnoreCase));
+
+      if ((!usedOptions.Contains(option.MatchPattern) || option.IsRepeated) && matchesCurrentWord)
       {
         yield return new CompletionCandidate(
           option.MatchPattern,
@@ -200,8 +212,10 @@ public class CompletionProvider
           CompletionType.Option
         );
 
-        // Also suggest alternate form if present
-        if (!string.IsNullOrEmpty(option.AlternateForm))
+        // Also suggest alternate form if present and matches current word
+        if (!string.IsNullOrEmpty(option.AlternateForm) &&
+            (!usedOptions.Contains(option.AlternateForm) || option.IsRepeated) &&
+            option.AlternateForm.StartsWith(currentWord, StringComparison.OrdinalIgnoreCase))
         {
           yield return new CompletionCandidate(
             option.AlternateForm,

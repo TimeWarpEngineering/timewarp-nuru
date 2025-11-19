@@ -9,12 +9,12 @@ public class ApplicationMetadata
   /// <summary>
   /// Gets the application name.
   /// </summary>
-  public string? Name { get; init; }
+  public string? Name { get; }
 
   /// <summary>
   /// Gets the application description.
   /// </summary>
-  public string? Description { get; init; }
+  public string? Description { get; }
 
   /// <summary>
   /// Initializes application metadata with optional values.

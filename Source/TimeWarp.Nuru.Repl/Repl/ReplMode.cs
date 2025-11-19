@@ -1,8 +1,10 @@
 namespace TimeWarp.Nuru.Repl;
 
 using System.Diagnostics;
+using Microsoft.Extensions.Logging;
 using TimeWarp.Nuru;
 using TimeWarp.Nuru.Completion;
+using TimeWarp.Nuru.Logging;
 using TimeWarp.Nuru.Repl.Input;
 
 /// <summary>
@@ -10,29 +12,29 @@ using TimeWarp.Nuru.Repl.Input;
 /// </summary>
 public sealed class ReplMode
 {
+  private readonly ILoggerFactory? LoggerFactory;
   private readonly NuruApp NuruApp;
   private readonly ReplOptions ReplOptions;
   private readonly List<string> History = [];
   private readonly ITypeConverterRegistry TypeConverterRegistry;
   private bool Running;
 
-  // ANSI escape codes for colored terminal output
-  private const string AnsiReset = "\x1b[0m";
-  private const string AnsiGreen = "\x1b[32m";
-  private const string AnsiRed = "\x1b[31m";
-  private const string AnsiGray = "\x1b[90m";
-  private const string AnsiBrightBlue = "\x1b[1;34m";
-
   /// <summary>
   /// Creates a new REPL mode instance.
   /// </summary>
   /// <param name="nuruApp">The NuruApp instance to execute commands against.</param>
   /// <param name="replOptions">Optional configuration for the REPL.</param>
-  public ReplMode(NuruApp nuruApp, ReplOptions? replOptions = null)
+  public ReplMode
+  (
+    NuruApp nuruApp,
+    ReplOptions? replOptions = null,
+    ILoggerFactory? loggerFactory = null
+  )
   {
     NuruApp = nuruApp ?? throw new ArgumentNullException(nameof(nuruApp));
     ReplOptions = replOptions ?? new ReplOptions();
     TypeConverterRegistry = nuruApp.TypeConverterRegistry;
+    LoggerFactory = loggerFactory;
   }
 
   /// <summary>
@@ -115,7 +117,7 @@ public sealed class ReplMode
   private string GetFormattedPrompt()
   {
     return ReplOptions.EnableColors
-      ? AnsiGreen + ReplOptions.Prompt + AnsiReset
+      ? AnsiColors.Green + ReplOptions.Prompt + AnsiColors.Reset
       : ReplOptions.Prompt;
   }
 
@@ -135,13 +137,13 @@ public sealed class ReplMode
     {
       var consoleReader =
         new ReplConsoleReader
-        (
-          History,
-          new CompletionProvider(TypeConverterRegistry),
-          NuruApp.Endpoints,
-          ReplOptions.EnableColors,
-          ReplOptions.Prompt
-        );
+          (
+            History,
+            new CompletionProvider(TypeConverterRegistry, LoggerFactory),
+            NuruApp.Endpoints,
+            ReplOptions.EnableColors,
+            ReplOptions.Prompt
+          );
       return consoleReader.ReadLine(ReplOptions.Prompt);
     }
 
@@ -190,7 +192,7 @@ public sealed class ReplMode
     if (ReplOptions.ShowExitCode && success)
     {
       if (ReplOptions.EnableColors)
-        Console.WriteLine(AnsiGray + $"Exit code: {exitCode}" + AnsiReset);
+        Console.WriteLine(AnsiColors.Gray + $"Exit code: {exitCode}" + AnsiColors.Reset);
       else
         Console.WriteLine($"Exit code: {exitCode}");
     }
@@ -198,7 +200,7 @@ public sealed class ReplMode
     if (ReplOptions.ShowTiming)
     {
       if (ReplOptions.EnableColors)
-        Console.WriteLine(AnsiGray + $"({elapsedMs}ms)" + AnsiReset);
+        Console.WriteLine(AnsiColors.Gray + $"({elapsedMs}ms)" + AnsiColors.Reset);
       else
         Console.WriteLine($"({elapsedMs}ms)");
     }
@@ -207,7 +209,7 @@ public sealed class ReplMode
     {
       string message = errorMessage ?? $"Command failed with exit code {exitCode}";
       if (ReplOptions.EnableColors)
-        Console.WriteLine(AnsiRed + message + AnsiReset);
+        Console.WriteLine(AnsiColors.Red + message + AnsiColors.Reset);
       else
         Console.WriteLine(message);
     }
@@ -215,7 +217,7 @@ public sealed class ReplMode
     {
       string message = $"Command failed with exit code {exitCode}. Exiting REPL.";
       if (ReplOptions.EnableColors)
-        Console.WriteLine(AnsiRed + message + AnsiReset);
+        Console.WriteLine(AnsiColors.Red + message + AnsiColors.Reset);
       else
         Console.WriteLine(message);
     }
@@ -300,7 +302,7 @@ public sealed class ReplMode
   {
     if (ReplOptions.EnableColors)
     {
-      Console.WriteLine(AnsiBrightBlue + "REPL Commands:" + AnsiReset);
+      Console.WriteLine(AnsiColors.BrightBlue + "REPL Commands:" + AnsiColors.Reset);
     }
     else
     {

@@ -34,6 +34,16 @@ public partial class NuruApp
   public ReplOptions? ReplOptions { get; }
 
   /// <summary>
+  /// Gets the application description for help display.
+  /// </summary>
+  public string? AppDescription { get; }
+
+  /// <summary>
+  /// Gets the application name for help display.
+  /// </summary>
+  public string AppName { get; }
+
+  /// <summary>
   /// Direct constructor - no dependency injection.
   /// </summary>
   public NuruApp
@@ -41,13 +51,17 @@ public partial class NuruApp
     EndpointCollection endpoints,
     ITypeConverterRegistry typeConverterRegistry,
     ILoggerFactory? loggerFactory = null,
-    ReplOptions? replOptions = null
+    ReplOptions? replOptions = null,
+    string? appDescription = null,
+    string? appName = null
   )
   {
     Endpoints = endpoints ?? throw new ArgumentNullException(nameof(endpoints));
     TypeConverterRegistry = typeConverterRegistry ?? throw new ArgumentNullException(nameof(typeConverterRegistry));
     LoggerFactory = loggerFactory ?? Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance;
     ReplOptions = replOptions;
+    AppDescription = appDescription;
+    AppName = appName ?? GetDefaultAppName();
 
     // If logging is configured but DI is not, create a minimal service provider
     // that can resolve ILoggerFactory and ILogger<T> for delegate parameter injection
@@ -68,6 +82,8 @@ public partial class NuruApp
     MediatorExecutor = serviceProvider.GetRequiredService<MediatorExecutor>();
     LoggerFactory = serviceProvider.GetService<ILoggerFactory>() ?? Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance;
     ReplOptions = serviceProvider.GetService<ReplOptions>();
+    AppDescription = serviceProvider.GetService<AppDescriptionService>()?.Description;
+    AppName = serviceProvider.GetService<AppNameService>()?.Name ?? GetDefaultAppName();
   }
 
   public async Task<int> RunAsync(string[] args)
@@ -191,7 +207,7 @@ public partial class NuruApp
 
   private void ShowAvailableCommands()
   {
-    NuruConsole.WriteLine(HelpProvider.GetHelpText(Endpoints));
+    NuruConsole.WriteLine(HelpProvider.GetHelpText(Endpoints, AppName, AppDescription));
   }
 
   /// <summary>
@@ -244,6 +260,27 @@ public partial class NuruApp
     await NuruConsole.WriteErrorLineAsync("").ConfigureAwait(false);
   }
 
+  /// <summary>
+  /// Gets the default application name from the entry point.
+  /// </summary>
+  private static string GetDefaultAppName()
+  {
+    try
+    {
+      string entryAssembly = System.Reflection.Assembly.GetEntryAssembly()?.GetName().Name ?? "nuru-app";
+      // Remove common extensions and clean up the name
+      return Path.GetFileNameWithoutExtension(entryAssembly).Replace(".", "-", StringComparison.Ordinal);
+    }
+    catch (ArgumentException)
+    {
+      return "nuru-app";
+    }
+    catch (InvalidOperationException)
+    {
+      return "nuru-app";
+    }
+  }
+
   [GeneratedRegex(@"^--[\w-]+:[\w:-]+", RegexOptions.Compiled)]
   private static partial Regex ConfigurationOverrideRegex();
 }
@@ -290,4 +327,21 @@ internal sealed class LoggerServiceProvider : IServiceProvider
 
     return null;
   }
+
+}
+
+/// <summary>
+/// Service for providing application description.
+/// </summary>
+public class AppDescriptionService(string description)
+{
+  public string Description { get; } = description;
+}
+
+/// <summary>
+/// Service for providing application name.
+/// </summary>
+public class AppNameService(string name)
+{
+  public string Name { get; } = name;
 }

@@ -11,6 +11,8 @@ public class NuruAppBuilder
   private ILoggerFactory? LoggerFactory;
   private IConfiguration? Configuration;
   private ReplOptions? ReplOptions;
+  private string? AppDescription;
+  private string? AppName;
 
   /// <summary>
   /// Gets the collection of registered endpoints.
@@ -303,6 +305,27 @@ public class NuruAppBuilder
   }
 
   /// <summary>
+  /// Sets the application description for help display.
+  /// </summary>
+  /// <param name="description">The application description.</param>
+  public NuruAppBuilder WithDescription(string description)
+  {
+    AppDescription = description;
+    return this;
+  }
+
+  /// <summary>
+  /// Sets the application name for help display.
+  /// If not set, will be auto-detected from entry point.
+  /// </summary>
+  /// <param name="appName">The application name.</param>
+  public NuruAppBuilder WithAppName(string appName)
+  {
+    AppName = appName;
+    return this;
+  }
+
+  /// <summary>
   /// Registers a custom type converter for parameter conversion.
   /// </summary>
   /// <param name="converter">The type converter to register.</param>
@@ -356,6 +379,17 @@ public class NuruAppBuilder
         ServiceCollection.AddSingleton(ReplOptions);
       }
 
+      // Register app metadata if configured
+      if (AppDescription is not null)
+      {
+        ServiceCollection.AddSingleton(new AppDescriptionService(AppDescription));
+      }
+
+      if (AppName is not null)
+      {
+        ServiceCollection.AddSingleton(new AppNameService(AppName));
+      }
+
       ServiceProvider serviceProvider = ServiceCollection.BuildServiceProvider();
 
       return new NuruApp(serviceProvider);
@@ -363,7 +397,7 @@ public class NuruAppBuilder
     else
     {
       // Direct path - return lightweight app without DI (pass logger factory for future use)
-      return new NuruApp(EndpointCollection, TypeConverterRegistry, loggerFactory, ReplOptions);
+      return new NuruApp(EndpointCollection, TypeConverterRegistry, loggerFactory, ReplOptions, AppDescription, AppName);
     }
   }
 
@@ -409,19 +443,19 @@ public class NuruAppBuilder
       }
     }
 
-    // Add base --help route if not already present
-    if (!existingEndpoints.Any(e => e.RoutePattern == "--help"))
-    {
-      AddRoute("--help", () => NuruConsole.WriteLine(HelpProvider.GetHelpText(EndpointCollection)),
-      description: "Show available commands");
-    }
+      // Add base --help route if not already present
+      if (!existingEndpoints.Any(e => e.RoutePattern == "--help"))
+      {
+        AddRoute("--help", () => NuruConsole.WriteLine(HelpProvider.GetHelpText(EndpointCollection, AppName, AppDescription)),
+        description: "Show available commands");
+      }
 
-    // Add base help route if not already present (REPL-friendly)
-    if (!existingEndpoints.Any(e => e.RoutePattern == "help"))
-    {
-      AddRoute("help", () => NuruConsole.WriteLine(HelpProvider.GetHelpText(EndpointCollection)),
-      description: "Show available commands");
-    }
+      // Add base help route if not already present (REPL-friendly)
+      if (!existingEndpoints.Any(e => e.RoutePattern == "help"))
+      {
+        AddRoute("help", () => NuruConsole.WriteLine(HelpProvider.GetHelpText(EndpointCollection, AppName, AppDescription)),
+        description: "Show available commands");
+      }
   }
 
   private static string GetCommandPrefix(Endpoint endpoint)

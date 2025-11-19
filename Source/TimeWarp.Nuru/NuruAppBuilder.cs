@@ -11,8 +11,7 @@ public class NuruAppBuilder
   private ILoggerFactory? LoggerFactory;
   private IConfiguration? Configuration;
   private ReplOptions? ReplOptions;
-  private string? AppDescription;
-  private string? AppName;
+  private ApplicationMetadata? AppMetadata;
 
   /// <summary>
   /// Gets the collection of registered endpoints.
@@ -305,12 +304,13 @@ public class NuruAppBuilder
   }
 
   /// <summary>
-  /// Sets the application description for help display.
+  /// Sets the application metadata for help display.
   /// </summary>
+  /// <param name="name">The application name. If null, will be auto-detected.</param>
   /// <param name="description">The application description.</param>
-  public NuruAppBuilder WithDescription(string description)
+  public NuruAppBuilder WithMetadata(string? name = null, string? description = null)
   {
-    AppDescription = description;
+    AppMetadata = new ApplicationMetadata(name, description);
     return this;
   }
 
@@ -321,7 +321,19 @@ public class NuruAppBuilder
   /// <param name="appName">The application name.</param>
   public NuruAppBuilder WithAppName(string appName)
   {
-    AppName = appName;
+    AppMetadata ??= new ApplicationMetadata();
+    AppMetadata = new ApplicationMetadata(appName, AppMetadata.Description);
+    return this;
+  }
+
+  /// <summary>
+  /// Sets the application description for help display.
+  /// </summary>
+  /// <param name="description">The application description.</param>
+  public NuruAppBuilder WithDescription(string description)
+  {
+    AppMetadata ??= new ApplicationMetadata();
+    AppMetadata = new ApplicationMetadata(AppMetadata.Name, description);
     return this;
   }
 
@@ -380,14 +392,9 @@ public class NuruAppBuilder
       }
 
       // Register app metadata if configured
-      if (AppDescription is not null)
+      if (AppMetadata is not null)
       {
-        ServiceCollection.AddSingleton(new AppDescriptionService(AppDescription));
-      }
-
-      if (AppName is not null)
-      {
-        ServiceCollection.AddSingleton(new AppNameService(AppName));
+        ServiceCollection.AddSingleton(AppMetadata);
       }
 
       ServiceProvider serviceProvider = ServiceCollection.BuildServiceProvider();
@@ -397,7 +404,7 @@ public class NuruAppBuilder
     else
     {
       // Direct path - return lightweight app without DI (pass logger factory for future use)
-      return new NuruApp(EndpointCollection, TypeConverterRegistry, loggerFactory, ReplOptions, AppDescription, AppName);
+      return new NuruApp(EndpointCollection, TypeConverterRegistry, loggerFactory, ReplOptions, AppMetadata);
     }
   }
 
@@ -446,14 +453,14 @@ public class NuruAppBuilder
       // Add base --help route if not already present
       if (!existingEndpoints.Any(e => e.RoutePattern == "--help"))
       {
-        AddRoute("--help", () => NuruConsole.WriteLine(HelpProvider.GetHelpText(EndpointCollection, AppName, AppDescription)),
+        AddRoute("--help", () => NuruConsole.WriteLine(HelpProvider.GetHelpText(EndpointCollection, AppMetadata?.Name, AppMetadata?.Description)),
         description: "Show available commands");
       }
 
       // Add base help route if not already present (REPL-friendly)
       if (!existingEndpoints.Any(e => e.RoutePattern == "help"))
       {
-        AddRoute("help", () => NuruConsole.WriteLine(HelpProvider.GetHelpText(EndpointCollection, AppName, AppDescription)),
+        AddRoute("help", () => NuruConsole.WriteLine(HelpProvider.GetHelpText(EndpointCollection, AppMetadata?.Name, AppMetadata?.Description)),
         description: "Show available commands");
       }
   }

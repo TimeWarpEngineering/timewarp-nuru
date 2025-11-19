@@ -34,14 +34,9 @@ public partial class NuruApp
   public ReplOptions? ReplOptions { get; }
 
   /// <summary>
-  /// Gets the application description for help display.
+  /// Gets the application metadata for help display.
   /// </summary>
-  public string? AppDescription { get; }
-
-  /// <summary>
-  /// Gets the application name for help display.
-  /// </summary>
-  public string AppName { get; }
+  public ApplicationMetadata? AppMetadata { get; }
 
   /// <summary>
   /// Direct constructor - no dependency injection.
@@ -52,16 +47,14 @@ public partial class NuruApp
     ITypeConverterRegistry typeConverterRegistry,
     ILoggerFactory? loggerFactory = null,
     ReplOptions? replOptions = null,
-    string? appDescription = null,
-    string? appName = null
+    ApplicationMetadata? appMetadata = null
   )
   {
     Endpoints = endpoints ?? throw new ArgumentNullException(nameof(endpoints));
     TypeConverterRegistry = typeConverterRegistry ?? throw new ArgumentNullException(nameof(typeConverterRegistry));
     LoggerFactory = loggerFactory ?? Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance;
     ReplOptions = replOptions;
-    AppDescription = appDescription;
-    AppName = appName ?? GetDefaultAppName();
+    AppMetadata = appMetadata;
 
     // If logging is configured but DI is not, create a minimal service provider
     // that can resolve ILoggerFactory and ILogger<T> for delegate parameter injection
@@ -82,8 +75,7 @@ public partial class NuruApp
     MediatorExecutor = serviceProvider.GetRequiredService<MediatorExecutor>();
     LoggerFactory = serviceProvider.GetService<ILoggerFactory>() ?? Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance;
     ReplOptions = serviceProvider.GetService<ReplOptions>();
-    AppDescription = serviceProvider.GetService<AppDescriptionService>()?.Description;
-    AppName = serviceProvider.GetService<AppNameService>()?.Name ?? GetDefaultAppName();
+    AppMetadata = serviceProvider.GetService<ApplicationMetadata>();
   }
 
   public async Task<int> RunAsync(string[] args)
@@ -207,7 +199,7 @@ public partial class NuruApp
 
   private void ShowAvailableCommands()
   {
-    NuruConsole.WriteLine(HelpProvider.GetHelpText(Endpoints, AppName, AppDescription));
+    NuruConsole.WriteLine(HelpProvider.GetHelpText(Endpoints, AppMetadata?.Name, AppMetadata?.Description));
   }
 
   /// <summary>
@@ -273,6 +265,22 @@ public partial class NuruApp
     {
       return "nuru-app";
     }
+  }
+
+  /// <summary>
+  /// Gets the application name from metadata or falls back to default detection.
+  /// </summary>
+  private string GetEffectiveAppName()
+  {
+    return AppMetadata?.Name ?? GetDefaultAppName();
+  }
+
+  /// <summary>
+  /// Gets the application description from metadata.
+  /// </summary>
+  private string? GetEffectiveDescription()
+  {
+    return AppMetadata?.Description;
   }
 
   [GeneratedRegex(@"^--[\w-]+:[\w:-]+", RegexOptions.Compiled)]

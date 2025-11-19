@@ -30,7 +30,7 @@ internal static class AppNameDetector
       return currentProcess.ProcessName;
 
     // Final attempt: assembly name
-    string? assemblyName = System.Reflection.Assembly.GetEntryAssembly()?.GetName().Name;
+    string? assemblyName = Assembly.GetEntryAssembly()?.GetName().Name;
     if (!string.IsNullOrEmpty(assemblyName))
       return assemblyName;
 

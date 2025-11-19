@@ -17,7 +17,6 @@ WriteLine();
 var app = new NuruAppBuilder()
   .WithMetadata
   (
-    name: "repl-demo",
     description: "Interactive REPL demo application for TimeWarp.Nuru framework."
   )
   .AddRoute

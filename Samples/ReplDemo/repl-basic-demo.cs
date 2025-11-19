@@ -15,37 +15,50 @@ WriteLine();
 
 // Build a simple CLI app
 var app = new NuruAppBuilder()
-  .WithMetadata(
+  .WithMetadata
+  (
     name: "repl-demo",
     description: "Interactive REPL demo application for TimeWarp.Nuru framework."
   )
-  .AddRoute(
-    "greet {name}", 
-    (string name) => WriteLine($"Hello, {name}!")
+  .AddRoute
+  (
+    pattern:"greet {name}", 
+    handler: (string name) => WriteLine($"Hello, {name}!"),
+    description: "Greets the person with the specified name."
+  )
+  .AddRoute
+  (
+    pattern:"status",
+    handler: () => WriteLine("System is running OK"),
+    description: "Displays the current system status."
+  )
+  .AddRoute
+  (
+    pattern:"echo {*message}", 
+    handler: (string[] message) => WriteLine(string.Join(" ", message)),
+    description: "Echoes the provided message back to the user."
+  )
+  .AddRoute
+  (
+    pattern:"add {a:int} {b:int}", 
+    handler: (int a, int b) => WriteLine($"{a} + {b} = {a + b}"),
+    description: "Adds two integers and displays the result."
   )
   .AddRoute(
-    "status", 
-    () => WriteLine("System is running OK")
+    pattern:"time", 
+    handler: () => WriteLine($"Current time: {DateTime.Now:HH:mm:ss}"),
+    description: "Displays the current time."
   )
-  .AddRoute(
-    "echo {*message}", 
-    (string[] message) => WriteLine(string.Join(" ", message))
+  .AddReplSupport
+  (
+    options =>
+    {
+      options.Prompt = "demo> ";
+      options.WelcomeMessage = "Welcome to REPL demo! Try: greet World, status, add 5 3, time, or 'exit' to quit.";
+      options.GoodbyeMessage = "Thanks for trying the REPL demo!";
+      options.PersistHistory = false; // Don't persist history for demo
+    }
   )
-  .AddRoute(
-    "add {a:int} {b:int}", 
-    (int a, int b) => WriteLine($"{a} + {b} = {a + b}")
-  )
-  .AddRoute(
-    "time", 
-    () => WriteLine($"Current time: {DateTime.Now:HH:mm:ss}")
-  )
-  .AddReplSupport(options =>
-  {
-    options.Prompt = "demo> ";
-    options.WelcomeMessage = "Welcome to REPL demo! Try: greet World, status, add 5 3, time, or 'exit' to quit.";
-    options.GoodbyeMessage = "Thanks for trying the REPL demo!";
-    options.PersistHistory = false; // Don't persist history for demo
-  })
   .Build();
 
 // Start REPL mode directly

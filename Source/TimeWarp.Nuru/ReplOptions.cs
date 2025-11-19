@@ -63,4 +63,5 @@ public class ReplOptions
   /// Whether to enable arrow key history navigation.
   /// </summary>
   public bool EnableArrowHistory { get; set; } = true;
+
 }

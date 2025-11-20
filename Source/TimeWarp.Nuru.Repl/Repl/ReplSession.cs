@@ -5,6 +5,7 @@ namespace TimeWarp.Nuru.Repl;
 /// </summary>
 internal sealed class ReplSession
 {
+  private static ReplSession? _current;
   private readonly ILoggerFactory LoggerFactory;
   private readonly NuruApp NuruApp;
   private readonly ReplOptions ReplOptions;
@@ -13,11 +14,16 @@ internal sealed class ReplSession
   private bool Running;
 
   /// <summary>
+  /// Gets the current active REPL session instance, if any.
+  /// </summary>
+  public static ReplSession? Current => _current;
+
+  /// <summary>
   /// Creates a new REPL mode instance.
   /// </summary>
   /// <param name="nuruApp">The NuruApp instance to execute commands against.</param>
   /// <param name="replOptions">Optional configuration for the REPL.</param>
-  public ReplSession
+  private ReplSession
   (
     NuruApp nuruApp,
     ReplOptions replOptions,
@@ -28,6 +34,30 @@ internal sealed class ReplSession
     ReplOptions = replOptions ?? new ReplOptions();
     TypeConverterRegistry = nuruApp.TypeConverterRegistry;
     LoggerFactory = loggerFactory;
+  }
+
+  /// <summary>
+  /// Creates and activates a new REPL session instance.
+  /// </summary>
+  /// <param name="nuruApp">The NuruApp instance to execute commands against.</param>
+  /// <param name="replOptions">Configuration for the REPL.</param>
+  /// <param name="loggerFactory">Logger factory for logging.</param>
+  /// <returns>The created REPL session instance.</returns>
+  public static ReplSession CreateAndActivate(
+    NuruApp nuruApp,
+    ReplOptions replOptions,
+    ILoggerFactory loggerFactory)
+  {
+    _current = new ReplSession(nuruApp, replOptions, loggerFactory);
+    return _current;
+  }
+
+  /// <summary>
+  /// Deactivates the current REPL session.
+  /// </summary>
+  public static void Deactivate()
+  {
+    _current = null;
   }
 
   /// <summary>

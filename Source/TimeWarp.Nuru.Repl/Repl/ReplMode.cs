@@ -1,16 +1,9 @@
 namespace TimeWarp.Nuru.Repl;
 
-using System.Diagnostics;
-using Microsoft.Extensions.Logging;
-using TimeWarp.Nuru;
-using TimeWarp.Nuru.Completion;
-using TimeWarp.Nuru.Logging;
-using TimeWarp.Nuru.Repl.Input;
-
 /// <summary>
 /// Provides REPL (Read-Eval-Print Loop) mode for interactive command execution.
 /// </summary>
-public sealed class ReplMode
+internal sealed class ReplMode
 {
   private readonly ILoggerFactory LoggerFactory;
   private readonly NuruApp NuruApp;

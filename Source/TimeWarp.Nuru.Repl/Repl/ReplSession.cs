@@ -36,37 +36,39 @@ internal sealed class ReplSession
   }
 
   /// <summary>
-  /// Starts a new REPL session instance.
+  /// Runs a REPL session asynchronously.
   /// </summary>
   /// <param name="nuruApp">The NuruApp instance to execute commands against.</param>
   /// <param name="replOptions">Configuration for the REPL.</param>
   /// <param name="loggerFactory">Logger factory for logging.</param>
-  /// <returns>The created REPL session instance.</returns>
-  public static ReplSession Start
+  /// <param name="cancellationToken">Token to cancel the REPL loop.</param>
+  /// <returns>The exit code of the last executed command, or 0 if no commands were executed.</returns>
+  public static async Task<int> RunAsync
   (
     NuruApp nuruApp,
     ReplOptions replOptions,
-    ILoggerFactory loggerFactory
+    ILoggerFactory loggerFactory,
+    CancellationToken cancellationToken = default
   )
   {
     CurrentSession = new ReplSession(nuruApp, replOptions, loggerFactory);
-    return CurrentSession;
+
+    try
+    {
+      return await CurrentSession.RunInstanceAsync(cancellationToken).ConfigureAwait(false);
+    }
+    finally
+    {
+      CurrentSession = null;
+    }
   }
 
   /// <summary>
-  /// Stops the current REPL session.
-  /// </summary>
-  public static void Stop()
-  {
-    CurrentSession = null;
-  }
-
-  /// <summary>
-  /// Starts the REPL loop, reading and executing commands until exit.
+  /// Runs this REPL instance.
   /// </summary>
   /// <param name="cancellationToken">Token to cancel the REPL loop.</param>
   /// <returns>The exit code of the last executed command, or 0 if no commands were executed.</returns>
-  public async Task<int> RunAsync(CancellationToken cancellationToken = default)
+  private async Task<int> RunInstanceAsync(CancellationToken cancellationToken = default)
   {
     InitializeRepl();
 

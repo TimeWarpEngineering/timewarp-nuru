@@ -65,7 +65,7 @@ public static class NuruAppExtensions
   /// return await app.RunReplAsync();
   /// </code>
   /// </example>
-  public static async Task<int> RunReplAsync
+  public static Task<int> RunReplAsync
   (
     this NuruApp app,
     ReplOptions? options = null,
@@ -76,15 +76,7 @@ public static class NuruAppExtensions
 
     // Use configured REPL options or provided options
     ReplOptions replOptions = options ?? app.ReplOptions ?? new ReplOptions();
-    var repl = ReplSession.Start(app, replOptions, app.LoggerFactory);
 
-    try
-    {
-      return await repl.RunAsync(cancellationToken).ConfigureAwait(false);
-    }
-    finally
-    {
-      ReplSession.Stop();
-    }
+    return ReplSession.RunAsync(app, replOptions, app.LoggerFactory, cancellationToken);
   }
 }

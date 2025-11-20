@@ -263,58 +263,6 @@ internal sealed class ReplSession
       Console.WriteLine(ReplOptions.GoodbyeMessage);
   }
 
-  private string ReadInputWithHistory()
-  {
-    string currentLine = "";
-    int historyIndex = History.Count;
-
-    while (true)
-    {
-      ConsoleKeyInfo keyInfo = Console.ReadKey(true);
-
-      if (keyInfo.Key == ConsoleKey.Enter)
-      {
-        Console.WriteLine();
-        return currentLine;
-      }
-      else if (keyInfo.Key == ConsoleKey.UpArrow)
-      {
-        if (historyIndex > 0)
-        {
-          historyIndex--;
-          currentLine = History[historyIndex];
-          RewriteLineWithPrompt(currentLine);
-        }
-      }
-      else if (keyInfo.Key == ConsoleKey.DownArrow)
-      {
-        historyIndex++;
-        if (historyIndex >= History.Count)
-        {
-          historyIndex = History.Count;
-          currentLine = "";
-        }
-        else
-        {
-          currentLine = History[historyIndex];
-        }
-
-        RewriteLineWithPrompt(currentLine);
-      }
-      else if (keyInfo.Key == ConsoleKey.Backspace && currentLine.Length > 0)
-      {
-        currentLine = currentLine[0..^1];
-        Console.Write("\b \b");
-      }
-      else if (!char.IsControl(keyInfo.KeyChar))
-      {
-        currentLine += keyInfo.KeyChar;
-        Console.Write(keyInfo.KeyChar);
-      }
-      // Ignore other keys for basic implementation
-    }
-  }
-
   private void OnCancelKeyPress(object? sender, ConsoleCancelEventArgs e)
   {
     e.Cancel = true; // Prevent immediate termination

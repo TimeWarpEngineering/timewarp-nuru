@@ -21,11 +21,10 @@ public static class NuruAppExtensions
     builder
       .AddRoute("exit", () => ReplSession.CurrentSession?.Exit(), "Exit the REPL")
       .AddRoute("quit", () => ReplSession.CurrentSession?.Exit(), "Exit the REPL")
-      .AddRoute("q", () => ReplSession.CurrentSession?.Exit(), "Exit the REPL (shortcut)")
-      // .AddRoute("help", () => ReplSession.CurrentSession?.ShowReplHelp(), "Show REPL help")
+      .AddRoute("q", () => ReplSession.CurrentSession?.Exit(), "Exit the REPL")
       .AddRoute("history", () => ReplSession.CurrentSession?.ShowHistory(), "Show command history")
       .AddRoute("clear", () => Console.Clear(), "Clear the screen")
-      .AddRoute("cls", () => Console.Clear(), "Clear the screen (shortcut)")
+      .AddRoute("cls", () => Console.Clear(), "Clear the screen")
       .AddRoute("clear-history", () => ReplSession.CurrentSession?.ClearHistory(), "Clear command history")
       .AddAutoHelp();
 

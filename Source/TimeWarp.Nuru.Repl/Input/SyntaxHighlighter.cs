@@ -1,23 +1,15 @@
 namespace TimeWarp.Nuru.Repl.Input;
 
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Microsoft.Extensions.Logging;
-using TimeWarp.Nuru;
-using TimeWarp.Nuru.Completion;
-using TimeWarp.Nuru.Logging;
-
 /// <summary>
 /// Provides syntax highlighting for command line input based on route patterns.
 /// </summary>
-public sealed class SyntaxHighlighter
+internal sealed class SyntaxHighlighter
 {
-  private readonly EndpointCollection? Endpoints;
+  private readonly EndpointCollection Endpoints;
   private readonly Dictionary<string, bool> CommandCache = [];
   private readonly ILogger<SyntaxHighlighter> Logger;
 
-  public SyntaxHighlighter(EndpointCollection? endpoints, ILoggerFactory loggerFactory)
+  public SyntaxHighlighter(EndpointCollection endpoints, ILoggerFactory loggerFactory)
   {
     ArgumentNullException.ThrowIfNull(loggerFactory);
     ArgumentNullException.ThrowIfNull(endpoints);
@@ -32,11 +24,10 @@ public sealed class SyntaxHighlighter
       return input;
 
     ReplLoggerMessages.SyntaxHighlightingStarted(Logger, input, null);
-
     List<CommandLineToken> tokens = CommandLineParser.ParseWithPositions(input);
     ReplLoggerMessages.TokensGenerated(Logger, tokens.Count, null);
 
-    var highlighted = new StringBuilder();
+    StringBuilder highlighted = new();
 
     foreach (CommandLineToken token in tokens)
     {
@@ -47,15 +38,6 @@ public sealed class SyntaxHighlighter
     string result = highlighted.ToString();
     ReplLoggerMessages.HighlightedTextGenerated(Logger, result, null);
     return result;
-  }
-
-  public static int GetVisualLength(string input)
-  {
-    ArgumentNullException.ThrowIfNull(input);
-
-    // For now, assume visual length equals string length
-    // In a full implementation, we'd need to strip ANSI codes from highlighted text
-    return input.Length;
   }
 
   private string GetHighlightedToken(CommandLineToken token)
@@ -82,7 +64,12 @@ public sealed class SyntaxHighlighter
     }
 
     // Check if it looks like a parameter (contains special chars)
-    if (token.Text.Contains('{', StringComparison.Ordinal) || token.Text.Contains('}', StringComparison.Ordinal) || token.Text.Contains(':', StringComparison.Ordinal))
+    if
+    (
+      token.Text.Contains('{', StringComparison.Ordinal) ||
+      token.Text.Contains('}', StringComparison.Ordinal) ||
+      token.Text.Contains(':', StringComparison.Ordinal)
+    )
     {
       return SyntaxColors.ParameterColor + token.Text + AnsiColors.Reset;
     }

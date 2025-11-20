@@ -3,7 +3,7 @@ namespace TimeWarp.Nuru.Repl.Input;
 /// <summary>
 /// Represents a token in the command line input with position information.
 /// </summary>
-public sealed class CommandLineToken
+internal sealed class CommandLineToken
 {
   public string Text { get; }
   public TokenType Type { get; }

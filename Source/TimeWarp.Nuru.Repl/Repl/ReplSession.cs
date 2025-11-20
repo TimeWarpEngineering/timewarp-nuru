@@ -3,7 +3,7 @@ namespace TimeWarp.Nuru.Repl;
 /// <summary>
 /// Provides REPL (Read-Eval-Print Loop) mode for interactive command execution.
 /// </summary>
-internal sealed class ReplMode
+internal sealed class ReplSession
 {
   private readonly ILoggerFactory LoggerFactory;
   private readonly NuruApp NuruApp;
@@ -17,7 +17,7 @@ internal sealed class ReplMode
   /// </summary>
   /// <param name="nuruApp">The NuruApp instance to execute commands against.</param>
   /// <param name="replOptions">Optional configuration for the REPL.</param>
-  public ReplMode
+  public ReplSession
   (
     NuruApp nuruApp,
     ReplOptions replOptions,

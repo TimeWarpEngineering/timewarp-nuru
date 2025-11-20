@@ -8,8 +8,7 @@ public sealed class ReplConsoleReader
   private readonly List<string> History;
   private readonly CompletionProvider CompletionProvider;
   private readonly EndpointCollection Endpoints;
-  private readonly bool EnableColors;
-  private readonly string Prompt;
+  private readonly ReplOptions ReplOptions;
   private readonly SyntaxHighlighter SyntaxHighlighter;
   private readonly ILogger<ReplConsoleReader> Logger;
   private readonly ILoggerFactory? LoggerFactory;
@@ -25,27 +24,27 @@ public sealed class ReplConsoleReader
   /// <param name="history">The command history list.</param>
   /// <param name="completionProvider">The completion provider for tab completion.</param>
   /// <param name="endpoints">The endpoint collection for completion.</param>
-  /// <param name="enableColors">Whether to enable colored output.</param>
+  /// <param name="replOptions">The REPL configuration options.</param>
+  /// <param name="loggerFactory">The logger factory for creating loggers.</param>
   public ReplConsoleReader
   (
     IEnumerable<string> history,
     CompletionProvider completionProvider,
     EndpointCollection endpoints,
-    bool enableColors,
-    string prompt,
+    ReplOptions replOptions,
     ILoggerFactory loggerFactory
   )
   {
     ArgumentNullException.ThrowIfNull(history);
     ArgumentNullException.ThrowIfNull(completionProvider);
     ArgumentNullException.ThrowIfNull(endpoints);
+    ArgumentNullException.ThrowIfNull(replOptions);
     ArgumentNullException.ThrowIfNull(loggerFactory);
 
     History = history?.ToList() ?? throw new ArgumentNullException(nameof(history));
     CompletionProvider = completionProvider ?? throw new ArgumentNullException(nameof(completionProvider));
     Endpoints = endpoints ?? throw new ArgumentNullException(nameof(endpoints));
-    EnableColors = enableColors;
-    Prompt = prompt;
+    ReplOptions = replOptions ?? throw new ArgumentNullException(nameof(replOptions));
     SyntaxHighlighter = new SyntaxHighlighter(endpoints, loggerFactory);
     LoggerFactory = loggerFactory;
     Logger = LoggerFactory?.CreateLogger<ReplConsoleReader>() ?? throw new ArgumentNullException(nameof(loggerFactory));
@@ -62,7 +61,7 @@ public sealed class ReplConsoleReader
 
     ReplLoggerMessages.ReadLineStarted(Logger, prompt, History.Count, null);
 
-    string formattedPrompt = GetFormattedPrompt(prompt);
+    string formattedPrompt = PromptFormatter.Format(prompt, ReplOptions.EnableColors, ReplOptions.PromptColor);
     Console.Write(formattedPrompt);
 
     UserInput = string.Empty;  // Store only user input, not prompt
@@ -132,11 +131,6 @@ public sealed class ReplConsoleReader
           break;
       }
     }
-  }
-
-  private string GetFormattedPrompt(string prompt)
-  {
-    return EnableColors ? AnsiColors.Green + prompt + AnsiColors.Reset : prompt;
   }
 
   private void HandleEnter()
@@ -238,7 +232,7 @@ public sealed class ReplConsoleReader
     ReplLoggerMessages.ShowCompletionCandidatesStarted(Logger, UserInput, null);
 
     Console.WriteLine();
-    if (EnableColors)
+    if (ReplOptions.EnableColors)
     {
       Console.WriteLine(AnsiColors.Gray + "Available completions:" + AnsiColors.Reset);
     }
@@ -268,7 +262,7 @@ public sealed class ReplConsoleReader
       Console.WriteLine();
 
     // Redraw the prompt and current line
-    Console.Write(GetFormattedPrompt(Prompt));
+    Console.Write(PromptFormatter.Format(ReplOptions));
     Console.Write(UserInput);
   }
 
@@ -416,9 +410,9 @@ public sealed class ReplConsoleReader
     Console.SetCursorPosition(0, Console.CursorTop);
 
     // Redraw the prompt and current line
-    Console.Write(GetFormattedPrompt(Prompt));
+    Console.Write(PromptFormatter.Format(ReplOptions));
 
-    if (EnableColors && Endpoints is not null)
+    if (ReplOptions.EnableColors && Endpoints is not null)
     {
       string highlightedText = SyntaxHighlighter.Highlight(UserInput);
       Console.Write(highlightedText);
@@ -435,7 +429,7 @@ public sealed class ReplConsoleReader
   private void UpdateCursorPosition()
   {
     // Calculate desired cursor position (after prompt)
-    int promptLength = Prompt.Length; // Use actual prompt length
+    int promptLength = ReplOptions.Prompt.Length; // Use actual prompt length
     int desiredLeft = promptLength + CursorPosition;
 
     ReplLoggerMessages.CursorPositionUpdated(Logger, promptLength, CursorPosition, null);

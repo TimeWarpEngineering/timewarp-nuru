@@ -55,6 +55,13 @@ public class ReplOptions
   public bool EnableColors { get; set; } = true;
 
   /// <summary>
+  /// The ANSI color to use for the prompt when EnableColors is true.
+  /// Default is green (\x1b[32m). Set to any ANSI color code string.
+  /// Common values: "\x1b[32m" (green), "\x1b[36m" (cyan), "\x1b[33m" (yellow).
+  /// </summary>
+  public string PromptColor { get; set; } = "\x1b[32m"; // Green
+
+  /// <summary>
   /// Whether to show execution time for each command.
   /// </summary>
   public bool ShowTiming { get; set; } = true;

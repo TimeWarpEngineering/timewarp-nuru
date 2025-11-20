@@ -137,19 +137,12 @@ internal sealed class ReplSession
 
   private void DisplayPrompt()
   {
-    Console.Write(GetFormattedPrompt());
-  }
-
-  private string GetFormattedPrompt()
-  {
-    return ReplOptions.EnableColors
-      ? AnsiColors.Green + ReplOptions.Prompt + AnsiColors.Reset
-      : ReplOptions.Prompt;
+    Console.Write(PromptFormatter.Format(ReplOptions));
   }
 
   private void RewriteLineWithPrompt(string content)
   {
-    string prompt = GetFormattedPrompt();
+    string prompt = PromptFormatter.Format(ReplOptions);
     // Clear current line and rewrite with prompt
     Console.SetCursorPosition(0, Console.CursorTop);
     Console.Write(new string(' ', Console.WindowWidth));
@@ -167,8 +160,7 @@ internal sealed class ReplSession
             History,
             new CompletionProvider(TypeConverterRegistry, LoggerFactory),
             NuruApp.Endpoints,
-            ReplOptions.EnableColors,
-            ReplOptions.Prompt,
+            ReplOptions,
             LoggerFactory
           );
       return consoleReader.ReadLine(ReplOptions.Prompt);

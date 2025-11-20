@@ -76,7 +76,7 @@ public static class NuruAppExtensions
 
     // Use configured REPL options or provided options
     ReplOptions replOptions = options ?? app.ReplOptions ?? new ReplOptions();
-    var repl = ReplSession.CreateAndActivate(app, replOptions, app.LoggerFactory);
+    var repl = ReplSession.Start(app, replOptions, app.LoggerFactory);
 
     try
     {
@@ -84,7 +84,7 @@ public static class NuruAppExtensions
     }
     finally
     {
-      ReplSession.Deactivate();
+      ReplSession.Stop();
     }
   }
 }

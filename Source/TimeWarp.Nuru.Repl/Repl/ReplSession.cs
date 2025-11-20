@@ -5,7 +5,7 @@ namespace TimeWarp.Nuru.Repl;
 /// </summary>
 internal sealed class ReplSession
 {
-  private static ReplSession? _current;
+  private static ReplSession? Current;
   private readonly ILoggerFactory LoggerFactory;
   private readonly NuruApp NuruApp;
   private readonly ReplOptions ReplOptions;
@@ -16,7 +16,7 @@ internal sealed class ReplSession
   /// <summary>
   /// Gets the current active REPL session instance, if any.
   /// </summary>
-  public static ReplSession? Current => _current;
+  public static ReplSession? CurrentSession => Current;
 
   /// <summary>
   /// Creates a new REPL mode instance.
@@ -48,8 +48,8 @@ internal sealed class ReplSession
     ReplOptions replOptions,
     ILoggerFactory loggerFactory)
   {
-    _current = new ReplSession(nuruApp, replOptions, loggerFactory);
-    return _current;
+    Current = new ReplSession(nuruApp, replOptions, loggerFactory);
+    return Current;
   }
 
   /// <summary>
@@ -57,7 +57,7 @@ internal sealed class ReplSession
   /// </summary>
   public static void Deactivate()
   {
-    _current = null;
+    Current = null;
   }
 
   /// <summary>

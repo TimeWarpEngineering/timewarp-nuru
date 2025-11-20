@@ -2,8 +2,6 @@
 #:project ../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
 #:project ../../Source/TimeWarp.Nuru.Repl/TimeWarp.Nuru.Repl.csproj
 
-using System.Diagnostics.CodeAnalysis;
-using System.Reflection;
 using TimeWarp.Nuru;
 using TimeWarp.Nuru.Repl;
 
@@ -292,39 +290,21 @@ public class ShouldIgnoreCommandTests
   }
 }
 
-// Helper class to access internal ReplSession methods via reflection
+// Helper class to test ReplSession's ShouldIgnoreCommand method
 internal sealed class ReplSessionHelper
 {
-  [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.NonPublicConstructors | DynamicallyAccessedMemberTypes.NonPublicMethods)]
-  private readonly Type ReplSessionType;
-  private readonly ConstructorInfo Constructor;
-  private readonly MethodInfo ShouldIgnoreCommandMethod;
   private readonly NuruApp App;
   private readonly ILoggerFactory LoggerFactoryInstance;
 
   public ReplSessionHelper()
   {
-    ReplSessionType = typeof(ReplSession);
-
-    Constructor = ReplSessionType.GetConstructor(
-    BindingFlags.NonPublic | BindingFlags.Instance,
-    null,
-    [typeof(NuruApp), typeof(ReplOptions), typeof(ILoggerFactory)],
-    null) ?? throw new InvalidOperationException("Could not find ReplSession constructor");
-
-    ShouldIgnoreCommandMethod = ReplSessionType.GetMethod(
-    "ShouldIgnoreCommand",
-    BindingFlags.NonPublic | BindingFlags.Instance)
-    ?? throw new InvalidOperationException("Could not find ShouldIgnoreCommand method");
-
     App = new NuruAppBuilder().Build();
     LoggerFactoryInstance = LoggerFactory.Create(_ => { });
   }
 
   public bool ShouldIgnoreCommand(string command, ReplOptions options)
   {
-    object replSession = Constructor.Invoke([App, options, LoggerFactoryInstance]);
-    object? result = ShouldIgnoreCommandMethod.Invoke(replSession, [command]);
-    return result is bool boolResult && boolResult;
+    var replSession = new ReplSession(App, options, LoggerFactoryInstance);
+    return replSession.ShouldIgnoreCommand(command);
   }
 }

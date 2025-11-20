@@ -22,7 +22,7 @@ internal sealed class ReplSession
   /// </summary>
   /// <param name="nuruApp">The NuruApp instance to execute commands against.</param>
   /// <param name="replOptions">Optional configuration for the REPL.</param>
-  private ReplSession
+  internal ReplSession
   (
     NuruApp nuruApp,
     ReplOptions replOptions,

@@ -12,60 +12,47 @@ return await RunTests<ReplAutocompletionTests>(clearCache: true);
 
 [TestTag("REPL")]
 [ClearRunfileCache]
-public class ReplAutocompletionTests
+public class CompletionProvider_
 {
-  /// <summary>
-  /// Test REPL creates CompletionProvider with proper dependencies
-  /// </summary>
-  public static async Task Should_create_completion_provider_in_repl()
+  private static CompletionProvider CompletionProvider;
+  private static NuruApp NuruApp;
+
+  public static async Task Setup()
   {
-    // Arrange
-    NuruAppBuilder builder = new NuruAppBuilder()
-      .AddRoute("version", () => WriteLine("v1.0.0"))
-      .AddRoute("greet {name}", (string name) => WriteLine($"Hello, {name}!"))
-      .AddReplSupport();
-
-    NuruApp app = builder.Build();
-
-    // Act - Create REPL components to test completion provider creation
-    using ILoggerFactory loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
-    ReplMode replMode = new(app, new ReplOptions { PersistHistory = false }, loggerFactory);
-
-    // Assert - REPL should have completion capabilities
-    app.TypeConverterRegistry.ShouldNotBeNull();
-    app.Endpoints.Count.ShouldBeGreaterThan(0);
-
-    await Task.CompletedTask;
-  }
-
-  /// <summary>
-  /// Test command completion in REPL context
-  /// </summary>
-  [Input("ver", "version")]
-  [Input("st", "status")] 
-  [Input("g", "greet")]
-  public static async Task Should_complete_partial_commands(string partialInput, string expectedCommand)
-  {
-    // Arrange
-    ArgumentNullException.ThrowIfNull(partialInput);
-    
     NuruAppBuilder builder = new NuruAppBuilder()
       .AddRoute("version", () => WriteLine("v1.0.0"))
       .AddRoute("status", () => WriteLine("OK"))
       .AddRoute("greet {name}", (string name) => WriteLine($"Hello, {name}!"))
       .AddReplSupport();
 
-    NuruApp app = builder.Build();
-    CompletionProvider completionProvider = new(app.TypeConverterRegistry);
+    NuruApp = builder.Build();
+    CompletionProvider = new(NuruApp.TypeConverterRegistry);
+  }
+
+  /// <summary>
+  /// Test command completion in REPL context
+  /// </summary>
+  [Input("ver", "version")]
+  [Input("st", "status")]
+  [Input("g", "greet")]
+  public static async Task GetCompletions_should_suggest_commands(string partialInput, string expectedCommand)
+  {
+    // Arrange
+    var context = new CompletionContext
+    (
+      Args: [partialInput],
+      CursorPosition: partialInput.Length,
+      Endpoints: app.Endpoints
+    );
 
     // Act
     WriteLine($"Test: '{partialInput}' should suggest matching commands");
-    var context = new CompletionContext(Args: [partialInput], CursorPosition: partialInput.Length, Endpoints: app.Endpoints);
-    IEnumerable<CompletionCandidate> candidates = completionProvider.GetCompletions(context, app.Endpoints);
+    IEnumerable<CompletionCandidate> candidates = CompletionProvider.GetCompletions(context, app.Endpoints);
     WriteLine($"  All candidates: {string.Join(", ", candidates.Select(c => c.Value))}");
     WriteLine($"  Candidates count: {candidates.Count()}");
 
-    // Assert
+    // Assert - Should find expected command based on partial input
+
     candidates.ShouldNotBeEmpty($"Should find completions for '{partialInput}'");
     candidates.ShouldContain(c => c.Value == expectedCommand, $"Should contain '{expectedCommand}' for input '{partialInput}'");
     WriteLine();
@@ -98,9 +85,9 @@ public class ReplAutocompletionTests
       _ => throw new ArgumentException($"Unknown test command: {command}")
     };
 
-    int cursorPos = args.Sum(a => a.Length) + args.Length - 1;
+    int cursorPos = args.Sum(a => a.Length) + args.Length - 1; // Account for spaces
 
-    WriteLine($"Test: '{command}' should suggest parameter completions");
+    WriteLine($"Test: '{command} ' should suggest parameter completions");
     var context = new CompletionContext(Args: args, CursorPosition: cursorPos, Endpoints: app.Endpoints);
     IEnumerable<CompletionCandidate> candidates = completionProvider.GetCompletions(context, app.Endpoints);
     WriteLine($"  Candidates: {string.Join(", ", candidates.Select(c => c.Value))}");
@@ -121,7 +108,7 @@ public class ReplAutocompletionTests
   {
     // Arrange
     ArgumentNullException.ThrowIfNull(optionInput);
-    
+
     NuruAppBuilder builder = new NuruAppBuilder()
       .AddRoute("build --config {mode} --verbose,-v", (string mode, bool _) => WriteLine($"Building {mode}"))
       .AddRoute("deploy {env} --message,-m {msg?}", (string _, string? _ = null) => WriteLine("Deploying"))
@@ -139,27 +126,29 @@ public class ReplAutocompletionTests
     WriteLine($"  Candidates count: {candidates.Count()}");
 
     // Assert based on input type
-    if (optionInput == "--")
+    switch (optionInput)
     {
-      candidates.ShouldNotBeEmpty("Should find multiple options for '--'");
-      candidates.ShouldContain(c => c.Value.Contains("config"), "Should contain --config option");
-      candidates.ShouldContain(c => c.Value.Contains("verbose"), "Should contain --verbose option");
-      candidates.ShouldContain(c => c.Value.Contains("message"), "Should contain --message option");
+      case "--":
+        candidates.ShouldNotBeEmpty("Should find multiple options for '--'");
+        candidates.ShouldContain(c => c.Value.Contains("config"), "Should contain --config option");
+        candidates.ShouldContain(c => c.Value.Contains("verbose"), "Should contain --verbose option");
+        candidates.ShouldContain(c => c.Value.Contains("message"), "Should contain --message option");
+        break;
+
+      case "--v":
+        candidates.ShouldNotBeEmpty("Should find verbose option for '--v'");
+        candidates.ShouldContain(c => c.Value.Contains("verbose"), "Should contain --verbose option");
+        break;
+
+      case "--m":
+        candidates.ShouldNotBeEmpty("Should find message options for '--m'");
+        candidates.ShouldContain(c => c.Value.Contains("message"), "Should contain --message option");
+        break;
+
+      default:
+        throw new ArgumentException($"Unknown test input: {optionInput}");
     }
-    else if (optionInput == "--v")
-    {
-      candidates.ShouldNotBeEmpty("Should find verbose option for '--v'");
-      candidates.ShouldContain(c => c.Value.Contains("verbose"), "Should contain --verbose option");
-    }
-    else if (optionInput == "--m")
-    {
-      candidates.ShouldNotBeEmpty("Should find message options for '--m'");
-      candidates.ShouldContain(c => c.Value.Contains("message"), "Should contain --message option");
-    }
-    else
-    {
-      throw new ArgumentException($"Unknown test input: {optionInput}");
-    }
+
     WriteLine();
   }
 
@@ -174,7 +163,7 @@ public class ReplAutocompletionTests
   {
     // Arrange
     ArgumentNullException.ThrowIfNull(complexInput);
-    
+
     NuruAppBuilder builder = new NuruAppBuilder()
       .AddRoute("git status", () => WriteLine("Git status"))
       .AddRoute("git add {path}", (string path) => WriteLine($"Adding {path}"))
@@ -195,7 +184,7 @@ public class ReplAutocompletionTests
       _ => throw new ArgumentException($"Unknown test input: {complexInput}")
     };
 
-    int cursorPos = args.Sum(a => a.Length) + args.Length - 1;
+    int cursorPos = args.Sum(a => a.Length) + args.Length - 1; // Account for spaces
 
     WriteLine($"Test: '{complexInput}' should complete appropriately");
     var context = new CompletionContext(Args: args, CursorPosition: cursorPos, Endpoints: app.Endpoints);
@@ -204,34 +193,34 @@ public class ReplAutocompletionTests
     WriteLine($"  Candidates count: {candidates.Count()}");
 
     // Assert based on input type
-    if (complexInput == "git")
+    switch (complexInput)
     {
-      candidates.ShouldNotBeEmpty("Should find git subcommands");
-      candidates.ShouldContain(c => c.Value == "status", "Should contain 'status'");
-      candidates.ShouldContain(c => c.Value == "add", "Should contain 'add'");
-      candidates.ShouldContain(c => c.Value == "commit", "Should contain 'commit'");
+      case "git":
+        candidates.ShouldNotBeEmpty("Should find git subcommands");
+        candidates.ShouldContain(c => c.Value == "status", "Should contain 'status'");
+        candidates.ShouldContain(c => c.Value == "add", "Should contain 'add'");
+        candidates.ShouldContain(c => c.Value == "commit", "Should contain 'commit'");
+        break;
+
+      case "git ":
+        candidates.ShouldNotBeEmpty("Should find git subcommands");
+        candidates.ShouldContain(c => c.Value == "status", "Should contain 'status'");
+        break;
+
+      case "git add ":
+        candidates.ShouldNotBeEmpty("Should find parameter completions for 'git add'");
+        break;
+
+      case "docker run --":
+        candidates.ShouldNotBeEmpty("Should find docker options");
+        candidates.ShouldContain(c => c.Value.Contains("image"), "Should contain --image option");
+        candidates.ShouldContain(c => c.Value.Contains("detach"), "Should contain --detach option");
+        break;
+
+      default:
+        throw new ArgumentException($"Unknown test input: {complexInput}");
     }
-    else if (complexInput == "git ")
-    {
-      candidates.ShouldNotBeEmpty("Should find git subcommands");
-      candidates.ShouldContain(c => c.Value == "status", "Should contain 'status'");
-    }
-    else if (complexInput == "git add ")
-    {
-      candidates.ShouldNotBeEmpty("Should find parameter completions for 'git add'");
-    }
-    else if (complexInput == "docker run --")
-    {
-      candidates.ShouldNotBeEmpty("Should find docker options");
-      candidates.ShouldContain(c => c.Value.Contains("image"), "Should contain --image option");
-      candidates.ShouldContain(c => c.Value.Contains("detach"), "Should contain --detach option");
-    }
-    else
-    {
-      throw new ArgumentException($"Unknown test input: {complexInput}");
-    }
-    WriteLine();
-  }
+
     WriteLine();
   }
 
@@ -245,7 +234,7 @@ public class ReplAutocompletionTests
   {
     // Arrange
     ArgumentNullException.ThrowIfNull(command);
-    
+
     NuruAppBuilder builder = new NuruAppBuilder()
       .AddRoute("add {a:int} {b:int}", (int a, int b) => WriteLine($"{a + b}"))
       .AddRoute("scale {factor:double}", (double factor) => WriteLine($"Scaling {factor}"))
@@ -257,7 +246,7 @@ public class ReplAutocompletionTests
     var completionProvider = new CompletionProvider(app.TypeConverterRegistry);
 
     // Act
-    WriteLine($"Test: '{command}' should suggest parameter completions");
+    WriteLine($"Test: '{command} ' should suggest {command} parameter completions");
     var context = new CompletionContext(Args: [command, ""], CursorPosition: command.Length + 1, Endpoints: app.Endpoints);
     IEnumerable<CompletionCandidate> candidates = completionProvider.GetCompletions(context, app.Endpoints);
     WriteLine($"  Candidates: {string.Join(", ", candidates.Select(c => c.Value))}");

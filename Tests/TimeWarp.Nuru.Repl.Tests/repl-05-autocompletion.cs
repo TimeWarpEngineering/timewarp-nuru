@@ -41,9 +41,14 @@ public class ReplAutocompletionTests
   /// <summary>
   /// Test command completion in REPL context
   /// </summary>
-  public static async Task Should_complete_partial_commands()
+  [Input("ver")]
+  [Input("st")] 
+  [Input("g")]
+  public static async Task Should_complete_partial_commands(string partialInput)
   {
     // Arrange
+    ArgumentNullException.ThrowIfNull(partialInput);
+    
     NuruAppBuilder builder = new NuruAppBuilder()
       .AddRoute("version", () => WriteLine("v1.0.0"))
       .AddRoute("status", () => WriteLine("OK"))
@@ -53,50 +58,34 @@ public class ReplAutocompletionTests
     NuruApp app = builder.Build();
     CompletionProvider completionProvider = new(app.TypeConverterRegistry);
 
-    // Test 1: 'ver' should suggest 'version'
-    WriteLine("Test 1: 'ver' should suggest 'version'");
-    CompletionContext context1 = new(Args: ["ver"], CursorPosition: 3, Endpoints: app.Endpoints);
-    IEnumerable<CompletionCandidate> candidates1 = completionProvider.GetCompletions(context1, app.Endpoints);
-    CompletionCandidate? versionCandidate = candidates1.FirstOrDefault(c => c.Value == "version");
-    WriteLine($"  Expected: version - Actual: {versionCandidate?.Value ?? "none"}");
-    WriteLine(versionCandidate?.Value == "version" ? "PASS" : "FAIL");
+    // Act
+    WriteLine($"Test: '{partialInput}' should suggest matching commands");
+    var context = new CompletionContext(Args: [partialInput], CursorPosition: partialInput.Length, Endpoints: app.Endpoints);
+    IEnumerable<CompletionCandidate> candidates = completionProvider.GetCompletions(context, app.Endpoints);
+    WriteLine($"  All candidates: {string.Join(", ", candidates.Select(c => c.Value))}");
+    WriteLine($"  Candidates count: {candidates.Count()}");
+
+    // Assert - Should find expected command based on partial input
+    string expectedCommand = partialInput switch
+    {
+      "ver" => "version",
+      "st" => "status",
+      "g" => "greet",
+      _ => throw new ArgumentException($"Unknown test input: {partialInput}")
+    };
+
+    candidates.ShouldNotBeEmpty($"Should find completions for '{partialInput}'");
+    candidates.ShouldContain(c => c.Value == expectedCommand, $"Should contain '{expectedCommand}' for input '{partialInput}'");
     WriteLine();
-
-    // Test 2: 'st' should suggest 'status'
-    WriteLine("Test 2: 'st' should suggest 'status'");
-    CompletionContext context2 = new(Args: ["st"], CursorPosition: 2, Endpoints: app.Endpoints);
-    IEnumerable<CompletionCandidate> candidates2 = completionProvider.GetCompletions(context2, app.Endpoints);
-    CompletionCandidate? statusCandidate = candidates2.FirstOrDefault(c => c.Value == "status");
-    WriteLine($"  Expected: status - Actual: {statusCandidate?.Value ?? "none"}");
-    WriteLine(statusCandidate?.Value == "status" ? "PASS" : "FAIL");
-    WriteLine();
-
-    // Test 3: 'g' should suggest 'greet'
-    WriteLine("Test 3: 'g' should suggest 'greet'");
-    CompletionContext context3 = new(Args: ["g"], CursorPosition: 1, Endpoints: app.Endpoints);
-    IEnumerable<CompletionCandidate> candidates3 = completionProvider.GetCompletions(context3, app.Endpoints);
-    CompletionCandidate? greetCandidate = candidates3.FirstOrDefault(c => c.Value == "greet");
-    WriteLine($"  Expected: greet - Actual: {greetCandidate?.Value ?? "none"}");
-    WriteLine(greetCandidate?.Value == "greet" ? "PASS" : "FAIL");
-    WriteLine();
-
-    // Summary
-    bool allPassed = versionCandidate?.Value == "version" &&
-                     statusCandidate?.Value == "status" &&
-                     greetCandidate?.Value == "greet";
-
-    WriteLine($"=== Command Completion: {(allPassed ? "ALL TESTS PASSED" : "SOME TESTS FAILED")} ===");
-
-    if (!allPassed)
-      throw new InvalidOperationException("Command completion tests failed");
-
-    await Task.CompletedTask;
   }
 
   /// <summary>
   /// Test parameter completion in REPL context
   /// </summary>
-  public static async Task Should_complete_route_parameters()
+  [Input("greet")]
+  [Input("add")]
+  [Input("deploy")]
+  public static async Task Should_complete_route_parameters(string command)
   {
     // Arrange
     NuruAppBuilder builder = new NuruAppBuilder()
@@ -108,47 +97,39 @@ public class ReplAutocompletionTests
     NuruApp app = builder.Build();
     var completionProvider = new CompletionProvider(app.TypeConverterRegistry);
 
-    // Test 1: 'greet ' should suggest parameter completions
-    WriteLine("Test 1: 'greet ' should suggest parameter completions");
-    CompletionContext context1 = new(Args: ["greet", ""], CursorPosition: 6, Endpoints: app.Endpoints);
-    IEnumerable<CompletionCandidate> candidates1 = completionProvider.GetCompletions(context1, app.Endpoints);
-    WriteLine($"  Candidates: {string.Join(", ", candidates1.Select(c => c.Value))}");
-    WriteLine(candidates1.Any() ? "PASS" : "FAIL");
+    // Act
+    string[] args = command switch
+    {
+      "greet" => ["greet", ""],
+      "add" => ["add", ""],
+      "deploy" => ["deploy", "production", ""],
+      _ => throw new ArgumentException($"Unknown test command: {command}")
+    };
+
+    int cursorPos = args.Sum(a => a.Length) + args.Length - 1; // Account for spaces
+
+    WriteLine($"Test: '{command} ' should suggest parameter completions");
+    var context = new CompletionContext(Args: args, CursorPosition: cursorPos, Endpoints: app.Endpoints);
+    IEnumerable<CompletionCandidate> candidates = completionProvider.GetCompletions(context, app.Endpoints);
+    WriteLine($"  Candidates: {string.Join(", ", candidates.Select(c => c.Value))}");
+    WriteLine($"  Candidates count: {candidates.Count()}");
+
+    // Assert
+    candidates.ShouldNotBeEmpty($"Should find parameter completions for '{command}' command");
     WriteLine();
-
-    // Test 2: 'add ' should suggest parameter completions for int type
-    WriteLine("Test 2: 'add ' should suggest parameter completions");
-    CompletionContext context2 = new(Args: ["add", ""], CursorPosition: 4, Endpoints: app.Endpoints);
-    IEnumerable<CompletionCandidate> candidates2 = completionProvider.GetCompletions(context2, app.Endpoints);
-    WriteLine($"  Candidates: {string.Join(", ", candidates2.Select(c => c.Value))}");
-    WriteLine(candidates2.Any() ? "PASS" : "FAIL");
-    WriteLine();
-
-    // Test 3: 'deploy production ' should suggest optional parameter
-    WriteLine("Test 3: 'deploy production ' should suggest optional parameter");
-    CompletionContext context3 = new(Args: ["deploy", "production", ""], CursorPosition: 18, Endpoints: app.Endpoints);
-    IEnumerable<CompletionCandidate> candidates3 = completionProvider.GetCompletions(context3, app.Endpoints);
-    WriteLine($"  Candidates: {string.Join(", ", candidates3.Select(c => c.Value))}");
-    WriteLine(candidates3.Any() ? "PASS" : "FAIL");
-    WriteLine();
-
-    // All tests should generate some candidates for parameters
-    bool allPassed = candidates1.Any() && candidates2.Any() && candidates3.Any();
-
-    WriteLine($"=== Parameter Completion: {(allPassed ? "ALL TESTS PASSED" : "SOME TESTS FAILED")} ===");
-
-    if (!allPassed)
-      throw new InvalidOperationException("Parameter completion tests failed");
-
-    await Task.CompletedTask;
   }
 
   /// <summary>
   /// Test option completion in REPL context
   /// </summary>
-  public static async Task Should_complete_options()
+  [Input("--")]
+  [Input("--v")]
+  [Input("--m")]
+  public static async Task Should_complete_options(string optionInput)
   {
     // Arrange
+    ArgumentNullException.ThrowIfNull(optionInput);
+    
     NuruAppBuilder builder = new NuruAppBuilder()
       .AddRoute("build --config {mode} --verbose,-v", (string mode, bool _) => WriteLine($"Building {mode}"))
       .AddRoute("deploy {env} --message,-m {msg?}", (string _, string? _ = null) => WriteLine("Deploying"))
@@ -158,168 +139,141 @@ public class ReplAutocompletionTests
     NuruApp app = builder.Build();
     var completionProvider = new CompletionProvider(app.TypeConverterRegistry);
 
-    // Test 1: '--' should suggest available options
-    WriteLine("Test 1: '--' should suggest available options");
-    CompletionContext context1 = new(Args: ["--"], CursorPosition: 2, Endpoints: app.Endpoints);
-    IEnumerable<CompletionCandidate> candidates1 = completionProvider.GetCompletions(context1, app.Endpoints);
-    var candidates1List = candidates1.ToList();
-    bool hasConfig = candidates1List.Any(c => c.Value.Contains("config"));
-    bool hasVerbose = candidates1List.Any(c => c.Value.Contains("verbose"));
-    bool hasMessage = candidates1List.Any(c => c.Value.Contains("message"));
-    WriteLine($"  Options found: config={hasConfig}, verbose={hasVerbose}, message={hasMessage}");
-    WriteLine(hasConfig && hasVerbose && hasMessage ? "PASS" : "FAIL");
-    WriteLine();
+    // Act
+    WriteLine($"Test: '{optionInput}' should suggest matching options");
+    var context = new CompletionContext(Args: [optionInput], CursorPosition: optionInput.Length, Endpoints: app.Endpoints);
+    IEnumerable<CompletionCandidate> candidates = completionProvider.GetCompletions(context, app.Endpoints);
+    WriteLine($"  All candidates: {string.Join(", ", candidates.Select(c => c.Value))}");
+    WriteLine($"  Candidates count: {candidates.Count()}");
 
-    // Test 2: '--v' should suggest --verbose
-    WriteLine("Test 2: '--v' should suggest --verbose");
-    CompletionContext context2 = new(Args: ["--v"], CursorPosition: 3, Endpoints: app.Endpoints);
-    IEnumerable<CompletionCandidate> candidates2 = completionProvider.GetCompletions(context2, app.Endpoints);
-    CompletionCandidate? verboseCandidate = candidates2.FirstOrDefault(c => c.Value.Contains("verbose"));
-    WriteLine($"  Expected: --verbose - Actual: {verboseCandidate?.Value ?? "none"}");
-    WriteLine(verboseCandidate?.Value?.Contains("verbose") == true ? "PASS" : "FAIL");
-    WriteLine();
-
-    // Test 3: '--m' should suggest --message options
-    WriteLine("Test 3: '--m' should suggest --message options");
-    CompletionContext context3 = new(Args: ["--m"], CursorPosition: 3, Endpoints: app.Endpoints);
-    IEnumerable<CompletionCandidate> candidates3 = completionProvider.GetCompletions(context3, app.Endpoints);
-    var messageCandidates = candidates3.Where(c => c.Value.Contains("message")).ToList();
-    WriteLine($"  Message options: {string.Join(", ", messageCandidates.Select(c => c.Value))}");
-    WriteLine(messageCandidates.Count != 0 ? "PASS" : "FAIL");
-    WriteLine();
-
-    // Summary
-    bool allPassed = hasConfig && hasVerbose && hasMessage &&
-                     verboseCandidate?.Value?.Contains("verbose") == true &&
-                     messageCandidates.Count > 0;
-
-    WriteLine($"=== Option Completion: {(allPassed ? "ALL TESTS PASSED" : "SOME TESTS FAILED")} ===");
-
-    if (!allPassed)
-      throw new InvalidOperationException("Option completion tests failed");
-
-    await Task.CompletedTask;
+    // Assert based on input type
+    switch (optionInput)
+    {
+      case "--":
+        candidates.ShouldNotBeEmpty("Should find multiple options for '--'");
+        candidates.ShouldContain(c => c.Value.Contains("config"), "Should contain --config option");
+        candidates.ShouldContain(c => c.Value.Contains("verbose"), "Should contain --verbose option");
+        candidates.ShouldContain(c => c.Value.Contains("message"), "Should contain --message option");
+        break;
+        
+      case "--v":
+        candidates.ShouldNotBeEmpty("Should find verbose option for '--v'");
+        candidates.ShouldContain(c => c.Value.Contains("verbose"), "Should contain --verbose option");
+        break;
+        
+      case "--m":
+        candidates.ShouldNotBeEmpty("Should find message options for '--m'");
+        candidates.ShouldContain(c => c.Value.Contains("message"), "Should contain --message option");
+        break;
+        
+      default:
+        throw new ArgumentException($"Unknown test input: {optionInput}");
+    }
+     WriteLine();
   }
 
   /// <summary>
   /// Test complex multi-word route completion
   /// </summary>
-  public static async Task Should_complete_complex_routes()
+  [Input("git")]
+  [Input("git ")]
+  [Input("git add ")]
+  [Input("docker run --")]
+  public static async Task Should_complete_complex_routes(string complexInput)
   {
     // Arrange
+    ArgumentNullException.ThrowIfNull(complexInput);
+    
     NuruAppBuilder builder = new NuruAppBuilder()
       .AddRoute("git status", () => WriteLine("Git status"))
       .AddRoute("git add {path}", (string path) => WriteLine($"Adding {path}"))
-      .AddRoute("git commit --message,-m {message}", (string _) => WriteLine("Committing"))
+      .AddRoute("git commit --message,-m {message}", (string _, bool _) => WriteLine("Committing"))
       .AddRoute("docker run --image,-i {image} --detach,-d", (string image, bool _) => WriteLine($"Running {image}"))
       .AddReplSupport();
 
     NuruApp app = builder.Build();
     var completionProvider = new CompletionProvider(app.TypeConverterRegistry);
 
-    // Test 1: 'git' should suggest git subcommands
-    WriteLine("Test 1: 'git' should suggest git subcommands");
-    CompletionContext context1 = new(Args: ["git"], CursorPosition: 3, Endpoints: app.Endpoints);
-    IEnumerable<CompletionCandidate> candidates1 = completionProvider.GetCompletions(context1, app.Endpoints);
-    var candidates1List = candidates1.ToList();
-    bool hasStatus = candidates1List.Any(c => c.Value == "status");
-    bool hasAdd = candidates1List.Any(c => c.Value == "add");
-    bool hasCommit = candidates1List.Any(c => c.Value == "commit");
-    WriteLine($"  Git subcommands: status={hasStatus}, add={hasAdd}, commit={hasCommit}");
-    WriteLine(hasStatus && hasAdd && hasCommit ? "PASS" : "FAIL");
+    // Act
+    string[] args = complexInput switch
+    {
+      "git" => ["git"],
+      "git " => ["git", ""],
+      "git add " => ["git", "add", ""],
+      "docker run --" => ["docker", "run", "--"],
+      _ => throw new ArgumentException($"Unknown test input: {complexInput}")
+    };
+
+    int cursorPos = args.Sum(a => a.Length) + args.Length - 1; // Account for spaces
+
+    WriteLine($"Test: '{complexInput}' should complete appropriately");
+    var context = new CompletionContext(Args: args, CursorPosition: cursorPos, Endpoints: app.Endpoints);
+    IEnumerable<CompletionCandidate> candidates = completionProvider.GetCompletions(context, app.Endpoints);
+    WriteLine($"  All candidates: {string.Join(", ", candidates.Select(c => c.Value))}");
+    WriteLine($"  Candidates count: {candidates.Count()}");
+
+    // Assert based on input type
+    switch (complexInput)
+    {
+      case "git":
+        candidates.ShouldNotBeEmpty("Should find git subcommands");
+        candidates.ShouldContain(c => c.Value == "status", "Should contain 'status'");
+        candidates.ShouldContain(c => c.Value == "add", "Should contain 'add'");
+        candidates.ShouldContain(c => c.Value == "commit", "Should contain 'commit'");
+        break;
+        
+      case "git ":
+        candidates.ShouldNotBeEmpty("Should find git subcommands");
+        candidates.ShouldContain(c => c.Value == "status", "Should contain 'status'");
+        break;
+        
+      case "git add ":
+        candidates.ShouldNotBeEmpty("Should find parameter completions for 'git add'");
+        break;
+        
+      case "docker run --":
+        candidates.ShouldNotBeEmpty("Should find docker options");
+        candidates.ShouldContain(c => c.Value.Contains("image"), "Should contain --image option");
+        candidates.ShouldContain(c => c.Value.Contains("detach"), "Should contain --detach option");
+        break;
+        
+      default:
+        throw new ArgumentException($"Unknown test input: {complexInput}");
+    }
     WriteLine();
-
-    // Test 2: 'git ' should suggest subcommands
-    WriteLine("Test 2: 'git ' should suggest subcommands");
-    CompletionContext context2 = new(Args: ["git", ""], CursorPosition: 4, Endpoints: app.Endpoints);
-    IEnumerable<CompletionCandidate> candidates2 = completionProvider.GetCompletions(context2, app.Endpoints);
-    CompletionCandidate? statusCandidate2 = candidates2.FirstOrDefault(c => c.Value == "status");
-    WriteLine($"  Expected: status - Actual: {statusCandidate2?.Value ?? "none"}");
-    WriteLine(statusCandidate2?.Value == "status" ? "PASS" : "FAIL");
-    WriteLine();
-
-    // Test 3: 'git add ' should suggest parameter completion
-    WriteLine("Test 3: 'git add ' should suggest parameter completion");
-    CompletionContext context3 = new(Args: ["git", "add", ""], CursorPosition: 8, Endpoints: app.Endpoints);
-    IEnumerable<CompletionCandidate> candidates3 = completionProvider.GetCompletions(context3, app.Endpoints);
-    WriteLine($"  Parameter candidates: {string.Join(", ", candidates3.Select(c => c.Value))}");
-    WriteLine(candidates3.Any() ? "PASS" : "FAIL");
-    WriteLine();
-
-    // Test 4: 'docker run --' should suggest docker options
-    WriteLine("Test 4: 'docker run --' should suggest docker options");
-    CompletionContext context4 = new(Args: ["docker", "run", "--"], CursorPosition: 12, Endpoints: app.Endpoints);
-    IEnumerable<CompletionCandidate> candidates4 = completionProvider.GetCompletions(context4, app.Endpoints);
-    var candidates4List = candidates4.ToList();
-    bool hasImage = candidates4List.Any(c => c.Value.Contains("image"));
-    bool hasDetach = candidates4List.Any(c => c.Value.Contains("detach"));
-    WriteLine($"  Docker options: image={hasImage}, detach={hasDetach}");
-    WriteLine(hasImage && hasDetach ? "PASS" : "FAIL");
-    WriteLine();
-
-    // Summary
-    bool allPassed = hasStatus && hasAdd && hasCommit &&
-                     statusCandidate2?.Value == "status" &&
-                     candidates3.Any() &&
-                     hasImage && hasDetach;
-
-    WriteLine($"=== Complex Route Completion: {(allPassed ? "ALL TESTS PASSED" : "SOME TESTS FAILED")} ===");
-
-    if (!allPassed)
-      throw new InvalidOperationException("Complex route completion tests failed");
-
-    await Task.CompletedTask;
   }
 
   /// <summary>
   /// Test typed parameter completion (int, double, bool, etc.)
   /// </summary>
-  public static async Task Should_complete_typed_parameters()
+  [Input("add")]
+  [Input("scale")]
+  [Input("enable")]
+  public static async Task Should_complete_typed_parameters(string command)
   {
     // Arrange
+    ArgumentNullException.ThrowIfNull(command);
+    
     NuruAppBuilder builder = new NuruAppBuilder()
       .AddRoute("add {a:int} {b:int}", (int a, int b) => WriteLine($"{a + b}"))
       .AddRoute("scale {factor:double}", (double factor) => WriteLine($"Scaling {factor}"))
       .AddRoute("enable {flag:bool}", (bool flag) => WriteLine($"Enabled: {flag}"))
-      .AddRoute("delay {ms:int}", (int _) => { WriteLine("Delay command"); })
+      .AddRoute("delay {ms:int}", (int _) => WriteLine("Delay command"))
       .AddReplSupport();
 
     NuruApp app = builder.Build();
     var completionProvider = new CompletionProvider(app.TypeConverterRegistry);
 
-    // Test 1: 'add ' should suggest int parameter completions
-    WriteLine("Test 1: 'add ' should suggest int parameter completions");
-    CompletionContext context1 = new(Args: ["add", ""], CursorPosition: 4, Endpoints: app.Endpoints);
-    IEnumerable<CompletionCandidate> candidates1 = completionProvider.GetCompletions(context1, app.Endpoints);
-    WriteLine($"  Int candidates: {string.Join(", ", candidates1.Select(c => c.Value))}");
-    WriteLine(candidates1.Any() ? "PASS" : "FAIL");
+    // Act
+    WriteLine($"Test: '{command} ' should suggest {command} parameter completions");
+    var context = new CompletionContext(Args: [command, ""], CursorPosition: command.Length + 1, Endpoints: app.Endpoints);
+    IEnumerable<CompletionCandidate> candidates = completionProvider.GetCompletions(context, app.Endpoints);
+    WriteLine($"  Candidates: {string.Join(", ", candidates.Select(c => c.Value))}");
+    WriteLine($"  Candidates count: {candidates.Count()}");
+
+    // Assert
+    candidates.ShouldNotBeEmpty($"Should find parameter completions for '{command}' command");
     WriteLine();
-
-    // Test 2: 'scale ' should suggest double parameter completions
-    WriteLine("Test 2: 'scale ' should suggest double parameter completions");
-    CompletionContext context2 = new(Args: ["scale", ""], CursorPosition: 6, Endpoints: app.Endpoints);
-    IEnumerable<CompletionCandidate> candidates2 = completionProvider.GetCompletions(context2, app.Endpoints);
-    WriteLine($"  Double candidates: {string.Join(", ", candidates2.Select(c => c.Value))}");
-    WriteLine(candidates2.Any() ? "PASS" : "FAIL");
-    WriteLine();
-
-    // Test 3: 'enable ' should suggest bool parameter completions
-    WriteLine("Test 3: 'enable ' should suggest bool parameter completions");
-    CompletionContext context3 = new(Args: ["enable", ""], CursorPosition: 7, Endpoints: app.Endpoints);
-    IEnumerable<CompletionCandidate> candidates3 = completionProvider.GetCompletions(context3, app.Endpoints);
-    WriteLine($"  Bool candidates: {string.Join(", ", candidates3.Select(c => c.Value))}");
-    WriteLine(candidates3.Any() ? "PASS" : "FAIL");
-    WriteLine();
-
-    // All typed parameters should generate some candidates
-    bool allPassed = candidates1.Any() && candidates2.Any() && candidates3.Any();
-
-    WriteLine($"=== Typed Parameter Completion: {(allPassed ? "ALL TESTS PASSED" : "SOME TESTS FAILED")} ===");
-
-    if (!allPassed)
-      throw new InvalidOperationException("Typed parameter completion tests failed");
-
-    await Task.CompletedTask;
   }
 
   /// <summary>
@@ -346,7 +300,7 @@ public class ReplAutocompletionTests
       literal.Value == "__complete");
 
     WriteLine($"__complete route registered: {hasCompleteRoute}");
-    WriteLine(hasCompleteRoute ? "PASS" : "FAIL");
+    hasCompleteRoute.ShouldBeTrue();
 
     if (!hasCompleteRoute)
       throw new InvalidOperationException("__complete route not found in REPL integration");

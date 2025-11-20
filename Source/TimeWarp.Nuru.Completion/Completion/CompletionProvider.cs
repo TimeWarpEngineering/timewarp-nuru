@@ -35,8 +35,8 @@ public class CompletionProvider
 
     var candidates = new List<CompletionCandidate>();
 
-    // If cursor is at position 0 or 1, we're completing the first command literal
-    if (context.CursorPosition <= 1 || context.Args.Length == 0)
+    // If we're completing the first command (0 or 1 args), use command completions
+    if (context.Args.Length <= 1)
     {
       candidates.AddRange(GetCommandCompletions(endpoints, context.Args.ElementAtOrDefault(0) ?? ""));
       return [.. candidates];
@@ -125,10 +125,47 @@ public class CompletionProvider
 
       if (segment is LiteralMatcher literal)
       {
-        // Must match exactly
-        if (argIndex >= args.Length || !literal.TryMatch(args[argIndex], out _))
+        // For completion, we need partial matching when at cursor position
+        if (argIndex >= args.Length)
         {
-          return []; // Route doesn't match
+          // We're at the end of args, this route could match
+          break;
+        }
+
+        // If we're at cursor position, allow partial match
+        if (argIndex == cursorPosition - 1)
+        {
+          // Check if current arg starts with the literal
+          if (!args[argIndex].StartsWith(literal.Value, StringComparison.OrdinalIgnoreCase))
+          {
+            return []; // Route doesn't match partial input
+          }
+        }
+        else
+        {
+          // For non-cursor positions, require exact match
+          if (!literal.TryMatch(args[argIndex], out _))
+          {
+            return []; // Route doesn't match
+          }
+        }
+
+        // If we're at the cursor position, allow partial match
+        if (argIndex == cursorPosition - 1)
+        {
+          // Check if current arg starts with the literal
+          if (!args[argIndex].StartsWith(literal.Value, StringComparison.OrdinalIgnoreCase))
+          {
+            return []; // Route doesn't match partial input
+          }
+        }
+        else
+        {
+          // For non-cursor positions, require exact match
+          if (!literal.TryMatch(args[argIndex], out _))
+          {
+            return []; // Route doesn't match
+          }
         }
 
         argIndex++;

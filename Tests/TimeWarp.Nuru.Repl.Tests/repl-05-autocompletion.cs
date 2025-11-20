@@ -41,10 +41,10 @@ public class ReplAutocompletionTests
   /// <summary>
   /// Test command completion in REPL context
   /// </summary>
-  [Input("ver")]
-  [Input("st")] 
-  [Input("g")]
-  public static async Task Should_complete_partial_commands(string partialInput)
+  [Input("ver", "version")]
+  [Input("st", "status")] 
+  [Input("g", "greet")]
+  public static async Task Should_complete_partial_commands(string partialInput, string expectedCommand)
   {
     // Arrange
     ArgumentNullException.ThrowIfNull(partialInput);
@@ -65,15 +65,7 @@ public class ReplAutocompletionTests
     WriteLine($"  All candidates: {string.Join(", ", candidates.Select(c => c.Value))}");
     WriteLine($"  Candidates count: {candidates.Count()}");
 
-    // Assert - Should find expected command based on partial input
-    string expectedCommand = partialInput switch
-    {
-      "ver" => "version",
-      "st" => "status",
-      "g" => "greet",
-      _ => throw new ArgumentException($"Unknown test input: {partialInput}")
-    };
-
+    // Assert
     candidates.ShouldNotBeEmpty($"Should find completions for '{partialInput}'");
     candidates.ShouldContain(c => c.Value == expectedCommand, $"Should contain '{expectedCommand}' for input '{partialInput}'");
     WriteLine();
@@ -106,9 +98,9 @@ public class ReplAutocompletionTests
       _ => throw new ArgumentException($"Unknown test command: {command}")
     };
 
-    int cursorPos = args.Sum(a => a.Length) + args.Length - 1; // Account for spaces
+    int cursorPos = args.Sum(a => a.Length) + args.Length - 1;
 
-    WriteLine($"Test: '{command} ' should suggest parameter completions");
+    WriteLine($"Test: '{command}' should suggest parameter completions");
     var context = new CompletionContext(Args: args, CursorPosition: cursorPos, Endpoints: app.Endpoints);
     IEnumerable<CompletionCandidate> candidates = completionProvider.GetCompletions(context, app.Endpoints);
     WriteLine($"  Candidates: {string.Join(", ", candidates.Select(c => c.Value))}");
@@ -147,29 +139,28 @@ public class ReplAutocompletionTests
     WriteLine($"  Candidates count: {candidates.Count()}");
 
     // Assert based on input type
-    switch (optionInput)
+    if (optionInput == "--")
     {
-      case "--":
-        candidates.ShouldNotBeEmpty("Should find multiple options for '--'");
-        candidates.ShouldContain(c => c.Value.Contains("config"), "Should contain --config option");
-        candidates.ShouldContain(c => c.Value.Contains("verbose"), "Should contain --verbose option");
-        candidates.ShouldContain(c => c.Value.Contains("message"), "Should contain --message option");
-        break;
-        
-      case "--v":
-        candidates.ShouldNotBeEmpty("Should find verbose option for '--v'");
-        candidates.ShouldContain(c => c.Value.Contains("verbose"), "Should contain --verbose option");
-        break;
-        
-      case "--m":
-        candidates.ShouldNotBeEmpty("Should find message options for '--m'");
-        candidates.ShouldContain(c => c.Value.Contains("message"), "Should contain --message option");
-        break;
-        
-      default:
-        throw new ArgumentException($"Unknown test input: {optionInput}");
+      candidates.ShouldNotBeEmpty("Should find multiple options for '--'");
+      candidates.ShouldContain(c => c.Value.Contains("config"), "Should contain --config option");
+      candidates.ShouldContain(c => c.Value.Contains("verbose"), "Should contain --verbose option");
+      candidates.ShouldContain(c => c.Value.Contains("message"), "Should contain --message option");
     }
-     WriteLine();
+    else if (optionInput == "--v")
+    {
+      candidates.ShouldNotBeEmpty("Should find verbose option for '--v'");
+      candidates.ShouldContain(c => c.Value.Contains("verbose"), "Should contain --verbose option");
+    }
+    else if (optionInput == "--m")
+    {
+      candidates.ShouldNotBeEmpty("Should find message options for '--m'");
+      candidates.ShouldContain(c => c.Value.Contains("message"), "Should contain --message option");
+    }
+    else
+    {
+      throw new ArgumentException($"Unknown test input: {optionInput}");
+    }
+    WriteLine();
   }
 
   /// <summary>
@@ -204,7 +195,7 @@ public class ReplAutocompletionTests
       _ => throw new ArgumentException($"Unknown test input: {complexInput}")
     };
 
-    int cursorPos = args.Sum(a => a.Length) + args.Length - 1; // Account for spaces
+    int cursorPos = args.Sum(a => a.Length) + args.Length - 1;
 
     WriteLine($"Test: '{complexInput}' should complete appropriately");
     var context = new CompletionContext(Args: args, CursorPosition: cursorPos, Endpoints: app.Endpoints);
@@ -213,33 +204,34 @@ public class ReplAutocompletionTests
     WriteLine($"  Candidates count: {candidates.Count()}");
 
     // Assert based on input type
-    switch (complexInput)
+    if (complexInput == "git")
     {
-      case "git":
-        candidates.ShouldNotBeEmpty("Should find git subcommands");
-        candidates.ShouldContain(c => c.Value == "status", "Should contain 'status'");
-        candidates.ShouldContain(c => c.Value == "add", "Should contain 'add'");
-        candidates.ShouldContain(c => c.Value == "commit", "Should contain 'commit'");
-        break;
-        
-      case "git ":
-        candidates.ShouldNotBeEmpty("Should find git subcommands");
-        candidates.ShouldContain(c => c.Value == "status", "Should contain 'status'");
-        break;
-        
-      case "git add ":
-        candidates.ShouldNotBeEmpty("Should find parameter completions for 'git add'");
-        break;
-        
-      case "docker run --":
-        candidates.ShouldNotBeEmpty("Should find docker options");
-        candidates.ShouldContain(c => c.Value.Contains("image"), "Should contain --image option");
-        candidates.ShouldContain(c => c.Value.Contains("detach"), "Should contain --detach option");
-        break;
-        
-      default:
-        throw new ArgumentException($"Unknown test input: {complexInput}");
+      candidates.ShouldNotBeEmpty("Should find git subcommands");
+      candidates.ShouldContain(c => c.Value == "status", "Should contain 'status'");
+      candidates.ShouldContain(c => c.Value == "add", "Should contain 'add'");
+      candidates.ShouldContain(c => c.Value == "commit", "Should contain 'commit'");
     }
+    else if (complexInput == "git ")
+    {
+      candidates.ShouldNotBeEmpty("Should find git subcommands");
+      candidates.ShouldContain(c => c.Value == "status", "Should contain 'status'");
+    }
+    else if (complexInput == "git add ")
+    {
+      candidates.ShouldNotBeEmpty("Should find parameter completions for 'git add'");
+    }
+    else if (complexInput == "docker run --")
+    {
+      candidates.ShouldNotBeEmpty("Should find docker options");
+      candidates.ShouldContain(c => c.Value.Contains("image"), "Should contain --image option");
+      candidates.ShouldContain(c => c.Value.Contains("detach"), "Should contain --detach option");
+    }
+    else
+    {
+      throw new ArgumentException($"Unknown test input: {complexInput}");
+    }
+    WriteLine();
+  }
     WriteLine();
   }
 
@@ -265,7 +257,7 @@ public class ReplAutocompletionTests
     var completionProvider = new CompletionProvider(app.TypeConverterRegistry);
 
     // Act
-    WriteLine($"Test: '{command} ' should suggest {command} parameter completions");
+    WriteLine($"Test: '{command}' should suggest parameter completions");
     var context = new CompletionContext(Args: [command, ""], CursorPosition: command.Length + 1, Endpoints: app.Endpoints);
     IEnumerable<CompletionCandidate> candidates = completionProvider.GetCompletions(context, app.Endpoints);
     WriteLine($"  Candidates: {string.Join(", ", candidates.Select(c => c.Value))}");

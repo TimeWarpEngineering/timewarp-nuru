@@ -172,6 +172,76 @@ Tests use numbered files (repl-01, repl-02, etc.) for systematic coverage, with 
 
 ---
 
+## Section 3b: History Security Filtering
+
+**File**: `repl-03b-history-security.cs`
+**Purpose**: Verify HistoryIgnorePatterns filtering for sensitive commands
+
+### Test Cases
+
+1. **Default Patterns Block Common Secrets**
+   - Commands: `login --password secret123`, `set apikey=ABC`, `deploy --token xyz`
+   - Expected: None added to history
+   - Verify: ShouldIgnoreCommand returns true for each
+
+2. **Case-Insensitive Pattern Matching**
+   - Commands: `PASSWORD=123`, `Password=456`, `password=789`
+   - Expected: All blocked regardless of case
+   - Verify: RegexOptions.IgnoreCase working
+
+3. **Wildcard Pattern Matching - Asterisk**
+   - Pattern: `*secret*`
+   - Commands: `secret`, `mysecret`, `secretvalue`, `has_secret_in_middle`
+   - Expected: All match the pattern
+   - Verify: `.*` regex conversion working
+
+4. **Wildcard Pattern Matching - Question Mark**
+   - Pattern: `log?n`
+   - Commands: `login`, `log1n`, `logXn`
+   - Expected: All match (single char wildcard)
+   - Commands: `logiin`, `lon`
+   - Expected: Don't match
+
+5. **Custom Pattern Configuration**
+   - Options: `HistoryIgnorePatterns = ["deploy prod*", "*staging*"]`
+   - Commands: `deploy production`, `deploy prod --force`, `test staging env`
+   - Expected: All blocked by custom patterns
+   - Command: `deploy dev`
+   - Expected: Allowed (doesn't match patterns)
+
+6. **Null/Empty Pattern Handling**
+   - Options: `HistoryIgnorePatterns = null`
+   - Expected: All commands saved to history
+   - Options: `HistoryIgnorePatterns = []`
+   - Expected: All commands saved to history
+
+7. **Pattern with Special Regex Characters**
+   - Pattern: `login.*` (literal dot-star)
+   - Command: `login.*`
+   - Expected: Exact match only (Regex.Escape handles special chars)
+   - Command: `loginABC`
+   - Expected: No match (dot is literal, not wildcard)
+
+8. **ShouldIgnoreCommand Internal Method Tests**
+   - Test directly via InternalsVisibleTo
+   - Input: Various commands and patterns
+   - Verify: Correct boolean returns
+   - Performance: < 1ms per check
+
+9. **Integration with AddToHistory**
+   - Commands matching patterns
+   - Expected: Not added to History list
+   - Commands not matching
+   - Expected: Added normally
+   - Verify: History.Count reflects filtering
+
+10. **Pattern Priority and Order**
+    - Multiple patterns, some overlapping
+    - Expected: First match wins (no need to check all)
+    - Verify: Performance optimization working
+
+---
+
 ## Section 4: History Persistence
 
 **File**: `repl-04-history-persistence.cs`
@@ -634,6 +704,16 @@ Tests use numbered files (repl-01, repl-02, etc.) for systematic coverage, with 
    - Expected: All applied
    - Verify: No conflicts
 
+9. **HistoryIgnorePatterns Configuration**
+   - Default patterns present
+   - Expected: Common sensitive patterns included
+   - Verify: `*password*`, `*secret*`, `*token*`, `*apikey*`, `*credential*`
+
+10. **Custom Prompt Color**
+    - Options: `PromptColor = "\x1b[36m"` (cyan)
+    - Expected: Prompt uses custom color
+    - Verify: PromptFormatter uses configured color
+
 ---
 
 ## Section 13: Integration with NuruApp
@@ -934,6 +1014,14 @@ Create shared test data:
 - Mock completion sources
 - Test history files
 
+### Testing Internal Methods
+
+Some critical security logic (like `ShouldIgnoreCommand`) is marked as `internal` to enable direct testing:
+- Use `InternalsVisibleTo` attribute to allow test assembly access
+- Test internal methods directly when they contain important logic
+- This provides better test coverage than testing only through public APIs
+- Especially important for security-related features like history filtering
+
 ### Assertions
 
 Use clear, specific assertions:
@@ -960,6 +1048,7 @@ Use clear, specific assertions:
 | 1 | Session Lifecycle | `repl-01-session-lifecycle.cs` | Start/stop/cleanup | 7 |
 | 2 | Command Parsing | `repl-02-command-parsing.cs` | Quote and escape handling | 9 |
 | 3 | History Management | `repl-03-history-management.cs` | History operations | 9 |
+| 3b | History Security | `repl-03b-history-security.cs` | Sensitive data filtering | 10 |
 | 4 | History Persistence | `repl-04-history-persistence.cs` | File I/O | 8 |
 | 5 | Console Input | `repl-05-console-input.cs` | Keyboard handling | 10 |
 | 6 | Tab Completion Basic | `repl-06-tab-completion-basic.cs` | Simple completions | 8 |
@@ -968,10 +1057,10 @@ Use clear, specific assertions:
 | 9 | Built-in Commands | `repl-09-builtin-commands.cs` | REPL commands | 8 |
 | 10 | Error Handling | `repl-10-error-handling.cs` | Error recovery | 8 |
 | 11 | Display Formatting | `repl-11-display-formatting.cs` | Output format | 9 |
-| 12 | Configuration | `repl-12-configuration.cs` | Options behavior | 8 |
+| 12 | Configuration | `repl-12-configuration.cs` | Options behavior | 10 |
 | 13 | Integration | `repl-13-nuruapp-integration.cs` | App integration | 8 |
 | 14 | Performance | `repl-14-performance.cs` | Speed and resources | 8 |
 | 15 | Edge Cases | `repl-15-edge-cases.cs` | Unusual conditions | 10 |
 
-**Total Test Categories**: 15
-**Total Test Cases**: ~127
+**Total Test Categories**: 16
+**Total Test Cases**: ~139

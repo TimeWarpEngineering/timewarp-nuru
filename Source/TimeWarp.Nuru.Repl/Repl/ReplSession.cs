@@ -371,7 +371,7 @@ internal sealed class ReplSession
     }
   }
 
-  private bool ShouldIgnoreCommand(string command)
+  internal bool ShouldIgnoreCommand(string command)
   {
     if (ReplOptions.HistoryIgnorePatterns is null || ReplOptions.HistoryIgnorePatterns.Count == 0)
       return false;

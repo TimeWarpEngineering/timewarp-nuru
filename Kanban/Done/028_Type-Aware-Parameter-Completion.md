@@ -2,7 +2,7 @@
 
 **Related**: Task 025 (Shell Tab Completion)
 
-## Status: SUPERSEDED by Task 029 (EnableDynamicCompletion)
+## Resolution: SUPERSEDED by Task 029 (EnableDynamicCompletion)
 
 **Resolution**: Dynamic completion (Task 029) solves this problem more elegantly:
 - `DynamicCompletionHandler` defaults to `CompletionDirective.NoFileComp`

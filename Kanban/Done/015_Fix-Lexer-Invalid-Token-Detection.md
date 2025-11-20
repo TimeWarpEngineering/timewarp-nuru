@@ -37,5 +37,5 @@ Updated `RouteLexer.cs` to detect malformed patterns during tokenization:
 - [x] Parser tests still pass (ensure we don't break valid patterns)
 - [x] Clear error messages for Invalid tokens
 
-## Status
+## Result
 ✅ **COMPLETED** - Fixed in commit bd000c1

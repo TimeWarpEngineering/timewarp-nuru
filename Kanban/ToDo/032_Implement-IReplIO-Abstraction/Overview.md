@@ -1,7 +1,7 @@
 # Task 032: Implement IReplIO Abstraction for REPL Extensibility
 
-## Status
-- Created: 2024-11-20
+## Created
+- 2024-11-20
 
 ## Executive Summary
 

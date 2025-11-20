@@ -151,7 +151,7 @@ public override string ToString() =>
 
 ### Part 2: Add Common Built-in Type Converters
 
-Based on research of System.CommandLine, Cocona, and common CLI scenarios, add these Priority 1 types:
+Based on research of System.CommandLine, Cocona, and common CLI scenarios, add these essential types:
 
 #### Essential File System Types
 - **`FileInfo`** - File paths with metadata (requested in issue #62)

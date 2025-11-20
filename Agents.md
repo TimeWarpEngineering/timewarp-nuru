@@ -18,6 +18,11 @@
 - Run specific runfile: `dotnet run Tests/TimeWarp.Nuru.Tests/Lexer/lexer-01-basic-token-types.cs`
 - Add to runner: Update `Tests/Scripts/run-all-tests.cs` for new tests
 
+## Kanban Task Guidelines
+- **NEVER add these fields**: Status (folder location indicates status), Priority, Category, Priority Justification, Implementation Status
+- **Use ONLY**: Description, Parent (optional), Requirements (optional), Checklist (optional), Notes (optional), Implementation Notes (optional)
+- **WHY**: Folder structure (ToDo/InProgress/Done/Backlog) determines status; adding status fields creates redundancy
+
 ## Code Style Guidelines
 - **Formatting**: Use `dotnet format`; 2-space indent (per .editorconfig), no trailing whitespace (RCS1037 fails build), blank lines between blocks (IDE2003).
 - **Imports**: Prefer global usings (GlobalUsings.cs); explicit for locals; no `using static` unless necessary.

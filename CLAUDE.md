@@ -125,6 +125,25 @@ dotnet publish -c Release -r linux-x64 -p:PublishAot=true
 dotnet publish -c Release -r linux-x64 -p:PublishAot=true -p:TrimMode=partial
 ```
 
+## Kanban Task Guidelines
+
+### ⚠️ CRITICAL: NEVER add these fields to Kanban tasks:
+- **Status** - The folder location (ToDo/InProgress/Done/Backlog) indicates status
+- **Priority** - We don't use priority rankings
+- **Category** - Unnecessary classification
+- **Priority Justification** - Not needed
+- **Implementation Status** or any temporal status indicators
+
+**WHY:** Status is determined by folder location. Adding status fields creates redundancy and confusion.
+
+### Use ONLY the fields from Task-Template.md:
+- Description
+- Parent (optional)
+- Requirements (optional)
+- Checklist (optional)
+- Notes (optional)
+- Implementation Notes (optional)
+
 ## Important Notes
 - The repository uses .NET 9.0 and C# latest features
 - Central package management via Directory.Packages.props

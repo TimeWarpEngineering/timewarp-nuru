@@ -30,7 +30,7 @@
 - 409be8b: docs: add shell completion section to Getting Started guide
 - 3dd55e1: docs: add comprehensive shell completion feature guide
 
-**Status:** All documentation complete. Ready for PR and release.
+**Summary:** All documentation complete. Ready for PR and release.
 
 ### 2025-11-13 (AM): Testing & Quality Complete - Phase 1 & 2 Ready
 
@@ -149,8 +149,8 @@ Shell completion operates through a **three-tier architecture**:
 
 ### How Other .NET CLI Frameworks Handle This
 
-| Framework | Approach | Complexity | Current Status |
-|-----------|----------|------------|----------------|
+| Framework | Approach | Complexity | Implementation State |
+|-----------|----------|------------|---------------------|
 | **System.CommandLine** | `dotnet-suggest` global tool as mediator | High - requires global tool install | Active but disabled by default |
 | **Cocona** | Built-in `--completion` command generates static scripts | Medium | **Disabled by default as of recent versions** |
 | **Spectre.Console** | No built-in support | N/A | Third-party package `JKToolKit.Spectre.AutoCompletion` exists |

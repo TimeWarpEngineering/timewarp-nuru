@@ -7,11 +7,11 @@ using System.Reflection;
 using TimeWarp.Nuru;
 using TimeWarp.Nuru.Repl;
 
-return await RunTests<HistorySecurityTests>(clearCache: true);
+return await RunTests<ShouldIgnoreCommandTests>(clearCache: true);
 
 [TestTag("REPL")]
 [ClearRunfileCache]
-public class HistorySecurityTests
+public class ShouldIgnoreCommandTests
 {
   // Shared helper instance for all tests
   private static ReplSessionHelper? Helper;

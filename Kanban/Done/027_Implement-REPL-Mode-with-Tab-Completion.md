@@ -863,22 +863,6 @@ If package size becomes a concern later, can split it. Start integrated.
 - REPL loop pattern is straightforward
 - Main complexity is input parsing and cross-platform terminal behavior
 
-## Priority Justification
-
-**Priority: Medium**
-
-### Why Not High?
-- Not blocking other features
-- Not fixing a bug or broken functionality
-- Users can still use Nuru effectively without REPL (one-shot commands work fine)
-
-### Why Not Low?
-- **Significant UX improvement** for exploratory workflows
-- **Competitive differentiator**: Cocona doesn't have REPL
-- **Validates architecture**: Shows stateless design enables advanced features
-- **Developer tool**: Helps Nuru app developers test routes interactively
-- **Synergy with Task 025**: Reuses completion infrastructure, amplifying that investment
-
 ### Suggested Sequencing
 1. **Complete Task 025 Phase 1** (CompletionProvider) first
 2. **Then implement this task's Phase 1** (basic REPL)

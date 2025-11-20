@@ -396,12 +396,3 @@ All phases completed successfully. Delivered:
 **Total Estimate**: 13-20 hours
 
 **Complexity**: Medium (multiple coordinated changes but each is straightforward)
-
-## Priority Justification
-
-**High Priority** because:
-1. Blocks real users (Issue #62 is active)
-2. Design inconsistency undermines framework credibility
-3. Missing documented feature (Uri is documented but not implemented)
-4. Common types (FileInfo) are table stakes for CLI frameworks
-5. Relatively quick to implement with high user value

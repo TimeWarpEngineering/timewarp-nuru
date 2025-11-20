@@ -1,8 +1,5 @@
 # Improve Configuration Validation Error Display
 
-**Status:** Complete ✅
-**Priority:** High
-**Category:** User Experience, Error Handling
 **Created:** 2025-10-25
 **Completed:** 2025-10-26
 **Related:** Issue #71 (ValidateOnStart support)

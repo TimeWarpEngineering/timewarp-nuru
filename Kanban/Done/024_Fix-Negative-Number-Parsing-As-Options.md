@@ -1,8 +1,5 @@
 # Fix Negative Number Parsing As Options
 
-## Priority
-**High** - This is a fundamental bug affecting basic numeric operations
-
 ## Goal
 Allow negative numbers to be passed as positional parameter values without being interpreted as undefined options.
 

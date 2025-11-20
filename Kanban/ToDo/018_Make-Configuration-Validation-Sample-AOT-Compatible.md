@@ -1,8 +1,5 @@
 # Make Configuration Validation Sample AOT-Compatible
 
-**Status:** ToDo
-**Priority:** Medium
-**Category:** Samples, AOT
 **Created:** 2025-10-25
 **Related:** Issue #71 (ValidateOnStart support)
 

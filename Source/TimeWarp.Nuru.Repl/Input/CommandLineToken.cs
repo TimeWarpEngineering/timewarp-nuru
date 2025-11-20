@@ -20,17 +20,3 @@ public sealed class CommandLineToken
 
   public int Length => End - Start;
 }
-
-/// <summary>
-/// Types of tokens in command line input.
-/// </summary>
-public enum TokenType
-{
-  Whitespace,
-  Command,
-  StringLiteral,
-  Number,
-  LongOption,
-  ShortOption,
-  Argument
-}

@@ -356,11 +356,11 @@ internal sealed class ReplSession
 
   private void AddToHistory(string command)
   {
+    // Check if command matches any ignore pattern
+    if (ShouldIgnoreCommand(command))  return;
+
     // Don't add if same as last command
-    if (History.Count > 0 && History[^1] == command)
-    {
-      return;
-    }
+    if (History.Count > 0 && History[^1] == command) return;
 
     History.Add(command);
 
@@ -369,6 +369,29 @@ internal sealed class ReplSession
     {
       History.RemoveAt(0);
     }
+  }
+
+  private bool ShouldIgnoreCommand(string command)
+  {
+    if (ReplOptions.HistoryIgnorePatterns is null || ReplOptions.HistoryIgnorePatterns.Count == 0)
+      return false;
+
+    foreach (string pattern in ReplOptions.HistoryIgnorePatterns)
+    {
+      if (string.IsNullOrEmpty(pattern))
+        continue;
+
+      // Convert wildcard pattern to regex pattern
+      string regexPattern = "^" + Regex.Escape(pattern)
+        .Replace("\\*", ".*", StringComparison.Ordinal)  // * matches any characters
+        .Replace("\\?", ".", StringComparison.Ordinal)   // ? matches single character
+        + "$";
+
+      if (Regex.IsMatch(command, regexPattern, RegexOptions.IgnoreCase))
+        return true;
+    }
+
+    return false;
   }
 
   private void LoadHistory()

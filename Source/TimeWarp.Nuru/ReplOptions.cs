@@ -71,4 +71,20 @@ public class ReplOptions
   /// </summary>
   public bool EnableArrowHistory { get; set; } = true;
 
+  /// <summary>
+  /// Patterns for commands that should not be saved to history.
+  /// Supports wildcards: * matches any characters, ? matches single character.
+  /// Example: ["*password*", "*secret*", "*token*", "*apikey*"]
+  /// Set to null or empty to save all commands to history.
+  /// Default includes common sensitive patterns.
+  /// </summary>
+  public IList<string>? HistoryIgnorePatterns { get; init; } =
+  [
+    "*password*",
+    "*secret*",
+    "*token*",
+    "*apikey*",
+    "*credential*"
+  ];
+
 }

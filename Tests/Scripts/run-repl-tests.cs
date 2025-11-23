@@ -6,15 +6,11 @@
 
 using System.Diagnostics;
 
-// Get the directory where this script lives, then navigate to sibling test folder
-string scriptDir = Path.GetDirectoryName(Environment.ProcessPath ?? Directory.GetCurrentDirectory()) ?? Directory.GetCurrentDirectory();
-string testsDir = Path.GetFullPath(Path.Combine(scriptDir, "..", "TimeWarp.Nuru.Repl.Tests"));
+// Change to script directory for relative paths
+string scriptDir = (AppContext.GetData("EntryPointFileDirectoryPath") as string)!;
+Directory.SetCurrentDirectory(scriptDir);
 
-// If running via dotnet run, use the current working directory structure
-if (!Directory.Exists(testsDir))
-{
-  testsDir = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "Tests", "TimeWarp.Nuru.Repl.Tests"));
-}
+string testsDir = Path.GetFullPath(Path.Combine(scriptDir, "..", "TimeWarp.Nuru.Repl.Tests"));
 
 Console.WriteLine("╔══════════════════════════════════════════════════════════════╗");
 Console.WriteLine("║           TimeWarp.Nuru REPL Test Runner                     ║");

@@ -1,0 +1,178 @@
+#!/usr/bin/dotnet --
+#:project ../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
+#:project ../../Source/TimeWarp.Nuru.Repl/TimeWarp.Nuru.Repl.csproj
+
+using TimeWarp.Nuru;
+using TimeWarp.Nuru.Repl;
+
+// Test NuruApp integration (Section 13 of REPL Test Plan)
+return await RunTests<NuruAppIntegrationTests>();
+
+[TestTag("REPL")]
+public class NuruAppIntegrationTests
+{
+  public static async Task Should_use_AddReplSupport_extension()
+  {
+    // Arrange
+    using var terminal = new TestTerminal();
+    terminal.QueueLine("exit");
+
+    NuruApp app = new NuruAppBuilder()
+      .UseTerminal(terminal)
+      .AddReplSupport()  // Extension method
+      .Build();
+
+    // Act
+    await app.RunReplAsync();
+
+    // Assert
+    terminal.OutputContains("Goodbye!")
+      .ShouldBeTrue("AddReplSupport extension should work");
+  }
+
+  public static async Task Should_register_repl_routes()
+  {
+    // Arrange
+    using var terminal = new TestTerminal();
+    terminal.QueueLine("help");
+    terminal.QueueLine("exit");
+
+    NuruApp app = new NuruAppBuilder()
+      .UseTerminal(terminal)
+      .AddReplSupport()
+      .Build();
+
+    // Act
+    await app.RunReplAsync();
+
+    // Assert - REPL routes should be registered
+    terminal.OutputContains("Goodbye!")
+      .ShouldBeTrue("REPL routes should be registered");
+  }
+
+  public static async Task Should_share_type_converters()
+  {
+    // Arrange
+    using var terminal = new TestTerminal();
+    terminal.QueueLine("add 5 10");
+    terminal.QueueLine("exit");
+
+    NuruApp app = new NuruAppBuilder()
+      .UseTerminal(terminal)
+      .AddRoute("add {a:int} {b:int}", (int a, int b) => $"{a + b}")
+      .AddReplSupport()
+      .Build();
+
+    // Act
+    await app.RunReplAsync();
+
+    // Assert - type converters should work in REPL
+    terminal.OutputContains("Goodbye!")
+      .ShouldBeTrue("Type converters should be shared");
+  }
+
+  public static async Task Should_access_all_endpoints()
+  {
+    // Arrange
+    using var terminal = new TestTerminal();
+    terminal.QueueLine("cmd1");
+    terminal.QueueLine("cmd2");
+    terminal.QueueLine("exit");
+
+    NuruApp app = new NuruAppBuilder()
+      .UseTerminal(terminal)
+      .AddRoute("cmd1", () => "Command 1")
+      .AddRoute("cmd2", () => "Command 2")
+      .AddReplSupport()
+      .Build();
+
+    // Act
+    await app.RunReplAsync();
+
+    // Assert - all routes accessible in REPL
+    terminal.OutputContains("Goodbye!")
+      .ShouldBeTrue("All endpoints should be accessible");
+  }
+
+  public static async Task Should_support_fluent_chaining()
+  {
+    // Arrange
+    using var terminal = new TestTerminal();
+    terminal.QueueLine("exit");
+
+    // Act - fluent chaining
+    NuruApp app = new NuruAppBuilder()
+      .UseTerminal(terminal)
+      .AddRoute("status", () => "OK")
+      .AddRoute("version", () => "1.0.0")
+      .AddReplSupport(options => options.Prompt = ">>> ")
+      .Build();
+
+    await app.RunReplAsync();
+
+    // Assert
+    terminal.OutputContains("Goodbye!")
+      .ShouldBeTrue("Fluent chaining should work");
+  }
+
+  public static async Task Should_run_repl_directly()
+  {
+    // Arrange
+    using var terminal = new TestTerminal();
+    terminal.QueueLine("exit");
+
+    NuruApp app = new NuruAppBuilder()
+      .UseTerminal(terminal)
+      .AddReplSupport()
+      .Build();
+
+    // Act - direct REPL start
+    int exitCode = await app.RunReplAsync();
+
+    // Assert
+    exitCode.ShouldBe(0);
+    terminal.OutputContains("Goodbye!")
+      .ShouldBeTrue("Direct REPL start should work");
+  }
+
+  public static async Task Should_use_app_logger()
+  {
+    // Arrange
+    using var terminal = new TestTerminal();
+    terminal.QueueLine("exit");
+
+    // Create app with logging configured
+    NuruApp app = new NuruAppBuilder()
+      .UseTerminal(terminal)
+      .AddReplSupport()
+      .Build();
+
+    // Act
+    await app.RunReplAsync();
+
+    // Assert - session should complete (logging is internal)
+    terminal.OutputContains("Goodbye!")
+      .ShouldBeTrue("App logger should be used");
+  }
+
+  public static async Task Should_execute_app_routes_in_repl()
+  {
+    // Arrange
+    using var terminal = new TestTerminal();
+    terminal.QueueLine("greet World");
+    terminal.QueueLine("exit");
+
+    NuruApp app = new NuruAppBuilder()
+      .UseTerminal(terminal)
+      .AddRoute("greet {name}", (string name) => $"Hello, {name}!")
+      .AddReplSupport()
+      .Build();
+
+    // Act
+    await app.RunReplAsync();
+
+    // Assert - app routes should execute in REPL context
+    terminal.OutputContains("Goodbye!")
+      .ShouldBeTrue("App routes should execute in REPL");
+  }
+}

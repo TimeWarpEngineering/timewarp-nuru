@@ -36,20 +36,20 @@ Implement all test files from the REPL test plan:
 
 ## Checklist
 
-- [ ] repl-02-command-parsing.cs
-- [ ] repl-04-history-persistence.cs
-- [ ] repl-05-console-input.cs
-- [ ] repl-06-tab-completion-basic.cs
-- [ ] repl-07-tab-completion-advanced.cs
-- [ ] repl-08-syntax-highlighting.cs
-- [ ] repl-09-builtin-commands.cs
-- [ ] repl-10-error-handling.cs
-- [ ] repl-11-display-formatting.cs
-- [ ] repl-12-configuration.cs
-- [ ] repl-13-nuruapp-integration.cs
-- [ ] repl-14-performance.cs
-- [ ] repl-15-edge-cases.cs
-- [ ] Create test runner script `Tests/Scripts/run-repl-tests.cs`
+- [x] repl-02-command-parsing.cs
+- [x] repl-04-history-persistence.cs
+- [x] repl-05-console-input.cs
+- [x] repl-06-tab-completion-basic.cs
+- [x] repl-07-tab-completion-advanced.cs
+- [x] repl-08-syntax-highlighting.cs
+- [x] repl-09-builtin-commands.cs
+- [x] repl-10-error-handling.cs
+- [x] repl-11-display-formatting.cs
+- [x] repl-12-configuration.cs
+- [x] repl-13-nuruapp-integration.cs
+- [x] repl-14-performance.cs
+- [x] repl-15-edge-cases.cs
+- [x] Create test runner script `Tests/Scripts/run-repl-tests.cs`
 
 ## Notes
 

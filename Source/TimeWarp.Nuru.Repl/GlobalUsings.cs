@@ -10,5 +10,5 @@ global using System.Text.RegularExpressions;
 global using System.Threading.Tasks;
 global using TimeWarp.Nuru;
 global using TimeWarp.Nuru.Completion;
-global using TimeWarp.Nuru.Logging;
+
 global using TimeWarp.Nuru.Repl.Input;

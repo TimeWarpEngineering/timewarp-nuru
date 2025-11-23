@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru.Logging;
+namespace TimeWarp.Nuru;
 
 using Microsoft.Extensions.Logging;
 

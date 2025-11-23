@@ -71,6 +71,7 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("parser-14-mixed-modifiers")]
 [assembly: InternalsVisibleTo("parser-15-custom-type-constraints")]
 [assembly: InternalsVisibleTo("Program")]
+[assembly: InternalsVisibleTo("repl-01-session-lifecycle")]
 [assembly: InternalsVisibleTo("repl-03b-history-security")]
 [assembly: InternalsVisibleTo("routing-01-basic-matching")]
 [assembly: InternalsVisibleTo("routing-02-parameter-binding")]

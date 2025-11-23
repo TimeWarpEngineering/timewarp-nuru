@@ -24,7 +24,6 @@
     <Using Include="TimeWarp.Jaribu.TestRunner" Static="true" />
     <Using Include="TimeWarp.Nuru.Parsing" />
     <Using Include="TimeWarp.Nuru" />
-    <Using Include="TimeWarp.Nuru.Logging" />
     <Using Include="Microsoft.Extensions.Logging" />
     <Using Include="TimeWarp.Mediator" />
   </ItemGroup>

@@ -74,7 +74,7 @@ public static class DelegateExecutor
       }
 
       // Display the response (if any)
-      DisplayResponse(returnValue, output);
+      ResponseDisplay.Write(returnValue, output);
 
       return 0;
     }
@@ -89,46 +89,6 @@ public static class DelegateExecutor
       ).ConfigureAwait(false);
 
       return 1;
-    }
-  }
-
-  /// <summary>
-  /// Formats the command response for console output.
-  /// </summary>
-  [RequiresUnreferencedCode("Response serialization may require types not known at compile time")]
-  [RequiresDynamicCode("JSON serialization of unknown response types may require dynamic code generation")]
-  private static void DisplayResponse(object? response, IConsole console)
-  {
-    if (response is null)
-      return;
-
-    Type responseType = response.GetType();
-
-    // Check if this is Unit.Value (represents no return value)
-    if (responseType.Name == "Unit" && responseType.Namespace == "TimeWarp.Mediator")
-      return;
-
-    // Simple types - display directly
-    if (responseType.IsPrimitive || responseType == typeof(string) || responseType == typeof(decimal))
-    {
-      console.WriteLine(response.ToString());
-      return;
-    }
-
-    // For complex objects, check if ToString is overridden by testing the output
-    string stringValue = response.ToString() ?? "";
-
-    // If ToString returns the default type name, use JSON instead
-    if (stringValue == responseType.FullName || stringValue == responseType.Name)
-    {
-      // Complex object without custom ToString - serialize to JSON for display
-      string json = JsonSerializer.Serialize(response, NuruJsonSerializerContext.Default.Options);
-      console.WriteLine(json);
-    }
-    else
-    {
-      // Custom ToString - use it
-      console.WriteLine(stringValue);
     }
   }
 

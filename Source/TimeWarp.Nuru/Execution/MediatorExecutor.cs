@@ -115,37 +115,5 @@ public class MediatorExecutor
   [RequiresUnreferencedCode("Response serialization may require types not known at compile time")]
   [RequiresDynamicCode("JSON serialization of unknown response types may require dynamic code generation")]
   public void DisplayResponse(object? response)
-  {
-    if (response is null)
-      return;
-
-    Type responseType = response.GetType();
-
-    // Check if this is Unit.Value (represents no return value)
-    if (responseType.Name == "Unit" && responseType.Namespace == "TimeWarp.Mediator")
-      return;
-
-    // Simple types - display directly
-    if (responseType.IsPrimitive || responseType == typeof(string) || responseType == typeof(decimal))
-    {
-      Console.WriteLine(response.ToString());
-      return;
-    }
-
-    // For complex objects, check if ToString is overridden by testing the output
-    string stringValue = response.ToString() ?? "";
-
-    // If ToString returns the default type name, use JSON instead
-    if (stringValue == responseType.FullName || stringValue == responseType.Name)
-    {
-      // Complex object without custom ToString - serialize to JSON for display
-      string json = JsonSerializer.Serialize(response, NuruJsonSerializerContext.Default.Options);
-      Console.WriteLine(json);
-    }
-    else
-    {
-      // Custom ToString - use it
-      Console.WriteLine(stringValue);
-    }
-  }
+    => ResponseDisplay.Write(response, Console);
 }

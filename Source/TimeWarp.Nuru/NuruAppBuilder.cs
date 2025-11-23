@@ -430,14 +430,14 @@ public class NuruAppBuilder
       // Add base --help route if not already present
       if (!existingEndpoints.Any(e => e.RoutePattern == "--help"))
       {
-        AddRoute("--help", () => NuruConsole.WriteLine(HelpProvider.GetHelpText(EndpointCollection, AppMetadata?.Name, AppMetadata?.Description)),
+        AddRoute("--help", () => NuruConsole.Default.WriteLine(HelpProvider.GetHelpText(EndpointCollection, AppMetadata?.Name, AppMetadata?.Description)),
         description: "Show available commands");
       }
 
       // Add base help route if not already present (REPL-friendly)
       if (!existingEndpoints.Any(e => e.RoutePattern == "help"))
       {
-        AddRoute("help", () => NuruConsole.WriteLine(HelpProvider.GetHelpText(EndpointCollection, AppMetadata?.Name, AppMetadata?.Description)),
+        AddRoute("help", () => NuruConsole.Default.WriteLine(HelpProvider.GetHelpText(EndpointCollection, AppMetadata?.Name, AppMetadata?.Description)),
         description: "Show available commands");
       }
   }
@@ -464,22 +464,22 @@ public class NuruAppBuilder
 
   private static void ShowCommandGroupHelp(string commandPrefix, List<Endpoint> endpoints)
   {
-    NuruConsole.WriteLine($"Usage patterns for '{commandPrefix}':");
-    NuruConsole.WriteLine(string.Empty);
+    NuruConsole.Default.WriteLine($"Usage patterns for '{commandPrefix}':");
+    NuruConsole.Default.WriteLine(string.Empty);
 
     foreach (Endpoint endpoint in endpoints)
     {
-      NuruConsole.WriteLine($"  {endpoint.RoutePattern}");
+      NuruConsole.Default.WriteLine($"  {endpoint.RoutePattern}");
       if (!string.IsNullOrEmpty(endpoint.Description))
       {
-        NuruConsole.WriteLine($"    {endpoint.Description}");
+        NuruConsole.Default.WriteLine($"    {endpoint.Description}");
       }
     }
 
     // Show consolidated argument and option information
     HashSet<string> shownParams = [];
 
-    NuruConsole.WriteLine("\nArguments:");
+    NuruConsole.Default.WriteLine("\nArguments:");
     foreach (Endpoint endpoint in endpoints)
     {
       foreach (RouteMatcher segment in endpoint.CompiledRoute.PositionalMatchers)
@@ -493,11 +493,11 @@ public class NuruAppBuilder
           string typeInfo = $"Type: {param.Constraint ?? "string"}";
           if (param.Description is not null)
           {
-            NuruConsole.WriteLine($"  {param.Name,-20} {status,-12} {typeInfo,-15} {param.Description}");
+            NuruConsole.Default.WriteLine($"  {param.Name,-20} {status,-12} {typeInfo,-15} {param.Description}");
           }
           else
           {
-            NuruConsole.WriteLine($"  {param.Name,-20} {status,-12} {typeInfo}");
+            NuruConsole.Default.WriteLine($"  {param.Name,-20} {status,-12} {typeInfo}");
           }
         }
       }
@@ -507,7 +507,7 @@ public class NuruAppBuilder
 
     if (endpoints.Any(e => e.CompiledRoute.OptionMatchers.Count > 0))
     {
-      NuruConsole.WriteLine("\nOptions:");
+      NuruConsole.Default.WriteLine("\nOptions:");
       foreach (Endpoint endpoint in endpoints)
       {
         foreach (OptionMatcher option in endpoint.CompiledRoute.OptionMatchers)
@@ -524,11 +524,11 @@ public class NuruAppBuilder
 
             if (option.Description is not null)
             {
-              NuruConsole.WriteLine($"  {optionName + paramInfo,-30} {option.Description}");
+              NuruConsole.Default.WriteLine($"  {optionName + paramInfo,-30} {option.Description}");
             }
             else
             {
-              NuruConsole.WriteLine($"  {optionName}{paramInfo}");
+              NuruConsole.Default.WriteLine($"  {optionName}{paramInfo}");
             }
           }
         }

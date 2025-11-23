@@ -19,4 +19,5 @@ global using System.Text.Json;
 global using System.Text.Json.Serialization;
 // TimeWarp namespaces
 global using TimeWarp.Mediator;
+global using TimeWarp.Nuru.IO;
 global using TimeWarp.Nuru.Parsing;

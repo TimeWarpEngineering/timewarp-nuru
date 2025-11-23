@@ -128,7 +128,7 @@ public class MediatorExecutor
     // Simple types - display directly
     if (responseType.IsPrimitive || responseType == typeof(string) || responseType == typeof(decimal))
     {
-      NuruConsole.WriteLine(response.ToString());
+      NuruConsole.Default.WriteLine(response.ToString());
       return;
     }
 
@@ -140,12 +140,12 @@ public class MediatorExecutor
     {
       // Complex object without custom ToString - serialize to JSON for display
       string json = JsonSerializer.Serialize(response, NuruJsonSerializerContext.Default.Options);
-      NuruConsole.WriteLine(json);
+      NuruConsole.Default.WriteLine(json);
     }
     else
     {
       // Custom ToString - use it
-      NuruConsole.WriteLine(stringValue);
+      NuruConsole.Default.WriteLine(stringValue);
     }
   }
 }

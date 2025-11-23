@@ -91,7 +91,7 @@ public partial class NuruApp
       // Exit early if route resolution failed
       if (!result.Success || result.MatchedEndpoint is null)
       {
-        await NuruConsole.WriteErrorLineAsync(
+        await NuruConsole.Default.WriteErrorLineAsync(
           result.ErrorMessage ?? "No matching command found."
         ).ConfigureAwait(false);
 
@@ -142,7 +142,7 @@ public partial class NuruApp
     catch (Exception ex)
 #pragma warning restore CA1031
     {
-      await NuruConsole.WriteErrorLineAsync($"Error: {ex.Message}").ConfigureAwait(false);
+      await NuruConsole.Default.WriteErrorLineAsync($"Error: {ex.Message}").ConfigureAwait(false);
       return 1;
     }
   }
@@ -194,7 +194,7 @@ public partial class NuruApp
 
   private void ShowAvailableCommands()
   {
-    NuruConsole.WriteLine(HelpProvider.GetHelpText(Endpoints, AppMetadata?.Name, AppMetadata?.Description));
+    NuruConsole.Default.WriteLine(HelpProvider.GetHelpText(Endpoints, AppMetadata?.Name, AppMetadata?.Description));
   }
 
   /// <summary>
@@ -236,15 +236,15 @@ public partial class NuruApp
   /// </summary>
   private static async Task DisplayValidationErrorsAsync(OptionsValidationException exception)
   {
-    await NuruConsole.WriteErrorLineAsync("❌ Configuration validation failed:").ConfigureAwait(false);
-    await NuruConsole.WriteErrorLineAsync("").ConfigureAwait(false);
+    await NuruConsole.Default.WriteErrorLineAsync("❌ Configuration validation failed:").ConfigureAwait(false);
+    await NuruConsole.Default.WriteErrorLineAsync("").ConfigureAwait(false);
 
     foreach (string failure in exception.Failures)
     {
-      await NuruConsole.WriteErrorLineAsync($"  • {failure}").ConfigureAwait(false);
+      await NuruConsole.Default.WriteErrorLineAsync($"  • {failure}").ConfigureAwait(false);
     }
 
-    await NuruConsole.WriteErrorLineAsync("").ConfigureAwait(false);
+    await NuruConsole.Default.WriteErrorLineAsync("").ConfigureAwait(false);
   }
 
   /// <summary>

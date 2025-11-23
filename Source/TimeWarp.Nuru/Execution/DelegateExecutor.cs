@@ -81,7 +81,7 @@ public static class DelegateExecutor
     catch (Exception ex)
 #pragma warning restore CA1031
     {
-      await NuruConsole.WriteErrorLineAsync(
+      await NuruConsole.Default.WriteErrorLineAsync(
         $"Error executing handler: {ex.Message}"
       ).ConfigureAwait(false);
 

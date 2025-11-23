@@ -32,6 +32,12 @@ Task 033 (IConsole/ITerminal abstractions) is complete. We now have:
 
 ### Verification
 - [x] Build succeeds with 0 warnings, 0 errors
+- [x] Automated REPL tests pass (52 total tests)
+  - Session Lifecycle: 11/11
+  - History Management: 8/8
+  - History Security: 14/14
+  - CommandLineParser Basic: 8/8
+  - CommandLineParser Quotes: 11/11
 - [ ] Verify existing REPL samples still work (requires manual interactive testing)
 
 ## Implementation Notes
@@ -62,6 +68,18 @@ Assert.Contains("REPL Commands", terminal.Output);
 - `NuruApp.cs` - Added Terminal property, made direct constructor internal
 - `ReplSession.cs` - Uses NuruApp.Terminal instead of System.Console
 - `ReplConsoleReader.cs` - Accepts ITerminal in constructor
+- `ReplOptions.cs` - Added `clear-history` to default HistoryIgnorePatterns
+
+**Additional Fix:**
+- `clear-history` command no longer adds itself to history (added to default ignore patterns)
+- This prevents confusing behavior where `history` shows `clear-history` after clearing
+
+**Test Files Created:**
+- `Tests/TimeWarp.Nuru.Repl.Tests/repl-01-session-lifecycle.cs`
+- `Tests/TimeWarp.Nuru.Repl.Tests/repl-03-history-management.cs`
+- `Tests/TimeWarp.Nuru.Repl.Tests/repl-03b-history-security.cs`
+- `Tests/TimeWarp.Nuru.Repl.Tests/CommandLineParser/parser-01-basic-parsing.cs`
+- `Tests/TimeWarp.Nuru.Repl.Tests/CommandLineParser/parser-02-quoted-strings.cs`
 
 ## Notes
 

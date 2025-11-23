@@ -1,4 +1,3 @@
-
 namespace TimeWarp.Nuru;
 
 /// <summary>
@@ -6,14 +5,15 @@ namespace TimeWarp.Nuru;
 /// </summary>
 public class MediatorExecutor
 {
-
   private readonly IServiceProvider ServiceProvider;
   private readonly ITypeConverterRegistry TypeConverterRegistry;
+  private readonly IConsole Console;
 
-  public MediatorExecutor(IServiceProvider serviceProvider, ITypeConverterRegistry typeConverterRegistry)
+  public MediatorExecutor(IServiceProvider serviceProvider, ITypeConverterRegistry typeConverterRegistry, IConsole? console = null)
   {
     ServiceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
     TypeConverterRegistry = typeConverterRegistry ?? throw new ArgumentNullException(nameof(typeConverterRegistry));
+    Console = console ?? serviceProvider.GetService<IConsole>() ?? NuruConsole.Default;
   }
 
   /// <summary>
@@ -114,7 +114,7 @@ public class MediatorExecutor
   /// </remarks>
   [RequiresUnreferencedCode("Response serialization may require types not known at compile time")]
   [RequiresDynamicCode("JSON serialization of unknown response types may require dynamic code generation")]
-  public static void DisplayResponse(object? response)
+  public void DisplayResponse(object? response)
   {
     if (response is null)
       return;
@@ -128,7 +128,7 @@ public class MediatorExecutor
     // Simple types - display directly
     if (responseType.IsPrimitive || responseType == typeof(string) || responseType == typeof(decimal))
     {
-      NuruConsole.Default.WriteLine(response.ToString());
+      Console.WriteLine(response.ToString());
       return;
     }
 
@@ -140,12 +140,12 @@ public class MediatorExecutor
     {
       // Complex object without custom ToString - serialize to JSON for display
       string json = JsonSerializer.Serialize(response, NuruJsonSerializerContext.Default.Options);
-      NuruConsole.Default.WriteLine(json);
+      Console.WriteLine(json);
     }
     else
     {
       // Custom ToString - use it
-      NuruConsole.Default.WriteLine(stringValue);
+      Console.WriteLine(stringValue);
     }
   }
 }

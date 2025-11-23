@@ -423,21 +423,21 @@ public class NuruAppBuilder
       {
         // Capture endpoints by value to avoid issues with collection modification
         List<Endpoint> capturedEndpoints = [.. endpoints];
-        AddRoute(helpRoute, () => ShowCommandGroupHelp(prefix, capturedEndpoints), description);
+        AddRoute(helpRoute, () => GetCommandGroupHelpText(prefix, capturedEndpoints), description);
       }
     }
 
       // Add base --help route if not already present
       if (!existingEndpoints.Any(e => e.RoutePattern == "--help"))
       {
-        AddRoute("--help", () => NuruConsole.Default.WriteLine(HelpProvider.GetHelpText(EndpointCollection, AppMetadata?.Name, AppMetadata?.Description)),
+        AddRoute("--help", () => HelpProvider.GetHelpText(EndpointCollection, AppMetadata?.Name, AppMetadata?.Description),
         description: "Show available commands");
       }
 
       // Add base help route if not already present (REPL-friendly)
       if (!existingEndpoints.Any(e => e.RoutePattern == "help"))
       {
-        AddRoute("help", () => NuruConsole.Default.WriteLine(HelpProvider.GetHelpText(EndpointCollection, AppMetadata?.Name, AppMetadata?.Description)),
+        AddRoute("help", () => HelpProvider.GetHelpText(EndpointCollection, AppMetadata?.Name, AppMetadata?.Description),
         description: "Show available commands");
       }
   }
@@ -462,24 +462,26 @@ public class NuruAppBuilder
     return string.Join(" ", parts);
   }
 
-  private static void ShowCommandGroupHelp(string commandPrefix, List<Endpoint> endpoints)
+  private static string GetCommandGroupHelpText(string commandPrefix, List<Endpoint> endpoints)
   {
-    NuruConsole.Default.WriteLine($"Usage patterns for '{commandPrefix}':");
-    NuruConsole.Default.WriteLine(string.Empty);
+    var sb = new StringBuilder();
+
+    sb.AppendLine(CultureInfo.InvariantCulture, $"Usage patterns for '{commandPrefix}':");
+    sb.AppendLine();
 
     foreach (Endpoint endpoint in endpoints)
     {
-      NuruConsole.Default.WriteLine($"  {endpoint.RoutePattern}");
+      sb.AppendLine(CultureInfo.InvariantCulture, $"  {endpoint.RoutePattern}");
       if (!string.IsNullOrEmpty(endpoint.Description))
       {
-        NuruConsole.Default.WriteLine($"    {endpoint.Description}");
+        sb.AppendLine(CultureInfo.InvariantCulture, $"    {endpoint.Description}");
       }
     }
 
     // Show consolidated argument and option information
     HashSet<string> shownParams = [];
 
-    NuruConsole.Default.WriteLine("\nArguments:");
+    sb.AppendLine("\nArguments:");
     foreach (Endpoint endpoint in endpoints)
     {
       foreach (RouteMatcher segment in endpoint.CompiledRoute.PositionalMatchers)
@@ -493,11 +495,11 @@ public class NuruAppBuilder
           string typeInfo = $"Type: {param.Constraint ?? "string"}";
           if (param.Description is not null)
           {
-            NuruConsole.Default.WriteLine($"  {param.Name,-20} {status,-12} {typeInfo,-15} {param.Description}");
+            sb.AppendLine(CultureInfo.InvariantCulture, $"  {param.Name,-20} {status,-12} {typeInfo,-15} {param.Description}");
           }
           else
           {
-            NuruConsole.Default.WriteLine($"  {param.Name,-20} {status,-12} {typeInfo}");
+            sb.AppendLine(CultureInfo.InvariantCulture, $"  {param.Name,-20} {status,-12} {typeInfo}");
           }
         }
       }
@@ -507,7 +509,7 @@ public class NuruAppBuilder
 
     if (endpoints.Any(e => e.CompiledRoute.OptionMatchers.Count > 0))
     {
-      NuruConsole.Default.WriteLine("\nOptions:");
+      sb.AppendLine("\nOptions:");
       foreach (Endpoint endpoint in endpoints)
       {
         foreach (OptionMatcher option in endpoint.CompiledRoute.OptionMatchers)
@@ -524,16 +526,18 @@ public class NuruAppBuilder
 
             if (option.Description is not null)
             {
-              NuruConsole.Default.WriteLine($"  {optionName + paramInfo,-30} {option.Description}");
+              sb.AppendLine(CultureInfo.InvariantCulture, $"  {optionName + paramInfo,-30} {option.Description}");
             }
             else
             {
-              NuruConsole.Default.WriteLine($"  {optionName}{paramInfo}");
+              sb.AppendLine(CultureInfo.InvariantCulture, $"  {optionName}{paramInfo}");
             }
           }
         }
       }
     }
+
+    return sb.ToString().TrimEnd();
   }
 
   /// <summary>

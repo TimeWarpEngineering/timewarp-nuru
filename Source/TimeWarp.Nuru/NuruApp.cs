@@ -7,6 +7,7 @@ public partial class NuruApp
 {
   private readonly IServiceProvider? ServiceProvider;
   private readonly MediatorExecutor? MediatorExecutor;
+  private readonly IConsole Console;
 
   /// <summary>
   /// Gets the logger factory.
@@ -42,7 +43,8 @@ public partial class NuruApp
     ITypeConverterRegistry typeConverterRegistry,
     ILoggerFactory? loggerFactory = null,
     ReplOptions? replOptions = null,
-    ApplicationMetadata? appMetadata = null
+    ApplicationMetadata? appMetadata = null,
+    IConsole? console = null
   )
   {
     Endpoints = endpoints ?? throw new ArgumentNullException(nameof(endpoints));
@@ -50,6 +52,7 @@ public partial class NuruApp
     LoggerFactory = loggerFactory ?? Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance;
     ReplOptions = replOptions;
     AppMetadata = appMetadata;
+    Console = console ?? NuruConsole.Default;
 
     // If logging is configured but DI is not, create a minimal service provider
     // that can resolve ILoggerFactory and ILogger<T> for delegate parameter injection
@@ -71,6 +74,7 @@ public partial class NuruApp
     LoggerFactory = serviceProvider.GetService<ILoggerFactory>() ?? Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance;
     ReplOptions = serviceProvider.GetService<ReplOptions>();
     AppMetadata = serviceProvider.GetService<ApplicationMetadata>();
+    Console = serviceProvider.GetService<IConsole>() ?? NuruConsole.Default;
   }
 
   public async Task<int> RunAsync(string[] args)
@@ -91,7 +95,7 @@ public partial class NuruApp
       // Exit early if route resolution failed
       if (!result.Success || result.MatchedEndpoint is null)
       {
-        await NuruConsole.Default.WriteErrorLineAsync(
+        await Console.WriteErrorLineAsync(
           result.ErrorMessage ?? "No matching command found."
         ).ConfigureAwait(false);
 
@@ -142,7 +146,7 @@ public partial class NuruApp
     catch (Exception ex)
 #pragma warning restore CA1031
     {
-      await NuruConsole.Default.WriteErrorLineAsync($"Error: {ex.Message}").ConfigureAwait(false);
+      await Console.WriteErrorLineAsync($"Error: {ex.Message}").ConfigureAwait(false);
       return 1;
     }
   }
@@ -189,12 +193,13 @@ public partial class NuruApp
       extractedValues,
       TypeConverterRegistry,
       ServiceProvider ?? EmptyServiceProvider.Instance,
-      endpoint
+      endpoint,
+      Console
     );
 
   private void ShowAvailableCommands()
   {
-    NuruConsole.Default.WriteLine(HelpProvider.GetHelpText(Endpoints, AppMetadata?.Name, AppMetadata?.Description));
+    Console.WriteLine(HelpProvider.GetHelpText(Endpoints, AppMetadata?.Name, AppMetadata?.Description));
   }
 
   /// <summary>
@@ -234,17 +239,17 @@ public partial class NuruApp
   /// <summary>
   /// Displays configuration validation errors in a clean, user-friendly format.
   /// </summary>
-  private static async Task DisplayValidationErrorsAsync(OptionsValidationException exception)
+  private async Task DisplayValidationErrorsAsync(OptionsValidationException exception)
   {
-    await NuruConsole.Default.WriteErrorLineAsync("❌ Configuration validation failed:").ConfigureAwait(false);
-    await NuruConsole.Default.WriteErrorLineAsync("").ConfigureAwait(false);
+    await Console.WriteErrorLineAsync("❌ Configuration validation failed:").ConfigureAwait(false);
+    await Console.WriteErrorLineAsync("").ConfigureAwait(false);
 
     foreach (string failure in exception.Failures)
     {
-      await NuruConsole.Default.WriteErrorLineAsync($"  • {failure}").ConfigureAwait(false);
+      await Console.WriteErrorLineAsync($"  • {failure}").ConfigureAwait(false);
     }
 
-    await NuruConsole.Default.WriteErrorLineAsync("").ConfigureAwait(false);
+    await Console.WriteErrorLineAsync("").ConfigureAwait(false);
   }
 
   /// <summary>

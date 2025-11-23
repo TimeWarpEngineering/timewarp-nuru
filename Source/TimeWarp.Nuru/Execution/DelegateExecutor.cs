@@ -20,13 +20,16 @@ public static class DelegateExecutor
       Dictionary<string, string> extractedValues,
       ITypeConverterRegistry typeConverterRegistry,
       IServiceProvider serviceProvider,
-      Endpoint endpoint)
+      Endpoint endpoint,
+      IConsole? console = null)
   {
     ArgumentNullException.ThrowIfNull(handler);
     ArgumentNullException.ThrowIfNull(extractedValues);
     ArgumentNullException.ThrowIfNull(typeConverterRegistry);
     ArgumentNullException.ThrowIfNull(serviceProvider);
     ArgumentNullException.ThrowIfNull(endpoint);
+
+    IConsole output = console ?? serviceProvider.GetService<IConsole>() ?? NuruConsole.Default;
 
     try
     {
@@ -71,7 +74,7 @@ public static class DelegateExecutor
       }
 
       // Display the response (if any)
-      MediatorExecutor.DisplayResponse(returnValue);
+      DisplayResponse(returnValue, output);
 
       return 0;
     }
@@ -81,11 +84,51 @@ public static class DelegateExecutor
     catch (Exception ex)
 #pragma warning restore CA1031
     {
-      await NuruConsole.Default.WriteErrorLineAsync(
+      await output.WriteErrorLineAsync(
         $"Error executing handler: {ex.Message}"
       ).ConfigureAwait(false);
 
       return 1;
+    }
+  }
+
+  /// <summary>
+  /// Formats the command response for console output.
+  /// </summary>
+  [RequiresUnreferencedCode("Response serialization may require types not known at compile time")]
+  [RequiresDynamicCode("JSON serialization of unknown response types may require dynamic code generation")]
+  private static void DisplayResponse(object? response, IConsole console)
+  {
+    if (response is null)
+      return;
+
+    Type responseType = response.GetType();
+
+    // Check if this is Unit.Value (represents no return value)
+    if (responseType.Name == "Unit" && responseType.Namespace == "TimeWarp.Mediator")
+      return;
+
+    // Simple types - display directly
+    if (responseType.IsPrimitive || responseType == typeof(string) || responseType == typeof(decimal))
+    {
+      console.WriteLine(response.ToString());
+      return;
+    }
+
+    // For complex objects, check if ToString is overridden by testing the output
+    string stringValue = response.ToString() ?? "";
+
+    // If ToString returns the default type name, use JSON instead
+    if (stringValue == responseType.FullName || stringValue == responseType.Name)
+    {
+      // Complex object without custom ToString - serialize to JSON for display
+      string json = JsonSerializer.Serialize(response, NuruJsonSerializerContext.Default.Options);
+      console.WriteLine(json);
+    }
+    else
+    {
+      // Custom ToString - use it
+      console.WriteLine(stringValue);
     }
   }
 

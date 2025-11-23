@@ -10,6 +10,7 @@ internal sealed class ReplSession
   private readonly ReplOptions ReplOptions;
   private readonly List<string> History = [];
   private readonly ITypeConverterRegistry TypeConverterRegistry;
+  private readonly ITerminal Terminal;
   private bool Running;
 
   /// <summary>
@@ -33,6 +34,7 @@ internal sealed class ReplSession
     ReplOptions = replOptions ?? new ReplOptions();
     TypeConverterRegistry = nuruApp.TypeConverterRegistry;
     LoggerFactory = loggerFactory;
+    Terminal = nuruApp.Terminal;
   }
 
   /// <summary>
@@ -85,13 +87,13 @@ internal sealed class ReplSession
 
     // Display welcome message
     if (!string.IsNullOrEmpty(ReplOptions.WelcomeMessage))
-      Console.WriteLine(ReplOptions.WelcomeMessage);
+      Terminal.WriteLine(ReplOptions.WelcomeMessage);
 
     // Load history if persistence is enabled
     if (ReplOptions.PersistHistory) LoadHistory();
 
-    // Handle Ctrl+C gracefully
-    Console.CancelKeyPress += OnCancelKeyPress;
+    // Handle Ctrl+C gracefully - still uses System.Console for event subscription
+    System.Console.CancelKeyPress += OnCancelKeyPress;
   }
 
   private async Task<int> ProcessCommandLoopAsync(CancellationToken cancellationToken)
@@ -117,7 +119,7 @@ internal sealed class ReplSession
     // Handle EOF (Ctrl+D on Unix, Ctrl+Z on Windows)
     if (input is null)
     {
-      Console.WriteLine();
+      await Terminal.WriteLineAsync().ConfigureAwait(false);
       Running = false;
       return 0;
     }
@@ -137,17 +139,18 @@ internal sealed class ReplSession
 
   private void DisplayPrompt()
   {
-    Console.Write(PromptFormatter.Format(ReplOptions));
+    Terminal.Write(PromptFormatter.Format(ReplOptions));
   }
 
   private void RewriteLineWithPrompt(string content)
   {
     string prompt = PromptFormatter.Format(ReplOptions);
     // Clear current line and rewrite with prompt
-    Console.SetCursorPosition(0, Console.CursorTop);
-    Console.Write(new string(' ', Console.WindowWidth));
-    Console.SetCursorPosition(0, Console.CursorTop);
-    Console.Write(prompt + content);
+    (int _, int top) = Terminal.GetCursorPosition();
+    Terminal.SetCursorPosition(0, top);
+    Terminal.Write(new string(' ', Terminal.WindowWidth));
+    Terminal.SetCursorPosition(0, top);
+    Terminal.Write(prompt + content);
   }
 
   private string? ReadCommandInput()
@@ -161,12 +164,13 @@ internal sealed class ReplSession
             new CompletionProvider(TypeConverterRegistry, LoggerFactory),
             NuruApp.Endpoints,
             ReplOptions,
-            LoggerFactory
+            LoggerFactory,
+            Terminal
           );
       return consoleReader.ReadLine(ReplOptions.Prompt);
     }
 
-    return Console.ReadLine();
+    return Terminal.ReadLine();
   }
 
   private async Task<int> ExecuteCommandAsync(string[] args)
@@ -211,40 +215,40 @@ internal sealed class ReplSession
     if (ReplOptions.ShowExitCode && success)
     {
       if (ReplOptions.EnableColors)
-        Console.WriteLine(AnsiColors.Gray + $"Exit code: {exitCode}" + AnsiColors.Reset);
+        Terminal.WriteLine(AnsiColors.Gray + $"Exit code: {exitCode}" + AnsiColors.Reset);
       else
-        Console.WriteLine($"Exit code: {exitCode}");
+        Terminal.WriteLine($"Exit code: {exitCode}");
     }
 
     if (ReplOptions.ShowTiming)
     {
       if (ReplOptions.EnableColors)
-        Console.WriteLine(AnsiColors.Gray + $"({elapsedMs}ms)" + AnsiColors.Reset);
+        Terminal.WriteLine(AnsiColors.Gray + $"({elapsedMs}ms)" + AnsiColors.Reset);
       else
-        Console.WriteLine($"({elapsedMs}ms)");
+        Terminal.WriteLine($"({elapsedMs}ms)");
     }
 
     if (!success)
     {
       string message = errorMessage ?? $"Command failed with exit code {exitCode}";
       if (ReplOptions.EnableColors)
-        Console.WriteLine(AnsiColors.Red + message + AnsiColors.Reset);
+        Terminal.WriteLine(AnsiColors.Red + message + AnsiColors.Reset);
       else
-        Console.WriteLine(message);
+        Terminal.WriteLine(message);
     }
     else if (!ReplOptions.ContinueOnError && exitCode != 0)
     {
       string message = $"Command failed with exit code {exitCode}. Exiting REPL.";
       if (ReplOptions.EnableColors)
-        Console.WriteLine(AnsiColors.Red + message + AnsiColors.Reset);
+        Terminal.WriteLine(AnsiColors.Red + message + AnsiColors.Reset);
       else
-        Console.WriteLine(message);
+        Terminal.WriteLine(message);
     }
   }
 
   private void CleanupRepl()
   {
-    Console.CancelKeyPress -= OnCancelKeyPress;
+    System.Console.CancelKeyPress -= OnCancelKeyPress;
 
     // Save history if persistence is enabled
     if (ReplOptions.PersistHistory)
@@ -252,14 +256,14 @@ internal sealed class ReplSession
 
     // Display goodbye message
     if (!string.IsNullOrEmpty(ReplOptions.GoodbyeMessage))
-      Console.WriteLine(ReplOptions.GoodbyeMessage);
+      Terminal.WriteLine(ReplOptions.GoodbyeMessage);
   }
 
   private void OnCancelKeyPress(object? sender, ConsoleCancelEventArgs e)
   {
     e.Cancel = true; // Prevent immediate termination
     Running = false;
-    Console.WriteLine();
+    Terminal.WriteLine();
   }
 
   /// <summary>
@@ -269,25 +273,25 @@ internal sealed class ReplSession
   {
     if (ReplOptions.EnableColors)
     {
-      Console.WriteLine(AnsiColors.BrightBlue + "REPL Commands:" + AnsiColors.Reset);
+      Terminal.WriteLine(AnsiColors.BrightBlue + "REPL Commands:" + AnsiColors.Reset);
     }
     else
     {
-      Console.WriteLine("REPL Commands:");
+      Terminal.WriteLine("REPL Commands:");
     }
 
-    Console.WriteLine("  exit, quit, q     - Exit the REPL");
-    Console.WriteLine("  help, ?           - Show this help");
-    Console.WriteLine("  history           - Show command history");
-    Console.WriteLine("  clear, cls        - Clear the screen");
-    Console.WriteLine("  clear-history     - Clear command history");
-    Console.WriteLine();
+    Terminal.WriteLine("  exit, quit, q     - Exit the REPL");
+    Terminal.WriteLine("  help, ?           - Show this help");
+    Terminal.WriteLine("  history           - Show command history");
+    Terminal.WriteLine("  clear, cls        - Clear the screen");
+    Terminal.WriteLine("  clear-history     - Clear command history");
+    Terminal.WriteLine();
 
-    Console.WriteLine("Any other input is executed as an application command.");
-    Console.WriteLine("Use Ctrl+C to cancel current operation or Ctrl+D to exit.");
+    Terminal.WriteLine("Any other input is executed as an application command.");
+    Terminal.WriteLine("Use Ctrl+C to cancel current operation or Ctrl+D to exit.");
 
     // Show available application commands using CompletionProvider
-    Console.WriteLine("\nAvailable Application Commands:");
+    Terminal.WriteLine("\nAvailable Application Commands:");
     try
     {
       CompletionProvider provider = new(TypeConverterRegistry);
@@ -300,23 +304,23 @@ internal sealed class ReplSession
         foreach (CompletionCandidate cand in completions.OrderBy(c => c.Value))
         {
           string desc = string.IsNullOrEmpty(cand.Description) ? "" : $" - {cand.Description}";
-          Console.WriteLine($"  {cand.Value}{desc}");
+          Terminal.WriteLine($"  {cand.Value}{desc}");
         }
       }
       else
       {
-        Console.WriteLine("  No commands available.");
+        Terminal.WriteLine("  No commands available.");
       }
     }
     catch (InvalidOperationException)
     {
       // Ignore completion errors for basic help
-      Console.WriteLine("  (Completions unavailable - check configuration)");
+      Terminal.WriteLine("  (Completions unavailable - check configuration)");
     }
     catch (ArgumentException)
     {
       // Ignore completion errors for basic help
-      Console.WriteLine("  (Completions unavailable - check configuration)");
+      Terminal.WriteLine("  (Completions unavailable - check configuration)");
     }
   }
 
@@ -327,14 +331,14 @@ internal sealed class ReplSession
   {
     if (History.Count == 0)
     {
-      Console.WriteLine("No commands in history.");
+      Terminal.WriteLine("No commands in history.");
       return;
     }
 
-    Console.WriteLine("Command History:");
+    Terminal.WriteLine("Command History:");
     for (int i = 0; i < History.Count; i++)
     {
-      Console.WriteLine($"  {i + 1}: {History[i]}");
+      Terminal.WriteLine($"  {i + 1}: {History[i]}");
     }
   }
 
@@ -415,11 +419,11 @@ internal sealed class ReplSession
     }
     catch (IOException ex)
     {
-      Console.WriteLine($"Warning: Could not load history: {ex.Message}");
+      Terminal.WriteLine($"Warning: Could not load history: {ex.Message}");
     }
     catch (UnauthorizedAccessException ex)
     {
-      Console.WriteLine($"Warning: Could not load history: {ex.Message}");
+      Terminal.WriteLine($"Warning: Could not load history: {ex.Message}");
     }
   }
 
@@ -439,11 +443,11 @@ internal sealed class ReplSession
     }
     catch (IOException ex)
     {
-      Console.WriteLine($"Warning: Could not save history: {ex.Message}");
+      Terminal.WriteLine($"Warning: Could not save history: {ex.Message}");
     }
     catch (UnauthorizedAccessException ex)
     {
-      Console.WriteLine($"Warning: Could not save history: {ex.Message}");
+      Terminal.WriteLine($"Warning: Could not save history: {ex.Message}");
     }
   }
 

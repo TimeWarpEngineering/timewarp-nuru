@@ -12,6 +12,7 @@ public sealed class ReplConsoleReader
   private readonly SyntaxHighlighter SyntaxHighlighter;
   private readonly ILogger<ReplConsoleReader> Logger;
   private readonly ILoggerFactory? LoggerFactory;
+  private readonly ITerminal Terminal;
   private string UserInput = string.Empty;
   private int CursorPosition;
   private int HistoryIndex = -1;
@@ -26,13 +27,15 @@ public sealed class ReplConsoleReader
   /// <param name="endpoints">The endpoint collection for completion.</param>
   /// <param name="replOptions">The REPL configuration options.</param>
   /// <param name="loggerFactory">The logger factory for creating loggers.</param>
+  /// <param name="terminal">The terminal I/O provider.</param>
   public ReplConsoleReader
   (
     IEnumerable<string> history,
     CompletionProvider completionProvider,
     EndpointCollection endpoints,
     ReplOptions replOptions,
-    ILoggerFactory loggerFactory
+    ILoggerFactory loggerFactory,
+    ITerminal terminal
   )
   {
     ArgumentNullException.ThrowIfNull(history);
@@ -40,6 +43,7 @@ public sealed class ReplConsoleReader
     ArgumentNullException.ThrowIfNull(endpoints);
     ArgumentNullException.ThrowIfNull(replOptions);
     ArgumentNullException.ThrowIfNull(loggerFactory);
+    ArgumentNullException.ThrowIfNull(terminal);
 
     History = history?.ToList() ?? throw new ArgumentNullException(nameof(history));
     CompletionProvider = completionProvider ?? throw new ArgumentNullException(nameof(completionProvider));
@@ -48,6 +52,7 @@ public sealed class ReplConsoleReader
     SyntaxHighlighter = new SyntaxHighlighter(endpoints, loggerFactory);
     LoggerFactory = loggerFactory;
     Logger = LoggerFactory?.CreateLogger<ReplConsoleReader>() ?? throw new ArgumentNullException(nameof(loggerFactory));
+    Terminal = terminal;
   }
 
   /// <summary>
@@ -62,7 +67,7 @@ public sealed class ReplConsoleReader
     ReplLoggerMessages.ReadLineStarted(Logger, prompt, History.Count, null);
 
     string formattedPrompt = PromptFormatter.Format(prompt, ReplOptions.EnableColors, ReplOptions.PromptColor);
-    Console.Write(formattedPrompt);
+    Terminal.Write(formattedPrompt);
 
     UserInput = string.Empty;  // Store only user input, not prompt
     CursorPosition = 0;        // Position relative to user input only
@@ -72,7 +77,7 @@ public sealed class ReplConsoleReader
 
     while (true)
     {
-      ConsoleKeyInfo keyInfo = Console.ReadKey(true);
+      ConsoleKeyInfo keyInfo = Terminal.ReadKey(true);
 
       ReplLoggerMessages.KeyPressed(Logger, keyInfo.Key.ToString(), CursorPosition, null);
 
@@ -135,7 +140,7 @@ public sealed class ReplConsoleReader
 
   private void HandleEnter()
   {
-    Console.WriteLine();
+    Terminal.WriteLine();
 
     // Add to history if not empty and not duplicate of last entry
     if (!string.IsNullOrWhiteSpace(UserInput))
@@ -231,19 +236,19 @@ public sealed class ReplConsoleReader
   {
     ReplLoggerMessages.ShowCompletionCandidatesStarted(Logger, UserInput, null);
 
-    Console.WriteLine();
+    Terminal.WriteLine();
     if (ReplOptions.EnableColors)
     {
-      Console.WriteLine(AnsiColors.Gray + "Available completions:" + AnsiColors.Reset);
+      Terminal.WriteLine(AnsiColors.Gray + "Available completions:" + AnsiColors.Reset);
     }
     else
     {
-      Console.WriteLine("Available completions:");
+      Terminal.WriteLine("Available completions:");
     }
 
     // Display nicely in columns
     int maxLen = candidates.Max(c => c.Value.Length) + 2;
-    int columns = Math.Max(1, Console.WindowWidth / maxLen);
+    int columns = Math.Max(1, Terminal.WindowWidth / maxLen);
 
     for (int i = 0; i < candidates.Count; i++)
     {
@@ -252,18 +257,18 @@ public sealed class ReplConsoleReader
 
       ReplLoggerMessages.CompletionCandidateDetails(Logger, candidate.Value, null);
 
-      Console.Write(padded);
+      Terminal.Write(padded);
 
       if ((i + 1) % columns == 0)
-        Console.WriteLine();
+        Terminal.WriteLine();
     }
 
     if (candidates.Count % columns != 0)
-      Console.WriteLine();
+      Terminal.WriteLine();
 
     // Redraw the prompt and current line
-    Console.Write(PromptFormatter.Format(ReplOptions));
-    Console.Write(UserInput);
+    Terminal.Write(PromptFormatter.Format(ReplOptions));
+    Terminal.Write(UserInput);
   }
 
   private void HandleBackspace()
@@ -401,25 +406,26 @@ public sealed class ReplConsoleReader
     ReplLoggerMessages.LineRedrawn(Logger, UserInput, null);
 
     // Move cursor to beginning of line
-    Console.SetCursorPosition(0, Console.CursorTop);
+    (int _, int top) = Terminal.GetCursorPosition();
+    Terminal.SetCursorPosition(0, top);
 
     // Clear line
-    Console.Write(new string(' ', Console.WindowWidth));
+    Terminal.Write(new string(' ', Terminal.WindowWidth));
 
     // Move back to beginning
-    Console.SetCursorPosition(0, Console.CursorTop);
+    Terminal.SetCursorPosition(0, top);
 
     // Redraw the prompt and current line
-    Console.Write(PromptFormatter.Format(ReplOptions));
+    Terminal.Write(PromptFormatter.Format(ReplOptions));
 
     if (ReplOptions.EnableColors && Endpoints is not null)
     {
       string highlightedText = SyntaxHighlighter.Highlight(UserInput);
-      Console.Write(highlightedText);
+      Terminal.Write(highlightedText);
     }
     else
     {
-      Console.Write(UserInput);
+      Terminal.Write(UserInput);
     }
 
     // Update cursor position
@@ -435,9 +441,10 @@ public sealed class ReplConsoleReader
     ReplLoggerMessages.CursorPositionUpdated(Logger, promptLength, CursorPosition, null);
 
     // Set cursor position if within bounds
-    if (desiredLeft < Console.WindowWidth)
+    if (desiredLeft < Terminal.WindowWidth)
     {
-      Console.SetCursorPosition(desiredLeft, Console.CursorTop);
+      (int _, int top) = Terminal.GetCursorPosition();
+      Terminal.SetCursorPosition(desiredLeft, top);
     }
   }
 }

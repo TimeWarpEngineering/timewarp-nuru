@@ -10,6 +10,11 @@ public partial class NuruApp
   private readonly IConsole Console;
 
   /// <summary>
+  /// Gets the terminal I/O provider for interactive operations like REPL.
+  /// </summary>
+  public ITerminal Terminal { get; }
+
+  /// <summary>
   /// Gets the logger factory.
   /// </summary>
   public ILoggerFactory LoggerFactory { get; }
@@ -35,28 +40,30 @@ public partial class NuruApp
   public ApplicationMetadata? AppMetadata { get; }
 
   /// <summary>
-  /// Direct constructor - no dependency injection.
+  /// Direct constructor - used by NuruAppBuilder for non-DI path.
   /// </summary>
-  public NuruApp
+  internal NuruApp
   (
     EndpointCollection endpoints,
     ITypeConverterRegistry typeConverterRegistry,
-    ILoggerFactory? loggerFactory = null,
+    ILoggerFactory loggerFactory,
+    IConsole console,
+    ITerminal terminal,
     ReplOptions? replOptions = null,
-    ApplicationMetadata? appMetadata = null,
-    IConsole? console = null
+    ApplicationMetadata? appMetadata = null
   )
   {
     Endpoints = endpoints ?? throw new ArgumentNullException(nameof(endpoints));
     TypeConverterRegistry = typeConverterRegistry ?? throw new ArgumentNullException(nameof(typeConverterRegistry));
-    LoggerFactory = loggerFactory ?? Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance;
+    LoggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
+    Console = console ?? throw new ArgumentNullException(nameof(console));
+    Terminal = terminal ?? throw new ArgumentNullException(nameof(terminal));
     ReplOptions = replOptions;
     AppMetadata = appMetadata;
-    Console = console ?? NuruConsole.Default;
 
     // If logging is configured but DI is not, create a minimal service provider
     // that can resolve ILoggerFactory and ILogger<T> for delegate parameter injection
-    if (loggerFactory is not null && loggerFactory != Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance)
+    if (loggerFactory != NullLoggerFactory.Instance)
     {
       ServiceProvider = new LoggerServiceProvider(loggerFactory);
     }
@@ -75,6 +82,7 @@ public partial class NuruApp
     ReplOptions = serviceProvider.GetService<ReplOptions>();
     AppMetadata = serviceProvider.GetService<ApplicationMetadata>();
     Console = serviceProvider.GetService<IConsole>() ?? NuruConsole.Default;
+    Terminal = serviceProvider.GetService<ITerminal>() ?? NuruTerminal.Default;
   }
 
   public async Task<int> RunAsync(string[] args)

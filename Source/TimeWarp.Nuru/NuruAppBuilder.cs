@@ -12,6 +12,7 @@ public class NuruAppBuilder
   private IConfiguration? Configuration;
   private ReplOptions? ReplOptions;
   private ApplicationMetadata? AppMetadata;
+  private ITerminal? Terminal;
 
   /// <summary>
   /// Gets the collection of registered endpoints.
@@ -45,6 +46,32 @@ public class NuruAppBuilder
   {
     ArgumentNullException.ThrowIfNull(loggerFactory);
     LoggerFactory = loggerFactory;
+    return this;
+  }
+
+  /// <summary>
+  /// Sets the terminal I/O provider for interactive operations like REPL.
+  /// If not called, defaults to <see cref="NuruTerminal.Default"/>.
+  /// </summary>
+  /// <param name="terminal">The terminal implementation to use.</param>
+  /// <returns>The builder for chaining.</returns>
+  /// <example>
+  /// <code>
+  /// // For testing REPL
+  /// var terminal = new TestTerminal();
+  /// terminal.QueueLine("help");
+  /// terminal.QueueLine("exit");
+  ///
+  /// var app = new NuruAppBuilder()
+  ///     .UseTerminal(terminal)
+  ///     .AddReplSupport()
+  ///     .Build();
+  /// </code>
+  /// </example>
+  public NuruAppBuilder UseTerminal(ITerminal terminal)
+  {
+    ArgumentNullException.ThrowIfNull(terminal);
+    Terminal = terminal;
     return this;
   }
 
@@ -374,14 +401,27 @@ public class NuruAppBuilder
         ServiceCollection.AddSingleton(AppMetadata);
       }
 
+      // Register terminal if configured
+      if (Terminal is not null)
+      {
+        ServiceCollection.AddSingleton<ITerminal>(Terminal);
+      }
+
       ServiceProvider serviceProvider = ServiceCollection.BuildServiceProvider();
 
       return new NuruApp(serviceProvider);
     }
     else
     {
-      // Direct path - return lightweight app without DI (pass logger factory for future use)
-      return new NuruApp(EndpointCollection, TypeConverterRegistry, loggerFactory, ReplOptions, AppMetadata);
+      // Direct path - return lightweight app without DI
+      return new NuruApp(
+        EndpointCollection,
+        TypeConverterRegistry,
+        loggerFactory,
+        NuruConsole.Default,
+        Terminal ?? NuruTerminal.Default,
+        ReplOptions,
+        AppMetadata);
     }
   }
 

@@ -22,6 +22,7 @@
 - **NEVER add these fields**: Status (folder location indicates status), Priority, Category, Priority Justification, Implementation Status
 - **Use ONLY**: Description, Parent (optional), Requirements (optional), Checklist (optional), Notes (optional), Implementation Notes (optional)
 - **WHY**: Folder structure (ToDo/InProgress/Done/Backlog) determines status; adding status fields creates redundancy
+- **CRITICAL**: NEVER start a new Kanban task without explicitly asking the user first. Always wait for explicit approval before moving to a new task.
 
 ## Code Style Guidelines
 - **Formatting**: Use `dotnet format`; 2-space indent (per .editorconfig), no trailing whitespace (RCS1037 fails build), blank lines between blocks (IDE2003).

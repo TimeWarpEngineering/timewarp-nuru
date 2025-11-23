@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru.IO;
+namespace TimeWarp.Nuru;
 
 /// <summary>
 /// A testable implementation of <see cref="ITerminal"/> that captures all output

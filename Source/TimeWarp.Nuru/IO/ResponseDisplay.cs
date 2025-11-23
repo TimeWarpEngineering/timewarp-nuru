@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru.IO;
+namespace TimeWarp.Nuru;
 
 /// <summary>
 /// Provides shared response display functionality for command execution.

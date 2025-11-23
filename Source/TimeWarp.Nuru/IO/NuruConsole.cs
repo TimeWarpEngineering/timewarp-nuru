@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru.IO;
+namespace TimeWarp.Nuru;
 
 /// <summary>
 /// Default implementation of <see cref="IConsole"/> that wraps <see cref="System.Console"/>.

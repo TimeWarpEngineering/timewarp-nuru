@@ -74,9 +74,9 @@ public class ReplOptions
   /// <summary>
   /// Patterns for commands that should not be saved to history.
   /// Supports wildcards: * matches any characters, ? matches single character.
-  /// Example: ["*password*", "*secret*", "*token*", "*apikey*"]
+  /// Example: ["*password*", "*secret*", "*apikey*", "*token*"]
   /// Set to null or empty to save all commands to history.
-  /// Default includes common sensitive patterns.
+  /// Default includes common sensitive patterns and history management commands.
   /// </summary>
   public IList<string>? HistoryIgnorePatterns { get; init; } =
   [
@@ -84,7 +84,8 @@ public class ReplOptions
     "*secret*",
     "*token*",
     "*apikey*",
-    "*credential*"
+    "*credential*",
+    "clear-history"  // Don't add history management commands to history
   ];
 
 }

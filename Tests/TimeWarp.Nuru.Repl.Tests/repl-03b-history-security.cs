@@ -275,7 +275,7 @@ public class ShouldIgnoreCommandTests
   {
     // Arrange
     ReplOptions defaultOptions = new();
-    string[] expectedDefaults = ["*password*", "*secret*", "*token*", "*apikey*", "*credential*"];
+    string[] expectedDefaults = ["*password*", "*secret*", "*token*", "*apikey*", "*credential*", "clear-history"];
 
     // Act & Assert
     defaultOptions.HistoryIgnorePatterns.ShouldNotBeNull("Default patterns should not be null");
@@ -285,6 +285,21 @@ public class ShouldIgnoreCommandTests
       defaultOptions.HistoryIgnorePatterns.ShouldContain(pattern,
           $"Default patterns should contain: {pattern}");
     }
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_block_clear_history_command()
+  {
+    // Arrange - clear-history should never be added to history
+    // This prevents confusing behavior where clear-history appears after clearing
+    ReplOptions options = new();
+
+    // Act
+    bool isBlocked = Helper!.ShouldIgnoreCommand("clear-history", options);
+
+    // Assert
+    isBlocked.ShouldBeTrue("clear-history command should be blocked from history");
 
     await Task.CompletedTask;
   }

@@ -2,6 +2,7 @@
 #:project ../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
 #:project ../../Source/TimeWarp.Nuru.Repl/TimeWarp.Nuru.Repl.csproj
 
+using System.Runtime.InteropServices;
 using TimeWarp.Nuru;
 using TimeWarp.Nuru.Repl;
 
@@ -174,7 +175,7 @@ public class HistoryPersistenceTests
     try
     {
       // Create history file with more entries than max
-      var manyCommands = Enumerable.Range(1, 200).Select(i => $"command-{i}").ToArray();
+      string[] manyCommands = [.. Enumerable.Range(1, 200).Select(i => $"command-{i}")];
       await File.WriteAllLinesAsync(historyPath, manyCommands);
 
       using var terminal = new TestTerminal();

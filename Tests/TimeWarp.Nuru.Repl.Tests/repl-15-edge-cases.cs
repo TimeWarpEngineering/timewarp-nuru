@@ -94,51 +94,8 @@ public class EdgeCaseTests
       .ShouldBeTrue("Should handle whitespace-only input");
   }
 
-  public static async Task Should_handle_null_options_gracefully()
-  {
-    // Arrange
-    using var terminal = new TestTerminal();
-    terminal.QueueLine("exit");
-
-    NuruApp app = new NuruAppBuilder()
-      .UseTerminal(terminal)
-      .AddReplSupport(options =>
-      {
-        options.HistoryIgnorePatterns = null!;  // Null collection
-      })
-      .Build();
-
-    // Act
-    await app.RunReplAsync();
-
-    // Assert
-    terminal.OutputContains("Goodbye!")
-      .ShouldBeTrue("Should handle null options gracefully");
-  }
-
-  public static async Task Should_handle_empty_history_patterns()
-  {
-    // Arrange
-    using var terminal = new TestTerminal();
-    terminal.QueueLine("test");
-    terminal.QueueLine("exit");
-
-    NuruApp app = new NuruAppBuilder()
-      .UseTerminal(terminal)
-      .AddRoute("test", () => "OK")
-      .AddReplSupport(options =>
-      {
-        options.HistoryIgnorePatterns = [];  // Empty list
-      })
-      .Build();
-
-    // Act
-    await app.RunReplAsync();
-
-    // Assert
-    terminal.OutputContains("Goodbye!")
-      .ShouldBeTrue("Should handle empty history patterns");
-  }
+  // Note: Null/empty HistoryIgnorePatterns tested in repl-03b-history-security.cs
+  // HistoryIgnorePatterns is init-only so can't be set via Action<ReplOptions> lambda
 
   public static async Task Should_handle_special_characters_in_commands()
   {
@@ -171,11 +128,12 @@ public class EdgeCaseTests
     {
       terminal.QueueLine("noop");
     }
+
     terminal.QueueLine("exit");
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("noop", () => { })
+      .AddRoute("noop", () => "OK")
       .AddReplSupport()
       .Build();
 
@@ -217,7 +175,7 @@ public class EdgeCaseTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("cmd{n}", (string n) => "OK")
+      .AddRoute("cmd{n}", (string _) => "OK")
       .AddReplSupport(options => options.MaxHistorySize = 0)
       .Build();
 

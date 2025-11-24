@@ -11,6 +11,8 @@ return await RunTests<ConfigurationTests>();
 [TestTag("REPL")]
 public class ConfigurationTests
 {
+  private static string ThrowTestException() => throw new InvalidOperationException("Test");
+
   public static async Task Should_use_default_options()
   {
     // Arrange
@@ -58,6 +60,7 @@ public class ConfigurationTests
     {
       terminal.QueueLine($"cmd{i}");
     }
+
     terminal.QueueLine("exit");
 
     NuruApp app = new NuruAppBuilder()
@@ -107,7 +110,7 @@ public class ConfigurationTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("fail", () => throw new Exception("Test"))
+      .AddRoute("fail", ThrowTestException)
       .AddRoute("status", () => "OK")
       .AddReplSupport(options => options.ContinueOnError = true)
       .Build();
@@ -209,32 +212,8 @@ public class ConfigurationTests
       .ShouldBeTrue("Exit code should be shown");
   }
 
-  public static async Task Should_configure_history_ignore_patterns()
-  {
-    // Arrange
-    using var terminal = new TestTerminal();
-    terminal.QueueLine("login --password secret123");
-    terminal.QueueLine("status");
-    terminal.QueueLine("history");
-    terminal.QueueLine("exit");
-
-    NuruApp app = new NuruAppBuilder()
-      .UseTerminal(terminal)
-      .AddRoute("login --password {pwd}", (string pwd) => "Logged in")
-      .AddRoute("status", () => "OK")
-      .AddReplSupport(options =>
-      {
-        options.HistoryIgnorePatterns = ["*password*", "*secret*"];
-      })
-      .Build();
-
-    // Act
-    await app.RunReplAsync();
-
-    // Assert - password command should be ignored from history
-    terminal.OutputContains("Goodbye!")
-      .ShouldBeTrue("History ignore patterns should work");
-  }
+  // Note: HistoryIgnorePatterns is tested in repl-03b-history-security.cs
+  // It's an init-only property so can't be set via Action<ReplOptions> lambda
 
   public static async Task Should_configure_custom_prompt_color()
   {

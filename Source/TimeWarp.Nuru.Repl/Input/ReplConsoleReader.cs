@@ -13,6 +13,7 @@ public sealed class ReplConsoleReader
   private readonly ILogger<ReplConsoleReader> Logger;
   private readonly ILoggerFactory? LoggerFactory;
   private readonly ITerminal Terminal;
+  private readonly Dictionary<(ConsoleKey Key, ConsoleModifiers Modifiers), Func<bool>> KeyBindings;
   private string UserInput = string.Empty;
   private int CursorPosition;
   private int HistoryIndex = -1;
@@ -53,6 +54,58 @@ public sealed class ReplConsoleReader
     LoggerFactory = loggerFactory;
     Logger = LoggerFactory?.CreateLogger<ReplConsoleReader>() ?? throw new ArgumentNullException(nameof(loggerFactory));
     Terminal = terminal;
+    KeyBindings = InitializeKeyBindings();
+  }
+
+  /// <summary>
+  /// Initializes the default PSReadLine-compatible keybindings.
+  /// </summary>
+  /// <returns>Dictionary mapping key combinations to handler functions.</returns>
+  private Dictionary<(ConsoleKey Key, ConsoleModifiers Modifiers), Func<bool>> InitializeKeyBindings()
+  {
+    // Func<bool> returns true if the key was handled and should continue the loop,
+    // false if it should return (e.g., Enter, Ctrl+D)
+    return new Dictionary<(ConsoleKey Key, ConsoleModifiers Modifiers), Func<bool>>
+    {
+      // === Enter/Submit ===
+      [(ConsoleKey.Enter, ConsoleModifiers.None)] = () => { HandleEnter(); return false; },
+
+      // === Tab Completion ===
+      [(ConsoleKey.Tab, ConsoleModifiers.None)] = () => { HandleTabCompletion(reverse: false); return true; },
+      [(ConsoleKey.Tab, ConsoleModifiers.Shift)] = () => { HandleTabCompletion(reverse: true); return true; },
+
+      // === Character Movement (PSReadLine: BackwardChar, ForwardChar) ===
+      [(ConsoleKey.LeftArrow, ConsoleModifiers.None)] = () => { HandleBackwardChar(); return true; },
+      [(ConsoleKey.B, ConsoleModifiers.Control)] = () => { HandleBackwardChar(); return true; },
+      [(ConsoleKey.RightArrow, ConsoleModifiers.None)] = () => { HandleForwardChar(); return true; },
+      [(ConsoleKey.F, ConsoleModifiers.Control)] = () => { HandleForwardChar(); return true; },
+
+      // === Word Movement (PSReadLine: BackwardWord, ForwardWord) ===
+      [(ConsoleKey.LeftArrow, ConsoleModifiers.Control)] = () => { HandleBackwardWord(); return true; },
+      [(ConsoleKey.B, ConsoleModifiers.Alt)] = () => { HandleBackwardWord(); return true; },
+      [(ConsoleKey.RightArrow, ConsoleModifiers.Control)] = () => { HandleForwardWord(); return true; },
+      [(ConsoleKey.F, ConsoleModifiers.Alt)] = () => { HandleForwardWord(); return true; },
+
+      // === Line Position (PSReadLine: BeginningOfLine, EndOfLine) ===
+      [(ConsoleKey.Home, ConsoleModifiers.None)] = () => { HandleBeginningOfLine(); return true; },
+      [(ConsoleKey.A, ConsoleModifiers.Control)] = () => { HandleBeginningOfLine(); return true; },
+      [(ConsoleKey.End, ConsoleModifiers.None)] = () => { HandleEndOfLine(); return true; },
+      [(ConsoleKey.E, ConsoleModifiers.Control)] = () => { HandleEndOfLine(); return true; },
+
+      // === History Navigation (PSReadLine: PreviousHistory, NextHistory) ===
+      [(ConsoleKey.UpArrow, ConsoleModifiers.None)] = () => { HandlePreviousHistory(); return true; },
+      [(ConsoleKey.P, ConsoleModifiers.Control)] = () => { HandlePreviousHistory(); return true; },
+      [(ConsoleKey.DownArrow, ConsoleModifiers.None)] = () => { HandleNextHistory(); return true; },
+      [(ConsoleKey.N, ConsoleModifiers.Control)] = () => { HandleNextHistory(); return true; },
+
+      // === Deletion (PSReadLine: BackwardDeleteChar, DeleteChar) ===
+      [(ConsoleKey.Backspace, ConsoleModifiers.None)] = () => { HandleBackwardDeleteChar(); return true; },
+      [(ConsoleKey.Delete, ConsoleModifiers.None)] = () => { HandleDeleteChar(); return true; },
+
+      // === Special Keys ===
+      [(ConsoleKey.Escape, ConsoleModifiers.None)] = () => { HandleEscape(); return true; },
+      [(ConsoleKey.D, ConsoleModifiers.Control)] = () => { Terminal.WriteLine(); return false; }, // EOF
+    };
   }
 
   /// <summary>
@@ -81,64 +134,23 @@ public sealed class ReplConsoleReader
 
       ReplLoggerMessages.KeyPressed(Logger, keyInfo.Key.ToString(), CursorPosition, null);
 
-      switch (keyInfo.Key)
+      // Normalize modifiers to only include Ctrl, Alt, Shift (ignore other flags)
+      ConsoleModifiers normalizedMods = keyInfo.Modifiers & (ConsoleModifiers.Control | ConsoleModifiers.Alt | ConsoleModifiers.Shift);
+      (ConsoleKey Key, ConsoleModifiers Modifiers) keyBinding = (keyInfo.Key, normalizedMods);
+
+      if (KeyBindings.TryGetValue(keyBinding, out Func<bool>? handler))
       {
-        case ConsoleKey.Enter:
-          HandleEnter();
-          return UserInput;
-
-        case ConsoleKey.Tab:
-          HandleTabCompletion(keyInfo.Modifiers.HasFlag(ConsoleModifiers.Shift));
-          break;
-
-        case ConsoleKey.Backspace:
-          HandleBackspace();
-          break;
-
-        case ConsoleKey.Delete:
-          HandleDelete();
-          break;
-
-        case ConsoleKey.LeftArrow:
-          HandleLeftArrow(keyInfo.Modifiers.HasFlag(ConsoleModifiers.Control));
-          break;
-
-        case ConsoleKey.RightArrow:
-          HandleRightArrow(keyInfo.Modifiers.HasFlag(ConsoleModifiers.Control));
-          break;
-
-        case ConsoleKey.Home:
-          HandleHome();
-          break;
-
-        case ConsoleKey.End:
-          HandleEnd();
-          break;
-
-        case ConsoleKey.UpArrow:
-          HandleUpArrow();
-          break;
-
-        case ConsoleKey.DownArrow:
-          HandleDownArrow();
-          break;
-
-        case ConsoleKey.Escape:
-          HandleEscape();
-          break;
-
-        case ConsoleKey.D when keyInfo.Modifiers.HasFlag(ConsoleModifiers.Control):
-          // Ctrl+D - EOF, standard Unix way to exit REPL
-          Terminal.WriteLine();
-          return null;
-
-        default:
-          if (!char.IsControl(keyInfo.KeyChar))
-          {
-            HandleCharacter(keyInfo.KeyChar);
-          }
-
-          break;
+        bool continueLoop = handler();
+        if (!continueLoop)
+        {
+          // Handler indicated we should return (Enter returns UserInput, Ctrl+D returns null)
+          return keyInfo.Key == ConsoleKey.Enter ? UserInput : null;
+        }
+      }
+      else if (!char.IsControl(keyInfo.KeyChar))
+      {
+        // No binding found, treat as character input
+        HandleCharacter(keyInfo.KeyChar);
       }
     }
   }
@@ -282,7 +294,14 @@ public sealed class ReplConsoleReader
     Terminal.Write(UserInput);
   }
 
-  private void HandleBackspace()
+  // ============================================================================
+  // PSReadLine-compatible handler methods
+  // ============================================================================
+
+  /// <summary>
+  /// PSReadLine: BackwardDeleteChar - Delete the character before the cursor.
+  /// </summary>
+  private void HandleBackwardDeleteChar()
   {
     if (CursorPosition > 0)
     {
@@ -296,7 +315,10 @@ public sealed class ReplConsoleReader
     }
   }
 
-  private void HandleDelete()
+  /// <summary>
+  /// PSReadLine: DeleteChar - Delete the character under the cursor.
+  /// </summary>
+  private void HandleDeleteChar()
   {
     if (CursorPosition < UserInput.Length)
     {
@@ -309,63 +331,85 @@ public sealed class ReplConsoleReader
     }
   }
 
-  private void HandleLeftArrow(bool ctrl)
+  /// <summary>
+  /// PSReadLine: BackwardChar - Move the cursor back one character.
+  /// </summary>
+  private void HandleBackwardChar()
   {
-    if (ctrl)
-    {
-      // Move to previous word
-      int newPos = CursorPosition;
-      while (newPos > 0 && char.IsWhiteSpace(UserInput[newPos - 1]))
-        newPos--;
-      while (newPos > 0 && !char.IsWhiteSpace(UserInput[newPos - 1]))
-        newPos--;
-      CursorPosition = newPos;
-    }
-    else
-    {
-      // Move one character left
-      if (CursorPosition > 0)
-        CursorPosition--;
-    }
+    if (CursorPosition > 0)
+      CursorPosition--;
 
     UpdateCursorPosition();
   }
 
-  private void HandleRightArrow(bool ctrl)
+  /// <summary>
+  /// PSReadLine: ForwardChar - Move the cursor forward one character.
+  /// </summary>
+  private void HandleForwardChar()
   {
-    if (ctrl)
-    {
-      // Move to next word
-      int newPos = CursorPosition;
-      while (newPos < UserInput.Length && !char.IsWhiteSpace(UserInput[newPos]))
-        newPos++;
-      while (newPos < UserInput.Length && char.IsWhiteSpace(UserInput[newPos]))
-        newPos++;
-      CursorPosition = newPos;
-    }
-    else
-    {
-      // Move one character right
-      if (CursorPosition < UserInput.Length)
-        CursorPosition++;
-    }
+    if (CursorPosition < UserInput.Length)
+      CursorPosition++;
 
     UpdateCursorPosition();
   }
 
-  private void HandleHome()
+  /// <summary>
+  /// PSReadLine: BackwardWord - Move the cursor to the beginning of the current or previous word.
+  /// </summary>
+  private void HandleBackwardWord()
+  {
+    int newPos = CursorPosition;
+    // Skip whitespace behind cursor
+    while (newPos > 0 && char.IsWhiteSpace(UserInput[newPos - 1]))
+      newPos--;
+    // Skip word characters to find start of word
+    while (newPos > 0 && !char.IsWhiteSpace(UserInput[newPos - 1]))
+      newPos--;
+    CursorPosition = newPos;
+
+    UpdateCursorPosition();
+  }
+
+  /// <summary>
+  /// PSReadLine: ForwardWord - Move the cursor to the end of the current or next word.
+  /// Note: PSReadLine moves to END of word, not start of next word.
+  /// </summary>
+  private void HandleForwardWord()
+  {
+    int newPos = CursorPosition;
+    // Skip whitespace ahead of cursor
+    while (newPos < UserInput.Length && char.IsWhiteSpace(UserInput[newPos]))
+      newPos++;
+    // Move to end of word
+    while (newPos < UserInput.Length && !char.IsWhiteSpace(UserInput[newPos]))
+      newPos++;
+    CursorPosition = newPos;
+
+    UpdateCursorPosition();
+  }
+
+  /// <summary>
+  /// PSReadLine: BeginningOfLine - Move the cursor to the beginning of the line.
+  /// </summary>
+  private void HandleBeginningOfLine()
   {
     CursorPosition = 0;
     UpdateCursorPosition();
   }
 
-  private void HandleEnd()
+  /// <summary>
+  /// PSReadLine: EndOfLine - Move the cursor to the end of the line.
+  /// </summary>
+  private void HandleEndOfLine()
   {
     CursorPosition = UserInput.Length;
     UpdateCursorPosition();
   }
 
-  private void HandleUpArrow()
+  /// <summary>
+  /// PSReadLine: PreviousHistory - Replace the input with the previous item in the history.
+  /// </summary>
+  private void HandlePreviousHistory()
   {
     if (HistoryIndex > 0)
     {
@@ -376,7 +420,10 @@ public sealed class ReplConsoleReader
     }
   }
 
-  private void HandleDownArrow()
+  /// <summary>
+  /// PSReadLine: NextHistory - Replace the input with the next item in the history.
+  /// </summary>
+  private void HandleNextHistory()
   {
     if (HistoryIndex < History.Count - 1)
     {

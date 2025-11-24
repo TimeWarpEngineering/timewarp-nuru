@@ -41,45 +41,39 @@ public class TabCyclingBugTests
   }
 
   [Timeout(5000)]
-  public static async Task BUG_Tab_cycling_should_cycle_through_all_completions()
+  public static async Task Tab_cycling_should_cycle_through_all_completions()
   {
-    // Demonstrates bug: After first cycle to "commit", subsequent tabs type characters
-    // instead of cycling to "log" and "status"
+    // Tests that tab cycling works through all completions
     //
     // Expected behavior:
     // 1. "git " + Tab     → Show completions (commit, log, status)
     // 2. Tab              → Cycle to "git commit"
-    // 3. Tab              → Cycle to "git log"      ← BUG: types 'e' instead
-    // 4. Tab              → Cycle to "git status"   ← BUG: types 'x' instead
+    // 3. Tab              → Cycle to "git log"
+    // 4. Tab              → Cycle to "git status"
 
     // Arrange
     Terminal!.QueueKeys("git ");
     Terminal.QueueKey(ConsoleKey.Tab);   // Show completions
     Terminal.QueueKey(ConsoleKey.Tab);   // Cycle to "commit"
-    Terminal.QueueKey(ConsoleKey.Tab);   // Should cycle to "log" but types 'e'
-    Terminal.QueueKey(ConsoleKey.Tab);   // Should cycle to "status" but types 'x'
+    Terminal.QueueKey(ConsoleKey.Tab);   // Cycle to "log"
+    Terminal.QueueKey(ConsoleKey.Tab);   // Cycle to "status"
     Terminal.QueueLine("exit");
 
     // Act
     await App!.RunReplAsync();
 
-    // Assert: This test DOCUMENTS THE BUG - it will fail until fixed
-    WriteLine("=== BUG OUTPUT ===");
+    // Assert
+    WriteLine("=== TAB CYCLING OUTPUT ===");
     WriteLine(Terminal.Output);
     WriteLine("=== END ===");
 
-    // What SHOULD happen: cycling to "log"
-    bool hasLog = Terminal.OutputContains("git log");
+    // Check that all three completions appeared in sequence
+    Terminal.OutputContains("commit").ShouldBeTrue("Should cycle to 'commit'");
+    Terminal.OutputContains("log").ShouldBeTrue("Should cycle to 'log'");
+    Terminal.OutputContains("status").ShouldBeTrue("Should cycle to 'status'");
 
-    // What ACTUALLY happens: typing characters (e, x, i, t spell "exit")
-    bool hasCommitE = Terminal.OutputContains("commite");
-
-    WriteLine($"Has 'git log': {hasLog} (expected: true, actual: {hasLog})");
-    WriteLine($"Has 'commite': {hasCommitE} (expected: false, actual: {hasCommitE})");
-
-    // This assertion will FAIL until the bug is fixed
-    hasLog.ShouldBeTrue("Tab cycling should cycle to 'git log' on third tab");
-    hasCommitE.ShouldBeFalse("Tab should not type characters after cycling");
+    // Should NOT have the old bug where it typed "commite"
+    Terminal.OutputContains("commite").ShouldBeFalse("Should not type characters after cycling");
   }
 
   [Timeout(5000)]

@@ -19,6 +19,8 @@ public sealed class ReplConsoleReader
   private int HistoryIndex = -1;
   private List<string> CompletionCandidates = [];
   private int CompletionIndex = -1;
+  private string? CompletionOriginalInput;  // Stores the input before completion cycling started
+  private int CompletionOriginalCursor;     // Stores the cursor position before completion cycling
   private string? PrefixSearchString;  // Stores the prefix for F8 prefix search
 
   /// <summary>
@@ -181,6 +183,13 @@ public sealed class ReplConsoleReader
 
   private void HandleTabCompletion(bool reverse)
   {
+    // If we're cycling, restore the original input before getting new completions
+    if (CompletionOriginalInput is not null)
+    {
+      UserInput = CompletionOriginalInput;
+      CursorPosition = CompletionOriginalCursor;
+    }
+
     // Parse current line into arguments for completion context
     string inputUpToCursor = UserInput[..CursorPosition];
     string[] args = CommandLineParser.Parse(inputUpToCursor);
@@ -211,8 +220,9 @@ public sealed class ReplConsoleReader
 
     if (candidates.Count == 1)
     {
-      // Single completion - apply it
+      // Single completion - apply it and clear cycling state
       ApplyCompletion(candidates[0]);
+      ResetCompletionState();
     }
     else
     {
@@ -220,8 +230,11 @@ public sealed class ReplConsoleReader
       if (CompletionCandidates.Count != candidates.Count ||
           !candidates.Select(c => c.Value).SequenceEqual(CompletionCandidates))
       {
-        // New completion set - show all candidates
+        // New completion set - save original input and show all candidates
+        CompletionOriginalInput = UserInput;
+        CompletionOriginalCursor = CursorPosition;
         CompletionCandidates = candidates.ConvertAll(c => c.Value);
+        CompletionIndex = -1;
         ShowCompletionCandidates(candidates);
       }
       else
@@ -263,6 +276,14 @@ public sealed class ReplConsoleReader
     }
 
     return 0;
+  }
+
+  private void ResetCompletionState()
+  {
+    CompletionCandidates.Clear();
+    CompletionIndex = -1;
+    CompletionOriginalInput = null;
+    CompletionOriginalCursor = 0;
   }
 
   private void ShowCompletionCandidates(List<CompletionCandidate> candidates)
@@ -353,6 +374,7 @@ public sealed class ReplConsoleReader
 
       UserInput = UserInput[..(CursorPosition - 1)] + UserInput[CursorPosition..];
       CursorPosition--;
+      ResetCompletionState();  // Clear completion cycling when user deletes
 
       ReplLoggerMessages.UserInputChanged(Logger, UserInput, CursorPosition, null);
       RedrawLine();
@@ -369,6 +391,7 @@ public sealed class ReplConsoleReader
       ReplLoggerMessages.DeletePressed(Logger, CursorPosition, null);
 
       UserInput = UserInput[..CursorPosition] + UserInput[(CursorPosition + 1)..];
+      ResetCompletionState();  // Clear completion cycling when user deletes
 
       ReplLoggerMessages.UserInputChanged(Logger, UserInput, CursorPosition, null);
       RedrawLine();
@@ -589,6 +612,7 @@ public sealed class ReplConsoleReader
     UserInput = UserInput[..CursorPosition] + charToInsert + UserInput[CursorPosition..];
     CursorPosition++;
     PrefixSearchString = null;  // Clear prefix search when user types
+    ResetCompletionState();  // Clear completion cycling when user types
 
     ReplLoggerMessages.UserInputChanged(Logger, UserInput, CursorPosition, null);
     RedrawLine();

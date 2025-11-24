@@ -169,9 +169,10 @@ public sealed class ReplConsoleReader
     ReplLoggerMessages.TabCompletionTriggered(Logger, UserInput, CursorPosition, args, null);
 
     // Build completion context
+    // CursorPosition in CompletionContext is the word index (not character position)
     var context = new CompletionContext(
       Args: args,
-      CursorPosition: CursorPosition,
+      CursorPosition: args.Length,
       Endpoints: Endpoints,
       HasTrailingSpace: hasTrailingSpace
     );

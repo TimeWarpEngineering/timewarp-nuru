@@ -323,29 +323,13 @@ public class CompletionProvider
         // If we're at cursor position, allow partial match
         if (argIndex == cursorPosition - 1)
         {
-          // Check if current arg starts with the literal
-          if (!args[argIndex].StartsWith(literal.Value, StringComparison.OrdinalIgnoreCase))
+          // Check if the literal starts with current arg (partial completion)
+          if (!literal.Value.StartsWith(args[argIndex], StringComparison.OrdinalIgnoreCase))
           {
             return []; // Route doesn't match partial input
           }
-        }
-        else
-        {
-          // For non-cursor positions, require exact match
-          if (!literal.TryMatch(args[argIndex], out _))
-          {
-            return []; // Route doesn't match
-          }
-        }
-
-        // If we're at the cursor position, allow partial match
-        if (argIndex == cursorPosition - 1)
-        {
-          // Check if current arg starts with the literal
-          if (!args[argIndex].StartsWith(literal.Value, StringComparison.OrdinalIgnoreCase))
-          {
-            return []; // Route doesn't match partial input
-          }
+          // Don't consume this segment - we want to offer it as a completion
+          break;
         }
         else
         {

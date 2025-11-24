@@ -377,4 +377,66 @@ public class SampleValidationTests
       "Should show completions header for ambiguous inputs"
     );
   }
+
+  // ============================================================================
+  // GIT SUBCOMMAND PARTIAL COMPLETION TESTS
+  // ============================================================================
+
+  [Timeout(5000)]
+  public static async Task Should_complete_partial_git_subcommand_com_to_commit()
+  {
+    // Arrange: Type "git com" then Tab - should autocomplete to "git commit"
+    Terminal!.QueueKeys("git com");
+    Terminal.QueueKey(ConsoleKey.Tab);
+    Terminal.QueueKey(ConsoleKey.Escape);
+    Terminal.QueueLine("");
+    Terminal.QueueLine("exit");
+
+    // Act
+    await App!.RunReplAsync();
+
+    // Assert: Should complete "com" to "commit"
+    Terminal.OutputContains("commit").ShouldBeTrue("Should complete 'git com' to 'git commit'");
+  }
+
+  [Timeout(5000)]
+  public static async Task Should_show_option_after_git_commit_space()
+  {
+    // Arrange: Type "git commit " then Tab - should show -m option
+    Terminal!.QueueKeys("git commit ");
+    Terminal.QueueKey(ConsoleKey.Tab);
+    Terminal.QueueKey(ConsoleKey.Escape);
+    Terminal.QueueLine("");
+    Terminal.QueueLine("exit");
+
+    // Act
+    await App!.RunReplAsync();
+
+    // Assert: Should show -m option (not complete to "git commit commit")
+    Terminal.OutputContains("-m").ShouldBeTrue("Should show '-m' option after 'git commit '");
+    Terminal.OutputContains("git commit commit").ShouldBeFalse("Should NOT duplicate 'commit'");
+  }
+
+  [Timeout(5000)]
+  public static async Task Should_not_show_inappropriate_options_for_git_space()
+  {
+    // Arrange: Type "git " then Tab - should NOT show options like --count or -m
+    Terminal!.QueueKeys("git ");
+    Terminal.QueueKey(ConsoleKey.Tab);
+    Terminal.QueueKey(ConsoleKey.Escape);
+    Terminal.QueueLine("");
+    Terminal.QueueLine("exit");
+
+    // Act
+    await App!.RunReplAsync();
+
+    // Assert: Should NOT show route-specific options before selecting subcommand
+    Terminal.OutputContains("--count").ShouldBeFalse("Should NOT show '--count' (only for 'git log')");
+    Terminal.OutputContains(" -m").ShouldBeFalse("Should NOT show '-m' (only for 'git commit')");
+
+    // Should still show subcommands
+    Terminal.OutputContains("commit").ShouldBeTrue("Should show 'commit' subcommand");
+    Terminal.OutputContains("log").ShouldBeTrue("Should show 'log' subcommand");
+    Terminal.OutputContains("status").ShouldBeTrue("Should show 'status' subcommand");
+  }
 }

@@ -23,8 +23,8 @@ public static class NuruAppExtensions
       .AddRoute("quit", () => ReplSession.CurrentSession?.Exit(), "Exit the REPL")
       .AddRoute("q", () => ReplSession.CurrentSession?.Exit(), "Exit the REPL")
       .AddRoute("history", () => ReplSession.CurrentSession?.ShowHistory(), "Show command history")
-      .AddRoute("clear", () => Console.Clear(), "Clear the screen")
-      .AddRoute("cls", () => Console.Clear(), "Clear the screen")
+      .AddRoute("clear", () => ReplSession.CurrentSession?.ClearScreen(), "Clear the screen")
+      .AddRoute("cls", () => ReplSession.CurrentSession?.ClearScreen(), "Clear the screen")
       .AddRoute("clear-history", () => ReplSession.CurrentSession?.ClearHistory(), "Clear command history")
       .AddAutoHelp();
 

@@ -358,6 +358,14 @@ internal sealed class ReplSession
     History.Clear();
   }
 
+  /// <summary>
+  /// Clears the terminal screen.
+  /// </summary>
+  public void ClearScreen()
+  {
+    Terminal.Clear();
+  }
+
   private void AddToHistory(string command)
   {
     // Check if command matches any ignore pattern

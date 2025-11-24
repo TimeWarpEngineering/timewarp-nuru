@@ -13,11 +13,11 @@ The `clear` and `cls` REPL commands call `Console.Clear()` directly instead of u
 
 ## Checklist
 
-- [ ] Add `void Clear()` to ITerminal interface
-- [ ] Implement Clear() in TestTerminal - write `[CLEAR]` to OutputWriter
-- [ ] Implement Clear() in SystemTerminal - call Console.Clear()
-- [ ] Update clear/cls routes in NuruAppExtensions to use Terminal.Clear()
-- [ ] Verify repl-09-builtin-commands.cs tests pass (6/8 -> 8/8)
+- [x] Add `void Clear()` to ITerminal interface (already existed)
+- [x] Implement Clear() in TestTerminal - write `[CLEAR]` to OutputWriter (already existed)
+- [x] Implement Clear() in SystemTerminal - call Console.Clear() (already existed)
+- [x] Update clear/cls routes in NuruAppExtensions to use Terminal.Clear()
+- [x] Verify repl-09-builtin-commands.cs tests pass (6/8 -> 8/8)
 
 ## Notes
 

@@ -347,6 +347,48 @@ public class PSReadLineKeybindingsTests
   }
 
   // ============================================================================
+  // BeginningOfHistory: Alt+<
+  // EndOfHistory: Alt+>
+  // ============================================================================
+
+  public static async Task Should_jump_to_beginning_of_history_with_alt_shift_comma()
+  {
+    // Arrange - Create history with multiple items
+    Terminal!.QueueLine("greet First");
+    Terminal.QueueLine("greet Second");
+    Terminal.QueueLine("greet Third");
+    // Now at empty prompt, jump to beginning of history
+    Terminal.QueueKey(ConsoleKey.OemComma, alt: true, shift: true);  // Alt+< = BeginningOfHistory
+    Terminal.QueueKey(ConsoleKey.Enter);  // Execute first history item
+    Terminal.QueueLine("exit");
+
+    // Act
+    await App!.RunReplAsync();
+
+    // Assert - Session completed successfully (jumped to first history item)
+    Terminal.OutputContains("Goodbye!").ShouldBeTrue("Alt+< should jump to beginning of history");
+  }
+
+  public static async Task Should_jump_to_end_of_history_with_alt_shift_period()
+  {
+    // Arrange - Navigate into history, then jump back to current input
+    Terminal!.QueueLine("greet Alpha");
+    Terminal.QueueLine("greet Beta");
+    Terminal.QueueKey(ConsoleKey.UpArrow);  // Go to "greet Beta"
+    Terminal.QueueKey(ConsoleKey.UpArrow);  // Go to "greet Alpha"
+    // Now jump back to current (empty) input
+    Terminal.QueueKey(ConsoleKey.OemPeriod, alt: true, shift: true);  // Alt+> = EndOfHistory
+    Terminal.QueueLine("greet Gamma");      // Type new command
+    Terminal.QueueLine("exit");
+
+    // Act
+    await App!.RunReplAsync();
+
+    // Assert - Session completed successfully (jumped to end of history)
+    Terminal.OutputContains("Goodbye!").ShouldBeTrue("Alt+> should jump to end of history (current input)");
+  }
+
+  // ============================================================================
   // BackwardDeleteChar: Backspace
   // DeleteChar: Delete
   // ============================================================================

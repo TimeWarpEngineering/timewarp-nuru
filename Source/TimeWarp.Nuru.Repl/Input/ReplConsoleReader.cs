@@ -98,6 +98,10 @@ public sealed class ReplConsoleReader
       [(ConsoleKey.DownArrow, ConsoleModifiers.None)] = () => { HandleNextHistory(); return true; },
       [(ConsoleKey.N, ConsoleModifiers.Control)] = () => { HandleNextHistory(); return true; },
 
+      // === History Position (PSReadLine: BeginningOfHistory, EndOfHistory) ===
+      [(ConsoleKey.OemComma, ConsoleModifiers.Alt | ConsoleModifiers.Shift)] = () => { HandleBeginningOfHistory(); return true; }, // Alt+<
+      [(ConsoleKey.OemPeriod, ConsoleModifiers.Alt | ConsoleModifiers.Shift)] = () => { HandleEndOfHistory(); return true; }, // Alt+>
+
       // === Deletion (PSReadLine: BackwardDeleteChar, DeleteChar) ===
       [(ConsoleKey.Backspace, ConsoleModifiers.None)] = () => { HandleBackwardDeleteChar(); return true; },
       [(ConsoleKey.Delete, ConsoleModifiers.None)] = () => { HandleDeleteChar(); return true; },
@@ -439,6 +443,31 @@ public sealed class ReplConsoleReader
       CursorPosition = 0;
       RedrawLine();
     }
+  }
+
+  /// <summary>
+  /// PSReadLine: BeginningOfHistory - Move to the first item in the history.
+  /// </summary>
+  private void HandleBeginningOfHistory()
+  {
+    if (History.Count > 0)
+    {
+      HistoryIndex = 0;
+      UserInput = History[HistoryIndex];
+      CursorPosition = UserInput.Length;
+      RedrawLine();
+    }
+  }
+
+  /// <summary>
+  /// PSReadLine: EndOfHistory - Move to the last item (current input) in the history.
+  /// </summary>
+  private void HandleEndOfHistory()
+  {
+    HistoryIndex = History.Count;
+    UserInput = string.Empty;
+    CursorPosition = 0;
+    RedrawLine();
   }
 
   private void HandleEscape()

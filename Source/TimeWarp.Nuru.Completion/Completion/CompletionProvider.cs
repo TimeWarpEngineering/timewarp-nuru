@@ -67,14 +67,35 @@ public class CompletionProvider
       candidates.AddRange(routeCandidates);
     }
 
-    // Remove duplicates
+    // Remove duplicates and sort by type priority, then alphabetically
+    // Priority: Command/Enum/Parameter first, Options last
     return
     [
       .. candidates
       .GroupBy(c => c.Value)
       .Select(g => g.First())
-      .OrderBy(c => c.Value)
+      .OrderBy(c => GetTypeSortOrder(c.Type))
+      .ThenBy(c => c.Value)
     ];
+  }
+
+  /// <summary>
+  /// Get sort order for completion types.
+  /// Commands and Enum values come first, Options come last.
+  /// </summary>
+  private static int GetTypeSortOrder(CompletionType type)
+  {
+    return type switch
+    {
+      CompletionType.Command => 0,
+      CompletionType.Enum => 1,
+      CompletionType.Parameter => 2,
+      CompletionType.File => 3,
+      CompletionType.Directory => 4,
+      CompletionType.Custom => 5,
+      CompletionType.Option => 6, // Options come last
+      _ => 99
+    };
   }
 
   /// <summary>
@@ -161,11 +182,15 @@ public class CompletionProvider
 
         if (secondSegment is LiteralMatcher subcommand)
         {
-          // Subcommand literal
+          // Determine type: if it starts with "-", it's an option, otherwise it's a command
+          CompletionType completionType = subcommand.Value.StartsWith('-')
+            ? CompletionType.Option
+            : CompletionType.Command;
+
           candidates.Add(new CompletionCandidate(
             subcommand.Value,
             Description: null,
-            CompletionType.Command
+            completionType
           ));
         }
         else if (secondSegment is ParameterMatcher parameter)
@@ -195,13 +220,14 @@ public class CompletionProvider
       }
     }
 
-    // Remove duplicates
+    // Remove duplicates and sort by type priority, then alphabetically
     return
     [
       .. candidates
       .GroupBy(c => c.Value)
       .Select(g => g.First())
-      .OrderBy(c => c.Value)
+      .OrderBy(c => GetTypeSortOrder(c.Type))
+      .ThenBy(c => c.Value)
     ];
   }
 

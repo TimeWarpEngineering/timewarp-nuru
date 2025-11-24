@@ -18,18 +18,18 @@ Create a new REPL demo file (repl-options-showcase.cs) that demonstrates ALL Rep
 ## Checklist
 
 ### Implementation
-- [ ] Create repl-options-showcase.cs in Samples/ReplDemo/
-- [ ] Configure PersistHistory = true with custom HistoryFilePath
-- [ ] Set MaxHistorySize to demonstrate history limits
-- [ ] Enable ShowExitCode option
-- [ ] Use non-default PromptColor
-- [ ] Set ContinueOnError = false
-- [ ] Configure HistoryIgnorePatterns
-- [ ] Add commands that demonstrate each feature
-- [ ] Verify demo compiles and runs correctly
+- [x] Create repl-options-showcase.cs in Samples/ReplDemo/
+- [x] Configure PersistHistory = true with custom HistoryFilePath
+- [x] Set MaxHistorySize to demonstrate history limits
+- [x] Enable ShowExitCode option
+- [x] Use non-default PromptColor
+- [x] Set ContinueOnError = false
+- [x] Configure HistoryIgnorePatterns
+- [x] Add commands that demonstrate each feature
+- [x] Verify demo compiles and runs correctly
 
 ### Documentation
-- [ ] Add inline comments explaining each ReplOptions property
+- [x] Add inline comments explaining each ReplOptions property
 
 ## Notes
 

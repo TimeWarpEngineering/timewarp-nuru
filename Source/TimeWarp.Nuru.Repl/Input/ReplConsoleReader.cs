@@ -59,8 +59,8 @@ public sealed class ReplConsoleReader
   /// Reads a line of input with advanced editing capabilities.
   /// </summary>
   /// <param name="prompt">The prompt to display.</param>
-  /// <returns>The input line from user.</returns>
-  public string ReadLine(string prompt)
+  /// <returns>The input line from user, or null if EOF (Ctrl+D) is received.</returns>
+  public string? ReadLine(string prompt)
   {
     ArgumentException.ThrowIfNullOrEmpty(prompt);
 
@@ -126,6 +126,11 @@ public sealed class ReplConsoleReader
         case ConsoleKey.Escape:
           HandleEscape();
           break;
+
+        case ConsoleKey.D when keyInfo.Modifiers.HasFlag(ConsoleModifiers.Control):
+          // Ctrl+D - EOF, standard Unix way to exit REPL
+          Terminal.WriteLine();
+          return null;
 
         default:
           if (!char.IsControl(keyInfo.KeyChar))

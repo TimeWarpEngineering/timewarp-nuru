@@ -88,7 +88,6 @@ public class PerformanceTests
     sw.ElapsedMilliseconds.ShouldBeLessThan(5000);
   }
 
-  [Skip("Tab completion tests hang - requires interactive terminal")]
   [Timeout(5000)]
   public static async Task Should_complete_quickly_with_many_routes()
   {

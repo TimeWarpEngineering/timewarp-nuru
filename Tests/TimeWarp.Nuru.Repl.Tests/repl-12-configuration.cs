@@ -80,7 +80,6 @@ public class ConfigurationTests
       .ShouldBeTrue("Max history size should be respected");
   }
 
-  [Skip("Arrow key tests hang - requires interactive terminal")]
   [Timeout(5000)]
   public static async Task Should_enable_arrow_history()
   {

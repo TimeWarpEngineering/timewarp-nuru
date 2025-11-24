@@ -39,7 +39,6 @@ public class TabCompletionBasicTests
       .ShouldBeTrue("Single completion should work");
   }
 
-  [Skip("Tab completion tests hang - requires interactive terminal")]
   [Timeout(5000)]
   public static async Task Should_show_multiple_matches()
   {
@@ -65,7 +64,6 @@ public class TabCompletionBasicTests
       .ShouldBeTrue("Multiple completions should be displayed");
   }
 
-  [Skip("Tab completion tests hang - requires interactive terminal")]
   [Timeout(5000)]
   public static async Task Should_cycle_through_completions()
   {
@@ -93,7 +91,6 @@ public class TabCompletionBasicTests
       .ShouldBeTrue("Should cycle through completions");
   }
 
-  [Skip("Tab completion tests hang - requires interactive terminal")]
   [Timeout(5000)]
   public static async Task Should_reverse_cycle_with_shift_tab()
   {
@@ -121,7 +118,6 @@ public class TabCompletionBasicTests
       .ShouldBeTrue("Shift+Tab should reverse cycle");
   }
 
-  [Skip("Tab completion tests hang - requires interactive terminal")]
   [Timeout(5000)]
   public static async Task Should_not_change_on_no_matches()
   {
@@ -148,7 +144,6 @@ public class TabCompletionBasicTests
       .ShouldBeTrue("No matches should leave input unchanged");
   }
 
-  [Skip("Tab completion tests hang - requires interactive terminal")]
   [Timeout(5000)]
   public static async Task Should_complete_at_empty_prompt()
   {
@@ -173,7 +168,6 @@ public class TabCompletionBasicTests
       .ShouldBeTrue("Empty prompt should show all commands");
   }
 
-  [Skip("Tab completion tests hang - requires interactive terminal")]
   [Timeout(5000)]
   public static async Task Should_replace_partial_word()
   {
@@ -198,7 +192,6 @@ public class TabCompletionBasicTests
       .ShouldBeTrue("Partial word should be replaced with completion");
   }
 
-  [Skip("Tab completion tests hang - requires interactive terminal")]
   [Timeout(5000)]
   public static async Task Should_complete_with_arguments()
   {

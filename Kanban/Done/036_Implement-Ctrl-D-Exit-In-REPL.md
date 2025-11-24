@@ -12,12 +12,12 @@ ReplConsoleReader.ReadLine() doesn't handle Ctrl+D (EOF), causing TestTerminal-d
 
 ## Checklist
 
-- [ ] Change ReadLine return type to string?
-- [ ] Add Ctrl+D case in switch statement
-- [ ] Verify ReplSession.ReadCommandInput() handles null correctly (it already does)
-- [ ] Update any callers if needed
-- [ ] Remove [Skip] attributes from tab completion tests (repl-06, repl-07, repl-12, repl-14)
-- [ ] Verify tests pass
+- [x] Change ReadLine return type to string?
+- [x] Add Ctrl+D case in switch statement
+- [x] Verify ReplSession.ReadCommandInput() handles null correctly (it already does)
+- [x] Update any callers if needed
+- [x] Remove [Skip] attributes from tab completion tests (repl-06, repl-07, repl-12, repl-14)
+- [x] Verify tests pass
 
 ## Implementation Notes
 

@@ -35,12 +35,12 @@ Implement PSReadLine-compatible history navigation features in the Nuru REPL. Th
 - [ ] Enter to accept, Escape to cancel
 
 ### Prefix Search
-- [ ] F8 or custom: HistorySearchBackward - Search history for items starting with current input prefix
-- [ ] Shift+F8 or custom: HistorySearchForward - Search forward with prefix
+- [x] F8: HistorySearchBackward - Search history for items starting with current input prefix (IMPLEMENTED with tests)
+- [x] Shift+F8: HistorySearchForward - Search forward with prefix (IMPLEMENTED with tests)
 
 ### Testing
 - [x] Add tests for BeginningOfHistory/EndOfHistory (2 tests in repl-18)
-- [ ] Add tests for prefix search functionality
+- [x] Add tests for prefix search functionality (4 tests in repl-18)
 - [ ] Test edge cases for interactive search (empty history, no matches)
 
 ## Notes

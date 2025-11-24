@@ -328,8 +328,19 @@ public class CompletionProvider
           {
             return []; // Route doesn't match partial input
           }
-          // Don't consume this segment - we want to offer it as a completion
-          break;
+
+          // Check if it's an exact match (not just partial)
+          if (literal.TryMatch(args[argIndex], out _))
+          {
+            // Exact match - consume and continue to next segment
+            argIndex++;
+            segmentIndex++;
+          }
+          else
+          {
+            // Partial match - don't consume, offer as completion
+            break;
+          }
         }
         else
         {
@@ -338,11 +349,12 @@ public class CompletionProvider
           {
             return []; // Route doesn't match
           }
-        }
 
-        argIndex++;
-        segmentIndex++;
+          argIndex++;
+          segmentIndex++;
+        }
       }
+
       else if (segment is ParameterMatcher parameter)
       {
         // If we're at the last arg before cursor and there's no trailing space,

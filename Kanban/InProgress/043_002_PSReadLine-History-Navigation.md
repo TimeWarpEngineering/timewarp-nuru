@@ -16,13 +16,17 @@ Implement PSReadLine-compatible history navigation features in the Nuru REPL. Th
 
 ## Checklist
 
-### Basic Navigation (VERIFY EXISTING)
-- [ ] UpArrow: PreviousHistory - Replace input with previous history item (VERIFY)
-- [ ] Ctrl+P: PreviousHistory - Alternative binding (VERIFY)
-- [ ] DownArrow: NextHistory - Replace input with next history item (VERIFY)
-- [ ] Ctrl+N: NextHistory - Alternative binding (VERIFY)
+### Basic Navigation
+- [x] UpArrow: PreviousHistory - Replace input with previous history item (VERIFIED - tested in 043_001)
+- [x] Ctrl+P: PreviousHistory - Alternative binding (VERIFIED - tested in 043_001)
+- [x] DownArrow: NextHistory - Replace input with next history item (VERIFIED - tested in 043_001)
+- [x] Ctrl+N: NextHistory - Alternative binding (VERIFIED - tested in 043_001)
 
-### Interactive Search (IMPLEMENT)
+### History Position
+- [x] Alt+<: BeginningOfHistory - Jump to first history item (IMPLEMENTED with tests)
+- [x] Alt+>: EndOfHistory - Jump to current input (exit history) (IMPLEMENTED with tests)
+
+### Interactive Search (REQUIRES EditMode STATE MACHINE)
 - [ ] Ctrl+R: ReverseSearchHistory - Interactive reverse incremental search
 - [ ] Ctrl+S: ForwardSearchHistory - Interactive forward incremental search
 - [ ] Display search prompt (e.g., "(reverse-i-search)`pattern':")
@@ -30,17 +34,14 @@ Implement PSReadLine-compatible history navigation features in the Nuru REPL. Th
 - [ ] Press Ctrl+R again to find next match
 - [ ] Enter to accept, Escape to cancel
 
-### History Position (IMPLEMENT)
-- [ ] Alt+<: BeginningOfHistory - Jump to first history item
-- [ ] Alt+>: EndOfHistory - Jump to current input (exit history)
-
-### Prefix Search (IMPLEMENT)
+### Prefix Search
 - [ ] F8 or custom: HistorySearchBackward - Search history for items starting with current input prefix
 - [ ] Shift+F8 or custom: HistorySearchForward - Search forward with prefix
 
 ### Testing
-- [ ] Add tests for search functionality
-- [ ] Test edge cases (empty history, no matches)
+- [x] Add tests for BeginningOfHistory/EndOfHistory (2 tests in repl-18)
+- [ ] Add tests for prefix search functionality
+- [ ] Test edge cases for interactive search (empty history, no matches)
 
 ## Notes
 

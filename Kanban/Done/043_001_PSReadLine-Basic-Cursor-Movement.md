@@ -19,31 +19,35 @@ Implement and verify PSReadLine-compatible cursor movement keybindings in the Nu
 ## Checklist
 
 ### Infrastructure
-- [ ] Add `Dictionary<(ConsoleKey, ConsoleModifiers), Action>` KeyBindings field to ReplConsoleReader
-- [ ] Replace switch statement with KeyBindings lookup
-- [ ] Initialize default keybindings in constructor
+- [x] Add `Dictionary<(ConsoleKey, ConsoleModifiers), Func<bool>>` KeyBindings field to ReplConsoleReader
+- [x] Replace switch statement with KeyBindings lookup
+- [x] Initialize default keybindings in constructor
 
 ### Character Movement
-- [ ] LeftArrow: BackwardChar - Move cursor back one character (IMPLEMENTED)
-- [ ] Ctrl+B: BackwardChar - Alternative binding (ADD)
-- [ ] RightArrow: ForwardChar - Move cursor forward one character (IMPLEMENTED)
-- [ ] Ctrl+F: ForwardChar - Alternative binding (ADD)
+- [x] LeftArrow: BackwardChar - Move cursor back one character
+- [x] Ctrl+B: BackwardChar - Alternative binding
+- [x] RightArrow: ForwardChar - Move cursor forward one character
+- [x] Ctrl+F: ForwardChar - Alternative binding
 
 ### Line Position
-- [ ] Home: BeginningOfLine - Move to beginning of line (IMPLEMENTED)
-- [ ] Ctrl+A: BeginningOfLine - Alternative binding (ADD)
-- [ ] End: EndOfLine - Move to end of line (IMPLEMENTED)
-- [ ] Ctrl+E: EndOfLine - Alternative binding (ADD)
+- [x] Home: BeginningOfLine - Move to beginning of line
+- [x] Ctrl+A: BeginningOfLine - Alternative binding
+- [x] End: EndOfLine - Move to end of line
+- [x] Ctrl+E: EndOfLine - Alternative binding
 
 ### Word Movement
-- [ ] Ctrl+LeftArrow: BackwardWord - Move to beginning of previous word (IMPLEMENTED)
-- [ ] Alt+B: BackwardWord - Alternative binding (ADD)
-- [ ] Ctrl+RightArrow: ForwardWord - Move to END of current/next word (FIX - goes to START)
-- [ ] Alt+F: ForwardWord - Alternative binding (ADD after fix)
+- [x] Ctrl+LeftArrow: BackwardWord - Move to beginning of previous word
+- [x] Alt+B: BackwardWord - Alternative binding
+- [x] Ctrl+RightArrow: ForwardWord - Move to END of current/next word (FIXED)
+- [x] Alt+F: ForwardWord - Alternative binding
+
+### History Navigation
+- [x] Ctrl+P: PreviousHistory - Alternative binding
+- [x] Ctrl+N: NextHistory - Alternative binding
 
 ### Testing
-- [ ] Add tests for each keybinding
-- [ ] Verify behavior matches PSReadLine
+- [x] Add tests for each keybinding (repl-18-psreadline-keybindings.cs - 18 tests)
+- [x] Verify behavior matches PSReadLine
 
 ## Notes
 

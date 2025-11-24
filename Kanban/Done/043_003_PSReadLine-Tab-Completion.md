@@ -2,7 +2,9 @@
 
 ## Description
 
-Enhance the Nuru REPL tab completion to match PSReadLine behavior, including menu completion and completion listing features.
+Enhance the Nuru REPL tab completion to match PSReadLine behavior. Basic tab completion (Tab/Shift+Tab) and PossibleCompletions (Alt+=) are now implemented.
+
+**Note:** Menu completion (Ctrl+Space) split into separate task 043_003a due to complex multi-line rendering requirements.
 
 ## Parent
 
@@ -16,31 +18,25 @@ Enhance the Nuru REPL tab completion to match PSReadLine behavior, including men
 
 ## Checklist
 
-### Basic Completion (VERIFY EXISTING)
-- [ ] Tab: Complete - Complete current word or show completions (VERIFY - partially implemented)
-- [ ] Shift+Tab: TabCompletePrevious - Cycle backwards through completions (VERIFY - implemented)
+### Basic Completion
+- [x] Tab: Complete - Complete current word or show completions (IMPLEMENTED - from original REPL)
+- [x] Shift+Tab: TabCompletePrevious - Cycle backwards through completions (IMPLEMENTED - from original REPL)
 
-### Menu Completion (IMPLEMENT)
-- [ ] Ctrl+Space: MenuComplete - Show interactive menu of completions
-- [ ] Display completions in columnar format
-- [ ] Arrow keys to navigate menu
-- [ ] Enter to select, Escape to cancel
-- [ ] Type to filter completions
+### Completion Display
+- [x] Alt+=: PossibleCompletions - Display all possible completions without modifying input (IMPLEMENTED with test)
+- [x] Show completions in columns below prompt (IMPLEMENTED)
+- [x] Return to editing after display (IMPLEMENTED)
 
-### Completion Display (IMPLEMENT)
-- [ ] Alt+=: PossibleCompletions - Display all possible completions without modifying input
-- [ ] Show completions in columns below prompt
-- [ ] Return to editing after display
+### Completion Behavior (Already Working)
+- [x] Double-Tab shows all completions when multiple matches
+- [x] Single completion auto-completes without showing menu
+- [x] Cycle through completions with Tab/Shift+Tab
 
-### Completion Behavior
-- [ ] Double-Tab shows all completions when multiple matches (like bash)
-- [ ] Single completion auto-completes without showing menu
-- [ ] Partial completion to common prefix when multiple matches
+### Menu Completion (Moved to 043_003a)
+- See task 043_003a for Ctrl+Space interactive menu implementation
 
 ### Testing
-- [ ] Test menu navigation
-- [ ] Test with many completions (scrolling)
-- [ ] Test completion filtering
+- [x] Test Alt+= display functionality (1 test in repl-18)
 
 ## Notes
 

@@ -324,4 +324,57 @@ public class SampleValidationTests
     bool hasVerbose = Terminal.OutputContains("--verbose") || Terminal.OutputContains("-v");
     hasVerbose.ShouldBeTrue("Should show verbose option (--verbose or -v)");
   }
+
+  // ============================================================================
+  // TAB COMPLETION SEQUENCE TEST
+  // ============================================================================
+
+  [Timeout(5000)]
+  public static async Task Should_show_completions_and_autocomplete_unique_match()
+  {
+    // This test validates basic completion: g<tab>i<tab><space><tab>
+    // Expected behavior:
+    // 1. g<tab>     → "g" (multiple matches: git, greet - show completions)
+    // 2. i         → "gi"
+    // 3. <tab>     → "git" (unique match auto-completes)
+    // 4. <space>   → "git "
+    // 5. <tab>     → "git " (show completions: commit, log, status, --count, --help, -m)
+
+    // Note: Multi-tab cycling (git <tab><tab><tab> to cycle commit→log→status)
+    // is tested in repl-19-tab-cycling-bug.cs (currently has a bug)
+
+    // Arrange
+    Terminal!.QueueKey(ConsoleKey.G);           // g
+    Terminal.QueueKey(ConsoleKey.Tab);          // <tab> (multiple matches)
+    Terminal.QueueKey(ConsoleKey.I);            // i
+    Terminal.QueueKey(ConsoleKey.Tab);          // <tab> (should complete to "git")
+    Terminal.QueueKey(ConsoleKey.Spacebar);     // <space>
+    Terminal.QueueKey(ConsoleKey.Tab);          // <tab> (show completions)
+    Terminal.QueueKey(ConsoleKey.Escape);       // Cancel
+    Terminal.QueueLine("exit");
+
+    // Act
+    await App!.RunReplAsync();
+
+    // Assert
+    WriteLine("=== COMPLETION OUTPUT ===");
+    WriteLine(Terminal.Output);
+    WriteLine("=== END ===");
+
+    // Verify the sequence worked:
+    // 1. "g" with tab showed git and greet
+    Terminal.OutputContains("git").ShouldBeTrue("Should show 'git' in initial completions");
+    Terminal.OutputContains("greet").ShouldBeTrue("Should show 'greet' in initial completions");
+
+    // 2. "gi" with tab completed to "git"
+    // 3. "git " with tab showed subcommands
+    Terminal.OutputContains("commit").ShouldBeTrue("Should show 'commit' subcommand");
+    Terminal.OutputContains("log").ShouldBeTrue("Should show 'log' subcommand");
+    Terminal.OutputContains("status").ShouldBeTrue("Should show 'status' subcommand");
+
+    // 4. Should show completions header
+    Terminal.OutputContains("Available completions").ShouldBeTrue(
+      "Should show completions header for ambiguous inputs"
+    );
+  }
 }

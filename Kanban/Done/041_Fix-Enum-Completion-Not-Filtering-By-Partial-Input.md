@@ -21,15 +21,22 @@ In `Source/TimeWarp.Nuru.Completion/Completion/CompletionProvider.cs`, the `GetP
 
 ## Checklist
 
-- [ ] Create failing test in Tests/TimeWarp.Nuru.Repl.Tests demonstrating the bug
-- [ ] Update GetParameterCompletions signature to accept partialWord parameter
-- [ ] Filter enum completions by partial word prefix (case-insensitive)
-- [ ] Update call sites in GetCompletionsAfterCommand and GetCompletionsForRoute
-- [ ] Verify test passes after fix
+- [x] Create failing test in Tests/TimeWarp.Nuru.Completion.Tests/Dynamic demonstrating the bug
+- [x] Update GetParameterCompletions signature to accept partialWord parameter
+- [x] Filter enum completions by partial word prefix (case-insensitive)
+- [x] Update call sites in GetCompletionsForRoute to pass partial word
+- [x] Fix parameter matching loop to not consume partial word being completed
+- [x] Fix partial word retrieval to use argIndex instead of cursorPosition
+- [x] Verify test passes after fix (5/5 tests pass)
 - [ ] Verify manual testing works: `deploy p<tab>` completes to `deploy prod`
 
-## Notes
+## Implementation Notes
 
-**Files to modify:**
-- Tests/TimeWarp.Nuru.Repl.Tests/ (new test file)
-- Source/TimeWarp.Nuru.Completion/Completion/CompletionProvider.cs
+**Test file created:**
+- Tests/TimeWarp.Nuru.Completion.Tests/Dynamic/completion-26-enum-partial-filtering.cs
+
+**Changes to CompletionProvider.cs:**
+1. Added `partialWord` parameter to `GetParameterCompletions` method
+2. Filter enum values by `enumName.StartsWith(partialWord, StringComparison.OrdinalIgnoreCase)`
+3. In ParameterMatcher handling loop: break early when at last arg before cursor
+4. Fixed `partial` computation to use `args[argIndex]` instead of `args[cursorPosition]`

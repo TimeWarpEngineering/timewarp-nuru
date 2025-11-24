@@ -283,6 +283,14 @@ public class CompletionProvider
       }
       else if (segment is ParameterMatcher parameter)
       {
+        // If we're at the last arg before cursor and there's no trailing space,
+        // this parameter is being completed - don't consume it, break to provide completions
+        if (argIndex == args.Length - 1 && argIndex == cursorPosition - 1)
+        {
+          // User is typing a partial value for this parameter
+          break;
+        }
+
         // Parameter consumes one arg
         if (argIndex < args.Length)
         {
@@ -309,10 +317,13 @@ public class CompletionProvider
     if (segmentIndex < route.Segments.Count)
     {
       RouteMatcher segment = route.Segments[segmentIndex];
+      // Get the partial word being completed (if user is typing a word)
+      // When argIndex < args.Length, use args[argIndex] as it's the partial word being typed
+      // Otherwise, user wants completions for a new word (no partial)
+      string partial = argIndex < args.Length ? args[argIndex] : "";
 
       if (segment is LiteralMatcher literal)
       {
-        string partial = cursorPosition < args.Length ? args[cursorPosition] : "";
         if (string.IsNullOrEmpty(partial) ||
             literal.Value.StartsWith(partial, StringComparison.OrdinalIgnoreCase))
         {
@@ -325,7 +336,7 @@ public class CompletionProvider
       }
       else if (segment is ParameterMatcher parameter)
       {
-        candidates.AddRange(GetParameterCompletions(parameter));
+        candidates.AddRange(GetParameterCompletions(parameter, partial));
       }
     }
 
@@ -377,8 +388,11 @@ public class CompletionProvider
   /// <summary>
   /// Get parameter completions based on type constraint.
   /// </summary>
+  /// <param name="parameter">The parameter matcher containing constraint information.</param>
+  /// <param name="partialWord">The partial word typed by the user for filtering completions.</param>
   private IEnumerable<CompletionCandidate> GetParameterCompletions(
-    ParameterMatcher parameter)
+    ParameterMatcher parameter,
+    string partialWord = "")
   {
     if (string.IsNullOrEmpty(parameter.Constraint))
     {
@@ -410,16 +424,21 @@ public class CompletionProvider
         CompletionType.Directory
       );
     }
-    // Handle enum types - enumerate all values
+    // Handle enum types - enumerate values filtered by partial input
     else if (targetType.IsEnum)
     {
       foreach (string enumName in Enum.GetNames(targetType))
       {
-        yield return new CompletionCandidate(
-          enumName,
-          $"{targetType.Name}.{enumName}",
-          CompletionType.Enum
-        );
+        // Filter by partial word if provided (case-insensitive)
+        if (string.IsNullOrEmpty(partialWord) ||
+            enumName.StartsWith(partialWord, StringComparison.OrdinalIgnoreCase))
+        {
+          yield return new CompletionCandidate(
+            enumName,
+            $"{targetType.Name}.{enumName}",
+            CompletionType.Enum
+          );
+        }
       }
     }
   }

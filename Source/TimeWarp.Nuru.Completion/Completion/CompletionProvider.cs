@@ -182,7 +182,8 @@ public class CompletionProvider
 
         if (secondSegment is LiteralMatcher subcommand)
         {
-          // Determine type: if it starts with "-", it's an option, otherwise it's a command
+          // Next segment is a literal (subcommand or option)
+          // Don't suggest options from this route yet - user needs to complete the subcommand first
           CompletionType completionType = subcommand.Value.StartsWith('-')
             ? CompletionType.Option
             : CompletionType.Command;
@@ -195,27 +196,49 @@ public class CompletionProvider
         }
         else if (secondSegment is ParameterMatcher parameter)
         {
-          // Parameter - provide type hints
+          // Next segment is a parameter - user can provide parameter value OR options
+          // Provide type hints for the parameter
           candidates.AddRange(GetParameterCompletions(parameter));
+
+          // Also suggest options for this route (since parameters can be followed by options)
+          foreach (OptionMatcher option in route.OptionMatchers)
+          {
+            candidates.Add(new CompletionCandidate(
+              option.MatchPattern,
+              option.Description,
+              CompletionType.Option
+            ));
+
+            if (!string.IsNullOrEmpty(option.AlternateForm))
+            {
+              candidates.Add(new CompletionCandidate(
+                option.AlternateForm,
+                option.Description,
+                CompletionType.Option
+              ));
+            }
+          }
         }
       }
-
-      // Also suggest options for this route
-      foreach (OptionMatcher option in route.OptionMatchers)
+      else
       {
-        candidates.Add(new CompletionCandidate(
-          option.MatchPattern,
-          option.Description,
-          CompletionType.Option
-        ));
-
-        if (!string.IsNullOrEmpty(option.AlternateForm))
+        // No more segments after command - suggest options for this route
+        foreach (OptionMatcher option in route.OptionMatchers)
         {
           candidates.Add(new CompletionCandidate(
-            option.AlternateForm,
+            option.MatchPattern,
             option.Description,
             CompletionType.Option
           ));
+
+          if (!string.IsNullOrEmpty(option.AlternateForm))
+          {
+            candidates.Add(new CompletionCandidate(
+              option.AlternateForm,
+              option.Description,
+              CompletionType.Option
+            ));
+          }
         }
       }
     }

@@ -19,12 +19,12 @@ Create a new agent file at `.opencode/agent/step-by-step.md` that implements the
 ## Checklist
 
 ### Implementation
-- [ ] Create `.opencode/agent/step-by-step.md` with proper frontmatter
-- [ ] Include description field for agent selection
-- [ ] Set mode to `subagent`
-- [ ] Enable all implementation tools (bash, read, write, edit, list, glob, grep)
-- [ ] Document the step-by-step workflow rules clearly
-- [ ] Reference `.agent/step-by-step-workflow.md` for detailed process
+- [x] Create `.opencode/agent/step-by-step.md` with proper frontmatter
+- [x] Include description field for agent selection
+- [x] Set mode to `subagent`
+- [x] Enable all implementation tools (bash, read, write, edit, list, glob, grep)
+- [x] Document the step-by-step workflow rules clearly
+- [x] Reference `.agent/step-by-step-workflow.md` for detailed process
 
 ## Notes
 

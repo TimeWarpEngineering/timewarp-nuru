@@ -275,9 +275,38 @@ public class CompletionProvider
     {
       RouteMatcher segment = route.Segments[segmentIndex];
 
-      if (segment is OptionMatcher)
+      if (segment is OptionMatcher optionMatcher)
       {
-        // Options can appear anywhere, skip for now
+        // Skip optional options (they can appear anywhere)
+        // But required options must be matched positionally
+        if (optionMatcher.IsOptional)
+        {
+          segmentIndex++;
+          continue;
+        }
+
+        // Required option - needs to be matched
+        if (argIndex >= args.Length)
+        {
+          // No more args to match, but option is required
+          break;
+        }
+
+        // Check if current arg matches this option
+        if (optionMatcher.TryMatch(args[argIndex], out _))
+        {
+          argIndex++;
+          if (optionMatcher.ExpectsValue && argIndex < args.Length)
+          {
+            argIndex++; // Consume the option's value
+          }
+        }
+        else
+        {
+          // Required option not matched
+          return []; // Route doesn't match
+        }
+
         segmentIndex++;
         continue;
       }
@@ -386,6 +415,31 @@ public class CompletionProvider
       else if (segment is ParameterMatcher parameter)
       {
         candidates.AddRange(GetParameterCompletions(parameter, partial));
+      }
+      else if (segment is OptionMatcher option)
+      {
+        // Next segment is an option - suggest it if it matches the partial input
+        if (string.IsNullOrEmpty(partial) ||
+            option.MatchPattern.StartsWith(partial, StringComparison.OrdinalIgnoreCase))
+        {
+          candidates.Add(new CompletionCandidate(
+            option.MatchPattern,
+            option.Description,
+            CompletionType.Option
+          ));
+        }
+
+        // Also suggest alternate form if present and matches
+        if (!string.IsNullOrEmpty(option.AlternateForm) &&
+            (string.IsNullOrEmpty(partial) ||
+             option.AlternateForm.StartsWith(partial, StringComparison.OrdinalIgnoreCase)))
+        {
+          candidates.Add(new CompletionCandidate(
+            option.AlternateForm,
+            option.Description,
+            CompletionType.Option
+          ));
+        }
       }
     }
 

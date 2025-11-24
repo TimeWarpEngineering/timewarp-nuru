@@ -74,6 +74,7 @@ public sealed class ReplConsoleReader
       // === Tab Completion ===
       [(ConsoleKey.Tab, ConsoleModifiers.None)] = () => { HandleTabCompletion(reverse: false); return true; },
       [(ConsoleKey.Tab, ConsoleModifiers.Shift)] = () => { HandleTabCompletion(reverse: true); return true; },
+      [(ConsoleKey.Oem7, ConsoleModifiers.Alt)] = () => { HandlePossibleCompletions(); return true; }, // Alt+= (Oem7 is the = key)
 
       // === Character Movement (PSReadLine: BackwardChar, ForwardChar) ===
       [(ConsoleKey.LeftArrow, ConsoleModifiers.None)] = () => { HandleBackwardChar(); return true; },
@@ -301,6 +302,40 @@ public sealed class ReplConsoleReader
     // Redraw the prompt and current line
     Terminal.Write(PromptFormatter.Format(ReplOptions));
     Terminal.Write(UserInput);
+  }
+
+  /// <summary>
+  /// PSReadLine: PossibleCompletions - Display possible completions without modifying the input.
+  /// Similar to ShowCompletionCandidates but triggered by Alt+= instead of Tab.
+  /// </summary>
+  private void HandlePossibleCompletions()
+  {
+    // Parse current line into arguments for completion context
+    string inputUpToCursor = UserInput[..CursorPosition];
+    string[] args = CommandLineParser.Parse(inputUpToCursor);
+
+    // Detect if input ends with whitespace (user wants to complete the NEXT word)
+    bool hasTrailingSpace = inputUpToCursor.Length > 0 && char.IsWhiteSpace(inputUpToCursor[^1]);
+
+    // Build completion context
+    var context = new CompletionContext(
+      Args: args,
+      CursorPosition: args.Length,
+      Endpoints: Endpoints,
+      HasTrailingSpace: hasTrailingSpace
+    );
+
+    // Get completion candidates
+    List<CompletionCandidate> candidates = [.. CompletionProvider.GetCompletions(context, Endpoints)];
+
+    if (candidates.Count == 0)
+    {
+      // No completions available - do nothing
+      return;
+    }
+
+    // Display all completions without modifying input
+    ShowCompletionCandidates(candidates);
   }
 
   // ============================================================================

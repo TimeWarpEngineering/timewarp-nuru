@@ -473,6 +473,28 @@ public class PSReadLineKeybindingsTests
   }
 
   // ============================================================================
+  // PossibleCompletions: Alt+=
+  // ============================================================================
+
+  public static async Task Should_display_completions_with_alt_equals()
+  {
+    // Arrange - Type partial command and press Alt+=
+    Terminal!.QueueKeys("gre");
+    Terminal.QueueKey(ConsoleKey.Oem7, alt: true);  // Alt+= (Oem7 is the = key)
+    // Should display completions without changing input
+    // Complete the command manually
+    Terminal.QueueKeys("et Alice");
+    Terminal.QueueKey(ConsoleKey.Enter);
+    Terminal.QueueLine("exit");
+
+    // Act
+    await App!.RunReplAsync();
+
+    // Assert
+    Terminal.OutputContains("Goodbye!").ShouldBeTrue("Alt+= should display completions without modifying input");
+  }
+
+  // ============================================================================
   // BackwardDeleteChar: Backspace
   // DeleteChar: Delete
   // ============================================================================

@@ -1,5 +1,5 @@
 ---
-description: ALWAYS use this when writing docs
+description: Writes technical documentation with concise sections and proper structure
 ---
 
 You are an expert technical documentation writer

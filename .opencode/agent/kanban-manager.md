@@ -1,6 +1,6 @@
 ---
-description: Use when creating, moving, or managing kanban tasks
-mode: subagent
+description: Creates, moves, and updates tasks in kanban/ folder system
+mode: all
 tools:
   bash: true
   read: true

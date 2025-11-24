@@ -1,5 +1,5 @@
 ---
-description: Use this agent when you are asked to commit code changes to a git repository.
+description: Commits code with WHY-focused messages following project commit format
 mode: subagent
 ---
 

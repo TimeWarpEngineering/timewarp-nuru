@@ -160,7 +160,11 @@ public sealed class ReplConsoleReader
   private void HandleTabCompletion(bool reverse)
   {
     // Parse current line into arguments for completion context
-    string[] args = CommandLineParser.Parse(UserInput[..CursorPosition]);
+    string inputUpToCursor = UserInput[..CursorPosition];
+    string[] args = CommandLineParser.Parse(inputUpToCursor);
+
+    // Detect if input ends with whitespace (user wants to complete the NEXT word)
+    bool hasTrailingSpace = inputUpToCursor.Length > 0 && char.IsWhiteSpace(inputUpToCursor[^1]);
 
     ReplLoggerMessages.TabCompletionTriggered(Logger, UserInput, CursorPosition, args, null);
 
@@ -168,7 +172,8 @@ public sealed class ReplConsoleReader
     var context = new CompletionContext(
       Args: args,
       CursorPosition: CursorPosition,
-      Endpoints: Endpoints
+      Endpoints: Endpoints,
+      HasTrailingSpace: hasTrailingSpace
     );
 
     ReplLoggerMessages.CompletionContextCreated(Logger, args.Length, null);

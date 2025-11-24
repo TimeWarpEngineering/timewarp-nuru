@@ -38,7 +38,22 @@ public class CompletionProvider
     // If we're completing the first command (0 or 1 args), use command completions
     if (context.Args.Length <= 1)
     {
-      candidates.AddRange(GetCommandCompletions(endpoints, context.Args.ElementAtOrDefault(0) ?? ""));
+      string partialCommand = context.Args.ElementAtOrDefault(0) ?? "";
+
+      // If there's a trailing space and we have exactly one arg, the user has finished
+      // typing a command. Check if the command exactly matches any registered command.
+      // If so, move to argument/option completion instead of re-suggesting the same command.
+      if (context.HasTrailingSpace && context.Args.Length == 1)
+      {
+        bool isCompleteCommand = IsExactCommandMatch(endpoints, partialCommand);
+        if (isCompleteCommand)
+        {
+          // Move on to argument/subcommand completions for this command
+          return GetCompletionsAfterCommand(endpoints, partialCommand);
+        }
+      }
+
+      candidates.AddRange(GetCommandCompletions(endpoints, partialCommand));
       return [.. candidates];
     }
 
@@ -93,6 +108,101 @@ public class CompletionProvider
       Description: null,
       CompletionType.Command
     ));
+  }
+
+  /// <summary>
+  /// Check if the given command exactly matches a registered command.
+  /// </summary>
+  private static bool IsExactCommandMatch(EndpointCollection endpoints, string command)
+  {
+    foreach (Endpoint endpoint in endpoints.Endpoints)
+    {
+      CompiledRoute route = endpoint.CompiledRoute;
+
+      // Get first literal segment
+      RouteMatcher? firstSegment = route.Segments.Count > 0 ? route.Segments[0] : null;
+      if (firstSegment is LiteralMatcher literal)
+      {
+        if (string.Equals(literal.Value, command, StringComparison.OrdinalIgnoreCase))
+        {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  /// <summary>
+  /// Get completions after a complete command (subcommands, parameters, options).
+  /// </summary>
+  private ReadOnlyCollection<CompletionCandidate> GetCompletionsAfterCommand(
+    EndpointCollection endpoints,
+    string command)
+  {
+    var candidates = new List<CompletionCandidate>();
+
+    foreach (Endpoint endpoint in endpoints.Endpoints)
+    {
+      CompiledRoute route = endpoint.CompiledRoute;
+
+      // Check if first segment matches command
+      RouteMatcher? firstSegment = route.Segments.Count > 0 ? route.Segments[0] : null;
+      if (firstSegment is not LiteralMatcher literal ||
+          !string.Equals(literal.Value, command, StringComparison.OrdinalIgnoreCase))
+      {
+        continue;
+      }
+
+      // Command matches - what comes next?
+      if (route.Segments.Count > 1)
+      {
+        RouteMatcher secondSegment = route.Segments[1];
+
+        if (secondSegment is LiteralMatcher subcommand)
+        {
+          // Subcommand literal
+          candidates.Add(new CompletionCandidate(
+            subcommand.Value,
+            Description: null,
+            CompletionType.Command
+          ));
+        }
+        else if (secondSegment is ParameterMatcher parameter)
+        {
+          // Parameter - provide type hints
+          candidates.AddRange(GetParameterCompletions(parameter));
+        }
+      }
+
+      // Also suggest options for this route
+      foreach (OptionMatcher option in route.OptionMatchers)
+      {
+        candidates.Add(new CompletionCandidate(
+          option.MatchPattern,
+          option.Description,
+          CompletionType.Option
+        ));
+
+        if (!string.IsNullOrEmpty(option.AlternateForm))
+        {
+          candidates.Add(new CompletionCandidate(
+            option.AlternateForm,
+            option.Description,
+            CompletionType.Option
+          ));
+        }
+      }
+    }
+
+    // Remove duplicates
+    return
+    [
+      .. candidates
+      .GroupBy(c => c.Value)
+      .Select(g => g.First())
+      .OrderBy(c => c.Value)
+    ];
   }
 
   /// <summary>

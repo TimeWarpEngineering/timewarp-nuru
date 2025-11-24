@@ -5,10 +5,23 @@
 #:package Serilog.Sinks.File
 #:package Serilog.Extensions.Logging
 
-// Basic REPL Demo for TimeWarp.Nuru with Filtered File Logging
-// Run this file to see REPL mode in action
-// Logs will be written to repl-debug.log for debugging completion logic
-// Filter: Only REPL messages (Event IDs 2000-2499), no parsing/route registration noise
+// ============================================================================
+// Basic REPL Demo for TimeWarp.Nuru
+// ============================================================================
+// Demonstrates various route pattern types supported by Nuru:
+// - Literal commands (status, time)
+// - Subcommands (git status, git commit, git log)
+// - Required parameters (greet {name})
+// - Optional parameters (deploy {env} {tag?})
+// - Typed parameters (add {a:int} {b:int})
+// - Catch-all parameters (echo {*message})
+// - Boolean options (build --verbose, build -v)
+// - Options with values (search --limit {n})
+// - Short aliases (--verbose,-v)
+// - Combined options (backup --compress --output {dest})
+//
+// Debug logs written to: repl-debug.log
+// ============================================================================
 
 using Serilog;
 using Serilog.Events;
@@ -19,11 +32,9 @@ using static System.Console;
 
 // Configure Serilog with filtered logging for REPL debugging only
 Log.Logger = new LoggerConfiguration()
-  .MinimumLevel.Verbose()  // Enable trace-level logs for debugging
-  .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)  // Reduce noise from Microsoft components
-  
-  // Filter to keep only REPL messages by content - exclude parsing/route registration noise
-  .Filter.ByExcluding(e => 
+  .MinimumLevel.Verbose()
+  .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
+  .Filter.ByExcluding(e =>
   {
     var message = e.RenderMessage();
     return message.Contains("Registering route:") ||
@@ -40,8 +51,6 @@ Log.Logger = new LoggerConfiguration()
            message.Contains("Positional matching") ||
            message.Contains("Resolving command:");
   })
-  
-  // File sink for debugging REPL completion logic
   .WriteTo.File
   (
     path: "repl-debug.log",
@@ -52,7 +61,6 @@ Log.Logger = new LoggerConfiguration()
   .Enrich.FromLogContext()
   .CreateLogger();
 
-// Create an ILoggerFactory that uses Serilog
 var loggerFactory = LoggerFactory.Create(builder =>
 {
   builder.AddSerilog(Log.Logger);
@@ -60,30 +68,24 @@ var loggerFactory = LoggerFactory.Create(builder =>
 
 try
 {
-  Log.Information("Starting TimeWarp.Nuru REPL Demo with file logging");
+  Log.Information("Starting TimeWarp.Nuru REPL Demo");
 
   WriteLine("TimeWarp.Nuru REPL Demo");
   WriteLine("========================");
-  WriteLine("Debug logs will be written to: repl-debug.log");
+  WriteLine("Debug logs: repl-debug.log");
   WriteLine();
 
-  // Build a simple CLI app with logging
   var app = new NuruAppBuilder()
-    .UseLogging(loggerFactory)  // Add logging to the app
+    .UseLogging(loggerFactory)
     .WithMetadata
     (
-      description: "Interactive REPL demo application for TimeWarp.Nuru framework."
+      description: "Interactive REPL demo showcasing Nuru route patterns."
     )
-    .AddRoute
-    (
-      pattern: "greet {name}",
-      handler: (string name) =>
-      {
-        Log.Information("Greet command executed with name: {Name}", name);
-        WriteLine($"Hello, {name}!");
-      },
-      description: "Greets the person with the specified name."
-    )
+
+    // ========================================
+    // SIMPLE COMMANDS (Literal only)
+    // ========================================
+
     .AddRoute
     (
       pattern: "status",
@@ -96,25 +98,6 @@ try
     )
     .AddRoute
     (
-      pattern: "echo {*message}",
-      handler: (string[] message) =>
-      {
-        Log.Information("Echo command executed with message: {Message}", string.Join(" ", message));
-        WriteLine(string.Join(" ", message));
-      },
-      description: "Echoes the provided message back to the user."
-    )
-    .AddRoute
-    (
-      pattern: "add {a:int} {b:int}",
-      handler: (int a, int b) =>
-      {
-        Log.Information("Add command executed with values: {A} + {B}", a, b);
-        WriteLine($"{a} + {b} = {a + b}");
-      },
-      description: "Adds two integers and displays the result."
-    )
-    .AddRoute(
       pattern: "time",
       handler: () =>
       {
@@ -124,22 +107,218 @@ try
       },
       description: "Displays the current time."
     )
+
+    // ========================================
+    // BASIC PARAMETERS
+    // ========================================
+
+    .AddRoute
+    (
+      pattern: "greet {name}",
+      handler: (string name) =>
+      {
+        Log.Information("Greet command: {Name}", name);
+        WriteLine($"Hello, {name}!");
+      },
+      description: "Greets the person with the specified name."
+    )
+    .AddRoute
+    (
+      pattern: "add {a:int} {b:int}",
+      handler: (int a, int b) =>
+      {
+        Log.Information("Add: {A} + {B}", a, b);
+        WriteLine($"{a} + {b} = {a + b}");
+      },
+      description: "Adds two integers."
+    )
+
+    // ========================================
+    // OPTIONAL PARAMETERS
+    // ========================================
+
+    .AddRoute
+    (
+      pattern: "deploy {env} {tag?}",
+      handler: (string env, string? tag) =>
+      {
+        Log.Information("Deploy: env={Env}, tag={Tag}", env, tag);
+        if (tag is not null)
+          WriteLine($"Deploying to {env} with tag {tag}");
+        else
+          WriteLine($"Deploying to {env} (latest)");
+      },
+      description: "Deploys to environment with optional version tag."
+    )
+
+    // ========================================
+    // CATCH-ALL PARAMETERS
+    // ========================================
+
+    .AddRoute
+    (
+      pattern: "echo {*message}",
+      handler: (string[] message) =>
+      {
+        Log.Information("Echo: {Message}", string.Join(" ", message));
+        WriteLine(string.Join(" ", message));
+      },
+      description: "Echoes all arguments back."
+    )
+
+    // ========================================
+    // SUBCOMMANDS (Hierarchical routes)
+    // ========================================
+
+    .AddRoute
+    (
+      pattern: "git status",
+      handler: () =>
+      {
+        Log.Information("git status executed");
+        WriteLine("On branch main");
+        WriteLine("nothing to commit, working tree clean");
+      },
+      description: "Shows git working tree status."
+    )
+    .AddRoute
+    (
+      pattern: "git commit -m {message}",
+      handler: (string message) =>
+      {
+        Log.Information("git commit: {Message}", message);
+        WriteLine($"[main abc1234] {message}");
+        WriteLine(" 1 file changed, 1 insertion(+)");
+      },
+      description: "Creates a commit with the specified message."
+    )
+    .AddRoute
+    (
+      pattern: "git log --count {n:int}",
+      handler: (int n) =>
+      {
+        Log.Information("git log --count {N}", n);
+        WriteLine($"Showing last {n} commits:");
+        for (int i = 0; i < n && i < 5; i++)
+        {
+          WriteLine($"  {Guid.NewGuid().ToString()[..7]} - Commit message {i + 1}");
+        }
+      },
+      description: "Shows the last N commits."
+    )
+
+    // ========================================
+    // BOOLEAN OPTIONS
+    // ========================================
+
+    .AddRoute
+    (
+      pattern: "build --verbose,-v",
+      handler: (bool verbose) =>
+      {
+        Log.Information("Build: verbose={Verbose}", verbose);
+        if (verbose)
+        {
+          WriteLine("Building project...");
+          WriteLine("  Compiling src/main.cs");
+          WriteLine("  Compiling src/utils.cs");
+          WriteLine("  Linking...");
+          WriteLine("Build succeeded.");
+        }
+        else
+        {
+          WriteLine("Build succeeded.");
+        }
+      },
+      description: "Builds the project. Use -v for verbose output."
+    )
+
+    // ========================================
+    // OPTIONS WITH VALUES
+    // ========================================
+
+    .AddRoute
+    (
+      pattern: "search {query} --limit,-l {count:int?}",
+      handler: (string query, int? count) =>
+      {
+        int limit = count ?? 10;
+        Log.Information("Search: query={Query}, limit={Limit}", query, limit);
+        WriteLine($"Searching for '{query}' (limit: {limit})...");
+        for (int i = 1; i <= Math.Min(limit, 3); i++)
+        {
+          WriteLine($"  {i}. Result matching '{query}'");
+        }
+      },
+      description: "Searches with optional result limit."
+    )
+
+    // ========================================
+    // COMBINED OPTIONS
+    // ========================================
+
+    .AddRoute
+    (
+      pattern: "backup {source} --compress,-c --output,-o {dest?}",
+      handler: (string source, bool compress, string? dest) =>
+      {
+        string destination = dest ?? $"{source}.bak";
+        Log.Information("Backup: source={Source}, compress={Compress}, dest={Dest}", source, compress, destination);
+        WriteLine($"Backing up '{source}' to '{destination}'");
+        if (compress)
+          WriteLine("  Compression: enabled");
+        WriteLine("Backup complete.");
+      },
+      description: "Backs up source with optional compression and destination."
+    )
+
+    // ========================================
+    // REPL CONFIGURATION
+    // ========================================
+
     .AddReplSupport
     (
       options =>
       {
         options.Prompt = "demo> ";
-        options.WelcomeMessage = "Welcome to REPL demo! Try: greet World, status, add 5 3, time, or 'exit' to quit.";
+        options.WelcomeMessage =
+          "Welcome to the Nuru REPL Demo!\n" +
+          "\n" +
+          "SIMPLE COMMANDS:\n" +
+          "  status              - Show system status\n" +
+          "  time                - Show current time\n" +
+          "\n" +
+          "PARAMETERS:\n" +
+          "  greet Alice         - Basic parameter\n" +
+          "  add 5 3             - Typed parameters (int)\n" +
+          "  deploy prod         - Optional param (no tag)\n" +
+          "  deploy prod v1.2    - Optional param (with tag)\n" +
+          "  echo hello world    - Catch-all parameter\n" +
+          "\n" +
+          "SUBCOMMANDS:\n" +
+          "  git status          - Literal subcommand\n" +
+          "  git commit -m \"fix\" - Short option with value\n" +
+          "  git log --count 3   - Long option with typed value\n" +
+          "\n" +
+          "OPTIONS:\n" +
+          "  build               - Without verbose\n" +
+          "  build -v            - With verbose (short)\n" +
+          "  build --verbose     - With verbose (long)\n" +
+          "  search foo          - Default limit\n" +
+          "  search foo -l 5     - Custom limit\n" +
+          "  backup data         - Basic backup\n" +
+          "  backup data -c      - With compression\n" +
+          "  backup data -c -o x - With compression and dest\n" +
+          "\n" +
+          "Type 'help' for all commands, 'exit' to quit.";
         options.GoodbyeMessage = "Thanks for trying the REPL demo!";
-        options.PersistHistory = false; // Don't persist history for demo
-        Log.Information("REPL support configured with custom options");
+        options.PersistHistory = false;
+        Log.Information("REPL configured");
       }
     )
     .Build();
 
   Log.Information("Starting REPL mode");
-
-  // Start REPL mode directly
   return await app.RunReplAsync();
 }
 catch (Exception ex)
@@ -149,6 +328,6 @@ catch (Exception ex)
 }
 finally
 {
-  Log.Information("Closing logger and flushing logs");
+  Log.Information("Closing logger");
   Log.CloseAndFlush();
 }

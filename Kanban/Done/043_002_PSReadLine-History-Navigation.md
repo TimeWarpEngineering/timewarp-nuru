@@ -2,7 +2,9 @@
 
 ## Description
 
-Implement PSReadLine-compatible history navigation features in the Nuru REPL. This includes basic up/down navigation (already implemented), plus advanced features like interactive search and prefix-based history search.
+Implement PSReadLine-compatible history navigation features in the Nuru REPL. This includes basic up/down navigation, history position jumping, and prefix-based history search.
+
+**Note:** Interactive search (Ctrl+R/S) split into separate task 043_002a due to EditMode state machine requirement.
 
 ## Parent
 
@@ -26,13 +28,8 @@ Implement PSReadLine-compatible history navigation features in the Nuru REPL. Th
 - [x] Alt+<: BeginningOfHistory - Jump to first history item (IMPLEMENTED with tests)
 - [x] Alt+>: EndOfHistory - Jump to current input (exit history) (IMPLEMENTED with tests)
 
-### Interactive Search (REQUIRES EditMode STATE MACHINE)
-- [ ] Ctrl+R: ReverseSearchHistory - Interactive reverse incremental search
-- [ ] Ctrl+S: ForwardSearchHistory - Interactive forward incremental search
-- [ ] Display search prompt (e.g., "(reverse-i-search)`pattern':")
-- [ ] Highlight matching text in results
-- [ ] Press Ctrl+R again to find next match
-- [ ] Enter to accept, Escape to cancel
+### Interactive Search (Moved to 043_002a)
+- See task 043_002a for Ctrl+R/S interactive search implementation
 
 ### Prefix Search
 - [x] F8: HistorySearchBackward - Search history for items starting with current input prefix (IMPLEMENTED with tests)
@@ -41,7 +38,6 @@ Implement PSReadLine-compatible history navigation features in the Nuru REPL. Th
 ### Testing
 - [x] Add tests for BeginningOfHistory/EndOfHistory (2 tests in repl-18)
 - [x] Add tests for prefix search functionality (4 tests in repl-18)
-- [ ] Test edge cases for interactive search (empty history, no matches)
 
 ## Notes
 

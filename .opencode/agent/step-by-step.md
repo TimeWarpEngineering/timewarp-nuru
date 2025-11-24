@@ -1,6 +1,6 @@
 ---
 description: Use for careful, methodical implementation tasks where you want full control and visibility over every action
-mode: subagent
+mode: primary
 tools:
   bash: true
   read: true

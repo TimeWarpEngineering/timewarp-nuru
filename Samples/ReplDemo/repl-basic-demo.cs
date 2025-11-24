@@ -14,6 +14,7 @@
 // - Required parameters (greet {name})
 // - Optional parameters (deploy {env} {tag?})
 // - Typed parameters (add {a:int} {b:int})
+// - Enum parameters (deploy {env:environment})
 // - Catch-all parameters (echo {*message})
 // - Boolean options (build --verbose, build -v)
 // - Options with values (search --limit {n})
@@ -77,6 +78,7 @@ try
 
   var app = new NuruAppBuilder()
     .UseLogging(loggerFactory)
+    .AddTypeConverter(new EnumTypeConverter<Environment>()) // Register enum converter
     .WithMetadata
     (
       description: "Interactive REPL demo showcasing Nuru route patterns."
@@ -134,13 +136,13 @@ try
     )
 
     // ========================================
-    // OPTIONAL PARAMETERS
+    // ENUM PARAMETERS
     // ========================================
 
     .AddRoute
     (
-      pattern: "deploy {env} {tag?}",
-      handler: (string env, string? tag) =>
+      pattern: "deploy {env:environment} {tag?}",
+      handler: (Environment env, string? tag) =>
       {
         Log.Information("Deploy: env={Env}, tag={Tag}", env, tag);
         if (tag is not null)
@@ -148,7 +150,7 @@ try
         else
           WriteLine($"Deploying to {env} (latest)");
       },
-      description: "Deploys to environment with optional version tag."
+      description: "Deploys to environment (dev, staging, prod) with optional tag."
     )
 
     // ========================================
@@ -291,8 +293,8 @@ try
           "PARAMETERS:\n" +
           "  greet Alice         - Basic parameter\n" +
           "  add 5 3             - Typed parameters (int)\n" +
-          "  deploy prod         - Optional param (no tag)\n" +
-          "  deploy prod v1.2    - Optional param (with tag)\n" +
+          "  deploy dev          - Enum param (dev/staging/prod)\n" +
+          "  deploy prod v1.2    - Enum with optional tag\n" +
           "  echo hello world    - Catch-all parameter\n" +
           "\n" +
           "SUBCOMMANDS:\n" +
@@ -330,4 +332,14 @@ finally
 {
   Log.Information("Closing logger");
   Log.CloseAndFlush();
+}
+
+// ============================================================================
+// Enum for deploy command - demonstrates enum type conversion
+// ============================================================================
+public enum Environment
+{
+  Dev,
+  Staging,
+  Prod
 }

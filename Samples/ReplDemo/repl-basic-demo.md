@@ -41,16 +41,25 @@ dotnet run Samples/ReplDemo/repl-basic-demo.cs
 | `greet Alice` | String parameter |
 | `add 5 3` | Typed integer parameters |
 
-### Optional Parameters
+### Enum Parameters
 
 ```csharp
-.AddRoute("deploy {env} {tag?}", (string env, string? tag) => ...)
+// Define enum
+public enum Environment { Dev, Staging, Prod }
+
+// Register converter
+.AddTypeConverter(new EnumTypeConverter<Environment>())
+
+// Use in route
+.AddRoute("deploy {env:environment} {tag?}", (Environment env, string? tag) => ...)
 ```
 
 | Command | Description |
 |---------|-------------|
-| `deploy prod` | Without optional tag |
-| `deploy prod v1.2` | With optional tag |
+| `deploy dev` | Enum parameter (case-insensitive) |
+| `deploy staging` | Enum parameter |
+| `deploy prod v1.2` | Enum with optional tag |
+| `deploy PROD` | Case-insensitive matching |
 
 ### Catch-All Parameters
 
@@ -125,6 +134,7 @@ Logs are written to `repl-debug.log` in the current directory. The logging is fi
 | Literal | plain text | `status`, `git commit` |
 | Parameter | `{name}` | `{env}` |
 | Typed parameter | `{name:type}` | `{count:int}` |
+| Enum parameter | `{name:enumname}` | `{env:environment}` |
 | Optional parameter | `{name?}` | `{tag?}` |
 | Optional typed | `{name:type?}` | `{count:int?}` |
 | Catch-all | `{*name}` | `{*args}` |
@@ -132,6 +142,29 @@ Logs are written to `repl-debug.log` in the current directory. The logging is fi
 | Short option | `-x` | `-v` |
 | Option with alias | `--name,-x` | `--verbose,-v` |
 | Option with value | `--name {value}` | `--limit {n}` |
+
+## Enum Type Conversion
+
+To use enums in routes:
+
+1. **Define the enum:**
+   ```csharp
+   public enum Environment { Dev, Staging, Prod }
+   ```
+
+2. **Register the converter:**
+   ```csharp
+   builder.AddTypeConverter(new EnumTypeConverter<Environment>());
+   ```
+
+3. **Use in route pattern:**
+   ```csharp
+   .AddRoute("deploy {env:environment}", (Environment env) => ...)
+   ```
+
+The constraint name is the enum type name in lowercase (e.g., `Environment` becomes `environment`).
+
+Enum parsing is **case-insensitive**: `dev`, `Dev`, and `DEV` all match `Environment.Dev`.
 
 ## Related
 

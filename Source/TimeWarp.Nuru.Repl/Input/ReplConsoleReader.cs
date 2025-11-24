@@ -19,6 +19,7 @@ public sealed class ReplConsoleReader
   private int HistoryIndex = -1;
   private List<string> CompletionCandidates = [];
   private int CompletionIndex = -1;
+  private string? PrefixSearchString;  // Stores the prefix for F8 prefix search
 
   /// <summary>
   /// Creates a new REPL console reader.
@@ -101,6 +102,10 @@ public sealed class ReplConsoleReader
       // === History Position (PSReadLine: BeginningOfHistory, EndOfHistory) ===
       [(ConsoleKey.OemComma, ConsoleModifiers.Alt | ConsoleModifiers.Shift)] = () => { HandleBeginningOfHistory(); return true; }, // Alt+<
       [(ConsoleKey.OemPeriod, ConsoleModifiers.Alt | ConsoleModifiers.Shift)] = () => { HandleEndOfHistory(); return true; }, // Alt+>
+
+      // === History Prefix Search (PSReadLine: HistorySearchBackward, HistorySearchForward) ===
+      [(ConsoleKey.F8, ConsoleModifiers.None)] = () => { HandleHistorySearchBackward(); return true; },
+      [(ConsoleKey.F8, ConsoleModifiers.Shift)] = () => { HandleHistorySearchForward(); return true; },
 
       // === Deletion (PSReadLine: BackwardDeleteChar, DeleteChar) ===
       [(ConsoleKey.Backspace, ConsoleModifiers.None)] = () => { HandleBackwardDeleteChar(); return true; },
@@ -420,6 +425,7 @@ public sealed class ReplConsoleReader
       HistoryIndex--;
       UserInput = History[HistoryIndex];
       CursorPosition = UserInput.Length;
+      PrefixSearchString = null;  // Clear prefix search when using normal history nav
       RedrawLine();
     }
   }
@@ -434,6 +440,7 @@ public sealed class ReplConsoleReader
       HistoryIndex++;
       UserInput = History[HistoryIndex];
       CursorPosition = UserInput.Length;
+      PrefixSearchString = null;  // Clear prefix search when using normal history nav
       RedrawLine();
     }
     else if (HistoryIndex == History.Count - 1)
@@ -441,6 +448,7 @@ public sealed class ReplConsoleReader
       HistoryIndex = History.Count;
       UserInput = string.Empty;
       CursorPosition = 0;
+      PrefixSearchString = null;  // Clear prefix search
       RedrawLine();
     }
   }
@@ -455,6 +463,7 @@ public sealed class ReplConsoleReader
       HistoryIndex = 0;
       UserInput = History[HistoryIndex];
       CursorPosition = UserInput.Length;
+      PrefixSearchString = null;  // Clear prefix search
       RedrawLine();
     }
   }
@@ -467,7 +476,68 @@ public sealed class ReplConsoleReader
     HistoryIndex = History.Count;
     UserInput = string.Empty;
     CursorPosition = 0;
+    PrefixSearchString = null;  // Clear prefix search
     RedrawLine();
+  }
+
+  /// <summary>
+  /// PSReadLine: HistorySearchBackward - Search backward through history for entries starting with current input prefix.
+  /// </summary>
+  private void HandleHistorySearchBackward()
+  {
+    // If no prefix search active, use current input as the prefix
+    if (PrefixSearchString is null)
+    {
+      PrefixSearchString = UserInput;
+    }
+
+    // Search backward from current position
+    int searchIndex = HistoryIndex - 1;
+    while (searchIndex >= 0)
+    {
+      if (History[searchIndex].StartsWith(PrefixSearchString, StringComparison.OrdinalIgnoreCase))
+      {
+        HistoryIndex = searchIndex;
+        UserInput = History[HistoryIndex];
+        CursorPosition = UserInput.Length;
+        RedrawLine();
+        return;
+      }
+
+      searchIndex--;
+    }
+
+    // No match found - do nothing (keep current state)
+  }
+
+  /// <summary>
+  /// PSReadLine: HistorySearchForward - Search forward through history for entries starting with current input prefix.
+  /// </summary>
+  private void HandleHistorySearchForward()
+  {
+    // If no prefix search active, use current input as the prefix
+    if (PrefixSearchString is null)
+    {
+      PrefixSearchString = UserInput;
+    }
+
+    // Search forward from current position
+    int searchIndex = HistoryIndex + 1;
+    while (searchIndex < History.Count)
+    {
+      if (History[searchIndex].StartsWith(PrefixSearchString, StringComparison.OrdinalIgnoreCase))
+      {
+        HistoryIndex = searchIndex;
+        UserInput = History[HistoryIndex];
+        CursorPosition = UserInput.Length;
+        RedrawLine();
+        return;
+      }
+
+      searchIndex++;
+    }
+
+    // No match found - do nothing (keep current state)
   }
 
   private void HandleEscape()
@@ -483,6 +553,7 @@ public sealed class ReplConsoleReader
 
     UserInput = UserInput[..CursorPosition] + charToInsert + UserInput[CursorPosition..];
     CursorPosition++;
+    PrefixSearchString = null;  // Clear prefix search when user types
 
     ReplLoggerMessages.UserInputChanged(Logger, UserInput, CursorPosition, null);
     RedrawLine();

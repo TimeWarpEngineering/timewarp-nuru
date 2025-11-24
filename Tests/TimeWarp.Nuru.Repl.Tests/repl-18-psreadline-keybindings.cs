@@ -347,6 +347,90 @@ public class PSReadLineKeybindingsTests
   }
 
   // ============================================================================
+  // HistorySearchBackward: F8
+  // HistorySearchForward: Shift+F8
+  // ============================================================================
+
+  public static async Task Should_search_backward_with_f8_prefix_match()
+  {
+    // Arrange - Create history with commands starting with "greet"
+    Terminal!.QueueLine("greet Alice");
+    Terminal.QueueLine("deploy prod");
+    Terminal.QueueLine("greet Bob");
+    Terminal.QueueLine("status");
+    // Type "gre" and press F8 to search backward for commands starting with "gre"
+    Terminal.QueueKeys("gre");
+    Terminal.QueueKey(ConsoleKey.F8);  // Should find "greet Bob"
+    Terminal.QueueKey(ConsoleKey.Enter);
+    Terminal.QueueLine("exit");
+
+    // Act
+    await App!.RunReplAsync();
+
+    // Assert - Session completed successfully
+    Terminal.OutputContains("Goodbye!").ShouldBeTrue("F8 should search backward for prefix match");
+  }
+
+  public static async Task Should_search_backward_multiple_times_with_f8()
+  {
+    // Arrange
+    Terminal!.QueueLine("greet Alice");
+    Terminal.QueueLine("greet Bob");
+    Terminal.QueueLine("greet Charlie");
+    Terminal.QueueKeys("gre");
+    Terminal.QueueKey(ConsoleKey.F8);  // Find "greet Charlie"
+    Terminal.QueueKey(ConsoleKey.F8);  // Find "greet Bob"
+    Terminal.QueueKey(ConsoleKey.F8);  // Find "greet Alice"
+    Terminal.QueueKey(ConsoleKey.Enter);
+    Terminal.QueueLine("exit");
+
+    // Act
+    await App!.RunReplAsync();
+
+    // Assert
+    Terminal.OutputContains("Goodbye!").ShouldBeTrue("F8 should search backward multiple times");
+  }
+
+  public static async Task Should_search_forward_with_shift_f8()
+  {
+    // Arrange
+    Terminal!.QueueLine("greet Alice");
+    Terminal.QueueLine("greet Bob");
+    Terminal.QueueLine("greet Charlie");
+    Terminal.QueueKeys("gre");
+    Terminal.QueueKey(ConsoleKey.F8);  // Find "greet Charlie"
+    Terminal.QueueKey(ConsoleKey.F8);  // Find "greet Bob"
+    Terminal.QueueKey(ConsoleKey.F8, shift: true);  // Search forward to "greet Charlie"
+    Terminal.QueueKey(ConsoleKey.Enter);
+    Terminal.QueueLine("exit");
+
+    // Act
+    await App!.RunReplAsync();
+
+    // Assert
+    Terminal.OutputContains("Goodbye!").ShouldBeTrue("Shift+F8 should search forward with prefix");
+  }
+
+  public static async Task Should_clear_prefix_search_when_typing()
+  {
+    // Arrange
+    Terminal!.QueueLine("greet Alice");
+    Terminal.QueueLine("deploy prod");
+    Terminal.QueueKeys("gre");
+    Terminal.QueueKey(ConsoleKey.F8);  // Find "greet Alice"
+    // Now type more characters - should clear prefix search
+    Terminal.QueueKeys("et Bob");
+    Terminal.QueueKey(ConsoleKey.Enter);
+    Terminal.QueueLine("exit");
+
+    // Act
+    await App!.RunReplAsync();
+
+    // Assert
+    Terminal.OutputContains("Goodbye!").ShouldBeTrue("Typing should clear prefix search state");
+  }
+
+  // ============================================================================
   // BeginningOfHistory: Alt+<
   // EndOfHistory: Alt+>
   // ============================================================================

@@ -18,11 +18,11 @@ Code review finding from `.agent/workspace/replsession-code-review-2025-11-25-v2
 ## Checklist
 
 ### Implementation
-- [ ] Update error messages in `Load()` method
-- [ ] Update error messages in `Save()` method
-- [ ] Include file path in all error messages
-- [ ] Add actionable guidance for UnauthorizedAccessException
-- [ ] Verify Functionality
+- [x] Update error messages in `Load()` method
+- [x] Update error messages in `Save()` method
+- [x] Include file path in all error messages
+- [x] Add actionable guidance for UnauthorizedAccessException
+- [x] Verify Functionality
 
 ### Testing
 - [ ] Test with non-existent history directory

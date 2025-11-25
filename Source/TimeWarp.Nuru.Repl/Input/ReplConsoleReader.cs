@@ -6,21 +6,17 @@ namespace TimeWarp.Nuru.Repl.Input;
 public sealed class ReplConsoleReader
 {
   private readonly List<string> History;
-  private readonly CompletionProvider CompletionProvider;
   private readonly EndpointCollection Endpoints;
   private readonly ReplOptions ReplOptions;
   private readonly SyntaxHighlighter SyntaxHighlighter;
   private readonly ILogger<ReplConsoleReader> Logger;
   private readonly ILoggerFactory? LoggerFactory;
   private readonly ITerminal Terminal;
+  private readonly TabCompletionHandler CompletionHandler;
   private readonly Dictionary<(ConsoleKey Key, ConsoleModifiers Modifiers), Func<bool>> KeyBindings;
   private string UserInput = string.Empty;
   private int CursorPosition;
   private int HistoryIndex = -1;
-  private List<string> CompletionCandidates = [];
-  private int CompletionIndex = -1;
-  private string? CompletionOriginalInput;  // Stores the input before completion cycling started
-  private int CompletionOriginalCursor;     // Stores the cursor position before completion cycling
   private string? PrefixSearchString;  // Stores the prefix for F8 prefix search
 
   /// <summary>
@@ -50,13 +46,13 @@ public sealed class ReplConsoleReader
     ArgumentNullException.ThrowIfNull(terminal);
 
     History = history?.ToList() ?? throw new ArgumentNullException(nameof(history));
-    CompletionProvider = completionProvider ?? throw new ArgumentNullException(nameof(completionProvider));
     Endpoints = endpoints ?? throw new ArgumentNullException(nameof(endpoints));
     ReplOptions = replOptions ?? throw new ArgumentNullException(nameof(replOptions));
     SyntaxHighlighter = new SyntaxHighlighter(endpoints, loggerFactory);
     LoggerFactory = loggerFactory;
     Logger = LoggerFactory?.CreateLogger<ReplConsoleReader>() ?? throw new ArgumentNullException(nameof(loggerFactory));
     Terminal = terminal;
+    CompletionHandler = new TabCompletionHandler(completionProvider, endpoints, terminal, replOptions, loggerFactory);
     KeyBindings = InitializeKeyBindings();
   }
 
@@ -137,8 +133,7 @@ public sealed class ReplConsoleReader
     UserInput = string.Empty;  // Store only user input, not prompt
     CursorPosition = 0;        // Position relative to user input only
     HistoryIndex = History.Count;
-    CompletionCandidates.Clear();
-    CompletionIndex = -1;
+    CompletionHandler.Reset();
 
     while (true)
     {
@@ -183,146 +178,8 @@ public sealed class ReplConsoleReader
 
   private void HandleTabCompletion(bool reverse)
   {
-    // If we're cycling, restore the original input before getting new completions
-    if (CompletionOriginalInput is not null)
-    {
-      UserInput = CompletionOriginalInput;
-      CursorPosition = CompletionOriginalCursor;
-    }
-
-    // Parse current line into arguments for completion context
-    string inputUpToCursor = UserInput[..CursorPosition];
-    string[] args = CommandLineParser.Parse(inputUpToCursor);
-
-    // Detect if input ends with whitespace (user wants to complete the NEXT word)
-    bool hasTrailingSpace = inputUpToCursor.Length > 0 && char.IsWhiteSpace(inputUpToCursor[^1]);
-
-    ReplLoggerMessages.TabCompletionTriggered(Logger, UserInput, CursorPosition, args, null);
-
-    // Build completion context
-    // CursorPosition in CompletionContext is the word index (not character position)
-    var context = new CompletionContext(
-      Args: args,
-      CursorPosition: args.Length,
-      Endpoints: Endpoints,
-      HasTrailingSpace: hasTrailingSpace
-    );
-
-    ReplLoggerMessages.CompletionContextCreated(Logger, args.Length, null);
-
-    // Get completion candidates
-    List<CompletionCandidate> candidates = [.. CompletionProvider.GetCompletions(context, Endpoints)];
-
-    ReplLoggerMessages.CompletionCandidatesGenerated(Logger, candidates.Count, null);
-
-    if (candidates.Count == 0)
-      return;
-
-    if (candidates.Count == 1)
-    {
-      // Single completion - apply it and clear cycling state
-      ApplyCompletion(candidates[0]);
-      ResetCompletionState();
-    }
-    else
-    {
-      // Multiple completions - cycle through them or show all
-      if (CompletionCandidates.Count != candidates.Count ||
-          !candidates.Select(c => c.Value).SequenceEqual(CompletionCandidates))
-      {
-        // New completion set - save original input and show all candidates
-        CompletionOriginalInput = UserInput;
-        CompletionOriginalCursor = CursorPosition;
-        CompletionCandidates = candidates.ConvertAll(c => c.Value);
-        CompletionIndex = -1;
-        ShowCompletionCandidates(candidates);
-      }
-      else
-      {
-        // Same completion set - cycle through them
-        CompletionIndex = reverse
-          ? (CompletionIndex - 1 + candidates.Count) % candidates.Count
-          : (CompletionIndex + 1) % candidates.Count;
-
-        ReplLoggerMessages.CompletionCycling(Logger, CompletionIndex, candidates.Count, null);
-        ApplyCompletion(candidates[CompletionIndex]);
-      }
-    }
-  }
-
-  private void ApplyCompletion(CompletionCandidate candidate)
-  {
-    // Find the start position of the word to complete
-    int wordStart = FindWordStart(UserInput, CursorPosition);
-
-    ReplLoggerMessages.CompletionApplied(Logger, candidate.Value, wordStart, null);
-
-    // Replace the word with the completion
-    UserInput = UserInput[..wordStart] + candidate.Value + UserInput[CursorPosition..];
-    CursorPosition = wordStart + candidate.Value.Length;
-
-    ReplLoggerMessages.UserInputChanged(Logger, UserInput, CursorPosition, null);
-    // Redraw the line
+    (UserInput, CursorPosition) = CompletionHandler.HandleTab(UserInput, CursorPosition, reverse);
     RedrawLine();
-  }
-
-  private static int FindWordStart(string line, int position)
-  {
-    // Find the start of the current word (simplified - looks for space before position)
-    for (int i = position - 1; i >= 0; i--)
-    {
-      if (char.IsWhiteSpace(line[i]))
-        return i + 1;
-    }
-
-    return 0;
-  }
-
-  private void ResetCompletionState()
-  {
-    CompletionCandidates.Clear();
-    CompletionIndex = -1;
-    CompletionOriginalInput = null;
-    CompletionOriginalCursor = 0;
-  }
-
-  private void ShowCompletionCandidates(List<CompletionCandidate> candidates)
-  {
-    ReplLoggerMessages.ShowCompletionCandidatesStarted(Logger, UserInput, null);
-
-    Terminal.WriteLine();
-    if (ReplOptions.EnableColors)
-    {
-      Terminal.WriteLine(AnsiColors.Gray + "Available completions:" + AnsiColors.Reset);
-    }
-    else
-    {
-      Terminal.WriteLine("Available completions:");
-    }
-
-    // Display nicely in columns
-    int maxLen = candidates.Max(c => c.Value.Length) + 2;
-    int columns = Math.Max(1, Terminal.WindowWidth / maxLen);
-
-    for (int i = 0; i < candidates.Count; i++)
-    {
-      CompletionCandidate candidate = candidates[i];
-      string padded = candidate.Value.PadRight(maxLen);
-
-      ReplLoggerMessages.CompletionCandidateDetails(Logger, candidate.Value, null);
-
-      Terminal.Write(padded);
-
-      if ((i + 1) % columns == 0)
-        Terminal.WriteLine();
-    }
-
-    if (candidates.Count % columns != 0)
-      Terminal.WriteLine();
-
-    // Redraw the prompt and current line
-    Terminal.Write(PromptFormatter.Format(ReplOptions));
-    Terminal.Write(UserInput);
   }
 
   /// <summary>
@@ -331,34 +188,11 @@ public sealed class ReplConsoleReader
   /// </summary>
   private void HandlePossibleCompletions()
   {
-    // Parse current line into arguments for completion context
-    string inputUpToCursor = UserInput[..CursorPosition];
-    string[] args = CommandLineParser.Parse(inputUpToCursor);
-
-    // Detect if input ends with whitespace (user wants to complete the NEXT word)
-    bool hasTrailingSpace = inputUpToCursor.Length > 0 && char.IsWhiteSpace(inputUpToCursor[^1]);
-
-    // Build completion context
-    var context = new CompletionContext(
-      Args: args,
-      CursorPosition: args.Length,
-      Endpoints: Endpoints,
-      HasTrailingSpace: hasTrailingSpace
-    );
-
-    // Get completion candidates
-    List<CompletionCandidate> candidates = [.. CompletionProvider.GetCompletions(context, Endpoints)];
-
-    if (candidates.Count == 0)
-    {
-      // No completions available - do nothing
-      return;
-    }
-
-    // Display all completions without modifying input
-    ShowCompletionCandidates(candidates);
+    CompletionHandler.ShowPossibleCompletions(UserInput, CursorPosition);
   }
 
+  // ============================================================================
+  // PSReadLine-compatible handler methods
   // ============================================================================
   // PSReadLine-compatible handler methods
   // ============================================================================
@@ -374,7 +208,7 @@ public sealed class ReplConsoleReader
 
       UserInput = UserInput[..(CursorPosition - 1)] + UserInput[CursorPosition..];
       CursorPosition--;
-      ResetCompletionState();  // Clear completion cycling when user deletes
+      CompletionHandler.Reset();  // Clear completion cycling when user deletes
 
       ReplLoggerMessages.UserInputChanged(Logger, UserInput, CursorPosition, null);
       RedrawLine();
@@ -391,7 +225,7 @@ public sealed class ReplConsoleReader
       ReplLoggerMessages.DeletePressed(Logger, CursorPosition, null);
 
       UserInput = UserInput[..CursorPosition] + UserInput[(CursorPosition + 1)..];
-      ResetCompletionState();  // Clear completion cycling when user deletes
+      CompletionHandler.Reset();  // Clear completion cycling when user deletes
 
       ReplLoggerMessages.UserInputChanged(Logger, UserInput, CursorPosition, null);
       RedrawLine();
@@ -605,7 +439,7 @@ public sealed class ReplConsoleReader
   private void HandleEscape()
   {
     // Clear completion state
-    ResetCompletionState();
+    CompletionHandler.Reset();
 
     // Clear the entire input line
     UserInput = string.Empty;
@@ -625,7 +459,7 @@ public sealed class ReplConsoleReader
     UserInput = UserInput[..CursorPosition] + charToInsert + UserInput[CursorPosition..];
     CursorPosition++;
     PrefixSearchString = null;  // Clear prefix search when user types
-    ResetCompletionState();  // Clear completion cycling when user types
+    CompletionHandler.Reset();  // Clear completion cycling when user types
 
     ReplLoggerMessages.UserInputChanged(Logger, UserInput, CursorPosition, null);
     RedrawLine();

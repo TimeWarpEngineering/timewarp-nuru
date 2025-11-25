@@ -42,36 +42,36 @@ internal sealed class ReplCommands
   /// <summary>
   /// Shows REPL help information including built-in commands and keyboard shortcuts.
   /// </summary>
-  public void ShowReplHelp()
+  public async Task ShowReplHelpAsync()
   {
     if (Options.EnableColors)
     {
-      Terminal.WriteLine(AnsiColors.BrightBlue + "REPL Commands:" + AnsiColors.Reset);
+      await Terminal.WriteLineAsync(AnsiColors.BrightBlue + "REPL Commands:" + AnsiColors.Reset).ConfigureAwait(false);
     }
     else
     {
-      Terminal.WriteLine("REPL Commands:");
+      await Terminal.WriteLineAsync("REPL Commands:").ConfigureAwait(false);
     }
 
-    Terminal.WriteLine("  exit, quit, q     - Exit the REPL");
-    Terminal.WriteLine("  help, ?           - Show this help");
-    Terminal.WriteLine("  history           - Show command history");
-    Terminal.WriteLine("  clear, cls        - Clear the screen");
-    Terminal.WriteLine("  clear-history     - Clear command history");
-    Terminal.WriteLine();
+    await Terminal.WriteLineAsync("  exit, quit, q     - Exit the REPL").ConfigureAwait(false);
+    await Terminal.WriteLineAsync("  help, ?           - Show this help").ConfigureAwait(false);
+    await Terminal.WriteLineAsync("  history           - Show command history").ConfigureAwait(false);
+    await Terminal.WriteLineAsync("  clear, cls        - Clear the screen").ConfigureAwait(false);
+    await Terminal.WriteLineAsync("  clear-history     - Clear command history").ConfigureAwait(false);
+    await Terminal.WriteLineAsync().ConfigureAwait(false);
 
-    Terminal.WriteLine("Any other input is executed as an application command.");
-    Terminal.WriteLine("Use Ctrl+C to cancel current operation or Ctrl+D to exit.");
+    await Terminal.WriteLineAsync("Any other input is executed as an application command.").ConfigureAwait(false);
+    await Terminal.WriteLineAsync("Use Ctrl+C to cancel current operation or Ctrl+D to exit.").ConfigureAwait(false);
 
-    ShowAvailableCommands();
+    await ShowAvailableCommandsAsync().ConfigureAwait(false);
   }
 
   /// <summary>
   /// Shows available application commands using completion provider.
   /// </summary>
-  private void ShowAvailableCommands()
+  private async Task ShowAvailableCommandsAsync()
   {
-    Terminal.WriteLine("\nAvailable Application Commands:");
+    await Terminal.WriteLineAsync("\nAvailable Application Commands:").ConfigureAwait(false);
     try
     {
       CompletionContext context = new(Args: [], CursorPosition: 0, Endpoints: NuruApp.Endpoints);
@@ -84,40 +84,40 @@ internal sealed class ReplCommands
         foreach (CompletionCandidate cand in completions.OrderBy(c => c.Value))
         {
           string desc = string.IsNullOrEmpty(cand.Description) ? "" : $" - {cand.Description}";
-          Terminal.WriteLine($"  {cand.Value}{desc}");
+          await Terminal.WriteLineAsync($"  {cand.Value}{desc}").ConfigureAwait(false);
         }
       }
       else
       {
-        Terminal.WriteLine("  No commands available.");
+        await Terminal.WriteLineAsync("  No commands available.").ConfigureAwait(false);
       }
     }
     catch (InvalidOperationException)
     {
-      Terminal.WriteLine("  (Completions unavailable - check configuration)");
+      await Terminal.WriteLineAsync("  (Completions unavailable - check configuration)").ConfigureAwait(false);
     }
     catch (ArgumentException)
     {
-      Terminal.WriteLine("  (Completions unavailable - check configuration)");
+      await Terminal.WriteLineAsync("  (Completions unavailable - check configuration)").ConfigureAwait(false);
     }
   }
 
   /// <summary>
   /// Shows command history.
   /// </summary>
-  public void ShowHistory()
+  public async Task ShowHistoryAsync()
   {
     if (History.Count == 0)
     {
-      Terminal.WriteLine("No commands in history.");
+      await Terminal.WriteLineAsync("No commands in history.").ConfigureAwait(false);
       return;
     }
 
-    Terminal.WriteLine("Command History:");
+    await Terminal.WriteLineAsync("Command History:").ConfigureAwait(false);
     IReadOnlyList<string> items = History.AsReadOnly;
     for (int i = 0; i < items.Count; i++)
     {
-      Terminal.WriteLine($"  {i + 1}: {items[i]}");
+      await Terminal.WriteLineAsync($"  {i + 1}: {items[i]}").ConfigureAwait(false);
     }
   }
 
@@ -137,8 +137,9 @@ internal sealed class ReplCommands
   /// <summary>
   /// Clears the terminal screen.
   /// </summary>
-  public void ClearScreen()
+  public Task ClearScreenAsync()
   {
     Terminal.Clear();
+    return Task.CompletedTask;
   }
 }

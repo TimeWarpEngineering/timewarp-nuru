@@ -22,9 +22,9 @@ public static class NuruAppExtensions
       .AddRoute("exit", () => ReplSession.CurrentSession?.GetCommands().Exit(), "Exit the REPL")
       .AddRoute("quit", () => ReplSession.CurrentSession?.GetCommands().Exit(), "Exit the REPL")
       .AddRoute("q", () => ReplSession.CurrentSession?.GetCommands().Exit(), "Exit the REPL")
-      .AddRoute("history", () => ReplSession.CurrentSession?.GetCommands().ShowHistory(), "Show command history")
-      .AddRoute("clear", () => ReplSession.CurrentSession?.GetCommands().ClearScreen(), "Clear the screen")
-      .AddRoute("cls", () => ReplSession.CurrentSession?.GetCommands().ClearScreen(), "Clear the screen")
+      .AddRoute("history", async () => await (ReplSession.CurrentSession?.GetCommands().ShowHistoryAsync() ?? Task.CompletedTask).ConfigureAwait(false), "Show command history")
+      .AddRoute("clear", async () => await (ReplSession.CurrentSession?.GetCommands().ClearScreenAsync() ?? Task.CompletedTask).ConfigureAwait(false), "Clear the screen")
+      .AddRoute("cls", async () => await (ReplSession.CurrentSession?.GetCommands().ClearScreenAsync() ?? Task.CompletedTask).ConfigureAwait(false), "Clear the screen")
       .AddRoute("clear-history", () => ReplSession.CurrentSession?.GetCommands().ClearHistory(), "Clear command history")
       .AddAutoHelp();
 

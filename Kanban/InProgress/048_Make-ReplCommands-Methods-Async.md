@@ -18,16 +18,16 @@ Code review finding from `.agent/workspace/replsession-code-review-2025-11-25-v2
 ## Checklist
 
 ### Implementation
-- [ ] Convert `ShowReplHelp()` to `ShowReplHelpAsync()`
-- [ ] Convert `ShowHistory()` to `ShowHistoryAsync()`
-- [ ] Convert `ClearScreen()` to `ClearScreenAsync()`
-- [ ] Update `ShowAvailableCommands()` to async if needed
-- [ ] Update route registrations in `NuruAppExtensions.AddReplRoutes()`
-- [ ] Update any tests that call these methods
-- [ ] Verify Functionality
+- [x] Convert `ShowReplHelp()` to `ShowReplHelpAsync()`
+- [x] Convert `ShowHistory()` to `ShowHistoryAsync()`
+- [x] Convert `ClearScreen()` to `ClearScreenAsync()`
+- [x] Update `ShowAvailableCommands()` to async if needed
+- [x] Update route registrations in `NuruAppExtensions.AddReplRoutes()`
+- [x] Update any tests that call these methods (no tests found)
+- [x] Verify Functionality (solution builds successfully)
 
 ### Documentation
-- [ ] Update XML comments to reflect async nature
+- [x] Update XML comments to reflect async nature (XML comments already correct)
 
 ## Notes
 

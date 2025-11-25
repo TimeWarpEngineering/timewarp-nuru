@@ -25,24 +25,26 @@ Related to:
 
 ## Checklist
 
-### Phase 0: Planning & Infrastructure
+### Phase 0: Planning & Infrastructure ✅ COMPLETE
 - [x] Analyze current test coverage gaps (see `.agent/workspace/2025-11-25-Comprehensive-Tab-Completion-Test-Plan.md`)
-- [ ] Review test plan with team
-- [ ] Create test helper utilities file
-  - [ ] `CompletionAssertions` extension methods
-  - [ ] `KeySequenceHelpers` extension methods
-  - [ ] `TestAppFactory` for shared app configuration
+- [x] Review test plan with team
+- [x] Create test helper utilities file `TabCompletion/CompletionTestHelpers.cs`
+  - [x] `CompletionAssertions` extension methods (ShouldShowCompletions, ShouldNotShowCompletions, ShouldAutoComplete, ShouldShowCompletionList)
+  - [x] `KeySequenceHelpers` extension methods (TypeAndTab, TabMultipleTimes, CleanupAndExit)
+  - [x] `TestAppFactory` for shared app configuration (CreateReplDemoApp with all 12 routes)
+- [x] Update `Directory.Build.props` to include helpers and static usings
+- [x] Validate helpers work with initial test file
 
 ### Phase 1: HIGH Priority Tests (60-70 tests)
 
-#### File 1: Basic Command Completion
-- [ ] Create `Tests/TimeWarp.Nuru.Repl.Tests/TabCompletion/repl-20-tab-basic-commands.cs`
-- [ ] Empty input tab (show all commands)
-- [ ] Partial matching: a-z letters
-- [ ] Unique matches auto-complete (st→status)
-- [ ] Multiple matches show list (s→status,search)
-- [ ] After complete command space tab (show --help)
-- [ ] Target: ~25-30 tests
+#### File 1: Basic Command Completion ✅ STARTED (6 tests passing)
+- [x] Create `Tests/TimeWarp.Nuru.Repl.Tests/TabCompletion/repl-20-tab-basic-commands.cs`
+- [x] Empty input tab (show all commands)
+- [x] Unique matches auto-complete (st→status, ti→time, gr→greet)
+- [x] Multiple matches show list (s→status,search, b→build,backup)
+- [ ] Partial matching: all a-z letters (expand coverage)
+- [ ] After complete command space tab (deferred to File 8: Help Option tests)
+- [ ] Target: Expand to ~25-30 tests (currently 6)
 
 #### File 2: Subcommand Completion
 - [ ] Create `Tests/TimeWarp.Nuru.Repl.Tests/TabCompletion/repl-21-tab-subcommands.cs`

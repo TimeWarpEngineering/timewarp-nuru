@@ -8,6 +8,7 @@ internal sealed class ReplHistory
   private readonly List<string> Items = [];
   private readonly ReplOptions Options;
   private readonly ITerminal Terminal;
+  private readonly List<Regex> CompiledIgnorePatterns = [];
 
   /// <summary>
   /// Gets the number of commands in history.
@@ -35,6 +36,26 @@ internal sealed class ReplHistory
   {
     Options = options ?? throw new ArgumentNullException(nameof(options));
     Terminal = terminal ?? throw new ArgumentNullException(nameof(terminal));
+
+    // Pre-compile regex patterns for history ignore filters
+    if (options.HistoryIgnorePatterns is not null)
+    {
+      foreach (string pattern in options.HistoryIgnorePatterns)
+      {
+        if (!string.IsNullOrEmpty(pattern))
+        {
+          // Convert wildcard pattern to regex pattern
+          string regexPattern = "^" + Regex.Escape(pattern)
+            .Replace("\\*", ".*", StringComparison.Ordinal)  // * matches any characters
+            .Replace("\\?", ".", StringComparison.Ordinal)   // ? matches single character
+            + "$";
+
+          CompiledIgnorePatterns.Add(
+            new Regex(regexPattern, RegexOptions.IgnoreCase | RegexOptions.Compiled)
+          );
+        }
+      }
+    }
   }
 
   /// <summary>
@@ -73,21 +94,9 @@ internal sealed class ReplHistory
   /// <returns>True if the command matches an ignore pattern; otherwise, false.</returns>
   public bool ShouldIgnore(string command)
   {
-    if (Options.HistoryIgnorePatterns is null || Options.HistoryIgnorePatterns.Count == 0)
-      return false;
-
-    foreach (string pattern in Options.HistoryIgnorePatterns)
+    foreach (Regex regex in CompiledIgnorePatterns)
     {
-      if (string.IsNullOrEmpty(pattern))
-        continue;
-
-      // Convert wildcard pattern to regex pattern
-      string regexPattern = "^" + Regex.Escape(pattern)
-        .Replace("\\*", ".*", StringComparison.Ordinal)  // * matches any characters
-        .Replace("\\?", ".", StringComparison.Ordinal)   // ? matches single character
-        + "$";
-
-      if (Regex.IsMatch(command, regexPattern, RegexOptions.IgnoreCase))
+      if (regex.IsMatch(command))
         return true;
     }
 

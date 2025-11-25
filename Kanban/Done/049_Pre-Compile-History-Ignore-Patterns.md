@@ -19,18 +19,18 @@ Code review finding from `.agent/workspace/replsession-code-review-2025-11-25-v2
 ## Checklist
 
 ### Implementation
-- [ ] Add `List<Regex> CompiledIgnorePatterns` field to ReplHistory
-- [ ] Move pattern compilation logic to constructor
-- [ ] Update `ShouldIgnore()` to use pre-compiled patterns
-- [ ] Add regex compilation options (IgnoreCase, Compiled)
-- [ ] Handle null/empty patterns gracefully
-- [ ] Verify Functionality
+- [x] Add `List<Regex> CompiledIgnorePatterns` field to ReplHistory
+- [x] Move pattern compilation logic to constructor
+- [x] Update `ShouldIgnore()` to use pre-compiled patterns
+- [x] Add regex compilation options (IgnoreCase, Compiled)
+- [x] Handle null/empty patterns gracefully
+- [x] Verify Functionality
 
 ### Testing
-- [ ] Test with various wildcard patterns (`exit*`, `quit`, `help?`)
-- [ ] Test with empty/null pattern lists
-- [ ] Verify case-insensitive matching still works
-- [ ] Benchmark performance improvement (optional)
+- [x] Test with various wildcard patterns (`exit*`, `quit`, `help?`)
+- [x] Test with empty/null pattern lists
+- [x] Verify case-insensitive matching still works
+- [x] Benchmark performance improvement (optional)
 
 ## Notes
 

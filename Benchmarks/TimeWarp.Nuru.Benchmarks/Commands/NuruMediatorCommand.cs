@@ -32,7 +32,7 @@ public sealed class TestCommand : IRequest
   public string Str { get; set; } = string.Empty;
   public int IntOption { get; set; }
   public bool B { get; set; }
-  
+
   internal sealed class Handler : IRequestHandler<TestCommand>
   {
     public Task Handle(TestCommand request, CancellationToken cancellationToken)

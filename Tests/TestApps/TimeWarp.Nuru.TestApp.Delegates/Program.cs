@@ -78,41 +78,41 @@ builder.AddRoute("git commit --message {message}", (string message) =>
 // Test 11: Async void methods
 builder.AddRoute("async-test", async () =>
 {
-    await Task.Delay(10); // Simulate async work
+  await Task.Delay(10); // Simulate async work
   WriteLine("Async operation completed");
 });
 
 // Test 12: Optional Parameters
 builder.AddRoute("deploy {env} {tag?}", (string env, string? tag) =>
 {
-    if (tag is not null)
-    {
+  if (tag is not null)
+  {
     WriteLine($"Deploying to {env} with tag {tag}");
-    }
-    else
-    {
+  }
+  else
+  {
     WriteLine($"Deploying to {env} with latest tag");
-    }
+  }
 });
 
 // Test 13: Async with Optional Parameters
 builder.AddRoute("backup {source} {destination?}", async (string source, string? destination) =>
 {
-    await Task.Delay(10); // Simulate async work
-    if (destination is not null)
-    {
+  await Task.Delay(10); // Simulate async work
+  if (destination is not null)
+  {
     WriteLine($"Backing up {source} to {destination}");
-    }
-    else
-    {
+  }
+  else
+  {
     WriteLine($"Backing up {source} to default location");
-    }
+  }
 });
 
 // Test 14: Optional Parameters with Type Constraints
 builder.AddRoute("sleep {seconds:int?}", (int? seconds) =>
 {
-    int sleepTime = seconds ?? 1;
+  int sleepTime = seconds ?? 1;
   WriteLine($"Sleeping for {sleepTime} seconds");
 });
 

@@ -85,7 +85,7 @@ public class CliFrameworkBenchmark
   public void ExecuteWithPowerArgs()
   {
     // PowerArgs uses Windows-style /name:value format by default
-    string[] powerArgsArguments = new[] { "/str:hello world", "/int:13", "/bool" };
+    string[] powerArgsArguments = ["/str:hello world", "/int:13", "/bool"];
     PowerArgs.Args.InvokeMain<PowerArgsCommand>(powerArgsArguments);
   }
 }

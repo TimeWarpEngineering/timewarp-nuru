@@ -467,19 +467,19 @@ public class NuruAppBuilder
       }
     }
 
-      // Add base --help route if not already present
-      if (!existingEndpoints.Any(e => e.RoutePattern == "--help"))
-      {
-        AddRoute("--help", () => HelpProvider.GetHelpText(EndpointCollection, AppMetadata?.Name, AppMetadata?.Description),
-        description: "Show available commands");
-      }
+    // Add base --help route if not already present
+    if (!existingEndpoints.Any(e => e.RoutePattern == "--help"))
+    {
+      AddRoute("--help", () => HelpProvider.GetHelpText(EndpointCollection, AppMetadata?.Name, AppMetadata?.Description),
+      description: "Show available commands");
+    }
 
-      // Add base help route if not already present (REPL-friendly)
-      if (!existingEndpoints.Any(e => e.RoutePattern == "help"))
-      {
-        AddRoute("help", () => HelpProvider.GetHelpText(EndpointCollection, AppMetadata?.Name, AppMetadata?.Description),
-        description: "Show available commands");
-      }
+    // Add base help route if not already present (REPL-friendly)
+    if (!existingEndpoints.Any(e => e.RoutePattern == "help"))
+    {
+      AddRoute("help", () => HelpProvider.GetHelpText(EndpointCollection, AppMetadata?.Name, AppMetadata?.Description),
+      description: "Show available commands");
+    }
   }
 
   private static string GetCommandPrefix(Endpoint endpoint)

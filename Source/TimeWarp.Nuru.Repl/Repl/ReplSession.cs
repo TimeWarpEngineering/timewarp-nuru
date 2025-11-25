@@ -11,12 +11,18 @@ internal sealed class ReplSession
   private readonly ReplHistory History;
   private readonly ITypeConverterRegistry TypeConverterRegistry;
   private readonly ITerminal Terminal;
+  private readonly ReplCommands Commands;
   private bool Running;
 
   /// <summary>
   /// Gets the current active REPL session instance, if any.
   /// </summary>
   public static ReplSession? CurrentSession { get; private set; }
+
+  /// <summary>
+  /// Gets the commands interface for this REPL session.
+  /// </summary>
+  internal ReplCommands GetCommands() => Commands;
 
   /// <summary>
   /// Creates a new REPL mode instance.
@@ -36,6 +42,7 @@ internal sealed class ReplSession
     LoggerFactory = loggerFactory;
     Terminal = nuruApp.Terminal;
     History = new ReplHistory(ReplOptions, Terminal);
+    Commands = new ReplCommands(this, NuruApp, ReplOptions, Terminal, TypeConverterRegistry, History);
   }
 
   /// <summary>
@@ -249,100 +256,10 @@ internal sealed class ReplSession
   }
 
   /// <summary>
-  /// Shows REPL help information.
+  /// Stops the REPL session. Called by Exit command.
   /// </summary>
-  public void ShowReplHelp()
-  {
-    if (ReplOptions.EnableColors)
-    {
-      Terminal.WriteLine(AnsiColors.BrightBlue + "REPL Commands:" + AnsiColors.Reset);
-    }
-    else
-    {
-      Terminal.WriteLine("REPL Commands:");
-    }
-
-    Terminal.WriteLine("  exit, quit, q     - Exit the REPL");
-    Terminal.WriteLine("  help, ?           - Show this help");
-    Terminal.WriteLine("  history           - Show command history");
-    Terminal.WriteLine("  clear, cls        - Clear the screen");
-    Terminal.WriteLine("  clear-history     - Clear command history");
-    Terminal.WriteLine();
-
-    Terminal.WriteLine("Any other input is executed as an application command.");
-    Terminal.WriteLine("Use Ctrl+C to cancel current operation or Ctrl+D to exit.");
-
-    // Show available application commands using CompletionProvider
-    Terminal.WriteLine("\nAvailable Application Commands:");
-    try
-    {
-      CompletionProvider provider = new(TypeConverterRegistry);
-      CompletionContext context = new(Args: [], CursorPosition: 0, Endpoints: NuruApp.Endpoints);
-      IEnumerable<CompletionCandidate> completionsEnumerable = provider.GetCompletions(context, NuruApp.Endpoints);
-      List<CompletionCandidate> completions = [.. completionsEnumerable];
-
-      if (completions.Count > 0)
-      {
-        foreach (CompletionCandidate cand in completions.OrderBy(c => c.Value))
-        {
-          string desc = string.IsNullOrEmpty(cand.Description) ? "" : $" - {cand.Description}";
-          Terminal.WriteLine($"  {cand.Value}{desc}");
-        }
-      }
-      else
-      {
-        Terminal.WriteLine("  No commands available.");
-      }
-    }
-    catch (InvalidOperationException)
-    {
-      // Ignore completion errors for basic help
-      Terminal.WriteLine("  (Completions unavailable - check configuration)");
-    }
-    catch (ArgumentException)
-    {
-      // Ignore completion errors for basic help
-      Terminal.WriteLine("  (Completions unavailable - check configuration)");
-    }
-  }
-
-  /// <summary>
-  /// Shows command history.
-  /// </summary>
-  public void ShowHistory()
-  {
-    if (History.Count == 0)
-    {
-      Terminal.WriteLine("No commands in history.");
-      return;
-    }
-
-    Terminal.WriteLine("Command History:");
-    IReadOnlyList<string> items = History.AsReadOnly;
-    for (int i = 0; i < items.Count; i++)
-    {
-      Terminal.WriteLine($"  {i + 1}: {items[i]}");
-    }
-  }
-
-  /// <summary>
-  /// Exits the REPL loop.
-  /// </summary>
-  public void Exit()
+  internal void Stop()
   {
     Running = false;
-  }
-
-  /// <summary>
-  /// Clears the command history.
-  /// </summary>
-  public void ClearHistory() => History.Clear();
-
-  /// <summary>
-  /// Clears the terminal screen.
-  /// </summary>
-  public void ClearScreen()
-  {
-    Terminal.Clear();
   }
 }

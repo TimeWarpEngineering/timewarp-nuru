@@ -61,4 +61,4 @@ public static class NuruLoggingExtensions
     ArgumentNullException.ThrowIfNull(builder);
     return builder.UseConsoleLogging(LogLevel.Trace);
   }
- }
+}

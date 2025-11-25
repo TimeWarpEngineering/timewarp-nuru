@@ -19,13 +19,13 @@ public static class NuruAppExtensions
 
     // Register REPL commands as routes
     builder
-      .AddRoute("exit", () => ReplSession.CurrentSession?.Exit(), "Exit the REPL")
-      .AddRoute("quit", () => ReplSession.CurrentSession?.Exit(), "Exit the REPL")
-      .AddRoute("q", () => ReplSession.CurrentSession?.Exit(), "Exit the REPL")
-      .AddRoute("history", () => ReplSession.CurrentSession?.ShowHistory(), "Show command history")
-      .AddRoute("clear", () => ReplSession.CurrentSession?.ClearScreen(), "Clear the screen")
-      .AddRoute("cls", () => ReplSession.CurrentSession?.ClearScreen(), "Clear the screen")
-      .AddRoute("clear-history", () => ReplSession.CurrentSession?.ClearHistory(), "Clear command history")
+      .AddRoute("exit", () => ReplSession.CurrentSession?.GetCommands().Exit(), "Exit the REPL")
+      .AddRoute("quit", () => ReplSession.CurrentSession?.GetCommands().Exit(), "Exit the REPL")
+      .AddRoute("q", () => ReplSession.CurrentSession?.GetCommands().Exit(), "Exit the REPL")
+      .AddRoute("history", () => ReplSession.CurrentSession?.GetCommands().ShowHistory(), "Show command history")
+      .AddRoute("clear", () => ReplSession.CurrentSession?.GetCommands().ClearScreen(), "Clear the screen")
+      .AddRoute("cls", () => ReplSession.CurrentSession?.GetCommands().ClearScreen(), "Clear the screen")
+      .AddRoute("clear-history", () => ReplSession.CurrentSession?.GetCommands().ClearHistory(), "Clear command history")
       .AddAutoHelp();
 
     return builder;

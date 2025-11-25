@@ -1,10 +1,10 @@
 namespace TimeWarp.Nuru.Completion;
 
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using Microsoft.Extensions.Logging;
 using TimeWarp.Nuru; // Endpoint, EndpointCollection, ITypeConverterRegistry, IRouteTypeConverter
 using TimeWarp.Nuru.Parsing; // CompiledRoute, RouteMatcher, LiteralMatcher, ParameterMatcher, OptionMatcher
 
@@ -375,9 +375,9 @@ public class CompletionProvider
       }
     }
 
-// Now we're at cursor position - what can complete here?
+    // Now we're at cursor position - what can complete here?
 
-// Get current word being completed
+    // Get current word being completed
     // If cursor is at the end (cursorPosition == args.Length) and there's no trailing space,
     // use the last arg as the current word being completed
     string currentWord = cursorPosition < args.Length ? args[cursorPosition] :

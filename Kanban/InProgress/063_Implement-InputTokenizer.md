@@ -23,17 +23,17 @@ Implement the `InputTokenizer` component that parses raw command-line input into
 
 ## Checklist
 
-- [ ] Create `ParsedInput` record in `TimeWarp.Nuru.Completion`
-- [ ] Create `InputTokenizer` static class
-- [ ] Implement `Parse(string input)` method
-- [ ] Handle quoted strings (preserve content)
-- [ ] Handle escape sequences (\", \', \\)
-- [ ] Detect trailing whitespace
-- [ ] Identify partial word (last word if no trailing space)
-- [ ] Handle empty input case
-- [ ] Handle multiple consecutive spaces
-- [ ] Add comprehensive unit tests
-- [ ] XML documentation for public API
+- [x] Create `ParsedInput` record in `TimeWarp.Nuru.Completion`
+- [x] Create `InputTokenizer` static class
+- [x] Implement `Parse(string input)` method
+- [x] Handle quoted strings (preserve content)
+- [x] Handle escape sequences (\", \', \\)
+- [x] Detect trailing whitespace
+- [x] Identify partial word (last word if no trailing space)
+- [x] Handle empty input case
+- [x] Handle multiple consecutive spaces
+- [x] Add comprehensive unit tests
+- [x] XML documentation for public API
 
 ## Notes
 
@@ -135,8 +135,8 @@ Create in: `Source/TimeWarp.Nuru.Completion/Completion/InputTokenizer.cs`
 
 ### Success Criteria
 
-- [ ] All example cases pass
-- [ ] Handles quotes and escapes correctly
-- [ ] Efficient (no unnecessary allocations)
-- [ ] Well-documented
-- [ ] Ready for RouteMatchEngine to consume
+- [x] All example cases pass
+- [x] Handles quotes and escapes correctly
+- [x] Efficient (no unnecessary allocations)
+- [x] Well-documented
+- [x] Ready for RouteMatchEngine to consume

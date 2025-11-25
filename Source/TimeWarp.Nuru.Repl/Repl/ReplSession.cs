@@ -167,6 +167,7 @@ internal sealed class ReplSession
       return consoleReader.ReadLine(ReplOptions.Prompt);
     }
 
+    Terminal.Write(PromptFormatter.Format(ReplOptions));
     return Terminal.ReadLine();
   }
 

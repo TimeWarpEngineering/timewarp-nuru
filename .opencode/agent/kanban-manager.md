@@ -98,7 +98,7 @@ Tasks should be sized to fit within a single AI context window. This means:
 - If a task requires more work than fits in one context, break it into multiple tasks
 - Each task should have a clear, achievable scope
 - Prefer multiple small tasks over one large task
-- When estimating size, consider: code changes, testing, documentation, and review
+- When determining scope, consider: code changes, testing, documentation, and review
 
 ## Time Estimates
 

@@ -16,9 +16,10 @@ internal sealed class ReplSession
   private bool Running;
 
   /// <summary>
-  /// Gets the current active REPL session instance, if any.
+  /// Gets the current active REPL session instance.
+  /// This is guaranteed to be non-null when REPL commands execute.
   /// </summary>
-  public static ReplSession? CurrentSession { get; private set; }
+  public static ReplSession CurrentSession { get; private set; } = null!;
 
   /// <summary>
   /// Gets the commands interface for this REPL session.
@@ -77,7 +78,7 @@ internal sealed class ReplSession
     }
     finally
     {
-      CurrentSession = null;
+      CurrentSession = null!;
     }
   }
 
@@ -271,4 +272,27 @@ internal sealed class ReplSession
   {
     Running = false;
   }
+
+  // Static wrapper methods for route registration
+  // These provide clean method group syntax for REPL command routes
+
+  /// <summary>
+  /// Exits the REPL session.
+  /// </summary>
+  public static Task ExitAsync() => CurrentSession.GetCommands().ExitAsync();
+
+  /// <summary>
+  /// Shows the command history.
+  /// </summary>
+  public static Task ShowHistoryAsync() => CurrentSession.GetCommands().ShowHistoryAsync();
+
+  /// <summary>
+  /// Clears the terminal screen.
+  /// </summary>
+  public static Task ClearScreenAsync() => CurrentSession.GetCommands().ClearScreenAsync();
+
+  /// <summary>
+  /// Clears the command history.
+  /// </summary>
+  public static Task ClearHistoryAsync() => CurrentSession.GetCommands().ClearHistoryAsync();
 }

@@ -124,15 +124,20 @@ internal sealed class ReplCommands
   /// <summary>
   /// Exits the REPL loop.
   /// </summary>
-  public void Exit()
+  public Task ExitAsync()
   {
     Session.Stop();
+    return Task.CompletedTask;
   }
 
   /// <summary>
   /// Clears the command history.
   /// </summary>
-  public void ClearHistory() => History.Clear();
+  public Task ClearHistoryAsync()
+  {
+    History.Clear();
+    return Task.CompletedTask;
+  }
 
   /// <summary>
   /// Clears the terminal screen.

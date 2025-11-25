@@ -17,15 +17,15 @@ public static class NuruAppExtensions
   {
     ArgumentNullException.ThrowIfNull(builder);
 
-    // Register REPL commands as routes
+    // Register REPL commands as routes using clean method group syntax
     builder
-      .AddRoute("exit", () => ReplSession.CurrentSession?.GetCommands().Exit(), "Exit the REPL")
-      .AddRoute("quit", () => ReplSession.CurrentSession?.GetCommands().Exit(), "Exit the REPL")
-      .AddRoute("q", () => ReplSession.CurrentSession?.GetCommands().Exit(), "Exit the REPL")
-      .AddRoute("history", async () => await (ReplSession.CurrentSession?.GetCommands().ShowHistoryAsync() ?? Task.CompletedTask).ConfigureAwait(false), "Show command history")
-      .AddRoute("clear", async () => await (ReplSession.CurrentSession?.GetCommands().ClearScreenAsync() ?? Task.CompletedTask).ConfigureAwait(false), "Clear the screen")
-      .AddRoute("cls", async () => await (ReplSession.CurrentSession?.GetCommands().ClearScreenAsync() ?? Task.CompletedTask).ConfigureAwait(false), "Clear the screen")
-      .AddRoute("clear-history", () => ReplSession.CurrentSession?.GetCommands().ClearHistory(), "Clear command history")
+      .AddRoute("exit", ReplSession.ExitAsync, "Exit the REPL")
+      .AddRoute("quit", ReplSession.ExitAsync, "Exit the REPL")
+      .AddRoute("q", ReplSession.ExitAsync, "Exit the REPL")
+      .AddRoute("history", ReplSession.ShowHistoryAsync, "Show command history")
+      .AddRoute("clear", ReplSession.ClearScreenAsync, "Clear the screen")
+      .AddRoute("cls", ReplSession.ClearScreenAsync, "Clear the screen")
+      .AddRoute("clear-history", ReplSession.ClearHistoryAsync, "Clear command history")
       .AddAutoHelp();
 
     return builder;

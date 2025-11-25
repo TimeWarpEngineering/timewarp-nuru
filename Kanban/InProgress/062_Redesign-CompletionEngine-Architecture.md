@@ -28,15 +28,15 @@ Replace the current ad hoc completion logic in `CompletionProvider.cs` with a un
 
 ## Checklist
 
-- [ ] Analyze current CompletionProvider code paths
-- [ ] Document bug categories and root causes
-- [ ] Design InputTokenizer interface and data structures
-- [ ] Design RouteMatchState for tracking match progress
-- [ ] Design CandidateGenerator interface
-- [ ] Define CompletionEngine orchestration
-- [ ] Create architecture diagram
-- [ ] Review design against all 20 test categories
-- [ ] Document design in `.agent/workspace/`
+- [x] Analyze current CompletionProvider code paths
+- [x] Document bug categories and root causes
+- [x] Design InputTokenizer interface and data structures
+- [x] Design RouteMatchState for tracking match progress
+- [x] Design CandidateGenerator interface
+- [x] Define CompletionEngine orchestration
+- [x] Create architecture diagram
+- [x] Review design against all 20 test categories
+- [x] Document design in `documentation/developer/design/completion/`
 
 ## Notes
 
@@ -140,11 +140,11 @@ All 20 categories from task 061:
 
 ### Success Criteria
 
-- [ ] Architecture document complete
-- [ ] All interfaces defined
-- [ ] Data structures specified
-- [ ] Design reviewed against test categories
-- [ ] Ready for implementation in tasks 063-066
+- [x] Architecture document complete
+- [x] All interfaces defined
+- [x] Data structures specified
+- [x] Design reviewed against test categories
+- [x] Ready for implementation in tasks 063-066
 
 ### Related Tasks
 

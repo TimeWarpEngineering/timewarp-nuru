@@ -9,7 +9,7 @@ internal sealed class ReplCommands
   private readonly NuruApp NuruApp;
   private readonly ReplOptions Options;
   private readonly ITerminal Terminal;
-  private readonly ITypeConverterRegistry TypeConverterRegistry;
+  private readonly CompletionProvider CompletionProvider;
   private readonly ReplHistory History;
 
   /// <summary>
@@ -19,7 +19,7 @@ internal sealed class ReplCommands
   /// <param name="nuruApp">The NuruApp instance.</param>
   /// <param name="options">REPL configuration options.</param>
   /// <param name="terminal">Terminal interface for I/O.</param>
-  /// <param name="typeConverterRegistry">Type converter registry for completions.</param>
+  /// <param name="completionProvider">Completion provider for command suggestions.</param>
   /// <param name="history">Command history manager.</param>
   internal ReplCommands
   (
@@ -27,7 +27,7 @@ internal sealed class ReplCommands
     NuruApp nuruApp,
     ReplOptions options,
     ITerminal terminal,
-    ITypeConverterRegistry typeConverterRegistry,
+    CompletionProvider completionProvider,
     ReplHistory history
   )
   {
@@ -35,12 +35,12 @@ internal sealed class ReplCommands
     NuruApp = nuruApp ?? throw new ArgumentNullException(nameof(nuruApp));
     Options = options ?? throw new ArgumentNullException(nameof(options));
     Terminal = terminal ?? throw new ArgumentNullException(nameof(terminal));
-    TypeConverterRegistry = typeConverterRegistry ?? throw new ArgumentNullException(nameof(typeConverterRegistry));
+    CompletionProvider = completionProvider ?? throw new ArgumentNullException(nameof(completionProvider));
     History = history ?? throw new ArgumentNullException(nameof(history));
   }
 
   /// <summary>
-  /// Shows REPL help information.
+  /// Shows REPL help information including built-in commands and keyboard shortcuts.
   /// </summary>
   public void ShowReplHelp()
   {
@@ -63,13 +63,20 @@ internal sealed class ReplCommands
     Terminal.WriteLine("Any other input is executed as an application command.");
     Terminal.WriteLine("Use Ctrl+C to cancel current operation or Ctrl+D to exit.");
 
-    // Show available application commands using CompletionProvider
+    ShowAvailableCommands();
+  }
+
+  /// <summary>
+  /// Shows available application commands using completion provider.
+  /// </summary>
+  private void ShowAvailableCommands()
+  {
     Terminal.WriteLine("\nAvailable Application Commands:");
     try
     {
-      CompletionProvider provider = new(TypeConverterRegistry);
       CompletionContext context = new(Args: [], CursorPosition: 0, Endpoints: NuruApp.Endpoints);
-      IEnumerable<CompletionCandidate> completionsEnumerable = provider.GetCompletions(context, NuruApp.Endpoints);
+      IEnumerable<CompletionCandidate> completionsEnumerable =
+        CompletionProvider.GetCompletions(context, NuruApp.Endpoints);
       List<CompletionCandidate> completions = [.. completionsEnumerable];
 
       if (completions.Count > 0)
@@ -87,12 +94,10 @@ internal sealed class ReplCommands
     }
     catch (InvalidOperationException)
     {
-      // Ignore completion errors for basic help
       Terminal.WriteLine("  (Completions unavailable - check configuration)");
     }
     catch (ArgumentException)
     {
-      // Ignore completion errors for basic help
       Terminal.WriteLine("  (Completions unavailable - check configuration)");
     }
   }

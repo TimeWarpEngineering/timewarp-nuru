@@ -11,6 +11,7 @@ internal sealed class ReplSession
   private readonly ReplHistory History;
   private readonly ITypeConverterRegistry TypeConverterRegistry;
   private readonly ITerminal Terminal;
+  private readonly CompletionProvider CompletionProvider;
   private readonly ReplCommands Commands;
   private bool Running;
 
@@ -29,6 +30,7 @@ internal sealed class ReplSession
   /// </summary>
   /// <param name="nuruApp">The NuruApp instance to execute commands against.</param>
   /// <param name="replOptions">Optional configuration for the REPL.</param>
+  /// <param name="loggerFactory">Logger factory for logging operations.</param>
   internal ReplSession
   (
     NuruApp nuruApp,
@@ -41,8 +43,14 @@ internal sealed class ReplSession
     TypeConverterRegistry = nuruApp.TypeConverterRegistry;
     LoggerFactory = loggerFactory;
     Terminal = nuruApp.Terminal;
+
+    // Create CompletionProvider once for entire session
+    CompletionProvider = new CompletionProvider(TypeConverterRegistry, LoggerFactory);
+
     History = new ReplHistory(ReplOptions, Terminal);
-    Commands = new ReplCommands(this, NuruApp, ReplOptions, Terminal, TypeConverterRegistry, History);
+
+    // Pass CompletionProvider to Commands
+    Commands = new ReplCommands(this, NuruApp, ReplOptions, Terminal, CompletionProvider, History);
   }
 
   /// <summary>
@@ -150,7 +158,7 @@ internal sealed class ReplSession
         new ReplConsoleReader
           (
             History.AsReadOnly,
-            new CompletionProvider(TypeConverterRegistry, LoggerFactory),
+            CompletionProvider,
             NuruApp.Endpoints,
             ReplOptions,
             LoggerFactory,

@@ -21,8 +21,8 @@ public enum Environment
 [ClearRunfileCache]
 public class SampleValidationTests
 {
-  private static TestTerminal? Terminal;
-  private static NuruApp? App;
+  private static TestTerminal Terminal = null!;
+  private static NuruApp App = null!;
 
   public static async Task Setup()
   {
@@ -96,8 +96,8 @@ public class SampleValidationTests
   public static async Task CleanUp()
   {
     Terminal?.Dispose();
-    Terminal = null;
-    App = null;
+    Terminal = null!;
+    App = null!;
     await Task.CompletedTask;
   }
 
@@ -109,14 +109,14 @@ public class SampleValidationTests
   public static async Task Should_show_enum_values_in_completions_after_deploy_space()
   {
     // Arrange: Type "deploy " then Tab to see completions
-    Terminal!.QueueKeys("deploy ");
+    Terminal.QueueKeys("deploy ");
     Terminal.QueueKey(ConsoleKey.Tab);
     Terminal.QueueKey(ConsoleKey.Escape);
     Terminal.QueueLine("");
     Terminal.QueueLine("exit");
 
     // Act
-    await App!.RunReplAsync();
+    await App.RunReplAsync();
 
     // Assert: All enum values should appear in completions
     Terminal.OutputContains("Dev").ShouldBeTrue("Should show 'Dev' enum value");
@@ -128,14 +128,14 @@ public class SampleValidationTests
   public static async Task Should_show_help_option_in_completions_after_deploy_space()
   {
     // Arrange
-    Terminal!.QueueKeys("deploy ");
+    Terminal.QueueKeys("deploy ");
     Terminal.QueueKey(ConsoleKey.Tab);
     Terminal.QueueKey(ConsoleKey.Escape);
     Terminal.QueueLine("");
     Terminal.QueueLine("exit");
 
     // Act
-    await App!.RunReplAsync();
+    await App.RunReplAsync();
 
     // Assert: --help option should also appear
     Terminal.OutputContains("--help").ShouldBeTrue("Should show '--help' option");
@@ -145,14 +145,14 @@ public class SampleValidationTests
   public static async Task Should_filter_enum_completions_with_partial_p()
   {
     // Arrange: Type "deploy p" then Tab - only "Prod" starts with p
-    Terminal!.QueueKeys("deploy p");
+    Terminal.QueueKeys("deploy p");
     Terminal.QueueKey(ConsoleKey.Tab);
     Terminal.QueueKey(ConsoleKey.Escape);
     Terminal.QueueLine("");
     Terminal.QueueLine("exit");
 
     // Act
-    await App!.RunReplAsync();
+    await App.RunReplAsync();
 
     // Assert: Should show "Prod" (either as completion or auto-completed)
     Terminal.OutputContains("Prod").ShouldBeTrue("Should show or complete to 'Prod'");
@@ -167,14 +167,14 @@ public class SampleValidationTests
   public static async Task Should_filter_enum_completions_with_partial_s()
   {
     // Arrange: Type "deploy s" then Tab - only "Staging" starts with s
-    Terminal!.QueueKeys("deploy s");
+    Terminal.QueueKeys("deploy s");
     Terminal.QueueKey(ConsoleKey.Tab);
     Terminal.QueueKey(ConsoleKey.Escape);
     Terminal.QueueLine("");
     Terminal.QueueLine("exit");
 
     // Act
-    await App!.RunReplAsync();
+    await App.RunReplAsync();
 
     // Assert: Should show "Staging" (either as completion or auto-completed)
     Terminal.OutputContains("Staging").ShouldBeTrue("Should show or complete to 'Staging'");
@@ -184,14 +184,14 @@ public class SampleValidationTests
   public static async Task Should_filter_enum_completions_with_partial_d()
   {
     // Arrange: Type "deploy d" then Tab - only "Dev" starts with d
-    Terminal!.QueueKeys("deploy d");
+    Terminal.QueueKeys("deploy d");
     Terminal.QueueKey(ConsoleKey.Tab);
     Terminal.QueueKey(ConsoleKey.Escape);
     Terminal.QueueLine("");
     Terminal.QueueLine("exit");
 
     // Act
-    await App!.RunReplAsync();
+    await App.RunReplAsync();
 
     // Assert: Should show "Dev" (either as completion or auto-completed)
     Terminal.OutputContains("Dev").ShouldBeTrue("Should show or complete to 'Dev'");
@@ -205,14 +205,14 @@ public class SampleValidationTests
   public static async Task Should_show_git_subcommands_on_tab()
   {
     // Arrange: Type "git " then Tab
-    Terminal!.QueueKeys("git ");
+    Terminal.QueueKeys("git ");
     Terminal.QueueKey(ConsoleKey.Tab);
     Terminal.QueueKey(ConsoleKey.Escape);
     Terminal.QueueLine("");
     Terminal.QueueLine("exit");
 
     // Act
-    await App!.RunReplAsync();
+    await App.RunReplAsync();
 
     // Assert: Should show git subcommands
     Terminal.OutputContains("status").ShouldBeTrue("Should show 'status' subcommand");
@@ -228,14 +228,14 @@ public class SampleValidationTests
   public static async Task Should_complete_partial_command_d_to_deploy()
   {
     // Arrange: Type "d" then Tab - should complete to "deploy"
-    Terminal!.QueueKeys("d");
+    Terminal.QueueKeys("d");
     Terminal.QueueKey(ConsoleKey.Tab);
     Terminal.QueueKey(ConsoleKey.Escape);
     Terminal.QueueLine("");
     Terminal.QueueLine("exit");
 
     // Act
-    await App!.RunReplAsync();
+    await App.RunReplAsync();
 
     // Assert: Should show "deploy" in output
     Terminal.OutputContains("deploy").ShouldBeTrue("Should complete 'd' to 'deploy'");
@@ -245,14 +245,14 @@ public class SampleValidationTests
   public static async Task Should_show_multiple_commands_starting_with_s()
   {
     // Arrange: Type "s" then Tab - "status" and "search" both start with s
-    Terminal!.QueueKeys("s");
+    Terminal.QueueKeys("s");
     Terminal.QueueKey(ConsoleKey.Tab);
     Terminal.QueueKey(ConsoleKey.Escape);
     Terminal.QueueLine("");
     Terminal.QueueLine("exit");
 
     // Act
-    await App!.RunReplAsync();
+    await App.RunReplAsync();
 
     // Assert: Should show both commands
     Terminal.OutputContains("status").ShouldBeTrue("Should show 'status'");
@@ -267,14 +267,14 @@ public class SampleValidationTests
   public static async Task Should_show_available_completions_header()
   {
     // Arrange
-    Terminal!.QueueKeys("deploy ");
+    Terminal.QueueKeys("deploy ");
     Terminal.QueueKey(ConsoleKey.Tab);
     Terminal.QueueKey(ConsoleKey.Escape);
     Terminal.QueueLine("");
     Terminal.QueueLine("exit");
 
     // Act
-    await App!.RunReplAsync();
+    await App.RunReplAsync();
 
     // Assert
     Terminal.OutputContains("Available completions").ShouldBeTrue("Should show completions header");
@@ -284,7 +284,7 @@ public class SampleValidationTests
   public static async Task Should_cycle_to_first_completion_on_second_tab()
   {
     // Arrange: Type "deploy ", Tab (show list), Tab again (should cycle)
-    Terminal!.QueueKeys("deploy ");
+    Terminal.QueueKeys("deploy ");
     Terminal.QueueKey(ConsoleKey.Tab);  // Show completions list
     Terminal.QueueKey(ConsoleKey.Tab);  // Should cycle to first item
     Terminal.QueueKey(ConsoleKey.Escape);
@@ -292,7 +292,7 @@ public class SampleValidationTests
     Terminal.QueueLine("exit");
 
     // Act
-    await App!.RunReplAsync();
+    await App.RunReplAsync();
 
     // Debug output to see cycling behavior
     WriteLine("=== OUTPUT FOR TAB CYCLING ===");
@@ -311,14 +311,14 @@ public class SampleValidationTests
   public static async Task Should_show_build_options_on_tab()
   {
     // Arrange: Type "build " then Tab
-    Terminal!.QueueKeys("build ");
+    Terminal.QueueKeys("build ");
     Terminal.QueueKey(ConsoleKey.Tab);
     Terminal.QueueKey(ConsoleKey.Escape);
     Terminal.QueueLine("");
     Terminal.QueueLine("exit");
 
     // Act
-    await App!.RunReplAsync();
+    await App.RunReplAsync();
 
     // Assert: Should show verbose options
     bool hasVerbose = Terminal.OutputContains("--verbose") || Terminal.OutputContains("-v");
@@ -344,7 +344,7 @@ public class SampleValidationTests
     // is tested in repl-19-tab-cycling-bug.cs (currently has a bug)
 
     // Arrange
-    Terminal!.QueueKey(ConsoleKey.G);           // g
+    Terminal.QueueKey(ConsoleKey.G);           // g
     Terminal.QueueKey(ConsoleKey.Tab);          // <tab> (multiple matches)
     Terminal.QueueKey(ConsoleKey.I);            // i
     Terminal.QueueKey(ConsoleKey.Tab);          // <tab> (should complete to "git")
@@ -354,7 +354,7 @@ public class SampleValidationTests
     Terminal.QueueLine("exit");
 
     // Act
-    await App!.RunReplAsync();
+    await App.RunReplAsync();
 
     // Assert
     WriteLine("=== COMPLETION OUTPUT ===");
@@ -386,14 +386,14 @@ public class SampleValidationTests
   public static async Task Should_complete_partial_git_subcommand_com_to_commit()
   {
     // Arrange: Type "git com" then Tab - should autocomplete to "git commit"
-    Terminal!.QueueKeys("git com");
+    Terminal.QueueKeys("git com");
     Terminal.QueueKey(ConsoleKey.Tab);
     Terminal.QueueKey(ConsoleKey.Escape);
     Terminal.QueueLine("");
     Terminal.QueueLine("exit");
 
     // Act
-    await App!.RunReplAsync();
+    await App.RunReplAsync();
 
     // Assert: Should complete "com" to "commit"
     Terminal.OutputContains("commit").ShouldBeTrue("Should complete 'git com' to 'git commit'");
@@ -403,14 +403,14 @@ public class SampleValidationTests
   public static async Task Should_show_option_after_git_commit_space()
   {
     // Arrange: Type "git commit " then Tab - should show -m option
-    Terminal!.QueueKeys("git commit ");
+    Terminal.QueueKeys("git commit ");
     Terminal.QueueKey(ConsoleKey.Tab);
     Terminal.QueueKey(ConsoleKey.Escape);
     Terminal.QueueLine("");
     Terminal.QueueLine("exit");
 
     // Act
-    await App!.RunReplAsync();
+    await App.RunReplAsync();
 
     // Assert: Should show -m option (not complete to "git commit commit")
     Terminal.OutputContains("-m").ShouldBeTrue("Should show '-m' option after 'git commit '");
@@ -421,14 +421,14 @@ public class SampleValidationTests
   public static async Task Should_not_show_inappropriate_options_for_git_space()
   {
     // Arrange: Type "git " then Tab - should NOT show options like --count or -m
-    Terminal!.QueueKeys("git ");
+    Terminal.QueueKeys("git ");
     Terminal.QueueKey(ConsoleKey.Tab);
     Terminal.QueueKey(ConsoleKey.Escape);
     Terminal.QueueLine("");
     Terminal.QueueLine("exit");
 
     // Act
-    await App!.RunReplAsync();
+    await App.RunReplAsync();
 
     // Assert: Should NOT show route-specific options before selecting subcommand
     Terminal.OutputContains("--count").ShouldBeFalse("Should NOT show '--count' (only for 'git log')");

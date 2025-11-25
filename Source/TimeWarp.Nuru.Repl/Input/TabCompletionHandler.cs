@@ -5,12 +5,12 @@ namespace TimeWarp.Nuru.Repl.Input;
 /// </summary>
 internal sealed class TabCompletionHandler
 {
-  private readonly CompletionProvider _completionProvider;
-  private readonly EndpointCollection _endpoints;
-  private readonly ITerminal _terminal;
-  private readonly ReplOptions _replOptions;
-  private readonly ILogger<TabCompletionHandler> _logger;
-  private readonly CompletionState _state = new();
+  private readonly CompletionProvider CompletionProvider;
+  private readonly EndpointCollection Endpoints;
+  private readonly ITerminal Terminal;
+  private readonly ReplOptions ReplOptions;
+  private readonly ILogger<TabCompletionHandler> Logger;
+  private readonly CompletionState State = new();
 
   /// <summary>
   /// Creates a new tab completion handler.
@@ -35,11 +35,11 @@ internal sealed class TabCompletionHandler
     ArgumentNullException.ThrowIfNull(replOptions);
     ArgumentNullException.ThrowIfNull(loggerFactory);
 
-    _completionProvider = completionProvider;
-    _endpoints = endpoints;
-    _terminal = terminal;
-    _replOptions = replOptions;
-    _logger = loggerFactory.CreateLogger<TabCompletionHandler>();
+    CompletionProvider = completionProvider;
+    Endpoints = endpoints;
+    Terminal = terminal;
+    ReplOptions = replOptions;
+    Logger = loggerFactory.CreateLogger<TabCompletionHandler>();
   }
 
   /// <summary>
@@ -55,10 +55,10 @@ internal sealed class TabCompletionHandler
     bool reverse)
   {
     // If we're cycling, restore the original input before getting new completions
-    if (_state.IsActive)
+    if (State.IsActive)
     {
-      currentInput = _state.OriginalInput!;
-      currentCursor = _state.OriginalCursor;
+      currentInput = State.OriginalInput!;
+      currentCursor = State.OriginalCursor;
     }
 
     List<CompletionCandidate> candidates = GetCandidates(currentInput, currentCursor);
@@ -87,7 +87,7 @@ internal sealed class TabCompletionHandler
   /// <summary>
   /// Resets completion state (call when user types/deletes/escapes).
   /// </summary>
-  public void Reset() => _state.Reset();
+  public void Reset() => State.Reset();
 
   private List<CompletionCandidate> GetCandidates(string input, int cursor)
   {
@@ -98,23 +98,23 @@ internal sealed class TabCompletionHandler
     // Detect if input ends with whitespace (user wants to complete the NEXT word)
     bool hasTrailingSpace = inputUpToCursor.Length > 0 && char.IsWhiteSpace(inputUpToCursor[^1]);
 
-    ReplLoggerMessages.TabCompletionTriggered(_logger, input, cursor, args, null);
+    ReplLoggerMessages.TabCompletionTriggered(Logger, input, cursor, args, null);
 
     // Build completion context
     // CursorPosition in CompletionContext is the word index (not character position)
     var context = new CompletionContext(
       Args: args,
       CursorPosition: args.Length,
-      Endpoints: _endpoints,
+      Endpoints: Endpoints,
       HasTrailingSpace: hasTrailingSpace
     );
 
-    ReplLoggerMessages.CompletionContextCreated(_logger, args.Length, null);
+    ReplLoggerMessages.CompletionContextCreated(Logger, args.Length, null);
 
     // Get completion candidates
-    List<CompletionCandidate> candidates = [.. _completionProvider.GetCompletions(context, _endpoints)];
+    List<CompletionCandidate> candidates = [.. CompletionProvider.GetCompletions(context, Endpoints)];
 
-    ReplLoggerMessages.CompletionCandidatesGenerated(_logger, candidates.Count, null);
+    ReplLoggerMessages.CompletionCandidatesGenerated(Logger, candidates.Count, null);
 
     return candidates;
   }
@@ -125,18 +125,18 @@ internal sealed class TabCompletionHandler
     CompletionCandidate candidate)
   {
     // Single completion - apply it and clear cycling state
-    _state.Reset();
+    State.Reset();
 
     // Find the start position of the word to complete
     int wordStart = FindWordStart(input, cursor);
 
-    ReplLoggerMessages.CompletionApplied(_logger, candidate.Value, wordStart, null);
+    ReplLoggerMessages.CompletionApplied(Logger, candidate.Value, wordStart, null);
 
     // Replace the word with the completion
     string newInput = input[..wordStart] + candidate.Value + input[cursor..];
     int newCursor = wordStart + candidate.Value.Length;
 
-    ReplLoggerMessages.UserInputChanged(_logger, newInput, newCursor, null);
+    ReplLoggerMessages.UserInputChanged(Logger, newInput, newCursor, null);
 
     return (newInput, newCursor);
   }
@@ -150,66 +150,66 @@ internal sealed class TabCompletionHandler
     List<string> candidateValues = candidates.ConvertAll(c => c.Value);
 
     // New completion set - save original input and show all candidates
-    if (!_state.HasCandidates ||
-        !candidateValues.SequenceEqual(_state.Candidates))
+    if (!State.HasCandidates ||
+        !candidateValues.SequenceEqual(State.Candidates))
     {
-      _state.BeginCycle(input, cursor);
-      _state.Candidates.Clear();
-      _state.Candidates.AddRange(candidateValues);
-      _state.Index = -1;
+      State.BeginCycle(input, cursor);
+      State.Candidates.Clear();
+      State.Candidates.AddRange(candidateValues);
+      State.Index = -1;
       DisplayCandidates(candidates, input);
       return (input, cursor);
     }
 
     // Same completion set - cycle through them
-    _state.Index = reverse
-      ? (_state.Index - 1 + candidates.Count) % candidates.Count
-      : (_state.Index + 1) % candidates.Count;
+    State.Index = reverse
+      ? (State.Index - 1 + candidates.Count) % candidates.Count
+      : (State.Index + 1) % candidates.Count;
 
-    ReplLoggerMessages.CompletionCycling(_logger, _state.Index, candidates.Count, null);
+    ReplLoggerMessages.CompletionCycling(Logger, State.Index, candidates.Count, null);
 
-    return ApplySingleCompletion(input, cursor, candidates[_state.Index]);
+    return ApplySingleCompletion(input, cursor, candidates[State.Index]);
   }
 
   private void DisplayCandidates(
     List<CompletionCandidate> candidates,
     string currentInput)
   {
-    ReplLoggerMessages.ShowCompletionCandidatesStarted(_logger, currentInput, null);
+    ReplLoggerMessages.ShowCompletionCandidatesStarted(Logger, currentInput, null);
 
-    _terminal.WriteLine();
-    if (_replOptions.EnableColors)
+    Terminal.WriteLine();
+    if (ReplOptions.EnableColors)
     {
-      _terminal.WriteLine(AnsiColors.Gray + "Available completions:" + AnsiColors.Reset);
+      Terminal.WriteLine(AnsiColors.Gray + "Available completions:" + AnsiColors.Reset);
     }
     else
     {
-      _terminal.WriteLine("Available completions:");
+      Terminal.WriteLine("Available completions:");
     }
 
     // Display nicely in columns
     int maxLen = candidates.Max(c => c.Value.Length) + 2;
-    int columns = Math.Max(1, _terminal.WindowWidth / maxLen);
+    int columns = Math.Max(1, Terminal.WindowWidth / maxLen);
 
     for (int i = 0; i < candidates.Count; i++)
     {
       CompletionCandidate candidate = candidates[i];
       string padded = candidate.Value.PadRight(maxLen);
 
-      ReplLoggerMessages.CompletionCandidateDetails(_logger, candidate.Value, null);
+      ReplLoggerMessages.CompletionCandidateDetails(Logger, candidate.Value, null);
 
-      _terminal.Write(padded);
+      Terminal.Write(padded);
 
       if ((i + 1) % columns == 0)
-        _terminal.WriteLine();
+        Terminal.WriteLine();
     }
 
     if (candidates.Count % columns != 0)
-      _terminal.WriteLine();
+      Terminal.WriteLine();
 
     // Redraw the prompt and current line
-    _terminal.Write(PromptFormatter.Format(_replOptions));
-    _terminal.Write(currentInput);
+    Terminal.Write(PromptFormatter.Format(ReplOptions));
+    Terminal.Write(currentInput);
   }
 
   private static int FindWordStart(string line, int position)

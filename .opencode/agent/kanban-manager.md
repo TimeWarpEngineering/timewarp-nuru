@@ -100,6 +100,22 @@ Tasks should be sized to fit within a single AI context window. This means:
 - Prefer multiple small tasks over one large task
 - When estimating size, consider: code changes, testing, documentation, and review
 
+## Time Estimates
+
+**NEVER provide time estimates in tasks (no hours, days, weeks, etc.)**
+
+Time estimates are:
+- Rarely accurate
+- Create false expectations
+- Provide no real value
+- Better to focus on task scope and breaking into smaller pieces
+
+Instead of time estimates, focus on:
+- Clear task scope and requirements
+- Breaking large tasks into smaller ones
+- Concrete checklists with actionable items
+- Dependencies between tasks
+
 ## Best Practices
 
 - Keep task descriptions focused and actionable

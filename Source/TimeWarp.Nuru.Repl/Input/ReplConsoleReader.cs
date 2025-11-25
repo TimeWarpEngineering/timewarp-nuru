@@ -598,11 +598,24 @@ public sealed class ReplConsoleReader
     // No match found - do nothing (keep current state)
   }
 
+  /// <summary>
+  /// PSReadLine: RevertLine - Clear the entire input line (like Escape in PowerShell).
+  /// Clears all user input and resets cursor to the beginning.
+  /// </summary>
   private void HandleEscape()
   {
     // Clear completion state
-    CompletionCandidates.Clear();
-    CompletionIndex = -1;
+    ResetCompletionState();
+
+    // Clear the entire input line
+    UserInput = string.Empty;
+    CursorPosition = 0;
+
+    // Clear any prefix search state
+    PrefixSearchString = null;
+
+    // Redraw the empty line
+    RedrawLine();
   }
 
   private void HandleCharacter(char charToInsert)

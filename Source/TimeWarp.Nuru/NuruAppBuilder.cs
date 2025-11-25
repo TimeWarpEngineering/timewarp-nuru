@@ -252,6 +252,39 @@ public class NuruAppBuilder
     return AddRouteInternal(pattern, handler, description);
   }
 
+  /// <summary>
+  /// Adds multiple route patterns that invoke the same handler.
+  /// Useful for command aliases (e.g., "exit", "quit", "q").
+  /// The first pattern is considered the primary for help display.
+  /// </summary>
+  /// <param name="patterns">Array of route patterns (first is primary).</param>
+  /// <param name="handler">The handler to invoke for all patterns.</param>
+  /// <param name="description">Description shown in help.</param>
+  /// <returns>The builder for chaining.</returns>
+  /// <example>
+  /// <code>
+  /// builder.AddRoutes(
+  ///     ["exit", "quit", "q"],
+  ///     () => Environment.Exit(0),
+  ///     "Exit the application");
+  /// </code>
+  /// </example>
+  public NuruAppBuilder AddRoutes(string[] patterns, Delegate handler, string? description = null)
+  {
+    ArgumentNullException.ThrowIfNull(patterns);
+    ArgumentNullException.ThrowIfNull(handler);
+
+    if (patterns.Length == 0)
+      throw new ArgumentException("At least one pattern required", nameof(patterns));
+
+    foreach (string pattern in patterns)
+    {
+      AddRouteInternal(pattern, handler, description);
+    }
+
+    return this;
+  }
+
   private NuruAppBuilder AddRouteInternal(string pattern, Delegate handler, string? description)
   {
     ArgumentNullException.ThrowIfNull(handler);
@@ -292,6 +325,37 @@ public class NuruAppBuilder
   }
 
   /// <summary>
+  /// Adds multiple route patterns for a Mediator command.
+  /// Requires AddDependencyInjection() to be called first.
+  /// The first pattern is considered the primary for help display.
+  /// </summary>
+  /// <param name="patterns">Array of route patterns (first is primary).</param>
+  /// <param name="description">Description shown in help.</param>
+  /// <returns>The builder for chaining.</returns>
+  /// <example>
+  /// <code>
+  /// builder.AddRoutes&lt;ExitCommand&gt;(
+  ///     ["exit", "quit", "q"],
+  ///     "Exit the application");
+  /// </code>
+  /// </example>
+  public NuruAppBuilder AddRoutes<TCommand>(string[] patterns, string? description = null)
+    where TCommand : IRequest, new()
+  {
+    ArgumentNullException.ThrowIfNull(patterns);
+
+    if (patterns.Length == 0)
+      throw new ArgumentException("At least one pattern required", nameof(patterns));
+
+    foreach (string pattern in patterns)
+    {
+      AddMediatorRoute(typeof(TCommand), pattern, description);
+    }
+
+    return this;
+  }
+
+  /// <summary>
   /// Adds a Mediator command-based route with response.
   /// Requires AddDependencyInjection() to be called first.
   /// </summary>
@@ -299,6 +363,37 @@ public class NuruAppBuilder
     where TCommand : IRequest<TResponse>, new()
   {
     return AddMediatorRoute(typeof(TCommand), pattern, description);
+  }
+
+  /// <summary>
+  /// Adds multiple route patterns for a Mediator command with response.
+  /// Requires AddDependencyInjection() to be called first.
+  /// The first pattern is considered the primary for help display.
+  /// </summary>
+  /// <param name="patterns">Array of route patterns (first is primary).</param>
+  /// <param name="description">Description shown in help.</param>
+  /// <returns>The builder for chaining.</returns>
+  /// <example>
+  /// <code>
+  /// builder.AddRoutes&lt;GreetCommand, string&gt;(
+  ///     ["greet", "hello", "hi"],
+  ///     "Greet someone");
+  /// </code>
+  /// </example>
+  public NuruAppBuilder AddRoutes<TCommand, TResponse>(string[] patterns, string? description = null)
+    where TCommand : IRequest<TResponse>, new()
+  {
+    ArgumentNullException.ThrowIfNull(patterns);
+
+    if (patterns.Length == 0)
+      throw new ArgumentException("At least one pattern required", nameof(patterns));
+
+    foreach (string pattern in patterns)
+    {
+      AddMediatorRoute(typeof(TCommand), pattern, description);
+    }
+
+    return this;
   }
 
   private NuruAppBuilder AddMediatorRoute(Type commandType, string pattern, string? description)

@@ -19,12 +19,9 @@ public static class NuruAppExtensions
 
     // Register REPL commands as routes using clean method group syntax
     builder
-      .AddRoute("exit", ReplSession.ExitAsync, "Exit the REPL")
-      .AddRoute("quit", ReplSession.ExitAsync, "Exit the REPL")
-      .AddRoute("q", ReplSession.ExitAsync, "Exit the REPL")
+      .AddRoutes(["exit", "quit", "q"], ReplSession.ExitAsync, "Exit the REPL")
       .AddRoute("history", ReplSession.ShowHistoryAsync, "Show command history")
-      .AddRoute("clear", ReplSession.ClearScreenAsync, "Clear the screen")
-      .AddRoute("cls", ReplSession.ClearScreenAsync, "Clear the screen")
+      .AddRoutes(["clear", "cls"], ReplSession.ClearScreenAsync, "Clear the screen")
       .AddRoute("clear-history", ReplSession.ClearHistoryAsync, "Clear command history")
       .AddAutoHelp();
 

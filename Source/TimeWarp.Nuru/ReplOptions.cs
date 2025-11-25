@@ -88,4 +88,32 @@ public class ReplOptions
     "clear-history"  // Don't add history management commands to history
   ];
 
+  /// <summary>
+  /// The name of the key binding profile to use for REPL input handling.
+  /// Determines which key combinations trigger which editing actions.
+  /// </summary>
+  /// <remarks>
+  /// <para>
+  /// Available profile names:
+  /// </para>
+  /// <list type="bullet">
+  /// <item><description><c>"Default"</c> - PSReadLine-compatible bindings (default)</description></item>
+  /// <item><description><c>"Emacs"</c> - Emacs/bash/readline conventions</description></item>
+  /// <item><description><c>"Vi"</c> - Vi-inspired bindings</description></item>
+  /// <item><description><c>"VSCode"</c> - VSCode-style modern IDE bindings</description></item>
+  /// </list>
+  /// <para>
+  /// Default is <c>"Default"</c> for backward compatibility.
+  /// </para>
+  /// </remarks>
+  /// <example>
+  /// <code>
+  /// // Use Emacs-style key bindings
+  /// var options = new ReplOptions
+  /// {
+  ///   KeyBindingProfileName = "Emacs"
+  /// };
+  /// </code>
+  /// </example>
+  public string KeyBindingProfileName { get; set; } = "Default";
 }

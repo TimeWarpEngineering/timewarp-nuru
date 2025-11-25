@@ -54,78 +54,12 @@ public sealed class ReplConsoleReader
     Logger = LoggerFactory?.CreateLogger<ReplConsoleReader>() ?? throw new ArgumentNullException(nameof(loggerFactory));
     Terminal = terminal;
     CompletionHandler = new TabCompletionHandler(completionProvider, endpoints, terminal, replOptions, loggerFactory);
-    KeyBindings = InitializeKeyBindings();
-    ExitKeys = InitializeExitKeys();
+
+    // Initialize key bindings from the configured profile
+    IKeyBindingProfile profile = KeyBindingProfileFactory.GetProfile(replOptions.KeyBindingProfileName);
+    KeyBindings = profile.GetBindings(this);
+    ExitKeys = profile.GetExitKeys();
   }
-
-  /// <summary>
-  /// Initializes the default PSReadLine-compatible keybindings.
-  /// </summary>
-  /// <returns>Dictionary mapping key combinations to handler actions.</returns>
-  private Dictionary<(ConsoleKey Key, ConsoleModifiers Modifiers), Action> InitializeKeyBindings()
-  {
-    return new Dictionary<(ConsoleKey Key, ConsoleModifiers Modifiers), Action>
-    {
-      // === Enter/Submit ===
-      [(ConsoleKey.Enter, ConsoleModifiers.None)] = HandleEnter,
-
-      // === Tab Completion ===
-      [(ConsoleKey.Tab, ConsoleModifiers.None)] = () => HandleTabCompletion(reverse: false),
-      [(ConsoleKey.Tab, ConsoleModifiers.Shift)] = () => HandleTabCompletion(reverse: true),
-      [(ConsoleKey.Oem7, ConsoleModifiers.Alt)] = HandlePossibleCompletions, // Alt+= (Oem7 is the = key)
-
-      // === Character Movement (PSReadLine: BackwardChar, ForwardChar) ===
-      [(ConsoleKey.LeftArrow, ConsoleModifiers.None)] = HandleBackwardChar,
-      [(ConsoleKey.B, ConsoleModifiers.Control)] = HandleBackwardChar,
-      [(ConsoleKey.RightArrow, ConsoleModifiers.None)] = HandleForwardChar,
-      [(ConsoleKey.F, ConsoleModifiers.Control)] = HandleForwardChar,
-
-      // === Word Movement (PSReadLine: BackwardWord, ForwardWord) ===
-      [(ConsoleKey.LeftArrow, ConsoleModifiers.Control)] = HandleBackwardWord,
-      [(ConsoleKey.B, ConsoleModifiers.Alt)] = HandleBackwardWord,
-      [(ConsoleKey.RightArrow, ConsoleModifiers.Control)] = HandleForwardWord,
-      [(ConsoleKey.F, ConsoleModifiers.Alt)] = HandleForwardWord,
-
-      // === Line Position (PSReadLine: BeginningOfLine, EndOfLine) ===
-      [(ConsoleKey.Home, ConsoleModifiers.None)] = HandleBeginningOfLine,
-      [(ConsoleKey.A, ConsoleModifiers.Control)] = HandleBeginningOfLine,
-      [(ConsoleKey.End, ConsoleModifiers.None)] = HandleEndOfLine,
-      [(ConsoleKey.E, ConsoleModifiers.Control)] = HandleEndOfLine,
-
-      // === History Navigation (PSReadLine: PreviousHistory, NextHistory) ===
-      [(ConsoleKey.UpArrow, ConsoleModifiers.None)] = HandlePreviousHistory,
-      [(ConsoleKey.P, ConsoleModifiers.Control)] = HandlePreviousHistory,
-      [(ConsoleKey.DownArrow, ConsoleModifiers.None)] = HandleNextHistory,
-      [(ConsoleKey.N, ConsoleModifiers.Control)] = HandleNextHistory,
-
-      // === History Position (PSReadLine: BeginningOfHistory, EndOfHistory) ===
-      [(ConsoleKey.OemComma, ConsoleModifiers.Alt | ConsoleModifiers.Shift)] = HandleBeginningOfHistory, // Alt+<
-      [(ConsoleKey.OemPeriod, ConsoleModifiers.Alt | ConsoleModifiers.Shift)] = HandleEndOfHistory, // Alt+>
-
-      // === History Prefix Search (PSReadLine: HistorySearchBackward, HistorySearchForward) ===
-      [(ConsoleKey.F8, ConsoleModifiers.None)] = HandleHistorySearchBackward,
-      [(ConsoleKey.F8, ConsoleModifiers.Shift)] = HandleHistorySearchForward,
-
-      // === Deletion (PSReadLine: BackwardDeleteChar, DeleteChar) ===
-      [(ConsoleKey.Backspace, ConsoleModifiers.None)] = HandleBackwardDeleteChar,
-      [(ConsoleKey.Delete, ConsoleModifiers.None)] = HandleDeleteChar,
-
-      // === Special Keys ===
-      [(ConsoleKey.Escape, ConsoleModifiers.None)] = HandleEscape,
-      [(ConsoleKey.D, ConsoleModifiers.Control)] = () => Terminal.WriteLine(), // EOF
-    };
-  }
-
-  /// <summary>
-  /// Initializes the set of keys that should exit the ReadLine loop.
-  /// These keys trigger a return from ReadLine after their handler executes.
-  /// </summary>
-  /// <returns>HashSet of key combinations that exit the read loop.</returns>
-  private static HashSet<(ConsoleKey Key, ConsoleModifiers Modifiers)> InitializeExitKeys() =>
-  [
-    (ConsoleKey.Enter, ConsoleModifiers.None),  // Submit command
-    (ConsoleKey.D, ConsoleModifiers.Control)    // EOF
-  ];
 
   /// <summary>
   /// Reads a line of input with advanced editing capabilities.
@@ -174,7 +108,7 @@ public sealed class ReplConsoleReader
     }
   }
 
-  private void HandleEnter()
+  internal void HandleEnter()
   {
     Terminal.WriteLine();
 
@@ -188,7 +122,7 @@ public sealed class ReplConsoleReader
     }
   }
 
-  private void HandleTabCompletion(bool reverse)
+  internal void HandleTabCompletion(bool reverse)
   {
     (UserInput, CursorPosition) = CompletionHandler.HandleTab(UserInput, CursorPosition, reverse);
     RedrawLine();
@@ -198,7 +132,7 @@ public sealed class ReplConsoleReader
   /// PSReadLine: PossibleCompletions - Display possible completions without modifying the input.
   /// Similar to ShowCompletionCandidates but triggered by Alt+= instead of Tab.
   /// </summary>
-  private void HandlePossibleCompletions()
+  internal void HandlePossibleCompletions()
   {
     CompletionHandler.ShowPossibleCompletions(UserInput, CursorPosition);
   }
@@ -212,7 +146,7 @@ public sealed class ReplConsoleReader
   /// <summary>
   /// PSReadLine: BackwardDeleteChar - Delete the character before the cursor.
   /// </summary>
-  private void HandleBackwardDeleteChar()
+  internal void HandleBackwardDeleteChar()
   {
     if (CursorPosition > 0)
     {
@@ -230,7 +164,7 @@ public sealed class ReplConsoleReader
   /// <summary>
   /// PSReadLine: DeleteChar - Delete the character under the cursor.
   /// </summary>
-  private void HandleDeleteChar()
+  internal void HandleDeleteChar()
   {
     if (CursorPosition < UserInput.Length)
     {
@@ -247,7 +181,7 @@ public sealed class ReplConsoleReader
   /// <summary>
   /// PSReadLine: BackwardChar - Move the cursor back one character.
   /// </summary>
-  private void HandleBackwardChar()
+  internal void HandleBackwardChar()
   {
     if (CursorPosition > 0)
       CursorPosition--;
@@ -258,7 +192,7 @@ public sealed class ReplConsoleReader
   /// <summary>
   /// PSReadLine: ForwardChar - Move the cursor forward one character.
   /// </summary>
-  private void HandleForwardChar()
+  internal void HandleForwardChar()
   {
     if (CursorPosition < UserInput.Length)
       CursorPosition++;
@@ -269,7 +203,7 @@ public sealed class ReplConsoleReader
   /// <summary>
   /// PSReadLine: BackwardWord - Move the cursor to the beginning of the current or previous word.
   /// </summary>
-  private void HandleBackwardWord()
+  internal void HandleBackwardWord()
   {
     int newPos = CursorPosition;
     // Skip whitespace behind cursor
@@ -287,7 +221,7 @@ public sealed class ReplConsoleReader
   /// PSReadLine: ForwardWord - Move the cursor to the end of the current or next word.
   /// Note: PSReadLine moves to END of word, not start of next word.
   /// </summary>
-  private void HandleForwardWord()
+  internal void HandleForwardWord()
   {
     int newPos = CursorPosition;
     // Skip whitespace ahead of cursor
@@ -304,7 +238,7 @@ public sealed class ReplConsoleReader
   /// <summary>
   /// PSReadLine: BeginningOfLine - Move the cursor to the beginning of the line.
   /// </summary>
-  private void HandleBeginningOfLine()
+  internal void HandleBeginningOfLine()
   {
     CursorPosition = 0;
     UpdateCursorPosition();
@@ -313,7 +247,7 @@ public sealed class ReplConsoleReader
   /// <summary>
   /// PSReadLine: EndOfLine - Move the cursor to the end of the line.
   /// </summary>
-  private void HandleEndOfLine()
+  internal void HandleEndOfLine()
   {
     CursorPosition = UserInput.Length;
     UpdateCursorPosition();
@@ -322,7 +256,7 @@ public sealed class ReplConsoleReader
   /// <summary>
   /// PSReadLine: PreviousHistory - Replace the input with the previous item in the history.
   /// </summary>
-  private void HandlePreviousHistory()
+  internal void HandlePreviousHistory()
   {
     if (HistoryIndex > 0)
     {
@@ -337,7 +271,7 @@ public sealed class ReplConsoleReader
   /// <summary>
   /// PSReadLine: NextHistory - Replace the input with the next item in the history.
   /// </summary>
-  private void HandleNextHistory()
+  internal void HandleNextHistory()
   {
     if (HistoryIndex < History.Count - 1)
     {
@@ -360,7 +294,7 @@ public sealed class ReplConsoleReader
   /// <summary>
   /// PSReadLine: BeginningOfHistory - Move to the first item in the history.
   /// </summary>
-  private void HandleBeginningOfHistory()
+  internal void HandleBeginningOfHistory()
   {
     if (History.Count > 0)
     {
@@ -375,7 +309,7 @@ public sealed class ReplConsoleReader
   /// <summary>
   /// PSReadLine: EndOfHistory - Move to the last item (current input) in the history.
   /// </summary>
-  private void HandleEndOfHistory()
+  internal void HandleEndOfHistory()
   {
     HistoryIndex = History.Count;
     UserInput = string.Empty;
@@ -387,7 +321,7 @@ public sealed class ReplConsoleReader
   /// <summary>
   /// PSReadLine: HistorySearchBackward - Search backward through history for entries starting with current input prefix.
   /// </summary>
-  private void HandleHistorySearchBackward()
+  internal void HandleHistorySearchBackward()
   {
     // If no prefix search active, use current input as the prefix
     if (PrefixSearchString is null)
@@ -417,7 +351,7 @@ public sealed class ReplConsoleReader
   /// <summary>
   /// PSReadLine: HistorySearchForward - Search forward through history for entries starting with current input prefix.
   /// </summary>
-  private void HandleHistorySearchForward()
+  internal void HandleHistorySearchForward()
   {
     // If no prefix search active, use current input as the prefix
     if (PrefixSearchString is null)
@@ -448,7 +382,7 @@ public sealed class ReplConsoleReader
   /// PSReadLine: RevertLine - Clear the entire input line (like Escape in PowerShell).
   /// Clears all user input and resets cursor to the beginning.
   /// </summary>
-  private void HandleEscape()
+  internal void HandleEscape()
   {
     // Clear completion state
     CompletionHandler.Reset();

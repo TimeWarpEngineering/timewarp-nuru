@@ -13,7 +13,8 @@ public sealed class ReplConsoleReader
   private readonly ILoggerFactory? LoggerFactory;
   private readonly ITerminal Terminal;
   private readonly TabCompletionHandler CompletionHandler;
-  private readonly Dictionary<(ConsoleKey Key, ConsoleModifiers Modifiers), Func<bool>> KeyBindings;
+  private readonly Dictionary<(ConsoleKey Key, ConsoleModifiers Modifiers), Action> KeyBindings;
+  private readonly HashSet<(ConsoleKey Key, ConsoleModifiers Modifiers)> ExitKeys;
   private string UserInput = string.Empty;
   private int CursorPosition;
   private int HistoryIndex = -1;
@@ -54,67 +55,77 @@ public sealed class ReplConsoleReader
     Terminal = terminal;
     CompletionHandler = new TabCompletionHandler(completionProvider, endpoints, terminal, replOptions, loggerFactory);
     KeyBindings = InitializeKeyBindings();
+    ExitKeys = InitializeExitKeys();
   }
 
   /// <summary>
   /// Initializes the default PSReadLine-compatible keybindings.
   /// </summary>
-  /// <returns>Dictionary mapping key combinations to handler functions.</returns>
-  private Dictionary<(ConsoleKey Key, ConsoleModifiers Modifiers), Func<bool>> InitializeKeyBindings()
+  /// <returns>Dictionary mapping key combinations to handler actions.</returns>
+  private Dictionary<(ConsoleKey Key, ConsoleModifiers Modifiers), Action> InitializeKeyBindings()
   {
-    // Func<bool> returns true if the key was handled and should continue the loop,
-    // false if it should return (e.g., Enter, Ctrl+D)
-    return new Dictionary<(ConsoleKey Key, ConsoleModifiers Modifiers), Func<bool>>
+    return new Dictionary<(ConsoleKey Key, ConsoleModifiers Modifiers), Action>
     {
       // === Enter/Submit ===
-      [(ConsoleKey.Enter, ConsoleModifiers.None)] = () => { HandleEnter(); return false; },
+      [(ConsoleKey.Enter, ConsoleModifiers.None)] = HandleEnter,
 
       // === Tab Completion ===
-      [(ConsoleKey.Tab, ConsoleModifiers.None)] = () => { HandleTabCompletion(reverse: false); return true; },
-      [(ConsoleKey.Tab, ConsoleModifiers.Shift)] = () => { HandleTabCompletion(reverse: true); return true; },
-      [(ConsoleKey.Oem7, ConsoleModifiers.Alt)] = () => { HandlePossibleCompletions(); return true; }, // Alt+= (Oem7 is the = key)
+      [(ConsoleKey.Tab, ConsoleModifiers.None)] = () => HandleTabCompletion(reverse: false),
+      [(ConsoleKey.Tab, ConsoleModifiers.Shift)] = () => HandleTabCompletion(reverse: true),
+      [(ConsoleKey.Oem7, ConsoleModifiers.Alt)] = HandlePossibleCompletions, // Alt+= (Oem7 is the = key)
 
       // === Character Movement (PSReadLine: BackwardChar, ForwardChar) ===
-      [(ConsoleKey.LeftArrow, ConsoleModifiers.None)] = () => { HandleBackwardChar(); return true; },
-      [(ConsoleKey.B, ConsoleModifiers.Control)] = () => { HandleBackwardChar(); return true; },
-      [(ConsoleKey.RightArrow, ConsoleModifiers.None)] = () => { HandleForwardChar(); return true; },
-      [(ConsoleKey.F, ConsoleModifiers.Control)] = () => { HandleForwardChar(); return true; },
+      [(ConsoleKey.LeftArrow, ConsoleModifiers.None)] = HandleBackwardChar,
+      [(ConsoleKey.B, ConsoleModifiers.Control)] = HandleBackwardChar,
+      [(ConsoleKey.RightArrow, ConsoleModifiers.None)] = HandleForwardChar,
+      [(ConsoleKey.F, ConsoleModifiers.Control)] = HandleForwardChar,
 
       // === Word Movement (PSReadLine: BackwardWord, ForwardWord) ===
-      [(ConsoleKey.LeftArrow, ConsoleModifiers.Control)] = () => { HandleBackwardWord(); return true; },
-      [(ConsoleKey.B, ConsoleModifiers.Alt)] = () => { HandleBackwardWord(); return true; },
-      [(ConsoleKey.RightArrow, ConsoleModifiers.Control)] = () => { HandleForwardWord(); return true; },
-      [(ConsoleKey.F, ConsoleModifiers.Alt)] = () => { HandleForwardWord(); return true; },
+      [(ConsoleKey.LeftArrow, ConsoleModifiers.Control)] = HandleBackwardWord,
+      [(ConsoleKey.B, ConsoleModifiers.Alt)] = HandleBackwardWord,
+      [(ConsoleKey.RightArrow, ConsoleModifiers.Control)] = HandleForwardWord,
+      [(ConsoleKey.F, ConsoleModifiers.Alt)] = HandleForwardWord,
 
       // === Line Position (PSReadLine: BeginningOfLine, EndOfLine) ===
-      [(ConsoleKey.Home, ConsoleModifiers.None)] = () => { HandleBeginningOfLine(); return true; },
-      [(ConsoleKey.A, ConsoleModifiers.Control)] = () => { HandleBeginningOfLine(); return true; },
-      [(ConsoleKey.End, ConsoleModifiers.None)] = () => { HandleEndOfLine(); return true; },
-      [(ConsoleKey.E, ConsoleModifiers.Control)] = () => { HandleEndOfLine(); return true; },
+      [(ConsoleKey.Home, ConsoleModifiers.None)] = HandleBeginningOfLine,
+      [(ConsoleKey.A, ConsoleModifiers.Control)] = HandleBeginningOfLine,
+      [(ConsoleKey.End, ConsoleModifiers.None)] = HandleEndOfLine,
+      [(ConsoleKey.E, ConsoleModifiers.Control)] = HandleEndOfLine,
 
       // === History Navigation (PSReadLine: PreviousHistory, NextHistory) ===
-      [(ConsoleKey.UpArrow, ConsoleModifiers.None)] = () => { HandlePreviousHistory(); return true; },
-      [(ConsoleKey.P, ConsoleModifiers.Control)] = () => { HandlePreviousHistory(); return true; },
-      [(ConsoleKey.DownArrow, ConsoleModifiers.None)] = () => { HandleNextHistory(); return true; },
-      [(ConsoleKey.N, ConsoleModifiers.Control)] = () => { HandleNextHistory(); return true; },
+      [(ConsoleKey.UpArrow, ConsoleModifiers.None)] = HandlePreviousHistory,
+      [(ConsoleKey.P, ConsoleModifiers.Control)] = HandlePreviousHistory,
+      [(ConsoleKey.DownArrow, ConsoleModifiers.None)] = HandleNextHistory,
+      [(ConsoleKey.N, ConsoleModifiers.Control)] = HandleNextHistory,
 
       // === History Position (PSReadLine: BeginningOfHistory, EndOfHistory) ===
-      [(ConsoleKey.OemComma, ConsoleModifiers.Alt | ConsoleModifiers.Shift)] = () => { HandleBeginningOfHistory(); return true; }, // Alt+<
-      [(ConsoleKey.OemPeriod, ConsoleModifiers.Alt | ConsoleModifiers.Shift)] = () => { HandleEndOfHistory(); return true; }, // Alt+>
+      [(ConsoleKey.OemComma, ConsoleModifiers.Alt | ConsoleModifiers.Shift)] = HandleBeginningOfHistory, // Alt+<
+      [(ConsoleKey.OemPeriod, ConsoleModifiers.Alt | ConsoleModifiers.Shift)] = HandleEndOfHistory, // Alt+>
 
       // === History Prefix Search (PSReadLine: HistorySearchBackward, HistorySearchForward) ===
-      [(ConsoleKey.F8, ConsoleModifiers.None)] = () => { HandleHistorySearchBackward(); return true; },
-      [(ConsoleKey.F8, ConsoleModifiers.Shift)] = () => { HandleHistorySearchForward(); return true; },
+      [(ConsoleKey.F8, ConsoleModifiers.None)] = HandleHistorySearchBackward,
+      [(ConsoleKey.F8, ConsoleModifiers.Shift)] = HandleHistorySearchForward,
 
       // === Deletion (PSReadLine: BackwardDeleteChar, DeleteChar) ===
-      [(ConsoleKey.Backspace, ConsoleModifiers.None)] = () => { HandleBackwardDeleteChar(); return true; },
-      [(ConsoleKey.Delete, ConsoleModifiers.None)] = () => { HandleDeleteChar(); return true; },
+      [(ConsoleKey.Backspace, ConsoleModifiers.None)] = HandleBackwardDeleteChar,
+      [(ConsoleKey.Delete, ConsoleModifiers.None)] = HandleDeleteChar,
 
       // === Special Keys ===
-      [(ConsoleKey.Escape, ConsoleModifiers.None)] = () => { HandleEscape(); return true; },
-      [(ConsoleKey.D, ConsoleModifiers.Control)] = () => { Terminal.WriteLine(); return false; }, // EOF
+      [(ConsoleKey.Escape, ConsoleModifiers.None)] = HandleEscape,
+      [(ConsoleKey.D, ConsoleModifiers.Control)] = () => Terminal.WriteLine(), // EOF
     };
   }
+
+  /// <summary>
+  /// Initializes the set of keys that should exit the ReadLine loop.
+  /// These keys trigger a return from ReadLine after their handler executes.
+  /// </summary>
+  /// <returns>HashSet of key combinations that exit the read loop.</returns>
+  private static HashSet<(ConsoleKey Key, ConsoleModifiers Modifiers)> InitializeExitKeys() =>
+  [
+    (ConsoleKey.Enter, ConsoleModifiers.None),  // Submit command
+    (ConsoleKey.D, ConsoleModifiers.Control)    // EOF
+  ];
 
   /// <summary>
   /// Reads a line of input with advanced editing capabilities.
@@ -145,12 +156,13 @@ public sealed class ReplConsoleReader
       ConsoleModifiers normalizedMods = keyInfo.Modifiers & (ConsoleModifiers.Control | ConsoleModifiers.Alt | ConsoleModifiers.Shift);
       (ConsoleKey Key, ConsoleModifiers Modifiers) keyBinding = (keyInfo.Key, normalizedMods);
 
-      if (KeyBindings.TryGetValue(keyBinding, out Func<bool>? handler))
+      if (KeyBindings.TryGetValue(keyBinding, out Action? handler))
       {
-        bool continueLoop = handler();
-        if (!continueLoop)
+        handler();
+
+        // Check if this key should exit the read loop
+        if (ExitKeys.Contains(keyBinding))
         {
-          // Handler indicated we should return (Enter returns UserInput, Ctrl+D returns null)
           return keyInfo.Key == ConsoleKey.Enter ? UserInput : null;
         }
       }

@@ -110,9 +110,6 @@ internal sealed class ReplSession
 
   private async Task<int> ProcessSingleCommandAsync()
   {
-    // Display prompt
-    // DisplayPrompt();
-
     // Read input
     string? input = ReadCommandInput();
 
@@ -135,22 +132,6 @@ internal sealed class ReplSession
     if (args.Length == 0) return 0;
 
     return await ExecuteCommandAsync(args).ConfigureAwait(false);
-  }
-
-  private void DisplayPrompt()
-  {
-    Terminal.Write(PromptFormatter.Format(ReplOptions));
-  }
-
-  private void RewriteLineWithPrompt(string content)
-  {
-    string prompt = PromptFormatter.Format(ReplOptions);
-    // Clear current line and rewrite with prompt
-    (int _, int top) = Terminal.GetCursorPosition();
-    Terminal.SetCursorPosition(0, top);
-    Terminal.Write(new string(' ', Terminal.WindowWidth));
-    Terminal.SetCursorPosition(0, top);
-    Terminal.Write(prompt + content);
   }
 
   private string? ReadCommandInput()

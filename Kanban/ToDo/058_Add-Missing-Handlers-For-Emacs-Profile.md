@@ -119,14 +119,13 @@ Just need to uncomment this line after implementing the handler.
 
 **Test File**: Add tests to existing `Tests/TimeWarp.Nuru.Repl.Tests/repl-23-key-binding-profiles.cs` or create new `repl-24-emacs-kill-line.cs`
 
-### Estimated Effort
+### Task Scope
 
-| Phase | Time |
-|-------|------|
-| Implementation | 30 min |
-| Testing | 30 min |
-| Documentation | 15 min |
-| **TOTAL** | **1-1.5 hours** |
+**Size**: Small task
+- Single handler method implementation
+- Simple string manipulation (similar to existing delete handlers)
+- Straightforward testing
+- Should fit comfortably in one AI context window
 
 ### Risk Assessment
 

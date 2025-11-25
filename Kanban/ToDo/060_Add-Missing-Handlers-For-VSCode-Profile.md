@@ -108,17 +108,15 @@ If Tasks 058 and 059 are complete, this task is mostly just uncommenting binding
 
 **Test File**: Add tests to `Tests/TimeWarp.Nuru.Repl.Tests/repl-23-key-binding-profiles.cs` or create `repl-26-vscode-handlers.cs`
 
-### Estimated Effort
+### Task Scope
 
-| Phase | Time |
-|-------|------|
-| Verify handlers exist | 15 min |
-| Uncomment bindings | 5 min |
-| Testing | 30 min |
-| Documentation | 15 min |
-| **TOTAL** | **1 hour** |
+**Size**: Small task
+- Both required handlers should exist from Tasks 058 and 059
+- Primarily uncommenting existing bindings in profile
+- Simple verification and testing
+- Should fit easily in one AI context window
 
-**Note**: If Tasks 058 and 059 are not complete, add their implementation time.
+**Note**: This task depends on completion of Tasks 058 and 059.
 
 ### Risk Assessment
 

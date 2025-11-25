@@ -178,14 +178,14 @@ internal void HandleDeleteToLineStart()
 
 **Test File**: Add tests to `Tests/TimeWarp.Nuru.Repl.Tests/repl-23-key-binding-profiles.cs` or create `repl-25-vi-handlers.cs`
 
-### Estimated Effort
+### Task Scope
 
-| Phase | Time |
-|-------|------|
-| Implementation (3 handlers) | 1.5 hours |
-| Testing | 1 hour |
-| Documentation | 30 min |
-| **TOTAL** | **3 hours** |
+**Size**: Medium task
+- Three handler methods to implement
+- String manipulation and cursor management (similar to existing handlers)
+- One handler (HandleKillLine) may be shared from Task 058
+- Comprehensive testing needed for all three handlers
+- Should fit in one AI context window
 
 ### Risk Assessment
 

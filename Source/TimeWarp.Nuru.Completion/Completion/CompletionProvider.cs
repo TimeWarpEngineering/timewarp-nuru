@@ -378,8 +378,10 @@ public class CompletionProvider
 // Now we're at cursor position - what can complete here?
 
 // Get current word being completed
+    // If cursor is at the end (cursorPosition == args.Length) and there's no trailing space,
+    // use the last arg as the current word being completed
     string currentWord = cursorPosition < args.Length ? args[cursorPosition] :
-                          (cursorPosition > 0 && args.Length > cursorPosition ? args[cursorPosition - 1] : "");
+                          (cursorPosition > 0 && args.Length == cursorPosition ? args[cursorPosition - 1] : "");
 
     // Only offer options if current word starts with option indicator
     if (currentWord.StartsWith('-'))

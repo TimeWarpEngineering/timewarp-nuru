@@ -127,11 +127,13 @@ internal sealed class ReplHistory
     }
     catch (IOException ex)
     {
-      Terminal.WriteLine($"Warning: Could not load history: {ex.Message}");
+      Terminal.WriteLine($"Warning: Could not load history from {historyPath}");
+      Terminal.WriteLine($"  Reason: {ex.Message}");
     }
-    catch (UnauthorizedAccessException ex)
+    catch (UnauthorizedAccessException)
     {
-      Terminal.WriteLine($"Warning: Could not load history: {ex.Message}");
+      Terminal.WriteLine($"Warning: Permission denied loading history from {historyPath}");
+      Terminal.WriteLine("  Set ReplOptions.HistoryFilePath to a writable location or disable with PersistHistory=false");
     }
   }
 
@@ -154,11 +156,13 @@ internal sealed class ReplHistory
     }
     catch (IOException ex)
     {
-      Terminal.WriteLine($"Warning: Could not save history: {ex.Message}");
+      Terminal.WriteLine($"Warning: Could not save history to {historyPath}");
+      Terminal.WriteLine($"  Reason: {ex.Message}");
     }
-    catch (UnauthorizedAccessException ex)
+    catch (UnauthorizedAccessException)
     {
-      Terminal.WriteLine($"Warning: Could not save history: {ex.Message}");
+      Terminal.WriteLine($"Warning: Permission denied saving history to {historyPath}");
+      Terminal.WriteLine("  Set ReplOptions.HistoryFilePath to a writable location or disable with PersistHistory=false");
     }
   }
 

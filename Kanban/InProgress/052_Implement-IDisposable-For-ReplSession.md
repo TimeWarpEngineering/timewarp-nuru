@@ -20,12 +20,12 @@ Code review finding from `.agent/workspace/replsession-code-review-2025-11-25-v2
 ## Checklist
 
 ### Implementation
-- [ ] Add IDisposable interface to ReplSession class
-- [ ] Implement Dispose method with duplicate-call protection
-- [ ] Move critical cleanup to Dispose (event handler, history save)
-- [ ] Update CleanupRepl to call Dispose
-- [ ] Update RunAsync to dispose in finally block
-- [ ] Verify Functionality
+- [x] Add IDisposable interface to ReplSession class
+- [x] Implement Dispose method with duplicate-call protection
+- [x] Move critical cleanup to Dispose (event handler, history save)
+- [x] Update CleanupRepl to call Dispose
+- [x] Update RunAsync to dispose in finally block
+- [x] Verify Functionality
 
 ### Testing
 - [ ] Verify cleanup happens on normal exit
@@ -35,8 +35,8 @@ Code review finding from `.agent/workspace/replsession-code-review-2025-11-25-v2
 - [ ] Verify history saves on abnormal exit
 
 ### Documentation
-- [ ] Update XML comments for ReplSession class
-- [ ] Document disposal pattern in comments
+- [x] Update XML comments for ReplSession class
+- [x] Document disposal pattern in comments
 
 ## Notes
 

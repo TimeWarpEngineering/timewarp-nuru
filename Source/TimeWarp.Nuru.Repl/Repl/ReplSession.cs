@@ -2,8 +2,9 @@ namespace TimeWarp.Nuru.Repl;
 
 /// <summary>
 /// Provides REPL (Read-Eval-Print Loop) mode for interactive command execution.
+/// Implements IDisposable to ensure proper cleanup of resources (event handlers, history persistence).
 /// </summary>
-internal sealed class ReplSession
+internal sealed class ReplSession : IDisposable
 {
   private readonly ILoggerFactory LoggerFactory;
   private readonly NuruApp NuruApp;
@@ -14,6 +15,7 @@ internal sealed class ReplSession
   private readonly CompletionProvider CompletionProvider;
   private readonly ReplCommands Commands;
   private bool Running;
+  private bool Disposed;
 
   /// <summary>
   /// Gets the current active REPL session instance.
@@ -55,6 +57,23 @@ internal sealed class ReplSession
   }
 
   /// <summary>
+  /// Disposes the REPL session and ensures cleanup of resources.
+  /// This method is idempotent and can be called multiple times safely.
+  /// </summary>
+  public void Dispose()
+  {
+    if (Disposed) return;
+
+    // Critical cleanup that must happen
+    Console.CancelKeyPress -= OnCancelKeyPress;
+
+    if (ReplOptions.PersistHistory)
+      History.Save();
+
+    Disposed = true;
+  }
+
+  /// <summary>
   /// Runs a REPL session asynchronously.
   /// </summary>
   /// <param name="nuruApp">The NuruApp instance to execute commands against.</param>
@@ -78,6 +97,8 @@ internal sealed class ReplSession
     }
     finally
     {
+      // Guaranteed cleanup even on exceptions
+      CurrentSession.Dispose();
       CurrentSession = null!;
     }
   }
@@ -247,13 +268,10 @@ internal sealed class ReplSession
 
   private void CleanupRepl()
   {
-    Console.CancelKeyPress -= OnCancelKeyPress;
+    // Dispose handles critical cleanup (event handler, history save)
+    Dispose();
 
-    // Save history if persistence is enabled
-    if (ReplOptions.PersistHistory)
-      History.Save();
-
-    // Display goodbye message
+    // Display goodbye message (non-critical, cosmetic)
     if (!string.IsNullOrEmpty(ReplOptions.GoodbyeMessage))
       Terminal.WriteLine(ReplOptions.GoodbyeMessage);
   }

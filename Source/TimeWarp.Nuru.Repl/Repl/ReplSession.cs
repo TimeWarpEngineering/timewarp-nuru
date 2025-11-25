@@ -93,7 +93,7 @@ internal sealed class ReplSession
     if (ReplOptions.PersistHistory) LoadHistory();
 
     // Handle Ctrl+C gracefully - still uses System.Console for event subscription
-    System.Console.CancelKeyPress += OnCancelKeyPress;
+    Console.CancelKeyPress += OnCancelKeyPress;
   }
 
   private async Task<int> ProcessCommandLoopAsync(CancellationToken cancellationToken)
@@ -229,7 +229,7 @@ internal sealed class ReplSession
 
   private void CleanupRepl()
   {
-    System.Console.CancelKeyPress -= OnCancelKeyPress;
+    Console.CancelKeyPress -= OnCancelKeyPress;
 
     // Save history if persistence is enabled
     if (ReplOptions.PersistHistory)

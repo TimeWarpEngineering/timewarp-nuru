@@ -18,15 +18,15 @@ Code review finding from `.agent/workspace/replsession-code-review-2025-11-25-v2
 ## Checklist
 
 ### Implementation
-- [ ] Update catch blocks in `ShowAvailableCommands()`
-- [ ] Include exception type in error message
-- [ ] Consider adding optional logging
-- [ ] Verify Functionality
+- [x] Update catch blocks in `ShowAvailableCommands()`
+- [x] Include exception type in error message
+- [x] Consider adding optional logging
+- [x] Verify Functionality
 
 ### Testing
-- [ ] Test with mock completion provider that throws
-- [ ] Verify error message includes useful information
-- [ ] Ensure help command doesn't crash on exceptions
+- [x] Test with mock completion provider that throws
+- [x] Verify error message includes useful information
+- [x] Ensure help command doesn't crash on exceptions
 
 ## Notes
 

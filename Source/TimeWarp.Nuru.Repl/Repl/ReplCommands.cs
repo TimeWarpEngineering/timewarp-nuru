@@ -92,14 +92,12 @@ internal sealed class ReplCommands
         await Terminal.WriteLineAsync("  No commands available.").ConfigureAwait(false);
       }
     }
-    catch (InvalidOperationException)
+#pragma warning disable CA1031 // Help command should never crash - catch all exceptions for graceful degradation
+    catch (Exception ex)
     {
-      await Terminal.WriteLineAsync("  (Completions unavailable - check configuration)").ConfigureAwait(false);
+      await Terminal.WriteLineAsync($"  (Completions unavailable: {ex.GetType().Name})").ConfigureAwait(false);
     }
-    catch (ArgumentException)
-    {
-      await Terminal.WriteLineAsync("  (Completions unavailable - check configuration)").ConfigureAwait(false);
-    }
+#pragma warning restore CA1031
   }
 
   /// <summary>

@@ -8,7 +8,7 @@ internal sealed class ReplSession
   private readonly ILoggerFactory LoggerFactory;
   private readonly NuruApp NuruApp;
   private readonly ReplOptions ReplOptions;
-  private readonly List<string> History = [];
+  private readonly ReplHistory History;
   private readonly ITypeConverterRegistry TypeConverterRegistry;
   private readonly ITerminal Terminal;
   private bool Running;
@@ -35,6 +35,7 @@ internal sealed class ReplSession
     TypeConverterRegistry = nuruApp.TypeConverterRegistry;
     LoggerFactory = loggerFactory;
     Terminal = nuruApp.Terminal;
+    History = new ReplHistory(ReplOptions, Terminal);
   }
 
   /// <summary>
@@ -90,7 +91,7 @@ internal sealed class ReplSession
       Terminal.WriteLine(ReplOptions.WelcomeMessage);
 
     // Load history if persistence is enabled
-    if (ReplOptions.PersistHistory) LoadHistory();
+    if (ReplOptions.PersistHistory) History.Load();
 
     // Handle Ctrl+C gracefully - still uses System.Console for event subscription
     Console.CancelKeyPress += OnCancelKeyPress;
@@ -125,7 +126,7 @@ internal sealed class ReplSession
     string trimmedInput = input.Trim();
     if (string.IsNullOrEmpty(trimmedInput)) return 0;
 
-    AddToHistory(trimmedInput);
+    History.Add(trimmedInput);
 
     // Parse and execute command - routes handle everything including REPL commands
     string[] args = CommandLineParser.Parse(trimmedInput);
@@ -141,7 +142,7 @@ internal sealed class ReplSession
       var consoleReader =
         new ReplConsoleReader
           (
-            History,
+            History.AsReadOnly,
             new CompletionProvider(TypeConverterRegistry, LoggerFactory),
             NuruApp.Endpoints,
             ReplOptions,
@@ -233,7 +234,7 @@ internal sealed class ReplSession
 
     // Save history if persistence is enabled
     if (ReplOptions.PersistHistory)
-      SaveHistory();
+      History.Save();
 
     // Display goodbye message
     if (!string.IsNullOrEmpty(ReplOptions.GoodbyeMessage))
@@ -317,9 +318,10 @@ internal sealed class ReplSession
     }
 
     Terminal.WriteLine("Command History:");
-    for (int i = 0; i < History.Count; i++)
+    IReadOnlyList<string> items = History.AsReadOnly;
+    for (int i = 0; i < items.Count; i++)
     {
-      Terminal.WriteLine($"  {i + 1}: {History[i]}");
+      Terminal.WriteLine($"  {i + 1}: {items[i]}");
     }
   }
 
@@ -334,10 +336,7 @@ internal sealed class ReplSession
   /// <summary>
   /// Clears the command history.
   /// </summary>
-  public void ClearHistory()
-  {
-    History.Clear();
-  }
+  public void ClearHistory() => History.Clear();
 
   /// <summary>
   /// Clears the terminal screen.
@@ -345,120 +344,5 @@ internal sealed class ReplSession
   public void ClearScreen()
   {
     Terminal.Clear();
-  }
-
-  private void AddToHistory(string command)
-  {
-    // Check if command matches any ignore pattern
-    if (ShouldIgnoreCommand(command))  return;
-
-    // Don't add if same as last command
-    if (History.Count > 0 && History[^1] == command) return;
-
-    History.Add(command);
-
-    // Trim history if it exceeds max size
-    while (History.Count > ReplOptions.MaxHistorySize)
-    {
-      History.RemoveAt(0);
-    }
-  }
-
-  internal bool ShouldIgnoreCommand(string command)
-  {
-    if (ReplOptions.HistoryIgnorePatterns is null || ReplOptions.HistoryIgnorePatterns.Count == 0)
-      return false;
-
-    foreach (string pattern in ReplOptions.HistoryIgnorePatterns)
-    {
-      if (string.IsNullOrEmpty(pattern))
-        continue;
-
-      // Convert wildcard pattern to regex pattern
-      string regexPattern = "^" + Regex.Escape(pattern)
-        .Replace("\\*", ".*", StringComparison.Ordinal)  // * matches any characters
-        .Replace("\\?", ".", StringComparison.Ordinal)   // ? matches single character
-        + "$";
-
-      if (Regex.IsMatch(command, regexPattern, RegexOptions.IgnoreCase))
-        return true;
-    }
-
-    return false;
-  }
-
-  private void LoadHistory()
-  {
-    string historyPath = GetHistoryFilePath();
-    if (!File.Exists(historyPath))
-    {
-      return;
-    }
-
-    try
-    {
-      string[] lines = File.ReadAllLines(historyPath);
-      foreach (string line in lines.TakeLast(ReplOptions.MaxHistorySize))
-      {
-        if (!string.IsNullOrWhiteSpace(line))
-        {
-          History.Add(line);
-        }
-      }
-    }
-    catch (IOException ex)
-    {
-      Terminal.WriteLine($"Warning: Could not load history: {ex.Message}");
-    }
-    catch (UnauthorizedAccessException ex)
-    {
-      Terminal.WriteLine($"Warning: Could not load history: {ex.Message}");
-    }
-  }
-
-  private void SaveHistory()
-  {
-    string historyPath = GetHistoryFilePath();
-
-    try
-    {
-      string? directory = Path.GetDirectoryName(historyPath);
-      if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
-      {
-        Directory.CreateDirectory(directory);
-      }
-
-      File.WriteAllLines(historyPath, History);
-    }
-    catch (IOException ex)
-    {
-      Terminal.WriteLine($"Warning: Could not save history: {ex.Message}");
-    }
-    catch (UnauthorizedAccessException ex)
-    {
-      Terminal.WriteLine($"Warning: Could not save history: {ex.Message}");
-    }
-  }
-
-  private string GetHistoryFilePath()
-  {
-    if (!string.IsNullOrEmpty(ReplOptions.HistoryFilePath))
-    {
-      return ReplOptions.HistoryFilePath;
-    }
-
-    // Use per-app history in ~/.nuru/history/ directory
-    string nuruDir = Path.Combine(
-      Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-      ".nuru"
-    );
-    string historyDir = Path.Combine(nuruDir, "history");
-
-    // Ensure directory exists
-    Directory.CreateDirectory(historyDir);
-
-    // Use consistent app name detection
-    string appName = AppNameDetector.GetEffectiveAppName();
-    return Path.Combine(historyDir, appName);
   }
 }

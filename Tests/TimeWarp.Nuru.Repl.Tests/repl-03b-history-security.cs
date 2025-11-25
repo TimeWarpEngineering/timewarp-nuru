@@ -319,7 +319,7 @@ internal sealed class ReplSessionHelper
 
   public bool ShouldIgnoreCommand(string command, ReplOptions options)
   {
-    var replSession = new ReplSession(App, options, LoggerFactoryInstance);
-    return replSession.ShouldIgnoreCommand(command);
+    var replHistory = new ReplHistory(options, App.Terminal);
+    return replHistory.ShouldIgnore(command);
   }
 }

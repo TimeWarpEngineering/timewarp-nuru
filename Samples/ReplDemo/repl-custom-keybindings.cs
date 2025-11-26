@@ -27,7 +27,6 @@ WriteLine("This demo uses a CustomKeyBindingProfile based on the Emacs profile")
 WriteLine("with the following modifications:");
 WriteLine();
 WriteLine("  ADDED:    Ctrl+G  - Bell/ding sound (custom action)");
-WriteLine("  OVERRIDE: Ctrl+U  - Shows message then escapes (custom behavior)");
 WriteLine("  REMOVED:  Ctrl+D  - No longer exits (EOF disabled)");
 WriteLine("  KEPT:     All other Emacs bindings (Ctrl+A, Ctrl+E, etc.)");
 WriteLine();
@@ -35,10 +34,9 @@ WriteLine("Try these key combinations:");
 WriteLine("  Ctrl+A    - Move to beginning of line (from Emacs)");
 WriteLine("  Ctrl+E    - Move to end of line (from Emacs)");
 WriteLine("  Ctrl+G    - Bell/ding (custom addition)");
-WriteLine("  Ctrl+U    - Custom behavior with message (overridden)");
 WriteLine("  Ctrl+D    - Does nothing (removed from Emacs profile)");
 WriteLine("  Tab       - Tab completion");
-WriteLine("  Up/Down   - History navigation");
+WriteLine("  Up/Down   - History navigation (Emacs doesn't include arrows by default)");
 WriteLine();
 
 // ============================================================================
@@ -53,21 +51,9 @@ WriteLine();
 var customProfile = new CustomKeyBindingProfile(new EmacsKeyBindingProfile())
   .WithName("EmacsCustomized")
 
-  // Override Ctrl+U to show a custom message then escape (clear line)
-  // The action factory receives the ReplConsoleReader so you can call its handler methods
-  .Override
-  (
-    ConsoleKey.U,
-    ConsoleModifiers.Control,
-    reader => () =>
-    {
-      // Custom behavior: show message then call escape to clear line
-      Write("\x1b[33m[Custom Ctrl+U!]\x1b[0m ");
-      reader.HandleEscape();
-    }
-  )
-
   // Add Ctrl+G to "ding" (bell) - a simple custom action
+  // Note: Custom actions can't call internal ReplConsoleReader methods from outside the assembly,
+  // but they can perform any other action (write output, play sounds, etc.)
   .Add
   (
     ConsoleKey.G,
@@ -116,7 +102,6 @@ var app = new NuruAppBuilder()
       WriteLine();
       WriteLine("Modifications:");
       WriteLine("  + Ctrl+G  : Bell/ding (custom addition)");
-      WriteLine("  ~ Ctrl+U  : Shows message + escape (overridden)");
       WriteLine("  - Ctrl+D  : Removed (no EOF exit)");
       WriteLine();
       WriteLine("Inherited Emacs Bindings:");
@@ -166,7 +151,7 @@ var app = new NuruAppBuilder()
       options.WelcomeMessage =
         "Custom Key Bindings Demo - REPL with personalized Emacs bindings\n" +
         "Try: 'bindings' to see customizations, 'profiles' to see available profiles\n" +
-        "Try: Ctrl+L to clear screen, Ctrl+A/Ctrl+E for line navigation";
+        "Try: Ctrl+G for bell, Ctrl+A/Ctrl+E for line navigation";
 
       options.GoodbyeMessage = "Custom key bindings demo complete!";
 

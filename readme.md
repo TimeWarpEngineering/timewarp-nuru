@@ -24,15 +24,25 @@ dotnet add package TimeWarp.Nuru
 
 ## 🚀 Quick Start
 
+### ASP.NET Core-Style API (Recommended)
+
+```csharp
+using TimeWarp.Nuru;
+
+var builder = NuruApp.CreateBuilder(args);
+builder.Map("add {x:double} {y:double}", (double x, double y) =>
+  Console.WriteLine($"{x} + {y} = {x + y}"));
+return await builder.Build().RunAsync(args);
+```
+
+### Classic Builder API
+
 ```csharp
 using TimeWarp.Nuru;
 
 NuruApp app = new NuruAppBuilder()
-  .AddRoute
-  (
-    "add {x:double} {y:double}",
-    (double x, double y) => Console.WriteLine($"{x} + {y} = {x + y}")
-  )
+  .AddRoute("add {x:double} {y:double}", (double x, double y) =>
+    Console.WriteLine($"{x} + {y} = {x + y}"))
   .Build();
 
 return await app.RunAsync(args);
@@ -44,6 +54,15 @@ dotnet run -- add 15 25
 ```
 
 **→ [Full Getting Started Guide](documentation/user/getting-started.md)**
+
+### Choose Your Builder
+
+| Builder | Use Case | Features |
+|---------|----------|----------|
+| `NuruApp.CreateBuilder(args)` | Full-featured apps | DI, Config, Mediator, REPL, Completion |
+| `NuruApp.CreateSlimBuilder()` | Lightweight tools | Auto-help, Logging infra, AOT-friendly |
+| `NuruApp.CreateEmptyBuilder()` | Total control | Type converters only, fully AOT |
+| `new NuruAppBuilder()` | Classic/migration | Same as CreateSlimBuilder |
 
 ## ✨ Key Features
 
@@ -129,10 +148,11 @@ NuruApp app = new NuruAppBuilder()
 
 ## 🌟 Working Examples
 
-**[Calculator Samples](Samples/Calculator/)** - Three complete implementations you can run now:
+**[Calculator Samples](Samples/Calculator/)** - Four complete implementations you can run now:
+- **[calc-createbuilder.cs](Samples/Calculator/calc-createbuilder.cs)** - ASP.NET Core-style API (recommended)
 - **[calc-delegate.cs](Samples/Calculator/calc-delegate.cs)** - Direct approach (pure performance)
 - **[calc-mediator.cs](Samples/Calculator/calc-mediator.cs)** - Mediator pattern (enterprise)
-- **[calc-mixed.cs](Samples/Calculator/calc-mixed.cs)** - Mixed approach (recommended)
+- **[calc-mixed.cs](Samples/Calculator/calc-mixed.cs)** - Mixed approach (classic builder)
 
 ```bash
 ./Samples/Calculator/calc-mixed.cs add 10 20        # Direct: fast

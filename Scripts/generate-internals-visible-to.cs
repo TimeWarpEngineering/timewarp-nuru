@@ -14,7 +14,8 @@ string[] outputFiles =
 [
   Path.Combine(repoRoot, "Source/TimeWarp.Nuru.Parsing/InternalsVisibleTo.g.cs"),
   Path.Combine(repoRoot, "Source/TimeWarp.Nuru.Mcp/InternalsVisibleTo.g.cs"),
-  Path.Combine(repoRoot, "Source/TimeWarp.Nuru.Completion/InternalsVisibleTo.g.cs")
+  Path.Combine(repoRoot, "Source/TimeWarp.Nuru.Completion/InternalsVisibleTo.g.cs"),
+  Path.Combine(repoRoot, "Source/TimeWarp.Nuru.Repl/InternalsVisibleTo.g.cs")
 ];
 
 // Find all .cs files in Tests directory (single-file scripts)
@@ -22,10 +23,29 @@ List<string> testFiles = Directory.GetFiles(testsDir, "*.cs", SearchOption.AllDi
   .Where(f => !f.Contains("/obj/", StringComparison.Ordinal) && !f.Contains("/bin/", StringComparison.Ordinal))
   .Select(Path.GetFileNameWithoutExtension)
   .Where(name => !string.IsNullOrEmpty(name))
-  .Order()
   .ToList()!;
 
-Console.WriteLine(string.Create(CultureInfo.InvariantCulture, $"Found {testFiles.Count} test files"));
+// Find all .csproj files in Tests directory (project assemblies)
+List<string> testProjects = Directory.GetFiles(testsDir, "*.csproj", SearchOption.AllDirectories)
+  .Where(f => !f.Contains("/obj/", StringComparison.Ordinal) && !f.Contains("/bin/", StringComparison.Ordinal))
+  .Select(f => Path.GetFileNameWithoutExtension(f))
+  .Where(name => !string.IsNullOrEmpty(name))
+  .ToList()!;
+
+// Also find directories with Directory.Build.props (test projects without .csproj)
+List<string> testDirectories = Directory.GetFiles(testsDir, "Directory.Build.props", SearchOption.AllDirectories)
+  .Where(f => !f.Contains("/obj/", StringComparison.Ordinal) && !f.Contains("/bin/", StringComparison.Ordinal))
+  .Select(f => Path.GetFileName(Path.GetDirectoryName(f)))
+  .Where(name => !string.IsNullOrEmpty(name))
+  .ToList()!;
+
+testProjects.AddRange(testDirectories);
+
+// Combine and deduplicate
+testFiles.AddRange(testProjects);
+testFiles = [.. testFiles.Distinct().Order()];
+
+Console.WriteLine(string.Create(CultureInfo.InvariantCulture, $"Found {testFiles.Count} test assemblies"));
 
 // Generate the InternalsVisibleTo attributes
 var sb = new StringBuilder();

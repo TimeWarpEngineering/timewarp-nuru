@@ -1,23 +1,136 @@
 namespace TimeWarp.Nuru;
 
-using Microsoft.Extensions.Logging;
-using System.Text.RegularExpressions;
-
 /// <summary>
 /// A unified CLI app that supports both direct execution and dependency injection.
 /// </summary>
 public partial class NuruApp
 {
   private readonly IServiceProvider? ServiceProvider;
-  private readonly ITypeConverterRegistry TypeConverterRegistry;
   private readonly MediatorExecutor? MediatorExecutor;
-  private readonly ILoggerFactory LoggerFactory;
+  private readonly IConsole Console;
+
+  #region Static Factory Methods
 
   /// <summary>
-  /// Regex pattern to match .NET configuration overrides (e.g., --Logging:LogLevel:Default=Debug).
-  /// Pattern requires colon to appear in the configuration path structure, not just in option values.
+  /// Creates a full-featured builder with DI, Configuration, Mediator, REPL, and Completion support.
+  /// This is the recommended approach for complex applications.
   /// </summary>
-  // private static readonly Regex ConfigOverridePattern = ConfigurationOverrideRegex();
+  /// <param name="args">Command line arguments. Required for Configuration command-line overrides.</param>
+  /// <param name="options">Optional application options.</param>
+  /// <returns>A fully configured <see cref="NuruAppBuilder"/>.</returns>
+  /// <remarks>
+  /// Features included:
+  /// - Dependency Injection container
+  /// - Configuration (appsettings.json, environment variables, command line)
+  /// - Mediator pattern support
+  /// - Auto-help generation
+  /// - REPL ready
+  /// - Completion ready
+  /// - OpenTelemetry ready
+  ///
+  /// Note: This builder uses partial AOT trim mode due to reflection requirements.
+  /// </remarks>
+  /// <example>
+  /// <code>
+  /// var builder = NuruApp.CreateBuilder(args);
+  /// builder.Map("status", () => "OK");
+  /// builder.Map&lt;DeployCommand&gt;("deploy {env}");
+  /// await builder.Build().RunAsync(args);
+  /// </code>
+  /// </example>
+  public static NuruAppBuilder CreateBuilder(string[] args, NuruApplicationOptions? options = null)
+  {
+    ArgumentNullException.ThrowIfNull(args);
+    options ??= new NuruApplicationOptions();
+    options.Args = args;
+    return new NuruAppBuilder(BuilderMode.Full, options);
+  }
+
+  /// <summary>
+  /// Creates a lightweight builder with Configuration, auto-help, and logging infrastructure.
+  /// No DI container, Mediator, REPL, or Completion.
+  /// </summary>
+  /// <param name="args">Optional command line arguments.</param>
+  /// <param name="options">Optional application options.</param>
+  /// <returns>A lightweight <see cref="NuruAppBuilder"/>.</returns>
+  /// <remarks>
+  /// Features included:
+  /// - Type converters
+  /// - Auto-help generation
+  /// - Logging infrastructure
+  ///
+  /// Features NOT included:
+  /// - DI Container
+  /// - Mediator pattern
+  /// - REPL
+  /// - Completion
+  /// - OpenTelemetry
+  ///
+  /// This builder is fully AOT-compatible.
+  /// </remarks>
+  /// <example>
+  /// <code>
+  /// var builder = NuruApp.CreateSlimBuilder();
+  /// builder.Map("greet {name}", (string name) => $"Hello, {name}!");
+  /// await builder.Build().RunAsync(args);
+  /// </code>
+  /// </example>
+  public static NuruAppBuilder CreateSlimBuilder(string[]? args = null, NuruApplicationOptions? options = null)
+  {
+    options ??= new NuruApplicationOptions();
+    options.Args = args;
+    return new NuruAppBuilder(BuilderMode.Slim, options);
+  }
+
+  /// <summary>
+  /// Creates a bare minimum builder with only type converters.
+  /// User has total control over what features to add.
+  /// </summary>
+  /// <param name="args">Optional command line arguments.</param>
+  /// <param name="options">Optional application options.</param>
+  /// <returns>An empty <see cref="NuruAppBuilder"/>.</returns>
+  /// <remarks>
+  /// Features included:
+  /// - Type converters
+  /// - Args storage
+  ///
+  /// Features NOT included (add manually if needed):
+  /// - Configuration
+  /// - Auto-help
+  /// - Logging infrastructure
+  /// - DI Container
+  /// - Mediator pattern
+  /// - REPL
+  /// - Completion
+  ///
+  /// This builder is fully AOT-compatible.
+  /// </remarks>
+  /// <example>
+  /// <code>
+  /// var builder = NuruApp.CreateEmptyBuilder();
+  /// builder.AddTypeConverter(new MyCustomConverter());
+  /// builder.Map("cmd", () => "minimal");
+  /// await builder.Build().RunAsync(args);
+  /// </code>
+  /// </example>
+  public static NuruAppBuilder CreateEmptyBuilder(string[]? args = null, NuruApplicationOptions? options = null)
+  {
+    options ??= new NuruApplicationOptions();
+    options.Args = args;
+    return new NuruAppBuilder(BuilderMode.Empty, options);
+  }
+
+  #endregion
+
+  /// <summary>
+  /// Gets the terminal I/O provider for interactive operations like REPL.
+  /// </summary>
+  public ITerminal Terminal { get; }
+
+  /// <summary>
+  /// Gets the logger factory.
+  /// </summary>
+  public ILoggerFactory LoggerFactory { get; }
 
   /// <summary>
   /// Gets the collection of registered endpoints.
@@ -25,25 +138,45 @@ public partial class NuruApp
   public EndpointCollection Endpoints { get; }
 
   /// <summary>
-  /// Direct constructor - no dependency injection.
+  /// Gets the type converter registry.
   /// </summary>
-  public NuruApp
+  public ITypeConverterRegistry TypeConverterRegistry { get; }
+
+  /// <summary>
+  /// Gets the REPL configuration options.
+  /// </summary>
+  public ReplOptions? ReplOptions { get; }
+
+  /// <summary>
+  /// Gets the application metadata for help display.
+  /// </summary>
+  public ApplicationMetadata? AppMetadata { get; }
+
+  /// <summary>
+  /// Direct constructor - used by NuruAppBuilder for non-DI path.
+  /// </summary>
+  internal NuruApp
   (
     EndpointCollection endpoints,
     ITypeConverterRegistry typeConverterRegistry,
-    ILoggerFactory? loggerFactory = null
+    ILoggerFactory loggerFactory,
+    IConsole console,
+    ITerminal terminal,
+    ReplOptions? replOptions = null,
+    ApplicationMetadata? appMetadata = null
   )
   {
     Endpoints = endpoints ?? throw new ArgumentNullException(nameof(endpoints));
     TypeConverterRegistry = typeConverterRegistry ?? throw new ArgumentNullException(nameof(typeConverterRegistry));
-    LoggerFactory = loggerFactory ?? Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance;
+    LoggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
+    Console = console ?? throw new ArgumentNullException(nameof(console));
+    Terminal = terminal ?? throw new ArgumentNullException(nameof(terminal));
+    ReplOptions = replOptions;
+    AppMetadata = appMetadata;
 
-    // If logging is configured but DI is not, create a minimal service provider
-    // that can resolve ILoggerFactory and ILogger<T> for delegate parameter injection
-    if (loggerFactory is not null && loggerFactory != Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance)
-    {
-      ServiceProvider = new LoggerServiceProvider(loggerFactory);
-    }
+    // Create a minimal service provider for delegate parameter injection
+    // Resolves NuruApp (for interactive mode), ILoggerFactory, and ILogger<T>
+    ServiceProvider = new LightweightServiceProvider(this, loggerFactory);
   }
 
   /// <summary>
@@ -56,6 +189,10 @@ public partial class NuruApp
     TypeConverterRegistry = serviceProvider.GetRequiredService<ITypeConverterRegistry>();
     MediatorExecutor = serviceProvider.GetRequiredService<MediatorExecutor>();
     LoggerFactory = serviceProvider.GetService<ILoggerFactory>() ?? Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance;
+    ReplOptions = serviceProvider.GetService<ReplOptions>();
+    AppMetadata = serviceProvider.GetService<ApplicationMetadata>();
+    Console = serviceProvider.GetService<IConsole>() ?? NuruConsole.Default;
+    Terminal = serviceProvider.GetService<ITerminal>() ?? NuruTerminal.Default;
   }
 
   public async Task<int> RunAsync(string[] args)
@@ -76,7 +213,7 @@ public partial class NuruApp
       // Exit early if route resolution failed
       if (!result.Success || result.MatchedEndpoint is null)
       {
-        await NuruConsole.WriteErrorLineAsync(
+        await Console.WriteErrorLineAsync(
           result.ErrorMessage ?? "No matching command found."
         ).ConfigureAwait(false);
 
@@ -127,7 +264,7 @@ public partial class NuruApp
     catch (Exception ex)
 #pragma warning restore CA1031
     {
-      await NuruConsole.WriteErrorLineAsync($"Error: {ex.Message}").ConfigureAwait(false);
+      await Console.WriteErrorLineAsync($"Error: {ex.Message}").ConfigureAwait(false);
       return 1;
     }
   }
@@ -174,12 +311,13 @@ public partial class NuruApp
       extractedValues,
       TypeConverterRegistry,
       ServiceProvider ?? EmptyServiceProvider.Instance,
-      endpoint
+      endpoint,
+      Console
     );
 
   private void ShowAvailableCommands()
   {
-    NuruConsole.WriteLine(HelpProvider.GetHelpText(Endpoints));
+    Console.WriteLine(HelpProvider.GetHelpText(Endpoints, AppMetadata?.Name, AppMetadata?.Description));
   }
 
   /// <summary>
@@ -219,63 +357,50 @@ public partial class NuruApp
   /// <summary>
   /// Displays configuration validation errors in a clean, user-friendly format.
   /// </summary>
-  private static async Task DisplayValidationErrorsAsync(OptionsValidationException exception)
+  private async Task DisplayValidationErrorsAsync(OptionsValidationException exception)
   {
-    await NuruConsole.WriteErrorLineAsync("❌ Configuration validation failed:").ConfigureAwait(false);
-    await NuruConsole.WriteErrorLineAsync("").ConfigureAwait(false);
+    await Console.WriteErrorLineAsync("❌ Configuration validation failed:").ConfigureAwait(false);
+    await Console.WriteErrorLineAsync("").ConfigureAwait(false);
 
     foreach (string failure in exception.Failures)
     {
-      await NuruConsole.WriteErrorLineAsync($"  • {failure}").ConfigureAwait(false);
+      await Console.WriteErrorLineAsync($"  • {failure}").ConfigureAwait(false);
     }
 
-    await NuruConsole.WriteErrorLineAsync("").ConfigureAwait(false);
+    await Console.WriteErrorLineAsync("").ConfigureAwait(false);
   }
 
-  [GeneratedRegex(@"^--[\w-]+:[\w:-]", RegexOptions.Compiled)]
+  /// <summary>
+  /// Gets the default application name using the centralized app name detector.
+  /// </summary>
+  private static string GetDefaultAppName()
+  {
+    try
+    {
+      return AppNameDetector.GetEffectiveAppName();
+    }
+    catch (InvalidOperationException)
+    {
+      return "nuru-app";
+    }
+  }
+
+  /// <summary>
+  /// Gets the application name from metadata or falls back to default detection.
+  /// </summary>
+  private string GetEffectiveAppName()
+  {
+    return AppMetadata?.Name ?? GetDefaultAppName();
+  }
+
+  /// <summary>
+  /// Gets the application description from metadata.
+  /// </summary>
+  private string? GetEffectiveDescription()
+  {
+    return AppMetadata?.Description;
+  }
+
+  [GeneratedRegex(@"^--[\w-]+:[\w:-]+", RegexOptions.Compiled)]
   private static partial Regex ConfigurationOverrideRegex();
-}
-
-/// <summary>
-/// Provides an empty service provider for scenarios without dependency injection.
-/// </summary>
-internal sealed class EmptyServiceProvider : IServiceProvider
-{
-  public static readonly EmptyServiceProvider Instance = new();
-
-  private EmptyServiceProvider() { }
-
-  public object? GetService(Type serviceType) => null;
-}
-
-/// <summary>
-/// Provides a minimal service provider that can resolve ILoggerFactory and ILogger&lt;T&gt;.
-/// Used when logging is configured but dependency injection is not enabled.
-/// </summary>
-internal sealed class LoggerServiceProvider : IServiceProvider
-{
-  private readonly ILoggerFactory LoggerFactory;
-
-  public LoggerServiceProvider(ILoggerFactory loggerFactory)
-  {
-    LoggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
-  }
-
-  public object? GetService(Type serviceType)
-  {
-    if (serviceType == typeof(ILoggerFactory))
-    {
-      return LoggerFactory;
-    }
-
-    // Handle ILogger<T> requests by creating Logger<T> instances
-    if (serviceType.IsGenericType && serviceType.GetGenericTypeDefinition() == typeof(ILogger<>))
-    {
-      Type categoryType = serviceType.GetGenericArguments()[0];
-      Type loggerType = typeof(Logger<>).MakeGenericType(categoryType);
-      return Activator.CreateInstance(loggerType, LoggerFactory)!;
-    }
-
-    return null;
-  }
 }

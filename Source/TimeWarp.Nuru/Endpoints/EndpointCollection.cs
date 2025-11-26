@@ -29,7 +29,7 @@ public class EndpointCollection : IEnumerable<Endpoint>
     if (existingRoute is not null)
     {
       // Warn about duplicate route
-      NuruConsole.WriteErrorLine($"Warning: Duplicate route pattern '{endpoint.RoutePattern}' detected. The new handler will override the previous one.");
+      NuruConsole.Default.WriteErrorLine($"Warning: Duplicate route pattern '{endpoint.RoutePattern}' detected. The new handler will override the previous one.");
       EndpointsList.Remove(existingRoute);
     }
 

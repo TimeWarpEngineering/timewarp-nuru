@@ -1,8 +1,5 @@
 # Dynamic Shell Completion (Optional Enhancement)
 
-## Status: BACKLOG
-## Priority: Low
-## Category: Feature Enhancement - Optional
 ## Related Issue: [#30](https://github.com/TimeWarpEngineering/timewarp-nuru/issues/30)
 ## Depends On: Task 025 (Shell Tab Completion)
 
@@ -381,16 +378,3 @@ App generates static completion files at runtime, shell reloads them.
 - Testing requires real shell environments
 - Documentation must clearly explain trade-offs
 
-## Priority Justification
-
-**Low Priority** because:
-
-1. **Not Requested**: No users asking for dynamic completion yet
-2. **Static Sufficient**: Current implementation handles vast majority of use cases
-3. **Performance Cost**: Dynamic completion is noticeably slower
-4. **Complexity**: Significant implementation and maintenance burden
-5. **Optional**: Nice-to-have enhancement, not core functionality
-6. **Other Priorities**: Core framework features more important
-7. **Can Wait**: Easy to add later if demand materializes
-
-**Recommendation:** Keep in backlog until clear user demand emerges. Static completion (Phase 1 & 2) is production-ready and sufficient for most applications.

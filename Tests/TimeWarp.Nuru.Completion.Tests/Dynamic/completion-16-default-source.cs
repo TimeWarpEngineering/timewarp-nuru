@@ -181,11 +181,10 @@ public class DefaultSourceTests
     // Act
     var completions = source.GetCompletions(context).ToList();
 
-    // Assert - DefaultCompletionSource returns all commands; shell filters by prefix
-    completions.Count.ShouldBe(3);
+    // Assert - DefaultCompletionSource filters commands by prefix
+    completions.Count.ShouldBe(2);
     completions.Any(c => c.Value == "deploy").ShouldBeTrue();
     completions.Any(c => c.Value == "delete").ShouldBeTrue();
-    completions.Any(c => c.Value == "status").ShouldBeTrue();
 
     await Task.CompletedTask;
   }

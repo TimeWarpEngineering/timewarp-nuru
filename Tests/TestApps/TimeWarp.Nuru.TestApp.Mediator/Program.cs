@@ -1,5 +1,5 @@
-using TimeWarp.Nuru;
 using TimeWarp.Mediator;
+using TimeWarp.Nuru;
 using static System.Console;
 
 NuruAppBuilder builder = new NuruAppBuilder()

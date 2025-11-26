@@ -1,9 +1,5 @@
 # Optimize Logging Memory Allocations
 
-## Status: TODO
-## Priority: Medium
-## Category: Performance
-
 ## Problem
 The current logging implementation causes unnecessary memory allocations even when logging is disabled:
 

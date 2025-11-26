@@ -1,9 +1,9 @@
+global using ModelContextProtocol.Server;
 global using System.ComponentModel;
 global using System.Globalization;
 global using System.Net.Http;
 global using System.Runtime.CompilerServices;
 global using System.Text.Json;
-global using ModelContextProtocol.Server;
 
 [assembly: InternalsVisibleTo("mcp-01-example-retrieval")]
 [assembly: InternalsVisibleTo("mcp-02-syntax-documentation")]

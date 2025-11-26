@@ -1,6 +1,5 @@
 # Support Custom Type Converters and Add Common CLI Types
 
-## Category: Bug Fix + Feature Enhancement
 ## Related Issue: [#62](https://github.com/TimeWarpEngineering/timewarp-nuru/issues/62)
 
 ## Problem
@@ -152,7 +151,7 @@ public override string ToString() =>
 
 ### Part 2: Add Common Built-in Type Converters
 
-Based on research of System.CommandLine, Cocona, and common CLI scenarios, add these Priority 1 types:
+Based on research of System.CommandLine, Cocona, and common CLI scenarios, add these essential types:
 
 #### Essential File System Types
 - **`FileInfo`** - File paths with metadata (requested in issue #62)
@@ -397,12 +396,3 @@ All phases completed successfully. Delivered:
 **Total Estimate**: 13-20 hours
 
 **Complexity**: Medium (multiple coordinated changes but each is straightforward)
-
-## Priority Justification
-
-**High Priority** because:
-1. Blocks real users (Issue #62 is active)
-2. Design inconsistency undermines framework credibility
-3. Missing documented feature (Uri is documented but not implemented)
-4. Common types (FileInfo) are table stakes for CLI frameworks
-5. Relatively quick to implement with high user value

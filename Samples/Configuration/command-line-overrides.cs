@@ -62,10 +62,12 @@ async Task RunApplicationAsync(IOptions<FooOptions> fooOptions)
   await Task.CompletedTask;
 }
 
-async Task ShowConfigurationAsync(
+async Task ShowConfigurationAsync
+(
   IOptions<FooOptions> fooOptions,
   IOptions<DatabaseOptions> dbOptions,
-  IConfiguration config)
+  IConfiguration config
+)
 {
   WriteLine("\n╔════════════════════════════════════════╗");
   WriteLine("║       Configuration Values             ║");

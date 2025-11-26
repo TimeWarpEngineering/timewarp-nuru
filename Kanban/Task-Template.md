@@ -2,6 +2,16 @@
 
 > **IMPORTANT NOTE**: This template provides a set of optional suggestions and ideas to choose from when creating tasks. Not all sections or items are required for every task. When creating tasks, choose conservatively which elements should be included based on the specific needs of the task. As an AI assistant, I will select appropriate sections based on the task's complexity and requirements.
 
+## ⚠️ CRITICAL: DO NOT INCLUDE THESE FIELDS ⚠️
+**NEVER add these fields to Kanban tasks:**
+- **Status** - The folder location (ToDo/InProgress/Done/Backlog) indicates status
+- **Priority** - We don't use priority rankings
+- **Category** - Unnecessary classification 
+- **Priority Justification** - Not needed
+- **Any temporal status indicators** - No "Currently", "Now", "Implementation Status"
+
+**WHY:** Status is determined by folder location. Adding status fields creates redundancy and confusion.
+
 ## Description
 
 [Provide a brief description of the task, outlining its purpose and goals]

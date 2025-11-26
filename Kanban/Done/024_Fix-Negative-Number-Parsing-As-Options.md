@@ -1,8 +1,5 @@
 # Fix Negative Number Parsing As Options
 
-## Priority
-**High** - This is a fundamental bug affecting basic numeric operations
-
 ## Goal
 Allow negative numbers to be passed as positional parameter values without being interpreted as undefined options.
 
@@ -307,7 +304,6 @@ Task completed and merged via PR #78. Implemented **Option 1** (Check Against De
 
 ## Timeline Estimate
 
-- **Priority**: High
 - **Complexity**: Medium
 - **Estimate**: 4-6 hours
   - 1 hour: Implementation of fix

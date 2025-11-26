@@ -19,6 +19,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="TimeWarp.Nuru.Completion" />
+    <InternalsVisibleTo Include="TimeWarp.Nuru.Repl" />
     <PackageReference Include="FluentValidation" />
     <PackageReference Include="GlobalUsingsAnalyzer">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

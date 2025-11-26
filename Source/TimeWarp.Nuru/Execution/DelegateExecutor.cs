@@ -20,13 +20,16 @@ public static class DelegateExecutor
       Dictionary<string, string> extractedValues,
       ITypeConverterRegistry typeConverterRegistry,
       IServiceProvider serviceProvider,
-      Endpoint endpoint)
+      Endpoint endpoint,
+      IConsole? console = null)
   {
     ArgumentNullException.ThrowIfNull(handler);
     ArgumentNullException.ThrowIfNull(extractedValues);
     ArgumentNullException.ThrowIfNull(typeConverterRegistry);
     ArgumentNullException.ThrowIfNull(serviceProvider);
     ArgumentNullException.ThrowIfNull(endpoint);
+
+    IConsole output = console ?? serviceProvider.GetService<IConsole>() ?? NuruConsole.Default;
 
     try
     {
@@ -71,7 +74,7 @@ public static class DelegateExecutor
       }
 
       // Display the response (if any)
-      MediatorExecutor.DisplayResponse(returnValue);
+      ResponseDisplay.Write(returnValue, output);
 
       return 0;
     }
@@ -81,7 +84,7 @@ public static class DelegateExecutor
     catch (Exception ex)
 #pragma warning restore CA1031
     {
-      await NuruConsole.WriteErrorLineAsync(
+      await output.WriteErrorLineAsync(
         $"Error executing handler: {ex.Message}"
       ).ConfigureAwait(false);
 

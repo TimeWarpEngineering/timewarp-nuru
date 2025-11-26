@@ -1,0 +1,22 @@
+<Project>
+  <!-- Import parent Directory.Build.props -->
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+
+  <ItemGroup>
+    <!-- Reference the Repl project -->
+    <ProjectReference Include="$(MSBuildThisFileDirectory)../../Source/TimeWarp.Nuru.Repl/TimeWarp.Nuru.Repl.csproj" />
+    <Using Include="TimeWarp.Nuru.Repl" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Include tab completion test helpers for all REPL tests -->
+    <Compile Include="$(MSBuildThisFileDirectory)TabCompletion/CompletionTestHelpers.cs" Link="Shared/CompletionTestHelpers.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Static using for tab completion test helpers -->
+    <Using Include="TimeWarp.Nuru.Repl.Tests.TabCompletion.CompletionAssertions" Static="true" />
+    <Using Include="TimeWarp.Nuru.Repl.Tests.TabCompletion.KeySequenceHelpers" Static="true" />
+    <Using Include="TimeWarp.Nuru.Repl.Tests.TabCompletion.TestAppFactory" Static="true" />
+  </ItemGroup>
+</Project>

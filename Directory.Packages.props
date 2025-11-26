@@ -23,7 +23,7 @@
   <ItemGroup Label="TimeWarp Packages">
     <PackageVersion Include="TimeWarp.Mediator" Version="13.0.0" />
     <PackageVersion Include="TimeWarp.Amuru" Version="1.0.0-beta.13" />
-    <PackageVersion Include="TimeWarp.Jaribu" Version="1.0.0-beta.4" />
+    <PackageVersion Include="TimeWarp.Jaribu" Version="1.0.0-beta.5" />
     <PackageVersion Include="TimeWarp.Build.Tasks" Version="1.0.0" />
     <PackageVersion Include="TimeWarp.OptionsValidation" Version="1.0.0-beta.3" />
     <PackageVersion Include="TimeWarp.Nuru.Parsing" Version="$(Version)" />
@@ -34,9 +34,10 @@
   </ItemGroup>
   <ItemGroup Label="Logging - Serilog">
     <PackageVersion Include="Serilog" Version="4.2.0" />
-    <PackageVersion Include="Serilog.Sinks.Console" Version="6.0.0" />
-    <PackageVersion Include="Serilog.Sinks.Seq" Version="8.0.0" />
-    <PackageVersion Include="Serilog.Extensions.Logging" Version="8.0.0" />
+    <PackageVersion Include="Serilog.Sinks.Console" Version="6.1.1" />
+    <PackageVersion Include="Serilog.Sinks.Seq" Version="9.0.0" />
+    <PackageVersion Include="Serilog.Sinks.File" Version="7.0.0" />
+    <PackageVersion Include="Serilog.Extensions.Logging" Version="9.0.2" />
   </ItemGroup>
   <ItemGroup Label="Benchmark - CLI Frameworks">
     <PackageVersion Include="CliFx" Version="2.3.6" />

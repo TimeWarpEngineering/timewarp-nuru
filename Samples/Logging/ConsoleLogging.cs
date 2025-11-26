@@ -4,7 +4,6 @@
 #:package Microsoft.Extensions.Logging
 
 using TimeWarp.Nuru;
-using TimeWarp.Nuru.Logging;
 using TimeWarp.Mediator;
 using Microsoft.Extensions.Logging;
 

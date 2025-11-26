@@ -1,4 +1,3 @@
-
 namespace TimeWarp.Nuru;
 
 /// <summary>
@@ -6,14 +5,15 @@ namespace TimeWarp.Nuru;
 /// </summary>
 public class MediatorExecutor
 {
-
   private readonly IServiceProvider ServiceProvider;
   private readonly ITypeConverterRegistry TypeConverterRegistry;
+  private readonly IConsole Console;
 
-  public MediatorExecutor(IServiceProvider serviceProvider, ITypeConverterRegistry typeConverterRegistry)
+  public MediatorExecutor(IServiceProvider serviceProvider, ITypeConverterRegistry typeConverterRegistry, IConsole? console = null)
   {
     ServiceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
     TypeConverterRegistry = typeConverterRegistry ?? throw new ArgumentNullException(nameof(typeConverterRegistry));
+    Console = console ?? serviceProvider.GetService<IConsole>() ?? NuruConsole.Default;
   }
 
   /// <summary>
@@ -114,38 +114,6 @@ public class MediatorExecutor
   /// </remarks>
   [RequiresUnreferencedCode("Response serialization may require types not known at compile time")]
   [RequiresDynamicCode("JSON serialization of unknown response types may require dynamic code generation")]
-  public static void DisplayResponse(object? response)
-  {
-    if (response is null)
-      return;
-
-    Type responseType = response.GetType();
-
-    // Check if this is Unit.Value (represents no return value)
-    if (responseType.Name == "Unit" && responseType.Namespace == "TimeWarp.Mediator")
-      return;
-
-    // Simple types - display directly
-    if (responseType.IsPrimitive || responseType == typeof(string) || responseType == typeof(decimal))
-    {
-      NuruConsole.WriteLine(response.ToString());
-      return;
-    }
-
-    // For complex objects, check if ToString is overridden by testing the output
-    string stringValue = response.ToString() ?? "";
-
-    // If ToString returns the default type name, use JSON instead
-    if (stringValue == responseType.FullName || stringValue == responseType.Name)
-    {
-      // Complex object without custom ToString - serialize to JSON for display
-      string json = JsonSerializer.Serialize(response, NuruJsonSerializerContext.Default.Options);
-      NuruConsole.WriteLine(json);
-    }
-    else
-    {
-      // Custom ToString - use it
-      NuruConsole.WriteLine(stringValue);
-    }
-  }
+  public void DisplayResponse(object? response)
+    => ResponseDisplay.Write(response, Console);
 }

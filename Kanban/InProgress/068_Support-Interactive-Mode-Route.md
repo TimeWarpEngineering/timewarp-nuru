@@ -27,7 +27,7 @@ The implementation adds an `AddInteractiveRoute` extension method that registers
 
 ### Documentation
 - [x] Add sample demonstrating CLI + interactive mode
-- [ ] Update existing REPL demo to show the pattern
+- [x] Update existing REPL demo to show the pattern
 
 ## Notes
 

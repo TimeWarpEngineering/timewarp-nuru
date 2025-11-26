@@ -21,6 +21,11 @@
 // - Short aliases (--verbose,-v)
 // - Combined options (backup --compress --output {dest})
 //
+// Supports both CLI and REPL modes:
+//   ./repl-basic-demo.cs greet Alice       - CLI mode (single command)
+//   ./repl-basic-demo.cs --interactive     - Enter REPL mode
+//   ./repl-basic-demo.cs -i                - Enter REPL mode (short form)
+//
 // Debug logs written to: repl-debug.log
 // ============================================================================
 
@@ -318,10 +323,23 @@ try
         Log.Information("REPL configured");
       }
     )
+
+    // Add interactive mode route (--interactive, -i)
+    // This allows running as CLI or entering REPL mode
+    .AddInteractiveRoute()
+
     .Build();
 
-  Log.Information("Starting REPL mode");
-  return await app.RunReplAsync();
+  // If no args or --interactive/-i, enter REPL mode
+  // Otherwise execute the command and exit
+  if (args.Length == 0)
+  {
+    Log.Information("No args - starting REPL mode");
+    return await app.RunReplAsync();
+  }
+
+  Log.Information("Running command: {Args}", string.Join(" ", args));
+  return await app.RunAsync(args);
 }
 catch (Exception ex)
 {

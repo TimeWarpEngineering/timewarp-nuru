@@ -122,10 +122,12 @@ internal sealed class TabCompletionHandler
   private (string, int) ApplySingleCompletion(
     string input,
     int cursor,
-    CompletionCandidate candidate)
+    CompletionCandidate candidate,
+    bool resetState = true)
   {
-    // Single completion - apply it and clear cycling state
-    State.Reset();
+    // Only reset state when not cycling through multiple completions
+    if (resetState)
+      State.Reset();
 
     // Find the start position of the word to complete
     int wordStart = FindWordStart(input, cursor);
@@ -168,7 +170,7 @@ internal sealed class TabCompletionHandler
 
     ReplLoggerMessages.CompletionCycling(Logger, State.Index, candidates.Count, null);
 
-    return ApplySingleCompletion(input, cursor, candidates[State.Index]);
+    return ApplySingleCompletion(input, cursor, candidates[State.Index], resetState: false);
   }
 
   private void DisplayCandidates(

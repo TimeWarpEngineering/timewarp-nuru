@@ -74,15 +74,26 @@ Most MCP clients will automatically detect and load the server after restarting.
 Fetches TimeWarp.Nuru code examples from the GitHub repository with intelligent caching.
 
 **Parameters:**
-- `name`: Example name (basic, async, console-logging, serilog, mediator, delegates) or 'list' to see all
+- `name`: Example name or 'list' to see all available examples
 - `forceRefresh`: Force refresh from GitHub, bypassing cache (default: false)
+
+**Available Examples:**
+- `basic`, `createbuilder`, `delegate`, `mediator`, `mixed` - Calculator examples
+- `hello-world` - Simplest possible app
+- `async` - Async command handlers
+- `console-logging`, `serilog` - Logging integrations
+- `configuration`, `configuration-validation`, `command-line-overrides` - Configuration samples
+- `repl-basic`, `repl-keybindings`, `repl-interactive`, `repl-options` - REPL demos
+- `shell-completion`, `dynamic-completion` - Tab completion examples
+- `syntax-examples`, `builtin-types`, `custom-type-converter` - Reference examples
 
 **Sample Prompts:**
 ```
 "Show me the basic TimeWarp.Nuru example"
-"Get the serilog logging example from TimeWarp.Nuru"
+"Get the createbuilder example from TimeWarp.Nuru"
+"Show me how REPL works in Nuru"
+"Get the dynamic-completion example"
 "List all available TimeWarp.Nuru examples"
-"Refresh and show me the mediator pattern example"
 ```
 
 #### 2. `list_examples`
@@ -158,11 +169,17 @@ Provides examples of specific route pattern features.
 ```
 
 #### 8. `generate_handler`
-Generates handler code from a route pattern.
+Generates handler code from a route pattern using the recommended `NuruApp.CreateBuilder()` pattern.
 
 **Parameters:**
 - `pattern`: The route pattern to generate a handler for
 - `useMediator`: Whether to generate mediator pattern code (default: false)
+
+**Generated Code Features:**
+- Uses ASP.NET Core-style `NuruApp.CreateBuilder(args)` pattern (recommended)
+- Shows alternative fluent builder pattern for reference
+- Generates correct parameter types based on route constraints
+- For mediator: generates Command class, Handler class, and DI registration
 
 **Sample Prompts:**
 ```
@@ -267,9 +284,10 @@ Cache location:
 ### Learning TimeWarp.Nuru
 ```
 "Show me how to create a basic CLI app with TimeWarp.Nuru"
-"Get the async command example and explain how it works"
+"Get the createbuilder example - I'm familiar with ASP.NET Core"
 "What's the difference between the delegates and mediator examples?"
 "Show me the syntax for optional parameters and give me examples"
+"How do I add REPL support to my CLI app?"
 ```
 
 ### Building CLI Applications
@@ -280,11 +298,26 @@ Cache location:
 "Create mediator pattern code for 'migrate {database} --rollback {version?}'"
 ```
 
+### Adding Interactive Features
+```
+"Show me the repl-basic example"
+"How do I customize REPL key bindings?"
+"Get the shell-completion example for adding tab completion"
+"Show me how to implement dynamic completion that queries my database"
+```
+
 ### Route Pattern Development
 ```
 "Show me examples of typed parameters and generate a handler for 'wait {seconds:int}'"
 "Get the syntax for catch-all parameters and create code for 'docker {*args}'"
 "Generate both direct and mediator handlers for 'test {project} --verbose'"
+```
+
+### Configuration
+```
+"Show me the configuration-validation example"
+"How do I support --Section:Key=Value style overrides?"
+"Get the command-line-overrides example"
 ```
 
 ### Code Generation
@@ -324,11 +357,10 @@ Once published, configure in your IDE:
 
 ## Future Enhancements
 
-- [ ] Dynamic example discovery from GitHub
-- [ ] Route pattern syntax documentation tool  
-- [ ] Pseudo source generators for common CLI patterns
 - [ ] Route conflict detection
 - [ ] Parameter type validation
+- [ ] Pseudo source generators for common CLI patterns (migration assistants, CRUD CLIs)
+- [ ] Interactive route builder tool
 
 ## Contributing
 

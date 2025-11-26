@@ -484,6 +484,10 @@ public class NuruAppBuilder
       // Register ILogger<T> generic implementation (matches Microsoft.Extensions.Logging behavior)
       ServiceCollection.AddSingleton(typeof(ILogger<>), typeof(Logger<>));
 
+      // Register NuruAppHolder for deferred app access (needed for interactive mode route)
+      var appHolder = new NuruAppHolder();
+      ServiceCollection.AddSingleton(appHolder);
+
       // Register REPL options if configured
       if (ReplOptions is not null)
       {
@@ -504,7 +508,9 @@ public class NuruAppBuilder
 
       ServiceProvider serviceProvider = ServiceCollection.BuildServiceProvider();
 
-      return new NuruApp(serviceProvider);
+      var app = new NuruApp(serviceProvider);
+      appHolder.SetApp(app);
+      return app;
     }
     else
     {

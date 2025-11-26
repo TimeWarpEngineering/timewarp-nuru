@@ -26,7 +26,7 @@ The implementation adds an `AddInteractiveRoute` extension method that registers
 - [x] Support custom route patterns
 
 ### Documentation
-- [ ] Add sample demonstrating CLI + interactive mode
+- [x] Add sample demonstrating CLI + interactive mode
 - [ ] Update existing REPL demo to show the pattern
 
 ## Notes

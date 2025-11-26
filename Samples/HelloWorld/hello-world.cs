@@ -4,7 +4,7 @@
 using TimeWarp.Nuru;
 
 var app = NuruApp.CreateBuilder(args)
-  .Map("hello", () => "Hello World")
+  .MapDefault(() => "Hello World")
   .Build();
 
-return await app.RunAsync(args);
+await app.RunAsync(args);

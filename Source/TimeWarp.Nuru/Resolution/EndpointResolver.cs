@@ -182,7 +182,7 @@ internal static class EndpointResolver
       // Handle non-repeated option segments
       if (segment is OptionMatcher option)
       {
-        if (!MatchOptionSegment(option, args, ref consumedArgs, extractedValues, seenEndOfOptions, endpoint.CompiledRoute.OptionMatchers, logger, ref defaultsUsed, consumedIndices))
+        if (!MatchOptionSegment(option, args, extractedValues, seenEndOfOptions, endpoint.CompiledRoute.OptionMatchers, logger, ref defaultsUsed, consumedIndices))
         {
           totalConsumed = consumedIndices.Count;
           return false;
@@ -403,7 +403,6 @@ internal static class EndpointResolver
   (
     OptionMatcher option,
     string[] args,
-    ref int consumedArgs,
     Dictionary<string, string> extractedValues,
     bool seenEndOfOptions,
     IReadOnlyList<OptionMatcher> optionMatchers,
@@ -428,27 +427,37 @@ internal static class EndpointResolver
       return false;
     }
 
-    // Skip indices consumed by repeated options
-    while (consumedArgs < args.Length && consumedIndices.Contains(consumedArgs))
+    // Search through ALL unconsumed arguments for this option (position-independent)
+    // This allows options to appear in any order AFTER positional arguments
+    int foundIndex = -1;
+    for (int i = 0; i < args.Length; i++)
     {
-      consumedArgs++;
+      // Skip already consumed indices
+      if (consumedIndices.Contains(i))
+        continue;
+
+      if (option.TryMatch(args[i], out _))
+      {
+        foundIndex = i;
+        break;
+      }
     }
 
-    // Check if current arg matches this option
-    if (consumedArgs < args.Length && option.TryMatch(args[consumedArgs], out _))
+    if (foundIndex >= 0)
     {
-      // Option matched at current position
-      int optionIndex = consumedArgs;
-      consumedIndices.Add(optionIndex); // Mark option flag as consumed
-      consumedArgs++; // Consume the option flag
+      // Option found at foundIndex
+      consumedIndices.Add(foundIndex); // Mark option flag as consumed
 
       if (option.ExpectsValue)
       {
-        // Option expects a value
+        // Option expects a value - look at the next arg after the option
+        int valueIndex = foundIndex + 1;
+
         // Check if next arg is available and is NOT a defined option
-        bool valueIsAvailable = consumedArgs < args.Length &&
-                                (!args[consumedArgs].StartsWith(CommonStrings.SingleDash, StringComparison.Ordinal) ||
-                                 !IsDefinedOption(args[consumedArgs], optionMatchers));
+        bool valueIsAvailable = valueIndex < args.Length &&
+                                !consumedIndices.Contains(valueIndex) &&
+                                (!args[valueIndex].StartsWith(CommonStrings.SingleDash, StringComparison.Ordinal) ||
+                                 !IsDefinedOption(args[valueIndex], optionMatchers));
 
         if (!valueIsAvailable)
         {
@@ -467,12 +476,11 @@ internal static class EndpointResolver
           // Value is available - extract it
           if (option.ParameterName is not null)
           {
-            extractedValues[option.ParameterName] = args[consumedArgs];
-            LoggerMessages.ExtractedParameter(logger, option.ParameterName, args[consumedArgs], null);
+            extractedValues[option.ParameterName] = args[valueIndex];
+            LoggerMessages.ExtractedParameter(logger, option.ParameterName, args[valueIndex], null);
           }
 
-          consumedIndices.Add(consumedArgs); // Mark option value as consumed
-          consumedArgs++; // Consume the value
+          consumedIndices.Add(valueIndex); // Mark option value as consumed
         }
       }
       else
@@ -488,7 +496,7 @@ internal static class EndpointResolver
       return true;
     }
 
-    // Option not found at current position
+    // Option not found anywhere in unconsumed arguments
     if (option.IsOptional)
     {
       // Optional option not provided

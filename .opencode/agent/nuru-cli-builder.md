@@ -60,22 +60,22 @@ Read `Samples/SyntaxExamples.cs` for the authoritative syntax reference. Key pat
 - **Aliases**: `--verbose,-v` (comma-separated)
 - **Descriptions**: `{env|Environment name}`, `--force|Skip confirmations`
 
-## Project References
+## Package References
 
-When writing .NET 10 runfiles, use these project references:
+When writing .NET 10 runfiles, use NuGet package references:
 
 ```csharp
 #!/usr/bin/dotnet --
-#:project ../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
+#:package TimeWarp.Nuru
 
 // For REPL support, add:
-#:project ../../Source/TimeWarp.Nuru.Repl/TimeWarp.Nuru.Repl.csproj
+#:package TimeWarp.Nuru.Repl
 
 // For tab completion, add:
-#:project ../../Source/TimeWarp.Nuru.Completion/TimeWarp.Nuru.Completion.csproj
+#:package TimeWarp.Nuru.Completion
 ```
 
-Adjust the relative paths based on where your file is located.
+For prerelease versions, specify the version: `#:package TimeWarp.Nuru@3.0.0-beta.3`
 
 ## Your Workflow
 

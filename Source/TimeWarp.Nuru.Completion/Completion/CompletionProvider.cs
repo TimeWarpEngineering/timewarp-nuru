@@ -1,82 +1,118 @@
 namespace TimeWarp.Nuru.Completion;
 
 using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
-using TimeWarp.Nuru; // Endpoint, EndpointCollection, ITypeConverterRegistry, IRouteTypeConverter
-using TimeWarp.Nuru.Parsing; // CompiledRoute, RouteMatcher, LiteralMatcher, ParameterMatcher, OptionMatcher
 
 /// <summary>
 /// Provides completion candidates by analyzing route patterns and current input.
 /// </summary>
+/// <remarks>
+/// <para>
+/// This class delegates to <see cref="CompletionEngine"/> which uses a three-stage pipeline:
+/// </para>
+/// <list type="number">
+/// <item><description><see cref="InputTokenizer"/>: Parse input into tokens</description></item>
+/// <item><description><see cref="RouteMatchEngine"/>: Match tokens against routes</description></item>
+/// <item><description><see cref="CandidateGenerator"/>: Generate candidates from matches</description></item>
+/// </list>
+/// <para>
+/// Additionally handles enum expansion by resolving parameter type constraints
+/// to actual CLR types and enumerating enum values.
+/// </para>
+/// </remarks>
 public class CompletionProvider
 {
-  private readonly ILoggerFactory? LoggerFactory;
+  private readonly CompletionEngine Engine;
   private readonly ITypeConverterRegistry TypeConverterRegistry;
+
+  /// <summary>
+  /// Creates a new instance of <see cref="CompletionProvider"/>.
+  /// </summary>
+  /// <param name="typeConverterRegistry">The type converter registry for resolving parameter types.</param>
+  /// <param name="loggerFactory">Optional logger factory for diagnostic output.</param>
   public CompletionProvider(ITypeConverterRegistry typeConverterRegistry, ILoggerFactory? loggerFactory = null)
   {
-    TypeConverterRegistry = typeConverterRegistry;
-    LoggerFactory = loggerFactory;
+    TypeConverterRegistry = typeConverterRegistry ?? throw new ArgumentNullException(nameof(typeConverterRegistry));
+
+    ILogger<CompletionEngine>? logger = loggerFactory?.CreateLogger<CompletionEngine>();
+    Engine = new CompletionEngine(logger: logger);
   }
 
   /// <summary>
   /// Get completion candidates for the given context.
   /// </summary>
-  public ReadOnlyCollection<CompletionCandidate> GetCompletions
-  (
+  /// <param name="context">The completion context containing args and cursor position.</param>
+  /// <param name="endpoints">The collection of all registered endpoints.</param>
+  /// <returns>
+  /// A read-only collection of completion candidates, sorted by type
+  /// priority (commands first, options last) and alphabetically within
+  /// each type group.
+  /// </returns>
+  public ReadOnlyCollection<CompletionCandidate> GetCompletions(
     CompletionContext context,
-    EndpointCollection endpoints
-  )
+    EndpointCollection endpoints)
   {
-    ArgumentNullException.ThrowIfNull(context);
-    ArgumentNullException.ThrowIfNull(endpoints);
+    IReadOnlyCollection<CompletionCandidate> candidates = Engine.GetCompletions(context, endpoints);
 
-    var candidates = new List<CompletionCandidate>();
+    // Expand enum parameters to individual enum values
+    List<CompletionCandidate> expanded = ExpandEnumCandidates(candidates, context);
 
-    // If we're completing the first command (0 or 1 args), use command completions
-    if (context.Args.Length <= 1)
+    return new ReadOnlyCollection<CompletionCandidate>(expanded);
+  }
+
+  /// <summary>
+  /// Expands parameter candidates with enum type constraints into individual enum value candidates.
+  /// </summary>
+  private List<CompletionCandidate> ExpandEnumCandidates(
+    IReadOnlyCollection<CompletionCandidate> candidates,
+    CompletionContext context)
+  {
+    List<CompletionCandidate> result = [];
+    string? partialWord = context.Args.Length > 0 && !context.HasTrailingSpace
+      ? context.Args[^1]
+      : null;
+
+    foreach (CompletionCandidate candidate in candidates)
     {
-      string partialCommand = context.Args.ElementAtOrDefault(0) ?? "";
-
-      // If there's a trailing space and we have exactly one arg, the user has finished
-      // typing a command. Check if the command exactly matches any registered command.
-      // If so, move to argument/option completion instead of re-suggesting the same command.
-      if (context.HasTrailingSpace && context.Args.Length == 1)
+      // Check if this is a parameter candidate that might be an enum
+      if (candidate.Type == CompletionType.Parameter && candidate.ParameterType is not null)
       {
-        bool isCompleteCommand = IsExactCommandMatch(endpoints, partialCommand);
-        if (isCompleteCommand)
+        // Try to get the type converter for this constraint
+        IRouteTypeConverter? converter = TypeConverterRegistry.GetConverterByConstraint(candidate.ParameterType);
+        if (converter?.TargetType?.IsEnum == true)
         {
-          // Move on to argument/subcommand completions for this command
-          return GetCompletionsAfterCommand(endpoints, partialCommand);
+          // Expand to enum values
+          foreach (string enumName in Enum.GetNames(converter.TargetType))
+          {
+            // Filter by partial word if present (case-insensitive)
+            if (string.IsNullOrEmpty(partialWord) ||
+                enumName.StartsWith(partialWord, StringComparison.OrdinalIgnoreCase))
+            {
+              result.Add(new CompletionCandidate(
+                enumName,
+                $"{converter.TargetType.Name}.{enumName}",
+                CompletionType.Enum
+              ));
+            }
+          }
+
+          continue; // Don't add the original parameter candidate
         }
       }
 
-      candidates.AddRange(GetCommandCompletions(endpoints, partialCommand));
-      return [.. candidates];
+      // Not an enum - add as-is
+      result.Add(candidate);
     }
 
-    // Get all possible routes and try to match against current args
-    foreach (Endpoint endpoint in endpoints.Endpoints)
+    // Re-sort after adding enum values (enums should come after commands but before other parameters)
+    result.Sort((a, b) =>
     {
-      CompiledRoute route = endpoint.CompiledRoute;
+      int typeCompare = GetTypeSortOrder(a.Type).CompareTo(GetTypeSortOrder(b.Type));
+      if (typeCompare != 0) return typeCompare;
+      return string.Compare(a.Value, b.Value, StringComparison.OrdinalIgnoreCase);
+    });
 
-      // Try to determine what kind of completion is expected at cursor position
-      IEnumerable<CompletionCandidate> routeCandidates = GetCompletionsForRoute(route, context.Args, context.CursorPosition);
-      candidates.AddRange(routeCandidates);
-    }
-
-    // Remove duplicates and sort by type priority, then alphabetically
-    // Priority: Command/Enum/Parameter first, Options last
-    return
-    [
-      .. candidates
-      .GroupBy(c => c.Value)
-      .Select(g => g.First())
-      .OrderBy(c => GetTypeSortOrder(c.Type))
-      .ThenBy(c => c.Value)
-    ];
+    return result;
   }
 
   /// <summary>
@@ -93,475 +129,8 @@ public class CompletionProvider
       CompletionType.File => 3,
       CompletionType.Directory => 4,
       CompletionType.Custom => 5,
-      CompletionType.Option => 6, // Options come last
+      CompletionType.Option => 6,
       _ => 99
     };
-  }
-
-  /// <summary>
-  /// Get command literal completions (first segment matching).
-  /// </summary>
-  private static IEnumerable<CompletionCandidate> GetCommandCompletions(
-    EndpointCollection endpoints,
-    string partialCommand)
-  {
-    var commands = new HashSet<string>();
-
-    foreach (Endpoint endpoint in endpoints.Endpoints)
-    {
-      CompiledRoute route = endpoint.CompiledRoute;
-
-      // Get first literal segment
-      RouteMatcher? firstSegment = route.Segments.Count > 0 ? route.Segments[0] : null;
-      if (firstSegment is LiteralMatcher literal)
-      {
-        // Match if partial command is empty or literal starts with partial
-        if (string.IsNullOrEmpty(partialCommand) ||
-            literal.Value.StartsWith(partialCommand, StringComparison.OrdinalIgnoreCase))
-        {
-          commands.Add(literal.Value);
-        }
-      }
-    }
-
-    return commands.Select(cmd => new CompletionCandidate(
-      cmd,
-      Description: null,
-      CompletionType.Command
-    ));
-  }
-
-  /// <summary>
-  /// Check if the given command exactly matches a registered command.
-  /// </summary>
-  private static bool IsExactCommandMatch(EndpointCollection endpoints, string command)
-  {
-    foreach (Endpoint endpoint in endpoints.Endpoints)
-    {
-      CompiledRoute route = endpoint.CompiledRoute;
-
-      // Get first literal segment
-      RouteMatcher? firstSegment = route.Segments.Count > 0 ? route.Segments[0] : null;
-      if (firstSegment is LiteralMatcher literal)
-      {
-        if (string.Equals(literal.Value, command, StringComparison.OrdinalIgnoreCase))
-        {
-          return true;
-        }
-      }
-    }
-
-    return false;
-  }
-
-  /// <summary>
-  /// Get completions after a complete command (subcommands, parameters, options).
-  /// </summary>
-  private ReadOnlyCollection<CompletionCandidate> GetCompletionsAfterCommand(
-    EndpointCollection endpoints,
-    string command)
-  {
-    var candidates = new List<CompletionCandidate>();
-
-    foreach (Endpoint endpoint in endpoints.Endpoints)
-    {
-      CompiledRoute route = endpoint.CompiledRoute;
-
-      // Check if first segment matches command
-      RouteMatcher? firstSegment = route.Segments.Count > 0 ? route.Segments[0] : null;
-      if (firstSegment is not LiteralMatcher literal ||
-          !string.Equals(literal.Value, command, StringComparison.OrdinalIgnoreCase))
-      {
-        continue;
-      }
-
-      // Command matches - what comes next?
-      if (route.Segments.Count > 1)
-      {
-        RouteMatcher secondSegment = route.Segments[1];
-
-        if (secondSegment is LiteralMatcher subcommand)
-        {
-          // Next segment is a literal (subcommand or option)
-          // Don't suggest options from this route yet - user needs to complete the subcommand first
-          CompletionType completionType = subcommand.Value.StartsWith('-')
-            ? CompletionType.Option
-            : CompletionType.Command;
-
-          candidates.Add(new CompletionCandidate(
-            subcommand.Value,
-            Description: null,
-            completionType
-          ));
-        }
-        else if (secondSegment is ParameterMatcher parameter)
-        {
-          // Next segment is a parameter - user can provide parameter value OR options
-          // Provide type hints for the parameter
-          candidates.AddRange(GetParameterCompletions(parameter));
-
-          // Also suggest options for this route (since parameters can be followed by options)
-          foreach (OptionMatcher option in route.OptionMatchers)
-          {
-            candidates.Add(new CompletionCandidate(
-              option.MatchPattern,
-              option.Description,
-              CompletionType.Option
-            ));
-
-            if (!string.IsNullOrEmpty(option.AlternateForm))
-            {
-              candidates.Add(new CompletionCandidate(
-                option.AlternateForm,
-                option.Description,
-                CompletionType.Option
-              ));
-            }
-          }
-        }
-      }
-      else
-      {
-        // No more segments after command - suggest options for this route
-        foreach (OptionMatcher option in route.OptionMatchers)
-        {
-          candidates.Add(new CompletionCandidate(
-            option.MatchPattern,
-            option.Description,
-            CompletionType.Option
-          ));
-
-          if (!string.IsNullOrEmpty(option.AlternateForm))
-          {
-            candidates.Add(new CompletionCandidate(
-              option.AlternateForm,
-              option.Description,
-              CompletionType.Option
-            ));
-          }
-        }
-      }
-    }
-
-    // Remove duplicates and sort by type priority, then alphabetically
-    return
-    [
-      .. candidates
-      .GroupBy(c => c.Value)
-      .Select(g => g.First())
-      .OrderBy(c => GetTypeSortOrder(c.Type))
-      .ThenBy(c => c.Value)
-    ];
-  }
-
-  /// <summary>
-  /// Get completions for a specific route at the given cursor position.
-  /// </summary>
-  private List<CompletionCandidate> GetCompletionsForRoute
-  (
-    CompiledRoute route,
-    string[] args,
-    int cursorPosition
-  )
-  {
-    var candidates = new List<CompletionCandidate>();
-
-    // Track which segments have been consumed
-    int segmentIndex = 0;
-    int argIndex = 0;
-
-    // First, check if we can match the route up to cursor position
-    while (argIndex < cursorPosition && segmentIndex < route.Segments.Count)
-    {
-      RouteMatcher segment = route.Segments[segmentIndex];
-
-      if (segment is OptionMatcher optionMatcher)
-      {
-        // Skip optional options (they can appear anywhere)
-        // But required options must be matched positionally
-        if (optionMatcher.IsOptional)
-        {
-          segmentIndex++;
-          continue;
-        }
-
-        // Required option - needs to be matched
-        if (argIndex >= args.Length)
-        {
-          // No more args to match, but option is required
-          break;
-        }
-
-        // Check if current arg matches this option
-        if (optionMatcher.TryMatch(args[argIndex], out _))
-        {
-          argIndex++;
-          if (optionMatcher.ExpectsValue && argIndex < args.Length)
-          {
-            argIndex++; // Consume the option's value
-          }
-        }
-        else
-        {
-          // Required option not matched
-          return []; // Route doesn't match
-        }
-
-        segmentIndex++;
-        continue;
-      }
-
-      if (segment is LiteralMatcher literal)
-      {
-        // For completion, we need partial matching when at cursor position
-        if (argIndex >= args.Length)
-        {
-          // We're at the end of args, this route could match
-          break;
-        }
-
-        // If we're at cursor position, allow partial match
-        if (argIndex == cursorPosition - 1)
-        {
-          // Check if the literal starts with current arg (partial completion)
-          if (!literal.Value.StartsWith(args[argIndex], StringComparison.OrdinalIgnoreCase))
-          {
-            return []; // Route doesn't match partial input
-          }
-
-          // Check if it's an exact match (not just partial)
-          if (literal.TryMatch(args[argIndex], out _))
-          {
-            // Exact match - consume and continue to next segment
-            argIndex++;
-            segmentIndex++;
-          }
-          else
-          {
-            // Partial match - don't consume, offer as completion
-            break;
-          }
-        }
-        else
-        {
-          // For non-cursor positions, require exact match
-          if (!literal.TryMatch(args[argIndex], out _))
-          {
-            return []; // Route doesn't match
-          }
-
-          argIndex++;
-          segmentIndex++;
-        }
-      }
-
-      else if (segment is ParameterMatcher parameter)
-      {
-        // If we're at the last arg before cursor and there's no trailing space,
-        // this parameter is being completed - don't consume it, break to provide completions
-        if (argIndex == args.Length - 1 && argIndex == cursorPosition - 1)
-        {
-          // User is typing a partial value for this parameter
-          break;
-        }
-
-        // Parameter consumes one arg
-        if (argIndex < args.Length)
-        {
-          argIndex++;
-        }
-
-        segmentIndex++;
-      }
-    }
-
-    // Now we're at cursor position - what can complete here?
-
-    // Get current word being completed
-    // If cursor is at the end (cursorPosition == args.Length) and there's no trailing space,
-    // use the last arg as the current word being completed
-    string currentWord = cursorPosition < args.Length ? args[cursorPosition] :
-                          (cursorPosition > 0 && args.Length == cursorPosition ? args[cursorPosition - 1] : "");
-
-    // Only offer options if current word starts with option indicator
-    if (currentWord.StartsWith('-'))
-    {
-      candidates.AddRange(GetOptionCompletions(route, args, currentWord));
-    }
-
-    // If we have a remaining segment, offer completions for it
-    if (segmentIndex < route.Segments.Count)
-    {
-      RouteMatcher segment = route.Segments[segmentIndex];
-      // Get the partial word being completed (if user is typing a word)
-      // When argIndex < args.Length, use args[argIndex] as it's the partial word being typed
-      // Otherwise, user wants completions for a new word (no partial)
-      string partial = argIndex < args.Length ? args[argIndex] : "";
-
-      if (segment is LiteralMatcher literal)
-      {
-        if (string.IsNullOrEmpty(partial) ||
-            literal.Value.StartsWith(partial, StringComparison.OrdinalIgnoreCase))
-        {
-          candidates.Add(new CompletionCandidate(
-            literal.Value,
-            Description: null,
-            CompletionType.Command
-          ));
-        }
-      }
-      else if (segment is ParameterMatcher parameter)
-      {
-        candidates.AddRange(GetParameterCompletions(parameter, partial));
-      }
-      else if (segment is OptionMatcher option)
-      {
-        // Next segment is an option - suggest it if it matches the partial input
-        if (string.IsNullOrEmpty(partial) ||
-            option.MatchPattern.StartsWith(partial, StringComparison.OrdinalIgnoreCase))
-        {
-          candidates.Add(new CompletionCandidate(
-            option.MatchPattern,
-            option.Description,
-            CompletionType.Option
-          ));
-        }
-
-        // Also suggest alternate form if present and matches
-        if (!string.IsNullOrEmpty(option.AlternateForm) &&
-            (string.IsNullOrEmpty(partial) ||
-             option.AlternateForm.StartsWith(partial, StringComparison.OrdinalIgnoreCase)))
-        {
-          candidates.Add(new CompletionCandidate(
-            option.AlternateForm,
-            option.Description,
-            CompletionType.Option
-          ));
-        }
-      }
-    }
-
-    return candidates;
-  }
-
-  /// <summary>
-  /// Get option completions (--long and -short forms).
-  /// </summary>
-  private static IEnumerable<CompletionCandidate> GetOptionCompletions
-  (
-    CompiledRoute route,
-    string[] args,
-    string currentWord
-  )
-  {
-    var usedOptions = new HashSet<string>(args);
-
-    foreach (OptionMatcher option in route.OptionMatchers)
-    {
-      // Only suggest if not already used (unless repeatable) AND matches current word
-      bool matchesCurrentWord = string.IsNullOrEmpty(currentWord) ||
-        option.MatchPattern.StartsWith(currentWord, StringComparison.OrdinalIgnoreCase) ||
-        (!string.IsNullOrEmpty(option.AlternateForm) && option.AlternateForm.StartsWith(currentWord, StringComparison.OrdinalIgnoreCase));
-
-      if ((!usedOptions.Contains(option.MatchPattern) || option.IsRepeated) && matchesCurrentWord)
-      {
-        yield return new CompletionCandidate(
-          option.MatchPattern,
-          option.Description,
-          CompletionType.Option
-        );
-
-        // Also suggest alternate form if present and matches current word
-        if (!string.IsNullOrEmpty(option.AlternateForm) &&
-            (!usedOptions.Contains(option.AlternateForm) || option.IsRepeated) &&
-            option.AlternateForm.StartsWith(currentWord, StringComparison.OrdinalIgnoreCase))
-        {
-          yield return new CompletionCandidate(
-            option.AlternateForm,
-            option.Description,
-            CompletionType.Option
-          );
-        }
-      }
-    }
-  }
-
-  /// <summary>
-  /// Get parameter completions based on type constraint.
-  /// </summary>
-  /// <param name="parameter">The parameter matcher containing constraint information.</param>
-  /// <param name="partialWord">The partial word typed by the user for filtering completions.</param>
-  private IEnumerable<CompletionCandidate> GetParameterCompletions(
-    ParameterMatcher parameter,
-    string partialWord = "")
-  {
-    if (string.IsNullOrEmpty(parameter.Constraint))
-    {
-      yield break;
-    }
-
-    // Get the target type for this constraint
-    Type? targetType = GetTypeForConstraint(parameter.Constraint);
-
-    if (targetType is null)
-    {
-      yield break;
-    }
-
-    // Handle FileInfo/DirectoryInfo - delegate to shell
-    if (targetType == typeof(System.IO.FileInfo))
-    {
-      yield return new CompletionCandidate(
-        "<file>",
-        "File path",
-        CompletionType.File
-      );
-    }
-    else if (targetType == typeof(System.IO.DirectoryInfo))
-    {
-      yield return new CompletionCandidate(
-        "<directory>",
-        "Directory path",
-        CompletionType.Directory
-      );
-    }
-    // Handle enum types - enumerate values filtered by partial input
-    else if (targetType.IsEnum)
-    {
-      foreach (string enumName in Enum.GetNames(targetType))
-      {
-        // Filter by partial word if provided (case-insensitive)
-        if (string.IsNullOrEmpty(partialWord) ||
-            enumName.StartsWith(partialWord, StringComparison.OrdinalIgnoreCase))
-        {
-          yield return new CompletionCandidate(
-            enumName,
-            $"{targetType.Name}.{enumName}",
-            CompletionType.Enum
-          );
-        }
-      }
-    }
-  }
-
-  /// <summary>
-  /// Get the Type for a given constraint name.
-  /// </summary>
-  [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage(
-    "Trimming",
-    "IL2057:Unrecognized value passed to the parameter of method. It's not possible to guarantee the availability of the target type.",
-    Justification = "Type.GetType is a fallback for custom types. Standard types are handled by TypeConverterRegistry.")]
-  private Type? GetTypeForConstraint(string constraint)
-  {
-    // Try to get converter from registry
-    IRouteTypeConverter? converter = TypeConverterRegistry.GetConverterByConstraint(constraint);
-    if (converter is not null)
-    {
-      return converter.TargetType;
-    }
-
-    // Fallback: try direct type lookup (for custom types)
-    // This path is only hit for custom types not registered in the converter registry
-    return Type.GetType(constraint);
   }
 }

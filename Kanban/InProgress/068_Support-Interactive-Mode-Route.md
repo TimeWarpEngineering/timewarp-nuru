@@ -17,9 +17,12 @@ The implementation adds an `AddInteractiveRoute` extension method that registers
 ## Checklist
 
 ### Implementation
+- [ ] Rename `LoggerServiceProvider` to `LightweightServiceProvider`
+- [ ] Extend `LightweightServiceProvider` to include `NuruApp` reference
+- [ ] Modify `NuruApp` non-DI constructor to pass `this` to provider
+- [ ] For DI path: register `NuruApp` via holder pattern in `Build()`
 - [ ] Add `AddInteractiveRoute` extension method to `NuruAppExtensions.cs`
-- [ ] Handle the async nature of REPL startup within route handler
-- [ ] Ensure REPL options from builder are used
+- [ ] Add static `StartInteractiveModeAsync(NuruApp app)` handler
 - [ ] Support custom route patterns
 
 ### Documentation
@@ -28,7 +31,19 @@ The implementation adds an `AddInteractiveRoute` extension method that registers
 
 ## Notes
 
-Example usage:
+### Implementation Decision
+
+The route handler needs access to `NuruApp` to call `RunReplAsync()`. The solution leverages existing delegate parameter injection via `IServiceProvider`:
+
+1. **Non-DI path**: Rename `LoggerServiceProvider` to `LightweightServiceProvider` and extend it to also resolve `NuruApp`. The constructor passes `this` to the provider.
+
+2. **DI path**: Use `NuruAppHolder` pattern - register holder in DI, populate it after `Build()` creates the app.
+
+3. **Handler**: A static method `StartInteractiveModeAsync(NuruApp app)` receives the app via injection and calls `app.RunReplAsync()`.
+
+This follows the existing pattern where `DelegateExecutor.BindParameters` resolves service parameters via `serviceProvider.GetService(param.ParameterType)`.
+
+### Example usage:
 ```csharp
 var app = new NuruAppBuilder()
   .AddRoute("greet {name}", (string name) => Console.WriteLine($"Hello, {name}!"))

@@ -61,12 +61,9 @@ public partial class NuruApp
     ReplOptions = replOptions;
     AppMetadata = appMetadata;
 
-    // If logging is configured but DI is not, create a minimal service provider
-    // that can resolve ILoggerFactory and ILogger<T> for delegate parameter injection
-    if (loggerFactory != NullLoggerFactory.Instance)
-    {
-      ServiceProvider = new LightweightServiceProvider(loggerFactory);
-    }
+    // Create a minimal service provider for delegate parameter injection
+    // Resolves NuruApp (for interactive mode), ILoggerFactory, and ILogger<T>
+    ServiceProvider = new LightweightServiceProvider(this, loggerFactory);
   }
 
   /// <summary>

@@ -7,15 +7,22 @@ namespace TimeWarp.Nuru;
 /// </summary>
 internal sealed class LightweightServiceProvider : IServiceProvider
 {
+  private readonly NuruApp App;
   private readonly ILoggerFactory LoggerFactory;
 
-  public LightweightServiceProvider(ILoggerFactory loggerFactory)
+  public LightweightServiceProvider(NuruApp app, ILoggerFactory loggerFactory)
   {
+    App = app ?? throw new ArgumentNullException(nameof(app));
     LoggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
   }
 
   public object? GetService(Type serviceType)
   {
+    if (serviceType == typeof(NuruApp))
+    {
+      return App;
+    }
+
     if (serviceType == typeof(ILoggerFactory))
     {
       return LoggerFactory;

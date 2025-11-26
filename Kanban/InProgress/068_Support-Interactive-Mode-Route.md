@@ -18,8 +18,8 @@ The implementation adds an `AddInteractiveRoute` extension method that registers
 
 ### Implementation
 - [x] Rename `LoggerServiceProvider` to `LightweightServiceProvider`
-- [ ] Extend `LightweightServiceProvider` to include `NuruApp` reference
-- [ ] Modify `NuruApp` non-DI constructor to pass `this` to provider
+- [x] Extend `LightweightServiceProvider` to include `NuruApp` reference
+- [x] Modify `NuruApp` non-DI constructor to pass `this` to provider
 - [ ] For DI path: register `NuruApp` via holder pattern in `Build()`
 - [ ] Add `AddInteractiveRoute` extension method to `NuruAppExtensions.cs`
 - [ ] Add static `StartInteractiveModeAsync(NuruApp app)` handler

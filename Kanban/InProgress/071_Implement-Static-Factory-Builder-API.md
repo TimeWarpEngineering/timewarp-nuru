@@ -83,25 +83,25 @@ await builder.Build().RunAsync(args);
 ## Checklist
 
 ### Design
-- [ ] Define `NuruApplicationOptions` class
-- [ ] Document feature inclusion for each builder type
+- [x] Define `NuruApplicationOptions` class
+- [x] Document feature inclusion for each builder type
 
 ### Implementation
-- [ ] Add static factory methods to `NuruApp` class
-- [ ] Implement `CreateBuilder` with full feature set
-- [ ] Implement `CreateSlimBuilder` with lightweight feature set
-- [ ] Implement `CreateEmptyBuilder` with minimal feature set
-- [ ] Add `Map()` method alias for `AddRoute()`
-- [ ] Ensure backward compatibility with existing `new NuruAppBuilder()` API
+- [x] Add static factory methods to `NuruApp` class
+- [x] Implement `CreateBuilder` with full feature set
+- [x] Implement `CreateSlimBuilder` with lightweight feature set
+- [x] Implement `CreateEmptyBuilder` with minimal feature set
+- [x] Add `Map()` method alias for `AddRoute()`
+- [x] Ensure backward compatibility with existing `new NuruAppBuilder()` API
 
 ### Testing
-- [ ] Add tests for each factory method
-- [ ] Verify feature inclusion/exclusion for each builder type
-- [ ] Test `RunAsync(args)` override behavior
+- [x] Add tests for each factory method
+- [x] Verify feature inclusion/exclusion for each builder type
+- [x] Test `RunAsync(args)` override behavior
 
 ### Documentation
-- [ ] Update README with new API examples
-- [ ] Update samples to demonstrate new patterns
+- [x] Update README with new API examples
+- [x] Update samples to demonstrate new patterns
 - [ ] Document migration path from existing API
 
 ## Notes

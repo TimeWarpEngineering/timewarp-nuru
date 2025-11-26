@@ -175,21 +175,7 @@ git add .nuru/keybindings.json
 git commit -m "Add team key binding profile"
 ```
 
-### Estimated Effort
-
-| Phase | Time |
-|-------|------|
-| Action Registry | 2 hours |
-| Config Model | 1 hour |
-| Config Loader + Parser | 3 hours |
-| Auto-Discovery Integration | 1 hour |
-| Testing | 2 hours |
-| Documentation | 2 hours |
-| **TOTAL** | **11 hours** |
-
-### Risk Assessment
-
-**RISK LEVEL: LOW-MEDIUM**
+### Risk Considerations
 
 - JSON parsing is well-understood
 - Action registry is straightforward mapping

@@ -9,6 +9,119 @@ public partial class NuruApp
   private readonly MediatorExecutor? MediatorExecutor;
   private readonly IConsole Console;
 
+  #region Static Factory Methods
+
+  /// <summary>
+  /// Creates a full-featured builder with DI, Configuration, Mediator, REPL, and Completion support.
+  /// This is the recommended approach for complex applications.
+  /// </summary>
+  /// <param name="args">Command line arguments. Required for Configuration command-line overrides.</param>
+  /// <param name="options">Optional application options.</param>
+  /// <returns>A fully configured <see cref="NuruAppBuilder"/>.</returns>
+  /// <remarks>
+  /// Features included:
+  /// - Dependency Injection container
+  /// - Configuration (appsettings.json, environment variables, command line)
+  /// - Mediator pattern support
+  /// - Auto-help generation
+  /// - REPL ready
+  /// - Completion ready
+  /// - OpenTelemetry ready
+  ///
+  /// Note: This builder uses partial AOT trim mode due to reflection requirements.
+  /// </remarks>
+  /// <example>
+  /// <code>
+  /// var builder = NuruApp.CreateBuilder(args);
+  /// builder.Map("status", () => "OK");
+  /// builder.Map&lt;DeployCommand&gt;("deploy {env}");
+  /// await builder.Build().RunAsync(args);
+  /// </code>
+  /// </example>
+  public static NuruAppBuilder CreateBuilder(string[] args, NuruApplicationOptions? options = null)
+  {
+    ArgumentNullException.ThrowIfNull(args);
+    options ??= new NuruApplicationOptions();
+    options.Args = args;
+    return new NuruAppBuilder(BuilderMode.Full, options);
+  }
+
+  /// <summary>
+  /// Creates a lightweight builder with Configuration, auto-help, and logging infrastructure.
+  /// No DI container, Mediator, REPL, or Completion.
+  /// </summary>
+  /// <param name="args">Optional command line arguments.</param>
+  /// <param name="options">Optional application options.</param>
+  /// <returns>A lightweight <see cref="NuruAppBuilder"/>.</returns>
+  /// <remarks>
+  /// Features included:
+  /// - Type converters
+  /// - Auto-help generation
+  /// - Logging infrastructure
+  ///
+  /// Features NOT included:
+  /// - DI Container
+  /// - Mediator pattern
+  /// - REPL
+  /// - Completion
+  /// - OpenTelemetry
+  ///
+  /// This builder is fully AOT-compatible.
+  /// </remarks>
+  /// <example>
+  /// <code>
+  /// var builder = NuruApp.CreateSlimBuilder();
+  /// builder.Map("greet {name}", (string name) => $"Hello, {name}!");
+  /// await builder.Build().RunAsync(args);
+  /// </code>
+  /// </example>
+  public static NuruAppBuilder CreateSlimBuilder(string[]? args = null, NuruApplicationOptions? options = null)
+  {
+    options ??= new NuruApplicationOptions();
+    options.Args = args;
+    return new NuruAppBuilder(BuilderMode.Slim, options);
+  }
+
+  /// <summary>
+  /// Creates a bare minimum builder with only type converters.
+  /// User has total control over what features to add.
+  /// </summary>
+  /// <param name="args">Optional command line arguments.</param>
+  /// <param name="options">Optional application options.</param>
+  /// <returns>An empty <see cref="NuruAppBuilder"/>.</returns>
+  /// <remarks>
+  /// Features included:
+  /// - Type converters
+  /// - Args storage
+  ///
+  /// Features NOT included (add manually if needed):
+  /// - Configuration
+  /// - Auto-help
+  /// - Logging infrastructure
+  /// - DI Container
+  /// - Mediator pattern
+  /// - REPL
+  /// - Completion
+  ///
+  /// This builder is fully AOT-compatible.
+  /// </remarks>
+  /// <example>
+  /// <code>
+  /// var builder = NuruApp.CreateEmptyBuilder();
+  /// builder.AddTypeConverter(new MyCustomConverter());
+  /// builder.Map("cmd", () => "minimal");
+  /// await builder.Build().RunAsync(args);
+  /// </code>
+  /// </example>
+  public static NuruAppBuilder CreateEmptyBuilder(string[]? args = null, NuruApplicationOptions? options = null)
+  {
+    options ??= new NuruApplicationOptions();
+    options.Args = args;
+    return new NuruAppBuilder(BuilderMode.Empty, options);
+  }
+
+  #endregion
+
   /// <summary>
   /// Gets the terminal I/O provider for interactive operations like REPL.
   /// </summary>

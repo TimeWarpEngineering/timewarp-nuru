@@ -5,6 +5,87 @@ namespace TimeWarp.Nuru;
 /// </summary>
 public partial class NuruAppBuilder
 {
+  #region Map Methods (ASP.NET Core style aliases)
+
+  /// <summary>
+  /// Maps a route pattern to a delegate handler.
+  /// This is an alias for <see cref="AddRoute(string, Delegate, string?)"/> that mirrors ASP.NET Core's Map pattern.
+  /// </summary>
+  /// <param name="pattern">The route pattern (e.g., "greet {name}").</param>
+  /// <param name="handler">The delegate to execute when the route matches.</param>
+  /// <param name="description">Optional description for help text.</param>
+  /// <returns>The builder for chaining.</returns>
+  /// <example>
+  /// <code>
+  /// var builder = NuruApp.CreateBuilder(args);
+  /// builder.Map("greet {name}", (string name) => $"Hello, {name}!");
+  /// builder.Map("status", () => "OK");
+  /// await builder.Build().RunAsync(args);
+  /// </code>
+  /// </example>
+  public NuruAppBuilder Map(string pattern, Delegate handler, string? description = null)
+    => AddRoute(pattern, handler, description);
+
+  /// <summary>
+  /// Maps a route pattern to a Mediator command.
+  /// This is an alias for <see cref="AddRoute{TCommand}(string, string?)"/> that mirrors ASP.NET Core's Map pattern.
+  /// Requires AddDependencyInjection() to be called first.
+  /// </summary>
+  /// <typeparam name="TCommand">The command type that implements <see cref="IRequest"/>.</typeparam>
+  /// <param name="pattern">The route pattern (e.g., "deploy {env}").</param>
+  /// <param name="description">Optional description for help text.</param>
+  /// <returns>The builder for chaining.</returns>
+  /// <example>
+  /// <code>
+  /// var builder = NuruApp.CreateBuilder(args);
+  /// builder.Map&lt;DeployCommand&gt;("deploy {env}");
+  /// await builder.Build().RunAsync(args);
+  /// </code>
+  /// </example>
+  public NuruAppBuilder Map<TCommand>(string pattern, string? description = null)
+    where TCommand : IRequest, new()
+    => AddRoute<TCommand>(pattern, description);
+
+  /// <summary>
+  /// Maps a route pattern to a Mediator command with response.
+  /// This is an alias for <see cref="AddRoute{TCommand, TResponse}(string, string?)"/> that mirrors ASP.NET Core's Map pattern.
+  /// Requires AddDependencyInjection() to be called first.
+  /// </summary>
+  /// <typeparam name="TCommand">The command type that implements <see cref="IRequest{TResponse}"/>.</typeparam>
+  /// <typeparam name="TResponse">The response type returned by the command.</typeparam>
+  /// <param name="pattern">The route pattern (e.g., "calculate {a} {b}").</param>
+  /// <param name="description">Optional description for help text.</param>
+  /// <returns>The builder for chaining.</returns>
+  /// <example>
+  /// <code>
+  /// var builder = NuruApp.CreateBuilder(args);
+  /// builder.Map&lt;CalculateCommand, int&gt;("calculate {a:int} {b:int}");
+  /// await builder.Build().RunAsync(args);
+  /// </code>
+  /// </example>
+  public NuruAppBuilder Map<TCommand, TResponse>(string pattern, string? description = null)
+    where TCommand : IRequest<TResponse>, new()
+    => AddRoute<TCommand, TResponse>(pattern, description);
+
+  /// <summary>
+  /// Maps a default route that executes when no arguments are provided.
+  /// This is an alias for <see cref="AddDefaultRoute(Delegate, string?)"/> that mirrors ASP.NET Core's Map pattern.
+  /// </summary>
+  /// <param name="handler">The delegate to execute when no arguments are provided.</param>
+  /// <param name="description">Optional description for help text.</param>
+  /// <returns>The builder for chaining.</returns>
+  /// <example>
+  /// <code>
+  /// var builder = NuruApp.CreateBuilder(args);
+  /// builder.MapDefault(() => Console.WriteLine("Welcome! Use --help for available commands."));
+  /// await builder.Build().RunAsync(args);
+  /// </code>
+  /// </example>
+  public NuruAppBuilder MapDefault(Delegate handler, string? description = null)
+    => AddDefaultRoute(handler, description);
+
+  #endregion
+
   /// <summary>
   /// Adds a default route that executes when no arguments are provided.
   /// </summary>

@@ -36,6 +36,7 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("engine-01-input-tokenizer")]
 [assembly: InternalsVisibleTo("engine-02-route-match-engine")]
 [assembly: InternalsVisibleTo("engine-03-candidate-generator")]
+[assembly: InternalsVisibleTo("factory-01-static-methods")]
 [assembly: InternalsVisibleTo("lexer-01-basic-token-types")]
 [assembly: InternalsVisibleTo("lexer-02-valid-options")]
 [assembly: InternalsVisibleTo("lexer-03-invalid-double-dashes")]

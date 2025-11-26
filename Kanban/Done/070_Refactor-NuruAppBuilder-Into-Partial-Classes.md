@@ -15,13 +15,13 @@ Reorganize `NuruAppBuilder.cs` (773 lines) into partial classes with logical gro
 ## Checklist
 
 ### Implementation
-- [ ] Create `NuruAppBuilder.cs` - Core (fields, properties, Build, WithMetadata, AddAutoHelp)
-- [ ] Create `NuruAppBuilder.Routes.cs` - Route registration methods
-- [ ] Create `NuruAppBuilder.Configuration.cs` - DI, Config, Services, Logging, Terminal
-- [ ] Create `HelpRouteGenerator.cs` - Extract help generation logic
-- [ ] Remove original monolithic file
-- [ ] Verify all builds succeed
-- [ ] Verify all tests pass
+- [x] Create `NuruAppBuilder.cs` - Core (fields, properties, Build, WithMetadata, AddAutoHelp)
+- [x] Create `NuruAppBuilder.Routes.cs` - Route registration methods
+- [x] Create `NuruAppBuilder.Configuration.cs` - DI, Config, Services, Logging, Terminal
+- [x] Create `HelpRouteGenerator.cs` - Extract help generation logic
+- [x] Remove original monolithic file
+- [x] Verify all builds succeed
+- [x] Verify all tests pass
 
 ## Notes
 

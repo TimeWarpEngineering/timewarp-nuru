@@ -315,17 +315,18 @@ Samples/Configuration/
 
 ### Success Criteria
 
-- [ ] KeyBindingBuilder fluent API works
-- [ ] CustomKeyBindingProfile implements IKeyBindingProfile
-- [ ] Can start from any base profile
-- [ ] Override, add, and remove operations work correctly
-- [ ] JSON config file loading works
-- [ ] Action registry maps all available actions
-- [ ] Validation catches invalid configurations
-- [ ] All tests pass (existing + new)
-- [ ] Documentation includes examples and action reference
-- [ ] Sample config files provided
-- [ ] Code compiles without warnings
+- [x] KeyBindingBuilder fluent API works
+- [x] CustomKeyBindingProfile implements IKeyBindingProfile
+- [x] Can start from any base profile
+- [x] Override, add, and remove operations work correctly
+- [ ] JSON config file loading works (deferred)
+- [ ] Action registry maps all available actions (deferred)
+- [ ] Validation catches invalid configurations (deferred - part of JSON config)
+- [x] All tests pass (existing + new)
+- [x] Sample application demonstrates custom key bindings
+- [ ] Documentation includes examples and action reference (deferred)
+- [ ] Sample config files provided (deferred)
+- [x] Code compiles without warnings
 
 ### Security Considerations
 
@@ -358,6 +359,12 @@ var profile = new CustomKeyBindingProfile(new EmacsKeyBindingProfile())
   .Override(ConsoleKey.P, ConsoleModifiers.Control, FuzzySearch)
   .Remove(ConsoleKey.S, ConsoleModifiers.Control); // Don't use Ctrl+S
 ```
+
+### Known Limitations
+
+1. **Internal Handler Methods**: `ReplConsoleReader` handler methods (e.g., `HandleBackwardChar`, `HandleEscape`) are `internal`, so external code cannot reference them in custom bindings. Custom actions from outside the assembly can only perform independent operations (write output, play sounds, etc.) but cannot call existing handlers.
+
+2. **Solution**: The planned Action Registry feature would expose handlers by name, allowing external code to reference them via strings like `"BackwardChar"` in JSON config files.
 
 ### Open Questions
 

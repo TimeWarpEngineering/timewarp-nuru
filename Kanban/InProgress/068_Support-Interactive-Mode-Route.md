@@ -17,7 +17,7 @@ The implementation adds an `AddInteractiveRoute` extension method that registers
 ## Checklist
 
 ### Implementation
-- [ ] Rename `LoggerServiceProvider` to `LightweightServiceProvider`
+- [x] Rename `LoggerServiceProvider` to `LightweightServiceProvider`
 - [ ] Extend `LightweightServiceProvider` to include `NuruApp` reference
 - [ ] Modify `NuruApp` non-DI constructor to pass `this` to provider
 - [ ] For DI path: register `NuruApp` via holder pattern in `Build()`

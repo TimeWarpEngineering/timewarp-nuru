@@ -65,7 +65,7 @@ public partial class NuruApp
     // that can resolve ILoggerFactory and ILogger<T> for delegate parameter injection
     if (loggerFactory != NullLoggerFactory.Instance)
     {
-      ServiceProvider = new LoggerServiceProvider(loggerFactory);
+      ServiceProvider = new LightweightServiceProvider(loggerFactory);
     }
   }
 

@@ -52,8 +52,7 @@ internal sealed class ReplSession : IDisposable
 
     History = new ReplHistory(ReplOptions, Terminal);
 
-    // Pass CompletionProvider to Commands
-    Commands = new ReplCommands(this, NuruApp, ReplOptions, Terminal, CompletionProvider, History);
+    Commands = new ReplCommands(this, Terminal, History);
   }
 
   /// <summary>

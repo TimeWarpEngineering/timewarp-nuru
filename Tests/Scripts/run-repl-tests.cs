@@ -18,13 +18,11 @@ Console.WriteLine("╚═══════════════════�
 Console.WriteLine();
 
 // Find all REPL test files
-List<string> testFiles = Directory.GetFiles(testsDir, "repl-*.cs", SearchOption.TopDirectoryOnly)
-  .OrderBy(f => Path.GetFileName(f))
-  .ToList();
+IOrderedEnumerable<string> testFiles = Directory.GetFiles(testsDir, "repl-*.cs", SearchOption.TopDirectoryOnly)
+  .OrderBy(f => Path.GetFileName(f));
 
-List<string> parserTestFiles = Directory.GetFiles(Path.Combine(testsDir, "CommandLineParser"), "parser-*.cs", SearchOption.TopDirectoryOnly)
-  .OrderBy(f => Path.GetFileName(f))
-  .ToList();
+IOrderedEnumerable<string> parserTestFiles = Directory.GetFiles(Path.Combine(testsDir, "CommandLineParser"), "parser-*.cs", SearchOption.TopDirectoryOnly)
+  .OrderBy(f => Path.GetFileName(f));
 
 List<string> allTestFiles = [.. parserTestFiles, .. testFiles];
 

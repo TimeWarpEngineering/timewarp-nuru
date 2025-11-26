@@ -14,7 +14,7 @@ public class DelegateMediatorConsistencyTests
     // Arrange - Delegate
     bool matched = false;
     NuruApp app = new NuruAppBuilder()
-      .AddRoute("status", () => { matched = true; return 0; })
+      .Map("status", () => { matched = true; return 0; })
       .Build();
 
     // Act
@@ -36,7 +36,7 @@ public class DelegateMediatorConsistencyTests
       {
         services.AddTransient<IRequestHandler<StatusCommand>, StatusHandler>();
       })
-      .AddRoute<StatusCommand>("status")
+      .Map<StatusCommand>("status")
       .Build();
 
     // Act
@@ -54,7 +54,7 @@ public class DelegateMediatorConsistencyTests
     // Arrange - Delegate
     string? boundName = null;
     NuruApp app = new NuruAppBuilder()
-      .AddRoute("greet {name}", (string name) => { boundName = name; return 0; })
+      .Map("greet {name}", (string name) => { boundName = name; return 0; })
       .Build();
 
     // Act
@@ -76,7 +76,7 @@ public class DelegateMediatorConsistencyTests
       {
         services.AddTransient<IRequestHandler<GreetCommand>, GreetHandler>();
       })
-      .AddRoute<GreetCommand>("greet {name}")
+      .Map<GreetCommand>("greet {name}")
       .Build();
 
     // Act
@@ -93,7 +93,7 @@ public class DelegateMediatorConsistencyTests
   {
     // Arrange - Delegate
     NuruApp app = new NuruAppBuilder()
-    .AddRoute("delay {ms:int}", (int _) => 0)
+    .Map("delay {ms:int}", (int _) => 0)
     .Build();
 
     // Act
@@ -114,7 +114,7 @@ public class DelegateMediatorConsistencyTests
       {
         services.AddTransient<IRequestHandler<DelayCommand>, DelayHandler>();
       })
-      .AddRoute<DelayCommand>("delay {ms:int}")
+      .Map<DelayCommand>("delay {ms:int}")
       .Build();
 
     // Act
@@ -132,7 +132,7 @@ public class DelegateMediatorConsistencyTests
     // Arrange - Delegate
     string? boundEnv = null;
     NuruApp app = new NuruAppBuilder()
-      .AddRoute("deploy {env?}", (string? env) => { boundEnv = env; return 0; })
+      .Map("deploy {env?}", (string? env) => { boundEnv = env; return 0; })
       .Build();
 
     // Act
@@ -154,7 +154,7 @@ public class DelegateMediatorConsistencyTests
       {
         services.AddTransient<IRequestHandler<DeployCommand>, DeployHandler>();
       })
-      .AddRoute<DeployCommand>("deploy {env?}")
+      .Map<DeployCommand>("deploy {env?}")
       .Build();
 
     // Act

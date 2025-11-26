@@ -13,14 +13,14 @@ After a structured 3-iteration consensus process between Grok and Claude, we hav
 ## Original Feedback Recap
 
 Community Contributor provided two main suggestions:
-1. **Rename `AddRoute` to `AddCommand`** - Claiming it's confusing for CLI context
+1. **Rename `Map` to `AddCommand`** - Claiming it's confusing for CLI context
 2. **Add `.OnError()` fluent API** - For better error handling when users input wrong data
 
 ## Consensus Position
 
 ### ❌ Rejected Suggestions
 
-#### 1. AddRoute → AddCommand Naming Change
+#### 1. Map → AddCommand Naming Change
 **Reasoning**: This would undermine the framework's core strategic positioning as a "route-based CLI framework" that brings web-style routing to command-line applications.
 
 **Strategic Impact**:

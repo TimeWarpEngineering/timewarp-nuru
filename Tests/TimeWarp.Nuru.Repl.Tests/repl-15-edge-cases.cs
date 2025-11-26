@@ -21,7 +21,7 @@ public class EdgeCaseTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("echo {text}", (string text) => text)
+      .Map("echo {text}", (string text) => text)
       .AddReplSupport()
       .Build();
 
@@ -106,7 +106,7 @@ public class EdgeCaseTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("echo {text}", (string text) => text)
+      .Map("echo {text}", (string text) => text)
       .AddReplSupport()
       .Build();
 
@@ -133,7 +133,7 @@ public class EdgeCaseTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("noop", () => "OK")
+      .Map("noop", () => "OK")
       .AddReplSupport()
       .Build();
 
@@ -175,7 +175,7 @@ public class EdgeCaseTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("cmd{n}", (string _) => "OK")
+      .Map("cmd{n}", (string _) => "OK")
       .AddReplSupport(options => options.MaxHistorySize = 0)
       .Build();
 

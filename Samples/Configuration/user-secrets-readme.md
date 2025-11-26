@@ -18,7 +18,7 @@ NuruApp app =
   new NuruAppBuilder()
   .AddDependencyInjection()
   .AddConfiguration(args)
-  .AddRoute("show", (IConfiguration config) =>
+  .Map("show", (IConfiguration config) =>
   {
     // Access secrets through IConfiguration
     string? apiKey = config["ApiKey"];

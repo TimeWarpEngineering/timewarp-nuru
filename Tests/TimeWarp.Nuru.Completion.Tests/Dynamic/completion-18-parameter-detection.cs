@@ -10,7 +10,7 @@ public class ParameterDetectionTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("greet {name}", (string name) => 0);
+    builder.Map("greet {name}", (string name) => 0);
 
     string[] typedWords = ["greet"];
     Endpoint endpoint = builder.EndpointCollection.First();
@@ -30,7 +30,7 @@ public class ParameterDetectionTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("deploy {env} {tag}", (string env, string tag) => 0);
+    builder.Map("deploy {env} {tag}", (string env, string tag) => 0);
 
     string[] typedWords = ["deploy", "production"];
     Endpoint endpoint = builder.EndpointCollection.First();
@@ -50,7 +50,7 @@ public class ParameterDetectionTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("deploy {env} {tag?}", (string env, string? tag) => 0);
+    builder.Map("deploy {env} {tag?}", (string env, string? tag) => 0);
 
     string[] typedWords = ["deploy", "production"];
     Endpoint endpoint = builder.EndpointCollection.First();
@@ -70,7 +70,7 @@ public class ParameterDetectionTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("build --config {mode}", (string mode) => 0);
+    builder.Map("build --config {mode}", (string mode) => 0);
 
     string[] typedWords = ["build", "--config"];
     Endpoint endpoint = builder.EndpointCollection.First();
@@ -90,7 +90,7 @@ public class ParameterDetectionTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("connect {port:int}", (int port) => 0);
+    builder.Map("connect {port:int}", (int port) => 0);
 
     string[] typedWords = ["connect"];
     Endpoint endpoint = builder.EndpointCollection.First();
@@ -110,7 +110,7 @@ public class ParameterDetectionTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("deploy {env} --mode {mode}", (string env, TestMode mode) => 0);
+    builder.Map("deploy {env} --mode {mode}", (string env, TestMode mode) => 0);
 
     string[] typedWords = ["deploy", "production", "--mode"];
     Endpoint endpoint = builder.EndpointCollection.First();
@@ -130,7 +130,7 @@ public class ParameterDetectionTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("greet {name}", (string name) => 0);
+    builder.Map("greet {name}", (string name) => 0);
 
     string[] typedWords = ["hello"]; // Wrong literal
     Endpoint endpoint = builder.EndpointCollection.First();
@@ -150,7 +150,7 @@ public class ParameterDetectionTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("git status", () => 0);
+    builder.Map("git status", () => 0);
 
     string[] typedWords = ["git"];
     Endpoint endpoint = builder.EndpointCollection.First();
@@ -168,7 +168,7 @@ public class ParameterDetectionTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("build --config,-c {mode}", (string mode) => 0);
+    builder.Map("build --config,-c {mode}", (string mode) => 0);
 
     string[] typedWords = ["build", "-c"];
     Endpoint endpoint = builder.EndpointCollection.First();
@@ -188,7 +188,7 @@ public class ParameterDetectionTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("greet {name}", (string name) => 0);
+    builder.Map("greet {name}", (string name) => 0);
 
     CompletionContext context = new(
       Args: ["app", "greet"],

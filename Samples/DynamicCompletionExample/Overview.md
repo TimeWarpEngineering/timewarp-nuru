@@ -397,7 +397,7 @@ If you're currently using `EnableStaticCompletion()` and want dynamic completion
 ```csharp
 builder.EnableStaticCompletion();
 
-builder.AddRoute("deploy {env}", (string env) => Deploy(env));
+builder.Map("deploy {env}", (string env) => Deploy(env));
 ```
 
 ### After (Dynamic)
@@ -408,7 +408,7 @@ builder.EnableDynamicCompletion(configure: registry =>
     registry.RegisterForParameter("env", new EnvironmentCompletionSource());
 });
 
-builder.AddRoute("deploy {env}", (string env) => Deploy(env));
+builder.Map("deploy {env}", (string env) => Deploy(env));
 // No changes to route patterns!
 ```
 

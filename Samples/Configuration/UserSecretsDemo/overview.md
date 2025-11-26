@@ -45,7 +45,7 @@ The `NuruAppBuilder.AddConfiguration()` method automatically:
 Inject `IConfiguration` into your route handlers:
 
 ```csharp
-.AddRoute("show", (IConfiguration config) =>
+.Map("show", (IConfiguration config) =>
 {
   string? apiKey = config["ApiKey"];
   string? dbConnection = config["Database:ConnectionString"];

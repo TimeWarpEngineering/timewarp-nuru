@@ -8,7 +8,7 @@ This index tracks all community feedback items processed through our structured 
 **Date Received**: 2025-08-27
 **Status**: ✅ **Completed** - Consensus reached, implementation planned
 **Priority**: High
-**Topic**: `AddRoute` naming confusion and `.OnError()` fluent API suggestion
+**Topic**: `Map` naming confusion and `.OnError()` fluent API suggestion
 **Reviewers**: Grok (Roo), Claude
 **Consensus Status**: ✅ **Achieved**
 **Implementation**: [011_Implement-Community-Feedback-Consensus-Resolution.md](../Kanban/ToDo/011_Implement-Community-Feedback-Consensus-Resolution.md)

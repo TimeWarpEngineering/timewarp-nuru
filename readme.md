@@ -41,7 +41,7 @@ return await builder.Build().RunAsync(args);
 using TimeWarp.Nuru;
 
 NuruApp app = new NuruAppBuilder()
-  .AddRoute("add {x:double} {y:double}", (double x, double y) =>
+  .Map("add {x:double} {y:double}", (double x, double y) =>
     Console.WriteLine($"{x} + {y} = {x + y}"))
   .Build();
 
@@ -109,12 +109,12 @@ Build modern command-line tools from scratch:
 
 ```csharp
 NuruApp app = new NuruAppBuilder()
-  .AddRoute
+  .Map
   (
     "deploy {env} --version {tag?}",
     (string env, string? tag) => Deploy(env, tag)
   )
-  .AddRoute
+  .Map
   (
     "backup {source} {dest?} --compress",
     (string source, string? dest, bool compress) => Backup(source, dest, compress)
@@ -127,7 +127,7 @@ Wrap existing CLIs to add auth, logging, or validation:
 
 ```csharp
 NuruApp app = new NuruAppBuilder()
-  .AddRoute
+  .Map
   (
     "deploy prod",
     async () =>
@@ -136,7 +136,7 @@ NuruApp app = new NuruAppBuilder()
       return await Shell.ExecuteAsync("existing-cli", "deploy", "prod");
     }
   )
-  .AddRoute
+  .Map
   (
     "{*args}",
     async (string[] args) => await Shell.ExecuteAsync("existing-cli", args)
@@ -193,8 +193,8 @@ Enable tab completion for your CLI with one line of code:
 
 ```csharp
 NuruApp app = new NuruAppBuilder()
-  .AddRoute("deploy {env} --version {tag}", (string env, string tag) => Deploy(env, tag))
-  .AddRoute("status", () => ShowStatus())
+  .Map("deploy {env} --version {tag}", (string env, string tag) => Deploy(env, tag))
+  .Map("status", () => ShowStatus())
   .EnableStaticCompletion()  // ← Add this
   .Build();
 ```

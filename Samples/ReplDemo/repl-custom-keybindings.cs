@@ -78,7 +78,7 @@ var app = new NuruAppBuilder()
   // --------------------------------------------------------
   // Echo command for testing
   // --------------------------------------------------------
-  .AddRoute
+  .Map
   (
     pattern: "echo {*message}",
     handler: (string[] message) =>
@@ -91,7 +91,7 @@ var app = new NuruAppBuilder()
   // --------------------------------------------------------
   // Show current key binding info
   // --------------------------------------------------------
-  .AddRoute
+  .Map
   (
     pattern: "bindings",
     handler: () =>
@@ -121,7 +121,7 @@ var app = new NuruAppBuilder()
   // --------------------------------------------------------
   // List available profiles
   // --------------------------------------------------------
-  .AddRoute
+  .Map
   (
     pattern: "profiles",
     handler: () =>

@@ -11,7 +11,7 @@ NuruApp app =
   new NuruAppBuilder()
   .AddDependencyInjection()
   .AddConfiguration(args)  // ✅ Loads secrets in Development
-  .AddRoute("test", (IConfiguration config) =>
+  .Map("test", (IConfiguration config) =>
     Console.WriteLine(config["ApiKey"]))
   .Build();
 ```

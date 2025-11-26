@@ -93,7 +93,7 @@ try
     // SIMPLE COMMANDS (Literal only)
     // ========================================
 
-    .AddRoute
+    .Map
     (
       pattern: "status",
       handler: () =>
@@ -103,7 +103,7 @@ try
       },
       description: "Displays the current system status."
     )
-    .AddRoute
+    .Map
     (
       pattern: "time",
       handler: () =>
@@ -119,7 +119,7 @@ try
     // BASIC PARAMETERS
     // ========================================
 
-    .AddRoute
+    .Map
     (
       pattern: "greet {name}",
       handler: (string name) =>
@@ -129,7 +129,7 @@ try
       },
       description: "Greets the person with the specified name."
     )
-    .AddRoute
+    .Map
     (
       pattern: "add {a:int} {b:int}",
       handler: (int a, int b) =>
@@ -144,7 +144,7 @@ try
     // ENUM PARAMETERS
     // ========================================
 
-    .AddRoute
+    .Map
     (
       pattern: "deploy {env:environment} {tag?}",
       handler: (Environment env, string? tag) =>
@@ -162,7 +162,7 @@ try
     // CATCH-ALL PARAMETERS
     // ========================================
 
-    .AddRoute
+    .Map
     (
       pattern: "echo {*message}",
       handler: (string[] message) =>
@@ -177,7 +177,7 @@ try
     // SUBCOMMANDS (Hierarchical routes)
     // ========================================
 
-    .AddRoute
+    .Map
     (
       pattern: "git status",
       handler: () =>
@@ -188,7 +188,7 @@ try
       },
       description: "Shows git working tree status."
     )
-    .AddRoute
+    .Map
     (
       pattern: "git commit -m {message}",
       handler: (string message) =>
@@ -199,7 +199,7 @@ try
       },
       description: "Creates a commit with the specified message."
     )
-    .AddRoute
+    .Map
     (
       pattern: "git log --count {n:int}",
       handler: (int n) =>
@@ -218,7 +218,7 @@ try
     // BOOLEAN OPTIONS
     // ========================================
 
-    .AddRoute
+    .Map
     (
       pattern: "build --verbose,-v",
       handler: (bool verbose) =>
@@ -244,7 +244,7 @@ try
     // OPTIONS WITH VALUES
     // ========================================
 
-    .AddRoute
+    .Map
     (
       pattern: "search {query} --limit,-l {count:int?}",
       handler: (string query, int? count) =>
@@ -264,7 +264,7 @@ try
     // COMBINED OPTIONS
     // ========================================
 
-    .AddRoute
+    .Map
     (
       pattern: "backup {source} --compress,-c --output,-o {dest?}",
       handler: (string source, bool compress, string? dest) =>

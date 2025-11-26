@@ -126,7 +126,7 @@ public partial class NuruAppBuilder
   ///     services.AddLogging(config => config.AddConsole());
   ///     services.Configure&lt;AppOptions&gt;(Configuration.GetSection("App"));
   ///   })
-  ///   .AddRoute&lt;Command&gt;("route")
+  ///   .Map&lt;Command&gt;("route")
   ///   .Build();
   /// </code>
   /// </example>
@@ -155,7 +155,7 @@ public partial class NuruAppBuilder
   ///         options.UseSqlServer(config.GetConnectionString("Default")));
   ///     }
   ///   })
-  ///   .AddRoute&lt;Command&gt;("route")
+  ///   .Map&lt;Command&gt;("route")
   ///   .Build();
   /// </code>
   /// </example>

@@ -10,15 +10,15 @@ using TimeWarp.Nuru;
 
 NuruAppBuilder builder = new();
 
-builder.AddDefaultRoute(() => RunBenchmark(100), "Run AOT invocation benchmark with default 100 runs");
+builder.MapDefault(() => RunBenchmark(100), "Run AOT invocation benchmark with default 100 runs");
 
-builder.AddRoute(
+builder.Map(
   "--runs {count:int}",
   (int count) => RunBenchmark(count),
   "Run AOT invocation benchmark with specified number of runs"
 );
 
-builder.AddRoute(
+builder.Map(
   "--help",
   async () =>
   {

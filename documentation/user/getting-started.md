@@ -23,12 +23,12 @@ using TimeWarp.Nuru;
 using static System.Console;
 
 NuruApp app = new NuruAppBuilder()
-    .AddRoute
+    .Map
     (
       "add {x:double} {y:double}",
       (double x, double y) => WriteLine($"{x} + {y} = {x + y}")
     )
-    .AddRoute
+    .Map
     (
       "multiply {x:double} {y:double}",
       (double x, double y) => WriteLine($"{x} × {y} = {x * y}")
@@ -74,7 +74,7 @@ dotnet run -- multiply 3 7
 ### Optional Parameters
 
 ```csharp
-.AddRoute
+.Map
 (
   "greet {name} {greeting?}",
   (string name, string? greeting) => WriteLine($"{greeting ?? "Hello"}, {name}!")
@@ -92,9 +92,9 @@ dotnet run -- greet Bob "Good morning"
 ### Options (Flags)
 
 ```csharp
-.AddRoute("list --verbose", () => WriteLine("Listing files with detailed information...")
+.Map("list --verbose", () => WriteLine("Listing files with detailed information...")
 )
-.AddRoute("list", () => WriteLine("Listing files..."))
+.Map("list", () => WriteLine("Listing files..."))
 ```
 
 ```bash
@@ -108,7 +108,7 @@ dotnet run -- list --verbose
 ### Catch-All Parameters
 
 ```csharp
-.AddRoute
+.Map
 (
   "echo {*words}",
   (string[] words) => WriteLine(string.Join(" ", words))
@@ -129,8 +129,8 @@ using TimeWarp.Nuru;
 using TimeWarp.Nuru.Completion;
 
 NuruApp app = new NuruAppBuilder()
-    .AddRoute("deploy {env} --version {tag}", (string env, string tag) => Deploy(env, tag))
-    .AddRoute("status", () => ShowStatus())
+    .Map("deploy {env} --version {tag}", (string env, string tag) => Deploy(env, tag))
+    .Map("status", () => ShowStatus())
     .EnableStaticCompletion()  // ← Add this
     .Build();
 ```
@@ -193,7 +193,7 @@ NuruApp app = new NuruAppBuilder()
   {
     services.AddSingleton<ICalculator, Calculator>();
   })
-  .AddRoute<FactorialCommand>("factorial {n:int}")
+  .Map<FactorialCommand>("factorial {n:int}")
   .Build();
 
 return await app.RunAsync(args);
@@ -239,7 +239,7 @@ Enable automatic help generation:
 
 ```csharp
 NuruApp app = new NuruAppBuilder()
-    .AddRoute("deploy {env|Target environment} {tag?|Optional version}",
+    .Map("deploy {env|Target environment} {tag?|Optional version}",
         (string env, string? tag) => Deploy(env, tag))
     .AddAutoHelp()
     .Build();

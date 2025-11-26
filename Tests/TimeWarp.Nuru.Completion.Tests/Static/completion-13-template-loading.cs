@@ -14,7 +14,7 @@ public class TemplateLoadingTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("status", () => 0);
+    builder.Map("status", () => 0);
     var generator = new CompletionScriptGenerator();
 
     // Act
@@ -33,7 +33,7 @@ public class TemplateLoadingTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("status", () => 0);
+    builder.Map("status", () => 0);
     var generator = new CompletionScriptGenerator();
 
     // Act
@@ -52,7 +52,7 @@ public class TemplateLoadingTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("status", () => 0);
+    builder.Map("status", () => 0);
     var generator = new CompletionScriptGenerator();
 
     // Act
@@ -71,7 +71,7 @@ public class TemplateLoadingTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("status", () => 0);
+    builder.Map("status", () => 0);
     var generator = new CompletionScriptGenerator();
 
     // Act
@@ -90,7 +90,7 @@ public class TemplateLoadingTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("status", () => 0);
+    builder.Map("status", () => 0);
     var generator = new CompletionScriptGenerator();
 
     // Act
@@ -111,8 +111,8 @@ public class TemplateLoadingTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("create", () => 0);
-    builder.AddRoute("delete", () => 0);
+    builder.Map("create", () => 0);
+    builder.Map("delete", () => 0);
     var generator = new CompletionScriptGenerator();
 
     // Act
@@ -130,7 +130,7 @@ public class TemplateLoadingTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("test --verbose --force", () => 0);
+    builder.Map("test --verbose --force", () => 0);
     var generator = new CompletionScriptGenerator();
 
     // Act
@@ -165,8 +165,8 @@ public class TemplateLoadingTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("status", () => 0);
-    builder.AddRoute("version --format {fmt}", (string fmt) => 0);
+    builder.Map("status", () => 0);
+    builder.Map("version --format {fmt}", (string fmt) => 0);
     var generator = new CompletionScriptGenerator();
 
     // Act
@@ -195,7 +195,7 @@ public class TemplateLoadingTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("test", () => 0);
+    builder.Map("test", () => 0);
     var generator = new CompletionScriptGenerator();
 
     // Act

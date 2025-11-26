@@ -68,7 +68,7 @@ public class ConfigurationTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("cmd{n}", (string n) => $"Command {n}")
+      .Map("cmd{n}", (string n) => $"Command {n}")
       .AddReplSupport(options => options.MaxHistorySize = 10)
       .Build();
 
@@ -92,7 +92,7 @@ public class ConfigurationTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("first", () => "First!")
+      .Map("first", () => "First!")
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 
@@ -115,8 +115,8 @@ public class ConfigurationTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("fail", ThrowTestException)
-      .AddRoute("status", () => "OK")
+      .Map("fail", ThrowTestException)
+      .Map("status", () => "OK")
       .AddReplSupport(options => options.ContinueOnError = true)
       .Build();
 
@@ -141,7 +141,7 @@ public class ConfigurationTests
 
       NuruApp app = new NuruAppBuilder()
         .UseTerminal(terminal)
-        .AddRoute("test", () => "OK")
+        .Map("test", () => "OK")
         .AddReplSupport(options =>
         {
           options.PersistHistory = true;
@@ -197,7 +197,7 @@ public class ConfigurationTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("test", () => "OK")
+      .Map("test", () => "OK")
       .AddReplSupport(options =>
       {
         options.Prompt = "app> ";

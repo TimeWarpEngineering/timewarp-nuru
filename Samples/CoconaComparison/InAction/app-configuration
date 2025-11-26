@@ -24,7 +24,7 @@ var configValue2 = configuration.GetValue<string>("ConfigValue2");
 
 // Create app with route that uses configuration
 var app = new NuruAppBuilder()
-    .AddRoute("run", () =>
+    .Map("run", () =>
     {
         WriteLine($"ConfigValue1: {configValue1}");
         WriteLine($"ConfigValue2: {configValue2}");

@@ -11,7 +11,7 @@ public class RepeatedOptionsTests
     // Arrange
     string[]? boundE = null;
     NuruApp app = new NuruAppBuilder()
-      .AddRoute("docker run --env {e}*", (string[] e) => { boundE = e; return 0; })
+      .Map("docker run --env {e}*", (string[] e) => { boundE = e; return 0; })
       .Build();
 
     // Act
@@ -33,7 +33,7 @@ public class RepeatedOptionsTests
     // Arrange
     string[]? boundE = null;
     NuruApp app = new NuruAppBuilder()
-      .AddRoute("docker run --env {e}*", (string[] e) => { boundE = e; return 0; })
+      .Map("docker run --env {e}*", (string[] e) => { boundE = e; return 0; })
       .Build();
 
     // Act
@@ -52,7 +52,7 @@ public class RepeatedOptionsTests
     // Arrange
     int[]? boundId = null;
     NuruApp app = new NuruAppBuilder()
-      .AddRoute("process --id {id:int}*", (int[] id) => { boundId = id; return 0; })
+      .Map("process --id {id:int}*", (int[] id) => { boundId = id; return 0; })
       .Build();
 
     // Act
@@ -74,7 +74,7 @@ public class RepeatedOptionsTests
     // Arrange
     string[]? boundE = null;
     NuruApp app = new NuruAppBuilder()
-      .AddRoute("docker run --env,-e {e}*", (string[] e) => { boundE = e; return 0; })
+      .Map("docker run --env,-e {e}*", (string[] e) => { boundE = e; return 0; })
       .Build();
 
     // Act
@@ -98,7 +98,7 @@ public class RepeatedOptionsTests
     string[]? boundT = null;
     bool boundVerbose = false;
     NuruApp app = new NuruAppBuilder()
-      .AddRoute("deploy --env {e} --tag {t}* --verbose", (string e, string[] t, bool verbose) => { boundE = e; boundT = t; boundVerbose = verbose; return 0; })
+      .Map("deploy --env {e} --tag {t}* --verbose", (string e, string[] t, bool verbose) => { boundE = e; boundT = t; boundVerbose = verbose; return 0; })
       .Build();
 
     // Act
@@ -121,7 +121,7 @@ public class RepeatedOptionsTests
     // Arrange
     string[]? boundF = null;
     NuruApp app = new NuruAppBuilder()
-      .AddRoute("run --flag {f}*", (string[] f) => { boundF = f; return 0; })
+      .Map("run --flag {f}*", (string[] f) => { boundF = f; return 0; })
       .Build();
 
     // Act

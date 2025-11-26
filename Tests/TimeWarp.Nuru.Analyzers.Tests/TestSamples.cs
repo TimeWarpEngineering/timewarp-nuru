@@ -9,7 +9,7 @@ public static class TestSamples
         NuruAppBuilder builder = new();
 
         // NURU001: Should suggest {env} instead of <env>
-        builder.AddRoute("deploy <env>", () => { });
+        builder.Map("deploy <env>", () => { });
     }
 
     public static void UnbalancedBraces()
@@ -17,10 +17,10 @@ public static class TestSamples
         NuruAppBuilder builder = new();
 
         // NURU002: Missing closing brace
-        builder.AddRoute("deploy {env", () => { });
+        builder.Map("deploy {env", () => { });
 
         // NURU002: Missing opening brace
-        builder.AddRoute("deploy env}", () => { });
+        builder.Map("deploy env}", () => { });
     }
 
     public static void InvalidOptionFormat()
@@ -28,7 +28,7 @@ public static class TestSamples
         NuruAppBuilder builder = new();
 
         // NURU003: Should be --verbose or -v
-        builder.AddRoute("test -verbose", () => { });
+        builder.Map("test -verbose", () => { });
     }
 
     public static void InvalidTypeConstraint()
@@ -36,13 +36,13 @@ public static class TestSamples
         NuruAppBuilder builder = new();
 
         // NURU004: Invalid type constraint
-        builder.AddRoute("wait {seconds:integer}", () => { });
+        builder.Map("wait {seconds:integer}", () => { });
 
         // NURU004: Should be DateTime not Date
-        builder.AddRoute("schedule {when:Date}", () => { });
+        builder.Map("schedule {when:Date}", () => { });
 
         // NURU004: float is not supported (yet)
-        builder.AddRoute("calculate {value:float}", () => { });
+        builder.Map("calculate {value:float}", () => { });
     }
 
     public static void CatchAllNotAtEnd()
@@ -50,13 +50,13 @@ public static class TestSamples
         NuruAppBuilder builder = new();
 
         // NURU005: Catch-all must be last
-        builder.AddRoute("docker {*args} --verbose", () => { });
+        builder.Map("docker {*args} --verbose", () => { });
 
         // NURU005: Catch-all must be last
-        builder.AddRoute("kubectl {*commands} apply", () => { });
+        builder.Map("kubectl {*commands} apply", () => { });
 
         // This is OK - catch-all is at the end
-        builder.AddRoute("docker run {*args}", () => { });
+        builder.Map("docker run {*args}", () => { });
     }
 
     public static void DuplicateParameterNames()
@@ -64,13 +64,13 @@ public static class TestSamples
         NuruAppBuilder builder = new();
 
         // NURU006: Duplicate parameter name 'env'
-        builder.AddRoute("deploy {env} to {env}", () => { });
+        builder.Map("deploy {env} to {env}", () => { });
 
         // NURU006: Duplicate parameter name 'file'
-        builder.AddRoute("copy {file} {dest} {file}", () => { });
+        builder.Map("copy {file} {dest} {file}", () => { });
 
         // This is OK - different parameter names
-        builder.AddRoute("deploy {env} {tag}", () => { });
+        builder.Map("deploy {env} {tag}", () => { });
     }
 
     public static void ConflictingOptionalParameters()
@@ -78,16 +78,16 @@ public static class TestSamples
         NuruAppBuilder builder = new();
 
         // NURU007: Consecutive optional parameters
-        builder.AddRoute("deploy {env?} {tag?}", () => { });
+        builder.Map("deploy {env?} {tag?}", () => { });
 
         // NURU007: Three consecutive optional parameters
-        builder.AddRoute("backup {source?} {dest?} {format?}", () => { });
+        builder.Map("backup {source?} {dest?} {format?}", () => { });
 
         // This is OK - required parameter before optional
-        builder.AddRoute("deploy {env} {tag?}", () => { });
+        builder.Map("deploy {env} {tag?}", () => { });
 
         // This is OK - literal between optional parameters
-        builder.AddRoute("copy {source?} to {dest?}", () => { });
+        builder.Map("copy {source?} to {dest?}", () => { });
     }
 
     public static void MixedCatchAllWithOptional()
@@ -95,16 +95,16 @@ public static class TestSamples
         NuruAppBuilder builder = new();
 
         // NURU008: Cannot mix optional with catch-all
-        builder.AddRoute("deploy {env?} {*args}", () => { });
+        builder.Map("deploy {env?} {*args}", () => { });
 
         // NURU008: Cannot mix optional with catch-all (different order)
-        builder.AddRoute("run {script} {config?} {*args}", () => { });
+        builder.Map("run {script} {config?} {*args}", () => { });
 
         // This is OK - required parameter with catch-all
-        builder.AddRoute("docker {command} {*args}", () => { });
+        builder.Map("docker {command} {*args}", () => { });
 
         // This is OK - only catch-all
-        builder.AddRoute("exec {*args}", () => { });
+        builder.Map("exec {*args}", () => { });
     }
 
     public static void DuplicateOptionAlias()
@@ -112,15 +112,15 @@ public static class TestSamples
         NuruAppBuilder builder = new();
 
         // NURU009: Both options use -v
-        builder.AddRoute("test --verbose,-v --version,-v", () => { });
+        builder.Map("test --verbose,-v --version,-v", () => { });
 
         // NURU009: Three options with same short form -d
-        builder.AddRoute("build --debug,-d --deploy,-d --dry-run,-d", () => { });
+        builder.Map("build --debug,-d --deploy,-d --dry-run,-d", () => { });
 
         // This is OK - different short forms
-        builder.AddRoute("run --verbose,-v --debug,-d", () => { });
+        builder.Map("run --verbose,-v --debug,-d", () => { });
 
         // This is OK - one has short form, other doesn't
-        builder.AddRoute("deploy --verbose,-v --force", () => { });
+        builder.Map("deploy --verbose,-v --force", () => { });
     }
 }

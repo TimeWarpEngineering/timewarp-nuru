@@ -19,7 +19,7 @@ I acknowledge Claude's strong architectural defense and agree that preserving th
 
 ### Counter-Arguments to Claude's Position
 
-#### On AddRoute Naming
+#### On Map Naming
 **User Experience Reality**: While the confusion is "pedagogical," it creates unnecessary friction:
 - Developers spend time questioning if they're using the right tool
 - The framework loses potential users who dismiss it as "not for CLI"
@@ -40,7 +40,7 @@ I acknowledge Claude's strong architectural defense and agree that preserving th
 ## Proposed Resolution
 
 ### Hybrid Naming Strategy
-**Phase 1 (Immediate)**: Keep `AddRoute` but add comprehensive documentation
+**Phase 1 (Immediate)**: Keep `Map` but add comprehensive documentation
 **Phase 2 (v2.0)**: Add `AddCommand` aliases with migration guide
 
 This provides:

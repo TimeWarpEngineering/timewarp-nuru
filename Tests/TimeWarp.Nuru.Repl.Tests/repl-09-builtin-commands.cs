@@ -80,7 +80,7 @@ public class BuiltinCommandsTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("status", () => "OK")
+      .Map("status", () => "OK")
       .AddReplSupport()
       .Build();
 
@@ -142,7 +142,7 @@ public class BuiltinCommandsTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("status", () => "OK")
+      .Map("status", () => "OK")
       .AddReplSupport()
       .Build();
 
@@ -165,7 +165,7 @@ public class BuiltinCommandsTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("status", () => "OK")
+      .Map("status", () => "OK")
       .AddReplSupport()
       .Build();
 

@@ -29,7 +29,7 @@ public class EnumCompletionTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("log {level:LogLevel}", (LogLevel level) => 0);
+    builder.Map("log {level:LogLevel}", (LogLevel level) => 0);
 
     // Act
     var generator = new CompletionScriptGenerator();
@@ -46,7 +46,7 @@ public class EnumCompletionTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("deploy {env:Environment} {level:LogLevel}",
+    builder.Map("deploy {env:Environment} {level:LogLevel}",
       (Environment env, LogLevel level) => 0);
 
     // Act
@@ -64,7 +64,7 @@ public class EnumCompletionTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("log {message} {level:LogLevel?}",
+    builder.Map("log {message} {level:LogLevel?}",
       (string message, LogLevel? level) => 0);
 
     // Act
@@ -82,7 +82,7 @@ public class EnumCompletionTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("deploy {env:Environment} --force --verbose",
+    builder.Map("deploy {env:Environment} --force --verbose",
       (Environment env) => 0);
 
     // Act
@@ -101,7 +101,7 @@ public class EnumCompletionTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("setlevel {level:LogLevel}", (LogLevel level) => 0);
+    builder.Map("setlevel {level:LogLevel}", (LogLevel level) => 0);
 
     var generator = new CompletionScriptGenerator();
 
@@ -124,7 +124,7 @@ public class EnumCompletionTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("deploy {app} {env:Environment} --version {ver} --log {level:LogLevel}",
+    builder.Map("deploy {app} {env:Environment} --version {ver} --log {level:LogLevel}",
       (string app, Environment env, string ver, LogLevel level) => 0);
 
     // Act
@@ -143,7 +143,7 @@ public class EnumCompletionTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("run {file} {count:int} {env:Environment} {enabled:bool}",
+    builder.Map("run {file} {count:int} {env:Environment} {enabled:bool}",
       (string file, int count, Environment env, bool enabled) => 0);
 
     // Act
@@ -161,7 +161,7 @@ public class EnumCompletionTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("execute {level:LogLevel} {*args}",
+    builder.Map("execute {level:LogLevel} {*args}",
       (LogLevel level, string[] args) => 0);
 
     // Act

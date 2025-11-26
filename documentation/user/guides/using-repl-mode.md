@@ -19,8 +19,8 @@ using TimeWarp.Nuru;
 using TimeWarp.Nuru.Repl;
 
 var builder = new NuruAppBuilder()
-  .AddRoute("greet {name}", name => Console.WriteLine($"Hello, {name}!"))
-  .AddRoute("version", () => Console.WriteLine("v1.0.0"));
+  .Map("greet {name}", name => Console.WriteLine($"Hello, {name}!"))
+  .Map("version", () => Console.WriteLine("v1.0.0"));
 
 var app = builder.Build();
 
@@ -273,8 +273,8 @@ REPL works on Windows, Linux, and macOS:
 
 ```csharp
 var builder = new NuruAppBuilder()
-  .AddRoute("add {a:int} {b:int}", (a, b) => Console.WriteLine($"{a} + {b} = {a + b}"))
-  .AddRoute("multiply {a:int} {b:int}", (a, b) => Console.WriteLine($"{a} × {b} = {a * b}"));
+  .Map("add {a:int} {b:int}", (a, b) => Console.WriteLine($"{a} + {b} = {a + b}"))
+  .Map("multiply {a:int} {b:int}", (a, b) => Console.WriteLine($"{a} × {b} = {a * b}"));
 
 var app = builder.Build();
 await app.RunReplAsync(new ReplOptions
@@ -288,9 +288,9 @@ await app.RunReplAsync(new ReplOptions
 
 ```csharp
 var builder = new NuruAppBuilder()
-  .AddRoute("status", () => RunGit("status"))
-  .AddRoute("commit -m {message}", message => RunGit($"commit -m \"{message}\""))
-  .AddRoute("log --oneline", () => RunGit("log --oneline"));
+  .Map("status", () => RunGit("status"))
+  .Map("commit -m {message}", message => RunGit($"commit -m \"{message}\""))
+  .Map("log --oneline", () => RunGit("log --oneline"));
 
 var app = builder.Build();
 await app.RunReplAsync(new ReplOptions

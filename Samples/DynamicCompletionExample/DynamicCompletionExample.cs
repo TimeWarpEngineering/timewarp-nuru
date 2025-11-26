@@ -49,7 +49,7 @@ builder.EnableDynamicCompletion(configure: registry =>
 // Sample Commands - Demonstrate Dynamic Completion
 // ============================================================================
 
-builder.AddRoute
+builder.Map
 (
   "deploy {env} --version {tag}",
   (string env, string tag) =>
@@ -61,7 +61,7 @@ builder.AddRoute
   "Deploy a version to an environment"
 );
 
-builder.AddRoute
+builder.Map
 (
   "deploy {env} --mode {mode}",
   (string env, DeploymentMode mode) =>
@@ -71,7 +71,7 @@ builder.AddRoute
   "Deploy with a specific mode"
 );
 
-builder.AddRoute
+builder.Map
 (
   "list-environments",
   () =>
@@ -85,7 +85,7 @@ builder.AddRoute
   "List all available environments"
 );
 
-builder.AddRoute
+builder.Map
 (
   "list-tags",
   () =>
@@ -99,7 +99,7 @@ builder.AddRoute
   "List all available tags"
 );
 
-builder.AddRoute
+builder.Map
 (
   "status",
   () => Console.WriteLine("📊 System Status: OK"),

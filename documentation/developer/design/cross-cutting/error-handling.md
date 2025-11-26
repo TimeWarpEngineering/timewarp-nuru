@@ -124,7 +124,7 @@ The Roslyn Analyzer validates route patterns at compile time, providing the same
 **Example:**
 ```csharp
 // Build-time error
-builder.AddRoute("deploy {env?} {version?}", handler);
+builder.Map("deploy {env?} {version?}", handler);
 // Compiler diagnostic: NURU_S002 - Conflicting optional parameters
 ```
 

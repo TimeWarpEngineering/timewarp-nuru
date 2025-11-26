@@ -35,9 +35,9 @@ public class DoubleTabBugTests
     using TestTerminal terminal = new();
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("git status", () => 0)
-      .AddRoute("git commit -m {message}", (string _) => 0)
-      .AddRoute("git log --count {n:int}", (int _) => 0)
+      .Map("git status", () => 0)
+      .Map("git commit -m {message}", (string _) => 0)
+      .Map("git log --count {n:int}", (int _) => 0)
       .AddReplSupport(options =>
       {
         options.Prompt = "demo> ";

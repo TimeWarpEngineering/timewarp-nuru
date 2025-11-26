@@ -8,25 +8,25 @@ using static System.Console;
 NuruApp app =
   new NuruAppBuilder()
   .AddAutoHelp()
-  .AddRoute // Basic operations
+  .Map // Basic operations
   (
     pattern: "add {x:double} {y:double}",
     handler: (double x, double y) => WriteLine($"{x} + {y} = {x + y}"),
     description: "Add two numbers together"
   )
-  .AddRoute
+  .Map
   (
     pattern: "subtract {x:double} {y:double}",
     handler: (double x, double y) => WriteLine($"{x} - {y} = {x - y}"),
     description: "Subtract the second number from the first"
   )
-  .AddRoute
+  .Map
   (
     pattern: "multiply {x:double} {y:double}",
     handler: (double x, double y) => WriteLine($"{x} × {y} = {x * y}"),
     description: "Multiply two numbers together"
   )
-  .AddRoute
+  .Map
   (
     pattern: "divide {x:double} {y:double}",
     handler: (double x, double y) =>
@@ -41,7 +41,7 @@ NuruApp app =
     },
     description: "Divide the first number by the second"
   )
-  .AddRoute // Rounding with options
+  .Map // Rounding with options
   (
     pattern: "round {value:double} --mode {mode}",
     handler: (double value, string mode) =>
@@ -66,7 +66,7 @@ NuruApp app =
     },
     description: "Round a number using specified mode (up, down, nearest, banker/accountancy)"
   )
-  .AddRoute // Default rounding (nearest)
+  .Map // Default rounding (nearest)
   (
     pattern: "round {value:double}",
     handler: (double value) => WriteLine($"Round({value}) = {Math.Round(value)}"),

@@ -16,9 +16,9 @@ using TimeWarp.Nuru;
 
 NuruApp app = new NuruAppBuilder()
     .AddAutoHelp()
-    .AddRoute("greet {name}", (string name) =>
+    .Map("greet {name}", (string name) =>
         Console.WriteLine($"Hello, {name}!"))
-    .AddRoute("status", () => "System is operational")
+    .Map("status", () => "System is operational")
     .Build();
 
 return await app.RunAsync(args);
@@ -165,9 +165,9 @@ using TimeWarp.Nuru;
 
 NuruApp app = new NuruAppBuilder()
     .AddAutoHelp()
-    .AddRoute("add {x:int} {y:int}", Add, "Add two numbers")
-    .AddRoute("greet {name}", Greet, "Greet someone")
-    .AddRoute("version", () => "1.0.0", "Show version")
+    .Map("add {x:int} {y:int}", Add, "Add two numbers")
+    .Map("greet {name}", Greet, "Greet someone")
+    .Map("version", () => "1.0.0", "Show version")
     .Build();
 
 return await app.RunAsync(args);

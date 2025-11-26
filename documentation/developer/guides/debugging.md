@@ -137,7 +137,7 @@ The parser provides extensive debugging capabilities through multiple components
 ```csharp
 var app = new NuruAppBuilder()
     .UseConsoleLogging(LogLevel.Trace)  // Enable ALL parser trace messages
-    .AddRoute("test {param}", () => {})
+    .Map("test {param}", () => {})
     .Build();
 
 await app.RunAsync(args);

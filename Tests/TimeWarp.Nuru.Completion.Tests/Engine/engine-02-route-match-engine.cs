@@ -19,7 +19,7 @@ public class RouteMatchEngineTests
     NuruAppBuilder builder = new();
     foreach (string pattern in patterns)
     {
-      builder.AddRoute(pattern, () => 0);
+      builder.Map(pattern, () => 0);
     }
 
     return builder.EndpointCollection;

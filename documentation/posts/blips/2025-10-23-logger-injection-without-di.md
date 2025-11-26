@@ -4,7 +4,7 @@ Inject ILogger<T> into delegates. No DI container needed.
 NuruApp app =
   new NuruAppBuilder()
   .UseConsoleLogging()
-  .AddRoute
+  .Map
   (
     "process {file}",
     (string file, ILogger<Program> logger) =>

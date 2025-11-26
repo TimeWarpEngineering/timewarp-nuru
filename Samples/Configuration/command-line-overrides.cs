@@ -35,9 +35,9 @@ NuruApp app =
     }
   })
   .AddAutoHelp()
-  .AddRoute("run", RunApplicationAsync, "Run application with current configuration")
-  .AddRoute("show", ShowConfigurationAsync, "Show all configuration values and their sources")
-  .AddRoute("demo", RunDemonstrationAsync, "Run interactive demonstration of override scenarios")
+  .Map("run", RunApplicationAsync, "Run application with current configuration")
+  .Map("show", ShowConfigurationAsync, "Show all configuration values and their sources")
+  .Map("demo", RunDemonstrationAsync, "Run interactive demonstration of override scenarios")
   .Build();
 
 return await app.RunAsync(args);

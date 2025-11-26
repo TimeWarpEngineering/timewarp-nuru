@@ -31,7 +31,7 @@ public static class NuruAppBuilderExtensions
     // Auto-detect app name at generation time (not at build time)
 
     // Register the --generate-completion route
-    builder.AddRoute("--generate-completion {shell}", (string shell) =>
+    builder.Map("--generate-completion {shell}", (string shell) =>
     {
       // Detect app name at runtime (when the command is actually executed)
       string detectedAppName = AppNameDetector.GetEffectiveAppName();
@@ -82,13 +82,13 @@ public static class NuruAppBuilderExtensions
     configure?.Invoke(registry);
 
     // Register the __complete callback route
-    builder.AddRoute("__complete {index:int} {*words}", (int index, string[] words) =>
+    builder.Map("__complete {index:int} {*words}", (int index, string[] words) =>
     {
       return DynamicCompletionHandler.HandleCompletion(index, words, registry, builder.EndpointCollection);
     });
 
     // Register the --generate-completion route with dynamic templates
-    builder.AddRoute("--generate-completion {shell}", (string shell) =>
+    builder.Map("--generate-completion {shell}", (string shell) =>
     {
       string detectedAppName = AppNameDetector.GetEffectiveAppName();
 
@@ -107,14 +107,14 @@ public static class NuruAppBuilderExtensions
     });
 
     // Register the --install-completion route for automatic installation
-    builder.AddRoute("--install-completion {shell?}", (string? shell) =>
+    builder.Map("--install-completion {shell?}", (string? shell) =>
     {
       string detectedAppName = AppNameDetector.GetEffectiveAppName();
       InstallCompletionHandler.Install(detectedAppName, shell);
     });
 
     // Register the --install-completion --dry-run route for preview
-    builder.AddRoute("--install-completion --dry-run {shell?}", (string? shell) =>
+    builder.Map("--install-completion --dry-run {shell?}", (string? shell) =>
     {
       string detectedAppName = AppNameDetector.GetEffectiveAppName();
       InstallCompletionHandler.Install(detectedAppName, shell, dryRun: true);

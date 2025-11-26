@@ -7,7 +7,7 @@
 Here's a route pattern using every possible syntax element:
 
 ```csharp
-builder.AddRoute(
+builder.Map(
   "docker run {image} {tag:string?} --env,-e {var}* --port {num:int} --detach? --verbose -- {*args}",
   (string image, string? tag, string[] var, int num, bool detach, bool verbose, string[] args) => ...
 );
@@ -272,7 +272,7 @@ Route Pattern (entire string)
 **Optional Boolean Flag with Alias:**
 ```csharp
 // Pattern
-builder.AddRoute("build --verbose,-v?", (bool verbose) => ...);
+builder.Map("build --verbose,-v?", (bool verbose) => ...);
 
 // All valid invocations:
 // build              → verbose = false
@@ -283,7 +283,7 @@ builder.AddRoute("build --verbose,-v?", (bool verbose) => ...);
 **Optional Flag with Required Value:**
 ```csharp
 // Pattern
-builder.AddRoute("backup {source} --output,-o? {file}",
+builder.Map("backup {source} --output,-o? {file}",
     (string source, string? file) => ...);
 
 // Valid invocations:
@@ -299,7 +299,7 @@ builder.AddRoute("backup {source} --output,-o? {file}",
 **Optional Flag with Optional Value:**
 ```csharp
 // Pattern
-builder.AddRoute("build --config,-c? {mode?}",
+builder.Map("build --config,-c? {mode?}",
     (string? mode) => ...);
 
 // All valid invocations:

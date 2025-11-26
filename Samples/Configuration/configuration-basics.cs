@@ -44,10 +44,10 @@ NuruApp app =
     }
   })
   .AddAutoHelp()
-  .AddRoute("config show", ShowConfigurationAsync, "Show current configuration values")
-  .AddRoute("db connect", ConnectToDatabaseAsync, "Connect to database using config")
-  .AddRoute("api call {endpoint}", CallApiAsync, "Call API endpoint using config")
-  .AddRoute("notify {message}", SendNotificationAsync, "Send notification (uses environment-based service)")
+  .Map("config show", ShowConfigurationAsync, "Show current configuration values")
+  .Map("db connect", ConnectToDatabaseAsync, "Connect to database using config")
+  .Map("api call {endpoint}", CallApiAsync, "Call API endpoint using config")
+  .Map("notify {message}", SendNotificationAsync, "Send notification (uses environment-based service)")
   .Build();
 
 return await app.RunAsync(args);

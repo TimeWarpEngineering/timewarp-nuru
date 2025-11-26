@@ -13,7 +13,7 @@ public class NegativeNumberTests
     int? capturedX = null;
     int? capturedY = null;
     NuruApp app = new NuruAppBuilder()
-      .AddRoute("add {x:int} {y:int}", (int x, int y) =>
+      .Map("add {x:int} {y:int}", (int x, int y) =>
       {
         capturedX = x;
         capturedY = y;
@@ -39,7 +39,7 @@ public class NegativeNumberTests
     double? capturedX = null;
     double? capturedY = null;
     NuruApp app = new NuruAppBuilder()
-      .AddRoute("multiply {x:double} {y:double}", (double x, double y) =>
+      .Map("multiply {x:double} {y:double}", (double x, double y) =>
       {
         capturedX = x;
         capturedY = y;
@@ -66,7 +66,7 @@ public class NegativeNumberTests
     int? capturedB = null;
     int? capturedC = null;
     NuruApp app = new NuruAppBuilder()
-      .AddRoute("calc {a:int} {b:int} {c:int}", (int a, int b, int c) =>
+      .Map("calc {a:int} {b:int} {c:int}", (int a, int b, int c) =>
       {
         capturedA = a;
         capturedB = b;
@@ -94,7 +94,7 @@ public class NegativeNumberTests
     int? capturedValue = null;
     bool? capturedFlag = null;
     NuruApp app = new NuruAppBuilder()
-      .AddRoute("test {value:int} --flag", (int value, bool flag) =>
+      .Map("test {value:int} --flag", (int value, bool flag) =>
       {
         capturedValue = value;
         capturedFlag = flag;
@@ -119,7 +119,7 @@ public class NegativeNumberTests
     // Arrange
     decimal? capturedValue = null;
     NuruApp app = new NuruAppBuilder()
-      .AddRoute("price {amount:decimal}", (decimal amount) =>
+      .Map("price {amount:decimal}", (decimal amount) =>
       {
         capturedValue = amount;
         return 0;
@@ -142,7 +142,7 @@ public class NegativeNumberTests
     // Arrange
     string? capturedText = null;
     NuruApp app = new NuruAppBuilder()
-      .AddRoute("echo {text}", (string text) =>
+      .Map("echo {text}", (string text) =>
       {
         capturedText = text;
         return 0;
@@ -165,7 +165,7 @@ public class NegativeNumberTests
     // Arrange
     bool? capturedVerbose = null;
     NuruApp app = new NuruAppBuilder()
-      .AddRoute("test --verbose", (bool verbose) =>
+      .Map("test --verbose", (bool verbose) =>
       {
         capturedVerbose = verbose;
         return 0;
@@ -194,7 +194,7 @@ public class NegativeNumberTests
     // Arrange
     double? capturedValue = null;
     NuruApp app = new NuruAppBuilder()
-      .AddRoute("calc {value:double}", (double value) =>
+      .Map("calc {value:double}", (double value) =>
       {
         capturedValue = value;
         return 0;
@@ -217,7 +217,7 @@ public class NegativeNumberTests
     // Arrange
     int? capturedAmount = null;
     NuruApp app = new NuruAppBuilder()
-      .AddRoute("calc --amount {amount:int}", (int amount) =>
+      .Map("calc --amount {amount:int}", (int amount) =>
       {
         capturedAmount = amount;
         return 0;

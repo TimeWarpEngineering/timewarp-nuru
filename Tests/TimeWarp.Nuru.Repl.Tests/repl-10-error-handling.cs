@@ -25,8 +25,8 @@ public class ErrorHandlingTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("fail", ThrowInvalidOperation)
-      .AddRoute("status", () => "OK")
+      .Map("fail", ThrowInvalidOperation)
+      .Map("status", () => "OK")
       .AddReplSupport(options => options.ContinueOnError = true)
       .Build();
 
@@ -48,8 +48,8 @@ public class ErrorHandlingTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("fail", ThrowInvalidOperation)
-      .AddRoute("status", () => "OK")
+      .Map("fail", ThrowInvalidOperation)
+      .Map("status", () => "OK")
       .AddReplSupport(options => options.ContinueOnError = false)
       .Build();
 
@@ -69,7 +69,7 @@ public class ErrorHandlingTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("status", () => "OK")
+      .Map("status", () => "OK")
       .AddReplSupport(options => options.ContinueOnError = true)
       .Build();
 
@@ -90,7 +90,7 @@ public class ErrorHandlingTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("add {n:int}", (int n) => $"Result: {n}")
+      .Map("add {n:int}", (int n) => $"Result: {n}")
       .AddReplSupport(options => options.ContinueOnError = true)
       .Build();
 
@@ -111,7 +111,7 @@ public class ErrorHandlingTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("fail", ThrowInvalidOperation)
+      .Map("fail", ThrowInvalidOperation)
       .AddReplSupport(options =>
       {
         options.ContinueOnError = true;
@@ -136,7 +136,7 @@ public class ErrorHandlingTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("greet {name}", (string name) => $"Hello, {name}!")
+      .Map("greet {name}", (string name) => $"Hello, {name}!")
       .AddReplSupport(options => options.ContinueOnError = true)
       .Build();
 
@@ -156,7 +156,7 @@ public class ErrorHandlingTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("fail", ThrowInvalidOperation)
+      .Map("fail", ThrowInvalidOperation)
       .AddReplSupport(options => options.ContinueOnError = false)
       .Build();
 
@@ -178,9 +178,9 @@ public class ErrorHandlingTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("fail1", ThrowError1)
-      .AddRoute("fail2", ThrowArgument)
-      .AddRoute("status", () => "OK")
+      .Map("fail1", ThrowError1)
+      .Map("fail2", ThrowArgument)
+      .Map("status", () => "OK")
       .AddReplSupport(options => options.ContinueOnError = true)
       .Build();
 

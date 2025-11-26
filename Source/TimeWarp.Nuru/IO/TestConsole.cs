@@ -10,7 +10,7 @@ namespace TimeWarp.Nuru;
 /// <code>
 /// using var console = new TestConsole("command1\nexit\n");
 /// var app = NuruApp.CreateBuilder()
-///     .AddRoute("command1", () => "Hello!")
+///     .Map("command1", () => "Hello!")
 ///     .Build(console: console);
 ///
 /// await app.RunAsync(["command1"]);

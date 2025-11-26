@@ -20,8 +20,8 @@ dotnet run Samples/ReplDemo/repl-basic-demo.cs
 ### Simple Commands (Literal Only)
 
 ```csharp
-.AddRoute("status", () => ...)
-.AddRoute("time", () => ...)
+.Map("status", () => ...)
+.Map("time", () => ...)
 ```
 
 | Command | Description |
@@ -32,8 +32,8 @@ dotnet run Samples/ReplDemo/repl-basic-demo.cs
 ### Basic Parameters
 
 ```csharp
-.AddRoute("greet {name}", (string name) => ...)
-.AddRoute("add {a:int} {b:int}", (int a, int b) => ...)
+.Map("greet {name}", (string name) => ...)
+.Map("add {a:int} {b:int}", (int a, int b) => ...)
 ```
 
 | Command | Description |
@@ -51,7 +51,7 @@ public enum Environment { Dev, Staging, Prod }
 .AddTypeConverter(new EnumTypeConverter<Environment>())
 
 // Use in route
-.AddRoute("deploy {env:environment} {tag?}", (Environment env, string? tag) => ...)
+.Map("deploy {env:environment} {tag?}", (Environment env, string? tag) => ...)
 ```
 
 | Command | Description |
@@ -64,7 +64,7 @@ public enum Environment { Dev, Staging, Prod }
 ### Catch-All Parameters
 
 ```csharp
-.AddRoute("echo {*message}", (string[] message) => ...)
+.Map("echo {*message}", (string[] message) => ...)
 ```
 
 | Command | Description |
@@ -74,9 +74,9 @@ public enum Environment { Dev, Staging, Prod }
 ### Subcommands (Hierarchical Routes)
 
 ```csharp
-.AddRoute("git status", () => ...)
-.AddRoute("git commit -m {message}", (string message) => ...)
-.AddRoute("git log --count {n:int}", (int n) => ...)
+.Map("git status", () => ...)
+.Map("git commit -m {message}", (string message) => ...)
+.Map("git log --count {n:int}", (int n) => ...)
 ```
 
 | Command | Description |
@@ -88,7 +88,7 @@ public enum Environment { Dev, Staging, Prod }
 ### Boolean Options
 
 ```csharp
-.AddRoute("build --verbose,-v", (bool verbose) => ...)
+.Map("build --verbose,-v", (bool verbose) => ...)
 ```
 
 | Command | Description |
@@ -100,7 +100,7 @@ public enum Environment { Dev, Staging, Prod }
 ### Options with Values
 
 ```csharp
-.AddRoute("search {query} --limit,-l {count:int?}", (string query, int? count) => ...)
+.Map("search {query} --limit,-l {count:int?}", (string query, int? count) => ...)
 ```
 
 | Command | Description |
@@ -112,7 +112,7 @@ public enum Environment { Dev, Staging, Prod }
 ### Combined Options
 
 ```csharp
-.AddRoute("backup {source} --compress,-c --output,-o {dest?}", 
+.Map("backup {source} --compress,-c --output,-o {dest?}", 
     (string source, bool compress, string? dest) => ...)
 ```
 
@@ -159,7 +159,7 @@ To use enums in routes:
 
 3. **Use in route pattern:**
    ```csharp
-   .AddRoute("deploy {env:environment}", (Environment env) => ...)
+   .Map("deploy {env:environment}", (Environment env) => ...)
    ```
 
 The constraint name is the enum type name in lowercase (e.g., `Environment` becomes `environment`).

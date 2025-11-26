@@ -177,7 +177,7 @@ internal sealed class ErrorHandlingTool
                     ## Example Pattern
 
                     ```csharp
-                    .AddRoute("deploy {environment}", async (string environment) =>
+                    .Map("deploy {environment}", async (string environment) =>
                     {
                         try
                         {

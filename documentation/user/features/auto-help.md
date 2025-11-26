@@ -8,8 +8,8 @@ Add `.AddAutoHelp()` to your application builder:
 
 ```csharp
 NuruApp app = new NuruAppBuilder()
-  .AddRoute("deploy {env}", (string env) => Deploy(env))
-  .AddRoute("backup {source}", (string source) => Backup(source))
+  .Map("deploy {env}", (string env) => Deploy(env))
+  .Map("backup {source}", (string source) => Backup(source))
   .AddAutoHelp()  // Enable automatic help
   .Build();
 ```
@@ -38,12 +38,12 @@ Use the pipe (`|`) syntax to add descriptions to parameters and options:
 
 ```csharp
 NuruApp app = new NuruAppBuilder()
-  .AddRoute
+  .Map
   (
     "deploy {env|Target environment} {tag?|Optional version tag}",
     (string env, string? tag) => Deploy(env, tag)
   )
-  .AddRoute
+  .Map
   (
     "backup {source|Source directory} --compress,-c|Enable compression",
     (string source, bool compress) => Backup(source, compress)
@@ -92,22 +92,22 @@ Options:
 using TimeWarp.Nuru;
 
 NuruApp app = new NuruAppBuilder()
-  .AddRoute
+  .Map
   (
     "version|Show application version",
     () => Console.WriteLine("MyApp v1.0.0")
   )
-  .AddRoute
+  .Map
   (
     "deploy {env|Environment (prod/staging/dev)} {tag?|Version tag}",
     (string env, string? tag) => Deploy(env, tag)
   )
-  .AddRoute
+  .Map
   (
     "backup {source|Source path} {dest?|Destination path} --compress,-c|Compress backup",
     (string source, string? dest, bool compress) => Backup(source, dest, compress)
   )
-  .AddRoute
+  .Map
   (
     "logs {service|Service name} --tail,-t {lines:int|Number of lines}",
     (string service, int lines) => ShowLogs(service, lines)
@@ -185,7 +185,7 @@ Format: `--option,-o|description`
 Format: `"pattern|description"`
 
 ```csharp
-.AddRoute("version|Show application version", handler)
+.Map("version|Show application version", handler)
 ```
 
 ## Customizing Help Output
@@ -195,7 +195,7 @@ Format: `"pattern|description"`
 You can provide custom help handlers:
 
 ```csharp
-builder.AddRoute("--help", () =>
+builder.Map("--help", () =>
 {
     Console.WriteLine("MyApp - Custom Help");
     Console.WriteLine();
@@ -210,8 +210,8 @@ builder.AddRoute("--help", () =>
 Show different help based on context:
 
 ```csharp
-builder.AddRoute("deploy --help", () => ShowDeployHelp());
-builder.AddRoute("backup --help", () => ShowBackupHelp());
+builder.Map("deploy --help", () => ShowDeployHelp());
+builder.Map("backup --help", () => ShowBackupHelp());
 ```
 
 ## Best Practices
@@ -249,9 +249,9 @@ builder.AddRoute("backup --help", () => ShowBackupHelp());
 ### Subcommands
 
 ```csharp
-builder.AddRoute("git --help", () => ShowGitHelp());
-builder.AddRoute("git commit --help", () => ShowGitCommitHelp());
-builder.AddRoute("git push --help", () => ShowGitPushHelp());
+builder.Map("git --help", () => ShowGitHelp());
+builder.Map("git commit --help", () => ShowGitCommitHelp());
+builder.Map("git push --help", () => ShowGitPushHelp());
 ```
 
 ### Option Groups
@@ -259,7 +259,7 @@ builder.AddRoute("git push --help", () => ShowGitPushHelp());
 Group related options in help text:
 
 ```csharp
-builder.AddRoute
+builder.Map
 (
   "serve {port:int|Port number} " +
   "--host {addr|Host address} " +

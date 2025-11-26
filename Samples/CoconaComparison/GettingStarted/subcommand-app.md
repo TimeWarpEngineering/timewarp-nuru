@@ -83,13 +83,13 @@ class SubSubCommands
 ```csharp
 var app = new NuruAppBuilder()
     // Top-level commands
-    .AddRoute("hello {name|Your name} --to-upper-case,-u|Print a name converted to upper-case {toUpperCase:bool}", 
+    .Map("hello {name|Your name} --to-upper-case,-u|Print a name converted to upper-case {toUpperCase:bool}", 
         (string name, bool toUpperCase) => 
         {
             WriteLine($"Hello {(toUpperCase ? name.ToUpper() : name)}!");
         },
         description: "Say hello")
-    .AddRoute("bye {name|Your name} --to-lower-case,-l|Print a name converted to lower-case {toLowerCase:bool}", 
+    .Map("bye {name|Your name} --to-lower-case,-l|Print a name converted to lower-case {toLowerCase:bool}", 
         (string name, bool toLowerCase) => 
         {
             WriteLine($"Goodbye {(toLowerCase ? name.ToLower() : name)}!");
@@ -97,21 +97,21 @@ var app = new NuruAppBuilder()
         description: "Say goodbye")
     
     // Sub-commands
-    .AddRoute("sub-commands konnichiwa {member}", 
+    .Map("sub-commands konnichiwa {member}", 
         (Member member) => 
         {
             WriteLine($"Konnichiwa! {member}");
         },
         description: "Say konnichiwa to a member")
-    .AddRoute("sub-commands hello", 
+    .Map("sub-commands hello", 
         () => WriteLine("Hello!"),
         description: "Say hello from sub-commands")
     
     // Sub-sub-commands
-    .AddRoute("sub-commands sub-sub-commands foobar", 
+    .Map("sub-commands sub-sub-commands foobar", 
         () => WriteLine("Foobar!"),
         description: "Execute foobar")
-    .AddRoute("sub-commands sub-sub-commands {value:string}", 
+    .Map("sub-commands sub-sub-commands {value:string}", 
         (string value) => WriteLine($"value={value}"),
         description: "Primary command with value")
     
@@ -128,12 +128,12 @@ var app = new NuruAppBuilder()
     .AddDependencyInjection(config => config.RegisterServicesFromAssembly(typeof(HelloCommand).Assembly))
     
     // Register commands with routes
-    .AddRoute<HelloCommand>("hello {name|Your name} --to-upper-case,-u|Print a name converted to upper-case {toUpperCase:bool}")
-    .AddRoute<ByeCommand>("bye {name|Your name} --to-lower-case,-l|Print a name converted to lower-case {toLowerCase:bool}")
-    .AddRoute<KonnichiwaCommand>("sub-commands konnichiwa {member}")
-    .AddRoute<SubHelloCommand>("sub-commands hello")
-    .AddRoute<FoobarCommand>("sub-commands sub-sub-commands foobar")
-    .AddRoute<PrimaryCommand>("sub-commands sub-sub-commands {value:string}")
+    .Map<HelloCommand>("hello {name|Your name} --to-upper-case,-u|Print a name converted to upper-case {toUpperCase:bool}")
+    .Map<ByeCommand>("bye {name|Your name} --to-lower-case,-l|Print a name converted to lower-case {toLowerCase:bool}")
+    .Map<KonnichiwaCommand>("sub-commands konnichiwa {member}")
+    .Map<SubHelloCommand>("sub-commands hello")
+    .Map<FoobarCommand>("sub-commands sub-sub-commands foobar")
+    .Map<PrimaryCommand>("sub-commands sub-sub-commands {value:string}")
     
     .AddAutoHelp()
     .Build();

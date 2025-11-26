@@ -42,8 +42,8 @@ internal sealed class GenerateHandlerTool
     sb.AppendLine(CultureInfo.InvariantCulture, $"// Specificity Score: {route.Specificity}");
     sb.AppendLine();
 
-    // Generate the AddRoute call
-    sb.Append(CultureInfo.InvariantCulture, $".AddRoute(\"{pattern}\", ");
+    // Generate the Map call
+    sb.Append(CultureInfo.InvariantCulture, $".Map(\"{pattern}\", ");
 
     if (parameters.Count == 0)
     {
@@ -128,7 +128,7 @@ internal sealed class GenerateHandlerTool
 
     // Generate the route registration
     sb.AppendLine("// Route registration:");
-    sb.Append(CultureInfo.InvariantCulture, $".AddRoute<{commandName}Command>(\"{pattern}\"");
+    sb.Append(CultureInfo.InvariantCulture, $".Map<{commandName}Command>(\"{pattern}\"");
 
     if (parameters.Count > 0)
     {

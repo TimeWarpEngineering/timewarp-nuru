@@ -8,7 +8,7 @@ NuruApp app =
   new NuruAppBuilder()
   .AddDependencyInjection()
   .AddConfiguration(args)  // Auto-discovers config files
-  .AddRoute("test", () => Console.WriteLine(app.Configuration["ApiKey"]))
+  .Map("test", () => Console.WriteLine(app.Configuration["ApiKey"]))
   .Build();
 
 await app.RunAsync(args);

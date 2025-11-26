@@ -4,86 +4,86 @@ using static System.Console;
 NuruAppBuilder builder = new();
 
 // Test 1: Basic Commands
-builder.AddRoute("status", () => WriteLine("✓ System is running"));
-builder.AddRoute("version", () => WriteLine("TimeWarp.Nuru v1.0.0"));
+builder.Map("status", () => WriteLine("✓ System is running"));
+builder.Map("version", () => WriteLine("TimeWarp.Nuru v1.0.0"));
 
 // Test 2: Sub-Commands
-builder.AddRoute("git status", () => WriteLine("On branch main\nYour branch is up to date"));
-builder.AddRoute("git commit", () => WriteLine("Nothing to commit, working tree clean"));
-builder.AddRoute("git push", () => WriteLine("Everything up-to-date"));
+builder.Map("git status", () => WriteLine("On branch main\nYour branch is up to date"));
+builder.Map("git commit", () => WriteLine("Nothing to commit, working tree clean"));
+builder.Map("git push", () => WriteLine("Everything up-to-date"));
 
 // Test 3: Option-Based Routing
-builder.AddRoute("git commit --amend", () => WriteLine("Amending previous commit"));
-builder.AddRoute("git commit --amend --no-edit", () => WriteLine("Amending without editing message"));
+builder.Map("git commit --amend", () => WriteLine("Amending previous commit"));
+builder.Map("git commit --amend --no-edit", () => WriteLine("Amending without editing message"));
 
 // Test 4: Options with Values
-builder.AddRoute("git log --max-count {count:int}", (int count) =>
+builder.Map("git log --max-count {count:int}", (int count) =>
     WriteLine($"Showing last {count} commits"));
 
 // Test 5: Docker Pass-Through
-builder.AddRoute("docker run --enhance-logs {image}", (string image) =>
+builder.Map("docker run --enhance-logs {image}", (string image) =>
     WriteLine($"🚀 Running {image} with enhanced logging"));
-builder.AddRoute("docker run {*args}", (string[] args) =>
+builder.Map("docker run {*args}", (string[] args) =>
     WriteLine($"docker run {string.Join(" ", args)}"));
 
 // Test 6: Docker Build Pass-Through
-builder.AddRoute("docker build {*args}", (string[] args) =>
+builder.Map("docker build {*args}", (string[] args) =>
     WriteLine($"docker build {string.Join(" ", args)}"));
-builder.AddRoute("docker ps {*args}", (string[] args) =>
+builder.Map("docker ps {*args}", (string[] args) =>
     WriteLine($"docker ps {string.Join(" ", args)}"));
-builder.AddRoute("docker {*args}", (string[] args) =>
+builder.Map("docker {*args}", (string[] args) =>
     WriteLine($"docker {string.Join(" ", args)}"));
 
 // Test 7: kubectl Enhancement
-builder.AddRoute("kubectl get {resource} --watch --enhanced", (string resource) =>
+builder.Map("kubectl get {resource} --watch --enhanced", (string resource) =>
     WriteLine($"⚡ Enhanced watch for {resource}"));
-builder.AddRoute("kubectl get {resource} --watch", (string resource) =>
+builder.Map("kubectl get {resource} --watch", (string resource) =>
     WriteLine($"Watching {resource}..."));
-builder.AddRoute("kubectl get {resource}", (string resource) =>
+builder.Map("kubectl get {resource}", (string resource) =>
     WriteLine($"NAME                  READY   STATUS    RESTARTS   AGE\n{resource}-sample    1/1     Running   0          5m"));
-builder.AddRoute("kubectl apply -f {file}", (string file) =>
+builder.Map("kubectl apply -f {file}", (string file) =>
     WriteLine($"deployment.apps/{file} configured"));
-builder.AddRoute("kubectl {*args}", (string[] args) =>
+builder.Map("kubectl {*args}", (string[] args) =>
     WriteLine($"kubectl {string.Join(" ", args)}"));
 
 // Test 8: npm with Options
-builder.AddRoute("npm install {package} --save-dev", (string package) =>
+builder.Map("npm install {package} --save-dev", (string package) =>
     WriteLine($"📦 Installing {package} as dev dependency"));
-builder.AddRoute("npm install {package} --save", (string package) =>
+builder.Map("npm install {package} --save", (string package) =>
     WriteLine($"📦 Installing {package} as dependency"));
-builder.AddRoute("npm install {package}", (string package) =>
+builder.Map("npm install {package}", (string package) =>
     WriteLine($"📦 Installing {package}"));
-builder.AddRoute("npm run {script}", (string script) =>
+builder.Map("npm run {script}", (string script) =>
     WriteLine($"🏃 Running script: {script}"));
-builder.AddRoute("npm {*args}", (string[] args) =>
+builder.Map("npm {*args}", (string[] args) =>
     WriteLine($"npm {string.Join(" ", args)}"));
 
 // Test 9: Option Order Independence
 // All these should match the amend with message handler
-builder.AddRoute("git commit -m {message} --amend", (string message) =>
+builder.Map("git commit -m {message} --amend", (string message) =>
     WriteLine($"Amending with message: {message}"));
-builder.AddRoute("git commit --amend -m {message}", (string message) =>
+builder.Map("git commit --amend -m {message}", (string message) =>
     WriteLine($"Amending with message: {message}"));
-builder.AddRoute("git commit --amend --message {message}", (string message) =>
+builder.Map("git commit --amend --message {message}", (string message) =>
     WriteLine($"Amending with message: {message}"));
-builder.AddRoute("git commit --message {message} --amend", (string message) =>
+builder.Map("git commit --message {message} --amend", (string message) =>
     WriteLine($"Amending with message: {message}"));
 
 // Test 10: Option Aliases
-builder.AddRoute("git commit -m {message}", (string message) =>
+builder.Map("git commit -m {message}", (string message) =>
     WriteLine($"Creating commit with message: {message} (using -m shorthand)"));
-builder.AddRoute("git commit --message {message}", (string message) =>
+builder.Map("git commit --message {message}", (string message) =>
     WriteLine($"Creating commit with message: {message} (using --message flag)"));
 
 // Test 11: Async void methods
-builder.AddRoute("async-test", async () =>
+builder.Map("async-test", async () =>
 {
   await Task.Delay(10); // Simulate async work
   WriteLine("Async operation completed");
 });
 
 // Test 12: Optional Parameters
-builder.AddRoute("deploy {env} {tag?}", (string env, string? tag) =>
+builder.Map("deploy {env} {tag?}", (string env, string? tag) =>
 {
   if (tag is not null)
   {
@@ -96,7 +96,7 @@ builder.AddRoute("deploy {env} {tag?}", (string env, string? tag) =>
 });
 
 // Test 13: Async with Optional Parameters
-builder.AddRoute("backup {source} {destination?}", async (string source, string? destination) =>
+builder.Map("backup {source} {destination?}", async (string source, string? destination) =>
 {
   await Task.Delay(10); // Simulate async work
   if (destination is not null)
@@ -110,18 +110,18 @@ builder.AddRoute("backup {source} {destination?}", async (string source, string?
 });
 
 // Test 14: Optional Parameters with Type Constraints
-builder.AddRoute("sleep {seconds:int?}", (int? seconds) =>
+builder.Map("sleep {seconds:int?}", (int? seconds) =>
 {
   int sleepTime = seconds ?? 1;
   WriteLine($"Sleeping for {sleepTime} seconds");
 });
 
 // Test 15: Ultimate Catch-All
-builder.AddRoute("{*everything}", (string[] everything) =>
+builder.Map("{*everything}", (string[] everything) =>
     WriteLine($"Unknown command: {string.Join(" ", everything)}"));
 
 // Help command
-builder.AddRoute("--help", () =>
+builder.Map("--help", () =>
 {
   WriteLine("TimeWarp.Nuru Integration Tests");
   WriteLine("==================================");

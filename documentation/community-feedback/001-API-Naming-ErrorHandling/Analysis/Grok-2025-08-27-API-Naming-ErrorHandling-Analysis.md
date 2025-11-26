@@ -6,14 +6,14 @@
 ## Executive Summary
 
 This analysis examines the feedback from Community Contributor regarding the TimeWarp.Nuru CLI framework, specifically focusing on two proposed changes:
-1. Renaming `AddRoute` to `AddCommand`
+1. Renaming `Map` to `AddCommand`
 2. Adding `.OnError()` fluent API for error handling
 
 **Verdict**: The naming feedback is technically sound but strategically questionable. The error handling suggestion has merit but requires careful implementation to avoid API complexity explosion.
 
 ---
 
-## 1. AddRoute → AddCommand Naming Analysis
+## 1. Map → AddCommand Naming Analysis
 
 ### Technical Merit: High
 The naming complaint is technically justified:
@@ -29,7 +29,7 @@ The naming complaint is technically justified:
 **Route-based CLI framework for .NET - bringing web-style routing to command-line applications**
 ```
 
-This marketing position creates a deliberate analogy between web routing and CLI command routing. Changing `AddRoute` to `AddCommand` would undermine this positioning.
+This marketing position creates a deliberate analogy between web routing and CLI command routing. Changing `Map` to `AddCommand` would undermine this positioning.
 
 #### B. Developer Mental Model Disruption
 **Problem**: The framework already has significant conceptual overhead:
@@ -77,7 +77,7 @@ catch (Exception ex)
 
 **Proposed**: Multiple error handlers per command would create complexity:
 ```csharp
-builder.AddRoute("process {file}", ProcessFile)
+builder.Map("process {file}", ProcessFile)
        .OnError(ex => Console.WriteLine("File processing failed"))
        .OnError(ex => LogError(ex))  // Multiple handlers?
        .OnError(ex => CleanupResources()); // Execution order?
@@ -91,11 +91,11 @@ builder.AddRoute("process {file}", ProcessFile)
 Error handling would need to work consistently across both:
 ```csharp
 // Delegate path - error in handler
-builder.AddRoute("process", () => throw new Exception("fail"))
+builder.Map("process", () => throw new Exception("fail"))
        .OnError(ex => HandleDelegateError(ex));
 
 // Mediator path - error in command handler
-builder.AddRoute<ProcessCommand>("process")
+builder.Map<ProcessCommand>("process")
        .OnError(ex => HandleMediatorError(ex)); // Different error context?
 ```
 
@@ -103,8 +103,8 @@ builder.AddRoute<ProcessCommand>("process")
 **Problem**: Many errors occur during parameter binding, before handler execution:
 ```csharp
 // These errors happen before OnError handler would execute
-builder.AddRoute("add {x:int}", (int x) => x + 1); // Type conversion errors?
-builder.AddRoute("add {x} {y}", (int x, int y) => x + y); // Missing required param?
+builder.Map("add {x:int}", (int x) => x + 1); // Type conversion errors?
+builder.Map("add {x} {y}", (int x, int y) => x + y); // Missing required param?
 ```
 
 ### Implementation Complexity Assessment
@@ -227,11 +227,11 @@ The proposed changes would add complexity to the simple path, potentially violat
 ### Phase 1: AddCommand Alias
 ```csharp
 public NuruAppBuilder AddCommand(string pattern, Delegate handler, string? description = null)
-    => AddRoute(pattern, handler, description);
+    => Map(pattern, handler, description);
 
 public NuruAppBuilder AddCommand<TCommand>(string pattern, string? description = null)
     where TCommand : IRequest, new()
-    => AddRoute<TCommand>(pattern, description);
+    => Map<TCommand>(pattern, description);
 ```
 
 ### Phase 2: Enhanced Error Context

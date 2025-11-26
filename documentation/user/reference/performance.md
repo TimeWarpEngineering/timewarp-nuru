@@ -98,10 +98,10 @@ All tests run against both Direct and Mediator implementations to ensure feature
 
 ```csharp
 // ✅ Direct for hot paths
-builder.AddRoute("ping", () => "pong");  // Called frequently
+builder.Map("ping", () => "pong");  // Called frequently
 
 // ✅ Mediator for complex logic
-builder.AddRoute<DeployCommand>("deploy {env}");  // Complex, less frequent
+builder.Map<DeployCommand>("deploy {env}");  // Complex, less frequent
 ```
 
 ### Use Native AOT
@@ -119,20 +119,20 @@ Provides **88-93% performance improvement** over JIT.
 
 ```csharp
 // ✅ Return value types when possible
-.AddRoute("status", () => 0);  // int return
+.Map("status", () => 0);  // int return
 
 // ❌ Avoid unnecessary allocations
-.AddRoute("status", () => new Status());  // Allocates object
+.Map("status", () => new Status());  // Allocates object
 ```
 
 ### Async Only When Needed
 
 ```csharp
 // ✅ Sync for CPU-bound work
-.AddRoute("calc {x:int} {y:int}", (int x, int y) => x + y)
+.Map("calc {x:int} {y:int}", (int x, int y) => x + y)
 
 // ✅ Async for I/O-bound work
-.AddRoute("fetch {url}", async (string url) => await FetchAsync(url))
+.Map("fetch {url}", async (string url) => await FetchAsync(url))
 ```
 
 ## Scaling Characteristics

@@ -59,7 +59,7 @@ public class NuruAppIntegrationTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("add {a:int} {b:int}", (int a, int b) => $"{a + b}")
+      .Map("add {a:int} {b:int}", (int a, int b) => $"{a + b}")
       .AddReplSupport()
       .Build();
 
@@ -81,8 +81,8 @@ public class NuruAppIntegrationTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("cmd1", () => "Command 1")
-      .AddRoute("cmd2", () => "Command 2")
+      .Map("cmd1", () => "Command 1")
+      .Map("cmd2", () => "Command 2")
       .AddReplSupport()
       .Build();
 
@@ -103,8 +103,8 @@ public class NuruAppIntegrationTests
     // Act - fluent chaining
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("status", () => "OK")
-      .AddRoute("version", () => "1.0.0")
+      .Map("status", () => "OK")
+      .Map("version", () => "1.0.0")
       .AddReplSupport(options => options.Prompt = ">>> ")
       .Build();
 
@@ -164,7 +164,7 @@ public class NuruAppIntegrationTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("greet {name}", (string name) => $"Hello, {name}!")
+      .Map("greet {name}", (string name) => $"Hello, {name}!")
       .AddReplSupport()
       .Build();
 

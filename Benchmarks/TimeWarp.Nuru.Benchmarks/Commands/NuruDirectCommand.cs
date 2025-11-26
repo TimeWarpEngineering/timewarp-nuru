@@ -13,7 +13,7 @@ public static class NuruDirectCommand
     NuruAppBuilder builder = new();
 
     // Add a route that matches the benchmark arguments pattern
-    builder.AddRoute
+    builder.Map
     (
       "test --str {str} -i {intOption:int} -b",
       (string str, int intOption) => { }

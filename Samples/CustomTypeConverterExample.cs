@@ -37,7 +37,7 @@ builder.AddTypeConverter(new SemanticVersionConverter());
 // Routes Using Custom Types
 // ============================================================================
 
-builder.AddRoute("send-email {to:email} {subject}", (EmailAddress to, string subject) =>
+builder.Map("send-email {to:email} {subject}", (EmailAddress to, string subject) =>
 {
   Console.WriteLine($"📧 Sending Email:");
   Console.WriteLine($"   To: {to}");
@@ -47,7 +47,7 @@ builder.AddRoute("send-email {to:email} {subject}", (EmailAddress to, string sub
   return 0;
 });
 
-builder.AddRoute("set-theme {primary:hexcolor} {secondary:hexcolor}", (HexColor primary, HexColor secondary) =>
+builder.Map("set-theme {primary:hexcolor} {secondary:hexcolor}", (HexColor primary, HexColor secondary) =>
 {
   Console.WriteLine($"🎨 Theme Configuration:");
   Console.WriteLine($"   Primary color: {primary}");
@@ -57,7 +57,7 @@ builder.AddRoute("set-theme {primary:hexcolor} {secondary:hexcolor}", (HexColor 
   return 0;
 });
 
-builder.AddRoute("release {version:semver}", (SemanticVersion version) =>
+builder.Map("release {version:semver}", (SemanticVersion version) =>
 {
   Console.WriteLine($"🚀 Creating Release:");
   Console.WriteLine($"   Version: {version}");
@@ -71,7 +71,7 @@ builder.AddRoute("release {version:semver}", (SemanticVersion version) =>
   return 0;
 });
 
-builder.AddRoute("notify {recipient:email} {color:hexcolor} {message}", (EmailAddress recipient, HexColor color, string message) =>
+builder.Map("notify {recipient:email} {color:hexcolor} {message}", (EmailAddress recipient, HexColor color, string message) =>
 {
   Console.WriteLine($"🔔 Notification:");
   Console.WriteLine($"   Recipient: {recipient}");
@@ -80,7 +80,7 @@ builder.AddRoute("notify {recipient:email} {color:hexcolor} {message}", (EmailAd
   return 0;
 });
 
-builder.AddRoute("deploy {version:semver} {env} --notify {email:email?}", (SemanticVersion version, string env, EmailAddress? email) =>
+builder.Map("deploy {version:semver} {env} --notify {email:email?}", (SemanticVersion version, string env, EmailAddress? email) =>
 {
   Console.WriteLine($"🚀 Deployment Plan:");
   Console.WriteLine($"   Version: {version}");
@@ -148,7 +148,7 @@ if (args.Length == 0)
   Console.WriteLine("  builder.AddTypeConverter(new YourConverter());");
   Console.WriteLine();
   Console.WriteLine("Then use in route patterns:");
-  Console.WriteLine("  builder.AddRoute(\"cmd {param:yourtype}\", (YourType param) => ...)");
+  Console.WriteLine("  builder.Map(\"cmd {param:yourtype}\", (YourType param) => ...)");
   Console.WriteLine();
   Console.WriteLine("═══════════════════════════════════════════════════════════════");
   return 0;

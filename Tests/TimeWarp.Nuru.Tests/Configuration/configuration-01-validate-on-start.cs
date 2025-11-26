@@ -28,7 +28,7 @@ public class ValidateOnStartTests
           .ValidateDataAnnotations()
           .ValidateOnStart();
       })
-      .AddRoute("test", (IOptions<ValidAppOptions> options) =>
+      .Map("test", (IOptions<ValidAppOptions> options) =>
       {
         options.Value.Name.ShouldBe("TestApp");
         return 0;
@@ -65,7 +65,7 @@ public class ValidateOnStartTests
             .ValidateDataAnnotations()
             .ValidateOnStart();
         })
-        .AddRoute("test", (IOptions<ValidAppOptions> _) => 0)
+        .Map("test", (IOptions<ValidAppOptions> _) => 0)
         .Build(); // Should throw here, not during RunAsync
 
       await app.RunAsync(["test"]); // This line should never execute
@@ -100,7 +100,7 @@ public class ValidateOnStartTests
           .ValidateDataAnnotations();
         // Note: NO .ValidateOnStart() - validation happens lazily
       })
-      .AddRoute("test", () => 0) // Don't access options
+      .Map("test", () => 0) // Don't access options
       .Build(); // Should NOT throw
 
     // Act
@@ -135,7 +135,7 @@ public class ValidateOnStartTests
             }, "EndDate must be after StartDate")
             .ValidateOnStart();
         })
-        .AddRoute("test", () => 0)
+        .Map("test", () => 0)
         .Build(); // Should throw here
 
       await app.RunAsync(["test"]); // Never reached
@@ -158,7 +158,7 @@ public class ValidateOnStartTests
     // Arrange
     NuruApp app = new NuruAppBuilder()
       // No AddDependencyInjection() call
-      .AddRoute("test", () => 0)
+      .Map("test", () => 0)
       .Build(); // Should not throw
 
     // Act

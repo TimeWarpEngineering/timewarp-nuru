@@ -19,10 +19,10 @@ public static class NuruAppExtensions
 
     // Register REPL commands as routes using clean method group syntax
     builder
-      .AddRoutes(["exit", "quit", "q"], ReplSession.ExitAsync, "Exit the REPL")
-      .AddRoute("history", ReplSession.ShowHistoryAsync, "Show command history")
-      .AddRoutes(["clear", "cls"], ReplSession.ClearScreenAsync, "Clear the screen")
-      .AddRoute("clear-history", ReplSession.ClearHistoryAsync, "Clear command history")
+      .MapMultiple(["exit", "quit", "q"], ReplSession.ExitAsync, "Exit the REPL")
+      .Map("history", ReplSession.ShowHistoryAsync, "Show command history")
+      .MapMultiple(["clear", "cls"], ReplSession.ClearScreenAsync, "Clear the screen")
+      .Map("clear-history", ReplSession.ClearHistoryAsync, "Clear command history")
       .AddAutoHelp();
 
     return builder;
@@ -55,8 +55,8 @@ public static class NuruAppExtensions
   /// <example>
   /// <code>
   /// NuruApp app = NuruApp.CreateBuilder()
-  ///   .AddRoute("greet {name}", (string name) => Console.WriteLine($"Hello, {name}!"))
-  ///   .AddRoute("status", () => Console.WriteLine("OK"))
+  ///   .Map("greet {name}", (string name) => Console.WriteLine($"Hello, {name}!"))
+  ///   .Map("status", () => Console.WriteLine("OK"))
   ///   .Build();
   ///
   /// // Start REPL immediately
@@ -88,7 +88,7 @@ public static class NuruAppExtensions
   /// <example>
   /// <code>
   /// var app = new NuruAppBuilder()
-  ///   .AddRoute("greet {name}", (string name) => Console.WriteLine($"Hello, {name}!"))
+  ///   .Map("greet {name}", (string name) => Console.WriteLine($"Hello, {name}!"))
   ///   .AddReplSupport(options => options.Prompt = "myapp> ")
   ///   .AddInteractiveRoute()
   ///   .Build();
@@ -110,7 +110,7 @@ public static class NuruAppExtensions
 
     string[] patternArray = patterns.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
-    builder.AddRoutes(patternArray, StartInteractiveModeAsync, "Enter interactive REPL mode");
+    builder.MapMultiple(patternArray, StartInteractiveModeAsync, "Enter interactive REPL mode");
 
     return builder;
   }

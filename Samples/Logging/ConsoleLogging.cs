@@ -29,21 +29,21 @@ using Microsoft.Extensions.Logging;
 // Uncomment to try:
 // var app = new NuruAppBuilder()
 //     .UseConsoleLogging()
-//     .AddRoute("test", () => Console.WriteLine("Test command executed"))
+//     .Map("test", () => Console.WriteLine("Test command executed"))
 //     .Build();
 
 // Example 2: Debug level logging
 // Uncomment to try:
 // var app = new NuruAppBuilder()
 //     .UseConsoleLogging(LogLevel.Debug)
-//     .AddRoute("test", () => Console.WriteLine("Test command executed"))
+//     .Map("test", () => Console.WriteLine("Test command executed"))
 //     .Build();
 
 // Example 3: Trace level logging (most verbose)
 // Uncomment to try:
 // var app = new NuruAppBuilder()
 //     .UseDebugLogging()
-//     .AddRoute("test", () => Console.WriteLine("Test command executed"))
+//     .Map("test", () => Console.WriteLine("Test command executed"))
 //     .Build();
 
 // Active example - change which one is active by commenting/uncommenting:
@@ -52,7 +52,7 @@ using Microsoft.Extensions.Logging;
 // Demonstrates that delegates can use logging without the memory overhead of full DI
 NuruApp app = new NuruAppBuilder()
     .UseConsoleLogging()
-    .AddRoute("test", (ILogger<Program> logger) =>
+    .Map("test", (ILogger<Program> logger) =>
     {
       logger.LogTrace("This is a TRACE message (very detailed)");
       logger.LogDebug("This is a DEBUG message (detailed)");
@@ -61,7 +61,7 @@ NuruApp app = new NuruAppBuilder()
       logger.LogError("This is an ERROR message");
       Console.WriteLine("✓ Test delegate completed");
     })
-    .AddRoute("greet {name}", (string name, ILogger<Program> logger) =>
+    .Map("greet {name}", (string name, ILogger<Program> logger) =>
     {
       logger.LogInformation("Greeting user: {Name}", name);
       Console.WriteLine($"Hello, {name}!");
@@ -73,8 +73,8 @@ NuruApp app = new NuruAppBuilder()
 // NuruApp app = new NuruAppBuilder()
 //     .UseConsoleLogging()
 //     .AddDependencyInjection(config => config.RegisterServicesFromAssembly(typeof(TestCommand).Assembly))
-//     .AddRoute<TestCommand>("test")
-//     .AddRoute<GreetCommand>("greet {name}")
+//     .Map<TestCommand>("test")
+//     .Map<GreetCommand>("greet {name}")
 //     .AddAutoHelp()
 //     .Build();
 
@@ -83,8 +83,8 @@ NuruApp app = new NuruAppBuilder()
 // NuruApp app = new NuruAppBuilder()
 //     .UseConsoleLogging(LogLevel.Debug)
 //     .AddDependencyInjection(config => config.RegisterServicesFromAssembly(typeof(TestCommand).Assembly))
-//     .AddRoute<TestCommand>("test")
-//     .AddRoute<GreetCommand>("greet {name}")
+//     .Map<TestCommand>("test")
+//     .Map<GreetCommand>("greet {name}")
 //     .Build();
 
 // Example C: Trace level - maximum verbosity (shows ALL log levels + internal routing details)
@@ -92,8 +92,8 @@ NuruApp app = new NuruAppBuilder()
 // NuruApp app = new NuruAppBuilder()
 //     .UseDebugLogging()
 //     .AddDependencyInjection(config => config.RegisterServicesFromAssembly(typeof(TestCommand).Assembly))
-//     .AddRoute<TestCommand>("test")
-//     .AddRoute<GreetCommand>("greet {name}")
+//     .Map<TestCommand>("test")
+//     .Map<GreetCommand>("greet {name}")
 //     .Build();
 
 return await app.RunAsync(args);

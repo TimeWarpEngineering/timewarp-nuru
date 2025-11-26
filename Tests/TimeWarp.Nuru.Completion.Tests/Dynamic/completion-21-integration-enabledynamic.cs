@@ -10,7 +10,7 @@ public class IntegrationEnableDynamicTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("status", () => 0);
+    builder.Map("status", () => 0);
 
     // Act
     builder.EnableDynamicCompletion();
@@ -62,7 +62,7 @@ public class IntegrationEnableDynamicTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("deploy {env}", (string env) => 0);
+    builder.Map("deploy {env}", (string env) => 0);
 
     bool registryConfigured = false;
 
@@ -84,7 +84,7 @@ public class IntegrationEnableDynamicTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("status", () => 0);
+    builder.Map("status", () => 0);
     builder.EnableDynamicCompletion();
 
     // Act - Find the __complete endpoint and verify its signature
@@ -141,8 +141,8 @@ public class IntegrationEnableDynamicTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("status", () => 0);
-    builder.AddRoute("version", () => 0);
+    builder.Map("status", () => 0);
+    builder.Map("version", () => 0);
     builder.EnableDynamicCompletion();
 
     NuruApp app = builder.Build();
@@ -162,7 +162,7 @@ public class IntegrationEnableDynamicTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("deploy {env}", (string env) => 0);
+    builder.Map("deploy {env}", (string env) => 0);
 
     builder.EnableDynamicCompletion(configure: registry =>
     {
@@ -187,7 +187,7 @@ public class IntegrationEnableDynamicTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("deploy {env} --mode {mode}", (string env, DeploymentMode mode) => 0);
+    builder.Map("deploy {env} --mode {mode}", (string env, DeploymentMode mode) => 0);
 
     builder.EnableDynamicCompletion(configure: registry =>
     {
@@ -213,7 +213,7 @@ public class IntegrationEnableDynamicTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("status", () => 0);
+    builder.Map("status", () => 0);
 
     // Act
     builder.EnableDynamicCompletion(appName: "my-custom-app");

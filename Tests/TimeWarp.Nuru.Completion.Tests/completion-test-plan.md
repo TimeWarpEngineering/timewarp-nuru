@@ -274,8 +274,8 @@ Tests are implemented as single-file C# applications (new in .NET 10) following 
 
 **Scenario:**
 ```csharp
-builder.AddRoute("createorder {product} {quantity:int}", ...);
-builder.AddRoute("create {item}", ...);
+builder.Map("createorder {product} {quantity:int}", ...);
+builder.Map("create {item}", ...);
 builder.EnableStaticCompletion("myapp");
 ```
 

@@ -12,16 +12,16 @@ var app = new NuruAppBuilder()
     .AddDependencyInjection(config => config.RegisterServicesFromAssembly(typeof(HelloCommand).Assembly))
     
     // Top-level commands
-    .AddRoute<HelloCommand>("hello {name|Your name} --to-upper-case,-u|Print a name converted to upper-case {toUpperCase:bool}")
-    .AddRoute<ByeCommand>("bye {name|Your name} --to-lower-case,-l|Print a name converted to lower-case {toLowerCase:bool}")
+    .Map<HelloCommand>("hello {name|Your name} --to-upper-case,-u|Print a name converted to upper-case {toUpperCase:bool}")
+    .Map<ByeCommand>("bye {name|Your name} --to-lower-case,-l|Print a name converted to lower-case {toLowerCase:bool}")
     
     // Sub-commands
-    .AddRoute<KonnichiwaCommand>("sub-commands konnichiwa {member}")
-    .AddRoute<SubHelloCommand>("sub-commands hello")
+    .Map<KonnichiwaCommand>("sub-commands konnichiwa {member}")
+    .Map<SubHelloCommand>("sub-commands hello")
     
     // Sub-sub-commands
-    .AddRoute<FoobarCommand>("sub-commands sub-sub-commands foobar")
-    .AddRoute<PrimaryCommand>("sub-commands sub-sub-commands {value:string}")
+    .Map<FoobarCommand>("sub-commands sub-sub-commands foobar")
+    .Map<PrimaryCommand>("sub-commands sub-sub-commands {value:string}")
     
     .AddAutoHelp()
     .Build();

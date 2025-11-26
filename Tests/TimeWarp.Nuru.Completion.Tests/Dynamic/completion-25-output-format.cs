@@ -10,7 +10,7 @@ public class OutputFormatTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("status", () => 0);
+    builder.Map("status", () => 0);
     builder.EnableDynamicCompletion();
 
     NuruApp app = builder.Build();
@@ -29,7 +29,7 @@ public class OutputFormatTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("deploy {env}", (string env) => 0);
+    builder.Map("deploy {env}", (string env) => 0);
 
     builder.EnableDynamicCompletion(configure: registry =>
     {
@@ -53,7 +53,7 @@ public class OutputFormatTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("status", () => 0);
+    builder.Map("status", () => 0);
     builder.EnableDynamicCompletion();
 
     NuruApp app = builder.Build();
@@ -71,7 +71,7 @@ public class OutputFormatTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("status", () => 0);
+    builder.Map("status", () => 0);
     builder.EnableDynamicCompletion();
 
     NuruApp app = builder.Build();
@@ -88,9 +88,9 @@ public class OutputFormatTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("apple", () => 0);
-    builder.AddRoute("banana", () => 0);
-    builder.AddRoute("cherry", () => 0);
+    builder.Map("apple", () => 0);
+    builder.Map("banana", () => 0);
+    builder.Map("cherry", () => 0);
     builder.EnableDynamicCompletion();
 
     NuruApp app = builder.Build();
@@ -115,7 +115,7 @@ public class OutputFormatTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("deploy {env}", (string env) => 0);
+    builder.Map("deploy {env}", (string env) => 0);
 
     builder.EnableDynamicCompletion(configure: registry =>
     {
@@ -141,7 +141,7 @@ public class OutputFormatTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("deploy {env}", (string env) => 0);
+    builder.Map("deploy {env}", (string env) => 0);
 
     builder.EnableDynamicCompletion(configure: registry =>
     {
@@ -165,8 +165,8 @@ public class OutputFormatTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("status", () => 0);
-    builder.AddRoute("version", () => 0);
+    builder.Map("status", () => 0);
+    builder.Map("version", () => 0);
     builder.EnableDynamicCompletion();
 
     NuruApp app = builder.Build();
@@ -184,7 +184,7 @@ public class OutputFormatTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("status", () => 0);
+    builder.Map("status", () => 0);
     builder.EnableDynamicCompletion();
 
     NuruApp app = builder.Build();
@@ -201,7 +201,7 @@ public class OutputFormatTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("connect {url}", (string url) => 0);
+    builder.Map("connect {url}", (string url) => 0);
 
     builder.EnableDynamicCompletion(configure: registry =>
     {
@@ -227,7 +227,7 @@ public class OutputFormatTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("build --verbose --quiet", (bool verbose, bool quiet) => 0);
+    builder.Map("build --verbose --quiet", (bool verbose, bool quiet) => 0);
     builder.EnableDynamicCompletion();
 
     NuruApp app = builder.Build();

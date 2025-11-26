@@ -778,7 +778,7 @@ Custom type constraints work with the `IRouteTypeConverter` system:
 app.AddTypeConverter(new FileInfoTypeConverter());
 
 // Use in route pattern with type constraint
-app.AddRoute("process {file:fileinfo}", (FileInfo file) => { ... });
+app.Map("process {file:fileinfo}", (FileInfo file) => { ... });
 ```
 
 The parser validates the **format** of the type constraint (valid identifier), while the runtime validates that a **converter is registered** for that type.

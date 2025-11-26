@@ -4,7 +4,7 @@
 ## Process Overview
 
 This workspace facilitates a structured consensus-building process between AI reviewers to resolve the feedback on TimeWarp.Nuru CLI framework regarding:
-1. `AddRoute` → `AddCommand` naming change
+1. `Map` → `AddCommand` naming change
 2. `.OnError()` fluent API implementation
 
 ## Participants

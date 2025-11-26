@@ -22,7 +22,7 @@ NuruApp app = new NuruAppBuilder()
     services.AddTransient(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
     services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
   })
-  .AddRoute<HelloCommand>("hello")
+  .Map<HelloCommand>("hello")
   .AddAutoHelp()
   .Build();
 

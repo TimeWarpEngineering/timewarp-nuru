@@ -18,9 +18,9 @@ public class CursorContextTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("deploy", () => 0);
-    builder.AddRoute("build", () => 0);
-    builder.AddRoute("test", () => 0);
+    builder.Map("deploy", () => 0);
+    builder.Map("build", () => 0);
+    builder.Map("test", () => 0);
 
     // Act
     var generator = new CompletionScriptGenerator();
@@ -38,7 +38,7 @@ public class CursorContextTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("deploy --force --verbose --dry-run", () => 0);
+    builder.Map("deploy --force --verbose --dry-run", () => 0);
 
     // Act
     var generator = new CompletionScriptGenerator();
@@ -56,9 +56,9 @@ public class CursorContextTests
   {
     // Arrange - Multiple commands with common prefix
     var builder = new NuruAppBuilder();
-    builder.AddRoute("create", () => 0);
-    builder.AddRoute("createorder", () => 0);
-    builder.AddRoute("createuser", () => 0);
+    builder.Map("create", () => 0);
+    builder.Map("createorder", () => 0);
+    builder.Map("createuser", () => 0);
 
     // Act
     var generator = new CompletionScriptGenerator();
@@ -76,7 +76,7 @@ public class CursorContextTests
   {
     // Arrange - Options with common prefix
     var builder = new NuruAppBuilder();
-    builder.AddRoute("test --verbose --version --validate", () => 0);
+    builder.Map("test --verbose --version --validate", () => 0);
 
     // Act
     var generator = new CompletionScriptGenerator();
@@ -94,9 +94,9 @@ public class CursorContextTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("git add", () => 0);
-    builder.AddRoute("git commit", () => 0);
-    builder.AddRoute("git push", () => 0);
+    builder.Map("git add", () => 0);
+    builder.Map("git commit", () => 0);
+    builder.Map("git push", () => 0);
 
     // Act
     var generator = new CompletionScriptGenerator();
@@ -112,8 +112,8 @@ public class CursorContextTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("deploy {env}", (string env) => 0);
-    builder.AddRoute("build --config {mode}", (string mode) => 0);
+    builder.Map("deploy {env}", (string env) => 0);
+    builder.Map("build --config {mode}", (string mode) => 0);
 
     // Act
     var generator = new CompletionScriptGenerator();
@@ -131,8 +131,8 @@ public class CursorContextTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("test {file}", (string file) => 0);
-    builder.AddRoute("run --verbose", () => 0);
+    builder.Map("test {file}", (string file) => 0);
+    builder.Map("run --verbose", () => 0);
 
     // Act
     var generator = new CompletionScriptGenerator();
@@ -150,8 +150,8 @@ public class CursorContextTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("status", () => 0);
-    builder.AddRoute("config --get {key}", (string key) => 0);
+    builder.Map("status", () => 0);
+    builder.Map("config --get {key}", (string key) => 0);
 
     // Act
     var generator = new CompletionScriptGenerator();
@@ -169,7 +169,7 @@ public class CursorContextTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("deploy {env} to {region}", (string env, string region) => 0);
+    builder.Map("deploy {env} to {region}", (string env, string region) => 0);
 
     // Act
     var generator = new CompletionScriptGenerator();
@@ -186,8 +186,8 @@ public class CursorContextTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("build --config {mode}", (string mode) => 0);
-    builder.AddRoute("test --output {file}", (string file) => 0);
+    builder.Map("build --config {mode}", (string mode) => 0);
+    builder.Map("test --output {file}", (string file) => 0);
 
     // Act
     var generator = new CompletionScriptGenerator();
@@ -204,7 +204,7 @@ public class CursorContextTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("deploy --force --dry-run --verbose", () => 0);
+    builder.Map("deploy --force --dry-run --verbose", () => 0);
 
     // Act
     var generator = new CompletionScriptGenerator();
@@ -222,8 +222,8 @@ public class CursorContextTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("command {param}", (string param) => 0);
-    builder.AddRoute("option --flag {value}", (string value) => 0);
+    builder.Map("command {param}", (string param) => 0);
+    builder.Map("option --flag {value}", (string value) => 0);
 
     var generator = new CompletionScriptGenerator();
 

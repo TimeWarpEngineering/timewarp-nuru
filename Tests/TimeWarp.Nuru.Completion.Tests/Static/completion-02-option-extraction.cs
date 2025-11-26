@@ -14,9 +14,9 @@ public class OptionExtractionTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("test --verbose", () => 0);
-    builder.AddRoute("build --force", () => 0);
-    builder.AddRoute("deploy --dry-run", () => 0);
+    builder.Map("test --verbose", () => 0);
+    builder.Map("build --force", () => 0);
+    builder.Map("deploy --dry-run", () => 0);
 
     // Act
     var generator = new CompletionScriptGenerator();
@@ -34,9 +34,9 @@ public class OptionExtractionTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("test -v", () => 0);
-    builder.AddRoute("build -f", () => 0);
-    builder.AddRoute("deploy -d", () => 0);
+    builder.Map("test -v", () => 0);
+    builder.Map("build -f", () => 0);
+    builder.Map("deploy -d", () => 0);
 
     // Act
     var generator = new CompletionScriptGenerator();
@@ -54,8 +54,8 @@ public class OptionExtractionTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("test --verbose,-v", () => 0);
-    builder.AddRoute("build --output,-o", () => 0);
+    builder.Map("test --verbose,-v", () => 0);
+    builder.Map("build --output,-o", () => 0);
 
     // Act
     var generator = new CompletionScriptGenerator();
@@ -74,7 +74,7 @@ public class OptionExtractionTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("test --verbose --force --dry-run", () => 0);
+    builder.Map("test --verbose --force --dry-run", () => 0);
 
     // Act
     var generator = new CompletionScriptGenerator();
@@ -92,8 +92,8 @@ public class OptionExtractionTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("build --config {mode}", (string mode) => 0);
-    builder.AddRoute("deploy --output {file}", (string file) => 0);
+    builder.Map("build --config {mode}", (string mode) => 0);
+    builder.Map("deploy --output {file}", (string file) => 0);
 
     // Act
     var generator = new CompletionScriptGenerator();
@@ -112,9 +112,9 @@ public class OptionExtractionTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("test --verbose", () => 0);
-    builder.AddRoute("build --verbose", () => 0);
-    builder.AddRoute("deploy --verbose", () => 0);
+    builder.Map("test --verbose", () => 0);
+    builder.Map("build --verbose", () => 0);
+    builder.Map("deploy --verbose", () => 0);
 
     // Act
     var generator = new CompletionScriptGenerator();
@@ -133,7 +133,7 @@ public class OptionExtractionTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("test --verbose,-v --force -d --output,-o {file}", (string file) => 0);
+    builder.Map("test --verbose,-v --force -d --output,-o {file}", (string file) => 0);
 
     // Act
     var generator = new CompletionScriptGenerator();
@@ -171,8 +171,8 @@ public class OptionExtractionTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("status", () => 0);
-    builder.AddRoute("version", () => 0);
+    builder.Map("status", () => 0);
+    builder.Map("version", () => 0);
 
     // Act
     var generator = new CompletionScriptGenerator();
@@ -189,7 +189,7 @@ public class OptionExtractionTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("deploy {env} --version {ver} --force --dry-run,-d", (string env, string ver) => 0);
+    builder.Map("deploy {env} --version {ver} --force --dry-run,-d", (string env, string ver) => 0);
 
     // Act
     var generator = new CompletionScriptGenerator();
@@ -208,9 +208,9 @@ public class OptionExtractionTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("test --dry-run", () => 0);
-    builder.AddRoute("build --skip-tests", () => 0);
-    builder.AddRoute("deploy --no-cache", () => 0);
+    builder.Map("test --dry-run", () => 0);
+    builder.Map("build --skip-tests", () => 0);
+    builder.Map("deploy --no-cache", () => 0);
 
     // Act
     var generator = new CompletionScriptGenerator();
@@ -228,8 +228,8 @@ public class OptionExtractionTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("test --Verbose", () => 0);
-    builder.AddRoute("build --verbose", () => 0);
+    builder.Map("test --Verbose", () => 0);
+    builder.Map("build --verbose", () => 0);
 
     // Act
     var generator = new CompletionScriptGenerator();

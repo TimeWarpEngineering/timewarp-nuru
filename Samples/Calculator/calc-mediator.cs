@@ -22,32 +22,32 @@ NuruApp app =
 
     services.AddSingleton<ICalculatorService, CalculatorService>();
   })
-  .AddRoute<AddCommand>
+  .Map<AddCommand>
   (
     pattern: "add {x:double} {y:double}",
     description: "Add two numbers together"
   )
-  .AddRoute<SubtractCommand>
+  .Map<SubtractCommand>
   (
     pattern: "subtract {x:double} {y:double}",
     description: "Subtract the second number from the first"
   )
-  .AddRoute<MultiplyCommand>
+  .Map<MultiplyCommand>
   (
     pattern: "multiply {x:double} {y:double}",
     description: "Multiply two numbers together"
   )
-  .AddRoute<DivideCommand>
+  .Map<DivideCommand>
   (
     pattern: "divide {x:double} {y:double}",
     description: "Divide the first number by the second"
   )
-  .AddRoute<RoundCommand>
+  .Map<RoundCommand>
   (
     pattern: "round {value:double} --mode {mode}",
     description: "Round a number using specified mode (up, down, nearest, banker/accountancy)"
   )
-  .AddRoute<RoundCommand>
+  .Map<RoundCommand>
   (
     pattern: "round {value:double}",
     description: "Round a number to the nearest integer"

@@ -14,8 +14,8 @@ public class EnableStaticCompletionIntegrationTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("status", () => 0);
-    builder.AddRoute("version", () => 0);
+    builder.Map("status", () => 0);
+    builder.Map("version", () => 0);
 
     // Act
     builder.EnableStaticCompletion();
@@ -36,7 +36,7 @@ public class EnableStaticCompletionIntegrationTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("deploy {env}", (string env) => 0);
+    builder.Map("deploy {env}", (string env) => 0);
 
     // Act
     builder.EnableStaticCompletion();
@@ -56,9 +56,9 @@ public class EnableStaticCompletionIntegrationTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("status", () => 0);
-    builder.AddRoute("deploy {env}", (string env) => 0);
-    builder.AddRoute("build --config {mode}", (string mode) => 0);
+    builder.Map("status", () => 0);
+    builder.Map("deploy {env}", (string env) => 0);
+    builder.Map("build --config {mode}", (string mode) => 0);
 
     int originalRouteCount = builder.EndpointCollection.Endpoints.Count;
 
@@ -94,7 +94,7 @@ public class EnableStaticCompletionIntegrationTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("status", () => 0);
+    builder.Map("status", () => 0);
 
     // Act
     builder.EnableStaticCompletion();
@@ -115,7 +115,7 @@ public class EnableStaticCompletionIntegrationTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("test", () => 0);
+    builder.Map("test", () => 0);
 
     // Act - EnableStaticCompletion before Build
     builder.EnableStaticCompletion();
@@ -130,7 +130,7 @@ public class EnableStaticCompletionIntegrationTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("status", () => 0);
+    builder.Map("status", () => 0);
     builder.EnableStaticCompletion();
 
     // Assert - All supported shell types should be matchable
@@ -147,9 +147,9 @@ public class EnableStaticCompletionIntegrationTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("deploy {env} --version {ver} --force --dry-run,-d", (string env, string ver) => 0);
-    builder.AddRoute("git {*args}", (string[] args) => 0);
-    builder.AddRoute("config set {key} {value?}", (string key, string? value) => 0);
+    builder.Map("deploy {env} --version {ver} --force --dry-run,-d", (string env, string ver) => 0);
+    builder.Map("git {*args}", (string[] args) => 0);
+    builder.Map("config set {key} {value?}", (string key, string? value) => 0);
 
     // Act
     builder.EnableStaticCompletion();
@@ -165,10 +165,10 @@ public class EnableStaticCompletionIntegrationTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("first", () => 0);
-    builder.AddRoute("second", () => 0);
+    builder.Map("first", () => 0);
+    builder.Map("second", () => 0);
     builder.EnableStaticCompletion();
-    builder.AddRoute("third", () => 0);
+    builder.Map("third", () => 0);
 
     // Assert - Original routes should maintain their relative order
     var nonCompletionRoutes = builder.EndpointCollection.Endpoints
@@ -187,9 +187,9 @@ public class EnableStaticCompletionIntegrationTests
   {
     // Arrange & Act - Test fluent chaining
     NuruAppBuilder builder = new NuruAppBuilder()
-      .AddRoute("status", () => 0)
+      .Map("status", () => 0)
       .EnableStaticCompletion()
-      .AddRoute("version", () => 0);
+      .Map("version", () => 0);
 
     // Assert
     builder.EndpointCollection.Endpoints.ShouldContain(e => e.RoutePattern == "status");

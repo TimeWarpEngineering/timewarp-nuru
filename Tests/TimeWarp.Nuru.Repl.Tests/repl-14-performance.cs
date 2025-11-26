@@ -46,7 +46,7 @@ public class PerformanceTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("noop", () => { })
+      .Map("noop", () => { })
       .AddReplSupport()
       .Build();
 
@@ -75,7 +75,7 @@ public class PerformanceTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("cmd{n}", (string _) => "OK")
+      .Map("cmd{n}", (string _) => "OK")
       .AddReplSupport(options => options.MaxHistorySize = 1000)
       .Build();
 
@@ -104,7 +104,7 @@ public class PerformanceTests
     for (int i = 0; i < 100; i++)
     {
       int index = i;
-      builder.AddRoute($"cmd{index}", () => $"Command {index}");
+      builder.Map($"cmd{index}", () => $"Command {index}");
     }
 
     builder.AddReplSupport(options => options.EnableArrowHistory = true);
@@ -128,7 +128,7 @@ public class PerformanceTests
     for (int i = 0; i < 50; i++)
     {
       int index = i;
-      builder.AddRoute($"command{index}", () => "OK");
+      builder.Map($"command{index}", () => "OK");
     }
 
     NuruApp app = builder.Build();
@@ -177,7 +177,7 @@ public class PerformanceTests
   {
     // Arrange - create endpoints via app builder
     var builder = new NuruAppBuilder();
-    builder.AddRoute("status", () => "OK");
+    builder.Map("status", () => "OK");
     NuruApp app = builder.Build();
     EndpointCollection endpoints = app.Endpoints;
 

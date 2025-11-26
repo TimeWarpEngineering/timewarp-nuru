@@ -56,7 +56,10 @@ public sealed class ReplConsoleReader
     CompletionHandler = new TabCompletionHandler(completionProvider, endpoints, terminal, replOptions, loggerFactory);
 
     // Initialize key bindings from the configured profile
-    IKeyBindingProfile profile = KeyBindingProfileFactory.GetProfile(replOptions.KeyBindingProfileName);
+    // Check for custom profile instance first, then fall back to profile name
+    IKeyBindingProfile profile = replOptions.KeyBindingProfile is IKeyBindingProfile customProfile
+      ? customProfile
+      : KeyBindingProfileFactory.GetProfile(replOptions.KeyBindingProfileName);
     KeyBindings = profile.GetBindings(this);
     ExitKeys = profile.GetExitKeys();
   }

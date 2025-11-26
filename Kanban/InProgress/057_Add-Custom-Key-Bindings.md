@@ -28,39 +28,39 @@ Part of 3-phase key binding evolution:
 ## Checklist
 
 ### Design
-- [ ] Design KeyBindingBuilder fluent API
-- [ ] Design CustomKeyBindingProfile architecture
-- [ ] Design JSON config file format
-- [ ] Plan validation and error handling
-- [ ] Consider security implications of custom actions
+- [x] Design KeyBindingBuilder fluent API
+- [x] Design CustomKeyBindingProfile architecture
+- [ ] Design JSON config file format (deferred to future iteration)
+- [x] Plan validation and error handling
+- [ ] Consider security implications of custom actions (deferred - only affects JSON config)
 
 ### Implementation - KeyBindingBuilder
-- [ ] Create `Source/TimeWarp.Nuru.Repl/KeyBindings/KeyBindingBuilder.cs`
-  - [ ] Private dictionary for storing bindings
-  - [ ] Private HashSet for exit keys
-  - [ ] `Bind(ConsoleKey key, Action action)` method
-  - [ ] `Bind(ConsoleKey key, ConsoleModifiers modifiers, Action action)` method
-  - [ ] `BindExit(ConsoleKey key, ConsoleModifiers modifiers, Action action)` method
-  - [ ] `Remove(ConsoleKey key, ConsoleModifiers modifiers)` method
-  - [ ] `Clear()` method to reset all bindings
-  - [ ] `LoadFrom(IKeyBindingProfile profile)` method to start from base
-  - [ ] `Build()` method returning (bindings, exitKeys) tuple
-  - [ ] XML documentation for all public methods
-  - [ ] Fluent interface (return `this` from all methods)
+- [x] Create `Source/TimeWarp.Nuru.Repl/KeyBindings/KeyBindingBuilder.cs`
+  - [x] Private dictionary for storing bindings
+  - [x] Private HashSet for exit keys
+  - [x] `Bind(ConsoleKey key, Action action)` method
+  - [x] `Bind(ConsoleKey key, ConsoleModifiers modifiers, Action action)` method
+  - [x] `BindExit(ConsoleKey key, ConsoleModifiers modifiers, Action action)` method
+  - [x] `Remove(ConsoleKey key, ConsoleModifiers modifiers)` method
+  - [x] `Clear()` method to reset all bindings
+  - [x] `LoadFrom(IKeyBindingProfile profile)` method to start from base
+  - [x] `Build()` method returning (bindings, exitKeys) tuple
+  - [x] XML documentation for all public methods
+  - [x] Fluent interface (return `this` from all methods)
 
 ### Implementation - CustomKeyBindingProfile
-- [ ] Create `Source/TimeWarp.Nuru.Repl/KeyBindings/CustomKeyBindingProfile.cs`
-  - [ ] Implement `IKeyBindingProfile`
-  - [ ] Constructor accepting optional base profile
-  - [ ] `Override(ConsoleKey, Action)` fluent method
-  - [ ] `Override(ConsoleKey, ConsoleModifiers, Action)` fluent method
-  - [ ] `Add(ConsoleKey, Action)` fluent method
-  - [ ] `Add(ConsoleKey, ConsoleModifiers, Action)` fluent method
-  - [ ] `Remove(ConsoleKey, ConsoleModifiers)` fluent method
-  - [ ] `Name` property returning "Custom" or user-specified name
-  - [ ] GetBindings() returning merged bindings
-  - [ ] GetExitKeys() returning exit keys
-  - [ ] XML documentation
+- [x] Create `Source/TimeWarp.Nuru.Repl/KeyBindings/CustomKeyBindingProfile.cs`
+  - [x] Implement `IKeyBindingProfile`
+  - [x] Constructor accepting optional base profile
+  - [x] `Override(ConsoleKey, Action)` fluent method
+  - [x] `Override(ConsoleKey, ConsoleModifiers, Action)` fluent method
+  - [x] `Add(ConsoleKey, Action)` fluent method
+  - [x] `Add(ConsoleKey, ConsoleModifiers, Action)` fluent method
+  - [x] `Remove(ConsoleKey, ConsoleModifiers)` fluent method
+  - [x] `Name` property returning "Custom" or user-specified name
+  - [x] GetBindings() returning merged bindings
+  - [x] GetExitKeys() returning exit keys
+  - [x] XML documentation
 
 ### Implementation - Config File Support
 - [ ] Design JSON config schema
@@ -100,17 +100,26 @@ Part of 3-phase key binding evolution:
 - [ ] Provide helpful error messages
 - [ ] Log warnings for questionable configurations
 
+### Sample Application
+- [ ] Create `Samples/ReplDemo/repl-custom-keybindings.cs`
+  - [ ] Demonstrate starting from scratch with KeyBindingBuilder
+  - [ ] Demonstrate starting from existing profile (Emacs, Vi, etc.)
+  - [ ] Demonstrate Override, Add, Remove operations
+  - [ ] Demonstrate using CustomKeyBindingProfile with ReplOptions
+  - [ ] Include helpful comments explaining each feature
+- [ ] Create `Samples/ReplDemo/repl-custom-keybindings.md` documentation
+
 ### Testing
-- [ ] Create `Tests/TimeWarp.Nuru.Repl.Tests/repl-12-custom-key-bindings.cs`
-  - [ ] Test CustomKeyBindingProfile programmatic API
-  - [ ] Test KeyBindingBuilder fluent API
-  - [ ] Test starting from different base profiles
-  - [ ] Test override, add, remove operations
-  - [ ] Test loading from JSON config
-  - [ ] Test validation and error cases
-  - [ ] Test conflicting bindings
-- [ ] Create sample config files in `Samples/`
-- [ ] Manual testing with custom configurations
+- [x] Create `Tests/TimeWarp.Nuru.Repl.Tests/repl-24-custom-key-bindings.cs`
+  - [x] Test CustomKeyBindingProfile programmatic API
+  - [x] Test KeyBindingBuilder fluent API
+  - [x] Test starting from different base profiles
+  - [x] Test override, add, remove operations
+  - [ ] Test loading from JSON config (deferred - JSON config not yet implemented)
+  - [x] Test validation and error cases
+  - [ ] Test conflicting bindings (deferred)
+- [ ] Create sample config files in `Samples/` (deferred - JSON config not yet implemented)
+- [ ] Manual testing with custom configurations (deferred - interactive REPL required)
 
 ### Documentation
 - [ ] Create `documentation/user/features/custom-key-bindings.md`
@@ -255,18 +264,22 @@ Source/TimeWarp.Nuru.Repl/
 │   ├── VSCodeKeyBindingProfile.cs
 │   ├── CustomKeyBindingProfile.cs           (NEW)
 │   ├── KeyBindingBuilder.cs                 (NEW)
-│   ├── KeyBindingConfig.cs                  (NEW - model)
-│   ├── KeyBindingConfigLoader.cs            (NEW - loader)
-│   ├── KeyBindingActionRegistry.cs          (NEW - action mapping)
-│   └── KeyBindingException.cs               (NEW - custom exception)
+│   ├── KeyBindingConfig.cs                  (NEW - model, deferred)
+│   ├── KeyBindingConfigLoader.cs            (NEW - loader, deferred)
+│   ├── KeyBindingActionRegistry.cs          (NEW - action mapping, deferred)
+│   └── KeyBindingException.cs               (NEW - custom exception, deferred)
 ├── Input/
 │   └── ReplConsoleReader.cs
 └── ReplOptions.cs
 
+Samples/ReplDemo/
+├── repl-custom-keybindings.cs               (NEW - sample demonstrating custom key bindings)
+└── repl-custom-keybindings.md               (NEW - documentation for sample)
+
 Samples/Configuration/
-├── emacs-enhanced.json                       (NEW - sample config)
-├── vi-enhanced.json                          (NEW - sample config)
-└── team-bindings.json                        (NEW - sample config)
+├── emacs-enhanced.json                       (NEW - sample config, deferred)
+├── vi-enhanced.json                          (NEW - sample config, deferred)
+└── team-bindings.json                        (NEW - sample config, deferred)
 ```
 
 ### Estimated Effort

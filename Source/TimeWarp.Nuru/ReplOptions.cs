@@ -105,6 +105,9 @@ public class ReplOptions
   /// <para>
   /// Default is <c>"Default"</c> for backward compatibility.
   /// </para>
+  /// <para>
+  /// This property is ignored if <see cref="KeyBindingProfile"/> is set.
+  /// </para>
   /// </remarks>
   /// <example>
   /// <code>
@@ -116,4 +119,32 @@ public class ReplOptions
   /// </code>
   /// </example>
   public string KeyBindingProfileName { get; set; } = "Default";
+
+  /// <summary>
+  /// A custom key binding profile instance to use for REPL input handling.
+  /// </summary>
+  /// <remarks>
+  /// <para>
+  /// When set, this takes precedence over <see cref="KeyBindingProfileName"/>.
+  /// The value must implement <c>IKeyBindingProfile</c> from TimeWarp.Nuru.Repl.
+  /// </para>
+  /// <para>
+  /// Use this property with <c>CustomKeyBindingProfile</c> to create personalized
+  /// key bindings that extend or modify the built-in profiles.
+  /// </para>
+  /// </remarks>
+  /// <example>
+  /// <code>
+  /// // Use a custom profile based on Emacs
+  /// var customProfile = new CustomKeyBindingProfile(new EmacsKeyBindingProfile())
+  ///   .Override(ConsoleKey.K, ConsoleModifiers.Control, reader => reader.HandleDeleteToEnd)
+  ///   .Remove(ConsoleKey.D, ConsoleModifiers.Control);
+  ///
+  /// var options = new ReplOptions
+  /// {
+  ///   KeyBindingProfile = customProfile
+  /// };
+  /// </code>
+  /// </example>
+  public object? KeyBindingProfile { get; set; }
 }

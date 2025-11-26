@@ -101,13 +101,12 @@ Part of 3-phase key binding evolution:
 - [ ] Log warnings for questionable configurations
 
 ### Sample Application
-- [ ] Create `Samples/ReplDemo/repl-custom-keybindings.cs`
-  - [ ] Demonstrate starting from scratch with KeyBindingBuilder
-  - [ ] Demonstrate starting from existing profile (Emacs, Vi, etc.)
-  - [ ] Demonstrate Override, Add, Remove operations
-  - [ ] Demonstrate using CustomKeyBindingProfile with ReplOptions
-  - [ ] Include helpful comments explaining each feature
-- [ ] Create `Samples/ReplDemo/repl-custom-keybindings.md` documentation
+- [x] Create `Samples/ReplDemo/repl-custom-keybindings.cs`
+  - [x] Demonstrate starting from existing profile (Emacs)
+  - [x] Demonstrate Override, Add, Remove operations
+  - [x] Demonstrate using CustomKeyBindingProfile with ReplOptions
+  - [x] Include helpful comments explaining each feature
+- [x] Create `Samples/ReplDemo/repl-custom-keybindings.md` documentation
 
 ### Testing
 - [x] Create `Tests/TimeWarp.Nuru.Repl.Tests/repl-24-custom-key-bindings.cs`

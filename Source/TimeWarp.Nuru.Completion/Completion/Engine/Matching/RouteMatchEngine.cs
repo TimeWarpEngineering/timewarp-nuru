@@ -235,6 +235,26 @@ public sealed class RouteMatchEngine : IRouteMatchEngine
       }
     }
 
+    // Only add options if there are no more literal segments remaining.
+    // Options belong "after" the command structure (literals), so they should
+    // only be suggested once all literals have been matched.
+    // For example, "git log --count {n}" should only show --count after "git log ",
+    // not after just "git ".
+    bool hasRemainingLiterals = false;
+    for (int i = segmentIndex; i < positionalSegments.Count; i++)
+    {
+      if (positionalSegments[i] is LiteralMatcher)
+      {
+        hasRemainingLiterals = true;
+        break;
+      }
+    }
+
+    if (hasRemainingLiterals)
+    {
+      return candidates;
+    }
+
     // Add unused options
     foreach (OptionMatcher option in options)
     {

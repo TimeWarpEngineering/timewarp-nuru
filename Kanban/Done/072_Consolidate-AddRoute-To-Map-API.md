@@ -19,23 +19,29 @@ Replace `AddRoute()` methods with `Map()` to match ASP.NET Core's minimal API pa
 ## Checklist
 
 ### Phase 1: Library Refactoring (LSP Rename)
-- [ ] Rename methods in `NuruAppBuilder.Routes.cs` using LSP
-- [ ] Verify Source/ compiles
+- [x] Rename methods in `NuruAppBuilder.Routes.cs` using LSP
+- [x] Verify Source/ compiles
 
 ### Phase 2: Samples/Tests/Docs (sed)
-- [ ] Update all files in `Samples/`
-- [ ] Update all files in `Tests/`
-- [ ] Update `README.md`
-- [ ] Update files in `documentation/`
+- [x] Update all files in `Samples/`
+- [x] Update all files in `Tests/`
+- [x] Update `README.md`
+- [x] Update files in `documentation/`
 
 ### Phase 3: Verification
-- [ ] Build solution
-- [ ] Run tests
-- [ ] Verify samples work
+- [x] Build solution
+- [x] Run tests
+- [x] Verify samples work
 
 ## Notes
 
 - Backward compatibility is NOT a concern
 - Goal is to reduce tech debt and simplify API
-- Keep internal `AddRouteInternal()` as implementation detail
-- Remove alias comments from Map methods (they become primary)
+- Internal methods renamed: `AddRouteInternal` → `MapInternal`, `AddMediatorRoute` → `MapMediator`
+- Updated Roslyn analyzer to recognize `Map` method
+- Updated MCP GenerateHandlerTool to generate `Map` code
+- Fixed `new NuruAppBuilder()` default to use `BuilderMode.Empty` for backward compatibility
+
+## Implementation Notes
+
+Completed in commit `bfb858f` - 186 files changed across entire codebase.

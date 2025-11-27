@@ -337,7 +337,7 @@ List<string> GetTestFiles(string directory)
                     !f.Contains("/bin/", StringComparison.Ordinal) &&
                     !f.EndsWith(".csproj", StringComparison.Ordinal) &&
                     !Path.GetFileName(f).StartsWith("run-", StringComparison.Ordinal) && // Exclude test runners
-                    !Path.GetFileName(f).EndsWith("Helper.cs", StringComparison.Ordinal)) // Exclude helper files
+                    !Path.GetFileName(f).Contains("Helper", StringComparison.OrdinalIgnoreCase)) // Exclude helper files
         .Order()
         .ToList();
 

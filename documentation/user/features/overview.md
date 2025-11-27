@@ -51,6 +51,14 @@ Automatic tab completion for CLI applications:
 - Static (zero runtime overhead)
 - Type-aware parameter hints
 
+### [Terminal Abstractions](terminal-abstractions.md)
+Testable I/O and colored output:
+- IConsole/ITerminal interfaces for testable CLI apps
+- TestTerminal for unit testing output capture
+- Fluent ANSI color extensions (`"text".Red().Bold()`)
+- Lightweight Spectre.Console alternative
+- Full CSS named colors support
+
 ## Feature Highlights
 
 | Feature | Benefit | Learn More |
@@ -60,6 +68,7 @@ Automatic tab completion for CLI applications:
 | ⚡ Zero-Overhead Logging | Optional, high-performance | [Logging](logging.md) |
 | 📖 Auto-Help | No manual documentation | [Auto-Help](auto-help.md) |
 | ⌨️ Shell Completion | Tab completion in all shells | [Shell Completion](shell-completion.md) |
+| 🎨 Colored Output | Testable ANSI colors | [Terminal Abstractions](terminal-abstractions.md) |
 | 🔒 Type Safety | Strong typing throughout | [Routing](routing.md#type-safety) |
 | 🚀 Native AOT | Fast startup, small binaries | [Deployment](../guides/deployment.md) |
 

@@ -23,28 +23,28 @@ The `IConsole` and `ITerminal` interfaces along with their implementations (`Nur
 ## Checklist
 
 ### Enhancement - Make Colors Accessible
-- [ ] Consider moving `AnsiColors` from `TimeWarp.Nuru.Repl` to core `TimeWarp.Nuru` package
-- [ ] Or: Document that consumers need REPL package for colors (suboptimal)
-- [ ] Add convenience extension methods on IConsole for colored output
-- [ ] Ensure TestTerminal properly handles ANSI codes in output (strip or preserve for assertions)
+- [x] Consider moving `AnsiColors` from `TimeWarp.Nuru.Repl` to core `TimeWarp.Nuru` package (Done in task 075)
+- [x] Or: Document that consumers need REPL package for colors (suboptimal) - N/A, moved to core
+- [x] Add convenience extension methods on IConsole for colored output (Done in task 075)
+- [x] Ensure TestTerminal properly handles ANSI codes in output (strip or preserve for assertions) - preserves codes, text searchable
 
 ### Documentation
-- [ ] Add ITerminal/IConsole section to README.md (brief mention with link)
-- [ ] Create `documentation/user/features/terminal-abstractions.md` with full documentation
-- [ ] Document `UseTerminal()` builder method
-- [ ] Document testing patterns with `TestTerminal`
-- [ ] Document color output as lightweight Spectre.Console alternative
+- [x] Add ITerminal/IConsole section to README.md (brief mention with link)
+- [x] Create `documentation/user/features/terminal-abstractions.md` with full documentation
+- [x] Document `UseTerminal()` builder method
+- [x] Document testing patterns with `TestTerminal`
+- [x] Document color output as lightweight Spectre.Console alternative
 
 ### Samples
-- [ ] Create `Samples/Testing/` folder with testing examples
-- [ ] Create sample showing unit testing CLI output capture
-- [ ] Create sample showing REPL testing with scripted key sequences
-- [ ] Create sample showing custom terminal implementation (e.g., logging wrapper)
-- [ ] Create sample showing ITerminal injection in route handlers for colored output
-- [ ] Create sample comparing Nuru color output vs Spectre.Console (show simplicity)
+- [x] Create `Samples/Testing/` folder with testing examples
+- [x] Create sample showing unit testing CLI output capture (test-output-capture.cs)
+- [ ] Create sample showing REPL testing with scripted key sequences (deferred - requires interactive REPL)
+- [x] Create sample showing custom terminal implementation (e.g., logging wrapper) - documented in terminal-abstractions.md
+- [x] Create sample showing ITerminal injection in route handlers for colored output (test-terminal-injection.cs)
+- [x] Create sample comparing Nuru color output vs Spectre.Console (show simplicity) - comparison table in docs
 
 ### MCP
-- [ ] Consider adding MCP tool to explain ITerminal/IConsole usage
+- [ ] Consider adding MCP tool to explain ITerminal/IConsole usage (deferred for future consideration)
 
 ## Notes
 
@@ -131,41 +131,29 @@ await app.RunReplAsync();
 Assert.Contains("Hello!", terminal.Output);  // ANSI codes present but text matches
 ```
 
-### Existing Color Infrastructure (ALREADY EXISTS - just undocumented!)
+### Color Infrastructure (Now in Core Package!)
 
-**AnsiColors** (`Source/TimeWarp.Nuru.Repl/Display/AnsiColors.cs`):
+**AnsiColors** (`Source/TimeWarp.Nuru/IO/AnsiColors.cs`):
 - Basic colors: Black, Red, Green, Yellow, Blue, Magenta, Cyan, White, Gray
 - Bright colors: BrightRed, BrightGreen, BrightYellow, etc.
 - All CSS named colors: Coral, Crimson, DodgerBlue, Gold, etc. (140+ colors)
 - Background colors: BgRed, BgGreen, BgBlue, etc.
 - Text formatting: Bold, Dim, Italic, Underline, Strikethrough, Reverse
 
+**AnsiColorExtensions** (`Source/TimeWarp.Nuru/IO/AnsiColorExtensions.cs`):
+- Fluent extension methods for clean API: `"text".Red()`, `"text".Bold()`
+- Uses C# 14 extension block syntax
+
 **SyntaxColors** (`Source/TimeWarp.Nuru.Repl/Display/SyntaxColors.cs`):
 - CommandColor, ErrorColor, KeywordColor, StringColor, etc.
 - PSReadLine-inspired syntax highlighting theme
+- Remains in REPL package (REPL-specific)
 
-**Current Usage Pattern** (manual string concatenation):
+**Usage Pattern** (fluent extensions):
 ```csharp
-Terminal.WriteLine(AnsiColors.Green + "Success!" + AnsiColors.Reset);
-Terminal.WriteLine(AnsiColors.Red + "Error: " + AnsiColors.Reset + message);
-Terminal.WriteLine(AnsiColors.Bold + AnsiColors.Cyan + "Header" + AnsiColors.Reset);
-```
-
-### Proposed Improvements
-
-```csharp
-// Extension methods for cleaner API (optional enhancement)
-public static class AnsiColorExtensions
-{
-    public static string Red(this string text) => AnsiColors.Red + text + AnsiColors.Reset;
-    public static string Green(this string text) => AnsiColors.Green + text + AnsiColors.Reset;
-    public static string Bold(this string text) => AnsiColors.Bold + text + AnsiColors.Reset;
-    // etc.
-}
-
-// Then usage becomes:
 terminal.WriteLine("Success!".Green());
 terminal.WriteLine("Error: ".Red() + message);
+terminal.WriteLine("Header".Bold().Cyan());
 ```
 
 ### Files to Reference
@@ -175,5 +163,6 @@ terminal.WriteLine("Error: ".Red() + message);
 - `Source/TimeWarp.Nuru/IO/NuruConsole.cs`
 - `Source/TimeWarp.Nuru/IO/NuruTerminal.cs`
 - `Source/TimeWarp.Nuru/IO/TestTerminal.cs`
-- `Source/TimeWarp.Nuru.Repl/Display/AnsiColors.cs` ← **Existing color support!**
-- `Source/TimeWarp.Nuru.Repl/Display/SyntaxColors.cs` ← **Existing syntax theme!**
+- `Source/TimeWarp.Nuru/IO/AnsiColors.cs` ← **Color constants**
+- `Source/TimeWarp.Nuru/IO/AnsiColorExtensions.cs` ← **Fluent extension methods**
+- `Source/TimeWarp.Nuru.Repl/Display/SyntaxColors.cs` ← **REPL syntax theme**

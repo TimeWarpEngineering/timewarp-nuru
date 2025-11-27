@@ -77,6 +77,7 @@ dotnet run -- add 15 25
 | 🚀 **Native AOT** | 3.3 MB binaries, instant startup | [Deployment Guide](documentation/user/guides/deployment.md) |
 | 🔒 **Type-Safe Parameters** | Automatic type conversion and validation | [Supported Types](documentation/user/reference/supported-types.md) |
 | 📖 **Auto-Help** | Generate help from route patterns | [Auto-Help Feature](documentation/user/features/auto-help.md) |
+| 🎨 **Colored Output** | Fluent ANSI colors without Spectre.Console | [Terminal Abstractions](documentation/user/features/terminal-abstractions.md) |
 
 ## 📚 Documentation
 
@@ -91,6 +92,7 @@ dotnet run -- add 15 25
 - **[Logging System](documentation/user/features/logging.md)** - Structured logging setup
 - **[Auto-Help](documentation/user/features/auto-help.md)** - Automatic help generation
 - **[Output Handling](documentation/user/features/output-handling.md)** - stdout/stderr best practices
+- **[Terminal Abstractions](documentation/user/features/terminal-abstractions.md)** - Testable I/O & colored output
 
 ### Tools & Deployment
 - **[MCP Server](documentation/user/tools/mcp-server.md)** - AI-powered development assistance

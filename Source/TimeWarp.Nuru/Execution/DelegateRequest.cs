@@ -1,18 +1,19 @@
 namespace TimeWarp.Nuru;
 
 /// <summary>
-/// Wraps a delegate invocation as a message that can flow through pipeline behaviors,
-/// enabling cross-cutting concerns to apply uniformly to delegate routes.
+/// Wraps a delegate invocation as a Mediator request, enabling pipeline behaviors
+/// to apply uniformly to delegate routes.
 /// </summary>
 /// <remarks>
-/// This type implements <see cref="IMessage"/> to satisfy pipeline behavior constraints,
-/// but delegates are NOT executed through IMediator.Send(). Instead, a custom pipeline
-/// executor manually invokes registered pipeline behaviors before executing the delegate.
+/// When DI is enabled and pipeline behaviors are registered, delegate routes are wrapped
+/// in this request and sent through <see cref="IMediator.Send"/>. This ensures cross-cutting
+/// concerns (logging, metrics, validation, etc.) apply consistently to all routes.
 ///
-/// This approach is necessary because martinothamar/Mediator uses source generation
-/// and doesn't support handlers defined in external libraries.
+/// The source generator in martinothamar/Mediator scans referenced assemblies by default,
+/// so the <see cref="DelegateRequestHandler"/> defined in this library will be discovered
+/// automatically when consuming applications call <c>services.AddMediator()</c>.
 /// </remarks>
-public sealed class DelegateRequest : IMessage
+public sealed class DelegateRequest : IRequest<DelegateResponse>
 {
   /// <summary>
   /// Gets the matched route pattern (e.g., "deploy {env} --dry-run").
@@ -70,4 +71,30 @@ public sealed class DelegateResponse
     Result = null,
     ExitCode = exitCode
   };
+}
+
+/// <summary>
+/// Handles <see cref="DelegateRequest"/> by invoking the wrapped delegate.
+/// </summary>
+/// <remarks>
+/// This handler is automatically discovered by martinothamar/Mediator's source generator
+/// when consuming applications call <c>services.AddMediator()</c>, as the generator
+/// scans referenced assemblies by default.
+///
+/// The handler simply invokes the pre-bound delegate. Parameter binding and type
+/// conversion happen before the request is created.
+/// </remarks>
+public sealed class DelegateRequestHandler : IRequestHandler<DelegateRequest, DelegateResponse>
+{
+  /// <summary>
+  /// Invokes the wrapped delegate and returns the result.
+  /// </summary>
+  public async ValueTask<DelegateResponse> Handle(DelegateRequest request, CancellationToken cancellationToken)
+  {
+    ArgumentNullException.ThrowIfNull(request);
+    _ = cancellationToken; // Available for future use
+
+    object? result = await request.Invoker(request.BoundArguments).ConfigureAwait(false);
+    return DelegateResponse.Success(result);
+  }
 }

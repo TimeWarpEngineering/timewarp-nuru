@@ -25,9 +25,6 @@ public static class ServiceCollectionExtensions
     // This follows Jimmy Bogard's recommendation for sharing context in pipelines
     services.TryAddScoped<RouteExecutionContext>();
 
-    // Register delegate pipeline executor as scoped (depends on scoped RouteExecutionContext)
-    services.TryAddScoped<DelegatePipelineExecutor>();
-
     return services;
   }
 }

@@ -343,7 +343,7 @@ public partial class NuruApp
   }
 
   /// <summary>
-  /// Executes a delegate through the pipeline when DI is enabled and behaviors are registered.
+  /// Executes a delegate through Mediator when DI is enabled, allowing pipeline behaviors to apply.
   /// </summary>
   [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode",
       Justification = "Delegate execution requires reflection - delegate types are preserved through registration")]
@@ -356,7 +356,16 @@ public partial class NuruApp
   {
     // Create a scope for this request to get fresh RouteExecutionContext
     using IServiceScope scope = ServiceProvider!.CreateScope();
-    DelegatePipelineExecutor pipelineExecutor = scope.ServiceProvider.GetRequiredService<DelegatePipelineExecutor>();
+
+    // Populate RouteExecutionContext for pipeline behaviors
+    RouteExecutionContext? executionContext = scope.ServiceProvider.GetService<RouteExecutionContext>();
+    if (executionContext is not null)
+    {
+      executionContext.RoutePattern = endpoint.RoutePattern;
+      executionContext.StartedAt = DateTimeOffset.UtcNow;
+      executionContext.Strategy = ExecutionStrategy.Delegate;
+      executionContext.IsWrappedDelegate = true;
+    }
 
     // Bind parameters first (same as direct execution)
     object?[] boundArgs = BindDelegateParameters(del, extractedValues, endpoint);
@@ -370,10 +379,17 @@ public partial class NuruApp
       Endpoint = endpoint
     };
 
+    // Populate parameters in execution context
+    if (executionContext is not null)
+    {
+      executionContext.Parameters = extractedValues;
+    }
+
     try
     {
-      // Execute through the pipeline
-      DelegateResponse response = await pipelineExecutor.ExecuteAsync(request, CancellationToken.None).ConfigureAwait(false);
+      // Execute through Mediator - pipeline behaviors will be invoked automatically
+      IMediator mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
+      DelegateResponse response = await mediator.Send(request, CancellationToken.None).ConfigureAwait(false);
 
       // Display the response (if any)
       ResponseDisplay.Write(response.Result, Console);

@@ -24,10 +24,10 @@ Implement a DelegateHandler that wraps delegate-based routes and executes them t
 
 ### Implementation
 - [x] Create RouteExecutionContext scoped service
-- [x] Create DelegateRequest wrapper (non-generic, uses boxed results)
-- [x] Create DelegatePipelineExecutor (custom pipeline, not IMediator.Send)
-- [x] Modify execution path to route through pipeline when DI enabled and behaviors registered
-- [x] Populate RouteExecutionContext before pipeline execution
+- [x] Create DelegateRequest : IRequest<DelegateResponse>
+- [x] Create DelegateRequestHandler : IRequestHandler<DelegateRequest, DelegateResponse>
+- [x] Modify execution path to use mediator.Send() when DI enabled and behaviors registered
+- [x] Populate RouteExecutionContext before Send()
 
 ### Verification
 - [x] Create sample demonstrating unified middleware
@@ -38,36 +38,33 @@ Implement a DelegateHandler that wraps delegate-based routes and executes them t
 
 ## Implementation Notes
 
-### Key Design Decision: Custom Pipeline Executor
+### How It Works
 
-The original design proposed using `IMediator.Send()` with a `DelegateRequest<TResult>` wrapper.
-However, martinothamar/Mediator uses source generation to discover handlers at compile time,
-which doesn't support handlers defined in external libraries.
-
-**Solution**: Created a `DelegatePipelineExecutor` that manually invokes registered
-`IPipelineBehavior<DelegateRequest, DelegateResponse>` instances, achieving the same
-result without requiring Mediator's handler discovery.
+1. `DelegateRequest` implements `IRequest<DelegateResponse>`
+2. `DelegateRequestHandler` implements `IRequestHandler<DelegateRequest, DelegateResponse>`
+3. martinothamar/Mediator's source generator scans referenced assemblies by default
+4. When consuming apps call `services.AddMediator()`, the handler is discovered
+5. Pipeline behaviors registered for `DelegateRequest` execute automatically via `mediator.Send()`
 
 ### Files Created
 
 - `Source/TimeWarp.Nuru/Execution/RouteExecutionContext.cs` - Scoped service for sharing route metadata
-- `Source/TimeWarp.Nuru/Execution/DelegateRequest.cs` - Request wrapper and response types
-- `Source/TimeWarp.Nuru/Execution/DelegatePipelineExecutor.cs` - Custom pipeline executor
+- `Source/TimeWarp.Nuru/Execution/DelegateRequest.cs` - Request, response, and handler types
 - `Samples/UnifiedMiddleware/unified-middleware.cs` - Demo sample
 
 ### Files Modified
 
-- `Source/TimeWarp.Nuru/ServiceCollectionExtensions.cs` - Register new services
-- `Source/TimeWarp.Nuru/NuruApp.cs` - Route through pipeline when behaviors registered
+- `Source/TimeWarp.Nuru/ServiceCollectionExtensions.cs` - Register RouteExecutionContext
+- `Source/TimeWarp.Nuru/NuruApp.cs` - Route through mediator.Send() when behaviors registered
 
 ### Execution Flow
 
 When DI is enabled AND pipeline behaviors are registered:
 1. Create DI scope for request
-2. Bind delegate parameters
-3. Create DelegateRequest with invoker function
-4. Populate RouteExecutionContext with route metadata
-5. Execute through DelegatePipelineExecutor (chains behaviors)
+2. Populate RouteExecutionContext with route metadata
+3. Bind delegate parameters
+4. Create DelegateRequest with invoker function
+5. Call `mediator.Send(request)` - pipeline behaviors execute automatically
 6. Display response
 
 When DI is NOT enabled OR no behaviors registered:
@@ -76,10 +73,11 @@ When DI is NOT enabled OR no behaviors registered:
 ### Usage Example
 
 ```csharp
+services.AddMediator(); // Discovers DelegateRequestHandler automatically
 services.AddSingleton<IPipelineBehavior<DelegateRequest, DelegateResponse>, LoggingBehavior>();
 
 builder.Map("add {x:int} {y:int}", (int x, int y) => x + y);
-// Now receives LoggingBehavior!
+// Now receives LoggingBehavior via mediator.Send()!
 ```
 
 ## References

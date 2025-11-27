@@ -19,7 +19,10 @@ using static System.Console;
 // - Mediator routes (IRequest commands)
 //
 // When DI is enabled and pipeline behaviors are registered for DelegateRequest,
-// delegate routes are automatically wrapped and executed through the pipeline.
+// delegate routes are wrapped in DelegateRequest and sent through IMediator.Send().
+// The DelegateRequestHandler (defined in TimeWarp.Nuru) is discovered by the
+// Mediator source generator, and pipeline behaviors execute automatically.
+//
 // This ensures cross-cutting concerns apply consistently regardless of route type.
 //
 // Try these commands:

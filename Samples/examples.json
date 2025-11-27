@@ -169,6 +169,30 @@
       "path": "Samples/CustomTypeConverterExample.cs",
       "tags": ["types", "converters", "custom", "advanced"],
       "difficulty": "intermediate"
+    },
+    {
+      "id": "test-output-capture",
+      "name": "Testing Output Capture",
+      "description": "Use TestTerminal to capture and assert CLI output in unit tests - stdout, stderr, and exit codes",
+      "path": "Samples/Testing/test-output-capture.cs",
+      "tags": ["testing", "terminal", "testability", "output-capture", "assertions"],
+      "difficulty": "beginner"
+    },
+    {
+      "id": "test-colored-output",
+      "name": "Testing Colored Output",
+      "description": "Test handlers that produce colored/styled output using ANSI codes and fluent color extensions",
+      "path": "Samples/Testing/test-colored-output.cs",
+      "tags": ["testing", "terminal", "colors", "ansi", "styled-output"],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "test-terminal-injection",
+      "name": "ITerminal Dependency Injection",
+      "description": "Inject ITerminal into route handlers for testable colored output with TestTerminal",
+      "path": "Samples/Testing/test-terminal-injection.cs",
+      "tags": ["testing", "terminal", "dependency-injection", "iterminal", "testability"],
+      "difficulty": "intermediate"
     }
   ]
 }

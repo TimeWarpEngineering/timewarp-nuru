@@ -1,3 +1,6 @@
+// CA1822: Analyzer bug - doesn't recognize C# 14 extension block receiver 'text' as instance data
+#pragma warning disable CA1822
+
 namespace TimeWarp.Nuru;
 
 /// <summary>
@@ -13,247 +16,199 @@ namespace TimeWarp.Nuru;
 /// </example>
 public static class AnsiColorExtensions
 {
-  #region Basic Foreground Colors
+  extension(string text)
+  {
+    /// <summary>Applies a custom ANSI color code to the text.</summary>
+    /// <param name="colorCode">The ANSI escape code for the color (e.g., AnsiColors.Red or SyntaxColors.CommandColor).</param>
+    public string WithStyle(string colorCode) => colorCode + text + AnsiColors.Reset;
 
-  /// <summary>Applies black foreground color.</summary>
-  public static string Black(this string text)
-    => AnsiColors.Black + text + AnsiColors.Reset;
+    #region Basic Foreground Colors
 
-  /// <summary>Applies red foreground color.</summary>
-  public static string Red(this string text)
-    => AnsiColors.Red + text + AnsiColors.Reset;
+    /// <summary>Applies black foreground color.</summary>
+    public string Black() => text.WithStyle(AnsiColors.Black);
 
-  /// <summary>Applies green foreground color.</summary>
-  public static string Green(this string text)
-    => AnsiColors.Green + text + AnsiColors.Reset;
+    /// <summary>Applies red foreground color.</summary>
+    public string Red() => text.WithStyle(AnsiColors.Red);
 
-  /// <summary>Applies yellow foreground color.</summary>
-  public static string Yellow(this string text)
-    => AnsiColors.Yellow + text + AnsiColors.Reset;
+    /// <summary>Applies green foreground color.</summary>
+    public string Green() => text.WithStyle(AnsiColors.Green);
 
-  /// <summary>Applies blue foreground color.</summary>
-  public static string Blue(this string text)
-    => AnsiColors.Blue + text + AnsiColors.Reset;
+    /// <summary>Applies yellow foreground color.</summary>
+    public string Yellow() => text.WithStyle(AnsiColors.Yellow);
 
-  /// <summary>Applies magenta foreground color.</summary>
-  public static string Magenta(this string text)
-    => AnsiColors.Magenta + text + AnsiColors.Reset;
+    /// <summary>Applies blue foreground color.</summary>
+    public string Blue() => text.WithStyle(AnsiColors.Blue);
 
-  /// <summary>Applies cyan foreground color.</summary>
-  public static string Cyan(this string text)
-    => AnsiColors.Cyan + text + AnsiColors.Reset;
+    /// <summary>Applies magenta foreground color.</summary>
+    public string Magenta() => text.WithStyle(AnsiColors.Magenta);
 
-  /// <summary>Applies white foreground color.</summary>
-  public static string White(this string text)
-    => AnsiColors.White + text + AnsiColors.Reset;
+    /// <summary>Applies cyan foreground color.</summary>
+    public string Cyan() => text.WithStyle(AnsiColors.Cyan);
 
-  /// <summary>Applies gray foreground color.</summary>
-  public static string Gray(this string text)
-    => AnsiColors.Gray + text + AnsiColors.Reset;
+    /// <summary>Applies white foreground color.</summary>
+    public string White() => text.WithStyle(AnsiColors.White);
 
-  #endregion
+    /// <summary>Applies gray foreground color.</summary>
+    public string Gray() => text.WithStyle(AnsiColors.Gray);
 
-  #region Bright Foreground Colors
+    #endregion
 
-  /// <summary>Applies bright red foreground color.</summary>
-  public static string BrightRed(this string text)
-    => AnsiColors.BrightRed + text + AnsiColors.Reset;
+    #region Bright Foreground Colors
 
-  /// <summary>Applies bright green foreground color.</summary>
-  public static string BrightGreen(this string text)
-    => AnsiColors.BrightGreen + text + AnsiColors.Reset;
+    /// <summary>Applies bright red foreground color.</summary>
+    public string BrightRed() => text.WithStyle(AnsiColors.BrightRed);
 
-  /// <summary>Applies bright yellow foreground color.</summary>
-  public static string BrightYellow(this string text)
-    => AnsiColors.BrightYellow + text + AnsiColors.Reset;
+    /// <summary>Applies bright green foreground color.</summary>
+    public string BrightGreen() => text.WithStyle(AnsiColors.BrightGreen);
 
-  /// <summary>Applies bright blue foreground color.</summary>
-  public static string BrightBlue(this string text)
-    => AnsiColors.BrightBlue + text + AnsiColors.Reset;
+    /// <summary>Applies bright yellow foreground color.</summary>
+    public string BrightYellow() => text.WithStyle(AnsiColors.BrightYellow);
 
-  /// <summary>Applies bright magenta foreground color.</summary>
-  public static string BrightMagenta(this string text)
-    => AnsiColors.BrightMagenta + text + AnsiColors.Reset;
+    /// <summary>Applies bright blue foreground color.</summary>
+    public string BrightBlue() => text.WithStyle(AnsiColors.BrightBlue);
 
-  /// <summary>Applies bright cyan foreground color.</summary>
-  public static string BrightCyan(this string text)
-    => AnsiColors.BrightCyan + text + AnsiColors.Reset;
+    /// <summary>Applies bright magenta foreground color.</summary>
+    public string BrightMagenta() => text.WithStyle(AnsiColors.BrightMagenta);
 
-  /// <summary>Applies bright white foreground color.</summary>
-  public static string BrightWhite(this string text)
-    => AnsiColors.BrightWhite + text + AnsiColors.Reset;
+    /// <summary>Applies bright cyan foreground color.</summary>
+    public string BrightCyan() => text.WithStyle(AnsiColors.BrightCyan);
 
-  #endregion
+    /// <summary>Applies bright white foreground color.</summary>
+    public string BrightWhite() => text.WithStyle(AnsiColors.BrightWhite);
 
-  #region Background Colors
+    #endregion
 
-  /// <summary>Applies black background color.</summary>
-  public static string OnBlack(this string text)
-    => AnsiColors.BgBlack + text + AnsiColors.Reset;
+    #region Background Colors
 
-  /// <summary>Applies red background color.</summary>
-  public static string OnRed(this string text)
-    => AnsiColors.BgRed + text + AnsiColors.Reset;
+    /// <summary>Applies black background color.</summary>
+    public string OnBlack() => text.WithStyle(AnsiColors.BgBlack);
 
-  /// <summary>Applies green background color.</summary>
-  public static string OnGreen(this string text)
-    => AnsiColors.BgGreen + text + AnsiColors.Reset;
+    /// <summary>Applies red background color.</summary>
+    public string OnRed() => text.WithStyle(AnsiColors.BgRed);
 
-  /// <summary>Applies yellow background color.</summary>
-  public static string OnYellow(this string text)
-    => AnsiColors.BgYellow + text + AnsiColors.Reset;
+    /// <summary>Applies green background color.</summary>
+    public string OnGreen() => text.WithStyle(AnsiColors.BgGreen);
 
-  /// <summary>Applies blue background color.</summary>
-  public static string OnBlue(this string text)
-    => AnsiColors.BgBlue + text + AnsiColors.Reset;
+    /// <summary>Applies yellow background color.</summary>
+    public string OnYellow() => text.WithStyle(AnsiColors.BgYellow);
 
-  /// <summary>Applies magenta background color.</summary>
-  public static string OnMagenta(this string text)
-    => AnsiColors.BgMagenta + text + AnsiColors.Reset;
+    /// <summary>Applies blue background color.</summary>
+    public string OnBlue() => text.WithStyle(AnsiColors.BgBlue);
 
-  /// <summary>Applies cyan background color.</summary>
-  public static string OnCyan(this string text)
-    => AnsiColors.BgCyan + text + AnsiColors.Reset;
+    /// <summary>Applies magenta background color.</summary>
+    public string OnMagenta() => text.WithStyle(AnsiColors.BgMagenta);
 
-  /// <summary>Applies white background color.</summary>
-  public static string OnWhite(this string text)
-    => AnsiColors.BgWhite + text + AnsiColors.Reset;
+    /// <summary>Applies cyan background color.</summary>
+    public string OnCyan() => text.WithStyle(AnsiColors.BgCyan);
 
-  #endregion
+    /// <summary>Applies white background color.</summary>
+    public string OnWhite() => text.WithStyle(AnsiColors.BgWhite);
 
-  #region Bright Background Colors
+    #endregion
 
-  /// <summary>Applies bright black (gray) background color.</summary>
-  public static string OnBrightBlack(this string text)
-    => AnsiColors.BgBrightBlack + text + AnsiColors.Reset;
+    #region Bright Background Colors
 
-  /// <summary>Applies bright red background color.</summary>
-  public static string OnBrightRed(this string text)
-    => AnsiColors.BgBrightRed + text + AnsiColors.Reset;
+    /// <summary>Applies bright black (gray) background color.</summary>
+    public string OnBrightBlack() => text.WithStyle(AnsiColors.BgBrightBlack);
 
-  /// <summary>Applies bright green background color.</summary>
-  public static string OnBrightGreen(this string text)
-    => AnsiColors.BgBrightGreen + text + AnsiColors.Reset;
+    /// <summary>Applies bright red background color.</summary>
+    public string OnBrightRed() => text.WithStyle(AnsiColors.BgBrightRed);
 
-  /// <summary>Applies bright yellow background color.</summary>
-  public static string OnBrightYellow(this string text)
-    => AnsiColors.BgBrightYellow + text + AnsiColors.Reset;
+    /// <summary>Applies bright green background color.</summary>
+    public string OnBrightGreen() => text.WithStyle(AnsiColors.BgBrightGreen);
 
-  /// <summary>Applies bright blue background color.</summary>
-  public static string OnBrightBlue(this string text)
-    => AnsiColors.BgBrightBlue + text + AnsiColors.Reset;
+    /// <summary>Applies bright yellow background color.</summary>
+    public string OnBrightYellow() => text.WithStyle(AnsiColors.BgBrightYellow);
 
-  /// <summary>Applies bright magenta background color.</summary>
-  public static string OnBrightMagenta(this string text)
-    => AnsiColors.BgBrightMagenta + text + AnsiColors.Reset;
+    /// <summary>Applies bright blue background color.</summary>
+    public string OnBrightBlue() => text.WithStyle(AnsiColors.BgBrightBlue);
 
-  /// <summary>Applies bright cyan background color.</summary>
-  public static string OnBrightCyan(this string text)
-    => AnsiColors.BgBrightCyan + text + AnsiColors.Reset;
+    /// <summary>Applies bright magenta background color.</summary>
+    public string OnBrightMagenta() => text.WithStyle(AnsiColors.BgBrightMagenta);
 
-  /// <summary>Applies bright white background color.</summary>
-  public static string OnBrightWhite(this string text)
-    => AnsiColors.BgBrightWhite + text + AnsiColors.Reset;
+    /// <summary>Applies bright cyan background color.</summary>
+    public string OnBrightCyan() => text.WithStyle(AnsiColors.BgBrightCyan);
 
-  #endregion
+    /// <summary>Applies bright white background color.</summary>
+    public string OnBrightWhite() => text.WithStyle(AnsiColors.BgBrightWhite);
 
-  #region Text Formatting
+    #endregion
 
-  /// <summary>Applies bold formatting.</summary>
-  public static string Bold(this string text)
-    => AnsiColors.Bold + text + AnsiColors.Reset;
+    #region Text Formatting
 
-  /// <summary>Applies dim (faint) formatting.</summary>
-  public static string Dim(this string text)
-    => AnsiColors.Dim + text + AnsiColors.Reset;
+    /// <summary>Applies bold formatting.</summary>
+    public string Bold() => text.WithStyle(AnsiColors.Bold);
 
-  /// <summary>Applies italic formatting.</summary>
-  public static string Italic(this string text)
-    => AnsiColors.Italic + text + AnsiColors.Reset;
+    /// <summary>Applies dim (faint) formatting.</summary>
+    public string Dim() => text.WithStyle(AnsiColors.Dim);
 
-  /// <summary>Applies underline formatting.</summary>
-  public static string Underline(this string text)
-    => AnsiColors.Underline + text + AnsiColors.Reset;
+    /// <summary>Applies italic formatting.</summary>
+    public string Italic() => text.WithStyle(AnsiColors.Italic);
 
-  /// <summary>Applies blink formatting (not supported in all terminals).</summary>
-  public static string Blink(this string text)
-    => AnsiColors.Blink + text + AnsiColors.Reset;
+    /// <summary>Applies underline formatting.</summary>
+    public string Underline() => text.WithStyle(AnsiColors.Underline);
 
-  /// <summary>Applies reverse (inverted colors) formatting.</summary>
-  public static string Reverse(this string text)
-    => AnsiColors.Reverse + text + AnsiColors.Reset;
+    /// <summary>Applies blink formatting (not supported in all terminals).</summary>
+    public string Blink() => text.WithStyle(AnsiColors.Blink);
 
-  /// <summary>Applies hidden (invisible) formatting.</summary>
-  public static string Hidden(this string text)
-    => AnsiColors.Hidden + text + AnsiColors.Reset;
+    /// <summary>Applies reverse (inverted colors) formatting.</summary>
+    public string Reverse() => text.WithStyle(AnsiColors.Reverse);
 
-  /// <summary>Applies strikethrough formatting.</summary>
-  public static string Strikethrough(this string text)
-    => AnsiColors.Strikethrough + text + AnsiColors.Reset;
+    /// <summary>Applies hidden (invisible) formatting.</summary>
+    public string Hidden() => text.WithStyle(AnsiColors.Hidden);
 
-  #endregion
+    /// <summary>Applies strikethrough formatting.</summary>
+    public string Strikethrough() => text.WithStyle(AnsiColors.Strikethrough);
 
-  #region Common CSS Named Colors
+    #endregion
 
-  /// <summary>Applies orange foreground color.</summary>
-  public static string Orange(this string text)
-    => AnsiColors.Orange + text + AnsiColors.Reset;
+    #region Common CSS Named Colors
 
-  /// <summary>Applies pink foreground color.</summary>
-  public static string Pink(this string text)
-    => AnsiColors.Pink + text + AnsiColors.Reset;
+    /// <summary>Applies orange foreground color.</summary>
+    public string Orange() => text.WithStyle(AnsiColors.Orange);
 
-  /// <summary>Applies purple foreground color.</summary>
-  public static string Purple(this string text)
-    => AnsiColors.Purple + text + AnsiColors.Reset;
+    /// <summary>Applies pink foreground color.</summary>
+    public string Pink() => text.WithStyle(AnsiColors.Pink);
 
-  /// <summary>Applies gold foreground color.</summary>
-  public static string Gold(this string text)
-    => AnsiColors.Gold + text + AnsiColors.Reset;
+    /// <summary>Applies purple foreground color.</summary>
+    public string Purple() => text.WithStyle(AnsiColors.Purple);
 
-  /// <summary>Applies coral foreground color.</summary>
-  public static string Coral(this string text)
-    => AnsiColors.Coral + text + AnsiColors.Reset;
+    /// <summary>Applies gold foreground color.</summary>
+    public string Gold() => text.WithStyle(AnsiColors.Gold);
 
-  /// <summary>Applies crimson foreground color.</summary>
-  public static string Crimson(this string text)
-    => AnsiColors.Crimson + text + AnsiColors.Reset;
+    /// <summary>Applies coral foreground color.</summary>
+    public string Coral() => text.WithStyle(AnsiColors.Coral);
 
-  /// <summary>Applies teal foreground color.</summary>
-  public static string Teal(this string text)
-    => AnsiColors.Teal + text + AnsiColors.Reset;
+    /// <summary>Applies crimson foreground color.</summary>
+    public string Crimson() => text.WithStyle(AnsiColors.Crimson);
 
-  /// <summary>Applies navy foreground color.</summary>
-  public static string Navy(this string text)
-    => AnsiColors.Navy + text + AnsiColors.Reset;
+    /// <summary>Applies teal foreground color.</summary>
+    public string Teal() => text.WithStyle(AnsiColors.Teal);
 
-  /// <summary>Applies olive foreground color.</summary>
-  public static string Olive(this string text)
-    => AnsiColors.Olive + text + AnsiColors.Reset;
+    /// <summary>Applies navy foreground color.</summary>
+    public string Navy() => text.WithStyle(AnsiColors.Navy);
 
-  /// <summary>Applies maroon foreground color.</summary>
-  public static string Maroon(this string text)
-    => AnsiColors.Maroon + text + AnsiColors.Reset;
+    /// <summary>Applies olive foreground color.</summary>
+    public string Olive() => text.WithStyle(AnsiColors.Olive);
 
-  /// <summary>Applies lime foreground color.</summary>
-  public static string Lime(this string text)
-    => AnsiColors.Lime + text + AnsiColors.Reset;
+    /// <summary>Applies maroon foreground color.</summary>
+    public string Maroon() => text.WithStyle(AnsiColors.Maroon);
 
-  /// <summary>Applies aqua foreground color.</summary>
-  public static string Aqua(this string text)
-    => AnsiColors.Aqua + text + AnsiColors.Reset;
+    /// <summary>Applies lime foreground color.</summary>
+    public string Lime() => text.WithStyle(AnsiColors.Lime);
 
-  /// <summary>Applies silver foreground color.</summary>
-  public static string Silver(this string text)
-    => AnsiColors.Silver + text + AnsiColors.Reset;
+    /// <summary>Applies aqua foreground color.</summary>
+    public string Aqua() => text.WithStyle(AnsiColors.Aqua);
 
-  /// <summary>Applies indigo foreground color.</summary>
-  public static string Indigo(this string text)
-    => AnsiColors.Indigo + text + AnsiColors.Reset;
+    /// <summary>Applies silver foreground color.</summary>
+    public string Silver() => text.WithStyle(AnsiColors.Silver);
 
-  /// <summary>Applies violet foreground color.</summary>
-  public static string Violet(this string text)
-    => AnsiColors.Violet + text + AnsiColors.Reset;
+    /// <summary>Applies indigo foreground color.</summary>
+    public string Indigo() => text.WithStyle(AnsiColors.Indigo);
 
-  #endregion
+    /// <summary>Applies violet foreground color.</summary>
+    public string Violet() => text.WithStyle(AnsiColors.Violet);
+
+    #endregion
+  }
 }

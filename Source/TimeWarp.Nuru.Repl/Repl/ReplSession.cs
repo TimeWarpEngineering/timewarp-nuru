@@ -233,35 +233,25 @@ internal sealed class ReplSession : IDisposable
   {
     if (ReplOptions.ShowExitCode && success)
     {
-      if (ReplOptions.EnableColors)
-        Terminal.WriteLine(AnsiColors.Gray + $"Exit code: {exitCode}" + AnsiColors.Reset);
-      else
-        Terminal.WriteLine($"Exit code: {exitCode}");
+      string text = $"Exit code: {exitCode}";
+      Terminal.WriteLine(ReplOptions.EnableColors ? text.Gray() : text);
     }
 
     if (ReplOptions.ShowTiming)
     {
-      if (ReplOptions.EnableColors)
-        Terminal.WriteLine(AnsiColors.Gray + $"({elapsedMs}ms)" + AnsiColors.Reset);
-      else
-        Terminal.WriteLine($"({elapsedMs}ms)");
+      string text = $"({elapsedMs}ms)";
+      Terminal.WriteLine(ReplOptions.EnableColors ? text.Gray() : text);
     }
 
     if (!success)
     {
       string message = errorMessage ?? $"Command failed with exit code {exitCode}";
-      if (ReplOptions.EnableColors)
-        Terminal.WriteLine(AnsiColors.Red + message + AnsiColors.Reset);
-      else
-        Terminal.WriteLine(message);
+      Terminal.WriteLine(ReplOptions.EnableColors ? message.Red() : message);
     }
     else if (!ReplOptions.ContinueOnError && exitCode != 0)
     {
       string message = $"Command failed with exit code {exitCode}. Exiting REPL.";
-      if (ReplOptions.EnableColors)
-        Terminal.WriteLine(AnsiColors.Red + message + AnsiColors.Reset);
-      else
-        Terminal.WriteLine(message);
+      Terminal.WriteLine(ReplOptions.EnableColors ? message.Red() : message);
     }
   }
 

@@ -419,3 +419,6 @@ dotnet_diagnostic.globalusingsanalyzer0003.severity = warning
 
 # TWA002: Move XML documentation to markdown file
 dotnet_diagnostic.TWA002.severity = silent
+
+# IDE0290: Use primary constructor - disabled per project preference
+dotnet_diagnostic.IDE0290.severity = none

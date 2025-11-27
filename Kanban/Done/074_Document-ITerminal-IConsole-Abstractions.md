@@ -44,7 +44,7 @@ The `IConsole` and `ITerminal` interfaces along with their implementations (`Nur
 - [x] Create sample comparing Nuru color output vs Spectre.Console (show simplicity) - comparison table in docs
 
 ### MCP
-- [ ] Consider adding MCP tool to explain ITerminal/IConsole usage (deferred for future consideration)
+- [x] Consider adding MCP tool to explain ITerminal/IConsole usage - Already covered via `examples.json` with `test-output-capture`, `test-colored-output`, and `test-terminal-injection` samples discoverable through `GetExample` MCP tool
 
 ## Notes
 

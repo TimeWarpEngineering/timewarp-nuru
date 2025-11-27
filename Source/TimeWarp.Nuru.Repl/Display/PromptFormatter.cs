@@ -17,9 +17,7 @@ internal static class PromptFormatter
     ArgumentException.ThrowIfNullOrEmpty(prompt);
     ArgumentException.ThrowIfNullOrEmpty(promptColor);
 
-    return enableColors
-      ? promptColor + prompt + AnsiColors.Reset
-      : prompt;
+    return enableColors ? prompt.WithStyle(promptColor) : prompt;
   }
 
   /// <summary>

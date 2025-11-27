@@ -44,11 +44,11 @@ internal sealed class SyntaxHighlighter
   {
     return token.Type switch
     {
-      TokenType.Command => SyntaxColors.CommandColor + token.Text + AnsiColors.Reset,
-      TokenType.StringLiteral => SyntaxColors.StringColor + token.Text + AnsiColors.Reset,
-      TokenType.Number => SyntaxColors.NumberColor + token.Text + AnsiColors.Reset,
-      TokenType.LongOption => SyntaxColors.KeywordColor + token.Text + AnsiColors.Reset,
-      TokenType.ShortOption => SyntaxColors.OperatorColor + token.Text + AnsiColors.Reset,
+      TokenType.Command => token.Text.WithStyle(SyntaxColors.CommandColor),
+      TokenType.StringLiteral => token.Text.WithStyle(SyntaxColors.StringColor),
+      TokenType.Number => token.Text.WithStyle(SyntaxColors.NumberColor),
+      TokenType.LongOption => token.Text.WithStyle(SyntaxColors.KeywordColor),
+      TokenType.ShortOption => token.Text.WithStyle(SyntaxColors.OperatorColor),
       TokenType.Argument => DetermineArgumentHighlighting(token),
       TokenType.Whitespace => token.Text, // No coloring for whitespace
       _ => token.Text
@@ -60,7 +60,7 @@ internal sealed class SyntaxHighlighter
     // Check if this argument is actually a command
     if (Endpoints is not null && IsKnownCommand(token.Text))
     {
-      return SyntaxColors.CommandColor + token.Text + AnsiColors.Reset;
+      return token.Text.WithStyle(SyntaxColors.CommandColor);
     }
 
     // Check if it looks like a parameter (contains special chars)
@@ -71,11 +71,11 @@ internal sealed class SyntaxHighlighter
       token.Text.Contains(':', StringComparison.Ordinal)
     )
     {
-      return SyntaxColors.ParameterColor + token.Text + AnsiColors.Reset;
+      return token.Text.WithStyle(SyntaxColors.ParameterColor);
     }
 
     // Default argument coloring
-    return SyntaxColors.DefaultTokenColor + token.Text + AnsiColors.Reset;
+    return token.Text.WithStyle(SyntaxColors.DefaultTokenColor);
   }
 
   private bool IsKnownCommand(string token)

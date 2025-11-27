@@ -180,14 +180,8 @@ internal sealed class TabCompletionHandler
     ReplLoggerMessages.ShowCompletionCandidatesStarted(Logger, currentInput, null);
 
     Terminal.WriteLine();
-    if (ReplOptions.EnableColors)
-    {
-      Terminal.WriteLine(AnsiColors.Gray + "Available completions:" + AnsiColors.Reset);
-    }
-    else
-    {
-      Terminal.WriteLine("Available completions:");
-    }
+    string header = "Available completions:";
+    Terminal.WriteLine(ReplOptions.EnableColors ? header.Gray() : header);
 
     // Display nicely in columns
     int maxLen = candidates.Max(c => c.Value.Length) + 2;

@@ -33,10 +33,15 @@ run_test() {
     local name="$1"
     local command="$2"
     local expected="$3"
-    
+
     # Run command and capture both stdout and stderr
-    output=$(eval "\"$EXECUTABLE\" $command 2>&1")
-    
+    # Use dotnet exec for DLL files, direct execution for AOT binaries
+    if [[ "$EXECUTABLE" == *.dll ]]; then
+        output=$(eval "dotnet \"$EXECUTABLE\" $command 2>&1")
+    else
+        output=$(eval "\"$EXECUTABLE\" $command 2>&1")
+    fi
+
     # Check if output contains expected string
     if echo "$output" | grep -q "$expected"; then
         ((PASSED++))
@@ -194,7 +199,8 @@ echo ""
 # Test Delegate JIT
 echo -e "${BLUE}1. Delegate-based routing (JIT)${NC}"
 echo "================================="
-EXECUTABLE="./Tests/TestApps/TimeWarp.Nuru.TestApp.Delegates/bin/Release/$TARGET_FRAMEWORK/TimeWarp.Nuru.TestApp.Delegates"
+# Use the DLL with dotnet exec for JIT (apphost may not find runtime)
+EXECUTABLE="./Tests/TestApps/TimeWarp.Nuru.TestApp.Delegates/bin/Release/$TARGET_FRAMEWORK/TimeWarp.Nuru.TestApp.Delegates.dll"
 START_TIME=$(date +%s.%N)
 run_all_tests
 END_TIME=$(date +%s.%N)
@@ -207,7 +213,8 @@ echo "Execution time: ${DELEGATE_JIT_TIME}s"
 echo ""
 echo -e "${BLUE}2. Mediator-based routing (JIT)${NC}"
 echo "================================="
-EXECUTABLE="./Tests/TestApps/TimeWarp.Nuru.TestApp.Mediator/bin/Release/$TARGET_FRAMEWORK/TimeWarp.Nuru.TestApp.Mediator"
+# Use the DLL with dotnet exec for JIT (apphost may not find runtime)
+EXECUTABLE="./Tests/TestApps/TimeWarp.Nuru.TestApp.Mediator/bin/Release/$TARGET_FRAMEWORK/TimeWarp.Nuru.TestApp.Mediator.dll"
 START_TIME=$(date +%s.%N)
 run_all_tests
 END_TIME=$(date +%s.%N)

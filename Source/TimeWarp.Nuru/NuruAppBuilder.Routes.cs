@@ -40,7 +40,7 @@ public partial class NuruAppBuilder
   /// Adds a Mediator command-based route.
   /// Requires AddDependencyInjection() to be called first.
   /// </summary>
-  public NuruAppBuilder Map<TCommand>(string pattern, string? description = null)
+  public NuruAppBuilder Map<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)] TCommand>(string pattern, string? description = null)
     where TCommand : IRequest, new()
   {
     return MapMediator(typeof(TCommand), pattern, description);
@@ -50,7 +50,7 @@ public partial class NuruAppBuilder
   /// Adds a Mediator command-based route with response.
   /// Requires AddDependencyInjection() to be called first.
   /// </summary>
-  public NuruAppBuilder Map<TCommand, TResponse>(string pattern, string? description = null)
+  public NuruAppBuilder Map<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)] TCommand, TResponse>(string pattern, string? description = null)
     where TCommand : IRequest<TResponse>, new()
   {
     return MapMediator(typeof(TCommand), pattern, description);
@@ -104,7 +104,7 @@ public partial class NuruAppBuilder
   ///     "Exit the application");
   /// </code>
   /// </example>
-  public NuruAppBuilder MapMultiple<TCommand>(string[] patterns, string? description = null)
+  public NuruAppBuilder MapMultiple<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)] TCommand>(string[] patterns, string? description = null)
     where TCommand : IRequest, new()
   {
     ArgumentNullException.ThrowIfNull(patterns);
@@ -135,7 +135,7 @@ public partial class NuruAppBuilder
   ///     "Greet someone");
   /// </code>
   /// </example>
-  public NuruAppBuilder MapMultiple<TCommand, TResponse>(string[] patterns, string? description = null)
+  public NuruAppBuilder MapMultiple<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)] TCommand, TResponse>(string[] patterns, string? description = null)
     where TCommand : IRequest<TResponse>, new()
   {
     ArgumentNullException.ThrowIfNull(patterns);

@@ -21,6 +21,13 @@ public static class ServiceCollectionExtensions
     // Register mediator executor for Mediator integration
     services.TryAddSingleton<MediatorExecutor>();
 
+    // Register route execution context as scoped so each request gets fresh context
+    // This follows Jimmy Bogard's recommendation for sharing context in pipelines
+    services.TryAddScoped<RouteExecutionContext>();
+
+    // Register delegate pipeline executor as scoped (depends on scoped RouteExecutionContext)
+    services.TryAddScoped<DelegatePipelineExecutor>();
+
     return services;
   }
 }

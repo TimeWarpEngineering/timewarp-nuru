@@ -30,12 +30,14 @@ Replace TimeWarp.Mediator (MediatR fork) with martinothamar/Mediator (source-gen
 - [x] Update calc-mediator.cs sample
 - [x] Update calc-mixed.cs sample
 - [x] Update pipeline-middleware.cs sample
+- [x] Add [DynamicallyAccessedMembers] to Map<TCommand> for AOT property preservation
 
 ### Verification
 - [x] All samples compile and run
-- [ ] Test AOT compilation without TrimMode=partial
-- [ ] Run benchmark comparison
+- [x] Test AOT compilation without TrimMode=partial
+- [x] Run benchmark comparison
 - [x] Verify pipeline behaviors execute correctly
+- [x] All 44 test-both-versions.sh tests pass (Delegate JIT, Mediator JIT, Delegate AOT, Mediator AOT)
 
 ## API Differences
 
@@ -100,6 +102,32 @@ For AOT/runfile scenarios, use explicit generic registrations rather than open g
 // Use explicit registrations:
 services.AddSingleton<IPipelineBehavior<MyCommand, Unit>, LoggingBehavior<MyCommand, Unit>>();
 ```
+
+### AOT Property Preservation
+
+Added `[DynamicallyAccessedMembers]` attribute to `Map<TCommand>` generic type parameters to ensure command properties are preserved during AOT trimming. This was required to fix Mediator AOT tests where property binding was failing.
+
+## Benchmark Results
+
+| Framework | Time | Memory |
+|-----------|------|--------|
+| ConsoleAppFramework v5 | 1.18 ms | 0 B |
+| System.CommandLine | 21.72 ms | 10 KB |
+| CliFx | 25.12 ms | 66 KB |
+| **TimeWarp.Nuru.Direct** | **28.07 ms** | **8 KB** |
+| TimeWarp.Nuru (Mediator) | 55.79 ms | 63 KB |
+| Cocona | 143.44 ms | 651 KB |
+
+## Test Results
+
+All 44 tests pass for all 4 configurations:
+
+| Implementation | Tests | Execution Time |
+|----------------|-------|----------------|
+| Delegate (JIT) | 44/44 | 3.31s |
+| Mediator (JIT) | 44/44 | 8.09s |
+| Delegate (AOT) | 44/44 | 0.43s |
+| Mediator (AOT) | 44/44 | 0.62s |
 
 ## Notes
 

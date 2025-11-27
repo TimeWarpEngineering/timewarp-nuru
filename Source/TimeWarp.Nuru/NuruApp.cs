@@ -307,14 +307,14 @@ public partial class NuruApp
       Justification = "Delegate invocation may require dynamic code generation")]
   private Task<int> ExecuteDelegateAsync(Delegate del, Dictionary<string, string> extractedValues, Endpoint endpoint)
   {
-    // When DI is enabled, check if pipeline behaviors are registered
-    // If so, route through the pipeline executor for unified middleware
-    if (ServiceProvider is not null && HasPipelineBehaviors())
+    // When full DI is enabled (MediatorExecutor exists), route through Mediator
+    // Pipeline behaviors will apply if registered, otherwise handler runs directly
+    if (MediatorExecutor is not null)
     {
       return ExecuteDelegateWithPipelineAsync(del, extractedValues, endpoint);
     }
 
-    // Direct execution path (no DI or no pipeline behaviors)
+    // Direct execution path (no DI)
     return DelegateExecutor.ExecuteAsync(
       del,
       extractedValues,
@@ -323,23 +323,6 @@ public partial class NuruApp
       endpoint,
       Console
     );
-  }
-
-  /// <summary>
-  /// Checks if any pipeline behaviors are registered for delegate requests.
-  /// </summary>
-  private bool HasPipelineBehaviors()
-  {
-    // Only use pipeline if we have full DI (MediatorExecutor indicates full DI)
-    // LightweightServiceProvider doesn't support IEnumerable<T> resolution
-    if (MediatorExecutor is null) return false;
-    if (ServiceProvider is null) return false;
-
-    // Check if any IPipelineBehavior<DelegateRequest, DelegateResponse> are registered
-    IEnumerable<IPipelineBehavior<DelegateRequest, DelegateResponse>> behaviors =
-      ServiceProvider.GetServices<IPipelineBehavior<DelegateRequest, DelegateResponse>>();
-
-    return behaviors.Any();
   }
 
   /// <summary>

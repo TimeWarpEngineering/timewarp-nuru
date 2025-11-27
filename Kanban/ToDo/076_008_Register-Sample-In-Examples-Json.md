@@ -6,7 +6,7 @@ Add the Pipeline Middleware sample to the examples.json manifest for MCP server 
 
 ## Parent
 
-073_Add-Pipeline-Middleware-Sample
+076_Add-Pipeline-Middleware-Sample
 
 ## Checklist
 

@@ -6,7 +6,7 @@ Create a TelemetryBehavior using System.Diagnostics.Activity for OpenTelemetry-c
 
 ## Parent
 
-073_Add-Pipeline-Middleware-Sample
+076_Add-Pipeline-Middleware-Sample
 
 ## Checklist
 

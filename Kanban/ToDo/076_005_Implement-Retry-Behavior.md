@@ -6,7 +6,7 @@ Create a RetryBehavior for resilience, demonstrating exponential backoff retry l
 
 ## Parent
 
-073_Add-Pipeline-Middleware-Sample
+076_Add-Pipeline-Middleware-Sample
 
 ## Checklist
 

@@ -97,13 +97,13 @@ public class StaticFactoryMethodTests
     await Task.CompletedTask;
   }
 
-  public static async Task Map_should_be_alias_for_AddRoute()
+  public static async Task Map_should_be_alias_for_Map()
   {
     // Arrange
     bool matched = false;
     NuruAppBuilder builder = NuruApp.CreateSlimBuilder();
 
-    // Act - use Map instead of AddRoute
+    // Act - use Map instead of Map
     builder.Map("test", () => { matched = true; return 0; });
     NuruApp app = builder.Build();
     int exitCode = await app.RunAsync(["test"]);
@@ -113,13 +113,13 @@ public class StaticFactoryMethodTests
     matched.ShouldBeTrue();
   }
 
-  public static async Task MapDefault_should_be_alias_for_AddDefaultRoute()
+  public static async Task MapDefault_should_be_alias_for_MapDefault()
   {
     // Arrange
     bool matched = false;
     NuruAppBuilder builder = NuruApp.CreateSlimBuilder();
 
-    // Act - use MapDefault instead of AddDefaultRoute
+    // Act - use MapDefault instead of MapDefault
     builder.MapDefault(() => { matched = true; return 0; });
     NuruApp app = builder.Build();
     int exitCode = await app.RunAsync([]);
@@ -182,7 +182,7 @@ public class StaticFactoryMethodTests
     // Arrange - Original API should still work
     bool matched = false;
     NuruApp app = new NuruAppBuilder()
-      .AddRoute("legacy", () => { matched = true; return 0; })
+      .Map("legacy", () => { matched = true; return 0; })
       .Build();
 
     // Act

@@ -33,7 +33,7 @@ builder.EnableStaticCompletion();
 // Sample Commands - Issue #30 Use Case
 // ============================================================================
 
-builder.AddRoute
+builder.Map
 (
   "createorder {product} {quantity:int}",
   (string product, int quantity) =>
@@ -44,25 +44,25 @@ builder.AddRoute
   }
 );
 
-builder.AddRoute
+builder.Map
 (
   "create {item}",
   (string item) => Console.WriteLine($"✅ Created: {item}")
 );
 
-builder.AddRoute
+builder.Map
 (
   "status",
   () => Console.WriteLine("📊 System Status: OK")
 );
 
-builder.AddRoute
+builder.Map
 (
   "deploy {env} --version {ver}",
   (string env, string ver) => Console.WriteLine($"🚀 Deploying version {ver} to {env}")
 );
 
-builder.AddRoute
+builder.Map
 (
   "list {*items}",
   (string[] items) => Console.WriteLine($"📝 Items: {string.Join(", ", items)}")

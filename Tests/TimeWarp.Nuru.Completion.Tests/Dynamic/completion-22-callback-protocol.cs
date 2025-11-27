@@ -10,7 +10,7 @@ public class CallbackProtocolTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("status", () => 0);
+    builder.Map("status", () => 0);
     builder.EnableDynamicCompletion();
 
     NuruApp app = builder.Build();
@@ -27,7 +27,7 @@ public class CallbackProtocolTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("git status", () => 0);
+    builder.Map("git status", () => 0);
     builder.EnableDynamicCompletion();
 
     NuruApp app = builder.Build();
@@ -45,7 +45,7 @@ public class CallbackProtocolTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("status", () => 0);
+    builder.Map("status", () => 0);
     builder.EnableDynamicCompletion();
 
     NuruApp app = builder.Build();
@@ -62,7 +62,7 @@ public class CallbackProtocolTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("deploy {env}", (string env) => 0);
+    builder.Map("deploy {env}", (string env) => 0);
     builder.EnableDynamicCompletion();
 
     NuruApp app = builder.Build();
@@ -79,7 +79,7 @@ public class CallbackProtocolTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("status", () => 0);
+    builder.Map("status", () => 0);
     builder.EnableDynamicCompletion();
 
     NuruApp app = builder.Build();
@@ -98,9 +98,9 @@ public class CallbackProtocolTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("status", () => 0);
-    builder.AddRoute("version", () => 0);
-    builder.AddRoute("help", () => 0);
+    builder.Map("status", () => 0);
+    builder.Map("version", () => 0);
+    builder.Map("help", () => 0);
     builder.EnableDynamicCompletion();
 
     NuruApp app = builder.Build();
@@ -119,7 +119,7 @@ public class CallbackProtocolTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("deploy {env}", (string env) => 0);
+    builder.Map("deploy {env}", (string env) => 0);
 
     builder.EnableDynamicCompletion(configure: registry =>
     {
@@ -143,7 +143,7 @@ public class CallbackProtocolTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("status", () => 0);
+    builder.Map("status", () => 0);
     builder.EnableDynamicCompletion();
 
     NuruApp app = builder.Build();
@@ -178,7 +178,7 @@ public class CallbackProtocolTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("test", () => 0);
+    builder.Map("test", () => 0);
     builder.EnableDynamicCompletion();
 
     NuruApp app = builder.Build();
@@ -195,7 +195,7 @@ public class CallbackProtocolTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("connect {url}", (string url) => 0);
+    builder.Map("connect {url}", (string url) => 0);
     builder.EnableDynamicCompletion();
 
     NuruApp app = builder.Build();

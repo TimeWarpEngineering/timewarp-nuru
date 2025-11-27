@@ -37,7 +37,7 @@ var configValue2 = configuration.GetValue<string>("ConfigValue2");
 
 // Create app with route that uses configuration
 var app = new NuruAppBuilder()
-    .AddRoute("run", () =>
+    .Map("run", () =>
     {
         WriteLine($"ConfigValue1: {configValue1}");
         WriteLine($"ConfigValue2: {configValue2}");
@@ -59,7 +59,7 @@ var app = new NuruAppBuilder()
         config.RegisterServicesFromAssembly(typeof(RunCommand).Assembly);
     })
     .AddConfiguration(args)  // Automatically sets up standard configuration sources
-    .AddRoute<RunCommand>("run")
+    .Map<RunCommand>("run")
     .AddAutoHelp()
     .Build();
 

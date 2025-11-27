@@ -10,7 +10,7 @@ public class ParameterBindingTests
     // Arrange
     string? boundName = null;
     NuruApp app = new NuruAppBuilder()
-      .AddRoute("greet {name}", (string name) => { boundName = name; return 0; })
+      .Map("greet {name}", (string name) => { boundName = name; return 0; })
       .Build();
 
     // Act
@@ -28,7 +28,7 @@ public class ParameterBindingTests
     // Arrange
     int boundMs = 0;
     NuruApp app = new NuruAppBuilder()
-      .AddRoute("delay {ms:int}", (int ms) => { boundMs = ms; return 0; })
+      .Map("delay {ms:int}", (int ms) => { boundMs = ms; return 0; })
       .Build();
 
     // Act
@@ -46,7 +46,7 @@ public class ParameterBindingTests
     // Arrange
 #pragma warning disable RCS1163 // Unused parameter
     NuruApp app = new NuruAppBuilder()
-      .AddRoute("delay {ms:int}", (int ms) => 0)
+      .Map("delay {ms:int}", (int ms) => 0)
       .Build();
 #pragma warning restore RCS1163 // Unused parameter
 
@@ -64,7 +64,7 @@ public class ParameterBindingTests
     // Arrange
     double boundValue = 0;
     NuruApp app = new NuruAppBuilder()
-      .AddRoute("calculate {value:double}", (double value) => { boundValue = value; return 0; })
+      .Map("calculate {value:double}", (double value) => { boundValue = value; return 0; })
       .Build();
 
     // Act
@@ -82,7 +82,7 @@ public class ParameterBindingTests
     // Arrange
     bool boundFlag = false;
     NuruApp app = new NuruAppBuilder()
-      .AddRoute("set {flag:bool}", (bool flag) => { boundFlag = flag; return 0; })
+      .Map("set {flag:bool}", (bool flag) => { boundFlag = flag; return 0; })
       .Build();
 
     // Act
@@ -100,7 +100,7 @@ public class ParameterBindingTests
     // Arrange
     bool boundFlag = true;
     NuruApp app = new NuruAppBuilder()
-      .AddRoute("set {flag:bool}", (bool flag) => { boundFlag = flag; return 0; })
+      .Map("set {flag:bool}", (bool flag) => { boundFlag = flag; return 0; })
       .Build();
 
     // Act
@@ -119,7 +119,7 @@ public class ParameterBindingTests
     string? boundHost = null;
     int boundPort = 0;
     NuruApp app = new NuruAppBuilder()
-      .AddRoute("connect {host} {port:int}", (string host, int port) => { boundHost = host; boundPort = port; return 0; })
+      .Map("connect {host} {port:int}", (string host, int port) => { boundHost = host; boundPort = port; return 0; })
       .Build();
 
     // Act
@@ -138,7 +138,7 @@ public class ParameterBindingTests
     // Arrange
 #pragma warning disable RCS1163 // Unused parameter
     NuruApp app = new NuruAppBuilder()
-      .AddRoute("age {years:int}", (int years) => 0)
+      .Map("age {years:int}", (int years) => 0)
       .Build();
 #pragma warning restore RCS1163 // Unused parameter
 

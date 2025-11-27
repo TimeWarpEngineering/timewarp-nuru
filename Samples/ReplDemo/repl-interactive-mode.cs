@@ -32,25 +32,25 @@ NuruApp app = new NuruAppBuilder()
   )
 
   // Define application commands
-  .AddRoute
+  .Map
   (
     "greet {name}",
     (string name) => WriteLine($"Hello, {name}!"),
     "Greet someone by name"
   )
-  .AddRoute
+  .Map
   (
     "status",
     () => WriteLine("System status: OK"),
     "Show system status"
   )
-  .AddRoute
+  .Map
   (
     "add {a:int} {b:int}",
     (int a, int b) => WriteLine($"{a} + {b} = {a + b}"),
     "Add two numbers"
   )
-  .AddRoute
+  .Map
   (
     "time",
     () => WriteLine($"Current time: {DateTime.Now:HH:mm:ss}"),

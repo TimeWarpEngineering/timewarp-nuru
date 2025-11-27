@@ -27,7 +27,7 @@ public class TabCompletionBasicTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("status", () => "OK")
+      .Map("status", () => "OK")
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 
@@ -51,8 +51,8 @@ public class TabCompletionBasicTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("status", () => "Status OK")
-      .AddRoute("start", () => "Started")
+      .Map("status", () => "Status OK")
+      .Map("start", () => "Started")
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 
@@ -78,8 +78,8 @@ public class TabCompletionBasicTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("status", () => "Status OK")
-      .AddRoute("start", () => "Started")
+      .Map("status", () => "Status OK")
+      .Map("start", () => "Started")
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 
@@ -105,8 +105,8 @@ public class TabCompletionBasicTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("status", () => "Status OK")
-      .AddRoute("start", () => "Started")
+      .Map("status", () => "Status OK")
+      .Map("start", () => "Started")
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 
@@ -132,7 +132,7 @@ public class TabCompletionBasicTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("status", () => "Status OK")
+      .Map("status", () => "Status OK")
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 
@@ -155,8 +155,8 @@ public class TabCompletionBasicTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("status", () => "Status OK")
-      .AddRoute("start", () => "Started")
+      .Map("status", () => "Status OK")
+      .Map("start", () => "Started")
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 
@@ -180,7 +180,7 @@ public class TabCompletionBasicTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("deploy", () => "Deployed!")
+      .Map("deploy", () => "Deployed!")
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 
@@ -204,7 +204,7 @@ public class TabCompletionBasicTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("deploy {env}", (string env) => $"Deployed to {env}")
+      .Map("deploy {env}", (string env) => $"Deployed to {env}")
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 

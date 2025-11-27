@@ -15,7 +15,7 @@ public static class NuruMediatorCommand
         // Register only the specific handler for this benchmark
         services.AddTransient<IRequestHandler<TestCommand>, TestCommand.Handler>();
       })
-      .AddRoute<TestCommand>("test --str {str} -i {intOption:int} -b")
+      .Map<TestCommand>("test --str {str} -i {intOption:int} -b")
       .Build();
 
     // Prepend "test" to the args since Nuru expects a command name

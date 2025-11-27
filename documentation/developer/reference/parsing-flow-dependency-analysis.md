@@ -4,13 +4,13 @@ This document provides a detailed analysis of the method dependencies in the Tim
 
 ## High-Level Flow
 
-1. **NuruAppBuilder.AddRoute(pattern, handler)**
-   - Calls `AddRouteInternal(pattern, handler, description)`
+1. **NuruAppBuilder.Map(pattern, handler)**
+   - Calls `MapInternal(pattern, handler, description)`
 
-2. **NuruAppBuilder.AddRouteInternal()**
-   - Calls `EndpointCollectionBuilder.AddRoute(pattern, handler, description)`
+2. **NuruAppBuilder.MapInternal()**
+   - Calls `EndpointCollectionBuilder.Map(pattern, handler, description)`
 
-3. **DefaultEndpointCollectionBuilder.AddRoute()**
+3. **DefaultEndpointCollectionBuilder.Map()**
    - Calls `RoutePatternParser.Parse(routePattern)`
    - Creates a `RouteEndpoint` with the parsed route
    - Adds it to the `EndpointCollection`

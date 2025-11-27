@@ -30,7 +30,7 @@ public void Hello(bool toUpperCase, [Argument]string name)
 
 ```csharp
 var app = new NuruAppBuilder()
-    .AddRoute("hello {name:string} --to-upper-case {toUpperCase:bool}", 
+    .Map("hello {name:string} --to-upper-case {toUpperCase:bool}", 
         (string name, bool toUpperCase) => 
         {
             WriteLine($"Hello {(toUpperCase ? name.ToUpper() : name)}");
@@ -47,7 +47,7 @@ return await app.RunAsync(args);
 ```csharp
 var app = new NuruAppBuilder()
     .AddDependencyInjection(config => config.RegisterServicesFromAssembly(typeof(HelloCommand).Assembly))
-    .AddRoute<HelloCommand>("hello {name:string} --to-upper-case {toUpperCase:bool}")
+    .Map<HelloCommand>("hello {name:string} --to-upper-case {toUpperCase:bool}")
     .AddAutoHelp()
     .Build();
 

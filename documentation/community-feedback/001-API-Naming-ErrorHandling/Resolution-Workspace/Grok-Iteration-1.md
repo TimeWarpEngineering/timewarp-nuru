@@ -8,7 +8,7 @@ I recommend a **hybrid approach** that acknowledges the validity of both feedbac
 
 ## Technical Arguments
 
-### On AddRoute Naming
+### On Map Naming
 **Strategic Reality Check**: The framework is deliberately marketed as "route-based CLI" to differentiate itself from traditional argument parsers. This positioning provides:
 - Clear unique selling proposition
 - Familiar mental model for web developers

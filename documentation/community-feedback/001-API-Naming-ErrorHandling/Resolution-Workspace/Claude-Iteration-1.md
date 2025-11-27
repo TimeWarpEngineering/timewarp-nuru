@@ -8,14 +8,14 @@ I strongly recommend **rejecting both suggestions** and instead focusing on docu
 
 ## Technical Arguments
 
-### On AddRoute Naming
-**Architectural Intent**: The `AddRoute` naming is deliberate architectural messaging that differentiates TimeWarp.Nuru from traditional CLI frameworks by bringing web-style routing concepts to command-line applications.
+### On Map Naming
+**Architectural Intent**: The `Map` naming is deliberate architectural messaging that differentiates TimeWarp.Nuru from traditional CLI frameworks by bringing web-style routing concepts to command-line applications.
 
 **Industry Analysis**:
 - System.CommandLine: Verbose OOP approach
 - Cocona: Uses `AddCommand` with traditional CLI semantics
 - ConsoleAppFramework: Recently simplified to just `Add()`
-- ASP.NET Core: Uses `MapGet`, `MapPost` (not `AddRoute`)
+- ASP.NET Core: Uses `MapGet`, `MapPost` (not `Map`)
 
 **Strategic Value**: The naming confusion is pedagogically valuable - it forces users to understand they're dealing with routing patterns, not simple command registration.
 
@@ -43,7 +43,7 @@ I strongly recommend **rejecting both suggestions** and instead focusing on docu
 
 ### Immediate Actions (Implement Now)
 1. **Strengthen README positioning**: Add explicit messaging about the routing paradigm
-2. **Add comparison documentation**: Show `AddRoute` vs traditional `AddCommand` approaches
+2. **Add comparison documentation**: Show `Map` vs traditional `AddCommand` approaches
 3. **Document error handling**: Clearly explain existing capabilities and patterns
 4. **Improve error messages**: Include suggestions and better context
 

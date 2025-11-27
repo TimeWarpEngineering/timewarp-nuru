@@ -13,7 +13,7 @@ var app = new NuruAppBuilder()
     .AddTypeConverter(new EnumTypeConverter<LogLevel>())
     
     // Command using the enum with custom converter
-    .AddRoute("log {message} --level {level:loglevel}", 
+    .Map("log {message} --level {level:loglevel}", 
         (string message, LogLevel level) => 
         {
             WriteLine($"[{level}] {message}");

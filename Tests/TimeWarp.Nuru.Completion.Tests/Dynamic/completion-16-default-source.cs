@@ -10,9 +10,9 @@ public class DefaultSourceTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("status", () => 0);
-    builder.AddRoute("version", () => 0);
-    builder.AddRoute("help", () => 0);
+    builder.Map("status", () => 0);
+    builder.Map("version", () => 0);
+    builder.Map("help", () => 0);
 
     var context = new CompletionContext(
       Args: ["app"],
@@ -39,9 +39,9 @@ public class DefaultSourceTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("git status", () => 0);
-    builder.AddRoute("git commit -m {message}", (string message) => 0);
-    builder.AddRoute("git push", () => 0);
+    builder.Map("git status", () => 0);
+    builder.Map("git commit -m {message}", (string message) => 0);
+    builder.Map("git push", () => 0);
 
     var context = new CompletionContext(
       Args: ["app", "git"],
@@ -68,7 +68,7 @@ public class DefaultSourceTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("deploy {env} --force --verbose", (string env, bool force, bool verbose) => 0);
+    builder.Map("deploy {env} --force --verbose", (string env, bool force, bool verbose) => 0);
 
     var context = new CompletionContext(
       Args: ["app", "deploy", "production", "-"],
@@ -94,7 +94,7 @@ public class DefaultSourceTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("build --configuration,-c {mode}", (string mode) => 0);
+    builder.Map("build --configuration,-c {mode}", (string mode) => 0);
 
     var context = new CompletionContext(
       Args: ["app", "build", "-"],
@@ -141,9 +141,9 @@ public class DefaultSourceTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("deploy {env}", (string env) => 0);
-    builder.AddRoute("deploy {env} --force", (string env, bool force) => 0);
-    builder.AddRoute("deploy {env} {tag?}", (string env, string? tag) => 0);
+    builder.Map("deploy {env}", (string env) => 0);
+    builder.Map("deploy {env} --force", (string env, bool force) => 0);
+    builder.Map("deploy {env} {tag?}", (string env, string? tag) => 0);
 
     var context = new CompletionContext(
       Args: ["app"],
@@ -166,9 +166,9 @@ public class DefaultSourceTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("deploy {env}", (string env) => 0);
-    builder.AddRoute("delete {resource}", (string resource) => 0);
-    builder.AddRoute("status", () => 0);
+    builder.Map("deploy {env}", (string env) => 0);
+    builder.Map("delete {resource}", (string resource) => 0);
+    builder.Map("status", () => 0);
 
     var context = new CompletionContext(
       Args: ["app", "de"],
@@ -193,7 +193,7 @@ public class DefaultSourceTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("{command} {*args}", (string command, string[] args) => 0);
+    builder.Map("{command} {*args}", (string command, string[] args) => 0);
 
     var context = new CompletionContext(
       Args: ["app"],
@@ -217,9 +217,9 @@ public class DefaultSourceTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("zebra", () => 0);
-    builder.AddRoute("apple", () => 0);
-    builder.AddRoute("mango", () => 0);
+    builder.Map("zebra", () => 0);
+    builder.Map("apple", () => 0);
+    builder.Map("mango", () => 0);
 
     var context = new CompletionContext(
       Args: ["app"],
@@ -245,8 +245,8 @@ public class DefaultSourceTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("build --debug --verbose", (bool debug, bool verbose) => 0);
-    builder.AddRoute("build --release --quiet", (bool release, bool quiet) => 0);
+    builder.Map("build --debug --verbose", (bool debug, bool verbose) => 0);
+    builder.Map("build --release --quiet", (bool release, bool quiet) => 0);
 
     var context = new CompletionContext(
       Args: ["app", "build", "-"],
@@ -273,8 +273,8 @@ public class DefaultSourceTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("status", () => 0);
-    builder.AddRoute("version", () => 0);
+    builder.Map("status", () => 0);
+    builder.Map("version", () => 0);
 
     var context = new CompletionContext(
       Args: ["app", ""],
@@ -299,7 +299,7 @@ public class DefaultSourceTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("run --verbose,-v --quiet,-q", (bool verbose, bool quiet) => 0);
+    builder.Map("run --verbose,-v --quiet,-q", (bool verbose, bool quiet) => 0);
 
     var context = new CompletionContext(
       Args: ["app", "run", "-"],

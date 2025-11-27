@@ -5,93 +5,12 @@ namespace TimeWarp.Nuru;
 /// </summary>
 public partial class NuruAppBuilder
 {
-  #region Map Methods (ASP.NET Core style aliases)
-
-  /// <summary>
-  /// Maps a route pattern to a delegate handler.
-  /// This is an alias for <see cref="AddRoute(string, Delegate, string?)"/> that mirrors ASP.NET Core's Map pattern.
-  /// </summary>
-  /// <param name="pattern">The route pattern (e.g., "greet {name}").</param>
-  /// <param name="handler">The delegate to execute when the route matches.</param>
-  /// <param name="description">Optional description for help text.</param>
-  /// <returns>The builder for chaining.</returns>
-  /// <example>
-  /// <code>
-  /// var builder = NuruApp.CreateBuilder(args);
-  /// builder.Map("greet {name}", (string name) => $"Hello, {name}!");
-  /// builder.Map("status", () => "OK");
-  /// await builder.Build().RunAsync(args);
-  /// </code>
-  /// </example>
-  public NuruAppBuilder Map(string pattern, Delegate handler, string? description = null)
-    => AddRoute(pattern, handler, description);
-
-  /// <summary>
-  /// Maps a route pattern to a Mediator command.
-  /// This is an alias for <see cref="AddRoute{TCommand}(string, string?)"/> that mirrors ASP.NET Core's Map pattern.
-  /// Requires AddDependencyInjection() to be called first.
-  /// </summary>
-  /// <typeparam name="TCommand">The command type that implements <see cref="IRequest"/>.</typeparam>
-  /// <param name="pattern">The route pattern (e.g., "deploy {env}").</param>
-  /// <param name="description">Optional description for help text.</param>
-  /// <returns>The builder for chaining.</returns>
-  /// <example>
-  /// <code>
-  /// var builder = NuruApp.CreateBuilder(args);
-  /// builder.Map&lt;DeployCommand&gt;("deploy {env}");
-  /// await builder.Build().RunAsync(args);
-  /// </code>
-  /// </example>
-  public NuruAppBuilder Map<TCommand>(string pattern, string? description = null)
-    where TCommand : IRequest, new()
-    => AddRoute<TCommand>(pattern, description);
-
-  /// <summary>
-  /// Maps a route pattern to a Mediator command with response.
-  /// This is an alias for <see cref="AddRoute{TCommand, TResponse}(string, string?)"/> that mirrors ASP.NET Core's Map pattern.
-  /// Requires AddDependencyInjection() to be called first.
-  /// </summary>
-  /// <typeparam name="TCommand">The command type that implements <see cref="IRequest{TResponse}"/>.</typeparam>
-  /// <typeparam name="TResponse">The response type returned by the command.</typeparam>
-  /// <param name="pattern">The route pattern (e.g., "calculate {a} {b}").</param>
-  /// <param name="description">Optional description for help text.</param>
-  /// <returns>The builder for chaining.</returns>
-  /// <example>
-  /// <code>
-  /// var builder = NuruApp.CreateBuilder(args);
-  /// builder.Map&lt;CalculateCommand, int&gt;("calculate {a:int} {b:int}");
-  /// await builder.Build().RunAsync(args);
-  /// </code>
-  /// </example>
-  public NuruAppBuilder Map<TCommand, TResponse>(string pattern, string? description = null)
-    where TCommand : IRequest<TResponse>, new()
-    => AddRoute<TCommand, TResponse>(pattern, description);
-
-  /// <summary>
-  /// Maps a default route that executes when no arguments are provided.
-  /// This is an alias for <see cref="AddDefaultRoute(Delegate, string?)"/> that mirrors ASP.NET Core's Map pattern.
-  /// </summary>
-  /// <param name="handler">The delegate to execute when no arguments are provided.</param>
-  /// <param name="description">Optional description for help text.</param>
-  /// <returns>The builder for chaining.</returns>
-  /// <example>
-  /// <code>
-  /// var builder = NuruApp.CreateBuilder(args);
-  /// builder.MapDefault(() => Console.WriteLine("Welcome! Use --help for available commands."));
-  /// await builder.Build().RunAsync(args);
-  /// </code>
-  /// </example>
-  public NuruAppBuilder MapDefault(Delegate handler, string? description = null)
-    => AddDefaultRoute(handler, description);
-
-  #endregion
-
   /// <summary>
   /// Adds a default route that executes when no arguments are provided.
   /// </summary>
-  public NuruAppBuilder AddDefaultRoute(Delegate handler, string? description = null)
+  public NuruAppBuilder MapDefault(Delegate handler, string? description = null)
   {
-    return AddRouteInternal(string.Empty, handler, description);
+    return MapInternal(string.Empty, handler, description);
   }
 
   /// <summary>
@@ -111,30 +30,30 @@ public partial class NuruAppBuilder
   /// <summary>
   /// Adds a delegate-based route.
   /// </summary>
-  public NuruAppBuilder AddRoute(string pattern, Delegate handler, string? description = null)
+  public NuruAppBuilder Map(string pattern, Delegate handler, string? description = null)
   {
     ArgumentNullException.ThrowIfNull(pattern);
-    return AddRouteInternal(pattern, handler, description);
+    return MapInternal(pattern, handler, description);
   }
 
   /// <summary>
   /// Adds a Mediator command-based route.
   /// Requires AddDependencyInjection() to be called first.
   /// </summary>
-  public NuruAppBuilder AddRoute<TCommand>(string pattern, string? description = null)
+  public NuruAppBuilder Map<TCommand>(string pattern, string? description = null)
     where TCommand : IRequest, new()
   {
-    return AddMediatorRoute(typeof(TCommand), pattern, description);
+    return MapMediator(typeof(TCommand), pattern, description);
   }
 
   /// <summary>
   /// Adds a Mediator command-based route with response.
   /// Requires AddDependencyInjection() to be called first.
   /// </summary>
-  public NuruAppBuilder AddRoute<TCommand, TResponse>(string pattern, string? description = null)
+  public NuruAppBuilder Map<TCommand, TResponse>(string pattern, string? description = null)
     where TCommand : IRequest<TResponse>, new()
   {
-    return AddMediatorRoute(typeof(TCommand), pattern, description);
+    return MapMediator(typeof(TCommand), pattern, description);
   }
 
   /// <summary>
@@ -148,13 +67,13 @@ public partial class NuruAppBuilder
   /// <returns>The builder for chaining.</returns>
   /// <example>
   /// <code>
-  /// builder.AddRoutes(
+  /// builder.Map(
   ///     ["exit", "quit", "q"],
   ///     () => Environment.Exit(0),
   ///     "Exit the application");
   /// </code>
   /// </example>
-  public NuruAppBuilder AddRoutes(string[] patterns, Delegate handler, string? description = null)
+  public NuruAppBuilder MapMultiple(string[] patterns, Delegate handler, string? description = null)
   {
     ArgumentNullException.ThrowIfNull(patterns);
     ArgumentNullException.ThrowIfNull(handler);
@@ -164,7 +83,7 @@ public partial class NuruAppBuilder
 
     foreach (string pattern in patterns)
     {
-      AddRouteInternal(pattern, handler, description);
+      MapInternal(pattern, handler, description);
     }
 
     return this;
@@ -180,12 +99,12 @@ public partial class NuruAppBuilder
   /// <returns>The builder for chaining.</returns>
   /// <example>
   /// <code>
-  /// builder.AddRoutes&lt;ExitCommand&gt;(
+  /// builder.Map&lt;ExitCommand&gt;(
   ///     ["exit", "quit", "q"],
   ///     "Exit the application");
   /// </code>
   /// </example>
-  public NuruAppBuilder AddRoutes<TCommand>(string[] patterns, string? description = null)
+  public NuruAppBuilder MapMultiple<TCommand>(string[] patterns, string? description = null)
     where TCommand : IRequest, new()
   {
     ArgumentNullException.ThrowIfNull(patterns);
@@ -195,7 +114,7 @@ public partial class NuruAppBuilder
 
     foreach (string pattern in patterns)
     {
-      AddMediatorRoute(typeof(TCommand), pattern, description);
+      MapMediator(typeof(TCommand), pattern, description);
     }
 
     return this;
@@ -211,12 +130,12 @@ public partial class NuruAppBuilder
   /// <returns>The builder for chaining.</returns>
   /// <example>
   /// <code>
-  /// builder.AddRoutes&lt;GreetCommand, string&gt;(
+  /// builder.Map&lt;GreetCommand, string&gt;(
   ///     ["greet", "hello", "hi"],
   ///     "Greet someone");
   /// </code>
   /// </example>
-  public NuruAppBuilder AddRoutes<TCommand, TResponse>(string[] patterns, string? description = null)
+  public NuruAppBuilder MapMultiple<TCommand, TResponse>(string[] patterns, string? description = null)
     where TCommand : IRequest<TResponse>, new()
   {
     ArgumentNullException.ThrowIfNull(patterns);
@@ -226,7 +145,7 @@ public partial class NuruAppBuilder
 
     foreach (string pattern in patterns)
     {
-      AddMediatorRoute(typeof(TCommand), pattern, description);
+      MapMediator(typeof(TCommand), pattern, description);
     }
 
     return this;
@@ -243,7 +162,7 @@ public partial class NuruAppBuilder
     return this;
   }
 
-  private NuruAppBuilder AddMediatorRoute(Type commandType, string pattern, string? description)
+  private NuruAppBuilder MapMediator(Type commandType, string pattern, string? description)
   {
     if (ServiceCollection is null)
     {
@@ -262,7 +181,7 @@ public partial class NuruAppBuilder
     return this;
   }
 
-  private NuruAppBuilder AddRouteInternal(string pattern, Delegate handler, string? description)
+  private NuruAppBuilder MapInternal(string pattern, Delegate handler, string? description)
   {
     ArgumentNullException.ThrowIfNull(handler);
 

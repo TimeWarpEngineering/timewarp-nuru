@@ -125,7 +125,7 @@ public class KeyBindingProfileTests
         options.KeyBindingProfileName = "Default";
         options.WelcomeMessage = null;
       })
-      .AddRoute("hello {name}", (string name) => $"Hello, {name}!")
+      .Map("hello {name}", (string name) => $"Hello, {name}!")
       .Build();
 
     // Act
@@ -153,7 +153,7 @@ public class KeyBindingProfileTests
         options.KeyBindingProfileName = "Default";
         options.WelcomeMessage = null;
       })
-      .AddRoute("tet", () => "Arrow keys work!")
+      .Map("tet", () => "Arrow keys work!")
       .Build();
 
     // Act
@@ -212,7 +212,7 @@ public class KeyBindingProfileTests
         options.KeyBindingProfileName = "Emacs";
         options.WelcomeMessage = null;
       })
-      .AddRoute("helo", () => "Emacs Ctrl+F/B work!")
+      .Map("helo", () => "Emacs Ctrl+F/B work!")
       .Build();
 
     // Act
@@ -239,7 +239,7 @@ public class KeyBindingProfileTests
         options.KeyBindingProfileName = "Emacs";
         options.WelcomeMessage = null;
       })
-      .AddRoute("version", () => "1.0.0")
+      .Map("version", () => "1.0.0")
       .Build();
 
     // Act
@@ -296,7 +296,7 @@ public class KeyBindingProfileTests
         options.KeyBindingProfileName = "Vi";
         options.WelcomeMessage = null;
       })
-      .AddRoute("tet", () => "Vi arrow keys work!")
+      .Map("tet", () => "Vi arrow keys work!")
       .Build();
 
     // Act
@@ -355,7 +355,7 @@ public class KeyBindingProfileTests
         options.KeyBindingProfileName = "VSCode";
         options.WelcomeMessage = null;
       })
-      .AddRoute("start-middle-end", () => "VSCode Home/End work!")
+      .Map("start-middle-end", () => "VSCode Home/End work!")
       .Build();
 
     // Act
@@ -383,7 +383,7 @@ public class KeyBindingProfileTests
         options.KeyBindingProfileName = "VSCode";
         options.WelcomeMessage = null;
       })
-      .AddRoute("one Xtwo", () => "VSCode word movement works!")
+      .Map("one Xtwo", () => "VSCode word movement works!")
       .Build();
 
     // Act

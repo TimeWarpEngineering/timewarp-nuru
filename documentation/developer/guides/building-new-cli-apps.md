@@ -29,7 +29,7 @@ The route pattern is self-contained and fully defines matching behavior. The del
 
 ```csharp
 // ONE ROUTE handles all these cases:
-.AddRoute("build {project?} --config? {cfg?} --verbose --watch",
+.Map("build {project?} --config? {cfg?} --verbose --watch",
     (string? project, string? cfg, bool verbose, bool watch) => ...)
 
 // Matches ALL of these:
@@ -48,7 +48,7 @@ build --watch --config debug myapp              // Order doesn't matter
 
 ```csharp
 // ONE ROUTE with mixed requirements:
-.AddRoute("deploy {env} --version? {ver?} --config {cfg} --dry-run --force",
+.Map("deploy {env} --version? {ver?} --config {cfg} --dry-run --force",
     (string env, string? ver, string cfg, bool dryRun, bool force) => ...)
 
 // env is REQUIRED (positional)
@@ -72,7 +72,7 @@ deploy --config prod.json      // Missing required env
 
 ```csharp
 // ONE ROUTE for all migration scenarios:
-.AddRoute("migrate {direction?} --target? {version?} --step? {count:int?} --dry-run",
+.Map("migrate {direction?} --target? {version?} --step? {count:int?} --dry-run",
     (string? direction, string? version, int? count, bool dryRun) =>
     {
         var dir = direction ?? "up";
@@ -119,21 +119,21 @@ The route pattern MUST be self-contained:
 
 ```csharp
 // Need 8 routes for 3 optional options!
-.AddRoute("test", () => RunTests())
-.AddRoute("test --verbose", (bool v) => RunTests(v))
-.AddRoute("test --coverage", (bool c) => RunTests(coverage: c))
-.AddRoute("test --watch", (bool w) => RunTests(watch: w))
-.AddRoute("test --verbose --coverage", (bool v, bool c) => RunTests(v, c))
-.AddRoute("test --verbose --watch", (bool v, bool w) => RunTests(v, watch: w))
-.AddRoute("test --coverage --watch", (bool c, bool w) => RunTests(coverage: c, watch: w))
-.AddRoute("test --verbose --coverage --watch", (bool v, bool c, bool w) => RunTests(v, c, w))
+.Map("test", () => RunTests())
+.Map("test --verbose", (bool v) => RunTests(v))
+.Map("test --coverage", (bool c) => RunTests(coverage: c))
+.Map("test --watch", (bool w) => RunTests(watch: w))
+.Map("test --verbose --coverage", (bool v, bool c) => RunTests(v, c))
+.Map("test --verbose --watch", (bool v, bool w) => RunTests(v, watch: w))
+.Map("test --coverage --watch", (bool c, bool w) => RunTests(coverage: c, watch: w))
+.Map("test --verbose --coverage --watch", (bool v, bool c, bool w) => RunTests(v, c, w))
 ```
 
 ### New Way: Single Route
 
 ```csharp
 // ONE route handles all 8 combinations:
-.AddRoute("test --verbose --coverage --watch",
+.Map("test --verbose --coverage --watch",
     (bool verbose, bool coverage, bool watch) =>
         RunTests(verbose, coverage, watch))
 
@@ -160,7 +160,7 @@ Without explicit modifiers in the route pattern:
 With explicit modifiers:
 1. **Clear Intent**: Route pattern tells complete story
 2. **Decoupled**: Route works with any matching delegate/command
-3. **Mediator Support**: `AddRoute<Command>("pattern")` works
+3. **Mediator Support**: `Map<Command>("pattern")` works
 4. **Better Tooling**: Can analyze/validate routes independently
 
 ## Greenfield Best Practices
@@ -174,17 +174,17 @@ With explicit modifiers:
 ### Good Pattern
 ```csharp
 // Single flexible route
-.AddRoute("backup {source} --dest? {destination?} --compress --encrypt",
+.Map("backup {source} --dest? {destination?} --compress --encrypt",
     (string source, string? destination, bool compress, bool encrypt) => ...)
 ```
 
 ### Avoid Pattern
 ```csharp
 // Multiple rigid routes
-.AddRoute("backup {source}", ...)
-.AddRoute("backup {source} --dest {destination}", ...)
-.AddRoute("backup {source} --compress", ...)
-.AddRoute("backup {source} --dest {destination} --compress", ...)
+.Map("backup {source}", ...)
+.Map("backup {source} --dest {destination}", ...)
+.Map("backup {source} --compress", ...)
+.Map("backup {source} --dest {destination} --compress", ...)
 // ... exponential explosion
 ```
 
@@ -194,7 +194,7 @@ With explicit route patterns, mediator/command pattern works:
 
 ```csharp
 // Route pattern is self-contained
-.AddRoute<BackupCommand>("backup {source} --dest? {destination?} --compress")
+.Map<BackupCommand>("backup {source} --dest? {destination?} --compress")
 
 // Command properties match route parameters
 public class BackupCommand : IRequest

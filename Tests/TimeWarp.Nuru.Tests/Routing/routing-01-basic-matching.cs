@@ -10,7 +10,7 @@ public class BasicMatchingTests
     // Arrange
     bool matched = false;
     NuruApp app = new NuruAppBuilder()
-      .AddRoute("status", () => { matched = true; return 0; })
+      .Map("status", () => { matched = true; return 0; })
       .Build();
 
     // Act
@@ -27,7 +27,7 @@ public class BasicMatchingTests
   {
     // Arrange
     NuruApp app = new NuruAppBuilder()
-      .AddRoute("status", () => 0)
+      .Map("status", () => 0)
       .Build();
 
     // Act
@@ -44,7 +44,7 @@ public class BasicMatchingTests
     // Arrange
     bool matched = false;
     NuruApp app = new NuruAppBuilder()
-      .AddRoute("git status", () => { matched = true; return 0; })
+      .Map("git status", () => { matched = true; return 0; })
       .Build();
 
     // Act
@@ -61,7 +61,7 @@ public class BasicMatchingTests
   {
     // Arrange
     NuruApp app = new NuruAppBuilder()
-      .AddRoute("git status", () => 0)
+      .Map("git status", () => 0)
       .Build();
 
     // Act
@@ -77,7 +77,7 @@ public class BasicMatchingTests
   {
     // Arrange
     NuruApp app = new NuruAppBuilder()
-      .AddRoute("status", () => 0)
+      .Map("status", () => 0)
       .Build();
 
     // Act
@@ -93,7 +93,7 @@ public class BasicMatchingTests
   {
     // Arrange
     NuruApp app = new NuruAppBuilder()
-      .AddRoute("git status", () => 0)
+      .Map("git status", () => 0)
       .Build();
 
     // Act
@@ -109,7 +109,7 @@ public class BasicMatchingTests
   {
     // Arrange
     NuruApp app = new NuruAppBuilder()
-      .AddRoute("git status", () => 0)
+      .Map("git status", () => 0)
       .Build();
 
     // Act
@@ -126,7 +126,7 @@ public class BasicMatchingTests
     // Arrange
     bool matched = false;
     NuruApp app = new NuruAppBuilder()
-      .AddDefaultRoute(() => { matched = true; return 0; })
+      .MapDefault(() => { matched = true; return 0; })
       .Build();
 
     // Act
@@ -143,7 +143,7 @@ public class BasicMatchingTests
   {
     // Arrange
     NuruApp app = new NuruAppBuilder()
-      .AddDefaultRoute(() => 0)
+      .MapDefault(() => 0)
       .Build();
 
     // Act

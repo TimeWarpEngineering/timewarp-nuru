@@ -4,14 +4,14 @@ using TimeWarp.Nuru;
 NuruAppBuilder builder = new();
 
 // Simple async route without parameters
-builder.AddRoute("ping", async () =>
+builder.Map("ping", async () =>
 {
     await Task.Delay(100);
     Console.WriteLine("Pong!");
 });
 
 // Async route with required parameter
-builder.AddRoute("fetch {url}", async (string url) =>
+builder.Map("fetch {url}", async (string url) =>
 {
     Console.WriteLine($"Fetching data from {url}...");
     await Task.Delay(500); // Simulate HTTP request
@@ -19,7 +19,7 @@ builder.AddRoute("fetch {url}", async (string url) =>
 });
 
 // Async route with optional parameter
-builder.AddRoute("download {file} {destination?}", async (string file, string? destination) =>
+builder.Map("download {file} {destination?}", async (string file, string? destination) =>
 {
     Console.WriteLine($"Downloading {file}...");
     await Task.Delay(1000); // Simulate download
@@ -35,7 +35,7 @@ builder.AddRoute("download {file} {destination?}", async (string file, string? d
 });
 
 // Async route with typed optional parameter
-builder.AddRoute("wait {seconds:int?}", async (int? seconds) =>
+builder.Map("wait {seconds:int?}", async (int? seconds) =>
 {
     int waitTime = seconds ?? 1;
     Console.WriteLine($"Waiting for {waitTime} seconds...");
@@ -44,7 +44,7 @@ builder.AddRoute("wait {seconds:int?}", async (int? seconds) =>
 });
 
 // Async route returning Task<int>
-builder.AddRoute("process {count:int}", async (int count) =>
+builder.Map("process {count:int}", async (int count) =>
 {
     Console.WriteLine($"Processing {count} items...");
     for (int i = 1; i <= count; i++)
@@ -56,7 +56,7 @@ builder.AddRoute("process {count:int}", async (int count) =>
 });
 
 // Async route with error handling
-builder.AddRoute("risky {operation}", async (string operation) =>
+builder.Map("risky {operation}", async (string operation) =>
 {
     try
     {
@@ -78,7 +78,7 @@ builder.AddRoute("risky {operation}", async (string operation) =>
 });
 
 // Async route with cancellation support (simulated)
-builder.AddRoute("long-task {duration:int?}", async (int? duration) =>
+builder.Map("long-task {duration:int?}", async (int? duration) =>
 {
     int totalSeconds = duration ?? 10;
     Console.WriteLine($"Starting long task ({totalSeconds} seconds)...");
@@ -108,7 +108,7 @@ builder.AddRoute("long-task {duration:int?}", async (int? duration) =>
 });
 
 // Async route with multiple optional parameters
-builder.AddRoute("deploy {service} {environment?} {version?}", 
+builder.Map("deploy {service} {environment?} {version?}", 
     async (string service, string? environment, string? version) =>
 {
     environment ??= "production";
@@ -120,7 +120,7 @@ builder.AddRoute("deploy {service} {environment?} {version?}",
 });
 
 // Help command
-builder.AddRoute("--help", () =>
+builder.Map("--help", () =>
 {
     Console.WriteLine("Async Examples for TimeWarp.Nuru");
     Console.WriteLine("================================");

@@ -14,10 +14,10 @@ Build modern command-line tools from scratch with clean architecture and progres
 using TimeWarp.Nuru;
 
 NuruApp app = new NuruAppBuilder()
-  .AddRoute("version", () => Console.WriteLine("MyTool v1.0.0"))
-  .AddRoute("status", () => ShowSystemStatus())
-  .AddRoute("config get {key}", (string key) => Console.WriteLine(GetConfig(key)))
-  .AddRoute("config set {key} {value}", (string key, string value) => SetConfig(key, value))
+  .Map("version", () => Console.WriteLine("MyTool v1.0.0"))
+  .Map("status", () => ShowSystemStatus())
+  .Map("config get {key}", (string key) => Console.WriteLine(GetConfig(key)))
+  .Map("config set {key} {value}", (string key, string value) => SetConfig(key, value))
   .Build();
 
 return await app.RunAsync(args);
@@ -47,12 +47,12 @@ NuruApp app = new NuruAppBuilder()
     services.AddScoped<IReportGenerator, ReportGenerator>();
   })
   // Simple commands remain direct
-  .AddRoute("version", () => Console.WriteLine("v1.0.0"))
-  .AddRoute("ping", () => Console.WriteLine("pong"))
+  .Map("version", () => Console.WriteLine("v1.0.0"))
+  .Map("ping", () => Console.WriteLine("pong"))
   // Complex commands use mediator pattern
-  .AddRoute<QueryCommand>("query {sql}")
-  .AddRoute<DeployCommand>("deploy {env} --version {tag?} --dry-run")
-  .AddRoute<GenerateReportCommand>("report generate {type} --format {fmt}")
+  .Map<QueryCommand>("query {sql}")
+  .Map<DeployCommand>("deploy {env} --version {tag?} --dry-run")
+  .Map<GenerateReportCommand>("report generate {type} --format {fmt}")
   .Build();
 
 return await app.RunAsync(args);
@@ -71,29 +71,29 @@ return await app.RunAsync(args);
 ```csharp
 NuruApp app = new NuruAppBuilder()
   // Repository management
-  .AddRoute
+  .Map
   (
     "repo init {name} --bare",
     (string name, bool bare) => InitializeRepository(name, bare)
   )
-  .AddRoute
+  .Map
   (
     "repo clone {url} {path?}",
     (string url, string? path) => CloneRepository(url, path)
   )
-  .AddRoute("repo list", () => ListRepositories())
+  .Map("repo list", () => ListRepositories())
   // Branch operations
-  .AddRoute("branch create {name}", (string name) => CreateBranch(name))
-  .AddRoute
+  .Map("branch create {name}", (string name) => CreateBranch(name))
+  .Map
   (
     "branch delete {name} --force",
     (string name, bool force) => DeleteBranch(name, force)
   )
-  .AddRoute("branch list --all", (bool all) => ListBranches(all))
+  .Map("branch list --all", (bool all) => ListBranches(all))
   // File operations
-  .AddRoute("add {*files}", (string[] files) => StageFiles(files))
-  .AddRoute("commit -m {message}", (string message) => Commit(message))
-  .AddRoute("push --force", (bool force) => Push(force))
+  .Map("add {*files}", (string[] files) => StageFiles(files))
+  .Map("commit -m {message}", (string message) => Commit(message))
+  .Map("push --force", (bool force) => Push(force))
   .Build();
 
 return await app.RunAsync(args);
@@ -118,7 +118,7 @@ using TimeWarp.Nuru;
 
 NuruApp app = new NuruAppBuilder()
   // Intercept production deployments for auth check
-  .AddRoute
+  .Map
   (
     "deploy prod {*args}",
     async (string[] args) =>
@@ -134,7 +134,7 @@ NuruApp app = new NuruAppBuilder()
     }
   )
   // Other environments pass through
-  .AddRoute
+  .Map
   (
     "deploy {env} {*args}",
     async (string env, string[] args) =>
@@ -158,7 +158,7 @@ return await app.RunAsync(args);
 **Use Case**: Add safety checks to dangerous operations
 
 ```csharp
-builder.AddRoute
+builder.Map
 (
   "delete database {name} --confirm",
   async (string name, bool confirm) =>
@@ -184,7 +184,7 @@ builder.AddRoute
 );
 
 // Add dry-run capability not in original tool
-builder.AddRoute
+builder.Map
 (
   "delete database {name} --dry-run",
   (string name) =>
@@ -207,7 +207,7 @@ builder.AddRoute
 
 ```csharp
 // New simplified interface
-builder.AddRoute
+builder.Map
 (
   "build {project}",
   async (string project) =>
@@ -224,7 +224,7 @@ builder.AddRoute
 );
 
 // New interface with options
-builder.AddRoute
+builder.Map
 (
   "build {project} --debug --quiet",
   async (string project, bool debug, bool quiet) =>
@@ -239,7 +239,7 @@ builder.AddRoute
 );
 
 // Pass through for advanced users needing old syntax
-builder.AddRoute
+builder.Map
 (
   "{*args}",
   async (string[] args) =>
@@ -266,7 +266,7 @@ NuruApp app = new NuruAppBuilder()
   {
     services.AddSingleton<ITelemetryService, TelemetryService>();
   })
-  .AddRoute<MonitoredCommand>("{*args}")
+  .Map<MonitoredCommand>("{*args}")
   .Build();
 
 public sealed class MonitoredCommand : IRequest<int>
@@ -329,14 +329,14 @@ NuruApp app = new NuruAppBuilder()
     services.AddSingleton<IConfigurationService, ConfigurationService>();
   })
   // Simple commands - Direct
-  .AddRoute("version", () => Console.WriteLine("DeployTool v2.0"))
-  .AddRoute("ping {host}", (string host) => PingHost(host))
+  .Map("version", () => Console.WriteLine("DeployTool v2.0"))
+  .Map("ping {host}", (string host) => PingHost(host))
   // Complex commands - Mediator
-  .AddRoute<DeployCommand>("deploy {env} --version {tag?} --dry-run")
-  .AddRoute<RollbackCommand>("rollback {env} --to {version}")
-  .AddRoute<ValidateCommand>("validate {env}")
+  .Map<DeployCommand>("deploy {env} --version {tag?} --dry-run")
+  .Map<RollbackCommand>("rollback {env} --to {version}")
+  .Map<ValidateCommand>("validate {env}")
   // Wrap existing tool for migration
-  .AddRoute
+  .Map
   (
     "legacy {*args}",
     async (string[] args) => await Shell.ExecuteAsync("old-deploy-tool", args)
@@ -354,12 +354,12 @@ NuruApp app = new NuruAppBuilder()
     services.AddSingleton<IDatabaseService, DatabaseService>();
   })
   // Direct for queries
-  .AddRoute("db list", () => ListDatabases())
-  .AddRoute("db status {name}", (string name) => ShowDatabaseStatus(name))
+  .Map("db list", () => ListDatabases())
+  .Map("db status {name}", (string name) => ShowDatabaseStatus(name))
   // Mediator for complex operations
-  .AddRoute<BackupCommand>("db backup {name} --compress")
-  .AddRoute<RestoreCommand>("db restore {name} --from {file}")
-  .AddRoute<MigrateCommand>("db migrate {name} --version {ver?}")
+  .Map<BackupCommand>("db backup {name} --compress")
+  .Map<RestoreCommand>("db restore {name} --from {file}")
+  .Map<MigrateCommand>("db migrate {name} --version {ver?}")
   .Build();
 ```
 

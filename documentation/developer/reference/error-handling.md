@@ -52,7 +52,7 @@ catch (Exception ex)
 
 ```csharp
 // In your command handlers
-.AddRoute("process {file}", async (string file) =>
+.Map("process {file}", async (string file) =>
 {
     try
     {

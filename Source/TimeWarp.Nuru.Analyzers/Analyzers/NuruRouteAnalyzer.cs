@@ -5,10 +5,10 @@ public class NuruRouteAnalyzer : IIncrementalGenerator
 {
   public void Initialize(IncrementalGeneratorInitializationContext context)
   {
-    // Step 1: Find all AddRoute invocations
+    // Step 1: Find all Map invocations
     IncrementalValuesProvider<RouteInfo?> routeInvocations = context.SyntaxProvider
         .CreateSyntaxProvider(
-            predicate: static (node, _) => IsAddRouteInvocation(node),
+            predicate: static (node, _) => IsMapInvocation(node),
             transform: static (ctx, ct) => GetRouteInfo(ctx, ct))
         .Where(static info => info is not null);
 
@@ -27,18 +27,18 @@ public class NuruRouteAnalyzer : IIncrementalGenerator
     });
   }
 
-  private static bool IsAddRouteInvocation(Microsoft.CodeAnalysis.SyntaxNode node)
+  private static bool IsMapInvocation(Microsoft.CodeAnalysis.SyntaxNode node)
   {
     // Check if this is an invocation expression
     if (node is not InvocationExpressionSyntax invocation)
       return false;
 
-    // Check if it's a member access expression (e.g., builder.AddRoute)
+    // Check if it's a member access expression (e.g., builder.Map)
     if (invocation.Expression is not MemberAccessExpressionSyntax memberAccess)
       return false;
 
-    // Check if the method name is "AddRoute"
-    return memberAccess.Name.Identifier.Text == "AddRoute";
+    // Check if the method name is "Map"
+    return memberAccess.Name.Identifier.Text == "Map";
   }
 
   private static RouteInfo? GetRouteInfo(GeneratorSyntaxContext context, CancellationToken cancellationToken)

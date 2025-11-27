@@ -28,7 +28,7 @@ public class HistoryPersistenceTests
 
       NuruApp app = new NuruAppBuilder()
         .UseTerminal(terminal)
-        .AddRoute("greet {name}", (string name) => $"Hello, {name}!")
+        .Map("greet {name}", (string name) => $"Hello, {name}!")
         .AddReplSupport(options =>
         {
           options.PersistHistory = true;
@@ -122,7 +122,7 @@ public class HistoryPersistenceTests
 
       NuruApp app = new NuruAppBuilder()
         .UseTerminal(terminal)
-        .AddRoute("test-command", () => "OK")
+        .Map("test-command", () => "OK")
         .AddReplSupport(options =>
         {
           options.PersistHistory = true;
@@ -217,7 +217,7 @@ public class HistoryPersistenceTests
 
       NuruApp app = new NuruAppBuilder()
         .UseTerminal(terminal)
-        .AddRoute("test-command", () => "OK")
+        .Map("test-command", () => "OK")
         .AddReplSupport(options =>
         {
           options.PersistHistory = false;

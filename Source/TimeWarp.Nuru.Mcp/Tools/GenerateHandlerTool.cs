@@ -42,8 +42,16 @@ internal sealed class GenerateHandlerTool
     sb.AppendLine(CultureInfo.InvariantCulture, $"// Specificity Score: {route.Specificity}");
     sb.AppendLine();
 
-    // Generate the AddRoute call
-    sb.Append(CultureInfo.InvariantCulture, $".AddRoute(\"{pattern}\", ");
+    // Show recommended CreateBuilder pattern first
+    sb.AppendLine("// ═══════════════════════════════════════════════════════════════");
+    sb.AppendLine("// Recommended: ASP.NET Core-style CreateBuilder pattern");
+    sb.AppendLine("// ═══════════════════════════════════════════════════════════════");
+    sb.AppendLine();
+    sb.AppendLine("var builder = NuruApp.CreateBuilder(args);");
+    sb.AppendLine();
+
+    // Generate the Map call with builder
+    sb.Append(CultureInfo.InvariantCulture, $"builder.Map(\"{pattern}\", ");
 
     if (parameters.Count == 0)
     {
@@ -68,14 +76,40 @@ internal sealed class GenerateHandlerTool
       }
     }
 
-    sb.AppendLine("})");
+    sb.AppendLine("}");
 
     if (parameters.Any(p => p.Description is not null))
     {
-      sb.AppendLine(".WithDescription(\"TODO: Add route description\")");
+      sb.Append(", \"TODO: Add route description\"");
     }
 
-    sb.AppendLine(";");
+    sb.AppendLine(");");
+    sb.AppendLine();
+    sb.AppendLine("var app = builder.Build();");
+    sb.AppendLine("return await app.RunAsync(args);");
+    sb.AppendLine();
+
+    // Also show the fluent builder pattern for reference
+    sb.AppendLine("// ═══════════════════════════════════════════════════════════════");
+    sb.AppendLine("// Alternative: Fluent builder pattern");
+    sb.AppendLine("// ═══════════════════════════════════════════════════════════════");
+    sb.AppendLine();
+    sb.AppendLine("// NuruApp app = new NuruAppBuilder()");
+    sb.Append(CultureInfo.InvariantCulture, $"//     .Map(\"{pattern}\", ");
+
+    if (parameters.Count == 0)
+    {
+      sb.Append("() => { /* handler */ }");
+    }
+    else
+    {
+      sb.Append('(');
+      sb.AppendJoin(", ", parameters.Select(p => $"{p.Type} {p.Name}"));
+      sb.Append(") => { /* handler */ }");
+    }
+
+    sb.AppendLine(")");
+    sb.AppendLine("//     .Build();");
 
     return sb.ToString();
   }
@@ -93,21 +127,21 @@ internal sealed class GenerateHandlerTool
     sb.AppendLine();
 
     // Generate the Command class
-    sb.AppendLine(CultureInfo.InvariantCulture, $"public sealed class {commandName}Command : IRequest<int>");
+    sb.AppendLine(CultureInfo.InvariantCulture, $"public sealed class {commandName}Command : IRequest");
     sb.AppendLine("{");
 
     foreach (ParameterInfo param in parameters)
     {
-      sb.AppendLine(CultureInfo.InvariantCulture, $"    public {param.Type} {param.PropertyName} {{ get; init; }}");
+      sb.AppendLine(CultureInfo.InvariantCulture, $"    public {param.Type} {param.PropertyName} {{ get; set; }}");
     }
 
     sb.AppendLine("}");
     sb.AppendLine();
 
     // Generate the Handler class
-    sb.AppendLine(CultureInfo.InvariantCulture, $"public sealed class {commandName}Handler : IRequestHandler<{commandName}Command, int>");
+    sb.AppendLine(CultureInfo.InvariantCulture, $"public sealed class {commandName}Handler : IRequestHandler<{commandName}Command>");
     sb.AppendLine("{");
-    sb.AppendLine(CultureInfo.InvariantCulture, $"    public Task<int> HandleAsync({commandName}Command command, CancellationToken cancellationToken = default)");
+    sb.AppendLine(CultureInfo.InvariantCulture, $"    public async Task Handle({commandName}Command request, CancellationToken cancellationToken)");
     sb.AppendLine("    {");
     sb.AppendLine("        // TODO: Implement handler logic");
 
@@ -116,31 +150,46 @@ internal sealed class GenerateHandlerTool
       sb.AppendLine();
       foreach (ParameterInfo param in parameters)
       {
-        sb.AppendLine(CultureInfo.InvariantCulture, $"        Console.WriteLine(\"{param.DisplayName}: {{0}}\", command.{param.PropertyName});");
+        sb.AppendLine(CultureInfo.InvariantCulture, $"        Console.WriteLine(\"{param.DisplayName}: {{0}}\", request.{param.PropertyName});");
       }
     }
 
     sb.AppendLine();
-    sb.AppendLine("        return Task.FromResult(0);");
+    sb.AppendLine("        await Task.CompletedTask;");
     sb.AppendLine("    }");
     sb.AppendLine("}");
     sb.AppendLine();
 
+    // Generate the app setup with CreateBuilder
+    sb.AppendLine("// ═══════════════════════════════════════════════════════════════");
+    sb.AppendLine("// App setup using CreateBuilder pattern");
+    sb.AppendLine("// ═══════════════════════════════════════════════════════════════");
+    sb.AppendLine();
+    sb.AppendLine("var builder = NuruApp.CreateBuilder(args);");
+    sb.AppendLine();
+    sb.AppendLine("builder.ConfigureServices(services =>");
+    sb.AppendLine("{");
+    sb.AppendLine(CultureInfo.InvariantCulture, $"    services.AddTransient<IRequestHandler<{commandName}Command>, {commandName}Handler>();");
+    sb.AppendLine("});");
+    sb.AppendLine();
+
     // Generate the route registration
-    sb.AppendLine("// Route registration:");
-    sb.Append(CultureInfo.InvariantCulture, $".AddRoute<{commandName}Command>(\"{pattern}\"");
+    sb.Append(CultureInfo.InvariantCulture, $"builder.Map<{commandName}Command>(\"{pattern}\"");
 
     if (parameters.Count > 0)
     {
-      sb.Append(", (");
+      sb.AppendLine(",");
+      sb.Append("    (");
       sb.AppendJoin(", ", parameters.Select(p => $"{p.Type} {p.Name}"));
       sb.Append(") => new() { ");
       sb.AppendJoin(", ", parameters.Select(p => $"{p.PropertyName} = {p.Name}"));
       sb.Append(" }");
     }
 
-    sb.AppendLine(")");
-    sb.AppendLine(".WithDescription(\"TODO: Add route description\");");
+    sb.AppendLine(", \"TODO: Add route description\");");
+    sb.AppendLine();
+    sb.AppendLine("var app = builder.Build();");
+    sb.AppendLine("return await app.RunAsync(args);");
 
     return sb.ToString();
   }

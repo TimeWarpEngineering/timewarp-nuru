@@ -22,7 +22,7 @@ public class HistoryManagementTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("greet {name}", (string name) => $"Hello, {name}!")
+      .Map("greet {name}", (string name) => $"Hello, {name}!")
       .AddReplSupport()
       .Build();
 
@@ -47,7 +47,7 @@ public class HistoryManagementTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("greet {name}", (string name) => $"Hello, {name}!")
+      .Map("greet {name}", (string name) => $"Hello, {name}!")
       .AddReplSupport()
       .Build();
 
@@ -71,7 +71,7 @@ public class HistoryManagementTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("greet {name}", (string name) => $"Hello, {name}!")
+      .Map("greet {name}", (string name) => $"Hello, {name}!")
       .AddReplSupport()
       .Build();
 
@@ -93,7 +93,7 @@ public class HistoryManagementTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("greet {name}", (string name) => $"Hello, {name}!")
+      .Map("greet {name}", (string name) => $"Hello, {name}!")
       .AddReplSupport()
       .Build();
 
@@ -117,7 +117,7 @@ public class HistoryManagementTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("greet {name}", (string name) => $"Hello, {name}!")
+      .Map("greet {name}", (string name) => $"Hello, {name}!")
       .AddReplSupport()
       .Build();
 
@@ -141,7 +141,7 @@ public class HistoryManagementTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("greet {name}", (string name) => $"Hello, {name}!")
+      .Map("greet {name}", (string name) => $"Hello, {name}!")
       .AddReplSupport(options => options.PersistHistory = false)
       .Build();
 
@@ -169,11 +169,11 @@ public class HistoryManagementTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("cmd1", () => "1")
-      .AddRoute("cmd2", () => "2")
-      .AddRoute("cmd3", () => "3")
-      .AddRoute("cmd4", () => "4")
-      .AddRoute("cmd5", () => "5")
+      .Map("cmd1", () => "1")
+      .Map("cmd2", () => "2")
+      .Map("cmd3", () => "3")
+      .Map("cmd4", () => "4")
+      .Map("cmd5", () => "5")
       .AddReplSupport(options => options.MaxHistorySize = 3)
       .Build();
 
@@ -197,7 +197,7 @@ public class HistoryManagementTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("greet {name}", (string name) => $"Hello, {name}!")
+      .Map("greet {name}", (string name) => $"Hello, {name}!")
       .AddReplSupport()
       .Build();
 

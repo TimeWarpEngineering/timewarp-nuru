@@ -29,7 +29,7 @@ The most straightforward approach is to add a dedicated help route:
 NuruAppBuilder builder = new();
 
 // Basic help command
-builder.AddRoute("help", () => Console.WriteLine(
+builder.Map("help", () => Console.WriteLine(
     "MyApp - A sample CLI application\n" +
     "\n" +
     "Commands:\n" +
@@ -39,7 +39,7 @@ builder.AddRoute("help", () => Console.WriteLine(
 ));
 
 // Also support --help convention
-builder.AddRoute("--help", () => Console.WriteLine("Use 'help' for available commands"));
+builder.Map("--help", () => Console.WriteLine("Use 'help' for available commands"));
 ```
 
 ### Help with Descriptions
@@ -47,11 +47,11 @@ builder.AddRoute("--help", () => Console.WriteLine("Use 'help' for available com
 Enhance readability by adding descriptions when registering routes:
 
 ```csharp
-builder.AddRoute("add {x:double} {y:double}", 
+builder.Map("add {x:double} {y:double}", 
     (double x, double y) => Console.WriteLine($"{x} + {y} = {x + y}"),
     description: "Add two numbers together");
 
-builder.AddRoute("multiply {x:double} {y:double}", 
+builder.Map("multiply {x:double} {y:double}", 
     (double x, double y) => Console.WriteLine($"{x} × {y} = {x * y}"),
     description: "Multiply two numbers");
 ```
@@ -62,7 +62,7 @@ Provide detailed help for specific commands:
 
 ```csharp
 // Command-specific help
-builder.AddRoute("deploy help", () => Console.WriteLine(
+builder.Map("deploy help", () => Console.WriteLine(
     "Usage: myapp deploy <environment> [options]\n" +
     "\n" +
     "Deploy application to the specified environment\n" +
@@ -81,7 +81,7 @@ builder.AddRoute("deploy help", () => Console.WriteLine(
 ));
 
 // The actual command
-builder.AddRoute("deploy {env} --version {version?} --dry-run", 
+builder.Map("deploy {env} --version {version?} --dry-run", 
     (string env, string? version) => DeployDryRun(env, version));
 ```
 
@@ -97,20 +97,20 @@ using TimeWarp.Nuru.Help;
 NuruAppBuilder builder = new();
 
 // Register routes with descriptions
-builder.AddRoute("status", ShowStatus, "Show application status");
-builder.AddRoute("deploy {env}", Deploy, "Deploy to environment");
-builder.AddRoute("config get {key}", GetConfig, "Get configuration value");
-builder.AddRoute("config set {key} {value}", SetConfig, "Set configuration value");
+builder.Map("status", ShowStatus, "Show application status");
+builder.Map("deploy {env}", Deploy, "Deploy to environment");
+builder.Map("config get {key}", GetConfig, "Get configuration value");
+builder.Map("config set {key} {value}", SetConfig, "Set configuration value");
 
 // Add automatic help generation
-builder.AddRoute("help", () =>
+builder.Map("help", () =>
 {
     var endpoints = builder.Build().Endpoints; // Note: In real code, store this reference
     Console.WriteLine(RouteHelpProvider.GetHelpText(endpoints));
 });
 
 // Or write to stderr
-builder.AddRoute("--help", () =>
+builder.Map("--help", () =>
 {
     var endpoints = builder.Build().Endpoints;
     Console.Error.WriteLine(RouteHelpProvider.GetHelpText(endpoints));
@@ -271,7 +271,7 @@ public class HelpCommand : IRequest
 
 // Register the help command
 builder.AddDependencyInjection();
-builder.AddRoute<HelpCommand>("help {topic?}");
+builder.Map<HelpCommand>("help {topic?}");
 ```
 
 ### Interactive Help System
@@ -279,7 +279,7 @@ builder.AddRoute<HelpCommand>("help {topic?}");
 Create an interactive help experience:
 
 ```csharp
-builder.AddRoute("help --interactive", async () =>
+builder.Map("help --interactive", async () =>
 {
     Console.WriteLine("Interactive Help - Type a command name or 'exit' to quit");
     
@@ -321,13 +321,13 @@ builder.AddRoute("help --interactive", async () =>
 Combine version information with help:
 
 ```csharp
-builder.AddRoute("--version", () => 
+builder.Map("--version", () => 
 {
     Console.WriteLine("MyApp version 1.2.3");
     Console.WriteLine("Copyright (c) 2025 MyCompany");
 });
 
-builder.AddRoute("help", () =>
+builder.Map("help", () =>
 {
     Console.WriteLine("MyApp v1.2.3 - CLI Application");
     Console.WriteLine("Usage: myapp [command] [arguments] [options]");
@@ -350,13 +350,13 @@ Users expect different help invocation patterns:
 // Support all common help patterns
 var helpAction = () => ShowHelp();
 
-builder.AddRoute("help", helpAction);
-builder.AddRoute("--help", helpAction);
-builder.AddRoute("-h", helpAction);
-builder.AddRoute("-?", helpAction);
+builder.Map("help", helpAction);
+builder.Map("--help", helpAction);
+builder.Map("-h", helpAction);
+builder.Map("-?", helpAction);
 
 // Also support help as a fallback
-builder.AddRoute("{*args}", (string args) =>
+builder.Map("{*args}", (string args) =>
 {
     if (string.IsNullOrEmpty(args))
     {
@@ -376,11 +376,11 @@ Always include descriptions when registering routes:
 
 ```csharp
 // Good: Includes description
-builder.AddRoute("backup {path} --compress", BackupWithCompression, 
+builder.Map("backup {path} --compress", BackupWithCompression, 
     "Create a compressed backup of the specified path");
 
 // Better: Detailed description
-builder.AddRoute("restore {backup} --target {path?}", Restore,
+builder.Map("restore {backup} --target {path?}", Restore,
     "Restore from backup file. Target defaults to original location");
 ```
 
@@ -390,14 +390,14 @@ Organize commands logically:
 
 ```csharp
 // Database commands
-builder.AddRoute("db migrate", DbMigrate, "Run database migrations");
-builder.AddRoute("db seed", DbSeed, "Seed the database");
-builder.AddRoute("db reset", DbReset, "Reset database to initial state");
+builder.Map("db migrate", DbMigrate, "Run database migrations");
+builder.Map("db seed", DbSeed, "Seed the database");
+builder.Map("db reset", DbReset, "Reset database to initial state");
 
 // User management
-builder.AddRoute("user create {email}", CreateUser, "Create a new user");
-builder.AddRoute("user list", ListUsers, "List all users");
-builder.AddRoute("user delete {id}", DeleteUser, "Delete a user");
+builder.Map("user create {email}", CreateUser, "Create a new user");
+builder.Map("user list", ListUsers, "List all users");
+builder.Map("user delete {id}", DeleteUser, "Delete a user");
 ```
 
 ### 4. Include Examples in Help
@@ -405,7 +405,7 @@ builder.AddRoute("user delete {id}", DeleteUser, "Delete a user");
 Show practical usage examples:
 
 ```csharp
-builder.AddRoute("help examples", () =>
+builder.Map("help examples", () =>
 {
     Console.WriteLine("Examples:");
     Console.WriteLine();
@@ -425,7 +425,7 @@ builder.AddRoute("help examples", () =>
 Provide helpful feedback for invalid help requests:
 
 ```csharp
-builder.AddRoute("help {command}", (string command) =>
+builder.Map("help {command}", (string command) =>
 {
     var matches = endpoints.Endpoints
         .Where(e => e.RoutePattern.Contains(command, StringComparison.OrdinalIgnoreCase))

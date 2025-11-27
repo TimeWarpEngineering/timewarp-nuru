@@ -10,7 +10,7 @@ public class OptionalParametersTests
     // Arrange
     string? boundEnv = null;
     NuruApp app = new NuruAppBuilder()
-      .AddRoute("deploy {env}", (string env) => { boundEnv = env; return 0; })
+      .Map("deploy {env}", (string env) => { boundEnv = env; return 0; })
       .Build();
 
     // Act
@@ -28,7 +28,7 @@ public class OptionalParametersTests
     // Arrange
 #pragma warning disable RCS1163 // Unused parameter
     NuruApp app = new NuruAppBuilder()
-      .AddRoute("deploy {env}", (string env) => 0)
+      .Map("deploy {env}", (string env) => 0)
       .Build();
 #pragma warning restore RCS1163 // Unused parameter
 
@@ -46,7 +46,7 @@ public class OptionalParametersTests
     // Arrange
     string? boundEnv = null;
     NuruApp app = new NuruAppBuilder()
-      .AddRoute("deploy {env?}", (string? env) => { boundEnv = env; return 0; })
+      .Map("deploy {env?}", (string? env) => { boundEnv = env; return 0; })
       .Build();
 
     // Act
@@ -64,7 +64,7 @@ public class OptionalParametersTests
     // Arrange
     string? boundEnv = "unexpected";
     NuruApp app = new NuruAppBuilder()
-      .AddRoute("deploy {env?}", (string? env) => { boundEnv = env; return 0; })
+      .Map("deploy {env?}", (string? env) => { boundEnv = env; return 0; })
       .Build();
 
     // Act
@@ -82,7 +82,7 @@ public class OptionalParametersTests
     // Arrange
     int? boundCount = null;
     NuruApp app = new NuruAppBuilder()
-      .AddRoute("list {count:int?}", (int? count) => { boundCount = count; return 0; })
+      .Map("list {count:int?}", (int? count) => { boundCount = count; return 0; })
       .Build();
 
     // Act
@@ -100,7 +100,7 @@ public class OptionalParametersTests
     // Arrange
     int? boundCount = 5;
     NuruApp app = new NuruAppBuilder()
-      .AddRoute("list {count:int?}", (int? count) => { boundCount = count; return 0; })
+      .Map("list {count:int?}", (int? count) => { boundCount = count; return 0; })
       .Build();
 
     // Act
@@ -119,7 +119,7 @@ public class OptionalParametersTests
     string? boundEnv = null;
     string? boundTag = null;
     NuruApp app = new NuruAppBuilder()
-      .AddRoute("deploy {env} {tag?}", (string env, string? tag) => { boundEnv = env; boundTag = tag; return 0; })
+      .Map("deploy {env} {tag?}", (string env, string? tag) => { boundEnv = env; boundTag = tag; return 0; })
       .Build();
 
     // Act
@@ -139,7 +139,7 @@ public class OptionalParametersTests
     string? boundEnv = null;
     string? boundTag = "unexpected";
     NuruApp app = new NuruAppBuilder()
-      .AddRoute("deploy {env} {tag?}", (string env, string? tag) => { boundEnv = env; boundTag = tag; return 0; })
+      .Map("deploy {env} {tag?}", (string env, string? tag) => { boundEnv = env; boundTag = tag; return 0; })
       .Build();
 
     // Act
@@ -158,7 +158,7 @@ public class OptionalParametersTests
     // Arrange
 #pragma warning disable RCS1163 // Unused parameter
     NuruApp app = new NuruAppBuilder()
-      .AddRoute("deploy {env} {tag?}", (string env, string? tag) => 0)
+      .Map("deploy {env} {tag?}", (string env, string? tag) => 0)
       .Build();
 #pragma warning restore RCS1163 // Unused parameter
 

@@ -77,7 +77,7 @@ public class DisplayFormattingTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("status", () => "OK")
+      .Map("status", () => "OK")
       .AddReplSupport(options => options.ShowExitCode = true)
       .Build();
 
@@ -98,7 +98,7 @@ public class DisplayFormattingTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("status", () => "OK")
+      .Map("status", () => "OK")
       .AddReplSupport(options => options.ShowExitCode = false)
       .Build();
 
@@ -119,7 +119,7 @@ public class DisplayFormattingTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("status", () => "OK")
+      .Map("status", () => "OK")
       .AddReplSupport(options => options.ShowTiming = true)
       .Build();
 
@@ -140,7 +140,7 @@ public class DisplayFormattingTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("status", () => "OK")
+      .Map("status", () => "OK")
       .AddReplSupport(options => options.ShowTiming = false)
       .Build();
 

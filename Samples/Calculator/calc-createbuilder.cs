@@ -21,7 +21,7 @@ builder.ConfigureServices(services =>
   services.AddTransient<IRequestHandler<FibonacciCommand>, FibonacciCommand.Handler>();
 });
 
-// Map() is an alias for AddRoute() - just like ASP.NET Core's app.Map()
+// Map() is an alias for Map() - just like ASP.NET Core's app.Map()
 builder.Map("add {x:double} {y:double}",
   (double x, double y) => WriteLine($"{x} + {y} = {x + y}"),
   "Add two numbers together");

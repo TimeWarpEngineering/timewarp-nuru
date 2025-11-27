@@ -21,9 +21,9 @@ This glossary provides detailed definitions and examples of all key terms used t
 
 **Examples**:
 ```csharp
-.AddRoute("git status", () => {})     // Simple literal route
-.AddRoute("deploy {env} --version {tag} --dry-run", handler)  // Complex route
-.AddRoute("docker run {*args}", handler)  // Catch-all route
+.Map("git status", () => {})     // Simple literal route
+.Map("deploy {env} --version {tag} --dry-run", handler)  // Complex route
+.Map("docker run {*args}", handler)  // Catch-all route
 ```
 
 ### Literal Segments
@@ -31,8 +31,8 @@ This glossary provides detailed definitions and examples of all key terms used t
 
 **Examples**:
 ```csharp
-builder.AddRoute("git status", () => {})        // "git" and "status" are literals
-builder.AddRoute("backup command", () => {})     // "backup" and "command" are literals
+builder.Map("git status", () => {})        // "git" and "status" are literals
+builder.Map("backup command", () => {})     // "backup" and "command" are literals
 ```
 
 ### Parameters
@@ -47,17 +47,17 @@ builder.AddRoute("backup command", () => {})     // "backup" and "command" are l
 **Examples**:
 ```csharp
 // Basic parameters
-builder.AddRoute("greet {name}", (string name) => {})  // Required string parameter
-builder.AddRoute("wait {seconds:int}", (int s) => {})  // Required integer parameter
+builder.Map("greet {name}", (string name) => {})  // Required string parameter
+builder.Map("wait {seconds:int}", (int s) => {})  // Required integer parameter
 
 // Multiple parameters
-builder.AddRoute("copy {source} {destination}", (string source, string dest) => {})
+builder.Map("copy {source} {destination}", (string source, string dest) => {})
 
 // Optional parameters
-builder.AddRoute("deploy {env} {tag?}", (string env, string? tag) => {})
+builder.Map("deploy {env} {tag?}", (string env, string? tag) => {})
 
 // Catch-all parameters
-builder.AddRoute("docker {*args}", (string[] args) => {})
+builder.Map("docker {*args}", (string[] args) => {})
 ```
 
 **See Also**: [**Arguments**](#arguments), [**Type Constraints**](#type-constraints)
@@ -73,15 +73,15 @@ builder.AddRoute("docker {*args}", (string[] args) => {})
 **Examples**:
 ```csharp
 // Boolean options
-builder.AddRoute("build --verbose", (bool verbose) => {})
-        .AddRoute("test -v", (bool v) => {})
+builder.Map("build --verbose", (bool verbose) => {})
+        .Map("test -v", (bool v) => {})
 
 // Options with values
-builder.AddRoute("deploy --version {ver}", (string ver) => {})
-        .AddRoute("run --config,-c {cfg}", (string cfg) => {})
+builder.Map("deploy --version {ver}", (string ver) => {})
+        .Map("run --config,-c {cfg}", (string cfg) => {})
 
 // Multiple options
-builder.AddRoute("server --port,-p {port} --host {host} --debug,-d",
+builder.Map("server --port,-p {port} --host {host} --debug,-d",
     (int port, string host, bool debug) => {})
 ```
 
@@ -92,8 +92,8 @@ builder.AddRoute("server --port,-p {port} --host {host} --debug,-d",
 
 **Examples**:
 ```csharp
-builder.AddRoute("run --verbose,-v", handler)     // -v is short alias for --verbose
-builder.AddRoute("build --output,-o {path}", handler)  // -o is short alias for --output
+builder.Map("run --verbose,-v", handler)     // -v is short alias for --verbose
+builder.Map("build --output,-o {path}", handler)  // -o is short alias for --output
 ```
 
 ### Boolean Options
@@ -102,7 +102,7 @@ builder.AddRoute("build --output,-o {path}", handler)  // -o is short alias for 
 **Examples**:
 ```csharp
 // Route definition
-builder.AddRoute("compile --optimize --debug,-d", (bool opt, bool debug) => {})
+builder.Map("compile --optimize --debug,-d", (bool opt, bool debug) => {})
 
 // Usage examples
 myapp compile --optimize --debug  // Both flags set to true
@@ -154,7 +154,7 @@ myapp docker run ubuntu            // command="run", args=["ubuntu"]
 
 **Examples**:
 ```csharp
-builder.AddRoute("deploy {env} {tag?}", (string env, string? tag) => {
+builder.Map("deploy {env} {tag?}", (string env, string? tag) => {
     // In handler: tag can be null if not provided
 })
 
@@ -169,10 +169,10 @@ myapp deploy production        // env="production", tag=null
 
 ```csharp
 // ❌ Ambiguous - won't work
-builder.AddRoute("backup {source?} {dest?}", handler)
+builder.Map("backup {source?} {dest?}", handler)
 
 // ✅ Clear separation
-builder.AddRoute("backup {source?} to {dest?}", handler)
+builder.Map("backup {source?} to {dest?}", handler)
 ```
 
 ### Catch-all Parameters
@@ -180,7 +180,7 @@ builder.AddRoute("backup {source?} to {dest?}", handler)
 
 **Examples**:
 ```csharp
-builder.AddRoute("docker {*args}", (string[] args) => {
+builder.Map("docker {*args}", (string[] args) => {
     // Captures all arguments after "docker"
 })
 
@@ -193,7 +193,7 @@ builder.AddRoute("docker {*args}", (string[] args) => {
 
 **Examples**:
 ```csharp
-builder.AddRoute("deploy {env}", (string env) => {})  // env is required
+builder.Map("deploy {env}", (string env) => {})  // env is required
 
 // ✓ Valid
 myapp deploy production          // env="production"
@@ -218,21 +218,21 @@ myapp deploy                     // Throws exception
 **Examples**:
 ```csharp
 // Synchronous Direct Approach
-builder.AddRoute("ping {count:int}",
+builder.Map("ping {count:int}",
     (int count) => {
         for(int i = 0; i < count; i++)
             Console.WriteLine("pong");
     });
 
 // Asynchronous Direct Approach
-builder.AddRoute("add {x:double} {y:double}",
+builder.Map("add {x:double} {y:double}",
     async (double x, double y) => {
         await Task.Delay(10); // Async work
         Console.WriteLine($"{x} + {y} = {x + y}");
     });
 
 // Returning values
-builder.AddRoute("calculate {a:double} {b:double}",
+builder.Map("calculate {a:double} {b:double}",
     (double a, double b) => a + b); // Returns result to stdout
 ```
 
@@ -282,8 +282,8 @@ public class FetchDataCommand : IRequest<string>
 // Registration with DI
 builder.AddDependencyInjection()
        .Services.AddHttpClient()
-       .AddRoute<ComputeCommand>("add {x:double} {y:double}")
-       .AddRoute<FetchDataCommand>("fetch {url}");
+       .Map<ComputeCommand>("add {x:double} {y:double}")
+       .Map<FetchDataCommand>("fetch {url}");
 
 // Alternative registration for commands without response
 public class StatusCommand : IRequest
@@ -308,8 +308,8 @@ public class StatusCommand : IRequest
 ```csharp
 NuruApp app = new NuruAppBuilder()
   // Simple commands: Direct Approach (fast)
-  .AddRoute("ping", () => Console.WriteLine("pong"))
-  .AddRoute("status", () => Console.WriteLine("OK"))
+  .Map("ping", () => Console.WriteLine("pong"))
+  .Map("status", () => Console.WriteLine("OK"))
   // Enable DI for complex commands
   .AddDependencyInjection()
   .ConfigureServices(services =>
@@ -317,8 +317,8 @@ NuruApp app = new NuruAppBuilder()
     services.AddScoped<ICalculator, Calculator>();
   })
   // Complex commands: Mediator Approach (structured)
-  .AddRoute<FactorialCommand>("factorial {n:int}")
-  .AddRoute<DeployCommand>("deploy {env} --version {version?}")
+  .Map<FactorialCommand>("factorial {n:int}")
+  .Map<DeployCommand>("deploy {env} --version {version?}")
   .Build();
 ```
 
@@ -348,13 +348,13 @@ NuruApp app = new NuruAppBuilder()
 **Examples**:
 ```csharp
 builder
-    .AddRoute("create {name}", (string name) => {})                    // Default string
-    .AddRoute("wait {ms:int}", (int milliseconds) => {})              // Integer
-    .AddRoute("price {cost:decimal}", (decimal cost) => {})           // Decimal
-    .AddRoute("enabled {flag:bool}", (bool flag) => {})               // Boolean
-    .AddRoute("schedule {when:DateTime}", (DateTime when) => {})      // DateTime
-    .AddRoute("process {id:Guid}", (Guid id) => {})                   // GUID
-    .AddRoute("download {url:Uri}", (Uri url) => {});                 // URI
+    .Map("create {name}", (string name) => {})                    // Default string
+    .Map("wait {ms:int}", (int milliseconds) => {})              // Integer
+    .Map("price {cost:decimal}", (decimal cost) => {})           // Decimal
+    .Map("enabled {flag:bool}", (bool flag) => {})               // Boolean
+    .Map("schedule {when:DateTime}", (DateTime when) => {})      // DateTime
+    .Map("process {id:Guid}", (Guid id) => {})                   // GUID
+    .Map("download {url:Uri}", (Uri url) => {});                 // URI
 ```
 
 ### Type Conversion
@@ -393,11 +393,11 @@ public class MyCustomConverter : IRouteTypeConverter
 **Examples**:
 ```csharp
 // Automatic string array (default)
-builder.AddRoute("copy {*files}", (string[] files) => {})
+builder.Map("copy {*files}", (string[] files) => {})
 
 // Typed arrays
-builder.AddRoute("sum {*numbers:int}", (int[] numbers) => {})
-        .AddRoute("average {*values:double}", (double[] values) => {})
+builder.Map("sum {*numbers:int}", (int[] numbers) => {})
+        .Map("average {*values:double}", (double[] values) => {})
 
 // Usage:
 myapp copy *.txt                  // files = ["file1.txt", "file2.txt"]
@@ -476,11 +476,11 @@ public static ResolverResult Resolve(string[] args, EndpointCollection endpoints
 **Examples**:
 ```csharp
 // Basic commands
-builder.AddRoute("build", () => {})
-       .AddRoute("test", () => {})
-       .AddRoute("deploy", () => {})
-       .AddRoute("status", () => {})
-       .AddRoute("clean", () => {});
+builder.Map("build", () => {})
+       .Map("test", () => {})
+       .Map("deploy", () => {})
+       .Map("status", () => {})
+       .Map("clean", () => {});
 ```
 
 **Implementation Styles**:
@@ -494,20 +494,20 @@ builder.AddRoute("build", () => {})
 **Examples**:
 ```csharp
 // Git-style subcommands
-builder.AddRoute("git status", () => {})
-       .AddRoute("git commit", () => {})
-       .AddRoute("git push", () => {})
-       .AddRoute("git pull", () => {})
+builder.Map("git status", () => {})
+       .Map("git commit", () => {})
+       .Map("git push", () => {})
+       .Map("git pull", () => {})
 
 // Docker-style subcommands
-builder.AddRoute("docker build", () => {})
-       .AddRoute("docker run", () => {})
-       .AddRoute("docker compose", () => {});
+builder.Map("docker build", () => {})
+       .Map("docker run", () => {})
+       .Map("docker compose", () => {});
 
 // Command prefixes for logical grouping
 const string gitPrefix = "git";
-builder.AddRoute($"{gitPrefix} status", handler)
-       .AddRoute($"{gitPrefix} commit", handler);
+builder.Map($"{gitPrefix} status", handler)
+       .Map($"{gitPrefix} commit", handler);
 ```
 
 **Benefits**:
@@ -540,7 +540,7 @@ builder.AddAutoHelp();
 // git commit --help                      (specific command help)
 
 // Command-specific help includes parameter descriptions
-builder.AddRoute("deploy {env|Deployment environment} --version {ver|Version tag} --dry-run,-d|Preview only",
+builder.Map("deploy {env|Deployment environment} --version {ver|Version tag} --dry-run,-d|Preview only",
     (string env, string ver, bool dry) => {});
 ```
 
@@ -554,16 +554,16 @@ builder.AddRoute("deploy {env|Deployment environment} --version {ver|Version tag
 **Examples**:
 ```csharp
 // Parameter descriptions
-builder.AddRoute("deploy {env|Target environment (dev, staging, prod)}", handler)
+builder.Map("deploy {env|Target environment (dev, staging, prod)}", handler)
 
 // Option descriptions
-builder.AddRoute("build --verbose|Enable debug output", handler)
+builder.Map("build --verbose|Enable debug output", handler)
 
 // Short alias descriptions
-builder.AddRoute("test --output,-o {path|Output file path}", handler)
+builder.Map("test --output,-o {path|Output file path}", handler)
 
 // Complex descriptions
-builder.AddRoute("backup {source|Source directory or file} " +
+builder.Map("backup {source|Source directory or file} " +
                 "--compress,-c|Compress archived file " +
                 "--output,-o {path|Backup file location} " +
                 "--exclude,-e {patterns|File patterns to exclude}",
@@ -584,13 +584,13 @@ builder.AddRoute("backup {source|Source directory or file} " +
 **Examples**:
 ```csharp
 // Highest specificity (31 points)
-builder.AddRoute("git commit --amend", handler)
+builder.Map("git commit --amend", handler)
 
 // Medium specificity (17 points)
-builder.AddRoute("git commit {message}", handler)
+builder.Map("git commit {message}", handler)
 
 // Lowest specificity (-3 points)
-builder.AddRoute("git {*args}", handler)
+builder.Map("git {*args}", handler)
 ```
 
 ### Dependency Injection (DI)
@@ -607,7 +607,7 @@ NuruApp app = new NuruAppBuilder()
     services.AddHttpClient();
     services.AddScoped<IValidationService, ValidationService>();
   })
-  .AddRoute<DeployCommand>("deploy {env}")
+  .Map<DeployCommand>("deploy {env}")
   .Build();
 
 // Inject into handlers

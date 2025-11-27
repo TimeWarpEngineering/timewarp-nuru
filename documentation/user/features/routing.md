@@ -22,11 +22,11 @@ Parameters are automatically converted to the correct types:
 ```csharp
 NuruApp app = new NuruAppBuilder()
   // Supports common types out of the box
-  .AddRoute("wait {seconds:int}", (int s) => Thread.Sleep(s * 1000))
-  .AddRoute("download {url:uri}", (Uri url) => Download(url))
-  .AddRoute("verbose {enabled:bool}", (bool v) => SetVerbose(v))
-  .AddRoute("process {date:datetime}", (DateTime d) => Process(d))
-  .AddRoute("scale {factor:double}", (double f) => Scale(f))
+  .Map("wait {seconds:int}", (int s) => Thread.Sleep(s * 1000))
+  .Map("download {url:uri}", (Uri url) => Download(url))
+  .Map("verbose {enabled:bool}", (bool v) => SetVerbose(v))
+  .Map("process {date:datetime}", (DateTime d) => Process(d))
+  .Map("scale {factor:double}", (double f) => Scale(f))
   .Build();
 ```
 
@@ -54,9 +54,9 @@ See [Supported Types Reference](../reference/supported-types.md) for complete li
 Literal segments must match exactly:
 
 ```csharp
-builder.AddRoute("status", () => ShowStatus());
-builder.AddRoute("version", () => ShowVersion());
-builder.AddRoute("git status", () => GitStatus());  // Multi-word literal
+builder.Map("status", () => ShowStatus());
+builder.Map("version", () => ShowVersion());
+builder.Map("git status", () => GitStatus());  // Multi-word literal
 ```
 
 ```bash
@@ -71,13 +71,13 @@ builder.AddRoute("git status", () => GitStatus());  // Multi-word literal
 Parameters capture values from command-line arguments:
 
 ```csharp
-builder.AddRoute
+builder.Map
 (
   "greet {name}",
   (string name) => Console.WriteLine($"Hello, {name}!")
 );
 
-builder.AddRoute
+builder.Map
 (
   "add {x:double} {y:double}",
   (double x, double y) => Console.WriteLine($"{x} + {y} = {x + y}")
@@ -102,7 +102,7 @@ builder.AddRoute
 Parameters marked with `?` are optional:
 
 ```csharp
-builder.AddRoute
+builder.Map
 (
   "deploy {env} {tag?}",
   (string env, string? tag) =>
@@ -130,16 +130,16 @@ Options provide named arguments with `--` or `-` prefixes:
 
 ```csharp
 // Long form
-builder.AddRoute("build --verbose", () => BuildVerbose());
+builder.Map("build --verbose", () => BuildVerbose());
 
 // Short form
-builder.AddRoute("list -l", () => ListDetailed());
+builder.Map("list -l", () => ListDetailed());
 
 // With values
-builder.AddRoute("serve --port {port:int}", (int port) => StartServer(port));
+builder.Map("serve --port {port:int}", (int port) => StartServer(port));
 
 // Optional options
-builder.AddRoute
+builder.Map
 (
   "build --config? {mode?}",
   (string? mode) => Build(mode ?? "Release")
@@ -159,7 +159,7 @@ builder.AddRoute
 Options can have both long and short forms:
 
 ```csharp
-builder.AddRoute
+builder.Map
 (
   "backup {source} --compress,-c",
   (string source, bool compress) => Backup(source, compress)
@@ -177,13 +177,13 @@ builder.AddRoute
 Catch-all parameters capture all remaining arguments:
 
 ```csharp
-builder.AddRoute
+builder.Map
 (
   "echo {*words}",
   (string[] words) => Console.WriteLine(string.Join(" ", words))
 );
 
-builder.AddRoute("git add {*files}", (string[] files) => StageFiles(files));
+builder.Map("git add {*files}", (string[] files) => StageFiles(files));
 ```
 
 ```bash
@@ -207,20 +207,20 @@ Build hierarchical command structures:
 
 ```csharp
 // Repository commands
-builder.AddRoute("git init", () => GitInit());
-builder.AddRoute("git clone {url}", (string url) => GitClone(url));
-builder.AddRoute("git status", () => GitStatus());
+builder.Map("git init", () => GitInit());
+builder.Map("git clone {url}", (string url) => GitClone(url));
+builder.Map("git status", () => GitStatus());
 
 // Branch commands
-builder.AddRoute("git branch", () => ListBranches());
-builder.AddRoute("git branch {name}", (string name) => CreateBranch(name));
-builder.AddRoute("git checkout {branch}", (string branch) => Checkout(branch));
+builder.Map("git branch", () => ListBranches());
+builder.Map("git branch {name}", (string name) => CreateBranch(name));
+builder.Map("git checkout {branch}", (string branch) => Checkout(branch));
 
 // Commit commands
-builder.AddRoute("git add {*files}", (string[] files) => GitAdd(files));
-builder.AddRoute("git commit -m {message}", (string message) => GitCommit(message));
-builder.AddRoute("git push", () => GitPush());
-builder.AddRoute("git push --force", () => GitPushForce());
+builder.Map("git add {*files}", (string[] files) => GitAdd(files));
+builder.Map("git commit -m {message}", (string message) => GitCommit(message));
+builder.Map("git push", () => GitPush());
+builder.Map("git push --force", () => GitPushForce());
 ```
 
 ### Docker-Style Options
@@ -228,21 +228,21 @@ builder.AddRoute("git push --force", () => GitPushForce());
 Complex option combinations:
 
 ```csharp
-builder.AddRoute("run {image}", (string image) => Docker.Run(image));
+builder.Map("run {image}", (string image) => Docker.Run(image));
 
-builder.AddRoute
+builder.Map
 (
   "run {image} --port {port:int}",
   (string image, int port) => Docker.Run(image, port: port)
 );
 
-builder.AddRoute
+builder.Map
 (
   "run {image} --port {port:int} --detach",
   (string image, int port) => Docker.Run(image, port: port, detached: true)
 );
 
-builder.AddRoute
+builder.Map
 (
   "run {image} --env {*vars}",
   (string image, string[] vars) => Docker.Run(image, envVars: vars)
@@ -255,21 +255,21 @@ Different handlers for different option combinations:
 
 ```csharp
 // Dry run
-builder.AddRoute
+builder.Map
 (
   "deploy {app} --env {environment} --dry-run",
   (string app, string env) => DeployDryRun(app, env)
 );
 
 // Actual deployment
-builder.AddRoute
+builder.Map
 (
   "deploy {app} --env {environment}",
   (string app, string env) => DeployReal(app, env)
 );
 
 // Force deployment
-builder.AddRoute
+builder.Map
 (
   "deploy {app} --env {environment} --force",
   (string app, string env) => DeployForce(app, env)
@@ -285,9 +285,9 @@ When multiple routes could match, Nuru uses specificity rules:
 3. **Options matter**: Routes with specific options are more specific
 
 ```csharp
-builder.AddRoute("deploy prod", () => DeployProduction());           // Most specific
-builder.AddRoute("deploy {env}", (string env) => DeployEnv(env));    // Less specific
-builder.AddRoute("{*args}", (string[] args) => HandleGeneric(args)); // Least specific
+builder.Map("deploy prod", () => DeployProduction());           // Most specific
+builder.Map("deploy {env}", (string env) => DeployEnv(env));    // Less specific
+builder.Map("{*args}", (string[] args) => HandleGeneric(args)); // Least specific
 ```
 
 ```bash
@@ -304,13 +304,13 @@ Design routes to minimize the number of route definitions:
 
 ```csharp
 // ❌ Factorial explosion with optional parameters
-builder.AddRoute("deploy {env}", handler);
-builder.AddRoute("deploy {env} {version}", handler);
-builder.AddRoute("deploy {env} {version} {region}", handler);
+builder.Map("deploy {env}", handler);
+builder.Map("deploy {env} {version}", handler);
+builder.Map("deploy {env} {version} {region}", handler);
 // Creates 3 routes for one concept
 
 // ✅ Use optional parameters
-builder.AddRoute("deploy {env} {version?} {region?}", handler);
+builder.Map("deploy {env} {version?} {region?}", handler);
 // One route, same flexibility
 ```
 
@@ -320,10 +320,10 @@ Use descriptive names that indicate purpose:
 
 ```csharp
 // ❌ Unclear
-builder.AddRoute("copy {arg1} {arg2}", handler);
+builder.Map("copy {arg1} {arg2}", handler);
 
 // ✅ Clear
-builder.AddRoute("copy {source} {destination}", handler);
+builder.Map("copy {source} {destination}", handler);
 ```
 
 ### Consistent Option Naming
@@ -332,9 +332,9 @@ Follow CLI conventions:
 
 ```csharp
 // ✅ Standard conventions
-builder.AddRoute("build --verbose", handler);      // Long form
-builder.AddRoute("build -v", handler);             // Short form
-builder.AddRoute("build --verbose,-v", handler);   // Both (preferred)
+builder.Map("build --verbose", handler);      // Long form
+builder.Map("build -v", handler);             // Short form
+builder.Map("build --verbose,-v", handler);   // Both (preferred)
 ```
 
 ## Related Documentation

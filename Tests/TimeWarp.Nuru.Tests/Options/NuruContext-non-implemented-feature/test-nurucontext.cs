@@ -19,7 +19,7 @@ WriteLine
 NuruAppBuilder builder = new();
 
 // Test route with NuruContext
-builder.AddRoute("analyze {file} --verbose", (string file, bool verbose, NuruContext context) =>
+builder.Map("analyze {file} --verbose", (string file, bool verbose, NuruContext context) =>
 {
     WriteLine($"✓ Analyze executed:");
     WriteLine($"  File: {file}");
@@ -30,7 +30,7 @@ builder.AddRoute("analyze {file} --verbose", (string file, bool verbose, NuruCon
 });
 
 // Test route with optional params and context
-builder.AddRoute("deploy {env} {tag?}", (string env, string? tag, NuruContext context) =>
+builder.Map("deploy {env} {tag?}", (string env, string? tag, NuruContext context) =>
 {
     WriteLine($"✓ Deploy executed:");
     WriteLine($"  Environment: {env}");

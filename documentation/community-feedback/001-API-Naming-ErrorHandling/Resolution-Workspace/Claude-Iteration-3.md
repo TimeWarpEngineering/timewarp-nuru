@@ -16,7 +16,7 @@
 - **Follow** agreed implementation timeline
 
 ### Architectural Victory Achieved
-- `AddRoute` naming maintained (strategic differentiation preserved)
+- `Map` naming maintained (strategic differentiation preserved)
 - No `.OnError()` fluent API (architectural purity maintained)
 - Routing paradigm consistently reinforced (no escape hatches)
 - No API schizophrenia from aliases

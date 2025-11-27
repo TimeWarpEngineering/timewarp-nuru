@@ -172,11 +172,11 @@ When working with Cocona comparison documents in `/Samples/CoconaComparison/`:
 
 ## REPL Implementation Status: COMPLETE ✅
 
-**Task 027: REPL AddRoute Implementation - FINISHED**
+**Task 027: REPL Map Implementation - FINISHED**
 
 ### What Was Accomplished:
 - ✅ **Split Architecture**: `AddReplOptions()` in core `TimeWarp.Nuru`, `AddReplRoutes()` in REPL `TimeWarp.Nuru.Repl`
-- ✅ **AddRoute Usage**: All REPL commands (`exit`, `quit`, `q`, `help`, `history`, `clear`, `cls`, `clear-history`) registered via `builder.AddRoute()`
+- ✅ **Map Usage**: All REPL commands (`exit`, `quit`, `q`, `help`, `history`, `clear`, `cls`, `clear-history`) registered via `builder.Map()`
 - ✅ **Clean Separation**: Core configuration stays private, REPL routes in separate project
 - ✅ **Updated Sample**: Modified `Samples/ReplDemo/repl-basic-demo.cs` to demonstrate new `AddReplSupport()` API
 - ✅ **All Builds Successful**: Both core and REPL projects compile without errors
@@ -192,4 +192,4 @@ When working with Cocona comparison documents in `/Samples/CoconaComparison/`:
 - `Samples/ReplDemo/repl-basic-demo.cs` - Updated to use new API
 - `CLAUDE.md` - Added testing limitations note
 
-The REPL AddRoute implementation is **complete and functional**.
+The REPL Map implementation is **complete and functional**.

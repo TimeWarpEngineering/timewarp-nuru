@@ -20,7 +20,7 @@ var app = new NuruAppBuilder()
         config.RegisterServicesFromAssembly(typeof(RunCommand).Assembly);
     })
     .AddConfiguration(args)  // Automatically sets up standard configuration sources
-    .AddRoute<RunCommand>("run")
+    .Map<RunCommand>("run")
     .AddAutoHelp()
     .Build();
 

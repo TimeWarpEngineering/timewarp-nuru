@@ -41,7 +41,7 @@ class Program
 
 ```csharp
 var app = new NuruAppBuilder()
-    .AddRoute("hello {name|Your name} --to-upper-case,-u|Print a name converted to upper-case {toUpperCase:bool}", 
+    .Map("hello {name|Your name} --to-upper-case,-u|Print a name converted to upper-case {toUpperCase:bool}", 
         (string name, bool toUpperCase) => 
         {
             WriteLine($"Hello {(toUpperCase ? name.ToUpper() : name)}!");
@@ -58,7 +58,7 @@ return await app.RunAsync(args);
 ```csharp
 var app = new NuruAppBuilder()
     .AddDependencyInjection(config => config.RegisterServicesFromAssembly(typeof(HelloCommand).Assembly))
-    .AddRoute<HelloCommand>("hello {name|Your name} --to-upper-case,-u|Print a name converted to upper-case {toUpperCase:bool}")
+    .Map<HelloCommand>("hello {name|Your name} --to-upper-case,-u|Print a name converted to upper-case {toUpperCase:bool}")
     .AddAutoHelp()
     .Build();
 

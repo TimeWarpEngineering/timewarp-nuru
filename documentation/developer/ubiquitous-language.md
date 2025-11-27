@@ -640,7 +640,7 @@ The Parser converts token streams into structured representations (CompiledRoute
 
 **User-Facing Term:** Yes - used in documentation and error messages
 
-**Code Artifact:** `string` (passed to `AddRoute()`)
+**Code Artifact:** `string` (passed to `Map()`)
 
 **Example:** `"docker run {image} --env,-e {var}* --verbose"`
 

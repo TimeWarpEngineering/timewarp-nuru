@@ -398,7 +398,7 @@ Tests are located in `Tests/TimeWarp.Nuru.Completion.Tests/Dynamic/`.
   - Call: `builder.EnableDynamicCompletion("myapp", configure: ...)`
   - Expected: scripts use "myapp" as app name
 - Should support fluent API chaining
-  - Call: `builder.EnableDynamicCompletion(...).AddRoute(...).Build()`
+  - Call: `builder.EnableDynamicCompletion(...).Map(...).Build()`
   - Expected: all methods chainable
 - Should not interfere with existing routes
   - Register routes before and after EnableDynamicCompletion
@@ -412,11 +412,11 @@ Tests are located in `Tests/TimeWarp.Nuru.Completion.Tests/Dynamic/`.
 - Should support all 4 shells
   - Call: `--generate-completion bash|zsh|pwsh|fish`
   - Expected: each generates valid script
-- Should work when called before AddRoute
-  - Call order: EnableDynamicCompletion → AddRoute
+- Should work when called before Map
+  - Call order: EnableDynamicCompletion → Map
   - Expected: works correctly
-- Should work when called after AddRoute
-  - Call order: AddRoute → EnableDynamicCompletion
+- Should work when called after Map
+  - Call order: Map → EnableDynamicCompletion
   - Expected: works correctly
 
 **Expected Results:**

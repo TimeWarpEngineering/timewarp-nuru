@@ -7,7 +7,7 @@ using static System.Console;
 
 // Typical simple CLI app with a single command and proper description
 var app = new NuruAppBuilder()
-    .AddRoute("hello {name|Your name} --to-upper-case,-u|Print a name converted to upper-case {toUpperCase:bool}", 
+    .Map("hello {name|Your name} --to-upper-case,-u|Print a name converted to upper-case {toUpperCase:bool}", 
         (string name, bool toUpperCase) => 
         {
             WriteLine($"Hello {(toUpperCase ? name.ToUpper() : name)}!");

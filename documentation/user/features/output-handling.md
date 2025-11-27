@@ -9,10 +9,10 @@ Use for **data and results** that other programs might consume:
 
 ```csharp
 // Simple text output
-builder.AddRoute("hello", () => Console.WriteLine("Hello, World!"));
+builder.Map("hello", () => Console.WriteLine("Hello, World!"));
 
 // Structured data (automatic JSON serialization)
-builder.AddRoute("info", () => new {
+builder.Map("info", () => new {
     Name = "MyApp",
     Version = "1.0.0",
     Status = "Running"
@@ -23,7 +23,7 @@ builder.AddRoute("info", () => new {
 Use for **diagnostics, progress, and errors** that humans read:
 
 ```csharp
-builder.AddRoute
+builder.Map
 (
   "process {file}",
   (string file) =>
@@ -67,7 +67,7 @@ public record AnalysisResult(
     string Status
 );
 
-builder.AddRoute
+builder.Map
 (
   "analyze {file}",
   (string file) =>
@@ -124,7 +124,7 @@ NuruApp app = new NuruAppBuilder()
   {
     services.AddScoped<IAnalyzer, Analyzer>();
   })
-  .AddRoute<AnalyzeCommand>("analyze {path}")
+  .Map<AnalyzeCommand>("analyze {path}")
   .Build();
 
 return await app.RunAsync(args);
@@ -162,7 +162,7 @@ public sealed class AnalyzeCommand : IRequest<AnalysisResult>
 ### Progress Reporting
 
 ```csharp
-builder.AddRoute
+builder.Map
 (
   "download {url}",
   async (string url) =>
@@ -188,7 +188,7 @@ builder.AddRoute
 ### Error Reporting
 
 ```csharp
-builder.AddRoute
+builder.Map
 (
   "validate {file}",
   (string file) =>
@@ -216,7 +216,7 @@ builder.AddRoute
 ### Multi-Step Operations
 
 ```csharp
-builder.AddRoute
+builder.Map
 (
   "deploy {env}",
   async (string env) =>
@@ -250,7 +250,7 @@ builder.AddRoute
 ### Verbose Mode
 
 ```csharp
-builder.AddRoute
+builder.Map
 (
   "process {file} --verbose",
   (string file, bool verbose) =>
@@ -278,7 +278,7 @@ builder.AddRoute
 ### Quiet Mode
 
 ```csharp
-builder.AddRoute
+builder.Map
 (
   "backup {source} --quiet",
   (string source, bool quiet) =>
@@ -354,7 +354,7 @@ Console.Error.WriteLine(jsonData);  // Bad: data on stderr
 Return exit codes for shell scripting:
 
 ```csharp
-builder.AddRoute
+builder.Map
 (
   "check {file}",
   (string file) =>

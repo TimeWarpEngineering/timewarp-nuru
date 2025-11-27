@@ -14,7 +14,7 @@ public class RouteAnalysisTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("status", () => 0);
+    builder.Map("status", () => 0);
 
     // Act
     var generator = new CompletionScriptGenerator();
@@ -30,7 +30,7 @@ public class RouteAnalysisTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("greet {name}", (string name) => 0);
+    builder.Map("greet {name}", (string name) => 0);
 
     // Act
     var generator = new CompletionScriptGenerator();
@@ -48,7 +48,7 @@ public class RouteAnalysisTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("delay {ms:int}", (int ms) => 0);
+    builder.Map("delay {ms:int}", (int ms) => 0);
 
     // Act
     var generator = new CompletionScriptGenerator();
@@ -64,7 +64,7 @@ public class RouteAnalysisTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("deploy {env} {tag?}", (string env, string? tag) => 0);
+    builder.Map("deploy {env} {tag?}", (string env, string? tag) => 0);
 
     // Act
     var generator = new CompletionScriptGenerator();
@@ -80,7 +80,7 @@ public class RouteAnalysisTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("build --config {mode}", (string mode) => 0);
+    builder.Map("build --config {mode}", (string mode) => 0);
 
     // Act
     var generator = new CompletionScriptGenerator();
@@ -97,7 +97,7 @@ public class RouteAnalysisTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("docker {*args}", (string[] args) => 0);
+    builder.Map("docker {*args}", (string[] args) => 0);
 
     // Act
     var generator = new CompletionScriptGenerator();
@@ -113,7 +113,7 @@ public class RouteAnalysisTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("test --verbose --dry-run", () => 0);
+    builder.Map("test --verbose --dry-run", () => 0);
 
     // Act
     var generator = new CompletionScriptGenerator();
@@ -131,7 +131,7 @@ public class RouteAnalysisTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("deploy {env} --version {ver} --force", (string env, string ver) => 0);
+    builder.Map("deploy {env} --version {ver} --force", (string env, string ver) => 0);
 
     // Act
     var generator = new CompletionScriptGenerator();
@@ -149,9 +149,9 @@ public class RouteAnalysisTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("create", () => 0);
-    builder.AddRoute("delete", () => 0);
-    builder.AddRoute("list --all", () => 0);
+    builder.Map("create", () => 0);
+    builder.Map("delete", () => 0);
+    builder.Map("list --all", () => 0);
 
     // Act
     var generator = new CompletionScriptGenerator();
@@ -171,9 +171,9 @@ public class RouteAnalysisTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("git commit", () => 0);
-    builder.AddRoute("git status", () => 0);
-    builder.AddRoute("git push", () => 0);
+    builder.Map("git commit", () => 0);
+    builder.Map("git status", () => 0);
+    builder.Map("git push", () => 0);
 
     // Act
     var generator = new CompletionScriptGenerator();
@@ -191,7 +191,7 @@ public class RouteAnalysisTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("server start --port {port:int} --host {host} --verbose",
+    builder.Map("server start --port {port:int} --host {host} --verbose",
       (int port, string host) => 0);
 
     // Act
@@ -212,7 +212,7 @@ public class RouteAnalysisTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("test --verbose,-v --quiet,-q", () => 0);
+    builder.Map("test --verbose,-v --quiet,-q", () => 0);
 
     // Act
     var generator = new CompletionScriptGenerator();
@@ -231,7 +231,7 @@ public class RouteAnalysisTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("deploy {env} --force", (string env) => 0);
+    builder.Map("deploy {env} --force", (string env) => 0);
 
     var generator = new CompletionScriptGenerator();
 

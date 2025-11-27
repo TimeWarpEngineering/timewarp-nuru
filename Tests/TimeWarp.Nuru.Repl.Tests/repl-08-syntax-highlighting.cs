@@ -17,7 +17,7 @@ public class SyntaxHighlightingTests
     NuruAppBuilder builder = new();
     foreach ((string route, Func<string> handler) in routes)
     {
-      builder.AddRoute(route, handler);
+      builder.Map(route, handler);
     }
 
     NuruApp app = builder.Build();

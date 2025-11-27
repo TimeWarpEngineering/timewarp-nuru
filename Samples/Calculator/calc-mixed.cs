@@ -15,25 +15,25 @@ NuruApp app =
   {
     services.AddSingleton<IScientificCalculator, ScientificCalculator>();
   })
-  .AddRoute // Use Delegate approach for simple operations (performance)
+  .Map // Use Delegate approach for simple operations (performance)
   (
     pattern: "add {x:double} {y:double}",
     handler: (double x, double y) => WriteLine($"{x} + {y} = {x + y}"),
     description: "Add two numbers together"
   )
-  .AddRoute
+  .Map
   (
     pattern: "subtract {x:double} {y:double}",
     handler: (double x, double y) => WriteLine($"{x} - {y} = {x - y}"),
     description: "Subtract the second number from the first"
   )
-  .AddRoute
+  .Map
   (
     pattern: "multiply {x:double} {y:double}",
     handler: (double x, double y) => WriteLine($"{x} × {y} = {x * y}"),
     description: "Multiply two numbers together"
   )
-  .AddRoute
+  .Map
   (
     pattern: "divide {x:double} {y:double}",
     handler: (double x, double y) =>
@@ -48,27 +48,27 @@ NuruApp app =
     },
     description: "Divide the first number by the second"
   )
-  .AddRoute<FactorialCommand> // Use Mediator for complex operations (testability, DI)
+  .Map<FactorialCommand> // Use Mediator for complex operations (testability, DI)
   (
     pattern: "factorial {n:int}",
     description: "Calculate factorial (n!)"
   )
-  .AddRoute<PrimeCheckCommand>
+  .Map<PrimeCheckCommand>
   (
     pattern: "isprime {n:int}",
     description: "Check if a number is prime"
   )
-  .AddRoute<FibonacciCommand>
+  .Map<FibonacciCommand>
   (
     pattern: "fibonacci {n:int}",
     description: "Calculate the nth Fibonacci number"
   )
-  .AddRoute<StatsCommand, StatsResponse> // Example: Mediator command that returns a response object
+  .Map<StatsCommand, StatsResponse> // Example: Mediator command that returns a response object
   (
     pattern: "stats {*values}",
     description: "Calculate statistics for a set of numbers (returns JSON)"
   )
-  .AddRoute // Example: Delegate that returns an object
+  .Map // Example: Delegate that returns an object
   (
     pattern: "compare {x:double} {y:double}",
     handler: (double x, double y) => new ComparisonResult

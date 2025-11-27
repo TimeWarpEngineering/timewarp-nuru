@@ -12,7 +12,7 @@ using TimeWarp.Nuru.Logging;
 
 var app = new NuruAppBuilder()
     .UseConsoleLogging()  // Enable console logging
-    .AddRoute("test", () => Console.WriteLine("Test"))
+    .Map("test", () => Console.WriteLine("Test"))
     .Build();
 
 return await app.RunAsync(args);
@@ -89,7 +89,7 @@ Log.Logger = new LoggerConfiguration()
 
 var app = new NuruAppBuilder()
     .UseLogging(new SerilogLoggerFactory(Log.Logger))
-    .AddRoute("test", () => Console.WriteLine("Test"))
+    .Map("test", () => Console.WriteLine("Test"))
     .Build();
 ```
 
@@ -105,7 +105,7 @@ var loggerFactory = LoggerFactory.Create(builder =>
 
 var app = new NuruAppBuilder()
     .UseLogging(loggerFactory)
-    .AddRoute("test", () => Console.WriteLine("Test"))
+    .Map("test", () => Console.WriteLine("Test"))
     .Build();
 ```
 
@@ -121,7 +121,7 @@ var loggerFactory = LoggerFactory.Create(builder =>
 
 var app = new NuruAppBuilder()
     .UseLogging(loggerFactory)
-    .AddRoute("test", () => Console.WriteLine("Test"))
+    .Map("test", () => Console.WriteLine("Test"))
     .Build();
 ```
 

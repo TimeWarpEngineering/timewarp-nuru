@@ -22,7 +22,7 @@ public class CandidateGeneratorTests
   private static Endpoint CreateEndpoint(string pattern)
   {
     NuruAppBuilder builder = new();
-    builder.AddRoute(pattern, () => 0);
+    builder.Map(pattern, () => 0);
     return builder.EndpointCollection.Endpoints[0];
   }
 

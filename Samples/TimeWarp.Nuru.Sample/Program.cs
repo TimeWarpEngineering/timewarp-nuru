@@ -10,23 +10,23 @@ NuruAppBuilder builder =
     .AddDependencyInjection(config => config.RegisterServicesFromAssembly(typeof(CalculateHandler).Assembly));
 
 // Add routes
-builder.AddDefaultRoute // Default route when no command is specified
+builder.MapDefault // Default route when no command is specified
 (
   () => WriteLine("Welcome to the Nuru sample app! Use --help to see available commands."),
   "Default welcome message"
 );
 
-builder.AddRoute("status", () => WriteLine("✓ System is running"), "Check system status");
-builder.AddRoute("echo {message}", (string message) => WriteLine($"Echo: {message}"), "Echo a message back");
+builder.Map("status", () => WriteLine("✓ System is running"), "Check system status");
+builder.Map("echo {message}", (string message) => WriteLine($"Echo: {message}"), "Echo a message back");
 
-builder.AddRoute
+builder.Map
 (
   "proxy {command} {*args}",
   (string command, string[] args) => WriteLine($"Would execute: {command} {string.Join(" ", args)}"),
   "Proxy command execution"
 );
 
-builder.AddRoute<CalculateCommand, CalculateResponse>
+builder.Map<CalculateCommand, CalculateResponse>
 (
   "calc {value1:double} {value2:double} --operation {operation}",
   "Perform calculation (operations: add, subtract, multiply, divide)"

@@ -14,7 +14,7 @@ public class OptionOrderIndependenceTests
     string? boundDest = null;
     bool boundCompress = false;
     NuruApp app = new NuruAppBuilder()
-      .AddRoute("backup {source} --compress --output {dest}",
+      .Map("backup {source} --compress --output {dest}",
         (string source, bool compress, string dest) =>
         {
           boundSource = source;
@@ -44,7 +44,7 @@ public class OptionOrderIndependenceTests
     string? boundDest = null;
     bool boundCompress = false;
     NuruApp app = new NuruAppBuilder()
-      .AddRoute("backup {source} --compress --output {dest}",
+      .Map("backup {source} --compress --output {dest}",
         (string source, bool compress, string dest) =>
         {
           boundSource = source;
@@ -74,7 +74,7 @@ public class OptionOrderIndependenceTests
     bool boundGamma = false;
 
     NuruApp app = new NuruAppBuilder()
-      .AddRoute("test --alpha --beta {value} --gamma",
+      .Map("test --alpha --beta {value} --gamma",
         (bool alpha, string value, bool gamma) =>
         {
           boundAlpha = alpha;
@@ -103,7 +103,7 @@ public class OptionOrderIndependenceTests
     bool boundGamma = false;
 
     NuruApp app = new NuruAppBuilder()
-      .AddRoute("test --alpha --beta {value} --gamma",
+      .Map("test --alpha --beta {value} --gamma",
         (bool alpha, string value, bool gamma) =>
         {
           boundAlpha = alpha;
@@ -132,7 +132,7 @@ public class OptionOrderIndependenceTests
     bool boundGamma = false;
 
     NuruApp app = new NuruAppBuilder()
-      .AddRoute("test --alpha --beta {value} --gamma",
+      .Map("test --alpha --beta {value} --gamma",
         (bool alpha, string value, bool gamma) =>
         {
           boundAlpha = alpha;
@@ -162,7 +162,7 @@ public class OptionOrderIndependenceTests
     bool boundVerbose = false;
 
     NuruApp app = new NuruAppBuilder()
-      .AddRoute("backup {source} --compress? --output? {dest} --verbose?",
+      .Map("backup {source} --compress? --output? {dest} --verbose?",
         (string source, bool compress, string? dest, bool verbose) =>
         {
           boundSource = source;
@@ -191,7 +191,7 @@ public class OptionOrderIndependenceTests
     // Options should come AFTER all positional arguments
 #pragma warning disable RCS1163 // Unused parameter
     NuruApp app = new NuruAppBuilder()
-      .AddRoute("copy {source} {dest} --verbose?",
+      .Map("copy {source} {dest} --verbose?",
         (string source, string dest, bool verbose) => 0)
 #pragma warning restore RCS1163 // Unused parameter
       .Build();
@@ -212,7 +212,7 @@ public class OptionOrderIndependenceTests
     bool boundVerbose = false;
 
     NuruApp app = new NuruAppBuilder()
-      .AddRoute("build --verbose,-v? --output,-o {file}",
+      .Map("build --verbose,-v? --output,-o {file}",
         (bool verbose, string file) =>
         {
           boundVerbose = verbose;
@@ -236,7 +236,7 @@ public class OptionOrderIndependenceTests
     // Ensure required options are still enforced
 #pragma warning disable RCS1163 // Unused parameter
     NuruApp app = new NuruAppBuilder()
-      .AddRoute("backup {source} --compress --output {dest}",
+      .Map("backup {source} --compress --output {dest}",
         (string source, bool compress, string dest) => 0)
 #pragma warning restore RCS1163 // Unused parameter
       .Build();

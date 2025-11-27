@@ -14,7 +14,7 @@ public class ParameterTypeDetectionTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("greet {name}", (string name) => 0);
+    builder.Map("greet {name}", (string name) => 0);
 
     // Act
     var generator = new CompletionScriptGenerator();
@@ -31,7 +31,7 @@ public class ParameterTypeDetectionTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("delay {ms:int}", (int ms) => 0);
+    builder.Map("delay {ms:int}", (int ms) => 0);
 
     // Act
     var generator = new CompletionScriptGenerator();
@@ -48,7 +48,7 @@ public class ParameterTypeDetectionTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("scale {factor:double}", (double factor) => 0);
+    builder.Map("scale {factor:double}", (double factor) => 0);
 
     // Act
     var generator = new CompletionScriptGenerator();
@@ -65,7 +65,7 @@ public class ParameterTypeDetectionTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("set {enabled:bool}", (bool enabled) => 0);
+    builder.Map("set {enabled:bool}", (bool enabled) => 0);
 
     // Act
     var generator = new CompletionScriptGenerator();
@@ -82,7 +82,7 @@ public class ParameterTypeDetectionTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("deploy {env} {tag?}", (string env, string? tag) => 0);
+    builder.Map("deploy {env} {tag?}", (string env, string? tag) => 0);
 
     // Act
     var generator = new CompletionScriptGenerator();
@@ -99,7 +99,7 @@ public class ParameterTypeDetectionTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("exec {*args}", (string[] args) => 0);
+    builder.Map("exec {*args}", (string[] args) => 0);
 
     // Act
     var generator = new CompletionScriptGenerator();
@@ -116,7 +116,7 @@ public class ParameterTypeDetectionTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("process {file} {count:int} {verbose:bool}",
+    builder.Map("process {file} {count:int} {verbose:bool}",
       (string file, int count, bool verbose) => 0);
 
     // Act
@@ -134,7 +134,7 @@ public class ParameterTypeDetectionTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("deploy {env} --force --tag {version}",
+    builder.Map("deploy {env} --force --tag {version}",
       (string env, string version) => 0);
 
     // Act
@@ -153,7 +153,7 @@ public class ParameterTypeDetectionTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("test {value:int}", (int value) => 0);
+    builder.Map("test {value:int}", (int value) => 0);
 
     var generator = new CompletionScriptGenerator();
 
@@ -176,7 +176,7 @@ public class ParameterTypeDetectionTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("schedule {when:DateTime}", (DateTime when) => 0);
+    builder.Map("schedule {when:DateTime}", (DateTime when) => 0);
 
     // Act
     var generator = new CompletionScriptGenerator();
@@ -193,7 +193,7 @@ public class ParameterTypeDetectionTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("lookup {id:Guid}", (Guid id) => 0);
+    builder.Map("lookup {id:Guid}", (Guid id) => 0);
 
     // Act
     var generator = new CompletionScriptGenerator();
@@ -210,7 +210,7 @@ public class ParameterTypeDetectionTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("{source} {destination}", (string source, string destination) => 0);
+    builder.Map("{source} {destination}", (string source, string destination) => 0);
 
     // Act
     var generator = new CompletionScriptGenerator();

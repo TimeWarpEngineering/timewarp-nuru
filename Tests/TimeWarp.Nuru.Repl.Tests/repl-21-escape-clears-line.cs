@@ -20,7 +20,7 @@ public class EscapeClearsLineTests
     using TestTerminal terminal = new();
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("status", () => 0)
+      .Map("status", () => 0)
       .AddReplSupport(options =>
       {
         options.Prompt = "demo> ";
@@ -56,8 +56,8 @@ public class EscapeClearsLineTests
     using TestTerminal terminal = new();
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("status", () => 0)
-      .AddRoute("start", () => 0)
+      .Map("status", () => 0)
+      .Map("start", () => 0)
       .AddReplSupport(options =>
       {
         options.Prompt = "> ";
@@ -88,8 +88,8 @@ public class EscapeClearsLineTests
     using TestTerminal terminal = new();
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("status", () => 0)
-      .AddRoute("start", () => 0)
+      .Map("status", () => 0)
+      .Map("start", () => 0)
       .AddReplSupport(options =>
       {
         options.Prompt = "> ";

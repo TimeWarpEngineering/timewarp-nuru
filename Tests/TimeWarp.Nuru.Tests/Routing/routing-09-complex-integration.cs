@@ -13,7 +13,7 @@ public class ComplexIntegrationTests
     string[]? boundE = null;
     string[]? boundCmd = null;
     NuruApp app = new NuruAppBuilder()
-      .AddRoute("docker run -i -t --env {e}* -- {*cmd}", (bool i, bool t, string[] e, string[] cmd) => { boundI = i; boundT = t; boundE = e; boundCmd = cmd; return 0; })
+      .Map("docker run -i -t --env {e}* -- {*cmd}", (bool i, bool t, string[] e, string[] cmd) => { boundI = i; boundT = t; boundE = e; boundCmd = cmd; return 0; })
       .Build();
 
     // Act
@@ -43,7 +43,7 @@ public class ComplexIntegrationTests
     bool boundAmend = false;
     bool boundNoVerify = false;
     NuruApp app = new NuruAppBuilder()
-      .AddRoute("git commit --message,-m {msg} --amend --no-verify", (string msg, bool amend, bool noVerify) => { boundMsg = msg; boundAmend = amend; boundNoVerify = noVerify; return 0; })
+      .Map("git commit --message,-m {msg} --amend --no-verify", (string msg, bool amend, bool noVerify) => { boundMsg = msg; boundAmend = amend; boundNoVerify = noVerify; return 0; })
       .Build();
 
     // Act
@@ -66,7 +66,7 @@ public class ComplexIntegrationTests
     bool boundVerbose = false;
     bool boundWatch = false;
     NuruApp app = new NuruAppBuilder()
-      .AddRoute("build {project?} --config? {cfg?} --verbose --watch", (string? project, string? cfg, bool verbose, bool watch) => { boundProject = project; boundCfg = cfg; boundVerbose = verbose; boundWatch = watch; return 0; })
+      .Map("build {project?} --config? {cfg?} --verbose --watch", (string? project, string? cfg, bool verbose, bool watch) => { boundProject = project; boundCfg = cfg; boundVerbose = verbose; boundWatch = watch; return 0; })
       .Build();
 
     // Act
@@ -89,7 +89,7 @@ public class ComplexIntegrationTests
     string[]? boundT = null;
     string? boundScript = null;
     NuruApp app = new NuruAppBuilder()
-      .AddRoute("process --id {id:int}* --tag {t}* {script}", (int[] id, string[] t, string script) => { boundId = id; boundT = t; boundScript = script; return 0; })
+      .Map("process --id {id:int}* --tag {t}* {script}", (int[] id, string[] t, string script) => { boundId = id; boundT = t; boundScript = script; return 0; })
       .Build();
 
     // Act

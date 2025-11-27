@@ -19,7 +19,7 @@ WriteLine();
 NuruAppBuilder builder = new();
 
 // Test route with mixed required and optional options
-builder.AddRoute("deploy --env {env} --version? {ver?} --dry-run",
+builder.Map("deploy --env {env} --version? {ver?} --dry-run",
     (string env, string? ver, bool dryRun) =>
 {
     WriteLine("✓ Deploy executed:");

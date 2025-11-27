@@ -7,7 +7,7 @@ Console logging extensions for TimeWarp.Nuru CLI framework.
 ```csharp
 var app = new NuruAppBuilder()
     .UseConsoleLogging() // Default: Information level
-    .AddRoute("test", () => Console.WriteLine("Test"))
+    .Map("test", () => Console.WriteLine("Test"))
     .Build();
 ```
 

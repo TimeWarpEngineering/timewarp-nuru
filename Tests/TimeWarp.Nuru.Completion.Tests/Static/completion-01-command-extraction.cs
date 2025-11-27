@@ -14,7 +14,7 @@ public class CommandExtractionTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("status", () => 0);
+    builder.Map("status", () => 0);
 
     // Act
     var generator = new CompletionScriptGenerator();
@@ -31,9 +31,9 @@ public class CommandExtractionTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("create", () => 0);
-    builder.AddRoute("createorder", () => 0);
-    builder.AddRoute("delete", () => 0);
+    builder.Map("create", () => 0);
+    builder.Map("createorder", () => 0);
+    builder.Map("delete", () => 0);
 
     // Act
     var generator = new CompletionScriptGenerator();
@@ -51,8 +51,8 @@ public class CommandExtractionTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("deploy {env}", (string env) => 0);
-    builder.AddRoute("build {project}", (string project) => 0);
+    builder.Map("deploy {env}", (string env) => 0);
+    builder.Map("build {project}", (string project) => 0);
 
     // Act
     var generator = new CompletionScriptGenerator();
@@ -71,8 +71,8 @@ public class CommandExtractionTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("test --verbose", () => 0);
-    builder.AddRoute("build --config {mode}", (string mode) => 0);
+    builder.Map("test --verbose", () => 0);
+    builder.Map("build --config {mode}", (string mode) => 0);
 
     // Act
     var generator = new CompletionScriptGenerator();
@@ -89,9 +89,9 @@ public class CommandExtractionTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("git commit", () => 0);
-    builder.AddRoute("git status", () => 0);
-    builder.AddRoute("git push", () => 0);
+    builder.Map("git commit", () => 0);
+    builder.Map("git status", () => 0);
+    builder.Map("git push", () => 0);
 
     // Act
     var generator = new CompletionScriptGenerator();
@@ -108,9 +108,9 @@ public class CommandExtractionTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("deploy {env}", (string env) => 0);
-    builder.AddRoute("deploy {env} --force", (string env) => 0);
-    builder.AddRoute("deploy {env} {tag}", (string env, string tag) => 0);
+    builder.Map("deploy {env}", (string env) => 0);
+    builder.Map("deploy {env} --force", (string env) => 0);
+    builder.Map("deploy {env} {tag}", (string env, string tag) => 0);
 
     // Act
     var generator = new CompletionScriptGenerator();
@@ -146,7 +146,7 @@ public class CommandExtractionTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("deploy {env} --version {ver} --force", (string env, string ver) => 0);
+    builder.Map("deploy {env} --version {ver} --force", (string env, string ver) => 0);
 
     // Act
     var generator = new CompletionScriptGenerator();
@@ -164,7 +164,7 @@ public class CommandExtractionTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("{command} {*args}", (string command, string[] args) => 0);
+    builder.Map("{command} {*args}", (string command, string[] args) => 0);
 
     // Act
     var generator = new CompletionScriptGenerator();
@@ -181,8 +181,8 @@ public class CommandExtractionTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("Deploy", () => 0);
-    builder.AddRoute("deploy", () => 0);
+    builder.Map("Deploy", () => 0);
+    builder.Map("deploy", () => 0);
 
     // Act
     var generator = new CompletionScriptGenerator();

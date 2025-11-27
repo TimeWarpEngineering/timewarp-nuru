@@ -5,12 +5,12 @@
 
 ## Executive Summary
 
-Community Contributor provides two suggestions: renaming `AddRoute` to `AddCommand` and adding fluent error handling. While superficially reasonable, both suggestions demonstrate misunderstanding of the framework's core architectural decisions and would potentially harm its unique value proposition.
+Community Contributor provides two suggestions: renaming `Map` to `AddCommand` and adding fluent error handling. While superficially reasonable, both suggestions demonstrate misunderstanding of the framework's core architectural decisions and would potentially harm its unique value proposition.
 
-## Point 1: `AddRoute` vs `AddCommand` Naming
+## Point 1: `Map` vs `AddCommand` Naming
 
 ### Community Contributor Suggestion
-- Rename `AddRoute` to `AddCommand`
+- Rename `Map` to `AddCommand`
 - Claims it "works better in CLI world"
 - Notes initial confusion expecting web-only usage
 
@@ -18,7 +18,7 @@ Community Contributor provides two suggestions: renaming `AddRoute` to `AddComma
 
 **The suggestion is misguided for several reasons:**
 
-1. **Architectural Intent**: TimeWarp.Nuru explicitly positions itself as bringing "web-style routing to command-line applications." The `AddRoute` naming is deliberate architectural messaging that:
+1. **Architectural Intent**: TimeWarp.Nuru explicitly positions itself as bringing "web-style routing to command-line applications." The `Map` naming is deliberate architectural messaging that:
    - Differentiates from traditional CLI frameworks
    - Signals pattern-matching capabilities beyond simple command registration
    - Aligns with the route pattern syntax (`{param:type}`, `{*catchall}`, etc.)
@@ -27,9 +27,9 @@ Community Contributor provides two suggestions: renaming `AddRoute` to `AddComma
    - **System.CommandLine**: Uses verbose OOP (`new Command()`, `command.Subcommands.Add()`)
    - **Cocona**: Uses `AddCommand` with traditional CLI semantics
    - **ConsoleAppFramework v5**: Recently simplified from `AddCommand/AddSubCommand` to just `Add()`
-   - **ASP.NET Core**: Uses `MapGet`, `MapPost`, not `AddRoute` or `AddEndpoint`
+   - **ASP.NET Core**: Uses `MapGet`, `MapPost`, not `Map` or `AddEndpoint`
 
-3. **Technical Differentiation**: `AddRoute` accurately describes functionality that `AddCommand` doesn't:
+3. **Technical Differentiation**: `Map` accurately describes functionality that `AddCommand` doesn't:
    - Routes support complex pattern matching: `deploy {env} --version {tag:string?}`
    - Routes handle catch-all patterns: `docker {*args}`
    - Routes include option parsing in the pattern itself
@@ -40,12 +40,12 @@ Community Contributor provides two suggestions: renaming `AddRoute` to `AddComma
    - Differentiates from commodity CLI frameworks
    - Appeals to web developers familiar with routing concepts
 
-**Verdict**: Keep `AddRoute`. The temporary confusion is a feature, not a bug—it signals users are dealing with something fundamentally different.
+**Verdict**: Keep `Map`. The temporary confusion is a feature, not a bug—it signals users are dealing with something fundamentally different.
 
 ## Point 2: Fluent Error Handling (`.OnError()`)
 
 ### Community Contributor Suggestion
-- Add `.AddRoute(...).OnError(...)` fluent API
+- Add `.Map(...).OnError(...)` fluent API
 - Claims it provides "more information when user inputs wrong data"
 
 ### Critical Analysis
@@ -96,7 +96,7 @@ Community Contributor provides two suggestions: renaming `AddRoute` to `AddComma
 
 ### Immediate Actions
 1. **Strengthen README positioning**: Add explicit "Not Your Father's CLI Framework" messaging
-2. **Add comparison table**: `AddRoute` vs `AddCommand` showing pattern capabilities
+2. **Add comparison table**: `Map` vs `AddCommand` showing pattern capabilities
 3. **Document error handling**: Show existing capabilities clearly
 
 ### Consider for Future

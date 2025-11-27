@@ -14,7 +14,7 @@ public class CompletionEdgeCasesTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("status", () => 0);
+    builder.Map("status", () => 0);
     var generator = new CompletionScriptGenerator();
 
     // Act - Empty app name should still generate valid script
@@ -31,7 +31,7 @@ public class CompletionEdgeCasesTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("status", () => 0);
+    builder.Map("status", () => 0);
     var generator = new CompletionScriptGenerator();
 
     // Act - Whitespace app name should still generate script
@@ -48,7 +48,7 @@ public class CompletionEdgeCasesTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("status", () => 0);
+    builder.Map("status", () => 0);
     var generator = new CompletionScriptGenerator();
 
     // Act - App name with shell special characters
@@ -64,8 +64,8 @@ public class CompletionEdgeCasesTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("{file}", (string file) => 0);
-    builder.AddRoute("{source} {dest}", (string source, string dest) => 0);
+    builder.Map("{file}", (string file) => 0);
+    builder.Map("{source} {dest}", (string source, string dest) => 0);
 
     // Act
     var generator = new CompletionScriptGenerator();
@@ -82,8 +82,8 @@ public class CompletionEdgeCasesTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("--version", () => 0);
-    builder.AddRoute("--help", () => 0);
+    builder.Map("--version", () => 0);
+    builder.Map("--help", () => 0);
 
     // Act
     var generator = new CompletionScriptGenerator();
@@ -101,9 +101,9 @@ public class CompletionEdgeCasesTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("deploy {env}", (string env) => 0);
-    builder.AddRoute("deploy {env} --force", (string env) => 0);
-    builder.AddRoute("deploy {env} --dry-run", (string env) => 0);
+    builder.Map("deploy {env}", (string env) => 0);
+    builder.Map("deploy {env} --force", (string env) => 0);
+    builder.Map("deploy {env} --dry-run", (string env) => 0);
 
     // Act
     var generator = new CompletionScriptGenerator();
@@ -121,9 +121,9 @@ public class CompletionEdgeCasesTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("test --verbose", () => 0);
-    builder.AddRoute("build --verbose", () => 0);
-    builder.AddRoute("deploy --verbose", () => 0);
+    builder.Map("test --verbose", () => 0);
+    builder.Map("build --verbose", () => 0);
+    builder.Map("deploy --verbose", () => 0);
 
     // Act
     var generator = new CompletionScriptGenerator();
@@ -139,7 +139,7 @@ public class CompletionEdgeCasesTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute(
+    builder.Map(
       "deploy {environment} {version} --config {configFile} --region {region} --instance-count {count:int} --timeout {seconds:int} --verbose --force --dry-run",
       (string environment, string version, string configFile, string region, int count, int seconds) => 0
     );
@@ -161,8 +161,8 @@ public class CompletionEdgeCasesTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("kebab-case-command", () => 0);
-    builder.AddRoute("snake_case_command", () => 0);
+    builder.Map("kebab-case-command", () => 0);
+    builder.Map("snake_case_command", () => 0);
 
     // Act
     var generator = new CompletionScriptGenerator();
@@ -179,8 +179,8 @@ public class CompletionEdgeCasesTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("delay {ms:int}", (int ms) => 0);
-    builder.AddRoute("scale {factor:double}", (double factor) => 0);
+    builder.Map("delay {ms:int}", (int ms) => 0);
+    builder.Map("scale {factor:double}", (double factor) => 0);
 
     // Act
     var generator = new CompletionScriptGenerator();
@@ -197,7 +197,7 @@ public class CompletionEdgeCasesTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("deploy {env} {tag?}", (string env, string? tag) => 0);
+    builder.Map("deploy {env} {tag?}", (string env, string? tag) => 0);
 
     // Act
     var generator = new CompletionScriptGenerator();
@@ -213,8 +213,8 @@ public class CompletionEdgeCasesTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("git {*args}", (string[] args) => 0);
-    builder.AddRoute("docker {*args}", (string[] args) => 0);
+    builder.Map("git {*args}", (string[] args) => 0);
+    builder.Map("docker {*args}", (string[] args) => 0);
 
     // Act
     var generator = new CompletionScriptGenerator();
@@ -231,9 +231,9 @@ public class CompletionEdgeCasesTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("Status", () => 0);
-    builder.AddRoute("status", () => 0);
-    builder.AddRoute("STATUS", () => 0);
+    builder.Map("Status", () => 0);
+    builder.Map("status", () => 0);
+    builder.Map("STATUS", () => 0);
 
     // Act
     var generator = new CompletionScriptGenerator();
@@ -251,9 +251,9 @@ public class CompletionEdgeCasesTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("http2-config", () => 0);
-    builder.AddRoute("base64-encode", () => 0);
-    builder.AddRoute("sha256-hash", () => 0);
+    builder.Map("http2-config", () => 0);
+    builder.Map("base64-encode", () => 0);
+    builder.Map("sha256-hash", () => 0);
 
     // Act
     var generator = new CompletionScriptGenerator();
@@ -271,8 +271,8 @@ public class CompletionEdgeCasesTests
   {
     // Arrange
     var builder = new NuruAppBuilder();
-    builder.AddRoute("status", () => 0);
-    builder.AddRoute("version", () => 0);
+    builder.Map("status", () => 0);
+    builder.Map("version", () => 0);
 
     var generator = new CompletionScriptGenerator();
 

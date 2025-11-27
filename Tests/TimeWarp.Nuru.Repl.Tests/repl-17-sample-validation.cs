@@ -36,48 +36,48 @@ public class SampleValidationTests
       // ========================================
       // SIMPLE COMMANDS (Literal only)
       // ========================================
-      .AddRoute("status", () => 0, description: "Displays the current system status.")
-      .AddRoute("time", () => 0, description: "Displays the current time.")
+      .Map("status", () => 0, description: "Displays the current system status.")
+      .Map("time", () => 0, description: "Displays the current time.")
 
       // ========================================
       // BASIC PARAMETERS
       // ========================================
-      .AddRoute("greet {name}", (string _) => 0, description: "Greets the person with the specified name.")
-      .AddRoute("add {a:int} {b:int}", (int _, int _2) => 0, description: "Adds two integers.")
+      .Map("greet {name}", (string _) => 0, description: "Greets the person with the specified name.")
+      .Map("add {a:int} {b:int}", (int _, int _2) => 0, description: "Adds two integers.")
 
       // ========================================
       // ENUM PARAMETERS
       // ========================================
-      .AddRoute("deploy {env:environment} {tag?}", (Environment _, string? _2) => 0,
+      .Map("deploy {env:environment} {tag?}", (Environment _, string? _2) => 0,
         description: "Deploys to environment (dev, staging, prod) with optional tag.")
 
       // ========================================
       // CATCH-ALL PARAMETERS
       // ========================================
-      .AddRoute("echo {*message}", (string[] _) => 0, description: "Echoes all arguments back.")
+      .Map("echo {*message}", (string[] _) => 0, description: "Echoes all arguments back.")
 
       // ========================================
       // SUBCOMMANDS (Hierarchical routes)
       // ========================================
-      .AddRoute("git status", () => 0, description: "Shows git working tree status.")
-      .AddRoute("git commit -m {message}", (string _) => 0, description: "Creates a commit with the specified message.")
-      .AddRoute("git log --count {n:int}", (int _) => 0, description: "Shows the last N commits.")
+      .Map("git status", () => 0, description: "Shows git working tree status.")
+      .Map("git commit -m {message}", (string _) => 0, description: "Creates a commit with the specified message.")
+      .Map("git log --count {n:int}", (int _) => 0, description: "Shows the last N commits.")
 
       // ========================================
       // BOOLEAN OPTIONS
       // ========================================
-      .AddRoute("build --verbose,-v", (bool _) => 0, description: "Builds the project. Use -v for verbose output.")
+      .Map("build --verbose,-v", (bool _) => 0, description: "Builds the project. Use -v for verbose output.")
 
       // ========================================
       // OPTIONS WITH VALUES
       // ========================================
-      .AddRoute("search {query} --limit,-l {count:int?}", (string _, int? _2) => 0,
+      .Map("search {query} --limit,-l {count:int?}", (string _, int? _2) => 0,
         description: "Searches with optional result limit.")
 
       // ========================================
       // COMBINED OPTIONS
       // ========================================
-      .AddRoute("backup {source} --compress,-c --output,-o {dest?}", (string _, bool _2, string? _3) => 0,
+      .Map("backup {source} --compress,-c --output,-o {dest?}", (string _, bool _2, string? _3) => 0,
         description: "Backs up source with optional compression and destination.")
 
       // ========================================

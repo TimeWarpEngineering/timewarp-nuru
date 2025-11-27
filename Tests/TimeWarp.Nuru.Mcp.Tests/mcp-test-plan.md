@@ -257,7 +257,7 @@ Tests use numbered files (mcp-01, mcp-02, etc.) for systematic coverage, with 7 
 1. **Generate Delegate for Simple Literal**
    - Pattern: `status`
    - Mode: Delegate (useMediator: false)
-   - Expected: `builder.AddRoute("status", () => { ... });`
+   - Expected: `builder.Map("status", () => { ... });`
 
 2. **Generate Delegate for Parameter**
    - Pattern: `greet {name}`
@@ -297,7 +297,7 @@ Tests use numbered files (mcp-01, mcp-02, etc.) for systematic coverage, with 7 
 9. **Generate Mediator for Simple Pattern**
    - Pattern: `deploy {env}`
    - Mode: Mediator (useMediator: true)
-   - Expected: IRequest record, IRequestHandler class, AddRoute registration
+   - Expected: IRequest record, IRequestHandler class, Map registration
 
 10. **Generate Mediator for Optional Parameter**
     - Pattern: `backup {source} {dest?}`

@@ -42,7 +42,7 @@ Without clear specification, multiple interpretations were possible:
 
 #### Optional Boolean Flag with Alias
 ```csharp
-builder.AddRoute("build --verbose,-v?", (bool verbose) => ...);
+builder.Map("build --verbose,-v?", (bool verbose) => ...);
 
 // Valid invocations:
 // build              → verbose = false
@@ -52,7 +52,7 @@ builder.AddRoute("build --verbose,-v?", (bool verbose) => ...);
 
 #### Optional Flag with Required Value
 ```csharp
-builder.AddRoute("backup {source} --output,-o? {file}",
+builder.Map("backup {source} --output,-o? {file}",
     (string source, string? file) => ...);
 
 // Valid invocations:
@@ -67,7 +67,7 @@ builder.AddRoute("backup {source} --output,-o? {file}",
 
 #### Optional Flag with Optional Value
 ```csharp
-builder.AddRoute("build --config,-c? {mode?}",
+builder.Map("build --config,-c? {mode?}",
     (string? mode) => ...);
 
 // Valid invocations:
@@ -182,10 +182,10 @@ This design decision **codifies existing behavior** - no breaking changes:
 
 ```csharp
 // Already works (undocumented)
-.AddRoute("build --verbose,-v", (bool verbose) => ...)
+.Map("build --verbose,-v", (bool verbose) => ...)
 
 // Now documented and tested
-.AddRoute("build --verbose,-v?", (bool verbose) => ...)
+.Map("build --verbose,-v?", (bool verbose) => ...)
 ```
 
 ### Future Analyzer Rule (NURU011)
@@ -194,7 +194,7 @@ A future analyzer rule could warn about potentially confusing patterns:
 
 ```csharp
 // Potential warning: ? placement before alias
-.AddRoute("build --verbose?,-v", ...)
+.Map("build --verbose?,-v", ...)
 // Suggestion: Place ? after alias group: --verbose,-v?
 ```
 

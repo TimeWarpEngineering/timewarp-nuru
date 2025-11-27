@@ -9,8 +9,8 @@ This document describes the route pattern syntax used in TimeWarp.Nuru for defin
 Literal segments are plain text that must match exactly:
 
 ```csharp
-.AddRoute("status", () => Console.WriteLine("OK"))
-.AddRoute("git commit", () => Console.WriteLine("Committing..."))
+.Map("status", () => Console.WriteLine("OK"))
+.Map("git commit", () => Console.WriteLine("Committing..."))
 ```
 
 ### Parameters
@@ -19,10 +19,10 @@ Parameters are defined using curly braces `{}` and capture values from the comma
 
 ```csharp
 // Basic parameter
-.AddRoute("greet {name}", (string name) => Console.WriteLine($"Hello {name}"))
+.Map("greet {name}", (string name) => Console.WriteLine($"Hello {name}"))
 
 // Multiple parameters
-.AddRoute("copy {source} {destination}", (string source, string dest) => ...)
+.Map("copy {source} {destination}", (string source, string dest) => ...)
 ```
 
 ### Parameter Types
@@ -30,9 +30,9 @@ Parameters are defined using curly braces `{}` and capture values from the comma
 Parameters can have type constraints using a colon `:` followed by the type:
 
 ```csharp
-.AddRoute("delay {ms:int}", (int milliseconds) => ...)
-.AddRoute("price {amount:double}", (double amount) => ...)
-.AddRoute("schedule {date:DateTime}", (DateTime date) => ...)
+.Map("delay {ms:int}", (int milliseconds) => ...)
+.Map("price {amount:double}", (double amount) => ...)
+.Map("schedule {date:DateTime}", (DateTime date) => ...)
 ```
 
 Supported types:
@@ -51,14 +51,14 @@ Supported types:
 Parameters can be made optional by adding `?` after the name:
 
 ```csharp
-.AddRoute("deploy {env} {tag?}", (string env, string? tag) => ...)
+.Map("deploy {env} {tag?}", (string env, string? tag) => ...)
 ```
 
 Optional parameters can also have type constraints:
 
 ```csharp
-.AddRoute("wait {seconds:int?}", (int? seconds) => ...)
-.AddRoute("backup {source} {destination:string?}", (string source, string? destination) => ...)
+.Map("wait {seconds:int?}", (int? seconds) => ...)
+.Map("backup {source} {destination:string?}", (string source, string? destination) => ...)
 ```
 
 ### Catch-all Parameters
@@ -66,7 +66,7 @@ Optional parameters can also have type constraints:
 Use `*` prefix for catch-all parameters that capture all remaining arguments:
 
 ```csharp
-.AddRoute("docker {*args}", (string[] args) => ...)
+.Map("docker {*args}", (string[] args) => ...)
 ```
 
 ## Options
@@ -75,13 +75,13 @@ Options start with `--` (long form) or `-` (short form):
 
 ```csharp
 // Boolean option
-.AddRoute("build --verbose", (bool verbose) => ...)
+.Map("build --verbose", (bool verbose) => ...)
 
 // Option with value
-.AddRoute("build --config {mode}", (string mode) => ...)
+.Map("build --config {mode}", (string mode) => ...)
 
 // Short form
-.AddRoute("build -c {mode}", (string mode) => ...)
+.Map("build -c {mode}", (string mode) => ...)
 ```
 
 ## Descriptions
@@ -91,10 +91,10 @@ Options start with `--` (long form) or `-` (short form):
 Add descriptions to parameters using the pipe `|` character:
 
 ```csharp
-.AddRoute("deploy {env|Target environment (dev, staging, prod)}", 
+.Map("deploy {env|Target environment (dev, staging, prod)}", 
     (string env) => ...)
 
-.AddRoute("copy {source|Source file path} {dest|Destination path}", 
+.Map("copy {source|Source file path} {dest|Destination path}", 
     (string source, string dest) => ...)
 ```
 
@@ -104,15 +104,15 @@ Options can have descriptions and short aliases:
 
 ```csharp
 // Option with description
-.AddRoute("build --verbose|Show detailed output", 
+.Map("build --verbose|Show detailed output", 
     (bool verbose) => ...)
 
 // Option with short alias and description
-.AddRoute("build --config,-c|Build configuration mode", 
+.Map("build --config,-c|Build configuration mode", 
     (string config) => ...)
 
 // Option with parameter and descriptions
-.AddRoute("deploy {env} --version|Deploy specific version {ver|Version tag}", 
+.Map("deploy {env} --version|Deploy specific version {ver|Version tag}", 
     (string env, string ver) => ...)
 ```
 
@@ -121,8 +121,8 @@ Options can have descriptions and short aliases:
 Use comma `,` to specify short aliases for options:
 
 ```csharp
-.AddRoute("test --verbose,-v", (bool verbose) => ...)
-.AddRoute("build --output,-o {path}", (string path) => ...)
+.Map("test --verbose,-v", (bool verbose) => ...)
+.Map("build --output,-o {path}", (string path) => ...)
 ```
 
 ## Complex Examples
@@ -130,7 +130,7 @@ Use comma `,` to specify short aliases for options:
 ### Multiple Options with Descriptions
 
 ```csharp
-.AddRoute("deploy {env|Environment name} " +
+.Map("deploy {env|Environment name} " +
           "--dry-run,-d|Preview without deploying " +
           "--force,-f|Skip confirmations",
     (string env, bool dryRun, bool force) => ...)
@@ -139,7 +139,7 @@ Use comma `,` to specify short aliases for options:
 ### Options with Parameters and Descriptions
 
 ```csharp
-.AddRoute("backup {source|Directory to backup} " +
+.Map("backup {source|Directory to backup} " +
           "--output,-o|Backup file location {path|Output path} " +
           "--compress,-c|Enable compression",
     (string source, string path, bool compress) => ...)
@@ -150,7 +150,7 @@ Use comma `,` to specify short aliases for options:
 In addition to inline descriptions, you can provide an overall route description:
 
 ```csharp
-.AddRoute("deploy {env}", 
+.Map("deploy {env}", 
     (string env) => ...,
     description: "Deploy application to specified environment")
 ```
@@ -161,8 +161,8 @@ Enable automatic help generation for all routes:
 
 ```csharp
 var app = new NuruAppBuilder()
-    .AddRoute(...)
-    .AddRoute(...)
+    .Map(...)
+    .Map(...)
     .AddAutoHelp()  // Generates --help routes automatically
     .Build();
 ```
@@ -187,17 +187,17 @@ This will automatically create help routes for:
 ```csharp
 var app = new NuruAppBuilder()
     // Simple command
-    .AddRoute("version", 
+    .Map("version", 
         () => Console.WriteLine("1.0.0"),
         description: "Show version information")
     
     // Command with parameters and descriptions
-    .AddRoute("deploy {env|Target environment (dev, staging, prod)} {tag?|Optional version tag}",
+    .Map("deploy {env|Target environment (dev, staging, prod)} {tag?|Optional version tag}",
         (string env, string? tag) => DeployTo(env, tag),
         description: "Deploy application to environment")
     
     // Command with options
-    .AddRoute("test {project|Project name} " +
+    .Map("test {project|Project name} " +
               "--verbose,-v|Show detailed output " +
               "--filter,-f|Test name filter {pattern|Filter pattern}",
         (string project, bool verbose, string? pattern) => RunTests(project, verbose, pattern),

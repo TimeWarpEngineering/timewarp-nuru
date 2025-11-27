@@ -28,37 +28,37 @@ NuruAppBuilder builder = new();
 // Original Built-In Types (v1.0)
 // ============================================================================
 
-builder.AddRoute("delay {milliseconds:int}", (int milliseconds) =>
+builder.Map("delay {milliseconds:int}", (int milliseconds) =>
 {
   Console.WriteLine($"⏱️  Delaying for {milliseconds}ms");
   return 0;
 });
 
-builder.AddRoute("price {amount:double} {quantity:int}", (double amount, int quantity) =>
+builder.Map("price {amount:double} {quantity:int}", (double amount, int quantity) =>
 {
   Console.WriteLine($"💰 Total: ${amount * quantity:F2} ({quantity} × ${amount:F2})");
   return 0;
 });
 
-builder.AddRoute("enabled {feature} {state:bool}", (string feature, bool state) =>
+builder.Map("enabled {feature} {state:bool}", (string feature, bool state) =>
 {
   Console.WriteLine($"🎚️  Feature '{feature}' is {(state ? "enabled" : "disabled")}");
   return 0;
 });
 
-builder.AddRoute("schedule {event} {when:DateTime}", (string @event, DateTime when) =>
+builder.Map("schedule {event} {when:DateTime}", (string @event, DateTime when) =>
 {
   Console.WriteLine($"📅 Event '{@event}' scheduled for {when:yyyy-MM-dd HH:mm:ss}");
   return 0;
 });
 
-builder.AddRoute("id {value:Guid}", (Guid value) =>
+builder.Map("id {value:Guid}", (Guid value) =>
 {
   Console.WriteLine($"🔑 GUID: {value}");
   return 0;
 });
 
-builder.AddRoute("wait {duration:TimeSpan}", (TimeSpan duration) =>
+builder.Map("wait {duration:TimeSpan}", (TimeSpan duration) =>
 {
   Console.WriteLine($"⏲️  Waiting for {duration.TotalSeconds:F1} seconds");
   return 0;
@@ -69,7 +69,7 @@ builder.AddRoute("wait {duration:TimeSpan}", (TimeSpan duration) =>
 // ============================================================================
 // Supports absolute URLs, relative URLs, and file:// URIs
 
-builder.AddRoute("fetch {url:Uri}", (Uri url) =>
+builder.Map("fetch {url:Uri}", (Uri url) =>
 {
   Console.WriteLine($"🌐 Fetching from {url.AbsoluteUri}");
   Console.WriteLine($"   Scheme: {url.Scheme}");
@@ -78,7 +78,7 @@ builder.AddRoute("fetch {url:Uri}", (Uri url) =>
   return 0;
 });
 
-builder.AddRoute("open-url {url:uri}", (Uri url) =>  // Case-insensitive!
+builder.Map("open-url {url:uri}", (Uri url) =>  // Case-insensitive!
 {
   Console.WriteLine($"🔗 Opening {url} in browser");
   return 0;
@@ -89,7 +89,7 @@ builder.AddRoute("open-url {url:uri}", (Uri url) =>  // Case-insensitive!
 // ============================================================================
 // Provides file metadata without requiring the file to exist
 
-builder.AddRoute("read {path:FileInfo}", (FileInfo file) =>
+builder.Map("read {path:FileInfo}", (FileInfo file) =>
 {
   Console.WriteLine($"📄 File: {file.Name}");
   Console.WriteLine($"   Full path: {file.FullName}");
@@ -104,7 +104,7 @@ builder.AddRoute("read {path:FileInfo}", (FileInfo file) =>
   return 0;
 });
 
-builder.AddRoute("edit {file:fileinfo} --backup {backup:FileInfo?}", (FileInfo file, FileInfo? backup) =>
+builder.Map("edit {file:fileinfo} --backup {backup:FileInfo?}", (FileInfo file, FileInfo? backup) =>
 {
   Console.WriteLine($"✏️  Editing {file.FullName}");
   if (backup != null)
@@ -117,7 +117,7 @@ builder.AddRoute("edit {file:fileinfo} --backup {backup:FileInfo?}", (FileInfo f
 // ============================================================================
 // Provides directory metadata without requiring the directory to exist
 
-builder.AddRoute("list {path:DirectoryInfo}", (DirectoryInfo dir) =>
+builder.Map("list {path:DirectoryInfo}", (DirectoryInfo dir) =>
 {
   Console.WriteLine($"📁 Directory: {dir.Name}");
   Console.WriteLine($"   Full path: {dir.FullName}");
@@ -132,7 +132,7 @@ builder.AddRoute("list {path:DirectoryInfo}", (DirectoryInfo dir) =>
   return 0;
 });
 
-builder.AddRoute("sync {source:DirectoryInfo} {dest:DIRECTORYINFO}", (DirectoryInfo source, DirectoryInfo dest) =>
+builder.Map("sync {source:DirectoryInfo} {dest:DIRECTORYINFO}", (DirectoryInfo source, DirectoryInfo dest) =>
 {
   Console.WriteLine($"🔄 Syncing {source.FullName} → {dest.FullName}");
   return 0;
@@ -143,7 +143,7 @@ builder.AddRoute("sync {source:DirectoryInfo} {dest:DIRECTORYINFO}", (DirectoryI
 // ============================================================================
 // Supports both IPv4 and IPv6 addresses
 
-builder.AddRoute("ping {address:ipaddress}", (IPAddress address) =>
+builder.Map("ping {address:ipaddress}", (IPAddress address) =>
 {
   Console.WriteLine($"📡 Pinging {address}");
   Console.WriteLine($"   Address family: {address.AddressFamily}");
@@ -154,7 +154,7 @@ builder.AddRoute("ping {address:ipaddress}", (IPAddress address) =>
   return 0;
 });
 
-builder.AddRoute("connect {host:ipaddress} {port:int}", (IPAddress host, int port) =>
+builder.Map("connect {host:ipaddress} {port:int}", (IPAddress host, int port) =>
 {
   Console.WriteLine($"🔌 Connecting to {host}:{port}");
   return 0;
@@ -165,7 +165,7 @@ builder.AddRoute("connect {host:ipaddress} {port:int}", (IPAddress host, int por
 // ============================================================================
 // For dates without time component (.NET 6+)
 
-builder.AddRoute("report {date:DateOnly}", (DateOnly date) =>
+builder.Map("report {date:DateOnly}", (DateOnly date) =>
 {
   Console.WriteLine($"📊 Generating report for {date:yyyy-MM-dd}");
   Console.WriteLine($"   Day of week: {date.DayOfWeek}");
@@ -173,7 +173,7 @@ builder.AddRoute("report {date:DateOnly}", (DateOnly date) =>
   return 0;
 });
 
-builder.AddRoute("range {start:dateonly} {end:DateOnly}", (DateOnly start, DateOnly end) =>
+builder.Map("range {start:dateonly} {end:DateOnly}", (DateOnly start, DateOnly end) =>
 {
   int days = end.DayNumber - start.DayNumber;
   Console.WriteLine($"📆 Date range: {start} to {end} ({days} days)");
@@ -185,7 +185,7 @@ builder.AddRoute("range {start:dateonly} {end:DateOnly}", (DateOnly start, DateO
 // ============================================================================
 // For time without date component (.NET 6+)
 
-builder.AddRoute("alarm {time:TimeOnly}", (TimeOnly time) =>
+builder.Map("alarm {time:TimeOnly}", (TimeOnly time) =>
 {
   Console.WriteLine($"⏰ Alarm set for {time:HH:mm:ss}");
   Console.WriteLine($"   Hour: {time.Hour}");
@@ -194,7 +194,7 @@ builder.AddRoute("alarm {time:TimeOnly}", (TimeOnly time) =>
   return 0;
 });
 
-builder.AddRoute("schedule-backup {time:timeonly}", (TimeOnly time) =>
+builder.Map("schedule-backup {time:timeonly}", (TimeOnly time) =>
 {
   Console.WriteLine($"💾 Backup scheduled daily at {time:HH:mm}");
   return 0;
@@ -204,7 +204,7 @@ builder.AddRoute("schedule-backup {time:timeonly}", (TimeOnly time) =>
 // Combined Examples
 // ============================================================================
 
-builder.AddRoute("deploy {version:Guid} {target:Uri} {date:DateOnly} --dry-run?",
+builder.Map("deploy {version:Guid} {target:Uri} {date:DateOnly} --dry-run?",
   (Guid version, Uri target, DateOnly date, bool dryRun) =>
 {
   Console.WriteLine($"🚀 Deployment Plan:");
@@ -215,7 +215,7 @@ builder.AddRoute("deploy {version:Guid} {target:Uri} {date:DateOnly} --dry-run?"
   return 0;
 });
 
-builder.AddRoute("backup {source:DirectoryInfo} --dest {dest:DirectoryInfo?} --config {cfg:FileInfo?}",
+builder.Map("backup {source:DirectoryInfo} --dest {dest:DirectoryInfo?} --config {cfg:FileInfo?}",
   (DirectoryInfo source, DirectoryInfo? dest, FileInfo? cfg) =>
 {
   Console.WriteLine($"💾 Backup Configuration:");

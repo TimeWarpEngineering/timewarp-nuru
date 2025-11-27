@@ -22,9 +22,9 @@ Maximum performance with minimal overhead.
 **Example:**
 ```csharp
 NuruApp app = new NuruAppBuilder()
-  .AddRoute("version", () => Console.WriteLine("v1.0.0"))
-  .AddRoute("ping", () => Console.WriteLine("pong"))
-  .AddRoute
+  .Map("version", () => Console.WriteLine("v1.0.0"))
+  .Map("ping", () => Console.WriteLine("pong"))
+  .Map
   (
     "add {x:double} {y:double}",
     (double x, double y) => Console.WriteLine(x + y)
@@ -58,8 +58,8 @@ NuruApp app = new NuruAppBuilder()
     services.AddSingleton<IDatabase, Database>();
     services.AddScoped<IAnalyzer, Analyzer>();
   })
-  .AddRoute<QueryCommand>("query {sql}")
-  .AddRoute<AnalyzeCommand>("analyze {*files}")
+  .Map<QueryCommand>("query {sql}")
+  .Map<AnalyzeCommand>("analyze {*files}")
   .Build();
 ```
 
@@ -86,11 +86,11 @@ NuruApp app = new NuruAppBuilder()
     services.AddScoped<IDeploymentService, DeploymentService>();
   })
   // Direct: Simple, fast commands
-  .AddRoute("version", () => Console.WriteLine("v1.0"))
-  .AddRoute("ping", () => Console.WriteLine("pong"))
+  .Map("version", () => Console.WriteLine("v1.0"))
+  .Map("ping", () => Console.WriteLine("pong"))
   // Mediator: Complex commands with DI
-  .AddRoute<DeployCommand>("deploy {env} --dry-run")
-  .AddRoute<AnalyzeCommand>("analyze {*files}")
+  .Map<DeployCommand>("deploy {env} --dry-run")
+  .Map<AnalyzeCommand>("analyze {*files}")
   .Build();
 ```
 
@@ -136,7 +136,7 @@ See [Performance Reference](../reference/performance.md) for detailed benchmarks
 **Direct:**
 ```csharp
 // All in one place
-builder.AddRoute
+builder.Map
 (
   "deploy {env}",
   (string env) =>
@@ -206,7 +206,7 @@ mockDeployment.Verify(x => x.ExecuteAsync(It.IsAny<Config>()), Times.Once);
 ```csharp
 // Phase 1: Start simple
 NuruApp app = new NuruAppBuilder()
-  .AddRoute("deploy {env}", (string env) => Deploy(env))
+  .Map("deploy {env}", (string env) => Deploy(env))
   .Build();
 
 // Phase 2: Add DI for new complex command
@@ -216,8 +216,8 @@ NuruApp app2 = new NuruAppBuilder()
   {
     services.AddScoped<IAnalyzer, Analyzer>();
   })
-  .AddRoute("deploy {env}", (string env) => Deploy(env))  // Keep existing
-  .AddRoute<AnalyzeCommand>("analyze {*files}")  // New complex command
+  .Map("deploy {env}", (string env) => Deploy(env))  // Keep existing
+  .Map<AnalyzeCommand>("analyze {*files}")  // New complex command
   .Build();
 
 // Phase 3: Migrate deploy to mediator if needed
@@ -230,10 +230,10 @@ NuruApp app2 = new NuruAppBuilder()
 NuruApp app = new NuruAppBuilder()
   .AddDependencyInjection()
   // Most commands use mediator
-  .AddRoute<DeployCommand>("deploy {env}")
-  .AddRoute<AnalyzeCommand>("analyze {*files}")
+  .Map<DeployCommand>("deploy {env}")
+  .Map<AnalyzeCommand>("analyze {*files}")
   // Optimize hot path with direct approach
-  .AddRoute("ping", () => "pong")  // Called frequently, needs speed
+  .Map("ping", () => "pong")  // Called frequently, needs speed
   .Build();
 ```
 
@@ -245,9 +245,9 @@ NuruApp app = new NuruAppBuilder()
 
 ```csharp
 NuruApp app = new NuruAppBuilder()
-  .AddRoute("encode {text}", (string text) => Base64.Encode(text))
-  .AddRoute("decode {text}", (string text) => Base64.Decode(text))
-  .AddRoute("hash {file}", (string file) => ComputeHash(file))
+  .Map("encode {text}", (string text) => Base64.Encode(text))
+  .Map("decode {text}", (string text) => Base64.Decode(text))
+  .Map("hash {file}", (string file) => ComputeHash(file))
   .Build();
 ```
 
@@ -266,8 +266,8 @@ NuruApp app = new NuruAppBuilder()
     services.AddTelemetry();
   })
   // All commands use mediator
-  .AddRoute<UserCreateCommand>("user create {email}")
-  .AddRoute<ReportGenerateCommand>("report generate {type}")
+  .Map<UserCreateCommand>("user create {email}")
+  .Map<ReportGenerateCommand>("report generate {type}")
   // ... 98 more commands
   .Build();
 ```
@@ -288,11 +288,11 @@ NuruApp app = new NuruAppBuilder()
     }
   )
   // Simple direct commands
-  .AddRoute("version", () => Console.WriteLine("v2.0"))
-  .AddRoute("status", () => ShowStatus())
+  .Map("version", () => Console.WriteLine("v2.0"))
+  .Map("status", () => ShowStatus())
   // Complex commands with DI
-  .AddRoute<DeployCommand>("deploy {env} --dry-run")
-  .AddRoute<RollbackCommand>("rollback {env} --to {version}")
+  .Map<DeployCommand>("deploy {env} --dry-run")
+  .Map<RollbackCommand>("rollback {env} --to {version}")
   .Build();
 ```
 
@@ -303,7 +303,7 @@ NuruApp app = new NuruAppBuilder()
 ```csharp
 // ✅ Start with direct approach
 NuruApp app = new NuruAppBuilder()
-  .AddRoute("greet {name}", (string name) => $"Hello, {name}!")
+  .Map("greet {name}", (string name) => $"Hello, {name}!")
   .Build();
 
 // ❌ Don't over-engineer from the start
@@ -317,7 +317,7 @@ NuruApp app = new NuruAppBuilder()
       services.AddScoped<IGreetingFormatter, GreetingFormatter>();
     }
   )
-  .AddRoute<GreetCommand>("greet {name}")  // Overkill for simple greeting
+  .Map<GreetCommand>("greet {name}")  // Overkill for simple greeting
   .Build();
 ```
 
@@ -337,10 +337,10 @@ NuruApp app = new NuruAppBuilder()
   .AddDependencyInjection()
   .ConfigureServices(services => services.AddComplexServices();)
   // Direct for simple operations
-  .AddRoute("ping", () => "pong")
-  .AddRoute("version", () => "1.0")
+  .Map("ping", () => "pong")
+  .Map("version", () => "1.0")
   // Mediator for complex operations
-  .AddRoute<ComplexCommand>("complex {arg}")
+  .Map<ComplexCommand>("complex {arg}")
   // Both in same app - totally fine!
   .Build();
 ```

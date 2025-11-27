@@ -16,7 +16,7 @@ public sealed class HandlerGenerationTests
     string result = GenerateHandlerTool.GenerateHandler(pattern, useMediator: false);
 
     // Assert
-    result.ShouldContain("AddRoute");
+    result.ShouldContain("Map");
     result.ShouldContain("\"status\"");
     result.ShouldContain("() =>");
     result.ShouldNotContain("// Error");
@@ -33,7 +33,7 @@ public sealed class HandlerGenerationTests
     string result = GenerateHandlerTool.GenerateHandler(pattern, useMediator: false);
 
     // Assert
-    result.ShouldContain("AddRoute");
+    result.ShouldContain("Map");
     result.ShouldContain("\"greet {name}\"");
     result.ShouldContain("(string name)");
     result.ShouldNotContain("// Error");
@@ -50,7 +50,7 @@ public sealed class HandlerGenerationTests
     string result = GenerateHandlerTool.GenerateHandler(pattern, useMediator: false);
 
     // Assert
-    result.ShouldContain("AddRoute");
+    result.ShouldContain("Map");
     result.ShouldContain("\"deploy {env} {tag?}\"");
     result.ShouldContain("(string env, string? tag)");
     result.ShouldNotContain("// Error");
@@ -67,7 +67,7 @@ public sealed class HandlerGenerationTests
     string result = GenerateHandlerTool.GenerateHandler(pattern, useMediator: false);
 
     // Assert
-    result.ShouldContain("AddRoute");
+    result.ShouldContain("Map");
     result.ShouldContain("\"wait {seconds:int}\"");
     result.ShouldContain("(int seconds)");
     result.ShouldNotContain("// Error");
@@ -84,7 +84,7 @@ public sealed class HandlerGenerationTests
     string result = GenerateHandlerTool.GenerateHandler(pattern, useMediator: false);
 
     // Assert
-    result.ShouldContain("AddRoute");
+    result.ShouldContain("Map");
     result.ShouldContain("\"build --verbose\"");
     result.ShouldContain("(bool verbose)");
     result.ShouldNotContain("// Error");
@@ -101,7 +101,7 @@ public sealed class HandlerGenerationTests
     string result = GenerateHandlerTool.GenerateHandler(pattern, useMediator: false);
 
     // Assert
-    result.ShouldContain("AddRoute");
+    result.ShouldContain("Map");
     result.ShouldContain("(string project");
     result.ShouldContain("string pattern)");
     result.ShouldNotContain("// Error");
@@ -118,7 +118,7 @@ public sealed class HandlerGenerationTests
     string result = GenerateHandlerTool.GenerateHandler(pattern, useMediator: false);
 
     // Assert
-    result.ShouldContain("AddRoute");
+    result.ShouldContain("Map");
     result.ShouldContain("\"docker {*args}\"");
     result.ShouldContain("(string[] args)");
     result.ShouldNotContain("// Error");
@@ -135,7 +135,7 @@ public sealed class HandlerGenerationTests
     string result = GenerateHandlerTool.GenerateHandler(pattern, useMediator: false);
 
     // Assert
-    result.ShouldContain("AddRoute");
+    result.ShouldContain("Map");
     result.ShouldContain("source");
     result.ShouldContain("dest");
     result.ShouldContain("compress");
@@ -156,7 +156,7 @@ public sealed class HandlerGenerationTests
     result.ShouldContain("public sealed class");
     result.ShouldContain("IRequest");
     result.ShouldContain("IRequestHandler");
-    result.ShouldContain("AddRoute<");
+    result.ShouldContain("Map<");
     result.ShouldContain("string env");
     result.ShouldNotContain("// Error");
 
@@ -222,7 +222,7 @@ public sealed class HandlerGenerationTests
     string result = GenerateHandlerTool.GenerateHandler(pattern);
 
     // Assert
-    result.ShouldContain("AddRoute");
+    result.ShouldContain("Map");
     result.ShouldNotContain("IRequest");
 
     await Task.CompletedTask;

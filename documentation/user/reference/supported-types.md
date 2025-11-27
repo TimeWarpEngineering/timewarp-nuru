@@ -26,8 +26,8 @@ TimeWarp.Nuru includes converters for common .NET types:
 ```csharp
 NuruApp app = new NuruAppBuilder()
   // Type annotation optional for strings
-  .AddRoute("greet {name}", (string name) => $"Hello, {name}!")
-  .AddRoute("echo {message:string}", (string msg) => msg)
+  .Map("greet {name}", (string name) => $"Hello, {name}!")
+  .Map("echo {message:string}", (string msg) => msg)
   .Build();
 ```
 
@@ -40,8 +40,8 @@ NuruApp app = new NuruAppBuilder()
 
 ```csharp
 NuruApp app = new NuruAppBuilder()
-  .AddRoute("wait {seconds:int}", (int sec) => Thread.Sleep(sec * 1000))
-  .AddRoute
+  .Map("wait {seconds:int}", (int sec) => Thread.Sleep(sec * 1000))
+  .Map
   (
     "repeat {times:int} {text}",
     (int times, string text) =>
@@ -62,8 +62,8 @@ NuruApp app = new NuruAppBuilder()
 
 ```csharp
 NuruApp app = new NuruAppBuilder()
-  .AddRoute("calc {x:double} {y:double}", (double x, double y) => x + y)
-  .AddRoute("scale {factor:double}", (double f) => Scale(f))
+  .Map("calc {x:double} {y:double}", (double x, double y) => x + y)
+  .Map("scale {factor:double}", (double f) => Scale(f))
   .Build();
 ```
 
@@ -76,7 +76,7 @@ NuruApp app = new NuruAppBuilder()
 
 ```csharp
 NuruApp app = new NuruAppBuilder()
-  .AddRoute
+  .Map
   (
     "set {key} {value:bool}",
     (string key, bool value) => Config.Set(key, value)
@@ -93,7 +93,7 @@ NuruApp app = new NuruAppBuilder()
 
 ```csharp
 NuruApp app = new NuruAppBuilder()
-  .AddRoute
+  .Map
   (
     "schedule {when:DateTime}",
     (DateTime dt) => Console.WriteLine($"Scheduled for {dt}")
@@ -110,8 +110,8 @@ NuruApp app = new NuruAppBuilder()
 
 ```csharp
 NuruApp app = new NuruAppBuilder()
-  .AddRoute("get {id:Guid}", (Guid id) => GetRecord(id))
-  .AddRoute("delete {userId:Guid}", (Guid userId) => DeleteUser(userId))
+  .Map("get {id:Guid}", (Guid id) => GetRecord(id))
+  .Map("delete {userId:Guid}", (Guid userId) => DeleteUser(userId))
   .Build();
 ```
 
@@ -123,7 +123,7 @@ NuruApp app = new NuruAppBuilder()
 
 ```csharp
 NuruApp app = new NuruAppBuilder()
-  .AddRoute("allocate {bytes:long}", (long bytes) => Allocate(bytes))
+  .Map("allocate {bytes:long}", (long bytes) => Allocate(bytes))
   .Build();
 ```
 
@@ -135,7 +135,7 @@ NuruApp app = new NuruAppBuilder()
 
 ```csharp
 NuruApp app = new NuruAppBuilder()
-  .AddRoute
+  .Map
   (
     "pay {amount:decimal}",
     (decimal amt) => ProcessPayment(amt)
@@ -151,7 +151,7 @@ NuruApp app = new NuruAppBuilder()
 
 ```csharp
 NuruApp app = new NuruAppBuilder()
-  .AddRoute
+  .Map
   (
     "timeout {duration:TimeSpan}",
     (TimeSpan ts) => SetTimeout(ts)
@@ -168,7 +168,7 @@ NuruApp app = new NuruAppBuilder()
 
 ```csharp
 NuruApp app = new NuruAppBuilder()
-  .AddRoute("download {url:uri}", (Uri url) => Download(url))
+  .Map("download {url:uri}", (Uri url) => Download(url))
   .Build();
 ```
 
@@ -182,7 +182,7 @@ Use nullable types for optional parameters:
 
 ```csharp
 NuruApp app = new NuruAppBuilder()
-  .AddRoute
+  .Map
   (
     "deploy {env} {version?}",
     (string env, string? version) =>
@@ -192,7 +192,7 @@ NuruApp app = new NuruAppBuilder()
         Console.WriteLine($"Version: {version}");
     }
   )
-  .AddRoute
+  .Map
   (
     "wait {seconds:int?}",
     (int? seconds) =>
@@ -210,12 +210,12 @@ Use `string[]` for catch-all parameters:
 
 ```csharp
 NuruApp app = new NuruAppBuilder()
-  .AddRoute
+  .Map
   (
     "echo {*words}",
     (string[] words) => Console.WriteLine(string.Join(" ", words))
   )
-  .AddRoute
+  .Map
   (
     "add {*files}",
     (string[] files) =>
@@ -267,7 +267,7 @@ public class ColorConverter : ITypeConverter<Color>
 builder.AddTypeConverter(new ColorConverter());
 
 // Use in routes
-builder.AddRoute("paint {color:Color}", (Color color) => Paint(color));
+builder.Map("paint {color:Color}", (Color color) => Paint(color));
 ```
 
 ```bash
@@ -281,12 +281,12 @@ The Roslyn analyzer validates type syntax at compile-time:
 
 ```csharp
 // ✅ Valid types
-builder.AddRoute("test {value:int}", handler);
-builder.AddRoute("test {value:DateTime}", handler);
+builder.Map("test {value:int}", handler);
+builder.Map("test {value:DateTime}", handler);
 
 // ❌ Invalid type (analyzer error NURU_P004)
-builder.AddRoute("test {value:integer}", handler);  // Use 'int'
-builder.AddRoute("test {value:float}", handler);    // Use 'double'
+builder.Map("test {value:integer}", handler);  // Use 'int'
+builder.Map("test {value:float}", handler);    // Use 'double'
 ```
 
 See [Analyzer Documentation](../features/analyzer.md) for more details.
@@ -297,11 +297,11 @@ See [Analyzer Documentation](../features/analyzer.md) for more details.
 
 ```csharp
 // ✅ Specific type for validation
-.AddRoute("wait {seconds:int}", (int sec) => ...)
+.Map("wait {seconds:int}", (int sec) => ...)
 
 // ❌ String requires manual validation
 NuruApp badApp = new NuruAppBuilder()
-  .AddRoute
+  .Map
   (
     "wait {seconds}",
     (string sec) =>
@@ -318,22 +318,22 @@ NuruApp badApp = new NuruAppBuilder()
 
 ```csharp
 // ✅ Nullable type for optional parameter
-.AddRoute("deploy {env} {version?}", (string env, string? version) => ...)
+.Map("deploy {env} {version?}", (string env, string? version) => ...)
 
 // ❌ Don't use default values in pattern
-.AddRoute("deploy {env} {version:v1.0}", ...)  // Not supported
+.Map("deploy {env} {version:v1.0}", ...)  // Not supported
 ```
 
 ### Consistent Naming
 
 ```csharp
 // ✅ Consistent type names
-.AddRoute("wait {seconds:int}", ...)
-.AddRoute("delay {milliseconds:int}", ...)
+.Map("wait {seconds:int}", ...)
+.Map("delay {milliseconds:int}", ...)
 
 // ❌ Mixed naming styles
-.AddRoute("wait {seconds:Int}", ...)    // Use lowercase 'int'
-.AddRoute("delay {milliseconds:INT}", ...)  // Use lowercase 'int'
+.Map("wait {seconds:Int}", ...)    // Use lowercase 'int'
+.Map("delay {milliseconds:INT}", ...)  // Use lowercase 'int'
 ```
 
 ## Related Documentation

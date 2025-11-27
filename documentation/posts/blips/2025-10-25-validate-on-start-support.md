@@ -23,7 +23,7 @@ NuruApp app =
       .ValidateDataAnnotations()
       .ValidateOnStart();  // ✅ Validates during Build()
   })
-  .AddRoute<QueryCommand>("query {sql}")
+  .Map<QueryCommand>("query {sql}")
   .Build();  // Throws if configuration is invalid
 ```
 

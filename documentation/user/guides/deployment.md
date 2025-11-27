@@ -64,7 +64,7 @@ Create single-file executables that run directly.
 using TimeWarp.Nuru;
 
 NuruApp app = new NuruAppBuilder()
-  .AddRoute("greet {name}", (string name) => $"Hello, {name}!")
+  .Map("greet {name}", (string name) => $"Hello, {name}!")
   .Build();
 
 return await app.RunAsync(args);

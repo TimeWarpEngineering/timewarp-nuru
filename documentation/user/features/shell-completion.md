@@ -34,8 +34,8 @@ using TimeWarp.Nuru;
 using TimeWarp.Nuru.Completion;
 
 NuruApp app = new NuruAppBuilder()
-    .AddRoute("deploy {env} --version {tag}", (string env, string tag) => Deploy(env, tag))
-    .AddRoute("status", () => ShowStatus())
+    .Map("deploy {env} --version {tag}", (string env, string tag) => Deploy(env, tag))
+    .Map("status", () => ShowStatus())
     .EnableStaticCompletion()  // ← Add this one line
     .Build();
 
@@ -94,9 +94,9 @@ source ~/.zshrc
 All root-level literal routes become completable commands:
 
 ```csharp
-builder.AddRoute("deploy {env}", (string env) => Deploy(env));
-builder.AddRoute("status", () => Status());
-builder.AddRoute("version", () => Version());
+builder.Map("deploy {env}", (string env) => Deploy(env));
+builder.Map("status", () => Status());
+builder.Map("version", () => Version());
 ```
 
 ```bash
@@ -109,7 +109,7 @@ deploy    status    version
 Parameter names are shown as completion hints:
 
 ```csharp
-builder.AddRoute("deploy {env}", (string env) => Deploy(env));
+builder.Map("deploy {env}", (string env) => Deploy(env));
 ```
 
 ```bash
@@ -129,7 +129,7 @@ config.json    data.xml    settings.toml
 All options defined in routes are completable:
 
 ```csharp
-builder.AddRoute("build --config {mode} --verbose", (string mode, bool verbose) => Build(mode, verbose));
+builder.Map("build --config {mode} --verbose", (string mode, bool verbose) => Build(mode, verbose));
 ```
 
 ```bash
@@ -147,7 +147,7 @@ Enum parameters automatically complete with all possible values:
 ```csharp
 public enum LogLevel { Debug, Info, Warning, Error }
 
-builder.AddRoute("log --level {level}", (LogLevel level) => SetLogLevel(level));
+builder.Map("log --level {level}", (LogLevel level) => SetLogLevel(level));
 ```
 
 ```bash
@@ -160,7 +160,7 @@ Debug    Info    Warning    Error
 Catch-all parameters trigger file/directory completion:
 
 ```csharp
-builder.AddRoute("echo {*words}", (string[] words) => Echo(words));
+builder.Map("echo {*words}", (string[] words) => Echo(words));
 ```
 
 ```bash
@@ -178,10 +178,10 @@ using TimeWarp.Nuru.Completion;
 
 var builder = new NuruAppBuilder();
 
-builder.AddRoute("createorder {product} {quantity:int}",
+builder.Map("createorder {product} {quantity:int}",
     (string product, int quantity) => CreateOrder(product, quantity));
 
-builder.AddRoute("status", () => ShowStatus());
+builder.Map("status", () => ShowStatus());
 
 builder.EnableStaticCompletion();
 
@@ -208,8 +208,8 @@ status
 ### With Options
 
 ```csharp
-builder.AddRoute("git commit -m {message} --amend?", (string message, bool amend) => Commit(message, amend));
-builder.AddRoute("git status --short?", (bool short) => Status(short));
+builder.Map("git commit -m {message} --amend?", (string message, bool amend) => Commit(message, amend));
+builder.Map("git status --short?", (bool short) => Status(short));
 ```
 
 **Tab completion behavior:**
@@ -230,7 +230,7 @@ $ ./myapp git status --<TAB>
 ```csharp
 public enum Environment { Development, Staging, Production }
 
-builder.AddRoute("deploy {env}", (Environment env) => Deploy(env));
+builder.Map("deploy {env}", (Environment env) => Deploy(env));
 builder.EnableStaticCompletion();
 ```
 
@@ -244,9 +244,9 @@ Development    Staging    Production
 ### Complex Routes
 
 ```csharp
-builder.AddRoute("docker run {image} {*args}", (string image, string[] args) => DockerRun(image, args));
-builder.AddRoute("docker ps --all?", (bool all) => DockerPs(all));
-builder.AddRoute("docker logs {container} --follow?", (string container, bool follow) => DockerLogs(container, follow));
+builder.Map("docker run {image} {*args}", (string image, string[] args) => DockerRun(image, args));
+builder.Map("docker ps --all?", (bool all) => DockerPs(all));
+builder.Map("docker logs {container} --follow?", (string container, bool follow) => DockerLogs(container, follow));
 ```
 
 **Tab completion behavior:**
@@ -337,7 +337,7 @@ TimeWarp.Nuru.Completion provides **static completion** by default:
 ```csharp
 public enum LogLevel { Debug, Info, Warning, Error }
 
-builder.AddRoute("log --level {level}", (LogLevel level) => SetLogLevel(level));
+builder.Map("log --level {level}", (LogLevel level) => SetLogLevel(level));
 builder.EnableStaticCompletion();
 ```
 
@@ -445,10 +445,10 @@ Use clear parameter names that make sense as completion hints:
 
 ```csharp
 // ✅ Good
-builder.AddRoute("deploy {environment}", (string environment) => Deploy(environment));
+builder.Map("deploy {environment}", (string environment) => Deploy(environment));
 
 // ❌ Less helpful
-builder.AddRoute("deploy {env}", (string env) => Deploy(env));
+builder.Map("deploy {env}", (string env) => Deploy(env));
 ```
 
 ### 2. Use Enums for Fixed Value Sets
@@ -458,10 +458,10 @@ Convert string parameters with known values to enums:
 ```csharp
 // ✅ Good - automatic completion of all values
 public enum Environment { Dev, Staging, Prod }
-builder.AddRoute("deploy {env}", (Environment env) => Deploy(env));
+builder.Map("deploy {env}", (Environment env) => Deploy(env));
 
 // ❌ Missed opportunity
-builder.AddRoute("deploy {env}", (string env) => Deploy(env));
+builder.Map("deploy {env}", (string env) => Deploy(env));
 ```
 
 ### 3. Group Related Commands
@@ -469,9 +469,9 @@ builder.AddRoute("deploy {env}", (string env) => Deploy(env));
 Use consistent command prefixes for related functionality:
 
 ```csharp
-builder.AddRoute("docker run {image}", (string image) => DockerRun(image));
-builder.AddRoute("docker ps", () => DockerPs());
-builder.AddRoute("docker logs {container}", (string container) => DockerLogs(container));
+builder.Map("docker run {image}", (string image) => DockerRun(image));
+builder.Map("docker ps", () => DockerPs());
+builder.Map("docker logs {container}", (string container) => DockerLogs(container));
 
 // Tab: ./myapp docker <TAB> → run, ps, logs
 ```
@@ -498,9 +498,9 @@ Include shell completion setup in your project's installation instructions:
 Use standard option names for common functionality:
 
 ```csharp
-builder.AddRoute("build --verbose", (bool verbose) => Build(verbose));
-builder.AddRoute("test --verbose", (bool verbose) => Test(verbose));
-builder.AddRoute("deploy --verbose", (bool verbose) => Deploy(verbose));
+builder.Map("build --verbose", (bool verbose) => Build(verbose));
+builder.Map("test --verbose", (bool verbose) => Test(verbose));
+builder.Map("deploy --verbose", (bool verbose) => Deploy(verbose));
 ```
 
 ## API Reference

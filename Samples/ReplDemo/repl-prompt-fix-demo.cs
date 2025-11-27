@@ -9,12 +9,12 @@ using TimeWarp.Nuru;
 // After fix: Prompt displays correctly, providing clear UX
 
 NuruApp app = new NuruAppBuilder()
-  .AddRoute("hello", () =>
+  .Map("hello", () =>
   {
     Console.WriteLine("Hello, World!");
     return 0;
   })
-  .AddRoute("status", () =>
+  .Map("status", () =>
   {
     Console.WriteLine("All systems operational");
     return 0;

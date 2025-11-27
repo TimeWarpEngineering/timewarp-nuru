@@ -52,21 +52,21 @@ internal static class HelpRouteGenerator
       {
         // Capture endpoints by value to avoid issues with collection modification
         List<Endpoint> capturedEndpoints = [.. endpoints];
-        builder.AddRoute(helpRoute, () => GetCommandGroupHelpText(prefix, capturedEndpoints), description);
+        builder.Map(helpRoute, () => GetCommandGroupHelpText(prefix, capturedEndpoints), description);
       }
     }
 
     // Add base --help route if not already present
     if (!existingEndpoints.Any(e => e.RoutePattern == "--help"))
     {
-      builder.AddRoute("--help", () => HelpProvider.GetHelpText(endpointCollection, appMetadata?.Name, appMetadata?.Description),
+      builder.Map("--help", () => HelpProvider.GetHelpText(endpointCollection, appMetadata?.Name, appMetadata?.Description),
       description: "Show available commands");
     }
 
     // Add base help route if not already present (REPL-friendly)
     if (!existingEndpoints.Any(e => e.RoutePattern == "help"))
     {
-      builder.AddRoute("help", () => HelpProvider.GetHelpText(endpointCollection, appMetadata?.Name, appMetadata?.Description),
+      builder.Map("help", () => HelpProvider.GetHelpText(endpointCollection, appMetadata?.Name, appMetadata?.Description),
       description: "Show available commands");
     }
   }

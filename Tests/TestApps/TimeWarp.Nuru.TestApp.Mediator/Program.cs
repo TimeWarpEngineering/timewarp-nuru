@@ -6,68 +6,68 @@ NuruAppBuilder builder = new NuruAppBuilder()
     .AddDependencyInjection(config => config.RegisterServicesFromAssembly(typeof(StatusCommand).Assembly));
 
 // Test 1: Basic Commands (2)
-builder.AddRoute<StatusCommand>("status");
-builder.AddRoute<VersionCommand>("version");
+builder.Map<StatusCommand>("status");
+builder.Map<VersionCommand>("version");
 
 // Test 2: Sub-Commands (3)
-builder.AddRoute<GitStatusCommand>("git status");
-builder.AddRoute<GitCommitCommand>("git commit");
-builder.AddRoute<GitPushCommand>("git push");
+builder.Map<GitStatusCommand>("git status");
+builder.Map<GitCommitCommand>("git commit");
+builder.Map<GitPushCommand>("git push");
 
 // Test 3: Option-Based Routing (2)
-builder.AddRoute<GitCommitAmendCommand>("git commit --amend");
-builder.AddRoute<GitCommitAmendNoEditCommand>("git commit --amend --no-edit");
+builder.Map<GitCommitAmendCommand>("git commit --amend");
+builder.Map<GitCommitAmendNoEditCommand>("git commit --amend --no-edit");
 
 // Test 4: Options with Values (2 - count variations)
-builder.AddRoute<GitLogCommand>("git log --max-count {count:int}");
+builder.Map<GitLogCommand>("git log --max-count {count:int}");
 
 // Test 5: Docker Pass-Through (3)
-builder.AddRoute<DockerRunEnhancedCommand>("docker run --enhance-logs {image}");
-builder.AddRoute<DockerRunCommand>("docker run {*args}");
+builder.Map<DockerRunEnhancedCommand>("docker run --enhance-logs {image}");
+builder.Map<DockerRunCommand>("docker run {*args}");
 
 // Test 6: Docker Build Pass-Through (2)
-builder.AddRoute<DockerBuildCommand>("docker build {*args}");
-builder.AddRoute<DockerPsCommand>("docker ps {*args}");
+builder.Map<DockerBuildCommand>("docker build {*args}");
+builder.Map<DockerPsCommand>("docker ps {*args}");
 
 // Test 7: kubectl Enhancement (5)
-builder.AddRoute<KubectlGetEnhancedCommand>("kubectl get {resource} --watch --enhanced");
-builder.AddRoute<KubectlGetWatchCommand>("kubectl get {resource} --watch");
-builder.AddRoute<KubectlGetCommand>("kubectl get {resource}");
-builder.AddRoute<KubectlApplyCommand>("kubectl apply -f {file}");
-builder.AddRoute<KubectlCommand>("kubectl {*args}");
+builder.Map<KubectlGetEnhancedCommand>("kubectl get {resource} --watch --enhanced");
+builder.Map<KubectlGetWatchCommand>("kubectl get {resource} --watch");
+builder.Map<KubectlGetCommand>("kubectl get {resource}");
+builder.Map<KubectlApplyCommand>("kubectl apply -f {file}");
+builder.Map<KubectlCommand>("kubectl {*args}");
 
 // Test 8: npm with Options (5)
-builder.AddRoute<NpmInstallDevCommand>("npm install {package} --save-dev");
-builder.AddRoute<NpmInstallSaveCommand>("npm install {package} --save");
-builder.AddRoute<NpmInstallCommand>("npm install {package}");
-builder.AddRoute<NpmRunCommand>("npm run {script}");
-builder.AddRoute<NpmCommand>("npm {*args}");
+builder.Map<NpmInstallDevCommand>("npm install {package} --save-dev");
+builder.Map<NpmInstallSaveCommand>("npm install {package} --save");
+builder.Map<NpmInstallCommand>("npm install {package}");
+builder.Map<NpmRunCommand>("npm run {script}");
+builder.Map<NpmCommand>("npm {*args}");
 
 // Test 9: Option Order Independence (4)
-builder.AddRoute<GitCommitMAmendCommand>("git commit -m {message} --amend");
-builder.AddRoute<GitCommitAmendMCommand>("git commit --amend -m {message}");
-builder.AddRoute<GitCommitAmendMessageCommand>("git commit --amend --message {message}");
-builder.AddRoute<GitCommitMessageAmendCommand>("git commit --message {message} --amend");
+builder.Map<GitCommitMAmendCommand>("git commit -m {message} --amend");
+builder.Map<GitCommitAmendMCommand>("git commit --amend -m {message}");
+builder.Map<GitCommitAmendMessageCommand>("git commit --amend --message {message}");
+builder.Map<GitCommitMessageAmendCommand>("git commit --message {message} --amend");
 
 // Test 10: Option Aliases (2)
-builder.AddRoute<GitCommitMCommand>("git commit -m {message}");
-builder.AddRoute<GitCommitMessageCommand>("git commit --message {message}");
+builder.Map<GitCommitMCommand>("git commit -m {message}");
+builder.Map<GitCommitMessageCommand>("git commit --message {message}");
 
 // Test 11: Async void methods
-builder.AddRoute<AsyncTestCommand>("async-test");
+builder.Map<AsyncTestCommand>("async-test");
 
 // Test 15: Optional Parameters
-builder.AddRoute<DeployCommand>("deploy {env} {tag?}");
-builder.AddRoute<BackupCommand>("backup {source} {destination?}");
+builder.Map<DeployCommand>("deploy {env} {tag?}");
+builder.Map<BackupCommand>("backup {source} {destination?}");
 
 // Test 17: Nullable Type Parameters
-builder.AddRoute<SleepCommand>("sleep {seconds:int?}");
+builder.Map<SleepCommand>("sleep {seconds:int?}");
 
 // Test 11: Ultimate Catch-All (2)
-builder.AddRoute<CatchAllCommand>("{*everything}");
+builder.Map<CatchAllCommand>("{*everything}");
 
 // Test 12: Help command (1)
-builder.AddRoute<HelpCommand>("--help");
+builder.Map<HelpCommand>("--help");
 
 // Build and run
 NuruApp app = builder.Build();

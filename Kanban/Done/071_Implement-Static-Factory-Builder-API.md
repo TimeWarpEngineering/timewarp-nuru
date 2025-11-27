@@ -109,3 +109,13 @@ await builder.Build().RunAsync(args);
 - Mirrors ASP.NET Core's `WebApplication.CreateBuilder()`, `CreateSlimBuilder()`, `CreateEmptyBuilder()` pattern
 - Future consideration: `AddOpenTelemetry()` for Aspire integration (included in CreateBuilder)
 - `CreateBuilder` includes Configuration which requires args for command-line config provider
+
+## Results
+
+- Successfully implemented static factory methods (`CreateBuilder`, `CreateSlimBuilder`, `CreateEmptyBuilder`) on `NuruApp` class
+- Added `NuruApplicationOptions` for configuration
+- Implemented `Map()` method alias for ASP.NET Core familiarity
+- All factory method tests passing
+- Samples updated to demonstrate new patterns
+- Backward compatibility maintained with existing `new NuruAppBuilder()` API
+- Migration path documentation deferred to separate task

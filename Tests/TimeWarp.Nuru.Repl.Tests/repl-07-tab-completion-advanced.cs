@@ -23,8 +23,8 @@ public class TabCompletionAdvancedTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("deploy --force", () => "Force deployed!")
-      .AddRoute("deploy --dry-run", () => "Dry run!")
+      .Map("deploy --force", () => "Force deployed!")
+      .Map("deploy --dry-run", () => "Dry run!")
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 
@@ -48,8 +48,8 @@ public class TabCompletionAdvancedTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("deploy -f", () => "Force!")
-      .AddRoute("deploy -v", () => "Verbose!")
+      .Map("deploy -f", () => "Force!")
+      .Map("deploy -v", () => "Verbose!")
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 
@@ -73,9 +73,9 @@ public class TabCompletionAdvancedTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("git commit", () => "Committed!")
-      .AddRoute("git config", () => "Configured!")
-      .AddRoute("git status", () => "Status OK")
+      .Map("git commit", () => "Committed!")
+      .Map("git config", () => "Configured!")
+      .Map("git status", () => "Status OK")
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 
@@ -99,7 +99,7 @@ public class TabCompletionAdvancedTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("deploy {env}", (string env) => $"Deployed to {env}")
+      .Map("deploy {env}", (string env) => $"Deployed to {env}")
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 
@@ -123,7 +123,7 @@ public class TabCompletionAdvancedTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("deploy --env {env}", (string env) => $"Deployed to {env}")
+      .Map("deploy --env {env}", (string env) => $"Deployed to {env}")
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 
@@ -147,7 +147,7 @@ public class TabCompletionAdvancedTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("cmd {arg} --opt {val}", (string arg, string val) => $"{arg}:{val}")
+      .Map("cmd {arg} --opt {val}", (string arg, string val) => $"{arg}:{val}")
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 
@@ -171,7 +171,7 @@ public class TabCompletionAdvancedTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("docker {*args}", (string[] args) => string.Join(" ", args))
+      .Map("docker {*args}", (string[] args) => string.Join(" ", args))
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 
@@ -195,9 +195,9 @@ public class TabCompletionAdvancedTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("kubectl get pods", () => "Pods!")
-      .AddRoute("kubectl get services", () => "Services!")
-      .AddRoute("kubectl get nodes", () => "Nodes!")
+      .Map("kubectl get pods", () => "Pods!")
+      .Map("kubectl get services", () => "Services!")
+      .Map("kubectl get nodes", () => "Nodes!")
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 
@@ -226,8 +226,8 @@ public class TabCompletionAdvancedTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("help", () => "Help content")
-      .AddRoute("hello", () => "Hello!")
+      .Map("help", () => "Help content")
+      .Map("hello", () => "Hello!")
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 
@@ -256,9 +256,9 @@ public class TabCompletionAdvancedTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("git commit", () => "Committed!")
-      .AddRoute("git push", () => "Pushed!")
-      .AddRoute("git pull", () => "Pulled!")
+      .Map("git commit", () => "Committed!")
+      .Map("git push", () => "Pushed!")
+      .Map("git pull", () => "Pulled!")
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 

@@ -139,7 +139,7 @@ public class SessionLifecycleTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("greet {name}", (string name) => $"Hello, {name}!")
+      .Map("greet {name}", (string name) => $"Hello, {name}!")
       .AddReplSupport()
       .Build();
 
@@ -162,7 +162,7 @@ public class SessionLifecycleTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("greet {name}", (string name) => $"Hello, {name}!")
+      .Map("greet {name}", (string name) => $"Hello, {name}!")
       .AddReplSupport()
       .Build();
 
@@ -183,7 +183,7 @@ public class SessionLifecycleTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("greet {name}", (string name) => $"Hello, {name}!")
+      .Map("greet {name}", (string name) => $"Hello, {name}!")
       .AddReplSupport(options => options.ShowTiming = true)
       .Build();
 
@@ -204,7 +204,7 @@ public class SessionLifecycleTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("greet {name}", (string name) => $"Hello, {name}!")
+      .Map("greet {name}", (string name) => $"Hello, {name}!")
       .AddReplSupport(options => options.ShowTiming = false)
       .Build();
 
@@ -225,7 +225,7 @@ public class SessionLifecycleTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("greet {name}", (string name) => $"Hello, {name}!")
+      .Map("greet {name}", (string name) => $"Hello, {name}!")
       .AddReplSupport()
       .Build();
 

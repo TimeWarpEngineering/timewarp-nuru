@@ -1,5 +1,5 @@
 {
-  "version": "1.0",
+  "version": "2.0",
   "description": "TimeWarp.Nuru example manifest for MCP server dynamic discovery",
   "examples": [
     {
@@ -8,6 +8,14 @@
       "description": "Calculator mixing Delegate and Mediator patterns - best of both worlds",
       "path": "Samples/Calculator/calc-mixed.cs",
       "tags": ["basics", "routing", "getting-started", "calculator", "mixed"],
+      "difficulty": "beginner"
+    },
+    {
+      "id": "createbuilder",
+      "name": "CreateBuilder Calculator",
+      "description": "ASP.NET Core-style CreateBuilder API - familiar pattern for web developers",
+      "path": "Samples/Calculator/calc-createbuilder.cs",
+      "tags": ["calculator", "createbuilder", "aspnet-style", "getting-started"],
       "difficulty": "beginner"
     },
     {
@@ -33,6 +41,14 @@
       "path": "Samples/Calculator/calc-mediator.cs",
       "tags": ["calculator", "mediator", "dependency-injection", "enterprise"],
       "difficulty": "intermediate"
+    },
+    {
+      "id": "hello-world",
+      "name": "Hello World",
+      "description": "Simplest possible Nuru app - a single route with a greeting",
+      "path": "Samples/HelloWorld/hello-world.cs",
+      "tags": ["basics", "getting-started", "minimal"],
+      "difficulty": "beginner"
     },
     {
       "id": "async",
@@ -63,7 +79,95 @@
       "name": "Configuration Basics",
       "description": "Demonstrates AOT-compatible AddConfiguration() with .settings.json files, strongly-typed options, and ConfigureServices with IConfiguration access",
       "path": "Samples/Configuration/configuration-basics.cs",
-      "tags": ["configuration", "dependency-injection", "options-pattern", "appsettings", "aot-compatible", "settings-json"],
+      "tags": ["configuration", "dependency-injection", "options-pattern", "settings-json", "aot-compatible"],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "configuration-validation",
+      "name": "Configuration Validation",
+      "description": "Fail-fast configuration validation using DataAnnotations, custom validation, and FluentValidation with ValidateOnStart()",
+      "path": "Samples/Configuration/configuration-validation.cs",
+      "tags": ["configuration", "validation", "fluent-validation", "data-annotations", "fail-fast"],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "command-line-overrides",
+      "name": "Command-Line Configuration Overrides",
+      "description": "ASP.NET Core-style command-line configuration overrides using --Section:Key=Value syntax",
+      "path": "Samples/Configuration/command-line-overrides.cs",
+      "tags": ["configuration", "command-line", "overrides", "aspnet-style"],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "repl-basic",
+      "name": "REPL Basic Demo",
+      "description": "Interactive REPL mode with various route pattern types - literals, parameters, options, and subcommands",
+      "path": "Samples/ReplDemo/repl-basic-demo.cs",
+      "tags": ["repl", "interactive", "getting-started"],
+      "difficulty": "beginner"
+    },
+    {
+      "id": "repl-keybindings",
+      "name": "REPL Custom Key Bindings",
+      "description": "Customize REPL key bindings with PSReadLine-style profiles (Emacs, Windows, Vi)",
+      "path": "Samples/ReplDemo/repl-custom-keybindings.cs",
+      "tags": ["repl", "key-bindings", "customization", "psreadline"],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "repl-interactive",
+      "name": "REPL Interactive Mode",
+      "description": "CLI app with --interactive/-i flag to enter REPL mode",
+      "path": "Samples/ReplDemo/repl-interactive-mode.cs",
+      "tags": ["repl", "interactive", "cli", "hybrid"],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "repl-options",
+      "name": "REPL Options Showcase",
+      "description": "All REPL configuration options - prompts, history, welcome/goodbye messages",
+      "path": "Samples/ReplDemo/repl-options-showcase.cs",
+      "tags": ["repl", "options", "configuration", "customization"],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "shell-completion",
+      "name": "Shell Tab Completion",
+      "description": "Static shell tab completion for Bash, Zsh, PowerShell, and Fish shells",
+      "path": "Samples/ShellCompletionExample/ShellCompletionExample.cs",
+      "tags": ["completion", "tab-completion", "bash", "zsh", "powershell", "fish"],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "dynamic-completion",
+      "name": "Dynamic Tab Completion",
+      "description": "Dynamic completion that queries the app at tab-press time with custom completion sources",
+      "path": "Samples/DynamicCompletionExample/DynamicCompletionExample.cs",
+      "tags": ["completion", "dynamic-completion", "custom-sources", "advanced"],
+      "difficulty": "advanced"
+    },
+    {
+      "id": "syntax-examples",
+      "name": "Route Syntax Examples",
+      "description": "Comprehensive examples of all route pattern syntax - literals, parameters, types, options, catch-all",
+      "path": "Samples/SyntaxExamples.cs",
+      "tags": ["syntax", "patterns", "reference", "documentation"],
+      "difficulty": "beginner"
+    },
+    {
+      "id": "builtin-types",
+      "name": "Built-in Type Converters",
+      "description": "Demonstrates all built-in type converters: int, double, bool, DateTime, Guid, etc.",
+      "path": "Samples/BuiltInTypesExample.cs",
+      "tags": ["types", "converters", "parameters", "reference"],
+      "difficulty": "beginner"
+    },
+    {
+      "id": "custom-type-converter",
+      "name": "Custom Type Converter",
+      "description": "Create custom type converters for your own types - enums, complex objects",
+      "path": "Samples/CustomTypeConverterExample.cs",
+      "tags": ["types", "converters", "custom", "advanced"],
       "difficulty": "intermediate"
     }
   ]

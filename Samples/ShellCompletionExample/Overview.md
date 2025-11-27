@@ -32,7 +32,7 @@ var builder = new NuruAppBuilder();
 builder.EnableStaticCompletion();
 
 // Register your routes as normal
-builder.AddRoute("createorder {product} {quantity:int}", (string product, int quantity) =>
+builder.Map("createorder {product} {quantity:int}", (string product, int quantity) =>
 {
     Console.WriteLine($"✅ Creating order:");
     Console.WriteLine($"   Product: {product}");
@@ -65,10 +65,10 @@ TimeWarp.Nuru.Completion supports all major shells:
 The completion system extracts command literals from your route patterns:
 
 ```csharp
-builder.AddRoute("createorder {product} {quantity:int}", ...);
-builder.AddRoute("create {item}", ...);
-builder.AddRoute("status", ...);
-builder.AddRoute("deploy {env} --version {ver}", ...);
+builder.Map("createorder {product} {quantity:int}", ...);
+builder.Map("create {item}", ...);
+builder.Map("status", ...);
+builder.Map("deploy {env} --version {ver}", ...);
 ```
 
 Typing `cre<TAB>` will show both `create` and `createorder` as options.
@@ -78,7 +78,7 @@ Typing `cre<TAB>` will show both `create` and `createorder` as options.
 Options are automatically extracted from route patterns:
 
 ```csharp
-builder.AddRoute("deploy {env} --version {ver}", ...);
+builder.Map("deploy {env} --version {ver}", ...);
 ```
 
 Typing `./ShellCompletionExample.cs deploy prod --v<TAB>` completes to `--version`.

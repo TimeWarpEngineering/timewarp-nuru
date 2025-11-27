@@ -10,13 +10,13 @@ Minimize route explosion by using optional parameters:
 
 ```csharp
 // ❌ Factorial explosion
-builder.AddRoute("deploy {env}", handler);
-builder.AddRoute("deploy {env} {version}", handler);
-builder.AddRoute("deploy {env} {version} {region}", handler);
+builder.Map("deploy {env}", handler);
+builder.Map("deploy {env} {version}", handler);
+builder.Map("deploy {env} {version} {region}", handler);
 // 3 routes for variations
 
 // ✅ Self-contained with optionals
-builder.AddRoute("deploy {env} {version?} {region?}", handler);
+builder.Map("deploy {env} {version?} {region?}", handler);
 // 1 route, same flexibility
 ```
 
@@ -26,13 +26,13 @@ Group related commands with shared prefixes:
 
 ```csharp
 // Git-style command groups
-builder.AddRoute("user create {email}", CreateUser);
-builder.AddRoute("user delete {id:Guid}", DeleteUser);
-builder.AddRoute("user list", ListUsers);
+builder.Map("user create {email}", CreateUser);
+builder.Map("user delete {id:Guid}", DeleteUser);
+builder.Map("user list", ListUsers);
 
-builder.AddRoute("project create {name}", CreateProject);
-builder.AddRoute("project delete {id:Guid}", DeleteProject);
-builder.AddRoute("project list", ListProjects);
+builder.Map("project create {name}", CreateProject);
+builder.Map("project delete {id:Guid}", DeleteProject);
+builder.Map("project list", ListProjects);
 ```
 
 ### Command Naming
@@ -41,14 +41,14 @@ Use consistent, clear naming:
 
 ```csharp
 // ✅ Clear, consistent
-builder.AddRoute("server start", StartServer);
-builder.AddRoute("server stop", StopServer);
-builder.AddRoute("server restart", RestartServer);
+builder.Map("server start", StartServer);
+builder.Map("server stop", StopServer);
+builder.Map("server restart", RestartServer);
 
 // ❌ Inconsistent
-builder.AddRoute("start-server", StartServer);
-builder.AddRoute("stopServer", StopServer);
-builder.AddRoute("restart_server", RestartServer);
+builder.Map("start-server", StartServer);
+builder.Map("stopServer", StopServer);
+builder.Map("restart_server", RestartServer);
 ```
 
 ## Error Handling
@@ -56,7 +56,7 @@ builder.AddRoute("restart_server", RestartServer);
 ### Return Exit Codes
 
 ```csharp
-builder.AddRoute
+builder.Map
 (
   "validate {file}",
   (string file) =>
@@ -94,7 +94,7 @@ Console.Error.WriteLine("SqlException: Connection timeout expired");
 ### Async Error Handling
 
 ```csharp
-builder.AddRoute
+builder.Map
 (
   "deploy {env}",
   async (string env) =>
@@ -125,7 +125,7 @@ builder.AddRoute
 
 ```csharp
 // ✅ Progress → stderr, data → stdout
-builder.AddRoute
+builder.Map
 (
   "process {file}",
   (string file) =>
@@ -138,7 +138,7 @@ builder.AddRoute
 );
 
 // ❌ Mixed output
-builder.AddRoute
+builder.Map
 (
   "process {file}",
   (string file) =>
@@ -155,7 +155,7 @@ builder.AddRoute
 
 ```csharp
 // ✅ Return objects for JSON
-builder.AddRoute
+builder.Map
 (
   "status",
   () => new
@@ -167,7 +167,7 @@ builder.AddRoute
 );
 
 // ❌ Manual JSON construction
-builder.AddRoute
+builder.Map
 (
   "status",
   () =>
@@ -191,10 +191,10 @@ NuruApp app = new NuruAppBuilder()
     services.AddScoped<IDeploymentService, DeploymentService>();
   })
   // Direct for hot paths
-  .AddRoute("ping", () => "pong")
-  .AddRoute("version", () => "1.0.0")
+  .Map("ping", () => "pong")
+  .Map("version", () => "1.0.0")
   // Mediator for complex operations
-  .AddRoute<DeployCommand>("deploy {env}")
+  .Map<DeployCommand>("deploy {env}")
   .Build();
 ```
 
@@ -202,10 +202,10 @@ NuruApp app = new NuruAppBuilder()
 
 ```csharp
 // ✅ Return value types
-.AddRoute("calc {x:int} {y:int}", (int x, int y) => x + y)
+.Map("calc {x:int} {y:int}", (int x, int y) => x + y)
 
 // ❌ Unnecessary allocations
-.AddRoute("calc {x:int} {y:int}", (int x, int y) => new { Result = x + y })
+.Map("calc {x:int} {y:int}", (int x, int y) => new { Result = x + y })
 ```
 
 ### Use AOT for Production
@@ -307,7 +307,7 @@ NuruApp app = new NuruAppBuilder()
     services.AddOptions<AppOptions>()
       .BindConfiguration("App");
   })
-  .AddRoute<SomeCommand>("some-command")
+  .Map<SomeCommand>("some-command")
   .Build();
 
 // In your command handler, inject IOptions<AppOptions>
@@ -340,7 +340,7 @@ NuruApp app = new NuruAppBuilder()
   {
     services.AddOptions<DatabaseOptions>().BindConfiguration("Database");
   })
-  .AddRoute<QueryCommand>("query {sql}")
+  .Map<QueryCommand>("query {sql}")
   .Build();
 ```
 
@@ -370,7 +370,7 @@ NuruApp app = new NuruAppBuilder()
       .ValidateDataAnnotations()
       .ValidateOnStart();  // ✅ Validates during Build(), not on first access
   })
-  .AddRoute<QueryCommand>("query {sql}")
+  .Map<QueryCommand>("query {sql}")
   .Build();  // Throws OptionsValidationException if configuration is invalid
 ```
 
@@ -423,7 +423,7 @@ logger.LogInformation("Connecting to database");
 ### Validate Input
 
 ```csharp
-builder.AddRoute
+builder.Map
 (
   "deploy {env}",
   (string env) =>
@@ -447,7 +447,7 @@ builder.AddRoute
 ### Add Descriptions
 
 ```csharp
-builder.AddRoute
+builder.Map
 (
   "deploy {env|Target environment (dev/staging/prod)} {version?|Version tag}",
   handler
@@ -458,7 +458,7 @@ builder.AddRoute
 
 ```csharp
 NuruApp app = new NuruAppBuilder()
-  .AddRoute("deploy {env|Environment} {version?|Version}", handler)
+  .Map("deploy {env|Environment} {version?|Version}", handler)
   .AddAutoHelp()
   .Build();
 ```

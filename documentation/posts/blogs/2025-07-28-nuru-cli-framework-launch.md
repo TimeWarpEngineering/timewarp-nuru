@@ -42,9 +42,9 @@ With TimeWarp.Nuru, you write CLI commands like web routes:
 
 ```csharp
 var app = new NuruAppBuilder()
-    .AddRoute("users {id:int}", (int id) => GetUser(id))
-    .AddRoute("deploy {env} --dry-run", (string env) => DeployDryRun(env))
-    .AddRoute("backup {*files}", (string[] files) => BackupFiles(files))
+    .Map("users {id:int}", (int id) => GetUser(id))
+    .Map("deploy {env} --dry-run", (string env) => DeployDryRun(env))
+    .Map("backup {*files}", (string[] files) => BackupFiles(files))
     .Build();
 
 await app.RunAsync(args);
@@ -58,7 +58,7 @@ Fair question. Sometimes you need dependency injection, unit testing, and all th
 
 **Direct approach**: For when you just want to get stuff done
 ```csharp
-builder.AddRoute("status", () => Console.WriteLine("All systems operational"))
+builder.Map("status", () => Console.WriteLine("All systems operational"))
 ```
 
 **Mediator approach**: For when you need structure
@@ -69,7 +69,7 @@ builder
   {
     services.AddSingleton<IDeploymentService, DeploymentService>();
   })
-  .AddRoute<DeployCommand>("deploy {environment} --strategy {strategy}");
+  .Map<DeployCommand>("deploy {environment} --strategy {strategy}");
 ```
 
 The kicker? You can use both in the same app. Simple commands stay simple. Complex commands get the full treatment.
@@ -81,8 +81,8 @@ Here's a deployment tool I built last week:
 ```csharp
 var app = new NuruAppBuilder()
   // Simple commands: Direct
-  .AddRoute("status", () => ShowStatus())
-  .AddRoute("version", () => Console.WriteLine("v1.0.0"))
+  .Map("status", () => ShowStatus())
+  .Map("version", () => Console.WriteLine("v1.0.0"))
   // Enable DI for complex commands
   .AddDependencyInjection()
   .ConfigureServices(services =>
@@ -91,8 +91,8 @@ var app = new NuruAppBuilder()
     services.AddSingleton<IDeploymentService, DeploymentService>();
   })
   // Complex commands: Mediator with DI
-  .AddRoute<DeployCommand>("deploy {cluster} {app} --tag {tag}")
-  .AddRoute<RollbackCommand>("rollback {cluster} {app} --to {version}")
+  .Map<DeployCommand>("deploy {cluster} {app} --tag {tag}")
+  .Map<RollbackCommand>("rollback {cluster} {app} --to {version}")
   .Build();
 
 return await app.RunAsync(args);
@@ -128,7 +128,7 @@ Then:
 using TimeWarp.Nuru;
 
 var app = new NuruAppBuilder()
-    .AddRoute("greet {name}", (string name) => 
+    .Map("greet {name}", (string name) => 
         Console.WriteLine($"Hello, {name}!"))
     .Build();
 

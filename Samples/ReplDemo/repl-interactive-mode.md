@@ -46,8 +46,8 @@ Goodbye!
 ```csharp
 var app = new NuruAppBuilder()
   // Define your commands
-  .AddRoute("greet {name}", (string name) => WriteLine($"Hello, {name}!"))
-  .AddRoute("status", () => WriteLine("OK"))
+  .Map("greet {name}", (string name) => WriteLine($"Hello, {name}!"))
+  .Map("status", () => WriteLine("OK"))
 
   // Add REPL support with configuration
   .AddReplSupport(options =>

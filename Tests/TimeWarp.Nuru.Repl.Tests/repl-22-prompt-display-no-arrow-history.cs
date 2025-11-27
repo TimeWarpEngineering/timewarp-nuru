@@ -18,7 +18,7 @@ public class PromptDisplayTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("hello", () => "Hello World!")
+      .Map("hello", () => "Hello World!")
       .AddReplSupport(options =>
       {
         options.EnableArrowHistory = false;  // Disable arrow history
@@ -42,7 +42,7 @@ public class PromptDisplayTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("hello", () => "Hello World!")
+      .Map("hello", () => "Hello World!")
       .AddReplSupport(options =>
       {
         options.EnableArrowHistory = false;
@@ -70,7 +70,7 @@ public class PromptDisplayTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("hello", () => "Hello World!")
+      .Map("hello", () => "Hello World!")
       .AddReplSupport(options =>
       {
         options.EnableArrowHistory = false;
@@ -97,7 +97,7 @@ public class PromptDisplayTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("status", () => "Running")
+      .Map("status", () => "Running")
       .AddReplSupport(options =>
       {
         options.EnableArrowHistory = false;
@@ -121,8 +121,8 @@ public class PromptDisplayTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("hello", () => "Hello!")
-      .AddRoute("world", () => "World!")
+      .Map("hello", () => "Hello!")
+      .Map("world", () => "World!")
       .AddReplSupport(options =>
       {
         options.EnableArrowHistory = false;

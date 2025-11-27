@@ -9,7 +9,7 @@ NuruApp app =
   new NuruAppBuilder()
   .AddDependencyInjection()
   .AddConfiguration(args)
-  .AddRoute("show", (IConfiguration config) =>
+  .Map("show", (IConfiguration config) =>
   {
     string? apiKey = config["ApiKey"];
     string? dbConnection = config["Database:ConnectionString"];

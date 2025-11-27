@@ -34,9 +34,10 @@ public partial class NuruAppBuilder
 
   /// <summary>
   /// Initializes a new instance of the <see cref="NuruAppBuilder"/> class with default settings.
-  /// This is the backward-compatible constructor equivalent to CreateSlimBuilder().
+  /// Uses Empty mode for backward compatibility - no auto-help or other features enabled.
+  /// Use CreateSlimBuilder() or CreateBuilder() for auto-configured builders.
   /// </summary>
-  public NuruAppBuilder() : this(BuilderMode.Slim, null)
+  public NuruAppBuilder() : this(BuilderMode.Empty, null)
   {
   }
 

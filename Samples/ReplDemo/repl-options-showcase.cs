@@ -48,7 +48,7 @@ var app = new NuruAppBuilder()
   // Success command - returns exit code 0
   // Demonstrates: Normal successful command execution
   // --------------------------------------------------------
-  .AddRoute
+  .Map
   (
     pattern: "success",
     handler: () =>
@@ -63,7 +63,7 @@ var app = new NuruAppBuilder()
   // Fail command - returns non-zero exit code
   // Demonstrates: ContinueOnError=false will stop REPL
   // --------------------------------------------------------
-  .AddRoute
+  .Map
   (
     pattern: "fail",
     handler: () =>
@@ -79,7 +79,7 @@ var app = new NuruAppBuilder()
   // Custom exit code command
   // Demonstrates: ShowExitCode feature with various codes
   // --------------------------------------------------------
-  .AddRoute
+  .Map
   (
     pattern: "exitcode {code:int}",
     handler: (int code) =>
@@ -95,7 +95,7 @@ var app = new NuruAppBuilder()
   // Password command - excluded from history
   // Demonstrates: HistoryIgnorePatterns feature
   // --------------------------------------------------------
-  .AddRoute
+  .Map
   (
     pattern: "set-password {value}",
     handler: (string value) =>
@@ -111,7 +111,7 @@ var app = new NuruAppBuilder()
   // Token command - excluded from history
   // Demonstrates: HistoryIgnorePatterns feature
   // --------------------------------------------------------
-  .AddRoute
+  .Map
   (
     pattern: "set-token {value}",
     handler: (string value) =>
@@ -126,7 +126,7 @@ var app = new NuruAppBuilder()
   // Secret command - excluded from history
   // Demonstrates: HistoryIgnorePatterns feature
   // --------------------------------------------------------
-  .AddRoute
+  .Map
   (
     pattern: "my-secret-command",
     handler: () =>
@@ -141,7 +141,7 @@ var app = new NuruAppBuilder()
   // Long running command
   // Demonstrates: ShowTiming feature
   // --------------------------------------------------------
-  .AddRoute
+  .Map
   (
     pattern: "slow {ms:int}",
     handler: async (int ms) =>
@@ -156,7 +156,7 @@ var app = new NuruAppBuilder()
   // --------------------------------------------------------
   // Echo command - useful for testing
   // --------------------------------------------------------
-  .AddRoute
+  .Map
   (
     pattern: "echo {*message}",
     handler: (string[] message) =>
@@ -169,7 +169,7 @@ var app = new NuruAppBuilder()
   // --------------------------------------------------------
   // Info command - shows current configuration
   // --------------------------------------------------------
-  .AddRoute
+  .Map
   (
     pattern: "config",
     handler: () =>

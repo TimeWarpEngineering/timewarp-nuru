@@ -21,7 +21,7 @@ public class ConsoleInputTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("hello", () => "Hello!")
+      .Map("hello", () => "Hello!")
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 
@@ -44,7 +44,7 @@ public class ConsoleInputTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("hello", () => "Hello!")
+      .Map("hello", () => "Hello!")
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 
@@ -68,7 +68,7 @@ public class ConsoleInputTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("hello", () => "Hello!")
+      .Map("hello", () => "Hello!")
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 
@@ -93,7 +93,7 @@ public class ConsoleInputTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("hello", () => "Hello!")
+      .Map("hello", () => "Hello!")
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 
@@ -119,7 +119,7 @@ public class ConsoleInputTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("hello", () => "Hello!")
+      .Map("hello", () => "Hello!")
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 
@@ -142,7 +142,7 @@ public class ConsoleInputTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("greet {name}", (string name) => $"Hello, {name}!")
+      .Map("greet {name}", (string name) => $"Hello, {name}!")
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 
@@ -166,7 +166,7 @@ public class ConsoleInputTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("greet {name}", (string name) => $"Hello, {name}!")
+      .Map("greet {name}", (string name) => $"Hello, {name}!")
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 
@@ -190,7 +190,7 @@ public class ConsoleInputTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("say hello", () => "Said hello!")
+      .Map("say hello", () => "Said hello!")
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 
@@ -215,7 +215,7 @@ public class ConsoleInputTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("hello world", () => "Hello World!")
+      .Map("hello world", () => "Hello World!")
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 
@@ -240,7 +240,7 @@ public class ConsoleInputTests
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .AddRoute("hello", () => "Hello!")
+      .Map("hello", () => "Hello!")
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 

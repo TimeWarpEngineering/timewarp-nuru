@@ -23,12 +23,12 @@ public class PSReadLineKeybindingsTests
 
     App = new NuruAppBuilder()
       .UseTerminal(Terminal)
-      .AddRoute("aXb", () => "Success!")
-      .AddRoute("hello", () => "Success!")
-      .AddRoute("hello world", () => "Success!")
-      .AddRoute("helloX world", () => "Success!")
-      .AddRoute("say hello world", () => "Success!")
-      .AddRoute("greet {name}", (string name) => $"Hello, {name}!")
+      .Map("aXb", () => "Success!")
+      .Map("hello", () => "Success!")
+      .Map("hello world", () => "Success!")
+      .Map("helloX world", () => "Success!")
+      .Map("say hello world", () => "Success!")
+      .Map("greet {name}", (string name) => $"Hello, {name}!")
       .AddReplSupport(options =>
       {
         options.EnableArrowHistory = true;

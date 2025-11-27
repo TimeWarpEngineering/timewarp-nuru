@@ -33,7 +33,7 @@ public class EnumCompletionTests
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .AddTypeConverter(new EnumTypeConverter<Environment>())
-      .AddRoute("deploy {env:environment}", (Environment _) => 0)
+      .Map("deploy {env:environment}", (Environment _) => 0)
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 
@@ -63,7 +63,7 @@ public class EnumCompletionTests
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .AddTypeConverter(new EnumTypeConverter<Environment>())
-      .AddRoute("deploy {env:environment}", (Environment _) => 0)
+      .Map("deploy {env:environment}", (Environment _) => 0)
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 
@@ -89,7 +89,7 @@ public class EnumCompletionTests
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .AddTypeConverter(new EnumTypeConverter<Environment>())
-      .AddRoute("deploy {env:environment}", (Environment _) => 0)
+      .Map("deploy {env:environment}", (Environment _) => 0)
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 
@@ -115,7 +115,7 @@ public class EnumCompletionTests
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .AddTypeConverter(new EnumTypeConverter<Environment>())
-      .AddRoute("deploy {env:environment}", (Environment _) => 0)
+      .Map("deploy {env:environment}", (Environment _) => 0)
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 

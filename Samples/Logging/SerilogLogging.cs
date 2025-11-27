@@ -45,26 +45,26 @@ try
     NuruApp app = new NuruAppBuilder()
         .UseLogging(loggerFactory)  // Use Serilog for all Nuru logging
         
-        .AddRoute("test", () => 
+        .Map("test", () => 
         {
             Log.Information("Test command executed");
             Console.WriteLine("Test successful!");
         })
         
-        .AddRoute("greet {name}", (string name) => 
+        .Map("greet {name}", (string name) => 
         {
             // Structured logging - the name will be a searchable property in Seq
             Log.Information("Greeting user {UserName}", name);
             Console.WriteLine($"Hello, {name}!");
         })
         
-        .AddRoute("error", () => 
+        .Map("error", () => 
         {
             Log.Error("Simulating an error for demonstration");
             throw new InvalidOperationException("This is a test error");
         })
         
-        .AddRoute("bench {iterations:int}", (int iterations) => 
+        .Map("bench {iterations:int}", (int iterations) => 
         {
             using (Log.Logger.BeginTimedOperation("Benchmark operation"))
             {

@@ -61,10 +61,10 @@ NuruApp app =
     }
   })
   .AddAutoHelp()
-  .AddRoute("validate", ShowValidationStatusAsync, "Show all validated configuration")
-  .AddRoute("server info", ShowServerInfoAsync, "Show server configuration")
-  .AddRoute("db info", ShowDatabaseInfoAsync, "Show database configuration")
-  .AddRoute("api info", ShowApiInfoAsync, "Show API configuration")
+  .Map("validate", ShowValidationStatusAsync, "Show all validated configuration")
+  .Map("server info", ShowServerInfoAsync, "Show server configuration")
+  .Map("db info", ShowDatabaseInfoAsync, "Show database configuration")
+  .Map("api info", ShowApiInfoAsync, "Show API configuration")
   .Build();
 // ↑ If any validation fails, OptionsValidationException is thrown HERE (fail-fast)
 

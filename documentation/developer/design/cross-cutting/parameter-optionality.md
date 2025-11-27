@@ -31,7 +31,7 @@ Options are **required** or **optional** based on their parameter nullability:
 
 ```csharp
 // CURRENT: All options in pattern are REQUIRED
-.AddRoute("deploy --env {env} --force", (string env, bool force) => ...)
+.Map("deploy --env {env} --force", (string env, bool force) => ...)
 // Must provide BOTH --env and --force for route to match
 ```
 
@@ -39,11 +39,11 @@ Options are **required** or **optional** based on their parameter nullability:
 
 ```csharp
 // NEW: Nullability determines optionality
-.AddRoute("deploy --env {env} --force", (string env, bool force) => ...)
+.Map("deploy --env {env} --force", (string env, bool force) => ...)
 // --env is REQUIRED (non-nullable string)
 // --force is OPTIONAL (booleans always optional)
 
-.AddRoute("deploy --env {env?} --config {cfg?}", (string? env, string? cfg) => ...)
+.Map("deploy --env {env?} --config {cfg?}", (string? env, string? cfg) => ...)
 // Both --env and --config are OPTIONAL (nullable parameters)
 ```
 
@@ -54,14 +54,14 @@ The design explicitly supports incremental migration from shell commands to nati
 ### Phase 1: Catch-all Passthrough
 ```csharp
 // Current shell behavior preserved
-.AddRoute("{cmd} {*args}", (string cmd, string[] args) =>
+.Map("{cmd} {*args}", (string cmd, string[] args) =>
     Shell.Run(cmd, args))
 ```
 
 ### Phase 2: Intercept for Logging/Monitoring
 ```csharp
 // Add observability without changing behavior
-.AddRoute("deploy --env {env}", (string env, NuruContext ctx) =>
+.Map("deploy --env {env}", (string env, NuruContext ctx) =>
 {
     Log($"Deploy to {env} with args: {ctx.OriginalArgs}");
     Shell.Run("deploy", ctx.OriginalArgs); // Passthrough
@@ -71,7 +71,7 @@ The design explicitly supports incremental migration from shell commands to nati
 ### Phase 3: Add Validation/Enhancement
 ```csharp
 // Validate inputs, add safety checks
-.AddRoute("deploy --env {env} --dry-run", (string env, bool dryRun) =>
+.Map("deploy --env {env} --dry-run", (string env, bool dryRun) =>
 {
     if (!ValidateEnv(env)) return Error();
     if (dryRun) return Simulate(env);
@@ -82,7 +82,7 @@ The design explicitly supports incremental migration from shell commands to nati
 ### Phase 4: Full Native Implementation
 ```csharp
 // Complete replacement, no shell dependency
-.AddRoute("deploy --env {env} --config {cfg?}", (string env, string? cfg) =>
+.Map("deploy --env {env} --config {cfg?}", (string env, string? cfg) =>
 {
     var config = cfg ?? "default.json";
     return DeployService.Execute(env, config); // No shell
@@ -112,7 +112,7 @@ When you need access to the full parsing context beyond declared parameters:
 
 ```csharp
 // Check for undeclared options
-.AddRoute("git commit", (NuruContext ctx) =>
+.Map("git commit", (NuruContext ctx) =>
 {
     // Check for flags not in pattern
     if (ctx.HasOption("--amend"))
@@ -177,14 +177,14 @@ Routes that currently require all options will continue to work but with differe
 
 ```csharp
 // Old behavior: Both options required
-.AddRoute("build --config {mode} --verbose", (string mode, bool verbose) => ...)
+.Map("build --config {mode} --verbose", (string mode, bool verbose) => ...)
 
 // New behavior:
 // - --config is REQUIRED (non-nullable string)
 // - --verbose is OPTIONAL (booleans always optional)
 
 // To make --config optional, change to:
-.AddRoute("build --config {mode?} --verbose", (string? mode, bool verbose) => ...)
+.Map("build --config {mode?} --verbose", (string? mode, bool verbose) => ...)
 ```
 
 ### Feature Flag (Optional)
@@ -194,7 +194,7 @@ For safer migration, consider a feature flag:
 ```csharp
 new NuruAppBuilder()
     .UseOptionalOptions()  // Opt-in to new behavior
-    .AddRoute(...)
+    .Map(...)
 ```
 
 ## Success Criteria

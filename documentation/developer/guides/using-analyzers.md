@@ -28,10 +28,10 @@ Detects malformed parameter placeholders that aren't using proper curly brace sy
 
 ```csharp
 // ❌ Error: Invalid syntax
-builder.AddRoute("deploy <env>", handler);  // Should use {env}
+builder.Map("deploy <env>", handler);  // Should use {env}
 
 // ✅ Correct
-builder.AddRoute("deploy {env}", handler);
+builder.Map("deploy {env}", handler);
 ```
 
 ### NURU_P002: Unbalanced Braces
@@ -39,13 +39,13 @@ Catches missing opening or closing braces in parameters.
 
 ```csharp
 // ❌ Error: Missing closing brace
-builder.AddRoute("deploy {env", handler);
+builder.Map("deploy {env", handler);
 
 // ❌ Error: Missing opening brace
-builder.AddRoute("deploy env}", handler);
+builder.Map("deploy env}", handler);
 
 // ✅ Correct
-builder.AddRoute("deploy {env}", handler);
+builder.Map("deploy {env}", handler);
 ```
 
 ### NURU_P003: Invalid Option Format
@@ -53,13 +53,13 @@ Ensures options follow proper naming conventions.
 
 ```csharp
 // ❌ Error: Invalid option format
-builder.AddRoute("build -verbose", handler);  // Multi-character single-dash
+builder.Map("build -verbose", handler);  // Multi-character single-dash
 
 // ✅ Correct: Use double-dash for long options
-builder.AddRoute("build --verbose", handler);
+builder.Map("build --verbose", handler);
 
 // ✅ Correct: Single dash for single character
-builder.AddRoute("build -v", handler);
+builder.Map("build -v", handler);
 ```
 
 ### NURU_P004: Invalid Type Constraint
@@ -67,14 +67,14 @@ Validates that parameter types are supported.
 
 ```csharp
 // ❌ Error: Unsupported type
-builder.AddRoute("process {id:integer}", handler);  // Should be 'int'
+builder.Map("process {id:integer}", handler);  // Should be 'int'
 
 // ✅ Supported types:
-builder.AddRoute("delay {ms:int}", handler);
-builder.AddRoute("scale {factor:double}", handler);
-builder.AddRoute("schedule {when:DateTime}", handler);
-builder.AddRoute("fetch {id:Guid}", handler);
-builder.AddRoute("wait {duration:TimeSpan}", handler);
+builder.Map("delay {ms:int}", handler);
+builder.Map("scale {factor:double}", handler);
+builder.Map("schedule {when:DateTime}", handler);
+builder.Map("fetch {id:Guid}", handler);
+builder.Map("wait {duration:TimeSpan}", handler);
 ```
 
 Supported types: `string`, `int`, `double`, `bool`, `DateTime`, `Guid`, `long`, `decimal`, `TimeSpan`
@@ -84,10 +84,10 @@ Detects invalid characters in route patterns.
 
 ```csharp
 // ❌ Error: Invalid character
-builder.AddRoute("test @param", handler);
+builder.Map("test @param", handler);
 
 // ✅ Correct
-builder.AddRoute("test {param}", handler);
+builder.Map("test {param}", handler);
 ```
 
 ### NURU_P006: Unexpected Token
@@ -95,10 +95,10 @@ The parser encountered an unexpected token in the route pattern.
 
 ```csharp
 // ❌ Error: Unexpected '}'
-builder.AddRoute("test }", handler);
+builder.Map("test }", handler);
 
 // ✅ Correct
-builder.AddRoute("test {param}", handler);
+builder.Map("test {param}", handler);
 ```
 
 ### NURU_P007: Null Route Pattern
@@ -107,10 +107,10 @@ Route pattern cannot be null.
 ```csharp
 // ❌ Error: Null pattern
 string? pattern = null;
-builder.AddRoute(pattern!, handler);
+builder.Map(pattern!, handler);
 
 // ✅ Correct
-builder.AddRoute("valid-pattern", handler);
+builder.Map("valid-pattern", handler);
 ```
 
 ---
@@ -122,10 +122,10 @@ Each parameter name must be unique within a route pattern.
 
 ```csharp
 // ❌ Error: Duplicate parameter 'arg'
-builder.AddRoute("run {arg} {arg}", handler);
+builder.Map("run {arg} {arg}", handler);
 
 // ✅ Correct: Unique names
-builder.AddRoute("run {source} {dest}", handler);
+builder.Map("run {source} {dest}", handler);
 ```
 
 ### NURU_S002: Conflicting Optional Parameters
@@ -133,14 +133,14 @@ Having multiple consecutive optional parameters creates parsing ambiguity.
 
 ```csharp
 // ❌ Error: Multiple optionals - ambiguous!
-builder.AddRoute("deploy {env?} {version?}", handler);
+builder.Map("deploy {env?} {version?}", handler);
 // Input "deploy v2.0" - is it env or version?
 
 // ✅ Correct: Single optional at end
-builder.AddRoute("deploy {env} {version?}", handler);
+builder.Map("deploy {env} {version?}", handler);
 
 // ✅ Alternative: Use options for multiple optional values
-builder.AddRoute("deploy {env} --version? {ver?} --tag? {tag?}", handler);
+builder.Map("deploy {env} --version? {ver?} --tag? {tag?}", handler);
 ```
 
 ### NURU_S003: Catch-all Not at End
@@ -148,10 +148,10 @@ Catch-all parameters must appear as the last positional parameter.
 
 ```csharp
 // ❌ Error: Catch-all not at end
-builder.AddRoute("exec {*args} {script}", handler);
+builder.Map("exec {*args} {script}", handler);
 
 // ✅ Correct: Catch-all at end
-builder.AddRoute("exec {script} {*args}", handler);
+builder.Map("exec {script} {*args}", handler);
 ```
 
 ### NURU_S004: Mixed Catch-all with Optional
@@ -159,11 +159,11 @@ Routes cannot contain both optional parameters and catch-all parameters.
 
 ```csharp
 // ❌ Error: Cannot mix optional with catch-all
-builder.AddRoute("run {script?} {*args}", handler);
+builder.Map("run {script?} {*args}", handler);
 
 // ✅ Use one or the other:
-builder.AddRoute("run {script} {*args}", handler);  // Required + catch-all
-builder.AddRoute("run {script?}", handler);          // Just optional
+builder.Map("run {script} {*args}", handler);  // Required + catch-all
+builder.Map("run {script?}", handler);          // Just optional
 ```
 
 ### NURU_S005: Option with Duplicate Alias
@@ -171,10 +171,10 @@ Options cannot have the same short form specified multiple times.
 
 ```csharp
 // ❌ Error: Duplicate alias '-c'
-builder.AddRoute("build --config,-c {m} --count,-c {n}", handler);
+builder.Map("build --config,-c {m} --count,-c {n}", handler);
 
 // ✅ Correct: Unique aliases
-builder.AddRoute("build --config,-c {m} --count,-n {n}", handler);
+builder.Map("build --config,-c {m} --count,-n {n}", handler);
 ```
 
 ### NURU_S006: Optional Before Required
@@ -182,10 +182,10 @@ Optional parameters must appear after all required parameters.
 
 ```csharp
 // ❌ Error: Optional before required
-builder.AddRoute("copy {source?} {dest}", handler);
+builder.Map("copy {source?} {dest}", handler);
 
 // ✅ Correct: Required before optional
-builder.AddRoute("copy {source} {dest?}", handler);
+builder.Map("copy {source} {dest?}", handler);
 ```
 
 ### NURU_S007: Invalid End-of-Options Separator
@@ -193,10 +193,10 @@ The end-of-options separator `--` must be followed by a catch-all parameter.
 
 ```csharp
 // ❌ Error: No catch-all after --
-builder.AddRoute("run --", handler);
+builder.Map("run --", handler);
 
 // ✅ Correct: -- followed by catch-all
-builder.AddRoute("run -- {*args}", handler);
+builder.Map("run -- {*args}", handler);
 ```
 
 ### NURU_S008: Options After End-of-Options Separator
@@ -204,10 +204,10 @@ Options cannot appear after the end-of-options separator `--`.
 
 ```csharp
 // ❌ Error: Option after --
-builder.AddRoute("run -- {*args} --verbose", handler);
+builder.Map("run -- {*args} --verbose", handler);
 
 // ✅ Correct: Options before --
-builder.AddRoute("run --verbose -- {*args}", handler);
+builder.Map("run --verbose -- {*args}", handler);
 ```
 
 ---
@@ -230,7 +230,7 @@ If you need to suppress a specific diagnostic (not recommended unless you have a
 
 ```csharp
 #pragma warning disable NURU_S002 // Conflicting optional parameters
-builder.AddRoute("risky {a?} {b?}", handler);  // NOT RECOMMENDED
+builder.Map("risky {a?} {b?}", handler);  // NOT RECOMMENDED
 #pragma warning restore NURU_S002
 ```
 
@@ -273,7 +273,7 @@ Errors appear in:
 ### Before (Multiple Errors)
 
 ```csharp
-builder.AddRoute("deploy <env?> <ver?>", handler);
+builder.Map("deploy <env?> <ver?>", handler);
 //                      ↑       ↑
 //              NURU_P001  NURU_S002
 ```
@@ -281,7 +281,7 @@ builder.AddRoute("deploy <env?> <ver?>", handler);
 ### After (Fixed)
 
 ```csharp
-builder.AddRoute("deploy {env} --version? {ver?}", handler);
+builder.Map("deploy {env} --version? {ver?}", handler);
 //                      ↑                 ↑
 //                  Valid parameters   Optional option
 ```

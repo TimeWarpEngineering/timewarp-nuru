@@ -20,7 +20,7 @@ WriteLine
 NuruAppBuilder builder = new();
 
 // Test route with optional flag and optional value
-builder.AddRoute("build --config? {mode?}", (string? mode) =>
+builder.Map("build --config? {mode?}", (string? mode) =>
 {
     WriteLine($"✓ Build executed with config: {mode ?? "(none)"}");
 });

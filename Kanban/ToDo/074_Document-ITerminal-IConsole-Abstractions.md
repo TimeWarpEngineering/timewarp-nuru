@@ -1,5 +1,9 @@
 # Document ITerminal/IConsole Abstractions
 
+## Dependency
+
+**Complete task 075 first** - Move AnsiColors to core package and add extension methods. Documentation should reflect the final API location and extension methods.
+
 ## Description
 
 The `IConsole` and `ITerminal` interfaces along with their implementations (`NuruConsole`, `NuruTerminal`, `TestConsole`, `TestTerminal`) are valuable public APIs that enable testability and custom terminal environments, but they are completely undocumented for consumers. Users have no way to discover these capabilities exist.

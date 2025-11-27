@@ -4,25 +4,25 @@
 
 The `IConsole` and `ITerminal` interfaces along with their implementations (`NuruConsole`, `NuruTerminal`, `TestConsole`, `TestTerminal`) are valuable public APIs that enable testability and custom terminal environments, but they are completely undocumented for consumers. Users have no way to discover these capabilities exist.
 
-Additionally, consumers should be able to use `ITerminal`/`NuruTerminal` directly in their route handlers for colored output, replacing the need for Spectre.Console in basic scenarios. The `SupportsColor` property exists but there are no color output methods.
+**We already have `AnsiColors` and `SyntaxColors` classes** with comprehensive color support (all CSS named colors, backgrounds, bold/italic/underline) - but they're buried in `TimeWarp.Nuru.Repl` and completely undocumented for consumer use. Consumers who don't use REPL miss out entirely.
 
 ## Requirements
 
 - Document IConsole/ITerminal in user-facing documentation
+- Document existing AnsiColors/SyntaxColors for consumer use
+- Move AnsiColors to core TimeWarp.Nuru package (or make it more discoverable)
 - Create samples demonstrating testing capabilities
-- Create samples demonstrating custom display/output scenarios
-- Add color output methods to IConsole/ITerminal (Spectre.Console alternative for basic use)
+- Create samples demonstrating colored output in handlers
 - Show how to inject ITerminal into route handlers via DI
 - Consider adding MCP tool support for discoverability
 
 ## Checklist
 
-### Enhancement - Color Output
-- [ ] Add color output methods to IConsole interface (e.g., `WriteColored`, `WriteLineColored`)
-- [ ] Add ANSI escape code helpers for common colors (red, green, yellow, cyan, etc.)
-- [ ] Implement in NuruConsole/NuruTerminal with `SupportsColor` check
-- [ ] Implement in TestConsole/TestTerminal (strip or capture color codes)
-- [ ] Consider extension methods for fluent API: `terminal.WriteLine("Success!".Green())`
+### Enhancement - Make Colors Accessible
+- [ ] Consider moving `AnsiColors` from `TimeWarp.Nuru.Repl` to core `TimeWarp.Nuru` package
+- [ ] Or: Document that consumers need REPL package for colors (suboptimal)
+- [ ] Add convenience extension methods on IConsole for colored output
+- [ ] Ensure TestTerminal properly handles ANSI codes in output (strip or preserve for assertions)
 
 ### Documentation
 - [ ] Add ITerminal/IConsole section to README.md (brief mention with link)
@@ -77,70 +77,91 @@ Additionally, consumers should be able to use `ITerminal`/`NuruTerminal` directl
 ### Sample Code to Include
 
 ```csharp
-// Handler with colored output (proposed API)
+// Handler with colored output using existing AnsiColors
 var app = NuruApp.CreateBuilder(args);
 
 app.Services.AddSingleton<ITerminal>(NuruTerminal.Default);
 
 app.Map("status", (ITerminal terminal) =>
 {
-    terminal.WriteLineColored("✓ All systems operational", ConsoleColor.Green);
-    terminal.WriteLineColored("⚠ 2 warnings", ConsoleColor.Yellow);
-    terminal.WriteLineColored("✗ 1 error", ConsoleColor.Red);
+    terminal.WriteLine(AnsiColors.Green + "✓ All systems operational" + AnsiColors.Reset);
+    terminal.WriteLine(AnsiColors.Yellow + "⚠ 2 warnings" + AnsiColors.Reset);
+    terminal.WriteLine(AnsiColors.Red + "✗ 1 error" + AnsiColors.Reset);
 });
 
-// Or with extension methods (proposed fluent API)
+// With bold, colors, and backgrounds
 app.Map("deploy {env}", (string env, ITerminal terminal) =>
 {
-    terminal.WriteLine($"Deploying to {env}...".Cyan());
+    terminal.WriteLine(AnsiColors.Bold + AnsiColors.Cyan + $"Deploying to {env}..." + AnsiColors.Reset);
     // ... do work
-    terminal.WriteLine("Deploy complete!".Green());
+    terminal.WriteLine(AnsiColors.BrightGreen + "✓ Deploy complete!" + AnsiColors.Reset);
+});
+
+// Using CSS named colors
+app.Map("fancy", (ITerminal terminal) =>
+{
+    terminal.WriteLine(AnsiColors.Coral + "Coral text" + AnsiColors.Reset);
+    terminal.WriteLine(AnsiColors.DodgerBlue + "Dodger blue" + AnsiColors.Reset);
+    terminal.WriteLine(AnsiColors.Gold + AnsiColors.Bold + "Golden bold" + AnsiColors.Reset);
 });
 
 await app.Build().RunAsync(args);
 ```
 
 ```csharp
-// Testing example - output capture works regardless of colors
+// Testing example - output capture includes ANSI codes
 using var terminal = new TestTerminal();
 terminal.QueueKeys("hello");
-terminal.QueueKey(ConsoleKey.Tab);  // Trigger completion
+terminal.QueueKey(ConsoleKey.Tab);
 terminal.QueueKey(ConsoleKey.Enter);
 terminal.QueueLine("exit");
 
 var app = new NuruAppBuilder()
     .UseTerminal(terminal)
-    .Map("hello", (ITerminal t) => t.WriteLineColored("Hello!", ConsoleColor.Green))
+    .Map("hello", (ITerminal t) =>
+        t.WriteLine(AnsiColors.Green + "Hello!" + AnsiColors.Reset))
     .Build();
 
 await app.RunReplAsync();
 
-Assert.Contains("Hello!", terminal.Output);  // Color codes stripped or captured
+Assert.Contains("Hello!", terminal.Output);  // ANSI codes present but text matches
 ```
 
-### Proposed Color API
+### Existing Color Infrastructure (ALREADY EXISTS - just undocumented!)
+
+**AnsiColors** (`Source/TimeWarp.Nuru.Repl/Display/AnsiColors.cs`):
+- Basic colors: Black, Red, Green, Yellow, Blue, Magenta, Cyan, White, Gray
+- Bright colors: BrightRed, BrightGreen, BrightYellow, etc.
+- All CSS named colors: Coral, Crimson, DodgerBlue, Gold, etc. (140+ colors)
+- Background colors: BgRed, BgGreen, BgBlue, etc.
+- Text formatting: Bold, Dim, Italic, Underline, Strikethrough, Reverse
+
+**SyntaxColors** (`Source/TimeWarp.Nuru.Repl/Display/SyntaxColors.cs`):
+- CommandColor, ErrorColor, KeywordColor, StringColor, etc.
+- PSReadLine-inspired syntax highlighting theme
+
+**Current Usage Pattern** (manual string concatenation):
+```csharp
+Terminal.WriteLine(AnsiColors.Green + "Success!" + AnsiColors.Reset);
+Terminal.WriteLine(AnsiColors.Red + "Error: " + AnsiColors.Reset + message);
+Terminal.WriteLine(AnsiColors.Bold + AnsiColors.Cyan + "Header" + AnsiColors.Reset);
+```
+
+### Proposed Improvements
 
 ```csharp
-// Interface additions
-public interface IConsole
+// Extension methods for cleaner API (optional enhancement)
+public static class AnsiColorExtensions
 {
-    // Existing methods...
-
-    // New color methods
-    void WriteColored(string message, ConsoleColor foreground);
-    void WriteLineColored(string message, ConsoleColor foreground);
-    void WriteColored(string message, ConsoleColor foreground, ConsoleColor background);
+    public static string Red(this string text) => AnsiColors.Red + text + AnsiColors.Reset;
+    public static string Green(this string text) => AnsiColors.Green + text + AnsiColors.Reset;
+    public static string Bold(this string text) => AnsiColors.Bold + text + AnsiColors.Reset;
+    // etc.
 }
 
-// Extension methods for fluent API
-public static class ConsoleColorExtensions
-{
-    public static string Red(this string text) => ...;
-    public static string Green(this string text) => ...;
-    public static string Yellow(this string text) => ...;
-    public static string Cyan(this string text) => ...;
-    public static string Bold(this string text) => ...;
-}
+// Then usage becomes:
+terminal.WriteLine("Success!".Green());
+terminal.WriteLine("Error: ".Red() + message);
 ```
 
 ### Files to Reference
@@ -150,3 +171,5 @@ public static class ConsoleColorExtensions
 - `Source/TimeWarp.Nuru/IO/NuruConsole.cs`
 - `Source/TimeWarp.Nuru/IO/NuruTerminal.cs`
 - `Source/TimeWarp.Nuru/IO/TestTerminal.cs`
+- `Source/TimeWarp.Nuru.Repl/Display/AnsiColors.cs` ← **Existing color support!**
+- `Source/TimeWarp.Nuru.Repl/Display/SyntaxColors.cs` ← **Existing syntax theme!**

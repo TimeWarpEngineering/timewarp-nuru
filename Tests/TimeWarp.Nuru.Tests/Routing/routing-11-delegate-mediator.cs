@@ -1,4 +1,5 @@
 #!/usr/bin/dotnet --
+#:package Mediator.SourceGenerator
 
 using Microsoft.Extensions.DependencyInjection;
 
@@ -32,10 +33,7 @@ public class DelegateMediatorConsistencyTests
     // Arrange - Mediator
     NuruApp app = new NuruAppBuilder()
       .AddDependencyInjection()
-      .ConfigureServices(services =>
-      {
-        services.AddTransient<IRequestHandler<StatusCommand>, StatusHandler>();
-      })
+      .ConfigureServices(services => services.AddMediator())
       .Map<StatusCommand>("status")
       .Build();
 
@@ -72,10 +70,7 @@ public class DelegateMediatorConsistencyTests
     // Arrange - Mediator
     NuruApp app = new NuruAppBuilder()
       .AddDependencyInjection()
-      .ConfigureServices(services =>
-      {
-        services.AddTransient<IRequestHandler<GreetCommand>, GreetHandler>();
-      })
+      .ConfigureServices(services => services.AddMediator())
       .Map<GreetCommand>("greet {name}")
       .Build();
 
@@ -110,10 +105,7 @@ public class DelegateMediatorConsistencyTests
     // Arrange - Mediator
     NuruApp app = new NuruAppBuilder()
       .AddDependencyInjection()
-      .ConfigureServices(services =>
-      {
-        services.AddTransient<IRequestHandler<DelayCommand>, DelayHandler>();
-      })
+      .ConfigureServices(services => services.AddMediator())
       .Map<DelayCommand>("delay {ms:int}")
       .Build();
 
@@ -150,10 +142,7 @@ public class DelegateMediatorConsistencyTests
     // Arrange - Mediator
     NuruApp app = new NuruAppBuilder()
       .AddDependencyInjection()
-      .ConfigureServices(services =>
-      {
-        services.AddTransient<IRequestHandler<DeployCommand>, DeployHandler>();
-      })
+      .ConfigureServices(services => services.AddMediator())
       .Map<DeployCommand>("deploy {env?}")
       .Build();
 
@@ -174,9 +163,9 @@ internal sealed class StatusCommand : IRequest
 
 internal sealed class StatusHandler : IRequestHandler<StatusCommand>
 {
-  public Task Handle(StatusCommand request, CancellationToken cancellationToken)
+  public ValueTask<Unit> Handle(StatusCommand request, CancellationToken cancellationToken)
   {
-    return Task.CompletedTask;
+    return default;
   }
 }
 
@@ -187,10 +176,10 @@ internal sealed class GreetCommand : IRequest
 
 internal sealed class GreetHandler : IRequestHandler<GreetCommand>
 {
-  public Task Handle(GreetCommand request, CancellationToken cancellationToken)
+  public ValueTask<Unit> Handle(GreetCommand request, CancellationToken cancellationToken)
   {
     request.Name.ShouldBe("Alice");
-    return Task.CompletedTask;
+    return default;
   }
 }
 
@@ -201,9 +190,9 @@ internal sealed class DelayCommand : IRequest
 
 internal sealed class DelayHandler : IRequestHandler<DelayCommand>
 {
-  public Task Handle(DelayCommand request, CancellationToken cancellationToken)
+  public ValueTask<Unit> Handle(DelayCommand request, CancellationToken cancellationToken)
   {
-    return Task.CompletedTask;
+    return default;
   }
 }
 
@@ -214,9 +203,9 @@ internal sealed class DeployCommand : IRequest
 
 internal sealed class DeployHandler : IRequestHandler<DeployCommand>
 {
-  public Task Handle(DeployCommand request, CancellationToken cancellationToken)
+  public ValueTask<Unit> Handle(DeployCommand request, CancellationToken cancellationToken)
   {
     request.Env.ShouldBeNull();
-    return Task.CompletedTask;
+    return default;
   }
 }

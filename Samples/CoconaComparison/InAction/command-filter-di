@@ -2,10 +2,11 @@
 // command-filter-di - Nuru DI version demonstrating mediator pipeline behaviors
 #:project ../../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
 #:project ../../../Source/TimeWarp.Nuru.Logging/TimeWarp.Nuru.Logging.csproj
+#:package Mediator.Abstractions
+#:package Mediator.SourceGenerator
 
 using TimeWarp.Nuru;
-using TimeWarp.Nuru.Logging;
-using TimeWarp.Mediator;
+using Mediator;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using static System.Console;
@@ -13,14 +14,13 @@ using static System.Console;
 // Create app with DI and pipeline behaviors - fully fluent!
 NuruApp app = new NuruAppBuilder()
   .UseConsoleLogging()
-  .AddDependencyInjection(config =>
-  {
-    config.RegisterServicesFromAssembly(typeof(HelloCommand).Assembly);
-  })
+  .AddDependencyInjection()
   .ConfigureServices(services =>
   {
-    services.AddTransient(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
-    services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+    services.AddMediator();
+    // For AOT/runfile scenarios, use explicit generic registrations
+    services.AddSingleton<IPipelineBehavior<HelloCommand, Unit>, LoggingBehavior<HelloCommand, Unit>>();
+    services.AddSingleton<IPipelineBehavior<HelloCommand, Unit>, ValidationBehavior<HelloCommand, Unit>>();
   })
   .Map<HelloCommand>("hello")
   .AddAutoHelp()
@@ -33,33 +33,33 @@ public sealed class HelloCommand : IRequest
 {
   internal sealed class Handler : IRequestHandler<HelloCommand>
   {
-    public async Task Handle(HelloCommand request, CancellationToken cancellationToken)
+    public ValueTask<Unit> Handle(HelloCommand request, CancellationToken cancellationToken)
     {
       WriteLine($"Hello Konnichiwa");
-      await Task.CompletedTask;
+      return default;
     }
   }
 }
 
 // Logging behavior (similar to CommandFilter)
-public sealed class LoggingBehavior<TRequest, TResponse> : TimeWarp.Mediator.IPipelineBehavior<TRequest, TResponse>
-    where TRequest : IRequest
+public sealed class LoggingBehavior<TMessage, TResponse> : IPipelineBehavior<TMessage, TResponse>
+    where TMessage : IMessage
 {
-  private readonly ILogger<LoggingBehavior<TRequest, TResponse>> Logger;
+  private readonly ILogger<LoggingBehavior<TMessage, TResponse>> Logger;
 
-  public LoggingBehavior(ILogger<LoggingBehavior<TRequest, TResponse>> logger)
+  public LoggingBehavior(ILogger<LoggingBehavior<TMessage, TResponse>> logger)
   {
     Logger = logger;
   }
 
-  public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
+  public async ValueTask<TResponse> Handle(TMessage message, MessageHandlerDelegate<TMessage, TResponse> next, CancellationToken cancellationToken)
   {
-    var requestName = typeof(TRequest).Name;
+    var requestName = typeof(TMessage).Name;
     Logger.LogInformation($"[LoggingBehavior] Before Command: {requestName}");
 
     try
     {
-      var response = await next();
+      var response = await next(message, cancellationToken);
       Logger.LogInformation($"[LoggingBehavior] After Command: {requestName}");
       return response;
     }
@@ -72,23 +72,23 @@ public sealed class LoggingBehavior<TRequest, TResponse> : TimeWarp.Mediator.IPi
 }
 
 // Validation behavior (another cross-cutting concern)
-public sealed class ValidationBehavior<TRequest, TResponse> : TimeWarp.Mediator.IPipelineBehavior<TRequest, TResponse>
-    where TRequest : IRequest
+public sealed class ValidationBehavior<TMessage, TResponse> : IPipelineBehavior<TMessage, TResponse>
+    where TMessage : IMessage
 {
-  private readonly ILogger<ValidationBehavior<TRequest, TResponse>> Logger;
+  private readonly ILogger<ValidationBehavior<TMessage, TResponse>> Logger;
 
-  public ValidationBehavior(ILogger<ValidationBehavior<TRequest, TResponse>> logger)
+  public ValidationBehavior(ILogger<ValidationBehavior<TMessage, TResponse>> logger)
   {
     Logger = logger;
   }
 
-  public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
+  public async ValueTask<TResponse> Handle(TMessage message, MessageHandlerDelegate<TMessage, TResponse> next, CancellationToken cancellationToken)
   {
-    Logger.LogInformation($"[ValidationBehavior] Validating: {typeof(TRequest).Name}");
+    Logger.LogInformation($"[ValidationBehavior] Validating: {typeof(TMessage).Name}");
 
     // In a real application, you would perform validation here
     // For example, using FluentValidation or custom validation logic
 
-    return await next();
+    return await next(message, cancellationToken);
   }
 }

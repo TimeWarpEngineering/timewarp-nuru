@@ -35,7 +35,7 @@ return await app.RunAsync(args);
 
 ```csharp
 using TimeWarp.Nuru;
-using TimeWarp.Mediator;
+using Mediator;
 using Microsoft.Extensions.DependencyInjection;
 
 NuruApp app = new NuruAppBuilder()

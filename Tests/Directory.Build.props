@@ -14,7 +14,7 @@
     <PackageReference Include="Shouldly" />
     <PackageReference Include="Microsoft.Extensions.Logging" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" />
-    <PackageReference Include="TimeWarp.Mediator" />
+    <PackageReference Include="Mediator.Abstractions" />
     <Using Include="Shouldly" />
     <Using Include="System.Console" Static="true" />
     <Using Include="System.Collections.Concurrent" />
@@ -25,7 +25,7 @@
     <Using Include="TimeWarp.Nuru.Parsing" />
     <Using Include="TimeWarp.Nuru" />
     <Using Include="Microsoft.Extensions.Logging" />
-    <Using Include="TimeWarp.Mediator" />
+    <Using Include="Mediator" />
   </ItemGroup>
 
   <ItemGroup>

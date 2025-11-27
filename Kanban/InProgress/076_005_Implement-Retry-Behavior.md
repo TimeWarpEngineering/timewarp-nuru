@@ -8,6 +8,10 @@ Create a RetryBehavior for resilience, demonstrating exponential backoff retry l
 
 076_Add-Pipeline-Middleware-Sample
 
+## Dependencies
+
+- 076_001_Create-Pipeline-Middleware-Sample-Structure (must be completed first)
+
 ## Checklist
 
 - [ ] Create IRetryable marker interface

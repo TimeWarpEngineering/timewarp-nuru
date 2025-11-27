@@ -1,18 +1,22 @@
 #!/usr/bin/dotnet --
 // calc-mixed - Calculator mixing Direct and Mediator approaches
 #:project ../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
+#:package Mediator.Abstractions
+#:package Mediator.SourceGenerator
 
 using TimeWarp.Nuru;
-using TimeWarp.Mediator;
+using Mediator;
 using Microsoft.Extensions.DependencyInjection;
 using static System.Console;
 
 NuruApp app =
   new NuruAppBuilder()
-  .AddDependencyInjection(config => config.RegisterServicesFromAssembly(typeof(FactorialCommand).Assembly))
+  .AddDependencyInjection()
   .AddAutoHelp()
   .ConfigureServices(services =>
   {
+    // Register Mediator - source generator discovers handlers in THIS assembly
+    services.AddMediator();
     services.AddSingleton<IScientificCalculator, ScientificCalculator>();
   })
   .Map // Use Delegate approach for simple operations (performance)
@@ -92,7 +96,7 @@ public sealed class FactorialCommand : IRequest
 
   public sealed class Handler(IScientificCalculator calc) : IRequestHandler<FactorialCommand>
   {
-    public async Task Handle(FactorialCommand request, CancellationToken cancellationToken)
+    public ValueTask<Unit> Handle(FactorialCommand request, CancellationToken cancellationToken)
     {
       try
       {
@@ -104,7 +108,7 @@ public sealed class FactorialCommand : IRequest
         WriteLine($"Error: {ex.Message}");
       }
 
-      await Task.CompletedTask;
+      return default;
     }
   }
 }
@@ -115,11 +119,11 @@ public class PrimeCheckCommand : IRequest
 
   public sealed class Handler(IScientificCalculator calc) : IRequestHandler<PrimeCheckCommand>
   {
-    public async Task Handle(PrimeCheckCommand request, CancellationToken cancellationToken)
+    public ValueTask<Unit> Handle(PrimeCheckCommand request, CancellationToken cancellationToken)
     {
       bool result = calc.IsPrime(request.N);
       WriteLine($"{request.N} is {(result ? "prime" : "not prime")}");
-      await Task.CompletedTask;
+      return default;
     }
   }
 }
@@ -130,7 +134,7 @@ public class FibonacciCommand : IRequest
 
   public sealed class Handler(IScientificCalculator calc) : IRequestHandler<FibonacciCommand>
   {
-    public async Task Handle(FibonacciCommand request, CancellationToken cancellationToken)
+    public ValueTask<Unit> Handle(FibonacciCommand request, CancellationToken cancellationToken)
     {
       try
       {
@@ -142,7 +146,7 @@ public class FibonacciCommand : IRequest
         WriteLine($"Error: {ex.Message}");
       }
 
-      await Task.CompletedTask;
+      return default;
     }
   }
 }
@@ -154,11 +158,11 @@ public class StatsCommand : IRequest<StatsResponse>
 
   internal sealed class Handler : IRequestHandler<StatsCommand, StatsResponse>
   {
-    public Task<StatsResponse> Handle(StatsCommand request, CancellationToken cancellationToken)
+    public ValueTask<StatsResponse> Handle(StatsCommand request, CancellationToken cancellationToken)
     {
       if (string.IsNullOrWhiteSpace(request.Values))
       {
-        return Task.FromResult(new StatsResponse());
+        return new ValueTask<StatsResponse>(new StatsResponse());
       }
 
       double[] values =
@@ -170,10 +174,10 @@ public class StatsCommand : IRequest<StatsResponse>
 
       if (values.Length == 0)
       {
-        return Task.FromResult(new StatsResponse());
+        return new ValueTask<StatsResponse>(new StatsResponse());
       }
 
-      return Task.FromResult
+      return new ValueTask<StatsResponse>
       (
         new StatsResponse
         {

@@ -21,13 +21,16 @@
     <PackageVersion Include="Microsoft.Extensions.Configuration.UserSecrets" Version="9.0.10" />
   </ItemGroup>
   <ItemGroup Label="TimeWarp Packages">
-    <PackageVersion Include="TimeWarp.Mediator" Version="13.0.0" />
     <PackageVersion Include="TimeWarp.Amuru" Version="1.0.0-beta.13" />
     <PackageVersion Include="TimeWarp.Jaribu" Version="1.0.0-beta.5" />
     <PackageVersion Include="TimeWarp.Build.Tasks" Version="1.0.0" />
     <PackageVersion Include="TimeWarp.OptionsValidation" Version="1.0.0-beta.3" />
     <PackageVersion Include="TimeWarp.Nuru.Parsing" Version="$(Version)" />
     <PackageVersion Include="TimeWarp.Nuru.Analyzers" Version="$(Version)" />
+  </ItemGroup>
+  <ItemGroup Label="Mediator - martinothamar source-generator based">
+    <PackageVersion Include="Mediator.Abstractions" Version="3.0.1" />
+    <PackageVersion Include="Mediator.SourceGenerator" Version="3.0.1" />
   </ItemGroup>
   <ItemGroup Label="Testing">
     <PackageVersion Include="Shouldly" Version="4.3.0" />

@@ -82,10 +82,22 @@ public partial class NuruAppBuilder
 
   /// <summary>
   /// Adds dependency injection support to the application.
-  /// This also enables Mediator support for command-based routing.
+  /// Uses martinothamar/Mediator source generator for full AOT compatibility.
   /// </summary>
-  /// <param name="configureMediatorOptions">Optional action to configure Mediator options.</param>
-  public NuruAppBuilder AddDependencyInjection(Action<MediatorServiceConfiguration>? configureMediatorOptions = null)
+  /// <remarks>
+  /// <para>
+  /// If your application uses Mediator-based command handlers (IRequest/IRequestHandler),
+  /// you must call AddMediator() in ConfigureServices:
+  /// </para>
+  /// <code>
+  /// builder.ConfigureServices(services => services.AddMediator());
+  /// </code>
+  /// <para>
+  /// The source generator creates the AddMediator() method based on handler types found
+  /// in your project at compile time. Configuration is done via [assembly: MediatorOptions] attribute.
+  /// </para>
+  /// </remarks>
+  public NuruAppBuilder AddDependencyInjection()
   {
     if (ServiceCollection is null)
     {
@@ -94,17 +106,9 @@ public partial class NuruAppBuilder
       ServiceCollection.AddSingleton(EndpointCollection);
       ServiceCollection.AddSingleton<ITypeConverterRegistry>(TypeConverterRegistry);
 
-      // Add Mediator support
-      if (configureMediatorOptions is not null)
-      {
-        ServiceCollection.AddMediator(configureMediatorOptions);
-      }
-      else
-      {
-        // Add core mediator services without assembly scanning
-        var defaultConfig = new MediatorServiceConfiguration();
-        TimeWarp.Mediator.Registration.ServiceRegistrar.AddRequiredServices(ServiceCollection, defaultConfig);
-      }
+      // Note: AddMediator() must be called by the consuming application, not the library.
+      // The source generator discovers handlers in the assembly where AddMediator() is called.
+      // Applications using Mediator-based handlers should call services.AddMediator() in ConfigureServices.
     }
 
     return this;

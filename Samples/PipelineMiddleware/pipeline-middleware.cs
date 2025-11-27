@@ -1,18 +1,20 @@
 #!/usr/bin/dotnet --
-// pipeline-middleware - Demonstrates TimeWarp.Mediator pipeline behaviors for cross-cutting concerns
+// pipeline-middleware - Demonstrates Mediator pipeline behaviors for cross-cutting concerns
 #:project ../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
 #:project ../../Source/TimeWarp.Nuru.Logging/TimeWarp.Nuru.Logging.csproj
+#:package Mediator.Abstractions
+#:package Mediator.SourceGenerator
 
 using System.Diagnostics;
 using TimeWarp.Nuru;
-using TimeWarp.Mediator;
+using Mediator;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using static System.Console;
 
 // Pipeline Middleware Sample
 // ==========================
-// This sample demonstrates TimeWarp.Mediator's pipeline behaviors (middleware)
+// This sample demonstrates martinothamar/Mediator pipeline behaviors (middleware)
 // for implementing cross-cutting concerns like logging, performance monitoring,
 // telemetry, validation, and more.
 //
@@ -22,15 +24,23 @@ using static System.Console;
 
 NuruApp app = new NuruAppBuilder()
   .UseConsoleLogging(LogLevel.Information)
-  .AddDependencyInjection(config => config.RegisterServicesFromAssembly(typeof(EchoCommand).Assembly))
+  .AddDependencyInjection()
   .ConfigureServices
   (
     (services, config) =>
     {
+      // Register Mediator - source generator discovers handlers in THIS assembly
+      services.AddMediator();
+
       // Register pipeline behaviors in execution order (outermost to innermost)
       // The order here determines the order behaviors wrap the handler
-      services.AddScoped(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
-      services.AddScoped(typeof(IPipelineBehavior<,>), typeof(PerformanceBehavior<,>));
+      //
+      // Note: For AOT/runfile scenarios, use explicit generic registrations rather than
+      // open generic registration (typeof(IPipelineBehavior<,>)) to avoid trimmer issues.
+      services.AddSingleton<IPipelineBehavior<EchoCommand, Unit>, LoggingBehavior<EchoCommand, Unit>>();
+      services.AddSingleton<IPipelineBehavior<EchoCommand, Unit>, PerformanceBehavior<EchoCommand, Unit>>();
+      services.AddSingleton<IPipelineBehavior<SlowCommand, Unit>, LoggingBehavior<SlowCommand, Unit>>();
+      services.AddSingleton<IPipelineBehavior<SlowCommand, Unit>, PerformanceBehavior<SlowCommand, Unit>>();
     }
   )
   // Simple command to demonstrate pipeline
@@ -61,10 +71,10 @@ public sealed class EchoCommand : IRequest
 
   public sealed class Handler : IRequestHandler<EchoCommand>
   {
-    public Task Handle(EchoCommand request, CancellationToken cancellationToken)
+    public ValueTask<Unit> Handle(EchoCommand request, CancellationToken cancellationToken)
     {
       WriteLine($"Echo: {request.Message}");
-      return Task.CompletedTask;
+      return default;
     }
   }
 }
@@ -76,11 +86,12 @@ public sealed class SlowCommand : IRequest
 
   public sealed class Handler : IRequestHandler<SlowCommand>
   {
-    public async Task Handle(SlowCommand request, CancellationToken cancellationToken)
+    public async ValueTask<Unit> Handle(SlowCommand request, CancellationToken cancellationToken)
     {
       WriteLine($"Starting slow operation ({request.Delay}ms)...");
       await Task.Delay(request.Delay, cancellationToken);
       WriteLine("Slow operation completed.");
+      return Unit.Value;
     }
   }
 }
@@ -93,29 +104,29 @@ public sealed class SlowCommand : IRequest
 /// Logging behavior that logs request entry and exit.
 /// This is the outermost behavior, so it wraps everything else.
 /// </summary>
-public sealed class LoggingBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
-  where TRequest : IRequest<TResponse>
+public sealed class LoggingBehavior<TMessage, TResponse> : IPipelineBehavior<TMessage, TResponse>
+  where TMessage : IMessage
 {
-  private readonly ILogger<LoggingBehavior<TRequest, TResponse>> Logger;
+  private readonly ILogger<LoggingBehavior<TMessage, TResponse>> Logger;
 
-  public LoggingBehavior(ILogger<LoggingBehavior<TRequest, TResponse>> logger)
+  public LoggingBehavior(ILogger<LoggingBehavior<TMessage, TResponse>> logger)
   {
     Logger = logger;
   }
 
-  public async Task<TResponse> Handle
+  public async ValueTask<TResponse> Handle
   (
-    TRequest request,
-    RequestHandlerDelegate<TResponse> next,
+    TMessage message,
+    MessageHandlerDelegate<TMessage, TResponse> next,
     CancellationToken cancellationToken
   )
   {
-    string requestName = typeof(TRequest).Name;
+    string requestName = typeof(TMessage).Name;
     Logger.LogInformation("[PIPELINE] Handling {RequestName}", requestName);
 
     try
     {
-      TResponse response = await next();
+      TResponse response = await next(message, cancellationToken);
       Logger.LogInformation("[PIPELINE] Completed {RequestName}", requestName);
       return response;
     }
@@ -131,33 +142,33 @@ public sealed class LoggingBehavior<TRequest, TResponse> : IPipelineBehavior<TRe
 /// Performance behavior that times command execution and warns on slow commands.
 /// Demonstrates cross-cutting performance monitoring.
 /// </summary>
-public sealed class PerformanceBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
-  where TRequest : IRequest<TResponse>
+public sealed class PerformanceBehavior<TMessage, TResponse> : IPipelineBehavior<TMessage, TResponse>
+  where TMessage : IMessage
 {
-  private readonly ILogger<PerformanceBehavior<TRequest, TResponse>> Logger;
+  private readonly ILogger<PerformanceBehavior<TMessage, TResponse>> Logger;
   private const int SlowThresholdMs = 500;
 
-  public PerformanceBehavior(ILogger<PerformanceBehavior<TRequest, TResponse>> logger)
+  public PerformanceBehavior(ILogger<PerformanceBehavior<TMessage, TResponse>> logger)
   {
     Logger = logger;
   }
 
-  public async Task<TResponse> Handle
+  public async ValueTask<TResponse> Handle
   (
-    TRequest request,
-    RequestHandlerDelegate<TResponse> next,
+    TMessage message,
+    MessageHandlerDelegate<TMessage, TResponse> next,
     CancellationToken cancellationToken
   )
   {
     Stopwatch stopwatch = Stopwatch.StartNew();
 
-    TResponse response = await next();
+    TResponse response = await next(message, cancellationToken);
 
     stopwatch.Stop();
 
     if (stopwatch.ElapsedMilliseconds > SlowThresholdMs)
     {
-      string requestName = typeof(TRequest).Name;
+      string requestName = typeof(TMessage).Name;
       Logger.LogWarning
       (
         "[PERFORMANCE] {RequestName} took {ElapsedMs}ms (threshold: {ThresholdMs}ms)",

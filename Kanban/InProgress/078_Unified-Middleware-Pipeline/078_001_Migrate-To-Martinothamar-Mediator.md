@@ -18,24 +18,24 @@ Replace TimeWarp.Mediator (MediatR fork) with martinothamar/Mediator (source-gen
 ## Checklist
 
 ### Research
-- [ ] Review martinothamar/Mediator API differences
-- [ ] Identify breaking changes from TimeWarp.Mediator
-- [ ] Document migration steps
+- [x] Review martinothamar/Mediator API differences
+- [x] Identify breaking changes from TimeWarp.Mediator
+- [x] Document migration steps
 
 ### Implementation
-- [ ] Update package references in Directory.Packages.props
-- [ ] Update NuruAppBuilder.Configuration.cs for new registration API
-- [ ] Update MediatorExecutor for new API (ValueTask, MessageHandlerDelegate)
-- [ ] Update pipeline behavior samples for new signature
-- [ ] Update calc-mediator.cs sample
-- [ ] Update calc-mixed.cs sample
-- [ ] Update pipeline-middleware.cs sample
+- [x] Update package references in Directory.Packages.props
+- [x] Update NuruAppBuilder.Configuration.cs for new registration API
+- [x] Update MediatorExecutor for new API (ValueTask, MessageHandlerDelegate)
+- [x] Update pipeline behavior samples for new signature
+- [x] Update calc-mediator.cs sample
+- [x] Update calc-mixed.cs sample
+- [x] Update pipeline-middleware.cs sample
 
 ### Verification
-- [ ] All samples compile and run
+- [x] All samples compile and run
 - [ ] Test AOT compilation without TrimMode=partial
 - [ ] Run benchmark comparison
-- [ ] Verify pipeline behaviors execute correctly
+- [x] Verify pipeline behaviors execute correctly
 
 ## API Differences
 
@@ -61,6 +61,7 @@ public interface IPipelineBehavior<TMessage, TResponse>
 2. **Delegate signature**: `RequestHandlerDelegate<TResponse>()` -> `MessageHandlerDelegate<TMessage, TResponse>(message, ct)`
 3. **Registration**: Reflection-based -> Source generator (`AddMediator()` with options)
 4. **Handler interface**: Same name but in different namespace
+5. **AddMediator() location**: Must be called by the consuming application, not the library
 
 ## Benefits
 
@@ -73,6 +74,32 @@ public interface IPipelineBehavior<TMessage, TResponse>
 | Service Lifetime | Typically Transient/Scoped | Singleton by default |
 | Handler Registration | Runtime reflection | Compile-time generated |
 | Diagnostics | Runtime errors | Build-time warnings/errors |
+
+## Implementation Notes
+
+### Breaking Change: AddMediator() Registration
+
+The library (TimeWarp.Nuru) no longer calls `AddMediator()` automatically. Applications using Mediator-based commands must call it explicitly:
+
+```csharp
+var app = new NuruAppBuilder()
+    .AddDependencyInjection()
+    .ConfigureServices(services => services.AddMediator()) // Required!
+    .Map<MyCommand>("my-command")
+    .Build();
+```
+
+This is because martinothamar/Mediator's source generator discovers handlers only in the assembly where `AddMediator()` is called. Since handlers are defined in the application, not the library, the application must make this call.
+
+### Pipeline Behaviors in Runfiles
+
+For AOT/runfile scenarios, use explicit generic registrations rather than open generic registration to avoid trimmer issues:
+
+```csharp
+// Instead of: services.AddSingleton(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
+// Use explicit registrations:
+services.AddSingleton<IPipelineBehavior<MyCommand, Unit>, LoggingBehavior<MyCommand, Unit>>();
+```
 
 ## Notes
 

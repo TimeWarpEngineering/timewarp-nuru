@@ -25,7 +25,7 @@ public class MediatorExecutor
   /// </remarks>
   [RequiresUnreferencedCode("Command types are created and populated dynamically. Ensure command constructors and properties are preserved.")]
   [RequiresDynamicCode("Command instantiation may require dynamic code generation.")]
-  public Task<object?> ExecuteCommandAsync(
+  public async Task<object?> ExecuteCommandAsync(
       [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
       Type commandType,
       Dictionary<string, string> extractedValues,
@@ -42,8 +42,9 @@ public class MediatorExecutor
     PopulateCommand(command, commandType, extractedValues);
 
     // Execute through Mediator (get from service provider to respect scoped lifetime)
+    // martinothamar/Mediator returns ValueTask<object?>, convert to Task for API compatibility
     IMediator mediator = ServiceProvider.GetRequiredService<IMediator>();
-    return mediator.Send(command, cancellationToken);
+    return await mediator.Send(command, cancellationToken).ConfigureAwait(false);
   }
 
   [UnconditionalSuppressMessage("Trimming", "IL2072:UnrecognizedReflectionPattern",

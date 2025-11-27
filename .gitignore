@@ -430,7 +430,9 @@ Tests/logs/
 
 # Agent workspace for temporary files
 .agent/workspace/
-Source/TimeWarp.Nuru/generated/
+
+# Source generator output directories
+**/generated/
 
 # Opencode temporary downloads
 opencodetmp/

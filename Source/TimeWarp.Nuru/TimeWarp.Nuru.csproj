@@ -11,7 +11,7 @@
     <IsAotCompatible>true</IsAotCompatible>
     <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
     <EnableAotAnalyzer>true</EnableAotAnalyzer>
-    <!-- Note: Direct delegate routing works with full AOT. Mediator routing requires partial trim mode (TrimMode=partial) -->
+    <!-- Note: Direct delegate routing works with full AOT. Mediator routing now uses martinothamar/Mediator source generator for full AOT support -->
 
     <!-- Output generated source files to generated directory -->
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
@@ -35,7 +35,8 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" GeneratePathProperty="true" />
     <PackageReference Include="Microsoft.Extensions.Options" />
-    <PackageReference Include="TimeWarp.Mediator" />
+    <!-- Only reference Mediator.Abstractions - consumers must add Mediator.SourceGenerator to discover their handlers -->
+    <PackageReference Include="Mediator.Abstractions" />
   </ItemGroup>
 
   <!-- Include parsing source files directly -->

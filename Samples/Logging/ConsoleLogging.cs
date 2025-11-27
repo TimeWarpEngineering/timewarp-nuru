@@ -2,9 +2,11 @@
 #:project ../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
 #:project ../../Source/TimeWarp.Nuru.Logging/TimeWarp.Nuru.Logging.csproj
 #:package Microsoft.Extensions.Logging
+#:package Mediator.Abstractions
+#:package Mediator.SourceGenerator
 
 using TimeWarp.Nuru;
-using TimeWarp.Mediator;
+using Mediator;
 using Microsoft.Extensions.Logging;
 
 // TimeWarp.Nuru.Logging provides three convenience methods for console logging:
@@ -72,7 +74,8 @@ NuruApp app = new NuruAppBuilder()
 // Uncomment to try:
 // NuruApp app = new NuruAppBuilder()
 //     .UseConsoleLogging()
-//     .AddDependencyInjection(config => config.RegisterServicesFromAssembly(typeof(TestCommand).Assembly))
+//     .AddDependencyInjection()
+//     .ConfigureServices(services => services.AddMediator()) // Source generator discovers handlers
 //     .Map<TestCommand>("test")
 //     .Map<GreetCommand>("greet {name}")
 //     .AddAutoHelp()
@@ -82,7 +85,8 @@ NuruApp app = new NuruAppBuilder()
 // Uncomment to try:
 // NuruApp app = new NuruAppBuilder()
 //     .UseConsoleLogging(LogLevel.Debug)
-//     .AddDependencyInjection(config => config.RegisterServicesFromAssembly(typeof(TestCommand).Assembly))
+//     .AddDependencyInjection()
+//     .ConfigureServices(services => services.AddMediator())
 //     .Map<TestCommand>("test")
 //     .Map<GreetCommand>("greet {name}")
 //     .Build();
@@ -91,7 +95,8 @@ NuruApp app = new NuruAppBuilder()
 // Uncomment to try:
 // NuruApp app = new NuruAppBuilder()
 //     .UseDebugLogging()
-//     .AddDependencyInjection(config => config.RegisterServicesFromAssembly(typeof(TestCommand).Assembly))
+//     .AddDependencyInjection()
+//     .ConfigureServices(services => services.AddMediator())
 //     .Map<TestCommand>("test")
 //     .Map<GreetCommand>("greet {name}")
 //     .Build();
@@ -110,7 +115,7 @@ public sealed class TestCommand : IRequest
       Logger = logger;
     }
 
-    public async Task Handle(TestCommand request, CancellationToken cancellationToken)
+    public ValueTask<Unit> Handle(TestCommand request, CancellationToken cancellationToken)
     {
       Logger.LogTrace("This is a TRACE message (very detailed)");
       Logger.LogDebug("This is a DEBUG message (detailed)");
@@ -118,7 +123,7 @@ public sealed class TestCommand : IRequest
       Logger.LogWarning("This is a WARNING message");
       Logger.LogError("This is an ERROR message");
       Console.WriteLine("✓ Test command completed");
-      await Task.CompletedTask;
+      return default;
     }
   }
 }
@@ -136,11 +141,11 @@ public sealed class GreetCommand : IRequest
       Logger = logger;
     }
 
-    public async Task Handle(GreetCommand request, CancellationToken cancellationToken)
+    public ValueTask<Unit> Handle(GreetCommand request, CancellationToken cancellationToken)
     {
       Logger.LogInformation("Greeting user: {Name}", request.Name);
       Console.WriteLine($"Hello, {request.Name}!");
-      await Task.CompletedTask;
+      return default;
     }
   }
 }

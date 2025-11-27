@@ -1,7 +1,7 @@
 namespace TimeWarp.Nuru.Benchmarks.Commands;
 
+using Mediator;
 using Microsoft.Extensions.DependencyInjection;
-using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 
 public static class NuruMediatorCommand
@@ -10,11 +10,7 @@ public static class NuruMediatorCommand
   {
     NuruApp app = new NuruAppBuilder()
       .AddDependencyInjection()
-      .ConfigureServices(services =>
-      {
-        // Register only the specific handler for this benchmark
-        services.AddTransient<IRequestHandler<TestCommand>, TestCommand.Handler>();
-      })
+      .ConfigureServices(services => services.AddMediator())
       .Map<TestCommand>("test --str {str} -i {intOption:int} -b")
       .Build();
 
@@ -35,10 +31,10 @@ public sealed class TestCommand : IRequest
 
   internal sealed class Handler : IRequestHandler<TestCommand>
   {
-    public Task Handle(TestCommand request, CancellationToken cancellationToken)
+    public ValueTask<Unit> Handle(TestCommand request, CancellationToken cancellationToken)
     {
       // Empty handler for benchmarking
-      return Task.CompletedTask;
+      return default;
     }
   }
 }

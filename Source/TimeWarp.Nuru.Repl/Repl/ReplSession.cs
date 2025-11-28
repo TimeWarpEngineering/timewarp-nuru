@@ -7,7 +7,7 @@ namespace TimeWarp.Nuru.Repl;
 internal sealed class ReplSession : IDisposable
 {
   private readonly ILoggerFactory LoggerFactory;
-  private readonly NuruApp NuruApp;
+  private readonly NuruCoreApp NuruCoreApp;
   private readonly ReplOptions ReplOptions;
   private readonly ReplHistory History;
   private readonly ITypeConverterRegistry TypeConverterRegistry;
@@ -31,17 +31,17 @@ internal sealed class ReplSession : IDisposable
   /// <summary>
   /// Creates a new REPL mode instance.
   /// </summary>
-  /// <param name="nuruApp">The NuruApp instance to execute commands against.</param>
+  /// <param name="nuruApp">The NuruCoreApp instance to execute commands against.</param>
   /// <param name="replOptions">Optional configuration for the REPL.</param>
   /// <param name="loggerFactory">Logger factory for logging operations.</param>
   internal ReplSession
   (
-    NuruApp nuruApp,
+    NuruCoreApp nuruApp,
     ReplOptions replOptions,
     ILoggerFactory loggerFactory
   )
   {
-    NuruApp = nuruApp ?? throw new ArgumentNullException(nameof(nuruApp));
+    NuruCoreApp = nuruApp ?? throw new ArgumentNullException(nameof(nuruApp));
     ReplOptions = replOptions ?? new ReplOptions();
     TypeConverterRegistry = nuruApp.TypeConverterRegistry;
     LoggerFactory = loggerFactory;
@@ -75,14 +75,14 @@ internal sealed class ReplSession : IDisposable
   /// <summary>
   /// Runs a REPL session asynchronously.
   /// </summary>
-  /// <param name="nuruApp">The NuruApp instance to execute commands against.</param>
+  /// <param name="nuruApp">The NuruCoreApp instance to execute commands against.</param>
   /// <param name="replOptions">Configuration for the REPL.</param>
   /// <param name="loggerFactory">Logger factory for logging.</param>
   /// <param name="cancellationToken">Token to cancel the REPL loop.</param>
   /// <returns>The exit code of the last executed command, or 0 if no commands were executed.</returns>
   public static async Task<int> RunAsync
   (
-    NuruApp nuruApp,
+    NuruCoreApp nuruApp,
     ReplOptions replOptions,
     ILoggerFactory loggerFactory,
     CancellationToken cancellationToken = default
@@ -179,7 +179,7 @@ internal sealed class ReplSession : IDisposable
         new          (
             History.AsReadOnly,
             CompletionProvider,
-            NuruApp.Endpoints,
+            NuruCoreApp.Endpoints,
             ReplOptions,
             LoggerFactory,
             Terminal
@@ -196,7 +196,7 @@ internal sealed class ReplSession : IDisposable
     Stopwatch stopwatch = Stopwatch.StartNew();
     try
     {
-      int exitCode = await NuruApp.RunAsync(args).ConfigureAwait(false);
+      int exitCode = await NuruCoreApp.RunAsync(args).ConfigureAwait(false);
       stopwatch.Stop();
 
       DisplayCommandResult(exitCode, stopwatch.ElapsedMilliseconds, success: true);

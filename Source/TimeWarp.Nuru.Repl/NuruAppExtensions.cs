@@ -5,7 +5,7 @@ using TimeWarp.Nuru;
 /// <summary>
 /// Extension methods to enable REPL (Read-Eval-Print Loop) mode for Nuru applications.
 /// </summary>
-public static class NuruAppExtensions
+public static class NuruCoreAppExtensions
 {
   /// <summary>
   /// Adds REPL (Read-Eval-Print Loop) command routes to application.
@@ -49,12 +49,12 @@ public static class NuruAppExtensions
   /// Runs the application with REPL support. If args contains "--repl", enters interactive mode.
   /// Otherwise, executes the command normally.
   /// </summary>
-  /// <param name="app">The NuruApp instance.</param>
+  /// <param name="app">The NuruCoreApp instance.</param>
   /// <param name="cancellationToken">Cancellation token.</param>
   /// <returns>Exit code from the command or REPL session.</returns>
   /// <example>
   /// <code>
-  /// NuruApp app = NuruApp.CreateBuilder()
+  /// NuruCoreApp app = NuruCoreApp.CreateBuilder()
   ///   .Map("greet {name}", (string name) => Console.WriteLine($"Hello, {name}!"))
   ///   .Map("status", () => Console.WriteLine("OK"))
   ///   .Build();
@@ -65,7 +65,7 @@ public static class NuruAppExtensions
   /// </example>
   public static Task<int> RunReplAsync
   (
-    this NuruApp app,
+    this NuruCoreApp app,
     ReplOptions? options = null,
     CancellationToken cancellationToken = default
   )
@@ -87,7 +87,7 @@ public static class NuruAppExtensions
   /// <returns>The builder for chaining.</returns>
   /// <example>
   /// <code>
-  /// NuruApp app = new NuruAppBuilder()
+  /// NuruCoreApp app = new NuruAppBuilder()
   ///   .Map("greet {name}", (string name) => Console.WriteLine($"Hello, {name}!"))
   ///   .AddReplSupport(options => options.Prompt = "myapp> ")
   ///   .AddInteractiveRoute()
@@ -117,11 +117,11 @@ public static class NuruAppExtensions
 
   /// <summary>
   /// Static handler for the interactive mode route.
-  /// Receives NuruApp via DI injection and starts the REPL.
+  /// Receives NuruCoreApp via DI injection and starts the REPL.
   /// </summary>
-  /// <param name="app">The NuruApp instance (injected by framework).</param>
+  /// <param name="app">The NuruCoreApp instance (injected by framework).</param>
   /// <returns>Exit code from the REPL session.</returns>
-  public static Task<int> StartInteractiveModeAsync(NuruApp app)
+  public static Task<int> StartInteractiveModeAsync(NuruCoreApp app)
   {
     return app.RunReplAsync();
   }

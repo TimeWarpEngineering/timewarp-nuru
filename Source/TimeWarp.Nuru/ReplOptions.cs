@@ -112,7 +112,7 @@ public class ReplOptions
   /// <example>
   /// <code>
   /// // Use Emacs-style key bindings
-  /// var options = new ReplOptions
+  /// ReplOptions options = new()
   /// {
   ///   KeyBindingProfileName = "Emacs"
   /// };
@@ -136,11 +136,11 @@ public class ReplOptions
   /// <example>
   /// <code>
   /// // Use a custom profile based on Emacs
-  /// var customProfile = new CustomKeyBindingProfile(new EmacsKeyBindingProfile())
+  /// CustomKeyBindingProfile customProfile = new CustomKeyBindingProfile(new EmacsKeyBindingProfile())
   ///   .Override(ConsoleKey.K, ConsoleModifiers.Control, reader => reader.HandleDeleteToEnd)
   ///   .Remove(ConsoleKey.D, ConsoleModifiers.Control);
   ///
-  /// var options = new ReplOptions
+  /// ReplOptions options = new()
   /// {
   ///   KeyBindingProfile = customProfile
   /// };

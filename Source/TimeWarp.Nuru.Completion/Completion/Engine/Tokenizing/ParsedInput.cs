@@ -20,13 +20,13 @@ namespace TimeWarp.Nuru.Completion;
 /// <example>
 /// <code>
 /// // User types "git " (with space) - wants to see all subcommands
-/// var input = new ParsedInput(["git"], null, true);
+/// ParsedInput input1 = new(["git"], null, true);
 ///
 /// // User types "git s" - wants subcommands starting with 's'
-/// var input = new ParsedInput(["git"], "s", false);
+/// ParsedInput input2 = new(["git"], "s", false);
 ///
 /// // User types "backup --com" - wants options starting with '--com'
-/// var input = new ParsedInput(["backup"], "--com", false);
+/// ParsedInput input3 = new(["backup"], "--com", false);
 /// </code>
 /// </example>
 /// <param name="CompletedWords">Words that are fully typed (followed by whitespace).</param>

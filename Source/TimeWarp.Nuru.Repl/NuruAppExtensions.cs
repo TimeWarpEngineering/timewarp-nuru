@@ -87,7 +87,7 @@ public static class NuruAppExtensions
   /// <returns>The builder for chaining.</returns>
   /// <example>
   /// <code>
-  /// var app = new NuruAppBuilder()
+  /// NuruApp app = new NuruAppBuilder()
   ///   .Map("greet {name}", (string name) => Console.WriteLine($"Hello, {name}!"))
   ///   .AddReplSupport(options => options.Prompt = "myapp> ")
   ///   .AddInteractiveRoute()

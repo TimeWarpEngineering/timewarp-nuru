@@ -8,8 +8,8 @@ namespace TimeWarp.Nuru;
 /// Use this class in unit tests to verify console output without interacting with the real console.
 /// <example>
 /// <code>
-/// using var console = new TestConsole("command1\nexit\n");
-/// var app = NuruApp.CreateBuilder()
+/// using TestConsole console = new("command1\nexit\n");
+/// NuruApp app = NuruApp.CreateBuilder()
 ///     .Map("command1", () => "Hello!")
 ///     .Build(console: console);
 ///

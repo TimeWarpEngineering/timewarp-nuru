@@ -32,7 +32,7 @@ public partial class NuruApp
   /// </remarks>
   /// <example>
   /// <code>
-  /// var builder = NuruApp.CreateBuilder(args);
+  /// NuruAppBuilder builder = NuruApp.CreateBuilder(args);
   /// builder.Map("status", () => "OK");
   /// builder.Map&lt;DeployCommand&gt;("deploy {env}");
   /// await builder.Build().RunAsync(args);
@@ -70,7 +70,7 @@ public partial class NuruApp
   /// </remarks>
   /// <example>
   /// <code>
-  /// var builder = NuruApp.CreateSlimBuilder();
+  /// NuruAppBuilder builder = NuruApp.CreateSlimBuilder();
   /// builder.Map("greet {name}", (string name) => $"Hello, {name}!");
   /// await builder.Build().RunAsync(args);
   /// </code>
@@ -107,7 +107,7 @@ public partial class NuruApp
   /// </remarks>
   /// <example>
   /// <code>
-  /// var builder = NuruApp.CreateEmptyBuilder();
+  /// NuruAppBuilder builder = NuruApp.CreateEmptyBuilder();
   /// builder.AddTypeConverter(new MyCustomConverter());
   /// builder.Map("cmd", () => "minimal");
   /// await builder.Build().RunAsync(args);

@@ -34,7 +34,7 @@ public interface ICandidateGenerator
   /// </returns>
   /// <example>
   /// <code>
-  /// var candidates = generator.Generate(matchStates, partialWord: "st");
+  /// IReadOnlyCollection&lt;CompletionCandidate&gt; candidates = generator.Generate(matchStates, partialWord: "st");
   /// // Returns candidates starting with "st": "status", "stop", etc.
   /// </code>
   /// </example>

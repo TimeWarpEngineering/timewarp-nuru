@@ -14,7 +14,7 @@ namespace TimeWarp.Nuru;
 /// </list>
 /// <example>
 /// <code>
-/// using var terminal = new TestTerminal();
+/// using TestTerminal terminal = new();
 /// terminal.QueueKeys("hello");
 /// terminal.QueueKey(ConsoleKey.Tab);  // Trigger completion
 /// terminal.QueueKey(ConsoleKey.Enter);

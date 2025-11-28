@@ -48,7 +48,7 @@ WriteLine();
 //   2. Remove the Ctrl+D (EOF) binding that would exit the REPL
 // ============================================================================
 
-var customProfile = new CustomKeyBindingProfile(new EmacsKeyBindingProfile())
+CustomKeyBindingProfile customProfile = new CustomKeyBindingProfile(new EmacsKeyBindingProfile())
   .WithName("EmacsCustomized")
 
   // Add Ctrl+G to "ding" (bell) - a simple custom action
@@ -69,7 +69,7 @@ var customProfile = new CustomKeyBindingProfile(new EmacsKeyBindingProfile())
 // Build the app with custom key bindings
 // ============================================================================
 
-var app = new NuruAppBuilder()
+NuruApp app = new NuruAppBuilder()
   .WithMetadata
   (
     description: "Demonstrates CustomKeyBindingProfile for personalized REPL key bindings."

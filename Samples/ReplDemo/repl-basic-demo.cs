@@ -42,7 +42,7 @@ Log.Logger = new LoggerConfiguration()
   .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
   .Filter.ByExcluding(e =>
   {
-    var message = e.RenderMessage();
+    string message = e.RenderMessage();
     return message.Contains("Registering route:") ||
            message.Contains("Starting lexical analysis") ||
            message.Contains("Lexical analysis complete") ||
@@ -67,7 +67,7 @@ Log.Logger = new LoggerConfiguration()
   .Enrich.FromLogContext()
   .CreateLogger();
 
-var loggerFactory = LoggerFactory.Create(builder =>
+ILoggerFactory loggerFactory = LoggerFactory.Create(builder =>
 {
   builder.AddSerilog(Log.Logger);
 });
@@ -81,7 +81,7 @@ try
   WriteLine("Debug logs: repl-debug.log");
   WriteLine();
 
-  var app = new NuruAppBuilder()
+  NuruApp app = new NuruAppBuilder()
     .UseLogging(loggerFactory)
     .AddTypeConverter(new EnumTypeConverter<Environment>()) // Register enum converter
     .WithMetadata
@@ -108,7 +108,7 @@ try
       pattern: "time",
       handler: () =>
       {
-        var now = DateTime.Now;
+        DateTime now = DateTime.Now;
         Log.Information("Time command executed at: {Time}", now);
         WriteLine($"Current time: {now:HH:mm:ss}");
       },

@@ -24,7 +24,7 @@ using System.ComponentModel;
 using TimeWarp.Nuru;
 using TimeWarp.Nuru.Completion;
 
-var builder = new NuruAppBuilder();
+NuruAppBuilder builder = new();
 
 // ============================================================================
 // Enable Dynamic Completion with Custom Sources

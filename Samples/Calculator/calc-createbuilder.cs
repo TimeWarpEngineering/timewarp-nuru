@@ -10,7 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 using static System.Console;
 
 // ASP.NET Core-style API - familiar to web developers
-var builder = NuruApp.CreateBuilder(args);
+NuruAppBuilder builder = NuruApp.CreateBuilder(args);
 
 // ConfigureServices works just like ASP.NET Core
 builder.ConfigureServices(services =>
@@ -58,7 +58,7 @@ builder.MapDefault(() =>
 });
 
 // Build and run - same pattern as ASP.NET Core
-var app = builder.Build();
+NuruApp app = builder.Build();
 return await app.RunAsync(args);
 
 // Command definitions (unchanged from calc-mixed.cs)

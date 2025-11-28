@@ -33,7 +33,7 @@ Log.Logger = new LoggerConfiguration()
     .CreateLogger();
 
 // Create an ILoggerFactory that uses Serilog
-var loggerFactory = LoggerFactory.Create(builder =>
+ILoggerFactory loggerFactory = LoggerFactory.Create(builder =>
 {
     builder.AddSerilog(Log.Logger);
 });

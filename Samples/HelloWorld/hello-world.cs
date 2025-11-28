@@ -3,7 +3,7 @@
 
 using TimeWarp.Nuru;
 
-var app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder(args)
   .MapDefault(() => "Hello World")
   .Build();
 

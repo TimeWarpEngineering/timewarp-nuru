@@ -34,7 +34,7 @@ Implement a DelegateHandler that wraps delegate-based routes and executes them t
 - [x] Verify delegate routes receive pipeline behaviors
 - [x] Verify explicit IRequest routes still work
 - [x] Test mixed delegate/Mediator scenarios (44/44 tests pass)
-- [ ] Benchmark performance impact
+- [x] Benchmark performance impact
 
 ## Implementation Notes
 

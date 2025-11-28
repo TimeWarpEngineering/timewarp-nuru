@@ -35,7 +35,7 @@ builder.Map<CalculateCommand, CalculateResponse>
 );
 
 // Build and run
-NuruApp app = builder.Build();
+NuruCoreApp app = builder.Build();
 return await app.RunAsync(args).ConfigureAwait(false);
 
 // Command and handler definitions

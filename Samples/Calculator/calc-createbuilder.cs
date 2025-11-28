@@ -16,7 +16,8 @@ NuruAppBuilder builder = NuruApp.CreateBuilder(args);
 builder.ConfigureServices(services =>
 {
   // Register Mediator - source generator discovers handlers in THIS assembly
-  services.AddMediator();
+  
+  builder.Services.AddMediator();
   services.AddSingleton<IScientificCalculator, ScientificCalculator>();
 });
 
@@ -58,7 +59,7 @@ builder.MapDefault(() =>
 });
 
 // Build and run - same pattern as ASP.NET Core
-NuruApp app = builder.Build();
+NuruCoreApp app = builder.Build();
 return await app.RunAsync(args);
 
 // Command definitions (unchanged from calc-mixed.cs)

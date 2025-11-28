@@ -26,7 +26,7 @@ public class PerformanceTests
       .Build();
 
     // Act
-    var sw = Stopwatch.StartNew();
+    Stopwatch sw = Stopwatch.StartNew();
     await app.RunReplAsync();
     sw.Stop();
 
@@ -51,7 +51,7 @@ public class PerformanceTests
       .Build();
 
     // Act
-    var sw = Stopwatch.StartNew();
+    Stopwatch sw = Stopwatch.StartNew();
     await app.RunReplAsync();
     sw.Stop();
 
@@ -80,7 +80,7 @@ public class PerformanceTests
       .Build();
 
     // Act
-    var sw = Stopwatch.StartNew();
+    Stopwatch sw = Stopwatch.StartNew();
     await app.RunReplAsync();
     sw.Stop();
 
@@ -111,7 +111,7 @@ public class PerformanceTests
     NuruApp app = builder.Build();
 
     // Act
-    var sw = Stopwatch.StartNew();
+    Stopwatch sw = Stopwatch.StartNew();
     await app.RunReplAsync();
     sw.Stop();
 
@@ -123,7 +123,7 @@ public class PerformanceTests
   public static async Task Should_highlight_syntax_quickly()
   {
     // Arrange - create endpoints via app builder
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
 
     for (int i = 0; i < 50; i++)
     {
@@ -135,10 +135,10 @@ public class PerformanceTests
     EndpointCollection endpoints = app.Endpoints;
 
     using ILoggerFactory loggerFactory = LoggerFactory.Create(_ => { });
-    var highlighter = new SyntaxHighlighter(endpoints, loggerFactory);
+    SyntaxHighlighter highlighter = new(endpoints, loggerFactory);
 
     // Act
-    var sw = Stopwatch.StartNew();
+    Stopwatch sw = Stopwatch.StartNew();
 
     for (int i = 0; i < 100; i++)
     {
@@ -157,7 +157,7 @@ public class PerformanceTests
   public static async Task Should_parse_commands_quickly()
   {
     // Arrange & Act
-    var sw = Stopwatch.StartNew();
+    Stopwatch sw = Stopwatch.StartNew();
 
     for (int i = 0; i < 1000; i++)
     {
@@ -176,21 +176,21 @@ public class PerformanceTests
   public static async Task Should_use_command_cache_efficiently()
   {
     // Arrange - create endpoints via app builder
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("status", () => "OK");
     NuruApp app = builder.Build();
     EndpointCollection endpoints = app.Endpoints;
 
     using ILoggerFactory loggerFactory = LoggerFactory.Create(_ => { });
-    var highlighter = new SyntaxHighlighter(endpoints, loggerFactory);
+    SyntaxHighlighter highlighter = new(endpoints, loggerFactory);
 
     // Act - first call populates cache
-    var sw1 = Stopwatch.StartNew();
+    Stopwatch sw1 = Stopwatch.StartNew();
     highlighter.Highlight("status");
     sw1.Stop();
 
     // Second call should use cache
-    var sw2 = Stopwatch.StartNew();
+    Stopwatch sw2 = Stopwatch.StartNew();
 
     for (int i = 0; i < 1000; i++)
     {

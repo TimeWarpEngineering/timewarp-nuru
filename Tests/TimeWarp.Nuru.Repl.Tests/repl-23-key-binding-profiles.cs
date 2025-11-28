@@ -42,7 +42,7 @@ public class KeyBindingProfileTests
   public static void Should_instantiate_default_profile()
   {
     // Act
-    var profile = new DefaultKeyBindingProfile();
+    DefaultKeyBindingProfile profile = new();
 
     // Assert
     profile.ShouldNotBeNull("Profile should be instantiated");
@@ -52,7 +52,7 @@ public class KeyBindingProfileTests
   public static void Should_instantiate_emacs_profile()
   {
     // Act
-    var profile = new EmacsKeyBindingProfile();
+    EmacsKeyBindingProfile profile = new();
 
     // Assert
     profile.ShouldNotBeNull("Profile should be instantiated");
@@ -62,7 +62,7 @@ public class KeyBindingProfileTests
   public static void Should_instantiate_vi_profile()
   {
     // Act
-    var profile = new ViKeyBindingProfile();
+    ViKeyBindingProfile profile = new();
 
     // Assert
     profile.ShouldNotBeNull("Profile should be instantiated");
@@ -72,7 +72,7 @@ public class KeyBindingProfileTests
   public static void Should_instantiate_vscode_profile()
   {
     // Act
-    var profile = new VSCodeKeyBindingProfile();
+    VSCodeKeyBindingProfile profile = new();
 
     // Assert
     profile.ShouldNotBeNull("Profile should be instantiated");

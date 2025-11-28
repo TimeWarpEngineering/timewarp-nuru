@@ -34,7 +34,7 @@ public class StaticFactoryMethodTests
   public static async Task CreateBuilder_should_accept_options()
   {
     // Arrange
-    var options = new NuruApplicationOptions
+    NuruApplicationOptions options = new()
     {
       ApplicationName = "TestApp",
       EnvironmentName = "Testing"

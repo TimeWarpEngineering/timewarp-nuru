@@ -29,7 +29,7 @@ internal enum BuilderMode
 /// </summary>
 public partial class NuruAppBuilder
 {
-  private readonly NuruApplicationOptions? ApplicationOptions;
+  private readonly NuruCoreApplicationOptions? ApplicationOptions;
   private readonly BuilderMode Mode;
 
   /// <summary>
@@ -44,7 +44,7 @@ public partial class NuruAppBuilder
   /// <summary>
   /// Internal constructor for factory methods with specific builder mode.
   /// </summary>
-  internal NuruAppBuilder(BuilderMode mode, NuruApplicationOptions? options)
+  internal NuruAppBuilder(BuilderMode mode, NuruCoreApplicationOptions? options)
   {
     Mode = mode;
     ApplicationOptions = options;

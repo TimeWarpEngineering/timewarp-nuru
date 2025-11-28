@@ -4,7 +4,7 @@ namespace TimeWarp.Nuru;
 /// Options for configuring a Nuru application.
 /// Mirrors ASP.NET Core's WebApplicationOptions pattern.
 /// </summary>
-public class NuruApplicationOptions
+public class NuruCoreApplicationOptions
 {
   /// <summary>
   /// Gets or sets the command line arguments.

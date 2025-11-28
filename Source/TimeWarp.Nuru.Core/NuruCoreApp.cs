@@ -1,50 +1,16 @@
 namespace TimeWarp.Nuru;
 
 /// <summary>
-/// A unified CLI app that supports both direct execution and dependency injection.
+/// Core CLI app that supports both direct execution and dependency injection.
+/// For the full-featured experience, use <see cref="NuruCoreApp"/> from the TimeWarp.Nuru package.
 /// </summary>
-public partial class NuruApp
+public partial class NuruCoreApp
 {
   private readonly IServiceProvider? ServiceProvider;
   private readonly MediatorExecutor? MediatorExecutor;
   private readonly IConsole Console;
 
   #region Static Factory Methods
-
-  /// <summary>
-  /// Creates a full-featured builder with DI, Configuration, Mediator, REPL, and Completion support.
-  /// This is the recommended approach for complex applications.
-  /// </summary>
-  /// <param name="args">Command line arguments. Required for Configuration command-line overrides.</param>
-  /// <param name="options">Optional application options.</param>
-  /// <returns>A fully configured <see cref="NuruAppBuilder"/>.</returns>
-  /// <remarks>
-  /// Features included:
-  /// - Dependency Injection container
-  /// - Configuration (appsettings.json, environment variables, command line)
-  /// - Mediator pattern support
-  /// - Auto-help generation
-  /// - REPL ready
-  /// - Completion ready
-  /// - OpenTelemetry ready
-  ///
-  /// Note: This builder uses partial AOT trim mode due to reflection requirements.
-  /// </remarks>
-  /// <example>
-  /// <code>
-  /// NuruAppBuilder builder = NuruApp.CreateBuilder(args);
-  /// builder.Map("status", () => "OK");
-  /// builder.Map&lt;DeployCommand&gt;("deploy {env}");
-  /// await builder.Build().RunAsync(args);
-  /// </code>
-  /// </example>
-  public static NuruAppBuilder CreateBuilder(string[] args, NuruApplicationOptions? options = null)
-  {
-    ArgumentNullException.ThrowIfNull(args);
-    options ??= new NuruApplicationOptions();
-    options.Args = args;
-    return new NuruAppBuilder(BuilderMode.Full, options);
-  }
 
   /// <summary>
   /// Creates a lightweight builder with Configuration, auto-help, and logging infrastructure.
@@ -70,14 +36,14 @@ public partial class NuruApp
   /// </remarks>
   /// <example>
   /// <code>
-  /// NuruAppBuilder builder = NuruApp.CreateSlimBuilder();
+  /// NuruAppBuilder builder = NuruCoreApp.CreateSlimBuilder();
   /// builder.Map("greet {name}", (string name) => $"Hello, {name}!");
   /// await builder.Build().RunAsync(args);
   /// </code>
   /// </example>
-  public static NuruAppBuilder CreateSlimBuilder(string[]? args = null, NuruApplicationOptions? options = null)
+  public static NuruAppBuilder CreateSlimBuilder(string[]? args = null, NuruCoreApplicationOptions? options = null)
   {
-    options ??= new NuruApplicationOptions();
+    options ??= new NuruCoreApplicationOptions();
     options.Args = args;
     return new NuruAppBuilder(BuilderMode.Slim, options);
   }
@@ -107,15 +73,15 @@ public partial class NuruApp
   /// </remarks>
   /// <example>
   /// <code>
-  /// NuruAppBuilder builder = NuruApp.CreateEmptyBuilder();
+  /// NuruAppBuilder builder = NuruCoreApp.CreateEmptyBuilder();
   /// builder.AddTypeConverter(new MyCustomConverter());
   /// builder.Map("cmd", () => "minimal");
   /// await builder.Build().RunAsync(args);
   /// </code>
   /// </example>
-  public static NuruAppBuilder CreateEmptyBuilder(string[]? args = null, NuruApplicationOptions? options = null)
+  public static NuruAppBuilder CreateEmptyBuilder(string[]? args = null, NuruCoreApplicationOptions? options = null)
   {
-    options ??= new NuruApplicationOptions();
+    options ??= new NuruCoreApplicationOptions();
     options.Args = args;
     return new NuruAppBuilder(BuilderMode.Empty, options);
   }
@@ -155,7 +121,7 @@ public partial class NuruApp
   /// <summary>
   /// Direct constructor - used by NuruAppBuilder for non-DI path.
   /// </summary>
-  internal NuruApp
+  internal NuruCoreApp
   (
     EndpointCollection endpoints,
     ITypeConverterRegistry typeConverterRegistry,
@@ -175,14 +141,14 @@ public partial class NuruApp
     AppMetadata = appMetadata;
 
     // Create a minimal service provider for delegate parameter injection
-    // Resolves NuruApp (for interactive mode), ILoggerFactory, and ILogger<T>
+    // Resolves NuruCoreApp (for interactive mode), ILoggerFactory, and ILogger<T>
     ServiceProvider = new LightweightServiceProvider(this, loggerFactory);
   }
 
   /// <summary>
   /// DI constructor - with service provider for Mediator support.
   /// </summary>
-  public NuruApp(IServiceProvider serviceProvider)
+  public NuruCoreApp(IServiceProvider serviceProvider)
   {
     ServiceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
     Endpoints = serviceProvider.GetRequiredService<EndpointCollection>();

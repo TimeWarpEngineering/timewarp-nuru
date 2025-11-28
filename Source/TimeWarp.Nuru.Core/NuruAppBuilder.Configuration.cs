@@ -122,7 +122,7 @@ public partial class NuruAppBuilder
   /// <returns>The builder for chaining.</returns>
   /// <example>
   /// <code>
-  /// NuruApp app = new NuruAppBuilder()
+  /// NuruCoreApp app = new NuruAppBuilder()
   ///   .AddDependencyInjection()
   ///   .ConfigureServices(services =>
   ///   {
@@ -148,7 +148,7 @@ public partial class NuruAppBuilder
   /// <returns>The builder for chaining.</returns>
   /// <example>
   /// <code>
-  /// NuruApp app = new NuruAppBuilder()
+  /// NuruCoreApp app = new NuruAppBuilder()
   ///   .AddDependencyInjection()
   ///   .AddConfiguration(args)
   ///   .ConfigureServices((services, config) =>
@@ -194,7 +194,7 @@ public partial class NuruAppBuilder
   /// terminal.QueueLine("help");
   /// terminal.QueueLine("exit");
   ///
-  /// NuruApp app = new NuruAppBuilder()
+  /// NuruCoreApp app = new NuruAppBuilder()
   ///     .UseTerminal(terminal)
   ///     .AddReplSupport()
   ///     .Build();

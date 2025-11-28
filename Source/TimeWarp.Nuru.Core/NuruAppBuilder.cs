@@ -48,9 +48,9 @@ public partial class NuruAppBuilder
   }
 
   /// <summary>
-  /// Builds and returns a runnable NuruApp.
+  /// Builds and returns a runnable NuruCoreApp.
   /// </summary>
-  public NuruApp Build()
+  public NuruCoreApp Build()
   {
     if (AutoHelpEnabled)
     {
@@ -70,8 +70,8 @@ public partial class NuruAppBuilder
       // Register ILogger<T> generic implementation (matches Microsoft.Extensions.Logging behavior)
       ServiceCollection.AddSingleton(typeof(ILogger<>), typeof(Logger<>));
 
-      // Register NuruAppHolder for deferred app access (needed for interactive mode route)
-      NuruAppHolder appHolder = new();
+      // Register NuruCoreAppHolder for deferred app access (needed for interactive mode route)
+      NuruCoreAppHolder appHolder = new();
       ServiceCollection.AddSingleton(appHolder);
 
       // Register REPL options if configured
@@ -94,14 +94,14 @@ public partial class NuruAppBuilder
 
       ServiceProvider serviceProvider = ServiceCollection.BuildServiceProvider();
 
-      NuruApp app = new(serviceProvider);
+      NuruCoreApp app = new(serviceProvider);
       appHolder.SetApp(app);
       return app;
     }
     else
     {
       // Direct path - return lightweight app without DI
-      return new NuruApp(
+      return new NuruCoreApp(
         EndpointCollection,
         TypeConverterRegistry,
         loggerFactory,

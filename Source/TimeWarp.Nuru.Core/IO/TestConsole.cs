@@ -9,7 +9,7 @@ namespace TimeWarp.Nuru;
 /// <example>
 /// <code>
 /// using TestConsole console = new("command1\nexit\n");
-/// NuruApp app = NuruApp.CreateBuilder()
+/// NuruCoreApp app = NuruCoreApp.CreateBuilder()
 ///     .Map("command1", () => "Hello!")
 ///     .Build(console: console);
 ///

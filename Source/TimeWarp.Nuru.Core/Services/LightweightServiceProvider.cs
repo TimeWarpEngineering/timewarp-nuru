@@ -3,14 +3,14 @@ namespace TimeWarp.Nuru;
 /// <summary>
 /// Provides a lightweight service provider for scenarios without full dependency injection.
 /// Used when logging is configured but dependency injection is not enabled.
-/// Resolves ILoggerFactory, ILogger&lt;T&gt;, and NuruApp.
+/// Resolves ILoggerFactory, ILogger&lt;T&gt;, and NuruCoreApp.
 /// </summary>
 internal sealed class LightweightServiceProvider : IServiceProvider
 {
-  private readonly NuruApp App;
+  private readonly NuruCoreApp App;
   private readonly ILoggerFactory LoggerFactory;
 
-  public LightweightServiceProvider(NuruApp app, ILoggerFactory loggerFactory)
+  public LightweightServiceProvider(NuruCoreApp app, ILoggerFactory loggerFactory)
   {
     App = app ?? throw new ArgumentNullException(nameof(app));
     LoggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
@@ -18,7 +18,7 @@ internal sealed class LightweightServiceProvider : IServiceProvider
 
   public object? GetService(Type serviceType)
   {
-    if (serviceType == typeof(NuruApp))
+    if (serviceType == typeof(NuruCoreApp))
     {
       return App;
     }

@@ -24,7 +24,7 @@ ProcessStartInfo psi = new()
   CreateNoWindow = true
 };
 
-using var process = Process.Start(psi);
+using Process? process = Process.Start(psi);
 if (process is null)
 {
   WriteLine("❌ Failed to start MCP server");

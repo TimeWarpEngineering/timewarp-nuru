@@ -10,7 +10,7 @@ Console.WriteLine("=== ITerminal Injection Demo ===\n");
 // Demo 1: Basic ITerminal injection
 Console.WriteLine("Demo 1: ITerminal injection in handlers\n".Cyan().Bold());
 {
-  using var terminal = new TestTerminal();
+  using TestTerminal terminal = new();
 
   NuruApp app = new NuruAppBuilder()
     .UseTerminal(terminal)
@@ -37,7 +37,7 @@ Console.WriteLine("Demo 1: ITerminal injection in handlers\n".Cyan().Bold());
 // Demo 2: Conditional color based on terminal capabilities
 Console.WriteLine("Demo 2: Conditional color output\n".Cyan().Bold());
 {
-  using var terminal = new TestTerminal();
+  using TestTerminal terminal = new();
 
   NuruApp app = new NuruAppBuilder()
     .UseTerminal(terminal)
@@ -68,7 +68,7 @@ Console.WriteLine("Demo 2: Conditional color output\n".Cyan().Bold());
 // Demo 3: Error handling with ITerminal
 Console.WriteLine("Demo 3: Error handling with colored output\n".Cyan().Bold());
 {
-  using var terminal = new TestTerminal();
+  using TestTerminal terminal = new();
 
   NuruApp app = new NuruAppBuilder()
     .UseTerminal(terminal)
@@ -101,7 +101,7 @@ Console.WriteLine("Demo 3: Error handling with colored output\n".Cyan().Bold());
 // Demo 4: Progress-style output
 Console.WriteLine("Demo 4: Progress-style output\n".Cyan().Bold());
 {
-  using var terminal = new TestTerminal();
+  using TestTerminal terminal = new();
 
   NuruApp app = new NuruAppBuilder()
     .UseTerminal(terminal)
@@ -129,7 +129,7 @@ Console.WriteLine("Demo 4: Progress-style output\n".Cyan().Bold());
 // Demo 5: Using WithStyle for custom colors
 Console.WriteLine("Demo 5: Custom colors with WithStyle()\n".Cyan().Bold());
 {
-  using var terminal = new TestTerminal();
+  using TestTerminal terminal = new();
 
   NuruApp app = new NuruAppBuilder()
     .UseTerminal(terminal)

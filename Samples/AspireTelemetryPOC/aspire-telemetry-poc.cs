@@ -139,7 +139,7 @@ NuruApp app = new NuruAppBuilder()
   .Map
   (
     pattern: "status",
-    handler: () =>
+    handler: () => ExecuteWithTelemetry("status", () =>
     {
       WriteLine($"Telemetry Enabled: {telemetryEnabled}");
       if (telemetryEnabled)
@@ -152,7 +152,7 @@ NuruApp app = new NuruAppBuilder()
       {
         WriteLine("Set OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317 to enable");
       }
-    },
+    }),
     description: "Show telemetry configuration status"
   )
   .AddAutoHelp()
@@ -160,7 +160,20 @@ NuruApp app = new NuruAppBuilder()
 
 int exitCode = await app.RunAsync(args);
 
-// Clean up OpenTelemetry providers
+// Flush and clean up OpenTelemetry providers
+// Critical for CLI apps: must flush before exit or telemetry is lost
+if (telemetryEnabled)
+{
+  WriteLine("[TELEMETRY] Flushing telemetry data...");
+
+  // Force flush to ensure all data is sent before process exits
+  tracerProvider?.ForceFlush();
+  meterProvider?.ForceFlush();
+
+  // Small delay to ensure OTLP export completes
+  await Task.Delay(1000);
+}
+
 tracerProvider?.Dispose();
 meterProvider?.Dispose();
 

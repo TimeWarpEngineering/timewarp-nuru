@@ -10,12 +10,41 @@ Create an ExceptionHandlingBehavior that provides consistent error handling, log
 
 ## Checklist
 
-- [ ] Create ExceptionHandlingBehavior<TRequest, TResponse> class
-- [ ] Catch and log all exceptions with command context
-- [ ] Differentiate between known and unknown exceptions
-- [ ] Provide user-friendly error output
-- [ ] Optionally wrap exceptions in CommandExecutionException
-- [ ] Create sample command that throws different exception types
+- [x] Create ExceptionHandlingBehavior<TRequest, TResponse> class
+- [x] Catch and log all exceptions with command context
+- [x] Differentiate between known and unknown exceptions
+- [x] Provide user-friendly error output
+- [x] Optionally wrap exceptions in CommandExecutionException
+- [x] Create sample command that throws different exception types
+
+## Results
+
+Implementation added to `Samples/PipelineMiddleware/pipeline-middleware.cs`:
+
+1. **ExceptionHandlingBehavior<TMessage, TResponse>** - Pipeline behavior with:
+   - Differentiated handling for known exception types:
+     - `ValidationException`: Warning level, shows message to user
+     - `UnauthorizedAccessException`: Warning level, shows message to user
+     - `ArgumentException`: Warning level, shows message to user
+     - All others: Error level, hides details from user (security best practice)
+   - User-friendly error output to stderr
+   - All exceptions wrapped in `CommandExecutionException` with command context
+
+2. **CommandExecutionException** - Custom exception that:
+   - Wraps the original exception
+   - Provides command name and failure category
+   - Enables upstream handlers to identify which command failed
+
+3. **ErrorCommand** - Demo command that throws:
+   - `validation` → ValidationException
+   - `auth` → UnauthorizedAccessException
+   - `argument` → ArgumentException
+   - `unknown` → InvalidOperationException
+
+Usage examples:
+- `./pipeline-middleware.cs error validation`
+- `./pipeline-middleware.cs error auth`
+- `./pipeline-middleware.cs error unknown`
 
 ## Notes
 

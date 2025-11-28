@@ -14,7 +14,7 @@ public class ConsoleInputTests
   public static async Task Should_handle_character_insertion()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueKeys("hello");
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
@@ -36,7 +36,7 @@ public class ConsoleInputTests
   public static async Task Should_handle_backspace_key()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueKeys("hellox");
     terminal.QueueKey(ConsoleKey.Backspace);  // Delete 'x'
     terminal.QueueKey(ConsoleKey.Enter);
@@ -59,7 +59,7 @@ public class ConsoleInputTests
   public static async Task Should_handle_delete_key()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueKeys("xhello");
     terminal.QueueKey(ConsoleKey.Home);      // Go to start
     terminal.QueueKey(ConsoleKey.Delete);    // Delete 'x'
@@ -83,7 +83,7 @@ public class ConsoleInputTests
   public static async Task Should_handle_left_arrow_navigation()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueKeys("helllo");            // Typo: double 'l'
     terminal.QueueKey(ConsoleKey.LeftArrow); // Move left
     terminal.QueueKey(ConsoleKey.LeftArrow); // Move left again
@@ -108,7 +108,7 @@ public class ConsoleInputTests
   public static async Task Should_handle_right_arrow_navigation()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueKeys("hello");
     terminal.QueueKey(ConsoleKey.Home);       // Go to start
     terminal.QueueKey(ConsoleKey.RightArrow); // Move right one
@@ -134,7 +134,7 @@ public class ConsoleInputTests
   public static async Task Should_handle_ctrl_left_word_navigation()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueKeys("greet world");
     terminal.QueueKey(ConsoleKey.LeftArrow, ctrl: true);  // Jump to start of "world"
     terminal.QueueKey(ConsoleKey.Enter);
@@ -157,7 +157,7 @@ public class ConsoleInputTests
   public static async Task Should_handle_ctrl_right_word_navigation()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueKeys("greet world");
     terminal.QueueKey(ConsoleKey.Home);
     terminal.QueueKey(ConsoleKey.RightArrow, ctrl: true);  // Jump to end of "greet"
@@ -181,7 +181,7 @@ public class ConsoleInputTests
   public static async Task Should_handle_home_key()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueKeys("hello");
     terminal.QueueKey(ConsoleKey.Home);
     terminal.QueueKeys("say ");  // Insert "say " at beginning
@@ -205,7 +205,7 @@ public class ConsoleInputTests
   public static async Task Should_handle_end_key()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueKeys("hello");
     terminal.QueueKey(ConsoleKey.Home);
     terminal.QueueKey(ConsoleKey.End);
@@ -230,7 +230,7 @@ public class ConsoleInputTests
   public static async Task Should_handle_escape_key_clearing_completion()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueKeys("hel");
     terminal.QueueKey(ConsoleKey.Tab);        // Trigger completion
     terminal.QueueKey(ConsoleKey.Escape);     // Cancel completion

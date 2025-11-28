@@ -101,9 +101,11 @@ public class EnableStaticCompletionIntegrationTests
     builder.EnableStaticCompletion(); // Call twice
 
     // Assert - Should not duplicate routes
-    List<Endpoint> completionRoutes = builder.EndpointCollection.Endpoints
-      .Where(e => e.RoutePattern.Contains("--generate-completion"))
-      .ToList();
+    List<Endpoint> completionRoutes =
+    [
+      .. builder.EndpointCollection.Endpoints
+        .Where(e => e.RoutePattern.Contains("--generate-completion"))
+    ];
 
     // Should have exactly one completion route (not duplicated)
     completionRoutes.Count.ShouldBe(1);
@@ -171,10 +173,12 @@ public class EnableStaticCompletionIntegrationTests
     builder.Map("third", () => 0);
 
     // Assert - Original routes should maintain their relative order
-    List<Endpoint> nonCompletionRoutes = builder.EndpointCollection.Endpoints
-      .Where(e => !e.RoutePattern.Contains("--generate-completion"))
-      .Select(e => e.RoutePattern)
-      .ToList();
+    List<string> nonCompletionRoutes =
+    [
+      .. builder.EndpointCollection.Endpoints
+        .Where(e => !e.RoutePattern.Contains("--generate-completion"))
+        .Select(e => e.RoutePattern)
+    ];
 
     nonCompletionRoutes.ShouldContain("first");
     nonCompletionRoutes.ShouldContain("second");

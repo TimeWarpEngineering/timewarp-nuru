@@ -14,7 +14,7 @@ public class PromptDisplayTests
   public static async Task Should_display_prompt_when_arrow_history_disabled()
   {
     // Arrange
-    using var terminal = new TestTerminal("hello\nexit\n");
+    using TestTerminal terminal = new("hello\nexit\n");
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
@@ -38,7 +38,7 @@ public class PromptDisplayTests
   public static async Task Should_display_colored_prompt_when_colors_enabled()
   {
     // Arrange
-    using var terminal = new TestTerminal("hello\nexit\n");
+    using TestTerminal terminal = new("hello\nexit\n");
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
@@ -66,7 +66,7 @@ public class PromptDisplayTests
   public static async Task Should_display_prompt_without_colors_when_colors_disabled()
   {
     // Arrange
-    using var terminal = new TestTerminal("hello\nexit\n");
+    using TestTerminal terminal = new("hello\nexit\n");
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
@@ -93,7 +93,7 @@ public class PromptDisplayTests
   public static async Task Should_display_custom_prompt()
   {
     // Arrange
-    using var terminal = new TestTerminal("status\nexit\n");
+    using TestTerminal terminal = new("status\nexit\n");
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
@@ -117,7 +117,7 @@ public class PromptDisplayTests
   public static async Task Should_display_prompt_for_each_command()
   {
     // Arrange
-    using var terminal = new TestTerminal("hello\nworld\nexit\n");
+    using TestTerminal terminal = new("hello\nworld\nexit\n");
 
     NuruApp app = new NuruAppBuilder()
       .UseTerminal(terminal)

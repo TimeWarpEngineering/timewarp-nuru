@@ -14,8 +14,8 @@ public class EdgeCaseTests
   public static async Task Should_handle_very_long_input()
   {
     // Arrange
-    using var terminal = new TestTerminal();
-    string longArg = new string('x', 1000);
+    using TestTerminal terminal = new();
+    string longArg = new('x', 1000);
     terminal.QueueLine($"echo {longArg}");
     terminal.QueueLine("exit");
 
@@ -36,7 +36,7 @@ public class EdgeCaseTests
   public static async Task Should_handle_unicode_input()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
     NuruApp app = new NuruAppBuilder()
@@ -55,7 +55,7 @@ public class EdgeCaseTests
   public static async Task Should_handle_empty_input()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("");  // Empty input
     terminal.QueueLine("");  // Another empty
     terminal.QueueLine("exit");
@@ -76,7 +76,7 @@ public class EdgeCaseTests
   public static async Task Should_handle_whitespace_only_input()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("   ");  // Whitespace only
     terminal.QueueLine("\t");   // Tab only
     terminal.QueueLine("exit");
@@ -100,7 +100,7 @@ public class EdgeCaseTests
   public static async Task Should_handle_special_characters_in_commands()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("echo \"Hello!@#$%^&*()\"");
     terminal.QueueLine("exit");
 
@@ -121,7 +121,7 @@ public class EdgeCaseTests
   public static async Task Should_handle_rapid_commands()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
 
     // Queue many commands rapidly
     for (int i = 0; i < 50; i++)
@@ -148,7 +148,7 @@ public class EdgeCaseTests
   public static async Task Should_handle_window_width_edge_cases()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.WindowWidth = 10;  // Very narrow window
     terminal.QueueLine("exit");
 
@@ -168,7 +168,7 @@ public class EdgeCaseTests
   public static async Task Should_handle_zero_max_history()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("cmd1");
     terminal.QueueLine("cmd2");
     terminal.QueueLine("exit");

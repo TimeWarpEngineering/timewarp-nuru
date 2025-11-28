@@ -17,7 +17,7 @@ public class PerformanceTests
   public static async Task Should_start_session_quickly()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
     NuruApp app = new NuruAppBuilder()
@@ -38,7 +38,7 @@ public class PerformanceTests
   public static async Task Should_execute_commands_with_low_overhead()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("noop");
     terminal.QueueLine("noop");
     terminal.QueueLine("noop");
@@ -63,7 +63,7 @@ public class PerformanceTests
   public static async Task Should_handle_large_history_efficiently()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
 
     // Add many commands to history
     for (int i = 0; i < 100; i++)
@@ -92,7 +92,7 @@ public class PerformanceTests
   public static async Task Should_complete_quickly_with_many_routes()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueKeys("cmd");
     terminal.QueueKey(ConsoleKey.Tab);
     terminal.QueueKey(ConsoleKey.Escape);
@@ -210,7 +210,7 @@ public class PerformanceTests
   public static async Task Should_cleanup_resources_on_exit()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
     NuruApp app = new NuruAppBuilder()

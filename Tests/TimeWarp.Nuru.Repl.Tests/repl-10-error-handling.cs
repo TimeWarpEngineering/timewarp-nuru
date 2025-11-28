@@ -18,7 +18,7 @@ public class ErrorHandlingTests
   public static async Task Should_continue_after_command_error_when_configured()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("fail");
     terminal.QueueLine("status");
     terminal.QueueLine("exit");
@@ -42,7 +42,7 @@ public class ErrorHandlingTests
   public static async Task Should_exit_on_error_when_configured()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("fail");
     terminal.QueueLine("status");
 
@@ -63,7 +63,7 @@ public class ErrorHandlingTests
   public static async Task Should_handle_invalid_route()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("nonexistent");
     terminal.QueueLine("exit");
 
@@ -84,7 +84,7 @@ public class ErrorHandlingTests
   public static async Task Should_handle_type_conversion_error()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("add notanumber");
     terminal.QueueLine("exit");
 
@@ -105,7 +105,7 @@ public class ErrorHandlingTests
   public static async Task Should_show_exit_code_on_error()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("fail");
     terminal.QueueLine("exit");
 
@@ -130,7 +130,7 @@ public class ErrorHandlingTests
   public static async Task Should_handle_argument_error()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("greet");
     terminal.QueueLine("exit");
 
@@ -151,7 +151,7 @@ public class ErrorHandlingTests
   public static async Task Should_return_non_zero_exit_code_on_error()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("fail");
 
     NuruApp app = new NuruAppBuilder()
@@ -170,7 +170,7 @@ public class ErrorHandlingTests
   public static async Task Should_handle_multiple_errors()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("fail1");
     terminal.QueueLine("fail2");
     terminal.QueueLine("status");

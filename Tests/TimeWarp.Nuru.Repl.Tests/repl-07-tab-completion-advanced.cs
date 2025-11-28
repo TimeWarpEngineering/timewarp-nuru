@@ -15,7 +15,7 @@ public class TabCompletionAdvancedTests
   public static async Task Should_complete_long_options()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueKeys("deploy --");
     terminal.QueueKey(ConsoleKey.Tab);  // Show options
     terminal.QueueKey(ConsoleKey.Escape);
@@ -40,7 +40,7 @@ public class TabCompletionAdvancedTests
   public static async Task Should_complete_short_options()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueKeys("deploy -");
     terminal.QueueKey(ConsoleKey.Tab);  // Show short options
     terminal.QueueKey(ConsoleKey.Escape);
@@ -65,7 +65,7 @@ public class TabCompletionAdvancedTests
   public static async Task Should_complete_nested_commands()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueKeys("git com");
     terminal.QueueKey(ConsoleKey.Tab);  // Should show "commit", "config"
     terminal.QueueKey(ConsoleKey.Escape);
@@ -91,7 +91,7 @@ public class TabCompletionAdvancedTests
   public static async Task Should_complete_parameter_values()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueKeys("deploy ");
     terminal.QueueKey(ConsoleKey.Tab);  // Show parameter completions
     terminal.QueueKey(ConsoleKey.Escape);
@@ -115,7 +115,7 @@ public class TabCompletionAdvancedTests
   public static async Task Should_complete_after_option_value()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueKeys("deploy --env prod ");
     terminal.QueueKey(ConsoleKey.Tab);
     terminal.QueueKey(ConsoleKey.Escape);
@@ -139,7 +139,7 @@ public class TabCompletionAdvancedTests
   public static async Task Should_complete_mixed_position()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueKeys("cmd arg1 --opt val ");
     terminal.QueueKey(ConsoleKey.Tab);
     terminal.QueueKey(ConsoleKey.Escape);
@@ -163,7 +163,7 @@ public class TabCompletionAdvancedTests
   public static async Task Should_complete_catch_all_parameter()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueKeys("docker ");
     terminal.QueueKey(ConsoleKey.Tab);
     terminal.QueueKey(ConsoleKey.Escape);
@@ -187,7 +187,7 @@ public class TabCompletionAdvancedTests
   public static async Task Should_complete_with_multiple_subcommands()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueKeys("kubectl get ");
     terminal.QueueKey(ConsoleKey.Tab);
     terminal.QueueKey(ConsoleKey.Escape);
@@ -218,7 +218,7 @@ public class TabCompletionAdvancedTests
     // the command takes no arguments.
 
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueKeys("help ");
     terminal.QueueKey(ConsoleKey.Tab);  // Should NOT suggest "help" again
     terminal.QueueKey(ConsoleKey.Enter); // Submit whatever we have
@@ -248,7 +248,7 @@ public class TabCompletionAdvancedTests
     // it should suggest subcommands like "commit", "push", etc.
 
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueKeys("git ");
     terminal.QueueKey(ConsoleKey.Tab);  // Should show subcommands
     terminal.QueueKey(ConsoleKey.Escape);

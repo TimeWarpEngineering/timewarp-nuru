@@ -21,7 +21,7 @@ public class HistoryPersistenceTests
     string historyPath = GetTestHistoryPath();
     try
     {
-      using var terminal = new TestTerminal();
+      using TestTerminal terminal = new();
       terminal.QueueLine("greet Alice");
       terminal.QueueLine("greet Bob");
       terminal.QueueLine("exit");
@@ -59,7 +59,7 @@ public class HistoryPersistenceTests
       // Pre-create history file
       await File.WriteAllLinesAsync(historyPath, ["previous-command-1", "previous-command-2"]);
 
-      using var terminal = new TestTerminal();
+      using TestTerminal terminal = new();
       terminal.QueueLine("history");
       terminal.QueueLine("exit");
 
@@ -88,7 +88,7 @@ public class HistoryPersistenceTests
   public static async Task Should_use_default_history_location()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
     NuruApp app = new NuruAppBuilder()
@@ -116,7 +116,7 @@ public class HistoryPersistenceTests
 
     try
     {
-      using var terminal = new TestTerminal();
+      using TestTerminal terminal = new();
       terminal.QueueLine("test-command");
       terminal.QueueLine("exit");
 
@@ -149,7 +149,7 @@ public class HistoryPersistenceTests
       ? "Z:\\nonexistent\\invalid\\path\\history.txt"
       : "/nonexistent/invalid/path/history.txt";
 
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
     NuruApp app = new NuruAppBuilder()
@@ -178,7 +178,7 @@ public class HistoryPersistenceTests
       string[] manyCommands = [.. Enumerable.Range(1, 200).Select(i => $"command-{i}")];
       await File.WriteAllLinesAsync(historyPath, manyCommands);
 
-      using var terminal = new TestTerminal();
+      using TestTerminal terminal = new();
       terminal.QueueLine("exit");
 
       NuruApp app = new NuruAppBuilder()
@@ -211,7 +211,7 @@ public class HistoryPersistenceTests
     string historyPath = GetTestHistoryPath();
     try
     {
-      using var terminal = new TestTerminal();
+      using TestTerminal terminal = new();
       terminal.QueueLine("test-command");
       terminal.QueueLine("exit");
 
@@ -246,7 +246,7 @@ public class HistoryPersistenceTests
       // Create a file with some binary/corrupted content mixed in
       await File.WriteAllTextAsync(historyPath, "valid-command-1\n\0\0\0binary-junk\nvalid-command-2\n");
 
-      using var terminal = new TestTerminal();
+      using TestTerminal terminal = new();
       terminal.QueueLine("exit");
 
       NuruApp app = new NuruAppBuilder()

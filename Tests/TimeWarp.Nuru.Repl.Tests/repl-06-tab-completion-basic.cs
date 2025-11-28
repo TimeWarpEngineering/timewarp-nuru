@@ -19,7 +19,7 @@ public class TabCompletionBasicTests
   public static async Task Should_complete_single_match()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueKeys("sta");
     terminal.QueueKey(ConsoleKey.Tab);  // Should complete to "status"
     terminal.QueueKey(ConsoleKey.Enter);
@@ -43,7 +43,7 @@ public class TabCompletionBasicTests
   public static async Task Should_show_multiple_matches()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueKeys("s");
     terminal.QueueKey(ConsoleKey.Tab);  // Should show "status", "start"
     terminal.QueueKey(ConsoleKey.Escape);
@@ -68,7 +68,7 @@ public class TabCompletionBasicTests
   public static async Task Should_cycle_through_completions()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueKeys("s");
     terminal.QueueKey(ConsoleKey.Tab);  // Show completions
     terminal.QueueKey(ConsoleKey.Tab);  // Cycle to first
@@ -95,7 +95,7 @@ public class TabCompletionBasicTests
   public static async Task Should_reverse_cycle_with_shift_tab()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueKeys("s");
     terminal.QueueKey(ConsoleKey.Tab);  // Show completions
     terminal.QueueKey(ConsoleKey.Tab);  // Cycle forward
@@ -122,7 +122,7 @@ public class TabCompletionBasicTests
   public static async Task Should_not_change_on_no_matches()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueKeys("xyz");
     terminal.QueueKey(ConsoleKey.Tab);  // No matches
     terminal.QueueKey(ConsoleKey.Backspace);
@@ -148,7 +148,7 @@ public class TabCompletionBasicTests
   public static async Task Should_complete_at_empty_prompt()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueKey(ConsoleKey.Tab);  // Tab at empty prompt - show all commands
     terminal.QueueKey(ConsoleKey.Escape);
     terminal.QueueLine("exit");
@@ -172,7 +172,7 @@ public class TabCompletionBasicTests
   public static async Task Should_replace_partial_word()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueKeys("deplo");
     terminal.QueueKey(ConsoleKey.Tab);  // Complete "deploy"
     terminal.QueueKey(ConsoleKey.Enter);
@@ -196,7 +196,7 @@ public class TabCompletionBasicTests
   public static async Task Should_complete_with_arguments()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueKeys("deploy prod");
     terminal.QueueKey(ConsoleKey.Tab);  // Complete after argument
     terminal.QueueKey(ConsoleKey.Escape);

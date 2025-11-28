@@ -23,7 +23,7 @@ public class DefaultSourceTests
     DefaultCompletionSource source = new();
 
     // Act
-    List<CompletionCandidate> completions = source.GetCompletions(context).ToList();
+    List<CompletionCandidate> completions = [.. source.GetCompletions(context)];
 
     // Assert
     completions.Count.ShouldBe(3);
@@ -52,7 +52,7 @@ public class DefaultSourceTests
     DefaultCompletionSource source = new();
 
     // Act
-    List<CompletionCandidate> completions = source.GetCompletions(context).ToList();
+    List<CompletionCandidate> completions = [.. source.GetCompletions(context)];
 
     // Assert
     completions.Count.ShouldBe(3);
@@ -79,7 +79,7 @@ public class DefaultSourceTests
     DefaultCompletionSource source = new();
 
     // Act
-    List<CompletionCandidate> completions = source.GetCompletions(context).ToList();
+    List<CompletionCandidate> completions = [.. source.GetCompletions(context)];
 
     // Assert
     completions.Count.ShouldBeGreaterThanOrEqualTo(2);
@@ -105,7 +105,7 @@ public class DefaultSourceTests
     DefaultCompletionSource source = new();
 
     // Act
-    List<CompletionCandidate> completions = source.GetCompletions(context).ToList();
+    List<CompletionCandidate> completions = [.. source.GetCompletions(context)];
 
     // Assert
     completions.Any(c => c.Value == "-c").ShouldBeTrue();
@@ -129,7 +129,7 @@ public class DefaultSourceTests
     DefaultCompletionSource source = new();
 
     // Act
-    List<CompletionCandidate> completions = source.GetCompletions(context).ToList();
+    List<CompletionCandidate> completions = [.. source.GetCompletions(context)];
 
     // Assert
     completions.ShouldBeEmpty();
@@ -154,7 +154,7 @@ public class DefaultSourceTests
     DefaultCompletionSource source = new();
 
     // Act
-    List<CompletionCandidate> completions = source.GetCompletions(context).ToList();
+    List<CompletionCandidate> completions = [.. source.GetCompletions(context)];
 
     // Assert
     completions.Count(c => c.Value == "deploy").ShouldBe(1);
@@ -179,7 +179,7 @@ public class DefaultSourceTests
     DefaultCompletionSource source = new();
 
     // Act
-    List<CompletionCandidate> completions = source.GetCompletions(context).ToList();
+    List<CompletionCandidate> completions = [.. source.GetCompletions(context)];
 
     // Assert - DefaultCompletionSource filters commands by prefix
     completions.Count.ShouldBe(2);
@@ -204,7 +204,7 @@ public class DefaultSourceTests
     DefaultCompletionSource source = new();
 
     // Act
-    List<CompletionCandidate> completions = source.GetCompletions(context).ToList();
+    List<CompletionCandidate> completions = [.. source.GetCompletions(context)];
 
     // Assert
     // Should return empty since there are no literal segments to extract
@@ -230,7 +230,7 @@ public class DefaultSourceTests
     DefaultCompletionSource source = new();
 
     // Act
-    List<CompletionCandidate> completions = source.GetCompletions(context).ToList();
+    List<CompletionCandidate> completions = [.. source.GetCompletions(context)];
 
     // Assert
     completions.Count.ShouldBe(3);
@@ -257,7 +257,7 @@ public class DefaultSourceTests
     DefaultCompletionSource source = new();
 
     // Act
-    List<CompletionCandidate> completions = source.GetCompletions(context).ToList();
+    List<CompletionCandidate> completions = [.. source.GetCompletions(context)];
 
     // Assert
     completions.Count.ShouldBeGreaterThanOrEqualTo(4);
@@ -285,7 +285,7 @@ public class DefaultSourceTests
     DefaultCompletionSource source = new();
 
     // Act
-    List<CompletionCandidate> completions = source.GetCompletions(context).ToList();
+    List<CompletionCandidate> completions = [.. source.GetCompletions(context)];
 
     // Assert
     completions.Count.ShouldBe(2);
@@ -310,7 +310,7 @@ public class DefaultSourceTests
     DefaultCompletionSource source = new();
 
     // Act
-    List<CompletionCandidate> completions = source.GetCompletions(context).ToList();
+    List<CompletionCandidate> completions = [.. source.GetCompletions(context)];
 
     // Assert
     completions.Any(c => c.Value == "-v").ShouldBeTrue();

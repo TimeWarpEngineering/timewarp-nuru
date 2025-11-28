@@ -14,7 +14,7 @@ public class NuruAppIntegrationTests
   public static async Task Should_use_AddReplSupport_extension()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
     NuruApp app = new NuruAppBuilder()
@@ -33,7 +33,7 @@ public class NuruAppIntegrationTests
   public static async Task Should_register_repl_routes()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("help");
     terminal.QueueLine("exit");
 
@@ -53,7 +53,7 @@ public class NuruAppIntegrationTests
   public static async Task Should_share_type_converters()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("add 5 10");
     terminal.QueueLine("exit");
 
@@ -74,7 +74,7 @@ public class NuruAppIntegrationTests
   public static async Task Should_access_all_endpoints()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("cmd1");
     terminal.QueueLine("cmd2");
     terminal.QueueLine("exit");
@@ -97,7 +97,7 @@ public class NuruAppIntegrationTests
   public static async Task Should_support_fluent_chaining()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
     // Act - fluent chaining
@@ -118,7 +118,7 @@ public class NuruAppIntegrationTests
   public static async Task Should_run_repl_directly()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
     NuruApp app = new NuruAppBuilder()
@@ -138,7 +138,7 @@ public class NuruAppIntegrationTests
   public static async Task Should_use_app_logger()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
     // Create app with logging configured
@@ -158,7 +158,7 @@ public class NuruAppIntegrationTests
   public static async Task Should_execute_app_routes_in_repl()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("greet World");
     terminal.QueueLine("exit");
 

@@ -101,7 +101,7 @@ public class OutputFormatTests
 
     // Assert - Should be alphabetically sorted
     string[] lines = output.Split('\n', StringSplitOptions.RemoveEmptyEntries);
-    List<string> completions = lines.Where(l => l.Length > 0 && l[0] != ':').ToList();
+    List<string> completions = [.. lines.Where(l => l.Length > 0 && l[0] != ':')];
 
     int appleIndex = completions.FindIndex(c => c == "apple");
     int bananaIndex = completions.FindIndex(c => c == "banana");

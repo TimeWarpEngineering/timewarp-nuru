@@ -209,6 +209,14 @@
       "path": "Samples/UnifiedMiddleware/unified-middleware.cs",
       "tags": ["pipeline", "middleware", "delegate", "mediator", "unified", "cross-cutting-concerns"],
       "difficulty": "advanced"
+    },
+    {
+      "id": "aspire-telemetry-poc",
+      "name": "Aspire Telemetry POC",
+      "description": "OpenTelemetry integration with Aspire Dashboard - traces, metrics, and logs for CLI observability",
+      "path": "Samples/AspireTelemetryPOC/aspire-telemetry-poc.cs",
+      "tags": ["telemetry", "opentelemetry", "aspire", "traces", "metrics", "observability", "otlp"],
+      "difficulty": "advanced"
     }
   ]
 }

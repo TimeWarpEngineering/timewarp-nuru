@@ -9,7 +9,7 @@ using Mediator;
 using Microsoft.Extensions.DependencyInjection;
 using static System.Console;
 
-var app = new NuruAppBuilder()
+NuruApp app = new NuruAppBuilder()
     .AddDependencyInjection()
     .ConfigureServices(services => services.AddMediator())
     .Map<HelloCommand>("hello {name:string} --to-upper-case {toUpperCase:bool}")

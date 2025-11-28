@@ -10,7 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 using static System.Console;
 
 // CLI app demonstrating sub-commands with DI/Mediator pattern
-var app = new NuruAppBuilder()
+NuruApp app = new NuruAppBuilder()
     .AddDependencyInjection()
     .ConfigureServices(services => services.AddMediator())
 

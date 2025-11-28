@@ -10,7 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 using static System.Console;
 
 // Typical simple CLI app with DI support
-var app = new NuruAppBuilder()
+NuruApp app = new NuruAppBuilder()
     .AddDependencyInjection()
     .ConfigureServices(services => services.AddMediator())
     .Map<HelloCommand>("hello {name|Your name} --to-upper-case,-u|Print a name converted to upper-case {toUpperCase:bool}")

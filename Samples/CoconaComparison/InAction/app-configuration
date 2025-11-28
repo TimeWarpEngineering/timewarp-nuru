@@ -11,7 +11,7 @@ using Microsoft.Extensions.Configuration;
 using static System.Console;
 
 // Build configuration manually for delegate approach
-var configuration = new ConfigurationBuilder()
+IConfigurationRoot configuration = new ConfigurationBuilder()
     .SetBasePath(Directory.GetCurrentDirectory())
     .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
     .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? "Production"}.json", optional: true)
@@ -19,11 +19,11 @@ var configuration = new ConfigurationBuilder()
     .Build();
 
 // Access configuration values
-var configValue1 = configuration.GetValue<bool>("ConfigValue1");
-var configValue2 = configuration.GetValue<string>("ConfigValue2");
+bool configValue1 = configuration.GetValue<bool>("ConfigValue1");
+string? configValue2 = configuration.GetValue<string>("ConfigValue2");
 
 // Create app with route that uses configuration
-var app = new NuruAppBuilder()
+NuruApp app = new NuruAppBuilder()
     .Map("run", () =>
     {
         WriteLine($"ConfigValue1: {configValue1}");

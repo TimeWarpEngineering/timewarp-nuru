@@ -6,7 +6,7 @@ using TimeWarp.Nuru;
 using static System.Console;
 
 // Simple CLI app demonstrating basic argument and option handling with auto-generated help
-var app = new NuruAppBuilder()
+NuruApp app = new NuruAppBuilder()
     .Map("hello {name:string} --to-upper-case {toUpperCase:bool}", 
         (string name, bool toUpperCase) => 
         {

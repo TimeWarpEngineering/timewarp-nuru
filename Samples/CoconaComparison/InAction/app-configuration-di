@@ -15,7 +15,7 @@ using Microsoft.Extensions.Configuration;
 using static System.Console;
 
 // Create app with DI and automatic configuration setup
-var app = new NuruAppBuilder()
+NuruApp app = new NuruAppBuilder()
     .AddDependencyInjection()
     .ConfigureServices(services => services.AddMediator())
     .AddConfiguration(args)  // Automatically sets up standard configuration sources
@@ -39,8 +39,8 @@ public sealed class RunCommand : IRequest
 
         public ValueTask<Unit> Handle(RunCommand request, CancellationToken cancellationToken)
         {
-            var configValue1 = _configuration.GetValue<bool>("ConfigValue1");
-            var configValue2 = _configuration.GetValue<string>("ConfigValue2");
+            bool configValue1 = _configuration.GetValue<bool>("ConfigValue1");
+            string? configValue2 = _configuration.GetValue<string>("ConfigValue2");
 
             WriteLine($"ConfigValue1: {configValue1}");
             WriteLine($"ConfigValue2: {configValue2}");

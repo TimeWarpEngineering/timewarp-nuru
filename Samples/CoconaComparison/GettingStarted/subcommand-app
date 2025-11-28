@@ -6,7 +6,7 @@ using TimeWarp.Nuru;
 using static System.Console;
 
 // CLI app demonstrating sub-commands and nested command structures
-var app = new NuruAppBuilder()
+NuruApp app = new NuruAppBuilder()
     // Top-level commands
     .Map("hello {name|Your name} --to-upper-case,-u|Print a name converted to upper-case {toUpperCase:bool}", 
         (string name, bool toUpperCase) => 

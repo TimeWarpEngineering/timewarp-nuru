@@ -2,9 +2,7 @@
 // aspire-telemetry-poc - Demonstrates OpenTelemetry integration with Aspire Dashboard
 #:project ../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
 #:project ../../Source/TimeWarp.Nuru.Logging/TimeWarp.Nuru.Logging.csproj
-#:package OpenTelemetry@1.10.0
-#:package OpenTelemetry.Exporter.OpenTelemetryProtocol@1.10.0
-#:package OpenTelemetry.Extensions.Hosting@1.10.0
+#:project ../../Source/TimeWarp.Nuru.Telemetry/TimeWarp.Nuru.Telemetry.csproj
 
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
@@ -82,14 +80,14 @@ if (telemetryEnabled)
   tracerProvider = Sdk.CreateTracerProviderBuilder()
     .SetResourceBuilder(resourceBuilder)
     .AddSource(activitySource.Name)
-    .AddOtlpExporter(options => options.Endpoint = new Uri(otlpEndpoint))
+    .AddOtlpExporter(options => options.Endpoint = new Uri(otlpEndpoint!))
     .Build();
 
   // Configure metrics
   meterProvider = Sdk.CreateMeterProviderBuilder()
     .SetResourceBuilder(resourceBuilder)
     .AddMeter(meter.Name)
-    .AddOtlpExporter(options => options.Endpoint = new Uri(otlpEndpoint))
+    .AddOtlpExporter(options => options.Endpoint = new Uri(otlpEndpoint!))
     .Build();
 }
 else
@@ -103,20 +101,8 @@ else
 
 NuruApp app = new NuruAppBuilder()
   .UseConsoleLogging(LogLevel.Information)
-  .ConfigureLogging(logging =>
-  {
-    // Add OpenTelemetry logging when enabled
-    if (telemetryEnabled)
-    {
-      logging.AddOpenTelemetry(options =>
-      {
-        options.SetResourceBuilder(ResourceBuilder.CreateDefault()
-          .AddService(serviceName: serviceName, serviceVersion: "1.0.0"));
-        options.AddOtlpExporter(exporterOptions =>
-          exporterOptions.Endpoint = new Uri(otlpEndpoint!));
-      });
-    }
-  })
+  // Note: OpenTelemetry logging requires custom ILoggerFactory configuration.
+  // This POC demonstrates traces and metrics; logs go to console.
   // Greet command - demonstrates basic telemetry
   .Map
   (

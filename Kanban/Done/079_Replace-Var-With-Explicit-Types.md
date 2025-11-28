@@ -45,3 +45,5 @@ csharp_style_var_when_type_is_apparent = false:warning  # was true:warning
 - Runfiles and test scripts fixed manually by Claude (~200 additional usages)
 - Also enabled `csharp_style_implicit_object_creation_when_type_is_apparent = true:warning` for target-typed `new()`
 - Updated `Microsoft.CodeAnalysis.CSharp.CodeStyle` to 5.0.0 to fix IDE bulk fix bug
+- Documentation cleanup completed: all markdown files, blog posts, and code examples updated
+- Coding standard (`documentation/developer/standards/csharp-coding.md`) updated to require explicit types

@@ -16,11 +16,16 @@ using static System.Console;
 // ==========================
 // This sample demonstrates martinothamar/Mediator pipeline behaviors (middleware)
 // for implementing cross-cutting concerns like logging, performance monitoring,
-// telemetry, validation, and more.
+// authorization, telemetry, validation, and more.
 //
 // Pipeline behaviors execute in registration order, wrapping the command handler
 // like layers of an onion. Each behavior can execute code before and after the
 // inner handler(s).
+//
+// Authorization Pattern:
+// The AuthorizationBehavior demonstrates the marker interface pattern. Only commands
+// that implement IRequireAuthorization will have permission checks applied.
+// Set CLI_AUTHORIZED=1 environment variable to grant access.
 
 NuruApp app = new NuruAppBuilder()
   .UseConsoleLogging(LogLevel.Information)
@@ -41,6 +46,11 @@ NuruApp app = new NuruAppBuilder()
       services.AddSingleton<IPipelineBehavior<EchoCommand, Unit>, PerformanceBehavior<EchoCommand, Unit>>();
       services.AddSingleton<IPipelineBehavior<SlowCommand, Unit>, LoggingBehavior<SlowCommand, Unit>>();
       services.AddSingleton<IPipelineBehavior<SlowCommand, Unit>, PerformanceBehavior<SlowCommand, Unit>>();
+
+      // Authorization behavior only applies to commands implementing IRequireAuthorization
+      services.AddSingleton<IPipelineBehavior<AdminCommand, Unit>, LoggingBehavior<AdminCommand, Unit>>();
+      services.AddSingleton<IPipelineBehavior<AdminCommand, Unit>, AuthorizationBehavior<AdminCommand, Unit>>();
+      services.AddSingleton<IPipelineBehavior<AdminCommand, Unit>, PerformanceBehavior<AdminCommand, Unit>>();
     }
   )
   // Simple command to demonstrate pipeline
@@ -54,6 +64,12 @@ NuruApp app = new NuruAppBuilder()
   (
     pattern: "slow {delay:int}",
     description: "Simulate slow operation (ms) to demonstrate performance behavior"
+  )
+  // Admin command that requires authorization (set CLI_AUTHORIZED=1 to access)
+  .Map<AdminCommand>
+  (
+    pattern: "admin {action}",
+    description: "Admin operation requiring authorization (set CLI_AUTHORIZED=1)"
   )
   .AddAutoHelp()
   .Build();
@@ -92,6 +108,29 @@ public sealed class SlowCommand : IRequest
       await Task.Delay(request.Delay, cancellationToken);
       WriteLine("Slow operation completed.");
       return Unit.Value;
+    }
+  }
+}
+
+/// <summary>
+/// Admin command that requires authorization.
+/// Demonstrates marker interface pattern - only commands implementing
+/// IRequireAuthorization will have permission checks applied.
+/// </summary>
+public sealed class AdminCommand : IRequest, IRequireAuthorization
+{
+  public string Action { get; set; } = string.Empty;
+
+  /// <summary>The permission required to execute this command.</summary>
+  public string RequiredPermission => "admin:execute";
+
+  public sealed class Handler : IRequestHandler<AdminCommand>
+  {
+    public ValueTask<Unit> Handle(AdminCommand request, CancellationToken cancellationToken)
+    {
+      WriteLine($"Executing admin action: {request.Action}");
+      WriteLine("Admin operation completed successfully.");
+      return default;
     }
   }
 }
@@ -189,5 +228,76 @@ public sealed class PerformanceBehavior<TMessage, TResponse> : IPipelineBehavior
     }
 
     return response;
+  }
+}
+
+// =============================================================================
+// MARKER INTERFACES
+// =============================================================================
+
+/// <summary>
+/// Marker interface for commands that require authorization.
+/// Only commands implementing this interface will have permission checks applied
+/// by the AuthorizationBehavior.
+/// </summary>
+public interface IRequireAuthorization
+{
+  /// <summary>The permission required to execute this command.</summary>
+  string RequiredPermission { get; }
+}
+
+// =============================================================================
+// AUTHORIZATION BEHAVIOR
+// =============================================================================
+
+/// <summary>
+/// Authorization behavior that checks permissions using a marker interface pattern.
+/// This behavior only applies permission checks to commands that implement
+/// IRequireAuthorization, demonstrating selective behavior application.
+/// </summary>
+/// <remarks>
+/// For demonstration purposes, authorization is controlled via the CLI_AUTHORIZED
+/// environment variable. In a real application, this would integrate with your
+/// authentication/authorization system.
+/// </remarks>
+public sealed class AuthorizationBehavior<TMessage, TResponse> : IPipelineBehavior<TMessage, TResponse>
+  where TMessage : IMessage
+{
+  private readonly ILogger<AuthorizationBehavior<TMessage, TResponse>> Logger;
+
+  public AuthorizationBehavior(ILogger<AuthorizationBehavior<TMessage, TResponse>> logger)
+  {
+    Logger = logger;
+  }
+
+  public async ValueTask<TResponse> Handle
+  (
+    TMessage message,
+    MessageHandlerDelegate<TMessage, TResponse> next,
+    CancellationToken cancellationToken
+  )
+  {
+    // Only check authorization for commands that require it
+    if (message is IRequireAuthorization authRequest)
+    {
+      string permission = authRequest.RequiredPermission;
+      Logger.LogInformation("[AUTH] Checking permission: {Permission}", permission);
+
+      // Simple demo: check environment variable for authorization
+      // In production, this would integrate with your auth system
+      string? authorized = Environment.GetEnvironmentVariable("CLI_AUTHORIZED");
+      if (string.IsNullOrEmpty(authorized) || authorized != "1")
+      {
+        Logger.LogWarning("[AUTH] Access denied - permission required: {Permission}", permission);
+        throw new UnauthorizedAccessException
+        (
+          $"Access denied. Permission required: {permission}. Set CLI_AUTHORIZED=1 to authorize."
+        );
+      }
+
+      Logger.LogInformation("[AUTH] Access granted for permission: {Permission}", permission);
+    }
+
+    return await next(message, cancellationToken);
   }
 }

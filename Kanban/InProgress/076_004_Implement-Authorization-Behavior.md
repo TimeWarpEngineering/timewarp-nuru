@@ -10,13 +10,13 @@ Create an AuthorizationBehavior that checks permissions using a marker interface
 
 ## Checklist
 
-- [ ] Create IRequireAuthorization marker interface with RequiredPermission property
-- [ ] Create AuthorizationBehavior<TRequest, TResponse> class
-- [ ] Check if request implements IRequireAuthorization
-- [ ] Validate permission (e.g., via environment variable or config)
-- [ ] Throw UnauthorizedAccessException on failure
-- [ ] Create sample command implementing IRequireAuthorization
-- [ ] Create sample command without authorization requirement
+- [x] Create IRequireAuthorization marker interface with RequiredPermission property
+- [x] Create AuthorizationBehavior<TRequest, TResponse> class
+- [x] Check if request implements IRequireAuthorization
+- [x] Validate permission (e.g., via environment variable or config)
+- [x] Throw UnauthorizedAccessException on failure
+- [x] Create sample command implementing IRequireAuthorization
+- [x] Create sample command without authorization requirement
 
 ## Notes
 

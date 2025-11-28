@@ -361,8 +361,8 @@ Tests the git commit example from [specificity-algorithm.md](../../../documentat
 
 1. **Most Specific Wins**
    ```csharp
-   var mostSpecific = PatternParser.Parse("git commit --message {msg} --amend");
-   var lessSpecific = PatternParser.Parse("git commit --message {msg}");
+   ParsedRoute mostSpecific = PatternParser.Parse("git commit --message {msg} --amend");
+   ParsedRoute lessSpecific = PatternParser.Parse("git commit --message {msg}");
 
    // Assertion: 2 options + param > 1 option + param
    mostSpecific.Specificity.ShouldBeGreaterThan(lessSpecific.Specificity);
@@ -370,8 +370,8 @@ Tests the git commit example from [specificity-algorithm.md](../../../documentat
 
 2. **Options Beat Literals**
    ```csharp
-   var withOption = PatternParser.Parse("git commit --amend");
-   var literalOnly = PatternParser.Parse("git commit");
+   ParsedRoute withOption = PatternParser.Parse("git commit --amend");
+   ParsedRoute literalOnly = PatternParser.Parse("git commit");
 
    // Assertion: Options increase specificity
    withOption.Specificity.ShouldBeGreaterThan(literalOnly.Specificity);
@@ -379,9 +379,9 @@ Tests the git commit example from [specificity-algorithm.md](../../../documentat
 
 3. **Literals Beat Catch-all**
    ```csharp
-   var specific = PatternParser.Parse("git commit");
-   var catchAll = PatternParser.Parse("git {*args}");
-   var universal = PatternParser.Parse("{*args}");
+   ParsedRoute specific = PatternParser.Parse("git commit");
+   ParsedRoute catchAll = PatternParser.Parse("git {*args}");
+   ParsedRoute universal = PatternParser.Parse("{*args}");
 
    // Assertion: Literals rank higher than catch-all
    specific.Specificity.ShouldBeGreaterThan(catchAll.Specificity);
@@ -391,13 +391,13 @@ Tests the git commit example from [specificity-algorithm.md](../../../documentat
 4. **Full Git Commit Hierarchy**
    ```csharp
    // Parse all 7 routes from the design doc example
-   var r1 = PatternParser.Parse("git commit --message {msg} --amend");
-   var r2 = PatternParser.Parse("git commit --message {msg}");
-   var r3 = PatternParser.Parse("git commit --amend --no-edit");
-   var r4 = PatternParser.Parse("git commit --amend");
-   var r5 = PatternParser.Parse("git commit");
-   var r6 = PatternParser.Parse("git {*args}");
-   var r7 = PatternParser.Parse("{*args}");
+   ParsedRoute r1 = PatternParser.Parse("git commit --message {msg} --amend");
+   ParsedRoute r2 = PatternParser.Parse("git commit --message {msg}");
+   ParsedRoute r3 = PatternParser.Parse("git commit --amend --no-edit");
+   ParsedRoute r4 = PatternParser.Parse("git commit --amend");
+   ParsedRoute r5 = PatternParser.Parse("git commit");
+   ParsedRoute r6 = PatternParser.Parse("git {*args}");
+   ParsedRoute r7 = PatternParser.Parse("{*args}");
 
    // Assertions verify complete ordering
    r1.Specificity.ShouldBeGreaterThan(r2.Specificity);  // More options wins
@@ -413,9 +413,9 @@ Tests the deploy example showing progressive feature addition.
 
 5. **Literal Parameter Beats Catch-all**
    ```csharp
-   var specific = PatternParser.Parse("deploy production --force");
-   var general = PatternParser.Parse("deploy {env}");
-   var catchAll = PatternParser.Parse("deploy {env} {*flags}");
+   ParsedRoute specific = PatternParser.Parse("deploy production --force");
+   ParsedRoute general = PatternParser.Parse("deploy {env}");
+   ParsedRoute catchAll = PatternParser.Parse("deploy {env} {*flags}");
 
    // Assertions
    specific.Specificity.ShouldBeGreaterThan(general.Specificity);  // Literal value > parameter
@@ -424,8 +424,8 @@ Tests the deploy example showing progressive feature addition.
 
 6. **Options Increase Specificity**
    ```csharp
-   var withOptions = PatternParser.Parse("deploy {env} --dry-run");
-   var withoutOptions = PatternParser.Parse("deploy {env}");
+   ParsedRoute withOptions = PatternParser.Parse("deploy {env} --dry-run");
+   ParsedRoute withoutOptions = PatternParser.Parse("deploy {env}");
 
    // Assertion: Adding option increases ranking
    withOptions.Specificity.ShouldBeGreaterThan(withoutOptions.Specificity);
@@ -435,9 +435,9 @@ Tests the deploy example showing progressive feature addition.
 
 7. **Specific Beats General Beats Universal**
    ```csharp
-   var specific = PatternParser.Parse("docker run {image} --detach");
-   var general = PatternParser.Parse("docker {cmd} {*args}");
-   var universal = PatternParser.Parse("{cmd} {*args}");
+   ParsedRoute specific = PatternParser.Parse("docker run {image} --detach");
+   ParsedRoute general = PatternParser.Parse("docker {cmd} {*args}");
+   ParsedRoute universal = PatternParser.Parse("{cmd} {*args}");
 
    // Assertions verify 3-level hierarchy
    specific.Specificity.ShouldBeGreaterThan(general.Specificity);
@@ -448,9 +448,9 @@ Tests the deploy example showing progressive feature addition.
 
 8. **Literal > Parameter > Catch-all**
    ```csharp
-   var literal = PatternParser.Parse("status");
-   var param = PatternParser.Parse("{command}");
-   var catchAll = PatternParser.Parse("{*args}");
+   ParsedRoute literal = PatternParser.Parse("status");
+   ParsedRoute param = PatternParser.Parse("{command}");
+   ParsedRoute catchAll = PatternParser.Parse("{*args}");
 
    // Fundamental hierarchy
    literal.Specificity.ShouldBeGreaterThan(param.Specificity);
@@ -459,8 +459,8 @@ Tests the deploy example showing progressive feature addition.
 
 9. **Multiple Elements Stack**
    ```csharp
-   var twoLiterals = PatternParser.Parse("git status");
-   var oneLiteral = PatternParser.Parse("status");
+   ParsedRoute twoLiterals = PatternParser.Parse("git status");
+   ParsedRoute oneLiteral = PatternParser.Parse("status");
 
    // More specificity elements = higher rank
    twoLiterals.Specificity.ShouldBeGreaterThan(oneLiteral.Specificity);
@@ -468,9 +468,9 @@ Tests the deploy example showing progressive feature addition.
 
 10. **Options Contribute to Ranking**
     ```csharp
-    var twoOptions = PatternParser.Parse("build --verbose --watch");
-    var oneOption = PatternParser.Parse("build --verbose");
-    var noOptions = PatternParser.Parse("build");
+    ParsedRoute twoOptions = PatternParser.Parse("build --verbose --watch");
+    ParsedRoute oneOption = PatternParser.Parse("build --verbose");
+    ParsedRoute noOptions = PatternParser.Parse("build");
 
     // More options = more specific
     twoOptions.Specificity.ShouldBeGreaterThan(oneOption.Specificity);

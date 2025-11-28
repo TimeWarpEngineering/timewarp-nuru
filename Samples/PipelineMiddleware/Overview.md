@@ -8,25 +8,28 @@ Pipeline behaviors are interceptors that wrap command execution, allowing you to
 
 ```
 Request Flow:
-┌─────────────────────────────────────────────────────────────────┐
-│ LoggingBehavior (outermost - registered first)                  │
-│   ┌─────────────────────────────────────────────────────────┐   │
-│   │ PerformanceBehavior                                     │   │
-│   │   ┌─────────────────────────────────────────────────┐   │   │
-│   │   │ AuthorizationBehavior                           │   │   │
-│   │   │   ┌─────────────────────────────────────────┐   │   │   │
-│   │   │   │ RetryBehavior                           │   │   │   │
-│   │   │   │   ┌─────────────────────────────────┐   │   │   │   │
-│   │   │   │   │ ExceptionHandlingBehavior       │   │   │   │   │
-│   │   │   │   │   ┌─────────────────────────┐   │   │   │   │   │
-│   │   │   │   │   │ Command Handler         │   │   │   │   │   │
-│   │   │   │   │   │ (innermost)             │   │   │   │   │   │
-│   │   │   │   │   └─────────────────────────┘   │   │   │   │   │
-│   │   │   │   └─────────────────────────────────┘   │   │   │   │
-│   │   │   └─────────────────────────────────────────┘   │   │   │
-│   │   └─────────────────────────────────────────────────┘   │   │
-│   └─────────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────────┘
+┌───────────────────────────────────────────────────────────────────────┐
+│ TelemetryBehavior (outermost - registered first)                      │
+│   ┌───────────────────────────────────────────────────────────────┐   │
+│   │ LoggingBehavior                                               │   │
+│   │   ┌───────────────────────────────────────────────────────┐   │   │
+│   │   │ PerformanceBehavior                                   │   │   │
+│   │   │   ┌───────────────────────────────────────────────┐   │   │   │
+│   │   │   │ AuthorizationBehavior                         │   │   │   │
+│   │   │   │   ┌───────────────────────────────────────┐   │   │   │   │
+│   │   │   │   │ RetryBehavior                         │   │   │   │   │
+│   │   │   │   │   ┌───────────────────────────────┐   │   │   │   │   │
+│   │   │   │   │   │ ExceptionHandlingBehavior     │   │   │   │   │   │
+│   │   │   │   │   │   ┌───────────────────────┐   │   │   │   │   │   │
+│   │   │   │   │   │   │ Command Handler       │   │   │   │   │   │   │
+│   │   │   │   │   │   │ (innermost)           │   │   │   │   │   │   │
+│   │   │   │   │   │   └───────────────────────┘   │   │   │   │   │   │
+│   │   │   │   │   └───────────────────────────────┘   │   │   │   │   │
+│   │   │   │   └───────────────────────────────────────┘   │   │   │   │
+│   │   │   └───────────────────────────────────────────────┘   │   │   │
+│   │   └───────────────────────────────────────────────────────┘   │   │
+│   └───────────────────────────────────────────────────────────────┘   │
+└───────────────────────────────────────────────────────────────────────┘
 ```
 
 ## Samples
@@ -36,6 +39,37 @@ Request Flow:
 | [pipeline-middleware.cs](pipeline-middleware.cs) | Complete example with all behaviors |
 
 ## Pipeline Behaviors Demonstrated
+
+### TelemetryBehavior
+
+Creates OpenTelemetry-compatible Activity spans for distributed tracing:
+
+```csharp
+public sealed class TelemetryBehavior<TMessage, TResponse> : IPipelineBehavior<TMessage, TResponse>
+{
+    private static readonly ActivitySource CommandActivitySource = new("TimeWarp.Nuru.Commands", "1.0.0");
+
+    public async ValueTask<TResponse> Handle(TMessage message, MessageHandlerDelegate<TMessage, TResponse> next, CancellationToken ct)
+    {
+        using Activity? activity = CommandActivitySource.StartActivity(typeof(TMessage).Name, ActivityKind.Internal);
+        activity?.SetTag("command.type", typeof(TMessage).FullName);
+        activity?.SetTag("command.name", typeof(TMessage).Name);
+
+        try
+        {
+            TResponse response = await next(message, ct);
+            activity?.SetStatus(ActivityStatusCode.Ok);
+            return response;
+        }
+        catch (Exception ex)
+        {
+            activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+            activity?.SetTag("error.type", ex.GetType().Name);
+            throw;
+        }
+    }
+}
+```
 
 ### LoggingBehavior
 
@@ -183,11 +217,12 @@ public sealed class ExceptionHandlingBehavior<TMessage, TResponse> : IPipelineBe
 - **Last registered** = innermost (executes last on request, first on response)
 
 ```csharp
-services.AddSingleton<IPipelineBehavior<MyCommand, Unit>, LoggingBehavior<MyCommand, Unit>>();      // 1st - outermost
-services.AddSingleton<IPipelineBehavior<MyCommand, Unit>, PerformanceBehavior<MyCommand, Unit>>(); // 2nd
-services.AddSingleton<IPipelineBehavior<MyCommand, Unit>, AuthorizationBehavior<MyCommand, Unit>>(); // 3rd
-services.AddSingleton<IPipelineBehavior<MyCommand, Unit>, RetryBehavior<MyCommand, Unit>>();       // 4th
-services.AddSingleton<IPipelineBehavior<MyCommand, Unit>, ExceptionHandlingBehavior<MyCommand, Unit>>(); // 5th - innermost
+services.AddSingleton<IPipelineBehavior<MyCommand, Unit>, TelemetryBehavior<MyCommand, Unit>>();        // 1st - outermost
+services.AddSingleton<IPipelineBehavior<MyCommand, Unit>, LoggingBehavior<MyCommand, Unit>>();          // 2nd
+services.AddSingleton<IPipelineBehavior<MyCommand, Unit>, PerformanceBehavior<MyCommand, Unit>>();      // 3rd
+services.AddSingleton<IPipelineBehavior<MyCommand, Unit>, AuthorizationBehavior<MyCommand, Unit>>();    // 4th
+services.AddSingleton<IPipelineBehavior<MyCommand, Unit>, RetryBehavior<MyCommand, Unit>>();            // 5th
+services.AddSingleton<IPipelineBehavior<MyCommand, Unit>, ExceptionHandlingBehavior<MyCommand, Unit>>(); // 6th - innermost
 ```
 
 ## Marker Interface Pattern
@@ -268,6 +303,9 @@ CLI_AUTHORIZED=1 ./Samples/PipelineMiddleware/pipeline-middleware.cs admin "dele
 ./Samples/PipelineMiddleware/pipeline-middleware.cs error validation
 ./Samples/PipelineMiddleware/pipeline-middleware.cs error auth
 ./Samples/PipelineMiddleware/pipeline-middleware.cs error unknown
+
+# Trace command (demonstrates distributed tracing)
+./Samples/PipelineMiddleware/pipeline-middleware.cs trace "database-query"
 
 # Help
 ./Samples/PipelineMiddleware/pipeline-middleware.cs --help

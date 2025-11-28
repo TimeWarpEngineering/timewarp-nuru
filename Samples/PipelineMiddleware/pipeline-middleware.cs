@@ -28,6 +28,10 @@ using static System.Console;
 // - IRequireAuthorization: Commands requiring permission checks (set CLI_AUTHORIZED=1)
 // - IRetryable: Commands that should retry on transient failures with exponential backoff
 //
+// Telemetry:
+// The TelemetryBehavior uses System.Diagnostics.Activity for OpenTelemetry-compatible
+// distributed tracing. Activities are created for each command execution.
+//
 // Exception Handling:
 // The ExceptionHandlingBehavior provides consistent error handling with user-friendly
 // messages. It should be registered LAST (innermost) to catch all exceptions.
@@ -67,6 +71,12 @@ NuruApp app = new NuruAppBuilder()
       services.AddSingleton<IPipelineBehavior<ErrorCommand, Unit>, LoggingBehavior<ErrorCommand, Unit>>();
       services.AddSingleton<IPipelineBehavior<ErrorCommand, Unit>, PerformanceBehavior<ErrorCommand, Unit>>();
       services.AddSingleton<IPipelineBehavior<ErrorCommand, Unit>, ExceptionHandlingBehavior<ErrorCommand, Unit>>();
+
+      // Telemetry behavior - demonstrates OpenTelemetry-compatible distributed tracing
+      // TelemetryBehavior should be registered early (outermost) to capture full execution
+      services.AddSingleton<IPipelineBehavior<TraceCommand, Unit>, TelemetryBehavior<TraceCommand, Unit>>();
+      services.AddSingleton<IPipelineBehavior<TraceCommand, Unit>, LoggingBehavior<TraceCommand, Unit>>();
+      services.AddSingleton<IPipelineBehavior<TraceCommand, Unit>, PerformanceBehavior<TraceCommand, Unit>>();
     }
   )
   // Simple command to demonstrate pipeline
@@ -98,6 +108,12 @@ NuruApp app = new NuruAppBuilder()
   (
     pattern: "error {errorType}",
     description: "Throw different exception types (validation, auth, argument, unknown)"
+  )
+  // Trace command to demonstrate telemetry/distributed tracing
+  .Map<TraceCommand>
+  (
+    pattern: "trace {operation}",
+    description: "Demonstrate OpenTelemetry-compatible distributed tracing with Activity"
   )
   .AddAutoHelp()
   .Build();
@@ -229,6 +245,45 @@ public sealed class ErrorCommand : IRequest
   }
 }
 
+/// <summary>
+/// Trace command that demonstrates OpenTelemetry-compatible distributed tracing.
+/// The TelemetryBehavior creates Activity spans for observability.
+/// </summary>
+public sealed class TraceCommand : IRequest
+{
+  /// <summary>Name of the operation being traced.</summary>
+  public string Operation { get; set; } = string.Empty;
+
+  public sealed class Handler : IRequestHandler<TraceCommand>
+  {
+    public async ValueTask<Unit> Handle(TraceCommand request, CancellationToken cancellationToken)
+    {
+      WriteLine($"[TRACE] Starting operation: {request.Operation}");
+
+      // Simulate some work
+      await Task.Delay(100, cancellationToken);
+
+      // Show current Activity information if available
+      Activity? current = Activity.Current;
+      if (current != null)
+      {
+        WriteLine($"[TRACE] Activity ID: {current.Id}");
+        WriteLine($"[TRACE] Activity Name: {current.DisplayName}");
+        WriteLine($"[TRACE] TraceId: {current.TraceId}");
+        WriteLine($"[TRACE] SpanId: {current.SpanId}");
+      }
+      else
+      {
+        WriteLine("[TRACE] No Activity listener configured - Activity data not captured");
+        WriteLine("[TRACE] In production, configure OpenTelemetry to capture these traces");
+      }
+
+      WriteLine($"[TRACE] Operation '{request.Operation}' completed");
+      return Unit.Value;
+    }
+  }
+}
+
 // =============================================================================
 // PIPELINE BEHAVIORS
 // =============================================================================
@@ -322,6 +377,85 @@ public sealed class PerformanceBehavior<TMessage, TResponse> : IPipelineBehavior
     }
 
     return response;
+  }
+}
+
+/// <summary>
+/// Telemetry behavior that creates OpenTelemetry-compatible Activity spans for
+/// distributed tracing of CLI command execution.
+/// </summary>
+/// <remarks>
+/// This behavior uses System.Diagnostics.Activity which is the .NET standard for
+/// distributed tracing. Activities integrate with OpenTelemetry exporters (Jaeger,
+/// Zipkin, OTLP) for visualization in tracing backends.
+///
+/// Activity tags captured:
+/// - command.type: Full type name of the command
+/// - command.name: Simple type name of the command
+///
+/// Status is set to Ok on success, Error on exception.
+/// </remarks>
+public sealed class TelemetryBehavior<TMessage, TResponse> : IPipelineBehavior<TMessage, TResponse>
+  where TMessage : IMessage
+{
+  /// <summary>
+  /// ActivitySource for CLI command tracing.
+  /// In production, configure OpenTelemetry to listen to this source.
+  /// </summary>
+  private static readonly ActivitySource CommandActivitySource = new("TimeWarp.Nuru.Commands", "1.0.0");
+
+  private readonly ILogger<TelemetryBehavior<TMessage, TResponse>> Logger;
+
+  public TelemetryBehavior(ILogger<TelemetryBehavior<TMessage, TResponse>> logger)
+  {
+    Logger = logger;
+  }
+
+  public async ValueTask<TResponse> Handle
+  (
+    TMessage message,
+    MessageHandlerDelegate<TMessage, TResponse> next,
+    CancellationToken cancellationToken
+  )
+  {
+    string commandName = typeof(TMessage).Name;
+    string commandFullName = typeof(TMessage).FullName ?? commandName;
+
+    // Start an Activity for this command execution
+    using Activity? activity = CommandActivitySource.StartActivity(commandName, ActivityKind.Internal);
+
+    // Set tags for the activity (visible in tracing tools)
+    activity?.SetTag("command.type", commandFullName);
+    activity?.SetTag("command.name", commandName);
+
+    Logger.LogDebug("[TELEMETRY] Started activity for {CommandName}, TraceId: {TraceId}",
+      commandName,
+      activity?.TraceId.ToString() ?? "none");
+
+    try
+    {
+      TResponse response = await next(message, cancellationToken);
+
+      // Mark as successful
+      activity?.SetStatus(ActivityStatusCode.Ok);
+
+      Logger.LogDebug("[TELEMETRY] Activity completed successfully for {CommandName}", commandName);
+
+      return response;
+    }
+    catch (Exception ex)
+    {
+      // Mark as error and record exception details
+      activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+      activity?.SetTag("error.type", ex.GetType().Name);
+      activity?.SetTag("error.message", ex.Message);
+
+      Logger.LogDebug("[TELEMETRY] Activity failed for {CommandName}: {ErrorMessage}",
+        commandName,
+        ex.Message);
+
+      throw;
+    }
   }
 }
 

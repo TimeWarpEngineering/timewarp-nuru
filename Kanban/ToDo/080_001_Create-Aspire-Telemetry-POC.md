@@ -6,7 +6,7 @@ Create a proof-of-concept demonstrating a Nuru CLI app sending telemetry (traces
 
 ## Parent
 
-072_Investigate-OpenTelemetry-Aspire-Integration
+080_Investigate-OpenTelemetry-Aspire-Integration
 
 ## Requirements
 

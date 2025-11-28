@@ -10,8 +10,8 @@ Research and design the `AddOpenTelemetry()` extension method for TimeWarp.Nuru 
 
 ## Subtasks
 
-- 072_001_Create-Aspire-Telemetry-POC
-- 072_002_Implement-TimeWarp-Nuru-Telemetry-Package
+- 080_001_Create-Aspire-Telemetry-POC
+- 080_002_Implement-TimeWarp-Nuru-Telemetry-Package
 
 ## Requirements
 
@@ -38,7 +38,7 @@ Research and design the `AddOpenTelemetry()` extension method for TimeWarp.Nuru 
 - [ ] Document AOT compatibility considerations
 
 ### Prototype
-- [ ] Create proof-of-concept implementation (see 072_001)
+- [ ] Create proof-of-concept implementation (see 080_001)
 - [ ] Test with Aspire dashboard
 - [ ] Validate minimal overhead when telemetry disabled
 

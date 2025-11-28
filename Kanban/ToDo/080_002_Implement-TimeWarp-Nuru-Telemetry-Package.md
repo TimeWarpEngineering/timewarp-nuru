@@ -6,11 +6,11 @@ Create the `TimeWarp.Nuru.Telemetry` NuGet package providing seamless OpenTeleme
 
 ## Parent
 
-072_Investigate-OpenTelemetry-Aspire-Integration
+080_Investigate-OpenTelemetry-Aspire-Integration
 
 ## Prerequisites
 
-- 072_001_Create-Aspire-Telemetry-POC (must be completed and validated)
+- 080_001_Create-Aspire-Telemetry-POC (must be completed and validated)
 
 ## Requirements
 

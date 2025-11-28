@@ -75,7 +75,7 @@ deploy --config prod.json      // Missing required env
 .Map("migrate {direction?} --target? {version?} --step? {count:int?} --dry-run",
     (string? direction, string? version, int? count, bool dryRun) =>
     {
-        var dir = direction ?? "up";
+        string dir = direction ?? "up";
 
         if (version != null)
             MigrateTo(version, dryRun);

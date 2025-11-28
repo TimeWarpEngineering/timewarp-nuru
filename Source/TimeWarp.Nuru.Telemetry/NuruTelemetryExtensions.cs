@@ -70,7 +70,7 @@ public static class NuruTelemetryExtensions
   /// <list type="bullet">
   /// <item>Tracing via ActivitySource with OTLP export</item>
   /// <item>Metrics via Meter with OTLP export</item>
-  /// <item>Structured logging with both Console and OTLP export</item>
+  /// <item>Structured logging with OTLP export (no console logging)</item>
   /// </list>
   /// </remarks>
   public static NuruAppBuilder UseTelemetry(this NuruAppBuilder builder)
@@ -86,7 +86,7 @@ public static class NuruTelemetryExtensions
   /// <list type="bullet">
   /// <item>Tracing via ActivitySource with OTLP export</item>
   /// <item>Metrics via Meter with OTLP export</item>
-  /// <item>Structured logging with both Console and OTLP export</item>
+  /// <item>Structured logging with OTLP export (no console logging)</item>
   /// </list>
   /// </remarks>
   public static NuruAppBuilder UseTelemetry(
@@ -105,31 +105,18 @@ public static class NuruTelemetryExtensions
         serviceName: options.EffectiveServiceName,
         serviceVersion: options.ServiceVersion);
 
-    // Configure logging with both Console and OpenTelemetry (when enabled)
-    if (options.EnableLogging)
+    // Configure OpenTelemetry logging when OTLP endpoint is configured
+    if (options.EnableLogging && options.ShouldExportTelemetry)
     {
+      Uri otlpEndpoint = new(options.EffectiveOtlpEndpoint!);
       builder.ConfigureLogging(logging =>
       {
         logging.SetMinimumLevel(LogLevel.Information);
-
-        // Always add console logging
-        logging.AddSimpleConsole(consoleOptions =>
+        logging.AddOpenTelemetry(otelOptions =>
         {
-          consoleOptions.IncludeScopes = false;
-          consoleOptions.TimestampFormat = "HH:mm:ss ";
-          consoleOptions.SingleLine = true;
+          otelOptions.SetResourceBuilder(resourceBuilder);
+          otelOptions.AddOtlpExporter(exporterOptions => exporterOptions.Endpoint = otlpEndpoint);
         });
-
-        // Add OpenTelemetry logging when OTLP endpoint is configured
-        if (options.ShouldExportTelemetry)
-        {
-          Uri otlpEndpoint = new(options.EffectiveOtlpEndpoint!);
-          logging.AddOpenTelemetry(otelOptions =>
-          {
-            otelOptions.SetResourceBuilder(resourceBuilder);
-            otelOptions.AddOtlpExporter(exporterOptions => exporterOptions.Endpoint = otlpEndpoint);
-          });
-        }
       });
     }
 

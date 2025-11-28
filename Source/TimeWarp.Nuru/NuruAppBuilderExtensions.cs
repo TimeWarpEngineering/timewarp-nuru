@@ -16,6 +16,7 @@ public static class NuruAppBuilderExtensions
   /// <list type="bullet">
   /// <item>OpenTelemetry integration via <c>UseTelemetry()</c></item>
   /// <item>REPL mode support via <c>AddReplSupport()</c></item>
+  /// <item>Interactive route (<c>--interactive</c>, <c>-i</c>) via <c>AddInteractiveRoute()</c></item>
   /// </list>
   /// Logging is already configured by <c>UseTelemetry()</c>.
   /// Completion is already included via the REPL package dependency.
@@ -26,6 +27,7 @@ public static class NuruAppBuilderExtensions
 
     return builder
       .UseTelemetry()
-      .AddReplSupport();
+      .AddReplSupport()
+      .AddInteractiveRoute();
   }
 }

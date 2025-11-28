@@ -117,12 +117,13 @@ public static class NuruCoreAppExtensions
 
   /// <summary>
   /// Static handler for the interactive mode route.
-  /// Receives NuruCoreApp via DI injection and starts the REPL.
+  /// Receives NuruCoreAppHolder via DI injection and starts the REPL.
   /// </summary>
-  /// <param name="app">The NuruCoreApp instance (injected by framework).</param>
+  /// <param name="appHolder">The NuruCoreAppHolder instance (injected by framework).</param>
   /// <returns>Exit code from the REPL session.</returns>
-  public static Task<int> StartInteractiveModeAsync(NuruCoreApp app)
+  public static Task<int> StartInteractiveModeAsync(NuruCoreAppHolder appHolder)
   {
-    return app.RunReplAsync();
+    ArgumentNullException.ThrowIfNull(appHolder);
+    return appHolder.App.RunReplAsync();
   }
 }

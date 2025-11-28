@@ -1,0 +1,17 @@
+========================================
+SUMMARY
+========================================
+Completion      26/26 (100.0%)
+Factory         1/1 (100.0%)
+Lexer           15/15 (100.0%)
+MCP             6/6 (100.0%)
+Parser          15/15 (100.0%)
+Repl            34/35 (97.1%)
+Routing         14/14 (100.0%)
+TypeConversion  1/1 (100.0%)
+
+Total: 112/113 tests passed (99.1%) in 513.8s
+
+Failed Tests:
+  ✗ Repl/repl-23-key-binding-profiles.cs
+========================================

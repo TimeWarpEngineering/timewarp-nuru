@@ -23,9 +23,16 @@ docker run --rm -it -p 18888:18888 -p 4317:18889 --name aspire-dashboard \
 
 Configure the OTLP exporter endpoint and service name:
 
+**Bash/Zsh:**
 ```bash
 export OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317
 export OTEL_SERVICE_NAME=nuru-telemetry-poc
+```
+
+**PowerShell:**
+```powershell
+$env:OTEL_EXPORTER_OTLP_ENDPOINT = "http://localhost:4317"
+$env:OTEL_SERVICE_NAME = "nuru-telemetry-poc"
 ```
 
 ## Running the Sample

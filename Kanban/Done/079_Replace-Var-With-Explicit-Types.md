@@ -13,10 +13,10 @@ Convert all `var` keyword usage to explicit type declarations throughout the cod
 ## Checklist
 
 ### Implementation
-- [ ] Update `.editorconfig` to set `csharp_style_var_when_type_is_apparent = false:suggestion`
-- [ ] Use IDE bulk fix ("Fix all occurrences in Solution") to convert all `var` to explicit types
-- [ ] Verify solution builds successfully
-- [ ] Change `.editorconfig` to `csharp_style_var_when_type_is_apparent = false:warning` to enforce
+- [x] Update `.editorconfig` to set `csharp_style_var_when_type_is_apparent = false:suggestion`
+- [x] Use IDE bulk fix ("Fix all occurrences in Solution") to convert all `var` to explicit types
+- [x] Verify solution builds successfully
+- [x] Change `.editorconfig` to `csharp_style_var_when_type_is_apparent = false:warning` to enforce
 
 ## Notes
 
@@ -38,3 +38,10 @@ csharp_style_var_when_type_is_apparent = false:warning  # was true:warning
 - `sed`/regex can't determine types
 - Manual is too slow for 816 occurrences
 - IDE has Roslyn type information and can do bulk replacement correctly
+
+## Implementation Notes
+
+- IDE bulk fix used for project files (~800 usages)
+- Runfiles and test scripts fixed manually by Claude (~200 additional usages)
+- Also enabled `csharp_style_implicit_object_creation_when_type_is_apparent = true:warning` for target-typed `new()`
+- Updated `Microsoft.CodeAnalysis.CSharp.CodeStyle` to 5.0.0 to fix IDE bulk fix bug

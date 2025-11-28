@@ -75,10 +75,10 @@ Test methods must:
 public static async Task Should_perform_expected_action()
 {
     // Arrange - Set up test conditions
-    var input = "test value";
+    string input = "test value";
     
     // Act - Execute the code being tested
-    var result = ProcessInput(input);
+    string result = ProcessInput(input);
     
     // Assert - Verify the outcome
     result.ShouldBe("expected value");
@@ -157,7 +157,7 @@ public class DatabaseTests
     public static async Task Should_query_test_data()
     {
         // Setup has been called, fresh database ready
-        var result = await _database!.QueryAsync("SELECT * FROM Users");
+        QueryResult result = await _database!.QueryAsync("SELECT * FROM Users");
         result.Count.ShouldBe(5);
         
         await Task.CompletedTask;
@@ -168,7 +168,7 @@ public class DatabaseTests
     {
         // Fresh database from new Setup call
         await _database!.InsertAsync("Users", new { Name = "Test" });
-        var count = await _database.CountAsync("Users");
+        int count = await _database.CountAsync("Users");
         count.ShouldBe(6); // 5 seeded + 1 new
         
         await Task.CompletedTask;
@@ -215,7 +215,7 @@ public static async Task Should_validate_simple_behavior()
 {
     // Arrange
     string input = "hello";
-    var processor = new StringProcessor();
+    StringProcessor processor = new();
     
     // Act
     string result = processor.ToUpper(input);
@@ -592,7 +592,7 @@ public class McpTests
     public static async Task Should_access_internal_types()
     {
         // Can now test internal classes from referenced project
-        var internalComponent = new InternalComponent();
+        InternalComponent internalComponent = new();
         // ... test implementation
     }
 }
@@ -604,22 +604,22 @@ public class McpTests
 public static async Task Should_handle_complex_scenario()
 {
     // Arrange - Create test data
-    var testRoutes = new[]
-    {
+    string[] testRoutes =
+    [
         "git commit -m {message}",
         "git push --force",
         "git pull --rebase"
-    };
+    ];
     
-    var builder = new NuruAppBuilder();
-    foreach (var route in testRoutes)
+    NuruAppBuilder builder = new();
+    foreach (string route in testRoutes)
     {
         builder.AddRoute(route, () => 0);
     }
     
     // Act
-    var app = builder.Build();
-    var result = await app.RunAsync(["git", "commit", "-m", "test"]);
+    NuruApp app = builder.Build();
+    int result = await app.RunAsync(["git", "commit", "-m", "test"]);
     
     // Assert
     result.ShouldBe(0);
@@ -634,12 +634,12 @@ public static async Task Should_handle_complex_scenario()
 public static async Task Should_complete_within_time_limit()
 {
     // Arrange
-    var stopwatch = Stopwatch.StartNew();
+    Stopwatch stopwatch = Stopwatch.StartNew();
     
     // Act
     for (int i = 0; i < 1000; i++)
     {
-        var lexer = new Lexer($"command-{i}");
+        Lexer lexer = new($"command-{i}");
         lexer.Tokenize();
     }
     
@@ -708,7 +708,7 @@ public static async Task Should_match_route_pattern()
 {
     // Arrange
     bool routeExecuted = false;
-    var app = new NuruAppBuilder()
+    NuruApp app = new NuruAppBuilder()
         .AddRoute("deploy {env} --tag {version}", 
             (string env, string version) => 
             {
@@ -736,7 +736,7 @@ public static async Task Should_match_route_pattern()
 public static async Task Should_handle_missing_required_parameter()
 {
     // Arrange
-    var app = new NuruAppBuilder()
+    NuruApp app = new NuruAppBuilder()
         .AddRoute("deploy {env}", (string env) => 0)
         .Build();
     
@@ -757,7 +757,7 @@ public static async Task Should_convert_parameter_types()
 {
     // Arrange
     int? capturedPort = null;
-    var app = new NuruAppBuilder()
+    NuruApp app = new NuruAppBuilder()
         .AddRoute("listen {port:int}", (int port) => 
         {
             capturedPort = port;

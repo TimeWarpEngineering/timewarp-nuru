@@ -41,7 +41,7 @@ foreach (string testFile in allTestFiles)
 
   try
   {
-    var psi = new ProcessStartInfo
+    ProcessStartInfo psi = new()
     {
       FileName = "dotnet",
       Arguments = $"run \"{testFile}\"",

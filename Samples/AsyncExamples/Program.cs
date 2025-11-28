@@ -136,5 +136,5 @@ builder.Map("--help", () =>
 });
 
 // Build and run
-var app = builder.Build();
+NuruApp app = builder.Build();
 return await app.RunAsync(args);

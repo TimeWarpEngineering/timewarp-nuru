@@ -70,7 +70,7 @@ async Task<int> RunBenchmark(int runs)
 
   for (int i = 0; i < runs; i++)
   {
-    var sw = Stopwatch.StartNew();
+    Stopwatch sw = Stopwatch.StartNew();
     CommandOutput result = await Shell.Builder(executable)
       .WithArguments("status")
       .WithNoValidation()
@@ -138,7 +138,7 @@ async Task<int> RunBenchmark(int runs)
   string baselineFile = Path.Combine(baselineDir, "aot-invocation-baseline.json");
 
   // Build JSON manually to avoid AOT serialization issues
-  var json = new StringBuilder();
+  StringBuilder json = new();
   json.AppendLine("{");
   json.AppendLine(CultureInfo.InvariantCulture, $"  \"baseline_date\": \"{DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture)}\",");
   json.AppendLine(CultureInfo.InvariantCulture, $"  \"commit\": \"{GetGitCommit()}\",");

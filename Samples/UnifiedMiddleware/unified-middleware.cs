@@ -172,7 +172,7 @@ public sealed class DelegatePerformanceBehavior : IPipelineBehavior<DelegateRequ
     CancellationToken cancellationToken
   )
   {
-    var stopwatch = Stopwatch.StartNew();
+    Stopwatch stopwatch = Stopwatch.StartNew();
 
     DelegateResponse response = await next(message, cancellationToken);
 
@@ -255,7 +255,7 @@ public sealed class PerformanceBehavior<TMessage, TResponse> : IPipelineBehavior
     CancellationToken cancellationToken
   )
   {
-    var stopwatch = Stopwatch.StartNew();
+    Stopwatch stopwatch = Stopwatch.StartNew();
 
     TResponse response = await next(message, cancellationToken);
 

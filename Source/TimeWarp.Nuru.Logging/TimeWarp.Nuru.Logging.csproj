@@ -11,7 +11,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../TimeWarp.Nuru/TimeWarp.Nuru.csproj" />
+    <ProjectReference Include="../TimeWarp.Nuru.Core/TimeWarp.Nuru.Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -12,6 +12,6 @@
     <SuppressNETCoreSdkPreviewMessage>true</SuppressNETCoreSdkPreviewMessage>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="$(MSBuildThisFileDirectory)../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj" />
+    <ProjectReference Include="$(MSBuildThisFileDirectory)../../Source/TimeWarp.Nuru.Core/TimeWarp.Nuru.Core.csproj" />
   </ItemGroup>
 </Project>

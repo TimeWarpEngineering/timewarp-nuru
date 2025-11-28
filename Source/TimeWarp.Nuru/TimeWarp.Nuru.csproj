@@ -1,67 +1,21 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <Description>Route-based CLI framework for .NET - bringing web-style routing to command-line applications</Description>
-    <PackageTags>cli;command-line;routing;framework;dotnet;console;consoleappframework;commandlineparser;mcmaster;cocona;spectre;system-commandline;clipr;commanddotnet</PackageTags>
-    <!-- Disable localization warning as CLI frameworks don't typically need localization -->
-    <NoWarn>$(NoWarn);CA1303</NoWarn>
-
-    <!-- AOT Compatibility -->
-    <!-- Mark library as AOT-compatible with warnings for reflection usage -->
-    <IsAotCompatible>true</IsAotCompatible>
-    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
-    <EnableAotAnalyzer>true</EnableAotAnalyzer>
-    <!-- Note: Direct delegate routing works with full AOT. Mediator routing now uses martinothamar/Mediator source generator for full AOT support -->
-
-    <!-- Output generated source files to generated directory -->
-    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
-    <CompilerGeneratedFilesOutputPath>$(MSBuildProjectDirectory)/generated</CompilerGeneratedFilesOutputPath>
+    <Description>Route-based CLI framework for .NET - batteries included with telemetry, REPL, and shell completion</Description>
+    <PackageTags>cli;command-line;routing;framework;dotnet;console;repl;telemetry;completion</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>
-    <InternalsVisibleTo Include="TimeWarp.Nuru.Completion" />
-    <InternalsVisibleTo Include="TimeWarp.Nuru.Repl" />
-    <PackageReference Include="FluentValidation" />
-    <PackageReference Include="GlobalUsingsAnalyzer">
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-      <PrivateAssets>all</PrivateAssets>
-    </PackageReference>
-    <PackageReference Include="Microsoft.Extensions.Configuration" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.CommandLine" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Json" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" GeneratePathProperty="true" />
-    <PackageReference Include="Microsoft.Extensions.Options" />
-    <!-- Only reference Mediator.Abstractions - consumers must add Mediator.SourceGenerator to discover their handlers -->
-    <PackageReference Include="Mediator.Abstractions" />
+    <!-- Reference all extension packages for batteries-included experience -->
+    <ProjectReference Include="../TimeWarp.Nuru.Core/TimeWarp.Nuru.Core.csproj" />
+    <ProjectReference Include="../TimeWarp.Nuru.Logging/TimeWarp.Nuru.Logging.csproj" />
+    <ProjectReference Include="../TimeWarp.Nuru.Telemetry/TimeWarp.Nuru.Telemetry.csproj" />
+    <ProjectReference Include="../TimeWarp.Nuru.Repl/TimeWarp.Nuru.Repl.csproj" />
+    <ProjectReference Include="../TimeWarp.Nuru.Completion/TimeWarp.Nuru.Completion.csproj" />
   </ItemGroup>
 
-  <!-- Include parsing source files directly -->
-  <ItemGroup>
-    <Compile Include="../TimeWarp.Nuru.Parsing/**/*.cs" Exclude="../TimeWarp.Nuru.Parsing/obj/**;../TimeWarp.Nuru.Parsing/bin/**" />
-  </ItemGroup>
-
-  <!-- Exclude generated files from compilation (they're already included by the source generator) -->
-  <ItemGroup>
-    <Compile Remove="generated/**/*.cs" />
-  </ItemGroup>
   <ItemGroup>
     <None Include="$(RepositoryRoot)readme.md" Pack="true" PackagePath="" />
-  </ItemGroup>
-
-  <!-- Include the analyzer in the main package as a development dependency -->
-  <ItemGroup>
-    <!-- Reference the analyzer project for building -->
-    <ProjectReference Include="../TimeWarp.Nuru.Analyzers/TimeWarp.Nuru.Analyzers.csproj" ReferenceOutputAssembly="false" PrivateAssets="all" />
-
-    <!-- Include analyzer DLL in the package -->
-    <None Include="../TimeWarp.Nuru.Analyzers/bin/$(Configuration)/$(TargetFramework)/TimeWarp.Nuru.Analyzers.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
-
-    <!-- Include the logging dependency for the analyzer -->
-    <None Include="$(PkgMicrosoft_Extensions_Logging_Abstractions)/lib/net9.0/Microsoft.Extensions.Logging.Abstractions.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
   </ItemGroup>
 
 </Project>

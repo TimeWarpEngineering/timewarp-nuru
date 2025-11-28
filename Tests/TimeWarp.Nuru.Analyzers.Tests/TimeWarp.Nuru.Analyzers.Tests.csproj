@@ -5,7 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="$(SourceDirectory)/TimeWarp.Nuru/TimeWarp.Nuru.csproj" />
+    <ProjectReference Include="$(SourceDirectory)/TimeWarp.Nuru.Core/TimeWarp.Nuru.Core.csproj" />
     <!-- Use PackageReference instead of ProjectReference for the analyzer -->
     <PackageReference Include="TimeWarp.Nuru.Analyzers">
       <PrivateAssets>all</PrivateAssets>

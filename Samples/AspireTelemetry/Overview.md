@@ -1,19 +1,32 @@
-# Aspire Telemetry POC
+# Aspire Telemetry Sample
 
-This proof-of-concept demonstrates how to send OpenTelemetry data (traces, metrics) from a Nuru CLI application to the standalone .NET Aspire Dashboard using the **Pipeline Middleware pattern**.
+This sample demonstrates how to send OpenTelemetry data (traces, metrics, logs) from a Nuru CLI application to the standalone .NET Aspire Dashboard with **minimal setup**.
 
-## Key Pattern: TelemetryBehavior
-
-This sample uses the recommended **Pipeline Middleware** approach for telemetry:
+## Key Pattern: One-Line Telemetry Setup
 
 ```csharp
-// Register TelemetryBehavior for all commands - automatic instrumentation!
-services.AddSingleton<IPipelineBehavior<GreetCommand, Unit>, TelemetryBehavior<GreetCommand, Unit>>();
-services.AddSingleton<IPipelineBehavior<WorkCommand, Unit>, TelemetryBehavior<WorkCommand, Unit>>();
+NuruApp app = NuruApp.CreateBuilder(args)
+  .UseTelemetry()  // <-- One line does everything!
+  .ConfigureServices(services =>
+  {
+    services.AddMediator();
+    // Register pre-built TelemetryBehavior for automatic command instrumentation
+    services.AddSingleton<IPipelineBehavior<GreetCommand, Unit>, TelemetryBehavior<GreetCommand, Unit>>();
+  })
+  .Map<GreetCommand>(pattern: "greet {name}")
+  .Build();
 ```
 
-Benefits:
-- **Automatic instrumentation** - No manual `ExecuteWithTelemetry()` calls needed
+### What UseTelemetry() Does
+
+- **Console logging** with timestamps (always enabled)
+- **OTLP export** to any compatible backend (Aspire, Jaeger, Zipkin, Grafana, etc.)
+- **Distributed tracing** via shared ActivitySource
+- **Metrics** via shared Meter (commands invoked, errors, duration)
+
+### What TelemetryBehavior Does
+
+- **Automatic instrumentation** - No manual telemetry calls in handlers
 - **Consistent** - Every command gets the same telemetry treatment
 - **Composable** - Combine with other behaviors (logging, performance, auth)
 - **Testable** - Behavior can be unit tested in isolation
@@ -35,35 +48,37 @@ docker run --rm -it -p 18888:18888 -p 4317:18889 --name aspire-dashboard \
 
 **Note:** Copy the login token from the container output when it starts.
 
-### 2. Set Environment Variables
+### 2. Set Environment Variables (Optional)
 
 Configure the OTLP exporter endpoint and service name:
 
 **Bash/Zsh:**
 ```bash
 export OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317
-export OTEL_SERVICE_NAME=nuru-telemetry-poc
+export OTEL_SERVICE_NAME=nuru-aspire-sample
 ```
 
 **PowerShell:**
 ```powershell
 $env:OTEL_EXPORTER_OTLP_ENDPOINT = "http://localhost:4317"
-$env:OTEL_SERVICE_NAME = "nuru-telemetry-poc"
+$env:OTEL_SERVICE_NAME = "nuru-aspire-sample"
 ```
+
+**Without these variables:** Console logging works, but OTLP export is disabled (zero overhead).
 
 ## Running the Sample
 
 ```bash
 # Check telemetry status
-./Samples/AspireTelemetryPOC/aspire-telemetry-poc.cs status
+./Samples/AspireTelemetry/aspire-telemetry.cs status
 
 # Execute commands to generate telemetry
-./Samples/AspireTelemetryPOC/aspire-telemetry-poc.cs greet "World"
-./Samples/AspireTelemetryPOC/aspire-telemetry-poc.cs work 500
-./Samples/AspireTelemetryPOC/aspire-telemetry-poc.cs fail "Test error"
+./Samples/AspireTelemetry/aspire-telemetry.cs greet "World"
+./Samples/AspireTelemetry/aspire-telemetry.cs work 500
+./Samples/AspireTelemetry/aspire-telemetry.cs fail "Test error"
 
 # View help
-./Samples/AspireTelemetryPOC/aspire-telemetry-poc.cs --help
+./Samples/AspireTelemetry/aspire-telemetry.cs --help
 ```
 
 ## Viewing Telemetry
@@ -72,6 +87,7 @@ $env:OTEL_SERVICE_NAME = "nuru-telemetry-poc"
 2. Enter the login token from the container output
 3. Navigate to:
    - **Traces** - View command execution spans
+   - **Structured Logs** - View log entries with context
    - **Metrics** - View command counters and duration histograms
 
 ## Pipeline Architecture
@@ -111,12 +127,15 @@ Each command execution creates a span with:
 | `nuru.commands.invoked` | Counter | Number of commands executed |
 | `nuru.commands.errors` | Counter | Number of failed commands |
 | `nuru.commands.duration` | Histogram | Command execution time in ms |
+| `nuru.repl.sessions` | Counter | REPL sessions started |
+| `nuru.repl.commands` | Counter | Commands executed in REPL |
 
 All metrics include tags: `command`, `status`, `error.type` (when applicable).
 
 ## Zero Overhead When Disabled
 
 When `OTEL_EXPORTER_OTLP_ENDPOINT` is not set:
+- Console logging still works normally
 - No OTLP exporters are configured
 - `ActivitySource` and `Meter` exist but have no listeners
 - Activities return `null` (no overhead)
@@ -129,13 +148,8 @@ This follows the OpenTelemetry design principle of zero overhead when telemetry 
 **Critical for CLI apps**: Telemetry must be flushed before the process exits:
 
 ```csharp
-// Flush telemetry before exit - critical for CLI apps!
-if (telemetryEnabled)
-{
-  tracerProvider?.ForceFlush();
-  meterProvider?.ForceFlush();
-  await Task.Delay(1000); // Allow export to complete
-}
+// At end of program - flush and shutdown telemetry
+await NuruTelemetryExtensions.FlushAndShutdownAsync();
 ```
 
 Without this, telemetry data may be lost because CLI apps exit quickly.

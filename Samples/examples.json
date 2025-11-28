@@ -211,10 +211,10 @@
       "difficulty": "advanced"
     },
     {
-      "id": "aspire-telemetry-poc",
-      "name": "Aspire Telemetry POC",
+      "id": "aspire-telemetry",
+      "name": "Aspire Telemetry",
       "description": "OpenTelemetry integration with Aspire Dashboard - traces, metrics, and logs for CLI observability",
-      "path": "Samples/AspireTelemetryPOC/aspire-telemetry-poc.cs",
+      "path": "Samples/AspireTelemetry/aspire-telemetry.cs",
       "tags": ["telemetry", "opentelemetry", "aspire", "traces", "metrics", "observability", "otlp"],
       "difficulty": "advanced"
     }

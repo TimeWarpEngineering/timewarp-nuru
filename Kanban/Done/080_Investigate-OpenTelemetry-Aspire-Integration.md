@@ -46,7 +46,7 @@ Research and design the `AddOpenTelemetry()` extension method for TimeWarp.Nuru 
 
 Both subtasks completed:
 
-1. **080_001_Create-Aspire-Telemetry-POC** - Created `Samples/AspireTelemetryPOC/` with:
+1. **080_001_Create-Aspire-Telemetry-POC** - Created `Samples/AspireTelemetry/` with:
    - Working sample demonstrating traces, metrics, logs
    - Comprehensive Overview.md documentation
    - Added to examples.json

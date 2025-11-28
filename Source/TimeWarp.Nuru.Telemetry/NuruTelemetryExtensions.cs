@@ -3,6 +3,7 @@ namespace TimeWarp.Nuru;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Console;
 using OpenTelemetry;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
@@ -24,28 +25,33 @@ public static class NuruTelemetryExtensions
   /// </summary>
   public static readonly Meter NuruMeter = new("TimeWarp.Nuru", "1.0.0");
 
-  // Metrics instruments
-  private static readonly Counter<int> CommandsInvoked = NuruMeter.CreateCounter<int>(
+  // Metrics instruments - public for use by TelemetryBehavior
+  /// <summary>Counter for commands invoked.</summary>
+  public static readonly Counter<int> CommandsInvoked = NuruMeter.CreateCounter<int>(
     name: "nuru.commands.invoked",
     unit: "{commands}",
     description: "Number of commands executed");
 
-  private static readonly Counter<int> CommandsErrored = NuruMeter.CreateCounter<int>(
+  /// <summary>Counter for command errors.</summary>
+  public static readonly Counter<int> CommandsErrored = NuruMeter.CreateCounter<int>(
     name: "nuru.commands.errors",
     unit: "{errors}",
     description: "Number of failed commands");
 
-  private static readonly Histogram<double> CommandDuration = NuruMeter.CreateHistogram<double>(
+  /// <summary>Histogram for command duration.</summary>
+  public static readonly Histogram<double> CommandDuration = NuruMeter.CreateHistogram<double>(
     name: "nuru.commands.duration",
     unit: "ms",
     description: "Command execution duration in milliseconds");
 
-  private static readonly Counter<int> ReplSessions = NuruMeter.CreateCounter<int>(
+  /// <summary>Counter for REPL sessions.</summary>
+  public static readonly Counter<int> ReplSessions = NuruMeter.CreateCounter<int>(
     name: "nuru.repl.sessions",
     unit: "{sessions}",
     description: "Number of REPL sessions started");
 
-  private static readonly Counter<int> ReplCommands = NuruMeter.CreateCounter<int>(
+  /// <summary>Counter for REPL commands.</summary>
+  public static readonly Counter<int> ReplCommands = NuruMeter.CreateCounter<int>(
     name: "nuru.repl.commands",
     unit: "{commands}",
     description: "Commands executed in REPL mode");
@@ -55,19 +61,35 @@ public static class NuruTelemetryExtensions
   private static MeterProvider? meterProvider;
 
   /// <summary>
-  /// Configures OpenTelemetry for Aspire Dashboard integration.
+  /// Configures OpenTelemetry with OTLP export for any compatible backend (Aspire, Jaeger, Zipkin, etc.).
   /// Uses OTEL_EXPORTER_OTLP_ENDPOINT environment variable for OTLP endpoint.
   /// When the environment variable is not set, telemetry export is disabled with zero overhead.
   /// </summary>
-  public static NuruAppBuilder UseAspireTelemetry(this NuruAppBuilder builder)
+  /// <remarks>
+  /// This method configures:
+  /// <list type="bullet">
+  /// <item>Tracing via ActivitySource with OTLP export</item>
+  /// <item>Metrics via Meter with OTLP export</item>
+  /// <item>Structured logging with both Console and OTLP export</item>
+  /// </list>
+  /// </remarks>
+  public static NuruAppBuilder UseTelemetry(this NuruAppBuilder builder)
   {
-    return builder.UseAspireTelemetry(_ => { });
+    return builder.UseTelemetry(_ => { });
   }
 
   /// <summary>
-  /// Configures OpenTelemetry for Aspire Dashboard integration with custom options.
+  /// Configures OpenTelemetry with OTLP export and custom options.
   /// </summary>
-  public static NuruAppBuilder UseAspireTelemetry(
+  /// <remarks>
+  /// This method configures:
+  /// <list type="bullet">
+  /// <item>Tracing via ActivitySource with OTLP export</item>
+  /// <item>Metrics via Meter with OTLP export</item>
+  /// <item>Structured logging with both Console and OTLP export</item>
+  /// </list>
+  /// </remarks>
+  public static NuruAppBuilder UseTelemetry(
     this NuruAppBuilder builder,
     Action<NuruTelemetryOptions> configure)
   {
@@ -77,18 +99,48 @@ public static class NuruTelemetryExtensions
     NuruTelemetryOptions options = new();
     configure(options);
 
-    if (!options.ShouldExportTelemetry)
-    {
-      // No OTLP endpoint configured - telemetry disabled with zero overhead
-      return builder;
-    }
-
-    Uri otlpEndpoint = new(options.EffectiveOtlpEndpoint!);
-
+    // Build resource for all telemetry types
     ResourceBuilder resourceBuilder = ResourceBuilder.CreateDefault()
       .AddService(
         serviceName: options.EffectiveServiceName,
         serviceVersion: options.ServiceVersion);
+
+    // Configure logging with both Console and OpenTelemetry (when enabled)
+    if (options.EnableLogging)
+    {
+      builder.ConfigureLogging(logging =>
+      {
+        logging.SetMinimumLevel(LogLevel.Information);
+
+        // Always add console logging
+        logging.AddSimpleConsole(consoleOptions =>
+        {
+          consoleOptions.IncludeScopes = false;
+          consoleOptions.TimestampFormat = "HH:mm:ss ";
+          consoleOptions.SingleLine = true;
+        });
+
+        // Add OpenTelemetry logging when OTLP endpoint is configured
+        if (options.ShouldExportTelemetry)
+        {
+          Uri otlpEndpoint = new(options.EffectiveOtlpEndpoint!);
+          logging.AddOpenTelemetry(otelOptions =>
+          {
+            otelOptions.SetResourceBuilder(resourceBuilder);
+            otelOptions.AddOtlpExporter(exporterOptions => exporterOptions.Endpoint = otlpEndpoint);
+          });
+        }
+      });
+    }
+
+    if (!options.ShouldExportTelemetry)
+    {
+      // No OTLP endpoint configured - telemetry export disabled with zero overhead
+      // Logging is still configured above (console only)
+      return builder;
+    }
+
+    Uri endpoint = new(options.EffectiveOtlpEndpoint!);
 
     // Configure tracing
     if (options.EnableTracing)
@@ -96,7 +148,7 @@ public static class NuruTelemetryExtensions
       tracerProvider = Sdk.CreateTracerProviderBuilder()
         .SetResourceBuilder(resourceBuilder)
         .AddSource(NuruActivitySource.Name)
-        .AddOtlpExporter(exporterOptions => exporterOptions.Endpoint = otlpEndpoint)
+        .AddOtlpExporter(exporterOptions => exporterOptions.Endpoint = endpoint)
         .Build();
     }
 
@@ -106,15 +158,50 @@ public static class NuruTelemetryExtensions
       meterProvider = Sdk.CreateMeterProviderBuilder()
         .SetResourceBuilder(resourceBuilder)
         .AddMeter(NuruMeter.Name)
-        .AddOtlpExporter(exporterOptions => exporterOptions.Endpoint = otlpEndpoint)
+        .AddOtlpExporter(exporterOptions => exporterOptions.Endpoint = endpoint)
         .Build();
     }
 
-    // Note: Logging integration requires the user to configure ILoggerFactory with OpenTelemetry
-    // separately, as NuruAppBuilder.UseLogging() takes an ILoggerFactory instance.
-    // See documentation for logging configuration examples.
-
     return builder;
+  }
+
+  /// <summary>
+  /// Flushes all telemetry data and disposes providers.
+  /// Call this before application exit to ensure all telemetry is exported.
+  /// Critical for CLI applications which exit quickly.
+  /// </summary>
+  /// <param name="delayMs">Optional delay in milliseconds to allow export to complete. Default: 1000ms.</param>
+  public static async Task FlushAndShutdownAsync(int delayMs = 1000)
+  {
+    // Force flush to ensure all data is sent
+    tracerProvider?.ForceFlush();
+    meterProvider?.ForceFlush();
+
+    // Allow time for export to complete
+    if (delayMs > 0)
+    {
+      await Task.Delay(delayMs).ConfigureAwait(false);
+    }
+
+    // Dispose providers
+    tracerProvider?.Dispose();
+    meterProvider?.Dispose();
+    tracerProvider = null;
+    meterProvider = null;
+  }
+
+  /// <summary>
+  /// Synchronous version of FlushAndShutdown.
+  /// Flushes all telemetry data and disposes providers.
+  /// </summary>
+  public static void Shutdown()
+  {
+    tracerProvider?.ForceFlush();
+    meterProvider?.ForceFlush();
+    tracerProvider?.Dispose();
+    meterProvider?.Dispose();
+    tracerProvider = null;
+    meterProvider = null;
   }
 
   /// <summary>
@@ -198,17 +285,6 @@ public static class NuruTelemetryExtensions
   public static void RecordReplCommand(string command)
   {
     ReplCommands.Add(1, new KeyValuePair<string, object?>("command", command));
-  }
-
-  /// <summary>
-  /// Disposes telemetry providers. Call during application shutdown.
-  /// </summary>
-  public static void Shutdown()
-  {
-    tracerProvider?.Dispose();
-    meterProvider?.Dispose();
-    tracerProvider = null;
-    meterProvider = null;
   }
 
   private static void RecordError(Activity? activity, string commandName, Exception ex, long elapsedMs)

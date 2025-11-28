@@ -6,6 +6,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Mediator.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" />
     <PackageReference Include="OpenTelemetry" />
     <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" />
     <PackageReference Include="OpenTelemetry.Extensions.Hosting" />
@@ -13,6 +15,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../TimeWarp.Nuru/TimeWarp.Nuru.csproj" />
+    <ProjectReference Include="../TimeWarp.Nuru.Logging/TimeWarp.Nuru.Logging.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,6 +1,6 @@
 # TimeWarp.Nuru.Telemetry
 
-OpenTelemetry integration for TimeWarp.Nuru CLI applications with Aspire Dashboard support.
+OpenTelemetry integration for TimeWarp.Nuru CLI applications. Works with any OTLP-compatible backend (Aspire Dashboard, Jaeger, Zipkin, Grafana, etc.).
 
 ## Installation
 
@@ -13,8 +13,8 @@ dotnet add package TimeWarp.Nuru.Telemetry
 ```csharp
 using TimeWarp.Nuru;
 
-var app = new NuruAppBuilder()
-    .UseAspireTelemetry()  // Auto-configures when OTEL env vars present
+var app = NuruApp.CreateBuilder(args)
+    .UseTelemetry()  // Auto-configures when OTEL env vars present
     .Map("greet {name}", (string name) => Console.WriteLine($"Hello, {name}!"))
     .Build();
 
@@ -35,7 +35,7 @@ export OTEL_SERVICE_NAME=my-nuru-app
 ### Programmatic Configuration
 
 ```csharp
-builder.UseAspireTelemetry(options =>
+builder.UseTelemetry(options =>
 {
     options.ServiceName = "my-app";
     options.ServiceVersion = "1.0.0";
@@ -85,6 +85,6 @@ When `OTEL_EXPORTER_OTLP_ENDPOINT` is not set, telemetry export is disabled with
 
 ## See Also
 
-- [Aspire Telemetry POC Sample](../../Samples/AspireTelemetryPOC/)
+- [Aspire Telemetry Sample](../../Samples/AspireTelemetry/)
 - [OpenTelemetry .NET](https://opentelemetry.io/docs/languages/net/)
 - [Aspire Dashboard](https://learn.microsoft.com/en-us/dotnet/aspire/fundamentals/dashboard)

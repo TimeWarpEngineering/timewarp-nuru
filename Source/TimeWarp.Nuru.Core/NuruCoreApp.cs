@@ -153,7 +153,7 @@ public partial class NuruCoreApp
     ServiceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
     Endpoints = serviceProvider.GetRequiredService<EndpointCollection>();
     TypeConverterRegistry = serviceProvider.GetRequiredService<ITypeConverterRegistry>();
-    MediatorExecutor = serviceProvider.GetRequiredService<MediatorExecutor>();
+    MediatorExecutor = serviceProvider.GetService<MediatorExecutor>();
     LoggerFactory = serviceProvider.GetService<ILoggerFactory>() ?? Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance;
     ReplOptions = serviceProvider.GetService<ReplOptions>();
     AppMetadata = serviceProvider.GetService<ApplicationMetadata>();

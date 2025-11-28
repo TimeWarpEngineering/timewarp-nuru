@@ -1,9 +1,9 @@
 #!/usr/bin/dotnet --
-#:project ../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
+#:project ../../Source/TimeWarp.Nuru.Core/TimeWarp.Nuru.Core.csproj
 
 using TimeWarp.Nuru;
 
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruCoreApp app = new NuruAppBuilder()
   .MapDefault(() => "Hello World")
   .Build();
 

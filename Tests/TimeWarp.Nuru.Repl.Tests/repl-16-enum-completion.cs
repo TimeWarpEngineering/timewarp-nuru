@@ -30,7 +30,7 @@ public class EnumCompletionTests
     terminal.QueueLine("");  // Submit empty (will show help)
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .AddTypeConverter(new EnumTypeConverter<Environment>())
       .Map("deploy {env:environment}", (Environment _) => 0)
@@ -60,7 +60,7 @@ public class EnumCompletionTests
     terminal.QueueLine("");
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .AddTypeConverter(new EnumTypeConverter<Environment>())
       .Map("deploy {env:environment}", (Environment _) => 0)
@@ -86,7 +86,7 @@ public class EnumCompletionTests
     terminal.QueueLine("");
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .AddTypeConverter(new EnumTypeConverter<Environment>())
       .Map("deploy {env:environment}", (Environment _) => 0)
@@ -112,7 +112,7 @@ public class EnumCompletionTests
     terminal.QueueLine("");
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .AddTypeConverter(new EnumTypeConverter<Environment>())
       .Map("deploy {env:environment}", (Environment _) => 0)

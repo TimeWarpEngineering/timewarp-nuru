@@ -25,7 +25,7 @@ public class TabCompletionBasicTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("status", () => "OK")
       .AddReplSupport(options => options.EnableArrowHistory = true)
@@ -49,7 +49,7 @@ public class TabCompletionBasicTests
     terminal.QueueKey(ConsoleKey.Escape);
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("status", () => "Status OK")
       .Map("start", () => "Started")
@@ -76,7 +76,7 @@ public class TabCompletionBasicTests
     terminal.QueueKey(ConsoleKey.Escape);
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("status", () => "Status OK")
       .Map("start", () => "Started")
@@ -103,7 +103,7 @@ public class TabCompletionBasicTests
     terminal.QueueKey(ConsoleKey.Escape);
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("status", () => "Status OK")
       .Map("start", () => "Started")
@@ -130,7 +130,7 @@ public class TabCompletionBasicTests
     terminal.QueueKey(ConsoleKey.Backspace);
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("status", () => "Status OK")
       .AddReplSupport(options => options.EnableArrowHistory = true)
@@ -153,7 +153,7 @@ public class TabCompletionBasicTests
     terminal.QueueKey(ConsoleKey.Escape);
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("status", () => "Status OK")
       .Map("start", () => "Started")
@@ -178,7 +178,7 @@ public class TabCompletionBasicTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("deploy", () => "Deployed!")
       .AddReplSupport(options => options.EnableArrowHistory = true)
@@ -202,7 +202,7 @@ public class TabCompletionBasicTests
     terminal.QueueKey(ConsoleKey.Escape);
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("deploy {env}", (string env) => $"Deployed to {env}")
       .AddReplSupport(options => options.EnableArrowHistory = true)

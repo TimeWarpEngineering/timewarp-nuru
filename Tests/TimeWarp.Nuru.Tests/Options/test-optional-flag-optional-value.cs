@@ -25,7 +25,7 @@ builder.Map("build --config? {mode?}", (string? mode) =>
     WriteLine($"✓ Build executed with config: {mode ?? "(none)"}");
 });
 
-NuruApp app = builder.Build();
+NuruCoreApp app = builder.Build();
 
 WriteLine
 (

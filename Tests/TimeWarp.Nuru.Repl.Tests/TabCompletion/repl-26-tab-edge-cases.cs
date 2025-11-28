@@ -30,7 +30,7 @@ return await RunTests<EdgeCasesTests>();
 public class EdgeCasesTests
 {
   private static TestTerminal Terminal = null!;
-  private static NuruApp App = null!;
+  private static NuruCoreApp App = null!;
 
   public static async Task Setup()
   {

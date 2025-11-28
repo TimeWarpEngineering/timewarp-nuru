@@ -9,7 +9,7 @@ using Mediator;
 using Microsoft.Extensions.DependencyInjection;
 using static System.Console;
 
-NuruApp app =
+NuruCoreApp app =
   new NuruAppBuilder()
   .AddDependencyInjection()
   .AddAutoHelp()

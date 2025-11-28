@@ -145,7 +145,7 @@ public class IntegrationEnableDynamicTests
     builder.Map("version", () => 0);
     builder.EnableDynamicCompletion();
 
-    NuruApp app = builder.Build();
+    NuruCoreApp app = builder.Build();
 
     // Act - Execute the __complete route
     (int exitCode, string output, string _) = await CaptureAppOutputAsync(() =>
@@ -170,7 +170,7 @@ public class IntegrationEnableDynamicTests
       registry.RegisterForParameter("env", source);
     });
 
-    NuruApp app = builder.Build();
+    NuruCoreApp app = builder.Build();
 
     // Act - Complete the env parameter
     (int exitCode, string output, string _) = await CaptureAppOutputAsync(() =>
@@ -196,7 +196,7 @@ public class IntegrationEnableDynamicTests
       registry.RegisterForType(typeof(DeploymentMode), enumSource);
     });
 
-    NuruApp app = builder.Build();
+    NuruCoreApp app = builder.Build();
 
     // Act - Complete the mode parameter (after --mode option)
     (int exitCode, string output, string _) = await CaptureAppOutputAsync(() =>

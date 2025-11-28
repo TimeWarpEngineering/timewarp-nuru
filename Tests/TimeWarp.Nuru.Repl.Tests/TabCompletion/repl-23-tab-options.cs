@@ -43,7 +43,7 @@ return await RunTests<OptionCompletionTests>();
 public class OptionCompletionTests
 {
   private static TestTerminal Terminal = null!;
-  private static NuruApp App = null!;
+  private static NuruCoreApp App = null!;
 
   public static async Task Setup()
   {

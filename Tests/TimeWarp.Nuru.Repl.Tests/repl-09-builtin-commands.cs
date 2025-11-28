@@ -17,7 +17,7 @@ public class BuiltinCommandsTests
     using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .AddReplSupport()
       .Build();
@@ -37,7 +37,7 @@ public class BuiltinCommandsTests
     using TestTerminal terminal = new();
     terminal.QueueLine("quit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .AddReplSupport()
       .Build();
@@ -57,7 +57,7 @@ public class BuiltinCommandsTests
     using TestTerminal terminal = new();
     terminal.QueueLine("q");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .AddReplSupport()
       .Build();
@@ -78,7 +78,7 @@ public class BuiltinCommandsTests
     terminal.QueueLine("help");
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("status", () => "OK")
       .AddReplSupport()
@@ -99,7 +99,7 @@ public class BuiltinCommandsTests
     terminal.QueueLine("clear");
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .AddReplSupport()
       .Build();
@@ -119,7 +119,7 @@ public class BuiltinCommandsTests
     terminal.QueueLine("cls");
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .AddReplSupport()
       .Build();
@@ -140,7 +140,7 @@ public class BuiltinCommandsTests
     terminal.QueueLine("history");
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("status", () => "OK")
       .AddReplSupport()
@@ -163,7 +163,7 @@ public class BuiltinCommandsTests
     terminal.QueueLine("history");
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("status", () => "OK")
       .AddReplSupport()

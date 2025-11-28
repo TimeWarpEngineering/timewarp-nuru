@@ -18,7 +18,7 @@ public class CustomSourcesTests
       registry.RegisterForParameter("env", source);
     });
 
-    NuruApp app = builder.Build();
+    NuruCoreApp app = builder.Build();
 
     // Act
     (int _, string output, string _) = await CaptureAppOutputAsync(() =>
@@ -42,7 +42,7 @@ public class CustomSourcesTests
       registry.RegisterForParameter("file", source);
     });
 
-    NuruApp app = builder.Build();
+    NuruCoreApp app = builder.Build();
 
     // Act
     (int _, string output, string _) = await CaptureAppOutputAsync(() =>
@@ -66,7 +66,7 @@ public class CustomSourcesTests
       registry.RegisterForParameter("version", new VersionSource());
     });
 
-    NuruApp app = builder.Build();
+    NuruCoreApp app = builder.Build();
 
     // Act - Complete env
     (int _, string envOutput, string _) = await CaptureAppOutputAsync(() =>
@@ -89,7 +89,7 @@ public class CustomSourcesTests
       registry.RegisterForParameter("item", source);
     });
 
-    NuruApp app = builder.Build();
+    NuruCoreApp app = builder.Build();
 
     // Act
     (int _, string output, string _) = await CaptureAppOutputAsync(() =>
@@ -111,7 +111,7 @@ public class CustomSourcesTests
       registry.RegisterForParameter("item", source);
     });
 
-    NuruApp app = builder.Build();
+    NuruCoreApp app = builder.Build();
 
     // Act
     (int exitCode, string output, string _) = await CaptureAppOutputAsync(() =>
@@ -134,7 +134,7 @@ public class CustomSourcesTests
       registry.RegisterForParameter("number", source);
     });
 
-    NuruApp app = builder.Build();
+    NuruCoreApp app = builder.Build();
 
     // Act
     (int exitCode, string output, string _) = await CaptureAppOutputAsync(() =>
@@ -159,7 +159,7 @@ public class CustomSourcesTests
       registry.RegisterForParameter("region", source);
     });
 
-    NuruApp app = builder.Build();
+    NuruCoreApp app = builder.Build();
 
     // Act
     (int _, string output, string _) = await CaptureAppOutputAsync(() =>
@@ -185,7 +185,7 @@ public class CustomSourcesTests
       registry.RegisterForParameter("item", statefulSource);
     });
 
-    NuruApp app = builder.Build();
+    NuruCoreApp app = builder.Build();
 
     // Act
     (int _, string output, string _) = await CaptureAppOutputAsync(() =>
@@ -208,7 +208,7 @@ public class CustomSourcesTests
       registry.RegisterForParameter("item", source);
     });
 
-    NuruApp app = builder.Build();
+    NuruCoreApp app = builder.Build();
 
     // Act
     (int _, string output, string _) = await CaptureAppOutputAsync(() =>

@@ -20,7 +20,7 @@ public class PerformanceTests
     using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .AddReplSupport()
       .Build();
@@ -44,7 +44,7 @@ public class PerformanceTests
     terminal.QueueLine("noop");
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("noop", () => { })
       .AddReplSupport()
@@ -73,7 +73,7 @@ public class PerformanceTests
 
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("cmd{n}", (string _) => "OK")
       .AddReplSupport(options => options.MaxHistorySize = 1000)
@@ -108,7 +108,7 @@ public class PerformanceTests
     }
 
     builder.AddReplSupport(options => options.EnableArrowHistory = true);
-    NuruApp app = builder.Build();
+    NuruCoreApp app = builder.Build();
 
     // Act
     Stopwatch sw = Stopwatch.StartNew();
@@ -131,7 +131,7 @@ public class PerformanceTests
       builder.Map($"command{index}", () => "OK");
     }
 
-    NuruApp app = builder.Build();
+    NuruCoreApp app = builder.Build();
     EndpointCollection endpoints = app.Endpoints;
 
     using ILoggerFactory loggerFactory = LoggerFactory.Create(_ => { });
@@ -178,7 +178,7 @@ public class PerformanceTests
     // Arrange - create endpoints via app builder
     NuruAppBuilder builder = new();
     builder.Map("status", () => "OK");
-    NuruApp app = builder.Build();
+    NuruCoreApp app = builder.Build();
     EndpointCollection endpoints = app.Endpoints;
 
     using ILoggerFactory loggerFactory = LoggerFactory.Create(_ => { });
@@ -213,7 +213,7 @@ public class PerformanceTests
     using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .AddReplSupport()
       .Build();

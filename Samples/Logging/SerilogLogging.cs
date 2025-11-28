@@ -42,7 +42,7 @@ try
 {
     Log.Information("Starting TimeWarp.Nuru application with Serilog");
     
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
         .UseLogging(loggerFactory)  // Use Serilog for all Nuru logging
         
         .Map("test", () => 

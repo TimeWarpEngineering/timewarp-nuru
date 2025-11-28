@@ -13,7 +13,7 @@ public class OutputFormatTests
     builder.Map("status", () => 0);
     builder.EnableDynamicCompletion();
 
-    NuruApp app = builder.Build();
+    NuruCoreApp app = builder.Build();
 
     // Act
     (int _, string output, string _) = await CaptureAppOutputAsync(() =>
@@ -39,7 +39,7 @@ public class OutputFormatTests
       registry.RegisterForParameter("env", source);
     });
 
-    NuruApp app = builder.Build();
+    NuruCoreApp app = builder.Build();
 
     // Act
     (int _, string output, string _) = await CaptureAppOutputAsync(() =>
@@ -56,7 +56,7 @@ public class OutputFormatTests
     builder.Map("status", () => 0);
     builder.EnableDynamicCompletion();
 
-    NuruApp app = builder.Build();
+    NuruCoreApp app = builder.Build();
 
     // Act
     (int _, string output, string _) = await CaptureAppOutputAsync(() =>
@@ -74,7 +74,7 @@ public class OutputFormatTests
     builder.Map("status", () => 0);
     builder.EnableDynamicCompletion();
 
-    NuruApp app = builder.Build();
+    NuruCoreApp app = builder.Build();
 
     // Act
     (int _, string output, string _) = await CaptureAppOutputAsync(() =>
@@ -93,7 +93,7 @@ public class OutputFormatTests
     builder.Map("cherry", () => 0);
     builder.EnableDynamicCompletion();
 
-    NuruApp app = builder.Build();
+    NuruCoreApp app = builder.Build();
 
     // Act
     (int _, string output, string _) = await CaptureAppOutputAsync(() =>
@@ -125,7 +125,7 @@ public class OutputFormatTests
       registry.RegisterForParameter("env", source);
     });
 
-    NuruApp app = builder.Build();
+    NuruCoreApp app = builder.Build();
 
     // Act
     (int _, string output, string _) = await CaptureAppOutputAsync(() =>
@@ -151,7 +151,7 @@ public class OutputFormatTests
       registry.RegisterForParameter("env", source);
     });
 
-    NuruApp app = builder.Build();
+    NuruCoreApp app = builder.Build();
 
     // Act
     (int _, string output, string _) = await CaptureAppOutputAsync(() =>
@@ -169,7 +169,7 @@ public class OutputFormatTests
     builder.Map("version", () => 0);
     builder.EnableDynamicCompletion();
 
-    NuruApp app = builder.Build();
+    NuruCoreApp app = builder.Build();
 
     // Act
     (int _, string output, string _) = await CaptureAppOutputAsync(() =>
@@ -187,7 +187,7 @@ public class OutputFormatTests
     builder.Map("status", () => 0);
     builder.EnableDynamicCompletion();
 
-    NuruApp app = builder.Build();
+    NuruCoreApp app = builder.Build();
 
     // Act
     (int _, string _, string stderr) = await CaptureAppOutputAsync(() =>
@@ -212,7 +212,7 @@ public class OutputFormatTests
       registry.RegisterForParameter("url", source);
     });
 
-    NuruApp app = builder.Build();
+    NuruCoreApp app = builder.Build();
 
     // Act
     (int _, string output, string _) = await CaptureAppOutputAsync(() =>
@@ -230,7 +230,7 @@ public class OutputFormatTests
     builder.Map("build --verbose --quiet", (bool verbose, bool quiet) => 0);
     builder.EnableDynamicCompletion();
 
-    NuruApp app = builder.Build();
+    NuruCoreApp app = builder.Build();
 
     // Act - Complete options
     (int _, string output, string _) = await CaptureAppOutputAsync(() =>

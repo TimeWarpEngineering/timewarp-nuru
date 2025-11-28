@@ -17,7 +17,7 @@ public class NuruAppIntegrationTests
     using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .AddReplSupport()  // Extension method
       .Build();
@@ -37,7 +37,7 @@ public class NuruAppIntegrationTests
     terminal.QueueLine("help");
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .AddReplSupport()
       .Build();
@@ -57,7 +57,7 @@ public class NuruAppIntegrationTests
     terminal.QueueLine("add 5 10");
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("add {a:int} {b:int}", (int a, int b) => $"{a + b}")
       .AddReplSupport()
@@ -79,7 +79,7 @@ public class NuruAppIntegrationTests
     terminal.QueueLine("cmd2");
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("cmd1", () => "Command 1")
       .Map("cmd2", () => "Command 2")
@@ -101,7 +101,7 @@ public class NuruAppIntegrationTests
     terminal.QueueLine("exit");
 
     // Act - fluent chaining
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("status", () => "OK")
       .Map("version", () => "1.0.0")
@@ -121,7 +121,7 @@ public class NuruAppIntegrationTests
     using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .AddReplSupport()
       .Build();
@@ -142,7 +142,7 @@ public class NuruAppIntegrationTests
     terminal.QueueLine("exit");
 
     // Create app with logging configured
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .AddReplSupport()
       .Build();
@@ -162,7 +162,7 @@ public class NuruAppIntegrationTests
     terminal.QueueLine("greet World");
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("greet {name}", (string name) => $"Hello, {name}!")
       .AddReplSupport()

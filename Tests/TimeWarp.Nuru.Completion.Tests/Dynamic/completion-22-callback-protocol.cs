@@ -13,7 +13,7 @@ public class CallbackProtocolTests
     builder.Map("status", () => 0);
     builder.EnableDynamicCompletion();
 
-    NuruApp app = builder.Build();
+    NuruCoreApp app = builder.Build();
 
     // Act - Pass cursor index as first argument
     (int exitCode, string _, string _) = await CaptureAppOutputAsync(() =>
@@ -30,7 +30,7 @@ public class CallbackProtocolTests
     builder.Map("git status", () => 0);
     builder.EnableDynamicCompletion();
 
-    NuruApp app = builder.Build();
+    NuruCoreApp app = builder.Build();
 
     // Act - Pass multiple words after cursor index
     (int exitCode, string output, string _) = await CaptureAppOutputAsync(() =>
@@ -48,7 +48,7 @@ public class CallbackProtocolTests
     builder.Map("status", () => 0);
     builder.EnableDynamicCompletion();
 
-    NuruApp app = builder.Build();
+    NuruCoreApp app = builder.Build();
 
     // Act - Cursor at position 0 (the app name itself)
     (int exitCode, string _, string _) = await CaptureAppOutputAsync(() =>
@@ -65,7 +65,7 @@ public class CallbackProtocolTests
     builder.Map("deploy {env}", (string env) => 0);
     builder.EnableDynamicCompletion();
 
-    NuruApp app = builder.Build();
+    NuruCoreApp app = builder.Build();
 
     // Act - Cursor at position 3 but only 2 words provided
     (int exitCode, string _, string _) = await CaptureAppOutputAsync(() =>
@@ -82,7 +82,7 @@ public class CallbackProtocolTests
     builder.Map("status", () => 0);
     builder.EnableDynamicCompletion();
 
-    NuruApp app = builder.Build();
+    NuruCoreApp app = builder.Build();
 
     // Act
     (int _, string output, string _) = await CaptureAppOutputAsync(() =>
@@ -103,7 +103,7 @@ public class CallbackProtocolTests
     builder.Map("help", () => 0);
     builder.EnableDynamicCompletion();
 
-    NuruApp app = builder.Build();
+    NuruCoreApp app = builder.Build();
 
     // Act
     (int _, string output, string _) = await CaptureAppOutputAsync(() =>
@@ -129,7 +129,7 @@ public class CallbackProtocolTests
       registry.RegisterForParameter("env", source);
     });
 
-    NuruApp app = builder.Build();
+    NuruCoreApp app = builder.Build();
 
     // Act
     (int _, string output, string _) = await CaptureAppOutputAsync(() =>
@@ -146,7 +146,7 @@ public class CallbackProtocolTests
     builder.Map("status", () => 0);
     builder.EnableDynamicCompletion();
 
-    NuruApp app = builder.Build();
+    NuruCoreApp app = builder.Build();
 
     // Act
     (int _, string _, string stderr) = await CaptureAppOutputAsync(() =>
@@ -163,7 +163,7 @@ public class CallbackProtocolTests
     // No routes registered
     builder.EnableDynamicCompletion();
 
-    NuruApp app = builder.Build();
+    NuruCoreApp app = builder.Build();
 
     // Act
     (int exitCode, string output, string _) = await CaptureAppOutputAsync(() =>
@@ -181,7 +181,7 @@ public class CallbackProtocolTests
     builder.Map("test", () => 0);
     builder.EnableDynamicCompletion();
 
-    NuruApp app = builder.Build();
+    NuruCoreApp app = builder.Build();
 
     // Act - Large cursor index
     (int exitCode, string _, string _) = await CaptureAppOutputAsync(() =>
@@ -198,7 +198,7 @@ public class CallbackProtocolTests
     builder.Map("connect {url}", (string url) => 0);
     builder.EnableDynamicCompletion();
 
-    NuruApp app = builder.Build();
+    NuruCoreApp app = builder.Build();
 
     // Act - Words with special characters
     (int exitCode, string _, string _) = await CaptureAppOutputAsync(() =>

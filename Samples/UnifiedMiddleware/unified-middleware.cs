@@ -31,7 +31,7 @@ using static System.Console;
 //   ./unified-middleware.cs slow 600       # Mediator route - triggers slow warning
 //   ./unified-middleware.cs multiply 4 7   # Delegate route - shows pipeline logging
 
-NuruApp app = new NuruAppBuilder()
+NuruCoreApp app = new NuruAppBuilder()
   .UseConsoleLogging(LogLevel.Information)
   .AddDependencyInjection()
   .ConfigureServices

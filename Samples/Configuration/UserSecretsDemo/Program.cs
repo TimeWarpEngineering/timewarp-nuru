@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Configuration;
 using TimeWarp.Nuru;
 
-NuruApp app =
+NuruCoreApp app =
   new NuruAppBuilder()
   .AddDependencyInjection()
   .AddConfiguration(args)

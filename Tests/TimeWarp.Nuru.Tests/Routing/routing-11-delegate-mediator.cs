@@ -14,7 +14,7 @@ public class DelegateMediatorConsistencyTests
   {
     // Arrange - Delegate
     bool matched = false;
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .Map("status", () => { matched = true; return 0; })
       .Build();
 
@@ -31,7 +31,7 @@ public class DelegateMediatorConsistencyTests
   public static async Task Should_identical_matching_basic_literal_mediator()
   {
     // Arrange - Mediator
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .AddDependencyInjection()
       .ConfigureServices(services => services.AddMediator())
       .Map<StatusCommand>("status")
@@ -51,7 +51,7 @@ public class DelegateMediatorConsistencyTests
   {
     // Arrange - Delegate
     string? boundName = null;
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .Map("greet {name}", (string name) => { boundName = name; return 0; })
       .Build();
 
@@ -68,7 +68,7 @@ public class DelegateMediatorConsistencyTests
   public static async Task Should_identical_matching_string_parameter_mediator()
   {
     // Arrange - Mediator
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .AddDependencyInjection()
       .ConfigureServices(services => services.AddMediator())
       .Map<GreetCommand>("greet {name}")
@@ -87,7 +87,7 @@ public class DelegateMediatorConsistencyTests
   public static async Task Should_identical_error_type_mismatch_delegate()
   {
     // Arrange - Delegate
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
     .Map("delay {ms:int}", (int _) => 0)
     .Build();
 
@@ -103,7 +103,7 @@ public class DelegateMediatorConsistencyTests
   public static async Task Should_identical_error_type_mismatch_mediator()
   {
     // Arrange - Mediator
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .AddDependencyInjection()
       .ConfigureServices(services => services.AddMediator())
       .Map<DelayCommand>("delay {ms:int}")
@@ -123,7 +123,7 @@ public class DelegateMediatorConsistencyTests
   {
     // Arrange - Delegate
     string? boundEnv = null;
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .Map("deploy {env?}", (string? env) => { boundEnv = env; return 0; })
       .Build();
 
@@ -140,7 +140,7 @@ public class DelegateMediatorConsistencyTests
   public static async Task Should_identical_matching_optional_string_mediator()
   {
     // Arrange - Mediator
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .AddDependencyInjection()
       .ConfigureServices(services => services.AddMediator())
       .Map<DeployCommand>("deploy {env?}")

@@ -26,7 +26,7 @@ public class HistoryPersistenceTests
       terminal.QueueLine("greet Bob");
       terminal.QueueLine("exit");
 
-      NuruApp app = new NuruAppBuilder()
+      NuruCoreApp app = new NuruAppBuilder()
         .UseTerminal(terminal)
         .Map("greet {name}", (string name) => $"Hello, {name}!")
         .AddReplSupport(options =>
@@ -63,7 +63,7 @@ public class HistoryPersistenceTests
       terminal.QueueLine("history");
       terminal.QueueLine("exit");
 
-      NuruApp app = new NuruAppBuilder()
+      NuruCoreApp app = new NuruAppBuilder()
         .UseTerminal(terminal)
         .AddReplSupport(options =>
         {
@@ -91,7 +91,7 @@ public class HistoryPersistenceTests
     using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .AddReplSupport(options => options.PersistHistory = true)
       .Build();
@@ -120,7 +120,7 @@ public class HistoryPersistenceTests
       terminal.QueueLine("test-command");
       terminal.QueueLine("exit");
 
-      NuruApp app = new NuruAppBuilder()
+      NuruCoreApp app = new NuruAppBuilder()
         .UseTerminal(terminal)
         .Map("test-command", () => "OK")
         .AddReplSupport(options =>
@@ -152,7 +152,7 @@ public class HistoryPersistenceTests
     using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .AddReplSupport(options =>
       {
@@ -181,7 +181,7 @@ public class HistoryPersistenceTests
       using TestTerminal terminal = new();
       terminal.QueueLine("exit");
 
-      NuruApp app = new NuruAppBuilder()
+      NuruCoreApp app = new NuruAppBuilder()
         .UseTerminal(terminal)
         .AddReplSupport(options =>
         {
@@ -215,7 +215,7 @@ public class HistoryPersistenceTests
       terminal.QueueLine("test-command");
       terminal.QueueLine("exit");
 
-      NuruApp app = new NuruAppBuilder()
+      NuruCoreApp app = new NuruAppBuilder()
         .UseTerminal(terminal)
         .Map("test-command", () => "OK")
         .AddReplSupport(options =>
@@ -249,7 +249,7 @@ public class HistoryPersistenceTests
       using TestTerminal terminal = new();
       terminal.QueueLine("exit");
 
-      NuruApp app = new NuruAppBuilder()
+      NuruCoreApp app = new NuruAppBuilder()
         .UseTerminal(terminal)
         .AddReplSupport(options =>
         {

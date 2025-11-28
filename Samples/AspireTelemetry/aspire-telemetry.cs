@@ -35,7 +35,7 @@ using static System.Console;
 // SIMPLE ONE-LINE TELEMETRY SETUP WITH CreateBuilder
 // =============================================================================
 
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruCoreApp app = NuruApp.CreateBuilder(args)
   // UseTelemetry() handles ALL telemetry configuration:
   // - Console logging with timestamps
   // - OTLP export to any compatible backend (Aspire, Jaeger, Zipkin, etc.)

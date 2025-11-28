@@ -20,7 +20,7 @@ public class SyntaxHighlightingTests
       builder.Map(route, handler);
     }
 
-    NuruApp app = builder.Build();
+    NuruCoreApp app = builder.Build();
     return app.Endpoints;
   }
 

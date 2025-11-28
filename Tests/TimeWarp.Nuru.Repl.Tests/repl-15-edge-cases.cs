@@ -19,7 +19,7 @@ public class EdgeCaseTests
     terminal.QueueLine($"echo {longArg}");
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("echo {text}", (string text) => text)
       .AddReplSupport()
@@ -39,7 +39,7 @@ public class EdgeCaseTests
     using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .AddReplSupport()
       .Build();
@@ -60,7 +60,7 @@ public class EdgeCaseTests
     terminal.QueueLine("");  // Another empty
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .AddReplSupport()
       .Build();
@@ -81,7 +81,7 @@ public class EdgeCaseTests
     terminal.QueueLine("\t");   // Tab only
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .AddReplSupport()
       .Build();
@@ -104,7 +104,7 @@ public class EdgeCaseTests
     terminal.QueueLine("echo \"Hello!@#$%^&*()\"");
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("echo {text}", (string text) => text)
       .AddReplSupport()
@@ -131,7 +131,7 @@ public class EdgeCaseTests
 
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("noop", () => "OK")
       .AddReplSupport()
@@ -152,7 +152,7 @@ public class EdgeCaseTests
     terminal.WindowWidth = 10;  // Very narrow window
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .AddReplSupport()
       .Build();
@@ -173,7 +173,7 @@ public class EdgeCaseTests
     terminal.QueueLine("cmd2");
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("cmd{n}", (string _) => "OK")
       .AddReplSupport(options => options.MaxHistorySize = 0)

@@ -8,7 +8,7 @@ using TimeWarp.Nuru;
 // Before fix: No prompt was displayed, causing confusion
 // After fix: Prompt displays correctly, providing clear UX
 
-NuruApp app = new NuruAppBuilder()
+NuruCoreApp app = new NuruAppBuilder()
   .Map("hello", () =>
   {
     Console.WriteLine("Hello, World!");

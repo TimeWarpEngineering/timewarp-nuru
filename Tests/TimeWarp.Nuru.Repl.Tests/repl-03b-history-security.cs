@@ -308,7 +308,7 @@ public class ShouldIgnoreCommandTests
 // Helper class to test ReplSession's ShouldIgnoreCommand method
 internal sealed class ReplSessionHelper
 {
-  private readonly NuruApp App;
+  private readonly NuruCoreApp App;
   private readonly ILoggerFactory LoggerFactoryInstance;
 
   public ReplSessionHelper()

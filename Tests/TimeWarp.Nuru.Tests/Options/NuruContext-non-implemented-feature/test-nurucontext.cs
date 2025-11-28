@@ -39,7 +39,7 @@ builder.Map("deploy {env} {tag?}", (string env, string? tag, NuruContext context
     WriteLine($"  All Provided Params: {string.Join(", ", context.ProvidedParameters)}");
 });
 
-NuruApp app = builder.Build();
+NuruCoreApp app = builder.Build();
 
 WriteLine
 (

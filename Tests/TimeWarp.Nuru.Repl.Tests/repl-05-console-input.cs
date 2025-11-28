@@ -19,7 +19,7 @@ public class ConsoleInputTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("hello", () => "Hello!")
       .AddReplSupport(options => options.EnableArrowHistory = true)
@@ -42,7 +42,7 @@ public class ConsoleInputTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("hello", () => "Hello!")
       .AddReplSupport(options => options.EnableArrowHistory = true)
@@ -66,7 +66,7 @@ public class ConsoleInputTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("hello", () => "Hello!")
       .AddReplSupport(options => options.EnableArrowHistory = true)
@@ -91,7 +91,7 @@ public class ConsoleInputTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("hello", () => "Hello!")
       .AddReplSupport(options => options.EnableArrowHistory = true)
@@ -117,7 +117,7 @@ public class ConsoleInputTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("hello", () => "Hello!")
       .AddReplSupport(options => options.EnableArrowHistory = true)
@@ -140,7 +140,7 @@ public class ConsoleInputTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("greet {name}", (string name) => $"Hello, {name}!")
       .AddReplSupport(options => options.EnableArrowHistory = true)
@@ -164,7 +164,7 @@ public class ConsoleInputTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("greet {name}", (string name) => $"Hello, {name}!")
       .AddReplSupport(options => options.EnableArrowHistory = true)
@@ -188,7 +188,7 @@ public class ConsoleInputTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("say hello", () => "Said hello!")
       .AddReplSupport(options => options.EnableArrowHistory = true)
@@ -213,7 +213,7 @@ public class ConsoleInputTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("hello world", () => "Hello World!")
       .AddReplSupport(options => options.EnableArrowHistory = true)
@@ -238,7 +238,7 @@ public class ConsoleInputTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("hello", () => "Hello!")
       .AddReplSupport(options => options.EnableArrowHistory = true)

@@ -28,7 +28,7 @@ builder.Map("deploy --env {env} --version? {ver?} --dry-run",
     WriteLine("  Dry Run: " + dryRun);
 });
 
-NuruApp app = builder.Build();
+NuruCoreApp app = builder.Build();
 
 // Test 1: All options provided
 WriteLine("Test 1: deploy --env prod --version v1.0 --dry-run");

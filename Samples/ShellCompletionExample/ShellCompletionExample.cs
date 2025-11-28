@@ -71,5 +71,5 @@ builder.Map
 // Build and Run
 // ============================================================================
 
-NuruApp app = builder.Build();
+NuruCoreApp app = builder.Build();
 return await app.RunAsync(args);

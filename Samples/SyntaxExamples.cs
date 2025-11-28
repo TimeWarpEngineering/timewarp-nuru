@@ -159,7 +159,7 @@ builder.Map(
 );
 #endregion
 
-NuruApp app = builder.Build();
+NuruCoreApp app = builder.Build();
 
 Console.WriteLine("✅ TimeWarp.Nuru Syntax Examples - All patterns compiled successfully!");
 Console.WriteLine();

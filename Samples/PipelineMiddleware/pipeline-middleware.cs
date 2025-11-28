@@ -36,7 +36,7 @@ using static System.Console;
 // The ExceptionHandlingBehavior provides consistent error handling with user-friendly
 // messages. It should be registered LAST (innermost) to catch all exceptions.
 
-NuruApp app = new NuruAppBuilder()
+NuruCoreApp app = new NuruAppBuilder()
   .UseConsoleLogging(LogLevel.Information)
   .AddDependencyInjection()
   .ConfigureServices

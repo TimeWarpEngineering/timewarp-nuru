@@ -38,7 +38,7 @@ WriteLine("  - Custom history file location");
 WriteLine("  - Sensitive commands excluded from history");
 WriteLine();
 
-NuruApp app = new NuruAppBuilder()
+NuruCoreApp app = new NuruAppBuilder()
   .WithMetadata
   (
     description: "ReplOptions comprehensive showcase demonstrating all configuration features."

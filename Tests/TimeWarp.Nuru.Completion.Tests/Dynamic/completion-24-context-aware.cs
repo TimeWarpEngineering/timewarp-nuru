@@ -18,7 +18,7 @@ public class ContextAwareTests
       registry.RegisterForParameter("env", source);
     });
 
-    NuruApp app = builder.Build();
+    NuruCoreApp app = builder.Build();
 
     // Act
     (int _, string output, string _) = await CaptureAppOutputAsync(() =>
@@ -40,7 +40,7 @@ public class ContextAwareTests
       registry.RegisterForParameter("env", source);
     });
 
-    NuruApp app = builder.Build();
+    NuruCoreApp app = builder.Build();
 
     // Act
     (int _, string output, string _) = await CaptureAppOutputAsync(() =>
@@ -64,7 +64,7 @@ public class ContextAwareTests
       registry.RegisterForParameter("env", source);
     });
 
-    NuruApp app = builder.Build();
+    NuruCoreApp app = builder.Build();
 
     // Act
     (int _, string output, string _) = await CaptureAppOutputAsync(() =>
@@ -86,7 +86,7 @@ public class ContextAwareTests
       registry.RegisterForParameter("port", source);
     });
 
-    NuruApp app = builder.Build();
+    NuruCoreApp app = builder.Build();
 
     // Act - Previous arg is "localhost"
     (int _, string output, string _) = await CaptureAppOutputAsync(() =>
@@ -108,7 +108,7 @@ public class ContextAwareTests
       registry.RegisterForParameter("service", source);
     });
 
-    NuruApp app = builder.Build();
+    NuruCoreApp app = builder.Build();
 
     // Act - Get services for production
     (int _, string prodOutput, string _) = await CaptureAppOutputAsync(() =>
@@ -130,7 +130,7 @@ public class ContextAwareTests
       registry.RegisterForParameter("dest", source);
     });
 
-    NuruApp app = builder.Build();
+    NuruCoreApp app = builder.Build();
 
     // Act - Backup database
     (int _, string output, string _) = await CaptureAppOutputAsync(() =>
@@ -153,7 +153,7 @@ public class ContextAwareTests
       registry.RegisterForParameter("item", source);
     });
 
-    NuruApp app = builder.Build();
+    NuruCoreApp app = builder.Build();
 
     // Act
     (int _, string output, string _) = await CaptureAppOutputAsync(() =>
@@ -177,7 +177,7 @@ public class ContextAwareTests
       registry.RegisterForParameter("param", source);
     });
 
-    NuruApp app = builder.Build();
+    NuruCoreApp app = builder.Build();
 
     // Act
     (int exitCode, string _, string _) = await CaptureAppOutputAsync(() =>
@@ -199,7 +199,7 @@ public class ContextAwareTests
       registry.RegisterForParameter("target", source);
     });
 
-    NuruApp app = builder.Build();
+    NuruCoreApp app = builder.Build();
 
     // Act - Args include option. Words are: ["app", "build", "--config", "release"]
     // CursorPosition 4 means "complete 5th word" which is out of bounds

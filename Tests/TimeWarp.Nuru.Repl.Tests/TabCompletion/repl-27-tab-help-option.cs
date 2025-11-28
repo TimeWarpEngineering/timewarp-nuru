@@ -27,7 +27,7 @@ return await RunTests<HelpOptionTests>();
 public class HelpOptionTests
 {
   private static TestTerminal Terminal = null!;
-  private static NuruApp App = null!;
+  private static NuruCoreApp App = null!;
 
   public static async Task Setup()
   {

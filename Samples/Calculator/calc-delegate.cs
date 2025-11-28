@@ -5,7 +5,7 @@
 using TimeWarp.Nuru;
 using static System.Console;
 
-NuruApp app =
+NuruCoreApp app =
   new NuruAppBuilder()
   .AddAutoHelp()
   .Map // Basic operations

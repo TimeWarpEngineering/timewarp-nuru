@@ -81,7 +81,7 @@ try
   WriteLine("Debug logs: repl-debug.log");
   WriteLine();
 
-  NuruApp app = new NuruAppBuilder()
+  NuruCoreApp app = new NuruAppBuilder()
     .UseLogging(loggerFactory)
     .AddTypeConverter(new EnumTypeConverter<Environment>()) // Register enum converter
     .WithMetadata

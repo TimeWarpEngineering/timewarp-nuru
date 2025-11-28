@@ -17,7 +17,7 @@ public class DisplayFormattingTests
     using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .AddReplSupport(options => options.WelcomeMessage = "Welcome to My App!")
       .Build();
@@ -36,7 +36,7 @@ public class DisplayFormattingTests
     using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .AddReplSupport(options => options.GoodbyeMessage = "Farewell!")
       .Build();
@@ -55,7 +55,7 @@ public class DisplayFormattingTests
     using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .AddReplSupport(options => options.Prompt = ">>> ")
       .Build();
@@ -75,7 +75,7 @@ public class DisplayFormattingTests
     terminal.QueueLine("status");
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("status", () => "OK")
       .AddReplSupport(options => options.ShowExitCode = true)
@@ -96,7 +96,7 @@ public class DisplayFormattingTests
     terminal.QueueLine("status");
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("status", () => "OK")
       .AddReplSupport(options => options.ShowExitCode = false)
@@ -117,7 +117,7 @@ public class DisplayFormattingTests
     terminal.QueueLine("status");
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("status", () => "OK")
       .AddReplSupport(options => options.ShowTiming = true)
@@ -138,7 +138,7 @@ public class DisplayFormattingTests
     terminal.QueueLine("status");
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("status", () => "OK")
       .AddReplSupport(options => options.ShowTiming = false)
@@ -158,7 +158,7 @@ public class DisplayFormattingTests
     using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .AddReplSupport(options => options.EnableColors = true)
       .Build();
@@ -177,7 +177,7 @@ public class DisplayFormattingTests
     using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .AddReplSupport(options => options.EnableColors = false)
       .Build();

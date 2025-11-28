@@ -15,7 +15,7 @@ return await RunTests<TabCyclingBugTests>();
 public class TabCyclingBugTests
 {
   private static TestTerminal? Terminal;
-  private static NuruApp? App;
+  private static NuruCoreApp? App;
 
   public static async Task Setup()
   {

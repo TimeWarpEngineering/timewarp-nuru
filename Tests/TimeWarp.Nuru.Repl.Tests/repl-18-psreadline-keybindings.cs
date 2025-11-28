@@ -14,7 +14,7 @@ return await RunTests<PSReadLineKeybindingsTests>();
 public class PSReadLineKeybindingsTests
 {
   private static TestTerminal? Terminal;
-  private static NuruApp? App;
+  private static NuruCoreApp? App;
 
   public static async Task Setup()
   {

@@ -85,7 +85,7 @@ internal sealed class GenerateHandlerTool
 
     sb.AppendLine(");");
     sb.AppendLine();
-    sb.AppendLine("NuruApp app = builder.Build();");
+    sb.AppendLine("NuruCoreApp app = builder.Build();");
     sb.AppendLine("return await app.RunAsync(args);");
     sb.AppendLine();
 
@@ -94,7 +94,7 @@ internal sealed class GenerateHandlerTool
     sb.AppendLine("// Alternative: Fluent builder pattern");
     sb.AppendLine("// ═══════════════════════════════════════════════════════════════");
     sb.AppendLine();
-    sb.AppendLine("// NuruApp app = new NuruAppBuilder()");
+    sb.AppendLine("// NuruCoreApp app = new NuruAppBuilder()");
     sb.Append(CultureInfo.InvariantCulture, $"//     .Map(\"{pattern}\", ");
 
     if (parameters.Count == 0)
@@ -188,7 +188,7 @@ internal sealed class GenerateHandlerTool
 
     sb.AppendLine(", \"TODO: Add route description\");");
     sb.AppendLine();
-    sb.AppendLine("NuruApp app = builder.Build();");
+    sb.AppendLine("NuruCoreApp app = builder.Build();");
     sb.AppendLine("return await app.RunAsync(args);");
 
     return sb.ToString();

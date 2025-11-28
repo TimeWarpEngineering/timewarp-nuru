@@ -21,7 +21,7 @@ public class TabCompletionAdvancedTests
     terminal.QueueKey(ConsoleKey.Escape);
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("deploy --force", () => "Force deployed!")
       .Map("deploy --dry-run", () => "Dry run!")
@@ -46,7 +46,7 @@ public class TabCompletionAdvancedTests
     terminal.QueueKey(ConsoleKey.Escape);
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("deploy -f", () => "Force!")
       .Map("deploy -v", () => "Verbose!")
@@ -71,7 +71,7 @@ public class TabCompletionAdvancedTests
     terminal.QueueKey(ConsoleKey.Escape);
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("git commit", () => "Committed!")
       .Map("git config", () => "Configured!")
@@ -97,7 +97,7 @@ public class TabCompletionAdvancedTests
     terminal.QueueKey(ConsoleKey.Escape);
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("deploy {env}", (string env) => $"Deployed to {env}")
       .AddReplSupport(options => options.EnableArrowHistory = true)
@@ -121,7 +121,7 @@ public class TabCompletionAdvancedTests
     terminal.QueueKey(ConsoleKey.Escape);
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("deploy --env {env}", (string env) => $"Deployed to {env}")
       .AddReplSupport(options => options.EnableArrowHistory = true)
@@ -145,7 +145,7 @@ public class TabCompletionAdvancedTests
     terminal.QueueKey(ConsoleKey.Escape);
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("cmd {arg} --opt {val}", (string arg, string val) => $"{arg}:{val}")
       .AddReplSupport(options => options.EnableArrowHistory = true)
@@ -169,7 +169,7 @@ public class TabCompletionAdvancedTests
     terminal.QueueKey(ConsoleKey.Escape);
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("docker {*args}", (string[] args) => string.Join(" ", args))
       .AddReplSupport(options => options.EnableArrowHistory = true)
@@ -193,7 +193,7 @@ public class TabCompletionAdvancedTests
     terminal.QueueKey(ConsoleKey.Escape);
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("kubectl get pods", () => "Pods!")
       .Map("kubectl get services", () => "Services!")
@@ -224,7 +224,7 @@ public class TabCompletionAdvancedTests
     terminal.QueueKey(ConsoleKey.Enter); // Submit whatever we have
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("help", () => "Help content")
       .Map("hello", () => "Hello!")
@@ -254,7 +254,7 @@ public class TabCompletionAdvancedTests
     terminal.QueueKey(ConsoleKey.Escape);
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("git commit", () => "Committed!")
       .Map("git push", () => "Pushed!")

@@ -24,7 +24,7 @@ using TimeWarp.Nuru;
 using TimeWarp.Nuru.Repl;
 using static System.Console;
 
-NuruApp app = new NuruAppBuilder()
+NuruCoreApp app = new NuruAppBuilder()
   .WithMetadata
   (
     name: "interactive-demo",

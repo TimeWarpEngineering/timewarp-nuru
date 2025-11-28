@@ -23,7 +23,7 @@ public class ErrorHandlingTests
     terminal.QueueLine("status");
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("fail", ThrowInvalidOperation)
       .Map("status", () => "OK")
@@ -46,7 +46,7 @@ public class ErrorHandlingTests
     terminal.QueueLine("fail");
     terminal.QueueLine("status");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("fail", ThrowInvalidOperation)
       .Map("status", () => "OK")
@@ -67,7 +67,7 @@ public class ErrorHandlingTests
     terminal.QueueLine("nonexistent");
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("status", () => "OK")
       .AddReplSupport(options => options.ContinueOnError = true)
@@ -88,7 +88,7 @@ public class ErrorHandlingTests
     terminal.QueueLine("add notanumber");
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("add {n:int}", (int n) => $"Result: {n}")
       .AddReplSupport(options => options.ContinueOnError = true)
@@ -109,7 +109,7 @@ public class ErrorHandlingTests
     terminal.QueueLine("fail");
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("fail", ThrowInvalidOperation)
       .AddReplSupport(options =>
@@ -134,7 +134,7 @@ public class ErrorHandlingTests
     terminal.QueueLine("greet");
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("greet {name}", (string name) => $"Hello, {name}!")
       .AddReplSupport(options => options.ContinueOnError = true)
@@ -154,7 +154,7 @@ public class ErrorHandlingTests
     using TestTerminal terminal = new();
     terminal.QueueLine("fail");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("fail", ThrowInvalidOperation)
       .AddReplSupport(options => options.ContinueOnError = false)
@@ -176,7 +176,7 @@ public class ErrorHandlingTests
     terminal.QueueLine("status");
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("fail1", ThrowError1)
       .Map("fail2", ThrowArgument)

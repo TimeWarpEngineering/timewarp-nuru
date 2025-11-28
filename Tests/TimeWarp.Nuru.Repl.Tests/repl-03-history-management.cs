@@ -20,7 +20,7 @@ public class HistoryManagementTests
     terminal.QueueLine("history");
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("greet {name}", (string name) => $"Hello, {name}!")
       .AddReplSupport()
@@ -45,7 +45,7 @@ public class HistoryManagementTests
     terminal.QueueLine("history");
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("greet {name}", (string name) => $"Hello, {name}!")
       .AddReplSupport()
@@ -69,7 +69,7 @@ public class HistoryManagementTests
     terminal.QueueKey(ConsoleKey.Enter);    // Execute it again
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("greet {name}", (string name) => $"Hello, {name}!")
       .AddReplSupport()
@@ -91,7 +91,7 @@ public class HistoryManagementTests
     terminal.QueueLine("clear-history");
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("greet {name}", (string name) => $"Hello, {name}!")
       .AddReplSupport()
@@ -115,7 +115,7 @@ public class HistoryManagementTests
     terminal.QueueLine("history");
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("greet {name}", (string name) => $"Hello, {name}!")
       .AddReplSupport()
@@ -139,7 +139,7 @@ public class HistoryManagementTests
     terminal.QueueLine("history");        // Should NOT show "greet First" or "greet Second"
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("greet {name}", (string name) => $"Hello, {name}!")
       .AddReplSupport(options => options.PersistHistory = false)
@@ -167,7 +167,7 @@ public class HistoryManagementTests
 
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("cmd1", () => "1")
       .Map("cmd2", () => "2")
@@ -195,7 +195,7 @@ public class HistoryManagementTests
     terminal.QueueLine("history");
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("greet {name}", (string name) => $"Hello, {name}!")
       .AddReplSupport()

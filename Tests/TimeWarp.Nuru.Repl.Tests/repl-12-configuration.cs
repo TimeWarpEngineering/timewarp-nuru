@@ -20,7 +20,7 @@ public class ConfigurationTests
     using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .AddReplSupport()  // No options - use defaults
       .Build();
@@ -40,7 +40,7 @@ public class ConfigurationTests
     using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .AddReplSupport(options => options.Prompt = "myapp> ")
       .Build();
@@ -66,7 +66,7 @@ public class ConfigurationTests
 
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("cmd{n}", (string n) => $"Command {n}")
       .AddReplSupport(options => options.MaxHistorySize = 10)
@@ -90,7 +90,7 @@ public class ConfigurationTests
     terminal.QueueKey(ConsoleKey.Escape);
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("first", () => "First!")
       .AddReplSupport(options => options.EnableArrowHistory = true)
@@ -113,7 +113,7 @@ public class ConfigurationTests
     terminal.QueueLine("status");
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("fail", ThrowTestException)
       .Map("status", () => "OK")
@@ -139,7 +139,7 @@ public class ConfigurationTests
       terminal.QueueLine("test");
       terminal.QueueLine("exit");
 
-      NuruApp app = new NuruAppBuilder()
+      NuruCoreApp app = new NuruAppBuilder()
         .UseTerminal(terminal)
         .Map("test", () => "OK")
         .AddReplSupport(options =>
@@ -168,7 +168,7 @@ public class ConfigurationTests
     using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .AddReplSupport(options =>
       {
@@ -195,7 +195,7 @@ public class ConfigurationTests
     terminal.QueueLine("test");
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("test", () => "OK")
       .AddReplSupport(options =>
@@ -230,7 +230,7 @@ public class ConfigurationTests
     using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .AddReplSupport(options =>
       {

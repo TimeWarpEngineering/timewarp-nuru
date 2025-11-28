@@ -21,7 +21,7 @@ using static System.Console;
 // 2. Custom validation with .Validate()
 // 3. FluentValidation (enterprise-grade validation library)
 
-NuruApp app =
+NuruCoreApp app =
   new NuruAppBuilder()
   .AddDependencyInjection()
   .AddConfiguration(args)

@@ -12,7 +12,7 @@ using TimeWarp.Nuru.Repl;
 // - TestAppFactory: Factory for creating test apps with repl-basic-demo.cs routes
 //
 // Usage Example:
-//   NuruApp app = TestAppFactory.CreateReplDemoApp(terminal);
+//   NuruCoreApp app = TestAppFactory.CreateReplDemoApp(terminal);
 //   terminal.TypeAndTab("g");
 //   terminal.CleanupAndExit();
 //   await app.RunReplAsync();
@@ -164,15 +164,15 @@ public static class KeySequenceHelpers
 }
 
 /// <summary>
-/// Factory for creating test NuruApp instances configured with repl-basic-demo.cs routes.
+/// Factory for creating test NuruCoreApp instances configured with repl-basic-demo.cs routes.
 /// </summary>
 public static class TestAppFactory
 {
   /// <summary>
-  /// Creates a NuruApp configured exactly like Samples/ReplDemo/repl-basic-demo.cs.
+  /// Creates a NuruCoreApp configured exactly like Samples/ReplDemo/repl-basic-demo.cs.
   /// </summary>
   /// <param name="terminal">The test terminal to use for this app instance.</param>
-  /// <returns>A fully configured NuruApp ready for REPL testing.</returns>
+  /// <returns>A fully configured NuruCoreApp ready for REPL testing.</returns>
   /// <remarks>
   /// This factory creates an app with all 12 routes from repl-basic-demo.cs:
   ///
@@ -203,7 +203,7 @@ public static class TestAppFactory
   /// All handlers return 0 (success) for testing purposes.
   /// REPL is configured with minimal options: "demo> " prompt and arrow history enabled.
   /// </remarks>
-  public static NuruApp CreateReplDemoApp(TestTerminal terminal)
+  public static NuruCoreApp CreateReplDemoApp(TestTerminal terminal)
   {
     return new NuruAppBuilder()
       .UseTerminal(terminal)

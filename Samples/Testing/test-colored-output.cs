@@ -10,7 +10,7 @@ Console.WriteLine("=== Testing Colored Output ===\n");
 // Test 1: Basic colored output
 Console.WriteLine("Test 1: Handler with colored output");
 {
-  using var terminal = new TestTerminal();
+  using TestTerminal terminal = new();
 
   NuruApp app = new NuruAppBuilder()
     .UseTerminal(terminal)
@@ -41,7 +41,7 @@ Console.WriteLine("Test 1: Handler with colored output");
 // Test 2: Formatted text (bold, italic, underline)
 Console.WriteLine("Test 2: Text formatting");
 {
-  using var terminal = new TestTerminal();
+  using TestTerminal terminal = new();
 
   NuruApp app = new NuruAppBuilder()
     .UseTerminal(terminal)
@@ -67,7 +67,7 @@ Console.WriteLine("Test 2: Text formatting");
 // Test 3: Chained styles
 Console.WriteLine("Test 3: Chained styles");
 {
-  using var terminal = new TestTerminal();
+  using TestTerminal terminal = new();
 
   NuruApp app = new NuruAppBuilder()
     .UseTerminal(terminal)
@@ -95,7 +95,7 @@ Console.WriteLine("Test 3: Chained styles");
 // Test 4: CSS named colors
 Console.WriteLine("Test 4: CSS named colors");
 {
-  using var terminal = new TestTerminal();
+  using TestTerminal terminal = new();
 
   NuruApp app = new NuruAppBuilder()
     .UseTerminal(terminal)
@@ -122,8 +122,8 @@ Console.WriteLine("Test 4: CSS named colors");
 Console.WriteLine("Test 5: Color support detection");
 {
   // TestTerminal.SupportsColor is true by default
-  using var colorTerminal = new TestTerminal { SupportsColor = true };
-  using var noColorTerminal = new TestTerminal { SupportsColor = false };
+  using TestTerminal colorTerminal = new() { SupportsColor = true };
+  using TestTerminal noColorTerminal = new() { SupportsColor = false };
 
   NuruApp app = new NuruAppBuilder()
     .UseTerminal(colorTerminal)

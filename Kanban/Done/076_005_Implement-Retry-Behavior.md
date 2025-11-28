@@ -14,13 +14,32 @@ Create a RetryBehavior for resilience, demonstrating exponential backoff retry l
 
 ## Checklist
 
-- [ ] Create IRetryable marker interface
-- [ ] Create RetryBehavior<TRequest, TResponse> class
-- [ ] Implement exponential backoff (2^attempt seconds)
-- [ ] Configure max retry attempts (e.g., 3)
-- [ ] Only retry specific exception types (e.g., HttpRequestException, TimeoutException)
-- [ ] Log retry attempts
-- [ ] Create sample command that simulates transient failures
+- [x] Create IRetryable marker interface
+- [x] Create RetryBehavior<TRequest, TResponse> class
+- [x] Implement exponential backoff (2^attempt seconds)
+- [x] Configure max retry attempts (e.g., 3)
+- [x] Only retry specific exception types (e.g., HttpRequestException, TimeoutException)
+- [x] Log retry attempts
+- [x] Create sample command that simulates transient failures
+
+## Results
+
+Implementation added to `Samples/PipelineMiddleware/pipeline-middleware.cs`:
+
+1. **IRetryable marker interface** - Commands implement to opt-in to retry behavior
+   - `MaxRetries` property with default value of 3
+
+2. **RetryBehavior<TMessage, TResponse>** - Pipeline behavior with:
+   - Exponential backoff: 2^attempt seconds between retries
+   - Transient exception detection: `HttpRequestException`, `TimeoutException`, `IOException`
+   - Detailed logging of retry attempts with delay information
+
+3. **FlakyCommand** - Demo command that:
+   - Simulates transient failures based on `failCount` parameter
+   - Implements `IRetryable` to opt-in to retry behavior
+   - Throws `HttpRequestException` to trigger retries
+
+Usage: `./pipeline-middleware.cs flaky 2` (fails twice then succeeds)
 
 ## Notes
 

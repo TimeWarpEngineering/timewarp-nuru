@@ -1,6 +1,22 @@
 # Aspire Telemetry POC
 
-This proof-of-concept demonstrates how to send OpenTelemetry data (traces, metrics, logs) from a Nuru CLI application to the standalone .NET Aspire Dashboard.
+This proof-of-concept demonstrates how to send OpenTelemetry data (traces, metrics) from a Nuru CLI application to the standalone .NET Aspire Dashboard using the **Pipeline Middleware pattern**.
+
+## Key Pattern: TelemetryBehavior
+
+This sample uses the recommended **Pipeline Middleware** approach for telemetry:
+
+```csharp
+// Register TelemetryBehavior for all commands - automatic instrumentation!
+services.AddSingleton<IPipelineBehavior<GreetCommand, Unit>, TelemetryBehavior<GreetCommand, Unit>>();
+services.AddSingleton<IPipelineBehavior<WorkCommand, Unit>, TelemetryBehavior<WorkCommand, Unit>>();
+```
+
+Benefits:
+- **Automatic instrumentation** - No manual `ExecuteWithTelemetry()` calls needed
+- **Consistent** - Every command gets the same telemetry treatment
+- **Composable** - Combine with other behaviors (logging, performance, auth)
+- **Testable** - Behavior can be unit tested in isolation
 
 ## Prerequisites
 
@@ -57,16 +73,33 @@ $env:OTEL_SERVICE_NAME = "nuru-telemetry-poc"
 3. Navigate to:
    - **Traces** - View command execution spans
    - **Metrics** - View command counters and duration histograms
-   - **Logs** - View application logs
+
+## Pipeline Architecture
+
+```
+Request Flow:
+┌─────────────────────────────────────────────────────────┐
+│ TelemetryBehavior (outermost)                           │
+│   - Starts Activity span                                │
+│   - Records metrics                                     │
+│   - Captures errors                                     │
+│   ┌─────────────────────────────────────────────────┐   │
+│   │ Command Handler                                 │   │
+│   │   - Business logic only                         │   │
+│   │   - No telemetry code needed!                   │   │
+│   └─────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────┘
+```
 
 ## Telemetry Data Collected
 
 ### Traces (Activities)
 
 Each command execution creates a span with:
-- **Name**: Command name (e.g., "greet", "work", "fail")
+- **Name**: Command class name (e.g., "GreetCommand", "WorkCommand")
 - **Tags**:
-  - `command.name` - The command being executed
+  - `command.type` - Full type name
+  - `command.name` - Simple type name
   - `error.type` - Exception type (on failure)
   - `error.message` - Exception message (on failure)
 - **Status**: `Ok` or `Error`
@@ -79,11 +112,7 @@ Each command execution creates a span with:
 | `nuru.commands.errors` | Counter | Number of failed commands |
 | `nuru.commands.duration` | Histogram | Command execution time in ms |
 
-All metrics include a `command` tag for filtering by command name.
-
-### Logs
-
-Application logs are sent to the OTLP endpoint via the OpenTelemetry logging provider. These appear in the Aspire Dashboard's Logs section with structured data.
+All metrics include tags: `command`, `status`, `error.type` (when applicable).
 
 ## Zero Overhead When Disabled
 
@@ -95,39 +124,25 @@ When `OTEL_EXPORTER_OTLP_ENDPOINT` is not set:
 
 This follows the OpenTelemetry design principle of zero overhead when telemetry is disabled.
 
-## Architecture
+## CLI App Telemetry Flush
 
-```
-┌─────────────────────┐     OTLP/gRPC      ┌──────────────────────┐
-│   Nuru CLI App      │ ──────────────────▶│  Aspire Dashboard    │
-│                     │                    │                      │
-│ ┌─────────────────┐ │                    │ ┌──────────────────┐ │
-│ │ ActivitySource  │ │ ─── Traces ──────▶ │ │ Trace Viewer     │ │
-│ └─────────────────┘ │                    │ └──────────────────┘ │
-│                     │                    │                      │
-│ ┌─────────────────┐ │                    │ ┌──────────────────┐ │
-│ │     Meter       │ │ ─── Metrics ─────▶ │ │ Metrics Viewer   │ │
-│ └─────────────────┘ │                    │ └──────────────────┘ │
-│                     │                    │                      │
-│ ┌─────────────────┐ │                    │ ┌──────────────────┐ │
-│ │ ILoggerFactory  │ │ ─── Logs ────────▶ │ │ Log Viewer       │ │
-│ └─────────────────┘ │                    │ └──────────────────┘ │
-└─────────────────────┘                    └──────────────────────┘
+**Critical for CLI apps**: Telemetry must be flushed before the process exits:
+
+```csharp
+// Flush telemetry before exit - critical for CLI apps!
+if (telemetryEnabled)
+{
+  tracerProvider?.ForceFlush();
+  meterProvider?.ForceFlush();
+  await Task.Delay(1000); // Allow export to complete
+}
 ```
 
-## Next Steps
-
-This POC validates the integration approach. The next step is to implement the `TimeWarp.Nuru.Telemetry` package that provides:
-
-- `UseAspireTelemetry()` extension method
-- Built-in instrumentation in `NuruApp.ExecuteAsync()`
-- REPL session tracking
-- Automatic route matching telemetry
-
-See task `080_002_Implement-TimeWarp-Nuru-Telemetry-Package` for details.
+Without this, telemetry data may be lost because CLI apps exit quickly.
 
 ## See Also
 
+- [Pipeline Middleware Sample](../PipelineMiddleware/) - Full middleware patterns
+- [TimeWarp.Nuru.Telemetry Package](../../Source/TimeWarp.Nuru.Telemetry/) - Production telemetry package
 - [Aspire Dashboard Documentation](https://learn.microsoft.com/en-us/dotnet/aspire/fundamentals/dashboard)
 - [OpenTelemetry .NET SDK](https://opentelemetry.io/docs/languages/net/)
-- [OTLP Exporter](https://opentelemetry.io/docs/specs/otlp/)

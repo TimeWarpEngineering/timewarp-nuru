@@ -1,25 +1,28 @@
 #!/usr/bin/dotnet --
-// aspire-telemetry-poc - Demonstrates OpenTelemetry integration with Aspire Dashboard
+// aspire-telemetry-poc - Demonstrates OpenTelemetry integration with Aspire Dashboard using Pipeline Middleware
 #:project ../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
 #:project ../../Source/TimeWarp.Nuru.Logging/TimeWarp.Nuru.Logging.csproj
 #:project ../../Source/TimeWarp.Nuru.Telemetry/TimeWarp.Nuru.Telemetry.csproj
+#:package Mediator.Abstractions
+#:package Mediator.SourceGenerator
 
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using TimeWarp.Nuru;
+using Mediator;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry;
-using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using static System.Console;
 
-// Aspire Telemetry POC
-// ====================
-// This sample demonstrates how to send telemetry (traces, metrics, logs) from a
-// Nuru CLI application to the standalone Aspire Dashboard.
+// Aspire Telemetry POC with Pipeline Middleware
+// ==============================================
+// This sample demonstrates how to send telemetry (traces, metrics) from a
+// Nuru CLI application to the standalone Aspire Dashboard using the
+// recommended Pipeline Middleware pattern.
 //
 // Prerequisites:
 // 1. Start Aspire Dashboard:
@@ -27,8 +30,10 @@ using static System.Console;
 //      mcr.microsoft.com/dotnet/aspire-dashboard:latest
 //
 // 2. Set environment variables:
-//    export OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317
-//    export OTEL_SERVICE_NAME=nuru-telemetry-poc
+//    Bash/Zsh:   export OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317
+//                export OTEL_SERVICE_NAME=nuru-telemetry-poc
+//    PowerShell: $env:OTEL_EXPORTER_OTLP_ENDPOINT = "http://localhost:4317"
+//                $env:OTEL_SERVICE_NAME = "nuru-telemetry-poc"
 //
 // 3. Run this sample and execute commands
 // 4. Open http://localhost:18888 to view telemetry (copy login token from container output)
@@ -39,32 +44,19 @@ using static System.Console;
 // TELEMETRY CONFIGURATION
 // =============================================================================
 
-// Check if OTLP endpoint is configured
 string? otlpEndpoint = Environment.GetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT");
 string serviceName = Environment.GetEnvironmentVariable("OTEL_SERVICE_NAME") ?? "nuru-telemetry-poc";
 bool telemetryEnabled = !string.IsNullOrEmpty(otlpEndpoint);
 
-// Define telemetry sources (these exist regardless of OTLP config)
+// Define telemetry sources (shared with TelemetryBehavior)
 ActivitySource activitySource = new("TimeWarp.Nuru.POC", "1.0.0");
 Meter meter = new("TimeWarp.Nuru.POC", "1.0.0");
 
-// Create metrics instruments
-Counter<int> commandCounter = meter.CreateCounter<int>(
-  name: "nuru.commands.invoked",
-  unit: "{commands}",
-  description: "Number of commands executed");
+Counter<int> commandCounter = meter.CreateCounter<int>("nuru.commands.invoked", "{commands}", "Commands executed");
+Counter<int> errorCounter = meter.CreateCounter<int>("nuru.commands.errors", "{errors}", "Failed commands");
+Histogram<double> commandDuration = meter.CreateHistogram<double>("nuru.commands.duration", "ms", "Command duration");
 
-Counter<int> errorCounter = meter.CreateCounter<int>(
-  name: "nuru.commands.errors",
-  unit: "{errors}",
-  description: "Number of failed commands");
-
-Histogram<double> commandDuration = meter.CreateHistogram<double>(
-  name: "nuru.commands.duration",
-  unit: "ms",
-  description: "Command execution duration in milliseconds");
-
-// Configure OpenTelemetry only when OTLP endpoint is set
+// Configure OpenTelemetry providers
 TracerProvider? tracerProvider = null;
 MeterProvider? meterProvider = null;
 
@@ -76,14 +68,12 @@ if (telemetryEnabled)
   ResourceBuilder resourceBuilder = ResourceBuilder.CreateDefault()
     .AddService(serviceName: serviceName, serviceVersion: "1.0.0");
 
-  // Configure tracing
   tracerProvider = Sdk.CreateTracerProviderBuilder()
     .SetResourceBuilder(resourceBuilder)
     .AddSource(activitySource.Name)
     .AddOtlpExporter(options => options.Endpoint = new Uri(otlpEndpoint!))
     .Build();
 
-  // Configure metrics
   meterProvider = Sdk.CreateMeterProviderBuilder()
     .SetResourceBuilder(resourceBuilder)
     .AddMeter(meter.Name)
@@ -96,81 +86,50 @@ else
 }
 
 // =============================================================================
-// APPLICATION SETUP
+// APPLICATION SETUP WITH PIPELINE MIDDLEWARE
 // =============================================================================
 
 NuruApp app = new NuruAppBuilder()
   .UseConsoleLogging(LogLevel.Information)
-  // Note: OpenTelemetry logging requires custom ILoggerFactory configuration.
-  // This POC demonstrates traces and metrics; logs go to console.
-  // Greet command - demonstrates basic telemetry
-  .Map
+  .AddDependencyInjection()
+  .ConfigureServices
   (
-    pattern: "greet {name}",
-    handler: (string name) => ExecuteWithTelemetry("greet", () =>
+    (services, config) =>
     {
-      WriteLine($"Hello, {name}!");
-    }),
-    description: "Greet someone (demonstrates basic telemetry)"
+      // Register Mediator
+      services.AddMediator();
+
+      // Register TelemetryBehavior for all commands - this is the key pattern!
+      // The behavior wraps every command automatically, no manual instrumentation needed.
+      services.AddSingleton<IPipelineBehavior<GreetCommand, Unit>, TelemetryBehavior<GreetCommand, Unit>>();
+      services.AddSingleton<IPipelineBehavior<WorkCommand, Unit>, TelemetryBehavior<WorkCommand, Unit>>();
+      services.AddSingleton<IPipelineBehavior<FailCommand, Unit>, TelemetryBehavior<FailCommand, Unit>>();
+      services.AddSingleton<IPipelineBehavior<StatusCommand, Unit>, TelemetryBehavior<StatusCommand, Unit>>();
+
+      // Share telemetry instances with the behavior via DI
+      services.AddSingleton(activitySource);
+      services.AddSingleton(meter);
+      services.AddSingleton(commandCounter);
+      services.AddSingleton(errorCounter);
+      services.AddSingleton(commandDuration);
+      services.AddSingleton(new TelemetryConfig(telemetryEnabled, otlpEndpoint, serviceName));
+    }
   )
-  // Work command - demonstrates longer duration
-  .Map
-  (
-    pattern: "work {duration:int}",
-    handler: async (int duration) => await ExecuteWithTelemetryAsync("work", async () =>
-    {
-      WriteLine($"Starting work for {duration}ms...");
-      await Task.Delay(duration);
-      WriteLine("Work completed!");
-    }),
-    description: "Simulate work with specified duration in ms"
-  )
-  // Fail command - demonstrates error telemetry
-  .Map
-  (
-    pattern: "fail {message}",
-    handler: (string message) => ExecuteWithTelemetry("fail", () =>
-    {
-      throw new InvalidOperationException(message);
-    }),
-    description: "Throw an exception (demonstrates error telemetry)"
-  )
-  // Status command - shows telemetry configuration
-  .Map
-  (
-    pattern: "status",
-    handler: () => ExecuteWithTelemetry("status", () =>
-    {
-      WriteLine($"Telemetry Enabled: {telemetryEnabled}");
-      if (telemetryEnabled)
-      {
-        WriteLine($"OTLP Endpoint: {otlpEndpoint}");
-        WriteLine($"Service Name: {serviceName}");
-        WriteLine("Dashboard: http://localhost:18888");
-      }
-      else
-      {
-        WriteLine("Set OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317 to enable");
-      }
-    }),
-    description: "Show telemetry configuration status"
-  )
+  .Map<GreetCommand>(pattern: "greet {name}", description: "Greet someone (demonstrates basic telemetry)")
+  .Map<WorkCommand>(pattern: "work {duration:int}", description: "Simulate work with specified duration in ms")
+  .Map<FailCommand>(pattern: "fail {message}", description: "Throw an exception (demonstrates error telemetry)")
+  .Map<StatusCommand>(pattern: "status", description: "Show telemetry configuration status")
   .AddAutoHelp()
   .Build();
 
 int exitCode = await app.RunAsync(args);
 
-// Flush and clean up OpenTelemetry providers
-// Critical for CLI apps: must flush before exit or telemetry is lost
+// Flush telemetry before exit - critical for CLI apps!
 if (telemetryEnabled)
 {
   WriteLine("[TELEMETRY] Flushing telemetry data...");
-
-  // Force flush to ensure all data is sent before process exits
   tracerProvider?.ForceFlush();
   meterProvider?.ForceFlush();
-
-  // Small delay to ensure OTLP export completes
   await Task.Delay(1000);
 }
 
@@ -180,79 +139,168 @@ meterProvider?.Dispose();
 return exitCode;
 
 // =============================================================================
-// TELEMETRY HELPER METHODS
+// TELEMETRY CONFIG (shared via DI)
 // =============================================================================
 
-void ExecuteWithTelemetry(string commandName, Action action)
+public record TelemetryConfig(bool Enabled, string? OtlpEndpoint, string ServiceName);
+
+// =============================================================================
+// COMMANDS
+// =============================================================================
+
+public sealed class GreetCommand : IRequest
 {
-  using Activity? activity = activitySource.StartActivity(commandName, ActivityKind.Internal);
-  activity?.SetTag("command.name", commandName);
+  public string Name { get; set; } = string.Empty;
 
-  Stopwatch stopwatch = Stopwatch.StartNew();
-
-  try
+  public sealed class Handler : IRequestHandler<GreetCommand>
   {
-    action();
-
-    stopwatch.Stop();
-    activity?.SetStatus(ActivityStatusCode.Ok);
-
-    commandCounter.Add(1, new KeyValuePair<string, object?>("command", commandName));
-    commandDuration.Record(stopwatch.ElapsedMilliseconds,
-      new KeyValuePair<string, object?>("command", commandName));
-  }
-  catch (Exception ex)
-  {
-    stopwatch.Stop();
-    activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
-    activity?.SetTag("error.type", ex.GetType().Name);
-    activity?.SetTag("error.message", ex.Message);
-
-    errorCounter.Add(1,
-      new KeyValuePair<string, object?>("command", commandName),
-      new KeyValuePair<string, object?>("error.type", ex.GetType().Name));
-
-    commandDuration.Record(stopwatch.ElapsedMilliseconds,
-      new KeyValuePair<string, object?>("command", commandName),
-      new KeyValuePair<string, object?>("status", "error"));
-
-    throw;
+    public ValueTask<Unit> Handle(GreetCommand request, CancellationToken cancellationToken)
+    {
+      WriteLine($"Hello, {request.Name}!");
+      return default;
+    }
   }
 }
 
-async Task ExecuteWithTelemetryAsync(string commandName, Func<Task> action)
+public sealed class WorkCommand : IRequest
 {
-  using Activity? activity = activitySource.StartActivity(commandName, ActivityKind.Internal);
-  activity?.SetTag("command.name", commandName);
+  public int Duration { get; set; }
 
-  Stopwatch stopwatch = Stopwatch.StartNew();
-
-  try
+  public sealed class Handler : IRequestHandler<WorkCommand>
   {
-    await action();
-
-    stopwatch.Stop();
-    activity?.SetStatus(ActivityStatusCode.Ok);
-
-    commandCounter.Add(1, new KeyValuePair<string, object?>("command", commandName));
-    commandDuration.Record(stopwatch.ElapsedMilliseconds,
-      new KeyValuePair<string, object?>("command", commandName));
+    public async ValueTask<Unit> Handle(WorkCommand request, CancellationToken cancellationToken)
+    {
+      WriteLine($"Starting work for {request.Duration}ms...");
+      await Task.Delay(request.Duration, cancellationToken);
+      WriteLine("Work completed!");
+      return Unit.Value;
+    }
   }
-  catch (Exception ex)
+}
+
+public sealed class FailCommand : IRequest
+{
+  public string Message { get; set; } = string.Empty;
+
+  public sealed class Handler : IRequestHandler<FailCommand>
   {
-    stopwatch.Stop();
-    activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
-    activity?.SetTag("error.type", ex.GetType().Name);
-    activity?.SetTag("error.message", ex.Message);
+    public ValueTask<Unit> Handle(FailCommand request, CancellationToken cancellationToken)
+    {
+      throw new InvalidOperationException(request.Message);
+    }
+  }
+}
 
-    errorCounter.Add(1,
-      new KeyValuePair<string, object?>("command", commandName),
-      new KeyValuePair<string, object?>("error.type", ex.GetType().Name));
+public sealed class StatusCommand : IRequest
+{
+  public sealed class Handler : IRequestHandler<StatusCommand>
+  {
+    private readonly TelemetryConfig Config;
 
-    commandDuration.Record(stopwatch.ElapsedMilliseconds,
-      new KeyValuePair<string, object?>("command", commandName),
-      new KeyValuePair<string, object?>("status", "error"));
+    public Handler(TelemetryConfig config)
+    {
+      Config = config;
+    }
 
-    throw;
+    public ValueTask<Unit> Handle(StatusCommand request, CancellationToken cancellationToken)
+    {
+      WriteLine($"Telemetry Enabled: {Config.Enabled}");
+      if (Config.Enabled)
+      {
+        WriteLine($"OTLP Endpoint: {Config.OtlpEndpoint}");
+        WriteLine($"Service Name: {Config.ServiceName}");
+        WriteLine("Dashboard: http://localhost:18888");
+      }
+      else
+      {
+        WriteLine("Set OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317 to enable");
+      }
+      return default;
+    }
+  }
+}
+
+// =============================================================================
+// TELEMETRY PIPELINE BEHAVIOR
+// =============================================================================
+
+/// <summary>
+/// Pipeline behavior that automatically instruments all commands with OpenTelemetry.
+/// This is the recommended pattern - telemetry is applied consistently without
+/// manual instrumentation in each command handler.
+/// </summary>
+public sealed class TelemetryBehavior<TMessage, TResponse> : IPipelineBehavior<TMessage, TResponse>
+  where TMessage : IMessage
+{
+  private readonly ActivitySource ActivitySource;
+  private readonly Counter<int> CommandCounter;
+  private readonly Counter<int> ErrorCounter;
+  private readonly Histogram<double> CommandDuration;
+
+  public TelemetryBehavior
+  (
+    ActivitySource activitySource,
+    Counter<int> commandCounter,
+    Counter<int> errorCounter,
+    Histogram<double> commandDuration
+  )
+  {
+    ActivitySource = activitySource;
+    CommandCounter = commandCounter;
+    ErrorCounter = errorCounter;
+    CommandDuration = commandDuration;
+  }
+
+  public async ValueTask<TResponse> Handle
+  (
+    TMessage message,
+    MessageHandlerDelegate<TMessage, TResponse> next,
+    CancellationToken cancellationToken
+  )
+  {
+    string commandName = typeof(TMessage).Name;
+
+    // Start Activity span for distributed tracing
+    using Activity? activity = ActivitySource.StartActivity(commandName, ActivityKind.Internal);
+    activity?.SetTag("command.type", typeof(TMessage).FullName);
+    activity?.SetTag("command.name", commandName);
+
+    Stopwatch stopwatch = Stopwatch.StartNew();
+
+    try
+    {
+      TResponse response = await next(message, cancellationToken);
+
+      stopwatch.Stop();
+      activity?.SetStatus(ActivityStatusCode.Ok);
+
+      // Record success metrics
+      CommandCounter.Add(1, new KeyValuePair<string, object?>("command", commandName));
+      CommandDuration.Record(stopwatch.ElapsedMilliseconds,
+        new KeyValuePair<string, object?>("command", commandName),
+        new KeyValuePair<string, object?>("status", "ok"));
+
+      return response;
+    }
+    catch (Exception ex)
+    {
+      stopwatch.Stop();
+
+      // Record error in trace
+      activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+      activity?.SetTag("error.type", ex.GetType().Name);
+      activity?.SetTag("error.message", ex.Message);
+
+      // Record error metrics
+      ErrorCounter.Add(1,
+        new KeyValuePair<string, object?>("command", commandName),
+        new KeyValuePair<string, object?>("error.type", ex.GetType().Name));
+
+      CommandDuration.Record(stopwatch.ElapsedMilliseconds,
+        new KeyValuePair<string, object?>("command", commandName),
+        new KeyValuePair<string, object?>("status", "error"));
+
+      throw;
+    }
   }
 }

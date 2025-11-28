@@ -188,6 +188,15 @@ public sealed class DelegatePerformanceBehavior : IPipelineBehavior<DelegateRequ
         SlowThresholdMs
       );
     }
+    else
+    {
+      Logger.LogInformation
+      (
+        "[DELEGATE PERFORMANCE] Route {RoutePattern} completed in {ElapsedMs}ms",
+        ExecutionContext.RoutePattern,
+        stopwatch.ElapsedMilliseconds
+      );
+    }
 
     return response;
   }
@@ -261,15 +270,25 @@ public sealed class PerformanceBehavior<TMessage, TResponse> : IPipelineBehavior
 
     stopwatch.Stop();
 
+    string requestName = typeof(TMessage).Name;
+
     if (stopwatch.ElapsedMilliseconds > SlowThresholdMs)
     {
-      string requestName = typeof(TMessage).Name;
       Logger.LogWarning
       (
         "[MEDIATOR PERFORMANCE] {RequestName} took {ElapsedMs}ms (threshold: {ThresholdMs}ms)",
         requestName,
         stopwatch.ElapsedMilliseconds,
         SlowThresholdMs
+      );
+    }
+    else
+    {
+      Logger.LogInformation
+      (
+        "[MEDIATOR PERFORMANCE] {RequestName} completed in {ElapsedMs}ms",
+        requestName,
+        stopwatch.ElapsedMilliseconds
       );
     }
 

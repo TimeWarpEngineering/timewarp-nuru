@@ -10,12 +10,27 @@ Create a PerformanceBehavior that measures command execution time using Stopwatc
 
 ## Checklist
 
-- [ ] Create PerformanceBehavior<TRequest, TResponse> class
-- [ ] Use Stopwatch for accurate timing
-- [ ] Configure warning threshold (e.g., 500ms)
-- [ ] Log elapsed time for all commands
-- [ ] Log warning for commands exceeding threshold
-- [ ] Add sample command that demonstrates slow execution
+- [x] Create PerformanceBehavior<TRequest, TResponse> class
+- [x] Use Stopwatch for accurate timing
+- [x] Configure warning threshold (e.g., 500ms)
+- [x] Log elapsed time for all commands
+- [x] Log warning for commands exceeding threshold
+- [x] Add sample command that demonstrates slow execution
+
+## Results
+
+Implementation exists in two samples demonstrating different use cases:
+
+1. **pipeline-middleware.cs** - Basic Mediator pipeline behavior
+2. **unified-middleware.cs** - Both Mediator and Delegate route performance monitoring
+
+Updated both implementations to log elapsed time for ALL commands:
+- Fast commands: `LogInformation` with elapsed time
+- Slow commands (>500ms): `LogWarning` with elapsed time and threshold
+
+Files modified:
+- `Samples/PipelineMiddleware/pipeline-middleware.cs`
+- `Samples/UnifiedMiddleware/unified-middleware.cs`
 
 ## Notes
 

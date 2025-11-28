@@ -166,15 +166,25 @@ public sealed class PerformanceBehavior<TMessage, TResponse> : IPipelineBehavior
 
     stopwatch.Stop();
 
+    string requestName = typeof(TMessage).Name;
+
     if (stopwatch.ElapsedMilliseconds > SlowThresholdMs)
     {
-      string requestName = typeof(TMessage).Name;
       Logger.LogWarning
       (
         "[PERFORMANCE] {RequestName} took {ElapsedMs}ms (threshold: {ThresholdMs}ms)",
         requestName,
         stopwatch.ElapsedMilliseconds,
         SlowThresholdMs
+      );
+    }
+    else
+    {
+      Logger.LogInformation
+      (
+        "[PERFORMANCE] {RequestName} completed in {ElapsedMs}ms",
+        requestName,
+        stopwatch.ElapsedMilliseconds
       );
     }
 

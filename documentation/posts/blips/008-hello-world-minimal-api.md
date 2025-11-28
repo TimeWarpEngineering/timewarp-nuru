@@ -4,8 +4,8 @@
 
 ## ASP.NET Core Web API
 ```csharp
-var builder = WebApplication.CreateBuilder(args);
-var app = builder.Build();
+WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+WebApplication app = builder.Build();
 
 app.MapGet("/", () => "Hello World");
 
@@ -19,7 +19,7 @@ app.Run();
 
 using TimeWarp.Nuru;
 
-var builder = NuruApp.CreateBuilder(args);
+NuruAppBuilder builder = NuruApp.CreateBuilder(args);
 
 builder.Map("hello", () => "Hello World");
 
@@ -45,13 +45,13 @@ If you know ASP.NET Core, you already know Nuru:
 
 ```csharp
 // Full featured: DI, Config, Mediator, REPL, Completion
-var builder = NuruApp.CreateBuilder(args);
+NuruAppBuilder builder = NuruApp.CreateBuilder(args);
 
 // Lightweight: Auto-help, AOT-friendly
-var builder = NuruApp.CreateSlimBuilder();
+NuruAppBuilder builder = NuruApp.CreateSlimBuilder();
 
 // Bare minimum: Total control
-var builder = NuruApp.CreateEmptyBuilder();
+NuruAppBuilder builder = NuruApp.CreateEmptyBuilder();
 ```
 
 ## Get Started

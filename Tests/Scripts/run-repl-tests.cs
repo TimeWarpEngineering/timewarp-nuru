@@ -52,7 +52,7 @@ foreach (string testFile in allTestFiles)
       CreateNoWindow = true
     };
 
-    using var process = Process.Start(psi);
+    using Process? process = Process.Start(psi);
     if (process is null)
     {
       Console.WriteLine("SKIP (could not start process)");

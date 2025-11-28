@@ -24,7 +24,7 @@ public class CatchAllOptionalConflictTests
     exception.SemanticErrors.ShouldNotBeNull();
     exception.SemanticErrors[0].ShouldBeOfType<MixedCatchAllWithOptionalError>();
 
-    var error = (MixedCatchAllWithOptionalError)exception.SemanticErrors[0];
+    MixedCatchAllWithOptionalError error = (MixedCatchAllWithOptionalError)exception.SemanticErrors[0];
     error.CatchAllParam.ShouldBe("args");
     error.OptionalParams.ShouldContain("script");
 
@@ -42,7 +42,7 @@ public class CatchAllOptionalConflictTests
     route.HasCatchAll.ShouldBeTrue();
     route.PositionalMatchers.Count.ShouldBe(3);
 
-    var scriptParam = (ParameterMatcher)route.PositionalMatchers[1];
+    ParameterMatcher scriptParam = (ParameterMatcher)route.PositionalMatchers[1];
     scriptParam.Name.ShouldBe("script");
     scriptParam.IsOptional.ShouldBeFalse();
     scriptParam.IsCatchAll.ShouldBeFalse();
@@ -75,7 +75,7 @@ public class CatchAllOptionalConflictTests
     exception.SemanticErrors.ShouldNotBeNull();
     exception.SemanticErrors[0].ShouldBeOfType<MixedCatchAllWithOptionalError>();
 
-    var error = (MixedCatchAllWithOptionalError)exception.SemanticErrors[0];
+    MixedCatchAllWithOptionalError error = (MixedCatchAllWithOptionalError)exception.SemanticErrors[0];
     error.CatchAllParam.ShouldBe("rest");
     error.OptionalParams.ShouldContain("arg");
 
@@ -93,7 +93,7 @@ public class CatchAllOptionalConflictTests
     exception.SemanticErrors.ShouldNotBeNull();
     exception.SemanticErrors[0].ShouldBeOfType<MixedCatchAllWithOptionalError>();
 
-    var error = (MixedCatchAllWithOptionalError)exception.SemanticErrors[0];
+    MixedCatchAllWithOptionalError error = (MixedCatchAllWithOptionalError)exception.SemanticErrors[0];
     error.CatchAllParam.ShouldBe("args");
     error.OptionalParams.ShouldContain("id");
 
@@ -110,10 +110,10 @@ public class CatchAllOptionalConflictTests
     route.HasCatchAll.ShouldBeTrue();
     route.PositionalMatchers.Count.ShouldBe(4);
 
-    var sourceParam = (ParameterMatcher)route.PositionalMatchers[1];
+    ParameterMatcher sourceParam = (ParameterMatcher)route.PositionalMatchers[1];
     sourceParam.IsOptional.ShouldBeFalse();
 
-    var destParam = (ParameterMatcher)route.PositionalMatchers[2];
+    ParameterMatcher destParam = (ParameterMatcher)route.PositionalMatchers[2];
     destParam.IsOptional.ShouldBeFalse();
 
     await Task.CompletedTask;
@@ -130,7 +130,7 @@ public class CatchAllOptionalConflictTests
     exception.SemanticErrors.ShouldNotBeNull();
     exception.SemanticErrors[0].ShouldBeOfType<MixedCatchAllWithOptionalError>();
 
-    var error = (MixedCatchAllWithOptionalError)exception.SemanticErrors[0];
+    MixedCatchAllWithOptionalError error = (MixedCatchAllWithOptionalError)exception.SemanticErrors[0];
     error.CatchAllParam.ShouldBe("files");
     error.OptionalParams.ShouldContain("env");
 

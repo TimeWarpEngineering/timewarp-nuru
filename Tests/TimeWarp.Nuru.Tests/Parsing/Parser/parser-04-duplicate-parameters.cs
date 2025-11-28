@@ -19,7 +19,7 @@ public class DuplicateParameterValidationTests
     exception.SemanticErrors.Count.ShouldBe(1);
     exception.SemanticErrors[0].ShouldBeOfType<DuplicateParameterNamesError>();
 
-    var error = (DuplicateParameterNamesError)exception.SemanticErrors[0];
+    DuplicateParameterNamesError error = (DuplicateParameterNamesError)exception.SemanticErrors[0];
     error.ParameterName.ShouldBe("source");
 
     await Task.CompletedTask;
@@ -36,7 +36,7 @@ public class DuplicateParameterValidationTests
     exception.SemanticErrors.ShouldNotBeNull();
     exception.SemanticErrors[0].ShouldBeOfType<DuplicateParameterNamesError>();
 
-    var error = (DuplicateParameterNamesError)exception.SemanticErrors[0];
+    DuplicateParameterNamesError error = (DuplicateParameterNamesError)exception.SemanticErrors[0];
     error.ParameterName.ShouldBe("value");
 
     await Task.CompletedTask;
@@ -53,7 +53,7 @@ public class DuplicateParameterValidationTests
     exception.SemanticErrors.ShouldNotBeNull();
     exception.SemanticErrors[0].ShouldBeOfType<DuplicateParameterNamesError>();
 
-    var error = (DuplicateParameterNamesError)exception.SemanticErrors[0];
+    DuplicateParameterNamesError error = (DuplicateParameterNamesError)exception.SemanticErrors[0];
     error.ParameterName.ShouldBe("cfg");
 
     await Task.CompletedTask;
@@ -70,7 +70,7 @@ public class DuplicateParameterValidationTests
     exception.SemanticErrors.ShouldNotBeNull();
     exception.SemanticErrors[0].ShouldBeOfType<DuplicateParameterNamesError>();
 
-    var error = (DuplicateParameterNamesError)exception.SemanticErrors[0];
+    DuplicateParameterNamesError error = (DuplicateParameterNamesError)exception.SemanticErrors[0];
     error.ParameterName.ShouldBe("env");
 
     await Task.CompletedTask;
@@ -86,8 +86,8 @@ public class DuplicateParameterValidationTests
     route1.ShouldNotBeNull();
     route2.ShouldNotBeNull();
 
-    var route1Param = (ParameterMatcher)route1.PositionalMatchers[1];
-    var route2Param = (ParameterMatcher)route2.PositionalMatchers[1];
+    ParameterMatcher route1Param = (ParameterMatcher)route1.PositionalMatchers[1];
+    ParameterMatcher route2Param = (ParameterMatcher)route2.PositionalMatchers[1];
 
     route1Param.Name.ShouldBe("source");
     route2Param.Name.ShouldBe("source"); // Same name is fine in different routes
@@ -106,7 +106,7 @@ public class DuplicateParameterValidationTests
     exception.SemanticErrors.ShouldNotBeNull();
     exception.SemanticErrors[0].ShouldBeOfType<DuplicateParameterNamesError>();
 
-    var error = (DuplicateParameterNamesError)exception.SemanticErrors[0];
+    DuplicateParameterNamesError error = (DuplicateParameterNamesError)exception.SemanticErrors[0];
     error.ParameterName.ShouldBe("env");
 
     await Task.CompletedTask;

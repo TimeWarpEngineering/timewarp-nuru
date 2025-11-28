@@ -19,12 +19,12 @@ public class BasicParameterParsingTests
 
     // Verify literal segment
     route.PositionalMatchers[0].ShouldBeOfType<LiteralMatcher>();
-    var literal = (LiteralMatcher)route.PositionalMatchers[0];
+    LiteralMatcher literal = (LiteralMatcher)route.PositionalMatchers[0];
     literal.Value.ShouldBe("greet");
 
     // Verify parameter segment
     route.PositionalMatchers[1].ShouldBeOfType<ParameterMatcher>();
-    var param = (ParameterMatcher)route.PositionalMatchers[1];
+    ParameterMatcher param = (ParameterMatcher)route.PositionalMatchers[1];
     param.Name.ShouldBe("name");
     param.IsOptional.ShouldBeFalse();
     param.IsCatchAll.ShouldBeFalse();
@@ -77,7 +77,7 @@ public class BasicParameterParsingTests
     route.ShouldNotBeNull();
     route.PositionalMatchers.Count.ShouldBe(2);
 
-    var param = (ParameterMatcher)route.PositionalMatchers[1];
+    ParameterMatcher param = (ParameterMatcher)route.PositionalMatchers[1];
     param.Name.ShouldBe("name");
     param.Description.ShouldBe("Person to greet");
 

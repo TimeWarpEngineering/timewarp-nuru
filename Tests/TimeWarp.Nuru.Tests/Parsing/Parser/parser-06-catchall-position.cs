@@ -35,7 +35,7 @@ public class CatchAllPositionTests
     route.CatchAllParameterName.ShouldBe("args");
     route.PositionalMatchers.Count.ShouldBe(3); // "execute", {script}, {*args}
 
-    var scriptParam = (ParameterMatcher)route.PositionalMatchers[1];
+    ParameterMatcher scriptParam = (ParameterMatcher)route.PositionalMatchers[1];
     scriptParam.Name.ShouldBe("script");
     scriptParam.IsCatchAll.ShouldBeFalse();
 
@@ -53,7 +53,7 @@ public class CatchAllPositionTests
     exception.SemanticErrors.ShouldNotBeNull();
     exception.SemanticErrors[0].ShouldBeOfType<CatchAllNotAtEndError>();
 
-    var error = (CatchAllNotAtEndError)exception.SemanticErrors[0];
+    CatchAllNotAtEndError error = (CatchAllNotAtEndError)exception.SemanticErrors[0];
     error.CatchAllParameter.ShouldBe("args");
     error.FollowingSegment.ShouldContain("script");
 
@@ -72,7 +72,7 @@ public class CatchAllPositionTests
     exception.SemanticErrors.ShouldNotBeNull();
     exception.SemanticErrors[0].ShouldBeOfType<CatchAllNotAtEndError>();
 
-    var error = (CatchAllNotAtEndError)exception.SemanticErrors[0];
+    CatchAllNotAtEndError error = (CatchAllNotAtEndError)exception.SemanticErrors[0];
     error.CatchAllParameter.ShouldBe("args");
     error.FollowingSegment.ShouldContain("timeout");
 
@@ -107,11 +107,11 @@ public class CatchAllPositionTests
     route.HasCatchAll.ShouldBeTrue();
     route.PositionalMatchers.Count.ShouldBe(4); // "copy", {source}, {dest}, {*options}
 
-    var sourceParam = (ParameterMatcher)route.PositionalMatchers[1];
+    ParameterMatcher sourceParam = (ParameterMatcher)route.PositionalMatchers[1];
     sourceParam.Name.ShouldBe("source");
     sourceParam.IsCatchAll.ShouldBeFalse();
 
-    var destParam = (ParameterMatcher)route.PositionalMatchers[2];
+    ParameterMatcher destParam = (ParameterMatcher)route.PositionalMatchers[2];
     destParam.Name.ShouldBe("dest");
     destParam.IsCatchAll.ShouldBeFalse();
 
@@ -129,7 +129,7 @@ public class CatchAllPositionTests
     exception.SemanticErrors.ShouldNotBeNull();
     exception.SemanticErrors[0].ShouldBeOfType<CatchAllNotAtEndError>();
 
-    var error = (CatchAllNotAtEndError)exception.SemanticErrors[0];
+    CatchAllNotAtEndError error = (CatchAllNotAtEndError)exception.SemanticErrors[0];
     error.CatchAllParameter.ShouldBe("args");
     error.FollowingSegment.ShouldContain("to");
 

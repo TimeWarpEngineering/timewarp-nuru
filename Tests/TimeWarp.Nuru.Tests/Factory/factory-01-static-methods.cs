@@ -1,5 +1,6 @@
 #!/usr/bin/dotnet --
 #:project ../../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
+#:package Mediator.SourceGenerator
 
 using Microsoft.Extensions.DependencyInjection;
 
@@ -135,10 +136,17 @@ public class StaticFactoryMethodTests
     // Arrange - Full featured builder with DI (via meta-package)
     bool matched = false;
     NuruAppBuilder builder = NuruApp.CreateBuilder([]);
+    builder.ConfigureServices(services =>
+    {
+      services.AddMediator();
+      // Additional service registrations can go here if needed
+    });
+    // DI is available
     builder.Map("status", () => { matched = true; return 0; });
 
     // Act
     NuruCoreApp app = builder.Build();
+
     int exitCode = await app.RunAsync(["status"]);
 
     // Assert

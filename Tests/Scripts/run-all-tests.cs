@@ -93,6 +93,7 @@ WriteLine();
 // Discover test files
 Dictionary<string, List<string>> testCategories = new()
 {
+  ["Factory"] = [.. GetTestFiles(Path.Combine(testsRoot, "TimeWarp.Nuru.Tests/Factory"))],
   ["Lexer"] = [.. GetTestFiles(Path.Combine(testsRoot, "TimeWarp.Nuru.Tests/Lexer"))],
   ["Parser"] = [.. GetTestFiles(Path.Combine(testsRoot, "TimeWarp.Nuru.Tests/Parsing/Parser"))],
   ["Routing"] = [.. GetTestFiles(Path.Combine(testsRoot, "TimeWarp.Nuru.Tests/Routing"))],

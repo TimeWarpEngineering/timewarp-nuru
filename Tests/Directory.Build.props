@@ -31,7 +31,7 @@
   <ItemGroup>
     <!-- Common project references for all test projects -->
     <PackageReference Include="TimeWarp.Jaribu" />
-    <ProjectReference Include="$(MSBuildThisFileDirectory)../Source/TimeWarp.Nuru.Core/TimeWarp.Nuru.Core.csproj" />
+    <ProjectReference Include="$(MSBuildThisFileDirectory)../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj" />
     <ProjectReference Include="$(MSBuildThisFileDirectory)../Source/TimeWarp.Nuru.Logging/TimeWarp.Nuru.Logging.csproj" />
   </ItemGroup>
 </Project>

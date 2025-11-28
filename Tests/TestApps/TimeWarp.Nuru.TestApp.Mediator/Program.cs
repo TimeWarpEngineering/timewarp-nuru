@@ -72,7 +72,7 @@ builder.Map<CatchAllCommand>("{*everything}");
 builder.Map<HelpCommand>("--help");
 
 // Build and run
-NuruApp app = builder.Build();
+NuruCoreApp app = builder.Build();
 return await app.RunAsync(args).ConfigureAwait(false);
 
 // ========== Command Definitions with Nested Handlers (44 total) ==========

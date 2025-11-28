@@ -894,18 +894,18 @@ return await RunTests();
 
 async Task<int> RunTests()
 {
-    var passed = 0;
-    var failed = 0;
-    
+    int passed = 0;
+    int failed = 0;
+
     // Test 1
     try
     {
         // Arrange
-        var options = new ReplOptions { Prompt = ">>> " };
-        
+        ReplOptions options = new() { Prompt = ">>> " };
+
         // Act
-        var result = TestMethod(options);
-        
+        TestResult result = TestMethod(options);
+
         // Assert
         if (result == expected)
         {
@@ -923,7 +923,7 @@ async Task<int> RunTests()
         Console.WriteLine($"❌ Test 1: Description - {ex.Message}");
         failed++;
     }
-    
+
     // Summary
     Console.WriteLine($"\nResults: {passed} passed, {failed} failed");
     return failed == 0 ? 0 : 1;

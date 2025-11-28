@@ -72,7 +72,7 @@ public class EdgeCasesTests
   public static async Task Should_tokenize_very_long_identifier()
   {
     // Create 150-character identifier (exceeds most buffer sizes)
-    string longIdentifier = new string('a', 150);
+    string longIdentifier = new('a', 150);
     string pattern = $"cmd {longIdentifier}";
     Lexer lexer = CreateLexer(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();

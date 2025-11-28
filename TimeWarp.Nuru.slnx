@@ -13,6 +13,7 @@
     <Project Path="Source/TimeWarp.Nuru.Mcp/TimeWarp.Nuru.Mcp.csproj" />
     <Project Path="Source/TimeWarp.Nuru.Parsing/TimeWarp.Nuru.Parsing.csproj" />
     <Project Path="Source/TimeWarp.Nuru.Repl/TimeWarp.Nuru.Repl.csproj" />
+    <Project Path="Source/TimeWarp.Nuru.Telemetry/TimeWarp.Nuru.Telemetry.csproj" />
   </Folder>
   <Folder Name="/Tests/">
     <Project Path="Tests/TestApps/TimeWarp.Nuru.TestApp.Delegates/TimeWarp.Nuru.TestApp.Delegates.csproj" />

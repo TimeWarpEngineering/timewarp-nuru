@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>OpenTelemetry integration for TimeWarp.Nuru CLI framework with Aspire Dashboard support</Description>
+    <PackageTags>cli;telemetry;opentelemetry;aspire;tracing;metrics;observability;timewarp;nuru</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="OpenTelemetry" />
+    <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" />
+    <PackageReference Include="OpenTelemetry.Extensions.Hosting" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../TimeWarp.Nuru/TimeWarp.Nuru.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="$(RepositoryRoot)readme.md" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+</Project>

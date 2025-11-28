@@ -5,13 +5,13 @@ This example demonstrates how to integrate .NET Configuration with command-line 
 ## Cocona Implementation
 
 ```csharp
-var builder = CoconaApp.CreateBuilder(args);
+CoconaAppBuilder builder = CoconaApp.CreateBuilder(args);
 
-var app = builder.Build();
+CoconaApp app = builder.Build();
 app.AddCommand("run", ([FromService]IConfiguration configuration) =>
 {
-    var configValue1 = configuration.GetValue<bool>("ConfigValue1");
-    var configValue2 = configuration.GetValue<string>("ConfigValue2");
+    bool configValue1 = configuration.GetValue<bool>("ConfigValue1");
+    string? configValue2 = configuration.GetValue<string>("ConfigValue2");
 
     Console.WriteLine($"ConfigValue1: {configValue1}");
     Console.WriteLine($"ConfigValue2: {configValue2}");
@@ -24,7 +24,7 @@ app.Run();
 
 ```csharp
 // Build configuration manually for delegate approach
-var configuration = new ConfigurationBuilder()
+IConfigurationRoot configuration = new ConfigurationBuilder()
     .SetBasePath(Directory.GetCurrentDirectory())
     .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
     .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? "Production"}.json", optional: true)
@@ -32,11 +32,11 @@ var configuration = new ConfigurationBuilder()
     .Build();
 
 // Access configuration values
-var configValue1 = configuration.GetValue<bool>("ConfigValue1");
-var configValue2 = configuration.GetValue<string>("ConfigValue2");
+bool configValue1 = configuration.GetValue<bool>("ConfigValue1");
+string? configValue2 = configuration.GetValue<string>("ConfigValue2");
 
 // Create app with route that uses configuration
-var app = new NuruAppBuilder()
+NuruApp app = new NuruAppBuilder()
     .Map("run", () =>
     {
         WriteLine($"ConfigValue1: {configValue1}");
@@ -53,8 +53,8 @@ return await app.RunAsync(args);
 
 ```csharp
 // Create app with DI and automatic configuration setup
-var app = new NuruAppBuilder()
-    .AddDependencyInjection(config => 
+NuruApp app = new NuruAppBuilder()
+    .AddDependencyInjection(config =>
     {
         config.RegisterServicesFromAssembly(typeof(RunCommand).Assembly);
     })
@@ -71,20 +71,20 @@ public sealed class RunCommand : IRequest
     internal sealed class Handler : IRequestHandler<RunCommand>
     {
         private readonly IConfiguration _configuration;
-        
+
         public Handler(IConfiguration configuration)
         {
             _configuration = configuration;
         }
-        
+
         public async Task Handle(RunCommand request, CancellationToken cancellationToken)
         {
-            var configValue1 = _configuration.GetValue<bool>("ConfigValue1");
-            var configValue2 = _configuration.GetValue<string>("ConfigValue2");
-            
+            bool configValue1 = _configuration.GetValue<bool>("ConfigValue1");
+            string? configValue2 = _configuration.GetValue<string>("ConfigValue2");
+
             WriteLine($"ConfigValue1: {configValue1}");
             WriteLine($"ConfigValue2: {configValue2}");
-            
+
             await Task.CompletedTask;
         }
     }

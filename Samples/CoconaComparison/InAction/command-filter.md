@@ -100,12 +100,12 @@ public sealed class LoggingBehavior<TMessage, TResponse> : IPipelineBehavior<TMe
 
     public async ValueTask<TResponse> Handle(TMessage message, MessageHandlerDelegate<TMessage, TResponse> next, CancellationToken cancellationToken)
     {
-        var requestName = typeof(TMessage).Name;
+        string requestName = typeof(TMessage).Name;
         _logger.LogInformation($"[LoggingBehavior] Before Command: {requestName}");
 
         try
         {
-            var response = await next(message, cancellationToken);
+            TResponse response = await next(message, cancellationToken);
             _logger.LogInformation($"[LoggingBehavior] After Command: {requestName}");
             return response;
         }

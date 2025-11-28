@@ -81,7 +81,7 @@ class SubSubCommands
 ### Nuru Implementation (Delegate)
 
 ```csharp
-var app = new NuruAppBuilder()
+NuruApp app = new NuruAppBuilder()
     // Top-level commands
     .Map("hello {name|Your name} --to-upper-case,-u|Print a name converted to upper-case {toUpperCase:bool}", 
         (string name, bool toUpperCase) => 
@@ -124,7 +124,7 @@ return await app.RunAsync(args);
 ### Nuru Implementation (Class-based with DI)
 
 ```csharp
-var app = new NuruAppBuilder()
+NuruApp app = new NuruAppBuilder()
     .AddDependencyInjection(config => config.RegisterServicesFromAssembly(typeof(HelloCommand).Assembly))
     
     // Register commands with routes

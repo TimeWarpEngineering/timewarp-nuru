@@ -32,7 +32,7 @@ TimeWarp.Nuru includes four key binding profiles:
 
 ```csharp
 // Simply set the profile name
-var options = new ReplOptions
+ReplOptions options = new ReplOptions
 {
   KeyBindingProfileName = "Emacs"
 };
@@ -44,13 +44,13 @@ Use `CustomKeyBindingProfile` to modify an existing profile:
 
 ```csharp
 // Start from Emacs and customize
-var customProfile = new CustomKeyBindingProfile(new EmacsKeyBindingProfile())
+CustomKeyBindingProfile customProfile = new CustomKeyBindingProfile(new EmacsKeyBindingProfile())
   .WithName("MyProfile")
   .Override(ConsoleKey.U, ConsoleModifiers.Control, reader => reader.HandleEscape)
   .Add(ConsoleKey.G, ConsoleModifiers.Control, _ => () => Console.Write("\a"))
   .Remove(ConsoleKey.D, ConsoleModifiers.Control);
 
-var options = new ReplOptions
+ReplOptions options = new ReplOptions
 {
   KeyBindingProfile = customProfile
 };
@@ -141,7 +141,7 @@ This demo creates an "EmacsCustomized" profile with these changes:
 ### Power User Customization
 
 ```csharp
-var profile = new CustomKeyBindingProfile(new EmacsKeyBindingProfile())
+CustomKeyBindingProfile profile = new CustomKeyBindingProfile(new EmacsKeyBindingProfile())
   .WithName("PowerUser")
   .Override(ConsoleKey.K, ConsoleModifiers.Control, reader => reader.HandleDeleteToEnd)
   .Add(ConsoleKey.Y, ConsoleModifiers.Control, reader => reader.HandleYank);
@@ -150,7 +150,7 @@ var profile = new CustomKeyBindingProfile(new EmacsKeyBindingProfile())
 ### Disable Accidental Exits
 
 ```csharp
-var profile = new CustomKeyBindingProfile(new DefaultKeyBindingProfile())
+CustomKeyBindingProfile profile = new CustomKeyBindingProfile(new DefaultKeyBindingProfile())
   .Remove(ConsoleKey.D, ConsoleModifiers.Control)  // No Ctrl+D exit
   .RemoveExitKey(ConsoleKey.D, ConsoleModifiers.Control);
 ```
@@ -158,7 +158,7 @@ var profile = new CustomKeyBindingProfile(new DefaultKeyBindingProfile())
 ### Start from Scratch
 
 ```csharp
-var profile = new CustomKeyBindingProfile()
+CustomKeyBindingProfile profile = new CustomKeyBindingProfile()
   .WithName("Minimal")
   .Add(ConsoleKey.LeftArrow, reader => reader.HandleBackwardChar)
   .Add(ConsoleKey.RightArrow, reader => reader.HandleForwardChar)

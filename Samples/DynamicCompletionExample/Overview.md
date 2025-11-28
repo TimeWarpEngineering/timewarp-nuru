@@ -430,7 +430,7 @@ public class MyCompletionSource : ICompletionSource
         string[] previousArgs = context.Args.Take(context.CursorPosition).ToArray();
 
         // 2. Query your data source (API, database, configuration)
-        var items = GetItems(); // Your logic here
+        IEnumerable<Item> items = GetItems(); // Your logic here
 
         // 3. Return completion candidates
         return items.Select(item => new CompletionCandidate(
@@ -477,7 +477,7 @@ public class ApiCompletionSource : IAsyncCompletionSource
         CancellationToken cancellationToken)
     {
         // Query external API
-        var results = await httpClient.GetAsync("/api/resources", cancellationToken);
+        IEnumerable<Resource> results = await httpClient.GetAsync("/api/resources", cancellationToken);
         return results.Select(r => new CompletionCandidate(r.Name, r.Description));
     }
 }

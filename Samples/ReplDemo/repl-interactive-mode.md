@@ -44,7 +44,7 @@ Goodbye!
 ## Key Code
 
 ```csharp
-var app = new NuruAppBuilder()
+NuruApp app = new NuruAppBuilder()
   // Define your commands
   .Map("greet {name}", (string name) => WriteLine($"Hello, {name}!"))
   .Map("status", () => WriteLine("OK"))

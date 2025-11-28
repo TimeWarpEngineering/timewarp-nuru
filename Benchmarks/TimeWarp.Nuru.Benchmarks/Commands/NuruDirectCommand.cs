@@ -19,7 +19,7 @@ public static class NuruDirectCommand
       (string str, int intOption) => { }
     );
 
-    NuruApp app = builder.Build();
+    NuruCoreApp app = builder.Build();
     await app.RunAsync(CachedNuruArgs);
   }
 }

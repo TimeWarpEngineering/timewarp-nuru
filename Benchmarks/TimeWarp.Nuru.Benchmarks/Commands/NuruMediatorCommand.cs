@@ -8,7 +8,7 @@ public static class NuruMediatorCommand
 {
   public static async Task Execute(string[] args)
   {
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .AddDependencyInjection()
       .ConfigureServices(services => services.AddMediator())
       .Map<TestCommand>("test --str {str} -i {intOption:int} -b")

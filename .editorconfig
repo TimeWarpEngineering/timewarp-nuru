@@ -99,10 +99,10 @@ dotnet_style_allow_statement_immediately_after_block_experimental = false:warnin
 
 #### C# Coding Conventions ####
 
-# var preferences - Use var only when type is apparent
-csharp_style_var_elsewhere = false:warning
-csharp_style_var_for_built_in_types = false:warning
-csharp_style_var_when_type_is_apparent = true:warning
+# var preferences - Explicit types everywhere (no var)
+csharp_style_var_elsewhere = false:suggestion
+csharp_style_var_for_built_in_types = false:suggestion
+csharp_style_var_when_type_is_apparent = false:suggestion
 
 # Expression-bodied members
 csharp_style_expression_bodied_accessors = when_on_single_line:warning

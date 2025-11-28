@@ -12,7 +12,7 @@ using TimeWarp.Nuru.Repl;
 // - TestAppFactory: Factory for creating test apps with repl-basic-demo.cs routes
 //
 // Usage Example:
-//   var app = TestAppFactory.CreateReplDemoApp(terminal);
+//   NuruApp app = TestAppFactory.CreateReplDemoApp(terminal);
 //   terminal.TypeAndTab("g");
 //   terminal.CleanupAndExit();
 //   await app.RunReplAsync();

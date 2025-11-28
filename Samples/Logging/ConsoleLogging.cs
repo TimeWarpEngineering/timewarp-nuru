@@ -29,21 +29,21 @@ using Microsoft.Extensions.Logging;
 
 // Example 1: Default logging (Information level)
 // Uncomment to try:
-// var app = new NuruAppBuilder()
+// NuruApp app = new NuruAppBuilder()
 //     .UseConsoleLogging()
 //     .Map("test", () => Console.WriteLine("Test command executed"))
 //     .Build();
 
 // Example 2: Debug level logging
 // Uncomment to try:
-// var app = new NuruAppBuilder()
+// NuruApp app = new NuruAppBuilder()
 //     .UseConsoleLogging(LogLevel.Debug)
 //     .Map("test", () => Console.WriteLine("Test command executed"))
 //     .Build();
 
 // Example 3: Trace level logging (most verbose)
 // Uncomment to try:
-// var app = new NuruAppBuilder()
+// NuruApp app = new NuruAppBuilder()
 //     .UseDebugLogging()
 //     .Map("test", () => Console.WriteLine("Test command executed"))
 //     .Build();

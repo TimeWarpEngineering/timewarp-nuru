@@ -9,7 +9,7 @@ public class CallbackProtocolTests
   public static async Task Should_accept_cursor_index_as_first_parameter()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("status", () => 0);
     builder.EnableDynamicCompletion();
 
@@ -26,7 +26,7 @@ public class CallbackProtocolTests
   public static async Task Should_accept_words_as_remaining_parameters()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("git status", () => 0);
     builder.EnableDynamicCompletion();
 
@@ -44,7 +44,7 @@ public class CallbackProtocolTests
   public static async Task Should_handle_cursor_at_app_name_position()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("status", () => 0);
     builder.EnableDynamicCompletion();
 
@@ -61,7 +61,7 @@ public class CallbackProtocolTests
   public static async Task Should_handle_cursor_beyond_typed_words()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("deploy {env}", (string env) => 0);
     builder.EnableDynamicCompletion();
 
@@ -78,7 +78,7 @@ public class CallbackProtocolTests
   public static async Task Should_include_directive_in_output()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("status", () => 0);
     builder.EnableDynamicCompletion();
 
@@ -97,7 +97,7 @@ public class CallbackProtocolTests
   public static async Task Should_output_each_completion_on_separate_line()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("status", () => 0);
     builder.Map("version", () => 0);
     builder.Map("help", () => 0);
@@ -118,7 +118,7 @@ public class CallbackProtocolTests
   public static async Task Should_use_tab_separator_for_description()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("deploy {env}", (string env) => 0);
 
     builder.EnableDynamicCompletion(configure: registry =>
@@ -142,7 +142,7 @@ public class CallbackProtocolTests
   public static async Task Should_output_diagnostics_to_stderr()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("status", () => 0);
     builder.EnableDynamicCompletion();
 
@@ -159,7 +159,7 @@ public class CallbackProtocolTests
   public static async Task Should_handle_empty_completion_results()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     // No routes registered
     builder.EnableDynamicCompletion();
 
@@ -177,7 +177,7 @@ public class CallbackProtocolTests
   public static async Task Should_parse_integer_cursor_index()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("test", () => 0);
     builder.EnableDynamicCompletion();
 
@@ -194,7 +194,7 @@ public class CallbackProtocolTests
   public static async Task Should_handle_special_characters_in_words()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("connect {url}", (string url) => 0);
     builder.EnableDynamicCompletion();
 

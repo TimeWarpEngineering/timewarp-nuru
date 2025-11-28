@@ -13,13 +13,13 @@ public class OptionExtractionTests
   public static async Task Should_extract_long_form_options()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("test --verbose", () => 0);
     builder.Map("build --force", () => 0);
     builder.Map("deploy --dry-run", () => 0);
 
     // Act
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
     string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
 
     // Assert
@@ -33,13 +33,13 @@ public class OptionExtractionTests
   public static async Task Should_extract_short_form_options()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("test -v", () => 0);
     builder.Map("build -f", () => 0);
     builder.Map("deploy -d", () => 0);
 
     // Act
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
     string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
 
     // Assert
@@ -53,12 +53,12 @@ public class OptionExtractionTests
   public static async Task Should_extract_options_with_aliases()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("test --verbose,-v", () => 0);
     builder.Map("build --output,-o", () => 0);
 
     // Act
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
     string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
 
     // Assert
@@ -73,11 +73,11 @@ public class OptionExtractionTests
   public static async Task Should_extract_multiple_options_from_one_route()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("test --verbose --force --dry-run", () => 0);
 
     // Act
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
     string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
 
     // Assert
@@ -91,12 +91,12 @@ public class OptionExtractionTests
   public static async Task Should_extract_options_with_values()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("build --config {mode}", (string mode) => 0);
     builder.Map("deploy --output {file}", (string file) => 0);
 
     // Act
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
     string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
 
     // Assert
@@ -111,13 +111,13 @@ public class OptionExtractionTests
   public static async Task Should_deduplicate_options()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("test --verbose", () => 0);
     builder.Map("build --verbose", () => 0);
     builder.Map("deploy --verbose", () => 0);
 
     // Act
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
     string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
 
     // Assert
@@ -132,11 +132,11 @@ public class OptionExtractionTests
   public static async Task Should_handle_mixed_option_styles()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("test --verbose,-v --force -d --output,-o {file}", (string file) => 0);
 
     // Act
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
     string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
 
     // Assert
@@ -153,11 +153,11 @@ public class OptionExtractionTests
   public static async Task Should_handle_empty_route_collection()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     // No routes added
 
     // Act
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
     string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
 
     // Assert
@@ -170,12 +170,12 @@ public class OptionExtractionTests
   public static async Task Should_handle_routes_without_options()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("status", () => 0);
     builder.Map("version", () => 0);
 
     // Act
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
     string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
 
     // Assert
@@ -188,11 +188,11 @@ public class OptionExtractionTests
   public static async Task Should_extract_options_from_complex_route()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("deploy {env} --version {ver} --force --dry-run,-d", (string env, string ver) => 0);
 
     // Act
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
     string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
 
     // Assert
@@ -207,13 +207,13 @@ public class OptionExtractionTests
   public static async Task Should_handle_options_with_hyphens_in_names()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("test --dry-run", () => 0);
     builder.Map("build --skip-tests", () => 0);
     builder.Map("deploy --no-cache", () => 0);
 
     // Act
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
     string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
 
     // Assert
@@ -227,12 +227,12 @@ public class OptionExtractionTests
   public static async Task Should_be_case_sensitive()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("test --Verbose", () => 0);
     builder.Map("build --verbose", () => 0);
 
     // Act
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
     string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
 
     // Assert

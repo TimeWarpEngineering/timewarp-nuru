@@ -9,7 +9,7 @@ public class EndpointMatchingTests
   public static async Task Should_match_route_with_multiple_literals()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("git remote add {name} {url}", (string name, string url) => 0);
 
     string[] typedWords = ["git", "remote", "add"];
@@ -29,7 +29,7 @@ public class EndpointMatchingTests
   public static async Task Should_match_third_parameter_in_sequence()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("deploy {env} {version} {tag}", (string env, string version, string tag) => 0);
 
     string[] typedWords = ["deploy", "production", "v1.0"];
@@ -49,7 +49,7 @@ public class EndpointMatchingTests
   public static async Task Should_return_false_when_all_parameters_filled()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("greet {name}", (string name) => 0);
 
     string[] typedWords = ["greet", "alice"];
@@ -69,7 +69,7 @@ public class EndpointMatchingTests
   public static async Task Should_match_catchall_parameter()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("docker {*args}", (string[] args) => 0);
 
     string[] typedWords = ["docker"];
@@ -98,7 +98,7 @@ public class EndpointMatchingTests
   public static async Task Should_match_typed_double_parameter()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("scale {factor:double}", (double factor) => 0);
 
     string[] typedWords = ["scale"];
@@ -118,7 +118,7 @@ public class EndpointMatchingTests
   public static async Task Should_match_typed_bool_parameter()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("enable {flag:bool}", (bool flag) => 0);
 
     string[] typedWords = ["enable"];
@@ -138,7 +138,7 @@ public class EndpointMatchingTests
   public static async Task Should_match_mixed_literal_and_option_route()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("git commit --message,-m {message} --amend", (string message, bool amend) => 0);
 
     string[] typedWords = ["git", "commit", "-m"];
@@ -158,7 +158,7 @@ public class EndpointMatchingTests
   public static async Task Should_return_false_for_partial_literal_match()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("git remote add {name}", (string name) => 0);
 
     string[] typedWords = ["git", "remote"]; // Missing "add"
@@ -176,7 +176,7 @@ public class EndpointMatchingTests
   public static async Task Should_match_optional_parameter_when_previous_filled()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     // Note: Multiple consecutive optional parameters are NOT allowed (creates ambiguity)
     // Use a single optional parameter instead
     builder.Map("deploy {env} {tag?}", (string env, string? tag) => 0);
@@ -198,7 +198,7 @@ public class EndpointMatchingTests
   public static async Task Should_handle_empty_typed_words()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("greet {name}", (string name) => 0);
 
     string[] typedWords = [];
@@ -216,7 +216,7 @@ public class EndpointMatchingTests
   public static async Task Should_match_option_with_long_form()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("build --configuration,-c {mode}", (string mode) => 0);
 
     string[] typedWords = ["build", "--configuration"];
@@ -236,7 +236,7 @@ public class EndpointMatchingTests
   public static async Task Should_return_false_when_option_value_already_provided()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("build --config {mode}", (string mode) => 0);
 
     string[] typedWords = ["build", "--config", "Release"];

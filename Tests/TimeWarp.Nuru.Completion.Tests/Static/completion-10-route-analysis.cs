@@ -13,11 +13,11 @@ public class RouteAnalysisTests
   public static async Task Should_analyze_simple_literal_route()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("status", () => 0);
 
     // Act
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
     string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
 
     // Assert - Should extract the literal command
@@ -29,11 +29,11 @@ public class RouteAnalysisTests
   public static async Task Should_analyze_route_with_parameter()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("greet {name}", (string name) => 0);
 
     // Act
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
     string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
 
     // Assert - Should extract command but not parameter
@@ -47,11 +47,11 @@ public class RouteAnalysisTests
   public static async Task Should_analyze_route_with_typed_parameter()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("delay {ms:int}", (int ms) => 0);
 
     // Act
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
     string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
 
     // Assert
@@ -63,11 +63,11 @@ public class RouteAnalysisTests
   public static async Task Should_analyze_route_with_optional_parameter()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("deploy {env} {tag?}", (string env, string? tag) => 0);
 
     // Act
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
     string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
 
     // Assert
@@ -79,11 +79,11 @@ public class RouteAnalysisTests
   public static async Task Should_analyze_route_with_options()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("build --config {mode}", (string mode) => 0);
 
     // Act
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
     string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
 
     // Assert
@@ -96,11 +96,11 @@ public class RouteAnalysisTests
   public static async Task Should_analyze_route_with_catch_all()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("docker {*args}", (string[] args) => 0);
 
     // Act
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
     string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
 
     // Assert
@@ -112,11 +112,11 @@ public class RouteAnalysisTests
   public static async Task Should_analyze_route_with_multiple_options()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("test --verbose --dry-run", () => 0);
 
     // Act
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
     string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
 
     // Assert
@@ -130,11 +130,11 @@ public class RouteAnalysisTests
   public static async Task Should_analyze_complex_route()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("deploy {env} --version {ver} --force", (string env, string ver) => 0);
 
     // Act
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
     string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
 
     // Assert - All components should be identified
@@ -148,13 +148,13 @@ public class RouteAnalysisTests
   public static async Task Should_separate_commands_from_options()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("create", () => 0);
     builder.Map("delete", () => 0);
     builder.Map("list --all", () => 0);
 
     // Act
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
     string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
 
     // Assert - Commands should be in commands section
@@ -170,13 +170,13 @@ public class RouteAnalysisTests
   public static async Task Should_handle_multi_word_literal_commands()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("git commit", () => 0);
     builder.Map("git status", () => 0);
     builder.Map("git push", () => 0);
 
     // Act
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
     string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
 
     // Assert - First literal "git" should be extracted from all routes
@@ -190,12 +190,12 @@ public class RouteAnalysisTests
   public static async Task Should_extract_all_route_components()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("server start --port {port:int} --host {host} --verbose",
       (int port, string host) => 0);
 
     // Act
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
     string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
 
     // Assert - All literals and options extracted
@@ -211,11 +211,11 @@ public class RouteAnalysisTests
   public static async Task Should_handle_routes_with_short_and_long_options()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("test --verbose,-v --quiet,-q", () => 0);
 
     // Act
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
     string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
 
     // Assert - Both forms should be present
@@ -230,10 +230,10 @@ public class RouteAnalysisTests
   public static async Task Should_work_with_all_shell_types()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("deploy {env} --force", (string env) => 0);
 
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
 
     // Act
     string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");

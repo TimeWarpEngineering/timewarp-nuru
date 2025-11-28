@@ -9,7 +9,7 @@ public class ContextAwareTests
   public static async Task Should_pass_args_array_in_context()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("deploy {env}", (string env) => 0);
 
     builder.EnableDynamicCompletion(configure: registry =>
@@ -31,7 +31,7 @@ public class ContextAwareTests
   public static async Task Should_pass_cursor_position_in_context()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("deploy {env}", (string env) => 0);
 
     builder.EnableDynamicCompletion(configure: registry =>
@@ -53,7 +53,7 @@ public class ContextAwareTests
   public static async Task Should_pass_endpoints_collection_in_context()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("status", () => 0);
     builder.Map("version", () => 0);
     builder.Map("deploy {env}", (string env) => 0);
@@ -77,7 +77,7 @@ public class ContextAwareTests
   public static async Task Should_allow_source_to_inspect_previous_arguments()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("connect {host} {port}", (string host, string port) => 0);
 
     builder.EnableDynamicCompletion(configure: registry =>
@@ -99,7 +99,7 @@ public class ContextAwareTests
   public static async Task Should_provide_different_completions_based_on_context()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("deploy {env} {service}", (string env, string service) => 0);
 
     builder.EnableDynamicCompletion(configure: registry =>
@@ -121,7 +121,7 @@ public class ContextAwareTests
   public static async Task Should_support_conditional_completion_logic()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("backup {target} {dest}", (string target, string dest) => 0);
 
     builder.EnableDynamicCompletion(configure: registry =>
@@ -144,7 +144,7 @@ public class ContextAwareTests
   public static async Task Should_allow_source_to_filter_by_partial_input()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("select {item}", (string item) => 0);
 
     builder.EnableDynamicCompletion(configure: registry =>
@@ -168,7 +168,7 @@ public class ContextAwareTests
   public static async Task Should_provide_immutable_context()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("test {param}", (string param) => 0);
 
     builder.EnableDynamicCompletion(configure: registry =>
@@ -190,7 +190,7 @@ public class ContextAwareTests
   public static async Task Should_handle_context_with_options_in_args()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("build --config {mode} {target}", (string mode, string target) => 0);
 
     builder.EnableDynamicCompletion(configure: registry =>

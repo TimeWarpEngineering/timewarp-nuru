@@ -13,9 +13,9 @@ public class CompletionEdgeCasesTests
   public static async Task Should_handle_empty_string_app_name()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("status", () => 0);
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
 
     // Act - Empty app name should still generate valid script
     string bashScript = generator.GenerateBash(builder.EndpointCollection, "");
@@ -30,9 +30,9 @@ public class CompletionEdgeCasesTests
   public static async Task Should_handle_whitespace_only_app_name()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("status", () => 0);
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
 
     // Act - Whitespace app name should still generate script
     string bashScript = generator.GenerateBash(builder.EndpointCollection, "   ");
@@ -47,9 +47,9 @@ public class CompletionEdgeCasesTests
   public static async Task Should_handle_special_shell_characters_in_app_name()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("status", () => 0);
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
 
     // Act - App name with shell special characters
     string bashScript = generator.GenerateBash(builder.EndpointCollection, "my$app");
@@ -63,12 +63,12 @@ public class CompletionEdgeCasesTests
   public static async Task Should_handle_routes_with_only_parameters()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("{file}", (string file) => 0);
     builder.Map("{source} {dest}", (string source, string dest) => 0);
 
     // Act
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
     string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
 
     // Assert - Should not crash, but won't have literal commands
@@ -81,12 +81,12 @@ public class CompletionEdgeCasesTests
   public static async Task Should_handle_routes_with_only_options()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("--version", () => 0);
     builder.Map("--help", () => 0);
 
     // Act
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
     string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
 
     // Assert
@@ -100,13 +100,13 @@ public class CompletionEdgeCasesTests
   public static async Task Should_deduplicate_commands()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("deploy {env}", (string env) => 0);
     builder.Map("deploy {env} --force", (string env) => 0);
     builder.Map("deploy {env} --dry-run", (string env) => 0);
 
     // Act
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
     string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
 
     // Assert - 'deploy' should appear only once in the commands list
@@ -120,13 +120,13 @@ public class CompletionEdgeCasesTests
   public static async Task Should_deduplicate_options()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("test --verbose", () => 0);
     builder.Map("build --verbose", () => 0);
     builder.Map("deploy --verbose", () => 0);
 
     // Act
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
     string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
 
     // Assert - '--verbose' should be deduplicated
@@ -138,14 +138,14 @@ public class CompletionEdgeCasesTests
   public static async Task Should_handle_very_long_route_patterns()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map(
       "deploy {environment} {version} --config {configFile} --region {region} --instance-count {count:int} --timeout {seconds:int} --verbose --force --dry-run",
       (string environment, string version, string configFile, string region, int count, int seconds) => 0
     );
 
     // Act
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
     string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
 
     // Assert
@@ -160,12 +160,12 @@ public class CompletionEdgeCasesTests
   public static async Task Should_handle_special_characters_in_commands()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("kebab-case-command", () => 0);
     builder.Map("snake_case_command", () => 0);
 
     // Act
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
     string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
 
     // Assert
@@ -178,12 +178,12 @@ public class CompletionEdgeCasesTests
   public static async Task Should_handle_numeric_parameters()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("delay {ms:int}", (int ms) => 0);
     builder.Map("scale {factor:double}", (double factor) => 0);
 
     // Act
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
     string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
 
     // Assert
@@ -196,11 +196,11 @@ public class CompletionEdgeCasesTests
   public static async Task Should_handle_optional_parameters()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("deploy {env} {tag?}", (string env, string? tag) => 0);
 
     // Act
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
     string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
 
     // Assert
@@ -212,12 +212,12 @@ public class CompletionEdgeCasesTests
   public static async Task Should_handle_catch_all_parameters()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("git {*args}", (string[] args) => 0);
     builder.Map("docker {*args}", (string[] args) => 0);
 
     // Act
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
     string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
 
     // Assert
@@ -230,13 +230,13 @@ public class CompletionEdgeCasesTests
   public static async Task Should_handle_mixed_case_sensitivity()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("Status", () => 0);
     builder.Map("status", () => 0);
     builder.Map("STATUS", () => 0);
 
     // Act
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
     string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
 
     // Assert - All three should be present (case-sensitive)
@@ -250,13 +250,13 @@ public class CompletionEdgeCasesTests
   public static async Task Should_handle_routes_with_numbers_in_names()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("http2-config", () => 0);
     builder.Map("base64-encode", () => 0);
     builder.Map("sha256-hash", () => 0);
 
     // Act
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
     string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
 
     // Assert
@@ -270,11 +270,11 @@ public class CompletionEdgeCasesTests
   public static async Task Should_work_across_all_shell_types()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("status", () => 0);
     builder.Map("version", () => 0);
 
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
 
     // Act
     string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");

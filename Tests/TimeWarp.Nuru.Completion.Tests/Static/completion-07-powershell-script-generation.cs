@@ -13,12 +13,12 @@ public class PowerShellScriptGenerationTests
   public static async Task Should_generate_valid_powershell_syntax()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("status", () => 0);
     builder.Map("deploy {env}", (string env) => 0);
 
     // Act
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
     string pwshScript = generator.GeneratePowerShell(builder.EndpointCollection, "testapp");
 
     // Assert
@@ -32,11 +32,11 @@ public class PowerShellScriptGenerationTests
   public static async Task Should_include_app_name_in_script()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("status", () => 0);
 
     // Act
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
     string pwshScript = generator.GeneratePowerShell(builder.EndpointCollection, "myapp");
 
     // Assert
@@ -48,14 +48,14 @@ public class PowerShellScriptGenerationTests
   public static async Task Should_include_all_commands()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("create", () => 0);
     builder.Map("createorder", () => 0);
     builder.Map("delete", () => 0);
     builder.Map("list", () => 0);
 
     // Act
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
     string pwshScript = generator.GeneratePowerShell(builder.EndpointCollection, "testapp");
 
     // Assert
@@ -70,11 +70,11 @@ public class PowerShellScriptGenerationTests
   public static async Task Should_use_completion_result()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("status", () => 0);
 
     // Act
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
     string pwshScript = generator.GeneratePowerShell(builder.EndpointCollection, "testapp");
 
     // Assert - PowerShell uses full type name [System.Management.Automation.CompletionResult]
@@ -86,11 +86,11 @@ public class PowerShellScriptGenerationTests
   public static async Task Should_use_register_argumentcompleter()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("status", () => 0);
 
     // Act
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
     string pwshScript = generator.GeneratePowerShell(builder.EndpointCollection, "testapp");
 
     // Assert
@@ -102,10 +102,10 @@ public class PowerShellScriptGenerationTests
   public static async Task Should_handle_empty_route_collection()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
 
     // Act
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
     string pwshScript = generator.GeneratePowerShell(builder.EndpointCollection, "testapp");
 
     // Assert
@@ -119,11 +119,11 @@ public class PowerShellScriptGenerationTests
   public static async Task Should_handle_special_characters_in_app_name()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("status", () => 0);
 
     // Act
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
     string pwshScript = generator.GeneratePowerShell(builder.EndpointCollection, "my-app");
 
     // Assert
@@ -136,11 +136,11 @@ public class PowerShellScriptGenerationTests
   public static async Task Should_generate_consistent_output()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("status", () => 0);
     builder.Map("version", () => 0);
 
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
 
     // Act
     string pwshScript1 = generator.GeneratePowerShell(builder.EndpointCollection, "testapp");
@@ -155,12 +155,12 @@ public class PowerShellScriptGenerationTests
   public static async Task Should_include_Issue_30_createorder_command()
   {
     // Arrange - Replicate Issue #30 scenario
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("createorder {product} {quantity:int}", (string product, int quantity) => 0);
     builder.Map("create {item}", (string item) => 0);
 
     // Act
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
     string pwshScript = generator.GeneratePowerShell(builder.EndpointCollection, "testapp");
 
     // Assert - Verify Issue #30 requirement
@@ -175,11 +175,11 @@ public class PowerShellScriptGenerationTests
   public static async Task Should_use_completion_result_type()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("status", () => 0);
 
     // Act
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
     string pwshScript = generator.GeneratePowerShell(builder.EndpointCollection, "testapp");
 
     // Assert - PowerShell uses full type name [System.Management.Automation.CompletionResultType]

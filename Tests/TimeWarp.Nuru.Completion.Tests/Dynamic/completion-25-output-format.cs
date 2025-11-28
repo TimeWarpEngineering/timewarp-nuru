@@ -9,7 +9,7 @@ public class OutputFormatTests
   public static async Task Should_output_value_only_when_no_description()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("status", () => 0);
     builder.EnableDynamicCompletion();
 
@@ -28,7 +28,7 @@ public class OutputFormatTests
   public static async Task Should_output_value_tab_description_format()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("deploy {env}", (string env) => 0);
 
     builder.EnableDynamicCompletion(configure: registry =>
@@ -52,7 +52,7 @@ public class OutputFormatTests
   public static async Task Should_end_with_directive_line()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("status", () => 0);
     builder.EnableDynamicCompletion();
 
@@ -70,7 +70,7 @@ public class OutputFormatTests
   public static async Task Should_output_directive_code_4_for_no_file_comp()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("status", () => 0);
     builder.EnableDynamicCompletion();
 
@@ -87,7 +87,7 @@ public class OutputFormatTests
   public static async Task Should_preserve_completion_order()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("apple", () => 0);
     builder.Map("banana", () => 0);
     builder.Map("cherry", () => 0);
@@ -101,7 +101,7 @@ public class OutputFormatTests
 
     // Assert - Should be alphabetically sorted
     string[] lines = output.Split('\n', StringSplitOptions.RemoveEmptyEntries);
-    var completions = lines.Where(l => l.Length > 0 && l[0] != ':').ToList();
+    List<string> completions = lines.Where(l => l.Length > 0 && l[0] != ':').ToList();
 
     int appleIndex = completions.FindIndex(c => c == "apple");
     int bananaIndex = completions.FindIndex(c => c == "banana");
@@ -114,7 +114,7 @@ public class OutputFormatTests
   public static async Task Should_handle_empty_description()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("deploy {env}", (string env) => 0);
 
     builder.EnableDynamicCompletion(configure: registry =>
@@ -140,7 +140,7 @@ public class OutputFormatTests
   public static async Task Should_handle_multiword_descriptions()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("deploy {env}", (string env) => 0);
 
     builder.EnableDynamicCompletion(configure: registry =>
@@ -164,7 +164,7 @@ public class OutputFormatTests
   public static async Task Should_output_newline_after_each_completion()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("status", () => 0);
     builder.Map("version", () => 0);
     builder.EnableDynamicCompletion();
@@ -183,7 +183,7 @@ public class OutputFormatTests
   public static async Task Should_output_stderr_diagnostic_for_debugging()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("status", () => 0);
     builder.EnableDynamicCompletion();
 
@@ -200,7 +200,7 @@ public class OutputFormatTests
   public static async Task Should_handle_special_characters_in_values()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("connect {url}", (string url) => 0);
 
     builder.EnableDynamicCompletion(configure: registry =>
@@ -226,7 +226,7 @@ public class OutputFormatTests
   public static async Task Should_handle_options_with_dashes()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("build --verbose --quiet", (bool verbose, bool quiet) => 0);
     builder.EnableDynamicCompletion();
 

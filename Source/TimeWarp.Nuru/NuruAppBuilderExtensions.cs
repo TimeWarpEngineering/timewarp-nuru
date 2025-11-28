@@ -7,7 +7,7 @@ public static class NuruAppBuilderExtensions
 {
   /// <summary>
   /// Adds all Nuru extensions to the builder: Telemetry, Logging, REPL, and Completion.
-  /// This is called automatically by <see cref="NuruFullApp.CreateBuilder"/>.
+  /// This is called automatically by <see cref="NuruApp.CreateBuilder"/>.
   /// </summary>
   /// <param name="builder">The builder to extend.</param>
   /// <returns>The builder for chaining.</returns>

@@ -6,6 +6,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- Mediator abstractions - source generator must be added by end-user app -->
+    <PackageReference Include="Mediator.Abstractions" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- Reference all extension packages for batteries-included experience -->
     <ProjectReference Include="../TimeWarp.Nuru.Core/TimeWarp.Nuru.Core.csproj" />
     <ProjectReference Include="../TimeWarp.Nuru.Logging/TimeWarp.Nuru.Logging.csproj" />

@@ -24,3 +24,25 @@ When mixing delegate and Mediator approaches (see `Samples/Calculator/calc-mixed
 - https://www.jimmybogard.com/sharing-context-in-mediatr-pipelines/
 - https://github.com/martinothamar/Mediator
 - https://github.com/TimeWarpEngineering/martinothamar-mediator
+
+## Results
+
+### Phase 1: Mediator Migration (078_001) ✅
+- Migrated from TimeWarp.Mediator to martinothamar/Mediator (source-generator based)
+- Full Native AOT support achieved (no `TrimMode=partial` workaround needed)
+- All 44 tests pass across all 4 configurations (Delegate JIT/AOT, Mediator JIT/AOT)
+- Breaking change: Applications must call `services.AddMediator()` explicitly
+
+### Phase 2: Unified DelegateHandler (078_002) ✅
+- Created `DelegateRequest`/`DelegateResponse` types that route through Mediator pipeline
+- Created `RouteExecutionContext` scoped service for sharing route metadata in behaviors
+- Delegate routes now receive pipeline behaviors when DI is enabled
+- Sample created: `Samples/UnifiedMiddleware/unified-middleware.cs`
+
+### Key Files Added
+- `Source/TimeWarp.Nuru/Execution/RouteExecutionContext.cs`
+- `Source/TimeWarp.Nuru/Execution/DelegateRequest.cs`
+- `Samples/UnifiedMiddleware/unified-middleware.cs`
+
+### Outcome
+Cross-cutting concerns (logging, metrics, validation) now apply uniformly to all routes regardless of registration style (delegate or Mediator).

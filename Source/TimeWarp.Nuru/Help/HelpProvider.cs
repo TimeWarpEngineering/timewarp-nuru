@@ -19,7 +19,7 @@ public static class HelpProvider
       return "No routes are registered.";
     }
 
-    var sb = new StringBuilder();
+    StringBuilder sb = new();
 
     // Description section
     if (!string.IsNullOrEmpty(appDescription))
@@ -35,8 +35,8 @@ public static class HelpProvider
     sb.AppendLine();
 
     // Separate commands and options
-    var commands = routes.Where(r => !r.RoutePattern.StartsWith("--", StringComparison.Ordinal)).ToList();
-    var options = routes.Where(r => r.RoutePattern.StartsWith("--", StringComparison.Ordinal)).ToList();
+    List<Endpoint> commands = [.. routes.Where(r => !r.RoutePattern.StartsWith("--", StringComparison.Ordinal))];
+    List<Endpoint> options = [.. routes.Where(r => r.RoutePattern.StartsWith("--", StringComparison.Ordinal))];
 
     // Commands section
     if (commands.Count > 0)
@@ -68,7 +68,7 @@ public static class HelpProvider
   /// </summary>
   private static List<Endpoint> FilterHelpRoutes(IReadOnlyList<Endpoint> endpoints)
   {
-    var filtered = new List<Endpoint>();
+    List<Endpoint> filtered = [];
 
     foreach (Endpoint endpoint in endpoints)
     {
@@ -164,7 +164,7 @@ public static class HelpProvider
 
   private static Dictionary<string, List<Endpoint>> GroupRoutesByPrefix(IReadOnlyList<Endpoint> routes)
   {
-    var groups = new Dictionary<string, List<Endpoint>>();
+    Dictionary<string, List<Endpoint>> groups = [];
 
     foreach (Endpoint? route in routes.OrderBy(r => r.RoutePattern))
     {

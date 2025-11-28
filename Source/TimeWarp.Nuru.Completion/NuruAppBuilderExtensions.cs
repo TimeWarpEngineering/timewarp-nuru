@@ -36,7 +36,7 @@ public static class NuruAppBuilderExtensions
       // Detect app name at runtime (when the command is actually executed)
       string detectedAppName = AppNameDetector.GetEffectiveAppName();
 
-      var generator = new CompletionScriptGenerator();
+      CompletionScriptGenerator generator = new();
 
       string script = shell.ToLowerInvariant() switch
       {
@@ -78,7 +78,7 @@ public static class NuruAppBuilderExtensions
     ArgumentNullException.ThrowIfNull(builder);
 
     // Create and configure the registry
-    var registry = new CompletionSourceRegistry();
+    CompletionSourceRegistry registry = new();
     configure?.Invoke(registry);
 
     // Register the __complete callback route

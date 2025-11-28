@@ -81,7 +81,7 @@ internal sealed class Compiler : SyntaxVisitor<object?>
     }
 
     // Create parameter matcher
-    var parameterMatcher = new ParameterMatcher(
+    ParameterMatcher parameterMatcher = new(
         parameter.Name,
         parameter.IsCatchAll,
         parameter.Type,
@@ -161,9 +161,8 @@ internal sealed class Compiler : SyntaxVisitor<object?>
     }
 
     // Create option matcher and add to segments in position
-    var optionMatcher =
-      new OptionMatcher
-      (
+    OptionMatcher optionMatcher =
+      new      (
         matchPattern: optionSyntax,
         expectsValue: expectsValue,
         parameterName: valueParameterName,

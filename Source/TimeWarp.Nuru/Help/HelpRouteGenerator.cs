@@ -73,7 +73,7 @@ internal static class HelpRouteGenerator
 
   private static string GetCommandGroupHelpText(string commandPrefix, List<Endpoint> endpoints)
   {
-    var sb = new StringBuilder();
+    StringBuilder sb = new();
 
     sb.AppendLine(CultureInfo.InvariantCulture, $"Usage patterns for '{commandPrefix}':");
     sb.AppendLine();

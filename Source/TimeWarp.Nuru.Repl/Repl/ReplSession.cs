@@ -175,9 +175,8 @@ internal sealed class ReplSession : IDisposable
   {
     if (ReplOptions.EnableArrowHistory)
     {
-      var consoleReader =
-        new ReplConsoleReader
-          (
+      ReplConsoleReader consoleReader =
+        new          (
             History.AsReadOnly,
             CompletionProvider,
             NuruApp.Endpoints,
@@ -194,7 +193,7 @@ internal sealed class ReplSession : IDisposable
 
   private async Task<int> ExecuteCommandAsync(string[] args)
   {
-    var stopwatch = Stopwatch.StartNew();
+    Stopwatch stopwatch = Stopwatch.StartNew();
     try
     {
       int exitCode = await NuruApp.RunAsync(args).ConfigureAwait(false);

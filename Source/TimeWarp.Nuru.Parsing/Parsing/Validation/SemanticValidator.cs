@@ -18,7 +18,7 @@ internal sealed class SemanticValidator
     ArgumentNullException.ThrowIfNull(ast);
 
     List<SemanticError> semanticErrors = [];
-    var context = new ValidationContext();
+    ValidationContext context = new();
 
     // First pass: collect all segments and their metadata
     CollectSegmentMetadata(ast, context);
@@ -278,7 +278,7 @@ internal sealed class SemanticValidator
   // NURU_S005: Check for duplicate option aliases
   private static void ValidateDuplicateOptionAliases(ValidationContext context, List<SemanticError> semanticErrors)
   {
-    var seen = new Dictionary<string, OptionSyntax>();
+    Dictionary<string, OptionSyntax> seen = [];
 
     foreach (OptionSyntax option in context.Options)
     {
@@ -305,16 +305,11 @@ internal sealed class SemanticValidator
   {
     if (context.HasOptionalParameters && context.HasCatchAllParameter)
     {
-      ParameterSyntax? catchAllParam = context.Parameters.FirstOrDefault(p => p.IsCatchAll);
+      ParameterSyntax? catchAllParam = context.Parameters.FirstOrDefault(p => p.IsCatchAll) ??
+      throw new InvalidOperationException
+      ("Internal error: HasCatchAllParameter is true but no catch-all parameter found in context");
 
-      // This should never happen if HasCatchAllParameter is true, but let's be defensive
-      if (catchAllParam is null)
-      {
-        throw new InvalidOperationException(
-          "Internal error: HasCatchAllParameter is true but no catch-all parameter found in context");
-      }
-
-      var optionalParams = context.Parameters.Where(p => p.IsOptional && !p.IsCatchAll).Select(p => p.Name).ToList();
+      List<string> optionalParams = [.. context.Parameters.Where(p => p.IsOptional && !p.IsCatchAll).Select(p => p.Name)];
 
       semanticErrors.Add(new MixedCatchAllWithOptionalError(
         catchAllParam.Position,

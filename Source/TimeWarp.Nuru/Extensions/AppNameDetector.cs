@@ -25,7 +25,7 @@ internal static class AppNameDetector
     }
 
     // Fallback: try Process.GetCurrentProcess()
-    using var currentProcess = Process.GetCurrentProcess();
+    using Process currentProcess = Process.GetCurrentProcess();
     if (!string.IsNullOrEmpty(currentProcess.ProcessName))
       return currentProcess.ProcessName;
 

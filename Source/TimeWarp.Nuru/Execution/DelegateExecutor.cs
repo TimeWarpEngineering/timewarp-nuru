@@ -126,7 +126,7 @@ public static class DelegateExecutor
           else
           {
             // Other array types - convert each element
-            var typedArray = Array.CreateInstance(elementType, parts.Length);
+            Array typedArray = Array.CreateInstance(elementType, parts.Length);
             for (int j = 0; j < parts.Length; j++)
             {
               if (typeConverterRegistry.TryConvert(parts[j], elementType, out object? convertedElement))

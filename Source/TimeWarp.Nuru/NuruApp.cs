@@ -354,7 +354,7 @@ public partial class NuruApp
     object?[] boundArgs = BindDelegateParameters(del, extractedValues, endpoint);
 
     // Create the delegate request
-    var request = new DelegateRequest
+    DelegateRequest request = new()
     {
       RoutePattern = endpoint.RoutePattern,
       BoundArguments = boundArgs,
@@ -485,7 +485,7 @@ public partial class NuruApp
         return parts;
       }
 
-      var typedArray = Array.CreateInstance(elementType, parts.Length);
+      Array typedArray = Array.CreateInstance(elementType, parts.Length);
       for (int j = 0; j < parts.Length; j++)
       {
         if (TypeConverterRegistry.TryConvert(parts[j], elementType, out object? convertedElement))

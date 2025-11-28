@@ -71,7 +71,7 @@ public partial class NuruAppBuilder
       ServiceCollection.AddSingleton(typeof(ILogger<>), typeof(Logger<>));
 
       // Register NuruAppHolder for deferred app access (needed for interactive mode route)
-      var appHolder = new NuruAppHolder();
+      NuruAppHolder appHolder = new();
       ServiceCollection.AddSingleton(appHolder);
 
       // Register REPL options if configured
@@ -94,7 +94,7 @@ public partial class NuruAppBuilder
 
       ServiceProvider serviceProvider = ServiceCollection.BuildServiceProvider();
 
-      var app = new NuruApp(serviceProvider);
+      NuruApp app = new(serviceProvider);
       appHolder.SetApp(app);
       return app;
     }

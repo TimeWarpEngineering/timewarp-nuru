@@ -56,8 +56,8 @@ internal static class EndpointResolver
   private static (Endpoint endpoint, Dictionary<string, string> extractedValues)?
     MatchRoute(string[] args, EndpointCollection endpoints, ILogger logger)
   {
-    var matches = new List<RouteMatch>();
-    var extractedValues = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+    List<RouteMatch> matches = [];
+    Dictionary<string, string> extractedValues = new(StringComparer.OrdinalIgnoreCase);
 
     int endpointIndex = 0;
     foreach (Endpoint endpoint in endpoints)
@@ -147,8 +147,8 @@ internal static class EndpointResolver
     LoggerMessages.MatchingPositionalSegments(logger, template.Count, args.Length, null);
 
     // Pre-pass: Handle repeated options first and mark consumed indices
-    var consumedIndices = new HashSet<int>();
-    var repeatedOptions = template.OfType<OptionMatcher>().Where(o => o.IsRepeated).ToList();
+    HashSet<int> consumedIndices = [];
+    List<OptionMatcher> repeatedOptions = [.. template.OfType<OptionMatcher>().Where(o => o.IsRepeated)];
 
     foreach (OptionMatcher repeatedOption in repeatedOptions)
     {
@@ -352,7 +352,7 @@ internal static class EndpointResolver
   )
   {
     // Collect positional arguments until we encounter a defined option from the route
-    var catchAllArgs = new List<string>();
+    List<string> catchAllArgs = [];
     int j = startPosition;
     while (j < args.Length)
     {
@@ -520,7 +520,7 @@ internal static class EndpointResolver
     ref int defaultsUsed
   )
   {
-    var collectedValues = new List<string>();
+    List<string> collectedValues = [];
 
     // Scan all args for occurrences of this repeated option
     for (int i = 0; i < args.Length; i++)
@@ -630,7 +630,7 @@ internal static class EndpointResolver
     foreach (OptionMatcher optionSegment in optionSegments)
     {
       bool found = false;
-      var collectedValues = new List<string>(); // For repeated options
+      List<string> collectedValues = []; // For repeated options
 
       // Look through remaining args for this option
       for (int i = 0; i < remainingArgs.Count; i++)

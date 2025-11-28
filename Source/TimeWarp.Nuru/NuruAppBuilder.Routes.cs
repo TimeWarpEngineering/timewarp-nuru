@@ -21,7 +21,7 @@ public partial class NuruAppBuilder
   /// <returns>The builder for chaining.</returns>
   public NuruAppBuilder AddReplOptions(Action<ReplOptions>? configureOptions = null)
   {
-    var replOptions = new ReplOptions();
+    ReplOptions replOptions = new();
     configureOptions?.Invoke(replOptions);
     ReplOptions = replOptions;
     return this;
@@ -169,7 +169,7 @@ public partial class NuruAppBuilder
       throw new InvalidOperationException("Dependency injection must be added before using Mediator commands. Call AddDependencyInjection() first.");
     }
 
-    var endpoint = new Endpoint
+    Endpoint endpoint = new()
     {
       RoutePattern = pattern,
       CompiledRoute = PatternParser.Parse(pattern, LoggerFactory),
@@ -197,7 +197,7 @@ public partial class NuruAppBuilder
       LoggerMessages.RegisteringRoute(logger, pattern, null);
     }
 
-    var endpoint = new Endpoint
+    Endpoint endpoint = new()
     {
       RoutePattern = pattern,
       CompiledRoute = PatternParser.Parse(pattern, LoggerFactory),

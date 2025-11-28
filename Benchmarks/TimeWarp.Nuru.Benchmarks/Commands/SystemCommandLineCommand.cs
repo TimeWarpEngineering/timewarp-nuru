@@ -9,12 +9,12 @@ public class SystemCommandLineCommand
 
   public static int Execute(string[] args)
   {
-    var command = new RootCommand
-        {
+    RootCommand command =
+    [
             new Option<string?>("--str", ["-s"]),
             new Option<int>("--int", ["-i"]),
             new Option<bool>("--bool", ["-b"]),
-        };
+        ];
 
     command.SetAction(parseResult =>
     {

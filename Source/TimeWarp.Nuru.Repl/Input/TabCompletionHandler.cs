@@ -102,7 +102,7 @@ internal sealed class TabCompletionHandler
 
     // Build completion context
     // CursorPosition in CompletionContext is the word index (not character position)
-    var context = new CompletionContext(
+    CompletionContext context = new(
       Args: args,
       CursorPosition: args.Length,
       Endpoints: Endpoints,

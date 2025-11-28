@@ -37,7 +37,7 @@ internal sealed class GetVersionInfoTool
       .Value;
 
     // Format the output
-    var builder = new StringBuilder();
+    StringBuilder builder = new();
     builder.AppendLine("TimeWarp.Nuru Version Information");
     builder.AppendLine("==================================");
     builder.AppendLine();

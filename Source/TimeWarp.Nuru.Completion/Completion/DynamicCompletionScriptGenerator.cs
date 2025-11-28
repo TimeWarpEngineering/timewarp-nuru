@@ -68,7 +68,7 @@ internal static class DynamicCompletionScriptGenerator
       );
     }
 
-    using var reader = new StreamReader(stream);
+    using StreamReader reader = new(stream);
     return reader.ReadToEnd();
   }
 }

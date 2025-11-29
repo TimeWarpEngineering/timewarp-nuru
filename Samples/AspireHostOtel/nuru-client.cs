@@ -82,21 +82,9 @@ builder
 
 NuruCoreApp app = builder.Build();
 
-// Run the app - enters REPL if no args, otherwise executes command
-int exitCode;
-if (args.Length == 0)
-{
-  exitCode = await app.RunReplAsync();
-}
-else
-{
-  exitCode = await app.RunAsync(args);
-}
-
-// Flush telemetry before exit - critical for CLI apps!
-await NuruTelemetryExtensions.FlushAndShutdownAsync();
-
-return exitCode;
+// Run the app - use -i or --interactive to enter REPL mode
+// Telemetry is automatically flushed by NuruApp.RunAsync()
+return await app.RunAsync(args);
 
 // =============================================================================
 // ASPIRE-STYLE EXTENSION METHOD

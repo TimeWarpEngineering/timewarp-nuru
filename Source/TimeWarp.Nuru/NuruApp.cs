@@ -11,6 +11,18 @@ public class NuruApp : NuruCoreApp
   }
 
   /// <summary>
+  /// Runs the application and automatically flushes telemetry on completion.
+  /// </summary>
+  /// <param name="args">Command line arguments.</param>
+  /// <returns>Exit code from the command execution.</returns>
+  public new async Task<int> RunAsync(string[] args)
+  {
+    int exitCode = await base.RunAsync(args).ConfigureAwait(false);
+    await NuruTelemetryExtensions.FlushAsync(delayMs: 0).ConfigureAwait(false);
+    return exitCode;
+  }
+
+  /// <summary>
   /// Creates a full-featured builder with DI, Configuration, and all extensions auto-wired.
   /// </summary>
   /// <param name="args">Command line arguments.</param>

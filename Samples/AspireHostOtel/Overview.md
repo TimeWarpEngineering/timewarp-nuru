@@ -1,15 +1,15 @@
 # Aspire Host with OpenTelemetry and Nuru REPL Sample
 
-This sample demonstrates .NET Aspire Host running an OpenTelemetry Collector and Dashboard, with a Nuru CLI/REPL application running externally in its own terminal. Telemetry (traces, metrics, structured logs) flows from the CLI to the Aspire Dashboard.
+This sample demonstrates .NET Aspire Host with its built-in OTLP receiver and Dashboard, with a Nuru CLI/REPL application running externally in its own terminal. Telemetry (traces, metrics, structured logs) flows from the CLI directly to the Aspire Dashboard.
 
 ## Architecture
 
 ```
 ┌─────────────────────────────────────────────────┐
 │ Terminal 1: Aspire AppHost                      │
-│  ├─ Aspire Dashboard (traces, metrics, logs)    │
-│  └─ OpenTelemetry Collector (OTLP receiver)     │
-│       └─ Listens on localhost:19034             │
+│  └─ Aspire Dashboard                            │
+│       ├─ Built-in OTLP receiver (port 19034)    │
+│       └─ Traces, metrics, logs visualization    │
 └─────────────────────────────────────────────────┘
                       ▲
                       │ OTLP (gRPC)
@@ -26,18 +26,18 @@ This sample demonstrates .NET Aspire Host running an OpenTelemetry Collector and
 
 ## Key Concepts
 
-### 1. Aspire Host Orchestration
+### 1. Aspire Dashboard Built-in OTLP Receiver
 
-The AppHost project uses `CommunityToolkit.Aspire.Hosting.OpenTelemetryCollector` to:
-- Run an OpenTelemetry Collector container
-- Expose an OTLP endpoint (localhost:19034) for external apps
-- Display telemetry in the Aspire Dashboard
+The Aspire Dashboard includes a built-in OTLP receiver - no separate OpenTelemetry Collector needed for simple scenarios. The AppHost is minimal:
 
 ```csharp
-// AppHost only runs the collector - NuruClient runs separately
-builder.AddOpenTelemetryCollector("otel-collector")
-  .WithAppForwarding();
+// No collector needed - Dashboard has built-in OTLP receiver
+var builder = DistributedApplication.CreateBuilder(args);
+DistributedApplication app = builder.Build();
+app.Run();
 ```
+
+The Dashboard's OTLP endpoint is exposed on port 19034 (for the http launch profile).
 
 ### 2. Dual Output Pattern (Console + Telemetry)
 
@@ -78,24 +78,31 @@ NuruCoreApp app = NuruApp.CreateBuilder(args)
 ### Prerequisites
 
 - .NET 10 SDK
-- Docker (for OpenTelemetry Collector container)
 
 ### Terminal 1: Start Aspire Host
 
 ```bash
-cd Samples/AspireHostOtel
-dotnet run --project AspireHostOtel.AppHost --launch-profile http
+cd Samples/AspireHostOtel/AspireHostOtel.AppHost
+dotnet run --launch-profile http
 ```
 
 The Aspire Dashboard URL will be printed to the console. Open it in your browser.
 
 ### Terminal 2: Run the NuruClient
 
-Open a **new terminal** and run the client with the OTLP endpoint:
+Open a **new terminal** and run the client with the AppHost launch profile:
 
 ```bash
-cd Samples/AspireHostOtel
-OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:19034 dotnet run --project AspireHostOtel.NuruClient
+cd Samples/AspireHostOtel/AspireHostOtel.NuruClient
+dotnet run --launch-profile AppHost
+```
+
+Or manually set the OTLP endpoint:
+
+```bash
+cd Samples/AspireHostOtel/AspireHostOtel.NuruClient
+export OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:19034
+dotnet run
 ```
 
 ### Interact with the REPL
@@ -126,7 +133,7 @@ In Aspire Dashboard:
 AspireHostOtel/
 ├── AspireHostOtel.AppHost/         # Aspire Host (orchestrator)
 │   ├── AspireHostOtel.AppHost.csproj
-│   └── Program.cs                  # Adds collector and NuruClient
+│   └── Program.cs                  # Minimal - Dashboard has built-in OTLP
 ├── AspireHostOtel.NuruClient/      # Nuru REPL app with telemetry
 │   ├── AspireHostOtel.NuruClient.csproj
 │   └── Program.cs                  # Commands with structured logging
@@ -137,8 +144,7 @@ AspireHostOtel/
 
 | Package | Purpose |
 |---------|---------|
-| `Aspire.Hosting.AppHost` | Aspire orchestration |
-| `CommunityToolkit.Aspire.Hosting.OpenTelemetryCollector` | OTEL Collector resource |
+| `Aspire.Hosting.AppHost` | Aspire orchestration with built-in OTLP receiver |
 | `TimeWarp.Nuru` | CLI framework |
 | `TimeWarp.Nuru.Repl` | REPL support |
 | `TimeWarp.Nuru.Telemetry` | Telemetry integration |
@@ -187,4 +193,3 @@ This is impossible with unstructured `Console.WriteLine` output.
 - [Aspire Telemetry Sample](../AspireTelemetry/) - Standalone dashboard mode
 - [REPL Demo](../ReplDemo/) - REPL features without telemetry
 - [TimeWarp.Nuru.Telemetry](../../Source/TimeWarp.Nuru.Telemetry/) - Telemetry package
-- [CommunityToolkit.Aspire](https://github.com/CommunityToolkit/Aspire) - Aspire extensions

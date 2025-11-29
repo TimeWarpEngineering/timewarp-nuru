@@ -1,18 +1,28 @@
 # Aspire Host with OpenTelemetry and Nuru REPL Sample
 
-This sample demonstrates .NET Aspire Host orchestrating an OpenTelemetry Collector and a Nuru console REPL application. All telemetry (traces, metrics, structured logs) flows to the Aspire Dashboard.
+This sample demonstrates .NET Aspire Host running an OpenTelemetry Collector and Dashboard, with a Nuru CLI/REPL application running externally in its own terminal. Telemetry (traces, metrics, structured logs) flows from the CLI to the Aspire Dashboard.
 
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│ Aspire AppHost                                              │
-│  ├─ OpenTelemetry Collector (OTLP receiver)                 │
-│  ├─ Aspire Dashboard (traces, metrics, logs)                │
-│  └─ Nuru Console App (REPL with telemetry)                  │
-│       └─ Uses structured ILogger, not Console.WriteLine     │
-└─────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────┐
+│ Terminal 1: Aspire AppHost                      │
+│  ├─ Aspire Dashboard (traces, metrics, logs)    │
+│  └─ OpenTelemetry Collector (OTLP receiver)     │
+│       └─ Listens on localhost:4317              │
+└─────────────────────────────────────────────────┘
+                      ▲
+                      │ OTLP (gRPC)
+                      │
+┌─────────────────────────────────────────────────┐
+│ Terminal 2: NuruClient (external)               │
+│  └─ REPL with telemetry                         │
+│       ├─ Console.WriteLine for user feedback    │
+│       └─ ILogger for telemetry to Dashboard     │
+└─────────────────────────────────────────────────┘
 ```
+
+**Why external?** CLI/REPL apps need direct console access for user interaction. Aspire-orchestrated console apps don't have an interactive terminal.
 
 ## Key Concepts
 
@@ -20,32 +30,31 @@ This sample demonstrates .NET Aspire Host orchestrating an OpenTelemetry Collect
 
 The AppHost project uses `CommunityToolkit.Aspire.Hosting.OpenTelemetryCollector` to:
 - Run an OpenTelemetry Collector container
-- Automatically forward telemetry from all resources to the collector
+- Expose an OTLP endpoint (localhost:4317) for external apps
 - Display telemetry in the Aspire Dashboard
 
 ```csharp
-var collector = builder.AddOpenTelemetryCollector("otel-collector")
-  .WithAppForwarding(); // Auto-forward all resources
-
-builder.AddProject<Projects.AspireHostOtel_NuruClient>("nuru-client");
+// AppHost only runs the collector - NuruClient runs separately
+builder.AddOpenTelemetryCollector("otel-collector")
+  .WithAppForwarding();
 ```
 
-### 2. Structured Logging (Critical!)
+### 2. Dual Output Pattern (Console + Telemetry)
 
-Commands use `ILogger<T>` with semantic properties instead of `Console.WriteLine`:
+Commands use BOTH `Console.WriteLine` for user feedback AND `ILogger<T>` for telemetry:
 
 ```csharp
-// CORRECT: Structured logging - appears in Aspire Dashboard
-logger.LogInformation("Greeting {Name} at {Timestamp}", request.Name, DateTime.UtcNow);
-
-// WRONG: Console output - does NOT flow to Aspire Dashboard
+// Console.WriteLine for user feedback (visible in their terminal)
 Console.WriteLine($"Hello, {request.Name}!");
+
+// ILogger for telemetry (flows to Aspire Dashboard via OTLP)
+logger.LogInformation("Greeting {Name} at {Timestamp}", request.Name, DateTime.UtcNow);
 ```
 
-This ensures:
-- Logs are searchable by property values in Aspire Dashboard
-- Logs include trace correlation IDs
-- Logs are properly formatted as structured OTLP log records
+This pattern ensures:
+- Users see immediate feedback in their terminal
+- Telemetry flows to Aspire Dashboard for monitoring
+- Structured logs are searchable by property values
 
 ### 3. Nuru Telemetry Integration
 
@@ -71,20 +80,27 @@ NuruCoreApp app = NuruApp.CreateBuilder(args)
 - .NET 10 SDK
 - Docker (for OpenTelemetry Collector container)
 
-### Start the Application
+### Terminal 1: Start Aspire Host
 
 ```bash
 cd Samples/AspireHostOtel
 dotnet run --project AspireHostOtel.AppHost
 ```
 
-### Open Aspire Dashboard
+The Aspire Dashboard URL will be printed to the console. Open it in your browser.
 
-The dashboard URL is printed to the console. Open it in your browser.
+### Terminal 2: Run the NuruClient
+
+Open a **new terminal** and run the client with the OTLP endpoint:
+
+```bash
+cd Samples/AspireHostOtel
+OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317 dotnet run --project AspireHostOtel.NuruClient
+```
 
 ### Interact with the REPL
 
-In another terminal, find the NuruClient console or interact through Aspire Dashboard console:
+In Terminal 2, you'll see the REPL prompt. Try these commands:
 
 ```
 otel> greet Alice
@@ -92,6 +108,10 @@ otel> work 500
 otel> status
 otel> config
 ```
+
+Each command will:
+1. Print output to your terminal (via Console.WriteLine)
+2. Send telemetry to Aspire Dashboard (via ILogger)
 
 ### View Telemetry
 

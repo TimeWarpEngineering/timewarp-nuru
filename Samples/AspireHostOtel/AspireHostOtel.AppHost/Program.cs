@@ -1,23 +1,42 @@
 // Aspire Host with OpenTelemetry Collector Sample
 // ================================================
 // This sample demonstrates:
-// - Aspire Host orchestrating an OpenTelemetry Collector and a Nuru CLI/REPL app
-// - Telemetry (traces, metrics, structured logs) flowing to Aspire Dashboard
-// - Proper structured logging with ILogger instead of Console.WriteLine
+// - Aspire Host orchestrating an OpenTelemetry Collector with Aspire Dashboard
+// - External CLI apps sending telemetry via OTEL_EXPORTER_OTLP_ENDPOINT
+//
+// Architecture:
+//   AppHost runs: Dashboard + OTEL Collector (in Docker)
+//   User runs: NuruClient separately in their own terminal
 //
 // To run:
-//   dotnet run --project AspireHostOtel.AppHost
-//
-// Then open the Aspire Dashboard URL (printed to console) and interact with the NuruClient.
+//   Terminal 1: dotnet run --project AspireHostOtel.AppHost
+//   Terminal 2: OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317 dotnet run --project AspireHostOtel.NuruClient
 
 var builder = DistributedApplication.CreateBuilder(args);
 
 // Add OpenTelemetry Collector with automatic forwarding
-// This makes all resources send telemetry through the collector
-var collector = builder.AddOpenTelemetryCollector("otel-collector")
-  .WithAppForwarding(); // Auto-forward all resources to collector
+// This creates the OTLP endpoint that external apps can send telemetry to
+builder.AddOpenTelemetryCollector("otel-collector")
+  .WithAppForwarding();
 
-// Add the Nuru CLI/REPL console app
-builder.AddProject<Projects.AspireHostOtel_NuruClient>("nuru-client");
+// NOTE: The NuruClient is NOT orchestrated by Aspire - it runs in its own terminal.
+// This is the correct pattern for CLI/REPL apps where the user needs direct console access.
+// The NuruClient sends telemetry to the collector via OTEL_EXPORTER_OTLP_ENDPOINT.
 
-builder.Build().Run();
+DistributedApplication app = builder.Build();
+
+// Print instructions for running the client
+Console.WriteLine();
+Console.WriteLine("=== Aspire Host with OpenTelemetry ===");
+Console.WriteLine();
+Console.WriteLine("The Aspire Dashboard and OTEL Collector are starting...");
+Console.WriteLine();
+Console.WriteLine("To run the NuruClient with telemetry, open a NEW terminal and run:");
+Console.WriteLine();
+Console.WriteLine("  cd Samples/AspireHostOtel");
+Console.WriteLine("  OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317 dotnet run --project AspireHostOtel.NuruClient");
+Console.WriteLine();
+Console.WriteLine("Then interact with the REPL and watch telemetry appear in the Aspire Dashboard!");
+Console.WriteLine();
+
+app.Run();

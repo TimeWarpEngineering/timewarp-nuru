@@ -2,12 +2,12 @@
 // ====================================================
 // This sample demonstrates:
 // - Nuru REPL application with full telemetry (traces, metrics, logs)
-// - Structured logging with ILogger (NOT Console.WriteLine)
+// - Dual output: Console.WriteLine for user feedback, ILogger for telemetry
 // - Telemetry flows to Aspire Dashboard via OpenTelemetry Collector
 // - Using NuruAppOptions to configure all extensions via CreateBuilder
 //
-// IMPORTANT: Use ILogger for structured logging, not Console.WriteLine!
-// This ensures logs flow through the OTEL pipeline to the Aspire Dashboard.
+// Run this in a separate terminal from the Aspire Host:
+//   OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317 dotnet run
 
 using Mediator;
 using Microsoft.Extensions.DependencyInjection;
@@ -95,12 +95,11 @@ public sealed class GreetCommand : IRequest
   {
     public ValueTask<Unit> Handle(GreetCommand request, CancellationToken cancellationToken)
     {
-      // CORRECT: Use structured logging with semantic properties
-      // This creates searchable, filterable logs in Aspire Dashboard
-      logger.LogInformation("Greeting {Name} at {Timestamp}", request.Name, DateTime.UtcNow);
+      // Console.WriteLine for user feedback (visible in terminal)
+      Console.WriteLine($"Hello, {request.Name}!");
 
-      // WRONG: Don't do this - it won't appear in Aspire Dashboard logs
-      // Console.WriteLine($"Hello, {request.Name}!");
+      // ILogger for telemetry (flows to Aspire Dashboard via OTLP)
+      logger.LogInformation("Greeting {Name} at {Timestamp}", request.Name, DateTime.UtcNow);
 
       return default;
     }
@@ -116,6 +115,12 @@ public sealed class StatusCommand : IRequest
   {
     public ValueTask<Unit> Handle(StatusCommand request, CancellationToken cancellationToken)
     {
+      // Console.WriteLine for user feedback (visible in terminal)
+      Console.WriteLine($"Machine: {Environment.MachineName}");
+      Console.WriteLine($"Process ID: {Environment.ProcessId}");
+      Console.WriteLine($"Runtime: {Environment.Version}");
+
+      // ILogger for telemetry (flows to Aspire Dashboard via OTLP)
       logger.LogInformation
       (
         "System status: MachineName={MachineName}, ProcessId={ProcessId}, Runtime={Runtime}",
@@ -140,10 +145,18 @@ public sealed class WorkCommand : IRequest
   {
     public async ValueTask<Unit> Handle(WorkCommand request, CancellationToken cancellationToken)
     {
+      // Console.WriteLine for user feedback (visible in terminal)
+      Console.WriteLine($"Starting work for {request.Duration}ms...");
+
+      // ILogger for telemetry (flows to Aspire Dashboard via OTLP)
       logger.LogInformation("Starting work for {Duration}ms", request.Duration);
 
       await Task.Delay(request.Duration, cancellationToken);
 
+      // Console.WriteLine for user feedback (visible in terminal)
+      Console.WriteLine($"Work completed after {request.Duration}ms");
+
+      // ILogger for telemetry (flows to Aspire Dashboard via OTLP)
       logger.LogInformation("Work completed after {Duration}ms", request.Duration);
 
       return Unit.Value;
@@ -164,6 +177,12 @@ public sealed class ConfigCommand : IRequest
       string serviceName = Environment.GetEnvironmentVariable("OTEL_SERVICE_NAME") ?? "nuru-client";
       bool telemetryEnabled = !string.IsNullOrEmpty(otlpEndpoint);
 
+      // Console.WriteLine for user feedback (visible in terminal)
+      Console.WriteLine($"Telemetry Enabled: {telemetryEnabled}");
+      Console.WriteLine($"OTLP Endpoint: {otlpEndpoint ?? "(not set)"}");
+      Console.WriteLine($"Service Name: {serviceName}");
+
+      // ILogger for telemetry (flows to Aspire Dashboard via OTLP)
       logger.LogInformation
       (
         "Telemetry config: Enabled={TelemetryEnabled}, Endpoint={OtlpEndpoint}, ServiceName={ServiceName}",

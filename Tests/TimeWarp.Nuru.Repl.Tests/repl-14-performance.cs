@@ -20,10 +20,10 @@ public class PerformanceTests
     using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = new NuruAppBuilder()
-      .UseTerminal(terminal)
-      .AddReplSupport()
-      .Build();
+    using NuruAppBuilder builder = new();
+    builder.UseTerminal(terminal);
+    builder.AddReplSupport();
+    NuruCoreApp app = builder.Build();
 
     // Act
     Stopwatch sw = Stopwatch.StartNew();
@@ -44,11 +44,11 @@ public class PerformanceTests
     terminal.QueueLine("noop");
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = new NuruAppBuilder()
-      .UseTerminal(terminal)
-      .Map("noop", () => { })
-      .AddReplSupport()
-      .Build();
+    using NuruAppBuilder builder = new();
+    builder.UseTerminal(terminal);
+    builder.Map("noop", () => { });
+    builder.AddReplSupport();
+    NuruCoreApp app = builder.Build();
 
     // Act
     Stopwatch sw = Stopwatch.StartNew();
@@ -73,11 +73,11 @@ public class PerformanceTests
 
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = new NuruAppBuilder()
-      .UseTerminal(terminal)
-      .Map("cmd{n}", (string _) => "OK")
-      .AddReplSupport(options => options.MaxHistorySize = 1000)
-      .Build();
+    using NuruAppBuilder builder = new();
+    builder.UseTerminal(terminal);
+    builder.Map("cmd{n}", (string _) => "OK");
+    builder.AddReplSupport(options => options.MaxHistorySize = 1000);
+    NuruCoreApp app = builder.Build();
 
     // Act
     Stopwatch sw = Stopwatch.StartNew();
@@ -98,7 +98,8 @@ public class PerformanceTests
     terminal.QueueKey(ConsoleKey.Escape);
     terminal.QueueLine("exit");
 
-    NuruAppBuilder builder = new NuruAppBuilder().UseTerminal(terminal);
+    using NuruAppBuilder builder = new();
+    builder.UseTerminal(terminal);
 
     // Add many routes
     for (int i = 0; i < 100; i++)
@@ -123,7 +124,7 @@ public class PerformanceTests
   public static async Task Should_highlight_syntax_quickly()
   {
     // Arrange - create endpoints via app builder
-    NuruAppBuilder builder = new();
+    using NuruAppBuilder builder = new();
 
     for (int i = 0; i < 50; i++)
     {
@@ -176,7 +177,7 @@ public class PerformanceTests
   public static async Task Should_use_command_cache_efficiently()
   {
     // Arrange - create endpoints via app builder
-    NuruAppBuilder builder = new();
+    using NuruAppBuilder builder = new();
     builder.Map("status", () => "OK");
     NuruCoreApp app = builder.Build();
     EndpointCollection endpoints = app.Endpoints;
@@ -213,10 +214,10 @@ public class PerformanceTests
     using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = new NuruAppBuilder()
-      .UseTerminal(terminal)
-      .AddReplSupport()
-      .Build();
+    using NuruAppBuilder builder = new();
+    builder.UseTerminal(terminal);
+    builder.AddReplSupport();
+    NuruCoreApp app = builder.Build();
 
     // Act
     await app.RunReplAsync();

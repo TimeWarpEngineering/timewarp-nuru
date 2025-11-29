@@ -203,9 +203,13 @@ public static class TestAppFactory
   /// All handlers return 0 (success) for testing purposes.
   /// REPL is configured with minimal options: "demo> " prompt and arrow history enabled.
   /// </remarks>
+  // CA2000: NuruAppBuilder is IDisposable but only disposes ConfigurationManager,
+  // which is not created when using new NuruAppBuilder() (only with NuruApp.CreateBuilder())
+#pragma warning disable CA2000
   public static NuruCoreApp CreateReplDemoApp(TestTerminal terminal)
   {
     return new NuruAppBuilder()
+#pragma warning restore CA2000
       .UseTerminal(terminal)
       .AddTypeConverter(new EnumTypeConverter<Environment>())
 

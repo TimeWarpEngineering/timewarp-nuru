@@ -12,7 +12,7 @@ internal static class HelpRouteGenerator
   /// <param name="endpointCollection">The collection of registered endpoints.</param>
   /// <param name="appMetadata">Optional application metadata for help display.</param>
   internal static void GenerateHelpRoutes(
-    NuruAppBuilder builder,
+    NuruCoreAppBuilder builder,
     EndpointCollection endpointCollection,
     ApplicationMetadata? appMetadata)
   {

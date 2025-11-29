@@ -53,8 +53,8 @@ public class StaticFactoryMethodTests
 
   public static async Task CreateSlimBuilder_should_return_builder_without_DI()
   {
-    // Arrange & Act
-    NuruAppBuilder builder = NuruApp.CreateSlimBuilder();
+    // Arrange & Act - CreateSlimBuilder returns NuruCoreAppBuilder (lightweight)
+    NuruCoreAppBuilder builder = NuruApp.CreateSlimBuilder();
 
     // Assert - DI is NOT enabled, so Services property should throw
     Should.Throw<InvalidOperationException>(() => _ = builder.Services);
@@ -64,9 +64,9 @@ public class StaticFactoryMethodTests
 
   public static async Task CreateSlimBuilder_should_allow_optional_args()
   {
-    // Arrange & Act - both should work
-    NuruAppBuilder builder1 = NuruApp.CreateSlimBuilder();
-    NuruAppBuilder builder2 = NuruApp.CreateSlimBuilder(["test"]);
+    // Arrange & Act - both should work (returns NuruCoreAppBuilder)
+    NuruCoreAppBuilder builder1 = NuruApp.CreateSlimBuilder();
+    NuruCoreAppBuilder builder2 = NuruApp.CreateSlimBuilder(["test"]);
 
     // Assert
     builder1.ShouldNotBeNull();
@@ -77,8 +77,8 @@ public class StaticFactoryMethodTests
 
   public static async Task CreateEmptyBuilder_should_return_minimal_builder()
   {
-    // Arrange & Act
-    NuruAppBuilder builder = NuruApp.CreateEmptyBuilder();
+    // Arrange & Act - CreateEmptyBuilder returns NuruCoreAppBuilder (minimal)
+    NuruCoreAppBuilder builder = NuruApp.CreateEmptyBuilder();
 
     // Assert - DI is NOT enabled
     Should.Throw<InvalidOperationException>(() => _ = builder.Services);
@@ -88,9 +88,9 @@ public class StaticFactoryMethodTests
 
   public static async Task CreateEmptyBuilder_should_allow_optional_args()
   {
-    // Arrange & Act - both should work
-    NuruAppBuilder builder1 = NuruApp.CreateEmptyBuilder();
-    NuruAppBuilder builder2 = NuruApp.CreateEmptyBuilder(["test"]);
+    // Arrange & Act - both should work (returns NuruCoreAppBuilder)
+    NuruCoreAppBuilder builder1 = NuruApp.CreateEmptyBuilder();
+    NuruCoreAppBuilder builder2 = NuruApp.CreateEmptyBuilder(["test"]);
 
     // Assert
     builder1.ShouldNotBeNull();
@@ -103,7 +103,7 @@ public class StaticFactoryMethodTests
   {
     // Arrange
     bool matched = false;
-    NuruAppBuilder builder = NuruApp.CreateSlimBuilder();
+    NuruCoreAppBuilder builder = NuruApp.CreateSlimBuilder();
 
     // Act - use Map instead of Map
     builder.Map("test", () => { matched = true; return 0; });
@@ -119,7 +119,7 @@ public class StaticFactoryMethodTests
   {
     // Arrange
     bool matched = false;
-    NuruAppBuilder builder = NuruApp.CreateSlimBuilder();
+    NuruCoreAppBuilder builder = NuruApp.CreateSlimBuilder();
 
     // Act - use MapDefault instead of MapDefault
     builder.MapDefault(() => { matched = true; return 0; });
@@ -156,9 +156,9 @@ public class StaticFactoryMethodTests
 
   public static async Task CreateSlimBuilder_full_integration_test()
   {
-    // Arrange - Lightweight builder
+    // Arrange - Lightweight builder (returns NuruCoreAppBuilder)
     string result = "";
-    NuruAppBuilder builder = NuruApp.CreateSlimBuilder();
+    NuruCoreAppBuilder builder = NuruApp.CreateSlimBuilder();
     builder.Map("greet {name}", (string name) => { result = $"Hello, {name}!"; return 0; });
 
     // Act
@@ -172,9 +172,9 @@ public class StaticFactoryMethodTests
 
   public static async Task CreateEmptyBuilder_full_integration_test()
   {
-    // Arrange - Minimal builder
+    // Arrange - Minimal builder (returns NuruCoreAppBuilder)
     bool matched = false;
-    NuruAppBuilder builder = NuruApp.CreateEmptyBuilder();
+    NuruCoreAppBuilder builder = NuruApp.CreateEmptyBuilder();
     builder.Map("cmd", () => { matched = true; return 0; });
 
     // Act

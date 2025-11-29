@@ -76,9 +76,9 @@ public class NuruApp : NuruCoreApp
     return builder.UseAllExtensions(nuruAppOptions);
   }
 
-  public new static NuruAppBuilder CreateSlimBuilder(string[]? args = null, NuruCoreApplicationOptions? options = null)
+  public static new NuruCoreAppBuilder CreateSlimBuilder(string[]? args = null, NuruCoreApplicationOptions? options = null)
     => NuruCoreApp.CreateSlimBuilder(args, options);
 
-  public new static NuruAppBuilder CreateEmptyBuilder(string[]? args = null, NuruCoreApplicationOptions? options = null)
+  public static new NuruCoreAppBuilder CreateEmptyBuilder(string[]? args = null, NuruCoreApplicationOptions? options = null)
     => NuruCoreApp.CreateEmptyBuilder(args, options);
 }

@@ -4,12 +4,11 @@ using Microsoft.Extensions.DependencyInjection;
 using TimeWarp.Nuru;
 using static System.Console;
 
-// Build the app
-NuruAppBuilder builder =
-  new NuruAppBuilder()
-    // If using Mediator Commands/Handlers, add dependency injection
-    .AddDependencyInjection()
-    .ConfigureServices(services => services.AddMediator());
+// Build the app with fluent API
+NuruAppBuilder builder = new NuruAppBuilder()
+  // If using Mediator Commands/Handlers, add dependency injection
+  .AddDependencyInjection()
+  .ConfigureServices(services => services.AddMediator());
 
 // Add routes
 builder.MapDefault // Default route when no command is specified

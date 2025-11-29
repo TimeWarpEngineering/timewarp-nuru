@@ -3,7 +3,7 @@ namespace TimeWarp.Nuru;
 /// <summary>
 /// Defines the initialization mode for the builder, determining which features are included.
 /// </summary>
-internal enum BuilderMode
+public enum BuilderMode
 {
   /// <summary>
   /// Empty builder - bare minimum with type converters only.
@@ -25,26 +25,27 @@ internal enum BuilderMode
 }
 
 /// <summary>
-/// Factory methods for creating NuruAppBuilder instances.
+/// Factory methods for creating NuruCoreAppBuilder instances.
 /// </summary>
-public partial class NuruAppBuilder
+public partial class NuruCoreAppBuilder
 {
-  private readonly NuruCoreApplicationOptions? ApplicationOptions;
-  private readonly BuilderMode Mode;
+  private protected readonly NuruCoreApplicationOptions? ApplicationOptions;
+  private protected readonly BuilderMode Mode;
 
   /// <summary>
-  /// Initializes a new instance of the <see cref="NuruAppBuilder"/> class with default settings.
+  /// Initializes a new instance of the <see cref="NuruCoreAppBuilder"/> class with default settings.
   /// Uses Empty mode for backward compatibility - no auto-help or other features enabled.
   /// Use CreateSlimBuilder() or CreateBuilder() for auto-configured builders.
   /// </summary>
-  public NuruAppBuilder() : this(BuilderMode.Empty, null)
+  public NuruCoreAppBuilder() : this(BuilderMode.Empty, null)
   {
   }
 
   /// <summary>
   /// Internal constructor for factory methods with specific builder mode.
   /// </summary>
-  internal NuruAppBuilder(BuilderMode mode, NuruCoreApplicationOptions? options)
+#pragma warning disable CA2214 // Do not call overridable methods in constructors - intentional for derived class initialization
+  internal NuruCoreAppBuilder(BuilderMode mode, NuruCoreApplicationOptions? options)
   {
     Mode = mode;
     ApplicationOptions = options;
@@ -58,18 +59,18 @@ public partial class NuruAppBuilder
     // Initialize based on mode
     InitializeForMode(mode, options?.Args);
   }
+#pragma warning restore CA2214
 
   /// <summary>
   /// Initializes the builder based on the specified mode.
   /// </summary>
-  private void InitializeForMode(BuilderMode mode, string[]? args)
+  protected virtual void InitializeForMode(BuilderMode mode, string[]? args)
   {
     switch (mode)
     {
       case BuilderMode.Full:
         // Full featured: DI, Configuration, auto-help, logging infrastructure
         AddDependencyInjection();
-        InitializeHostApplicationBuilder();
         AddConfiguration(args);
         AddAutoHelp();
         break;

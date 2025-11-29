@@ -1,9 +1,9 @@
 namespace TimeWarp.Nuru;
 
 /// <summary>
-/// Configuration, dependency injection, and service methods for NuruAppBuilder.
+/// Configuration, dependency injection, and service methods for NuruCoreAppBuilder.
 /// </summary>
-public partial class NuruAppBuilder
+public partial class NuruCoreAppBuilder
 {
   /// <summary>
   /// Adds standard .NET configuration sources to the application.
@@ -32,7 +32,7 @@ public partial class NuruAppBuilder
   /// [assembly: Microsoft.Extensions.Configuration.UserSecrets.UserSecretsId("your-guid-here")]
   /// </code>
   /// </remarks>
-  public NuruAppBuilder AddConfiguration(string[]? args = null)
+  public virtual NuruCoreAppBuilder AddConfiguration(string[]? args = null)
   {
     // Ensure DI is enabled
     if (ServiceCollection is null)
@@ -97,7 +97,7 @@ public partial class NuruAppBuilder
   /// in your project at compile time. Configuration is done via [assembly: MediatorOptions] attribute.
   /// </para>
   /// </remarks>
-  public NuruAppBuilder AddDependencyInjection()
+  public virtual NuruCoreAppBuilder AddDependencyInjection()
   {
     if (ServiceCollection is null)
     {
@@ -134,7 +134,7 @@ public partial class NuruAppBuilder
   ///   .Build();
   /// </code>
   /// </example>
-  public NuruAppBuilder ConfigureServices(Action<IServiceCollection> configure)
+  public virtual NuruCoreAppBuilder ConfigureServices(Action<IServiceCollection> configure)
   {
     configure?.Invoke(Services);
     return this;
@@ -163,7 +163,7 @@ public partial class NuruAppBuilder
   ///   .Build();
   /// </code>
   /// </example>
-  public NuruAppBuilder ConfigureServices(Action<IServiceCollection, IConfiguration?> configure)
+  public virtual NuruCoreAppBuilder ConfigureServices(Action<IServiceCollection, IConfiguration?> configure)
   {
     configure?.Invoke(Services, Configuration);
     return this;
@@ -174,7 +174,7 @@ public partial class NuruAppBuilder
   /// If not called, NullLoggerFactory is used (zero overhead).
   /// </summary>
   /// <param name="loggerFactory">The logger factory to use for creating loggers.</param>
-  public NuruAppBuilder UseLogging(ILoggerFactory loggerFactory)
+  public virtual NuruCoreAppBuilder UseLogging(ILoggerFactory loggerFactory)
   {
     ArgumentNullException.ThrowIfNull(loggerFactory);
     LoggerFactory = loggerFactory;
@@ -200,7 +200,7 @@ public partial class NuruAppBuilder
   ///     .Build();
   /// </code>
   /// </example>
-  public NuruAppBuilder UseTerminal(ITerminal terminal)
+  public virtual NuruCoreAppBuilder UseTerminal(ITerminal terminal)
   {
     ArgumentNullException.ThrowIfNull(terminal);
     Terminal = terminal;
@@ -224,7 +224,7 @@ public partial class NuruAppBuilder
   /// </remarks>
   private string DetermineConfigurationBasePath()
   {
-    ILogger logger = (LoggerFactory ?? NullLoggerFactory.Instance).CreateLogger<NuruAppBuilder>();
+    ILogger logger = (LoggerFactory ?? NullLoggerFactory.Instance).CreateLogger<NuruCoreAppBuilder>();
     string basePath = AppContext.BaseDirectory;
     bool configInAssemblyDir = false;
 

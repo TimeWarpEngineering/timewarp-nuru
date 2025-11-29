@@ -1,18 +1,19 @@
 namespace TimeWarp.Nuru;
 
 /// <summary>
-/// Unified builder for configuring Nuru applications with or without dependency injection.
+/// Core builder for configuring lightweight Nuru applications.
+/// For full-featured applications with IHostApplicationBuilder support, use NuruAppBuilder from TimeWarp.Nuru package.
 /// </summary>
-public partial class NuruAppBuilder : IDisposable
+public partial class NuruCoreAppBuilder
 {
-  private readonly TypeConverterRegistry TypeConverterRegistry = new();
-  private ApplicationMetadata? AppMetadata;
-  private bool AutoHelpEnabled;
-  private IConfiguration? Configuration;
-  private ILoggerFactory? LoggerFactory;
-  private ReplOptions? ReplOptions;
-  private ServiceCollection? ServiceCollection;
-  private ITerminal? Terminal;
+  private protected readonly TypeConverterRegistry TypeConverterRegistry = new();
+  private protected ApplicationMetadata? AppMetadata;
+  private protected bool AutoHelpEnabled;
+  private protected IConfiguration? Configuration;
+  private protected ILoggerFactory? LoggerFactory;
+  private protected ReplOptions? ReplOptions;
+  private protected ServiceCollection? ServiceCollection;
+  private protected ITerminal? Terminal;
 
   /// <summary>
   /// Gets the collection of registered endpoints.
@@ -41,7 +42,7 @@ public partial class NuruAppBuilder : IDisposable
   /// Enables automatic help generation for all routes.
   /// Help routes will be generated at build time.
   /// </summary>
-  public NuruAppBuilder AddAutoHelp()
+  public NuruCoreAppBuilder AddAutoHelp()
   {
     AutoHelpEnabled = true;
     return this;
@@ -117,30 +118,9 @@ public partial class NuruAppBuilder : IDisposable
   /// </summary>
   /// <param name="name">The application name. If null, will be auto-detected.</param>
   /// <param name="description">The application description.</param>
-  public NuruAppBuilder WithMetadata(string? name = null, string? description = null)
+  public NuruCoreAppBuilder WithMetadata(string? name = null, string? description = null)
   {
     AppMetadata = new ApplicationMetadata(name, description);
     return this;
-  }
-
-  /// <summary>
-  /// Disposes resources used by the builder.
-  /// </summary>
-  public void Dispose()
-  {
-    Dispose(disposing: true);
-    GC.SuppressFinalize(this);
-  }
-
-  /// <summary>
-  /// Disposes resources used by the builder.
-  /// </summary>
-  /// <param name="disposing">True if called from Dispose(), false if from finalizer.</param>
-  protected virtual void Dispose(bool disposing)
-  {
-    if (disposing)
-    {
-      ConfigurationManager?.Dispose();
-    }
   }
 }

@@ -73,7 +73,8 @@ public static class NuruTelemetryExtensions
   /// <item>Structured logging with OTLP export (no console logging)</item>
   /// </list>
   /// </remarks>
-  public static NuruAppBuilder UseTelemetry(this NuruAppBuilder builder)
+  public static TBuilder UseTelemetry<TBuilder>(this TBuilder builder)
+    where TBuilder : NuruCoreAppBuilder
   {
     return builder.UseTelemetry(_ => { });
   }
@@ -89,9 +90,10 @@ public static class NuruTelemetryExtensions
   /// <item>Structured logging with OTLP export (no console logging)</item>
   /// </list>
   /// </remarks>
-  public static NuruAppBuilder UseTelemetry(
-    this NuruAppBuilder builder,
+  public static TBuilder UseTelemetry<TBuilder>(
+    this TBuilder builder,
     Action<NuruTelemetryOptions> configure)
+    where TBuilder : NuruCoreAppBuilder
   {
     ArgumentNullException.ThrowIfNull(builder);
     ArgumentNullException.ThrowIfNull(configure);

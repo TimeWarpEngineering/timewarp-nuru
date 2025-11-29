@@ -1,14 +1,14 @@
 namespace TimeWarp.Nuru;
 
 /// <summary>
-/// Route registration methods for NuruAppBuilder.
+/// Route registration methods for NuruCoreAppBuilder.
 /// </summary>
-public partial class NuruAppBuilder
+public partial class NuruCoreAppBuilder
 {
   /// <summary>
   /// Adds a default route that executes when no arguments are provided.
   /// </summary>
-  public NuruAppBuilder MapDefault(Delegate handler, string? description = null)
+  public virtual NuruCoreAppBuilder MapDefault(Delegate handler, string? description = null)
   {
     return MapInternal(string.Empty, handler, description);
   }
@@ -19,7 +19,7 @@ public partial class NuruAppBuilder
   /// </summary>
   /// <param name="configureOptions">Optional action to configure REPL options.</param>
   /// <returns>The builder for chaining.</returns>
-  public NuruAppBuilder AddReplOptions(Action<ReplOptions>? configureOptions = null)
+  public virtual NuruCoreAppBuilder AddReplOptions(Action<ReplOptions>? configureOptions = null)
   {
     ReplOptions replOptions = new();
     configureOptions?.Invoke(replOptions);
@@ -30,7 +30,7 @@ public partial class NuruAppBuilder
   /// <summary>
   /// Adds a delegate-based route.
   /// </summary>
-  public NuruAppBuilder Map(string pattern, Delegate handler, string? description = null)
+  public virtual NuruCoreAppBuilder Map(string pattern, Delegate handler, string? description = null)
   {
     ArgumentNullException.ThrowIfNull(pattern);
     return MapInternal(pattern, handler, description);
@@ -40,7 +40,7 @@ public partial class NuruAppBuilder
   /// Adds a Mediator command-based route.
   /// Requires AddDependencyInjection() to be called first.
   /// </summary>
-  public NuruAppBuilder Map<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)] TCommand>(string pattern, string? description = null)
+  public virtual NuruCoreAppBuilder Map<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)] TCommand>(string pattern, string? description = null)
     where TCommand : IRequest, new()
   {
     return MapMediator(typeof(TCommand), pattern, description);
@@ -50,7 +50,7 @@ public partial class NuruAppBuilder
   /// Adds a Mediator command-based route with response.
   /// Requires AddDependencyInjection() to be called first.
   /// </summary>
-  public NuruAppBuilder Map<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)] TCommand, TResponse>(string pattern, string? description = null)
+  public virtual NuruCoreAppBuilder Map<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)] TCommand, TResponse>(string pattern, string? description = null)
     where TCommand : IRequest<TResponse>, new()
   {
     return MapMediator(typeof(TCommand), pattern, description);
@@ -73,7 +73,7 @@ public partial class NuruAppBuilder
   ///     "Exit the application");
   /// </code>
   /// </example>
-  public NuruAppBuilder MapMultiple(string[] patterns, Delegate handler, string? description = null)
+  public virtual NuruCoreAppBuilder MapMultiple(string[] patterns, Delegate handler, string? description = null)
   {
     ArgumentNullException.ThrowIfNull(patterns);
     ArgumentNullException.ThrowIfNull(handler);
@@ -104,7 +104,7 @@ public partial class NuruAppBuilder
   ///     "Exit the application");
   /// </code>
   /// </example>
-  public NuruAppBuilder MapMultiple<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)] TCommand>(string[] patterns, string? description = null)
+  public virtual NuruCoreAppBuilder MapMultiple<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)] TCommand>(string[] patterns, string? description = null)
     where TCommand : IRequest, new()
   {
     ArgumentNullException.ThrowIfNull(patterns);
@@ -135,7 +135,7 @@ public partial class NuruAppBuilder
   ///     "Greet someone");
   /// </code>
   /// </example>
-  public NuruAppBuilder MapMultiple<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)] TCommand, TResponse>(string[] patterns, string? description = null)
+  public virtual NuruCoreAppBuilder MapMultiple<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)] TCommand, TResponse>(string[] patterns, string? description = null)
     where TCommand : IRequest<TResponse>, new()
   {
     ArgumentNullException.ThrowIfNull(patterns);
@@ -155,14 +155,14 @@ public partial class NuruAppBuilder
   /// Registers a custom type converter for parameter conversion.
   /// </summary>
   /// <param name="converter">The type converter to register.</param>
-  public NuruAppBuilder AddTypeConverter(IRouteTypeConverter converter)
+  public virtual NuruCoreAppBuilder AddTypeConverter(IRouteTypeConverter converter)
   {
     ArgumentNullException.ThrowIfNull(converter);
     TypeConverterRegistry.RegisterConverter(converter);
     return this;
   }
 
-  private NuruAppBuilder MapMediator(Type commandType, string pattern, string? description)
+  private NuruCoreAppBuilder MapMediator(Type commandType, string pattern, string? description)
   {
     if (ServiceCollection is null)
     {
@@ -181,14 +181,14 @@ public partial class NuruAppBuilder
     return this;
   }
 
-  private NuruAppBuilder MapInternal(string pattern, Delegate handler, string? description)
+  private NuruCoreAppBuilder MapInternal(string pattern, Delegate handler, string? description)
   {
     ArgumentNullException.ThrowIfNull(handler);
 
     // Log route registration if logger is available
     if (LoggerFactory is not null)
     {
-      ILogger<NuruAppBuilder> logger = LoggerFactory.CreateLogger<NuruAppBuilder>();
+      ILogger<NuruCoreAppBuilder> logger = LoggerFactory.CreateLogger<NuruCoreAppBuilder>();
       if (EndpointCollection.Count == 0)
       {
         LoggerMessages.StartingRouteRegistration(logger, null);

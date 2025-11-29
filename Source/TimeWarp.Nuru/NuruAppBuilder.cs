@@ -1,28 +1,54 @@
 namespace TimeWarp.Nuru;
 
 /// <summary>
-/// IHostApplicationBuilder implementation for NuruAppBuilder.
-/// Enables seamless integration with Aspire and other .NET ecosystem extensions.
+/// Full-featured builder for configuring Nuru applications with IHostApplicationBuilder support.
+/// Inherits from <see cref="NuruCoreAppBuilder"/> and adds Aspire integration.
 /// </summary>
-public partial class NuruAppBuilder : IHostApplicationBuilder
+public partial class NuruAppBuilder : NuruCoreAppBuilder, IHostApplicationBuilder, IDisposable
 {
   private ConfigurationManager? ConfigurationManager;
   private NuruHostEnvironment? NuruHostEnvironment;
   private NuruLoggingBuilder? NuruLoggingBuilder;
   private NuruMetricsBuilder? NuruMetricsBuilder;
-  private Dictionary<object, object> PropertiesDictionary = [];
+  private readonly Dictionary<object, object> PropertiesDictionary = [];
+
+  /// <summary>
+  /// Initializes a new instance of the <see cref="NuruAppBuilder"/> class with default settings.
+  /// </summary>
+  public NuruAppBuilder() { }
+
+  /// <summary>
+  /// Internal constructor for factory methods with specific builder mode.
+  /// </summary>
+  internal NuruAppBuilder(BuilderMode mode, NuruCoreApplicationOptions? options) : base(mode, options)
+  {
+  }
+
+  /// <summary>
+  /// Initializes the builder based on the specified mode.
+  /// Extends base initialization with IHostApplicationBuilder setup for Full mode.
+  /// </summary>
+  protected override void InitializeForMode(BuilderMode mode, string[]? args)
+  {
+    base.InitializeForMode(mode, args);
+
+    // Initialize IHostApplicationBuilder fields after DI is set up
+    if (mode == BuilderMode.Full)
+    {
+      InitializeHostApplicationBuilder();
+    }
+  }
 
   /// <summary>
   /// Initializes IHostApplicationBuilder fields that depend on Services.
-  /// Called after AddDependencyInjection() in Full mode.
   /// </summary>
   private void InitializeHostApplicationBuilder()
   {
     ConfigurationManager = new ConfigurationManager();
 
     string environmentName = ApplicationOptions?.EnvironmentName
-      ?? System.Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")
-      ?? System.Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT")
+      ?? Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")
+      ?? Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT")
       ?? "Production";
 
     string applicationName = ApplicationOptions?.ApplicationName
@@ -36,6 +62,8 @@ public partial class NuruAppBuilder : IHostApplicationBuilder
     NuruLoggingBuilder = new NuruLoggingBuilder(Services);
     NuruMetricsBuilder = new NuruMetricsBuilder(Services);
   }
+
+  #region IHostApplicationBuilder Implementation
 
   /// <summary>
   /// Gets the set of key/value configuration properties.
@@ -71,8 +99,6 @@ public partial class NuruAppBuilder : IHostApplicationBuilder
   public IDictionary<object, object> Properties => PropertiesDictionary;
 
   // Explicit interface implementations that delegate to the public properties.
-  // CA1033 is suppressed because we expose public properties with equivalent functionality
-  // (HostConfiguration/HostEnvironment) to avoid naming conflicts with existing Nuru properties.
 #pragma warning disable CA1033 // Interface methods should be callable by child types
   IConfigurationManager IHostApplicationBuilder.Configuration => HostConfiguration;
   IHostEnvironment IHostApplicationBuilder.Environment => HostEnvironment;
@@ -89,4 +115,31 @@ public partial class NuruAppBuilder : IHostApplicationBuilder
     // This is a no-op that allows the interface to be satisfied
     // Most Aspire extensions don't use this method
   }
+
+  #endregion
+
+  #region IDisposable Implementation
+
+  /// <summary>
+  /// Disposes resources used by the builder.
+  /// </summary>
+  public void Dispose()
+  {
+    Dispose(disposing: true);
+    GC.SuppressFinalize(this);
+  }
+
+  /// <summary>
+  /// Disposes resources used by the builder.
+  /// </summary>
+  /// <param name="disposing">True if called from Dispose(), false if from finalizer.</param>
+  protected virtual void Dispose(bool disposing)
+  {
+    if (disposing)
+    {
+      ConfigurationManager?.Dispose();
+    }
+  }
+
+  #endregion
 }

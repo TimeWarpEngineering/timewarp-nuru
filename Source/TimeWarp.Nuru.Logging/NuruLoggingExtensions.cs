@@ -29,7 +29,8 @@ public static class NuruLoggingExtensions
   ///   .Build();
   /// </code>
   /// </example>
-  public static NuruAppBuilder ConfigureLogging(this NuruAppBuilder builder, Action<ILoggingBuilder> configure)
+  public static TBuilder ConfigureLogging<TBuilder>(this TBuilder builder, Action<ILoggingBuilder> configure)
+    where TBuilder : NuruCoreAppBuilder
   {
     ArgumentNullException.ThrowIfNull(builder);
     ArgumentNullException.ThrowIfNull(configure);
@@ -38,13 +39,15 @@ public static class NuruLoggingExtensions
     ILoggerFactory loggerFactory = LoggerFactory.Create(configure);
 #pragma warning restore CA2000
 
-    return builder.UseLogging(loggerFactory);
+    builder.UseLogging(loggerFactory);
+    return builder;
   }
 
   /// <summary>
   /// Adds console logging with default Nuru configuration.
   /// </summary>
-  public static NuruAppBuilder UseConsoleLogging(this NuruAppBuilder builder, LogLevel minimumLevel = LogLevel.Information)
+  public static TBuilder UseConsoleLogging<TBuilder>(this TBuilder builder, LogLevel minimumLevel = LogLevel.Information)
+    where TBuilder : NuruCoreAppBuilder
   {
     ArgumentNullException.ThrowIfNull(builder);
 
@@ -67,13 +70,15 @@ public static class NuruLoggingExtensions
       );
 #pragma warning restore CA2000
 
-    return builder.UseLogging(loggerFactory);
+    builder.UseLogging(loggerFactory);
+    return builder;
   }
 
   /// <summary>
   /// Adds console logging with custom configuration.
   /// </summary>
-  public static NuruAppBuilder UseConsoleLogging(this NuruAppBuilder builder, Action<ILoggingBuilder> configure)
+  public static TBuilder UseConsoleLogging<TBuilder>(this TBuilder builder, Action<ILoggingBuilder> configure)
+    where TBuilder : NuruCoreAppBuilder
   {
     ArgumentNullException.ThrowIfNull(builder);
     ArgumentNullException.ThrowIfNull(configure);
@@ -82,13 +87,15 @@ public static class NuruLoggingExtensions
     ILoggerFactory loggerFactory = LoggerFactory.Create(configure);
 #pragma warning restore CA2000
 
-    return builder.UseLogging(loggerFactory);
+    builder.UseLogging(loggerFactory);
+    return builder;
   }
 
   /// <summary>
   /// Adds debug console logging (includes Trace level).
   /// </summary>
-  public static NuruAppBuilder UseDebugLogging(this NuruAppBuilder builder)
+  public static TBuilder UseDebugLogging<TBuilder>(this TBuilder builder)
+    where TBuilder : NuruCoreAppBuilder
   {
     ArgumentNullException.ThrowIfNull(builder);
     return builder.UseConsoleLogging(LogLevel.Trace);

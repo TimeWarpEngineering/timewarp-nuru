@@ -18,7 +18,7 @@ public partial class NuruCoreApp
   /// </summary>
   /// <param name="args">Optional command line arguments.</param>
   /// <param name="options">Optional application options.</param>
-  /// <returns>A lightweight <see cref="NuruAppBuilder"/>.</returns>
+  /// <returns>A lightweight <see cref="NuruCoreAppBuilder"/>.</returns>
   /// <remarks>
   /// Features included:
   /// - Type converters
@@ -36,16 +36,16 @@ public partial class NuruCoreApp
   /// </remarks>
   /// <example>
   /// <code>
-  /// NuruAppBuilder builder = NuruCoreApp.CreateSlimBuilder();
+  /// NuruCoreAppBuilder builder = NuruCoreApp.CreateSlimBuilder();
   /// builder.Map("greet {name}", (string name) => $"Hello, {name}!");
   /// await builder.Build().RunAsync(args);
   /// </code>
   /// </example>
-  public static NuruAppBuilder CreateSlimBuilder(string[]? args = null, NuruCoreApplicationOptions? options = null)
+  public static NuruCoreAppBuilder CreateSlimBuilder(string[]? args = null, NuruCoreApplicationOptions? options = null)
   {
     options ??= new NuruCoreApplicationOptions();
     options.Args = args;
-    return new NuruAppBuilder(BuilderMode.Slim, options);
+    return new NuruCoreAppBuilder(BuilderMode.Slim, options);
   }
 
   /// <summary>
@@ -54,7 +54,7 @@ public partial class NuruCoreApp
   /// </summary>
   /// <param name="args">Optional command line arguments.</param>
   /// <param name="options">Optional application options.</param>
-  /// <returns>An empty <see cref="NuruAppBuilder"/>.</returns>
+  /// <returns>An empty <see cref="NuruCoreAppBuilder"/>.</returns>
   /// <remarks>
   /// Features included:
   /// - Type converters
@@ -73,17 +73,17 @@ public partial class NuruCoreApp
   /// </remarks>
   /// <example>
   /// <code>
-  /// NuruAppBuilder builder = NuruCoreApp.CreateEmptyBuilder();
+  /// NuruCoreAppBuilder builder = NuruCoreApp.CreateEmptyBuilder();
   /// builder.AddTypeConverter(new MyCustomConverter());
   /// builder.Map("cmd", () => "minimal");
   /// await builder.Build().RunAsync(args);
   /// </code>
   /// </example>
-  public static NuruAppBuilder CreateEmptyBuilder(string[]? args = null, NuruCoreApplicationOptions? options = null)
+  public static NuruCoreAppBuilder CreateEmptyBuilder(string[]? args = null, NuruCoreApplicationOptions? options = null)
   {
     options ??= new NuruCoreApplicationOptions();
     options.Args = args;
-    return new NuruAppBuilder(BuilderMode.Empty, options);
+    return new NuruCoreAppBuilder(BuilderMode.Empty, options);
   }
 
   #endregion

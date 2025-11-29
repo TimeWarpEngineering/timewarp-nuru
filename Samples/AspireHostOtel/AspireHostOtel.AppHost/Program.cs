@@ -10,7 +10,7 @@
 //
 // To run:
 //   Terminal 1: dotnet run --project AspireHostOtel.AppHost
-//   Terminal 2: OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317 dotnet run --project AspireHostOtel.NuruClient
+//   Terminal 2: OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:19034 dotnet run --project AspireHostOtel.NuruClient
 
 var builder = DistributedApplication.CreateBuilder(args);
 
@@ -34,7 +34,7 @@ Console.WriteLine();
 Console.WriteLine("To run the NuruClient with telemetry, open a NEW terminal and run:");
 Console.WriteLine();
 Console.WriteLine("  cd Samples/AspireHostOtel");
-Console.WriteLine("  OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317 dotnet run --project AspireHostOtel.NuruClient");
+Console.WriteLine("  OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:19034 dotnet run --project AspireHostOtel.NuruClient");
 Console.WriteLine();
 Console.WriteLine("Then interact with the REPL and watch telemetry appear in the Aspire Dashboard!");
 Console.WriteLine();

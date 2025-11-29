@@ -4,7 +4,7 @@
     "AspireHostOtel.NuruClient": {
       "commandName": "Project",
       "environmentVariables": {
-        "OTEL_EXPORTER_OTLP_ENDPOINT": "http://localhost:4317",
+        "OTEL_EXPORTER_OTLP_ENDPOINT": "http://localhost:19034",
         "OTEL_SERVICE_NAME": "nuru-repl-client"
       }
     }

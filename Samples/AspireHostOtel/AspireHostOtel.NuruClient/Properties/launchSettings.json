@@ -1,10 +1,17 @@
 {
   "$schema": "https://json.schemastore.org/launchsettings.json",
   "profiles": {
-    "AspireHostOtel.NuruClient": {
+    "Docker": {
       "commandName": "Project",
       "environmentVariables": {
         "OTEL_EXPORTER_OTLP_ENDPOINT": "http://localhost:4317",
+        "OTEL_SERVICE_NAME": "nuru-repl-client"
+      }
+    },
+    "AppHost": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "OTEL_EXPORTER_OTLP_ENDPOINT": "http://localhost:19034",
         "OTEL_SERVICE_NAME": "nuru-repl-client"
       }
     }

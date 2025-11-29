@@ -1,12 +1,12 @@
-#!/usr/bin/dotnet --
+#!/usr/bin/env -S dotnet run --launch-profile AppHost --
 #:package OpenTelemetry
 #:package OpenTelemetry.Exporter.OpenTelemetryProtocol
 #:package OpenTelemetry.Extensions.Hosting
 #:package Mediator.Abstractions
 #:package Mediator.SourceGenerator
-#:project ../../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
-#:project ../../../Source/TimeWarp.Nuru.Repl/TimeWarp.Nuru.Repl.csproj
-#:project ../../../Source/TimeWarp.Nuru.Telemetry/TimeWarp.Nuru.Telemetry.csproj
+#:project ../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
+#:project ../../Source/TimeWarp.Nuru.Repl/TimeWarp.Nuru.Repl.csproj
+#:project ../../Source/TimeWarp.Nuru.Telemetry/TimeWarp.Nuru.Telemetry.csproj
 
 // Nuru REPL Client with OpenTelemetry for Aspire Host
 // ====================================================

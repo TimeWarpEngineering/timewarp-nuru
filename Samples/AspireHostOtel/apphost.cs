@@ -1,4 +1,4 @@
-#!/usr/bin/dotnet --
+#!/usr/bin/env -S dotnet run --launch-profile http --
 #:sdk Aspire.AppHost.Sdk@13.0.0
 
 // Aspire Host with OpenTelemetry Sample
@@ -26,7 +26,7 @@ var builder = DistributedApplication.CreateBuilder(args);
 //
 // Pass arguments to run a command instead of entering REPL mode
 // (REPL requires interactive console which Aspire doesn't provide)
-builder.AddCSharpApp("nuruclient", "../NuruClient/nuru-client.cs")
+builder.AddCSharpApp("nuruclient", "./nuru-client.cs")
   .WithArgs("status");
 
 await builder.Build().RunAsync();

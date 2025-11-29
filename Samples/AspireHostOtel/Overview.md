@@ -7,14 +7,23 @@ This sample demonstrates a Nuru CLI/REPL application sending telemetry (traces, 
 Both the AppHost and NuruClient are implemented as **.NET 10 file-based apps** (runfiles) - single `.cs` files that run directly without a `.csproj`:
 
 ```bash
-# Run the AppHost
-./AppHost/apphost.cs
+cd Samples/AspireHostOtel
 
-# Run the NuruClient
-./NuruClient/nuru-client.cs
+# Run the AppHost
+./apphost.cs
+
+# Run the NuruClient (in separate terminal)
+./nuru-client.cs
 ```
 
-This demonstrates Aspire 13's support for single-file AppHosts using `#:sdk` directives.
+Each runfile specifies its launch profile in the shebang:
+
+```csharp
+#!/usr/bin/env -S dotnet run --launch-profile http --      # apphost.cs
+#!/usr/bin/env -S dotnet run --launch-profile AppHost --   # nuru-client.cs
+```
+
+Both runfiles share a single `Properties/launchSettings.json` with multiple profiles.
 
 ## IHostApplicationBuilder Integration
 
@@ -63,7 +72,7 @@ This means any extension method targeting `IHostApplicationBuilder` (like Aspire
 ### Step 1: Start Aspire Host
 
 ```bash
-cd Samples/AspireHostOtel/AppHost
+cd Samples/AspireHostOtel
 ./apphost.cs
 ```
 
@@ -75,7 +84,7 @@ This:
 ### Step 2: Run Interactive REPL (separate terminal)
 
 ```bash
-cd Samples/AspireHostOtel/NuruClient
+cd Samples/AspireHostOtel
 ./nuru-client.cs
 ```
 
@@ -102,14 +111,14 @@ Each command sends telemetry to the AppHost dashboard. Check:
 The AppHost registers NuruClient as a managed C# file-based app:
 
 ```csharp
-#!/usr/bin/dotnet --
+#!/usr/bin/env -S dotnet run --launch-profile http --
 #:sdk Aspire.AppHost.Sdk@13.0.0
 
 #pragma warning disable ASPIRECSHARPAPPS001
 
 var builder = DistributedApplication.CreateBuilder(args);
 
-builder.AddCSharpApp("nuruclient", "../NuruClient/nuru-client.cs")
+builder.AddCSharpApp("nuruclient", "./nuru-client.cs")
   .WithArgs("status");
 
 await builder.Build().RunAsync();
@@ -119,6 +128,33 @@ Aspire automatically:
 - Injects `OTEL_EXPORTER_OTLP_ENDPOINT` pointing to the dashboard
 - Shows the resource in the dashboard
 - Correlates telemetry from both managed and interactive sessions
+
+### Shared Launch Settings
+
+Both runfiles use a single `Properties/launchSettings.json` with multiple profiles:
+
+```json
+{
+  "profiles": {
+    "http": {
+      "environmentVariables": {
+        "ASPIRE_DASHBOARD_OTLP_ENDPOINT_URL": "http://localhost:19034",
+        ...
+      }
+    },
+    "AppHost": {
+      "environmentVariables": {
+        "OTEL_EXPORTER_OTLP_ENDPOINT": "http://localhost:19034",
+        "OTEL_SERVICE_NAME": "nuru-repl-client"
+      }
+    }
+  }
+}
+```
+
+The shebang in each runfile specifies which profile to use:
+- `apphost.cs` uses `--launch-profile http`
+- `nuru-client.cs` uses `--launch-profile AppHost`
 
 ### Dual Output Pattern (Console + Telemetry)
 
@@ -154,15 +190,11 @@ public static IHostApplicationBuilder AddNuruClientDefaults(this IHostApplicatio
 
 ```
 AspireHostOtel/
-├── AppHost/
-│   ├── apphost.cs              # Aspire Host runfile
-│   └── Properties/
-│       └── launchSettings.json # Dashboard configuration
-├── NuruClient/
-│   ├── nuru-client.cs          # Nuru REPL runfile
-│   └── Properties/
-│       └── launchSettings.json # OTLP endpoint configuration
-└── Overview.md                 # This file
+├── apphost.cs              # Aspire Host runfile
+├── nuru-client.cs          # Nuru REPL runfile
+├── Properties/
+│   └── launchSettings.json # Shared launch profiles
+└── Overview.md             # This file
 ```
 
 ## Telemetry Data Collected

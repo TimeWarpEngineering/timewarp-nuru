@@ -14,6 +14,13 @@
         "ASPIRE_ALLOW_UNSECURED_TRANSPORT": "true",
         "ASPIRE_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS": "true"
       }
+    },
+    "AppHost": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "OTEL_EXPORTER_OTLP_ENDPOINT": "http://localhost:19034",
+        "OTEL_SERVICE_NAME": "nuru-repl-client"
+      }
     }
   }
 }

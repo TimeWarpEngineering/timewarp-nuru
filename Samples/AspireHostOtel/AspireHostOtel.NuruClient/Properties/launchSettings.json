@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json.schemastore.org/launchsettings.json",
+  "profiles": {
+    "AspireHostOtel.NuruClient": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "OTEL_EXPORTER_OTLP_ENDPOINT": "http://localhost:4317",
+        "OTEL_SERVICE_NAME": "nuru-repl-client"
+      }
+    }
+  }
+}

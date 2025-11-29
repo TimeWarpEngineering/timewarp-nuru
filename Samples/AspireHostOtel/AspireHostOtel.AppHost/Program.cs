@@ -9,7 +9,7 @@
 //   User runs: NuruClient separately in their own terminal
 //
 // To run:
-//   Terminal 1: dotnet run --project AspireHostOtel.AppHost
+//   Terminal 1: dotnet run --project AspireHostOtel.AppHost --launch-profile http
 //   Terminal 2: OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:19034 dotnet run --project AspireHostOtel.NuruClient
 
 var builder = DistributedApplication.CreateBuilder(args);

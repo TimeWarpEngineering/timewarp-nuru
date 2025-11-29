@@ -9,7 +9,7 @@ This sample demonstrates .NET Aspire Host running an OpenTelemetry Collector and
 │ Terminal 1: Aspire AppHost                      │
 │  ├─ Aspire Dashboard (traces, metrics, logs)    │
 │  └─ OpenTelemetry Collector (OTLP receiver)     │
-│       └─ Listens on localhost:4317              │
+│       └─ Listens on localhost:19034             │
 └─────────────────────────────────────────────────┘
                       ▲
                       │ OTLP (gRPC)
@@ -30,7 +30,7 @@ This sample demonstrates .NET Aspire Host running an OpenTelemetry Collector and
 
 The AppHost project uses `CommunityToolkit.Aspire.Hosting.OpenTelemetryCollector` to:
 - Run an OpenTelemetry Collector container
-- Expose an OTLP endpoint (localhost:4317) for external apps
+- Expose an OTLP endpoint (localhost:19034) for external apps
 - Display telemetry in the Aspire Dashboard
 
 ```csharp
@@ -84,7 +84,7 @@ NuruCoreApp app = NuruApp.CreateBuilder(args)
 
 ```bash
 cd Samples/AspireHostOtel
-dotnet run --project AspireHostOtel.AppHost
+dotnet run --project AspireHostOtel.AppHost --launch-profile http
 ```
 
 The Aspire Dashboard URL will be printed to the console. Open it in your browser.
@@ -95,7 +95,7 @@ Open a **new terminal** and run the client with the OTLP endpoint:
 
 ```bash
 cd Samples/AspireHostOtel
-OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317 dotnet run --project AspireHostOtel.NuruClient
+OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:19034 dotnet run --project AspireHostOtel.NuruClient
 ```
 
 ### Interact with the REPL

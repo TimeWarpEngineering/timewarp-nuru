@@ -12,6 +12,7 @@
       "commandName": "Project",
       "environmentVariables": {
         "OTEL_EXPORTER_OTLP_ENDPOINT": "http://localhost:19034",
+        "OTEL_EXPORTER_OTLP_PROTOCOL": "grpc",
         "OTEL_SERVICE_NAME": "nuru-repl-client"
       }
     }

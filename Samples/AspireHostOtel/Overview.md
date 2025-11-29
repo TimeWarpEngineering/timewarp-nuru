@@ -2,6 +2,20 @@
 
 This sample demonstrates a Nuru CLI/REPL application sending telemetry (traces, metrics, structured logs) to an OpenTelemetry-compatible dashboard.
 
+## File-Based Apps (Runfiles)
+
+Both the AppHost and NuruClient are implemented as **.NET 10 file-based apps** (runfiles) - single `.cs` files that run directly without a `.csproj`:
+
+```bash
+# Run the AppHost
+./AppHost/apphost.cs
+
+# Run the NuruClient
+./NuruClient/nuru-client.cs
+```
+
+This demonstrates Aspire 13's support for single-file AppHosts using `#:sdk` directives.
+
 ## IHostApplicationBuilder Integration
 
 **New in Nuru 3.0**: `NuruAppBuilder` implements `IHostApplicationBuilder`, enabling seamless integration with Aspire and other .NET ecosystem extensions:
@@ -18,15 +32,11 @@ This means any extension method targeting `IHostApplicationBuilder` (like Aspire
 
 ---
 
-## Two Modes
-
-### AppHost Mode (Recommended)
-
-NuruClient is registered as an Aspire-managed project. Telemetry flows automatically to the Aspire Dashboard - both from Aspire-launched commands AND interactive REPL sessions.
+## Architecture
 
 ```
 ┌─────────────────────────────────────────────────┐
-│ Aspire AppHost                                  │
+│ Aspire AppHost (apphost.cs)                     │
 │  └─ Dashboard (http://localhost:15186)          │
 │       └─ OTLP receiver (port 19034)             │
 │            └─ Shows ALL telemetry               │
@@ -41,10 +51,6 @@ NuruClient is registered as an Aspire-managed project. Telemetry flows automatic
 └─────────────────────┘   └─────────────────────┘
 ```
 
-### Docker Mode (Standalone Dashboard)
-
-The standalone Aspire Dashboard running in Docker accepts telemetry from any application.
-
 ---
 
 ## Running the Sample
@@ -52,17 +58,13 @@ The standalone Aspire Dashboard running in Docker accepts telemetry from any app
 ### Prerequisites
 
 - .NET 10 SDK
-- Docker (optional, for standalone dashboard)
-
----
-
-## Option 1: AppHost Mode (Recommended)
+- Aspire 13.0+
 
 ### Step 1: Start Aspire Host
 
 ```bash
-cd Samples/AspireHostOtel/AspireHostOtel.AppHost
-dotnet run --launch-profile http
+cd Samples/AspireHostOtel/AppHost
+./apphost.cs
 ```
 
 This:
@@ -73,8 +75,8 @@ This:
 ### Step 2: Run Interactive REPL (separate terminal)
 
 ```bash
-cd Samples/AspireHostOtel/AspireHostOtel.NuruClient
-dotnet run --launch-profile AppHost
+cd Samples/AspireHostOtel/NuruClient
+./nuru-client.cs
 ```
 
 ### Step 3: Interact with the REPL
@@ -93,42 +95,24 @@ Each command sends telemetry to the AppHost dashboard. Check:
 
 ---
 
-## Option 2: Docker Mode
-
-### Step 1: Start the Standalone Dashboard
-
-```bash
-docker run --rm -it \
-  -p 18888:18888 \
-  -p 4317:18889 \
-  --name aspire-dashboard \
-  mcr.microsoft.com/dotnet/aspire-dashboard:9.0
-```
-
-Open http://localhost:18888 in your browser.
-
-### Step 2: Run the NuruClient
-
-```bash
-cd Samples/AspireHostOtel/AspireHostOtel.NuruClient
-dotnet run --launch-profile Docker
-```
-
----
-
 ## Key Concepts
 
-### Aspire Project Registration
+### Aspire C# App Registration
 
-The AppHost registers NuruClient as a managed project:
+The AppHost registers NuruClient as a managed C# file-based app:
 
 ```csharp
+#!/usr/bin/dotnet --
+#:sdk Aspire.AppHost.Sdk@13.0.0
+
+#pragma warning disable ASPIRECSHARPAPPS001
+
 var builder = DistributedApplication.CreateBuilder(args);
 
-builder.AddProject<Projects.AspireHostOtel_NuruClient>("nuruclient")
-  .WithArgs("status");  // Run command (REPL needs interactive console)
+builder.AddCSharpApp("nuruclient", "../NuruClient/nuru-client.cs")
+  .WithArgs("status");
 
-builder.Build().Run();
+await builder.Build().RunAsync();
 ```
 
 Aspire automatically:
@@ -170,11 +154,15 @@ public static IHostApplicationBuilder AddNuruClientDefaults(this IHostApplicatio
 
 ```
 AspireHostOtel/
-├── AspireHostOtel.AppHost/         # Aspire Host
-│   └── Program.cs                  # Registers NuruClient as managed project
-├── AspireHostOtel.NuruClient/      # Nuru REPL app with telemetry
-│   └── Program.cs                  # Commands with structured logging
-└── Overview.md                     # This file
+├── AppHost/
+│   ├── apphost.cs              # Aspire Host runfile
+│   └── Properties/
+│       └── launchSettings.json # Dashboard configuration
+├── NuruClient/
+│   ├── nuru-client.cs          # Nuru REPL runfile
+│   └── Properties/
+│       └── launchSettings.json # OTLP endpoint configuration
+└── Overview.md                 # This file
 ```
 
 ## Telemetry Data Collected
@@ -207,6 +195,6 @@ Duration > 1000
 
 ## See Also
 
-- [Aspire Telemetry Sample](../AspireTelemetry/) - Simpler telemetry example
+- [Aspire 13 File-Based App Support](https://aspire.dev/whats-new/aspire-13/#c-file-based-app-support)
 - [REPL Demo](../ReplDemo/) - REPL features without telemetry
 - [TimeWarp.Nuru.Telemetry](../../Source/TimeWarp.Nuru.Telemetry/) - Telemetry package

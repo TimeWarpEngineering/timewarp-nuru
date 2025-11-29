@@ -1,17 +1,24 @@
+#!/usr/bin/dotnet --
+#:sdk Aspire.AppHost.Sdk@13.0.0
+
 // Aspire Host with OpenTelemetry Sample
 // ======================================
 // This sample demonstrates:
 // - Aspire Dashboard with built-in OTLP receiver for telemetry
-// - NuruClient registered as an Aspire-managed project
+// - NuruClient runfile registered as an Aspire-managed C# app
 // - Telemetry flows automatically to the Aspire Dashboard
 //
 // To run:
-//   dotnet run
+//   ./apphost.cs
 //   (Aspire launches NuruClient automatically)
+
+// Type is for evaluation purposes only and is subject to change or
+// removal in future updates. Suppress this diagnostic to proceed.
+#pragma warning disable ASPIRECSHARPAPPS001
 
 var builder = DistributedApplication.CreateBuilder(args);
 
-// Register NuruClient as an Aspire-managed project.
+// Register NuruClient runfile as an Aspire-managed C# app.
 // Aspire will:
 // - Launch it automatically
 // - Inject OTEL_EXPORTER_OTLP_ENDPOINT pointing to the dashboard
@@ -19,8 +26,7 @@ var builder = DistributedApplication.CreateBuilder(args);
 //
 // Pass arguments to run a command instead of entering REPL mode
 // (REPL requires interactive console which Aspire doesn't provide)
-builder.AddProject<Projects.AspireHostOtel_NuruClient>("nuruclient")
+builder.AddCSharpApp("nuruclient", "../NuruClient/nuru-client.cs")
   .WithArgs("status");
 
-DistributedApplication app = builder.Build();
-app.Run();
+await builder.Build().RunAsync();

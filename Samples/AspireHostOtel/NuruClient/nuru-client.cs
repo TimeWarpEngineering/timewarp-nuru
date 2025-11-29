@@ -1,3 +1,13 @@
+#!/usr/bin/dotnet --
+#:package OpenTelemetry
+#:package OpenTelemetry.Exporter.OpenTelemetryProtocol
+#:package OpenTelemetry.Extensions.Hosting
+#:package Mediator.Abstractions
+#:package Mediator.SourceGenerator
+#:project ../../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
+#:project ../../../Source/TimeWarp.Nuru.Repl/TimeWarp.Nuru.Repl.csproj
+#:project ../../../Source/TimeWarp.Nuru.Telemetry/TimeWarp.Nuru.Telemetry.csproj
+
 // Nuru REPL Client with OpenTelemetry for Aspire Host
 // ====================================================
 // This sample demonstrates:
@@ -6,8 +16,11 @@
 // - Dual output: Console.WriteLine for user feedback, ILogger for telemetry
 // - Telemetry flows to Aspire Dashboard via OpenTelemetry
 //
-// Run this in a separate terminal from the Aspire Host:
-//   OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317 dotnet run
+// Run with Docker dashboard:
+//   OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317 ./nuru-client.cs
+//
+// Run with AppHost dashboard:
+//   OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:19034 ./nuru-client.cs
 
 using Mediator;
 using Microsoft.Extensions.DependencyInjection;

@@ -1,13 +1,6 @@
 {
   "$schema": "https://json.schemastore.org/launchsettings.json",
   "profiles": {
-    "Docker": {
-      "commandName": "Project",
-      "environmentVariables": {
-        "OTEL_EXPORTER_OTLP_ENDPOINT": "http://localhost:4317",
-        "OTEL_SERVICE_NAME": "nuru-repl-client"
-      }
-    },
     "AppHost": {
       "commandName": "Project",
       "environmentVariables": {

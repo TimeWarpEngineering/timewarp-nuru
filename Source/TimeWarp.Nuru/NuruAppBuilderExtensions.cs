@@ -10,6 +10,7 @@ public static class NuruAppBuilderExtensions
   /// This is called automatically by <see cref="NuruApp.CreateBuilder"/>.
   /// </summary>
   /// <param name="builder">The builder to extend.</param>
+  /// <param name="options">Optional configuration for extensions. If null, uses defaults.</param>
   /// <returns>The builder for chaining.</returns>
   /// <remarks>
   /// This method adds:
@@ -21,13 +22,14 @@ public static class NuruAppBuilderExtensions
   /// Logging is already configured by <c>UseTelemetry()</c>.
   /// Completion is already included via the REPL package dependency.
   /// </remarks>
-  public static NuruAppBuilder UseAllExtensions(this NuruAppBuilder builder)
+  public static NuruAppBuilder UseAllExtensions(this NuruAppBuilder builder, NuruAppOptions? options = null)
   {
     ArgumentNullException.ThrowIfNull(builder);
+    options ??= new NuruAppOptions();
 
     return builder
-      .UseTelemetry()
-      .AddReplSupport()
-      .AddInteractiveRoute();
+      .UseTelemetry(options.ConfigureTelemetry ?? (_ => { }))
+      .AddReplSupport(options.ConfigureRepl)
+      .AddInteractiveRoute(options.InteractiveRoutePatterns);
   }
 }

@@ -4,6 +4,7 @@
 // - Nuru REPL application with full telemetry (traces, metrics, logs)
 // - Structured logging with ILogger (NOT Console.WriteLine)
 // - Telemetry flows to Aspire Dashboard via OpenTelemetry Collector
+// - Using NuruAppOptions to configure all extensions via CreateBuilder
 //
 // IMPORTANT: Use ILogger for structured logging, not Console.WriteLine!
 // This ensures logs flow through the OTEL pipeline to the Aspire Dashboard.
@@ -15,37 +16,13 @@ using TimeWarp.Nuru;
 using TimeWarp.Nuru.Repl;
 
 // Build the Nuru app with telemetry and REPL support
-NuruCoreApp app = NuruApp.CreateBuilder(args)
-  // UseTelemetry() configures:
-  // - OTLP export to collector (via OTEL_EXPORTER_OTLP_ENDPOINT env var)
-  // - Distributed tracing via ActivitySource
-  // - Metrics via Meter
-  // - Console logging with timestamps
-  .UseTelemetry()
-  .ConfigureServices
-  (
-    services =>
-    {
-      services.AddMediator();
-
-      // Register TelemetryBehavior for automatic command instrumentation
-      services.AddSingleton<IPipelineBehavior<GreetCommand, Unit>, TelemetryBehavior<GreetCommand, Unit>>();
-      services.AddSingleton<IPipelineBehavior<StatusCommand, Unit>, TelemetryBehavior<StatusCommand, Unit>>();
-      services.AddSingleton<IPipelineBehavior<WorkCommand, Unit>, TelemetryBehavior<WorkCommand, Unit>>();
-      services.AddSingleton<IPipelineBehavior<ConfigCommand, Unit>, TelemetryBehavior<ConfigCommand, Unit>>();
-    }
-  )
-
-  // Commands - all use structured ILogger, not Console.WriteLine
-  .Map<GreetCommand>(pattern: "greet {name}", description: "Greet someone (structured log)")
-  .Map<StatusCommand>(pattern: "status", description: "Show system status (structured log)")
-  .Map<WorkCommand>(pattern: "work {duration:int}", description: "Simulate work with duration in ms")
-  .Map<ConfigCommand>(pattern: "config", description: "Show telemetry configuration")
-
-  // REPL configuration
-  .AddReplSupport
-  (
-    options =>
+// Using CreateBuilder with NuruAppOptions for clean extension configuration
+NuruCoreApp app = NuruApp.CreateBuilder
+(
+  args,
+  new NuruAppOptions
+  {
+    ConfigureRepl = options =>
     {
       options.Prompt = "otel> ";
       options.WelcomeMessage =
@@ -64,8 +41,26 @@ NuruCoreApp app = NuruApp.CreateBuilder(args)
         "Type 'help' for all commands, 'exit' to quit.";
       options.GoodbyeMessage = "Goodbye! Check Aspire Dashboard for telemetry data.";
     }
+  }
+)
+  .ConfigureServices
+  (
+    services =>
+    {
+      services.AddMediator();
+
+      // Register TelemetryBehavior for automatic command instrumentation
+      services.AddSingleton<IPipelineBehavior<GreetCommand, Unit>, TelemetryBehavior<GreetCommand, Unit>>();
+      services.AddSingleton<IPipelineBehavior<StatusCommand, Unit>, TelemetryBehavior<StatusCommand, Unit>>();
+      services.AddSingleton<IPipelineBehavior<WorkCommand, Unit>, TelemetryBehavior<WorkCommand, Unit>>();
+      services.AddSingleton<IPipelineBehavior<ConfigCommand, Unit>, TelemetryBehavior<ConfigCommand, Unit>>();
+    }
   )
-  .AddInteractiveRoute()
+  // Commands - all use structured ILogger, not Console.WriteLine
+  .Map<GreetCommand>(pattern: "greet {name}", description: "Greet someone (structured log)")
+  .Map<StatusCommand>(pattern: "status", description: "Show system status (structured log)")
+  .Map<WorkCommand>(pattern: "work {duration:int}", description: "Simulate work with duration in ms")
+  .Map<ConfigCommand>(pattern: "config", description: "Show telemetry configuration")
   .Build();
 
 // Run the app - enters REPL if no args, otherwise executes command

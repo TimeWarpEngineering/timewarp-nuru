@@ -15,14 +15,14 @@ Add a `NuruAppOptions` parameter to `CreateBuilder()` that allows configuration 
 
 ## Checklist
 
-- [ ] Create `NuruAppOptions` class in `Source/TimeWarp.Nuru/`
-- [ ] Add `ConfigureRepl` property (`Action<ReplOptions>?`)
-- [ ] Add `ConfigureTelemetry` property (`Action<NuruTelemetryOptions>?`)
-- [ ] Add `InteractiveRoutePatterns` property (default: "--interactive,-i")
-- [ ] Update `NuruApp.CreateBuilder` to accept `NuruAppOptions?`
-- [ ] Update `UseAllExtensions` to accept and use `NuruAppOptions`
-- [ ] Update AspireHostOtel sample to use new API
-- [ ] Verify no duplicate route warnings
+- [x] Create `NuruAppOptions` class in `Source/TimeWarp.Nuru/`
+- [x] Add `ConfigureRepl` property (`Action<ReplOptions>?`)
+- [x] Add `ConfigureTelemetry` property (`Action<NuruTelemetryOptions>?`)
+- [x] Add `InteractiveRoutePatterns` property (default: "--interactive,-i")
+- [x] Update `NuruApp.CreateBuilder` to accept `NuruAppOptions?`
+- [x] Update `UseAllExtensions` to accept and use `NuruAppOptions`
+- [x] Update AspireHostOtel sample to use new API
+- [x] Verify no duplicate route warnings
 
 ## Notes
 

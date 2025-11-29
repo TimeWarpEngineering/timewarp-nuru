@@ -69,6 +69,7 @@ public partial class NuruAppBuilder
       case BuilderMode.Full:
         // Full featured: DI, Configuration, auto-help, logging infrastructure
         AddDependencyInjection();
+        InitializeHostApplicationBuilder();
         AddConfiguration(args);
         AddAutoHelp();
         break;

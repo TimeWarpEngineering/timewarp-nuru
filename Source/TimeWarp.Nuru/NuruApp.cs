@@ -56,6 +56,8 @@ public class NuruApp : NuruCoreApp
   /// .Build();
   /// </code>
   /// </example>
+  [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope",
+    Justification = "Builder ownership is transferred to caller who is responsible for disposal")]
   public static NuruAppBuilder CreateBuilder
   (
     string[] args,

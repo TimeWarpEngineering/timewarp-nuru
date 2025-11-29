@@ -3,7 +3,7 @@ namespace TimeWarp.Nuru;
 /// <summary>
 /// Unified builder for configuring Nuru applications with or without dependency injection.
 /// </summary>
-public partial class NuruAppBuilder
+public partial class NuruAppBuilder : IDisposable
 {
   private readonly TypeConverterRegistry TypeConverterRegistry = new();
   private ApplicationMetadata? AppMetadata;
@@ -121,5 +121,26 @@ public partial class NuruAppBuilder
   {
     AppMetadata = new ApplicationMetadata(name, description);
     return this;
+  }
+
+  /// <summary>
+  /// Disposes resources used by the builder.
+  /// </summary>
+  public void Dispose()
+  {
+    Dispose(disposing: true);
+    GC.SuppressFinalize(this);
+  }
+
+  /// <summary>
+  /// Disposes resources used by the builder.
+  /// </summary>
+  /// <param name="disposing">True if called from Dispose(), false if from finalizer.</param>
+  protected virtual void Dispose(bool disposing)
+  {
+    if (disposing)
+    {
+      ConfigurationManager?.Dispose();
+    }
   }
 }

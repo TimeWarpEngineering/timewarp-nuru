@@ -2,41 +2,25 @@
 // ======================================
 // This sample demonstrates:
 // - Aspire Dashboard with built-in OTLP receiver for telemetry
-// - External CLI apps sending telemetry directly to the Dashboard
-//
-// Architecture:
-//   AppHost runs: Aspire Dashboard (with built-in OTLP receiver on port 19034)
-//   User runs: NuruClient separately in their own terminal
+// - NuruClient registered as an Aspire-managed project
+// - Telemetry flows automatically to the Aspire Dashboard
 //
 // To run:
-//   Terminal 1: dotnet run --launch-profile http
-//   Terminal 2: dotnet run --project ../AspireHostOtel.NuruClient --launch-profile AppHost
+//   dotnet run
+//   (Aspire launches NuruClient automatically)
 
 var builder = DistributedApplication.CreateBuilder(args);
 
-// The Aspire Dashboard has a built-in OTLP receiver.
-// No need for a separate OpenTelemetry Collector for simple scenarios.
-// External apps send telemetry to DOTNET_DASHBOARD_OTLP_ENDPOINT_URL (port 19034 for http profile).
+// Register NuruClient as an Aspire-managed project.
+// Aspire will:
+// - Launch it automatically
+// - Inject OTEL_EXPORTER_OTLP_ENDPOINT pointing to the dashboard
+// - Show its telemetry in the dashboard
+//
+// Pass arguments to run a command instead of entering REPL mode
+// (REPL requires interactive console which Aspire doesn't provide)
+builder.AddProject<Projects.AspireHostOtel_NuruClient>("nuruclient")
+  .WithArgs("status");
 
 DistributedApplication app = builder.Build();
-
-// Print instructions for running the client
-Console.WriteLine();
-Console.WriteLine("=== Aspire Host with OpenTelemetry ===");
-Console.WriteLine();
-Console.WriteLine("The Aspire Dashboard is starting with built-in OTLP receiver...");
-Console.WriteLine("Dashboard OTLP endpoint: http://localhost:19034");
-Console.WriteLine();
-Console.WriteLine("To run the NuruClient with telemetry, open a NEW terminal and run:");
-Console.WriteLine();
-Console.WriteLine("  cd Samples/AspireHostOtel/AspireHostOtel.NuruClient");
-Console.WriteLine("  dotnet run --launch-profile AppHost");
-Console.WriteLine();
-Console.WriteLine("Or manually set the endpoint:");
-Console.WriteLine("  $env:OTEL_EXPORTER_OTLP_ENDPOINT = 'http://localhost:19034'");
-Console.WriteLine("  dotnet run");
-Console.WriteLine();
-Console.WriteLine("Then interact with the REPL and watch telemetry appear in the Aspire Dashboard!");
-Console.WriteLine();
-
 app.Run();

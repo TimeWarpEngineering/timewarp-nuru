@@ -23,20 +23,50 @@ This is a lightweight change - just implementing an interface from `Microsoft.Ex
 ## Checklist
 
 ### Implementation
-- [ ] Add Microsoft.Extensions.Hosting.Abstractions package reference
-- [ ] Add Microsoft.Extensions.Diagnostics.Abstractions if needed for IMetricsBuilder
-- [ ] Implement IHostEnvironment (or use existing implementation)
-- [ ] Expose ILoggingBuilder
-- [ ] Expose IMetricsBuilder
-- [ ] Add Properties dictionary
-- [ ] Implement ConfigureContainer method
-- [ ] Update NuruAppBuilder to implement IHostApplicationBuilder
-- [ ] Verify AOT compatibility
+- [x] Add Microsoft.Extensions.Hosting.Abstractions package reference
+- [x] Add Microsoft.Extensions.Diagnostics.Abstractions if needed for IMetricsBuilder
+- [x] Implement IHostEnvironment (or use existing implementation)
+- [x] Expose ILoggingBuilder
+- [x] Expose IMetricsBuilder
+- [x] Add Properties dictionary
+- [x] Implement ConfigureContainer method
+- [x] Update NuruAppBuilder to implement IHostApplicationBuilder
+- [x] Verify AOT compatibility (solution builds)
 
 ### Testing
-- [ ] Test that Aspire AddAppDefaults() works
-- [ ] Update AspireHostOtel sample to use the new integration
-- [ ] Verify telemetry flows to Aspire dashboard
+- [x] Test that Aspire AddAppDefaults() style extensions work
+- [x] Update AspireHostOtel sample to use the new integration
+- [ ] Verify telemetry flows to Aspire dashboard (requires human testing)
+
+## Results
+
+Successfully implemented `IHostApplicationBuilder` on `NuruAppBuilder`:
+
+### Files Modified
+- `Directory.Packages.props` - Added `Microsoft.Extensions.Hosting.Abstractions` package
+- `Source/TimeWarp.Nuru.Core/TimeWarp.Nuru.Core.csproj` - Added package reference
+- `Source/TimeWarp.Nuru.Core/GlobalUsings.cs` - Added required using statements
+- `Source/TimeWarp.Nuru.Core/NuruAppBuilder.HostApplicationBuilder.cs` - **New file** with interface implementation
+
+### Implementation Details
+
+Created a new partial class file `NuruAppBuilder.HostApplicationBuilder.cs` that:
+1. Implements `IHostApplicationBuilder` interface on `NuruAppBuilder`
+2. Provides public properties: `HostConfiguration`, `HostEnvironment`, `Logging`, `Metrics`, `Properties`
+3. Uses explicit interface implementations for `Configuration` and `Environment` (to avoid naming conflicts)
+4. Includes helper classes: `NuruHostEnvironment`, `NuruLoggingBuilder`, `NuruMetricsBuilder`
+
+### Sample Updated
+- `Samples/AspireHostOtel/AspireHostOtel.NuruClient/Program.cs` - Demonstrates Aspire-style extension methods
+- `Samples/AspireHostOtel/Overview.md` - Documents the new feature
+
+### Benefit
+Any extension method targeting `IHostApplicationBuilder` (like Aspire's `AddAppDefaults()`) now works with NuruAppBuilder:
+
+```csharp
+NuruAppBuilder builder = NuruApp.CreateBuilder(args);
+builder.AddNuruClientDefaults();  // Uses builder.Logging, builder.Services, etc.
+```
 
 ## Notes
 

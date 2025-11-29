@@ -2,6 +2,20 @@
 
 This sample demonstrates a Nuru CLI/REPL application sending telemetry (traces, metrics, structured logs) to an OpenTelemetry-compatible dashboard.
 
+## IHostApplicationBuilder Integration
+
+**New in Nuru 3.0**: `NuruAppBuilder` implements `IHostApplicationBuilder`, enabling seamless integration with Aspire and other .NET ecosystem extensions:
+
+```csharp
+// NuruAppBuilder implements IHostApplicationBuilder!
+NuruAppBuilder builder = NuruApp.CreateBuilder(args, options);
+
+// Aspire-style extension methods work directly:
+builder.AddNuruClientDefaults();  // Uses builder.Logging, builder.Services, etc.
+```
+
+This means any extension method targeting `IHostApplicationBuilder` (like Aspire's `AddAppDefaults()`) works with Nuru out of the box.
+
 ## Two Dashboard Modes
 
 ### Docker Mode (Recommended for CLI Apps)
@@ -149,19 +163,36 @@ This pattern ensures:
 
 ### Nuru Telemetry Integration
 
-The Nuru app uses `UseTelemetry()` for one-line telemetry setup:
+The Nuru app uses `IHostApplicationBuilder` extension methods for Aspire-style configuration:
 
 ```csharp
-NuruCoreApp app = NuruApp.CreateBuilder(args)
-  .UseTelemetry()  // OTLP export, tracing, metrics
+NuruAppBuilder builder = NuruApp.CreateBuilder(args, options);
+
+// IHostApplicationBuilder extensions work because NuruAppBuilder implements the interface!
+builder.AddNuruClientDefaults();  // Configures OpenTelemetry via builder.Logging, builder.Services
+
+builder
   .ConfigureServices(services =>
   {
     services.AddMediator();
     services.AddSingleton<IPipelineBehavior<T, Unit>, TelemetryBehavior<T, Unit>>();
   })
   .Map<GreetCommand>(pattern: "greet {name}")
-  .AddReplSupport(options => { ... })
   .Build();
+```
+
+The extension method uses standard `IHostApplicationBuilder` properties:
+
+```csharp
+public static IHostApplicationBuilder AddNuruClientDefaults(this IHostApplicationBuilder builder)
+{
+    builder.Logging.AddOpenTelemetry(logging => { ... });
+    builder.Services.AddOpenTelemetry().WithTracing(tracing =>
+    {
+        tracing.AddSource(builder.Environment.ApplicationName);
+    });
+    return builder;
+}
 ```
 
 ## Project Structure

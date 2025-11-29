@@ -47,6 +47,9 @@
     <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.14.0" />
     <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.14.0" />
   </ItemGroup>
+  <ItemGroup Label="Aspire">
+    <PackageVersion Include="CommunityToolkit.Aspire.Hosting.OpenTelemetryCollector" Version="13.0.0" />
+  </ItemGroup>
   <ItemGroup Label="Benchmark - CLI Frameworks">
     <PackageVersion Include="CliFx" Version="2.3.6" />
     <PackageVersion Include="Cocona" Version="2.2.0" />

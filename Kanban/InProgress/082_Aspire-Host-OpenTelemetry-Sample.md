@@ -15,14 +15,14 @@ Reference: David Fowler tweet on Aspire orchestration patterns.
 
 ## Checklist
 
-- [ ] Create Aspire Host project (AppHost)
-- [ ] Add OpenTelemetry Collector resource
-- [ ] Create Nuru console app with REPL support
-- [ ] Configure OTLP export to collector
-- [ ] Demonstrate structured logging (not just Console.WriteLine)
+- [x] Create Aspire Host project (AppHost)
+- [x] Add OpenTelemetry Collector resource
+- [x] Create Nuru console app with REPL support
+- [x] Configure OTLP export to collector
+- [x] Demonstrate structured logging (not just Console.WriteLine)
 - [ ] Verify telemetry appears in Aspire Dashboard
-- [ ] Create Overview.md explaining the architecture
-- [ ] Document how to run the sample
+- [x] Create Overview.md explaining the architecture
+- [x] Document how to run the sample
 
 ## Notes
 

@@ -1,7 +1,4 @@
 #!/usr/bin/env -S dotnet run --launch-profile AppHost --
-#:package OpenTelemetry
-#:package OpenTelemetry.Exporter.OpenTelemetryProtocol
-#:package OpenTelemetry.Extensions.Hosting
 #:package Mediator.Abstractions
 #:package Mediator.SourceGenerator
 #:project ../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj

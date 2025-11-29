@@ -5,32 +5,26 @@
 #:project ../../Source/TimeWarp.Nuru.Repl/TimeWarp.Nuru.Repl.csproj
 #:project ../../Source/TimeWarp.Nuru.Telemetry/TimeWarp.Nuru.Telemetry.csproj
 
-// Nuru REPL Client with OpenTelemetry for Aspire Host
-// ====================================================
+// Nuru CLI Client with OpenTelemetry for Aspire Host
+// ===================================================
 // This sample demonstrates:
-// - Nuru implements IHostApplicationBuilder for seamless Aspire integration
-// - Extension methods targeting IHostApplicationBuilder work with NuruAppBuilder
+// - Mediator commands with TelemetryBehavior pipeline
+// - Auto-wired OpenTelemetry via NuruApp.CreateBuilder()
 // - Dual output: Console.WriteLine for user feedback, ILogger for telemetry
-// - Telemetry flows to Aspire Dashboard via OpenTelemetry
+// - Telemetry flows to Aspire Dashboard via OTLP
 //
-// Run with Docker dashboard:
-//   OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317 ./nuru-client.cs
+// Run standalone with OTLP endpoint:
+//   OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317 ./nuru-client.cs greet Alice
 //
-// Run with AppHost dashboard:
-//   OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:19034 ./nuru-client.cs
+// Run via AppHost (telemetry auto-configured):
+//   ./apphost.cs
 
 using Mediator;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using OpenTelemetry;
-using OpenTelemetry.Metrics;
-using OpenTelemetry.Trace;
 using TimeWarp.Nuru;
-using TimeWarp.Nuru.Repl;
 
-// Build the Nuru app with telemetry and REPL support
-// NuruAppBuilder implements IHostApplicationBuilder, so Aspire-style extensions work!
+// Build the Nuru app with auto-wired telemetry and REPL support
 NuruAppBuilder builder = NuruApp.CreateBuilder
 (
   args,
@@ -49,18 +43,11 @@ NuruAppBuilder builder = NuruApp.CreateBuilder
         "  work 500         - Simulate 500ms work (watch traces)\n" +
         "  config           - Show telemetry configuration\n" +
         "\n" +
-        "NuruAppBuilder implements IHostApplicationBuilder!\n" +
-        "This enables Aspire-style extension methods to work directly.\n" +
-        "\n" +
         "Type 'help' for all commands, 'exit' to quit.";
       options.GoodbyeMessage = "Goodbye! Check Aspire Dashboard for telemetry data.";
     }
   }
 );
-
-// Demonstrate IHostApplicationBuilder integration:
-// Extension methods targeting IHostApplicationBuilder work with NuruAppBuilder!
-builder.AddNuruClientDefaults();
 
 builder
   .ConfigureServices
@@ -85,67 +72,6 @@ NuruCoreApp app = builder.Build();
 // Run the app - use -i or --interactive to enter REPL mode
 // Telemetry is automatically flushed by NuruApp.RunAsync()
 return await app.RunAsync(args);
-
-// =============================================================================
-// ASPIRE-STYLE EXTENSION METHOD
-// =============================================================================
-// This demonstrates that IHostApplicationBuilder extensions work with NuruAppBuilder.
-// In a real Aspire project, you'd use the shared AppDefaults library.
-
-/// <summary>
-/// Extension methods for configuring Nuru client apps with OpenTelemetry.
-/// These work because NuruAppBuilder implements IHostApplicationBuilder.
-/// </summary>
-public static class NuruClientDefaultsExtensions
-{
-  /// <summary>
-  /// Adds default configuration for Nuru client apps.
-  /// This pattern mirrors Aspire's AddAppDefaults() extension.
-  /// </summary>
-  public static IHostApplicationBuilder AddNuruClientDefaults(this IHostApplicationBuilder builder)
-  {
-    builder.ConfigureNuruOpenTelemetry();
-    return builder;
-  }
-
-  /// <summary>
-  /// Configures OpenTelemetry for the Nuru client.
-  /// </summary>
-  public static IHostApplicationBuilder ConfigureNuruOpenTelemetry(this IHostApplicationBuilder builder)
-  {
-    // Configure logging with OpenTelemetry
-    builder.Logging.AddOpenTelemetry(logging =>
-    {
-      logging.IncludeFormattedMessage = true;
-      logging.IncludeScopes = true;
-    });
-
-    // Configure OpenTelemetry services
-    builder.Services.AddOpenTelemetry()
-      .WithTracing(tracing =>
-      {
-        tracing.AddSource(builder.Environment.ApplicationName);
-      });
-
-    // Add OTLP exporter if endpoint is configured
-    builder.AddOpenTelemetryExporters();
-
-    return builder;
-  }
-
-  private static IHostApplicationBuilder AddOpenTelemetryExporters(this IHostApplicationBuilder builder)
-  {
-    string? otlpEndpoint = builder.Configuration["OTEL_EXPORTER_OTLP_ENDPOINT"];
-    bool useOtlpExporter = !string.IsNullOrWhiteSpace(otlpEndpoint);
-
-    if (useOtlpExporter)
-    {
-      builder.Services.AddOpenTelemetry().UseOtlpExporter();
-    }
-
-    return builder;
-  }
-}
 
 // =============================================================================
 // COMMANDS - Using structured ILogger, NOT Console.WriteLine

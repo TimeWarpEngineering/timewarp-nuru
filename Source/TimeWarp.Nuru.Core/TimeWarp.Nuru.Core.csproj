@@ -35,6 +35,7 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" GeneratePathProperty="true" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
     <PackageReference Include="Microsoft.Extensions.Options" />
     <!-- Only reference Mediator.Abstractions - consumers must add Mediator.SourceGenerator to discover their handlers -->
     <PackageReference Include="Mediator.Abstractions" />

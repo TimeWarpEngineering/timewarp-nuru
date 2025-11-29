@@ -153,6 +153,24 @@ public static class NuruTelemetryExtensions
   }
 
   /// <summary>
+  /// Flushes all telemetry data without disposing providers.
+  /// Use this in REPL mode after each command to ensure telemetry appears immediately.
+  /// </summary>
+  /// <param name="delayMs">Optional delay in milliseconds to allow export to complete. Default: 100ms.</param>
+  public static async Task FlushAsync(int delayMs = 100)
+  {
+    // Force flush to ensure all data is sent
+    tracerProvider?.ForceFlush();
+    meterProvider?.ForceFlush();
+
+    // Allow time for export to complete
+    if (delayMs > 0)
+    {
+      await Task.Delay(delayMs).ConfigureAwait(false);
+    }
+  }
+
+  /// <summary>
   /// Flushes all telemetry data and disposes providers.
   /// Call this before application exit to ensure all telemetry is exported.
   /// Critical for CLI applications which exit quickly.

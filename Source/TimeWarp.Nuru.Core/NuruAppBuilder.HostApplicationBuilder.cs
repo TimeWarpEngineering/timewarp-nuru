@@ -6,11 +6,11 @@ namespace TimeWarp.Nuru;
 /// </summary>
 public partial class NuruAppBuilder : IHostApplicationBuilder
 {
-  private ConfigurationManager? ConfigurationManagerField;
-  private NuruHostEnvironment? HostEnvironmentField;
-  private NuruLoggingBuilder? LoggingBuilderField;
-  private NuruMetricsBuilder? MetricsBuilderField;
-  private Dictionary<object, object>? PropertiesDictionaryField;
+  private ConfigurationManager? ConfigurationManager;
+  private NuruHostEnvironment? NuruHostEnvironment;
+  private NuruLoggingBuilder? NuruLoggingBuilder;
+  private NuruMetricsBuilder? NuruMetricsBuilder;
+  private Dictionary<object, object>? PropertiesDictionary;
 
   /// <summary>
   /// Gets the set of key/value configuration properties.
@@ -23,7 +23,7 @@ public partial class NuruAppBuilder : IHostApplicationBuilder
   {
     get
     {
-      ConfigurationManagerField ??= new ConfigurationManager();
+      ConfigurationManager ??= new ConfigurationManager();
 
       // If we have existing configuration, copy it to the manager
       if (Configuration is not null)
@@ -32,12 +32,12 @@ public partial class NuruAppBuilder : IHostApplicationBuilder
         {
           if (kvp.Value is not null)
           {
-            ConfigurationManagerField[kvp.Key] = kvp.Value;
+            ConfigurationManager[kvp.Key] = kvp.Value;
           }
         }
       }
 
-      return ConfigurationManagerField;
+      return ConfigurationManager;
     }
   }
 
@@ -48,7 +48,7 @@ public partial class NuruAppBuilder : IHostApplicationBuilder
   {
     get
     {
-      if (HostEnvironmentField is null)
+      if (NuruHostEnvironment is null)
       {
         string environmentName = ApplicationOptions?.EnvironmentName
           ?? System.Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")
@@ -62,13 +62,13 @@ public partial class NuruAppBuilder : IHostApplicationBuilder
         string contentRootPath = ApplicationOptions?.ContentRootPath
           ?? AppContext.BaseDirectory;
 
-        HostEnvironmentField = new NuruHostEnvironment(
+        NuruHostEnvironment = new NuruHostEnvironment(
           environmentName,
           applicationName,
           contentRootPath);
       }
 
-      return HostEnvironmentField;
+      return NuruHostEnvironment;
     }
   }
 
@@ -79,8 +79,8 @@ public partial class NuruAppBuilder : IHostApplicationBuilder
   {
     get
     {
-      LoggingBuilderField ??= new NuruLoggingBuilder(Services);
-      return LoggingBuilderField;
+      NuruLoggingBuilder ??= new NuruLoggingBuilder(Services);
+      return NuruLoggingBuilder;
     }
   }
 
@@ -91,8 +91,8 @@ public partial class NuruAppBuilder : IHostApplicationBuilder
   {
     get
     {
-      MetricsBuilderField ??= new NuruMetricsBuilder(Services);
-      return MetricsBuilderField;
+      NuruMetricsBuilder ??= new NuruMetricsBuilder(Services);
+      return NuruMetricsBuilder;
     }
   }
 
@@ -103,8 +103,8 @@ public partial class NuruAppBuilder : IHostApplicationBuilder
   {
     get
     {
-      PropertiesDictionaryField ??= [];
-      return PropertiesDictionaryField;
+      PropertiesDictionary ??= [];
+      return PropertiesDictionary;
     }
   }
 

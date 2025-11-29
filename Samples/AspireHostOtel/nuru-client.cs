@@ -24,54 +24,48 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using TimeWarp.Nuru;
 
-// Build the Nuru app with auto-wired telemetry and REPL support
-NuruAppBuilder builder = NuruApp.CreateBuilder
-(
-  args,
-  new NuruAppOptions
+// Configuration extracted for clean fluent API
+NuruAppOptions nuruAppOptions = new()
+{
+  ConfigureRepl = options =>
   {
-    ConfigureRepl = options =>
-    {
-      options.Prompt = "otel> ";
-      options.WelcomeMessage =
-        "Aspire Host + OpenTelemetry + Nuru REPL Demo\n" +
-        "=============================================\n" +
-        "\n" +
-        "COMMANDS:\n" +
-        "  greet Alice      - Greet someone (watch Aspire Dashboard logs)\n" +
-        "  status           - Show system status\n" +
-        "  work 500         - Simulate 500ms work (watch traces)\n" +
-        "  config           - Show telemetry configuration\n" +
-        "\n" +
-        "Type 'help' for all commands, 'exit' to quit.";
-      options.GoodbyeMessage = "Goodbye! Check Aspire Dashboard for telemetry data.";
-    }
+    options.Prompt = "otel> ";
+    options.WelcomeMessage =
+      "Aspire Host + OpenTelemetry + Nuru REPL Demo\n" +
+      "=============================================\n" +
+      "\n" +
+      "COMMANDS:\n" +
+      "  greet Alice      - Greet someone (watch Aspire Dashboard logs)\n" +
+      "  status           - Show system status\n" +
+      "  work 500         - Simulate 500ms work (watch traces)\n" +
+      "  config           - Show telemetry configuration\n" +
+      "\n" +
+      "Type 'help' for all commands, 'exit' to quit.";
+    options.GoodbyeMessage = "Goodbye! Check Aspire Dashboard for telemetry data.";
   }
-);
+};
 
-builder
-  .ConfigureServices
-  (
-    services =>
-    {
-      // Register TelemetryBehavior for all commands using MediatorOptions (AOT-compatible)
-      services.AddMediator(options =>
-      {
-        options.PipelineBehaviors = [typeof(TelemetryBehavior<,>)];
-      });
-    }
-  )
-  // Commands - all use structured ILogger, not Console.WriteLine
+// Build the Nuru app with auto-wired telemetry and REPL support
+NuruCoreApp app = NuruApp.CreateBuilder(args, nuruAppOptions)
+  .ConfigureServices(ConfigureServices)
   .Map<GreetCommand>(pattern: "greet {name}", description: "Greet someone (structured log)")
   .Map<StatusCommand>(pattern: "status", description: "Show system status (structured log)")
   .Map<WorkCommand>(pattern: "work {duration:int}", description: "Simulate work with duration in ms")
-  .Map<ConfigCommand>(pattern: "config", description: "Show telemetry configuration");
-
-NuruCoreApp app = builder.Build();
+  .Map<ConfigCommand>(pattern: "config", description: "Show telemetry configuration")
+  .Build();
 
 // Run the app - use -i or --interactive to enter REPL mode
 // Telemetry is automatically flushed by NuruApp.RunAsync()
 return await app.RunAsync(args);
+
+static void ConfigureServices(IServiceCollection services)
+{
+  // Register TelemetryBehavior for all commands using MediatorOptions (AOT-compatible)
+  services.AddMediator(options =>
+  {
+    options.PipelineBehaviors = [typeof(TelemetryBehavior<,>)];
+  });
+}
 
 // =============================================================================
 // COMMANDS - Using structured ILogger, NOT Console.WriteLine

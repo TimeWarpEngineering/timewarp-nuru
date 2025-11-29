@@ -67,13 +67,11 @@ builder
   (
     services =>
     {
-      services.AddMediator();
-
-      // Register TelemetryBehavior for automatic command instrumentation
-      services.AddSingleton<IPipelineBehavior<GreetCommand, Unit>, TelemetryBehavior<GreetCommand, Unit>>();
-      services.AddSingleton<IPipelineBehavior<StatusCommand, Unit>, TelemetryBehavior<StatusCommand, Unit>>();
-      services.AddSingleton<IPipelineBehavior<WorkCommand, Unit>, TelemetryBehavior<WorkCommand, Unit>>();
-      services.AddSingleton<IPipelineBehavior<ConfigCommand, Unit>, TelemetryBehavior<ConfigCommand, Unit>>();
+      // Register TelemetryBehavior for all commands using MediatorOptions (AOT-compatible)
+      services.AddMediator(options =>
+      {
+        options.PipelineBehaviors = [typeof(TelemetryBehavior<,>)];
+      });
     }
   )
   // Commands - all use structured ILogger, not Console.WriteLine

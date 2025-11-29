@@ -59,6 +59,9 @@ public sealed class TelemetryBehavior<TMessage, TResponse> : IPipelineBehavior<T
         new KeyValuePair<string, object?>("command", commandName),
         new KeyValuePair<string, object?>("status", "ok"));
 
+      // Flush telemetry so metrics appear immediately in dashboards
+      await NuruTelemetryExtensions.FlushAsync().ConfigureAwait(false);
+
       return response;
     }
     catch (Exception ex)
@@ -78,6 +81,9 @@ public sealed class TelemetryBehavior<TMessage, TResponse> : IPipelineBehavior<T
       NuruTelemetryExtensions.CommandDuration.Record(stopwatch.ElapsedMilliseconds,
         new KeyValuePair<string, object?>("command", commandName),
         new KeyValuePair<string, object?>("status", "error"));
+
+      // Flush telemetry so metrics appear immediately in dashboards
+      await NuruTelemetryExtensions.FlushAsync().ConfigureAwait(false);
 
       throw;
     }

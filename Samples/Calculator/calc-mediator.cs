@@ -1,15 +1,17 @@
 #!/usr/bin/dotnet --
 // calc-mediator - Calculator using Mediator pattern for testability
 #:project ../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
+#:package Mediator.Abstractions
+#:package Mediator.SourceGenerator
 
 using TimeWarp.Nuru;
-using TimeWarp.Mediator;
+using Mediator;
 using Microsoft.Extensions.DependencyInjection;
 using static System.Console;
 
-NuruApp app =
+NuruCoreApp app =
   new NuruAppBuilder()
-  .AddDependencyInjection(config => config.RegisterServicesFromAssembly(typeof(AddCommand).Assembly))
+  .AddDependencyInjection()
   .AddAutoHelp()
   // ConfigureServices has two overloads:
   // 1. ConfigureServices(Action<IServiceCollection>) - when you don't need configuration
@@ -20,6 +22,8 @@ NuruApp app =
     // Example: could use config here if AddConfiguration() was called
     // string? connectionString = config?.GetConnectionString("Default");
 
+    // Register Mediator - source generator discovers handlers in THIS assembly
+    services.AddMediator();
     services.AddSingleton<ICalculatorService, CalculatorService>();
   })
   .Map<AddCommand>
@@ -64,11 +68,11 @@ public sealed class AddCommand : IRequest
 
   public sealed class Handler(ICalculatorService calc) : IRequestHandler<AddCommand>
   {
-    public async Task Handle(AddCommand request, CancellationToken cancellationToken)
+    public ValueTask<Unit> Handle(AddCommand request, CancellationToken cancellationToken)
     {
       double result = calc.Add(request.X, request.Y);
       WriteLine($"{request.X} + {request.Y} = {result}");
-      await Task.CompletedTask;
+      return default;
     }
   }
 }
@@ -80,11 +84,11 @@ public sealed class SubtractCommand : IRequest
 
   public sealed class Handler(ICalculatorService calc) : IRequestHandler<SubtractCommand>
   {
-    public async Task Handle(SubtractCommand request, CancellationToken cancellationToken)
+    public ValueTask<Unit> Handle(SubtractCommand request, CancellationToken cancellationToken)
     {
       double result = calc.Subtract(request.X, request.Y);
       WriteLine($"{request.X} - {request.Y} = {result}");
-      await Task.CompletedTask;
+      return default;
     }
   }
 }
@@ -96,11 +100,11 @@ public sealed class MultiplyCommand : IRequest
 
   public sealed class Handler(ICalculatorService calc) : IRequestHandler<MultiplyCommand>
   {
-    public async Task Handle(MultiplyCommand request, CancellationToken cancellationToken)
+    public ValueTask<Unit> Handle(MultiplyCommand request, CancellationToken cancellationToken)
     {
       double result = calc.Multiply(request.X, request.Y);
       WriteLine($"{request.X} × {request.Y} = {result}");
-      await Task.CompletedTask;
+      return default;
     }
   }
 }
@@ -112,14 +116,14 @@ public sealed class DivideCommand : IRequest
 
   public sealed class Handler(ICalculatorService calc) : IRequestHandler<DivideCommand>
   {
-    public async Task Handle(DivideCommand request, CancellationToken cancellationToken)
+    public ValueTask<Unit> Handle(DivideCommand request, CancellationToken cancellationToken)
     {
       (double result, string? error) = calc.Divide(request.X, request.Y);
       if (error != null)
         WriteLine($"Error: {error}");
       else
         WriteLine($"{request.X} ÷ {request.Y} = {result}");
-      await Task.CompletedTask;
+      return default;
     }
   }
 }
@@ -131,7 +135,7 @@ public sealed class RoundCommand : IRequest
 
   public sealed class Handler(ICalculatorService calc) : IRequestHandler<RoundCommand>
   {
-    public async Task Handle(RoundCommand request, CancellationToken cancellationToken)
+    public ValueTask<Unit> Handle(RoundCommand request, CancellationToken cancellationToken)
     {
       (double result, string? error) = calc.Round(request.Value, request.Mode ?? "nearest");
       if (error != null)
@@ -142,7 +146,7 @@ public sealed class RoundCommand : IRequest
       else
         WriteLine($"Round({request.Value}, {request.Mode ?? "nearest"}) = {result}");
 
-      await Task.CompletedTask;
+      return default;
     }
   }
 }

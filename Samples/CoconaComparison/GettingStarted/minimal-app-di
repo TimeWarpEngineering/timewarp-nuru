@@ -1,14 +1,17 @@
 #!/usr/bin/dotnet --
 // minimal-app-di - Nuru DI/class-based version of Cocona's GettingStarted.MinimalApp
 #:project ../../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
+#:package Mediator.Abstractions
+#:package Mediator.SourceGenerator
 
 using TimeWarp.Nuru;
-using TimeWarp.Mediator;
+using Mediator;
 using Microsoft.Extensions.DependencyInjection;
 using static System.Console;
 
-var app = new NuruAppBuilder()
-    .AddDependencyInjection(config => config.RegisterServicesFromAssembly(typeof(HelloCommand).Assembly))
+NuruApp app = new NuruAppBuilder()
+    .AddDependencyInjection()
+    .ConfigureServices(services => services.AddMediator())
     .Map<HelloCommand>("hello {name:string} --to-upper-case {toUpperCase:bool}")
     .AddAutoHelp()
     .Build();
@@ -18,15 +21,15 @@ return await app.RunAsync(args);
 // Command class with nested handler - similar to Cocona's class-based approach
 public sealed class HelloCommand : IRequest
 {
-    public string Name { get; set; } = string.Empty;
-    public bool ToUpperCase { get; set; }
-    
-    internal sealed class Handler : IRequestHandler<HelloCommand>
+  public string Name { get; set; } = string.Empty;
+  public bool ToUpperCase { get; set; }
+
+  internal sealed class Handler : IRequestHandler<HelloCommand>
+  {
+    public ValueTask<Unit> Handle(HelloCommand request, CancellationToken cancellationToken)
     {
-        public async Task Handle(HelloCommand request, CancellationToken cancellationToken)
-        {
-            WriteLine($"Hello {(request.ToUpperCase ? request.Name.ToUpper() : request.Name)}");
-            await Task.CompletedTask;
-        }
+      WriteLine($"Hello {(request.ToUpperCase ? request.Name.ToUpper() : request.Name)}");
+      return default;
     }
+  }
 }

@@ -58,7 +58,7 @@ internal class Lexer
   {
     ArgumentNullException.ThrowIfNull(tokens);
 
-    var sb = new StringBuilder();
+    StringBuilder sb = new();
     sb.Append("Tokens (").Append(tokens.Count).Append("): ");
 
     List<string> tokenStrings = [];
@@ -160,7 +160,7 @@ internal class Lexer
   private void ScanIdentifier()
   {
     int start = Position - 1;
-    var identifier = new StringBuilder();
+    StringBuilder identifier = new();
     identifier.Append(Input[start]);
 
     while (!IsAtEnd())
@@ -219,7 +219,7 @@ internal class Lexer
   private void ScanInvalidParameterSyntax()
   {
     int start = Position - 1;
-    var invalidSyntax = new StringBuilder();
+    StringBuilder invalidSyntax = new();
     invalidSyntax.Append('<');
 
     // Scan until we find the closing > or end of input

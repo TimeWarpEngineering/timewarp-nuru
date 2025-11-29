@@ -12,7 +12,7 @@ public class RouteSelectionTests
     // Arrange
     bool literalSelected = false;
     bool parameterSelected = false;
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .Map("git status", () => { literalSelected = true; return 0; })
       .Map("git {command}", (string command) => { parameterSelected = true; return 0; })
       .Build();
@@ -33,7 +33,7 @@ public class RouteSelectionTests
     // Arrange
     bool typedSelected = false;
     bool untypedSelected = false;
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .Map("delay {ms:int}", (int ms) => { typedSelected = true; return 0; })
       .Map("delay {duration}", (string duration) => { untypedSelected = true; return 0; })
       .Build();
@@ -54,7 +54,7 @@ public class RouteSelectionTests
     // Arrange
     bool requiredSelected = false;
     bool optionalSelected = false;
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .Map("deploy {env}", (string env) => { requiredSelected = true; return 0; })
       .Map("deploy {env?}", (string? env) => { optionalSelected = true; return 0; })
       .Build();
@@ -75,7 +75,7 @@ public class RouteSelectionTests
     // Arrange
     bool moreOptionsSelected = false;
     bool fewerOptionsSelected = false;
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .Map("build --verbose --watch", (bool verbose, bool watch) => { moreOptionsSelected = true; return 0; })
       .Map("build --verbose", (bool verbose) => { fewerOptionsSelected = true; return 0; })
       .Build();
@@ -96,7 +96,7 @@ public class RouteSelectionTests
     // Arrange
     bool noOptionSelected = false;
     bool requiredOptionSelected = false;
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .Map("build", () => { noOptionSelected = true; return 0; })
       .Map("build --config {m}", (string m) => { requiredOptionSelected = true; return 0; })
       .Build();
@@ -118,7 +118,7 @@ public class RouteSelectionTests
     bool statusSelected = false;
     bool commitSelected = false;
     bool catchAllSelected = false;
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .Map("git status", () => { statusSelected = true; return 0; })
       .Map("git commit", () => { commitSelected = true; return 0; })
       .Map("git {*args}", (string[] args) => { catchAllSelected = true; return 0; })
@@ -141,7 +141,7 @@ public class RouteSelectionTests
     // Arrange - Equal specificity but different literals, so only one matches
     bool firstSelected = false;
     bool secondSelected = false;
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .Map("greet {name}", (string name) => { firstSelected = true; return 0; })
       .Map("hello {person}", (string person) => { secondSelected = true; return 0; })
       .Build();
@@ -164,7 +164,7 @@ public class RouteSelectionTests
     bool mediumSelected = false;
     bool lessSpecificSelected = false;
     bool leastSpecificSelected = false;
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .Map("deploy {env} --tag {t} --verbose", (string env, string t, bool verbose) => { mostSpecificSelected = true; return 0; })
       .Map("deploy {env} --tag {t}", (string env, string t) => { mediumSelected = true; return 0; })
       .Map("deploy {env}", (string env) => { lessSpecificSelected = true; return 0; })

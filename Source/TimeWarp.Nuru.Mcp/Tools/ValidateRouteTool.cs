@@ -57,7 +57,7 @@ internal sealed class ValidateRouteTool
       }
 
       // Required options
-      var requiredOptions = route.OptionMatchers.Where(o => !o.IsOptional).ToList();
+      List<OptionMatcher> requiredOptions = [.. route.OptionMatchers.Where(o => !o.IsOptional)];
       if (requiredOptions.Count > 0)
       {
         details.Add("**Required Options:**");

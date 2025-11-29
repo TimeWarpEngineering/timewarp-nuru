@@ -55,19 +55,18 @@ class SampleCommandFilterAttribute : CommandFilterAttribute
 ```csharp
 // Create app with DI and pipeline behaviors - fully fluent!
 NuruApp app = new NuruAppBuilder()
-    .AddDependencyInjection(config =>
-    {
-        config.RegisterServicesFromAssembly(typeof(HelloCommand).Assembly);
-    })
+    .AddDependencyInjection()
     .ConfigureServices(services =>
     {
+        services.AddMediator();  // Source generator discovers handlers
         services.AddLogging(config =>
         {
             config.AddConsole();
             config.SetMinimumLevel(LogLevel.Information);
         });
-        services.AddTransient(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
-        services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+        // For AOT/runfile scenarios, use explicit generic registrations
+        services.AddSingleton<IPipelineBehavior<HelloCommand, Unit>, LoggingBehavior<HelloCommand, Unit>>();
+        services.AddSingleton<IPipelineBehavior<HelloCommand, Unit>, ValidationBehavior<HelloCommand, Unit>>();
     })
     .Map<HelloCommand>("hello")
     .AddAutoHelp()
@@ -80,33 +79,33 @@ public sealed class HelloCommand : IRequest
 {
     internal sealed class Handler : IRequestHandler<HelloCommand>
     {
-        public async Task Handle(HelloCommand request, CancellationToken cancellationToken)
+        public ValueTask<Unit> Handle(HelloCommand request, CancellationToken cancellationToken)
         {
             WriteLine($"Hello Konnichiwa");
-            await Task.CompletedTask;
+            return default;
         }
     }
 }
 
 // Logging behavior (similar to CommandFilter)
-public sealed class LoggingBehavior<TRequest, TResponse> : TimeWarp.Mediator.IPipelineBehavior<TRequest, TResponse>
-    where TRequest : IRequest
+public sealed class LoggingBehavior<TMessage, TResponse> : IPipelineBehavior<TMessage, TResponse>
+    where TMessage : IMessage
 {
-    private readonly ILogger<LoggingBehavior<TRequest, TResponse>> _logger;
+    private readonly ILogger<LoggingBehavior<TMessage, TResponse>> _logger;
 
-    public LoggingBehavior(ILogger<LoggingBehavior<TRequest, TResponse>> logger)
+    public LoggingBehavior(ILogger<LoggingBehavior<TMessage, TResponse>> logger)
     {
         _logger = logger;
     }
 
-    public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
+    public async ValueTask<TResponse> Handle(TMessage message, MessageHandlerDelegate<TMessage, TResponse> next, CancellationToken cancellationToken)
     {
-        var requestName = typeof(TRequest).Name;
+        string requestName = typeof(TMessage).Name;
         _logger.LogInformation($"[LoggingBehavior] Before Command: {requestName}");
-        
+
         try
         {
-            var response = await next();
+            TResponse response = await next(message, cancellationToken);
             _logger.LogInformation($"[LoggingBehavior] After Command: {requestName}");
             return response;
         }
@@ -127,7 +126,7 @@ public sealed class LoggingBehavior<TRequest, TResponse> : TimeWarp.Mediator.IPi
 
 ### Registration
 - **Cocona**: Filters applied via attributes on classes or methods
-- **Nuru**: Behaviors registered in DI container as open generics
+- **Nuru**: Behaviors registered in DI container (explicit for AOT, open generics for JIT)
 
 ### Execution Order
 - **Cocona**: Filters execute in order of declaration (class then method)

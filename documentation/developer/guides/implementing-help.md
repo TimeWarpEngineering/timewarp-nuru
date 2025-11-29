@@ -105,14 +105,14 @@ builder.Map("config set {key} {value}", SetConfig, "Set configuration value");
 // Add automatic help generation
 builder.Map("help", () =>
 {
-    var endpoints = builder.Build().Endpoints; // Note: In real code, store this reference
+    EndpointCollection endpoints = builder.Build().Endpoints; // Note: In real code, store this reference
     Console.WriteLine(RouteHelpProvider.GetHelpText(endpoints));
 });
 
 // Or write to stderr
 builder.Map("--help", () =>
 {
-    var endpoints = builder.Build().Endpoints;
+    EndpointCollection endpoints = builder.Build().Endpoints;
     Console.Error.WriteLine(RouteHelpProvider.GetHelpText(endpoints));
 });
 ```
@@ -150,7 +150,7 @@ public class HelpApiHandler(EndpointCollection endpoints) : IRequestHandler<Help
 {
     public Task<string> Handle(HelpApiCommand request, CancellationToken cancellationToken)
     {
-        var helpText = RouteHelpProvider.GetHelpText(endpoints);
+        string helpText = RouteHelpProvider.GetHelpText(endpoints);
         return Task.FromResult(helpText);
     }
 }
@@ -171,17 +171,17 @@ public static class CustomHelpFormatter
         Console.WriteLine();
         
         // Group by category (using custom logic)
-        var grouped = endpoints.Endpoints
+        IOrderedEnumerable<IGrouping<string, Endpoint>> grouped = endpoints.Endpoints
             .GroupBy(e => GetCategory(e.RoutePattern))
             .OrderBy(g => g.Key);
-            
-        foreach (var group in grouped)
+
+        foreach (IGrouping<string, Endpoint> group in grouped)
         {
             Console.WriteLine($"[{group.Key}]");
-            foreach (var endpoint in group.OrderBy(e => e.RoutePattern))
+            foreach (Endpoint endpoint in group.OrderBy(e => e.RoutePattern))
             {
-                var pattern = FormatPattern(endpoint.RoutePattern);
-                var desc = endpoint.Description ?? "No description";
+                string pattern = FormatPattern(endpoint.RoutePattern);
+                string desc = endpoint.Description ?? "No description";
                 Console.WriteLine($"  {pattern,-30} {desc}");
             }
             Console.WriteLine();
@@ -240,14 +240,14 @@ public class HelpCommand : IRequest
         private void ShowTopicHelp(string topic)
         {
             // Show help for specific topic
-            var relevantRoutes = endpoints.Endpoints
+            List<Endpoint> relevantRoutes = endpoints.Endpoints
                 .Where(e => e.RoutePattern.Contains(topic, StringComparison.OrdinalIgnoreCase))
                 .ToList();
-                
-            if (relevantRoutes.Any())
+
+            if (relevantRoutes.Count > 0)
             {
                 Console.WriteLine($"Help for '{topic}':");
-                foreach (var route in relevantRoutes)
+                foreach (Endpoint route in relevantRoutes)
                 {
                     Console.WriteLine($"  {route.RoutePattern}");
                     if (!string.IsNullOrEmpty(route.Description))
@@ -282,20 +282,20 @@ Create an interactive help experience:
 builder.Map("help --interactive", async () =>
 {
     Console.WriteLine("Interactive Help - Type a command name or 'exit' to quit");
-    
+
     while (true)
     {
         Console.Write("\nhelp> ");
-        var input = Console.ReadLine()?.Trim();
-        
+        string? input = Console.ReadLine()?.Trim();
+
         if (string.IsNullOrEmpty(input) || input == "exit")
             break;
-            
+
         // Find matching commands
-        var matches = endpoints.Endpoints
+        List<Endpoint> matches = endpoints.Endpoints
             .Where(e => e.RoutePattern.Contains(input, StringComparison.OrdinalIgnoreCase))
             .ToList();
-            
+
         if (matches.Count == 0)
         {
             Console.WriteLine($"No commands found matching '{input}'");
@@ -307,7 +307,7 @@ builder.Map("help --interactive", async () =>
         else
         {
             Console.WriteLine($"Multiple matches for '{input}':");
-            foreach (var match in matches)
+            foreach (Endpoint match in matches)
             {
                 Console.WriteLine($"  - {match.RoutePattern}");
             }
@@ -348,7 +348,7 @@ Users expect different help invocation patterns:
 
 ```csharp
 // Support all common help patterns
-var helpAction = () => ShowHelp();
+Action helpAction = () => ShowHelp();
 
 builder.Map("help", helpAction);
 builder.Map("--help", helpAction);
@@ -427,23 +427,23 @@ Provide helpful feedback for invalid help requests:
 ```csharp
 builder.Map("help {command}", (string command) =>
 {
-    var matches = endpoints.Endpoints
+    List<Endpoint> matches = endpoints.Endpoints
         .Where(e => e.RoutePattern.Contains(command, StringComparison.OrdinalIgnoreCase))
         .ToList();
-        
+
     if (matches.Count == 0)
     {
         Console.WriteLine($"No help available for '{command}'");
         Console.WriteLine();
         Console.WriteLine("Available commands:");
-        
+
         // Show command prefixes
-        var prefixes = endpoints.Endpoints
+        IOrderedEnumerable<string> prefixes = endpoints.Endpoints
             .Select(e => e.RoutePattern.Split(' ')[0])
             .Distinct()
             .OrderBy(p => p);
-            
-        foreach (var prefix in prefixes)
+
+        foreach (string prefix in prefixes)
         {
             Console.WriteLine($"  {prefix}");
         }
@@ -451,7 +451,7 @@ builder.Map("help {command}", (string command) =>
     else
     {
         // Show specific help
-        foreach (var match in matches)
+        foreach (Endpoint match in matches)
         {
             Console.WriteLine($"{match.RoutePattern}");
             if (!string.IsNullOrEmpty(match.Description))
@@ -480,16 +480,16 @@ public static class HelpFormatter
         if (arguments.Length > 0)
         {
             Console.WriteLine("\nArguments:");
-            foreach (var arg in arguments)
+            foreach (string arg in arguments)
             {
                 Console.WriteLine($"  {arg}");
             }
         }
-        
+
         if (options.Length > 0)
         {
             Console.WriteLine("\nOptions:");
-            foreach (var (name, desc) in options)
+            foreach ((string name, string desc) in options)
             {
                 Console.WriteLine($"  {name,-20} {desc}");
             }

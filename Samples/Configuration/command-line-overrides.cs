@@ -21,7 +21,7 @@ using static System.Console;
 // This allows you to override any configuration value from appsettings.json,
 // environment variables, or other configuration sources.
 
-NuruApp app =
+NuruCoreApp app =
   new NuruAppBuilder()
   .AddDependencyInjection()
   .AddConfiguration(args)  // ← Key: Enables command-line overrides via Microsoft.Extensions.Configuration.CommandLine

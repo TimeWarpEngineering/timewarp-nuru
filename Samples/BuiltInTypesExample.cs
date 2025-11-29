@@ -225,7 +225,7 @@ builder.Map("backup {source:DirectoryInfo} --dest {dest:DirectoryInfo?} --config
   return 0;
 });
 
-NuruApp app = builder.Build();
+NuruCoreApp app = builder.Build();
 
 // Show usage examples
 if (args.Length == 0)

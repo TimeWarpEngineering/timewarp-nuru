@@ -20,7 +20,7 @@
 using TimeWarp.Nuru;
 using TimeWarp.Nuru.Completion;
 
-var builder = new NuruAppBuilder();
+NuruAppBuilder builder = new();
 
 // ============================================================================
 // Enable Shell Completion (Auto-detects executable name)
@@ -71,5 +71,5 @@ builder.Map
 // Build and Run
 // ============================================================================
 
-NuruApp app = builder.Build();
+NuruCoreApp app = builder.Build();
 return await app.RunAsync(args);

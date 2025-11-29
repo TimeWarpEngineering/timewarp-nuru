@@ -1,125 +1,145 @@
 namespace TimeWarp.Nuru;
 
 /// <summary>
-/// Unified builder for configuring Nuru applications with or without dependency injection.
+/// Full-featured builder for configuring Nuru applications with IHostApplicationBuilder support.
+/// Inherits from <see cref="NuruCoreAppBuilder"/> and adds Aspire integration.
 /// </summary>
-public partial class NuruAppBuilder
+public partial class NuruAppBuilder : NuruCoreAppBuilder, IHostApplicationBuilder, IDisposable
 {
-  private readonly TypeConverterRegistry TypeConverterRegistry = new();
-  private ApplicationMetadata? AppMetadata;
-  private bool AutoHelpEnabled;
-  private IConfiguration? Configuration;
-  private ILoggerFactory? LoggerFactory;
-  private ReplOptions? ReplOptions;
-  private ServiceCollection? ServiceCollection;
-  private ITerminal? Terminal;
+  private ConfigurationManager? ConfigurationManager;
+  private NuruHostEnvironment? NuruHostEnvironment;
+  private NuruLoggingBuilder? NuruLoggingBuilder;
+  private NuruMetricsBuilder? NuruMetricsBuilder;
+  private readonly Dictionary<object, object> PropertiesDictionary = [];
 
   /// <summary>
-  /// Gets the collection of registered endpoints.
+  /// Initializes a new instance of the <see cref="NuruAppBuilder"/> class with default settings.
   /// </summary>
-  public EndpointCollection EndpointCollection { get; } = [];
+  public NuruAppBuilder() { }
 
   /// <summary>
-  /// Gets the service collection. Throws if dependency injection has not been added.
-  /// Call AddDependencyInjection() first to enable DI and Mediator support.
+  /// Internal constructor for factory methods with specific builder mode.
   /// </summary>
-  public IServiceCollection Services
+  internal NuruAppBuilder(BuilderMode mode, NuruCoreApplicationOptions? options) : base(mode, options)
   {
-    get
-    {
-      if (ServiceCollection is null)
-      {
-        throw new InvalidOperationException(
-          "Dependency injection has not been enabled. Call AddDependencyInjection() first.");
-      }
+  }
 
-      return ServiceCollection;
+  /// <summary>
+  /// Initializes the builder based on the specified mode.
+  /// Extends base initialization with IHostApplicationBuilder setup for Full mode.
+  /// </summary>
+  protected override void InitializeForMode(BuilderMode mode, string[]? args)
+  {
+    base.InitializeForMode(mode, args);
+
+    // Initialize IHostApplicationBuilder fields after DI is set up
+    if (mode == BuilderMode.Full)
+    {
+      InitializeHostApplicationBuilder();
     }
   }
 
   /// <summary>
-  /// Enables automatic help generation for all routes.
-  /// Help routes will be generated at build time.
+  /// Initializes IHostApplicationBuilder fields that depend on Services.
   /// </summary>
-  public NuruAppBuilder AddAutoHelp()
+  private void InitializeHostApplicationBuilder()
   {
-    AutoHelpEnabled = true;
-    return this;
+    ConfigurationManager = new ConfigurationManager();
+
+    string environmentName = ApplicationOptions?.EnvironmentName
+      ?? Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")
+      ?? Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT")
+      ?? "Production";
+
+    string applicationName = ApplicationOptions?.ApplicationName
+      ?? Assembly.GetEntryAssembly()?.GetName().Name
+      ?? "NuruApp";
+
+    string contentRootPath = ApplicationOptions?.ContentRootPath
+      ?? AppContext.BaseDirectory;
+
+    NuruHostEnvironment = new NuruHostEnvironment(environmentName, applicationName, contentRootPath);
+    NuruLoggingBuilder = new NuruLoggingBuilder(Services);
+    NuruMetricsBuilder = new NuruMetricsBuilder(Services);
+  }
+
+  #region IHostApplicationBuilder Implementation
+
+  /// <summary>
+  /// Gets the set of key/value configuration properties.
+  /// </summary>
+  public IConfigurationManager HostConfiguration =>
+    ConfigurationManager ?? throw new InvalidOperationException(
+      "HostConfiguration is not available. Use NuruApp.CreateBuilder() for IHostApplicationBuilder support.");
+
+  /// <summary>
+  /// Gets the information about the hosting environment an application is running in.
+  /// </summary>
+  public IHostEnvironment HostEnvironment =>
+    NuruHostEnvironment ?? throw new InvalidOperationException(
+      "HostEnvironment is not available. Use NuruApp.CreateBuilder() for IHostApplicationBuilder support.");
+
+  /// <summary>
+  /// Gets a collection of logging providers for the application to compose.
+  /// </summary>
+  public ILoggingBuilder Logging =>
+    NuruLoggingBuilder ?? throw new InvalidOperationException(
+      "Logging is not available. Use NuruApp.CreateBuilder() for IHostApplicationBuilder support.");
+
+  /// <summary>
+  /// Gets a builder that allows enabling metrics and directing their output.
+  /// </summary>
+  public IMetricsBuilder Metrics =>
+    NuruMetricsBuilder ?? throw new InvalidOperationException(
+      "Metrics is not available. Use NuruApp.CreateBuilder() for IHostApplicationBuilder support.");
+
+  /// <summary>
+  /// Gets a central location for sharing state between components during the host building process.
+  /// </summary>
+  public IDictionary<object, object> Properties => PropertiesDictionary;
+
+  // Explicit interface implementations that delegate to the public properties.
+#pragma warning disable CA1033 // Interface methods should be callable by child types
+  IConfigurationManager IHostApplicationBuilder.Configuration => HostConfiguration;
+  IHostEnvironment IHostApplicationBuilder.Environment => HostEnvironment;
+#pragma warning restore CA1033
+
+  /// <summary>
+  /// Registers a IServiceProviderFactory instance to be used to create the IServiceProvider.
+  /// </summary>
+  void IHostApplicationBuilder.ConfigureContainer<TContainerBuilder>(
+    IServiceProviderFactory<TContainerBuilder> factory,
+    Action<TContainerBuilder>? configure)
+  {
+    // For now, we don't support custom container builders
+    // This is a no-op that allows the interface to be satisfied
+    // Most Aspire extensions don't use this method
+  }
+
+  #endregion
+
+  #region IDisposable Implementation
+
+  /// <summary>
+  /// Disposes resources used by the builder.
+  /// </summary>
+  public void Dispose()
+  {
+    Dispose(disposing: true);
+    GC.SuppressFinalize(this);
   }
 
   /// <summary>
-  /// Builds and returns a runnable NuruApp.
+  /// Disposes resources used by the builder.
   /// </summary>
-  public NuruApp Build()
+  /// <param name="disposing">True if called from Dispose(), false if from finalizer.</param>
+  protected virtual void Dispose(bool disposing)
   {
-    if (AutoHelpEnabled)
+    if (disposing)
     {
-      HelpRouteGenerator.GenerateHelpRoutes(this, EndpointCollection, AppMetadata);
-    }
-
-    EndpointCollection.Sort();
-
-    // Use NullLoggerFactory if none provided (zero overhead)
-    ILoggerFactory loggerFactory = LoggerFactory ?? NullLoggerFactory.Instance;
-
-    if (ServiceCollection is not null)
-    {
-      // DI path - register logger factory and build service provider
-      ServiceCollection.AddSingleton(loggerFactory);
-
-      // Register ILogger<T> generic implementation (matches Microsoft.Extensions.Logging behavior)
-      ServiceCollection.AddSingleton(typeof(ILogger<>), typeof(Logger<>));
-
-      // Register NuruAppHolder for deferred app access (needed for interactive mode route)
-      var appHolder = new NuruAppHolder();
-      ServiceCollection.AddSingleton(appHolder);
-
-      // Register REPL options if configured
-      if (ReplOptions is not null)
-      {
-        ServiceCollection.AddSingleton(ReplOptions);
-      }
-
-      // Register app metadata if configured
-      if (AppMetadata is not null)
-      {
-        ServiceCollection.AddSingleton(AppMetadata);
-      }
-
-      // Register terminal if configured
-      if (Terminal is not null)
-      {
-        ServiceCollection.AddSingleton<ITerminal>(Terminal);
-      }
-
-      ServiceProvider serviceProvider = ServiceCollection.BuildServiceProvider();
-
-      var app = new NuruApp(serviceProvider);
-      appHolder.SetApp(app);
-      return app;
-    }
-    else
-    {
-      // Direct path - return lightweight app without DI
-      return new NuruApp(
-        EndpointCollection,
-        TypeConverterRegistry,
-        loggerFactory,
-        NuruConsole.Default,
-        Terminal ?? NuruTerminal.Default,
-        ReplOptions,
-        AppMetadata);
+      ConfigurationManager?.Dispose();
     }
   }
 
-  /// <summary>
-  /// Sets the application metadata for help display.
-  /// </summary>
-  /// <param name="name">The application name. If null, will be auto-detected.</param>
-  /// <param name="description">The application description.</param>
-  public NuruAppBuilder WithMetadata(string? name = null, string? description = null)
-  {
-    AppMetadata = new ApplicationMetadata(name, description);
-    return this;
-  }
+  #endregion
 }

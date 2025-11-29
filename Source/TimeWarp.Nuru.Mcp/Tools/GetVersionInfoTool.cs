@@ -14,7 +14,7 @@ internal sealed class GetVersionInfoTool
   [Description("Get TimeWarp.Nuru version, git commit hash, and build information")]
   public static Task<string> GetVersionInfoAsync()
   {
-    Assembly assembly = typeof(NuruApp).Assembly;
+    Assembly assembly = typeof(NuruCoreApp).Assembly;
 
     // Get version from AssemblyInformationalVersionAttribute (includes +commit if present)
     string? informationalVersion = assembly
@@ -37,7 +37,7 @@ internal sealed class GetVersionInfoTool
       .Value;
 
     // Format the output
-    var builder = new StringBuilder();
+    StringBuilder builder = new();
     builder.AppendLine("TimeWarp.Nuru Version Information");
     builder.AppendLine("==================================");
     builder.AppendLine();

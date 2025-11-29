@@ -18,12 +18,12 @@ public class ErrorHandlingTests
   public static async Task Should_continue_after_command_error_when_configured()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("fail");
     terminal.QueueLine("status");
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("fail", ThrowInvalidOperation)
       .Map("status", () => "OK")
@@ -42,11 +42,11 @@ public class ErrorHandlingTests
   public static async Task Should_exit_on_error_when_configured()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("fail");
     terminal.QueueLine("status");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("fail", ThrowInvalidOperation)
       .Map("status", () => "OK")
@@ -63,11 +63,11 @@ public class ErrorHandlingTests
   public static async Task Should_handle_invalid_route()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("nonexistent");
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("status", () => "OK")
       .AddReplSupport(options => options.ContinueOnError = true)
@@ -84,11 +84,11 @@ public class ErrorHandlingTests
   public static async Task Should_handle_type_conversion_error()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("add notanumber");
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("add {n:int}", (int n) => $"Result: {n}")
       .AddReplSupport(options => options.ContinueOnError = true)
@@ -105,11 +105,11 @@ public class ErrorHandlingTests
   public static async Task Should_show_exit_code_on_error()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("fail");
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("fail", ThrowInvalidOperation)
       .AddReplSupport(options =>
@@ -130,11 +130,11 @@ public class ErrorHandlingTests
   public static async Task Should_handle_argument_error()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("greet");
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("greet {name}", (string name) => $"Hello, {name}!")
       .AddReplSupport(options => options.ContinueOnError = true)
@@ -151,10 +151,10 @@ public class ErrorHandlingTests
   public static async Task Should_return_non_zero_exit_code_on_error()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("fail");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("fail", ThrowInvalidOperation)
       .AddReplSupport(options => options.ContinueOnError = false)
@@ -170,13 +170,13 @@ public class ErrorHandlingTests
   public static async Task Should_handle_multiple_errors()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("fail1");
     terminal.QueueLine("fail2");
     terminal.QueueLine("status");
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("fail1", ThrowError1)
       .Map("fail2", ThrowArgument)

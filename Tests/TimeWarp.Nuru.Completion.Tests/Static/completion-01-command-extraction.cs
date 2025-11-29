@@ -13,11 +13,11 @@ public class CommandExtractionTests
   public static async Task Should_extract_single_command()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("status", () => 0);
 
     // Act
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
     string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
 
     // Assert
@@ -30,13 +30,13 @@ public class CommandExtractionTests
   public static async Task Should_extract_multiple_commands()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("create", () => 0);
     builder.Map("createorder", () => 0);
     builder.Map("delete", () => 0);
 
     // Act
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
     string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
 
     // Assert
@@ -50,12 +50,12 @@ public class CommandExtractionTests
   public static async Task Should_extract_commands_with_parameters()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("deploy {env}", (string env) => 0);
     builder.Map("build {project}", (string project) => 0);
 
     // Act
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
     string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
 
     // Assert
@@ -70,12 +70,12 @@ public class CommandExtractionTests
   public static async Task Should_extract_commands_with_options()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("test --verbose", () => 0);
     builder.Map("build --config {mode}", (string mode) => 0);
 
     // Act
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
     string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
 
     // Assert
@@ -88,13 +88,13 @@ public class CommandExtractionTests
   public static async Task Should_handle_nested_commands()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("git commit", () => 0);
     builder.Map("git status", () => 0);
     builder.Map("git push", () => 0);
 
     // Act
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
     string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
 
     // Assert
@@ -107,13 +107,13 @@ public class CommandExtractionTests
   public static async Task Should_deduplicate_commands()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("deploy {env}", (string env) => 0);
     builder.Map("deploy {env} --force", (string env) => 0);
     builder.Map("deploy {env} {tag}", (string env, string tag) => 0);
 
     // Act
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
     string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
 
     // Assert
@@ -128,11 +128,11 @@ public class CommandExtractionTests
   public static async Task Should_handle_empty_route_collection()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     // No routes added
 
     // Act
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
     string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
 
     // Assert
@@ -145,11 +145,11 @@ public class CommandExtractionTests
   public static async Task Should_extract_command_from_complex_route()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("deploy {env} --version {ver} --force", (string env, string ver) => 0);
 
     // Act
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
     string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
 
     // Assert
@@ -163,11 +163,11 @@ public class CommandExtractionTests
   public static async Task Should_handle_route_with_only_parameters()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("{command} {*args}", (string command, string[] args) => 0);
 
     // Act
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
     string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
 
     // Assert
@@ -180,12 +180,12 @@ public class CommandExtractionTests
   public static async Task Should_be_case_sensitive()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("Deploy", () => 0);
     builder.Map("deploy", () => 0);
 
     // Act
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
     string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
 
     // Assert

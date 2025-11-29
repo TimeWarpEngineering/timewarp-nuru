@@ -59,7 +59,7 @@ public class CliFrameworkBenchmark
   [Benchmark(Description = "Spectre.Console.Cli")]
   public void ExecuteSpectreConsoleCli()
   {
-    var app = new CommandApp<SpectreConsoleCliCommand>();
+    CommandApp<SpectreConsoleCliCommand> app = new();
     app.Run(Arguments);
   }
 

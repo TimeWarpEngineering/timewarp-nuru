@@ -14,10 +14,10 @@ public class DisplayFormattingTests
   public static async Task Should_display_welcome_message()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .AddReplSupport(options => options.WelcomeMessage = "Welcome to My App!")
       .Build();
@@ -33,10 +33,10 @@ public class DisplayFormattingTests
   public static async Task Should_display_goodbye_message()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .AddReplSupport(options => options.GoodbyeMessage = "Farewell!")
       .Build();
@@ -52,10 +52,10 @@ public class DisplayFormattingTests
   public static async Task Should_use_custom_prompt()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .AddReplSupport(options => options.Prompt = ">>> ")
       .Build();
@@ -71,11 +71,11 @@ public class DisplayFormattingTests
   public static async Task Should_show_exit_code_when_enabled()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("status");
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("status", () => "OK")
       .AddReplSupport(options => options.ShowExitCode = true)
@@ -92,11 +92,11 @@ public class DisplayFormattingTests
   public static async Task Should_hide_exit_code_when_disabled()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("status");
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("status", () => "OK")
       .AddReplSupport(options => options.ShowExitCode = false)
@@ -113,11 +113,11 @@ public class DisplayFormattingTests
   public static async Task Should_show_timing_when_enabled()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("status");
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("status", () => "OK")
       .AddReplSupport(options => options.ShowTiming = true)
@@ -134,11 +134,11 @@ public class DisplayFormattingTests
   public static async Task Should_hide_timing_when_disabled()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("status");
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("status", () => "OK")
       .AddReplSupport(options => options.ShowTiming = false)
@@ -155,10 +155,10 @@ public class DisplayFormattingTests
   public static async Task Should_use_colors_when_enabled()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .AddReplSupport(options => options.EnableColors = true)
       .Build();
@@ -174,10 +174,10 @@ public class DisplayFormattingTests
   public static async Task Should_not_use_colors_when_disabled()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .AddReplSupport(options => options.EnableColors = false)
       .Build();

@@ -13,7 +13,7 @@ public class EnableStaticCompletionIntegrationTests
   public static async Task Should_register_completion_routes_for_all_shells()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("status", () => 0);
     builder.Map("version", () => 0);
 
@@ -35,7 +35,7 @@ public class EnableStaticCompletionIntegrationTests
   public static async Task Should_register_completion_route_with_correct_pattern()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("deploy {env}", (string env) => 0);
 
     // Act
@@ -55,7 +55,7 @@ public class EnableStaticCompletionIntegrationTests
   public static async Task Should_not_interfere_with_existing_routes()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("status", () => 0);
     builder.Map("deploy {env}", (string env) => 0);
     builder.Map("build --config {mode}", (string mode) => 0);
@@ -79,7 +79,7 @@ public class EnableStaticCompletionIntegrationTests
   public static async Task Should_work_with_empty_route_collection()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
 
     // Act
     builder.EnableStaticCompletion();
@@ -93,7 +93,7 @@ public class EnableStaticCompletionIntegrationTests
   public static async Task Should_be_callable_multiple_times_safely()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("status", () => 0);
 
     // Act
@@ -101,9 +101,11 @@ public class EnableStaticCompletionIntegrationTests
     builder.EnableStaticCompletion(); // Call twice
 
     // Assert - Should not duplicate routes
-    var completionRoutes = builder.EndpointCollection.Endpoints
-      .Where(e => e.RoutePattern.Contains("--generate-completion"))
-      .ToList();
+    List<Endpoint> completionRoutes =
+    [
+      .. builder.EndpointCollection.Endpoints
+        .Where(e => e.RoutePattern.Contains("--generate-completion"))
+    ];
 
     // Should have exactly one completion route (not duplicated)
     completionRoutes.Count.ShouldBe(1);
@@ -114,7 +116,7 @@ public class EnableStaticCompletionIntegrationTests
   public static async Task Should_register_routes_before_build()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("test", () => 0);
 
     // Act - EnableStaticCompletion before Build
@@ -129,7 +131,7 @@ public class EnableStaticCompletionIntegrationTests
   public static async Task Should_support_all_shell_types()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("status", () => 0);
     builder.EnableStaticCompletion();
 
@@ -146,7 +148,7 @@ public class EnableStaticCompletionIntegrationTests
   public static async Task Should_work_with_complex_route_patterns()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("deploy {env} --version {ver} --force --dry-run,-d", (string env, string ver) => 0);
     builder.Map("git {*args}", (string[] args) => 0);
     builder.Map("config set {key} {value?}", (string key, string? value) => 0);
@@ -164,17 +166,19 @@ public class EnableStaticCompletionIntegrationTests
   public static async Task Should_preserve_route_order()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("first", () => 0);
     builder.Map("second", () => 0);
     builder.EnableStaticCompletion();
     builder.Map("third", () => 0);
 
     // Assert - Original routes should maintain their relative order
-    var nonCompletionRoutes = builder.EndpointCollection.Endpoints
-      .Where(e => !e.RoutePattern.Contains("--generate-completion"))
-      .Select(e => e.RoutePattern)
-      .ToList();
+    List<string> nonCompletionRoutes =
+    [
+      .. builder.EndpointCollection.Endpoints
+        .Where(e => !e.RoutePattern.Contains("--generate-completion"))
+        .Select(e => e.RoutePattern)
+    ];
 
     nonCompletionRoutes.ShouldContain("first");
     nonCompletionRoutes.ShouldContain("second");
@@ -185,7 +189,7 @@ public class EnableStaticCompletionIntegrationTests
 
   public static async Task Should_integrate_with_builder_fluent_api()
   {
-    // Arrange & Act - Test fluent chaining
+    // Arrange & Act - Test fluent chaining (covariant return types preserve NuruAppBuilder)
     NuruAppBuilder builder = new NuruAppBuilder()
       .Map("status", () => 0)
       .EnableStaticCompletion()

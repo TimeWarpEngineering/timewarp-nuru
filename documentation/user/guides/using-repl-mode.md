@@ -18,11 +18,11 @@ REPL mode is ideal for:
 using TimeWarp.Nuru;
 using TimeWarp.Nuru.Repl;
 
-var builder = new NuruAppBuilder()
+NuruAppBuilder builder = new NuruAppBuilder()
   .Map("greet {name}", name => Console.WriteLine($"Hello, {name}!"))
   .Map("version", () => Console.WriteLine("v1.0.0"));
 
-var app = builder.Build();
+NuruApp app = builder.Build();
 
 // Start REPL mode
 await app.RunReplAsync(new ReplOptions
@@ -166,7 +166,7 @@ public class ReplOptions
 ### Example Configuration
 
 ```csharp
-var options = new ReplOptions
+ReplOptions options = new()
 {
   Prompt = "myapp> ",
   EnableColors = true,
@@ -214,7 +214,7 @@ Error: No matching command found.
 Configure to exit on errors:
 
 ```csharp
-var options = new ReplOptions
+ReplOptions options = new()
 {
   ContinueOnError = false  // Exit on first error
 };
@@ -272,11 +272,11 @@ REPL works on Windows, Linux, and macOS:
 ### Simple Calculator REPL
 
 ```csharp
-var builder = new NuruAppBuilder()
+NuruAppBuilder builder = new NuruAppBuilder()
   .Map("add {a:int} {b:int}", (a, b) => Console.WriteLine($"{a} + {b} = {a + b}"))
   .Map("multiply {a:int} {b:int}", (a, b) => Console.WriteLine($"{a} × {b} = {a * b}"));
 
-var app = builder.Build();
+NuruApp app = builder.Build();
 await app.RunReplAsync(new ReplOptions
 {
   Prompt = "calc> ",
@@ -287,12 +287,12 @@ await app.RunReplAsync(new ReplOptions
 ### Git Command Wrapper
 
 ```csharp
-var builder = new NuruAppBuilder()
+NuruAppBuilder builder = new NuruAppBuilder()
   .Map("status", () => RunGit("status"))
   .Map("commit -m {message}", message => RunGit($"commit -m \"{message}\""))
   .Map("log --oneline", () => RunGit("log --oneline"));
 
-var app = builder.Build();
+NuruApp app = builder.Build();
 await app.RunReplAsync(new ReplOptions
 {
   Prompt = "git> ",

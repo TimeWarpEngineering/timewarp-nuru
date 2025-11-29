@@ -17,10 +17,10 @@ public class ConfigurationTests
   public static async Task Should_use_default_options()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .AddReplSupport()  // No options - use defaults
       .Build();
@@ -37,10 +37,10 @@ public class ConfigurationTests
   public static async Task Should_configure_custom_prompt()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .AddReplSupport(options => options.Prompt = "myapp> ")
       .Build();
@@ -57,7 +57,7 @@ public class ConfigurationTests
   public static async Task Should_configure_max_history_size()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     // Add more commands than max history
     for (int i = 0; i < 15; i++)
     {
@@ -66,7 +66,7 @@ public class ConfigurationTests
 
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("cmd{n}", (string n) => $"Command {n}")
       .AddReplSupport(options => options.MaxHistorySize = 10)
@@ -84,13 +84,13 @@ public class ConfigurationTests
   public static async Task Should_enable_arrow_history()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("first");
     terminal.QueueKey(ConsoleKey.UpArrow);  // Navigate history
     terminal.QueueKey(ConsoleKey.Escape);
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("first", () => "First!")
       .AddReplSupport(options => options.EnableArrowHistory = true)
@@ -108,12 +108,12 @@ public class ConfigurationTests
   public static async Task Should_configure_continue_on_error()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("fail");
     terminal.QueueLine("status");
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("fail", ThrowTestException)
       .Map("status", () => "OK")
@@ -135,11 +135,11 @@ public class ConfigurationTests
     string historyPath = Path.Combine(Path.GetTempPath(), $"test-history-{Guid.NewGuid()}.txt");
     try
     {
-      using var terminal = new TestTerminal();
+      using TestTerminal terminal = new();
       terminal.QueueLine("test");
       terminal.QueueLine("exit");
 
-      NuruApp app = new NuruAppBuilder()
+      NuruCoreApp app = new NuruAppBuilder()
         .UseTerminal(terminal)
         .Map("test", () => "OK")
         .AddReplSupport(options =>
@@ -165,10 +165,10 @@ public class ConfigurationTests
   public static async Task Should_configure_messages()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .AddReplSupport(options =>
       {
@@ -191,11 +191,11 @@ public class ConfigurationTests
   public static async Task Should_configure_mixed_options()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("test");
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("test", () => "OK")
       .AddReplSupport(options =>
@@ -227,10 +227,10 @@ public class ConfigurationTests
   public static async Task Should_configure_custom_prompt_color()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .AddReplSupport(options =>
       {

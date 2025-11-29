@@ -16,15 +16,15 @@ namespace TimeWarp.Nuru.Repl;
 /// <example>
 /// <code>
 /// // Build from scratch
-/// var builder = new KeyBindingBuilder()
+/// KeyBindingBuilder builder = new KeyBindingBuilder()
 ///   .Bind(ConsoleKey.LeftArrow, () => MoveLeft())
 ///   .Bind(ConsoleKey.RightArrow, () => MoveRight())
 ///   .BindExit(ConsoleKey.Enter, () => Submit());
 ///
-/// var (bindings, exitKeys) = builder.Build();
+/// (Dictionary&lt;(ConsoleKey, ConsoleModifiers), Action&gt; bindings, HashSet&lt;ConsoleKey&gt; exitKeys) = builder.Build();
 ///
 /// // Start from existing profile and modify
-/// var builder = new KeyBindingBuilder()
+/// KeyBindingBuilder customBuilder = new KeyBindingBuilder()
 ///   .LoadFrom(new DefaultKeyBindingProfile(), reader)
 ///   .Remove(ConsoleKey.D, ConsoleModifiers.Control)
 ///   .Bind(ConsoleKey.Q, ConsoleModifiers.Control, () => Quit());

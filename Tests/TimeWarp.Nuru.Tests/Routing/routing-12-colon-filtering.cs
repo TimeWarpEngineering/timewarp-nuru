@@ -11,7 +11,7 @@ public class ColonFilteringTests
   {
     // Arrange
     string? capturedDataSource = null;
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .Map("connect {dataSource}", (string dataSource) =>
       {
         capturedDataSource = dataSource;
@@ -33,7 +33,7 @@ public class ColonFilteringTests
   {
     // Arrange
     string? capturedDataSource = null;
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .Map("connect --data-source {dataSource}", (string dataSource) =>
       {
         capturedDataSource = dataSource;
@@ -56,7 +56,7 @@ public class ColonFilteringTests
     // Arrange
     string? capturedEnv = null;
     string? capturedConnectionString = null;
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .Map("deploy {env} {connectionString}", (string env, string connectionString) =>
       {
         capturedEnv = env;
@@ -80,7 +80,7 @@ public class ColonFilteringTests
   {
     // Arrange
     string? capturedUrl = null;
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .Map("fetch {url}", (string url) =>
       {
         capturedUrl = url;
@@ -102,7 +102,7 @@ public class ColonFilteringTests
   {
     // Arrange
     string? capturedDataSource = null;
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .Map("connect {dataSource}", (string dataSource) =>
       {
         capturedDataSource = dataSource;
@@ -124,7 +124,7 @@ public class ColonFilteringTests
   {
     // Arrange
     string[]? capturedArgs = null;
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .Map("docker run {*args}", (string[] args) =>
       {
         capturedArgs = args;
@@ -155,7 +155,7 @@ public class ColonFilteringTests
   {
     // Arrange
     string? capturedValue = null;
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseDebugLogging()
       .Map("test -x {value}", (string value) =>
       {
@@ -178,7 +178,7 @@ public class ColonFilteringTests
   {
     // Arrange
     string? capturedParam = null;
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .Map("run {param}", (string param) =>
       {
         capturedParam = param;
@@ -204,7 +204,7 @@ public class ColonFilteringTests
   {
     // Arrange - Test false positive case: --url=https://host:port should NOT be filtered
     string? capturedUrl = null;
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .Map("fetch --url {url}", (string url) =>
       {
         capturedUrl = url;
@@ -226,7 +226,7 @@ public class ColonFilteringTests
   {
     // Arrange - Test false positive case: --connection=Server=localhost:5432 should NOT be filtered
     string? capturedConnection = null;
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .Map("connect --connection {conn}", (string conn) =>
       {
         capturedConnection = conn;
@@ -248,7 +248,7 @@ public class ColonFilteringTests
   {
     // Arrange
     string? capturedParam = null;
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .Map("run {param}", (string param) =>
       {
         capturedParam = param;

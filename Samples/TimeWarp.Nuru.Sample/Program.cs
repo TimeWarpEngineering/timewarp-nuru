@@ -1,13 +1,14 @@
 using System.Globalization;
-using TimeWarp.Mediator;
+using Mediator;
+using Microsoft.Extensions.DependencyInjection;
 using TimeWarp.Nuru;
 using static System.Console;
 
-// Build the app
-NuruAppBuilder builder =
-  new NuruAppBuilder()
-    // If using Mediator Commands/Handlers, add dependency injection
-    .AddDependencyInjection(config => config.RegisterServicesFromAssembly(typeof(CalculateHandler).Assembly));
+// Build the app with fluent API
+NuruAppBuilder builder = new NuruAppBuilder()
+  // If using Mediator Commands/Handlers, add dependency injection
+  .AddDependencyInjection()
+  .ConfigureServices(services => services.AddMediator());
 
 // Add routes
 builder.MapDefault // Default route when no command is specified
@@ -33,7 +34,7 @@ builder.Map<CalculateCommand, CalculateResponse>
 );
 
 // Build and run
-NuruApp app = builder.Build();
+NuruCoreApp app = builder.Build();
 return await app.RunAsync(args).ConfigureAwait(false);
 
 // Command and handler definitions
@@ -54,7 +55,7 @@ internal sealed class CalculateResponse
 internal sealed class CalculateHandler : IRequestHandler<CalculateCommand, CalculateResponse>
 #pragma warning restore CA1812
 {
-  public Task<CalculateResponse> Handle(CalculateCommand request, CancellationToken cancellationToken)
+  public ValueTask<CalculateResponse> Handle(CalculateCommand request, CancellationToken cancellationToken)
   {
     ArgumentNullException.ThrowIfNull(request);
 
@@ -76,7 +77,7 @@ internal sealed class CalculateHandler : IRequestHandler<CalculateCommand, Calcu
       _ => "?"
     };
 
-    return Task.FromResult(new CalculateResponse
+    return new ValueTask<CalculateResponse>(new CalculateResponse
     {
       Result = result,
       Formula = $"{request.Value1} {op} {request.Value2} = {result}"

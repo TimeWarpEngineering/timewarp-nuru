@@ -17,8 +17,8 @@ if (!File.Exists(slnxPath))
   Environment.Exit(1);
 }
 
-var projects = new List<string>();
-var doc = XDocument.Load(slnxPath);
+List<string> projects = [];
+XDocument doc = XDocument.Load(slnxPath);
 foreach (XElement project in doc.Descendants("Project"))
 {
   string? projectPath = project.Attribute("Path")?.Value;

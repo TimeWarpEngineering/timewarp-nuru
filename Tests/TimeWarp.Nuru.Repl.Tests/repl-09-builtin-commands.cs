@@ -14,10 +14,10 @@ public class BuiltinCommandsTests
   public static async Task Should_handle_exit_command()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .AddReplSupport()
       .Build();
@@ -34,10 +34,10 @@ public class BuiltinCommandsTests
   public static async Task Should_handle_quit_command()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("quit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .AddReplSupport()
       .Build();
@@ -54,10 +54,10 @@ public class BuiltinCommandsTests
   public static async Task Should_handle_q_shortcut()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("q");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .AddReplSupport()
       .Build();
@@ -74,11 +74,11 @@ public class BuiltinCommandsTests
   public static async Task Should_handle_help_command()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("help");
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("status", () => "OK")
       .AddReplSupport()
@@ -95,11 +95,11 @@ public class BuiltinCommandsTests
   public static async Task Should_handle_clear_command()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("clear");
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .AddReplSupport()
       .Build();
@@ -115,11 +115,11 @@ public class BuiltinCommandsTests
   public static async Task Should_handle_cls_command()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("cls");
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .AddReplSupport()
       .Build();
@@ -135,12 +135,12 @@ public class BuiltinCommandsTests
   public static async Task Should_handle_history_command()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("status");
     terminal.QueueLine("history");
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("status", () => "OK")
       .AddReplSupport()
@@ -157,13 +157,13 @@ public class BuiltinCommandsTests
   public static async Task Should_handle_clear_history_command()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("status");
     terminal.QueueLine("clear-history");
     terminal.QueueLine("history");
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("status", () => "OK")
       .AddReplSupport()

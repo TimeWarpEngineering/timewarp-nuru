@@ -19,7 +19,7 @@ NuruAppBuilder builder = new();
 // builder.MapDefault(() => RunTests(null), "Run all Nuru unit tests");
 builder.Map("--tag? {tag?}", (string? tag) => RunTests(tag), "Run Nuru unit tests (Lexer, Parser, Routing) filtered by tag");
 
-NuruApp app = builder.Build();
+NuruCoreApp app = builder.Build();
 return await app.RunAsync(args);
 
 async Task<int> RunTests(string? filterTag)

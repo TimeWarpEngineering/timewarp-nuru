@@ -176,7 +176,7 @@ $ ./myapp echo <TAB>
 using TimeWarp.Nuru;
 using TimeWarp.Nuru.Completion;
 
-var builder = new NuruAppBuilder();
+NuruAppBuilder builder = new();
 
 builder.Map("createorder {product} {quantity:int}",
     (string product, int quantity) => CreateOrder(product, quantity));
@@ -521,7 +521,7 @@ public NuruAppBuilder EnableStaticCompletion(string? appName = null)
 **Example:**
 
 ```csharp
-var builder = new NuruAppBuilder();
+NuruAppBuilder builder = new();
 builder.EnableStaticCompletion();  // Uses executable name
 // or
 builder.EnableStaticCompletion("myapp");  // Explicit name

@@ -14,10 +14,10 @@ public class NuruAppIntegrationTests
   public static async Task Should_use_AddReplSupport_extension()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .AddReplSupport()  // Extension method
       .Build();
@@ -33,11 +33,11 @@ public class NuruAppIntegrationTests
   public static async Task Should_register_repl_routes()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("help");
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .AddReplSupport()
       .Build();
@@ -53,11 +53,11 @@ public class NuruAppIntegrationTests
   public static async Task Should_share_type_converters()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("add 5 10");
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("add {a:int} {b:int}", (int a, int b) => $"{a + b}")
       .AddReplSupport()
@@ -74,12 +74,12 @@ public class NuruAppIntegrationTests
   public static async Task Should_access_all_endpoints()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("cmd1");
     terminal.QueueLine("cmd2");
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("cmd1", () => "Command 1")
       .Map("cmd2", () => "Command 2")
@@ -97,11 +97,11 @@ public class NuruAppIntegrationTests
   public static async Task Should_support_fluent_chaining()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
     // Act - fluent chaining
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("status", () => "OK")
       .Map("version", () => "1.0.0")
@@ -118,10 +118,10 @@ public class NuruAppIntegrationTests
   public static async Task Should_run_repl_directly()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .AddReplSupport()
       .Build();
@@ -138,11 +138,11 @@ public class NuruAppIntegrationTests
   public static async Task Should_use_app_logger()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
     // Create app with logging configured
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .AddReplSupport()
       .Build();
@@ -158,11 +158,11 @@ public class NuruAppIntegrationTests
   public static async Task Should_execute_app_routes_in_repl()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("greet World");
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("greet {name}", (string name) => $"Hello, {name}!")
       .AddReplSupport()

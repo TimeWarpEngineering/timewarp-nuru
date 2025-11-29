@@ -17,16 +17,16 @@ public class PerformanceTests
   public static async Task Should_start_session_quickly()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
-      .UseTerminal(terminal)
-      .AddReplSupport()
-      .Build();
+    using NuruAppBuilder builder = new();
+    builder.UseTerminal(terminal);
+    builder.AddReplSupport();
+    NuruCoreApp app = builder.Build();
 
     // Act
-    var sw = Stopwatch.StartNew();
+    Stopwatch sw = Stopwatch.StartNew();
     await app.RunReplAsync();
     sw.Stop();
 
@@ -38,20 +38,20 @@ public class PerformanceTests
   public static async Task Should_execute_commands_with_low_overhead()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("noop");
     terminal.QueueLine("noop");
     terminal.QueueLine("noop");
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
-      .UseTerminal(terminal)
-      .Map("noop", () => { })
-      .AddReplSupport()
-      .Build();
+    using NuruAppBuilder builder = new();
+    builder.UseTerminal(terminal);
+    builder.Map("noop", () => { });
+    builder.AddReplSupport();
+    NuruCoreApp app = builder.Build();
 
     // Act
-    var sw = Stopwatch.StartNew();
+    Stopwatch sw = Stopwatch.StartNew();
     await app.RunReplAsync();
     sw.Stop();
 
@@ -63,7 +63,7 @@ public class PerformanceTests
   public static async Task Should_handle_large_history_efficiently()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
 
     // Add many commands to history
     for (int i = 0; i < 100; i++)
@@ -73,14 +73,14 @@ public class PerformanceTests
 
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
-      .UseTerminal(terminal)
-      .Map("cmd{n}", (string _) => "OK")
-      .AddReplSupport(options => options.MaxHistorySize = 1000)
-      .Build();
+    using NuruAppBuilder builder = new();
+    builder.UseTerminal(terminal);
+    builder.Map("cmd{n}", (string _) => "OK");
+    builder.AddReplSupport(options => options.MaxHistorySize = 1000);
+    NuruCoreApp app = builder.Build();
 
     // Act
-    var sw = Stopwatch.StartNew();
+    Stopwatch sw = Stopwatch.StartNew();
     await app.RunReplAsync();
     sw.Stop();
 
@@ -92,13 +92,14 @@ public class PerformanceTests
   public static async Task Should_complete_quickly_with_many_routes()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueKeys("cmd");
     terminal.QueueKey(ConsoleKey.Tab);
     terminal.QueueKey(ConsoleKey.Escape);
     terminal.QueueLine("exit");
 
-    NuruAppBuilder builder = new NuruAppBuilder().UseTerminal(terminal);
+    using NuruAppBuilder builder = new();
+    builder.UseTerminal(terminal);
 
     // Add many routes
     for (int i = 0; i < 100; i++)
@@ -108,10 +109,10 @@ public class PerformanceTests
     }
 
     builder.AddReplSupport(options => options.EnableArrowHistory = true);
-    NuruApp app = builder.Build();
+    NuruCoreApp app = builder.Build();
 
     // Act
-    var sw = Stopwatch.StartNew();
+    Stopwatch sw = Stopwatch.StartNew();
     await app.RunReplAsync();
     sw.Stop();
 
@@ -123,7 +124,7 @@ public class PerformanceTests
   public static async Task Should_highlight_syntax_quickly()
   {
     // Arrange - create endpoints via app builder
-    var builder = new NuruAppBuilder();
+    using NuruAppBuilder builder = new();
 
     for (int i = 0; i < 50; i++)
     {
@@ -131,14 +132,14 @@ public class PerformanceTests
       builder.Map($"command{index}", () => "OK");
     }
 
-    NuruApp app = builder.Build();
+    NuruCoreApp app = builder.Build();
     EndpointCollection endpoints = app.Endpoints;
 
     using ILoggerFactory loggerFactory = LoggerFactory.Create(_ => { });
-    var highlighter = new SyntaxHighlighter(endpoints, loggerFactory);
+    SyntaxHighlighter highlighter = new(endpoints, loggerFactory);
 
     // Act
-    var sw = Stopwatch.StartNew();
+    Stopwatch sw = Stopwatch.StartNew();
 
     for (int i = 0; i < 100; i++)
     {
@@ -157,7 +158,7 @@ public class PerformanceTests
   public static async Task Should_parse_commands_quickly()
   {
     // Arrange & Act
-    var sw = Stopwatch.StartNew();
+    Stopwatch sw = Stopwatch.StartNew();
 
     for (int i = 0; i < 1000; i++)
     {
@@ -176,21 +177,21 @@ public class PerformanceTests
   public static async Task Should_use_command_cache_efficiently()
   {
     // Arrange - create endpoints via app builder
-    var builder = new NuruAppBuilder();
+    using NuruAppBuilder builder = new();
     builder.Map("status", () => "OK");
-    NuruApp app = builder.Build();
+    NuruCoreApp app = builder.Build();
     EndpointCollection endpoints = app.Endpoints;
 
     using ILoggerFactory loggerFactory = LoggerFactory.Create(_ => { });
-    var highlighter = new SyntaxHighlighter(endpoints, loggerFactory);
+    SyntaxHighlighter highlighter = new(endpoints, loggerFactory);
 
     // Act - first call populates cache
-    var sw1 = Stopwatch.StartNew();
+    Stopwatch sw1 = Stopwatch.StartNew();
     highlighter.Highlight("status");
     sw1.Stop();
 
     // Second call should use cache
-    var sw2 = Stopwatch.StartNew();
+    Stopwatch sw2 = Stopwatch.StartNew();
 
     for (int i = 0; i < 1000; i++)
     {
@@ -210,13 +211,13 @@ public class PerformanceTests
   public static async Task Should_cleanup_resources_on_exit()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
-      .UseTerminal(terminal)
-      .AddReplSupport()
-      .Build();
+    using NuruAppBuilder builder = new();
+    builder.UseTerminal(terminal);
+    builder.AddReplSupport();
+    NuruCoreApp app = builder.Build();
 
     // Act
     await app.RunReplAsync();

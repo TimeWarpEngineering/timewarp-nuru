@@ -99,10 +99,10 @@ dotnet_style_allow_statement_immediately_after_block_experimental = false:warnin
 
 #### C# Coding Conventions ####
 
-# var preferences - Use var only when type is apparent
+# var preferences - Explicit types everywhere (no var)
 csharp_style_var_elsewhere = false:warning
 csharp_style_var_for_built_in_types = false:warning
-csharp_style_var_when_type_is_apparent = true:warning
+csharp_style_var_when_type_is_apparent = false:warning
 
 # Expression-bodied members
 csharp_style_expression_bodied_accessors = when_on_single_line:warning
@@ -149,7 +149,7 @@ csharp_style_prefer_top_level_statements = false
 csharp_prefer_simple_default_expression = true
 csharp_prefer_simple_default_expression = true:suggestion
 csharp_style_deconstructed_variable_declaration = true
-csharp_style_implicit_object_creation_when_type_is_apparent = true
+csharp_style_implicit_object_creation_when_type_is_apparent = true:warning
 csharp_style_inlined_variable_declaration = true
 csharp_style_pattern_local_over_anonymous_function = true:suggestion
 csharp_style_prefer_index_operator = true:suggestion
@@ -419,3 +419,6 @@ dotnet_diagnostic.globalusingsanalyzer0003.severity = warning
 
 # TWA002: Move XML documentation to markdown file
 dotnet_diagnostic.TWA002.severity = silent
+
+# IDE0290: Use primary constructor - disabled per project preference
+dotnet_diagnostic.IDE0290.severity = none

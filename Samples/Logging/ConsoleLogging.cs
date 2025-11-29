@@ -2,9 +2,11 @@
 #:project ../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
 #:project ../../Source/TimeWarp.Nuru.Logging/TimeWarp.Nuru.Logging.csproj
 #:package Microsoft.Extensions.Logging
+#:package Mediator.Abstractions
+#:package Mediator.SourceGenerator
 
 using TimeWarp.Nuru;
-using TimeWarp.Mediator;
+using Mediator;
 using Microsoft.Extensions.Logging;
 
 // TimeWarp.Nuru.Logging provides three convenience methods for console logging:
@@ -27,21 +29,21 @@ using Microsoft.Extensions.Logging;
 
 // Example 1: Default logging (Information level)
 // Uncomment to try:
-// var app = new NuruAppBuilder()
+// NuruCoreApp app = new NuruAppBuilder()
 //     .UseConsoleLogging()
 //     .Map("test", () => Console.WriteLine("Test command executed"))
 //     .Build();
 
 // Example 2: Debug level logging
 // Uncomment to try:
-// var app = new NuruAppBuilder()
+// NuruCoreApp app = new NuruAppBuilder()
 //     .UseConsoleLogging(LogLevel.Debug)
 //     .Map("test", () => Console.WriteLine("Test command executed"))
 //     .Build();
 
 // Example 3: Trace level logging (most verbose)
 // Uncomment to try:
-// var app = new NuruAppBuilder()
+// NuruCoreApp app = new NuruAppBuilder()
 //     .UseDebugLogging()
 //     .Map("test", () => Console.WriteLine("Test command executed"))
 //     .Build();
@@ -50,7 +52,7 @@ using Microsoft.Extensions.Logging;
 
 // Example A: DELEGATE routes with ILogger<T> injection (NO DI container needed!)
 // Demonstrates that delegates can use logging without the memory overhead of full DI
-NuruApp app = new NuruAppBuilder()
+NuruCoreApp app = new NuruAppBuilder()
     .UseConsoleLogging()
     .Map("test", (ILogger<Program> logger) =>
     {
@@ -70,9 +72,10 @@ NuruApp app = new NuruAppBuilder()
 
 // Example A2: MEDIATOR commands with ILogger<T> injection (requires DI)
 // Uncomment to try:
-// NuruApp app = new NuruAppBuilder()
+// NuruCoreApp app = new NuruAppBuilder()
 //     .UseConsoleLogging()
-//     .AddDependencyInjection(config => config.RegisterServicesFromAssembly(typeof(TestCommand).Assembly))
+//     .AddDependencyInjection()
+//     .ConfigureServices(services => services.AddMediator()) // Source generator discovers handlers
 //     .Map<TestCommand>("test")
 //     .Map<GreetCommand>("greet {name}")
 //     .AddAutoHelp()
@@ -80,18 +83,20 @@ NuruApp app = new NuruAppBuilder()
 
 // Example B: Debug level (shows Debug, Info, Warning, Error)
 // Uncomment to try:
-// NuruApp app = new NuruAppBuilder()
+// NuruCoreApp app = new NuruAppBuilder()
 //     .UseConsoleLogging(LogLevel.Debug)
-//     .AddDependencyInjection(config => config.RegisterServicesFromAssembly(typeof(TestCommand).Assembly))
+//     .AddDependencyInjection()
+//     .ConfigureServices(services => services.AddMediator())
 //     .Map<TestCommand>("test")
 //     .Map<GreetCommand>("greet {name}")
 //     .Build();
 
 // Example C: Trace level - maximum verbosity (shows ALL log levels + internal routing details)
 // Uncomment to try:
-// NuruApp app = new NuruAppBuilder()
+// NuruCoreApp app = new NuruAppBuilder()
 //     .UseDebugLogging()
-//     .AddDependencyInjection(config => config.RegisterServicesFromAssembly(typeof(TestCommand).Assembly))
+//     .AddDependencyInjection()
+//     .ConfigureServices(services => services.AddMediator())
 //     .Map<TestCommand>("test")
 //     .Map<GreetCommand>("greet {name}")
 //     .Build();
@@ -110,7 +115,7 @@ public sealed class TestCommand : IRequest
       Logger = logger;
     }
 
-    public async Task Handle(TestCommand request, CancellationToken cancellationToken)
+    public ValueTask<Unit> Handle(TestCommand request, CancellationToken cancellationToken)
     {
       Logger.LogTrace("This is a TRACE message (very detailed)");
       Logger.LogDebug("This is a DEBUG message (detailed)");
@@ -118,7 +123,7 @@ public sealed class TestCommand : IRequest
       Logger.LogWarning("This is a WARNING message");
       Logger.LogError("This is an ERROR message");
       Console.WriteLine("✓ Test command completed");
-      await Task.CompletedTask;
+      return default;
     }
   }
 }
@@ -136,11 +141,11 @@ public sealed class GreetCommand : IRequest
       Logger = logger;
     }
 
-    public async Task Handle(GreetCommand request, CancellationToken cancellationToken)
+    public ValueTask<Unit> Handle(GreetCommand request, CancellationToken cancellationToken)
     {
       Logger.LogInformation("Greeting user: {Name}", request.Name);
       Console.WriteLine($"Hello, {request.Name}!");
-      await Task.CompletedTask;
+      return default;
     }
   }
 }

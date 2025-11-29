@@ -193,6 +193,30 @@
       "path": "Samples/Testing/test-terminal-injection.cs",
       "tags": ["testing", "terminal", "dependency-injection", "iterminal", "testability"],
       "difficulty": "intermediate"
+    },
+    {
+      "id": "pipeline-middleware",
+      "name": "Mediator Pipeline Middleware",
+      "description": "Cross-cutting concerns with pipeline behaviors: telemetry, performance, logging, authorization, retry, and exception handling",
+      "path": "Samples/PipelineMiddleware/pipeline-middleware.cs",
+      "tags": ["pipeline", "middleware", "mediator", "behaviors", "cross-cutting-concerns", "telemetry", "performance", "enterprise"],
+      "difficulty": "advanced"
+    },
+    {
+      "id": "unified-middleware",
+      "name": "Unified Pipeline Middleware",
+      "description": "Pipeline behaviors for both delegate and Mediator routes - unified cross-cutting concerns",
+      "path": "Samples/UnifiedMiddleware/unified-middleware.cs",
+      "tags": ["pipeline", "middleware", "delegate", "mediator", "unified", "cross-cutting-concerns"],
+      "difficulty": "advanced"
+    },
+    {
+      "id": "aspire-telemetry",
+      "name": "Aspire Telemetry",
+      "description": "OpenTelemetry integration with Aspire Dashboard - traces, metrics, and logs for CLI observability",
+      "path": "Samples/AspireTelemetry/aspire-telemetry.cs",
+      "tags": ["telemetry", "opentelemetry", "aspire", "traces", "metrics", "observability", "otlp"],
+      "difficulty": "advanced"
     }
   ]
 }

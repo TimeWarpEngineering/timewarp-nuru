@@ -184,7 +184,7 @@ For more complex scenarios, enable DI and use the Mediator pattern:
 
 ```csharp
 using TimeWarp.Nuru;
-using TimeWarp.Mediator;
+using Mediator;
 using Microsoft.Extensions.DependencyInjection;
 
 NuruApp app = new NuruAppBuilder()

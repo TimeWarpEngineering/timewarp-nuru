@@ -41,7 +41,7 @@ That's... a lot of ceremony for "take an ID and do something."
 With TimeWarp.Nuru, you write CLI commands like web routes:
 
 ```csharp
-var app = new NuruAppBuilder()
+NuruApp app = new NuruAppBuilder()
     .Map("users {id:int}", (int id) => GetUser(id))
     .Map("deploy {env} --dry-run", (string env) => DeployDryRun(env))
     .Map("backup {*files}", (string[] files) => BackupFiles(files))
@@ -79,7 +79,7 @@ The kicker? You can use both in the same app. Simple commands stay simple. Compl
 Here's a deployment tool I built last week:
 
 ```csharp
-var app = new NuruAppBuilder()
+NuruApp app = new NuruAppBuilder()
   // Simple commands: Direct
   .Map("status", () => ShowStatus())
   .Map("version", () => Console.WriteLine("v1.0.0"))
@@ -127,8 +127,8 @@ Then:
 ```csharp
 using TimeWarp.Nuru;
 
-var app = new NuruAppBuilder()
-    .Map("greet {name}", (string name) => 
+NuruApp app = new NuruAppBuilder()
+    .Map("greet {name}", (string name) =>
         Console.WriteLine($"Hello, {name}!"))
     .Build();
 

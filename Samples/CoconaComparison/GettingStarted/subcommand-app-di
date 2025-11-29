@@ -1,28 +1,31 @@
 #!/usr/bin/dotnet --
 // subcommand-app-di - Nuru DI/class-based version of Cocona's GettingStarted.SubCommandApp
 #:project ../../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
+#:package Mediator.Abstractions
+#:package Mediator.SourceGenerator
 
 using TimeWarp.Nuru;
-using TimeWarp.Mediator;
+using Mediator;
 using Microsoft.Extensions.DependencyInjection;
 using static System.Console;
 
 // CLI app demonstrating sub-commands with DI/Mediator pattern
-var app = new NuruAppBuilder()
-    .AddDependencyInjection(config => config.RegisterServicesFromAssembly(typeof(HelloCommand).Assembly))
-    
+NuruApp app = new NuruAppBuilder()
+    .AddDependencyInjection()
+    .ConfigureServices(services => services.AddMediator())
+
     // Top-level commands
     .Map<HelloCommand>("hello {name|Your name} --to-upper-case,-u|Print a name converted to upper-case {toUpperCase:bool}")
     .Map<ByeCommand>("bye {name|Your name} --to-lower-case,-l|Print a name converted to lower-case {toLowerCase:bool}")
-    
+
     // Sub-commands
     .Map<KonnichiwaCommand>("sub-commands konnichiwa {member}")
     .Map<SubHelloCommand>("sub-commands hello")
-    
+
     // Sub-sub-commands
     .Map<FoobarCommand>("sub-commands sub-sub-commands foobar")
     .Map<PrimaryCommand>("sub-commands sub-sub-commands {value:string}")
-    
+
     .AddAutoHelp()
     .Build();
 
@@ -33,13 +36,13 @@ public sealed class HelloCommand : IRequest
 {
     public string Name { get; set; } = string.Empty;
     public bool ToUpperCase { get; set; }
-    
+
     internal sealed class Handler : IRequestHandler<HelloCommand>
     {
-        public async Task Handle(HelloCommand request, CancellationToken cancellationToken)
+        public ValueTask<Unit> Handle(HelloCommand request, CancellationToken cancellationToken)
         {
             WriteLine($"Hello {(request.ToUpperCase ? request.Name.ToUpper() : request.Name)}!");
-            await Task.CompletedTask;
+            return default;
         }
     }
 }
@@ -48,13 +51,13 @@ public sealed class ByeCommand : IRequest
 {
     public string Name { get; set; } = string.Empty;
     public bool ToLowerCase { get; set; }
-    
+
     internal sealed class Handler : IRequestHandler<ByeCommand>
     {
-        public async Task Handle(ByeCommand request, CancellationToken cancellationToken)
+        public ValueTask<Unit> Handle(ByeCommand request, CancellationToken cancellationToken)
         {
             WriteLine($"Goodbye {(request.ToLowerCase ? request.Name.ToLower() : request.Name)}!");
-            await Task.CompletedTask;
+            return default;
         }
     }
 }
@@ -63,13 +66,13 @@ public sealed class ByeCommand : IRequest
 public sealed class KonnichiwaCommand : IRequest
 {
     public Member Member { get; set; }
-    
+
     internal sealed class Handler : IRequestHandler<KonnichiwaCommand>
     {
-        public async Task Handle(KonnichiwaCommand request, CancellationToken cancellationToken)
+        public ValueTask<Unit> Handle(KonnichiwaCommand request, CancellationToken cancellationToken)
         {
             WriteLine($"Konnichiwa! {request.Member}");
-            await Task.CompletedTask;
+            return default;
         }
     }
 }
@@ -78,10 +81,10 @@ public sealed class SubHelloCommand : IRequest
 {
     internal sealed class Handler : IRequestHandler<SubHelloCommand>
     {
-        public async Task Handle(SubHelloCommand request, CancellationToken cancellationToken)
+        public ValueTask<Unit> Handle(SubHelloCommand request, CancellationToken cancellationToken)
         {
             WriteLine("Hello!");
-            await Task.CompletedTask;
+            return default;
         }
     }
 }
@@ -91,10 +94,10 @@ public sealed class FoobarCommand : IRequest
 {
     internal sealed class Handler : IRequestHandler<FoobarCommand>
     {
-        public async Task Handle(FoobarCommand request, CancellationToken cancellationToken)
+        public ValueTask<Unit> Handle(FoobarCommand request, CancellationToken cancellationToken)
         {
             WriteLine("Foobar!");
-            await Task.CompletedTask;
+            return default;
         }
     }
 }
@@ -102,13 +105,13 @@ public sealed class FoobarCommand : IRequest
 public sealed class PrimaryCommand : IRequest
 {
     public string Value { get; set; } = string.Empty;
-    
+
     internal sealed class Handler : IRequestHandler<PrimaryCommand>
     {
-        public async Task Handle(PrimaryCommand request, CancellationToken cancellationToken)
+        public ValueTask<Unit> Handle(PrimaryCommand request, CancellationToken cancellationToken)
         {
             WriteLine($"value={request.Value}");
-            await Task.CompletedTask;
+            return default;
         }
     }
 }

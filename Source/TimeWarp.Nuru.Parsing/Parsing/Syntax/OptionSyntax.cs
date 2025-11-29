@@ -22,7 +22,7 @@ internal record OptionSyntax
 {
   public override string ToString()
   {
-    var sb = new StringBuilder();
+    StringBuilder sb = new();
     sb.Append("Option:");
     if (LongForm is not null) sb.Append(" longName='").Append(LongForm).Append('\'');
     if (ShortForm is not null) sb.Append(" shortName='").Append(ShortForm).Append('\'');

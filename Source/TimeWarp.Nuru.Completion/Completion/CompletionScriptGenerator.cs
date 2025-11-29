@@ -57,7 +57,7 @@ public class CompletionScriptGenerator
     HashSet<string> options = ExtractOptions(endpoints);
 
     // Build _arguments specification
-    var argsSpec = new StringBuilder();
+    StringBuilder argsSpec = new();
     foreach (string option in options)
     {
       argsSpec.AppendLine(CultureInfo.InvariantCulture, $"  '{option}[{option}]' \\");
@@ -88,7 +88,7 @@ public class CompletionScriptGenerator
     HashSet<string> options = ExtractOptions(endpoints);
 
     // Build PowerShell completion results
-    var completions = new StringBuilder();
+    StringBuilder completions = new();
     foreach (string cmd in commands)
     {
       completions.AppendLine(CultureInfo.InvariantCulture, $"    [System.Management.Automation.CompletionResult]::new('{cmd}', '{cmd}', [System.Management.Automation.CompletionResultType]::ParameterValue, '{cmd}')");
@@ -118,7 +118,7 @@ public class CompletionScriptGenerator
     HashSet<string> options = ExtractOptions(endpoints);
 
     // Build fish complete commands
-    var completes = new StringBuilder();
+    StringBuilder completes = new();
     foreach (string cmd in commands)
     {
       completes.AppendLine(CultureInfo.InvariantCulture, $"complete -c {appName} -a '{cmd}' -d 'Command: {cmd}'");
@@ -141,7 +141,7 @@ public class CompletionScriptGenerator
   /// </summary>
   private static HashSet<string> ExtractCommands(EndpointCollection endpoints)
   {
-    var commands = new HashSet<string>();
+    HashSet<string> commands = [];
 
     foreach (Endpoint endpoint in endpoints.Endpoints)
     {
@@ -163,7 +163,7 @@ public class CompletionScriptGenerator
   /// </summary>
   private static HashSet<string> ExtractOptions(EndpointCollection endpoints)
   {
-    var options = new HashSet<string>();
+    HashSet<string> options = [];
 
     foreach (Endpoint endpoint in endpoints.Endpoints)
     {
@@ -197,7 +197,7 @@ public class CompletionScriptGenerator
       throw new InvalidOperationException($"Template not found: {templateName}");
     }
 
-    using var reader = new StreamReader(stream);
+    using StreamReader reader = new(stream);
     return reader.ReadToEnd();
   }
 }

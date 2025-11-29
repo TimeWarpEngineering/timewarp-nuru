@@ -12,7 +12,7 @@ using Microsoft.Extensions.Options;
 using TimeWarp.Nuru;
 using static System.Console;
 
-NuruApp app =
+NuruCoreApp app =
   new NuruAppBuilder()
   .AddDependencyInjection()
   .AddConfiguration(args) // Loads appsettings.json, environment variables, command line args

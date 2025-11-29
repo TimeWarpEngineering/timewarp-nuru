@@ -9,7 +9,7 @@ public class DynamicHandlerTests
   public static async Task Should_output_completions_to_stdout()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("status", () => 0);
     builder.Map("version", () => 0);
 
@@ -32,7 +32,7 @@ public class DynamicHandlerTests
   public static async Task Should_output_completion_directive()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("status", () => 0);
 
     CompletionSourceRegistry registry = new();
@@ -51,7 +51,7 @@ public class DynamicHandlerTests
   public static async Task Should_output_diagnostic_to_stderr()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("status", () => 0);
 
     CompletionSourceRegistry registry = new();
@@ -70,7 +70,7 @@ public class DynamicHandlerTests
   public static async Task Should_use_registered_parameter_source()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("deploy {env}", (string env) => 0);
 
     CompletionSourceRegistry registry = new();
@@ -95,7 +95,7 @@ public class DynamicHandlerTests
   public static async Task Should_use_registered_type_source()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("deploy {env} --mode {mode}", (string env, DeploymentMode mode) => 0);
 
     CompletionSourceRegistry registry = new();
@@ -120,7 +120,7 @@ public class DynamicHandlerTests
   public static async Task Should_fallback_to_default_source_when_no_registration()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("git status", () => 0);
     builder.Map("git push", () => 0);
     builder.Map("git pull", () => 0);
@@ -144,7 +144,7 @@ public class DynamicHandlerTests
   public static async Task Should_include_descriptions_in_output()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("deploy {env}", (string env) => 0);
 
     CompletionSourceRegistry registry = new();
@@ -171,7 +171,7 @@ public class DynamicHandlerTests
   public static async Task Should_return_zero_exit_code()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("status", () => 0);
 
     CompletionSourceRegistry registry = new();
@@ -189,7 +189,7 @@ public class DynamicHandlerTests
   public static async Task Should_prefer_parameter_name_over_type_registration()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("deploy {env}", (string env) => 0);
 
     CompletionSourceRegistry registry = new();
@@ -217,7 +217,7 @@ public class DynamicHandlerTests
   public static async Task Should_handle_empty_words_array()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("status", () => 0);
 
     CompletionSourceRegistry registry = new();

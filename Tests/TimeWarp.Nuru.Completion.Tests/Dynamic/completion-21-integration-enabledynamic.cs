@@ -9,7 +9,7 @@ public class IntegrationEnableDynamicTests
   public static async Task Should_register_complete_route()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("status", () => 0);
 
     // Act
@@ -29,7 +29,7 @@ public class IntegrationEnableDynamicTests
   public static async Task Should_register_generate_completion_route()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
 
     // Act
     builder.EnableDynamicCompletion();
@@ -47,7 +47,7 @@ public class IntegrationEnableDynamicTests
   public static async Task Should_return_builder_for_fluent_chaining()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
 
     // Act
     NuruAppBuilder result = builder.EnableDynamicCompletion();
@@ -61,7 +61,7 @@ public class IntegrationEnableDynamicTests
   public static async Task Should_configure_registry_via_callback()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("deploy {env}", (string env) => 0);
 
     bool registryConfigured = false;
@@ -83,7 +83,7 @@ public class IntegrationEnableDynamicTests
   public static async Task Should_complete_route_accept_index_and_words()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("status", () => 0);
     builder.EnableDynamicCompletion();
 
@@ -110,7 +110,7 @@ public class IntegrationEnableDynamicTests
   public static async Task Should_have_catchall_for_words_parameter()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.EnableDynamicCompletion();
 
     // Act
@@ -140,12 +140,12 @@ public class IntegrationEnableDynamicTests
   public static async Task Should_execute_complete_route_and_return_candidates()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("status", () => 0);
     builder.Map("version", () => 0);
     builder.EnableDynamicCompletion();
 
-    NuruApp app = builder.Build();
+    NuruCoreApp app = builder.Build();
 
     // Act - Execute the __complete route
     (int exitCode, string output, string _) = await CaptureAppOutputAsync(() =>
@@ -161,7 +161,7 @@ public class IntegrationEnableDynamicTests
   public static async Task Should_use_configured_sources_in_complete_route()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("deploy {env}", (string env) => 0);
 
     builder.EnableDynamicCompletion(configure: registry =>
@@ -170,7 +170,7 @@ public class IntegrationEnableDynamicTests
       registry.RegisterForParameter("env", source);
     });
 
-    NuruApp app = builder.Build();
+    NuruCoreApp app = builder.Build();
 
     // Act - Complete the env parameter
     (int exitCode, string output, string _) = await CaptureAppOutputAsync(() =>
@@ -186,7 +186,7 @@ public class IntegrationEnableDynamicTests
   public static async Task Should_auto_register_enum_sources()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("deploy {env} --mode {mode}", (string env, DeploymentMode mode) => 0);
 
     builder.EnableDynamicCompletion(configure: registry =>
@@ -196,7 +196,7 @@ public class IntegrationEnableDynamicTests
       registry.RegisterForType(typeof(DeploymentMode), enumSource);
     });
 
-    NuruApp app = builder.Build();
+    NuruCoreApp app = builder.Build();
 
     // Act - Complete the mode parameter (after --mode option)
     (int exitCode, string output, string _) = await CaptureAppOutputAsync(() =>
@@ -212,7 +212,7 @@ public class IntegrationEnableDynamicTests
   public static async Task Should_handle_explicit_app_name()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("status", () => 0);
 
     // Act

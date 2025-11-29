@@ -15,7 +15,7 @@ public class EnumSourceTests
     CompletionContext context = CreateContext();
 
     // Act
-    var completions = source.GetCompletions(context).ToList();
+    List<CompletionCandidate> completions = [.. source.GetCompletions(context)];
 
     // Assert
     completions.Count.ShouldBe(4);
@@ -34,7 +34,7 @@ public class EnumSourceTests
     CompletionContext context = CreateContext();
 
     // Act
-    var completions = source.GetCompletions(context).ToList();
+    List<CompletionCandidate> completions = [.. source.GetCompletions(context)];
 
     // Assert
     CompletionCandidate fast = completions.First(c => c.Value == "Fast");
@@ -59,7 +59,7 @@ public class EnumSourceTests
     CompletionContext context = CreateContext();
 
     // Act
-    var completions = source.GetCompletions(context).ToList();
+    List<CompletionCandidate> completions = [.. source.GetCompletions(context)];
 
     // Assert - Without DescriptionAttribute, fallback shows "Value: {numeric_value}"
     completions.All(c => c.Description!.StartsWith("Value:", StringComparison.Ordinal)).ShouldBeTrue();
@@ -74,7 +74,7 @@ public class EnumSourceTests
     CompletionContext context = CreateContext();
 
     // Act
-    var completions = source.GetCompletions(context).ToList();
+    List<CompletionCandidate> completions = [.. source.GetCompletions(context)];
 
     // Assert
     CompletionCandidate debug = completions.First(c => c.Value == "Debug");
@@ -101,7 +101,7 @@ public class EnumSourceTests
     CompletionContext context = CreateContext();
 
     // Act
-    var completions = source.GetCompletions(context).ToList();
+    List<CompletionCandidate> completions = [.. source.GetCompletions(context)];
 
     // Assert - EnumCompletionSource sorts alphabetically (StringComparer.Ordinal)
     completions[0].Value.ShouldBe("BlueGreen");
@@ -119,7 +119,7 @@ public class EnumSourceTests
     CompletionContext context = CreateContext();
 
     // Act
-    var completions = source.GetCompletions(context).ToList();
+    List<CompletionCandidate> completions = [.. source.GetCompletions(context)];
 
     // Assert
     completions.All(c => c.Type == CompletionType.Parameter).ShouldBeTrue();
@@ -134,7 +134,7 @@ public class EnumSourceTests
     CompletionContext context = CreateContext();
 
     // Act
-    var completions = source.GetCompletions(context).ToList();
+    List<CompletionCandidate> completions = [.. source.GetCompletions(context)];
 
     // Assert
     completions.Count.ShouldBe(1);
@@ -150,7 +150,7 @@ public class EnumSourceTests
     CompletionContext context = CreateContext();
 
     // Act
-    var completions = source.GetCompletions(context).ToList();
+    List<CompletionCandidate> completions = [.. source.GetCompletions(context)];
 
     // Assert
     completions.Any(c => c.Value == "BlueGreen").ShouldBeTrue(); // Not "bluegreen" or "blue-green"
@@ -165,7 +165,7 @@ public class EnumSourceTests
     CompletionContext context = CreateContext();
 
     // Act
-    var completions = source.GetCompletions(context).ToList();
+    List<CompletionCandidate> completions = [.. source.GetCompletions(context)];
 
     // Assert
     completions.Count.ShouldBe(3);
@@ -184,8 +184,8 @@ public class EnumSourceTests
     CompletionContext context2 = CreateContext("different", "args");
 
     // Act
-    var completions1 = source.GetCompletions(context1).ToList();
-    var completions2 = source.GetCompletions(context2).ToList();
+    List<CompletionCandidate> completions1 = [.. source.GetCompletions(context1)];
+    List<CompletionCandidate> completions2 = [.. source.GetCompletions(context2)];
 
     // Assert - Context doesn't affect enum extraction
     completions1.Count.ShouldBe(completions2.Count);
@@ -196,7 +196,7 @@ public class EnumSourceTests
 
   private static CompletionContext CreateContext(params string[] args)
   {
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     return new CompletionContext(
       Args: args.Length > 0 ? args : ["app"],
       CursorPosition: args.Length > 0 ? args.Length : 1,

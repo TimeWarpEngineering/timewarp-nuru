@@ -19,7 +19,7 @@ public class CustomTypeConstraintParsingTests
 
     // Verify parameter segment with custom type constraint
     route.PositionalMatchers[1].ShouldBeOfType<ParameterMatcher>();
-    var param = (ParameterMatcher)route.PositionalMatchers[1];
+    ParameterMatcher param = (ParameterMatcher)route.PositionalMatchers[1];
     param.Name.ShouldBe("file");
     param.Constraint.ShouldBe("fileinfo");
     param.IsOptional.ShouldBeFalse();
@@ -34,7 +34,7 @@ public class CustomTypeConstraintParsingTests
 
     // Assert
     route.ShouldNotBeNull();
-    var param = (ParameterMatcher)route.PositionalMatchers[1];
+    ParameterMatcher param = (ParameterMatcher)route.PositionalMatchers[1];
     param.Name.ShouldBe("data");
     param.Constraint.ShouldBe("MyCustomType");
 
@@ -48,7 +48,7 @@ public class CustomTypeConstraintParsingTests
 
     // Assert
     route.ShouldNotBeNull();
-    var param = (ParameterMatcher)route.PositionalMatchers[1];
+    ParameterMatcher param = (ParameterMatcher)route.PositionalMatchers[1];
     param.Name.ShouldBe("input");
     param.Constraint.ShouldBe("my_custom_type");
 
@@ -62,7 +62,7 @@ public class CustomTypeConstraintParsingTests
 
     // Assert
     route.ShouldNotBeNull();
-    var param = (ParameterMatcher)route.PositionalMatchers[1];
+    ParameterMatcher param = (ParameterMatcher)route.PositionalMatchers[1];
     param.Name.ShouldBe("value");
     param.Constraint.ShouldBe("_internal");
 
@@ -76,7 +76,7 @@ public class CustomTypeConstraintParsingTests
 
     // Assert
     route.ShouldNotBeNull();
-    var param = (ParameterMatcher)route.PositionalMatchers[1];
+    ParameterMatcher param = (ParameterMatcher)route.PositionalMatchers[1];
     param.Name.ShouldBe("addr");
     param.Constraint.ShouldBe("ipv4address");
 
@@ -121,11 +121,11 @@ public class CustomTypeConstraintParsingTests
     route.ShouldNotBeNull();
     route.PositionalMatchers.Count.ShouldBe(3); // "copy" + {source:fileinfo} + {dest:directoryinfo}
 
-    var sourceParam = (ParameterMatcher)route.PositionalMatchers[1];
+    ParameterMatcher sourceParam = (ParameterMatcher)route.PositionalMatchers[1];
     sourceParam.Name.ShouldBe("source");
     sourceParam.Constraint.ShouldBe("fileinfo");
 
-    var destParam = (ParameterMatcher)route.PositionalMatchers[2];
+    ParameterMatcher destParam = (ParameterMatcher)route.PositionalMatchers[2];
     destParam.Name.ShouldBe("dest");
     destParam.Constraint.ShouldBe("directoryinfo");
 
@@ -139,7 +139,7 @@ public class CustomTypeConstraintParsingTests
 
     // Assert
     route.ShouldNotBeNull();
-    var param = (ParameterMatcher)route.PositionalMatchers[1];
+    ParameterMatcher param = (ParameterMatcher)route.PositionalMatchers[1];
     param.Name.ShouldBe("config");
     param.Constraint.ShouldBe("fileinfo?");
     param.IsOptional.ShouldBeTrue();

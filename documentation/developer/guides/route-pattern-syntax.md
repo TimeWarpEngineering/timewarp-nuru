@@ -160,7 +160,7 @@ In addition to inline descriptions, you can provide an overall route description
 Enable automatic help generation for all routes:
 
 ```csharp
-var app = new NuruAppBuilder()
+NuruApp app = new NuruAppBuilder()
     .Map(...)
     .Map(...)
     .AddAutoHelp()  // Generates --help routes automatically
@@ -185,9 +185,9 @@ This will automatically create help routes for:
 ### Complete Application Example
 
 ```csharp
-var app = new NuruAppBuilder()
+NuruApp app = new NuruAppBuilder()
     // Simple command
-    .Map("version", 
+    .Map("version",
         () => Console.WriteLine("1.0.0"),
         description: "Show version information")
     

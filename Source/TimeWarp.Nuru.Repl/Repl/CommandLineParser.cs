@@ -118,7 +118,7 @@ internal static class CommandLineParser
   /// <returns>A list of tokens with position and type information.</returns>
   public static List<CommandLineToken> ParseWithPositions(string input)
   {
-    var tokens = new List<CommandLineToken>();
+    List<CommandLineToken> tokens = [];
 
     if (string.IsNullOrWhiteSpace(input))
       return tokens;

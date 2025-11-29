@@ -1,19 +1,19 @@
 namespace TimeWarp.Nuru.Repl;
 
-using TimeWarp.Nuru;
-
 /// <summary>
 /// Extension methods to enable REPL (Read-Eval-Print Loop) mode for Nuru applications.
 /// </summary>
-public static class NuruAppExtensions
+public static class NuruCoreAppExtensions
 {
   /// <summary>
   /// Adds REPL (Read-Eval-Print Loop) command routes to application.
   /// This registers built-in REPL commands as routes.
   /// </summary>
-  /// <param name="builder">The NuruAppBuilder instance.</param>
+  /// <typeparam name="TBuilder">The builder type.</typeparam>
+  /// <param name="builder">The NuruCoreAppBuilder instance.</param>
   /// <returns>The builder for chaining.</returns>
-  public static NuruAppBuilder AddReplRoutes(this NuruAppBuilder builder)
+  public static TBuilder AddReplRoutes<TBuilder>(this TBuilder builder)
+    where TBuilder : NuruCoreAppBuilder
   {
     ArgumentNullException.ThrowIfNull(builder);
 
@@ -32,29 +32,32 @@ public static class NuruAppExtensions
   /// Adds REPL (Read-Eval-Print Loop) support to application.
   /// This stores REPL configuration options and registers REPL commands as routes.
   /// </summary>
-  /// <param name="builder">The NuruAppBuilder instance.</param>
+  /// <typeparam name="TBuilder">The builder type.</typeparam>
+  /// <param name="builder">The NuruCoreAppBuilder instance.</param>
   /// <param name="configureOptions">Optional action to configure REPL options.</param>
   /// <returns>The builder for chaining.</returns>
-  public static NuruAppBuilder AddReplSupport
+  public static TBuilder AddReplSupport<TBuilder>
   (
-    this NuruAppBuilder builder,
+    this TBuilder builder,
     Action<ReplOptions>? configureOptions = null
   )
+    where TBuilder : NuruCoreAppBuilder
   {
     ArgumentNullException.ThrowIfNull(builder);
-    return builder.AddReplOptions(configureOptions).AddReplRoutes();
+    builder.AddReplOptions(configureOptions).AddReplRoutes();
+    return builder;
   }
 
   /// <summary>
   /// Runs the application with REPL support. If args contains "--repl", enters interactive mode.
   /// Otherwise, executes the command normally.
   /// </summary>
-  /// <param name="app">The NuruApp instance.</param>
+  /// <param name="app">The NuruCoreApp instance.</param>
   /// <param name="cancellationToken">Cancellation token.</param>
   /// <returns>Exit code from the command or REPL session.</returns>
   /// <example>
   /// <code>
-  /// NuruApp app = NuruApp.CreateBuilder()
+  /// NuruCoreApp app = NuruCoreApp.CreateBuilder()
   ///   .Map("greet {name}", (string name) => Console.WriteLine($"Hello, {name}!"))
   ///   .Map("status", () => Console.WriteLine("OK"))
   ///   .Build();
@@ -65,7 +68,7 @@ public static class NuruAppExtensions
   /// </example>
   public static Task<int> RunReplAsync
   (
-    this NuruApp app,
+    this NuruCoreApp app,
     ReplOptions? options = null,
     CancellationToken cancellationToken = default
   )
@@ -82,12 +85,13 @@ public static class NuruAppExtensions
   /// Adds an interactive mode route that starts the REPL when invoked.
   /// This allows apps to support both CLI and REPL modes via command line.
   /// </summary>
-  /// <param name="builder">The NuruAppBuilder instance.</param>
+  /// <typeparam name="TBuilder">The builder type.</typeparam>
+  /// <param name="builder">The NuruCoreAppBuilder instance.</param>
   /// <param name="patterns">Route patterns to trigger interactive mode (default: "--interactive,-i").</param>
   /// <returns>The builder for chaining.</returns>
   /// <example>
   /// <code>
-  /// var app = new NuruAppBuilder()
+  /// NuruCoreApp app = NuruCoreAppBuilder.Create()
   ///   .Map("greet {name}", (string name) => Console.WriteLine($"Hello, {name}!"))
   ///   .AddReplSupport(options => options.Prompt = "myapp> ")
   ///   .AddInteractiveRoute()
@@ -99,11 +103,12 @@ public static class NuruAppExtensions
   /// return await app.RunAsync(args);
   /// </code>
   /// </example>
-  public static NuruAppBuilder AddInteractiveRoute
+  public static TBuilder AddInteractiveRoute<TBuilder>
   (
-    this NuruAppBuilder builder,
+    this TBuilder builder,
     string patterns = "--interactive,-i"
   )
+    where TBuilder : NuruCoreAppBuilder
   {
     ArgumentNullException.ThrowIfNull(builder);
     ArgumentNullException.ThrowIfNull(patterns);
@@ -117,12 +122,13 @@ public static class NuruAppExtensions
 
   /// <summary>
   /// Static handler for the interactive mode route.
-  /// Receives NuruApp via DI injection and starts the REPL.
+  /// Receives NuruCoreAppHolder via DI injection and starts the REPL.
   /// </summary>
-  /// <param name="app">The NuruApp instance (injected by framework).</param>
+  /// <param name="appHolder">The NuruCoreAppHolder instance (injected by framework).</param>
   /// <returns>Exit code from the REPL session.</returns>
-  public static Task<int> StartInteractiveModeAsync(NuruApp app)
+  public static Task<int> StartInteractiveModeAsync(NuruCoreAppHolder appHolder)
   {
-    return app.RunReplAsync();
+    ArgumentNullException.ThrowIfNull(appHolder);
+    return appHolder.App.RunReplAsync();
   }
 }

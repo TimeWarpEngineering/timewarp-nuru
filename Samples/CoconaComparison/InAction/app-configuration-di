@@ -5,20 +5,19 @@
 #:package Microsoft.Extensions.Configuration.Binder
 #:package Microsoft.Extensions.Configuration.Json
 #:package Microsoft.Extensions.Configuration.EnvironmentVariables
+#:package Mediator.Abstractions
+#:package Mediator.SourceGenerator
 
 using TimeWarp.Nuru;
-using TimeWarp.Nuru.Extensions;
-using TimeWarp.Mediator;
+using Mediator;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using static System.Console;
 
 // Create app with DI and automatic configuration setup
-var app = new NuruAppBuilder()
-    .AddDependencyInjection(config => 
-    {
-        config.RegisterServicesFromAssembly(typeof(RunCommand).Assembly);
-    })
+NuruApp app = new NuruAppBuilder()
+    .AddDependencyInjection()
+    .ConfigureServices(services => services.AddMediator())
     .AddConfiguration(args)  // Automatically sets up standard configuration sources
     .Map<RunCommand>("run")
     .AddAutoHelp()
@@ -32,21 +31,21 @@ public sealed class RunCommand : IRequest
     internal sealed class Handler : IRequestHandler<RunCommand>
     {
         private readonly IConfiguration _configuration;
-        
+
         public Handler(IConfiguration configuration)
         {
             _configuration = configuration;
         }
-        
-        public async Task Handle(RunCommand request, CancellationToken cancellationToken)
+
+        public ValueTask<Unit> Handle(RunCommand request, CancellationToken cancellationToken)
         {
-            var configValue1 = _configuration.GetValue<bool>("ConfigValue1");
-            var configValue2 = _configuration.GetValue<string>("ConfigValue2");
-            
+            bool configValue1 = _configuration.GetValue<bool>("ConfigValue1");
+            string? configValue2 = _configuration.GetValue<string>("ConfigValue2");
+
             WriteLine($"ConfigValue1: {configValue1}");
             WriteLine($"ConfigValue2: {configValue2}");
-            
-            await Task.CompletedTask;
+
+            return default;
         }
     }
 }

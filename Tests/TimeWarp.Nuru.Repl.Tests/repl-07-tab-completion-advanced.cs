@@ -15,13 +15,13 @@ public class TabCompletionAdvancedTests
   public static async Task Should_complete_long_options()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueKeys("deploy --");
     terminal.QueueKey(ConsoleKey.Tab);  // Show options
     terminal.QueueKey(ConsoleKey.Escape);
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("deploy --force", () => "Force deployed!")
       .Map("deploy --dry-run", () => "Dry run!")
@@ -40,13 +40,13 @@ public class TabCompletionAdvancedTests
   public static async Task Should_complete_short_options()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueKeys("deploy -");
     terminal.QueueKey(ConsoleKey.Tab);  // Show short options
     terminal.QueueKey(ConsoleKey.Escape);
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("deploy -f", () => "Force!")
       .Map("deploy -v", () => "Verbose!")
@@ -65,13 +65,13 @@ public class TabCompletionAdvancedTests
   public static async Task Should_complete_nested_commands()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueKeys("git com");
     terminal.QueueKey(ConsoleKey.Tab);  // Should show "commit", "config"
     terminal.QueueKey(ConsoleKey.Escape);
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("git commit", () => "Committed!")
       .Map("git config", () => "Configured!")
@@ -91,13 +91,13 @@ public class TabCompletionAdvancedTests
   public static async Task Should_complete_parameter_values()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueKeys("deploy ");
     terminal.QueueKey(ConsoleKey.Tab);  // Show parameter completions
     terminal.QueueKey(ConsoleKey.Escape);
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("deploy {env}", (string env) => $"Deployed to {env}")
       .AddReplSupport(options => options.EnableArrowHistory = true)
@@ -115,13 +115,13 @@ public class TabCompletionAdvancedTests
   public static async Task Should_complete_after_option_value()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueKeys("deploy --env prod ");
     terminal.QueueKey(ConsoleKey.Tab);
     terminal.QueueKey(ConsoleKey.Escape);
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("deploy --env {env}", (string env) => $"Deployed to {env}")
       .AddReplSupport(options => options.EnableArrowHistory = true)
@@ -139,13 +139,13 @@ public class TabCompletionAdvancedTests
   public static async Task Should_complete_mixed_position()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueKeys("cmd arg1 --opt val ");
     terminal.QueueKey(ConsoleKey.Tab);
     terminal.QueueKey(ConsoleKey.Escape);
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("cmd {arg} --opt {val}", (string arg, string val) => $"{arg}:{val}")
       .AddReplSupport(options => options.EnableArrowHistory = true)
@@ -163,13 +163,13 @@ public class TabCompletionAdvancedTests
   public static async Task Should_complete_catch_all_parameter()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueKeys("docker ");
     terminal.QueueKey(ConsoleKey.Tab);
     terminal.QueueKey(ConsoleKey.Escape);
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("docker {*args}", (string[] args) => string.Join(" ", args))
       .AddReplSupport(options => options.EnableArrowHistory = true)
@@ -187,13 +187,13 @@ public class TabCompletionAdvancedTests
   public static async Task Should_complete_with_multiple_subcommands()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueKeys("kubectl get ");
     terminal.QueueKey(ConsoleKey.Tab);
     terminal.QueueKey(ConsoleKey.Escape);
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("kubectl get pods", () => "Pods!")
       .Map("kubectl get services", () => "Services!")
@@ -218,13 +218,13 @@ public class TabCompletionAdvancedTests
     // the command takes no arguments.
 
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueKeys("help ");
     terminal.QueueKey(ConsoleKey.Tab);  // Should NOT suggest "help" again
     terminal.QueueKey(ConsoleKey.Enter); // Submit whatever we have
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("help", () => "Help content")
       .Map("hello", () => "Hello!")
@@ -248,13 +248,13 @@ public class TabCompletionAdvancedTests
     // it should suggest subcommands like "commit", "push", etc.
 
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueKeys("git ");
     terminal.QueueKey(ConsoleKey.Tab);  // Should show subcommands
     terminal.QueueKey(ConsoleKey.Escape);
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("git commit", () => "Committed!")
       .Map("git push", () => "Pushed!")

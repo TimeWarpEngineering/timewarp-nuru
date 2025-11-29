@@ -1,24 +1,24 @@
 #!/usr/bin/dotnet --
 // calc-createbuilder - Calculator using ASP.NET Core-style CreateBuilder API
 #:project ../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
+#:package Mediator.Abstractions
+#:package Mediator.SourceGenerator
 
 using TimeWarp.Nuru;
-using TimeWarp.Mediator;
+using Mediator;
 using Microsoft.Extensions.DependencyInjection;
 using static System.Console;
 
 // ASP.NET Core-style API - familiar to web developers
-var builder = NuruApp.CreateBuilder(args);
+NuruAppBuilder builder = NuruApp.CreateBuilder(args);
 
 // ConfigureServices works just like ASP.NET Core
 builder.ConfigureServices(services =>
 {
+  // Register Mediator - source generator discovers handlers in THIS assembly
+  
+  builder.Services.AddMediator();
   services.AddSingleton<IScientificCalculator, ScientificCalculator>();
-
-  // Register mediator handlers
-  services.AddTransient<IRequestHandler<FactorialCommand>, FactorialCommand.Handler>();
-  services.AddTransient<IRequestHandler<PrimeCheckCommand>, PrimeCheckCommand.Handler>();
-  services.AddTransient<IRequestHandler<FibonacciCommand>, FibonacciCommand.Handler>();
 });
 
 // Map() is an alias for Map() - just like ASP.NET Core's app.Map()
@@ -59,7 +59,7 @@ builder.MapDefault(() =>
 });
 
 // Build and run - same pattern as ASP.NET Core
-var app = builder.Build();
+NuruCoreApp app = builder.Build();
 return await app.RunAsync(args);
 
 // Command definitions (unchanged from calc-mixed.cs)
@@ -69,7 +69,7 @@ public sealed class FactorialCommand : IRequest
 
   public sealed class Handler(IScientificCalculator calc) : IRequestHandler<FactorialCommand>
   {
-    public async Task Handle(FactorialCommand request, CancellationToken cancellationToken)
+    public ValueTask<Unit> Handle(FactorialCommand request, CancellationToken cancellationToken)
     {
       try
       {
@@ -80,7 +80,7 @@ public sealed class FactorialCommand : IRequest
       {
         WriteLine($"Error: {ex.Message}");
       }
-      await Task.CompletedTask;
+      return default;
     }
   }
 }
@@ -91,11 +91,11 @@ public class PrimeCheckCommand : IRequest
 
   public sealed class Handler(IScientificCalculator calc) : IRequestHandler<PrimeCheckCommand>
   {
-    public async Task Handle(PrimeCheckCommand request, CancellationToken cancellationToken)
+    public ValueTask<Unit> Handle(PrimeCheckCommand request, CancellationToken cancellationToken)
     {
       bool result = calc.IsPrime(request.N);
       WriteLine($"{request.N} is {(result ? "prime" : "not prime")}");
-      await Task.CompletedTask;
+      return default;
     }
   }
 }
@@ -106,7 +106,7 @@ public class FibonacciCommand : IRequest
 
   public sealed class Handler(IScientificCalculator calc) : IRequestHandler<FibonacciCommand>
   {
-    public async Task Handle(FibonacciCommand request, CancellationToken cancellationToken)
+    public ValueTask<Unit> Handle(FibonacciCommand request, CancellationToken cancellationToken)
     {
       try
       {
@@ -117,7 +117,7 @@ public class FibonacciCommand : IRequest
       {
         WriteLine($"Error: {ex.Message}");
       }
-      await Task.CompletedTask;
+      return default;
     }
   }
 }

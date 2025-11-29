@@ -1,0 +1,10 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "aspire-dashboard": {
+      "type": "remote",
+      "url": "http://localhost:15186/mcp",
+      "enabled": true
+    }
+  }
+}

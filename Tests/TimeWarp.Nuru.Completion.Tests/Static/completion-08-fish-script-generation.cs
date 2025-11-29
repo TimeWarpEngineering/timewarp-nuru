@@ -13,12 +13,12 @@ public class FishScriptGenerationTests
   public static async Task Should_generate_valid_fish_syntax()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("status", () => 0);
     builder.Map("deploy {env}", (string env) => 0);
 
     // Act
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
     string fishScript = generator.GenerateFish(builder.EndpointCollection, "testapp");
 
     // Assert
@@ -32,11 +32,11 @@ public class FishScriptGenerationTests
   public static async Task Should_include_app_name_in_script()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("status", () => 0);
 
     // Act
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
     string fishScript = generator.GenerateFish(builder.EndpointCollection, "myapp");
 
     // Assert
@@ -48,14 +48,14 @@ public class FishScriptGenerationTests
   public static async Task Should_include_all_commands()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("create", () => 0);
     builder.Map("createorder", () => 0);
     builder.Map("delete", () => 0);
     builder.Map("list", () => 0);
 
     // Act
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
     string fishScript = generator.GenerateFish(builder.EndpointCollection, "testapp");
 
     // Assert
@@ -70,12 +70,12 @@ public class FishScriptGenerationTests
   public static async Task Should_include_all_options()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("test --verbose --force", () => 0);
     builder.Map("build --dry-run,-d", () => 0);
 
     // Act
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
     string fishScript = generator.GenerateFish(builder.EndpointCollection, "testapp");
 
     // Assert
@@ -90,11 +90,11 @@ public class FishScriptGenerationTests
   public static async Task Should_use_complete_command()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("status", () => 0);
 
     // Act
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
     string fishScript = generator.GenerateFish(builder.EndpointCollection, "testapp");
 
     // Assert - Fish uses 'complete -c' commands
@@ -106,11 +106,11 @@ public class FishScriptGenerationTests
   public static async Task Should_use_dash_a_for_commands()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("status", () => 0);
 
     // Act
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
     string fishScript = generator.GenerateFish(builder.EndpointCollection, "testapp");
 
     // Assert - Fish uses '-a' flag for arguments
@@ -122,11 +122,11 @@ public class FishScriptGenerationTests
   public static async Task Should_use_dash_d_for_descriptions()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("status", () => 0);
 
     // Act
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
     string fishScript = generator.GenerateFish(builder.EndpointCollection, "testapp");
 
     // Assert - Fish uses '-d' flag for descriptions
@@ -138,10 +138,10 @@ public class FishScriptGenerationTests
   public static async Task Should_handle_empty_route_collection()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
 
     // Act
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
     string fishScript = generator.GenerateFish(builder.EndpointCollection, "testapp");
 
     // Assert
@@ -154,11 +154,11 @@ public class FishScriptGenerationTests
   public static async Task Should_handle_special_characters_in_app_name()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("status", () => 0);
 
     // Act
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
     string fishScript = generator.GenerateFish(builder.EndpointCollection, "my-app");
 
     // Assert
@@ -171,11 +171,11 @@ public class FishScriptGenerationTests
   public static async Task Should_generate_consistent_output()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("status", () => 0);
     builder.Map("version", () => 0);
 
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
 
     // Act
     string fishScript1 = generator.GenerateFish(builder.EndpointCollection, "testapp");
@@ -190,12 +190,12 @@ public class FishScriptGenerationTests
   public static async Task Should_include_Issue_30_createorder_command()
   {
     // Arrange - Replicate Issue #30 scenario
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("createorder {product} {quantity:int}", (string product, int quantity) => 0);
     builder.Map("create {item}", (string item) => 0);
 
     // Act
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
     string fishScript = generator.GenerateFish(builder.EndpointCollection, "testapp");
 
     // Assert - Verify Issue #30 requirement

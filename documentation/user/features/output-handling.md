@@ -114,7 +114,7 @@ Structured logging goes to stderr, results to stdout:
 ```csharp
 using TimeWarp.Nuru;
 using TimeWarp.Nuru.Logging;
-using TimeWarp.Mediator;
+using Mediator;
 using Microsoft.Extensions.DependencyInjection;
 
 NuruApp app = new NuruAppBuilder()

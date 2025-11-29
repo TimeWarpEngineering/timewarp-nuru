@@ -3,11 +3,22 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <AssemblyName>TimeWarp.Nuru.TestApp.Mediator</AssemblyName>
-    <!-- AOT Configuration - Use partial trimming to preserve user code reflection -->
+    <!-- AOT Configuration - martinothamar/Mediator supports full AOT -->
     <PublishAot>true</PublishAot>
-    <TrimMode>partial</TrimMode>
+
+    <!-- Output generated source files to generated directory -->
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    <CompilerGeneratedFilesOutputPath>$(MSBuildProjectDirectory)/generated</CompilerGeneratedFilesOutputPath>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="TimeWarp.Mediator" />
+    <PackageReference Include="Mediator.Abstractions" />
+    <PackageReference Include="Mediator.SourceGenerator">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+  <!-- Exclude generated files from compilation (they're already included by the source generator) -->
+  <ItemGroup>
+    <Compile Remove="generated/**/*.cs" />
   </ItemGroup>
 </Project>

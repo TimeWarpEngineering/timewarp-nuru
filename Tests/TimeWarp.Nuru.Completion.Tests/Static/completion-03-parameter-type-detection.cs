@@ -13,11 +13,11 @@ public class ParameterTypeDetectionTests
   public static async Task Should_handle_string_parameters()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("greet {name}", (string name) => 0);
 
     // Act
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
     string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
 
     // Assert - Script should be generated
@@ -30,11 +30,11 @@ public class ParameterTypeDetectionTests
   public static async Task Should_handle_int_parameters()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("delay {ms:int}", (int ms) => 0);
 
     // Act
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
     string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
 
     // Assert
@@ -47,11 +47,11 @@ public class ParameterTypeDetectionTests
   public static async Task Should_handle_double_parameters()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("scale {factor:double}", (double factor) => 0);
 
     // Act
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
     string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
 
     // Assert
@@ -64,11 +64,11 @@ public class ParameterTypeDetectionTests
   public static async Task Should_handle_bool_parameters()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("set {enabled:bool}", (bool enabled) => 0);
 
     // Act
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
     string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
 
     // Assert
@@ -81,11 +81,11 @@ public class ParameterTypeDetectionTests
   public static async Task Should_handle_optional_parameters()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("deploy {env} {tag?}", (string env, string? tag) => 0);
 
     // Act
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
     string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
 
     // Assert
@@ -98,11 +98,11 @@ public class ParameterTypeDetectionTests
   public static async Task Should_handle_catch_all_parameters()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("exec {*args}", (string[] args) => 0);
 
     // Act
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
     string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
 
     // Assert
@@ -115,12 +115,12 @@ public class ParameterTypeDetectionTests
   public static async Task Should_handle_mixed_parameter_types()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("process {file} {count:int} {verbose:bool}",
       (string file, int count, bool verbose) => 0);
 
     // Act
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
     string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
 
     // Assert
@@ -133,12 +133,12 @@ public class ParameterTypeDetectionTests
   public static async Task Should_handle_parameters_with_options()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("deploy {env} --force --tag {version}",
       (string env, string version) => 0);
 
     // Act
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
     string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
 
     // Assert
@@ -152,10 +152,10 @@ public class ParameterTypeDetectionTests
   public static async Task Should_work_across_all_shell_types()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("test {value:int}", (int value) => 0);
 
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
 
     // Act
     string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
@@ -175,11 +175,11 @@ public class ParameterTypeDetectionTests
   public static async Task Should_handle_datetime_parameters()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("schedule {when:DateTime}", (DateTime when) => 0);
 
     // Act
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
     string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
 
     // Assert
@@ -192,11 +192,11 @@ public class ParameterTypeDetectionTests
   public static async Task Should_handle_guid_parameters()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("lookup {id:Guid}", (Guid id) => 0);
 
     // Act
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
     string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
 
     // Assert
@@ -209,11 +209,11 @@ public class ParameterTypeDetectionTests
   public static async Task Should_handle_routes_with_only_parameters()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("{source} {destination}", (string source, string destination) => 0);
 
     // Act
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
     string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
 
     // Assert - Should generate valid script even without literal commands

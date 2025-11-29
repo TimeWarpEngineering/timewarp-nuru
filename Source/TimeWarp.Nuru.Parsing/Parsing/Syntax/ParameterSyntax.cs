@@ -1,5 +1,7 @@
 namespace TimeWarp.Nuru.Parsing;
 
+using System.Text;
+
 /// <summary>
 /// A parameter segment that captures a value from command line arguments.
 /// Examples: {name}, {count:int}, {file?}, {*args}, {value}*
@@ -22,7 +24,7 @@ internal record ParameterSyntax
 {
   public override string ToString()
   {
-    var sb = new System.Text.StringBuilder();
+    StringBuilder sb = new();
     sb.Append("Parameter: name='").Append(Name).Append('\'');
     if (IsCatchAll) sb.Append(", catchAll=true");
     if (IsOptional) sb.Append(", optional=true");

@@ -1,4 +1,6 @@
 #!/usr/bin/dotnet --
+#:project ../../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
+#:package Mediator.SourceGenerator
 
 using Microsoft.Extensions.DependencyInjection;
 
@@ -9,7 +11,7 @@ public class StaticFactoryMethodTests
 {
   public static async Task CreateBuilder_should_return_builder_with_DI_enabled()
   {
-    // Arrange & Act
+    // Arrange & Act - NuruApp.CreateBuilder is available via meta-package (TimeWarp.Nuru)
     NuruAppBuilder builder = NuruApp.CreateBuilder([]);
 
     // Assert - DI is enabled, so Services property should not throw
@@ -34,7 +36,7 @@ public class StaticFactoryMethodTests
   public static async Task CreateBuilder_should_accept_options()
   {
     // Arrange
-    var options = new NuruApplicationOptions
+    NuruCoreApplicationOptions options = new()
     {
       ApplicationName = "TestApp",
       EnvironmentName = "Testing"
@@ -51,8 +53,8 @@ public class StaticFactoryMethodTests
 
   public static async Task CreateSlimBuilder_should_return_builder_without_DI()
   {
-    // Arrange & Act
-    NuruAppBuilder builder = NuruApp.CreateSlimBuilder();
+    // Arrange & Act - CreateSlimBuilder returns NuruCoreAppBuilder (lightweight)
+    NuruCoreAppBuilder builder = NuruApp.CreateSlimBuilder();
 
     // Assert - DI is NOT enabled, so Services property should throw
     Should.Throw<InvalidOperationException>(() => _ = builder.Services);
@@ -62,9 +64,9 @@ public class StaticFactoryMethodTests
 
   public static async Task CreateSlimBuilder_should_allow_optional_args()
   {
-    // Arrange & Act - both should work
-    NuruAppBuilder builder1 = NuruApp.CreateSlimBuilder();
-    NuruAppBuilder builder2 = NuruApp.CreateSlimBuilder(["test"]);
+    // Arrange & Act - both should work (returns NuruCoreAppBuilder)
+    NuruCoreAppBuilder builder1 = NuruApp.CreateSlimBuilder();
+    NuruCoreAppBuilder builder2 = NuruApp.CreateSlimBuilder(["test"]);
 
     // Assert
     builder1.ShouldNotBeNull();
@@ -75,8 +77,8 @@ public class StaticFactoryMethodTests
 
   public static async Task CreateEmptyBuilder_should_return_minimal_builder()
   {
-    // Arrange & Act
-    NuruAppBuilder builder = NuruApp.CreateEmptyBuilder();
+    // Arrange & Act - CreateEmptyBuilder returns NuruCoreAppBuilder (minimal)
+    NuruCoreAppBuilder builder = NuruApp.CreateEmptyBuilder();
 
     // Assert - DI is NOT enabled
     Should.Throw<InvalidOperationException>(() => _ = builder.Services);
@@ -86,9 +88,9 @@ public class StaticFactoryMethodTests
 
   public static async Task CreateEmptyBuilder_should_allow_optional_args()
   {
-    // Arrange & Act - both should work
-    NuruAppBuilder builder1 = NuruApp.CreateEmptyBuilder();
-    NuruAppBuilder builder2 = NuruApp.CreateEmptyBuilder(["test"]);
+    // Arrange & Act - both should work (returns NuruCoreAppBuilder)
+    NuruCoreAppBuilder builder1 = NuruApp.CreateEmptyBuilder();
+    NuruCoreAppBuilder builder2 = NuruApp.CreateEmptyBuilder(["test"]);
 
     // Assert
     builder1.ShouldNotBeNull();
@@ -101,11 +103,11 @@ public class StaticFactoryMethodTests
   {
     // Arrange
     bool matched = false;
-    NuruAppBuilder builder = NuruApp.CreateSlimBuilder();
+    NuruCoreAppBuilder builder = NuruApp.CreateSlimBuilder();
 
     // Act - use Map instead of Map
     builder.Map("test", () => { matched = true; return 0; });
-    NuruApp app = builder.Build();
+    NuruCoreApp app = builder.Build();
     int exitCode = await app.RunAsync(["test"]);
 
     // Assert
@@ -117,11 +119,11 @@ public class StaticFactoryMethodTests
   {
     // Arrange
     bool matched = false;
-    NuruAppBuilder builder = NuruApp.CreateSlimBuilder();
+    NuruCoreAppBuilder builder = NuruApp.CreateSlimBuilder();
 
     // Act - use MapDefault instead of MapDefault
     builder.MapDefault(() => { matched = true; return 0; });
-    NuruApp app = builder.Build();
+    NuruCoreApp app = builder.Build();
     int exitCode = await app.RunAsync([]);
 
     // Assert
@@ -131,13 +133,20 @@ public class StaticFactoryMethodTests
 
   public static async Task CreateBuilder_full_integration_test()
   {
-    // Arrange - Full featured builder with DI
+    // Arrange - Full featured builder with DI (via meta-package)
     bool matched = false;
     NuruAppBuilder builder = NuruApp.CreateBuilder([]);
+    builder.ConfigureServices(services =>
+    {
+      services.AddMediator();
+      // Additional service registrations can go here if needed
+    });
+    // DI is available
     builder.Map("status", () => { matched = true; return 0; });
 
     // Act
-    NuruApp app = builder.Build();
+    NuruCoreApp app = builder.Build();
+
     int exitCode = await app.RunAsync(["status"]);
 
     // Assert
@@ -147,13 +156,13 @@ public class StaticFactoryMethodTests
 
   public static async Task CreateSlimBuilder_full_integration_test()
   {
-    // Arrange - Lightweight builder
+    // Arrange - Lightweight builder (returns NuruCoreAppBuilder)
     string result = "";
-    NuruAppBuilder builder = NuruApp.CreateSlimBuilder();
+    NuruCoreAppBuilder builder = NuruApp.CreateSlimBuilder();
     builder.Map("greet {name}", (string name) => { result = $"Hello, {name}!"; return 0; });
 
     // Act
-    NuruApp app = builder.Build();
+    NuruCoreApp app = builder.Build();
     int exitCode = await app.RunAsync(["greet", "World"]);
 
     // Assert
@@ -163,13 +172,13 @@ public class StaticFactoryMethodTests
 
   public static async Task CreateEmptyBuilder_full_integration_test()
   {
-    // Arrange - Minimal builder
+    // Arrange - Minimal builder (returns NuruCoreAppBuilder)
     bool matched = false;
-    NuruAppBuilder builder = NuruApp.CreateEmptyBuilder();
+    NuruCoreAppBuilder builder = NuruApp.CreateEmptyBuilder();
     builder.Map("cmd", () => { matched = true; return 0; });
 
     // Act
-    NuruApp app = builder.Build();
+    NuruCoreApp app = builder.Build();
     int exitCode = await app.RunAsync(["cmd"]);
 
     // Assert
@@ -181,7 +190,7 @@ public class StaticFactoryMethodTests
   {
     // Arrange - Original API should still work
     bool matched = false;
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .Map("legacy", () => { matched = true; return 0; })
       .Build();
 

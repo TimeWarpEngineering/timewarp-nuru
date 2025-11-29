@@ -14,13 +14,13 @@ public class HistoryManagementTests
   public static async Task Should_add_commands_to_history()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("greet Alice");
     terminal.QueueLine("greet Bob");
     terminal.QueueLine("history");
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("greet {name}", (string name) => $"Hello, {name}!")
       .AddReplSupport()
@@ -39,13 +39,13 @@ public class HistoryManagementTests
   public static async Task Should_not_add_duplicate_consecutive_commands()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("greet Alice");
     terminal.QueueLine("greet Alice");  // Duplicate
     terminal.QueueLine("history");
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("greet {name}", (string name) => $"Hello, {name}!")
       .AddReplSupport()
@@ -63,13 +63,13 @@ public class HistoryManagementTests
   public static async Task Should_navigate_history_with_up_arrow()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("greet Alice");
     terminal.QueueKey(ConsoleKey.UpArrow);  // Navigate to previous command
     terminal.QueueKey(ConsoleKey.Enter);    // Execute it again
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("greet {name}", (string name) => $"Hello, {name}!")
       .AddReplSupport()
@@ -86,12 +86,12 @@ public class HistoryManagementTests
   public static async Task Should_clear_history_command()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("greet Alice");
     terminal.QueueLine("clear-history");
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("greet {name}", (string name) => $"Hello, {name}!")
       .AddReplSupport()
@@ -110,12 +110,12 @@ public class HistoryManagementTests
   public static async Task Should_show_history_command()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("greet World");
     terminal.QueueLine("history");
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("greet {name}", (string name) => $"Hello, {name}!")
       .AddReplSupport()
@@ -132,14 +132,14 @@ public class HistoryManagementTests
   public static async Task Should_clear_history_removes_prior_commands()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("greet First");
     terminal.QueueLine("greet Second");
     terminal.QueueLine("clear-history");  // Clear history including above commands
     terminal.QueueLine("history");        // Should NOT show "greet First" or "greet Second"
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("greet {name}", (string name) => $"Hello, {name}!")
       .AddReplSupport(options => options.PersistHistory = false)
@@ -158,7 +158,7 @@ public class HistoryManagementTests
   public static async Task Should_respect_max_history_size()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     // Queue more commands than max history size
     for (int i = 1; i <= 5; i++)
     {
@@ -167,7 +167,7 @@ public class HistoryManagementTests
 
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("cmd1", () => "1")
       .Map("cmd2", () => "2")
@@ -188,14 +188,14 @@ public class HistoryManagementTests
   public static async Task Should_skip_empty_commands_in_history()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("");           // Empty line
     terminal.QueueLine("   ");        // Whitespace only
     terminal.QueueLine("greet Test");
     terminal.QueueLine("history");
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("greet {name}", (string name) => $"Hello, {name}!")
       .AddReplSupport()

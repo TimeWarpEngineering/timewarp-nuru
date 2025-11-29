@@ -216,7 +216,7 @@ public class ShouldIgnoreCommandTests
     };
 
     // Act
-    var stopwatch = Stopwatch.StartNew();
+    Stopwatch stopwatch = Stopwatch.StartNew();
     for (int i = 0; i < 1000; i++)
     {
       _ = Helper!.ShouldIgnoreCommand($"command{i}", options);
@@ -308,7 +308,7 @@ public class ShouldIgnoreCommandTests
 // Helper class to test ReplSession's ShouldIgnoreCommand method
 internal sealed class ReplSessionHelper
 {
-  private readonly NuruApp App;
+  private readonly NuruCoreApp App;
   private readonly ILoggerFactory LoggerFactoryInstance;
 
   public ReplSessionHelper()
@@ -319,7 +319,7 @@ internal sealed class ReplSessionHelper
 
   public bool ShouldIgnoreCommand(string command, ReplOptions options)
   {
-    var replHistory = new ReplHistory(options, App.Terminal);
+    ReplHistory replHistory = new(options, App.Terminal);
     return replHistory.ShouldIgnore(command);
   }
 }

@@ -13,9 +13,9 @@ public class TemplateLoadingTests
   public static async Task Should_load_bash_template()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("status", () => 0);
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
 
     // Act
     string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
@@ -32,9 +32,9 @@ public class TemplateLoadingTests
   public static async Task Should_load_zsh_template()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("status", () => 0);
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
 
     // Act
     string zshScript = generator.GenerateZsh(builder.EndpointCollection, "testapp");
@@ -51,9 +51,9 @@ public class TemplateLoadingTests
   public static async Task Should_load_powershell_template()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("status", () => 0);
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
 
     // Act
     string pwshScript = generator.GeneratePowerShell(builder.EndpointCollection, "testapp");
@@ -70,9 +70,9 @@ public class TemplateLoadingTests
   public static async Task Should_load_fish_template()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("status", () => 0);
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
 
     // Act
     string fishScript = generator.GenerateFish(builder.EndpointCollection, "testapp");
@@ -89,9 +89,9 @@ public class TemplateLoadingTests
   public static async Task Should_replace_app_name_placeholder()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("status", () => 0);
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
 
     // Act
     string bashScript = generator.GenerateBash(builder.EndpointCollection, "myapp");
@@ -110,10 +110,10 @@ public class TemplateLoadingTests
   public static async Task Should_replace_commands_placeholder()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("create", () => 0);
     builder.Map("delete", () => 0);
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
 
     // Act
     string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
@@ -129,9 +129,9 @@ public class TemplateLoadingTests
   public static async Task Should_replace_options_placeholder()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("test --verbose --force", () => 0);
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
 
     // Act
     string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
@@ -147,8 +147,8 @@ public class TemplateLoadingTests
   public static async Task Should_handle_empty_commands_list()
   {
     // Arrange - No routes
-    var builder = new NuruAppBuilder();
-    var generator = new CompletionScriptGenerator();
+    NuruAppBuilder builder = new();
+    CompletionScriptGenerator generator = new();
 
     // Act
     string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
@@ -164,10 +164,10 @@ public class TemplateLoadingTests
   public static async Task Should_generate_valid_scripts_for_all_shells()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("status", () => 0);
     builder.Map("version --format {fmt}", (string fmt) => 0);
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
 
     // Act
     string bashScript = generator.GenerateBash(builder.EndpointCollection, "testapp");
@@ -194,9 +194,9 @@ public class TemplateLoadingTests
   public static async Task Should_use_consistent_template_structure()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("test", () => 0);
-    var generator = new CompletionScriptGenerator();
+    CompletionScriptGenerator generator = new();
 
     // Act
     string bashScript1 = generator.GenerateBash(builder.EndpointCollection, "app1");

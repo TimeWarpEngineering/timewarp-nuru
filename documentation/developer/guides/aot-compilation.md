@@ -118,7 +118,7 @@ class Program
     static async Task<int> Main(string[] args)
     {
         // Register route
-        var app = new NuruAppBuilder()
+        NuruApp app = new NuruAppBuilder()
             .AddMediatorRoute<DeployCommand>("deploy {environment} --dry-run?")
             .BuildWithServices(services => services.AddMediator());
 

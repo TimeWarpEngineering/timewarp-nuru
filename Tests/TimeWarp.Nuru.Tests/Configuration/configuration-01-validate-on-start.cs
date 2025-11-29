@@ -14,7 +14,7 @@ public class ValidateOnStartTests
   public static async Task Should_pass_validation_with_valid_configuration()
   {
     // Arrange
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .AddDependencyInjection()
       .ConfigureServices(services =>
       {
@@ -51,7 +51,7 @@ public class ValidateOnStartTests
     OptionsValidationException? caughtException = null;
     try
     {
-      NuruApp app = new NuruAppBuilder()
+      NuruCoreApp app = new NuruAppBuilder()
         .AddDependencyInjection()
         .ConfigureServices(services =>
         {
@@ -86,7 +86,7 @@ public class ValidateOnStartTests
   public static async Task Should_work_without_validate_on_start()
   {
     // Arrange
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .AddDependencyInjection()
       .ConfigureServices(services =>
       {
@@ -119,7 +119,7 @@ public class ValidateOnStartTests
     OptionsValidationException? caughtException = null;
     try
     {
-      NuruApp app = new NuruAppBuilder()
+      NuruCoreApp app = new NuruAppBuilder()
         .AddDependencyInjection()
         .ConfigureServices(services =>
         {
@@ -156,7 +156,7 @@ public class ValidateOnStartTests
   public static async Task Should_work_without_dependency_injection()
   {
     // Arrange
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       // No AddDependencyInjection() call
       .Map("test", () => 0)
       .Build(); // Should not throw

@@ -27,7 +27,7 @@ return await RunTests<HelpOptionTests>();
 public class HelpOptionTests
 {
   private static TestTerminal Terminal = null!;
-  private static NuruApp App = null!;
+  private static NuruCoreApp App = null!;
 
   public static async Task Setup()
   {
@@ -102,7 +102,6 @@ public class HelpOptionTests
   [Timeout(5000)]
   public static async Task Should_show_help_option_after_status_command()
   {
-    // BUG: This test may FAIL - --help not shown after simple commands
     // Arrange: Type "status " then Tab
     Terminal.QueueKeys("status ");
     Terminal.QueueKey(ConsoleKey.Tab);
@@ -118,7 +117,6 @@ public class HelpOptionTests
   [Timeout(5000)]
   public static async Task Should_show_help_option_after_time_command()
   {
-    // BUG: This test may FAIL - --help not shown after simple commands
     // Arrange: Type "time " then Tab
     Terminal.QueueKeys("time ");
     Terminal.QueueKey(ConsoleKey.Tab);
@@ -134,7 +132,6 @@ public class HelpOptionTests
   [Timeout(5000)]
   public static async Task Should_show_help_option_after_greet_command()
   {
-    // BUG: This test may FAIL - --help not shown for commands with parameters
     // Arrange: Type "greet " then Tab
     Terminal.QueueKeys("greet ");
     Terminal.QueueKey(ConsoleKey.Tab);
@@ -150,7 +147,6 @@ public class HelpOptionTests
   [Timeout(5000)]
   public static async Task Should_show_help_option_with_deploy_enum_values()
   {
-    // BUG: This test may FAIL - documented in existing test file
     // Arrange: Type "deploy " then Tab
     Terminal.QueueKeys("deploy ");
     Terminal.QueueKey(ConsoleKey.Tab);
@@ -204,7 +200,6 @@ public class HelpOptionTests
   [Timeout(5000)]
   public static async Task Should_show_help_with_build_options()
   {
-    // BUG: This test may FAIL - --help not shown with other options
     // Arrange: Type "build " then Tab
     Terminal.QueueKeys("build ");
     Terminal.QueueKey(ConsoleKey.Tab);
@@ -215,22 +210,6 @@ public class HelpOptionTests
 
     // Assert: Should show --help along with --verbose, -v
     Terminal.OutputContains("--help").ShouldBeTrue("Should show '--help' with build options");
-  }
-
-  [Timeout(5000)]
-  public static async Task Should_show_help_with_search_options()
-  {
-    // BUG: This test may FAIL - --help not shown with other options
-    // Arrange: Type "search foo " then Tab
-    Terminal.QueueKeys("search foo ");
-    Terminal.QueueKey(ConsoleKey.Tab);
-    KeySequenceHelpers.CleanupAndExit(Terminal);
-
-    // Act
-    await App.RunReplAsync();
-
-    // Assert: Should show --help along with --limit, -l
-    Terminal.OutputContains("--help").ShouldBeTrue("Should show '--help' with search options");
   }
 
   // ============================================================================

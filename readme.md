@@ -29,7 +29,7 @@ dotnet add package TimeWarp.Nuru
 ```csharp
 using TimeWarp.Nuru;
 
-var builder = NuruApp.CreateBuilder(args);
+NuruAppBuilder builder = NuruApp.CreateBuilder(args);
 builder.Map("add {x:double} {y:double}", (double x, double y) =>
   Console.WriteLine($"{x} + {y} = {x + y}"));
 return await builder.Build().RunAsync(args);

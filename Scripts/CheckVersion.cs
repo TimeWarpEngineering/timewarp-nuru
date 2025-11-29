@@ -9,7 +9,7 @@ Directory.SetCurrentDirectory(scriptDir);
 
 // Read version from Source/Directory.Build.props
 string propsPath = "../Source/Directory.Build.props";
-var doc = XDocument.Load(propsPath);
+XDocument doc = XDocument.Load(propsPath);
 string? version = doc.Descendants("Version").FirstOrDefault()?.Value;
 
 if (string.IsNullOrEmpty(version))

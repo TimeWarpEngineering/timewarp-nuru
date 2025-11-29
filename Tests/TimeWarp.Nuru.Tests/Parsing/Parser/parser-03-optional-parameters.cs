@@ -19,7 +19,7 @@ public class OptionalParameterParsingTests
 
     // Verify optional parameter
     route.PositionalMatchers[1].ShouldBeOfType<ParameterMatcher>();
-    var param = (ParameterMatcher)route.PositionalMatchers[1];
+    ParameterMatcher param = (ParameterMatcher)route.PositionalMatchers[1];
     param.Name.ShouldBe("name");
     param.IsOptional.ShouldBeTrue();
     param.IsCatchAll.ShouldBeFalse();
@@ -34,7 +34,7 @@ public class OptionalParameterParsingTests
 
     // Assert - Verify both optional and typed
     route.ShouldNotBeNull();
-    var param = (ParameterMatcher)route.PositionalMatchers[1];
+    ParameterMatcher param = (ParameterMatcher)route.PositionalMatchers[1];
     param.Name.ShouldBe("ms");
     param.Constraint.ShouldBe("int?"); // Constraint includes the ? marker
     param.IsOptional.ShouldBeTrue();
@@ -51,11 +51,11 @@ public class OptionalParameterParsingTests
     route.ShouldNotBeNull();
     route.PositionalMatchers.Count.ShouldBe(3); // "deploy" + {env} + {tag?}
 
-    var envParam = (ParameterMatcher)route.PositionalMatchers[1];
+    ParameterMatcher envParam = (ParameterMatcher)route.PositionalMatchers[1];
     envParam.Name.ShouldBe("env");
     envParam.IsOptional.ShouldBeFalse();
 
-    var tagParam = (ParameterMatcher)route.PositionalMatchers[2];
+    ParameterMatcher tagParam = (ParameterMatcher)route.PositionalMatchers[2];
     tagParam.Name.ShouldBe("tag");
     tagParam.IsOptional.ShouldBeTrue();
 
@@ -73,7 +73,7 @@ public class OptionalParameterParsingTests
     exception.SemanticErrors.ShouldNotBeNull();
     exception.SemanticErrors[0].ShouldBeOfType<ConflictingOptionalParametersError>();
 
-    var error = (ConflictingOptionalParametersError)exception.SemanticErrors[0];
+    ConflictingOptionalParametersError error = (ConflictingOptionalParametersError)exception.SemanticErrors[0];
     error.ConflictingParameters.ShouldContain("env");
     error.ConflictingParameters.ShouldContain("region");
 
@@ -87,7 +87,7 @@ public class OptionalParameterParsingTests
 
     // Assert - Verify optional with description
     route.ShouldNotBeNull();
-    var param = (ParameterMatcher)route.PositionalMatchers[1];
+    ParameterMatcher param = (ParameterMatcher)route.PositionalMatchers[1];
     param.Name.ShouldBe("name");
     param.IsOptional.ShouldBeTrue();
     param.Description.ShouldBe("Person to greet");
@@ -102,7 +102,7 @@ public class OptionalParameterParsingTests
 
     // Assert - Verify all three attributes
     route.ShouldNotBeNull();
-    var param = (ParameterMatcher)route.PositionalMatchers[1];
+    ParameterMatcher param = (ParameterMatcher)route.PositionalMatchers[1];
     param.Name.ShouldBe("ms");
     param.Constraint.ShouldBe("int?"); // Constraint includes the ? marker
     param.IsOptional.ShouldBeTrue();

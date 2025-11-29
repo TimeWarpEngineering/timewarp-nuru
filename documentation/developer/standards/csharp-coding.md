@@ -77,15 +77,19 @@ NAMING CONVENTIONS:
 
 LANGUAGE FEATURES:
 1. Type Declaration
-   - Use var only when type is apparent from right side
+   - Always use explicit types, never use var (IDE0008)
+   - This improves code readability and makes types immediately visible
 
-   ✓ `List<int> list = new();               // Type explicitly declared`
-   ✓ `var customer = new Customer();        // Type apparent from new`
-   ✓ `int count = 1 + 2;                    // Use explicit type for built-in types`
-   
-   ✗ `var items = GetItems();               // Type not apparent`
-   ✗ `var count = 1 + 2;                    // Don't use var for built-in types`
-   ✗ `var customer = await GetCustomer();   // Type not apparent`
+   ✓ `List<int> list = new();               // Explicit type with target-typed new`
+   ✓ `Customer customer = new();            // Explicit type`
+   ✓ `int count = 1 + 2;                    // Explicit built-in type`
+   ✓ `Customer customer = await GetCustomer();  // Explicit type for method returns`
+   ✓ `IEnumerable<string> items = GetItems();   // Explicit interface type`
+
+   ✗ `var list = new List<int>();           // Never use var`
+   ✗ `var customer = new Customer();        // Never use var`
+   ✗ `var count = 1 + 2;                    // Never use var`
+   ✗ `var items = GetItems();               // Never use var`
 
 2. New Operator
    - Use targeted type new

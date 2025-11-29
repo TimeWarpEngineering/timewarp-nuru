@@ -25,13 +25,13 @@ The `UseTerminal()` builder method configures which terminal implementation to u
 
 ```csharp
 // Production (default)
-var app = new NuruAppBuilder()
+NuruApp app = new NuruAppBuilder()
     .Map("hello", () => Console.WriteLine("Hello!"))
     .Build();
 
 // Testing
-using var terminal = new TestTerminal();
-var testApp = new NuruAppBuilder()
+using TestTerminal terminal = new TestTerminal();
+NuruApp testApp = new NuruAppBuilder()
     .UseTerminal(terminal)
     .Map("hello", () => Console.WriteLine("Hello!"))
     .Build();

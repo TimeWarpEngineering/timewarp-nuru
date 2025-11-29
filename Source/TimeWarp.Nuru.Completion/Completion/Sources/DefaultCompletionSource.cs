@@ -44,7 +44,7 @@ public sealed class DefaultCompletionSource : ICompletionSource
   private static IEnumerable<CompletionCandidate> GetOptionCompletions(CompletionContext context)
   {
     // Extract all option matchers from routes
-    var options = new HashSet<string>(StringComparer.Ordinal);
+    HashSet<string> options = new(StringComparer.Ordinal);
 
     foreach (Endpoint endpoint in context.Endpoints)
     {
@@ -81,12 +81,12 @@ public sealed class DefaultCompletionSource : ICompletionSource
     string[] completedWords = [.. context.Args.Skip(1).Take(context.CursorPosition - 1)];
 
     // Find routes that match the completed prefix
-    var commands = new HashSet<string>(StringComparer.Ordinal);
+    HashSet<string> commands = new(StringComparer.Ordinal);
 
     foreach (Endpoint endpoint in context.Endpoints)
     {
       // Extract literal matchers from the positional matchers
-      var literalSegments = new List<string>();
+      List<string> literalSegments = [];
 
       foreach (RouteMatcher matcher in endpoint.CompiledRoute.PositionalMatchers)
       {

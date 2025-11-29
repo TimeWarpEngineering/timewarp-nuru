@@ -19,11 +19,11 @@ public class ConsecutiveOptionalParametersTests
     route.ShouldNotBeNull();
     route.PositionalMatchers.Count.ShouldBe(3); // "deploy" + {env} + {tag?}
 
-    var envParam = (ParameterMatcher)route.PositionalMatchers[1];
+    ParameterMatcher envParam = (ParameterMatcher)route.PositionalMatchers[1];
     envParam.Name.ShouldBe("env");
     envParam.IsOptional.ShouldBeFalse();
 
-    var tagParam = (ParameterMatcher)route.PositionalMatchers[2];
+    ParameterMatcher tagParam = (ParameterMatcher)route.PositionalMatchers[2];
     tagParam.Name.ShouldBe("tag");
     tagParam.IsOptional.ShouldBeTrue();
 
@@ -42,7 +42,7 @@ public class ConsecutiveOptionalParametersTests
     exception.SemanticErrors.ShouldNotBeNull();
     exception.SemanticErrors[0].ShouldBeOfType<ConflictingOptionalParametersError>();
 
-    var error = (ConflictingOptionalParametersError)exception.SemanticErrors[0];
+    ConflictingOptionalParametersError error = (ConflictingOptionalParametersError)exception.SemanticErrors[0];
     error.ConflictingParameters.ShouldContain("env");
     error.ConflictingParameters.ShouldContain("version");
 
@@ -61,7 +61,7 @@ public class ConsecutiveOptionalParametersTests
     exception.SemanticErrors.ShouldNotBeNull();
     exception.SemanticErrors[0].ShouldBeOfType<ConflictingOptionalParametersError>();
 
-    var error = (ConflictingOptionalParametersError)exception.SemanticErrors[0];
+    ConflictingOptionalParametersError error = (ConflictingOptionalParametersError)exception.SemanticErrors[0];
     error.ConflictingParameters.ShouldContain("script");
     error.ConflictingParameters.ShouldContain("arg1");
     // arg2 not included - validator stops at first conflicting pair
@@ -78,7 +78,7 @@ public class ConsecutiveOptionalParametersTests
     route.ShouldNotBeNull();
     route.PositionalMatchers.Count.ShouldBe(2); // "status" + {format?}
 
-    var formatParam = (ParameterMatcher)route.PositionalMatchers[1];
+    ParameterMatcher formatParam = (ParameterMatcher)route.PositionalMatchers[1];
     formatParam.Name.ShouldBe("format");
     formatParam.IsOptional.ShouldBeTrue();
 
@@ -97,9 +97,9 @@ public class ConsecutiveOptionalParametersTests
     exception.SemanticErrors.ShouldNotBeNull();
     exception.SemanticErrors[0].ShouldBeOfType<OptionalBeforeRequiredError>();
 
-    var error = (OptionalBeforeRequiredError)exception.SemanticErrors[0];
-    error.OptionalParam.ShouldBe("arg");
-    error.RequiredParam.ShouldBe("timeout");
+    OptionalBeforeRequiredError optError = (OptionalBeforeRequiredError)exception.SemanticErrors[0];
+    optError.OptionalParam.ShouldBe("arg");
+    optError.RequiredParam.ShouldBe("timeout");
 
     await Task.CompletedTask;
   }
@@ -113,10 +113,10 @@ public class ConsecutiveOptionalParametersTests
     route.ShouldNotBeNull();
     route.PositionalMatchers.Count.ShouldBe(3);
 
-    var sourceParam = (ParameterMatcher)route.PositionalMatchers[1];
+    ParameterMatcher sourceParam = (ParameterMatcher)route.PositionalMatchers[1];
     sourceParam.IsOptional.ShouldBeFalse();
 
-    var destParam = (ParameterMatcher)route.PositionalMatchers[2];
+    ParameterMatcher destParam = (ParameterMatcher)route.PositionalMatchers[2];
     destParam.IsOptional.ShouldBeTrue();
 
     await Task.CompletedTask;
@@ -133,7 +133,7 @@ public class ConsecutiveOptionalParametersTests
     exception.SemanticErrors.ShouldNotBeNull();
     exception.SemanticErrors[0].ShouldBeOfType<ConflictingOptionalParametersError>();
 
-    var error = (ConflictingOptionalParametersError)exception.SemanticErrors[0];
+    ConflictingOptionalParametersError error = (ConflictingOptionalParametersError)exception.SemanticErrors[0];
     error.ConflictingParameters.ShouldContain("id");
     error.ConflictingParameters.ShouldContain("priority");
 

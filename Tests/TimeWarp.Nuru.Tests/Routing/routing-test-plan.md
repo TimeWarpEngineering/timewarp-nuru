@@ -539,12 +539,12 @@ public class BasicMatchingTests
   public static async Task Should_match_exact_literal()
   {
     // Arrange - Build routes
-    var routes = new RouteCollection();
+    RouteCollection routes = new();
     bool executed = false;
     routes.Add("status", () => { executed = true; });
 
     // Act - Match input
-    var match = routes.Match(["status"]);
+    RouteMatch? match = routes.Match(["status"]);
 
     // Assert
     match.ShouldNotBeNull();

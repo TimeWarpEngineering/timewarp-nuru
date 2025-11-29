@@ -10,9 +10,9 @@ Console.WriteLine("=== Testing Colored Output ===\n");
 // Test 1: Basic colored output
 Console.WriteLine("Test 1: Handler with colored output");
 {
-  using var terminal = new TestTerminal();
+  using TestTerminal terminal = new();
 
-  var app = new NuruAppBuilder()
+  NuruCoreApp app = new NuruAppBuilder()
     .UseTerminal(terminal)
     .Map("status", (ITerminal t) =>
     {
@@ -41,9 +41,9 @@ Console.WriteLine("Test 1: Handler with colored output");
 // Test 2: Formatted text (bold, italic, underline)
 Console.WriteLine("Test 2: Text formatting");
 {
-  using var terminal = new TestTerminal();
+  using TestTerminal terminal = new();
 
-  var app = new NuruAppBuilder()
+  NuruCoreApp app = new NuruAppBuilder()
     .UseTerminal(terminal)
     .Map("format", (ITerminal t) =>
     {
@@ -67,9 +67,9 @@ Console.WriteLine("Test 2: Text formatting");
 // Test 3: Chained styles
 Console.WriteLine("Test 3: Chained styles");
 {
-  using var terminal = new TestTerminal();
+  using TestTerminal terminal = new();
 
-  var app = new NuruAppBuilder()
+  NuruCoreApp app = new NuruAppBuilder()
     .UseTerminal(terminal)
     .Map("alert", (ITerminal t) =>
     {
@@ -95,9 +95,9 @@ Console.WriteLine("Test 3: Chained styles");
 // Test 4: CSS named colors
 Console.WriteLine("Test 4: CSS named colors");
 {
-  using var terminal = new TestTerminal();
+  using TestTerminal terminal = new();
 
-  var app = new NuruAppBuilder()
+  NuruCoreApp app = new NuruAppBuilder()
     .UseTerminal(terminal)
     .Map("palette", (ITerminal t) =>
     {
@@ -122,10 +122,10 @@ Console.WriteLine("Test 4: CSS named colors");
 Console.WriteLine("Test 5: Color support detection");
 {
   // TestTerminal.SupportsColor is true by default
-  using var colorTerminal = new TestTerminal { SupportsColor = true };
-  using var noColorTerminal = new TestTerminal { SupportsColor = false };
+  using TestTerminal colorTerminal = new() { SupportsColor = true };
+  using TestTerminal noColorTerminal = new() { SupportsColor = false };
 
-  var app = new NuruAppBuilder()
+  NuruCoreApp app = new NuruAppBuilder()
     .UseTerminal(colorTerminal)
     .Map("check", (ITerminal t) =>
     {
@@ -138,7 +138,7 @@ Console.WriteLine("Test 5: Color support detection");
 
   await app.RunAsync(["check"]);
 
-  var appNoColor = new NuruAppBuilder()
+  NuruCoreApp appNoColor = new NuruAppBuilder()
     .UseTerminal(noColorTerminal)
     .Map("check", (ITerminal t) =>
     {

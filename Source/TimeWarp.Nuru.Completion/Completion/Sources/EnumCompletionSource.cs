@@ -34,7 +34,7 @@ public sealed class EnumCompletionSource<[DynamicallyAccessedMembers(Dynamically
   {
     ArgumentNullException.ThrowIfNull(context);
 
-    var candidates = new List<CompletionCandidate>();
+    List<CompletionCandidate> candidates = [];
 
     // Get all enum values
     TEnum[] values = Enum.GetValues<TEnum>();

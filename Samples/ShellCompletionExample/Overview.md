@@ -26,7 +26,7 @@ Shell completion (also called tab completion) allows users to press the Tab key 
 using TimeWarp.Nuru;
 using TimeWarp.Nuru.Completion;
 
-var builder = new NuruAppBuilder();
+NuruAppBuilder builder = new();
 
 // Enable shell completion (auto-detects executable name)
 builder.EnableStaticCompletion();

@@ -25,7 +25,7 @@ Console.WriteLine("Highlight".BrightYellow().Underline());
 ### Colored Output in Route Handlers
 
 ```csharp
-var builder = NuruApp.CreateBuilder(args);
+NuruAppBuilder builder = NuruApp.CreateBuilder(args);
 
 builder.Map("status", (ITerminal terminal) =>
 {
@@ -47,9 +47,9 @@ return await builder.Build().RunAsync(args);
 ### Testing CLI Output
 
 ```csharp
-using var terminal = new TestTerminal();
+using TestTerminal terminal = new();
 
-var app = new NuruAppBuilder()
+NuruApp app = new NuruAppBuilder()
     .UseTerminal(terminal)
     .Map("greet {name}", (string name, ITerminal t) =>
         t.WriteLine($"Hello, {name}!".Green()))
@@ -198,9 +198,9 @@ terminal.WriteLine(AnsiColors.DodgerBlue + "Dodger blue" + AnsiColors.Reset);
 ### Basic Output Capture
 
 ```csharp
-using var terminal = new TestTerminal();
+using TestTerminal terminal = new();
 
-var app = new NuruAppBuilder()
+NuruApp app = new NuruAppBuilder()
     .UseTerminal(terminal)
     .Map("hello", (ITerminal t) => t.WriteLine("Hello, World!"))
     .Build();
@@ -215,9 +215,9 @@ Assert.Equal(1, terminal.GetOutputLines().Length);
 ### Testing Error Output
 
 ```csharp
-using var terminal = new TestTerminal();
+using TestTerminal terminal = new();
 
-var app = new NuruAppBuilder()
+NuruApp app = new NuruAppBuilder()
     .UseTerminal(terminal)
     .Map("fail", (ITerminal t) => t.WriteErrorLine("Something went wrong"))
     .Build();
@@ -231,7 +231,7 @@ Assert.Contains("Something went wrong", terminal.ErrorOutput);
 ### Testing Interactive Input (REPL)
 
 ```csharp
-using var terminal = new TestTerminal();
+using TestTerminal terminal = new();
 
 // Queue scripted key input
 terminal.QueueKeys("hello");      // Type "hello"
@@ -239,7 +239,7 @@ terminal.QueueKey(ConsoleKey.Tab); // Press Tab for completion
 terminal.QueueKey(ConsoleKey.Enter); // Press Enter
 terminal.QueueLine("exit");       // Type "exit" and Enter
 
-var app = new NuruAppBuilder()
+NuruApp app = new NuruAppBuilder()
     .UseTerminal(terminal)
     .Map("hello-world", () => Console.WriteLine("Hello!"))
     .Build();
@@ -281,20 +281,20 @@ terminal.ClearKeys();
 
 ```csharp
 // Production (default)
-var app = new NuruAppBuilder()
+NuruApp app = new NuruAppBuilder()
     .Map("hello", () => Console.WriteLine("Hello!"))
     .Build();
 // Uses NuruTerminal.Default automatically
 
 // Testing
-using var terminal = new TestTerminal();
-var testApp = new NuruAppBuilder()
+using TestTerminal terminal = new();
+NuruApp testApp = new NuruAppBuilder()
     .UseTerminal(terminal)
     .Map("hello", () => Console.WriteLine("Hello!"))
     .Build();
 
 // Custom terminal
-var customApp = new NuruAppBuilder()
+NuruApp customApp = new NuruAppBuilder()
     .UseTerminal(new MyCustomTerminal())
     .Build();
 ```
@@ -304,7 +304,7 @@ var customApp = new NuruAppBuilder()
 ITerminal is automatically registered when using `NuruApp.CreateBuilder()`:
 
 ```csharp
-var builder = NuruApp.CreateBuilder(args);
+NuruAppBuilder builder = NuruApp.CreateBuilder(args);
 
 // ITerminal is injectable
 builder.Map("status", (ITerminal terminal) =>
@@ -372,7 +372,7 @@ public class WebTerminal : ITerminal
     public ConsoleKeyInfo ReadKey(bool intercept)
     {
         // Return queued keys from WebSocket messages
-        if (_inputQueue.TryDequeue(out var key))
+        if (_inputQueue.TryDequeue(out ConsoleKeyInfo key))
             return key;
 
         // Wait for input from client...
@@ -449,9 +449,9 @@ builder.Map("validate", (ITerminal terminal) =>
 
 ```csharp
 // Use 'using' to ensure cleanup
-using var terminal = new TestTerminal();
+using TestTerminal terminal = new();
 // or
-using (var terminal = new TestTerminal())
+using (TestTerminal terminal = new())
 {
     // test code
 }

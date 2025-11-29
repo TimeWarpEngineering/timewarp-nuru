@@ -26,7 +26,7 @@ public class EnumPartialFilteringTests
     builder.AddTypeConverter(new EnumTypeConverter<Environment>());
     builder.Map("deploy {env:environment} {tag?}", (Environment env, string? tag) => 0);
 
-    NuruApp app = builder.Build();
+    NuruCoreApp app = builder.Build();
     CompletionProvider provider = new(app.TypeConverterRegistry);
 
     // Simulate: user typed "deploy p" and pressed tab
@@ -56,7 +56,7 @@ public class EnumPartialFilteringTests
     builder.AddTypeConverter(new EnumTypeConverter<Environment>());
     builder.Map("deploy {env:environment}", (Environment env) => 0);
 
-    NuruApp app = builder.Build();
+    NuruCoreApp app = builder.Build();
     CompletionProvider provider = new(app.TypeConverterRegistry);
 
     // Simulate: user typed "deploy " and pressed tab (trailing space = completing next word)
@@ -86,7 +86,7 @@ public class EnumPartialFilteringTests
     builder.AddTypeConverter(new EnumTypeConverter<Environment>());
     builder.Map("deploy {env:environment}", (Environment env) => 0);
 
-    NuruApp app = builder.Build();
+    NuruCoreApp app = builder.Build();
     CompletionProvider provider = new(app.TypeConverterRegistry);
 
     // Simulate: user typed "deploy S" (uppercase)
@@ -114,7 +114,7 @@ public class EnumPartialFilteringTests
     builder.AddTypeConverter(new EnumTypeConverter<LogLevel>());
     builder.Map("log {level:loglevel}", (LogLevel level) => 0);
 
-    NuruApp app = builder.Build();
+    NuruCoreApp app = builder.Build();
     CompletionProvider provider = new(app.TypeConverterRegistry);
 
     // Simulate: user typed "log d" - should match "Debug"
@@ -142,7 +142,7 @@ public class EnumPartialFilteringTests
     builder.AddTypeConverter(new EnumTypeConverter<Environment>());
     builder.Map("deploy {env:environment}", (Environment env) => 0);
 
-    NuruApp app = builder.Build();
+    NuruCoreApp app = builder.Build();
     CompletionProvider provider = new(app.TypeConverterRegistry);
 
     // Simulate: user typed "deploy xyz" - no enum value starts with "xyz"

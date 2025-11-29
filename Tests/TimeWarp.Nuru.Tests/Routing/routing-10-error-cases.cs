@@ -8,7 +8,7 @@ public class ErrorCasesTests
   public static async Task Should_no_matching_route_unknown()
   {
     // Arrange
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .Map("status", () => 0)
       .Map("version", () => 0)
       .Build();
@@ -26,7 +26,7 @@ public class ErrorCasesTests
   {
     // Arrange
 #pragma warning disable RCS1163 // Unused parameter
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .Map("delay {ms:int}", (int ms) => 0)
       .Build();
 #pragma warning restore RCS1163 // Unused parameter
@@ -44,7 +44,7 @@ public class ErrorCasesTests
   {
     // Arrange
 #pragma warning disable RCS1163 // Unused parameter
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .Map("build --config {mode}", (string mode) => 0)
       .Build();
 #pragma warning restore RCS1163 // Unused parameter
@@ -62,7 +62,7 @@ public class ErrorCasesTests
   {
     // Arrange
 #pragma warning disable RCS1163 // Unused parameter
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .Map("build --verbose", (bool verbose) => 0)
       .Build();
 #pragma warning restore RCS1163 // Unused parameter
@@ -80,7 +80,7 @@ public class ErrorCasesTests
   {
     // Arrange
 #pragma warning disable RCS1163 // Unused parameter
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .Map("build --verbose", (bool verbose) => 0)
       .Build();
 #pragma warning restore RCS1163 // Unused parameter
@@ -98,7 +98,7 @@ public class ErrorCasesTests
   {
     // Arrange
 #pragma warning disable RCS1163 // Unused parameter
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .Map("deploy {env} --tag {t}", (string env, string t) => 0)
       .Build();
 #pragma warning restore RCS1163 // Unused parameter
@@ -116,7 +116,7 @@ public class ErrorCasesTests
   {
     // Arrange
 #pragma warning disable RCS1163 // Unused parameter
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .Map("deploy {env} --tag {t}", (string env, string t) => 0)
       .Build();
 #pragma warning restore RCS1163 // Unused parameter

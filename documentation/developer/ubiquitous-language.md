@@ -56,7 +56,7 @@ The **Lexer** is the first stage of the processing pipeline. It converts a route
 
 **Example:**
 ```csharp
-var lexer = new Lexer("deploy {env} --force");
+Lexer lexer = new Lexer("deploy {env} --force");
 IReadOnlyList<Token> tokens = lexer.Tokenize();
 ```
 
@@ -163,7 +163,7 @@ Output: [
 **Example:**
 ```csharp
 string input = "deploy {env} --force";
-var lexer = new Lexer(input);
+Lexer lexer = new Lexer(input);
 ```
 
 **Related Terms:** Route Pattern, Position

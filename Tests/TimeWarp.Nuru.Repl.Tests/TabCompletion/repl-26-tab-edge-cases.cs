@@ -30,7 +30,7 @@ return await RunTests<EdgeCasesTests>();
 public class EdgeCasesTests
 {
   private static TestTerminal Terminal = null!;
-  private static NuruApp App = null!;
+  private static NuruCoreApp App = null!;
 
   public static async Task Setup()
   {
@@ -329,7 +329,7 @@ public class EdgeCasesTests
   public static async Task Should_handle_very_long_command()
   {
     // Arrange: Type very long string then Tab
-    string longInput = new string('a', 200);
+    string longInput = new('a', 200);
     Terminal.QueueKeys(longInput);
     Terminal.QueueKey(ConsoleKey.Tab);
     KeySequenceHelpers.CleanupAndExit(Terminal);

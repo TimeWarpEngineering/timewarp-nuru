@@ -47,7 +47,7 @@ internal sealed class GenerateHandlerTool
     sb.AppendLine("// Recommended: ASP.NET Core-style CreateBuilder pattern");
     sb.AppendLine("// ═══════════════════════════════════════════════════════════════");
     sb.AppendLine();
-    sb.AppendLine("var builder = NuruApp.CreateBuilder(args);");
+    sb.AppendLine("NuruAppBuilder builder = NuruApp.CreateBuilder(args);");
     sb.AppendLine();
 
     // Generate the Map call with builder
@@ -85,7 +85,7 @@ internal sealed class GenerateHandlerTool
 
     sb.AppendLine(");");
     sb.AppendLine();
-    sb.AppendLine("var app = builder.Build();");
+    sb.AppendLine("NuruCoreApp app = builder.Build();");
     sb.AppendLine("return await app.RunAsync(args);");
     sb.AppendLine();
 
@@ -94,7 +94,7 @@ internal sealed class GenerateHandlerTool
     sb.AppendLine("// Alternative: Fluent builder pattern");
     sb.AppendLine("// ═══════════════════════════════════════════════════════════════");
     sb.AppendLine();
-    sb.AppendLine("// NuruApp app = new NuruAppBuilder()");
+    sb.AppendLine("// NuruCoreApp app = new NuruAppBuilder()");
     sb.Append(CultureInfo.InvariantCulture, $"//     .Map(\"{pattern}\", ");
 
     if (parameters.Count == 0)
@@ -165,7 +165,7 @@ internal sealed class GenerateHandlerTool
     sb.AppendLine("// App setup using CreateBuilder pattern");
     sb.AppendLine("// ═══════════════════════════════════════════════════════════════");
     sb.AppendLine();
-    sb.AppendLine("var builder = NuruApp.CreateBuilder(args);");
+    sb.AppendLine("NuruAppBuilder builder = NuruApp.CreateBuilder(args);");
     sb.AppendLine();
     sb.AppendLine("builder.ConfigureServices(services =>");
     sb.AppendLine("{");
@@ -188,7 +188,7 @@ internal sealed class GenerateHandlerTool
 
     sb.AppendLine(", \"TODO: Add route description\");");
     sb.AppendLine();
-    sb.AppendLine("var app = builder.Build();");
+    sb.AppendLine("NuruCoreApp app = builder.Build();");
     sb.AppendLine("return await app.RunAsync(args);");
 
     return sb.ToString();

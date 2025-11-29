@@ -59,8 +59,8 @@ public static class PatternParser
     }
 
     // Create parser and compiler without logger for now
-    var parser = new Parser();
-    var compiler = new Compiler();
+    Parser parser = new();
+    Compiler compiler = new();
     ParseResult<Syntax> result = parser.Parse(routePattern);
     errors = result.ParseErrors;
     semanticErrors = result.SemanticErrors;

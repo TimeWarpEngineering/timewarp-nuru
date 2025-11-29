@@ -10,9 +10,9 @@ Console.WriteLine("=== Testing CLI Output Capture ===\n");
 // Test 1: Basic output capture
 Console.WriteLine("Test 1: Basic output capture");
 {
-  using var terminal = new TestTerminal();
+  using TestTerminal terminal = new();
 
-  var app = new NuruAppBuilder()
+  NuruCoreApp app = new NuruAppBuilder()
     .UseTerminal(terminal)
     .Map("hello {name}", (string name, ITerminal t) =>
       t.WriteLine($"Hello, {name}!"))
@@ -29,9 +29,9 @@ Console.WriteLine("Test 1: Basic output capture");
 // Test 2: Multiple lines capture
 Console.WriteLine("Test 2: Multiple lines capture");
 {
-  using var terminal = new TestTerminal();
+  using TestTerminal terminal = new();
 
-  var app = new NuruAppBuilder()
+  NuruCoreApp app = new NuruAppBuilder()
     .UseTerminal(terminal)
     .Map("list", (ITerminal t) =>
     {
@@ -56,9 +56,9 @@ Console.WriteLine("Test 2: Multiple lines capture");
 // Test 3: Error output capture
 Console.WriteLine("Test 3: Error output capture");
 {
-  using var terminal = new TestTerminal();
+  using TestTerminal terminal = new();
 
-  var app = new NuruAppBuilder()
+  NuruCoreApp app = new NuruAppBuilder()
     .UseTerminal(terminal)
     .Map("validate", (ITerminal t) =>
     {
@@ -78,9 +78,9 @@ Console.WriteLine("Test 3: Error output capture");
 // Test 4: Combined output and error
 Console.WriteLine("Test 4: Combined stdout and stderr");
 {
-  using var terminal = new TestTerminal();
+  using TestTerminal terminal = new();
 
-  var app = new NuruAppBuilder()
+  NuruCoreApp app = new NuruAppBuilder()
     .UseTerminal(terminal)
     .Map("mixed", (ITerminal t) =>
     {

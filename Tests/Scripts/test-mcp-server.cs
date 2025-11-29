@@ -24,7 +24,7 @@ ProcessStartInfo psi = new()
   CreateNoWindow = true
 };
 
-using var process = Process.Start(psi);
+using Process? process = Process.Start(psi);
 if (process is null)
 {
   WriteLine("❌ Failed to start MCP server");
@@ -70,7 +70,7 @@ try
 
     try
     {
-      var json = JsonDocument.Parse(response);
+      JsonDocument json = JsonDocument.Parse(response);
 
       // Check for successful initialization
       if (json.RootElement.TryGetProperty("result", out JsonElement result))
@@ -199,7 +199,7 @@ try
                     // Parse and display just the text content
                     try
                     {
-                      var statusJson = JsonDocument.Parse(statusResponse);
+                      JsonDocument statusJson = JsonDocument.Parse(statusResponse);
                       if (statusJson.RootElement.TryGetProperty("result", out JsonElement statusResult) &&
                           statusResult.TryGetProperty("content", out JsonElement statusContent))
                       {
@@ -249,7 +249,7 @@ try
                     // Parse and display just the text content
                     try
                     {
-                      var clearJson = JsonDocument.Parse(clearResponse);
+                      JsonDocument clearJson = JsonDocument.Parse(clearResponse);
                       if (clearJson.RootElement.TryGetProperty("result", out JsonElement clearResult) &&
                           clearResult.TryGetProperty("content", out JsonElement clearContent))
                       {

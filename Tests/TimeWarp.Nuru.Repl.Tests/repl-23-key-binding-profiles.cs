@@ -42,7 +42,7 @@ public class KeyBindingProfileTests
   public static void Should_instantiate_default_profile()
   {
     // Act
-    var profile = new DefaultKeyBindingProfile();
+    DefaultKeyBindingProfile profile = new();
 
     // Assert
     profile.ShouldNotBeNull("Profile should be instantiated");
@@ -52,7 +52,7 @@ public class KeyBindingProfileTests
   public static void Should_instantiate_emacs_profile()
   {
     // Act
-    var profile = new EmacsKeyBindingProfile();
+    EmacsKeyBindingProfile profile = new();
 
     // Assert
     profile.ShouldNotBeNull("Profile should be instantiated");
@@ -62,7 +62,7 @@ public class KeyBindingProfileTests
   public static void Should_instantiate_vi_profile()
   {
     // Act
-    var profile = new ViKeyBindingProfile();
+    ViKeyBindingProfile profile = new();
 
     // Assert
     profile.ShouldNotBeNull("Profile should be instantiated");
@@ -72,7 +72,7 @@ public class KeyBindingProfileTests
   public static void Should_instantiate_vscode_profile()
   {
     // Act
-    var profile = new VSCodeKeyBindingProfile();
+    VSCodeKeyBindingProfile profile = new();
 
     // Assert
     profile.ShouldNotBeNull("Profile should be instantiated");
@@ -86,12 +86,12 @@ public class KeyBindingProfileTests
   public static async Task Default_profile_should_execute_commands()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueKeys("help");
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .AddReplSupport(options =>
       {
@@ -111,14 +111,14 @@ public class KeyBindingProfileTests
   public static async Task Default_profile_should_support_ctrl_a_for_line_start()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueKeys("world");
     terminal.QueueKey(ConsoleKey.A, ctrl: true); // Ctrl+A to go to start
     terminal.QueueKeys("hello ");
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .AddReplSupport(options =>
       {
@@ -139,14 +139,14 @@ public class KeyBindingProfileTests
   public static async Task Default_profile_should_support_arrow_keys()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueKeys("test");
     terminal.QueueKey(ConsoleKey.LeftArrow);
     terminal.QueueKey(ConsoleKey.Backspace);
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .AddReplSupport(options =>
       {
@@ -171,12 +171,12 @@ public class KeyBindingProfileTests
   public static async Task Emacs_profile_should_execute_commands()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueKeys("help");
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .AddReplSupport(options =>
       {
@@ -196,7 +196,7 @@ public class KeyBindingProfileTests
   public static async Task Emacs_profile_should_support_ctrl_f_and_ctrl_b()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueKeys("hello");
     terminal.QueueKey(ConsoleKey.B, ctrl: true); // Ctrl+B backward
     terminal.QueueKey(ConsoleKey.B, ctrl: true);
@@ -205,7 +205,7 @@ public class KeyBindingProfileTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .AddReplSupport(options =>
       {
@@ -226,13 +226,13 @@ public class KeyBindingProfileTests
   public static async Task Emacs_profile_should_support_ctrl_p_for_history()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("version");
     terminal.QueueKey(ConsoleKey.P, ctrl: true); // Ctrl+P previous history
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .AddReplSupport(options =>
       {
@@ -257,12 +257,12 @@ public class KeyBindingProfileTests
   public static async Task Vi_profile_should_execute_commands()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueKeys("help");
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .AddReplSupport(options =>
       {
@@ -282,14 +282,14 @@ public class KeyBindingProfileTests
   public static async Task Vi_profile_should_support_arrow_keys()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueKeys("test");
     terminal.QueueKey(ConsoleKey.LeftArrow);
     terminal.QueueKey(ConsoleKey.Backspace);
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .AddReplSupport(options =>
       {
@@ -314,12 +314,12 @@ public class KeyBindingProfileTests
   public static async Task VSCode_profile_should_execute_commands()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueKeys("help");
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .AddReplSupport(options =>
       {
@@ -339,7 +339,7 @@ public class KeyBindingProfileTests
   public static async Task VSCode_profile_should_support_home_and_end()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueKeys("middle");
     terminal.QueueKey(ConsoleKey.Home);
     terminal.QueueKeys("start-");
@@ -348,7 +348,7 @@ public class KeyBindingProfileTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .AddReplSupport(options =>
       {
@@ -369,14 +369,14 @@ public class KeyBindingProfileTests
   public static async Task VSCode_profile_should_support_ctrl_arrow_for_words()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueKeys("one two");
     terminal.QueueKey(ConsoleKey.LeftArrow, ctrl: true); // Ctrl+Left (word backward)
     terminal.QueueKeys("X");
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .AddReplSupport(options =>
       {
@@ -401,10 +401,10 @@ public class KeyBindingProfileTests
   public static void Should_resolve_default_profile_by_name()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .AddReplSupport(options =>
       {
@@ -419,10 +419,10 @@ public class KeyBindingProfileTests
   public static void Should_resolve_emacs_profile_by_name()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .AddReplSupport(options =>
       {
@@ -437,10 +437,10 @@ public class KeyBindingProfileTests
   public static void Should_resolve_vi_profile_by_name()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .AddReplSupport(options =>
       {
@@ -455,10 +455,10 @@ public class KeyBindingProfileTests
   public static void Should_resolve_vscode_profile_by_name()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .AddReplSupport(options =>
       {
@@ -473,13 +473,13 @@ public class KeyBindingProfileTests
   public static void Should_throw_on_unknown_profile_name()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
     // Act & Assert
     Should.Throw<ArgumentException>(() =>
     {
-      NuruApp app = new NuruAppBuilder()
+      NuruCoreApp app = new NuruAppBuilder()
         .UseTerminal(terminal)
         .AddReplSupport(options =>
         {
@@ -492,10 +492,10 @@ public class KeyBindingProfileTests
   public static void Should_default_to_default_profile_when_not_specified()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .AddReplSupport() // No profile specified
       .Build();

@@ -90,7 +90,7 @@ builder.Map("deploy {version:semver} {env} --notify {email:email?}", (SemanticVe
   return 0;
 });
 
-NuruApp app = builder.Build();
+NuruCoreApp app = builder.Build();
 
 // Show usage examples
 if (args.Length == 0)

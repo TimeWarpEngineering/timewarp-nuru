@@ -13,7 +13,7 @@ string testDir = Path.Combine(scriptDir, "..", "TimeWarp.Nuru.Mcp.Tests");
 // Configure Nuru app
 NuruAppBuilder builder = new();
 builder.MapDefault(() => RunTests(), "Run all MCP tests");
-NuruApp app = builder.Build();
+NuruCoreApp app = builder.Build();
 
 return await app.RunAsync(args);
 

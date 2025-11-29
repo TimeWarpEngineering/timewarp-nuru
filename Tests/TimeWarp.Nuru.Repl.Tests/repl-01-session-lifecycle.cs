@@ -14,10 +14,10 @@ public class SessionLifecycleTests
   public static async Task Should_start_session_and_display_welcome_message()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .AddReplSupport()
       .Build();
@@ -35,10 +35,10 @@ public class SessionLifecycleTests
   public static async Task Should_display_custom_welcome_message()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .AddReplSupport(options => options.WelcomeMessage = "Custom Welcome!")
       .Build();
@@ -54,10 +54,10 @@ public class SessionLifecycleTests
   public static async Task Should_exit_cleanly_via_exit_command()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .AddReplSupport()
       .Build();
@@ -74,10 +74,10 @@ public class SessionLifecycleTests
   public static async Task Should_exit_via_quit_command()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("quit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .AddReplSupport()
       .Build();
@@ -94,10 +94,10 @@ public class SessionLifecycleTests
   public static async Task Should_exit_via_q_shortcut()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("q");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .AddReplSupport()
       .Build();
@@ -114,10 +114,10 @@ public class SessionLifecycleTests
   public static async Task Should_display_custom_goodbye_message()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .AddReplSupport(options => options.GoodbyeMessage = "See you later!")
       .Build();
@@ -133,11 +133,11 @@ public class SessionLifecycleTests
   public static async Task Should_execute_command_and_continue()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("greet Alice");
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("greet {name}", (string name) => $"Hello, {name}!")
       .AddReplSupport()
@@ -155,12 +155,12 @@ public class SessionLifecycleTests
   public static async Task Should_execute_multiple_commands()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("greet Alice");
     terminal.QueueLine("greet Bob");
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("greet {name}", (string name) => $"Hello, {name}!")
       .AddReplSupport()
@@ -177,11 +177,11 @@ public class SessionLifecycleTests
   public static async Task Should_show_timing_when_enabled()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("greet World");
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("greet {name}", (string name) => $"Hello, {name}!")
       .AddReplSupport(options => options.ShowTiming = true)
@@ -198,11 +198,11 @@ public class SessionLifecycleTests
   public static async Task Should_not_show_timing_when_disabled()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("greet World");
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("greet {name}", (string name) => $"Hello, {name}!")
       .AddReplSupport(options => options.ShowTiming = false)
@@ -219,11 +219,11 @@ public class SessionLifecycleTests
   public static async Task Should_show_help_command()
   {
     // Arrange
-    using var terminal = new TestTerminal();
+    using TestTerminal terminal = new();
     terminal.QueueLine("help");
     terminal.QueueLine("exit");
 
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
       .Map("greet {name}", (string name) => $"Hello, {name}!")
       .AddReplSupport()

@@ -9,7 +9,7 @@ public class CustomSourcesTests
   public static async Task Should_use_custom_source_for_parameter()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("deploy {env}", (string env) => 0);
 
     builder.EnableDynamicCompletion(configure: registry =>
@@ -18,7 +18,7 @@ public class CustomSourcesTests
       registry.RegisterForParameter("env", source);
     });
 
-    NuruApp app = builder.Build();
+    NuruCoreApp app = builder.Build();
 
     // Act
     (int _, string output, string _) = await CaptureAppOutputAsync(() =>
@@ -33,7 +33,7 @@ public class CustomSourcesTests
   public static async Task Should_use_custom_source_for_file_paths()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("open {file}", (string file) => 0);
 
     builder.EnableDynamicCompletion(configure: registry =>
@@ -42,7 +42,7 @@ public class CustomSourcesTests
       registry.RegisterForParameter("file", source);
     });
 
-    NuruApp app = builder.Build();
+    NuruCoreApp app = builder.Build();
 
     // Act
     (int _, string output, string _) = await CaptureAppOutputAsync(() =>
@@ -57,7 +57,7 @@ public class CustomSourcesTests
   public static async Task Should_support_multiple_custom_sources_for_different_parameters()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("deploy {env} {version}", (string env, string version) => 0);
 
     builder.EnableDynamicCompletion(configure: registry =>
@@ -66,7 +66,7 @@ public class CustomSourcesTests
       registry.RegisterForParameter("version", new VersionSource());
     });
 
-    NuruApp app = builder.Build();
+    NuruCoreApp app = builder.Build();
 
     // Act - Complete env
     (int _, string envOutput, string _) = await CaptureAppOutputAsync(() =>
@@ -80,7 +80,7 @@ public class CustomSourcesTests
   public static async Task Should_provide_context_to_custom_source()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("show {item}", (string item) => 0);
 
     builder.EnableDynamicCompletion(configure: registry =>
@@ -89,7 +89,7 @@ public class CustomSourcesTests
       registry.RegisterForParameter("item", source);
     });
 
-    NuruApp app = builder.Build();
+    NuruCoreApp app = builder.Build();
 
     // Act
     (int _, string output, string _) = await CaptureAppOutputAsync(() =>
@@ -102,7 +102,7 @@ public class CustomSourcesTests
   public static async Task Should_handle_source_that_returns_empty_list()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("select {item}", (string item) => 0);
 
     builder.EnableDynamicCompletion(configure: registry =>
@@ -111,7 +111,7 @@ public class CustomSourcesTests
       registry.RegisterForParameter("item", source);
     });
 
-    NuruApp app = builder.Build();
+    NuruCoreApp app = builder.Build();
 
     // Act
     (int exitCode, string output, string _) = await CaptureAppOutputAsync(() =>
@@ -125,7 +125,7 @@ public class CustomSourcesTests
   public static async Task Should_handle_source_with_many_completions()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("pick {number}", (string number) => 0);
 
     builder.EnableDynamicCompletion(configure: registry =>
@@ -134,7 +134,7 @@ public class CustomSourcesTests
       registry.RegisterForParameter("number", source);
     });
 
-    NuruApp app = builder.Build();
+    NuruCoreApp app = builder.Build();
 
     // Act
     (int exitCode, string output, string _) = await CaptureAppOutputAsync(() =>
@@ -150,7 +150,7 @@ public class CustomSourcesTests
   public static async Task Should_support_descriptions_in_custom_source()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("select {region}", (string region) => 0);
 
     builder.EnableDynamicCompletion(configure: registry =>
@@ -159,7 +159,7 @@ public class CustomSourcesTests
       registry.RegisterForParameter("region", source);
     });
 
-    NuruApp app = builder.Build();
+    NuruCoreApp app = builder.Build();
 
     // Act
     (int _, string output, string _) = await CaptureAppOutputAsync(() =>
@@ -173,7 +173,7 @@ public class CustomSourcesTests
   public static async Task Should_support_stateful_source()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("use {item}", (string item) => 0);
 
     StatefulSource statefulSource = new();
@@ -185,7 +185,7 @@ public class CustomSourcesTests
       registry.RegisterForParameter("item", statefulSource);
     });
 
-    NuruApp app = builder.Build();
+    NuruCoreApp app = builder.Build();
 
     // Act
     (int _, string output, string _) = await CaptureAppOutputAsync(() =>
@@ -199,7 +199,7 @@ public class CustomSourcesTests
   public static async Task Should_allow_source_to_access_endpoints()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("info {item}", (string item) => 0);
 
     builder.EnableDynamicCompletion(configure: registry =>
@@ -208,7 +208,7 @@ public class CustomSourcesTests
       registry.RegisterForParameter("item", source);
     });
 
-    NuruApp app = builder.Build();
+    NuruCoreApp app = builder.Build();
 
     // Act
     (int _, string output, string _) = await CaptureAppOutputAsync(() =>

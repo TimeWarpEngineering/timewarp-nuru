@@ -21,10 +21,11 @@ public static class NuruAppBuilderExtensions
   /// This ensures completion scripts match the published executable name.
   /// </param>
   /// <returns>The builder for fluent chaining.</returns>
-  public static NuruAppBuilder EnableStaticCompletion(
-    this NuruAppBuilder builder,
+  public static TBuilder EnableStaticCompletion<TBuilder>(
+    this TBuilder builder,
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Roslynator", "RCS1163:Unused parameter", Justification = "Parameter kept for backward compatibility")]
     string? appName = null)
+    where TBuilder : NuruCoreAppBuilder
   {
     ArgumentNullException.ThrowIfNull(builder);
 
@@ -36,7 +37,7 @@ public static class NuruAppBuilderExtensions
       // Detect app name at runtime (when the command is actually executed)
       string detectedAppName = AppNameDetector.GetEffectiveAppName();
 
-      var generator = new CompletionScriptGenerator();
+      CompletionScriptGenerator generator = new();
 
       string script = shell.ToLowerInvariant() switch
       {
@@ -69,16 +70,17 @@ public static class NuruAppBuilderExtensions
   /// Register completion sources for specific parameters or types.
   /// </param>
   /// <returns>The builder for fluent chaining.</returns>
-  public static NuruAppBuilder EnableDynamicCompletion(
-    this NuruAppBuilder builder,
+  public static TBuilder EnableDynamicCompletion<TBuilder>(
+    this TBuilder builder,
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Roslynator", "RCS1163:Unused parameter", Justification = "Parameter kept for backward compatibility")]
     string? appName = null,
     Action<CompletionSourceRegistry>? configure = null)
+    where TBuilder : NuruCoreAppBuilder
   {
     ArgumentNullException.ThrowIfNull(builder);
 
     // Create and configure the registry
-    var registry = new CompletionSourceRegistry();
+    CompletionSourceRegistry registry = new();
     configure?.Invoke(registry);
 
     // Register the __complete callback route

@@ -1,0 +1,120 @@
+namespace TimeWarp.Nuru;
+
+/// <summary>
+/// Executes command objects through Mediator after populating them from route parameters.
+/// </summary>
+public class MediatorExecutor
+{
+  private readonly IServiceProvider ServiceProvider;
+  private readonly ITypeConverterRegistry TypeConverterRegistry;
+  private readonly IConsole Console;
+
+  public MediatorExecutor(IServiceProvider serviceProvider, ITypeConverterRegistry typeConverterRegistry, IConsole? console = null)
+  {
+    ServiceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
+    TypeConverterRegistry = typeConverterRegistry ?? throw new ArgumentNullException(nameof(typeConverterRegistry));
+    Console = console ?? serviceProvider.GetService<IConsole>() ?? NuruConsole.Default;
+  }
+
+  /// <summary>
+  /// Creates a command instance, populates it with extracted values, and executes it through Mediator.
+  /// </summary>
+  /// <remarks>
+  /// This method uses reflection to create command instances and populate properties.
+  /// When using NativeAOT, ensure command types are preserved with [DynamicDependency] or similar attributes.
+  /// </remarks>
+  [RequiresUnreferencedCode("Command types are created and populated dynamically. Ensure command constructors and properties are preserved.")]
+  [RequiresDynamicCode("Command instantiation may require dynamic code generation.")]
+  public async Task<object?> ExecuteCommandAsync(
+      [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+      Type commandType,
+      Dictionary<string, string> extractedValues,
+      CancellationToken cancellationToken)
+  {
+    ArgumentNullException.ThrowIfNull(commandType);
+    ArgumentNullException.ThrowIfNull(extractedValues);
+
+    // Create instance of the command
+    object command = Activator.CreateInstance(commandType)
+            ?? throw new InvalidOperationException($"Failed to create instance of {commandType.Name}");
+
+    // Populate command properties from extracted values
+    PopulateCommand(command, commandType, extractedValues);
+
+    // Execute through Mediator (get from service provider to respect scoped lifetime)
+    // martinothamar/Mediator returns ValueTask<object?>, convert to Task for API compatibility
+    IMediator mediator = ServiceProvider.GetRequiredService<IMediator>();
+    return await mediator.Send(command, cancellationToken).ConfigureAwait(false);
+  }
+
+  [UnconditionalSuppressMessage("Trimming", "IL2072:UnrecognizedReflectionPattern",
+      Justification = "Command properties are preserved through DynamicallyAccessedMembers annotation on commandType parameter")]
+  private void PopulateCommand(
+      object command,
+      [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
+      Type commandType,
+      Dictionary<string, string> extractedValues)
+  {
+    foreach ((string paramName, string value) in extractedValues)
+    {
+      // Find property (case-insensitive)
+      PropertyInfo? property = commandType.GetProperties()
+                .FirstOrDefault(p => string.Equals(p.Name, paramName, StringComparison.OrdinalIgnoreCase));
+
+      if (property?.CanWrite != true)
+        continue;
+
+      try
+      {
+        // Handle string arrays (for catch-all parameters)
+        if (property.PropertyType == typeof(string[]))
+        {
+          // Split the value by spaces to create an array
+          string[] arrayValue = value.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+          property.SetValue(command, arrayValue);
+        }
+        // Convert the string value to the property type
+        else if (TypeConverterRegistry.TryConvert(value, property.PropertyType, out object? convertedValue))
+        {
+          property.SetValue(command, convertedValue);
+        }
+        else if (property.PropertyType == typeof(string))
+        {
+          property.SetValue(command, value);
+        }
+        else
+        {
+          // Try basic conversion as fallback
+          try
+          {
+            object converted = Convert.ChangeType(value, property.PropertyType, CultureInfo.InvariantCulture);
+            property.SetValue(command, converted);
+          }
+          catch
+          {
+            throw new InvalidOperationException(
+                $"Cannot convert '{value}' to type {property.PropertyType} for parameter '{property.Name}'");
+          }
+        }
+      }
+      catch (Exception ex)
+      {
+        throw new InvalidOperationException(
+            $"Failed to set property '{property.Name}' to value '{value}': {ex.Message}", ex);
+      }
+    }
+  }
+
+  /// <summary>
+  /// Formats the command response for console output.
+  /// </summary>
+  /// <remarks>
+  /// This method may serialize unknown response types to JSON, which requires reflection
+  /// and is not fully compatible with Native AOT. For best AOT support, return primitive types
+  /// or types with custom ToString implementations from mediator commands.
+  /// </remarks>
+  [RequiresUnreferencedCode("Response serialization may require types not known at compile time")]
+  [RequiresDynamicCode("JSON serialization of unknown response types may require dynamic code generation")]
+  public void DisplayResponse(object? response)
+    => ResponseDisplay.Write(response, Console);
+}

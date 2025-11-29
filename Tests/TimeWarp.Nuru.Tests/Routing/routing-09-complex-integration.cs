@@ -12,7 +12,7 @@ public class ComplexIntegrationTests
     bool boundT = false;
     string[]? boundE = null;
     string[]? boundCmd = null;
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .Map("docker run -i -t --env {e}* -- {*cmd}", (bool i, bool t, string[] e, string[] cmd) => { boundI = i; boundT = t; boundE = e; boundCmd = cmd; return 0; })
       .Build();
 
@@ -42,7 +42,7 @@ public class ComplexIntegrationTests
     string? boundMsg = null;
     bool boundAmend = false;
     bool boundNoVerify = false;
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .Map("git commit --message,-m {msg} --amend --no-verify", (string msg, bool amend, bool noVerify) => { boundMsg = msg; boundAmend = amend; boundNoVerify = noVerify; return 0; })
       .Build();
 
@@ -65,7 +65,7 @@ public class ComplexIntegrationTests
     string? boundCfg = null;
     bool boundVerbose = false;
     bool boundWatch = false;
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .Map("build {project?} --config? {cfg?} --verbose --watch", (string? project, string? cfg, bool verbose, bool watch) => { boundProject = project; boundCfg = cfg; boundVerbose = verbose; boundWatch = watch; return 0; })
       .Build();
 
@@ -88,7 +88,7 @@ public class ComplexIntegrationTests
     int[]? boundId = null;
     string[]? boundT = null;
     string? boundScript = null;
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .Map("process --id {id:int}* --tag {t}* {script}", (int[] id, string[] t, string script) => { boundId = id; boundT = t; boundScript = script; return 0; })
       .Build();
 

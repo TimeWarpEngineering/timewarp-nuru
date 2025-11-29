@@ -43,12 +43,12 @@ internal sealed partial class Parser : IParser
     // Parse tokens into AST
 
     List<SegmentSyntax> segments = ParsePattern();
-    var ast = new Syntax(segments);
+    Syntax ast = new(segments);
 
     // Perform semantic validation using the SemanticValidator
     IReadOnlyList<SemanticError>? semanticErrors = SemanticValidator.Validate(ast);
 
-    var result = new ParseResult<Syntax>
+    ParseResult<Syntax> result = new()
     {
       Value = ast,
       ParseErrors = ParseErrors,
@@ -72,11 +72,11 @@ internal sealed partial class Parser : IParser
   {
     ArgumentNullException.ThrowIfNull(ast);
 
-    var sb = new StringBuilder();
+    StringBuilder sb = new();
     sb.Append("→ ").Append(ast.Segments.Count).Append(" segments: ");
 
     // Build inline segment list
-    var segmentList = new List<string>();
+    List<string> segmentList = [];
     for (int i = 0; i < ast.Segments.Count; i++)
     {
       segmentList.Add(ast.Segments[i].ToString());
@@ -89,7 +89,7 @@ internal sealed partial class Parser : IParser
 
   private List<SegmentSyntax> ParsePattern()
   {
-    var segments = new List<SegmentSyntax>();
+    List<SegmentSyntax> segments = [];
 
     while (!IsAtEnd())
     {
@@ -499,7 +499,7 @@ internal sealed partial class Parser : IParser
 
   private string ConsumeDescription(bool stopAtRightBrace)
   {
-    var description = new List<string>();
+    List<string> description = [];
 
     while (!IsAtEnd())
     {

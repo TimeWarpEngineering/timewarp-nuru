@@ -84,7 +84,7 @@ builder.Map("long-task {duration:int?}", async (int? duration) =>
     Console.WriteLine($"Starting long task ({totalSeconds} seconds)...");
     Console.WriteLine("Press Ctrl+C to cancel");
     
-    using var cts = new CancellationTokenSource();
+    using CancellationTokenSource cts = new();
     Console.CancelKeyPress += (s, e) =>
     {
         e.Cancel = true;
@@ -136,5 +136,5 @@ builder.Map("--help", () =>
 });
 
 // Build and run
-var app = builder.Build();
+NuruCoreApp app = builder.Build();
 return await app.RunAsync(args);

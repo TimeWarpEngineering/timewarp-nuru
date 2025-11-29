@@ -19,7 +19,7 @@ public class TypedParameterParsingTests
 
     // Verify parameter segment with type constraint
     route.PositionalMatchers[1].ShouldBeOfType<ParameterMatcher>();
-    var param = (ParameterMatcher)route.PositionalMatchers[1];
+    ParameterMatcher param = (ParameterMatcher)route.PositionalMatchers[1];
     param.Name.ShouldBe("ms");
     param.Constraint.ShouldBe("int");
     param.IsOptional.ShouldBeFalse();
@@ -34,7 +34,7 @@ public class TypedParameterParsingTests
 
     // Assert - Verify type constraint captured
     route.ShouldNotBeNull();
-    var param = (ParameterMatcher)route.PositionalMatchers[1];
+    ParameterMatcher param = (ParameterMatcher)route.PositionalMatchers[1];
     param.Name.ShouldBe("value");
     param.Constraint.ShouldBe("double");
 
@@ -48,7 +48,7 @@ public class TypedParameterParsingTests
 
     // Assert - Verify DateTime type (Pascal case)
     route.ShouldNotBeNull();
-    var param = (ParameterMatcher)route.PositionalMatchers[1];
+    ParameterMatcher param = (ParameterMatcher)route.PositionalMatchers[1];
     param.Name.ShouldBe("when");
     param.Constraint.ShouldBe("DateTime");
 
@@ -64,11 +64,11 @@ public class TypedParameterParsingTests
     route.ShouldNotBeNull();
     route.PositionalMatchers.Count.ShouldBe(3); // "range" + {start:int} + {end:int}
 
-    var startParam = (ParameterMatcher)route.PositionalMatchers[1];
+    ParameterMatcher startParam = (ParameterMatcher)route.PositionalMatchers[1];
     startParam.Name.ShouldBe("start");
     startParam.Constraint.ShouldBe("int");
 
-    var endParam = (ParameterMatcher)route.PositionalMatchers[2];
+    ParameterMatcher endParam = (ParameterMatcher)route.PositionalMatchers[2];
     endParam.Name.ShouldBe("end");
     endParam.Constraint.ShouldBe("int");
 
@@ -82,7 +82,7 @@ public class TypedParameterParsingTests
 
     // Assert - Verify both type and description captured
     route.ShouldNotBeNull();
-    var param = (ParameterMatcher)route.PositionalMatchers[1];
+    ParameterMatcher param = (ParameterMatcher)route.PositionalMatchers[1];
     param.Name.ShouldBe("ms");
     param.Constraint.ShouldBe("int");
     param.Description.ShouldBe("Milliseconds to wait");
@@ -99,11 +99,11 @@ public class TypedParameterParsingTests
     route.ShouldNotBeNull();
     route.PositionalMatchers.Count.ShouldBe(3);
 
-    var envParam = (ParameterMatcher)route.PositionalMatchers[1];
+    ParameterMatcher envParam = (ParameterMatcher)route.PositionalMatchers[1];
     envParam.Name.ShouldBe("env");
     envParam.Constraint.ShouldBeNull(); // No type constraint
 
-    var replicasParam = (ParameterMatcher)route.PositionalMatchers[2];
+    ParameterMatcher replicasParam = (ParameterMatcher)route.PositionalMatchers[2];
     replicasParam.Name.ShouldBe("replicas");
     replicasParam.Constraint.ShouldBe("int");
 

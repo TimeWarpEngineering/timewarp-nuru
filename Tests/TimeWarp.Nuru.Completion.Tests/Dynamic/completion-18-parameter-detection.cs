@@ -9,7 +9,7 @@ public class ParameterDetectionTests
   public static async Task Should_detect_first_positional_parameter()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("greet {name}", (string name) => 0);
 
     string[] typedWords = ["greet"];
@@ -29,7 +29,7 @@ public class ParameterDetectionTests
   public static async Task Should_detect_second_positional_parameter()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("deploy {env} {tag}", (string env, string tag) => 0);
 
     string[] typedWords = ["deploy", "production"];
@@ -49,7 +49,7 @@ public class ParameterDetectionTests
   public static async Task Should_detect_optional_parameter()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("deploy {env} {tag?}", (string env, string? tag) => 0);
 
     string[] typedWords = ["deploy", "production"];
@@ -69,7 +69,7 @@ public class ParameterDetectionTests
   public static async Task Should_detect_option_value_parameter()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("build --config {mode}", (string mode) => 0);
 
     string[] typedWords = ["build", "--config"];
@@ -89,7 +89,7 @@ public class ParameterDetectionTests
   public static async Task Should_detect_typed_parameter()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("connect {port:int}", (int port) => 0);
 
     string[] typedWords = ["connect"];
@@ -109,7 +109,7 @@ public class ParameterDetectionTests
   public static async Task Should_detect_enum_parameter()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("deploy {env} --mode {mode}", (string env, TestMode mode) => 0);
 
     string[] typedWords = ["deploy", "production", "--mode"];
@@ -129,7 +129,7 @@ public class ParameterDetectionTests
   public static async Task Should_return_false_when_literal_mismatch()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("greet {name}", (string name) => 0);
 
     string[] typedWords = ["hello"]; // Wrong literal
@@ -149,7 +149,7 @@ public class ParameterDetectionTests
   public static async Task Should_return_false_when_completing_literal()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("git status", () => 0);
 
     string[] typedWords = ["git"];
@@ -167,7 +167,7 @@ public class ParameterDetectionTests
   public static async Task Should_detect_short_option_value_parameter()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("build --config,-c {mode}", (string mode) => 0);
 
     string[] typedWords = ["build", "-c"];
@@ -187,7 +187,7 @@ public class ParameterDetectionTests
   public static async Task Should_use_try_get_parameter_info_with_full_context()
   {
     // Arrange
-    var builder = new NuruAppBuilder();
+    NuruAppBuilder builder = new();
     builder.Map("greet {name}", (string name) => 0);
 
     CompletionContext context = new(

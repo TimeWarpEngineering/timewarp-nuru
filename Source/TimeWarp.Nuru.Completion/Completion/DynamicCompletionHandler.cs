@@ -26,7 +26,7 @@ internal static class DynamicCompletionHandler
   )
   {
     // Build completion context (using existing CompletionContext record)
-    var context = new CompletionContext(
+    CompletionContext context = new(
       Args: words,
       CursorPosition: cursorIndex,
       Endpoints: endpoints
@@ -92,7 +92,7 @@ internal static class DynamicCompletionHandler
     }
 
     // Fall back to default source (analyzes registered routes)
-    var defaultSource = new DefaultCompletionSource();
+    DefaultCompletionSource defaultSource = new();
     return defaultSource.GetCompletions(context);
   }
 

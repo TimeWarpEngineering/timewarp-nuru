@@ -12,7 +12,7 @@ public class NegativeNumberTests
     // Arrange
     int? capturedX = null;
     int? capturedY = null;
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .Map("add {x:int} {y:int}", (int x, int y) =>
       {
         capturedX = x;
@@ -38,7 +38,7 @@ public class NegativeNumberTests
     // Arrange
     double? capturedX = null;
     double? capturedY = null;
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .Map("multiply {x:double} {y:double}", (double x, double y) =>
       {
         capturedX = x;
@@ -65,7 +65,7 @@ public class NegativeNumberTests
     int? capturedA = null;
     int? capturedB = null;
     int? capturedC = null;
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .Map("calc {a:int} {b:int} {c:int}", (int a, int b, int c) =>
       {
         capturedA = a;
@@ -93,7 +93,7 @@ public class NegativeNumberTests
     // Arrange
     int? capturedValue = null;
     bool? capturedFlag = null;
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .Map("test {value:int} --flag", (int value, bool flag) =>
       {
         capturedValue = value;
@@ -118,7 +118,7 @@ public class NegativeNumberTests
   {
     // Arrange
     decimal? capturedValue = null;
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .Map("price {amount:decimal}", (decimal amount) =>
       {
         capturedValue = amount;
@@ -141,7 +141,7 @@ public class NegativeNumberTests
   {
     // Arrange
     string? capturedText = null;
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .Map("echo {text}", (string text) =>
       {
         capturedText = text;
@@ -164,7 +164,7 @@ public class NegativeNumberTests
   {
     // Arrange
     bool? capturedVerbose = null;
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .Map("test --verbose", (bool verbose) =>
       {
         capturedVerbose = verbose;
@@ -193,7 +193,7 @@ public class NegativeNumberTests
   {
     // Arrange
     double? capturedValue = null;
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .Map("calc {value:double}", (double value) =>
       {
         capturedValue = value;
@@ -216,7 +216,7 @@ public class NegativeNumberTests
   {
     // Arrange
     int? capturedAmount = null;
-    NuruApp app = new NuruAppBuilder()
+    NuruCoreApp app = new NuruAppBuilder()
       .Map("calc --amount {amount:int}", (int amount) =>
       {
         capturedAmount = amount;

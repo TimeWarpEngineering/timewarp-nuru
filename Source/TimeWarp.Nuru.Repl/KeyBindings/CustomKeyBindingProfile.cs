@@ -19,12 +19,12 @@ namespace TimeWarp.Nuru.Repl;
 /// <example>
 /// <code>
 /// // Start from Emacs profile and customize
-/// var customProfile = new CustomKeyBindingProfile(new EmacsKeyBindingProfile())
+/// CustomKeyBindingProfile customProfile = new CustomKeyBindingProfile(new EmacsKeyBindingProfile())
 ///   .WithName("MyCustomProfile")
 ///   .Override(ConsoleKey.K, ConsoleModifiers.Control, reader => reader.HandleDeleteToEnd)
 ///   .Remove(ConsoleKey.D, ConsoleModifiers.Control);
 ///
-/// var replOptions = new ReplOptions { KeyBindingProfile = customProfile };
+/// ReplOptions replOptions = new() { KeyBindingProfile = customProfile };
 /// </code>
 /// </example>
 public sealed class CustomKeyBindingProfile : IKeyBindingProfile

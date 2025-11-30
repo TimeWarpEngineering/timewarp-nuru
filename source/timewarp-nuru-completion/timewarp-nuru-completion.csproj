@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <AssemblyName>TimeWarp.Nuru.Completion</AssemblyName>
+    <RootNamespace>TimeWarp.Nuru.Completion</RootNamespace>
+    <Description>Shell completion support for TimeWarp.Nuru CLI applications</Description>
+    <PackageTags>cli;command-line;completion;tab-completion;bash;zsh;powershell;fish;shell</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../timewarp-nuru-core/timewarp-nuru-core.csproj" />
+  </ItemGroup>
+
+  <!-- Embed completion script templates as resources -->
+  <ItemGroup>
+    <EmbeddedResource Include="completion/templates/*.sh" />
+    <EmbeddedResource Include="completion/templates/*.zsh" />
+    <EmbeddedResource Include="completion/templates/*.ps1" />
+    <EmbeddedResource Include="completion/templates/*.fish" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="$(RepositoryRoot)readme.md" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+</Project>

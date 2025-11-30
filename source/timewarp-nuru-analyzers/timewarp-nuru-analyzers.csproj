@@ -1,0 +1,55 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <AssemblyName>TimeWarp.Nuru.Analyzers</AssemblyName>
+    <RootNamespace>TimeWarp.Nuru.Analyzers</RootNamespace>
+    <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+    <IsRoslynComponent>true</IsRoslynComponent>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+    <DevelopmentDependency>true</DevelopmentDependency>
+    <!-- Suppress RS1041 since we're intentionally targeting .NET 10 for CLI usage -->
+    <!-- Suppress CA1805, CA1802, RCS1163 for parsing code that's compiled in -->
+    <NoWarn>$(NoWarn);RS1041;CA1805;CA1802;RCS1163</NoWarn>
+    <!-- Define ANALYZER_BUILD for conditional compilation -->
+    <DefineConstants>$(DefineConstants);ANALYZER_BUILD</DefineConstants>
+    <IncludeSymbols>false</IncludeSymbols>
+    <IncludeSource>false</IncludeSource>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <PackageId>TimeWarp.Nuru.Analyzers</PackageId>
+    <Description>Roslyn analyzers for TimeWarp.Nuru route pattern validation</Description>
+    <PackageTags>TimeWarp;Nuru;Analyzers;Roslyn;CLI</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
+    <PackageReference Include="Microsoft.CodeAnalysis.Analyzers">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <!-- Required for parsing code that uses ILogger -->
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions">
+      <PrivateAssets>all</PrivateAssets>
+      <GeneratePathProperty>true</GeneratePathProperty>
+    </PackageReference>
+  </ItemGroup>
+
+
+  <!-- Include parsing source files directly -->
+  <ItemGroup>
+    <Compile Include="$(SourceDirectory)timewarp-nuru-parsing/**/*.cs" Exclude="$(SourceDirectory)timewarp-nuru-parsing/obj/**;$(SourceDirectory)timewarp-nuru-parsing/bin/**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="$(OutputPath)/$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+    <!-- Include Microsoft.Extensions.Logging.Abstractions in the analyzer package -->
+    <None Include="$(PkgMicrosoft_Extensions_Logging_Abstractions)/lib/net9.0/Microsoft.Extensions.Logging.Abstractions.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="$(RepositoryRoot)readme.md" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+</Project>

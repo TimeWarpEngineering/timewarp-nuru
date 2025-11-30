@@ -8,7 +8,7 @@
     <Authors>Steven T. Cramer</Authors>
     <RepositoryUrl>https://github.com/TimeWarpEngineering/timewarp-nuru</RepositoryUrl>
     <PackageLicenseExpression>Unlicense</PackageLicenseExpression>
-    <PackageIcon>Logo.png</PackageIcon>
+    <PackageIcon>logo.png</PackageIcon>
     <PackageReadmeFile>readme.md</PackageReadmeFile>
   </PropertyGroup>
 
@@ -26,7 +26,7 @@
   </PropertyGroup>
 
   <ItemGroup Label="Shared Package Assets">
-    <None Include="$(RepositoryRoot)Assets/Logo.png" Pack="true" PackagePath="" />
+    <None Include="$(RepositoryRoot)assets/logo.png" Pack="true" PackagePath="" />
   </ItemGroup>
 
   <ItemGroup Label="Build Tasks">

@@ -17,10 +17,10 @@ Rename the Assets directory to lowercase. Verify msbuild directory compliance.
 
 ## Checklist
 
-- [ ] Rename Assets directory to lowercase
-- [ ] Rename image files to lowercase
-- [ ] Verify msbuild directory compliance
-- [ ] Update any references to logo/assets
+- [x] Rename Assets directory to lowercase
+- [x] Rename image files to lowercase
+- [x] Verify msbuild directory compliance
+- [x] Update any references to logo/assets
 
 ## Notes
 

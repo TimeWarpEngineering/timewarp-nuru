@@ -6,7 +6,7 @@
     <SolutionFile>$(RepositoryRoot)TimeWarp.Nuru.sln</SolutionFile>
     <SourceDirectory>$(RepositoryRoot)Source/</SourceDirectory>
     <TestsDirectory>$(RepositoryRoot)Tests/</TestsDirectory>
-    <SamplesDirectory>$(RepositoryRoot)Samples/</SamplesDirectory>
+    <SamplesDirectory>$(RepositoryRoot)samples/</SamplesDirectory>
     <BenchmarksDirectory>$(RepositoryRoot)Benchmarks/</BenchmarksDirectory>
     <ScriptsDirectory>$(RepositoryRoot)Scripts/</ScriptsDirectory>
     <ArtifactsDirectory>$(RepositoryRoot)artifacts/</ArtifactsDirectory>

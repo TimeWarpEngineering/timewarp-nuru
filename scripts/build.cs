@@ -12,16 +12,16 @@ WriteLine($"Working from: {Directory.GetCurrentDirectory()}");
 // Build each project individually to avoid framework resolution issues
 // Note: TimeWarp.Nuru.Parsing is no longer built separately - its source is compiled directly into consuming projects
 string[] projectsToBuild = [
-  "../Source/TimeWarp.Nuru.Analyzers/TimeWarp.Nuru.Analyzers.csproj",
-  "../Source/TimeWarp.Nuru.Logging/TimeWarp.Nuru.Logging.csproj",
-  "../Source/TimeWarp.Nuru.Mcp/TimeWarp.Nuru.Mcp.csproj",
-  "../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj",
-  "../Source/TimeWarp.Nuru.Completion/TimeWarp.Nuru.Completion.csproj",
-  "../Source/TimeWarp.Nuru.Repl/TimeWarp.Nuru.Repl.csproj",
-  "../Benchmarks/TimeWarp.Nuru.Benchmarks/TimeWarp.Nuru.Benchmarks.csproj",
-  "../Tests/TestApps/TimeWarp.Nuru.TestApp.Mediator/TimeWarp.Nuru.TestApp.Mediator.csproj",
-  "../Tests/TestApps/TimeWarp.Nuru.TestApp.Delegates/TimeWarp.Nuru.TestApp.Delegates.csproj",
-  // "../Tests/TimeWarp.Nuru.Analyzers.Tests/TimeWarp.Nuru.Analyzers.Tests.csproj",
+  "../source/timewarp-nuru-analyzers/timewarp-nuru-analyzers.csproj",
+  "../source/timewarp-nuru-logging/timewarp-nuru-logging.csproj",
+  "../source/timewarp-nuru-mcp/timewarp-nuru-mcp.csproj",
+  "../source/timewarp-nuru/timewarp-nuru.csproj",
+  "../source/timewarp-nuru-completion/timewarp-nuru-completion.csproj",
+  "../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj",
+  "../benchmarks/timewarp-nuru-benchmarks/timewarp-nuru-benchmarks.csproj",
+  "../tests/test-apps/timewarp-nuru-testapp-mediator/timewarp-nuru-testapp-mediator.csproj",
+  "../tests/test-apps/timewarp-nuru-testapp-delegates/timewarp-nuru-testapp-delegates.csproj",
+  // "../tests/timewarp-nuru-analyzers-tests/timewarp-nuru-analyzers-tests.csproj",
   "../samples/timewarp-nuru-sample/timewarp-nuru-sample.csproj"
 ];
 

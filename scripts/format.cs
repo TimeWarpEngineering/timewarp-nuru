@@ -31,7 +31,7 @@ if (!parsingResult.IsSuccess)
 // Now check code style with dotnet format
 WriteLine("Checking code style with dotnet format...");
 CommandResult dotnetCommandResult = Shell.Run("dotnet")
- .WithArguments("format", "../TimeWarp.Nuru.slnx", "--verify-no-changes", "--severity", "warn", "--exclude", "**/Benchmarks/**")
+ .WithArguments("format", "../timewarp-nuru.slnx", "--verify-no-changes", "--severity", "warn", "--exclude", "**/Benchmarks/**")
  .Build();
 
 WriteLine("Running ...");

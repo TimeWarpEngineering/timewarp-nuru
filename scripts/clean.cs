@@ -12,7 +12,7 @@ WriteLine($"Working from: {Directory.GetCurrentDirectory()}");
 try
 {
     ExecutionResult result = await DotNet.Clean()
-        .WithProject("../TimeWarp.Nuru.slnx")
+        .WithProject("../timewarp-nuru.slnx")
         .WithVerbosity("minimal")
         .ExecuteAsync();
 

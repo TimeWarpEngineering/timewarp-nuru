@@ -35,7 +35,7 @@ After .NET 10 RTM release (expected November 2024).
 After update, build the solution to ensure all C# 14 features still work:
 
 ```bash
-dotnet build TimeWarp.Nuru.slnx -c Release
+dotnet build timewarp-nuru.slnx -c Release
 ```
 
 Should build with 0 errors and 0 warnings.

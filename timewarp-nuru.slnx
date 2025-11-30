@@ -19,6 +19,5 @@
   <Folder Name="/tests/">
     <Project Path="tests/test-apps/timewarp-nuru-testapp-delegates/timewarp-nuru-testapp-delegates.csproj" />
     <Project Path="tests/test-apps/timewarp-nuru-testapp-mediator/timewarp-nuru-testapp-mediator.csproj" />
-    <Project Path="tests/timewarp-nuru-analyzers-tests/timewarp-nuru-analyzers-tests.csproj" />
   </Folder>
 </Solution>

@@ -9,7 +9,7 @@ WriteLine("Running Roslynator analysis and fixes...");
 WriteLine($"Working from: {Directory.GetCurrentDirectory()}");
 
 // Read the .slnx file to get all project paths
-const string SolutionFileName = "TimeWarp.Nuru.slnx";
+const string SolutionFileName = "timewarp-nuru.slnx";
 string slnxPath = Path.Combine("..", SolutionFileName);
 if (!File.Exists(slnxPath))
 {

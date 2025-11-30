@@ -1,10 +1,10 @@
 # agents.md
 
 ## Build Commands
-- Full build: `dotnet build TimeWarp.Nuru.slnx -c Release`
+- Full build: `dotnet build timewarp-nuru.slnx -c Release`
 - Scripted build (with format/analyze): `cd scripts && ./build.cs`
 - Clean & rebuild: `cd scripts && ./clean-and-build.cs`
-- Single project: `dotnet build Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj -c Release`
+- Single project: `dotnet build source/timewarp-nuru/timewarp-nuru.csproj -c Release`
 
 ## Lint & Analyze Commands
 - Format code: `dotnet format` (enforced in build; follows .editorconfig)

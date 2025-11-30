@@ -3,7 +3,7 @@
   <PropertyGroup Label="Repository Structure">
     <RepositoryName>timewarp-nuru</RepositoryName>
     <RepositoryRoot>$(MSBuildThisFileDirectory)../</RepositoryRoot>
-    <SolutionFile>$(RepositoryRoot)TimeWarp.Nuru.sln</SolutionFile>
+    <SolutionFile>$(RepositoryRoot)timewarp-nuru.slnx</SolutionFile>
     <SourceDirectory>$(RepositoryRoot)source/</SourceDirectory>
     <TestsDirectory>$(RepositoryRoot)tests/</TestsDirectory>
     <SamplesDirectory>$(RepositoryRoot)samples/</SamplesDirectory>

@@ -13,7 +13,7 @@ TimeWarp.Nuru is a route-based CLI framework for .NET that brings web-style rout
 
 ```bash
 # Build the entire solution
-dotnet build TimeWarp.Nuru.slnx -c Release
+dotnet build timewarp-nuru.slnx -c Release
 
 # Build with code formatting check
 cd scripts && ./build.cs

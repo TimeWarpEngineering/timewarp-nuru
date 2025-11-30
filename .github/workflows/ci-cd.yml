@@ -5,10 +5,10 @@ on:
     branches:
       - master
     paths:
-      - 'Source/**'
-      - 'Samples/**'
-      - 'Tests/**'
-      - 'Scripts/**'
+      - 'source/**'
+      - 'samples/**'
+      - 'tests/**'
+      - 'scripts/**'
       - '.github/workflows/**'
       - 'Directory.Build.props'
       - 'Directory.Packages.props'
@@ -16,10 +16,10 @@ on:
     branches:
       - master
     paths:
-      - 'Source/**'
-      - 'Samples/**'
-      - 'Tests/**'
-      - 'Scripts/**'
+      - 'source/**'
+      - 'samples/**'
+      - 'tests/**'
+      - 'scripts/**'
       - '.github/workflows/**'
       - 'Directory.Build.props'
       - 'Directory.Packages.props'
@@ -52,18 +52,18 @@ jobs:
       - name: Build and Test
         run: |
           echo "Running build script..."
-          dotnet ${{ github.workspace }}/Scripts/Build.cs
+          dotnet ${{ github.workspace }}/scripts/build.cs
 
           echo "Running Nuru unit tests (lexer, parser, routing)..."
-          dotnet ${{ github.workspace }}/Tests/Scripts/run-nuru-tests.cs
+          dotnet ${{ github.workspace }}/tests/scripts/run-nuru-tests.cs
 
           echo "Running integration tests (Delegate vs Mediator)..."
-          cd Tests
+          cd tests
           ./test-both-versions.sh
 
       - name: Check if version already published (Releases only)
         if: github.event_name == 'release'
-        run: dotnet ${{ github.workspace }}/Scripts/CheckVersion.cs
+        run: dotnet ${{ github.workspace }}/scripts/check-version.cs
 
       - name: Publish to NuGet.org (Releases only)
         if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && github.event.inputs.version != '')

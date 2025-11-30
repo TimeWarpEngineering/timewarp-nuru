@@ -16,14 +16,27 @@ The AspireHostOtel sample demonstrates:
 ## Checklist
 
 ### Update examples.json
-- [ ] Add `aspire-host-otel` example entry pointing to `Samples/AspireHostOtel/nuru-client.cs`
-- [ ] Include appropriate tags: `aspire`, `opentelemetry`, `telemetry`, `ihostapplicationbuilder`, `runfiles`, `dashboard`
-- [ ] Set difficulty to `advanced`
+- [x] Add `aspire-host-otel` example entry pointing to `Samples/AspireHostOtel/nuru-client.cs`
+- [x] Include appropriate tags: `aspire`, `opentelemetry`, `telemetry`, `ihostapplicationbuilder`, `runfiles`, `dashboard`
+- [x] Set difficulty to `advanced`
 
 ### Update MCP README.md
-- [ ] Add `aspire-host-otel` to the Available Examples section under `get_example`
-- [ ] Add sample prompt for Aspire Host OTEL integration
-- [ ] Update "Adding Interactive Features" use case section to mention telemetry integration
+- [x] Add `aspire-host-otel` to the Available Examples section under `get_example`
+- [x] Add sample prompt for Aspire Host OTEL integration
+- [x] Add "Observability & Telemetry" use case section
+- [x] Add "Testing" use case section
+- [x] Add testing and pipeline middleware examples to Available Examples
+
+## Implementation Notes
+
+Updated examples.json:
+- Added `aspire-host-otel` example with full tags and advanced difficulty
+
+Updated README.md:
+- Added 3 new example categories to Available Examples section
+- Added 2 new sample prompts for Aspire integration
+- Added "Observability & Telemetry" use case section with 5 prompts
+- Added "Testing" use case section with 3 prompts
 
 ## Notes
 

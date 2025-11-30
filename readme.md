@@ -35,12 +35,25 @@ builder.Map("add {x:double} {y:double}", (double x, double y) =>
 return await builder.Build().RunAsync(args);
 ```
 
-### Classic Builder API
+### Slim Builder (Lightweight)
 
 ```csharp
 using TimeWarp.Nuru;
 
-NuruApp app = new NuruAppBuilder()
+NuruApp app = NuruApp.CreateSlimBuilder()
+  .Map("add {x:double} {y:double}", (double x, double y) =>
+    Console.WriteLine($"{x} + {y} = {x + y}"))
+  .Build();
+
+return await app.RunAsync(args);
+```
+
+### Empty Builder (Total Control)
+
+```csharp
+using TimeWarp.Nuru;
+
+NuruApp app = NuruApp.CreateEmptyBuilder()
   .Map("add {x:double} {y:double}", (double x, double y) =>
     Console.WriteLine($"{x} + {y} = {x + y}"))
   .Build();
@@ -62,7 +75,6 @@ dotnet run -- add 15 25
 | `NuruApp.CreateBuilder(args)` | Full-featured apps | DI, Config, Mediator, REPL, Completion |
 | `NuruApp.CreateSlimBuilder()` | Lightweight tools | Auto-help, Logging infra, AOT-friendly |
 | `NuruApp.CreateEmptyBuilder()` | Total control | Type converters only, fully AOT |
-| `new NuruAppBuilder()` | Classic/migration | Same as CreateSlimBuilder |
 
 ## ✨ Key Features
 

@@ -201,4 +201,72 @@ public class StaticFactoryMethodTests
     exitCode.ShouldBe(0);
     matched.ShouldBeTrue();
   }
+
+  public static async Task CreateBuilder_should_register_dynamic_completion_routes()
+  {
+    // Arrange & Act - NuruApp.CreateBuilder() calls UseAllExtensions() which enables dynamic completion
+    NuruAppBuilder builder = NuruApp.CreateBuilder([]);
+
+    // Assert - Should have __complete route (dynamic completion callback)
+    bool hasCompleteRoute = builder.EndpointCollection.Any(e =>
+      e.CompiledRoute.PositionalMatchers.Count > 0 &&
+      e.CompiledRoute.PositionalMatchers[0] is LiteralMatcher literal &&
+      literal.Value == "__complete");
+
+    hasCompleteRoute.ShouldBeTrue("__complete route should be registered by CreateBuilder()");
+
+    // Assert - Should have --generate-completion route
+    bool hasGenerateRoute = builder.EndpointCollection.Any(e =>
+      e.CompiledRoute.OptionMatchers.Any(opt =>
+        opt.MatchPattern == "--generate-completion"));
+
+    hasGenerateRoute.ShouldBeTrue("--generate-completion route should be registered by CreateBuilder()");
+
+    // Assert - Should have --install-completion route
+    bool hasInstallRoute = builder.EndpointCollection.Any(e =>
+      e.CompiledRoute.OptionMatchers.Any(opt =>
+        opt.MatchPattern == "--install-completion"));
+
+    hasInstallRoute.ShouldBeTrue("--install-completion route should be registered by CreateBuilder()");
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task CreateBuilder_should_accept_completion_configuration()
+  {
+    // Arrange
+    bool configureWasCalled = false;
+    NuruAppOptions options = new()
+    {
+      ConfigureCompletion = _ =>
+      {
+        configureWasCalled = true;
+        // Could register custom completion sources here
+      }
+    };
+
+    // Act
+    NuruAppBuilder builder = NuruApp.CreateBuilder([], options);
+
+    // Assert
+    configureWasCalled.ShouldBeTrue("ConfigureCompletion callback should be invoked");
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task CreateSlimBuilder_should_not_register_completion_routes()
+  {
+    // Arrange & Act - CreateSlimBuilder doesn't call UseAllExtensions
+    NuruCoreAppBuilder builder = NuruApp.CreateSlimBuilder();
+
+    // Assert - Should NOT have completion routes (manual opt-in required)
+    bool hasCompleteRoute = builder.EndpointCollection.Any(e =>
+      e.CompiledRoute.PositionalMatchers.Count > 0 &&
+      e.CompiledRoute.PositionalMatchers[0] is LiteralMatcher literal &&
+      literal.Value == "__complete");
+
+    hasCompleteRoute.ShouldBeFalse("CreateSlimBuilder should not auto-register completion routes");
+
+    await Task.CompletedTask;
+  }
 }

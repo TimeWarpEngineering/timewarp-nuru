@@ -20,12 +20,12 @@ The comment in `UseAllExtensions()` incorrectly claims "Completion is already in
 ## Checklist
 
 ### Implementation
-- [ ] Add `Action<CompletionSourceRegistry>? ConfigureCompletion` property to `NuruAppOptions`
-- [ ] Update `UseAllExtensions()` to call `EnableDynamicCompletion()` with the configure action
-- [ ] Fix the misleading comment about completion being included via REPL
+- [x] Add `Action<CompletionSourceRegistry>? ConfigureCompletion` property to `NuruAppOptions`
+- [x] Update `UseAllExtensions()` to call `EnableDynamicCompletion()` with the configure action
+- [x] Fix the misleading comment about completion being included via REPL
 
 ### Documentation
-- [ ] Update `NuruAppOptions` XML docs to include completion configuration example
+- [x] Update `NuruAppOptions` XML docs to include completion configuration example
 
 ## Notes
 

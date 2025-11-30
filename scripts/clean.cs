@@ -1,5 +1,5 @@
 #!/usr/bin/dotnet --
-// Clean.cs - Clean the TimeWarp.Nuru solution
+// clean.cs - Clean the TimeWarp.Nuru solution
 
 // Change to script directory for relative paths
 string scriptDir = (AppContext.GetData("EntryPointFileDirectoryPath") as string)!;

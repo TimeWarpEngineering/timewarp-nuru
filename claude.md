@@ -16,13 +16,13 @@ TimeWarp.Nuru is a route-based CLI framework for .NET that brings web-style rout
 dotnet build TimeWarp.Nuru.slnx -c Release
 
 # Build with code formatting check
-cd Scripts && ./Build.cs
+cd scripts && ./build.cs
 
 # Clean and rebuild
-cd Scripts && ./CleanAndBuild.cs
+cd scripts && ./clean-and-build.cs
 
 # Run code analysis
-cd Scripts && ./Analyze.cs
+cd scripts && ./analyze.cs
 ```
 
 ### Test Commands
@@ -85,7 +85,7 @@ dotnet run -c Release
   TimeWarp.Nuru.TestApp.Mediator/    # Mediator routing test app
 /Benchmarks/                    # Performance benchmarks
 /samples/                       # Example implementations
-/Scripts/                       # Build and utility scripts
+/scripts/                       # Build and utility runfiles
 /kanban/                       # Task tracking
 ```
 

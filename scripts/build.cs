@@ -1,6 +1,6 @@
 #!/usr/bin/dotnet --
 
-// Build.cs - Build the TimeWarp.Nuru library
+// build.cs - Build the TimeWarp.Nuru library
 
 // Change to script directory for relative paths
 string scriptDir = (AppContext.GetData("EntryPointFileDirectoryPath") as string)!;

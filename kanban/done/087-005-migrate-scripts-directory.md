@@ -22,10 +22,10 @@ Rename the Scripts directory and all contents to kebab-case naming convention.
 
 ## Checklist
 
-- [ ] Rename Scripts directory to lowercase
-- [ ] Rename C# runfiles to kebab-case
-- [ ] Update any script cross-references
-- [ ] Verify scripts still execute correctly
+- [x] Rename Scripts directory to lowercase
+- [x] Rename C# runfiles to kebab-case
+- [x] Update any script cross-references
+- [x] Verify scripts still execute correctly
 
 ## Notes
 

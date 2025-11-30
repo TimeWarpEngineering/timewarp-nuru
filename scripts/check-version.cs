@@ -1,5 +1,5 @@
 #!/usr/bin/dotnet --
-// CheckVersion.cs - Check if NuGet packages are already published
+// check-version.cs - Check if NuGet packages are already published
 
 using System.Xml.Linq;
 

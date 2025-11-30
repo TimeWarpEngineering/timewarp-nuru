@@ -8,7 +8,7 @@
     <TestsDirectory>$(RepositoryRoot)Tests/</TestsDirectory>
     <SamplesDirectory>$(RepositoryRoot)samples/</SamplesDirectory>
     <BenchmarksDirectory>$(RepositoryRoot)Benchmarks/</BenchmarksDirectory>
-    <ScriptsDirectory>$(RepositoryRoot)Scripts/</ScriptsDirectory>
+    <ScriptsDirectory>$(RepositoryRoot)scripts/</ScriptsDirectory>
     <ArtifactsDirectory>$(RepositoryRoot)artifacts/</ArtifactsDirectory>
     <PackagesDirectory>$(ArtifactsDirectory)packages/</PackagesDirectory>
   </PropertyGroup>

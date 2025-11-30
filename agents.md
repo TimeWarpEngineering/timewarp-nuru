@@ -2,13 +2,13 @@
 
 ## Build Commands
 - Full build: `dotnet build TimeWarp.Nuru.slnx -c Release`
-- Scripted build (with format/analyze): `cd Scripts && ./Build.cs`
-- Clean & rebuild: `cd Scripts && ./CleanAndBuild.cs`
+- Scripted build (with format/analyze): `cd scripts && ./build.cs`
+- Clean & rebuild: `cd scripts && ./clean-and-build.cs`
 - Single project: `dotnet build Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj -c Release`
 
 ## Lint & Analyze Commands
 - Format code: `dotnet format` (enforced in build; follows .editorconfig)
-- Analyze: `cd Scripts && ./Analyze.cs` (Roslynator rules from Directory.Build.props; warnings as errors)
+- Analyze: `cd scripts && ./analyze.cs` (Roslynator rules from Directory.Build.props; warnings as errors)
 - Check style: Build fails on RCS1037 (no trailing whitespace), CA1031 (specific exceptions)
 
 ## Test Commands

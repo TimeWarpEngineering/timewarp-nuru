@@ -1,5 +1,5 @@
 #!/usr/bin/dotnet --
-// Format.cs - Check code formatting for TimeWarp.Nuru
+// format.cs - Check code formatting for TimeWarp.Nuru
 
 // Change to script directory for relative paths
 string scriptDir = (AppContext.GetData("EntryPointFileDirectoryPath") as string)!;

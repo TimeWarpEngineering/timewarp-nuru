@@ -20,8 +20,17 @@ if (string.IsNullOrEmpty(version))
 
 WriteLine($"Checking if packages with version {version} are already published on NuGet.org...");
 
-// Packages to check
-string[] packages = ["TimeWarp.Nuru", "TimeWarp.Nuru.Analyzers", "TimeWarp.Nuru.Logging", "TimeWarp.Nuru.Mcp"];
+// Packages to check (dependency order)
+string[] packages = [
+  "TimeWarp.Nuru.Core",        // Foundation - no Nuru dependencies
+  "TimeWarp.Nuru.Logging",     // Depends on Core
+  "TimeWarp.Nuru.Completion",  // Depends on Core
+  "TimeWarp.Nuru.Telemetry",   // Depends on Core, Logging
+  "TimeWarp.Nuru.Repl",        // Depends on Core, Completion
+  "TimeWarp.Nuru",             // Depends on all above
+  "TimeWarp.Nuru.Analyzers",   // Standalone
+  "TimeWarp.Nuru.Mcp"          // Standalone tool
+];
 bool anyPublished = false;
 
 foreach (string package in packages)

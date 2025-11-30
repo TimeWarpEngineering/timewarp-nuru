@@ -21,13 +21,13 @@ The CI/CD pipeline builds 8 NuGet packages but only publishes 4. Update the work
 ## Checklist
 
 ### Implementation
-- [ ] Update `.github/workflows/ci-cd.yml` publish step with all 8 packages
-- [ ] Update `scripts/check-version.cs` package array with all 8 packages
-- [ ] Verify package dependency order (Core before Completion/Repl/Telemetry)
+- [x] Update `.github/workflows/ci-cd.yml` publish step with all 8 packages
+- [x] Update `scripts/check-version.cs` package array with all 8 packages
+- [x] Verify package dependency order (Core before Completion/Repl/Telemetry)
 
 ### Verification
-- [ ] Run `scripts/build.cs` to confirm all 8 .nupkg files created
-- [ ] Run `scripts/check-version.cs` to verify all packages checked
+- [x] Run `scripts/build.cs` to confirm all 8 .nupkg files created
+- [x] Run `scripts/check-version.cs` to verify all packages checked
 
 ## Notes
 

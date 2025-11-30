@@ -16,8 +16,9 @@
     <Project Path="source/timewarp-nuru-repl/timewarp-nuru-repl.csproj" />
     <Project Path="source/timewarp-nuru-telemetry/timewarp-nuru-telemetry.csproj" />
   </Folder>
-  <Folder Name="/Tests/">
-    <Project Path="Tests/TestApps/TimeWarp.Nuru.TestApp.Delegates/TimeWarp.Nuru.TestApp.Delegates.csproj" />
-    <Project Path="Tests/TestApps/TimeWarp.Nuru.TestApp.Mediator/TimeWarp.Nuru.TestApp.Mediator.csproj" />
+  <Folder Name="/tests/">
+    <Project Path="tests/test-apps/timewarp-nuru-testapp-delegates/timewarp-nuru-testapp-delegates.csproj" />
+    <Project Path="tests/test-apps/timewarp-nuru-testapp-mediator/timewarp-nuru-testapp-mediator.csproj" />
+    <Project Path="tests/timewarp-nuru-analyzers-tests/timewarp-nuru-analyzers-tests.csproj" />
   </Folder>
 </Solution>

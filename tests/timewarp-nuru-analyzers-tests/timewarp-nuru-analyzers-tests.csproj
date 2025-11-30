@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <AssemblyName>TimeWarp.Nuru.Analyzers.Tests</AssemblyName>
+    <RootNamespace>TimeWarp.Nuru.Analyzers.Tests</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="$(SourceDirectory)/timewarp-nuru/timewarp-nuru.csproj" />
+    <!-- Use PackageReference instead of ProjectReference for the analyzer -->
+    <PackageReference Include="TimeWarp.Nuru.Analyzers">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>build; analyzers</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+</Project>

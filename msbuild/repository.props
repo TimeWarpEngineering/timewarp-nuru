@@ -5,7 +5,7 @@
     <RepositoryRoot>$(MSBuildThisFileDirectory)../</RepositoryRoot>
     <SolutionFile>$(RepositoryRoot)TimeWarp.Nuru.sln</SolutionFile>
     <SourceDirectory>$(RepositoryRoot)source/</SourceDirectory>
-    <TestsDirectory>$(RepositoryRoot)Tests/</TestsDirectory>
+    <TestsDirectory>$(RepositoryRoot)tests/</TestsDirectory>
     <SamplesDirectory>$(RepositoryRoot)samples/</SamplesDirectory>
     <BenchmarksDirectory>$(RepositoryRoot)Benchmarks/</BenchmarksDirectory>
     <ScriptsDirectory>$(RepositoryRoot)scripts/</ScriptsDirectory>

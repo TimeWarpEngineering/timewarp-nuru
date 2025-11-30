@@ -30,11 +30,11 @@ Iteration X - [Participant Name]
 - Timeline and priority recommendations
 
 ## Files in this Workspace
-- `Consensus-Framework.md` - This document
-- `Grok-Iteration-1.md` - Grok's first position
-- `Claude-Iteration-1.md` - Claude's first position (to be created)
+- `consensus-framework.md` - This document
+- `grok-iteration-1.md` - Grok's first position
+- `claude-iteration-1.md` - Claude's first position (to be created)
 - Subsequent iteration files as discussion progresses
-- `Final-Consensus.md` - Final agreed-upon resolution
+- `final-consensus.md` - Final agreed-upon resolution
 
 ## Ground Rules
 1. Each iteration must directly address points raised in the previous iteration

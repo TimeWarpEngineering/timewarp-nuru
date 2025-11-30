@@ -37,13 +37,13 @@ This index tracks all community feedback items processed through our structured 
 ## Quick Reference
 
 ### By Status
-- **Completed**: 001-API-Naming-ErrorHandling
+- **Completed**: 001-api-naming-error-handling
 
 ### By Priority
-- **High**: 001-API-Naming-ErrorHandling
+- **High**: 001-api-naming-error-handling
 
 ### By Topic Category
-- **API Design**: 001-API-Naming-ErrorHandling
+- **API Design**: 001-api-naming-error-handling
 
 ## Adding New Feedback
 

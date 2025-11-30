@@ -7,7 +7,7 @@ This folder contains references to Kanban tasks and implementation tracking for 
 ### 011 - Implement Community Feedback Consensus Resolution
 **Status**: 🟡 **Ready for Implementation**
 **Kanban Location**: [011-implement-community-feedback-consensus-resolution.md](../../../kanban/to-do/011-implement-community-feedback-consensus-resolution.md)
-**Related Feedback**: [001-API-Naming-ErrorHandling](../001-API-Naming-ErrorHandling/)
+**Related Feedback**: [001-api-naming-error-handling](../001-api-naming-error-handling/)
 
 **Implementation Summary**:
 - Enhanced error messages with suggestions
@@ -16,7 +16,7 @@ This folder contains references to Kanban tasks and implementation tracking for 
 - Improved README with routing paradigm explanations
 - Better parameter validation feedback
 
-**Consensus Source**: [Final-Consensus.md](../001-API-Naming-ErrorHandling/Resolution-Workspace/Final-Consensus.md)
+**Consensus Source**: [final-consensus.md](../001-api-naming-error-handling/resolution-workspace/final-consensus.md)
 
 ---
 

@@ -16,18 +16,14 @@ The goal of this system is to:
 ```
 Community-Feedback/
 ├── README.md (this file)
-├── Feedback-Index.md (central index of all feedback)
-├── Implementation/ (implementation tracking)
+├── feedback-index.md (central index of all feedback)
+├── implementation/ (implementation tracking)
 │   └── [Kanban task references and implementation notes]
 └── [001, 002, 003...] Individual feedback folders
-    ├── Original-Feedback.md (anonymized feedback content)
-    ├── Analysis/ (individual AI analyses)
-    │   ├── [Analyst-Name]-[Date]-Analysis.md
-    │   └── [Analyst-Name]-[Date]-Analysis.md
-    └── Resolution-Workspace/ (consensus building)
-        ├── Consensus-Framework.md (process documentation)
-        ├── [Analyst]-Iteration-[1-3].md (structured debate)
-        └── Final-Consensus.md (agreed implementation plan)
+    ├── original-feedback.md (anonymized feedback content)
+    └── resolution-workspace/ (consensus building)
+        ├── consensus-framework.md (process documentation)
+        └── final-consensus.md (agreed implementation plan)
 ```
 
 ## Process Workflow
@@ -35,7 +31,7 @@ Community-Feedback/
 ### 1. Feedback Intake
 - Receive feedback from community (GitHub issues, discussions, etc.)
 - Create numbered folder (`001`, `002`, etc.) in chronological order
-- Anonymize content and create `Original-Feedback.md`
+- Anonymize content and create `original-feedback.md`
 
 ### 2. Multi-Perspective Analysis
 - Assign 2+ AI reviewers to analyze the feedback independently
@@ -43,30 +39,30 @@ Community-Feedback/
 - Focus on technical merit, architectural impact, and implementation considerations
 
 ### 3. Consensus Resolution
-- Use structured 3-iteration debate process in `Resolution-Workspace/`
+- Use structured 3-iteration debate process in `resolution-workspace/`
 - Each reviewer presents position, addresses counter-arguments
 - Reach unanimous consensus on implementation approach
 
 ### 4. Implementation Planning
-- Create `Final-Consensus.md` with actionable implementation plan
+- Create `final-consensus.md` with actionable implementation plan
 - Generate Kanban task in `/kanban/to-do/` referencing consensus
 - Link implementation tracking back to original feedback
 
 ## Naming Conventions
 
 ### Feedback Folders
-- `001-API-Naming-ErrorHandling` (numbered + brief topic description)
+- `001-api-naming-error-handling` (numbered + brief topic description)
 - `002-Documentation-Clarity`
 - `003-Performance-Optimization`
 
 ### Analysis Files
-- `Grok-2025-08-27-API-Naming-ErrorHandling-Analysis.md`
-- `Claude-2025-08-27-Critical-Feedback-Analysis.md`
+- `grok-2025-08-27-api-naming-error-handling-analysis.md`
+- `claude-2025-08-27-critical-feedback-analysis.md`
 
 ### Iteration Files
-- `Grok-Iteration-1.md`
-- `Claude-Iteration-2.md`
-- `Final-Consensus.md`
+- `grok-iteration-1.md`
+- `claude-iteration-2.md`
+- `final-consensus.md`
 
 ## Status Tracking
 
@@ -90,8 +86,8 @@ Each feedback item should track:
 ## Getting Started
 
 1. **New Feedback**: Create next numbered folder and follow the process
-2. **Check Status**: Review `Feedback-Index.md` for overview
-3. **Implementation**: Check `Implementation/` folder for active work
+2. **Check Status**: Review `feedback-index.md` for overview
+3. **Implementation**: Check `implementation/` folder for active work
 4. **Historical**: Browse numbered folders for completed items
 
 This system transforms community feedback from one-off discussions into a structured, actionable process that scales with project growth.

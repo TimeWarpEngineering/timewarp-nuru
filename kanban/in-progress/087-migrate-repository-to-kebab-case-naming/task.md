@@ -23,7 +23,7 @@ See analysis: `@.agent/workspace/kebab-case-migration-analysis-2025-11-30.md`
 ### Phase 1: Low Risk
 - [x] 087-001: Migrate Kanban directory structure
 - [ ] 087-002: Migrate root-level files (readme, license, etc.)
-- [ ] 087-003: Migrate documentation directory
+- [x] 087-003: Migrate documentation directory
 
 ### Phase 2: Medium Risk
 - [ ] 087-004: Migrate Samples directory

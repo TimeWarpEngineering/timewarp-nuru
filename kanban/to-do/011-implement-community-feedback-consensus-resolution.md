@@ -23,7 +23,7 @@ None - This is a standalone framework improvement task
 ## Checklist
 
 ### Design
-- [ ] Review Final-Consensus.md for complete implementation specifications
+- [ ] Review final-consensus.md for complete implementation specifications
 - [ ] Ensure changes align with architectural principles
 - [ ] Consider backward compatibility impact
 
@@ -56,4 +56,4 @@ All changes must preserve the framework's strategic differentiation while improv
 
 ## Implementation Notes
 
-See `analysis/Community-Feedback-Analysis/Resolution-Workspace/Final-Consensus.md` for detailed implementation roadmap and rationale.
+See `documentation/community-feedback/001-api-naming-error-handling/resolution-workspace/final-consensus.md` for detailed implementation roadmap and rationale.

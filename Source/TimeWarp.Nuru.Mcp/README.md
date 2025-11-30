@@ -86,6 +86,9 @@ Fetches TimeWarp.Nuru code examples from the GitHub repository with intelligent 
 - `repl-basic`, `repl-keybindings`, `repl-interactive`, `repl-options` - REPL demos
 - `shell-completion`, `dynamic-completion` - Tab completion examples
 - `syntax-examples`, `builtin-types`, `custom-type-converter` - Reference examples
+- `test-output-capture`, `test-colored-output`, `test-terminal-injection` - Testing examples
+- `pipeline-middleware`, `unified-middleware` - Pipeline behavior examples
+- `aspire-telemetry`, `aspire-host-otel` - OpenTelemetry/Aspire integration
 
 **Sample Prompts:**
 ```
@@ -93,6 +96,8 @@ Fetches TimeWarp.Nuru code examples from the GitHub repository with intelligent 
 "Get the createbuilder example from TimeWarp.Nuru"
 "Show me how REPL works in Nuru"
 "Get the dynamic-completion example"
+"Show me how to integrate with Aspire and OpenTelemetry"
+"Get the aspire-host-otel example for IHostApplicationBuilder integration"
 "List all available TimeWarp.Nuru examples"
 ```
 
@@ -318,6 +323,22 @@ Cache location:
 "Show me the configuration-validation example"
 "How do I support --Section:Key=Value style overrides?"
 "Get the command-line-overrides example"
+```
+
+### Observability & Telemetry
+```
+"Show me the aspire-host-otel example"
+"How do I integrate Nuru with Aspire Dashboard for telemetry?"
+"Get the aspire-telemetry example for basic OTLP export"
+"How does IHostApplicationBuilder work with NuruAppBuilder?"
+"Show me how to use TelemetryBehavior for command tracing"
+```
+
+### Testing
+```
+"Show me the test-output-capture example"
+"How do I test colored output in Nuru apps?"
+"Get the test-terminal-injection example for DI-based testing"
 ```
 
 ### Code Generation

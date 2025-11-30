@@ -217,6 +217,14 @@
       "path": "Samples/AspireTelemetry/aspire-telemetry.cs",
       "tags": ["telemetry", "opentelemetry", "aspire", "traces", "metrics", "observability", "otlp"],
       "difficulty": "advanced"
+    },
+    {
+      "id": "aspire-host-otel",
+      "name": "Aspire Host with OpenTelemetry",
+      "description": "Full Aspire AppHost integration with IHostApplicationBuilder, .NET 10 runfiles, TelemetryBehavior pipeline, and dual output pattern",
+      "path": "Samples/AspireHostOtel/nuru-client.cs",
+      "tags": ["aspire", "opentelemetry", "telemetry", "ihostapplicationbuilder", "runfiles", "dashboard", "apphost", "repl"],
+      "difficulty": "advanced"
     }
   ]
 }

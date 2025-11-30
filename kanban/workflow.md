@@ -6,21 +6,21 @@ This document describes the workflow for managing the migration of Cocona sample
 
 ## Task Structure
 
-- **Parent Task**: `001_Recreate-All-Cocona-Samples-Using-Nuru.md` (remains in InProgress throughout the project)
+- **Parent Task**: `001-recreate-all-cocona-samples-using-nuru.md` (remains in in-progress throughout the project)
 - **Child Tasks**: 29 individual sample recreation tasks (001_001 through 001_029)
 
 ## Workflow States
 
-### ToDo
+### to-do
 - Initial state for all child tasks
 - Tasks waiting to be started
 
-### InProgress
+### in-progress
 - Parent task location during active development
 - Child tasks move here when work begins
 - Only work on one child task at a time
 
-### Done
+### done
 - Completed child tasks
 - Parent task moves here only after all children complete
 
@@ -28,35 +28,35 @@ This document describes the workflow for managing the migration of Cocona sample
 
 ### Starting a Child Task
 ```bash
-# Move child task from ToDo to InProgress
-git mv Kanban/ToDo/001_XXX_TaskName.md Kanban/InProgress/
+# Move child task from to-do to in-progress
+git mv kanban/to-do/001-xxx-task-name.md kanban/in-progress/
 ```
 
 ### Completing a Child Task
 ```bash
-# Move child task from InProgress to Done
-git mv Kanban/InProgress/001_XXX_TaskName.md Kanban/Done/
+# Move child task from in-progress to done
+git mv kanban/in-progress/001-xxx-task-name.md kanban/done/
 ```
 
 ### Example Workflow
 
 1. Start work on MinimalApp sample:
    ```bash
-   git mv Kanban/ToDo/001_001_Recreate-GettingStarted-MinimalApp-with-Nuru.md Kanban/InProgress/
+   git mv kanban/to-do/001-001-recreate-gettingstarted-minimalapp-with-nuru.md kanban/in-progress/
    ```
 
 2. Complete implementation and documentation
 
 3. Move to Done:
    ```bash
-   git mv Kanban/InProgress/001_001_Recreate-GettingStarted-MinimalApp-with-Nuru.md Kanban/Done/
+   git mv kanban/in-progress/001-001-recreate-gettingstarted-minimalapp-with-nuru.md kanban/done/
    ```
 
 4. Select next task and repeat
 
 ## Progress Tracking
 
-- Parent task checklist in `001_Recreate-All-Cocona-Samples-Using-Nuru.md` tracks overall progress
+- Parent task checklist in `001-recreate-all-cocona-samples-using-nuru.md` tracks overall progress
 - Individual task files track detailed implementation steps
 - Each completed child task should have:
   - Working Nuru implementation

@@ -303,7 +303,7 @@ For **static generation** (Phase 2):
 
 ### ~~Phase 3: Dynamic Completion~~ → Moved to Task 026
 
-**Note:** Dynamic completion (runtime-computed suggestions) has been moved to separate **Task 026** in the Backlog. It's an optional enhancement only needed if users request runtime-computed completions. See `/Kanban/Backlog/026_Dynamic-Shell-Completion-Optional.md` for details.
+**Note:** Dynamic completion (runtime-computed suggestions) has been moved to separate **Task 026** in the Backlog. It's an optional enhancement only needed if users request runtime-computed completions. See `/kanban/backlog/026-dynamic-shell-completion-optional.md` for details.
 
 Static completion (Phase 1 & 2, implemented here) covers:
 - ✅ Command name completion
@@ -495,7 +495,7 @@ source <(./myapp --generate-completion bash)
 
 ### ~~Phase 3 (Dynamic - Optional)~~ → Moved to Task 026
 
-See `/Kanban/Backlog/026_Dynamic-Shell-Completion-Optional.md` for implementation plan.
+See `/kanban/backlog/026-dynamic-shell-completion-optional.md` for implementation plan.
 
 ### Phase 4 (Documentation)
 **New:**
@@ -535,7 +535,7 @@ See `/Kanban/Backlog/026_Dynamic-Shell-Completion-Optional.md` for implementatio
 
 ### ~~Phase 3 (Dynamic - Optional)~~ → Moved to Task 026
 
-See Task 026 in Backlog for dynamic completion implementation plan.
+See Task 026 in backlog for dynamic completion implementation plan.
 
 ### Phase 4 (Documentation)
 - [x] Shell completion guide is comprehensive and clear (`documentation/user/features/shell-completion.md` - 553 lines)

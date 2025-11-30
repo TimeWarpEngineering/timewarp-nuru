@@ -21,21 +21,21 @@ See analysis: `@.agent/workspace/kebab-case-migration-analysis-2025-11-30.md`
 ## Checklist
 
 ### Phase 1: Low Risk
-- [ ] 087_001: Migrate Kanban directory structure
-- [ ] 087_002: Migrate root-level files (readme, license, etc.)
-- [ ] 087_003: Migrate documentation directory
+- [x] 087-001: Migrate Kanban directory structure
+- [ ] 087-002: Migrate root-level files (readme, license, etc.)
+- [ ] 087-003: Migrate documentation directory
 
 ### Phase 2: Medium Risk
-- [ ] 087_004: Migrate Samples directory
-- [ ] 087_005: Migrate Scripts directory
-- [ ] 087_006: Migrate Assets and msbuild directories
+- [ ] 087-004: Migrate Samples directory
+- [ ] 087-005: Migrate Scripts directory
+- [ ] 087-006: Migrate Assets and msbuild directories
 
 ### Phase 3: High Risk
-- [ ] 087_007: Migrate Source directory and update project references
-- [ ] 087_008: Migrate Tests directory and update project references
-- [ ] 087_009: Migrate Benchmarks directory
-- [ ] 087_010: Update solution file and validate build
-- [ ] 087_011: Update CI/CD pipeline and validate
+- [ ] 087-007: Migrate Source directory and update project references
+- [ ] 087-008: Migrate Tests directory and update project references
+- [ ] 087-009: Migrate Benchmarks directory
+- [ ] 087-010: Update solution file and validate build
+- [ ] 087-011: Update CI/CD pipeline and validate
 
 ## Notes
 

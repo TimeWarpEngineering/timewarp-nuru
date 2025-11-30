@@ -72,7 +72,7 @@ Create a Blazor WebAssembly terminal component that connects to a server running
 - Sticky sessions for load balancing
 
 ### Reference Material
-The `Kanban/Done/032_Implement-IReplIO-Abstraction/Web-Terminal-Guide.md` contains detailed implementation examples for:
+The `kanban/done/032-implement-irepl-io-abstraction/web-terminal-guide.md` contains detailed implementation examples for:
 - `SignalRReplIO` class (adapt to `SignalRTerminal`)
 - `TerminalHub` SignalR hub
 - Blazor terminal component with CSS

@@ -11,7 +11,7 @@ This index tracks all community feedback items processed through our structured 
 **Topic**: `Map` naming confusion and `.OnError()` fluent API suggestion
 **Reviewers**: Grok (Roo), Claude
 **Consensus Status**: ✅ **Achieved**
-**Implementation**: [011_Implement-Community-Feedback-Consensus-Resolution.md](../Kanban/ToDo/011_Implement-Community-Feedback-Consensus-Resolution.md)
+**Implementation**: [011-implement-community-feedback-consensus-resolution.md](../../kanban/to-do/011-implement-community-feedback-consensus-resolution.md)
 
 **Summary**:
 - **Rejected**: Both original suggestions (`AddCommand` naming, `.OnError()` API)

@@ -338,7 +338,7 @@ This keeps the core `TimeWarp.Nuru` package lightweight while allowing users to 
 ## Related Resources
 
 - **Issue #30**: [Add "auto completion" of arguments](https://github.com/TimeWarpEngineering/timewarp-nuru/issues/30)
-- **Task 025**: Implementation details in `Kanban/InProgress/025_Implement-Shell-Tab-Completion.md`
+- **Task 025**: Implementation details in `kanban/done/025-implement-shell-tab-completion.md`
 - **Core Package**: `Source/TimeWarp.Nuru.Completion/`
 
 ## Troubleshooting

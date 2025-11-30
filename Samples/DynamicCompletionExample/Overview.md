@@ -546,11 +546,11 @@ public class ApiCompletionSource : IAsyncCompletionSource
 - **Implement your own completion sources** for your domain data
 - **Explore Phase 4 enhancements**: Async sources, caching, hybrid mode
 - **Compare with Aspire CLI** to see how Nuru can replace System.CommandLine
-- **Review Task #029** in Kanban for implementation details
+- **Review Task #029** in kanban for implementation details
 
 ## References
 
-- **Task #029**: `Kanban/InProgress/029_Implement-EnableDynamicCompletion.md`
+- **Task #029**: `kanban/done/029-implement-enabledynamiccompletion.md`
 - **Core Implementation**: `Source/TimeWarp.Nuru.Completion/`
 - **Static Completion Example**: `Samples/ShellCompletionExample/`
 - **Industry Standard**: Cobra's `__complete` pattern (kubectl, gh, docker)

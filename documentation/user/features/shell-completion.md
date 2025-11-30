@@ -356,7 +356,7 @@ The completion script contains: `Debug Info Warning Error`
 - 🌐 May need network/database access
 - 🛠️ More complex to implement
 
-**Status:** Optional feature, see [Task 026](../../../Kanban/Backlog/026_Dynamic-Shell-Completion-Optional.md) if your use case requires runtime-computed completions.
+**Status:** Optional feature, see [Task 026](../../../kanban/backlog/026-dynamic-shell-completion-optional.md) if your use case requires runtime-computed completions.
 
 ## Troubleshooting
 
@@ -543,7 +543,7 @@ When you call `EnableStaticCompletion()`, it registers this hidden route:
 
 - **[Getting Started](../getting-started.md#shell-completion-tab-completion)** - Quick setup guide
 - **[Shell Completion Example](../../../Samples/ShellCompletionExample/)** - Complete working example
-- **[Task 026: Dynamic Completion](../../../Kanban/Backlog/026_Dynamic-Shell-Completion-Optional.md)** - Optional runtime-computed completions
+- **[Task 026: Dynamic Completion](../../../kanban/backlog/026-dynamic-shell-completion-optional.md)** - Optional runtime-computed completions
 
 ## Learn More
 

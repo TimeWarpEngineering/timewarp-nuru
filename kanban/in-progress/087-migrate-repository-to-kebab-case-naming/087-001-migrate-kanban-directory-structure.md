@@ -6,7 +6,7 @@ Rename the Kanban directory and all contents to kebab-case naming convention.
 
 ## Parent
 
-087_Migrate-Repository-To-Kebab-Case-Naming
+087-migrate-repository-to-kebab-case-naming
 
 ## Requirements
 
@@ -19,12 +19,12 @@ Rename the Kanban directory and all contents to kebab-case naming convention.
 
 ## Checklist
 
-- [ ] Rename Kanban directory to lowercase
-- [ ] Rename subdirectories to kebab-case
-- [ ] Rename all task files to hyphen format
-- [ ] Rename metadata files (template, workflow, overview)
-- [ ] Update CLAUDE.md Kanban references if needed
-- [ ] Verify no broken references
+- [x] Rename Kanban directory to lowercase
+- [x] Rename subdirectories to kebab-case
+- [x] Rename all task files to hyphen format
+- [x] Rename metadata files (template, workflow, overview)
+- [x] Update CLAUDE.md Kanban references if needed
+- [x] Verify no broken references
 
 ## Notes
 

@@ -49,7 +49,7 @@ Community-Feedback/
 
 ### 4. Implementation Planning
 - Create `Final-Consensus.md` with actionable implementation plan
-- Generate Kanban task in `/Kanban/ToDo/` referencing consensus
+- Generate Kanban task in `/kanban/to-do/` referencing consensus
 - Link implementation tracking back to original feedback
 
 ## Naming Conventions

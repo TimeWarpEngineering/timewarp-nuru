@@ -86,7 +86,7 @@ dotnet run -c Release
 /Benchmarks/                    # Performance benchmarks
 /Samples/                       # Example implementations
 /Scripts/                       # Build and utility scripts
-/Kanban/                       # Task tracking
+/kanban/                       # Task tracking
 ```
 
 ## Key Development Guidelines
@@ -128,7 +128,7 @@ dotnet publish -c Release -r linux-x64 -p:PublishAot=true -p:TrimMode=partial
 ## Kanban Task Guidelines
 
 ### ⚠️ CRITICAL: NEVER add these fields to Kanban tasks:
-- **Status** - The folder location (ToDo/InProgress/Done/Backlog) indicates status
+- **Status** - The folder location (to-do/in-progress/done/backlog) indicates status
 - **Priority** - We don't use priority rankings
 - **Category** - Unnecessary classification
 - **Priority Justification** - Not needed
@@ -136,7 +136,7 @@ dotnet publish -c Release -r linux-x64 -p:PublishAot=true -p:TrimMode=partial
 
 **WHY:** Status is determined by folder location. Adding status fields creates redundancy and confusion.
 
-### Use ONLY the fields from Task-Template.md:
+### Use ONLY the fields from task-template.md:
 - Description
 - Parent (optional)
 - Requirements (optional)

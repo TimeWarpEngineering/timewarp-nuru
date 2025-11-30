@@ -360,5 +360,5 @@ dotnet run completion-05-bash-script-generation.cs
 - Lexer Tests: `/Tests/TimeWarp.Nuru.Tests/Lexer/lexer-test-plan.md`
 - Parser Tests: `/Tests/TimeWarp.Nuru.Tests/Parsing/Parser/parser-test-plan.md`
 - Routing Tests: `/Tests/TimeWarp.Nuru.Tests/Routing/routing-test-plan.md`
-- Task 025: `/Kanban/InProgress/025_Implement-Shell-Tab-Completion.md`
+- Task 025: `/kanban/done/025-implement-shell-tab-completion.md`
 - Issue #30: https://github.com/TimeWarpEngineering/timewarp-nuru/issues/30

@@ -7,15 +7,15 @@ using System.Text;
 string scriptDir = AppContext.GetData("EntryPointFileDirectoryPath") as string
   ?? throw new InvalidOperationException("Could not get entry point directory");
 string repoRoot = Path.GetFullPath(Path.Combine(scriptDir, ".."));
-string testsDir = Path.Combine(repoRoot, "Tests");
+string testsDir = Path.Combine(repoRoot, "tests");
 
 // Projects that need InternalsVisibleTo
 string[] outputFiles =
 [
-  Path.Combine(repoRoot, "Source/TimeWarp.Nuru.Parsing/InternalsVisibleTo.g.cs"),
-  Path.Combine(repoRoot, "Source/TimeWarp.Nuru.Mcp/InternalsVisibleTo.g.cs"),
-  Path.Combine(repoRoot, "Source/TimeWarp.Nuru.Completion/InternalsVisibleTo.g.cs"),
-  Path.Combine(repoRoot, "Source/TimeWarp.Nuru.Repl/InternalsVisibleTo.g.cs")
+  Path.Combine(repoRoot, "source/timewarp-nuru-parsing/internals-visible-to.g.cs"),
+  Path.Combine(repoRoot, "source/timewarp-nuru-mcp/internals-visible-to.g.cs"),
+  Path.Combine(repoRoot, "source/timewarp-nuru-completion/internals-visible-to.g.cs"),
+  Path.Combine(repoRoot, "source/timewarp-nuru-repl/internals-visible-to.g.cs")
 ];
 
 // Find all .cs files in Tests directory (single-file scripts)

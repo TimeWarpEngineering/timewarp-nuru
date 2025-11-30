@@ -19,14 +19,14 @@ Rename the Benchmarks directory and contents to kebab-case naming convention.
 
 ## Checklist
 
-- [ ] Rename Benchmarks directory to lowercase
-- [ ] Rename benchmark project directory
-- [ ] Rename subdirectories to kebab-case
-- [ ] Rename .csproj file
-- [ ] Rename C# source files
-- [ ] Rename markdown files to lowercase
-- [ ] Update ProjectReference paths
-- [ ] Verify benchmarks still run
+- [x] Rename Benchmarks directory to lowercase
+- [x] Rename benchmark project directory
+- [x] Rename subdirectories to kebab-case
+- [x] Rename .csproj file
+- [x] Rename C# source files
+- [x] Rename markdown files to lowercase
+- [x] Update ProjectReference paths
+- [x] Verify benchmarks still run
 
 ## Notes
 

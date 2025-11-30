@@ -1,6 +1,6 @@
 <Solution>
-  <Folder Name="/Benchmarks/">
-    <Project Path="Benchmarks/TimeWarp.Nuru.Benchmarks/TimeWarp.Nuru.Benchmarks.csproj" />
+  <Folder Name="/benchmarks/">
+    <Project Path="benchmarks/timewarp-nuru-benchmarks/timewarp-nuru-benchmarks.csproj" />
   </Folder>
   <Folder Name="/samples/">
     <Project Path="samples/timewarp-nuru-sample/timewarp-nuru-sample.csproj" />

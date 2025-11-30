@@ -2,6 +2,8 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
+    <AssemblyName>TimeWarp.Nuru.Benchmarks</AssemblyName>
+    <RootNamespace>TimeWarp.Nuru.Benchmarks</RootNamespace>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
@@ -22,7 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="$(SourceDirectory)TimeWarp.Nuru/TimeWarp.Nuru.csproj" />
+    <ProjectReference Include="$(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj" />
     <PackageReference Include="Mediator.Abstractions" />
     <PackageReference Include="Mediator.SourceGenerator">
       <PrivateAssets>all</PrivateAssets>

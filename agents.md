@@ -1,4 +1,4 @@
-# Agents.md
+# agents.md
 
 ## Build Commands
 - Full build: `dotnet build TimeWarp.Nuru.slnx -c Release`

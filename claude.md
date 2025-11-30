@@ -1,5 +1,5 @@
-@Agents.md
-# CLAUDE.md
+@agents.md
+# claude.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
@@ -190,6 +190,6 @@ When working with Cocona comparison documents in `/Samples/CoconaComparison/`:
 - `Source/TimeWarp.Nuru/NuruAppBuilder.cs` - Added `AddReplOptions()` method
 - `Source/TimeWarp.Nuru.Repl/NuruAppExtensions.cs` - Added `AddReplRoutes()` and updated `AddReplSupport()`
 - `Samples/ReplDemo/repl-basic-demo.cs` - Updated to use new API
-- `CLAUDE.md` - Added testing limitations note
+- `claude.md` - Added testing limitations note
 
 The REPL Map implementation is **complete and functional**.

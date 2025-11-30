@@ -19,11 +19,11 @@ Rename root-level files to lowercase naming convention.
 
 ## Checklist
 
-- [ ] Rename CLAUDE.md to lowercase
-- [ ] Rename Agents.md to lowercase
-- [ ] Rename OPTIMIZATION-RESULTS.md to lowercase
-- [ ] Rename LICENSE to lowercase
-- [ ] Update any internal references to these files
+- [x] Rename CLAUDE.md to lowercase
+- [x] Rename Agents.md to lowercase
+- [x] Rename OPTIMIZATION-RESULTS.md to lowercase
+- [x] Rename LICENSE to lowercase
+- [x] Update any internal references to these files
 
 ## Notes
 

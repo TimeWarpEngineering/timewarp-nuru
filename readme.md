@@ -235,7 +235,7 @@ We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
 ## 📄 License
 
-This project is licensed under the Unlicense - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the Unlicense - see the [license](license) file for details.
 
 ---
 

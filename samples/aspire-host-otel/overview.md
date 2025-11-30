@@ -7,7 +7,7 @@ This sample demonstrates a Nuru CLI/REPL application sending telemetry (traces, 
 Both the AppHost and NuruClient are implemented as **.NET 10 file-based apps** (runfiles) - single `.cs` files that run directly without a `.csproj`:
 
 ```bash
-cd Samples/AspireHostOtel
+cd samples/aspire-host-otel
 
 # Run the AppHost
 ./apphost.cs
@@ -72,7 +72,7 @@ This means any extension method targeting `IHostApplicationBuilder` (like Aspire
 ### Step 1: Start Aspire Host
 
 ```bash
-cd Samples/AspireHostOtel
+cd samples/aspire-host-otel
 ./apphost.cs
 ```
 
@@ -84,7 +84,7 @@ This:
 ### Step 2: Run Interactive REPL (separate terminal)
 
 ```bash
-cd Samples/AspireHostOtel
+cd samples/aspire-host-otel
 ./nuru-client.cs
 ```
 

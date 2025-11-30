@@ -287,28 +287,28 @@ public sealed class MyCommand : IRequest
 
 ```bash
 # Basic echo command
-./Samples/PipelineMiddleware/pipeline-middleware.cs echo "Hello, World!"
+./samples/pipeline-middleware/pipeline-middleware.cs echo "Hello, World!"
 
 # Slow command (triggers performance warning at >500ms)
-./Samples/PipelineMiddleware/pipeline-middleware.cs slow 600
+./samples/pipeline-middleware/pipeline-middleware.cs slow 600
 
 # Admin command (requires CLI_AUTHORIZED=1)
-./Samples/PipelineMiddleware/pipeline-middleware.cs admin "delete-all"
-CLI_AUTHORIZED=1 ./Samples/PipelineMiddleware/pipeline-middleware.cs admin "delete-all"
+./samples/pipeline-middleware/pipeline-middleware.cs admin "delete-all"
+CLI_AUTHORIZED=1 ./samples/pipeline-middleware/pipeline-middleware.cs admin "delete-all"
 
 # Flaky command (simulates transient failures with retry)
-./Samples/PipelineMiddleware/pipeline-middleware.cs flaky 2
+./samples/pipeline-middleware/pipeline-middleware.cs flaky 2
 
 # Error command (demonstrates exception handling)
-./Samples/PipelineMiddleware/pipeline-middleware.cs error validation
-./Samples/PipelineMiddleware/pipeline-middleware.cs error auth
-./Samples/PipelineMiddleware/pipeline-middleware.cs error unknown
+./samples/pipeline-middleware/pipeline-middleware.cs error validation
+./samples/pipeline-middleware/pipeline-middleware.cs error auth
+./samples/pipeline-middleware/pipeline-middleware.cs error unknown
 
 # Trace command (demonstrates distributed tracing)
-./Samples/PipelineMiddleware/pipeline-middleware.cs trace "database-query"
+./samples/pipeline-middleware/pipeline-middleware.cs trace "database-query"
 
 # Help
-./Samples/PipelineMiddleware/pipeline-middleware.cs --help
+./samples/pipeline-middleware/pipeline-middleware.cs --help
 ```
 
 ## AOT Considerations

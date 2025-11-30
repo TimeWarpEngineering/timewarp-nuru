@@ -13,7 +13,7 @@ Port the Cocona Advanced.GenericHost.HostApplicationBuilder sample to Nuru, demo
 - Implement modern configuration patterns
 - Use simplified host building API
 - Create Overview.md comparing builder approaches
-- Implementation location: `Samples/CoconaComparison/Advanced/generic-host-builder`
+- Implementation location: `samples/cocona-comparison/Advanced/generic-host-builder`
 
 ## Checklist
 

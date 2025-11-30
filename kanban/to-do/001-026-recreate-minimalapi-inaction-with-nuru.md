@@ -13,7 +13,7 @@ Port the Cocona MinimalApi.InAction sample to Nuru, demonstrating real-world min
 - Implement complex scenarios with minimal syntax
 - Show practical minimal API usage
 - Create Overview.md comparing approaches
-- Implementation location: `Samples/CoconaComparison/MinimalApi/minimal-api-in-action`
+- Implementation location: `samples/cocona-comparison/MinimalApi/minimal-api-in-action`
 
 ## Checklist
 

@@ -94,7 +94,7 @@ Follows Task 057 (Custom Key Bindings via Builder API) which implemented the pro
   - [ ] Available action names reference
   - [ ] Search path explanation
   - [ ] Example configurations
-- [ ] Add sample config files to `Samples/Configuration/`
+- [ ] Add sample config files to `samples/configuration/`
   - [ ] `emacs-enhanced.json`
   - [ ] `vi-enhanced.json`
   - [ ] `minimal.json`

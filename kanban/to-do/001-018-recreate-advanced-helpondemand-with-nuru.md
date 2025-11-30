@@ -13,7 +13,7 @@ Port the Cocona Advanced.HelpOnDemand sample to Nuru, demonstrating custom help 
 - Implement on-demand help generation
 - Control when help is displayed
 - Create Overview.md comparing help customization
-- Implementation location: `Samples/CoconaComparison/Advanced/help-on-demand`
+- Implementation location: `samples/cocona-comparison/Advanced/help-on-demand`
 
 ## Checklist
 

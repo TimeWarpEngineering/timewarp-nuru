@@ -379,4 +379,4 @@ NuruApp app = new NuruAppBuilder()
 - **[Architecture Choices](guides/architecture-choices.md)** - Detailed comparison of approaches
 - **[Deployment Guide](guides/deployment.md)** - Native AOT and distribution
 - **[Routing Features](features/routing.md)** - Complete route pattern syntax
-- **[Examples](../../Samples/)** - Working code you can run
+- **[Examples](../../samples/)** - Working code you can run

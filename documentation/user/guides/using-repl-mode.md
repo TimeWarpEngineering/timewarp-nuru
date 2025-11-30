@@ -304,5 +304,5 @@ await app.RunReplAsync(new ReplOptions
 ## Next Steps
 
 - Explore [Implementing REPL Mode](../developer/guides/implementing-repl.md) for development details
-- See [REPL Samples](../../Samples/ReplDemo/) for working examples
+- See [REPL Samples](../../samples/repl-demo/) for working examples
 - Consider [Shell Tab Completion](../using-shell-completion.md) for external completion

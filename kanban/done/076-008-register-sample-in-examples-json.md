@@ -38,7 +38,7 @@ Example entry:
   "id": "pipeline-middleware",
   "name": "Mediator Pipeline Middleware",
   "description": "Cross-cutting concerns with pipeline behaviors: telemetry, performance, logging, authorization, validation, retry, and exception handling",
-  "path": "Samples/PipelineMiddleware/pipeline-middleware.cs",
+  "path": "samples/pipeline-middleware/pipeline-middleware.cs",
   "tags": ["pipeline", "middleware", "mediator", "behaviors", "cross-cutting-concerns", "telemetry", "performance", "enterprise"],
   "difficulty": "advanced"
 }

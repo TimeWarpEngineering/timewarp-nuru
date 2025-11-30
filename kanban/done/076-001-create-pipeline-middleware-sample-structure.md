@@ -10,7 +10,7 @@ Set up the initial directory structure and sample file scaffold for the Pipeline
 
 ## Checklist
 
-- [x] Create `Samples/PipelineMiddleware/` directory
+- [x] Create `samples/pipeline-middleware/` directory
 - [x] Create `pipeline-middleware.cs` with basic NuruApp setup
 - [x] Add project references and package directives
 - [x] Create placeholder commands (will be enhanced in later tasks)
@@ -27,7 +27,7 @@ Initial file should include:
 
 ## Implementation Notes
 
-- Created `Samples/PipelineMiddleware/` directory
+- Created `samples/pipeline-middleware/` directory
 - Created `pipeline-middleware.cs` with:
   - Project references to TimeWarp.Nuru and TimeWarp.Nuru.Logging
   - Two sample commands: `EchoCommand` and `SlowCommand`

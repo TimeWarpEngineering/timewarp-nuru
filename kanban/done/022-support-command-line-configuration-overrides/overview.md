@@ -17,7 +17,7 @@ This folder contains all materials related to implementing ASP.NET Core-style co
 
 ## Related Sample
 
-[Samples/Configuration/command-line-overrides.cs](../../../Samples/Configuration/command-line-overrides.cs) demonstrates the expected behavior and will work correctly once this task is complete.
+[samples/configuration/command-line-overrides.cs](../../../samples/configuration/command-line-overrides.cs) demonstrates the expected behavior and will work correctly once this task is complete.
 
 ## GitHub Issue
 

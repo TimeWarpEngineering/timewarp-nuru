@@ -513,7 +513,7 @@ Manual testing scenarios:
    - Stateful vs stateless REPL
    - Integration with custom completion providers
 
-3. **Samples/ReplDemo/** (new directory)
+3. **samples/repl-demo/** (new directory)
    - `repl-basic.cs` - Minimal REPL example
    - `repl-custom-prompt.cs` - Custom prompt styling
    - `repl-stateful.cs` - Stateful REPL with persistent variables
@@ -960,7 +960,7 @@ Keep Phase 1-4 focused. These are valuable but can be added incrementally based 
 - Integrated into test runner (`Tests/Scripts/run-all-tests.cs`)
 
 **Samples:**
-- Created `Samples/ReplDemo/repl-basic-demo.cs` - Working demo
+- Created `samples/repl-demo/repl-basic-demo.cs` - Working demo
 
 **Key Architectural Decisions:**
 1. **Separate library** - Keeps core Nuru lightweight, REPL is opt-in
@@ -1063,7 +1063,7 @@ public NuruAppBuilder AddReplSupport(Action<ReplOptions>? configureOptions = nul
 - ✅ **Split Architecture**: `AddReplOptions()` in core `TimeWarp.Nuru`, `AddReplRoutes()` in REPL `TimeWarp.Nuru.Repl`
 - ✅ **AddRoute Usage**: All REPL commands (`exit`, `quit`, `q`, `help`, `history`, `clear`, `cls`, `clear-history`) registered via `builder.AddRoute()`
 - ✅ **Clean Separation**: Core configuration stays private, REPL routes in separate project
-- ✅ **Updated Sample**: Modified `Samples/ReplDemo/repl-basic-demo.cs` to demonstrate new `AddReplSupport()` API
+- ✅ **Updated Sample**: Modified `samples/repl-demo/repl-basic-demo.cs` to demonstrate new `AddReplSupport()` API
 - ✅ **All Builds Successful**: Both core and REPL projects compile without errors
 
 ### Testing Limitations:
@@ -1074,7 +1074,7 @@ public NuruAppBuilder AddReplSupport(Action<ReplOptions>? configureOptions = nul
 ### Files Modified:
 - `Source/TimeWarp.Nuru/NuruAppBuilder.cs` - Added `AddReplOptions()` method
 - `Source/TimeWarp.Nuru.Repl/NuruAppExtensions.cs` - Added `AddReplRoutes()` and updated `AddReplSupport()`
-- `Samples/ReplDemo/repl-basic-demo.cs` - Updated to use new API
+- `samples/repl-demo/repl-basic-demo.cs` - Updated to use new API
 - `CLAUDE.md` - Added testing limitations note
 
 The REPL AddRoute implementation is **complete and functional**.

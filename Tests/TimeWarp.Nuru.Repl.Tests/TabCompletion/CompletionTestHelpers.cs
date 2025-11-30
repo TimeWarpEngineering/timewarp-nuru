@@ -169,7 +169,7 @@ public static class KeySequenceHelpers
 public static class TestAppFactory
 {
   /// <summary>
-  /// Creates a NuruCoreApp configured exactly like Samples/ReplDemo/repl-basic-demo.cs.
+  /// Creates a NuruCoreApp configured exactly like samples/repl-demo/repl-basic-demo.cs.
   /// </summary>
   /// <param name="terminal">The test terminal to use for this app instance.</param>
   /// <returns>A fully configured NuruCoreApp ready for REPL testing.</returns>

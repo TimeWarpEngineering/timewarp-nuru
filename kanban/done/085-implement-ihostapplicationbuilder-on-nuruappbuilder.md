@@ -57,8 +57,8 @@ Created a new partial class file `NuruAppBuilder.HostApplicationBuilder.cs` that
 4. Includes helper classes: `NuruHostEnvironment`, `NuruLoggingBuilder`, `NuruMetricsBuilder`
 
 ### Sample Updated
-- `Samples/AspireHostOtel/AspireHostOtel.NuruClient/Program.cs` - Demonstrates Aspire-style extension methods
-- `Samples/AspireHostOtel/Overview.md` - Documents the new feature
+- `samples/aspire-host-otel/AspireHostOtel.NuruClient/Program.cs` - Demonstrates Aspire-style extension methods
+- `samples/aspire-host-otel/Overview.md` - Documents the new feature
 
 ### Benefit
 Any extension method targeting `IHostApplicationBuilder` (like Aspire's `AddAppDefaults()`) now works with NuruAppBuilder:

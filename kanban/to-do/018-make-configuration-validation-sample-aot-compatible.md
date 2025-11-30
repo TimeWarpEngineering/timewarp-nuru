@@ -5,7 +5,7 @@
 
 ## Problem
 
-The `Samples/Configuration/configuration-validation.cs` sample demonstrates ValidateOnStart() functionality but currently produces AOT warnings when using configuration binding:
+The `samples/configuration/configuration-validation.cs` sample demonstrates ValidateOnStart() functionality but currently produces AOT warnings when using configuration binding:
 
 ```
 warning IL2026: Using member 'OptionsBuilderConfigurationExtensions.Bind<TOptions>' which has 'RequiresUnreferencedCodeAttribute'

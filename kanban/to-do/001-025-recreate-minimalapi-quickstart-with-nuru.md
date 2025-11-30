@@ -13,7 +13,7 @@ Port the Cocona MinimalApi.QuickStart sample to Nuru, demonstrating minimal API 
 - Implement commands with lambda expressions
 - Show simplified syntax benefits
 - Create Overview.md comparing minimal approaches
-- Implementation location: `Samples/CoconaComparison/MinimalApi/minimal-api-quickstart`
+- Implementation location: `samples/cocona-comparison/MinimalApi/minimal-api-quickstart`
 
 ## Checklist
 

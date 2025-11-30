@@ -19,7 +19,7 @@ Create an ExceptionHandlingBehavior that provides consistent error handling, log
 
 ## Results
 
-Implementation added to `Samples/PipelineMiddleware/pipeline-middleware.cs`:
+Implementation added to `samples/pipeline-middleware/pipeline-middleware.cs`:
 
 1. **ExceptionHandlingBehavior<TMessage, TResponse>** - Pipeline behavior with:
    - Differentiated handling for known exception types:

@@ -8,17 +8,17 @@ Port the Cocona GettingStarted.TypicalSimpleApp sample to Nuru, demonstrating a 
 001_Recreate-All-Cocona-Samples-Using-Nuru
 
 ## Requirements
-- Implementation location: `Samples/CoconaComparison/GettingStarted/typical-simple-app`
+- Implementation location: `samples/cocona-comparison/GettingStarted/typical-simple-app`
 
-- Implementation location: `Samples/CoconaComparison/GettingStarted/typical-simple-app`
+- Implementation location: `samples/cocona-comparison/GettingStarted/typical-simple-app`
 - Create a typical Nuru CLI application following common patterns
-- Implementation location: `Samples/CoconaComparison/GettingStarted/typical-simple-app`
+- Implementation location: `samples/cocona-comparison/GettingStarted/typical-simple-app`
 - Implement standard command structure
-- Implementation location: `Samples/CoconaComparison/GettingStarted/typical-simple-app`
+- Implementation location: `samples/cocona-comparison/GettingStarted/typical-simple-app`
 - Create Overview.md comparing typical app patterns
-- Implementation location: `Samples/CoconaComparison/GettingStarted/typical-simple-app`
+- Implementation location: `samples/cocona-comparison/GettingStarted/typical-simple-app`
 
-- Implementation location: `Samples/CoconaComparison/GettingStarted/typical-simple-app`
+- Implementation location: `samples/cocona-comparison/GettingStarted/typical-simple-app`
 ## Checklist
 
 ### Implementation

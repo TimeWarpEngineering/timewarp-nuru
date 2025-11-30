@@ -8,7 +8,7 @@ This sample will showcase the power of the Mediator pattern's pipeline compared 
 
 ## Requirements
 
-- Create `Samples/PipelineMiddleware/` directory
+- Create `samples/pipeline-middleware/` directory
 - Implement runnable sample `pipeline-middleware.cs`
 - Create `Overview.md` documentation
 - Register sample in `examples.json`
@@ -59,8 +59,8 @@ Comprehensive Pipeline Middleware sample completed with 6 pipeline behaviors:
 - `trace {operation}` - Telemetry/Activity demonstration
 
 ### Files Created
-- `Samples/PipelineMiddleware/pipeline-middleware.cs` - Main sample (580+ lines)
-- `Samples/PipelineMiddleware/Overview.md` - Comprehensive documentation
+- `samples/pipeline-middleware/pipeline-middleware.cs` - Main sample (580+ lines)
+- `samples/pipeline-middleware/Overview.md` - Comprehensive documentation
 - `Samples/examples.json` - MCP discovery entries added
 
 All 8 subtasks completed:

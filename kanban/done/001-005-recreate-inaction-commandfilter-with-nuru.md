@@ -13,7 +13,7 @@ Port the Cocona InAction.CommandFilter sample to Nuru, demonstrating command fil
 - Implement pre and post command execution logic
 - Demonstrate filter ordering and chaining
 - Create Overview.md comparing filter/middleware approaches
-- Implementation location: `Samples/CoconaComparison/InAction/command-filter`
+- Implementation location: `samples/cocona-comparison/InAction/command-filter`
 
 ## Checklist
 

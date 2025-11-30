@@ -242,4 +242,4 @@ for i in {1..1000}; do ./mytool ping; done
 
 - **[Architecture Choices](../guides/architecture-choices.md)** - Choose the right approach
 - **[Deployment](../guides/deployment.md)** - AOT compilation guide
-- **[Calculator Samples](../../../Samples/Calculator/)** - See implementations to compare
+- **[Calculator Samples](../../../samples/calculator/)** - See implementations to compare

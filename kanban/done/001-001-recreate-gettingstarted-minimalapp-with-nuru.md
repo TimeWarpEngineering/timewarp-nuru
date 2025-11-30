@@ -12,13 +12,13 @@ Port the Cocona GettingStarted.MinimalApp sample to Nuru, demonstrating the simp
 - Create a minimal Nuru CLI application that matches the functionality of Cocona's MinimalApp sample
 - Implement basic command with argument and option handling
 - Create Overview.md comparing Cocona vs Nuru approaches
-- Implementation location: `Samples/CoconaComparison/GettingStarted/minimal-app`
+- Implementation location: `samples/cocona-comparison/GettingStarted/minimal-app`
 
 ## Checklist
 
 ### Implementation
-- [x] Create single-file executable at `Samples/CoconaComparison/GettingStarted/minimal-app` (delegate version)
-- [x] Create single-file executable at `Samples/CoconaComparison/GettingStarted/minimal-app-di` (class-based with DI)
+- [x] Create single-file executable at `samples/cocona-comparison/GettingStarted/minimal-app` (delegate version)
+- [x] Create single-file executable at `samples/cocona-comparison/GettingStarted/minimal-app-di` (class-based with DI)
 - [x] Port the Hello command with toUpperCase option and name argument
 - [x] Ensure proper argument and option parsing
 - [x] Test both implementations work as expected

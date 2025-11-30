@@ -36,7 +36,7 @@ The `IConsole` and `ITerminal` interfaces along with their implementations (`Nur
 - [x] Document color output as lightweight Spectre.Console alternative
 
 ### Samples
-- [x] Create `Samples/Testing/` folder with testing examples
+- [x] Create `samples/testing/` folder with testing examples
 - [x] Create sample showing unit testing CLI output capture (test-output-capture.cs)
 - [ ] Create sample showing REPL testing with scripted key sequences (deferred - requires interactive REPL)
 - [x] Create sample showing custom terminal implementation (e.g., logging wrapper) - documented in terminal-abstractions.md

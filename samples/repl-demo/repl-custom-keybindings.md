@@ -5,14 +5,14 @@ Demonstrates how to create personalized REPL key bindings using `CustomKeyBindin
 ## Running the Demo
 
 ```bash
-cd Samples/ReplDemo
+cd samples/repl-demo
 ./repl-custom-keybindings.cs
 ```
 
 Or:
 
 ```bash
-dotnet run Samples/ReplDemo/repl-custom-keybindings.cs
+dotnet run samples/repl-demo/repl-custom-keybindings.cs
 ```
 
 ## Key Concepts

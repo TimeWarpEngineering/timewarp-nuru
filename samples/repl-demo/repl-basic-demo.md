@@ -5,14 +5,14 @@ A comprehensive REPL demonstration showcasing all major route pattern types supp
 ## Running the Demo
 
 ```bash
-cd Samples/ReplDemo
+cd samples/repl-demo
 ./repl-basic-demo.cs
 ```
 
 Or:
 
 ```bash
-dotnet run Samples/ReplDemo/repl-basic-demo.cs
+dotnet run samples/repl-demo/repl-basic-demo.cs
 ```
 
 ## Route Patterns Demonstrated

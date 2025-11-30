@@ -24,7 +24,7 @@ Create a RetryBehavior for resilience, demonstrating exponential backoff retry l
 
 ## Results
 
-Implementation added to `Samples/PipelineMiddleware/pipeline-middleware.cs`:
+Implementation added to `samples/pipeline-middleware/pipeline-middleware.cs`:
 
 1. **IRetryable marker interface** - Commands implement to opt-in to retry behavior
    - `MaxRetries` property with default value of 3

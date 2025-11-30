@@ -13,7 +13,7 @@ Port the Cocona Advanced.JsonValueConverter sample to Nuru, demonstrating custom
 - Implement custom type conversion from JSON
 - Handle complex object parameters
 - Create Overview.md comparing conversion approaches
-- Implementation location: `Samples/CoconaComparison/Advanced/json-value-converter`
+- Implementation location: `samples/cocona-comparison/Advanced/json-value-converter`
 
 ## Checklist
 

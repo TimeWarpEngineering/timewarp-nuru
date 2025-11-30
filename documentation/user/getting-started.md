@@ -174,7 +174,7 @@ Tab completion automatically supports:
 - ✅ Enum values (if your parameters use enums)
 - ✅ File paths (for string parameters)
 
-See the [Shell Completion Example](../../Samples/ShellCompletionExample/) for a complete working example.
+See the [Shell Completion Example](../../samples/shell-completion-example/) for a complete working example.
 
 ## Next Steps
 
@@ -203,7 +203,7 @@ See [Architecture Choices](guides/architecture-choices.md) for when to use Direc
 
 ### Explore Complete Examples
 
-Check out the [Calculator Samples](../../Samples/Calculator/) for three complete implementations:
+Check out the [Calculator Samples](../../samples/calculator/) for three complete implementations:
 - **calc-delegate.cs** - Pure Direct approach
 - **calc-mediator.cs** - Pure Mediator approach
 - **calc-mixed.cs** - Mixed approach (recommended)
@@ -231,7 +231,7 @@ No! You can mix both approaches in the same application:
 - Use **Direct** for simple commands (blazing fast)
 - Use **Mediator** for complex commands (testable, DI, structured)
 
-See the [Mixed approach example](../../Samples/Calculator/calc-mixed.cs).
+See the [Mixed approach example](../../samples/calculator/calc-mixed.cs).
 
 ### What about help text?
 

@@ -10,7 +10,7 @@ Create comprehensive Overview.md documentation explaining pipeline middleware co
 
 ## Checklist
 
-- [x] Create `Samples/PipelineMiddleware/Overview.md`
+- [x] Create `samples/pipeline-middleware/Overview.md`
 - [x] Explain pipeline behavior concept
 - [x] Document execution order (outermost to innermost)
 - [x] Describe each behavior's purpose
@@ -21,7 +21,7 @@ Create comprehensive Overview.md documentation explaining pipeline middleware co
 
 ## Results
 
-Created comprehensive `Samples/PipelineMiddleware/Overview.md` with:
+Created comprehensive `samples/pipeline-middleware/Overview.md` with:
 
 1. **Pipeline concept explanation** - Onion-layer ASCII diagram showing behavior wrapping
 2. **Execution order documentation** - Clear explanation of outermost/innermost semantics

@@ -144,7 +144,7 @@ Canary     (Canary deployment with gradual rollout)
 ### 1. Build the Example (AOT for Best Performance)
 
 ```bash
-cd Samples/DynamicCompletionExample
+cd samples/dynamic-completion-example
 chmod +x DynamicCompletionExample.cs
 
 # Option A: AOT (Native, ~7ms invocation time)
@@ -552,5 +552,5 @@ public class ApiCompletionSource : IAsyncCompletionSource
 
 - **Task #029**: `kanban/done/029-implement-enabledynamiccompletion.md`
 - **Core Implementation**: `Source/TimeWarp.Nuru.Completion/`
-- **Static Completion Example**: `Samples/ShellCompletionExample/`
+- **Static Completion Example**: `samples/shell-completion-example/`
 - **Industry Standard**: Cobra's `__complete` pattern (kubectl, gh, docker)

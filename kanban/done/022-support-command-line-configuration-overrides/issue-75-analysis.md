@@ -300,7 +300,7 @@ The route resolver currently treats ALL `--key=value` args as potential route op
 
 ### 1. Configuration Basics Sample
 
-**Location:** `Samples/Configuration/configuration-basics.cs`
+**Location:** `samples/configuration/configuration-basics.cs`
 
 Demonstrates:
 - Both `ConfigureServices` overloads (with and without config)
@@ -310,7 +310,7 @@ Demonstrates:
 
 ### 2. Configuration Validation Sample
 
-**Location:** `Samples/Configuration/configuration-validation.cs`
+**Location:** `samples/configuration/configuration-validation.cs`
 
 Demonstrates:
 - DataAnnotations validation
@@ -320,7 +320,7 @@ Demonstrates:
 
 ### 3. UserSecretsDemo Sample
 
-**Location:** `Samples/Configuration/UserSecretsDemo/`
+**Location:** `samples/configuration/UserSecretsDemo/`
 
 Full csproj-based project demonstrating:
 - User secrets integration
@@ -329,7 +329,7 @@ Full csproj-based project demonstrating:
 
 ### 4. User Secrets Property Sample
 
-**Location:** `Samples/Configuration/user-secrets-property.cs`
+**Location:** `samples/configuration/user-secrets-property.cs`
 
 Demonstrates:
 - UserSecretsId via MSBuild property directive:
@@ -452,7 +452,7 @@ This would:
 ## References
 
 - NuruAppBuilder.cs: Lines 106-152 (AddConfiguration method)
-- Samples/Configuration/configuration-basics.cs
-- Samples/Configuration/configuration-validation.cs
-- Samples/Configuration/UserSecretsDemo/
+- samples/configuration/configuration-basics.cs
+- samples/configuration/configuration-validation.cs
+- samples/configuration/UserSecretsDemo/
 - Microsoft.Extensions.Configuration.CommandLine documentation

@@ -13,7 +13,7 @@ Port the Cocona GettingStarted.SubCommandApp sample to Nuru, demonstrating sub-c
 - Implement nested command structure (sub-commands and sub-sub-commands)
 - Support shell completion
 - Create Overview.md comparing sub-command approaches
-- Implementation location: `Samples/CoconaComparison/GettingStarted/subcommand-app`
+- Implementation location: `samples/cocona-comparison/GettingStarted/subcommand-app`
 
 ## Checklist
 

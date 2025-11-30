@@ -101,12 +101,12 @@ Part of 3-phase key binding evolution:
 - [ ] Log warnings for questionable configurations
 
 ### Sample Application
-- [x] Create `Samples/ReplDemo/repl-custom-keybindings.cs`
+- [x] Create `samples/repl-demo/repl-custom-keybindings.cs`
   - [x] Demonstrate starting from existing profile (Emacs)
   - [x] Demonstrate Override, Add, Remove operations
   - [x] Demonstrate using CustomKeyBindingProfile with ReplOptions
   - [x] Include helpful comments explaining each feature
-- [x] Create `Samples/ReplDemo/repl-custom-keybindings.md` documentation
+- [x] Create `samples/repl-demo/repl-custom-keybindings.md` documentation
 
 ### Testing
 - [x] Create `Tests/TimeWarp.Nuru.Repl.Tests/repl-24-custom-key-bindings.cs`
@@ -127,7 +127,7 @@ Part of 3-phase key binding evolution:
   - [ ] Available action names reference
   - [ ] Common customization recipes
 - [ ] Update `documentation/user/guides/repl-configuration.md`
-- [ ] Add sample config files to `Samples/Configuration/`
+- [ ] Add sample config files to `samples/configuration/`
 - [ ] Update CLAUDE.md if needed
 
 ## Notes
@@ -271,11 +271,11 @@ Source/TimeWarp.Nuru.Repl/
 │   └── ReplConsoleReader.cs
 └── ReplOptions.cs
 
-Samples/ReplDemo/
+samples/repl-demo/
 ├── repl-custom-keybindings.cs               (NEW - sample demonstrating custom key bindings)
 └── repl-custom-keybindings.md               (NEW - documentation for sample)
 
-Samples/Configuration/
+samples/configuration/
 ├── emacs-enhanced.json                       (NEW - sample config, deferred)
 ├── vi-enhanced.json                          (NEW - sample config, deferred)
 └── team-bindings.json                        (NEW - sample config, deferred)

@@ -22,7 +22,7 @@ NuruCoreApp app =
       if (string.IsNullOrEmpty(apiKey))
       {
         Console.WriteLine("⚠️  No secrets found. Run:");
-        Console.WriteLine("   dotnet user-secrets set \"ApiKey\" \"secret-123\" --project Samples/Configuration/UserSecretsDemo");
+        Console.WriteLine("   dotnet user-secrets set \"ApiKey\" \"secret-123\" --project samples/configuration/user-secrets-demo");
       }
       else
       {

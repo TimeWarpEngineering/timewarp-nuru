@@ -13,7 +13,7 @@ Port the Cocona Advanced.CommandMethodForwarding sample to Nuru, demonstrating c
 - Implement command aliases using forwarding
 - Handle parameter passing in forwarding
 - Create Overview.md comparing forwarding approaches
-- Implementation location: `Samples/CoconaComparison/Advanced/command-method-forwarding`
+- Implementation location: `samples/cocona-comparison/Advanced/command-method-forwarding`
 
 ## Checklist
 

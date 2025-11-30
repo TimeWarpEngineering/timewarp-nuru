@@ -36,7 +36,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="../../Samples/SyntaxExamples.cs" LogicalName="TimeWarp.Nuru.Mcp.SyntaxExamples.cs" />
+    <EmbeddedResource Include="../../samples/syntax-examples.cs" LogicalName="TimeWarp.Nuru.Mcp.SyntaxExamples.cs" />
   </ItemGroup>
 
 </Project>

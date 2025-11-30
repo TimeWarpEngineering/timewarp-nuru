@@ -1035,7 +1035,7 @@ Use clear, specific assertions:
 
 - REPL Implementation: `Source/TimeWarp.Nuru.Repl/`
 - Integration Tests: `Tests/TimeWarp.Nuru.Repl.Tests/`
-- Sample Applications: `Samples/ReplDemo/`
+- Sample Applications: `samples/repl-demo/`
 - Design Documents: Task 027, 031
 - Code Review: `.agent/workspace/TimeWarp.Nuru.Repl-Code-Review-Report.md`
 

@@ -726,5 +726,5 @@ dotnet run completion-17-enum-source.cs
 - Static Completion Tests: `../Static/` folder
 - Static Test Plan: `../completion-test-plan.md`
 - Task 029: `/kanban/done/029-implement-enabledynamiccompletion.md`
-- Dynamic Completion Example: `/Samples/DynamicCompletionExample/`
-- Example Overview: `/Samples/DynamicCompletionExample/Overview.md`
+- Dynamic Completion Example: `/samples/dynamic-completion-example/`
+- Example Overview: `/samples/dynamic-completion-example/Overview.md`

@@ -41,9 +41,9 @@ NuruApp testApp = new NuruAppBuilder()
 
 ```bash
 # Run any sample directly
-./Samples/Testing/test-output-capture.cs
-./Samples/Testing/test-colored-output.cs
-./Samples/Testing/test-terminal-injection.cs
+./samples/testing/test-output-capture.cs
+./samples/testing/test-colored-output.cs
+./samples/testing/test-terminal-injection.cs
 ```
 
 ## See Also

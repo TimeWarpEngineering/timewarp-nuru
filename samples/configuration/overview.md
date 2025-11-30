@@ -104,7 +104,7 @@ See [`command-line-overrides.cs`](command-line-overrides.cs) for a complete work
 ## Running the Examples
 
 ```bash
-cd Samples/Configuration
+cd samples/configuration
 
 # Configuration basics example
 ./configuration-basics.cs config show

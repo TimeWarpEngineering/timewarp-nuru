@@ -13,7 +13,7 @@ Port the Cocona Advanced.ShellCompletionCandidates sample to Nuru, demonstrating
 - Implement dynamic completion providers
 - Support bash/zsh completion
 - Create Overview.md comparing completion approaches
-- Implementation location: `Samples/CoconaComparison/Advanced/shell-completion-candidates`
+- Implementation location: `samples/cocona-comparison/Advanced/shell-completion-candidates`
 
 ## Checklist
 

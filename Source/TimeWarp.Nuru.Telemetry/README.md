@@ -85,6 +85,6 @@ When `OTEL_EXPORTER_OTLP_ENDPOINT` is not set, telemetry export is disabled with
 
 ## See Also
 
-- [Aspire Telemetry Sample](../../Samples/AspireTelemetry/)
+- [Aspire Telemetry Sample](../../samples/aspire-telemetry/)
 - [OpenTelemetry .NET](https://opentelemetry.io/docs/languages/net/)
 - [Aspire Dashboard](https://learn.microsoft.com/en-us/dotnet/aspire/fundamentals/dashboard)

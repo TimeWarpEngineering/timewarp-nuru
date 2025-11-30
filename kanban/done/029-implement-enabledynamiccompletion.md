@@ -288,7 +288,7 @@ complete -F _myapp_completions myapp
 ### Phase 4: Example and Testing
 
 **12. Create dynamic completion example**
-   - File: `/Samples/DynamicCompletionExample/DynamicCompletionExample.cs`
+   - File: `/samples/dynamic-completion-example/DynamicCompletionExample.cs`
    - Demonstrates custom `ICompletionSource` implementation
    - Shows parameter-based registration
    - Includes installation instructions for all 4 shells
@@ -374,8 +374,8 @@ builder.WithCompletionSource("env",
 - `/Source/TimeWarp.Nuru.Completion/Completion/Templates/fish-completion-dynamic.fish`
 - `/Source/TimeWarp.Nuru.Completion/Completion/Sources/DefaultCompletionSource.cs`
 - `/Source/TimeWarp.Nuru.Completion/Completion/Sources/EnumCompletionSource.cs`
-- `/Samples/DynamicCompletionExample/DynamicCompletionExample.cs`
-- `/Samples/DynamicCompletionExample/Overview.md`
+- `/samples/dynamic-completion-example/DynamicCompletionExample.cs`
+- `/samples/dynamic-completion-example/Overview.md`
 - `/Tests/TimeWarp.Nuru.Completion.Tests/DynamicCompletionTests.cs`
 
 ### Files to Modify

@@ -16,7 +16,7 @@ The AspireHostOtel sample demonstrates:
 ## Checklist
 
 ### Update examples.json
-- [x] Add `aspire-host-otel` example entry pointing to `Samples/AspireHostOtel/nuru-client.cs`
+- [x] Add `aspire-host-otel` example entry pointing to `samples/aspire-host-otel/nuru-client.cs`
 - [x] Include appropriate tags: `aspire`, `opentelemetry`, `telemetry`, `ihostapplicationbuilder`, `runfiles`, `dashboard`
 - [x] Set difficulty to `advanced`
 

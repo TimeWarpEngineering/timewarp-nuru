@@ -161,7 +161,7 @@ This would be a separate task (Task 029) to implement type-aware completion for 
 ### Documentation
 - `documentation/user/getting-started.md` (line 175)
 - `documentation/user/features/shell-completion.md`
-- `Samples/ShellCompletionExample/Overview.md`
+- `samples/shell-completion-example/Overview.md`
 
 ### Tests
 - Add test to verify string parameters don't trigger file completion

@@ -88,7 +88,7 @@ Typing `./ShellCompletionExample.cs deploy prod --v<TAB>` completes to `--versio
 For production use, publish the runfile as an AOT-compiled executable:
 
 ```bash
-cd Samples/ShellCompletionExample
+cd samples/shell-completion-example
 
 # Publish with Native AOT
 dotnet publish ShellCompletionExample.cs -c Release -r linux-x64 -p:PublishAot=true -o ./publish
@@ -121,7 +121,7 @@ dotnet publish ShellCompletionExample.cs -c Release -r osx-arm64 -p:PublishAot=t
 ### From Runfile (Development)
 
 ```bash
-cd Samples/ShellCompletionExample
+cd samples/shell-completion-example
 
 # Make executable (first time only)
 chmod +x ShellCompletionExample.cs

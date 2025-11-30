@@ -11,14 +11,14 @@ Without the Web SDK, CWD remains where the user executed the script from, causin
 **With `#:sdk Microsoft.NET.Sdk.Web`:**
 ```bash
 cd /anywhere
-./Samples/Configuration/script.cs
-# CWD inside script: /path/to/Samples/Configuration/ ✓
+./samples/configuration/script.cs
+# CWD inside script: /path/to/samples/configuration/ ✓
 ```
 
 **Without Web SDK:**
 ```bash
 cd /anywhere  
-./Samples/Configuration/script.cs
+./samples/configuration/script.cs
 # CWD inside script: /anywhere ✗
 ```
 

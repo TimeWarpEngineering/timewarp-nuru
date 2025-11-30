@@ -6,7 +6,7 @@
       "id": "basic",
       "name": "Mixed Calculator Example",
       "description": "Calculator mixing Delegate and Mediator patterns - best of both worlds",
-      "path": "Samples/Calculator/calc-mixed.cs",
+      "path": "samples/calculator/calc-mixed.cs",
       "tags": ["basics", "routing", "getting-started", "calculator", "mixed"],
       "difficulty": "beginner"
     },
@@ -14,7 +14,7 @@
       "id": "createbuilder",
       "name": "CreateBuilder Calculator",
       "description": "ASP.NET Core-style CreateBuilder API - familiar pattern for web developers",
-      "path": "Samples/Calculator/calc-createbuilder.cs",
+      "path": "samples/calculator/calc-createbuilder.cs",
       "tags": ["calculator", "createbuilder", "aspnet-style", "getting-started"],
       "difficulty": "beginner"
     },
@@ -22,7 +22,7 @@
       "id": "mixed",
       "name": "Mixed Pattern Calculator",
       "description": "Mixed approach combining delegate performance with mediator structure",
-      "path": "Samples/Calculator/calc-mixed.cs",
+      "path": "samples/calculator/calc-mixed.cs",
       "tags": ["calculator", "mixed", "delegate", "mediator"],
       "difficulty": "intermediate"
     },
@@ -30,7 +30,7 @@
       "id": "delegate",
       "name": "Delegate Calculator",
       "description": "Pure delegate routing for maximum performance with no DI overhead",
-      "path": "Samples/Calculator/calc-delegate.cs",
+      "path": "samples/calculator/calc-delegate.cs",
       "tags": ["calculator", "delegate", "performance", "minimal"],
       "difficulty": "beginner"
     },
@@ -38,7 +38,7 @@
       "id": "mediator",
       "name": "Mediator Calculator",
       "description": "Mediator pattern with DI for testability and enterprise patterns",
-      "path": "Samples/Calculator/calc-mediator.cs",
+      "path": "samples/calculator/calc-mediator.cs",
       "tags": ["calculator", "mediator", "dependency-injection", "enterprise"],
       "difficulty": "intermediate"
     },
@@ -46,7 +46,7 @@
       "id": "hello-world",
       "name": "Hello World",
       "description": "Simplest possible Nuru app - a single route with a greeting",
-      "path": "Samples/HelloWorld/hello-world.cs",
+      "path": "samples/hello-world/hello-world.cs",
       "tags": ["basics", "getting-started", "minimal"],
       "difficulty": "beginner"
     },
@@ -54,7 +54,7 @@
       "id": "async",
       "name": "Async Command Examples",
       "description": "Demonstrates async command handlers with Task-based routes and async/await patterns",
-      "path": "Samples/AsyncExamples/Program.cs",
+      "path": "samples/async-examples/program.cs",
       "tags": ["async", "tasks", "advanced"],
       "difficulty": "intermediate"
     },
@@ -62,7 +62,7 @@
       "id": "console-logging",
       "name": "Console Logging Integration",
       "description": "Shows how to integrate Microsoft.Extensions.Logging with console output",
-      "path": "Samples/Logging/ConsoleLogging.cs",
+      "path": "samples/logging/console-logging.cs",
       "tags": ["logging", "console", "diagnostics"],
       "difficulty": "beginner"
     },
@@ -70,7 +70,7 @@
       "id": "serilog",
       "name": "Serilog Integration",
       "description": "Demonstrates Serilog integration with structured logging and trace-level output",
-      "path": "Samples/Logging/SerilogLogging.cs",
+      "path": "samples/logging/serilog-logging.cs",
       "tags": ["logging", "serilog", "structured-logging", "diagnostics"],
       "difficulty": "intermediate"
     },
@@ -78,7 +78,7 @@
       "id": "configuration",
       "name": "Configuration Basics",
       "description": "Demonstrates AOT-compatible AddConfiguration() with .settings.json files, strongly-typed options, and ConfigureServices with IConfiguration access",
-      "path": "Samples/Configuration/configuration-basics.cs",
+      "path": "samples/configuration/configuration-basics.cs",
       "tags": ["configuration", "dependency-injection", "options-pattern", "settings-json", "aot-compatible"],
       "difficulty": "intermediate"
     },
@@ -86,7 +86,7 @@
       "id": "configuration-validation",
       "name": "Configuration Validation",
       "description": "Fail-fast configuration validation using DataAnnotations, custom validation, and FluentValidation with ValidateOnStart()",
-      "path": "Samples/Configuration/configuration-validation.cs",
+      "path": "samples/configuration/configuration-validation.cs",
       "tags": ["configuration", "validation", "fluent-validation", "data-annotations", "fail-fast"],
       "difficulty": "intermediate"
     },
@@ -94,7 +94,7 @@
       "id": "command-line-overrides",
       "name": "Command-Line Configuration Overrides",
       "description": "ASP.NET Core-style command-line configuration overrides using --Section:Key=Value syntax",
-      "path": "Samples/Configuration/command-line-overrides.cs",
+      "path": "samples/configuration/command-line-overrides.cs",
       "tags": ["configuration", "command-line", "overrides", "aspnet-style"],
       "difficulty": "intermediate"
     },
@@ -102,7 +102,7 @@
       "id": "repl-basic",
       "name": "REPL Basic Demo",
       "description": "Interactive REPL mode with various route pattern types - literals, parameters, options, and subcommands",
-      "path": "Samples/ReplDemo/repl-basic-demo.cs",
+      "path": "samples/repl-demo/repl-basic-demo.cs",
       "tags": ["repl", "interactive", "getting-started"],
       "difficulty": "beginner"
     },
@@ -110,7 +110,7 @@
       "id": "repl-keybindings",
       "name": "REPL Custom Key Bindings",
       "description": "Customize REPL key bindings with PSReadLine-style profiles (Emacs, Windows, Vi)",
-      "path": "Samples/ReplDemo/repl-custom-keybindings.cs",
+      "path": "samples/repl-demo/repl-custom-keybindings.cs",
       "tags": ["repl", "key-bindings", "customization", "psreadline"],
       "difficulty": "intermediate"
     },
@@ -118,7 +118,7 @@
       "id": "repl-interactive",
       "name": "REPL Interactive Mode",
       "description": "CLI app with --interactive/-i flag to enter REPL mode",
-      "path": "Samples/ReplDemo/repl-interactive-mode.cs",
+      "path": "samples/repl-demo/repl-interactive-mode.cs",
       "tags": ["repl", "interactive", "cli", "hybrid"],
       "difficulty": "intermediate"
     },
@@ -126,7 +126,7 @@
       "id": "repl-options",
       "name": "REPL Options Showcase",
       "description": "All REPL configuration options - prompts, history, welcome/goodbye messages",
-      "path": "Samples/ReplDemo/repl-options-showcase.cs",
+      "path": "samples/repl-demo/repl-options-showcase.cs",
       "tags": ["repl", "options", "configuration", "customization"],
       "difficulty": "intermediate"
     },
@@ -134,7 +134,7 @@
       "id": "shell-completion",
       "name": "Shell Tab Completion",
       "description": "Static shell tab completion for Bash, Zsh, PowerShell, and Fish shells",
-      "path": "Samples/ShellCompletionExample/ShellCompletionExample.cs",
+      "path": "samples/shell-completion-example/shell-completion-example.cs",
       "tags": ["completion", "tab-completion", "bash", "zsh", "powershell", "fish"],
       "difficulty": "intermediate"
     },
@@ -142,7 +142,7 @@
       "id": "dynamic-completion",
       "name": "Dynamic Tab Completion",
       "description": "Dynamic completion that queries the app at tab-press time with custom completion sources",
-      "path": "Samples/DynamicCompletionExample/DynamicCompletionExample.cs",
+      "path": "samples/dynamic-completion-example/dynamic-completion-example.cs",
       "tags": ["completion", "dynamic-completion", "custom-sources", "advanced"],
       "difficulty": "advanced"
     },
@@ -150,7 +150,7 @@
       "id": "syntax-examples",
       "name": "Route Syntax Examples",
       "description": "Comprehensive examples of all route pattern syntax - literals, parameters, types, options, catch-all",
-      "path": "Samples/SyntaxExamples.cs",
+      "path": "samples/syntax-examples.cs",
       "tags": ["syntax", "patterns", "reference", "documentation"],
       "difficulty": "beginner"
     },
@@ -158,7 +158,7 @@
       "id": "builtin-types",
       "name": "Built-in Type Converters",
       "description": "Demonstrates all built-in type converters: int, double, bool, DateTime, Guid, etc.",
-      "path": "Samples/BuiltInTypesExample.cs",
+      "path": "samples/builtin-types-example.cs",
       "tags": ["types", "converters", "parameters", "reference"],
       "difficulty": "beginner"
     },
@@ -166,7 +166,7 @@
       "id": "custom-type-converter",
       "name": "Custom Type Converter",
       "description": "Create custom type converters for your own types - enums, complex objects",
-      "path": "Samples/CustomTypeConverterExample.cs",
+      "path": "samples/custom-type-converter-example.cs",
       "tags": ["types", "converters", "custom", "advanced"],
       "difficulty": "intermediate"
     },
@@ -174,7 +174,7 @@
       "id": "test-output-capture",
       "name": "Testing Output Capture",
       "description": "Use TestTerminal to capture and assert CLI output in unit tests - stdout, stderr, and exit codes",
-      "path": "Samples/Testing/test-output-capture.cs",
+      "path": "samples/testing/test-output-capture.cs",
       "tags": ["testing", "terminal", "testability", "output-capture", "assertions"],
       "difficulty": "beginner"
     },
@@ -182,7 +182,7 @@
       "id": "test-colored-output",
       "name": "Testing Colored Output",
       "description": "Test handlers that produce colored/styled output using ANSI codes and fluent color extensions",
-      "path": "Samples/Testing/test-colored-output.cs",
+      "path": "samples/testing/test-colored-output.cs",
       "tags": ["testing", "terminal", "colors", "ansi", "styled-output"],
       "difficulty": "intermediate"
     },
@@ -190,7 +190,7 @@
       "id": "test-terminal-injection",
       "name": "ITerminal Dependency Injection",
       "description": "Inject ITerminal into route handlers for testable colored output with TestTerminal",
-      "path": "Samples/Testing/test-terminal-injection.cs",
+      "path": "samples/testing/test-terminal-injection.cs",
       "tags": ["testing", "terminal", "dependency-injection", "iterminal", "testability"],
       "difficulty": "intermediate"
     },
@@ -198,7 +198,7 @@
       "id": "pipeline-middleware",
       "name": "Mediator Pipeline Middleware",
       "description": "Cross-cutting concerns with pipeline behaviors: telemetry, performance, logging, authorization, retry, and exception handling",
-      "path": "Samples/PipelineMiddleware/pipeline-middleware.cs",
+      "path": "samples/pipeline-middleware/pipeline-middleware.cs",
       "tags": ["pipeline", "middleware", "mediator", "behaviors", "cross-cutting-concerns", "telemetry", "performance", "enterprise"],
       "difficulty": "advanced"
     },
@@ -206,7 +206,7 @@
       "id": "unified-middleware",
       "name": "Unified Pipeline Middleware",
       "description": "Pipeline behaviors for both delegate and Mediator routes - unified cross-cutting concerns",
-      "path": "Samples/UnifiedMiddleware/unified-middleware.cs",
+      "path": "samples/unified-middleware/unified-middleware.cs",
       "tags": ["pipeline", "middleware", "delegate", "mediator", "unified", "cross-cutting-concerns"],
       "difficulty": "advanced"
     },
@@ -214,7 +214,7 @@
       "id": "aspire-telemetry",
       "name": "Aspire Telemetry",
       "description": "OpenTelemetry integration with Aspire Dashboard - traces, metrics, and logs for CLI observability",
-      "path": "Samples/AspireTelemetry/aspire-telemetry.cs",
+      "path": "samples/aspire-telemetry/aspire-telemetry.cs",
       "tags": ["telemetry", "opentelemetry", "aspire", "traces", "metrics", "observability", "otlp"],
       "difficulty": "advanced"
     },
@@ -222,7 +222,7 @@
       "id": "aspire-host-otel",
       "name": "Aspire Host with OpenTelemetry",
       "description": "Full Aspire AppHost integration with IHostApplicationBuilder, .NET 10 runfiles, TelemetryBehavior pipeline, and dual output pattern",
-      "path": "Samples/AspireHostOtel/nuru-client.cs",
+      "path": "samples/aspire-host-otel/nuru-client.cs",
       "tags": ["aspire", "opentelemetry", "telemetry", "ihostapplicationbuilder", "runfiles", "dashboard", "apphost", "repl"],
       "difficulty": "advanced"
     }

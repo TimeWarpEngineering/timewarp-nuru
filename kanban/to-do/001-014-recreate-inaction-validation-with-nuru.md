@@ -13,7 +13,7 @@ Port the Cocona InAction.Validation sample to Nuru, demonstrating parameter vali
 - Implement data annotation validators
 - Add custom validation logic
 - Create Overview.md comparing validation approaches
-- Implementation location: `Samples/CoconaComparison/InAction/validation`
+- Implementation location: `samples/cocona-comparison/InAction/validation`
 
 ## Checklist
 

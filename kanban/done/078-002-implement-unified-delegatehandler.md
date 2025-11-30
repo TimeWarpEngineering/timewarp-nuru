@@ -50,7 +50,7 @@ Implement a DelegateHandler that wraps delegate-based routes and executes them t
 
 - `Source/TimeWarp.Nuru/Execution/RouteExecutionContext.cs` - Scoped service for sharing route metadata
 - `Source/TimeWarp.Nuru/Execution/DelegateRequest.cs` - Request, response, and handler types
-- `Samples/UnifiedMiddleware/unified-middleware.cs` - Demo sample
+- `samples/unified-middleware/unified-middleware.cs` - Demo sample
 
 ### Files Modified
 

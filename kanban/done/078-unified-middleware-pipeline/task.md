@@ -10,7 +10,7 @@ This is a multi-phase effort:
 
 ## Problem Statement
 
-When mixing delegate and Mediator approaches (see `Samples/Calculator/calc-mixed.cs`), middleware like logging, metrics, or validation only applies to Mediator commands. Users reasonably expect cross-cutting concerns to apply uniformly to all routes.
+When mixing delegate and Mediator approaches (see `samples/calculator/calc-mixed.cs`), middleware like logging, metrics, or validation only applies to Mediator commands. Users reasonably expect cross-cutting concerns to apply uniformly to all routes.
 
 ## Subtasks
 
@@ -19,8 +19,8 @@ When mixing delegate and Mediator approaches (see `Samples/Calculator/calc-mixed
 
 ## References
 
-- `Samples/Calculator/calc-mixed.cs` - Mixed delegate/Mediator example
-- `Samples/PipelineMiddleware/pipeline-middleware.cs` - Pipeline behavior example
+- `samples/calculator/calc-mixed.cs` - Mixed delegate/Mediator example
+- `samples/pipeline-middleware/pipeline-middleware.cs` - Pipeline behavior example
 - https://www.jimmybogard.com/sharing-context-in-mediatr-pipelines/
 - https://github.com/martinothamar/Mediator
 - https://github.com/TimeWarpEngineering/martinothamar-mediator
@@ -37,12 +37,12 @@ When mixing delegate and Mediator approaches (see `Samples/Calculator/calc-mixed
 - Created `DelegateRequest`/`DelegateResponse` types that route through Mediator pipeline
 - Created `RouteExecutionContext` scoped service for sharing route metadata in behaviors
 - Delegate routes now receive pipeline behaviors when DI is enabled
-- Sample created: `Samples/UnifiedMiddleware/unified-middleware.cs`
+- Sample created: `samples/unified-middleware/unified-middleware.cs`
 
 ### Key Files Added
 - `Source/TimeWarp.Nuru/Execution/RouteExecutionContext.cs`
 - `Source/TimeWarp.Nuru/Execution/DelegateRequest.cs`
-- `Samples/UnifiedMiddleware/unified-middleware.cs`
+- `samples/unified-middleware/unified-middleware.cs`
 
 ### Outcome
 Cross-cutting concerns (logging, metrics, validation) now apply uniformly to all routes regardless of registration style (delegate or Mediator).

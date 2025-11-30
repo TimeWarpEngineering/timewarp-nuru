@@ -182,7 +182,7 @@ internal sealed class GetExampleTool
     try
     {
       // Fetch manifest from GitHub
-      Uri manifestUrl = new("https://raw.githubusercontent.com/TimeWarpEngineering/timewarp-nuru/master/Samples/examples.json");
+      Uri manifestUrl = new("https://raw.githubusercontent.com/TimeWarpEngineering/timewarp-nuru/master/samples/examples.json");
       HttpResponseMessage response = await HttpClient.GetAsync(manifestUrl);
 
       if (response.IsSuccessStatusCode)

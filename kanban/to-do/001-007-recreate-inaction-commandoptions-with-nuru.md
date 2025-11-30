@@ -13,7 +13,7 @@ Port the Cocona InAction.CommandOptions sample to Nuru, demonstrating various co
 - Implement short and long option names
 - Handle default values and required options
 - Create Overview.md comparing option handling
-- Implementation location: `Samples/CoconaComparison/InAction/command-options`
+- Implementation location: `samples/cocona-comparison/InAction/command-options`
 
 ## Checklist
 

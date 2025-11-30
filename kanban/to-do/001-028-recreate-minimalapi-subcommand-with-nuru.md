@@ -13,7 +13,7 @@ Port the Cocona MinimalApi.SubCommand sample to Nuru, demonstrating sub-command 
 - Implement nested command structure minimally
 - Show sub-command organization patterns
 - Create Overview.md comparing approaches
-- Implementation location: `Samples/CoconaComparison/MinimalApi/minimal-api-subcommand`
+- Implementation location: `samples/cocona-comparison/MinimalApi/minimal-api-subcommand`
 
 ## Checklist
 

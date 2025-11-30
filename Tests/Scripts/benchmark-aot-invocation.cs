@@ -46,14 +46,14 @@ async Task<int> RunBenchmark(int runs)
 {
   string workingDir = Directory.GetCurrentDirectory();
   string executable = Path.GetFullPath(
-    Path.Combine(workingDir, "../../Samples/ShellCompletionExample/publish/ShellCompletionExample")
+    Path.Combine(workingDir, "../../samples/shell-completion-example/publish/shell-completion-example")
   );
 
   if (!File.Exists(executable))
   {
     await Console.Error.WriteLineAsync($"ERROR: Executable not found: {executable}");
     await Console.Error.WriteLineAsync("Build it with:");
-    await Console.Error.WriteLineAsync("  cd Samples/ShellCompletionExample");
+    await Console.Error.WriteLineAsync("  cd samples/shell-completion-example");
     await Console.Error.WriteLineAsync("  dotnet publish ShellCompletionExample.cs -c Release -r linux-x64 -p:PublishAot=true -o ./publish");
     return 1;
   }

@@ -19,7 +19,7 @@ Create a TelemetryBehavior using System.Diagnostics.Activity for OpenTelemetry-c
 
 ## Results
 
-Implementation added to `Samples/PipelineMiddleware/pipeline-middleware.cs`:
+Implementation added to `samples/pipeline-middleware/pipeline-middleware.cs`:
 
 1. **TelemetryBehavior<TMessage, TResponse>** - Pipeline behavior with:
    - `ActivitySource` named "TimeWarp.Nuru.Commands" (version 1.0.0)

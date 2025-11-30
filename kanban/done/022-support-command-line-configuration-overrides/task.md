@@ -55,7 +55,7 @@ EndpointResolutionResult result = EndpointResolver.Resolve(routeArgs, Endpoints,
 - [x] Test edge cases (arg values containing colons, etc.)
 
 ### Documentation
-- [x] Update `Samples/Configuration/Overview.md` to document the new sample
+- [x] Update `samples/configuration/Overview.md` to document the new sample
 - [x] Document the colon filtering behavior in architecture docs
 - [x] Add note about limitation (can't use colons in custom route option names)
 - [x] Update GitHub Issue #75 with solution and examples
@@ -76,7 +76,7 @@ EndpointResolutionResult result = EndpointResolver.Resolve(routeArgs, Endpoints,
 
 - `Source/TimeWarp.Nuru/NuruApp.cs` - Line 62: Where `EndpointResolver.Resolve()` is called
 - `Source/TimeWarp.Nuru/NuruAppBuilder.cs` - Line 144: Where `AddCommandLine(args)` is called
-- `Samples/Configuration/command-line-overrides.cs` - Demo sample that will work after fix
+- `samples/configuration/command-line-overrides.cs` - Demo sample that will work after fix
 - `.agent/workspace/claude/issue-75-analysis.md` - Detailed technical analysis
 
 ### Potential Future Enhancements
@@ -139,7 +139,7 @@ Command Line Args: ["run", "--FooOptions:Url=https://example.com", "--force"]
 
 ### Verification
 
-The implementation was verified with the [command-line-overrides.cs](../../../Samples/Configuration/command-line-overrides.cs) sample:
+The implementation was verified with the [command-line-overrides.cs](../../../samples/configuration/command-line-overrides.cs) sample:
 
 - ✅ Default configuration from settings file loads correctly
 - ✅ Single override: `--FooOptions:Url=https://override.example.com` works

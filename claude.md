@@ -84,7 +84,7 @@ dotnet run -c Release
   TimeWarp.Nuru.TestApp.Delegates/   # Direct routing test app
   TimeWarp.Nuru.TestApp.Mediator/    # Mediator routing test app
 /Benchmarks/                    # Performance benchmarks
-/Samples/                       # Example implementations
+/samples/                       # Example implementations
 /Scripts/                       # Build and utility scripts
 /kanban/                       # Task tracking
 ```
@@ -165,9 +165,9 @@ Tests are implemented as single-file C# applications (new in .NET 10). You can f
 
 ## Cocona Comparison Documentation
 
-When working with Cocona comparison documents in `/Samples/CoconaComparison/`:
-- Follow the template structure defined in `CoconaComparisonTemplate.md`
-- Check `CoconaComparisonUpdateTracking.md` for documents needing updates
+When working with Cocona comparison documents in `/samples/cocona-comparison/`:
+- Follow the template structure defined in `cocona-comparison-template.md`
+- Check `cocona-comparison-update-tracking.md` for documents needing updates
 - Ensure all comparison documents maintain consistent structure for better developer experience
 
 ## REPL Implementation Status: COMPLETE ✅
@@ -178,7 +178,7 @@ When working with Cocona comparison documents in `/Samples/CoconaComparison/`:
 - ✅ **Split Architecture**: `AddReplOptions()` in core `TimeWarp.Nuru`, `AddReplRoutes()` in REPL `TimeWarp.Nuru.Repl`
 - ✅ **Map Usage**: All REPL commands (`exit`, `quit`, `q`, `help`, `history`, `clear`, `cls`, `clear-history`) registered via `builder.Map()`
 - ✅ **Clean Separation**: Core configuration stays private, REPL routes in separate project
-- ✅ **Updated Sample**: Modified `Samples/ReplDemo/repl-basic-demo.cs` to demonstrate new `AddReplSupport()` API
+- ✅ **Updated Sample**: Modified `samples/repl-demo/repl-basic-demo.cs` to demonstrate new `AddReplSupport()` API
 - ✅ **All Builds Successful**: Both core and REPL projects compile without errors
 
 ### Testing Limitations:
@@ -189,7 +189,7 @@ When working with Cocona comparison documents in `/Samples/CoconaComparison/`:
 ### Files Modified:
 - `Source/TimeWarp.Nuru/NuruAppBuilder.cs` - Added `AddReplOptions()` method
 - `Source/TimeWarp.Nuru.Repl/NuruAppExtensions.cs` - Added `AddReplRoutes()` and updated `AddReplSupport()`
-- `Samples/ReplDemo/repl-basic-demo.cs` - Updated to use new API
+- `samples/repl-demo/repl-basic-demo.cs` - Updated to use new API
 - `claude.md` - Added testing limitations note
 
 The REPL Map implementation is **complete and functional**.

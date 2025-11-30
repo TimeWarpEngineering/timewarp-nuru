@@ -13,7 +13,7 @@ Port the Cocona Advanced.HelpTransformer sample to Nuru, demonstrating help mess
 - Implement custom help formatters
 - Transform help content dynamically
 - Create Overview.md comparing help transformation
-- Implementation location: `Samples/CoconaComparison/Advanced/help-transformer`
+- Implementation location: `samples/cocona-comparison/Advanced/help-transformer`
 
 ## Checklist
 

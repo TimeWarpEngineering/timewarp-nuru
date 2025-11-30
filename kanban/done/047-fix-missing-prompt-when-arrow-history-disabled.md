@@ -321,7 +321,7 @@ Source/TimeWarp.Nuru.Repl/Repl/
   - Multiple command prompt display
 
 **3. Demo Sample Created**
-- File: `Samples/ReplDemo/repl-prompt-fix-demo.cs`
+- File: `samples/repl-demo/repl-prompt-fix-demo.cs`
 - Interactive demo showcasing the fix
 - Demonstrates before/after behavior
 - Can be run manually for verification
@@ -372,7 +372,7 @@ Source/TimeWarp.Nuru.Repl/Repl/
 ### Files Modified
 - Source/TimeWarp.Nuru.Repl/Repl/ReplSession.cs (1 line added)
 - Tests/TimeWarp.Nuru.Repl.Tests/repl-22-prompt-display-no-arrow-history.cs (new file, 141 lines)
-- Samples/ReplDemo/repl-prompt-fix-demo.cs (new file, 35 lines)
+- samples/repl-demo/repl-prompt-fix-demo.cs (new file, 35 lines)
 
 ### Commits
 - d937dd0: Start task 047: Fix missing prompt when arrow history disabled

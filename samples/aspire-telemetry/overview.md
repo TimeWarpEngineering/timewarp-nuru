@@ -70,15 +70,15 @@ $env:OTEL_SERVICE_NAME = "nuru-aspire-sample"
 
 ```bash
 # Check telemetry status
-./Samples/AspireTelemetry/aspire-telemetry.cs status
+./samples/aspire-telemetry/aspire-telemetry.cs status
 
 # Execute commands to generate telemetry
-./Samples/AspireTelemetry/aspire-telemetry.cs greet "World"
-./Samples/AspireTelemetry/aspire-telemetry.cs work 500
-./Samples/AspireTelemetry/aspire-telemetry.cs fail "Test error"
+./samples/aspire-telemetry/aspire-telemetry.cs greet "World"
+./samples/aspire-telemetry/aspire-telemetry.cs work 500
+./samples/aspire-telemetry/aspire-telemetry.cs fail "Test error"
 
 # View help
-./Samples/AspireTelemetry/aspire-telemetry.cs --help
+./samples/aspire-telemetry/aspire-telemetry.cs --help
 ```
 
 ## Viewing Telemetry

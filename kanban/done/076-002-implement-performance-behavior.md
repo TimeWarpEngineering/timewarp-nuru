@@ -29,8 +29,8 @@ Updated both implementations to log elapsed time for ALL commands:
 - Slow commands (>500ms): `LogWarning` with elapsed time and threshold
 
 Files modified:
-- `Samples/PipelineMiddleware/pipeline-middleware.cs`
-- `Samples/UnifiedMiddleware/unified-middleware.cs`
+- `samples/pipeline-middleware/pipeline-middleware.cs`
+- `samples/unified-middleware/unified-middleware.cs`
 
 ## Notes
 

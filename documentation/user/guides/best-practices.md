@@ -379,7 +379,7 @@ Benefits:
 - **Clear errors** - Detailed validation messages from `OptionsValidationException`
 - **Works with** - DataAnnotations, custom validation, FluentValidation
 
-See **[configuration-validation.cs](../../../Samples/Configuration/configuration-validation.cs)** for complete examples.
+See **[configuration-validation.cs](../../../samples/configuration/configuration-validation.cs)** for complete examples.
 
 ## Logging
 

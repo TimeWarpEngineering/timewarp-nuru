@@ -13,7 +13,7 @@ Port the Cocona Advanced.Localization sample to Nuru, demonstrating internationa
 - Implement multi-language support
 - Use resource files for translations
 - Create Overview.md comparing i18n approaches
-- Implementation location: `Samples/CoconaComparison/Advanced/localization`
+- Implementation location: `samples/cocona-comparison/Advanced/localization`
 
 ## Checklist
 

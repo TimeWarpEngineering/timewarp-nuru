@@ -5,14 +5,14 @@ This demo demonstrates **all** `ReplOptions` configuration properties available 
 ## Running the Demo
 
 ```bash
-cd Samples/ReplDemo
+cd samples/repl-demo
 ./repl-options-showcase.cs
 ```
 
 Or:
 
 ```bash
-dotnet run Samples/ReplDemo/repl-options-showcase.cs
+dotnet run samples/repl-demo/repl-options-showcase.cs
 ```
 
 ## ReplOptions Properties Demonstrated

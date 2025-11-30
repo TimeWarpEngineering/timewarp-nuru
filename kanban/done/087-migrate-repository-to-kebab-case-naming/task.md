@@ -1,0 +1,49 @@
+# Migrate Repository To Kebab-Case Naming
+
+## Description
+
+Migrate the entire repository from PascalCase/mixed naming conventions to all-lowercase kebab-case file and directory naming, matching the standard established in timewarp-state repository.
+
+See analysis: `@.agent/workspace/kebab-case-migration-analysis-2025-11-30.md`
+
+## Requirements
+
+- All directories use lowercase with hyphens (e.g., `source/timewarp-nuru/`)
+- All C# files use kebab-case (e.g., `nuru-app-builder.cs`)
+- All markdown files use lowercase (e.g., `readme.md`)
+- Kanban tasks use hyphen format (e.g., `087-task-name.md`)
+- Project references updated in all .csproj files
+- Solution file updated with new paths
+- CI/CD pipeline paths updated
+- Preserve case for framework conventions (Directory.Build.props, *.razor, etc.)
+- Build and tests pass after migration
+
+## Checklist
+
+### Phase 1: Low Risk
+- [x] 087-001: Migrate Kanban directory structure
+- [x] 087-002: Migrate root-level files (readme, license, etc.)
+- [x] 087-003: Migrate documentation directory
+
+### Phase 2: Medium Risk
+- [x] 087-004: Migrate Samples directory
+- [x] 087-005: Migrate Scripts directory (no subtask file - scripts already migrated)
+- [x] 087-006: Migrate Assets and msbuild directories
+
+### Phase 3: High Risk
+- [x] 087-007: Migrate Source directory and update project references
+- [x] 087-008: Migrate Tests directory and update project references
+- [x] 087-009: Migrate Benchmarks directory
+- [x] 087-010: Update solution file and validate build
+- [x] 087-011: Update CI/CD pipeline and validate
+
+## Notes
+
+- Use `git mv` for all renames to preserve history
+- Commit after each subtask for easier rollback
+- Assembly names and NuGet package names remain PascalCase (only files/folders change)
+- Framework conventions to preserve:
+  - `Directory.Build.props`, `Directory.Packages.props`
+  - `*.razor` files (Blazor components)
+  - `_Imports.cs`, `_imports.razor`
+  - `Properties/launchSettings.json`

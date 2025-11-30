@@ -339,8 +339,8 @@ Debug: ✓ Matched route: 'deploy {env}'               // Final success
 This debugging system was shaped by **community feedback analysis** in:
 
 - **[Community Feedback System](../../analysis/Community-Feedback/)** - Structured feedback processing
-- **[API Feedback Analysis](../../analysis/Community-Feedback/001-API-Naming-ErrorHandling/)** - Debugger improvements from user feedback
-- **[Roslyn Analyzers](../../analysis/Community-Feedback/001-API-Naming-ErrorHandling/)** - Compilation-time debugging
+- **[API Feedback Analysis](../../community-feedback/001-api-naming-error-handling/)** - Debugger improvements from user feedback
+- **[Roslyn Analyzers](../../community-feedback/001-api-naming-error-handling/)** - Compilation-time debugging
 
 ### 🪲 Implementation Details
 - **[Logger Message Definitions](../../Source/TimeWarp.Nuru.Parsing/Logging/LoggerMessageDefinitions.cs)** - Complete message catalog

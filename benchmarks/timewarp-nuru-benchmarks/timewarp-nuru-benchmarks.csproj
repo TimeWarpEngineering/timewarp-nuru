@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>TimeWarp.Nuru.Benchmarks</AssemblyName>
+    <RootNamespace>TimeWarp.Nuru.Benchmarks</RootNamespace>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BenchmarkDotNet" />
+    <PackageReference Include="CliFx" />
+    <PackageReference Include="Cocona" />
+    <PackageReference Include="Cocona.Lite" />
+    <PackageReference Include="CommandLineParser" />
+    <PackageReference Include="ConsoleAppFramework" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+    <PackageReference Include="McMaster.Extensions.CommandLineUtils" />
+    <PackageReference Include="PowerArgs" />
+    <PackageReference Include="Spectre.Console.Cli" />
+    <PackageReference Include="System.CommandLine" />
+    <PackageReference Include="System.CommandLine.NamingConventionBinder" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="$(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj" />
+    <PackageReference Include="Mediator.Abstractions" />
+    <PackageReference Include="Mediator.SourceGenerator">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+</Project>

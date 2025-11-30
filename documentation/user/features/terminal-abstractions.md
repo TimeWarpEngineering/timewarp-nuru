@@ -461,4 +461,4 @@ using (TestTerminal terminal = new())
 
 - [Output Handling](output-handling.md) - stdout/stderr best practices
 - [Routing Patterns](routing.md) - Route syntax reference
-- [Testing Samples](../../../Samples/Testing/) - Complete testing examples
+- [Testing Samples](../../../samples/testing/) - Complete testing examples

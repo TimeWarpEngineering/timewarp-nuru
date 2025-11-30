@@ -61,6 +61,6 @@ Step-by-step learning paths:
 
 ## Related Documentation
 
-- **[Samples](../../Samples/)** - Complete working examples you can run
+- **[Samples](../../samples/)** - Complete working examples you can run
 - **[Developer Documentation](../developer/overview.md)** - For contributors to TimeWarp.Nuru
-- **[Cocona Comparison](../../Samples/CoconaComparison/)** - Migration guides from Cocona
+- **[Cocona Comparison](../../samples/cocona-comparison/)** - Migration guides from Cocona

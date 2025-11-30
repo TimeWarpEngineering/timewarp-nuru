@@ -51,7 +51,7 @@ Step-by-step tutorials for learning TimeWarp.Nuru.
 If you're new to TimeWarp.Nuru, start with:
 1. [Getting Started Guide](../getting-started.md) - Quick overview
 2. [Your First CLI App](first-cli-app.md) - Detailed walkthrough
-3. [Calculator Examples](../../../Samples/Calculator/) - Working code
+3. [Calculator Examples](../../../samples/calculator/) - Working code
 
 ## Tutorial vs Guide
 
@@ -63,4 +63,4 @@ If you're new to TimeWarp.Nuru, start with:
 - **[Getting Started](../getting-started.md)** - Quick start
 - **[Use Cases](../use-cases.md)** - Real-world patterns
 - **[Guides](../guides/)** - Task-focused documentation
-- **[Samples](../../../Samples/)** - Complete working examples
+- **[Samples](../../../samples/)** - Complete working examples

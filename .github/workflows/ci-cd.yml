@@ -5,10 +5,10 @@ on:
     branches:
       - master
     paths:
-      - 'Source/**'
-      - 'Samples/**'
-      - 'Tests/**'
-      - 'Scripts/**'
+      - 'source/**'
+      - 'samples/**'
+      - 'tests/**'
+      - 'scripts/**'
       - '.github/workflows/**'
       - 'Directory.Build.props'
       - 'Directory.Packages.props'
@@ -16,10 +16,10 @@ on:
     branches:
       - master
     paths:
-      - 'Source/**'
-      - 'Samples/**'
-      - 'Tests/**'
-      - 'Scripts/**'
+      - 'source/**'
+      - 'samples/**'
+      - 'tests/**'
+      - 'scripts/**'
       - '.github/workflows/**'
       - 'Directory.Build.props'
       - 'Directory.Packages.props'
@@ -52,18 +52,18 @@ jobs:
       - name: Build and Test
         run: |
           echo "Running build script..."
-          dotnet ${{ github.workspace }}/Scripts/Build.cs
+          dotnet ${{ github.workspace }}/scripts/build.cs
 
           echo "Running Nuru unit tests (lexer, parser, routing)..."
-          dotnet ${{ github.workspace }}/Tests/Scripts/run-nuru-tests.cs
+          dotnet ${{ github.workspace }}/tests/scripts/run-nuru-tests.cs
 
           echo "Running integration tests (Delegate vs Mediator)..."
-          cd Tests
+          cd tests
           ./test-both-versions.sh
 
       - name: Check if version already published (Releases only)
         if: github.event_name == 'release'
-        run: dotnet ${{ github.workspace }}/Scripts/CheckVersion.cs
+        run: dotnet ${{ github.workspace }}/scripts/check-version.cs
 
       - name: Publish to NuGet.org (Releases only)
         if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && github.event.inputs.version != '')
@@ -78,22 +78,25 @@ jobs:
           
           echo "Publishing version: $VERSION"
 
-          dotnet nuget push artifacts/packages/TimeWarp.Nuru.$VERSION.nupkg \
-            --api-key ${{ secrets.NUGET_API_KEY }} \
-            --source https://api.nuget.org/v3/index.json \
-            --skip-duplicate
-          dotnet nuget push artifacts/packages/TimeWarp.Nuru.Analyzers.$VERSION.nupkg \
-            --api-key ${{ secrets.NUGET_API_KEY }} \
-            --source https://api.nuget.org/v3/index.json \
-            --skip-duplicate
-          dotnet nuget push artifacts/packages/TimeWarp.Nuru.Logging.$VERSION.nupkg \
-            --api-key ${{ secrets.NUGET_API_KEY }} \
-            --source https://api.nuget.org/v3/index.json \
-            --skip-duplicate
-          dotnet nuget push artifacts/packages/TimeWarp.Nuru.Mcp.$VERSION.nupkg \
-            --api-key ${{ secrets.NUGET_API_KEY }} \
-            --source https://api.nuget.org/v3/index.json \
-            --skip-duplicate
+          # Explicit package list in dependency order - no globs
+          PACKAGES=(
+            "TimeWarp.Nuru.Core"
+            "TimeWarp.Nuru.Logging"
+            "TimeWarp.Nuru.Completion"
+            "TimeWarp.Nuru.Telemetry"
+            "TimeWarp.Nuru.Repl"
+            "TimeWarp.Nuru"
+            "TimeWarp.Nuru.Analyzers"
+            "TimeWarp.Nuru.Mcp"
+          )
+
+          for pkg in "${PACKAGES[@]}"; do
+            echo "Publishing $pkg..."
+            dotnet nuget push "artifacts/packages/${pkg}.$VERSION.nupkg" \
+              --api-key ${{ secrets.NUGET_API_KEY }} \
+              --source https://api.nuget.org/v3/index.json \
+              --skip-duplicate
+          done
         env:
           DOTNET_NUGET_SIGNATURE_VERIFICATION: false
 

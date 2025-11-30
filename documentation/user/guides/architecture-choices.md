@@ -350,4 +350,4 @@ NuruApp app = new NuruAppBuilder()
 - **[Getting Started](../getting-started.md)** - Quick start examples
 - **[Use Cases](../use-cases.md)** - Real-world scenarios
 - **[Performance](../reference/performance.md)** - Detailed benchmarks
-- **[Calculator Samples](../../../Samples/Calculator/)** - All three approaches demonstrated
+- **[Calculator Samples](../../../samples/calculator/)** - All three approaches demonstrated

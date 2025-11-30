@@ -1,0 +1,36 @@
+<Project>
+  <!-- Import parent Directory.Build.props -->
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+
+  <!-- Default package metadata (can be overridden in individual projects) -->
+  <PropertyGroup Label="Package Metadata">
+    <Version>3.0.0-beta.8</Version>
+    <Authors>Steven T. Cramer</Authors>
+    <RepositoryUrl>https://github.com/TimeWarpEngineering/timewarp-nuru</RepositoryUrl>
+    <PackageLicenseExpression>Unlicense</PackageLicenseExpression>
+    <PackageIcon>logo.png</PackageIcon>
+    <PackageReadmeFile>readme.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <PropertyGroup Label="MsBuild Packaging Defaults">
+    <IsPackable>true</IsPackable>
+    <PackageOutputPath>$(ArtifactsDirectory)packages/</PackageOutputPath>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+  </PropertyGroup>
+
+  <PropertyGroup Label="Source Link Settings">
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <IncludeSymbols>false</IncludeSymbols>
+    <DebugType>embedded</DebugType>
+  </PropertyGroup>
+
+  <ItemGroup Label="Shared Package Assets">
+    <None Include="$(RepositoryRoot)assets/logo.png" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+  <ItemGroup Label="Build Tasks">
+    <PackageReference Include="TimeWarp.Build.Tasks" />
+  </ItemGroup>
+
+</Project>

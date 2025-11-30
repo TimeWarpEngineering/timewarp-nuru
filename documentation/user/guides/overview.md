@@ -27,16 +27,16 @@ Patterns and conventions for maintainable CLI apps:
 - Performance optimization
 - Code structure
 
-### [Migration from Cocona](../../Samples/CoconaComparison/)
+### [Migration from Cocona](../../samples/cocona-comparison/)
 Migrate existing Cocona applications to TimeWarp.Nuru:
 - Feature comparison
 - Migration patterns
 - Code transformations
-- See Samples/CoconaComparison/ for detailed examples
+- See samples/cocona-comparison/ for detailed examples
 
 ## Related Documentation
 
 - **[Getting Started](../getting-started.md)** - Build your first app
 - **[Use Cases](../use-cases.md)** - Real-world scenarios
 - **[Features](../features/)** - Detailed feature documentation
-- **[Samples](../../../Samples/)** - Working code examples
+- **[Samples](../../../samples/)** - Working code examples

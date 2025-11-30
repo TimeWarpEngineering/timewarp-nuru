@@ -229,4 +229,4 @@ Ask with force refresh: "Get the latest mediator example (force refresh)"
 - **[Getting Started](../getting-started.md)** - Build your first app
 - **[Routing](../features/routing.md)** - Route pattern syntax
 - **[Analyzer](../features/analyzer.md)** - Compile-time validation
-- **[Examples](../../../Samples/)** - Working code samples
+- **[Examples](../../../samples/)** - Working code samples

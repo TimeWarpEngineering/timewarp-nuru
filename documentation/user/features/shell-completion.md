@@ -356,7 +356,7 @@ The completion script contains: `Debug Info Warning Error`
 - 🌐 May need network/database access
 - 🛠️ More complex to implement
 
-**Status:** Optional feature, see [Task 026](../../../Kanban/Backlog/026_Dynamic-Shell-Completion-Optional.md) if your use case requires runtime-computed completions.
+**Status:** Optional feature, see [Task 026](../../../kanban/backlog/026-dynamic-shell-completion-optional.md) if your use case requires runtime-computed completions.
 
 ## Troubleshooting
 
@@ -542,11 +542,11 @@ When you call `EnableStaticCompletion()`, it registers this hidden route:
 ## Related Documentation
 
 - **[Getting Started](../getting-started.md#shell-completion-tab-completion)** - Quick setup guide
-- **[Shell Completion Example](../../../Samples/ShellCompletionExample/)** - Complete working example
-- **[Task 026: Dynamic Completion](../../../Kanban/Backlog/026_Dynamic-Shell-Completion-Optional.md)** - Optional runtime-computed completions
+- **[Shell Completion Example](../../../samples/shell-completion-example/)** - Complete working example
+- **[Task 026: Dynamic Completion](../../../kanban/backlog/026-dynamic-shell-completion-optional.md)** - Optional runtime-computed completions
 
 ## Learn More
 
-- **Sample Application:** [Samples/ShellCompletionExample/](../../../Samples/ShellCompletionExample/)
+- **Sample Application:** [samples/shell-completion-example/](../../../samples/shell-completion-example/)
 - **Test Coverage:** [Tests/TimeWarp.Nuru.Completion.Tests/](../../../Tests/TimeWarp.Nuru.Completion.Tests/) (135 tests)
 - **Source Code:** [Source/TimeWarp.Nuru.Completion/](../../../Source/TimeWarp.Nuru.Completion/)

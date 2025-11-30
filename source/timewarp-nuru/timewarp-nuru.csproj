@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <AssemblyName>TimeWarp.Nuru</AssemblyName>
+    <RootNamespace>TimeWarp.Nuru</RootNamespace>
+    <Description>Route-based CLI framework for .NET - batteries included with telemetry, REPL, and shell completion</Description>
+    <PackageTags>cli;command-line;routing;framework;dotnet;console;repl;telemetry;completion</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Mediator abstractions - source generator must be added by end-user app -->
+    <PackageReference Include="Mediator.Abstractions" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Reference all extension packages for batteries-included experience -->
+    <ProjectReference Include="../timewarp-nuru-core/timewarp-nuru-core.csproj" />
+    <ProjectReference Include="../timewarp-nuru-logging/timewarp-nuru-logging.csproj" />
+    <ProjectReference Include="../timewarp-nuru-telemetry/timewarp-nuru-telemetry.csproj" />
+    <ProjectReference Include="../timewarp-nuru-repl/timewarp-nuru-repl.csproj" />
+    <ProjectReference Include="../timewarp-nuru-completion/timewarp-nuru-completion.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="$(RepositoryRoot)readme.md" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+</Project>

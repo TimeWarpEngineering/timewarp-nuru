@@ -150,18 +150,18 @@ NuruApp app = new NuruAppBuilder()
 
 ## 🌟 Working Examples
 
-**[Calculator Samples](Samples/Calculator/)** - Four complete implementations you can run now:
-- **[calc-createbuilder.cs](Samples/Calculator/calc-createbuilder.cs)** - ASP.NET Core-style API (recommended)
-- **[calc-delegate.cs](Samples/Calculator/calc-delegate.cs)** - Direct approach (pure performance)
-- **[calc-mediator.cs](Samples/Calculator/calc-mediator.cs)** - Mediator pattern (enterprise)
-- **[calc-mixed.cs](Samples/Calculator/calc-mixed.cs)** - Mixed approach (classic builder)
+**[Calculator Samples](samples/calculator/)** - Four complete implementations you can run now:
+- **[calc-createbuilder.cs](samples/calculator/calc-createbuilder.cs)** - ASP.NET Core-style API (recommended)
+- **[calc-delegate.cs](samples/calculator/calc-delegate.cs)** - Direct approach (pure performance)
+- **[calc-mediator.cs](samples/calculator/calc-mediator.cs)** - Mediator pattern (enterprise)
+- **[calc-mixed.cs](samples/calculator/calc-mixed.cs)** - Mixed approach (classic builder)
 
 ```bash
-./Samples/Calculator/calc-mixed.cs add 10 20        # Direct: fast
-./Samples/Calculator/calc-mixed.cs factorial 5      # Mediator: structured
+./samples/calculator/calc-mixed.cs add 10 20        # Direct: fast
+./samples/calculator/calc-mixed.cs factorial 5      # Mediator: structured
 ```
 
-**[Cocona Comparison](Samples/CoconaComparison/)** - Migration guides from Cocona
+**[Cocona Comparison](samples/cocona-comparison/)** - Migration guides from Cocona
 
 ## ⚡ Performance
 
@@ -223,7 +223,7 @@ Generate completion scripts for your shell:
 - ✅ Short option aliases (`-v`, `-f`)
 - ✅ All 4 major shells (bash, zsh, PowerShell, fish)
 
-**See [ShellCompletionExample](Samples/ShellCompletionExample/) for a complete working example.**
+**See [shell-completion-example](samples/shell-completion-example/) for a complete working example.**
 
 ## 🤝 Contributing
 
@@ -235,7 +235,7 @@ We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
 ## 📄 License
 
-This project is licensed under the Unlicense - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the Unlicense - see the [license](license) file for details.
 
 ---
 
@@ -243,6 +243,6 @@ This project is licensed under the Unlicense - see the [LICENSE](LICENSE) file f
 
 **Ready to build powerful CLI applications?**
 
-**[Get Started in 5 Minutes](documentation/user/getting-started.md)** • **[View Examples](Samples/Calculator/)** • **[Read the Docs](documentation/user/overview.md)**
+**[Get Started in 5 Minutes](documentation/user/getting-started.md)** • **[View Examples](samples/calculator/)** • **[Read the Docs](documentation/user/overview.md)**
 
 </div>

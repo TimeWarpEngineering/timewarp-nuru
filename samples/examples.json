@@ -5,7 +5,7 @@
     {
       "id": "basic",
       "name": "Mixed Calculator Example",
-      "description": "Calculator mixing Delegate and Mediator patterns - best of both worlds",
+      "description": "Calculator mixing Delegate and Mediator patterns. REQUIRES: Mediator.Abstractions + Mediator.SourceGenerator packages and services.AddMediator() for Mediator routes.",
       "path": "samples/calculator/calc-mixed.cs",
       "tags": ["basics", "routing", "getting-started", "calculator", "mixed"],
       "difficulty": "beginner"
@@ -21,7 +21,7 @@
     {
       "id": "mixed",
       "name": "Mixed Pattern Calculator",
-      "description": "Mixed approach combining delegate performance with mediator structure",
+      "description": "Mixed approach combining delegate performance with mediator structure. REQUIRES: Mediator.Abstractions + Mediator.SourceGenerator packages and services.AddMediator().",
       "path": "samples/calculator/calc-mixed.cs",
       "tags": ["calculator", "mixed", "delegate", "mediator"],
       "difficulty": "intermediate"
@@ -29,7 +29,7 @@
     {
       "id": "delegate",
       "name": "Delegate Calculator",
-      "description": "Pure delegate routing for maximum performance with no DI overhead",
+      "description": "Pure delegate routing - NO additional packages required beyond TimeWarp.Nuru. Maximum performance with no DI overhead.",
       "path": "samples/calculator/calc-delegate.cs",
       "tags": ["calculator", "delegate", "performance", "minimal"],
       "difficulty": "beginner"
@@ -37,7 +37,7 @@
     {
       "id": "mediator",
       "name": "Mediator Calculator",
-      "description": "Mediator pattern with DI for testability and enterprise patterns",
+      "description": "Mediator pattern with DI for testability. REQUIRES: Mediator.Abstractions + Mediator.SourceGenerator packages and services.AddMediator() in ConfigureServices.",
       "path": "samples/calculator/calc-mediator.cs",
       "tags": ["calculator", "mediator", "dependency-injection", "enterprise"],
       "difficulty": "intermediate"
@@ -45,7 +45,7 @@
     {
       "id": "hello-world",
       "name": "Hello World",
-      "description": "Simplest possible Nuru app - a single route with a greeting",
+      "description": "Simplest possible Nuru app - a single route with a greeting. NO additional packages required beyond TimeWarp.Nuru.",
       "path": "samples/hello-world/hello-world.cs",
       "tags": ["basics", "getting-started", "minimal"],
       "difficulty": "beginner"
@@ -197,7 +197,7 @@
     {
       "id": "pipeline-middleware",
       "name": "Mediator Pipeline Middleware",
-      "description": "Cross-cutting concerns with pipeline behaviors: telemetry, performance, logging, authorization, retry, and exception handling",
+      "description": "Cross-cutting concerns with pipeline behaviors: telemetry, performance, logging, authorization, retry, and exception handling. REQUIRES: Mediator.Abstractions + Mediator.SourceGenerator packages with options.PipelineBehaviors configuration.",
       "path": "samples/pipeline-middleware/pipeline-middleware.cs",
       "tags": ["pipeline", "middleware", "mediator", "behaviors", "cross-cutting-concerns", "telemetry", "performance", "enterprise"],
       "difficulty": "advanced"
@@ -205,7 +205,7 @@
     {
       "id": "unified-middleware",
       "name": "Unified Pipeline Middleware",
-      "description": "Pipeline behaviors for both delegate and Mediator routes - unified cross-cutting concerns",
+      "description": "Pipeline behaviors for both delegate and Mediator routes - unified cross-cutting concerns. REQUIRES: Mediator.Abstractions + Mediator.SourceGenerator packages with options.PipelineBehaviors configuration.",
       "path": "samples/unified-middleware/unified-middleware.cs",
       "tags": ["pipeline", "middleware", "delegate", "mediator", "unified", "cross-cutting-concerns"],
       "difficulty": "advanced"

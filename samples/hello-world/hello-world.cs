@@ -1,9 +1,11 @@
 #!/usr/bin/dotnet --
-#:project ../../Source/TimeWarp.Nuru.Core/TimeWarp.Nuru.Core.csproj
+// hello-world - Minimal CLI using delegate-based routing
+// Uses CreateSlimBuilder for lightweight delegate-only patterns (no DI, no Mediator)
+#:project ../../source/timewarp-nuru-core/timewarp-nuru-core.csproj
 
 using TimeWarp.Nuru;
 
-NuruCoreApp app = new NuruAppBuilder()
+NuruCoreApp app = NuruCoreApp.CreateSlimBuilder(args)
   .MapDefault(() => "Hello World")
   .Build();
 

@@ -18,11 +18,15 @@ MCP Builder Pattern Guidance Analysis - standardizing samples to prevent AI conf
 ## Checklist
 
 ### Implementation
-- [ ] Update `samples/hello-world/hello-world.cs` to use `NuruCoreApp.CreateSlimBuilder(args)`
-- [ ] Update `samples/calculator/calc-delegate.cs` to use `NuruCoreApp.CreateSlimBuilder(args)`
-- [ ] Add explanatory comments about builder choice (delegate = slim, mediator = full)
-- [ ] Verify both samples compile successfully
-- [ ] Verify both samples run correctly with expected output
+- [x] Update `samples/hello-world/hello-world.cs` to use `NuruCoreApp.CreateSlimBuilder(args)`
+- [x] Update `samples/calculator/calc-delegate.cs` to use `NuruCoreApp.CreateSlimBuilder(args)`
+- [x] Add explanatory comments about builder choice (delegate = slim, mediator = full)
+- [x] Verify both samples compile successfully
+- [x] Verify both samples run correctly with expected output
+
+### Additional Fixes
+- [x] Fixed incorrect `#:project` directive paths (case sensitivity issue: `Source` → `source`, `TimeWarp.Nuru.Core` → `timewarp-nuru-core`)
+- [x] Removed redundant `.AddAutoHelp()` from calc-delegate.cs (CreateSlimBuilder includes auto-help by default)
 
 ## Notes
 

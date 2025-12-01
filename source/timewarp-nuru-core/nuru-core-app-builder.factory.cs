@@ -12,13 +12,16 @@ public enum BuilderMode
   Empty,
 
   /// <summary>
-  /// Slim builder - lightweight with Configuration, auto-help, and logging infrastructure.
-  /// No DI container, Mediator, REPL, or Completion.
+  /// Slim builder - lightweight with auto-help enabled.
+  /// No DI container, Configuration, REPL, or Completion.
+  /// Use for simple delegate-only CLIs that don't need dependency injection.
   /// </summary>
   Slim,
 
   /// <summary>
-  /// Full builder - all features enabled including DI, Mediator, REPL, Completion.
+  /// Full builder - DI, Configuration, and auto-help enabled.
+  /// For Mediator support, install Mediator.Abstractions + Mediator.SourceGenerator packages
+  /// and call services.AddMediator() in ConfigureServices.
   /// Best for complex applications that need enterprise patterns.
   /// </summary>
   Full

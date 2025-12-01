@@ -17,11 +17,14 @@ MCP Builder Pattern Guidance Analysis - standardizing samples to prevent AI conf
 ## Checklist
 
 ### Implementation
-- [ ] Locate `BuilderMode.Full` enum in `source/timewarp-nuru-core/nuru-core-app-builder.factory.cs` (lines 21-24)
-- [ ] Update XML doc comment to remove incorrect "Mediator" mention
-- [ ] Add clarification about Mediator requiring explicit setup
-- [ ] Verify documentation builds correctly
-- [ ] Verify IntelliSense shows correct comment
+- [x] Locate `BuilderMode.Full` enum in `source/timewarp-nuru-core/nuru-core-app-builder.factory.cs` (lines 21-24)
+- [x] Update XML doc comment to remove incorrect "Mediator" mention
+- [x] Add clarification about Mediator requiring explicit setup
+- [x] Verify documentation builds correctly
+- [x] Verify IntelliSense shows correct comment
+
+### Additional changes
+- [x] Also fixed `BuilderMode.Slim` comment which incorrectly mentioned Mediator
 
 ## Notes
 

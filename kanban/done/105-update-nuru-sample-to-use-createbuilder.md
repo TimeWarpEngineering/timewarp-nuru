@@ -18,12 +18,15 @@ MCP Builder Pattern Guidance Analysis - standardizing samples to prevent AI conf
 ## Checklist
 
 ### Implementation
-- [ ] Update `samples/timewarp-nuru-sample/program.cs` to use `NuruApp.CreateBuilder(args)`
-- [ ] Add Mediator package references to .csproj if Map<TCommand> is used
-- [ ] Add canonical ConfigureServices pattern for Mediator commands
-- [ ] Add explanatory comments about builder choice
-- [ ] Verify sample compiles successfully
-- [ ] Verify sample runs correctly with expected output
+- [x] Update `samples/timewarp-nuru-sample/program.cs` to use `NuruApp.CreateBuilder(args)`
+- [x] Add Mediator package references to .csproj if Map<TCommand> is used (already present)
+- [x] Add canonical ConfigureServices pattern for Mediator commands
+- [x] Add explanatory comments about builder choice
+- [x] Verify sample compiles successfully
+- [x] Verify sample runs correctly with expected output
+
+### Additional changes
+- [x] Converted from multi-statement builder pattern to fluent chain pattern
 
 ## Notes
 

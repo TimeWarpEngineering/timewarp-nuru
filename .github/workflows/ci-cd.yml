@@ -49,11 +49,14 @@ jobs:
       - name: Create artifacts directory
         run: mkdir -p artifacts/packages
 
-      - name: Build and Test
+      - name: Build
         run: |
           echo "Running build script..."
           dotnet ${{ github.workspace }}/scripts/build.cs
 
+      - name: Test
+        if: github.event_name != 'release'
+        run: |
           echo "Running Nuru unit tests (lexer, parser, routing)..."
           dotnet ${{ github.workspace }}/tests/scripts/run-nuru-tests.cs
 

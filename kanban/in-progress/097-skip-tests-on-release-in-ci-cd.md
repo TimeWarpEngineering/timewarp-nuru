@@ -15,9 +15,9 @@ Split the "Build and Test" step into separate "Build" and "Test" steps, with the
 ## Checklist
 
 ### Implementation
-- [ ] Split "Build and Test" step into separate "Build" and "Test" steps
-- [ ] Add `if: github.event_name != 'release'` condition to Test step
-- [ ] Verify workflow syntax is valid
+- [x] Split "Build and Test" step into separate "Build" and "Test" steps
+- [x] Add `if: github.event_name != 'release'` condition to Test step
+- [x] Verify workflow syntax is valid
 
 ## Notes
 

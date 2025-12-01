@@ -18,13 +18,17 @@ MCP Builder Pattern Guidance Analysis - standardizing samples to prevent AI conf
 ## Checklist
 
 ### Implementation
-- [ ] Update `samples/logging/console-logging.cs` to use `NuruApp.CreateBuilder(args)`
-- [ ] Update `samples/logging/serilog-logging.cs` to use `NuruApp.CreateBuilder(args)`
-- [ ] Add Mediator package directives where Map<TCommand> is used
-- [ ] Add canonical ConfigureServices pattern for Mediator samples
-- [ ] Add explanatory comments about builder choice and logging integration
-- [ ] Verify both samples compile successfully
-- [ ] Verify both samples run correctly with expected logging output
+- [x] Update `samples/logging/console-logging.cs` to use `NuruApp.CreateBuilder(args)`
+- [x] Update `samples/logging/serilog-logging.cs` to use `NuruApp.CreateBuilder(args)`
+- [x] Add Mediator package directives where Map<TCommand> is used
+- [x] Add canonical ConfigureServices pattern for Mediator samples
+- [x] Add explanatory comments about builder choice and logging integration
+- [x] Verify both samples compile successfully
+- [x] Verify both samples run correctly with expected logging output
+
+### Additional changes
+- [x] Fixed incorrect project paths (`Source/TimeWarp.Nuru` → `source/timewarp-nuru`)
+- [x] Simplified console-logging.cs by removing commented-out alternative examples
 
 ## Notes
 

@@ -51,4 +51,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support for both direct delegate and mediator pattern approaches
 - Basic route pattern matching with parameters and options
 - Type conversion for common types (int, double, bool, DateTime, etc.)
-- Integration with TimeWarp.Mediator for DI scenarios
+- Initial mediator support for DI scenarios (later migrated to martinothamar/Mediator)

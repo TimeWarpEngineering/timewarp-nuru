@@ -82,7 +82,7 @@ public class ExampleRetrievalTests
 
     // Assert
     result.Length.ShouldBeGreaterThan(100);
-    result.ShouldContain("ConsoleLogging.cs");
+    result.ShouldContain("console-logging.cs");
 
     await Task.CompletedTask;
   }
@@ -94,7 +94,7 @@ public class ExampleRetrievalTests
 
     // Assert
     result.Length.ShouldBeGreaterThan(100);
-    result.ShouldContain("SerilogLogging.cs");
+    result.ShouldContain("serilog-logging.cs");
 
     await Task.CompletedTask;
   }

@@ -116,7 +116,7 @@ internal static class GeneratedRouteInvokers
 
 ## Future Considerations
 
-- Coordinate with TimeWarp.Mediator for unified approach
+- Coordinate with martinothamar/Mediator for unified approach
 - Consider incremental generators for better IDE performance
 - Support for generic delegates
 - Integration with trimming annotations

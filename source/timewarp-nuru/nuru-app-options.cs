@@ -5,7 +5,7 @@ namespace TimeWarp.Nuru;
 /// </summary>
 /// <remarks>
 /// <para>
-/// This class provides a way to configure all auto-wired extensions (telemetry, REPL, interactive routes)
+/// This class provides a way to configure all auto-wired extensions (telemetry, REPL, shell completion, interactive routes)
 /// when using <see cref="NuruApp.CreateBuilder"/>. Without this, users would need to use
 /// <see cref="NuruCoreApp.CreateSlimBuilder"/> and manually wire everything to avoid duplicate route warnings.
 /// </para>
@@ -22,6 +22,10 @@ namespace TimeWarp.Nuru;
 ///   ConfigureTelemetry = options =>
 ///   {
 ///     options.ServiceName = "my-app";
+///   },
+///   ConfigureCompletion = registry =>
+///   {
+///     registry.RegisterForParameter("env", new StaticCompletionSource("dev", "staging", "prod"));
 ///   },
 ///   InteractiveRoutePatterns = "--interactive,-i,--repl"
 /// })
@@ -42,6 +46,19 @@ public sealed class NuruAppOptions
   /// If null, telemetry uses default options.
   /// </summary>
   public Action<NuruTelemetryOptions>? ConfigureTelemetry { get; set; }
+
+  /// <summary>
+  /// Action to configure shell completion sources.
+  /// If null, dynamic completion uses default (no custom sources).
+  /// </summary>
+  /// <remarks>
+  /// Shell completion (Tab-completion in bash, zsh, pwsh, fish) is distinct from REPL tab-completion:
+  /// <list type="bullet">
+  /// <item><description>Shell completion: External process - shell invokes the CLI app to get completions before command execution</description></item>
+  /// <item><description>REPL completion: In-process - the running REPL handles Tab keypresses internally</description></item>
+  /// </list>
+  /// </remarks>
+  public Action<CompletionSourceRegistry>? ConfigureCompletion { get; set; }
 
   /// <summary>
   /// Comma-separated route patterns that trigger interactive REPL mode.

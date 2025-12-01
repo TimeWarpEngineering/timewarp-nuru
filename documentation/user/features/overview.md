@@ -59,6 +59,14 @@ Testable I/O and colored output:
 - Lightweight Spectre.Console alternative
 - Full CSS named colors support
 
+### [Terminal Widgets](widgets.md)
+Built-in widgets for formatted terminal output:
+- **Rule**: Horizontal dividers with optional centered text
+- **Panel**: Bordered boxes with headers and content
+- **Table**: Columnar data with alignment and borders
+- Fluent builder pattern for all widgets
+- Full AOT and testability support
+
 ## Feature Highlights
 
 | Feature | Benefit | Learn More |
@@ -69,6 +77,7 @@ Testable I/O and colored output:
 | 📖 Auto-Help | No manual documentation | [Auto-Help](auto-help.md) |
 | ⌨️ Shell Completion | Tab completion in all shells | [Shell Completion](shell-completion.md) |
 | 🎨 Colored Output | Testable ANSI colors | [Terminal Abstractions](terminal-abstractions.md) |
+| 📊 Terminal Widgets | Tables, panels, rules | [Widgets](widgets.md) |
 | 🔒 Type Safety | Strong typing throughout | [Routing](routing.md#type-safety) |
 | 🚀 Native AOT | Fast startup, small binaries | [Deployment](../guides/deployment.md) |
 

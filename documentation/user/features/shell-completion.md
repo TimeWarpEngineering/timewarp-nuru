@@ -13,77 +13,147 @@ TimeWarp.Nuru.Completion generates shell-specific completion scripts from your r
 - File and directory paths
 
 **Key Benefits:**
-- ⚡ **One line to enable**: `.EnableStaticCompletion()`
+- ⚡ **Zero configuration with CreateBuilder**: Dynamic completion enabled by default
 - 🎯 **Automatic**: Generates from your existing route definitions
 - 🌐 **Cross-platform**: Supports 4 major shells
-- 📦 **Static**: No runtime overhead, completions computed at build time
+- 🔄 **Dynamic by default**: Runtime-computed completions for databases, APIs, config
 - 🔒 **Type-aware**: Knows parameter types and suggests appropriately
 
 ## Quick Start
 
-### 1. Install the Package
+### Using CreateBuilder (Recommended)
 
-```bash
-dotnet add package TimeWarp.Nuru.Completion
+With `NuruApp.CreateBuilder()`, dynamic shell completion is **enabled by default**. No additional code needed!
+
+```csharp
+using TimeWarp.Nuru;
+
+// Dynamic completion is automatically enabled
+NuruAppBuilder builder = NuruApp.CreateBuilder(args);
+
+builder.Map("deploy {env} --version {tag}", (string env, string tag) => Deploy(env, tag));
+builder.Map("status", () => ShowStatus());
+
+NuruCoreApp app = builder.Build();
+return await app.RunAsync(args);
 ```
 
-### 2. Enable Shell Completion
+This automatically registers these routes:
+- `__complete {index:int} {*words}` - Dynamic completion callback for shells
+- `--generate-completion {shell}` - Generate shell-specific completion scripts  
+- `--install-completion {shell?}` - Install completion to shell config files
+- `--install-completion --dry-run {shell?}` - Preview installation
+
+### Customizing Completion Sources
+
+Use `ConfigureCompletion` to register custom completion sources:
+
+```csharp
+NuruAppBuilder builder = NuruApp.CreateBuilder(args, new NuruAppOptions
+{
+    ConfigureCompletion = registry =>
+    {
+        // Complete "env" parameter from a list
+        registry.RegisterForParameter("env", new StaticCompletionSource("dev", "staging", "prod"));
+        
+        // Complete "tag" parameter dynamically (could query Git, Docker registry, etc.)
+        registry.RegisterForParameter("tag", new TagCompletionSource());
+    }
+});
+```
+
+### Using SlimBuilder (Manual Setup)
+
+If you prefer explicit control or use `CreateSlimBuilder()`:
 
 ```csharp
 using TimeWarp.Nuru;
 using TimeWarp.Nuru.Completion;
 
-NuruApp app = new NuruAppBuilder()
-    .Map("deploy {env} --version {tag}", (string env, string tag) => Deploy(env, tag))
-    .Map("status", () => ShowStatus())
-    .EnableStaticCompletion()  // ← Add this one line
-    .Build();
+NuruAppBuilder builder = NuruCoreApp.CreateSlimBuilder();
 
+builder.Map("deploy {env} --version {tag}", (string env, string tag) => Deploy(env, tag));
+builder.Map("status", () => ShowStatus());
+
+// Manually enable completion
+builder.EnableDynamicCompletion();  // Or: builder.EnableStaticCompletion()
+
+NuruCoreApp app = builder.Build();
 return await app.RunAsync(args);
 ```
 
-### 3. Generate Completion Script
+### 3. Install Shell Completion
 
-After building your application:
+#### Automatic Installation (Recommended)
+
+The easiest way to install completion - single command, auto-detects your shell:
 
 ```bash
-# Generate completion for your shell
-./myapp --generate-completion bash   # For bash
-./myapp --generate-completion zsh    # For zsh
-./myapp --generate-completion pwsh   # For PowerShell
-./myapp --generate-completion fish   # For fish
+# Auto-detect shell and install
+./myapp --install-completion
+
+# Or specify shell explicitly
+./myapp --install-completion bash
+./myapp --install-completion zsh
+./myapp --install-completion fish
+./myapp --install-completion pwsh
+
+# Preview what will be installed (dry-run)
+./myapp --install-completion --dry-run
 ```
 
-### 4. Install the Script
+**Installation Paths:**
 
-#### Bash (Linux/macOS)
+| Shell | Path | Auto-loads? |
+|-------|------|-------------|
+| **Bash** | `~/.local/share/bash-completion/completions/<appname>` | ✅ Yes |
+| **Fish** | `~/.config/fish/completions/<appname>.fish` | ✅ Yes |
+| **Zsh** | `~/.local/share/zsh/site-functions/_<appname>` | ⚠️ One-time fpath setup |
+| **PowerShell** | `~/.local/share/nuru/completions/<appname>.ps1` | ⚠️ One-time profile setup |
+
+#### Manual Installation (Alternative)
+
+If you prefer manual control, generate and install scripts yourself:
+
+##### Bash (Linux/macOS)
 
 ```bash
-# Append to your .bashrc
+# Option 1: Source directly (temporary)
+source <(./myapp --generate-completion bash)
+
+# Option 2: Append to profile (permanent)
 ./myapp --generate-completion bash >> ~/.bashrc
 source ~/.bashrc
 ```
 
-#### Zsh (macOS/Linux)
+##### Zsh (macOS/Linux)
 
 ```bash
-# Append to your .zshrc
-./myapp --generate-completion zsh >> ~/.zshrc
-source ~/.zshrc
+# Option 1: Source directly (temporary)
+source <(./myapp --generate-completion zsh)
+
+# Option 2: Write to file (permanent)
+mkdir -p ~/.zsh/completions
+./myapp --generate-completion zsh > ~/.zsh/completions/_myapp
+# Add to ~/.zshrc: fpath=(~/.zsh/completions $fpath) && autoload -Uz compinit && compinit
 ```
 
-#### PowerShell (Windows)
+##### PowerShell (Windows/macOS/Linux)
 
 ```powershell
-# Append to your PowerShell profile
+# Option 1: Invoke directly (temporary)
+& ./myapp --generate-completion pwsh | Out-String | Invoke-Expression
+
+# Option 2: Append to profile (permanent)
 ./myapp --generate-completion pwsh >> $PROFILE
 . $PROFILE
 ```
 
-#### Fish (Linux/macOS)
+##### Fish (Linux/macOS)
 
 ```bash
-# Create completion file in fish config
+# Fish auto-loads from this directory
+mkdir -p ~/.config/fish/completions
 ./myapp --generate-completion fish > ~/.config/fish/completions/myapp.fish
 ```
 
@@ -316,47 +386,75 @@ Fish completion uses the declarative `complete` command:
 
 ## Static vs Dynamic Completion
 
-TimeWarp.Nuru.Completion provides **static completion** by default:
+`NuruApp.CreateBuilder()` enables **dynamic completion** by default. You can also choose static completion for simpler use cases.
 
-### Static Completion (Current Implementation)
+### Dynamic Completion (Default with CreateBuilder)
 
-**All completion candidates are known at build time:**
+**Runtime-computed completion candidates:**
+- Query databases, APIs, configuration services at Tab-press time
+- Context-aware suggestions based on previous arguments
+- Custom completion sources for any parameter
+
+**Advantages:**
+- 🔄 **Live data**: Completions reflect current state
+- 🎯 **Context-aware**: Different suggestions based on previous args
+- 🛠️ **Extensible**: Register custom completion sources
+
+**Performance:** AOT-compiled apps have ~7-10ms invocation time, imperceptible to users.
+
+**Example:**
+
+```csharp
+NuruAppBuilder builder = NuruApp.CreateBuilder(args, new NuruAppOptions
+{
+    ConfigureCompletion = registry =>
+    {
+        // Register custom completion source for environments
+        registry.RegisterForParameter("env", new EnvironmentCompletionSource());
+    }
+});
+
+builder.Map("deploy {env}", (string env) => Deploy(env));
+```
+
+When you press Tab, the shell calls your app via `__complete`, which queries your completion source.
+
+### Static Completion (Opt-in)
+
+**All completion candidates known at build time:**
 - Command names from route definitions
 - Option names from route patterns
 - Enum values from parameter types
 - File paths (delegated to shell)
 
 **Advantages:**
-- ⚡ Instant (0ms latency)
+- ⚡ Instant (0ms latency, no subprocess call)
 - 🔒 No runtime dependencies
 - 🎯 Works offline
-- ✅ Covers 90%+ of use cases
+- ✅ Sufficient for many use cases
 
 **Example:**
 
 ```csharp
 public enum LogLevel { Debug, Info, Warning, Error }
 
+NuruAppBuilder builder = NuruCoreApp.CreateSlimBuilder();
 builder.Map("log --level {level}", (LogLevel level) => SetLogLevel(level));
-builder.EnableStaticCompletion();
+builder.EnableStaticCompletion();  // Generates static completion with enum values
 ```
 
 The completion script contains: `Debug Info Warning Error`
 
-### Dynamic Completion (Optional Enhancement)
+### When to Choose Each
 
-**Runtime-computed completion candidates:**
-- Environment names from a configuration service
-- Database record IDs from a query
-- Context-aware suggestions based on previous arguments
-
-**Trade-offs:**
-- ⏱️ Slower (subprocess call on every Tab press)
-- 🔄 Requires app to be executable at completion time
-- 🌐 May need network/database access
-- 🛠️ More complex to implement
-
-**Status:** Optional feature, see [Task 026](../../../kanban/backlog/026-dynamic-shell-completion-optional.md) if your use case requires runtime-computed completions.
+| Use Case | Recommended |
+|----------|-------------|
+| Simple CLI with enum parameters | Static |
+| Need database/API lookups | Dynamic |
+| Offline-only environments | Static |
+| Context-aware completions | Dynamic |
+| Minimal app startup time | Static |
+| Complex enterprise CLIs | Dynamic |
 
 ## Troubleshooting
 
@@ -505,39 +603,62 @@ builder.Map("deploy --verbose", (bool verbose) => Deploy(verbose));
 
 ## API Reference
 
+### NuruAppOptions.ConfigureCompletion
+
+Configure dynamic completion sources when using `CreateBuilder()`:
+
+```csharp
+public Action<CompletionSourceRegistry>? ConfigureCompletion { get; set; }
+```
+
+**Example:**
+
+```csharp
+NuruAppBuilder builder = NuruApp.CreateBuilder(args, new NuruAppOptions
+{
+    ConfigureCompletion = registry =>
+    {
+        registry.RegisterForParameter("env", new StaticCompletionSource("dev", "staging", "prod"));
+        registry.RegisterForType(typeof(MyEnum), new EnumCompletionSource<MyEnum>());
+    }
+});
+```
+
+### EnableDynamicCompletion()
+
+Manually enable dynamic completion (called automatically by `CreateBuilder()`):
+
+```csharp
+public NuruAppBuilder EnableDynamicCompletion(
+    string? appName = null,
+    Action<CompletionSourceRegistry>? configure = null)
+```
+
+**Parameters:**
+- `appName` (optional): Application name for completion functions. Defaults to executable name.
+- `configure` (optional): Action to register custom completion sources.
+
+**Registers these routes:**
+- `__complete {index:int} {*words}` - Callback for dynamic completion
+- `--generate-completion {shell}` - Generate shell completion scripts
+- `--install-completion {shell?}` - Install completion to shell config
+- `--install-completion --dry-run {shell?}` - Preview installation
+
 ### EnableStaticCompletion()
 
-Enables shell completion support by registering the `--generate-completion` route:
+Enable static completion (simpler, no runtime callbacks):
 
 ```csharp
 public NuruAppBuilder EnableStaticCompletion(string? appName = null)
 ```
 
 **Parameters:**
-- `appName` (optional): The application name used in completion functions. If not provided, uses the executable name.
+- `appName` (optional): Application name for completion functions. Defaults to executable name.
 
-**Returns:** The builder instance for method chaining.
-
-**Example:**
-
-```csharp
-NuruAppBuilder builder = new();
-builder.EnableStaticCompletion();  // Uses executable name
-// or
-builder.EnableStaticCompletion("myapp");  // Explicit name
-```
-
-### Generated Route
-
-When you call `EnableStaticCompletion()`, it registers this hidden route:
-
-```csharp
-"--generate-completion {shell}"
-```
+**Registers this route:**
+- `--generate-completion {shell}` - Generate static shell completion scripts
 
 **Shell parameter values:** `bash`, `zsh`, `pwsh`, `fish`
-
-**Output:** Complete shell completion script to stdout
 
 ## Related Documentation
 

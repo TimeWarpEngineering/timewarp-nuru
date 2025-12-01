@@ -189,7 +189,7 @@ public class CompletionScriptGenerator
   private static string LoadTemplate(string templateName)
   {
     Assembly assembly = typeof(CompletionScriptGenerator).Assembly;
-    string resourceName = $"TimeWarp.Nuru.Completion.Completion.Templates.{templateName}";
+    string resourceName = $"TimeWarp.Nuru.Completion.completion.templates.{templateName}";
 
     using Stream? stream = assembly.GetManifestResourceStream(resourceName);
     if (stream is null)

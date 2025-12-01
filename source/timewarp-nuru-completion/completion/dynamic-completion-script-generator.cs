@@ -8,10 +8,10 @@ using System.Reflection;
 /// </summary>
 internal static class DynamicCompletionScriptGenerator
 {
-  private const string BashTemplateName = "TimeWarp.Nuru.Completion.Completion.Templates.bash-completion-dynamic.sh";
-  private const string ZshTemplateName = "TimeWarp.Nuru.Completion.Completion.Templates.zsh-completion-dynamic.zsh";
-  private const string PwshTemplateName = "TimeWarp.Nuru.Completion.Completion.Templates.pwsh-completion-dynamic.ps1";
-  private const string FishTemplateName = "TimeWarp.Nuru.Completion.Completion.Templates.fish-completion-dynamic.fish";
+  private const string BashTemplateName = "TimeWarp.Nuru.Completion.completion.templates.bash-completion-dynamic.sh";
+  private const string ZshTemplateName = "TimeWarp.Nuru.Completion.completion.templates.zsh-completion-dynamic.zsh";
+  private const string PwshTemplateName = "TimeWarp.Nuru.Completion.completion.templates.pwsh-completion-dynamic.ps1";
+  private const string FishTemplateName = "TimeWarp.Nuru.Completion.completion.templates.fish-completion-dynamic.fish";
 
   /// <summary>
   /// Generates a Bash completion script.

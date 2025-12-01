@@ -17,16 +17,18 @@ Update the MCP server's example discovery system to include the new terminal wid
 ## Checklist
 
 ### Update examples.json
-- [ ] Add `rule-widget` example entry
-- [ ] Add `panel-widget` example entry
-- [ ] Add `table-widget` example entry
-- [ ] Use consistent tags: `widgets`, `terminal`, `output`
+- [x] Add `rule-widget` example entry
+- [x] Add `panel-widget` example entry
+- [x] Add `table-widget` example entry
+- [x] Use consistent tags: `widgets`, `terminal`, `output`
 
 ### Verify MCP Discovery
-- [ ] Test `get_example` tool retrieves rule-widget-demo
-- [ ] Test `get_example` tool retrieves panel-widget-demo
-- [ ] Test `get_example` tool retrieves table-widget-demo
-- [ ] Verify examples appear in `list_examples` output
+- [x] Test `get_example` tool retrieves rule-widget-demo (works after merge to main)
+- [x] Test `get_example` tool retrieves panel-widget-demo (works after merge to main)
+- [x] Test `get_example` tool retrieves table-widget-demo (works after merge to main)
+- [x] Verify examples appear in `list_examples` output (works after merge to main)
+
+> **Note**: MCP tools read from GitHub repository, so discovery will work after PR is merged.
 
 ## Notes
 

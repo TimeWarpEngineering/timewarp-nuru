@@ -18,21 +18,21 @@ Create comprehensive documentation for the new terminal widget system (Rule, Pan
 ## Checklist
 
 ### New Documentation
-- [ ] Create `documentation/user/features/widgets.md`
-  - [ ] Overview of widget system
-  - [ ] Rule widget documentation with examples
-  - [ ] Panel widget documentation with examples
-  - [ ] Table widget documentation with examples
-  - [ ] API reference for all widget classes
-  - [ ] Border/line style reference tables
+- [x] Create `documentation/user/features/widgets.md`
+  - [x] Overview of widget system
+  - [x] Rule widget documentation with examples
+  - [x] Panel widget documentation with examples
+  - [x] Table widget documentation with examples
+  - [x] API reference for all widget classes
+  - [x] Border/line style reference tables
 
 ### Update Existing Documentation
-- [ ] Update `documentation/user/features/terminal-abstractions.md`
-  - [ ] Fix line ~395: "Tables/Progress: Not included" → now included
-  - [ ] Add reference to new widgets.md
-  - [ ] Update Spectre.Console comparison table
-- [ ] Update `documentation/user/features/overview.md`
-  - [ ] Add "Terminal Widgets" section with link to widgets.md
+- [x] Update `documentation/user/features/terminal-abstractions.md`
+  - [x] Fix line ~395: "Tables/Progress: Not included" → now included
+  - [x] Add reference to new widgets.md
+  - [x] Update Spectre.Console comparison table
+- [x] Update `documentation/user/features/overview.md`
+  - [x] Add "Terminal Widgets" section with link to widgets.md
 
 ## Notes
 

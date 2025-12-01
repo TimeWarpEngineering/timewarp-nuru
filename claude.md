@@ -73,7 +73,7 @@ dotnet run -c Release
 
 2. **Mediator Pattern** (Enterprise patterns)
    - Full DI support via Microsoft.Extensions.DependencyInjection
-   - TimeWarp.Mediator integration
+   - Uses martinothamar/Mediator (source-generator based, AOT-friendly)
    - Best for complex business logic
 
 ## Project Structure

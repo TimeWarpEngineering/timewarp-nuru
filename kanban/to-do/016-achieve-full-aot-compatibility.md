@@ -189,7 +189,7 @@ Two options:
 ## Dependencies
 
 - Coordinate with Task 008 (Source Generators for Reflection-Free Routing)
-- Consider impact on TimeWarp.Mediator integration
+- Consider impact on martinothamar/Mediator integration
 - Update documentation and samples
 
 ## References

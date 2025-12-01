@@ -8,49 +8,49 @@ using TimeWarp.Nuru;
 // Get a terminal instance
 ITerminal terminal = NuruTerminal.Default;
 
-Console.WriteLine();
-Console.WriteLine("Rule Widget Demo".Cyan().Bold());
-Console.WriteLine("Demonstrates horizontal divider lines with optional centered text");
-Console.WriteLine();
+terminal.WriteLine();
+terminal.WriteLine("Rule Widget Demo".Cyan().Bold());
+terminal.WriteLine("Demonstrates horizontal divider lines with optional centered text");
+terminal.WriteLine();
 
 // Simple horizontal line
-Console.WriteLine("1. Simple Rule (no title):");
+terminal.WriteLine("1. Simple Rule (no title):");
 terminal.WriteRule();
-Console.WriteLine();
+terminal.WriteLine();
 
 // Rule with centered title
-Console.WriteLine("2. Rule with centered title:");
+terminal.WriteLine("2. Rule with centered title:");
 terminal.WriteRule("Section Title");
-Console.WriteLine();
+terminal.WriteLine();
 
 // Rule with styled title
-Console.WriteLine("3. Rule with styled title:");
+terminal.WriteLine("3. Rule with styled title:");
 terminal.WriteRule("Results".Cyan().Bold());
-Console.WriteLine();
+terminal.WriteLine();
 
 // Different line styles
-Console.WriteLine("4. Different line styles:");
-Console.WriteLine();
-Console.WriteLine("   Thin (default):");
+terminal.WriteLine("4. Different line styles:");
+terminal.WriteLine();
+terminal.WriteLine("   Thin (default):");
 terminal.WriteRule("Thin Style", LineStyle.Thin);
-Console.WriteLine();
-Console.WriteLine("   Doubled:");
+terminal.WriteLine();
+terminal.WriteLine("   Doubled:");
 terminal.WriteRule("Doubled Style", LineStyle.Doubled);
-Console.WriteLine();
-Console.WriteLine("   Heavy:");
+terminal.WriteLine();
+terminal.WriteLine("   Heavy:");
 terminal.WriteRule("Heavy Style", LineStyle.Heavy);
-Console.WriteLine();
+terminal.WriteLine();
 
 // Fluent builder API
-Console.WriteLine("5. Fluent builder API:");
+terminal.WriteLine("5. Fluent builder API:");
 terminal.WriteRule(rule => rule
     .Title("Configuration")
     .Style(LineStyle.Doubled)
     .Color(AnsiColors.Cyan));
-Console.WriteLine();
+terminal.WriteLine();
 
 // Colored rules
-Console.WriteLine("6. Colored rules:");
+terminal.WriteLine("6. Colored rules:");
 terminal.WriteRule(rule => rule
     .Title("Success".Green())
     .Color(AnsiColors.Green));
@@ -62,10 +62,10 @@ terminal.WriteRule(rule => rule
 terminal.WriteRule(rule => rule
     .Title("Error".Red())
     .Color(AnsiColors.Red));
-Console.WriteLine();
+terminal.WriteLine();
 
 // Pre-configured rule
-Console.WriteLine("7. Pre-configured Rule object:");
+terminal.WriteLine("7. Pre-configured Rule object:");
 Rule customRule = new()
 {
   Title = "Custom Configuration",
@@ -73,28 +73,28 @@ Rule customRule = new()
   Color = AnsiColors.Magenta
 };
 terminal.WriteRule(customRule);
-Console.WriteLine();
+terminal.WriteLine();
 
 // Practical example
-Console.WriteLine("8. Practical example - CLI output sections:");
-Console.WriteLine();
+terminal.WriteLine("8. Practical example - CLI output sections:");
+terminal.WriteLine();
 
 terminal.WriteRule("Build Output");
-Console.WriteLine("  Compiling project...");
-Console.WriteLine("  Build succeeded.");
-Console.WriteLine();
+terminal.WriteLine("  Compiling project...");
+terminal.WriteLine("  Build succeeded.");
+terminal.WriteLine();
 
 terminal.WriteRule("Test Results", LineStyle.Doubled);
-Console.WriteLine("  ✓ 42 tests passed");
-Console.WriteLine("  ✗ 0 tests failed");
-Console.WriteLine();
+terminal.WriteLine("  ✓ 42 tests passed");
+terminal.WriteLine("  ✗ 0 tests failed");
+terminal.WriteLine();
 
 terminal.WriteRule(rule => rule
     .Title("Summary".Bold())
     .Style(LineStyle.Heavy)
     .Color(AnsiColors.BrightGreen));
-Console.WriteLine("  Total time: 1.23s");
-Console.WriteLine("  Status: " + "SUCCESS".Green().Bold());
-Console.WriteLine();
+terminal.WriteLine("  Total time: 1.23s");
+terminal.WriteLine("  Status: " + "SUCCESS".Green().Bold());
+terminal.WriteLine();
 
 return 0;

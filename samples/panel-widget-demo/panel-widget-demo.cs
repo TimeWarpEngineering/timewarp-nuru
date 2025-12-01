@@ -8,77 +8,77 @@ using TimeWarp.Nuru;
 // Get a terminal instance
 ITerminal terminal = NuruTerminal.Default;
 
-Console.WriteLine();
-Console.WriteLine("Panel Widget Demo".Cyan().Bold());
-Console.WriteLine("Demonstrates bordered boxes with optional headers and styled content");
-Console.WriteLine();
+terminal.WriteLine();
+terminal.WriteLine("Panel Widget Demo".Cyan().Bold());
+terminal.WriteLine("Demonstrates bordered boxes with optional headers and styled content");
+terminal.WriteLine();
 
 // Simple panel with content
-Console.WriteLine("1. Simple Panel:");
+terminal.WriteLine("1. Simple Panel:");
 terminal.WritePanel("This is important information");
-Console.WriteLine();
+terminal.WriteLine();
 
 // Panel with header
-Console.WriteLine("2. Panel with header:");
+terminal.WriteLine("2. Panel with header:");
 terminal.WritePanel("Content goes here", "Notice");
-Console.WriteLine();
+terminal.WriteLine();
 
 // Different border styles
-Console.WriteLine("3. Different border styles:");
-Console.WriteLine();
+terminal.WriteLine("3. Different border styles:");
+terminal.WriteLine();
 
-Console.WriteLine("   Rounded (default):");
+terminal.WriteLine("   Rounded (default):");
 terminal.WritePanel(panel => panel
     .Header("Rounded")
     .Content("Soft corners ╭╮╰╯")
     .Border(BorderStyle.Rounded));
-Console.WriteLine();
+terminal.WriteLine();
 
-Console.WriteLine("   Square:");
+terminal.WriteLine("   Square:");
 terminal.WritePanel(panel => panel
     .Header("Square")
     .Content("Sharp corners ┌┐└┘")
     .Border(BorderStyle.Square));
-Console.WriteLine();
+terminal.WriteLine();
 
-Console.WriteLine("   Double:");
+terminal.WriteLine("   Double:");
 terminal.WritePanel(panel => panel
     .Header("Double")
     .Content("Double lines ╔╗╚╝")
     .Border(BorderStyle.Doubled));
-Console.WriteLine();
+terminal.WriteLine();
 
-Console.WriteLine("   Heavy:");
+terminal.WriteLine("   Heavy:");
 terminal.WritePanel(panel => panel
     .Header("Heavy")
     .Content("Thick lines ┏┓┗┛")
     .Border(BorderStyle.Heavy));
-Console.WriteLine();
+terminal.WriteLine();
 
 // Multi-line content
-Console.WriteLine("4. Multi-line content:");
+terminal.WriteLine("4. Multi-line content:");
 terminal.WritePanel(panel => panel
     .Header("Team Members")
     .Content("Alice - Developer\nBob - Designer\nCharlie - Manager")
     .Border(BorderStyle.Rounded));
-Console.WriteLine();
+terminal.WriteLine();
 
 // Padding options
-Console.WriteLine("5. Padding options:");
-Console.WriteLine();
+terminal.WriteLine("5. Padding options:");
+terminal.WriteLine();
 
-Console.WriteLine("   Default padding (horizontal=1, vertical=0):");
+terminal.WriteLine("   Default padding (horizontal=1, vertical=0):");
 terminal.WritePanel("Compact");
-Console.WriteLine();
+terminal.WriteLine();
 
-Console.WriteLine("   More padding (horizontal=3, vertical=1):");
+terminal.WriteLine("   More padding (horizontal=3, vertical=1):");
 terminal.WritePanel(panel => panel
     .Content("Spacious content")
     .Padding(3, 1));
-Console.WriteLine();
+terminal.WriteLine();
 
 // Colored borders
-Console.WriteLine("6. Colored borders:");
+terminal.WriteLine("6. Colored borders:");
 terminal.WritePanel(panel => panel
     .Header("Success".Green())
     .Content("Operation completed successfully")
@@ -93,28 +93,28 @@ terminal.WritePanel(panel => panel
     .Header("Error".Red())
     .Content("Something went wrong")
     .BorderColor(AnsiColors.Red));
-Console.WriteLine();
+terminal.WriteLine();
 
 // Fixed width panel
-Console.WriteLine("7. Fixed width panel (30 characters):");
+terminal.WriteLine("7. Fixed width panel (30 characters):");
 terminal.WritePanel(panel => panel
     .Header("Fixed")
     .Content("30 chars wide")
     .Width(30));
-Console.WriteLine();
+terminal.WriteLine();
 
 // Styled header and content
-Console.WriteLine("8. Styled header and content:");
+terminal.WriteLine("8. Styled header and content:");
 terminal.WritePanel(panel => panel
     .Header("💠 Ardalis".Cyan().Bold())
     .Content("Steve 'Ardalis' Smith\n" + "Software Architect".Gray())
     .Border(BorderStyle.Rounded)
     .BorderColor(AnsiColors.Cyan)
     .Padding(2, 1));
-Console.WriteLine();
+terminal.WriteLine();
 
 // Pre-configured panel
-Console.WriteLine("9. Pre-configured Panel object:");
+terminal.WriteLine("9. Pre-configured Panel object:");
 Panel customPanel = new()
 {
   Header = "Configuration",
@@ -125,11 +125,11 @@ Panel customPanel = new()
   PaddingVertical = 1
 };
 terminal.WritePanel(customPanel);
-Console.WriteLine();
+terminal.WriteLine();
 
 // Practical example
-Console.WriteLine("10. Practical example - CLI status display:");
-Console.WriteLine();
+terminal.WriteLine("10. Practical example - CLI status display:");
+terminal.WriteLine();
 
 terminal.WritePanel(panel => panel
     .Header("Build Status".Bold())
@@ -139,6 +139,6 @@ terminal.WritePanel(panel => panel
     .Border(BorderStyle.Rounded)
     .BorderColor(AnsiColors.BrightGreen)
     .Padding(2, 1));
-Console.WriteLine();
+terminal.WriteLine();
 
 return 0;

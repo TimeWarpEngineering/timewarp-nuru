@@ -4,15 +4,15 @@
 // Demonstrates the Table widget for rendering columnar data
 using TimeWarp.Nuru;
 
-Console.WriteLine("Table Widget Demo");
-Console.WriteLine("==================\n");
-
 // Create a terminal for colored output
 ITerminal terminal = new NuruTerminal();
 
+terminal.WriteLine("Table Widget Demo");
+terminal.WriteLine("==================\n");
+
 // Example 1: Basic table with two columns
-Console.WriteLine("1. Basic Table");
-Console.WriteLine("--------------");
+terminal.WriteLine("1. Basic Table");
+terminal.WriteLine("--------------");
 
 Table basicTable = new Table()
   .AddColumn("Name")
@@ -22,11 +22,11 @@ Table basicTable = new Table()
   .AddRow("Protocol", "HTTP/2");
 
 terminal.WriteTable(basicTable);
-Console.WriteLine();
+terminal.WriteLine();
 
 // Example 2: Table with alignment
-Console.WriteLine("2. Table with Column Alignment");
-Console.WriteLine("-------------------------------");
+terminal.WriteLine("2. Table with Column Alignment");
+terminal.WriteLine("-------------------------------");
 
 Table alignedTable = new Table()
   .AddColumn("Package")
@@ -37,11 +37,11 @@ Table alignedTable = new Table()
   .AddRow("TimeWarp.Nuru", "42,000", "3.0.0");
 
 terminal.WriteTable(alignedTable);
-Console.WriteLine();
+terminal.WriteLine();
 
 // Example 3: Table with styled content
-Console.WriteLine("3. Table with Styled Content");
-Console.WriteLine("----------------------------");
+terminal.WriteLine("3. Table with Styled Content");
+terminal.WriteLine("----------------------------");
 
 Table styledTable = new Table()
   .AddColumn("Test")
@@ -51,18 +51,18 @@ Table styledTable = new Table()
   .AddRow("E2E Tests", $"{AnsiColors.Red}FAILED{AnsiColors.Reset}");
 
 terminal.WriteTable(styledTable);
-Console.WriteLine();
+terminal.WriteLine();
 
 // Example 4: Different border styles
-Console.WriteLine("4. Border Styles");
-Console.WriteLine("----------------");
+terminal.WriteLine("4. Border Styles");
+terminal.WriteLine("----------------");
 
 string[] borderNames = ["Square", "Rounded", "Double", "Heavy", "None"];
 BorderStyle[] borderStyles = [BorderStyle.Square, BorderStyle.Rounded, BorderStyle.Doubled, BorderStyle.Heavy, BorderStyle.None];
 
 for (int i = 0; i < borderStyles.Length; i++)
 {
-  Console.WriteLine($"\n{borderNames[i]} Border:");
+  terminal.WriteLine($"\n{borderNames[i]} Border:");
   Table borderTable = new Table()
     .AddColumn("A")
     .AddColumn("B")
@@ -70,11 +70,11 @@ for (int i = 0; i < borderStyles.Length; i++)
   borderTable.Border = borderStyles[i];
   terminal.WriteTable(borderTable);
 }
-Console.WriteLine();
+terminal.WriteLine();
 
 // Example 5: Table with colored border
-Console.WriteLine("5. Colored Border");
-Console.WriteLine("-----------------");
+terminal.WriteLine("5. Colored Border");
+terminal.WriteLine("-----------------");
 
 Table coloredBorderTable = new Table()
   .AddColumn("Project")
@@ -85,11 +85,11 @@ coloredBorderTable.BorderColor = AnsiColors.Cyan;
 coloredBorderTable.Border = BorderStyle.Rounded;
 
 terminal.WriteTable(coloredBorderTable);
-Console.WriteLine();
+terminal.WriteLine();
 
 // Example 6: Headerless table
-Console.WriteLine("6. Headerless Table");
-Console.WriteLine("-------------------");
+terminal.WriteLine("6. Headerless Table");
+terminal.WriteLine("-------------------");
 
 Table headerlessTable = new Table()
   .AddColumn("Key")
@@ -100,11 +100,11 @@ Table headerlessTable = new Table()
 headerlessTable.ShowHeaders = false;
 
 terminal.WriteTable(headerlessTable);
-Console.WriteLine();
+terminal.WriteLine();
 
 // Example 7: Table with row separators
-Console.WriteLine("7. Table with Row Separators");
-Console.WriteLine("----------------------------");
+terminal.WriteLine("7. Table with Row Separators");
+terminal.WriteLine("----------------------------");
 
 Table separatorsTable = new Table()
   .AddColumn("Time")
@@ -115,11 +115,11 @@ Table separatorsTable = new Table()
 separatorsTable.ShowRowSeparators = true;
 
 terminal.WriteTable(separatorsTable);
-Console.WriteLine();
+terminal.WriteLine();
 
 // Example 8: Expanded table
-Console.WriteLine("8. Expanded Table (fills terminal width)");
-Console.WriteLine("-----------------------------------------");
+terminal.WriteLine("8. Expanded Table (fills terminal width)");
+terminal.WriteLine("-----------------------------------------");
 
 Table expandedTable = new Table()
   .AddColumn("Name")
@@ -131,11 +131,11 @@ expandedTable.Expand = true;
 expandedTable.Border = BorderStyle.Rounded;
 
 terminal.WriteTable(expandedTable);
-Console.WriteLine();
+terminal.WriteLine();
 
 // Example 9: Fluent builder pattern
-Console.WriteLine("9. Fluent Builder Pattern");
-Console.WriteLine("-------------------------");
+terminal.WriteLine("9. Fluent Builder Pattern");
+terminal.WriteLine("-------------------------");
 
 terminal.WriteTable(t => t
   .AddColumns("Method", "Endpoint", "Status")
@@ -144,5 +144,5 @@ terminal.WriteTable(t => t
   .AddRow("DELETE", "/api/items/42", "404")
   .Border(BorderStyle.Rounded));
 
-Console.WriteLine();
-Console.WriteLine("Demo complete!");
+terminal.WriteLine();
+terminal.WriteLine("Demo complete!");

@@ -174,3 +174,49 @@ Data source integration for later:
 // From IEnumerable<T>
 terminal.WriteTable(users, u => new { u.Name, u.Email });
 ```
+
+## Implementation Notes
+
+### Files Created
+
+**Source files** in `source/timewarp-nuru-core/io/widgets/`:
+- `alignment.cs` - `Alignment` enum (Left, Center, Right)
+- `table-column.cs` - `TableColumn` class for column definitions
+- `table-widget.cs` - `Table` class with complete rendering logic
+- `table-builder.cs` - `TableBuilder` for fluent configuration
+- `terminal-table-extensions.cs` - Extension methods for `ITerminal.WriteTable()`
+
+**Modified files**:
+- `box-chars.cs` - Added T-junction and cross character methods: `GetTopT()`, `GetBottomT()`, `GetLeftT()`, `GetRightT()`, `GetCross()`
+
+**Test files** in `tests/timewarp-nuru-core-tests/`:
+- `table-widget-01-basic.cs` - 8 basic functionality tests
+- `table-widget-02-borders.cs` - 6 border style tests
+- `table-widget-03-styling.cs` - 8 styling/ANSI tests
+- `table-widget-04-expand.cs` - 4 expand functionality tests
+
+**Sample** in `samples/table-widget-demo/`:
+- `table-widget-demo.cs` - Comprehensive demo of all Table widget features
+
+### Test Results
+
+All 26 tests pass:
+- Basic functionality: 8/8 passed
+- Border styles: 6/6 passed
+- Styling/ANSI: 8/8 passed
+- Expand: 4/4 passed
+
+### Features Implemented
+
+- Column headers with optional styling
+- Column alignment: Left, Center, Right
+- Auto-sizing columns based on content
+- Max column width with ellipsis truncation
+- All border styles: Rounded, Square, Doubled, Heavy, None
+- Optional row separators
+- Styled cell content (ANSI colors preserved correctly)
+- ANSI-aware width calculation
+- Headerless tables
+- Expandable columns to fill terminal width
+- Border color customization
+- Fluent builder API

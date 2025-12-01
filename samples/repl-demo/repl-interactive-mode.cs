@@ -1,11 +1,19 @@
 #!/usr/bin/dotnet --
-#:project ../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
-#:project ../../Source/TimeWarp.Nuru.Repl/TimeWarp.Nuru.Repl.csproj
+#:project ../../source/timewarp-nuru/timewarp-nuru.csproj
+#:project ../../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj
+#:package Mediator.Abstractions
+#:package Mediator.SourceGenerator
 
-// ============================================================================
-// Interactive Mode Demo for TimeWarp.Nuru
-// ============================================================================
-// Demonstrates an app that supports both CLI and REPL modes:
+// ═══════════════════════════════════════════════════════════════════════════════
+// INTERACTIVE MODE DEMO - CLI + REPL DUAL MODE
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// This sample demonstrates NuruApp.CreateBuilder(args) which provides:
+// - Full DI container setup
+// - Configuration support
+// - Auto-help generation
+// - REPL support with tab completion
+// - Interactive mode route (--interactive, -i) built-in
 //
 // CLI mode (single command execution):
 //   ./repl-interactive-mode.cs greet Alice
@@ -18,13 +26,26 @@
 //
 // This pattern allows users to run quick one-off commands or enter
 // an interactive session for extended use.
-// ============================================================================
+// ═══════════════════════════════════════════════════════════════════════════════
 
 using TimeWarp.Nuru;
-using TimeWarp.Nuru.Repl;
+using Microsoft.Extensions.DependencyInjection;
 using static System.Console;
 
-NuruCoreApp app = new NuruAppBuilder()
+NuruAppOptions nuruAppOptions = new()
+{
+  ConfigureRepl = options =>
+  {
+    options.Prompt = "demo> ";
+    options.WelcomeMessage =
+      "Welcome to Interactive Mode!\n" +
+      "Type 'help' for available commands, 'exit' to quit.";
+    options.GoodbyeMessage = "Goodbye!";
+  }
+};
+
+NuruCoreApp app = NuruApp.CreateBuilder(args, nuruAppOptions)
+  .ConfigureServices(services => services.AddMediator())
   .WithMetadata
   (
     name: "interactive-demo",
@@ -56,23 +77,6 @@ NuruCoreApp app = new NuruAppBuilder()
     () => WriteLine($"Current time: {DateTime.Now:HH:mm:ss}"),
     "Show current time"
   )
-
-  // Add REPL support with configuration
-  .AddReplSupport
-  (
-    options =>
-    {
-      options.Prompt = "demo> ";
-      options.WelcomeMessage =
-        "Welcome to Interactive Mode!\n" +
-        "Type 'help' for available commands, 'exit' to quit.";
-      options.GoodbyeMessage = "Goodbye!";
-    }
-  )
-
-  // Add the interactive route (--interactive, -i)
-  .AddInteractiveRoute()
-
   .Build();
 
 // Run the app - either executes a single command or enters REPL

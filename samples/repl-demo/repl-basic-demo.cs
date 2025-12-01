@@ -1,13 +1,23 @@
 #!/usr/bin/dotnet --
-#:project ../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
-#:project ../../Source/TimeWarp.Nuru.Repl/TimeWarp.Nuru.Repl.csproj
+#:project ../../source/timewarp-nuru/timewarp-nuru.csproj
+#:project ../../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj
+#:package Mediator.Abstractions
+#:package Mediator.SourceGenerator
 #:package Serilog
 #:package Serilog.Sinks.File
 #:package Serilog.Extensions.Logging
 
-// ============================================================================
-// Basic REPL Demo for TimeWarp.Nuru
-// ============================================================================
+// ═══════════════════════════════════════════════════════════════════════════════
+// REPL BASIC DEMO - ROUTE PATTERN EXAMPLES
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// This sample demonstrates NuruApp.CreateBuilder(args) which provides:
+// - Full DI container setup
+// - Configuration support
+// - Auto-help generation
+// - REPL support with tab completion
+// - All extensions enabled by default
+//
 // Demonstrates various route pattern types supported by Nuru:
 // - Literal commands (status, time)
 // - Subcommands (git status, git commit, git log)
@@ -32,6 +42,7 @@
 using Serilog;
 using Serilog.Events;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.DependencyInjection;
 using TimeWarp.Nuru;
 using TimeWarp.Nuru.Repl;
 using static System.Console;
@@ -81,7 +92,49 @@ try
   WriteLine("Debug logs: repl-debug.log");
   WriteLine();
 
-  NuruCoreApp app = new NuruAppBuilder()
+  NuruAppOptions nuruAppOptions = new()
+  {
+    ConfigureRepl = options =>
+    {
+      options.Prompt = "demo> ";
+      options.WelcomeMessage =
+        "Welcome to the Nuru REPL Demo!\n" +
+        "\n" +
+        "SIMPLE COMMANDS:\n" +
+        "  status              - Show system status\n" +
+        "  time                - Show current time\n" +
+        "\n" +
+        "PARAMETERS:\n" +
+        "  greet Alice         - Basic parameter\n" +
+        "  add 5 3             - Typed parameters (int)\n" +
+        "  deploy dev          - Enum param (dev/staging/prod)\n" +
+        "  deploy prod v1.2    - Enum with optional tag\n" +
+        "  echo hello world    - Catch-all parameter\n" +
+        "\n" +
+        "SUBCOMMANDS:\n" +
+        "  git status          - Literal subcommand\n" +
+        "  git commit -m \"fix\" - Short option with value\n" +
+        "  git log --count 3   - Long option with typed value\n" +
+        "\n" +
+        "OPTIONS:\n" +
+        "  build               - Without verbose\n" +
+        "  build -v            - With verbose (short)\n" +
+        "  build --verbose     - With verbose (long)\n" +
+        "  search foo          - Default limit\n" +
+        "  search foo -l 5     - Custom limit\n" +
+        "  backup data         - Basic backup\n" +
+        "  backup data -c      - With compression\n" +
+        "  backup data -c -o x - With compression and dest\n" +
+        "\n" +
+        "Type 'help' for all commands, 'exit' to quit.";
+      options.GoodbyeMessage = "Thanks for trying the REPL demo!";
+      options.PersistHistory = false;
+      Log.Information("REPL configured");
+    }
+  };
+
+  NuruCoreApp app = NuruApp.CreateBuilder(args, nuruAppOptions)
+    .ConfigureServices(services => services.AddMediator())
     .UseLogging(loggerFactory)
     .AddTypeConverter(new EnumTypeConverter<Environment>()) // Register enum converter
     .WithMetadata
@@ -278,55 +331,6 @@ try
       },
       description: "Backs up source with optional compression and destination."
     )
-
-    // ========================================
-    // REPL CONFIGURATION
-    // ========================================
-
-    .AddReplSupport
-    (
-      options =>
-      {
-        options.Prompt = "demo> ";
-        options.WelcomeMessage =
-          "Welcome to the Nuru REPL Demo!\n" +
-          "\n" +
-          "SIMPLE COMMANDS:\n" +
-          "  status              - Show system status\n" +
-          "  time                - Show current time\n" +
-          "\n" +
-          "PARAMETERS:\n" +
-          "  greet Alice         - Basic parameter\n" +
-          "  add 5 3             - Typed parameters (int)\n" +
-          "  deploy dev          - Enum param (dev/staging/prod)\n" +
-          "  deploy prod v1.2    - Enum with optional tag\n" +
-          "  echo hello world    - Catch-all parameter\n" +
-          "\n" +
-          "SUBCOMMANDS:\n" +
-          "  git status          - Literal subcommand\n" +
-          "  git commit -m \"fix\" - Short option with value\n" +
-          "  git log --count 3   - Long option with typed value\n" +
-          "\n" +
-          "OPTIONS:\n" +
-          "  build               - Without verbose\n" +
-          "  build -v            - With verbose (short)\n" +
-          "  build --verbose     - With verbose (long)\n" +
-          "  search foo          - Default limit\n" +
-          "  search foo -l 5     - Custom limit\n" +
-          "  backup data         - Basic backup\n" +
-          "  backup data -c      - With compression\n" +
-          "  backup data -c -o x - With compression and dest\n" +
-          "\n" +
-          "Type 'help' for all commands, 'exit' to quit.";
-        options.GoodbyeMessage = "Thanks for trying the REPL demo!";
-        options.PersistHistory = false;
-        Log.Information("REPL configured");
-      }
-    )
-
-    // Add interactive mode route (--interactive, -i)
-    // This allows running as CLI or entering REPL mode
-    .AddInteractiveRoute()
 
     .Build();
 

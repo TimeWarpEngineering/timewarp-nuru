@@ -18,16 +18,22 @@ MCP Builder Pattern Guidance Analysis - standardizing samples to prevent AI conf
 ## Checklist
 
 ### Implementation
-- [ ] Update `samples/repl-demo/repl-basic-demo.cs` to use `NuruApp.CreateBuilder(args)`
-- [ ] Update `samples/repl-demo/repl-interactive-mode.cs` to use `NuruApp.CreateBuilder(args)`
-- [ ] Update `samples/repl-demo/repl-prompt-fix-demo.cs` to use `NuruApp.CreateBuilder(args)`
-- [ ] Update `samples/repl-demo/repl-custom-keybindings.cs` to use `NuruApp.CreateBuilder(args)`
-- [ ] Update `samples/repl-demo/repl-options-showcase.cs` to use `NuruApp.CreateBuilder(args)`
-- [ ] Add Mediator package directives where Map<TCommand> is used
-- [ ] Add canonical ConfigureServices pattern for Mediator samples
-- [ ] Add explanatory comments about builder choice and REPL requirements
-- [ ] Verify all samples compile successfully
-- [ ] Verify all samples run correctly in REPL mode
+- [x] Update `samples/repl-demo/repl-basic-demo.cs` to use `NuruApp.CreateBuilder(args)`
+- [x] Update `samples/repl-demo/repl-interactive-mode.cs` to use `NuruApp.CreateBuilder(args)`
+- [x] Update `samples/repl-demo/repl-prompt-fix-demo.cs` to use `NuruApp.CreateBuilder(args)`
+- [x] Update `samples/repl-demo/repl-custom-keybindings.cs` to use `NuruApp.CreateBuilder(args)`
+- [x] Update `samples/repl-demo/repl-options-showcase.cs` to use `NuruApp.CreateBuilder(args)`
+- [x] Add Mediator package directives where Map<TCommand> is used
+- [x] Add canonical ConfigureServices pattern for Mediator samples
+- [x] Add explanatory comments about builder choice and REPL requirements
+- [x] Verify all samples compile successfully
+- [x] Verify all samples run correctly in REPL mode
+
+### Additional changes
+- [x] Fixed incorrect project paths (`Source/TimeWarp.Nuru` → `source/timewarp-nuru`)
+- [x] Moved REPL configuration to `NuruAppOptions.ConfigureRepl` callback
+- [x] Removed redundant `.AddReplSupport()` and `.AddInteractiveRoute()` calls
+- [x] All samples now use Mediator packages since CreateBuilder requires IMediator
 
 ## Notes
 

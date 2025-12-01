@@ -228,25 +228,25 @@
     },
     {
       "id": "rule-widget",
-      "name": "Rule Widget Demo",
+      "name": "Rule Widget",
       "description": "Horizontal divider lines with optional centered text - lightweight Spectre.Console Rule alternative",
-      "path": "samples/rule-widget-demo/rule-widget-demo.cs",
+      "path": "samples/terminal/rule-widget.cs",
       "tags": ["widgets", "terminal", "rule", "divider", "output", "spectre-alternative"],
       "difficulty": "beginner"
     },
     {
       "id": "panel-widget",
-      "name": "Panel Widget Demo",
+      "name": "Panel Widget",
       "description": "Bordered boxes with headers and styled content - lightweight Spectre.Console Panel alternative",
-      "path": "samples/panel-widget-demo/panel-widget-demo.cs",
+      "path": "samples/terminal/panel-widget.cs",
       "tags": ["widgets", "terminal", "panel", "box", "border", "output", "spectre-alternative"],
       "difficulty": "beginner"
     },
     {
       "id": "table-widget",
-      "name": "Table Widget Demo",
+      "name": "Table Widget",
       "description": "Columnar data tables with alignment, borders, and styling - lightweight Spectre.Console Table alternative",
-      "path": "samples/table-widget-demo/table-widget-demo.cs",
+      "path": "samples/terminal/table-widget.cs",
       "tags": ["widgets", "terminal", "table", "columns", "output", "spectre-alternative"],
       "difficulty": "intermediate"
     }

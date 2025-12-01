@@ -1,14 +1,16 @@
 #!/usr/bin/dotnet --
-#:project ../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
+// test-terminal-injection - Demonstrates ITerminal injection into route handlers for testable colored output
+// Uses new NuruAppBuilder() for testing scenarios - provides ITerminal injection without full Mediator
+#:package Shouldly
+#:project ../../source/timewarp-nuru/timewarp-nuru.csproj
 
-// Demonstrates ITerminal injection into route handlers for testable colored output
-
+using Shouldly;
 using TimeWarp.Nuru;
 
-Console.WriteLine("=== ITerminal Injection Demo ===\n");
+Console.WriteLine("=== ITerminal Injection Tests ===\n");
 
-// Demo 1: Basic ITerminal injection
-Console.WriteLine("Demo 1: ITerminal injection in handlers\n".Cyan().Bold());
+// Test 1: Basic ITerminal injection
+Console.WriteLine("Test 1: ITerminal injection in handlers");
 {
   using TestTerminal terminal = new();
 
@@ -17,7 +19,6 @@ Console.WriteLine("Demo 1: ITerminal injection in handlers\n".Cyan().Bold());
     .Map("deploy {env}", (string env, ITerminal t) =>
     {
       t.WriteLine($"Deploying to {env}...".Cyan());
-      // Simulate work
       t.WriteLine("Building artifacts...".Gray());
       t.WriteLine("Uploading files...".Gray());
       t.WriteLine($"Deployed to {env} successfully!".Green().Bold());
@@ -26,16 +27,13 @@ Console.WriteLine("Demo 1: ITerminal injection in handlers\n".Cyan().Bold());
 
   await app.RunAsync(["deploy", "production"]);
 
-  Console.WriteLine("Captured output:");
-  foreach (string line in terminal.GetOutputLines())
-  {
-    Console.WriteLine($"  {line}");
-  }
-  Console.WriteLine();
+  terminal.OutputContains("Deploying to production").ShouldBeTrue();
+  terminal.OutputContains("Deployed to production successfully").ShouldBeTrue();
+  Console.WriteLine("  PASSED".Green());
 }
 
-// Demo 2: Conditional color based on terminal capabilities
-Console.WriteLine("Demo 2: Conditional color output\n".Cyan().Bold());
+// Test 2: Conditional color based on terminal capabilities
+Console.WriteLine("\nTest 2: Conditional color output");
 {
   using TestTerminal terminal = new();
 
@@ -57,16 +55,13 @@ Console.WriteLine("Demo 2: Conditional color output\n".Cyan().Bold());
 
   await app.RunAsync(["status"]);
 
-  Console.WriteLine("With color support (TestTerminal.SupportsColor = true):");
-  foreach (string line in terminal.GetOutputLines())
-  {
-    Console.WriteLine($"  {line}");
-  }
-  Console.WriteLine();
+  terminal.OutputContains("Service A").ShouldBeTrue();
+  terminal.OutputContains("Service B").ShouldBeTrue();
+  Console.WriteLine("  PASSED".Green());
 }
 
-// Demo 3: Error handling with ITerminal
-Console.WriteLine("Demo 3: Error handling with colored output\n".Cyan().Bold());
+// Test 3: Error output with ITerminal
+Console.WriteLine("\nTest 3: Error output capture");
 {
   using TestTerminal terminal = new();
 
@@ -74,32 +69,27 @@ Console.WriteLine("Demo 3: Error handling with colored output\n".Cyan().Bold());
     .UseTerminal(terminal)
     .Map("validate {file}", (string file, ITerminal t) =>
     {
-      // Simulate validation
       if (file == "bad.json")
       {
         t.WriteErrorLine($"Error: Invalid JSON in {file}".Red().Bold());
         t.WriteErrorLine("  Line 5: Unexpected token '}'".Red());
-        return 1;
       }
-
-      t.WriteLine($"Validated {file}".Green());
-      return 0;
+      else
+      {
+        t.WriteLine($"Validated {file}".Green());
+      }
     })
     .Build();
 
-  int exitCode = await app.RunAsync(["validate", "bad.json"]);
+  await app.RunAsync(["validate", "bad.json"]);
 
-  Console.WriteLine($"Exit code: {exitCode}");
-  Console.WriteLine("Captured error output:");
-  foreach (string line in terminal.ErrorOutput.Split('\n', StringSplitOptions.RemoveEmptyEntries))
-  {
-    Console.WriteLine($"  {line}");
-  }
-  Console.WriteLine();
+  terminal.ErrorContains("Invalid JSON").ShouldBeTrue();
+  terminal.ErrorContains("bad.json").ShouldBeTrue();
+  Console.WriteLine("  PASSED".Green());
 }
 
-// Demo 4: Progress-style output
-Console.WriteLine("Demo 4: Progress-style output\n".Cyan().Bold());
+// Test 4: Progress-style output
+Console.WriteLine("\nTest 4: Progress-style output");
 {
   using TestTerminal terminal = new();
 
@@ -118,16 +108,14 @@ Console.WriteLine("Demo 4: Progress-style output\n".Cyan().Bold());
 
   await app.RunAsync(["build"]);
 
-  Console.WriteLine("Captured build output:");
-  foreach (string line in terminal.GetOutputLines())
-  {
-    Console.WriteLine($"  {line}");
-  }
-  Console.WriteLine();
+  terminal.GetOutputLines().Length.ShouldBe(6);
+  terminal.OutputContains("Build started").ShouldBeTrue();
+  terminal.OutputContains("Build completed successfully").ShouldBeTrue();
+  Console.WriteLine("  PASSED".Green());
 }
 
-// Demo 5: Using WithStyle for custom colors
-Console.WriteLine("Demo 5: Custom colors with WithStyle()\n".Cyan().Bold());
+// Test 5: Custom colors with WithStyle
+Console.WriteLine("\nTest 5: Custom colors with WithStyle()");
 {
   using TestTerminal terminal = new();
 
@@ -135,7 +123,6 @@ Console.WriteLine("Demo 5: Custom colors with WithStyle()\n".Cyan().Bold());
     .UseTerminal(terminal)
     .Map("theme", (ITerminal t) =>
     {
-      // Using WithStyle for custom ANSI codes
       t.WriteLine("Coral message".WithStyle(AnsiColors.Coral));
       t.WriteLine("Deep pink alert".WithStyle(AnsiColors.DeepPink));
       t.WriteLine("Dodger blue info".WithStyle(AnsiColors.DodgerBlue));
@@ -144,12 +131,10 @@ Console.WriteLine("Demo 5: Custom colors with WithStyle()\n".Cyan().Bold());
 
   await app.RunAsync(["theme"]);
 
-  Console.WriteLine("Captured themed output:");
-  foreach (string line in terminal.GetOutputLines())
-  {
-    Console.WriteLine($"  {line}");
-  }
-  Console.WriteLine();
+  terminal.OutputContains("Coral message").ShouldBeTrue();
+  terminal.OutputContains("Deep pink alert").ShouldBeTrue();
+  terminal.OutputContains("Dodger blue info").ShouldBeTrue();
+  Console.WriteLine("  PASSED".Green());
 }
 
-Console.WriteLine("=== Demo Complete ===".BrightGreen().Bold());
+Console.WriteLine("\n=== All Tests Complete ===".BrightGreen().Bold());

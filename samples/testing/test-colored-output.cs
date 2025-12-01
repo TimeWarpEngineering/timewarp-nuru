@@ -1,8 +1,10 @@
 #!/usr/bin/dotnet --
-#:project ../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
+// test-colored-output - Demonstrates testing handlers with colored output
+// Uses new NuruAppBuilder() for testing scenarios - provides ITerminal injection without full Mediator
+#:package Shouldly
+#:project ../../source/timewarp-nuru/timewarp-nuru.csproj
 
-// Demonstrates testing handlers with colored output
-
+using Shouldly;
 using TimeWarp.Nuru;
 
 Console.WriteLine("=== Testing Colored Output ===\n");
@@ -25,21 +27,20 @@ Console.WriteLine("Test 1: Handler with colored output");
   await app.RunAsync(["status"]);
 
   // Output contains ANSI codes but text is still searchable
-  bool passed =
-    terminal.OutputContains("All systems operational") &&
-    terminal.OutputContains("2 warnings") &&
-    terminal.OutputContains("0 errors");
+  terminal.OutputContains("All systems operational").ShouldBeTrue();
+  terminal.OutputContains("2 warnings").ShouldBeTrue();
+  terminal.OutputContains("0 errors").ShouldBeTrue();
 
   Console.WriteLine("  Captured output (with ANSI codes):");
   foreach (string line in terminal.GetOutputLines())
   {
     Console.WriteLine($"    {line}");
   }
-  Console.WriteLine($"  Result: {(passed ? "PASSED".Green() : "FAILED".Red())}\n");
+  Console.WriteLine("  PASSED".Green());
 }
 
 // Test 2: Formatted text (bold, italic, underline)
-Console.WriteLine("Test 2: Text formatting");
+Console.WriteLine("\nTest 2: Text formatting");
 {
   using TestTerminal terminal = new();
 
@@ -55,17 +56,14 @@ Console.WriteLine("Test 2: Text formatting");
 
   await app.RunAsync(["format"]);
 
-  bool passed =
-    terminal.OutputContains("Important") &&
-    terminal.OutputContains("Emphasis") &&
-    terminal.OutputContains("Link");
-
-  Console.WriteLine($"  Contains expected text: {passed}");
-  Console.WriteLine($"  Result: {(passed ? "PASSED".Green() : "FAILED".Red())}\n");
+  terminal.OutputContains("Important").ShouldBeTrue();
+  terminal.OutputContains("Emphasis").ShouldBeTrue();
+  terminal.OutputContains("Link").ShouldBeTrue();
+  Console.WriteLine("  PASSED".Green());
 }
 
 // Test 3: Chained styles
-Console.WriteLine("Test 3: Chained styles");
+Console.WriteLine("\nTest 3: Chained styles");
 {
   using TestTerminal terminal = new();
 
@@ -80,20 +78,19 @@ Console.WriteLine("Test 3: Chained styles");
 
   await app.RunAsync(["alert"]);
 
-  bool passed =
-    terminal.OutputContains("Critical Error") &&
-    terminal.OutputContains("Success!");
+  terminal.OutputContains("Critical Error").ShouldBeTrue();
+  terminal.OutputContains("Success!").ShouldBeTrue();
 
   Console.WriteLine("  Captured styled output:");
   foreach (string line in terminal.GetOutputLines())
   {
     Console.WriteLine($"    {line}");
   }
-  Console.WriteLine($"  Result: {(passed ? "PASSED".Green() : "FAILED".Red())}\n");
+  Console.WriteLine("  PASSED".Green());
 }
 
 // Test 4: CSS named colors
-Console.WriteLine("Test 4: CSS named colors");
+Console.WriteLine("\nTest 4: CSS named colors");
 {
   using TestTerminal terminal = new();
 
@@ -109,17 +106,14 @@ Console.WriteLine("Test 4: CSS named colors");
 
   await app.RunAsync(["palette"]);
 
-  bool passed =
-    terminal.OutputContains("Coral text") &&
-    terminal.OutputContains("Gold highlight") &&
-    terminal.OutputContains("Navy message");
-
-  Console.WriteLine($"  Contains CSS color names: {passed}");
-  Console.WriteLine($"  Result: {(passed ? "PASSED".Green() : "FAILED".Red())}\n");
+  terminal.OutputContains("Coral text").ShouldBeTrue();
+  terminal.OutputContains("Gold highlight").ShouldBeTrue();
+  terminal.OutputContains("Navy message").ShouldBeTrue();
+  Console.WriteLine("  PASSED".Green());
 }
 
 // Test 5: Color support detection
-Console.WriteLine("Test 5: Color support detection");
+Console.WriteLine("\nTest 5: Color support detection");
 {
   // TestTerminal.SupportsColor is true by default
   using TestTerminal colorTerminal = new() { SupportsColor = true };
@@ -151,13 +145,12 @@ Console.WriteLine("Test 5: Color support detection");
 
   await appNoColor.RunAsync(["check"]);
 
-  bool passed =
-    colorTerminal.OutputContains("Colors enabled") &&
-    noColorTerminal.OutputContains("Colors disabled");
+  colorTerminal.OutputContains("Colors enabled").ShouldBeTrue();
+  noColorTerminal.OutputContains("Colors disabled").ShouldBeTrue();
 
   Console.WriteLine($"  Color terminal output: {colorTerminal.Output.Trim()}");
   Console.WriteLine($"  No-color terminal output: {noColorTerminal.Output.Trim()}");
-  Console.WriteLine($"  Result: {(passed ? "PASSED".Green() : "FAILED".Red())}\n");
+  Console.WriteLine("  PASSED".Green());
 }
 
-Console.WriteLine("=== All Tests Complete ===".BrightGreen().Bold());
+Console.WriteLine("\n=== All Tests Complete ===".BrightGreen().Bold());

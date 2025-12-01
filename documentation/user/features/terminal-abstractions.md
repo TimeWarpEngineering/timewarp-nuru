@@ -392,17 +392,17 @@ public class WebTerminal : ITerminal
 | Testability | Built-in `TestTerminal` | Requires mocking |
 | Dependencies | None | ~500KB package |
 | AOT Support | Full | Limited |
-| Tables/Progress | Not included | Full support |
+| Tables/Widgets | Rule, Panel, Table widgets | Full support (tables, progress, prompts) |
 
-**Choose TimeWarp.Nuru colors when:**
-- You need simple colored output
-- Testing is important
+**Choose TimeWarp.Nuru when:**
+- You need colored output with testability
+- You need tables, panels, or rules
 - Minimal dependencies are required
 - AOT compilation is needed
 
 **Choose Spectre.Console when:**
-- You need tables, progress bars, prompts
-- Rich terminal UI is required
+- You need progress bars, prompts, or live displays
+- Advanced terminal UI features are required
 
 ## Best Practices
 
@@ -459,6 +459,7 @@ using (TestTerminal terminal = new())
 
 ## See Also
 
+- [Terminal Widgets](widgets.md) - Rule, Panel, and Table widgets
 - [Output Handling](output-handling.md) - stdout/stderr best practices
 - [Routing Patterns](routing.md) - Route syntax reference
 - [Testing Samples](../../../samples/testing/) - Complete testing examples

@@ -1,7 +1,7 @@
 # Dynamic Completion Example
 
-**Demonstrates**: Task #029 - `EnableDynamicCompletion()` feature
-**Related**: Task #025 (Static Shell Completion), Task #028 (Type-Aware Parameter Completion)
+**Demonstrates**: Dynamic shell completion with custom completion sources
+**Related**: Task #029 (EnableDynamicCompletion), Task #091 (CreateBuilder integration)
 
 ## What is Dynamic Completion?
 
@@ -11,29 +11,70 @@ Dynamic completion queries your application **at Tab-press time** instead of usi
 - **Context-Aware Suggestions**: Different completions based on previous arguments
 - **Dynamic State**: Completions reflect current application state
 
-## Comparison: Static vs Dynamic
+## Quick Start: CreateBuilder (Recommended)
 
-### Static Completion (`EnableStaticCompletion()`)
+With `NuruApp.CreateBuilder()`, dynamic completion is **enabled by default**:
 
 ```csharp
-builder.EnableStaticCompletion();
-// Completion script contains ALL possible values at generation time
-// ✅ Fast (no app invocation)
-// ❌ Cannot query runtime data
-// ❌ No context awareness
+// Dynamic completion is automatically enabled!
+NuruAppBuilder builder = NuruApp.CreateBuilder(args);
+
+builder.Map("deploy {env}", (string env) => Deploy(env));
+
+NuruCoreApp app = builder.Build();
+return await app.RunAsync(args);
 ```
 
-### Dynamic Completion (`EnableDynamicCompletion()`)
+To customize completion sources, use `ConfigureCompletion`:
 
 ```csharp
+NuruAppBuilder builder = NuruApp.CreateBuilder(args, new NuruAppOptions
+{
+    ConfigureCompletion = registry =>
+    {
+        registry.RegisterForParameter("env", new EnvironmentCompletionSource());
+        registry.RegisterForParameter("tag", new TagCompletionSource());
+    }
+});
+```
+
+## Comparison: CreateBuilder vs Manual Setup
+
+### CreateBuilder (Auto-enabled)
+
+```csharp
+NuruAppBuilder builder = NuruApp.CreateBuilder(args, new NuruAppOptions
+{
+    ConfigureCompletion = registry =>
+    {
+        registry.RegisterForParameter("env", new EnvironmentCompletionSource());
+    }
+});
+// ✅ Dynamic completion enabled by default
+// ✅ Clean, ASP.NET Core-style API
+// ✅ Includes REPL, telemetry, and other extensions
+```
+
+### Manual Setup (SlimBuilder)
+
+```csharp
+NuruAppBuilder builder = NuruCoreApp.CreateSlimBuilder();
 builder.EnableDynamicCompletion(configure: registry =>
 {
     registry.RegisterForParameter("env", new EnvironmentCompletionSource());
 });
-// Completion script calls app via __complete route at Tab-press time
-// ✅ Can query databases, APIs, configuration
-// ✅ Context-aware (based on previous args)
-// ✅ Negligible overhead with AOT (~7-10ms, imperceptible to users)
+// ✅ Explicit control over what's enabled
+// ✅ Minimal overhead - only what you need
+```
+
+### Static Completion (No Runtime Callbacks)
+
+```csharp
+NuruAppBuilder builder = NuruCoreApp.CreateSlimBuilder();
+builder.EnableStaticCompletion();
+// ✅ Fast (no app invocation at Tab-press)
+// ❌ Cannot query runtime data
+// ❌ No context awareness
 ```
 
 ## Example Custom Completion Sources
@@ -392,30 +433,43 @@ builder.EnableDynamicCompletion(configure: registry =>
 
 If you're currently using `EnableStaticCompletion()` and want dynamic completion:
 
-### Before (Static)
+### Before (Static with NuruAppBuilder)
 
 ```csharp
+NuruAppBuilder builder = new();
 builder.EnableStaticCompletion();
-
 builder.Map("deploy {env}", (string env) => Deploy(env));
 ```
 
-### After (Dynamic)
+### After (CreateBuilder - Recommended)
 
 ```csharp
+// Dynamic completion enabled by default!
+NuruAppBuilder builder = NuruApp.CreateBuilder(args, new NuruAppOptions
+{
+    ConfigureCompletion = registry =>
+    {
+        registry.RegisterForParameter("env", new EnvironmentCompletionSource());
+    }
+});
+builder.Map("deploy {env}", (string env) => Deploy(env));
+```
+
+### After (Manual with SlimBuilder)
+
+```csharp
+NuruAppBuilder builder = NuruCoreApp.CreateSlimBuilder();
 builder.EnableDynamicCompletion(configure: registry =>
 {
     registry.RegisterForParameter("env", new EnvironmentCompletionSource());
 });
-
 builder.Map("deploy {env}", (string env) => Deploy(env));
-// No changes to route patterns!
 ```
 
 **Key benefits**:
-- Same route patterns
-- No API changes
-- Progressive enhancement (start with static, upgrade to dynamic when needed)
+- Same route patterns - no changes needed
+- Progressive enhancement - start static, upgrade to dynamic when needed
+- CreateBuilder does the right thing by default
 
 ## Implementing Custom Completion Sources
 

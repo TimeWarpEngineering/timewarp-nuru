@@ -23,9 +23,14 @@ The comment in `UseAllExtensions()` incorrectly claims "Completion is already in
 - [x] Add `Action<CompletionSourceRegistry>? ConfigureCompletion` property to `NuruAppOptions`
 - [x] Update `UseAllExtensions()` to call `EnableDynamicCompletion()` with the configure action
 - [x] Fix the misleading comment about completion being included via REPL
+- [x] Add tests for CreateBuilder completion registration
 
 ### Documentation
 - [x] Update `NuruAppOptions` XML docs to include completion configuration example
+- [x] Update `documentation/user/features/shell-completion.md` to reflect CreateBuilder auto-enables completion
+- [x] Update `samples/dynamic-completion-example/overview.md` with CreateBuilder patterns
+- [x] Update `samples/examples.json` with completion example descriptions
+- [x] Update MCP `generate-handler-tool.cs` to mention ConfigureCompletion option
 
 ## Notes
 

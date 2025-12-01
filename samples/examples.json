@@ -133,18 +133,18 @@
     {
       "id": "shell-completion",
       "name": "Shell Tab Completion",
-      "description": "Static shell tab completion for Bash, Zsh, PowerShell, and Fish shells",
+      "description": "Static shell tab completion for Bash, Zsh, PowerShell, and Fish shells. Note: CreateBuilder auto-enables dynamic completion - use EnableStaticCompletion() with SlimBuilder for static-only.",
       "path": "samples/shell-completion-example/shell-completion-example.cs",
-      "tags": ["completion", "tab-completion", "bash", "zsh", "powershell", "fish"],
+      "tags": ["completion", "tab-completion", "bash", "zsh", "powershell", "fish", "static-completion"],
       "difficulty": "intermediate"
     },
     {
       "id": "dynamic-completion",
       "name": "Dynamic Tab Completion",
-      "description": "Dynamic completion that queries the app at tab-press time with custom completion sources",
+      "description": "Dynamic completion that queries the app at tab-press time with custom completion sources. Note: CreateBuilder auto-enables dynamic completion by default - use ConfigureCompletion to customize.",
       "path": "samples/dynamic-completion-example/dynamic-completion-example.cs",
-      "tags": ["completion", "dynamic-completion", "custom-sources", "advanced"],
-      "difficulty": "advanced"
+      "tags": ["completion", "dynamic-completion", "custom-sources", "configure-completion", "createbuilder"],
+      "difficulty": "intermediate"
     },
     {
       "id": "syntax-examples",

@@ -14,7 +14,9 @@ public partial class NuruAppBuilder : NuruCoreAppBuilder, IHostApplicationBuilde
 
   /// <summary>
   /// Initializes a new instance of the <see cref="NuruAppBuilder"/> class with default settings.
+  /// Use <see cref="NuruApp.CreateBuilder(string[])"/> factory method instead.
   /// </summary>
+  [Obsolete("Use NuruApp.CreateBuilder(args) instead. Direct constructor use will be removed in a future version.")]
   public NuruAppBuilder() { }
 
   /// <summary>

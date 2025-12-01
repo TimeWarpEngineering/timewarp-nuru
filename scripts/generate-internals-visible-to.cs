@@ -12,6 +12,8 @@ string testsDir = Path.Combine(repoRoot, "tests");
 // Projects that need InternalsVisibleTo
 string[] outputFiles =
 [
+  Path.Combine(repoRoot, "source/timewarp-nuru/internals-visible-to.g.cs"),
+  Path.Combine(repoRoot, "source/timewarp-nuru-core/internals-visible-to.g.cs"),
   Path.Combine(repoRoot, "source/timewarp-nuru-parsing/internals-visible-to.g.cs"),
   Path.Combine(repoRoot, "source/timewarp-nuru-mcp/internals-visible-to.g.cs"),
   Path.Combine(repoRoot, "source/timewarp-nuru-completion/internals-visible-to.g.cs"),

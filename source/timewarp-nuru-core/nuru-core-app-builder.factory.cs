@@ -40,8 +40,7 @@ public partial class NuruCoreAppBuilder
   /// Uses Empty mode for backward compatibility - no auto-help or other features enabled.
   /// Use <see cref="NuruCoreApp.CreateSlimBuilder(string[])"/> or <see cref="NuruApp.CreateBuilder(string[])"/> factory methods instead.
   /// </summary>
-  [Obsolete("Use NuruApp.CreateBuilder(args) or NuruCoreApp.CreateSlimBuilder(args) instead. Direct constructor use will be removed in a future version.")]
-  public NuruCoreAppBuilder() : this(BuilderMode.Empty, null)
+  internal NuruCoreAppBuilder() : this(BuilderMode.Empty, null)
   {
   }
 

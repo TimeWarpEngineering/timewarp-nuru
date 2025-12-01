@@ -18,15 +18,18 @@ MCP Builder Pattern Guidance Analysis - standardizing samples to prevent AI conf
 ## Checklist
 
 ### Implementation
-- [ ] Update `samples/calculator/calc-mediator.cs` to use `NuruApp.CreateBuilder(args)`
-- [ ] Update `samples/calculator/calc-mixed.cs` to use `NuruApp.CreateBuilder(args)`
-- [ ] Add `#:package Mediator.Abstractions` directive
-- [ ] Add `#:package Mediator.SourceGenerator` directive
-- [ ] Implement canonical `ConfigureServices` pattern with `services.AddMediator(options => {...})`
-- [ ] Add comprehensive header comments explaining how Mediator.SourceGenerator works
-- [ ] Include "COMMON ERROR" section about missing IMediator registration
-- [ ] Verify both samples compile successfully
-- [ ] Verify both samples run correctly with expected output
+- [x] Update `samples/calculator/calc-mediator.cs` to use `NuruApp.CreateBuilder(args)`
+- [x] Update `samples/calculator/calc-mixed.cs` to use `NuruApp.CreateBuilder(args)`
+- [x] Add `#:package Mediator.Abstractions` directive
+- [x] Add `#:package Mediator.SourceGenerator` directive
+- [x] Implement canonical `ConfigureServices` pattern with `services.AddMediator()`
+- [x] Add comprehensive header comments explaining how Mediator.SourceGenerator works
+- [x] Include "COMMON ERROR" section about missing IMediator registration
+- [x] Verify both samples compile successfully
+- [x] Verify both samples run correctly with expected output
+
+### Additional fixes
+- [x] Fixed incorrect project paths (`Source/TimeWarp.Nuru` → `source/timewarp-nuru`)
 
 ## Notes
 

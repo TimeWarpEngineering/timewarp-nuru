@@ -19,31 +19,31 @@ Implement a `Rule` widget for rendering horizontal divider lines in the terminal
 ## Checklist
 
 ### Design
-- [ ] Create `LineStyle` enum (Single, Double, Heavy)
-- [ ] Design `Rule` class with properties (Title, Style, Color, Width)
-- [ ] Design `RuleBuilder` for fluent configuration
-- [ ] Plan extension methods for `ITerminal`
+- [x] Create `LineStyle` enum (Thin, Doubled, Heavy)
+- [x] Design `Rule` class with properties (Title, Style, Color, Width)
+- [x] Design `RuleBuilder` for fluent configuration
+- [x] Plan extension methods for `ITerminal`
 
 ### Implementation
-- [ ] Create `line-style.cs` with LineStyle enum
-- [ ] Create `rule-widget.cs` with Rule and RuleBuilder classes
-- [ ] Create `terminal-rule-extensions.cs` with ITerminal extensions
-- [ ] Implement ANSI code stripping for visible length calculation
-- [ ] Handle terminal width detection via `ITerminal.WindowWidth`
-- [ ] Handle color support detection via `ITerminal.SupportsColor`
+- [x] Create `line-style.cs` with LineStyle enum
+- [x] Create `rule-widget.cs` with Rule and RuleBuilder classes
+- [x] Create `terminal-rule-extensions.cs` with ITerminal extensions
+- [x] Implement ANSI code stripping for visible length calculation
+- [x] Handle terminal width detection via `ITerminal.WindowWidth`
+- [x] Handle color support detection via `ITerminal.SupportsColor`
 
 ### Testing
-- [ ] Test simple rule without title
-- [ ] Test rule with plain title (centered)
-- [ ] Test rule with styled title
-- [ ] Test rule with different LineStyles
-- [ ] Test rule with custom width
-- [ ] Test graceful degradation when SupportsColor is false
-- [ ] Test with various terminal widths
+- [x] Test simple rule without title
+- [x] Test rule with plain title (centered)
+- [x] Test rule with styled title
+- [x] Test rule with different LineStyles
+- [x] Test rule with custom width
+- [x] Test graceful degradation when SupportsColor is false
+- [x] Test with various terminal widths
 
 ### Documentation
-- [ ] Add XML documentation to all public APIs
-- [ ] Create sample demonstrating Rule widget usage
+- [x] Add XML documentation to all public APIs
+- [x] Create sample demonstrating Rule widget usage
 
 ## Notes
 
@@ -106,3 +106,34 @@ int leftPadding = (totalWidth - titleLength - 2) / 2;  // -2 for spaces
 int rightPadding = totalWidth - leftPadding - titleLength - 2;
 // Output: [left chars] [space] [title] [space] [right chars]
 ```
+
+## Implementation Notes
+
+### Files Created
+
+**Source files** in `source/timewarp-nuru-core/io/widgets/`:
+- `line-style.cs` - `LineStyle` enum (Thin, Doubled, Heavy) and `LineChars` helper
+- `ansi-string-utils.cs` - `AnsiStringUtils` class for ANSI-aware string operations
+- `rule-widget.cs` - `Rule` class and `RuleBuilder` for fluent configuration
+- `terminal-rule-extensions.cs` - Extension methods for `ITerminal`
+
+**Test files** in `tests/timewarp-nuru-core-tests/`:
+- `rule-widget-01-basic.cs` - 8 tests for Rule class
+- `rule-widget-02-terminal-extensions.cs` - 9 tests for terminal extensions
+- `ansi-string-utils-01-basic.cs` - 12 tests for AnsiStringUtils
+
+**Sample** in `samples/rule-widget-demo/`:
+- `rule-widget-demo.cs` - Comprehensive demo of all Rule widget features
+
+### API Changes
+
+Due to CA1720 analyzer rule (identifiers cannot contain type names), enum values were renamed:
+- `LineStyle.Single` → `LineStyle.Thin`
+- `LineStyle.Double` → `LineStyle.Doubled`
+
+### Test Results
+
+All 29 tests pass:
+- Rule widget basic: 8/8 passed
+- Terminal extensions: 9/9 passed
+- AnsiStringUtils: 12/12 passed

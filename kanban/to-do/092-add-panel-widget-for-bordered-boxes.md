@@ -10,7 +10,10 @@ Implement a `Panel` widget for rendering bordered boxes with optional headers an
 
 ## Dependencies
 
-- **Task #091** (Rule widget) should be implemented first to establish shared infrastructure (box characters, ANSI string utilities, LineStyle enum)
+- **Task #091** (Rule widget) - COMPLETED. Provides shared infrastructure:
+  - `LineStyle` enum (Thin, Doubled, Heavy)
+  - `AnsiStringUtils` class (GetVisibleLength, StripAnsiCodes, padding utilities)
+  - `LineChars` helper class
 
 ## Requirements
 

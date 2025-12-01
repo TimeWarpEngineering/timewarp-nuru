@@ -18,15 +18,19 @@ MCP Builder Pattern Guidance Analysis - standardizing samples to prevent AI conf
 ## Checklist
 
 ### Implementation
-- [ ] Update `samples/pipeline-middleware/pipeline-middleware.cs` to use `NuruApp.CreateBuilder(args)`
-- [ ] Update `samples/unified-middleware/unified-middleware.cs` to use `NuruApp.CreateBuilder(args)`
-- [ ] Add `#:package Mediator.Abstractions` directive
-- [ ] Add `#:package Mediator.SourceGenerator` directive
-- [ ] Migrate from old pattern (`services.AddMediator()` + explicit IPipelineBehavior registrations) to canonical pattern
-- [ ] Use `options.PipelineBehaviors = [typeof(Behavior<,>)]` for pipeline configuration
-- [ ] Add comments explaining pipeline behavior execution order (first = outermost)
-- [ ] Verify both samples compile successfully
-- [ ] Verify both samples run correctly with expected output
+- [x] Update `samples/pipeline-middleware/pipeline-middleware.cs` to use `NuruApp.CreateBuilder(args)`
+- [x] Update `samples/unified-middleware/unified-middleware.cs` to use `NuruApp.CreateBuilder(args)`
+- [x] Add `#:package Mediator.Abstractions` directive
+- [x] Add `#:package Mediator.SourceGenerator` directive
+- [x] Migrate from old pattern (`services.AddMediator()` + explicit IPipelineBehavior registrations) to canonical pattern
+- [x] Use `options.PipelineBehaviors = [typeof(Behavior<,>)]` for pipeline configuration
+- [x] Add comments explaining pipeline behavior execution order (first = outermost)
+- [x] Verify both samples compile successfully
+- [x] Verify both samples run correctly with expected output
+
+### Additional fixes
+- [x] Fixed incorrect project paths (`Source/TimeWarp.Nuru` → `source/timewarp-nuru`)
+- [x] Removed redundant `.AddAutoHelp()` calls (included in CreateBuilder)
 
 ## Notes
 

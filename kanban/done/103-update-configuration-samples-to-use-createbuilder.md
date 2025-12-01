@@ -18,16 +18,20 @@ MCP Builder Pattern Guidance Analysis - standardizing samples to prevent AI conf
 ## Checklist
 
 ### Implementation
-- [ ] Update `samples/configuration/configuration-basics.cs` to use `NuruApp.CreateBuilder(args)`
-- [ ] Update `samples/configuration/configuration-validation.cs` to use `NuruApp.CreateBuilder(args)`
-- [ ] Update `samples/configuration/command-line-overrides.cs` to use `NuruApp.CreateBuilder(args)`
-- [ ] Update `samples/configuration/user-secrets-property.cs` to use `NuruApp.CreateBuilder(args)`
-- [ ] Update `samples/configuration/user-secrets-demo/program.cs` to use `NuruApp.CreateBuilder(args)`
-- [ ] Add Mediator package directives where Map<TCommand> is used
-- [ ] Add canonical ConfigureServices pattern for Mediator samples
-- [ ] Add explanatory comments about builder choice and configuration features
-- [ ] Verify all samples compile successfully
-- [ ] Verify all samples run correctly with expected configuration behavior
+- [x] Update `samples/configuration/configuration-basics.cs` to use `NuruApp.CreateBuilder(args)`
+- [x] Update `samples/configuration/configuration-validation.cs` to use `NuruApp.CreateBuilder(args)`
+- [x] Update `samples/configuration/command-line-overrides.cs` to use `NuruApp.CreateBuilder(args)`
+- [x] Update `samples/configuration/user-secrets-property.cs` to use `NuruApp.CreateBuilder(args)`
+- [x] Update `samples/configuration/user-secrets-demo/program.cs` to use `NuruApp.CreateBuilder(args)`
+- [x] Add Mediator package directives where Map<TCommand> is used
+- [x] Add canonical ConfigureServices pattern for Mediator samples
+- [x] Add explanatory comments about builder choice and configuration features
+- [x] Verify all samples compile successfully
+- [x] Verify all samples run correctly with expected configuration behavior
+
+### Additional changes
+- [x] Fixed incorrect project paths (`Source/TimeWarp.Nuru` → `source/timewarp-nuru`)
+- [x] Updated `user-secrets-demo.csproj` with correct project reference and Mediator packages
 
 ## Notes
 

@@ -1,11 +1,28 @@
 #!/usr/bin/dotnet --
-// command-line-overrides - Demonstrates command-line configuration overrides (ASP.NET Core style)
-// Settings file: command-line-overrides.settings.json
-// Answers GitHub Issue #75: https://github.com/TimeWarpEngineering/timewarp-nuru/issues/75
-#:project ../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
+#:project ../../source/timewarp-nuru/timewarp-nuru.csproj
+#:package Mediator.Abstractions
+#:package Mediator.SourceGenerator
 #:package Microsoft.Extensions.Options
 #:package Microsoft.Extensions.Options.ConfigurationExtensions
 #:property EnableConfigurationBindingGenerator=true
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// COMMAND-LINE OVERRIDES - ASP.NET CORE STYLE CONFIGURATION
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// This sample demonstrates NuruApp.CreateBuilder(args) with command-line overrides.
+// Answers GitHub Issue #75: https://github.com/TimeWarpEngineering/timewarp-nuru/issues/75
+//
+// Use ASP.NET Core-style configuration overrides: --Section:Key=Value
+// This allows you to override any configuration value from appsettings.json,
+// environment variables, or other configuration sources.
+//
+// Settings file: command-line-overrides.settings.json
+//
+// REQUIRED PACKAGES:
+//   #:package Mediator.Abstractions    - Required by NuruApp.CreateBuilder
+//   #:package Mediator.SourceGenerator - Generates AddMediator() in YOUR assembly
+// ═══════════════════════════════════════════════════════════════════════════════
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -13,32 +30,29 @@ using Microsoft.Extensions.Options;
 using TimeWarp.Nuru;
 using static System.Console;
 
-// This example demonstrates how TimeWarp.Nuru supports ASP.NET Core-style
-// command-line configuration overrides using the colon-separated syntax:
-//
-//   --Section:Key=Value
-//
-// This allows you to override any configuration value from appsettings.json,
-// environment variables, or other configuration sources.
-
-NuruCoreApp app =
-  new NuruAppBuilder()
-  .AddDependencyInjection()
-  .AddConfiguration(args)  // ← Key: Enables command-line overrides via Microsoft.Extensions.Configuration.CommandLine
-  .ConfigureServices((services, config) =>
-  {
-    if (config != null)
-    {
-      // Bind configuration sections to strongly-typed options
-      services.AddOptions<FooOptions>().Bind(config.GetSection("FooOptions"));
-      services.AddOptions<DatabaseOptions>().Bind(config.GetSection("Database"));
-    }
-  })
-  .AddAutoHelp()
+NuruCoreApp app = NuruApp.CreateBuilder(args)
+  .ConfigureServices(ConfigureServices)
   .Map("run", RunApplicationAsync, "Run application with current configuration")
   .Map("show", ShowConfigurationAsync, "Show all configuration values and their sources")
   .Map("demo", RunDemonstrationAsync, "Run interactive demonstration of override scenarios")
   .Build();
+
+static void ConfigureServices(IServiceCollection services)
+{
+  // Get configuration from the service provider
+  ServiceProvider sp = services.BuildServiceProvider();
+  IConfiguration? config = sp.GetService<IConfiguration>();
+
+  if (config != null)
+  {
+    // Bind configuration sections to strongly-typed options
+    services.AddOptions<FooOptions>().Bind(config.GetSection("FooOptions"));
+    services.AddOptions<DatabaseOptions>().Bind(config.GetSection("Database"));
+  }
+
+  // Register Mediator - required by NuruApp.CreateBuilder
+  services.AddMediator();
+}
 
 return await app.RunAsync(args);
 

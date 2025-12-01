@@ -1,12 +1,28 @@
 #!/usr/bin/dotnet --
-// configuration-validation - Demonstrates ValidateOnStart() for fail-fast configuration validation
-// Settings file: configuration-validation.settings.json
-#:project ../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
+#:project ../../source/timewarp-nuru/timewarp-nuru.csproj
+#:package Mediator.Abstractions
+#:package Mediator.SourceGenerator
 #:package Microsoft.Extensions.Options
 #:package Microsoft.Extensions.Options.ConfigurationExtensions
 #:package Microsoft.Extensions.Options.DataAnnotations
 #:package TimeWarp.OptionsValidation
 #:property EnableConfigurationBindingGenerator=true
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// CONFIGURATION VALIDATION - FAIL-FAST WITH VALIDATEONSTART
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// This sample demonstrates NuruApp.CreateBuilder(args) with configuration validation:
+// - DataAnnotations (built-in .NET attributes)
+// - Custom validation with .Validate()
+// - FluentValidation (enterprise-grade validation library)
+//
+// Settings file: configuration-validation.settings.json
+//
+// REQUIRED PACKAGES:
+//   #:package Mediator.Abstractions    - Required by NuruApp.CreateBuilder
+//   #:package Mediator.SourceGenerator - Generates AddMediator() in YOUR assembly
+// ═══════════════════════════════════════════════════════════════════════════════
 
 using FluentValidation;
 using Microsoft.Extensions.Configuration;
@@ -16,56 +32,57 @@ using TimeWarp.Nuru;
 using TimeWarp.OptionsValidation;
 using static System.Console;
 
-// This sample demonstrates three validation approaches:
-// 1. DataAnnotations (built-in .NET attributes)
-// 2. Custom validation with .Validate()
-// 3. FluentValidation (enterprise-grade validation library)
-
-NuruCoreApp app =
-  new NuruAppBuilder()
-  .AddDependencyInjection()
-  .AddConfiguration(args)
-  .ConfigureServices((services, config) =>
-  {
-    if (config != null)
-    {
-      // 1. DataAnnotations validation (built-in)
-      services.AddOptions<ServerOptions>()
-        .Bind(config.GetSection("Server"))
-        .ValidateDataAnnotations()  // Validates [Required], [Range], etc.
-        .ValidateOnStart();          // ← Validates during Build(), not on first access
-
-      // 2. Custom validation logic
-      services.AddOptions<DatabaseOptions>()
-        .Bind(config.GetSection("Database"))
-        .Validate(opts =>
-        {
-          // Custom business rule: connection string must match database type
-          if (opts.Type == "PostgreSQL" && !opts.ConnectionString.Contains("Host="))
-          {
-            return false;
-          }
-          if (opts.Type == "SqlServer" && !opts.ConnectionString.Contains("Server="))
-          {
-            return false;
-          }
-          return true;
-        }, "Connection string format must match database type")
-        .ValidateOnStart();
-
-      // 3. FluentValidation (most powerful, enterprise-grade)
-      // Using TimeWarp.OptionsValidation for automatic FluentValidation integration
-      services
-        .AddFluentValidatedOptions<ApiOptions, ApiOptionsValidator>(config)
-        .ValidateOnStart(); // ✅ Validates when app starts, throws on error
-    }
-  })
-  .AddAutoHelp()
+NuruCoreApp app = NuruApp.CreateBuilder(args)
+  .ConfigureServices(ConfigureServices)
   .Map("validate", ShowValidationStatusAsync, "Show all validated configuration")
   .Map("server info", ShowServerInfoAsync, "Show server configuration")
   .Map("db info", ShowDatabaseInfoAsync, "Show database configuration")
   .Map("api info", ShowApiInfoAsync, "Show API configuration")
   .Build();
+// ↑ If any validation fails, OptionsValidationException is thrown HERE (fail-fast)
+
+static void ConfigureServices(IServiceCollection services)
+{
+  // Get configuration from the service provider
+  ServiceProvider sp = services.BuildServiceProvider();
+  IConfiguration? config = sp.GetService<IConfiguration>();
+
+  if (config != null)
+  {
+    // 1. DataAnnotations validation (built-in)
+    services.AddOptions<ServerOptions>()
+      .Bind(config.GetSection("Server"))
+      .ValidateDataAnnotations()  // Validates [Required], [Range], etc.
+      .ValidateOnStart();          // ← Validates during Build(), not on first access
+
+    // 2. Custom validation logic
+    services.AddOptions<DatabaseOptions>()
+      .Bind(config.GetSection("Database"))
+      .Validate(opts =>
+      {
+        // Custom business rule: connection string must match database type
+        if (opts.Type == "PostgreSQL" && !opts.ConnectionString.Contains("Host="))
+        {
+          return false;
+        }
+        if (opts.Type == "SqlServer" && !opts.ConnectionString.Contains("Server="))
+        {
+          return false;
+        }
+        return true;
+      }, "Connection string format must match database type")
+      .ValidateOnStart();
+
+    // 3. FluentValidation (most powerful, enterprise-grade)
+    // Using TimeWarp.OptionsValidation for automatic FluentValidation integration
+    services
+      .AddFluentValidatedOptions<ApiOptions, ApiOptionsValidator>(config)
+      .ValidateOnStart(); // ✅ Validates when app starts, throws on error
+  }
+
+  // Register Mediator - required by NuruApp.CreateBuilder
+  services.AddMediator();
+}
 // ↑ If any validation fails, OptionsValidationException is thrown HERE (fail-fast)
 
 return await app.RunAsync(args);

@@ -1,10 +1,20 @@
+// ═══════════════════════════════════════════════════════════════════════════════
+// USER SECRETS DEMO - CSPROJ-BASED PROJECT WITH USER SECRETS
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// This sample demonstrates NuruApp.CreateBuilder(args) with user secrets
+// configured via the .csproj file's UserSecretsId property.
+//
+// Note: This is a regular .csproj project, not a runfile, so Mediator packages
+// are referenced in the .csproj file.
+// ═══════════════════════════════════════════════════════════════════════════════
+
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using TimeWarp.Nuru;
 
-NuruCoreApp app =
-  new NuruAppBuilder()
-  .AddDependencyInjection()
-  .AddConfiguration(args)
+NuruCoreApp app = NuruApp.CreateBuilder(args)
+  .ConfigureServices(services => services.AddMediator())
   .Map("show", (IConfiguration config) =>
   {
     string? apiKey = config["ApiKey"];

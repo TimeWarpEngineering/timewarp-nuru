@@ -21,15 +21,15 @@ When defining a route like `recent --verbose?` and invoking just `recent`, the a
 - [x] Document route matching behavior
 
 ### Implementation
-- [ ] Implement fix (Option 1 or Option 3 - see Notes)
-- [ ] Add regression tests for the fix
-- [ ] Verify fix doesn't break existing help functionality
+- [x] Implement fix (new approach - see Implemented Solution below)
+- [x] Add regression tests for the fix
+- [x] Verify fix doesn't break existing help functionality
 
 ### Verification
-- [ ] Test `command` matches user route, not help route
-- [ ] Test `command --help` still shows help
-- [ ] Test `command --flag` executes user route correctly
-- [ ] Run full test suite
+- [x] Test `command` matches user route, not help route
+- [x] Test `command --help` still shows help
+- [x] Test `command --flag` executes user route correctly
+- [x] Run full test suite (all routing tests pass)
 
 ## Notes
 
@@ -109,8 +109,25 @@ Cons:
 
 ### Test File
 
-A reproduction test exists at:
-`tests/temp-tests/temp-issue-98-help-route-priority.cs`
+Regression tests added at:
+`tests/timewarp-nuru-tests/routing/routing-15-help-route-priority.cs`
+
+### Implemented Solution
+
+The fix uses two changes:
+
+1. **Help routes use `--help?` (optional)** instead of `--help`
+   - Auto-generated help routes now have same specificity as user optional flags
+   - File: `source/timewarp-nuru-core/help/help-route-generator.cs`
+
+2. **Route resolver prioritizes exact matches, then more defaults**
+   - Exact matches (0 defaults) always win
+   - Among partial matches, prefer routes with MORE defaults
+   - This ensures user routes with multiple optional flags beat help routes
+   - Help only wins when `--help` is explicitly provided (0 defaults for help route)
+   - File: `source/timewarp-nuru-core/resolution/endpoint-resolver.cs`
+
+This approach treats help routes as normal routes after generation, maintaining consistency.
 
 ### Related
 

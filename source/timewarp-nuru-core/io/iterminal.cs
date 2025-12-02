@@ -65,6 +65,19 @@ public interface ITerminal : IConsole
   bool SupportsColor { get; }
 
   /// <summary>
+  /// Gets a value indicating whether the terminal supports OSC 8 hyperlinks.
+  /// </summary>
+  /// <value>
+  /// <c>true</c> if the terminal supports clickable hyperlinks;
+  /// otherwise, <c>false</c>.
+  /// </value>
+  /// <remarks>
+  /// Supported terminals include Windows Terminal, iTerm2, VS Code terminal,
+  /// Hyper, Konsole, and GNOME Terminal 3.26+.
+  /// </remarks>
+  bool SupportsHyperlinks { get; }
+
+  /// <summary>
   /// Clears the console buffer and corresponding console window of display information.
   /// </summary>
   void Clear();

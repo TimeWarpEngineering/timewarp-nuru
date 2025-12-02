@@ -96,6 +96,7 @@ public interface ITerminal : IConsole
     int WindowWidth { get; }
     bool IsInteractive { get; }
     bool SupportsColor { get; }
+    bool SupportsHyperlinks { get; }
     void Clear();
 }
 ```
@@ -103,7 +104,7 @@ public interface ITerminal : IConsole
 **Use `ITerminal` when you need:**
 - Key-by-key input (arrow keys, Tab, etc.)
 - Cursor positioning for line editing
-- Terminal capability detection
+- Terminal capability detection (color, hyperlinks)
 - Screen clearing
 
 ## Implementations
@@ -192,6 +193,91 @@ terminal.WriteLine(AnsiColors.DodgerBlue + "Dodger blue" + AnsiColors.Reset);
 - **140+ CSS named colors**: Coral, Crimson, DodgerBlue, Gold, etc.
 - **Background colors**: BgRed, BgGreen, BgBlue, etc.
 - **Formatting**: Bold, Dim, Italic, Underline, Strikethrough, Reverse
+
+## Hyperlinks (OSC 8)
+
+TimeWarp.Nuru supports OSC 8 hyperlinks for clickable URLs in supported terminals.
+
+### Supported Terminals
+
+- Windows Terminal
+- iTerm2
+- VS Code integrated terminal
+- Hyper
+- Konsole
+- GNOME Terminal 3.26+
+
+### String Extension Method
+
+Use the `Link()` extension method for inline hyperlinks:
+
+```csharp
+// Simple hyperlink
+Console.WriteLine($"Visit {"Ardalis.com".Link("https://ardalis.com")}");
+
+// Chain with colors (hyperlink + styling)
+Console.WriteLine($"Check out {"GitHub".Link("https://github.com").Cyan().Bold()}");
+
+// Multiple links in one line
+Console.WriteLine($"{"Home".Link("https://example.com")} | {"Docs".Link("https://docs.example.com")}");
+```
+
+### Terminal Extension Methods
+
+Use `WriteLink()` and `WriteLinkLine()` for terminal-aware hyperlinks:
+
+```csharp
+NuruAppBuilder builder = NuruApp.CreateBuilder(args);
+
+builder.Map("help", (ITerminal terminal) =>
+{
+    terminal.WriteLine("For more information:");
+    terminal.WriteLink("https://docs.example.com", "Documentation");
+    terminal.WriteLine();
+    terminal.WriteLinkLine("https://github.com/example", "Source Code");
+});
+```
+
+These methods automatically check `SupportsHyperlinks` and gracefully degrade:
+- **Supported terminals**: Output includes OSC 8 escape sequences (clickable)
+- **Unsupported terminals**: Output shows only the display text (plain)
+
+### Detecting Hyperlink Support
+
+```csharp
+builder.Map("info", (ITerminal terminal) =>
+{
+    if (terminal.SupportsHyperlinks)
+    {
+        terminal.WriteLinkLine("https://docs.example.com", "Click here for docs");
+    }
+    else
+    {
+        terminal.WriteLine("Visit: https://docs.example.com");
+    }
+});
+```
+
+### API Summary
+
+| Method | Description |
+|--------|-------------|
+| `"text".Link("url")` | String extension - always generates OSC 8 sequences |
+| `terminal.WriteLink("url", "text")` | Writes hyperlink (or plain text if unsupported) |
+| `terminal.WriteLinkLine("url", "text")` | Same as WriteLink with newline |
+| `terminal.SupportsHyperlinks` | Check if terminal supports OSC 8 |
+
+### OSC 8 Format Reference
+
+The OSC 8 hyperlink format is:
+```
+\e]8;;URL\e\DISPLAY_TEXT\e]8;;\e\
+```
+
+Where:
+- `\e]8;;` starts the hyperlink with URL following
+- `\e\` is the string terminator (ST)
+- Display text appears between the start and end sequences
 
 ## Testing with TestTerminal
 

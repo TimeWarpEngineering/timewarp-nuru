@@ -195,6 +195,14 @@
       "difficulty": "intermediate"
     },
     {
+      "id": "test-repl",
+      "name": "Testing REPL Mode",
+      "description": "Programmatically test REPL mode using TestTerminal with QueueLine() and QueueKey() for input simulation - session lifecycle, commands, and assertions",
+      "path": "tests/timewarp-nuru-repl-tests/repl-01-session-lifecycle.cs",
+      "tags": ["testing", "repl", "testability", "terminal", "automation", "queueline", "queuekey"],
+      "difficulty": "intermediate"
+    },
+    {
       "id": "pipeline-middleware",
       "name": "Mediator Pipeline Middleware",
       "description": "Cross-cutting concerns with pipeline behaviors: telemetry, performance, logging, authorization, retry, and exception handling. REQUIRES: Mediator.Abstractions + Mediator.SourceGenerator packages with options.PipelineBehaviors configuration.",

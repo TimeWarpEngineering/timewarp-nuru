@@ -34,10 +34,10 @@ internal sealed partial class Parser : IParser
       : new Lexer(pattern);
     Tokens = lexer.Tokenize();
 
-    LoggerMessages.ParsingPattern(Logger, pattern, null);
+    ParsingLoggerMessages.ParsingPattern(Logger, pattern, null);
     if (Logger.IsEnabled(LogLevel.Trace))
     {
-      LoggerMessages.DumpingTokens(Logger, Lexer.DumpTokens(Tokens), null);
+      ParsingLoggerMessages.DumpingTokens(Logger, Lexer.DumpTokens(Tokens), null);
     }
 
     // Parse tokens into AST
@@ -57,7 +57,7 @@ internal sealed partial class Parser : IParser
 
     if (result.Success && Logger.IsEnabled(LogLevel.Debug))
     {
-      LoggerMessages.DumpingAst(Logger, DumpAst(ast), null);
+      ParsingLoggerMessages.DumpingAst(Logger, DumpAst(ast), null);
     }
 
     return result;
@@ -117,19 +117,19 @@ internal sealed partial class Parser : IParser
 
     return token.Type switch
     {
-      TokenType.LeftBrace => ParseParameter(),
-      TokenType.DoubleDash or TokenType.SingleDash => ParseOption(),
-      TokenType.EndOfOptions => ParseEndOfOptions(),
-      TokenType.Identifier => ParseLiteral(),
-      TokenType.Invalid => ParseInvalidToken(),
-      TokenType.RightBrace => HandleUnexpectedRightBrace(),
+      RouteTokenType.LeftBrace => ParseParameter(),
+      RouteTokenType.DoubleDash or RouteTokenType.SingleDash => ParseOption(),
+      RouteTokenType.EndOfOptions => ParseEndOfOptions(),
+      RouteTokenType.Identifier => ParseLiteral(),
+      RouteTokenType.Invalid => ParseInvalidToken(),
+      RouteTokenType.RightBrace => HandleUnexpectedRightBrace(),
       _ => HandleUnexpectedToken()
     };
   }
 
   private LiteralSyntax ParseLiteral()
   {
-    Token token = Consume(TokenType.Identifier, "Expected identifier");
+    Token token = Consume(RouteTokenType.Identifier, "Expected identifier");
     return new LiteralSyntax(token.Value)
     {
       Position = token.Position,
@@ -139,7 +139,7 @@ internal sealed partial class Parser : IParser
 
   private LiteralSyntax ParseEndOfOptions()
   {
-    Token token = Consume(TokenType.EndOfOptions, "Expected '--'");
+    Token token = Consume(RouteTokenType.EndOfOptions, "Expected '--'");
 
     // Create a literal segment for the -- separator
     return new LiteralSyntax("--")
@@ -151,18 +151,18 @@ internal sealed partial class Parser : IParser
 
   private ParameterSyntax ParseParameter()
   {
-    Token leftBrace = Consume(TokenType.LeftBrace, "Expected '{'");
+    Token leftBrace = Consume(RouteTokenType.LeftBrace, "Expected '{'");
     int startPos = leftBrace.Position;
 
     // Check for catch-all marker
     bool isCatchAll = false;
-    if (Match(TokenType.Asterisk))
+    if (Match(RouteTokenType.Asterisk))
     {
       isCatchAll = true;
     }
 
     // Parameter name
-    Token nameToken = Consume(TokenType.Identifier, "Expected parameter name");
+    Token nameToken = Consume(RouteTokenType.Identifier, "Expected parameter name");
     string paramName = nameToken.Value;
 
     // Validate identifier starts with letter or underscore
@@ -180,7 +180,7 @@ internal sealed partial class Parser : IParser
     }
 
     // Optional marker
-    bool isOptional = Match(TokenType.Question);
+    bool isOptional = Match(RouteTokenType.Question);
 
     // Validate that catch-all and optional are not combined
     if (isCatchAll && isOptional)
@@ -198,13 +198,13 @@ internal sealed partial class Parser : IParser
 
     // Type constraint
     string? typeConstraint = null;
-    if (Match(TokenType.Colon))
+    if (Match(RouteTokenType.Colon))
     {
-      Token typeToken = Consume(TokenType.Identifier, "Expected type name after ':'");
+      Token typeToken = Consume(RouteTokenType.Identifier, "Expected type name after ':'");
       typeConstraint = typeToken.Value;
 
       // Type might also be optional (e.g., int?)
-      if (Match(TokenType.Question))
+      if (Match(RouteTokenType.Question))
       {
         isOptional = true;
         typeConstraint += "?";
@@ -228,12 +228,12 @@ internal sealed partial class Parser : IParser
 
     // Description
     string? description = null;
-    if (Match(TokenType.Pipe))
+    if (Match(RouteTokenType.Pipe))
     {
       description = ConsumeDescription(stopAtRightBrace: true);
     }
 
-    Token rightBrace = Consume(TokenType.RightBrace, "Expected '}'");
+    Token rightBrace = Consume(RouteTokenType.RightBrace, "Expected '}'");
 
     return new ParameterSyntax(paramName, isCatchAll, isOptional, false, typeConstraint, description)
     {
@@ -245,17 +245,17 @@ internal sealed partial class Parser : IParser
   private OptionSyntax ParseOption()
   {
     Token optionToken = Current();
-    bool isLong = optionToken.Type == TokenType.DoubleDash;
+    bool isLong = optionToken.Type == RouteTokenType.DoubleDash;
     Advance(); // Consume the dash(es)
 
     int startPos = optionToken.Position;
-    Token optionNameToken = Consume(TokenType.Identifier, "Expected option name");
+    Token optionNameToken = Consume(RouteTokenType.Identifier, "Expected option name");
 
     // Parse option forms (long/short)
     (string? longForm, string? shortForm) = ParseOptionForms(isLong, optionNameToken);
 
     // Check for optional modifier (?)
-    bool isOptional = Match(TokenType.Question);
+    bool isOptional = Match(RouteTokenType.Question);
 
     // Parse description if present
     string? description = ParseOptionDescription();
@@ -280,10 +280,10 @@ internal sealed partial class Parser : IParser
       string? shortForm = null;
 
       // Check for short alias
-      if (Match(TokenType.Comma))
+      if (Match(RouteTokenType.Comma))
       {
-        Consume(TokenType.SingleDash, "Expected '-' after comma");
-        Token shortToken = Consume(TokenType.Identifier, "Expected short option name");
+        Consume(RouteTokenType.SingleDash, "Expected '-' after comma");
+        Token shortToken = Consume(RouteTokenType.Identifier, "Expected short option name");
         shortForm = shortToken.Value;
       }
 
@@ -312,7 +312,7 @@ internal sealed partial class Parser : IParser
 
   private string? ParseOptionDescription()
   {
-    if (Match(TokenType.Pipe))
+    if (Match(RouteTokenType.Pipe))
     {
       return ConsumeDescription(stopAtRightBrace: false);
     }
@@ -322,7 +322,7 @@ internal sealed partial class Parser : IParser
 
   private ParameterSyntax? ParseOptionParameter()
   {
-    if (!Check(TokenType.LeftBrace))
+    if (!Check(RouteTokenType.LeftBrace))
     {
       return null;
     }
@@ -347,7 +347,7 @@ internal sealed partial class Parser : IParser
 
     // Check for repeated modifier (*) after the parameter
     // e.g., --tag {value}* means the option can be repeated
-    if (Match(TokenType.Asterisk))
+    if (Match(RouteTokenType.Asterisk))
     {
       parameter = parameter with { IsRepeated = true };
     }
@@ -428,9 +428,9 @@ internal sealed partial class Parser : IParser
 
   // Helper methods for parsing
 
-  private bool Match(params TokenType[] types)
+  private bool Match(params RouteTokenType[] types)
   {
-    foreach (TokenType type in types)
+    foreach (RouteTokenType type in types)
     {
       if (Check(type))
       {
@@ -442,7 +442,7 @@ internal sealed partial class Parser : IParser
     return false;
   }
 
-  private bool Check(TokenType type)
+  private bool Check(RouteTokenType type)
   {
     return !IsAtEnd() && Peek().Type == type;
   }
@@ -455,7 +455,7 @@ internal sealed partial class Parser : IParser
 
   private bool IsAtEnd()
   {
-    return CurrentIndex >= Tokens.Count || Peek().Type == TokenType.EndOfInput;
+    return CurrentIndex >= Tokens.Count || Peek().Type == RouteTokenType.EndOfInput;
   }
 
   private Token Peek()
@@ -473,7 +473,7 @@ internal sealed partial class Parser : IParser
     return Tokens[CurrentIndex];
   }
 
-  private Token Consume(TokenType type, string message)
+  private Token Consume(RouteTokenType type, string message)
   {
     if (Check(type)) return Advance();
     Token token = Peek();
@@ -487,8 +487,8 @@ internal sealed partial class Parser : IParser
     while (!IsAtEnd())
     {
       Token token = Peek();
-      if (token.Type is TokenType.LeftBrace or TokenType.DoubleDash or
-          TokenType.SingleDash or TokenType.Identifier)
+      if (token.Type is RouteTokenType.LeftBrace or RouteTokenType.DoubleDash or
+          RouteTokenType.SingleDash or RouteTokenType.Identifier)
       {
         break;
       }
@@ -506,7 +506,7 @@ internal sealed partial class Parser : IParser
       Token token = Peek();
 
       // Stop conditions
-      if (stopAtRightBrace && token.Type == TokenType.RightBrace)
+      if (stopAtRightBrace && token.Type == RouteTokenType.RightBrace)
       {
         break;
       }
@@ -514,19 +514,19 @@ internal sealed partial class Parser : IParser
       if (!stopAtRightBrace)
       {
         // For option descriptions, stop at new segment indicators
-        if (token.Type is TokenType.DoubleDash or TokenType.SingleDash or TokenType.LeftBrace)
+        if (token.Type is RouteTokenType.DoubleDash or RouteTokenType.SingleDash or RouteTokenType.LeftBrace)
         {
           break;
         }
       }
 
       // Add token value to description
-      if (token.Type == TokenType.Identifier)
+      if (token.Type == RouteTokenType.Identifier)
       {
         description.Add(token.Value);
         Advance();
       }
-      else if (token.Type == TokenType.EndOfInput)
+      else if (token.Type == RouteTokenType.EndOfInput)
       {
         break;
       }

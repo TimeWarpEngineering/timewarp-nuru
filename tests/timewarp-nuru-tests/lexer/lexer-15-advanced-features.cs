@@ -19,17 +19,17 @@ public class AdvancedFeaturesTests
 
         // Assert
         tokens.Count.ShouldBe(7);
-        tokens[0].Type.ShouldBe(TokenType.Identifier);
+        tokens[0].Type.ShouldBe(RouteTokenType.Identifier);
         tokens[0].Value.ShouldBe("deploy");
-        tokens[1].Type.ShouldBe(TokenType.LeftBrace);
-        tokens[2].Type.ShouldBe(TokenType.Identifier);
+        tokens[1].Type.ShouldBe(RouteTokenType.LeftBrace);
+        tokens[2].Type.ShouldBe(RouteTokenType.Identifier);
         tokens[2].Value.ShouldBe("env");
-        tokens[3].Type.ShouldBe(TokenType.Pipe);
+        tokens[3].Type.ShouldBe(RouteTokenType.Pipe);
         tokens[3].Value.ShouldBe("|");
-        tokens[4].Type.ShouldBe(TokenType.Identifier);
+        tokens[4].Type.ShouldBe(RouteTokenType.Identifier);
         tokens[4].Value.ShouldBe("Environment");
-        tokens[5].Type.ShouldBe(TokenType.RightBrace);
-        tokens[6].Type.ShouldBe(TokenType.EndOfInput);
+        tokens[5].Type.ShouldBe(RouteTokenType.RightBrace);
+        tokens[6].Type.ShouldBe(RouteTokenType.EndOfInput);
 
         await Task.CompletedTask;
     }
@@ -47,21 +47,21 @@ public class AdvancedFeaturesTests
 
         // Assert
         tokens.Count.ShouldBe(8);
-        tokens[0].Type.ShouldBe(TokenType.DoubleDash);
+        tokens[0].Type.ShouldBe(RouteTokenType.DoubleDash);
         tokens[0].Value.ShouldBe("--");
-        tokens[1].Type.ShouldBe(TokenType.Identifier);
+        tokens[1].Type.ShouldBe(RouteTokenType.Identifier);
         tokens[1].Value.ShouldBe("dry-run");
-        tokens[2].Type.ShouldBe(TokenType.Comma);
+        tokens[2].Type.ShouldBe(RouteTokenType.Comma);
         tokens[2].Value.ShouldBe(",");
-        tokens[3].Type.ShouldBe(TokenType.SingleDash);
+        tokens[3].Type.ShouldBe(RouteTokenType.SingleDash);
         tokens[3].Value.ShouldBe("-");
-        tokens[4].Type.ShouldBe(TokenType.Identifier);
+        tokens[4].Type.ShouldBe(RouteTokenType.Identifier);
         tokens[4].Value.ShouldBe("d");
-        tokens[5].Type.ShouldBe(TokenType.Pipe);
+        tokens[5].Type.ShouldBe(RouteTokenType.Pipe);
         tokens[5].Value.ShouldBe("|");
-        tokens[6].Type.ShouldBe(TokenType.Identifier);
+        tokens[6].Type.ShouldBe(RouteTokenType.Identifier);
         tokens[6].Value.ShouldBe("Preview");
-        tokens[7].Type.ShouldBe(TokenType.EndOfInput);
+        tokens[7].Type.ShouldBe(RouteTokenType.EndOfInput);
 
         await Task.CompletedTask;
     }
@@ -79,31 +79,31 @@ public class AdvancedFeaturesTests
 
         // Assert
         tokens.Count.ShouldBe(14);
-        tokens[0].Type.ShouldBe(TokenType.Identifier);
+        tokens[0].Type.ShouldBe(RouteTokenType.Identifier);
         tokens[0].Value.ShouldBe("deploy");
-        tokens[1].Type.ShouldBe(TokenType.LeftBrace);
-        tokens[2].Type.ShouldBe(TokenType.Identifier);
+        tokens[1].Type.ShouldBe(RouteTokenType.LeftBrace);
+        tokens[2].Type.ShouldBe(RouteTokenType.Identifier);
         tokens[2].Value.ShouldBe("env");
-        tokens[3].Type.ShouldBe(TokenType.Pipe);
+        tokens[3].Type.ShouldBe(RouteTokenType.Pipe);
         tokens[3].Value.ShouldBe("|");
-        tokens[4].Type.ShouldBe(TokenType.Identifier);
+        tokens[4].Type.ShouldBe(RouteTokenType.Identifier);
         tokens[4].Value.ShouldBe("Environment");
-        tokens[5].Type.ShouldBe(TokenType.RightBrace);
-        tokens[6].Type.ShouldBe(TokenType.DoubleDash);
+        tokens[5].Type.ShouldBe(RouteTokenType.RightBrace);
+        tokens[6].Type.ShouldBe(RouteTokenType.DoubleDash);
         tokens[6].Value.ShouldBe("--");
-        tokens[7].Type.ShouldBe(TokenType.Identifier);
+        tokens[7].Type.ShouldBe(RouteTokenType.Identifier);
         tokens[7].Value.ShouldBe("dry-run");
-        tokens[8].Type.ShouldBe(TokenType.Comma);
+        tokens[8].Type.ShouldBe(RouteTokenType.Comma);
         tokens[8].Value.ShouldBe(",");
-        tokens[9].Type.ShouldBe(TokenType.SingleDash);
+        tokens[9].Type.ShouldBe(RouteTokenType.SingleDash);
         tokens[9].Value.ShouldBe("-");
-        tokens[10].Type.ShouldBe(TokenType.Identifier);
+        tokens[10].Type.ShouldBe(RouteTokenType.Identifier);
         tokens[10].Value.ShouldBe("d");
-        tokens[11].Type.ShouldBe(TokenType.Pipe);
+        tokens[11].Type.ShouldBe(RouteTokenType.Pipe);
         tokens[11].Value.ShouldBe("|");
-        tokens[12].Type.ShouldBe(TokenType.Identifier);
+        tokens[12].Type.ShouldBe(RouteTokenType.Identifier);
         tokens[12].Value.ShouldBe("Preview");
-        tokens[13].Type.ShouldBe(TokenType.EndOfInput);
+        tokens[13].Type.ShouldBe(RouteTokenType.EndOfInput);
 
         await Task.CompletedTask;
     }
@@ -121,13 +121,13 @@ public class AdvancedFeaturesTests
 
         // Assert
         tokens.Count.ShouldBe(4);
-        tokens[0].Type.ShouldBe(TokenType.DoubleDash);
+        tokens[0].Type.ShouldBe(RouteTokenType.DoubleDash);
         tokens[0].Value.ShouldBe("--");
-        tokens[1].Type.ShouldBe(TokenType.Identifier);
+        tokens[1].Type.ShouldBe(RouteTokenType.Identifier);
         tokens[1].Value.ShouldBe("verbose");
-        tokens[2].Type.ShouldBe(TokenType.Question);
+        tokens[2].Type.ShouldBe(RouteTokenType.Question);
         tokens[2].Value.ShouldBe("?");
-        tokens[3].Type.ShouldBe(TokenType.EndOfInput);
+        tokens[3].Type.ShouldBe(RouteTokenType.EndOfInput);
 
         await Task.CompletedTask;
     }
@@ -144,13 +144,13 @@ public class AdvancedFeaturesTests
 
         // Assert
         tokens.Count.ShouldBe(4);
-        tokens[0].Type.ShouldBe(TokenType.DoubleDash);
+        tokens[0].Type.ShouldBe(RouteTokenType.DoubleDash);
         tokens[0].Value.ShouldBe("--");
-        tokens[1].Type.ShouldBe(TokenType.Identifier);
+        tokens[1].Type.ShouldBe(RouteTokenType.Identifier);
         tokens[1].Value.ShouldBe("dry-run");
-        tokens[2].Type.ShouldBe(TokenType.Question);
+        tokens[2].Type.ShouldBe(RouteTokenType.Question);
         tokens[2].Value.ShouldBe("?");
-        tokens[3].Type.ShouldBe(TokenType.EndOfInput);
+        tokens[3].Type.ShouldBe(RouteTokenType.EndOfInput);
 
         await Task.CompletedTask;
     }
@@ -167,13 +167,13 @@ public class AdvancedFeaturesTests
 
         // Assert
         tokens.Count.ShouldBe(4);
-        tokens[0].Type.ShouldBe(TokenType.SingleDash);
+        tokens[0].Type.ShouldBe(RouteTokenType.SingleDash);
         tokens[0].Value.ShouldBe("-");
-        tokens[1].Type.ShouldBe(TokenType.Identifier);
+        tokens[1].Type.ShouldBe(RouteTokenType.Identifier);
         tokens[1].Value.ShouldBe("v");
-        tokens[2].Type.ShouldBe(TokenType.Question);
+        tokens[2].Type.ShouldBe(RouteTokenType.Question);
         tokens[2].Value.ShouldBe("?");
-        tokens[3].Type.ShouldBe(TokenType.EndOfInput);
+        tokens[3].Type.ShouldBe(RouteTokenType.EndOfInput);
 
         await Task.CompletedTask;
     }
@@ -190,19 +190,19 @@ public class AdvancedFeaturesTests
 
         // Assert
         tokens.Count.ShouldBe(7);
-        tokens[0].Type.ShouldBe(TokenType.DoubleDash);
+        tokens[0].Type.ShouldBe(RouteTokenType.DoubleDash);
         tokens[0].Value.ShouldBe("--");
-        tokens[1].Type.ShouldBe(TokenType.Identifier);
+        tokens[1].Type.ShouldBe(RouteTokenType.Identifier);
         tokens[1].Value.ShouldBe("config");
-        tokens[2].Type.ShouldBe(TokenType.Question);
+        tokens[2].Type.ShouldBe(RouteTokenType.Question);
         tokens[2].Value.ShouldBe("?");
-        tokens[3].Type.ShouldBe(TokenType.LeftBrace);
+        tokens[3].Type.ShouldBe(RouteTokenType.LeftBrace);
         tokens[3].Value.ShouldBe("{");
-        tokens[4].Type.ShouldBe(TokenType.Identifier);
+        tokens[4].Type.ShouldBe(RouteTokenType.Identifier);
         tokens[4].Value.ShouldBe("mode");
-        tokens[5].Type.ShouldBe(TokenType.RightBrace);
+        tokens[5].Type.ShouldBe(RouteTokenType.RightBrace);
         tokens[5].Value.ShouldBe("}");
-        tokens[6].Type.ShouldBe(TokenType.EndOfInput);
+        tokens[6].Type.ShouldBe(RouteTokenType.EndOfInput);
 
         await Task.CompletedTask;
     }
@@ -219,21 +219,21 @@ public class AdvancedFeaturesTests
 
         // Assert
         tokens.Count.ShouldBe(8);
-        tokens[0].Type.ShouldBe(TokenType.DoubleDash);
+        tokens[0].Type.ShouldBe(RouteTokenType.DoubleDash);
         tokens[0].Value.ShouldBe("--");
-        tokens[1].Type.ShouldBe(TokenType.Identifier);
+        tokens[1].Type.ShouldBe(RouteTokenType.Identifier);
         tokens[1].Value.ShouldBe("env");
-        tokens[2].Type.ShouldBe(TokenType.Question);
+        tokens[2].Type.ShouldBe(RouteTokenType.Question);
         tokens[2].Value.ShouldBe("?");
-        tokens[3].Type.ShouldBe(TokenType.LeftBrace);
+        tokens[3].Type.ShouldBe(RouteTokenType.LeftBrace);
         tokens[3].Value.ShouldBe("{");
-        tokens[4].Type.ShouldBe(TokenType.Identifier);
+        tokens[4].Type.ShouldBe(RouteTokenType.Identifier);
         tokens[4].Value.ShouldBe("name");
-        tokens[5].Type.ShouldBe(TokenType.Question);
+        tokens[5].Type.ShouldBe(RouteTokenType.Question);
         tokens[5].Value.ShouldBe("?");
-        tokens[6].Type.ShouldBe(TokenType.RightBrace);
+        tokens[6].Type.ShouldBe(RouteTokenType.RightBrace);
         tokens[6].Value.ShouldBe("}");
-        tokens[7].Type.ShouldBe(TokenType.EndOfInput);
+        tokens[7].Type.ShouldBe(RouteTokenType.EndOfInput);
 
         await Task.CompletedTask;
     }
@@ -251,19 +251,19 @@ public class AdvancedFeaturesTests
 
         // Assert
         tokens.Count.ShouldBe(7);
-        tokens[0].Type.ShouldBe(TokenType.DoubleDash);
+        tokens[0].Type.ShouldBe(RouteTokenType.DoubleDash);
         tokens[0].Value.ShouldBe("--");
-        tokens[1].Type.ShouldBe(TokenType.Identifier);
+        tokens[1].Type.ShouldBe(RouteTokenType.Identifier);
         tokens[1].Value.ShouldBe("env");
-        tokens[2].Type.ShouldBe(TokenType.LeftBrace);
+        tokens[2].Type.ShouldBe(RouteTokenType.LeftBrace);
         tokens[2].Value.ShouldBe("{");
-        tokens[3].Type.ShouldBe(TokenType.Identifier);
+        tokens[3].Type.ShouldBe(RouteTokenType.Identifier);
         tokens[3].Value.ShouldBe("var");
-        tokens[4].Type.ShouldBe(TokenType.RightBrace);
+        tokens[4].Type.ShouldBe(RouteTokenType.RightBrace);
         tokens[4].Value.ShouldBe("}");
-        tokens[5].Type.ShouldBe(TokenType.Asterisk);
+        tokens[5].Type.ShouldBe(RouteTokenType.Asterisk);
         tokens[5].Value.ShouldBe("*");
-        tokens[6].Type.ShouldBe(TokenType.EndOfInput);
+        tokens[6].Type.ShouldBe(RouteTokenType.EndOfInput);
 
         await Task.CompletedTask;
     }
@@ -280,23 +280,23 @@ public class AdvancedFeaturesTests
 
         // Assert
         tokens.Count.ShouldBe(9);
-        tokens[0].Type.ShouldBe(TokenType.DoubleDash);
+        tokens[0].Type.ShouldBe(RouteTokenType.DoubleDash);
         tokens[0].Value.ShouldBe("--");
-        tokens[1].Type.ShouldBe(TokenType.Identifier);
+        tokens[1].Type.ShouldBe(RouteTokenType.Identifier);
         tokens[1].Value.ShouldBe("port");
-        tokens[2].Type.ShouldBe(TokenType.LeftBrace);
+        tokens[2].Type.ShouldBe(RouteTokenType.LeftBrace);
         tokens[2].Value.ShouldBe("{");
-        tokens[3].Type.ShouldBe(TokenType.Identifier);
+        tokens[3].Type.ShouldBe(RouteTokenType.Identifier);
         tokens[3].Value.ShouldBe("p");
-        tokens[4].Type.ShouldBe(TokenType.Colon);
+        tokens[4].Type.ShouldBe(RouteTokenType.Colon);
         tokens[4].Value.ShouldBe(":");
-        tokens[5].Type.ShouldBe(TokenType.Identifier);
+        tokens[5].Type.ShouldBe(RouteTokenType.Identifier);
         tokens[5].Value.ShouldBe("int");
-        tokens[6].Type.ShouldBe(TokenType.RightBrace);
+        tokens[6].Type.ShouldBe(RouteTokenType.RightBrace);
         tokens[6].Value.ShouldBe("}");
-        tokens[7].Type.ShouldBe(TokenType.Asterisk);
+        tokens[7].Type.ShouldBe(RouteTokenType.Asterisk);
         tokens[7].Value.ShouldBe("*");
-        tokens[8].Type.ShouldBe(TokenType.EndOfInput);
+        tokens[8].Type.ShouldBe(RouteTokenType.EndOfInput);
 
         await Task.CompletedTask;
     }
@@ -313,31 +313,31 @@ public class AdvancedFeaturesTests
 
         // Assert
         tokens.Count.ShouldBe(13);
-        tokens[0].Type.ShouldBe(TokenType.DoubleDash);
+        tokens[0].Type.ShouldBe(RouteTokenType.DoubleDash);
         tokens[0].Value.ShouldBe("--");
-        tokens[1].Type.ShouldBe(TokenType.Identifier);
+        tokens[1].Type.ShouldBe(RouteTokenType.Identifier);
         tokens[1].Value.ShouldBe("label");
-        tokens[2].Type.ShouldBe(TokenType.LeftBrace);
+        tokens[2].Type.ShouldBe(RouteTokenType.LeftBrace);
         tokens[2].Value.ShouldBe("{");
-        tokens[3].Type.ShouldBe(TokenType.Identifier);
+        tokens[3].Type.ShouldBe(RouteTokenType.Identifier);
         tokens[3].Value.ShouldBe("l");
-        tokens[4].Type.ShouldBe(TokenType.RightBrace);
+        tokens[4].Type.ShouldBe(RouteTokenType.RightBrace);
         tokens[4].Value.ShouldBe("}");
-        tokens[5].Type.ShouldBe(TokenType.Asterisk);
+        tokens[5].Type.ShouldBe(RouteTokenType.Asterisk);
         tokens[5].Value.ShouldBe("*");
-        tokens[6].Type.ShouldBe(TokenType.DoubleDash);
+        tokens[6].Type.ShouldBe(RouteTokenType.DoubleDash);
         tokens[6].Value.ShouldBe("--");
-        tokens[7].Type.ShouldBe(TokenType.Identifier);
+        tokens[7].Type.ShouldBe(RouteTokenType.Identifier);
         tokens[7].Value.ShouldBe("tag");
-        tokens[8].Type.ShouldBe(TokenType.LeftBrace);
+        tokens[8].Type.ShouldBe(RouteTokenType.LeftBrace);
         tokens[8].Value.ShouldBe("{");
-        tokens[9].Type.ShouldBe(TokenType.Identifier);
+        tokens[9].Type.ShouldBe(RouteTokenType.Identifier);
         tokens[9].Value.ShouldBe("t");
-        tokens[10].Type.ShouldBe(TokenType.RightBrace);
+        tokens[10].Type.ShouldBe(RouteTokenType.RightBrace);
         tokens[10].Value.ShouldBe("}");
-        tokens[11].Type.ShouldBe(TokenType.Asterisk);
+        tokens[11].Type.ShouldBe(RouteTokenType.Asterisk);
         tokens[11].Value.ShouldBe("*");
-        tokens[12].Type.ShouldBe(TokenType.EndOfInput);
+        tokens[12].Type.ShouldBe(RouteTokenType.EndOfInput);
 
         await Task.CompletedTask;
     }
@@ -354,21 +354,21 @@ public class AdvancedFeaturesTests
 
         // Assert
         tokens.Count.ShouldBe(8);
-        tokens[0].Type.ShouldBe(TokenType.DoubleDash);
+        tokens[0].Type.ShouldBe(RouteTokenType.DoubleDash);
         tokens[0].Value.ShouldBe("--");
-        tokens[1].Type.ShouldBe(TokenType.Identifier);
+        tokens[1].Type.ShouldBe(RouteTokenType.Identifier);
         tokens[1].Value.ShouldBe("env");
-        tokens[2].Type.ShouldBe(TokenType.Question);
+        tokens[2].Type.ShouldBe(RouteTokenType.Question);
         tokens[2].Value.ShouldBe("?");
-        tokens[3].Type.ShouldBe(TokenType.LeftBrace);
+        tokens[3].Type.ShouldBe(RouteTokenType.LeftBrace);
         tokens[3].Value.ShouldBe("{");
-        tokens[4].Type.ShouldBe(TokenType.Identifier);
+        tokens[4].Type.ShouldBe(RouteTokenType.Identifier);
         tokens[4].Value.ShouldBe("var");
-        tokens[5].Type.ShouldBe(TokenType.RightBrace);
+        tokens[5].Type.ShouldBe(RouteTokenType.RightBrace);
         tokens[5].Value.ShouldBe("}");
-        tokens[6].Type.ShouldBe(TokenType.Asterisk);
+        tokens[6].Type.ShouldBe(RouteTokenType.Asterisk);
         tokens[6].Value.ShouldBe("*");
-        tokens[7].Type.ShouldBe(TokenType.EndOfInput);
+        tokens[7].Type.ShouldBe(RouteTokenType.EndOfInput);
 
         await Task.CompletedTask;
     }
@@ -385,23 +385,23 @@ public class AdvancedFeaturesTests
 
         // Assert
         tokens.Count.ShouldBe(9);
-        tokens[0].Type.ShouldBe(TokenType.DoubleDash);
+        tokens[0].Type.ShouldBe(RouteTokenType.DoubleDash);
         tokens[0].Value.ShouldBe("--");
-        tokens[1].Type.ShouldBe(TokenType.Identifier);
+        tokens[1].Type.ShouldBe(RouteTokenType.Identifier);
         tokens[1].Value.ShouldBe("opt");
-        tokens[2].Type.ShouldBe(TokenType.Question);
+        tokens[2].Type.ShouldBe(RouteTokenType.Question);
         tokens[2].Value.ShouldBe("?");
-        tokens[3].Type.ShouldBe(TokenType.LeftBrace);
+        tokens[3].Type.ShouldBe(RouteTokenType.LeftBrace);
         tokens[3].Value.ShouldBe("{");
-        tokens[4].Type.ShouldBe(TokenType.Identifier);
+        tokens[4].Type.ShouldBe(RouteTokenType.Identifier);
         tokens[4].Value.ShouldBe("val");
-        tokens[5].Type.ShouldBe(TokenType.Question);
+        tokens[5].Type.ShouldBe(RouteTokenType.Question);
         tokens[5].Value.ShouldBe("?");
-        tokens[6].Type.ShouldBe(TokenType.RightBrace);
+        tokens[6].Type.ShouldBe(RouteTokenType.RightBrace);
         tokens[6].Value.ShouldBe("}");
-        tokens[7].Type.ShouldBe(TokenType.Asterisk);
+        tokens[7].Type.ShouldBe(RouteTokenType.Asterisk);
         tokens[7].Value.ShouldBe("*");
-        tokens[8].Type.ShouldBe(TokenType.EndOfInput);
+        tokens[8].Type.ShouldBe(RouteTokenType.EndOfInput);
 
         await Task.CompletedTask;
     }
@@ -418,15 +418,15 @@ public class AdvancedFeaturesTests
 
         // Assert
         tokens.Count.ShouldBe(5);
-        tokens[0].Type.ShouldBe(TokenType.DoubleDash);
+        tokens[0].Type.ShouldBe(RouteTokenType.DoubleDash);
         tokens[0].Value.ShouldBe("--");
-        tokens[1].Type.ShouldBe(TokenType.Identifier);
+        tokens[1].Type.ShouldBe(RouteTokenType.Identifier);
         tokens[1].Value.ShouldBe("flag");
-        tokens[2].Type.ShouldBe(TokenType.Question);
+        tokens[2].Type.ShouldBe(RouteTokenType.Question);
         tokens[2].Value.ShouldBe("?");
-        tokens[3].Type.ShouldBe(TokenType.Asterisk);
+        tokens[3].Type.ShouldBe(RouteTokenType.Asterisk);
         tokens[3].Value.ShouldBe("*");
-        tokens[4].Type.ShouldBe(TokenType.EndOfInput);
+        tokens[4].Type.ShouldBe(RouteTokenType.EndOfInput);
 
         await Task.CompletedTask;
     }
@@ -443,27 +443,27 @@ public class AdvancedFeaturesTests
 
         // Assert
         tokens.Count.ShouldBe(11);
-        tokens[0].Type.ShouldBe(TokenType.Identifier);
+        tokens[0].Type.ShouldBe(RouteTokenType.Identifier);
         tokens[0].Value.ShouldBe("deploy");
-        tokens[1].Type.ShouldBe(TokenType.LeftBrace);
+        tokens[1].Type.ShouldBe(RouteTokenType.LeftBrace);
         tokens[1].Value.ShouldBe("{");
-        tokens[2].Type.ShouldBe(TokenType.Identifier);
+        tokens[2].Type.ShouldBe(RouteTokenType.Identifier);
         tokens[2].Value.ShouldBe("env");
-        tokens[3].Type.ShouldBe(TokenType.RightBrace);
+        tokens[3].Type.ShouldBe(RouteTokenType.RightBrace);
         tokens[3].Value.ShouldBe("}");
-        tokens[4].Type.ShouldBe(TokenType.DoubleDash);
+        tokens[4].Type.ShouldBe(RouteTokenType.DoubleDash);
         tokens[4].Value.ShouldBe("--");
-        tokens[5].Type.ShouldBe(TokenType.Identifier);
+        tokens[5].Type.ShouldBe(RouteTokenType.Identifier);
         tokens[5].Value.ShouldBe("force");
-        tokens[6].Type.ShouldBe(TokenType.Question);
+        tokens[6].Type.ShouldBe(RouteTokenType.Question);
         tokens[6].Value.ShouldBe("?");
-        tokens[7].Type.ShouldBe(TokenType.DoubleDash);
+        tokens[7].Type.ShouldBe(RouteTokenType.DoubleDash);
         tokens[7].Value.ShouldBe("--");
-        tokens[8].Type.ShouldBe(TokenType.Identifier);
+        tokens[8].Type.ShouldBe(RouteTokenType.Identifier);
         tokens[8].Value.ShouldBe("dry-run");
-        tokens[9].Type.ShouldBe(TokenType.Question);
+        tokens[9].Type.ShouldBe(RouteTokenType.Question);
         tokens[9].Value.ShouldBe("?");
-        tokens[10].Type.ShouldBe(TokenType.EndOfInput);
+        tokens[10].Type.ShouldBe(RouteTokenType.EndOfInput);
 
         await Task.CompletedTask;
     }
@@ -480,31 +480,31 @@ public class AdvancedFeaturesTests
 
         // Assert
         tokens.Count.ShouldBe(13);
-        tokens[0].Type.ShouldBe(TokenType.Identifier);
+        tokens[0].Type.ShouldBe(RouteTokenType.Identifier);
         tokens[0].Value.ShouldBe("docker");
-        tokens[1].Type.ShouldBe(TokenType.DoubleDash);
+        tokens[1].Type.ShouldBe(RouteTokenType.DoubleDash);
         tokens[1].Value.ShouldBe("--");
-        tokens[2].Type.ShouldBe(TokenType.Identifier);
+        tokens[2].Type.ShouldBe(RouteTokenType.Identifier);
         tokens[2].Value.ShouldBe("env");
-        tokens[3].Type.ShouldBe(TokenType.Question);
+        tokens[3].Type.ShouldBe(RouteTokenType.Question);
         tokens[3].Value.ShouldBe("?");
-        tokens[4].Type.ShouldBe(TokenType.LeftBrace);
+        tokens[4].Type.ShouldBe(RouteTokenType.LeftBrace);
         tokens[4].Value.ShouldBe("{");
-        tokens[5].Type.ShouldBe(TokenType.Identifier);
+        tokens[5].Type.ShouldBe(RouteTokenType.Identifier);
         tokens[5].Value.ShouldBe("e");
-        tokens[6].Type.ShouldBe(TokenType.RightBrace);
+        tokens[6].Type.ShouldBe(RouteTokenType.RightBrace);
         tokens[6].Value.ShouldBe("}");
-        tokens[7].Type.ShouldBe(TokenType.Asterisk);
+        tokens[7].Type.ShouldBe(RouteTokenType.Asterisk);
         tokens[7].Value.ShouldBe("*");
-        tokens[8].Type.ShouldBe(TokenType.LeftBrace);
+        tokens[8].Type.ShouldBe(RouteTokenType.LeftBrace);
         tokens[8].Value.ShouldBe("{");
-        tokens[9].Type.ShouldBe(TokenType.Asterisk);
+        tokens[9].Type.ShouldBe(RouteTokenType.Asterisk);
         tokens[9].Value.ShouldBe("*");
-        tokens[10].Type.ShouldBe(TokenType.Identifier);
+        tokens[10].Type.ShouldBe(RouteTokenType.Identifier);
         tokens[10].Value.ShouldBe("cmd");
-        tokens[11].Type.ShouldBe(TokenType.RightBrace);
+        tokens[11].Type.ShouldBe(RouteTokenType.RightBrace);
         tokens[11].Value.ShouldBe("}");
-        tokens[12].Type.ShouldBe(TokenType.EndOfInput);
+        tokens[12].Type.ShouldBe(RouteTokenType.EndOfInput);
 
         await Task.CompletedTask;
     }

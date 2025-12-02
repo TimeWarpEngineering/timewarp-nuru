@@ -18,9 +18,9 @@ public class InvalidDoubleDashesTests
 
     // Assert
     tokens.Count.ShouldBe(2); // Invalid + EndOfInput
-    tokens[0].Type.ShouldBe(TokenType.Invalid);
+    tokens[0].Type.ShouldBe(RouteTokenType.Invalid);
     tokens[0].Value.ShouldBe(pattern);
-    tokens[1].Type.ShouldBe(TokenType.EndOfInput);
+    tokens[1].Type.ShouldBe(RouteTokenType.EndOfInput);
 
     await Task.CompletedTask;
   }

@@ -33,9 +33,9 @@ public class BasicTokenTypesTests
 
     // Assert
     tokens.Count.ShouldBe(2);
-    tokens[0].Type.ShouldBe(TokenType.LeftBrace);
+    tokens[0].Type.ShouldBe(RouteTokenType.LeftBrace);
     tokens[0].Value.ShouldBe("{");
-    tokens[1].Type.ShouldBe(TokenType.EndOfInput);
+    tokens[1].Type.ShouldBe(RouteTokenType.EndOfInput);
 
     await Task.CompletedTask;
   }
@@ -49,9 +49,9 @@ public class BasicTokenTypesTests
 
     // Assert
     tokens.Count.ShouldBe(2);
-    tokens[0].Type.ShouldBe(TokenType.RightBrace);
+    tokens[0].Type.ShouldBe(RouteTokenType.RightBrace);
     tokens[0].Value.ShouldBe("}");
-    tokens[1].Type.ShouldBe(TokenType.EndOfInput);
+    tokens[1].Type.ShouldBe(RouteTokenType.EndOfInput);
 
     await Task.CompletedTask;
   }
@@ -65,9 +65,9 @@ public class BasicTokenTypesTests
 
     // Assert
     tokens.Count.ShouldBe(2);
-    tokens[0].Type.ShouldBe(TokenType.Colon);
+    tokens[0].Type.ShouldBe(RouteTokenType.Colon);
     tokens[0].Value.ShouldBe(":");
-    tokens[1].Type.ShouldBe(TokenType.EndOfInput);
+    tokens[1].Type.ShouldBe(RouteTokenType.EndOfInput);
 
     await Task.CompletedTask;
   }
@@ -81,9 +81,9 @@ public class BasicTokenTypesTests
 
     // Assert
     tokens.Count.ShouldBe(2);
-    tokens[0].Type.ShouldBe(TokenType.Question);
+    tokens[0].Type.ShouldBe(RouteTokenType.Question);
     tokens[0].Value.ShouldBe("?");
-    tokens[1].Type.ShouldBe(TokenType.EndOfInput);
+    tokens[1].Type.ShouldBe(RouteTokenType.EndOfInput);
 
     await Task.CompletedTask;
   }
@@ -97,9 +97,9 @@ public class BasicTokenTypesTests
 
     // Assert
     tokens.Count.ShouldBe(2);
-    tokens[0].Type.ShouldBe(TokenType.Asterisk);
+    tokens[0].Type.ShouldBe(RouteTokenType.Asterisk);
     tokens[0].Value.ShouldBe("*");
-    tokens[1].Type.ShouldBe(TokenType.EndOfInput);
+    tokens[1].Type.ShouldBe(RouteTokenType.EndOfInput);
 
     await Task.CompletedTask;
   }
@@ -113,9 +113,9 @@ public class BasicTokenTypesTests
 
     // Assert
     tokens.Count.ShouldBe(2);
-    tokens[0].Type.ShouldBe(TokenType.Pipe);
+    tokens[0].Type.ShouldBe(RouteTokenType.Pipe);
     tokens[0].Value.ShouldBe("|");
-    tokens[1].Type.ShouldBe(TokenType.EndOfInput);
+    tokens[1].Type.ShouldBe(RouteTokenType.EndOfInput);
 
     await Task.CompletedTask;
   }
@@ -129,9 +129,9 @@ public class BasicTokenTypesTests
 
     // Assert
     tokens.Count.ShouldBe(2);
-    tokens[0].Type.ShouldBe(TokenType.Comma);
+    tokens[0].Type.ShouldBe(RouteTokenType.Comma);
     tokens[0].Value.ShouldBe(",");
-    tokens[1].Type.ShouldBe(TokenType.EndOfInput);
+    tokens[1].Type.ShouldBe(RouteTokenType.EndOfInput);
 
     await Task.CompletedTask;
   }
@@ -145,11 +145,11 @@ public class BasicTokenTypesTests
 
     // Assert
     tokens.Count.ShouldBe(3);
-    tokens[0].Type.ShouldBe(TokenType.DoubleDash);
+    tokens[0].Type.ShouldBe(RouteTokenType.DoubleDash);
     tokens[0].Value.ShouldBe("--");
-    tokens[1].Type.ShouldBe(TokenType.Identifier);
+    tokens[1].Type.ShouldBe(RouteTokenType.Identifier);
     tokens[1].Value.ShouldBe("option");
-    tokens[2].Type.ShouldBe(TokenType.EndOfInput);
+    tokens[2].Type.ShouldBe(RouteTokenType.EndOfInput);
 
     await Task.CompletedTask;
   }
@@ -163,11 +163,11 @@ public class BasicTokenTypesTests
 
     // Assert
     tokens.Count.ShouldBe(3);
-    tokens[0].Type.ShouldBe(TokenType.SingleDash);
+    tokens[0].Type.ShouldBe(RouteTokenType.SingleDash);
     tokens[0].Value.ShouldBe("-");
-    tokens[1].Type.ShouldBe(TokenType.Identifier);
+    tokens[1].Type.ShouldBe(RouteTokenType.Identifier);
     tokens[1].Value.ShouldBe("h");
-    tokens[2].Type.ShouldBe(TokenType.EndOfInput);
+    tokens[2].Type.ShouldBe(RouteTokenType.EndOfInput);
 
     await Task.CompletedTask;
   }
@@ -181,9 +181,9 @@ public class BasicTokenTypesTests
 
     // Assert
     tokens.Count.ShouldBe(2);
-    tokens[0].Type.ShouldBe(TokenType.EndOfOptions);
+    tokens[0].Type.ShouldBe(RouteTokenType.EndOfOptions);
     tokens[0].Value.ShouldBe("--");
-    tokens[1].Type.ShouldBe(TokenType.EndOfInput);
+    tokens[1].Type.ShouldBe(RouteTokenType.EndOfInput);
 
     await Task.CompletedTask;
   }
@@ -198,18 +198,18 @@ public class BasicTokenTypesTests
     // Assert
     // Lexer continues normal tokenization after pipe - parser handles description
     tokens.Count.ShouldBe(8);
-    tokens[0].Type.ShouldBe(TokenType.Identifier);
+    tokens[0].Type.ShouldBe(RouteTokenType.Identifier);
     tokens[0].Value.ShouldBe("greet");
-    tokens[1].Type.ShouldBe(TokenType.LeftBrace);
-    tokens[2].Type.ShouldBe(TokenType.Identifier);
+    tokens[1].Type.ShouldBe(RouteTokenType.LeftBrace);
+    tokens[2].Type.ShouldBe(RouteTokenType.Identifier);
     tokens[2].Value.ShouldBe("name");
-    tokens[3].Type.ShouldBe(TokenType.RightBrace);
-    tokens[4].Type.ShouldBe(TokenType.Pipe);
-    tokens[5].Type.ShouldBe(TokenType.Identifier);
+    tokens[3].Type.ShouldBe(RouteTokenType.RightBrace);
+    tokens[4].Type.ShouldBe(RouteTokenType.Pipe);
+    tokens[5].Type.ShouldBe(RouteTokenType.Identifier);
     tokens[5].Value.ShouldBe("Say");
-    tokens[6].Type.ShouldBe(TokenType.Identifier);
+    tokens[6].Type.ShouldBe(RouteTokenType.Identifier);
     tokens[6].Value.ShouldBe("hello");
-    tokens[7].Type.ShouldBe(TokenType.EndOfInput);
+    tokens[7].Type.ShouldBe(RouteTokenType.EndOfInput);
 
     await Task.CompletedTask;
   }
@@ -223,7 +223,7 @@ public class BasicTokenTypesTests
 
     // Assert
     tokens.Count.ShouldBe(1);
-    tokens[0].Type.ShouldBe(TokenType.EndOfInput);
+    tokens[0].Type.ShouldBe(RouteTokenType.EndOfInput);
     tokens[0].Value.ShouldBe("");
 
     await Task.CompletedTask;
@@ -237,9 +237,9 @@ public class BasicTokenTypesTests
 
     // Assert
     tokens.Count.ShouldBe(2); // identifier + EndOfInput
-    tokens[0].Type.ShouldBe(TokenType.Identifier);
+    tokens[0].Type.ShouldBe(RouteTokenType.Identifier);
     tokens[0].Value.ShouldBe(pattern);
-    tokens[1].Type.ShouldBe(TokenType.EndOfInput);
+    tokens[1].Type.ShouldBe(RouteTokenType.EndOfInput);
 
     await Task.CompletedTask;
   }

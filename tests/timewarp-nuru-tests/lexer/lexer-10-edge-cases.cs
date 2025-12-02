@@ -16,7 +16,7 @@ public class EdgeCasesTests
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     tokens.Count.ShouldBe(1);
-    tokens[0].Type.ShouldBe(TokenType.EndOfInput);
+    tokens[0].Type.ShouldBe(RouteTokenType.EndOfInput);
 
     await Task.CompletedTask;
   }
@@ -36,7 +36,7 @@ public class EdgeCasesTests
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     tokens.Count.ShouldBe(1);
-    tokens[0].Type.ShouldBe(TokenType.EndOfInput);
+    tokens[0].Type.ShouldBe(RouteTokenType.EndOfInput);
 
     await Task.CompletedTask;
   }
@@ -53,13 +53,13 @@ public class EdgeCasesTests
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     tokens.Count.ShouldBe(7);  // 6 tokens + EndOfInput
-    tokens[0].Type.ShouldBe(TokenType.LeftBrace);
-    tokens[1].Type.ShouldBe(TokenType.RightBrace);
-    tokens[2].Type.ShouldBe(TokenType.Colon);
-    tokens[3].Type.ShouldBe(TokenType.Question);
-    tokens[4].Type.ShouldBe(TokenType.Asterisk);
-    tokens[5].Type.ShouldBe(TokenType.Pipe);
-    tokens[6].Type.ShouldBe(TokenType.EndOfInput);
+    tokens[0].Type.ShouldBe(RouteTokenType.LeftBrace);
+    tokens[1].Type.ShouldBe(RouteTokenType.RightBrace);
+    tokens[2].Type.ShouldBe(RouteTokenType.Colon);
+    tokens[3].Type.ShouldBe(RouteTokenType.Question);
+    tokens[4].Type.ShouldBe(RouteTokenType.Asterisk);
+    tokens[5].Type.ShouldBe(RouteTokenType.Pipe);
+    tokens[6].Type.ShouldBe(RouteTokenType.EndOfInput);
 
     await Task.CompletedTask;
   }
@@ -78,12 +78,12 @@ public class EdgeCasesTests
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     tokens.Count.ShouldBe(3);
-    tokens[0].Type.ShouldBe(TokenType.Identifier);
+    tokens[0].Type.ShouldBe(RouteTokenType.Identifier);
     tokens[0].Value.ShouldBe("cmd");
-    tokens[1].Type.ShouldBe(TokenType.Identifier);
+    tokens[1].Type.ShouldBe(RouteTokenType.Identifier);
     tokens[1].Value.ShouldBe(longIdentifier);
     tokens[1].Value.Length.ShouldBe(150);
-    tokens[2].Type.ShouldBe(TokenType.EndOfInput);
+    tokens[2].Type.ShouldBe(RouteTokenType.EndOfInput);
 
     await Task.CompletedTask;
   }
@@ -101,18 +101,18 @@ public class EdgeCasesTests
 
     // Should produce: { } { ? } { * } { : } EndOfInput = 12 tokens
     tokens.Count.ShouldBe(12);
-    tokens[0].Type.ShouldBe(TokenType.LeftBrace);
-    tokens[1].Type.ShouldBe(TokenType.RightBrace);
-    tokens[2].Type.ShouldBe(TokenType.LeftBrace);
-    tokens[3].Type.ShouldBe(TokenType.Question);
-    tokens[4].Type.ShouldBe(TokenType.RightBrace);
-    tokens[5].Type.ShouldBe(TokenType.LeftBrace);
-    tokens[6].Type.ShouldBe(TokenType.Asterisk);
-    tokens[7].Type.ShouldBe(TokenType.RightBrace);
-    tokens[8].Type.ShouldBe(TokenType.LeftBrace);
-    tokens[9].Type.ShouldBe(TokenType.Colon);
-    tokens[10].Type.ShouldBe(TokenType.RightBrace);
-    tokens[11].Type.ShouldBe(TokenType.EndOfInput);
+    tokens[0].Type.ShouldBe(RouteTokenType.LeftBrace);
+    tokens[1].Type.ShouldBe(RouteTokenType.RightBrace);
+    tokens[2].Type.ShouldBe(RouteTokenType.LeftBrace);
+    tokens[3].Type.ShouldBe(RouteTokenType.Question);
+    tokens[4].Type.ShouldBe(RouteTokenType.RightBrace);
+    tokens[5].Type.ShouldBe(RouteTokenType.LeftBrace);
+    tokens[6].Type.ShouldBe(RouteTokenType.Asterisk);
+    tokens[7].Type.ShouldBe(RouteTokenType.RightBrace);
+    tokens[8].Type.ShouldBe(RouteTokenType.LeftBrace);
+    tokens[9].Type.ShouldBe(RouteTokenType.Colon);
+    tokens[10].Type.ShouldBe(RouteTokenType.RightBrace);
+    tokens[11].Type.ShouldBe(RouteTokenType.EndOfInput);
 
     await Task.CompletedTask;
   }
@@ -130,18 +130,18 @@ public class EdgeCasesTests
 
     // Should tokenize: cmd, {, param, }, Invalid(@), --, flag, EndOfInput
     tokens.Count.ShouldBe(8);
-    tokens[0].Type.ShouldBe(TokenType.Identifier);
+    tokens[0].Type.ShouldBe(RouteTokenType.Identifier);
     tokens[0].Value.ShouldBe("cmd");
-    tokens[1].Type.ShouldBe(TokenType.LeftBrace);
-    tokens[2].Type.ShouldBe(TokenType.Identifier);
+    tokens[1].Type.ShouldBe(RouteTokenType.LeftBrace);
+    tokens[2].Type.ShouldBe(RouteTokenType.Identifier);
     tokens[2].Value.ShouldBe("param");
-    tokens[3].Type.ShouldBe(TokenType.RightBrace);
-    tokens[4].Type.ShouldBe(TokenType.Invalid);
+    tokens[3].Type.ShouldBe(RouteTokenType.RightBrace);
+    tokens[4].Type.ShouldBe(RouteTokenType.Invalid);
     tokens[4].Value.ShouldBe("@");
-    tokens[5].Type.ShouldBe(TokenType.DoubleDash);
-    tokens[6].Type.ShouldBe(TokenType.Identifier);
+    tokens[5].Type.ShouldBe(RouteTokenType.DoubleDash);
+    tokens[6].Type.ShouldBe(RouteTokenType.Identifier);
     tokens[6].Value.ShouldBe("flag");
-    tokens[7].Type.ShouldBe(TokenType.EndOfInput);
+    tokens[7].Type.ShouldBe(RouteTokenType.EndOfInput);
 
     await Task.CompletedTask;
   }
@@ -160,21 +160,21 @@ public class EdgeCasesTests
 
     // Should recognize unicode characters as valid identifiers
     tokens.Count.ShouldBe(10);
-    tokens[0].Type.ShouldBe(TokenType.Identifier);
+    tokens[0].Type.ShouldBe(RouteTokenType.Identifier);
     tokens[0].Value.ShouldBe("部署");  // Chinese: "deploy"
-    tokens[1].Type.ShouldBe(TokenType.LeftBrace);
-    tokens[2].Type.ShouldBe(TokenType.Identifier);
+    tokens[1].Type.ShouldBe(RouteTokenType.LeftBrace);
+    tokens[2].Type.ShouldBe(RouteTokenType.Identifier);
     tokens[2].Value.ShouldBe("名称");  // Chinese: "name"
-    tokens[3].Type.ShouldBe(TokenType.RightBrace);
-    tokens[4].Type.ShouldBe(TokenType.Identifier);
+    tokens[3].Type.ShouldBe(RouteTokenType.RightBrace);
+    tokens[4].Type.ShouldBe(RouteTokenType.Identifier);
     tokens[4].Value.ShouldBe("αβγ");   // Greek letters
-    tokens[5].Type.ShouldBe(TokenType.LeftBrace);
-    tokens[6].Type.ShouldBe(TokenType.Identifier);
+    tokens[5].Type.ShouldBe(RouteTokenType.LeftBrace);
+    tokens[6].Type.ShouldBe(RouteTokenType.Identifier);
     tokens[6].Value.ShouldBe("δ");     // Greek delta
-    tokens[7].Type.ShouldBe(TokenType.RightBrace);
-    tokens[8].Type.ShouldBe(TokenType.Identifier);
+    tokens[7].Type.ShouldBe(RouteTokenType.RightBrace);
+    tokens[8].Type.ShouldBe(RouteTokenType.Identifier);
     tokens[8].Value.ShouldBe("café");  // French accent
-    tokens[9].Type.ShouldBe(TokenType.EndOfInput);
+    tokens[9].Type.ShouldBe(RouteTokenType.EndOfInput);
 
     await Task.CompletedTask;
   }

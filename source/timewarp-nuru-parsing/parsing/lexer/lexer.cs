@@ -31,7 +31,7 @@ internal class Lexer
     Tokens.Clear();
     Position = 0;
 
-    LoggerMessages.StartingLexicalAnalysis(Logger, Input, null);
+    ParsingLoggerMessages.StartingLexicalAnalysis(Logger, Input, null);
 
     while (!IsAtEnd())
     {
@@ -42,8 +42,8 @@ internal class Lexer
 
     if (Logger.IsEnabled(LogLevel.Trace))
     {
-      LoggerMessages.CompletedLexicalAnalysis(Logger, Tokens.Count, null);
-      LoggerMessages.DumpingTokens(Logger, DumpTokens(Tokens), null);
+      ParsingLoggerMessages.CompletedLexicalAnalysis(Logger, Tokens.Count, null);
+      ParsingLoggerMessages.DumpingTokens(Logger, DumpTokens(Tokens), null);
     }
 
     return Tokens;
@@ -86,27 +86,27 @@ internal class Lexer
         break;
 
       case '{':
-        AddToken(TokenType.LeftBrace, "{");
+        AddToken(RouteTokenType.LeftBrace, "{");
         break;
 
       case '}':
-        AddToken(TokenType.RightBrace, "}");
+        AddToken(RouteTokenType.RightBrace, "}");
         break;
 
       case ':':
-        AddToken(TokenType.Colon, ":");
+        AddToken(RouteTokenType.Colon, ":");
         break;
 
       case '?':
-        AddToken(TokenType.Question, "?");
+        AddToken(RouteTokenType.Question, "?");
         break;
 
       case '|':
-        AddToken(TokenType.Pipe, "|");
+        AddToken(RouteTokenType.Pipe, "|");
         break;
 
       case '*':
-        AddToken(TokenType.Asterisk, "*");
+        AddToken(RouteTokenType.Asterisk, "*");
         break;
 
       case '-':
@@ -116,11 +116,11 @@ internal class Lexer
           // It should be followed by whitespace or end of input
           if (IsAtEnd() || Peek() == ' ')
           {
-            AddToken(TokenType.EndOfOptions, "--");
+            AddToken(RouteTokenType.EndOfOptions, "--");
           }
           else
           {
-            AddToken(TokenType.DoubleDash, "--");
+            AddToken(RouteTokenType.DoubleDash, "--");
           }
         }
         else
@@ -128,13 +128,13 @@ internal class Lexer
           // Single dash - valid for both single and multi-character options
           // Examples: -h, -v, -bl, -verbosity
           // Real-world tools like dotnet CLI use multi-char short options: dotnet run -bl
-          AddToken(TokenType.SingleDash, "-");
+          AddToken(RouteTokenType.SingleDash, "-");
         }
 
         break;
 
       case ',':
-        AddToken(TokenType.Comma, ",");
+        AddToken(RouteTokenType.Comma, ",");
         break;
 
       case '<':
@@ -150,7 +150,7 @@ internal class Lexer
         else
         {
           // Invalid character
-          AddToken(TokenType.Invalid, c.ToString());
+          AddToken(RouteTokenType.Invalid, c.ToString());
         }
 
         break;
@@ -177,7 +177,7 @@ internal class Lexer
         {
           // Trailing dash at end of input: "test-"
           identifier.Append(Advance());
-          AddToken(TokenType.Invalid, identifier.ToString(), start);
+          AddToken(RouteTokenType.Invalid, identifier.ToString(), start);
           return;
         }
 
@@ -191,7 +191,7 @@ internal class Lexer
             identifier.Append(Advance());
           }
 
-          AddToken(TokenType.Invalid, identifier.ToString(), start);
+          AddToken(RouteTokenType.Invalid, identifier.ToString(), start);
           return;
         }
         else if (IsAlphaNumeric(next))
@@ -203,7 +203,7 @@ internal class Lexer
         {
           // Trailing dash before space or other char: "test- " or "test-}"
           identifier.Append(Advance());
-          AddToken(TokenType.Invalid, identifier.ToString(), start);
+          AddToken(RouteTokenType.Invalid, identifier.ToString(), start);
           return;
         }
       }
@@ -213,7 +213,7 @@ internal class Lexer
       }
     }
 
-    AddToken(TokenType.Identifier, identifier.ToString(), start);
+    AddToken(RouteTokenType.Identifier, identifier.ToString(), start);
   }
 
   private void ScanInvalidParameterSyntax()
@@ -233,7 +233,7 @@ internal class Lexer
       invalidSyntax.Append(Advance()); // Include the closing >
     }
 
-    AddToken(TokenType.Invalid, invalidSyntax.ToString(), start);
+    AddToken(RouteTokenType.Invalid, invalidSyntax.ToString(), start);
   }
 
   private bool Match(char expected)
@@ -272,13 +272,13 @@ internal class Lexer
     return char.IsLetterOrDigit(c) || c == '_';
   }
 
-  private void AddToken(TokenType type, string value)
+  private void AddToken(RouteTokenType type, string value)
   {
     int tokenStart = Position - value.Length;
     Tokens.Add(new Token(type, value, tokenStart, value.Length));
   }
 
-  private void AddToken(TokenType type, string value, int start)
+  private void AddToken(RouteTokenType type, string value, int start)
   {
     Tokens.Add(new Token(type, value, start, Position - start));
   }

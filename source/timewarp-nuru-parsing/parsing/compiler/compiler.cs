@@ -125,7 +125,7 @@ internal sealed class Compiler : SyntaxVisitor<object?>
     {
       // Extract the option name from the syntax (remove leading dashes) and convert to camelCase
       valueParameterName = ToCamelCase(option.LongForm ?? option.ShortForm ?? "");
-      LoggerMessages.SettingBooleanOptionParameter(Logger, valueParameterName!, null);
+      ParsingLoggerMessages.SettingBooleanOptionParameter(Logger, valueParameterName!, null);
     }
 
     // Determine if option is optional (runtime behavior)

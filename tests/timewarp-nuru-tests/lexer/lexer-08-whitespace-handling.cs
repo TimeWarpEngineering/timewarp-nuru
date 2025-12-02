@@ -19,11 +19,11 @@ public class WhitespaceHandlingTests
 
     // Assert - whitespace quantity and type don't affect tokenization
     tokens.Count.ShouldBe(3);
-    tokens[0].Type.ShouldBe(TokenType.Identifier);
+    tokens[0].Type.ShouldBe(RouteTokenType.Identifier);
     tokens[0].Value.ShouldBe("git");
-    tokens[1].Type.ShouldBe(TokenType.Identifier);
+    tokens[1].Type.ShouldBe(RouteTokenType.Identifier);
     tokens[1].Value.ShouldBe("log");
-    tokens[2].Type.ShouldBe(TokenType.EndOfInput);
+    tokens[2].Type.ShouldBe(RouteTokenType.EndOfInput);
 
     await Task.CompletedTask;
   }
@@ -37,11 +37,11 @@ public class WhitespaceHandlingTests
 
     // Assert - whitespace separates special chars from identifiers
     tokens.Count.ShouldBe(4);
-    tokens[0].Type.ShouldBe(TokenType.LeftBrace);
-    tokens[1].Type.ShouldBe(TokenType.Identifier);
+    tokens[0].Type.ShouldBe(RouteTokenType.LeftBrace);
+    tokens[1].Type.ShouldBe(RouteTokenType.Identifier);
     tokens[1].Value.ShouldBe("param");
-    tokens[2].Type.ShouldBe(TokenType.RightBrace);
-    tokens[3].Type.ShouldBe(TokenType.EndOfInput);
+    tokens[2].Type.ShouldBe(RouteTokenType.RightBrace);
+    tokens[3].Type.ShouldBe(RouteTokenType.EndOfInput);
 
     await Task.CompletedTask;
   }
@@ -55,9 +55,9 @@ public class WhitespaceHandlingTests
 
     // Assert - special chars are self-delimiting
     tokens.Count.ShouldBe(3);
-    tokens[0].Type.ShouldBe(TokenType.LeftBrace);
-    tokens[1].Type.ShouldBe(TokenType.RightBrace);
-    tokens[2].Type.ShouldBe(TokenType.EndOfInput);
+    tokens[0].Type.ShouldBe(RouteTokenType.LeftBrace);
+    tokens[1].Type.ShouldBe(RouteTokenType.RightBrace);
+    tokens[2].Type.ShouldBe(RouteTokenType.EndOfInput);
 
     await Task.CompletedTask;
   }

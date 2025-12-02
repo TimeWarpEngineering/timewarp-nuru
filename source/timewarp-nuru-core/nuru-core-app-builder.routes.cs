@@ -191,10 +191,10 @@ public partial class NuruCoreAppBuilder
       ILogger<NuruCoreAppBuilder> logger = LoggerFactory.CreateLogger<NuruCoreAppBuilder>();
       if (EndpointCollection.Count == 0)
       {
-        LoggerMessages.StartingRouteRegistration(logger, null);
+        ParsingLoggerMessages.StartingRouteRegistration(logger, null);
       }
 
-      LoggerMessages.RegisteringRoute(logger, pattern, null);
+      ParsingLoggerMessages.RegisteringRoute(logger, pattern, null);
     }
 
     Endpoint endpoint = new()

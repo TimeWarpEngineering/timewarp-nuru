@@ -2,7 +2,7 @@
 
 ## Context
 
-After .NET 10 is released (November 2024), C# 14 will become the "latest" language version. We're using `<LangVersion>preview</LangVersion>` to access C# 14 extension block syntax.
+After .NET 10 is released (November 2025), C# 14 will become the "latest" language version. We're using `<LangVersion>preview</LangVersion>` to access C# 14 extension block syntax.
 
 ## Task
 
@@ -18,7 +18,7 @@ Update `Directory.Build.props` line 29:
 
 ## When
 
-After .NET 10 RTM release (expected November 2024).
+After .NET 10 RTM release (expected November 2025).
 
 ## Why
 

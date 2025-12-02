@@ -3,7 +3,6 @@
 #:project ../../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj
 
 using TimeWarp.Nuru;
-using TimeWarp.Nuru.Repl;
 
 // Test basic tab completion (Section 6 of REPL Test Plan)
 // Note: Tab completion tests require interactive key simulation which

@@ -3,7 +3,6 @@
 #:project ../../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj
 
 using TimeWarp.Nuru;
-using TimeWarp.Nuru.Repl;
 
 // Tests for PSReadLine-compatible keybindings (Task 043_001)
 // Verifies both primary and alternative keybindings work correctly

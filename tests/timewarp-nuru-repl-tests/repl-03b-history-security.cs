@@ -3,7 +3,6 @@
 #:project ../../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj
 
 using TimeWarp.Nuru;
-using TimeWarp.Nuru.Repl;
 
 return await RunTests<ShouldIgnoreCommandTests>(clearCache: true);
 

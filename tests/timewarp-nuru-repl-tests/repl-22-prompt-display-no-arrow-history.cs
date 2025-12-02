@@ -3,7 +3,6 @@
 #:project ../../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj
 
 using TimeWarp.Nuru;
-using TimeWarp.Nuru.Repl;
 
 // Test prompt display when EnableArrowHistory is false (Bug Fix Verification)
 return await RunTests<PromptDisplayTests>();

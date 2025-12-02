@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru.Repl.Input;
+namespace TimeWarp.Nuru;
 
 /// <summary>
 /// Provides advanced console input handling for REPL mode with tab completion and history navigation.

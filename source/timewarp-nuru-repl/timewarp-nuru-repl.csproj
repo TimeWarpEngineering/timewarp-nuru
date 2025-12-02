@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <AssemblyName>TimeWarp.Nuru.Repl</AssemblyName>
-    <RootNamespace>TimeWarp.Nuru.Repl</RootNamespace>
+    <RootNamespace>TimeWarp.Nuru</RootNamespace>
     <Description>REPL (Read-Eval-Print Loop) mode support for TimeWarp.Nuru CLI applications</Description>
     <PackageTags>cli;command-line;repl;interactive;shell</PackageTags>
     <!-- CA1303: CLI output strings don't need localization resources -->

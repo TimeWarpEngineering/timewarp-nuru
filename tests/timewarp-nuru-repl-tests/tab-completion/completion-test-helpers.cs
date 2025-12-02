@@ -1,7 +1,6 @@
 namespace TimeWarp.Nuru.Tests.TabCompletion;
 
 using TimeWarp.Nuru;
-using TimeWarp.Nuru.Repl;
 
 // ============================================================================
 // Tab Completion Test Helpers

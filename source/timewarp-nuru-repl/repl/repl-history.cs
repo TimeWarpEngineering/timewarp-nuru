@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru.Repl;
+namespace TimeWarp.Nuru;
 
 /// <summary>
 /// Manages command history for REPL sessions including persistence, filtering, and deduplication.

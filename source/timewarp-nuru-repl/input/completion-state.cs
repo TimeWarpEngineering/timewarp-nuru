@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru.Repl.Input;
+namespace TimeWarp.Nuru;
 
 /// <summary>
 /// Encapsulates the state of tab completion cycling.

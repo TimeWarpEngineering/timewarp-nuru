@@ -3,7 +3,6 @@
 #:project ../../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj
 
 using TimeWarp.Nuru;
-using TimeWarp.Nuru.Repl;
 
 // Tests that validate REPL behavior using the same routes as repl-basic-demo.cs
 // This test file mirrors the exact route configuration from samples/repl-demo/repl-basic-demo.cs

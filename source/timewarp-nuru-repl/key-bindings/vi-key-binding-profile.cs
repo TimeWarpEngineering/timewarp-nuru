@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru.Repl;
+namespace TimeWarp.Nuru;
 
 /// <summary>
 /// Vi-inspired key binding profile (insert mode bindings).

@@ -3,7 +3,6 @@
 #:project ../../../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj
 
 using TimeWarp.Nuru;
-using TimeWarp.Nuru.Repl;
 using TimeWarp.Nuru.Tests.TabCompletion;
 
 // ============================================================================

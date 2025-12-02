@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru.Repl;
+namespace TimeWarp.Nuru;
 
 /// <summary>
 /// Defines a set of key bindings for REPL input handling.

@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru.Repl;
+namespace TimeWarp.Nuru;
 
 /// <summary>
 /// Fluent builder for creating custom key binding configurations.

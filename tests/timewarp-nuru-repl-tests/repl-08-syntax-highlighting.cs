@@ -3,8 +3,6 @@
 #:project ../../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj
 
 using TimeWarp.Nuru;
-using TimeWarp.Nuru.Repl;
-using TimeWarp.Nuru.Repl.Input;
 
 // Test syntax highlighting (Section 8 of REPL Test Plan)
 return await RunTests<SyntaxHighlightingTests>();

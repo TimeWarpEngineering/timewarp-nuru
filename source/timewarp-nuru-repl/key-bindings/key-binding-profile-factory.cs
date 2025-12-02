@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru.Repl;
+namespace TimeWarp.Nuru;
 
 /// <summary>
 /// Factory for creating key binding profile instances by name.

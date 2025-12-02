@@ -3,7 +3,6 @@
 #:project ../../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj
 
 using TimeWarp.Nuru;
-using TimeWarp.Nuru.Repl;
 
 // Test display and formatting (Section 11 of REPL Test Plan)
 return await RunTests<DisplayFormattingTests>();

@@ -1,7 +1,5 @@
 namespace TimeWarp.Nuru;
 
-using TimeWarp.Nuru.Parsing;
-
 /// <summary>
 /// JSON serialization context for TimeWarp.Nuru with source generation support.
 /// For user-defined types, create your own JsonSerializerContext in your application.

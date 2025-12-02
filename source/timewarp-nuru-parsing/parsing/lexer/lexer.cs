@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru.Parsing;
+namespace TimeWarp.Nuru;
 
 /// <summary>
 /// Lexer for tokenizing route pattern strings.

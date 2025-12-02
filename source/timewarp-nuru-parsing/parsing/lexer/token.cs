@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru.Parsing;
+namespace TimeWarp.Nuru;
 
 /// <summary>
 /// Represents the different types of tokens in route patterns.

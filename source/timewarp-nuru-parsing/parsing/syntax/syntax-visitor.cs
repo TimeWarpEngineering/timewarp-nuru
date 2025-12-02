@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru.Parsing;
+namespace TimeWarp.Nuru;
 
 /// <summary>
 /// Base visitor class that provides default implementations.

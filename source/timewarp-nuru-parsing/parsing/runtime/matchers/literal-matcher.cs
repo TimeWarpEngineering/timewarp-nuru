@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru.Parsing;
+namespace TimeWarp.Nuru;
 
 /// <summary>
 /// Represents a literal matcher in a route pattern that must match exactly.

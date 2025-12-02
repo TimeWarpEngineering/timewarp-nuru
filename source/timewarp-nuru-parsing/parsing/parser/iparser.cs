@@ -1,6 +1,6 @@
-namespace TimeWarp.Nuru.Parsing;
+namespace TimeWarp.Nuru;
 
-using TimeWarp.Nuru.Parsing;
+using TimeWarp.Nuru;
 
 /// <summary>
 /// Interface for parsing route patterns into Abstract Syntax Trees.

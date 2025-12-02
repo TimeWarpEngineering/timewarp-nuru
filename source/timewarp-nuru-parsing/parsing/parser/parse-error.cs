@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru.Parsing;
+namespace TimeWarp.Nuru;
 
 /// <summary>
 /// Base class for all parsing errors with position information.

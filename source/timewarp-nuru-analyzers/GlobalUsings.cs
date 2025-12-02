@@ -8,4 +8,4 @@ global using System.Linq;
 global using System.Threading;
 global using System.Threading.Tasks;
 global using TimeWarp.Nuru.Analyzers.Diagnostics;
-global using TimeWarp.Nuru.Parsing;
+global using TimeWarp.Nuru;

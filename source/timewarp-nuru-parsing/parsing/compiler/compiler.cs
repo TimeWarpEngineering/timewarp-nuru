@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru.Parsing;
+namespace TimeWarp.Nuru;
 
 /// <summary>
 /// Compiler that converts route pattern syntax tree to the runtime CompiledRoute structure.

@@ -1,6 +1,6 @@
 namespace TimeWarp.Nuru.Mcp.Tools;
 
-using TimeWarp.Nuru.Parsing;
+using TimeWarp.Nuru;
 
 /// <summary>
 /// MCP tool for validating TimeWarp.Nuru route patterns.

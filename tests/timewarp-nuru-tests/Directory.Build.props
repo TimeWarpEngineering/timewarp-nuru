@@ -9,6 +9,6 @@
 
   <ItemGroup>
     <!-- Static using for lexer test helper -->
-    <Using Include="TimeWarp.Nuru.Tests.Lexer.LexerTestHelper" Static="true" />
+    <Using Include="TimeWarp.Nuru.Tests.LexerTests.LexerTestHelper" Static="true" />
   </ItemGroup>
 </Project>

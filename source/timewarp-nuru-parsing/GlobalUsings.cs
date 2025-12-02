@@ -7,4 +7,4 @@ global using System.Linq;
 global using System.Runtime.Serialization;
 global using System.Text;
 global using System.Text.Json.Serialization;
-global using TimeWarp.Nuru.Parsing;
+global using TimeWarp.Nuru;

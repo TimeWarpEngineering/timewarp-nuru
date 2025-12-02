@@ -7,8 +7,6 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using TimeWarp.Nuru; // Endpoint, EndpointCollection
-using TimeWarp.Nuru.Parsing; // CompiledRoute, RouteMatcher, LiteralMatcher, OptionMatcher
 
 /// <summary>
 /// Generates shell completion scripts for various shells.

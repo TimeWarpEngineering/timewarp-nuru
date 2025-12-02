@@ -106,13 +106,19 @@ internal static class EndpointResolver
     }
 
     // Select the best match:
-    // 1. Prefer exact matches (0 defaults) over partial matches
-    // 2. Among partial matches, prefer fewer defaults
-    // 3. Among matches with same defaults, prefer higher specificity (already sorted by endpoints collection)
-    RouteMatch bestMatch = matches
-      .OrderBy(m => m.DefaultsUsed)  // Fewer defaults is better
-      .ThenByDescending(m => m.Endpoint.CompiledRoute.Specificity)  // Higher specificity is better
-      .First();
+    // 1. Exact matches (0 defaults) always win - pick highest specificity among them
+    // 2. If no exact matches, prefer routes with MORE defaults (user routes beat help routes)
+    // 3. Among matches with same defaults, prefer higher specificity
+    List<RouteMatch> exactMatches = [.. matches.Where(m => m.DefaultsUsed == 0)];
+
+    RouteMatch bestMatch = exactMatches.Count > 0
+      ? exactMatches
+          .OrderByDescending(m => m.Endpoint.CompiledRoute.Specificity)
+          .First()
+      : matches
+          .OrderByDescending(m => m.DefaultsUsed)  // More defaults is better (user routes win)
+          .ThenByDescending(m => m.Endpoint.CompiledRoute.Specificity)
+          .First();
 
     return (bestMatch.Endpoint, bestMatch.ExtractedValues);
   }

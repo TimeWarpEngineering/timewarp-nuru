@@ -44,11 +44,13 @@ internal static class HelpRouteGenerator
         continue;
       }
 
-      string helpRoute = $"{prefix} --help";
+      // Use --help? (optional) so help routes don't outrank user routes with optional flags
+      // When both have same specificity, user routes win due to insertion order
+      string helpRoute = $"{prefix} --help?";
       string description = $"Show help for {prefix} command";
 
-      // Only add if not already present
-      if (!existingEndpoints.Any(e => e.RoutePattern == helpRoute))
+      // Only add if not already present (check both --help and --help? patterns)
+      if (!existingEndpoints.Any(e => e.RoutePattern == helpRoute || e.RoutePattern == $"{prefix} --help"))
       {
         // Capture endpoints by value to avoid issues with collection modification
         List<Endpoint> capturedEndpoints = [.. endpoints];
@@ -57,9 +59,10 @@ internal static class HelpRouteGenerator
     }
 
     // Add base --help route if not already present
-    if (!existingEndpoints.Any(e => e.RoutePattern == "--help"))
+    // Use --help? (optional) so help routes don't outrank user routes with optional flags
+    if (!existingEndpoints.Any(e => e.RoutePattern == "--help" || e.RoutePattern == "--help?"))
     {
-      builder.Map("--help", () => HelpProvider.GetHelpText(endpointCollection, appMetadata?.Name, appMetadata?.Description),
+      builder.Map("--help?", () => HelpProvider.GetHelpText(endpointCollection, appMetadata?.Name, appMetadata?.Description),
       description: "Show available commands");
     }
 

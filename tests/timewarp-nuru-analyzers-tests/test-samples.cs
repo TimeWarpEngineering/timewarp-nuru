@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru.Analyzers.Tests;
+namespace TimeWarp.Nuru.Tests;
 
 using TimeWarp.Nuru;
 

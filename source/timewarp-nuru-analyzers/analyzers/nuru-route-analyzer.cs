@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru.Analyzers;
+namespace TimeWarp.Nuru;
 
 [Generator]
 public class NuruRouteAnalyzer : IIncrementalGenerator

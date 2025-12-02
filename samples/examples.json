@@ -249,6 +249,14 @@
       "path": "samples/terminal/table-widget.cs",
       "tags": ["widgets", "terminal", "table", "columns", "output", "spectre-alternative"],
       "difficulty": "intermediate"
+    },
+    {
+      "id": "hyperlink-widget",
+      "name": "Hyperlink Widget (OSC 8)",
+      "description": "Clickable terminal URLs using OSC 8 hyperlinks - supported in Windows Terminal, VS Code, iTerm2, and more",
+      "path": "samples/terminal/hyperlink-widget.cs",
+      "tags": ["widgets", "terminal", "hyperlinks", "osc8", "links", "clickable", "spectre-alternative"],
+      "difficulty": "beginner"
     }
   ]
 }

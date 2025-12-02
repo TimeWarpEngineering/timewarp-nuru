@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru.Repl.Tests.TabCompletion;
+namespace TimeWarp.Nuru.Tests.TabCompletion;
 
 using TimeWarp.Nuru;
 using TimeWarp.Nuru.Repl;

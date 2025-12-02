@@ -4,7 +4,7 @@
 
 using TimeWarp.Nuru;
 using TimeWarp.Nuru.Repl;
-using TimeWarp.Nuru.Repl.Tests.TabCompletion;
+using TimeWarp.Nuru.Tests.TabCompletion;
 
 // ============================================================================
 // Basic Command Completion Tests

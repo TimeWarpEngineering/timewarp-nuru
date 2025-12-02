@@ -1,0 +1,46 @@
+<Project>
+  <!--
+    STANDALONE Directory.Build.props - Does NOT import parent
+    
+    This is intentional to provide isolated analyzer testing without inheriting
+    parent test infrastructure (Jaribu, Shouldly, etc.).
+    
+    NOTE ON NURU_D001 TESTING:
+    The MediatorDependencyAnalyzer (NURU_D001) checks if Mediator.Abstractions
+    is referenced. Because timewarp-nuru-core itself references Mediator.Abstractions
+    (required for the Map<TCommand> where TCommand : IRequest constraint), any
+    project using our library will always have Mediator available transitively.
+    
+    Therefore, NURU_D001 can only fire in projects that:
+    1. Somehow use Map<T>() syntax without referencing our library
+    2. Or in synthetic Roslyn analyzer unit tests
+    
+    The test files here document expected analyzer behavior rather than
+    triggering actual NURU_D001 errors.
+  -->
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <!-- Suppress warnings common in analyzer tests -->
+    <NoWarn>$(NoWarn);CA1303;CA1307;CA2000;CA2007;CA1031;CA1515;CA1050;CA1052;CA1707;CS0050;RCS1046;RCS1102;RCS1110</NoWarn>
+  </PropertyGroup>
+
+  <!-- Attach analyzer via project reference -->
+  <ItemGroup>
+    <ProjectReference Include="$(MSBuildThisFileDirectory)../../source/timewarp-nuru-analyzers/timewarp-nuru-analyzers.csproj">
+      <OutputItemType>Analyzer</OutputItemType>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <!-- Reference main nuru library for API usage -->
+    <ProjectReference Include="$(MSBuildThisFileDirectory)../../source/timewarp-nuru/timewarp-nuru.csproj" />
+  </ItemGroup>
+
+  <!-- Common usings -->
+  <ItemGroup>
+    <Using Include="System.Console" Static="true" />
+    <Using Include="TimeWarp.Nuru" />
+  </ItemGroup>
+</Project>

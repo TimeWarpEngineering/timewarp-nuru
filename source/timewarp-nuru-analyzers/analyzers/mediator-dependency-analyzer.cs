@@ -1,14 +1,12 @@
 namespace TimeWarp.Nuru;
 
 /// <summary>
-/// Analyzes Map&lt;TCommand&gt; usage and reports an error if Mediator packages are not referenced.
+/// Analyzes Map&lt;TCommand&gt; usage and reports an error if Mediator.SourceGenerator is not referenced.
+/// The source generator must be DIRECTLY referenced (not transitive) to generate AddMediator().
 /// </summary>
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public sealed class MediatorDependencyAnalyzer : DiagnosticAnalyzer
 {
-  // The Mediator.Abstractions NuGet package produces an assembly named "Mediator"
-  private const string MediatorAssemblyName = "Mediator";
-
   public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics =>
     [DiagnosticDescriptors.MissingMediatorPackages];
 
@@ -31,8 +29,8 @@ public sealed class MediatorDependencyAnalyzer : DiagnosticAnalyzer
     if (!IsGenericMapInvocation(invocation))
       return;
 
-    // Check if Mediator is referenced (from Mediator.Abstractions package)
-    if (HasMediatorReference(context.Compilation))
+    // Check if Mediator.SourceGenerator has run (generates AddMediator extension method)
+    if (HasMediatorGeneratedSource(context.Compilation))
       return;
 
     // Get the type argument name for the diagnostic message
@@ -72,13 +70,28 @@ public sealed class MediatorDependencyAnalyzer : DiagnosticAnalyzer
     return false;
   }
 
-  private static bool HasMediatorReference(Compilation compilation)
+  /// <summary>
+  /// Checks if Mediator.SourceGenerator has produced the AddMediator extension method.
+  /// This method is generated when the source generator runs successfully.
+  /// </summary>
+  private static bool HasMediatorGeneratedSource(Compilation compilation)
   {
-    foreach (AssemblyIdentity assembly in compilation.ReferencedAssemblyNames)
+    // Mediator.SourceGenerator generates an AddMediator extension method on IServiceCollection.
+    // If this method exists, the source generator has run successfully.
+    IEnumerable<ISymbol> symbols = compilation.GetSymbolsWithName("AddMediator", SymbolFilter.Member);
+
+    foreach (ISymbol symbol in symbols)
     {
-      if (string.Equals(assembly.Name, MediatorAssemblyName, StringComparison.OrdinalIgnoreCase))
+      // Check if it's a method (the extension method we're looking for)
+      if (symbol is IMethodSymbol method)
       {
-        return true;
+        // Verify it's an extension method on IServiceCollection
+        if (method.IsExtensionMethod &&
+            method.Parameters.Length > 0 &&
+            method.Parameters[0].Type.Name == "IServiceCollection")
+        {
+          return true;
+        }
       }
     }
 

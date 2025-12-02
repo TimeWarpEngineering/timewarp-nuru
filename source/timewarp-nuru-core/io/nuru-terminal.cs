@@ -101,6 +101,47 @@ public sealed class NuruTerminal : ITerminal
     => !Console.IsOutputRedirected && Environment.GetEnvironmentVariable("NO_COLOR") is null;
 
   /// <inheritdoc />
+  public bool SupportsHyperlinks => DetectHyperlinkSupport();
+
+  /// <summary>
+  /// Detects whether the terminal supports OSC 8 hyperlinks based on environment variables.
+  /// </summary>
+  private static bool DetectHyperlinkSupport()
+  {
+    // No hyperlinks if output is redirected
+    if (Console.IsOutputRedirected)
+      return false;
+
+    // Windows Terminal
+    if (Environment.GetEnvironmentVariable("WT_SESSION") is not null)
+      return true;
+
+    // VS Code integrated terminal
+    if (Environment.GetEnvironmentVariable("TERM_PROGRAM") == "vscode")
+      return true;
+
+    // iTerm2
+    if (Environment.GetEnvironmentVariable("TERM_PROGRAM") == "iTerm.app")
+      return true;
+
+    // Konsole
+    if (Environment.GetEnvironmentVariable("KONSOLE_VERSION") is not null)
+      return true;
+
+    // GNOME Terminal (VTE 0.50+ / version 5000+)
+    string? vteVersion = Environment.GetEnvironmentVariable("VTE_VERSION");
+    if (vteVersion is not null && int.TryParse(vteVersion, out int version) && version >= 5000)
+      return true;
+
+    // Hyper terminal
+    if (Environment.GetEnvironmentVariable("TERM_PROGRAM") == "Hyper")
+      return true;
+
+    // Default: assume no support for unknown terminals
+    return false;
+  }
+
+  /// <inheritdoc />
   public void Clear()
   {
     try

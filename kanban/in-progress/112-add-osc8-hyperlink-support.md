@@ -16,20 +16,20 @@ GitHub Issue: #95
 ## Checklist
 
 ### Implementation
-- [ ] Create `ansi-hyperlink-extensions.cs` with string extension `Link()` method
-- [ ] Create `terminal-hyperlink-extensions.cs` with `WriteLink()` and `WriteLinkLine()` methods
-- [ ] Add `SupportsHyperlinks` property to `ITerminal` interface
-- [ ] Implement `SupportsHyperlinks` in `NuruTerminal`
-- [ ] Implement `SupportsHyperlinks` in `TestTerminal`
+- [x] Create `ansi-hyperlink-extensions.cs` with string extension `Link()` method
+- [x] Create `terminal-hyperlink-extensions.cs` with `WriteLink()` and `WriteLinkLine()` methods
+- [x] Add `SupportsHyperlinks` property to `ITerminal` interface
+- [x] Implement `SupportsHyperlinks` in `NuruTerminal`
+- [x] Implement `SupportsHyperlinks` in `TestTerminal`
 
 ### Testing
-- [ ] Create unit tests for hyperlink string extension
-- [ ] Create unit tests for terminal hyperlink methods
-- [ ] Test chaining with existing color extensions
+- [x] Create unit tests for hyperlink string extension
+- [x] Create unit tests for terminal hyperlink methods
+- [x] Test chaining with existing color extensions
 
 ### Documentation
-- [ ] Create sample `samples/terminal/hyperlink-widget.cs`
-- [ ] Add user documentation
+- [x] Create sample `samples/terminal/hyperlink-widget.cs`
+- [x] Add user documentation in `documentation/user/features/terminal-abstractions.md`
 
 ## Notes
 

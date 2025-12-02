@@ -147,6 +147,9 @@ public sealed class TestTerminal : ITerminal, IDisposable
   public bool SupportsColor { get; set; }
 
   /// <inheritdoc />
+  public bool SupportsHyperlinks { get; set; }
+
+  /// <inheritdoc />
   public void Clear()
     => OutputWriter.WriteLine("[CLEAR]");
 

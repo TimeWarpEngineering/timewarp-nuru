@@ -21,16 +21,16 @@ The redundant `DelegateLoggingBehavior` and `DelegatePerformanceBehavior` classe
 ## Checklist
 
 ### Implementation
-- [ ] Remove `DelegateLoggingBehavior` class
-- [ ] Remove `DelegatePerformanceBehavior` class
-- [ ] Update `ConfigureServices` to only register open generic behaviors
-- [ ] Update header comments to explain unified pipeline correctly
-- [ ] Update `TRY THESE COMMANDS` section to show unified logging output
-- [ ] Verify sample compiles and runs correctly
+- [x] Remove `DelegateLoggingBehavior` class
+- [x] Remove `DelegatePerformanceBehavior` class
+- [x] Update `ConfigureServices` to only register open generic behaviors
+- [x] Update header comments to explain unified pipeline correctly
+- [x] Update `TRY THESE COMMANDS` section to show unified logging output
+- [x] Verify sample compiles and runs correctly
 
 ### Documentation
-- [ ] Ensure comments explain that `DelegateRequest` is just another `IRequest<T>`
-- [ ] Clarify that open generics catch ALL request types
+- [x] Ensure comments explain that `DelegateRequest` is just another `IRequest<T>`
+- [x] Clarify that open generics catch ALL request types
 
 ## Notes
 

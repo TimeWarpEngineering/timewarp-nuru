@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru.Completion;
+namespace TimeWarp.Nuru;
 
 /// <summary>
 /// Registry for managing completion sources by parameter name or type.

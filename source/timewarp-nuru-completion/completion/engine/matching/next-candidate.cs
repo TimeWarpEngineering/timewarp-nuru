@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru.Completion;
+namespace TimeWarp.Nuru;
 
 /// <summary>
 /// Represents what can come next at a particular position in a route.

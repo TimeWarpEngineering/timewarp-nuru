@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru.Completion;
+namespace TimeWarp.Nuru;
 
 using Microsoft.Extensions.Logging;
 
@@ -9,7 +9,7 @@ using Microsoft.Extensions.Logging;
 /// <remarks>
 /// Event ID ranges for Completion Engine: 2000-2099
 /// </remarks>
-internal static partial class LoggerMessages
+internal static partial class CompletionLoggerMessages
 {
   // ===== Tokenization Messages (2000-2019) =====
   internal static readonly Action<ILogger, string, string, bool, Exception?> TokenizedInput =

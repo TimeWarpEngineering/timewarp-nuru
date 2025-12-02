@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru.Completion;
+namespace TimeWarp.Nuru;
 
 using System;
 using System.Collections.Generic;

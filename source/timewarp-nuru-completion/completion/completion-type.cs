@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru.Completion;
+namespace TimeWarp.Nuru;
 
 /// <summary>
 /// Specifies the type of completion candidate.

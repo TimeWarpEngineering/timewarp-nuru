@@ -1,7 +1,6 @@
 #!/usr/bin/dotnet --
 
 using TimeWarp.Nuru;
-using TimeWarp.Nuru.Completion;
 using Shouldly;
 
 return await RunTests<ParameterTypeDetectionTests>(clearCache: true);

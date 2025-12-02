@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru.Completion;
+namespace TimeWarp.Nuru;
 
 using System;
 using System.Collections.Generic;
@@ -187,7 +187,7 @@ public class CompletionScriptGenerator
   private static string LoadTemplate(string templateName)
   {
     Assembly assembly = typeof(CompletionScriptGenerator).Assembly;
-    string resourceName = $"TimeWarp.Nuru.Completion.completion.templates.{templateName}";
+    string resourceName = $"TimeWarp.Nuru.completion.templates.{templateName}";
 
     using Stream? stream = assembly.GetManifestResourceStream(resourceName);
     if (stream is null)

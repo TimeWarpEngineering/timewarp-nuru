@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru.Completion;
+namespace TimeWarp.Nuru;
 
 using Microsoft.Extensions.Logging;
 using System.Collections.ObjectModel;

@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru.Completion;
+namespace TimeWarp.Nuru;
 
 /// <summary>
 /// Default implementation of <see cref="ICandidateGenerator"/>.

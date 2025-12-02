@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru.Completion;
+namespace TimeWarp.Nuru;
 
 /// <summary>
 /// Provides dynamic completion suggestions for command-line parameters.

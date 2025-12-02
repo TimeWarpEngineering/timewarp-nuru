@@ -13,7 +13,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Static using for completion types -->
-    <Using Include="TimeWarp.Nuru.Completion" />
+    <!-- Completion types are now in TimeWarp.Nuru namespace (already imported via parent) -->
   </ItemGroup>
 </Project>

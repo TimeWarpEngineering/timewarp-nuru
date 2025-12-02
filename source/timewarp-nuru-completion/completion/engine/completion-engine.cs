@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru.Completion;
+namespace TimeWarp.Nuru;
 
 using Microsoft.Extensions.Logging;
 
@@ -42,7 +42,7 @@ public sealed class CompletionEngine : ICompletionEngine
     ILogger<CompletionEngine>? logger = null)
   {
     MatchEngine = matchEngine ?? RouteMatchEngine.Instance;
-    CandidateGenerator = candidateGenerator ?? Completion.CandidateGenerator.Instance;
+    CandidateGenerator = candidateGenerator ?? TimeWarp.Nuru.CandidateGenerator.Instance;
     Logger = logger;
   }
 
@@ -59,7 +59,7 @@ public sealed class CompletionEngine : ICompletionEngine
 
     if (Logger is not null)
     {
-      LoggerMessages.TokenizedInput(
+      CompletionLoggerMessages.TokenizedInput(
         Logger,
         string.Join(", ", parsedInput.CompletedWords),
         parsedInput.PartialWord ?? "(null)",
@@ -81,7 +81,7 @@ public sealed class CompletionEngine : ICompletionEngine
 
     if (Logger is not null)
     {
-      LoggerMessages.MatchedRoutes(Logger, viableCount, matchStates.Count, null);
+      CompletionLoggerMessages.MatchedRoutes(Logger, viableCount, matchStates.Count, null);
     }
 
     // Stage 3: Generate candidates from viable matches
@@ -91,7 +91,7 @@ public sealed class CompletionEngine : ICompletionEngine
 
     if (Logger is not null)
     {
-      LoggerMessages.GeneratedCandidates(Logger, candidates.Count, null);
+      CompletionLoggerMessages.GeneratedCandidates(Logger, candidates.Count, null);
     }
 
     return candidates;
@@ -114,7 +114,7 @@ public sealed class CompletionEngine : ICompletionEngine
 
     if (Logger is not null)
     {
-      LoggerMessages.ParsedRawInput(
+      CompletionLoggerMessages.ParsedRawInput(
         Logger,
         input ?? "",
         string.Join(", ", parsedInput.CompletedWords),

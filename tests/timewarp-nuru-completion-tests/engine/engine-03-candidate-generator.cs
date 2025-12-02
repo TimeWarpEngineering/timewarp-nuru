@@ -4,7 +4,6 @@
 // Task: 065 - Implement CandidateGenerator
 
 using TimeWarp.Nuru;
-using TimeWarp.Nuru.Completion;
 using Shouldly;
 
 return await RunTests<CandidateGeneratorTests>(clearCache: true);

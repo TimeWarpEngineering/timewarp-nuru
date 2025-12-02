@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <AssemblyName>TimeWarp.Nuru.Completion</AssemblyName>
-    <RootNamespace>TimeWarp.Nuru.Completion</RootNamespace>
+    <RootNamespace>TimeWarp.Nuru</RootNamespace>
     <Description>Shell completion support for TimeWarp.Nuru CLI applications</Description>
     <PackageTags>cli;command-line;completion;tab-completion;bash;zsh;powershell;fish;shell</PackageTags>
   </PropertyGroup>

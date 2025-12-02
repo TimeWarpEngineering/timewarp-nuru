@@ -67,6 +67,10 @@ Both routes match input `recent`:
 - `source/timewarp-nuru-core/help/help-route-generator.cs` - Help route generation
 - `source/timewarp-nuru-parsing/parsing/compiler/compiler.cs` - Specificity scoring
 
+### Implementation Insight
+
+The scoring logic should use the `IsOptional` property on segments rather than checking for `?` in the pattern string. This provides a more robust and semantic approach to determining optionality.
+
 ### Suggested Fix Options
 
 #### Option 1: Specificity Adjustment for Help Routes

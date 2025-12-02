@@ -14,10 +14,10 @@ public class InvalidAngleBracketsTests
 
     // Assert
     tokens.Count.ShouldBe(3);
-    tokens[0].Type.ShouldBe(TokenType.Identifier);
+    tokens[0].Type.ShouldBe(RouteTokenType.Identifier);
     tokens[0].Value.ShouldBe("test");
-    tokens[1].Type.ShouldBe(TokenType.Invalid);
-    tokens[2].Type.ShouldBe(TokenType.EndOfInput);
+    tokens[1].Type.ShouldBe(RouteTokenType.Invalid);
+    tokens[2].Type.ShouldBe(RouteTokenType.EndOfInput);
 
     await Task.CompletedTask;
   }
@@ -31,8 +31,8 @@ public class InvalidAngleBracketsTests
 
     // Assert
     tokens.Count.ShouldBe(2);
-    tokens[0].Type.ShouldBe(TokenType.Invalid);
-    tokens[1].Type.ShouldBe(TokenType.EndOfInput);
+    tokens[0].Type.ShouldBe(RouteTokenType.Invalid);
+    tokens[1].Type.ShouldBe(RouteTokenType.EndOfInput);
 
     await Task.CompletedTask;
   }
@@ -46,11 +46,11 @@ public class InvalidAngleBracketsTests
 
     // Assert - positive test: ensure valid syntax still works
     tokens.Count.ShouldBe(4);
-    tokens[0].Type.ShouldBe(TokenType.LeftBrace);
-    tokens[1].Type.ShouldBe(TokenType.Identifier);
+    tokens[0].Type.ShouldBe(RouteTokenType.LeftBrace);
+    tokens[1].Type.ShouldBe(RouteTokenType.Identifier);
     tokens[1].Value.ShouldBe("param");
-    tokens[2].Type.ShouldBe(TokenType.RightBrace);
-    tokens[3].Type.ShouldBe(TokenType.EndOfInput);
+    tokens[2].Type.ShouldBe(RouteTokenType.RightBrace);
+    tokens[3].Type.ShouldBe(RouteTokenType.EndOfInput);
 
     await Task.CompletedTask;
   }
@@ -64,11 +64,11 @@ public class InvalidAngleBracketsTests
 
     // Assert
     tokens.Count.ShouldBe(4);
-    tokens[0].Type.ShouldBe(TokenType.LeftBrace);
-    tokens[1].Type.ShouldBe(TokenType.Identifier);
+    tokens[0].Type.ShouldBe(RouteTokenType.LeftBrace);
+    tokens[1].Type.ShouldBe(RouteTokenType.Identifier);
     tokens[1].Value.ShouldBe("param");
-    tokens[2].Type.ShouldBe(TokenType.Invalid);
-    tokens[3].Type.ShouldBe(TokenType.EndOfInput);
+    tokens[2].Type.ShouldBe(RouteTokenType.Invalid);
+    tokens[3].Type.ShouldBe(RouteTokenType.EndOfInput);
 
     await Task.CompletedTask;
   }

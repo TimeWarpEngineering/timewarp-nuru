@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru.Repl.Input;
+namespace TimeWarp.Nuru;
 
 /// <summary>
 /// Handles tab completion logic for REPL input, including cycling and candidate display.

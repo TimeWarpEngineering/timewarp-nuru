@@ -18,11 +18,11 @@ public class ValidOptionsTests
 
     // Assert
     tokens.Count.ShouldBe(3); // DoubleDash + Identifier + EndOfInput
-    tokens[0].Type.ShouldBe(TokenType.DoubleDash);
+    tokens[0].Type.ShouldBe(RouteTokenType.DoubleDash);
     tokens[0].Value.ShouldBe("--");
-    tokens[1].Type.ShouldBe(TokenType.Identifier);
+    tokens[1].Type.ShouldBe(RouteTokenType.Identifier);
     tokens[1].Value.ShouldBe(expectedOption);
-    tokens[2].Type.ShouldBe(TokenType.EndOfInput);
+    tokens[2].Type.ShouldBe(RouteTokenType.EndOfInput);
 
     await Task.CompletedTask;
   }
@@ -39,11 +39,11 @@ public class ValidOptionsTests
 
     // Assert
     tokens.Count.ShouldBe(3); // SingleDash + Identifier + EndOfInput
-    tokens[0].Type.ShouldBe(TokenType.SingleDash);
+    tokens[0].Type.ShouldBe(RouteTokenType.SingleDash);
     tokens[0].Value.ShouldBe("-");
-    tokens[1].Type.ShouldBe(TokenType.Identifier);
+    tokens[1].Type.ShouldBe(RouteTokenType.Identifier);
     tokens[1].Value.ShouldBe(expectedOption);
-    tokens[2].Type.ShouldBe(TokenType.EndOfInput);
+    tokens[2].Type.ShouldBe(RouteTokenType.EndOfInput);
 
     await Task.CompletedTask;
   }

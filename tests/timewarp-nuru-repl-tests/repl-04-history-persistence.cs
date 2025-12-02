@@ -4,7 +4,6 @@
 
 using System.Runtime.InteropServices;
 using TimeWarp.Nuru;
-using TimeWarp.Nuru.Repl;
 
 // Test history persistence (Section 4 of REPL Test Plan)
 return await RunTests<HistoryPersistenceTests>();

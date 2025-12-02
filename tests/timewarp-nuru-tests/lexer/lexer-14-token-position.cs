@@ -23,34 +23,34 @@ public class TokenPositionTests
     tokens.Count.ShouldBe(7);
 
     // "cmd" starts at position 0
-    tokens[0].Type.ShouldBe(TokenType.Identifier);
+    tokens[0].Type.ShouldBe(RouteTokenType.Identifier);
     tokens[0].Value.ShouldBe("cmd");
     tokens[0].Position.ShouldBe(0);
 
     // "{" starts at position 4 (after "cmd ")
-    tokens[1].Type.ShouldBe(TokenType.LeftBrace);
+    tokens[1].Type.ShouldBe(RouteTokenType.LeftBrace);
     tokens[1].Position.ShouldBe(4);
 
     // "name" starts at position 5
-    tokens[2].Type.ShouldBe(TokenType.Identifier);
+    tokens[2].Type.ShouldBe(RouteTokenType.Identifier);
     tokens[2].Value.ShouldBe("name");
     tokens[2].Position.ShouldBe(5);
 
     // "}" starts at position 9
-    tokens[3].Type.ShouldBe(TokenType.RightBrace);
+    tokens[3].Type.ShouldBe(RouteTokenType.RightBrace);
     tokens[3].Position.ShouldBe(9);
 
     // "--" starts at position 11 (after "} ")
-    tokens[4].Type.ShouldBe(TokenType.DoubleDash);
+    tokens[4].Type.ShouldBe(RouteTokenType.DoubleDash);
     tokens[4].Position.ShouldBe(11);
 
     // "flag" starts at position 13
-    tokens[5].Type.ShouldBe(TokenType.Identifier);
+    tokens[5].Type.ShouldBe(RouteTokenType.Identifier);
     tokens[5].Value.ShouldBe("flag");
     tokens[5].Position.ShouldBe(13);
 
     // EndOfInput starts at position 17 (end of string)
-    tokens[6].Type.ShouldBe(TokenType.EndOfInput);
+    tokens[6].Type.ShouldBe(RouteTokenType.EndOfInput);
     tokens[6].Position.ShouldBe(17);
 
     await Task.CompletedTask;
@@ -97,7 +97,7 @@ public class TokenPositionTests
     tokens[3].EndPosition.ShouldBe(10);
 
     // EndOfInput → Position 10, Length 0, EndPosition 10 (special case)
-    tokens[4].Type.ShouldBe(TokenType.EndOfInput);
+    tokens[4].Type.ShouldBe(RouteTokenType.EndOfInput);
     tokens[4].Position.ShouldBe(10);
     tokens[4].Length.ShouldBe(0);
     tokens[4].EndPosition.ShouldBe(10);
@@ -150,7 +150,7 @@ public class TokenPositionTests
 
     // EndOfInput → Length 0, Value ""
     Token endToken = tokens[tokens.Count - 1];
-    endToken.Type.ShouldBe(TokenType.EndOfInput);
+    endToken.Type.ShouldBe(RouteTokenType.EndOfInput);
     endToken.Value.ShouldBe("");
     endToken.Length.ShouldBe(0);
 
@@ -198,7 +198,7 @@ public class TokenPositionTests
 
     // EndOfInput at position 20
     tokens[6].Position.ShouldBe(20);
-    tokens[6].Type.ShouldBe(TokenType.EndOfInput);
+    tokens[6].Type.ShouldBe(RouteTokenType.EndOfInput);
 
     await Task.CompletedTask;
   }
@@ -218,28 +218,28 @@ public class TokenPositionTests
     tokens.Count.ShouldBe(4);
 
     // "git" → Position 0, Length 3
-    tokens[0].Type.ShouldBe(TokenType.Identifier);
+    tokens[0].Type.ShouldBe(RouteTokenType.Identifier);
     tokens[0].Value.ShouldBe("git");
     tokens[0].Position.ShouldBe(0);
     tokens[0].Length.ShouldBe(3);
     tokens[0].EndPosition.ShouldBe(3);
 
     // "log" → Position 4, Length 3
-    tokens[1].Type.ShouldBe(TokenType.Identifier);
+    tokens[1].Type.ShouldBe(RouteTokenType.Identifier);
     tokens[1].Value.ShouldBe("log");
     tokens[1].Position.ShouldBe(4);
     tokens[1].Length.ShouldBe(3);
     tokens[1].EndPosition.ShouldBe(7);
 
     // "--" (EndOfOptions) → Position 8, Length 2
-    tokens[2].Type.ShouldBe(TokenType.EndOfOptions);
+    tokens[2].Type.ShouldBe(RouteTokenType.EndOfOptions);
     tokens[2].Value.ShouldBe("--");
     tokens[2].Position.ShouldBe(8);
     tokens[2].Length.ShouldBe(2);
     tokens[2].EndPosition.ShouldBe(10);
 
     // EndOfInput → Position 10, Length 0
-    tokens[3].Type.ShouldBe(TokenType.EndOfInput);
+    tokens[3].Type.ShouldBe(RouteTokenType.EndOfInput);
     tokens[3].Position.ShouldBe(10);
     tokens[3].Length.ShouldBe(0);
     tokens[3].EndPosition.ShouldBe(10);
@@ -260,7 +260,7 @@ public class TokenPositionTests
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     // Find all Invalid tokens
-    Token[] invalidTokens = [.. tokens.Where(t => t.Type == TokenType.Invalid)];
+    Token[] invalidTokens = [.. tokens.Where(t => t.Type == RouteTokenType.Invalid)];
     invalidTokens.Length.ShouldBe(2, "Should find two invalid tokens");
 
     // First invalid token: @ at position 4

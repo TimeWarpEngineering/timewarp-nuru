@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru.Completion;
+namespace TimeWarp.Nuru;
 
 using System;
 using System.Collections.Generic;
@@ -7,8 +7,6 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using TimeWarp.Nuru; // Endpoint, EndpointCollection
-using TimeWarp.Nuru.Parsing; // CompiledRoute, RouteMatcher, LiteralMatcher, OptionMatcher
 
 /// <summary>
 /// Generates shell completion scripts for various shells.
@@ -189,7 +187,7 @@ public class CompletionScriptGenerator
   private static string LoadTemplate(string templateName)
   {
     Assembly assembly = typeof(CompletionScriptGenerator).Assembly;
-    string resourceName = $"TimeWarp.Nuru.Completion.completion.templates.{templateName}";
+    string resourceName = $"TimeWarp.Nuru.completion.templates.{templateName}";
 
     using Stream? stream = assembly.GetManifestResourceStream(resourceName);
     if (stream is null)

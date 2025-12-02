@@ -1,58 +1,35 @@
 #!/usr/bin/dotnet --
-#:project ../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
-#:project ../../Source/TimeWarp.Nuru.Logging/TimeWarp.Nuru.Logging.csproj
-#:package Microsoft.Extensions.Logging
+#:project ../../source/timewarp-nuru/timewarp-nuru.csproj
+#:project ../../source/timewarp-nuru-logging/timewarp-nuru-logging.csproj
 #:package Mediator.Abstractions
 #:package Mediator.SourceGenerator
+#:package Microsoft.Extensions.Logging
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// CONSOLE LOGGING - MICROSOFT.EXTENSIONS.LOGGING INTEGRATION
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// This sample demonstrates NuruApp.CreateBuilder(args) with console logging.
+// The builder provides full DI container setup for ILogger<T> injection.
+//
+// REQUIRED PACKAGES:
+//   #:package Mediator.Abstractions    - Required by NuruApp.CreateBuilder
+//   #:package Mediator.SourceGenerator - Generates AddMediator() in YOUR assembly
+//
+// LOGGING CONVENIENCE METHODS:
+//   .UseConsoleLogging()              - Information level (default)
+//   .UseConsoleLogging(LogLevel.X)    - Custom level (Trace/Debug/Information/Warning/Error)
+//   .UseDebugLogging()                - Alias for UseConsoleLogging(LogLevel.Trace)
+// ═══════════════════════════════════════════════════════════════════════════════
 
 using TimeWarp.Nuru;
 using Mediator;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
-// TimeWarp.Nuru.Logging provides three convenience methods for console logging:
-//
-// 1. UseConsoleLogging()
-//    - Default option with Information level
-//    - Shows route resolution and general application flow
-//
-// 2. UseConsoleLogging(LogLevel.Debug)
-//    - Custom minimum log level
-//    - Available levels: Trace, Debug, Information, Warning, Error, Critical
-//
-// 3. UseDebugLogging()
-//    - Alias for UseConsoleLogging(LogLevel.Trace)
-//    - Shows maximum detail including internal route matching
-//
-// 4. UseConsoleLogging(builder => { ... })
-//    - Advanced configuration with filters and custom options
-//    - See example below
-
-// Example 1: Default logging (Information level)
-// Uncomment to try:
-// NuruCoreApp app = new NuruAppBuilder()
-//     .UseConsoleLogging()
-//     .Map("test", () => Console.WriteLine("Test command executed"))
-//     .Build();
-
-// Example 2: Debug level logging
-// Uncomment to try:
-// NuruCoreApp app = new NuruAppBuilder()
-//     .UseConsoleLogging(LogLevel.Debug)
-//     .Map("test", () => Console.WriteLine("Test command executed"))
-//     .Build();
-
-// Example 3: Trace level logging (most verbose)
-// Uncomment to try:
-// NuruCoreApp app = new NuruAppBuilder()
-//     .UseDebugLogging()
-//     .Map("test", () => Console.WriteLine("Test command executed"))
-//     .Build();
-
-// Active example - change which one is active by commenting/uncommenting:
-
-// Example A: DELEGATE routes with ILogger<T> injection (NO DI container needed!)
-// Demonstrates that delegates can use logging without the memory overhead of full DI
-NuruCoreApp app = new NuruAppBuilder()
+// Active example: Delegate routes with ILogger<T> injection
+NuruCoreApp app = NuruApp.CreateBuilder(args)
+    .ConfigureServices(services => services.AddMediator())
     .UseConsoleLogging()
     .Map("test", (ILogger<Program> logger) =>
     {
@@ -69,37 +46,6 @@ NuruCoreApp app = new NuruAppBuilder()
       Console.WriteLine($"Hello, {name}!");
     })
     .Build();
-
-// Example A2: MEDIATOR commands with ILogger<T> injection (requires DI)
-// Uncomment to try:
-// NuruCoreApp app = new NuruAppBuilder()
-//     .UseConsoleLogging()
-//     .AddDependencyInjection()
-//     .ConfigureServices(services => services.AddMediator()) // Source generator discovers handlers
-//     .Map<TestCommand>("test")
-//     .Map<GreetCommand>("greet {name}")
-//     .AddAutoHelp()
-//     .Build();
-
-// Example B: Debug level (shows Debug, Info, Warning, Error)
-// Uncomment to try:
-// NuruCoreApp app = new NuruAppBuilder()
-//     .UseConsoleLogging(LogLevel.Debug)
-//     .AddDependencyInjection()
-//     .ConfigureServices(services => services.AddMediator())
-//     .Map<TestCommand>("test")
-//     .Map<GreetCommand>("greet {name}")
-//     .Build();
-
-// Example C: Trace level - maximum verbosity (shows ALL log levels + internal routing details)
-// Uncomment to try:
-// NuruCoreApp app = new NuruAppBuilder()
-//     .UseDebugLogging()
-//     .AddDependencyInjection()
-//     .ConfigureServices(services => services.AddMediator())
-//     .Map<TestCommand>("test")
-//     .Map<GreetCommand>("greet {name}")
-//     .Build();
 
 return await app.RunAsync(args);
 

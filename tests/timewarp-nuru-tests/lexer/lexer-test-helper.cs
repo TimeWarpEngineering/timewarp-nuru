@@ -1,7 +1,6 @@
-namespace TimeWarp.Nuru.Tests.Lexer;
+namespace TimeWarp.Nuru.Tests.LexerTests;
 
 using Microsoft.Extensions.Logging;
-using TimeWarp.Nuru.Parsing;
 
 /// <summary>
 /// Helper methods for lexer tests.

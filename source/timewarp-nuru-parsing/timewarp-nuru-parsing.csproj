@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <AssemblyName>TimeWarp.Nuru.Parsing</AssemblyName>
-    <RootNamespace>TimeWarp.Nuru.Parsing</RootNamespace>
+    <RootNamespace>TimeWarp.Nuru</RootNamespace>
     <Description>Route pattern parsing library for TimeWarp.Nuru (internal use only - compiled directly into consuming projects)</Description>
     <IsPackable>false</IsPackable>
   </PropertyGroup>

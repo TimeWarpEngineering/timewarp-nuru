@@ -1,6 +1,4 @@
-namespace TimeWarp.Nuru.Repl;
-
-using TimeWarp.Nuru.Repl.Input;
+namespace TimeWarp.Nuru;
 
 /// <summary>
 /// Parses command line input strings into argument arrays, handling quotes and escapes.
@@ -136,7 +134,7 @@ internal static class CommandLineParser
       {
         tokens.Add(new CommandLineToken(
           input[whitespaceStart..position],
-          TokenType.Whitespace,
+          ReplTokenType.Whitespace,
           whitespaceStart,
           position));
       }
@@ -163,7 +161,7 @@ internal static class CommandLineParser
 
         tokens.Add(new CommandLineToken(
           input[tokenStart..position],
-          TokenType.StringLiteral,
+          ReplTokenType.StringLiteral,
           tokenStart,
           position));
       }
@@ -174,7 +172,7 @@ internal static class CommandLineParser
           position++;
 
         string tokenText = input[tokenStart..position];
-        TokenType type = tokenText.StartsWith("--", StringComparison.Ordinal) ? TokenType.LongOption : TokenType.ShortOption;
+        ReplTokenType type = tokenText.StartsWith("--", StringComparison.Ordinal) ? ReplTokenType.LongOption : ReplTokenType.ShortOption;
 
         tokens.Add(new CommandLineToken(tokenText, type, tokenStart, position));
       }
@@ -185,7 +183,7 @@ internal static class CommandLineParser
           position++;
 
         string tokenText = input[tokenStart..position];
-        TokenType type = DetermineArgumentType(tokenText);
+        ReplTokenType type = DetermineArgumentType(tokenText);
 
         tokens.Add(new CommandLineToken(tokenText, type, tokenStart, position));
       }
@@ -194,13 +192,13 @@ internal static class CommandLineParser
     return tokens;
   }
 
-  private static TokenType DetermineArgumentType(string token)
+  private static ReplTokenType DetermineArgumentType(string token)
   {
     // Check if it's a numeric literal
     if (int.TryParse(token, out _) || double.TryParse(token, out _))
-      return TokenType.Number;
+      return ReplTokenType.Number;
 
     // Default to argument for now - command detection will be done by SyntaxHighlighter
-    return TokenType.Argument;
+    return ReplTokenType.Argument;
   }
 }

@@ -1,8 +1,10 @@
 #!/usr/bin/dotnet --
-#:project ../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
+// test-output-capture - Demonstrates testing CLI output capture using TestTerminal
+// Uses new NuruAppBuilder() for testing scenarios - provides ITerminal injection without full Mediator
+#:package Shouldly
+#:project ../../source/timewarp-nuru/timewarp-nuru.csproj
 
-// Demonstrates testing CLI output capture using TestTerminal
-
+using Shouldly;
 using TimeWarp.Nuru;
 
 Console.WriteLine("=== Testing CLI Output Capture ===\n");
@@ -20,14 +22,13 @@ Console.WriteLine("Test 1: Basic output capture");
 
   await app.RunAsync(["hello", "World"]);
 
-  // Assert output contains expected text
-  bool passed = terminal.OutputContains("Hello, World!");
+  terminal.OutputContains("Hello, World!").ShouldBeTrue();
   Console.WriteLine($"  Output: {terminal.Output.Trim()}");
-  Console.WriteLine($"  Result: {(passed ? "PASSED".Green() : "FAILED".Red())}\n");
+  Console.WriteLine("  PASSED".Green());
 }
 
 // Test 2: Multiple lines capture
-Console.WriteLine("Test 2: Multiple lines capture");
+Console.WriteLine("\nTest 2: Multiple lines capture");
 {
   using TestTerminal terminal = new();
 
@@ -44,17 +45,16 @@ Console.WriteLine("Test 2: Multiple lines capture");
   await app.RunAsync(["list"]);
 
   string[] lines = terminal.GetOutputLines();
-  bool passed = lines.Length == 3 &&
-    lines[0] == "Item 1" &&
-    lines[1] == "Item 2" &&
-    lines[2] == "Item 3";
-
+  lines.Length.ShouldBe(3);
+  lines[0].ShouldBe("Item 1");
+  lines[1].ShouldBe("Item 2");
+  lines[2].ShouldBe("Item 3");
   Console.WriteLine($"  Lines captured: {lines.Length}");
-  Console.WriteLine($"  Result: {(passed ? "PASSED".Green() : "FAILED".Red())}\n");
+  Console.WriteLine("  PASSED".Green());
 }
 
-// Test 3: Error output capture
-Console.WriteLine("Test 3: Error output capture");
+// Test 3: Error output capture (even when handler throws)
+Console.WriteLine("\nTest 3: Error output capture with exception");
 {
   using TestTerminal terminal = new();
 
@@ -63,20 +63,19 @@ Console.WriteLine("Test 3: Error output capture");
     .Map("validate", (ITerminal t) =>
     {
       t.WriteErrorLine("Error: Invalid input");
-      return 1;
+      throw new InvalidOperationException("Intentional error to verify terminal capture still works");
     })
     .Build();
 
-  int exitCode = await app.RunAsync(["validate"]);
+  await app.RunAsync(["validate"]);
 
-  bool passed = terminal.ErrorContains("Invalid input") && exitCode == 1;
+  terminal.ErrorContains("Invalid input").ShouldBeTrue();
   Console.WriteLine($"  Error output: {terminal.ErrorOutput.Trim()}");
-  Console.WriteLine($"  Exit code: {exitCode}");
-  Console.WriteLine($"  Result: {(passed ? "PASSED".Green() : "FAILED".Red())}\n");
+  Console.WriteLine("  PASSED".Green());
 }
 
 // Test 4: Combined output and error
-Console.WriteLine("Test 4: Combined stdout and stderr");
+Console.WriteLine("\nTest 4: Combined stdout and stderr");
 {
   using TestTerminal terminal = new();
 
@@ -92,14 +91,12 @@ Console.WriteLine("Test 4: Combined stdout and stderr");
 
   await app.RunAsync(["mixed"]);
 
-  bool passed =
-    terminal.OutputContains("Processing...") &&
-    terminal.OutputContains("Done!") &&
-    terminal.ErrorContains("Warning: Low memory");
-
+  terminal.OutputContains("Processing...").ShouldBeTrue();
+  terminal.OutputContains("Done!").ShouldBeTrue();
+  terminal.ErrorContains("Warning: Low memory").ShouldBeTrue();
   Console.WriteLine($"  Stdout: {terminal.Output.Replace("\n", " ").Trim()}");
   Console.WriteLine($"  Stderr: {terminal.ErrorOutput.Trim()}");
-  Console.WriteLine($"  Result: {(passed ? "PASSED".Green() : "FAILED".Red())}\n");
+  Console.WriteLine("  PASSED".Green());
 }
 
-Console.WriteLine("=== All Tests Complete ===".BrightGreen().Bold());
+Console.WriteLine("\n=== All Tests Complete ===".BrightGreen().Bold());

@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru.Analyzers.Diagnostics;
+namespace TimeWarp.Nuru;
 
 internal static partial class DiagnosticDescriptors
 {

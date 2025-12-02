@@ -3,7 +3,6 @@
 #:project ../../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj
 
 using TimeWarp.Nuru;
-using TimeWarp.Nuru.Repl;
 
 // Test NuruApp integration (Section 13 of REPL Test Plan)
 return await RunTests<NuruAppIntegrationTests>();

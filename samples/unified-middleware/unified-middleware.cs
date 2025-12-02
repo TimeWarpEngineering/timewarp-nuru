@@ -1,9 +1,36 @@
 #!/usr/bin/dotnet --
-// unified-middleware - Demonstrates unified middleware for both delegate and Mediator routes
-#:project ../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
-#:project ../../Source/TimeWarp.Nuru.Logging/TimeWarp.Nuru.Logging.csproj
+#:project ../../source/timewarp-nuru/timewarp-nuru.csproj
+#:project ../../source/timewarp-nuru-logging/timewarp-nuru-logging.csproj
 #:package Mediator.Abstractions
 #:package Mediator.SourceGenerator
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// UNIFIED MIDDLEWARE - DELEGATE + MEDIATOR ROUTES EXAMPLE
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// This sample demonstrates that pipeline behaviors apply uniformly to BOTH:
+// - Delegate routes (simple lambdas)
+// - Mediator routes (IRequest commands)
+//
+// REQUIRED PACKAGES:
+//   #:package Mediator.Abstractions    - Interfaces (IRequest, IRequestHandler, IPipelineBehavior)
+//   #:package Mediator.SourceGenerator - Generates AddMediator() in YOUR assembly
+//
+// HOW UNIFIED MIDDLEWARE WORKS:
+//   When pipeline behaviors are registered for DelegateRequest/DelegateResponse,
+//   delegate routes are wrapped in DelegateRequest and sent through IMediator.Send().
+//   This ensures cross-cutting concerns apply consistently regardless of route type.
+//
+// TRY THESE COMMANDS:
+//   ./unified-middleware.cs add 5 3        # Delegate route - shows pipeline logging
+//   ./unified-middleware.cs echo "hello"   # Mediator route - shows pipeline logging
+//   ./unified-middleware.cs slow 600       # Mediator route - triggers slow warning
+//   ./unified-middleware.cs multiply 4 7   # Delegate route - shows pipeline logging
+//
+// COMMON ERROR:
+//   "No service for type 'Mediator.IMediator' has been registered"
+//   SOLUTION: Install BOTH packages AND call services.AddMediator(options => {...})
+// ═══════════════════════════════════════════════════════════════════════════════
 
 using System.Diagnostics;
 using TimeWarp.Nuru;
@@ -12,47 +39,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using static System.Console;
 
-// Unified Middleware Sample
-// =========================
-// This sample demonstrates that pipeline behaviors apply uniformly to BOTH:
-// - Delegate routes (simple lambdas)
-// - Mediator routes (IRequest commands)
-//
-// When DI is enabled and pipeline behaviors are registered for DelegateRequest,
-// delegate routes are wrapped in DelegateRequest and sent through IMediator.Send().
-// The DelegateRequestHandler (defined in TimeWarp.Nuru) is discovered by the
-// Mediator source generator, and pipeline behaviors execute automatically.
-//
-// This ensures cross-cutting concerns apply consistently regardless of route type.
-//
-// Try these commands:
-//   ./unified-middleware.cs add 5 3        # Delegate route - shows pipeline logging
-//   ./unified-middleware.cs echo "hello"   # Mediator route - shows pipeline logging
-//   ./unified-middleware.cs slow 600       # Mediator route - triggers slow warning
-//   ./unified-middleware.cs multiply 4 7   # Delegate route - shows pipeline logging
-
-NuruCoreApp app = new NuruAppBuilder()
-  .UseConsoleLogging(LogLevel.Information)
-  .AddDependencyInjection()
-  .ConfigureServices
-  (
-    (services, config) =>
-    {
-      // Register Mediator - source generator discovers handlers in THIS assembly
-      services.AddMediator();
-
-      // Register pipeline behaviors for Mediator commands (explicit IRequest)
-      services.AddSingleton<IPipelineBehavior<EchoCommand, Unit>, LoggingBehavior<EchoCommand, Unit>>();
-      services.AddSingleton<IPipelineBehavior<EchoCommand, Unit>, PerformanceBehavior<EchoCommand, Unit>>();
-      services.AddSingleton<IPipelineBehavior<SlowCommand, Unit>, LoggingBehavior<SlowCommand, Unit>>();
-      services.AddSingleton<IPipelineBehavior<SlowCommand, Unit>, PerformanceBehavior<SlowCommand, Unit>>();
-
-      // Register pipeline behaviors for delegate routes (unified middleware)
-      // These apply to ALL delegate-based routes!
-      services.AddSingleton<IPipelineBehavior<DelegateRequest, DelegateResponse>, DelegateLoggingBehavior>();
-      services.AddSingleton<IPipelineBehavior<DelegateRequest, DelegateResponse>, DelegatePerformanceBehavior>();
-    }
-  )
+NuruCoreApp app = NuruApp.CreateBuilder(args)
+  .ConfigureServices(ConfigureServices)
   // =========================================================================
   // DELEGATE ROUTES - These now receive pipeline behaviors too!
   // =========================================================================
@@ -97,10 +85,25 @@ NuruCoreApp app = new NuruAppBuilder()
     pattern: "slow {delay:int}",
     description: "Simulate slow operation in ms (Mediator route with pipeline)"
   )
-  .AddAutoHelp()
   .Build();
 
 return await app.RunAsync(args);
+
+static void ConfigureServices(IServiceCollection services)
+{
+  // Register Mediator with pipeline behaviors using open generics.
+  // Behaviors execute in array order: first = outermost (wraps everything).
+  services.AddMediator(options =>
+  {
+    options.PipelineBehaviors =
+    [
+      typeof(LoggingBehavior<,>),            // Logs entry/exit for Mediator commands
+      typeof(PerformanceBehavior<,>),        // Warns on slow Mediator commands
+      typeof(DelegateLoggingBehavior),       // Logs entry/exit for delegate routes
+      typeof(DelegatePerformanceBehavior)    // Warns on slow delegate routes
+    ];
+  });
+}
 
 // =============================================================================
 // PIPELINE BEHAVIORS FOR DELEGATE ROUTES

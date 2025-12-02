@@ -3,7 +3,6 @@
 // Test: InputTokenizer - Tokenizes command-line input for completion analysis
 // Task: 063 - Implement InputTokenizer
 
-using TimeWarp.Nuru.Completion;
 using Shouldly;
 
 return await RunTests<InputTokenizerTests>(clearCache: true);

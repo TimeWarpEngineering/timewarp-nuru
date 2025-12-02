@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru.Repl;
+namespace TimeWarp.Nuru;
 
 /// <summary>
 /// Extension methods to enable REPL (Read-Eval-Print Loop) mode for Nuru applications.

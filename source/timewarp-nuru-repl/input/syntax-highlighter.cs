@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru.Repl.Input;
+namespace TimeWarp.Nuru;
 
 /// <summary>
 /// Provides syntax highlighting for command line input based on route patterns.
@@ -44,13 +44,13 @@ internal sealed class SyntaxHighlighter
   {
     return token.Type switch
     {
-      TokenType.Command => token.Text.WithStyle(SyntaxColors.CommandColor),
-      TokenType.StringLiteral => token.Text.WithStyle(SyntaxColors.StringColor),
-      TokenType.Number => token.Text.WithStyle(SyntaxColors.NumberColor),
-      TokenType.LongOption => token.Text.WithStyle(SyntaxColors.KeywordColor),
-      TokenType.ShortOption => token.Text.WithStyle(SyntaxColors.OperatorColor),
-      TokenType.Argument => DetermineArgumentHighlighting(token),
-      TokenType.Whitespace => token.Text, // No coloring for whitespace
+      ReplTokenType.Command => token.Text.WithStyle(SyntaxColors.CommandColor),
+      ReplTokenType.StringLiteral => token.Text.WithStyle(SyntaxColors.StringColor),
+      ReplTokenType.Number => token.Text.WithStyle(SyntaxColors.NumberColor),
+      ReplTokenType.LongOption => token.Text.WithStyle(SyntaxColors.KeywordColor),
+      ReplTokenType.ShortOption => token.Text.WithStyle(SyntaxColors.OperatorColor),
+      ReplTokenType.Argument => DetermineArgumentHighlighting(token),
+      ReplTokenType.Whitespace => token.Text, // No coloring for whitespace
       _ => token.Text
     };
   }

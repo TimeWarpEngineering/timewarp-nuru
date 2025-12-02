@@ -1,40 +1,53 @@
+// ═══════════════════════════════════════════════════════════════════════════════
+// TIMEWARP.NURU SAMPLE - GENERAL REFERENCE APPLICATION
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// This sample demonstrates NuruApp.CreateBuilder(args) which provides:
+// - Full DI container setup
+// - Configuration support
+// - Auto-help generation
+// - REPL support with tab completion
+// - All extensions enabled by default
+//
+// REQUIRED PACKAGES (in .csproj):
+//   Mediator.Abstractions    - Interfaces (IRequest, IRequestHandler)
+//   Mediator.SourceGenerator - Generates AddMediator() in YOUR assembly
+//
+// COMMON ERROR:
+//   "No service for type 'Mediator.IMediator' has been registered"
+//   SOLUTION: Ensure ConfigureServices calls services.AddMediator()
+// ═══════════════════════════════════════════════════════════════════════════════
+
 using System.Globalization;
 using Mediator;
 using Microsoft.Extensions.DependencyInjection;
 using TimeWarp.Nuru;
 using static System.Console;
 
-// Build the app with fluent API
-NuruAppBuilder builder = new NuruAppBuilder()
-  // If using Mediator Commands/Handlers, add dependency injection
-  .AddDependencyInjection()
-  .ConfigureServices(services => services.AddMediator());
+// Build the app with canonical CreateBuilder pattern
+NuruCoreApp app = NuruApp.CreateBuilder(args)
+  .ConfigureServices(services => services.AddMediator())
+  // Default route when no command is specified
+  .MapDefault
+  (
+    () => WriteLine("Welcome to the Nuru sample app! Use --help to see available commands."),
+    "Default welcome message"
+  )
+  .Map("status", () => WriteLine("✓ System is running"), "Check system status")
+  .Map("echo {message}", (string message) => WriteLine($"Echo: {message}"), "Echo a message back")
+  .Map
+  (
+    "proxy {command} {*args}",
+    (string command, string[] args) => WriteLine($"Would execute: {command} {string.Join(" ", args)}"),
+    "Proxy command execution"
+  )
+  .Map<CalculateCommand, CalculateResponse>
+  (
+    "calc {value1:double} {value2:double} --operation {operation}",
+    "Perform calculation (operations: add, subtract, multiply, divide)"
+  )
+  .Build();
 
-// Add routes
-builder.MapDefault // Default route when no command is specified
-(
-  () => WriteLine("Welcome to the Nuru sample app! Use --help to see available commands."),
-  "Default welcome message"
-);
-
-builder.Map("status", () => WriteLine("✓ System is running"), "Check system status");
-builder.Map("echo {message}", (string message) => WriteLine($"Echo: {message}"), "Echo a message back");
-
-builder.Map
-(
-  "proxy {command} {*args}",
-  (string command, string[] args) => WriteLine($"Would execute: {command} {string.Join(" ", args)}"),
-  "Proxy command execution"
-);
-
-builder.Map<CalculateCommand, CalculateResponse>
-(
-  "calc {value1:double} {value2:double} --operation {operation}",
-  "Perform calculation (operations: add, subtract, multiply, divide)"
-);
-
-// Build and run
-NuruCoreApp app = builder.Build();
 return await app.RunAsync(args).ConfigureAwait(false);
 
 // Command and handler definitions

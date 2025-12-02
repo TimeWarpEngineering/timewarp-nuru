@@ -1,31 +1,39 @@
 #!/usr/bin/dotnet --
-// calc-mediator - Calculator using Mediator pattern for testability
-#:project ../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
+#:project ../../source/timewarp-nuru/timewarp-nuru.csproj
 #:package Mediator.Abstractions
 #:package Mediator.SourceGenerator
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// MEDIATOR PATTERN - CALCULATOR EXAMPLE
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// This sample demonstrates the Mediator pattern for CLI commands with:
+// - Testable command handlers via dependency injection
+// - Clean separation of concerns (commands, handlers, services)
+// - Type-safe parameter binding
+//
+// REQUIRED PACKAGES:
+//   #:package Mediator.Abstractions    - Interfaces (IRequest, IRequestHandler)
+//   #:package Mediator.SourceGenerator - Generates AddMediator() in YOUR assembly
+//
+// HOW IT WORKS:
+//   Mediator.SourceGenerator scans YOUR assembly at compile time for:
+//   - IRequest implementations (commands)
+//   - IRequestHandler<> implementations (handlers)
+//   Then generates a type-safe AddMediator() extension method specific to YOUR project.
+//
+// COMMON ERROR:
+//   "No service for type 'Mediator.IMediator' has been registered"
+//   SOLUTION: Install BOTH packages AND call services.AddMediator()
+// ═══════════════════════════════════════════════════════════════════════════════
 
 using TimeWarp.Nuru;
 using Mediator;
 using Microsoft.Extensions.DependencyInjection;
 using static System.Console;
 
-NuruCoreApp app =
-  new NuruAppBuilder()
-  .AddDependencyInjection()
-  .AddAutoHelp()
-  // ConfigureServices has two overloads:
-  // 1. ConfigureServices(Action<IServiceCollection>) - when you don't need configuration
-  // 2. ConfigureServices(Action<IServiceCollection, IConfiguration?>) - when you need access to configuration
-  //    (Configuration is available if AddConfiguration() was called)
-  .ConfigureServices((services, config) =>
-  {
-    // Example: could use config here if AddConfiguration() was called
-    // string? connectionString = config?.GetConnectionString("Default");
-
-    // Register Mediator - source generator discovers handlers in THIS assembly
-    services.AddMediator();
-    services.AddSingleton<ICalculatorService, CalculatorService>();
-  })
+NuruCoreApp app = NuruApp.CreateBuilder(args)
+  .ConfigureServices(ConfigureServices)
   .Map<AddCommand>
   (
     pattern: "add {x:double} {y:double}",
@@ -59,6 +67,13 @@ NuruCoreApp app =
   .Build();
 
 return await app.RunAsync(args);
+
+static void ConfigureServices(IServiceCollection services)
+{
+  // Register Mediator - source generator discovers handlers in THIS assembly
+  services.AddMediator();
+  services.AddSingleton<ICalculatorService, CalculatorService>();
+}
 
 // Command definitions with nested handlers
 public sealed class AddCommand : IRequest

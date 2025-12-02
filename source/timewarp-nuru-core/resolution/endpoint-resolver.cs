@@ -27,8 +27,8 @@ internal static class EndpointResolver
 
     logger ??= NullLogger.Instance;
 
-    LoggerMessages.ResolvingCommand(logger, string.Join(" ", args), null);
-    LoggerMessages.CheckingAvailableRoutes(logger, endpoints.Count, null);
+    ParsingLoggerMessages.ResolvingCommand(logger, string.Join(" ", args), null);
+    ParsingLoggerMessages.CheckingAvailableRoutes(logger, endpoints.Count, null);
 
     // Try to match against route endpoints
     (Endpoint endpoint, Dictionary<string, string> extractedValues)? matchResult =
@@ -63,7 +63,7 @@ internal static class EndpointResolver
     foreach (Endpoint endpoint in endpoints)
     {
       endpointIndex++;
-      LoggerMessages.CheckingRoute(logger, endpointIndex, endpoints.Count, endpoint.RoutePattern, null);
+      ParsingLoggerMessages.CheckingRoute(logger, endpointIndex, endpoints.Count, endpoint.RoutePattern, null);
       extractedValues.Clear(); // Clear for each attempt
 
       // Match all segments sequentially (literals, parameters, and options)
@@ -72,7 +72,7 @@ internal static class EndpointResolver
         // For catch-all routes, we don't need to check if all args were consumed
         if (endpoint.CompiledRoute.HasCatchAll)
         {
-          LoggerMessages.MatchedCatchAllRoute(logger, endpoint.RoutePattern, null);
+          ParsingLoggerMessages.MatchedCatchAllRoute(logger, endpoint.RoutePattern, null);
           LogExtractedValues(extractedValues, logger);
           // Store this match and continue checking other routes
           matches.Add(new RouteMatch(endpoint, new Dictionary<string, string>(extractedValues, StringComparer.OrdinalIgnoreCase), defaultsUsed));
@@ -82,26 +82,26 @@ internal static class EndpointResolver
         // For non-catch-all routes, ensure all arguments were consumed
         if (totalConsumed == args.Length)
         {
-          LoggerMessages.MatchedRoute(logger, endpoint.RoutePattern, null);
+          ParsingLoggerMessages.MatchedRoute(logger, endpoint.RoutePattern, null);
           LogExtractedValues(extractedValues, logger);
           // Store this match and continue checking other routes
           matches.Add(new RouteMatch(endpoint, new Dictionary<string, string>(extractedValues, StringComparer.OrdinalIgnoreCase), defaultsUsed));
         }
         else
         {
-          LoggerMessages.RouteConsumedPartialArgs(logger, endpoint.RoutePattern, totalConsumed, args.Length, null);
+          ParsingLoggerMessages.RouteConsumedPartialArgs(logger, endpoint.RoutePattern, totalConsumed, args.Length, null);
         }
       }
       else
       {
-        LoggerMessages.RouteFailedAtPositionalMatching(logger, endpoint.RoutePattern, null);
+        ParsingLoggerMessages.RouteFailedAtPositionalMatching(logger, endpoint.RoutePattern, null);
       }
     }
 
     // If no matches found, return null
     if (matches.Count == 0)
     {
-      LoggerMessages.NoMatchingRouteFound(logger, string.Join(" ", args), null);
+      ParsingLoggerMessages.NoMatchingRouteFound(logger, string.Join(" ", args), null);
       return null;
     }
 
@@ -121,10 +121,10 @@ internal static class EndpointResolver
   {
     if (extractedValues.Count > 0)
     {
-      LoggerMessages.ExtractedValues(logger, null);
+      ParsingLoggerMessages.ExtractedValues(logger, null);
       foreach (KeyValuePair<string, string> kvp in extractedValues)
       {
-        LoggerMessages.ExtractedValue(logger, kvp.Key, kvp.Value, null);
+        ParsingLoggerMessages.ExtractedValue(logger, kvp.Key, kvp.Value, null);
       }
     }
   }
@@ -144,7 +144,7 @@ internal static class EndpointResolver
     defaultsUsed = 0;
     IReadOnlyList<RouteMatcher> template = endpoint.CompiledRoute.Segments;
 
-    LoggerMessages.MatchingPositionalSegments(logger, template.Count, args.Length, null);
+    ParsingLoggerMessages.MatchingPositionalSegments(logger, template.Count, args.Length, null);
 
     // Pre-pass: Handle repeated options first and mark consumed indices
     HashSet<int> consumedIndices = [];
@@ -251,7 +251,7 @@ internal static class EndpointResolver
     }
 
     totalConsumed = consumedIndices.Count;
-    LoggerMessages.PositionalMatchingComplete(logger, consumedArgs, null);
+    ParsingLoggerMessages.PositionalMatchingComplete(logger, consumedArgs, null);
     return true;
   }
 
@@ -279,11 +279,11 @@ internal static class EndpointResolver
       if (segment is ParameterMatcher optionalParam && optionalParam.IsOptional)
       {
         // Optional parameter with no value - skip it
-        LoggerMessages.OptionalParameterNoValue(logger, optionalParam.Name, null);
+        ParsingLoggerMessages.OptionalParameterNoValue(logger, optionalParam.Name, null);
         return SegmentValidationResult.Skip;
       }
 
-      LoggerMessages.NotEnoughArgumentsForSegment(logger, segment.ToDisplayString(), null);
+      ParsingLoggerMessages.NotEnoughArgumentsForSegment(logger, segment.ToDisplayString(), null);
       return SegmentValidationResult.Fail;
     }
 
@@ -297,11 +297,11 @@ internal static class EndpointResolver
         if (segment is ParameterMatcher optionalParam && optionalParam.IsOptional)
         {
           // Optional parameter followed by an option - skip it
-          LoggerMessages.OptionalParameterSkippedHitOption(logger, optionalParam.Name, args[argIndex], null);
+          ParsingLoggerMessages.OptionalParameterSkippedHitOption(logger, optionalParam.Name, args[argIndex], null);
           return SegmentValidationResult.Skip;
         }
 
-        LoggerMessages.RequiredSegmentExpectedButFoundOption(logger, segment.ToDisplayString(), args[argIndex], null);
+        ParsingLoggerMessages.RequiredSegmentExpectedButFoundOption(logger, segment.ToDisplayString(), args[argIndex], null);
         return SegmentValidationResult.Fail;
       }
 
@@ -320,22 +320,22 @@ internal static class EndpointResolver
     ILogger logger
   )
   {
-    LoggerMessages.AttemptingToMatch(logger, arg, segment.ToDisplayString(), null);
+    ParsingLoggerMessages.AttemptingToMatch(logger, arg, segment.ToDisplayString(), null);
 
     if (!segment.TryMatch(arg, out string? value))
     {
-      LoggerMessages.FailedToMatch(logger, arg, segment.ToDisplayString(), null);
+      ParsingLoggerMessages.FailedToMatch(logger, arg, segment.ToDisplayString(), null);
       return false;
     }
 
     if (value is not null && segment is ParameterMatcher ps)
     {
       extractedValues[ps.Name] = value;
-      LoggerMessages.ExtractedParameter(logger, ps.Name, value, null);
+      ParsingLoggerMessages.ExtractedParameter(logger, ps.Name, value, null);
     }
     else if (segment is LiteralMatcher)
     {
-      LoggerMessages.LiteralMatched(logger, segment.ToDisplayString(), null);
+      ParsingLoggerMessages.LiteralMatched(logger, segment.ToDisplayString(), null);
     }
 
     return true;
@@ -376,11 +376,11 @@ internal static class EndpointResolver
 
     if (catchAllArgs.Count > 0)
     {
-      LoggerMessages.CatchAllParameterCaptured(logger, param.Name, catchAllValue, null);
+      ParsingLoggerMessages.CatchAllParameterCaptured(logger, param.Name, catchAllValue, null);
     }
     else
     {
-      LoggerMessages.CatchAllParameterNoArgs(logger, param.Name, null);
+      ParsingLoggerMessages.CatchAllParameterNoArgs(logger, param.Name, null);
     }
 
     return j; // Return position after all catch-all args
@@ -423,7 +423,7 @@ internal static class EndpointResolver
         return true;
       }
 
-      LoggerMessages.RequiredOptionNotFound(logger, option.ToDisplayString(), null);
+      ParsingLoggerMessages.RequiredOptionNotFound(logger, option.ToDisplayString(), null);
       return false;
     }
 
@@ -465,11 +465,11 @@ internal static class EndpointResolver
           if (!option.ParameterIsOptional)
           {
             // Value is required but not provided
-            LoggerMessages.RequiredOptionValueNotProvided(logger, option.ToDisplayString(), null);
+            ParsingLoggerMessages.RequiredOptionValueNotProvided(logger, option.ToDisplayString(), null);
             return false;
           }
           // Value is optional and not provided - parameter will be null
-          LoggerMessages.OptionalValueOptionNotProvided(logger, option.ParameterName ?? "", null);
+          ParsingLoggerMessages.OptionalValueOptionNotProvided(logger, option.ParameterName ?? "", null);
         }
         else
         {
@@ -477,7 +477,7 @@ internal static class EndpointResolver
           if (option.ParameterName is not null)
           {
             extractedValues[option.ParameterName] = args[valueIndex];
-            LoggerMessages.ExtractedParameter(logger, option.ParameterName, args[valueIndex], null);
+            ParsingLoggerMessages.ExtractedParameter(logger, option.ParameterName, args[valueIndex], null);
           }
 
           consumedIndices.Add(valueIndex); // Mark option value as consumed
@@ -489,7 +489,7 @@ internal static class EndpointResolver
         if (option.ParameterName is not null)
         {
           extractedValues[option.ParameterName] = "true";
-          LoggerMessages.BooleanOptionSet(logger, option.ParameterName, null);
+          ParsingLoggerMessages.BooleanOptionSet(logger, option.ParameterName, null);
         }
       }
 
@@ -506,7 +506,7 @@ internal static class EndpointResolver
     }
 
     // Required option not found
-    LoggerMessages.RequiredOptionNotFound(logger, option.ToDisplayString(), null);
+    ParsingLoggerMessages.RequiredOptionNotFound(logger, option.ToDisplayString(), null);
     return false;
   }
 
@@ -546,7 +546,7 @@ internal static class EndpointResolver
             if (!option.ParameterIsOptional)
             {
               // Value is required but not provided
-              LoggerMessages.RequiredOptionValueNotProvided(logger, option.ToDisplayString(), null);
+              ParsingLoggerMessages.RequiredOptionValueNotProvided(logger, option.ToDisplayString(), null);
               return false;
             }
             // Value is optional - skip this occurrence
@@ -582,7 +582,7 @@ internal static class EndpointResolver
       return true;
     }
 
-    LoggerMessages.RequiredOptionNotFound(logger, option.ToDisplayString(), null);
+    ParsingLoggerMessages.RequiredOptionNotFound(logger, option.ToDisplayString(), null);
     return false;
   }
 
@@ -600,18 +600,18 @@ internal static class EndpointResolver
     {
       // Boolean option defaults to false
       extractedValues[option.ParameterName] = "false";
-      LoggerMessages.OptionalBooleanOptionNotProvided(logger, option.ParameterName, null);
+      ParsingLoggerMessages.OptionalBooleanOptionNotProvided(logger, option.ParameterName, null);
     }
     else if (option.IsRepeated)
     {
       // Repeated option defaults to empty array
       extractedValues[option.ParameterName] = "";
-      LoggerMessages.OptionalValueOptionNotProvided(logger, option.ParameterName, null);
+      ParsingLoggerMessages.OptionalValueOptionNotProvided(logger, option.ParameterName, null);
     }
     else
     {
       // Other value options default to null (handled by binding)
-      LoggerMessages.OptionalValueOptionNotProvided(logger, option.ParameterName, null);
+      ParsingLoggerMessages.OptionalValueOptionNotProvided(logger, option.ParameterName, null);
     }
   }
 
@@ -684,7 +684,7 @@ internal static class EndpointResolver
             if (optionSegment.ParameterName is not null)
             {
               extractedValues[optionSegment.ParameterName] = "true";
-              LoggerMessages.BooleanOptionSet(logger, optionSegment.ParameterName, null);
+              ParsingLoggerMessages.BooleanOptionSet(logger, optionSegment.ParameterName, null);
             }
 
             optionsConsumed++; // Just the option
@@ -718,30 +718,30 @@ internal static class EndpointResolver
             if (!optionSegment.ExpectsValue)
             {
               extractedValues[optionSegment.ParameterName] = "false";
-              LoggerMessages.OptionalBooleanOptionNotProvided(logger, optionSegment.ParameterName, null);
+              ParsingLoggerMessages.OptionalBooleanOptionNotProvided(logger, optionSegment.ParameterName, null);
             }
             // For repeated options, set to empty string (will be parsed as empty array)
             else if (optionSegment.IsRepeated)
             {
               extractedValues[optionSegment.ParameterName] = "";
-              LoggerMessages.OptionalValueOptionNotProvided(logger, optionSegment.ParameterName, null);
+              ParsingLoggerMessages.OptionalValueOptionNotProvided(logger, optionSegment.ParameterName, null);
             }
             // For other value options, the parameter will be null (handled by binding)
             else
             {
-              LoggerMessages.OptionalValueOptionNotProvided(logger, optionSegment.ParameterName, null);
+              ParsingLoggerMessages.OptionalValueOptionNotProvided(logger, optionSegment.ParameterName, null);
             }
           }
 
           continue; // Skip to next option
         }
 
-        LoggerMessages.RequiredOptionNotFound(logger, optionSegment.ToDisplayString(), null);
+        ParsingLoggerMessages.RequiredOptionNotFound(logger, optionSegment.ToDisplayString(), null);
         return false;
       }
     }
 
-    LoggerMessages.OptionsMatchingComplete(logger, optionsConsumed, null);
+    ParsingLoggerMessages.OptionsMatchingComplete(logger, optionsConsumed, null);
     return true;
   }
 }

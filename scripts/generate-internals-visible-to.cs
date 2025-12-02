@@ -2,33 +2,52 @@
 
 using System.Globalization;
 using System.Text;
+using System.Text.RegularExpressions;
 
 // Get the repo root
 string scriptDir = AppContext.GetData("EntryPointFileDirectoryPath") as string
   ?? throw new InvalidOperationException("Could not get entry point directory");
 string repoRoot = Path.GetFullPath(Path.Combine(scriptDir, ".."));
 string testsDir = Path.Combine(repoRoot, "tests");
+string benchmarksDir = Path.Combine(repoRoot, "benchmarks");
 
 // Projects that need InternalsVisibleTo
 string[] outputFiles =
 [
+  Path.Combine(repoRoot, "source/timewarp-nuru/internals-visible-to.g.cs"),
+  Path.Combine(repoRoot, "source/timewarp-nuru-core/internals-visible-to.g.cs"),
   Path.Combine(repoRoot, "source/timewarp-nuru-parsing/internals-visible-to.g.cs"),
   Path.Combine(repoRoot, "source/timewarp-nuru-mcp/internals-visible-to.g.cs"),
   Path.Combine(repoRoot, "source/timewarp-nuru-completion/internals-visible-to.g.cs"),
   Path.Combine(repoRoot, "source/timewarp-nuru-repl/internals-visible-to.g.cs")
 ];
 
-// Find all .cs files in Tests directory (single-file scripts)
+// Helper to extract AssemblyName from csproj, or return null if not found
+static string? GetAssemblyNameFromCsproj(string csprojPath)
+{
+  string content = File.ReadAllText(csprojPath);
+  Match match = Regex.Match(content, @"<AssemblyName>([^<]+)</AssemblyName>");
+  return match.Success ? match.Groups[1].Value : null;
+}
+
+// Find all .cs files in Tests directory (single-file scripts / runfiles)
 List<string> testFiles = Directory.GetFiles(testsDir, "*.cs", SearchOption.AllDirectories)
   .Where(f => !f.Contains("/obj/", StringComparison.Ordinal) && !f.Contains("/bin/", StringComparison.Ordinal))
   .Select(Path.GetFileNameWithoutExtension)
   .Where(name => !string.IsNullOrEmpty(name))
   .ToList()!;
 
-// Find all .csproj files in Tests directory (project assemblies)
+// Find all .csproj files in Tests directory and extract AssemblyName (or use file name as fallback)
 List<string> testProjects = Directory.GetFiles(testsDir, "*.csproj", SearchOption.AllDirectories)
   .Where(f => !f.Contains("/obj/", StringComparison.Ordinal) && !f.Contains("/bin/", StringComparison.Ordinal))
-  .Select(f => Path.GetFileNameWithoutExtension(f))
+  .Select(f => GetAssemblyNameFromCsproj(f) ?? Path.GetFileNameWithoutExtension(f))
+  .Where(name => !string.IsNullOrEmpty(name))
+  .ToList()!;
+
+// Find all .csproj files in Benchmarks directory and extract AssemblyName (or use file name as fallback)
+List<string> benchmarkProjects = Directory.GetFiles(benchmarksDir, "*.csproj", SearchOption.AllDirectories)
+  .Where(f => !f.Contains("/obj/", StringComparison.Ordinal) && !f.Contains("/bin/", StringComparison.Ordinal))
+  .Select(f => GetAssemblyNameFromCsproj(f) ?? Path.GetFileNameWithoutExtension(f))
   .Where(name => !string.IsNullOrEmpty(name))
   .ToList()!;
 
@@ -40,6 +59,7 @@ List<string> testDirectories = Directory.GetFiles(testsDir, "Directory.Build.pro
   .ToList()!;
 
 testProjects.AddRange(testDirectories);
+testProjects.AddRange(benchmarkProjects);
 
 // Combine and deduplicate
 testFiles.AddRange(testProjects);

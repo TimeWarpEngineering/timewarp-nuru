@@ -1,6 +1,4 @@
-namespace TimeWarp.Nuru.Completion;
-
-using TimeWarp.Nuru.Parsing;
+namespace TimeWarp.Nuru;
 
 /// <summary>
 /// Matches parsed input against registered routes and computes match states.

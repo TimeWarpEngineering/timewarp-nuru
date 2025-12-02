@@ -17,11 +17,11 @@ public class ErrorReportingTests
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     // Find the Invalid token
-    Token? invalidToken = tokens.FirstOrDefault(t => t.Type == TokenType.Invalid);
+    Token? invalidToken = tokens.FirstOrDefault(t => t.Type == RouteTokenType.Invalid);
     invalidToken.ShouldNotBeNull("Expected to find an Invalid token");
 
     // Verify position information
-    invalidToken.Type.ShouldBe(TokenType.Invalid);
+    invalidToken.Type.ShouldBe(RouteTokenType.Invalid);
     invalidToken.Value.ShouldBe("@");
     invalidToken.Position.ShouldBe(4, "@ character is at position 4");
     invalidToken.Length.ShouldBe(1, "@ is a single character");
@@ -41,7 +41,7 @@ public class ErrorReportingTests
     Lexer lexer = CreateLexer(pattern);
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
-    Token? invalidToken = tokens.FirstOrDefault(t => t.Type == TokenType.Invalid);
+    Token? invalidToken = tokens.FirstOrDefault(t => t.Type == RouteTokenType.Invalid);
     invalidToken.ShouldNotBeNull();
 
     string diagnosticString = invalidToken.ToString();
@@ -67,7 +67,7 @@ public class ErrorReportingTests
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     // Should have two Invalid tokens
-    Token[] invalidTokens = [.. tokens.Where(t => t.Type == TokenType.Invalid)];
+    Token[] invalidTokens = [.. tokens.Where(t => t.Type == RouteTokenType.Invalid)];
     invalidTokens.Length.ShouldBe(2, "Should find two invalid tokens");
 
     // First invalid token: @
@@ -94,13 +94,13 @@ public class ErrorReportingTests
 
     // First token should be the Invalid token
     tokens.Count.ShouldBeGreaterThan(0);
-    tokens[0].Type.ShouldBe(TokenType.Invalid);
+    tokens[0].Type.ShouldBe(RouteTokenType.Invalid);
     tokens[0].Value.ShouldBe("@");
     tokens[0].Position.ShouldBe(0, "Invalid token at start has position 0");
 
     // Should still tokenize remaining valid parts
-    tokens.Any(t => t.Type == TokenType.Identifier && t.Value == "cmd").ShouldBeTrue();
-    tokens.Any(t => t.Type == TokenType.LeftBrace).ShouldBeTrue();
+    tokens.Any(t => t.Type == RouteTokenType.Identifier && t.Value == "cmd").ShouldBeTrue();
+    tokens.Any(t => t.Type == RouteTokenType.LeftBrace).ShouldBeTrue();
 
     await Task.CompletedTask;
   }
@@ -118,14 +118,14 @@ public class ErrorReportingTests
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     // Find Invalid token
-    Token? invalidToken = tokens.FirstOrDefault(t => t.Type == TokenType.Invalid);
+    Token? invalidToken = tokens.FirstOrDefault(t => t.Type == RouteTokenType.Invalid);
     invalidToken.ShouldNotBeNull();
     invalidToken.Value.ShouldBe("@");
     invalidToken.Position.ShouldBe(12, "@ is at position 12");
 
     // Invalid token should come before EndOfInput
     // Last token should be EndOfInput
-    tokens[tokens.Count - 1].Type.ShouldBe(TokenType.EndOfInput);
+    tokens[tokens.Count - 1].Type.ShouldBe(RouteTokenType.EndOfInput);
     // Second to last should be the invalid token
     tokens[tokens.Count - 2].ShouldBe(invalidToken);
 
@@ -145,19 +145,19 @@ public class ErrorReportingTests
     IReadOnlyList<Token> tokens = lexer.Tokenize();
 
     // Should have valid tokens before invalid
-    tokens[0].Type.ShouldBe(TokenType.Identifier);
+    tokens[0].Type.ShouldBe(RouteTokenType.Identifier);
     tokens[0].Value.ShouldBe("deploy");
-    tokens[1].Type.ShouldBe(TokenType.LeftBrace);
+    tokens[1].Type.ShouldBe(RouteTokenType.LeftBrace);
 
     // Invalid token in middle
-    Token? invalidToken = tokens.FirstOrDefault(t => t.Type == TokenType.Invalid);
+    Token? invalidToken = tokens.FirstOrDefault(t => t.Type == RouteTokenType.Invalid);
     invalidToken.ShouldNotBeNull();
     invalidToken.Value.ShouldBe("@");
     invalidToken.Position.ShouldBe(13);
 
     // Should have valid tokens after invalid
-    tokens.Any(t => t.Type == TokenType.DoubleDash).ShouldBeTrue("Should find -- after error");
-    tokens.Any(t => t.Type == TokenType.Identifier && t.Value == "force").ShouldBeTrue("Should find 'force' after error");
+    tokens.Any(t => t.Type == RouteTokenType.DoubleDash).ShouldBeTrue("Should find -- after error");
+    tokens.Any(t => t.Type == RouteTokenType.Identifier && t.Value == "force").ShouldBeTrue("Should find 'force' after error");
 
     await Task.CompletedTask;
   }

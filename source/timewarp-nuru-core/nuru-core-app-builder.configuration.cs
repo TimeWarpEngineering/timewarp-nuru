@@ -255,13 +255,13 @@ public partial class NuruCoreAppBuilder
       if (!string.IsNullOrEmpty(sourceDir) && Directory.Exists(sourceDir))
       {
         basePath = sourceDir;
-        LoggerMessages.ConfigurationBasePath(logger, basePath, source, null);
+        ParsingLoggerMessages.ConfigurationBasePath(logger, basePath, source, null);
         return basePath;
       }
     }
     else
     {
-      LoggerMessages.ConfigurationBasePath(logger, basePath, "Assembly directory", null);
+      ParsingLoggerMessages.ConfigurationBasePath(logger, basePath, "Assembly directory", null);
       return basePath;
     }
 
@@ -269,7 +269,7 @@ public partial class NuruCoreAppBuilder
     if (!configInAssemblyDir && basePath == AppContext.BaseDirectory)
     {
       basePath = Directory.GetCurrentDirectory();
-      LoggerMessages.ConfigurationBasePath(logger, basePath, "Current directory - fallback", null);
+      ParsingLoggerMessages.ConfigurationBasePath(logger, basePath, "Current directory - fallback", null);
     }
 
     return basePath;

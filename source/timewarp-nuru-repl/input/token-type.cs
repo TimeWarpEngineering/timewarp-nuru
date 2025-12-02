@@ -1,9 +1,9 @@
-namespace TimeWarp.Nuru.Repl.Input;
+namespace TimeWarp.Nuru;
 
 /// <summary>
 /// Types of tokens in command line input.
 /// </summary>
-internal enum TokenType
+internal enum ReplTokenType
 {
   Whitespace,
   Command,

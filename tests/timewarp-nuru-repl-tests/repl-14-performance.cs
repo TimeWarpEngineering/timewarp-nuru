@@ -4,8 +4,6 @@
 
 using System.Diagnostics;
 using TimeWarp.Nuru;
-using TimeWarp.Nuru.Repl;
-using TimeWarp.Nuru.Repl.Input;
 
 // Test performance (Section 14 of REPL Test Plan)
 return await RunTests<PerformanceTests>();

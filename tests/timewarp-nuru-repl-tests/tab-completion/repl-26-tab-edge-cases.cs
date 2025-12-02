@@ -3,8 +3,7 @@
 #:project ../../../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj
 
 using TimeWarp.Nuru;
-using TimeWarp.Nuru.Repl;
-using TimeWarp.Nuru.Repl.Tests.TabCompletion;
+using TimeWarp.Nuru.Tests.TabCompletion;
 
 // ============================================================================
 // Edge Cases Tests

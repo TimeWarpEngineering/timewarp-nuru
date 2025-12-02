@@ -186,9 +186,9 @@ public class StaticFactoryMethodTests
     matched.ShouldBeTrue();
   }
 
-  public static async Task Backward_compatibility_new_NuruAppBuilder_still_works()
+  public static async Task Internal_constructor_still_works_for_tests()
   {
-    // Arrange - Original API should still work
+    // Arrange - Internal constructor accessible via InternalsVisibleTo
     bool matched = false;
     NuruCoreApp app = new NuruAppBuilder()
       .Map("legacy", () => { matched = true; return 0; })

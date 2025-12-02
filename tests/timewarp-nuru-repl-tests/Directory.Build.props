@@ -5,7 +5,7 @@
   <ItemGroup>
     <!-- Reference the Repl project -->
     <ProjectReference Include="$(MSBuildThisFileDirectory)../../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj" />
-    <Using Include="TimeWarp.Nuru.Repl" />
+    <!-- Repl types are now in TimeWarp.Nuru namespace (already imported via parent) -->
   </ItemGroup>
 
   <ItemGroup>
@@ -15,8 +15,8 @@
 
   <ItemGroup>
     <!-- Static using for tab completion test helpers -->
-    <Using Include="TimeWarp.Nuru.Repl.Tests.TabCompletion.CompletionAssertions" Static="true" />
-    <Using Include="TimeWarp.Nuru.Repl.Tests.TabCompletion.KeySequenceHelpers" Static="true" />
-    <Using Include="TimeWarp.Nuru.Repl.Tests.TabCompletion.TestAppFactory" Static="true" />
+    <Using Include="TimeWarp.Nuru.Tests.TabCompletion.CompletionAssertions" Static="true" />
+    <Using Include="TimeWarp.Nuru.Tests.TabCompletion.KeySequenceHelpers" Static="true" />
+    <Using Include="TimeWarp.Nuru.Tests.TabCompletion.TestAppFactory" Static="true" />
   </ItemGroup>
 </Project>

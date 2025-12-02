@@ -26,10 +26,12 @@ dotnet add package TimeWarp.Nuru
 ```csharp
 using TimeWarp.Nuru;
 
-NuruAppBuilder builder = NuruApp.CreateBuilder(args);
-builder.Map("add {x:double} {y:double}", (double x, double y) =>
-  Console.WriteLine($"{x} + {y} = {x + y}"));
-return await builder.Build().RunAsync(args);
+NuruCoreApp app = NuruApp.CreateBuilder(args)
+  .Map("add {x:double} {y:double}", (double x, double y) =>
+    Console.WriteLine($"{x} + {y} = {x + y}"))
+  .Build();
+
+return await app.RunAsync(args);
 ```
 
 ### Slim Builder (Lightweight)
@@ -37,7 +39,7 @@ return await builder.Build().RunAsync(args);
 ```csharp
 using TimeWarp.Nuru;
 
-NuruApp app = NuruApp.CreateSlimBuilder()
+NuruCoreApp app = NuruApp.CreateSlimBuilder()
   .Map("add {x:double} {y:double}", (double x, double y) =>
     Console.WriteLine($"{x} + {y} = {x + y}"))
   .Build();
@@ -50,7 +52,7 @@ return await app.RunAsync(args);
 ```csharp
 using TimeWarp.Nuru;
 
-NuruApp app = NuruApp.CreateEmptyBuilder()
+NuruCoreApp app = NuruApp.CreateEmptyBuilder()
   .Map("add {x:double} {y:double}", (double x, double y) =>
     Console.WriteLine($"{x} + {y} = {x + y}"))
   .Build();
@@ -119,7 +121,7 @@ dotnet run -- add 15 25
 Build modern command-line tools from scratch:
 
 ```csharp
-NuruApp app = new NuruAppBuilder()
+NuruCoreApp app = new NuruAppBuilder()
   .Map
   (
     "deploy {env} --version {tag?}",
@@ -137,7 +139,7 @@ NuruApp app = new NuruAppBuilder()
 Wrap existing CLIs to add auth, logging, or validation:
 
 ```csharp
-NuruApp app = new NuruAppBuilder()
+NuruCoreApp app = new NuruAppBuilder()
   .Map
   (
     "deploy prod",
@@ -203,7 +205,7 @@ Get instant help in Claude Code, Roo Code, or Continue:
 Enable tab completion for your CLI with one line of code:
 
 ```csharp
-NuruApp app = new NuruAppBuilder()
+NuruCoreApp app = new NuruAppBuilder()
   .Map("deploy {env} --version {tag}", (string env, string tag) => Deploy(env, tag))
   .Map("status", () => ShowStatus())
   .EnableStaticCompletion()  // ← Add this

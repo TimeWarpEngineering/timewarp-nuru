@@ -4,7 +4,6 @@
 // Task: 064 - Implement RouteMatchEngine
 
 using TimeWarp.Nuru;
-using TimeWarp.Nuru.Completion;
 using Shouldly;
 
 return await RunTests<RouteMatchEngineTests>(clearCache: true);

@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru.Completion;
+namespace TimeWarp.Nuru;
 
 using TimeWarp.Nuru; // EndpointCollection is in root namespace
 

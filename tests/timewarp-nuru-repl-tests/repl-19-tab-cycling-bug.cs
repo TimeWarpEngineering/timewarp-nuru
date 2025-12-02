@@ -3,7 +3,6 @@
 #:project ../../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj
 
 using TimeWarp.Nuru;
-using TimeWarp.Nuru.Repl;
 
 // Test to demonstrate tab completion cycling bug
 // After first cycle completion, subsequent tabs are interpreted as text input

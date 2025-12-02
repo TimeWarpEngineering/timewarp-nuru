@@ -1,9 +1,36 @@
 #!/usr/bin/dotnet --
-// pipeline-middleware - Demonstrates Mediator pipeline behaviors for cross-cutting concerns
-#:project ../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
-#:project ../../Source/TimeWarp.Nuru.Logging/TimeWarp.Nuru.Logging.csproj
+#:project ../../source/timewarp-nuru/timewarp-nuru.csproj
+#:project ../../source/timewarp-nuru-logging/timewarp-nuru-logging.csproj
 #:package Mediator.Abstractions
 #:package Mediator.SourceGenerator
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PIPELINE MIDDLEWARE - CROSS-CUTTING CONCERNS EXAMPLE
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// This sample demonstrates martinothamar/Mediator pipeline behaviors (middleware)
+// for implementing cross-cutting concerns like logging, performance monitoring,
+// authorization, retry/resilience, telemetry, and exception handling.
+//
+// REQUIRED PACKAGES:
+//   #:package Mediator.Abstractions    - Interfaces (IRequest, IRequestHandler, IPipelineBehavior)
+//   #:package Mediator.SourceGenerator - Generates AddMediator() in YOUR assembly
+//
+// HOW PIPELINE BEHAVIORS WORK:
+//   Behaviors execute in registration order, wrapping the handler like onion layers.
+//   First behavior = outermost (executes first on the way in, last on the way out).
+//   Each behavior can run code before AND after calling next().
+//
+// MARKER INTERFACE PATTERN:
+//   Behaviors are registered globally but use runtime checks to apply selectively:
+//   - IRequireAuthorization: Commands requiring permission checks
+//   - IRetryable: Commands that should retry on transient failures
+//   The behavior checks: if (message is IRequireAuthorization auth) { ... }
+//
+// COMMON ERROR:
+//   "No service for type 'Mediator.IMediator' has been registered"
+//   SOLUTION: Install BOTH packages AND call services.AddMediator(options => {...})
+// ═══════════════════════════════════════════════════════════════════════════════
 
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
@@ -14,71 +41,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using static System.Console;
 
-// Pipeline Middleware Sample
-// ==========================
-// This sample demonstrates martinothamar/Mediator pipeline behaviors (middleware)
-// for implementing cross-cutting concerns like logging, performance monitoring,
-// authorization, retry/resilience, telemetry, validation, and more.
-//
-// Pipeline behaviors execute in registration order, wrapping the command handler
-// like layers of an onion. Each behavior can execute code before and after the
-// inner handler(s).
-//
-// Marker Interface Patterns:
-// - IRequireAuthorization: Commands requiring permission checks (set CLI_AUTHORIZED=1)
-// - IRetryable: Commands that should retry on transient failures with exponential backoff
-//
-// Telemetry:
-// The TelemetryBehavior uses System.Diagnostics.Activity for OpenTelemetry-compatible
-// distributed tracing. Activities are created for each command execution.
-//
-// Exception Handling:
-// The ExceptionHandlingBehavior provides consistent error handling with user-friendly
-// messages. It should be registered LAST (innermost) to catch all exceptions.
-
-NuruCoreApp app = new NuruAppBuilder()
-  .UseConsoleLogging(LogLevel.Information)
-  .AddDependencyInjection()
-  .ConfigureServices
-  (
-    (services, config) =>
-    {
-      // Register Mediator - source generator discovers handlers in THIS assembly
-      services.AddMediator();
-
-      // Register pipeline behaviors in execution order (outermost to innermost)
-      // The order here determines the order behaviors wrap the handler
-      //
-      // Note: For AOT/runfile scenarios, use explicit generic registrations rather than
-      // open generic registration (typeof(IPipelineBehavior<,>)) to avoid trimmer issues.
-      services.AddSingleton<IPipelineBehavior<EchoCommand, Unit>, LoggingBehavior<EchoCommand, Unit>>();
-      services.AddSingleton<IPipelineBehavior<EchoCommand, Unit>, PerformanceBehavior<EchoCommand, Unit>>();
-      services.AddSingleton<IPipelineBehavior<SlowCommand, Unit>, LoggingBehavior<SlowCommand, Unit>>();
-      services.AddSingleton<IPipelineBehavior<SlowCommand, Unit>, PerformanceBehavior<SlowCommand, Unit>>();
-
-      // Authorization behavior only applies to commands implementing IRequireAuthorization
-      services.AddSingleton<IPipelineBehavior<AdminCommand, Unit>, LoggingBehavior<AdminCommand, Unit>>();
-      services.AddSingleton<IPipelineBehavior<AdminCommand, Unit>, AuthorizationBehavior<AdminCommand, Unit>>();
-      services.AddSingleton<IPipelineBehavior<AdminCommand, Unit>, PerformanceBehavior<AdminCommand, Unit>>();
-
-      // Retry behavior for commands implementing IRetryable (resilience pattern)
-      services.AddSingleton<IPipelineBehavior<FlakyCommand, Unit>, LoggingBehavior<FlakyCommand, Unit>>();
-      services.AddSingleton<IPipelineBehavior<FlakyCommand, Unit>, RetryBehavior<FlakyCommand, Unit>>();
-      services.AddSingleton<IPipelineBehavior<FlakyCommand, Unit>, PerformanceBehavior<FlakyCommand, Unit>>();
-
-      // Exception handling behavior - demonstrates consistent error handling
-      // ExceptionHandlingBehavior is registered LAST (innermost) to catch all exceptions
-      services.AddSingleton<IPipelineBehavior<ErrorCommand, Unit>, LoggingBehavior<ErrorCommand, Unit>>();
-      services.AddSingleton<IPipelineBehavior<ErrorCommand, Unit>, PerformanceBehavior<ErrorCommand, Unit>>();
-      services.AddSingleton<IPipelineBehavior<ErrorCommand, Unit>, ExceptionHandlingBehavior<ErrorCommand, Unit>>();
-
-      // Telemetry behavior - demonstrates OpenTelemetry-compatible distributed tracing
-      // TelemetryBehavior should be registered early (outermost) to capture full execution
-      services.AddSingleton<IPipelineBehavior<TraceCommand, Unit>, TelemetryBehavior<TraceCommand, Unit>>();
-      services.AddSingleton<IPipelineBehavior<TraceCommand, Unit>, LoggingBehavior<TraceCommand, Unit>>();
-      services.AddSingleton<IPipelineBehavior<TraceCommand, Unit>, PerformanceBehavior<TraceCommand, Unit>>();
-    }
-  )
+NuruCoreApp app = NuruApp.CreateBuilder(args)
+  .ConfigureServices(ConfigureServices)
   // Simple command to demonstrate pipeline
   .Map<EchoCommand>
   (
@@ -115,10 +79,28 @@ NuruCoreApp app = new NuruAppBuilder()
     pattern: "trace {operation}",
     description: "Demonstrate OpenTelemetry-compatible distributed tracing with Activity"
   )
-  .AddAutoHelp()
   .Build();
 
 return await app.RunAsync(args);
+
+static void ConfigureServices(IServiceCollection services)
+{
+  // Register Mediator with pipeline behaviors using open generics.
+  // Behaviors execute in array order: first = outermost (wraps everything).
+  // Each behavior uses marker interface checks to apply selectively at runtime.
+  services.AddMediator(options =>
+  {
+    options.PipelineBehaviors =
+    [
+      typeof(TelemetryBehavior<,>),         // Outermost: captures full execution span
+      typeof(LoggingBehavior<,>),           // Logs entry/exit for all commands
+      typeof(AuthorizationBehavior<,>),     // Checks IRequireAuthorization at runtime
+      typeof(RetryBehavior<,>),             // Retries IRetryable commands on transient failures
+      typeof(PerformanceBehavior<,>),       // Warns on slow commands
+      typeof(ExceptionHandlingBehavior<,>)  // Innermost: catches all exceptions
+    ];
+  });
+}
 
 // =============================================================================
 // COMMANDS

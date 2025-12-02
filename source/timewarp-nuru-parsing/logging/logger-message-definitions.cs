@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru.Parsing;
+namespace TimeWarp.Nuru;
 
 using Microsoft.Extensions.Logging;
 
@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 /// High-performance logger message definitions using LoggerMessage.Define
 /// to avoid allocations when logging is disabled.
 /// </summary>
-internal static class LoggerMessages
+internal static class ParsingLoggerMessages
 {
   // ===== Registration Messages (1000-1099) =====
   internal static readonly Action<ILogger, Exception?> StartingRouteRegistration =

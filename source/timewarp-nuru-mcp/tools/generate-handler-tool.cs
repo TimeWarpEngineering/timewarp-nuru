@@ -2,7 +2,7 @@ namespace TimeWarp.Nuru.Mcp.Tools;
 
 using System.ComponentModel;
 using System.Text;
-using TimeWarp.Nuru.Parsing;
+using TimeWarp.Nuru;
 
 internal sealed class GenerateHandlerTool
 {

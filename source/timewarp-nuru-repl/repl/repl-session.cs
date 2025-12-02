@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru.Repl;
+namespace TimeWarp.Nuru;
 
 /// <summary>
 /// Provides REPL (Read-Eval-Print Loop) mode for interactive command execution.

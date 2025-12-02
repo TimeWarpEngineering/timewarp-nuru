@@ -1,15 +1,30 @@
 #!/usr/bin/dotnet --
-// SerilogExample.cs - Example of using TimeWarp.Nuru with Serilog for structured logging
-
-#:project ../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
+#:project ../../source/timewarp-nuru/timewarp-nuru.csproj
+#:package Mediator.Abstractions
+#:package Mediator.SourceGenerator
 #:package Serilog
 #:package Serilog.Sinks.Console
 #:package Serilog.Sinks.Seq
 #:package Serilog.Extensions.Logging
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// SERILOG LOGGING - STRUCTURED LOGGING WITH SERILOG
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// This sample demonstrates NuruApp.CreateBuilder(args) with Serilog integration.
+// Features: Console sink with themes, Seq sink for structured logging.
+//
+// REQUIRED PACKAGES:
+//   #:package Mediator.Abstractions    - Required by NuruApp.CreateBuilder
+//   #:package Mediator.SourceGenerator - Generates AddMediator() in YOUR assembly
+//
+// To run Seq locally: docker run --rm -it -p 5341:80 datalust/seq
+// ═══════════════════════════════════════════════════════════════════════════════
+
 using Serilog;
 using Serilog.Events;
 using Serilog.Sinks.SystemConsole.Themes;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using TimeWarp.Nuru;
 
@@ -42,7 +57,8 @@ try
 {
     Log.Information("Starting TimeWarp.Nuru application with Serilog");
     
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder(args)
+        .ConfigureServices(services => services.AddMediator())
         .UseLogging(loggerFactory)  // Use Serilog for all Nuru logging
         
         .Map("test", () => 

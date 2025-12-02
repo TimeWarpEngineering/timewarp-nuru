@@ -1,9 +1,9 @@
-namespace TimeWarp.Nuru.Parsing;
+namespace TimeWarp.Nuru;
 
 /// <summary>
 /// Represents the different types of tokens in route patterns.
 /// </summary>
-internal enum TokenType
+internal enum RouteTokenType
 {
   /// <summary>
   /// A literal string that must match exactly.
@@ -74,7 +74,7 @@ internal enum TokenType
 /// <param name="Value">The text value of the token.</param>
 /// <param name="Position">The starting position in the input string.</param>
 /// <param name="Length">The length of the token in characters.</param>
-internal record Token(TokenType Type, string Value, int Position, int Length)
+internal record Token(RouteTokenType Type, string Value, int Position, int Length)
 {
   /// <summary>
   /// Gets the end position of this token (Position + Length).
@@ -86,7 +86,7 @@ internal record Token(TokenType Type, string Value, int Position, int Length)
   /// </summary>
   /// <param name="position">The position at the end of input.</param>
   /// <returns>An end of input token.</returns>
-  public static Token EndOfInput(int position) => new(TokenType.EndOfInput, string.Empty, position, 0);
+  public static Token EndOfInput(int position) => new(RouteTokenType.EndOfInput, string.Empty, position, 0);
 
   /// <summary>
   /// Creates an invalid token.
@@ -97,7 +97,7 @@ internal record Token(TokenType Type, string Value, int Position, int Length)
   public static Token Invalid(string value, int position)
   {
     ArgumentNullException.ThrowIfNull(value, nameof(value));
-    return new(TokenType.Invalid, value, position, value.Length);
+    return new(RouteTokenType.Invalid, value, position, value.Length);
   }
 
   /// <summary>

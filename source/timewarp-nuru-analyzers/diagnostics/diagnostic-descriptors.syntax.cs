@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru.Analyzers.Diagnostics;
+namespace TimeWarp.Nuru;
 
 /// <summary>
 /// Diagnostic descriptors for parse errors (syntax issues in route patterns).

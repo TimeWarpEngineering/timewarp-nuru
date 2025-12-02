@@ -1,10 +1,15 @@
 #!/usr/bin/dotnet --
-#:project ../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
-#:project ../../Source/TimeWarp.Nuru.Repl/TimeWarp.Nuru.Repl.csproj
+#:project ../../source/timewarp-nuru/timewarp-nuru.csproj
+#:project ../../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj
+#:package Mediator.Abstractions
+#:package Mediator.SourceGenerator
 
-// ============================================================================
-// Custom Key Bindings Demo
-// ============================================================================
+// ═══════════════════════════════════════════════════════════════════════════════
+// CUSTOM KEY BINDINGS DEMO
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// This sample uses NuruApp.CreateBuilder(args) which provides all REPL features.
+//
 // This demo shows how to create personalized REPL key bindings using
 // CustomKeyBindingProfile. You can:
 //   - Start from any built-in profile (Default, Emacs, Vi, VSCode)
@@ -14,10 +19,11 @@
 //   - Customize exit keys
 //
 // Run this file to explore the custom key binding system interactively.
-// ============================================================================
+// ═══════════════════════════════════════════════════════════════════════════════
 
 using TimeWarp.Nuru;
 using TimeWarp.Nuru.Repl;
+using Microsoft.Extensions.DependencyInjection;
 using static System.Console;
 
 WriteLine("Custom Key Bindings Demo");
@@ -69,7 +75,27 @@ CustomKeyBindingProfile customProfile = new CustomKeyBindingProfile(new EmacsKey
 // Build the app with custom key bindings
 // ============================================================================
 
-NuruCoreApp app = new NuruAppBuilder()
+NuruAppOptions nuruAppOptions = new()
+{
+  ConfigureRepl = options =>
+  {
+    options.Prompt = "custom> ";
+    options.PromptColor = "\x1b[35m"; // Magenta to indicate custom bindings
+
+    options.WelcomeMessage =
+      "Custom Key Bindings Demo - REPL with personalized Emacs bindings\n" +
+      "Try: 'bindings' to see customizations, 'profiles' to see available profiles\n" +
+      "Try: Ctrl+G for bell, Ctrl+A/Ctrl+E for line navigation";
+
+    options.GoodbyeMessage = "Custom key bindings demo complete!";
+
+    // Set the custom profile
+    options.KeyBindingProfile = customProfile;
+  }
+};
+
+NuruCoreApp app = NuruApp.CreateBuilder(args, nuruAppOptions)
+  .ConfigureServices(services => services.AddMediator())
   .WithMetadata
   (
     description: "Demonstrates CustomKeyBindingProfile for personalized REPL key bindings."
@@ -136,28 +162,6 @@ NuruCoreApp app = new NuruAppBuilder()
       WriteLine("This demo uses: CustomKeyBindingProfile based on Emacs");
     },
     description: "Lists available key binding profiles."
-  )
-
-  // --------------------------------------------------------
-  // REPL configuration with custom key bindings
-  // --------------------------------------------------------
-  .AddReplSupport
-  (
-    options =>
-    {
-      options.Prompt = "custom> ";
-      options.PromptColor = "\x1b[35m"; // Magenta to indicate custom bindings
-
-      options.WelcomeMessage =
-        "Custom Key Bindings Demo - REPL with personalized Emacs bindings\n" +
-        "Try: 'bindings' to see customizations, 'profiles' to see available profiles\n" +
-        "Try: Ctrl+G for bell, Ctrl+A/Ctrl+E for line navigation";
-
-      options.GoodbyeMessage = "Custom key bindings demo complete!";
-
-      // Set the custom profile
-      options.KeyBindingProfile = customProfile;
-    }
   )
   .Build();
 

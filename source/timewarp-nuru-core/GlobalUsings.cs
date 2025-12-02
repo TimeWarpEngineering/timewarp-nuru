@@ -18,6 +18,6 @@ global using System.Text.Json;
 global using System.Text.Json.Serialization;
 global using System.Text.RegularExpressions;
 // TimeWarp namespaces
-global using TimeWarp.Nuru.Parsing;
+global using TimeWarp.Nuru;
 // Mediator (martinothamar source-generator based)
 global using Mediator;

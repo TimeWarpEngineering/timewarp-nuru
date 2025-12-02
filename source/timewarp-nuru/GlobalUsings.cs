@@ -7,5 +7,3 @@ global using Microsoft.Extensions.Hosting;
 global using Microsoft.Extensions.Logging;
 global using System.Reflection;
 global using TimeWarp.Nuru;
-global using TimeWarp.Nuru.Completion;
-global using TimeWarp.Nuru.Repl;

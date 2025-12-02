@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru.Parsing;
+namespace TimeWarp.Nuru;
 
 /// <summary>
 /// Compiler that converts route pattern syntax tree to the runtime CompiledRoute structure.
@@ -125,7 +125,7 @@ internal sealed class Compiler : SyntaxVisitor<object?>
     {
       // Extract the option name from the syntax (remove leading dashes) and convert to camelCase
       valueParameterName = ToCamelCase(option.LongForm ?? option.ShortForm ?? "");
-      LoggerMessages.SettingBooleanOptionParameter(Logger, valueParameterName!, null);
+      ParsingLoggerMessages.SettingBooleanOptionParameter(Logger, valueParameterName!, null);
     }
 
     // Determine if option is optional (runtime behavior)

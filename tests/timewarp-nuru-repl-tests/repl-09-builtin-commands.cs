@@ -3,7 +3,6 @@
 #:project ../../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj
 
 using TimeWarp.Nuru;
-using TimeWarp.Nuru.Repl;
 
 // Test built-in REPL commands (Section 9 of REPL Test Plan)
 return await RunTests<BuiltinCommandsTests>();

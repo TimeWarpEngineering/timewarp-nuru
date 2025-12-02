@@ -12,13 +12,16 @@ public enum BuilderMode
   Empty,
 
   /// <summary>
-  /// Slim builder - lightweight with Configuration, auto-help, and logging infrastructure.
-  /// No DI container, Mediator, REPL, or Completion.
+  /// Slim builder - lightweight with auto-help enabled.
+  /// No DI container, Configuration, REPL, or Completion.
+  /// Use for simple delegate-only CLIs that don't need dependency injection.
   /// </summary>
   Slim,
 
   /// <summary>
-  /// Full builder - all features enabled including DI, Mediator, REPL, Completion.
+  /// Full builder - DI, Configuration, and auto-help enabled.
+  /// For Mediator support, install Mediator.Abstractions + Mediator.SourceGenerator packages
+  /// and call services.AddMediator() in ConfigureServices.
   /// Best for complex applications that need enterprise patterns.
   /// </summary>
   Full
@@ -35,9 +38,9 @@ public partial class NuruCoreAppBuilder
   /// <summary>
   /// Initializes a new instance of the <see cref="NuruCoreAppBuilder"/> class with default settings.
   /// Uses Empty mode for backward compatibility - no auto-help or other features enabled.
-  /// Use CreateSlimBuilder() or CreateBuilder() for auto-configured builders.
+  /// Use <see cref="NuruCoreApp.CreateSlimBuilder(string[])"/> or <see cref="NuruApp.CreateBuilder(string[])"/> factory methods instead.
   /// </summary>
-  public NuruCoreAppBuilder() : this(BuilderMode.Empty, null)
+  internal NuruCoreAppBuilder() : this(BuilderMode.Empty, null)
   {
   }
 

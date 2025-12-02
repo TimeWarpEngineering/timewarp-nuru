@@ -1,10 +1,8 @@
-namespace TimeWarp.Nuru.Completion;
+namespace TimeWarp.Nuru;
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using TimeWarp.Nuru;
-using TimeWarp.Nuru.Parsing;
 
 /// <summary>
 /// Provides default completions based on registered routes and their patterns.

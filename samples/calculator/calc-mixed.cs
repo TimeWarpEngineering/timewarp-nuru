@@ -1,24 +1,42 @@
 #!/usr/bin/dotnet --
-// calc-mixed - Calculator mixing Direct and Mediator approaches
-#:project ../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
+#:project ../../source/timewarp-nuru/timewarp-nuru.csproj
 #:package Mediator.Abstractions
 #:package Mediator.SourceGenerator
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// MIXED PATTERN - DELEGATES + MEDIATOR EXAMPLE
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// This sample demonstrates mixing both approaches:
+// - DELEGATES: For simple operations (inline, fast, no DI needed)
+// - MEDIATOR: For complex operations (testable, DI, separation of concerns)
+//
+// WHEN TO USE EACH:
+//   Delegates: Simple one-liners, no external dependencies, performance-critical
+//   Mediator:  Complex logic, needs DI, requires unit testing, reusable handlers
+//
+// REQUIRED PACKAGES (for Mediator commands):
+//   #:package Mediator.Abstractions    - Interfaces (IRequest, IRequestHandler)
+//   #:package Mediator.SourceGenerator - Generates AddMediator() in YOUR assembly
+//
+// HOW IT WORKS:
+//   Mediator.SourceGenerator scans YOUR assembly at compile time for:
+//   - IRequest implementations (commands)
+//   - IRequestHandler<> implementations (handlers)
+//   Then generates a type-safe AddMediator() extension method specific to YOUR project.
+//
+// COMMON ERROR:
+//   "No service for type 'Mediator.IMediator' has been registered"
+//   SOLUTION: Install BOTH packages AND call services.AddMediator()
+// ═══════════════════════════════════════════════════════════════════════════════
 
 using TimeWarp.Nuru;
 using Mediator;
 using Microsoft.Extensions.DependencyInjection;
 using static System.Console;
 
-NuruCoreApp app =
-  new NuruAppBuilder()
-  .AddDependencyInjection()
-  .AddAutoHelp()
-  .ConfigureServices(services =>
-  {
-    // Register Mediator - source generator discovers handlers in THIS assembly
-    services.AddMediator();
-    services.AddSingleton<IScientificCalculator, ScientificCalculator>();
-  })
+NuruCoreApp app = NuruApp.CreateBuilder(args)
+  .ConfigureServices(ConfigureServices)
   .Map // Use Delegate approach for simple operations (performance)
   (
     pattern: "add {x:double} {y:double}",
@@ -88,6 +106,13 @@ NuruCoreApp app =
   .Build();
 
 return await app.RunAsync(args);
+
+static void ConfigureServices(IServiceCollection services)
+{
+  // Register Mediator - source generator discovers handlers in THIS assembly
+  services.AddMediator();
+  services.AddSingleton<IScientificCalculator, ScientificCalculator>();
+}
 
 // Complex operations using Mediator pattern with nested handlers
 public sealed class FactorialCommand : IRequest

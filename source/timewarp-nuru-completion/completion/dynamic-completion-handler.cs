@@ -1,8 +1,6 @@
-namespace TimeWarp.Nuru.Completion;
+namespace TimeWarp.Nuru;
 
 using System.Linq;
-using TimeWarp.Nuru;
-using TimeWarp.Nuru.Parsing;
 
 /// <summary>
 /// Handles the __complete callback route for dynamic shell completion.

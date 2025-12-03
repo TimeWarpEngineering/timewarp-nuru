@@ -54,7 +54,7 @@
       "id": "async",
       "name": "Async Command Examples",
       "description": "Demonstrates async command handlers with Task-based routes and async/await patterns",
-      "path": "samples/async-examples/program.cs",
+      "path": "samples/async-examples/async-examples.cs",
       "tags": ["async", "tasks", "advanced"],
       "difficulty": "intermediate"
     },

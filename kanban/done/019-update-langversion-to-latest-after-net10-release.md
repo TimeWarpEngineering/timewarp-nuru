@@ -44,3 +44,10 @@ dotnet build timewarp-nuru.slnx -c Release
 ```
 
 Should build with 0 errors and 0 warnings.
+
+## Results
+
+- Changed `<LangVersion>preview</LangVersion>` to `<LangVersion>latest</LangVersion>` in Directory.Build.props line 20
+- Build verification passed: `dotnet build timewarp-nuru.slnx -c Release` completed with 0 warnings and 0 errors
+- .NET 10 SDK 10.0.100 is released, C# 14 is now the "latest" version
+- All C# 14 features continue to work with `latest` instead of `preview`

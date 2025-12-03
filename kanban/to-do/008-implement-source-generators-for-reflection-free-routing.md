@@ -120,3 +120,18 @@ internal static class GeneratedRouteInvokers
 - Consider incremental generators for better IDE performance
 - Support for generic delegates
 - Integration with trimming annotations
+
+## Reference Implementation
+
+The `martinothamar/Mediator` source generator provides an excellent reference for this implementation:
+
+**Local Path:** `/home/steventcramer/worktrees/github.com/TimeWarpEngineering/martinothamar-mediator/main/src/Mediator.SourceGenerator/`
+
+**Key Files to Study:**
+- `IncrementalMediatorGenerator.cs` - Entry point using `IIncrementalGenerator`
+- `Implementation/Analysis/CompilationAnalyzer.cs` - Code analysis patterns
+- `Implementation/MediatorImplementationGenerator.cs` - Code generation
+- `Implementation/Models/` - Data models for analyzed code
+- `Implementation/resources/*.sbn-cs` - Scriban templates for code generation
+
+**GitHub:** https://github.com/martinothamar/Mediator

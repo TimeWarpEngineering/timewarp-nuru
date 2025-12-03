@@ -1,7 +1,7 @@
 using TimeWarp.Nuru;
 
-// Create builder
-NuruAppBuilder builder = new();
+// Create builder - uses CreateSlimBuilder for delegate-only patterns
+NuruCoreAppBuilder builder = NuruApp.CreateSlimBuilder(args);
 
 // Simple async route without parameters
 builder.Map("ping", async () =>
@@ -107,8 +107,8 @@ builder.Map("long-task {duration:int?}", async (int? duration) =>
     }
 });
 
-// Async route with multiple optional parameters
-builder.Map("deploy {service} {environment?} {version?}", 
+// Async route with multiple optional parameters (using optional options to avoid ambiguity)
+builder.Map("deploy {service} --env? {environment} --version? {version}", 
     async (string service, string? environment, string? version) =>
 {
     environment ??= "production";
@@ -132,7 +132,7 @@ builder.Map("--help", () =>
     Console.WriteLine("  process {count:int}                     - Async returning exit code");
     Console.WriteLine("  risky {operation}                       - Async with error handling");
     Console.WriteLine("  long-task {duration:int?}               - Async with cancellation");
-    Console.WriteLine("  deploy {service} {env?} {version?}      - Async with multiple optional params");
+    Console.WriteLine("  deploy {service} --env? --version?      - Async with optional options");
 });
 
 // Build and run

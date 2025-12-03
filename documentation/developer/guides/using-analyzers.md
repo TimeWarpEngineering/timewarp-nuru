@@ -14,10 +14,11 @@ The analyzers run during compilation only and don't affect runtime performance o
 
 ## Error Categories
 
-Nuru uses two categories of diagnostics:
+Nuru uses three categories of diagnostics:
 
 - **Parse Errors (NURU_P###)**: Syntax issues in route patterns
 - **Semantic Errors (NURU_S###)**: Validation issues that create ambiguity or conflicts
+- **Dependency Errors (NURU_D###)**: Missing package dependencies for specific features
 
 ---
 
@@ -209,6 +210,29 @@ builder.Map("run -- {*args} --verbose", handler);
 // ✅ Correct: Options before --
 builder.Map("run --verbose -- {*args}", handler);
 ```
+
+---
+
+## Dependency Errors (NURU_D###)
+
+### NURU_D001: Missing Mediator Packages
+The `Map<TCommand>` pattern requires Mediator packages to be directly referenced.
+
+```csharp
+// ❌ Error: Mediator packages not installed
+var app = NuruApp.CreateBuilder(args)
+  .ConfigureServices(services => services.AddMediator())
+  .Map<PingCommand>("ping")  // NURU_D001
+  .Build();
+
+// ✅ Fix: Add package references
+// dotnet add package Mediator.Abstractions
+// dotnet add package Mediator.SourceGenerator
+```
+
+**Why direct references?** The `Mediator.SourceGenerator` generates an `AddMediator()` extension method in your assembly. Transitive references don't trigger source generation.
+
+**Detection**: The analyzer checks if a generated `AddMediator` extension method exists on `IServiceCollection`. If not found, it reports the diagnostic.
 
 ---
 

@@ -135,6 +135,8 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("routing-15-help-route-priority")]
 [assembly: InternalsVisibleTo("routing-16-typed-catch-all")]
 [assembly: InternalsVisibleTo("routing-17-additional-primitive-types")]
+[assembly: InternalsVisibleTo("routing-18-option-alias-with-description")]
+[assembly: InternalsVisibleTo("routing-19-catch-all-with-options")]
 [assembly: InternalsVisibleTo("rule-widget-01-basic")]
 [assembly: InternalsVisibleTo("rule-widget-02-terminal-extensions")]
 [assembly: InternalsVisibleTo("run-all-tests")]

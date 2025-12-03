@@ -125,12 +125,12 @@ Part of 3-phase key binding evolution:
 - [ ] Manual testing with each profile - Requires interactive shell
 
 ### Documentation
-- [ ] Add `documentation/user/features/repl-key-bindings.md`
-  - [ ] List all profiles
-  - [ ] Key binding comparison table
-  - [ ] Usage examples
-- [ ] Update REPL samples to show profile selection
-- [ ] Update CLAUDE.md if needed
+- [x] Add `documentation/user/features/repl-key-bindings.md`
+  - [x] List all profiles
+  - [x] Key binding comparison table
+  - [x] Usage examples
+- [x] Update REPL samples to show profile selection
+- [x] Update CLAUDE.md if needed - Not needed, feature documented in user docs
 
 ## Notes
 
@@ -254,14 +254,14 @@ Source/TimeWarp.Nuru.Repl/
 
 ### Success Criteria
 
-- [ ] IKeyBindingProfile interface created
-- [ ] All 4 profiles implemented (Default, Emacs, Vi, VSCode)
-- [ ] ReplOptions.KeyBindingProfile property added
-- [ ] All existing tests pass with DefaultKeyBindingProfile
-- [ ] New profile tests pass
-- [ ] Documentation includes key binding comparison table
-- [ ] User can switch profiles via ReplOptions
-- [ ] Code compiles without warnings
+- [x] IKeyBindingProfile interface created
+- [x] All 4 profiles implemented (Default, Emacs, Vi, VSCode)
+- [x] ReplOptions.KeyBindingProfile property added
+- [x] All existing tests pass with DefaultKeyBindingProfile
+- [x] New profile tests pass
+- [x] Documentation includes key binding comparison table
+- [x] User can switch profiles via ReplOptions
+- [x] Code compiles without warnings
 
 ### Future Work
 

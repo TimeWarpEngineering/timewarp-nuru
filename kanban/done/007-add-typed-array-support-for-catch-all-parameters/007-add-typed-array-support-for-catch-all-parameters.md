@@ -142,3 +142,42 @@ app.AddRoute("custom {*args:string}", (string[] args) => {
 - Clear error messages for conversion failures
 - Performance comparable to manual conversion
 - Documentation updated with examples
+
+## Results
+
+### Implementation
+
+1. **Parser support**: `parser.cs` (lines 158-238) parses `{*args:type}` syntax for typed catch-all parameters
+2. **Executor conversion**: `delegate-executor.cs` (lines 116-153) converts array elements using the type converter registry
+
+### Tests Created
+
+13 new tests in `routing-16-typed-catch-all.cs`, all passing:
+
+- `int[]` arrays
+- `double[]` arrays
+- `bool[]` arrays
+- `long[]` arrays
+- `decimal[]` arrays
+- `Guid[]` arrays
+- `DateTime[]` arrays
+- `string[]` (explicit and default)
+- Empty arrays
+- Mixed parameters with typed catch-all
+- Error handling for invalid conversions
+- Negative numbers
+
+### Supported Array Types (All Working)
+
+- `{*values:string}` → `string[]` (default if no type specified)
+- `{*values:int}` → `int[]`
+- `{*values:double}` → `double[]`
+- `{*values:bool}` → `bool[]`
+- `{*values:DateTime}` → `DateTime[]`
+- `{*values:Guid}` → `Guid[]`
+- `{*values:long}` → `long[]`
+- `{*values:decimal}` → `decimal[]`
+
+### Error Handling
+
+Fail-fast strategy implemented: throws exception on first conversion failure with clear error message.

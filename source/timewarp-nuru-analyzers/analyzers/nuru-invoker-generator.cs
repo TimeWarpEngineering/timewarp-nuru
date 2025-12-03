@@ -324,8 +324,29 @@ public class NuruInvokerGenerator : IIncrementalGenerator
     GenerateLookupDictionary(sb, signatures);
 
     sb.AppendLine("}");
+    sb.AppendLine();
+
+    // Generate the module initializer to register invokers
+    GenerateModuleInitializer(sb);
 
     return sb.ToString();
+  }
+
+  private static void GenerateModuleInitializer(System.Text.StringBuilder sb)
+  {
+    sb.AppendLine("/// <summary>");
+    sb.AppendLine("/// Module initializer that registers generated invokers with the InvokerRegistry.");
+    sb.AppendLine("/// </summary>");
+    sb.AppendLine("[global::System.CodeDom.Compiler.GeneratedCode(\"TimeWarp.Nuru.Analyzers\", \"1.0.0\")]");
+    sb.AppendLine("internal static class GeneratedInvokerRegistration");
+    sb.AppendLine("{");
+    sb.AppendLine("  [global::System.Runtime.CompilerServices.ModuleInitializer]");
+    sb.AppendLine("  internal static void Register()");
+    sb.AppendLine("  {");
+    sb.AppendLine("    global::TimeWarp.Nuru.InvokerRegistry.RegisterSyncBatch(GeneratedRouteInvokers.SyncInvokers);");
+    sb.AppendLine("    global::TimeWarp.Nuru.InvokerRegistry.RegisterAsyncInvokerBatch(GeneratedRouteInvokers.AsyncInvokers);");
+    sb.AppendLine("  }");
+    sb.AppendLine("}");
   }
 
   private static void GenerateInvokerMethod(System.Text.StringBuilder sb, DelegateSignature signature)

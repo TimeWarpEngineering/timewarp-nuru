@@ -40,36 +40,55 @@ public static class DelegateExecutor
         ? []
         : BindParameters(parameters, extractedValues, typeConverterRegistry, serviceProvider, endpoint);
 
-      object? returnValue = handler.DynamicInvoke(args);
+      // Try to use a generated typed invoker for AOT compatibility
+      string signatureKey = InvokerRegistry.ComputeSignatureKey(method);
+      object? returnValue;
 
-      // Handle async delegates
-      if (returnValue is Task task)
+      // Check for async invoker first
+      if (InvokerRegistry.TryGetAsyncInvoker(signatureKey, out AsyncInvoker? asyncInvoker))
       {
-        await task.ConfigureAwait(false);
+        // Use generated async invoker - no reflection needed
+        returnValue = await asyncInvoker(handler, args).ConfigureAwait(false);
+      }
+      else if (InvokerRegistry.TryGetSync(signatureKey, out SyncInvoker? syncInvoker))
+      {
+        // Use generated sync invoker - no reflection needed
+        returnValue = syncInvoker(handler, args);
+      }
+      else
+      {
+        // Fall back to DynamicInvoke (requires reflection)
+        returnValue = handler.DynamicInvoke(args);
 
-        // For Task<T>, get the result
-        Type taskType = task.GetType();
-        if (taskType.IsGenericType)
+        // Handle async delegates when using fallback
+        if (returnValue is Task task)
         {
-          PropertyInfo? resultProperty = taskType.GetProperty("Result");
-          if (resultProperty is not null)
+          await task.ConfigureAwait(false);
+
+          // For Task<T>, get the result
+          Type taskType = task.GetType();
+          if (taskType.IsGenericType)
           {
-            object? result = resultProperty.GetValue(task);
-            // Check if this is VoidTaskResult (used internally for void async methods)
-            if (result?.GetType().Name == "VoidTaskResult")
+            PropertyInfo? resultProperty = taskType.GetProperty("Result");
+            if (resultProperty is not null)
             {
-              returnValue = null;
-            }
-            else
-            {
-              returnValue = result;
+              object? result = resultProperty.GetValue(task);
+              // Check if this is VoidTaskResult (used internally for void async methods)
+              if (result?.GetType().Name == "VoidTaskResult")
+              {
+                returnValue = null;
+              }
+              else
+              {
+                returnValue = result;
+              }
             }
           }
-        }
-        else
-        {
-          // For non-generic Task (void async), set to null to avoid displaying VoidTaskResult
-          returnValue = null;
+          else
+          {
+            // For non-generic Task (void async), set to null to avoid displaying VoidTaskResult
+            returnValue = null;
+          }
         }
       }
 

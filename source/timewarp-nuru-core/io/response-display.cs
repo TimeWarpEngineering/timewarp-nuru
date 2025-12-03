@@ -6,7 +6,7 @@ namespace TimeWarp.Nuru;
 public static class ResponseDisplay
 {
   /// <summary>
-  /// Formats and writes a command response to the console.
+  /// Formats and writes a command response to the terminal.
   /// </summary>
   /// <remarks>
   /// This method may serialize unknown response types to JSON, which requires reflection
@@ -14,12 +14,12 @@ public static class ResponseDisplay
   /// or types with custom ToString implementations from commands.
   /// </remarks>
   /// <param name="response">The response object to display.</param>
-  /// <param name="console">The console to write to.</param>
+  /// <param name="terminal">The terminal to write to.</param>
   [RequiresUnreferencedCode("Response serialization may require types not known at compile time")]
   [RequiresDynamicCode("JSON serialization of unknown response types may require dynamic code generation")]
-  public static void Write(object? response, IConsole console)
+  public static void Write(object? response, ITerminal terminal)
   {
-    ArgumentNullException.ThrowIfNull(console);
+    ArgumentNullException.ThrowIfNull(terminal);
 
     if (response is null)
       return;
@@ -34,7 +34,7 @@ public static class ResponseDisplay
     // Simple types - display directly
     if (responseType.IsPrimitive || responseType == typeof(string) || responseType == typeof(decimal))
     {
-      console.WriteLine(response.ToString());
+      terminal.WriteLine(response.ToString());
       return;
     }
 
@@ -46,12 +46,12 @@ public static class ResponseDisplay
     {
       // Complex object without custom ToString - serialize to JSON for display
       string json = JsonSerializer.Serialize(response, NuruJsonSerializerContext.Default.Options);
-      console.WriteLine(json);
+      terminal.WriteLine(json);
     }
     else
     {
       // Custom ToString - use it
-      console.WriteLine(stringValue);
+      terminal.WriteLine(stringValue);
     }
   }
 }

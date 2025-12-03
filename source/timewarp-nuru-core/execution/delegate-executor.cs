@@ -21,7 +21,7 @@ public static class DelegateExecutor
       ITypeConverterRegistry typeConverterRegistry,
       IServiceProvider serviceProvider,
       Endpoint endpoint,
-      IConsole? console = null)
+      ITerminal? terminal = null)
   {
     ArgumentNullException.ThrowIfNull(handler);
     ArgumentNullException.ThrowIfNull(extractedValues);
@@ -29,7 +29,7 @@ public static class DelegateExecutor
     ArgumentNullException.ThrowIfNull(serviceProvider);
     ArgumentNullException.ThrowIfNull(endpoint);
 
-    IConsole output = console ?? serviceProvider.GetService<IConsole>() ?? NuruConsole.Default;
+    ITerminal output = terminal ?? serviceProvider.GetService<ITerminal>() ?? NuruTerminal.Default;
 
     try
     {

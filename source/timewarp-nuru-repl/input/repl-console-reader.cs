@@ -401,6 +401,63 @@ public sealed class ReplConsoleReader
     RedrawLine();
   }
 
+  /// <summary>
+  /// PSReadLine: KillLine - Delete from the cursor position to the end of the line.
+  /// The deleted text is removed (kill ring not implemented).
+  /// </summary>
+  internal void HandleKillLine()
+  {
+    if (CursorPosition < UserInput.Length)
+    {
+      // Delete everything from cursor to end of line
+      UserInput = UserInput[..CursorPosition];
+      CompletionHandler.Reset();
+      RedrawLine();
+    }
+  }
+
+  /// <summary>
+  /// PSReadLine: BackwardKillWord - Delete the word before the cursor.
+  /// Deletes from cursor back to the start of the current or previous word.
+  /// </summary>
+  internal void HandleDeleteWordBackward()
+  {
+    if (CursorPosition > 0)
+    {
+      int newPos = CursorPosition;
+
+      // Skip whitespace behind cursor
+      while (newPos > 0 && char.IsWhiteSpace(UserInput[newPos - 1]))
+        newPos--;
+
+      // Skip word characters to find start of word
+      while (newPos > 0 && !char.IsWhiteSpace(UserInput[newPos - 1]))
+        newPos--;
+
+      // Delete from newPos to CursorPosition
+      UserInput = UserInput[..newPos] + UserInput[CursorPosition..];
+      CursorPosition = newPos;
+      CompletionHandler.Reset();
+      RedrawLine();
+    }
+  }
+
+  /// <summary>
+  /// PSReadLine: BackwardKillLine - Delete from the beginning of the line to the cursor.
+  /// The deleted text is removed (kill ring not implemented).
+  /// </summary>
+  internal void HandleDeleteToLineStart()
+  {
+    if (CursorPosition > 0)
+    {
+      // Delete everything from start of line to cursor
+      UserInput = UserInput[CursorPosition..];
+      CursorPosition = 0;
+      CompletionHandler.Reset();
+      RedrawLine();
+    }
+  }
+
   private void HandleCharacter(char charToInsert)
   {
     ReplLoggerMessages.CharacterInserted(Logger, charToInsert, CursorPosition, null);

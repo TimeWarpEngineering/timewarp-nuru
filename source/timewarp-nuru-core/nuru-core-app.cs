@@ -8,7 +8,6 @@ public partial class NuruCoreApp
 {
   private readonly IServiceProvider? ServiceProvider;
   private readonly MediatorExecutor? MediatorExecutor;
-  private readonly IConsole Console;
 
   #region Static Factory Methods
 
@@ -126,7 +125,6 @@ public partial class NuruCoreApp
     EndpointCollection endpoints,
     ITypeConverterRegistry typeConverterRegistry,
     ILoggerFactory loggerFactory,
-    IConsole console,
     ITerminal terminal,
     ReplOptions? replOptions = null,
     ApplicationMetadata? appMetadata = null
@@ -135,7 +133,6 @@ public partial class NuruCoreApp
     Endpoints = endpoints ?? throw new ArgumentNullException(nameof(endpoints));
     TypeConverterRegistry = typeConverterRegistry ?? throw new ArgumentNullException(nameof(typeConverterRegistry));
     LoggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
-    Console = console ?? throw new ArgumentNullException(nameof(console));
     Terminal = terminal ?? throw new ArgumentNullException(nameof(terminal));
     ReplOptions = replOptions;
     AppMetadata = appMetadata;
@@ -157,7 +154,6 @@ public partial class NuruCoreApp
     LoggerFactory = serviceProvider.GetService<ILoggerFactory>() ?? Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance;
     ReplOptions = serviceProvider.GetService<ReplOptions>();
     AppMetadata = serviceProvider.GetService<ApplicationMetadata>();
-    Console = serviceProvider.GetService<IConsole>() ?? NuruConsole.Default;
     Terminal = serviceProvider.GetService<ITerminal>() ?? NuruTerminal.Default;
   }
 
@@ -179,7 +175,7 @@ public partial class NuruCoreApp
       // Exit early if route resolution failed
       if (!result.Success || result.MatchedEndpoint is null)
       {
-        await Console.WriteErrorLineAsync(
+        await Terminal.WriteErrorLineAsync(
           result.ErrorMessage ?? "No matching command found."
         ).ConfigureAwait(false);
 
@@ -230,7 +226,7 @@ public partial class NuruCoreApp
     catch (Exception ex)
 #pragma warning restore CA1031
     {
-      await Console.WriteErrorLineAsync($"Error: {ex.Message}").ConfigureAwait(false);
+      await Terminal.WriteErrorLineAsync($"Error: {ex.Message}").ConfigureAwait(false);
       return 1;
     }
   }
@@ -287,7 +283,7 @@ public partial class NuruCoreApp
       TypeConverterRegistry,
       ServiceProvider ?? EmptyServiceProvider.Instance,
       endpoint,
-      Console
+      Terminal
     );
   }
 
@@ -341,7 +337,7 @@ public partial class NuruCoreApp
       DelegateResponse response = await mediator.Send(request, CancellationToken.None).ConfigureAwait(false);
 
       // Display the response (if any)
-      ResponseDisplay.Write(response.Result, Console);
+      ResponseDisplay.Write(response.Result, Terminal);
 
       return response.ExitCode;
     }
@@ -351,7 +347,7 @@ public partial class NuruCoreApp
     catch (Exception ex)
 #pragma warning restore CA1031
     {
-      await Console.WriteErrorLineAsync($"Error executing handler: {ex.Message}").ConfigureAwait(false);
+      await Terminal.WriteErrorLineAsync($"Error executing handler: {ex.Message}").ConfigureAwait(false);
       return 1;
     }
   }
@@ -575,7 +571,7 @@ public partial class NuruCoreApp
 
   private void ShowAvailableCommands()
   {
-    Console.WriteLine(HelpProvider.GetHelpText(Endpoints, AppMetadata?.Name, AppMetadata?.Description));
+    Terminal.WriteLine(HelpProvider.GetHelpText(Endpoints, AppMetadata?.Name, AppMetadata?.Description));
   }
 
   /// <summary>
@@ -617,15 +613,15 @@ public partial class NuruCoreApp
   /// </summary>
   private async Task DisplayValidationErrorsAsync(OptionsValidationException exception)
   {
-    await Console.WriteErrorLineAsync("❌ Configuration validation failed:").ConfigureAwait(false);
-    await Console.WriteErrorLineAsync("").ConfigureAwait(false);
+    await Terminal.WriteErrorLineAsync("❌ Configuration validation failed:").ConfigureAwait(false);
+    await Terminal.WriteErrorLineAsync("").ConfigureAwait(false);
 
     foreach (string failure in exception.Failures)
     {
-      await Console.WriteErrorLineAsync($"  • {failure}").ConfigureAwait(false);
+      await Terminal.WriteErrorLineAsync($"  • {failure}").ConfigureAwait(false);
     }
 
-    await Console.WriteErrorLineAsync("").ConfigureAwait(false);
+    await Terminal.WriteErrorLineAsync("").ConfigureAwait(false);
   }
 
   /// <summary>

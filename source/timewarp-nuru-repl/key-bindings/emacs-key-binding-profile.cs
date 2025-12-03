@@ -129,10 +129,9 @@ public sealed class EmacsKeyBindingProfile : IKeyBindingProfile
       [(ConsoleKey.Delete, ConsoleModifiers.None)] = reader.HandleDeleteChar,
       [(ConsoleKey.D, ConsoleModifiers.Control)] = reader.HandleDeleteChar, // Also EOF when handled by ExitKeys
 
-      // === Kill Operations (Emacs: kill-line) ===
-      // Note: Ctrl+K (kill-line) would need a new handler method to delete from cursor to end of line
-      // For now, we map it to nothing as the handler doesn't exist yet
-      // This is a limitation noted in the task - full kill-ring support is future work
+      // === Kill Operations (Emacs: kill-line, backward-kill-line) ===
+      [(ConsoleKey.K, ConsoleModifiers.Control)] = reader.HandleKillLine,
+      [(ConsoleKey.U, ConsoleModifiers.Control)] = reader.HandleDeleteToLineStart,
 
       // === Special Keys ===
       [(ConsoleKey.Escape, ConsoleModifiers.None)] = reader.HandleEscape,

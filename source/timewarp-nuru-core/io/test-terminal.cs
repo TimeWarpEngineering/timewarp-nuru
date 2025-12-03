@@ -72,7 +72,6 @@ public sealed class TestTerminal : ITerminal, IDisposable
   /// Gets all output (both standard and error) combined.
   /// </summary>
   public string AllOutput => Output + ErrorOutput;
-
   /// <inheritdoc />
   public void Write(string message)
     => OutputWriter.Write(message);

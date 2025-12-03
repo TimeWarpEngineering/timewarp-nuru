@@ -7,13 +7,13 @@ public class MediatorExecutor
 {
   private readonly IServiceProvider ServiceProvider;
   private readonly ITypeConverterRegistry TypeConverterRegistry;
-  private readonly IConsole Console;
+  private readonly ITerminal Terminal;
 
-  public MediatorExecutor(IServiceProvider serviceProvider, ITypeConverterRegistry typeConverterRegistry, IConsole? console = null)
+  public MediatorExecutor(IServiceProvider serviceProvider, ITypeConverterRegistry typeConverterRegistry, ITerminal? terminal = null)
   {
     ServiceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
     TypeConverterRegistry = typeConverterRegistry ?? throw new ArgumentNullException(nameof(typeConverterRegistry));
-    Console = console ?? serviceProvider.GetService<IConsole>() ?? NuruConsole.Default;
+    Terminal = terminal ?? serviceProvider.GetService<ITerminal>() ?? NuruTerminal.Default;
   }
 
   /// <summary>
@@ -116,5 +116,5 @@ public class MediatorExecutor
   [RequiresUnreferencedCode("Response serialization may require types not known at compile time")]
   [RequiresDynamicCode("JSON serialization of unknown response types may require dynamic code generation")]
   public void DisplayResponse(object? response)
-    => ResponseDisplay.Write(response, Console);
+    => ResponseDisplay.Write(response, Terminal);
 }

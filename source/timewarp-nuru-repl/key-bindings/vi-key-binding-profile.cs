@@ -134,9 +134,9 @@ public sealed class ViKeyBindingProfile : IKeyBindingProfile
       [(ConsoleKey.D, ConsoleModifiers.Control)] = reader.HandleDeleteChar, // Also EOF when handled by ExitKeys
 
       // === Vi-style Kill Operations ===
-      // Note: Ctrl+W (delete-word-backward), Ctrl+U (delete-to-line-start), Ctrl+K (delete-to-line-end)
-      // would need new handler methods. These are noted as future enhancements.
-      // For now, these bindings are omitted until the handlers are implemented.
+      [(ConsoleKey.W, ConsoleModifiers.Control)] = reader.HandleDeleteWordBackward,
+      [(ConsoleKey.U, ConsoleModifiers.Control)] = reader.HandleDeleteToLineStart,
+      [(ConsoleKey.K, ConsoleModifiers.Control)] = reader.HandleKillLine,
 
       // === Clear/Escape ===
       [(ConsoleKey.Escape, ConsoleModifiers.None)] = reader.HandleEscape,

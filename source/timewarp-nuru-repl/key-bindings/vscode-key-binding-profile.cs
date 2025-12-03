@@ -135,12 +135,9 @@ public sealed class VSCodeKeyBindingProfile : IKeyBindingProfile
       [(ConsoleKey.Backspace, ConsoleModifiers.None)] = reader.HandleBackwardDeleteChar,
       [(ConsoleKey.Delete, ConsoleModifiers.None)] = reader.HandleDeleteChar,
 
-      // === Advanced Deletion (Future Enhancement) ===
-      // Note: Ctrl+K (delete-to-end-of-line) and Ctrl+Backspace (delete-word-backward)
-      // would need new handler methods:
-      //   - HandleDeleteToEndOfLine()
-      //   - HandleDeleteWordBackward()
-      // These are omitted for now as the handlers don't exist yet.
+      // === Advanced Deletion ===
+      [(ConsoleKey.K, ConsoleModifiers.Control)] = reader.HandleKillLine,
+      [(ConsoleKey.Backspace, ConsoleModifiers.Control)] = reader.HandleDeleteWordBackward,
 
       // === Special Keys ===
       [(ConsoleKey.Escape, ConsoleModifiers.None)] = reader.HandleEscape,

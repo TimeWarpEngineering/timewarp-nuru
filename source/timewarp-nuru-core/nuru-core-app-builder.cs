@@ -106,7 +106,6 @@ public partial class NuruCoreAppBuilder
         EndpointCollection,
         TypeConverterRegistry,
         loggerFactory,
-        NuruConsole.Default,
         Terminal ?? NuruTerminal.Default,
         ReplOptions,
         AppMetadata);

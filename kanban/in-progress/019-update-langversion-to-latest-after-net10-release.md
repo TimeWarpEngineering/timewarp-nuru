@@ -20,6 +20,11 @@ Update `Directory.Build.props` line 29:
 
 After .NET 10 RTM release (expected November 2025).
 
+## Notes
+
+- .NET 10 SDK 10.0.100 is now released
+- C# 14 is the "latest" version, enabling the change from `preview` to `latest`
+
 ## Why
 
 - Using `preview` after release is unnecessary

@@ -69,3 +69,21 @@ Enable custom type names (especially enums) as constraints in route patterns, al
 ## Notes
 
 This is an optional enhancement that builds on the enum support already added. The current system works fine with automatic enum conversion based on parameter types, but this would provide a more explicit and self-documenting API.
+
+## Results
+
+All three phases implemented and verified:
+
+### Phase 1: Parser accepts custom type names as constraints
+- `IsValidTypeConstraint()` in `parser.cs` (lines 572-578) accepts both built-in types AND any valid C# identifier format
+- Tests in `parser-15-custom-type-constraints.cs` verify parsing of custom type constraints like `{file:fileinfo}`, `{data:MyCustomType}`, `{config:fileinfo?}`
+
+### Phase 2: Enum converters are auto-registered based on parameter types
+- Tests in `completion-11-enum-completion.cs` verify enum completion with patterns like `{level:LogLevel}`, `{env:Environment}`
+
+### Phase 3: Enhanced error messages for invalid type constraints
+- Validation provides helpful messages when constraints are invalid
+
+### Evidence
+- Sample usage in `repl-basic-demo.cs` demonstrates `deploy {env:environment} {tag?}` pattern
+- Full test coverage in parser and completion test files

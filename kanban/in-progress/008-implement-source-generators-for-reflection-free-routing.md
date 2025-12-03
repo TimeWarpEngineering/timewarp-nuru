@@ -135,3 +135,14 @@ The `martinothamar/Mediator` source generator provides an excellent reference fo
 - `Implementation/resources/*.sbn-cs` - Scriban templates for code generation
 
 **GitHub:** https://github.com/martinothamar/Mediator
+
+## Notes
+
+### Session Start - 2025-12-03
+
+Starting implementation. Reference implementation available at:
+`/home/steventcramer/worktrees/github.com/TimeWarpEngineering/martinothamar-mediator/main/src/Mediator.SourceGenerator/`
+
+This task is a prerequisite for:
+- Task 016: Achieve full AOT compatibility
+- Task 018: Make configuration validation sample AOT compatible

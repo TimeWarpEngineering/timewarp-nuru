@@ -24,6 +24,70 @@ internal static class DefaultTypeConverters
         return true;
       }
     }
+    else if (targetType == typeof(byte))
+    {
+      if (byte.TryParse(value, out byte byteValue))
+      {
+        result = byteValue;
+        return true;
+      }
+    }
+    else if (targetType == typeof(sbyte))
+    {
+      if (sbyte.TryParse(value, out sbyte sbyteValue))
+      {
+        result = sbyteValue;
+        return true;
+      }
+    }
+    else if (targetType == typeof(short))
+    {
+      if (short.TryParse(value, out short shortValue))
+      {
+        result = shortValue;
+        return true;
+      }
+    }
+    else if (targetType == typeof(ushort))
+    {
+      if (ushort.TryParse(value, out ushort ushortValue))
+      {
+        result = ushortValue;
+        return true;
+      }
+    }
+    else if (targetType == typeof(uint))
+    {
+      if (uint.TryParse(value, out uint uintValue))
+      {
+        result = uintValue;
+        return true;
+      }
+    }
+    else if (targetType == typeof(ulong))
+    {
+      if (ulong.TryParse(value, out ulong ulongValue))
+      {
+        result = ulongValue;
+        return true;
+      }
+    }
+    else if (targetType == typeof(float))
+    {
+      if (float.TryParse(value, out float floatValue))
+      {
+        result = floatValue;
+        return true;
+      }
+    }
+    else if (targetType == typeof(char))
+    {
+      if (value.Length == 1)
+      {
+        result = value[0];
+        return true;
+      }
+    }
     else if (targetType == typeof(bool))
     {
       if (bool.TryParse(value, out bool boolValue))
@@ -163,6 +227,14 @@ internal static class DefaultTypeConverters
     return constraintName.ToLowerInvariant() switch
     {
       "int" => typeof(int),
+      "byte" => typeof(byte),
+      "sbyte" => typeof(sbyte),
+      "short" => typeof(short),
+      "ushort" => typeof(ushort),
+      "uint" => typeof(uint),
+      "ulong" => typeof(ulong),
+      "float" => typeof(float),
+      "char" => typeof(char),
       "bool" => typeof(bool),
       "long" => typeof(long),
       "double" => typeof(double),

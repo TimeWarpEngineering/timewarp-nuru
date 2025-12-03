@@ -148,7 +148,9 @@ Instead of time estimates, focus on:
 Common operations:
 
 - List all tasks: `find kanban/{to-do,in-progress,done} \( -name "*.md" -o -type d \) -not -name "overview.md" | grep -E "[0-9]{3}-"`
-- Find next number: Check highest number in all folders (files and directories) and increment
+- Find next number: `find kanban/{to-do,in-progress,done,backlog} \( -name "*.md" -o -type d \) -not -name "overview.md" -not -name "task.md" | xargs -I{} basename {} | grep -oE "^[0-9]{3}" | sort -n | uniq | tail -1`
+  - CRITICAL: Extract basename FIRST to avoid matching numbers in parent path (e.g., `2025` in worktree paths)
+  - Increment the result by 1 for the next task number
 - Move simple task: `mv kanban/to-do/NNN-name.md kanban/in-progress/NNN-name.md`
 - Move folder task: `mv kanban/to-do/NNN-name/ kanban/in-progress/NNN-name/`
 - Create simple task: Use template, replace placeholders, save to `kanban/to-do/`

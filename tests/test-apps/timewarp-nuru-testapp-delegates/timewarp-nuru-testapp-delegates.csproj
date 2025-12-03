@@ -7,6 +7,14 @@
     <PublishAot>true</PublishAot>
     <!-- Use partial trimming to preserve reflection used by Nuru framework -->
     <TrimMode>partial</TrimMode>
+    <!-- Emit source generator output to .generated folder for inspection -->
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    <CompilerGeneratedFilesOutputPath>.generated</CompilerGeneratedFilesOutputPath>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Mediator.Abstractions" />
+    <PackageReference Include="Mediator.SourceGenerator" />
+  </ItemGroup>
 
 </Project>

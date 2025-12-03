@@ -25,6 +25,10 @@ public sealed class MediatorDependencyAnalyzer : DiagnosticAnalyzer
     if (context.Node is not InvocationExpressionSyntax invocation)
       return;
 
+    // Skip analysis for TimeWarp.Nuru library projects (they define the Map<T> method)
+    if (context.Compilation.AssemblyName?.StartsWith("TimeWarp.Nuru", StringComparison.Ordinal) == true)
+      return;
+
     // Check if this is a generic method invocation (e.g., builder.Map<TCommand>())
     if (!IsGenericMapInvocation(invocation))
       return;

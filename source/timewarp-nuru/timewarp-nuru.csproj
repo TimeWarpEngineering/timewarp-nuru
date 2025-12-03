@@ -19,6 +19,11 @@
     <ProjectReference Include="../timewarp-nuru-telemetry/timewarp-nuru-telemetry.csproj" />
     <ProjectReference Include="../timewarp-nuru-repl/timewarp-nuru-repl.csproj" />
     <ProjectReference Include="../timewarp-nuru-completion/timewarp-nuru-completion.csproj" />
+    <!-- Include analyzers and source generators for AOT-compatible routing -->
+    <ProjectReference Include="../timewarp-nuru-analyzers/timewarp-nuru-analyzers.csproj">
+      <OutputItemType>Analyzer</OutputItemType>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
   </ItemGroup>
 
   <ItemGroup>

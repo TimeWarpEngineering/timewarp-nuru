@@ -24,13 +24,14 @@ Generate compile-time typed invoker methods that cast delegates and invoke witho
 ## Checklist
 
 ### Implementation
-- [ ] Create Scriban template for invoker methods
-- [ ] Generate Action<> invokers for void returns
-- [ ] Generate Func<> invokers for value returns
-- [ ] Generate async invokers for Task/Task<T> returns
-- [ ] Handle parameter casting with null checks
-- [ ] Generate unique method names per signature
-- [ ] Emit proper nullable annotations
+- [x] ~~Create Scriban template for invoker methods~~ Used StringBuilder (simpler for this use case)
+- [x] Generate Action<> invokers for void returns
+- [x] Generate Func<> invokers for value returns
+- [x] Generate async invokers for Task/Task<T> returns
+- [x] Handle parameter casting with null checks
+- [x] Generate unique method names per signature
+- [x] Emit proper nullable annotations
+- [x] Generate lookup dictionaries (SyncInvokers, AsyncInvokers)
 
 ### Generated Code Shape
 ```csharp
@@ -56,10 +57,14 @@ internal static class GeneratedRouteInvokers
 ```
 
 ### Testing
-- [ ] Verify generated code compiles
-- [ ] Test invokers with various parameter combinations
-- [ ] Test async invokers with Task and Task<T>
-- [ ] Verify no reflection warnings in generated code
+- [x] Verify generated code compiles
+- [x] Test invokers with various parameter combinations
+- [x] Test async invokers with Task and Task<T>
+- [x] Verify no reflection warnings in generated code
+
+### Infrastructure
+- [x] Fixed analyzer reference propagation in test-apps (analyzer refs don't flow transitively)
+- [x] Created unit tests: `tests/timewarp-nuru-analyzers-tests/nuru-invoker-generator-01-basic.cs`
 
 ## Notes
 
@@ -70,3 +75,23 @@ Key considerations:
 - Method naming must be deterministic and unique per signature
 - Handle both sync and async delegates
 - Ensure generated code is trimmer-friendly
+
+## Implementation Details
+
+### Files Created/Modified
+- `source/timewarp-nuru-analyzers/analyzers/nuru-invoker-generator.cs` - Main source generator
+- `tests/timewarp-nuru-analyzers-tests/nuru-invoker-generator-01-basic.cs` - Unit tests
+- `tests/test-apps/Directory.Build.props` - Added direct analyzer reference
+
+### Key Learnings
+- Analyzer project references with `OutputItemType="Analyzer"` do NOT flow transitively
+- When consuming as NuGet package, analyzer will be bundled correctly
+- For local development/testing, need direct analyzer reference
+- `ToDisplayString(FullyQualifiedFormat)` for `Nullable<int>` returns `int?` not `System.Nullable<int>`
+
+### Generated Output Location
+- `.generated/TimeWarp.Nuru.Analyzers/TimeWarp.Nuru.NuruInvokerGenerator/GeneratedRouteInvokers.g.cs`
+
+## Status
+
+**COMPLETE** - Ready to move to done once 008c (wire to DelegateExecutor) is started.

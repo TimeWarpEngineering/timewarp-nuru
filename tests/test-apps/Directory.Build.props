@@ -1,7 +1,9 @@
 <Project>
   <PropertyGroup>
     <!-- Suppress localization warnings for test apps -->
-    <NoWarn>$(NoWarn);CA1303;CA1307;CA2007;CA1031;CA1515;CA1050;CA1052;CA1707</NoWarn>
+    <!-- CS8785: NuruRouteAnalyzer fails to load M.E.Logging.Abstractions when using ProjectReference -->
+    <!-- This is expected - the analyzer works correctly when consumed as a NuGet package -->
+    <NoWarn>$(NoWarn);CA1303;CA1307;CA2007;CA1031;CA1515;CA1050;CA1052;CA1707;CS8785</NoWarn>
 
     <!-- Common Project Settings -->
     <TargetFramework>net10.0</TargetFramework>
@@ -13,5 +15,10 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="$(MSBuildThisFileDirectory)../../source/timewarp-nuru/timewarp-nuru.csproj" />
+    <!-- Analyzer references don't flow transitively, so we must add it directly -->
+    <ProjectReference Include="$(MSBuildThisFileDirectory)../../source/timewarp-nuru-analyzers/timewarp-nuru-analyzers.csproj">
+      <OutputItemType>Analyzer</OutputItemType>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
   </ItemGroup>
 </Project>

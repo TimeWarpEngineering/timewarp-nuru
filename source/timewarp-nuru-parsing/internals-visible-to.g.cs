@@ -124,6 +124,8 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("repl-26-kill-ring")]
 [assembly: InternalsVisibleTo("repl-26-tab-edge-cases")]
 [assembly: InternalsVisibleTo("repl-27-tab-help-option")]
+[assembly: InternalsVisibleTo("repl-27-undo-redo")]
+[assembly: InternalsVisibleTo("repl-28-text-selection")]
 [assembly: InternalsVisibleTo("routing-01-basic-matching")]
 [assembly: InternalsVisibleTo("routing-02-parameter-binding")]
 [assembly: InternalsVisibleTo("routing-03-optional-parameters")]

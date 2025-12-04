@@ -4,18 +4,22 @@
 #:package Mediator.SourceGenerator
 #:package Microsoft.Extensions.Options
 #:package Microsoft.Extensions.Options.ConfigurationExtensions
-#:package Microsoft.Extensions.Options.DataAnnotations
 #:package TimeWarp.OptionsValidation
 #:property EnableConfigurationBindingGenerator=true
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// CONFIGURATION VALIDATION - FAIL-FAST WITH VALIDATEONSTART
+// CONFIGURATION VALIDATION - FAIL-FAST WITH VALIDATEONSTART (AOT-COMPATIBLE)
 // ═══════════════════════════════════════════════════════════════════════════════
 //
 // This sample demonstrates NuruApp.CreateBuilder(args) with configuration validation:
-// - DataAnnotations (built-in .NET attributes)
-// - Custom validation with .Validate()
-// - FluentValidation (enterprise-grade validation library)
+// - FluentValidation (enterprise-grade, AOT-compatible)
+// - Custom validation with .Validate() (AOT-compatible)
+//
+// AOT COMPATIBILITY:
+//   ✅ Uses EnableConfigurationBindingGenerator for binding (no reflection)
+//   ✅ Uses FluentValidation instead of DataAnnotations (no reflection)
+//   ✅ All validation runs at compile-time or startup
+//   ❌ Avoid: .Bind(), .ValidateDataAnnotations() - these use reflection
 //
 // Settings file: configuration-validation.settings.json
 //
@@ -49,15 +53,17 @@ static void ConfigureServices(IServiceCollection services)
 
   if (config != null)
   {
-    // 1. DataAnnotations validation (built-in)
-    services.AddOptions<ServerOptions>()
-      .Bind(config.GetSection("Server"))
-      .ValidateDataAnnotations()  // Validates [Required], [Range], etc.
-      .ValidateOnStart();          // ← Validates during Build(), not on first access
+    // 1. FluentValidation (AOT-compatible, replaces DataAnnotations)
+    // ✅ Uses source generator for configuration binding (no reflection)
+    // ✅ FluentValidation performs validation without reflection
+    services
+      .AddFluentValidatedOptions<ServerOptions, ServerOptionsValidator>(config)
+      .ValidateOnStart(); // ← Validates during Build(), not on first access
 
-    // 2. Custom validation logic
+    // 2. Custom validation logic (AOT-compatible)
+    // ✅ Configure() + source generator avoids reflection-based binding
+    services.Configure<DatabaseOptions>(config.GetSection("Database"));
     services.AddOptions<DatabaseOptions>()
-      .Bind(config.GetSection("Database"))
       .Validate(opts =>
       {
         // Custom business rule: connection string must match database type
@@ -89,38 +95,35 @@ return await app.RunAsync(args);
 
 // Route handlers
 
-async Task ShowValidationStatusAsync()
+void ShowValidationStatusAsync()
 {
   WriteLine("\n✓ All configuration validated successfully at startup!");
   WriteLine("\nThis demonstrates fail-fast behavior:");
   WriteLine("  • Invalid configuration would have thrown OptionsValidationException during Build()");
   WriteLine("  • No need to wait until first access to discover configuration errors");
   WriteLine("  • Matches ASP.NET Core and Hosted Services behavior");
-  await Task.CompletedTask;
 }
 
-async Task ShowServerInfoAsync(IOptions<ServerOptions> serverOptions)
+void ShowServerInfoAsync(IOptions<ServerOptions> serverOptions)
 {
   ServerOptions server = serverOptions.Value;
-  WriteLine("\n=== Server Configuration (DataAnnotations Validation) ===");
+  WriteLine("\n=== Server Configuration (FluentValidation) ===");
   WriteLine($"Host: {server.Host}");
   WriteLine($"Port: {server.Port}");
   WriteLine($"Max Connections: {server.MaxConnections}");
   WriteLine($"Timeout: {server.Timeout}s");
-  await Task.CompletedTask;
 }
 
-async Task ShowDatabaseInfoAsync(IOptions<DatabaseOptions> dbOptions)
+void ShowDatabaseInfoAsync(IOptions<DatabaseOptions> dbOptions)
 {
   DatabaseOptions db = dbOptions.Value;
   WriteLine("\n=== Database Configuration (Custom Validation) ===");
   WriteLine($"Type: {db.Type}");
   WriteLine($"Connection String: {db.ConnectionString}");
   WriteLine("✓ Connection string format matches database type");
-  await Task.CompletedTask;
 }
 
-async Task ShowApiInfoAsync(IOptions<ApiOptions> apiOptions)
+void ShowApiInfoAsync(IOptions<ApiOptions> apiOptions)
 {
   ApiOptions api = apiOptions.Value;
   WriteLine("\n=== API Configuration (FluentValidation) ===");
@@ -129,23 +132,16 @@ async Task ShowApiInfoAsync(IOptions<ApiOptions> apiOptions)
   WriteLine($"Timeout: {api.TimeoutSeconds}s");
   WriteLine($"Retry Count: {api.RetryCount}");
   WriteLine($"Rate Limit: {api.RateLimitPerMinute} requests/minute");
-  await Task.CompletedTask;
 }
 
 // Configuration option classes
 
+[ConfigurationKey("Server")]
 public class ServerOptions
 {
-  [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Host is required")]
   public string Host { get; set; } = "localhost";
-
-  [System.ComponentModel.DataAnnotations.Range(1, 65535, ErrorMessage = "Port must be between 1 and 65535")]
   public int Port { get; set; } = 8080;
-
-  [System.ComponentModel.DataAnnotations.Range(1, 10000, ErrorMessage = "MaxConnections must be between 1 and 10000")]
   public int MaxConnections { get; set; } = 100;
-
-  [System.ComponentModel.DataAnnotations.Range(1, 300, ErrorMessage = "Timeout must be between 1 and 300 seconds")]
   public int Timeout { get; set; } = 30;
 }
 
@@ -165,7 +161,25 @@ public class ApiOptions
   public int RateLimitPerMinute { get; set; } = 60;
 }
 
-// FluentValidation validator
+// FluentValidation validators
+
+public class ServerOptionsValidator : AbstractValidator<ServerOptions>
+{
+  public ServerOptionsValidator()
+  {
+    RuleFor(x => x.Host)
+      .NotEmpty().WithMessage("Host is required");
+
+    RuleFor(x => x.Port)
+      .InclusiveBetween(1, 65535).WithMessage("Port must be between 1 and 65535");
+
+    RuleFor(x => x.MaxConnections)
+      .InclusiveBetween(1, 10000).WithMessage("MaxConnections must be between 1 and 10000");
+
+    RuleFor(x => x.Timeout)
+      .InclusiveBetween(1, 300).WithMessage("Timeout must be between 1 and 300 seconds");
+  }
+}
 
 public class ApiOptionsValidator : AbstractValidator<ApiOptions>
 {

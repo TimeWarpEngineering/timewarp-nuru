@@ -1,6 +1,10 @@
 # 011_Implement-Community-Feedback-Consensus-Resolution
 
-## Description
+## Status: Obsolete
+
+The primary concern from community feedback (`AddRoute` naming) has been addressed by renaming to `Map*` methods to align with .NET Minimal API conventions. The remaining items in this task are either no longer relevant or should be created as separate, focused tasks if still needed.
+
+## Original Description (Obsolete)
 
 Implement the consensus resolution from the structured analysis of Community Contributor feedback on TimeWarp.Nuru. This involves enhancing user experience and documentation while maintaining architectural integrity of the routing paradigm.
 
@@ -57,3 +61,9 @@ All changes must preserve the framework's strategic differentiation while improv
 ## Implementation Notes
 
 See `documentation/community-feedback/001-api-naming-error-handling/resolution-workspace/final-consensus.md` for detailed implementation roadmap and rationale.
+
+## Results
+
+**Status:** Obsolete - Superseded
+
+**Reason:** The API has been updated to use `Map*` methods (e.g., `MapRoute`, `MapCommand`) instead of `AddRoute`, aligning with .NET Minimal API conventions. This addressed the core community feedback concern about naming confusion. The remaining items (error messages, diagnostic mode, documentation) should be evaluated independently and created as separate tasks if still relevant.

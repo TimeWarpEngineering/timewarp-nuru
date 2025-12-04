@@ -15,6 +15,8 @@ public sealed partial class ReplConsoleReader
     if (CursorPosition >= UserInput.Length)
       return;
 
+    SaveUndoState(isCharacterInput: false);  // Save state before kill
+
     string killedText = UserInput[CursorPosition..];
 
     if (LastCommandWasKill)
@@ -40,6 +42,8 @@ public sealed partial class ReplConsoleReader
   {
     if (CursorPosition == 0)
       return;
+
+    SaveUndoState(isCharacterInput: false);  // Save state before kill
 
     string killedText = UserInput[..CursorPosition];
 
@@ -67,6 +71,8 @@ public sealed partial class ReplConsoleReader
   {
     if (CursorPosition == 0)
       return;
+
+    SaveUndoState(isCharacterInput: false);  // Save state before kill
 
     int startPos = CursorPosition;
 
@@ -103,6 +109,8 @@ public sealed partial class ReplConsoleReader
   {
     if (CursorPosition >= UserInput.Length)
       return;
+
+    SaveUndoState(isCharacterInput: false);  // Save state before kill
 
     int startPos = CursorPosition;
 
@@ -141,6 +149,8 @@ public sealed partial class ReplConsoleReader
     if (CursorPosition == 0)
       return;
 
+    SaveUndoState(isCharacterInput: false);  // Save state before kill
+
     int endPos = CursorPosition;
 
     // Skip non-word characters behind cursor
@@ -177,6 +187,8 @@ public sealed partial class ReplConsoleReader
     if (text is null)
       return;
 
+    SaveUndoState(isCharacterInput: false);  // Save state before yank
+
     // Track yank position for YankPop
     LastYankStart = CursorPosition;
     LastYankLength = text.Length;
@@ -202,6 +214,8 @@ public sealed partial class ReplConsoleReader
     string? text = KillRing.YankPop();
     if (text is null)
       return;
+
+    SaveUndoState(isCharacterInput: false);  // Save state before yank pop
 
     // Remove the previously yanked text
     int removeStart = LastYankStart;

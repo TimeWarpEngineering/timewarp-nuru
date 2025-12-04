@@ -10,6 +10,8 @@ public sealed partial class ReplConsoleReader
   /// </summary>
   internal void HandleBackwardChar()
   {
+    EndUndoCharacterGrouping();  // Movement ends character grouping
+
     if (CursorPosition > 0)
       CursorPosition--;
 
@@ -21,6 +23,8 @@ public sealed partial class ReplConsoleReader
   /// </summary>
   internal void HandleForwardChar()
   {
+    EndUndoCharacterGrouping();  // Movement ends character grouping
+
     if (CursorPosition < UserInput.Length)
       CursorPosition++;
 
@@ -32,6 +36,8 @@ public sealed partial class ReplConsoleReader
   /// </summary>
   internal void HandleBackwardWord()
   {
+    EndUndoCharacterGrouping();  // Movement ends character grouping
+
     int newPos = CursorPosition;
 
     // Skip whitespace behind cursor
@@ -53,6 +59,8 @@ public sealed partial class ReplConsoleReader
   /// </summary>
   internal void HandleForwardWord()
   {
+    EndUndoCharacterGrouping();  // Movement ends character grouping
+
     int newPos = CursorPosition;
 
     // Skip whitespace ahead of cursor
@@ -73,6 +81,7 @@ public sealed partial class ReplConsoleReader
   /// </summary>
   internal void HandleBeginningOfLine()
   {
+    EndUndoCharacterGrouping();  // Movement ends character grouping
     CursorPosition = 0;
     UpdateCursorPosition();
   }
@@ -82,6 +91,7 @@ public sealed partial class ReplConsoleReader
   /// </summary>
   internal void HandleEndOfLine()
   {
+    EndUndoCharacterGrouping();  // Movement ends character grouping
     CursorPosition = UserInput.Length;
     UpdateCursorPosition();
   }

@@ -148,6 +148,10 @@ public sealed class ViKeyBindingProfile : IKeyBindingProfile
       [(ConsoleKey.Y, ConsoleModifiers.Control)] = reader.HandleYank,
       [(ConsoleKey.Y, ConsoleModifiers.Alt)] = reader.HandleYankPop,
 
+      // === Undo/Redo Operations ===
+      [(ConsoleKey.Z, ConsoleModifiers.Control)] = reader.HandleUndo,
+      [(ConsoleKey.Z, ConsoleModifiers.Control | ConsoleModifiers.Shift)] = reader.HandleRedo,
+
       // === Clear/Escape ===
       [(ConsoleKey.Escape, ConsoleModifiers.None)] = reader.HandleEscape,
       // Note: Ctrl+[ is Escape in ASCII, but ConsoleKey doesn't distinguish this easily

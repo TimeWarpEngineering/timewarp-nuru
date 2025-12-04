@@ -11,6 +11,7 @@ namespace TimeWarp.Nuru;
 /// - repl-console-reader.editing.cs: Text editing handlers
 /// - repl-console-reader.search.cs: Interactive search mode (Ctrl+R/Ctrl+S)
 /// - repl-console-reader.kill-ring.cs: Kill ring (cut/paste) handlers
+/// - repl-console-reader.undo.cs: Undo/redo handlers
 /// </remarks>
 public sealed partial class ReplConsoleReader
 {
@@ -43,6 +44,9 @@ public sealed partial class ReplConsoleReader
   private bool LastCommandWasYank;  // For YankPop to work
   private int LastYankStart;        // Start position of last yanked text
   private int LastYankLength;       // Length of last yanked text
+
+  // Undo/redo state fields
+  private readonly UndoStack UndoManager = new();
 
   /// <summary>
   /// Creates a new REPL console reader.
@@ -106,6 +110,8 @@ public sealed partial class ReplConsoleReader
     CursorPosition = 0;        // Position relative to user input only
     HistoryIndex = History.Count;
     CompletionHandler.Reset();
+    UndoManager.Clear();
+    UndoManager.SetInitialState(string.Empty, 0);
 
     while (true)
     {
@@ -179,6 +185,7 @@ public sealed partial class ReplConsoleReader
   {
     ReplLoggerMessages.CharacterInserted(Logger, charToInsert, CursorPosition, null);
 
+    SaveUndoState(isCharacterInput: true);  // Save state before edit (grouped for consecutive chars)
     UserInput = UserInput[..CursorPosition] + charToInsert + UserInput[CursorPosition..];
     CursorPosition++;
     PrefixSearchString = null;  // Clear prefix search when user types

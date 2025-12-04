@@ -168,6 +168,12 @@ public sealed class EmacsKeyBindingProfile : IKeyBindingProfile
       [(ConsoleKey.Y, ConsoleModifiers.Control)] = reader.HandleYank,
       [(ConsoleKey.Y, ConsoleModifiers.Alt)] = reader.HandleYankPop,
 
+      // === Undo/Redo Operations (Emacs: undo, redo, revert-line) ===
+      [(ConsoleKey.OemMinus, ConsoleModifiers.Control)] = reader.HandleUndo,  // Ctrl+_ (underscore) - canonical Emacs
+      [(ConsoleKey.Z, ConsoleModifiers.Control)] = reader.HandleUndo,         // Ctrl+Z - alternative
+      [(ConsoleKey.Z, ConsoleModifiers.Control | ConsoleModifiers.Shift)] = reader.HandleRedo,
+      [(ConsoleKey.R, ConsoleModifiers.Alt)] = reader.HandleRevertLine,
+
       // === Special Keys ===
       [(ConsoleKey.Escape, ConsoleModifiers.None)] = reader.HandleEscape,
     };

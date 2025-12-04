@@ -17,33 +17,33 @@ Implement undo/redo functionality in the Nuru REPL. This allows users to reverse
 ## Checklist
 
 ### Undo Infrastructure (IMPLEMENT)
-- [ ] Create UndoStack class to track edit history
-- [ ] Define UndoUnit to store text state and cursor position
-- [ ] Implement undo grouping for related edits
+- [x] Create UndoStack class to track edit history
+- [x] Define UndoUnit to store text state and cursor position
+- [x] Implement undo grouping for related edits
 
 ### Undo Commands (IMPLEMENT)
-- [ ] Ctrl+_ (Ctrl+Underscore): Undo - Undo last edit
-- [ ] Ctrl+Z: Undo - Alternative binding (common expectation)
-- [ ] Multiple undo presses continue undoing
+- [x] Ctrl+_ (Ctrl+Underscore): Undo - Undo last edit
+- [x] Ctrl+Z: Undo - Alternative binding (common expectation)
+- [x] Multiple undo presses continue undoing
 
 ### Redo Commands (IMPLEMENT)
-- [ ] Ctrl+Shift+Z: Redo - Redo an undone edit (if available)
-- [ ] Alt+Shift+_ : Redo - Alternative binding
-- [ ] Note: Ctrl+Y conflicts with Yank, so avoid for Redo
+- [x] Ctrl+Shift+Z: Redo - Redo an undone edit (if available)
+- [ ] Alt+Shift+_ : Redo - Alternative binding (not implemented)
+- [x] Note: Ctrl+Y conflicts with Yank, so avoid for Redo
 
 ### Revert Line (IMPLEMENT)
-- [ ] Alt+R: RevertLine - Undo ALL changes to current line (reset to original)
-- [ ] Escape,R: RevertLine - Alternative binding
+- [x] Alt+R: RevertLine - Undo ALL changes to current line (reset to original)
+- [ ] Escape,R: RevertLine - Alternative binding (not implemented)
 
 ### Undo Boundaries (IMPLEMENT)
-- [ ] Group related edits into single undo unit (e.g., typing a word)
-- [ ] Commands like KillLine, Yank are single undo units
-- [ ] Movement commands don't create undo entries
+- [x] Group related edits into single undo unit (e.g., typing a word)
+- [x] Commands like KillLine, Yank are single undo units
+- [x] Movement commands don't create undo entries
 
 ### Testing
-- [ ] Test undo/redo stack behavior
-- [ ] Test undo after various edit types
-- [ ] Test RevertLine from different states
+- [x] Test undo/redo stack behavior
+- [x] Test undo after various edit types
+- [x] Test RevertLine from different states
 
 ## Notes
 

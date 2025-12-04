@@ -14,6 +14,7 @@ public sealed partial class ReplConsoleReader
     {
       ReplLoggerMessages.BackspacePressed(Logger, CursorPosition, null);
 
+      SaveUndoState(isCharacterInput: false);  // Save state before edit
       UserInput = UserInput[..(CursorPosition - 1)] + UserInput[CursorPosition..];
       CursorPosition--;
       CompletionHandler.Reset();  // Clear completion cycling when user deletes
@@ -33,6 +34,7 @@ public sealed partial class ReplConsoleReader
     {
       ReplLoggerMessages.DeletePressed(Logger, CursorPosition, null);
 
+      SaveUndoState(isCharacterInput: false);  // Save state before edit
       UserInput = UserInput[..CursorPosition] + UserInput[(CursorPosition + 1)..];
       CompletionHandler.Reset();  // Clear completion cycling when user deletes
       ResetKillTracking();        // Delete is not a kill command
@@ -50,6 +52,8 @@ public sealed partial class ReplConsoleReader
   {
     // Clear completion state
     CompletionHandler.Reset();
+
+    SaveUndoState(isCharacterInput: false);  // Save state before clearing
 
     // Clear the entire input line
     UserInput = string.Empty;

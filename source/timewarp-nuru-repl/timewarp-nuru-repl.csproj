@@ -6,7 +6,9 @@
     <Description>REPL (Read-Eval-Print Loop) mode support for TimeWarp.Nuru CLI applications</Description>
     <PackageTags>cli;command-line;repl;interactive;shell</PackageTags>
     <!-- CA1303: CLI output strings don't need localization resources -->
-    <NoWarn>$(NoWarn);CA1303</NoWarn>
+    <!-- CA1031: Clipboard operations intentionally catch all exceptions (platform-specific, may fail in headless) -->
+    <!-- RCS1075: Clipboard fallback pattern requires empty catch to try alternative -->
+    <NoWarn>$(NoWarn);CA1303;CA1031;RCS1075</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

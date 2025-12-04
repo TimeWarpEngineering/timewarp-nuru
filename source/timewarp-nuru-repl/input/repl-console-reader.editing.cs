@@ -7,9 +7,17 @@ public sealed partial class ReplConsoleReader
 {
   /// <summary>
   /// PSReadLine: BackwardDeleteChar - Delete the character before the cursor.
+  /// If there is a selection, delete the selected text instead.
   /// </summary>
   internal void HandleBackwardDeleteChar()
   {
+    // If there's a selection, delete it instead
+    if (SelectionState.IsActive)
+    {
+      HandleDeleteSelection();
+      return;
+    }
+
     if (CursorPosition > 0)
     {
       ReplLoggerMessages.BackspacePressed(Logger, CursorPosition, null);
@@ -27,9 +35,17 @@ public sealed partial class ReplConsoleReader
 
   /// <summary>
   /// PSReadLine: DeleteChar - Delete the character under the cursor.
+  /// If there is a selection, delete the selected text instead.
   /// </summary>
   internal void HandleDeleteChar()
   {
+    // If there's a selection, delete it instead
+    if (SelectionState.IsActive)
+    {
+      HandleDeleteSelection();
+      return;
+    }
+
     if (CursorPosition < UserInput.Length)
     {
       ReplLoggerMessages.DeletePressed(Logger, CursorPosition, null);
@@ -52,6 +68,9 @@ public sealed partial class ReplConsoleReader
   {
     // Clear completion state
     CompletionHandler.Reset();
+
+    // Clear selection first (before clearing text to avoid invalid indices)
+    SelectionState.Clear();
 
     SaveUndoState(isCharacterInput: false);  // Save state before clearing
 

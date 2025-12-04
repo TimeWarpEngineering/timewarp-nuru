@@ -12,6 +12,7 @@ namespace TimeWarp.Nuru;
 /// - repl-console-reader.search.cs: Interactive search mode (Ctrl+R/Ctrl+S)
 /// - repl-console-reader.kill-ring.cs: Kill ring (cut/paste) handlers
 /// - repl-console-reader.undo.cs: Undo/redo handlers
+/// - repl-console-reader.selection.cs: Text selection handlers
 /// </remarks>
 public sealed partial class ReplConsoleReader
 {
@@ -47,6 +48,9 @@ public sealed partial class ReplConsoleReader
 
   // Undo/redo state fields
   private readonly UndoStack UndoManager = new();
+
+  // Selection state fields
+  private readonly Selection SelectionState = new();
 
   /// <summary>
   /// Creates a new REPL console reader.
@@ -186,8 +190,22 @@ public sealed partial class ReplConsoleReader
     ReplLoggerMessages.CharacterInserted(Logger, charToInsert, CursorPosition, null);
 
     SaveUndoState(isCharacterInput: true);  // Save state before edit (grouped for consecutive chars)
-    UserInput = UserInput[..CursorPosition] + charToInsert + UserInput[CursorPosition..];
-    CursorPosition++;
+
+    // If there's a selection, replace it with the typed character
+    if (SelectionState.IsActive)
+    {
+      int start = SelectionState.Start;
+      int end = SelectionState.End;
+      UserInput = UserInput[..start] + charToInsert + UserInput[end..];
+      CursorPosition = start + 1;
+      SelectionState.Clear();
+    }
+    else
+    {
+      UserInput = UserInput[..CursorPosition] + charToInsert + UserInput[CursorPosition..];
+      CursorPosition++;
+    }
+
     PrefixSearchString = null;  // Clear prefix search when user types
     CompletionHandler.Reset();  // Clear completion cycling when user types
     ResetKillTracking();        // Clear kill ring tracking when user types

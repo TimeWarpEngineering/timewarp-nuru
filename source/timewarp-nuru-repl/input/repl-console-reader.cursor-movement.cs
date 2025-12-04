@@ -11,6 +11,7 @@ public sealed partial class ReplConsoleReader
   internal void HandleBackwardChar()
   {
     EndUndoCharacterGrouping();  // Movement ends character grouping
+    ClearSelectionOnMovement();  // Clear selection on non-shift movement
 
     if (CursorPosition > 0)
       CursorPosition--;
@@ -24,6 +25,7 @@ public sealed partial class ReplConsoleReader
   internal void HandleForwardChar()
   {
     EndUndoCharacterGrouping();  // Movement ends character grouping
+    ClearSelectionOnMovement();  // Clear selection on non-shift movement
 
     if (CursorPosition < UserInput.Length)
       CursorPosition++;
@@ -37,6 +39,7 @@ public sealed partial class ReplConsoleReader
   internal void HandleBackwardWord()
   {
     EndUndoCharacterGrouping();  // Movement ends character grouping
+    ClearSelectionOnMovement();  // Clear selection on non-shift movement
 
     int newPos = CursorPosition;
 
@@ -60,6 +63,7 @@ public sealed partial class ReplConsoleReader
   internal void HandleForwardWord()
   {
     EndUndoCharacterGrouping();  // Movement ends character grouping
+    ClearSelectionOnMovement();  // Clear selection on non-shift movement
 
     int newPos = CursorPosition;
 
@@ -82,6 +86,7 @@ public sealed partial class ReplConsoleReader
   internal void HandleBeginningOfLine()
   {
     EndUndoCharacterGrouping();  // Movement ends character grouping
+    ClearSelectionOnMovement();  // Clear selection on non-shift movement
     CursorPosition = 0;
     UpdateCursorPosition();
   }
@@ -92,6 +97,7 @@ public sealed partial class ReplConsoleReader
   internal void HandleEndOfLine()
   {
     EndUndoCharacterGrouping();  // Movement ends character grouping
+    ClearSelectionOnMovement();  // Clear selection on non-shift movement
     CursorPosition = UserInput.Length;
     UpdateCursorPosition();
   }

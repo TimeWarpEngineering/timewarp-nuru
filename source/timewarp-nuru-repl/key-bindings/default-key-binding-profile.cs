@@ -85,6 +85,26 @@ public sealed class DefaultKeyBindingProfile : IKeyBindingProfile
       [(ConsoleKey.OemMinus, ConsoleModifiers.Control)] = reader.HandleUndo,  // Ctrl+_ (underscore)
       [(ConsoleKey.R, ConsoleModifiers.Alt)] = reader.HandleRevertLine,
 
+      // === Character Selection (PSReadLine: SelectBackwardChar, SelectForwardChar) ===
+      [(ConsoleKey.LeftArrow, ConsoleModifiers.Shift)] = reader.HandleSelectBackwardChar,
+      [(ConsoleKey.RightArrow, ConsoleModifiers.Shift)] = reader.HandleSelectForwardChar,
+
+      // === Word Selection (PSReadLine: SelectBackwardWord, SelectNextWord) ===
+      [(ConsoleKey.LeftArrow, ConsoleModifiers.Control | ConsoleModifiers.Shift)] = reader.HandleSelectBackwardWord,
+      [(ConsoleKey.RightArrow, ConsoleModifiers.Control | ConsoleModifiers.Shift)] = reader.HandleSelectNextWord,
+      [(ConsoleKey.B, ConsoleModifiers.Alt | ConsoleModifiers.Shift)] = reader.HandleSelectBackwardWord,
+      [(ConsoleKey.F, ConsoleModifiers.Alt | ConsoleModifiers.Shift)] = reader.HandleSelectNextWord,
+
+      // === Line Selection (PSReadLine: SelectBackwardsLine, SelectLine, SelectAll) ===
+      [(ConsoleKey.Home, ConsoleModifiers.Shift)] = reader.HandleSelectBackwardsLine,
+      [(ConsoleKey.End, ConsoleModifiers.Shift)] = reader.HandleSelectLine,
+      [(ConsoleKey.A, ConsoleModifiers.Control | ConsoleModifiers.Shift)] = reader.HandleSelectAll,
+
+      // === Clipboard Operations (PSReadLine: CopyOrCancelLine, Cut, Paste) ===
+      [(ConsoleKey.C, ConsoleModifiers.Control)] = reader.HandleCopyOrCancelLine,
+      [(ConsoleKey.X, ConsoleModifiers.Control)] = reader.HandleCut,
+      [(ConsoleKey.V, ConsoleModifiers.Control)] = reader.HandlePaste,
+
       // === Special Keys ===
       [(ConsoleKey.Escape, ConsoleModifiers.None)] = reader.HandleEscape,
       [(ConsoleKey.D, ConsoleModifiers.Control)] = () => { }, // EOF - handled by ExitKeys

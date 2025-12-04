@@ -152,6 +152,19 @@ public sealed class ViKeyBindingProfile : IKeyBindingProfile
       [(ConsoleKey.Z, ConsoleModifiers.Control)] = reader.HandleUndo,
       [(ConsoleKey.Z, ConsoleModifiers.Control | ConsoleModifiers.Shift)] = reader.HandleRedo,
 
+      // === Selection (Shift+Arrow) ===
+      [(ConsoleKey.LeftArrow, ConsoleModifiers.Shift)] = reader.HandleSelectBackwardChar,
+      [(ConsoleKey.RightArrow, ConsoleModifiers.Shift)] = reader.HandleSelectForwardChar,
+      [(ConsoleKey.LeftArrow, ConsoleModifiers.Control | ConsoleModifiers.Shift)] = reader.HandleSelectBackwardWord,
+      [(ConsoleKey.RightArrow, ConsoleModifiers.Control | ConsoleModifiers.Shift)] = reader.HandleSelectNextWord,
+      [(ConsoleKey.Home, ConsoleModifiers.Shift)] = reader.HandleSelectBackwardsLine,
+      [(ConsoleKey.End, ConsoleModifiers.Shift)] = reader.HandleSelectLine,
+
+      // === Clipboard Operations ===
+      [(ConsoleKey.C, ConsoleModifiers.Control)] = reader.HandleCopyOrCancelLine,
+      [(ConsoleKey.X, ConsoleModifiers.Control)] = reader.HandleCut,
+      [(ConsoleKey.V, ConsoleModifiers.Control)] = reader.HandlePaste,
+
       // === Clear/Escape ===
       [(ConsoleKey.Escape, ConsoleModifiers.None)] = reader.HandleEscape,
       // Note: Ctrl+[ is Escape in ASCII, but ConsoleKey doesn't distinguish this easily

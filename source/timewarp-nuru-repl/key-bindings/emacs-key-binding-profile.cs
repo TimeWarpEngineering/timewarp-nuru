@@ -174,6 +174,22 @@ public sealed class EmacsKeyBindingProfile : IKeyBindingProfile
       [(ConsoleKey.Z, ConsoleModifiers.Control | ConsoleModifiers.Shift)] = reader.HandleRedo,
       [(ConsoleKey.R, ConsoleModifiers.Alt)] = reader.HandleRevertLine,
 
+      // === Word Selection (Emacs: uses Shift+movement) ===
+      [(ConsoleKey.LeftArrow, ConsoleModifiers.Shift)] = reader.HandleSelectBackwardChar,
+      [(ConsoleKey.RightArrow, ConsoleModifiers.Shift)] = reader.HandleSelectForwardChar,
+      [(ConsoleKey.LeftArrow, ConsoleModifiers.Control | ConsoleModifiers.Shift)] = reader.HandleSelectBackwardWord,
+      [(ConsoleKey.RightArrow, ConsoleModifiers.Control | ConsoleModifiers.Shift)] = reader.HandleSelectNextWord,
+      [(ConsoleKey.B, ConsoleModifiers.Alt | ConsoleModifiers.Shift)] = reader.HandleSelectBackwardWord,
+      [(ConsoleKey.F, ConsoleModifiers.Alt | ConsoleModifiers.Shift)] = reader.HandleSelectNextWord,
+      [(ConsoleKey.Home, ConsoleModifiers.Shift)] = reader.HandleSelectBackwardsLine,
+      [(ConsoleKey.End, ConsoleModifiers.Shift)] = reader.HandleSelectLine,
+      [(ConsoleKey.A, ConsoleModifiers.Control | ConsoleModifiers.Shift)] = reader.HandleSelectAll,
+
+      // === Clipboard Operations ===
+      [(ConsoleKey.C, ConsoleModifiers.Control)] = reader.HandleCopyOrCancelLine,
+      [(ConsoleKey.X, ConsoleModifiers.Control)] = reader.HandleCut,
+      [(ConsoleKey.V, ConsoleModifiers.Control)] = reader.HandlePaste,
+
       // === Special Keys ===
       [(ConsoleKey.Escape, ConsoleModifiers.None)] = reader.HandleEscape,
     };

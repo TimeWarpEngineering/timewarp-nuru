@@ -152,6 +152,24 @@ public sealed class VSCodeKeyBindingProfile : IKeyBindingProfile
       [(ConsoleKey.Z, ConsoleModifiers.Control)] = reader.HandleUndo,
       [(ConsoleKey.Z, ConsoleModifiers.Control | ConsoleModifiers.Shift)] = reader.HandleRedo,
 
+      // === Character Selection (Shift+Arrow) ===
+      [(ConsoleKey.LeftArrow, ConsoleModifiers.Shift)] = reader.HandleSelectBackwardChar,
+      [(ConsoleKey.RightArrow, ConsoleModifiers.Shift)] = reader.HandleSelectForwardChar,
+
+      // === Word Selection (Ctrl+Shift+Arrow) ===
+      [(ConsoleKey.LeftArrow, ConsoleModifiers.Control | ConsoleModifiers.Shift)] = reader.HandleSelectBackwardWord,
+      [(ConsoleKey.RightArrow, ConsoleModifiers.Control | ConsoleModifiers.Shift)] = reader.HandleSelectNextWord,
+
+      // === Line Selection (Shift+Home/End) ===
+      [(ConsoleKey.Home, ConsoleModifiers.Shift)] = reader.HandleSelectBackwardsLine,
+      [(ConsoleKey.End, ConsoleModifiers.Shift)] = reader.HandleSelectLine,
+      [(ConsoleKey.A, ConsoleModifiers.Control)] = reader.HandleSelectAll,  // VSCode uses Ctrl+A for Select All
+
+      // === Clipboard Operations (VSCode standard: Ctrl+C, Ctrl+X, Ctrl+V) ===
+      [(ConsoleKey.C, ConsoleModifiers.Control)] = reader.HandleCopyOrCancelLine,
+      [(ConsoleKey.X, ConsoleModifiers.Control)] = reader.HandleCut,
+      [(ConsoleKey.V, ConsoleModifiers.Control)] = reader.HandlePaste,
+
       // === Special Keys ===
       [(ConsoleKey.Escape, ConsoleModifiers.None)] = reader.HandleEscape,
     };

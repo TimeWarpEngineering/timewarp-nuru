@@ -48,38 +48,38 @@ For now, keep it inline PSReadLine-style. No premature abstraction.
 ## Checklist
 
 ### Architecture (MUST IMPLEMENT FIRST)
-- [ ] Add EditMode enum (Normal, Search, MenuComplete)
-- [ ] Add CurrentMode field to track active mode
-- [ ] Modify ReadLine loop to check CurrentMode
-- [ ] Create mode-specific key handlers
+- [x] Add EditMode enum (Normal, Search, MenuComplete)
+- [x] Add CurrentMode field to track active mode
+- [x] Modify ReadLine loop to check CurrentMode
+- [x] Create mode-specific key handlers
 
 ### Interactive Reverse Search (Ctrl+R)
-- [ ] Add Ctrl+R keybinding (conditional on Normal mode)
-- [ ] Implement HandleReverseSearchHistory() to enter search mode
-- [ ] Display search prompt: "(reverse-i-search)`pattern': "
-- [ ] Search backward through history for entries containing pattern
-- [ ] Show matched entry with highlighted search term
-- [ ] Press Ctrl+R again to find next (older) match
-- [ ] Enter accepts current match and returns to Normal mode
-- [ ] Escape cancels and returns to Normal mode
-- [ ] Other keys accept match and process the key
+- [x] Add Ctrl+R keybinding (conditional on Normal mode)
+- [x] Implement HandleReverseSearchHistory() to enter search mode
+- [x] Display search prompt: "(reverse-i-search)`pattern': "
+- [x] Search backward through history for entries containing pattern
+- [x] Show matched entry with highlighted search term
+- [x] Press Ctrl+R again to find next (older) match
+- [x] Enter accepts current match and returns to Normal mode
+- [x] Escape cancels and returns to Normal mode
+- [x] Other keys accept match and process the key
 
 ### Interactive Forward Search (Ctrl+S)
-- [ ] Add Ctrl+S keybinding (conditional on Normal mode)
-- [ ] Implement HandleForwardSearchHistory() to enter search mode
-- [ ] Display search prompt: "(forward-i-search)`pattern': "
-- [ ] Search forward through history for entries containing pattern
-- [ ] Show matched entry with highlighted search term
-- [ ] Press Ctrl+S again to find next (newer) match
-- [ ] Enter accepts current match and returns to Normal mode
-- [ ] Escape cancels and returns to Normal mode
+- [x] Add Ctrl+S keybinding (conditional on Normal mode)
+- [x] Implement HandleForwardSearchHistory() to enter search mode
+- [x] Display search prompt: "(forward-i-search)`pattern': "
+- [x] Search forward through history for entries containing pattern
+- [x] Show matched entry with highlighted search term
+- [x] Press Ctrl+S again to find next (newer) match
+- [x] Enter accepts current match and returns to Normal mode
+- [x] Escape cancels and returns to Normal mode
 
 ### Testing
-- [ ] Add tests for Ctrl+R search mode entry
-- [ ] Add tests for incremental search (pattern updates)
-- [ ] Add tests for cycling through matches
-- [ ] Add tests for Enter/Escape handling
-- [ ] Test edge cases (empty history, no matches, empty pattern)
+- [x] Add tests for Ctrl+R search mode entry
+- [x] Add tests for incremental search (pattern updates)
+- [x] Add tests for cycling through matches
+- [x] Add tests for Enter/Escape handling
+- [x] Test edge cases (empty history, no matches, empty pattern)
 
 ## Notes
 
@@ -158,3 +158,51 @@ Search is just `String.Contains` with case-insensitive comparison - keep it simp
 The EditMode architecture will be reused for:
 - Task 043-003a: Ctrl+Space menu completion (future)
 - Future: Vi mode (if desired)
+
+## Results
+
+### Implementation Complete
+
+All features implemented and tested:
+
+1. **EditMode State Machine**
+   - Added `EditMode` enum with `Normal`, `Search`, `MenuComplete` states
+   - Added state fields: `CurrentMode`, `SearchPattern`, `SearchMatchIndex`, `SavedInputBeforeSearch`, `SavedCursorBeforeSearch`, `SearchDirectionIsReverse`
+   - Modified `ReadLine` loop to route to mode-specific handlers
+
+2. **Ctrl+R Reverse Search**
+   - Enters search mode with `(reverse-i-search)` prompt
+   - Searches backward through history using substring matching
+   - Case-insensitive search
+   - Repeated Ctrl+R cycles to older matches
+
+3. **Ctrl+S Forward Search**
+   - Enters search mode with `(forward-i-search)` prompt
+   - Searches forward through history
+   - Can switch direction mid-search
+
+4. **Key Handling in Search Mode**
+   - Character keys append to search pattern
+   - Backspace removes from pattern
+   - Enter accepts match
+   - Escape cancels and restores original input
+   - Ctrl+G also cancels (Emacs style)
+   - Other keys accept and process
+
+5. **Key Binding Profiles Updated**
+   - Default, Emacs, Vi, and VSCode profiles all include Ctrl+R and Ctrl+S
+
+### Test Results
+
+- 14 new tests added in `repl-25-interactive-history-search.cs`
+- All 28 REPL tests pass
+- No regressions
+
+### Files Modified
+
+- `source/timewarp-nuru-repl/input/repl-console-reader.cs` - Added EditMode enum and search methods
+- `source/timewarp-nuru-repl/key-bindings/default-key-binding-profile.cs` - Added Ctrl+R/S bindings
+- `source/timewarp-nuru-repl/key-bindings/emacs-key-binding-profile.cs` - Added Ctrl+R/S bindings
+- `source/timewarp-nuru-repl/key-bindings/vi-key-binding-profile.cs` - Added Ctrl+R/S bindings
+- `source/timewarp-nuru-repl/key-bindings/vscode-key-binding-profile.cs` - Added Ctrl+R/S bindings
+- `tests/timewarp-nuru-repl-tests/repl-25-interactive-history-search.cs` - New test file

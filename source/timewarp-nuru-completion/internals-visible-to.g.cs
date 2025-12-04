@@ -119,6 +119,7 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("repl-23-tab-options")]
 [assembly: InternalsVisibleTo("repl-24-custom-key-bindings")]
 [assembly: InternalsVisibleTo("repl-24-tab-cycling")]
+[assembly: InternalsVisibleTo("repl-25-interactive-history-search")]
 [assembly: InternalsVisibleTo("repl-25-tab-state-management")]
 [assembly: InternalsVisibleTo("repl-26-tab-edge-cases")]
 [assembly: InternalsVisibleTo("repl-27-tab-help-option")]

@@ -60,6 +60,10 @@ public sealed class DefaultKeyBindingProfile : IKeyBindingProfile
       [(ConsoleKey.F8, ConsoleModifiers.None)] = reader.HandleHistorySearchBackward,
       [(ConsoleKey.F8, ConsoleModifiers.Shift)] = reader.HandleHistorySearchForward,
 
+      // === Interactive History Search (PSReadLine: ReverseSearchHistory, ForwardSearchHistory) ===
+      [(ConsoleKey.R, ConsoleModifiers.Control)] = reader.HandleReverseSearchHistory,
+      [(ConsoleKey.S, ConsoleModifiers.Control)] = reader.HandleForwardSearchHistory,
+
       // === Deletion (PSReadLine: BackwardDeleteChar, DeleteChar) ===
       [(ConsoleKey.Backspace, ConsoleModifiers.None)] = reader.HandleBackwardDeleteChar,
       [(ConsoleKey.Delete, ConsoleModifiers.None)] = reader.HandleDeleteChar,

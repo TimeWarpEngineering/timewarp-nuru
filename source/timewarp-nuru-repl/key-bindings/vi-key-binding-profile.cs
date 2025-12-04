@@ -128,6 +128,10 @@ public sealed class ViKeyBindingProfile : IKeyBindingProfile
       [(ConsoleKey.UpArrow, ConsoleModifiers.None)] = reader.HandlePreviousHistory,
       [(ConsoleKey.DownArrow, ConsoleModifiers.None)] = reader.HandleNextHistory,
 
+      // === Interactive History Search ===
+      [(ConsoleKey.R, ConsoleModifiers.Control)] = reader.HandleReverseSearchHistory,
+      [(ConsoleKey.S, ConsoleModifiers.Control)] = reader.HandleForwardSearchHistory,
+
       // === Deletion ===
       [(ConsoleKey.Backspace, ConsoleModifiers.None)] = reader.HandleBackwardDeleteChar,
       [(ConsoleKey.Delete, ConsoleModifiers.None)] = reader.HandleDeleteChar,

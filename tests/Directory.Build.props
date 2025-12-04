@@ -5,12 +5,17 @@
   <PropertyGroup>
     <!-- Tests should not be packaged -->
     <IsPackable>false</IsPackable>
+    <!-- Emit source generator output for inspection (commented out - multiple tests would overwrite each other)
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    <CompilerGeneratedFilesOutputPath>.generated</CompilerGeneratedFilesOutputPath>
+    -->
     <!-- Suppress warnings for test projects:
          CA1303: Localization not needed in tests
          CA2000: NuruAppBuilder is IDisposable but new NuruAppBuilder() creates no disposable resources
                  (ConfigurationManager only created via NuruApp.CreateBuilder with BuilderMode.Full)
-         CA2007: ConfigureAwait not required in tests -->
-    <NoWarn>$(NoWarn);CA1303;CA1307;CA2000;CA2007;CA1031;CA1515;CA1050;CA1052;CA1707;CS0050;RCS1046;RCS1102;RCS1110</NoWarn>
+         CA2007: ConfigureAwait not required in tests
+         CS8785: NuruRouteAnalyzer can't load M.E.Logging.Abstractions with ProjectReference (works as NuGet package) -->
+    <NoWarn>$(NoWarn);CA1303;CA1307;CA2000;CA2007;CA1031;CA1515;CA1050;CA1052;CA1707;CS0050;RCS1046;RCS1102;RCS1110;CS8785</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
@@ -36,5 +41,10 @@
     <PackageReference Include="TimeWarp.Jaribu" />
     <ProjectReference Include="$(MSBuildThisFileDirectory)../source/timewarp-nuru/timewarp-nuru.csproj" />
     <ProjectReference Include="$(MSBuildThisFileDirectory)../source/timewarp-nuru-logging/timewarp-nuru-logging.csproj" />
+    <!-- Analyzer references don't flow transitively, so we must add it directly -->
+    <ProjectReference Include="$(MSBuildThisFileDirectory)../source/timewarp-nuru-analyzers/timewarp-nuru-analyzers.csproj">
+      <OutputItemType>Analyzer</OutputItemType>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
   </ItemGroup>
 </Project>

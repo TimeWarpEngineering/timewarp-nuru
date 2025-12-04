@@ -320,7 +320,7 @@ public partial class NuruCoreApp
     {
       RoutePattern = endpoint.RoutePattern,
       BoundArguments = boundArgs,
-      Invoker = CreateDelegateInvoker(del),
+      Handler = del,
       Endpoint = endpoint
     };
 
@@ -476,50 +476,6 @@ public partial class NuruCoreApp
     }
 
     return Convert.ChangeType(stringValue, param.ParameterType, CultureInfo.InvariantCulture);
-  }
-
-  /// <summary>
-  /// Creates an invoker function for a delegate.
-  /// </summary>
-  [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode",
-      Justification = "Delegate invocation uses reflection - types preserved through registration")]
-  [UnconditionalSuppressMessage("AOT", "IL3050:RequiresDynamicCode",
-      Justification = "Delegate invocation may require dynamic code generation")]
-  private static Func<object?[], Task<object?>> CreateDelegateInvoker(Delegate del)
-  {
-    return async args =>
-    {
-      object? returnValue = del.DynamicInvoke(args);
-
-      // Handle async delegates
-      if (returnValue is Task task)
-      {
-        await task.ConfigureAwait(false);
-
-        // For Task<T>, get the result
-        Type taskType = task.GetType();
-        if (taskType.IsGenericType)
-        {
-          PropertyInfo? resultProperty = taskType.GetProperty("Result");
-          if (resultProperty is not null)
-          {
-            object? result = resultProperty.GetValue(task);
-            // Check if this is VoidTaskResult (used internally for void async methods)
-            if (result?.GetType().Name == "VoidTaskResult")
-            {
-              return null;
-            }
-
-            return result;
-          }
-        }
-
-        // Non-generic Task (void async)
-        return null;
-      }
-
-      return returnValue;
-    };
   }
 
   /// <summary>

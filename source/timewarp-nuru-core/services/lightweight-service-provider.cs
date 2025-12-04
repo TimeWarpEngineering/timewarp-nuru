@@ -33,12 +33,12 @@ internal sealed class LightweightServiceProvider : IServiceProvider
       return App.Terminal;
     }
 
-    // Handle ILogger<T> requests by creating Logger<T> instances
+    // Handle ILogger<T> requests using ILoggerFactory.CreateLogger
+    // This avoids MakeGenericType for AOT compatibility
     if (serviceType.IsGenericType && serviceType.GetGenericTypeDefinition() == typeof(ILogger<>))
     {
       Type categoryType = serviceType.GetGenericArguments()[0];
-      Type loggerType = typeof(Logger<>).MakeGenericType(categoryType);
-      return Activator.CreateInstance(loggerType, LoggerFactory)!;
+      return LoggerFactory.CreateLogger(categoryType);
     }
 
     return null;

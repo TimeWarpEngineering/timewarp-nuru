@@ -28,10 +28,9 @@ public sealed class DelegateRequest : IRequest<DelegateResponse>
   public required object?[] BoundArguments { get; init; }
 
   /// <summary>
-  /// Gets the function that invokes the delegate with bound arguments.
-  /// Returns the result boxed as object (or null for void delegates).
+  /// Gets the delegate handler to invoke.
   /// </summary>
-  public required Func<object?[], Task<object?>> Invoker { get; init; }
+  public required Delegate Handler { get; init; }
 
   /// <summary>
   /// Gets the endpoint metadata for logging/tracing.
@@ -81,20 +80,42 @@ public sealed class DelegateResponse
 /// when consuming applications call <c>services.AddMediator()</c>, as the generator
 /// scans referenced assemblies by default.
 ///
-/// The handler simply invokes the pre-bound delegate. Parameter binding and type
-/// conversion happen before the request is created.
+/// The handler uses source-generated typed invokers from <see cref="InvokerRegistry"/>
+/// for AOT-compatible delegate invocation. Parameter binding and type conversion
+/// happen before the request is created.
 /// </remarks>
 public sealed class DelegateRequestHandler : IRequestHandler<DelegateRequest, DelegateResponse>
 {
   /// <summary>
-  /// Invokes the wrapped delegate and returns the result.
+  /// Invokes the wrapped delegate using source-generated typed invokers.
   /// </summary>
   public async ValueTask<DelegateResponse> Handle(DelegateRequest request, CancellationToken cancellationToken)
   {
     ArgumentNullException.ThrowIfNull(request);
     _ = cancellationToken; // Available for future use
 
-    object? result = await request.Invoker(request.BoundArguments).ConfigureAwait(false);
+    MethodInfo method = request.Handler.Method;
+    string signatureKey = InvokerRegistry.ComputeSignatureKey(method);
+    object? result;
+
+    // Try async invoker first
+    if (InvokerRegistry.TryGetAsyncInvoker(signatureKey, out AsyncInvoker? asyncInvoker))
+    {
+      result = await asyncInvoker(request.Handler, request.BoundArguments).ConfigureAwait(false);
+    }
+    // Try sync invoker
+    else if (InvokerRegistry.TryGetSync(signatureKey, out SyncInvoker? syncInvoker))
+    {
+      result = syncInvoker(request.Handler, request.BoundArguments);
+    }
+    else
+    {
+      throw new InvalidOperationException(
+        $"No source-generated invoker found for signature '{signatureKey}'. " +
+        "Ensure the NuruInvokerGenerator source generator is running and the delegate signature is supported. " +
+        $"Route: {request.RoutePattern}");
+    }
+
     return DelegateResponse.Success(result);
   }
 }

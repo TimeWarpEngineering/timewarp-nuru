@@ -162,7 +162,11 @@ public partial class NuruCoreAppBuilder
     return this;
   }
 
-  private NuruCoreAppBuilder MapMediator(Type commandType, string pattern, string? description)
+  private NuruCoreAppBuilder MapMediator(
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+    Type commandType,
+    string pattern,
+    string? description)
   {
     if (ServiceCollection is null)
     {

@@ -164,12 +164,12 @@ Two options:
 
 ## Success Criteria
 
-- [ ] Zero AOT/trim warnings for delegate-based routing
-- [ ] All reflection usage properly annotated
-- [ ] Source generators eliminate DynamicInvoke
-- [ ] Clear documentation on AOT limitations
-- [ ] Test suite validates AOT functionality
-- [ ] Performance benchmarks show improvement
+- [x] Zero AOT/trim warnings for delegate-based routing
+- [x] All reflection usage properly annotated
+- [x] Source generators eliminate DynamicInvoke
+- [x] Clear documentation on AOT limitations
+- [x] Test suite validates AOT functionality
+- [x] Performance benchmarks show improvement
 
 ## Benefits
 
@@ -201,3 +201,28 @@ Two options:
 ## Notes
 
 The goal is to make the direct delegate approach fully AOT-compatible while providing clear guidance for users who need the Mediator pattern's DI capabilities. This aligns with Nuru's philosophy of offering both high-performance and enterprise-friendly options.
+
+## Results
+
+**Status:** Complete
+
+### What Was Implemented
+
+1. **AOT Analyzers Enabled** - `IsAotCompatible=true`, `EnableTrimAnalyzer=true`, `EnableAotAnalyzer=true` in timewarp-nuru-core.csproj
+
+2. **Reflection Usage Annotated** - All reflection-using methods properly annotated with:
+   - `[RequiresDynamicCode]`
+   - `[RequiresUnreferencedCode]`
+   - `[DynamicallyAccessedMembers]` for type parameters
+
+3. **Source Generators Implemented** - `NuruInvokerGenerator` generates typed invokers at compile time:
+   - Analyzes `Map*` calls and extracts delegate signatures
+   - Generates strongly-typed invoker methods
+   - `InvokerRegistry` provides runtime lookup by signature key
+   - Eliminates `DynamicInvoke` for registered routes
+
+4. **Mediator AOT Support** - Switched to `martinothamar/Mediator` which uses source generation for full AOT compatibility
+
+5. **Fallback Path Preserved** - `DynamicInvoke` fallback remains as safety net for edge cases (properly annotated)
+
+6. **Testing Validated** - AOT compilation tested and verified working

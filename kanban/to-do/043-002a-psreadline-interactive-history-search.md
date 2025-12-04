@@ -4,11 +4,11 @@
 
 Implement Ctrl+R and Ctrl+S interactive incremental history search. This provides a real-time search experience where users type a search pattern and see matching history entries as they type.
 
-**Prerequisites:** Requires EditMode state machine implementation (see 043_002 implementation notes).
+**Prerequisites:** Requires EditMode state machine implementation.
 
 ## Parent
 
-043_PSReadLine-REPL-Compatibility
+043-psreadline-repl-compatibility
 
 ## Requirements
 
@@ -17,6 +17,33 @@ Implement Ctrl+R and Ctrl+S interactive incremental history search. This provide
 - Update results in real-time as user types
 - Support cycling through multiple matches
 - Escape cancels, Enter accepts, other keys accept and process
+
+## Design Decisions
+
+### Keep Search Simple - No New Dependencies
+
+The search algorithm is intentionally simple:
+
+```csharp
+// Substring search - this is all we need for Ctrl+R
+history.Where(h => h.Contains(pattern, StringComparison.OrdinalIgnoreCase))
+       .Reverse()  // Most recent first
+```
+
+**Rationale:**
+- Zero new dependencies required
+- Matches PSReadLine behavior (substring, not fuzzy)
+- The complexity is in the EditMode state machine and UI, not the algorithm
+- If we later build FZF-like capabilities in Amuru, we can extract/enhance then
+
+### Future Consideration: Amuru FZF
+
+A full FZF-like fuzzy finder may be built in `TimeWarp.Amuru` later. If so:
+- Extract matching algorithms to shared location
+- Add fuzzy matching (skipped characters)
+- Build full-screen UI with preview
+
+For now, keep it inline PSReadLine-style. No premature abstraction.
 
 ## Checklist
 
@@ -113,18 +140,21 @@ When in Search mode:
 
 ### Related Tasks
 
-- **043_002** - Completed basic history navigation
-- **043_003** - Tab completion (Ctrl+Space menu also needs EditMode)
+- **043-002** - Completed basic history navigation
+- **043-003** - Tab completion (Ctrl+Space menu also needs EditMode)
 
 ### Implementation Location
 
-- Input handling: `Source/TimeWarp.Nuru.Repl/Input/ReplConsoleReader.cs`
-- Tests: `Tests/TimeWarp.Nuru.Repl.Tests/repl-18-psreadline-keybindings.cs`
+- Input handling: `source/timewarp-nuru-repl/input/repl-console-reader.cs`
+- Tests: `tests/timewarp-nuru-repl-tests/`
+- No new packages or dependencies required
 
 ## Implementation Notes
 
-This task is blocked until we implement the EditMode state machine. Without it, we cannot cleanly implement the modal behavior required for interactive search.
+The main complexity is the **EditMode state machine**, not the search algorithm.
 
-The EditMode architecture will also be reused for:
-- Task 043_003: Ctrl+Space menu completion
+Search is just `String.Contains` with case-insensitive comparison - keep it simple.
+
+The EditMode architecture will be reused for:
+- Task 043-003a: Ctrl+Space menu completion (future)
 - Future: Vi mode (if desired)

@@ -138,9 +138,15 @@ public sealed class ViKeyBindingProfile : IKeyBindingProfile
       [(ConsoleKey.D, ConsoleModifiers.Control)] = reader.HandleDeleteChar, // Also EOF when handled by ExitKeys
 
       // === Vi-style Kill Operations ===
-      [(ConsoleKey.W, ConsoleModifiers.Control)] = reader.HandleDeleteWordBackward,
-      [(ConsoleKey.U, ConsoleModifiers.Control)] = reader.HandleDeleteToLineStart,
+      [(ConsoleKey.W, ConsoleModifiers.Control)] = reader.HandleUnixWordRubout,
+      [(ConsoleKey.U, ConsoleModifiers.Control)] = reader.HandleBackwardKillInput,
       [(ConsoleKey.K, ConsoleModifiers.Control)] = reader.HandleKillLine,
+      [(ConsoleKey.D, ConsoleModifiers.Alt)] = reader.HandleKillWord,
+      [(ConsoleKey.Backspace, ConsoleModifiers.Alt)] = reader.HandleBackwardKillWord,
+
+      // === Yank Operations ===
+      [(ConsoleKey.Y, ConsoleModifiers.Control)] = reader.HandleYank,
+      [(ConsoleKey.Y, ConsoleModifiers.Alt)] = reader.HandleYankPop,
 
       // === Clear/Escape ===
       [(ConsoleKey.Escape, ConsoleModifiers.None)] = reader.HandleEscape,

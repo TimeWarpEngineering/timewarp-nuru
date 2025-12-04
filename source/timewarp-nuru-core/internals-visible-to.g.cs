@@ -121,6 +121,7 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("repl-24-tab-cycling")]
 [assembly: InternalsVisibleTo("repl-25-interactive-history-search")]
 [assembly: InternalsVisibleTo("repl-25-tab-state-management")]
+[assembly: InternalsVisibleTo("repl-26-kill-ring")]
 [assembly: InternalsVisibleTo("repl-26-tab-edge-cases")]
 [assembly: InternalsVisibleTo("repl-27-tab-help-option")]
 [assembly: InternalsVisibleTo("routing-01-basic-matching")]

@@ -17,6 +17,7 @@ public sealed partial class ReplConsoleReader
       UserInput = UserInput[..(CursorPosition - 1)] + UserInput[CursorPosition..];
       CursorPosition--;
       CompletionHandler.Reset();  // Clear completion cycling when user deletes
+      ResetKillTracking();        // Backspace is not a kill command
 
       ReplLoggerMessages.UserInputChanged(Logger, UserInput, CursorPosition, null);
       RedrawLine();
@@ -34,6 +35,7 @@ public sealed partial class ReplConsoleReader
 
       UserInput = UserInput[..CursorPosition] + UserInput[(CursorPosition + 1)..];
       CompletionHandler.Reset();  // Clear completion cycling when user deletes
+      ResetKillTracking();        // Delete is not a kill command
 
       ReplLoggerMessages.UserInputChanged(Logger, UserInput, CursorPosition, null);
       RedrawLine();
@@ -56,64 +58,41 @@ public sealed partial class ReplConsoleReader
     // Clear any prefix search state
     PrefixSearchString = null;
 
+    // Clear kill tracking
+    ResetKillTracking();
+
     // Redraw the empty line
     RedrawLine();
   }
 
   /// <summary>
   /// PSReadLine: KillLine - Delete from the cursor position to the end of the line.
-  /// The deleted text is removed (kill ring not implemented).
+  /// The deleted text is stored in the kill ring for later yanking.
   /// </summary>
   internal void HandleKillLine()
   {
-    if (CursorPosition < UserInput.Length)
-    {
-      // Delete everything from cursor to end of line
-      UserInput = UserInput[..CursorPosition];
-      CompletionHandler.Reset();
-      RedrawLine();
-    }
+    // Delegate to the kill ring implementation
+    HandleKillLineToRing();
   }
 
   /// <summary>
   /// PSReadLine: BackwardKillWord - Delete the word before the cursor.
   /// Deletes from cursor back to the start of the current or previous word.
+  /// The deleted text is stored in the kill ring for later yanking.
   /// </summary>
   internal void HandleDeleteWordBackward()
   {
-    if (CursorPosition > 0)
-    {
-      int newPos = CursorPosition;
-
-      // Skip whitespace behind cursor
-      while (newPos > 0 && char.IsWhiteSpace(UserInput[newPos - 1]))
-        newPos--;
-
-      // Skip word characters to find start of word
-      while (newPos > 0 && !char.IsWhiteSpace(UserInput[newPos - 1]))
-        newPos--;
-
-      // Delete from newPos to CursorPosition
-      UserInput = UserInput[..newPos] + UserInput[CursorPosition..];
-      CursorPosition = newPos;
-      CompletionHandler.Reset();
-      RedrawLine();
-    }
+    // Delegate to the kill ring implementation (BackwardKillWord uses word boundaries)
+    HandleBackwardKillWord();
   }
 
   /// <summary>
   /// PSReadLine: BackwardKillLine - Delete from the beginning of the line to the cursor.
-  /// The deleted text is removed (kill ring not implemented).
+  /// The deleted text is stored in the kill ring for later yanking.
   /// </summary>
   internal void HandleDeleteToLineStart()
   {
-    if (CursorPosition > 0)
-    {
-      // Delete everything from start of line to cursor
-      UserInput = UserInput[CursorPosition..];
-      CursorPosition = 0;
-      CompletionHandler.Reset();
-      RedrawLine();
-    }
+    // Delegate to the kill ring implementation
+    HandleBackwardKillInput();
   }
 }

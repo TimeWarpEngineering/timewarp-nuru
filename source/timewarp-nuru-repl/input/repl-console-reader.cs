@@ -10,6 +10,7 @@ namespace TimeWarp.Nuru;
 /// - repl-console-reader.history.cs: History navigation handlers
 /// - repl-console-reader.editing.cs: Text editing handlers
 /// - repl-console-reader.search.cs: Interactive search mode (Ctrl+R/Ctrl+S)
+/// - repl-console-reader.kill-ring.cs: Kill ring (cut/paste) handlers
 /// </remarks>
 public sealed partial class ReplConsoleReader
 {
@@ -35,6 +36,13 @@ public sealed partial class ReplConsoleReader
   private string SavedInputBeforeSearch = string.Empty;  // Original input to restore on cancel
   private int SavedCursorBeforeSearch;  // Original cursor position to restore on cancel
   private bool SearchDirectionIsReverse = true;  // true = Ctrl+R (backward), false = Ctrl+S (forward)
+
+  // Kill ring state fields
+  private readonly KillRing KillRing = new();
+  private bool LastCommandWasKill;  // For consecutive kill appending
+  private bool LastCommandWasYank;  // For YankPop to work
+  private int LastYankStart;        // Start position of last yanked text
+  private int LastYankLength;       // Length of last yanked text
 
   /// <summary>
   /// Creates a new REPL console reader.
@@ -175,6 +183,7 @@ public sealed partial class ReplConsoleReader
     CursorPosition++;
     PrefixSearchString = null;  // Clear prefix search when user types
     CompletionHandler.Reset();  // Clear completion cycling when user types
+    ResetKillTracking();        // Clear kill ring tracking when user types
 
     ReplLoggerMessages.UserInputChanged(Logger, UserInput, CursorPosition, null);
     RedrawLine();

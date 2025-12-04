@@ -68,6 +68,17 @@ public sealed class DefaultKeyBindingProfile : IKeyBindingProfile
       [(ConsoleKey.Backspace, ConsoleModifiers.None)] = reader.HandleBackwardDeleteChar,
       [(ConsoleKey.Delete, ConsoleModifiers.None)] = reader.HandleDeleteChar,
 
+      // === Kill Operations (PSReadLine: KillLine, BackwardKillInput, UnixWordRubout, KillWord, BackwardKillWord) ===
+      [(ConsoleKey.K, ConsoleModifiers.Control)] = reader.HandleKillLine,
+      [(ConsoleKey.U, ConsoleModifiers.Control)] = reader.HandleBackwardKillInput,
+      [(ConsoleKey.W, ConsoleModifiers.Control)] = reader.HandleUnixWordRubout,
+      [(ConsoleKey.D, ConsoleModifiers.Alt)] = reader.HandleKillWord,
+      [(ConsoleKey.Backspace, ConsoleModifiers.Alt)] = reader.HandleBackwardKillWord,
+
+      // === Yank Operations (PSReadLine: Yank, YankPop) ===
+      [(ConsoleKey.Y, ConsoleModifiers.Control)] = reader.HandleYank,
+      [(ConsoleKey.Y, ConsoleModifiers.Alt)] = reader.HandleYankPop,
+
       // === Special Keys ===
       [(ConsoleKey.Escape, ConsoleModifiers.None)] = reader.HandleEscape,
       [(ConsoleKey.D, ConsoleModifiers.Control)] = () => { }, // EOF - handled by ExitKeys

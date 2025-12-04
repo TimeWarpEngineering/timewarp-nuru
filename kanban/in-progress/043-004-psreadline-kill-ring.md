@@ -17,29 +17,29 @@ Implement Emacs-style kill ring functionality in the Nuru REPL. The kill ring is
 ## Checklist
 
 ### Kill Ring Infrastructure (IMPLEMENT)
-- [ ] Create KillRing class with circular buffer
-- [ ] Track "last kill" for consecutive kill appending
-- [ ] Configurable ring size
+- [x] Create KillRing class with circular buffer
+- [x] Track "last kill" for consecutive kill appending
+- [x] Configurable ring size
 
 ### Line Killing (IMPLEMENT)
-- [ ] Ctrl+K: KillLine - Kill from cursor to end of line
-- [ ] Ctrl+U: BackwardKillInput - Kill from beginning of line to cursor (Unix style)
-- [ ] Alternative: Ctrl+U kills entire line in some configurations
+- [x] Ctrl+K: KillLine - Kill from cursor to end of line
+- [x] Ctrl+U: BackwardKillInput - Kill from beginning of line to cursor (Unix style)
+- [x] Alternative: Ctrl+U kills entire line in some configurations
 
 ### Word Killing (IMPLEMENT)
-- [ ] Ctrl+W: UnixWordRubout - Kill previous whitespace-delimited word
-- [ ] Alt+D: KillWord - Kill from cursor to end of current word
-- [ ] Alt+Backspace: BackwardKillWord - Kill from start of current word to cursor
+- [x] Ctrl+W: UnixWordRubout - Kill previous whitespace-delimited word
+- [x] Alt+D: KillWord - Kill from cursor to end of current word
+- [x] Alt+Backspace: BackwardKillWord - Kill from start of current word to cursor
 
 ### Yanking (IMPLEMENT)
-- [ ] Ctrl+Y: Yank - Paste most recent kill ring entry at cursor
-- [ ] Alt+Y: YankPop - Replace just-yanked text with previous kill ring entry
-- [ ] YankPop only works immediately after Yank or YankPop
+- [x] Ctrl+Y: Yank - Paste most recent kill ring entry at cursor
+- [x] Alt+Y: YankPop - Replace just-yanked text with previous kill ring entry
+- [x] YankPop only works immediately after Yank or YankPop
 
 ### Testing
-- [ ] Test kill ring rotation
-- [ ] Test consecutive kills appending
-- [ ] Test YankPop cycling through ring
+- [x] Test kill ring rotation
+- [x] Test consecutive kills appending
+- [x] Test YankPop cycling through ring
 
 ## Notes
 

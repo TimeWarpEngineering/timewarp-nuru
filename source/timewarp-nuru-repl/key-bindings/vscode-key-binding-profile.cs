@@ -139,9 +139,14 @@ public sealed class VSCodeKeyBindingProfile : IKeyBindingProfile
       [(ConsoleKey.Backspace, ConsoleModifiers.None)] = reader.HandleBackwardDeleteChar,
       [(ConsoleKey.Delete, ConsoleModifiers.None)] = reader.HandleDeleteChar,
 
-      // === Advanced Deletion ===
+      // === Kill Operations ===
       [(ConsoleKey.K, ConsoleModifiers.Control)] = reader.HandleKillLine,
-      [(ConsoleKey.Backspace, ConsoleModifiers.Control)] = reader.HandleDeleteWordBackward,
+      [(ConsoleKey.Backspace, ConsoleModifiers.Control)] = reader.HandleBackwardKillWord,
+      [(ConsoleKey.U, ConsoleModifiers.Control)] = reader.HandleBackwardKillInput,
+
+      // === Yank Operations (Cut/Paste from kill ring) ===
+      [(ConsoleKey.Y, ConsoleModifiers.Control)] = reader.HandleYank,
+      [(ConsoleKey.Y, ConsoleModifiers.Alt)] = reader.HandleYankPop,
 
       // === Special Keys ===
       [(ConsoleKey.Escape, ConsoleModifiers.None)] = reader.HandleEscape,

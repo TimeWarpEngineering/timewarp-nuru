@@ -43,6 +43,30 @@ namespace TimeWarp.Nuru;
 ///   <description>Kill (delete) to end of line</description>
 /// </item>
 /// <item>
+///   <term>Ctrl+U</term>
+///   <description>Kill (delete) from start of line to cursor</description>
+/// </item>
+/// <item>
+///   <term>Ctrl+W</term>
+///   <description>Kill previous whitespace-delimited word</description>
+/// </item>
+/// <item>
+///   <term>Alt+D</term>
+///   <description>Kill from cursor to end of word</description>
+/// </item>
+/// <item>
+///   <term>Alt+Backspace</term>
+///   <description>Kill from start of word to cursor</description>
+/// </item>
+/// <item>
+///   <term>Ctrl+Y</term>
+///   <description>Yank (paste) most recent kill</description>
+/// </item>
+/// <item>
+///   <term>Alt+Y</term>
+///   <description>Yank-pop: cycle through kill ring after yank</description>
+/// </item>
+/// <item>
 ///   <term>Ctrl+D</term>
 ///   <description>Delete character under cursor (or EOF if line empty)</description>
 /// </item>
@@ -133,9 +157,16 @@ public sealed class EmacsKeyBindingProfile : IKeyBindingProfile
       [(ConsoleKey.Delete, ConsoleModifiers.None)] = reader.HandleDeleteChar,
       [(ConsoleKey.D, ConsoleModifiers.Control)] = reader.HandleDeleteChar, // Also EOF when handled by ExitKeys
 
-      // === Kill Operations (Emacs: kill-line, backward-kill-line) ===
+      // === Kill Operations (Emacs: kill-line, backward-kill-input, unix-word-rubout, kill-word, backward-kill-word) ===
       [(ConsoleKey.K, ConsoleModifiers.Control)] = reader.HandleKillLine,
-      [(ConsoleKey.U, ConsoleModifiers.Control)] = reader.HandleDeleteToLineStart,
+      [(ConsoleKey.U, ConsoleModifiers.Control)] = reader.HandleBackwardKillInput,
+      [(ConsoleKey.W, ConsoleModifiers.Control)] = reader.HandleUnixWordRubout,
+      [(ConsoleKey.D, ConsoleModifiers.Alt)] = reader.HandleKillWord,
+      [(ConsoleKey.Backspace, ConsoleModifiers.Alt)] = reader.HandleBackwardKillWord,
+
+      // === Yank Operations (Emacs: yank, yank-pop) ===
+      [(ConsoleKey.Y, ConsoleModifiers.Control)] = reader.HandleYank,
+      [(ConsoleKey.Y, ConsoleModifiers.Alt)] = reader.HandleYankPop,
 
       // === Special Keys ===
       [(ConsoleKey.Escape, ConsoleModifiers.None)] = reader.HandleEscape,

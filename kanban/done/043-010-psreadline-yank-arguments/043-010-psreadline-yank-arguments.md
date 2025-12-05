@@ -99,3 +99,29 @@ Track whether last command was YankLastArg:
 ### Dependencies
 - History navigation (043_002) should be complete
 - May share argument parsing with route parsing
+
+## Results
+
+**Completed:** 2025-12-05
+
+### What was implemented
+
+**New File**: `source/timewarp-nuru-repl/input/repl-console-reader.yank-arg.cs`
+- `HandleYankLastArg()` - Insert last argument from previous history entry (Alt+. / Alt+_)
+- `HandleYankNthArg()` - Insert Nth argument from previous command (Alt+Ctrl+Y)
+- `HandleDigitArgument()` - Handle Alt+0 through Alt+9 for digit prefix
+- `ParseHistoryArguments()` - Parse command line into arguments with:
+  - Double quote handling: `"arg with spaces"` → `arg with spaces`
+  - Single quote handling: `'arg with spaces'` → `arg with spaces`
+  - Escape handling: `arg\ with\ spaces` → `arg with spaces`
+  - Escaped quotes inside quotes: `"say \"hello\""` → `say "hello"`
+
+**Modified Files**:
+- `repl-console-reader.kill-ring.cs` - Added call to `ResetYankArgTracking()` in `ResetKillTracking()`
+- All 4 key binding profiles - Added bindings for Alt+., Alt+_, Alt+Ctrl+Y, and Alt+0-9
+
+### Test coverage
+- `repl-33-yank-arguments.cs`: 20 tests (9 parsing + 6 YankLastArg + 3 YankNthArg + 2 edge cases)
+
+### Commit
+`b616bfd` - feat(repl): implement PSReadLine YankLastArg and YankNthArg

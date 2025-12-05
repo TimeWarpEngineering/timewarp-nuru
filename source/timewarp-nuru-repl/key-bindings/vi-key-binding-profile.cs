@@ -135,7 +135,7 @@ public sealed class ViKeyBindingProfile : IKeyBindingProfile
       // === Deletion ===
       [(ConsoleKey.Backspace, ConsoleModifiers.None)] = reader.HandleBackwardDeleteChar,
       [(ConsoleKey.Delete, ConsoleModifiers.None)] = reader.HandleDeleteChar,
-      [(ConsoleKey.D, ConsoleModifiers.Control)] = reader.HandleDeleteChar, // Also EOF when handled by ExitKeys
+      [(ConsoleKey.D, ConsoleModifiers.Control)] = reader.HandleDeleteCharOrExit,  // Delete char or EOF if empty
 
       // === Vi-style Kill Operations ===
       [(ConsoleKey.W, ConsoleModifiers.Control)] = reader.HandleUnixWordRubout,
@@ -165,6 +165,9 @@ public sealed class ViKeyBindingProfile : IKeyBindingProfile
       [(ConsoleKey.X, ConsoleModifiers.Control)] = reader.HandleCut,
       [(ConsoleKey.V, ConsoleModifiers.Control)] = reader.HandlePaste,
 
+      // === Screen Operations ===
+      [(ConsoleKey.L, ConsoleModifiers.Control)] = reader.HandleClearScreen,
+
       // === Clear/Escape ===
       [(ConsoleKey.Escape, ConsoleModifiers.None)] = reader.HandleEscape,
       // Note: Ctrl+[ is Escape in ASCII, but ConsoleKey doesn't distinguish this easily
@@ -175,6 +178,6 @@ public sealed class ViKeyBindingProfile : IKeyBindingProfile
   public HashSet<(ConsoleKey Key, ConsoleModifiers Modifiers)> GetExitKeys() =>
   [
     (ConsoleKey.Enter, ConsoleModifiers.None),  // Submit command
-    (ConsoleKey.D, ConsoleModifiers.Control)    // EOF (Vi-style Ctrl+D)
+    // Note: Ctrl+D now handled by HandleDeleteCharOrExit which signals exit via ShouldExitRepl
   ];
 }

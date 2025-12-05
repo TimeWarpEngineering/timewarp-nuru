@@ -116,16 +116,26 @@ public sealed class DefaultKeyBindingProfile : IKeyBindingProfile
       [(ConsoleKey.X, ConsoleModifiers.Control)] = reader.HandleCut,
       [(ConsoleKey.V, ConsoleModifiers.Control)] = reader.HandlePaste,
 
+      // === Basic Editing Enhancement (PSReadLine: DeleteCharOrExit, ClearScreen) ===
+      [(ConsoleKey.D, ConsoleModifiers.Control)] = reader.HandleDeleteCharOrExit,
+      [(ConsoleKey.L, ConsoleModifiers.Control)] = reader.HandleClearScreen,
+      [(ConsoleKey.H, ConsoleModifiers.Control)] = reader.HandleBackwardDeleteChar,  // Alternative backspace
+      [(ConsoleKey.Insert, ConsoleModifiers.None)] = reader.HandleToggleInsertMode,
+
+      // === Alternative AcceptLine bindings ===
+      [(ConsoleKey.M, ConsoleModifiers.Control)] = reader.HandleEnter,  // Ctrl+M = Enter
+      [(ConsoleKey.J, ConsoleModifiers.Control)] = reader.HandleEnter,  // Ctrl+J = Newline/Enter
+
       // === Special Keys ===
       [(ConsoleKey.Escape, ConsoleModifiers.None)] = reader.HandleEscape,
-      [(ConsoleKey.D, ConsoleModifiers.Control)] = () => { }, // EOF - handled by ExitKeys
     };
   }
 
   /// <inheritdoc/>
   public HashSet<(ConsoleKey Key, ConsoleModifiers Modifiers)> GetExitKeys() =>
   [
-    (ConsoleKey.Enter, ConsoleModifiers.None),  // Submit command
-    (ConsoleKey.D, ConsoleModifiers.Control)    // EOF
+    (ConsoleKey.Enter, ConsoleModifiers.None),   // Submit command
+    (ConsoleKey.M, ConsoleModifiers.Control),    // Ctrl+M = Enter
+    (ConsoleKey.J, ConsoleModifiers.Control),    // Ctrl+J = Newline/Enter
   ];
 }

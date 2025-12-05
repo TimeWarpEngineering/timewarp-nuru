@@ -170,6 +170,12 @@ public sealed class VSCodeKeyBindingProfile : IKeyBindingProfile
       [(ConsoleKey.X, ConsoleModifiers.Control)] = reader.HandleCut,
       [(ConsoleKey.V, ConsoleModifiers.Control)] = reader.HandlePaste,
 
+      // === Screen Operations ===
+      [(ConsoleKey.L, ConsoleModifiers.Control)] = reader.HandleClearScreen,
+
+      // === Insert Mode Toggle ===
+      [(ConsoleKey.Insert, ConsoleModifiers.None)] = reader.HandleToggleInsertMode,
+
       // === Special Keys ===
       [(ConsoleKey.Escape, ConsoleModifiers.None)] = reader.HandleEscape,
     };

@@ -152,10 +152,11 @@ public sealed class EmacsKeyBindingProfile : IKeyBindingProfile
       [(ConsoleKey.R, ConsoleModifiers.Control)] = reader.HandleReverseSearchHistory,
       [(ConsoleKey.S, ConsoleModifiers.Control)] = reader.HandleForwardSearchHistory,
 
-      // === Deletion (Emacs: backward-delete-char, delete-char) ===
+      // === Deletion (Emacs: backward-delete-char, delete-char, delete-char-or-eof) ===
       [(ConsoleKey.Backspace, ConsoleModifiers.None)] = reader.HandleBackwardDeleteChar,
+      [(ConsoleKey.H, ConsoleModifiers.Control)] = reader.HandleBackwardDeleteChar,  // Ctrl+H = Backspace
       [(ConsoleKey.Delete, ConsoleModifiers.None)] = reader.HandleDeleteChar,
-      [(ConsoleKey.D, ConsoleModifiers.Control)] = reader.HandleDeleteChar, // Also EOF when handled by ExitKeys
+      [(ConsoleKey.D, ConsoleModifiers.Control)] = reader.HandleDeleteCharOrExit,  // Delete char or EOF if empty
 
       // === Kill Operations (Emacs: kill-line, backward-kill-input, unix-word-rubout, kill-word, backward-kill-word) ===
       [(ConsoleKey.K, ConsoleModifiers.Control)] = reader.HandleKillLine,
@@ -201,6 +202,16 @@ public sealed class EmacsKeyBindingProfile : IKeyBindingProfile
       [(ConsoleKey.X, ConsoleModifiers.Control)] = reader.HandleCut,
       [(ConsoleKey.V, ConsoleModifiers.Control)] = reader.HandlePaste,
 
+      // === Screen Operations (Emacs: clear-screen) ===
+      [(ConsoleKey.L, ConsoleModifiers.Control)] = reader.HandleClearScreen,
+
+      // === Insert Mode Toggle ===
+      [(ConsoleKey.Insert, ConsoleModifiers.None)] = reader.HandleToggleInsertMode,
+
+      // === Alternative AcceptLine bindings (Emacs: accept-line) ===
+      [(ConsoleKey.M, ConsoleModifiers.Control)] = reader.HandleEnter,  // Ctrl+M = carriage return
+      [(ConsoleKey.J, ConsoleModifiers.Control)] = reader.HandleEnter,  // Ctrl+J = newline
+
       // === Special Keys ===
       [(ConsoleKey.Escape, ConsoleModifiers.None)] = reader.HandleEscape,
     };
@@ -209,7 +220,8 @@ public sealed class EmacsKeyBindingProfile : IKeyBindingProfile
   /// <inheritdoc/>
   public HashSet<(ConsoleKey Key, ConsoleModifiers Modifiers)> GetExitKeys() =>
   [
-    (ConsoleKey.Enter, ConsoleModifiers.None),  // Submit command
-    (ConsoleKey.D, ConsoleModifiers.Control)    // EOF
+    (ConsoleKey.Enter, ConsoleModifiers.None),   // Submit command
+    (ConsoleKey.M, ConsoleModifiers.Control),    // Ctrl+M = Enter
+    (ConsoleKey.J, ConsoleModifiers.Control),    // Ctrl+J = Newline
   ];
 }

@@ -53,6 +53,9 @@ public sealed partial class ReplConsoleReader
   // Selection state fields
   private readonly Selection SelectionState = new();
 
+  // Exit signal for DeleteCharOrExit
+  private bool ShouldExitRepl;
+
   /// <summary>
   /// Creates a new REPL console reader.
   /// </summary>
@@ -143,10 +146,20 @@ public sealed partial class ReplConsoleReader
       {
         handler();
 
-        // Check if this key should exit the read loop
+        // Check if handler signaled exit (e.g., DeleteCharOrExit on empty line)
+        if (ShouldExitRepl)
+        {
+          ShouldExitRepl = false;  // Reset for next call
+          return null;
+        }
+
+        // Check if this key should exit the read loop (accept line)
         if (ExitKeys.Contains(keyBinding))
         {
-          return keyInfo.Key == ConsoleKey.Enter ? UserInput : null;
+          // All exit keys that are "accept line" should return UserInput
+          // (Enter, Ctrl+M, Ctrl+J are accept line; others would be EOF but
+          // those are now handled by ShouldExitRepl flag)
+          return UserInput;
         }
       }
       else if (!char.IsControl(keyInfo.KeyChar))
@@ -201,8 +214,15 @@ public sealed partial class ReplConsoleReader
       CursorPosition = start + 1;
       SelectionState.Clear();
     }
+    else if (IsOverwriteMode && CursorPosition < UserInput.Length)
+    {
+      // Overwrite mode: replace character at cursor
+      UserInput = UserInput[..CursorPosition] + charToInsert + UserInput[(CursorPosition + 1)..];
+      CursorPosition++;
+    }
     else
     {
+      // Insert mode (default): insert at cursor
       UserInput = UserInput[..CursorPosition] + charToInsert + UserInput[CursorPosition..];
       CursorPosition++;
     }

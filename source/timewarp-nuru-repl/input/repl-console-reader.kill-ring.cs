@@ -247,5 +247,6 @@ public sealed partial class ReplConsoleReader
     LastCommandWasKill = false;
     LastCommandWasYank = false;
     KillRing.ResetYankPosition();
+    ResetYankArgTracking();  // Also reset yank-arg state
   }
 }

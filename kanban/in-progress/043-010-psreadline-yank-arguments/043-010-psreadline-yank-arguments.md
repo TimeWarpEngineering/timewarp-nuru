@@ -19,25 +19,25 @@ Implement argument yanking functionality in the Nuru REPL, allowing users to qui
 ## Checklist
 
 ### Last Argument Yanking (IMPLEMENT)
-- [ ] Alt+.: YankLastArg - Insert last argument from previous history entry
-- [ ] Alt+_: YankLastArg - Alternative binding
-- [ ] Consecutive Alt+. cycles through history (each press = last arg of older command)
+- [x] Alt+.: YankLastArg - Insert last argument from previous history entry
+- [x] Alt+_: YankLastArg - Alternative binding
+- [x] Consecutive Alt+. cycles through history (each press = last arg of older command)
 
 ### Nth Argument Yanking (IMPLEMENT)
-- [ ] Alt+Ctrl+Y: YankNthArg - Insert Nth argument from previous command
-- [ ] Alt+0 Alt+.: Yank 0th arg (command name) from previous
-- [ ] Alt+1 Alt+.: Yank 1st arg from previous
-- [ ] etc.
+- [x] Alt+Ctrl+Y: YankNthArg - Insert Nth argument from previous command
+- [x] Alt+0 Alt+.: Yank 0th arg (command name) from previous
+- [x] Alt+1 Alt+.: Yank 1st arg from previous
+- [x] etc.
 
 ### Argument Extraction (IMPLEMENT)
-- [ ] Parse history entries into arguments
-- [ ] Handle quoted arguments: `"arg with spaces"`
-- [ ] Handle escaped characters: `arg\ with\ spaces`
+- [x] Parse history entries into arguments
+- [x] Handle quoted arguments: `"arg with spaces"`
+- [x] Handle escaped characters: `arg\ with\ spaces`
 
 ### Testing
-- [ ] Test with various argument formats
-- [ ] Test cycling through history
-- [ ] Test Nth argument selection
+- [x] Test with various argument formats
+- [x] Test cycling through history
+- [x] Test Nth argument selection
 
 ## Notes
 

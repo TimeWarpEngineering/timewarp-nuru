@@ -169,6 +169,23 @@ public sealed class EmacsKeyBindingProfile : IKeyBindingProfile
       [(ConsoleKey.Y, ConsoleModifiers.Control)] = reader.HandleYank,
       [(ConsoleKey.Y, ConsoleModifiers.Alt)] = reader.HandleYankPop,
 
+      // === Yank Argument Operations (Emacs: yank-last-arg, yank-nth-arg) ===
+      [(ConsoleKey.OemPeriod, ConsoleModifiers.Alt)] = reader.HandleYankLastArg,  // Alt+. (insert-last-argument)
+      [(ConsoleKey.OemMinus, ConsoleModifiers.Alt | ConsoleModifiers.Shift)] = reader.HandleYankLastArg,  // Alt+_
+      [(ConsoleKey.Y, ConsoleModifiers.Alt | ConsoleModifiers.Control)] = reader.HandleYankNthArg,  // Alt+Ctrl+Y
+
+      // === Digit Arguments for YankNthArg (Alt+0 through Alt+9) ===
+      [(ConsoleKey.D0, ConsoleModifiers.Alt)] = () => reader.HandleDigitArgument(0),
+      [(ConsoleKey.D1, ConsoleModifiers.Alt)] = () => reader.HandleDigitArgument(1),
+      [(ConsoleKey.D2, ConsoleModifiers.Alt)] = () => reader.HandleDigitArgument(2),
+      [(ConsoleKey.D3, ConsoleModifiers.Alt)] = () => reader.HandleDigitArgument(3),
+      [(ConsoleKey.D4, ConsoleModifiers.Alt)] = () => reader.HandleDigitArgument(4),
+      [(ConsoleKey.D5, ConsoleModifiers.Alt)] = () => reader.HandleDigitArgument(5),
+      [(ConsoleKey.D6, ConsoleModifiers.Alt)] = () => reader.HandleDigitArgument(6),
+      [(ConsoleKey.D7, ConsoleModifiers.Alt)] = () => reader.HandleDigitArgument(7),
+      [(ConsoleKey.D8, ConsoleModifiers.Alt)] = () => reader.HandleDigitArgument(8),
+      [(ConsoleKey.D9, ConsoleModifiers.Alt)] = () => reader.HandleDigitArgument(9),
+
       // === Word Case Operations (Emacs: upcase-word, downcase-word, capitalize-word) ===
       [(ConsoleKey.U, ConsoleModifiers.Alt)] = reader.HandleUpcaseWord,
       [(ConsoleKey.L, ConsoleModifiers.Alt)] = reader.HandleDowncaseWord,

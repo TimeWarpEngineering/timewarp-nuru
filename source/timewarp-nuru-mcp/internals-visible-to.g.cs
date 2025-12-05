@@ -130,6 +130,7 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("repl-30-basic-editing-enhancement")]
 [assembly: InternalsVisibleTo("repl-31-multiline-buffer")]
 [assembly: InternalsVisibleTo("repl-32-multiline-editing")]
+[assembly: InternalsVisibleTo("repl-33-yank-arguments")]
 [assembly: InternalsVisibleTo("routing-01-basic-matching")]
 [assembly: InternalsVisibleTo("routing-02-parameter-binding")]
 [assembly: InternalsVisibleTo("routing-03-optional-parameters")]

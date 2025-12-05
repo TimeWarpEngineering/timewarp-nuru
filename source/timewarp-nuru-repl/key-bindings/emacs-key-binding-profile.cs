@@ -168,6 +168,17 @@ public sealed class EmacsKeyBindingProfile : IKeyBindingProfile
       [(ConsoleKey.Y, ConsoleModifiers.Control)] = reader.HandleYank,
       [(ConsoleKey.Y, ConsoleModifiers.Alt)] = reader.HandleYankPop,
 
+      // === Word Case Operations (Emacs: upcase-word, downcase-word, capitalize-word) ===
+      [(ConsoleKey.U, ConsoleModifiers.Alt)] = reader.HandleUpcaseWord,
+      [(ConsoleKey.L, ConsoleModifiers.Alt)] = reader.HandleDowncaseWord,
+      [(ConsoleKey.C, ConsoleModifiers.Alt)] = reader.HandleCapitalizeWord,
+
+      // === Character Transposition (Emacs: transpose-chars) ===
+      [(ConsoleKey.T, ConsoleModifiers.Control)] = reader.HandleSwapCharacters,
+
+      // === Word Deletion (Emacs: backward-kill-word with Ctrl+Backspace) ===
+      [(ConsoleKey.Backspace, ConsoleModifiers.Control)] = reader.HandleBackwardDeleteWord,
+
       // === Undo/Redo Operations (Emacs: undo, redo, revert-line) ===
       [(ConsoleKey.OemMinus, ConsoleModifiers.Control)] = reader.HandleUndo,  // Ctrl+_ (underscore) - canonical Emacs
       [(ConsoleKey.Z, ConsoleModifiers.Control)] = reader.HandleUndo,         // Ctrl+Z - alternative

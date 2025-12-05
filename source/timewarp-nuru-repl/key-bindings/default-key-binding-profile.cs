@@ -79,6 +79,17 @@ public sealed class DefaultKeyBindingProfile : IKeyBindingProfile
       [(ConsoleKey.Y, ConsoleModifiers.Control)] = reader.HandleYank,
       [(ConsoleKey.Y, ConsoleModifiers.Alt)] = reader.HandleYankPop,
 
+      // === Word Operations (PSReadLine: UpcaseWord, DowncaseWord, CapitalizeWord) ===
+      [(ConsoleKey.U, ConsoleModifiers.Alt)] = reader.HandleUpcaseWord,
+      [(ConsoleKey.L, ConsoleModifiers.Alt)] = reader.HandleDowncaseWord,
+      [(ConsoleKey.C, ConsoleModifiers.Alt)] = reader.HandleCapitalizeWord,
+
+      // === Character Operations (PSReadLine: SwapCharacters) ===
+      [(ConsoleKey.T, ConsoleModifiers.Control)] = reader.HandleSwapCharacters,
+
+      // === Word Deletion (PSReadLine: BackwardDeleteWord) ===
+      [(ConsoleKey.Backspace, ConsoleModifiers.Control)] = reader.HandleBackwardDeleteWord,
+
       // === Undo/Redo Operations (PSReadLine: Undo, Redo, RevertLine) ===
       [(ConsoleKey.Z, ConsoleModifiers.Control)] = reader.HandleUndo,
       [(ConsoleKey.Z, ConsoleModifiers.Control | ConsoleModifiers.Shift)] = reader.HandleRedo,

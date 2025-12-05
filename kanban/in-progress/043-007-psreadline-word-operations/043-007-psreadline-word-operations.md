@@ -17,23 +17,23 @@ Implement word manipulation operations in the Nuru REPL, including case conversi
 ## Checklist
 
 ### Case Conversion (IMPLEMENT)
-- [ ] Alt+U: UpcaseWord - Convert from cursor to end of word to UPPERCASE
-- [ ] Alt+L: DowncaseWord - Convert from cursor to end of word to lowercase
-- [ ] Alt+C: CapitalizeWord - Uppercase first char, lowercase rest (from cursor)
+- [x] Alt+U: UpcaseWord - Convert from cursor to end of word to UPPERCASE
+- [x] Alt+L: DowncaseWord - Convert from cursor to end of word to lowercase
+- [x] Alt+C: CapitalizeWord - Uppercase first char, lowercase rest (from cursor)
 
 ### Character Operations (IMPLEMENT)
-- [ ] Ctrl+T: SwapCharacters - Swap character at cursor with previous character
-- [ ] Move cursor forward after swap (Emacs behavior)
+- [x] Ctrl+T: SwapCharacters - Swap character at cursor with previous character
+- [x] Move cursor forward after swap (Emacs behavior)
 
 ### Word Deletion (IMPLEMENT)
-- [ ] Alt+D: DeleteWord - Delete from cursor to end of word (same as KillWord but may not use kill ring)
-- [ ] Ctrl+Backspace: BackwardDeleteWord - Delete from start of word to cursor
-- [ ] Note: These may be aliases for kill operations
+- [x] Alt+D: DeleteWord - Delete from cursor to end of word (same as KillWord but may not use kill ring)
+- [x] Ctrl+Backspace: BackwardDeleteWord - Delete from start of word to cursor
+- [x] Note: These may be aliases for kill operations
 
 ### Testing
-- [ ] Test case conversion with mixed text
-- [ ] Test character swap at line boundaries
-- [ ] Test word deletion
+- [x] Test case conversion with mixed text
+- [x] Test character swap at line boundaries
+- [x] Test word deletion
 
 ## Notes
 

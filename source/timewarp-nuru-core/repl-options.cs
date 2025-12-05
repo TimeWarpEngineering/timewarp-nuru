@@ -12,6 +12,17 @@ public class ReplOptions
   public string Prompt { get; set; } = "> ";
 
   /// <summary>
+  /// The continuation prompt displayed for subsequent lines in multiline input mode.
+  /// Default is "&gt;&gt; " (two greater-than signs followed by a space).
+  /// Set to null to use the default.
+  /// </summary>
+  /// <remarks>
+  /// This prompt is shown when the user adds a new line with Shift+Enter without executing
+  /// the command. It visually indicates that the input continues from the previous line.
+  /// </remarks>
+  public string? ContinuationPrompt { get; set; } = ">> ";
+
+  /// <summary>
   /// The welcome message displayed when REPL mode starts.
   /// Set to null to disable.
   /// </summary>

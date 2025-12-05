@@ -22,6 +22,7 @@ public sealed class DefaultKeyBindingProfile : IKeyBindingProfile
     {
       // === Enter/Submit ===
       [(ConsoleKey.Enter, ConsoleModifiers.None)] = reader.HandleEnter,
+      [(ConsoleKey.Enter, ConsoleModifiers.Shift)] = reader.HandleAddLine,  // Shift+Enter adds new line without executing
 
       // === Tab Completion ===
       [(ConsoleKey.Tab, ConsoleModifiers.None)] = () => reader.HandleTabCompletion(reverse: false),

@@ -120,6 +120,7 @@ public sealed partial class ReplConsoleReader
     CompletionHandler.Reset();
     UndoManager.Clear();
     UndoManager.SetInitialState(string.Empty, 0);
+    MultilineInput.Clear();    // Reset multiline buffer for new input
 
     while (true)
     {
@@ -172,6 +173,13 @@ public sealed partial class ReplConsoleReader
 
   internal void HandleEnter()
   {
+    // If in multiline mode, move cursor to end of last line first
+    if (IsMultilineMode)
+    {
+      // Sync to get final UserInput value
+      SyncFromMultilineBuffer();
+    }
+
     Terminal.WriteLine();
 
     // Add to history if not empty and not duplicate of last entry
@@ -182,6 +190,9 @@ public sealed partial class ReplConsoleReader
         History.Add(UserInput);
       }
     }
+
+    // Clear multiline buffer for next input
+    MultilineInput.Clear();
   }
 
   internal void HandleTabCompletion(bool reverse)
@@ -237,6 +248,23 @@ public sealed partial class ReplConsoleReader
 
   private void RedrawLine()
   {
+    // Check if UserInput contains newlines (multiline content)
+    // This can happen when recalling multiline history
+    if (UserInput.Contains('\n', StringComparison.Ordinal) || UserInput.Contains('\r', StringComparison.Ordinal))
+    {
+      SyncToMultilineBuffer();
+      RedrawMultiline();
+      return;
+    }
+
+    // If already in multiline mode, delegate to multiline rendering
+    if (IsMultilineMode)
+    {
+      SyncToMultilineBuffer();
+      RedrawMultiline();
+      return;
+    }
+
     ReplLoggerMessages.LineRedrawn(Logger, UserInput, null);
 
     // Move cursor to beginning of line

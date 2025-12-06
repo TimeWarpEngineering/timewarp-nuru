@@ -16,10 +16,10 @@
 // - Custom validation with .Validate() (AOT-compatible)
 //
 // AOT COMPATIBILITY:
-//   ✅ Uses EnableConfigurationBindingGenerator for binding (no reflection)
+//   ✅ Uses manual property binding in Action<TOptions> overloads (no reflection)
 //   ✅ Uses FluentValidation instead of DataAnnotations (no reflection)
 //   ✅ All validation runs at compile-time or startup
-//   ❌ Avoid: .Bind(), .ValidateDataAnnotations() - these use reflection
+//   ❌ Avoid: .Bind(), .ValidateDataAnnotations(), IConfiguration overloads - these use reflection
 //
 // Settings file: configuration-validation.settings.json
 //
@@ -53,17 +53,32 @@ static void ConfigureServices(IServiceCollection services)
 
   if (config != null)
   {
-    // 1. FluentValidation (AOT-compatible, replaces DataAnnotations)
-    // ✅ Uses source generator for configuration binding (no reflection)
+    // 1. FluentValidation with AOT-compatible manual binding
+    // ✅ The Action<TOptions> overload avoids IConfiguration.Bind() reflection
+    // ✅ Manual property assignment is fully AOT-compatible
     // ✅ FluentValidation performs validation without reflection
+    IConfigurationSection serverSection = config.GetSection("Server");
     services
-      .AddFluentValidatedOptions<ServerOptions, ServerOptionsValidator>(config)
+      .AddFluentValidatedOptions<ServerOptions, ServerOptionsValidator>(options =>
+      {
+        // Manual binding is fully AOT-compatible (no reflection)
+        options.Host = serverSection["Host"] ?? options.Host;
+        options.Port = int.TryParse(serverSection["Port"], out int port) ? port : options.Port;
+        options.MaxConnections = int.TryParse(serverSection["MaxConnections"], out int max) ? max : options.MaxConnections;
+        options.Timeout = int.TryParse(serverSection["Timeout"], out int timeout) ? timeout : options.Timeout;
+      })
       .ValidateOnStart(); // ← Validates during Build(), not on first access
 
-    // 2. Custom validation logic (AOT-compatible)
-    // ✅ Configure() + source generator avoids reflection-based binding
-    services.Configure<DatabaseOptions>(config.GetSection("Database"));
+    // 2. Custom validation logic with AOT-compatible manual binding
+    // ✅ Manual binding avoids reflection-based Configure(section)
+    IConfigurationSection dbSection = config.GetSection("Database");
     services.AddOptions<DatabaseOptions>()
+      .Configure(options =>
+      {
+        // Manual binding is fully AOT-compatible (no reflection)
+        options.Type = dbSection["Type"] ?? options.Type;
+        options.ConnectionString = dbSection["ConnectionString"] ?? options.ConnectionString;
+      })
       .Validate(opts =>
       {
         // Custom business rule: connection string must match database type
@@ -79,10 +94,20 @@ static void ConfigureServices(IServiceCollection services)
       }, "Connection string format must match database type")
       .ValidateOnStart();
 
-    // 3. FluentValidation (most powerful, enterprise-grade)
-    // Using TimeWarp.OptionsValidation for automatic FluentValidation integration
+    // 3. FluentValidation with AOT-compatible manual binding (enterprise-grade)
+    // ✅ The Action<TOptions> overload is fully AOT-compatible
+    // ✅ Using TimeWarp.OptionsValidation for automatic FluentValidation integration
+    IConfigurationSection apiSection = config.GetSection("Api");
     services
-      .AddFluentValidatedOptions<ApiOptions, ApiOptionsValidator>(config)
+      .AddFluentValidatedOptions<ApiOptions, ApiOptionsValidator>(options =>
+      {
+        // Manual binding is fully AOT-compatible (no reflection)
+        options.BaseUrl = apiSection["BaseUrl"] ?? options.BaseUrl;
+        options.ApiKey = apiSection["ApiKey"] ?? options.ApiKey;
+        options.TimeoutSeconds = int.TryParse(apiSection["TimeoutSeconds"], out int timeout) ? timeout : options.TimeoutSeconds;
+        options.RetryCount = int.TryParse(apiSection["RetryCount"], out int retry) ? retry : options.RetryCount;
+        options.RateLimitPerMinute = int.TryParse(apiSection["RateLimitPerMinute"], out int rate) ? rate : options.RateLimitPerMinute;
+      })
       .ValidateOnStart(); // ✅ Validates when app starts, throws on error
   }
 

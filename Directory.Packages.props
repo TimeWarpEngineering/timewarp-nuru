@@ -25,7 +25,7 @@
     <PackageVersion Include="TimeWarp.Amuru" Version="1.0.0-beta.13" />
     <PackageVersion Include="TimeWarp.Jaribu" Version="1.0.0-beta.5" />
     <PackageVersion Include="TimeWarp.Build.Tasks" Version="1.0.0" />
-    <PackageVersion Include="TimeWarp.OptionsValidation" Version="1.0.0-beta.3" />
+    <PackageVersion Include="TimeWarp.OptionsValidation" Version="1.0.0-beta.4" />
     <PackageVersion Include="TimeWarp.Nuru.Parsing" Version="$(Version)" />
     <PackageVersion Include="TimeWarp.Nuru.Analyzers" Version="$(Version)" />
   </ItemGroup>

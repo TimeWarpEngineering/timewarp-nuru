@@ -132,6 +132,11 @@ services
   - This is an issue with the external package, not this sample
   - Should be tracked and fixed in TimeWarp.OptionsValidation
 
-### Resolution (2025-12-06)
+### Resolution (2025-12-07)
 
-- **Action Required:** Bump the version of `TimeWarp.OptionsValidation` package - the AOT issue has been resolved in a newer version
+- Bumped `TimeWarp.OptionsValidation` from `1.0.0-beta.3` to `1.0.0-beta.4`
+- Added `<clear />` to `nuget.config` to fix NU1507 package source mapping error
+- Refactored sample to use `Action<TOptions>` overloads with manual property binding
+- AOT publish now produces **zero warnings**
+
+**Completed in commit:** `5575f78`

@@ -13,10 +13,12 @@ The Table widget incorrectly calculates column widths when cell content contains
 ## Checklist
 
 ### Implementation
-- [ ] Update `AnsiPattern` regex to include OSC 8 sequences: `@"\x1b\[[0-9;]*m|\x1b\]8;;[^\x1b]*\x1b\\"`
-- [ ] Add test: `Should_strip_osc8_hyperlink_sequences`
-- [ ] Add test: `Should_get_visible_length_with_hyperlinks`
-- [ ] Add test: `Should_handle_styled_hyperlinks`
+- [x] Update `AnsiPattern` regex to include OSC 8 sequences (also supports BEL terminator)
+- [x] Add test: `Should_strip_osc8_hyperlink_sequences`
+- [x] Add test: `Should_get_visible_length_with_hyperlinks`
+- [x] Add test: `Should_handle_styled_hyperlinks`
+- [x] Add test: `Should_strip_osc8_hyperlink_with_bel_terminator`
+- [x] Add test: `Should_handle_multiple_hyperlinks_in_text`
 - [ ] Verify table rendering with `dnx ardalis dotnetconf-score`
 
 ## Notes

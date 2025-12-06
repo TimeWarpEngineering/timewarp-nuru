@@ -131,3 +131,7 @@ services
 - `TimeWarp.OptionsValidation` package produces IL2104/IL3053 warnings
   - This is an issue with the external package, not this sample
   - Should be tracked and fixed in TimeWarp.OptionsValidation
+
+### Resolution (2025-12-06)
+
+- **Action Required:** Bump the version of `TimeWarp.OptionsValidation` package - the AOT issue has been resolved in a newer version

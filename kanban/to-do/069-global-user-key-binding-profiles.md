@@ -28,25 +28,75 @@ Follows Task 057 (Custom Key Bindings via Builder API) which implemented the pro
 - [ ] Plan config file precedence rules
 
 ### Implementation - Action Registry
-- [ ] Create `Source/TimeWarp.Nuru.Repl/KeyBindings/KeyBindingActionRegistry.cs`
+- [ ] Create `source/timewarp-nuru-repl/key-bindings/key-binding-action-registry.cs`
   - [ ] Map action names to handler method factories
-  - [ ] Support all existing handlers:
+  - [ ] Support all existing handlers (58 total):
+    
+    **Cursor Movement (6)**
     - [ ] BackwardChar, ForwardChar
     - [ ] BackwardWord, ForwardWord
     - [ ] BeginningOfLine, EndOfLine
-    - [ ] BackwardDeleteChar, DeleteChar
+    
+    **History (6)**
     - [ ] PreviousHistory, NextHistory
     - [ ] BeginningOfHistory, EndOfHistory
     - [ ] HistorySearchBackward, HistorySearchForward
-    - [ ] TabComplete, TabComplete:reverse
+    
+    **History Search (2)**
+    - [ ] ReverseSearchHistory, ForwardSearchHistory
+    
+    **Basic Editing (7)**
+    - [ ] BackwardDeleteChar, DeleteChar
+    - [ ] DeleteCharOrExit
+    - [ ] Escape, KillLine
+    - [ ] DeleteWordBackward, DeleteToLineStart
+    
+    **Advanced Editing (3)**
+    - [ ] ClearScreen, ToggleInsertMode
+    - [ ] CharacterWithOverwrite
+    
+    **Word Operations (6)**
+    - [ ] UpcaseWord, DowncaseWord, CapitalizeWord
+    - [ ] SwapCharacters
+    - [ ] DeleteWord, BackwardDeleteWord
+    
+    **Selection (11)**
+    - [ ] SelectBackwardChar, SelectForwardChar
+    - [ ] SelectBackwardWord, SelectNextWord
+    - [ ] SelectBackwardsLine, SelectLine
+    - [ ] SelectAll
+    - [ ] CopyOrCancelLine, Cut, Paste
+    - [ ] DeleteSelection
+    
+    **Kill Ring (7)**
+    - [ ] KillLineToRing, BackwardKillInput
+    - [ ] UnixWordRubout
+    - [ ] KillWord, BackwardKillWord
+    - [ ] Yank, YankPop
+    
+    **Yank Arg (3)**
+    - [ ] YankLastArg, YankNthArg
+    - [ ] DigitArgument (0-9)
+    
+    **Undo/Redo (3)**
+    - [ ] Undo, Redo, RevertLine
+    
+    **Tab Completion (2)**
+    - [ ] TabComplete, TabCompleteReverse
     - [ ] PossibleCompletions
-    - [ ] Enter, Escape
+    
+    **Multiline (1)**
+    - [ ] AddLine
+    
+    **Control (1)**
+    - [ ] Enter
+    
   - [ ] `GetAction(string name, ReplConsoleReader reader)` method
   - [ ] `GetAvailableActions()` for discoverability
   - [ ] XML documentation listing all actions
 
 ### Implementation - Config Model
-- [ ] Create `Source/TimeWarp.Nuru.Repl/KeyBindings/KeyBindingConfig.cs`
+- [ ] Create `source/timewarp-nuru-repl/key-bindings/key-binding-config.cs`
   - [ ] `Name` property
   - [ ] `BaseProfile` property (optional: "Default", "Emacs", "Vi", "VSCode")
   - [ ] `Overrides` dictionary (key combo → action name)
@@ -55,7 +105,7 @@ Follows Task 057 (Custom Key Bindings via Builder API) which implemented the pro
   - [ ] `ExitKeys` list (optional)
 
 ### Implementation - Config Loader
-- [ ] Create `Source/TimeWarp.Nuru.Repl/KeyBindings/KeyBindingConfigLoader.cs`
+- [ ] Create `source/timewarp-nuru-repl/key-bindings/key-binding-config-loader.cs`
   - [ ] `LoadFromFile(string path)` method
   - [ ] `LoadFromJson(string json)` method
   - [ ] `LoadDefault()` method (searches standard locations)
@@ -79,7 +129,7 @@ Follows Task 057 (Custom Key Bindings via Builder API) which implemented the pro
 - [ ] Only auto-discover if neither is set
 
 ### Testing
-- [ ] Create `Tests/TimeWarp.Nuru.Repl.Tests/KeyBindings/config-loader-tests.cs`
+- [ ] Create `tests/timewarp-nuru-repl-tests/key-bindings/config-loader-tests.cs`
   - [ ] Test JSON parsing
   - [ ] Test key combination string parsing
   - [ ] Test action name resolution
@@ -91,7 +141,7 @@ Follows Task 057 (Custom Key Bindings via Builder API) which implemented the pro
 ### Documentation
 - [ ] Create `documentation/user/features/global-key-binding-profiles.md`
   - [ ] Config file format specification
-  - [ ] Available action names reference
+  - [ ] Available action names reference (all 58 actions)
   - [ ] Search path explanation
   - [ ] Example configurations
 - [ ] Add sample config files to `samples/configuration/`
@@ -109,10 +159,11 @@ Follows Task 057 (Custom Key Bindings via Builder API) which implemented the pro
   "baseProfile": "Emacs",
   "overrides": {
     "Ctrl+U": "Escape",
-    "Ctrl+K": "DeleteToEnd"
+    "Ctrl+K": "KillLineToRing"
   },
   "additions": {
-    "Ctrl+G": "Bell"
+    "Ctrl+G": "Bell",
+    "Ctrl+Shift+Z": "Redo"
   },
   "removals": [
     "Ctrl+D"
@@ -131,10 +182,52 @@ Follows Task 057 (Custom Key Bindings via Builder API) which implemented the pro
 | `"Ctrl+A"` | ConsoleKey.A, Control |
 | `"Alt+F"` | ConsoleKey.F, Alt |
 | `"Ctrl+Shift+K"` | ConsoleKey.K, Control \| Shift |
+| `"Ctrl+Shift+Left"` | ConsoleKey.LeftArrow, Control \| Shift |
 | `"Enter"` | ConsoleKey.Enter, None |
 | `"Escape"` | ConsoleKey.Escape, None |
 | `"Tab"` | ConsoleKey.Tab, None |
 | `"Shift+Tab"` | ConsoleKey.Tab, Shift |
+| `"Alt+."` | ConsoleKey.OemPeriod, Alt |
+
+### Action Name Reference
+
+```
+# Cursor Movement
+BackwardChar, ForwardChar, BackwardWord, ForwardWord, BeginningOfLine, EndOfLine
+
+# History
+PreviousHistory, NextHistory, BeginningOfHistory, EndOfHistory
+HistorySearchBackward, HistorySearchForward, ReverseSearchHistory, ForwardSearchHistory
+
+# Basic Editing
+BackwardDeleteChar, DeleteChar, DeleteCharOrExit, Escape, KillLine
+DeleteWordBackward, DeleteToLineStart, ClearScreen, ToggleInsertMode
+
+# Word Operations
+UpcaseWord, DowncaseWord, CapitalizeWord, SwapCharacters, DeleteWord, BackwardDeleteWord
+
+# Selection
+SelectBackwardChar, SelectForwardChar, SelectBackwardWord, SelectNextWord
+SelectBackwardsLine, SelectLine, SelectAll, CopyOrCancelLine, Cut, Paste, DeleteSelection
+
+# Kill Ring
+KillLineToRing, BackwardKillInput, UnixWordRubout, KillWord, BackwardKillWord, Yank, YankPop
+
+# Yank Arg
+YankLastArg, YankNthArg, DigitArgument:0-9
+
+# Undo
+Undo, Redo, RevertLine
+
+# Tab Completion
+TabComplete, TabComplete:reverse, PossibleCompletions
+
+# Multiline
+AddLine
+
+# Control
+Enter
+```
 
 ### Config Precedence
 

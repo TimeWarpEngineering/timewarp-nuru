@@ -42,7 +42,7 @@ public static class HelpProvider
 
     // Usage section
     sb.AppendLine("Usage:");
-    sb.AppendLine("  " + (appName ?? "nuru-app") + " [command] [options]");
+    sb.AppendLine("  " + (appName ?? GetDefaultAppName()) + " [command] [options]");
     sb.AppendLine();
 
     // Group endpoints by description for alias grouping
@@ -236,6 +236,22 @@ public static class HelpProvider
       "$";
 
     return Regex.IsMatch(input, regexPattern, RegexOptions.IgnoreCase);
+  }
+
+  /// <summary>
+  /// Gets the default application name using AppNameDetector.
+  /// Falls back to "nuru-app" if detection fails.
+  /// </summary>
+  private static string GetDefaultAppName()
+  {
+    try
+    {
+      return AppNameDetector.GetEffectiveAppName();
+    }
+    catch (InvalidOperationException)
+    {
+      return "nuru-app";
+    }
   }
 
   /// <summary>

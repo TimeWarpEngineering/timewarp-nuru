@@ -1,7 +1,11 @@
+using Microsoft.Extensions.DependencyInjection;
 using TimeWarp.Nuru;
 using static System.Console;
 
-NuruAppBuilder builder = new();
+NuruAppBuilder builder = NuruApp.CreateBuilder(args);
+
+// Register the source-generated Mediator
+builder.Services.AddMediator();
 
 // Test 1: Basic Commands
 builder.Map("status", () => WriteLine("✓ System is running"));

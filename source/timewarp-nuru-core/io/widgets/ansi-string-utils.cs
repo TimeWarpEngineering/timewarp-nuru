@@ -6,16 +6,19 @@ namespace TimeWarp.Nuru;
 public static partial class AnsiStringUtils
 {
   /// <summary>
-  /// Regular expression pattern matching ANSI escape sequences.
-  /// Matches sequences like \x1b[0m, \x1b[31m, \x1b[38;5;214m, etc.
+  /// Compiled regex for stripping ANSI escape sequences.
+  /// Matches:
+  /// - CSI sequences like \x1b[0m, \x1b[31m, \x1b[38;5;214m, etc.
+  /// - OSC 8 hyperlink sequences: \x1b]8;;URL\x1b\ or \x1b]8;;URL\a (BEL terminator)
   /// </summary>
-  private const string AnsiPattern = @"\x1b\[[0-9;]*m";
+  private static readonly Regex AnsiRegexInstance = new(
+    @"\x1b\[[0-9;]*m|\x1b]8;;[^\x07\x1b]*(?:\x1b\\|\x07)",
+    RegexOptions.Compiled);
 
   /// <summary>
   /// Gets the compiled regex for stripping ANSI codes.
   /// </summary>
-  [GeneratedRegex(AnsiPattern)]
-  private static partial Regex AnsiRegex();
+  private static Regex AnsiRegex() => AnsiRegexInstance;
 
   /// <summary>
   /// Removes all ANSI escape codes from a string.

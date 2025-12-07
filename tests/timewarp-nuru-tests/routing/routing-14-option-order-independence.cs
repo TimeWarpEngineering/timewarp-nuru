@@ -249,4 +249,29 @@ public class OptionOrderIndependenceTests
 
     await Task.CompletedTask;
   }
+
+  public static async Task Should_match_required_flag_with_optional_value()
+  {
+    // --output {file?} means flag is REQUIRED, but value is OPTIONAL
+    // This is different from --output? {file} where the flag itself is optional
+    string? boundFile = null;
+
+    NuruCoreApp app = new NuruAppBuilder()
+      .Map("build --output {file?}",
+        (string? file) =>
+        {
+          boundFile = file;
+          return 0;
+        })
+      .Build();
+
+    // Act - provide flag with value
+    int exitCode = await app.RunAsync(["build", "--output", "out.dll"]);
+
+    // Assert
+    exitCode.ShouldBe(0);
+    boundFile.ShouldBe("out.dll");
+
+    await Task.CompletedTask;
+  }
 }

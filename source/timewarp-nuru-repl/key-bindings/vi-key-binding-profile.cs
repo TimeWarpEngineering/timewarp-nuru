@@ -128,15 +128,62 @@ public sealed class ViKeyBindingProfile : IKeyBindingProfile
       [(ConsoleKey.UpArrow, ConsoleModifiers.None)] = reader.HandlePreviousHistory,
       [(ConsoleKey.DownArrow, ConsoleModifiers.None)] = reader.HandleNextHistory,
 
+      // === Interactive History Search ===
+      [(ConsoleKey.R, ConsoleModifiers.Control)] = reader.HandleReverseSearchHistory,
+      [(ConsoleKey.S, ConsoleModifiers.Control)] = reader.HandleForwardSearchHistory,
+
       // === Deletion ===
       [(ConsoleKey.Backspace, ConsoleModifiers.None)] = reader.HandleBackwardDeleteChar,
       [(ConsoleKey.Delete, ConsoleModifiers.None)] = reader.HandleDeleteChar,
-      [(ConsoleKey.D, ConsoleModifiers.Control)] = reader.HandleDeleteChar, // Also EOF when handled by ExitKeys
+      [(ConsoleKey.D, ConsoleModifiers.Control)] = reader.HandleDeleteCharOrExit,  // Delete char or EOF if empty
 
       // === Vi-style Kill Operations ===
-      // Note: Ctrl+W (delete-word-backward), Ctrl+U (delete-to-line-start), Ctrl+K (delete-to-line-end)
-      // would need new handler methods. These are noted as future enhancements.
-      // For now, these bindings are omitted until the handlers are implemented.
+      [(ConsoleKey.W, ConsoleModifiers.Control)] = reader.HandleUnixWordRubout,
+      [(ConsoleKey.U, ConsoleModifiers.Control)] = reader.HandleBackwardKillInput,
+      [(ConsoleKey.K, ConsoleModifiers.Control)] = reader.HandleKillLine,
+      [(ConsoleKey.D, ConsoleModifiers.Alt)] = reader.HandleKillWord,
+      [(ConsoleKey.Backspace, ConsoleModifiers.Alt)] = reader.HandleBackwardKillWord,
+
+      // === Yank Operations ===
+      [(ConsoleKey.Y, ConsoleModifiers.Control)] = reader.HandleYank,
+      [(ConsoleKey.Y, ConsoleModifiers.Alt)] = reader.HandleYankPop,
+
+      // === Yank Argument Operations (PSReadLine: YankLastArg, YankNthArg) ===
+      [(ConsoleKey.OemPeriod, ConsoleModifiers.Alt)] = reader.HandleYankLastArg,  // Alt+.
+      [(ConsoleKey.OemMinus, ConsoleModifiers.Alt | ConsoleModifiers.Shift)] = reader.HandleYankLastArg,  // Alt+_
+      [(ConsoleKey.Y, ConsoleModifiers.Alt | ConsoleModifiers.Control)] = reader.HandleYankNthArg,  // Alt+Ctrl+Y
+
+      // === Digit Arguments for YankNthArg (Alt+0 through Alt+9) ===
+      [(ConsoleKey.D0, ConsoleModifiers.Alt)] = () => reader.HandleDigitArgument(0),
+      [(ConsoleKey.D1, ConsoleModifiers.Alt)] = () => reader.HandleDigitArgument(1),
+      [(ConsoleKey.D2, ConsoleModifiers.Alt)] = () => reader.HandleDigitArgument(2),
+      [(ConsoleKey.D3, ConsoleModifiers.Alt)] = () => reader.HandleDigitArgument(3),
+      [(ConsoleKey.D4, ConsoleModifiers.Alt)] = () => reader.HandleDigitArgument(4),
+      [(ConsoleKey.D5, ConsoleModifiers.Alt)] = () => reader.HandleDigitArgument(5),
+      [(ConsoleKey.D6, ConsoleModifiers.Alt)] = () => reader.HandleDigitArgument(6),
+      [(ConsoleKey.D7, ConsoleModifiers.Alt)] = () => reader.HandleDigitArgument(7),
+      [(ConsoleKey.D8, ConsoleModifiers.Alt)] = () => reader.HandleDigitArgument(8),
+      [(ConsoleKey.D9, ConsoleModifiers.Alt)] = () => reader.HandleDigitArgument(9),
+
+      // === Undo/Redo Operations ===
+      [(ConsoleKey.Z, ConsoleModifiers.Control)] = reader.HandleUndo,
+      [(ConsoleKey.Z, ConsoleModifiers.Control | ConsoleModifiers.Shift)] = reader.HandleRedo,
+
+      // === Selection (Shift+Arrow) ===
+      [(ConsoleKey.LeftArrow, ConsoleModifiers.Shift)] = reader.HandleSelectBackwardChar,
+      [(ConsoleKey.RightArrow, ConsoleModifiers.Shift)] = reader.HandleSelectForwardChar,
+      [(ConsoleKey.LeftArrow, ConsoleModifiers.Control | ConsoleModifiers.Shift)] = reader.HandleSelectBackwardWord,
+      [(ConsoleKey.RightArrow, ConsoleModifiers.Control | ConsoleModifiers.Shift)] = reader.HandleSelectNextWord,
+      [(ConsoleKey.Home, ConsoleModifiers.Shift)] = reader.HandleSelectBackwardsLine,
+      [(ConsoleKey.End, ConsoleModifiers.Shift)] = reader.HandleSelectLine,
+
+      // === Clipboard Operations ===
+      [(ConsoleKey.C, ConsoleModifiers.Control)] = reader.HandleCopyOrCancelLine,
+      [(ConsoleKey.X, ConsoleModifiers.Control)] = reader.HandleCut,
+      [(ConsoleKey.V, ConsoleModifiers.Control)] = reader.HandlePaste,
+
+      // === Screen Operations ===
+      [(ConsoleKey.L, ConsoleModifiers.Control)] = reader.HandleClearScreen,
 
       // === Clear/Escape ===
       [(ConsoleKey.Escape, ConsoleModifiers.None)] = reader.HandleEscape,
@@ -148,6 +195,6 @@ public sealed class ViKeyBindingProfile : IKeyBindingProfile
   public HashSet<(ConsoleKey Key, ConsoleModifiers Modifiers)> GetExitKeys() =>
   [
     (ConsoleKey.Enter, ConsoleModifiers.None),  // Submit command
-    (ConsoleKey.D, ConsoleModifiers.Control)    // EOF (Vi-style Ctrl+D)
+    // Note: Ctrl+D now handled by HandleDeleteCharOrExit which signals exit via ShouldExitRepl
   ];
 }

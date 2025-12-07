@@ -51,6 +51,123 @@ dotnet publish -c Release -r osx-arm64
 dotnet publish -c Release -r win-x64
 ```
 
+### Source Generators for AOT
+
+TimeWarp.Nuru uses source generators to achieve full AOT compatibility with zero IL2XXX/IL3XXX warnings. When you reference the `TimeWarp.Nuru` NuGet package, the `NuruInvokerGenerator` source generator is automatically included and runs at compile time.
+
+**What the source generator does:**
+- Analyzes your `Map()` delegate signatures
+- Generates typed invoker methods at compile time
+- Eliminates reflection-based delegate invocation
+- Ensures fast, AOT-compatible execution
+
+**When using `NuruApp.CreateBuilder()` with DI:**
+
+You must register the Mediator source generator for AOT-compatible dependency injection:
+
+```csharp
+using Microsoft.Extensions.DependencyInjection;
+using TimeWarp.Nuru;
+
+NuruAppBuilder builder = NuruApp.CreateBuilder(args);
+
+// REQUIRED: Register source-generated Mediator for AOT compatibility
+builder.Services.AddMediator();
+
+builder.Map("hello", () => Console.WriteLine("Hello!"));
+// ... more routes
+
+NuruCoreApp app = builder.Build();
+return await app.RunAsync(args);
+```
+
+Add the Mediator packages to your project:
+
+```xml
+<ItemGroup>
+  <PackageReference Include="Mediator.Abstractions" />
+  <PackageReference Include="Mediator.SourceGenerator">
+    <PrivateAssets>all</PrivateAssets>
+    <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+  </PackageReference>
+</ItemGroup>
+```
+
+### Fail-Fast Behavior
+
+TimeWarp.Nuru uses a **fail-fast, no silent fallback** approach for AOT compatibility:
+
+- If a delegate signature doesn't have a generated invoker, an exception is thrown immediately
+- There is no silent fallback to reflection (which would fail at runtime with AOT anyway)
+- This ensures you discover any issues at development time, not in production
+
+Example error:
+```
+No source-generated invoker found for signature 'MyCustomSignature'.
+Ensure the NuruInvokerGenerator source generator is running and the delegate signature is supported.
+```
+
+**Supported delegate signatures include:**
+- Parameterless: `() => ...`
+- With parameters: `(string name, int count) => ...`
+- With optional parameters: `(string name, int? count) => ...`
+- Async variants: `async () => ...`, `async (string name) => ...`
+- Returning int or Task<int> for exit codes
+
+### AOT Limitations and Edge Cases
+
+**Fully Supported:**
+- All built-in types (int, double, string, bool, DateTime, Guid, etc.)
+- Nullable types (int?, string?, etc.)
+- Array parameters for catch-all routes (`string[]`)
+- Async/await patterns
+- Optional parameters
+- Boolean options (flags)
+
+**Considerations:**
+- Custom type converters must be AOT-compatible (no runtime code generation)
+- Dynamic completion providers must not use reflection
+- Third-party libraries in your handlers must be AOT-compatible
+
+**Complete Example:**
+
+See the [AOT Example](../../../samples/aot-example/) for a complete, working AOT sample.
+
+### Migration from Non-AOT Versions
+
+If upgrading from a version without AOT support:
+
+1. **Add Mediator packages** (if using `CreateBuilder()`):
+   ```xml
+   <PackageReference Include="Mediator.Abstractions" />
+   <PackageReference Include="Mediator.SourceGenerator">
+     <PrivateAssets>all</PrivateAssets>
+     <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+   </PackageReference>
+   ```
+
+2. **Call `AddMediator()`**:
+   ```csharp
+   builder.Services.AddMediator();
+   ```
+
+3. **Add AOT properties** to your .csproj:
+   ```xml
+   <PropertyGroup>
+     <PublishAot>true</PublishAot>
+     <TrimMode>partial</TrimMode>
+   </PropertyGroup>
+   ```
+
+4. **Build and test** - any unsupported patterns will fail fast with clear error messages
+
+5. **Publish**:
+   ```bash
+   dotnet publish -c Release -r linux-x64
+   ```
+
+No other code changes are required for standard use cases.
+
 ## .NET 10 Runfiles
 
 Create single-file executables that run directly.

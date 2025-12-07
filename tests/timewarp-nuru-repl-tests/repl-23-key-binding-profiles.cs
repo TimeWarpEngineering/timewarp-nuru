@@ -13,16 +13,9 @@ return await RunTests<KeyBindingProfileTests>(clearCache: true);
 /// <para><strong>IMPLEMENTATION STATUS:</strong></para>
 /// <list type="bullet">
 /// <item><description>✅ DefaultKeyBindingProfile: COMPLETE - All handler methods exist</description></item>
-/// <item><description>⚠️ EmacsKeyBindingProfile: PARTIAL - Missing: HandleKillLine (Ctrl+K)</description></item>
-/// <item><description>⚠️ ViKeyBindingProfile: PARTIAL - Missing: HandleDeleteWordBackward (Ctrl+W), HandleDeleteToLineStart (Ctrl+U), HandleKillLine (Ctrl+K)</description></item>
-/// <item><description>⚠️ VSCodeKeyBindingProfile: PARTIAL - Missing: HandleKillLine (Ctrl+K), HandleDeleteWordBackward (Ctrl+Backspace)</description></item>
-/// </list>
-///
-/// <para><strong>MISSING HANDLER METHODS (Future Work):</strong></para>
-/// <list type="number">
-/// <item><description>HandleKillLine() - Delete from cursor to end of line (Emacs Ctrl+K, Vi Ctrl+K, VSCode Ctrl+K)</description></item>
-/// <item><description>HandleDeleteWordBackward() - Delete word before cursor (Vi Ctrl+W, VSCode Ctrl+Backspace)</description></item>
-/// <item><description>HandleDeleteToLineStart() - Delete from beginning of line to cursor (Vi Ctrl+U)</description></item>
+/// <item><description>✅ EmacsKeyBindingProfile: COMPLETE - All handlers including Ctrl+K, Ctrl+U</description></item>
+/// <item><description>✅ ViKeyBindingProfile: COMPLETE - All handlers including Ctrl+W, Ctrl+U, Ctrl+K</description></item>
+/// <item><description>✅ VSCodeKeyBindingProfile: COMPLETE - All handlers including Ctrl+K, Ctrl+Backspace</description></item>
 /// </list>
 ///
 /// <para>

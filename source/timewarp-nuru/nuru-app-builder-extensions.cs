@@ -27,6 +27,12 @@ public static class NuruAppBuilderExtensions
     ArgumentNullException.ThrowIfNull(builder);
     options ??= new NuruAppOptions();
 
+    // Configure help options if provided
+    if (options.ConfigureHelp is not null)
+    {
+      builder.ConfigureHelp(options.ConfigureHelp);
+    }
+
     return builder
       .UseTelemetry(options.ConfigureTelemetry ?? (_ => { }))
       .AddReplSupport(options.ConfigureRepl)

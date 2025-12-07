@@ -4,18 +4,22 @@
 #:package Mediator.SourceGenerator
 #:package Microsoft.Extensions.Options
 #:package Microsoft.Extensions.Options.ConfigurationExtensions
-#:package Microsoft.Extensions.Options.DataAnnotations
 #:package TimeWarp.OptionsValidation
 #:property EnableConfigurationBindingGenerator=true
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// CONFIGURATION VALIDATION - FAIL-FAST WITH VALIDATEONSTART
+// CONFIGURATION VALIDATION - FAIL-FAST WITH VALIDATEONSTART (AOT-COMPATIBLE)
 // ═══════════════════════════════════════════════════════════════════════════════
 //
 // This sample demonstrates NuruApp.CreateBuilder(args) with configuration validation:
-// - DataAnnotations (built-in .NET attributes)
-// - Custom validation with .Validate()
-// - FluentValidation (enterprise-grade validation library)
+// - FluentValidation (enterprise-grade, AOT-compatible)
+// - Custom validation with .Validate() (AOT-compatible)
+//
+// AOT COMPATIBILITY:
+//   ✅ Uses manual property binding in Action<TOptions> overloads (no reflection)
+//   ✅ Uses FluentValidation instead of DataAnnotations (no reflection)
+//   ✅ All validation runs at compile-time or startup
+//   ❌ Avoid: .Bind(), .ValidateDataAnnotations(), IConfiguration overloads - these use reflection
 //
 // Settings file: configuration-validation.settings.json
 //
@@ -49,15 +53,32 @@ static void ConfigureServices(IServiceCollection services)
 
   if (config != null)
   {
-    // 1. DataAnnotations validation (built-in)
-    services.AddOptions<ServerOptions>()
-      .Bind(config.GetSection("Server"))
-      .ValidateDataAnnotations()  // Validates [Required], [Range], etc.
-      .ValidateOnStart();          // ← Validates during Build(), not on first access
+    // 1. FluentValidation with AOT-compatible manual binding
+    // ✅ The Action<TOptions> overload avoids IConfiguration.Bind() reflection
+    // ✅ Manual property assignment is fully AOT-compatible
+    // ✅ FluentValidation performs validation without reflection
+    IConfigurationSection serverSection = config.GetSection("Server");
+    services
+      .AddFluentValidatedOptions<ServerOptions, ServerOptionsValidator>(options =>
+      {
+        // Manual binding is fully AOT-compatible (no reflection)
+        options.Host = serverSection["Host"] ?? options.Host;
+        options.Port = int.TryParse(serverSection["Port"], out int port) ? port : options.Port;
+        options.MaxConnections = int.TryParse(serverSection["MaxConnections"], out int max) ? max : options.MaxConnections;
+        options.Timeout = int.TryParse(serverSection["Timeout"], out int timeout) ? timeout : options.Timeout;
+      })
+      .ValidateOnStart(); // ← Validates during Build(), not on first access
 
-    // 2. Custom validation logic
+    // 2. Custom validation logic with AOT-compatible manual binding
+    // ✅ Manual binding avoids reflection-based Configure(section)
+    IConfigurationSection dbSection = config.GetSection("Database");
     services.AddOptions<DatabaseOptions>()
-      .Bind(config.GetSection("Database"))
+      .Configure(options =>
+      {
+        // Manual binding is fully AOT-compatible (no reflection)
+        options.Type = dbSection["Type"] ?? options.Type;
+        options.ConnectionString = dbSection["ConnectionString"] ?? options.ConnectionString;
+      })
       .Validate(opts =>
       {
         // Custom business rule: connection string must match database type
@@ -73,10 +94,20 @@ static void ConfigureServices(IServiceCollection services)
       }, "Connection string format must match database type")
       .ValidateOnStart();
 
-    // 3. FluentValidation (most powerful, enterprise-grade)
-    // Using TimeWarp.OptionsValidation for automatic FluentValidation integration
+    // 3. FluentValidation with AOT-compatible manual binding (enterprise-grade)
+    // ✅ The Action<TOptions> overload is fully AOT-compatible
+    // ✅ Using TimeWarp.OptionsValidation for automatic FluentValidation integration
+    IConfigurationSection apiSection = config.GetSection("Api");
     services
-      .AddFluentValidatedOptions<ApiOptions, ApiOptionsValidator>(config)
+      .AddFluentValidatedOptions<ApiOptions, ApiOptionsValidator>(options =>
+      {
+        // Manual binding is fully AOT-compatible (no reflection)
+        options.BaseUrl = apiSection["BaseUrl"] ?? options.BaseUrl;
+        options.ApiKey = apiSection["ApiKey"] ?? options.ApiKey;
+        options.TimeoutSeconds = int.TryParse(apiSection["TimeoutSeconds"], out int timeout) ? timeout : options.TimeoutSeconds;
+        options.RetryCount = int.TryParse(apiSection["RetryCount"], out int retry) ? retry : options.RetryCount;
+        options.RateLimitPerMinute = int.TryParse(apiSection["RateLimitPerMinute"], out int rate) ? rate : options.RateLimitPerMinute;
+      })
       .ValidateOnStart(); // ✅ Validates when app starts, throws on error
   }
 
@@ -89,38 +120,35 @@ return await app.RunAsync(args);
 
 // Route handlers
 
-async Task ShowValidationStatusAsync()
+void ShowValidationStatusAsync()
 {
   WriteLine("\n✓ All configuration validated successfully at startup!");
   WriteLine("\nThis demonstrates fail-fast behavior:");
   WriteLine("  • Invalid configuration would have thrown OptionsValidationException during Build()");
   WriteLine("  • No need to wait until first access to discover configuration errors");
   WriteLine("  • Matches ASP.NET Core and Hosted Services behavior");
-  await Task.CompletedTask;
 }
 
-async Task ShowServerInfoAsync(IOptions<ServerOptions> serverOptions)
+void ShowServerInfoAsync(IOptions<ServerOptions> serverOptions)
 {
   ServerOptions server = serverOptions.Value;
-  WriteLine("\n=== Server Configuration (DataAnnotations Validation) ===");
+  WriteLine("\n=== Server Configuration (FluentValidation) ===");
   WriteLine($"Host: {server.Host}");
   WriteLine($"Port: {server.Port}");
   WriteLine($"Max Connections: {server.MaxConnections}");
   WriteLine($"Timeout: {server.Timeout}s");
-  await Task.CompletedTask;
 }
 
-async Task ShowDatabaseInfoAsync(IOptions<DatabaseOptions> dbOptions)
+void ShowDatabaseInfoAsync(IOptions<DatabaseOptions> dbOptions)
 {
   DatabaseOptions db = dbOptions.Value;
   WriteLine("\n=== Database Configuration (Custom Validation) ===");
   WriteLine($"Type: {db.Type}");
   WriteLine($"Connection String: {db.ConnectionString}");
   WriteLine("✓ Connection string format matches database type");
-  await Task.CompletedTask;
 }
 
-async Task ShowApiInfoAsync(IOptions<ApiOptions> apiOptions)
+void ShowApiInfoAsync(IOptions<ApiOptions> apiOptions)
 {
   ApiOptions api = apiOptions.Value;
   WriteLine("\n=== API Configuration (FluentValidation) ===");
@@ -129,23 +157,16 @@ async Task ShowApiInfoAsync(IOptions<ApiOptions> apiOptions)
   WriteLine($"Timeout: {api.TimeoutSeconds}s");
   WriteLine($"Retry Count: {api.RetryCount}");
   WriteLine($"Rate Limit: {api.RateLimitPerMinute} requests/minute");
-  await Task.CompletedTask;
 }
 
 // Configuration option classes
 
+[ConfigurationKey("Server")]
 public class ServerOptions
 {
-  [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Host is required")]
   public string Host { get; set; } = "localhost";
-
-  [System.ComponentModel.DataAnnotations.Range(1, 65535, ErrorMessage = "Port must be between 1 and 65535")]
   public int Port { get; set; } = 8080;
-
-  [System.ComponentModel.DataAnnotations.Range(1, 10000, ErrorMessage = "MaxConnections must be between 1 and 10000")]
   public int MaxConnections { get; set; } = 100;
-
-  [System.ComponentModel.DataAnnotations.Range(1, 300, ErrorMessage = "Timeout must be between 1 and 300 seconds")]
   public int Timeout { get; set; } = 30;
 }
 
@@ -165,7 +186,25 @@ public class ApiOptions
   public int RateLimitPerMinute { get; set; } = 60;
 }
 
-// FluentValidation validator
+// FluentValidation validators
+
+public class ServerOptionsValidator : AbstractValidator<ServerOptions>
+{
+  public ServerOptionsValidator()
+  {
+    RuleFor(x => x.Host)
+      .NotEmpty().WithMessage("Host is required");
+
+    RuleFor(x => x.Port)
+      .InclusiveBetween(1, 65535).WithMessage("Port must be between 1 and 65535");
+
+    RuleFor(x => x.MaxConnections)
+      .InclusiveBetween(1, 10000).WithMessage("MaxConnections must be between 1 and 10000");
+
+    RuleFor(x => x.Timeout)
+      .InclusiveBetween(1, 300).WithMessage("Timeout must be between 1 and 300 seconds");
+  }
+}
 
 public class ApiOptionsValidator : AbstractValidator<ApiOptions>
 {

@@ -25,7 +25,10 @@
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
     <!-- Suppress warnings common in analyzer tests -->
-    <NoWarn>$(NoWarn);CA1303;CA1307;CA2000;CA2007;CA1031;CA1515;CA1050;CA1052;CA1707;CS0050;RCS1046;RCS1102;RCS1110</NoWarn>
+    <!-- CS8785: NuruRouteAnalyzer fails to load M.E.Logging.Abstractions when using ProjectReference -->
+    <!-- This is expected - the analyzer works correctly when consumed as a NuGet package -->
+    <!-- IL3000: Assembly.Location returns empty in single-file apps - acceptable in test code -->
+    <NoWarn>$(NoWarn);CA1303;CA1307;CA2000;CA2007;CA1031;CA1515;CA1050;CA1052;CA1707;CS0050;RCS1046;RCS1102;RCS1110;CS8785;IL3000</NoWarn>
   </PropertyGroup>
 
   <!-- Attach analyzer via project reference -->

@@ -38,6 +38,9 @@ Syntax issues in route patterns - malformed brackets, invalid characters, unsupp
 ### Semantic Errors (NURU_S###)
 Logical issues that create ambiguity or conflicts - duplicate parameters, invalid parameter ordering, incompatible combinations.
 
+### Dependency Errors (NURU_D###)
+Missing package dependencies required for specific features.
+
 ## Common Errors and Fixes
 
 ### NURU_P001: Invalid Parameter Syntax
@@ -167,6 +170,21 @@ builder.Map("copy {source?} {dest}", handler);
 builder.Map("copy {source} {dest?}", handler);
 ```
 
+### NURU_D001: Missing Mediator Packages
+
+**Problem**: Using `Map<TCommand>` without required Mediator packages
+
+```csharp
+// ❌ Error: Mediator packages not installed
+builder.Map<PingCommand>("ping");
+
+// ✅ Fix: Install packages
+// dotnet add package Mediator.Abstractions
+// dotnet add package Mediator.SourceGenerator
+```
+
+The `Map<TCommand>` pattern uses [Mediator](https://github.com/martinothamar/Mediator) for request handling. Both packages must be directly referenced (not transitive).
+
 ## IDE Integration
 
 The analyzer works automatically in all modern .NET IDEs:
@@ -279,6 +297,12 @@ dotnet_diagnostic.NURU_S002.severity = none     # Completely suppress
 | NURU_S006 | Optional before required |
 | NURU_S007 | Invalid end-of-options separator |
 | NURU_S008 | Options after end-of-options separator |
+
+### Dependency Errors (NURU_D###)
+
+| Code | Description |
+|------|-------------|
+| NURU_D001 | Missing Mediator packages for Map&lt;TCommand&gt; |
 
 ## Related Documentation
 

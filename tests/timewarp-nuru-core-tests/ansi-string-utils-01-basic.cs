@@ -178,4 +178,84 @@ public class AnsiStringUtilsTests
 
     await Task.CompletedTask;
   }
+
+  public static async Task Should_strip_osc8_hyperlink_sequences()
+  {
+    // Arrange - OSC 8 hyperlink with ST (String Terminator) ending
+    string hyperlink = "\x1b]8;;https://example.com\x1b\\Click Here\x1b]8;;\x1b\\";
+
+    // Act
+    string result = AnsiStringUtils.StripAnsiCodes(hyperlink);
+
+    // Assert
+    result.ShouldBe("Click Here");
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_strip_osc8_hyperlink_with_bel_terminator()
+  {
+    // Arrange - OSC 8 hyperlink with BEL (\u0007) terminator
+    // Note: Using \u0007 instead of \x07 because \x07C would be parsed as \x7C (pipe character)
+    string hyperlink = "\x1b]8;;https://example.com\u0007Click Here\x1b]8;;\u0007";
+
+    // Act
+    string result = AnsiStringUtils.StripAnsiCodes(hyperlink);
+
+    // Assert
+    result.ShouldBe("Click Here");
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_get_visible_length_with_hyperlinks()
+  {
+    // Arrange - Simulates "Clean Architecture with ASP.NET Core 10" with a long URL
+    string displayText = "Clean Architecture with ASP.NET Core 10";
+    string url = "https://www.youtube.com/watch?v=dQw4w9WgXcQ&list=PLdo4fOcmZ0oUv7O0RYoxBVJw"; // 73 chars
+    string hyperlink = $"\x1b]8;;{url}\x1b\\{displayText}\x1b]8;;\x1b\\";
+
+    // Act
+    int length = AnsiStringUtils.GetVisibleLength(hyperlink);
+
+    // Assert - Should be 39 (display text only), not 100+ (with URL bytes)
+    length.ShouldBe(39);
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_handle_styled_hyperlinks()
+  {
+    // Arrange - Hyperlink with color styling
+    string url = "https://example.com";
+    string displayText = "Link";
+    // Red colored hyperlink
+    string styledHyperlink = $"\x1b[31m\x1b]8;;{url}\x1b\\{displayText}\x1b]8;;\x1b\\\x1b[0m";
+
+    // Act
+    string stripped = AnsiStringUtils.StripAnsiCodes(styledHyperlink);
+    int length = AnsiStringUtils.GetVisibleLength(styledHyperlink);
+
+    // Assert
+    stripped.ShouldBe("Link");
+    length.ShouldBe(4);
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_handle_multiple_hyperlinks_in_text()
+  {
+    // Arrange - Two hyperlinks in one string
+    string text = "\x1b]8;;https://a.com\x1b\\First\x1b]8;;\x1b\\ and \x1b]8;;https://b.com\x1b\\Second\x1b]8;;\x1b\\";
+
+    // Act
+    string result = AnsiStringUtils.StripAnsiCodes(text);
+    int length = AnsiStringUtils.GetVisibleLength(text);
+
+    // Assert
+    result.ShouldBe("First and Second");
+    length.ShouldBe(16);
+
+    await Task.CompletedTask;
+  }
 }

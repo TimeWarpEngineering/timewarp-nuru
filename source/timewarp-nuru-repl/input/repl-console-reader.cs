@@ -3,7 +3,19 @@ namespace TimeWarp.Nuru;
 /// <summary>
 /// Provides advanced console input handling for REPL mode with tab completion and history navigation.
 /// </summary>
-public sealed class ReplConsoleReader
+/// <remarks>
+/// This class is split into partial classes for maintainability:
+/// - repl-console-reader.cs: Core class, fields, constructor, and main ReadLine loop
+/// - repl-console-reader.cursor-movement.cs: Cursor movement handlers
+/// - repl-console-reader.history.cs: History navigation handlers
+/// - repl-console-reader.editing.cs: Text editing handlers
+/// - repl-console-reader.search.cs: Interactive search mode (Ctrl+R/Ctrl+S)
+/// - repl-console-reader.kill-ring.cs: Kill ring (cut/paste) handlers
+/// - repl-console-reader.undo.cs: Undo/redo handlers
+/// - repl-console-reader.selection.cs: Text selection handlers
+/// - repl-console-reader.word-operations.cs: Word case conversion and transposition handlers
+/// </remarks>
+public sealed partial class ReplConsoleReader
 {
   private readonly List<string> History;
   private readonly EndpointCollection Endpoints;
@@ -19,6 +31,30 @@ public sealed class ReplConsoleReader
   private int CursorPosition;
   private int HistoryIndex = -1;
   private string? PrefixSearchString;  // Stores the prefix for F8 prefix search
+
+  // EditMode state machine fields
+  private EditMode CurrentMode = EditMode.Normal;
+  private string SearchPattern = string.Empty;
+  private int SearchMatchIndex = -1;  // Index in history of current match (-1 = no match)
+  private string SavedInputBeforeSearch = string.Empty;  // Original input to restore on cancel
+  private int SavedCursorBeforeSearch;  // Original cursor position to restore on cancel
+  private bool SearchDirectionIsReverse = true;  // true = Ctrl+R (backward), false = Ctrl+S (forward)
+
+  // Kill ring state fields
+  private readonly KillRing KillRing = new();
+  private bool LastCommandWasKill;  // For consecutive kill appending
+  private bool LastCommandWasYank;  // For YankPop to work
+  private int LastYankStart;        // Start position of last yanked text
+  private int LastYankLength;       // Length of last yanked text
+
+  // Undo/redo state fields
+  private readonly UndoStack UndoManager = new();
+
+  // Selection state fields
+  private readonly Selection SelectionState = new();
+
+  // Exit signal for DeleteCharOrExit
+  private bool ShouldExitRepl;
 
   /// <summary>
   /// Creates a new REPL console reader.
@@ -82,6 +118,9 @@ public sealed class ReplConsoleReader
     CursorPosition = 0;        // Position relative to user input only
     HistoryIndex = History.Count;
     CompletionHandler.Reset();
+    UndoManager.Clear();
+    UndoManager.SetInitialState(string.Empty, 0);
+    MultilineInput.Clear();    // Reset multiline buffer for new input
 
     while (true)
     {
@@ -89,6 +128,17 @@ public sealed class ReplConsoleReader
 
       ReplLoggerMessages.KeyPressed(Logger, keyInfo.Key.ToString(), CursorPosition, null);
 
+      // Route to mode-specific handler
+      if (CurrentMode == EditMode.Search)
+      {
+        string? result = HandleSearchModeKey(keyInfo);
+        if (result is not null)
+          return result;
+
+        continue;
+      }
+
+      // Normal mode: use key bindings
       // Normalize modifiers to only include Ctrl, Alt, Shift (ignore other flags)
       ConsoleModifiers normalizedMods = keyInfo.Modifiers & (ConsoleModifiers.Control | ConsoleModifiers.Alt | ConsoleModifiers.Shift);
       (ConsoleKey Key, ConsoleModifiers Modifiers) keyBinding = (keyInfo.Key, normalizedMods);
@@ -97,10 +147,20 @@ public sealed class ReplConsoleReader
       {
         handler();
 
-        // Check if this key should exit the read loop
+        // Check if handler signaled exit (e.g., DeleteCharOrExit on empty line)
+        if (ShouldExitRepl)
+        {
+          ShouldExitRepl = false;  // Reset for next call
+          return null;
+        }
+
+        // Check if this key should exit the read loop (accept line)
         if (ExitKeys.Contains(keyBinding))
         {
-          return keyInfo.Key == ConsoleKey.Enter ? UserInput : null;
+          // All exit keys that are "accept line" should return UserInput
+          // (Enter, Ctrl+M, Ctrl+J are accept line; others would be EOF but
+          // those are now handled by ShouldExitRepl flag)
+          return UserInput;
         }
       }
       else if (!char.IsControl(keyInfo.KeyChar))
@@ -113,6 +173,13 @@ public sealed class ReplConsoleReader
 
   internal void HandleEnter()
   {
+    // If in multiline mode, move cursor to end of last line first
+    if (IsMultilineMode)
+    {
+      // Sync to get final UserInput value
+      SyncFromMultilineBuffer();
+    }
+
     Terminal.WriteLine();
 
     // Add to history if not empty and not duplicate of last entry
@@ -123,6 +190,9 @@ public sealed class ReplConsoleReader
         History.Add(UserInput);
       }
     }
+
+    // Clear multiline buffer for next input
+    MultilineInput.Clear();
   }
 
   internal void HandleTabCompletion(bool reverse)
@@ -140,275 +210,37 @@ public sealed class ReplConsoleReader
     CompletionHandler.ShowPossibleCompletions(UserInput, CursorPosition);
   }
 
-  // ============================================================================
-  // PSReadLine-compatible handler methods
-  // ============================================================================
-  // PSReadLine-compatible handler methods
-  // ============================================================================
-
-  /// <summary>
-  /// PSReadLine: BackwardDeleteChar - Delete the character before the cursor.
-  /// </summary>
-  internal void HandleBackwardDeleteChar()
-  {
-    if (CursorPosition > 0)
-    {
-      ReplLoggerMessages.BackspacePressed(Logger, CursorPosition, null);
-
-      UserInput = UserInput[..(CursorPosition - 1)] + UserInput[CursorPosition..];
-      CursorPosition--;
-      CompletionHandler.Reset();  // Clear completion cycling when user deletes
-
-      ReplLoggerMessages.UserInputChanged(Logger, UserInput, CursorPosition, null);
-      RedrawLine();
-    }
-  }
-
-  /// <summary>
-  /// PSReadLine: DeleteChar - Delete the character under the cursor.
-  /// </summary>
-  internal void HandleDeleteChar()
-  {
-    if (CursorPosition < UserInput.Length)
-    {
-      ReplLoggerMessages.DeletePressed(Logger, CursorPosition, null);
-
-      UserInput = UserInput[..CursorPosition] + UserInput[(CursorPosition + 1)..];
-      CompletionHandler.Reset();  // Clear completion cycling when user deletes
-
-      ReplLoggerMessages.UserInputChanged(Logger, UserInput, CursorPosition, null);
-      RedrawLine();
-    }
-  }
-
-  /// <summary>
-  /// PSReadLine: BackwardChar - Move the cursor back one character.
-  /// </summary>
-  internal void HandleBackwardChar()
-  {
-    if (CursorPosition > 0)
-      CursorPosition--;
-
-    UpdateCursorPosition();
-  }
-
-  /// <summary>
-  /// PSReadLine: ForwardChar - Move the cursor forward one character.
-  /// </summary>
-  internal void HandleForwardChar()
-  {
-    if (CursorPosition < UserInput.Length)
-      CursorPosition++;
-
-    UpdateCursorPosition();
-  }
-
-  /// <summary>
-  /// PSReadLine: BackwardWord - Move the cursor to the beginning of the current or previous word.
-  /// </summary>
-  internal void HandleBackwardWord()
-  {
-    int newPos = CursorPosition;
-    // Skip whitespace behind cursor
-    while (newPos > 0 && char.IsWhiteSpace(UserInput[newPos - 1]))
-      newPos--;
-    // Skip word characters to find start of word
-    while (newPos > 0 && !char.IsWhiteSpace(UserInput[newPos - 1]))
-      newPos--;
-    CursorPosition = newPos;
-
-    UpdateCursorPosition();
-  }
-
-  /// <summary>
-  /// PSReadLine: ForwardWord - Move the cursor to the end of the current or next word.
-  /// Note: PSReadLine moves to END of word, not start of next word.
-  /// </summary>
-  internal void HandleForwardWord()
-  {
-    int newPos = CursorPosition;
-    // Skip whitespace ahead of cursor
-    while (newPos < UserInput.Length && char.IsWhiteSpace(UserInput[newPos]))
-      newPos++;
-    // Move to end of word
-    while (newPos < UserInput.Length && !char.IsWhiteSpace(UserInput[newPos]))
-      newPos++;
-    CursorPosition = newPos;
-
-    UpdateCursorPosition();
-  }
-
-  /// <summary>
-  /// PSReadLine: BeginningOfLine - Move the cursor to the beginning of the line.
-  /// </summary>
-  internal void HandleBeginningOfLine()
-  {
-    CursorPosition = 0;
-    UpdateCursorPosition();
-  }
-
-  /// <summary>
-  /// PSReadLine: EndOfLine - Move the cursor to the end of the line.
-  /// </summary>
-  internal void HandleEndOfLine()
-  {
-    CursorPosition = UserInput.Length;
-    UpdateCursorPosition();
-  }
-
-  /// <summary>
-  /// PSReadLine: PreviousHistory - Replace the input with the previous item in the history.
-  /// </summary>
-  internal void HandlePreviousHistory()
-  {
-    if (HistoryIndex > 0)
-    {
-      HistoryIndex--;
-      UserInput = History[HistoryIndex];
-      CursorPosition = UserInput.Length;
-      PrefixSearchString = null;  // Clear prefix search when using normal history nav
-      RedrawLine();
-    }
-  }
-
-  /// <summary>
-  /// PSReadLine: NextHistory - Replace the input with the next item in the history.
-  /// </summary>
-  internal void HandleNextHistory()
-  {
-    if (HistoryIndex < History.Count - 1)
-    {
-      HistoryIndex++;
-      UserInput = History[HistoryIndex];
-      CursorPosition = UserInput.Length;
-      PrefixSearchString = null;  // Clear prefix search when using normal history nav
-      RedrawLine();
-    }
-    else if (HistoryIndex == History.Count - 1)
-    {
-      HistoryIndex = History.Count;
-      UserInput = string.Empty;
-      CursorPosition = 0;
-      PrefixSearchString = null;  // Clear prefix search
-      RedrawLine();
-    }
-  }
-
-  /// <summary>
-  /// PSReadLine: BeginningOfHistory - Move to the first item in the history.
-  /// </summary>
-  internal void HandleBeginningOfHistory()
-  {
-    if (History.Count > 0)
-    {
-      HistoryIndex = 0;
-      UserInput = History[HistoryIndex];
-      CursorPosition = UserInput.Length;
-      PrefixSearchString = null;  // Clear prefix search
-      RedrawLine();
-    }
-  }
-
-  /// <summary>
-  /// PSReadLine: EndOfHistory - Move to the last item (current input) in the history.
-  /// </summary>
-  internal void HandleEndOfHistory()
-  {
-    HistoryIndex = History.Count;
-    UserInput = string.Empty;
-    CursorPosition = 0;
-    PrefixSearchString = null;  // Clear prefix search
-    RedrawLine();
-  }
-
-  /// <summary>
-  /// PSReadLine: HistorySearchBackward - Search backward through history for entries starting with current input prefix.
-  /// </summary>
-  internal void HandleHistorySearchBackward()
-  {
-    // If no prefix search active, use current input as the prefix
-    if (PrefixSearchString is null)
-    {
-      PrefixSearchString = UserInput;
-    }
-
-    // Search backward from current position
-    int searchIndex = HistoryIndex - 1;
-    while (searchIndex >= 0)
-    {
-      if (History[searchIndex].StartsWith(PrefixSearchString, StringComparison.OrdinalIgnoreCase))
-      {
-        HistoryIndex = searchIndex;
-        UserInput = History[HistoryIndex];
-        CursorPosition = UserInput.Length;
-        RedrawLine();
-        return;
-      }
-
-      searchIndex--;
-    }
-
-    // No match found - do nothing (keep current state)
-  }
-
-  /// <summary>
-  /// PSReadLine: HistorySearchForward - Search forward through history for entries starting with current input prefix.
-  /// </summary>
-  internal void HandleHistorySearchForward()
-  {
-    // If no prefix search active, use current input as the prefix
-    if (PrefixSearchString is null)
-    {
-      PrefixSearchString = UserInput;
-    }
-
-    // Search forward from current position
-    int searchIndex = HistoryIndex + 1;
-    while (searchIndex < History.Count)
-    {
-      if (History[searchIndex].StartsWith(PrefixSearchString, StringComparison.OrdinalIgnoreCase))
-      {
-        HistoryIndex = searchIndex;
-        UserInput = History[HistoryIndex];
-        CursorPosition = UserInput.Length;
-        RedrawLine();
-        return;
-      }
-
-      searchIndex++;
-    }
-
-    // No match found - do nothing (keep current state)
-  }
-
-  /// <summary>
-  /// PSReadLine: RevertLine - Clear the entire input line (like Escape in PowerShell).
-  /// Clears all user input and resets cursor to the beginning.
-  /// </summary>
-  internal void HandleEscape()
-  {
-    // Clear completion state
-    CompletionHandler.Reset();
-
-    // Clear the entire input line
-    UserInput = string.Empty;
-    CursorPosition = 0;
-
-    // Clear any prefix search state
-    PrefixSearchString = null;
-
-    // Redraw the empty line
-    RedrawLine();
-  }
-
   private void HandleCharacter(char charToInsert)
   {
     ReplLoggerMessages.CharacterInserted(Logger, charToInsert, CursorPosition, null);
 
-    UserInput = UserInput[..CursorPosition] + charToInsert + UserInput[CursorPosition..];
-    CursorPosition++;
+    SaveUndoState(isCharacterInput: true);  // Save state before edit (grouped for consecutive chars)
+
+    // If there's a selection, replace it with the typed character
+    if (SelectionState.IsActive)
+    {
+      int start = SelectionState.Start;
+      int end = SelectionState.End;
+      UserInput = UserInput[..start] + charToInsert + UserInput[end..];
+      CursorPosition = start + 1;
+      SelectionState.Clear();
+    }
+    else if (IsOverwriteMode && CursorPosition < UserInput.Length)
+    {
+      // Overwrite mode: replace character at cursor
+      UserInput = UserInput[..CursorPosition] + charToInsert + UserInput[(CursorPosition + 1)..];
+      CursorPosition++;
+    }
+    else
+    {
+      // Insert mode (default): insert at cursor
+      UserInput = UserInput[..CursorPosition] + charToInsert + UserInput[CursorPosition..];
+      CursorPosition++;
+    }
+
     PrefixSearchString = null;  // Clear prefix search when user types
     CompletionHandler.Reset();  // Clear completion cycling when user types
+    ResetKillTracking();        // Clear kill ring tracking when user types
 
     ReplLoggerMessages.UserInputChanged(Logger, UserInput, CursorPosition, null);
     RedrawLine();
@@ -416,6 +248,23 @@ public sealed class ReplConsoleReader
 
   private void RedrawLine()
   {
+    // Check if UserInput contains newlines (multiline content)
+    // This can happen when recalling multiline history
+    if (UserInput.Contains('\n', StringComparison.Ordinal) || UserInput.Contains('\r', StringComparison.Ordinal))
+    {
+      SyncToMultilineBuffer();
+      RedrawMultiline();
+      return;
+    }
+
+    // If already in multiline mode, delegate to multiline rendering
+    if (IsMultilineMode)
+    {
+      SyncToMultilineBuffer();
+      RedrawMultiline();
+      return;
+    }
+
     ReplLoggerMessages.LineRedrawn(Logger, UserInput, null);
 
     // Move cursor to beginning of line

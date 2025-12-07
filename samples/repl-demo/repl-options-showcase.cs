@@ -129,6 +129,18 @@ NuruAppOptions nuruAppOptions = new()
     // Show execution time for commands (default is true)
     // Displays timing information after command execution
     options.ShowTiming = true;
+
+    // ========================================
+    // Key Binding Profile
+    // ========================================
+
+    // Choose a key binding profile for the REPL (default is "Default")
+    // Available profiles: "Default", "Emacs", "Vi", "VSCode"
+    // - Default: Standard readline-style bindings
+    // - Emacs: GNU Readline/Bash-style (Ctrl+A/E, Ctrl+F/B)
+    // - Vi: Vi-inspired insert mode bindings (Ctrl+W, Ctrl+U)
+    // - VSCode: Modern IDE-style (Ctrl+Arrow for word movement)
+    options.KeyBindingProfileName = "Default";
   }
 };
 
@@ -281,6 +293,7 @@ NuruCoreApp app = NuruApp.CreateBuilder(args, nuruAppOptions)
       WriteLine("ShowTiming:           true");
       WriteLine("EnableColors:         true");
       WriteLine("EnableArrowHistory:   true");
+      WriteLine("KeyBindingProfileName: Default");
       WriteLine();
       WriteLine("HistoryIgnorePatterns:");
       WriteLine("  - *password*");

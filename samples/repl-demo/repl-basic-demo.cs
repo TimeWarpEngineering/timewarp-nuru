@@ -44,7 +44,6 @@ using Serilog.Events;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.DependencyInjection;
 using TimeWarp.Nuru;
-using TimeWarp.Nuru.Repl;
 using static System.Console;
 
 // Configure Serilog with filtered logging for REPL debugging only

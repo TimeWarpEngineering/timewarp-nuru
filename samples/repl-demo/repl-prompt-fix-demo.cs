@@ -16,7 +16,6 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 
 using TimeWarp.Nuru;
-using TimeWarp.Nuru.Repl;
 using Microsoft.Extensions.DependencyInjection;
 
 NuruAppOptions nuruAppOptions = new()

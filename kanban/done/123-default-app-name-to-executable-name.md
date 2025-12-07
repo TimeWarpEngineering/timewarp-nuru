@@ -12,13 +12,13 @@ When the consumer doesn't set the app name, help output shows `nuru-app` as the 
 ## Checklist
 
 ### Implementation
-- [ ] Update `help-provider.cs` line 45 to use `AppNameDetector.GetEffectiveAppName()` instead of hardcoded `"nuru-app"`
-- [ ] Add try/catch since `AppNameDetector` can throw `InvalidOperationException`
-- [ ] Consider updating `nuru-telemetry-options.cs` to use `AppNameDetector` for consistency
+- [x] Update `help-provider.cs` line 45 to use `AppNameDetector.GetEffectiveAppName()` instead of hardcoded `"nuru-app"`
+- [x] Add try/catch since `AppNameDetector` can throw `InvalidOperationException`
+- [ ] Consider updating `nuru-telemetry-options.cs` to use `AppNameDetector` for consistency (skipped - different namespace, can't access internal AppNameDetector)
 
 ### Verification
-- [ ] Run sample app without setting app name, verify help shows executable name
-- [ ] Verify published executable shows correct name in help
+- [x] Run sample app without setting app name, verify help shows executable name
+- [x] Verify published executable shows correct name in help
 
 ## Notes
 

@@ -79,26 +79,26 @@ Options:
 ## Checklist
 
 ### Design
-- [ ] Create `HelpOptions` class in `timewarp-nuru-core`
-- [ ] Create `HelpContext` enum in `timewarp-nuru-core`
+- [x] Create `HelpOptions` class in `timewarp-nuru-core`
+- [x] Create `HelpContext` enum in `timewarp-nuru-core`
 
 ### Implementation
-- [ ] Add `Action<HelpOptions>? ConfigureHelp` to `NuruAppOptions`
-- [ ] Update `HelpProvider.GetHelpText()` signature to accept `HelpOptions` and `HelpContext`
-- [ ] Implement endpoint grouping by description
-- [ ] Implement filtering logic:
+- [x] Add `Action<HelpOptions>? ConfigureHelp` to `NuruAppOptions`
+- [x] Update `HelpProvider.GetHelpText()` signature to accept `HelpOptions` and `HelpContext`
+- [x] Implement endpoint grouping by description
+- [x] Implement filtering logic:
   - Filter `* --help?` patterns when `ShowPerCommandHelpRoutes = false`
   - Filter REPL commands when `ShowReplCommandsInCli = false && context == Cli`
   - Filter `__complete*`, `--generate-completion*`, `--install-completion*` when `ShowCompletionRoutes = false`
   - Filter by `ExcludePatterns` wildcard matching
-- [ ] Update `HelpRouteGenerator` to pass options to help handlers
-- [ ] Update REPL's help command to use `HelpContext.Repl`
-- [ ] Wire `HelpOptions` through `NuruCoreAppBuilder`
+- [x] Update `HelpRouteGenerator` to pass options to help handlers
+- [x] Update REPL's help command to use `HelpContext.Repl`
+- [x] Wire `HelpOptions` through `NuruCoreAppBuilder`
 
 ### Testing
-- [ ] Add tests for filtering behavior
-- [ ] Add tests for alias grouping display
-- [ ] Verify REPL commands visible in REPL help, hidden in CLI help
+- [x] Add tests for filtering behavior
+- [x] Add tests for alias grouping display
+- [x] Verify REPL commands visible in REPL help, hidden in CLI help
 
 ## Notes
 
@@ -111,3 +111,18 @@ Options:
 
 - 118: Fix HelpProvider single-dash option detection (bug fix, independent)
 - 119: Fix AddInteractiveRoute alias syntax (improves `-i, --interactive` display)
+
+## Implementation Summary
+
+### Files Created
+- `source/timewarp-nuru-core/help/help-context.cs` - HelpContext enum (Cli, Repl)
+- `source/timewarp-nuru-core/help/help-options.cs` - HelpOptions configuration class
+- `tests/timewarp-nuru-core-tests/help-provider-02-filtering.cs` - 10 new tests for filtering behavior
+
+### Files Modified
+- `source/timewarp-nuru-core/help/help-provider.cs` - Updated GetHelpText to accept options/context, implemented filtering and alias grouping
+- `source/timewarp-nuru-core/help/help-route-generator.cs` - Pass HelpOptions and context to help routes
+- `source/timewarp-nuru-core/nuru-core-app-builder.cs` - Store HelpOptions, add ConfigureHelp() method
+- `source/timewarp-nuru-core/nuru-core-app.cs` - Add HelpOptions property, update constructors and ShowAvailableCommands
+- `source/timewarp-nuru/nuru-app-options.cs` - Add ConfigureHelp action
+- `source/timewarp-nuru/nuru-app-builder-extensions.cs` - Wire ConfigureHelp in UseAllExtensions

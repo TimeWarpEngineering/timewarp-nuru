@@ -5,14 +5,25 @@ namespace TimeWarp.Nuru;
 /// </summary>
 public static class HelpProvider
 {
-
   /// <summary>
   /// Gets help text for all registered routes.
   /// </summary>
-  public static string GetHelpText(EndpointCollection endpoints, string? appName = null, string? appDescription = null)
+  /// <param name="endpoints">The endpoint collection.</param>
+  /// <param name="appName">Optional application name.</param>
+  /// <param name="appDescription">Optional application description.</param>
+  /// <param name="options">Optional help options for filtering.</param>
+  /// <param name="context">The help context (CLI or REPL).</param>
+  public static string GetHelpText(
+    EndpointCollection endpoints,
+    string? appName = null,
+    string? appDescription = null,
+    HelpOptions? options = null,
+    HelpContext context = HelpContext.Cli)
   {
     ArgumentNullException.ThrowIfNull(endpoints);
-    List<Endpoint> routes = FilterHelpRoutes(endpoints.Endpoints);
+    options ??= new HelpOptions();
+
+    List<Endpoint> routes = FilterRoutes(endpoints.Endpoints, options, context);
 
     if (routes.Count == 0)
     {
@@ -34,29 +45,32 @@ public static class HelpProvider
     sb.AppendLine("  " + (appName ?? "nuru-app") + " [command] [options]");
     sb.AppendLine();
 
+    // Group endpoints by description for alias grouping
+    List<EndpointGroup> groups = GroupByDescription(routes);
+
     // Separate commands and options
-    List<Endpoint> commands = [.. routes.Where(r => !r.RoutePattern.StartsWith('-'))];
-    List<Endpoint> options = [.. routes.Where(r => r.RoutePattern.StartsWith('-'))];
+    List<EndpointGroup> commandGroups = [.. groups.Where(g => !g.FirstPattern.StartsWith('-'))];
+    List<EndpointGroup> optionGroups = [.. groups.Where(g => g.FirstPattern.StartsWith('-'))];
 
     // Commands section
-    if (commands.Count > 0)
+    if (commandGroups.Count > 0)
     {
       sb.AppendLine("Commands:");
-      foreach (Endpoint command in commands.OrderBy(c => c.RoutePattern))
+      foreach (EndpointGroup group in commandGroups.OrderBy(g => g.FirstPattern))
       {
-        AppendCommand(sb, command);
+        AppendGroup(sb, group);
       }
 
       sb.AppendLine();
     }
 
     // Options section
-    if (options.Count > 0)
+    if (optionGroups.Count > 0)
     {
       sb.AppendLine("Options:");
-      foreach (Endpoint option in options.OrderBy(o => o.RoutePattern))
+      foreach (EndpointGroup group in optionGroups.OrderBy(g => g.FirstPattern))
       {
-        AppendOption(sb, option);
+        AppendGroup(sb, group);
       }
     }
 
@@ -64,22 +78,15 @@ public static class HelpProvider
   }
 
   /// <summary>
-  /// Filters out help routes from the endpoint list.
+  /// Filters routes based on help options and context.
   /// </summary>
-  private static List<Endpoint> FilterHelpRoutes(IReadOnlyList<Endpoint> endpoints)
+  private static List<Endpoint> FilterRoutes(IReadOnlyList<Endpoint> endpoints, HelpOptions options, HelpContext context)
   {
     List<Endpoint> filtered = [];
 
     foreach (Endpoint endpoint in endpoints)
     {
-      string pattern = endpoint.RoutePattern;
-
-      // Skip help routes
-      if (pattern == "help" || pattern == "--help")
-        continue;
-
-      // Skip command-specific help routes (e.g., "git --help", "add --help")
-      if (pattern.EndsWith(" --help", StringComparison.Ordinal))
+      if (ShouldFilter(endpoint, options, context))
         continue;
 
       filtered.Add(endpoint);
@@ -89,32 +96,106 @@ public static class HelpProvider
   }
 
   /// <summary>
-  /// Appends a command to the string builder with proper formatting.
+  /// Determines if an endpoint should be filtered from help output.
   /// </summary>
-  private static void AppendCommand(StringBuilder sb, Endpoint command)
+  private static bool ShouldFilter(Endpoint endpoint, HelpOptions options, HelpContext context)
   {
-    string pattern = FormatCommandPattern(command.RoutePattern);
-    string? description = command.Description;
+    string pattern = endpoint.RoutePattern;
 
-    if (!string.IsNullOrEmpty(description))
+    // Always filter the base help routes (--help and help) - they don't need to be shown in their own output
+    if (pattern is "--help" or "--help?" or "help")
+      return true;
+
+    // Filter per-command help routes (e.g., "blog --help?")
+    if (!options.ShowPerCommandHelpRoutes)
     {
-      int padding = 30 - pattern.Length;
-      if (padding < 2) padding = 2;
-      sb.AppendLine(CultureInfo.InvariantCulture, $"  {pattern}{new string(' ', padding)}{description}");
+      if (pattern.EndsWith(" --help", StringComparison.Ordinal) ||
+          pattern.EndsWith(" --help?", StringComparison.Ordinal))
+        return true;
     }
-    else
+
+    // Filter REPL commands in CLI context
+    if (!options.ShowReplCommandsInCli && context == HelpContext.Cli)
     {
-      sb.AppendLine(CultureInfo.InvariantCulture, $"  {pattern}");
+      if (HelpOptions.ReplCommandPatterns.Contains(pattern))
+        return true;
     }
+
+    // Filter completion routes
+    if (!options.ShowCompletionRoutes)
+    {
+      foreach (string prefix in HelpOptions.CompletionRoutePrefixes)
+      {
+        if (pattern.StartsWith(prefix, StringComparison.Ordinal))
+          return true;
+      }
+    }
+
+    // Filter by custom exclude patterns
+    if (options.ExcludePatterns is { Count: > 0 })
+    {
+      foreach (string excludePattern in options.ExcludePatterns)
+      {
+        if (MatchesWildcard(pattern, excludePattern))
+          return true;
+      }
+    }
+
+    return false;
   }
 
   /// <summary>
-  /// Appends an option to the string builder with proper formatting.
+  /// Groups endpoints by description for alias display.
+  /// Same description = alias group (e.g., exit, quit, q all have "Exit the REPL").
   /// </summary>
-  private static void AppendOption(StringBuilder sb, Endpoint option)
+  private static List<EndpointGroup> GroupByDescription(List<Endpoint> endpoints)
   {
-    string pattern = option.RoutePattern;
-    string? description = option.Description;
+    // Group by description (use empty string for null descriptions to satisfy dictionary constraint)
+    Dictionary<string, List<Endpoint>> byDescription = [];
+
+    foreach (Endpoint endpoint in endpoints)
+    {
+      string desc = endpoint.Description ?? string.Empty;
+
+      if (!byDescription.TryGetValue(desc, out List<Endpoint>? list))
+      {
+        list = [];
+        byDescription[desc] = list;
+      }
+
+      list.Add(endpoint);
+    }
+
+    // Convert to EndpointGroup list
+    List<EndpointGroup> groups = [];
+
+    foreach ((string description, List<Endpoint> groupEndpoints) in byDescription)
+    {
+      // Sort patterns within group for consistent display
+      List<string> patterns = [.. groupEndpoints.OrderBy(e => e.RoutePattern).Select(e => e.RoutePattern)];
+
+      groups.Add(new EndpointGroup
+      {
+        Patterns = patterns,
+        Description = string.IsNullOrEmpty(description) ? null : description,
+        FirstPattern = patterns[0]
+      });
+    }
+
+    return groups;
+  }
+
+  /// <summary>
+  /// Appends a group (potentially with multiple alias patterns) to the help output.
+  /// </summary>
+  private static void AppendGroup(StringBuilder sb, EndpointGroup group)
+  {
+    // Format all patterns (convert {x} to <x>)
+    List<string> formattedPatterns = [.. group.Patterns.Select(FormatCommandPattern)];
+
+    // Join patterns with comma for alias display
+    string pattern = string.Join(", ", formattedPatterns);
+    string? description = group.Description;
 
     if (!string.IsNullOrEmpty(description))
     {
@@ -142,63 +223,28 @@ public static class HelpProvider
       .Replace("*", "...", StringComparison.Ordinal);
   }
 
-  private static void AppendRoute(StringBuilder sb, Endpoint route, bool indent = false)
+  /// <summary>
+  /// Matches a pattern against a wildcard expression.
+  /// Supports * to match any characters.
+  /// </summary>
+  private static bool MatchesWildcard(string input, string wildcardPattern)
   {
-    string prefix = indent ? "  " : "";
-    string pattern = route.RoutePattern;
-    string? description = route.Description;
+    // Convert wildcard pattern to regex
+    // Escape all regex special chars except *, then replace * with .*
+    string regexPattern = "^" +
+      Regex.Escape(wildcardPattern).Replace("\\*", ".*", StringComparison.Ordinal) +
+      "$";
 
-    if (!string.IsNullOrEmpty(description))
-    {
-      // Calculate padding for alignment
-      int padding = 40 - pattern.Length - prefix.Length;
-      if (padding < 2) padding = 2;
-
-      sb.AppendLine(CultureInfo.InvariantCulture, $"{prefix}{pattern}{new string(' ', padding)}{description}");
-    }
-    else
-    {
-      sb.AppendLine(CultureInfo.InvariantCulture, $"{prefix}{pattern}");
-    }
+    return Regex.IsMatch(input, regexPattern, RegexOptions.IgnoreCase);
   }
 
-  private static Dictionary<string, List<Endpoint>> GroupRoutesByPrefix(IReadOnlyList<Endpoint> routes)
+  /// <summary>
+  /// Represents a group of endpoints with the same description (aliases).
+  /// </summary>
+  private sealed class EndpointGroup
   {
-    Dictionary<string, List<Endpoint>> groups = [];
-
-    foreach (Endpoint? route in routes.OrderBy(r => r.RoutePattern))
-    {
-      string prefix = GetCommandPrefix(route.RoutePattern);
-
-      if (!groups.TryGetValue(prefix, out List<Endpoint>? list))
-      {
-        list = [];
-        groups[prefix] = list;
-      }
-
-      list.Add(route);
-    }
-
-    return groups;
-  }
-
-  private static string GetCommandPrefix(string routePattern)
-  {
-    // Skip catch-all patterns
-    if (routePattern.StartsWith('{'))
-    {
-      return "";
-    }
-
-    // Extract the first word as the command prefix
-    string[] parts = routePattern.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-    if (parts.Length > 1)
-    {
-      // Multi-part command, use first part as group (e.g., "git" from "git status")
-      return char.ToUpper(parts[0][0], CultureInfo.InvariantCulture) + parts[0].Substring(1);
-    }
-
-    // Single word command, no grouping
-    return "";
+    public required List<string> Patterns { get; init; }
+    public string? Description { get; init; }
+    public required string FirstPattern { get; init; }
   }
 }

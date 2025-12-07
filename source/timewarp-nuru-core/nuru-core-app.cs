@@ -118,6 +118,11 @@ public partial class NuruCoreApp
   public ApplicationMetadata? AppMetadata { get; }
 
   /// <summary>
+  /// Gets the help configuration options.
+  /// </summary>
+  public HelpOptions HelpOptions { get; }
+
+  /// <summary>
   /// Direct constructor - used by NuruAppBuilder for non-DI path.
   /// </summary>
   internal NuruCoreApp
@@ -127,7 +132,8 @@ public partial class NuruCoreApp
     ILoggerFactory loggerFactory,
     ITerminal terminal,
     ReplOptions? replOptions = null,
-    ApplicationMetadata? appMetadata = null
+    ApplicationMetadata? appMetadata = null,
+    HelpOptions? helpOptions = null
   )
   {
     Endpoints = endpoints ?? throw new ArgumentNullException(nameof(endpoints));
@@ -136,6 +142,7 @@ public partial class NuruCoreApp
     Terminal = terminal ?? throw new ArgumentNullException(nameof(terminal));
     ReplOptions = replOptions;
     AppMetadata = appMetadata;
+    HelpOptions = helpOptions ?? new HelpOptions();
 
     // Create a minimal service provider for delegate parameter injection
     // Resolves NuruCoreApp (for interactive mode), ILoggerFactory, and ILogger<T>
@@ -154,6 +161,7 @@ public partial class NuruCoreApp
     LoggerFactory = serviceProvider.GetService<ILoggerFactory>() ?? Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance;
     ReplOptions = serviceProvider.GetService<ReplOptions>();
     AppMetadata = serviceProvider.GetService<ApplicationMetadata>();
+    HelpOptions = serviceProvider.GetService<HelpOptions>() ?? new HelpOptions();
     Terminal = serviceProvider.GetService<ITerminal>() ?? NuruTerminal.Default;
   }
 
@@ -527,7 +535,7 @@ public partial class NuruCoreApp
 
   private void ShowAvailableCommands()
   {
-    Terminal.WriteLine(HelpProvider.GetHelpText(Endpoints, AppMetadata?.Name, AppMetadata?.Description));
+    Terminal.WriteLine(HelpProvider.GetHelpText(Endpoints, AppMetadata?.Name, AppMetadata?.Description, HelpOptions, HelpContext.Cli));
   }
 
   /// <summary>

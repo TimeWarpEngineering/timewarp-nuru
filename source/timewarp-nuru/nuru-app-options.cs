@@ -65,4 +65,10 @@ public sealed class NuruAppOptions
   /// Default is "--interactive,-i".
   /// </summary>
   public string InteractiveRoutePatterns { get; set; } = "--interactive,-i";
+
+  /// <summary>
+  /// Action to configure help output filtering and display.
+  /// If null, help uses default options (hide per-command help routes, REPL commands in CLI, completion routes).
+  /// </summary>
+  public Action<HelpOptions>? ConfigureHelp { get; set; }
 }

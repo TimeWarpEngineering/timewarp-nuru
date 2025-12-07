@@ -10,6 +10,7 @@ public partial class NuruCoreAppBuilder
   private protected ApplicationMetadata? AppMetadata;
   private protected bool AutoHelpEnabled;
   private protected IConfiguration? Configuration;
+  private protected HelpOptions HelpOptions = new();
   private protected ILoggerFactory? LoggerFactory;
   private protected ReplOptions? ReplOptions;
   private protected ServiceCollection? ServiceCollection;
@@ -49,13 +50,24 @@ public partial class NuruCoreAppBuilder
   }
 
   /// <summary>
+  /// Configures help output filtering and display options.
+  /// </summary>
+  /// <param name="configure">Action to configure help options.</param>
+  public NuruCoreAppBuilder ConfigureHelp(Action<HelpOptions> configure)
+  {
+    ArgumentNullException.ThrowIfNull(configure);
+    configure(HelpOptions);
+    return this;
+  }
+
+  /// <summary>
   /// Builds and returns a runnable NuruCoreApp.
   /// </summary>
   public NuruCoreApp Build()
   {
     if (AutoHelpEnabled)
     {
-      HelpRouteGenerator.GenerateHelpRoutes(this, EndpointCollection, AppMetadata);
+      HelpRouteGenerator.GenerateHelpRoutes(this, EndpointCollection, AppMetadata, HelpOptions);
     }
 
     EndpointCollection.Sort();
@@ -80,6 +92,9 @@ public partial class NuruCoreAppBuilder
       {
         ServiceCollection.AddSingleton(ReplOptions);
       }
+
+      // Register help options
+      ServiceCollection.AddSingleton(HelpOptions);
 
       // Register app metadata if configured
       if (AppMetadata is not null)
@@ -108,7 +123,8 @@ public partial class NuruCoreAppBuilder
         loggerFactory,
         Terminal ?? NuruTerminal.Default,
         ReplOptions,
-        AppMetadata);
+        AppMetadata,
+        HelpOptions);
     }
   }
 

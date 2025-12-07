@@ -11,10 +11,12 @@ internal static class HelpRouteGenerator
   /// <param name="builder">The NuruAppBuilder to add help routes to.</param>
   /// <param name="endpointCollection">The collection of registered endpoints.</param>
   /// <param name="appMetadata">Optional application metadata for help display.</param>
+  /// <param name="helpOptions">Optional help options for filtering.</param>
   internal static void GenerateHelpRoutes(
     NuruCoreAppBuilder builder,
     EndpointCollection endpointCollection,
-    ApplicationMetadata? appMetadata)
+    ApplicationMetadata? appMetadata,
+    HelpOptions? helpOptions = null)
   {
     // Get a snapshot of existing endpoints (before we add help routes)
     List<Endpoint> existingEndpoints = [.. endpointCollection.Endpoints];
@@ -60,16 +62,18 @@ internal static class HelpRouteGenerator
 
     // Add base --help route if not already present
     // Use --help? (optional) so help routes don't outrank user routes with optional flags
+    // CLI context - may filter REPL commands based on options
     if (!existingEndpoints.Any(e => e.RoutePattern == "--help" || e.RoutePattern == "--help?"))
     {
-      builder.Map("--help?", () => HelpProvider.GetHelpText(endpointCollection, appMetadata?.Name, appMetadata?.Description),
+      builder.Map("--help?", () => HelpProvider.GetHelpText(endpointCollection, appMetadata?.Name, appMetadata?.Description, helpOptions, HelpContext.Cli),
       description: "Show available commands");
     }
 
     // Add base help route if not already present (REPL-friendly)
+    // REPL context - always shows REPL commands
     if (!existingEndpoints.Any(e => e.RoutePattern == "help"))
     {
-      builder.Map("help", () => HelpProvider.GetHelpText(endpointCollection, appMetadata?.Name, appMetadata?.Description),
+      builder.Map("help", () => HelpProvider.GetHelpText(endpointCollection, appMetadata?.Name, appMetadata?.Description, helpOptions, HelpContext.Repl),
       description: "Show available commands");
     }
   }

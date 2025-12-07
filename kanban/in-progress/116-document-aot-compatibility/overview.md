@@ -6,12 +6,12 @@ Update documentation to reflect full AOT (Ahead-of-Time) compilation support ach
 
 ## Todo List
 
-- [ ] Update README.md with AOT compatibility section
-- [ ] Document source generator requirements (direct analyzer reference needed)
-- [ ] Add AOT sample/example to samples/ directory
-- [ ] Update user documentation in documentation/user/
-- [ ] Document any limitations or edge cases
-- [ ] Add migration notes for users upgrading from non-AOT versions
+- [x] Update README.md with AOT compatibility section
+- [x] Document source generator requirements (direct analyzer reference needed)
+- [x] Add AOT sample/example to samples/ directory
+- [x] Update user documentation in documentation/user/
+- [x] Document any limitations or edge cases
+- [x] Add migration notes for users upgrading from non-AOT versions
 
 ## Notes
 
@@ -36,3 +36,17 @@ See `tests/test-apps/timewarp-nuru-testapp-delegates/` for a working AOT-compati
 
 - 008 - Implement source generators for reflection-free routing (completed)
 - 008d - AOT testing and verification (completed)
+
+## Completion Notes
+
+**Files Created:**
+- `samples/aot-example/aot-example.cs` - Complete AOT sample with typed parameters, options, async, and catch-all routes
+- `samples/aot-example/aot-example.csproj` - Project file with AOT configuration and source generator references
+
+**Files Updated:**
+- `documentation/user/guides/deployment.md` - Added sections:
+  - "Source Generators for AOT" - Explains NuruInvokerGenerator and AddMediator() requirement
+  - "Fail-Fast Behavior" - Documents no-reflection-fallback approach
+  - "AOT Limitations and Edge Cases" - Lists supported patterns and considerations
+  - "Migration from Non-AOT Versions" - Step-by-step upgrade guide
+- `readme.md` - Enhanced AOT feature description and added link to AOT sample

@@ -1,0 +1,48 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>aot-example</AssemblyName>
+
+    <!-- Enable Native AOT compilation -->
+    <PublishAot>true</PublishAot>
+
+    <!-- Use partial trimming to preserve reflection used by Nuru framework -->
+    <TrimMode>partial</TrimMode>
+
+    <!-- Optional: Disable globalization for smaller binaries (~1-2 MB savings) -->
+    <!-- <InvariantGlobalization>true</InvariantGlobalization> -->
+
+    <!-- Optional: View generated source files for debugging -->
+    <!-- <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles> -->
+    <!-- <CompilerGeneratedFilesOutputPath>.generated</CompilerGeneratedFilesOutputPath> -->
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Reference TimeWarp.Nuru (use PackageReference for published packages) -->
+    <ProjectReference Include="$(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj" />
+
+    <!--
+      IMPORTANT: In-repo development requires direct analyzer reference.
+      Source generators don't flow transitively with ProjectReference.
+      When using the NuGet package, this is not needed - the analyzer is included.
+    -->
+    <ProjectReference Include="$(SourceDirectory)timewarp-nuru-analyzers/timewarp-nuru-analyzers.csproj">
+      <OutputItemType>Analyzer</OutputItemType>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+
+    <!-- Mediator source generator is required for AOT-compatible DI -->
+    <PackageReference Include="Mediator.Abstractions" />
+    <PackageReference Include="Mediator.SourceGenerator">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <!-- Exclude generated files from compilation (they're already included by the source generator) -->
+  <ItemGroup>
+    <Compile Remove=".generated/**/*.cs" />
+  </ItemGroup>
+
+</Project>

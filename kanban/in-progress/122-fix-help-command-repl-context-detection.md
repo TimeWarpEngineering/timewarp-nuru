@@ -17,18 +17,24 @@ The `help` command shows REPL-specific commands (exit, clear, history, etc.) eve
 ## Checklist
 
 ### Implementation
-- [ ] Create `SessionContext` class in `source/timewarp-nuru-core/`
+- [x] Create `SessionContext` class in `source/timewarp-nuru-core/`
   - `IsReplSession` property (bool)
   - `HelpContext` computed property
-- [ ] Register `SessionContext` as singleton in `service-collection-extensions.cs`
-- [ ] Update `help-route-generator.cs` to inject `SessionContext` and use `session.HelpContext`
-- [ ] Update `repl-session.cs` to set/reset `sessionContext.IsReplSession` in `RunAsync`
+- [x] Register `SessionContext` as singleton in `service-collection-extensions.cs`
+- [x] Update `help-route-generator.cs` to inject `SessionContext` and use `session.HelpContext`
+- [x] Update `repl-session.cs` to set/reset `sessionContext.IsReplSession` in `RunAsync`
+- [x] Add `SessionContext` property to `NuruCoreApp`
+- [x] Update `LightweightServiceProvider` to resolve `SessionContext`
+- [x] Update `NuruCoreAppBuilder.Build()` to create `SessionContext` for non-DI path
 
 ### Verification
-- [ ] `dotnet run -- help` hides REPL commands
-- [ ] `dotnet run -- --help` hides REPL commands  
-- [ ] Both outputs are identical in CLI context
-- [ ] REPL `help` command shows REPL commands when inside REPL
+- [x] `dotnet run -- help` hides REPL commands
+- [x] `dotnet run -- --help` hides REPL commands  
+- [x] Both outputs are identical in CLI context
+- [ ] REPL `help` command shows REPL commands when inside REPL (manual test needed)
+
+### Tests Added
+- [x] `tests/timewarp-nuru-core-tests/help-provider-03-session-context.cs` (7 tests, all passing)
 
 ## Notes
 

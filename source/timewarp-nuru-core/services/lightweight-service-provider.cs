@@ -33,6 +33,11 @@ internal sealed class LightweightServiceProvider : IServiceProvider
       return App.Terminal;
     }
 
+    if (serviceType == typeof(SessionContext))
+    {
+      return App.SessionContext;
+    }
+
     // Handle ILogger<T> requests using ILoggerFactory.CreateLogger
     // This avoids MakeGenericType for AOT compatibility
     if (serviceType.IsGenericType && serviceType.GetGenericTypeDefinition() == typeof(ILogger<>))

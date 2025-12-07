@@ -25,6 +25,10 @@ public static class ServiceCollectionExtensions
     // This follows Jimmy Bogard's recommendation for sharing context in pipelines
     services.TryAddScoped<RouteExecutionContext>();
 
+    // Register session context as singleton to track REPL vs CLI execution context
+    // Must be singleton (not scoped) because delegate handlers are resolved from root ServiceProvider
+    services.TryAddSingleton<SessionContext>();
+
     return services;
   }
 }

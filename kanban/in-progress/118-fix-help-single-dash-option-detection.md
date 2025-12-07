@@ -27,9 +27,9 @@ List<Endpoint> options = [.. routes.Where(r => r.RoutePattern.StartsWith("-", St
 ## Checklist
 
 ### Implementation
-- [ ] Update `HelpProvider.cs` to use `-` prefix check
-- [ ] Add test verifying `-i` appears in Options section
-- [ ] Verify existing tests pass
+- [x] Update `HelpProvider.cs` to use `-` prefix check
+- [x] Add test verifying `-i` appears in Options section
+- [x] Verify existing tests pass
 
 ## Notes
 

@@ -35,8 +35,8 @@ public static class HelpProvider
     sb.AppendLine();
 
     // Separate commands and options
-    List<Endpoint> commands = [.. routes.Where(r => !r.RoutePattern.StartsWith("--", StringComparison.Ordinal))];
-    List<Endpoint> options = [.. routes.Where(r => r.RoutePattern.StartsWith("--", StringComparison.Ordinal))];
+    List<Endpoint> commands = [.. routes.Where(r => !r.RoutePattern.StartsWith('-'))];
+    List<Endpoint> options = [.. routes.Where(r => r.RoutePattern.StartsWith('-'))];
 
     // Commands section
     if (commands.Count > 0)

@@ -85,7 +85,7 @@ dotnet run -- add 15 25
 | ⌨️ **Shell Completion** | Tab completion for bash, zsh, PowerShell, fish | [Shell Completion](#-shell-completion) |
 | 🤖 **MCP Server** | AI-assisted development with Claude | [MCP Server Guide](documentation/user/tools/mcp-server.md) |
 | 📊 **Logging Package** | Zero-overhead structured logging | [Logging Docs](documentation/user/features/logging.md) |
-| 🚀 **Native AOT** | 3.3 MB binaries, instant startup | [Deployment Guide](documentation/user/guides/deployment.md) |
+| 🚀 **Native AOT** | Zero warnings, 3.3 MB binaries, instant startup | [Deployment Guide](documentation/user/guides/deployment.md#native-aot-compilation) |
 | 🔒 **Type-Safe Parameters** | Automatic type conversion and validation | [Supported Types](documentation/user/reference/supported-types.md) |
 | 📖 **Auto-Help** | Generate help from route patterns | [Auto-Help Feature](documentation/user/features/auto-help.md) |
 | 🎨 **Colored Output** | Fluent ANSI colors without Spectre.Console | [Terminal Abstractions](documentation/user/features/terminal-abstractions.md) |
@@ -171,6 +171,8 @@ NuruCoreApp app = new NuruAppBuilder()
 ./samples/calculator/calc-mixed.cs add 10 20        # Direct: fast
 ./samples/calculator/calc-mixed.cs factorial 5      # Mediator: structured
 ```
+
+**[AOT Example](samples/aot-example/)** - Native AOT compilation with source generators
 
 **[Cocona Comparison](samples/cocona-comparison/)** - Migration guides from Cocona
 

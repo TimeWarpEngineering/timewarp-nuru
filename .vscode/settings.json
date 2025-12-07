@@ -26,5 +26,6 @@
     "Nuru",
     "Ryzen",
     "Stackalloc"
-  ]
+  ],
+  "timewarp.blurImagePath": "assets/timewarp-nuru-avatar.svg"
 }

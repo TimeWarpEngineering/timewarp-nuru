@@ -123,6 +123,11 @@ public partial class NuruCoreApp
   public HelpOptions HelpOptions { get; }
 
   /// <summary>
+  /// Gets the session context for tracking REPL vs CLI execution state.
+  /// </summary>
+  public SessionContext SessionContext { get; }
+
+  /// <summary>
   /// Direct constructor - used by NuruAppBuilder for non-DI path.
   /// </summary>
   internal NuruCoreApp
@@ -133,7 +138,8 @@ public partial class NuruCoreApp
     ITerminal terminal,
     ReplOptions? replOptions = null,
     ApplicationMetadata? appMetadata = null,
-    HelpOptions? helpOptions = null
+    HelpOptions? helpOptions = null,
+    SessionContext? sessionContext = null
   )
   {
     Endpoints = endpoints ?? throw new ArgumentNullException(nameof(endpoints));
@@ -143,6 +149,7 @@ public partial class NuruCoreApp
     ReplOptions = replOptions;
     AppMetadata = appMetadata;
     HelpOptions = helpOptions ?? new HelpOptions();
+    SessionContext = sessionContext ?? new SessionContext();
 
     // Create a minimal service provider for delegate parameter injection
     // Resolves NuruCoreApp (for interactive mode), ILoggerFactory, and ILogger<T>
@@ -163,6 +170,7 @@ public partial class NuruCoreApp
     AppMetadata = serviceProvider.GetService<ApplicationMetadata>();
     HelpOptions = serviceProvider.GetService<HelpOptions>() ?? new HelpOptions();
     Terminal = serviceProvider.GetService<ITerminal>() ?? NuruTerminal.Default;
+    SessionContext = serviceProvider.GetRequiredService<SessionContext>();
   }
 
   public async Task<int> RunAsync(string[] args)

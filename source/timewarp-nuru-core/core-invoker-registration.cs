@@ -17,5 +17,12 @@ internal static class CoreInvokerRegistration
       Func<string> typedHandler = (Func<string>)handler;
       return typedHandler();
     });
+
+    // Register invoker for (SessionContext) => string signature (used by context-aware help routes)
+    InvokerRegistry.RegisterSync("SessionContext_Returns_String", static (handler, args) =>
+    {
+      Func<SessionContext, string> typedHandler = (Func<SessionContext, string>)handler;
+      return typedHandler((SessionContext)args[0]!);
+    });
   }
 }

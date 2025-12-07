@@ -62,18 +62,18 @@ internal static class HelpRouteGenerator
 
     // Add base --help route if not already present
     // Use --help? (optional) so help routes don't outrank user routes with optional flags
-    // CLI context - may filter REPL commands based on options
+    // Context determined at runtime via SessionContext singleton
     if (!existingEndpoints.Any(e => e.RoutePattern == "--help" || e.RoutePattern == "--help?"))
     {
-      builder.Map("--help?", () => HelpProvider.GetHelpText(endpointCollection, appMetadata?.Name, appMetadata?.Description, helpOptions, HelpContext.Cli),
+      builder.Map("--help?", (SessionContext session) => HelpProvider.GetHelpText(endpointCollection, appMetadata?.Name, appMetadata?.Description, helpOptions, session.HelpContext),
       description: "Show available commands");
     }
 
     // Add base help route if not already present (REPL-friendly)
-    // REPL context - always shows REPL commands
+    // Context determined at runtime via SessionContext singleton
     if (!existingEndpoints.Any(e => e.RoutePattern == "help"))
     {
-      builder.Map("help", () => HelpProvider.GetHelpText(endpointCollection, appMetadata?.Name, appMetadata?.Description, helpOptions, HelpContext.Repl),
+      builder.Map("help", (SessionContext session) => HelpProvider.GetHelpText(endpointCollection, appMetadata?.Name, appMetadata?.Description, helpOptions, session.HelpContext),
       description: "Show available commands");
     }
   }

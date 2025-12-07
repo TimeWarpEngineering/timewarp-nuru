@@ -117,6 +117,8 @@ public partial class NuruCoreAppBuilder
     else
     {
       // Direct path - return lightweight app without DI
+      // Create a shared SessionContext for REPL/CLI context tracking
+      SessionContext sessionContext = new();
       return new NuruCoreApp(
         EndpointCollection,
         TypeConverterRegistry,
@@ -124,7 +126,8 @@ public partial class NuruCoreAppBuilder
         Terminal ?? NuruTerminal.Default,
         ReplOptions,
         AppMetadata,
-        HelpOptions);
+        HelpOptions,
+        sessionContext);
     }
   }
 

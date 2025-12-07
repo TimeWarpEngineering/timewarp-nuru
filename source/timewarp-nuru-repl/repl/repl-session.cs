@@ -122,6 +122,9 @@ internal sealed class ReplSession : IDisposable
   {
     Running = true;
 
+    // Mark session context as REPL mode for help display
+    NuruCoreApp.SessionContext.IsReplSession = true;
+
     // Display welcome message
     if (!string.IsNullOrEmpty(ReplOptions.WelcomeMessage))
       Terminal.WriteLine(ReplOptions.WelcomeMessage);
@@ -256,6 +259,9 @@ internal sealed class ReplSession : IDisposable
 
   private void CleanupRepl()
   {
+    // Reset session context back to CLI mode
+    NuruCoreApp.SessionContext.IsReplSession = false;
+
     // Dispose handles critical cleanup (event handler, history save)
     Dispose();
 

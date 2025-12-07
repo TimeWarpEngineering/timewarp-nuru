@@ -115,7 +115,23 @@ public static class NuruCoreAppExtensions
 
     string[] patternArray = patterns.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
-    builder.MapMultiple(patternArray, StartInteractiveModeAsync, "Enter interactive REPL mode");
+    // Alias syntax only works for exactly 2 options (long + short form)
+    // If all patterns are options AND there are exactly 2, use alias syntax
+    // Otherwise use MapMultiple for multiple options or literal command aliases
+    bool allAreOptions = patternArray.All(p => p.StartsWith('-'));
+    bool canUseAliasSyntax = allAreOptions && patternArray.Length == 2;
+
+    if (canUseAliasSyntax)
+    {
+      // Use alias syntax: "--interactive,-i" creates single endpoint with alternate form
+      builder.Map(patterns, StartInteractiveModeAsync, "Enter interactive REPL mode");
+    }
+    else
+    {
+      // Use MapMultiple for literals like ["interactive", "repl"]
+      // or for more than 2 options which can't use alias syntax
+      builder.MapMultiple(patternArray, StartInteractiveModeAsync, "Enter interactive REPL mode");
+    }
 
     return builder;
   }

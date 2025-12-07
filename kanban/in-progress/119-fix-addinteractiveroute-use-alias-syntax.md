@@ -28,13 +28,28 @@ The comma syntax is already supported for options and correctly populates `Optio
 ## Checklist
 
 ### Implementation
-- [ ] Update `AddInteractiveRoute` to use `"--interactive,-i"` pattern
-- [ ] Handle custom patterns parameter (parse and convert to alias syntax if both are options)
-- [ ] Add test verifying single endpoint is created
-- [ ] Verify help output shows `-i, --interactive` on one line
+- [x] Update `AddInteractiveRoute` to use `"--interactive,-i"` pattern
+- [x] Handle custom patterns parameter (parse and convert to alias syntax if both are options)
+- [x] Add test verifying single endpoint is created
+- [x] Verify help output shows `-i, --interactive` on one line
 
 ## Notes
 
 - The `patterns` parameter allows custom values like `"--interactive,-i,--repl"` - need to handle conversion
-- Option alias syntax only works for options (dash-prefixed), not literal commands
+- Option alias syntax only works for exactly 2 options (long + short form), not multiple
+- More than 2 options fall back to `MapMultiple`
 - `MapMultiple` remains appropriate for literal command aliases like `["exit", "quit", "q"]`
+
+## Implementation Details
+
+The fix uses conditional logic:
+1. If exactly 2 patterns are provided AND both are options (start with `-`), use `Map` with alias syntax
+2. Otherwise, use `MapMultiple` for literals or more than 2 option aliases
+
+Tests added in `tests/timewarp-nuru-repl-tests/repl-34-interactive-route-alias.cs`:
+- `Should_create_single_endpoint_for_option_aliases` - verifies default case creates single endpoint
+- `Should_use_alias_syntax_in_route_pattern` - verifies custom 2-option aliases work
+- `Should_use_map_multiple_for_literal_commands` - verifies literals use MapMultiple
+- `Should_handle_two_option_aliases` - verifies custom long+short form works
+- `Should_fallback_to_map_multiple_for_more_than_two_options` - verifies >2 options fallback
+- `Should_show_aliases_on_single_help_line` - verifies help consolidates aliases

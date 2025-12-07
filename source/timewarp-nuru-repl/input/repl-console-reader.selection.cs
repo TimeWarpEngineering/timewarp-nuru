@@ -191,10 +191,18 @@ public sealed partial class ReplConsoleReader
 
   /// <summary>
   /// PSReadLine: Paste - Paste from system clipboard.
+  /// Falls back to the kill ring when system clipboard is unavailable.
   /// </summary>
   internal void HandlePaste()
   {
     string? clipboardText = GetClipboardText();
+
+    // Fall back to kill ring when clipboard is unavailable
+    if (string.IsNullOrEmpty(clipboardText))
+    {
+      clipboardText = KillRing.Yank();
+    }
+
     if (string.IsNullOrEmpty(clipboardText))
       return;
 
@@ -482,92 +490,318 @@ public sealed partial class ReplConsoleReader
 
   private static string? GetLinuxClipboard()
   {
-    // Try xclip first, then xsel
-    try
+    // Try methods in order of preference:
+    // 1. pwsh (PowerShell Core - cross-platform)
+    // 2. powershell.exe (WSL → Windows clipboard)
+    // 3. xclip (X11)
+    // 4. xsel (X11 fallback)
+
+    // Try pwsh (PowerShell Core)
+    if (ClipboardToolCache.HasPwsh)
     {
-      using System.Diagnostics.Process process = new()
+      try
       {
-        StartInfo = new System.Diagnostics.ProcessStartInfo
+        using System.Diagnostics.Process process = new()
         {
-          FileName = "xclip",
-          Arguments = "-selection clipboard -o",
-          RedirectStandardOutput = true,
-          UseShellExecute = false,
-          CreateNoWindow = true
-        }
-      };
-      process.Start();
-      string result = process.StandardOutput.ReadToEnd();
-      process.WaitForExit();
-      return result;
-    }
-    catch (Exception)
-    {
-      // xclip not available, try xsel as fallback
-    }
-
-    // Try xsel as fallback
-    using System.Diagnostics.Process xselProcess = new()
-    {
-      StartInfo = new System.Diagnostics.ProcessStartInfo
-      {
-        FileName = "xsel",
-        Arguments = "--clipboard --output",
-        RedirectStandardOutput = true,
-        UseShellExecute = false,
-        CreateNoWindow = true
+          StartInfo = new System.Diagnostics.ProcessStartInfo
+          {
+            FileName = "pwsh",
+            Arguments = "-NoProfile -Command \"Get-Clipboard\"",
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true
+          }
+        };
+        process.Start();
+        string result = process.StandardOutput.ReadToEnd().TrimEnd('\r', '\n');
+        process.WaitForExit();
+        if (process.ExitCode == 0 && !string.IsNullOrEmpty(result))
+          return result;
       }
-    };
+      catch (Exception)
+      {
+        // pwsh failed, continue to next method
+      }
+    }
 
-    xselProcess.Start();
-    string xselResult = xselProcess.StandardOutput.ReadToEnd();
-    xselProcess.WaitForExit();
-    return xselResult;
+    // Try powershell.exe (WSL → Windows clipboard)
+    if (ClipboardToolCache.HasPowershellExe)
+    {
+      try
+      {
+        using System.Diagnostics.Process process = new()
+        {
+          StartInfo = new System.Diagnostics.ProcessStartInfo
+          {
+            FileName = "powershell.exe",
+            Arguments = "-NoProfile -Command \"Get-Clipboard\"",
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true
+          }
+        };
+        process.Start();
+        string result = process.StandardOutput.ReadToEnd().TrimEnd('\r', '\n');
+        process.WaitForExit();
+        if (process.ExitCode == 0 && !string.IsNullOrEmpty(result))
+          return result;
+      }
+      catch (Exception)
+      {
+        // powershell.exe failed, continue to next method
+      }
+    }
+
+    // Try xclip
+    if (ClipboardToolCache.HasXclip)
+    {
+      try
+      {
+        using System.Diagnostics.Process process = new()
+        {
+          StartInfo = new System.Diagnostics.ProcessStartInfo
+          {
+            FileName = "xclip",
+            Arguments = "-selection clipboard -o",
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true
+          }
+        };
+        process.Start();
+        string result = process.StandardOutput.ReadToEnd();
+        process.WaitForExit();
+        if (process.ExitCode == 0)
+          return result;
+      }
+      catch (Exception)
+      {
+        // xclip failed, continue to next method
+      }
+    }
+
+    // Try xsel as final fallback
+    if (ClipboardToolCache.HasXsel)
+    {
+      try
+      {
+        using System.Diagnostics.Process process = new()
+        {
+          StartInfo = new System.Diagnostics.ProcessStartInfo
+          {
+            FileName = "xsel",
+            Arguments = "--clipboard --output",
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true
+          }
+        };
+        process.Start();
+        string result = process.StandardOutput.ReadToEnd();
+        process.WaitForExit();
+        if (process.ExitCode == 0)
+          return result;
+      }
+      catch (Exception)
+      {
+        // xsel failed
+      }
+    }
+
+    return null;
   }
 
   private static void SetLinuxClipboard(string text)
   {
-    // Try xclip first, then xsel
-    try
+    // Try methods in order of preference:
+    // 1. pwsh (PowerShell Core - cross-platform)
+    // 2. clip.exe (WSL → Windows clipboard)
+    // 3. xclip (X11)
+    // 4. xsel (X11 fallback)
+
+    // Try pwsh (PowerShell Core)
+    if (ClipboardToolCache.HasPwsh)
     {
-      using System.Diagnostics.Process process = new()
+      try
       {
-        StartInfo = new System.Diagnostics.ProcessStartInfo
+        // Use stdin piping to handle special characters safely
+        using System.Diagnostics.Process process = new()
         {
-          FileName = "xclip",
-          Arguments = "-selection clipboard",
-          RedirectStandardInput = true,
-          UseShellExecute = false,
-          CreateNoWindow = true
-        }
-      };
-      process.Start();
-      process.StandardInput.Write(text);
-      process.StandardInput.Close();
-      process.WaitForExit();
-      return;  // Success with xclip
-    }
-    catch (Exception)
-    {
-      // xclip not available, try xsel as fallback
-    }
-
-    // Try xsel as fallback
-    using System.Diagnostics.Process xselProcess = new()
-    {
-      StartInfo = new System.Diagnostics.ProcessStartInfo
-      {
-        FileName = "xsel",
-        Arguments = "--clipboard --input",
-        RedirectStandardInput = true,
-        UseShellExecute = false,
-        CreateNoWindow = true
+          StartInfo = new System.Diagnostics.ProcessStartInfo
+          {
+            FileName = "pwsh",
+            Arguments = "-NoProfile -Command \"$input | Set-Clipboard\"",
+            RedirectStandardInput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true
+          }
+        };
+        process.Start();
+        process.StandardInput.Write(text);
+        process.StandardInput.Close();
+        process.WaitForExit();
+        if (process.ExitCode == 0)
+          return;
       }
-    };
+      catch (Exception)
+      {
+        // pwsh failed, continue to next method
+      }
+    }
 
-    xselProcess.Start();
-    xselProcess.StandardInput.Write(text);
-    xselProcess.StandardInput.Close();
-    xselProcess.WaitForExit();
+    // Try clip.exe (WSL → Windows clipboard)
+    if (ClipboardToolCache.HasClipExe)
+    {
+      try
+      {
+        using System.Diagnostics.Process process = new()
+        {
+          StartInfo = new System.Diagnostics.ProcessStartInfo
+          {
+            FileName = "clip.exe",
+            RedirectStandardInput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true
+          }
+        };
+        process.Start();
+        process.StandardInput.Write(text);
+        process.StandardInput.Close();
+        process.WaitForExit();
+        if (process.ExitCode == 0)
+          return;
+      }
+      catch (Exception)
+      {
+        // clip.exe failed, continue to next method
+      }
+    }
+
+    // Try xclip
+    if (ClipboardToolCache.HasXclip)
+    {
+      try
+      {
+        using System.Diagnostics.Process process = new()
+        {
+          StartInfo = new System.Diagnostics.ProcessStartInfo
+          {
+            FileName = "xclip",
+            Arguments = "-selection clipboard",
+            RedirectStandardInput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true
+          }
+        };
+        process.Start();
+        process.StandardInput.Write(text);
+        process.StandardInput.Close();
+        process.WaitForExit();
+        if (process.ExitCode == 0)
+          return;
+      }
+      catch (Exception)
+      {
+        // xclip failed, continue to next method
+      }
+    }
+
+    // Try xsel as final fallback
+    if (ClipboardToolCache.HasXsel)
+    {
+      try
+      {
+        using System.Diagnostics.Process process = new()
+        {
+          StartInfo = new System.Diagnostics.ProcessStartInfo
+          {
+            FileName = "xsel",
+            Arguments = "--clipboard --input",
+            RedirectStandardInput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true
+          }
+        };
+        process.Start();
+        process.StandardInput.Write(text);
+        process.StandardInput.Close();
+        process.WaitForExit();
+      }
+      catch (Exception)
+      {
+        // xsel failed - no more fallbacks
+      }
+    }
+  }
+
+  /// <summary>
+  /// Caches clipboard tool availability to avoid repeated process spawning.
+  /// </summary>
+  private static class ClipboardToolCache
+  {
+    private static bool Initialized;
+    private static bool _hasPwsh;
+    private static bool _hasPowershellExe;
+    private static bool _hasClipExe;
+    private static bool _hasXclip;
+    private static bool _hasXsel;
+
+    public static bool HasPwsh { get { EnsureInitialized(); return _hasPwsh; } }
+    public static bool HasPowershellExe { get { EnsureInitialized(); return _hasPowershellExe; } }
+    public static bool HasClipExe { get { EnsureInitialized(); return _hasClipExe; } }
+    public static bool HasXclip { get { EnsureInitialized(); return _hasXclip; } }
+    public static bool HasXsel { get { EnsureInitialized(); return _hasXsel; } }
+
+    private static void EnsureInitialized()
+    {
+      if (Initialized)
+        return;
+
+      // Only check Linux-specific tools when running on Linux
+      if (OperatingSystem.IsLinux())
+      {
+        _hasPwsh = IsCommandAvailable("pwsh");
+        _hasPowershellExe = IsCommandAvailable("powershell.exe");
+        _hasClipExe = IsCommandAvailable("clip.exe");
+        _hasXclip = IsCommandAvailable("xclip");
+        _hasXsel = IsCommandAvailable("xsel");
+      }
+
+      Initialized = true;
+    }
+
+    private static bool IsCommandAvailable(string command)
+    {
+      try
+      {
+        using System.Diagnostics.Process process = new()
+        {
+          StartInfo = new System.Diagnostics.ProcessStartInfo
+          {
+            FileName = "which",
+            Arguments = command,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true
+          }
+        };
+        process.Start();
+        process.WaitForExit();
+        return process.ExitCode == 0;
+      }
+      catch
+      {
+        return false;
+      }
+    }
   }
 }

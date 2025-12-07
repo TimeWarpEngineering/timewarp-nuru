@@ -46,11 +46,11 @@ Update clipboard detection order for Linux:
 ## Checklist
 
 ### Implementation
-- [ ] Add `pwsh` detection for Get/Set clipboard on Linux
-- [ ] Add WSL detection: check for `clip.exe` availability
-- [ ] Add `powershell.exe -command "Get-Clipboard"` for WSL paste
-- [ ] Add kill ring fallback to `HandlePaste()`
-- [ ] Cache clipboard tool availability at startup (avoid repeated `which` calls)
+- [x] Add `pwsh` detection for Get/Set clipboard on Linux
+- [x] Add WSL detection: check for `clip.exe` availability
+- [x] Add `powershell.exe -command "Get-Clipboard"` for WSL paste
+- [x] Add kill ring fallback to `HandlePaste()`
+- [x] Cache clipboard tool availability at startup (avoid repeated `which` calls)
 
 ### Testing
 - [ ] Test pwsh clipboard on Linux (if available)

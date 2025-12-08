@@ -62,7 +62,7 @@ public static async Task Should_display_card()
 - `tests/timewarp-nuru-core-tests/test-terminal-context-01-basic.cs` - 7 tests covering context behavior
 
 ### Samples Added
-- `samples/testing/test-real-app.cs` - Demonstrates zero-config testing pattern
+- `samples/testing/runfile-test-harness/test-real-app.cs` - Demonstrates zero-config testing pattern
 
 ## Notes
 

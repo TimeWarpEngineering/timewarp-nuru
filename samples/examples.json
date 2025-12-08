@@ -195,6 +195,14 @@
       "difficulty": "intermediate"
     },
     {
+      "id": "runfile-test-harness",
+      "name": "Runfile Test Harness",
+      "description": "Zero-modification testing pattern for runfiles using NuruTestContext, ModuleInitializer, and conditional compilation via Directory.Build.props",
+      "path": "samples/testing/runfile-test-harness/run-real-app-tests.cs",
+      "tags": ["testing", "runfiles", "zero-modification", "test-harness", "module-initializer", "ci-cd"],
+      "difficulty": "intermediate"
+    },
+    {
       "id": "test-repl",
       "name": "Testing REPL Mode",
       "description": "Programmatically test REPL mode using TestTerminal with QueueLine() and QueueKey() for input simulation - session lifecycle, commands, and assertions",

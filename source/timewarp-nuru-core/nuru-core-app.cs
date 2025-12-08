@@ -177,29 +177,13 @@ public partial class NuruCoreApp
   {
     ArgumentNullException.ThrowIfNull(args);
 
-// Check if a test harness wants to take control
+    // Test harness handoff (only top-level)
     if (NuruTestContext.TryExecuteTestRunner(this, out Task<int> testResult))
-    {
-      return await testResult;
-    }
-
-    ITerminal effectiveTerminal = TestTerminalContext.Resolve(Terminal);
-
-    try
     {
       return await testResult.ConfigureAwait(false);
     }
 
-    return await RunAsync(TestTerminalContext.Current ?? Terminal, args);
-  }
-
-  /// <summary>
-  /// Executes the app with an explicit terminal for testing.
-  /// </summary>
-  public async Task<int> RunAsync(ITerminal terminal, string[] args)
-  {
-    ArgumentNullException.ThrowIfNull(terminal);
-    ArgumentNullException.ThrowIfNull(args);
+    ITerminal effectiveTerminal = TestTerminalContext.Resolve(Terminal);
 
     try
     {
@@ -217,13 +201,13 @@ public partial class NuruCoreApp
       {
         await effectiveTerminal.WriteErrorLineAsync(
           result.ErrorMessage ?? "No matching command found."
-        );
+        ).ConfigureAwait(false);
 
         ShowAvailableCommands(effectiveTerminal);
         return 1;
       }
 
-      if (!await ValidateConfigurationAsync(args).ConfigureAwait(false)) return 1;
+      if (!await ValidateConfigurationAsync(args, effectiveTerminal).ConfigureAwait(false)) return 1;
 
       // Execute based on endpoint strategy
       return result.MatchedEndpoint.Strategy switch
@@ -239,8 +223,7 @@ public partial class NuruCoreApp
           await ExecuteMediatorCommandAsync
           (
             result.MatchedEndpoint.CommandType!,
-            result,
-            terminal
+            result
           ).ConfigureAwait(false),
 
         ExecutionStrategy.Delegate =>
@@ -248,8 +231,7 @@ public partial class NuruCoreApp
           (
             result.MatchedEndpoint.Handler!,
             result.ExtractedValues!,
-            result.MatchedEndpoint,
-            terminal
+            result.MatchedEndpoint
           ).ConfigureAwait(false),
 
         ExecutionStrategy.Invalid =>
@@ -309,24 +291,24 @@ public partial class NuruCoreApp
       Justification = "Delegate execution requires reflection - delegate types are preserved through registration")]
   [UnconditionalSuppressMessage("AOT", "IL3050:RequiresDynamicCode",
       Justification = "Delegate invocation may require dynamic code generation")]
-    private Task<int> ExecuteDelegateAsync(Delegate del, Dictionary<string, string> extractedValues, Endpoint endpoint, ITerminal terminal)
+  private Task<int> ExecuteDelegateAsync(Delegate del, Dictionary<string, string> extractedValues, Endpoint endpoint)
+  {
+    // When full DI is enabled (MediatorExecutor exists), route through Mediator
+    if (MediatorExecutor is not null)
     {
-      // When full DI is enabled (MediatorExecutor exists), route through Mediator
-      if (MediatorExecutor is not null)
-      {
-        return ExecuteDelegateWithPipelineAsync(del, extractedValues, endpoint, terminal);
-      }
-
-      // Direct execution path (no DI)
-      return DelegateExecutor.ExecuteAsync(
-        del,
-        extractedValues,
-        TypeConverterRegistry,
-        ServiceProvider ?? EmptyServiceProvider.Instance,
-        endpoint,
-        terminal
-      );
+      return ExecuteDelegateWithPipelineAsync(del, extractedValues, endpoint);
     }
+
+    // Direct execution path (no DI)
+    return DelegateExecutor.ExecuteAsync(
+      del,
+      extractedValues,
+      TypeConverterRegistry,
+      ServiceProvider ?? EmptyServiceProvider.Instance,
+      endpoint,
+      Terminal
+    );
+  }
 
   /// <summary>
   /// Executes a delegate through Mediator when DI is enabled, allowing pipeline behaviors to apply.
@@ -573,7 +555,7 @@ public partial class NuruCoreApp
     return true;
   }
 
-  private void ShowAvailableCommands(ITerminal terminal = default)
+  private void ShowAvailableCommands(ITerminal? terminal = null)
   {
     terminal ??= Terminal;
     terminal.WriteLine(HelpProvider.GetHelpText(Endpoints, AppMetadata?.Name, AppMetadata?.Description, HelpOptions, HelpContext.Cli));
@@ -598,7 +580,7 @@ public partial class NuruCoreApp
     }
     catch (OptionsValidationException ex)
     {
-      await DisplayValidationErrorsAsync(ex, terminal);
+      await DisplayValidationErrorsAsync(ex, terminal).ConfigureAwait(false);
       return false;
     }
   }
@@ -616,17 +598,17 @@ public partial class NuruCoreApp
   /// <summary>
   /// Displays configuration validation errors in a clean, user-friendly format.
   /// </summary>
-  private async Task DisplayValidationErrorsAsync(OptionsValidationException exception)
+  private static async Task DisplayValidationErrorsAsync(OptionsValidationException exception, ITerminal terminal)
   {
-    await Terminal.WriteErrorLineAsync("❌ Configuration validation failed:").ConfigureAwait(false);
-    await Terminal.WriteErrorLineAsync("").ConfigureAwait(false);
+    await terminal.WriteErrorLineAsync("❌ Configuration validation failed:").ConfigureAwait(false);
+    await terminal.WriteErrorLineAsync("").ConfigureAwait(false);
 
     foreach (string failure in exception.Failures)
     {
-      await Terminal.WriteErrorLineAsync($"  • {failure}").ConfigureAwait(false);
+      await terminal.WriteErrorLineAsync($"  • {failure}").ConfigureAwait(false);
     }
 
-    await Terminal.WriteErrorLineAsync("").ConfigureAwait(false);
+    await terminal.WriteErrorLineAsync("").ConfigureAwait(false);
   }
 
   /// <summary>

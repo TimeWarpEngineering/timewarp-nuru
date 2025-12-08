@@ -94,32 +94,62 @@ public static class TestSetup
 
 # Test run - includes test file, delegate takes over
 NURU_TEST=test-real-app.cs ./real-app.cs
+
+# IMPORTANT: Clean after changing NURU_TEST (runfile cache doesn't track env vars)
+dotnet clean ./real-app.cs
 ```
 
 ## Checklist
 
 ### Implementation
-- [ ] Add `NuruTestContext` class with `AsyncLocal<Func<NuruCoreApp, Task<int>>?>` 
-- [ ] Update `RunAsync` to check for and invoke `TestRunner` delegate
-- [ ] Ensure inner `RunAsync` calls don't re-trigger the delegate (only top-level)
+- [x] Add `NuruTestContext` class with `AsyncLocal<Func<NuruCoreApp, Task<int>>?>` 
+- [x] Update `RunAsync` to check for and invoke `TestRunner` delegate
+- [x] Ensure inner `RunAsync` calls don't re-trigger the delegate (only top-level)
 
 ### Testing
-- [ ] Create sample runfile `real-app.cs`
-- [ ] Create test file `test-real-app.cs` with `ModuleInitializer`
-- [ ] Create `Directory.Build.props` for conditional inclusion
-- [ ] Verify tests run with `NURU_TEST=test-real-app.cs ./real-app.cs`
+- [x] Create sample runfile `real-app.cs`
+- [x] Create test file `test-real-app.cs` with `ModuleInitializer`
+- [x] Create `Directory.Build.props` for conditional inclusion
+- [x] Verify tests run with `NURU_TEST=test-real-app.cs ./real-app.cs`
+- [x] Create automated test runner `run-real-app-tests.cs` using Amuru
 
 ### Documentation
-- [ ] Document the pattern in testing guide
+- [x] Document the pattern in `samples/testing/overview.md`
 - [ ] Add example to MCP
 - [ ] Update issue #109 with this approach
 
-## Notes
+## Implementation Notes
 
-The delegate check should only trigger at the top-level `RunAsync` call. When test code calls `app.RunAsync(args)` to run test scenarios, those should execute normally. Options:
-- Clear the delegate after first invocation
-- Use a flag to track "already handed off"
-- Pass a different method to tests (e.g., `app.ExecuteAsync(args)`)
+### Files Created/Modified
+
+- `source/timewarp-nuru-core/io/nuru-test-context.cs` - NuruTestContext with AsyncLocal delegate
+- `source/timewarp-nuru-core/nuru-core-app.cs` - RunAsync checks for test runner delegate
+- `samples/testing/real-app.cs` - Sample CLI app (system under test)
+- `samples/testing/test-real-app.cs` - Test harness with ModuleInitializer
+- `samples/testing/run-real-app-tests.cs` - Automated test runner using Amuru
+- `samples/testing/Directory.Build.props` - Conditional test file inclusion
+- `samples/testing/overview.md` - Updated documentation
+
+### Key Insight: Runfile Cache
+
+The runfile build cache does NOT track environment variables. When toggling `NURU_TEST`, you MUST run `dotnet clean ./app.cs` to force a rebuild with the new configuration.
+
+### CI/CD Usage
+
+```yaml
+# Test job
+- name: Run Tests
+  run: |
+    export NURU_TEST=test-real-app.cs
+    dotnet clean ./real-app.cs
+    ./real-app.cs
+
+# Production build (no NURU_TEST set)
+- name: Build Production
+  run: |
+    dotnet clean ./real-app.cs
+    dotnet publish ./real-app.cs
+```
 
 ## References
 

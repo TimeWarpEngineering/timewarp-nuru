@@ -169,13 +169,21 @@ public partial class NuruCoreApp
     ReplOptions = serviceProvider.GetService<ReplOptions>();
     AppMetadata = serviceProvider.GetService<ApplicationMetadata>();
     HelpOptions = serviceProvider.GetService<HelpOptions>() ?? new HelpOptions();
-    Terminal = serviceProvider.GetService<ITerminal>() ?? NuruTerminal.Default;
+    Terminal = TestTerminalContext.Resolve(serviceProvider.GetService<ITerminal>());
     SessionContext = serviceProvider.GetRequiredService<SessionContext>();
   }
 
   public async Task<int> RunAsync(string[] args)
   {
     ArgumentNullException.ThrowIfNull(args);
+
+    // Test harness handoff (only top-level)
+    if (NuruTestContext.TryExecuteTestRunner(this, out Task<int> testResult))
+    {
+      return await testResult.ConfigureAwait(false);
+    }
+
+    ITerminal effectiveTerminal = TestTerminalContext.Resolve(Terminal);
 
     try
     {
@@ -191,15 +199,15 @@ public partial class NuruCoreApp
       // Exit early if route resolution failed
       if (!result.Success || result.MatchedEndpoint is null)
       {
-        await Terminal.WriteErrorLineAsync(
+        await effectiveTerminal.WriteErrorLineAsync(
           result.ErrorMessage ?? "No matching command found."
         ).ConfigureAwait(false);
 
-        ShowAvailableCommands();
+        ShowAvailableCommands(effectiveTerminal);
         return 1;
       }
 
-      if (!await ValidateConfigurationAsync(args).ConfigureAwait(false)) return 1;
+      if (!await ValidateConfigurationAsync(args, effectiveTerminal).ConfigureAwait(false)) return 1;
 
       // Execute based on endpoint strategy
       return result.MatchedEndpoint.Strategy switch
@@ -286,7 +294,6 @@ public partial class NuruCoreApp
   private Task<int> ExecuteDelegateAsync(Delegate del, Dictionary<string, string> extractedValues, Endpoint endpoint)
   {
     // When full DI is enabled (MediatorExecutor exists), route through Mediator
-    // Pipeline behaviors will apply if registered, otherwise handler runs directly
     if (MediatorExecutor is not null)
     {
       return ExecuteDelegateWithPipelineAsync(del, extractedValues, endpoint);
@@ -406,6 +413,13 @@ public partial class NuruCoreApp
     for (int i = 0; i < parameters.Length; i++)
     {
       ParameterInfo param = parameters[i];
+
+      // Special case: ITerminal - use this.Terminal (which respects TestTerminalContext)
+      if (param.ParameterType == typeof(ITerminal))
+      {
+        args[i] = Terminal;
+        continue;
+      }
 
       // Try to get value from extracted values
       if (extractedValues.TryGetValue(param.Name!, out string? stringValue))
@@ -541,9 +555,10 @@ public partial class NuruCoreApp
     return true;
   }
 
-  private void ShowAvailableCommands()
+  private void ShowAvailableCommands(ITerminal? terminal = null)
   {
-    Terminal.WriteLine(HelpProvider.GetHelpText(Endpoints, AppMetadata?.Name, AppMetadata?.Description, HelpOptions, HelpContext.Cli));
+    terminal ??= Terminal;
+    terminal.WriteLine(HelpProvider.GetHelpText(Endpoints, AppMetadata?.Name, AppMetadata?.Description, HelpOptions, HelpContext.Cli));
   }
 
   /// <summary>
@@ -551,7 +566,7 @@ public partial class NuruCoreApp
   /// </summary>
   /// <param name="args">Command line arguments.</param>
   /// <returns>True if validation passed or was skipped, false if validation failed.</returns>
-  private async Task<bool> ValidateConfigurationAsync(string[] args)
+  private async Task<bool> ValidateConfigurationAsync(string[] args, ITerminal terminal)
   {
     // Skip validation for help commands or if no ServiceProvider
     if (ShouldSkipValidation(args) || ServiceProvider is null)
@@ -565,7 +580,7 @@ public partial class NuruCoreApp
     }
     catch (OptionsValidationException ex)
     {
-      await DisplayValidationErrorsAsync(ex).ConfigureAwait(false);
+      await DisplayValidationErrorsAsync(ex, terminal).ConfigureAwait(false);
       return false;
     }
   }
@@ -583,17 +598,17 @@ public partial class NuruCoreApp
   /// <summary>
   /// Displays configuration validation errors in a clean, user-friendly format.
   /// </summary>
-  private async Task DisplayValidationErrorsAsync(OptionsValidationException exception)
+  private static async Task DisplayValidationErrorsAsync(OptionsValidationException exception, ITerminal terminal)
   {
-    await Terminal.WriteErrorLineAsync("❌ Configuration validation failed:").ConfigureAwait(false);
-    await Terminal.WriteErrorLineAsync("").ConfigureAwait(false);
+    await terminal.WriteErrorLineAsync("❌ Configuration validation failed:").ConfigureAwait(false);
+    await terminal.WriteErrorLineAsync("").ConfigureAwait(false);
 
     foreach (string failure in exception.Failures)
     {
-      await Terminal.WriteErrorLineAsync($"  • {failure}").ConfigureAwait(false);
+      await terminal.WriteErrorLineAsync($"  • {failure}").ConfigureAwait(false);
     }
 
-    await Terminal.WriteErrorLineAsync("").ConfigureAwait(false);
+    await terminal.WriteErrorLineAsync("").ConfigureAwait(false);
   }
 
   /// <summary>

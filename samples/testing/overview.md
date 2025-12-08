@@ -9,9 +9,7 @@ This folder contains examples demonstrating how to test Nuru CLI applications us
 | [test-output-capture.cs](test-output-capture.cs) | Capture and assert on CLI output |
 | [test-colored-output.cs](test-colored-output.cs) | Test handlers with colored output |
 | [test-terminal-injection.cs](test-terminal-injection.cs) | ITerminal injection in route handlers |
-| [real-app.cs](real-app.cs) | Sample CLI app (system under test) |
-| [test-real-app.cs](test-real-app.cs) | Test harness for real-app.cs |
-| [run-real-app-tests.cs](run-real-app-tests.cs) | Automated test runner using Amuru |
+| [runfile-test-harness/](runfile-test-harness/) | Zero-modification testing pattern for runfiles |
 
 ## Key Concepts
 
@@ -69,54 +67,7 @@ public static class TestHarness
 
 ## Testing Real Apps (Zero-Modification Pattern)
 
-The `real-app.cs` and `test-real-app.cs` demonstrate testing a runfile without changing it:
-
-### How It Works
-
-1. **`real-app.cs`** - A normal CLI app, no test-specific code
-2. **`test-real-app.cs`** - Test harness with `[ModuleInitializer]`
-3. **`Directory.Build.props`** - Conditionally includes test file when `NURU_TEST` is set
-
-### Running Tests Manually
-
-```bash
-# Set the environment variable
-export NURU_TEST=test-real-app.cs  # bash
-$env:NURU_TEST = "test-real-app.cs"  # PowerShell
-
-# IMPORTANT: Clean to force rebuild with test harness
-dotnet clean ./real-app.cs
-
-# Run - tests execute instead of normal app
-./real-app.cs
-
-# Clean up: remove env var and rebuild for production
-unset NURU_TEST  # bash
-Remove-Item Env:NURU_TEST  # PowerShell
-dotnet clean ./real-app.cs
-```
-
-### Running Tests Automatically
-
-Use the test runner script:
-
-```bash
-./run-real-app-tests.cs
-```
-
-This script:
-1. Sets `NURU_TEST` environment variable
-2. Cleans and rebuilds with test harness
-3. Runs tests
-4. Clears environment variable
-5. Cleans and rebuilds for production
-6. Verifies normal operation
-
-### CI/CD Considerations
-
-- **Production builds**: Don't set `NURU_TEST` - app builds normally
-- **Test builds**: Set `NURU_TEST=test-file.cs` before building
-- **Always clean** when changing `NURU_TEST` - runfile cache doesn't track env vars
+See the [runfile-test-harness/](runfile-test-harness/) subfolder for the complete zero-modification testing pattern, which demonstrates testing runfiles without changing the application code.
 
 ## Running the Samples
 
@@ -126,8 +77,8 @@ This script:
 ./samples/testing/test-colored-output.cs
 ./samples/testing/test-terminal-injection.cs
 
-# Run the real-app test suite
-./samples/testing/run-real-app-tests.cs
+# Run the runfile test harness
+./samples/testing/runfile-test-harness/run-real-app-tests.cs
 ```
 
 ## See Also

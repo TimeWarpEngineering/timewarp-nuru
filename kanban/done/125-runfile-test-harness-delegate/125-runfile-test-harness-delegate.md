@@ -124,10 +124,11 @@ dotnet clean ./real-app.cs
 
 - `source/timewarp-nuru-core/io/nuru-test-context.cs` - NuruTestContext with AsyncLocal delegate
 - `source/timewarp-nuru-core/nuru-core-app.cs` - RunAsync checks for test runner delegate
-- `samples/testing/real-app.cs` - Sample CLI app (system under test)
-- `samples/testing/test-real-app.cs` - Test harness with ModuleInitializer
-- `samples/testing/run-real-app-tests.cs` - Automated test runner using Amuru
-- `samples/testing/Directory.Build.props` - Conditional test file inclusion
+- `samples/testing/runfile-test-harness/real-app.cs` - Sample CLI app (system under test)
+- `samples/testing/runfile-test-harness/test-real-app.cs` - Test harness with ModuleInitializer
+- `samples/testing/runfile-test-harness/run-real-app-tests.cs` - Automated test runner using Amuru
+- `samples/testing/runfile-test-harness/Directory.Build.props` - Conditional test file inclusion
+- `samples/testing/runfile-test-harness/overview.md` - Subfolder documentation
 - `samples/testing/overview.md` - Updated documentation
 
 ### Key Insight: Runfile Cache

@@ -2,9 +2,8 @@
 // This file is included at build time via Directory.Build.props when NURU_TEST is set
 // Usage: NURU_TEST=test-real-app.cs ./real-app.cs
 //
-// The ModuleInitializer sets up the test runner delegate BEFORE Main() runs.
-// When real-app.cs calls RunAsync(), control is handed to our test runner,
-// which receives the fully configured NuruCoreApp to test against.
+// The ModuleInitializer sets up NuruTestContext.TestRunner before Main() runs.
+// When real-app.cs calls RunAsync(), control is handed to our test runner.
 
 using System.Runtime.CompilerServices;
 using Shouldly;

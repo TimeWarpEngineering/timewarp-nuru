@@ -14,6 +14,9 @@
     
     The test harness receives the fully configured NuruCoreApp and can run 
     multiple test scenarios against it.
+    
+    NOTE: Run `dotnet clean ./real-app.cs` after setting/unsetting NURU_TEST
+    to rebuild with the new configuration.
   -->
   <ItemGroup Condition="'$(NURU_TEST)' != ''">
     <Compile Include="$(NURU_TEST)" />

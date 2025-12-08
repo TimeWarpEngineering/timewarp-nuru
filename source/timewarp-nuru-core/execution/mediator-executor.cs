@@ -13,7 +13,7 @@ public class MediatorExecutor
   {
     ServiceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
     TypeConverterRegistry = typeConverterRegistry ?? throw new ArgumentNullException(nameof(typeConverterRegistry));
-    Terminal = terminal ?? serviceProvider.GetService<ITerminal>() ?? NuruTerminal.Default;
+    Terminal = TestTerminalContext.Resolve(terminal ?? serviceProvider.GetService<ITerminal>());
   }
 
   /// <summary>

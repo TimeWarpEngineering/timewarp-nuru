@@ -29,7 +29,7 @@ public static class DelegateExecutor
     ArgumentNullException.ThrowIfNull(serviceProvider);
     ArgumentNullException.ThrowIfNull(endpoint);
 
-    ITerminal output = terminal ?? serviceProvider.GetService<ITerminal>() ?? NuruTerminal.Default;
+    ITerminal output = TestTerminalContext.Resolve(terminal ?? serviceProvider.GetService<ITerminal>());
 
     try
     {
@@ -38,7 +38,7 @@ public static class DelegateExecutor
 
       object?[] args = parameters.Length == 0
         ? []
-        : BindParameters(parameters, extractedValues, typeConverterRegistry, serviceProvider, endpoint);
+        : BindParameters(parameters, extractedValues, typeConverterRegistry, serviceProvider, endpoint, output);
 
       // Try to use a generated typed invoker for AOT compatibility
       string signatureKey = InvokerRegistry.ComputeSignatureKey(method);
@@ -120,13 +120,21 @@ public static class DelegateExecutor
       Dictionary<string, string> extractedValues,
       ITypeConverterRegistry typeConverterRegistry,
       IServiceProvider serviceProvider,
-      Endpoint endpoint)
+      Endpoint endpoint,
+      ITerminal resolvedTerminal)
   {
     object?[] args = new object?[parameters.Length];
 
     for (int i = 0; i < parameters.Length; i++)
     {
       ParameterInfo param = parameters[i];
+
+      // Special case: ITerminal - use the resolved terminal (respects TestTerminalContext)
+      if (param.ParameterType == typeof(ITerminal))
+      {
+        args[i] = resolvedTerminal;
+        continue;
+      }
 
       // Try to get value from extracted values
       if (extractedValues.TryGetValue(param.Name!, out string? stringValue))

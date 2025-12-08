@@ -123,7 +123,7 @@ public partial class NuruCoreAppBuilder
         EndpointCollection,
         TypeConverterRegistry,
         loggerFactory,
-        Terminal ?? NuruTerminal.Default,
+        TestTerminalContext.Resolve(Terminal),
         ReplOptions,
         AppMetadata,
         HelpOptions,

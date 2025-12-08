@@ -169,7 +169,7 @@ public partial class NuruCoreApp
     ReplOptions = serviceProvider.GetService<ReplOptions>();
     AppMetadata = serviceProvider.GetService<ApplicationMetadata>();
     HelpOptions = serviceProvider.GetService<HelpOptions>() ?? new HelpOptions();
-    Terminal = serviceProvider.GetService<ITerminal>() ?? NuruTerminal.Default;
+    Terminal = TestTerminalContext.Resolve(serviceProvider.GetService<ITerminal>());
     SessionContext = serviceProvider.GetRequiredService<SessionContext>();
   }
 
@@ -406,6 +406,13 @@ public partial class NuruCoreApp
     for (int i = 0; i < parameters.Length; i++)
     {
       ParameterInfo param = parameters[i];
+
+      // Special case: ITerminal - use this.Terminal (which respects TestTerminalContext)
+      if (param.ParameterType == typeof(ITerminal))
+      {
+        args[i] = Terminal;
+        continue;
+      }
 
       // Try to get value from extracted values
       if (extractedValues.TryGetValue(param.Name!, out string? stringValue))

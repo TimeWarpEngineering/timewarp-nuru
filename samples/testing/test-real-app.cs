@@ -1,129 +1,152 @@
-#!/usr/bin/dotnet --
-// test-real-app - Demonstrates zero-configuration testing using TestTerminalContext
-// This pattern allows testing real CLI apps by calling their Main() directly
-#:package Shouldly
-#:project ../../source/timewarp-nuru/timewarp-nuru.csproj
+// test-real-app.cs - Test harness for real-app.cs
+// This file is included at build time via Directory.Build.props when NURU_TEST is set
+// Usage: NURU_TEST=test-real-app.cs ./real-app.cs
+//
+// The ModuleInitializer sets up the test runner delegate BEFORE Main() runs.
+// When real-app.cs calls RunAsync(), control is handed to our test runner,
+// which receives the fully configured NuruCoreApp to test against.
 
+using System.Runtime.CompilerServices;
 using Shouldly;
 using TimeWarp.Nuru;
 
-Console.WriteLine("=== Testing Real Apps with TestTerminalContext ===\n");
-
-// Test 1: Basic usage pattern
-Console.WriteLine("Test 1: Basic TestTerminalContext usage");
+public static class TestHarness
 {
-  using TestTerminal terminal = new();
-  TestTerminalContext.Current = terminal;
-
-  // Call the "real" app's entry point
-  await SampleApp.Main(["greet", "World"]);
-
-  terminal.OutputContains("Hello, World!").ShouldBeTrue();
-  Console.WriteLine($"  Output: {terminal.Output.Trim()}");
-  Console.WriteLine("  PASSED".Green());
-
-  TestTerminalContext.Current = null;
-}
-
-// Test 2: Parallel test isolation
-Console.WriteLine("\nTest 2: Parallel test isolation");
-{
-  // Run multiple tests in parallel - each gets its own terminal
-  Task[] tasks =
-  [
-    TestGreeting("Alice"),
-    TestGreeting("Bob"),
-    TestGreeting("Charlie"),
-  ];
-
-  await Task.WhenAll(tasks);
-  Console.WriteLine("  All parallel tests passed!".Green());
-}
-
-static async Task TestGreeting(string name)
-{
-  using TestTerminal terminal = new();
-  TestTerminalContext.Current = terminal;
-
-  // For parallel tests, build a fresh app each time
-  // This ensures each test has complete isolation
-  await SampleApp.RunFresh(["greet", name]);
-
-  terminal.OutputContains($"Hello, {name}!").ShouldBeTrue();
-  Console.WriteLine($"    {name}: {terminal.Output.Trim()}".Green());
-
-  TestTerminalContext.Current = null;
-}
-
-// Test 3: Testing error output
-Console.WriteLine("\nTest 3: Error output capture");
-{
-  using TestTerminal terminal = new();
-  TestTerminalContext.Current = terminal;
-
-  int exitCode = await SampleApp.RunFresh(["unknown-command"]);
-
-  exitCode.ShouldBe(1);
-  terminal.ErrorContains("No matching command found").ShouldBeTrue();
-  Console.WriteLine($"  Exit code: {exitCode}");
-  Console.WriteLine("  PASSED".Green());
-
-  TestTerminalContext.Current = null;
-}
-
-// Test 4: Testing with options
-Console.WriteLine("\nTest 4: Commands with options");
-{
-  using TestTerminal terminal = new();
-  TestTerminalContext.Current = terminal;
-
-  await SampleApp.RunFresh(["deploy", "prod", "--dry-run"]);
-
-  terminal.OutputContains("DRY RUN").ShouldBeTrue();
-  terminal.OutputContains("prod").ShouldBeTrue();
-  Console.WriteLine($"  Output: {terminal.Output.Trim()}");
-  Console.WriteLine("  PASSED".Green());
-
-  TestTerminalContext.Current = null;
-}
-
-Console.WriteLine("\n=== All Tests Complete ===".BrightGreen().Bold());
-
-// Sample CLI app that would normally be in a separate project
-public static class SampleApp
-{
-  // For testing scenarios, this pattern builds a fresh app each time
-  // to ensure TestTerminalContext isolation works correctly
-  public static async Task<int> RunFresh(string[] args)
+  [ModuleInitializer]
+  public static void Initialize()
   {
-    NuruCoreApp app = BuildApp();
-    return await app.RunAsync(args);
+    NuruTestContext.TestRunner = RunTestsAsync;
   }
 
-  // If your app is a static Program.Main, you'd call it like this:
-  // await Program.Main(args);
-  // But in that case, make sure your app creates a fresh builder each time.
-  public static async Task<int> Main(string[] args)
+  private static async Task<int> RunTestsAsync(NuruCoreApp app)
   {
-    // This demonstrates the pattern for an actual Main method
-    // Each call builds fresh to support TestTerminalContext
-    return await RunFresh(args);
-  }
+    Console.WriteLine("=== Testing real-app.cs with NuruTestContext ===\n");
 
-  private static NuruCoreApp BuildApp()
-  {
-    NuruCoreAppBuilder builder = NuruCoreApp.CreateSlimBuilder();
-    builder.AddAutoHelp();
+    int passed = 0;
+    int failed = 0;
 
-    builder.Map("greet {name}", (string name, ITerminal terminal) =>
-      terminal.WriteLine($"Hello, {name}!"));
+    // Test 1: Basic greeting
+    Console.Write("Test 1: greet command... ");
+    try
+    {
+      using TestTerminal terminal = new();
+      TestTerminalContext.Current = terminal;
 
-    builder.Map("deploy {env} --dry-run", (string env, ITerminal terminal) =>
-      terminal.WriteLine($"[DRY RUN] Would deploy to {env}"));
+      await app.RunAsync(["greet", "World"]);
 
-    builder.Map("deploy {env}", (string env, ITerminal terminal) =>
-      terminal.WriteLine($"Deploying to {env}..."));
+      terminal.OutputContains("Hello, World!").ShouldBeTrue();
+      Console.WriteLine("PASSED".Green());
+      passed++;
+    }
+    catch (Exception ex)
+    {
+      Console.WriteLine($"FAILED: {ex.Message}".Red());
+      failed++;
+    }
+    finally
+    {
+      TestTerminalContext.Current = null;
+    }
 
-    return builder.Build();
+    // Test 2: Deploy with dry-run option
+    Console.Write("Test 2: deploy --dry-run... ");
+    try
+    {
+      using TestTerminal terminal = new();
+      TestTerminalContext.Current = terminal;
+
+      await app.RunAsync(["deploy", "production", "--dry-run"]);
+
+      terminal.OutputContains("[DRY RUN]").ShouldBeTrue();
+      terminal.OutputContains("production").ShouldBeTrue();
+      Console.WriteLine("PASSED".Green());
+      passed++;
+    }
+    catch (Exception ex)
+    {
+      Console.WriteLine($"FAILED: {ex.Message}".Red());
+      failed++;
+    }
+    finally
+    {
+      TestTerminalContext.Current = null;
+    }
+
+    // Test 3: Deploy without dry-run
+    Console.Write("Test 3: deploy (actual)... ");
+    try
+    {
+      using TestTerminal terminal = new();
+      TestTerminalContext.Current = terminal;
+
+      await app.RunAsync(["deploy", "staging"]);
+
+      terminal.OutputContains("Deploying to staging").ShouldBeTrue();
+      terminal.OutputContains("DRY RUN").ShouldBeFalse();
+      Console.WriteLine("PASSED".Green());
+      passed++;
+    }
+    catch (Exception ex)
+    {
+      Console.WriteLine($"FAILED: {ex.Message}".Red());
+      failed++;
+    }
+    finally
+    {
+      TestTerminalContext.Current = null;
+    }
+
+    // Test 4: Version command
+    Console.Write("Test 4: version... ");
+    try
+    {
+      using TestTerminal terminal = new();
+      TestTerminalContext.Current = terminal;
+
+      await app.RunAsync(["version"]);
+
+      terminal.OutputContains("RealApp v1.0.0").ShouldBeTrue();
+      Console.WriteLine("PASSED".Green());
+      passed++;
+    }
+    catch (Exception ex)
+    {
+      Console.WriteLine($"FAILED: {ex.Message}".Red());
+      failed++;
+    }
+    finally
+    {
+      TestTerminalContext.Current = null;
+    }
+
+    // Test 5: Unknown command returns error
+    Console.Write("Test 5: unknown command... ");
+    try
+    {
+      using TestTerminal terminal = new();
+      TestTerminalContext.Current = terminal;
+
+      int exitCode = await app.RunAsync(["unknown-command"]);
+
+      exitCode.ShouldBe(1);
+      terminal.ErrorContains("No matching command found").ShouldBeTrue();
+      Console.WriteLine("PASSED".Green());
+      passed++;
+    }
+    catch (Exception ex)
+    {
+      Console.WriteLine($"FAILED: {ex.Message}".Red());
+      failed++;
+    }
+    finally
+    {
+      TestTerminalContext.Current = null;
+    }
+
+    // Summary
+    Console.WriteLine();
+    Console.WriteLine($"=== Results: {passed} passed, {failed} failed ===".Bold());
+
+    return failed > 0 ? 1 : 0;
   }
 }

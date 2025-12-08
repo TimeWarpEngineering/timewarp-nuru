@@ -1,0 +1,22 @@
+<Project>
+  <!-- Import parent Directory.Build.props -->
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+
+  <!-- 
+    Conditional test harness inclusion for runfile testing.
+    
+    When NURU_TEST environment variable is set to a filename (e.g., test-real-app.cs),
+    that file is included in the build. This allows test code with [ModuleInitializer]
+    to set up NuruTestContext.TestRunner before Main() runs.
+    
+    Usage:
+      NURU_TEST=test-real-app.cs ./real-app.cs
+    
+    The test harness receives the fully configured NuruCoreApp and can run 
+    multiple test scenarios against it.
+  -->
+  <ItemGroup Condition="'$(NURU_TEST)' != ''">
+    <Compile Include="$(NURU_TEST)" />
+    <PackageReference Include="Shouldly" />
+  </ItemGroup>
+</Project>

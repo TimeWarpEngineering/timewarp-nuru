@@ -41,7 +41,10 @@ if (!string.IsNullOrEmpty(testResult.Stderr))
   Console.WriteLine(testResult.Stderr);
 }
 
-bool testsPassed = testResult.Success && testResult.Stdout.Contains("0 failed");
+// Jaribu outputs "X/Y tests passed" where X == Y means all passed
+bool testsPassed = testResult.Success && 
+  (testResult.Stdout.Contains("0 failed") || 
+   System.Text.RegularExpressions.Regex.IsMatch(testResult.Stdout, @"(\d+)/\1 tests passed"));
 
 // Step 4: Clean up - remove env var and rebuild for production
 Console.WriteLine("\n4. Cleaning up test environment...");

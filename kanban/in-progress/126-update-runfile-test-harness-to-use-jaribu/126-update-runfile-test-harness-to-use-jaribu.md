@@ -15,16 +15,20 @@ Refactor `samples/testing/runfile-test-harness/test-real-app.cs` to use Jaribu i
 ## Checklist
 
 ### Implementation
-- [ ] Add `#:package TimeWarp.Jaribu` directive to test-real-app.cs
-- [ ] Create static field to hold captured app instance
-- [ ] Update `[ModuleInitializer]` to capture app and call `RunTests<T>()`
-- [ ] Convert 5 manual tests to Jaribu test methods
-- [ ] Add `CleanUp()` method for terminal context cleanup
-- [ ] Verify tests pass with `./run-real-app-tests.cs`
+- [x] Add `#:package TimeWarp.Jaribu` directive to test-real-app.cs (added via Directory.Build.props)
+- [x] Create static field to hold captured app instance
+- [x] Update `[ModuleInitializer]` to capture app and call `RunTests<T>()`
+- [x] Convert 5 manual tests to Jaribu test methods
+- [x] Add `CleanUp()` method for terminal context cleanup
+- [x] Verify tests pass with `./run-real-app-tests.cs`
 
 ### Documentation
-- [ ] Update `overview.md` to reflect Jaribu usage
-- [ ] Add note about Jaribu benefits (attributes, data-driven tests, etc.)
+- [x] Update `overview.md` to reflect Jaribu usage
+- [x] Add note about Jaribu benefits (attributes, data-driven tests, etc.)
+
+### Additional Fixes
+- [x] Fixed `real-app.cs` project path (was `../../source`, now `../../../source`)
+- [x] Updated `run-real-app-tests.cs` to recognize Jaribu output format
 
 ## Notes
 

@@ -21,5 +21,6 @@
   <ItemGroup Condition="'$(NURU_TEST)' != ''">
     <Compile Include="$(NURU_TEST)" />
     <PackageReference Include="Shouldly" />
+    <PackageReference Include="TimeWarp.Jaribu" />
   </ItemGroup>
 </Project>

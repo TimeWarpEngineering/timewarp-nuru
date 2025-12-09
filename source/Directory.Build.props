@@ -4,7 +4,7 @@
 
   <!-- Default package metadata (can be overridden in individual projects) -->
   <PropertyGroup Label="Package Metadata">
-    <Version>3.0.0-beta.16</Version>
+    <Version>3.0.0-beta.17</Version>
     <Authors>Steven T. Cramer</Authors>
     <RepositoryUrl>https://github.com/TimeWarpEngineering/timewarp-nuru</RepositoryUrl>
     <PackageLicenseExpression>Unlicense</PackageLicenseExpression>

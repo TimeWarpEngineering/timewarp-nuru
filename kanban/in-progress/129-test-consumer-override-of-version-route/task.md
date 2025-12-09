@@ -24,3 +24,9 @@ NuruApp.CreateBuilder(args)  // registers --version via UseAllExtensions
 ```
 
 Consider whether this is the desired behavior or if consumers should use `DisableVersionRoute = true` first.
+
+## Blocked
+
+Test infrastructure issue: New test files in `tests/timewarp-nuru-tests/` fail to compile because `Directory.Build.props` includes `lexer-test-helper.cs` which references internal types (`Lexer`, `Token`). Existing cached tests work but new tests fail. Need to fix the test infrastructure before adding these tests.
+
+Attempted test file: `routing-20-version-route-override.cs` (removed due to build failures)

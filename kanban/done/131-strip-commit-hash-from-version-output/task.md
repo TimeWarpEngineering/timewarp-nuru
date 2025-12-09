@@ -27,14 +27,20 @@ Date: 2025-12-09T13:12:36
 ## Checklist
 
 ### Implementation
-- [ ] Modify `DisplayVersion()` in `nuru-app-builder-extensions.cs` to strip `+<hash>` suffix from version
-- [ ] Handle edge cases (no `+` in version, empty hash, etc.)
+- [x] Modify `DisplayVersion()` in `nuru-app-builder-extensions.cs` to strip `+<hash>` suffix from version
+- [x] Handle edge cases (no `+` in version, empty hash, etc.)
 
 ### Testing
-- [ ] Verify version output no longer shows redundant commit hash
+- [x] Verify version output no longer shows redundant commit hash
 
 ## Notes
 
 - Location: `source/timewarp-nuru/nuru-app-builder-extensions.cs` lines 97-101
 - The `+` suffix follows SemVer 2.0 build metadata convention
 - Simple string manipulation: split on `+` and take the first part
+
+## Results
+
+- Modified `DisplayVersion()` to strip build metadata suffix using `version.Split('+')[0]`
+- Edge case handled: if no `+` exists, the full string is returned unchanged
+- Verified output now shows clean version without redundant commit hash

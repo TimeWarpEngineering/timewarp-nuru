@@ -71,4 +71,18 @@ public sealed class NuruAppOptions
   /// If null, help uses default options (hide per-command help routes, REPL commands in CLI, completion routes).
   /// </summary>
   public Action<HelpOptions>? ConfigureHelp { get; set; }
+
+  /// <summary>
+  /// When true, disables the automatic registration of the <c>--version,-v</c> route.
+  /// Default is false (version route is registered).
+  /// </summary>
+  /// <remarks>
+  /// The version route displays:
+  /// <list type="bullet">
+  /// <item><description>Assembly informational version (or simple version as fallback)</description></item>
+  /// <item><description>Commit hash (if available from TimeWarp.Build.Tasks)</description></item>
+  /// <item><description>Commit date (if available from TimeWarp.Build.Tasks)</description></item>
+  /// </list>
+  /// </remarks>
+  public bool DisableVersionRoute { get; set; }
 }

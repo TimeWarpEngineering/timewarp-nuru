@@ -7,22 +7,47 @@ namespace TimeWarp.Nuru;
 [Generator]
 public class NuruInvokerGenerator : IIncrementalGenerator
 {
+  private const string SuppressAttributeName = "TimeWarp.Nuru.SuppressNuruInvokerGenerationAttribute";
+
   public void Initialize(IncrementalGeneratorInitializationContext context)
   {
-    // Step 1: Find all Map invocations with their delegate signatures
+    // Step 1: Check for [assembly: SuppressNuruInvokerGeneration] attribute
+    IncrementalValueProvider<bool> hasSuppressAttribute = context.CompilationProvider
+      .Select(static (compilation, _) =>
+      {
+        foreach (AttributeData attribute in compilation.Assembly.GetAttributes())
+        {
+          if (attribute.AttributeClass?.ToDisplayString() == SuppressAttributeName)
+            return true;
+        }
+
+        return false;
+      });
+
+    // Step 2: Find all Map invocations with their delegate signatures
     IncrementalValuesProvider<RouteWithSignature?> routeSignatures = context.SyntaxProvider
       .CreateSyntaxProvider(
         predicate: static (node, _) => IsMapInvocation(node),
         transform: static (ctx, ct) => GetRouteWithSignature(ctx, ct))
       .Where(static info => info?.Signature is not null);
 
-    // Step 2: Collect all unique signatures
+    // Step 3: Collect all unique signatures
     IncrementalValueProvider<ImmutableArray<RouteWithSignature?>> collectedSignatures =
       routeSignatures.Collect();
 
-    // Step 3: Generate source code
-    context.RegisterSourceOutput(collectedSignatures, static (ctx, routes) =>
+    // Step 4: Combine signatures with suppress flag
+    IncrementalValueProvider<(ImmutableArray<RouteWithSignature?> Routes, bool Suppress)> combined =
+      collectedSignatures.Combine(hasSuppressAttribute);
+
+    // Step 5: Generate source code (unless suppressed)
+    context.RegisterSourceOutput(combined, static (ctx, data) =>
     {
+      // Skip generation if assembly has [SuppressNuruInvokerGeneration]
+      if (data.Suppress)
+        return;
+
+      ImmutableArray<RouteWithSignature?> routes = data.Routes;
+
       if (routes.IsDefaultOrEmpty)
         return;
 

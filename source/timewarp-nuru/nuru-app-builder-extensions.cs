@@ -1,5 +1,7 @@
 namespace TimeWarp.Nuru;
 
+using System.Reflection;
+
 /// <summary>
 /// Extension methods that auto-wire all Nuru extensions to an existing builder.
 /// </summary>
@@ -33,10 +35,86 @@ public static class NuruAppBuilderExtensions
       builder.ConfigureHelp(options.ConfigureHelp);
     }
 
-    return builder
+    builder
       .UseTelemetry(options.ConfigureTelemetry ?? (_ => { }))
       .AddReplSupport(options.ConfigureRepl)
       .EnableDynamicCompletion(configure: options.ConfigureCompletion)
       .AddInteractiveRoute(options.InteractiveRoutePatterns);
+
+    // Add version route unless disabled
+    if (!options.DisableVersionRoute)
+    {
+      builder.AddVersionRoute();
+    }
+
+    return builder;
+  }
+
+  /// <summary>
+  /// Adds a <c>--version,-v</c> route that displays version information including commit hash and date when available.
+  /// </summary>
+  /// <typeparam name="TBuilder">The builder type.</typeparam>
+  /// <param name="builder">The NuruCoreAppBuilder instance.</param>
+  /// <returns>The builder for chaining.</returns>
+  /// <remarks>
+  /// The version output includes:
+  /// <list type="bullet">
+  /// <item><description>Assembly informational version (or simple version as fallback)</description></item>
+  /// <item><description>Commit hash (if available from <c>AssemblyMetadataAttribute</c> with key "CommitHash")</description></item>
+  /// <item><description>Commit date (if available from <c>AssemblyMetadataAttribute</c> with key "CommitDate")</description></item>
+  /// </list>
+  /// This information is automatically injected by TimeWarp.Build.Tasks which is a transitive dependency.
+  /// </remarks>
+  public static TBuilder AddVersionRoute<TBuilder>(this TBuilder builder)
+    where TBuilder : NuruCoreAppBuilder
+  {
+    ArgumentNullException.ThrowIfNull(builder);
+    builder.Map("--version,-v", DisplayVersion, "Display version information");
+    return builder;
+  }
+
+  private const string VersionUnavailableMessage = "Version information unavailable";
+  private const string UnknownVersion = "Unknown";
+  private const string CommitHashKey = "CommitHash";
+  private const string CommitDateKey = "CommitDate";
+
+  /// <summary>
+  /// Handler for the version route that displays version information.
+  /// Uses Action (void return) so it uses the common "NoParams" invoker signature
+  /// that virtually every consuming app will generate.
+  /// </summary>
+  internal static void DisplayVersion()
+  {
+    Assembly? entryAssembly = Assembly.GetEntryAssembly();
+
+    if (entryAssembly is null)
+    {
+      Console.WriteLine(VersionUnavailableMessage);
+      return;
+    }
+
+    // Get informational version or fall back to simple version
+    string version = entryAssembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
+      ?? entryAssembly.GetName().Version?.ToString()
+      ?? UnknownVersion;
+
+    Console.WriteLine(version);
+
+    // Get commit hash and date from AssemblyMetadataAttribute (injected by TimeWarp.Build.Tasks)
+    // Materialize to list to avoid multiple enumeration
+    List<AssemblyMetadataAttribute> metadata = [.. entryAssembly.GetCustomAttributes<AssemblyMetadataAttribute>()];
+
+    string? commitHash = metadata.Find(m => m.Key == CommitHashKey)?.Value;
+    string? commitDate = metadata.Find(m => m.Key == CommitDateKey)?.Value;
+
+    if (!string.IsNullOrEmpty(commitHash))
+    {
+      Console.WriteLine($"Commit: {commitHash}");
+    }
+
+    if (!string.IsNullOrEmpty(commitDate))
+    {
+      Console.WriteLine($"Date: {commitDate}");
+    }
   }
 }

@@ -269,4 +269,85 @@ public class StaticFactoryMethodTests
 
     await Task.CompletedTask;
   }
+
+  public static async Task CreateBuilder_should_register_version_route()
+  {
+    // Arrange & Act - NuruApp.CreateBuilder() calls UseAllExtensions() which registers --version
+    NuruAppBuilder builder = NuruApp.CreateBuilder([]);
+
+    // Assert - Should have --version route
+    bool hasVersionRoute = builder.EndpointCollection.Any(e =>
+      e.CompiledRoute.OptionMatchers.Any(opt =>
+        opt.MatchPattern == "--version"));
+
+    hasVersionRoute.ShouldBeTrue("--version route should be registered by CreateBuilder()");
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task CreateBuilder_version_route_should_have_v_alias()
+  {
+    // Arrange & Act - NuruApp.CreateBuilder() registers --version,-v
+    NuruAppBuilder builder = NuruApp.CreateBuilder([]);
+
+    // Assert - Should have -v alias
+    bool hasVersionWithAlias = builder.EndpointCollection.Any(e =>
+      e.CompiledRoute.OptionMatchers.Any(opt =>
+        opt.MatchPattern == "--version" && opt.AlternateForm == "-v"));
+
+    hasVersionWithAlias.ShouldBeTrue("--version route should have -v alias");
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task CreateSlimBuilder_should_not_register_version_route()
+  {
+    // Arrange & Act - CreateSlimBuilder doesn't call UseAllExtensions
+    NuruCoreAppBuilder builder = NuruApp.CreateSlimBuilder();
+
+    // Assert - Should NOT have --version route (manual opt-in required)
+    bool hasVersionRoute = builder.EndpointCollection.Any(e =>
+      e.CompiledRoute.OptionMatchers.Any(opt =>
+        opt.MatchPattern == "--version"));
+
+    hasVersionRoute.ShouldBeFalse("CreateSlimBuilder should not auto-register --version route");
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task CreateEmptyBuilder_should_not_register_version_route()
+  {
+    // Arrange & Act - CreateEmptyBuilder doesn't call UseAllExtensions
+    NuruCoreAppBuilder builder = NuruApp.CreateEmptyBuilder();
+
+    // Assert - Should NOT have --version route (manual opt-in required)
+    bool hasVersionRoute = builder.EndpointCollection.Any(e =>
+      e.CompiledRoute.OptionMatchers.Any(opt =>
+        opt.MatchPattern == "--version"));
+
+    hasVersionRoute.ShouldBeFalse("CreateEmptyBuilder should not auto-register --version route");
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task CreateBuilder_DisableVersionRoute_should_prevent_registration()
+  {
+    // Arrange
+    NuruAppOptions options = new()
+    {
+      DisableVersionRoute = true
+    };
+
+    // Act
+    NuruAppBuilder builder = NuruApp.CreateBuilder([], options);
+
+    // Assert - Should NOT have --version route when disabled
+    bool hasVersionRoute = builder.EndpointCollection.Any(e =>
+      e.CompiledRoute.OptionMatchers.Any(opt =>
+        opt.MatchPattern == "--version"));
+
+    hasVersionRoute.ShouldBeFalse("DisableVersionRoute = true should prevent --version route registration");
+
+    await Task.CompletedTask;
+  }
 }

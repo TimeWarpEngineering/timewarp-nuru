@@ -59,26 +59,26 @@ Unable to check for updates: <reason>
 ## Checklist
 
 ### Implementation
-- [ ] Add `DisableCheckUpdatesRoute` property to `NuruAppOptions`
-- [ ] Create `GitHubRelease` record for JSON deserialization
-- [ ] Create `JsonSerializerContext` for AOT-compatible JSON parsing
-- [ ] Implement `CheckForUpdates()` async handler
-- [ ] Parse GitHub owner/repo from `RepositoryUrl`
-- [ ] Implement SemVer parsing and comparison
-- [ ] Implement pre-release filtering logic
-- [ ] Add fallback to `published_at` date comparison
-- [ ] Register `--check-updates` route in `UseAllExtensions()`
-- [ ] Add ANSI color output (green ✓, yellow ⚠)
+- [x] Add `DisableCheckUpdatesRoute` property to `NuruAppOptions`
+- [x] Create `GitHubRelease` record for JSON deserialization
+- [x] Create `JsonSerializerContext` for AOT-compatible JSON parsing
+- [x] Implement `CheckForUpdates()` async handler
+- [x] Parse GitHub owner/repo from `RepositoryUrl`
+- [x] Implement SemVer parsing and comparison
+- [x] Implement pre-release filtering logic
+- [x] Add fallback to `published_at` date comparison
+- [x] Register `--check-updates` route in `UseAllExtensions()`
+- [x] Add ANSI color output (green ✓, yellow ⚠)
 
 ### Error Handling
-- [ ] Handle missing `RepositoryUrl` gracefully
-- [ ] Handle network errors gracefully
-- [ ] Handle non-GitHub URLs gracefully
-- [ ] Handle empty releases list
+- [x] Handle missing `RepositoryUrl` gracefully
+- [x] Handle network errors gracefully
+- [x] Handle non-GitHub URLs gracefully
+- [x] Handle empty releases list
 - [ ] Handle rate limiting (optional: inform user)
 
 ### Testing
-- [ ] Test with stable version against stable releases
+- [x] Test with stable version against stable releases
 - [ ] Test with pre-release version against all releases
 - [ ] Test version comparison logic
 - [ ] Test error handling scenarios
@@ -100,7 +100,7 @@ Unable to check for updates: <reason>
 
 - Main implementation: `source/timewarp-nuru/nuru-app-builder-extensions.cs`
 - Options: `source/timewarp-nuru/nuru-app-options.cs`
-- JSON types: Consider new file `source/timewarp-nuru/github-release.cs` or inline
+- JSON types: `source/timewarp-nuru/github-release.cs`
 
 ### Version Comparison Strategy
 
@@ -113,3 +113,26 @@ Unable to check for updates: <reason>
 
 - Current version contains `-` → pre-release (e.g., `1.0.0-beta.5`)
 - Current version has no `-` → stable (e.g., `1.0.0`)
+
+## Results
+
+Implementation complete. The `--check-updates` command:
+
+- Successfully queries GitHub API for releases
+- Filters releases based on pre-release status of current version
+- Compares versions using full SemVer comparison (major.minor.patch + prerelease labels)
+- Displays colored output (green ✓ for up-to-date, yellow ⚠ for update available)
+- Handles error cases gracefully with descriptive messages
+
+**Files created/modified:**
+- `source/timewarp-nuru/github-release.cs` - GitHubRelease record + JSON serializer context
+- `source/timewarp-nuru/nuru-app-options.cs` - Added `DisableCheckUpdatesRoute` property
+- `source/timewarp-nuru/nuru-app-builder-extensions.cs` - Added `CheckForUpdatesAsync` handler and route registration
+
+**Tested:**
+```
+$ dotnet run samples/calculator/calc-createbuilder.cs -- --check-updates
+⚠ A newer version is available: 3.0.0-beta.10
+  Released: 2025-12-02
+  https://github.com/TimeWarpEngineering/timewarp-nuru/releases/tag/v3.0.0-beta.10
+```

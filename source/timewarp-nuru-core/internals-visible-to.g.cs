@@ -154,6 +154,7 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("routing-17-additional-primitive-types")]
 [assembly: InternalsVisibleTo("routing-18-option-alias-with-description")]
 [assembly: InternalsVisibleTo("routing-20-version-route-override")]
+[assembly: InternalsVisibleTo("routing-21-check-updates-version-comparison")]
 [assembly: InternalsVisibleTo("rule-widget-01-basic")]
 [assembly: InternalsVisibleTo("rule-widget-02-terminal-extensions")]
 [assembly: InternalsVisibleTo("run-all-tests")]

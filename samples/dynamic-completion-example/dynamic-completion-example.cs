@@ -1,6 +1,6 @@
 #!/usr/bin/dotnet --
-#:project ../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
-#:project ../../Source/TimeWarp.Nuru.Completion/TimeWarp.Nuru.Completion.csproj
+#:project ../../source/timewarp-nuru/timewarp-nuru.csproj
+#:project ../../source/timewarp-nuru-completion/timewarp-nuru-completion.csproj
 #:property PublishDir=../../artifacts/
 
 // ============================================================================

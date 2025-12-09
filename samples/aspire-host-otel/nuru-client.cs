@@ -1,9 +1,9 @@
 #!/usr/bin/env -S dotnet run --launch-profile AppHost --
 #:package Mediator.Abstractions
 #:package Mediator.SourceGenerator
-#:project ../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
-#:project ../../Source/TimeWarp.Nuru.Repl/TimeWarp.Nuru.Repl.csproj
-#:project ../../Source/TimeWarp.Nuru.Telemetry/TimeWarp.Nuru.Telemetry.csproj
+#:project ../../source/timewarp-nuru/timewarp-nuru.csproj
+#:project ../../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj
+#:project ../../source/timewarp-nuru-telemetry/timewarp-nuru-telemetry.csproj
 
 // Nuru CLI Client with OpenTelemetry for Aspire Host
 // ===================================================

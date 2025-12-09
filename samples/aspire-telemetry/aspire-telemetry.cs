@@ -1,7 +1,7 @@
 #!/usr/bin/dotnet --
 // aspire-telemetry - Demonstrates OpenTelemetry integration with Aspire Dashboard
-#:project ../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
-#:project ../../Source/TimeWarp.Nuru.Telemetry/TimeWarp.Nuru.Telemetry.csproj
+#:project ../../source/timewarp-nuru/timewarp-nuru.csproj
+#:project ../../source/timewarp-nuru-telemetry/timewarp-nuru-telemetry.csproj
 #:package Mediator.Abstractions
 #:package Mediator.SourceGenerator
 

@@ -14,18 +14,18 @@ The pattern uses `Source/TimeWarp.Nuru/` instead of `source/timewarp-nuru/` (and
 ## Checklist
 
 ### Implementation
-- [ ] Fix `samples/dynamic-completion-example/dynamic-completion-example.cs` (2 refs)
-- [ ] Fix `samples/aspire-telemetry/aspire-telemetry.cs` (2 refs)
-- [ ] Fix `samples/aspire-host-otel/nuru-client.cs` (3 refs)
-- [ ] Fix `samples/shell-completion-example/shell-completion-example.cs` (2 refs)
-- [ ] Fix `samples/builtin-types-example.cs` (1 ref)
-- [ ] Fix `samples/custom-type-converter-example.cs` (1 ref)
-- [ ] Fix `samples/syntax-examples.cs` (1 ref)
-- [ ] Verify all samples build with `dotnet clean`
+- [x] Fix `samples/dynamic-completion-example/dynamic-completion-example.cs` (2 refs)
+- [x] Fix `samples/aspire-telemetry/aspire-telemetry.cs` (2 refs)
+- [x] Fix `samples/aspire-host-otel/nuru-client.cs` (3 refs)
+- [x] Fix `samples/shell-completion-example/shell-completion-example.cs` (2 refs)
+- [x] Fix `samples/builtin-types-example.cs` (1 ref)
+- [x] Fix `samples/custom-type-converter-example.cs` (1 ref)
+- [x] Fix `samples/syntax-examples.cs` (1 ref)
+- [x] Verify all samples build with `dotnet clean`
 
 ### Documentation
-- [ ] Update `samples/shell-completion-example/overview.md` (lines 23-24, 323-324)
-- [ ] Update `samples/configuration/user-secrets-readme.md` (line 11)
+- [x] Update `samples/shell-completion-example/overview.md` (lines 23-24, 323-324)
+- [x] Update `samples/configuration/user-secrets-readme.md` (line 11)
 
 ## Notes
 

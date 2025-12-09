@@ -20,8 +20,8 @@ Shell completion (also called tab completion) allows users to press the Tab key 
 
 ```csharp
 #!/usr/bin/dotnet --
-#:project ../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
-#:project ../../Source/TimeWarp.Nuru.Completion/TimeWarp.Nuru.Completion.csproj
+#:project ../../source/timewarp-nuru/timewarp-nuru.csproj
+#:project ../../source/timewarp-nuru-completion/timewarp-nuru-completion.csproj
 
 using TimeWarp.Nuru;
 using TimeWarp.Nuru.Completion;
@@ -320,8 +320,8 @@ For projects, add the packages:
 For .NET 10 runfiles, use `#:project` directives (as shown in this example):
 ```csharp
 #!/usr/bin/dotnet --
-#:project ../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
-#:project ../../Source/TimeWarp.Nuru.Completion/TimeWarp.Nuru.Completion.csproj
+#:project ../../source/timewarp-nuru/timewarp-nuru.csproj
+#:project ../../source/timewarp-nuru-completion/timewarp-nuru-completion.csproj
 ```
 
 This keeps the core `TimeWarp.Nuru` package lightweight while allowing users to opt-in to completion support.

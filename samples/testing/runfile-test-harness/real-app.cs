@@ -1,7 +1,7 @@
 #!/usr/bin/dotnet --
 // real-app - A sample CLI application to demonstrate testing patterns
 // This represents a "real" CLI app that a consumer would build
-#:project ../../source/timewarp-nuru/timewarp-nuru.csproj
+#:project ../../../source/timewarp-nuru/timewarp-nuru.csproj
 
 using TimeWarp.Nuru;
 

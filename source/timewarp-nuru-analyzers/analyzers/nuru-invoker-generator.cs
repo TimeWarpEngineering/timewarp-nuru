@@ -57,7 +57,7 @@ public class NuruInvokerGenerator : IIncrementalGenerator
     if (invocation.Expression is not MemberAccessExpressionSyntax memberAccess)
       return false;
 
-    return memberAccess.Name.Identifier.Text == "Map";
+    return memberAccess.Name.Identifier.Text is "Map" or "MapDefault";
   }
 
   private static RouteWithSignature? GetRouteWithSignature(
@@ -68,28 +68,49 @@ public class NuruInvokerGenerator : IIncrementalGenerator
       return null;
 
     ArgumentListSyntax? argumentList = invocation.ArgumentList;
-    if (argumentList is null || argumentList.Arguments.Count < 2)
+    if (argumentList is null || argumentList.Arguments.Count < 1)
       return null;
 
-    // Find the pattern argument (may be positional or named)
-    ArgumentSyntax? patternArgument = FindPatternArgument(argumentList);
-    if (patternArgument is null)
-      return null;
+    // Determine if this is Map or MapDefault
+    bool isMapDefault = invocation.Expression is MemberAccessExpressionSyntax memberAccess &&
+                        memberAccess.Name.Identifier.Text == "MapDefault";
 
-    if (patternArgument.Expression is not LiteralExpressionSyntax literal ||
-        !literal.IsKind(SyntaxKind.StringLiteralExpression))
-      return null;
+    string pattern;
+    Location location;
 
-    string? pattern = literal.Token.ValueText;
-    if (string.IsNullOrEmpty(pattern))
-      return null;
+    if (isMapDefault)
+    {
+      // MapDefault has no pattern argument - use empty string
+      pattern = string.Empty;
+      location = invocation.GetLocation();
+    }
+    else
+    {
+      // Map requires at least 2 arguments (pattern and handler)
+      if (argumentList.Arguments.Count < 2)
+        return null;
 
-    Location location = literal.GetLocation();
+      // Find the pattern argument (may be positional or named)
+      ArgumentSyntax? patternArgument = FindPatternArgument(argumentList);
+      if (patternArgument is null)
+        return null;
+
+      if (patternArgument.Expression is not LiteralExpressionSyntax literal ||
+          !literal.IsKind(SyntaxKind.StringLiteralExpression))
+        return null;
+
+      pattern = literal.Token.ValueText;
+      if (pattern is null)
+        return null;
+
+      location = literal.GetLocation();
+    }
 
     // Extract delegate signature using the handler argument
     DelegateSignature? signature = ExtractSignatureFromMapCall(
       invocation,
       argumentList,
+      isMapDefault,
       context.SemanticModel,
       cancellationToken);
 
@@ -113,11 +134,12 @@ public class NuruInvokerGenerator : IIncrementalGenerator
   }
 
   /// <summary>
-  /// Extracts the delegate signature from a Map() call, handling both positional and named arguments.
+  /// Extracts the delegate signature from a Map() or MapDefault() call, handling both positional and named arguments.
   /// </summary>
   private static DelegateSignature? ExtractSignatureFromMapCall(
     InvocationExpressionSyntax invocation,
     ArgumentListSyntax argumentList,
+    bool isMapDefault,
     SemanticModel semanticModel,
     CancellationToken cancellationToken)
   {
@@ -134,14 +156,32 @@ public class NuruInvokerGenerator : IIncrementalGenerator
       }
     }
 
-    // Fall back to second positional argument if no named argument found
-    if (handlerArgument is null && argumentList.Arguments.Count >= 2)
+    // Fall back to positional argument if no named argument found
+    if (handlerArgument is null)
     {
-      // Only use positional if no named arguments are used for the first arg
-      ArgumentSyntax firstArg = argumentList.Arguments[0];
-      if (firstArg.NameColon is null)
+      if (isMapDefault)
       {
-        handlerArgument = argumentList.Arguments[1];
+        // MapDefault: handler is first positional argument
+        if (argumentList.Arguments.Count >= 1)
+        {
+          ArgumentSyntax firstArg = argumentList.Arguments[0];
+          if (firstArg.NameColon is null)
+          {
+            handlerArgument = firstArg;
+          }
+        }
+      }
+      else
+      {
+        // Map: handler is second positional argument
+        if (argumentList.Arguments.Count >= 2)
+        {
+          ArgumentSyntax firstArg = argumentList.Arguments[0];
+          if (firstArg.NameColon is null)
+          {
+            handlerArgument = argumentList.Arguments[1];
+          }
+        }
       }
     }
 

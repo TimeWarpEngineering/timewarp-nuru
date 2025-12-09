@@ -153,6 +153,76 @@ public sealed class NuruInvokerGeneratorTests
   }
 
   /// <summary>
+  /// Test that MapDefault is detected and generates invokers.
+  /// Issue #127: NuruInvokerGenerator must detect MapDefault invocations.
+  /// </summary>
+  public static async Task Should_detect_MapDefault_invocations()
+  {
+    const string code = """
+      using TimeWarp.Nuru;
+      
+      var app = NuruCoreApp.CreateSlimBuilder()
+        // MapDefault with Func<int> - should generate invoker
+        .MapDefault(() => 42)
+        .Build();
+      """;
+
+    GeneratorDriverRunResult result = RunGenerator(code);
+
+    WriteLine($"Generated trees: {result.GeneratedTrees.Length}");
+    
+    // Check if GeneratedRouteInvokers.g.cs was created
+    SyntaxTree? invokersTree = result.GeneratedTrees
+      .FirstOrDefault(t => t.FilePath.Contains("GeneratedRouteInvokers"));
+    
+    invokersTree.ShouldNotBeNull("GeneratedRouteInvokers.g.cs should be generated for MapDefault");
+    
+    string content = invokersTree.GetText().ToString();
+    WriteLine("Generated content:");
+    WriteLine(content);
+    
+    // The generated code should contain an invoker for Func<int> signature
+    content.Contains("_Returns_Int").ShouldBeTrue("Generated code should contain invoker for Func<int> signature");
+    
+    await Task.CompletedTask;
+  }
+
+  /// <summary>
+  /// Test that both Map and MapDefault work together.
+  /// </summary>
+  public static async Task Should_detect_both_Map_and_MapDefault()
+  {
+    const string code = """
+      using TimeWarp.Nuru;
+      
+      var app = NuruCoreApp.CreateSlimBuilder()
+        // MapDefault with Func<int>
+        .MapDefault(() => 42)
+        // Map with Action<string>
+        .Map("greet {name}", (string name) => System.Console.WriteLine(name))
+        .Build();
+      """;
+
+    GeneratorDriverRunResult result = RunGenerator(code);
+    
+    SyntaxTree? invokersTree = result.GeneratedTrees
+      .FirstOrDefault(t => t.FilePath.Contains("GeneratedRouteInvokers"));
+    
+    invokersTree.ShouldNotBeNull("GeneratedRouteInvokers.g.cs should be generated");
+    
+    string content = invokersTree.GetText().ToString();
+    WriteLine("Generated content:");
+    WriteLine(content);
+    
+    // Should contain invokers for both signatures
+    content.Contains("_Returns_Int").ShouldBeTrue("Generated code should contain invoker for Func<int> from MapDefault");
+    // Action<string> generates just "String" (no returns void suffix)
+    content.Contains("Invoke_String").ShouldBeTrue("Generated code should contain invoker for Action<string> from Map");
+    
+    await Task.CompletedTask;
+  }
+
+  /// <summary>
   /// Debug test to trace through generator execution.
   /// </summary>
   public static async Task Should_trace_generator_execution()

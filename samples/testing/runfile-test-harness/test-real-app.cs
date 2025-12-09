@@ -1,4 +1,4 @@
-// test-real-app.cs - Test harness for real-app.cs
+// test-real-app.cs - Test harness for real-app.cs using Jaribu
 // This file is included at build time via Directory.Build.props when NURU_TEST is set
 // Usage: NURU_TEST=test-real-app.cs ./real-app.cs
 //
@@ -7,145 +7,110 @@
 
 using System.Runtime.CompilerServices;
 using Shouldly;
+using TimeWarp.Jaribu;
 using TimeWarp.Nuru;
+using static TimeWarp.Jaribu.TestRunner;
 
 public static class TestHarness
 {
+  internal static NuruCoreApp? App;
+
   [ModuleInitializer]
   public static void Initialize()
   {
-    NuruTestContext.TestRunner = RunTestsAsync;
+    NuruTestContext.TestRunner = async (app) =>
+    {
+      App = app;  // Capture the real app
+      return await RunTests<RealAppTests>(clearCache: false);
+    };
+  }
+}
+
+[TestTag("RealApp")]
+public class RealAppTests
+{
+  public static async Task CleanUp()
+  {
+    // Reset terminal context after each test
+    TestTerminalContext.Current = null;
+    await Task.CompletedTask;
   }
 
-  private static async Task<int> RunTestsAsync(NuruCoreApp app)
+  public static async Task Should_greet_with_name()
   {
-    Console.WriteLine("=== Testing real-app.cs with NuruTestContext ===\n");
+    // Arrange
+    using TestTerminal terminal = new();
+    TestTerminalContext.Current = terminal;
 
-    int passed = 0;
-    int failed = 0;
+    // Act
+    await TestHarness.App!.RunAsync(["greet", "World"]);
 
-    // Test 1: Basic greeting
-    Console.Write("Test 1: greet command... ");
-    try
-    {
-      using TestTerminal terminal = new();
-      TestTerminalContext.Current = terminal;
+    // Assert
+    terminal.OutputContains("Hello, World!").ShouldBeTrue();
 
-      await app.RunAsync(["greet", "World"]);
+    await Task.CompletedTask;
+  }
 
-      terminal.OutputContains("Hello, World!").ShouldBeTrue();
-      Console.WriteLine("PASSED".Green());
-      passed++;
-    }
-    catch (Exception ex)
-    {
-      Console.WriteLine($"FAILED: {ex.Message}".Red());
-      failed++;
-    }
-    finally
-    {
-      TestTerminalContext.Current = null;
-    }
+  public static async Task Should_deploy_with_dry_run_option()
+  {
+    // Arrange
+    using TestTerminal terminal = new();
+    TestTerminalContext.Current = terminal;
 
-    // Test 2: Deploy with dry-run option
-    Console.Write("Test 2: deploy --dry-run... ");
-    try
-    {
-      using TestTerminal terminal = new();
-      TestTerminalContext.Current = terminal;
+    // Act
+    await TestHarness.App!.RunAsync(["deploy", "production", "--dry-run"]);
 
-      await app.RunAsync(["deploy", "production", "--dry-run"]);
+    // Assert
+    terminal.OutputContains("[DRY RUN]").ShouldBeTrue();
+    terminal.OutputContains("production").ShouldBeTrue();
 
-      terminal.OutputContains("[DRY RUN]").ShouldBeTrue();
-      terminal.OutputContains("production").ShouldBeTrue();
-      Console.WriteLine("PASSED".Green());
-      passed++;
-    }
-    catch (Exception ex)
-    {
-      Console.WriteLine($"FAILED: {ex.Message}".Red());
-      failed++;
-    }
-    finally
-    {
-      TestTerminalContext.Current = null;
-    }
+    await Task.CompletedTask;
+  }
 
-    // Test 3: Deploy without dry-run
-    Console.Write("Test 3: deploy (actual)... ");
-    try
-    {
-      using TestTerminal terminal = new();
-      TestTerminalContext.Current = terminal;
+  public static async Task Should_deploy_without_dry_run()
+  {
+    // Arrange
+    using TestTerminal terminal = new();
+    TestTerminalContext.Current = terminal;
 
-      await app.RunAsync(["deploy", "staging"]);
+    // Act
+    await TestHarness.App!.RunAsync(["deploy", "staging"]);
 
-      terminal.OutputContains("Deploying to staging").ShouldBeTrue();
-      terminal.OutputContains("DRY RUN").ShouldBeFalse();
-      Console.WriteLine("PASSED".Green());
-      passed++;
-    }
-    catch (Exception ex)
-    {
-      Console.WriteLine($"FAILED: {ex.Message}".Red());
-      failed++;
-    }
-    finally
-    {
-      TestTerminalContext.Current = null;
-    }
+    // Assert
+    terminal.OutputContains("Deploying to staging").ShouldBeTrue();
+    terminal.OutputContains("DRY RUN").ShouldBeFalse();
 
-    // Test 4: Version command
-    Console.Write("Test 4: version... ");
-    try
-    {
-      using TestTerminal terminal = new();
-      TestTerminalContext.Current = terminal;
+    await Task.CompletedTask;
+  }
 
-      await app.RunAsync(["version"]);
+  public static async Task Should_show_version()
+  {
+    // Arrange
+    using TestTerminal terminal = new();
+    TestTerminalContext.Current = terminal;
 
-      terminal.OutputContains("RealApp v1.0.0").ShouldBeTrue();
-      Console.WriteLine("PASSED".Green());
-      passed++;
-    }
-    catch (Exception ex)
-    {
-      Console.WriteLine($"FAILED: {ex.Message}".Red());
-      failed++;
-    }
-    finally
-    {
-      TestTerminalContext.Current = null;
-    }
+    // Act
+    await TestHarness.App!.RunAsync(["version"]);
 
-    // Test 5: Unknown command returns error
-    Console.Write("Test 5: unknown command... ");
-    try
-    {
-      using TestTerminal terminal = new();
-      TestTerminalContext.Current = terminal;
+    // Assert
+    terminal.OutputContains("RealApp v1.0.0").ShouldBeTrue();
 
-      int exitCode = await app.RunAsync(["unknown-command"]);
+    await Task.CompletedTask;
+  }
 
-      exitCode.ShouldBe(1);
-      terminal.ErrorContains("No matching command found").ShouldBeTrue();
-      Console.WriteLine("PASSED".Green());
-      passed++;
-    }
-    catch (Exception ex)
-    {
-      Console.WriteLine($"FAILED: {ex.Message}".Red());
-      failed++;
-    }
-    finally
-    {
-      TestTerminalContext.Current = null;
-    }
+  public static async Task Should_return_error_for_unknown_command()
+  {
+    // Arrange
+    using TestTerminal terminal = new();
+    TestTerminalContext.Current = terminal;
 
-    // Summary
-    Console.WriteLine();
-    Console.WriteLine($"=== Results: {passed} passed, {failed} failed ===".Bold());
+    // Act
+    int exitCode = await TestHarness.App!.RunAsync(["unknown-command"]);
 
-    return failed > 0 ? 1 : 0;
+    // Assert
+    exitCode.ShouldBe(1);
+    terminal.ErrorContains("No matching command found").ShouldBeTrue();
+
+    await Task.CompletedTask;
   }
 }

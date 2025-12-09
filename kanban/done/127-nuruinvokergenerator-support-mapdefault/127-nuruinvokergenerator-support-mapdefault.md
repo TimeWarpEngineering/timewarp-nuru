@@ -20,13 +20,13 @@ Route:
 ## Checklist
 
 ### Implementation
-- [ ] Update `IsMapInvocation` in `nuru-invoker-generator.cs` to detect `MapDefault`
-- [ ] Verify `GetRouteWithSignature` handles `MapDefault` argument positions correctly
-- [ ] Add test for `MapDefault` with `Func<int>` signature
+- [x] Update `IsMapInvocation` in `nuru-invoker-generator.cs` to detect `MapDefault`
+- [x] Verify `GetRouteWithSignature` handles `MapDefault` argument positions correctly
+- [x] Add test for `MapDefault` with `Func<int>` signature
 
 ### Verification
-- [ ] Run analyzer tests
-- [ ] Verify generated code includes `MapDefault` signatures
+- [x] Run analyzer tests
+- [x] Verify generated code includes `MapDefault` signatures
 
 ## Notes
 

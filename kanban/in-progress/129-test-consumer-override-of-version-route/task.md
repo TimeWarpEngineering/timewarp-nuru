@@ -6,9 +6,9 @@ Add a test to verify behavior when a consumer of Nuru maps their own `--version`
 
 ## Todo List
 
-- [ ] Add test verifying consumer can override `--version` route
-- [ ] Verify warning message is displayed for duplicate route
-- [ ] Verify consumer's handler is used (not the built-in one)
+- [x] Add test verifying consumer can override `--version` route
+- [x] Verify warning message is displayed for duplicate route
+- [x] Verify consumer's handler is used (not the built-in one)
 - [ ] Document expected behavior in user docs
 
 ## Notes
@@ -19,14 +19,18 @@ Current behavior in `EndpointCollection.Add()`:
 
 Example scenario:
 ```csharp
-NuruApp.CreateBuilder(args)  // registers --version via UseAllExtensions
-  .Map("--version", () => Console.WriteLine("My custom version"))  // overrides it
+NuruApp.CreateBuilder(args)  // registers --version,-v via UseAllExtensions
+  .Map("--version,-v", () => Console.WriteLine("My custom version"))  // overrides it
 ```
 
-Consider whether this is the desired behavior or if consumers should use `DisableVersionRoute = true` first.
+**Important:** To override the built-in route, consumer must use the SAME pattern `--version,-v` (including alias). Using just `--version` creates a separate route that doesn't override.
 
-## Blocked
+## Results
 
-Test infrastructure issue: New test files in `tests/timewarp-nuru-tests/` fail to compile because `Directory.Build.props` includes `lexer-test-helper.cs` which references internal types (`Lexer`, `Token`). Existing cached tests work but new tests fail. Need to fix the test infrastructure before adding these tests.
+Tests added in `routing-20-version-route-override.cs`:
+1. `Consumer_can_override_version_route` - verifies override with same pattern works
+2. `Consumer_can_override_version_route_with_alias` - verifies -v short form works after override
+3. `DisableVersionRoute_then_map_custom` - verifies clean registration without warning
+4. `Endpoint_count_after_override` - verifies override replaces (doesn't duplicate)
 
-Attempted test file: `routing-20-version-route-override.cs` (removed due to build failures)
+All 4 tests pass. Warning is displayed for duplicate routes as expected.

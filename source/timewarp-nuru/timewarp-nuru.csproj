@@ -5,11 +5,16 @@
     <RootNamespace>TimeWarp.Nuru</RootNamespace>
     <Description>Route-based CLI framework for .NET - batteries included with telemetry, REPL, and shell completion</Description>
     <PackageTags>cli;command-line;routing;framework;dotnet;console;repl;telemetry;completion</PackageTags>
+    <!-- CA1303: CLI output strings don't need localization resources
+         CS8785: NuruRouteAnalyzer fails to load M.E.Logging.Abstractions when using ProjectReference -->
+    <NoWarn>$(NoWarn);CA1303;CS8785</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
     <!-- Mediator abstractions - source generator must be added by end-user app -->
     <PackageReference Include="Mediator.Abstractions" />
+    <!-- Override TimeWarp.Build.Tasks to flow transitively to consumers (removes PrivateAssets default) -->
+    <PackageReference Update="TimeWarp.Build.Tasks" PrivateAssets="none" />
   </ItemGroup>
 
   <ItemGroup>

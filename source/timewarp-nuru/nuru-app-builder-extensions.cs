@@ -98,7 +98,11 @@ public static class NuruAppBuilderExtensions
       ?? entryAssembly.GetName().Version?.ToString()
       ?? UnknownVersion;
 
-    Console.WriteLine(version);
+    // Strip build metadata suffix (+<hash>) if present, per SemVer 2.0 convention
+    // The full commit hash is displayed separately below
+    int plusIndex = version.IndexOf('+', StringComparison.Ordinal);
+    string displayVersion = plusIndex >= 0 ? version[..plusIndex] : version;
+    Console.WriteLine(displayVersion);
 
     // Get commit hash and date from AssemblyMetadataAttribute (injected by TimeWarp.Build.Tasks)
     // Materialize to list to avoid multiple enumeration

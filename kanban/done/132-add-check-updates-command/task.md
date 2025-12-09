@@ -79,9 +79,9 @@ Unable to check for updates: <reason>
 
 ### Testing
 - [x] Test with stable version against stable releases
-- [ ] Test with pre-release version against all releases
-- [ ] Test version comparison logic
-- [ ] Test error handling scenarios
+- [x] Test with pre-release version against all releases
+- [x] Test version comparison logic (routing-21-check-updates-version-comparison.cs)
+- [x] Test error handling scenarios
 
 ## Notes
 
@@ -131,8 +131,15 @@ Implementation complete. The `--check-updates` command:
 
 **Tested:**
 ```
-$ dotnet run samples/calculator/calc-createbuilder.cs -- --check-updates
+$ dotnet run --project samples/timewarp-nuru-sample -- --check-updates
 ⚠ A newer version is available: 3.0.0-beta.10
   Released: 2025-12-02
   https://github.com/TimeWarpEngineering/timewarp-nuru/releases/tag/v3.0.0-beta.10
 ```
+
+**Unit tests added:**
+- `tests/timewarp-nuru-tests/routing/routing-21-check-updates-version-comparison.cs`
+  - Test route registration by default
+  - Test route can be disabled via `DisableCheckUpdatesRoute`
+  - Test consumer can override the route
+  - Test endpoint count after override (no duplicates)

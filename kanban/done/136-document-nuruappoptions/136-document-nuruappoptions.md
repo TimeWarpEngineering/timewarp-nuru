@@ -12,14 +12,14 @@ Create reference documentation for `NuruAppOptions` which configures all auto-wi
 
 ## Checklist
 
-- [ ] Create new page: documentation/user/reference/nuru-app-options.md
-- [ ] Document ConfigureRepl property with example
-- [ ] Document ConfigureTelemetry property with example
-- [ ] Document ConfigureCompletion property with example
-- [ ] Document ConfigureHelp property with example
-- [ ] Document InteractiveRoutePatterns property
-- [ ] Document DisableVersionRoute and DisableCheckUpdatesRoute
-- [ ] Add link from getting-started.md and features/overview.md
+- [x] Create new page: documentation/user/reference/nuru-app-options.md
+- [x] Document ConfigureRepl property with example
+- [x] Document ConfigureTelemetry property with example
+- [x] Document ConfigureCompletion property with example
+- [x] Document ConfigureHelp property with example
+- [x] Document InteractiveRoutePatterns property
+- [x] Document DisableVersionRoute and DisableCheckUpdatesRoute
+- [x] Add link from getting-started.md and features/overview.md
 
 ## Notes
 

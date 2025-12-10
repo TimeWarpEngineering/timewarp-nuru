@@ -73,6 +73,12 @@ public sealed class Panel
   public int? Width { get; set; }
 
   /// <summary>
+  /// Gets or sets whether to wrap long text at word boundaries to fit within the panel width.
+  /// Defaults to true.
+  /// </summary>
+  public bool WordWrap { get; set; } = true;
+
+  /// <summary>
   /// Renders the panel to an array of strings (one per line).
   /// </summary>
   /// <param name="terminalWidth">The terminal width to use if <see cref="Width"/> is not set.</param>
@@ -113,10 +119,24 @@ public sealed class Panel
     int contentAreaWidth = width - 2 - (2 * PaddingHorizontal);
     if (contentAreaWidth < 1) contentAreaWidth = 1;
 
-    // Split content into lines
-    string[] contentLines = string.IsNullOrEmpty(Content)
-      ? []
-      : Content.Split('\n');
+    // Split content into lines and optionally wrap
+    List<string> contentLines = [];
+    if (!string.IsNullOrEmpty(Content))
+    {
+      string[] rawLines = Content.Split('\n');
+      foreach (string rawLine in rawLines)
+      {
+        if (WordWrap)
+        {
+          // Wrap each line that exceeds the content area width
+          contentLines.AddRange(AnsiStringUtils.WrapText(rawLine, contentAreaWidth));
+        }
+        else
+        {
+          contentLines.Add(rawLine);
+        }
+      }
+    }
 
     List<string> result = [];
 
@@ -136,7 +156,7 @@ public sealed class Panel
     }
 
     // Handle empty content
-    if (contentLines.Length == 0)
+    if (contentLines.Count == 0)
     {
       result.Add(RenderEmptyContentRow(vertical, contentAreaWidth));
     }
@@ -318,6 +338,17 @@ public sealed class PanelBuilder
   public PanelBuilder Width(int width)
   {
     _panel.Width = width;
+    return this;
+  }
+
+  /// <summary>
+  /// Sets whether to wrap long text at word boundaries.
+  /// </summary>
+  /// <param name="wrap">True to enable word wrapping, false to disable.</param>
+  /// <returns>This builder for method chaining.</returns>
+  public PanelBuilder WordWrap(bool wrap)
+  {
+    _panel.WordWrap = wrap;
     return this;
   }
 

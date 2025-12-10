@@ -12,10 +12,10 @@ Document the `MapDefault` method for registering a handler for the empty route (
 
 ## Checklist
 
-- [ ] Add MapDefault section to features/routing.md
-- [ ] Show basic usage example
-- [ ] Document common use case: show help when no args
-- [ ] Explain difference from catch-all `{*args}`
+- [x] Add MapDefault section to features/routing.md
+- [x] Show basic usage example
+- [x] Document common use case: show help when no args
+- [x] Explain difference from catch-all `{*args}`
 
 ## Notes
 

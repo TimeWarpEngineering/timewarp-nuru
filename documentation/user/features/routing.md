@@ -49,6 +49,67 @@ TimeWarp.Nuru includes built-in type converters for:
 
 See [Supported Types Reference](../reference/supported-types.md) for complete list and custom type converters.
 
+## Default Route (MapDefault)
+
+The `MapDefault` method registers a handler that executes when no arguments are provided:
+
+```csharp
+NuruApp app = new NuruAppBuilder()
+  .MapDefault(() => Console.WriteLine("Usage: myapp <command>"))
+  .Map("greet {name}", (string name) => Console.WriteLine($"Hello, {name}!"))
+  .Build();
+```
+
+```bash
+./myapp              # Prints: Usage: myapp <command>
+./myapp greet Alice  # Prints: Hello, Alice!
+```
+
+### Common Use Case: Show Help When No Args
+
+A typical pattern is to display help information when users run your CLI without arguments:
+
+```csharp
+NuruApp app = new NuruAppBuilder()
+  .MapDefault(() =>
+  {
+    Console.WriteLine("myapp - A sample CLI application");
+    Console.WriteLine();
+    Console.WriteLine("Commands:");
+    Console.WriteLine("  greet {name}    Greet someone by name");
+    Console.WriteLine("  version         Show version info");
+    Console.WriteLine("  help            Show detailed help");
+  })
+  .Map("greet {name}", (string name) => Console.WriteLine($"Hello, {name}!"))
+  .Map("version", () => Console.WriteLine("v1.0.0"))
+  .Build();
+```
+
+### MapDefault vs Catch-All `{*args}`
+
+While both can handle "fallback" scenarios, they serve different purposes:
+
+| Feature | `MapDefault` | Catch-all `{*args}` |
+|---------|--------------|---------------------|
+| **Matches** | Empty input only (no arguments) | Any unmatched input |
+| **Use case** | Show usage/help when CLI invoked alone | Forward unknown commands elsewhere |
+| **Handler receives** | Nothing | All arguments as `string[]` |
+| **Specificity** | Most specific (exact empty match) | Least specific (matches anything) |
+
+```csharp
+NuruApp app = new NuruAppBuilder()
+  .MapDefault(() => Console.WriteLine("No command provided. Try 'help'."))
+  .Map("help", () => Console.WriteLine("Available: greet, version"))
+  .Map("{*args}", (string[] args) => Console.WriteLine($"Unknown: {string.Join(" ", args)}"))
+  .Build();
+```
+
+```bash
+./myapp                    # "No command provided. Try 'help'."
+./myapp help               # "Available: greet, version"
+./myapp unknown command    # "Unknown: unknown command"
+```
+
 ## Literal Segments
 
 Literal segments must match exactly:

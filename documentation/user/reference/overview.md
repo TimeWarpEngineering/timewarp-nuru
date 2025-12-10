@@ -20,6 +20,14 @@ Complete list of supported parameter types:
 - Nullable type handling
 - Array and collection support
 
+### [NuruAppOptions](nuru-app-options.md)
+Configuration options for `NuruApp.CreateBuilder()`:
+- REPL customization (prompt, history, key bindings)
+- Telemetry configuration (tracing, metrics, logging)
+- Shell completion sources
+- Help output filtering
+- Built-in route control
+
 ## Quick Reference
 
 ### Performance Numbers

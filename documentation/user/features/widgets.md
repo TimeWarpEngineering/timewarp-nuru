@@ -183,6 +183,26 @@ terminal.WritePanel(panel => panel
     .Padding(2, 1));
 ```
 
+### Automatic Text Wrapping
+
+Panels automatically wrap long text at word boundaries to fit within the panel width. This is ANSI-aware, so color codes are preserved across wrapped lines.
+
+```csharp
+// Long text automatically wraps at word boundaries
+terminal.WritePanel(panel => panel
+    .Header("Description")
+    .Content("This is a long piece of text that will automatically wrap at word boundaries to fit within the panel. " +
+             "The wrapping is ANSI-aware, so " + "colored text".Cyan() + " preserves formatting across line breaks.")
+    .Width(50));
+
+// Disable word wrapping if needed
+terminal.WritePanel(panel => panel
+    .Header("Raw Output")
+    .Content("This text will not wrap and may extend beyond the panel border if too long")
+    .WordWrap(false)
+    .Width(40));
+```
+
 ### Pre-configured Panel Object
 
 ```csharp
@@ -209,6 +229,7 @@ terminal.WritePanel(customPanel);
 | `PaddingHorizontal` | `int` | `1` | Left/right padding inside panel |
 | `PaddingVertical` | `int` | `0` | Top/bottom padding inside panel |
 | `Width` | `int?` | `null` | Fixed width (uses terminal width if null) |
+| `WordWrap` | `bool` | `true` | Wrap long text at word boundaries (ANSI-aware) |
 
 ### PanelBuilder Methods
 
@@ -222,6 +243,7 @@ terminal.WritePanel(customPanel);
 | `.PaddingHorizontal(int)` | Sets horizontal padding only |
 | `.PaddingVertical(int)` | Sets vertical padding only |
 | `.Width(int)` | Sets a fixed width |
+| `.WordWrap(bool)` | Enables/disables word wrapping (default: true) |
 | `.Build()` | Returns the configured `Panel` |
 
 ## Table Widget
@@ -526,6 +548,6 @@ terminal.WriteTable(t => t
 
 - [Terminal Abstractions](terminal-abstractions.md) - ITerminal interface and colored output
 - [Testing Samples](../../../samples/testing/) - Complete testing examples
-- [Rule Widget Demo](../../../samples/rule-widget-demo/) - Rule widget examples
-- [Panel Widget Demo](../../../samples/panel-widget-demo/) - Panel widget examples
-- [Table Widget Demo](../../../samples/table-widget-demo/) - Table widget examples
+- [Rule Widget Demo](../../../samples/terminal/rule-widget.cs) - Rule widget examples
+- [Panel Widget Demo](../../../samples/terminal/panel-widget.cs) - Panel widget examples
+- [Table Widget Demo](../../../samples/terminal/table-widget.cs) - Table widget examples

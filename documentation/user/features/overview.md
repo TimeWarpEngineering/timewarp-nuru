@@ -35,6 +35,13 @@ Automatic help generation:
 - Option documentation
 - Auto-generated usage examples
 
+### [Built-in Routes](built-in-routes.md)
+Routes auto-registered by `NuruApp.CreateBuilder()`:
+- `--version, -v` - Display version with commit info
+- `--check-updates` - Check GitHub for newer versions
+- `--interactive, -i` - Enter REPL mode
+- Configuration via [`NuruAppOptions`](../reference/nuru-app-options.md)
+
 ### [Output Handling](output-handling.md)
 Console stream management:
 - stdout vs stderr separation
@@ -75,6 +82,7 @@ Built-in widgets for formatted terminal output:
 | 🛡️ Compile-Time Validation | Catch errors before runtime | [Analyzer](analyzer.md) |
 | ⚡ Zero-Overhead Logging | Optional, high-performance | [Logging](logging.md) |
 | 📖 Auto-Help | No manual documentation | [Auto-Help](auto-help.md) |
+| 🔧 Built-in Routes | Version, updates, REPL out-of-box | [Built-in Routes](built-in-routes.md) |
 | ⌨️ Shell Completion | Tab completion in all shells | [Shell Completion](shell-completion.md) |
 | 🎨 Colored Output | Testable ANSI colors | [Terminal Abstractions](terminal-abstractions.md) |
 | 📊 Terminal Widgets | Tables, panels, rules | [Widgets](widgets.md) |

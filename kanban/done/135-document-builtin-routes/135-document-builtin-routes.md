@@ -17,11 +17,11 @@ Document the automatic routes registered by `NuruApp.CreateBuilder()`:
 
 ## Checklist
 
-- [ ] Add built-in routes section to getting-started.md or features/overview.md
-- [ ] Document --version route behavior and output format
-- [ ] Document --check-updates route behavior and prerequisites
-- [ ] Document DisableVersionRoute and DisableCheckUpdatesRoute options
-- [ ] Add example output for each route
+- [x] Add built-in routes section to getting-started.md or features/overview.md
+- [x] Document --version route behavior and output format
+- [x] Document --check-updates route behavior and prerequisites
+- [x] Document DisableVersionRoute and DisableCheckUpdatesRoute options
+- [x] Add example output for each route
 
 ## Notes
 

@@ -13,12 +13,12 @@ Document the zero-configuration test isolation pattern using `TestTerminalContex
 
 ## Checklist
 
-- [ ] Add "Zero-Config Test Isolation" section to terminal-abstractions.md
-- [ ] Document TestTerminalContext.Current usage
-- [ ] Document NuruTestContext.TestRunner for runfile testing
-- [ ] Explain resolution order (TestTerminalContext → DI → NuruTerminal.Default)
-- [ ] Add example test code
-- [ ] Reference samples/testing/runfile-test-harness/
+- [x] Add "Zero-Config Test Isolation" section to terminal-abstractions.md
+- [x] Document TestTerminalContext.Current usage
+- [x] Document NuruTestContext.TestRunner for runfile testing
+- [x] Explain resolution order (TestTerminalContext → DI → NuruTerminal.Default)
+- [x] Add example test code
+- [x] Reference samples/testing/runfile-test-harness/
 
 ## Notes
 

@@ -543,9 +543,159 @@ using (TestTerminal terminal = new())
 }
 ```
 
+## Zero-Config Test Isolation
+
+TimeWarp.Nuru provides ambient context classes that enable zero-configuration testing of CLI applications. These use `AsyncLocal<T>` to provide test isolation even when running tests in parallel.
+
+### TestTerminalContext
+
+`TestTerminalContext` provides an ambient `TestTerminal` that Nuru's terminal resolution automatically uses:
+
+```csharp
+using TestTerminal terminal = new();
+TestTerminalContext.Current = terminal;
+
+// Any code that resolves ITerminal will now use this TestTerminal
+await Program.Main(["greet", "World"]);
+
+terminal.OutputContains("Hello, World!").ShouldBeTrue();
+```
+
+**Resolution Order:**
+
+When Nuru resolves a terminal, it checks in this order:
+1. `TestTerminalContext.Current` (if set)
+2. `ITerminal` from DI (if registered)
+3. `NuruTerminal.Default` (fallback)
+
+This means you can set `TestTerminalContext.Current` at the start of your test, and all terminal output will be captured without any code changes to the app being tested.
+
+**Parallel Test Isolation:**
+
+Because `TestTerminalContext` uses `AsyncLocal<T>`, each test gets its own isolated context:
+
+```csharp
+// Test 1 runs in parallel with Test 2
+public static async Task Test1()
+{
+    using TestTerminal terminal = new();
+    TestTerminalContext.Current = terminal;  // Only affects this async context
+    await app.RunAsync(["command1"]);
+    terminal.OutputContains("result1").ShouldBeTrue();
+}
+
+public static async Task Test2()
+{
+    using TestTerminal terminal = new();
+    TestTerminalContext.Current = terminal;  // Separate from Test 1
+    await app.RunAsync(["command2"]);
+    terminal.OutputContains("result2").ShouldBeTrue();
+}
+```
+
+### NuruTestContext for Runfile Testing
+
+`NuruTestContext` enables testing of **runfiles** without modifying the application code. It allows a test harness to intercept `NuruCoreApp.RunAsync()` execution.
+
+**How It Works:**
+
+1. Create a test harness file with a `[ModuleInitializer]` that sets `NuruTestContext.TestRunner`
+2. Use `Directory.Build.props` to conditionally include the test file when `NURU_TEST` is set
+3. When the runfile executes, the test harness takes control instead of normal execution
+
+```csharp
+// test-my-app.cs - included via Directory.Build.props when NURU_TEST is set
+public static class TestHarness
+{
+    internal static NuruCoreApp? App;
+
+    [ModuleInitializer]
+    public static void Initialize()
+    {
+        NuruTestContext.TestRunner = async (app) =>
+        {
+            App = app;  // Capture the configured app
+
+            // Run multiple test scenarios
+            using (TestTerminal terminal = new())
+            {
+                TestTerminalContext.Current = terminal;
+                await app.RunAsync(["greet", "Alice"]);
+                terminal.OutputContains("Hello, Alice!").ShouldBeTrue();
+            }
+
+            using (TestTerminal terminal = new())
+            {
+                TestTerminalContext.Current = terminal;
+                await app.RunAsync(["greet", "Bob"]);
+                terminal.OutputContains("Hello, Bob!").ShouldBeTrue();
+            }
+
+            Console.WriteLine("All tests passed!");
+            return 0;
+        };
+    }
+}
+```
+
+**Key Behaviors:**
+
+- The `TestRunner` delegate is only invoked once per execution
+- Subsequent calls to `RunAsync` from within the test harness execute normally
+- This allows running multiple test scenarios against the same app instance
+
+### Directory.Build.props Setup
+
+To conditionally include test files for runfiles:
+
+```xml
+<Project>
+  <ItemGroup Condition="'$(NURU_TEST)' != ''">
+    <Compile Include="$(NURU_TEST)" />
+    <PackageReference Include="TimeWarp.Jaribu" Version="*" />
+  </ItemGroup>
+</Project>
+```
+
+### Running Tests
+
+```bash
+# Set the environment variable
+export NURU_TEST=test-my-app.cs  # bash
+$env:NURU_TEST = "test-my-app.cs"  # PowerShell
+
+# Clean to force rebuild with test harness (important!)
+dotnet clean ./my-app.cs
+
+# Run - tests execute instead of normal app
+./my-app.cs
+
+# Clean up: remove env var and rebuild for production
+unset NURU_TEST  # bash
+Remove-Item Env:NURU_TEST  # PowerShell
+dotnet clean ./my-app.cs
+```
+
+**Important:** Always clean when changing `NURU_TEST` - the runfile cache doesn't track environment variables.
+
+### When to Use Each Pattern
+
+| Pattern | Use Case |
+|---------|----------|
+| `TestTerminalContext` | Testing apps where you control the test entry point (unit tests, integration tests) |
+| `NuruTestContext` | Testing runfiles without modifying application code |
+| Both together | Runfile testing with output capture |
+
+### Source Files
+
+- `source/timewarp-nuru-core/io/test-terminal-context.cs` - Ambient terminal context
+- `source/timewarp-nuru-core/io/nuru-test-context.cs` - Runfile test harness support
+- `samples/testing/runfile-test-harness/` - Complete example with Jaribu integration
+
 ## See Also
 
 - [Terminal Widgets](widgets.md) - Rule, Panel, and Table widgets
 - [Output Handling](output-handling.md) - stdout/stderr best practices
 - [Routing Patterns](routing.md) - Route syntax reference
 - [Testing Samples](../../../samples/testing/) - Complete testing examples
+- [Runfile Test Harness Sample](../../../samples/testing/runfile-test-harness/overview.md) - Zero-modification testing pattern

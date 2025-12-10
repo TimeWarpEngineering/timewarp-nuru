@@ -33,16 +33,16 @@ Located in `source/timewarp-nuru-core/io/widgets/panel-widget.cs`:
 ## Checklist
 
 ### Implementation
-- [ ] Add `WrapText()` method to `AnsiStringUtils` that wraps text at word boundaries while preserving ANSI codes
-- [ ] Update `Panel.RenderWithBorder()` to wrap each content line before rendering
-- [ ] Add `WordWrap` property to `Panel` class (default: true)
-- [ ] Update `PanelBuilder` with `WordWrap()` method
+- [x] Add `WrapText()` method to `AnsiStringUtils` that wraps text at word boundaries while preserving ANSI codes
+- [x] Update `Panel.RenderWithBorder()` to wrap each content line before rendering
+- [x] Add `WordWrap` property to `Panel` class (default: true)
+- [x] Update `PanelBuilder` with `WordWrap()` method
 
 ### Testing
-- [ ] Add test: `Should_wrap_long_content_within_panel_width`
-- [ ] Add test: `Should_wrap_content_preserving_ansi_codes`
-- [ ] Add test: `Should_not_wrap_when_WordWrap_is_false`
-- [ ] Add test: `Should_wrap_content_with_hyperlinks`
+- [x] Add test: `Should_wrap_long_content_within_panel_width`
+- [x] Add test: `Should_wrap_content_preserving_ansi_codes`
+- [x] Add test: `Should_not_wrap_when_WordWrap_is_false`
+- [x] Add test: `Should_wrap_content_with_hyperlinks`
 - [ ] Verify with `dnx ardalis courses` command
 
 ### Documentation

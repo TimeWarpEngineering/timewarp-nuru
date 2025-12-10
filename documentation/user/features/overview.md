@@ -40,7 +40,7 @@ Routes auto-registered by `NuruApp.CreateBuilder()`:
 - `--version, -v` - Display version with commit info
 - `--check-updates` - Check GitHub for newer versions
 - `--interactive, -i` - Enter REPL mode
-- Configuration via `NuruAppOptions`
+- Configuration via [`NuruAppOptions`](../reference/nuru-app-options.md)
 
 ### [Output Handling](output-handling.md)
 Console stream management:

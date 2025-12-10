@@ -212,6 +212,7 @@ Check out the [Calculator Samples](../../samples/calculator/) for three complete
 
 - **[Use Cases](use-cases.md)** - Greenfield apps and progressive enhancement patterns
 - **[Routing Features](features/routing.md)** - Complete route pattern syntax
+- **[NuruAppOptions](reference/nuru-app-options.md)** - Configure REPL, telemetry, completion, and built-in routes
 - **[Deployment](guides/deployment.md)** - Native AOT and .NET 10 runfiles
 - **[MCP Server](tools/mcp-server.md)** - AI-assisted development with Claude
 

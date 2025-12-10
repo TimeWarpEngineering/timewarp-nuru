@@ -548,6 +548,6 @@ terminal.WriteTable(t => t
 
 - [Terminal Abstractions](terminal-abstractions.md) - ITerminal interface and colored output
 - [Testing Samples](../../../samples/testing/) - Complete testing examples
-- [Rule Widget Demo](../../../samples/rule-widget-demo/) - Rule widget examples
-- [Panel Widget Demo](../../../samples/panel-widget-demo/) - Panel widget examples
-- [Table Widget Demo](../../../samples/table-widget-demo/) - Table widget examples
+- [Rule Widget Demo](../../../samples/terminal/rule-widget.cs) - Rule widget examples
+- [Panel Widget Demo](../../../samples/terminal/panel-widget.cs) - Panel widget examples
+- [Table Widget Demo](../../../samples/terminal/table-widget.cs) - Table widget examples

@@ -9,7 +9,7 @@ Add a test to verify behavior when a consumer of Nuru maps their own `--version`
 - [x] Add test verifying consumer can override `--version` route
 - [x] Verify warning message is displayed for duplicate route
 - [x] Verify consumer's handler is used (not the built-in one)
-- [ ] Document expected behavior in user docs
+- [x] Document expected behavior in user docs (completed in task 135 - built-in-routes.md)
 
 ## Notes
 

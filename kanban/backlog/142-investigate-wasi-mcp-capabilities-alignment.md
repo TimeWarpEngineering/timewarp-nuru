@@ -24,6 +24,8 @@ Microsoft's [Wassette](https://github.com/microsoft/wassette) project provides a
 
 ## Notes
 
+**Source URL:** https://grok.com/share/bGVnYWN5LWNvcHk_10511a09-0a78-428a-bf4b-f705cdc92501
+
 ### Vision
 
 Create alignment across three systems using a ubiquitous capabilities language:
@@ -101,4 +103,3 @@ Microsoft's Wassette (https://github.com/microsoft/wassette):
 - WASI GitHub: https://github.com/WebAssembly/WASI
 - Wassette: https://github.com/microsoft/wassette
 - MCP Specification: https://modelcontextprotocol.io
-- Grok conversation: https://grok.com/share/bGVnYWN5LWNvcHk_10511a09-0a78-428a-bf4b-f705cdc92501

@@ -85,4 +85,19 @@ public sealed class NuruAppOptions
   /// </list>
   /// </remarks>
   public bool DisableVersionRoute { get; set; }
+
+  /// <summary>
+  /// When true, disables the automatic registration of the <c>--check-updates</c> route.
+  /// Default is false (check-updates route is registered).
+  /// </summary>
+  /// <remarks>
+  /// The check-updates route:
+  /// <list type="bullet">
+  /// <item><description>Queries GitHub releases for the latest version</description></item>
+  /// <item><description>Compares against the current assembly version</description></item>
+  /// <item><description>Displays update availability with colored output</description></item>
+  /// </list>
+  /// Requires <c>RepositoryUrl</c> to be set in the project file pointing to a GitHub repository.
+  /// </remarks>
+  public bool DisableCheckUpdatesRoute { get; set; }
 }

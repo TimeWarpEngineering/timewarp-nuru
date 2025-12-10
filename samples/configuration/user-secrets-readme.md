@@ -8,7 +8,7 @@ See: [user-secrets-property.cs](user-secrets-property.cs)
 
 ```csharp
 #!/usr/bin/dotnet --
-#:project ../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
+#:project ../../source/timewarp-nuru/timewarp-nuru.csproj
 #:property UserSecretsId=nuru-user-secrets-demo
 
 using Microsoft.Extensions.Configuration;

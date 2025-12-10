@@ -1,6 +1,6 @@
 #!/usr/bin/dotnet --
 // calc-createbuilder - Calculator using ASP.NET Core-style CreateBuilder API
-#:project ../../Source/TimeWarp.Nuru/TimeWarp.Nuru.csproj
+#:project ../../source/timewarp-nuru/timewarp-nuru.csproj
 #:package Mediator.Abstractions
 #:package Mediator.SourceGenerator
 

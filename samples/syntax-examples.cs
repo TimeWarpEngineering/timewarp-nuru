@@ -1,5 +1,5 @@
 #!/usr/bin/dotnet --
-#:project TimeWarp.Nuru.Sample/TimeWarp.Nuru.Sample.csproj
+#:project timewarp-nuru-sample/timewarp-nuru-sample.csproj
 
 // ============================================================================
 // IMPORTANT: This file is used by the TimeWarp.Nuru MCP Server

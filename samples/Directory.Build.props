@@ -14,5 +14,7 @@
     <!-- Disable code analysis for samples -->
     <EnableNETAnalyzers>false</EnableNETAnalyzers>
     <EnforceCodeStyleInBuild>false</EnforceCodeStyleInBuild>
+    <!-- Repository URL for testing version check feature -->
+    <RepositoryUrl>https://github.com/TimeWarpEngineering/timewarp-nuru</RepositoryUrl>
   </PropertyGroup>
 </Project>

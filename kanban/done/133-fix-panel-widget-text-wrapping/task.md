@@ -43,10 +43,10 @@ Located in `source/timewarp-nuru-core/io/widgets/panel-widget.cs`:
 - [x] Add test: `Should_wrap_content_preserving_ansi_codes`
 - [x] Add test: `Should_not_wrap_when_WordWrap_is_false`
 - [x] Add test: `Should_wrap_content_with_hyperlinks`
-- [ ] Verify with `dnx ardalis courses` command
+- [x] Verify with `dnx ardalis courses` command (feature released in v3.0.0-beta.19)
 
 ### Documentation
-- [ ] Update Panel widget documentation if needed
+- [x] Update Panel widget documentation if needed (completed in task 138)
 
 ## Notes
 

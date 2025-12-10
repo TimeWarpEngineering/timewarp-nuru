@@ -13,12 +13,12 @@ The changelog.md file stops at v2.0.0 (July 2025). Update it to include all v3.0
 
 ## Checklist
 
-- [ ] Review GitHub releases for v3.0.0-beta.1 through v3.0.0-beta.19
-- [ ] Add v3.0.0 section header
-- [ ] Document Added features
-- [ ] Document Changed behaviors
-- [ ] Document Fixed bugs
-- [ ] Verify formatting matches existing changelog style
+- [x] Review GitHub releases for v3.0.0-beta.1 through v3.0.0-beta.19
+- [x] Add v3.0.0 section header
+- [x] Document Added features
+- [x] Document Changed behaviors
+- [x] Document Fixed bugs
+- [x] Verify formatting matches existing changelog style
 
 ## Notes
 

@@ -190,8 +190,24 @@ public static class HelpProvider
   /// </summary>
   private static void AppendGroup(StringBuilder sb, EndpointGroup group)
   {
-    // Format all patterns (convert {x} to <x>)
-    List<string> formattedPatterns = [.. group.Patterns.Select(FormatCommandPattern)];
+    // Check if this group contains a default route (empty pattern)
+    bool hasDefaultRoute = group.Patterns.Contains(string.Empty);
+
+    // Format all non-empty patterns (convert {x} to <x>)
+    List<string> formattedPatterns = [.. group.Patterns
+      .Where(p => !string.IsNullOrEmpty(p))
+      .Select(FormatCommandPattern)];
+
+    // If only default route exists with no other patterns, show "(default)"
+    if (formattedPatterns.Count == 0 && hasDefaultRoute)
+    {
+      formattedPatterns.Add("(default)");
+    }
+    // If there are patterns alongside a default route, append "(default)" indicator
+    else if (hasDefaultRoute && formattedPatterns.Count > 0)
+    {
+      formattedPatterns[0] += " (default)";
+    }
 
     // Join patterns with comma for alias display
     string pattern = string.Join(", ", formattedPatterns);

@@ -118,7 +118,7 @@ public class AddInteractiveRouteAliasTests
     builder.AddInteractiveRoute();
 
     // Act - Get help text
-    string helpText = HelpProvider.GetHelpText(builder.EndpointCollection, "testapp");
+    string helpText = HelpProvider.GetHelpText(builder.EndpointCollection, "testapp", useColor: false);
 
     // Assert - Help should show both forms on same line
     // The exact format depends on HelpProvider implementation, but both should appear together

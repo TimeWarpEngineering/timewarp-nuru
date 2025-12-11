@@ -27,7 +27,7 @@ public class HelpProviderDefaultRouteTests
     endpoints.Add(CreateEndpoint("", "Show main view"));
 
     // Act
-    string helpText = HelpProvider.GetHelpText(endpoints, "testapp");
+    string helpText = HelpProvider.GetHelpText(endpoints, "testapp", useColor: false);
 
     // Assert - Should show "(default)" instead of blank
     helpText.ShouldContain("(default)");
@@ -45,7 +45,7 @@ public class HelpProviderDefaultRouteTests
     endpoints.Add(CreateEndpoint("list", "Display the kanban board"));
 
     // Act
-    string helpText = HelpProvider.GetHelpText(endpoints, "testapp");
+    string helpText = HelpProvider.GetHelpText(endpoints, "testapp", useColor: false);
 
     // Assert - Should NOT have leading comma
     helpText.ShouldNotContain(", list");
@@ -65,7 +65,7 @@ public class HelpProviderDefaultRouteTests
     endpoints.Add(CreateEndpoint("ls", "Show kanban board"));
 
     // Act
-    string helpText = HelpProvider.GetHelpText(endpoints, "testapp");
+    string helpText = HelpProvider.GetHelpText(endpoints, "testapp", useColor: false);
 
     // Assert - Should show aliases cleanly without LEADING comma (the bug was ", list")
     // Normal comma separation between aliases is expected: "list (default), ls"
@@ -87,7 +87,7 @@ public class HelpProviderDefaultRouteTests
     endpoints.Add(CreateEndpoint("other", "Other action"));
 
     // Act
-    string helpText = HelpProvider.GetHelpText(endpoints, "testapp");
+    string helpText = HelpProvider.GetHelpText(endpoints, "testapp", useColor: false);
 
     // Assert
     helpText.ShouldContain("(default)");
@@ -108,7 +108,7 @@ public class HelpProviderDefaultRouteTests
     HelpOptions options = new() { ShowReplCommandsInCli = true };
 
     // Act
-    string helpText = HelpProvider.GetHelpText(endpoints, "testapp", null, options, HelpContext.Cli);
+    string helpText = HelpProvider.GetHelpText(endpoints, "testapp", null, options, HelpContext.Cli, useColor: false);
 
     // Assert - Normal comma-separated aliases should work
     helpText.ShouldContain("exit, quit");

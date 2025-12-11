@@ -6,15 +6,27 @@ The `--help` output for Nuru CLI applications is plain, hard to scan, and visual
 
 ## Checklist
 
-- [ ] Audit current HelpProvider implementation
-- [ ] Add color highlighting for commands, parameters, and options
-- [ ] Separate command names from their descriptions with better visual hierarchy
-- [ ] Consider table layout for commands listing
-- [ ] Group related commands visually (e.g., all `repo` subcommands together)
-- [ ] Move parameter descriptions below or separate from command signatures
-- [ ] Add examples section to help output
-- [ ] Test with various terminal color support levels
-- [ ] Ensure graceful fallback for non-color terminals
+- [x] Audit current HelpProvider implementation
+- [x] Add color highlighting for commands, parameters, and options
+  - Commands/literals in cyan
+  - Parameters in yellow
+  - Options in green
+  - Descriptions in gray
+  - Section headers in bold yellow
+- [x] Separate command names from their descriptions with better visual hierarchy
+  - Use ANSI-aware padding for proper column alignment
+- [ ] Consider table layout for commands listing (deferred - current formatting sufficient)
+- [ ] Group related commands visually (deferred - would require hierarchical route parsing)
+- [x] Simplify parameter display in command signatures
+  - Show only parameter names (e.g., `<name>`) instead of `<name|Description>`
+  - Optional parameters shown with brackets: `[name]`
+- [ ] Add examples section to help output (future enhancement)
+- [x] Test with various terminal color support levels
+  - Added `useColor` parameter to GetHelpText
+  - SessionContext.SupportsColor tracks terminal capability
+- [x] Ensure graceful fallback for non-color terminals
+  - When useColor=false, produces plain text output
+  - Tests verify both colored and non-colored output
 
 ## Notes
 

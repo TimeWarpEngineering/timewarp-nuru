@@ -185,6 +185,9 @@ public partial class NuruCoreApp
 
     ITerminal effectiveTerminal = TestTerminalContext.Resolve(Terminal);
 
+    // Update session context with terminal color support for help output
+    SessionContext.SupportsColor = effectiveTerminal.SupportsColor;
+
     try
     {
       // Filter out configuration override args before route matching
@@ -558,7 +561,8 @@ public partial class NuruCoreApp
   private void ShowAvailableCommands(ITerminal? terminal = null)
   {
     terminal ??= Terminal;
-    terminal.WriteLine(HelpProvider.GetHelpText(Endpoints, AppMetadata?.Name, AppMetadata?.Description, HelpOptions, HelpContext.Cli));
+    bool useColor = terminal.SupportsColor;
+    terminal.WriteLine(HelpProvider.GetHelpText(Endpoints, AppMetadata?.Name, AppMetadata?.Description, HelpOptions, HelpContext.Cli, useColor));
   }
 
   /// <summary>

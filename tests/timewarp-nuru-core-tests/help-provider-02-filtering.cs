@@ -29,7 +29,7 @@ public class HelpProviderFilteringTests
     HelpOptions options = new();
 
     // Act
-    string helpText = HelpProvider.GetHelpText(endpoints, "testapp", null, options, HelpContext.Cli);
+    string helpText = HelpProvider.GetHelpText(endpoints, "testapp", null, options, HelpContext.Cli, useColor: false);
 
     // Assert
     helpText.ShouldContain("blog");
@@ -48,11 +48,12 @@ public class HelpProviderFilteringTests
     HelpOptions options = new() { ShowPerCommandHelpRoutes = true };
 
     // Act
-    string helpText = HelpProvider.GetHelpText(endpoints, "testapp", null, options, HelpContext.Cli);
+    string helpText = HelpProvider.GetHelpText(endpoints, "testapp", null, options, HelpContext.Cli, useColor: false);
 
     // Assert
     helpText.ShouldContain("blog");
-    helpText.ShouldContain("blog --help");
+    // Optional --help? flag is formatted as [--help] in plain text
+    helpText.ShouldContain("blog [--help]");
 
     await Task.CompletedTask;
   }
@@ -71,7 +72,7 @@ public class HelpProviderFilteringTests
     HelpOptions options = new();
 
     // Act
-    string helpText = HelpProvider.GetHelpText(endpoints, "testapp", null, options, HelpContext.Cli);
+    string helpText = HelpProvider.GetHelpText(endpoints, "testapp", null, options, HelpContext.Cli, useColor: false);
 
     // Assert
     helpText.ShouldContain("mycommand");
@@ -96,7 +97,7 @@ public class HelpProviderFilteringTests
     HelpOptions options = new();
 
     // Act - Using REPL context
-    string helpText = HelpProvider.GetHelpText(endpoints, "testapp", null, options, HelpContext.Repl);
+    string helpText = HelpProvider.GetHelpText(endpoints, "testapp", null, options, HelpContext.Repl, useColor: false);
 
     // Assert - REPL commands should be visible in REPL mode
     helpText.ShouldContain("mycommand");
@@ -119,7 +120,7 @@ public class HelpProviderFilteringTests
     HelpOptions options = new();
 
     // Act
-    string helpText = HelpProvider.GetHelpText(endpoints, "testapp", null, options, HelpContext.Cli);
+    string helpText = HelpProvider.GetHelpText(endpoints, "testapp", null, options, HelpContext.Cli, useColor: false);
 
     // Assert
     helpText.ShouldContain("mycommand");
@@ -140,7 +141,7 @@ public class HelpProviderFilteringTests
     HelpOptions options = new() { ShowCompletionRoutes = true };
 
     // Act
-    string helpText = HelpProvider.GetHelpText(endpoints, "testapp", null, options, HelpContext.Cli);
+    string helpText = HelpProvider.GetHelpText(endpoints, "testapp", null, options, HelpContext.Cli, useColor: false);
 
     // Assert
     helpText.ShouldContain("mycommand");
@@ -163,7 +164,7 @@ public class HelpProviderFilteringTests
     };
 
     // Act
-    string helpText = HelpProvider.GetHelpText(endpoints, "testapp", null, options, HelpContext.Cli);
+    string helpText = HelpProvider.GetHelpText(endpoints, "testapp", null, options, HelpContext.Cli, useColor: false);
 
     // Assert
     helpText.ShouldContain("mycommand");
@@ -184,7 +185,7 @@ public class HelpProviderFilteringTests
     HelpOptions options = new() { ShowReplCommandsInCli = true };
 
     // Act
-    string helpText = HelpProvider.GetHelpText(endpoints, "testapp", null, options, HelpContext.Cli);
+    string helpText = HelpProvider.GetHelpText(endpoints, "testapp", null, options, HelpContext.Cli, useColor: false);
 
     // Assert - All three should be grouped together on one line
     // The pattern should show: "exit, q, quit" (alphabetically sorted within group)
@@ -205,7 +206,7 @@ public class HelpProviderFilteringTests
     HelpOptions options = new();
 
     // Act
-    string helpText = HelpProvider.GetHelpText(endpoints, "testapp", null, options, HelpContext.Cli);
+    string helpText = HelpProvider.GetHelpText(endpoints, "testapp", null, options, HelpContext.Cli, useColor: false);
 
     // Assert
     helpText.ShouldContain("mycommand");
@@ -230,7 +231,7 @@ public class HelpProviderFilteringTests
     HelpOptions options = new() { ShowReplCommandsInCli = true };
 
     // Act - CLI context but with ShowReplCommandsInCli enabled
-    string helpText = HelpProvider.GetHelpText(endpoints, "testapp", null, options, HelpContext.Cli);
+    string helpText = HelpProvider.GetHelpText(endpoints, "testapp", null, options, HelpContext.Cli, useColor: false);
 
     // Assert
     helpText.ShouldContain("exit");

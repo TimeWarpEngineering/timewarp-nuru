@@ -26,7 +26,7 @@ public class HelpProviderOptionDetectionTests
     endpoints.Add(CreateEndpoint("-i", "Interactive mode"));
 
     // Act
-    string helpText = HelpProvider.GetHelpText(endpoints, "testapp");
+    string helpText = HelpProvider.GetHelpText(endpoints, "testapp", useColor: false);
 
     // Assert - "-i" should be in Options section, not Commands section
     helpText.ShouldContain("Options:");
@@ -49,7 +49,7 @@ public class HelpProviderOptionDetectionTests
     endpoints.Add(CreateEndpoint("--verbose", "Verbose output"));
 
     // Act
-    string helpText = HelpProvider.GetHelpText(endpoints, "testapp");
+    string helpText = HelpProvider.GetHelpText(endpoints, "testapp", useColor: false);
 
     // Assert
     helpText.ShouldContain("Options:");
@@ -69,7 +69,7 @@ public class HelpProviderOptionDetectionTests
     endpoints.Add(CreateEndpoint("build", "Build the project"));
 
     // Act
-    string helpText = HelpProvider.GetHelpText(endpoints, "testapp");
+    string helpText = HelpProvider.GetHelpText(endpoints, "testapp", useColor: false);
 
     // Assert
     helpText.ShouldContain("Commands:");
@@ -92,7 +92,7 @@ public class HelpProviderOptionDetectionTests
     endpoints.Add(CreateEndpoint("--verbose", "Verbose output"));
 
     // Act
-    string helpText = HelpProvider.GetHelpText(endpoints, "myapp");
+    string helpText = HelpProvider.GetHelpText(endpoints, "myapp", useColor: false);
 
     // Assert - both sections should exist
     helpText.ShouldContain("Commands:");
@@ -129,7 +129,7 @@ public class HelpProviderOptionDetectionTests
     endpoints.Add(CreateEndpoint("--version", "Show version"));
 
     // Act
-    string helpText = HelpProvider.GetHelpText(endpoints, "testapp");
+    string helpText = HelpProvider.GetHelpText(endpoints, "testapp", useColor: false);
 
     // Assert
     helpText.ShouldNotContain("Commands:");
@@ -146,7 +146,7 @@ public class HelpProviderOptionDetectionTests
     endpoints.Add(CreateEndpoint("test", "Run tests"));
 
     // Act
-    string helpText = HelpProvider.GetHelpText(endpoints, "testapp");
+    string helpText = HelpProvider.GetHelpText(endpoints, "testapp", useColor: false);
 
     // Assert
     helpText.ShouldContain("Commands:");

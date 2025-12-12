@@ -65,7 +65,7 @@ internal static class HelpRouteGenerator
     // Context determined at runtime via SessionContext singleton
     if (!existingEndpoints.Any(e => e.RoutePattern == "--help" || e.RoutePattern == "--help?"))
     {
-      builder.Map("--help?", (SessionContext session) => HelpProvider.GetHelpText(endpointCollection, appMetadata?.Name, appMetadata?.Description, helpOptions, session.HelpContext),
+      builder.Map("--help?", (SessionContext session) => HelpProvider.GetHelpText(endpointCollection, appMetadata?.Name, appMetadata?.Description, helpOptions, session.HelpContext, session.SupportsColor),
       description: "Show available commands");
     }
 
@@ -73,7 +73,7 @@ internal static class HelpRouteGenerator
     // Context determined at runtime via SessionContext singleton
     if (!existingEndpoints.Any(e => e.RoutePattern == "help"))
     {
-      builder.Map("help", (SessionContext session) => HelpProvider.GetHelpText(endpointCollection, appMetadata?.Name, appMetadata?.Description, helpOptions, session.HelpContext),
+      builder.Map("help", (SessionContext session) => HelpProvider.GetHelpText(endpointCollection, appMetadata?.Name, appMetadata?.Description, helpOptions, session.HelpContext, session.SupportsColor),
       description: "Show available commands");
     }
   }

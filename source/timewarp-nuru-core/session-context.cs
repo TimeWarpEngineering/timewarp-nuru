@@ -21,6 +21,15 @@ public sealed class SessionContext
   public bool IsReplSession { get; set; }
 
   /// <summary>
+  /// Gets or sets whether the terminal supports ANSI color codes.
+  /// </summary>
+  /// <remarks>
+  /// Set by the NuruCoreApp based on the terminal's SupportsColor property.
+  /// Defaults to true for color-enabled output.
+  /// </remarks>
+  public bool SupportsColor { get; set; } = true;
+
+  /// <summary>
   /// Gets the appropriate HelpContext based on the current session state.
   /// </summary>
   /// <remarks>

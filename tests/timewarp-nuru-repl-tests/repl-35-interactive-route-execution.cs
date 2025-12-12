@@ -5,7 +5,7 @@
 using TimeWarp.Nuru;
 
 // Test that interactive route execution works with NuruCoreAppHolder invoker
-// Regression test for: "No source-generated invoker found for signature 'NuruCoreAppHolder_Returns_TaskInt'"
+// Regression test for: "No source-generated invoker found for signature 'NuruCoreAppHolder_Returns_Task'"
 return await RunTests<InteractiveRouteExecutionTests>();
 
 [TestTag("REPL")]
@@ -21,10 +21,10 @@ public class InteractiveRouteExecutionTests
       .UseTerminal(terminal)
       .Map("status", () => "OK")
       .AddReplSupport()
-      .AddInteractiveRoute() // This registers StartInteractiveModeAsync(NuruCoreAppHolder) => Task<int>
+      .AddInteractiveRoute() // This registers StartInteractiveModeAsync(NuruCoreAppHolder) => Task
       .Build();
 
-    // Act - Execute the --interactive route (requires NuruCoreAppHolder_Returns_TaskInt invoker)
+    // Act - Execute the --interactive route (requires NuruCoreAppHolder_Returns_Task invoker)
     int exitCode = await app.RunAsync(["--interactive"]);
 
     // Assert - Should enter REPL and exit cleanly

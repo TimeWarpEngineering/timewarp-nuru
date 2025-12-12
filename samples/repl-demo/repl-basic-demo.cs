@@ -338,7 +338,7 @@ try
   if (args.Length == 0)
   {
     Log.Information("No args - starting REPL mode");
-    return await app.RunReplAsync();
+    await app.RunReplAsync();
   }
 
   Log.Information("Running command: {Args}", string.Join(" ", args));

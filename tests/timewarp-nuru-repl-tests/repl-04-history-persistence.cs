@@ -161,10 +161,11 @@ public class HistoryPersistenceTests
       .Build();
 
     // Act - should not throw, just log warning
-    int exitCode = await app.RunReplAsync();
+    await app.RunReplAsync();
 
     // Assert
-    exitCode.ShouldBe(0, "Session should continue despite file error");
+    terminal.OutputContains("Goodbye!")
+      .ShouldBeTrue("Session should continue despite file error");
   }
 
   public static async Task Should_trim_history_to_max_size_when_loading()
@@ -258,10 +259,11 @@ public class HistoryPersistenceTests
         .Build();
 
       // Act - should handle gracefully
-      int exitCode = await app.RunReplAsync();
+      await app.RunReplAsync();
 
       // Assert
-      exitCode.ShouldBe(0, "Session should start normally despite corrupted history");
+      terminal.OutputContains("Goodbye!")
+        .ShouldBeTrue("Session should start normally despite corrupted history");
     }
     finally
     {

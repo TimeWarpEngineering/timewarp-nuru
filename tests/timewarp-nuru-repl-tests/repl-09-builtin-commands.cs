@@ -22,10 +22,9 @@ public class BuiltinCommandsTests
       .Build();
 
     // Act
-    int exitCode = await app.RunReplAsync();
+    await app.RunReplAsync();
 
     // Assert
-    exitCode.ShouldBe(0);
     terminal.OutputContains("Goodbye!")
       .ShouldBeTrue("Exit command should terminate session");
   }
@@ -42,10 +41,9 @@ public class BuiltinCommandsTests
       .Build();
 
     // Act
-    int exitCode = await app.RunReplAsync();
+    await app.RunReplAsync();
 
     // Assert
-    exitCode.ShouldBe(0);
     terminal.OutputContains("Goodbye!")
       .ShouldBeTrue("Quit command should terminate session");
   }
@@ -62,10 +60,9 @@ public class BuiltinCommandsTests
       .Build();
 
     // Act
-    int exitCode = await app.RunReplAsync();
+    await app.RunReplAsync();
 
     // Assert
-    exitCode.ShouldBe(0);
     terminal.OutputContains("Goodbye!")
       .ShouldBeTrue("q shortcut should terminate session");
   }

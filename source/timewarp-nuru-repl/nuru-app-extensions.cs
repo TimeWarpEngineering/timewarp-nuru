@@ -53,8 +53,8 @@ public static class NuruCoreAppExtensions
   /// Otherwise, executes the command normally.
   /// </summary>
   /// <param name="app">The NuruCoreApp instance.</param>
+  /// <param name="options">Optional REPL options to override configured options.</param>
   /// <param name="cancellationToken">Cancellation token.</param>
-  /// <returns>Exit code from the command or REPL session.</returns>
   /// <example>
   /// <code>
   /// NuruCoreApp app = NuruCoreApp.CreateBuilder()
@@ -63,10 +63,10 @@ public static class NuruCoreAppExtensions
   ///   .Build();
   ///
   /// // Start REPL immediately
-  /// return await app.RunReplAsync();
+  /// await app.RunReplAsync();
   /// </code>
   /// </example>
-  public static Task<int> RunReplAsync
+  public static Task RunReplAsync
   (
     this NuruCoreApp app,
     ReplOptions? options = null,
@@ -141,8 +141,7 @@ public static class NuruCoreAppExtensions
   /// Receives NuruCoreAppHolder via DI injection and starts the REPL.
   /// </summary>
   /// <param name="appHolder">The NuruCoreAppHolder instance (injected by framework).</param>
-  /// <returns>Exit code from the REPL session.</returns>
-  public static Task<int> StartInteractiveModeAsync(NuruCoreAppHolder appHolder)
+  public static Task StartInteractiveModeAsync(NuruCoreAppHolder appHolder)
   {
     ArgumentNullException.ThrowIfNull(appHolder);
     return appHolder.App.RunReplAsync();

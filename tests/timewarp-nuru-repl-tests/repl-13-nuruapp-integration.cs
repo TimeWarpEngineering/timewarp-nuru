@@ -126,10 +126,9 @@ public class NuruAppIntegrationTests
       .Build();
 
     // Act - direct REPL start
-    int exitCode = await app.RunReplAsync();
+    await app.RunReplAsync();
 
     // Assert
-    exitCode.ShouldBe(0);
     terminal.OutputContains("Goodbye!")
       .ShouldBeTrue("Direct REPL start should work");
   }

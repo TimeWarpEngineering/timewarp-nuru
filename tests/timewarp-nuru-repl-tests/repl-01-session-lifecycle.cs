@@ -62,10 +62,9 @@ public class SessionLifecycleTests
       .Build();
 
     // Act
-    int exitCode = await app.RunReplAsync();
+    await app.RunReplAsync();
 
     // Assert
-    exitCode.ShouldBe(0, "Exit code should be 0 for clean exit");
     terminal.OutputContains("Goodbye!")
       .ShouldBeTrue("Goodbye message should be displayed on exit");
   }
@@ -82,10 +81,9 @@ public class SessionLifecycleTests
       .Build();
 
     // Act
-    int exitCode = await app.RunReplAsync();
+    await app.RunReplAsync();
 
     // Assert
-    exitCode.ShouldBe(0, "Exit code should be 0 for quit command");
     terminal.OutputContains("Goodbye!")
       .ShouldBeTrue("Goodbye message should be displayed on quit");
   }
@@ -102,10 +100,9 @@ public class SessionLifecycleTests
       .Build();
 
     // Act
-    int exitCode = await app.RunReplAsync();
+    await app.RunReplAsync();
 
     // Assert
-    exitCode.ShouldBe(0, "Exit code should be 0 for q shortcut");
     terminal.OutputContains("Goodbye!")
       .ShouldBeTrue("Goodbye message should be displayed on q");
   }

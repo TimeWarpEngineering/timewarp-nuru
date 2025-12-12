@@ -63,10 +63,25 @@ compose.Map("down", (bool debug, string? logLevel, string? file) => ...);
 - [ ] Add tests for nested option accumulation
 - [ ] Documentation
 
+## Design Decisions
+
+### Options follow literals (not Docker-style)
+
+**Decision:** Group options append after literals, same as current Nuru patterns.
+
+```
+# Nuru style (options after literals) - CHOSEN
+docker compose up --debug --file ./compose.yaml
+
+# Docker style (global options before subcommand) - NOT DOING
+docker --debug compose --file ./compose.yaml up
+```
+
+**Rationale:** Docker's style requires multi-phase parsing (parse globals, strip, determine subcommand, parse subcommand options). Nuru's single-pass matcher handles everything as one pattern. Zero runtime changes needed.
+
 ## Notes
 
 - This is syntactic sugar - all existing parsing, matching, and binding logic remains unchanged
 - Group options expand into the route pattern with `?` (optional) modifier
-- Consider: should group options appear before or after route-specific options in expanded pattern?
 - Consider: collision detection if route defines same option as group
 - Reference: ASP.NET `MapGroup()` for API conventions

@@ -83,5 +83,5 @@ docker --debug compose --file ./compose.yaml up
 
 - This is syntactic sugar - all existing parsing, matching, and binding logic remains unchanged
 - Group options expand into the route pattern with `?` (optional) modifier
-- Consider: collision detection if route defines same option as group
+- **Collision detection already exists** - `SemanticValidator.ValidateDuplicateParameters()` will reject patterns with duplicate parameter names. If a route defines `--verbose` and the group also has `--verbose`, the expanded pattern fails validation with `DuplicateParameterNamesError`. No new code needed.
 - Reference: ASP.NET `MapGroup()` for API conventions

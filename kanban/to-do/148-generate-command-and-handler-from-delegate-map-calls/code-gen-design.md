@@ -9,7 +9,12 @@ This document explores the design for generating `IRequest` Command classes and 
 1. **Unified execution model** — All routes (delegate and command-based) flow through Command/Handler pattern
 2. **AOT compatibility** — No reflection for delegate invocation
 3. **Testability** — Generated commands can be unit tested
-4. **Backward compatible** — Existing code continues to work
+4. **Optimal API** — Get it right for 3.0, no backward compatibility concerns
+
+## Non-Goals
+
+- **Backward compatibility** — 3.0 is a breaking release. We will NOT carry tech debt forward to preserve old behavior.
+- **DelegateExecutor preservation** — Can be removed entirely once codegen handles all cases
 
 ## Source Generator Context
 
@@ -191,12 +196,11 @@ docker.Map("run {image}", handler);  // Generator can't resolve this
 **Pros:** Simple parsing, no data flow needed
 **Cons:** Restricts how users write code
 
-#### Approach C: Skip Codegen for Groups
+#### Approach C: ~~Skip Codegen for Groups~~
 
-Groups use existing `DelegateExecutor` path. Only simple `Map()` calls get codegen.
+~~Groups use existing `DelegateExecutor` path. Only simple `Map()` calls get codegen.~~
 
-**Pros:** Ship faster, simpler generator
-**Cons:** Inconsistent — some routes are commands, some aren't
+**REJECTED** — Creates inconsistency and preserves tech debt. All routes must be commands.
 
 #### Approach D: Attribute-Based Alternative
 
@@ -431,30 +435,41 @@ internal static void RegisterGeneratedCommands()
 
 ---
 
-## Phased Implementation
+## Implementation Plan
 
-### Phase 1: Simple `Map()` Only
+Since 3.0 is a clean break, we implement **all cases** before release. No partial solutions.
 
-- Handle `builder.Map("pattern", delegate)`
-- Generate Command + Handler
-- Skip `MapMultiple`, `MapGroup`
-- No closure support (emit warning)
+### Phase 1: Core Infrastructure
 
-### Phase 2: `MapMultiple` Support
+- Extend `NuruInvokerGenerator` or create sibling generator
+- Command class generation from pattern
+- Handler class generation wrapping delegate body
+- Parameter name rewriting (`x` → `request.X`)
+- DI registration generation
 
-- Parse array initializers
-- Generate single Command/Handler for aliases
-- Handle different array syntax variants
+### Phase 2: All Map Variants
 
-### Phase 3: Closures
+- `Map("pattern", delegate)` — simple case
+- `MapMultiple(["a", "b"], delegate)` — array parsing
+- `MapDefault(delegate)` — empty pattern case
 
-- Detect captured variables
-- Generate delegate-wrapping handlers
+### Phase 3: MapGroup
 
-### Phase 4: `MapGroup` (If Needed)
+- **Decision needed:** Require fluent inline chains OR implement data flow analysis
+- Implement chosen approach
+- Nested group support with option accumulation
 
-- Evaluate whether data flow analysis is worth it
-- Consider alternative approaches (attributes, fluent-only)
+### Phase 4: Edge Cases
+
+- Closures — delegate-wrapping handlers
+- Async delegates — `Task`, `Task<T>`, `ValueTask`
+- Return values — `int` exit codes, `IRequest<T>`
+
+### Phase 5: Cleanup
+
+- **Remove `DelegateExecutor`** — no longer needed
+- Remove any dual-path logic
+- Update all samples and documentation
 
 ---
 
@@ -462,10 +477,12 @@ internal static void RegisterGeneratedCommands()
 
 1. **Opt-in or automatic?** Should codegen be automatic for all `Map()` calls, or require an attribute/flag?
 
-2. **Coexistence with DelegateExecutor?** During transition, both paths exist. How to choose which runs?
+2. ~~**Coexistence with DelegateExecutor?**~~ **ANSWERED:** No coexistence. `DelegateExecutor` will be removed. All routes become commands.
 
 3. **Debugging experience?** Generated code should have good debug symbols, source mapping.
 
 4. **Naming collisions across assemblies?** If two assemblies generate same command name, what happens?
 
 5. **Incremental generation?** Source generators should be incremental for performance. How to cache efficiently?
+
+6. **MapGroup API constraint?** Should we require fluent inline chains for `MapGroup` to enable codegen? This is an API design decision, not a backward compat concern.

@@ -292,38 +292,70 @@ var route3 = new CompiledRouteBuilder()
 ```csharp
 public interface IEndpointCollectionBuilder
 {
-    // Existing: string-based pattern
+    // === Delegate-based (source generator creates Command/Handler) ===
+    
+    // String pattern + delegate
     void Map(string routePattern, Delegate handler, string? description = null);
     
-    // New: pre-built CompiledRoute
+    // Fluent builder + delegate
+    void Map(Action<CompiledRouteBuilder> configure, Delegate handler, string? description = null);
+    
+    // Pre-built route + delegate
     void Map(CompiledRoute compiledRoute, Delegate handler, string? description = null);
     
-    // New: fluent builder callback
-    void Map(Action<CompiledRouteBuilder> configure, Delegate handler, string? description = null);
+    // === Command-based (user provides Command, Handler already exists) ===
+    
+    // String pattern + command type
+    void Map<TCommand>(string routePattern, string? description = null) 
+        where TCommand : ICommand;
+    
+    // Fluent builder + command type
+    void Map<TCommand>(Action<CompiledRouteBuilder> configure, string? description = null) 
+        where TCommand : ICommand;
+    
+    // Pre-built route + command type
+    void Map<TCommand>(CompiledRoute compiledRoute, string? description = null) 
+        where TCommand : ICommand;
 }
 ```
 
 ### Consumer Choice
 
 ```csharp
-// Option 1: String pattern (concise, familiar, good for simple cases)
-app.Map("deploy {env} --force", Deploy);
+// === Delegate-based (generates Command/Handler) ===
 
-// Option 2: Fluent builder (programmatic, IDE autocomplete, refactor-friendly)
+// Option 1: String pattern + delegate (concise, familiar)
+app.Map("deploy {env} --force", (string env, bool force) => { ... });
+
+// Option 2: Fluent builder + delegate (IDE autocomplete, refactor-friendly)
 app.Map(r => r
     .WithLiteral("deploy")
     .WithParameter("env")
     .WithOption("force"),
-    Deploy);
+    (string env, bool force) => { ... });
 
-// Option 3: Pre-built route (reusable, dynamic scenarios)
+// Option 3: Pre-built route + delegate (reusable, dynamic scenarios)
 CompiledRoute route = new CompiledRouteBuilder()
     .WithLiteral("deploy")
     .WithParameter("env")
     .WithOption("force")
     .Build();
+app.Map(route, (string env, bool force) => { ... });
 
-app.Map(route, Deploy);
+
+// === Command-based (user provides Command/Handler) ===
+
+// Option 4: String pattern + command
+app.Map<DeployCommand>("deploy {env} --force");
+
+// Option 5: Fluent builder + command
+app.Map<DeployCommand>(r => r
+    .WithLiteral("deploy")
+    .WithParameter("env")
+    .WithOption("force"));
+
+// Option 6: Pre-built route + command
+app.Map<DeployCommand>(route);
 ```
 
 ### Why Support Both Syntaxes?

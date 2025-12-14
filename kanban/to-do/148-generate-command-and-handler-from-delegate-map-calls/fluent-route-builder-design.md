@@ -318,6 +318,23 @@ public interface IEndpointCollectionBuilder
     // Pre-built route + command type
     void Map<TCommand>(CompiledRoute compiledRoute, string? description = null) 
         where TCommand : ICommand;
+    
+    // === Grouped routes ===
+    
+    // Create a route group with shared prefix and/or options
+    IRouteGroupBuilder MapGroup(string prefix);
+}
+
+public interface IRouteGroupBuilder : IEndpointCollectionBuilder
+{
+    // Add description to the group (for help display)
+    IRouteGroupBuilder WithDescription(string description);
+    
+    // Add options that apply to all routes in the group
+    IRouteGroupBuilder WithGroupOptions(string optionsPattern);
+    
+    // Fluent version of group options
+    IRouteGroupBuilder WithGroupOptions(Action<CompiledRouteBuilder> configure);
 }
 ```
 
@@ -378,6 +395,115 @@ app.Map<HelpCommand>("");
 app.Map<HelpCommand>("--verbose,-v --format {fmt?}");
 ```
 
+### Grouped Routes
+
+Create a group of routes sharing a common prefix and/or options using `MapGroup()`.
+
+```csharp
+var docker = builder.MapGroup("docker")
+    .WithDescription("Container management commands")
+    .WithGroupOptions("--debug,-D --log-level {level?}");
+
+docker.Map("run {image}", (string image, bool debug, string? logLevel) => { ... });
+docker.Map("build {path}", (string path, bool debug, string? logLevel) => { ... });
+```
+
+**Resulting effective patterns:**
+- `docker run {image} --debug,-D? --log-level {level?}`
+- `docker build {path} --debug,-D? --log-level {level?}`
+
+#### Nested Groups
+
+Groups can be nested, with prefixes and options accumulating:
+
+```csharp
+var docker = builder.MapGroup("docker")
+    .WithGroupOptions("--debug,-D");
+
+var compose = docker.MapGroup("compose")
+    .WithGroupOptions("--file,-f {path?}");
+
+compose.Map("up", (bool debug, string? file) => { ... });
+// Effective: "docker compose up --debug,-D? --file,-f {path?}"
+
+compose.Map("down", (bool debug, string? file) => { ... });
+// Effective: "docker compose down --debug,-D? --file,-f {path?}"
+```
+
+#### Fluent Chain Requirement
+
+**API CONSTRAINT:** Group routes must be defined in a fluent chain or with immediate `Map` calls on the group variable:
+
+```csharp
+// SUPPORTED - fluent chain
+builder.MapGroup("docker")
+    .WithGroupOptions("--debug")
+    .Map("run {image}", handler);
+
+// SUPPORTED - variable but immediate Map calls
+var docker = builder.MapGroup("docker").WithGroupOptions("--debug");
+docker.Map("run {image}", handler);  // Same statement block, trackable
+docker.Map("build {path}", handler); // Still trackable
+```
+
+**Why:** Enables source generator to resolve group context without complex data flow analysis. The generator can walk up the fluent chain or track variables within the same method scope.
+
+#### Groups with Commands
+
+Groups work with both delegate-based and command-based routes:
+
+```csharp
+var docker = builder.MapGroup("docker")
+    .WithGroupOptions("--debug,-D");
+
+// Delegate-based
+docker.Map("run {image}", (string image, bool debug) => { ... });
+
+// Command-based
+docker.Map<DockerBuildCommand>("build {path}");
+```
+
+#### What Gets Generated from Groups
+
+```csharp
+// User writes:
+var docker = builder.MapGroup("docker")
+    .WithDescription("Container management")
+    .WithGroupOptions("--debug,-D");
+
+docker.Map("run {image}", (string image, bool debug) => 
+{
+    Console.WriteLine($"Running {image}, debug={debug}");
+});
+
+// Source generator emits:
+
+// 1. Command with combined parameters
+public sealed record DockerRun_Generated_Command(
+    string Image,
+    bool Debug
+) : ICommand;
+
+// 2. CompiledRoute with combined pattern
+private static readonly CompiledRoute __Route_DockerRun = new CompiledRouteBuilder()
+    .WithLiteral("docker")
+    .WithLiteral("run")
+    .WithParameter("image")
+    .WithOption("debug", shortForm: "D")
+    .Build();
+
+// 3. Handler with delegate body
+public sealed class DockerRun_Generated_CommandHandler 
+    : ICommandHandler<DockerRun_Generated_Command>
+{
+    public Task Handle(DockerRun_Generated_Command command, CancellationToken ct)
+    {
+        Console.WriteLine($"Running {command.Image}, debug={command.Debug}");
+        return Task.CompletedTask;
+    }
+}
+```
+
 ### Why Support Multiple Syntaxes?
 
 | Use Case | String Pattern | Fluent Builder | Attributed Command |
@@ -391,6 +517,7 @@ app.Map<HelpCommand>("--verbose,-v --format {fmt?}");
 | Validation timing | Runtime parse errors | Compile-time | Compile-time |
 | Single source of truth | Pattern + Command separate | Pattern + Command separate | Command IS the route |
 | Zero-ceremony | Requires Map call | Requires Map call | Auto-registered |
+| Grouped routes | MapGroup() | MapGroup() | [RouteGroup] attribute |
 
 ---
 
@@ -416,6 +543,15 @@ public sealed class RouteAliasAttribute : Attribute
     public RouteAliasAttribute(string pattern) { }
 }
 
+// Route group - for grouping related commands with shared prefix/options
+[AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
+public sealed class RouteGroupAttribute : Attribute
+{
+    public RouteGroupAttribute(string prefix) { }
+    public string? Description { get; set; }
+    public string? Options { get; set; }  // Shared options pattern
+}
+
 // Positional parameter - applied to properties/parameters
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Parameter)]
 public sealed class ParameterAttribute : Attribute
@@ -434,6 +570,13 @@ public sealed class OptionAttribute : Attribute
     public string? Description { get; set; }
     public bool IsRepeated { get; set; }
     // Optional is inferred from nullability or bool type
+}
+
+// Group option - marks a parameter as coming from the group's shared options
+[AttributeUsage(AttributeTargets.Property | AttributeTargets.Parameter)]
+public sealed class GroupOptionAttribute : Attribute
+{
+    public GroupOptionAttribute(string longForm, string? shortForm = null) { }
 }
 ```
 
@@ -522,6 +665,75 @@ public sealed record GitCommitCommand(
 // Generates route: "git commit {message?} --amend,-a --author {author?} --message,-m {messageOption?}"
 ```
 
+#### Grouped Commands with Attributes
+
+Commands can declare their group membership using `[RouteGroup]`:
+
+```csharp
+// Define the group's shared options once
+[RouteGroup("docker", Options = "--debug,-D --log-level {level?}")]
+public abstract record DockerCommandBase(
+    [GroupOption("--debug", "-D")] bool Debug,
+    [GroupOption("--log-level")] string? LogLevel
+);
+
+// Commands inherit group prefix and options
+[Route("run")]
+public sealed record DockerRunCommand(
+    [Parameter] string Image,
+    bool Debug,           // Inherited from group
+    string? LogLevel      // Inherited from group
+) : DockerCommandBase(Debug, LogLevel), ICommand;
+
+// Generates route: "docker run {image} --debug,-D? --log-level {level?}"
+
+[Route("build")]
+public sealed record DockerBuildCommand(
+    [Parameter] string Path,
+    bool Debug,
+    string? LogLevel
+) : DockerCommandBase(Debug, LogLevel), ICommand;
+
+// Generates route: "docker build {path} --debug,-D? --log-level {level?}"
+```
+
+Alternative: Use `[RouteGroup]` directly on commands without inheritance:
+
+```csharp
+[RouteGroup("docker", Options = "--debug,-D")]
+[Route("run")]
+public sealed record DockerRunCommand(
+    [Parameter] string Image,
+    [GroupOption("--debug", "-D")] bool Debug
+) : ICommand;
+
+// Generates route: "docker run {image} --debug,-D?"
+```
+
+#### Nested Groups with Attributes
+
+```csharp
+[RouteGroup("docker")]
+public abstract record DockerCommandBase(
+    [GroupOption("--debug", "-D")] bool Debug
+);
+
+[RouteGroup("compose", Options = "--file,-f {path?}")]
+public abstract record DockerComposeCommandBase(
+    bool Debug,
+    [GroupOption("--file", "-f")] string? File
+) : DockerCommandBase(Debug);
+
+[Route("up")]
+public sealed record DockerComposeUpCommand(
+    bool Debug,
+    string? File,
+    [Option("--detach", "-d")] bool Detach
+) : DockerComposeCommandBase(Debug, File), ICommand;
+
+// Generates route: "docker compose up --debug,-D? --file,-f {path?} --detach,-d"
+```
+
 ### What Gets Generated from Attributed Commands
 
 ```csharp
@@ -595,6 +807,10 @@ builder.Map("quick {name}", (string name) => Console.WriteLine($"Quick: {name}")
 
 // Explicit command-based routes (overrides attribute if present)
 builder.Map<SpecialCommand>("special-route");
+
+// Explicit grouped routes
+var admin = builder.MapGroup("admin").WithGroupOptions("--sudo");
+admin.Map("reset", () => { ... });
 
 var app = builder.Build();
 return await app.RunAsync();

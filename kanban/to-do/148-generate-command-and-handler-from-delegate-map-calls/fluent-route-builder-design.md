@@ -16,38 +16,40 @@ This document describes the design for a fluent `CompiledRouteBuilder` API that 
 ```
                         CONSUMER WRITES (all equivalent)
 
-  ┌────────────────────────┐  ┌─────────────────────────────┐  ┌────────────────────────┐
-  │   String + Delegate    │  │     Fluent + Delegate       │  │   Command (Mediator)   │
-  │                        │  │                             │  │                        │
-  │ app.Map(               │  │ app.Map(r => r              │  │ app.Map<DeployCommand>(│
-  │   "deploy {env}        │  │   .WithLiteral("deploy")    │  │   "deploy {env}        │
-  │    --force",           │  │   .WithParameter("env")     │  │    --force");          │
-  │   (env, force) =>      │  │   .WithOption("force"),     │  │                        │
-  │   { ... });            │  │   (env, force) =>           │  │ // Command already     │
-  │                        │  │   { ... });                 │  │ // exists              │
-  └───────────┬────────────┘  └──────────────┬──────────────┘  └───────────┬────────────┘
-              │                              │                             │
-              ▼                              ▼                             │
-  ┌───────────────────────────────────────────────────────────┐            │
-  │                   SOURCE GENERATOR                        │            │
-  │                                                           │            │
-  │  1. Parse route (string → fluent builder calls)           │            │
-  │  2. OR walk fluent builder calls directly                 │            │
-  │  3. Generate Command class from delegate signature        │◄───────────┘
-  │  4. Generate Handler class from delegate body             │  (already has command)
-  │  5. Generate static CompiledRoute                         │
-  │  6. Generate registration code                            │
-  │                                                           │
-  └─────────────────────────┬─────────────────────────────────┘
-                            ▼
+  ┌────────────────────────┐  ┌─────────────────────────────┐  ┌────────────────────────┐  ┌────────────────────────┐
+  │   String + Delegate    │  │     Fluent + Delegate       │  │   Command + Pattern    │  │  Attributed Command    │
+  │                        │  │                             │  │                        │  │                        │
+  │ app.Map(               │  │ app.Map(r => r              │  │ app.Map<DeployCommand>(│  │ [Route("deploy")]      │
+  │   "deploy {env}        │  │   .WithLiteral("deploy")    │  │   "deploy {env}        │  │ record DeployCommand(  │
+  │    --force",           │  │   .WithParameter("env")     │  │    --force");          │  │   [Parameter] string   │
+  │   (env, force) =>      │  │   .WithOption("force"),     │  │                        │  │     Env,               │
+  │   { ... });            │  │   (env, force) =>           │  │                        │  │   [Option("--force")]  │
+  │                        │  │   { ... });                 │  │                        │  │     bool Force         │
+  │                        │  │                             │  │                        │  │ ) : ICommand<int>;     │
+  └───────────┬────────────┘  └──────────────┬──────────────┘  └───────────┬────────────┘  └───────────┬────────────┘
+              │                              │                             │                          │
+              ▼                              ▼                             ▼                          ▼
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │                                        SOURCE GENERATOR                                                        │
+  │                                                                                                                │
+  │  1. Parse route (string → fluent builder calls)                                                                │
+  │  2. OR walk fluent builder calls directly                                                                      │
+  │  3. OR read attributes from Command class                                                                      │
+  │  4. Generate Command class from delegate signature (if delegate-based)                                         │
+  │  5. Generate Handler class from delegate body (if delegate-based)                                              │
+  │  6. Generate static CompiledRoute                                                                              │
+  │  7. Generate registration code                                                                                 │
+  │                                                                                                                │
+  └─────────────────────────────────────────────────┬──────────────────────────────────────────────────────────────┘
+                                                    ▼
   ┌───────────────────────────────────────────────────────────────────────────────┐
   │                          GENERATED OUTPUT                                     │
   │                                                                               │
-  │  // Command (generated from delegate signature)                               │
+  │  // Command (generated from delegate signature, or user-provided)             │
   │  public sealed record Deploy_Generated_Command(string Env, bool Force)        │
   │      : ICommand<int>;                                                         │
   │                                                                               │
-  │  // Handler (wraps original delegate body)                                    │
+  │  // Handler (wraps original delegate body, or user-provided)                  │
   │  public sealed class Deploy_Generated_CommandHandler                          │
   │      : ICommandHandler<Deploy_Generated_Command, int>                         │
   │  {                                                                            │
@@ -376,17 +378,279 @@ app.Map<HelpCommand>("");
 app.Map<HelpCommand>("--verbose,-v --format {fmt?}");
 ```
 
-### Why Support Both Syntaxes?
+### Why Support Multiple Syntaxes?
 
-| Use Case | String Pattern | Fluent Builder |
-|----------|---------------|----------------|
-| Quick prototyping | Faster to type | |
-| Complex patterns | Harder to read | Self-documenting |
-| IDE support | No autocomplete | Full IntelliSense |
-| Refactoring | Find/replace | Rename symbol |
-| Dynamic route generation | Parse at runtime | Build programmatically |
-| Code generation | Emit strings | Emit builder calls |
-| Validation timing | Runtime parse errors | Compile-time (with analyzers) |
+| Use Case | String Pattern | Fluent Builder | Attributed Command |
+|----------|---------------|----------------|-------------------|
+| Quick prototyping | Faster to type | | |
+| Complex patterns | Harder to read | Self-documenting | Self-documenting |
+| IDE support | No autocomplete | Full IntelliSense | Full IntelliSense |
+| Refactoring | Find/replace | Rename symbol | Rename symbol |
+| Dynamic route generation | Parse at runtime | Build programmatically | N/A |
+| Code generation | Emit strings | Emit builder calls | Emit attributes |
+| Validation timing | Runtime parse errors | Compile-time | Compile-time |
+| Single source of truth | Pattern + Command separate | Pattern + Command separate | Command IS the route |
+| Zero-ceremony | Requires Map call | Requires Map call | Auto-registered |
+
+---
+
+## Attribute-Based Route Definition
+
+In addition to explicit `Map` calls, routes can be defined directly on Command classes using attributes. This provides a **zero-ceremony** approach where the Command definition IS the route definition.
+
+### Attribute API
+
+```csharp
+// Route prefix (literals) - applied to Command class
+[AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
+public sealed class RouteAttribute : Attribute
+{
+    public RouteAttribute(string pattern) { }  // "git commit" or just "deploy" or ""
+    public string? Description { get; set; }
+}
+
+// Route alias - for commands with multiple patterns
+[AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
+public sealed class RouteAliasAttribute : Attribute
+{
+    public RouteAliasAttribute(string pattern) { }
+}
+
+// Positional parameter - applied to properties/parameters
+[AttributeUsage(AttributeTargets.Property | AttributeTargets.Parameter)]
+public sealed class ParameterAttribute : Attribute
+{
+    public string? Name { get; set; }           // Override parameter name
+    public string? Description { get; set; }
+    public bool IsCatchAll { get; set; }
+    // Optional is inferred from nullability (string? = optional)
+}
+
+// Option (flag or valued) - applied to properties/parameters
+[AttributeUsage(AttributeTargets.Property | AttributeTargets.Parameter)]
+public sealed class OptionAttribute : Attribute
+{
+    public OptionAttribute(string longForm, string? shortForm = null) { }
+    public string? Description { get; set; }
+    public bool IsRepeated { get; set; }
+    // Optional is inferred from nullability or bool type
+}
+```
+
+### Examples
+
+#### Simple Command
+
+```csharp
+[Route("greet")]
+public sealed record GreetCommand(
+    [Parameter] string Name
+) : ICommand;
+
+// Generates route: "greet {name}"
+```
+
+#### With Options
+
+```csharp
+[Route("deploy", Description = "Deploy to an environment")]
+public sealed record DeployCommand(
+    [Parameter(Description = "Target environment")] string Env,
+    [Option("--force", "-f", Description = "Skip confirmation")] bool Force,
+    [Option("--config", "-c")] string? ConfigFile
+) : ICommand<int>;
+
+// Generates route: "deploy {env} --force,-f --config,-c {configFile?}"
+```
+
+#### Nested Literals
+
+```csharp
+[Route("docker compose up")]
+public sealed record DockerComposeUpCommand(
+    [Option("--detach", "-d")] bool Detach,
+    [Option("--build")] bool Build
+) : ICommand;
+
+// Generates route: "docker compose up --detach,-d --build"
+```
+
+#### Catch-All
+
+```csharp
+[Route("exec")]
+public sealed record ExecCommand(
+    [Parameter(IsCatchAll = true)] string[] Args
+) : ICommand<int>;
+
+// Generates route: "exec {*args}"
+```
+
+#### Default Route
+
+```csharp
+[Route("")]  // Empty = default route
+public sealed record HelpCommand(
+    [Option("--verbose", "-v")] bool Verbose
+) : ICommand;
+
+// Generates route: "--verbose,-v" (matches when no other route matches)
+```
+
+#### Aliases
+
+```csharp
+[Route("exit")]
+[RouteAlias("quit")]
+[RouteAlias("q")]
+public sealed record ExitCommand : ICommand;
+
+// Generates routes: "exit", "quit", "q" - all map to same command
+```
+
+#### Mixed Parameters and Options
+
+```csharp
+[Route("git commit")]
+public sealed record GitCommitCommand(
+    [Parameter] string? Message,                           // Optional positional
+    [Option("--amend", "-a")] bool Amend,                 // Boolean flag
+    [Option("--author")] string? Author,                  // Optional valued option
+    [Option("--message", "-m")] string? MessageOption     // Alternative to positional
+) : ICommand<int>;
+
+// Generates route: "git commit {message?} --amend,-a --author {author?} --message,-m {messageOption?}"
+```
+
+### What Gets Generated from Attributed Commands
+
+```csharp
+// User writes:
+[Route("deploy")]
+public sealed record DeployCommand(
+    [Parameter] string Env,
+    [Option("--force", "-f")] bool Force,
+    [Option("--replicas", "-r")] int? Replicas
+) : ICommand<int>;
+
+public sealed class DeployCommandHandler : ICommandHandler<DeployCommand, int>
+{
+    public Task<int> Handle(DeployCommand command, CancellationToken ct) { ... }
+}
+
+
+// Source generator emits:
+
+// 1. CompiledRoute
+private static readonly CompiledRoute __Route_DeployCommand = new CompiledRouteBuilder()
+    .WithLiteral("deploy")
+    .WithParameter("env")
+    .WithOption("force", shortForm: "f")
+    .WithOption("replicas", shortForm: "r", expectsValue: true, isOptional: true)
+    .Build();
+
+// 2. Route pattern string (for help display)
+private const string __Pattern_DeployCommand = "deploy {env} --force,-f --replicas,-r {replicas?}";
+
+// 3. Auto-registration (no Map call needed!)
+internal static class GeneratedRouteRegistration
+{
+    [ModuleInitializer]
+    public static void Register()
+    {
+        NuruRouteRegistry.Register<DeployCommand>(__Route_DeployCommand, __Pattern_DeployCommand);
+    }
+}
+```
+
+### Auto-Registration
+
+With attributed commands, no explicit `Map` calls are needed. The source generator discovers all `[Route]` attributed commands and registers them automatically:
+
+```csharp
+// User code - just build and run!
+var builder = NuruApp.CreateBuilder(args);
+
+// Optionally configure services
+builder.ConfigureServices(services => 
+{
+    services.AddSingleton<IDeploymentService, DeploymentService>();
+});
+
+var app = builder.Build();
+return await app.RunAsync();
+
+// That's it! All [Route] commands are auto-registered.
+```
+
+### Combining Approaches
+
+Attributed commands can coexist with explicit `Map` calls:
+
+```csharp
+var builder = NuruApp.CreateBuilder(args);
+
+// Explicit delegate-based routes
+builder.Map("quick {name}", (string name) => Console.WriteLine($"Quick: {name}"));
+
+// Explicit command-based routes (overrides attribute if present)
+builder.Map<SpecialCommand>("special-route");
+
+var app = builder.Build();
+return await app.RunAsync();
+
+// Meanwhile, all other [Route] commands are auto-registered
+```
+
+### Benefits of Attribute Approach
+
+| Benefit | Explanation |
+|---------|-------------|
+| **Self-documenting** | Command definition IS the route definition |
+| **Single source of truth** | No drift between command properties and route pattern |
+| **Zero ceremony** | No `Map` calls needed at all |
+| **Refactor-safe** | Rename property = route updates automatically |
+| **IDE support** | Full IntelliSense on attributes |
+| **Validation** | Analyzer can verify attributes match property types |
+| **Discoverability** | Look at any Command to see its route |
+
+### Trade-offs
+
+| Consideration | Notes |
+|---------------|-------|
+| **Centralized view** | Must look at command classes to see routes (vs. one file with all `Map` calls) |
+| **Dynamic routes** | Can't do runtime-computed patterns (but that's rare) |
+| **Learning curve** | Another way to do things (but consistent with ASP.NET patterns) |
+
+---
+
+## Summary: Three Styles
+
+All three styles generate the same runtime artifacts - the difference is ergonomics:
+
+```csharp
+// Style 1: Delegate + String Pattern (quick prototyping)
+app.Map("deploy {env} --force", (string env, bool force) => { ... });
+
+// Style 2: Command + String Pattern (explicit mapping)
+app.Map<DeployCommand>("deploy {env} --force");
+
+// Style 3: Attributed Command (zero-ceremony, self-documenting)
+[Route("deploy")]
+public sealed record DeployCommand(
+    [Parameter] string Env,
+    [Option("--force", "-f")] bool Force
+) : ICommand<int>;
+// No Map call needed - auto-registered!
+```
+
+| Style | Best For |
+|-------|----------|
+| **Delegate + Pattern** | Quick scripts, prototyping, simple CLIs |
+| **Command + Pattern** | When you want explicit control over mapping |
+| **Attributed Command** | Production apps, large CLIs, team projects |
+
+---
 
 ## What Gets Generated
 
@@ -507,7 +771,7 @@ public sealed class Deploy_CommandHandler : ICommandHandler<Deploy_Command, int>
 
 ## Unified Runtime Model
 
-All three syntaxes become the same thing at runtime:
+All syntaxes become the same thing at runtime:
 
 ```csharp
 // 1. Delegate syntax
@@ -519,6 +783,10 @@ app.Map(r => r.WithLiteral("greet").WithParameter("name"),
 
 // 3. Explicit command
 app.Map<GreetCommand>("greet {name}");
+
+// 4. Attributed command
+[Route("greet")]
+public sealed record GreetCommand([Parameter] string Name) : ICommand;
 
 // ─────────────────────────────────────────────────────────────────────
 // At runtime, ALL become:
@@ -543,7 +811,7 @@ app.Map<GreetCommand>("greet {name}");
 
 **Delegates are developer convenience; commands are the runtime reality.**
 
-The string pattern and fluent builder are both syntactic sugar. The source generator transforms everything into the unified Command/Handler model, ensuring consistent behavior regardless of how the route was originally declared.
+The string pattern, fluent builder, and attributes are all syntactic sugar. The source generator transforms everything into the unified Command/Handler model, ensuring consistent behavior regardless of how the route was originally declared.
 
 ## Relationship to Existing Parser
 
@@ -551,6 +819,7 @@ The existing `PatternParser` (already used in the analyzer for compile-time vali
 
 1. **For string patterns:** Parser extracts segments → Generator emits equivalent builder calls
 2. **For fluent patterns:** Generator walks the builder expression tree directly
+3. **For attributed commands:** Generator reads attributes → emits equivalent builder calls
 
 This means the parser remains the single source of truth for pattern syntax, while the builder becomes the single mechanism for constructing `CompiledRoute` instances.
 

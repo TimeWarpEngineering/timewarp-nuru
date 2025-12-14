@@ -11,6 +11,28 @@ This document describes the design for a fluent `CompiledRouteBuilder` API that 
 3. **Source generation** - No runtime parsing; everything resolved at compile time
 4. **Unified pipeline** - All routes (delegate or command) flow through mediator pipeline
 
+## Phased Implementation
+
+The implementation follows a phased approach, each building on the previous without rework:
+
+```
+Phase 1 (Current)          Phase 2                    Phase 3
+─────────────────────────────────────────────────────────────────────────
+[RouteGroup] attribute  →  + MapGroup() API        →  + Data flow analysis
+Groups via attributes      (fluent constraint)        (best effort tracking)
+
+Simplest generator         Walk syntax tree           Track variables
+No data flow analysis      Immediate variable only    Within method scope
+```
+
+| Phase | Grouping Support | Generator Complexity |
+|-------|------------------|---------------------|
+| **Phase 1** | `[RouteGroup]` attribute only | Low - read attributes |
+| **Phase 2** | + `MapGroup()` fluent API | Medium - walk syntax tree |
+| **Phase 3** | + Relaxed constraints | Higher - data flow analysis |
+
+---
+
 ## The Full Architecture
 
 ```
@@ -287,7 +309,7 @@ var route3 = new CompiledRouteBuilder()
     .Build();
 ```
 
-## Consumer API
+## Consumer API (Phase 1)
 
 ### `IEndpointCollectionBuilder`
 
@@ -318,25 +340,10 @@ public interface IEndpointCollectionBuilder
     // Pre-built route + command type
     void Map<TCommand>(CompiledRoute compiledRoute, string? description = null) 
         where TCommand : ICommand;
-    
-    // === Grouped routes ===
-    
-    // Create a route group with shared prefix and/or options
-    IRouteGroupBuilder MapGroup(string prefix);
-}
-
-public interface IRouteGroupBuilder : IEndpointCollectionBuilder
-{
-    // Add description to the group (for help display)
-    IRouteGroupBuilder WithDescription(string description);
-    
-    // Add options that apply to all routes in the group
-    IRouteGroupBuilder WithGroupOptions(string optionsPattern);
-    
-    // Fluent version of group options
-    IRouteGroupBuilder WithGroupOptions(Action<CompiledRouteBuilder> configure);
 }
 ```
+
+> **Note:** `MapGroup()` is not included in Phase 1. Use `[RouteGroup]` attributes for grouped commands, or specify full patterns in `Map()` calls.
 
 ### Consumer Choice
 
@@ -395,114 +402,22 @@ app.Map<HelpCommand>("");
 app.Map<HelpCommand>("--verbose,-v --format {fmt?}");
 ```
 
-### Grouped Routes
+### Grouped Routes (Phase 1)
 
-Create a group of routes sharing a common prefix and/or options using `MapGroup()`.
-
-```csharp
-var docker = builder.MapGroup("docker")
-    .WithDescription("Container management commands")
-    .WithGroupOptions("--debug,-D --log-level {level?}");
-
-docker.Map("run {image}", (string image, bool debug, string? logLevel) => { ... });
-docker.Map("build {path}", (string path, bool debug, string? logLevel) => { ... });
-```
-
-**Resulting effective patterns:**
-- `docker run {image} --debug,-D? --log-level {level?}`
-- `docker build {path} --debug,-D? --log-level {level?}`
-
-#### Nested Groups
-
-Groups can be nested, with prefixes and options accumulating:
+In Phase 1, grouped routes are supported **only via attributes**. For delegate-based routes that need a common prefix, use the full pattern:
 
 ```csharp
-var docker = builder.MapGroup("docker")
-    .WithGroupOptions("--debug,-D");
+// Phase 1: Specify full pattern for grouped delegate routes
+app.Map("docker run {image} --debug,-D", (string image, bool debug) => { ... });
+app.Map("docker build {path} --debug,-D", (string path, bool debug) => { ... });
 
-var compose = docker.MapGroup("compose")
-    .WithGroupOptions("--file,-f {path?}");
-
-compose.Map("up", (bool debug, string? file) => { ... });
-// Effective: "docker compose up --debug,-D? --file,-f {path?}"
-
-compose.Map("down", (bool debug, string? file) => { ... });
-// Effective: "docker compose down --debug,-D? --file,-f {path?}"
+// OR use attributed commands with [RouteGroup] (recommended)
+[RouteGroup("docker", Options = "--debug,-D")]
+[Route("run")]
+public sealed record DockerRunCommand(...) : ICommand;
 ```
 
-#### Fluent Chain Requirement
-
-**API CONSTRAINT:** Group routes must be defined in a fluent chain or with immediate `Map` calls on the group variable:
-
-```csharp
-// SUPPORTED - fluent chain
-builder.MapGroup("docker")
-    .WithGroupOptions("--debug")
-    .Map("run {image}", handler);
-
-// SUPPORTED - variable but immediate Map calls
-var docker = builder.MapGroup("docker").WithGroupOptions("--debug");
-docker.Map("run {image}", handler);  // Same statement block, trackable
-docker.Map("build {path}", handler); // Still trackable
-```
-
-**Why:** Enables source generator to resolve group context without complex data flow analysis. The generator can walk up the fluent chain or track variables within the same method scope.
-
-#### Groups with Commands
-
-Groups work with both delegate-based and command-based routes:
-
-```csharp
-var docker = builder.MapGroup("docker")
-    .WithGroupOptions("--debug,-D");
-
-// Delegate-based
-docker.Map("run {image}", (string image, bool debug) => { ... });
-
-// Command-based
-docker.Map<DockerBuildCommand>("build {path}");
-```
-
-#### What Gets Generated from Groups
-
-```csharp
-// User writes:
-var docker = builder.MapGroup("docker")
-    .WithDescription("Container management")
-    .WithGroupOptions("--debug,-D");
-
-docker.Map("run {image}", (string image, bool debug) => 
-{
-    Console.WriteLine($"Running {image}, debug={debug}");
-});
-
-// Source generator emits:
-
-// 1. Command with combined parameters
-public sealed record DockerRun_Generated_Command(
-    string Image,
-    bool Debug
-) : ICommand;
-
-// 2. CompiledRoute with combined pattern
-private static readonly CompiledRoute __Route_DockerRun = new CompiledRouteBuilder()
-    .WithLiteral("docker")
-    .WithLiteral("run")
-    .WithParameter("image")
-    .WithOption("debug", shortForm: "D")
-    .Build();
-
-// 3. Handler with delegate body
-public sealed class DockerRun_Generated_CommandHandler 
-    : ICommandHandler<DockerRun_Generated_Command>
-{
-    public Task Handle(DockerRun_Generated_Command command, CancellationToken ct)
-    {
-        Console.WriteLine($"Running {command.Image}, debug={command.Debug}");
-        return Task.CompletedTask;
-    }
-}
-```
+See the [Attribute-Based Route Definition](#attribute-based-route-definition) section for `[RouteGroup]` details.
 
 ### Why Support Multiple Syntaxes?
 
@@ -517,7 +432,7 @@ public sealed class DockerRun_Generated_CommandHandler
 | Validation timing | Runtime parse errors | Compile-time | Compile-time |
 | Single source of truth | Pattern + Command separate | Pattern + Command separate | Command IS the route |
 | Zero-ceremony | Requires Map call | Requires Map call | Auto-registered |
-| Grouped routes | MapGroup() | MapGroup() | [RouteGroup] attribute |
+| Grouped routes (Phase 1) | Full pattern | Full pattern | [RouteGroup] attribute |
 
 ---
 
@@ -808,10 +723,6 @@ builder.Map("quick {name}", (string name) => Console.WriteLine($"Quick: {name}")
 // Explicit command-based routes (overrides attribute if present)
 builder.Map<SpecialCommand>("special-route");
 
-// Explicit grouped routes
-var admin = builder.MapGroup("admin").WithGroupOptions("--sudo");
-admin.Map("reset", () => { ... });
-
 var app = builder.Build();
 return await app.RunAsync();
 
@@ -1048,3 +959,195 @@ Since `Endpoint.RoutePattern` is required for help display, builder-created rout
 3. **Generator emits both** - Builder calls AND original pattern string
 
 Option 3 (generator emits both) is cleanest since the generator has access to the original source.
+
+---
+
+## Phase 2: MapGroup() API
+
+> **Status:** Future enhancement. Phase 1 uses `[RouteGroup]` attributes only.
+
+Phase 2 adds the `MapGroup()` fluent API for delegate-based grouped routes.
+
+### Extended Interface
+
+```csharp
+public interface IEndpointCollectionBuilder
+{
+    // ... all Phase 1 methods ...
+    
+    // === Grouped routes (Phase 2) ===
+    
+    // Create a route group with shared prefix and/or options
+    IRouteGroupBuilder MapGroup(string prefix);
+}
+
+public interface IRouteGroupBuilder : IEndpointCollectionBuilder
+{
+    // Add description to the group (for help display)
+    IRouteGroupBuilder WithDescription(string description);
+    
+    // Add options that apply to all routes in the group
+    IRouteGroupBuilder WithGroupOptions(string optionsPattern);
+    
+    // Fluent version of group options
+    IRouteGroupBuilder WithGroupOptions(Action<CompiledRouteBuilder> configure);
+}
+```
+
+### Usage
+
+```csharp
+var docker = builder.MapGroup("docker")
+    .WithDescription("Container management commands")
+    .WithGroupOptions("--debug,-D --log-level {level?}");
+
+docker.Map("run {image}", (string image, bool debug, string? logLevel) => { ... });
+docker.Map("build {path}", (string path, bool debug, string? logLevel) => { ... });
+```
+
+**Resulting effective patterns:**
+- `docker run {image} --debug,-D? --log-level {level?}`
+- `docker build {path} --debug,-D? --log-level {level?}`
+
+### Nested Groups
+
+Groups can be nested, with prefixes and options accumulating:
+
+```csharp
+var docker = builder.MapGroup("docker")
+    .WithGroupOptions("--debug,-D");
+
+var compose = docker.MapGroup("compose")
+    .WithGroupOptions("--file,-f {path?}");
+
+compose.Map("up", (bool debug, string? file) => { ... });
+// Effective: "docker compose up --debug,-D? --file,-f {path?}"
+
+compose.Map("down", (bool debug, string? file) => { ... });
+// Effective: "docker compose down --debug,-D? --file,-f {path?}"
+```
+
+### Fluent Chain Constraint (Phase 2)
+
+**API CONSTRAINT:** Group routes must be defined in a fluent chain or with immediate `Map` calls on the group variable:
+
+```csharp
+// SUPPORTED - fluent chain
+builder.MapGroup("docker")
+    .WithGroupOptions("--debug")
+    .Map("run {image}", handler);
+
+// SUPPORTED - variable but immediate Map calls
+var docker = builder.MapGroup("docker").WithGroupOptions("--debug");
+docker.Map("run {image}", handler);  // Same statement block, trackable
+docker.Map("build {path}", handler); // Still trackable
+```
+
+**Why:** Enables source generator to resolve group context without complex data flow analysis. The generator can walk up the fluent chain or track variables within the same method scope.
+
+### Groups with Commands
+
+Groups work with both delegate-based and command-based routes:
+
+```csharp
+var docker = builder.MapGroup("docker")
+    .WithGroupOptions("--debug,-D");
+
+// Delegate-based
+docker.Map("run {image}", (string image, bool debug) => { ... });
+
+// Command-based
+docker.Map<DockerBuildCommand>("build {path}");
+```
+
+### What Gets Generated from Groups
+
+```csharp
+// User writes:
+var docker = builder.MapGroup("docker")
+    .WithDescription("Container management")
+    .WithGroupOptions("--debug,-D");
+
+docker.Map("run {image}", (string image, bool debug) => 
+{
+    Console.WriteLine($"Running {image}, debug={debug}");
+});
+
+// Source generator emits:
+
+// 1. Command with combined parameters
+public sealed record DockerRun_Generated_Command(
+    string Image,
+    bool Debug
+) : ICommand;
+
+// 2. CompiledRoute with combined pattern
+private static readonly CompiledRoute __Route_DockerRun = new CompiledRouteBuilder()
+    .WithLiteral("docker")
+    .WithLiteral("run")
+    .WithParameter("image")
+    .WithOption("debug", shortForm: "D")
+    .Build();
+
+// 3. Handler with delegate body
+public sealed class DockerRun_Generated_CommandHandler 
+    : ICommandHandler<DockerRun_Generated_Command>
+{
+    public Task Handle(DockerRun_Generated_Command command, CancellationToken ct)
+    {
+        Console.WriteLine($"Running {command.Image}, debug={command.Debug}");
+        return Task.CompletedTask;
+    }
+}
+```
+
+---
+
+## Phase 3: Relaxed Constraints
+
+> **Status:** Future enhancement. Builds on Phase 2.
+
+Phase 3 relaxes the fluent chain constraint by adding data flow analysis within method scope.
+
+### What Changes
+
+```csharp
+// Phase 2: This emits a warning
+var docker = builder.MapGroup("docker");
+// ... other code ...
+docker.Map("run {image}", handler);  // ⚠️ NURU003: Cannot resolve group context
+
+// Phase 3: This works - generator tracks variable within method
+var docker = builder.MapGroup("docker");
+// ... other code ...
+docker.Map("run {image}", handler);  // ✓ Resolved via data flow analysis
+```
+
+### Still Not Supported
+
+Some patterns remain unsupported even in Phase 3:
+
+```csharp
+// Passed to another method - can't see inside
+var docker = builder.MapGroup("docker");
+RegisterDockerCommands(docker);  // ⚠️ Still emits warning
+
+// Stored in a field - cross-method tracking too complex
+private IRouteGroupBuilder _docker;
+
+public void Setup(IEndpointCollectionBuilder builder)
+{
+    _docker = builder.MapGroup("docker");
+}
+
+public void RegisterCommands()
+{
+    _docker.Map("run {image}", handler);  // ⚠️ Still emits warning
+}
+```
+
+### Recommendation
+
+For complex scenarios where data flow analysis can't resolve group context:
+- Use `[RouteGroup]` attributes (always works)
+- Or specify the full pattern: `app.Map("docker run {image}", handler)`

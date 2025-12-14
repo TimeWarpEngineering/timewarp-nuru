@@ -107,13 +107,43 @@ internal sealed class Add_Generated_Handler : IRequestHandler<Add_Generated_Comm
 
 ---
 
-### 2. `MapDefault(delegate)`
+### 2. `MapDefault` Variants
 
-**Complexity: LOW**
+**Complexity: LOW-MEDIUM**
 
-Same as `Map()` but with empty pattern.
+#### `MapDefault(delegate)` — No options
+
+```csharp
+builder.MapDefault(() => Console.WriteLine("Usage: mycli <command>"));
+```
 
 **Generation:** Command with no properties.
+
+#### `MapDefault(optionsPattern, delegate)` — With options
+
+```csharp
+builder.MapDefault("--verbose,-v --format {fmt?}", (bool verbose, string? format) => { ... });
+```
+
+**Detection:** First argument is options-only pattern (starts with `--` or contains only options).
+
+**Generation:** Command with properties for options only.
+
+```csharp
+internal sealed class DefaultCommand : IRequest
+{
+    public bool Verbose { get; set; }
+    public string? Format { get; set; }
+}
+```
+
+#### `MapDefault<TCommand>()` — Command class, no options
+
+No generation needed — user provides the Command class.
+
+#### `MapDefault<TCommand>(optionsPattern)` — Command class with options
+
+No generation needed — user provides the Command class. Pattern used for matching only.
 
 ---
 

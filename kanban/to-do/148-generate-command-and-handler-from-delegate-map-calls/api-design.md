@@ -72,12 +72,54 @@ public sealed class AddCommand : IRequest
 
 ---
 
-### `MapDefault(delegate)`
+### `MapDefault(delegate)` / `MapDefault<TCommand>()`
 
-Register the default route (no pattern match required).
+Register the default route — invoked when no other route matches.
+
+**Simple delegate:**
 
 ```csharp
 builder.MapDefault(() => Console.WriteLine("Usage: mycli <command>"));
+```
+
+**With Command class:**
+
+```csharp
+builder.MapDefault<DefaultCommand>();
+
+public sealed class DefaultCommand : IRequest
+{
+    public sealed class Handler : IRequestHandler<DefaultCommand>
+    {
+        public ValueTask<Unit> Handle(DefaultCommand request, CancellationToken ct)
+        {
+            Console.WriteLine("Usage: mycli <command>");
+            return default;
+        }
+    }
+}
+```
+
+**With options pattern (optional):**
+
+Default routes can still accept options — they just have no required positional parameters:
+
+```csharp
+// Delegate with options
+builder.MapDefault("--verbose,-v --format {fmt?}", (bool verbose, string? format) =>
+{
+    ShowHelp(verbose, format);
+});
+
+// Command with options
+builder.MapDefault<HelpCommand>("--verbose,-v --format {fmt?}");
+```
+
+This allows:
+```bash
+mycli                      # Matches default
+mycli --verbose            # Matches default with option
+mycli --format json        # Matches default with option
 ```
 
 ---

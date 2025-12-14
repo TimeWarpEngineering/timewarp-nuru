@@ -287,15 +287,11 @@ var route3 = new CompiledRouteBuilder()
 
 ## Consumer API
 
-### Extended `IEndpointCollectionBuilder`
+### `IEndpointCollectionBuilder`
 
 ```csharp
 public interface IEndpointCollectionBuilder
 {
-    // ═══════════════════════════════════════════════════════════════════
-    // MAP - Named routes
-    // ═══════════════════════════════════════════════════════════════════
-    
     // === Delegate-based (source generator creates Command/Handler) ===
     
     // String pattern + delegate
@@ -319,35 +315,6 @@ public interface IEndpointCollectionBuilder
     
     // Pre-built route + command type
     void Map<TCommand>(CompiledRoute compiledRoute, string? description = null) 
-        where TCommand : ICommand;
-    
-    // ═══════════════════════════════════════════════════════════════════
-    // MAPDEFAULT - Fallback route when no other route matches
-    // ═══════════════════════════════════════════════════════════════════
-    
-    // === Delegate-based (source generator creates Command/Handler) ===
-    
-    // No parameters - simple default
-    void MapDefault(Delegate handler, string? description = null);
-    
-    // With options pattern (e.g., "--verbose,-v --format {fmt?}")
-    void MapDefault(string optionsPattern, Delegate handler, string? description = null);
-    
-    // Fluent builder for options
-    void MapDefault(Action<CompiledRouteBuilder> configure, Delegate handler, string? description = null);
-    
-    // === Command-based (user provides Command, Handler already exists) ===
-    
-    // No parameters - simple default
-    void MapDefault<TCommand>(string? description = null) 
-        where TCommand : ICommand;
-    
-    // With options pattern
-    void MapDefault<TCommand>(string optionsPattern, string? description = null) 
-        where TCommand : ICommand;
-    
-    // Fluent builder for options
-    void MapDefault<TCommand>(Action<CompiledRouteBuilder> configure, string? description = null) 
         where TCommand : ICommand;
 }
 ```
@@ -389,45 +356,24 @@ app.Map<DeployCommand>(r => r
 
 // Option 6: Pre-built route + command
 app.Map<DeployCommand>(route);
+```
 
+### Default Routes
 
-// ═══════════════════════════════════════════════════════════════════════════
-// MAPDEFAULT - Fallback route when no other route matches
-// ═══════════════════════════════════════════════════════════════════════════
+Default routes (fallback when no other route matches) use an empty string pattern. No separate `MapDefault` method is needed - this keeps the API surface minimal and simplifies the source generator.
 
-// === Delegate-based (generates Command/Handler) ===
+```csharp
+// Default route with delegate
+app.Map("", () => Console.WriteLine("Usage: mycli <command>"));
 
-// Option 7: Simple default (no parameters)
-app.MapDefault(() => Console.WriteLine("Usage: mycli <command>"));
+// Default route with options
+app.Map("--verbose,-v", (bool verbose) => ShowHelp(verbose));
 
-// Option 8: Default with options (string pattern)
-app.MapDefault("--verbose,-v --format {fmt?}", (bool verbose, string? format) => 
-{
-    ShowHelp(verbose, format);
-});
+// Default route with command
+app.Map<HelpCommand>("");
 
-// Option 9: Default with options (fluent builder)
-app.MapDefault(r => r
-    .WithOption("verbose", shortForm: "v")
-    .WithOption("format", parameterName: "fmt", expectsValue: true, isOptional: true),
-    (bool verbose, string? format) => 
-    {
-        ShowHelp(verbose, format);
-    });
-
-
-// === Command-based (user provides Command/Handler) ===
-
-// Option 10: Simple default command
-app.MapDefault<HelpCommand>();
-
-// Option 11: Default command with options (string pattern)
-app.MapDefault<HelpCommand>("--verbose,-v --format {fmt?}");
-
-// Option 12: Default command with options (fluent builder)
-app.MapDefault<HelpCommand>(r => r
-    .WithOption("verbose", shortForm: "v")
-    .WithOption("format", parameterName: "fmt", expectsValue: true, isOptional: true));
+// Default route with command + options
+app.Map<HelpCommand>("--verbose,-v --format {fmt?}");
 ```
 
 ### Why Support Both Syntaxes?

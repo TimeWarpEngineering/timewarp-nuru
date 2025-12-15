@@ -72,6 +72,8 @@ Extend the existing `NuruInvokerGenerator` (or create a sibling generator) to em
 ### Final Cleanup
 - [ ] Update all samples
 - [ ] Update documentation
+- [ ] Move `fluent-route-builder-design.md` to `documentation/developer/design/`
+- [ ] Move `open-design-questions.md` to `documentation/developer/design/` (as historical reference)
 
 ## Notes
 

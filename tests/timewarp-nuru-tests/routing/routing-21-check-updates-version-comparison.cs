@@ -13,8 +13,8 @@ public class CheckUpdatesRouteTests
   public static async Task Check_updates_route_is_registered_by_default()
   {
     // Arrange - Create builder with UseAllExtensions (registers --check-updates)
-    NuruAppBuilder builder = new NuruAppBuilder()
-      .UseAllExtensions();
+    NuruAppBuilder builder = new();
+    builder.UseAllExtensions();
 
     // Assert - Should have --check-updates endpoint
     bool hasCheckUpdates = builder.EndpointCollection.Any(e =>
@@ -29,8 +29,8 @@ public class CheckUpdatesRouteTests
   {
     // Arrange - Create builder with DisableCheckUpdatesRoute = true
     NuruAppOptions options = new() { DisableCheckUpdatesRoute = true };
-    NuruAppBuilder builder = new NuruAppBuilder()
-      .UseAllExtensions(options);
+    NuruAppBuilder builder = new();
+    builder.UseAllExtensions(options);
 
     // Assert - Should NOT have --check-updates endpoint
     bool hasCheckUpdates = builder.EndpointCollection.Any(e =>
@@ -62,9 +62,9 @@ public class CheckUpdatesRouteTests
   public static async Task Endpoint_count_after_override()
   {
     // Arrange
-    NuruAppBuilder builder = new NuruAppBuilder()
-      .UseAllExtensions()
-      .Map("--check-updates", () => { });
+    NuruAppBuilder builder = new();
+    builder.UseAllExtensions();
+    builder.Map("--check-updates", () => { });
 
     // Count endpoints with --check-updates pattern
     int checkUpdatesEndpoints = builder.EndpointCollection.Count(e =>

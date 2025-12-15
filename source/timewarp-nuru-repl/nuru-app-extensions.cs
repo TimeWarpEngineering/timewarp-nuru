@@ -5,6 +5,57 @@ namespace TimeWarp.Nuru;
 /// </summary>
 public static class NuruCoreAppExtensions
 {
+  // ============================================================================
+  // RouteConfigurator overloads - enable fluent chaining after Map() calls
+  // ============================================================================
+
+  /// <summary>
+  /// Adds REPL support to application (RouteConfigurator overload for fluent chaining).
+  /// </summary>
+  /// <param name="configurator">The RouteConfigurator from a Map() call.</param>
+  /// <param name="configureOptions">Optional action to configure REPL options.</param>
+  /// <returns>The underlying builder for chaining.</returns>
+  public static NuruCoreAppBuilder AddReplSupport
+  (
+    this RouteConfigurator configurator,
+    Action<ReplOptions>? configureOptions = null
+  )
+  {
+    ArgumentNullException.ThrowIfNull(configurator);
+    return configurator.Builder.AddReplSupport(configureOptions);
+  }
+
+  /// <summary>
+  /// Adds REPL command routes to application (RouteConfigurator overload for fluent chaining).
+  /// </summary>
+  /// <param name="configurator">The RouteConfigurator from a Map() call.</param>
+  /// <returns>The underlying builder for chaining.</returns>
+  public static NuruCoreAppBuilder AddReplRoutes(this RouteConfigurator configurator)
+  {
+    ArgumentNullException.ThrowIfNull(configurator);
+    return configurator.Builder.AddReplRoutes();
+  }
+
+  /// <summary>
+  /// Adds an interactive mode route (RouteConfigurator overload for fluent chaining).
+  /// </summary>
+  /// <param name="configurator">The RouteConfigurator from a Map() call.</param>
+  /// <param name="patterns">Route patterns to trigger interactive mode.</param>
+  /// <returns>The underlying builder for chaining.</returns>
+  public static NuruCoreAppBuilder AddInteractiveRoute
+  (
+    this RouteConfigurator configurator,
+    string patterns = "--interactive,-i"
+  )
+  {
+    ArgumentNullException.ThrowIfNull(configurator);
+    return configurator.Builder.AddInteractiveRoute(patterns);
+  }
+
+  // ============================================================================
+  // NuruCoreAppBuilder extension methods
+  // ============================================================================
+
   /// <summary>
   /// Adds REPL (Read-Eval-Print Loop) command routes to application.
   /// This registers built-in REPL commands as routes.

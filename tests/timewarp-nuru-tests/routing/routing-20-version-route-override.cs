@@ -66,9 +66,9 @@ public class VersionRouteOverrideTests
   public static async Task Endpoint_count_after_override()
   {
     // Arrange
-    NuruAppBuilder builder = new NuruAppBuilder()
-      .UseAllExtensions()
-      .Map("--version,-v", () => { });
+    NuruAppBuilder builder = new();
+    builder.UseAllExtensions();
+    builder.Map("--version,-v", () => { });
 
     // Count endpoints with --version pattern
     int versionEndpoints = builder.EndpointCollection.Count(e =>

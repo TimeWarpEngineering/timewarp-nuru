@@ -188,11 +188,11 @@ public class EnableStaticCompletionIntegrationTests
 
   public static async Task Should_integrate_with_builder_fluent_api()
   {
-    // Arrange & Act - Test fluent chaining (covariant return types preserve NuruAppBuilder)
-    NuruAppBuilder builder = new NuruAppBuilder()
-      .Map("status", () => 0)
-      .EnableStaticCompletion()
-      .Map("version", () => 0);
+    // Arrange & Act - Test fluent chaining
+    NuruAppBuilder builder = new();
+    builder.Map("status", () => 0);
+    builder.EnableStaticCompletion();
+    builder.Map("version", () => 0);
 
     // Assert
     builder.EndpointCollection.Endpoints.ShouldContain(e => e.RoutePattern == "status");

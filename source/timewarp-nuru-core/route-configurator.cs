@@ -122,6 +122,17 @@ public sealed class RouteConfigurator
   public NuruCoreApp Build() => _builder.Build();
 
   /// <summary>
+  /// Gets the underlying app builder for accessing extension methods.
+  /// Use this when you need to call extension methods that don't have RouteConfigurator overloads.
+  /// </summary>
+  /// <example>
+  /// <code>
+  /// app.Map("test", handler).Builder.AddReplSupport().Build();
+  /// </code>
+  /// </example>
+  public NuruCoreAppBuilder Builder => _builder;
+
+  /// <summary>
   /// Implicitly converts to NuruCoreAppBuilder, allowing seamless continuation of builder chain.
   /// </summary>
   /// <param name="configurator">The route configurator.</param>

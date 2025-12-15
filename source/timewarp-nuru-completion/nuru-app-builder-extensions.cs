@@ -10,6 +10,44 @@ using TimeWarp.Nuru;
 /// </summary>
 public static class NuruAppBuilderExtensions
 {
+  // ============================================================================
+  // RouteConfigurator overloads - enable fluent chaining after Map() calls
+  // ============================================================================
+
+  /// <summary>
+  /// Enables static shell completion (RouteConfigurator overload for fluent chaining).
+  /// </summary>
+  /// <param name="configurator">The RouteConfigurator from a Map() call.</param>
+  /// <param name="appName">Optional application name for generated scripts.</param>
+  /// <returns>The underlying builder for chaining.</returns>
+  public static NuruCoreAppBuilder EnableStaticCompletion(
+    this RouteConfigurator configurator,
+    string? appName = null)
+  {
+    ArgumentNullException.ThrowIfNull(configurator);
+    return configurator.Builder.EnableStaticCompletion(appName);
+  }
+
+  /// <summary>
+  /// Enables dynamic shell completion (RouteConfigurator overload for fluent chaining).
+  /// </summary>
+  /// <param name="configurator">The RouteConfigurator from a Map() call.</param>
+  /// <param name="appName">Optional application name for generated scripts.</param>
+  /// <param name="configure">Optional action to configure completion sources.</param>
+  /// <returns>The underlying builder for chaining.</returns>
+  public static NuruCoreAppBuilder EnableDynamicCompletion(
+    this RouteConfigurator configurator,
+    string? appName = null,
+    Action<CompletionSourceRegistry>? configure = null)
+  {
+    ArgumentNullException.ThrowIfNull(configurator);
+    return configurator.Builder.EnableDynamicCompletion(appName, configure);
+  }
+
+  // ============================================================================
+  // NuruCoreAppBuilder extension methods
+  // ============================================================================
+
   /// <summary>
   /// Enables static shell completion by automatically registering the `--generate-completion {shell}` route.
   /// Static completion generates pre-computed scripts based on registered routes.

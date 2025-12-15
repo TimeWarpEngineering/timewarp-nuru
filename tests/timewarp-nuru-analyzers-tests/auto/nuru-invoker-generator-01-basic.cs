@@ -392,20 +392,22 @@ public sealed class NuruInvokerGeneratorTests
 
   private static string FindRepoRoot()
   {
-    // Look for common repo markers starting from current directory
+    // Look for the solution file starting from current directory
+    // We specifically look for timewarp-nuru.slnx (not Directory.Build.props)
+    // because Directory.Build.props exists in multiple subdirectories
     string? dir = Environment.CurrentDirectory;
     while (dir != null)
     {
-      if (File.Exists(Path.Combine(dir, "timewarp-nuru.slnx")) ||
-          File.Exists(Path.Combine(dir, "Directory.Build.props")))
+      if (File.Exists(Path.Combine(dir, "timewarp-nuru.slnx")))
       {
         return dir;
       }
       dir = Path.GetDirectoryName(dir);
     }
     
-    // Fallback to hardcoded path for this worktree
-    return "/home/steventcramer/worktrees/github.com/TimeWarpEngineering/timewarp-nuru/Cramer-2025-08-30-dev";
+    // If not found, throw a clear error instead of using hardcoded fallback
+    throw new InvalidOperationException(
+      $"Could not find repository root (timewarp-nuru.slnx) starting from {Environment.CurrentDirectory}");
   }
 
   private static CSharpCompilation CreateCompilationWithNuru(string source)

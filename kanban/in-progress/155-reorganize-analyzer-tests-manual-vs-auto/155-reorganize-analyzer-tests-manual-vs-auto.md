@@ -34,19 +34,19 @@ tests/timewarp-nuru-analyzers-tests/
 
 ## Tasks
 
-- [ ] Create `auto/` and `manual/` subfolders
-- [ ] Move tests to appropriate folders
-- [ ] Update `run-all-tests.cs` to use `auto/` subfolder for Analyzers
-- [ ] Remove filename-based exclusion patterns (now unnecessary)
-- [ ] Fix `nuru-invoker-generator-01-basic.cs` assembly path resolution
-- [ ] Ensure all tests in `auto/` pass
+- [x] Create `auto/` and `manual/` subfolders
+- [x] Move tests to appropriate folders
+- [x] Update `run-all-tests.cs` to use `auto/` subfolder for Analyzers
+- [x] Remove filename-based exclusion patterns (now unnecessary)
+- [x] Fix `nuru-invoker-generator-01-basic.cs` assembly path resolution
+- [x] Ensure all tests in `auto/` pass
 - [ ] Update any documentation referencing test locations
 
 ## Acceptance Criteria
 
-- [ ] `dotnet run run-all-tests.cs -- --category Analyzers` passes 100%
-- [ ] Manual tests remain accessible but don't run automatically
-- [ ] Clear folder structure documents intent
+- [x] `dotnet run run-all-tests.cs -- --category Analyzers` passes 100%
+- [x] Manual tests remain accessible but don't run automatically
+- [x] Clear folder structure documents intent
 
 ## Priority
 

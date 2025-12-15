@@ -30,6 +30,7 @@ Request classes with `[NuruRoute]` attributes auto-register without explicit `Ma
 - [ ] Create `[Parameter]` attribute - positional parameter on property/parameter
 - [ ] Create `[Option]` attribute - flag or valued option on property/parameter
 - [ ] Create `[GroupOption]` attribute - marks parameter from group's shared options
+- [ ] Make `CompiledRouteBuilder` public (currently internal)
 
 ### Source Generator
 - [ ] Create or extend generator to find classes with `[NuruRoute]` attribute
@@ -71,10 +72,10 @@ public sealed class DeployRequest : IRequest<Unit>  // Unit = no result (side-ef
     [Parameter(Description = "Target environment")]
     public string Env { get; set; } = string.Empty;
     
-    [Option("--force", "-f", Description = "Skip confirmation")]
+    [Option("force", "f", Description = "Skip confirmation")]
     public bool Force { get; set; }
     
-    [Option("--config", "-c")]
+    [Option("config", "c")]
     public string? ConfigFile { get; set; }
 }
 
@@ -128,34 +129,42 @@ Attributed routes are simpler than delegate generation:
 
 Yes - this phase provides immediate value for request-based CLIs.
 
-## Clarifying Questions
-
-The following questions need answers before implementation begins:
+## Design Decisions
 
 ### 1. `CompiledRouteBuilder` Visibility
 
-The builder is currently `internal`. Should it be made `public` so the generated code can access it, or should the generator emit the builder code into the same namespace with internal visibility?
+**Decision: Make it public**
 
-**Options:**
-- A) Make `CompiledRouteBuilder` public
-- B) Generator emits into `TimeWarp.Nuru` namespace with `internal` access
-- C) Use `[InternalsVisibleTo]` for generated code assembly
+The builder needs to be public so generated code can access it. Generating into another namespace with internal access is unnecessarily complex.
 
 ### 2. Attribute Dash Convention
 
-The design doc shows `[Option("--force", "-f")]` with dashes. Should users include dashes or should we accept either form?
+**Decision: No dashes in attribute - use two separate parameters**
 
-**Options:**
-- A) Require dashes (exactly as shown: `"--force"`, `"-f"`)
-- B) Strip dashes automatically (accept `"force"` or `"--force"`)
-- C) Require no dashes (user writes `"force"`, `"f"`)
+The `[Option]` attribute takes `longForm` and `shortForm` as separate parameters without dashes:
+
+```csharp
+[Option("force", "f")]  // Generator adds -- and - when building route
+public bool Force { get; set; }
+```
+
+Attribute constructor signature:
+```csharp
+public OptionAttribute(string longForm, string? shortForm = null)
+```
+
+The generator adds `--` and `-` prefixes when building the route pattern. This is cleaner than making users type dashes that would just be stripped anyway.
+
+## Open Questions
+
+The following questions still need answers before implementation begins:
 
 ### 3. IBaseRequest Constraint
 
-The design references `IBaseRequest`, but the codebase uses `IRequest` and `IRequest<T>`. Which interface should the `NuruRouteRegistry.Register<T>()` constraint use?
+Which interface should the `NuruRouteRegistry.Register<T>()` constraint use?
 
 **Options:**
-- A) `where TRequest : IBaseRequest` (MediatR's common base for both)
+- A) `where TRequest : IBaseRequest` (MediatR's common base for both) - **Recommended**
 - B) No constraint (just `where TRequest : class`)
 - C) Two overloads: one for `IRequest`, one for `IRequest<T>`
 
@@ -164,7 +173,7 @@ The design references `IBaseRequest`, but the codebase uses `IRequest` and `IReq
 For `[NuruRouteGroup]`, how should the generator discover group membership?
 
 **Options:**
-- A) Look at base class for `[NuruRouteGroup]` attribute (inheritance-based)
+- A) Look at base class for `[NuruRouteGroup]` attribute (inheritance-based) - **Recommended**
 - B) Each request explicitly declares `[NuruRouteGroup("prefix")]` (explicit membership)
 - C) Both: inherit from base OR declare explicitly
 

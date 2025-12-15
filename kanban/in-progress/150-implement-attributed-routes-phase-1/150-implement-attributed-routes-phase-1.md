@@ -39,12 +39,7 @@ Request classes with `[NuruRoute]` attributes auto-register without explicit `Ma
 - [ ] Emit `CompiledRouteBuilder` calls for each attributed request
 - [ ] Generate route pattern string for help display
 - [ ] Emit `NuruRouteRegistry.Register<T>()` calls via `[ModuleInitializer]`
-
-### MessageType Detection (from Task 156)
-- [ ] Detect `IQuery<T>` on request class → set `MessageType.Query` via `WithMessageType()`
-- [ ] Detect `ICommand<T>` on request class → set `MessageType.Command` via `WithMessageType()`
-- [ ] Detect `ICommand<T>` + `IIdempotent` → set `MessageType.IdempotentCommand` via `WithMessageType()`
-- [ ] Test source generator correctly derives MessageType from interfaces
+- [ ] Read `IQuery<T>`, `ICommand<T>`, `IIdempotent` from request class → emit `WithMessageType()` call
 
 ### Attribute Features
 - [ ] Support empty route `[NuruRoute("")]` for default route
@@ -211,7 +206,7 @@ public static void Register<TRequest>(CompiledRoute route, string pattern, strin
 
 `IMessage` is the base interface in Martin Mediator for all message types (`IBaseRequest`, `IBaseCommand`, `IBaseQuery`). If something doesn't implement `IMessage`, it's not a valid message to register as a route.
 
-**Note on Query/Command Distinction:** ~~The current design (string syntax, fluent API, attributes) does not distinguish between `IBaseQuery` (read operations), `IBaseCommand` (write operations), and `IBaseRequest`.~~ **Resolved by Task 156:** `MessageType` enum and `IIdempotent` marker interface are now implemented. The source generator should detect `IQuery<T>`, `ICommand<T>`, and `IIdempotent` interfaces to automatically set `MessageType` on routes. See "MessageType Detection" checklist section above.
+**Note on Query/Command Distinction:** ~~The current design (string syntax, fluent API, attributes) does not distinguish between `IBaseQuery` (read operations), `IBaseCommand` (write operations), and `IBaseRequest`.~~ **Resolved by Task 156:** `MessageType` enum and `IIdempotent` marker interface are now implemented. For attributed routes, users write classes implementing `IQuery<T>`, `ICommand<T>`, or `ICommand<T>, IIdempotent` directly - the source generator just reads these interfaces and emits the appropriate `WithMessageType()` call.
 
 ### 4. Group Inheritance Mechanism
 

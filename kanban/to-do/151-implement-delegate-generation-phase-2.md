@@ -31,6 +31,12 @@ Delegates in `Map()` calls automatically become Commands through the pipeline. S
 - [ ] Apply `[GeneratedCode]` attribute
 - [ ] Generate as `sealed class` with properties (NOT record, NO primary constructor)
 
+### MessageType for Generated Commands (from Task 156)
+- [ ] Default generated commands to `MessageType.Command` (safest for AI agents)
+- [ ] Support fluent `.AsQuery()` on delegate Map calls → generate `IQuery<T>` + `WithMessageType(Query)`
+- [ ] Support fluent `.AsIdempotentCommand()` → generate `ICommand<T>, IIdempotent` + `WithMessageType(IdempotentCommand)`
+- [ ] Emit `WithMessageType()` call in generated `CompiledRouteBuilder` code
+
 ### Source Generator - Handler Generation
 - [ ] Generate Handler class wrapping delegate body
 - [ ] Name convention: `{RoutePrefix}_Generated_CommandHandler`

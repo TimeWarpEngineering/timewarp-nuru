@@ -147,5 +147,6 @@ public enum MessageType
 - Default is `Command` (safest choice for AI agents)
 - Help output: Query=Blue `(Q)`, IdempotentCommand=Yellow `(I)`, Command=Red `(C)`
 
-**Deferred to Task 151:**
-Source generator detection of `IQuery<T>`, `ICommand<T>`, and `IIdempotent` interfaces for automatic MessageType derivation in attributed routes.
+**Source generator work split between tasks:**
+- **Task 150 (Attributed Routes):** Generator reads `IQuery<T>`, `ICommand<T>`, `IIdempotent` from user-written request classes and emits `WithMessageType()` call
+- **Task 151 (Delegate Routes):** Generator decides MessageType based on fluent `.AsQuery()` / `.AsIdempotentCommand()` calls, generates appropriate interfaces on Command class

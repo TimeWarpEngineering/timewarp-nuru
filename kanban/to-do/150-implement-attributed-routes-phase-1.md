@@ -4,7 +4,7 @@
 
 Request classes with `[NuruRoute]` attributes auto-register without explicit `Map()` calls. This is the **first releasable phase** - production use case for request-based CLIs with clean, attribute-driven development.
 
-**Goal:** Users can decorate request classes (that implement `IRequest`) with attributes and they auto-register. No `Map()` calls needed.
+**Goal:** Users can decorate request classes (that implement `IMessage`) with attributes and they auto-register. No `Map()` calls needed.
 
 ## Parent
 
@@ -18,7 +18,7 @@ Request classes with `[NuruRoute]` attributes auto-register without explicit `Ma
 
 ### NuruRouteRegistry Infrastructure
 - [ ] Create `NuruRouteRegistry` static class for route registration
-- [ ] Implement `Register<TRequest>(CompiledRoute route, string pattern)` method
+- [ ] Implement `Register<TRequest>(CompiledRoute route, string pattern) where TRequest : IMessage` method
 - [ ] Store registered routes for lookup by `NuruApp`
 - [ ] Integrate with `IEndpointCollectionBuilder` so registered routes are included
 - [ ] Ensure thread-safe registration (module initializers run early)
@@ -26,15 +26,16 @@ Request classes with `[NuruRoute]` attributes auto-register without explicit `Ma
 ### Attribute Design
 - [ ] Create `[NuruRoute]` attribute - route pattern on request class
 - [ ] Create `[NuruRouteAlias]` attribute - additional patterns for same request
-- [ ] Create `[NuruRouteGroup]` attribute - shared prefix and options
+- [ ] Create `[NuruRouteGroup]` attribute - shared prefix and options (applied to base class)
 - [ ] Create `[Parameter]` attribute - positional parameter on property/parameter
-- [ ] Create `[Option]` attribute - flag or valued option on property/parameter
+- [ ] Create `[Option]` attribute - flag or valued option on property/parameter (no dashes, two params)
 - [ ] Create `[GroupOption]` attribute - marks parameter from group's shared options
 - [ ] Make `CompiledRouteBuilder` public (currently internal)
 
 ### Source Generator
 - [ ] Create or extend generator to find classes with `[NuruRoute]` attribute
 - [ ] Read attributes from request classes
+- [ ] Look up inheritance chain for `[NuruRouteGroup]` on base classes
 - [ ] Emit `CompiledRouteBuilder` calls for each attributed request
 - [ ] Generate route pattern string for help display
 - [ ] Emit `NuruRouteRegistry.Register<T>()` calls via `[ModuleInitializer]`
@@ -46,12 +47,19 @@ Request classes with `[NuruRoute]` attributes auto-register without explicit `Ma
 - [ ] Infer option type from property type (`bool` = flag, else valued)
 - [ ] Support `IsCatchAll` on `[Parameter]` attribute
 
+### Sample Application
+- [ ] Create `samples/attributed-routes/` directory
+- [ ] Implement example requests demonstrating all attribute features
+- [ ] Include grouped requests example (inheritance-based)
+- [ ] Include default route example
+- [ ] Include aliases example
+
 ### Testing
 - [ ] Test simple request with `[NuruRoute]`
 - [ ] Test request with `[Parameter]` attributes
 - [ ] Test request with `[Option]` attributes (flags and valued)
 - [ ] Test `[NuruRouteAlias]` multiple patterns
-- [ ] Test `[NuruRouteGroup]` with shared options
+- [ ] Test `[NuruRouteGroup]` with shared options (inheritance-based)
 - [ ] Test default route `[NuruRoute("")]`
 - [ ] Test catch-all parameter
 - [ ] Verify auto-registration works without `Map()` calls
@@ -92,6 +100,37 @@ public sealed class DeployRequestHandler : IRequestHandler<DeployRequest, Unit>
 // Auto-registered via [ModuleInitializer]
 ```
 
+### Grouped Requests Example (Inheritance-Based)
+
+```csharp
+// Base class defines the group - applied once
+[NuruRouteGroup("docker")]
+public abstract class DockerRequestBase
+{
+    [GroupOption("debug", "D")]
+    public bool Debug { get; set; }
+}
+
+// Requests inherit group membership
+[NuruRoute("run")]
+public sealed class DockerRunRequest : DockerRequestBase, IRequest<Unit>
+{
+    [Parameter]
+    public string Image { get; set; } = string.Empty;
+}
+
+[NuruRoute("build")]
+public sealed class DockerBuildRequest : DockerRequestBase, IRequest<Unit>
+{
+    [Parameter]
+    public string Path { get; set; } = ".";
+}
+
+// Generated routes:
+// "docker run {image} --debug,-D"
+// "docker build {path} --debug,-D"
+```
+
 **Notes:**
 - Request classes use classes with properties, NOT records or primary constructors
 - `IRequest<Unit>` for side-effect requests, `IRequest<T>` for requests that return results
@@ -105,7 +144,7 @@ private static readonly CompiledRoute __Route_DeployRequest = new CompiledRouteB
     .WithLiteral("deploy")
     .WithParameter("env")
     .WithOption("force", shortForm: "f")
-    .WithOption("config", shortForm: "c", expectsValue: true, isOptional: true)
+    .WithOption("config", shortForm: "c", expectsValue: true, parameterIsOptional: true)
     .Build();
 
 internal static class GeneratedRouteRegistration
@@ -155,33 +194,53 @@ public OptionAttribute(string longForm, string? shortForm = null)
 
 The generator adds `--` and `-` prefixes when building the route pattern. This is cleaner than making users type dashes that would just be stripped anyway.
 
-## Open Questions
+### 3. IMessage Constraint
 
-The following questions still need answers before implementation begins:
+**Decision: Use `where TRequest : IMessage`**
 
-### 3. IBaseRequest Constraint
+```csharp
+public static void Register<TRequest>(CompiledRoute route, string pattern, string? description = null)
+    where TRequest : IMessage
+```
 
-Which interface should the `NuruRouteRegistry.Register<T>()` constraint use?
+`IMessage` is the base interface in Martin Mediator for all message types (`IBaseRequest`, `IBaseCommand`, `IBaseQuery`). If something doesn't implement `IMessage`, it's not a valid message to register as a route.
 
-**Options:**
-- A) `where TRequest : IBaseRequest` (MediatR's common base for both) - **Recommended**
-- B) No constraint (just `where TRequest : class`)
-- C) Two overloads: one for `IRequest`, one for `IRequest<T>`
+**Note on Query/Command Distinction:** The current design (string syntax, fluent API, attributes) does not distinguish between `IBaseQuery` (read operations), `IBaseCommand` (write operations), and `IBaseRequest`. This is a known design gap that affects all three syntaxes. For Phase 1, everything is treated as an `IMessage`. The query/command distinction should be addressed holistically in a future task, potentially connected to Task 142 (WASI/MCP investigation) where this schema information becomes important.
 
 ### 4. Group Inheritance Mechanism
 
-For `[NuruRouteGroup]`, how should the generator discover group membership?
+**Decision: Inheritance-based**
 
-**Options:**
-- A) Look at base class for `[NuruRouteGroup]` attribute (inheritance-based) - **Recommended**
-- B) Each request explicitly declares `[NuruRouteGroup("prefix")]` (explicit membership)
-- C) Both: inherit from base OR declare explicitly
+The `[NuruRouteGroup]` attribute is placed on a base class. Request classes inherit group membership by extending that base class:
+
+```csharp
+[NuruRouteGroup("docker")]
+public abstract class DockerRequestBase
+{
+    [GroupOption("debug", "D")]
+    public bool Debug { get; set; }
+}
+
+[NuruRoute("run")]
+public sealed class DockerRunRequest : DockerRequestBase, IRequest<Unit>
+{
+    [Parameter]
+    public string Image { get; set; } = string.Empty;
+}
+```
+
+The generator walks up the inheritance chain to find `[NuruRouteGroup]` attributes and combines the group prefix with the route pattern.
 
 ### 5. Sample Application
 
-Should a sample application demonstrating attributed routes be created as part of this task?
+**Decision: Yes, create `samples/attributed-routes/`**
 
-**Options:**
-- A) Yes, create `samples/attributed-routes/` with example request classes
-- B) No, add examples to existing samples later
-- C) Add to documentation only
+A sample application will be created demonstrating:
+- Simple requests with `[NuruRoute]`
+- Parameters and options
+- Grouped requests (inheritance-based)
+- Default routes
+- Aliases
+- Catch-all parameters
+
+This provides a runnable example for visualization and testing.

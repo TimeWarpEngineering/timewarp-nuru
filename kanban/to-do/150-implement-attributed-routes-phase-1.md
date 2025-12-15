@@ -2,7 +2,7 @@
 
 ## Description
 
-Commands with `[Route]` attributes auto-register without explicit `Map()` calls. This is the **first releasable phase** - production use case for Command-based CLIs with clean, attribute-driven development.
+Commands with `[NuruRoute]` attributes auto-register without explicit `Map()` calls. This is the **first releasable phase** - production use case for Command-based CLIs with clean, attribute-driven development.
 
 **Goal:** Users can decorate Command classes with attributes and they auto-register. No `Map()` calls needed.
 
@@ -24,34 +24,34 @@ Commands with `[Route]` attributes auto-register without explicit `Map()` calls.
 - [ ] Ensure thread-safe registration (module initializers run early)
 
 ### Attribute Design
-- [ ] Create `[Route]` attribute - route pattern on Command class
-- [ ] Create `[RouteAlias]` attribute - additional patterns for same command
-- [ ] Create `[RouteGroup]` attribute - shared prefix and options
+- [ ] Create `[NuruRoute]` attribute - route pattern on Command class
+- [ ] Create `[NuruRouteAlias]` attribute - additional patterns for same command
+- [ ] Create `[NuruRouteGroup]` attribute - shared prefix and options
 - [ ] Create `[Parameter]` attribute - positional parameter on property/parameter
 - [ ] Create `[Option]` attribute - flag or valued option on property/parameter
 - [ ] Create `[GroupOption]` attribute - marks parameter from group's shared options
 
 ### Source Generator
-- [ ] Create or extend generator to find classes with `[Route]` attribute
+- [ ] Create or extend generator to find classes with `[NuruRoute]` attribute
 - [ ] Read attributes from Command classes
 - [ ] Emit `CompiledRouteBuilder` calls for each attributed Command
 - [ ] Generate route pattern string for help display
 - [ ] Emit `NuruRouteRegistry.Register<T>()` calls via `[ModuleInitializer]`
 
 ### Attribute Features
-- [ ] Support empty route `[Route("")]` for default route
-- [ ] Support nested literals `[Route("docker compose up")]`
+- [ ] Support empty route `[NuruRoute("")]` for default route
+- [ ] Support nested literals `[NuruRoute("docker compose up")]`
 - [ ] Infer optional from nullability (`string?` = optional parameter)
 - [ ] Infer option type from property type (`bool` = flag, else valued)
 - [ ] Support `IsCatchAll` on `[Parameter]` attribute
 
 ### Testing
-- [ ] Test simple command with `[Route]`
+- [ ] Test simple command with `[NuruRoute]`
 - [ ] Test command with `[Parameter]` attributes
 - [ ] Test command with `[Option]` attributes (flags and valued)
-- [ ] Test `[RouteAlias]` multiple patterns
-- [ ] Test `[RouteGroup]` with shared options
-- [ ] Test default route `[Route("")]`
+- [ ] Test `[NuruRouteAlias]` multiple patterns
+- [ ] Test `[NuruRouteGroup]` with shared options
+- [ ] Test default route `[NuruRoute("")]`
 - [ ] Test catch-all parameter
 - [ ] Verify auto-registration works without `Map()` calls
 
@@ -65,7 +65,7 @@ Commands with `[Route]` attributes auto-register without explicit `Map()` calls.
 
 ```csharp
 // User writes - no Map() call needed!
-[Route("deploy", Description = "Deploy to an environment")]
+[NuruRoute("deploy", Description = "Deploy to an environment")]
 public sealed class DeployCommand : IRequest<Unit>  // Unit = no result (side-effect only)
 {
     [Parameter(Description = "Target environment")]
@@ -127,3 +127,52 @@ Attributed routes are simpler than delegate generation:
 ### Releasable
 
 Yes - this phase provides immediate value for Command-based CLIs.
+
+## Clarifying Questions
+
+The following questions need answers before implementation begins:
+
+### 1. `CompiledRouteBuilder` Visibility
+
+The builder is currently `internal`. Should it be made `public` so the generated code can access it, or should the generator emit the builder code into the same namespace with internal visibility?
+
+**Options:**
+- A) Make `CompiledRouteBuilder` public
+- B) Generator emits into `TimeWarp.Nuru` namespace with `internal` access
+- C) Use `[InternalsVisibleTo]` for generated code assembly
+
+### 2. Attribute Dash Convention
+
+The design doc shows `[Option("--force", "-f")]` with dashes. Should users include dashes or should we accept either form?
+
+**Options:**
+- A) Require dashes (exactly as shown: `"--force"`, `"-f"`)
+- B) Strip dashes automatically (accept `"force"` or `"--force"`)
+- C) Require no dashes (user writes `"force"`, `"f"`)
+
+### 3. IBaseRequest Constraint
+
+The design references `IBaseRequest`, but the codebase uses `IRequest` and `IRequest<T>`. Which interface should the `NuruRouteRegistry.Register<T>()` constraint use?
+
+**Options:**
+- A) `where TCommand : IBaseRequest` (MediatR's common base for both)
+- B) No constraint (just `where TCommand : class`)
+- C) Two overloads: one for `IRequest`, one for `IRequest<T>`
+
+### 4. Group Inheritance Mechanism
+
+For `[NuruRouteGroup]`, how should the generator discover group membership?
+
+**Options:**
+- A) Look at base class for `[NuruRouteGroup]` attribute (inheritance-based)
+- B) Each command explicitly declares `[NuruRouteGroup("prefix")]` (explicit membership)
+- C) Both: inherit from base OR declare explicitly
+
+### 5. Sample Application
+
+Should a sample application demonstrating attributed routes be created as part of this task?
+
+**Options:**
+- A) Yes, create `samples/attributed-routes/` with example commands
+- B) No, add examples to existing samples later
+- C) Add to documentation only

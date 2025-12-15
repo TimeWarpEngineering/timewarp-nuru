@@ -37,7 +37,7 @@ More flexible `MapGroup()` usage via data flow analysis within method scope. Rel
 ### Diagnostics
 - [ ] Update `NURU003` to be more specific about why resolution failed
 - [ ] Add suggestions for how to fix unresolvable cases
-- [ ] Suggest using `[RouteGroup]` attributes as alternative
+- [ ] Suggest using `[NuruRouteGroup]` attributes as alternative
 - [ ] Suggest using full pattern string as alternative
 
 ### Testing
@@ -94,7 +94,7 @@ public void RegisterCommands()
 ### Recommendation for Unsupported Cases
 
 For complex scenarios where data flow analysis can't resolve group context:
-1. Use `[RouteGroup]` attributes (always works)
+1. Use `[NuruRouteGroup]` attributes (always works)
 2. Or specify the full pattern: `app.Map("docker run {image}", handler)`
 
 ### Implementation Approach

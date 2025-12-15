@@ -61,7 +61,7 @@ The implementation follows a phased approach. Each phase builds on the previous 
 | Phase | Name | Description | Releasable? |
 |-------|------|-------------|-------------|
 | **0** | Foundation | `CompiledRouteBuilder` (internal) + tests | No |
-| **1** | Attributed Routes | `[Route]`, `[RouteGroup]` → auto-registration | **Yes** |
+| **1** | Attributed Routes | `[NuruRoute]`, `[NuruRouteGroup]` → auto-registration | **Yes** |
 | **2** | Delegate Generation | String pattern + delegate → Command/Handler gen | **Yes** |
 | **3** | Unified Pipeline | Remove `DelegateExecutor`, single code path | **Yes** |
 | **4** | Fluent Builder API | Public `CompiledRouteBuilder`, `MapGroup()` | **Yes** |
@@ -70,7 +70,7 @@ The implementation follows a phased approach. Each phase builds on the previous 
 ```
 Phase 0          Phase 1           Phase 2              Phase 3           Phase 4              Phase 5
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────
-CompiledRoute    [Route] attrs     String+Delegate      Remove            Public fluent        Data flow
+CompiledRoute    [NuruRoute]       String+Delegate      Remove            Public fluent        Data flow
 Builder          auto-register     → Command/Handler    DelegateExecutor  builder + MapGroup   analysis
 (internal)                         generation           Single code path  API
 
@@ -97,17 +97,17 @@ Foundation       First Release     Second Release       Third Release     Fourth
 
 ### Phase 1: Attributed Routes ✨ Release
 
-**Goal:** Commands with `[Route]` attributes auto-register without explicit `Map()` calls.
+**Goal:** Commands with `[NuruRoute]` attributes auto-register without explicit `Map()` calls.
 
 **Scope:**
-- `[Route]`, `[RouteAlias]`, `[RouteGroup]`, `[Parameter]`, `[Option]`, `[GroupOption]` attributes
+- `[NuruRoute]`, `[NuruRouteAlias]`, `[NuruRouteGroup]`, `[Parameter]`, `[Option]`, `[GroupOption]` attributes
 - Source generator reads attributes from Command classes
 - Generator emits `CompiledRouteBuilder` calls for each attributed Command
 - Auto-registration via `[ModuleInitializer]`
 - User still writes Command and Handler classes (no generation)
 
 **What the generator does:**
-1. Find all classes with `[Route]` attribute
+1. Find all classes with `[NuruRoute]` attribute
 2. Read attributes → emit `CompiledRouteBuilder` calls
 3. Emit registration code
 
@@ -217,7 +217,7 @@ docker.Map("run {image}", handler);  // ✓ Resolved
   │   String + Delegate    │  │     Fluent + Delegate       │  │   Command + Pattern    │  │  Attributed Command    │
   │       (Phase 2)        │  │        (Phase 4)            │  │      (Phase 2)         │  │      (Phase 1)         │
   │                        │  │                             │  │                        │  │                        │
-  │ app.Map(               │  │ app.Map(r => r              │  │ app.Map<DeployCommand>(│  │ [Route("deploy")]      │
+  │ app.Map(               │  │ app.Map(r => r              │  │ app.Map<DeployCommand>(│  │ [NuruRoute("deploy")]  │
   │   "deploy {env}        │  │   .WithLiteral("deploy")    │  │   "deploy {env}        │  │ class DeployCommand    │
   │    --force",           │  │   .WithParameter("env")     │  │    --force");          │  │   : IRequest<Unit>     │
   │   (env, force) =>      │  │   .WithOption("force"),     │  │                        │  │ { Env {get;set;}       │
@@ -679,7 +679,7 @@ public interface IGroupOptionsBuilder
 ```csharp
 // === Phase 1: Attributed Commands (recommended for production) ===
 
-[Route("deploy")]
+[NuruRoute("deploy")]
 public sealed class DeployCommand : IRequest<Unit>
 {
     [Parameter] public string Env { get; set; } = string.Empty;
@@ -725,7 +725,7 @@ app.Map("--verbose,-v", (bool verbose) => ShowHelp(verbose));
 app.Map<HelpCommand>("");
 
 // Default route with attributed command [Phase 1+]
-[Route("")]
+[NuruRoute("")]
 public sealed class HelpCommand : IRequest<Unit>
 {
     [Option("--verbose", "-v")] public bool Verbose { get; set; }
@@ -743,7 +743,7 @@ Route descriptions use the inline `|` syntax in the pattern string (same as para
 builder.Map("add {x} {y}|Add two numbers", handler);
 
 // Via attribute
-[Route("add|Add two numbers")]
+[NuruRoute("add|Add two numbers")]
 public sealed class AddCommand : IRequest<Unit> { ... }
 ```
 
@@ -759,8 +759,8 @@ builder.Map("exit|Exit the application", handler)
     .WithAliases("quit", "q");
 
 // Via attribute (single attribute with params)
-[Route("exit|Exit the application")]
-[RouteAlias("quit", "q")]
+[NuruRoute("exit|Exit the application")]
+[NuruRouteAlias("quit", "q")]
 public sealed class ExitCommand : IRequest<Unit> { }
 
 // Help output: "exit, quit, q    Exit the application"
@@ -776,7 +776,7 @@ builder.Map("secret-debug", handler)
     .Hidden();
 
 // Via attribute
-[Route("secret-debug")]
+[NuruRoute("secret-debug")]
 [Hidden]
 public sealed class SecretDebugCommand : IRequest<Unit> { }
 ```
@@ -791,7 +791,7 @@ builder.Map("old-command|Old command", handler)
     .Deprecated("Use 'new-command' instead");
 
 // Via attribute
-[Route("old-command|Old command")]
+[NuruRoute("old-command|Old command")]
 [Deprecated("Use 'new-command' instead")]
 public sealed class OldCommand : IRequest<Unit> { }
 ```
@@ -802,14 +802,14 @@ Deprecated routes still work but show a warning when invoked and in help output.
 
 ### Grouped Routes
 
-**Phase 1:** Use `[RouteGroup]` attributes only.
+**Phase 1:** Use `[NuruRouteGroup]` attributes only.
 
 **Phase 4+:** Use `MapGroup()` API for delegate-based grouped routes.
 
 ```csharp
 // Phase 1: Attributed groups
-[RouteGroup("docker", Options = "--debug,-D")]
-[Route("run")]
+[NuruRouteGroup("docker", Options = "--debug,-D")]
+[NuruRoute("run")]
 public sealed class DockerRunCommand : IRequest<Unit>
 {
     [Parameter] public string Image { get; set; } = string.Empty;
@@ -850,18 +850,18 @@ Routes can be defined directly on Command classes using attributes. This is the 
 ```csharp
 // Route prefix (literals) - applied to Command class
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
-public sealed class RouteAttribute : Attribute
+public sealed class NuruRouteAttribute : Attribute
 {
-    public RouteAttribute(string pattern) { }  // "git commit" or just "deploy" or ""
+    public NuruRouteAttribute(string pattern) { }  // "git commit" or just "deploy" or ""
     public string? Description { get; set; }
 }
 
 // Route alias - for commands with multiple patterns (single attribute with params)
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
-public sealed class RouteAliasAttribute : Attribute
+public sealed class NuruRouteAliasAttribute : Attribute
 {
     public string[] Aliases { get; }
-    public RouteAliasAttribute(params string[] aliases)
+    public NuruRouteAliasAttribute(params string[] aliases)
     {
         Aliases = aliases;
     }
@@ -869,9 +869,9 @@ public sealed class RouteAliasAttribute : Attribute
 
 // Route group - for grouping related commands with shared prefix/options
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
-public sealed class RouteGroupAttribute : Attribute
+public sealed class NuruRouteGroupAttribute : Attribute
 {
-    public RouteGroupAttribute(string prefix) { }
+    public NuruRouteGroupAttribute(string prefix) { }
     public string? Description { get; set; }
     public string? Options { get; set; }  // Shared options pattern
 }
@@ -909,7 +909,7 @@ public sealed class GroupOptionAttribute : Attribute
 #### Simple Command
 
 ```csharp
-[Route("greet")]
+[NuruRoute("greet")]
 public sealed class GreetCommand : IRequest<Unit>
 {
     [Parameter] public string Name { get; set; } = string.Empty;
@@ -921,7 +921,7 @@ public sealed class GreetCommand : IRequest<Unit>
 #### With Options
 
 ```csharp
-[Route("deploy", Description = "Deploy to an environment")]
+[NuruRoute("deploy", Description = "Deploy to an environment")]
 public sealed class DeployCommand : IRequest<Unit>
 {
     [Parameter(Description = "Target environment")] 
@@ -940,7 +940,7 @@ public sealed class DeployCommand : IRequest<Unit>
 #### Nested Literals
 
 ```csharp
-[Route("docker compose up")]
+[NuruRoute("docker compose up")]
 public sealed class DockerComposeUpCommand : IRequest<Unit>
 {
     [Option("--detach", "-d")] public bool Detach { get; set; }
@@ -953,7 +953,7 @@ public sealed class DockerComposeUpCommand : IRequest<Unit>
 #### Catch-All
 
 ```csharp
-[Route("exec")]
+[NuruRoute("exec")]
 public sealed class ExecCommand : IRequest<int>
 {
     [Parameter(IsCatchAll = true)] public string[] Args { get; set; } = [];
@@ -965,7 +965,7 @@ public sealed class ExecCommand : IRequest<int>
 #### Default Route
 
 ```csharp
-[Route("")]  // Empty = default route
+[NuruRoute("")]  // Empty = default route
 public sealed class HelpCommand : IRequest<Unit>
 {
     [Option("--verbose", "-v")] public bool Verbose { get; set; }
@@ -977,9 +977,9 @@ public sealed class HelpCommand : IRequest<Unit>
 #### Aliases
 
 ```csharp
-// Single [RouteAlias] attribute with params — aliases share primary route's description
-[Route("exit|Exit the application")]
-[RouteAlias("quit", "q")]
+// Single [NuruRouteAlias] attribute with params — aliases share primary route's description
+[NuruRoute("exit|Exit the application")]
+[NuruRouteAlias("quit", "q")]
 public sealed class ExitCommand : IRequest<Unit> { }
 
 // Generates routes: "exit", "quit", "q" - all map to same command
@@ -990,7 +990,7 @@ public sealed class ExitCommand : IRequest<Unit> { }
 
 ```csharp
 // Define the group's shared options once
-[RouteGroup("docker", Options = "--debug,-D --log-level {level?}")]
+[NuruRouteGroup("docker", Options = "--debug,-D --log-level {level?}")]
 public abstract class DockerCommandBase
 {
     [GroupOption("--debug", "-D")] public bool Debug { get; set; }
@@ -998,7 +998,7 @@ public abstract class DockerCommandBase
 }
 
 // Commands inherit group prefix and options
-[Route("run")]
+[NuruRoute("run")]
 public sealed class DockerRunCommand : DockerCommandBase, IRequest<Unit>
 {
     [Parameter] public string Image { get; set; } = string.Empty;
@@ -1011,7 +1011,7 @@ public sealed class DockerRunCommand : DockerCommandBase, IRequest<Unit>
 
 ```csharp
 // User writes:
-[Route("deploy")]
+[NuruRoute("deploy")]
 public sealed class DeployCommand : IRequest<Unit>
 {
     [Parameter] public string Env { get; set; } = string.Empty;
@@ -1066,7 +1066,7 @@ builder.ConfigureServices(services =>
 var app = builder.Build();
 return await app.RunAsync();
 
-// That's it! All [Route] commands are auto-registered.
+// That's it! All [NuruRoute] commands are auto-registered.
 ```
 
 ### Benefits of Attribute Approach
@@ -1278,7 +1278,7 @@ app.Map(r => r.WithLiteral("greet").WithParameter("name"),
 app.Map<GreetCommand>("greet {name}");
 
 // 4. Attributed command [Phase 1+]
-[Route("greet")]
+[NuruRoute("greet")]
 public sealed class GreetCommand : IRequest<Unit>
 {
     [Parameter] public string Name { get; set; } = string.Empty;
@@ -1470,7 +1470,7 @@ public void RegisterCommands()
 ### Recommendation
 
 For complex scenarios where data flow analysis can't resolve group context:
-- Use `[RouteGroup]` attributes (always works)
+- Use `[NuruRouteGroup]` attributes (always works)
 - Or specify the full pattern: `app.Map("docker run {image}", handler)`
 
 

@@ -25,9 +25,9 @@ app.Map("exit|Exit the application", () => Environment.Exit(0))
 
 **Attribute API:**
 ```csharp
-// Single [RouteAlias] attribute with params (not multiple attributes)
-[Route("exit|Exit the application")]
-[RouteAlias("quit", "q")]
+// Single [NuruRouteAlias] attribute with params (not multiple attributes)
+[NuruRoute("exit|Exit the application")]
+[NuruRouteAlias("quit", "q")]
 public sealed class ExitCommand : IRequest<Unit> { }
 ```
 
@@ -39,7 +39,7 @@ exit, quit, q                           Exit the application
 **What's Removed:**
 - ❌ `MapMultiple` — no longer needed
 - ❌ `MapAliases` — no longer needed
-- ❌ Multiple `[RouteAlias]` attributes — single attribute with `params` handles all
+- ❌ Multiple `[NuruRouteAlias]` attributes — single attribute with `params` handles all
 
 **Attribute Definition:**
 ```csharp
@@ -109,14 +109,14 @@ var docker = builder.MapGroup("docker")
 
 ### 3. Hidden/Deprecated Attributes ✅
 
-**Decision:** Use separate attributes, not properties on `[Route]`.
+**Decision:** Use separate attributes, not properties on `[NuruRoute]`.
 
 ```csharp
-[Route("secret")]
+[NuruRoute("secret")]
 [Hidden]
 public sealed class SecretCommand : IRequest<Unit> { }
 
-[Route("old")]
+[NuruRoute("old")]
 [Deprecated("Use 'new' instead")]
 public sealed class OldCommand : IRequest<Unit> { }
 ```
@@ -126,7 +126,7 @@ public sealed class OldCommand : IRequest<Unit> { }
 - **Discoverable** — Shows up separately in IntelliSense
 - **Reusable** — Can potentially apply to other elements (methods, groups)
 - **Explicit** — Clear what each attribute means without reading Route's documentation
-- **Composable** — Easy to combine: `[Route][Hidden][Deprecated]`
+- **Composable** — Easy to combine: `[NuruRoute][Hidden][Deprecated]`
 
 **Attribute Definitions:**
 ```csharp

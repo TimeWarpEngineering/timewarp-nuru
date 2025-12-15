@@ -422,3 +422,6 @@ dotnet_diagnostic.TWA002.severity = silent
 
 # IDE0290: Use primary constructor - disabled per project preference
 dotnet_diagnostic.IDE0290.severity = none
+
+# IDE1006: Naming Styles
+dotnet_diagnostic.IDE1006.severity = none

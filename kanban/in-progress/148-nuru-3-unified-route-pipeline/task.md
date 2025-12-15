@@ -23,7 +23,7 @@ Extend the existing `NuruInvokerGenerator` (or create a sibling generator) to em
 | Phase | Name | Description | Releasable? |
 |-------|------|-------------|-------------|
 | **0** | Foundation | `CompiledRouteBuilder` (internal) + tests | No |
-| **1** | Attributed Routes | `[Route]`, `[RouteGroup]` → auto-registration | **Yes** |
+| **1** | Attributed Routes | `[NuruRoute]`, `[NuruRouteGroup]` → auto-registration | **Yes** |
 | **2** | Delegate Generation | String pattern + delegate → Command/Handler gen | **Yes** |
 | **3** | Unified Pipeline | Remove `DelegateExecutor`, single code path | **Yes** |
 | **4** | Fluent Builder API | Public `CompiledRouteBuilder`, `MapGroup()` | **Yes** |
@@ -41,7 +41,7 @@ Extend the existing `NuruInvokerGenerator` (or create a sibling generator) to em
 - [ ] Validate builder produces identical `CompiledRoute` instances
 
 ### Phase 1: Attributed Routes
-- [ ] Design and implement `[Route]`, `[RouteAlias]`, `[RouteGroup]`, `[Parameter]`, `[Option]`, `[GroupOption]` attributes
+- [ ] Design and implement `[NuruRoute]`, `[NuruRouteAlias]`, `[NuruRouteGroup]`, `[Parameter]`, `[Option]`, `[GroupOption]` attributes
 - [ ] Source generator reads attributes from Command classes
 - [ ] Generator emits `CompiledRouteBuilder` calls for each attributed Command
 - [ ] Auto-registration via `[ModuleInitializer]`

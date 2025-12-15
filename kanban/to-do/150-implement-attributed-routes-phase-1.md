@@ -66,7 +66,7 @@ Commands with `[Route]` attributes auto-register without explicit `Map()` calls.
 ```csharp
 // User writes - no Map() call needed!
 [Route("deploy", Description = "Deploy to an environment")]
-public sealed class DeployCommand : IRequest<int>
+public sealed class DeployCommand : IRequest<Unit>  // Unit = no result (side-effect only)
 {
     [Parameter(Description = "Target environment")]
     public string Env { get; set; } = string.Empty;
@@ -78,9 +78,13 @@ public sealed class DeployCommand : IRequest<int>
     public string? ConfigFile { get; set; }
 }
 
-public sealed class DeployCommandHandler : IRequestHandler<DeployCommand, int>
+public sealed class DeployCommandHandler : IRequestHandler<DeployCommand, Unit>
 {
-    public Task<int> Handle(DeployCommand request, CancellationToken ct) { ... }
+    public Task<Unit> Handle(DeployCommand request, CancellationToken ct) 
+    {
+        // Do deployment...
+        return Unit.Task;  // Exit code 0 on success, non-zero on exception
+    }
 }
 
 // Generated route: "deploy {env} --force,-f --config,-c {configFile?}"
@@ -89,8 +93,8 @@ public sealed class DeployCommandHandler : IRequestHandler<DeployCommand, int>
 
 **Notes:**
 - Commands use classes with properties, NOT records or primary constructors
-- Actual interfaces are `IRequest<TResponse>` / `IRequestHandler<TRequest, TResponse>` (Mediator)
-- We use "Command" in class names as it's more natural CLI terminology
+- `IRequest<Unit>` for side-effect commands, `IRequest<T>` for commands that return results
+- Exit code is automatic: 0 on success, non-zero on exception
 
 ### Generated Output
 

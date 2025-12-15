@@ -74,21 +74,21 @@ Delegates in `Map()` calls automatically become Commands through the pipeline. S
 
 - **Design doc:** `kanban/to-do/148-generate-command-and-handler-from-delegate-map-calls/fluent-route-builder-design.md` (lines 836-951)
 
-### Example Transformation
+### Example Transformation (Side-Effect Command)
 
 ```csharp
-// User writes:
+// User writes (void delegate = side-effect only):
 app.Map("deploy {env} --force", (string env, bool force, ILogger logger) => 
 {
     logger.LogInformation("Deploying to {Env}", env);
-    return 0;
+    // No return - side effect only
 });
 
 // Generator emits:
 
-// 1. Command (only route parameters) - class with properties, NOT record
+// 1. Command - class with properties, NOT record
 [GeneratedCode("TimeWarp.Nuru.Generator", "1.0.0")]
-public sealed class Deploy_Generated_Command : IRequest<int>
+public sealed class Deploy_Generated_Command : IRequest<Unit>
 {
     public string Env { get; set; } = string.Empty;
     public bool Force { get; set; }
@@ -97,7 +97,7 @@ public sealed class Deploy_Generated_Command : IRequest<int>
 // 2. Handler (DI via constructor, delegate body with rewritten params)
 [GeneratedCode("TimeWarp.Nuru.Generator", "1.0.0")]
 public sealed class Deploy_Generated_CommandHandler 
-    : IRequestHandler<Deploy_Generated_Command, int>
+    : IRequestHandler<Deploy_Generated_Command, Unit>
 {
     private readonly ILogger _logger;
     
@@ -106,10 +106,10 @@ public sealed class Deploy_Generated_CommandHandler
         _logger = logger;
     }
     
-    public Task<int> Handle(Deploy_Generated_Command request, CancellationToken ct)
+    public Task<Unit> Handle(Deploy_Generated_Command request, CancellationToken ct)
     {
         _logger.LogInformation("Deploying to {Env}", request.Env);
-        return Task.FromResult(0);
+        return Unit.Task;
     }
 }
 
@@ -121,10 +121,36 @@ private static readonly CompiledRoute __Route_Deploy = new CompiledRouteBuilder(
     .Build();
 ```
 
+### Example Transformation (Result-Returning Command)
+
+```csharp
+// User writes (returns int result, NOT exit code):
+app.Map("add {x:int} {y:int}", (int x, int y) => x + y);
+
+// Generator emits:
+
+[GeneratedCode("TimeWarp.Nuru.Generator", "1.0.0")]
+public sealed class Add_Generated_Command : IRequest<int>
+{
+    public int X { get; set; }
+    public int Y { get; set; }
+}
+
+[GeneratedCode("TimeWarp.Nuru.Generator", "1.0.0")]
+public sealed class Add_Generated_CommandHandler 
+    : IRequestHandler<Add_Generated_Command, int>
+{
+    public Task<int> Handle(Add_Generated_Command request, CancellationToken ct)
+    {
+        return Task.FromResult(request.X + request.Y);  // Returns 4, exit code is 0
+    }
+}
+```
+
 **Notes:**
-- Generated Commands use classes with properties, NOT records or primary constructors
-- Actual interfaces are `IRequest<TResponse>` / `IRequestHandler<TRequest, TResponse>` (Mediator)
-- We use "Command" in class names as it's more natural CLI terminology
+- `void` delegate → `IRequest<Unit>` (side-effect only)
+- `T` delegate → `IRequest<T>` (returns result)
+- Exit code is automatic: 0 on success, non-zero on exception
 
 ### Complexity Notes
 

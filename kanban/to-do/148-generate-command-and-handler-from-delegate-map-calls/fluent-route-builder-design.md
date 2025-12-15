@@ -10,17 +10,40 @@ This document describes the design for a fluent `CompiledRouteBuilder` API that 
 > 
 > 2. **Interface Naming:** We use the Mediator interfaces `IRequest<TResponse>`/`IRequestHandler<TRequest, TResponse>` directly. Class names use "Command" terminology (e.g., `DeployCommand`) since it's more natural for CLI contexts.
 > 
+> 3. **Result vs Exit Code:** These are separate concepts:
+>    - **Result** (`TResponse`) — The return value of the handler (e.g., `4` from `add 2 2`)
+>    - **Exit Code** — Process exit status, handled automatically by Nuru:
+>      - `0` on success (no exception)
+>      - Non-zero on exception
+>      - Handler can explicitly set `Environment.ExitCode` for specific error codes
+> 
+>    | Interface | Meaning | Example |
+>    |-----------|---------|---------|
+>    | `IRequest<Unit>` | No result (side-effect only) | `delete file.txt` |
+>    | `IRequest<int>` | Returns integer result | `add 2 2` → `4` |
+>    | `IRequest<string>` | Returns string result | `whoami` → `"steve"` |
+>    | `IRequest<T>` | Returns typed result | `get-config` → `ConfigObject` |
+> 
 > ```csharp
-> // Actual implementation
-> public sealed class DeployCommand : IRequest<int>
+> // Side-effect only command (no meaningful return)
+> public sealed class DeleteFileCommand : IRequest<Unit>
 > {
->     public string Env { get; set; } = string.Empty;
->     public bool Force { get; set; }
+>     public string Path { get; set; } = string.Empty;
 > }
 > 
-> public sealed class DeployCommandHandler : IRequestHandler<DeployCommand, int>
+> // Command that returns a result (NOT an exit code)
+> public sealed class AddCommand : IRequest<int>
 > {
->     public Task<int> Handle(DeployCommand request, CancellationToken ct) { ... }
+>     public int X { get; set; }
+>     public int Y { get; set; }
+> }
+> 
+> public sealed class AddCommandHandler : IRequestHandler<AddCommand, int>
+> {
+>     public Task<int> Handle(AddCommand request, CancellationToken ct)
+>     {
+>         return Task.FromResult(request.X + request.Y); // Returns 4, exit code is 0
+>     }
 > }
 > ```
 

@@ -4,25 +4,6 @@ These are unresolved API design questions that need decisions before implementat
 
 ---
 
-## 1. MapMultiple Naming
-
-**Should `MapMultiple` be renamed?**
-
-Alternatives:
-- `MapAliases`
-- `MapWithAliases`
-- Or rely solely on `[RouteAlias]` attributes (no delegate-based API)?
-
-```csharp
-// Current
-builder.MapMultiple(["exit", "quit", "q"], () => Environment.Exit(0));
-
-// Alternative
-builder.MapAliases(["exit", "quit", "q"], () => Environment.Exit(0));
-```
-
----
-
 ## 2. Group Options Syntax
 
 **Is `WithGroupOptions("--debug,-D --log-level {level?}")` the right API?**
@@ -133,25 +114,53 @@ app.Map("whoami", () => { Console.WriteLine("steve"); });
 
 ---
 
-## 6. MapMultiple with Different Parameters
-
-**What happens if patterns in `MapMultiple` have different parameters?**
-
-```csharp
-// Same parameters — works fine
-builder.MapMultiple(["greet {name}", "hello {name}"], (string name) => ...);
-
-// Different parameters — what happens?
-builder.MapMultiple(["list", "list {filter?}"], (string? filter) => ...);
-```
-
-**Options:**
-- Error: All patterns must have identical parameters
-- Union: Command has union of all parameters (some optional)
-- Subset: Shorter patterns are valid if parameters are a subset
-
----
-
 ## Decisions Made
 
-*(Move questions here once decided)*
+### 1. Aliases API ✅
+
+**Decision:** Use `Map()` with fluent `.WithAliases()` chain instead of `MapMultiple` or `MapAliases`.
+
+**Rationale:**
+- Primary route is explicit in `Map()` call
+- Aliases are clearly secondary via `.WithAliases()`
+- Consistent with existing fluent pattern (`.WithDescription()`, `.Hidden()`, etc.)
+- Aliases share the primary route's description — no duplicate descriptions
+
+**Fluent API:**
+```csharp
+// Primary route with aliases — all share same description
+app.Map("exit|Exit the application", () => Environment.Exit(0))
+   .WithAliases("quit", "q");
+```
+
+**Attribute API:**
+```csharp
+// Single [RouteAlias] attribute with params (not multiple attributes)
+[Route("exit|Exit the application")]
+[RouteAlias("quit", "q")]
+public sealed class ExitCommand : IRequest<Unit> { }
+```
+
+**Help Output:**
+```
+exit, quit, q                           Exit the application
+```
+
+**What's Removed:**
+- ❌ `MapMultiple` — no longer needed
+- ❌ `MapAliases` — no longer needed
+- ❌ Multiple `[RouteAlias]` attributes — single attribute with `params` handles all
+
+**Attribute Definition:**
+```csharp
+// Single attribute accepts multiple aliases via params
+[AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
+public sealed class RouteAliasAttribute : Attribute
+{
+    public string[] Aliases { get; }
+    public RouteAliasAttribute(params string[] aliases)
+    {
+        Aliases = aliases;
+    }
+}
+```

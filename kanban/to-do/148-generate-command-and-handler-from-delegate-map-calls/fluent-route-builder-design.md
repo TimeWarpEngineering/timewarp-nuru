@@ -499,14 +499,38 @@ public interface IEndpointCollectionBuilder
 {
     // === Delegate-based (source generator creates Command/Handler) [Phase 2+] ===
     
-    // String pattern + delegate
-    void Map(string routePattern, Delegate handler, string? description = null);
+    // String pattern + delegate — returns builder for chaining
+    IRouteBuilder Map(string routePattern, Delegate handler);
     
     // === Command-based (user provides Command, Handler already exists) ===
     
-    // String pattern + command type
-    void Map<TCommand>(string routePattern, string? description = null) 
+    // String pattern + command type — returns builder for chaining
+    IRouteBuilder Map<TCommand>(string routePattern) 
         where TCommand : IRequest<Unit>;
+}
+
+/// <summary>
+/// Fluent builder for route metadata (aliases, hidden, deprecated).
+/// Returned by Map() calls to enable chaining.
+/// Note: Description is set via inline | syntax in the route pattern, not via fluent method.
+/// </summary>
+public interface IRouteBuilder
+{
+    /// <summary>
+    /// Add alternative patterns that invoke the same command.
+    /// Aliases share the primary route's description.
+    /// </summary>
+    IRouteBuilder WithAliases(params string[] aliases);
+    
+    /// <summary>
+    /// Hide route from help output (still invokable).
+    /// </summary>
+    IRouteBuilder Hidden();
+    
+    /// <summary>
+    /// Mark route as deprecated with migration message.
+    /// </summary>
+    IRouteBuilder Deprecated(string message);
 }
 ```
 
@@ -517,27 +541,27 @@ public interface IEndpointCollectionBuilder
 {
     // === Delegate-based (source generator creates Command/Handler) ===
     
-    // String pattern + delegate
-    void Map(string routePattern, Delegate handler, string? description = null);
+    // String pattern + delegate — returns builder for chaining
+    IRouteBuilder Map(string routePattern, Delegate handler);
     
     // Fluent builder + delegate [Phase 4+]
-    void Map(Action<CompiledRouteBuilder> configure, Delegate handler, string? description = null);
+    IRouteBuilder Map(Action<CompiledRouteBuilder> configure, Delegate handler);
     
     // Pre-built route + delegate [Phase 4+]
-    void Map(CompiledRoute compiledRoute, Delegate handler, string? description = null);
+    IRouteBuilder Map(CompiledRoute compiledRoute, Delegate handler);
     
     // === Command-based (user provides Command, Handler already exists) ===
     
-    // String pattern + command type
-    void Map<TCommand>(string routePattern, string? description = null) 
+    // String pattern + command type — returns builder for chaining
+    IRouteBuilder Map<TCommand>(string routePattern) 
         where TCommand : IRequest<Unit>;
     
     // Fluent builder + command type [Phase 4+]
-    void Map<TCommand>(Action<CompiledRouteBuilder> configure, string? description = null) 
+    IRouteBuilder Map<TCommand>(Action<CompiledRouteBuilder> configure) 
         where TCommand : IRequest<Unit>;
     
     // Pre-built route + command type [Phase 4+]
-    void Map<TCommand>(CompiledRoute compiledRoute, string? description = null) 
+    IRouteBuilder Map<TCommand>(CompiledRoute compiledRoute) 
         where TCommand : IRequest<Unit>;
     
     // === Grouped routes [Phase 4+] ===
@@ -546,17 +570,42 @@ public interface IEndpointCollectionBuilder
     IRouteGroupBuilder MapGroup(string prefix);
 }
 
+/// <summary>
+/// Fluent builder for route metadata (aliases, hidden, deprecated).
+/// Returned by Map() calls to enable chaining.
+/// Note: Description is set via inline | syntax in the route pattern, not via fluent method.
+/// </summary>
+public interface IRouteBuilder
+{
+    /// <summary>
+    /// Add alternative patterns that invoke the same command.
+    /// Aliases share the primary route's description.
+    /// </summary>
+    IRouteBuilder WithAliases(params string[] aliases);
+    
+    /// <summary>
+    /// Hide route from help output (still invokable).
+    /// </summary>
+    IRouteBuilder Hidden();
+    
+    /// <summary>
+    /// Mark route as deprecated with migration message.
+    /// </summary>
+    IRouteBuilder Deprecated(string message);
+}
+
 public interface IRouteGroupBuilder : IEndpointCollectionBuilder
 {
-    // Add description to the group (for help display)
-    IRouteGroupBuilder WithDescription(string description);
-    
     // Add options that apply to all routes in the group
     IRouteGroupBuilder WithGroupOptions(string optionsPattern);
     
     // Fluent version of group options
     IRouteGroupBuilder WithGroupOptions(Action<CompiledRouteBuilder> configure);
 }
+
+// Note: Group descriptions use inline | syntax in MapGroup() prefix:
+//   builder.MapGroup("docker|Container management commands")
+// This is consistent with route pattern syntax.
 ```
 
 ### Consumer Choice
@@ -621,17 +670,34 @@ public sealed class HelpCommand : IRequest<Unit>
 
 #### Description
 
-```csharp
-// Via parameter
-builder.Map("add {x} {y}", handler, description: "Add two numbers");
+Route descriptions use the inline `|` syntax in the pattern string (same as parameter/option descriptions):
 
-// Via fluent method
-builder.Map("add {x} {y}", handler)
-    .WithDescription("Add two numbers");
+```csharp
+// Via inline pattern syntax (preferred)
+builder.Map("add {x} {y}|Add two numbers", handler);
 
 // Via attribute
-[Route("add", Description = "Add two numbers")]
+[Route("add|Add two numbers")]
 public sealed class AddCommand : IRequest<Unit> { ... }
+```
+
+> **Note:** There is no `.WithDescription()` method. Descriptions are part of the route pattern syntax using `|`. This keeps all route metadata in one place and avoids redundancy.
+
+#### Aliases
+
+Add alternative patterns that invoke the same command. Aliases share the primary route's description:
+
+```csharp
+// Via fluent chain
+builder.Map("exit|Exit the application", handler)
+    .WithAliases("quit", "q");
+
+// Via attribute (single attribute with params)
+[Route("exit|Exit the application")]
+[RouteAlias("quit", "q")]
+public sealed class ExitCommand : IRequest<Unit> { }
+
+// Help output: "exit, quit, q    Exit the application"
 ```
 
 #### Hidden Routes
@@ -655,11 +721,11 @@ Mark routes as deprecated with a migration message:
 
 ```csharp
 // Via fluent method
-builder.Map("old-command", handler)
+builder.Map("old-command|Old command", handler)
     .Deprecated("Use 'new-command' instead");
 
 // Via attribute
-[Route("old-command")]
+[Route("old-command|Old command")]
 [Deprecated("Use 'new-command' instead")]
 public sealed class OldCommand : IRequest<Unit> { }
 ```
@@ -724,11 +790,15 @@ public sealed class RouteAttribute : Attribute
     public string? Description { get; set; }
 }
 
-// Route alias - for commands with multiple patterns
-[AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
+// Route alias - for commands with multiple patterns (single attribute with params)
+[AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
 public sealed class RouteAliasAttribute : Attribute
 {
-    public RouteAliasAttribute(string pattern) { }
+    public string[] Aliases { get; }
+    public RouteAliasAttribute(params string[] aliases)
+    {
+        Aliases = aliases;
+    }
 }
 
 // Route group - for grouping related commands with shared prefix/options
@@ -841,12 +911,13 @@ public sealed class HelpCommand : IRequest<Unit>
 #### Aliases
 
 ```csharp
-[Route("exit")]
-[RouteAlias("quit")]
-[RouteAlias("q")]
+// Single [RouteAlias] attribute with params — aliases share primary route's description
+[Route("exit|Exit the application")]
+[RouteAlias("quit", "q")]
 public sealed class ExitCommand : IRequest<Unit> { }
 
 // Generates routes: "exit", "quit", "q" - all map to same command
+// Help output: "exit, quit, q    Exit the application"
 ```
 
 #### Grouped Commands with Attributes
@@ -1201,12 +1272,11 @@ Phase 4 adds the `MapGroup()` fluent API for delegate-based grouped routes.
 ### Usage
 
 ```csharp
-var docker = builder.MapGroup("docker")
-    .WithDescription("Container management commands")
+var docker = builder.MapGroup("docker|Container management commands")
     .WithGroupOptions("--debug,-D --log-level {level?}");
 
-docker.Map("run {image}", (string image, bool debug, string? logLevel) => { ... });
-docker.Map("build {path}", (string path, bool debug, string? logLevel) => { ... });
+docker.Map("run {image}|Run a container", (string image, bool debug, string? logLevel) => { ... });
+docker.Map("build {path}|Build an image", (string path, bool debug, string? logLevel) => { ... });
 ```
 
 **Resulting effective patterns:**

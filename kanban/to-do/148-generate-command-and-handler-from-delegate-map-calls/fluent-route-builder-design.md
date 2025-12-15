@@ -617,6 +617,57 @@ public sealed class HelpCommand : IRequest<Unit>
 }
 ```
 
+### Route Metadata
+
+#### Description
+
+```csharp
+// Via parameter
+builder.Map("add {x} {y}", handler, description: "Add two numbers");
+
+// Via fluent method
+builder.Map("add {x} {y}", handler)
+    .WithDescription("Add two numbers");
+
+// Via attribute
+[Route("add", Description = "Add two numbers")]
+public sealed class AddCommand : IRequest<Unit> { ... }
+```
+
+#### Hidden Routes
+
+Routes that work but don't appear in help output:
+
+```csharp
+// Via fluent method
+builder.Map("secret-debug", handler)
+    .Hidden();
+
+// Via attribute
+[Route("secret-debug")]
+[Hidden]
+public sealed class SecretDebugCommand : IRequest<Unit> { }
+```
+
+#### Deprecation
+
+Mark routes as deprecated with a migration message:
+
+```csharp
+// Via fluent method
+builder.Map("old-command", handler)
+    .Deprecated("Use 'new-command' instead");
+
+// Via attribute
+[Route("old-command")]
+[Deprecated("Use 'new-command' instead")]
+public sealed class OldCommand : IRequest<Unit> { }
+```
+
+Deprecated routes still work but show a warning when invoked and in help output.
+
+---
+
 ### Grouped Routes
 
 **Phase 1:** Use `[RouteGroup]` attributes only.
@@ -1283,3 +1334,40 @@ public void RegisterCommands()
 For complex scenarios where data flow analysis can't resolve group context:
 - Use `[RouteGroup]` attributes (always works)
 - Or specify the full pattern: `app.Map("docker run {image}", handler)`
+
+---
+
+## Open Design Questions
+
+1. **Should `MapMultiple` be renamed?** Alternatives: `MapAliases`, `MapWithAliases`. Or rely solely on `[RouteAlias]` attributes?
+
+2. **Group options syntax** — Is `WithGroupOptions("--debug,-D --log-level {level?}")` the right API, or should it be:
+   ```csharp
+   .WithGroupOption("--debug,-D")
+   .WithGroupOption("--log-level {level?}")
+   ```
+
+3. **Hidden/Deprecated attributes** — Should `[Hidden]` and `[Deprecated]` be separate attributes or properties on `[Route]`?
+   ```csharp
+   // Separate attributes (shown above)
+   [Route("secret")]
+   [Hidden]
+   
+   // Or properties on Route
+   [Route("secret", Hidden = true)]
+   [Route("old", DeprecatedMessage = "Use 'new' instead")]
+   ```
+
+4. **CancellationToken** — Should it be implicitly available to all handlers, or explicitly requested as a delegate parameter?
+   ```csharp
+   // Implicit (always available in generated handler)
+   app.Map("long-task", async () => { ... });
+   
+   // Explicit (user requests it)
+   app.Map("long-task", async (CancellationToken ct) => { ... });
+   ```
+
+5. **Return value semantics** — Clarified in conventions (Result vs Exit Code), but should we support `string` returns for direct output?
+   ```csharp
+   app.Map("whoami", () => "steve");  // Prints "steve" to stdout?
+   ```

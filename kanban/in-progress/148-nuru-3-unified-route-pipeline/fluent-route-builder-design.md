@@ -1473,4 +1473,339 @@ For complex scenarios where data flow analysis can't resolve group context:
 - Use `[NuruRouteGroup]` attributes (always works)
 - Or specify the full pattern: `app.Map("docker run {image}", handler)`
 
+---
+
+## Idempotency Metadata for AI Agents
+
+### Problem Statement
+
+AI agents (Claude, GPT, Copilot, etc.) can execute CLI commands but lack information to make safe decisions:
+
+- "Can I run this to gather information, or will it change something?"
+- "If this fails, can I safely retry?"
+- "Should I ask the user before running this?"
+
+### The Three Categories
+
+| Category | AI Behavior | Examples |
+|----------|-------------|----------|
+| **Read-only** | Run freely, retry safely, use for exploration | `list`, `get`, `status`, `show` |
+| **Idempotent write** | Safe to retry, can run to ensure state | `set`, `enable`, `disable`, `upsert` |
+| **Non-idempotent write** | Run once, confirm before retry | `create`, `append`, `send`, `increment` |
+
+### Implementation: Deriving from Type System
+
+For attributed routes using the Mediator pattern, idempotency is derived from interfaces:
+
+```csharp
+// Base markers (from Mediator library)
+public interface IQuery<TResponse> : IRequest<TResponse> { }
+public interface ICommand<TResponse> : IRequest<TResponse> { }
+
+// New marker interface for idempotent commands
+public interface IIdempotent { }
+
+// Usage - idempotency derived from interfaces:
+[NuruRoute("users list")]
+public sealed class ListUsersRequest : IQuery<Response> { }  // ReadOnly implied
+
+[NuruRoute("config set")]
+public sealed class SetConfigRequest : ICommand<Response>, IIdempotent { }  // Idempotent
+
+[NuruRoute("user create")]
+public sealed class CreateUserRequest : ICommand<Response> { }  // Non-idempotent (default)
+```
+
+### Implementation: Fluent API
+
+For string/delegate-based routes, chain after `Map()`:
+
+```csharp
+app.Map("users list", handler).ReadOnly();
+app.Map("config set {key} {value}", handler).Idempotent();
+app.Map("user create {name}", handler);  // Non-idempotent by default
+```
+
+### Updated `IRouteBuilder` Interface
+
+```csharp
+public interface IRouteBuilder
+{
+    // Existing methods
+    IRouteBuilder WithAliases(params string[] aliases);
+    IRouteBuilder Hidden();
+    IRouteBuilder Deprecated(string message);
+    
+    // New idempotency methods
+    
+    /// <summary>
+    /// Mark route as read-only. AI agents can run freely and retry safely.
+    /// </summary>
+    IRouteBuilder ReadOnly();
+    
+    /// <summary>
+    /// Mark route as idempotent. AI agents can retry safely on failure.
+    /// </summary>
+    IRouteBuilder Idempotent();
+    
+    /// <summary>
+    /// Mark route as non-idempotent (default). AI agents should confirm before running
+    /// and not auto-retry on failure.
+    /// </summary>
+    IRouteBuilder NonIdempotent();
+}
+```
+
+### Default Behavior
+
+**Non-idempotent as default** is the safe choice:
+- AI will be cautious by default
+- Explicit `.ReadOnly()` or `.Idempotent()` opts into more AI freedom
+- Matches reality (most commands without explicit thought are probably writes)
+
+### Help Output
+
+```bash
+$ mytool --help
+
+Commands:
+  users list          (R)  List all users
+  users get {id}      (R)  Get user by ID
+  config set          (I)  Set configuration value
+  config reset        (I)  Reset to defaults
+  user create         (W)  Create a new user
+  email send          (W)  Send an email
+
+Legend: (R) Read-only  (I) Idempotent  (W) Non-idempotent write
+```
+
+### Source Generator Integration
+
+The source generator derives idempotency from interfaces:
+
+```csharp
+// User writes:
+[NuruRoute("users list")]
+public sealed class ListUsersRequest : IQuery<ListUsersResponse> { }
+
+// Generator detects IQuery<T> → sets Idempotency.ReadOnly
+// Generator emits:
+private static readonly CompiledRoute __Route_ListUsers = new CompiledRouteBuilder()
+    .WithLiteral("users")
+    .WithLiteral("list")
+    .WithIdempotency(Idempotency.ReadOnly)  // Derived from IQuery<T>
+    .Build();
+```
+
+### `CompiledRouteBuilder` Extension
+
+```csharp
+public class CompiledRouteBuilder
+{
+    private Idempotency _idempotency = Idempotency.NonIdempotent;  // Safe default
+    
+    // ... existing methods ...
+    
+    /// <summary>
+    /// Sets the idempotency level for this route.
+    /// </summary>
+    public CompiledRouteBuilder WithIdempotency(Idempotency idempotency)
+    {
+        _idempotency = idempotency;
+        return this;
+    }
+    
+    public CompiledRoute Build()
+    {
+        return new CompiledRoute
+        {
+            Segments = _segments.ToArray(),
+            CatchAllParameterName = _catchAllParameterName,
+            Specificity = _specificity,
+            Idempotency = _idempotency  // New property
+        };
+    }
+}
+
+public enum Idempotency
+{
+    /// <summary>Read-only operation. Safe to run and retry freely.</summary>
+    ReadOnly,
+    
+    /// <summary>Idempotent write. Safe to retry on failure.</summary>
+    Idempotent,
+    
+    /// <summary>Non-idempotent write. Should confirm before running, don't auto-retry.</summary>
+    NonIdempotent
+}
+```
+
+---
+
+## `--capabilities` Flag for AI Tool Discovery
+
+### Problem Statement
+
+Instead of wrapping Nuru CLIs in MCP (Model Context Protocol), AI tools like OpenCode can discover CLI capabilities via a well-known flag, similar to `--help` and `--version`.
+
+### The `--capabilities` Flag
+
+A well-known convention for AI agents to discover what a CLI can do:
+
+```bash
+$ mytool --capabilities
+```
+
+This returns machine-readable JSON metadata about all commands, their parameters, options, descriptions, and idempotency levels.
+
+### Output Format
+
+```json
+{
+  "name": "mytool",
+  "version": "1.0.0",
+  "description": "My CLI application",
+  "commands": [
+    {
+      "pattern": "users list",
+      "description": "List all users",
+      "idempotency": "readonly",
+      "parameters": [],
+      "options": [
+        { "name": "format", "alias": "f", "type": "string", "required": false, "default": "table" }
+      ]
+    },
+    {
+      "pattern": "users get {id}",
+      "description": "Get user by ID",
+      "idempotency": "readonly",
+      "parameters": [
+        { "name": "id", "type": "string", "required": true }
+      ],
+      "options": []
+    },
+    {
+      "pattern": "config set {key} {value}",
+      "description": "Set configuration value",
+      "idempotency": "idempotent",
+      "parameters": [
+        { "name": "key", "type": "string", "required": true },
+        { "name": "value", "type": "string", "required": true }
+      ],
+      "options": []
+    },
+    {
+      "pattern": "user create {name}",
+      "description": "Create a new user",
+      "idempotency": "non-idempotent",
+      "parameters": [
+        { "name": "name", "type": "string", "required": true }
+      ],
+      "options": [
+        { "name": "email", "alias": "e", "type": "string", "required": false }
+      ]
+    }
+  ]
+}
+```
+
+### Implementation
+
+The `--capabilities` route is automatically added (like `--help` and `--version`):
+
+```csharp
+// Automatically registered by Nuru
+app.Map("--capabilities", () =>
+{
+    var capabilities = app.GetCapabilities();  // Gathers all route metadata
+    Console.WriteLine(JsonSerializer.Serialize(capabilities, JsonSerializerOptions));
+}).ReadOnly().Hidden();  // Read-only, hidden from --help
+```
+
+### Comparison to Existing Conventions
+
+| Flag | Purpose | Audience |
+|------|---------|----------|
+| `--help` | Human-readable usage | Humans |
+| `--version` | Version information | Both |
+| `-i` / `--interactive` | Enter REPL mode | Humans |
+| `--capabilities` | Machine-readable metadata | AI agents |
+
+### AI Tool Integration
+
+With `--capabilities`, AI tools can auto-discover Nuru CLIs:
+
+```yaml
+# OpenCode or similar AI tool configuration
+tools:
+  - command: mytool
+    discover: true  # Runs `mytool --capabilities` to learn about it
+```
+
+Or the AI can run `mytool --capabilities` on demand when it encounters the tool.
+
+### AI Decision Flow
+
+```
+User: "List all users and create a new one called Alice"
+
+AI runs: mytool --capabilities
+
+AI thinks:
+  1. "users list" is readonly → run it freely
+  2. "user create Alice" is non-idempotent → ask first
+
+AI: "I listed the users (found 3). Should I also create user 'Alice'?"
+```
+
+### `CapabilitiesResponse` Model
+
+```csharp
+public sealed class CapabilitiesResponse
+{
+    public required string Name { get; init; }
+    public required string Version { get; init; }
+    public string? Description { get; init; }
+    public required IReadOnlyList<CommandCapability> Commands { get; init; }
+}
+
+public sealed class CommandCapability
+{
+    public required string Pattern { get; init; }
+    public string? Description { get; init; }
+    public required string Idempotency { get; init; }  // "readonly", "idempotent", "non-idempotent"
+    public required IReadOnlyList<ParameterCapability> Parameters { get; init; }
+    public required IReadOnlyList<OptionCapability> Options { get; init; }
+}
+
+public sealed class ParameterCapability
+{
+    public required string Name { get; init; }
+    public string? Type { get; init; }
+    public required bool Required { get; init; }
+    public string? Description { get; init; }
+    public bool IsCatchAll { get; init; }
+}
+
+public sealed class OptionCapability
+{
+    public required string Name { get; init; }
+    public string? Alias { get; init; }
+    public string? Type { get; init; }  // null for boolean flags
+    public required bool Required { get; init; }
+    public string? Default { get; init; }
+    public string? Description { get; init; }
+}
+```
+
+### Benefits
+
+| Benefit | Explanation |
+|---------|-------------|
+| **No MCP complexity** | Just a CLI flag, no daemon or protocol |
+| **Self-describing** | CLI describes itself, no external manifest needed |
+| **Idempotency included** | AI knows what's safe to run/retry |
+| **Consistent with conventions** | Like `--help` and `--version` |
+| **Source generator has all info** | Trivial to implement |
+
 

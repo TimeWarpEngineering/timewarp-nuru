@@ -4,34 +4,6 @@ These are unresolved API design questions that need decisions before implementat
 
 ---
 
-## 4. CancellationToken Availability
-
-**Should CancellationToken be implicitly available to all handlers, or explicitly requested as a delegate parameter?**
-
-```csharp
-// Option A: Implicit (always available in generated handler)
-app.Map("long-task", async () => 
-{
-    // CancellationToken not accessible in delegate
-    await Task.Delay(1000);
-});
-
-// Option B: Explicit (user requests it)
-app.Map("long-task", async (CancellationToken ct) => 
-{
-    await Task.Delay(1000, ct);
-});
-```
-
-**Considerations:**
-- Implicit: Simpler for users who don't need it
-- Explicit: User controls whether to use it, makes cancellation-aware code obvious
-- Generated handler always has access to CancellationToken regardless
-
-**Recommendation:** Explicit — if user wants CancellationToken, they add it as a parameter. Generator detects it and passes it through.
-
----
-
 ## 5. String Return Value Semantics
 
 **Should we support `string` returns for direct output?**
@@ -200,4 +172,55 @@ public sealed class DeprecatedAttribute : Attribute
 ```csharp
 app.Map("secret", handler).Hidden();
 app.Map("old", handler).Deprecated("Use 'new' instead");
+```
+
+---
+
+### 4. CancellationToken Availability ✅
+
+**Decision:** Explicit — user adds `CancellationToken` as a delegate parameter if they need it.
+
+```csharp
+// User who needs cancellation — adds parameter explicitly
+app.Map("long-task", async (CancellationToken ct) => 
+{
+    await Task.Delay(1000, ct);
+});
+
+// User who doesn't need cancellation — no parameter needed
+app.Map("quick-task", () => Console.WriteLine("Done"));
+```
+
+**Rationale:**
+- **Explicit is better than implicit** — Cancellation-aware code is obvious at a glance
+- **No unused parameters** — Users who don't need cancellation don't have to deal with it
+- **Generator handles detection** — Source generator sees `CancellationToken` parameter and passes it through from the pipeline
+- **Consistent with ASP.NET Minimal APIs** — Same pattern used there
+
+**How it works:**
+1. User includes `CancellationToken` parameter in delegate (or not)
+2. Source generator detects its presence
+3. Generated handler receives `CancellationToken` from mediator pipeline (always available)
+4. If user requested it, generator passes it to the delegate body; otherwise ignores it
+
+**Generated code example:**
+```csharp
+// User writes:
+app.Map("long-task", async (string name, CancellationToken ct) => 
+{
+    await Task.Delay(1000, ct);
+    Console.WriteLine($"Hello {name}");
+});
+
+// Generator emits:
+public sealed class LongTask_CommandHandler : IRequestHandler<LongTask_Command, Unit>
+{
+    public async Task<Unit> Handle(LongTask_Command command, CancellationToken cancellationToken)
+    {
+        // CancellationToken passed through because user requested it
+        await Task.Delay(1000, cancellationToken);
+        Console.WriteLine($"Hello {command.Name}");
+        return Unit.Value;
+    }
+}
 ```

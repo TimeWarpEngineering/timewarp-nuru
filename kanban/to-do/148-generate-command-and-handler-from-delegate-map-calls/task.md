@@ -14,42 +14,64 @@ Extend the existing `NuruInvokerGenerator` (or create a sibling generator) to em
 
 ## Supporting Documents
 
+- `fluent-route-builder-design.md` — **Main design doc** with phased implementation plan
 - `api-design.md` — Consumer-facing route registration API
 - `source-gen-design.md` — Source generator implementation details
 
+## Phased Implementation Plan
+
+| Phase | Name | Description | Releasable? |
+|-------|------|-------------|-------------|
+| **0** | Foundation | `CompiledRouteBuilder` (internal) + tests | No |
+| **1** | Attributed Routes | `[Route]`, `[RouteGroup]` → auto-registration | **Yes** |
+| **2** | Delegate Generation | String pattern + delegate → Command/Handler gen | **Yes** |
+| **3** | Unified Pipeline | Remove `DelegateExecutor`, single code path | **Yes** |
+| **4** | Fluent Builder API | Public `CompiledRouteBuilder`, `MapGroup()` | **Yes** |
+| **5** | Relaxed Constraints | Data flow analysis for `MapGroup()` | **Yes** |
+
 ## Checklist
 
-### API Design
-- [ ] Finalize `Map()` API variants
-- [ ] Finalize `MapMultiple()` API (consider rename to `MapAliases`?)
-- [ ] Finalize `MapGroup()` fluent API and constraints
-- [ ] Decide on return value semantics (exit codes, output)
-- [ ] Decide on DI parameter injection in delegates
+### Phase 0: Foundation (NEXT)
+- [ ] Create `CompiledRouteBuilder` class in `timewarp-nuru-parsing`
+- [ ] Keep visibility `internal` (public in Phase 4)
+- [ ] Add `[InternalsVisibleTo]` for test project
+- [ ] Implement builder methods: `WithLiteral`, `WithParameter`, `WithOptionalParameter`, `WithOption`, `WithCatchAll`, `Build`
+- [ ] Use same specificity constants as existing `Compiler`
+- [ ] Write tests comparing `PatternParser.Parse()` results with builder `.Build()` results
+- [ ] Validate builder produces identical `CompiledRoute` instances
 
-### Source Generator
+### Phase 1: Attributed Routes
+- [ ] Design and implement `[Route]`, `[RouteAlias]`, `[RouteGroup]`, `[Parameter]`, `[Option]`, `[GroupOption]` attributes
+- [ ] Source generator reads attributes from Command classes
+- [ ] Generator emits `CompiledRouteBuilder` calls for each attributed Command
+- [ ] Auto-registration via `[ModuleInitializer]`
+
+### Phase 2: Delegate Generation
 - [ ] Extend `NuruInvokerGenerator` or create sibling generator
-- [ ] Implement Command class generation from pattern
+- [ ] Implement Command class generation from delegate signature
 - [ ] Implement Handler class generation from delegate body
-- [ ] Implement parameter rewriting (`x` → `request.X`)
-- [ ] Handle `MapMultiple` array parsing
-- [ ] Handle `MapGroup` fluent chain parsing
-- [ ] Handle `MapGroup` variable tracking (same method scope)
-- [ ] Handle async delegates
-- [ ] Handle return values (`int`, `Task<T>`)
-- [ ] Detect and handle closures
-- [ ] Generate DI registration (module initializer)
+- [ ] Implement parameter rewriting (`x` → `command.X`)
+- [ ] DI parameter detection (parameters not in route → constructor injection)
+- [ ] Handle async delegates and return values
 
-### Cleanup
+### Phase 3: Unified Pipeline
 - [ ] Remove `DelegateExecutor`
-- [ ] Remove old invoker-only generation (if superseded)
+- [ ] Refactor `Compiler` to use `CompiledRouteBuilder` internally
+- [ ] Single code path for `CompiledRoute` construction
+
+### Phase 4: Fluent Builder API
+- [ ] Make `CompiledRouteBuilder` public
+- [ ] Add `Map(Action<CompiledRouteBuilder>, Delegate)` overload
+- [ ] Add `MapGroup()` API with fluent chain constraint
+- [ ] Source generator walks fluent builder syntax tree
+
+### Phase 5: Relaxed Constraints
+- [ ] Data flow analysis within method scope for `MapGroup()` variable tracking
+- [ ] Diagnostic warnings for unresolvable cases
+
+### Final Cleanup
 - [ ] Update all samples
 - [ ] Update documentation
-
-### Testing
-- [ ] Unit tests for generated Command classes
-- [ ] Unit tests for generated Handler classes
-- [ ] Integration tests for full pipeline
-- [ ] AOT compatibility verification
 
 ## Notes
 

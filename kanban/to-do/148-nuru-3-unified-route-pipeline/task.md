@@ -1,4 +1,4 @@
-# Generate Command and Handler from Delegate Map Calls
+# Nuru 3.0 Unified Route Pipeline
 
 ## Description
 

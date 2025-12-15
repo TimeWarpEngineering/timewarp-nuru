@@ -4,33 +4,6 @@ These are unresolved API design questions that need decisions before implementat
 
 ---
 
-## 2. Group Options Syntax
-
-**Is `WithGroupOptions("--debug,-D --log-level {level?}")` the right API?**
-
-Or should it be multiple calls:
-
-```csharp
-// Single string (current)
-.WithGroupOptions("--debug,-D --log-level {level?}")
-
-// Multiple calls
-.WithGroupOption("--debug,-D")
-.WithGroupOption("--log-level {level?}")
-
-// Fluent builder
-.WithGroupOptions(o => o
-    .WithOption("debug", shortForm: "D")
-    .WithOption("log-level", parameterName: "level", expectsValue: true, isOptional: true))
-```
-
-**Considerations:**
-- Single string is concise but requires parsing
-- Multiple calls are verbose but explicit
-- Fluent builder matches other APIs but is most verbose
-
----
-
 ## 3. Hidden/Deprecated Attributes
 
 **Should `[Hidden]` and `[Deprecated]` be separate attributes or properties on `[Route]`?**
@@ -164,3 +137,53 @@ public sealed class RouteAliasAttribute : Attribute
     }
 }
 ```
+
+---
+
+### 2. Group Options Syntax ✅
+
+**Decision:** Use fluent builder API, not string parsing.
+
+```csharp
+.WithGroupOptions(o => o
+    .Flag("debug", "D", "Enable debug mode")
+    .Option("log-level", "level", optional: true, description: "Set logging level"))
+```
+
+**Rationale:**
+- **No magic** — What you see is what you get
+- **Full IDE support** — Autocomplete, parameter hints, compile-time checking
+- **Self-documenting** — Method names (`Flag`, `Option`) tell you what you're creating
+- **Extensible** — Easy to add capabilities later without breaking existing code
+- **Descriptions work cleanly** — String parsing gets ugly with descriptions (`"--debug,-D|Enable debug mode --verbose,-v|Verbose"`)
+- **Few group options in practice** — Realistically 2-5 global options, so verbosity is minimal
+- **No new parsing logic** — Existing parser is for route patterns, not option lists
+
+**What's Removed:**
+- ❌ `WithGroupOptions(string optionsPattern)` — No string-based option parsing
+- ❌ Reusing route parser for option lists — Different contexts, different APIs
+
+**Fluent Builder API:**
+```csharp
+public interface IGroupOptionsBuilder
+{
+    /// <summary>
+    /// Add a boolean flag option.
+    /// </summary>
+    IGroupOptionsBuilder Flag(string longForm, string? shortForm = null, string? description = null);
+    
+    /// <summary>
+    /// Add an option that expects a value.
+    /// </summary>
+    IGroupOptionsBuilder Option(string longForm, string parameterName, string? shortForm = null, 
+        bool optional = false, string? description = null);
+}
+
+// Usage:
+var docker = builder.MapGroup("docker")
+    .WithGroupOptions(o => o
+        .Flag("debug", "D", "Enable debug mode")
+        .Option("log-level", "level", "l", optional: true, description: "Set logging level"));
+```
+
+**Future:** If syntactic sugar is truly needed, a string-based overload could parse into the same builder calls internally. But start explicit.

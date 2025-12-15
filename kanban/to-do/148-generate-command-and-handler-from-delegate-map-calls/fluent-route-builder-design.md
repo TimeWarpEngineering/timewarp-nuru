@@ -596,11 +596,26 @@ public interface IRouteBuilder
 
 public interface IRouteGroupBuilder : IEndpointCollectionBuilder
 {
-    // Add options that apply to all routes in the group
-    IRouteGroupBuilder WithGroupOptions(string optionsPattern);
+    // Add options that apply to all routes in the group (fluent builder only — no string parsing)
+    IRouteGroupBuilder WithGroupOptions(Action<IGroupOptionsBuilder> configure);
+}
+
+/// <summary>
+/// Fluent builder for defining group-level options.
+/// Explicit API — no string parsing.
+/// </summary>
+public interface IGroupOptionsBuilder
+{
+    /// <summary>
+    /// Add a boolean flag option.
+    /// </summary>
+    IGroupOptionsBuilder Flag(string longForm, string? shortForm = null, string? description = null);
     
-    // Fluent version of group options
-    IRouteGroupBuilder WithGroupOptions(Action<CompiledRouteBuilder> configure);
+    /// <summary>
+    /// Add an option that expects a value.
+    /// </summary>
+    IGroupOptionsBuilder Option(string longForm, string parameterName, string? shortForm = null, 
+        bool optional = false, string? description = null);
 }
 
 // Note: Group descriptions use inline | syntax in MapGroup() prefix:
@@ -750,9 +765,9 @@ public sealed class DockerRunCommand : IRequest<Unit>
     [GroupOption("--debug", "-D")] public bool Debug { get; set; }
 }
 
-// Phase 4+: MapGroup API
+// Phase 4+: MapGroup API (fluent builder — no string parsing)
 var docker = builder.MapGroup("docker")
-    .WithGroupOptions("--debug,-D");
+    .WithGroupOptions(o => o.Flag("debug", "D", "Enable debug mode"));
 
 docker.Map("run {image}", (string image, bool debug) => { ... });
 docker.Map("build {path}", (string path, bool debug) => { ... });
@@ -1273,7 +1288,9 @@ Phase 4 adds the `MapGroup()` fluent API for delegate-based grouped routes.
 
 ```csharp
 var docker = builder.MapGroup("docker|Container management commands")
-    .WithGroupOptions("--debug,-D --log-level {level?}");
+    .WithGroupOptions(o => o
+        .Flag("debug", "D", "Enable debug mode")
+        .Option("log-level", "level", "l", optional: true, description: "Set logging level"));
 
 docker.Map("run {image}|Run a container", (string image, bool debug, string? logLevel) => { ... });
 docker.Map("build {path}|Build an image", (string path, bool debug, string? logLevel) => { ... });
@@ -1289,10 +1306,10 @@ Groups can be nested, with prefixes and options accumulating:
 
 ```csharp
 var docker = builder.MapGroup("docker")
-    .WithGroupOptions("--debug,-D");
+    .WithGroupOptions(o => o.Flag("debug", "D", "Enable debug mode"));
 
 var compose = docker.MapGroup("compose")
-    .WithGroupOptions("--file,-f {path?}");
+    .WithGroupOptions(o => o.Option("file", "path", "f", optional: true, description: "Compose file path"));
 
 compose.Map("up", (bool debug, string? file) => { ... });
 // Effective: "docker compose up --debug,-D? --file,-f {path?}"
@@ -1305,11 +1322,11 @@ compose.Map("up", (bool debug, string? file) => { ... });
 ```csharp
 // SUPPORTED - fluent chain
 builder.MapGroup("docker")
-    .WithGroupOptions("--debug")
+    .WithGroupOptions(o => o.Flag("debug", "D"))
     .Map("run {image}", handler);
 
 // SUPPORTED - variable but immediate Map calls
-var docker = builder.MapGroup("docker").WithGroupOptions("--debug");
+var docker = builder.MapGroup("docker").WithGroupOptions(o => o.Flag("debug", "D"));
 docker.Map("run {image}", handler);  // Same statement block, trackable
 ```
 
@@ -1320,7 +1337,7 @@ docker.Map("run {image}", handler);  // Same statement block, trackable
 ```csharp
 // User writes:
 var docker = builder.MapGroup("docker")
-    .WithGroupOptions("--debug,-D");
+    .WithGroupOptions(o => o.Flag("debug", "D", "Enable debug mode"));
 
 docker.Map("run {image}", (string image, bool debug) => 
 {

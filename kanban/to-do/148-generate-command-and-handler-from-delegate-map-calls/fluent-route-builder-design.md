@@ -4,14 +4,23 @@
 
 This document describes the design for a fluent `CompiledRouteBuilder` API that provides an alternative to string-based route patterns. Both syntaxes ultimately compile down to the same runtime artifact: a `CompiledRoute` feeding into the unified Command/Handler pipeline.
 
-> **IMPORTANT: Command Class Convention**
+> **IMPORTANT: Conventions**
 > 
-> All Command classes use **classes with properties**, NOT records or primary constructors. This aligns with API-side conventions. Examples in this document may show record syntax for brevity, but the actual implementation must use:
+> 1. **Class Convention:** All Command classes use **classes with properties**, NOT records or primary constructors. This aligns with API-side conventions.
+> 
+> 2. **Interface Naming:** The actual Mediator interfaces are `IRequest`/`IRequestHandler`, but we use "Command" terminology in class names since it's more natural for CLI contexts. Examples in this document may show `ICommand`/`ICommandHandler` for readability, but the actual implementation uses `IRequest<TResponse>`/`IRequestHandler<TRequest, TResponse>`.
+> 
 > ```csharp
-> public sealed class DeployCommand : ICommand<int>
+> // Actual implementation
+> public sealed class DeployCommand : IRequest<int>
 > {
 >     public string Env { get; set; } = string.Empty;
 >     public bool Force { get; set; }
+> }
+> 
+> public sealed class DeployCommandHandler : IRequestHandler<DeployCommand, int>
+> {
+>     public Task<int> Handle(DeployCommand request, CancellationToken ct) { ... }
 > }
 > ```
 

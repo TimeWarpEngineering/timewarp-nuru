@@ -59,7 +59,7 @@ Commands with `[Route]` attributes auto-register without explicit `Map()` calls.
 ```csharp
 // User writes - no Map() call needed!
 [Route("deploy", Description = "Deploy to an environment")]
-public sealed class DeployCommand : ICommand<int>
+public sealed class DeployCommand : IRequest<int>
 {
     [Parameter(Description = "Target environment")]
     public string Env { get; set; } = string.Empty;
@@ -71,16 +71,19 @@ public sealed class DeployCommand : ICommand<int>
     public string? ConfigFile { get; set; }
 }
 
-public sealed class DeployCommandHandler : ICommandHandler<DeployCommand, int>
+public sealed class DeployCommandHandler : IRequestHandler<DeployCommand, int>
 {
-    public Task<int> Handle(DeployCommand command, CancellationToken ct) { ... }
+    public Task<int> Handle(DeployCommand request, CancellationToken ct) { ... }
 }
 
 // Generated route: "deploy {env} --force,-f --config,-c {configFile?}"
 // Auto-registered via [ModuleInitializer]
 ```
 
-**Note:** Commands use classes with properties, NOT records or primary constructors. This aligns with API-side conventions.
+**Notes:**
+- Commands use classes with properties, NOT records or primary constructors
+- Actual interfaces are `IRequest<TResponse>` / `IRequestHandler<TRequest, TResponse>` (Mediator)
+- We use "Command" in class names as it's more natural CLI terminology
 
 ### Generated Output
 

@@ -75,16 +75,16 @@ public interface IEndpointCollectionBuilder
     // Fluent builder + delegate
     void Map(Action<CompiledRouteBuilder> configure, Delegate handler, string? description = null);
     
-    // Fluent builder + command
+    // Fluent builder + command (TCommand : IRequest<TResponse>)
     void Map<TCommand>(Action<CompiledRouteBuilder> configure, string? description = null) 
-        where TCommand : ICommand;
+        where TCommand : IBaseRequest;
     
     // Pre-built route + delegate
     void Map(CompiledRoute compiledRoute, Delegate handler, string? description = null);
     
-    // Pre-built route + command
+    // Pre-built route + command (TCommand : IRequest<TResponse>)
     void Map<TCommand>(CompiledRoute compiledRoute, string? description = null) 
-        where TCommand : ICommand;
+        where TCommand : IBaseRequest;
     
     // Grouped routes
     IRouteGroupBuilder MapGroup(string prefix);
@@ -97,6 +97,8 @@ public interface IRouteGroupBuilder : IEndpointCollectionBuilder
     IRouteGroupBuilder WithGroupOptions(Action<CompiledRouteBuilder> configure);
 }
 ```
+
+**Note:** `IBaseRequest` is the non-generic base interface for `IRequest<TResponse>` from Mediator.
 
 ### Example Usage
 

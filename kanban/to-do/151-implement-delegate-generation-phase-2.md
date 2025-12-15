@@ -34,8 +34,8 @@ Delegates in `Map()` calls automatically become Commands through the pipeline. S
 ### Source Generator - Handler Generation
 - [ ] Generate Handler class wrapping delegate body
 - [ ] Name convention: `{RoutePrefix}_Generated_CommandHandler`
-- [ ] Implement `ICommandHandler<TCommand, TResult>`
-- [ ] Rewrite parameter references (`x` -> `command.X`)
+- [ ] Implement `IRequestHandler<TRequest, TResponse>` (Mediator interface)
+- [ ] Rewrite parameter references (`x` -> `request.X`)
 - [ ] Handle async delegates correctly
 - [ ] Apply `[GeneratedCode]` attribute
 
@@ -46,11 +46,11 @@ Delegates in `Map()` calls automatically become Commands through the pipeline. S
 - [ ] Use fields in handler body
 
 ### Return Values
-- [ ] Handle `void` return -> `ICommand` (Unit)
-- [ ] Handle `int` return -> `ICommand<int>`
-- [ ] Handle `Task` return -> async handler, `ICommand`
-- [ ] Handle `Task<int>` return -> async handler, `ICommand<int>`
-- [ ] Handle `Task<T>` return -> async handler, `ICommand<T>`
+- [ ] Handle `void` return -> `IRequest<Unit>`
+- [ ] Handle `int` return -> `IRequest<int>`
+- [ ] Handle `Task` return -> async handler, `IRequest<Unit>`
+- [ ] Handle `Task<int>` return -> async handler, `IRequest<int>`
+- [ ] Handle `Task<T>` return -> async handler, `IRequest<T>`
 
 ### Registration
 - [ ] Emit `CompiledRouteBuilder` calls from parsed pattern
@@ -88,7 +88,7 @@ app.Map("deploy {env} --force", (string env, bool force, ILogger logger) =>
 
 // 1. Command (only route parameters) - class with properties, NOT record
 [GeneratedCode("TimeWarp.Nuru.Generator", "1.0.0")]
-public sealed class Deploy_Generated_Command : ICommand<int>
+public sealed class Deploy_Generated_Command : IRequest<int>
 {
     public string Env { get; set; } = string.Empty;
     public bool Force { get; set; }
@@ -97,7 +97,7 @@ public sealed class Deploy_Generated_Command : ICommand<int>
 // 2. Handler (DI via constructor, delegate body with rewritten params)
 [GeneratedCode("TimeWarp.Nuru.Generator", "1.0.0")]
 public sealed class Deploy_Generated_CommandHandler 
-    : ICommandHandler<Deploy_Generated_Command, int>
+    : IRequestHandler<Deploy_Generated_Command, int>
 {
     private readonly ILogger _logger;
     
@@ -106,9 +106,9 @@ public sealed class Deploy_Generated_CommandHandler
         _logger = logger;
     }
     
-    public Task<int> Handle(Deploy_Generated_Command command, CancellationToken ct)
+    public Task<int> Handle(Deploy_Generated_Command request, CancellationToken ct)
     {
-        _logger.LogInformation("Deploying to {Env}", command.Env);
+        _logger.LogInformation("Deploying to {Env}", request.Env);
         return Task.FromResult(0);
     }
 }
@@ -121,7 +121,10 @@ private static readonly CompiledRoute __Route_Deploy = new CompiledRouteBuilder(
     .Build();
 ```
 
-**Note:** Generated Commands use classes with properties, NOT records or primary constructors. This aligns with API-side conventions.
+**Notes:**
+- Generated Commands use classes with properties, NOT records or primary constructors
+- Actual interfaces are `IRequest<TResponse>` / `IRequestHandler<TRequest, TResponse>` (Mediator)
+- We use "Command" in class names as it's more natural CLI terminology
 
 ### Complexity Notes
 

@@ -29,7 +29,7 @@ Delegates in `Map()` calls automatically become Commands through the pipeline. S
 - [ ] Name convention: `{RoutePrefix}_Generated_Command`
 - [ ] Include only route parameters (not DI parameters)
 - [ ] Apply `[GeneratedCode]` attribute
-- [ ] Generate as `sealed record`
+- [ ] Generate as `sealed class` with properties (NOT record, NO primary constructor)
 
 ### Source Generator - Handler Generation
 - [ ] Generate Handler class wrapping delegate body
@@ -86,12 +86,13 @@ app.Map("deploy {env} --force", (string env, bool force, ILogger logger) =>
 
 // Generator emits:
 
-// 1. Command (only route parameters)
+// 1. Command (only route parameters) - class with properties, NOT record
 [GeneratedCode("TimeWarp.Nuru.Generator", "1.0.0")]
-public sealed record Deploy_Generated_Command(
-    string Env,
-    bool Force
-) : ICommand<int>;
+public sealed class Deploy_Generated_Command : ICommand<int>
+{
+    public string Env { get; set; } = string.Empty;
+    public bool Force { get; set; }
+}
 
 // 2. Handler (DI via constructor, delegate body with rewritten params)
 [GeneratedCode("TimeWarp.Nuru.Generator", "1.0.0")]
@@ -119,6 +120,8 @@ private static readonly CompiledRoute __Route_Deploy = new CompiledRouteBuilder(
     .WithOption("force")
     .Build();
 ```
+
+**Note:** Generated Commands use classes with properties, NOT records or primary constructors. This aligns with API-side conventions.
 
 ### Complexity Notes
 

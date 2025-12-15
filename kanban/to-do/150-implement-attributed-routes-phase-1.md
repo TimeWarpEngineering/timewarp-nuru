@@ -59,11 +59,17 @@ Commands with `[Route]` attributes auto-register without explicit `Map()` calls.
 ```csharp
 // User writes - no Map() call needed!
 [Route("deploy", Description = "Deploy to an environment")]
-public sealed record DeployCommand(
-    [Parameter(Description = "Target environment")] string Env,
-    [Option("--force", "-f", Description = "Skip confirmation")] bool Force,
-    [Option("--config", "-c")] string? ConfigFile
-) : ICommand<int>;
+public sealed class DeployCommand : ICommand<int>
+{
+    [Parameter(Description = "Target environment")]
+    public string Env { get; set; } = string.Empty;
+    
+    [Option("--force", "-f", Description = "Skip confirmation")]
+    public bool Force { get; set; }
+    
+    [Option("--config", "-c")]
+    public string? ConfigFile { get; set; }
+}
 
 public sealed class DeployCommandHandler : ICommandHandler<DeployCommand, int>
 {
@@ -73,6 +79,8 @@ public sealed class DeployCommandHandler : ICommandHandler<DeployCommand, int>
 // Generated route: "deploy {env} --force,-f --config,-c {configFile?}"
 // Auto-registered via [ModuleInitializer]
 ```
+
+**Note:** Commands use classes with properties, NOT records or primary constructors. This aligns with API-side conventions.
 
 ### Generated Output
 

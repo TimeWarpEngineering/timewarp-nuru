@@ -4,6 +4,17 @@
 
 This document describes the design for a fluent `CompiledRouteBuilder` API that provides an alternative to string-based route patterns. Both syntaxes ultimately compile down to the same runtime artifact: a `CompiledRoute` feeding into the unified Command/Handler pipeline.
 
+> **IMPORTANT: Command Class Convention**
+> 
+> All Command classes use **classes with properties**, NOT records or primary constructors. This aligns with API-side conventions. Examples in this document may show record syntax for brevity, but the actual implementation must use:
+> ```csharp
+> public sealed class DeployCommand : ICommand<int>
+> {
+>     public string Env { get; set; } = string.Empty;
+>     public bool Force { get; set; }
+> }
+> ```
+
 ## Design Goals
 
 1. **Dual syntax support** - Consumers can use string patterns OR fluent builder
@@ -13,23 +24,155 @@ This document describes the design for a fluent `CompiledRouteBuilder` API that 
 
 ## Phased Implementation
 
-The implementation follows a phased approach, each building on the previous without rework:
+The implementation follows a phased approach. Each phase builds on the previous without rework, and most phases are independently releasable.
+
+| Phase | Name | Description | Releasable? |
+|-------|------|-------------|-------------|
+| **0** | Foundation | `CompiledRouteBuilder` (internal) + tests | No |
+| **1** | Attributed Routes | `[Route]`, `[RouteGroup]` → auto-registration | **Yes** |
+| **2** | Delegate Generation | String pattern + delegate → Command/Handler gen | **Yes** |
+| **3** | Unified Pipeline | Remove `DelegateExecutor`, single code path | **Yes** |
+| **4** | Fluent Builder API | Public `CompiledRouteBuilder`, `MapGroup()` | **Yes** |
+| **5** | Relaxed Constraints | Data flow analysis for `MapGroup()` | **Yes** |
 
 ```
-Phase 1 (Current)          Phase 2                    Phase 3
-─────────────────────────────────────────────────────────────────────────
-[RouteGroup] attribute  →  + MapGroup() API        →  + Data flow analysis
-Groups via attributes      (fluent constraint)        (best effort tracking)
+Phase 0          Phase 1           Phase 2              Phase 3           Phase 4              Phase 5
+────────────────────────────────────────────────────────────────────────────────────────────────────────────
+CompiledRoute    [Route] attrs     String+Delegate      Remove            Public fluent        Data flow
+Builder          auto-register     → Command/Handler    DelegateExecutor  builder + MapGroup   analysis
+(internal)                         generation           Single code path  API
 
-Simplest generator         Walk syntax tree           Track variables
-No data flow analysis      Immediate variable only    Within method scope
+Foundation       First Release     Second Release       Third Release     Fourth Release       Fifth Release
 ```
 
-| Phase | Grouping Support | Generator Complexity |
-|-------|------------------|---------------------|
-| **Phase 1** | `[RouteGroup]` attribute only | Low - read attributes |
-| **Phase 2** | + `MapGroup()` fluent API | Medium - walk syntax tree |
-| **Phase 3** | + Relaxed constraints | Higher - data flow analysis |
+---
+
+### Phase 0: Foundation (Internal)
+
+**Goal:** Create `CompiledRouteBuilder` and validate it produces correct `CompiledRoute` instances.
+
+**Scope:**
+- Create `CompiledRouteBuilder` class (internal visibility)
+- Add `[InternalsVisibleTo]` for test project
+- Write tests comparing:
+  - `PatternParser.Parse("pattern")` result
+  - `new CompiledRouteBuilder().WithLiteral()...Build()` result
+- Existing `Compiler` stays as-is (parallel code paths for now)
+
+**Not Releasable** - No consumer-facing changes. This is internal infrastructure.
+
+---
+
+### Phase 1: Attributed Routes ✨ Release
+
+**Goal:** Commands with `[Route]` attributes auto-register without explicit `Map()` calls.
+
+**Scope:**
+- `[Route]`, `[RouteAlias]`, `[RouteGroup]`, `[Parameter]`, `[Option]`, `[GroupOption]` attributes
+- Source generator reads attributes from Command classes
+- Generator emits `CompiledRouteBuilder` calls for each attributed Command
+- Auto-registration via `[ModuleInitializer]`
+- User still writes Command and Handler classes (no generation)
+
+**What the generator does:**
+1. Find all classes with `[Route]` attribute
+2. Read attributes → emit `CompiledRouteBuilder` calls
+3. Emit registration code
+
+**Releasable** - Production use case for Command-based CLIs. Clean, attribute-driven development.
+
+---
+
+### Phase 2: Delegate Generation ✨ Release
+
+**Goal:** Delegates in `Map()` calls automatically become Commands through the pipeline.
+
+**Scope:**
+- Source generator detects `Map(string pattern, Delegate handler)` calls
+- Generates Command class from delegate signature
+- Generates Handler class from delegate body
+- Rewrites parameter references (`x` → `command.X`)
+- Emits `CompiledRouteBuilder` calls for route
+- Emits registration code
+- DI parameter detection (parameters not in route → constructor injection)
+
+**What the generator does:**
+1. Find all `Map(pattern, delegate)` calls
+2. Parse pattern string → emit `CompiledRouteBuilder` calls
+3. Extract delegate signature → generate Command class
+4. Extract delegate body → generate Handler class (with parameter rewriting)
+5. Emit registration code
+
+**Releasable** - Enables quick prototyping with delegates while maintaining pipeline benefits.
+
+---
+
+### Phase 3: Unified Pipeline ✨ Release
+
+**Goal:** All routes flow through Mediator pipeline. Single code path for `CompiledRoute` construction.
+
+**Scope:**
+- Remove `DelegateExecutor` - no more direct delegate invocation
+- All routes (delegate-based and command-based) flow through Mediator pipeline
+- Refactor `Compiler` to use `CompiledRouteBuilder` internally
+- Single mechanism for constructing `CompiledRoute` instances
+
+**Benefits:**
+- Consistent middleware behavior for ALL routes
+- Simplified internals (one code path)
+- Better AOT compatibility
+
+**Releasable** - Internal simplification with consistent runtime behavior.
+
+---
+
+### Phase 4: Fluent Builder API + MapGroup ✨ Release
+
+**Goal:** Expose fluent builder to consumers. Add `MapGroup()` for delegate-based grouped routes.
+
+**Scope:**
+- Make `CompiledRouteBuilder` public
+- Add `Map(Action<CompiledRouteBuilder>, Delegate)` overload
+- Add `Map<TCommand>(Action<CompiledRouteBuilder>)` overload
+- Add `MapGroup()` API with fluent chain constraint
+- Source generator walks fluent builder syntax tree
+
+**MapGroup Constraint:**
+Group routes must be defined in a fluent chain or with immediate `Map` calls:
+```csharp
+// SUPPORTED
+builder.MapGroup("docker").WithGroupOptions("--debug").Map("run {image}", handler);
+
+// SUPPORTED
+var docker = builder.MapGroup("docker");
+docker.Map("run {image}", handler);  // Immediate, trackable
+```
+
+**Releasable** - Advanced consumer API for complex CLIs.
+
+---
+
+### Phase 5: Relaxed Constraints ✨ Release
+
+**Goal:** More flexible `MapGroup()` usage via data flow analysis.
+
+**Scope:**
+- Data flow analysis within method scope for `MapGroup()` variable tracking
+- Diagnostic warnings for truly unresolvable cases (passed to methods, stored in fields)
+
+```csharp
+// Phase 4: Warning
+var docker = builder.MapGroup("docker");
+// ... other code ...
+docker.Map("run {image}", handler);  // ⚠️ NURU003
+
+// Phase 5: Works
+var docker = builder.MapGroup("docker");
+// ... other code ...
+docker.Map("run {image}", handler);  // ✓ Resolved
+```
+
+**Releasable** - Quality of life improvement for `MapGroup()` users.
 
 ---
 
@@ -40,6 +183,7 @@ No data flow analysis      Immediate variable only    Within method scope
 
   ┌────────────────────────┐  ┌─────────────────────────────┐  ┌────────────────────────┐  ┌────────────────────────┐
   │   String + Delegate    │  │     Fluent + Delegate       │  │   Command + Pattern    │  │  Attributed Command    │
+  │       (Phase 2)        │  │        (Phase 4)            │  │      (Phase 2)         │  │      (Phase 1)         │
   │                        │  │                             │  │                        │  │                        │
   │ app.Map(               │  │ app.Map(r => r              │  │ app.Map<DeployCommand>(│  │ [Route("deploy")]      │
   │   "deploy {env}        │  │   .WithLiteral("deploy")    │  │   "deploy {env}        │  │ record DeployCommand(  │
@@ -54,13 +198,13 @@ No data flow analysis      Immediate variable only    Within method scope
   ┌────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
   │                                        SOURCE GENERATOR                                                        │
   │                                                                                                                │
-  │  1. Parse route (string → fluent builder calls)                                                                │
-  │  2. OR walk fluent builder calls directly                                                                      │
-  │  3. OR read attributes from Command class                                                                      │
-  │  4. Generate Command class from delegate signature (if delegate-based)                                         │
-  │  5. Generate Handler class from delegate body (if delegate-based)                                              │
-  │  6. Generate static CompiledRoute                                                                              │
-  │  7. Generate registration code                                                                                 │
+  │  1. Parse route (string → fluent builder calls)                         [Phase 2]                              │
+  │  2. OR walk fluent builder calls directly                               [Phase 4]                              │
+  │  3. OR read attributes from Command class                               [Phase 1]                              │
+  │  4. Generate Command class from delegate signature (if delegate-based)  [Phase 2]                              │
+  │  5. Generate Handler class from delegate body (if delegate-based)       [Phase 2]                              │
+  │  6. Generate static CompiledRoute (via CompiledRouteBuilder)            [Phase 0+]                             │
+  │  7. Generate registration code                                          [Phase 1+]                             │
   │                                                                                                                │
   └─────────────────────────────────────────────────┬──────────────────────────────────────────────────────────────┘
                                                     ▼
@@ -96,7 +240,7 @@ No data flow analysis      Immediate variable only    Within method scope
   └───────────────────────────────────────────────────────────────────────────────┘
                             ▼
   ┌───────────────────────────────────────────────────────────────────────────────┐
-  │                          RUNTIME (same for ALL)                               │
+  │                          RUNTIME (same for ALL) [Phase 3+]                    │
   │                                                                               │
   │  Route Match → Bind Args → Create Command → Pipeline → Handler                │
   │                                                                               │
@@ -152,6 +296,8 @@ The key insight is that **string patterns can be translated to fluent builder ca
 ## Fluent Builder API
 
 ### `CompiledRouteBuilder` Class
+
+> **Note:** Internal in Phase 0-3, public in Phase 4+
 
 ```csharp
 public class CompiledRouteBuilder
@@ -309,9 +455,27 @@ var route3 = new CompiledRouteBuilder()
     .Build();
 ```
 
-## Consumer API (Phase 1)
+## Consumer API
 
-### `IEndpointCollectionBuilder`
+### Phase 1-3: `IEndpointCollectionBuilder`
+
+```csharp
+public interface IEndpointCollectionBuilder
+{
+    // === Delegate-based (source generator creates Command/Handler) [Phase 2+] ===
+    
+    // String pattern + delegate
+    void Map(string routePattern, Delegate handler, string? description = null);
+    
+    // === Command-based (user provides Command, Handler already exists) ===
+    
+    // String pattern + command type
+    void Map<TCommand>(string routePattern, string? description = null) 
+        where TCommand : ICommand;
+}
+```
+
+### Phase 4+: Extended `IEndpointCollectionBuilder`
 
 ```csharp
 public interface IEndpointCollectionBuilder
@@ -321,10 +485,10 @@ public interface IEndpointCollectionBuilder
     // String pattern + delegate
     void Map(string routePattern, Delegate handler, string? description = null);
     
-    // Fluent builder + delegate
+    // Fluent builder + delegate [Phase 4+]
     void Map(Action<CompiledRouteBuilder> configure, Delegate handler, string? description = null);
     
-    // Pre-built route + delegate
+    // Pre-built route + delegate [Phase 4+]
     void Map(CompiledRoute compiledRoute, Delegate handler, string? description = null);
     
     // === Command-based (user provides Command, Handler already exists) ===
@@ -333,63 +497,74 @@ public interface IEndpointCollectionBuilder
     void Map<TCommand>(string routePattern, string? description = null) 
         where TCommand : ICommand;
     
-    // Fluent builder + command type
+    // Fluent builder + command type [Phase 4+]
     void Map<TCommand>(Action<CompiledRouteBuilder> configure, string? description = null) 
         where TCommand : ICommand;
     
-    // Pre-built route + command type
+    // Pre-built route + command type [Phase 4+]
     void Map<TCommand>(CompiledRoute compiledRoute, string? description = null) 
         where TCommand : ICommand;
+    
+    // === Grouped routes [Phase 4+] ===
+    
+    // Create a route group with shared prefix and/or options
+    IRouteGroupBuilder MapGroup(string prefix);
+}
+
+public interface IRouteGroupBuilder : IEndpointCollectionBuilder
+{
+    // Add description to the group (for help display)
+    IRouteGroupBuilder WithDescription(string description);
+    
+    // Add options that apply to all routes in the group
+    IRouteGroupBuilder WithGroupOptions(string optionsPattern);
+    
+    // Fluent version of group options
+    IRouteGroupBuilder WithGroupOptions(Action<CompiledRouteBuilder> configure);
 }
 ```
-
-> **Note:** `MapGroup()` is not included in Phase 1. Use `[RouteGroup]` attributes for grouped commands, or specify full patterns in `Map()` calls.
 
 ### Consumer Choice
 
 ```csharp
-// === Delegate-based (generates Command/Handler) ===
+// === Phase 1: Attributed Commands (recommended for production) ===
 
-// Option 1: String pattern + delegate (concise, familiar)
+[Route("deploy")]
+public sealed record DeployCommand(
+    [Parameter] string Env,
+    [Option("--force", "-f")] bool Force
+) : ICommand<int>;
+// No Map call needed - auto-registered!
+
+
+// === Phase 2+: Delegate-based ===
+
+// String pattern + delegate (quick prototyping)
 app.Map("deploy {env} --force", (string env, bool force) => { ... });
 
-// Option 2: Fluent builder + delegate (IDE autocomplete, refactor-friendly)
+
+// === Phase 4+: Fluent builder ===
+
+// Fluent builder + delegate (IDE autocomplete, refactor-friendly)
 app.Map(r => r
     .WithLiteral("deploy")
     .WithParameter("env")
     .WithOption("force"),
     (string env, bool force) => { ... });
 
-// Option 3: Pre-built route + delegate (reusable, dynamic scenarios)
-CompiledRoute route = new CompiledRouteBuilder()
-    .WithLiteral("deploy")
-    .WithParameter("env")
-    .WithOption("force")
-    .Build();
-app.Map(route, (string env, bool force) => { ... });
-
-
-// === Command-based (user provides Command/Handler) ===
-
-// Option 4: String pattern + command
-app.Map<DeployCommand>("deploy {env} --force");
-
-// Option 5: Fluent builder + command
+// Fluent builder + command
 app.Map<DeployCommand>(r => r
     .WithLiteral("deploy")
     .WithParameter("env")
     .WithOption("force"));
-
-// Option 6: Pre-built route + command
-app.Map<DeployCommand>(route);
 ```
 
 ### Default Routes
 
-Default routes (fallback when no other route matches) use an empty string pattern. No separate `MapDefault` method is needed - this keeps the API surface minimal and simplifies the source generator.
+Default routes (fallback when no other route matches) use an empty string pattern. No separate `MapDefault` method is needed.
 
 ```csharp
-// Default route with delegate
+// Default route with delegate [Phase 2+]
 app.Map("", () => Console.WriteLine("Usage: mycli <command>"));
 
 // Default route with options
@@ -398,26 +573,33 @@ app.Map("--verbose,-v", (bool verbose) => ShowHelp(verbose));
 // Default route with command
 app.Map<HelpCommand>("");
 
-// Default route with command + options
-app.Map<HelpCommand>("--verbose,-v --format {fmt?}");
+// Default route with attributed command [Phase 1+]
+[Route("")]
+public sealed record HelpCommand([Option("--verbose", "-v")] bool Verbose) : ICommand;
 ```
 
-### Grouped Routes (Phase 1)
+### Grouped Routes
 
-In Phase 1, grouped routes are supported **only via attributes**. For delegate-based routes that need a common prefix, use the full pattern:
+**Phase 1:** Use `[RouteGroup]` attributes only.
+
+**Phase 4+:** Use `MapGroup()` API for delegate-based grouped routes.
 
 ```csharp
-// Phase 1: Specify full pattern for grouped delegate routes
-app.Map("docker run {image} --debug,-D", (string image, bool debug) => { ... });
-app.Map("docker build {path} --debug,-D", (string path, bool debug) => { ... });
-
-// OR use attributed commands with [RouteGroup] (recommended)
+// Phase 1: Attributed groups
 [RouteGroup("docker", Options = "--debug,-D")]
 [Route("run")]
-public sealed record DockerRunCommand(...) : ICommand;
-```
+public sealed record DockerRunCommand(
+    [Parameter] string Image,
+    [GroupOption("--debug", "-D")] bool Debug
+) : ICommand;
 
-See the [Attribute-Based Route Definition](#attribute-based-route-definition) section for `[RouteGroup]` details.
+// Phase 4+: MapGroup API
+var docker = builder.MapGroup("docker")
+    .WithGroupOptions("--debug,-D");
+
+docker.Map("run {image}", (string image, bool debug) => { ... });
+docker.Map("build {path}", (string path, bool debug) => { ... });
+```
 
 ### Why Support Multiple Syntaxes?
 
@@ -432,13 +614,13 @@ See the [Attribute-Based Route Definition](#attribute-based-route-definition) se
 | Validation timing | Runtime parse errors | Compile-time | Compile-time |
 | Single source of truth | Pattern + Command separate | Pattern + Command separate | Command IS the route |
 | Zero-ceremony | Requires Map call | Requires Map call | Auto-registered |
-| Grouped routes (Phase 1) | Full pattern | Full pattern | [RouteGroup] attribute |
+| Available in Phase | 2+ | 4+ | 1+ |
 
 ---
 
-## Attribute-Based Route Definition
+## Attribute-Based Route Definition (Phase 1+)
 
-In addition to explicit `Map` calls, routes can be defined directly on Command classes using attributes. This provides a **zero-ceremony** approach where the Command definition IS the route definition.
+Routes can be defined directly on Command classes using attributes. This is the **recommended approach for production** CLIs.
 
 ### Attribute API
 
@@ -566,23 +748,7 @@ public sealed record ExitCommand : ICommand;
 // Generates routes: "exit", "quit", "q" - all map to same command
 ```
 
-#### Mixed Parameters and Options
-
-```csharp
-[Route("git commit")]
-public sealed record GitCommitCommand(
-    [Parameter] string? Message,                           // Optional positional
-    [Option("--amend", "-a")] bool Amend,                 // Boolean flag
-    [Option("--author")] string? Author,                  // Optional valued option
-    [Option("--message", "-m")] string? MessageOption     // Alternative to positional
-) : ICommand<int>;
-
-// Generates route: "git commit {message?} --amend,-a --author {author?} --message,-m {messageOption?}"
-```
-
 #### Grouped Commands with Attributes
-
-Commands can declare their group membership using `[RouteGroup]`:
 
 ```csharp
 // Define the group's shared options once
@@ -596,57 +762,11 @@ public abstract record DockerCommandBase(
 [Route("run")]
 public sealed record DockerRunCommand(
     [Parameter] string Image,
-    bool Debug,           // Inherited from group
-    string? LogLevel      // Inherited from group
-) : DockerCommandBase(Debug, LogLevel), ICommand;
-
-// Generates route: "docker run {image} --debug,-D? --log-level {level?}"
-
-[Route("build")]
-public sealed record DockerBuildCommand(
-    [Parameter] string Path,
     bool Debug,
     string? LogLevel
 ) : DockerCommandBase(Debug, LogLevel), ICommand;
 
-// Generates route: "docker build {path} --debug,-D? --log-level {level?}"
-```
-
-Alternative: Use `[RouteGroup]` directly on commands without inheritance:
-
-```csharp
-[RouteGroup("docker", Options = "--debug,-D")]
-[Route("run")]
-public sealed record DockerRunCommand(
-    [Parameter] string Image,
-    [GroupOption("--debug", "-D")] bool Debug
-) : ICommand;
-
-// Generates route: "docker run {image} --debug,-D?"
-```
-
-#### Nested Groups with Attributes
-
-```csharp
-[RouteGroup("docker")]
-public abstract record DockerCommandBase(
-    [GroupOption("--debug", "-D")] bool Debug
-);
-
-[RouteGroup("compose", Options = "--file,-f {path?}")]
-public abstract record DockerComposeCommandBase(
-    bool Debug,
-    [GroupOption("--file", "-f")] string? File
-) : DockerCommandBase(Debug);
-
-[Route("up")]
-public sealed record DockerComposeUpCommand(
-    bool Debug,
-    string? File,
-    [Option("--detach", "-d")] bool Detach
-) : DockerComposeCommandBase(Debug, File), ICommand;
-
-// Generates route: "docker compose up --debug,-D? --file,-f {path?} --detach,-d"
+// Generates route: "docker run {image} --debug,-D? --log-level {level?}"
 ```
 
 ### What Gets Generated from Attributed Commands
@@ -692,7 +812,7 @@ internal static class GeneratedRouteRegistration
 
 ### Auto-Registration
 
-With attributed commands, no explicit `Map` calls are needed. The source generator discovers all `[Route]` attributed commands and registers them automatically:
+With attributed commands, no explicit `Map` calls are needed:
 
 ```csharp
 // User code - just build and run!
@@ -710,25 +830,6 @@ return await app.RunAsync();
 // That's it! All [Route] commands are auto-registered.
 ```
 
-### Combining Approaches
-
-Attributed commands can coexist with explicit `Map` calls:
-
-```csharp
-var builder = NuruApp.CreateBuilder(args);
-
-// Explicit delegate-based routes
-builder.Map("quick {name}", (string name) => Console.WriteLine($"Quick: {name}"));
-
-// Explicit command-based routes (overrides attribute if present)
-builder.Map<SpecialCommand>("special-route");
-
-var app = builder.Build();
-return await app.RunAsync();
-
-// Meanwhile, all other [Route] commands are auto-registered
-```
-
 ### Benefits of Attribute Approach
 
 | Benefit | Explanation |
@@ -741,45 +842,9 @@ return await app.RunAsync();
 | **Validation** | Analyzer can verify attributes match property types |
 | **Discoverability** | Look at any Command to see its route |
 
-### Trade-offs
-
-| Consideration | Notes |
-|---------------|-------|
-| **Centralized view** | Must look at command classes to see routes (vs. one file with all `Map` calls) |
-| **Dynamic routes** | Can't do runtime-computed patterns (but that's rare) |
-| **Learning curve** | Another way to do things (but consistent with ASP.NET patterns) |
-
 ---
 
-## Summary: Three Styles
-
-All three styles generate the same runtime artifacts - the difference is ergonomics:
-
-```csharp
-// Style 1: Delegate + String Pattern (quick prototyping)
-app.Map("deploy {env} --force", (string env, bool force) => { ... });
-
-// Style 2: Command + String Pattern (explicit mapping)
-app.Map<DeployCommand>("deploy {env} --force");
-
-// Style 3: Attributed Command (zero-ceremony, self-documenting)
-[Route("deploy")]
-public sealed record DeployCommand(
-    [Parameter] string Env,
-    [Option("--force", "-f")] bool Force
-) : ICommand<int>;
-// No Map call needed - auto-registered!
-```
-
-| Style | Best For |
-|-------|----------|
-| **Delegate + Pattern** | Quick scripts, prototyping, simple CLIs |
-| **Command + Pattern** | When you want explicit control over mapping |
-| **Attributed Command** | Production apps, large CLIs, team projects |
-
----
-
-## What Gets Generated
+## What Gets Generated (Phase 2+)
 
 ### From String Syntax
 
@@ -801,7 +866,7 @@ private static readonly CompiledRoute __Route_Deploy = new CompiledRouteBuilder(
 // Plus Command, Handler, and registration (see below)
 ```
 
-### From Fluent Syntax
+### From Fluent Syntax (Phase 4+)
 
 ```csharp
 // User writes:
@@ -863,7 +928,7 @@ app.MapCommand<Deploy_Generated_Command>(
 services.AddTransient<ICommandHandler<Deploy_Generated_Command, int>, Deploy_Generated_CommandHandler>();
 ```
 
-## DI Integration
+## DI Integration (Phase 2+)
 
 Parameters not in the route pattern are resolved from DI:
 
@@ -896,22 +961,22 @@ public sealed class Deploy_CommandHandler : ICommandHandler<Deploy_Command, int>
 }
 ```
 
-## Unified Runtime Model
+## Unified Runtime Model (Phase 3+)
 
 All syntaxes become the same thing at runtime:
 
 ```csharp
-// 1. Delegate syntax
+// 1. Delegate syntax [Phase 2+]
 app.Map("greet {name}", (string name) => Console.WriteLine($"Hello {name}"));
 
-// 2. Fluent syntax  
+// 2. Fluent syntax [Phase 4+]
 app.Map(r => r.WithLiteral("greet").WithParameter("name"), 
     (string name) => Console.WriteLine($"Hello {name}"));
 
-// 3. Explicit command
+// 3. Explicit command [Phase 2+]
 app.Map<GreetCommand>("greet {name}");
 
-// 4. Attributed command
+// 4. Attributed command [Phase 1+]
 [Route("greet")]
 public sealed record GreetCommand([Parameter] string Name) : ICommand;
 
@@ -962,37 +1027,9 @@ Option 3 (generator emits both) is cleanest since the generator has access to th
 
 ---
 
-## Phase 2: MapGroup() API
+## Phase 4 Details: MapGroup() API
 
-> **Status:** Future enhancement. Phase 1 uses `[RouteGroup]` attributes only.
-
-Phase 2 adds the `MapGroup()` fluent API for delegate-based grouped routes.
-
-### Extended Interface
-
-```csharp
-public interface IEndpointCollectionBuilder
-{
-    // ... all Phase 1 methods ...
-    
-    // === Grouped routes (Phase 2) ===
-    
-    // Create a route group with shared prefix and/or options
-    IRouteGroupBuilder MapGroup(string prefix);
-}
-
-public interface IRouteGroupBuilder : IEndpointCollectionBuilder
-{
-    // Add description to the group (for help display)
-    IRouteGroupBuilder WithDescription(string description);
-    
-    // Add options that apply to all routes in the group
-    IRouteGroupBuilder WithGroupOptions(string optionsPattern);
-    
-    // Fluent version of group options
-    IRouteGroupBuilder WithGroupOptions(Action<CompiledRouteBuilder> configure);
-}
-```
+Phase 4 adds the `MapGroup()` fluent API for delegate-based grouped routes.
 
 ### Usage
 
@@ -1022,14 +1059,11 @@ var compose = docker.MapGroup("compose")
 
 compose.Map("up", (bool debug, string? file) => { ... });
 // Effective: "docker compose up --debug,-D? --file,-f {path?}"
-
-compose.Map("down", (bool debug, string? file) => { ... });
-// Effective: "docker compose down --debug,-D? --file,-f {path?}"
 ```
 
-### Fluent Chain Constraint (Phase 2)
+### Fluent Chain Constraint (Phase 4)
 
-**API CONSTRAINT:** Group routes must be defined in a fluent chain or with immediate `Map` calls on the group variable:
+**API CONSTRAINT:** Group routes must be defined in a fluent chain or with immediate `Map` calls:
 
 ```csharp
 // SUPPORTED - fluent chain
@@ -1040,32 +1074,15 @@ builder.MapGroup("docker")
 // SUPPORTED - variable but immediate Map calls
 var docker = builder.MapGroup("docker").WithGroupOptions("--debug");
 docker.Map("run {image}", handler);  // Same statement block, trackable
-docker.Map("build {path}", handler); // Still trackable
 ```
 
-**Why:** Enables source generator to resolve group context without complex data flow analysis. The generator can walk up the fluent chain or track variables within the same method scope.
-
-### Groups with Commands
-
-Groups work with both delegate-based and command-based routes:
-
-```csharp
-var docker = builder.MapGroup("docker")
-    .WithGroupOptions("--debug,-D");
-
-// Delegate-based
-docker.Map("run {image}", (string image, bool debug) => { ... });
-
-// Command-based
-docker.Map<DockerBuildCommand>("build {path}");
-```
+**Why:** Enables source generator to resolve group context without complex data flow analysis.
 
 ### What Gets Generated from Groups
 
 ```csharp
 // User writes:
 var docker = builder.MapGroup("docker")
-    .WithDescription("Container management")
     .WithGroupOptions("--debug,-D");
 
 docker.Map("run {image}", (string image, bool debug) => 
@@ -1103,21 +1120,19 @@ public sealed class DockerRun_Generated_CommandHandler
 
 ---
 
-## Phase 3: Relaxed Constraints
+## Phase 5 Details: Relaxed Constraints
 
-> **Status:** Future enhancement. Builds on Phase 2.
-
-Phase 3 relaxes the fluent chain constraint by adding data flow analysis within method scope.
+Phase 5 relaxes the fluent chain constraint by adding data flow analysis within method scope.
 
 ### What Changes
 
 ```csharp
-// Phase 2: This emits a warning
+// Phase 4: This emits a warning
 var docker = builder.MapGroup("docker");
 // ... other code ...
 docker.Map("run {image}", handler);  // ⚠️ NURU003: Cannot resolve group context
 
-// Phase 3: This works - generator tracks variable within method
+// Phase 5: This works - generator tracks variable within method
 var docker = builder.MapGroup("docker");
 // ... other code ...
 docker.Map("run {image}", handler);  // ✓ Resolved via data flow analysis
@@ -1125,7 +1140,7 @@ docker.Map("run {image}", handler);  // ✓ Resolved via data flow analysis
 
 ### Still Not Supported
 
-Some patterns remain unsupported even in Phase 3:
+Some patterns remain unsupported even in Phase 5:
 
 ```csharp
 // Passed to another method - can't see inside

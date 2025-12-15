@@ -34,15 +34,15 @@ Command as default (safe choice - AI will be cautious).
 ## Checklist
 
 ### Design
-- [ ] Create `MessageType` enum (`Query`, `Command`, `IdempotentCommand`)
-- [ ] Create `IIdempotent` marker interface (use `IQuery<T>` and `ICommand<T>` from Mediator)
-- [ ] Add `MessageType` property to `CompiledRoute`
-- [ ] Add `WithMessageType()` to `CompiledRouteBuilder`
+- [x] Create `MessageType` enum (`Query`, `Command`, `IdempotentCommand`)
+- [x] Create `IIdempotent` marker interface (use `IQuery<T>` and `ICommand<T>` from Mediator)
+- [x] Add `MessageType` property to `CompiledRoute`
+- [x] Add `WithMessageType()` to `CompiledRouteBuilder`
 
 ### Implementation - Fluent API
-- [ ] Add `.AsQuery()` method to `IRouteBuilder`
-- [ ] Add `.AsCommand()` method to `IRouteBuilder` (explicit default)
-- [ ] Add `.AsIdempotentCommand()` method to `IRouteBuilder`
+- [x] Add `.AsQuery()` method via `RouteConfigurator`
+- [x] Add `.AsCommand()` method via `RouteConfigurator` (explicit default)
+- [x] Add `.AsIdempotentCommand()` method via `RouteConfigurator`
 
 ### Implementation - Type System Derivation
 - [ ] Source generator detects `IQuery<T>` → sets `MessageType.Query`
@@ -50,14 +50,14 @@ Command as default (safe choice - AI will be cautious).
 - [ ] Source generator detects `ICommand<T>, IIdempotent` → sets `MessageType.IdempotentCommand`
 
 ### Implementation - Help Output
-- [ ] Display message type indicator in `--help` output: `(Q)`, `(C)`, `(I)`
-- [ ] Add legend to help footer
+- [x] Display message type indicator in `--help` output: `(Q)`, `(C)`, `(I)`
+- [x] Add legend to help footer
 
 ### Testing
-- [ ] Unit tests for `MessageType` enum
-- [ ] Unit tests for fluent API methods
+- [x] Unit tests for `MessageType` enum
+- [x] Unit tests for fluent API methods
 - [ ] Unit tests for source generator derivation
-- [ ] Integration tests for help output
+- [x] Integration tests for help output
 
 ## Notes
 

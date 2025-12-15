@@ -12,6 +12,11 @@ public class CompiledRoute
   /// </summary>
   public required IReadOnlyList<RouteMatcher> Segments { get; set; }
   /// <summary>
+  /// Gets or sets the message type for this route, indicating whether it's a query, command, or idempotent command.
+  /// Defaults to <see cref="MessageType.Command"/> (the safest assumption for AI agents).
+  /// </summary>
+  public MessageType MessageType { get; set; } = MessageType.Command;
+  /// <summary>
   /// Gets or sets the name of the catch-all parameter if present (e.g., "args" for {*args}).
   /// </summary>
   public string? CatchAllParameterName { get; set; }

@@ -13,6 +13,7 @@ public sealed class CompiledRouteBuilder
   private readonly List<RouteMatcher> _segments = [];
   private string? _catchAllParameterName;
   private int _specificity;
+  private MessageType _messageType = MessageType.Command;
 
   // Specificity scoring constants - must match Compiler exactly
   // See: documentation/developer/design/resolver/specificity-algorithm.md
@@ -179,6 +180,25 @@ public sealed class CompiledRouteBuilder
   }
 
   /// <summary>
+  /// Sets the message type for this route.
+  /// </summary>
+  /// <param name="messageType">The message type indicating query, command, or idempotent command behavior.</param>
+  /// <returns>This builder for method chaining.</returns>
+  /// <remarks>
+  /// The message type helps AI agents determine how to handle the command:
+  /// <list type="bullet">
+  ///   <item><description><see cref="MessageType.Query"/> - Safe to run freely and retry</description></item>
+  ///   <item><description><see cref="MessageType.Command"/> - Confirm before running, don't auto-retry</description></item>
+  ///   <item><description><see cref="MessageType.IdempotentCommand"/> - Safe to retry on failure</description></item>
+  /// </list>
+  /// </remarks>
+  public CompiledRouteBuilder WithMessageType(MessageType messageType)
+  {
+    _messageType = messageType;
+    return this;
+  }
+
+  /// <summary>
   /// Builds the <see cref="CompiledRoute"/> from the configured segments.
   /// </summary>
   /// <returns>A new <see cref="CompiledRoute"/> instance.</returns>
@@ -188,7 +208,8 @@ public sealed class CompiledRouteBuilder
     {
       Segments = _segments.ToArray(),
       CatchAllParameterName = _catchAllParameterName,
-      Specificity = _specificity
+      Specificity = _specificity,
+      MessageType = _messageType
     };
   }
 

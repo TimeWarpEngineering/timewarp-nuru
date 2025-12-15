@@ -8,7 +8,7 @@ namespace TimeWarp.Nuru;
 /// The builder produces routes identical to those created by <see cref="PatternParser.Parse"/>.
 /// It uses the same specificity scoring constants as the pattern compiler.
 /// </remarks>
-internal sealed class CompiledRouteBuilder
+public sealed class CompiledRouteBuilder
 {
   private readonly List<RouteMatcher> _segments = [];
   private string? _catchAllParameterName;

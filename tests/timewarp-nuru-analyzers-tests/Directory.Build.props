@@ -41,9 +41,19 @@
     <ProjectReference Include="$(MSBuildThisFileDirectory)../../source/timewarp-nuru/timewarp-nuru.csproj" />
   </ItemGroup>
 
+  <!-- Mediator for attributed route tests -->
+  <ItemGroup>
+    <PackageReference Include="Mediator.Abstractions" />
+    <PackageReference Include="Mediator.SourceGenerator">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
   <!-- Common usings -->
   <ItemGroup>
     <Using Include="System.Console" Static="true" />
     <Using Include="TimeWarp.Nuru" />
+    <Using Include="Mediator" />
   </ItemGroup>
 </Project>

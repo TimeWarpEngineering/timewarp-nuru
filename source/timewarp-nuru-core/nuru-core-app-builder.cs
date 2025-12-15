@@ -65,6 +65,25 @@ public partial class NuruCoreAppBuilder
   /// </summary>
   public NuruCoreApp Build()
   {
+    // Add routes from NuruRouteRegistry (auto-registered via [NuruRoute] attributes)
+    foreach (RegisteredRoute registered in NuruRouteRegistry.RegisteredRoutes)
+    {
+      // Skip if this exact pattern is already mapped (user explicit Map() takes precedence)
+      if (EndpointCollection.Endpoints.Any(e =>
+            string.Equals(e.RoutePattern, registered.Pattern, StringComparison.OrdinalIgnoreCase)))
+        continue;
+
+      Endpoint endpoint = new()
+      {
+        RoutePattern = registered.Pattern,
+        CompiledRoute = registered.Route,
+        Description = registered.Description,
+        CommandType = registered.RequestType
+      };
+
+      EndpointCollection.Add(endpoint);
+    }
+
     if (AutoHelpEnabled)
     {
       HelpRouteGenerator.GenerateHelpRoutes(this, EndpointCollection, AppMetadata, HelpOptions);

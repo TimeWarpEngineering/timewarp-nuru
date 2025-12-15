@@ -4,34 +4,6 @@ These are unresolved API design questions that need decisions before implementat
 
 ---
 
-## 3. Hidden/Deprecated Attributes
-
-**Should `[Hidden]` and `[Deprecated]` be separate attributes or properties on `[Route]`?**
-
-```csharp
-// Option A: Separate attributes
-[Route("secret")]
-[Hidden]
-public sealed class SecretCommand : IRequest<Unit> { }
-
-[Route("old")]
-[Deprecated("Use 'new' instead")]
-public sealed class OldCommand : IRequest<Unit> { }
-
-// Option B: Properties on Route
-[Route("secret", Hidden = true)]
-public sealed class SecretCommand : IRequest<Unit> { }
-
-[Route("old", DeprecatedMessage = "Use 'new' instead")]
-public sealed class OldCommand : IRequest<Unit> { }
-```
-
-**Considerations:**
-- Separate attributes: More discoverable, can be reused on other elements
-- Properties on Route: Fewer attributes to learn, all route metadata in one place
-
----
-
 ## 4. CancellationToken Availability
 
 **Should CancellationToken be implicitly available to all handlers, or explicitly requested as a delegate parameter?**
@@ -187,3 +159,45 @@ var docker = builder.MapGroup("docker")
 ```
 
 **Future:** If syntactic sugar is truly needed, a string-based overload could parse into the same builder calls internally. But start explicit.
+
+---
+
+### 3. Hidden/Deprecated Attributes ✅
+
+**Decision:** Use separate attributes, not properties on `[Route]`.
+
+```csharp
+[Route("secret")]
+[Hidden]
+public sealed class SecretCommand : IRequest<Unit> { }
+
+[Route("old")]
+[Deprecated("Use 'new' instead")]
+public sealed class OldCommand : IRequest<Unit> { }
+```
+
+**Rationale:**
+- **Single responsibility** — Each attribute does one thing
+- **Discoverable** — Shows up separately in IntelliSense
+- **Reusable** — Can potentially apply to other elements (methods, groups)
+- **Explicit** — Clear what each attribute means without reading Route's documentation
+- **Composable** — Easy to combine: `[Route][Hidden][Deprecated]`
+
+**Attribute Definitions:**
+```csharp
+[AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
+public sealed class HiddenAttribute : Attribute { }
+
+[AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
+public sealed class DeprecatedAttribute : Attribute
+{
+    public string Message { get; }
+    public DeprecatedAttribute(string message) => Message = message;
+}
+```
+
+**Fluent API equivalents:**
+```csharp
+app.Map("secret", handler).Hidden();
+app.Map("old", handler).Deprecated("Use 'new' instead");
+```

@@ -392,20 +392,46 @@ public class CompiledRouteBuilder
     /// <summary>
     /// Adds an option (flag or option with value).
     /// </summary>
+    /// <param name="longForm">Long form without dashes (e.g., "force" for --force).</param>
+    /// <param name="shortForm">Optional short form without dash (e.g., "f" for -f).</param>
+    /// <param name="parameterName">Parameter name for the option value (null for boolean flags).</param>
+    /// <param name="expectsValue">True if the option expects a value argument.</param>
+    /// <param name="parameterType">Type constraint for the value (e.g., "int" for --port {port:int}).</param>
+    /// <param name="parameterIsOptional">True if the option value is optional (e.g., --config {file?}).</param>
+    /// <param name="description">Optional description for help text.</param>
+    /// <param name="isOptionalFlag">True if the option flag itself is optional (affects specificity scoring only).</param>
+    /// <param name="isRepeated">True if the option can be specified multiple times.</param>
+    /// <remarks>
+    /// The isOptionalFlag parameter controls specificity scoring only.
+    /// Boolean flags and repeated options are always optional at runtime regardless of this setting.
+    /// For boolean flags (expectsValue=false), the parameter name is automatically derived
+    /// from the long form using camelCase conversion (e.g., "dry-run" becomes "dryRun").
+    /// </remarks>
     public CompiledRouteBuilder WithOption(
         string longForm,
         string? shortForm = null,
         string? parameterName = null,
         bool expectsValue = false,
+        string? parameterType = null,
+        bool parameterIsOptional = false,
         string? description = null,
-        bool isOptional = true,
+        bool isOptionalFlag = false,
         bool isRepeated = false)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(longForm);
+
         string matchPattern = $"--{longForm}";
         string? alternateForm = shortForm is not null ? $"-{shortForm}" : null;
         
         // For boolean flags, derive parameter name from long form
-        string? resolvedParamName = parameterName ?? (expectsValue ? null : ToCamelCase(longForm));
+        string? resolvedParamName = parameterName;
+        if (resolvedParamName is null && !expectsValue)
+        {
+            resolvedParamName = ToCamelCase(longForm);
+        }
+
+        // Determine runtime optionality: boolean flags and repeated options are always optional
+        bool isOptionalAtRuntime = isOptionalFlag || !expectsValue || isRepeated;
 
         _segments.Add(new OptionMatcher(
             matchPattern: matchPattern,
@@ -413,12 +439,31 @@ public class CompiledRouteBuilder
             parameterName: resolvedParamName,
             alternateForm: alternateForm,
             description: description,
-            isOptional: isOptional,
+            isOptional: isOptionalAtRuntime,
             isRepeated: isRepeated,
-            parameterIsOptional: false
+            parameterIsOptional: parameterIsOptional
         ));
         
-        _specificity += isOptional ? SpecificityOptionalOption : SpecificityRequiredOption;
+        // Score the option flag itself (only explicitly optional flags get lower specificity)
+        _specificity += isOptionalFlag ? SpecificityOptionalOption : SpecificityRequiredOption;
+
+        // Score the option's parameter value if present
+        if (expectsValue)
+        {
+            if (parameterIsOptional)
+            {
+                _specificity += SpecificityOptionalParameter;
+            }
+            else if (!string.IsNullOrEmpty(parameterType))
+            {
+                _specificity += SpecificityTypedParameter;
+            }
+            else
+            {
+                _specificity += SpecificityUntypedParameter;
+            }
+        }
+
         return this;
     }
 

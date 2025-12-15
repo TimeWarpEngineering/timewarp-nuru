@@ -8,7 +8,7 @@ This document describes the design for a fluent `CompiledRouteBuilder` API that 
 > 
 > 1. **Class Convention:** All Command classes use **classes with properties**, NOT records or primary constructors. This aligns with API-side conventions.
 > 
-> 2. **Interface Naming:** The actual Mediator interfaces are `IRequest`/`IRequestHandler`, but we use "Command" terminology in class names since it's more natural for CLI contexts. Examples in this document may show `ICommand`/`ICommandHandler` for readability, but the actual implementation uses `IRequest<TResponse>`/`IRequestHandler<TRequest, TResponse>`.
+> 2. **Interface Naming:** We use the Mediator interfaces `IRequest<TResponse>`/`IRequestHandler<TRequest, TResponse>` directly. Class names use "Command" terminology (e.g., `DeployCommand`) since it's more natural for CLI contexts.
 > 
 > ```csharp
 > // Actual implementation
@@ -200,7 +200,7 @@ docker.Map("run {image}", handler);  // ✓ Resolved
   │   (env, force) =>      │  │   .WithOption("force"),     │  │                        │  │     Env,               │
   │   { ... });            │  │   (env, force) =>           │  │                        │  │   [Option("--force")]  │
   │                        │  │   { ... });                 │  │                        │  │     bool Force         │
-  │                        │  │                             │  │                        │  │ ) : ICommand<int>;     │
+  │                        │  │                             │  │                        │  │ ) : IRequest<int>;     │
   └───────────┬────────────┘  └──────────────┬──────────────┘  └───────────┬────────────┘  └───────────┬────────────┘
               │                              │                             │                          │
               ▼                              ▼                             ▼                          ▼
@@ -222,11 +222,11 @@ docker.Map("run {image}", handler);  // ✓ Resolved
   │                                                                               │
   │  // Command (generated from delegate signature, or user-provided)             │
   │  public sealed record Deploy_Generated_Command(string Env, bool Force)        │
-  │      : ICommand<int>;                                                         │
+  │      : IRequest<int>;                                                         │
   │                                                                               │
   │  // Handler (wraps original delegate body, or user-provided)                  │
   │  public sealed class Deploy_Generated_CommandHandler                          │
-  │      : ICommandHandler<Deploy_Generated_Command, int>                         │
+  │      : IRequestHandler<Deploy_Generated_Command, int>                         │
   │  {                                                                            │
   │      public Task<int> Handle(Deploy_Generated_Command cmd, CancellationToken) │
   │      {                                                                        │
@@ -480,7 +480,7 @@ public interface IEndpointCollectionBuilder
     
     // String pattern + command type
     void Map<TCommand>(string routePattern, string? description = null) 
-        where TCommand : ICommand;
+        where TCommand : IRequest<Unit>;
 }
 ```
 
@@ -504,15 +504,15 @@ public interface IEndpointCollectionBuilder
     
     // String pattern + command type
     void Map<TCommand>(string routePattern, string? description = null) 
-        where TCommand : ICommand;
+        where TCommand : IRequest<Unit>;
     
     // Fluent builder + command type [Phase 4+]
     void Map<TCommand>(Action<CompiledRouteBuilder> configure, string? description = null) 
-        where TCommand : ICommand;
+        where TCommand : IRequest<Unit>;
     
     // Pre-built route + command type [Phase 4+]
     void Map<TCommand>(CompiledRoute compiledRoute, string? description = null) 
-        where TCommand : ICommand;
+        where TCommand : IRequest<Unit>;
     
     // === Grouped routes [Phase 4+] ===
     
@@ -542,7 +542,7 @@ public interface IRouteGroupBuilder : IEndpointCollectionBuilder
 public sealed record DeployCommand(
     [Parameter] string Env,
     [Option("--force", "-f")] bool Force
-) : ICommand<int>;
+) : IRequest<int>;
 // No Map call needed - auto-registered!
 
 
@@ -584,7 +584,7 @@ app.Map<HelpCommand>("");
 
 // Default route with attributed command [Phase 1+]
 [Route("")]
-public sealed record HelpCommand([Option("--verbose", "-v")] bool Verbose) : ICommand;
+public sealed record HelpCommand([Option("--verbose", "-v")] bool Verbose) : IRequest<Unit>;
 ```
 
 ### Grouped Routes
@@ -600,7 +600,7 @@ public sealed record HelpCommand([Option("--verbose", "-v")] bool Verbose) : ICo
 public sealed record DockerRunCommand(
     [Parameter] string Image,
     [GroupOption("--debug", "-D")] bool Debug
-) : ICommand;
+) : IRequest<Unit>;
 
 // Phase 4+: MapGroup API
 var docker = builder.MapGroup("docker")
@@ -694,7 +694,7 @@ public sealed class GroupOptionAttribute : Attribute
 [Route("greet")]
 public sealed record GreetCommand(
     [Parameter] string Name
-) : ICommand;
+) : IRequest<Unit>;
 
 // Generates route: "greet {name}"
 ```
@@ -707,7 +707,7 @@ public sealed record DeployCommand(
     [Parameter(Description = "Target environment")] string Env,
     [Option("--force", "-f", Description = "Skip confirmation")] bool Force,
     [Option("--config", "-c")] string? ConfigFile
-) : ICommand<int>;
+) : IRequest<int>;
 
 // Generates route: "deploy {env} --force,-f --config,-c {configFile?}"
 ```
@@ -719,7 +719,7 @@ public sealed record DeployCommand(
 public sealed record DockerComposeUpCommand(
     [Option("--detach", "-d")] bool Detach,
     [Option("--build")] bool Build
-) : ICommand;
+) : IRequest<Unit>;
 
 // Generates route: "docker compose up --detach,-d --build"
 ```
@@ -730,7 +730,7 @@ public sealed record DockerComposeUpCommand(
 [Route("exec")]
 public sealed record ExecCommand(
     [Parameter(IsCatchAll = true)] string[] Args
-) : ICommand<int>;
+) : IRequest<int>;
 
 // Generates route: "exec {*args}"
 ```
@@ -741,7 +741,7 @@ public sealed record ExecCommand(
 [Route("")]  // Empty = default route
 public sealed record HelpCommand(
     [Option("--verbose", "-v")] bool Verbose
-) : ICommand;
+) : IRequest<Unit>;
 
 // Generates route: "--verbose,-v" (matches when no other route matches)
 ```
@@ -752,7 +752,7 @@ public sealed record HelpCommand(
 [Route("exit")]
 [RouteAlias("quit")]
 [RouteAlias("q")]
-public sealed record ExitCommand : ICommand;
+public sealed record ExitCommand : IRequest<Unit>;
 
 // Generates routes: "exit", "quit", "q" - all map to same command
 ```
@@ -773,7 +773,7 @@ public sealed record DockerRunCommand(
     [Parameter] string Image,
     bool Debug,
     string? LogLevel
-) : DockerCommandBase(Debug, LogLevel), ICommand;
+) : DockerCommandBase(Debug, LogLevel), IRequest<Unit>;
 
 // Generates route: "docker run {image} --debug,-D? --log-level {level?}"
 ```
@@ -787,9 +787,9 @@ public sealed record DeployCommand(
     [Parameter] string Env,
     [Option("--force", "-f")] bool Force,
     [Option("--replicas", "-r")] int? Replicas
-) : ICommand<int>;
+) : IRequest<int>;
 
-public sealed class DeployCommandHandler : ICommandHandler<DeployCommand, int>
+public sealed class DeployCommandHandler : IRequestHandler<DeployCommand, int>
 {
     public Task<int> Handle(DeployCommand command, CancellationToken ct) { ... }
 }
@@ -906,7 +906,7 @@ private static readonly CompiledRoute __Route_Deploy = new CompiledRouteBuilder(
 public sealed record Deploy_Generated_Command(
     string Env,
     bool Force
-) : ICommand<int>;
+) : IRequest<int>;
 ```
 
 ### Generated Handler
@@ -914,7 +914,7 @@ public sealed record Deploy_Generated_Command(
 ```csharp
 [GeneratedCode("TimeWarp.Nuru.Generator", "1.0.0")]
 public sealed class Deploy_Generated_CommandHandler 
-    : ICommandHandler<Deploy_Generated_Command, int>
+    : IRequestHandler<Deploy_Generated_Command, int>
 {
     public Task<int> Handle(Deploy_Generated_Command command, CancellationToken cancellationToken)
     {
@@ -934,7 +934,7 @@ app.MapCommand<Deploy_Generated_Command>(
     "deploy {env} --force");  // Original pattern preserved for help display
 
 // Handler registered in DI
-services.AddTransient<ICommandHandler<Deploy_Generated_Command, int>, Deploy_Generated_CommandHandler>();
+services.AddTransient<IRequestHandler<Deploy_Generated_Command, int>, Deploy_Generated_CommandHandler>();
 ```
 
 ## DI Integration (Phase 2+)
@@ -950,10 +950,10 @@ app.Map("deploy {env}", (string env, ILogger logger) =>
 });
 
 // Generated Command (only route parameters):
-public sealed record Deploy_Command(string Env) : ICommand<int>;
+public sealed record Deploy_Command(string Env) : IRequest<int>;
 
 // Generated Handler (DI parameters injected via constructor):
-public sealed class Deploy_CommandHandler : ICommandHandler<Deploy_Command, int>
+public sealed class Deploy_CommandHandler : IRequestHandler<Deploy_Command, int>
 {
     private readonly ILogger _logger;
     
@@ -987,7 +987,7 @@ app.Map<GreetCommand>("greet {name}");
 
 // 4. Attributed command [Phase 1+]
 [Route("greet")]
-public sealed record GreetCommand([Parameter] string Name) : ICommand;
+public sealed record GreetCommand([Parameter] string Name) : IRequest<Unit>;
 
 // ─────────────────────────────────────────────────────────────────────
 // At runtime, ALL become:
@@ -1105,7 +1105,7 @@ docker.Map("run {image}", (string image, bool debug) =>
 public sealed record DockerRun_Generated_Command(
     string Image,
     bool Debug
-) : ICommand;
+) : IRequest<Unit>;
 
 // 2. CompiledRoute with combined pattern
 private static readonly CompiledRoute __Route_DockerRun = new CompiledRouteBuilder()
@@ -1117,7 +1117,7 @@ private static readonly CompiledRoute __Route_DockerRun = new CompiledRouteBuild
 
 // 3. Handler with delegate body
 public sealed class DockerRun_Generated_CommandHandler 
-    : ICommandHandler<DockerRun_Generated_Command>
+    : IRequestHandler<DockerRun_Generated_Command>
 {
     public Task Handle(DockerRun_Generated_Command command, CancellationToken ct)
     {

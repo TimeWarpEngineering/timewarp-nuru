@@ -10,7 +10,7 @@ Add a well-known `--capabilities` flag to Nuru CLIs that returns machine-readabl
 
 ## Dependencies
 
-- 156-add-iidempotent-interface-and-idempotency-metadata-to-routes (idempotency metadata)
+- 156-add-iidempotent-interface-and-idempotency-metadata-to-routes (MessageType metadata)
 
 ## Background
 
@@ -31,7 +31,7 @@ See: `.agent/workspace/2024-12-15T14-30-00_unified-contracts-and-idempotency-ana
 
 ### Output Format
 
-JSON with commands, parameters, options, descriptions, and idempotency levels.
+JSON with commands, parameters, options, descriptions, and message types.
 
 ## Checklist
 
@@ -44,7 +44,7 @@ JSON with commands, parameters, options, descriptions, and idempotency levels.
 ### Implementation
 - [ ] Add `--capabilities` as built-in route (like `--help`, `--version`)
 - [ ] Implement `GetCapabilities()` method on app to gather route metadata
-- [ ] Mark route as `.ReadOnly().Hidden()` (hidden from `--help`)
+- [ ] Mark route as `.AsQuery().Hidden()` (hidden from `--help`)
 - [ ] JSON serialization with proper formatting
 
 ### Integration
@@ -77,7 +77,7 @@ $ mytool --capabilities
     {
       "pattern": "users list",
       "description": "List all users",
-      "idempotency": "readonly",
+      "messageType": "query",
       "parameters": [],
       "options": [
         { "name": "format", "alias": "f", "type": "string", "required": false, "default": "table" }
@@ -86,7 +86,7 @@ $ mytool --capabilities
     {
       "pattern": "user create {name}",
       "description": "Create a new user",
-      "idempotency": "non-idempotent",
+      "messageType": "command",
       "parameters": [
         { "name": "name", "type": "string", "required": true }
       ],
@@ -106,8 +106,8 @@ User: "List all users and create a new one called Alice"
 AI runs: mytool --capabilities
 
 AI thinks:
-  1. "users list" is readonly → run it freely
-  2. "user create Alice" is non-idempotent → ask first
+  1. "users list" is query → run it freely
+  2. "user create Alice" is command → ask first
 
 AI: "I listed the users (found 3). Should I also create user 'Alice'?"
 ```
@@ -127,7 +127,7 @@ public sealed class CommandCapability
 {
     public required string Pattern { get; init; }
     public string? Description { get; init; }
-    public required string Idempotency { get; init; }
+    public required string MessageType { get; init; }  // "query", "command", "idempotent-command"
     public required IReadOnlyList<ParameterCapability> Parameters { get; init; }
     public required IReadOnlyList<OptionCapability> Options { get; init; }
 }

@@ -1475,7 +1475,7 @@ For complex scenarios where data flow analysis can't resolve group context:
 
 ---
 
-## Idempotency Metadata for AI Agents
+## Message Type Metadata for AI Agents
 
 ### Problem Statement
 
@@ -1487,15 +1487,17 @@ AI agents (Claude, GPT, Copilot, etc.) can execute CLI commands but lack informa
 
 ### The Three Categories
 
-| Category | AI Behavior | Examples |
-|----------|-------------|----------|
-| **Read-only** | Run freely, retry safely, use for exploration | `list`, `get`, `status`, `show` |
-| **Idempotent write** | Safe to retry, can run to ensure state | `set`, `enable`, `disable`, `upsert` |
-| **Non-idempotent write** | Run once, confirm before retry | `create`, `append`, `send`, `increment` |
+Using established CQRS terminology that matches the Mediator interfaces:
+
+| MessageType | AI Behavior | Examples |
+|-------------|-------------|----------|
+| **Query** | Run freely, retry safely, use for exploration | `list`, `get`, `status`, `show` |
+| **IdempotentCommand** | Safe to retry on failure | `set`, `enable`, `disable`, `upsert` |
+| **Command** | Confirm before running, don't auto-retry | `create`, `append`, `send`, `increment` |
 
 ### Implementation: Deriving from Type System
 
-For attributed routes using the Mediator pattern, idempotency is derived from interfaces:
+For attributed routes using the Mediator pattern, message type is derived from interfaces:
 
 ```csharp
 // Base markers (from Mediator library)
@@ -1505,15 +1507,15 @@ public interface ICommand<TResponse> : IRequest<TResponse> { }
 // New marker interface for idempotent commands
 public interface IIdempotent { }
 
-// Usage - idempotency derived from interfaces:
+// Usage - message type derived from interfaces:
 [NuruRoute("users list")]
-public sealed class ListUsersRequest : IQuery<Response> { }  // ReadOnly implied
+public sealed class ListUsersRequest : IQuery<Response> { }  // Query
 
 [NuruRoute("config set")]
-public sealed class SetConfigRequest : ICommand<Response>, IIdempotent { }  // Idempotent
+public sealed class SetConfigRequest : ICommand<Response>, IIdempotent { }  // IdempotentCommand
 
 [NuruRoute("user create")]
-public sealed class CreateUserRequest : ICommand<Response> { }  // Non-idempotent (default)
+public sealed class CreateUserRequest : ICommand<Response> { }  // Command (default)
 ```
 
 ### Implementation: Fluent API
@@ -1521,9 +1523,9 @@ public sealed class CreateUserRequest : ICommand<Response> { }  // Non-idempoten
 For string/delegate-based routes, chain after `Map()`:
 
 ```csharp
-app.Map("users list", handler).ReadOnly();
-app.Map("config set {key} {value}", handler).Idempotent();
-app.Map("user create {name}", handler);  // Non-idempotent by default
+app.Map("users list", handler).AsQuery();
+app.Map("config set {key} {value}", handler).AsIdempotentCommand();
+app.Map("user create {name}", handler);  // Command by default
 ```
 
 ### Updated `IRouteBuilder` Interface
@@ -1536,31 +1538,31 @@ public interface IRouteBuilder
     IRouteBuilder Hidden();
     IRouteBuilder Deprecated(string message);
     
-    // New idempotency methods
+    // New message type methods
     
     /// <summary>
-    /// Mark route as read-only. AI agents can run freely and retry safely.
+    /// Mark route as a query. AI agents can run freely and retry safely.
     /// </summary>
-    IRouteBuilder ReadOnly();
+    IRouteBuilder AsQuery();
     
     /// <summary>
-    /// Mark route as idempotent. AI agents can retry safely on failure.
+    /// Mark route as an idempotent command. AI agents can retry safely on failure.
     /// </summary>
-    IRouteBuilder Idempotent();
+    IRouteBuilder AsIdempotentCommand();
     
     /// <summary>
-    /// Mark route as non-idempotent (default). AI agents should confirm before running
+    /// Mark route as a command (default). AI agents should confirm before running
     /// and not auto-retry on failure.
     /// </summary>
-    IRouteBuilder NonIdempotent();
+    IRouteBuilder AsCommand();
 }
 ```
 
 ### Default Behavior
 
-**Non-idempotent as default** is the safe choice:
+**Command as default** is the safe choice:
 - AI will be cautious by default
-- Explicit `.ReadOnly()` or `.Idempotent()` opts into more AI freedom
+- Explicit `.AsQuery()` or `.AsIdempotentCommand()` opts into more AI freedom
 - Matches reality (most commands without explicit thought are probably writes)
 
 ### Help Output
@@ -1569,31 +1571,31 @@ public interface IRouteBuilder
 $ mytool --help
 
 Commands:
-  users list          (R)  List all users
-  users get {id}      (R)  Get user by ID
+  users list          (Q)  List all users
+  users get {id}      (Q)  Get user by ID
   config set          (I)  Set configuration value
   config reset        (I)  Reset to defaults
-  user create         (W)  Create a new user
-  email send          (W)  Send an email
+  user create         (C)  Create a new user
+  email send          (C)  Send an email
 
-Legend: (R) Read-only  (I) Idempotent  (W) Non-idempotent write
+Legend: (Q) Query  (I) Idempotent  (C) Command
 ```
 
 ### Source Generator Integration
 
-The source generator derives idempotency from interfaces:
+The source generator derives message type from interfaces:
 
 ```csharp
 // User writes:
 [NuruRoute("users list")]
 public sealed class ListUsersRequest : IQuery<ListUsersResponse> { }
 
-// Generator detects IQuery<T> → sets Idempotency.ReadOnly
+// Generator detects IQuery<T> → sets MessageType.Query
 // Generator emits:
 private static readonly CompiledRoute __Route_ListUsers = new CompiledRouteBuilder()
     .WithLiteral("users")
     .WithLiteral("list")
-    .WithIdempotency(Idempotency.ReadOnly)  // Derived from IQuery<T>
+    .WithMessageType(MessageType.Query)  // Derived from IQuery<T>
     .Build();
 ```
 
@@ -1602,16 +1604,16 @@ private static readonly CompiledRoute __Route_ListUsers = new CompiledRouteBuild
 ```csharp
 public class CompiledRouteBuilder
 {
-    private Idempotency _idempotency = Idempotency.NonIdempotent;  // Safe default
+    private MessageType _messageType = MessageType.Command;  // Safe default
     
     // ... existing methods ...
     
     /// <summary>
-    /// Sets the idempotency level for this route.
+    /// Sets the message type for this route.
     /// </summary>
-    public CompiledRouteBuilder WithIdempotency(Idempotency idempotency)
+    public CompiledRouteBuilder WithMessageType(MessageType messageType)
     {
-        _idempotency = idempotency;
+        _messageType = messageType;
         return this;
     }
     
@@ -1622,21 +1624,21 @@ public class CompiledRouteBuilder
             Segments = _segments.ToArray(),
             CatchAllParameterName = _catchAllParameterName,
             Specificity = _specificity,
-            Idempotency = _idempotency  // New property
+            MessageType = _messageType  // New property
         };
     }
 }
 
-public enum Idempotency
+public enum MessageType
 {
-    /// <summary>Read-only operation. Safe to run and retry freely.</summary>
-    ReadOnly,
+    /// <summary>Query operation. No state change - safe to run and retry freely.</summary>
+    Query,
     
-    /// <summary>Idempotent write. Safe to retry on failure.</summary>
-    Idempotent,
+    /// <summary>Command operation. State change, not repeatable - confirm before running, don't auto-retry.</summary>
+    Command,
     
-    /// <summary>Non-idempotent write. Should confirm before running, don't auto-retry.</summary>
-    NonIdempotent
+    /// <summary>Idempotent command. State change but repeatable - safe to retry on failure.</summary>
+    IdempotentCommand
 }
 ```
 
@@ -1669,7 +1671,7 @@ This returns machine-readable JSON metadata about all commands, their parameters
     {
       "pattern": "users list",
       "description": "List all users",
-      "idempotency": "readonly",
+      "messageType": "query",
       "parameters": [],
       "options": [
         { "name": "format", "alias": "f", "type": "string", "required": false, "default": "table" }
@@ -1678,7 +1680,7 @@ This returns machine-readable JSON metadata about all commands, their parameters
     {
       "pattern": "users get {id}",
       "description": "Get user by ID",
-      "idempotency": "readonly",
+      "messageType": "query",
       "parameters": [
         { "name": "id", "type": "string", "required": true }
       ],
@@ -1687,7 +1689,7 @@ This returns machine-readable JSON metadata about all commands, their parameters
     {
       "pattern": "config set {key} {value}",
       "description": "Set configuration value",
-      "idempotency": "idempotent",
+      "messageType": "idempotent-command",
       "parameters": [
         { "name": "key", "type": "string", "required": true },
         { "name": "value", "type": "string", "required": true }
@@ -1697,7 +1699,7 @@ This returns machine-readable JSON metadata about all commands, their parameters
     {
       "pattern": "user create {name}",
       "description": "Create a new user",
-      "idempotency": "non-idempotent",
+      "messageType": "command",
       "parameters": [
         { "name": "name", "type": "string", "required": true }
       ],
@@ -1719,7 +1721,7 @@ app.Map("--capabilities", () =>
 {
     var capabilities = app.GetCapabilities();  // Gathers all route metadata
     Console.WriteLine(JsonSerializer.Serialize(capabilities, JsonSerializerOptions));
-}).ReadOnly().Hidden();  // Read-only, hidden from --help
+}).AsQuery().Hidden();  // Query, hidden from --help
 ```
 
 ### Comparison to Existing Conventions
@@ -1752,8 +1754,8 @@ User: "List all users and create a new one called Alice"
 AI runs: mytool --capabilities
 
 AI thinks:
-  1. "users list" is readonly → run it freely
-  2. "user create Alice" is non-idempotent → ask first
+  1. "users list" is query → run it freely
+  2. "user create Alice" is command → ask first
 
 AI: "I listed the users (found 3). Should I also create user 'Alice'?"
 ```
@@ -1773,7 +1775,7 @@ public sealed class CommandCapability
 {
     public required string Pattern { get; init; }
     public string? Description { get; init; }
-    public required string Idempotency { get; init; }  // "readonly", "idempotent", "non-idempotent"
+    public required string MessageType { get; init; }  // "query", "command", "idempotent-command"
     public required IReadOnlyList<ParameterCapability> Parameters { get; init; }
     public required IReadOnlyList<OptionCapability> Options { get; init; }
 }
@@ -1804,7 +1806,7 @@ public sealed class OptionCapability
 |---------|-------------|
 | **No MCP complexity** | Just a CLI flag, no daemon or protocol |
 | **Self-describing** | CLI describes itself, no external manifest needed |
-| **Idempotency included** | AI knows what's safe to run/retry |
+| **Message type included** | AI knows what's safe to run/retry |
 | **Consistent with conventions** | Like `--help` and `--version` |
 | **Source generator has all info** | Trivial to implement |
 

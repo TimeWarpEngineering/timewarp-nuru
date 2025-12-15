@@ -2,9 +2,9 @@
 
 ## Description
 
-IRequest classes with `[NuruRoute]` attributes auto-register without explicit `Map()` calls. This is the **first releasable phase** - production use case for IRequest-based CLIs with clean, attribute-driven development.
+Request classes with `[NuruRoute]` attributes auto-register without explicit `Map()` calls. This is the **first releasable phase** - production use case for request-based CLIs with clean, attribute-driven development.
 
-**Goal:** Users can decorate IRequest classes with attributes and they auto-register. No `Map()` calls needed.
+**Goal:** Users can decorate request classes (that implement `IRequest`) with attributes and they auto-register. No `Map()` calls needed.
 
 ## Parent
 
@@ -24,8 +24,8 @@ IRequest classes with `[NuruRoute]` attributes auto-register without explicit `M
 - [ ] Ensure thread-safe registration (module initializers run early)
 
 ### Attribute Design
-- [ ] Create `[NuruRoute]` attribute - route pattern on IRequest class
-- [ ] Create `[NuruRouteAlias]` attribute - additional patterns for same IRequest
+- [ ] Create `[NuruRoute]` attribute - route pattern on request class
+- [ ] Create `[NuruRouteAlias]` attribute - additional patterns for same request
 - [ ] Create `[NuruRouteGroup]` attribute - shared prefix and options
 - [ ] Create `[Parameter]` attribute - positional parameter on property/parameter
 - [ ] Create `[Option]` attribute - flag or valued option on property/parameter
@@ -33,8 +33,8 @@ IRequest classes with `[NuruRoute]` attributes auto-register without explicit `M
 
 ### Source Generator
 - [ ] Create or extend generator to find classes with `[NuruRoute]` attribute
-- [ ] Read attributes from IRequest classes
-- [ ] Emit `CompiledRouteBuilder` calls for each attributed IRequest
+- [ ] Read attributes from request classes
+- [ ] Emit `CompiledRouteBuilder` calls for each attributed request
 - [ ] Generate route pattern string for help display
 - [ ] Emit `NuruRouteRegistry.Register<T>()` calls via `[ModuleInitializer]`
 
@@ -46,9 +46,9 @@ IRequest classes with `[NuruRoute]` attributes auto-register without explicit `M
 - [ ] Support `IsCatchAll` on `[Parameter]` attribute
 
 ### Testing
-- [ ] Test simple IRequest with `[NuruRoute]`
-- [ ] Test IRequest with `[Parameter]` attributes
-- [ ] Test IRequest with `[Option]` attributes (flags and valued)
+- [ ] Test simple request with `[NuruRoute]`
+- [ ] Test request with `[Parameter]` attributes
+- [ ] Test request with `[Option]` attributes (flags and valued)
 - [ ] Test `[NuruRouteAlias]` multiple patterns
 - [ ] Test `[NuruRouteGroup]` with shared options
 - [ ] Test default route `[NuruRoute("")]`
@@ -92,7 +92,7 @@ public sealed class DeployRequestHandler : IRequestHandler<DeployRequest, Unit>
 ```
 
 **Notes:**
-- IRequest classes use classes with properties, NOT records or primary constructors
+- Request classes use classes with properties, NOT records or primary constructors
 - `IRequest<Unit>` for side-effect requests, `IRequest<T>` for requests that return results
 - Exit code is automatic: 0 on success, non-zero on exception
 
@@ -120,13 +120,13 @@ internal static class GeneratedRouteRegistration
 ### Why Phase 1 Before Phase 2
 
 Attributed routes are simpler than delegate generation:
-- No IRequest/Handler class generation needed (user provides both)
+- No request/handler class generation needed (user provides both)
 - No delegate body extraction or parameter rewriting
 - Just read attributes -> emit builder calls -> register
 
 ### Releasable
 
-Yes - this phase provides immediate value for IRequest-based CLIs.
+Yes - this phase provides immediate value for request-based CLIs.
 
 ## Clarifying Questions
 
@@ -165,7 +165,7 @@ For `[NuruRouteGroup]`, how should the generator discover group membership?
 
 **Options:**
 - A) Look at base class for `[NuruRouteGroup]` attribute (inheritance-based)
-- B) Each IRequest explicitly declares `[NuruRouteGroup("prefix")]` (explicit membership)
+- B) Each request explicitly declares `[NuruRouteGroup("prefix")]` (explicit membership)
 - C) Both: inherit from base OR declare explicitly
 
 ### 5. Sample Application
@@ -173,6 +173,6 @@ For `[NuruRouteGroup]`, how should the generator discover group membership?
 Should a sample application demonstrating attributed routes be created as part of this task?
 
 **Options:**
-- A) Yes, create `samples/attributed-routes/` with example IRequest classes
+- A) Yes, create `samples/attributed-routes/` with example request classes
 - B) No, add examples to existing samples later
 - C) Add to documentation only

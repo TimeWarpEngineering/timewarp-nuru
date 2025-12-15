@@ -77,7 +77,7 @@ public sealed class CompiledRouteBuilderTests
     const string pattern = "greet {name?}";
     CompiledRoute builderRoute = new CompiledRouteBuilder()
       .WithLiteral("greet")
-      .WithOptionalParameter("name")
+      .WithParameter("name", isOptional: true)
       .Build();
 
     // Act & Assert

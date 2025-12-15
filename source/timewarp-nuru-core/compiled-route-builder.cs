@@ -38,38 +38,31 @@ internal sealed class CompiledRouteBuilder
   }
 
   /// <summary>
-  /// Adds a required positional parameter.
+  /// Adds a positional parameter.
   /// </summary>
-  /// <param name="name">The parameter name (e.g., "name" for {name}).</param>
+  /// <param name="name">The parameter name (e.g., "name" for {name} or {name?}).</param>
   /// <param name="type">Optional type constraint (e.g., "int" for {id:int}).</param>
   /// <param name="description">Optional description for help text.</param>
+  /// <param name="isOptional">True for optional parameters ({name?}), false for required ({name}).</param>
   /// <returns>This builder for method chaining.</returns>
   public CompiledRouteBuilder WithParameter(
     string name,
     string? type = null,
-    string? description = null)
+    string? description = null,
+    bool isOptional = false)
   {
     ArgumentException.ThrowIfNullOrWhiteSpace(name);
-    _segments.Add(new ParameterMatcher(name, isCatchAll: false, type, description, isOptional: false));
-    _specificity += string.IsNullOrEmpty(type) ? SpecificityUntypedParameter : SpecificityTypedParameter;
-    return this;
-  }
+    _segments.Add(new ParameterMatcher(name, isCatchAll: false, type, description, isOptional));
 
-  /// <summary>
-  /// Adds an optional positional parameter.
-  /// </summary>
-  /// <param name="name">The parameter name (e.g., "name" for {name?}).</param>
-  /// <param name="type">Optional type constraint (e.g., "int" for {id?:int}).</param>
-  /// <param name="description">Optional description for help text.</param>
-  /// <returns>This builder for method chaining.</returns>
-  public CompiledRouteBuilder WithOptionalParameter(
-    string name,
-    string? type = null,
-    string? description = null)
-  {
-    ArgumentException.ThrowIfNullOrWhiteSpace(name);
-    _segments.Add(new ParameterMatcher(name, isCatchAll: false, type, description, isOptional: true));
-    _specificity += SpecificityOptionalParameter;
+    if (isOptional)
+    {
+      _specificity += SpecificityOptionalParameter;
+    }
+    else
+    {
+      _specificity += string.IsNullOrEmpty(type) ? SpecificityUntypedParameter : SpecificityTypedParameter;
+    }
+
     return this;
   }
 

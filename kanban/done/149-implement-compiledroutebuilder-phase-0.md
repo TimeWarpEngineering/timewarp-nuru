@@ -72,25 +72,30 @@ Create the internal `CompiledRouteBuilder` class that provides a fluent API for 
 4. **Test-driven** - Tests prove equivalence with parser output
 5. **No runtime behavior changes** - This is infrastructure only
 
-### Builder API Signature (Extended)
+### Builder API Signature (Final)
 
-The `WithOption` method was extended to support all option scenarios:
+The API was consolidated for simplicity:
+- `WithParameter` and `WithOptionalParameter` merged into single `WithParameter` with `isOptional` flag
+- `WithOption` extended to support all option scenarios
 
 ```csharp
 internal sealed class CompiledRouteBuilder
 {
     public CompiledRouteBuilder WithLiteral(string value);
-    public CompiledRouteBuilder WithParameter(string name, string? type = null, string? description = null);
-    public CompiledRouteBuilder WithOptionalParameter(string name, string? type = null, string? description = null);
+    public CompiledRouteBuilder WithParameter(
+        string name, 
+        string? type = null, 
+        string? description = null,
+        bool isOptional = false);           // Consolidated: replaces WithOptionalParameter
     public CompiledRouteBuilder WithOption(
         string longForm,
         string? shortForm = null,
         string? parameterName = null,
         bool expectsValue = false,
-        string? parameterType = null,      // NEW: type constraint for option value
-        bool parameterIsOptional = false,   // NEW: whether option value is optional
+        string? parameterType = null,
+        bool parameterIsOptional = false,
         string? description = null,
-        bool isOptionalFlag = false,        // RENAMED: affects specificity scoring only
+        bool isOptionalFlag = false,
         bool isRepeated = false);
     public CompiledRouteBuilder WithCatchAll(string name, string? type = null, string? description = null);
     public CompiledRoute Build();

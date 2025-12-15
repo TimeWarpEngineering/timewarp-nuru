@@ -1,33 +1,6 @@
 # Open Design Questions
 
-These are unresolved API design questions that need decisions before implementation.
-
----
-
-## 5. String Return Value Semantics
-
-**Should we support `string` returns for direct output?**
-
-```csharp
-// Returns string — what happens?
-app.Map("whoami", () => "steve");
-
-// Option A: Print to stdout
-// Executes: Console.WriteLine("steve")
-
-// Option B: Return as IRequest<string> result
-// Caller handles the result
-
-// Option C: Not supported — must use Console.WriteLine explicitly
-app.Map("whoami", () => { Console.WriteLine("steve"); });
-```
-
-**Considerations:**
-- Option A is convenient for simple cases
-- Option B is more flexible but requires handling
-- Option C is explicit and consistent with side-effect model
-
-**Current convention:** `IRequest<T>` returns a result, exit code is separate. So `string` return would be a result, not automatic output.
+All design questions have been resolved. See decisions below.
 
 ---
 
@@ -173,6 +146,63 @@ public sealed class DeprecatedAttribute : Attribute
 app.Map("secret", handler).Hidden();
 app.Map("old", handler).Deprecated("Use 'new' instead");
 ```
+
+---
+
+### 5. String Return Value Semantics ✅
+
+**Decision:** Option A — keep current auto-print behavior via `ResponseDisplay.Write()`.
+
+**Current behavior (preserved):**
+```csharp
+// ResponseDisplay.Write() handles return values:
+// - Unit → no output
+// - string/primitives → WriteLine directly
+// - Complex objects with custom ToString → use ToString
+// - Complex objects without custom ToString → serialize to JSON
+
+app.Map("whoami", () => "steve");  // prints "steve"
+app.Map("config", () => new Config { Env = "prod" });  // prints {"Env":"prod"}
+```
+
+**Both explicit writes AND return values are allowed:**
+```csharp
+// Multi-step operation with progress output AND structured result
+public ValueTask<DeployResult> Handle(DeployCommand request, CancellationToken ct)
+{
+  Console.WriteLine("Step 1: Validating configuration...");
+  // ...
+  Console.WriteLine("Step 2: Connecting to server...");
+  // ...
+  Console.WriteLine("Step 3: Deploying...");
+  // ...
+  return new ValueTask<DeployResult>(new DeployResult 
+  { 
+    Status = "success", 
+    Version = "1.2.3", 
+    Duration = "12.5s" 
+  });
+}
+// Output:
+// Step 1: Validating configuration...
+// Step 2: Connecting to server...
+// Step 3: Deploying...
+// {"Status":"success","Version":"1.2.3","Duration":"12.5s"}
+```
+
+**Rationale:**
+- **Preserves current behavior** — no breaking change
+- **Multi-step operations** — progress output during execution + structured result at end is a valid pattern
+- **User is in control** — they choose when to write explicitly and what to return
+- **Clear mental model** — explicit writes happen immediately; return value displayed after handler completes
+
+**Generated Command/Handler mapping:**
+| Delegate Return | Generated Command | Output Behavior |
+|-----------------|-------------------|-----------------|
+| `void` | `IRequest<Unit>` | No auto-output |
+| `T` | `IRequest<T>` | Auto-prints result via `ResponseDisplay` |
+| `Task` | `IRequest<Unit>` | No auto-output |
+| `Task<T>` | `IRequest<T>` | Auto-prints result via `ResponseDisplay`
 
 ---
 

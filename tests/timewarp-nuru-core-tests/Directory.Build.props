@@ -1,0 +1,14 @@
+<Project>
+  <!-- Import parent Directory.Build.props -->
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+
+  <ItemGroup>
+    <!-- Include compiled route test helper for this project -->
+    <Compile Include="$(MSBuildThisFileDirectory)compiled-route-test-helper.cs" Link="Shared/compiled-route-test-helper.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Static using for compiled route test helper -->
+    <Using Include="TimeWarp.Nuru.Tests.CompiledRouteTests.CompiledRouteTestHelper" Static="true" />
+  </ItemGroup>
+</Project>

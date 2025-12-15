@@ -35,7 +35,7 @@ Extend the existing `NuruInvokerGenerator` (or create a sibling generator) to em
 - [ ] Create `CompiledRouteBuilder` class in `timewarp-nuru-parsing`
 - [ ] Keep visibility `internal` (public in Phase 4)
 - [ ] Add `[InternalsVisibleTo]` for test project
-- [ ] Implement builder methods: `WithLiteral`, `WithParameter`, `WithOptionalParameter`, `WithOption`, `WithCatchAll`, `Build`
+- [ ] Implement builder methods: `WithLiteral`, `WithParameter(isOptional)`, `WithOption`, `WithCatchAll`, `Build`
 - [ ] Use same specificity constants as existing `Compiler`
 - [ ] Write tests comparing `PatternParser.Parse()` results with builder `.Build()` results
 - [ ] Validate builder produces identical `CompiledRoute` instances

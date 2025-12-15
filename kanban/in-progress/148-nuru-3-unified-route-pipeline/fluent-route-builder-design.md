@@ -533,6 +533,12 @@ var route3 = new CompiledRouteBuilder()
     .WithLiteral("exec")
     .WithCatchAll("args")
     .Build();
+
+// Equivalent to: "greet {name?}"
+var route4 = new CompiledRouteBuilder()
+    .WithLiteral("greet")
+    .WithParameter("name", isOptional: true)
+    .Build();
 ```
 
 ## Consumer API

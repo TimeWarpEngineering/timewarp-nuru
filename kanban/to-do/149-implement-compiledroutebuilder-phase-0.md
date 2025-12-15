@@ -13,9 +13,9 @@ Create the internal `CompiledRouteBuilder` class that provides a fluent API for 
 ## Checklist
 
 ### Implementation
-- [ ] Create `CompiledRouteBuilder.cs` in `source/timewarp-nuru-parsing/parsing/`
+- [ ] Create `CompiledRouteBuilder.cs` in `source/timewarp-nuru-core/`
 - [ ] Keep visibility `internal` (becomes public in Phase 4)
-- [ ] Add `[InternalsVisibleTo("timewarp-nuru-parsing-tests")]` to assembly
+- [ ] Add `[InternalsVisibleTo("timewarp-nuru-core-tests")]` to assembly
 - [ ] Implement `WithLiteral(string value)` - adds literal segment
 - [ ] Implement `WithParameter(string name, string? type, string? description)` - required positional
 - [ ] Implement `WithOptionalParameter(string name, string? type, string? description)` - optional positional
@@ -32,7 +32,7 @@ Create the internal `CompiledRouteBuilder` class that provides a fluent API for 
   - `SpecificityCatchAll = 1`
 
 ### Testing
-- [ ] Create test file `compiled-route-builder-tests.cs` in `tests/timewarp-nuru-parsing-tests/`
+- [ ] Create test file `compiled-route-builder-tests.cs` in `tests/timewarp-nuru-core-tests/`
 - [ ] Test: Simple literal route (`"greet"`)
 - [ ] Test: Literal + parameter (`"greet {name}"`)
 - [ ] Test: Multiple literals (`"git commit"`)
@@ -63,10 +63,11 @@ Create the internal `CompiledRouteBuilder` class that provides a fluent API for 
 
 ### Key Design Decisions
 
-1. **Internal visibility** - Not exposed to consumers until Phase 4
-2. **Parallel code paths** - Existing `Compiler` stays as-is; builder is new code
-3. **Test-driven** - Tests prove equivalence with parser output
-4. **No runtime behavior changes** - This is infrastructure only
+1. **Location: `timewarp-nuru-core`** - The builder is runtime infrastructure, not parsing. The analyzer doesn't need it. Core is where `NuruRouteRegistry` and route registration live.
+2. **Internal visibility** - Not exposed to consumers until Phase 4
+3. **Parallel code paths** - Existing `Compiler` stays as-is; builder is new code
+4. **Test-driven** - Tests prove equivalence with parser output
+5. **No runtime behavior changes** - This is infrastructure only
 
 ### Builder API Signature (from design doc)
 

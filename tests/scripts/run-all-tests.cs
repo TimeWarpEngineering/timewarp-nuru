@@ -342,6 +342,9 @@ List<string> GetTestFiles(string directory)
                   !f.Contains("/bin/", StringComparison.Ordinal) &&
                   !f.EndsWith(".csproj", StringComparison.Ordinal) &&
                   !Path.GetFileName(f).StartsWith("run-", StringComparison.Ordinal) && // Exclude test runners
+                  !Path.GetFileName(f).StartsWith("should-fail-", StringComparison.Ordinal) && // Exclude expected-failure tests
+                  !Path.GetFileName(f).StartsWith("should-pass-", StringComparison.Ordinal) && // Exclude manual validation tests
+                  !Path.GetFileName(f).StartsWith("test-analyzer-", StringComparison.Ordinal) && // Exclude analyzer documentation tests
                   !Path.GetFileName(f).Contains("helper", StringComparison.OrdinalIgnoreCase)) // Exclude helper files
       .Order()
   ];

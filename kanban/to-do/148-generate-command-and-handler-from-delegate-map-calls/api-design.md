@@ -72,26 +72,26 @@ public sealed class AddCommand : IRequest
 
 ---
 
-### `MapDefault(delegate)` / `MapDefault<TCommand>()`
+### Default Routes
 
-Register the default route — invoked when no other route matches.
+Default routes use an empty string pattern `""`. No separate `MapDefault` method — this simplifies source generation.
 
-**Simple delegate:**
+**Delegate:**
 
 ```csharp
-builder.MapDefault(() => Console.WriteLine("Usage: mycli <command>"));
+builder.Map("", () => Console.WriteLine("Usage: mycli <command>"));
 ```
 
 **With Command class:**
 
 ```csharp
-builder.MapDefault<DefaultCommand>();
+builder.Map<HelpCommand>("");
 
-public sealed class DefaultCommand : IRequest
+public sealed class HelpCommand : IRequest
 {
-    public sealed class Handler : IRequestHandler<DefaultCommand>
+    public sealed class Handler : IRequestHandler<HelpCommand>
     {
-        public ValueTask<Unit> Handle(DefaultCommand request, CancellationToken ct)
+        public ValueTask<Unit> Handle(HelpCommand request, CancellationToken ct)
         {
             Console.WriteLine("Usage: mycli <command>");
             return default;
@@ -100,19 +100,19 @@ public sealed class DefaultCommand : IRequest
 }
 ```
 
-**With options pattern (optional):**
+**With options:**
 
-Default routes can still accept options — they just have no required positional parameters:
+Default routes can accept options — they just have no required positional parameters:
 
 ```csharp
 // Delegate with options
-builder.MapDefault("--verbose,-v --format {fmt?}", (bool verbose, string? format) =>
+builder.Map("--verbose,-v --format {fmt?}", (bool verbose, string? format) =>
 {
     ShowHelp(verbose, format);
 });
 
 // Command with options
-builder.MapDefault<HelpCommand>("--verbose,-v --format {fmt?}");
+builder.Map<HelpCommand>("--verbose,-v --format {fmt?}");
 ```
 
 This allows:
@@ -120,6 +120,17 @@ This allows:
 mycli                      # Matches default
 mycli --verbose            # Matches default with option
 mycli --format json        # Matches default with option
+```
+
+**With attributes (Phase 1+):**
+
+```csharp
+[Route("")]  // Empty = default route
+public sealed class HelpCommand : IRequest
+{
+    [Option("--verbose", "-v")]
+    public bool Verbose { get; set; }
+}
 ```
 
 ---

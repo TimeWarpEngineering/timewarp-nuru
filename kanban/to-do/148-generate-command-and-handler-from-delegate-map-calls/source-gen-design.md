@@ -107,43 +107,24 @@ internal sealed class Add_Generated_Handler : IRequestHandler<Add_Generated_Comm
 
 ---
 
-### 2. `MapDefault` Variants
+### 2. Default Routes (Empty Pattern)
 
-**Complexity: LOW-MEDIUM**
+**Complexity: LOW**
 
-#### `MapDefault(delegate)` — No options
-
-```csharp
-builder.MapDefault(() => Console.WriteLine("Usage: mycli <command>"));
-```
-
-**Generation:** Command with no properties.
-
-#### `MapDefault(optionsPattern, delegate)` — With options
+Default routes use empty string `""` as the pattern. No separate `MapDefault` method — this simplifies source generation by treating defaults as regular `Map()` calls.
 
 ```csharp
-builder.MapDefault("--verbose,-v --format {fmt?}", (bool verbose, string? format) => { ... });
+// Default with no options
+builder.Map("", () => Console.WriteLine("Usage: mycli <command>"));
+
+// Default with options
+builder.Map("--verbose,-v", (bool verbose) => ShowHelp(verbose));
+
+// Default with command
+builder.Map<HelpCommand>("");
 ```
 
-**Detection:** First argument is options-only pattern (starts with `--` or contains only options).
-
-**Generation:** Command with properties for options only.
-
-```csharp
-internal sealed class DefaultCommand : IRequest
-{
-    public bool Verbose { get; set; }
-    public string? Format { get; set; }
-}
-```
-
-#### `MapDefault<TCommand>()` — Command class, no options
-
-No generation needed — user provides the Command class.
-
-#### `MapDefault<TCommand>(optionsPattern)` — Command class with options
-
-No generation needed — user provides the Command class. Pattern used for matching only.
+**Generation:** Same as regular `Map()` — pattern happens to be empty or options-only.
 
 ---
 

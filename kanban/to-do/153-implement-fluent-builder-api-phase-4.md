@@ -39,6 +39,8 @@ Expose fluent builder to consumers. Add `MapGroup()` API for delegate-based grou
 - [ ] Implement `WithGroupOptions(Action<CompiledRouteBuilder>)` on group
 - [ ] Support nested groups (prefix accumulation)
 - [ ] Support options accumulation in nested groups
+- [ ] Update help generation to display group structure and group options
+- [ ] Update shell completion to include group options
 
 ### Source Generator Updates
 - [ ] Walk fluent builder expression tree

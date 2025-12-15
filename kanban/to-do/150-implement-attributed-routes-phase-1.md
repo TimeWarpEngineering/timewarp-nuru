@@ -16,6 +16,13 @@ Commands with `[Route]` attributes auto-register without explicit `Map()` calls.
 
 ## Checklist
 
+### NuruRouteRegistry Infrastructure
+- [ ] Create `NuruRouteRegistry` static class for route registration
+- [ ] Implement `Register<TCommand>(CompiledRoute route, string pattern)` method
+- [ ] Store registered routes for lookup by `NuruApp`
+- [ ] Integrate with `IEndpointCollectionBuilder` so registered routes are included
+- [ ] Ensure thread-safe registration (module initializers run early)
+
 ### Attribute Design
 - [ ] Create `[Route]` attribute - route pattern on Command class
 - [ ] Create `[RouteAlias]` attribute - additional patterns for same command
@@ -29,7 +36,7 @@ Commands with `[Route]` attributes auto-register without explicit `Map()` calls.
 - [ ] Read attributes from Command classes
 - [ ] Emit `CompiledRouteBuilder` calls for each attributed Command
 - [ ] Generate route pattern string for help display
-- [ ] Emit auto-registration via `[ModuleInitializer]`
+- [ ] Emit `NuruRouteRegistry.Register<T>()` calls via `[ModuleInitializer]`
 
 ### Attribute Features
 - [ ] Support empty route `[Route("")]` for default route

@@ -851,6 +851,65 @@ return await app.RunAsync();
 | **Validation** | Analyzer can verify attributes match property types |
 | **Discoverability** | Look at any Command to see its route |
 
+### NuruRouteRegistry (Phase 1 Infrastructure)
+
+`NuruRouteRegistry` is a static class that holds routes registered via `[ModuleInitializer]`. It enables auto-registration without explicit `Map()` calls.
+
+```csharp
+/// <summary>
+/// Static registry for routes registered via [ModuleInitializer].
+/// Used by source generator for attributed commands.
+/// </summary>
+public static class NuruRouteRegistry
+{
+    private static readonly ConcurrentDictionary<Type, RegisteredRoute> _routes = new();
+
+    /// <summary>
+    /// Register a route for a command type. Called by generated [ModuleInitializer] code.
+    /// </summary>
+    public static void Register<TCommand>(CompiledRoute route, string pattern)
+        where TCommand : IBaseRequest
+    {
+        _routes[typeof(TCommand)] = new RegisteredRoute(route, pattern, typeof(TCommand));
+    }
+
+    /// <summary>
+    /// Get all registered routes. Called by NuruApp.Build() to include auto-registered routes.
+    /// </summary>
+    public static IEnumerable<RegisteredRoute> GetRegisteredRoutes() => _routes.Values;
+
+    /// <summary>
+    /// Clear registry. Used for testing.
+    /// </summary>
+    internal static void Clear() => _routes.Clear();
+}
+
+public sealed class RegisteredRoute
+{
+    public CompiledRoute Route { get; }
+    public string Pattern { get; }
+    public Type CommandType { get; }
+
+    public RegisteredRoute(CompiledRoute route, string pattern, Type commandType)
+    {
+        Route = route;
+        Pattern = pattern;
+        CommandType = commandType;
+    }
+}
+```
+
+**Integration with NuruApp:**
+
+```csharp
+// In NuruApp.Build() or similar:
+foreach (var registered in NuruRouteRegistry.GetRegisteredRoutes())
+{
+    // Add to endpoint collection alongside explicit Map() routes
+    endpoints.AddRoute(registered.Route, registered.Pattern, registered.CommandType);
+}
+```
+
 ---
 
 ## What Gets Generated (Phase 2+)

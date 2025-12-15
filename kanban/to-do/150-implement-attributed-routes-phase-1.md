@@ -2,9 +2,9 @@
 
 ## Description
 
-Commands with `[NuruRoute]` attributes auto-register without explicit `Map()` calls. This is the **first releasable phase** - production use case for Command-based CLIs with clean, attribute-driven development.
+IRequest classes with `[NuruRoute]` attributes auto-register without explicit `Map()` calls. This is the **first releasable phase** - production use case for IRequest-based CLIs with clean, attribute-driven development.
 
-**Goal:** Users can decorate Command classes with attributes and they auto-register. No `Map()` calls needed.
+**Goal:** Users can decorate IRequest classes with attributes and they auto-register. No `Map()` calls needed.
 
 ## Parent
 
@@ -18,14 +18,14 @@ Commands with `[NuruRoute]` attributes auto-register without explicit `Map()` ca
 
 ### NuruRouteRegistry Infrastructure
 - [ ] Create `NuruRouteRegistry` static class for route registration
-- [ ] Implement `Register<TCommand>(CompiledRoute route, string pattern)` method
+- [ ] Implement `Register<TRequest>(CompiledRoute route, string pattern)` method
 - [ ] Store registered routes for lookup by `NuruApp`
 - [ ] Integrate with `IEndpointCollectionBuilder` so registered routes are included
 - [ ] Ensure thread-safe registration (module initializers run early)
 
 ### Attribute Design
-- [ ] Create `[NuruRoute]` attribute - route pattern on Command class
-- [ ] Create `[NuruRouteAlias]` attribute - additional patterns for same command
+- [ ] Create `[NuruRoute]` attribute - route pattern on IRequest class
+- [ ] Create `[NuruRouteAlias]` attribute - additional patterns for same IRequest
 - [ ] Create `[NuruRouteGroup]` attribute - shared prefix and options
 - [ ] Create `[Parameter]` attribute - positional parameter on property/parameter
 - [ ] Create `[Option]` attribute - flag or valued option on property/parameter
@@ -33,8 +33,8 @@ Commands with `[NuruRoute]` attributes auto-register without explicit `Map()` ca
 
 ### Source Generator
 - [ ] Create or extend generator to find classes with `[NuruRoute]` attribute
-- [ ] Read attributes from Command classes
-- [ ] Emit `CompiledRouteBuilder` calls for each attributed Command
+- [ ] Read attributes from IRequest classes
+- [ ] Emit `CompiledRouteBuilder` calls for each attributed IRequest
 - [ ] Generate route pattern string for help display
 - [ ] Emit `NuruRouteRegistry.Register<T>()` calls via `[ModuleInitializer]`
 
@@ -46,9 +46,9 @@ Commands with `[NuruRoute]` attributes auto-register without explicit `Map()` ca
 - [ ] Support `IsCatchAll` on `[Parameter]` attribute
 
 ### Testing
-- [ ] Test simple command with `[NuruRoute]`
-- [ ] Test command with `[Parameter]` attributes
-- [ ] Test command with `[Option]` attributes (flags and valued)
+- [ ] Test simple IRequest with `[NuruRoute]`
+- [ ] Test IRequest with `[Parameter]` attributes
+- [ ] Test IRequest with `[Option]` attributes (flags and valued)
 - [ ] Test `[NuruRouteAlias]` multiple patterns
 - [ ] Test `[NuruRouteGroup]` with shared options
 - [ ] Test default route `[NuruRoute("")]`
@@ -59,14 +59,14 @@ Commands with `[NuruRoute]` attributes auto-register without explicit `Map()` ca
 
 ### Reference
 
-- **Design doc:** `kanban/to-do/148-generate-command-and-handler-from-delegate-map-calls/fluent-route-builder-design.md` (lines 610-833)
+- **Design doc:** `kanban/in-progress/148-nuru-3-unified-route-pipeline/fluent-route-builder-design.md` (lines 610-833)
 
 ### Example Usage
 
 ```csharp
 // User writes - no Map() call needed!
 [NuruRoute("deploy", Description = "Deploy to an environment")]
-public sealed class DeployCommand : IRequest<Unit>  // Unit = no result (side-effect only)
+public sealed class DeployRequest : IRequest<Unit>  // Unit = no result (side-effect only)
 {
     [Parameter(Description = "Target environment")]
     public string Env { get; set; } = string.Empty;
@@ -78,9 +78,9 @@ public sealed class DeployCommand : IRequest<Unit>  // Unit = no result (side-ef
     public string? ConfigFile { get; set; }
 }
 
-public sealed class DeployCommandHandler : IRequestHandler<DeployCommand, Unit>
+public sealed class DeployRequestHandler : IRequestHandler<DeployRequest, Unit>
 {
-    public Task<Unit> Handle(DeployCommand request, CancellationToken ct) 
+    public Task<Unit> Handle(DeployRequest request, CancellationToken ct) 
     {
         // Do deployment...
         return Unit.Task;  // Exit code 0 on success, non-zero on exception
@@ -92,15 +92,15 @@ public sealed class DeployCommandHandler : IRequestHandler<DeployCommand, Unit>
 ```
 
 **Notes:**
-- Commands use classes with properties, NOT records or primary constructors
-- `IRequest<Unit>` for side-effect commands, `IRequest<T>` for commands that return results
+- IRequest classes use classes with properties, NOT records or primary constructors
+- `IRequest<Unit>` for side-effect requests, `IRequest<T>` for requests that return results
 - Exit code is automatic: 0 on success, non-zero on exception
 
 ### Generated Output
 
 ```csharp
 // Source generator emits:
-private static readonly CompiledRoute __Route_DeployCommand = new CompiledRouteBuilder()
+private static readonly CompiledRoute __Route_DeployRequest = new CompiledRouteBuilder()
     .WithLiteral("deploy")
     .WithParameter("env")
     .WithOption("force", shortForm: "f")
@@ -112,7 +112,7 @@ internal static class GeneratedRouteRegistration
     [ModuleInitializer]
     public static void Register()
     {
-        NuruRouteRegistry.Register<DeployCommand>(__Route_DeployCommand, "deploy {env} --force,-f --config,-c {configFile?}");
+        NuruRouteRegistry.Register<DeployRequest>(__Route_DeployRequest, "deploy {env} --force,-f --config,-c {configFile?}");
     }
 }
 ```
@@ -120,13 +120,13 @@ internal static class GeneratedRouteRegistration
 ### Why Phase 1 Before Phase 2
 
 Attributed routes are simpler than delegate generation:
-- No Command/Handler class generation needed (user provides both)
+- No IRequest/Handler class generation needed (user provides both)
 - No delegate body extraction or parameter rewriting
 - Just read attributes -> emit builder calls -> register
 
 ### Releasable
 
-Yes - this phase provides immediate value for Command-based CLIs.
+Yes - this phase provides immediate value for IRequest-based CLIs.
 
 ## Clarifying Questions
 
@@ -155,8 +155,8 @@ The design doc shows `[Option("--force", "-f")]` with dashes. Should users inclu
 The design references `IBaseRequest`, but the codebase uses `IRequest` and `IRequest<T>`. Which interface should the `NuruRouteRegistry.Register<T>()` constraint use?
 
 **Options:**
-- A) `where TCommand : IBaseRequest` (MediatR's common base for both)
-- B) No constraint (just `where TCommand : class`)
+- A) `where TRequest : IBaseRequest` (MediatR's common base for both)
+- B) No constraint (just `where TRequest : class`)
 - C) Two overloads: one for `IRequest`, one for `IRequest<T>`
 
 ### 4. Group Inheritance Mechanism
@@ -165,7 +165,7 @@ For `[NuruRouteGroup]`, how should the generator discover group membership?
 
 **Options:**
 - A) Look at base class for `[NuruRouteGroup]` attribute (inheritance-based)
-- B) Each command explicitly declares `[NuruRouteGroup("prefix")]` (explicit membership)
+- B) Each IRequest explicitly declares `[NuruRouteGroup("prefix")]` (explicit membership)
 - C) Both: inherit from base OR declare explicitly
 
 ### 5. Sample Application
@@ -173,6 +173,6 @@ For `[NuruRouteGroup]`, how should the generator discover group membership?
 Should a sample application demonstrating attributed routes be created as part of this task?
 
 **Options:**
-- A) Yes, create `samples/attributed-routes/` with example commands
+- A) Yes, create `samples/attributed-routes/` with example IRequest classes
 - B) No, add examples to existing samples later
 - C) Add to documentation only

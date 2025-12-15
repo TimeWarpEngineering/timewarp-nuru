@@ -40,6 +40,12 @@ Request classes with `[NuruRoute]` attributes auto-register without explicit `Ma
 - [ ] Generate route pattern string for help display
 - [ ] Emit `NuruRouteRegistry.Register<T>()` calls via `[ModuleInitializer]`
 
+### MessageType Detection (from Task 156)
+- [ ] Detect `IQuery<T>` on request class → set `MessageType.Query` via `WithMessageType()`
+- [ ] Detect `ICommand<T>` on request class → set `MessageType.Command` via `WithMessageType()`
+- [ ] Detect `ICommand<T>` + `IIdempotent` → set `MessageType.IdempotentCommand` via `WithMessageType()`
+- [ ] Test source generator correctly derives MessageType from interfaces
+
 ### Attribute Features
 - [ ] Support empty route `[NuruRoute("")]` for default route
 - [ ] Support nested literals `[NuruRoute("docker compose up")]`
@@ -205,7 +211,7 @@ public static void Register<TRequest>(CompiledRoute route, string pattern, strin
 
 `IMessage` is the base interface in Martin Mediator for all message types (`IBaseRequest`, `IBaseCommand`, `IBaseQuery`). If something doesn't implement `IMessage`, it's not a valid message to register as a route.
 
-**Note on Query/Command Distinction:** The current design (string syntax, fluent API, attributes) does not distinguish between `IBaseQuery` (read operations), `IBaseCommand` (write operations), and `IBaseRequest`. This is a known design gap that affects all three syntaxes. For Phase 1, everything is treated as an `IMessage`. The query/command distinction should be addressed holistically in a future task, potentially connected to Task 142 (WASI/MCP investigation) where this schema information becomes important.
+**Note on Query/Command Distinction:** ~~The current design (string syntax, fluent API, attributes) does not distinguish between `IBaseQuery` (read operations), `IBaseCommand` (write operations), and `IBaseRequest`.~~ **Resolved by Task 156:** `MessageType` enum and `IIdempotent` marker interface are now implemented. The source generator should detect `IQuery<T>`, `ICommand<T>`, and `IIdempotent` interfaces to automatically set `MessageType` on routes. See "MessageType Detection" checklist section above.
 
 ### 4. Group Inheritance Mechanism
 

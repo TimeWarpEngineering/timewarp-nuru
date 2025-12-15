@@ -45,9 +45,7 @@ Command as default (safe choice - AI will be cautious).
 - [x] Add `.AsIdempotentCommand()` method via `RouteConfigurator`
 
 ### Implementation - Type System Derivation
-- [ ] Source generator detects `IQuery<T>` → sets `MessageType.Query`
-- [ ] Source generator detects `ICommand<T>` → sets `MessageType.Command`
-- [ ] Source generator detects `ICommand<T>, IIdempotent` → sets `MessageType.IdempotentCommand`
+- [x] **Moved to Task 151** - Source generator detection of `IQuery<T>`, `ICommand<T>`, and `IIdempotent` interfaces belongs in the delegate generation phase where source generator infrastructure lives
 
 ### Implementation - Help Output
 - [x] Display message type indicator in `--help` output: `(Q)`, `(C)`, `(I)`
@@ -56,7 +54,7 @@ Command as default (safe choice - AI will be cautious).
 ### Testing
 - [x] Unit tests for `MessageType` enum
 - [x] Unit tests for fluent API methods
-- [ ] Unit tests for source generator derivation
+- [x] **Moved to Task 151** - Unit tests for source generator derivation
 - [x] Integration tests for help output
 
 ## Notes
@@ -123,3 +121,31 @@ public enum MessageType
     IdempotentCommand
 }
 ```
+
+## Results
+
+### Implementation Complete
+
+**Files Created:**
+- `source/timewarp-nuru-parsing/message-type.cs` - MessageType enum
+- `source/timewarp-nuru-core/iidempotent.cs` - IIdempotent marker interface
+- `source/timewarp-nuru-core/route-configurator.cs` - Fluent API configurator
+- `tests/timewarp-nuru-core-tests/message-type-01-fluent-api.cs` - 7 passing tests
+- `tests/timewarp-nuru-core-tests/message-type-02-help-output.cs` - 6 passing tests
+
+**Files Modified:**
+- `compiled-route-builder.cs` - Added `WithMessageType()` method
+- `compiled-route.cs` - Added `MessageType` property (defaults to `Command`)
+- `endpoint.cs` - Added `MessageType` property
+- `help-provider.cs` - Added indicators `(Q)`, `(C)`, `(I)` with color coding and legend
+- `nuru-core-app-builder.routes.cs` - `Map()` returns `RouteConfigurator`
+- `nuru-app-builder.overrides.cs` - Removed obsolete covariant override methods
+
+**Key Design Decisions:**
+- `RouteConfigurator` enables fluent chaining: `app.Map(...).AsQuery()`
+- Implicit conversion from `RouteConfigurator` to `NuruCoreAppBuilder` maintains backward compatibility
+- Default is `Command` (safest choice for AI agents)
+- Help output: Query=Blue `(Q)`, IdempotentCommand=Yellow `(I)`, Command=Red `(C)`
+
+**Deferred to Task 151:**
+Source generator detection of `IQuery<T>`, `ICommand<T>`, and `IIdempotent` interfaces for automatic MessageType derivation in attributed routes.

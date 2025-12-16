@@ -34,6 +34,7 @@
     <Using Include="TimeWarp.Nuru" />
     <Using Include="Microsoft.Extensions.Logging" />
     <Using Include="Mediator" />
+    <Using Include="System.Runtime.CompilerServices" />
   </ItemGroup>
 
   <ItemGroup>

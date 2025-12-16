@@ -6,7 +6,60 @@ namespace TimeWarp.Nuru;
 public static class NuruCoreAppExtensions
 {
   // ============================================================================
-  // RouteConfigurator overloads - enable fluent chaining after Map() calls
+  // RouteConfigurator<TBuilder> overloads - preserve builder type in fluent chain
+  // ============================================================================
+
+  /// <summary>
+  /// Adds REPL support to application (generic RouteConfigurator overload for fluent chaining).
+  /// </summary>
+  /// <typeparam name="TBuilder">The builder type for proper fluent chaining.</typeparam>
+  /// <param name="configurator">The RouteConfigurator from a Map() call.</param>
+  /// <param name="configureOptions">Optional action to configure REPL options.</param>
+  /// <returns>The underlying builder for chaining.</returns>
+  public static TBuilder AddReplSupport<TBuilder>
+  (
+    this RouteConfigurator<TBuilder> configurator,
+    Action<ReplOptions>? configureOptions = null
+  )
+    where TBuilder : NuruCoreAppBuilder
+  {
+    ArgumentNullException.ThrowIfNull(configurator);
+    return configurator.Builder.AddReplSupport(configureOptions);
+  }
+
+  /// <summary>
+  /// Adds REPL command routes to application (generic RouteConfigurator overload for fluent chaining).
+  /// </summary>
+  /// <typeparam name="TBuilder">The builder type for proper fluent chaining.</typeparam>
+  /// <param name="configurator">The RouteConfigurator from a Map() call.</param>
+  /// <returns>The underlying builder for chaining.</returns>
+  public static TBuilder AddReplRoutes<TBuilder>(this RouteConfigurator<TBuilder> configurator)
+    where TBuilder : NuruCoreAppBuilder
+  {
+    ArgumentNullException.ThrowIfNull(configurator);
+    return configurator.Builder.AddReplRoutes();
+  }
+
+  /// <summary>
+  /// Adds an interactive mode route (generic RouteConfigurator overload for fluent chaining).
+  /// </summary>
+  /// <typeparam name="TBuilder">The builder type for proper fluent chaining.</typeparam>
+  /// <param name="configurator">The RouteConfigurator from a Map() call.</param>
+  /// <param name="patterns">Route patterns to trigger interactive mode.</param>
+  /// <returns>The underlying builder for chaining.</returns>
+  public static TBuilder AddInteractiveRoute<TBuilder>
+  (
+    this RouteConfigurator<TBuilder> configurator,
+    string patterns = "--interactive,-i"
+  )
+    where TBuilder : NuruCoreAppBuilder
+  {
+    ArgumentNullException.ThrowIfNull(configurator);
+    return configurator.Builder.AddInteractiveRoute(patterns);
+  }
+
+  // ============================================================================
+  // RouteConfigurator overloads (non-generic) - backward compatibility
   // ============================================================================
 
   /// <summary>

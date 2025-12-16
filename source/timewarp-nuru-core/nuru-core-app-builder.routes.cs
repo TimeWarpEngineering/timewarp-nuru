@@ -162,6 +162,61 @@ public partial class NuruCoreAppBuilder
     return this;
   }
 
+  // Internal methods for creating RouteConfigurator<TBuilder> - used by extension methods
+  internal RouteConfigurator<TBuilder> MapInternalTyped<TBuilder>(string pattern, Delegate handler, string? description)
+    where TBuilder : NuruCoreAppBuilder
+  {
+    ArgumentNullException.ThrowIfNull(handler);
+
+    // Log route registration if logger is available
+    if (LoggerFactory is not null)
+    {
+      ILogger<NuruCoreAppBuilder> logger = LoggerFactory.CreateLogger<NuruCoreAppBuilder>();
+      if (EndpointCollection.Count == 0)
+      {
+        ParsingLoggerMessages.StartingRouteRegistration(logger, null);
+      }
+
+      ParsingLoggerMessages.RegisteringRoute(logger, pattern, null);
+    }
+
+    Endpoint endpoint = new()
+    {
+      RoutePattern = pattern,
+      CompiledRoute = PatternParser.Parse(pattern, LoggerFactory),
+      Handler = handler,
+      Method = handler.Method,
+      Description = description
+    };
+
+    EndpointCollection.Add(endpoint);
+    return new RouteConfigurator<TBuilder>((TBuilder)this, endpoint);
+  }
+
+  internal RouteConfigurator<TBuilder> MapMediatorTyped<TBuilder>(
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+    Type commandType,
+    string pattern,
+    string? description)
+    where TBuilder : NuruCoreAppBuilder
+  {
+    if (ServiceCollection is null)
+    {
+      throw new InvalidOperationException("Dependency injection must be added before using Mediator commands. Call AddDependencyInjection() first.");
+    }
+
+    Endpoint endpoint = new()
+    {
+      RoutePattern = pattern,
+      CompiledRoute = PatternParser.Parse(pattern, LoggerFactory),
+      Description = description,
+      CommandType = commandType
+    };
+
+    EndpointCollection.Add(endpoint);
+    return new RouteConfigurator<TBuilder>((TBuilder)this, endpoint);
+  }
+
   private RouteConfigurator MapMediator(
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
     Type commandType,

@@ -18,6 +18,13 @@ Extend the existing `NuruInvokerGenerator` (or create a sibling generator) to em
 - `api-design.md` — Consumer-facing route registration API
 - `source-gen-design.md` — Source generator implementation details
 
+## Related Tasks
+
+- **Task 158**: Fix Fluent API Breakage with IBuilder Pattern
+  - Task 156 (MessageType metadata) broke fluent chaining by returning `RouteConfigurator` instead of `TBuilder`
+  - Implementing `IBuilder<TParent>` pattern from `TimeWarp.FluentBuilder`
+  - Critical for Developer Experience - must be resolved before Phase 4
+
 ## Phased Implementation Plan
 
 | Phase | Name | Description | Releasable? |
@@ -60,6 +67,7 @@ Extend the existing `NuruInvokerGenerator` (or create a sibling generator) to em
 - [ ] Single code path for `CompiledRoute` construction
 
 ### Phase 4: Fluent Builder API
+- [ ] **Prerequisite: Complete Task 158** (Fix Fluent API with IBuilder pattern)
 - [ ] Make `CompiledRouteBuilder` public
 - [ ] Add `Map(Action<CompiledRouteBuilder>, Delegate)` overload
 - [ ] Add `MapGroup()` API with fluent chain constraint

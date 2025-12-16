@@ -200,10 +200,108 @@ Some test files have additional `#:project` directives (e.g., REPL tests referen
 
 **Recommendation:** Option B or C - keep existing script for backward compatibility.
 
+## Jaribu Multi-Mode API Reference
+
+The following APIs from `TimeWarp.Jaribu.TestRunner` are used for multi-mode:
+
+### Registration API
+```csharp
+/// <summary>
+/// Registers a test class for batch execution with RunAllTests().
+/// </summary>
+public static void RegisterTests<T>()
+
+/// <summary>
+/// Clears all registered test classes.
+/// </summary>
+public static void ClearRegisteredTests()
+```
+
+### Execution API
+```csharp
+/// <summary>
+/// Runs all registered test classes and returns an exit code.
+/// </summary>
+/// <returns>Exit code: 0 if all tests passed, 1 if any tests failed.</returns>
+public static async Task<int> RunAllTests(bool? clearCache = null, string? filterTag = null)
+
+/// <summary>
+/// Runs all registered test classes and returns aggregated results.
+/// </summary>
+public static async Task<TestSuiteSummary> RunAllTestsWithResults(bool? clearCache = null, string? filterTag = null)
+```
+
+### Result Types
+```csharp
+public enum TestOutcome { Passed, Failed, Skipped }
+
+public record TestResult(
+    string TestName,
+    TestOutcome Outcome,
+    TimeSpan Duration,
+    string? FailureMessage,
+    string? StackTrace,
+    IReadOnlyList<object?>? Parameters
+);
+
+public record TestRunSummary(
+    string ClassName,
+    DateTimeOffset StartTime,
+    TimeSpan TotalDuration,
+    int PassedCount,
+    int FailedCount,
+    int SkippedCount,
+    IReadOnlyList<TestResult> Results
+)
+{
+    public int TotalTests => PassedCount + FailedCount + SkippedCount;
+    public bool Success => FailedCount == 0;
+}
+
+public record TestSuiteSummary(
+    DateTimeOffset StartTime,
+    TimeSpan TotalDuration,
+    int TotalTests,
+    int PassedCount,
+    int FailedCount,
+    int SkippedCount,
+    IReadOnlyList<TestRunSummary> ClassResults
+)
+{
+    public bool Success => FailedCount == 0;
+}
+```
+
+### How Multi-Mode Works
+
+1. **Standalone mode** (`dotnet file.cs`):
+   - `JARIBU_MULTI` is NOT defined
+   - The `#if !JARIBU_MULTI` block executes `return await RunAllTests();`
+   - The `[ModuleInitializer]` still runs, registering the test class
+   - `RunAllTests()` executes all registered tests (just this one class)
+
+2. **Multi mode** (via orchestrator):
+   - `JARIBU_MULTI` IS defined via `Directory.Build.props`
+   - The `#if !JARIBU_MULTI` block is skipped (no self-execution)
+   - The `[ModuleInitializer]` runs for all included files, registering all test classes
+   - The orchestrator's `return await RunAllTests();` executes all registered tests
+
+### Required Using Statements
+The `tests/Directory.Build.props` already has:
+```xml
+<Using Include="TimeWarp.Jaribu" />
+<Using Include="TimeWarp.Jaribu.TestRunner" Static="true" />
+```
+
+Need to add:
+```xml
+<Using Include="System.Runtime.CompilerServices" />
+```
+
 ## Notes
 
 - Helper files (no test classes) don't need `[ModuleInitializer]`
 - Individual test files remain runnable standalone for debugging
 - Single orchestrator chosen over per-category for simplicity
 - Expected result: Test execution time reduced from ~15 minutes to ~10-30 seconds
-- Reference implementation: TimeWarp.Jaribu's own test suite uses this pattern
+- Reference implementation: TimeWarp.Jaribu's own test suite at `/home/steventcramer/worktrees/github.com/TimeWarpEngineering/timewarp-jaribu/Cramer-2025-12-17-dev`

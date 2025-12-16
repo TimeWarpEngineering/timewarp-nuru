@@ -40,16 +40,15 @@ tests/ci-tests/
     <DefineConstants>$(DefineConstants);JARIBU_MULTI</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
-    <!-- All test files from all categories -->
-    <Compile Include="../timewarp-nuru-analyzers-tests/auto/*.cs" />
-    <Compile Include="../timewarp-nuru-core-tests/*.cs" Exclude="../timewarp-nuru-core-tests/*helper*.cs" />
-    <Compile Include="../timewarp-nuru-tests/**/*.cs" Exclude="../timewarp-nuru-tests/**/*helper*.cs" />
-    <Compile Include="../timewarp-nuru-completion-tests/**/*.cs" Exclude="../timewarp-nuru-completion-tests/**/*helper*.cs" />
-    <Compile Include="../timewarp-nuru-repl-tests/**/*.cs" Exclude="../timewarp-nuru-repl-tests/**/*helper*.cs" />
-    <Compile Include="../timewarp-nuru-mcp-tests/*.cs" />
+    <!-- Test files will be added here as they are migrated to multi-mode pattern -->
+    <!-- Example (do not add until files are migrated):
+    <Compile Include="../timewarp-nuru-tests/lexer/*.cs" Exclude="../timewarp-nuru-tests/lexer/*helper*.cs" />
+    -->
   </ItemGroup>
 </Project>
 ```
+
+**Note:** Do NOT include any test files yet. Files will be added to this ItemGroup as each category is migrated in subsequent tasks.
 
 ### 4. Create tests/ci-tests/run-ci-tests.cs
 
@@ -75,6 +74,7 @@ This is Phase 1 of [task 164](../in-progress/164-migrate-tests-to-jaribu-multi-m
 
 ## Notes
 
-- The orchestrator will initially show "No test classes registered" until test files are migrated (task 164 Phase 2)
-- Helper files are excluded via `*helper*.cs` pattern to avoid compilation conflicts
+- The orchestrator will show "No test classes registered" until test files are migrated in subsequent tasks
+- Do NOT add any test file includes yet - files are added as each category is migrated
+- Helper files will be excluded via `*helper*.cs` pattern when includes are added
 - All project references are included in the orchestrator to support tests across all categories

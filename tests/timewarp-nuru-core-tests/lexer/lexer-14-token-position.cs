@@ -1,11 +1,15 @@
 #!/usr/bin/dotnet --
 
-return await RunTests<TokenPositionTests>();
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
 
 [TestTag("Lexer")]
-[ClearRunfileCache]
 public class TokenPositionTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<TokenPositionTests>();
+
   /// <summary>
   /// Test 1: Token start positions should accurately reflect location in input string
   /// Validates Position property for all token types

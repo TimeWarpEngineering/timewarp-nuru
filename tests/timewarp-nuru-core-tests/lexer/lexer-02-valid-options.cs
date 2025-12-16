@@ -1,10 +1,15 @@
 #!/usr/bin/dotnet --
 
-return await RunTests<ValidOptionsTests>();
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
 
 [TestTag("Lexer")]
 public class ValidOptionsTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<ValidOptionsTests>();
+
   // Long options (with compound identifiers)
   [Input("--dry-run", "dry-run")]
   [Input("--no-edit", "no-edit")]

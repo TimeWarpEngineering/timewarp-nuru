@@ -1,10 +1,15 @@
 #!/usr/bin/dotnet --
 
-return await RunTests<WhitespaceHandlingTests>();
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
 
 [TestTag("Lexer")]
 public class WhitespaceHandlingTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<WhitespaceHandlingTests>();
+
   // All whitespace variations should produce identical token sequences
   [Input("git log")]          // single space
   [Input("git   log")]         // multiple spaces

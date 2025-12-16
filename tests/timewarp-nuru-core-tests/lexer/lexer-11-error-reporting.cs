@@ -1,10 +1,15 @@
 #!/usr/bin/dotnet --
 
-return await RunTests<ErrorReportingTests>();
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
 
 [TestTag("Lexer")]
 public class ErrorReportingTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<ErrorReportingTests>();
+
   /// <summary>
   /// Test 1: Invalid tokens should include accurate position information
   /// Position tracking is essential for providing helpful error messages to users

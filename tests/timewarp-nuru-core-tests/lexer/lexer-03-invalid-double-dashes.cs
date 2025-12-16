@@ -1,10 +1,15 @@
 #!/usr/bin/dotnet --
 
-return await RunTests<InvalidDoubleDashesTests>();
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
 
 [TestTag("Lexer")]
 public class InvalidDoubleDashesTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<InvalidDoubleDashesTests>();
+
   // Double dashes embedded within identifiers are invalid
   [Input("test--case")]
   [Input("foo--bar--baz")]

@@ -1,10 +1,15 @@
 #!/usr/bin/dotnet --
 
-return await RunTests<EdgeCasesTests>();
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
 
 [TestTag("Lexer")]
 public class EdgeCasesTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<EdgeCasesTests>();
+
   /// <summary>
   /// Test 1: Empty string should produce only EndOfInput token
   /// This validates lexer handles minimal input correctly

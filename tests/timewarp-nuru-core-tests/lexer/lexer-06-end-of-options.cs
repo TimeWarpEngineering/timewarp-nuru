@@ -1,10 +1,15 @@
 #!/usr/bin/dotnet --
 
-return await RunTests<EndOfOptionsTests>();
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
 
 [TestTag("Lexer")]
 public class EndOfOptionsTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<EndOfOptionsTests>();
+
   public static async Task Should_tokenize_end_of_options_after_commands()
   {
     // Arrange

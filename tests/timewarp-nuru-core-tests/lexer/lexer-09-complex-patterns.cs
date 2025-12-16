@@ -1,10 +1,15 @@
 #!/usr/bin/dotnet --
 
-return await RunTests<ComplexPatternsTests>();
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
 
 [TestTag("Lexer")]
 public class ComplexPatternsTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<ComplexPatternsTests>();
+
   public static async Task Should_tokenize_deploy_pattern_with_option()
   {
     // Arrange

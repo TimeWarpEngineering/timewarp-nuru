@@ -1,11 +1,15 @@
 #!/usr/bin/dotnet --
 
-return await RunTests<DescriptionTokenizationTests>();
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
 
 [TestTag("Lexer")]
-[ClearRunfileCache]
 public class DescriptionTokenizationTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<DescriptionTokenizationTests>();
+
   /// <summary>
   /// Test 1: Simple description after pipe character
   /// Validates lexer continues normal tokenization after pipe

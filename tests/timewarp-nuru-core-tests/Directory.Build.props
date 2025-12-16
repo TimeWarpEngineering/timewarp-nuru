@@ -5,10 +5,14 @@
   <ItemGroup>
     <!-- Include compiled route test helper for this project -->
     <Compile Include="$(MSBuildThisFileDirectory)compiled-route-test-helper.cs" Link="Shared/compiled-route-test-helper.cs" />
+    <!-- Include lexer test helper for this project -->
+    <Compile Include="$(MSBuildThisFileDirectory)lexer/lexer-test-helper.cs" Link="Shared/lexer-test-helper.cs" />
   </ItemGroup>
 
   <ItemGroup>
     <!-- Static using for compiled route test helper -->
     <Using Include="TimeWarp.Nuru.Tests.CompiledRouteTests.CompiledRouteTestHelper" Static="true" />
+    <!-- Static using for lexer test helper -->
+    <Using Include="TimeWarp.Nuru.Tests.LexerTests.LexerTestHelper" Static="true" />
   </ItemGroup>
 </Project>

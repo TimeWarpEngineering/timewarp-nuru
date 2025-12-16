@@ -1,10 +1,15 @@
 #!/usr/bin/dotnet --
 
-return await RunTests<InvalidAngleBracketsTests>();
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
 
 [TestTag("Lexer")]
 public class InvalidAngleBracketsTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<InvalidAngleBracketsTests>();
+
   public static async Task Should_reject_angle_brackets_after_identifier()
   {
     // Arrange

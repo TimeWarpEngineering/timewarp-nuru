@@ -1,10 +1,15 @@
 #!/usr/bin/dotnet --
 
-return await RunTests<InvalidTrailingDashesTests>();
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
 
 [TestTag("Lexer")]
 public class InvalidTrailingDashesTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<InvalidTrailingDashesTests>();
+
   // Trailing dashes indicate incomplete/malformed identifiers
   [Input("test-")]
   [Input("test--")]

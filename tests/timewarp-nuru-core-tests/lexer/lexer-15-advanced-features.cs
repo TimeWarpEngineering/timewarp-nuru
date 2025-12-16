@@ -1,10 +1,15 @@
 #!/usr/bin/dotnet --
 
-return await RunTests<AdvancedFeaturesTests>();
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
 
 [TestTag("Lexer")]
 public class AdvancedFeaturesTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<AdvancedFeaturesTests>();
+
     /// <summary>
     /// Tests parameter descriptions using internal pipe: {env|Environment}
     /// Validates lexer tokenizes pipe inside braces as Identifier | Identifier

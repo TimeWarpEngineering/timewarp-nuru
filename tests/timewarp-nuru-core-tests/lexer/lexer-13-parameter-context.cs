@@ -1,11 +1,15 @@
 #!/usr/bin/dotnet --
 
-return await RunTests<ParameterContextTests>();
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
 
 [TestTag("Lexer")]
-[ClearRunfileCache]
 public class ParameterContextTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<ParameterContextTests>();
+
   /// <summary>
   /// Test 1: Simple parameter inside braces
   /// Baseline test validating basic parameter tokenization

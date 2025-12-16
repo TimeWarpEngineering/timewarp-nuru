@@ -1,10 +1,15 @@
 #!/usr/bin/dotnet --
 
-return await RunTests<MultiCharShortOptionsTests>();
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
 
 [TestTag("Lexer")]
 public class MultiCharShortOptionsTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<MultiCharShortOptionsTests>();
+
   // Multi-character short options (real-world patterns like dotnet -bl)
   [Input("-test", "test")]
   [Input("-bl", "bl")]

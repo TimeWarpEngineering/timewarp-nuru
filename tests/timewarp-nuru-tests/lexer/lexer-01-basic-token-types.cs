@@ -1,11 +1,15 @@
 #!/usr/bin/dotnet --
 
-return await RunTests<BasicTokenTypesTests>();
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
 
 [TestTag("Lexer")]
-[ClearRunfileCache]
 public class BasicTokenTypesTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<BasicTokenTypesTests>();
+
   // Plain identifiers
   [Input("status")]
   [Input("version")]

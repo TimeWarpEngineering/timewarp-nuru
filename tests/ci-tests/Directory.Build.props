@@ -3,4 +3,11 @@
   <PropertyGroup>
     <DefineConstants>$(DefineConstants);JARIBU_MULTI</DefineConstants>
   </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../timewarp-nuru-tests/lexer/lexer-test-helper.cs" />
+    <Compile Include="../timewarp-nuru-tests/lexer/lexer-01-basic-token-types.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Using Include="TimeWarp.Nuru.Tests.LexerTests.LexerTestHelper" Static="true" />
+  </ItemGroup>
 </Project>

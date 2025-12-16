@@ -19,6 +19,7 @@ global using System.Reflection;
 global using System.Text;
 global using System.Text.Json;
 global using System.Text.Json.Serialization;
+global using System.Runtime.CompilerServices;
 global using System.Text.RegularExpressions;
 // TimeWarp namespaces
 global using TimeWarp.Nuru;

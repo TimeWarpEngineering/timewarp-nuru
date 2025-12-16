@@ -42,11 +42,12 @@ This is broken into focused subtasks:
 // App configuration with nested builders
 NuruApp.CreateBuilder()
     .Map("status", () => "OK").AsQuery()
-    .MapRoute(r => r                          // CompiledRouteBuilder
+    .Map(r => r                               // CompiledRouteBuilder overload
         .WithLiteral("deploy")
         .WithParameter("env")
-        .WithOption("force", "f")
-        .Done())                              // Returns to app builder
+        .WithOption("force", "f"),
+        handler)                              // Handler as second param
+    .Done()
     .AddReplSupport(options => options
         .WithPrompt("nuru> ")
         .WithKeyBindings(kb => kb             // KeyBindingBuilder

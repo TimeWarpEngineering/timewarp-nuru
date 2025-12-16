@@ -19,7 +19,7 @@ NuruRouteRegistry.Clear();
 {
   NuruRouteRegistry.Clear();
 
-  CompiledRoute route = new CompiledRouteBuilder()
+  CompiledRoute route = new RouteBuilder()
     .WithLiteral("greet")
     .WithParameter("name")
     .Build();
@@ -45,9 +45,9 @@ NuruRouteRegistry.Clear();
 {
   NuruRouteRegistry.Clear();
 
-  CompiledRoute route1 = new CompiledRouteBuilder().WithLiteral("exit").Build();
-  CompiledRoute route2 = new CompiledRouteBuilder().WithLiteral("quit").Build();
-  CompiledRoute route3 = new CompiledRouteBuilder().WithLiteral("q").Build();
+  CompiledRoute route1 = new RouteBuilder().WithLiteral("exit").Build();
+  CompiledRoute route2 = new RouteBuilder().WithLiteral("quit").Build();
+  CompiledRoute route3 = new RouteBuilder().WithLiteral("q").Build();
 
   NuruRouteRegistry.Register<TestRequest2>(route1, "exit", "Exit app");
   NuruRouteRegistry.Register<TestRequest2>(route2, "quit", "Exit app");
@@ -71,7 +71,7 @@ NuruRouteRegistry.Clear();
 {
   NuruRouteRegistry.Clear();
 
-  CompiledRoute route = new CompiledRouteBuilder().WithLiteral("test").Build();
+  CompiledRoute route = new RouteBuilder().WithLiteral("test").Build();
 
   NuruRouteRegistry.Register<TestRequest1>(route, "test", "First");
   NuruRouteRegistry.Register<TestRequest1>(route, "test", "Second"); // Duplicate
@@ -94,7 +94,7 @@ NuruRouteRegistry.Clear();
 {
   NuruRouteRegistry.Clear();
 
-  CompiledRoute route = new CompiledRouteBuilder().WithLiteral("foo").Build();
+  CompiledRoute route = new RouteBuilder().WithLiteral("foo").Build();
   NuruRouteRegistry.Register<TestRequest1>(route, "foo", "Foo command");
 
   bool isRegistered = NuruRouteRegistry.IsRegistered<TestRequest1>();
@@ -118,9 +118,9 @@ NuruRouteRegistry.Clear();
 {
   NuruRouteRegistry.Clear();
 
-  CompiledRoute route1 = new CompiledRouteBuilder().WithLiteral("cmd1").Build();
-  CompiledRoute route2 = new CompiledRouteBuilder().WithLiteral("cmd2").Build();
-  CompiledRoute route3 = new CompiledRouteBuilder().WithLiteral("cmd3").Build();
+  CompiledRoute route1 = new RouteBuilder().WithLiteral("cmd1").Build();
+  CompiledRoute route2 = new RouteBuilder().WithLiteral("cmd2").Build();
+  CompiledRoute route3 = new RouteBuilder().WithLiteral("cmd3").Build();
 
   NuruRouteRegistry.Register<TestRequest1>(route1, "cmd1", "Command 1");
   NuruRouteRegistry.Register<TestRequest2>(route2, "cmd2", "Command 2");
@@ -149,7 +149,7 @@ NuruRouteRegistry.Clear();
 {
   NuruRouteRegistry.Clear();
 
-  CompiledRoute route = new CompiledRouteBuilder().WithLiteral("test").Build();
+  CompiledRoute route = new RouteBuilder().WithLiteral("test").Build();
   NuruRouteRegistry.Register<TestRequest1>(route, "test", "Test");
 
   int countBefore = NuruRouteRegistry.Count;

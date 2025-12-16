@@ -8,7 +8,7 @@ namespace TimeWarp.Nuru;
 /// The builder produces routes identical to those created by <see cref="PatternParser.Parse"/>.
 /// It uses the same specificity scoring constants as the pattern compiler.
 /// </remarks>
-public sealed class CompiledRouteBuilder
+public sealed class RouteBuilder
 {
   private readonly List<RouteMatcher> _segments = [];
   private string? _catchAllParameterName;
@@ -30,7 +30,7 @@ public sealed class CompiledRouteBuilder
   /// </summary>
   /// <param name="value">The literal value that must be matched exactly.</param>
   /// <returns>This builder for method chaining.</returns>
-  public CompiledRouteBuilder WithLiteral(string value)
+  public RouteBuilder WithLiteral(string value)
   {
     ArgumentException.ThrowIfNullOrWhiteSpace(value);
     _segments.Add(new LiteralMatcher(value));
@@ -46,7 +46,7 @@ public sealed class CompiledRouteBuilder
   /// <param name="description">Optional description for help text.</param>
   /// <param name="isOptional">True for optional parameters ({name?}), false for required ({name}).</param>
   /// <returns>This builder for method chaining.</returns>
-  public CompiledRouteBuilder WithParameter(
+  public RouteBuilder WithParameter(
     string name,
     string? type = null,
     string? description = null,
@@ -90,7 +90,7 @@ public sealed class CompiledRouteBuilder
   /// from the long form using camelCase conversion (e.g., "dry-run" becomes "dryRun").
   /// </para>
   /// </remarks>
-  public CompiledRouteBuilder WithOption(
+  public RouteBuilder WithOption(
     string longForm,
     string? shortForm = null,
     string? parameterName = null,
@@ -161,7 +161,7 @@ public sealed class CompiledRouteBuilder
   /// <remarks>
   /// Only one catch-all parameter is allowed per route. It should typically be the last segment.
   /// </remarks>
-  public CompiledRouteBuilder WithCatchAll(
+  public RouteBuilder WithCatchAll(
     string name,
     string? type = null,
     string? description = null)
@@ -192,7 +192,7 @@ public sealed class CompiledRouteBuilder
   ///   <item><description><see cref="MessageType.IdempotentCommand"/> - Safe to retry on failure</description></item>
   /// </list>
   /// </remarks>
-  public CompiledRouteBuilder WithMessageType(MessageType messageType)
+  public RouteBuilder WithMessageType(MessageType messageType)
   {
     _messageType = messageType;
     return this;

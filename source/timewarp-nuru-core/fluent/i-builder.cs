@@ -12,8 +12,8 @@ namespace TimeWarp.Nuru;
 /// for continued chaining:
 /// </para>
 /// <code>
-/// app.Map("status", handler)     // Returns RouteConfigurator&lt;TBuilder&gt;
-///    .AsQuery()                   // Returns RouteConfigurator&lt;TBuilder&gt;
+/// app.Map("status", handler)     // Returns EndpointBuilder&lt;TBuilder&gt;
+///    .AsQuery()                   // Returns EndpointBuilder&lt;TBuilder&gt;
 ///    .Done()                      // Returns TBuilder (preserves derived type!)
 ///    .AddReplSupport()            // Extension method works!
 ///    .Build();

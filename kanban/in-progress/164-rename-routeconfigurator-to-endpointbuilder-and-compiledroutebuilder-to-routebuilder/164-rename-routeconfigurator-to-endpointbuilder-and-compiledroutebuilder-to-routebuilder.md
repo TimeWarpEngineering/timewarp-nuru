@@ -30,13 +30,13 @@ This is a breaking change appropriate for Nuru 3.0.
 
 ## Checklist
 
-- [ ] Rename `RouteConfigurator` → `EndpointBuilder`
-- [ ] Rename `RouteConfigurator<TBuilder>` → `EndpointBuilder<TBuilder>`
-- [ ] Rename `CompiledRouteBuilder` → `RouteBuilder`
-- [ ] Update all usages in source code
-- [ ] Update all tests
+- [x] Rename `RouteConfigurator` → `EndpointBuilder`
+- [x] Rename `RouteConfigurator<TBuilder>` → `EndpointBuilder<TBuilder>`
+- [x] Rename `CompiledRouteBuilder` → `RouteBuilder`
+- [x] Update all usages in source code
+- [x] Update all tests
 - [ ] Update documentation
-- [ ] Update samples
+- [x] Update samples
 - [ ] Add `WithHandler(Delegate)` method to `EndpointBuilder`
 - [ ] Add `Map(Action<RouteBuilder>)` overload that returns `EndpointBuilder`
 
@@ -44,14 +44,15 @@ This is a breaking change appropriate for Nuru 3.0.
 
 | File | Changes |
 |------|---------|
-| `route-configurator.cs` | Rename class |
-| `compiled-route-builder.cs` | Rename class |
-| `nuru-core-app-builder.routes.cs` | Update return types, add overload |
-| `nuru-app-extensions.cs` | Update extension methods |
-| `nuru-app-builder-extensions.cs` | Update extension methods |
-| Tests | Update all references |
-| Samples | Update all references |
-| Docs | Update all references |
+| `route-configurator.cs` → `endpoint-builder.cs` | ✅ Renamed class and file |
+| `compiled-route-builder.cs` → `route-builder.cs` | ✅ Renamed class and file |
+| `nuru-core-app-builder.routes.cs` | ✅ Updated return types |
+| `nuru-app-extensions.cs` | ✅ Updated extension methods |
+| `nuru-app-builder-extensions.cs` | ✅ Updated extension methods |
+| `nuru-attributed-route-generator.cs` | ✅ Updated generated code |
+| Tests | ✅ Updated all references |
+| Samples | ✅ Updated all references |
+| Docs | ⏳ Pending |
 
 ## Notes
 

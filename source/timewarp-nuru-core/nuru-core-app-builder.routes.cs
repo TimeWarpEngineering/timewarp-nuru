@@ -8,7 +8,7 @@ public partial class NuruCoreAppBuilder
   /// <summary>
   /// Adds a default route that executes when no arguments are provided.
   /// </summary>
-  public virtual RouteConfigurator MapDefault(Delegate handler, string? description = null)
+  public virtual EndpointBuilder MapDefault(Delegate handler, string? description = null)
   {
     return MapInternal(string.Empty, handler, description);
   }
@@ -30,7 +30,7 @@ public partial class NuruCoreAppBuilder
   /// <summary>
   /// Adds a delegate-based route.
   /// </summary>
-  public virtual RouteConfigurator Map(string pattern, Delegate handler, string? description = null)
+  public virtual EndpointBuilder Map(string pattern, Delegate handler, string? description = null)
   {
     ArgumentNullException.ThrowIfNull(pattern);
     return MapInternal(pattern, handler, description);
@@ -40,7 +40,7 @@ public partial class NuruCoreAppBuilder
   /// Adds a Mediator command-based route.
   /// Requires AddDependencyInjection() to be called first.
   /// </summary>
-  public virtual RouteConfigurator Map<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)] TCommand>(string pattern, string? description = null)
+  public virtual EndpointBuilder Map<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)] TCommand>(string pattern, string? description = null)
     where TCommand : IRequest, new()
   {
     return MapMediator(typeof(TCommand), pattern, description);
@@ -50,7 +50,7 @@ public partial class NuruCoreAppBuilder
   /// Adds a Mediator command-based route with response.
   /// Requires AddDependencyInjection() to be called first.
   /// </summary>
-  public virtual RouteConfigurator Map<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)] TCommand, TResponse>(string pattern, string? description = null)
+  public virtual EndpointBuilder Map<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)] TCommand, TResponse>(string pattern, string? description = null)
     where TCommand : IRequest<TResponse>, new()
   {
     return MapMediator(typeof(TCommand), pattern, description);
@@ -162,8 +162,8 @@ public partial class NuruCoreAppBuilder
     return this;
   }
 
-  // Internal methods for creating RouteConfigurator<TBuilder> - used by extension methods
-  internal RouteConfigurator<TBuilder> MapInternalTyped<TBuilder>(string pattern, Delegate handler, string? description)
+  // Internal methods for creating EndpointBuilder<TBuilder> - used by extension methods
+  internal EndpointBuilder<TBuilder> MapInternalTyped<TBuilder>(string pattern, Delegate handler, string? description)
     where TBuilder : NuruCoreAppBuilder
   {
     ArgumentNullException.ThrowIfNull(handler);
@@ -190,10 +190,10 @@ public partial class NuruCoreAppBuilder
     };
 
     EndpointCollection.Add(endpoint);
-    return new RouteConfigurator<TBuilder>((TBuilder)this, endpoint);
+    return new EndpointBuilder<TBuilder>((TBuilder)this, endpoint);
   }
 
-  internal RouteConfigurator<TBuilder> MapMediatorTyped<TBuilder>(
+  internal EndpointBuilder<TBuilder> MapMediatorTyped<TBuilder>(
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
     Type commandType,
     string pattern,
@@ -214,10 +214,10 @@ public partial class NuruCoreAppBuilder
     };
 
     EndpointCollection.Add(endpoint);
-    return new RouteConfigurator<TBuilder>((TBuilder)this, endpoint);
+    return new EndpointBuilder<TBuilder>((TBuilder)this, endpoint);
   }
 
-  private RouteConfigurator MapMediator(
+  private EndpointBuilder MapMediator(
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
     Type commandType,
     string pattern,
@@ -237,10 +237,10 @@ public partial class NuruCoreAppBuilder
     };
 
     EndpointCollection.Add(endpoint);
-    return new RouteConfigurator(this, endpoint);
+    return new EndpointBuilder(this, endpoint);
   }
 
-  private RouteConfigurator MapInternal(string pattern, Delegate handler, string? description)
+  private EndpointBuilder MapInternal(string pattern, Delegate handler, string? description)
   {
     ArgumentNullException.ThrowIfNull(handler);
 
@@ -266,6 +266,6 @@ public partial class NuruCoreAppBuilder
     };
 
     EndpointCollection.Add(endpoint);
-    return new RouteConfigurator(this, endpoint);
+    return new EndpointBuilder(this, endpoint);
   }
 }

@@ -11,7 +11,7 @@
 // HOW IT WORKS:
 //   The NuruAttributedRouteGenerator source generator scans for classes with
 //   [NuruRoute] and generates:
-//   1. CompiledRouteBuilder calls for each route
+//   1. RouteBuilder calls for each route
 //   2. ModuleInitializer code to register routes with NuruRouteRegistry
 //   3. Route pattern strings for help display
 //

@@ -6,19 +6,19 @@ namespace TimeWarp.Nuru;
 public static class NuruCoreAppExtensions
 {
   // ============================================================================
-  // RouteConfigurator<TBuilder> overloads - preserve builder type in fluent chain
+  // EndpointBuilder<TBuilder> overloads - preserve builder type in fluent chain
   // ============================================================================
 
   /// <summary>
-  /// Adds REPL support to application (generic RouteConfigurator overload for fluent chaining).
+  /// Adds REPL support to application (generic EndpointBuilder overload for fluent chaining).
   /// </summary>
   /// <typeparam name="TBuilder">The builder type for proper fluent chaining.</typeparam>
-  /// <param name="configurator">The RouteConfigurator from a Map() call.</param>
+  /// <param name="configurator">The EndpointBuilder from a Map() call.</param>
   /// <param name="configureOptions">Optional action to configure REPL options.</param>
   /// <returns>The underlying builder for chaining.</returns>
   public static TBuilder AddReplSupport<TBuilder>
   (
-    this RouteConfigurator<TBuilder> configurator,
+    this EndpointBuilder<TBuilder> configurator,
     Action<ReplOptions>? configureOptions = null
   )
     where TBuilder : NuruCoreAppBuilder
@@ -28,12 +28,12 @@ public static class NuruCoreAppExtensions
   }
 
   /// <summary>
-  /// Adds REPL command routes to application (generic RouteConfigurator overload for fluent chaining).
+  /// Adds REPL command routes to application (generic EndpointBuilder overload for fluent chaining).
   /// </summary>
   /// <typeparam name="TBuilder">The builder type for proper fluent chaining.</typeparam>
-  /// <param name="configurator">The RouteConfigurator from a Map() call.</param>
+  /// <param name="configurator">The EndpointBuilder from a Map() call.</param>
   /// <returns>The underlying builder for chaining.</returns>
-  public static TBuilder AddReplRoutes<TBuilder>(this RouteConfigurator<TBuilder> configurator)
+  public static TBuilder AddReplRoutes<TBuilder>(this EndpointBuilder<TBuilder> configurator)
     where TBuilder : NuruCoreAppBuilder
   {
     ArgumentNullException.ThrowIfNull(configurator);
@@ -41,15 +41,15 @@ public static class NuruCoreAppExtensions
   }
 
   /// <summary>
-  /// Adds an interactive mode route (generic RouteConfigurator overload for fluent chaining).
+  /// Adds an interactive mode route (generic EndpointBuilder overload for fluent chaining).
   /// </summary>
   /// <typeparam name="TBuilder">The builder type for proper fluent chaining.</typeparam>
-  /// <param name="configurator">The RouteConfigurator from a Map() call.</param>
+  /// <param name="configurator">The EndpointBuilder from a Map() call.</param>
   /// <param name="patterns">Route patterns to trigger interactive mode.</param>
   /// <returns>The underlying builder for chaining.</returns>
   public static TBuilder AddInteractiveRoute<TBuilder>
   (
-    this RouteConfigurator<TBuilder> configurator,
+    this EndpointBuilder<TBuilder> configurator,
     string patterns = "--interactive,-i"
   )
     where TBuilder : NuruCoreAppBuilder
@@ -59,18 +59,18 @@ public static class NuruCoreAppExtensions
   }
 
   // ============================================================================
-  // RouteConfigurator overloads (non-generic) - backward compatibility
+  // EndpointBuilder overloads (non-generic) - backward compatibility
   // ============================================================================
 
   /// <summary>
-  /// Adds REPL support to application (RouteConfigurator overload for fluent chaining).
+  /// Adds REPL support to application (EndpointBuilder overload for fluent chaining).
   /// </summary>
-  /// <param name="configurator">The RouteConfigurator from a Map() call.</param>
+  /// <param name="configurator">The EndpointBuilder from a Map() call.</param>
   /// <param name="configureOptions">Optional action to configure REPL options.</param>
   /// <returns>The underlying builder for chaining.</returns>
   public static NuruCoreAppBuilder AddReplSupport
   (
-    this RouteConfigurator configurator,
+    this EndpointBuilder configurator,
     Action<ReplOptions>? configureOptions = null
   )
   {
@@ -79,25 +79,25 @@ public static class NuruCoreAppExtensions
   }
 
   /// <summary>
-  /// Adds REPL command routes to application (RouteConfigurator overload for fluent chaining).
+  /// Adds REPL command routes to application (EndpointBuilder overload for fluent chaining).
   /// </summary>
-  /// <param name="configurator">The RouteConfigurator from a Map() call.</param>
+  /// <param name="configurator">The EndpointBuilder from a Map() call.</param>
   /// <returns>The underlying builder for chaining.</returns>
-  public static NuruCoreAppBuilder AddReplRoutes(this RouteConfigurator configurator)
+  public static NuruCoreAppBuilder AddReplRoutes(this EndpointBuilder configurator)
   {
     ArgumentNullException.ThrowIfNull(configurator);
     return configurator.Builder.AddReplRoutes();
   }
 
   /// <summary>
-  /// Adds an interactive mode route (RouteConfigurator overload for fluent chaining).
+  /// Adds an interactive mode route (EndpointBuilder overload for fluent chaining).
   /// </summary>
-  /// <param name="configurator">The RouteConfigurator from a Map() call.</param>
+  /// <param name="configurator">The EndpointBuilder from a Map() call.</param>
   /// <param name="patterns">Route patterns to trigger interactive mode.</param>
   /// <returns>The underlying builder for chaining.</returns>
   public static NuruCoreAppBuilder AddInteractiveRoute
   (
-    this RouteConfigurator configurator,
+    this EndpointBuilder configurator,
     string patterns = "--interactive,-i"
   )
   {

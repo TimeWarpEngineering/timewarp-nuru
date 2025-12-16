@@ -64,7 +64,7 @@ public class MessageTypeFluentApiTests
     // Arrange - Simulate what happens when AsQuery is called
     Endpoint endpoint = CreateEndpoint("users", "List users");
 
-    // Act - Simulate RouteConfigurator.AsQuery() behavior
+    // Act - Simulate EndpointBuilder.AsQuery() behavior
     endpoint.MessageType = MessageType.Query;
     endpoint.CompiledRoute.MessageType = MessageType.Query;
 
@@ -80,7 +80,7 @@ public class MessageTypeFluentApiTests
     // Arrange - Simulate what happens when AsIdempotentCommand is called
     Endpoint endpoint = CreateEndpoint("config set {key}", "Set config");
 
-    // Act - Simulate RouteConfigurator.AsIdempotentCommand() behavior
+    // Act - Simulate EndpointBuilder.AsIdempotentCommand() behavior
     endpoint.MessageType = MessageType.IdempotentCommand;
     endpoint.CompiledRoute.MessageType = MessageType.IdempotentCommand;
 
@@ -93,8 +93,8 @@ public class MessageTypeFluentApiTests
 
   public static async Task Compiled_route_builder_should_support_message_type()
   {
-    // Arrange & Act - Test CompiledRouteBuilder.WithMessageType
-    CompiledRoute route = new CompiledRouteBuilder()
+    // Arrange & Act - Test RouteBuilder.WithMessageType
+    CompiledRoute route = new RouteBuilder()
       .WithLiteral("test")
       .WithMessageType(MessageType.Query)
       .Build();
@@ -108,7 +108,7 @@ public class MessageTypeFluentApiTests
   public static async Task Compiled_route_builder_should_default_to_command()
   {
     // Arrange & Act - Test default message type
-    CompiledRoute route = new CompiledRouteBuilder()
+    CompiledRoute route = new RouteBuilder()
       .WithLiteral("test")
       .Build();
 

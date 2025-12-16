@@ -1,16 +1,16 @@
 #!/usr/bin/dotnet --
 #:project ../../source/timewarp-nuru/timewarp-nuru.csproj
 
-// Tests for CompiledRouteBuilder
+// Tests for RouteBuilder
 // Verifies that builder-constructed routes match PatternParser.Parse() output
 
-return await RunTests<CompiledRouteBuilderTests>();
+return await RunTests<RouteBuilderTests>();
 
 /// <summary>
-/// Tests for CompiledRouteBuilder - verifies parity with PatternParser.Parse()
+/// Tests for RouteBuilder - verifies parity with PatternParser.Parse()
 /// </summary>
-[TestTag("CompiledRouteBuilder")]
-public sealed class CompiledRouteBuilderTests
+[TestTag("RouteBuilder")]
+public sealed class RouteBuilderTests
 {
   /// <summary>
   /// Test: Simple literal route ("greet")
@@ -19,7 +19,7 @@ public sealed class CompiledRouteBuilderTests
   {
     // Arrange
     const string pattern = "greet";
-    CompiledRoute builderRoute = new CompiledRouteBuilder()
+    CompiledRoute builderRoute = new RouteBuilder()
       .WithLiteral("greet")
       .Build();
 
@@ -37,7 +37,7 @@ public sealed class CompiledRouteBuilderTests
   {
     // Arrange
     const string pattern = "greet {name}";
-    CompiledRoute builderRoute = new CompiledRouteBuilder()
+    CompiledRoute builderRoute = new RouteBuilder()
       .WithLiteral("greet")
       .WithParameter("name")
       .Build();
@@ -56,7 +56,7 @@ public sealed class CompiledRouteBuilderTests
   {
     // Arrange
     const string pattern = "git commit";
-    CompiledRoute builderRoute = new CompiledRouteBuilder()
+    CompiledRoute builderRoute = new RouteBuilder()
       .WithLiteral("git")
       .WithLiteral("commit")
       .Build();
@@ -75,7 +75,7 @@ public sealed class CompiledRouteBuilderTests
   {
     // Arrange
     const string pattern = "greet {name?}";
-    CompiledRoute builderRoute = new CompiledRouteBuilder()
+    CompiledRoute builderRoute = new RouteBuilder()
       .WithLiteral("greet")
       .WithParameter("name", isOptional: true)
       .Build();
@@ -94,7 +94,7 @@ public sealed class CompiledRouteBuilderTests
   {
     // Arrange
     const string pattern = "add {x:int} {y:int}";
-    CompiledRoute builderRoute = new CompiledRouteBuilder()
+    CompiledRoute builderRoute = new RouteBuilder()
       .WithLiteral("add")
       .WithParameter("x", type: "int")
       .WithParameter("y", type: "int")
@@ -114,7 +114,7 @@ public sealed class CompiledRouteBuilderTests
   {
     // Arrange
     const string pattern = "deploy --force";
-    CompiledRoute builderRoute = new CompiledRouteBuilder()
+    CompiledRoute builderRoute = new RouteBuilder()
       .WithLiteral("deploy")
       .WithOption("force")
       .Build();
@@ -133,7 +133,7 @@ public sealed class CompiledRouteBuilderTests
   {
     // Arrange
     const string pattern = "deploy --force,-f";
-    CompiledRoute builderRoute = new CompiledRouteBuilder()
+    CompiledRoute builderRoute = new RouteBuilder()
       .WithLiteral("deploy")
       .WithOption("force", shortForm: "f")
       .Build();
@@ -152,7 +152,7 @@ public sealed class CompiledRouteBuilderTests
   {
     // Arrange
     const string pattern = "deploy --config {file}";
-    CompiledRoute builderRoute = new CompiledRouteBuilder()
+    CompiledRoute builderRoute = new RouteBuilder()
       .WithLiteral("deploy")
       .WithOption("config", parameterName: "file", expectsValue: true)
       .Build();
@@ -171,7 +171,7 @@ public sealed class CompiledRouteBuilderTests
   {
     // Arrange
     const string pattern = "exec {*args}";
-    CompiledRoute builderRoute = new CompiledRouteBuilder()
+    CompiledRoute builderRoute = new RouteBuilder()
       .WithLiteral("exec")
       .WithCatchAll("args")
       .Build();
@@ -190,7 +190,7 @@ public sealed class CompiledRouteBuilderTests
   {
     // Arrange
     const string pattern = "deploy {env} --force,-f --config,-c {file?}";
-    CompiledRoute builderRoute = new CompiledRouteBuilder()
+    CompiledRoute builderRoute = new RouteBuilder()
       .WithLiteral("deploy")
       .WithParameter("env")
       .WithOption("force", shortForm: "f")
@@ -212,7 +212,7 @@ public sealed class CompiledRouteBuilderTests
     // Arrange & Act & Assert
     Should.Throw<InvalidOperationException>(() =>
     {
-      new CompiledRouteBuilder()
+      new RouteBuilder()
         .WithCatchAll("args1")
         .WithCatchAll("args2")
         .Build();
@@ -230,7 +230,7 @@ public sealed class CompiledRouteBuilderTests
   {
     // Arrange
     const string pattern = "server --port {port:int}";
-    CompiledRoute builderRoute = new CompiledRouteBuilder()
+    CompiledRoute builderRoute = new RouteBuilder()
       .WithLiteral("server")
       .WithOption("port", parameterName: "port", expectsValue: true, parameterType: "int")
       .Build();
@@ -249,7 +249,7 @@ public sealed class CompiledRouteBuilderTests
   {
     // Arrange
     const string pattern = "deploy --verbose?";
-    CompiledRoute builderRoute = new CompiledRouteBuilder()
+    CompiledRoute builderRoute = new RouteBuilder()
       .WithLiteral("deploy")
       .WithOption("verbose", isOptionalFlag: true)
       .Build();

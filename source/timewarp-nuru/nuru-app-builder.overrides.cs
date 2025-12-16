@@ -57,10 +57,10 @@ public partial class NuruAppBuilder
 
   #region Route Overrides
 
-  // Note: Map, MapDefault, and Map<T> now return RouteConfigurator from the base class.
-  // RouteConfigurator provides implicit conversion back to the builder type and
+  // Note: Map, MapDefault, and Map<T> now return EndpointBuilder from the base class.
+  // EndpointBuilder provides implicit conversion back to the builder type and
   // supports fluent chaining via its own Map/MapMultiple methods.
-  // These overrides are no longer needed since RouteConfigurator handles the chaining.
+  // These overrides are no longer needed since EndpointBuilder handles the chaining.
 
   /// <inheritdoc />
   public override NuruAppBuilder AddReplOptions(Action<ReplOptions>? configureOptions = null)

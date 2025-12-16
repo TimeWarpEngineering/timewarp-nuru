@@ -18,19 +18,19 @@ namespace TimeWarp.Nuru;
 ///
 /// // Or use inline configuration with Also():
 /// app.Map("users list", handler)
-///    .Also(r => r.AsQuery())    // Returns RouteConfigurator&lt;TBuilder&gt;
+///    .Also(r => r.AsQuery())    // Returns EndpointBuilder&lt;TBuilder&gt;
 ///    .Done()
 ///    .AddReplSupport()
 ///    .Build();
 /// </code>
 /// </remarks>
-public sealed class RouteConfigurator<TBuilder> : IBuilder<TBuilder>
+public sealed class EndpointBuilder<TBuilder> : IBuilder<TBuilder>
   where TBuilder : NuruCoreAppBuilder
 {
   private readonly TBuilder _builder;
   private readonly Endpoint _endpoint;
 
-  internal RouteConfigurator(TBuilder builder, Endpoint endpoint)
+  internal EndpointBuilder(TBuilder builder, Endpoint endpoint)
   {
     _builder = builder;
     _endpoint = endpoint;
@@ -50,7 +50,7 @@ public sealed class RouteConfigurator<TBuilder> : IBuilder<TBuilder>
   /// AI agents can run query routes without confirmation and safely retry on failure.
   /// Examples: list, get, status, show, describe
   /// </remarks>
-  public RouteConfigurator<TBuilder> AsQuery()
+  public EndpointBuilder<TBuilder> AsQuery()
   {
     _endpoint.MessageType = MessageType.Query;
     _endpoint.CompiledRoute.MessageType = MessageType.Query;
@@ -66,7 +66,7 @@ public sealed class RouteConfigurator<TBuilder> : IBuilder<TBuilder>
   /// AI agents should ask for confirmation before running command routes and should not auto-retry.
   /// Examples: create, append, send, delete (non-idempotent)
   /// </remarks>
-  public RouteConfigurator<TBuilder> AsCommand()
+  public EndpointBuilder<TBuilder> AsCommand()
   {
     _endpoint.MessageType = MessageType.Command;
     _endpoint.CompiledRoute.MessageType = MessageType.Command;
@@ -82,7 +82,7 @@ public sealed class RouteConfigurator<TBuilder> : IBuilder<TBuilder>
   /// and can safely retry on failure.
   /// Examples: set, enable, disable, upsert, update
   /// </remarks>
-  public RouteConfigurator<TBuilder> AsIdempotentCommand()
+  public EndpointBuilder<TBuilder> AsIdempotentCommand()
   {
     _endpoint.MessageType = MessageType.IdempotentCommand;
     _endpoint.CompiledRoute.MessageType = MessageType.IdempotentCommand;
@@ -93,14 +93,14 @@ public sealed class RouteConfigurator<TBuilder> : IBuilder<TBuilder>
   /// Adds a delegate-based route (forwarded to the app builder).
   /// Enables fluent chaining after route configuration.
   /// </summary>
-  public RouteConfigurator<TBuilder> Map(string pattern, Delegate handler, string? description = null) =>
+  public EndpointBuilder<TBuilder> Map(string pattern, Delegate handler, string? description = null) =>
     _builder.MapInternalTyped<TBuilder>(pattern, handler, description);
 
   /// <summary>
   /// Adds a Mediator command-based route (forwarded to the app builder).
   /// Enables fluent chaining after route configuration.
   /// </summary>
-  public RouteConfigurator<TBuilder> Map<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)] TCommand>(string pattern, string? description = null)
+  public EndpointBuilder<TBuilder> Map<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)] TCommand>(string pattern, string? description = null)
     where TCommand : IRequest, new() =>
     _builder.MapMediatorTyped<TBuilder>(typeof(TCommand), pattern, description);
 
@@ -108,7 +108,7 @@ public sealed class RouteConfigurator<TBuilder> : IBuilder<TBuilder>
   /// Adds a Mediator command-based route with response (forwarded to the app builder).
   /// Enables fluent chaining after route configuration.
   /// </summary>
-  public RouteConfigurator<TBuilder> Map<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)] TCommand, TResponse>(string pattern, string? description = null)
+  public EndpointBuilder<TBuilder> Map<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)] TCommand, TResponse>(string pattern, string? description = null)
     where TCommand : IRequest<TResponse>, new() =>
     _builder.MapMediatorTyped<TBuilder>(typeof(TCommand), pattern, description);
 
@@ -116,7 +116,7 @@ public sealed class RouteConfigurator<TBuilder> : IBuilder<TBuilder>
   /// Adds a default route that executes when no arguments are provided (forwarded to the app builder).
   /// Enables fluent chaining after route configuration.
   /// </summary>
-  public RouteConfigurator<TBuilder> MapDefault(Delegate handler, string? description = null) =>
+  public EndpointBuilder<TBuilder> MapDefault(Delegate handler, string? description = null) =>
     _builder.MapInternalTyped<TBuilder>(string.Empty, handler, description);
 
   /// <summary>
@@ -159,20 +159,20 @@ public sealed class RouteConfigurator<TBuilder> : IBuilder<TBuilder>
   /// <param name="configurator">The route configurator.</param>
   /// <returns>The underlying app builder.</returns>
 #pragma warning disable CA2225, CA1062 // Implicit conversion provides better fluent API ergonomics
-  public static implicit operator TBuilder(RouteConfigurator<TBuilder> configurator) => configurator._builder;
+  public static implicit operator TBuilder(EndpointBuilder<TBuilder> configurator) => configurator._builder;
 #pragma warning restore CA2225, CA1062
 }
 
 /// <summary>
-/// Non-generic RouteConfigurator for backward compatibility.
-/// Prefer using <see cref="RouteConfigurator{TBuilder}"/> for type-safe fluent chaining.
+/// Non-generic EndpointBuilder for backward compatibility.
+/// Prefer using <see cref="EndpointBuilder{TBuilder}"/> for type-safe fluent chaining.
 /// </summary>
-public sealed class RouteConfigurator : IBuilder<NuruCoreAppBuilder>
+public sealed class EndpointBuilder : IBuilder<NuruCoreAppBuilder>
 {
   private readonly NuruCoreAppBuilder _builder;
   private readonly Endpoint _endpoint;
 
-  internal RouteConfigurator(NuruCoreAppBuilder builder, Endpoint endpoint)
+  internal EndpointBuilder(NuruCoreAppBuilder builder, Endpoint endpoint)
   {
     _builder = builder;
     _endpoint = endpoint;
@@ -235,14 +235,14 @@ public sealed class RouteConfigurator : IBuilder<NuruCoreAppBuilder>
   /// Adds a delegate-based route (forwarded to the app builder).
   /// Enables fluent chaining after route configuration.
   /// </summary>
-  public RouteConfigurator Map(string pattern, Delegate handler, string? description = null) =>
+  public EndpointBuilder Map(string pattern, Delegate handler, string? description = null) =>
     _builder.Map(pattern, handler, description);
 
   /// <summary>
   /// Adds a Mediator command-based route (forwarded to the app builder).
   /// Enables fluent chaining after route configuration.
   /// </summary>
-  public RouteConfigurator Map<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)] TCommand>(string pattern, string? description = null)
+  public EndpointBuilder Map<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)] TCommand>(string pattern, string? description = null)
     where TCommand : IRequest, new() =>
     _builder.Map<TCommand>(pattern, description);
 
@@ -250,7 +250,7 @@ public sealed class RouteConfigurator : IBuilder<NuruCoreAppBuilder>
   /// Adds a Mediator command-based route with response (forwarded to the app builder).
   /// Enables fluent chaining after route configuration.
   /// </summary>
-  public RouteConfigurator Map<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)] TCommand, TResponse>(string pattern, string? description = null)
+  public EndpointBuilder Map<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)] TCommand, TResponse>(string pattern, string? description = null)
     where TCommand : IRequest<TResponse>, new() =>
     _builder.Map<TCommand, TResponse>(pattern, description);
 
@@ -258,7 +258,7 @@ public sealed class RouteConfigurator : IBuilder<NuruCoreAppBuilder>
   /// Adds a default route that executes when no arguments are provided (forwarded to the app builder).
   /// Enables fluent chaining after route configuration.
   /// </summary>
-  public RouteConfigurator MapDefault(Delegate handler, string? description = null) =>
+  public EndpointBuilder MapDefault(Delegate handler, string? description = null) =>
     _builder.MapDefault(handler, description);
 
   /// <summary>
@@ -282,7 +282,7 @@ public sealed class RouteConfigurator : IBuilder<NuruCoreAppBuilder>
 
   /// <summary>
   /// Gets the underlying app builder for accessing extension methods.
-  /// Use this when you need to call extension methods that don't have RouteConfigurator overloads.
+  /// Use this when you need to call extension methods that don't have EndpointBuilder overloads.
   /// </summary>
   /// <example>
   /// <code>
@@ -297,7 +297,7 @@ public sealed class RouteConfigurator : IBuilder<NuruCoreAppBuilder>
   /// <param name="configurator">The route configurator.</param>
   /// <returns>The underlying app builder.</returns>
 #pragma warning disable CA2225, CA1062 // Implicit conversion provides better fluent API ergonomics
-  public static implicit operator NuruCoreAppBuilder(RouteConfigurator configurator) => configurator._builder;
+  public static implicit operator NuruCoreAppBuilder(EndpointBuilder configurator) => configurator._builder;
 #pragma warning restore CA2225, CA1062
 
   /// <summary>

@@ -11,18 +11,18 @@ using TimeWarp.Nuru;
 public static class NuruAppBuilderExtensions
 {
   // ============================================================================
-  // RouteConfigurator<TBuilder> overloads - preserve builder type in fluent chain
+  // EndpointBuilder<TBuilder> overloads - preserve builder type in fluent chain
   // ============================================================================
 
   /// <summary>
-  /// Enables static shell completion (generic RouteConfigurator overload for fluent chaining).
+  /// Enables static shell completion (generic EndpointBuilder overload for fluent chaining).
   /// </summary>
   /// <typeparam name="TBuilder">The builder type for proper fluent chaining.</typeparam>
-  /// <param name="configurator">The RouteConfigurator from a Map() call.</param>
+  /// <param name="configurator">The EndpointBuilder from a Map() call.</param>
   /// <param name="appName">Optional application name for generated scripts.</param>
   /// <returns>The underlying builder for chaining.</returns>
   public static TBuilder EnableStaticCompletion<TBuilder>(
-    this RouteConfigurator<TBuilder> configurator,
+    this EndpointBuilder<TBuilder> configurator,
     string? appName = null)
     where TBuilder : NuruCoreAppBuilder
   {
@@ -31,15 +31,15 @@ public static class NuruAppBuilderExtensions
   }
 
   /// <summary>
-  /// Enables dynamic shell completion (generic RouteConfigurator overload for fluent chaining).
+  /// Enables dynamic shell completion (generic EndpointBuilder overload for fluent chaining).
   /// </summary>
   /// <typeparam name="TBuilder">The builder type for proper fluent chaining.</typeparam>
-  /// <param name="configurator">The RouteConfigurator from a Map() call.</param>
+  /// <param name="configurator">The EndpointBuilder from a Map() call.</param>
   /// <param name="appName">Optional application name for generated scripts.</param>
   /// <param name="configure">Optional action to configure completion sources.</param>
   /// <returns>The underlying builder for chaining.</returns>
   public static TBuilder EnableDynamicCompletion<TBuilder>(
-    this RouteConfigurator<TBuilder> configurator,
+    this EndpointBuilder<TBuilder> configurator,
     string? appName = null,
     Action<CompletionSourceRegistry>? configure = null)
     where TBuilder : NuruCoreAppBuilder
@@ -49,17 +49,17 @@ public static class NuruAppBuilderExtensions
   }
 
   // ============================================================================
-  // RouteConfigurator overloads (non-generic) - backward compatibility
+  // EndpointBuilder overloads (non-generic) - backward compatibility
   // ============================================================================
 
   /// <summary>
-  /// Enables static shell completion (RouteConfigurator overload for fluent chaining).
+  /// Enables static shell completion (EndpointBuilder overload for fluent chaining).
   /// </summary>
-  /// <param name="configurator">The RouteConfigurator from a Map() call.</param>
+  /// <param name="configurator">The EndpointBuilder from a Map() call.</param>
   /// <param name="appName">Optional application name for generated scripts.</param>
   /// <returns>The underlying builder for chaining.</returns>
   public static NuruCoreAppBuilder EnableStaticCompletion(
-    this RouteConfigurator configurator,
+    this EndpointBuilder configurator,
     string? appName = null)
   {
     ArgumentNullException.ThrowIfNull(configurator);
@@ -67,14 +67,14 @@ public static class NuruAppBuilderExtensions
   }
 
   /// <summary>
-  /// Enables dynamic shell completion (RouteConfigurator overload for fluent chaining).
+  /// Enables dynamic shell completion (EndpointBuilder overload for fluent chaining).
   /// </summary>
-  /// <param name="configurator">The RouteConfigurator from a Map() call.</param>
+  /// <param name="configurator">The EndpointBuilder from a Map() call.</param>
   /// <param name="appName">Optional application name for generated scripts.</param>
   /// <param name="configure">Optional action to configure completion sources.</param>
   /// <returns>The underlying builder for chaining.</returns>
   public static NuruCoreAppBuilder EnableDynamicCompletion(
-    this RouteConfigurator configurator,
+    this EndpointBuilder configurator,
     string? appName = null,
     Action<CompletionSourceRegistry>? configure = null)
   {

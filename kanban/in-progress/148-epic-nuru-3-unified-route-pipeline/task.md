@@ -22,10 +22,15 @@ Extend the existing `NuruInvokerGenerator` (or create a sibling generator) to em
 
 ```
 148 - Nuru 3 Unified Route Pipeline (this epic)
-├── 158 - Fix Fluent API Breakage with IBuilder Pattern (in-progress)
+├── 158 - Fix Fluent API Breakage with IBuilder Pattern [DONE]
 │         Foundation: IBuilder<T>, RouteConfigurator<TBuilder>
+├── 164 - Rename Builders to Match What They Build [NEXT]
+│         RouteConfigurator → EndpointBuilder
+│         CompiledRouteBuilder → RouteBuilder
+│         Add WithHandler() to EndpointBuilder
+│         Add Map(Action<RouteBuilder>) overload
 ├── 160 - Unify Builders with IBuilder Pattern
-│   ├── 161 - Apply IBuilder to CompiledRouteBuilder
+│   ├── 161 - Apply IBuilder to RouteBuilder (was CompiledRouteBuilder)
 │   ├── 162 - Apply IBuilder to Widget Builders (Table, Panel, Rule)
 │   └── 163 - Apply IBuilder to KeyBindingBuilder
 ├── 151 - Implement Delegate Generation Phase 2
@@ -36,16 +41,22 @@ Extend the existing `NuruInvokerGenerator` (or create a sibling generator) to em
 
 ## Related Tasks
 
-- **Task 158**: Fix Fluent API Breakage with IBuilder Pattern
-  - Task 156 (MessageType metadata) broke fluent chaining by returning `RouteConfigurator` instead of `TBuilder`
-  - Implementing `IBuilder<TParent>` pattern from `TimeWarp.FluentBuilder`
-  - Critical for Developer Experience - must be resolved before Phase 4
-  - **Status**: Implementation complete, awaiting test results
+- **Task 158**: Fix Fluent API Breakage with IBuilder Pattern [DONE]
+  - Introduced `IBuilder<TParent>` pattern with `Done()` method
+  - Made `RouteConfigurator` generic to preserve builder type
+  - **Status**: Complete - 156/158 tests pass (2 pre-existing failures)
+
+- **Task 164**: Rename Builders to Match What They Build [NEXT]
+  - `RouteConfigurator` → `EndpointBuilder` (it configures Endpoint, not Route)
+  - `CompiledRouteBuilder` → `RouteBuilder` (cleaner name)
+  - Add `WithHandler(Delegate)` to `EndpointBuilder`
+  - Add `Map(Action<RouteBuilder>)` overload returning `EndpointBuilder`
+  - Breaking change appropriate for 3.0
 
 - **Task 160**: Unify Builders with IBuilder Pattern
   - Apply `IBuilder<TParent>` consistently across all Nuru builders
   - Enables composable fluent API for routes, widgets, and configuration
-  - Subtasks: 161 (CompiledRouteBuilder), 162 (Widgets), 163 (KeyBindings)
+  - Subtasks: 161 (RouteBuilder), 162 (Widgets), 163 (KeyBindings)
 
 ## Phased Implementation Plan
 

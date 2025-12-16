@@ -142,5 +142,16 @@ Failed:
 - Solution builds successfully
 
 **Pending:**
-- User to run full test suite and report results
-- Move to done if tests pass
+- ~~User to run full test suite and report results~~
+- ~~Move to done if tests pass~~
+
+## Results
+
+**Test Results (2025-12-16):**
+- 156/158 tests passed (98.7%)
+- Same results as before the fix - no regressions introduced
+- 2 pre-existing REPL test failures (unrelated to this task):
+  - `repl-35-interactive-route-execution.cs`
+  - `repl-23-key-binding-profiles.cs`
+
+**Outcome:** IBuilder pattern successfully implemented. Fluent API chaining is restored with `Done()` method and generic `RouteConfigurator<TBuilder>`.

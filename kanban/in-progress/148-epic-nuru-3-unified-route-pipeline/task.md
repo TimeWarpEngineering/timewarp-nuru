@@ -18,12 +18,34 @@ Extend the existing `NuruInvokerGenerator` (or create a sibling generator) to em
 - `api-design.md` — Consumer-facing route registration API
 - `source-gen-design.md` — Source generator implementation details
 
+## Task Hierarchy
+
+```
+148 - Nuru 3 Unified Route Pipeline (this epic)
+├── 158 - Fix Fluent API Breakage with IBuilder Pattern (in-progress)
+│         Foundation: IBuilder<T>, RouteConfigurator<TBuilder>
+├── 160 - Unify Builders with IBuilder Pattern
+│   ├── 161 - Apply IBuilder to CompiledRouteBuilder
+│   ├── 162 - Apply IBuilder to Widget Builders (Table, Panel, Rule)
+│   └── 163 - Apply IBuilder to KeyBindingBuilder
+├── 151 - Implement Delegate Generation Phase 2
+├── 152 - Implement Unified Pipeline Phase 3
+├── 153 - Implement Fluent Builder API Phase 4 (depends on 161)
+└── 154 - Implement Relaxed Constraints Phase 5
+```
+
 ## Related Tasks
 
 - **Task 158**: Fix Fluent API Breakage with IBuilder Pattern
   - Task 156 (MessageType metadata) broke fluent chaining by returning `RouteConfigurator` instead of `TBuilder`
   - Implementing `IBuilder<TParent>` pattern from `TimeWarp.FluentBuilder`
   - Critical for Developer Experience - must be resolved before Phase 4
+  - **Status**: Implementation complete, awaiting test results
+
+- **Task 160**: Unify Builders with IBuilder Pattern
+  - Apply `IBuilder<TParent>` consistently across all Nuru builders
+  - Enables composable fluent API for routes, widgets, and configuration
+  - Subtasks: 161 (CompiledRouteBuilder), 162 (Widgets), 163 (KeyBindings)
 
 ## Phased Implementation Plan
 

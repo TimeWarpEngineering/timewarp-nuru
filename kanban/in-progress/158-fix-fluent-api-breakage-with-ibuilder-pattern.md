@@ -126,3 +126,21 @@ Failed:
   - Repl/repl-35-interactive-route-execution.cs
   - Repl/repl-23-key-binding-profiles.cs
 ```
+
+### Testing Note
+
+**User will run tests manually** - The full test suite (`dotnet tests/scripts/run-all-tests.cs`) takes ~15+ minutes. Do not run tests in AI session; user will execute and report results.
+
+### Implementation Progress (2025-12-16)
+
+**Completed:**
+- Created `IBuilder<TParent>` interface at `source/timewarp-nuru-core/fluent/i-builder.cs`
+- Created `ScopeExtensions` (Also, Apply, Let, Run) at `source/timewarp-nuru-core/fluent/scope-extensions.cs`
+- Made `RouteConfigurator<TBuilder>` generic implementing `IBuilder<TBuilder>`
+- Added typed internal methods `MapInternalTyped<TBuilder>()` and `MapMediatorTyped<TBuilder>()` to `NuruCoreAppBuilder`
+- Added generic extension overloads for `AddReplSupport<TBuilder>()` and `EnableStaticCompletion<TBuilder>()`
+- Solution builds successfully
+
+**Pending:**
+- User to run full test suite and report results
+- Move to done if tests pass

@@ -39,16 +39,10 @@ tests/ci-tests/
   <PropertyGroup>
     <DefineConstants>$(DefineConstants);JARIBU_MULTI</DefineConstants>
   </PropertyGroup>
-  <ItemGroup>
-    <!-- Test files will be added here as they are migrated to multi-mode pattern -->
-    <!-- Example (do not add until files are migrated):
-    <Compile Include="../timewarp-nuru-tests/lexer/*.cs" Exclude="../timewarp-nuru-tests/lexer/*helper*.cs" />
-    -->
-  </ItemGroup>
 </Project>
 ```
 
-**Note:** Do NOT include any test files yet. Files will be added to this ItemGroup as each category is migrated in subsequent tasks.
+**Note:** Do NOT include any test files. Files will be added as each category is migrated in subsequent tasks.
 
 ### 4. Create tests/ci-tests/run-ci-tests.cs
 

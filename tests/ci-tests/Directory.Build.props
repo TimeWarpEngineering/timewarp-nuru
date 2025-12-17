@@ -21,6 +21,11 @@
     <Compile Include="../timewarp-nuru-repl-tests/repl-08-syntax-highlighting.cs" />
     <Compile Include="../timewarp-nuru-repl-tests/repl-09-builtin-commands.cs" />
     <Compile Include="../timewarp-nuru-repl-tests/repl-10-error-handling.cs" />
+    <Compile Include="../timewarp-nuru-repl-tests/repl-11-display-formatting.cs" />
+    <Compile Include="../timewarp-nuru-repl-tests/repl-12-configuration.cs" />
+    <Compile Include="../timewarp-nuru-repl-tests/repl-13-nuruapp-integration.cs" />
+    <Compile Include="../timewarp-nuru-repl-tests/repl-14-performance.cs" />
+    <Compile Include="../timewarp-nuru-repl-tests/repl-15-edge-cases.cs" />
     <Compile Include="../timewarp-nuru-repl-tests/repl-16-enum-completion.cs" />
     <Compile Include="../timewarp-nuru-repl-tests/repl-17-sample-validation.cs" />
   </ItemGroup>

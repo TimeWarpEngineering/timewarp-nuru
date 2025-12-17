@@ -2,14 +2,20 @@
 #:project ../../source/timewarp-nuru/timewarp-nuru.csproj
 #:project ../../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj
 
-using TimeWarp.Nuru;
-
 // Test edge cases (Section 15 of REPL Test Plan)
-return await RunTests<EdgeCaseTests>();
 
-[TestTag("REPL")]
-public class EdgeCaseTests
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.ReplTests.EdgeCases
 {
+  [TestTag("REPL")]
+  public class EdgeCaseTests
+  {
+    [ModuleInitializer]
+    internal static void Register() => RegisterTests<EdgeCaseTests>();
+
   public static async Task Should_handle_very_long_input()
   {
     // Arrange
@@ -184,5 +190,6 @@ public class EdgeCaseTests
     // Assert
     terminal.OutputContains("Goodbye!")
       .ShouldBeTrue("Should handle zero max history");
+  }
   }
 }

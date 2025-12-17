@@ -3,14 +3,21 @@
 #:project ../../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj
 
 using System.Diagnostics;
-using TimeWarp.Nuru;
 
 // Test performance (Section 14 of REPL Test Plan)
-return await RunTests<PerformanceTests>();
 
-[TestTag("REPL")]
-public class PerformanceTests
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.ReplTests.Performance
 {
+  [TestTag("REPL")]
+  public class PerformanceTests
+  {
+    [ModuleInitializer]
+    internal static void Register() => RegisterTests<PerformanceTests>();
+
   [Timeout(5000)]
   public static async Task Should_start_session_quickly()
   {
@@ -224,5 +231,6 @@ public class PerformanceTests
     // This is internal, so we verify indirectly through successful completion
     terminal.OutputContains("Goodbye!")
       .ShouldBeTrue("Resources should be cleaned up");
+  }
   }
 }

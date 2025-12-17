@@ -2,14 +2,20 @@
 #:project ../../source/timewarp-nuru/timewarp-nuru.csproj
 #:project ../../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj
 
-using TimeWarp.Nuru;
-
 // Test configuration options (Section 12 of REPL Test Plan)
-return await RunTests<ConfigurationTests>();
 
-[TestTag("REPL")]
-public class ConfigurationTests
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.ReplTests.Configuration
 {
+  [TestTag("REPL")]
+  public class ConfigurationTests
+  {
+    [ModuleInitializer]
+    internal static void Register() => RegisterTests<ConfigurationTests>();
+
   private static string ThrowTestException() => throw new InvalidOperationException("Test");
 
   [Timeout(5000)]
@@ -244,5 +250,6 @@ public class ConfigurationTests
     // Assert
     terminal.OutputContains(AnsiColors.Cyan)
       .ShouldBeTrue("Custom prompt color should be used");
+  }
   }
 }

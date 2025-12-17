@@ -1,12 +1,19 @@
 #!/usr/bin/dotnet --
 #:project ../../source/timewarp-nuru-mcp/timewarp-nuru-mcp.csproj
 
-return await RunTests<ExampleRetrievalTests>(clearCache: true);
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.Mcp
+{
 
 [TestTag("MCP")]
-[ClearRunfileCache]
 public class ExampleRetrievalTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<ExampleRetrievalTests>();
+
   public static async Task Should_list_all_available_examples()
   {
     // Arrange & Act
@@ -169,3 +176,5 @@ public class ExampleRetrievalTests
     await Task.CompletedTask;
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.Mcp

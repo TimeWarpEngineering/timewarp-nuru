@@ -16,34 +16,32 @@ TimeWarp.Nuru is a route-based CLI framework for .NET that brings web-style rout
 dotnet build timewarp-nuru.slnx -c Release
 
 # Build with code formatting check
-cd scripts && ./build.cs
+dotnet runfiles/build.cs
 
 # Clean and rebuild
-cd scripts && ./clean-and-build.cs
+dotnet runfiles/clean-and-build.cs
 
 # Run code analysis
-cd scripts && ./analyze.cs
+dotnet runfiles/analyze.cs
 ```
 
 ### Test Commands
 
 ```bash
-# Run integration tests comparing Delegate vs Mediator implementations (both JIT and AOT)
-cd Tests && ./test-both-versions.sh
+# Fast CI tests (~1700 tests, ~12s)
+dotnet tests/ci-tests/run-ci-tests.cs
+
+# Full test suite (~1759 tests, ~25s)
+dotnet tests/scripts/run-all-tests.cs
+
+# Integration tests (Delegate vs Mediator, JIT/AOT)
+tests/test-both-versions.sh
+
+# Single test file
+dotnet tests/timewarp-nuru-core-tests/routing/routing-01-basic.cs
 
 # Run benchmarks
-cd Benchmarks/TimeWarp.Nuru.Benchmarks
-dotnet run -c Release
-```
-
-### Single Test Execution
-
-```bash
-# Test specific delegate implementation
-./Tests/TimeWarp.Nuru.TestApp.Delegates/bin/Release/net9.0/TimeWarp.Nuru.TestApp.Delegates git status
-
-# Test specific mediator implementation  
-./Tests/TimeWarp.Nuru.TestApp.Mediator/bin/Release/net9.0/TimeWarp.Nuru.TestApp.Mediator git status
+cd benchmarks/timewarp-nuru-benchmarks && dotnet run -c Release
 ```
 
 ## Architecture
@@ -79,14 +77,15 @@ dotnet run -c Release
 ## Project Structure
 
 ```
-/Source/TimeWarp.Nuru/          # Main library
-/Tests/
-  TimeWarp.Nuru.TestApp.Delegates/   # Direct routing test app
-  TimeWarp.Nuru.TestApp.Mediator/    # Mediator routing test app
-/Benchmarks/                    # Performance benchmarks
+/source/                        # Main library source code
+/tests/
+  test-apps/                    # Integration test applications
+  timewarp-nuru-core-tests/     # Core unit tests
+  ci-tests/                     # CI multi-mode test runner
+/benchmarks/                    # Performance benchmarks
 /samples/                       # Example implementations
-/scripts/                       # Build and utility runfiles
-/kanban/                       # Task tracking
+/runfiles/                      # Build and utility runfiles
+/kanban/                        # Task tracking
 ```
 
 ## Key Development Guidelines
@@ -155,7 +154,7 @@ dotnet publish -c Release -r linux-x64 -p:PublishAot=true -p:TrimMode=partial
 ## Testing Approach
 - **IMPORTANT: This repository does NOT use xUnit, NUnit, MSTest or any traditional testing frameworks.**
 
-Tests are implemented as single-file C# applications (new in .NET 10). You can find 50+ test files by searching for "test" in file names. The analyzer tests are located in `/Tests/TimeWarp.Nuru.Analyzers.Tests/TimeWarp.Nuru.Analyzers.Tests.csproj`.
+Tests are implemented as single-file C# applications (runfiles). Test files are located in `tests/` subdirectories. Use `dotnet tests/ci-tests/run-ci-tests.cs` for the fast CI test suite (~1700 tests in ~12s).
 
 ## REPL Interactive Testing Limitations
 - **IMPORTANT: Claude cannot run interactive REPL tests due to non-interactive shell environment.**
@@ -170,16 +169,16 @@ When working with Cocona comparison documents in `/samples/cocona-comparison/`:
 - Check `cocona-comparison-update-tracking.md` for documents needing updates
 - Ensure all comparison documents maintain consistent structure for better developer experience
 
-## REPL Implementation Status: COMPLETE ✅
+## REPL Implementation Status: COMPLETE
 
 **Task 027: REPL Map Implementation - FINISHED**
 
 ### What Was Accomplished:
-- ✅ **Split Architecture**: `AddReplOptions()` in core `TimeWarp.Nuru`, `AddReplRoutes()` in REPL `TimeWarp.Nuru.Repl`
-- ✅ **Map Usage**: All REPL commands (`exit`, `quit`, `q`, `help`, `history`, `clear`, `cls`, `clear-history`) registered via `builder.Map()`
-- ✅ **Clean Separation**: Core configuration stays private, REPL routes in separate project
-- ✅ **Updated Sample**: Modified `samples/repl-demo/repl-basic-demo.cs` to demonstrate new `AddReplSupport()` API
-- ✅ **All Builds Successful**: Both core and REPL projects compile without errors
+- **Split Architecture**: `AddReplOptions()` in core `TimeWarp.Nuru`, `AddReplRoutes()` in REPL `TimeWarp.Nuru.Repl`
+- **Map Usage**: All REPL commands (`exit`, `quit`, `q`, `help`, `history`, `clear`, `cls`, `clear-history`) registered via `builder.Map()`
+- **Clean Separation**: Core configuration stays private, REPL routes in separate project
+- **Updated Sample**: Modified `samples/repl-demo/repl-basic-demo.cs` to demonstrate new `AddReplSupport()` API
+- **All Builds Successful**: Both core and REPL projects compile without errors
 
 ### Testing Limitations:
 - **IMPORTANT**: Claude cannot run interactive REPL tests due to non-interactive shell environment
@@ -187,8 +186,8 @@ When working with Cocona comparison documents in `/samples/cocona-comparison/`:
 - Implementation verified to start correctly and display custom prompts/messages
 
 ### Files Modified:
-- `Source/TimeWarp.Nuru/NuruAppBuilder.cs` - Added `AddReplOptions()` method
-- `Source/TimeWarp.Nuru.Repl/NuruAppExtensions.cs` - Added `AddReplRoutes()` and updated `AddReplSupport()`
+- `source/timewarp-nuru/NuruAppBuilder.cs` - Added `AddReplOptions()` method
+- `source/timewarp-nuru-repl/NuruAppExtensions.cs` - Added `AddReplRoutes()` and updated `AddReplSupport()`
 - `samples/repl-demo/repl-basic-demo.cs` - Updated to use new API
 - `claude.md` - Added testing limitations note
 

@@ -2,21 +2,20 @@
 
 ## Build Commands
 - Full build: `dotnet build timewarp-nuru.slnx -c Release`
-- Scripted build (with format/analyze): `cd scripts && ./build.cs`
-- Clean & rebuild: `cd scripts && ./clean-and-build.cs`
+- Runfile build (with format/analyze): `dotnet runfiles/build.cs`
+- Clean & rebuild: `dotnet runfiles/clean-and-build.cs`
 - Single project: `dotnet build source/timewarp-nuru/timewarp-nuru.csproj -c Release`
 
 ## Lint & Analyze Commands
 - Format code: `dotnet format` (enforced in build; follows .editorconfig)
-- Analyze: `cd scripts && ./analyze.cs` (Roslynator rules from Directory.Build.props; warnings as errors)
+- Analyze: `dotnet runfiles/analyze.cs` (Roslynator rules from Directory.Build.props; warnings as errors)
 - Check style: Build fails on RCS1037 (no trailing whitespace), CA1031 (specific exceptions)
 
 ## Test Commands
-- All integration tests (Delegate vs Mediator, JIT/AOT): `cd Tests && ./test-both-versions.sh`
-- Single test app (Delegate): `./Tests/TimeWarp.Nuru.TestApp.Delegates/bin/Release/net9.0/TimeWarp.Nuru.TestApp.Delegates git status`
-- Single test app (Mediator): `./Tests/TimeWarp.Nuru.TestApp.Mediator/bin/Release/net9.0/TimeWarp.Nuru.TestApp.Mediator git status`
-- Run specific runfile: `dotnet run Tests/TimeWarp.Nuru.Tests/Lexer/lexer-01-basic-token-types.cs`
-- Add to runner: Update `Tests/Scripts/run-all-tests.cs` for new tests
+- Fast CI tests (~1700 tests, ~12s): `dotnet tests/ci-tests/run-ci-tests.cs`
+- Full test suite (~1759 tests, ~25s): `dotnet tests/scripts/run-all-tests.cs`
+- Integration tests (Delegate vs Mediator, JIT/AOT): `tests/test-both-versions.sh`
+- Single test file: `dotnet tests/timewarp-nuru-core-tests/routing/routing-01-basic.cs`
 
 ## Kanban Task Guidelines
 - **NEVER add these fields**: Status (folder location indicates status), Priority, Category, Priority Justification, Implementation Status

@@ -8,7 +8,7 @@ on:
       - 'source/**'
       - 'samples/**'
       - 'tests/**'
-      - 'scripts/**'
+      - 'runfiles/**'
       - '.github/workflows/**'
       - 'Directory.Build.props'
       - 'Directory.Packages.props'
@@ -19,7 +19,7 @@ on:
       - 'source/**'
       - 'samples/**'
       - 'tests/**'
-      - 'scripts/**'
+      - 'runfiles/**'
       - '.github/workflows/**'
       - 'Directory.Build.props'
       - 'Directory.Packages.props'
@@ -52,7 +52,7 @@ jobs:
       - name: Build
         run: |
           echo "Running build script..."
-          dotnet ${{ github.workspace }}/scripts/build.cs
+          dotnet ${{ github.workspace }}/runfiles/build.cs
 
       - name: Test
         if: github.event_name != 'release'
@@ -66,7 +66,7 @@ jobs:
 
       - name: Check if version already published (Releases only)
         if: github.event_name == 'release'
-        run: dotnet ${{ github.workspace }}/scripts/check-version.cs
+        run: dotnet ${{ github.workspace }}/runfiles/check-version.cs
 
       - name: Publish to NuGet.org (Releases only)
         if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && github.event.inputs.version != '')

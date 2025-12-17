@@ -2,17 +2,22 @@
 #:project ../../source/timewarp-nuru/timewarp-nuru.csproj
 #:project ../../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj
 
-using TimeWarp.Nuru;
-
 // Test to demonstrate tab completion cycling bug
 // After first cycle completion, subsequent tabs are interpreted as text input
 
-return await RunTests<TabCyclingBugTests>();
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.ReplTests.TabCyclingBug
+{
 
 [TestTag("REPL")]
-[ClearRunfileCache]
 public class TabCyclingBugTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<TabCyclingBugTests>();
+
   private static TestTerminal? Terminal;
   private static NuruCoreApp? App;
 
@@ -98,3 +103,5 @@ public class TabCyclingBugTests
     );
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.ReplTests.TabCyclingBug

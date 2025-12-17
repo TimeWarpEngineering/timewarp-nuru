@@ -2,14 +2,21 @@
 #:project ../../source/timewarp-nuru/timewarp-nuru.csproj
 #:project ../../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj
 
-using TimeWarp.Nuru;
-
 // Test kill ring functionality (PSReadLine kill/yank operations)
-return await RunTests<KillRingTests>();
+
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.ReplTests.KillRingTests
+{
 
 [TestTag("REPL")]
 public class KillRingTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<KillRingTests>();
+
   // === Kill Ring Unit Tests ===
 
   public static async Task Should_add_text_to_kill_ring()
@@ -389,3 +396,5 @@ public class KillRingTests
     await Task.CompletedTask;
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.ReplTests.KillRingTests

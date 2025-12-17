@@ -2,16 +2,23 @@
 #:project ../../source/timewarp-nuru/timewarp-nuru.csproj
 #:project ../../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj
 
-using TimeWarp.Nuru;
-
 // Tests for PSReadLine-compatible undo/redo functionality (Task 043-005)
-return await RunTests<UndoRedoTests>();
+
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.ReplTests.UndoRedo
+{
 
 [TestTag("REPL")]
 [TestTag("PSReadLine")]
 [TestTag("UndoRedo")]
 public class UndoRedoTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<UndoRedoTests>();
+
   // ============================================================================
   // UndoStack Unit Tests
   // ============================================================================
@@ -307,3 +314,5 @@ public class UndoRedoTests
     terminal.OutputContains("X!").ShouldBeTrue("Redo should be cleared after new edit");
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.ReplTests.UndoRedo

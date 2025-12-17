@@ -2,9 +2,12 @@
 #:project ../../source/timewarp-nuru/timewarp-nuru.csproj
 #:project ../../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj
 
-using TimeWarp.Nuru;
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
 
-return await RunTests<KeyBindingProfileTests>(clearCache: true);
+namespace TimeWarp.Nuru.Tests.ReplTests.KeyBindingProfiles
+{
 
 /// <summary>
 /// Tests for key binding profiles (Default, Emacs, Vi, VSCode).
@@ -24,9 +27,11 @@ return await RunTests<KeyBindingProfileTests>(clearCache: true);
 /// </para>
 /// </remarks>
 [TestTag("REPL")]
-[ClearRunfileCache]
 public class KeyBindingProfileTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<KeyBindingProfileTests>();
+
   // ============================================================================
   // Profile Instantiation Tests
   // ============================================================================
@@ -496,3 +501,5 @@ public class KeyBindingProfileTests
     app.ShouldNotBeNull("App should build with implicit Default profile");
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.ReplTests.KeyBindingProfiles

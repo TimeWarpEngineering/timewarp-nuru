@@ -2,16 +2,23 @@
 #:project ../../source/timewarp-nuru/timewarp-nuru.csproj
 #:project ../../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj
 
-using TimeWarp.Nuru;
-
 // Tests for PSReadLine basic editing enhancements (Task 043-008)
-return await RunTests<BasicEditingEnhancementTests>();
+
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.ReplTests.BasicEditingEnhancement
+{
 
 [TestTag("REPL")]
 [TestTag("PSReadLine")]
 [TestTag("BasicEditing")]
 public class BasicEditingEnhancementTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<BasicEditingEnhancementTests>();
+
   // ============================================================================
   // DeleteCharOrExit Tests
   // ============================================================================
@@ -314,3 +321,5 @@ public class BasicEditingEnhancementTests
     terminal.OutputContains("No crash!").ShouldBeTrue("Ctrl+H at start of line should not crash");
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.ReplTests.BasicEditingEnhancement

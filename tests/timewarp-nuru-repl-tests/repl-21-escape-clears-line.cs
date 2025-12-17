@@ -2,16 +2,21 @@
 #:project ../../source/timewarp-nuru/timewarp-nuru.csproj
 #:project ../../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj
 
-using TimeWarp.Nuru;
-
 // Test that Escape key clears the current line (PSReadLine RevertLine behavior)
 
-return await RunTests<EscapeClearsLineTests>();
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.ReplTests.EscapeClearsLine
+{
 
 [TestTag("REPL")]
-[ClearRunfileCache]
 public class EscapeClearsLineTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<EscapeClearsLineTests>();
+
   [Timeout(5000)]
   public static async Task Should_clear_line_on_escape()
   {
@@ -116,3 +121,5 @@ public class EscapeClearsLineTests
       .ShouldBeFalse("Should NOT show error after Escape");
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.ReplTests.EscapeClearsLine

@@ -2,16 +2,23 @@
 #:project ../../source/timewarp-nuru/timewarp-nuru.csproj
 #:project ../../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj
 
-using TimeWarp.Nuru;
-
 // Tests for PSReadLine-compatible text selection functionality (Task 043-006)
-return await RunTests<TextSelectionTests>();
+
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.ReplTests.TextSelection
+{
 
 [TestTag("REPL")]
 [TestTag("PSReadLine")]
 [TestTag("Selection")]
 public class TextSelectionTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<TextSelectionTests>();
+
   // ============================================================================
   // Selection Unit Tests
   // ============================================================================
@@ -473,3 +480,5 @@ public class TextSelectionTests
     terminal.OutputContains("Kill ring worked!").ShouldBeTrue("Cut should add to kill ring for yank");
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.ReplTests.TextSelection

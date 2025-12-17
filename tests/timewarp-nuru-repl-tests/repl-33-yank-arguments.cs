@@ -2,17 +2,24 @@
 #:project ../../source/timewarp-nuru/timewarp-nuru.csproj
 #:project ../../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj
 
-using TimeWarp.Nuru;
-
 // Tests for PSReadLine-compatible yank argument functionality (Task 043-010)
 // Verifies YankLastArg (Alt+.) and YankNthArg (Alt+Ctrl+Y) functionality
-return await RunTests<YankArgumentTests>();
+
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.ReplTests.YankArguments
+{
 
 [TestTag("REPL")]
 [TestTag("PSReadLine")]
 [TestTag("YankArg")]
 public class YankArgumentTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<YankArgumentTests>();
+
   // ============================================================================
   // ParseHistoryArguments Tests (Unit Tests for Argument Parsing)
   // ============================================================================
@@ -438,3 +445,5 @@ public class YankArgumentTests
     terminal.OutputContains("Hi, World!").ShouldBeTrue("Alt+. should insert at cursor position");
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.ReplTests.YankArguments

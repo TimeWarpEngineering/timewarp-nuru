@@ -2,8 +2,6 @@
 #:project ../../source/timewarp-nuru/timewarp-nuru.csproj
 #:project ../../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj
 
-using TimeWarp.Nuru;
-
 // BUG: git commit<Tab><Tab> completes to "git --help" instead of showing "git commit" options
 // 
 // Steps to reproduce:
@@ -20,13 +18,20 @@ using TimeWarp.Nuru;
 //
 // This test captures the bug. Once fixed, uncomment the assertion.
 
-return await RunTests<DoubleTabBugTests>();
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.ReplTests.DoubleTabBug
+{
 
 [TestTag("REPL")]
 [TestTag("Bug")]
-[ClearRunfileCache]
 public class DoubleTabBugTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<DoubleTabBugTests>();
+
   [Timeout(5000)]
   public static async Task Should_stay_in_git_commit_context_after_double_tab()
   {
@@ -67,3 +72,5 @@ public class DoubleTabBugTests
     await Task.CompletedTask;
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.ReplTests.DoubleTabBug

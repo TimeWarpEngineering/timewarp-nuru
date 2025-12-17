@@ -4,19 +4,56 @@
 
 Jaribu is a lightweight, attribute-based testing framework specifically designed for .NET 10 file-based apps (runfiles). Unlike traditional testing frameworks like xUnit or NUnit, Jaribu tests are standalone executable C# files that leverage .NET 10's native single-file app support.
 
+**Jaribu supports two execution modes:**
+1. **Standalone Mode** - Each test file runs as an independent executable
+2. **Multi-Mode** - Multiple test files compiled into a single assembly for faster CI execution
+
 ## Key Concepts
 
 ### What is Jaribu?
 
 - **NOT a traditional test framework** - No xUnit, NUnit, or MSTest
 - **Single-file executable tests** - Each test file is a standalone .NET app
-- **Attribute-driven** - Uses attributes like `[Input]`, `[TestTag]`, `[ClearRunfileCache]`
+- **Attribute-driven** - Uses attributes like `[Input]`, `[TestTag]`, `[ModuleInitializer]`
 - **Built for .NET 10 runfiles** - Uses the `#!/usr/bin/dotnet --` shebang
 - **Package-based** - Available as `TimeWarp.Jaribu` NuGet package
+- **Dual-mode compatible** - Tests can run standalone OR compiled together in multi-mode
 
-### Test File Structure
+### Test File Structure (Multi-Mode Compatible)
 
-Every Jaribu test file follows this pattern:
+Every Jaribu test file should follow this pattern to support both standalone and multi-mode execution:
+
+```csharp
+#!/usr/bin/dotnet --
+
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace Your.Namespace.Here
+{
+
+[TestTag("CategoryName")]
+public class YourTestClassName
+{
+    [ModuleInitializer]
+    internal static void Register() => RegisterTests<YourTestClassName>();
+
+    public static async Task Should_describe_expected_behavior()
+    {
+        // Arrange
+        // Act
+        // Assert
+        await Task.CompletedTask;
+    }
+}
+
+} // namespace Your.Namespace.Here
+```
+
+### Legacy Standalone-Only Structure (Deprecated)
+
+The old pattern without multi-mode support:
 
 ```csharp
 #!/usr/bin/dotnet --
@@ -37,6 +74,8 @@ public class YourTestClassName
 }
 ```
 
+**Note:** New tests should use the multi-mode compatible format.
+
 ## Writing Your First Test
 
 ### Step 1: Create the Test File
@@ -45,26 +84,51 @@ Create a new file with a descriptive name following the naming convention:
 - `category-##-feature-description.cs`
 - Examples: `lexer-01-basic-token-types.cs`, `routing-05-option-matching.cs`
 
-### Step 2: Add the Shebang and Entry Point
+### Step 2: Add the Shebang and Multi-Mode Guard
 
 ```csharp
 #!/usr/bin/dotnet --
 
-return await RunTests<MyTests>(clearCache: true);
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
 ```
 
-### Step 3: Define Your Test Class
+The `#if !JARIBU_MULTI` guard ensures:
+- **Standalone mode**: `RunAllTests()` executes all tests in the file
+- **Multi-mode**: The top-level statement is skipped (tests discovered via `[ModuleInitializer]`)
+
+### Step 3: Add a Namespace
+
+Use a unique namespace to avoid type conflicts when multiple test files are compiled together:
+
+```csharp
+namespace TimeWarp.Nuru.Tests.YourCategory.YourFeature
+{
+```
+
+### Step 4: Define Your Test Class with Registration
 
 ```csharp
 [TestTag("MyCategory")]
-[ClearRunfileCache]
 public class MyTests
 {
+    [ModuleInitializer]
+    internal static void Register() => RegisterTests<MyTests>();
+
     // Test methods go here
 }
 ```
 
-### Step 4: Write Test Methods
+The `[ModuleInitializer]` attribute ensures your test class is automatically registered when compiled in multi-mode.
+
+### Step 5: Close the Namespace
+
+```csharp
+} // namespace TimeWarp.Nuru.Tests.YourCategory.YourFeature
+```
+
+### Step 6: Write Test Methods
 
 Test methods must:
 - Be `public static async Task`
@@ -85,6 +149,56 @@ public static async Task Should_perform_expected_action()
     
     await Task.CompletedTask;
 }
+```
+
+### Complete Multi-Mode Compatible Example
+
+```csharp
+#!/usr/bin/dotnet --
+
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.MyFeature
+{
+
+[TestTag("MyCategory")]
+public class MyFeatureTests
+{
+    [ModuleInitializer]
+    internal static void Register() => RegisterTests<MyFeatureTests>();
+
+    public static async Task Should_perform_expected_action()
+    {
+        // Arrange
+        string input = "test value";
+        
+        // Act
+        string result = input.ToUpper();
+        
+        // Assert
+        result.ShouldBe("TEST VALUE");
+        
+        await Task.CompletedTask;
+    }
+
+    public static async Task Should_handle_empty_input()
+    {
+        // Arrange
+        string input = "";
+        
+        // Act
+        string result = input.ToUpper();
+        
+        // Assert
+        result.ShouldBeEmpty();
+        
+        await Task.CompletedTask;
+    }
+}
+
+} // namespace TimeWarp.Nuru.Tests.MyFeature
 ```
 
 ### Step 5: Optional Setup and CleanUp Methods
@@ -402,9 +516,9 @@ public static async Task Should_complete_within_timeout()
 }
 ```
 
-### ClearRunfileCache Attribute
+### ClearRunfileCache Attribute (Standalone Only)
 
-Clear the .NET runfile cache before tests run:
+Clear the .NET runfile cache before tests run (only applies to standalone mode):
 
 ```csharp
 [ClearRunfileCache] // Clears cache to ensure latest code changes
@@ -413,6 +527,25 @@ public class MyTests { }
 // Or control it programmatically:
 return await RunTests<MyTests>(clearCache: true);
 ```
+
+**Note:** In multi-mode compatible tests, `[ClearRunfileCache]` is not needed because `RunAllTests()` handles cache clearing automatically.
+
+### ModuleInitializer Attribute (Multi-Mode Required)
+
+Register test classes for multi-mode discovery:
+
+```csharp
+[TestTag("MyCategory")]
+public class MyTests
+{
+    [ModuleInitializer]
+    internal static void Register() => RegisterTests<MyTests>();
+    
+    // Tests...
+}
+```
+
+The `[ModuleInitializer]` ensures the test class is automatically registered when the assembly loads in multi-mode.
 
 ## Test Tags and Filtering
 

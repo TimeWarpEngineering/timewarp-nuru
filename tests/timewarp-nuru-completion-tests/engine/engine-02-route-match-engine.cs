@@ -3,15 +3,19 @@
 // Test: RouteMatchEngine - Matches parsed input against routes
 // Task: 064 - Implement RouteMatchEngine
 
-using TimeWarp.Nuru;
-using Shouldly;
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
 
-return await RunTests<RouteMatchEngineTests>(clearCache: true);
+namespace TimeWarp.Nuru.Tests.Completion.Engine.RouteMatch
+{
 
 [TestTag("Completion")]
-[ClearRunfileCache]
 public class RouteMatchEngineTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<RouteMatchEngineTests>();
+
   // Helper to create test endpoints
   private static EndpointCollection CreateEndpoints(params string[] patterns)
   {
@@ -468,3 +472,5 @@ public class RouteMatchEngineTests
     await Task.CompletedTask;
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.Completion.Engine.RouteMatch

@@ -3,14 +3,19 @@
 // Test: InputTokenizer - Tokenizes command-line input for completion analysis
 // Task: 063 - Implement InputTokenizer
 
-using Shouldly;
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
 
-return await RunTests<InputTokenizerTests>(clearCache: true);
+namespace TimeWarp.Nuru.Tests.Completion.Engine.Tokenizer
+{
 
 [TestTag("Completion")]
-[ClearRunfileCache]
 public class InputTokenizerTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<InputTokenizerTests>();
+
   // Helper to verify completed words
   private static void VerifyCompletedWords(ParsedInput result, params string[] expected)
   {
@@ -663,3 +668,5 @@ public class InputTokenizerTests
     await Task.CompletedTask;
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.Completion.Engine.Tokenizer

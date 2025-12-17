@@ -50,6 +50,8 @@
     <Compile Include="../timewarp-nuru-completion-tests/static/*.cs" />
     <!-- Completion tests - dynamic (migrated) -->
     <Compile Include="../timewarp-nuru-completion-tests/dynamic/*.cs" />
+    <!-- Completion tests - engine (migrated) -->
+    <Compile Include="../timewarp-nuru-completion-tests/engine/*.cs" />
     <!-- All REPL tests (recursive glob includes subfolders, excludes obj/bin) -->
     <Compile Include="../timewarp-nuru-repl-tests/**/*.cs" Exclude="../timewarp-nuru-repl-tests/obj/**;../timewarp-nuru-repl-tests/bin/**" />
     <!-- MCP tests (migrated) -->

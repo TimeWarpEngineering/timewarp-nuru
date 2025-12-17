@@ -46,6 +46,8 @@
     <Compile Include="../timewarp-nuru-repl-tests/repl-33-yank-arguments.cs" />
     <Compile Include="../timewarp-nuru-repl-tests/repl-34-interactive-route-alias.cs" />
     <Compile Include="../timewarp-nuru-repl-tests/repl-35-interactive-route-execution.cs" />
+    <Compile Include="../timewarp-nuru-repl-tests/command-line-parser/parser-01-basic-parsing.cs" />
+    <Compile Include="../timewarp-nuru-repl-tests/command-line-parser/parser-02-quoted-strings.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="$(MSBuildThisFileDirectory)../../source/timewarp-nuru-completion/timewarp-nuru-completion.csproj" />

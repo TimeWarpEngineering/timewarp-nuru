@@ -2,11 +2,20 @@
 #:project ../../../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj
 
 // Test CommandLineParser quote handling
-return await RunTests<CommandLineParserQuoteTests>();
+
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.CommandLineParserTests.QuotedStrings
+{
 
 [TestTag("CommandLineParser")]
 public class CommandLineParserQuoteTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<CommandLineParserQuoteTests>();
+
   public static async Task Should_parse_double_quoted_string()
   {
     // Arrange & Act
@@ -153,3 +162,5 @@ public class CommandLineParserQuoteTests
     await Task.CompletedTask;
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.CommandLineParserTests.QuotedStrings

@@ -2,37 +2,18 @@
 #:package TimeWarp.Amuru
 
 using TimeWarp.Amuru;
-using static TimeWarp.Amuru.Native.FileSystem.Direct;
 
-// Get script directory
-string scriptDir = Path.GetDirectoryName(AppContext.GetData("EntryPointFileDirectoryPath") as string)!;
-// The script is in tests/scripts, but AppContext returns tests, so testsRoot is scriptDir itself
-string testsRoot = scriptDir;
+// Get script directory, tests root, and repo root
+// EntryPointFileDirectoryPath returns the scripts directory
+string scriptsDir = AppContext.GetData("EntryPointFileDirectoryPath") as string ?? Environment.CurrentDirectory;
+string testsRoot = Path.GetFullPath(Path.Combine(scriptsDir, ".."));
+string repoRoot = Path.GetFullPath(Path.Combine(testsRoot, ".."));
 
 // Parse command line arguments
-bool parallel = args.Contains("--parallel");
 bool verbose = args.Contains("--verbose");
-bool stopOnFail = args.Contains("--stop-on-fail");
-
-// Handle --category CategoryName format
-string? category = null;
-int categoryIndex = Array.IndexOf(args, "--category");
-if (categoryIndex >= 0 && categoryIndex + 1 < args.Length)
-{
-  category = args[categoryIndex + 1];
-}
-
-if (verbose)
-{
-  WriteLine($"Parsed category: '{category}'");
-  WriteLine($"Args: {string.Join(", ", args)}");
-}
-
-if (verbose)
-{
-  WriteLine($"Script dir: {scriptDir}");
-  WriteLine($"Tests root: {testsRoot}");
-}
+bool skipStandalone = args.Contains("--skip-standalone");
+bool skipAnalyzers = args.Contains("--skip-analyzers");
+bool onlyStandalone = args.Contains("--only-standalone");
 
 // Color codes for output
 const string Reset = "\u001b[0m";
@@ -41,323 +22,268 @@ const string Red = "\u001b[31m";
 const string Yellow = "\u001b[33m";
 const string Blue = "\u001b[34m";
 const string Cyan = "\u001b[36m";
+const string Bold = "\u001b[1m";
 
 // Header
 WriteLine($"{Blue}========================================{Reset}");
-WriteLine($"{Blue}TimeWarp.Nuru Test Suite{Reset}");
-WriteLine($"{Blue}========================================{Reset}");
-
-// Clear runfile cache (except for this currently running script) to ensure test scripts pick up latest source
-string runfileCacheRoot = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".local", "share", "dotnet", "runfile");
-if (Directory.Exists(runfileCacheRoot))
-{
-  // Get the current executable's directory to avoid deleting ourselves
-  string? currentExeDir = AppContext.BaseDirectory;
-
-  WriteLine($"Current executable directory: {currentExeDir}");
-  WriteLine("Runfile cache entries:");
-
-  int deletedCount = 0;
-  foreach (string cacheDir in Directory.GetDirectories(runfileCacheRoot))
-  {
-    // Don't delete the directory containing the currently running executable
-    // currentExeDir will be something like: /path/runfile/script-hash/bin/debug/
-    // cacheDir will be: /path/runfile/script-hash/
-    // So check if currentExeDir STARTS WITH cacheDir
-    if (currentExeDir?.StartsWith(cacheDir, StringComparison.OrdinalIgnoreCase) == true)
-    {
-      WriteLine($"  [SKIP] {Path.GetFileName(cacheDir)} (current executable)");
-      continue;
-    }
-
-    try
-    {
-      WriteLine($"  [DELETE] {Path.GetFileName(cacheDir)}");
-      RemoveItem(cacheDir, recursive: true);
-      deletedCount++;
-    }
-    catch (Exception ex)
-    {
-      WriteLine($"  [ERROR] {Path.GetFileName(cacheDir)}: {ex.Message}");
-    }
-  }
-
-  WriteLine($"✓ Cleared {deletedCount} cached test entries from runfile cache");
-}
-
-WriteLine();
-WriteLine($"Configuration: {(parallel ? "Parallel" : "Sequential")} | {(verbose ? "Verbose" : "Normal")}");
+WriteLine($"{Blue}{Bold}TimeWarp.Nuru Test Suite{Reset}");
 WriteLine($"{Blue}========================================{Reset}");
 WriteLine();
-
-// Discover test files
-Dictionary<string, List<string>> testCategories = new()
-{
-  ["Analyzers"] = [.. GetTestFiles(Path.Combine(testsRoot, "timewarp-nuru-analyzers-tests/auto"))],
-  ["Core"] = [.. GetTestFiles(Path.Combine(testsRoot, "timewarp-nuru-core-tests"))],
-  ["Factory"] = [.. GetTestFiles(Path.Combine(testsRoot, "timewarp-nuru-tests/factory"))],
-  ["Lexer"] = [.. GetTestFiles(Path.Combine(testsRoot, "timewarp-nuru-tests/lexer"))],
-  ["Parser"] = [.. GetTestFiles(Path.Combine(testsRoot, "timewarp-nuru-tests/parsing/parser"))],
-  ["Routing"] = [.. GetTestFiles(Path.Combine(testsRoot, "timewarp-nuru-tests/routing"))],
-  ["TypeConversion"] = [.. GetTestFiles(Path.Combine(testsRoot, "timewarp-nuru-tests/type-conversion"))],
-  ["MCP"] = GetTestFiles(Path.Combine(testsRoot, "timewarp-nuru-mcp-tests")),
-  ["Completion"] = [.. GetTestFiles(Path.Combine(testsRoot, "timewarp-nuru-completion-tests/static")),
-                      .. GetTestFiles(Path.Combine(testsRoot, "timewarp-nuru-completion-tests/dynamic"))],
-  ["Repl"] = [.. GetTestFiles(Path.Combine(testsRoot, "timewarp-nuru-repl-tests"))],
-};
-
-// Filter categories if specified
-if (category is not null)
-{
-  List<string> originalCategories = [.. testCategories.Keys];
-  testCategories = testCategories
-      .Where(kvp => kvp.Key.Equals(category, StringComparison.OrdinalIgnoreCase))
-      .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
-
-  if (testCategories.Count == 0)
-  {
-    WriteLine($"{Red}Error: No tests found for category '{category}'{Reset}");
-    WriteLine($"Available categories: {string.Join(", ", originalCategories)}");
-    return 1;
-  }
-}
-
-// Count total tests
-int totalTests = testCategories.Sum(kvp => kvp.Value.Count);
-WriteLine($"Found {totalTests} tests in {testCategories.Count} categories");
 
 if (verbose)
 {
-  foreach (KeyValuePair<string, List<string>> kvp in testCategories)
-  {
-    WriteLine($"  {kvp.Key}: {kvp.Value.Count} tests");
-  }
+  WriteLine($"Tests root: {testsRoot}");
+  WriteLine($"Repo root: {repoRoot}");
+  WriteLine();
 }
 
-WriteLine();
+// Track overall results
+int totalPassed = 0;
+int totalFailed = 0;
+int totalSkipped = 0;
+Stopwatch overallStopwatch = Stopwatch.StartNew();
 
-// Run tests
-ConcurrentBag<TestResult> results = [];
-Stopwatch stopwatch = Stopwatch.StartNew();
+// ============================================================================
+// PHASE 1: Run CI Multi-Mode Tests
+// ============================================================================
 
-if (parallel && !stopOnFail)
+if (!onlyStandalone)
 {
-  // Parallel execution
-  List<Task> tasks = [];
-  foreach (KeyValuePair<string, List<string>> categoryKvp in testCategories)
-  {
-    tasks.Add(RunCategoryTests(categoryKvp.Key, categoryKvp.Value, results, verbose, stopOnFail));
-  }
-
-  await Task.WhenAll(tasks);
-}
-else
-{
-  // Sequential execution
-  foreach (KeyValuePair<string, List<string>> categoryKvp in testCategories)
-  {
-    await RunCategoryTests(categoryKvp.Key, categoryKvp.Value, results, verbose, stopOnFail);
-  }
-}
-
-stopwatch.Stop();
-
-// Generate summary
-WriteLine();
-WriteLine($"{Blue}========================================{Reset}");
-WriteLine($"{Blue}SUMMARY{Reset}");
-WriteLine($"{Blue}========================================{Reset}");
-
-// Group results by category for summary
-IOrderedEnumerable<IGrouping<string, TestResult>> resultsByCategory = results.GroupBy(r => r.Category).OrderBy(g => g.Key);
-
-foreach (IGrouping<string, TestResult> categoryGroup in resultsByCategory)
-{
-  int passed = categoryGroup.Count(r => r.Success);
-  int total = categoryGroup.Count();
-  double percentage = total > 0 ? (passed * 100.0 / total) : 0;
-  string color = passed == total ? Green : (passed > 0 ? Yellow : Red);
-
-  WriteLine($"{categoryGroup.Key,-15} {color}{passed}/{total} ({percentage:F1}%){Reset}");
-}
-
-WriteLine();
-
-// Overall summary
-int totalPassed = results.Count(r => r.Success);
-int totalFailed = results.Count(r => !r.Success);
-double overallPercentage = totalTests > 0 ? (totalPassed * 100.0 / totalTests) : 0;
-
-WriteLine($"Total: {totalPassed}/{totalTests} tests passed ({overallPercentage:F1}%) in {stopwatch.Elapsed.TotalSeconds:F1}s");
-
-// List failed tests
-if (totalFailed > 0)
-{
+  WriteLine($"{Cyan}Phase 1: CI Multi-Mode Tests{Reset}");
+  WriteLine($"{Cyan}Running tests/ci-tests/run-ci-tests.cs...{Reset}");
   WriteLine();
 
-  // Separate compilation errors from test failures
-  List<TestResult> compilationErrors = [.. results.Where(r => r.ExitCode == -999)];
-  List<TestResult> testFailures = [.. results.Where(r => !r.Success && r.ExitCode != -999)];
+  string ciTestRunner = Path.Combine(testsRoot, "ci-tests", "run-ci-tests.cs");
 
-  if (compilationErrors.Count > 0)
+  CommandOutput ciResult = await Shell.Builder("dotnet")
+    .WithArguments(ciTestRunner)
+    .WithWorkingDirectory(repoRoot)
+    .WithNoValidation()
+    .CaptureAsync();
+
+  // Parse results from output - look for the FINAL summary lines only
+  // The CI runner outputs individual class results AND an overall summary
+  // We only want the overall summary which appears at the very end after "Overall:"
+  string[] ciLines = ciResult.Stdout.Split('\n');
+  bool foundOverallSection = false;
+  for (int i = 0; i < ciLines.Length; i++)
   {
-    WriteLine($"{Yellow}Compilation Errors:{Reset}");
-    foreach (TestResult failed in compilationErrors)
+    string line = ciLines[i];
+
+    // Start parsing after we see "Overall:" marker
+    if (line.Contains("Overall:"))
     {
-      WriteLine($"  {Yellow}⚠{Reset} {failed.Category}/{Path.GetFileName(failed.TestFile)}");
+      foundOverallSection = true;
+      continue;
     }
 
-    WriteLine();
+    if (!foundOverallSection)
+      continue;
+
+    // Match lines like "[32mPassed:[0m 1687" (green Passed)
+    if (line.Contains("Passed:") && line.Contains("[32m"))
+    {
+      string numPart = line.Split(':').Last().Trim();
+      numPart = System.Text.RegularExpressions.Regex.Replace(numPart, @"\x1b\[[0-9;]*m", "");
+      if (int.TryParse(numPart, out int passed))
+        totalPassed += passed;
+    }
+    // Match lines like "[31mFailed:[0m 12" (red Failed)
+    else if (line.Contains("Failed:") && line.Contains("[31m"))
+    {
+      string numPart = line.Split(':').Last().Trim();
+      numPart = System.Text.RegularExpressions.Regex.Replace(numPart, @"\x1b\[[0-9;]*m", "");
+      if (int.TryParse(numPart, out int failed))
+        totalFailed += failed;
+    }
+    // Match lines like "[33mSkipped:[0m 3" (yellow Skipped)
+    else if (line.Contains("Skipped:") && line.Contains("[33m"))
+    {
+      string numPart = line.Split(':').Last().Trim();
+      numPart = System.Text.RegularExpressions.Regex.Replace(numPart, @"\x1b\[[0-9;]*m", "");
+      if (int.TryParse(numPart, out int skipped))
+        totalSkipped += skipped;
+    }
+
+    // Stop after Duration line
+    if (line.Contains("Duration:"))
+      break;
   }
 
-  if (testFailures.Count > 0)
+  // Show output
+  WriteLine(ciResult.Stdout);
+  if (!string.IsNullOrEmpty(ciResult.Stderr))
   {
-    WriteLine($"{Red}Failed Tests:{Reset}");
-    foreach (TestResult failed in testFailures)
+    WriteLine($"{Red}[STDERR]{Reset}");
+    WriteLine(ciResult.Stderr);
+  }
+
+  WriteLine();
+}
+
+// ============================================================================
+// PHASE 2: Run Standalone-Only Tests
+// ============================================================================
+
+if (!skipStandalone)
+{
+  WriteLine($"{Cyan}Phase 2: Standalone-Only Tests{Reset}");
+  WriteLine($"{Cyan}Tests excluded from multi-mode due to conflicts...{Reset}");
+  WriteLine();
+
+  // These tests cannot run in multi-mode due to Mediator source generator conflicts
+  // or unimplemented features
+  string[] standaloneTests =
+  [
+    Path.Combine(testsRoot, "timewarp-nuru-core-tests", "routing", "routing-11-delegate-mediator.cs"),
+    Path.Combine(testsRoot, "timewarp-nuru-core-tests", "routing", "routing-22-async-task-int-return.cs"),
+    Path.Combine(testsRoot, "timewarp-nuru-core-tests", "factory", "factory-01-static-methods.cs"),
+    Path.Combine(testsRoot, "timewarp-nuru-core-tests", "options", "options-03-nuru-context.cs"),
+  ];
+
+  foreach (string testFile in standaloneTests)
+  {
+    if (!File.Exists(testFile))
     {
-      WriteLine($"  {Red}✗{Reset} {failed.Category}/{Path.GetFileName(failed.TestFile)}");
-      if (verbose && !string.IsNullOrEmpty(failed.Output))
+      WriteLine($"  {Yellow}⚠{Reset} {Path.GetFileName(testFile)} - NOT FOUND");
+      continue;
+    }
+
+    Stopwatch sw = Stopwatch.StartNew();
+    CommandOutput result = await Shell.Builder("dotnet")
+      .WithArguments(testFile)
+      .WithWorkingDirectory(Path.GetDirectoryName(testFile)!)
+      .WithNoValidation()
+      .CaptureAsync();
+    sw.Stop();
+
+    bool success = result.ExitCode == 0;
+    string symbol = success ? $"{Green}✓{Reset}" : $"{Red}✗{Reset}";
+    WriteLine($"  {symbol} {Path.GetFileName(testFile)} ({sw.ElapsedMilliseconds}ms)");
+
+    if (success)
+    {
+      // Count tests from output - look for "[32mPassed:[0m N" line
+      foreach (string line in result.Stdout.Split('\n'))
       {
-        IEnumerable<string> lines = failed.Output.Split('\n').Take(5);
-        foreach (string line in lines)
+        if (line.Contains("Passed:") && line.Contains("[32m"))
         {
-          WriteLine($"    {line}");
+          string numPart = line.Split(':').Last().Trim();
+          numPart = System.Text.RegularExpressions.Regex.Replace(numPart, @"\x1b\[[0-9;]*m", "");
+          if (int.TryParse(numPart, out int count))
+            totalPassed += count;
+
+          break;
+        }
+      }
+    }
+    else
+    {
+      totalFailed++;
+      if (verbose)
+      {
+        WriteLine($"    {Red}Exit code: {result.ExitCode}{Reset}");
+        if (!string.IsNullOrEmpty(result.Stderr))
+        {
+          foreach (string line in result.Stderr.Split('\n').Take(5))
+            WriteLine($"    {line}");
         }
       }
     }
   }
+
+  WriteLine();
 }
 
-WriteLine($"{Blue}========================================{Reset}");
+// ============================================================================
+// PHASE 3: Run Analyzer Tests (Optional)
+// ============================================================================
 
-return totalFailed > 0 ? 1 : 0;
-
-// Helper functions
-
-async Task RunCategoryTests(string category, List<string> testFiles, ConcurrentBag<TestResult> results, bool verbose, bool stopOnFail)
+if (!skipAnalyzers)
 {
-  WriteLine($"{Cyan}Running {category} ({testFiles.Count} tests)...{Reset}");
+  WriteLine($"{Cyan}Phase 3: Analyzer Tests{Reset}");
+  WriteLine($"{Cyan}Tests using Roslyn compilation API...{Reset}");
+  WriteLine();
 
-  foreach (string testFile in testFiles)
+  string analyzerTestsDir = Path.Combine(testsRoot, "timewarp-nuru-analyzers-tests", "auto");
+
+  if (Directory.Exists(analyzerTestsDir))
   {
+    string[] analyzerTests = Directory.GetFiles(analyzerTestsDir, "*.cs");
 
-    TestResult result = await RunTest(testFile, category, verbose);
-    results.Add(result);
-
-    string symbol = result.Success ? $"{Green}✓{Reset}" :
-                   result.ExitCode == -999 ? $"{Yellow}⚠{Reset}" : $"{Red}✗{Reset}";
-    string status = result.ExitCode == -999 ? "NO COMPILE" : "";
-    string fileName = Path.GetFileName(testFile);
-    WriteLine($"  {symbol} {fileName,-40} ({result.Duration.TotalMilliseconds:F0}ms) {status}");
-
-    if (!result.Success && stopOnFail)
+    foreach (string testFile in analyzerTests)
     {
-      WriteLine($"{Red}Stopping on first failure{Reset}");
-      break;
-    }
-  }
-}
-
-async Task<TestResult> RunTest(string testFile, string category, bool verbose)
-{
-  Stopwatch sw = Stopwatch.StartNew();
-
-  try
-  {
-    // Make test file executable if needed
-    if (OperatingSystem.IsLinux() || OperatingSystem.IsMacOS())
-    {
-      await Shell.Builder("chmod").WithArguments("+x", testFile).RunAsync();
-    }
-
-    // Run the test using Amuru
-    CommandOutput result = await Shell.Builder(testFile)
+      Stopwatch sw = Stopwatch.StartNew();
+      CommandOutput result = await Shell.Builder("dotnet")
+        .WithArguments(testFile)
         .WithWorkingDirectory(Path.GetDirectoryName(testFile)!)
         .WithNoValidation()
         .CaptureAsync();
+      sw.Stop();
 
-    sw.Stop();
+      bool success = result.ExitCode == 0;
+      string symbol = success ? $"{Green}✓{Reset}" : $"{Red}✗{Reset}";
+      WriteLine($"  {symbol} {Path.GetFileName(testFile)} ({sw.ElapsedMilliseconds}ms)");
 
-    // Check if it's a compilation error
-    bool isCompilationError = result.Stderr.Contains("build failed", StringComparison.OrdinalIgnoreCase) ||
-                             result.Stderr.Contains("Build FAILED", StringComparison.OrdinalIgnoreCase) ||
-                             result.Stdout.Contains("build failed", StringComparison.OrdinalIgnoreCase) ||
-                             result.Stdout.Contains("Build FAILED", StringComparison.OrdinalIgnoreCase);
-
-    if (verbose)
-    {
-      if (!string.IsNullOrEmpty(result.Stdout))
+      if (success)
       {
+        // Count tests from output - look for "[32mPassed:[0m N" line
         foreach (string line in result.Stdout.Split('\n'))
         {
-          WriteLine($"    {line}");
+          if (line.Contains("Passed:") && line.Contains("[32m"))
+          {
+            string numPart = line.Split(':').Last().Trim();
+            numPart = System.Text.RegularExpressions.Regex.Replace(numPart, @"\x1b\[[0-9;]*m", "");
+            if (int.TryParse(numPart, out int count))
+              totalPassed += count;
+
+            break;
+          }
         }
       }
-
-      if (!string.IsNullOrEmpty(result.Stderr))
+      else
       {
-        foreach (string line in result.Stderr.Split('\n'))
+        totalFailed++;
+        if (verbose)
         {
-          WriteLine($"    {Red}[ERROR]{Reset} {line}");
+          WriteLine($"    {Red}Exit code: {result.ExitCode}{Reset}");
         }
       }
     }
-
-    string output = result.Stdout;
-    if (!string.IsNullOrEmpty(result.Stderr))
-    {
-      output += Environment.NewLine + "[STDERR]" + Environment.NewLine + result.Stderr;
-    }
-
-    // Use -999 as exit code for compilation errors
-    int exitCode = isCompilationError ? -999 : result.ExitCode;
-    bool success = result.Success && !isCompilationError;
-
-    return new TestResult(testFile, category, success, exitCode, sw.Elapsed, output);
   }
-  catch (TimeoutException)
+  else
   {
-    sw.Stop();
-    return new TestResult(testFile, category, false, -1, sw.Elapsed, "Test timeout (30s)");
+    WriteLine($"  {Yellow}⚠{Reset} Analyzer tests directory not found");
   }
-  catch (InvalidOperationException ex)
-  {
-    sw.Stop();
-    return new TestResult(testFile, category, false, -1, sw.Elapsed, $"Exception: {ex.Message}");
-  }
+
+  WriteLine();
 }
 
-List<string> GetTestFiles(string directory)
-{
-  if (!Directory.Exists(directory))
-  {
-    WriteLine($"Directory does not exist: {directory}");
-    return [];
-  }
+// ============================================================================
+// SUMMARY
+// ============================================================================
 
-  List<string> files =
-  [
-    .. Directory.GetFiles(directory, "*.cs", SearchOption.AllDirectories)
-      .Where(f => !f.Contains("/obj/", StringComparison.Ordinal) &&
-                  !f.Contains("/bin/", StringComparison.Ordinal) &&
-                  !f.EndsWith(".csproj", StringComparison.Ordinal) &&
-                  !Path.GetFileName(f).StartsWith("run-", StringComparison.Ordinal) && // Exclude test runners
-                  !Path.GetFileName(f).Contains("helper", StringComparison.OrdinalIgnoreCase)) // Exclude helper files
-      .Order()
-  ];
+overallStopwatch.Stop();
 
-  if (verbose && files.Count == 0)
-  {
-    WriteLine($"No test files found in: {directory}");
-    if (Directory.Exists(directory))
-    {
-      int allFiles = Directory.GetFiles(directory, "*.cs", SearchOption.AllDirectories).Length;
-      WriteLine($"  Total .cs files in directory: {allFiles}");
-    }
-  }
+WriteLine($"{Blue}========================================{Reset}");
+WriteLine($"{Blue}{Bold}OVERALL SUMMARY{Reset}");
+WriteLine($"{Blue}========================================{Reset}");
+WriteLine();
 
-  return files;
-}
+int totalTests = totalPassed + totalFailed + totalSkipped;
+string statusColor = totalFailed == 0 ? Green : Red;
+string status = totalFailed == 0 ? "ALL TESTS PASSED" : "TESTS FAILED";
 
-// Test result tracking
-sealed record TestResult(string TestFile, string Category, bool Success, int ExitCode, TimeSpan Duration, string Output);
+WriteLine($"{Bold}Status:{Reset} {statusColor}{status}{Reset}");
+WriteLine($"{Bold}Total Tests:{Reset} {totalTests}");
+WriteLine($"{Green}Passed:{Reset} {totalPassed}");
+if (totalFailed > 0)
+  WriteLine($"{Red}Failed:{Reset} {totalFailed}");
+if (totalSkipped > 0)
+  WriteLine($"{Yellow}Skipped:{Reset} {totalSkipped}");
+WriteLine($"{Bold}Duration:{Reset} {overallStopwatch.Elapsed.TotalSeconds:F1}s");
+
+WriteLine();
+WriteLine($"{Blue}========================================{Reset}");
+
+return totalFailed > 0 ? 1 : 0;

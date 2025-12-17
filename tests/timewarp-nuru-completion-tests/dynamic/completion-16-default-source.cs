@@ -1,11 +1,18 @@
 #!/usr/bin/dotnet --
 
-return await RunTests<DefaultSourceTests>(clearCache: true);
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.Completion.DefaultSource
+{
 
 [TestTag("Completion")]
-[ClearRunfileCache]
 public class DefaultSourceTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<DefaultSourceTests>();
+
   public static async Task Should_extract_root_level_commands()
   {
     // Arrange
@@ -321,3 +328,5 @@ public class DefaultSourceTests
     await Task.CompletedTask;
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.Completion.DefaultSource

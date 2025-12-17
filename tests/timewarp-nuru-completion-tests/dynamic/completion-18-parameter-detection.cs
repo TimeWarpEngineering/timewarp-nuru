@@ -1,11 +1,18 @@
 #!/usr/bin/dotnet --
 
-return await RunTests<ParameterDetectionTests>(clearCache: true);
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.Completion.ParameterDetection
+{
 
 [TestTag("Completion")]
-[ClearRunfileCache]
 public class ParameterDetectionTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<ParameterDetectionTests>();
+
   public static async Task Should_detect_first_positional_parameter()
   {
     // Arrange
@@ -214,3 +221,5 @@ enum TestMode
   Standard,
   Slow
 }
+
+} // namespace TimeWarp.Nuru.Tests.Completion.ParameterDetection

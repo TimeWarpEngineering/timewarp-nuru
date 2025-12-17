@@ -10,6 +10,9 @@ using System.Collections.ObjectModel;
 return await RunAllTests();
 #endif
 
+namespace TimeWarp.Nuru.Tests.Completion.EnumPartialFiltering
+{
+
 [TestTag("Completion")]
 public class EnumPartialFilteringTests
 {
@@ -174,3 +177,5 @@ public enum LogLevel
   Warning,
   Error
 }
+
+} // namespace TimeWarp.Nuru.Tests.Completion.EnumPartialFiltering

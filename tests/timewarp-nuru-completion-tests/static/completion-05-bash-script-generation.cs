@@ -3,12 +3,16 @@
 using TimeWarp.Nuru;
 using Shouldly;
 
-return await RunTests<BashScriptGenerationTests>(clearCache: true);
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
 
 [TestTag("Completion")]
-[ClearRunfileCache]
 public class BashScriptGenerationTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<BashScriptGenerationTests>();
+
   public static async Task Should_generate_valid_bash_syntax()
   {
     // Arrange

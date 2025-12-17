@@ -3,12 +3,16 @@
 using TimeWarp.Nuru;
 using Shouldly;
 
-return await RunTests<PowerShellScriptGenerationTests>(clearCache: true);
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
 
 [TestTag("Completion")]
-[ClearRunfileCache]
 public class PowerShellScriptGenerationTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<PowerShellScriptGenerationTests>();
+
   public static async Task Should_generate_valid_powershell_syntax()
   {
     // Arrange

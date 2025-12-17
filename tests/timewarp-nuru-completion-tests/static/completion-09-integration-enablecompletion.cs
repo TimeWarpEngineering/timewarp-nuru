@@ -3,12 +3,16 @@
 using TimeWarp.Nuru;
 using Shouldly;
 
-return await RunTests<EnableStaticCompletionIntegrationTests>(clearCache: true);
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
 
 [TestTag("Completion")]
-[ClearRunfileCache]
 public class EnableStaticCompletionIntegrationTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<EnableStaticCompletionIntegrationTests>();
+
   public static async Task Should_register_completion_routes_for_all_shells()
   {
     // Arrange

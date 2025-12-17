@@ -46,8 +46,10 @@
     <Compile Include="../timewarp-nuru-core-tests/options/*.cs" Exclude="../timewarp-nuru-core-tests/options/options-03-*.cs" />
     <!-- Type conversion tests (migrated) -->
     <Compile Include="../timewarp-nuru-core-tests/type-conversion/*.cs" />
-    <Compile Include="../timewarp-nuru-completion-tests/dynamic/completion-26-enum-partial-filtering.cs" />
-    <Compile Include="../timewarp-nuru-completion-tests/static/completion-11-enum-completion.cs" />
+    <!-- Completion tests - static (migrated) -->
+    <Compile Include="../timewarp-nuru-completion-tests/static/*.cs" />
+    <!-- Completion tests - dynamic (migrated) -->
+    <Compile Include="../timewarp-nuru-completion-tests/dynamic/*.cs" />
     <!-- All REPL tests (recursive glob includes subfolders, excludes obj/bin) -->
     <Compile Include="../timewarp-nuru-repl-tests/**/*.cs" Exclude="../timewarp-nuru-repl-tests/obj/**;../timewarp-nuru-repl-tests/bin/**" />
     <!-- MCP tests (migrated) -->

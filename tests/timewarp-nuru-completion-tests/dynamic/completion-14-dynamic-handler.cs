@@ -1,11 +1,18 @@
 #!/usr/bin/dotnet --
 
-return await RunTests<DynamicHandlerTests>(clearCache: true);
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.Completion.DynamicHandler
+{
 
 [TestTag("Completion")]
-[ClearRunfileCache]
 public class DynamicHandlerTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<DynamicHandlerTests>();
+
   public static async Task Should_output_completions_to_stdout()
   {
     // Arrange
@@ -300,3 +307,5 @@ enum DeploymentMode
   Standard,
   Slow
 }
+
+} // namespace TimeWarp.Nuru.Tests.Completion.DynamicHandler

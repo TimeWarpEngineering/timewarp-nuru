@@ -3,12 +3,16 @@
 using TimeWarp.Nuru;
 using Shouldly;
 
-return await RunTests<CompletionEdgeCasesTests>(clearCache: true);
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
 
 [TestTag("Completion")]
-[ClearRunfileCache]
 public class CompletionEdgeCasesTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<CompletionEdgeCasesTests>();
+
   public static async Task Should_handle_empty_string_app_name()
   {
     // Arrange

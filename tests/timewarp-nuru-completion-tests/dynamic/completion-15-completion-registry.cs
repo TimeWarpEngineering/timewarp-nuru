@@ -1,11 +1,18 @@
 #!/usr/bin/dotnet --
 
-return await RunTests<CompletionRegistryTests>(clearCache: true);
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.Completion.Registry
+{
 
 [TestTag("Completion")]
-[ClearRunfileCache]
 public class CompletionRegistryTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<CompletionRegistryTests>();
+
   public static async Task Should_register_and_retrieve_by_parameter_name()
   {
     // Arrange
@@ -250,3 +257,5 @@ sealed class TestCompletionSource(string id) : ICompletionSource
 
   public override string ToString() => $"TestCompletionSource({id})";
 }
+
+} // namespace TimeWarp.Nuru.Tests.Completion.Registry

@@ -1,11 +1,18 @@
 #!/usr/bin/dotnet --
 
-return await RunTests<OutputFormatTests>(clearCache: true);
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.Completion.OutputFormat
+{
 
 [TestTag("Completion")]
-[ClearRunfileCache]
 public class OutputFormatTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<OutputFormatTests>();
+
   public static async Task Should_output_value_only_when_no_description()
   {
     // Arrange
@@ -284,3 +291,5 @@ sealed class TestCompletionSourceWithDescriptions((string value, string desc)[] 
     }
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.Completion.OutputFormat

@@ -1,11 +1,18 @@
 #!/usr/bin/dotnet --
 
-return await RunTests<ContextAwareTests>(clearCache: true);
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.Completion.ContextAware
+{
 
 [TestTag("Completion")]
-[ClearRunfileCache]
 public class ContextAwareTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<ContextAwareTests>();
+
   public static async Task Should_pass_args_array_in_context()
   {
     // Arrange
@@ -350,3 +357,5 @@ sealed class TargetSource : ICompletionSource
     yield return new CompletionCandidate("macos", "macOS ARM64", CompletionType.Parameter);
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.Completion.ContextAware

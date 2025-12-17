@@ -7,7 +7,11 @@
     <NoWarn>$(NoWarn);RCS1163;IDE0161;IDE0065</NoWarn>
   </PropertyGroup>
   <ItemGroup>
+    <!-- Core tests - lexer (migrated) -->
     <Compile Include="../timewarp-nuru-core-tests/lexer/*.cs" />
+    <!-- Core tests - migrated files -->
+    <Compile Include="../timewarp-nuru-core-tests/ansi-string-utils-01-basic.cs" />
+    <Compile Include="../timewarp-nuru-core-tests/compiled-route-test-helper.cs" />
     <Compile Include="../timewarp-nuru-completion-tests/dynamic/completion-26-enum-partial-filtering.cs" />
     <Compile Include="../timewarp-nuru-completion-tests/static/completion-11-enum-completion.cs" />
     <!-- All REPL tests (recursive glob includes subfolders, excludes obj/bin) -->

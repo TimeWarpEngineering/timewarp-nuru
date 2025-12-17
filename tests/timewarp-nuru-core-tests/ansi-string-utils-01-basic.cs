@@ -2,19 +2,27 @@
 #:project ../../source/timewarp-nuru/timewarp-nuru.csproj
 
 // Test AnsiStringUtils functionality
-return await RunTests<AnsiStringUtilsTests>(clearCache: true);
+
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.Core.AnsiStringUtils
+{
 
 [TestTag("Widgets")]
-[ClearRunfileCache]
 public class AnsiStringUtilsTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<AnsiStringUtilsTests>();
+
   public static async Task Should_strip_basic_ansi_codes()
   {
     // Arrange
     string input = "\x1b[31mError\x1b[0m";
 
     // Act
-    string result = AnsiStringUtils.StripAnsiCodes(input);
+    string result = TimeWarp.Nuru.AnsiStringUtils.StripAnsiCodes(input);
 
     // Assert
     result.ShouldBe("Error");
@@ -28,7 +36,7 @@ public class AnsiStringUtilsTests
     string input = "\x1b[38;5;214mOrange\x1b[0m";
 
     // Act
-    string result = AnsiStringUtils.StripAnsiCodes(input);
+    string result = TimeWarp.Nuru.AnsiStringUtils.StripAnsiCodes(input);
 
     // Assert
     result.ShouldBe("Orange");
@@ -39,7 +47,7 @@ public class AnsiStringUtilsTests
   public static async Task Should_handle_null_input()
   {
     // Act
-    string result = AnsiStringUtils.StripAnsiCodes(null);
+    string result = TimeWarp.Nuru.AnsiStringUtils.StripAnsiCodes(null);
 
     // Assert
     result.ShouldBe(string.Empty);
@@ -50,7 +58,7 @@ public class AnsiStringUtilsTests
   public static async Task Should_handle_empty_input()
   {
     // Act
-    string result = AnsiStringUtils.StripAnsiCodes("");
+    string result = TimeWarp.Nuru.AnsiStringUtils.StripAnsiCodes("");
 
     // Assert
     result.ShouldBe(string.Empty);
@@ -64,7 +72,7 @@ public class AnsiStringUtilsTests
     string styled = "\x1b[31mError\x1b[0m"; // "Error" = 5 chars
 
     // Act
-    int length = AnsiStringUtils.GetVisibleLength(styled);
+    int length = TimeWarp.Nuru.AnsiStringUtils.GetVisibleLength(styled);
 
     // Assert
     length.ShouldBe(5);
@@ -78,7 +86,7 @@ public class AnsiStringUtilsTests
     string styled = "Warning".Yellow().Bold(); // Uses chained ANSI codes
 
     // Act
-    int length = AnsiStringUtils.GetVisibleLength(styled);
+    int length = TimeWarp.Nuru.AnsiStringUtils.GetVisibleLength(styled);
 
     // Assert
     length.ShouldBe(7); // "Warning" = 7 chars
@@ -92,7 +100,7 @@ public class AnsiStringUtilsTests
     string plain = "Hello World";
 
     // Act
-    int length = AnsiStringUtils.GetVisibleLength(plain);
+    int length = TimeWarp.Nuru.AnsiStringUtils.GetVisibleLength(plain);
 
     // Assert
     length.ShouldBe(11);
@@ -106,10 +114,10 @@ public class AnsiStringUtilsTests
     string styled = "Hi".Red(); // 2 visible chars
 
     // Act
-    string padded = AnsiStringUtils.PadRightVisible(styled, 10);
+    string padded = TimeWarp.Nuru.AnsiStringUtils.PadRightVisible(styled, 10);
 
     // Assert
-    int visibleLength = AnsiStringUtils.GetVisibleLength(padded);
+    int visibleLength = TimeWarp.Nuru.AnsiStringUtils.GetVisibleLength(padded);
     visibleLength.ShouldBe(10);
     padded.ShouldContain(AnsiColors.Red);
     padded.ShouldEndWith("        "); // 8 spaces
@@ -123,10 +131,10 @@ public class AnsiStringUtilsTests
     string styled = "Hi".Blue(); // 2 visible chars
 
     // Act
-    string padded = AnsiStringUtils.PadLeftVisible(styled, 10);
+    string padded = TimeWarp.Nuru.AnsiStringUtils.PadLeftVisible(styled, 10);
 
     // Assert
-    int visibleLength = AnsiStringUtils.GetVisibleLength(padded);
+    int visibleLength = TimeWarp.Nuru.AnsiStringUtils.GetVisibleLength(padded);
     visibleLength.ShouldBe(10);
     padded.ShouldContain(AnsiColors.Blue);
     padded.ShouldStartWith("        "); // 8 spaces
@@ -140,10 +148,10 @@ public class AnsiStringUtilsTests
     string styled = "Hi".Green(); // 2 visible chars
 
     // Act
-    string centered = AnsiStringUtils.CenterVisible(styled, 10);
+    string centered = TimeWarp.Nuru.AnsiStringUtils.CenterVisible(styled, 10);
 
     // Assert
-    int visibleLength = AnsiStringUtils.GetVisibleLength(centered);
+    int visibleLength = TimeWarp.Nuru.AnsiStringUtils.GetVisibleLength(centered);
     visibleLength.ShouldBe(10);
     // Should have 4 spaces on each side
     centered.ShouldStartWith("    "); // 4 spaces
@@ -157,7 +165,7 @@ public class AnsiStringUtilsTests
     string text = "Hello"; // 5 chars
 
     // Act
-    string padded = AnsiStringUtils.PadRightVisible(text, 5);
+    string padded = TimeWarp.Nuru.AnsiStringUtils.PadRightVisible(text, 5);
 
     // Assert
     padded.ShouldBe("Hello");
@@ -171,7 +179,7 @@ public class AnsiStringUtilsTests
     string text = "Hello World"; // 11 chars
 
     // Act
-    string padded = AnsiStringUtils.PadRightVisible(text, 5);
+    string padded = TimeWarp.Nuru.AnsiStringUtils.PadRightVisible(text, 5);
 
     // Assert - Should not truncate
     padded.ShouldBe("Hello World");
@@ -185,7 +193,7 @@ public class AnsiStringUtilsTests
     string hyperlink = "\x1b]8;;https://example.com\x1b\\Click Here\x1b]8;;\x1b\\";
 
     // Act
-    string result = AnsiStringUtils.StripAnsiCodes(hyperlink);
+    string result = TimeWarp.Nuru.AnsiStringUtils.StripAnsiCodes(hyperlink);
 
     // Assert
     result.ShouldBe("Click Here");
@@ -200,7 +208,7 @@ public class AnsiStringUtilsTests
     string hyperlink = "\x1b]8;;https://example.com\u0007Click Here\x1b]8;;\u0007";
 
     // Act
-    string result = AnsiStringUtils.StripAnsiCodes(hyperlink);
+    string result = TimeWarp.Nuru.AnsiStringUtils.StripAnsiCodes(hyperlink);
 
     // Assert
     result.ShouldBe("Click Here");
@@ -216,7 +224,7 @@ public class AnsiStringUtilsTests
     string hyperlink = $"\x1b]8;;{url}\x1b\\{displayText}\x1b]8;;\x1b\\";
 
     // Act
-    int length = AnsiStringUtils.GetVisibleLength(hyperlink);
+    int length = TimeWarp.Nuru.AnsiStringUtils.GetVisibleLength(hyperlink);
 
     // Assert - Should be 39 (display text only), not 100+ (with URL bytes)
     length.ShouldBe(39);
@@ -233,8 +241,8 @@ public class AnsiStringUtilsTests
     string styledHyperlink = $"\x1b[31m\x1b]8;;{url}\x1b\\{displayText}\x1b]8;;\x1b\\\x1b[0m";
 
     // Act
-    string stripped = AnsiStringUtils.StripAnsiCodes(styledHyperlink);
-    int length = AnsiStringUtils.GetVisibleLength(styledHyperlink);
+    string stripped = TimeWarp.Nuru.AnsiStringUtils.StripAnsiCodes(styledHyperlink);
+    int length = TimeWarp.Nuru.AnsiStringUtils.GetVisibleLength(styledHyperlink);
 
     // Assert
     stripped.ShouldBe("Link");
@@ -249,8 +257,8 @@ public class AnsiStringUtilsTests
     string text = "\x1b]8;;https://a.com\x1b\\First\x1b]8;;\x1b\\ and \x1b]8;;https://b.com\x1b\\Second\x1b]8;;\x1b\\";
 
     // Act
-    string result = AnsiStringUtils.StripAnsiCodes(text);
-    int length = AnsiStringUtils.GetVisibleLength(text);
+    string result = TimeWarp.Nuru.AnsiStringUtils.StripAnsiCodes(text);
+    int length = TimeWarp.Nuru.AnsiStringUtils.GetVisibleLength(text);
 
     // Assert
     result.ShouldBe("First and Second");
@@ -259,3 +267,5 @@ public class AnsiStringUtilsTests
     await Task.CompletedTask;
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.Core.AnsiStringUtils

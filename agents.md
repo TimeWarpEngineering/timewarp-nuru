@@ -12,7 +12,7 @@
 - Check style: Build fails on RCS1037 (no trailing whitespace), CA1031 (specific exceptions)
 
 ## Test Commands
-- Fast CI tests (~1700 tests, ~12s): `dotnet tests/ci-tests/run-ci-tests.cs`
+- Fast CI tests (~1700 tests, ~12s): `dotnet runfiles/test.cs`
 - Full test suite (~1759 tests, ~25s): `dotnet tests/scripts/run-all-tests.cs`
 - Integration tests (Delegate vs Mediator, JIT/AOT): `tests/test-both-versions.sh`
 - Single test file: `dotnet tests/timewarp-nuru-core-tests/routing/routing-01-basic.cs`

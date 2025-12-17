@@ -29,7 +29,7 @@ dotnet runfiles/analyze.cs
 
 ```bash
 # Fast CI tests (~1700 tests, ~12s)
-dotnet tests/ci-tests/run-ci-tests.cs
+dotnet runfiles/test.cs
 
 # Full test suite (~1759 tests, ~25s)
 dotnet tests/scripts/run-all-tests.cs
@@ -154,7 +154,7 @@ dotnet publish -c Release -r linux-x64 -p:PublishAot=true -p:TrimMode=partial
 ## Testing Approach
 - **IMPORTANT: This repository does NOT use xUnit, NUnit, MSTest or any traditional testing frameworks.**
 
-Tests are implemented as single-file C# applications (runfiles). Test files are located in `tests/` subdirectories. Use `dotnet tests/ci-tests/run-ci-tests.cs` for the fast CI test suite (~1700 tests in ~12s).
+Tests are implemented as single-file C# applications (runfiles). Test files are located in `tests/` subdirectories. Use `dotnet runfiles/test.cs` for the fast CI test suite (~1700 tests in ~12s).
 
 ## REPL Interactive Testing Limitations
 - **IMPORTANT: Claude cannot run interactive REPL tests due to non-interactive shell environment.**

@@ -1,10 +1,18 @@
 #!/usr/bin/dotnet --
 
-return await RunTests<ErrorCasesTests>(clearCache: true);
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.Routing
+{
 
 [TestTag("Routing")]
 public class ErrorCasesTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<ErrorCasesTests>();
+
   public static async Task Should_no_matching_route_unknown()
   {
     // Arrange
@@ -130,3 +138,5 @@ public class ErrorCasesTests
     await Task.CompletedTask;
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.Routing

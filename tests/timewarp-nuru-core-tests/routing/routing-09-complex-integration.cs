@@ -1,10 +1,18 @@
 #!/usr/bin/dotnet --
 
-return await RunTests<ComplexIntegrationTests>(clearCache: true);
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.Routing
+{
 
 [TestTag("Routing")]
 public class ComplexIntegrationTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<ComplexIntegrationTests>();
+
   public static async Task Should_match_docker_style_command()
   {
     // Arrange
@@ -109,3 +117,5 @@ public class ComplexIntegrationTests
     await Task.CompletedTask;
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.Routing

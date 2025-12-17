@@ -1,11 +1,18 @@
 #!/usr/bin/dotnet --
 
-return await RunTests<NegativeNumberTests>(clearCache: true);
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.Routing
+{
 
 [TestTag("Routing")]
-[ClearRunfileCache]
 public class NegativeNumberTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<NegativeNumberTests>();
+
   // TEST 1: Basic negative integer
   public static async Task Should_accept_negative_integer_parameter()
   {
@@ -234,3 +241,5 @@ public class NegativeNumberTests
     await Task.CompletedTask;
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.Routing

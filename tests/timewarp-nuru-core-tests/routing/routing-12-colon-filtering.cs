@@ -1,11 +1,18 @@
 #!/usr/bin/dotnet --
 
-return await RunTests<ColonFilteringTests>(clearCache: true);
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.Routing
+{
 
 [TestTag("Routing")]
-[ClearRunfileCache]
 public class ColonFilteringTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<ColonFilteringTests>();
+
   // Issue #77: Arguments with colons should not be filtered unless they are config overrides
   public static async Task Should_positional_argument_with_colon_connection_string()
   {
@@ -270,3 +277,5 @@ public class ColonFilteringTests
     await Task.CompletedTask;
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.Routing

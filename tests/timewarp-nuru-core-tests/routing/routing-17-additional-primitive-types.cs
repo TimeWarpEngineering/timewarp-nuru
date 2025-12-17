@@ -1,11 +1,18 @@
 #!/usr/bin/dotnet --
 
-return await RunTests<AdditionalPrimitiveTypeTests>(clearCache: true);
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.Routing
+{
 
 [TestTag("Routing")]
-[ClearRunfileCache]
 public class AdditionalPrimitiveTypeTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<AdditionalPrimitiveTypeTests>();
+
   // ============================================================================
   // BYTE TESTS
   // ============================================================================
@@ -344,3 +351,5 @@ public class AdditionalPrimitiveTypeTests
     await Task.CompletedTask;
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.Routing

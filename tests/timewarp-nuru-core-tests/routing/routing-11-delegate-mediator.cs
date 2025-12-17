@@ -3,12 +3,19 @@
 
 using Microsoft.Extensions.DependencyInjection;
 
-return await RunTests<DelegateMediatorConsistencyTests>(clearCache: true);
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.Routing
+{
 
 [TestTag("Routing")]
-[ClearRunfileCache]
 public class DelegateMediatorConsistencyTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<DelegateMediatorConsistencyTests>();
+
   // Test same matching for basic literal (from Section 1)
   public static async Task Should_identical_matching_basic_literal_delegate()
   {
@@ -209,3 +216,5 @@ internal sealed class DeployHandler : IRequestHandler<DeployCommand>
     return default;
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.Routing

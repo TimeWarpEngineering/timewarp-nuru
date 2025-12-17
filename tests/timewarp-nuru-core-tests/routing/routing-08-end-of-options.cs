@@ -1,10 +1,18 @@
 #!/usr/bin/dotnet --
 
-return await RunTests<EndOfOptionsTests>(clearCache: true);
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.Routing
+{
 
 [TestTag("Routing")]
 public class EndOfOptionsTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<EndOfOptionsTests>();
+
   public static async Task Should_match_end_of_options_with_catch_all_run_not_a_flag_file_txt()
   {
     // Arrange
@@ -93,3 +101,5 @@ public class EndOfOptionsTests
     await Task.CompletedTask;
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.Routing

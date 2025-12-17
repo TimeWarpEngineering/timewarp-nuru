@@ -1,11 +1,18 @@
 #!/usr/bin/dotnet --
 
-return await RunTests<TypedCatchAllTests>(clearCache: true);
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.Routing
+{
 
 [TestTag("Routing")]
-[ClearRunfileCache]
 public class TypedCatchAllTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<TypedCatchAllTests>();
+
   /// <summary>
   /// Tests that int[] catch-all parameter properly converts string arguments to integers.
   /// </summary>
@@ -330,3 +337,5 @@ public class TypedCatchAllTests
     await Task.CompletedTask;
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.Routing

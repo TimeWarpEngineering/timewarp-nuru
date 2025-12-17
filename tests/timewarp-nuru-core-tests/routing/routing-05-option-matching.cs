@@ -1,10 +1,18 @@
 #!/usr/bin/dotnet --
 
-return await RunTests<OptionMatchingTests>(clearCache: true);
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.Routing
+{
 
 [TestTag("Routing")]
 public class OptionMatchingTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<OptionMatchingTests>();
+
   public static async Task Should_match_required_option_build_config_debug()
   {
     // Arrange
@@ -595,3 +603,5 @@ public class OptionMatchingTests
     await Task.CompletedTask;
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.Routing

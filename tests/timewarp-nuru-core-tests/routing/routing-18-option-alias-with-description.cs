@@ -1,6 +1,11 @@
 #!/usr/bin/dotnet --
 
-return await RunTests<OptionAliasWithDescriptionTests>(clearCache: true);
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.Routing
+{
 
 /// <summary>
 /// Tests for the bug reported in task 013:
@@ -10,9 +15,11 @@ return await RunTests<OptionAliasWithDescriptionTests>(clearCache: true);
 /// - "hello World --upper" fails
 /// </summary>
 [TestTag("Routing")]
-[ClearRunfileCache]
 public class OptionAliasWithDescriptionTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<OptionAliasWithDescriptionTests>();
+
   public static async Task Should_match_option_alias_with_description_short_form()
   {
     // Arrange - Pattern with alias AND description
@@ -144,3 +151,5 @@ public class OptionAliasWithDescriptionTests
     await Task.CompletedTask;
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.Routing

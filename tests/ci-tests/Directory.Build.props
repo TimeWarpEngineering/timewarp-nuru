@@ -36,6 +36,8 @@
     <Compile Include="../timewarp-nuru-core-tests/compiled-route-test-helper.cs" />
     <!-- Parser tests (migrated) -->
     <Compile Include="../timewarp-nuru-core-tests/parser/*.cs" />
+    <!-- Routing tests (migrated) - exclude Mediator tests (routing-11, routing-22) which conflict with Mediator source generator in multi-mode -->
+    <Compile Include="../timewarp-nuru-core-tests/routing/*.cs" Exclude="../timewarp-nuru-core-tests/routing/routing-11-*.cs;../timewarp-nuru-core-tests/routing/routing-22-*.cs" />
     <Compile Include="../timewarp-nuru-completion-tests/dynamic/completion-26-enum-partial-filtering.cs" />
     <Compile Include="../timewarp-nuru-completion-tests/static/completion-11-enum-completion.cs" />
     <!-- All REPL tests (recursive glob includes subfolders, excludes obj/bin) -->
@@ -45,6 +47,7 @@
     <ProjectReference Include="$(MSBuildThisFileDirectory)../../source/timewarp-nuru-completion/timewarp-nuru-completion.csproj" />
     <ProjectReference Include="$(MSBuildThisFileDirectory)../../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj" />
   </ItemGroup>
+
   <ItemGroup>
     <Using Include="TimeWarp.Nuru.Tests.LexerTests.LexerTestHelper" Static="true" />
   </ItemGroup>

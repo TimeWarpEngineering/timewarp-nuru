@@ -6,12 +6,19 @@
 
 using Microsoft.Extensions.DependencyInjection;
 
-return await RunTests<AsyncTaskIntReturnTests>(clearCache: true);
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.Routing
+{
 
 [TestTag("Routing")]
-[ClearRunfileCache]
 public class AsyncTaskIntReturnTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<AsyncTaskIntReturnTests>();
+
   /// <summary>
   /// Issue #120: Verify CreateSlimBuilder works with async Task&lt;int&gt; MapDefault
   /// </summary>
@@ -133,3 +140,5 @@ public class AsyncTaskIntReturnTests
     executed.ShouldBeTrue();
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.Routing

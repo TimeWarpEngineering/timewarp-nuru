@@ -4,12 +4,19 @@
 // Issue #98: Auto-generated --help routes should not match before user-defined routes with optional flags
 // When invoking 'recent', the user's handler should execute, not the auto-generated help route
 
-return await RunTests<HelpRoutePriorityTests>(clearCache: true);
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.Routing
+{
 
 [TestTag("Routing")]
-[ClearRunfileCache]
 public class HelpRoutePriorityTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<HelpRoutePriorityTests>();
+
   public static async Task Should_execute_user_route_not_help_when_optional_flag_omitted()
   {
     // Arrange - Issue #98 reproduction: user route with optional flag
@@ -112,3 +119,5 @@ public class HelpRoutePriorityTests
     await Task.CompletedTask;
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.Routing

@@ -1,10 +1,18 @@
 #!/usr/bin/dotnet --
 
-return await RunTests<OptionOrderIndependenceTests>(clearCache: true);
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.Routing
+{
 
 [TestTag("Routing")]
 public class OptionOrderIndependenceTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<OptionOrderIndependenceTests>();
+
   public static async Task Should_match_options_in_different_order_than_pattern()
   {
     // Bug reproduction: backup "something" --output "mydest" --compress
@@ -275,3 +283,5 @@ public class OptionOrderIndependenceTests
     await Task.CompletedTask;
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.Routing

@@ -1,12 +1,19 @@
 #!/usr/bin/dotnet --
 #pragma warning disable RCS1163 // Unused parameter - parameters must match route pattern names for binding
 
-return await RunTests<RouteSelectionTests>(clearCache: true);
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.Routing
+{
 
 [TestTag("Routing")]
-[ClearRunfileCache]
 public class RouteSelectionTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<RouteSelectionTests>();
+
   public static async Task Should_select_literal_over_parameter_git_status()
   {
     // Arrange
@@ -184,3 +191,5 @@ public class RouteSelectionTests
     await Task.CompletedTask;
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.Routing

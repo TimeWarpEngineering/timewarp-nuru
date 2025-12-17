@@ -1,10 +1,18 @@
 #!/usr/bin/dotnet --
 
-return await RunTests<ParameterBindingTests>(clearCache: true);
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.Routing
+{
 
 [TestTag("Routing")]
 public class ParameterBindingTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<ParameterBindingTests>();
+
   public static async Task Should_bind_string_parameter_greet_Alice()
   {
     // Arrange
@@ -151,3 +159,5 @@ public class ParameterBindingTests
     await Task.CompletedTask;
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.Routing

@@ -1,10 +1,18 @@
 #!/usr/bin/dotnet --
 
-return await RunTests<BasicMatchingTests>(clearCache: true);
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.Routing
+{
 
 [TestTag("Routing")]
 public class BasicMatchingTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<BasicMatchingTests>();
+
   public static async Task Should_match_exact_literal_status_delegate()
   {
     // Arrange
@@ -157,3 +165,5 @@ public class BasicMatchingTests
 
   // Mediator consistency will be verified in Section 11
 }
+
+} // namespace TimeWarp.Nuru.Tests.Routing

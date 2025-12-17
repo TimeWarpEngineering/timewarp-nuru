@@ -1,10 +1,18 @@
 #!/usr/bin/dotnet --
 
-return await RunTests<OptionalParametersTests>(clearCache: true);
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.Routing
+{
 
 [TestTag("Routing")]
 public class OptionalParametersTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<OptionalParametersTests>();
+
   public static async Task Should_match_required_string_deploy_prod()
   {
     // Arrange
@@ -171,3 +179,5 @@ public class OptionalParametersTests
     await Task.CompletedTask;
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.Routing

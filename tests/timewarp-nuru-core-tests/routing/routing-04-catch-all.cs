@@ -1,11 +1,18 @@
 #!/usr/bin/dotnet --
 
-return await RunTests<CatchAllTests>(clearCache: true);
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.Routing
+{
 
 [TestTag("Routing")]
-[ClearRunfileCache]
 public class CatchAllTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<CatchAllTests>();
+
   public static async Task Should_match_basic_catch_all_run_one_two_three()
   {
     // Arrange
@@ -115,3 +122,5 @@ public class CatchAllTests
     await Task.CompletedTask;
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.Routing

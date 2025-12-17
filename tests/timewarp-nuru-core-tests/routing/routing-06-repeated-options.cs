@@ -1,11 +1,18 @@
 #!/usr/bin/dotnet --
 
-return await RunTests<RepeatedOptionsTests>(clearCache: true);
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.Routing
+{
 
 [TestTag("Routing")]
-[ClearRunfileCache]
 public class RepeatedOptionsTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<RepeatedOptionsTests>();
+
   public static async Task Should_match_basic_repeated_option_docker_run_env_A_B_C()
   {
     // Arrange
@@ -136,3 +143,5 @@ public class RepeatedOptionsTests
     await Task.CompletedTask;
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.Routing

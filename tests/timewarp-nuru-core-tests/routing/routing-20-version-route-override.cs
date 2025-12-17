@@ -1,15 +1,22 @@
 #!/usr/bin/dotnet --
 
-return await RunTests<VersionRouteOverrideTests>(clearCache: true);
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.Routing
+{
 
 /// <summary>
 /// Tests for consumer override of the built-in --version route.
 /// Task 129: Verify behavior when consumer maps their own --version route.
 /// </summary>
 [TestTag("Routing")]
-[ClearRunfileCache]
 public class VersionRouteOverrideTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<VersionRouteOverrideTests>();
+
   public static async Task Consumer_can_override_version_route()
   {
     // Arrange - Create builder with UseAllExtensions (registers --version,-v)
@@ -81,3 +88,5 @@ public class VersionRouteOverrideTests
     await Task.CompletedTask;
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.Routing

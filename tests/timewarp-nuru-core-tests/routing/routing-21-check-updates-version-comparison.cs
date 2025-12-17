@@ -1,15 +1,22 @@
 #!/usr/bin/dotnet --
 
-return await RunTests<CheckUpdatesRouteTests>(clearCache: true);
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.Routing
+{
 
 /// <summary>
 /// Tests for the --check-updates route registration and configuration.
 /// Task 132: Verify check-updates route is properly registered.
 /// </summary>
 [TestTag("Routing")]
-[ClearRunfileCache]
 public class CheckUpdatesRouteTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<CheckUpdatesRouteTests>();
+
   public static async Task Check_updates_route_is_registered_by_default()
   {
     // Arrange - Create builder with UseAllExtensions (registers --check-updates)
@@ -77,3 +84,5 @@ public class CheckUpdatesRouteTests
     await Task.CompletedTask;
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.Routing

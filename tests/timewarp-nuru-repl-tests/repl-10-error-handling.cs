@@ -2,14 +2,20 @@
 #:project ../../source/timewarp-nuru/timewarp-nuru.csproj
 #:project ../../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj
 
-using TimeWarp.Nuru;
-
 // Test error handling (Section 10 of REPL Test Plan)
-return await RunTests<ErrorHandlingTests>();
 
-[TestTag("REPL")]
-public class ErrorHandlingTests
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.ReplTests.ErrorHandling
 {
+  [TestTag("REPL")]
+  public class ErrorHandlingTests
+  {
+    [ModuleInitializer]
+    internal static void Register() => RegisterTests<ErrorHandlingTests>();
+
   private static string ThrowInvalidOperation() => throw new InvalidOperationException("Test error");
   private static string ThrowError1() => throw new InvalidOperationException("Error 1");
   private static string ThrowArgument() => throw new ArgumentException("Error 2");
@@ -190,5 +196,6 @@ public class ErrorHandlingTests
     // Assert
     terminal.OutputContains("Goodbye!")
       .ShouldBeTrue("Session should handle multiple errors");
+  }
   }
 }

@@ -2,14 +2,20 @@
 #:project ../../source/timewarp-nuru/timewarp-nuru.csproj
 #:project ../../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj
 
-using TimeWarp.Nuru;
-
 // Test advanced tab completion scenarios (Section 7 of REPL Test Plan)
-return await RunTests<TabCompletionAdvancedTests>();
 
-[TestTag("REPL")]
-public class TabCompletionAdvancedTests
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.ReplTests.TabCompletionAdvanced
 {
+  [TestTag("REPL")]
+  public class TabCompletionAdvancedTests
+  {
+    [ModuleInitializer]
+    internal static void Register() => RegisterTests<TabCompletionAdvancedTests>();
+
   [Timeout(5000)]
   public static async Task Should_complete_long_options()
   {
@@ -269,5 +275,6 @@ public class TabCompletionAdvancedTests
       .ShouldBeTrue("Should show subcommand completions");
     terminal.OutputContains("Goodbye!")
       .ShouldBeTrue("Should exit cleanly");
+  }
   }
 }

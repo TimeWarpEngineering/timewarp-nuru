@@ -6,12 +6,16 @@ using System.Collections.ObjectModel;
 // This tests the bug where typing "deploy p<tab>" should complete to "deploy prod"
 // but the completion system returns all enum values without filtering
 
-return await RunTests<EnumPartialFilteringTests>(clearCache: true);
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
 
 [TestTag("Completion")]
-[ClearRunfileCache]
 public class EnumPartialFilteringTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<EnumPartialFilteringTests>();
+
   public enum Environment
   {
     Dev,

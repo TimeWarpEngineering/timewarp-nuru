@@ -35,10 +35,10 @@ This is a breaking change appropriate for Nuru 3.0.
 - [x] Rename `CompiledRouteBuilder` → `RouteBuilder`
 - [x] Update all usages in source code
 - [x] Update all tests
-- [ ] Update documentation
+- [ ] Update documentation (deferred - will be done with full 3.0 docs)
 - [x] Update samples
-- [ ] Add `WithHandler(Delegate)` method to `EndpointBuilder`
-- [ ] Add `Map(Action<RouteBuilder>)` overload that returns `EndpointBuilder`
+- [x] Add `WithHandler(Delegate)` method to `EndpointBuilder`
+- [x] Add `Map(Action<RouteBuilder>)` overload that returns `EndpointBuilder`
 
 ## Impact
 
@@ -52,7 +52,27 @@ This is a breaking change appropriate for Nuru 3.0.
 | `nuru-attributed-route-generator.cs` | ✅ Updated generated code |
 | Tests | ✅ Updated all references |
 | Samples | ✅ Updated all references |
-| Docs | ⏳ Pending |
+| Docs | ⏳ Deferred to 3.0 docs |
+
+## Results
+
+**Completed 2025-12-17:**
+- Renamed classes and files
+- Added `WithHandler(Delegate)` to `EndpointBuilder` and `EndpointBuilder<TBuilder>`
+- Added `Map(Action<RouteBuilder>)` overload with auto-generated pattern string for help
+- All CI tests pass
+
+**New API:**
+```csharp
+// Fluent route building with RouteBuilder
+builder.Map(route => route
+    .WithLiteral("deploy")
+    .WithParameter("env")
+    .WithOption("force", "f"))
+    .WithHandler(async (string env, bool force) => await Deploy(env, force))
+    .AsCommand()
+    .Done();
+```
 
 ## Notes
 

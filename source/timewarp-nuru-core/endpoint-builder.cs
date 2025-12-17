@@ -43,6 +43,29 @@ public sealed class EndpointBuilder<TBuilder> : IBuilder<TBuilder>
   public TBuilder Done() => _builder;
 
   /// <summary>
+  /// Sets the handler delegate for this endpoint.
+  /// </summary>
+  /// <param name="handler">The delegate to invoke when this route is matched.</param>
+  /// <returns>This configurator for further endpoint configuration.</returns>
+  /// <remarks>
+  /// Use this when building routes with <see cref="RouteBuilder"/> where the handler
+  /// is set separately from the route pattern:
+  /// <code>
+  /// app.Map(r => r.WithLiteral("deploy").WithParameter("env"))
+  ///    .WithHandler(async (string env) => await Deploy(env))
+  ///    .AsCommand()
+  ///    .Done();
+  /// </code>
+  /// </remarks>
+  public EndpointBuilder<TBuilder> WithHandler(Delegate handler)
+  {
+    ArgumentNullException.ThrowIfNull(handler);
+    _endpoint.Handler = handler;
+    _endpoint.Method = handler.Method;
+    return this;
+  }
+
+  /// <summary>
   /// Marks this route as a query operation (no state change - safe to run and retry freely).
   /// </summary>
   /// <returns>This configurator for further route configuration.</returns>
@@ -183,6 +206,29 @@ public sealed class EndpointBuilder : IBuilder<NuruCoreAppBuilder>
   /// </summary>
   /// <returns>The builder for further configuration.</returns>
   public NuruCoreAppBuilder Done() => _builder;
+
+  /// <summary>
+  /// Sets the handler delegate for this endpoint.
+  /// </summary>
+  /// <param name="handler">The delegate to invoke when this route is matched.</param>
+  /// <returns>This configurator for further endpoint configuration.</returns>
+  /// <remarks>
+  /// Use this when building routes with <see cref="RouteBuilder"/> where the handler
+  /// is set separately from the route pattern:
+  /// <code>
+  /// app.Map(r => r.WithLiteral("deploy").WithParameter("env"))
+  ///    .WithHandler(async (string env) => await Deploy(env))
+  ///    .AsCommand()
+  ///    .Done();
+  /// </code>
+  /// </remarks>
+  public EndpointBuilder WithHandler(Delegate handler)
+  {
+    ArgumentNullException.ThrowIfNull(handler);
+    _endpoint.Handler = handler;
+    _endpoint.Method = handler.Method;
+    return this;
+  }
 
   /// <summary>
   /// Marks this route as a query operation (no state change - safe to run and retry freely).

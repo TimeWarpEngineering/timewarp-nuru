@@ -37,6 +37,47 @@ public partial class NuruCoreAppBuilder
   }
 
   /// <summary>
+  /// Adds a route using fluent <see cref="RouteBuilder"/> configuration.
+  /// Use <see cref="EndpointBuilder.WithHandler"/> to set the handler after configuring the route.
+  /// </summary>
+  /// <param name="configureRoute">Action to configure the route pattern using <see cref="RouteBuilder"/>.</param>
+  /// <param name="description">Optional description shown in help.</param>
+  /// <returns>An <see cref="EndpointBuilder"/> for further endpoint configuration.</returns>
+  /// <example>
+  /// <code>
+  /// builder.Map(route => route
+  ///     .WithLiteral("deploy")
+  ///     .WithParameter("env")
+  ///     .WithOption("force", "f"))
+  ///     .WithHandler(async (string env, bool force) => await Deploy(env, force))
+  ///     .AsCommand()
+  ///     .Done();
+  /// </code>
+  /// </example>
+  public virtual EndpointBuilder Map(Action<RouteBuilder> configureRoute, string? description = null)
+  {
+    ArgumentNullException.ThrowIfNull(configureRoute);
+
+    RouteBuilder routeBuilder = new();
+    configureRoute(routeBuilder);
+    CompiledRoute compiledRoute = routeBuilder.Build();
+
+    // Generate a display pattern from the compiled route for help text
+    string routePattern = GeneratePatternFromCompiledRoute(compiledRoute);
+
+    Endpoint endpoint = new()
+    {
+      RoutePattern = routePattern,
+      CompiledRoute = compiledRoute,
+      Description = description
+      // Handler will be set via EndpointBuilder.WithHandler()
+    };
+
+    EndpointCollection.Add(endpoint);
+    return new EndpointBuilder(this, endpoint);
+  }
+
+  /// <summary>
   /// Adds a Mediator command-based route.
   /// Requires AddDependencyInjection() to be called first.
   /// </summary>
@@ -267,5 +308,54 @@ public partial class NuruCoreAppBuilder
 
     EndpointCollection.Add(endpoint);
     return new EndpointBuilder(this, endpoint);
+  }
+
+  /// <summary>
+  /// Generates a display pattern string from a compiled route for help text.
+  /// </summary>
+  private static string GeneratePatternFromCompiledRoute(CompiledRoute route)
+  {
+    List<string> parts = [];
+
+    foreach (RouteMatcher segment in route.Segments)
+    {
+      switch (segment)
+      {
+        case LiteralMatcher literal:
+          parts.Add(literal.Value);
+          break;
+
+        case ParameterMatcher param:
+          string paramPart = param.IsCatchAll ? $"{{*{param.Name}" : $"{{{param.Name}";
+          if (!string.IsNullOrEmpty(param.Constraint))
+            paramPart += $":{param.Constraint}";
+          if (param.IsOptional)
+            paramPart += "?";
+          paramPart += "}";
+          parts.Add(paramPart);
+          break;
+
+        case OptionMatcher option:
+          string optPart = option.MatchPattern; // e.g., "--force"
+          if (option.AlternateForm is not null)
+            optPart += $"|-{option.AlternateForm.TrimStart('-')}"; // e.g., "--force|-f"
+          if (option.ExpectsValue && option.ParameterName is not null)
+          {
+            optPart += $" {{{option.ParameterName}";
+            if (option.ParameterIsOptional)
+              optPart += "?";
+
+            optPart += "}";
+          }
+
+          if (option.IsOptional)
+            optPart = $"[{optPart}]";
+
+          parts.Add(optPart);
+          break;
+      }
+    }
+
+    return string.Join(" ", parts);
   }
 }

@@ -64,6 +64,8 @@
   <ItemGroup>
     <Using Include="TimeWarp.Nuru.Tests.LexerTests.LexerTestHelper" Static="true" />
     <!-- Global usings for migrated test files -->
+    <Using Include="TimeWarp.Nuru" />
+    <Using Include="Shouldly" />
     <Using Include="System.ComponentModel.DataAnnotations" />
     <Using Include="Microsoft.Extensions.DependencyInjection" />
     <Using Include="Microsoft.Extensions.Options" />

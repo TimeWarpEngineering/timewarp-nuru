@@ -1,8 +1,4 @@
 #!/usr/bin/dotnet --
-
-using TimeWarp.Nuru;
-using Shouldly;
-
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

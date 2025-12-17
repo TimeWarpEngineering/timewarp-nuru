@@ -129,7 +129,8 @@ Failed:
 
 ### Testing Note
 
-**User will run tests manually** - The full test suite (`dotnet tests/scripts/run-all-tests.cs`) takes ~15+ minutes. Do not run tests in AI session; user will execute and report results.
+**Fast CI tests available**: Run `dotnet runfiles/test.cs` (~3 seconds).
+The old full test suite (`dotnet tests/scripts/run-all-tests.cs`) took ~15+ minutes but has been replaced with the fast CI tests.
 
 ### Implementation Progress (2025-12-16)
 

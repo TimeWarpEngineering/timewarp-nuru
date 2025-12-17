@@ -2,13 +2,19 @@
 #:project ../../../source/timewarp-nuru/timewarp-nuru.csproj
 #:package Mediator.SourceGenerator
 
-using Microsoft.Extensions.DependencyInjection;
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
 
-return await RunTests<StaticFactoryMethodTests>(clearCache: true);
+namespace TimeWarp.Nuru.Tests.Factory
+{
 
 [TestTag("Factory")]
 public class StaticFactoryMethodTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<StaticFactoryMethodTests>();
+
   public static async Task CreateBuilder_should_return_builder_with_DI_enabled()
   {
     // Arrange & Act - NuruApp.CreateBuilder is available via meta-package (TimeWarp.Nuru)
@@ -351,3 +357,5 @@ public class StaticFactoryMethodTests
     await Task.CompletedTask;
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.Factory

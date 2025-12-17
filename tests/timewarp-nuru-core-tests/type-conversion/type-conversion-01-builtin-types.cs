@@ -1,15 +1,20 @@
 #!/usr/bin/dotnet --
 #:project ../../../source/timewarp-nuru/timewarp-nuru.csproj
 
-using System.Net;
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.TypeConversion
+{
 
 // Test built-in type converters including new types from issue #62
-return await RunTests<BuiltInTypeConversionTests>(clearCache: true);
-
 [TestTag("TypeConversion")]
-[ClearRunfileCache]
 public class BuiltInTypeConversionTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<BuiltInTypeConversionTests>();
+
   public static async Task Should_convert_uri_absolute()
   {
     // Arrange
@@ -251,3 +256,5 @@ public class BuiltInTypeConversionTests
     await Task.CompletedTask;
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.TypeConversion

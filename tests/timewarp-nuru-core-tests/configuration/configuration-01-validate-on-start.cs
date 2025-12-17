@@ -1,15 +1,19 @@
 #!/usr/bin/dotnet --
+#:package Microsoft.Extensions.Options.DataAnnotations
 
-using System.ComponentModel.DataAnnotations;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
 
-return await RunTests<ValidateOnStartTests>(clearCache: true);
+namespace TimeWarp.Nuru.Tests.Configuration
+{
 
 [TestTag("Configuration")]
-[ClearRunfileCache]
 public class ValidateOnStartTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<ValidateOnStartTests>();
+
   // Test that valid configuration passes startup validation
   public static async Task Should_pass_validation_with_valid_configuration()
   {
@@ -191,3 +195,5 @@ internal sealed class CustomValidationOptions
   public DateTime StartDate { get; set; }
   public DateTime EndDate { get; set; }
 }
+
+} // namespace TimeWarp.Nuru.Tests.Configuration

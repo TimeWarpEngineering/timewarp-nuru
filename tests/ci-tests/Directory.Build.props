@@ -38,6 +38,14 @@
     <Compile Include="../timewarp-nuru-core-tests/parser/*.cs" />
     <!-- Routing tests (migrated) - exclude Mediator tests (routing-11, routing-22) which conflict with Mediator source generator in multi-mode -->
     <Compile Include="../timewarp-nuru-core-tests/routing/*.cs" Exclude="../timewarp-nuru-core-tests/routing/routing-11-*.cs;../timewarp-nuru-core-tests/routing/routing-22-*.cs" />
+    <!-- Configuration tests (migrated) -->
+    <Compile Include="../timewarp-nuru-core-tests/configuration/*.cs" />
+    <!-- Factory tests - excluded from multi-mode due to Mediator.SourceGenerator conflicts -->
+    <!-- <Compile Include="../timewarp-nuru-core-tests/factory/*.cs" /> -->
+    <!-- Options tests (migrated) - exclude NuruContext tests (not implemented feature) -->
+    <Compile Include="../timewarp-nuru-core-tests/options/*.cs" Exclude="../timewarp-nuru-core-tests/options/options-03-*.cs" />
+    <!-- Type conversion tests (migrated) -->
+    <Compile Include="../timewarp-nuru-core-tests/type-conversion/*.cs" />
     <Compile Include="../timewarp-nuru-completion-tests/dynamic/completion-26-enum-partial-filtering.cs" />
     <Compile Include="../timewarp-nuru-completion-tests/static/completion-11-enum-completion.cs" />
     <!-- All REPL tests (recursive glob includes subfolders, excludes obj/bin) -->
@@ -50,5 +58,15 @@
 
   <ItemGroup>
     <Using Include="TimeWarp.Nuru.Tests.LexerTests.LexerTestHelper" Static="true" />
+    <!-- Global usings for migrated test files -->
+    <Using Include="System.ComponentModel.DataAnnotations" />
+    <Using Include="Microsoft.Extensions.DependencyInjection" />
+    <Using Include="Microsoft.Extensions.Options" />
+    <Using Include="System.Net" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Packages for configuration tests -->
+    <PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" />
   </ItemGroup>
 </Project>

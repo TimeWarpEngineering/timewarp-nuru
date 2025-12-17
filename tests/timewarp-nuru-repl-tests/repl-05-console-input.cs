@@ -2,14 +2,20 @@
 #:project ../../source/timewarp-nuru/timewarp-nuru.csproj
 #:project ../../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj
 
-using TimeWarp.Nuru;
-
 // Test console input handling (Section 5 of REPL Test Plan)
-return await RunTests<ConsoleInputTests>();
 
-[TestTag("REPL")]
-public class ConsoleInputTests
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.ReplTests.ConsoleInput
 {
+  [TestTag("REPL")]
+  public class ConsoleInputTests
+  {
+    [ModuleInitializer]
+    internal static void Register() => RegisterTests<ConsoleInputTests>();
+
   public static async Task Should_handle_character_insertion()
   {
     // Arrange
@@ -249,5 +255,6 @@ public class ConsoleInputTests
     // Assert
     terminal.OutputContains("Goodbye!")
       .ShouldBeTrue("Session should complete after Escape key");
+  }
   }
 }

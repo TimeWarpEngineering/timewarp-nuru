@@ -3,14 +3,21 @@
 #:project ../../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj
 
 using System.Runtime.InteropServices;
-using TimeWarp.Nuru;
 
 // Test history persistence (Section 4 of REPL Test Plan)
-return await RunTests<HistoryPersistenceTests>();
 
-[TestTag("REPL")]
-public class HistoryPersistenceTests
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.ReplTests.HistoryPersistence
 {
+  [TestTag("REPL")]
+  public class HistoryPersistenceTests
+  {
+    [ModuleInitializer]
+    internal static void Register() => RegisterTests<HistoryPersistenceTests>();
+
   private static string GetTestHistoryPath() =>
     Path.Combine(Path.GetTempPath(), $"nuru-test-history-{Guid.NewGuid()}.txt");
 
@@ -100,7 +107,7 @@ public class HistoryPersistenceTests
 
     // Assert - default location is ~/.nuru/history/{appname}
     string expectedDir = Path.Combine(
-      Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+      System.Environment.GetFolderPath(System.Environment.SpecialFolder.UserProfile),
       ".nuru",
       "history");
 
@@ -269,5 +276,6 @@ public class HistoryPersistenceTests
     {
       if (File.Exists(historyPath)) File.Delete(historyPath);
     }
+  }
   }
 }

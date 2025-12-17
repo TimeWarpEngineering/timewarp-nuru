@@ -2,14 +2,18 @@
 #:project ../../source/timewarp-nuru/timewarp-nuru.csproj
 #:project ../../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj
 
-using TimeWarp.Nuru;
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
 
-return await RunTests<ShouldIgnoreCommandTests>(clearCache: true);
-
-[TestTag("REPL")]
-[ClearRunfileCache]
-public class ShouldIgnoreCommandTests
+namespace TimeWarp.Nuru.Tests.ReplTests.HistorySecurity
 {
+  [TestTag("REPL")]
+  public class ShouldIgnoreCommandTests
+  {
+    [ModuleInitializer]
+    internal static void Register() => RegisterTests<ShouldIgnoreCommandTests>();
+
   // Shared helper instance for all tests
   private static ReplSessionHelper? Helper;
 
@@ -302,23 +306,24 @@ public class ShouldIgnoreCommandTests
 
     await Task.CompletedTask;
   }
-}
-
-// Helper class to test ReplSession's ShouldIgnoreCommand method
-internal sealed class ReplSessionHelper
-{
-  private readonly NuruCoreApp App;
-  private readonly ILoggerFactory LoggerFactoryInstance;
-
-  public ReplSessionHelper()
-  {
-    App = new NuruAppBuilder().Build();
-    LoggerFactoryInstance = LoggerFactory.Create(_ => { });
   }
 
-  public bool ShouldIgnoreCommand(string command, ReplOptions options)
+  // Helper class to test ReplSession's ShouldIgnoreCommand method
+  internal sealed class ReplSessionHelper
   {
-    ReplHistory replHistory = new(options, App.Terminal);
-    return replHistory.ShouldIgnore(command);
+    private readonly NuruCoreApp App;
+    private readonly ILoggerFactory LoggerFactoryInstance;
+
+    public ReplSessionHelper()
+    {
+      App = new NuruAppBuilder().Build();
+      LoggerFactoryInstance = LoggerFactory.Create(_ => { });
+    }
+
+    public bool ShouldIgnoreCommand(string command, ReplOptions options)
+    {
+      ReplHistory replHistory = new(options, App.Terminal);
+      return replHistory.ShouldIgnore(command);
+    }
   }
 }

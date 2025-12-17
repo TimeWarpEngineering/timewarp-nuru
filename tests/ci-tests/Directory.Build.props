@@ -10,54 +10,8 @@
     <Compile Include="../timewarp-nuru-core-tests/lexer/*.cs" />
     <Compile Include="../timewarp-nuru-completion-tests/dynamic/completion-26-enum-partial-filtering.cs" />
     <Compile Include="../timewarp-nuru-completion-tests/static/completion-11-enum-completion.cs" />
-    <Compile Include="../timewarp-nuru-repl-tests/repl-01-session-lifecycle.cs" />
-    <Compile Include="../timewarp-nuru-repl-tests/repl-02-command-parsing.cs" />
-    <Compile Include="../timewarp-nuru-repl-tests/repl-03-history-management.cs" />
-    <Compile Include="../timewarp-nuru-repl-tests/repl-03b-history-security.cs" />
-    <Compile Include="../timewarp-nuru-repl-tests/repl-04-history-persistence.cs" />
-    <Compile Include="../timewarp-nuru-repl-tests/repl-05-console-input.cs" />
-    <Compile Include="../timewarp-nuru-repl-tests/repl-06-tab-completion-basic.cs" />
-    <Compile Include="../timewarp-nuru-repl-tests/repl-07-tab-completion-advanced.cs" />
-    <Compile Include="../timewarp-nuru-repl-tests/repl-08-syntax-highlighting.cs" />
-    <Compile Include="../timewarp-nuru-repl-tests/repl-09-builtin-commands.cs" />
-    <Compile Include="../timewarp-nuru-repl-tests/repl-10-error-handling.cs" />
-    <Compile Include="../timewarp-nuru-repl-tests/repl-11-display-formatting.cs" />
-    <Compile Include="../timewarp-nuru-repl-tests/repl-12-configuration.cs" />
-    <Compile Include="../timewarp-nuru-repl-tests/repl-13-nuruapp-integration.cs" />
-    <Compile Include="../timewarp-nuru-repl-tests/repl-14-performance.cs" />
-    <Compile Include="../timewarp-nuru-repl-tests/repl-15-edge-cases.cs" />
-    <Compile Include="../timewarp-nuru-repl-tests/repl-16-enum-completion.cs" />
-    <Compile Include="../timewarp-nuru-repl-tests/repl-17-sample-validation.cs" />
-    <Compile Include="../timewarp-nuru-repl-tests/repl-18-psreadline-keybindings.cs" />
-    <Compile Include="../timewarp-nuru-repl-tests/repl-19-tab-cycling-bug.cs" />
-    <Compile Include="../timewarp-nuru-repl-tests/repl-20-double-tab-bug.cs" />
-    <Compile Include="../timewarp-nuru-repl-tests/repl-21-escape-clears-line.cs" />
-    <Compile Include="../timewarp-nuru-repl-tests/repl-22-prompt-display-no-arrow-history.cs" />
-    <Compile Include="../timewarp-nuru-repl-tests/repl-23-key-binding-profiles.cs" />
-    <Compile Include="../timewarp-nuru-repl-tests/repl-24-custom-key-bindings.cs" />
-    <Compile Include="../timewarp-nuru-repl-tests/repl-25-interactive-history-search.cs" />
-    <Compile Include="../timewarp-nuru-repl-tests/repl-26-kill-ring.cs" />
-    <Compile Include="../timewarp-nuru-repl-tests/repl-27-undo-redo.cs" />
-    <Compile Include="../timewarp-nuru-repl-tests/repl-28-text-selection.cs" />
-    <Compile Include="../timewarp-nuru-repl-tests/repl-29-word-operations.cs" />
-    <Compile Include="../timewarp-nuru-repl-tests/repl-30-basic-editing-enhancement.cs" />
-    <Compile Include="../timewarp-nuru-repl-tests/repl-31-multiline-buffer.cs" />
-    <Compile Include="../timewarp-nuru-repl-tests/repl-32-multiline-editing.cs" />
-    <Compile Include="../timewarp-nuru-repl-tests/repl-33-yank-arguments.cs" />
-    <Compile Include="../timewarp-nuru-repl-tests/repl-34-interactive-route-alias.cs" />
-    <Compile Include="../timewarp-nuru-repl-tests/repl-35-interactive-route-execution.cs" />
-    <Compile Include="../timewarp-nuru-repl-tests/command-line-parser/parser-01-basic-parsing.cs" />
-    <Compile Include="../timewarp-nuru-repl-tests/command-line-parser/parser-02-quoted-strings.cs" />
-    <!-- Tab Completion Tests - helper file must come first -->
-    <Compile Include="../timewarp-nuru-repl-tests/tab-completion/completion-test-helpers.cs" />
-    <Compile Include="../timewarp-nuru-repl-tests/tab-completion/repl-20-tab-basic-commands.cs" />
-    <Compile Include="../timewarp-nuru-repl-tests/tab-completion/repl-21-tab-subcommands.cs" />
-    <Compile Include="../timewarp-nuru-repl-tests/tab-completion/repl-22-tab-enums.cs" />
-    <Compile Include="../timewarp-nuru-repl-tests/tab-completion/repl-23-tab-options.cs" />
-    <Compile Include="../timewarp-nuru-repl-tests/tab-completion/repl-24-tab-cycling.cs" />
-    <Compile Include="../timewarp-nuru-repl-tests/tab-completion/repl-25-tab-state-management.cs" />
-    <Compile Include="../timewarp-nuru-repl-tests/tab-completion/repl-26-tab-edge-cases.cs" />
-    <Compile Include="../timewarp-nuru-repl-tests/tab-completion/repl-27-tab-help-option.cs" />
+    <!-- All REPL tests (recursive glob includes subfolders, excludes obj/bin) -->
+    <Compile Include="../timewarp-nuru-repl-tests/**/*.cs" Exclude="../timewarp-nuru-repl-tests/obj/**;../timewarp-nuru-repl-tests/bin/**" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="$(MSBuildThisFileDirectory)../../source/timewarp-nuru-completion/timewarp-nuru-completion.csproj" />

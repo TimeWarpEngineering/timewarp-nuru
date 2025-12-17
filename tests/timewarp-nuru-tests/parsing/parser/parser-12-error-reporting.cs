@@ -1,12 +1,20 @@
 #!/usr/bin/dotnet --
 
 // Clear cache to ensure parser changes are picked up (parsing is source-compiled)
-return await RunTests<ErrorReportingTests>(clearCache: true);
+
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.Parser
+{
 
 [TestTag("Parser")]
-[ClearRunfileCache]
 public class ErrorReportingTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<ErrorReportingTests>();
+
   // Section 15: Error reporting and edge cases
   // Verifies comprehensive error coverage for both semantic and parse errors
 
@@ -404,3 +412,5 @@ public class ErrorReportingTests
     await Task.CompletedTask;
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.Parser

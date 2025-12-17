@@ -1,12 +1,20 @@
 #!/usr/bin/dotnet --
 
 // Clear cache to ensure parser changes are picked up (parsing is source-compiled)
-return await RunTests<MixedModifiersTests>(clearCache: true);
+
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.Parser
+{
 
 [TestTag("Parser")]
-[ClearRunfileCache]
 public class MixedModifiersTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<MixedModifiersTests>();
+
   // Section 14: Mixed modifiers - combining optional (?) and repeated (*)
   // Tests validation of complex modifier combinations on options and parameters
 
@@ -212,3 +220,5 @@ public class MixedModifiersTests
     await Task.CompletedTask;
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.Parser

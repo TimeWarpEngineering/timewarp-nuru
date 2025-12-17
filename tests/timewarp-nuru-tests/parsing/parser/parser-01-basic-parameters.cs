@@ -1,12 +1,20 @@
 #!/usr/bin/dotnet --
 
 // Clear cache to ensure parser changes are picked up (parsing is source-compiled)
-return await RunTests<BasicParameterParsingTests>(clearCache: true);
+
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.Parser
+{
 
 [TestTag("Parser")]
-[ClearRunfileCache]
 public class BasicParameterParsingTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<BasicParameterParsingTests>();
+
   public static async Task Should_parse_single_required_parameter()
   {
     // Arrange & Act
@@ -84,3 +92,5 @@ public class BasicParameterParsingTests
     await Task.CompletedTask;
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.Parser

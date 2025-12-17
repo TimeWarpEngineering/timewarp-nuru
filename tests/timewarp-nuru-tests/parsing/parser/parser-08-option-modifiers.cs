@@ -1,12 +1,20 @@
 #!/usr/bin/dotnet --
 
 // Clear cache to ensure parser changes are picked up (parsing is source-compiled)
-return await RunTests<OptionModifiersTests>(clearCache: true);
+
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.Parser
+{
 
 [TestTag("Parser")]
-[ClearRunfileCache]
 public class OptionModifiersTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<OptionModifiersTests>();
+
   // Section 8: Option modifier combinations and parsing
   // Options are flags (--verbose, -v) that can optionally take parameters
 
@@ -335,3 +343,5 @@ public class OptionModifiersTests
     await Task.CompletedTask;
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.Parser

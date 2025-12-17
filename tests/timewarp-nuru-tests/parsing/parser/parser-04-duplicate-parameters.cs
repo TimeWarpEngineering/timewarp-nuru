@@ -1,12 +1,20 @@
 #!/usr/bin/dotnet --
 
 // Clear cache to ensure parser changes are picked up (parsing is source-compiled)
-return await RunTests<DuplicateParameterValidationTests>(clearCache: true);
+
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.Parser
+{
 
 [TestTag("Parser")]
-[ClearRunfileCache]
 public class DuplicateParameterValidationTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<DuplicateParameterValidationTests>();
+
   public static async Task Should_reject_duplicate_positional_parameters()
   {
     // Arrange & Act
@@ -112,3 +120,5 @@ public class DuplicateParameterValidationTests
     await Task.CompletedTask;
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.Parser

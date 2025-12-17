@@ -1,12 +1,20 @@
 #!/usr/bin/dotnet --
 
 // Clear cache to ensure parser changes are picked up (parsing is source-compiled)
-return await RunTests<CatchAllOptionalConflictTests>(clearCache: true);
+
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.Parser
+{
 
 [TestTag("Parser")]
-[ClearRunfileCache]
 public class CatchAllOptionalConflictTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<CatchAllOptionalConflictTests>();
+
   // NURU_S004: Optional parameters and catch-all parameters CANNOT coexist
   // The ambiguity is irresolvable: where does optional end and catch-all begin?
 
@@ -137,3 +145,5 @@ public class CatchAllOptionalConflictTests
     await Task.CompletedTask;
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.Parser

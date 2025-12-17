@@ -1,12 +1,20 @@
 #!/usr/bin/dotnet --
 
 // Clear cache to ensure parser changes are picked up (parsing is source-compiled)
-return await RunTests<SpecificityRankingTests>(clearCache: true);
+
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.Parser
+{
 
 [TestTag("Parser")]
-[ClearRunfileCache]
 public class SpecificityRankingTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<SpecificityRankingTests>();
+
   // These tests verify RELATIVE specificity ordering from design doc examples
   // They test routing priority (which route wins), NOT exact point values
 
@@ -133,3 +141,5 @@ public class SpecificityRankingTests
     await Task.CompletedTask;
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.Parser

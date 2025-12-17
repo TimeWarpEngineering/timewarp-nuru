@@ -1,12 +1,20 @@
 #!/usr/bin/dotnet --
 
 // Clear cache to ensure parser changes are picked up (parsing is source-compiled)
-return await RunTests<SyntaxErrorTests>(clearCache: true);
+
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.Parser
+{
 
 [TestTag("Parser")]
-[ClearRunfileCache]
 public class SyntaxErrorTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<SyntaxErrorTests>();
+
   // Section 13: Additional syntax validation tests
   // These tests cover edge cases in lexical and syntactic validation
 
@@ -89,3 +97,5 @@ public class SyntaxErrorTests
     await Task.CompletedTask;
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.Parser

@@ -1,12 +1,20 @@
 #!/usr/bin/dotnet --
 
 // Clear cache to ensure parser changes are picked up (parsing is source-compiled)
-return await RunTests<ComplexIntegrationTests>(clearCache: true);
+
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.Parser
+{
 
 [TestTag("Parser")]
-[ClearRunfileCache]
 public class ComplexIntegrationTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<ComplexIntegrationTests>();
+
   // Section 14: Complex pattern integration
   // Tests real-world CLI patterns combining multiple features
 
@@ -216,3 +224,5 @@ public class ComplexIntegrationTests
     await Task.CompletedTask;
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.Parser

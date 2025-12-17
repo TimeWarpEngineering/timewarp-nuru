@@ -1,12 +1,20 @@
 #!/usr/bin/dotnet --
 
 // Clear cache to ensure parser changes are picked up (parsing is source-compiled)
-return await RunTests<ConsecutiveOptionalParametersTests>(clearCache: true);
+
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.Parser
+{
 
 [TestTag("Parser")]
-[ClearRunfileCache]
 public class ConsecutiveOptionalParametersTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<ConsecutiveOptionalParametersTests>();
+
   // NURU_S002: Only ONE optional positional parameter is allowed
   // Consecutive optional parameters create ambiguity in parsing
 
@@ -140,3 +148,5 @@ public class ConsecutiveOptionalParametersTests
     await Task.CompletedTask;
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.Parser

@@ -1,12 +1,20 @@
 #!/usr/bin/dotnet --
 
 // Test custom type constraints after parser fix for issue #62
-return await RunTests<CustomTypeConstraintParsingTests>(clearCache: true);
+
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.Parser
+{
 
 [TestTag("Parser")]
-[ClearRunfileCache]
 public class CustomTypeConstraintParsingTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<CustomTypeConstraintParsingTests>();
+
   public static async Task Should_parse_custom_type_constraint_lowercase()
   {
     // Arrange & Act - Custom type constraint like "fileinfo"
@@ -148,3 +156,5 @@ public class CustomTypeConstraintParsingTests
   }
 
 }
+
+} // namespace TimeWarp.Nuru.Tests.Parser

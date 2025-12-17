@@ -35,21 +35,7 @@
     <Compile Include="../timewarp-nuru-core-tests/test-terminal-context-01-basic.cs" />
     <Compile Include="../timewarp-nuru-core-tests/compiled-route-test-helper.cs" />
     <!-- Parser tests (migrated) -->
-    <Compile Include="../timewarp-nuru-tests/parsing/parser/parser-01-basic-parameters.cs" />
-    <Compile Include="../timewarp-nuru-tests/parsing/parser/parser-02-typed-parameters.cs" />
-    <Compile Include="../timewarp-nuru-tests/parsing/parser/parser-03-optional-parameters.cs" />
-    <Compile Include="../timewarp-nuru-tests/parsing/parser/parser-04-duplicate-parameters.cs" />
-    <Compile Include="../timewarp-nuru-tests/parsing/parser/parser-05-consecutive-optionals.cs" />
-    <Compile Include="../timewarp-nuru-tests/parsing/parser/parser-06-catchall-position.cs" />
-    <Compile Include="../timewarp-nuru-tests/parsing/parser/parser-07-catchall-optional-conflict.cs" />
-    <Compile Include="../timewarp-nuru-tests/parsing/parser/parser-08-option-modifiers.cs" />
-    <Compile Include="../timewarp-nuru-tests/parsing/parser/parser-09-end-of-options.cs" />
-    <Compile Include="../timewarp-nuru-tests/parsing/parser/parser-10-specificity-ranking.cs" />
-    <Compile Include="../timewarp-nuru-tests/parsing/parser/parser-11-complex-integration.cs" />
-    <Compile Include="../timewarp-nuru-tests/parsing/parser/parser-12-error-reporting.cs" />
-    <Compile Include="../timewarp-nuru-tests/parsing/parser/parser-13-syntax-errors.cs" />
-    <Compile Include="../timewarp-nuru-tests/parsing/parser/parser-14-mixed-modifiers.cs" />
-    <Compile Include="../timewarp-nuru-tests/parsing/parser/parser-15-custom-type-constraints.cs" />
+    <Compile Include="../timewarp-nuru-core-tests/parser/*.cs" />
     <Compile Include="../timewarp-nuru-completion-tests/dynamic/completion-26-enum-partial-filtering.cs" />
     <Compile Include="../timewarp-nuru-completion-tests/static/completion-11-enum-completion.cs" />
     <!-- All REPL tests (recursive glob includes subfolders, excludes obj/bin) -->

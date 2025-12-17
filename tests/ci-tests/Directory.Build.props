@@ -48,6 +48,16 @@
     <Compile Include="../timewarp-nuru-repl-tests/repl-35-interactive-route-execution.cs" />
     <Compile Include="../timewarp-nuru-repl-tests/command-line-parser/parser-01-basic-parsing.cs" />
     <Compile Include="../timewarp-nuru-repl-tests/command-line-parser/parser-02-quoted-strings.cs" />
+    <!-- Tab Completion Tests - helper file must come first -->
+    <Compile Include="../timewarp-nuru-repl-tests/tab-completion/completion-test-helpers.cs" />
+    <Compile Include="../timewarp-nuru-repl-tests/tab-completion/repl-20-tab-basic-commands.cs" />
+    <Compile Include="../timewarp-nuru-repl-tests/tab-completion/repl-21-tab-subcommands.cs" />
+    <Compile Include="../timewarp-nuru-repl-tests/tab-completion/repl-22-tab-enums.cs" />
+    <Compile Include="../timewarp-nuru-repl-tests/tab-completion/repl-23-tab-options.cs" />
+    <Compile Include="../timewarp-nuru-repl-tests/tab-completion/repl-24-tab-cycling.cs" />
+    <Compile Include="../timewarp-nuru-repl-tests/tab-completion/repl-25-tab-state-management.cs" />
+    <Compile Include="../timewarp-nuru-repl-tests/tab-completion/repl-26-tab-edge-cases.cs" />
+    <Compile Include="../timewarp-nuru-repl-tests/tab-completion/repl-27-tab-help-option.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="$(MSBuildThisFileDirectory)../../source/timewarp-nuru-completion/timewarp-nuru-completion.csproj" />

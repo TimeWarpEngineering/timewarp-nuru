@@ -2,7 +2,6 @@
 #:project ../../../source/timewarp-nuru/timewarp-nuru.csproj
 #:project ../../../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj
 
-using TimeWarp.Nuru;
 using TimeWarp.Nuru.Tests.TabCompletion;
 
 // ============================================================================
@@ -19,13 +18,20 @@ using TimeWarp.Nuru.Tests.TabCompletion;
 // operations and that users can interrupt/modify completions naturally.
 // ============================================================================
 
-return await RunTests<StateManagementTests>();
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.TabCompletion.StateManagement
+{
 
 [TestTag("REPL")]
 [TestTag("TabCompletion")]
-[ClearRunfileCache]
 public class StateManagementTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<StateManagementTests>();
+
   private static TestTerminal Terminal = null!;
   private static NuruCoreApp App = null!;
 
@@ -325,3 +331,5 @@ public class StateManagementTests
     CompletionAssertions.ShouldShowCompletions(Terminal, "Dev", "Staging", "Prod");
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.TabCompletion.StateManagement

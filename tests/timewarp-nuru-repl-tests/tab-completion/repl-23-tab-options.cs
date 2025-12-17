@@ -2,7 +2,6 @@
 #:project ../../../source/timewarp-nuru/timewarp-nuru.csproj
 #:project ../../../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj
 
-using TimeWarp.Nuru;
 using TimeWarp.Nuru.Tests.TabCompletion;
 
 // ============================================================================
@@ -34,13 +33,20 @@ using TimeWarp.Nuru.Tests.TabCompletion;
 // Passing tests (12/23) show what currently works.
 // ============================================================================
 
-return await RunTests<OptionCompletionTests>();
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.TabCompletion.Options
+{
 
 [TestTag("REPL")]
 [TestTag("TabCompletion")]
-[ClearRunfileCache]
 public class OptionCompletionTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<OptionCompletionTests>();
+
   private static TestTerminal Terminal = null!;
   private static NuruCoreApp App = null!;
 
@@ -450,3 +456,5 @@ public class OptionCompletionTests
     );
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.TabCompletion.Options

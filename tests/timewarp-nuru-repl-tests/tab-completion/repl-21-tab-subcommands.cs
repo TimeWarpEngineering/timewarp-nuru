@@ -2,7 +2,6 @@
 #:project ../../../source/timewarp-nuru/timewarp-nuru.csproj
 #:project ../../../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj
 
-using TimeWarp.Nuru;
 using TimeWarp.Nuru.Tests.TabCompletion;
 
 // ============================================================================
@@ -19,13 +18,20 @@ using TimeWarp.Nuru.Tests.TabCompletion;
 // multi-level command structures and maintains proper context.
 // ============================================================================
 
-return await RunTests<SubcommandCompletionTests>();
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.TabCompletion.Subcommands
+{
 
 [TestTag("REPL")]
 [TestTag("TabCompletion")]
-[ClearRunfileCache]
 public class SubcommandCompletionTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<SubcommandCompletionTests>();
+
   private static TestTerminal Terminal = null!;
   private static NuruCoreApp App = null!;
 
@@ -261,3 +267,5 @@ public class SubcommandCompletionTests
     Terminal.OutputContains("commit").ShouldBeTrue("Should match 'commit' case-insensitively");
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.TabCompletion.Subcommands

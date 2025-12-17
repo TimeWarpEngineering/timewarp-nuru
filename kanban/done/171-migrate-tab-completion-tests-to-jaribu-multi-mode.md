@@ -7,26 +7,26 @@ Migrate the 8 test files and 1 helper file in `tests/timewarp-nuru-repl-tests/ta
 ## Files to Migrate
 
 ### Helper File (migrate first)
-- [ ] `completion-test-helpers.cs` - Contains `CompletionAssertions`, `KeySequenceHelpers`, `TestAppFactory`, and `Environment` enum
+- [x] `completion-test-helpers.cs` - Contains `CompletionAssertions`, `KeySequenceHelpers`, `TestAppFactory`, and `Environment` enum
 
 ### Test Files
-- [ ] `repl-20-tab-basic-commands.cs`
-- [ ] `repl-21-tab-subcommands.cs`
-- [ ] `repl-22-tab-enums.cs`
-- [ ] `repl-23-tab-options.cs`
-- [ ] `repl-24-tab-cycling.cs`
-- [ ] `repl-25-tab-state-management.cs`
-- [ ] `repl-26-tab-edge-cases.cs`
-- [ ] `repl-27-tab-help-option.cs`
+- [x] `repl-20-tab-basic-commands.cs`
+- [x] `repl-21-tab-subcommands.cs`
+- [x] `repl-22-tab-enums.cs`
+- [x] `repl-23-tab-options.cs`
+- [x] `repl-24-tab-cycling.cs`
+- [x] `repl-25-tab-state-management.cs`
+- [x] `repl-26-tab-edge-cases.cs`
+- [x] `repl-27-tab-help-option.cs`
 
 ## Checklist
 
-- [ ] Migrate `completion-test-helpers.cs`:
+- [x] Migrate `completion-test-helpers.cs`:
   - Already has namespace `TimeWarp.Nuru.Tests.TabCompletion`
   - Add to `ci-tests/Directory.Build.props`
   - Note: Contains `Environment` enum - may conflict with `System.Environment`
   
-- [ ] For each test file:
+- [x] For each test file:
   - Add `#if !JARIBU_MULTI` / `return await RunAllTests();` / `#endif` block
   - Wrap types in namespace block (e.g., `TimeWarp.Nuru.Tests.TabCompletion.BasicCommands`)
   - Add `[ModuleInitializer]` registration method
@@ -34,10 +34,10 @@ Migrate the 8 test files and 1 helper file in `tests/timewarp-nuru-repl-tests/ta
   - Remove `using TimeWarp.Nuru;` (already global)
   - Keep `using TimeWarp.Nuru.Tests.TabCompletion;` for helper access
   
-- [ ] Add all files to `tests/ci-tests/Directory.Build.props`
-- [ ] Test standalone mode for each file
-- [ ] Test multi-mode: `dotnet tests/ci-tests/run-ci-tests.cs`
-- [ ] Commit changes
+- [x] Add all files to `tests/ci-tests/Directory.Build.props`
+- [x] Test standalone mode for each file
+- [x] Test multi-mode: `dotnet tests/ci-tests/run-ci-tests.cs`
+- [x] Commit changes
 
 ## Special Considerations
 
@@ -81,3 +81,37 @@ public static async Task CleanUp()
 - These tests reference both `timewarp-nuru.csproj` and `timewarp-nuru-repl.csproj`
 - The helper file already has a namespace, so it mainly needs to be added to Directory.Build.props
 - Test files need full migration pattern (namespace wrapping, ModuleInitializer, etc.)
+
+## Results
+
+**Completed:** All 8 test files and 1 helper file migrated to Jaribu multi-mode.
+
+### Test Counts Added
+| File | Tests |
+|------|-------|
+| repl-20-tab-basic-commands.cs | 19 |
+| repl-21-tab-subcommands.cs | 12 |
+| repl-22-tab-enums.cs | 17 |
+| repl-23-tab-options.cs | 23 |
+| repl-24-tab-cycling.cs | 14 |
+| repl-25-tab-state-management.cs | 15 |
+| repl-26-tab-edge-cases.cs | 21 |
+| repl-27-tab-help-option.cs | 12 |
+| **Total New Tests** | **133** |
+
+### CI Test Count
+- **Before:** 546 tests
+- **After:** 679 tests (+133 from tab-completion)
+
+### Namespaces Used
+- `TimeWarp.Nuru.Tests.TabCompletion` (helper file)
+- `TimeWarp.Nuru.Tests.TabCompletion.BasicCommands`
+- `TimeWarp.Nuru.Tests.TabCompletion.Subcommands`
+- `TimeWarp.Nuru.Tests.TabCompletion.Enums`
+- `TimeWarp.Nuru.Tests.TabCompletion.Options`
+- `TimeWarp.Nuru.Tests.TabCompletion.Cycling`
+- `TimeWarp.Nuru.Tests.TabCompletion.StateManagement`
+- `TimeWarp.Nuru.Tests.TabCompletion.EdgeCases`
+- `TimeWarp.Nuru.Tests.TabCompletion.HelpOption`
+
+All tab-completion tests pass in both standalone and multi-mode.

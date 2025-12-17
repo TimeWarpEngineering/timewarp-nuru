@@ -2,14 +2,22 @@
 #:project ../../source/timewarp-nuru/timewarp-nuru.csproj
 
 // Test HelpProvider displays message type indicators
-return await RunTests<MessageTypeHelpOutputTests>(clearCache: true);
+
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.Core.MessageTypeHelp
+{
 
 [TestTag("MessageType")]
 [TestTag("Help")]
-[ClearRunfileCache]
 public class MessageTypeHelpOutputTests
 {
-  private static Endpoint CreateEndpoint(string pattern, string? description = null, MessageType messageType = MessageType.Command)
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<MessageTypeHelpOutputTests>();
+
+  private static Endpoint CreateEndpoint(string pattern, string? description = null, TimeWarp.Nuru.MessageType messageType = TimeWarp.Nuru.MessageType.Command)
   {
     CompiledRoute route = PatternParser.Parse(pattern);
     route.MessageType = messageType;
@@ -28,10 +36,10 @@ public class MessageTypeHelpOutputTests
   {
     // Arrange
     EndpointCollection endpoints = [];
-    endpoints.Add(CreateEndpoint("list", "List all items", MessageType.Query));
+    endpoints.Add(CreateEndpoint("list", "List all items", TimeWarp.Nuru.MessageType.Query));
 
     // Act
-    string helpText = HelpProvider.GetHelpText(endpoints, "testapp", useColor: false);
+    string helpText = TimeWarp.Nuru.HelpProvider.GetHelpText(endpoints, "testapp", useColor: false);
 
     // Assert - Should contain (Q) indicator for Query
     helpText.ShouldContain("(Q)");
@@ -44,10 +52,10 @@ public class MessageTypeHelpOutputTests
   {
     // Arrange
     EndpointCollection endpoints = [];
-    endpoints.Add(CreateEndpoint("create {name}", "Create item", MessageType.Command));
+    endpoints.Add(CreateEndpoint("create {name}", "Create item", TimeWarp.Nuru.MessageType.Command));
 
     // Act
-    string helpText = HelpProvider.GetHelpText(endpoints, "testapp", useColor: false);
+    string helpText = TimeWarp.Nuru.HelpProvider.GetHelpText(endpoints, "testapp", useColor: false);
 
     // Assert - Should contain (C) indicator for Command
     helpText.ShouldContain("(C)");
@@ -59,10 +67,10 @@ public class MessageTypeHelpOutputTests
   {
     // Arrange
     EndpointCollection endpoints = [];
-    endpoints.Add(CreateEndpoint("set {key} {value}", "Set config value", MessageType.IdempotentCommand));
+    endpoints.Add(CreateEndpoint("set {key} {value}", "Set config value", TimeWarp.Nuru.MessageType.IdempotentCommand));
 
     // Act
-    string helpText = HelpProvider.GetHelpText(endpoints, "testapp", useColor: false);
+    string helpText = TimeWarp.Nuru.HelpProvider.GetHelpText(endpoints, "testapp", useColor: false);
 
     // Assert - Should contain (I) indicator for IdempotentCommand
     helpText.ShouldContain("(I)");
@@ -74,10 +82,10 @@ public class MessageTypeHelpOutputTests
   {
     // Arrange
     EndpointCollection endpoints = [];
-    endpoints.Add(CreateEndpoint("list", "List items", MessageType.Query));
+    endpoints.Add(CreateEndpoint("list", "List items", TimeWarp.Nuru.MessageType.Query));
 
     // Act
-    string helpText = HelpProvider.GetHelpText(endpoints, "testapp", useColor: false);
+    string helpText = TimeWarp.Nuru.HelpProvider.GetHelpText(endpoints, "testapp", useColor: false);
 
     // Assert - Should contain legend explaining indicators
     helpText.ShouldContain("Legend:");
@@ -92,12 +100,12 @@ public class MessageTypeHelpOutputTests
   {
     // Arrange
     EndpointCollection endpoints = [];
-    endpoints.Add(CreateEndpoint("list", "List items", MessageType.Query));
-    endpoints.Add(CreateEndpoint("create {name}", "Create item", MessageType.Command));
-    endpoints.Add(CreateEndpoint("set {key} {value}", "Set config", MessageType.IdempotentCommand));
+    endpoints.Add(CreateEndpoint("list", "List items", TimeWarp.Nuru.MessageType.Query));
+    endpoints.Add(CreateEndpoint("create {name}", "Create item", TimeWarp.Nuru.MessageType.Command));
+    endpoints.Add(CreateEndpoint("set {key} {value}", "Set config", TimeWarp.Nuru.MessageType.IdempotentCommand));
 
     // Act
-    string helpText = HelpProvider.GetHelpText(endpoints, "testapp", useColor: false);
+    string helpText = TimeWarp.Nuru.HelpProvider.GetHelpText(endpoints, "testapp", useColor: false);
 
     // Assert - Should contain all three indicators
     helpText.ShouldContain("(Q)");
@@ -111,12 +119,12 @@ public class MessageTypeHelpOutputTests
   {
     // Arrange
     EndpointCollection endpoints = [];
-    endpoints.Add(CreateEndpoint("list", "List items", MessageType.Query));
-    endpoints.Add(CreateEndpoint("create {name}", "Create item", MessageType.Command));
-    endpoints.Add(CreateEndpoint("set {key}", "Set config", MessageType.IdempotentCommand));
+    endpoints.Add(CreateEndpoint("list", "List items", TimeWarp.Nuru.MessageType.Query));
+    endpoints.Add(CreateEndpoint("create {name}", "Create item", TimeWarp.Nuru.MessageType.Command));
+    endpoints.Add(CreateEndpoint("set {key}", "Set config", TimeWarp.Nuru.MessageType.IdempotentCommand));
 
     // Act
-    string helpText = HelpProvider.GetHelpText(endpoints, "testapp", useColor: true);
+    string helpText = TimeWarp.Nuru.HelpProvider.GetHelpText(endpoints, "testapp", useColor: true);
 
     // Assert - Should contain ANSI color codes
     // Query = Blue, IdempotentCommand = Yellow, Command = Red
@@ -125,3 +133,5 @@ public class MessageTypeHelpOutputTests
     await Task.CompletedTask;
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.Core.MessageTypeHelp

@@ -2,12 +2,20 @@
 #:project ../../source/timewarp-nuru/timewarp-nuru.csproj
 
 // Test OSC 8 hyperlink functionality
-return await RunTests<HyperlinkTests>(clearCache: true);
+
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.Core.Hyperlink
+{
 
 [TestTag("Hyperlinks")]
-[ClearRunfileCache]
 public class HyperlinkTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<HyperlinkTests>();
+
   public static async Task Should_create_hyperlink_with_link_extension()
   {
     // Arrange
@@ -179,3 +187,5 @@ public class HyperlinkTests
     await Task.CompletedTask;
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.Core.Hyperlink

@@ -2,13 +2,21 @@
 #:project ../../source/timewarp-nuru/timewarp-nuru.csproj
 
 // Test MessageType fluent API for routes
-return await RunTests<MessageTypeFluentApiTests>(clearCache: true);
+
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.Core.MessageType
+{
 
 [TestTag("MessageType")]
-[ClearRunfileCache]
 public class MessageTypeFluentApiTests
 {
-  private static Endpoint CreateEndpoint(string pattern, string? description = null, MessageType messageType = MessageType.Command)
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<MessageTypeFluentApiTests>();
+
+  private static Endpoint CreateEndpoint(string pattern, string? description = null, TimeWarp.Nuru.MessageType messageType = TimeWarp.Nuru.MessageType.Command)
   {
     CompiledRoute route = PatternParser.Parse(pattern);
     route.MessageType = messageType;
@@ -29,8 +37,8 @@ public class MessageTypeFluentApiTests
     Endpoint endpoint = CreateEndpoint("create {name}", "Create something");
 
     // Assert - Default should be Command
-    endpoint.MessageType.ShouldBe(MessageType.Command);
-    endpoint.CompiledRoute.MessageType.ShouldBe(MessageType.Command);
+    endpoint.MessageType.ShouldBe(TimeWarp.Nuru.MessageType.Command);
+    endpoint.CompiledRoute.MessageType.ShouldBe(TimeWarp.Nuru.MessageType.Command);
 
     await Task.CompletedTask;
   }
@@ -38,11 +46,11 @@ public class MessageTypeFluentApiTests
   public static async Task Should_support_query_message_type()
   {
     // Arrange - Create endpoint with Query message type
-    Endpoint endpoint = CreateEndpoint("list", "List items", MessageType.Query);
+    Endpoint endpoint = CreateEndpoint("list", "List items", TimeWarp.Nuru.MessageType.Query);
 
     // Assert
-    endpoint.MessageType.ShouldBe(MessageType.Query);
-    endpoint.CompiledRoute.MessageType.ShouldBe(MessageType.Query);
+    endpoint.MessageType.ShouldBe(TimeWarp.Nuru.MessageType.Query);
+    endpoint.CompiledRoute.MessageType.ShouldBe(TimeWarp.Nuru.MessageType.Query);
 
     await Task.CompletedTask;
   }
@@ -50,11 +58,11 @@ public class MessageTypeFluentApiTests
   public static async Task Should_support_idempotent_command_message_type()
   {
     // Arrange - Create endpoint with IdempotentCommand message type
-    Endpoint endpoint = CreateEndpoint("set {key} {value}", "Set config", MessageType.IdempotentCommand);
+    Endpoint endpoint = CreateEndpoint("set {key} {value}", "Set config", TimeWarp.Nuru.MessageType.IdempotentCommand);
 
     // Assert
-    endpoint.MessageType.ShouldBe(MessageType.IdempotentCommand);
-    endpoint.CompiledRoute.MessageType.ShouldBe(MessageType.IdempotentCommand);
+    endpoint.MessageType.ShouldBe(TimeWarp.Nuru.MessageType.IdempotentCommand);
+    endpoint.CompiledRoute.MessageType.ShouldBe(TimeWarp.Nuru.MessageType.IdempotentCommand);
 
     await Task.CompletedTask;
   }
@@ -65,12 +73,12 @@ public class MessageTypeFluentApiTests
     Endpoint endpoint = CreateEndpoint("users", "List users");
 
     // Act - Simulate EndpointBuilder.AsQuery() behavior
-    endpoint.MessageType = MessageType.Query;
-    endpoint.CompiledRoute.MessageType = MessageType.Query;
+    endpoint.MessageType = TimeWarp.Nuru.MessageType.Query;
+    endpoint.CompiledRoute.MessageType = TimeWarp.Nuru.MessageType.Query;
 
     // Assert
-    endpoint.MessageType.ShouldBe(MessageType.Query);
-    endpoint.CompiledRoute.MessageType.ShouldBe(MessageType.Query);
+    endpoint.MessageType.ShouldBe(TimeWarp.Nuru.MessageType.Query);
+    endpoint.CompiledRoute.MessageType.ShouldBe(TimeWarp.Nuru.MessageType.Query);
 
     await Task.CompletedTask;
   }
@@ -81,12 +89,12 @@ public class MessageTypeFluentApiTests
     Endpoint endpoint = CreateEndpoint("config set {key}", "Set config");
 
     // Act - Simulate EndpointBuilder.AsIdempotentCommand() behavior
-    endpoint.MessageType = MessageType.IdempotentCommand;
-    endpoint.CompiledRoute.MessageType = MessageType.IdempotentCommand;
+    endpoint.MessageType = TimeWarp.Nuru.MessageType.IdempotentCommand;
+    endpoint.CompiledRoute.MessageType = TimeWarp.Nuru.MessageType.IdempotentCommand;
 
     // Assert
-    endpoint.MessageType.ShouldBe(MessageType.IdempotentCommand);
-    endpoint.CompiledRoute.MessageType.ShouldBe(MessageType.IdempotentCommand);
+    endpoint.MessageType.ShouldBe(TimeWarp.Nuru.MessageType.IdempotentCommand);
+    endpoint.CompiledRoute.MessageType.ShouldBe(TimeWarp.Nuru.MessageType.IdempotentCommand);
 
     await Task.CompletedTask;
   }
@@ -94,13 +102,13 @@ public class MessageTypeFluentApiTests
   public static async Task Compiled_route_builder_should_support_message_type()
   {
     // Arrange & Act - Test RouteBuilder.WithMessageType
-    CompiledRoute route = new RouteBuilder()
+    CompiledRoute route = new TimeWarp.Nuru.RouteBuilder()
       .WithLiteral("test")
-      .WithMessageType(MessageType.Query)
+      .WithMessageType(TimeWarp.Nuru.MessageType.Query)
       .Build();
 
     // Assert
-    route.MessageType.ShouldBe(MessageType.Query);
+    route.MessageType.ShouldBe(TimeWarp.Nuru.MessageType.Query);
 
     await Task.CompletedTask;
   }
@@ -108,13 +116,15 @@ public class MessageTypeFluentApiTests
   public static async Task Compiled_route_builder_should_default_to_command()
   {
     // Arrange & Act - Test default message type
-    CompiledRoute route = new RouteBuilder()
+    CompiledRoute route = new TimeWarp.Nuru.RouteBuilder()
       .WithLiteral("test")
       .Build();
 
     // Assert - Default should be Command
-    route.MessageType.ShouldBe(MessageType.Command);
+    route.MessageType.ShouldBe(TimeWarp.Nuru.MessageType.Command);
 
     await Task.CompletedTask;
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.Core.MessageType

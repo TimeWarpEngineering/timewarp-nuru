@@ -2,12 +2,20 @@
 #:project ../../source/timewarp-nuru/timewarp-nuru.csproj
 
 // Test Table widget with styled content (ANSI colors)
-return await RunTests<TableWidgetStylingTests>(clearCache: true);
+
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.Core.TableWidgetStyling
+{
 
 [TestTag("Widgets")]
-[ClearRunfileCache]
 public class TableWidgetStylingTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<TableWidgetStylingTests>();
+
   public static async Task Should_render_styled_cell_content()
   {
     // Arrange
@@ -47,7 +55,7 @@ public class TableWidgetStylingTests
 
     // The visible width of the content row should match the header width
     // (both padded to 6 characters)
-    string contentLine = AnsiStringUtils.StripAnsiCodes(lines[3]);
+    string contentLine = TimeWarp.Nuru.AnsiStringUtils.StripAnsiCodes(lines[3]);
     contentLine.ShouldContain("Error ");
 
     await Task.CompletedTask;
@@ -179,3 +187,5 @@ public class TableWidgetStylingTests
     await Task.CompletedTask;
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.Core.TableWidgetStyling

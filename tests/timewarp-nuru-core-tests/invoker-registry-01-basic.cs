@@ -11,7 +11,12 @@ using Shouldly;
 using static System.Console;
 using static TimeWarp.Jaribu.TestRunner;
 
-return await RunTests<InvokerRegistryTests>();
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.Core.InvokerRegistry
+{
 
 /// <summary>
 /// Tests for InvokerRegistry.ComputeSignatureKey
@@ -19,6 +24,9 @@ return await RunTests<InvokerRegistryTests>();
 [TestTag("InvokerRegistry")]
 public sealed class InvokerRegistryTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<InvokerRegistryTests>();
+
   /// <summary>
   /// Verify signature key for Action (no params, void return)
   /// </summary>
@@ -29,7 +37,7 @@ public sealed class InvokerRegistryTests
     MethodInfo method = handler.Method;
 
     // Act
-    string key = InvokerRegistry.ComputeSignatureKey(method);
+    string key = TimeWarp.Nuru.InvokerRegistry.ComputeSignatureKey(method);
 
     // Assert
     key.ShouldBe("NoParams");
@@ -48,7 +56,7 @@ public sealed class InvokerRegistryTests
     MethodInfo method = handler.Method;
 
     // Act
-    string key = InvokerRegistry.ComputeSignatureKey(method);
+    string key = TimeWarp.Nuru.InvokerRegistry.ComputeSignatureKey(method);
 
     // Assert
     key.ShouldBe("String");
@@ -67,7 +75,7 @@ public sealed class InvokerRegistryTests
     MethodInfo method = handler.Method;
 
     // Act
-    string key = InvokerRegistry.ComputeSignatureKey(method);
+    string key = TimeWarp.Nuru.InvokerRegistry.ComputeSignatureKey(method);
 
     // Assert
     key.ShouldBe("Int");
@@ -86,7 +94,7 @@ public sealed class InvokerRegistryTests
     MethodInfo method = handler.Method;
 
     // Act
-    string key = InvokerRegistry.ComputeSignatureKey(method);
+    string key = TimeWarp.Nuru.InvokerRegistry.ComputeSignatureKey(method);
 
     // Assert
     key.ShouldBe("String_String");
@@ -105,7 +113,7 @@ public sealed class InvokerRegistryTests
     MethodInfo method = handler.Method;
 
     // Act
-    string key = InvokerRegistry.ComputeSignatureKey(method);
+    string key = TimeWarp.Nuru.InvokerRegistry.ComputeSignatureKey(method);
 
     // Assert
     key.ShouldBe("StringArrayArray");
@@ -124,7 +132,7 @@ public sealed class InvokerRegistryTests
     MethodInfo method = handler.Method;
 
     // Act
-    string key = InvokerRegistry.ComputeSignatureKey(method);
+    string key = TimeWarp.Nuru.InvokerRegistry.ComputeSignatureKey(method);
 
     // Assert
     key.ShouldBe("NullableInt");
@@ -143,7 +151,7 @@ public sealed class InvokerRegistryTests
     MethodInfo method = handler.Method;
 
     // Act
-    string key = InvokerRegistry.ComputeSignatureKey(method);
+    string key = TimeWarp.Nuru.InvokerRegistry.ComputeSignatureKey(method);
 
     // Assert
     key.ShouldBe("Int_Int_Returns_Int");
@@ -162,7 +170,7 @@ public sealed class InvokerRegistryTests
     MethodInfo method = handler.Method;
 
     // Act
-    string key = InvokerRegistry.ComputeSignatureKey(method);
+    string key = TimeWarp.Nuru.InvokerRegistry.ComputeSignatureKey(method);
 
     // Assert
     key.ShouldBe("_Returns_Task");
@@ -181,7 +189,7 @@ public sealed class InvokerRegistryTests
     MethodInfo method = handler.Method;
 
     // Act
-    string key = InvokerRegistry.ComputeSignatureKey(method);
+    string key = TimeWarp.Nuru.InvokerRegistry.ComputeSignatureKey(method);
 
     // Assert
     key.ShouldBe("String_Returns_Task");
@@ -200,7 +208,7 @@ public sealed class InvokerRegistryTests
     MethodInfo method = handler.Method;
 
     // Act
-    string key = InvokerRegistry.ComputeSignatureKey(method);
+    string key = TimeWarp.Nuru.InvokerRegistry.ComputeSignatureKey(method);
 
     // Assert
     key.ShouldBe("String_Returns_TaskInt");
@@ -215,13 +223,13 @@ public sealed class InvokerRegistryTests
   public static async Task Should_register_and_lookup_sync_invoker()
   {
     // Arrange
-    InvokerRegistry.Clear();
+    TimeWarp.Nuru.InvokerRegistry.Clear();
     bool invoked = false;
     SyncInvoker testInvoker = (_, _) => { invoked = true; return null; };
 
     // Act
-    InvokerRegistry.RegisterSync("TestKey", testInvoker);
-    bool found = InvokerRegistry.TryGetSync("TestKey", out SyncInvoker? retrieved);
+    TimeWarp.Nuru.InvokerRegistry.RegisterSync("TestKey", testInvoker);
+    bool found = TimeWarp.Nuru.InvokerRegistry.TryGetSync("TestKey", out SyncInvoker? retrieved);
 
     // Assert
     found.ShouldBeTrue();
@@ -232,7 +240,7 @@ public sealed class InvokerRegistryTests
     invoked.ShouldBeTrue();
 
     WriteLine("Sync invoker registration and lookup works");
-    InvokerRegistry.Clear();
+    TimeWarp.Nuru.InvokerRegistry.Clear();
 
     await Task.CompletedTask;
   }
@@ -243,10 +251,10 @@ public sealed class InvokerRegistryTests
   public static async Task Should_return_false_for_unknown_key()
   {
     // Arrange
-    InvokerRegistry.Clear();
+    TimeWarp.Nuru.InvokerRegistry.Clear();
 
     // Act
-    bool found = InvokerRegistry.TryGetSync("NonExistentKey", out SyncInvoker? invoker);
+    bool found = TimeWarp.Nuru.InvokerRegistry.TryGetSync("NonExistentKey", out SyncInvoker? invoker);
 
     // Assert
     found.ShouldBeFalse();
@@ -257,3 +265,5 @@ public sealed class InvokerRegistryTests
     await Task.CompletedTask;
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.Core.InvokerRegistry

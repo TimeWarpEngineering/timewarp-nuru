@@ -2,12 +2,20 @@
 #:project ../../source/timewarp-nuru/timewarp-nuru.csproj
 
 // Test Panel widget terminal extension methods
-return await RunTests<PanelTerminalExtensionTests>(clearCache: true);
+
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.Core.PanelWidgetTerminal
+{
 
 [TestTag("Widgets")]
-[ClearRunfileCache]
 public class PanelTerminalExtensionTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<PanelTerminalExtensionTests>();
+
   public static async Task Should_write_simple_panel_to_terminal()
   {
     // Arrange
@@ -109,7 +117,7 @@ public class PanelTerminalExtensionTests
 
     // Assert
     string[] lines = terminal.Output.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
-    AnsiStringUtils.GetVisibleLength(lines[0]).ShouldBe(60);
+    TimeWarp.Nuru.AnsiStringUtils.GetVisibleLength(lines[0]).ShouldBe(60);
 
     await Task.CompletedTask;
   }
@@ -164,3 +172,5 @@ public class PanelTerminalExtensionTests
     await Task.CompletedTask;
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.Core.PanelWidgetTerminal

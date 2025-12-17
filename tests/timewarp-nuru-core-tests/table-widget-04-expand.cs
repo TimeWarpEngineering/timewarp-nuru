@@ -2,12 +2,20 @@
 #:project ../../source/timewarp-nuru/timewarp-nuru.csproj
 
 // Test Table widget expand functionality
-return await RunTests<TableWidgetExpandTests>(clearCache: true);
+
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.Core.TableWidgetExpand
+{
 
 [TestTag("Widgets")]
-[ClearRunfileCache]
 public class TableWidgetExpandTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<TableWidgetExpandTests>();
+
   public static async Task Should_expand_table_to_terminal_width()
   {
     // Arrange
@@ -22,7 +30,7 @@ public class TableWidgetExpandTests
 
     // Assert
     // The table should expand to fill 80 characters
-    int topLineWidth = AnsiStringUtils.GetVisibleLength(lines[0]);
+    int topLineWidth = TimeWarp.Nuru.AnsiStringUtils.GetVisibleLength(lines[0]);
     topLineWidth.ShouldBe(80);
 
     await Task.CompletedTask;
@@ -42,7 +50,7 @@ public class TableWidgetExpandTests
 
     // Assert
     // The table should be sized to content, not terminal width
-    int topLineWidth = AnsiStringUtils.GetVisibleLength(lines[0]);
+    int topLineWidth = TimeWarp.Nuru.AnsiStringUtils.GetVisibleLength(lines[0]);
     topLineWidth.ShouldBeLessThan(80);
 
     await Task.CompletedTask;
@@ -63,7 +71,7 @@ public class TableWidgetExpandTests
     string[] lines = table.Render(50);
 
     // Assert
-    int topLineWidth = AnsiStringUtils.GetVisibleLength(lines[0]);
+    int topLineWidth = TimeWarp.Nuru.AnsiStringUtils.GetVisibleLength(lines[0]);
     topLineWidth.ShouldBe(50);
 
     await Task.CompletedTask;
@@ -84,9 +92,11 @@ public class TableWidgetExpandTests
 
     // Assert
     // Borderless tables don't expand because there's no visual border to fill
-    int lineWidth = AnsiStringUtils.GetVisibleLength(lines[0]);
+    int lineWidth = TimeWarp.Nuru.AnsiStringUtils.GetVisibleLength(lines[0]);
     lineWidth.ShouldBeLessThan(80);
 
     await Task.CompletedTask;
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.Core.TableWidgetExpand

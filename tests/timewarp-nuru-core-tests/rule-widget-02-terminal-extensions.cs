@@ -2,12 +2,20 @@
 #:project ../../source/timewarp-nuru/timewarp-nuru.csproj
 
 // Test Rule widget terminal extension methods
-return await RunTests<RuleTerminalExtensionTests>(clearCache: true);
+
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.Core.RuleWidgetTerminal
+{
 
 [TestTag("Widgets")]
-[ClearRunfileCache]
 public class RuleTerminalExtensionTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<RuleTerminalExtensionTests>();
+
   public static async Task Should_write_simple_rule_to_terminal()
   {
     // Arrange
@@ -151,3 +159,5 @@ public class RuleTerminalExtensionTests
     await Task.CompletedTask;
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.Core.RuleWidgetTerminal

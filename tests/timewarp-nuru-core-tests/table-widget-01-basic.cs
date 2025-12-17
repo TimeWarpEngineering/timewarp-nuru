@@ -2,12 +2,20 @@
 #:project ../../source/timewarp-nuru/timewarp-nuru.csproj
 
 // Test Table widget basic functionality
-return await RunTests<TableWidgetBasicTests>(clearCache: true);
+
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.Core.TableWidget
+{
 
 [TestTag("Widgets")]
-[ClearRunfileCache]
 public class TableWidgetBasicTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<TableWidgetBasicTests>();
+
   public static async Task Should_render_basic_table_with_two_columns_and_two_rows()
   {
     // Arrange
@@ -191,3 +199,5 @@ public class TableWidgetBasicTests
     await Task.CompletedTask;
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.Core.TableWidget

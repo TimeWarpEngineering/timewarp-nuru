@@ -3,13 +3,21 @@
 
 // Test SessionContext integration for help display
 // Verifies that help and --help behave consistently based on runtime context
-return await RunTests<SessionContextHelpTests>(clearCache: true);
+
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.Core.HelpProviderSession
+{
 
 [TestTag("Help")]
 [TestTag("SessionContext")]
-[ClearRunfileCache]
 public class SessionContextHelpTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<SessionContextHelpTests>();
+
   public static async Task Should_default_to_cli_context()
   {
     // Arrange
@@ -163,3 +171,5 @@ public class SessionContextHelpTests
     await Task.CompletedTask;
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.Core.HelpProviderSession

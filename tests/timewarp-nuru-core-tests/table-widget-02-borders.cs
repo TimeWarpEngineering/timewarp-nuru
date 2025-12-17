@@ -2,12 +2,20 @@
 #:project ../../source/timewarp-nuru/timewarp-nuru.csproj
 
 // Test Table widget border styles
-return await RunTests<TableWidgetBorderTests>(clearCache: true);
+
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.Core.TableWidgetBorders
+{
 
 [TestTag("Widgets")]
-[ClearRunfileCache]
 public class TableWidgetBorderTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<TableWidgetBorderTests>();
+
   public static async Task Should_render_table_with_rounded_border()
   {
     // Arrange
@@ -169,3 +177,5 @@ public class TableWidgetBorderTests
     await Task.CompletedTask;
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.Core.TableWidgetBorders

@@ -3,12 +3,20 @@
 
 // Test HelpProvider default route display
 // Issue #141: Fix blank entry and comma before default route aliases
-return await RunTests<HelpProviderDefaultRouteTests>(clearCache: true);
+
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.Core.HelpProviderDefault
+{
 
 [TestTag("Help")]
-[ClearRunfileCache]
 public class HelpProviderDefaultRouteTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<HelpProviderDefaultRouteTests>();
+
   private static Endpoint CreateEndpoint(string pattern, string? description = null)
   {
     return new Endpoint
@@ -27,7 +35,7 @@ public class HelpProviderDefaultRouteTests
     endpoints.Add(CreateEndpoint("", "Show main view"));
 
     // Act
-    string helpText = HelpProvider.GetHelpText(endpoints, "testapp", useColor: false);
+    string helpText = TimeWarp.Nuru.HelpProvider.GetHelpText(endpoints, "testapp", useColor: false);
 
     // Assert - Should show "(default)" instead of blank
     helpText.ShouldContain("(default)");
@@ -45,7 +53,7 @@ public class HelpProviderDefaultRouteTests
     endpoints.Add(CreateEndpoint("list", "Display the kanban board"));
 
     // Act
-    string helpText = HelpProvider.GetHelpText(endpoints, "testapp", useColor: false);
+    string helpText = TimeWarp.Nuru.HelpProvider.GetHelpText(endpoints, "testapp", useColor: false);
 
     // Assert - Should NOT have leading comma
     helpText.ShouldNotContain(", list");
@@ -65,7 +73,7 @@ public class HelpProviderDefaultRouteTests
     endpoints.Add(CreateEndpoint("ls", "Show kanban board"));
 
     // Act
-    string helpText = HelpProvider.GetHelpText(endpoints, "testapp", useColor: false);
+    string helpText = TimeWarp.Nuru.HelpProvider.GetHelpText(endpoints, "testapp", useColor: false);
 
     // Assert - Should show aliases cleanly without LEADING comma (the bug was ", list")
     // Normal comma separation between aliases is expected: "list (default), ls"
@@ -87,7 +95,7 @@ public class HelpProviderDefaultRouteTests
     endpoints.Add(CreateEndpoint("other", "Other action"));
 
     // Act
-    string helpText = HelpProvider.GetHelpText(endpoints, "testapp", useColor: false);
+    string helpText = TimeWarp.Nuru.HelpProvider.GetHelpText(endpoints, "testapp", useColor: false);
 
     // Assert
     helpText.ShouldContain("(default)");
@@ -108,7 +116,7 @@ public class HelpProviderDefaultRouteTests
     HelpOptions options = new() { ShowReplCommandsInCli = true };
 
     // Act
-    string helpText = HelpProvider.GetHelpText(endpoints, "testapp", null, options, HelpContext.Cli, useColor: false);
+    string helpText = TimeWarp.Nuru.HelpProvider.GetHelpText(endpoints, "testapp", null, options, HelpContext.Cli, useColor: false);
 
     // Assert - Normal comma-separated aliases should work
     helpText.ShouldContain("exit, quit");
@@ -117,3 +125,5 @@ public class HelpProviderDefaultRouteTests
     await Task.CompletedTask;
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.Core.HelpProviderDefault

@@ -3,12 +3,20 @@
 
 // Test HelpProvider colored output formatting
 // Issue #144: Improve help output formatting and readability
-return await RunTests<HelpProviderColorOutputTests>(clearCache: true);
+
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.Core.HelpProviderColor
+{
 
 [TestTag("Help")]
-[ClearRunfileCache]
 public class HelpProviderColorOutputTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<HelpProviderColorOutputTests>();
+
   private static Endpoint CreateEndpoint(string pattern, string? description = null)
   {
     return new Endpoint
@@ -27,7 +35,7 @@ public class HelpProviderColorOutputTests
     endpoints.Add(CreateEndpoint("build", "Build the project"));
 
     // Act
-    string helpText = HelpProvider.GetHelpText(endpoints, "testapp", useColor: true);
+    string helpText = TimeWarp.Nuru.HelpProvider.GetHelpText(endpoints, "testapp", useColor: true);
 
     // Assert - Should contain ANSI escape codes
     helpText.ShouldContain("\x1b["); // ANSI escape sequence start
@@ -42,7 +50,7 @@ public class HelpProviderColorOutputTests
     endpoints.Add(CreateEndpoint("build", "Build the project"));
 
     // Act
-    string helpText = HelpProvider.GetHelpText(endpoints, "testapp", useColor: false);
+    string helpText = TimeWarp.Nuru.HelpProvider.GetHelpText(endpoints, "testapp", useColor: false);
 
     // Assert - Should NOT contain ANSI escape codes
     helpText.ShouldNotContain("\x1b[");
@@ -57,7 +65,7 @@ public class HelpProviderColorOutputTests
     endpoints.Add(CreateEndpoint("test", "Run tests"));
 
     // Act
-    string helpText = HelpProvider.GetHelpText(endpoints, "testapp", useColor: true);
+    string helpText = TimeWarp.Nuru.HelpProvider.GetHelpText(endpoints, "testapp", useColor: true);
 
     // Assert - Section headers should have yellow and bold formatting
     // Yellow is \x1b[33m, Bold is \x1b[1m
@@ -74,7 +82,7 @@ public class HelpProviderColorOutputTests
     endpoints.Add(CreateEndpoint("deploy", "Deploy the app"));
 
     // Act
-    string helpText = HelpProvider.GetHelpText(endpoints, "testapp", useColor: true);
+    string helpText = TimeWarp.Nuru.HelpProvider.GetHelpText(endpoints, "testapp", useColor: true);
 
     // Assert - Command literals should be cyan
     helpText.ShouldContain(AnsiColors.Cyan);
@@ -89,7 +97,7 @@ public class HelpProviderColorOutputTests
     endpoints.Add(CreateEndpoint("greet {name}", "Greet someone"));
 
     // Act
-    string helpText = HelpProvider.GetHelpText(endpoints, "testapp", useColor: true);
+    string helpText = TimeWarp.Nuru.HelpProvider.GetHelpText(endpoints, "testapp", useColor: true);
 
     // Assert - Parameters should be yellow
     // The parameter "name" should be wrapped in yellow
@@ -106,7 +114,7 @@ public class HelpProviderColorOutputTests
     endpoints.Add(CreateEndpoint("--verbose", "Enable verbose output"));
 
     // Act
-    string helpText = HelpProvider.GetHelpText(endpoints, "testapp", useColor: true);
+    string helpText = TimeWarp.Nuru.HelpProvider.GetHelpText(endpoints, "testapp", useColor: true);
 
     // Assert - Options should be green
     helpText.ShouldContain(AnsiColors.Green);
@@ -121,7 +129,7 @@ public class HelpProviderColorOutputTests
     endpoints.Add(CreateEndpoint("build", "Build the project"));
 
     // Act
-    string helpText = HelpProvider.GetHelpText(endpoints, "testapp", useColor: true);
+    string helpText = TimeWarp.Nuru.HelpProvider.GetHelpText(endpoints, "testapp", useColor: true);
 
     // Assert - Descriptions should be gray
     helpText.ShouldContain(AnsiColors.Gray);
@@ -137,11 +145,11 @@ public class HelpProviderColorOutputTests
     endpoints.Add(CreateEndpoint("very-long-command-name", "Long command"));
 
     // Act
-    string coloredText = HelpProvider.GetHelpText(endpoints, "testapp", useColor: true);
-    string plainText = HelpProvider.GetHelpText(endpoints, "testapp", useColor: false);
+    string coloredText = TimeWarp.Nuru.HelpProvider.GetHelpText(endpoints, "testapp", useColor: true);
+    string plainText = TimeWarp.Nuru.HelpProvider.GetHelpText(endpoints, "testapp", useColor: false);
 
     // Assert - The visible (stripped) text should have proper alignment
-    string strippedColored = AnsiStringUtils.StripAnsiCodes(coloredText);
+    string strippedColored = TimeWarp.Nuru.AnsiStringUtils.StripAnsiCodes(coloredText);
 
     // Both should have the same visible structure
     strippedColored.ShouldContain("short");
@@ -159,7 +167,7 @@ public class HelpProviderColorOutputTests
     endpoints.Add(CreateEndpoint("greet {name?}", "Greet someone (optional)"));
 
     // Act
-    string helpText = HelpProvider.GetHelpText(endpoints, "testapp", useColor: true);
+    string helpText = TimeWarp.Nuru.HelpProvider.GetHelpText(endpoints, "testapp", useColor: true);
 
     // Assert - Optional parameters should use brackets []
     helpText.ShouldContain("[");
@@ -175,7 +183,7 @@ public class HelpProviderColorOutputTests
     endpoints.Add(CreateEndpoint("repo add {path} --config {config?}", "Add a repository"));
 
     // Act
-    string helpText = HelpProvider.GetHelpText(endpoints, "testapp", useColor: true);
+    string helpText = TimeWarp.Nuru.HelpProvider.GetHelpText(endpoints, "testapp", useColor: true);
 
     // Assert - Should contain various color codes for different elements
     helpText.ShouldContain(AnsiColors.Cyan); // literals
@@ -193,8 +201,8 @@ public class HelpProviderColorOutputTests
     endpoints.Add(CreateEndpoint("--verbose", "Verbose output"));
 
     // Act
-    string coloredText = HelpProvider.GetHelpText(endpoints, "testapp", useColor: true);
-    string strippedText = AnsiStringUtils.StripAnsiCodes(coloredText);
+    string coloredText = TimeWarp.Nuru.HelpProvider.GetHelpText(endpoints, "testapp", useColor: true);
+    string strippedText = TimeWarp.Nuru.AnsiStringUtils.StripAnsiCodes(coloredText);
 
     // Assert - Stripped text should be clean and readable
     strippedText.ShouldNotContain("\x1b[");
@@ -207,3 +215,5 @@ public class HelpProviderColorOutputTests
     await Task.CompletedTask;
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.Core.HelpProviderColor

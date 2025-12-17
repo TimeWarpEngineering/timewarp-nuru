@@ -2,12 +2,20 @@
 #:project ../../source/timewarp-nuru/timewarp-nuru.csproj
 
 // Test HelpProvider correctly classifies single-dash and double-dash options
-return await RunTests<HelpProviderOptionDetectionTests>(clearCache: true);
+
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.Core.HelpProvider
+{
 
 [TestTag("Help")]
-[ClearRunfileCache]
 public class HelpProviderOptionDetectionTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<HelpProviderOptionDetectionTests>();
+
   private static Endpoint CreateEndpoint(string pattern, string? description = null)
   {
     return new Endpoint
@@ -26,7 +34,7 @@ public class HelpProviderOptionDetectionTests
     endpoints.Add(CreateEndpoint("-i", "Interactive mode"));
 
     // Act
-    string helpText = HelpProvider.GetHelpText(endpoints, "testapp", useColor: false);
+    string helpText = TimeWarp.Nuru.HelpProvider.GetHelpText(endpoints, "testapp", useColor: false);
 
     // Assert - "-i" should be in Options section, not Commands section
     helpText.ShouldContain("Options:");
@@ -49,7 +57,7 @@ public class HelpProviderOptionDetectionTests
     endpoints.Add(CreateEndpoint("--verbose", "Verbose output"));
 
     // Act
-    string helpText = HelpProvider.GetHelpText(endpoints, "testapp", useColor: false);
+    string helpText = TimeWarp.Nuru.HelpProvider.GetHelpText(endpoints, "testapp", useColor: false);
 
     // Assert
     helpText.ShouldContain("Options:");
@@ -69,7 +77,7 @@ public class HelpProviderOptionDetectionTests
     endpoints.Add(CreateEndpoint("build", "Build the project"));
 
     // Act
-    string helpText = HelpProvider.GetHelpText(endpoints, "testapp", useColor: false);
+    string helpText = TimeWarp.Nuru.HelpProvider.GetHelpText(endpoints, "testapp", useColor: false);
 
     // Assert
     helpText.ShouldContain("Commands:");
@@ -92,7 +100,7 @@ public class HelpProviderOptionDetectionTests
     endpoints.Add(CreateEndpoint("--verbose", "Verbose output"));
 
     // Act
-    string helpText = HelpProvider.GetHelpText(endpoints, "myapp", useColor: false);
+    string helpText = TimeWarp.Nuru.HelpProvider.GetHelpText(endpoints, "myapp", useColor: false);
 
     // Assert - both sections should exist
     helpText.ShouldContain("Commands:");
@@ -129,7 +137,7 @@ public class HelpProviderOptionDetectionTests
     endpoints.Add(CreateEndpoint("--version", "Show version"));
 
     // Act
-    string helpText = HelpProvider.GetHelpText(endpoints, "testapp", useColor: false);
+    string helpText = TimeWarp.Nuru.HelpProvider.GetHelpText(endpoints, "testapp", useColor: false);
 
     // Assert
     helpText.ShouldNotContain("Commands:");
@@ -146,7 +154,7 @@ public class HelpProviderOptionDetectionTests
     endpoints.Add(CreateEndpoint("test", "Run tests"));
 
     // Act
-    string helpText = HelpProvider.GetHelpText(endpoints, "testapp", useColor: false);
+    string helpText = TimeWarp.Nuru.HelpProvider.GetHelpText(endpoints, "testapp", useColor: false);
 
     // Assert
     helpText.ShouldContain("Commands:");
@@ -155,3 +163,5 @@ public class HelpProviderOptionDetectionTests
     await Task.CompletedTask;
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.Core.HelpProvider

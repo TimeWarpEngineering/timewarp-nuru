@@ -4,7 +4,14 @@
 // Tests for RouteBuilder
 // Verifies that builder-constructed routes match PatternParser.Parse() output
 
-return await RunTests<RouteBuilderTests>();
+using static TimeWarp.Nuru.Tests.CompiledRouteTests.CompiledRouteTestHelper;
+
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.Core.RouteBuilderTests
+{
 
 /// <summary>
 /// Tests for RouteBuilder - verifies parity with PatternParser.Parse()
@@ -12,6 +19,9 @@ return await RunTests<RouteBuilderTests>();
 [TestTag("RouteBuilder")]
 public sealed class RouteBuilderTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<RouteBuilderTests>();
+
   /// <summary>
   /// Test: Simple literal route ("greet")
   /// </summary>
@@ -19,7 +29,7 @@ public sealed class RouteBuilderTests
   {
     // Arrange
     const string pattern = "greet";
-    CompiledRoute builderRoute = new RouteBuilder()
+    CompiledRoute builderRoute = new TimeWarp.Nuru.RouteBuilder()
       .WithLiteral("greet")
       .Build();
 
@@ -37,7 +47,7 @@ public sealed class RouteBuilderTests
   {
     // Arrange
     const string pattern = "greet {name}";
-    CompiledRoute builderRoute = new RouteBuilder()
+    CompiledRoute builderRoute = new TimeWarp.Nuru.RouteBuilder()
       .WithLiteral("greet")
       .WithParameter("name")
       .Build();
@@ -56,7 +66,7 @@ public sealed class RouteBuilderTests
   {
     // Arrange
     const string pattern = "git commit";
-    CompiledRoute builderRoute = new RouteBuilder()
+    CompiledRoute builderRoute = new TimeWarp.Nuru.RouteBuilder()
       .WithLiteral("git")
       .WithLiteral("commit")
       .Build();
@@ -75,7 +85,7 @@ public sealed class RouteBuilderTests
   {
     // Arrange
     const string pattern = "greet {name?}";
-    CompiledRoute builderRoute = new RouteBuilder()
+    CompiledRoute builderRoute = new TimeWarp.Nuru.RouteBuilder()
       .WithLiteral("greet")
       .WithParameter("name", isOptional: true)
       .Build();
@@ -94,7 +104,7 @@ public sealed class RouteBuilderTests
   {
     // Arrange
     const string pattern = "add {x:int} {y:int}";
-    CompiledRoute builderRoute = new RouteBuilder()
+    CompiledRoute builderRoute = new TimeWarp.Nuru.RouteBuilder()
       .WithLiteral("add")
       .WithParameter("x", type: "int")
       .WithParameter("y", type: "int")
@@ -114,7 +124,7 @@ public sealed class RouteBuilderTests
   {
     // Arrange
     const string pattern = "deploy --force";
-    CompiledRoute builderRoute = new RouteBuilder()
+    CompiledRoute builderRoute = new TimeWarp.Nuru.RouteBuilder()
       .WithLiteral("deploy")
       .WithOption("force")
       .Build();
@@ -133,7 +143,7 @@ public sealed class RouteBuilderTests
   {
     // Arrange
     const string pattern = "deploy --force,-f";
-    CompiledRoute builderRoute = new RouteBuilder()
+    CompiledRoute builderRoute = new TimeWarp.Nuru.RouteBuilder()
       .WithLiteral("deploy")
       .WithOption("force", shortForm: "f")
       .Build();
@@ -152,7 +162,7 @@ public sealed class RouteBuilderTests
   {
     // Arrange
     const string pattern = "deploy --config {file}";
-    CompiledRoute builderRoute = new RouteBuilder()
+    CompiledRoute builderRoute = new TimeWarp.Nuru.RouteBuilder()
       .WithLiteral("deploy")
       .WithOption("config", parameterName: "file", expectsValue: true)
       .Build();
@@ -171,7 +181,7 @@ public sealed class RouteBuilderTests
   {
     // Arrange
     const string pattern = "exec {*args}";
-    CompiledRoute builderRoute = new RouteBuilder()
+    CompiledRoute builderRoute = new TimeWarp.Nuru.RouteBuilder()
       .WithLiteral("exec")
       .WithCatchAll("args")
       .Build();
@@ -190,7 +200,7 @@ public sealed class RouteBuilderTests
   {
     // Arrange
     const string pattern = "deploy {env} --force,-f --config,-c {file?}";
-    CompiledRoute builderRoute = new RouteBuilder()
+    CompiledRoute builderRoute = new TimeWarp.Nuru.RouteBuilder()
       .WithLiteral("deploy")
       .WithParameter("env")
       .WithOption("force", shortForm: "f")
@@ -212,7 +222,7 @@ public sealed class RouteBuilderTests
     // Arrange & Act & Assert
     Should.Throw<InvalidOperationException>(() =>
     {
-      new RouteBuilder()
+      new TimeWarp.Nuru.RouteBuilder()
         .WithCatchAll("args1")
         .WithCatchAll("args2")
         .Build();
@@ -230,7 +240,7 @@ public sealed class RouteBuilderTests
   {
     // Arrange
     const string pattern = "server --port {port:int}";
-    CompiledRoute builderRoute = new RouteBuilder()
+    CompiledRoute builderRoute = new TimeWarp.Nuru.RouteBuilder()
       .WithLiteral("server")
       .WithOption("port", parameterName: "port", expectsValue: true, parameterType: "int")
       .Build();
@@ -249,7 +259,7 @@ public sealed class RouteBuilderTests
   {
     // Arrange
     const string pattern = "deploy --verbose?";
-    CompiledRoute builderRoute = new RouteBuilder()
+    CompiledRoute builderRoute = new TimeWarp.Nuru.RouteBuilder()
       .WithLiteral("deploy")
       .WithOption("verbose", isOptionalFlag: true)
       .Build();
@@ -261,3 +271,5 @@ public sealed class RouteBuilderTests
     await Task.CompletedTask;
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.Core.RouteBuilderTests

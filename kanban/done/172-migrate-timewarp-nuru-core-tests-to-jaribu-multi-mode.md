@@ -6,7 +6,7 @@ Migrate the remaining test files in `tests/timewarp-nuru-core-tests/` to support
 
 ## Current Status
 
-**CI Test Count:** 696 tests (added 17 from ansi-string-utils-01)
+**CI Test Count:** 880 tests (completed migration of all 22 files)
 
 ## Files Status
 
@@ -18,37 +18,37 @@ Migrate the remaining test files in `tests/timewarp-nuru-core-tests/` to support
 ### Excluded (not a test file)
 - [x] `show-help-colors.cs` - Demo/utility script, excluded from CI
 
-### Files Still Need Migration (22 files)
+### Files Migrated (22 files) ✅
 
 #### ANSI String Utils (1 file)
-- [ ] `ansi-string-utils-02-wrap-text.cs`
+- [x] `ansi-string-utils-02-wrap-text.cs` (10 tests)
 
 #### Help Provider (5 files)
-- [ ] `help-provider-01-option-detection.cs`
-- [ ] `help-provider-02-filtering.cs`
-- [ ] `help-provider-03-session-context.cs`
-- [ ] `help-provider-04-default-route.cs`
-- [ ] `help-provider-05-color-output.cs`
+- [x] `help-provider-01-option-detection.cs` (6 tests)
+- [x] `help-provider-02-filtering.cs` (10 tests)
+- [x] `help-provider-03-session-context.cs` (7 tests)
+- [x] `help-provider-04-default-route.cs` (5 tests)
+- [x] `help-provider-05-color-output.cs` (11 tests)
 
 #### Widgets (10 files)
-- [ ] `hyperlink-01-basic.cs`
-- [ ] `panel-widget-01-basic.cs`
-- [ ] `panel-widget-02-terminal-extensions.cs`
-- [ ] `panel-widget-03-word-wrap.cs`
-- [ ] `rule-widget-01-basic.cs`
-- [ ] `rule-widget-02-terminal-extensions.cs`
-- [ ] `table-widget-01-basic.cs`
-- [ ] `table-widget-02-borders.cs`
-- [ ] `table-widget-03-styling.cs`
-- [ ] `table-widget-04-expand.cs`
+- [x] `hyperlink-01-basic.cs` (10 tests)
+- [x] `panel-widget-01-basic.cs` (13 tests)
+- [x] `panel-widget-02-terminal-extensions.cs`
+- [x] `panel-widget-03-word-wrap.cs`
+- [x] `rule-widget-01-basic.cs`
+- [x] `rule-widget-02-terminal-extensions.cs`
+- [x] `table-widget-01-basic.cs`
+- [x] `table-widget-02-borders.cs`
+- [x] `table-widget-03-styling.cs`
+- [x] `table-widget-04-expand.cs`
 
 #### Core Components (6 files)
-- [ ] `invoker-registry-01-basic.cs`
-- [ ] `message-type-01-fluent-api.cs`
-- [ ] `message-type-02-help-output.cs`
-- [ ] `nuru-route-registry-01-basic.cs` - **Special: Uses inline test runner, needs conversion to Jaribu**
-- [ ] `route-builder-01-basic.cs`
-- [ ] `test-terminal-context-01-basic.cs`
+- [x] `invoker-registry-01-basic.cs`
+- [x] `message-type-01-fluent-api.cs`
+- [x] `message-type-02-help-output.cs`
+- [x] `nuru-route-registry-01-basic.cs` - Converted to Jaribu pattern
+- [x] `route-builder-01-basic.cs`
+- [x] `test-terminal-context-01-basic.cs`
 
 ## Migration Pattern
 
@@ -124,15 +124,17 @@ Since there's a class `TimeWarp.Nuru.AnsiStringUtils`, tests need to use fully-q
 
 - [x] Analyze helper/utility files
 - [x] Migrate ansi-string-utils-01-basic.cs (17 tests)
-- [ ] Migrate remaining 22 files
-- [ ] Update Directory.Build.props to use glob pattern
-- [ ] Test standalone mode for each file
-- [ ] Test multi-mode: `dotnet tests/ci-tests/run-ci-tests.cs`
+- [x] Migrate remaining 22 files
+- [x] Update Directory.Build.props to use glob pattern
+- [x] Test standalone mode for each file
+- [x] Test multi-mode: `dotnet tests/ci-tests/run-ci-tests.cs`
 - [ ] Commit changes
 
-## Notes
+## Results
 
-- Starting CI test count: 679 tests
-- Current CI test count: 696 tests (+17 from ansi-string-utils-01)
-- Lexer tests already use namespace `TimeWarp.Nuru.Tests.LexerTests`
-- After all migrations, switch to recursive glob pattern
+- **Starting CI test count:** 679 tests
+- **Final CI test count:** 880 tests (+201 tests)
+- All 22 files successfully migrated to Jaribu multi-mode
+- All tests pass in standalone mode
+- All tests run in consolidated CI runner
+- 8 pre-existing test failures unrelated to migration (KeyBindingProfile, InteractiveRouteExecution)

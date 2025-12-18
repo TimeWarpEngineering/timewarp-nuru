@@ -130,10 +130,10 @@ public sealed class NestedTableBuilder<TParent> : INestedBuilder<TParent>
 ## Checklist
 
 ### TableBuilder
-- [ ] Add `IBuilder<Table>` to existing `TableBuilder`
-- [ ] Create `NestedTableBuilder<TParent>` implementing `INestedBuilder<TParent>`
-- [ ] Use composition - wrap `TableBuilder` internally
-- [ ] Add wrapper methods for all fluent methods
+- [x] Add `IBuilder<Table>` to existing `TableBuilder`
+- [x] Create `NestedTableBuilder<TParent>` implementing `INestedBuilder<TParent>`
+- [x] Use composition - wrap `TableBuilder` internally
+- [x] Add wrapper methods for all fluent methods
 
 ### PanelBuilder
 - [ ] Add `IBuilder<Panel>` to existing `PanelBuilder`

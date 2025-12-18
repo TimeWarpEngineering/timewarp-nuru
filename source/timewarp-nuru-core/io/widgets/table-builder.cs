@@ -13,7 +13,7 @@ namespace TimeWarp.Nuru;
 ///     .Build();
 /// </code>
 /// </example>
-public sealed class TableBuilder
+public sealed class TableBuilder : IBuilder<Table>
 {
   private readonly Table _table = new();
 

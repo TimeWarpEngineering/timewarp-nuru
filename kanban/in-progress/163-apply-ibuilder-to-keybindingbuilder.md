@@ -128,33 +128,33 @@ public sealed class NestedKeyBindingBuilder<TParent> : INestedBuilder<TParent>
 ## Checklist
 
 ### KeyBindingResult Type
-- [ ] Create `KeyBindingResult` class to replace tuple return
-- [ ] Migrate `Build()` to return `KeyBindingResult`
+- [x] Create `KeyBindingResult` class to replace tuple return
+- [x] Migrate `Build()` to return `KeyBindingResult`
 
 ### KeyBindingBuilder (Standalone)
-- [ ] Add `IBuilder<KeyBindingResult>` interface
-- [ ] Update `Build()` return type to `KeyBindingResult`
-- [ ] Keep backward-compatible tuple deconstruction if needed
+- [x] Add `IBuilder<KeyBindingResult>` interface
+- [x] Update `Build()` return type to `KeyBindingResult`
+- [x] Keep backward-compatible tuple deconstruction if needed
 
 ### NestedKeyBindingBuilder (New)
-- [ ] Create `NestedKeyBindingBuilder<TParent>` implementing `INestedBuilder<TParent>`
-- [ ] Use composition - wrap `KeyBindingBuilder` internally
-- [ ] Add wrapper methods for all `Bind*()` methods
-- [ ] Add wrapper methods for `Remove()`, `Clear()`, `LoadFrom()`, etc.
+- [x] Create `NestedKeyBindingBuilder<TParent>` implementing `INestedBuilder<TParent>`
+- [x] Use composition - wrap `KeyBindingBuilder` internally
+- [x] Add wrapper methods for all `Bind*()` methods
+- [x] Add wrapper methods for `Remove()`, `Clear()`, `LoadFrom()`, etc.
 
 ### ReplOptions Integration
-- [ ] Make `ReplOptions` fluent with `WithX()` methods if not already
-- [ ] Add `WithKeyBindings(Func<NestedKeyBindingBuilder<ReplOptions>, ReplOptions>)` method
-- [ ] Ensure `Done()` applies bindings to REPL options
+- [ ] Make `ReplOptions` fluent with `WithX()` methods if not already (follow-up task)
+- [ ] Add `WithKeyBindings(Func<NestedKeyBindingBuilder<ReplOptions>, ReplOptions>)` method (follow-up task)
+- [ ] Ensure `Done()` applies bindings to REPL options (follow-up task)
 
 ### Testing
-- [ ] Test standalone `KeyBindingBuilder` with `Build()`
-- [ ] Test nested key binding configuration in REPL options
-- [ ] Test key bindings are properly applied at runtime
+- [ ] Test standalone `KeyBindingBuilder` with `Build()` (existing tests cover this via deconstruction)
+- [ ] Test nested key binding configuration in REPL options (follow-up task)
+- [ ] Test key bindings are properly applied at runtime (existing tests cover this)
 
 ### Documentation
-- [ ] Update XML docs for both builder classes
-- [ ] Add examples showing fluent REPL configuration
+- [x] Update XML docs for both builder classes
+- [ ] Add examples showing fluent REPL configuration (follow-up task)
 
 ## Notes
 

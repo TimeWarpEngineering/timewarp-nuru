@@ -1,5 +1,9 @@
 # Implement Attributed Routes (Phase 1)
 
+## Type
+
+Epic
+
 ## Description
 
 Request classes with `[NuruRoute]` attributes auto-register without explicit `Map()` calls. This is the **first releasable phase** - production use case for request-based CLIs with clean, attribute-driven development.
@@ -13,6 +17,12 @@ Request classes with `[NuruRoute]` attributes auto-register without explicit `Ma
 ## Dependencies
 
 - Task 149: Implement CompiledRouteBuilder (Phase 0) - must be complete
+
+## Subtasks
+
+- [ ] 186: Add Source Generation Verification Tests (with test utilities)
+- [ ] 187: Add Route Matching Tests for Attributed Routes
+- [ ] 188: Update Existing Basic Tests with Missing Coverage
 
 ## Checklist
 

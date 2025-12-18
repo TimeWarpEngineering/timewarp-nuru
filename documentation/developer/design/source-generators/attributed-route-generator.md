@@ -358,7 +358,7 @@ record AttributedRouteInfo(
 
 ## Sample Application
 
-A complete working example is in [samples/attributed-routes/attributed-routes.cs](../../../../samples/attributed-routes/attributed-routes.cs).
+A complete working example is in [samples/attributed-routes/](../../../../samples/attributed-routes/).
 
 Features demonstrated:
 - Simple routes with parameters and options (`GreetRequest`, `DeployRequest`)

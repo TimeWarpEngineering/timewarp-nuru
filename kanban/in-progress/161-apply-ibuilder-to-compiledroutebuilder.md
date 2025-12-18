@@ -1,5 +1,9 @@
 # Establish Builder Interface Pattern and Apply to CompiledRouteBuilder
 
+## Status
+
+**BLOCKED by Task 191** - Core implementation complete, but full type preservation requires CRTP refactor.
+
 ## Description
 
 Establish the two-interface builder pattern (`IBuilder<TBuilt>` and `INestedBuilder<TParent>`) and apply it to `CompiledRouteBuilder` as the first implementation.
@@ -14,6 +18,10 @@ Nested builders use **composition** - they wrap a standalone builder and add the
 ## Parent
 
 160-unify-builders-with-ibuilder-pattern
+
+## Blocked By
+
+191-implement-crtp-pattern-for-nurucoreappbuilder
 
 ## Interface Design
 
@@ -162,36 +170,42 @@ builder.Map(r => r                    // NestedCompiledRouteBuilder<EndpointBuil
 ## Checklist
 
 ### Interfaces
-- [ ] Create `IBuilder<TBuilt>` at `source/timewarp-nuru-core/fluent/i-builder.cs`
-- [ ] Rename existing `IBuilder<TParent>` to `INestedBuilder<TParent>` at `source/timewarp-nuru-core/fluent/i-nested-builder.cs`
-- [ ] Update `EndpointBuilder<TBuilder>` to implement `INestedBuilder<TBuilder>` (rename)
-- [ ] Update `EndpointBuilder` to implement `INestedBuilder<NuruCoreAppBuilder>` (rename)
+- [x] Create `IBuilder<TBuilt>` at `source/timewarp-nuru-core/fluent/i-builder.cs`
+- [x] Rename existing `IBuilder<TParent>` to `INestedBuilder<TParent>` at `source/timewarp-nuru-core/fluent/i-nested-builder.cs`
+- [x] Update `EndpointBuilder<TBuilder>` to implement `INestedBuilder<TBuilder>` (rename)
+- [x] Update `EndpointBuilder` to implement `INestedBuilder<NuruCoreAppBuilder>` (rename)
 
 ### CompiledRouteBuilder (Standalone)
-- [ ] Add `IBuilder<CompiledRoute>` to existing `CompiledRouteBuilder`
-- [ ] Keep all existing functionality (no changes needed beyond interface)
+- [x] Add `IBuilder<CompiledRoute>` to existing `CompiledRouteBuilder`
+- [x] Keep all existing functionality (no changes needed beyond interface)
 
 ### NestedCompiledRouteBuilder (New)
-- [ ] Create `NestedCompiledRouteBuilder<TParent>` implementing `INestedBuilder<TParent>`
-- [ ] Use composition - wrap `CompiledRouteBuilder` internally
-- [ ] Add thin wrapper methods for all `WithX()` methods
-- [ ] Implement `Done()` that calls `_inner.Build()`, passes to callback, returns parent
+- [x] Create `NestedCompiledRouteBuilder<TParent>` implementing `INestedBuilder<TParent>`
+- [x] Use composition - wrap `CompiledRouteBuilder` internally
+- [x] Add thin wrapper methods for all `WithX()` methods
+- [x] Implement `Done()` that calls `_inner.Build()`, passes to callback, returns parent
 
 ### NuruCoreAppBuilder
-- [ ] Update `Map(Action<CompiledRouteBuilder>)` to `Map(Func<NestedCompiledRouteBuilder<EndpointBuilder>, EndpointBuilder>)`
-- [ ] Generate route pattern string in endpoint for help display
+- [x] Update `Map(Action<CompiledRouteBuilder>)` to `Map(Func<NestedCompiledRouteBuilder<EndpointBuilder>, EndpointBuilder>)`
+- [x] Generate route pattern string in endpoint for help display
+- [x] Add `MapNestedTyped<TBuilder>()` internal method (workaround - will be removed after Task 191)
 
 ### Testing
-- [ ] Test standalone: `new CompiledRouteBuilder().WithLiteral().Build()`
-- [ ] Test nested: `Map(r => r.WithLiteral().Done()).WithHandler().Done()`
-- [ ] Test full fluent chain with `AsQuery()`, `AsCommand()`
-- [ ] Test route pattern generation for help
-- [ ] Update existing CompiledRouteBuilder tests
+- [x] Test standalone: `new CompiledRouteBuilder().WithLiteral().Build()` (existing tests pass)
+- [ ] Test nested: `Map(r => r.WithLiteral().Done()).WithHandler().Done()` - BLOCKED by type preservation issue
+- [ ] Test full fluent chain with `AsQuery()`, `AsCommand()` - BLOCKED by type preservation issue
+- [x] Test route pattern generation for help
+- [x] Update existing CompiledRouteBuilder tests (no changes needed)
 
 ### Documentation
-- [ ] Update XML docs for both interfaces
-- [ ] Update XML docs for both builder classes
-- [ ] Update task 160 epic example to match
+- [x] Update XML docs for both interfaces
+- [x] Update XML docs for both builder classes
+- [ ] Update task 160 epic example to match - BLOCKED
+
+### Type Preservation Issue (BLOCKED)
+- [ ] **Requires Task 191 (CRTP)** - Current `Map()` returns `EndpointBuilder` (non-generic), losing derived type
+- [x] Added `MapNestedTyped<TBuilder>()` as temporary workaround
+- [ ] After Task 191: Remove workaround methods, clean up
 
 ## Notes
 

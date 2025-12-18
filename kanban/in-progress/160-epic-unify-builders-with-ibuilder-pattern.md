@@ -61,22 +61,19 @@ NuruApp.CreateBuilder()
     .Done()                                   // Returns app builder
     .AddReplSupport(options => options
         .WithPrompt("nuru> ")
-        .WithKeyBindings(kb => kb             // KeyBindingBuilder<ReplOptions>
-            .Bind(ConsoleKey.F1, ShowHelp)
-            .Done())                          // Returns ReplOptions
+        .WithKeyBindings(kb => kb
+            .Bind(ConsoleKey.F1, ShowHelp))
         .WithHistory(100))
     .Build();
 
 // Terminal output with nested builders
 terminal
-    .Panel(p => p                             // PanelBuilder<ITerminal>
+    .Panel(p => p
         .WithTitle("Results")
-        .WithTable(t => t                     // TableBuilder<PanelBuilder>
+        .WithTable(t => t
             .AddColumn("Name")
-            .AddRow("foo", "bar")
-            .Done())                          // Returns PanelBuilder
-        .Done())                              // Returns terminal
-    .Rule(r => r.WithTitle("End").Done());
+            .AddRow("foo", "bar")))
+    .Rule(r => r.WithTitle("End"));
 ```
 
 ## Notes

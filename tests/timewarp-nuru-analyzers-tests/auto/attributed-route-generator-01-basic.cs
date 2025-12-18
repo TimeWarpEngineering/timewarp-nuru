@@ -123,7 +123,8 @@ int failed = 0;
     .FirstOrDefault(r => r.RequestType == typeof(ParameterTestRequest));
 
   bool simpleCorrect = simpleRoute?.Pattern == "simple";
-  bool paramCorrect = paramRoute?.Pattern.Contains("{value}") == true;
+  // Pattern uses display format <param> not AST format {param}
+  bool paramCorrect = paramRoute?.Pattern.Contains("<value>") == true;
 
   if (simpleCorrect && paramCorrect)
   {
@@ -176,6 +177,84 @@ int failed = 0;
   else
   {
     Console.WriteLine($"✗ Test 8: No segments in compiled route");
+    failed++;
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Test 9: Default route with empty pattern is registered
+// ─────────────────────────────────────────────────────────────────────────────
+{
+  bool isRegistered = NuruRouteRegistry.IsRegistered<DefaultTestRequest>();
+
+  RegisteredRoute? route = NuruRouteRegistry.RegisteredRoutes
+    .FirstOrDefault(r => r.RequestType == typeof(DefaultTestRequest));
+
+  bool hasEmptyPattern = route?.Pattern == "";
+
+  if (isRegistered && hasEmptyPattern)
+  {
+    Console.WriteLine("✓ Test 9: Default route with empty pattern registered");
+    passed++;
+  }
+  else
+  {
+    Console.WriteLine($"✗ Test 9: Default route failed - registered={isRegistered}, pattern='{route?.Pattern}'");
+    failed++;
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Test 10: Catch-all parameter is registered correctly
+// ─────────────────────────────────────────────────────────────────────────────
+{
+  bool isRegistered = NuruRouteRegistry.IsRegistered<CatchAllTestRequest>();
+
+  RegisteredRoute? route = NuruRouteRegistry.RegisteredRoutes
+    .FirstOrDefault(r => r.RequestType == typeof(CatchAllTestRequest));
+
+  // The compiled route should have a catch-all parameter
+  bool hasCatchAll = route?.CompiledRoute.HasCatchAll == true;
+
+  if (isRegistered && hasCatchAll)
+  {
+    Console.WriteLine("✓ Test 10: Catch-all parameter registered correctly");
+    passed++;
+  }
+  else
+  {
+    Console.WriteLine($"✗ Test 10: Catch-all failed - registered={isRegistered}, hasCatchAll={hasCatchAll}");
+    failed++;
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Test 11: Typed int option is registered correctly
+// ─────────────────────────────────────────────────────────────────────────────
+{
+  bool isRegistered = NuruRouteRegistry.IsRegistered<TypedOptionTestRequest>();
+
+  RegisteredRoute? route = NuruRouteRegistry.RegisteredRoutes
+    .FirstOrDefault(r => r.RequestType == typeof(TypedOptionTestRequest));
+
+  // The compiled route should have options
+  bool hasOptions = route?.CompiledRoute.OptionMatchers.Count > 0;
+
+  // Check if we have an option named "count" that accepts values (not a flag)
+  OptionMatcher? countOption = route?.CompiledRoute.OptionMatchers
+    .FirstOrDefault(o => o.MatchPattern == "--count");
+
+  // ExpectsValue=true means it's a valued option (not a flag)
+  bool hasIntOption = countOption != null && countOption.ExpectsValue;
+
+  if (isRegistered && hasOptions && hasIntOption)
+  {
+    Console.WriteLine("✓ Test 11: Typed int option registered correctly");
+    passed++;
+  }
+  else
+  {
+    Console.WriteLine($"✗ Test 11: Typed option failed - registered={isRegistered}, hasOptions={hasOptions}, hasIntOption={hasIntOption}");
     failed++;
   }
 }
@@ -257,5 +336,44 @@ public sealed class GroupedTestRequest : TestGroupBase, IRequest
   public sealed class Handler : IRequestHandler<GroupedTestRequest>
   {
     public ValueTask<Unit> Handle(GroupedTestRequest request, CancellationToken ct) => default;
+  }
+}
+
+/// <summary>Default route with empty pattern.</summary>
+[NuruRoute("", Description = "Default command when no arguments provided")]
+public sealed class DefaultTestRequest : IRequest
+{
+  public sealed class Handler : IRequestHandler<DefaultTestRequest>
+  {
+    public ValueTask<Unit> Handle(DefaultTestRequest request, CancellationToken ct) => default;
+  }
+}
+
+/// <summary>Route with catch-all parameter to capture multiple arguments.</summary>
+[NuruRoute("catchall", Description = "Catch-all test command")]
+public sealed class CatchAllTestRequest : IRequest
+{
+  [Parameter(IsCatchAll = true, Description = "All remaining arguments")]
+  public string[] Args { get; set; } = [];
+
+  public sealed class Handler : IRequestHandler<CatchAllTestRequest>
+  {
+    public ValueTask<Unit> Handle(CatchAllTestRequest request, CancellationToken ct) => default;
+  }
+}
+
+/// <summary>Route with typed int option.</summary>
+[NuruRoute("typed", Description = "Typed option test command")]
+public sealed class TypedOptionTestRequest : IRequest
+{
+  [Option("count", "c", Description = "Number of items")]
+  public int Count { get; set; } = 1;
+
+  [Option("verbose", "v", Description = "Enable verbose output")]
+  public bool Verbose { get; set; }
+
+  public sealed class Handler : IRequestHandler<TypedOptionTestRequest>
+  {
+    public ValueTask<Unit> Handle(TypedOptionTestRequest request, CancellationToken ct) => default;
   }
 }

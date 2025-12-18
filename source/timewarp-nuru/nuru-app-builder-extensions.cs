@@ -75,7 +75,7 @@ public static partial class NuruAppBuilderExtensions
   /// This information is automatically injected by TimeWarp.Build.Tasks which is a transitive dependency.
   /// </remarks>
   public static TBuilder AddVersionRoute<TBuilder>(this TBuilder builder)
-    where TBuilder : NuruCoreAppBuilder
+    where TBuilder : NuruCoreAppBuilder<TBuilder>
   {
     ArgumentNullException.ThrowIfNull(builder);
     builder.Map("--version,-v", DisplayVersion, "Display version information");
@@ -148,7 +148,7 @@ public static partial class NuruAppBuilderExtensions
   /// Requires <c>RepositoryUrl</c> assembly metadata pointing to a GitHub repository.
   /// </remarks>
   public static TBuilder AddCheckUpdatesRoute<TBuilder>(this TBuilder builder)
-    where TBuilder : NuruCoreAppBuilder
+    where TBuilder : NuruCoreAppBuilder<TBuilder>
   {
     ArgumentNullException.ThrowIfNull(builder);
     builder.Map("--check-updates", CheckForUpdatesAsync, "Check for newer versions on GitHub");

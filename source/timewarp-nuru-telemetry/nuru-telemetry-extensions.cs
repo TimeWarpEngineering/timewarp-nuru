@@ -74,7 +74,7 @@ public static class NuruTelemetryExtensions
   /// </list>
   /// </remarks>
   public static TBuilder UseTelemetry<TBuilder>(this TBuilder builder)
-    where TBuilder : NuruCoreAppBuilder
+    where TBuilder : NuruCoreAppBuilder<TBuilder>
   {
     return builder.UseTelemetry(_ => { });
   }
@@ -93,7 +93,7 @@ public static class NuruTelemetryExtensions
   public static TBuilder UseTelemetry<TBuilder>(
     this TBuilder builder,
     Action<NuruTelemetryOptions> configure)
-    where TBuilder : NuruCoreAppBuilder
+    where TBuilder : NuruCoreAppBuilder<TBuilder>
   {
     ArgumentNullException.ThrowIfNull(builder);
     ArgumentNullException.ThrowIfNull(configure);

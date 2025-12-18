@@ -16,9 +16,10 @@
 // and validation that all syntax examples are correct and working.
 // ============================================================================
 
+using System.Net;
 using TimeWarp.Nuru;
 
-NuruAppBuilder builder = new();
+NuruAppBuilder builder = NuruApp.CreateBuilder([]);
 
 #region MCP:literals
 // Literal segments are plain text that must match exactly

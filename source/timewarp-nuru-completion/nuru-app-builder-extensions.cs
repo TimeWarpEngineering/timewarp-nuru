@@ -24,7 +24,7 @@ public static class NuruAppBuilderExtensions
   public static TBuilder EnableStaticCompletion<TBuilder>(
     this EndpointBuilder<TBuilder> configurator,
     string? appName = null)
-    where TBuilder : NuruCoreAppBuilder
+    where TBuilder : NuruCoreAppBuilder<TBuilder>
   {
     ArgumentNullException.ThrowIfNull(configurator);
     return configurator.Builder.EnableStaticCompletion(appName);
@@ -42,7 +42,7 @@ public static class NuruAppBuilderExtensions
     this EndpointBuilder<TBuilder> configurator,
     string? appName = null,
     Action<CompletionSourceRegistry>? configure = null)
-    where TBuilder : NuruCoreAppBuilder
+    where TBuilder : NuruCoreAppBuilder<TBuilder>
   {
     ArgumentNullException.ThrowIfNull(configurator);
     return configurator.Builder.EnableDynamicCompletion(appName, configure);
@@ -101,7 +101,7 @@ public static class NuruAppBuilderExtensions
     this TBuilder builder,
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Roslynator", "RCS1163:Unused parameter", Justification = "Parameter kept for backward compatibility")]
     string? appName = null)
-    where TBuilder : NuruCoreAppBuilder
+    where TBuilder : NuruCoreAppBuilder<TBuilder>
   {
     ArgumentNullException.ThrowIfNull(builder);
 
@@ -151,7 +151,7 @@ public static class NuruAppBuilderExtensions
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Roslynator", "RCS1163:Unused parameter", Justification = "Parameter kept for backward compatibility")]
     string? appName = null,
     Action<CompletionSourceRegistry>? configure = null)
-    where TBuilder : NuruCoreAppBuilder
+    where TBuilder : NuruCoreAppBuilder<TBuilder>
   {
     ArgumentNullException.ThrowIfNull(builder);
 

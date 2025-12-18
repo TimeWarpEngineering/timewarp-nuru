@@ -3,7 +3,7 @@ namespace TimeWarp.Nuru;
 /// <summary>
 /// Configuration, dependency injection, and service methods for NuruCoreAppBuilder.
 /// </summary>
-public partial class NuruCoreAppBuilder
+public partial class NuruCoreAppBuilder<TSelf>
 {
   /// <summary>
   /// Adds standard .NET configuration sources to the application.
@@ -32,7 +32,7 @@ public partial class NuruCoreAppBuilder
   /// [assembly: Microsoft.Extensions.Configuration.UserSecrets.UserSecretsId("your-guid-here")]
   /// </code>
   /// </remarks>
-  public virtual NuruCoreAppBuilder AddConfiguration(string[]? args = null)
+  public virtual TSelf AddConfiguration(string[]? args = null)
   {
     // Ensure DI is enabled
     if (ServiceCollection is null)
@@ -77,7 +77,7 @@ public partial class NuruCoreAppBuilder
     Configuration = configurationRoot;
     ServiceCollection.AddSingleton<IConfiguration>(configurationRoot);
 
-    return this;
+    return (TSelf)this;
   }
 
   /// <summary>
@@ -97,7 +97,7 @@ public partial class NuruCoreAppBuilder
   /// in your project at compile time. Configuration is done via [assembly: MediatorOptions] attribute.
   /// </para>
   /// </remarks>
-  public virtual NuruCoreAppBuilder AddDependencyInjection()
+  public virtual TSelf AddDependencyInjection()
   {
     if (ServiceCollection is null)
     {
@@ -111,7 +111,7 @@ public partial class NuruCoreAppBuilder
       // Applications using Mediator-based handlers should call services.AddMediator() in ConfigureServices.
     }
 
-    return this;
+    return (TSelf)this;
   }
 
   /// <summary>
@@ -134,10 +134,10 @@ public partial class NuruCoreAppBuilder
   ///   .Build();
   /// </code>
   /// </example>
-  public virtual NuruCoreAppBuilder ConfigureServices(Action<IServiceCollection> configure)
+  public virtual TSelf ConfigureServices(Action<IServiceCollection> configure)
   {
     configure?.Invoke(Services);
-    return this;
+    return (TSelf)this;
   }
 
   /// <summary>
@@ -163,10 +163,10 @@ public partial class NuruCoreAppBuilder
   ///   .Build();
   /// </code>
   /// </example>
-  public virtual NuruCoreAppBuilder ConfigureServices(Action<IServiceCollection, IConfiguration?> configure)
+  public virtual TSelf ConfigureServices(Action<IServiceCollection, IConfiguration?> configure)
   {
     configure?.Invoke(Services, Configuration);
-    return this;
+    return (TSelf)this;
   }
 
   /// <summary>
@@ -174,11 +174,11 @@ public partial class NuruCoreAppBuilder
   /// If not called, NullLoggerFactory is used (zero overhead).
   /// </summary>
   /// <param name="loggerFactory">The logger factory to use for creating loggers.</param>
-  public virtual NuruCoreAppBuilder UseLogging(ILoggerFactory loggerFactory)
+  public virtual TSelf UseLogging(ILoggerFactory loggerFactory)
   {
     ArgumentNullException.ThrowIfNull(loggerFactory);
     LoggerFactory = loggerFactory;
-    return this;
+    return (TSelf)this;
   }
 
   /// <summary>
@@ -200,11 +200,11 @@ public partial class NuruCoreAppBuilder
   ///     .Build();
   /// </code>
   /// </example>
-  public virtual NuruCoreAppBuilder UseTerminal(ITerminal terminal)
+  public virtual TSelf UseTerminal(ITerminal terminal)
   {
     ArgumentNullException.ThrowIfNull(terminal);
     Terminal = terminal;
-    return this;
+    return (TSelf)this;
   }
 
   /// <summary>

@@ -120,32 +120,32 @@ public class NuruCoreAppBuilder : NuruCoreAppBuilder<NuruCoreAppBuilder>
 ## Checklist
 
 ### Phase 1: Core CRTP Implementation
-- [ ] Create `NuruCoreAppBuilder<TSelf>` with generic parameter
-- [ ] Update all fluent methods to return `TSelf`
-- [ ] Create non-generic `NuruCoreAppBuilder` alias for factory methods
-- [ ] Update `NuruAppBuilder` to extend `NuruCoreAppBuilder<NuruAppBuilder>`
-- [ ] Delete `nuru-app-builder.overrides.cs`
+- [x] Create `NuruCoreAppBuilder<TSelf>` with generic parameter
+- [x] Update all fluent methods to return `TSelf`
+- [x] Create non-generic `NuruCoreAppBuilder` alias for factory methods
+- [x] Update `NuruAppBuilder` to extend `NuruCoreAppBuilder<NuruAppBuilder>`
+- [x] Delete `nuru-app-builder.overrides.cs`
 
 ### Phase 2: Update Dependent Types
-- [ ] Update `EndpointBuilder<TBuilder>` constraint
-- [ ] Update `NestedCompiledRouteBuilder<TParent>` if needed
-- [ ] Update factory methods in `NuruCoreApp` and `NuruApp`
+- [x] Update `EndpointBuilder<TBuilder>` constraint
+- [x] Update `NestedCompiledRouteBuilder<TParent>` if needed
+- [x] Update factory methods in `NuruCoreApp` and `NuruApp`
 
 ### Phase 3: Update Extension Methods
-- [ ] Update `timewarp-nuru-completion` extension constraints
-- [ ] Update `timewarp-nuru-repl` extension constraints
-- [ ] Update `timewarp-nuru-logging` extension constraints
-- [ ] Update `timewarp-nuru-telemetry` extension constraints
-- [ ] Update `timewarp-nuru` extension constraints
+- [x] Update `timewarp-nuru-completion` extension constraints
+- [x] Update `timewarp-nuru-repl` extension constraints
+- [x] Update `timewarp-nuru-logging` extension constraints
+- [x] Update `timewarp-nuru-telemetry` extension constraints
+- [x] Update `timewarp-nuru` extension constraints
 
 ### Phase 4: Testing
-- [ ] Build solution and fix compile errors
-- [ ] Run test suite
-- [ ] Update tests that use `NuruCoreAppBuilder` variable declarations
+- [x] Build solution and fix compile errors
+- [x] Run test suite
+- [x] Update tests that use `NuruCoreAppBuilder` variable declarations
 - [ ] Add test verifying type preservation through fluent chain
 
 ### Phase 5: Cleanup
-- [ ] Remove any obsolete internal typed methods (`MapInternalTyped`, `MapNestedTyped`, etc.)
+- [x] Remove any obsolete internal typed methods (`MapInternalTyped`, `MapNestedTyped`, etc.)
 - [ ] Update documentation
 
 ## Context from Previous Work

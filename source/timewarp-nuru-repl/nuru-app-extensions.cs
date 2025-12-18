@@ -21,7 +21,7 @@ public static class NuruCoreAppExtensions
     this EndpointBuilder<TBuilder> configurator,
     Action<ReplOptions>? configureOptions = null
   )
-    where TBuilder : NuruCoreAppBuilder
+    where TBuilder : NuruCoreAppBuilder<TBuilder>
   {
     ArgumentNullException.ThrowIfNull(configurator);
     return configurator.Builder.AddReplSupport(configureOptions);
@@ -34,7 +34,7 @@ public static class NuruCoreAppExtensions
   /// <param name="configurator">The EndpointBuilder from a Map() call.</param>
   /// <returns>The underlying builder for chaining.</returns>
   public static TBuilder AddReplRoutes<TBuilder>(this EndpointBuilder<TBuilder> configurator)
-    where TBuilder : NuruCoreAppBuilder
+    where TBuilder : NuruCoreAppBuilder<TBuilder>
   {
     ArgumentNullException.ThrowIfNull(configurator);
     return configurator.Builder.AddReplRoutes();
@@ -52,7 +52,7 @@ public static class NuruCoreAppExtensions
     this EndpointBuilder<TBuilder> configurator,
     string patterns = "--interactive,-i"
   )
-    where TBuilder : NuruCoreAppBuilder
+    where TBuilder : NuruCoreAppBuilder<TBuilder>
   {
     ArgumentNullException.ThrowIfNull(configurator);
     return configurator.Builder.AddInteractiveRoute(patterns);
@@ -117,7 +117,7 @@ public static class NuruCoreAppExtensions
   /// <param name="builder">The NuruCoreAppBuilder instance.</param>
   /// <returns>The builder for chaining.</returns>
   public static TBuilder AddReplRoutes<TBuilder>(this TBuilder builder)
-    where TBuilder : NuruCoreAppBuilder
+    where TBuilder : NuruCoreAppBuilder<TBuilder>
   {
     ArgumentNullException.ThrowIfNull(builder);
 
@@ -145,7 +145,7 @@ public static class NuruCoreAppExtensions
     this TBuilder builder,
     Action<ReplOptions>? configureOptions = null
   )
-    where TBuilder : NuruCoreAppBuilder
+    where TBuilder : NuruCoreAppBuilder<TBuilder>
   {
     ArgumentNullException.ThrowIfNull(builder);
     builder.AddReplOptions(configureOptions).AddReplRoutes();
@@ -212,7 +212,7 @@ public static class NuruCoreAppExtensions
     this TBuilder builder,
     string patterns = "--interactive,-i"
   )
-    where TBuilder : NuruCoreAppBuilder
+    where TBuilder : NuruCoreAppBuilder<TBuilder>
   {
     ArgumentNullException.ThrowIfNull(builder);
     ArgumentNullException.ThrowIfNull(patterns);

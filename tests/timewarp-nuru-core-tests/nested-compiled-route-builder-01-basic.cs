@@ -29,7 +29,7 @@ public sealed class NestedCompiledRouteBuilderTests
     NuruAppBuilder builder = NuruApp.CreateBuilder([]);
 
     // Act - use nested builder pattern
-    EndpointBuilder endpointBuilder = builder.Map(
+    EndpointBuilder<NuruAppBuilder> endpointBuilder = builder.Map(
       r => r
         .WithLiteral("deploy")
         .WithParameter("env")
@@ -55,7 +55,7 @@ public sealed class NestedCompiledRouteBuilderTests
     NuruAppBuilder builder = NuruApp.CreateBuilder([]);
 
     // Act
-    EndpointBuilder endpointBuilder = builder.Map(
+    EndpointBuilder<NuruAppBuilder> endpointBuilder = builder.Map(
       r => r
         .WithLiteral("test")
         .Done())

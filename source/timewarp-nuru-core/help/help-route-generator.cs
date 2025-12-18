@@ -8,15 +8,17 @@ internal static class HelpRouteGenerator
   /// <summary>
   /// Generates help routes for all registered endpoints.
   /// </summary>
+  /// <typeparam name="TBuilder">The builder type.</typeparam>
   /// <param name="builder">The NuruAppBuilder to add help routes to.</param>
   /// <param name="endpointCollection">The collection of registered endpoints.</param>
   /// <param name="appMetadata">Optional application metadata for help display.</param>
   /// <param name="helpOptions">Optional help options for filtering.</param>
-  internal static void GenerateHelpRoutes(
-    NuruCoreAppBuilder builder,
+  internal static void GenerateHelpRoutes<TBuilder>(
+    NuruCoreAppBuilder<TBuilder> builder,
     EndpointCollection endpointCollection,
     ApplicationMetadata? appMetadata,
     HelpOptions? helpOptions = null)
+    where TBuilder : NuruCoreAppBuilder<TBuilder>
   {
     // Get a snapshot of existing endpoints (before we add help routes)
     List<Endpoint> existingEndpoints = [.. endpointCollection.Endpoints];

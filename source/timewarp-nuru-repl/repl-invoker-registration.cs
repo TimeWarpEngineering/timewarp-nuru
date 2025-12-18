@@ -26,11 +26,12 @@ internal static class ReplInvokerRegistration
       return null;
     });
 
-    // Register invoker for (NuruCoreAppHolder) => Task<int> signature (used by StartInteractiveModeAsync)
-    InvokerRegistry.RegisterAsyncInvoker("NuruCoreAppHolder_Returns_TaskInt", static async (handler, args) =>
+    // Register invoker for (NuruCoreAppHolder) => Task signature (used by StartInteractiveModeAsync)
+    InvokerRegistry.RegisterAsyncInvoker("NuruCoreAppHolder_Returns_Task", static async (handler, args) =>
     {
-      Func<NuruCoreAppHolder, Task<int>> typedHandler = (Func<NuruCoreAppHolder, Task<int>>)handler;
-      return await typedHandler((NuruCoreAppHolder)args[0]!).ConfigureAwait(false);
+      Func<NuruCoreAppHolder, Task> typedHandler = (Func<NuruCoreAppHolder, Task>)handler;
+      await typedHandler((NuruCoreAppHolder)args[0]!).ConfigureAwait(false);
+      return null;
     });
   }
 }

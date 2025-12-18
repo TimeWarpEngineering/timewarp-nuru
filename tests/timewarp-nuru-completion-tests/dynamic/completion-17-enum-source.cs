@@ -2,12 +2,19 @@
 
 using System.ComponentModel;
 
-return await RunTests<EnumSourceTests>(clearCache: true);
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.Completion.EnumSource
+{
 
 [TestTag("Completion")]
-[ClearRunfileCache]
 public class EnumSourceTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<EnumSourceTests>();
+
   public static async Task Should_extract_all_enum_values()
   {
     // Arrange
@@ -257,3 +264,5 @@ enum ExplicitValuesEnum
   Second = 20,
   Third = 30
 }
+
+} // namespace TimeWarp.Nuru.Tests.Completion.EnumSource

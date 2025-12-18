@@ -2,12 +2,20 @@
 #:project ../../source/timewarp-nuru/timewarp-nuru.csproj
 
 // Test Panel widget word wrapping functionality
-return await RunTests<PanelWidgetWordWrapTests>(clearCache: true);
+
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.Core.PanelWidgetWrap
+{
 
 [TestTag("Widgets")]
-[ClearRunfileCache]
 public class PanelWidgetWordWrapTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<PanelWidgetWordWrapTests>();
+
   public static async Task Should_wrap_long_content_within_panel_width()
   {
     // Arrange
@@ -20,7 +28,7 @@ public class PanelWidgetWordWrapTests
     // Assert - All content lines should fit within the panel width
     foreach (string line in lines)
     {
-      int visibleLength = AnsiStringUtils.GetVisibleLength(line);
+      int visibleLength = TimeWarp.Nuru.AnsiStringUtils.GetVisibleLength(line);
       visibleLength.ShouldBeLessThanOrEqualTo(80);
     }
 
@@ -42,7 +50,7 @@ public class PanelWidgetWordWrapTests
     // Assert - All content lines should fit within panel width
     foreach (string line in lines)
     {
-      int visibleLength = AnsiStringUtils.GetVisibleLength(line);
+      int visibleLength = TimeWarp.Nuru.AnsiStringUtils.GetVisibleLength(line);
       visibleLength.ShouldBeLessThanOrEqualTo(40);
     }
 
@@ -83,7 +91,7 @@ public class PanelWidgetWordWrapTests
     // Assert - All lines should fit within width
     foreach (string line in lines)
     {
-      int visibleLength = AnsiStringUtils.GetVisibleLength(line);
+      int visibleLength = TimeWarp.Nuru.AnsiStringUtils.GetVisibleLength(line);
       visibleLength.ShouldBeLessThanOrEqualTo(50);
     }
 
@@ -102,7 +110,7 @@ public class PanelWidgetWordWrapTests
     // Assert - All lines should fit within panel width
     foreach (string line in lines)
     {
-      int visibleLength = AnsiStringUtils.GetVisibleLength(line);
+      int visibleLength = TimeWarp.Nuru.AnsiStringUtils.GetVisibleLength(line);
       visibleLength.ShouldBeLessThanOrEqualTo(20);
     }
 
@@ -124,7 +132,7 @@ public class PanelWidgetWordWrapTests
     // Assert - All lines should fit within panel width
     foreach (string line in lines)
     {
-      int visibleLength = AnsiStringUtils.GetVisibleLength(line);
+      int visibleLength = TimeWarp.Nuru.AnsiStringUtils.GetVisibleLength(line);
       visibleLength.ShouldBeLessThanOrEqualTo(40);
     }
 
@@ -183,10 +191,12 @@ public class PanelWidgetWordWrapTests
     // Each line should be exactly 20 visible chars
     foreach (string line in lines)
     {
-      int visibleLength = AnsiStringUtils.GetVisibleLength(line);
+      int visibleLength = TimeWarp.Nuru.AnsiStringUtils.GetVisibleLength(line);
       visibleLength.ShouldBe(20);
     }
 
     await Task.CompletedTask;
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.Core.PanelWidgetWrap

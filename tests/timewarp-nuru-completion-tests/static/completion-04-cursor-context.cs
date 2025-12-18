@@ -1,14 +1,14 @@
 #!/usr/bin/dotnet --
-
-using TimeWarp.Nuru;
-using Shouldly;
-
-return await RunTests<CursorContextTests>(clearCache: true);
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
 
 [TestTag("Completion")]
-[ClearRunfileCache]
 public class CursorContextTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<CursorContextTests>();
+
   // Note: These tests validate that completion scripts contain the necessary
   // components for context-aware completion. The actual cursor position
   // handling is done by the shell's completion engine.

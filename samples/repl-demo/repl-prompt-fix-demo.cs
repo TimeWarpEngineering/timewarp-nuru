@@ -46,4 +46,4 @@ NuruCoreApp app = NuruApp.CreateBuilder(args, nuruAppOptions)
   })
   .Build();
 
-return await app.RunReplAsync();
+await app.RunReplAsync();

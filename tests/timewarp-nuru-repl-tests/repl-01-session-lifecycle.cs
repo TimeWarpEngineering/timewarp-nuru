@@ -2,14 +2,18 @@
 #:project ../../source/timewarp-nuru/timewarp-nuru.csproj
 #:project ../../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj
 
-using TimeWarp.Nuru;
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
 
-return await RunTests<SessionLifecycleTests>(clearCache: true);
-
-[TestTag("REPL")]
-[ClearRunfileCache]
-public class SessionLifecycleTests
+namespace TimeWarp.Nuru.Tests.ReplTests.SessionLifecycle
 {
+  [TestTag("REPL")]
+  public class SessionLifecycleTests
+  {
+    [ModuleInitializer]
+    internal static void Register() => RegisterTests<SessionLifecycleTests>();
+
   public static async Task Should_start_session_and_display_welcome_message()
   {
     // Arrange
@@ -62,10 +66,9 @@ public class SessionLifecycleTests
       .Build();
 
     // Act
-    int exitCode = await app.RunReplAsync();
+    await app.RunReplAsync();
 
     // Assert
-    exitCode.ShouldBe(0, "Exit code should be 0 for clean exit");
     terminal.OutputContains("Goodbye!")
       .ShouldBeTrue("Goodbye message should be displayed on exit");
   }
@@ -82,10 +85,9 @@ public class SessionLifecycleTests
       .Build();
 
     // Act
-    int exitCode = await app.RunReplAsync();
+    await app.RunReplAsync();
 
     // Assert
-    exitCode.ShouldBe(0, "Exit code should be 0 for quit command");
     terminal.OutputContains("Goodbye!")
       .ShouldBeTrue("Goodbye message should be displayed on quit");
   }
@@ -102,10 +104,9 @@ public class SessionLifecycleTests
       .Build();
 
     // Act
-    int exitCode = await app.RunReplAsync();
+    await app.RunReplAsync();
 
     // Assert
-    exitCode.ShouldBe(0, "Exit code should be 0 for q shortcut");
     terminal.OutputContains("Goodbye!")
       .ShouldBeTrue("Goodbye message should be displayed on q");
   }
@@ -235,5 +236,6 @@ public class SessionLifecycleTests
     // Verify session processed the help command and exited cleanly via terminal
     terminal.OutputContains("Goodbye!")
       .ShouldBeTrue("Session should process help and exit cleanly");
+  }
   }
 }

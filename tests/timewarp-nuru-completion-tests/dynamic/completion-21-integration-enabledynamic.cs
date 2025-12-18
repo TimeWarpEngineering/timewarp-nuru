@@ -1,11 +1,18 @@
 #!/usr/bin/dotnet --
 
-return await RunTests<IntegrationEnableDynamicTests>(clearCache: true);
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.Completion.Integration
+{
 
 [TestTag("Completion")]
-[ClearRunfileCache]
 public class IntegrationEnableDynamicTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<IntegrationEnableDynamicTests>();
+
   public static async Task Should_register_complete_route()
   {
     // Arrange
@@ -280,3 +287,5 @@ enum DeploymentMode
   Standard,
   Slow
 }
+
+} // namespace TimeWarp.Nuru.Tests.Completion.Integration

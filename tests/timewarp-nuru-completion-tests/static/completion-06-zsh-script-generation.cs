@@ -1,14 +1,14 @@
 #!/usr/bin/dotnet --
-
-using TimeWarp.Nuru;
-using Shouldly;
-
-return await RunTests<ZshScriptGenerationTests>(clearCache: true);
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
 
 [TestTag("Completion")]
-[ClearRunfileCache]
 public class ZshScriptGenerationTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<ZshScriptGenerationTests>();
+
   public static async Task Should_generate_valid_zsh_syntax()
   {
     // Arrange

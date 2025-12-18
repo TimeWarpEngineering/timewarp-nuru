@@ -2,14 +2,20 @@
 #:project ../../source/timewarp-nuru/timewarp-nuru.csproj
 #:project ../../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj
 
-using TimeWarp.Nuru;
-
 // Test NuruApp integration (Section 13 of REPL Test Plan)
-return await RunTests<NuruAppIntegrationTests>();
 
-[TestTag("REPL")]
-public class NuruAppIntegrationTests
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.ReplTests.NuruAppIntegration
 {
+  [TestTag("REPL")]
+  public class NuruAppIntegrationTests
+  {
+    [ModuleInitializer]
+    internal static void Register() => RegisterTests<NuruAppIntegrationTests>();
+
   public static async Task Should_use_AddReplSupport_extension()
   {
     // Arrange
@@ -126,10 +132,9 @@ public class NuruAppIntegrationTests
       .Build();
 
     // Act - direct REPL start
-    int exitCode = await app.RunReplAsync();
+    await app.RunReplAsync();
 
     // Assert
-    exitCode.ShouldBe(0);
     terminal.OutputContains("Goodbye!")
       .ShouldBeTrue("Direct REPL start should work");
   }
@@ -173,5 +178,6 @@ public class NuruAppIntegrationTests
     // Assert - app routes should execute in REPL context
     terminal.OutputContains("Goodbye!")
       .ShouldBeTrue("App routes should execute in REPL");
+  }
   }
 }

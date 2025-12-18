@@ -74,7 +74,12 @@ public static class HelpProvider
       {
         AppendGroup(sb, group, useColor);
       }
+
+      sb.AppendLine();
     }
+
+    // Legend section
+    sb.AppendLine(FormatMessageTypeLegend(useColor));
 
     return sb.ToString().TrimEnd();
   }
@@ -176,11 +181,15 @@ public static class HelpProvider
       // Sort patterns within group for consistent display
       List<string> patterns = [.. groupEndpoints.OrderBy(e => e.RoutePattern).Select(e => e.RoutePattern)];
 
+      // Use the message type from the first endpoint in the group
+      MessageType messageType = groupEndpoints[0].MessageType;
+
       groups.Add(new EndpointGroup
       {
         Patterns = patterns,
         Description = string.IsNullOrEmpty(description) ? null : description,
-        FirstPattern = patterns[0]
+        FirstPattern = patterns[0],
+        MessageType = messageType
       });
     }
 
@@ -215,18 +224,22 @@ public static class HelpProvider
     string pattern = string.Join(", ", formattedPatterns);
     string? description = group.Description;
 
+    // Format message type indicator
+    string messageTypeIndicator = FormatMessageTypeIndicator(group.MessageType, useColor);
+
     if (!string.IsNullOrEmpty(description))
     {
       // Use ANSI-aware padding for proper alignment when colors are present
       int visibleLength = useColor ? AnsiStringUtils.GetVisibleLength(pattern) : pattern.Length;
-      int padding = 30 - visibleLength;
+      int indicatorVisibleLength = useColor ? AnsiStringUtils.GetVisibleLength(messageTypeIndicator) : messageTypeIndicator.Length;
+      int padding = 26 - visibleLength - indicatorVisibleLength;
       if (padding < 2) padding = 2;
       string formattedDesc = FormatDescription(description, useColor);
-      sb.AppendLine(CultureInfo.InvariantCulture, $"  {pattern}{new string(' ', padding)}{formattedDesc}");
+      sb.AppendLine(CultureInfo.InvariantCulture, $"  {pattern} {messageTypeIndicator}{new string(' ', padding)}{formattedDesc}");
     }
     else
     {
-      sb.AppendLine(CultureInfo.InvariantCulture, $"  {pattern}");
+      sb.AppendLine(CultureInfo.InvariantCulture, $"  {pattern} {messageTypeIndicator}");
     }
   }
 
@@ -563,6 +576,58 @@ public static class HelpProvider
     return "(default)".Dim();
   }
 
+  /// <summary>
+  /// Formats the message type indicator for help display.
+  /// </summary>
+  /// <param name="messageType">The message type to format.</param>
+  /// <param name="useColor">Whether to apply ANSI colors.</param>
+  /// <returns>A formatted indicator string like "(Q)", "(C)", or "(I)".</returns>
+  private static string FormatMessageTypeIndicator(MessageType messageType, bool useColor)
+  {
+    string indicator = messageType switch
+    {
+      MessageType.Unspecified => "( )",
+      MessageType.Query => "(Q)",
+      MessageType.IdempotentCommand => "(I)",
+      MessageType.Command => "(C)",
+      _ => "(C)"
+    };
+
+    if (!useColor)
+      return indicator;
+
+    // Use different colors for different message types:
+    // Unspecified = Gray (not yet classified, treated as Command for safety)
+    // Query = Blue (safe/informational)
+    // IdempotentCommand = Yellow (caution but retryable)
+    // Command = Red (danger/confirm)
+    return messageType switch
+    {
+      MessageType.Unspecified => indicator.Gray(),
+      MessageType.Query => indicator.Blue(),
+      MessageType.IdempotentCommand => indicator.Yellow(),
+      MessageType.Command => indicator.Red(),
+      _ => indicator.Red()
+    };
+  }
+
+  /// <summary>
+  /// Formats the message type legend for display at the bottom of help output.
+  /// </summary>
+  /// <param name="useColor">Whether to apply ANSI colors.</param>
+  /// <returns>A formatted legend string.</returns>
+  private static string FormatMessageTypeLegend(bool useColor)
+  {
+    if (!useColor)
+      return "Legend: ( ) Unspecified  (Q) Query  (I) Idempotent  (C) Command";
+
+    return "Legend: " +
+           "( )".Gray() + " Unspecified  " +
+           "(Q)".Blue() + " Query  " +
+           "(I)".Yellow() + " Idempotent  " +
+           "(C)".Red() + " Command";
+  }
+
   #endregion
 
   /// <summary>
@@ -573,5 +638,6 @@ public static class HelpProvider
     public required List<string> Patterns { get; init; }
     public string? Description { get; init; }
     public required string FirstPattern { get; init; }
+    public MessageType MessageType { get; init; } = MessageType.Command;
   }
 }

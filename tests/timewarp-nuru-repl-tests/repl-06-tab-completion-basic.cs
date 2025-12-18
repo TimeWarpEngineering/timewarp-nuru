@@ -2,18 +2,24 @@
 #:project ../../source/timewarp-nuru/timewarp-nuru.csproj
 #:project ../../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj
 
-using TimeWarp.Nuru;
-
 // Test basic tab completion (Section 6 of REPL Test Plan)
 // Note: Tab completion tests require interactive key simulation which
 // doesn't work reliably with TestTerminal's key queuing mechanism.
 // The REPL enters a state waiting for more input after showing completions.
 // These tests should be run manually in an interactive terminal.
-return await RunTests<TabCompletionBasicTests>();
 
-[TestTag("REPL")]
-public class TabCompletionBasicTests
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.ReplTests.TabCompletionBasic
 {
+  [TestTag("REPL")]
+  public class TabCompletionBasicTests
+  {
+    [ModuleInitializer]
+    internal static void Register() => RegisterTests<TabCompletionBasicTests>();
+
   [Timeout(5000)]
   public static async Task Should_complete_single_match()
   {
@@ -213,5 +219,6 @@ public class TabCompletionBasicTests
     // Assert
     terminal.OutputContains("Goodbye!")
       .ShouldBeTrue("Completion should work with arguments");
+  }
   }
 }

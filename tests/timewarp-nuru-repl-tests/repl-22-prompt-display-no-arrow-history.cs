@@ -2,14 +2,21 @@
 #:project ../../source/timewarp-nuru/timewarp-nuru.csproj
 #:project ../../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj
 
-using TimeWarp.Nuru;
-
 // Test prompt display when EnableArrowHistory is false (Bug Fix Verification)
-return await RunTests<PromptDisplayTests>();
+
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.ReplTests.PromptDisplay
+{
 
 [TestTag("REPL")]
 public class PromptDisplayTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<PromptDisplayTests>();
+
   public static async Task Should_display_prompt_when_arrow_history_disabled()
   {
     // Arrange
@@ -139,3 +146,5 @@ public class PromptDisplayTests
       .ShouldBeTrue($"Prompt should appear multiple times, but appeared {promptCount} times");
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.ReplTests.PromptDisplay

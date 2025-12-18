@@ -1,14 +1,14 @@
 #!/usr/bin/dotnet --
-
-using TimeWarp.Nuru;
-using Shouldly;
-
-return await RunTests<FishScriptGenerationTests>(clearCache: true);
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
 
 [TestTag("Completion")]
-[ClearRunfileCache]
 public class FishScriptGenerationTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<FishScriptGenerationTests>();
+
   public static async Task Should_generate_valid_fish_syntax()
   {
     // Arrange

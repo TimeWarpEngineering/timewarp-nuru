@@ -2,14 +2,20 @@
 #:project ../../source/timewarp-nuru/timewarp-nuru.csproj
 #:project ../../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj
 
-using TimeWarp.Nuru;
-
 // Test built-in REPL commands (Section 9 of REPL Test Plan)
-return await RunTests<BuiltinCommandsTests>();
 
-[TestTag("REPL")]
-public class BuiltinCommandsTests
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.ReplTests.BuiltinCommands
 {
+  [TestTag("REPL")]
+  public class BuiltinCommandsTests
+  {
+    [ModuleInitializer]
+    internal static void Register() => RegisterTests<BuiltinCommandsTests>();
+
   public static async Task Should_handle_exit_command()
   {
     // Arrange
@@ -22,10 +28,9 @@ public class BuiltinCommandsTests
       .Build();
 
     // Act
-    int exitCode = await app.RunReplAsync();
+    await app.RunReplAsync();
 
     // Assert
-    exitCode.ShouldBe(0);
     terminal.OutputContains("Goodbye!")
       .ShouldBeTrue("Exit command should terminate session");
   }
@@ -42,10 +47,9 @@ public class BuiltinCommandsTests
       .Build();
 
     // Act
-    int exitCode = await app.RunReplAsync();
+    await app.RunReplAsync();
 
     // Assert
-    exitCode.ShouldBe(0);
     terminal.OutputContains("Goodbye!")
       .ShouldBeTrue("Quit command should terminate session");
   }
@@ -62,10 +66,9 @@ public class BuiltinCommandsTests
       .Build();
 
     // Act
-    int exitCode = await app.RunReplAsync();
+    await app.RunReplAsync();
 
     // Assert
-    exitCode.ShouldBe(0);
     terminal.OutputContains("Goodbye!")
       .ShouldBeTrue("q shortcut should terminate session");
   }
@@ -174,5 +177,6 @@ public class BuiltinCommandsTests
     // Assert - after clear-history, history should be empty
     terminal.OutputContains("Goodbye!")
       .ShouldBeTrue("Clear-history command should work");
+  }
   }
 }

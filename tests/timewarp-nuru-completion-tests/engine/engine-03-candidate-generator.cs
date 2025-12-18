@@ -3,15 +3,19 @@
 // Test: CandidateGenerator - Generates completion candidates from route match states
 // Task: 065 - Implement CandidateGenerator
 
-using TimeWarp.Nuru;
-using Shouldly;
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
 
-return await RunTests<CandidateGeneratorTests>(clearCache: true);
+namespace TimeWarp.Nuru.Tests.Completion.Engine.CandidateGen
+{
 
 [TestTag("Completion")]
-[ClearRunfileCache]
 public class CandidateGeneratorTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<CandidateGeneratorTests>();
+
   private static readonly CandidateGenerator Generator = CandidateGenerator.Instance;
 
   // ============================================================================
@@ -665,3 +669,5 @@ public class CandidateGeneratorTests
     await Task.CompletedTask;
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.Completion.Engine.CandidateGen

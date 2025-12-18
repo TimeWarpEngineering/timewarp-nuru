@@ -2,14 +2,21 @@
 #:project ../../source/timewarp-nuru/timewarp-nuru.csproj
 #:project ../../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj
 
-using TimeWarp.Nuru;
-
 // Test PSReadLine word operations (case conversion, character transposition)
-return await RunTests<WordOperationTests>();
+
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.ReplTests.WordOperations
+{
 
 [TestTag("REPL")]
 public class WordOperationTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<WordOperationTests>();
+
   // === UpcaseWord Tests (Alt+U) ===
 
   public static async Task Should_upcase_word_from_cursor_to_end()
@@ -447,3 +454,5 @@ public class WordOperationTests
     await Task.CompletedTask;
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.ReplTests.WordOperations

@@ -1,11 +1,18 @@
 #!/usr/bin/dotnet --
 
-return await RunTests<DynamicScriptGenTests>(clearCache: true);
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.Completion.DynamicScriptGen
+{
 
 [TestTag("Completion")]
-[ClearRunfileCache]
 public class DynamicScriptGenTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<DynamicScriptGenTests>();
+
   public static async Task Should_generate_bash_script_with_callback()
   {
     // Arrange
@@ -198,3 +205,5 @@ public class DynamicScriptGenTests
     await Task.CompletedTask;
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.Completion.DynamicScriptGen

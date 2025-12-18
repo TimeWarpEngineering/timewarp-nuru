@@ -10,6 +10,82 @@ using TimeWarp.Nuru;
 /// </summary>
 public static class NuruAppBuilderExtensions
 {
+  // ============================================================================
+  // EndpointBuilder<TBuilder> overloads - preserve builder type in fluent chain
+  // ============================================================================
+
+  /// <summary>
+  /// Enables static shell completion (generic EndpointBuilder overload for fluent chaining).
+  /// </summary>
+  /// <typeparam name="TBuilder">The builder type for proper fluent chaining.</typeparam>
+  /// <param name="configurator">The EndpointBuilder from a Map() call.</param>
+  /// <param name="appName">Optional application name for generated scripts.</param>
+  /// <returns>The underlying builder for chaining.</returns>
+  public static TBuilder EnableStaticCompletion<TBuilder>(
+    this EndpointBuilder<TBuilder> configurator,
+    string? appName = null)
+    where TBuilder : NuruCoreAppBuilder
+  {
+    ArgumentNullException.ThrowIfNull(configurator);
+    return configurator.Builder.EnableStaticCompletion(appName);
+  }
+
+  /// <summary>
+  /// Enables dynamic shell completion (generic EndpointBuilder overload for fluent chaining).
+  /// </summary>
+  /// <typeparam name="TBuilder">The builder type for proper fluent chaining.</typeparam>
+  /// <param name="configurator">The EndpointBuilder from a Map() call.</param>
+  /// <param name="appName">Optional application name for generated scripts.</param>
+  /// <param name="configure">Optional action to configure completion sources.</param>
+  /// <returns>The underlying builder for chaining.</returns>
+  public static TBuilder EnableDynamicCompletion<TBuilder>(
+    this EndpointBuilder<TBuilder> configurator,
+    string? appName = null,
+    Action<CompletionSourceRegistry>? configure = null)
+    where TBuilder : NuruCoreAppBuilder
+  {
+    ArgumentNullException.ThrowIfNull(configurator);
+    return configurator.Builder.EnableDynamicCompletion(appName, configure);
+  }
+
+  // ============================================================================
+  // EndpointBuilder overloads (non-generic) - backward compatibility
+  // ============================================================================
+
+  /// <summary>
+  /// Enables static shell completion (EndpointBuilder overload for fluent chaining).
+  /// </summary>
+  /// <param name="configurator">The EndpointBuilder from a Map() call.</param>
+  /// <param name="appName">Optional application name for generated scripts.</param>
+  /// <returns>The underlying builder for chaining.</returns>
+  public static NuruCoreAppBuilder EnableStaticCompletion(
+    this EndpointBuilder configurator,
+    string? appName = null)
+  {
+    ArgumentNullException.ThrowIfNull(configurator);
+    return configurator.Builder.EnableStaticCompletion(appName);
+  }
+
+  /// <summary>
+  /// Enables dynamic shell completion (EndpointBuilder overload for fluent chaining).
+  /// </summary>
+  /// <param name="configurator">The EndpointBuilder from a Map() call.</param>
+  /// <param name="appName">Optional application name for generated scripts.</param>
+  /// <param name="configure">Optional action to configure completion sources.</param>
+  /// <returns>The underlying builder for chaining.</returns>
+  public static NuruCoreAppBuilder EnableDynamicCompletion(
+    this EndpointBuilder configurator,
+    string? appName = null,
+    Action<CompletionSourceRegistry>? configure = null)
+  {
+    ArgumentNullException.ThrowIfNull(configurator);
+    return configurator.Builder.EnableDynamicCompletion(appName, configure);
+  }
+
+  // ============================================================================
+  // NuruCoreAppBuilder extension methods
+  // ============================================================================
+
   /// <summary>
   /// Enables static shell completion by automatically registering the `--generate-completion {shell}` route.
   /// Static completion generates pre-computed scripts based on registered routes.

@@ -3,12 +3,20 @@
 #:project ../../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj
 
 // Test AddInteractiveRoute uses alias syntax for single endpoint (Issue #119)
-return await RunTests<AddInteractiveRouteAliasTests>(clearCache: true);
+
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.ReplTests.InteractiveRouteAlias
+{
 
 [TestTag("REPL")]
-[ClearRunfileCache]
 public class AddInteractiveRouteAliasTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<AddInteractiveRouteAliasTests>();
+
   public static async Task Should_create_single_endpoint_for_option_aliases()
   {
     // Arrange - Issue #119: AddInteractiveRoute should use alias syntax
@@ -145,3 +153,5 @@ public class AddInteractiveRouteAliasTests
     return count;
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.ReplTests.InteractiveRouteAlias

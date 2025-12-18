@@ -2,7 +2,6 @@
 #:project ../../../source/timewarp-nuru/timewarp-nuru.csproj
 #:project ../../../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj
 
-using TimeWarp.Nuru;
 using TimeWarp.Nuru.Tests.TabCompletion;
 
 // ============================================================================
@@ -21,13 +20,20 @@ using TimeWarp.Nuru.Tests.TabCompletion;
 // without crashing or producing unexpected behavior.
 // ============================================================================
 
-return await RunTests<EdgeCasesTests>();
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.TabCompletion.EdgeCases
+{
 
 [TestTag("REPL")]
 [TestTag("TabCompletion")]
-[ClearRunfileCache]
 public class EdgeCasesTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<EdgeCasesTests>();
+
   private static TestTerminal Terminal = null!;
   private static NuruCoreApp App = null!;
 
@@ -413,3 +419,5 @@ public class EdgeCasesTests
     );
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.TabCompletion.EdgeCases

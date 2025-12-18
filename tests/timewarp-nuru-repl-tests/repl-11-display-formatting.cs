@@ -2,14 +2,20 @@
 #:project ../../source/timewarp-nuru/timewarp-nuru.csproj
 #:project ../../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj
 
-using TimeWarp.Nuru;
-
 // Test display and formatting (Section 11 of REPL Test Plan)
-return await RunTests<DisplayFormattingTests>();
 
-[TestTag("REPL")]
-public class DisplayFormattingTests
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.ReplTests.DisplayFormatting
 {
+  [TestTag("REPL")]
+  public class DisplayFormattingTests
+  {
+    [ModuleInitializer]
+    internal static void Register() => RegisterTests<DisplayFormattingTests>();
+
   public static async Task Should_display_welcome_message()
   {
     // Arrange
@@ -187,5 +193,6 @@ public class DisplayFormattingTests
     // Assert - ANSI escape codes should NOT be present
     terminal.OutputContains("\x1b[")
       .ShouldBeFalse("Colors should NOT be used when disabled");
+  }
   }
 }

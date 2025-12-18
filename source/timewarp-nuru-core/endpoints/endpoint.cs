@@ -38,6 +38,11 @@ public class Endpoint
   /// </summary>
   [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
   public Type? CommandType { get; set; }
+  /// <summary>
+  /// Gets or sets the message type for this endpoint, indicating whether it's a query, command, or idempotent command.
+  /// Defaults to <see cref="MessageType.Command"/> (the safest assumption for AI agents).
+  /// </summary>
+  public MessageType MessageType { get; set; } = MessageType.Command;
 
   /// <summary>
   /// Gets the execution strategy for this endpoint based on its configuration.

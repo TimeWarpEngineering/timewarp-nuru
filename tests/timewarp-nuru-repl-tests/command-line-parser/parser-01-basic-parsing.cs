@@ -2,11 +2,20 @@
 #:project ../../../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj
 
 // Test CommandLineParser basic parsing functionality
-return await RunTests<CommandLineParserBasicTests>();
+
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.CommandLineParserTests.BasicParsing
+{
 
 [TestTag("CommandLineParser")]
 public class CommandLineParserBasicTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<CommandLineParserBasicTests>();
+
   public static async Task Should_parse_simple_command()
   {
     // Arrange & Act
@@ -110,3 +119,5 @@ public class CommandLineParserBasicTests
     await Task.CompletedTask;
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.CommandLineParserTests.BasicParsing

@@ -1,14 +1,14 @@
 #!/usr/bin/dotnet --
-
-using TimeWarp.Nuru;
-using Shouldly;
-
-return await RunTests<RouteAnalysisTests>(clearCache: true);
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
 
 [TestTag("Completion")]
-[ClearRunfileCache]
 public class RouteAnalysisTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<RouteAnalysisTests>();
+
   public static async Task Should_analyze_simple_literal_route()
   {
     // Arrange

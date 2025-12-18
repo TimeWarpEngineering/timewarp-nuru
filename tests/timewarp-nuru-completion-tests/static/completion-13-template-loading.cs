@@ -1,14 +1,14 @@
 #!/usr/bin/dotnet --
-
-using TimeWarp.Nuru;
-using Shouldly;
-
-return await RunTests<TemplateLoadingTests>(clearCache: true);
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
 
 [TestTag("Completion")]
-[ClearRunfileCache]
 public class TemplateLoadingTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<TemplateLoadingTests>();
+
   public static async Task Should_load_bash_template()
   {
     // Arrange

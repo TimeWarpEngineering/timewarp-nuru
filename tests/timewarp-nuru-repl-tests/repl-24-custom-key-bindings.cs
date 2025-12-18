@@ -2,9 +2,12 @@
 #:project ../../source/timewarp-nuru/timewarp-nuru.csproj
 #:project ../../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj
 
-using TimeWarp.Nuru;
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
 
-return await RunTests<CustomKeyBindingTests>(clearCache: true);
+namespace TimeWarp.Nuru.Tests.ReplTests.CustomKeyBindings
+{
 
 /// <summary>
 /// Tests for custom key binding functionality (KeyBindingBuilder and CustomKeyBindingProfile).
@@ -20,9 +23,11 @@ return await RunTests<CustomKeyBindingTests>(clearCache: true);
 /// </list>
 /// </remarks>
 [TestTag("REPL")]
-[ClearRunfileCache]
 public class CustomKeyBindingTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<CustomKeyBindingTests>();
+
   // ============================================================================
   // KeyBindingBuilder Tests
   // ============================================================================
@@ -463,3 +468,5 @@ public class CustomKeyBindingTests
       .ShouldBeTrue("Custom profile based on Emacs should work");
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.ReplTests.CustomKeyBindings

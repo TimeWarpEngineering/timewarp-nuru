@@ -2,12 +2,20 @@
 #:project ../../source/timewarp-nuru/timewarp-nuru.csproj
 
 // Test HelpProvider filtering based on HelpOptions and HelpContext
-return await RunTests<HelpProviderFilteringTests>(clearCache: true);
+
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.Core.HelpProviderFiltering
+{
 
 [TestTag("Help")]
-[ClearRunfileCache]
 public class HelpProviderFilteringTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<HelpProviderFilteringTests>();
+
   private static Endpoint CreateEndpoint(string pattern, string? description = null)
   {
     return new Endpoint
@@ -29,7 +37,7 @@ public class HelpProviderFilteringTests
     HelpOptions options = new();
 
     // Act
-    string helpText = HelpProvider.GetHelpText(endpoints, "testapp", null, options, HelpContext.Cli, useColor: false);
+    string helpText = TimeWarp.Nuru.HelpProvider.GetHelpText(endpoints, "testapp", null, options, HelpContext.Cli, useColor: false);
 
     // Assert
     helpText.ShouldContain("blog");
@@ -48,7 +56,7 @@ public class HelpProviderFilteringTests
     HelpOptions options = new() { ShowPerCommandHelpRoutes = true };
 
     // Act
-    string helpText = HelpProvider.GetHelpText(endpoints, "testapp", null, options, HelpContext.Cli, useColor: false);
+    string helpText = TimeWarp.Nuru.HelpProvider.GetHelpText(endpoints, "testapp", null, options, HelpContext.Cli, useColor: false);
 
     // Assert
     helpText.ShouldContain("blog");
@@ -72,7 +80,7 @@ public class HelpProviderFilteringTests
     HelpOptions options = new();
 
     // Act
-    string helpText = HelpProvider.GetHelpText(endpoints, "testapp", null, options, HelpContext.Cli, useColor: false);
+    string helpText = TimeWarp.Nuru.HelpProvider.GetHelpText(endpoints, "testapp", null, options, HelpContext.Cli, useColor: false);
 
     // Assert
     helpText.ShouldContain("mycommand");
@@ -97,7 +105,7 @@ public class HelpProviderFilteringTests
     HelpOptions options = new();
 
     // Act - Using REPL context
-    string helpText = HelpProvider.GetHelpText(endpoints, "testapp", null, options, HelpContext.Repl, useColor: false);
+    string helpText = TimeWarp.Nuru.HelpProvider.GetHelpText(endpoints, "testapp", null, options, HelpContext.Repl, useColor: false);
 
     // Assert - REPL commands should be visible in REPL mode
     helpText.ShouldContain("mycommand");
@@ -120,7 +128,7 @@ public class HelpProviderFilteringTests
     HelpOptions options = new();
 
     // Act
-    string helpText = HelpProvider.GetHelpText(endpoints, "testapp", null, options, HelpContext.Cli, useColor: false);
+    string helpText = TimeWarp.Nuru.HelpProvider.GetHelpText(endpoints, "testapp", null, options, HelpContext.Cli, useColor: false);
 
     // Assert
     helpText.ShouldContain("mycommand");
@@ -141,7 +149,7 @@ public class HelpProviderFilteringTests
     HelpOptions options = new() { ShowCompletionRoutes = true };
 
     // Act
-    string helpText = HelpProvider.GetHelpText(endpoints, "testapp", null, options, HelpContext.Cli, useColor: false);
+    string helpText = TimeWarp.Nuru.HelpProvider.GetHelpText(endpoints, "testapp", null, options, HelpContext.Cli, useColor: false);
 
     // Assert
     helpText.ShouldContain("mycommand");
@@ -164,7 +172,7 @@ public class HelpProviderFilteringTests
     };
 
     // Act
-    string helpText = HelpProvider.GetHelpText(endpoints, "testapp", null, options, HelpContext.Cli, useColor: false);
+    string helpText = TimeWarp.Nuru.HelpProvider.GetHelpText(endpoints, "testapp", null, options, HelpContext.Cli, useColor: false);
 
     // Assert
     helpText.ShouldContain("mycommand");
@@ -185,7 +193,7 @@ public class HelpProviderFilteringTests
     HelpOptions options = new() { ShowReplCommandsInCli = true };
 
     // Act
-    string helpText = HelpProvider.GetHelpText(endpoints, "testapp", null, options, HelpContext.Cli, useColor: false);
+    string helpText = TimeWarp.Nuru.HelpProvider.GetHelpText(endpoints, "testapp", null, options, HelpContext.Cli, useColor: false);
 
     // Assert - All three should be grouped together on one line
     // The pattern should show: "exit, q, quit" (alphabetically sorted within group)
@@ -206,7 +214,7 @@ public class HelpProviderFilteringTests
     HelpOptions options = new();
 
     // Act
-    string helpText = HelpProvider.GetHelpText(endpoints, "testapp", null, options, HelpContext.Cli, useColor: false);
+    string helpText = TimeWarp.Nuru.HelpProvider.GetHelpText(endpoints, "testapp", null, options, HelpContext.Cli, useColor: false);
 
     // Assert
     helpText.ShouldContain("mycommand");
@@ -231,7 +239,7 @@ public class HelpProviderFilteringTests
     HelpOptions options = new() { ShowReplCommandsInCli = true };
 
     // Act - CLI context but with ShowReplCommandsInCli enabled
-    string helpText = HelpProvider.GetHelpText(endpoints, "testapp", null, options, HelpContext.Cli, useColor: false);
+    string helpText = TimeWarp.Nuru.HelpProvider.GetHelpText(endpoints, "testapp", null, options, HelpContext.Cli, useColor: false);
 
     // Assert
     helpText.ShouldContain("exit");
@@ -239,3 +247,5 @@ public class HelpProviderFilteringTests
     await Task.CompletedTask;
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.Core.HelpProviderFiltering

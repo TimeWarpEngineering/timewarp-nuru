@@ -1,11 +1,18 @@
 #!/usr/bin/dotnet --
 
-return await RunTests<CallbackProtocolTests>(clearCache: true);
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.Completion.CallbackProtocol
+{
 
 [TestTag("Completion")]
-[ClearRunfileCache]
 public class CallbackProtocolTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<CallbackProtocolTests>();
+
   public static async Task Should_accept_cursor_index_as_first_parameter()
   {
     // Arrange
@@ -251,3 +258,5 @@ sealed class TestCompletionSourceWithDescriptions((string value, string desc)[] 
     }
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.Completion.CallbackProtocol

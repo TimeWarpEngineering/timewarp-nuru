@@ -2,16 +2,23 @@
 #:project ../../source/timewarp-nuru/timewarp-nuru.csproj
 #:project ../../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj
 
-using TimeWarp.Nuru;
-
 // Tests for multiline editing in REPL (Task 043-009)
-return await RunTests<MultilineEditingTests>();
+
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.ReplTests.MultilineEditing
+{
 
 [TestTag("REPL")]
 [TestTag("PSReadLine")]
 [TestTag("Multiline")]
 public class MultilineEditingTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<MultilineEditingTests>();
+
   // ============================================================================
   // Shift+Enter (AddLine) Tests
   // ============================================================================
@@ -338,3 +345,5 @@ public class MultilineEditingTests
     await Task.CompletedTask;
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.ReplTests.MultilineEditing

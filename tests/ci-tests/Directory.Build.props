@@ -1,0 +1,83 @@
+<Project>
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+  <PropertyGroup>
+    <DefineConstants>$(DefineConstants);JARIBU_MULTI</DefineConstants>
+    <!-- Suppress unused parameter warnings in test lambdas -->
+    <!-- Suppress namespace style warnings for tests with top-level statements + namespace blocks -->
+    <NoWarn>$(NoWarn);RCS1163;IDE0161;IDE0065</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Core tests - lexer (migrated) -->
+    <Compile Include="../timewarp-nuru-core-tests/lexer/*.cs" />
+    <!-- Core tests - migrated files -->
+    <Compile Include="../timewarp-nuru-core-tests/ansi-string-utils-01-basic.cs" />
+    <Compile Include="../timewarp-nuru-core-tests/ansi-string-utils-02-wrap-text.cs" />
+    <Compile Include="../timewarp-nuru-core-tests/help-provider-01-option-detection.cs" />
+    <Compile Include="../timewarp-nuru-core-tests/help-provider-02-filtering.cs" />
+    <Compile Include="../timewarp-nuru-core-tests/help-provider-03-session-context.cs" />
+    <Compile Include="../timewarp-nuru-core-tests/help-provider-04-default-route.cs" />
+    <Compile Include="../timewarp-nuru-core-tests/help-provider-05-color-output.cs" />
+    <Compile Include="../timewarp-nuru-core-tests/hyperlink-01-basic.cs" />
+    <Compile Include="../timewarp-nuru-core-tests/panel-widget-01-basic.cs" />
+    <Compile Include="../timewarp-nuru-core-tests/panel-widget-02-terminal-extensions.cs" />
+    <Compile Include="../timewarp-nuru-core-tests/panel-widget-03-word-wrap.cs" />
+    <Compile Include="../timewarp-nuru-core-tests/rule-widget-01-basic.cs" />
+    <Compile Include="../timewarp-nuru-core-tests/rule-widget-02-terminal-extensions.cs" />
+    <Compile Include="../timewarp-nuru-core-tests/table-widget-01-basic.cs" />
+    <Compile Include="../timewarp-nuru-core-tests/table-widget-02-borders.cs" />
+    <Compile Include="../timewarp-nuru-core-tests/table-widget-03-styling.cs" />
+    <Compile Include="../timewarp-nuru-core-tests/table-widget-04-expand.cs" />
+    <Compile Include="../timewarp-nuru-core-tests/invoker-registry-01-basic.cs" />
+    <Compile Include="../timewarp-nuru-core-tests/message-type-01-fluent-api.cs" />
+    <Compile Include="../timewarp-nuru-core-tests/message-type-02-help-output.cs" />
+    <Compile Include="../timewarp-nuru-core-tests/nuru-route-registry-01-basic.cs" />
+    <Compile Include="../timewarp-nuru-core-tests/route-builder-01-basic.cs" />
+    <Compile Include="../timewarp-nuru-core-tests/test-terminal-context-01-basic.cs" />
+    <Compile Include="../timewarp-nuru-core-tests/compiled-route-test-helper.cs" />
+    <!-- Parser tests (migrated) -->
+    <Compile Include="../timewarp-nuru-core-tests/parser/*.cs" />
+    <!-- Routing tests (migrated) - exclude Mediator tests (routing-11, routing-22) which conflict with Mediator source generator in multi-mode -->
+    <Compile Include="../timewarp-nuru-core-tests/routing/*.cs" Exclude="../timewarp-nuru-core-tests/routing/routing-11-*.cs;../timewarp-nuru-core-tests/routing/routing-22-*.cs" />
+    <!-- Configuration tests (migrated) -->
+    <Compile Include="../timewarp-nuru-core-tests/configuration/*.cs" />
+    <!-- Factory tests - excluded from multi-mode due to Mediator.SourceGenerator conflicts -->
+    <!-- <Compile Include="../timewarp-nuru-core-tests/factory/*.cs" /> -->
+    <!-- Options tests (migrated) - exclude NuruContext tests (not implemented feature) -->
+    <Compile Include="../timewarp-nuru-core-tests/options/*.cs" Exclude="../timewarp-nuru-core-tests/options/options-03-*.cs" />
+    <!-- Type conversion tests (migrated) -->
+    <Compile Include="../timewarp-nuru-core-tests/type-conversion/*.cs" />
+    <!-- Completion tests - static (migrated) -->
+    <Compile Include="../timewarp-nuru-completion-tests/static/*.cs" />
+    <!-- Completion tests - dynamic (migrated) -->
+    <Compile Include="../timewarp-nuru-completion-tests/dynamic/*.cs" />
+    <!-- Completion tests - engine (migrated) -->
+    <Compile Include="../timewarp-nuru-completion-tests/engine/*.cs" />
+    <!-- All REPL tests (recursive glob includes subfolders, excludes obj/bin) -->
+    <Compile Include="../timewarp-nuru-repl-tests/**/*.cs" Exclude="../timewarp-nuru-repl-tests/obj/**;../timewarp-nuru-repl-tests/bin/**" />
+    <!-- MCP tests (migrated) -->
+    <Compile Include="../timewarp-nuru-mcp-tests/*.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="$(MSBuildThisFileDirectory)../../source/timewarp-nuru-completion/timewarp-nuru-completion.csproj" />
+    <ProjectReference Include="$(MSBuildThisFileDirectory)../../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj" />
+    <ProjectReference Include="$(MSBuildThisFileDirectory)../../source/timewarp-nuru-mcp/timewarp-nuru-mcp.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="TimeWarp.Nuru.Tests.LexerTests.LexerTestHelper" Static="true" />
+    <!-- Global usings for migrated test files -->
+    <Using Include="TimeWarp.Nuru" />
+    <Using Include="Shouldly" />
+    <Using Include="System.ComponentModel.DataAnnotations" />
+    <Using Include="Microsoft.Extensions.DependencyInjection" />
+    <Using Include="Microsoft.Extensions.Options" />
+    <Using Include="System.Net" />
+    <!-- MCP tools namespace -->
+    <Using Include="TimeWarp.Nuru.Mcp.Tools" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Packages for configuration tests -->
+    <PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" />
+  </ItemGroup>
+</Project>

@@ -2,7 +2,6 @@
 #:project ../../../source/timewarp-nuru/timewarp-nuru.csproj
 #:project ../../../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj
 
-using TimeWarp.Nuru;
 using TimeWarp.Nuru.Tests.TabCompletion;
 
 // ============================================================================
@@ -18,13 +17,20 @@ using TimeWarp.Nuru.Tests.TabCompletion;
 // if --help completion is not fully implemented yet.
 // ============================================================================
 
-return await RunTests<HelpOptionTests>();
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.TabCompletion.HelpOption
+{
 
 [TestTag("REPL")]
 [TestTag("TabCompletion")]
-[ClearRunfileCache]
 public class HelpOptionTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<HelpOptionTests>();
+
   private static TestTerminal Terminal = null!;
   private static NuruCoreApp App = null!;
 
@@ -243,3 +249,5 @@ public class HelpOptionTests
     Terminal.OutputContains("help").ShouldBeTrue("Should match 'HeLp' case-insensitively");
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.TabCompletion.HelpOption

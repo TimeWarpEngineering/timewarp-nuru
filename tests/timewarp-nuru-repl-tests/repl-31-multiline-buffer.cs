@@ -2,16 +2,23 @@
 #:project ../../source/timewarp-nuru/timewarp-nuru.csproj
 #:project ../../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj
 
-using TimeWarp.Nuru;
-
 // Tests for MultilineBuffer data model (Task 043-009)
-return await RunTests<MultilineBufferTests>();
+
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.ReplTests.MultilineBufferTests
+{
 
 [TestTag("REPL")]
 [TestTag("PSReadLine")]
 [TestTag("Multiline")]
 public class MultilineBufferTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<MultilineBufferTests>();
+
   // ============================================================================
   // Construction and Basic State Tests
   // ============================================================================
@@ -436,7 +443,7 @@ public class MultilineBufferTests
     string fullText = buffer.GetFullText();
 
     // Assert
-    fullText.ShouldBe($"line one{Environment.NewLine}line two", "Full text should include newlines");
+    fullText.ShouldBe($"line one{System.Environment.NewLine}line two", "Full text should include newlines");
 
     await Task.CompletedTask;
   }
@@ -561,3 +568,5 @@ public class MultilineBufferTests
     await Task.CompletedTask;
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.ReplTests.MultilineBufferTests

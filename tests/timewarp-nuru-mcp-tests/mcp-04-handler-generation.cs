@@ -1,12 +1,19 @@
 #!/usr/bin/dotnet --
 #:project ../../source/timewarp-nuru-mcp/timewarp-nuru-mcp.csproj
 
-return await RunTests<HandlerGenerationTests>(clearCache: true);
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.Mcp
+{
 
 [TestTag("MCP")]
-[ClearRunfileCache]
 public sealed class HandlerGenerationTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<HandlerGenerationTests>();
+
   public static async Task Should_generate_delegate_handler_for_simple_literal()
   {
     // Arrange
@@ -228,3 +235,5 @@ public sealed class HandlerGenerationTests
     await Task.CompletedTask;
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.Mcp

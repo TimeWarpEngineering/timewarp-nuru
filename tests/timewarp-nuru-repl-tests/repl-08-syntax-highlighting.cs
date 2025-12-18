@@ -2,14 +2,20 @@
 #:project ../../source/timewarp-nuru/timewarp-nuru.csproj
 #:project ../../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj
 
-using TimeWarp.Nuru;
-
 // Test syntax highlighting (Section 8 of REPL Test Plan)
-return await RunTests<SyntaxHighlightingTests>();
 
-[TestTag("REPL")]
-public class SyntaxHighlightingTests
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.ReplTests.SyntaxHighlighting
 {
+  [TestTag("REPL")]
+  public class SyntaxHighlightingTests
+  {
+    [ModuleInitializer]
+    internal static void Register() => RegisterTests<SyntaxHighlightingTests>();
+
   private static EndpointCollection CreateEndpointsFromApp(params (string route, Func<string> handler)[] routes)
   {
     NuruAppBuilder builder = new();
@@ -176,5 +182,6 @@ public class SyntaxHighlightingTests
     result1.ShouldBe(result2);
 
     await Task.CompletedTask;
+  }
   }
 }

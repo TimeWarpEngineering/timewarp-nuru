@@ -4,13 +4,21 @@
 using Microsoft.Extensions.DependencyInjection;
 
 // Test TestTerminalContext AsyncLocal behavior and isolation
-return await RunTests<TestTerminalContextTests>(clearCache: true);
+
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.Core.TerminalContext
+{
 
 [TestTag("Terminal")]
 [TestTag("Testing")]
-[ClearRunfileCache]
 public class TestTerminalContextTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<TestTerminalContextTests>();
+
   public static async Task Should_provide_null_when_not_set()
   {
     // Arrange/Act
@@ -180,3 +188,5 @@ public class TestTerminalContextTests
     TestTerminalContext.Current = null;
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.Core.TerminalContext

@@ -1,11 +1,18 @@
 #!/usr/bin/dotnet --
 
-return await RunTests<EndpointMatchingTests>(clearCache: true);
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.Completion.EndpointMatching
+{
 
 [TestTag("Completion")]
-[ClearRunfileCache]
 public class EndpointMatchingTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<EndpointMatchingTests>();
+
   public static async Task Should_match_route_with_multiple_literals()
   {
     // Arrange
@@ -251,3 +258,5 @@ public class EndpointMatchingTests
     await Task.CompletedTask;
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.Completion.EndpointMatching

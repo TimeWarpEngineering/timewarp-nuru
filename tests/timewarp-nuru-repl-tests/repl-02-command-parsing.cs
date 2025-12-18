@@ -2,11 +2,19 @@
 #:project ../../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj
 
 // Test command line parsing with quotes and escapes (Section 2 of REPL Test Plan)
-return await RunTests<CommandParsingTests>();
 
-[TestTag("REPL")]
-public class CommandParsingTests
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.ReplTests.CommandParsing
 {
+  [TestTag("REPL")]
+  public class CommandParsingTests
+  {
+    [ModuleInitializer]
+    internal static void Register() => RegisterTests<CommandParsingTests>();
+
   public static async Task Should_parse_simple_command()
   {
     // Arrange & Act
@@ -126,5 +134,6 @@ public class CommandParsingTests
     result[5].ShouldBe("nginx");
 
     await Task.CompletedTask;
+  }
   }
 }

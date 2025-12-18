@@ -165,4 +165,4 @@ NuruCoreApp app = NuruApp.CreateBuilder(args, nuruAppOptions)
   .Build();
 
 // Start REPL mode
-return await app.RunReplAsync();
+await app.RunReplAsync();

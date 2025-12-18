@@ -2,15 +2,22 @@
 #:project ../../source/timewarp-nuru/timewarp-nuru.csproj
 #:project ../../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj
 
-using TimeWarp.Nuru;
-
 // Test that interactive route execution works with NuruCoreAppHolder invoker
-// Regression test for: "No source-generated invoker found for signature 'NuruCoreAppHolder_Returns_TaskInt'"
-return await RunTests<InteractiveRouteExecutionTests>();
+// Regression test for: "No source-generated invoker found for signature 'NuruCoreAppHolder_Returns_Task'"
+
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.ReplTests.InteractiveRouteExecution
+{
 
 [TestTag("REPL")]
 public class InteractiveRouteExecutionTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<InteractiveRouteExecutionTests>();
+
   public static async Task Should_execute_interactive_route_with_long_form()
   {
     // Arrange - Create app with interactive route (uses NuruCoreAppHolder parameter)
@@ -21,10 +28,10 @@ public class InteractiveRouteExecutionTests
       .UseTerminal(terminal)
       .Map("status", () => "OK")
       .AddReplSupport()
-      .AddInteractiveRoute() // This registers StartInteractiveModeAsync(NuruCoreAppHolder) => Task<int>
+      .AddInteractiveRoute() // This registers StartInteractiveModeAsync(NuruCoreAppHolder) => Task
       .Build();
 
-    // Act - Execute the --interactive route (requires NuruCoreAppHolder_Returns_TaskInt invoker)
+    // Act - Execute the --interactive route (requires NuruCoreAppHolder_Returns_Task invoker)
     int exitCode = await app.RunAsync(["--interactive"]);
 
     // Assert - Should enter REPL and exit cleanly
@@ -100,3 +107,5 @@ public class InteractiveRouteExecutionTests
       .ShouldBeTrue("Commands should execute after entering REPL via --interactive");
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.ReplTests.InteractiveRouteExecution

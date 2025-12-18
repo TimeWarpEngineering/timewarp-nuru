@@ -79,8 +79,7 @@ internal sealed class ReplSession : IDisposable
   /// <param name="replOptions">Configuration for the REPL.</param>
   /// <param name="loggerFactory">Logger factory for logging.</param>
   /// <param name="cancellationToken">Token to cancel the REPL loop.</param>
-  /// <returns>The exit code of the last executed command, or 0 if no commands were executed.</returns>
-  public static async Task<int> RunAsync
+  public static async Task RunAsync
   (
     NuruCoreApp nuruApp,
     ReplOptions replOptions,
@@ -92,7 +91,7 @@ internal sealed class ReplSession : IDisposable
 
     try
     {
-      return await CurrentSession.RunInstanceAsync(cancellationToken).ConfigureAwait(false);
+      await CurrentSession.RunInstanceAsync(cancellationToken).ConfigureAwait(false);
     }
     finally
     {

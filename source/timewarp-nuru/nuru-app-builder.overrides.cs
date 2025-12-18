@@ -57,38 +57,15 @@ public partial class NuruAppBuilder
 
   #region Route Overrides
 
-  /// <inheritdoc />
-  public override NuruAppBuilder MapDefault(Delegate handler, string? description = null)
-  {
-    base.MapDefault(handler, description);
-    return this;
-  }
+  // Note: Map, MapDefault, and Map<T> now return EndpointBuilder from the base class.
+  // EndpointBuilder provides implicit conversion back to the builder type and
+  // supports fluent chaining via its own Map/MapMultiple methods.
+  // These overrides are no longer needed since EndpointBuilder handles the chaining.
 
   /// <inheritdoc />
   public override NuruAppBuilder AddReplOptions(Action<ReplOptions>? configureOptions = null)
   {
     base.AddReplOptions(configureOptions);
-    return this;
-  }
-
-  /// <inheritdoc />
-  public override NuruAppBuilder Map(string pattern, Delegate handler, string? description = null)
-  {
-    base.Map(pattern, handler, description);
-    return this;
-  }
-
-  /// <inheritdoc />
-  public override NuruAppBuilder Map<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)] TCommand>(string pattern, string? description = null)
-  {
-    base.Map<TCommand>(pattern, description);
-    return this;
-  }
-
-  /// <inheritdoc />
-  public override NuruAppBuilder Map<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)] TCommand, TResponse>(string pattern, string? description = null)
-  {
-    base.Map<TCommand, TResponse>(pattern, description);
     return this;
   }
 

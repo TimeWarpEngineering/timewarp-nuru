@@ -2,12 +2,20 @@
 #:project ../../source/timewarp-nuru/timewarp-nuru.csproj
 
 // Test Rule widget basic functionality
-return await RunTests<RuleWidgetBasicTests>(clearCache: true);
+
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.Core.RuleWidget
+{
 
 [TestTag("Widgets")]
-[ClearRunfileCache]
 public class RuleWidgetBasicTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<RuleWidgetBasicTests>();
+
   public static async Task Should_render_simple_rule_at_specified_width()
   {
     // Arrange
@@ -131,3 +139,5 @@ public class RuleWidgetBasicTests
     await Task.CompletedTask;
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.Core.RuleWidget

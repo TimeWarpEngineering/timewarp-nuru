@@ -1,14 +1,14 @@
 #!/usr/bin/dotnet --
-
-using TimeWarp.Nuru;
-using Shouldly;
-
-return await RunTests<CommandExtractionTests>(clearCache: true);
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
 
 [TestTag("Completion")]
-[ClearRunfileCache]
 public class CommandExtractionTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<CommandExtractionTests>();
+
   public static async Task Should_extract_single_command()
   {
     // Arrange

@@ -98,6 +98,21 @@ Microsoft's Wassette (https://github.com/microsoft/wassette):
 4. Invoke via Wassette from AI agent
 5. Validate capabilities on load
 
+### Query/Command Distinction
+
+**Related:** Task 150 (Attributed Routes) identified a design gap - the current Nuru route syntax (string, fluent, attribute) does not distinguish between:
+- `IBaseQuery` (read operations)
+- `IBaseCommand` (write operations)
+- `IBaseRequest` (general requests)
+
+Martin Mediator's hierarchy (`IMessage` → `IBaseRequest`/`IBaseCommand`/`IBaseQuery`) provides this semantic information, but Nuru doesn't currently expose it in route definitions.
+
+For MCP schema generation, this distinction matters:
+- Queries are safe, idempotent, read-only operations
+- Commands may have side effects
+
+This investigation should consider how to surface query/command semantics in the capabilities model.
+
 ### Related Resources
 
 - WASI GitHub: https://github.com/WebAssembly/WASI

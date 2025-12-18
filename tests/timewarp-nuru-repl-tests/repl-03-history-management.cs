@@ -2,14 +2,18 @@
 #:project ../../source/timewarp-nuru/timewarp-nuru.csproj
 #:project ../../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj
 
-using TimeWarp.Nuru;
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
 
-return await RunTests<HistoryManagementTests>(clearCache: true);
-
-[TestTag("REPL")]
-[ClearRunfileCache]
-public class HistoryManagementTests
+namespace TimeWarp.Nuru.Tests.ReplTests.HistoryManagement
 {
+  [TestTag("REPL")]
+  public class HistoryManagementTests
+  {
+    [ModuleInitializer]
+    internal static void Register() => RegisterTests<HistoryManagementTests>();
+
   public static async Task Should_add_commands_to_history()
   {
     // Arrange
@@ -206,5 +210,6 @@ public class HistoryManagementTests
     // Assert - only non-empty command should be in history
     terminal.OutputContains("greet Test")
       .ShouldBeTrue("Non-empty command should be in history");
+  }
   }
 }

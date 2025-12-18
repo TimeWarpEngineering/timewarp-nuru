@@ -2,7 +2,6 @@
 #:project ../../../source/timewarp-nuru/timewarp-nuru.csproj
 #:project ../../../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj
 
-using TimeWarp.Nuru;
 using TimeWarp.Nuru.Tests.TabCompletion;
 
 // ============================================================================
@@ -19,13 +18,20 @@ using TimeWarp.Nuru.Tests.TabCompletion;
 // tab completion and provide proper IntelliSense-like experience.
 // ============================================================================
 
-return await RunTests<EnumCompletionTests>();
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.TabCompletion.Enums
+{
 
 [TestTag("REPL")]
 [TestTag("TabCompletion")]
-[ClearRunfileCache]
 public class EnumCompletionTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<EnumCompletionTests>();
+
   private static TestTerminal Terminal = null!;
   private static NuruCoreApp App = null!;
 
@@ -326,3 +332,5 @@ public class EnumCompletionTests
     Terminal.OutputContains("Prod").ShouldBeTrue("Should accept exact 'Prod' enum value");
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.TabCompletion.Enums

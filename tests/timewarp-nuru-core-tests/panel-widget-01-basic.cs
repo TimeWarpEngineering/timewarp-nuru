@@ -2,12 +2,20 @@
 #:project ../../source/timewarp-nuru/timewarp-nuru.csproj
 
 // Test Panel widget basic functionality
-return await RunTests<PanelWidgetBasicTests>(clearCache: true);
+
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.Core.PanelWidget
+{
 
 [TestTag("Widgets")]
-[ClearRunfileCache]
 public class PanelWidgetBasicTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<PanelWidgetBasicTests>();
+
   public static async Task Should_render_simple_panel_with_content()
   {
     // Arrange
@@ -157,8 +165,8 @@ public class PanelWidgetBasicTests
     string[] lines = panel.Render(80); // terminal width should be ignored
 
     // Assert
-    AnsiStringUtils.GetVisibleLength(lines[0]).ShouldBe(20);
-    AnsiStringUtils.GetVisibleLength(lines[2]).ShouldBe(20);
+    TimeWarp.Nuru.AnsiStringUtils.GetVisibleLength(lines[0]).ShouldBe(20);
+    TimeWarp.Nuru.AnsiStringUtils.GetVisibleLength(lines[2]).ShouldBe(20);
 
     await Task.CompletedTask;
   }
@@ -224,3 +232,5 @@ public class PanelWidgetBasicTests
     await Task.CompletedTask;
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.Core.PanelWidget

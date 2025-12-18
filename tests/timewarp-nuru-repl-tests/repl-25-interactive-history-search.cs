@@ -2,17 +2,24 @@
 #:project ../../source/timewarp-nuru/timewarp-nuru.csproj
 #:project ../../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj
 
-using TimeWarp.Nuru;
-
 // Tests for PSReadLine-compatible interactive history search (Task 043-002a)
 // Verifies Ctrl+R (reverse search) and Ctrl+S (forward search) functionality
-return await RunTests<InteractiveHistorySearchTests>();
+
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.ReplTests.InteractiveHistorySearch
+{
 
 [TestTag("REPL")]
 [TestTag("PSReadLine")]
 [TestTag("HistorySearch")]
 public class InteractiveHistorySearchTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<InteractiveHistorySearchTests>();
+
   private static TestTerminal? Terminal;
   private static NuruCoreApp? App;
 
@@ -367,3 +374,5 @@ public class InteractiveHistorySearchTests
     Terminal.OutputContains("Deployed to prod!").ShouldBeTrue("Other keys should accept match and be processed");
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.ReplTests.InteractiveHistorySearch

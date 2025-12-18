@@ -1,11 +1,18 @@
 #!/usr/bin/dotnet --
 
-return await RunTests<CustomSourcesTests>(clearCache: true);
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.Completion.CustomSources
+{
 
 [TestTag("Completion")]
-[ClearRunfileCache]
 public class CustomSourcesTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<CustomSourcesTests>();
+
   public static async Task Should_use_custom_source_for_parameter()
   {
     // Arrange
@@ -342,3 +349,5 @@ sealed class EndpointAwareSource : ICompletionSource
     yield return new CompletionCandidate($"endpoint-count:{count}", null, CompletionType.Parameter);
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.Completion.CustomSources

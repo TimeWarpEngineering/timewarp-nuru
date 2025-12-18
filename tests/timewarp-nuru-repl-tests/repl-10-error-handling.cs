@@ -2,14 +2,20 @@
 #:project ../../source/timewarp-nuru/timewarp-nuru.csproj
 #:project ../../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj
 
-using TimeWarp.Nuru;
-
 // Test error handling (Section 10 of REPL Test Plan)
-return await RunTests<ErrorHandlingTests>();
 
-[TestTag("REPL")]
-public class ErrorHandlingTests
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.ReplTests.ErrorHandling
 {
+  [TestTag("REPL")]
+  public class ErrorHandlingTests
+  {
+    [ModuleInitializer]
+    internal static void Register() => RegisterTests<ErrorHandlingTests>();
+
   private static string ThrowInvalidOperation() => throw new InvalidOperationException("Test error");
   private static string ThrowError1() => throw new InvalidOperationException("Error 1");
   private static string ThrowArgument() => throw new ArgumentException("Error 2");
@@ -30,10 +36,9 @@ public class ErrorHandlingTests
       .Build();
 
     // Act
-    int exitCode = await app.RunReplAsync();
+    await app.RunReplAsync();
 
     // Assert
-    exitCode.ShouldBe(0);
     terminal.OutputContains("Goodbye!")
       .ShouldBeTrue("Session should continue after error");
   }
@@ -53,10 +58,11 @@ public class ErrorHandlingTests
       .Build();
 
     // Act
-    int exitCode = await app.RunReplAsync();
+    await app.RunReplAsync();
 
     // Assert - session should exit after error
-    exitCode.ShouldBe(1);
+    // Note: With Task return type, we can't check exit code, but we verify error was shown
+    terminal.ErrorOutput.ShouldContain("Error");
   }
 
   public static async Task Should_handle_invalid_route()
@@ -160,10 +166,11 @@ public class ErrorHandlingTests
       .Build();
 
     // Act
-    int exitCode = await app.RunReplAsync();
+    await app.RunReplAsync();
 
-    // Assert
-    exitCode.ShouldBe(1, "Exit code should be non-zero on error");
+    // Assert - session should exit on error
+    // Note: With Task return type, we can't check exit code, but we verify error was shown
+    terminal.ErrorOutput.ShouldContain("Error");
   }
 
   public static async Task Should_handle_multiple_errors()
@@ -184,11 +191,11 @@ public class ErrorHandlingTests
       .Build();
 
     // Act
-    int exitCode = await app.RunReplAsync();
+    await app.RunReplAsync();
 
     // Assert
-    exitCode.ShouldBe(0);
     terminal.OutputContains("Goodbye!")
       .ShouldBeTrue("Session should handle multiple errors");
+  }
   }
 }

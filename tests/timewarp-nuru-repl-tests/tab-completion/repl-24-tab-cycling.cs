@@ -2,7 +2,6 @@
 #:project ../../../source/timewarp-nuru/timewarp-nuru.csproj
 #:project ../../../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj
 
-using TimeWarp.Nuru;
 using TimeWarp.Nuru.Tests.TabCompletion;
 
 // ============================================================================
@@ -19,13 +18,20 @@ using TimeWarp.Nuru.Tests.TabCompletion;
 // can cycle through options to find the right match.
 // ============================================================================
 
-return await RunTests<CyclingBehaviorTests>();
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.TabCompletion.Cycling
+{
 
 [TestTag("REPL")]
 [TestTag("TabCompletion")]
-[ClearRunfileCache]
 public class CyclingBehaviorTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<CyclingBehaviorTests>();
+
   private static TestTerminal Terminal = null!;
   private static NuruCoreApp App = null!;
 
@@ -286,3 +292,5 @@ public class CyclingBehaviorTests
   // These will be tested in Phase 3 if terminal supports it.
   // ============================================================================
 }
+
+} // namespace TimeWarp.Nuru.Tests.TabCompletion.Cycling

@@ -5,6 +5,110 @@ namespace TimeWarp.Nuru;
 /// </summary>
 public static class NuruCoreAppExtensions
 {
+  // ============================================================================
+  // EndpointBuilder<TBuilder> overloads - preserve builder type in fluent chain
+  // ============================================================================
+
+  /// <summary>
+  /// Adds REPL support to application (generic EndpointBuilder overload for fluent chaining).
+  /// </summary>
+  /// <typeparam name="TBuilder">The builder type for proper fluent chaining.</typeparam>
+  /// <param name="configurator">The EndpointBuilder from a Map() call.</param>
+  /// <param name="configureOptions">Optional action to configure REPL options.</param>
+  /// <returns>The underlying builder for chaining.</returns>
+  public static TBuilder AddReplSupport<TBuilder>
+  (
+    this EndpointBuilder<TBuilder> configurator,
+    Action<ReplOptions>? configureOptions = null
+  )
+    where TBuilder : NuruCoreAppBuilder
+  {
+    ArgumentNullException.ThrowIfNull(configurator);
+    return configurator.Builder.AddReplSupport(configureOptions);
+  }
+
+  /// <summary>
+  /// Adds REPL command routes to application (generic EndpointBuilder overload for fluent chaining).
+  /// </summary>
+  /// <typeparam name="TBuilder">The builder type for proper fluent chaining.</typeparam>
+  /// <param name="configurator">The EndpointBuilder from a Map() call.</param>
+  /// <returns>The underlying builder for chaining.</returns>
+  public static TBuilder AddReplRoutes<TBuilder>(this EndpointBuilder<TBuilder> configurator)
+    where TBuilder : NuruCoreAppBuilder
+  {
+    ArgumentNullException.ThrowIfNull(configurator);
+    return configurator.Builder.AddReplRoutes();
+  }
+
+  /// <summary>
+  /// Adds an interactive mode route (generic EndpointBuilder overload for fluent chaining).
+  /// </summary>
+  /// <typeparam name="TBuilder">The builder type for proper fluent chaining.</typeparam>
+  /// <param name="configurator">The EndpointBuilder from a Map() call.</param>
+  /// <param name="patterns">Route patterns to trigger interactive mode.</param>
+  /// <returns>The underlying builder for chaining.</returns>
+  public static TBuilder AddInteractiveRoute<TBuilder>
+  (
+    this EndpointBuilder<TBuilder> configurator,
+    string patterns = "--interactive,-i"
+  )
+    where TBuilder : NuruCoreAppBuilder
+  {
+    ArgumentNullException.ThrowIfNull(configurator);
+    return configurator.Builder.AddInteractiveRoute(patterns);
+  }
+
+  // ============================================================================
+  // EndpointBuilder overloads (non-generic) - backward compatibility
+  // ============================================================================
+
+  /// <summary>
+  /// Adds REPL support to application (EndpointBuilder overload for fluent chaining).
+  /// </summary>
+  /// <param name="configurator">The EndpointBuilder from a Map() call.</param>
+  /// <param name="configureOptions">Optional action to configure REPL options.</param>
+  /// <returns>The underlying builder for chaining.</returns>
+  public static NuruCoreAppBuilder AddReplSupport
+  (
+    this EndpointBuilder configurator,
+    Action<ReplOptions>? configureOptions = null
+  )
+  {
+    ArgumentNullException.ThrowIfNull(configurator);
+    return configurator.Builder.AddReplSupport(configureOptions);
+  }
+
+  /// <summary>
+  /// Adds REPL command routes to application (EndpointBuilder overload for fluent chaining).
+  /// </summary>
+  /// <param name="configurator">The EndpointBuilder from a Map() call.</param>
+  /// <returns>The underlying builder for chaining.</returns>
+  public static NuruCoreAppBuilder AddReplRoutes(this EndpointBuilder configurator)
+  {
+    ArgumentNullException.ThrowIfNull(configurator);
+    return configurator.Builder.AddReplRoutes();
+  }
+
+  /// <summary>
+  /// Adds an interactive mode route (EndpointBuilder overload for fluent chaining).
+  /// </summary>
+  /// <param name="configurator">The EndpointBuilder from a Map() call.</param>
+  /// <param name="patterns">Route patterns to trigger interactive mode.</param>
+  /// <returns>The underlying builder for chaining.</returns>
+  public static NuruCoreAppBuilder AddInteractiveRoute
+  (
+    this EndpointBuilder configurator,
+    string patterns = "--interactive,-i"
+  )
+  {
+    ArgumentNullException.ThrowIfNull(configurator);
+    return configurator.Builder.AddInteractiveRoute(patterns);
+  }
+
+  // ============================================================================
+  // NuruCoreAppBuilder extension methods
+  // ============================================================================
+
   /// <summary>
   /// Adds REPL (Read-Eval-Print Loop) command routes to application.
   /// This registers built-in REPL commands as routes.
@@ -53,8 +157,8 @@ public static class NuruCoreAppExtensions
   /// Otherwise, executes the command normally.
   /// </summary>
   /// <param name="app">The NuruCoreApp instance.</param>
+  /// <param name="options">Optional REPL options to override configured options.</param>
   /// <param name="cancellationToken">Cancellation token.</param>
-  /// <returns>Exit code from the command or REPL session.</returns>
   /// <example>
   /// <code>
   /// NuruCoreApp app = NuruCoreApp.CreateBuilder()
@@ -63,10 +167,10 @@ public static class NuruCoreAppExtensions
   ///   .Build();
   ///
   /// // Start REPL immediately
-  /// return await app.RunReplAsync();
+  /// await app.RunReplAsync();
   /// </code>
   /// </example>
-  public static Task<int> RunReplAsync
+  public static Task RunReplAsync
   (
     this NuruCoreApp app,
     ReplOptions? options = null,
@@ -141,8 +245,7 @@ public static class NuruCoreAppExtensions
   /// Receives NuruCoreAppHolder via DI injection and starts the REPL.
   /// </summary>
   /// <param name="appHolder">The NuruCoreAppHolder instance (injected by framework).</param>
-  /// <returns>Exit code from the REPL session.</returns>
-  public static Task<int> StartInteractiveModeAsync(NuruCoreAppHolder appHolder)
+  public static Task StartInteractiveModeAsync(NuruCoreAppHolder appHolder)
   {
     ArgumentNullException.ThrowIfNull(appHolder);
     return appHolder.App.RunReplAsync();

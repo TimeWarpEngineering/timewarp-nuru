@@ -2,16 +2,23 @@
 #:project ../../source/timewarp-nuru/timewarp-nuru.csproj
 #:project ../../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj
 
-using TimeWarp.Nuru;
-
 // Tests for PSReadLine-compatible keybindings (Task 043_001)
 // Verifies both primary and alternative keybindings work correctly
-return await RunTests<PSReadLineKeybindingsTests>();
+
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.ReplTests.PSReadLineKeybindings
+{
 
 [TestTag("REPL")]
 [TestTag("PSReadLine")]
 public class PSReadLineKeybindingsTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<PSReadLineKeybindingsTests>();
+
   private static TestTerminal? Terminal;
   private static NuruCoreApp? App;
 
@@ -529,3 +536,5 @@ public class PSReadLineKeybindingsTests
     Terminal.OutputContains("Goodbye!").ShouldBeTrue("Delete should delete character under cursor");
   }
 }
+
+} // namespace TimeWarp.Nuru.Tests.ReplTests.PSReadLineKeybindings

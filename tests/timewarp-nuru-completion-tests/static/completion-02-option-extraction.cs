@@ -1,14 +1,14 @@
 #!/usr/bin/dotnet --
-
-using TimeWarp.Nuru;
-using Shouldly;
-
-return await RunTests<OptionExtractionTests>(clearCache: true);
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
 
 [TestTag("Completion")]
-[ClearRunfileCache]
 public class OptionExtractionTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<OptionExtractionTests>();
+
   public static async Task Should_extract_long_form_options()
   {
     // Arrange

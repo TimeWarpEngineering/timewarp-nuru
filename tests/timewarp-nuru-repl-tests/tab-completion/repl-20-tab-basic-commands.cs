@@ -2,7 +2,6 @@
 #:project ../../../source/timewarp-nuru/timewarp-nuru.csproj
 #:project ../../../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj
 
-using TimeWarp.Nuru;
 using TimeWarp.Nuru.Tests.TabCompletion;
 
 // ============================================================================
@@ -20,13 +19,20 @@ using TimeWarp.Nuru.Tests.TabCompletion;
 // like subcommands, options, and enums.
 // ============================================================================
 
-return await RunTests<BasicCommandCompletionTests>();
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.TabCompletion.BasicCommands
+{
 
 [TestTag("REPL")]
 [TestTag("TabCompletion")]
-[ClearRunfileCache]
 public class BasicCommandCompletionTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<BasicCommandCompletionTests>();
+
   private static TestTerminal Terminal = null!;
   private static NuruCoreApp App = null!;
 
@@ -364,3 +370,5 @@ public class BasicCommandCompletionTests
   // The --help option behavior after complete commands needs further investigation
   // ============================================================================
 }
+
+} // namespace TimeWarp.Nuru.Tests.TabCompletion.BasicCommands

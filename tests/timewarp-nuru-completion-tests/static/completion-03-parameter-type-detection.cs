@@ -1,14 +1,14 @@
 #!/usr/bin/dotnet --
-
-using TimeWarp.Nuru;
-using Shouldly;
-
-return await RunTests<ParameterTypeDetectionTests>(clearCache: true);
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
 
 [TestTag("Completion")]
-[ClearRunfileCache]
 public class ParameterTypeDetectionTests
 {
+  [ModuleInitializer]
+  internal static void Register() => RegisterTests<ParameterTypeDetectionTests>();
+
   public static async Task Should_handle_string_parameters()
   {
     // Arrange

@@ -23,6 +23,7 @@ Request classes with `[NuruRoute]` attributes auto-register without explicit `Ma
 - [x] 186: Add Source Generation Verification Tests (with test utilities)
 - [ ] 187: Add Route Matching Tests for Attributed Routes
 - [ ] 188: Update Existing Basic Tests with Missing Coverage
+- [ ] 189: Add MessageType Detection to Attributed Route Generator
 
 ## Checklist
 

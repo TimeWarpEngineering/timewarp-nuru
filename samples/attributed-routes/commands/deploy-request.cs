@@ -6,9 +6,10 @@ using static System.Console;
 
 /// <summary>
 /// Deploy request with a required parameter and options.
+/// This is a Command (C) - mutating, needs confirmation before running.
 /// </summary>
 [NuruRoute("deploy", Description = "Deploy to an environment")]
-public sealed class DeployRequest : IRequest
+public sealed class DeployRequest : ICommand<Unit>
 {
   [Parameter(Description = "Target environment (dev, staging, prod)")]
   public string Env { get; set; } = string.Empty;
@@ -22,7 +23,7 @@ public sealed class DeployRequest : IRequest
   [Option("replicas", "r", Description = "Number of replicas")]
   public int Replicas { get; set; } = 1;
 
-  public sealed class Handler : IRequestHandler<DeployRequest>
+  public sealed class Handler : ICommandHandler<DeployRequest, Unit>
   {
     public ValueTask<Unit> Handle(DeployRequest request, CancellationToken ct)
     {

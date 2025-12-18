@@ -15,7 +15,7 @@ Task 158 introduced `IBuilder<TParent>` and `EndpointBuilder<TBuilder>` (was `Ro
 | Builder | Current State | Target Pattern |
 |---------|---------------|----------------|
 | `EndpointBuilder<T>` | Has `IBuilder<T>` | Done (Task 158, 164) |
-| `RouteBuilder` | Standalone `Build()` | `IBuilder<TParent>` (Factory) - Task 161 |
+| `CompiledRouteBuilder` | Standalone `Build()` | `IBuilder<TParent>` (Factory) - Task 161 |
 | `TableBuilder` | Standalone | `IBuilder<TParent>` (Mutating) - Task 162 |
 | `PanelBuilder` | Standalone | `IBuilder<TParent>` (Mutating) - Task 162 |
 | `RuleBuilder` | Standalone | `IBuilder<TParent>` (Mutating) - Task 162 |
@@ -24,7 +24,7 @@ Task 158 introduced `IBuilder<TParent>` and `EndpointBuilder<TBuilder>` (was `Ro
 
 ## Subtasks
 
-- **Task 161**: Apply IBuilder to RouteBuilder (in-progress)
+- **Task 161**: Apply IBuilder to CompiledRouteBuilder (in-progress)
 - **Task 162**: Apply IBuilder to Widget Builders (Table, Panel, Rule)
 - **Task 163**: Apply IBuilder to KeyBindingBuilder
 
@@ -32,7 +32,7 @@ Task 158 introduced `IBuilder<TParent>` and `EndpointBuilder<TBuilder>` (was `Ro
 
 - [x] Task 158: Introduce `IBuilder<TParent>` pattern
 - [x] Task 164: Rename builders to match what they build
-- [ ] Task 161: Apply IBuilder to RouteBuilder
+- [ ] Task 161: Apply IBuilder to CompiledRouteBuilder
 - [ ] Task 162: Apply IBuilder to Widget Builders
 - [ ] Task 163: Apply IBuilder to KeyBindingBuilder
 - [ ] Update documentation with unified pattern examples
@@ -50,7 +50,7 @@ Task 158 introduced `IBuilder<TParent>` and `EndpointBuilder<TBuilder>` (was `Ro
 // App configuration with nested builders
 NuruApp.CreateBuilder()
     .Map("status", () => "OK").AsQuery().Done()
-    .Map(r => r                               // RouteBuilder<EndpointBuilder>
+    .Map(r => r                               // CompiledRouteBuilder<EndpointBuilder>
         .WithLiteral("deploy")
         .WithParameter("env")
         .WithOption("force", "f")
@@ -94,7 +94,7 @@ public interface IBuilder<out TParent> where TParent : class
 }
 
 // Nested builder takes parent reference and callback
-public sealed class RouteBuilder<TParent> : IBuilder<TParent>
+public sealed class CompiledRouteBuilder<TParent> : IBuilder<TParent>
 {
     private readonly TParent _parent;
     private readonly Action<CompiledRoute> _onBuild;

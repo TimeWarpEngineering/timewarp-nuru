@@ -37,10 +37,10 @@ public partial class NuruCoreAppBuilder
   }
 
   /// <summary>
-  /// Adds a route using fluent <see cref="RouteBuilder"/> configuration.
+  /// Adds a route using fluent <see cref="CompiledRouteBuilder"/> configuration.
   /// Use <see cref="EndpointBuilder.WithHandler"/> to set the handler after configuring the route.
   /// </summary>
-  /// <param name="configureRoute">Action to configure the route pattern using <see cref="RouteBuilder"/>.</param>
+  /// <param name="configureRoute">Action to configure the route pattern using <see cref="CompiledRouteBuilder"/>.
   /// <param name="description">Optional description shown in help.</param>
   /// <returns>An <see cref="EndpointBuilder"/> for further endpoint configuration.</returns>
   /// <example>
@@ -54,11 +54,11 @@ public partial class NuruCoreAppBuilder
   ///     .Done();
   /// </code>
   /// </example>
-  public virtual EndpointBuilder Map(Action<RouteBuilder> configureRoute, string? description = null)
+  public virtual EndpointBuilder Map(Action<CompiledRouteBuilder> configureRoute, string? description = null)
   {
     ArgumentNullException.ThrowIfNull(configureRoute);
 
-    RouteBuilder routeBuilder = new();
+    CompiledRouteBuilder routeBuilder = new();
     configureRoute(routeBuilder);
     CompiledRoute compiledRoute = routeBuilder.Build();
 

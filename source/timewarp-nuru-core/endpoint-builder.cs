@@ -48,7 +48,7 @@ public sealed class EndpointBuilder<TBuilder> : IBuilder<TBuilder>
   /// <param name="handler">The delegate to invoke when this route is matched.</param>
   /// <returns>This configurator for further endpoint configuration.</returns>
   /// <remarks>
-  /// Use this when building routes with <see cref="RouteBuilder"/> where the handler
+  /// Use this when building routes with <see cref="CompiledRouteBuilder"/> where the handler
   /// is set separately from the route pattern:
   /// <code>
   /// app.Map(r => r.WithLiteral("deploy").WithParameter("env"))
@@ -213,7 +213,7 @@ public sealed class EndpointBuilder : IBuilder<NuruCoreAppBuilder>
   /// <param name="handler">The delegate to invoke when this route is matched.</param>
   /// <returns>This configurator for further endpoint configuration.</returns>
   /// <remarks>
-  /// Use this when building routes with <see cref="RouteBuilder"/> where the handler
+  /// Use this when building routes with <see cref="CompiledRouteBuilder"/> where the handler
   /// is set separately from the route pattern:
   /// <code>
   /// app.Map(r => r.WithLiteral("deploy").WithParameter("env"))

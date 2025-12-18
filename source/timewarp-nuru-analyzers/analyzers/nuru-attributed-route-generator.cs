@@ -2,7 +2,7 @@ namespace TimeWarp.Nuru;
 
 /// <summary>
 /// Source generator that creates route registration code for classes with [NuruRoute] attribute.
-/// Generates RouteBuilder calls and ModuleInitializer registration code.
+/// Generates CompiledRouteBuilder calls and ModuleInitializer registration code.
 /// </summary>
 [Generator]
 public class NuruAttributedRouteGenerator : IIncrementalGenerator
@@ -405,7 +405,7 @@ public class NuruAttributedRouteGenerator : IIncrementalGenerator
     string safeName = MakeSafeName(route.TypeName);
 
     sb.Append(CultureInfo.InvariantCulture, $"  internal static readonly global::TimeWarp.Nuru.CompiledRoute __Route_{safeName} = ");
-    sb.AppendLine("new global::TimeWarp.Nuru.RouteBuilder()");
+    sb.AppendLine("new global::TimeWarp.Nuru.CompiledRouteBuilder()");
 
     // Add group prefix literals
     if (!string.IsNullOrEmpty(route.GroupPrefix))
@@ -542,7 +542,7 @@ public class NuruAttributedRouteGenerator : IIncrementalGenerator
     string aliasSafeName = MakeSafeName(alias);
 
     sb.Append(CultureInfo.InvariantCulture, $"  internal static readonly global::TimeWarp.Nuru.CompiledRoute __Route_{safeName}_Alias_{aliasSafeName} = ");
-    sb.AppendLine("new global::TimeWarp.Nuru.RouteBuilder()");
+    sb.AppendLine("new global::TimeWarp.Nuru.CompiledRouteBuilder()");
 
     // Add group prefix literals (same as main route)
     if (!string.IsNullOrEmpty(route.GroupPrefix))

@@ -101,8 +101,8 @@ public class MessageTypeFluentApiTests
 
   public static async Task Compiled_route_builder_should_support_message_type()
   {
-    // Arrange & Act - Test RouteBuilder.WithMessageType
-    CompiledRoute route = new TimeWarp.Nuru.RouteBuilder()
+    // Arrange & Act - Test CompiledRouteBuilder.WithMessageType
+    CompiledRoute route = new TimeWarp.Nuru.CompiledRouteBuilder()
       .WithLiteral("test")
       .WithMessageType(TimeWarp.Nuru.MessageType.Query)
       .Build();
@@ -116,7 +116,7 @@ public class MessageTypeFluentApiTests
   public static async Task Compiled_route_builder_should_default_to_command()
   {
     // Arrange & Act - Test default message type
-    CompiledRoute route = new TimeWarp.Nuru.RouteBuilder()
+    CompiledRoute route = new TimeWarp.Nuru.CompiledRouteBuilder()
       .WithLiteral("test")
       .Build();
 

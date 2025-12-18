@@ -1,8 +1,8 @@
-# Apply IBuilder to RouteBuilder
+# Apply IBuilder to CompiledRouteBuilder
 
 ## Description
 
-Make `RouteBuilder` implement `IBuilder<TParent>` for consistent fluent API across all Nuru builders.
+Make `CompiledRouteBuilder` implement `IBuilder<TParent>` for consistent fluent API across all Nuru builders.
 
 **No backward compatibility concerns** - we're in beta, prioritize the best API.
 
@@ -13,13 +13,13 @@ Make `RouteBuilder` implement `IBuilder<TParent>` for consistent fluent API acro
 ## Current State (after Task 164)
 
 ```csharp
-// RouteBuilder is standalone with Build()
-var route = new RouteBuilder()
+// CompiledRouteBuilder is standalone with Build()
+var route = new CompiledRouteBuilder()
     .WithLiteral("deploy")
     .WithParameter("env")
     .Build();  // Returns CompiledRoute
 
-// Map() overload takes Action<RouteBuilder>
+// Map() overload takes Action<CompiledRouteBuilder>
 builder
     .Map(r => r
         .WithLiteral("deploy")
@@ -32,7 +32,7 @@ builder
 ## Target API
 
 ```csharp
-// RouteBuilder<TParent> implements IBuilder<TParent>
+// CompiledRouteBuilder<TParent> implements IBuilder<TParent>
 // Done() builds the route, sets it on parent, returns parent
 builder
     .Map(r => r
@@ -47,12 +47,12 @@ builder
 
 ## Design
 
-### RouteBuilder<TParent> Pattern
+### CompiledRouteBuilder<TParent> Pattern
 
 Following `TestAddressBuilder` pattern from `timewarp-fluent-builder`:
 
 ```csharp
-public sealed class RouteBuilder<TParent> : IBuilder<TParent>
+public sealed class CompiledRouteBuilder<TParent> : IBuilder<TParent>
     where TParent : class
 {
     private readonly TParent _parent;
@@ -60,17 +60,17 @@ public sealed class RouteBuilder<TParent> : IBuilder<TParent>
     
     // ... existing state fields ...
 
-    internal RouteBuilder(TParent parent, Action<CompiledRoute> onBuild)
+    internal CompiledRouteBuilder(TParent parent, Action<CompiledRoute> onBuild)
     {
         _parent = parent;
         _onBuild = onBuild;
     }
 
-    // All WithX() methods return RouteBuilder<TParent>
-    public RouteBuilder<TParent> WithLiteral(string value) { ... return this; }
-    public RouteBuilder<TParent> WithParameter(...) { ... return this; }
-    public RouteBuilder<TParent> WithOption(...) { ... return this; }
-    public RouteBuilder<TParent> WithCatchAll(...) { ... return this; }
+    // All WithX() methods return CompiledRouteBuilder<TParent>
+    public CompiledRouteBuilder<TParent> WithLiteral(string value) { ... return this; }
+    public CompiledRouteBuilder<TParent> WithParameter(...) { ... return this; }
+    public CompiledRouteBuilder<TParent> WithOption(...) { ... return this; }
+    public CompiledRouteBuilder<TParent> WithCatchAll(...) { ... return this; }
 
     public TParent Done()
     {
@@ -87,13 +87,13 @@ public sealed class RouteBuilder<TParent> : IBuilder<TParent>
 
 ```csharp
 // In NuruCoreAppBuilder
-public virtual EndpointBuilder Map(Func<RouteBuilder<EndpointBuilder>, EndpointBuilder> configure)
+public virtual EndpointBuilder Map(Func<CompiledRouteBuilder<EndpointBuilder>, EndpointBuilder> configure)
 {
     Endpoint endpoint = new() { /* minimal init */ };
     EndpointCollection.Add(endpoint);
     
     var endpointBuilder = new EndpointBuilder(this, endpoint);
-    var routeBuilder = new RouteBuilder<EndpointBuilder>(
+    var routeBuilder = new CompiledRouteBuilder<EndpointBuilder>(
         endpointBuilder,
         route => endpoint.CompiledRoute = route
     );
@@ -105,9 +105,9 @@ public virtual EndpointBuilder Map(Func<RouteBuilder<EndpointBuilder>, EndpointB
 ### Usage Flow
 
 ```
-builder.Map(r => r                    // RouteBuilder<EndpointBuilder>
-    .WithLiteral("deploy")            // RouteBuilder<EndpointBuilder>
-    .WithParameter("env")             // RouteBuilder<EndpointBuilder>
+builder.Map(r => r                    // CompiledRouteBuilder<EndpointBuilder>
+    .WithLiteral("deploy")            // CompiledRouteBuilder<EndpointBuilder>
+    .WithParameter("env")             // CompiledRouteBuilder<EndpointBuilder>
     .Done()                           // Builds route, returns EndpointBuilder
 )                                     // EndpointBuilder
 .WithHandler(handler)                 // EndpointBuilder  
@@ -118,19 +118,19 @@ builder.Map(r => r                    // RouteBuilder<EndpointBuilder>
 ## Checklist
 
 ### Implementation
-- [ ] Create `RouteBuilder<TParent>` implementing `IBuilder<TParent>`
-- [ ] Move all `WithX()` methods to return `RouteBuilder<TParent>`
+- [ ] Create `CompiledRouteBuilder<TParent>` implementing `IBuilder<TParent>`
+- [ ] Move all `WithX()` methods to return `CompiledRouteBuilder<TParent>`
 - [ ] Add `Done()` method that builds route, passes to callback, returns parent
 - [ ] Make `Build()` private (or remove if not needed standalone)
-- [ ] Update `Map(Action<RouteBuilder>)` to `Map(Func<RouteBuilder<EndpointBuilder>, EndpointBuilder>)`
-- [ ] Remove non-generic `RouteBuilder` (no backward compat needed)
+- [ ] Update `Map(Action<CompiledRouteBuilder>)` to `Map(Func<CompiledRouteBuilder<EndpointBuilder>, EndpointBuilder>)`
+- [ ] Remove non-generic `CompiledRouteBuilder` (no backward compat needed)
 - [ ] Generate route pattern string in `Done()` for help display
 
 ### Testing
 - [ ] Test `Map(r => r.WithLiteral().Done()).WithHandler().Done()`
 - [ ] Test full fluent chain with `AsQuery()`, `AsCommand()`
 - [ ] Test route pattern generation for help
-- [ ] Update existing RouteBuilder tests
+- [ ] Update existing CompiledRouteBuilder tests
 
 ### Documentation
 - [ ] Update XML docs
@@ -142,10 +142,10 @@ builder.Map(r => r                    // RouteBuilder<EndpointBuilder>
 
 ```csharp
 // Action pattern (current) - user doesn't call Done()
-Map(Action<RouteBuilder> configure)
+Map(Action<CompiledRouteBuilder> configure)
 
 // Func pattern (target) - user must call Done()
-Map(Func<RouteBuilder<EndpointBuilder>, EndpointBuilder> configure)
+Map(Func<CompiledRouteBuilder<EndpointBuilder>, EndpointBuilder> configure)
 ```
 
 The `Func` pattern:
@@ -157,15 +157,15 @@ The `Func` pattern:
 
 Task 164 added:
 - `EndpointBuilder.WithHandler()`
-- `Map(Action<RouteBuilder>)` returning `EndpointBuilder`
+- `Map(Action<CompiledRouteBuilder>)` returning `EndpointBuilder`
 
 This task evolves that to:
-- `RouteBuilder<TParent>` with `IBuilder<TParent>`
+- `CompiledRouteBuilder<TParent>` with `IBuilder<TParent>`
 - `Map(Func<...>)` pattern requiring `Done()`
 
-### No Standalone RouteBuilder
+### No Standalone CompiledRouteBuilder
 
 Since we don't care about backward compat:
-- Remove non-generic `RouteBuilder`
-- Only `RouteBuilder<TParent>` exists
+- Remove non-generic `CompiledRouteBuilder`
+- Only `CompiledRouteBuilder<TParent>` exists
 - If someone needs standalone route building, they can use `PatternParser.Parse()`

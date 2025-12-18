@@ -180,7 +180,7 @@ public static class CompiledRouteTestHelper
   /// Asserts that a builder-constructed route matches the parsed route.
   /// </summary>
   /// <param name="pattern">The route pattern string to parse for comparison.</param>
-  /// <param name="builderRoute">The route constructed via RouteBuilder.</param>
+  /// <param name="builderRoute">The route constructed via CompiledRouteBuilder.</param>
   /// <exception cref="ShouldAssertException">Thrown if the routes do not match.</exception>
   public static void AssertRoutesMatch(string pattern, CompiledRoute builderRoute)
   {

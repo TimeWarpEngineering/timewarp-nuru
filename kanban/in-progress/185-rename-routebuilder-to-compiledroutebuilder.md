@@ -14,23 +14,23 @@ Rename to follow convention and update all task files to use correct name.
 ## Checklist
 
 ### Code Changes
-- [ ] Rename `RouteBuilder` class back to `CompiledRouteBuilder`
-- [ ] Rename `route-builder.cs` file to `compiled-route-builder.cs`
-- [ ] Update all references in source code
-- [ ] Update all references in tests
-- [ ] Update all references in samples
+- [x] Rename `RouteBuilder` class back to `CompiledRouteBuilder`
+- [x] Rename `route-builder.cs` file to `compiled-route-builder.cs`
+- [x] Update all references in source code
+- [x] Update all references in tests
+- [x] Update all references in samples
 
 ### Task File Cleanup
-- [ ] Update task 160 (epic) to use `CompiledRouteBuilder`
-- [ ] Update task 161 to use `CompiledRouteBuilder`
-- [ ] Update task 162 if it references RouteBuilder
-- [ ] Update task 163 if it references RouteBuilder
-- [ ] Update task 148 hierarchy/design docs
-- [ ] Search all kanban tasks for "RouteBuilder" and fix
+- [x] Update task 160 (epic) to use `CompiledRouteBuilder`
+- [x] Update task 161 to use `CompiledRouteBuilder`
+- [x] Update task 162 if it references RouteBuilder (N/A - no references)
+- [x] Update task 163 if it references RouteBuilder (N/A - no references)
+- [x] Update task 148 hierarchy/design docs
+- [x] Search all kanban tasks for "RouteBuilder" and fix
 
 ### Verify
-- [ ] Build succeeds
-- [ ] Tests pass
+- [x] Build succeeds
+- [x] Tests pass
 
 ## Notes
 

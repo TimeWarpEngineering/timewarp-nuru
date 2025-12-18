@@ -109,7 +109,7 @@ public class AnsiStringUtilsTests
 | Invoker Registry | `TimeWarp.Nuru.Tests.Core.InvokerRegistry` |
 | Message Type | `TimeWarp.Nuru.Tests.Core.MessageType` |
 | Route Registry | `TimeWarp.Nuru.Tests.Core.RouteRegistry` |
-| Route Builder | `TimeWarp.Nuru.Tests.Core.RouteBuilder` |
+| CompiledRouteBuilder | `TimeWarp.Nuru.Tests.Core.CompiledRouteBuilder` |
 | Terminal Context | `TimeWarp.Nuru.Tests.Core.TerminalContext` |
 
 ## Special Considerations

@@ -38,18 +38,25 @@ public class EndpointCollection : IEnumerable<Endpoint>
 
   /// <summary>
   /// Sorts the endpoints by order and specificity. Called once during build.
+  /// Uses a stable sort to preserve insertion order for routes with equal Order and Specificity.
   /// </summary>
   internal void Sort()
   {
     // Sort by Order descending (higher order = higher priority)
     // Then by Specificity descending for routes with same order
-    EndpointsList.Sort((a, b) =>
-    {
-      int orderComparison = b.Order.CompareTo(a.Order);
-      return orderComparison != 0
-                ? orderComparison
-                : b.CompiledRoute.Specificity.CompareTo(a.CompiledRoute.Specificity);
-    });
+    // Use LINQ for stable sort - preserves insertion order as tie-breaker
+    List<Endpoint> sorted =
+    [
+      .. EndpointsList
+        .Select((ep, index) => (ep, index))
+        .OrderByDescending(x => x.ep.Order)
+        .ThenByDescending(x => x.ep.CompiledRoute.Specificity)
+        .ThenBy(x => x.index)
+        .Select(x => x.ep)
+    ];
+
+    EndpointsList.Clear();
+    EndpointsList.AddRange(sorted);
   }
 
   /// <summary>

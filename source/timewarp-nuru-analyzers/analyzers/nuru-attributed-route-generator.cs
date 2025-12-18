@@ -193,6 +193,9 @@ public class NuruAttributedRouteGenerator : IIncrementalGenerator
       }
     }
 
+    // Sort parameters by Order (parameters with Order >= 0 come first, sorted by Order)
+    parameters.Sort((a, b) => a.Order.CompareTo(b.Order));
+
     return new AttributedRouteInfo(
       FullTypeName: classSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
       TypeName: classSymbol.Name,
@@ -211,6 +214,7 @@ public class NuruAttributedRouteGenerator : IIncrementalGenerator
     string? name = null;
     string? description = null;
     bool isCatchAll = false;
+    int order = -1; // -1 means unset
 
     foreach (KeyValuePair<string, TypedConstant> namedArg in attr.NamedArguments)
     {
@@ -224,6 +228,9 @@ public class NuruAttributedRouteGenerator : IIncrementalGenerator
           break;
         case "IsCatchAll":
           isCatchAll = namedArg.Value.Value is true;
+          break;
+        case "Order":
+          order = namedArg.Value.Value is int orderValue ? orderValue : -1;
           break;
       }
     }
@@ -244,7 +251,8 @@ public class NuruAttributedRouteGenerator : IIncrementalGenerator
       Description: description,
       IsOptional: isOptional,
       IsCatchAll: isCatchAll,
-      TypeName: typeName
+      TypeName: typeName,
+      Order: order
     );
   }
 
@@ -417,17 +425,14 @@ public class NuruAttributedRouteGenerator : IIncrementalGenerator
       }
     }
 
-    // Add pattern literals
+    // Pattern should be a single literal (no spaces allowed - use [NuruRouteGroup] for multi-word routes)
     if (!string.IsNullOrEmpty(route.Pattern))
     {
-      foreach (string literal in route.Pattern.Split(' ', StringSplitOptions.RemoveEmptyEntries))
-      {
-        sb.Append(CultureInfo.InvariantCulture, $"    .WithLiteral(\"{EscapeString(literal)}\")");
-        sb.AppendLine();
-      }
+      sb.Append(CultureInfo.InvariantCulture, $"    .WithLiteral(\"{EscapeString(route.Pattern)}\")");
+      sb.AppendLine();
     }
 
-    // Add parameters
+    // Add parameters from [Parameter] attributes
     foreach (ParameterInfo param in route.Parameters)
     {
       if (param.IsCatchAll)
@@ -554,17 +559,14 @@ public class NuruAttributedRouteGenerator : IIncrementalGenerator
       }
     }
 
-    // Add alias as the literal instead of the original pattern
+    // Alias should be a single literal (no spaces allowed)
     if (!string.IsNullOrEmpty(alias))
     {
-      foreach (string literal in alias.Split(' ', StringSplitOptions.RemoveEmptyEntries))
-      {
-        sb.Append(CultureInfo.InvariantCulture, $"    .WithLiteral(\"{EscapeString(literal)}\")");
-        sb.AppendLine();
-      }
+      sb.Append(CultureInfo.InvariantCulture, $"    .WithLiteral(\"{EscapeString(alias)}\")");
+      sb.AppendLine();
     }
 
-    // Add parameters (same as main route)
+    // Add parameters from [Parameter] attributes (same as main route)
     foreach (ParameterInfo param in route.Parameters)
     {
       if (param.IsCatchAll)
@@ -614,19 +616,19 @@ public class NuruAttributedRouteGenerator : IIncrementalGenerator
     if (!string.IsNullOrEmpty(route.GroupPrefix))
       parts.Add(route.GroupPrefix);
 
-    // Pattern
+    // Pattern (single literal)
     if (!string.IsNullOrEmpty(route.Pattern))
       parts.Add(route.Pattern);
 
-    // Parameters
+    // Add parameters from [Parameter] attributes
     foreach (ParameterInfo param in route.Parameters)
     {
       if (param.IsCatchAll)
-        parts.Add($"{{*{param.Name}}}");
+        parts.Add($"<*{param.Name}>");
       else if (param.IsOptional)
-        parts.Add($"{{{param.Name}?}}");
+        parts.Add($"[{param.Name}]");
       else
-        parts.Add($"{{{param.Name}}}");
+        parts.Add($"<{param.Name}>");
     }
 
     // Group options
@@ -654,15 +656,15 @@ public class NuruAttributedRouteGenerator : IIncrementalGenerator
 
     parts.Add(alias);
 
-    // Parameters
+    // Add parameters from [Parameter] attributes (same as main route)
     foreach (ParameterInfo param in route.Parameters)
     {
       if (param.IsCatchAll)
-        parts.Add($"{{*{param.Name}}}");
+        parts.Add($"<*{param.Name}>");
       else if (param.IsOptional)
-        parts.Add($"{{{param.Name}?}}");
+        parts.Add($"[{param.Name}]");
       else
-        parts.Add($"{{{param.Name}}}");
+        parts.Add($"<{param.Name}>");
     }
 
     // Group options
@@ -687,7 +689,12 @@ public class NuruAttributedRouteGenerator : IIncrementalGenerator
       ? $"--{longForm},-{shortForm}"
       : $"--{longForm}";
 
-    if (!isFlag)
+    if (isFlag)
+    {
+      // Boolean flags are always optional - add ? to match help route pattern style
+      optPart += "?";
+    }
+    else
     {
       string paramName = ToCamelCase(propertyName);
       optPart += isValueOptional ? $" {{{paramName}?}}" : $" {{{paramName}}}";
@@ -758,7 +765,8 @@ public class NuruAttributedRouteGenerator : IIncrementalGenerator
     string? Description,
     bool IsOptional,
     bool IsCatchAll,
-    string? TypeName
+    string? TypeName,
+    int Order
   );
 
   private sealed record OptionInfo(

@@ -22,3 +22,5 @@ NURU_S006 | RoutePattern.Semantic | Error | Optional parameter before required p
 NURU_S007 | RoutePattern.Semantic | Error | Invalid end-of-options separator
 NURU_S008 | RoutePattern.Semantic | Error | Options after end-of-options separator
 NURU_D001 | Dependencies | Error | Mediator packages required for Map&lt;TCommand&gt;
+NURU_A001 | AttributedRoutes | Error | Multi-word route pattern requires [NuruRouteGroup]
+NURU_A002 | AttributedRoutes | Error | Multiple parameters require explicit Order

@@ -1,15 +1,15 @@
-namespace AttributedRoutes.Commands;
+namespace AttributedRoutes.Messages;
 
 using TimeWarp.Nuru;
 using Mediator;
 using static System.Console;
 
 /// <summary>
-/// Deploy request with a required parameter and options.
+/// Deploy to an environment.
 /// This is a Command (C) - mutating, needs confirmation before running.
 /// </summary>
 [NuruRoute("deploy", Description = "Deploy to an environment")]
-public sealed class DeployRequest : ICommand<Unit>
+public sealed class DeployCommand : ICommand<Unit>
 {
   [Parameter(Description = "Target environment (dev, staging, prod)")]
   public string Env { get; set; } = string.Empty;
@@ -23,14 +23,14 @@ public sealed class DeployRequest : ICommand<Unit>
   [Option("replicas", "r", Description = "Number of replicas")]
   public int Replicas { get; set; } = 1;
 
-  public sealed class Handler : ICommandHandler<DeployRequest, Unit>
+  public sealed class Handler : ICommandHandler<DeployCommand, Unit>
   {
-    public ValueTask<Unit> Handle(DeployRequest request, CancellationToken ct)
+    public ValueTask<Unit> Handle(DeployCommand command, CancellationToken ct)
     {
-      WriteLine($"Deploying to {request.Env}...");
-      WriteLine($"  Force: {request.Force}");
-      WriteLine($"  Config: {request.ConfigFile ?? "(default)"}");
-      WriteLine($"  Replicas: {request.Replicas}");
+      WriteLine($"Deploying to {command.Env}...");
+      WriteLine($"  Force: {command.Force}");
+      WriteLine($"  Config: {command.ConfigFile ?? "(default)"}");
+      WriteLine($"  Replicas: {command.Replicas}");
       return default;
     }
   }

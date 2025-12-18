@@ -1,22 +1,22 @@
-namespace AttributedRoutes.Commands;
+namespace AttributedRoutes.Messages;
 
 using TimeWarp.Nuru;
 using Mediator;
 using static System.Console;
 
 /// <summary>
-/// Goodbye request with multiple aliases.
+/// Say goodbye and exit.
 /// This is a Command (C) - has side effect (exits the process).
 /// Note: We use "goodbye" instead of "exit" because the REPL already registers
 /// built-in exit/quit/q commands. This demonstrates [NuruRouteAlias] without conflicts.
 /// </summary>
 [NuruRoute("goodbye", Description = "Say goodbye and exit")]
 [NuruRouteAlias("bye", "cya")]
-public sealed class GoodbyeRequest : ICommand<Unit>
+public sealed class GoodbyeCommand : ICommand<Unit>
 {
-  public sealed class Handler : ICommandHandler<GoodbyeRequest, Unit>
+  public sealed class Handler : ICommandHandler<GoodbyeCommand, Unit>
   {
-    public ValueTask<Unit> Handle(GoodbyeRequest request, CancellationToken ct)
+    public ValueTask<Unit> Handle(GoodbyeCommand command, CancellationToken ct)
     {
       WriteLine("Goodbye! Thanks for using attributed routes.");
       Environment.Exit(0);

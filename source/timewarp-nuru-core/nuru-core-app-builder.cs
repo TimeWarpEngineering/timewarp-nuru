@@ -78,7 +78,8 @@ public partial class NuruCoreAppBuilder
         RoutePattern = registered.Pattern,
         CompiledRoute = registered.CompiledRoute,
         Description = registered.Description,
-        CommandType = registered.RequestType
+        CommandType = registered.RequestType,
+        MessageType = registered.CompiledRoute.MessageType
       };
 
       EndpointCollection.Add(endpoint);

@@ -586,6 +586,7 @@ public static class HelpProvider
   {
     string indicator = messageType switch
     {
+      MessageType.Unspecified => "( )",
       MessageType.Query => "(Q)",
       MessageType.IdempotentCommand => "(I)",
       MessageType.Command => "(C)",
@@ -596,11 +597,13 @@ public static class HelpProvider
       return indicator;
 
     // Use different colors for different message types:
+    // Unspecified = Gray (not yet classified, treated as Command for safety)
     // Query = Blue (safe/informational)
     // IdempotentCommand = Yellow (caution but retryable)
     // Command = Red (danger/confirm)
     return messageType switch
     {
+      MessageType.Unspecified => indicator.Gray(),
       MessageType.Query => indicator.Blue(),
       MessageType.IdempotentCommand => indicator.Yellow(),
       MessageType.Command => indicator.Red(),
@@ -616,9 +619,10 @@ public static class HelpProvider
   private static string FormatMessageTypeLegend(bool useColor)
   {
     if (!useColor)
-      return "Legend: (Q) Query  (I) Idempotent  (C) Command";
+      return "Legend: ( ) Unspecified  (Q) Query  (I) Idempotent  (C) Command";
 
     return "Legend: " +
+           "( )".Gray() + " Unspecified  " +
            "(Q)".Blue() + " Query  " +
            "(I)".Yellow() + " Idempotent  " +
            "(C)".Red() + " Command";

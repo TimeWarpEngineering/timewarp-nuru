@@ -21,6 +21,25 @@ namespace TimeWarp.Nuru;
 public enum MessageType
 {
   /// <summary>
+  /// Message type not yet specified. Treated as Command for safety.
+  /// </summary>
+  /// <remarks>
+  /// <para>
+  /// Use this when a command's classification hasn't been determined yet.
+  /// In help output, displays as ( ) (blank) to indicate unclassified.
+  /// </para>
+  /// <para>
+  /// For AI agent tooling, Unspecified is treated the same as <see cref="Command"/>
+  /// (confirm before running, don't auto-retry) to ensure safe defaults.
+  /// </para>
+  /// <para>
+  /// Developers should eventually classify their commands as Query, Command,
+  /// or IdempotentCommand for better AI agent interaction.
+  /// </para>
+  /// </remarks>
+  Unspecified,
+
+  /// <summary>
   /// Query operation. No state change - safe to run and retry freely.
   /// </summary>
   /// <remarks>

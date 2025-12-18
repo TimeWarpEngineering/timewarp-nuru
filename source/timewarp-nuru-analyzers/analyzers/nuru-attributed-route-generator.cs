@@ -196,6 +196,9 @@ public class NuruAttributedRouteGenerator : IIncrementalGenerator
     // Sort parameters by Order (parameters with Order >= 0 come first, sorted by Order)
     parameters.Sort((a, b) => a.Order.CompareTo(b.Order));
 
+    // Infer MessageType from implemented interfaces
+    string inferredMessageType = InferMessageType(classSymbol);
+
     return new AttributedRouteInfo(
       FullTypeName: classSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
       TypeName: classSymbol.Name,
@@ -205,7 +208,8 @@ public class NuruAttributedRouteGenerator : IIncrementalGenerator
       GroupPrefix: groupPrefix,
       GroupOptions: groupOptions,
       Parameters: parameters,
-      Options: options
+      Options: options,
+      InferredMessageType: inferredMessageType
     );
   }
 
@@ -471,6 +475,10 @@ public class NuruAttributedRouteGenerator : IIncrementalGenerator
         opt.IsFlag, opt.IsValueOptional, opt.IsRepeated, opt.TypeName);
     }
 
+    // Add MessageType from inferred interfaces
+    sb.Append(CultureInfo.InvariantCulture, $"    .WithMessageType(global::TimeWarp.Nuru.MessageType.{route.InferredMessageType})");
+    sb.AppendLine();
+
     sb.AppendLine("    .Build();");
 
     // Generate pattern string for help display
@@ -604,6 +612,10 @@ public class NuruAttributedRouteGenerator : IIncrementalGenerator
       GenerateOptionCall(sb, opt.LongForm, opt.ShortForm, opt.PropertyName, opt.Description,
         opt.IsFlag, opt.IsValueOptional, opt.IsRepeated, opt.TypeName);
     }
+
+    // Add MessageType from inferred interfaces (same as main route)
+    sb.Append(CultureInfo.InvariantCulture, $"    .WithMessageType(global::TimeWarp.Nuru.MessageType.{route.InferredMessageType})");
+    sb.AppendLine();
 
     sb.AppendLine("    .Build();");
   }
@@ -746,6 +758,55 @@ public class NuruAttributedRouteGenerator : IIncrementalGenerator
       .Replace("<", "_", StringComparison.Ordinal)
       .Replace(">", "_", StringComparison.Ordinal);
 
+  /// <summary>
+  /// Infers the MessageType from the interfaces implemented by the class.
+  /// </summary>
+  /// <remarks>
+  /// Detection priority:
+  /// 1. IQuery&lt;T&gt; → Query
+  /// 2. ICommand&lt;T&gt; + IIdempotent → IdempotentCommand
+  /// 3. ICommand&lt;T&gt; → Command
+  /// 4. IRequest&lt;T&gt; or none → Unspecified
+  /// </remarks>
+  private static string InferMessageType(INamedTypeSymbol classSymbol)
+  {
+    bool implementsQuery = false;
+    bool implementsCommand = false;
+    bool implementsIdempotent = false;
+
+    foreach (INamedTypeSymbol iface in classSymbol.AllInterfaces)
+    {
+      string name = iface.Name;
+      string fullName = iface.OriginalDefinition.ToDisplayString();
+
+      // Check for IQuery<T> (generic interface with one type argument)
+      if (name == "IQuery" && iface.IsGenericType && iface.TypeArguments.Length == 1)
+      {
+        implementsQuery = true;
+      }
+      // Check for ICommand<T> (generic interface with one type argument)
+      else if (name == "ICommand" && iface.IsGenericType && iface.TypeArguments.Length == 1)
+      {
+        implementsCommand = true;
+      }
+      // Check for IIdempotent marker interface
+      else if (fullName == "TimeWarp.Nuru.IIdempotent")
+      {
+        implementsIdempotent = true;
+      }
+    }
+
+    // Apply priority: Query > IdempotentCommand > Command > Unspecified
+    if (implementsQuery)
+      return "Query";
+
+    if (implementsCommand)
+      return implementsIdempotent ? "IdempotentCommand" : "Command";
+
+    // If none of the above, it's Unspecified (likely IRequest<T> or no mediator interface)
+    return "Unspecified";
+  }
+
   // Data classes for extracted info
   private sealed record AttributedRouteInfo(
     string FullTypeName,
@@ -756,7 +817,8 @@ public class NuruAttributedRouteGenerator : IIncrementalGenerator
     string? GroupPrefix,
     List<GroupOptionInfo> GroupOptions,
     List<ParameterInfo> Parameters,
-    List<OptionInfo> Options
+    List<OptionInfo> Options,
+    string InferredMessageType // "Unspecified", "Query", "Command", "IdempotentCommand"
   );
 
   private sealed record ParameterInfo(

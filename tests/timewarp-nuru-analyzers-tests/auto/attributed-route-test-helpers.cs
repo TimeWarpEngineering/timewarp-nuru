@@ -52,6 +52,8 @@ public static class AttributedRouteTestHelpers
     string repoRoot = FindRepoRoot();
     string nuruDir = Path.Combine(repoRoot, "source", "timewarp-nuru", "bin", "Debug", "net10.0");
     string nuruCoreDir = Path.Combine(repoRoot, "source", "timewarp-nuru-core", "bin", "Debug", "net10.0");
+    // attributed-routes sample has Mediator.dll for IQuery/ICommand interfaces
+    string attributedRoutesDir = Path.Combine(repoRoot, "samples", "attributed-routes", "bin", "Debug", "net10.0");
 
     List<MetadataReference> references =
     [
@@ -66,6 +68,13 @@ public static class AttributedRouteTestHelpers
     // Add TimeWarp.Nuru assemblies
     AddAssembliesFromDirectory(references, nuruDir);
     AddAssembliesFromDirectory(references, nuruCoreDir);
+
+    // Add Mediator.dll for IQuery<T>/ICommand<T> interface detection
+    string mediatorDll = Path.Combine(attributedRoutesDir, "Mediator.dll");
+    if (File.Exists(mediatorDll))
+    {
+      references.Add(MetadataReference.CreateFromFile(mediatorDll));
+    }
 
     return CSharpCompilation.Create(
       "TestAssembly",

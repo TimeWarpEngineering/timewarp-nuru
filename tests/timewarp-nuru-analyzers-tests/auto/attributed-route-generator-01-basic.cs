@@ -166,7 +166,7 @@ int failed = 0;
     .FirstOrDefault(r => r.RequestType == typeof(SimpleTestRequest));
 
   // CompiledRoute should have segments
-  bool hasSegments = route?.Route.Segments.Count > 0;
+  bool hasSegments = route?.CompiledRoute.Segments.Count > 0;
 
   if (hasSegments)
   {

@@ -2,7 +2,7 @@
 
 ## Status
 
-**BLOCKED by Task 191** - Core implementation complete, but full type preservation requires CRTP refactor.
+**COMPLETE** - All implementation done. Task 191 (CRTP) is complete, enabling full type preservation.
 
 ## Description
 
@@ -188,24 +188,24 @@ builder.Map(r => r                    // NestedCompiledRouteBuilder<EndpointBuil
 ### NuruCoreAppBuilder
 - [x] Update `Map(Action<CompiledRouteBuilder>)` to `Map(Func<NestedCompiledRouteBuilder<EndpointBuilder>, EndpointBuilder>)`
 - [x] Generate route pattern string in endpoint for help display
-- [x] Add `MapNestedTyped<TBuilder>()` internal method (workaround - will be removed after Task 191)
+- [x] `MapNestedTyped()` private implementation method (now integrated into CRTP pattern)
 
 ### Testing
 - [x] Test standalone: `new CompiledRouteBuilder().WithLiteral().Build()` (existing tests pass)
-- [ ] Test nested: `Map(r => r.WithLiteral().Done()).WithHandler().Done()` - BLOCKED by type preservation issue
-- [ ] Test full fluent chain with `AsQuery()`, `AsCommand()` - BLOCKED by type preservation issue
+- [x] Test nested: `Map(r => r.WithLiteral().Done()).WithHandler().Done()` - Tests in `nested-compiled-route-builder-01-basic.cs`
+- [x] Test full fluent chain with `AsQuery()`, `AsCommand()` - Test `Should_enable_full_fluent_chain` verifies this
 - [x] Test route pattern generation for help
 - [x] Update existing CompiledRouteBuilder tests (no changes needed)
 
 ### Documentation
 - [x] Update XML docs for both interfaces
 - [x] Update XML docs for both builder classes
-- [ ] Update task 160 epic example to match - BLOCKED
+- [ ] Update task 160 epic example to match - Deferred to task 160 completion
 
-### Type Preservation Issue (BLOCKED)
-- [ ] **Requires Task 191 (CRTP)** - Current `Map()` returns `EndpointBuilder` (non-generic), losing derived type
-- [x] Added `MapNestedTyped<TBuilder>()` as temporary workaround
-- [ ] After Task 191: Remove workaround methods, clean up
+### Type Preservation Issue (RESOLVED)
+- [x] **Task 191 (CRTP) complete** - `Map()` now returns `EndpointBuilder<TSelf>`, preserving derived type
+- [x] `MapNestedTyped()` is now a private implementation helper (not a workaround)
+- [x] Type preservation verified in tests (`Should_enable_full_fluent_chain`)
 
 ## Notes
 

@@ -1,140 +1,214 @@
-# Apply IBuilder to KeyBindingBuilder
+# Apply IBuilder Pattern to KeyBindingBuilder
 
 ## Description
 
-Make `KeyBindingBuilder` implement `IBuilder<ReplOptions>` to enable fluent configuration of REPL key bindings nested within REPL options.
+Apply the two-interface builder pattern to `KeyBindingBuilder`:
+
+- Add `IBuilder<KeyBindingResult>` to standalone builder
+- Create `NestedKeyBindingBuilder<TParent>` wrapper implementing `INestedBuilder<TParent>`
+
+This enables fluent configuration of REPL key bindings nested within REPL options.
 
 ## Parent
 
 160-unify-builders-with-ibuilder-pattern
 
+## Dependencies
+
+- Task 161: Must be complete (establishes `IBuilder<T>` and `INestedBuilder<T>` interfaces)
+
 ## Current API
 
 ```csharp
-// Current: separate configuration
+// Standalone builder
+var (bindings, exitKeys) = new KeyBindingBuilder()
+    .Bind(ConsoleKey.F1, ShowHelp)
+    .Bind(ConsoleKey.F5, Refresh)
+    .BindExit(ConsoleKey.Enter, Submit)
+    .Build();
+
+// REPL options configured separately
 app.AddReplSupport(options =>
 {
     options.Prompt = "nuru> ";
     options.HistorySize = 100;
 });
-
-// KeyBindingBuilder used separately
-var bindings = new KeyBindingBuilder()
-    .Bind(ConsoleKey.F1, ShowHelp)
-    .Bind(ConsoleKey.F5, Refresh)
-    .Build();
 ```
 
 ## Target API
 
 ```csharp
+// Standalone (unchanged, but now with IBuilder interface)
+var result = new KeyBindingBuilder()
+    .Bind(ConsoleKey.F1, ShowHelp)
+    .Build();  // IBuilder<KeyBindingResult>.Build()
+
 // Nested fluent configuration
 app.AddReplSupport(options => options
     .WithPrompt("nuru> ")
     .WithHistorySize(100)
-    .WithKeyBindings(kb => kb           // KeyBindingBuilder<ReplOptions>
+    .WithKeyBindings(kb => kb                   // NestedKeyBindingBuilder<ReplOptions>
         .Bind(ConsoleKey.F1, ShowHelp)
         .Bind(ConsoleKey.F5, Refresh)
-        .Bind(ConsoleKey.Escape, Cancel)
-        .Done())                         // Returns to ReplOptions
+        .BindExit(ConsoleKey.Escape, Cancel)
+        .Done())                                 // Returns to ReplOptions
     .WithCompletionStyle(CompletionStyle.Inline));
+```
 
-// Or chained
-app.AddReplSupport()
-    .WithPrompt("nuru> ")
-    .WithKeyBindings(kb => kb
-        .Bind(ConsoleKey.F1, ShowHelp)
-        .Done())
-    .Done()                              // Returns to app builder
-    .AddAutoHelp()
-    .Build();
+## Design
+
+### Result Type
+
+Define a proper result type instead of tuple:
+
+```csharp
+public sealed class KeyBindingResult
+{
+    public Dictionary<(ConsoleKey, ConsoleModifiers), Action> Bindings { get; init; } = [];
+    public HashSet<(ConsoleKey, ConsoleModifiers)> ExitKeys { get; init; } = [];
+}
+```
+
+### Composition Pattern
+
+```csharp
+// Standalone - full implementation
+public sealed class KeyBindingBuilder : IBuilder<KeyBindingResult>
+{
+    private readonly Dictionary<(ConsoleKey, ConsoleModifiers), Action> _bindings = [];
+    private readonly HashSet<(ConsoleKey, ConsoleModifiers)> _exitKeys = [];
+
+    public KeyBindingBuilder Bind(ConsoleKey key, Action action) { ... return this; }
+    public KeyBindingBuilder Bind(ConsoleKey key, ConsoleModifiers modifiers, Action action) { ... return this; }
+    public KeyBindingBuilder BindExit(ConsoleKey key, Action action) { ... return this; }
+    public KeyBindingBuilder Remove(ConsoleKey key) { ... return this; }
+    
+    public KeyBindingResult Build() => new()
+    {
+        Bindings = new(_bindings),
+        ExitKeys = [.. _exitKeys]
+    };
+}
+
+// Nested - wraps standalone
+public sealed class NestedKeyBindingBuilder<TParent> : INestedBuilder<TParent>
+    where TParent : class
+{
+    private readonly KeyBindingBuilder _inner = new();
+    private readonly TParent _parent;
+    private readonly Action<KeyBindingResult> _onBuild;
+
+    internal NestedKeyBindingBuilder(TParent parent, Action<KeyBindingResult> onBuild)
+    {
+        _parent = parent;
+        _onBuild = onBuild;
+    }
+
+    public NestedKeyBindingBuilder<TParent> Bind(ConsoleKey key, Action action)
+    {
+        _inner.Bind(key, action);
+        return this;
+    }
+
+    public NestedKeyBindingBuilder<TParent> BindExit(ConsoleKey key, Action action)
+    {
+        _inner.BindExit(key, action);
+        return this;
+    }
+
+    public TParent Done()
+    {
+        KeyBindingResult result = _inner.Build();
+        _onBuild(result);
+        return _parent;
+    }
+}
 ```
 
 ## Checklist
 
-### KeyBindingBuilder
-- [ ] Create `KeyBindingBuilder<TParent>` implementing `IBuilder<TParent>`
-- [ ] Keep non-generic `KeyBindingBuilder` for standalone usage
-- [ ] Add `Done()` method that applies bindings and returns parent
-- [ ] Ensure `Bind()` returns `KeyBindingBuilder<TParent>` for chaining
+### KeyBindingResult Type
+- [ ] Create `KeyBindingResult` class to replace tuple return
+- [ ] Migrate `Build()` to return `KeyBindingResult`
 
-### ReplOptions
-- [ ] Make `ReplOptions` fluent with `WithX()` methods
-- [ ] Add `WithKeyBindings(Action<KeyBindingBuilder<ReplOptions>>)` method
-- [ ] Consider making `ReplOptions` implement `IBuilder<TBuilder>` for nested REPL config
-- [ ] Add `WithPrompt()`, `WithHistorySize()`, etc. fluent methods
+### KeyBindingBuilder (Standalone)
+- [ ] Add `IBuilder<KeyBindingResult>` interface
+- [ ] Update `Build()` return type to `KeyBindingResult`
+- [ ] Keep backward-compatible tuple deconstruction if needed
 
-### Integration
-- [ ] Update `AddReplSupport()` to support fluent `ReplOptions`
-- [ ] Ensure backward compatibility with action-based configuration
-- [ ] Consider `AddReplSupport()` returning `ReplOptionsBuilder<TBuilder>` for full fluent chain
+### NestedKeyBindingBuilder (New)
+- [ ] Create `NestedKeyBindingBuilder<TParent>` implementing `INestedBuilder<TParent>`
+- [ ] Use composition - wrap `KeyBindingBuilder` internally
+- [ ] Add wrapper methods for all `Bind*()` methods
+- [ ] Add wrapper methods for `Remove()`, `Clear()`, `LoadFrom()`, etc.
+
+### ReplOptions Integration
+- [ ] Make `ReplOptions` fluent with `WithX()` methods if not already
+- [ ] Add `WithKeyBindings(Func<NestedKeyBindingBuilder<ReplOptions>, ReplOptions>)` method
+- [ ] Ensure `Done()` applies bindings to REPL options
 
 ### Testing
-- [ ] Test standalone `KeyBindingBuilder` still works
-- [ ] Test nested key binding configuration
-- [ ] Test full fluent chain from app builder through REPL options
+- [ ] Test standalone `KeyBindingBuilder` with `Build()`
+- [ ] Test nested key binding configuration in REPL options
 - [ ] Test key bindings are properly applied at runtime
 
 ### Documentation
-- [ ] Update XML docs
+- [ ] Update XML docs for both builder classes
 - [ ] Add examples showing fluent REPL configuration
 
 ## Notes
 
-### Pattern: Mutating
+### Pattern: Factory
 
-`KeyBindingBuilder` uses the **Mutating** pattern:
-- `Bind()` methods accumulate bindings and return `this`
-- `Done()` applies bindings to parent and returns parent
+`KeyBindingBuilder` uses the **Factory** pattern:
+- `Bind()` methods accumulate bindings
+- `Build()` or `Done()` creates the result
+
+### Backward Compatibility
+
+Consider keeping tuple deconstruction support:
+
+```csharp
+public sealed class KeyBindingResult
+{
+    public Dictionary<...> Bindings { get; init; }
+    public HashSet<...> ExitKeys { get; init; }
+    
+    // Enable tuple deconstruction for backward compat
+    public void Deconstruct(
+        out Dictionary<...> bindings,
+        out HashSet<...> exitKeys)
+    {
+        bindings = Bindings;
+        exitKeys = ExitKeys;
+    }
+}
+
+// Still works:
+var (bindings, exitKeys) = new KeyBindingBuilder().Bind(...).Build();
+```
 
 ### ReplOptions Fluent Design
 
-Consider making `ReplOptions` itself a builder:
+Consider making `ReplOptions` itself implement `INestedBuilder<TBuilder>`:
 
 ```csharp
-public class ReplOptionsBuilder<TBuilder> : IBuilder<TBuilder>
+public sealed class ReplOptionsBuilder<TBuilder> : INestedBuilder<TBuilder>
     where TBuilder : NuruCoreAppBuilder
 {
     public ReplOptionsBuilder<TBuilder> WithPrompt(string prompt) { ... }
     public ReplOptionsBuilder<TBuilder> WithHistorySize(int size) { ... }
-    public ReplOptionsBuilder<TBuilder> WithKeyBindings(Action<KeyBindingBuilder<ReplOptionsBuilder<TBuilder>>> configure) { ... }
+    public ReplOptionsBuilder<TBuilder> WithKeyBindings(
+        Func<NestedKeyBindingBuilder<ReplOptionsBuilder<TBuilder>>, ReplOptionsBuilder<TBuilder>> configure) { ... }
     public TBuilder Done() { ... }
 }
 ```
 
 This enables:
 ```csharp
-app.ConfigureRepl()                      // Returns ReplOptionsBuilder<NuruAppBuilder>
+app.ConfigureRepl()                              // Returns ReplOptionsBuilder<NuruAppBuilder>
     .WithPrompt("nuru> ")
     .WithKeyBindings(kb => kb.Bind(...).Done())
-    .Done()                              // Returns NuruAppBuilder
+    .Done()                                      // Returns NuruAppBuilder
     .AddAutoHelp();
-```
-
-### Key Binding Actions
-
-Key bindings bind `ConsoleKey` (with modifiers) to actions:
-
-```csharp
-kb.Bind(ConsoleKey.F1, ShowHelp)                           // Simple
-kb.Bind(ConsoleKey.S, ctrl: true, SaveCommand)             // Ctrl+S
-kb.Bind(ConsoleKey.Tab, CompleteCommand)                   // Tab completion override
-kb.BindSequence("gc", GitCommit)                           // Multi-key sequence (vim-style)
-```
-
-### Backward Compatibility
-
-Keep supporting the current action-based API:
-
-```csharp
-// Still works
-app.AddReplSupport(options =>
-{
-    options.Prompt = "nuru> ";
-});
-
-// New fluent API (preferred)
-app.AddReplSupport()
-    .WithPrompt("nuru> ")
-    .Done();
 ```

@@ -1,8 +1,13 @@
-# Apply IBuilder to CompiledRouteBuilder
+# Establish Builder Interface Pattern and Apply to CompiledRouteBuilder
 
 ## Description
 
-Make `CompiledRouteBuilder` implement `IBuilder<TParent>` for consistent fluent API across all Nuru builders.
+Establish the two-interface builder pattern (`IBuilder<TBuilt>` and `INestedBuilder<TParent>`) and apply it to `CompiledRouteBuilder` as the first implementation.
+
+- **`IBuilder<TBuilt>`** - Top-level builders that create objects via `Build()`
+- **`INestedBuilder<TParent>`** - Nested builders that return to parent via `Done()`
+
+Nested builders use **composition** - they wrap a standalone builder and add the return-to-parent capability. This avoids code duplication while keeping clear API surfaces.
 
 **No backward compatibility concerns** - we're in beta, prioritize the best API.
 
@@ -10,10 +15,26 @@ Make `CompiledRouteBuilder` implement `IBuilder<TParent>` for consistent fluent 
 
 160-unify-builders-with-ibuilder-pattern
 
-## Current State (after Task 164)
+## Interface Design
 
 ```csharp
-// CompiledRouteBuilder is standalone with Build()
+// Top-level builder - creates TBuilt
+public interface IBuilder<out TBuilt>
+{
+    TBuilt Build();
+}
+
+// Nested builder - returns to TParent (wraps a standalone builder internally)
+public interface INestedBuilder<out TParent> where TParent : class
+{
+    TParent Done();  // Done() = Build() + pass result to parent + return parent
+}
+```
+
+## Current State
+
+```csharp
+// CompiledRouteBuilder is standalone with Build() but no interface
 var route = new CompiledRouteBuilder()
     .WithLiteral("deploy")
     .WithParameter("env")
@@ -32,13 +53,18 @@ builder
 ## Target API
 
 ```csharp
-// CompiledRouteBuilder<TParent> implements IBuilder<TParent>
-// Done() builds the route, sets it on parent, returns parent
+// Standalone builder (for tests, source generators, static routes)
+CompiledRoute route = new CompiledRouteBuilder()
+    .WithLiteral("deploy")
+    .WithParameter("env")
+    .Build();
+
+// Nested builder (for fluent app configuration)
 builder
     .Map(r => r
         .WithLiteral("deploy")
         .WithParameter("env")
-        .Done()              // Builds route, returns EndpointBuilder
+        .Done()              // Builds route, passes to parent, returns EndpointBuilder
     )
     .WithHandler(handler)
     .AsCommand()
@@ -47,39 +73,56 @@ builder
 
 ## Design
 
-### CompiledRouteBuilder<TParent> Pattern
-
-Following `TestAddressBuilder` pattern from `timewarp-fluent-builder`:
+### Composition Pattern (Nested wraps Standalone)
 
 ```csharp
-public sealed class CompiledRouteBuilder<TParent> : IBuilder<TParent>
+// Standalone - full implementation, implements IBuilder<CompiledRoute>
+public sealed class CompiledRouteBuilder : IBuilder<CompiledRoute>
+{
+    private readonly List<RouteMatcher> _segments = [];
+    private int _specificity;
+    // ... all state lives here ...
+
+    public CompiledRouteBuilder WithLiteral(string value) { ... return this; }
+    public CompiledRouteBuilder WithParameter(...) { ... return this; }
+    public CompiledRouteBuilder WithOption(...) { ... return this; }
+    public CompiledRouteBuilder WithCatchAll(...) { ... return this; }
+    public CompiledRouteBuilder WithMessageType(...) { ... return this; }
+
+    public CompiledRoute Build() { ... }
+}
+
+// Nested - wraps standalone, implements INestedBuilder<TParent>
+public sealed class NestedCompiledRouteBuilder<TParent> : INestedBuilder<TParent>
     where TParent : class
 {
+    private readonly CompiledRouteBuilder _inner = new();  // Composition!
     private readonly TParent _parent;
     private readonly Action<CompiledRoute> _onBuild;
-    
-    // ... existing state fields ...
 
-    internal CompiledRouteBuilder(TParent parent, Action<CompiledRoute> onBuild)
+    internal NestedCompiledRouteBuilder(TParent parent, Action<CompiledRoute> onBuild)
     {
         _parent = parent;
         _onBuild = onBuild;
     }
 
-    // All WithX() methods return CompiledRouteBuilder<TParent>
-    public CompiledRouteBuilder<TParent> WithLiteral(string value) { ... return this; }
-    public CompiledRouteBuilder<TParent> WithParameter(...) { ... return this; }
-    public CompiledRouteBuilder<TParent> WithOption(...) { ... return this; }
-    public CompiledRouteBuilder<TParent> WithCatchAll(...) { ... return this; }
+    // Thin wrappers delegate to _inner
+    public NestedCompiledRouteBuilder<TParent> WithLiteral(string value)
+    {
+        _inner.WithLiteral(value);
+        return this;
+    }
+    public NestedCompiledRouteBuilder<TParent> WithParameter(...) { _inner.WithParameter(...); return this; }
+    public NestedCompiledRouteBuilder<TParent> WithOption(...) { _inner.WithOption(...); return this; }
+    public NestedCompiledRouteBuilder<TParent> WithCatchAll(...) { _inner.WithCatchAll(...); return this; }
+    public NestedCompiledRouteBuilder<TParent> WithMessageType(...) { _inner.WithMessageType(...); return this; }
 
     public TParent Done()
     {
-        CompiledRoute route = Build();  // Internal build
-        _onBuild(route);                 // Pass to parent
-        return _parent;
+        CompiledRoute route = _inner.Build();  // Delegate to standalone
+        _onBuild(route);                        // Pass to parent
+        return _parent;                         // Return to parent
     }
-
-    private CompiledRoute Build() { ... }  // Now private
 }
 ```
 
@@ -87,17 +130,18 @@ public sealed class CompiledRouteBuilder<TParent> : IBuilder<TParent>
 
 ```csharp
 // In NuruCoreAppBuilder
-public virtual EndpointBuilder Map(Func<CompiledRouteBuilder<EndpointBuilder>, EndpointBuilder> configure)
+public virtual EndpointBuilder Map(
+    Func<NestedCompiledRouteBuilder<EndpointBuilder>, EndpointBuilder> configure)
 {
     Endpoint endpoint = new() { /* minimal init */ };
     EndpointCollection.Add(endpoint);
-    
+
     var endpointBuilder = new EndpointBuilder(this, endpoint);
-    var routeBuilder = new CompiledRouteBuilder<EndpointBuilder>(
+    var routeBuilder = new NestedCompiledRouteBuilder<EndpointBuilder>(
         endpointBuilder,
         route => endpoint.CompiledRoute = route
     );
-    
+
     return configure(routeBuilder);  // User calls Done() which returns EndpointBuilder
 }
 ```
@@ -105,38 +149,65 @@ public virtual EndpointBuilder Map(Func<CompiledRouteBuilder<EndpointBuilder>, E
 ### Usage Flow
 
 ```
-builder.Map(r => r                    // CompiledRouteBuilder<EndpointBuilder>
-    .WithLiteral("deploy")            // CompiledRouteBuilder<EndpointBuilder>
-    .WithParameter("env")             // CompiledRouteBuilder<EndpointBuilder>
+builder.Map(r => r                    // NestedCompiledRouteBuilder<EndpointBuilder>
+    .WithLiteral("deploy")            // NestedCompiledRouteBuilder<EndpointBuilder>
+    .WithParameter("env")             // NestedCompiledRouteBuilder<EndpointBuilder>
     .Done()                           // Builds route, returns EndpointBuilder
 )                                     // EndpointBuilder
-.WithHandler(handler)                 // EndpointBuilder  
+.WithHandler(handler)                 // EndpointBuilder
 .AsCommand()                          // EndpointBuilder
 .Done()                               // TBuilder (app builder)
 ```
 
 ## Checklist
 
-### Implementation
-- [ ] Create `CompiledRouteBuilder<TParent>` implementing `IBuilder<TParent>`
-- [ ] Move all `WithX()` methods to return `CompiledRouteBuilder<TParent>`
-- [ ] Add `Done()` method that builds route, passes to callback, returns parent
-- [ ] Make `Build()` private (or remove if not needed standalone)
-- [ ] Update `Map(Action<CompiledRouteBuilder>)` to `Map(Func<CompiledRouteBuilder<EndpointBuilder>, EndpointBuilder>)`
-- [ ] Remove non-generic `CompiledRouteBuilder` (no backward compat needed)
-- [ ] Generate route pattern string in `Done()` for help display
+### Interfaces
+- [ ] Create `IBuilder<TBuilt>` at `source/timewarp-nuru-core/fluent/i-builder.cs`
+- [ ] Rename existing `IBuilder<TParent>` to `INestedBuilder<TParent>` at `source/timewarp-nuru-core/fluent/i-nested-builder.cs`
+- [ ] Update `EndpointBuilder<TBuilder>` to implement `INestedBuilder<TBuilder>` (rename)
+- [ ] Update `EndpointBuilder` to implement `INestedBuilder<NuruCoreAppBuilder>` (rename)
+
+### CompiledRouteBuilder (Standalone)
+- [ ] Add `IBuilder<CompiledRoute>` to existing `CompiledRouteBuilder`
+- [ ] Keep all existing functionality (no changes needed beyond interface)
+
+### NestedCompiledRouteBuilder (New)
+- [ ] Create `NestedCompiledRouteBuilder<TParent>` implementing `INestedBuilder<TParent>`
+- [ ] Use composition - wrap `CompiledRouteBuilder` internally
+- [ ] Add thin wrapper methods for all `WithX()` methods
+- [ ] Implement `Done()` that calls `_inner.Build()`, passes to callback, returns parent
+
+### NuruCoreAppBuilder
+- [ ] Update `Map(Action<CompiledRouteBuilder>)` to `Map(Func<NestedCompiledRouteBuilder<EndpointBuilder>, EndpointBuilder>)`
+- [ ] Generate route pattern string in endpoint for help display
 
 ### Testing
-- [ ] Test `Map(r => r.WithLiteral().Done()).WithHandler().Done()`
+- [ ] Test standalone: `new CompiledRouteBuilder().WithLiteral().Build()`
+- [ ] Test nested: `Map(r => r.WithLiteral().Done()).WithHandler().Done()`
 - [ ] Test full fluent chain with `AsQuery()`, `AsCommand()`
 - [ ] Test route pattern generation for help
 - [ ] Update existing CompiledRouteBuilder tests
 
 ### Documentation
-- [ ] Update XML docs
+- [ ] Update XML docs for both interfaces
+- [ ] Update XML docs for both builder classes
 - [ ] Update task 160 epic example to match
 
 ## Notes
+
+### Why Two Interfaces?
+
+| Interface               | Purpose                      | Method    | Example                        |
+|-------------------------|------------------------------|-----------|--------------------------------|
+| `IBuilder<TBuilt>`      | Creates TBuilt               | `Build()` | `CompiledRouteBuilder`         |
+| `INestedBuilder<TParent>` | Returns to parent when done | `Done()`  | `NestedCompiledRouteBuilder<T>` |
+
+### Why Composition?
+
+- **No code duplication** - nested wraps standalone
+- **Clear API surface** - standalone has `Build()`, nested has `Done()`
+- **Simple mental model** - `Done()` = `Build()` + return to parent
+- **Avoids CRTP complexity** - no generic base class gymnastics
 
 ### Why Func instead of Action?
 
@@ -145,27 +216,38 @@ builder.Map(r => r                    // CompiledRouteBuilder<EndpointBuilder>
 Map(Action<CompiledRouteBuilder> configure)
 
 // Func pattern (target) - user must call Done()
-Map(Func<CompiledRouteBuilder<EndpointBuilder>, EndpointBuilder> configure)
+Map(Func<NestedCompiledRouteBuilder<EndpointBuilder>, EndpointBuilder> configure)
 ```
 
 The `Func` pattern:
 1. Forces user to call `Done()` - can't forget it
 2. Type system enforces correct return
-3. Matches the nested builder pattern from `timewarp-fluent-builder`
+3. Consistent with nested builder pattern
 
-### Relationship to Task 164
+### Naming Convention
 
-Task 164 added:
-- `EndpointBuilder.WithHandler()`
-- `Map(Action<CompiledRouteBuilder>)` returning `EndpointBuilder`
+- **Standalone**: `{Thing}Builder` - e.g., `CompiledRouteBuilder`
+- **Nested**: `Nested{Thing}Builder<TParent>` - e.g., `NestedCompiledRouteBuilder<TParent>`
 
-This task evolves that to:
-- `CompiledRouteBuilder<TParent>` with `IBuilder<TParent>`
-- `Map(Func<...>)` pattern requiring `Done()`
+### Use Cases for Standalone Builder
 
-### No Standalone CompiledRouteBuilder
+```csharp
+// 1. Unit testing route matching
+var route = new CompiledRouteBuilder()
+    .WithLiteral("deploy")
+    .Build();
+Assert.True(route.Match(["deploy"]).IsMatch);
 
-Since we don't care about backward compat:
-- Remove non-generic `CompiledRouteBuilder`
-- Only `CompiledRouteBuilder<TParent>` exists
-- If someone needs standalone route building, they can use `PatternParser.Parse()`
+// 2. Source generator emits static routes (Task 151)
+private static readonly CompiledRoute __Route_Deploy = new CompiledRouteBuilder()
+    .WithLiteral("deploy")
+    .Build();
+
+// 3. Pre-computed routes for performance
+public static class Routes
+{
+    public static readonly CompiledRoute Status = new CompiledRouteBuilder()
+        .WithLiteral("status")
+        .Build();
+}
+```

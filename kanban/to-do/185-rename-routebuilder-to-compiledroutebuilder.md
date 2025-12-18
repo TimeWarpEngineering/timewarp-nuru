@@ -1,15 +1,15 @@
-# Rename RouteBuilder back to CompiledRouteBuilder
+# Rename RouteBuilder to CompiledRouteBuilder
 
 ## Description
 
-Task 164 incorrectly renamed `CompiledRouteBuilder` to `RouteBuilder`. 
+Task 164 renamed `CompiledRouteBuilder` to `RouteBuilder`, but this violates naming convention.
 
 **Naming convention:** `{ThingItBuilds}Builder`
 
-- `RouteBuilder` builds `CompiledRoute` → WRONG
+- `RouteBuilder` builds `CompiledRoute` → WRONG (no class called `Route`)
 - `CompiledRouteBuilder` builds `CompiledRoute` → CORRECT
 
-Revert this specific rename and update all task files to use correct name.
+Rename to follow convention and update all task files to use correct name.
 
 ## Checklist
 

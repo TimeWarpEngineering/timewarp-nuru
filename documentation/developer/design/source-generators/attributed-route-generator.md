@@ -141,6 +141,8 @@ public abstract class DockerRequestBase
 
 ## Generated Code Structure
 
+### Simple Route
+
 For a request like:
 
 ```csharp
@@ -186,6 +188,65 @@ internal static class GeneratedAttributedRouteRegistration
   }
 }
 ```
+
+### Grouped Route
+
+For a grouped request like:
+
+```csharp
+[NuruRouteGroup("docker")]
+public abstract class DockerRequestBase
+{
+  [GroupOption("debug", "D", Description = "Enable debug mode")]
+  public bool Debug { get; set; }
+}
+
+[NuruRoute("run", Description = "Run a container")]
+public sealed class DockerRunRequest : DockerRequestBase, IRequest
+{
+  [Parameter(Description = "Image name")]
+  public string Image { get; set; } = string.Empty;
+  
+  [Option("detach", "d")]
+  public bool Detach { get; set; }
+}
+```
+
+The generator produces:
+
+```csharp
+// GeneratedAttributedRoutes.g.cs
+namespace TimeWarp.Nuru.Generated;
+
+internal static class GeneratedAttributedRoutes
+{
+  internal static readonly CompiledRoute __Route_DockerRunRequest = 
+    new CompiledRouteBuilder()
+      .WithLiteral("docker")          // Group prefix
+      .WithLiteral("run")             // Route pattern
+      .WithParameter("image", type: "string", description: "Image name")
+      .WithOption("debug", shortForm: "D", description: "Enable debug mode", isOptionalFlag: true)  // From group
+      .WithOption("detach", shortForm: "d", isOptionalFlag: true)
+      .Build();
+      
+  internal const string __Pattern_DockerRunRequest = "docker run {image} --debug,-D --detach,-d";
+}
+
+internal static class GeneratedAttributedRouteRegistration
+{
+  [ModuleInitializer]
+  internal static void Register()
+  {
+    NuruRouteRegistry.Register(
+      typeof(DockerRunRequest),
+      GeneratedAttributedRoutes.__Route_DockerRunRequest,
+      GeneratedAttributedRoutes.__Pattern_DockerRunRequest,
+      "Run a container");
+  }
+}
+```
+
+Note how the group prefix `"docker"` and group option `--debug,-D` are inherited from `DockerRequestBase`.
 
 ## Registration Flow
 

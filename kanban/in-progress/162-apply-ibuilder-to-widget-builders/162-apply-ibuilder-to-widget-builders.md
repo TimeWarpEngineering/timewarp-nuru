@@ -136,17 +136,17 @@ public sealed class NestedTableBuilder<TParent> : INestedBuilder<TParent>
 - [x] Add wrapper methods for all fluent methods
 
 ### PanelBuilder
-- [ ] Add `IBuilder<Panel>` to existing `PanelBuilder`
-- [ ] Create `NestedPanelBuilder<TParent>` implementing `INestedBuilder<TParent>`
-- [ ] Use composition - wrap `PanelBuilder` internally
+- [x] Add `IBuilder<Panel>` to existing `PanelBuilder`
+- [x] Create `NestedPanelBuilder<TParent>` implementing `INestedBuilder<TParent>`
+- [x] Use composition - wrap `PanelBuilder` internally
 - [ ] Add `WithTable()` method for nested table building
-- [ ] Add wrapper methods for all fluent methods
+- [x] Add wrapper methods for all fluent methods
 
 ### RuleBuilder
-- [ ] Add `IBuilder<Rule>` to existing `RuleBuilder`
-- [ ] Create `NestedRuleBuilder<TParent>` implementing `INestedBuilder<TParent>`
-- [ ] Use composition - wrap `RuleBuilder` internally
-- [ ] Add wrapper methods for all fluent methods
+- [x] Add `IBuilder<Rule>` to existing `RuleBuilder`
+- [x] Create `NestedRuleBuilder<TParent>` implementing `INestedBuilder<TParent>`
+- [x] Use composition - wrap `RuleBuilder` internally
+- [x] Add wrapper methods for all fluent methods
 
 ### ITerminal Extensions
 - [ ] Add `Panel(Func<NestedPanelBuilder<ITerminal>, ITerminal>)` extension

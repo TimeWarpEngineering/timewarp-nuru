@@ -128,7 +128,7 @@ public sealed class Rule
 ///     .Build();
 /// </code>
 /// </example>
-public sealed class RuleBuilder
+public sealed class RuleBuilder : IBuilder<Rule>
 {
   private readonly Rule _rule = new();
 

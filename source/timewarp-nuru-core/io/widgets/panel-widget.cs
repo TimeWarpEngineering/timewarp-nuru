@@ -247,7 +247,7 @@ public sealed class Panel
 ///     .Build();
 /// </code>
 /// </example>
-public sealed class PanelBuilder
+public sealed class PanelBuilder : IBuilder<Panel>
 {
   private readonly Panel _panel = new();
 

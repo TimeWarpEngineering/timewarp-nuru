@@ -1,29 +1,27 @@
 namespace TimeWarp.Nuru;
 
 /// <summary>
-/// Interface for nested builders supporting pop-back to parent.
-/// Enables fluent API patterns where child configurators can return to the parent builder.
+/// Interface for top-level builders that create objects via <see cref="Build"/>.
 /// </summary>
-/// <typeparam name="TParent">The parent builder type to return to.</typeparam>
+/// <typeparam name="TBuilt">The type of object this builder creates.</typeparam>
 /// <remarks>
 /// <para>
-/// This pattern allows methods like <see cref="NuruCoreAppBuilder.Map"/> to return a
-/// configuration object that can be further configured, then return to the parent builder
-/// for continued chaining:
+/// This interface is for standalone builders that produce a final object.
+/// For nested builders that return to a parent context, see <see cref="INestedBuilder{TParent}"/>.
 /// </para>
 /// <code>
-/// app.Map("status", handler)     // Returns EndpointBuilder&lt;TBuilder&gt;
-///    .AsQuery()                   // Returns EndpointBuilder&lt;TBuilder&gt;
-///    .Done()                      // Returns TBuilder (preserves derived type!)
-///    .AddReplSupport()            // Extension method works!
-///    .Build();
+/// // Standalone builder creates CompiledRoute
+/// CompiledRoute route = new CompiledRouteBuilder()
+///     .WithLiteral("deploy")
+///     .WithParameter("env")
+///     .Build();  // Returns CompiledRoute
 /// </code>
 /// </remarks>
-public interface IBuilder<out TParent> where TParent : class
+public interface IBuilder<out TBuilt>
 {
   /// <summary>
-  /// Completes the nested builder configuration and returns to the parent builder.
+  /// Builds and returns the configured object.
   /// </summary>
-  /// <returns>The parent builder for continued chaining.</returns>
-  TParent Done();
+  /// <returns>The built object of type <typeparamref name="TBuilt"/>.</returns>
+  TBuilt Build();
 }

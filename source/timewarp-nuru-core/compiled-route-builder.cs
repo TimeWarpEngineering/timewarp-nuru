@@ -5,10 +5,26 @@ namespace TimeWarp.Nuru;
 /// This provides a programmatic alternative to string-based route patterns.
 /// </summary>
 /// <remarks>
+/// <para>
 /// The builder produces routes identical to those created by <see cref="PatternParser.Parse"/>.
 /// It uses the same specificity scoring constants as the pattern compiler.
+/// </para>
+/// <para>
+/// This is a standalone builder implementing <see cref="IBuilder{TBuilt}"/>.
+/// For nested fluent configuration, use <see cref="NestedCompiledRouteBuilder{TParent}"/>.
+/// </para>
 /// </remarks>
-public sealed class CompiledRouteBuilder
+/// <example>
+/// <code>
+/// // Standalone usage
+/// CompiledRoute route = new CompiledRouteBuilder()
+///     .WithLiteral("deploy")
+///     .WithParameter("env")
+///     .WithOption("force", "f")
+///     .Build();
+/// </code>
+/// </example>
+public sealed class CompiledRouteBuilder : IBuilder<CompiledRoute>
 {
   private readonly List<RouteMatcher> _segments = [];
   private string? _catchAllParameterName;

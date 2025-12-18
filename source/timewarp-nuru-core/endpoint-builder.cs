@@ -24,7 +24,7 @@ namespace TimeWarp.Nuru;
 ///    .Build();
 /// </code>
 /// </remarks>
-public sealed class EndpointBuilder<TBuilder> : IBuilder<TBuilder>
+public sealed class EndpointBuilder<TBuilder> : INestedBuilder<TBuilder>
   where TBuilder : NuruCoreAppBuilder
 {
   private readonly TBuilder _builder;
@@ -136,6 +136,21 @@ public sealed class EndpointBuilder<TBuilder> : IBuilder<TBuilder>
     _builder.MapMediatorTyped<TBuilder>(typeof(TCommand), pattern, description);
 
   /// <summary>
+  /// Adds a route using fluent <see cref="NestedCompiledRouteBuilder{TParent}"/> configuration.
+  /// Use <see cref="WithHandler"/> to set the handler after configuring the route.
+  /// </summary>
+  /// <param name="configureRoute">
+  /// Function to configure the route pattern. Must call <see cref="NestedCompiledRouteBuilder{TParent}.Done"/>
+  /// to complete route configuration and return the <see cref="EndpointBuilder{TBuilder}"/>.
+  /// </param>
+  /// <param name="description">Optional description shown in help.</param>
+  /// <returns>An <see cref="EndpointBuilder{TBuilder}"/> for further endpoint configuration.</returns>
+  public EndpointBuilder<TBuilder> Map(
+    Func<NestedCompiledRouteBuilder<EndpointBuilder<TBuilder>>, EndpointBuilder<TBuilder>> configureRoute,
+    string? description = null) =>
+    _builder.MapNestedTyped<TBuilder>(configureRoute, description);
+
+  /// <summary>
   /// Adds a default route that executes when no arguments are provided (forwarded to the app builder).
   /// Enables fluent chaining after route configuration.
   /// </summary>
@@ -190,7 +205,7 @@ public sealed class EndpointBuilder<TBuilder> : IBuilder<TBuilder>
 /// Non-generic EndpointBuilder for backward compatibility.
 /// Prefer using <see cref="EndpointBuilder{TBuilder}"/> for type-safe fluent chaining.
 /// </summary>
-public sealed class EndpointBuilder : IBuilder<NuruCoreAppBuilder>
+public sealed class EndpointBuilder : INestedBuilder<NuruCoreAppBuilder>
 {
   private readonly NuruCoreAppBuilder _builder;
   private readonly Endpoint _endpoint;

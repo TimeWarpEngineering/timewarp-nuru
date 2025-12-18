@@ -37,10 +37,13 @@ public partial class NuruCoreAppBuilder
   }
 
   /// <summary>
-  /// Adds a route using fluent <see cref="CompiledRouteBuilder"/> configuration.
+  /// Adds a route using fluent <see cref="NestedCompiledRouteBuilder{TParent}"/> configuration.
   /// Use <see cref="EndpointBuilder.WithHandler"/> to set the handler after configuring the route.
   /// </summary>
-  /// <param name="configureRoute">Action to configure the route pattern using <see cref="CompiledRouteBuilder"/>.
+  /// <param name="configureRoute">
+  /// Function to configure the route pattern. Must call <see cref="NestedCompiledRouteBuilder{TParent}.Done"/>
+  /// to complete route configuration and return the <see cref="EndpointBuilder"/>.
+  /// </param>
   /// <param name="description">Optional description shown in help.</param>
   /// <returns>An <see cref="EndpointBuilder"/> for further endpoint configuration.</returns>
   /// <example>
@@ -48,33 +51,40 @@ public partial class NuruCoreAppBuilder
   /// builder.Map(route => route
   ///     .WithLiteral("deploy")
   ///     .WithParameter("env")
-  ///     .WithOption("force", "f"))
+  ///     .WithOption("force", "f")
+  ///     .Done())                    // Must call Done() to complete route configuration
   ///     .WithHandler(async (string env, bool force) => await Deploy(env, force))
   ///     .AsCommand()
   ///     .Done();
   /// </code>
   /// </example>
-  public virtual EndpointBuilder Map(Action<CompiledRouteBuilder> configureRoute, string? description = null)
+  public virtual EndpointBuilder Map(
+    Func<NestedCompiledRouteBuilder<EndpointBuilder>, EndpointBuilder> configureRoute,
+    string? description = null)
   {
     ArgumentNullException.ThrowIfNull(configureRoute);
 
-    CompiledRouteBuilder routeBuilder = new();
-    configureRoute(routeBuilder);
-    CompiledRoute compiledRoute = routeBuilder.Build();
-
-    // Generate a display pattern from the compiled route for help text
-    string routePattern = GeneratePatternFromCompiledRoute(compiledRoute);
-
+    // Create endpoint with placeholder values - these will be set by the nested builder callback
     Endpoint endpoint = new()
     {
-      RoutePattern = routePattern,
-      CompiledRoute = compiledRoute,
+      RoutePattern = string.Empty,  // Placeholder - set in callback below
+      CompiledRoute = new CompiledRoute { Segments = [] },  // Placeholder - set in callback below
       Description = description
       // Handler will be set via EndpointBuilder.WithHandler()
     };
 
     EndpointCollection.Add(endpoint);
-    return new EndpointBuilder(this, endpoint);
+
+    EndpointBuilder endpointBuilder = new(this, endpoint);
+    NestedCompiledRouteBuilder<EndpointBuilder> routeBuilder = new(
+      endpointBuilder,
+      route =>
+      {
+        endpoint.CompiledRoute = route;
+        endpoint.RoutePattern = GeneratePatternFromCompiledRoute(route);
+      });
+
+    return configureRoute(routeBuilder);
   }
 
   /// <summary>
@@ -256,6 +266,36 @@ public partial class NuruCoreAppBuilder
 
     EndpointCollection.Add(endpoint);
     return new EndpointBuilder<TBuilder>((TBuilder)this, endpoint);
+  }
+
+  internal EndpointBuilder<TBuilder> MapNestedTyped<TBuilder>(
+    Func<NestedCompiledRouteBuilder<EndpointBuilder<TBuilder>>, EndpointBuilder<TBuilder>> configureRoute,
+    string? description = null)
+    where TBuilder : NuruCoreAppBuilder
+  {
+    ArgumentNullException.ThrowIfNull(configureRoute);
+
+    // Create endpoint with placeholder values - these will be set by the nested builder callback
+    Endpoint endpoint = new()
+    {
+      RoutePattern = string.Empty,  // Placeholder - set in callback below
+      CompiledRoute = new CompiledRoute { Segments = [] },  // Placeholder - set in callback below
+      Description = description
+      // Handler will be set via EndpointBuilder.WithHandler()
+    };
+
+    EndpointCollection.Add(endpoint);
+
+    EndpointBuilder<TBuilder> endpointBuilder = new((TBuilder)this, endpoint);
+    NestedCompiledRouteBuilder<EndpointBuilder<TBuilder>> routeBuilder = new(
+      endpointBuilder,
+      route =>
+      {
+        endpoint.CompiledRoute = route;
+        endpoint.RoutePattern = GeneratePatternFromCompiledRoute(route);
+      });
+
+    return configureRoute(routeBuilder);
   }
 
   private EndpointBuilder MapMediator(

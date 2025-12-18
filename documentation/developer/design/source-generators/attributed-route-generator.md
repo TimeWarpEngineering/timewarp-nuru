@@ -356,6 +356,25 @@ record AttributedRouteInfo(
 );
 ```
 
+## Sample Application
+
+A complete working example is in `samples/attributed-routes/attributed-routes.cs`.
+
+Features demonstrated:
+- Simple routes with parameters and options (`GreetRequest`, `DeployRequest`)
+- Default route with empty pattern (`DefaultRequest`)
+- Route aliases (`GoodbyeRequest` with `bye`, `cya` aliases)
+- Grouped routes (`DockerRunRequest`, `DockerBuildRequest` inheriting from `DockerRequestBase`)
+- Catch-all parameters (`ExecRequest`)
+
+Run the sample:
+```bash
+dotnet run --project samples/attributed-routes -- greet Alice
+dotnet run --project samples/attributed-routes -- deploy prod --force --replicas 3
+dotnet run --project samples/attributed-routes -- docker run nginx --debug
+dotnet run --project samples/attributed-routes -- exec echo hello world
+```
+
 ## Testing
 
 Tests are in `tests/timewarp-nuru-analyzers-tests/auto/`:

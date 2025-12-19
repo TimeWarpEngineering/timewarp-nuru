@@ -67,7 +67,7 @@ app.Map("")
 - [ ] Task 195: Handler generation (complex - parameter rewriting)
 - [ ] Task 196: MessageType support
 - [ ] Task 197: Invoker generator updates
-- [ ] Task 198: Sample updates
+- [x] Task 198: Sample updates (28 files migrated to fluent API)
 - [ ] Task 199: Test coverage
 
 ## Example Transformation

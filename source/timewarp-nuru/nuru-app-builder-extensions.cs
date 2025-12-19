@@ -78,7 +78,10 @@ public static partial class NuruAppBuilderExtensions
     where TBuilder : NuruCoreAppBuilder<TBuilder>
   {
     ArgumentNullException.ThrowIfNull(builder);
-    builder.Map("--version,-v", DisplayVersion, "Display version information");
+    builder.Map("--version,-v")
+      .WithHandler(DisplayVersion)
+      .WithDescription("Display version information")
+      .Done();
     return builder;
   }
 
@@ -151,7 +154,10 @@ public static partial class NuruAppBuilderExtensions
     where TBuilder : NuruCoreAppBuilder<TBuilder>
   {
     ArgumentNullException.ThrowIfNull(builder);
-    builder.Map("--check-updates", CheckForUpdatesAsync, "Check for newer versions on GitHub");
+    builder.Map("--check-updates")
+      .WithHandler(CheckForUpdatesAsync)
+      .WithDescription("Check for newer versions on GitHub")
+      .Done();
     return builder;
   }
 

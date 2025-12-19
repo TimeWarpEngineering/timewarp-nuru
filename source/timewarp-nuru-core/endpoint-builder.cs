@@ -10,14 +10,17 @@ namespace TimeWarp.Nuru;
 /// This class enables the fluent API pattern for configuring route metadata:
 /// </para>
 /// <code>
-/// app.Map("users list", handler)
+/// app.Map("users list")
+///    .WithHandler(handler)
+///    .WithDescription("List all users")
 ///    .AsQuery()
 ///    .Done()                    // Returns to TBuilder
 ///    .AddReplSupport()          // Extension methods work!
 ///    .Build();
 ///
 /// // Or use inline configuration with Also():
-/// app.Map("users list", handler)
+/// app.Map("users list")
+///    .WithHandler(handler)
 ///    .Also(r => r.AsQuery())    // Returns EndpointBuilder&lt;TBuilder&gt;
 ///    .Done()
 ///    .AddReplSupport()
@@ -51,8 +54,9 @@ public class EndpointBuilder<TBuilder> : INestedBuilder<TBuilder>
   /// Use this when building routes with <see cref="CompiledRouteBuilder"/> where the handler
   /// is set separately from the route pattern:
   /// <code>
-  /// app.Map(r => r.WithLiteral("deploy").WithParameter("env"))
+  /// app.Map("deploy {env}")
   ///    .WithHandler(async (string env) => await Deploy(env))
+  ///    .WithDescription("Deploy to an environment")
   ///    .AsCommand()
   ///    .Done();
   /// </code>
@@ -62,6 +66,26 @@ public class EndpointBuilder<TBuilder> : INestedBuilder<TBuilder>
     ArgumentNullException.ThrowIfNull(handler);
     _endpoint.Handler = handler;
     _endpoint.Method = handler.Method;
+    return this;
+  }
+
+  /// <summary>
+  /// Sets the description for this endpoint (shown in help text).
+  /// </summary>
+  /// <param name="description">The description to display in help output.</param>
+  /// <returns>This configurator for further endpoint configuration.</returns>
+  /// <example>
+  /// <code>
+  /// app.Map("deploy {env}")
+  ///    .WithHandler((string env) => Deploy(env))
+  ///    .WithDescription("Deploy to the specified environment")
+  ///    .AsCommand()
+  ///    .Done();
+  /// </code>
+  /// </example>
+  public EndpointBuilder<TBuilder> WithDescription(string description)
+  {
+    _endpoint.Description = description;
     return this;
   }
 
@@ -113,27 +137,30 @@ public class EndpointBuilder<TBuilder> : INestedBuilder<TBuilder>
   }
 
   /// <summary>
-  /// Adds a delegate-based route (forwarded to the app builder).
+  /// Adds a route pattern (forwarded to the app builder).
+  /// Use <see cref="WithHandler"/> to set the handler after configuring the route.
   /// Enables fluent chaining after route configuration.
   /// </summary>
-  public EndpointBuilder<TBuilder> Map(string pattern, Delegate handler, string? description = null) =>
-    _builder.Map(pattern, handler, description);
+  /// <param name="pattern">The route pattern to match.</param>
+  /// <returns>An <see cref="EndpointBuilder{TBuilder}"/> for further endpoint configuration.</returns>
+  public EndpointBuilder<TBuilder> Map(string pattern) =>
+    _builder.Map(pattern);
 
   /// <summary>
   /// Adds a Mediator command-based route (forwarded to the app builder).
   /// Enables fluent chaining after route configuration.
   /// </summary>
-  public EndpointBuilder<TBuilder> Map<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)] TCommand>(string pattern, string? description = null)
+  public EndpointBuilder<TBuilder> Map<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)] TCommand>(string pattern)
     where TCommand : IRequest, new() =>
-    _builder.Map<TCommand>(pattern, description);
+    _builder.Map<TCommand>(pattern);
 
   /// <summary>
   /// Adds a Mediator command-based route with response (forwarded to the app builder).
   /// Enables fluent chaining after route configuration.
   /// </summary>
-  public EndpointBuilder<TBuilder> Map<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)] TCommand, TResponse>(string pattern, string? description = null)
+  public EndpointBuilder<TBuilder> Map<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)] TCommand, TResponse>(string pattern)
     where TCommand : IRequest<TResponse>, new() =>
-    _builder.Map<TCommand, TResponse>(pattern, description);
+    _builder.Map<TCommand, TResponse>(pattern);
 
   /// <summary>
   /// Adds a route using fluent <see cref="NestedCompiledRouteBuilder{TParent}"/> configuration.
@@ -143,26 +170,17 @@ public class EndpointBuilder<TBuilder> : INestedBuilder<TBuilder>
   /// Function to configure the route pattern. Must call <see cref="NestedCompiledRouteBuilder{TParent}.Done"/>
   /// to complete route configuration and return the <see cref="EndpointBuilder{TBuilder}"/>.
   /// </param>
-  /// <param name="description">Optional description shown in help.</param>
   /// <returns>An <see cref="EndpointBuilder{TBuilder}"/> for further endpoint configuration.</returns>
   public EndpointBuilder<TBuilder> Map(
-    Func<NestedCompiledRouteBuilder<EndpointBuilder<TBuilder>>, EndpointBuilder<TBuilder>> configureRoute,
-    string? description = null) =>
-    _builder.Map(configureRoute, description);
-
-  /// <summary>
-  /// Adds a default route that executes when no arguments are provided (forwarded to the app builder).
-  /// Enables fluent chaining after route configuration.
-  /// </summary>
-  public EndpointBuilder<TBuilder> MapDefault(Delegate handler, string? description = null) =>
-    _builder.MapDefault(handler, description);
+    Func<NestedCompiledRouteBuilder<EndpointBuilder<TBuilder>>, EndpointBuilder<TBuilder>> configureRoute) =>
+    _builder.Map(configureRoute);
 
   /// <summary>
   /// Adds multiple route patterns that invoke the same handler (forwarded to the app builder).
   /// Enables fluent chaining after route configuration.
   /// </summary>
-  public TBuilder MapMultiple(string[] patterns, Delegate handler, string? description = null) =>
-    (TBuilder)_builder.MapMultiple(patterns, handler, description);
+  public TBuilder MapMultiple(string[] patterns, Delegate handler) =>
+    (TBuilder)_builder.MapMultiple(patterns, handler);
 
   /// <summary>
   /// Adds automatic help routes to the application (forwarded to the app builder).
@@ -183,10 +201,10 @@ public class EndpointBuilder<TBuilder> : INestedBuilder<TBuilder>
   /// <example>
   /// <code>
   /// // Preferred - use Done()
-  /// app.Map("test", handler).Done().AddReplSupport().Build();
+  /// app.Map("test").WithHandler(handler).Done().AddReplSupport().Build();
   ///
   /// // Alternative - use Builder property
-  /// app.Map("test", handler).Builder.AddReplSupport().Build();
+  /// app.Map("test").WithHandler(handler).Builder.AddReplSupport().Build();
   /// </code>
   /// </example>
   public TBuilder Builder => _builder;

@@ -122,12 +122,36 @@ public static class NuruCoreAppExtensions
     ArgumentNullException.ThrowIfNull(builder);
 
     // Register REPL commands as routes using clean method group syntax
-    builder
-      .MapMultiple(["exit", "quit", "q"], ReplSession.ExitAsync, "Exit the REPL")
-      .Map("history", ReplSession.ShowHistoryAsync, "Show command history")
-      .MapMultiple(["clear", "cls"], ReplSession.ClearScreenAsync, "Clear the screen")
-      .Map("clear-history", ReplSession.ClearHistoryAsync, "Clear command history")
-      .AddAutoHelp();
+    // Note: MapMultiple doesn't support WithDescription, so we use Map for each pattern
+    builder.Map("exit")
+      .WithHandler(ReplSession.ExitAsync)
+      .WithDescription("Exit the REPL")
+      .Done();
+    builder.Map("quit")
+      .WithHandler(ReplSession.ExitAsync)
+      .WithDescription("Exit the REPL")
+      .Done();
+    builder.Map("q")
+      .WithHandler(ReplSession.ExitAsync)
+      .WithDescription("Exit the REPL")
+      .Done();
+    builder.Map("history")
+      .WithHandler(ReplSession.ShowHistoryAsync)
+      .WithDescription("Show command history")
+      .Done();
+    builder.Map("clear")
+      .WithHandler(ReplSession.ClearScreenAsync)
+      .WithDescription("Clear the screen")
+      .Done();
+    builder.Map("cls")
+      .WithHandler(ReplSession.ClearScreenAsync)
+      .WithDescription("Clear the screen")
+      .Done();
+    builder.Map("clear-history")
+      .WithHandler(ReplSession.ClearHistoryAsync)
+      .WithDescription("Clear command history")
+      .Done();
+    builder.AddAutoHelp();
 
     return builder;
   }
@@ -228,13 +252,22 @@ public static class NuruCoreAppExtensions
     if (canUseAliasSyntax)
     {
       // Use alias syntax: "--interactive,-i" creates single endpoint with alternate form
-      builder.Map(patterns, StartInteractiveModeAsync, "Enter interactive REPL mode");
+      builder.Map(patterns)
+        .WithHandler(StartInteractiveModeAsync)
+        .WithDescription("Enter interactive REPL mode")
+        .Done();
     }
     else
     {
-      // Use MapMultiple for literals like ["interactive", "repl"]
+      // Use individual Map calls for literals like ["interactive", "repl"]
       // or for more than 2 options which can't use alias syntax
-      builder.MapMultiple(patternArray, StartInteractiveModeAsync, "Enter interactive REPL mode");
+      foreach (string pattern in patternArray)
+      {
+        builder.Map(pattern)
+          .WithHandler(StartInteractiveModeAsync)
+          .WithDescription("Enter interactive REPL mode")
+          .Done();
+      }
     }
 
     return builder;

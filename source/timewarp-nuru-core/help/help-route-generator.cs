@@ -58,7 +58,10 @@ internal static class HelpRouteGenerator
       {
         // Capture endpoints by value to avoid issues with collection modification
         List<Endpoint> capturedEndpoints = [.. endpoints];
-        builder.Map(helpRoute, () => GetCommandGroupHelpText(prefix, capturedEndpoints), description);
+        builder.Map(helpRoute)
+          .WithHandler(() => GetCommandGroupHelpText(prefix, capturedEndpoints))
+          .WithDescription(description)
+          .Done();
       }
     }
 
@@ -67,16 +70,20 @@ internal static class HelpRouteGenerator
     // Context determined at runtime via SessionContext singleton
     if (!existingEndpoints.Any(e => e.RoutePattern == "--help" || e.RoutePattern == "--help?"))
     {
-      builder.Map("--help?", (SessionContext session) => HelpProvider.GetHelpText(endpointCollection, appMetadata?.Name, appMetadata?.Description, helpOptions, session.HelpContext, session.SupportsColor),
-      description: "Show available commands");
+      builder.Map("--help?")
+        .WithHandler((SessionContext session) => HelpProvider.GetHelpText(endpointCollection, appMetadata?.Name, appMetadata?.Description, helpOptions, session.HelpContext, session.SupportsColor))
+        .WithDescription("Show available commands")
+        .Done();
     }
 
     // Add base help route if not already present (REPL-friendly)
     // Context determined at runtime via SessionContext singleton
     if (!existingEndpoints.Any(e => e.RoutePattern == "help"))
     {
-      builder.Map("help", (SessionContext session) => HelpProvider.GetHelpText(endpointCollection, appMetadata?.Name, appMetadata?.Description, helpOptions, session.HelpContext, session.SupportsColor),
-      description: "Show available commands");
+      builder.Map("help")
+        .WithHandler((SessionContext session) => HelpProvider.GetHelpText(endpointCollection, appMetadata?.Name, appMetadata?.Description, helpOptions, session.HelpContext, session.SupportsColor))
+        .WithDescription("Show available commands")
+        .Done();
     }
   }
 

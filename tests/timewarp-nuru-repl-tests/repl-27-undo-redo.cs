@@ -137,8 +137,14 @@ public class UndoRedoTests
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("bye", () => "Goodbye!")
-      .Map("hello", () => "Hello!")
+      .Map("bye")
+        .WithHandler(() => "Goodbye!")
+        .AsQuery()
+        .Done()
+      .Map("hello")
+        .WithHandler(() => "Hello!")
+        .AsQuery()
+        .Done()
       .AddReplSupport(options => options.EnableColors = false)
       .Build();
 
@@ -162,7 +168,10 @@ public class UndoRedoTests
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("hello world", () => "Full text!")
+      .Map("hello world")
+        .WithHandler(() => "Full text!")
+        .AsQuery()
+        .Done()
       .AddReplSupport(options => options.EnableColors = false)
       .Build();
 
@@ -185,7 +194,10 @@ public class UndoRedoTests
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("hello", () => "Hello!")
+      .Map("hello")
+        .WithHandler(() => "Hello!")
+        .AsQuery()
+        .Done()
       .AddReplSupport(options => options.EnableColors = false)
       .Build();
 
@@ -210,7 +222,10 @@ public class UndoRedoTests
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("abc", () => "ABC!")
+      .Map("abc")
+        .WithHandler(() => "ABC!")
+        .AsQuery()
+        .Done()
       .AddReplSupport(options => options.EnableColors = false)
       .Build();
 
@@ -235,7 +250,10 @@ public class UndoRedoTests
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("status", () => "OK!")
+      .Map("status")
+        .WithHandler(() => "OK!")
+        .AsQuery()
+        .Done()
       .AddReplSupport(options => options.EnableColors = false)
       .Build();
 
@@ -257,7 +275,10 @@ public class UndoRedoTests
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("hello", () => "Hello!")
+      .Map("hello")
+        .WithHandler(() => "Hello!")
+        .AsQuery()
+        .Done()
       .AddReplSupport(options => options.EnableColors = false)
       .Build();
 
@@ -279,7 +300,10 @@ public class UndoRedoTests
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("hello", () => "Hello!")
+      .Map("hello")
+        .WithHandler(() => "Hello!")
+        .AsQuery()
+        .Done()
       .AddReplSupport(options => options.EnableColors = false)
       .Build();
 
@@ -303,7 +327,10 @@ public class UndoRedoTests
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("x", () => "X!")
+      .Map("x")
+        .WithHandler(() => "X!")
+        .AsQuery()
+        .Done()
       .AddReplSupport(options => options.EnableColors = false)
       .Build();
 

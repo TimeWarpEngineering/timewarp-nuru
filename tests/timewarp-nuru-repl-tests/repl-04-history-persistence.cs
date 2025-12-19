@@ -34,7 +34,10 @@ namespace TimeWarp.Nuru.Tests.ReplTests.HistoryPersistence
 
       NuruCoreApp app = new NuruAppBuilder()
         .UseTerminal(terminal)
-        .Map("greet {name}", (string name) => $"Hello, {name}!")
+        .Map("greet {name}")
+          .WithHandler((string name) => $"Hello, {name}!")
+          .AsCommand()
+          .Done()
         .AddReplSupport(options =>
         {
           options.PersistHistory = true;
@@ -128,7 +131,10 @@ namespace TimeWarp.Nuru.Tests.ReplTests.HistoryPersistence
 
       NuruCoreApp app = new NuruAppBuilder()
         .UseTerminal(terminal)
-        .Map("test-command", () => "OK")
+        .Map("test-command")
+          .WithHandler(() => "OK")
+          .AsCommand()
+          .Done()
         .AddReplSupport(options =>
         {
           options.PersistHistory = true;
@@ -224,7 +230,10 @@ namespace TimeWarp.Nuru.Tests.ReplTests.HistoryPersistence
 
       NuruCoreApp app = new NuruAppBuilder()
         .UseTerminal(terminal)
-        .Map("test-command", () => "OK")
+        .Map("test-command")
+          .WithHandler(() => "OK")
+          .AsCommand()
+          .Done()
         .AddReplSupport(options =>
         {
           options.PersistHistory = false;

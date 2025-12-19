@@ -18,7 +18,7 @@ public class BasicMatchingTests
     // Arrange
     bool matched = false;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("status", () => { matched = true; return 0; })
+      .Map("status").WithHandler(() => { matched = true; return 0; }).AsQuery().Done()
       .Build();
 
     // Act
@@ -35,7 +35,7 @@ public class BasicMatchingTests
   {
     // Arrange
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("status", () => 0)
+      .Map("status").WithHandler(() => 0).AsQuery().Done()
       .Build();
 
     // Act
@@ -52,7 +52,7 @@ public class BasicMatchingTests
     // Arrange
     bool matched = false;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("git status", () => { matched = true; return 0; })
+      .Map("git status").WithHandler(() => { matched = true; return 0; }).AsQuery().Done()
       .Build();
 
     // Act
@@ -69,7 +69,7 @@ public class BasicMatchingTests
   {
     // Arrange
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("git status", () => 0)
+      .Map("git status").WithHandler(() => 0).AsQuery().Done()
       .Build();
 
     // Act
@@ -85,7 +85,7 @@ public class BasicMatchingTests
   {
     // Arrange
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("status", () => 0)
+      .Map("status").WithHandler(() => 0).AsQuery().Done()
       .Build();
 
     // Act
@@ -101,7 +101,7 @@ public class BasicMatchingTests
   {
     // Arrange
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("git status", () => 0)
+      .Map("git status").WithHandler(() => 0).AsQuery().Done()
       .Build();
 
     // Act
@@ -117,7 +117,7 @@ public class BasicMatchingTests
   {
     // Arrange
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("git status", () => 0)
+      .Map("git status").WithHandler(() => 0).AsQuery().Done()
       .Build();
 
     // Act
@@ -134,7 +134,7 @@ public class BasicMatchingTests
     // Arrange
     bool matched = false;
     NuruCoreApp app = new NuruAppBuilder()
-      .MapDefault(() => { matched = true; return 0; })
+      .Map("").WithHandler(() => { matched = true; return 0; }).AsQuery().Done()
       .Build();
 
     // Act
@@ -151,7 +151,7 @@ public class BasicMatchingTests
   {
     // Arrange
     NuruCoreApp app = new NuruAppBuilder()
-      .MapDefault(() => 0)
+      .Map("").WithHandler(() => 0).AsQuery().Done()
       .Build();
 
     // Act

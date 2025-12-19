@@ -21,7 +21,10 @@ public class AddInteractiveRouteAliasTests
   {
     // Arrange - Issue #119: AddInteractiveRoute should use alias syntax
     NuruAppBuilder builder = new();
-    builder.Map("status", () => 0);
+    builder.Map("status")
+      .WithHandler(() => 0)
+      .AsQuery()
+      .Done();
 
     // Act - Add interactive route with default "--interactive,-i"
     builder.AddInteractiveRoute();
@@ -122,7 +125,10 @@ public class AddInteractiveRouteAliasTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("status", () => 0);
+    builder.Map("status")
+      .WithHandler(() => 0)
+      .AsQuery()
+      .Done();
     builder.AddInteractiveRoute();
 
     // Act - Get help text

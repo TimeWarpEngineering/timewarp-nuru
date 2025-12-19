@@ -38,7 +38,10 @@ namespace TimeWarp.Nuru.Tests.ReplTests
       NuruCoreApp app = new NuruAppBuilder()
         .UseTerminal(terminal)
         .AddTypeConverter(new EnumTypeConverter<Environment>())
-        .Map("deploy {env:environment}", (Environment _) => 0)
+        .Map("deploy {env:environment}")
+          .WithHandler((Environment _) => 0)
+          .AsCommand()
+          .Done()
         .AddReplSupport(options => options.EnableArrowHistory = true)
         .Build();
 
@@ -68,7 +71,10 @@ namespace TimeWarp.Nuru.Tests.ReplTests
       NuruCoreApp app = new NuruAppBuilder()
         .UseTerminal(terminal)
         .AddTypeConverter(new EnumTypeConverter<Environment>())
-        .Map("deploy {env:environment}", (Environment _) => 0)
+        .Map("deploy {env:environment}")
+          .WithHandler((Environment _) => 0)
+          .AsCommand()
+          .Done()
         .AddReplSupport(options => options.EnableArrowHistory = true)
         .Build();
 
@@ -94,7 +100,10 @@ namespace TimeWarp.Nuru.Tests.ReplTests
       NuruCoreApp app = new NuruAppBuilder()
         .UseTerminal(terminal)
         .AddTypeConverter(new EnumTypeConverter<Environment>())
-        .Map("deploy {env:environment}", (Environment _) => 0)
+        .Map("deploy {env:environment}")
+          .WithHandler((Environment _) => 0)
+          .AsCommand()
+          .Done()
         .AddReplSupport(options => options.EnableArrowHistory = true)
         .Build();
 
@@ -120,7 +129,10 @@ namespace TimeWarp.Nuru.Tests.ReplTests
       NuruCoreApp app = new NuruAppBuilder()
         .UseTerminal(terminal)
         .AddTypeConverter(new EnumTypeConverter<Environment>())
-        .Map("deploy {env:environment}", (Environment _) => 0)
+        .Map("deploy {env:environment}")
+          .WithHandler((Environment _) => 0)
+          .AsCommand()
+          .Done()
         .AddReplSupport(options => options.EnableArrowHistory = true)
         .Build();
 

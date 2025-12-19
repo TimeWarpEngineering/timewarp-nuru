@@ -13,8 +13,14 @@ public class EnableStaticCompletionIntegrationTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("status", () => 0);
-    builder.Map("version", () => 0);
+    builder.Map("status")
+      .WithHandler(() => 0)
+      .AsQuery()
+      .Done();
+    builder.Map("version")
+      .WithHandler(() => 0)
+      .AsQuery()
+      .Done();
 
     // Act
     builder.EnableStaticCompletion();
@@ -35,7 +41,10 @@ public class EnableStaticCompletionIntegrationTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("deploy {env}", (string env) => 0);
+    builder.Map("deploy {env}")
+      .WithHandler((string env) => 0)
+      .AsCommand()
+      .Done();
 
     // Act
     builder.EnableStaticCompletion();
@@ -55,9 +64,18 @@ public class EnableStaticCompletionIntegrationTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("status", () => 0);
-    builder.Map("deploy {env}", (string env) => 0);
-    builder.Map("build --config {mode}", (string mode) => 0);
+    builder.Map("status")
+      .WithHandler(() => 0)
+      .AsQuery()
+      .Done();
+    builder.Map("deploy {env}")
+      .WithHandler((string env) => 0)
+      .AsCommand()
+      .Done();
+    builder.Map("build --config {mode}")
+      .WithHandler((string mode) => 0)
+      .AsCommand()
+      .Done();
 
     int originalRouteCount = builder.EndpointCollection.Endpoints.Count;
 
@@ -93,7 +111,10 @@ public class EnableStaticCompletionIntegrationTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("status", () => 0);
+    builder.Map("status")
+      .WithHandler(() => 0)
+      .AsQuery()
+      .Done();
 
     // Act
     builder.EnableStaticCompletion();
@@ -116,7 +137,10 @@ public class EnableStaticCompletionIntegrationTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("test", () => 0);
+    builder.Map("test")
+      .WithHandler(() => 0)
+      .AsCommand()
+      .Done();
 
     // Act - EnableStaticCompletion before Build
     builder.EnableStaticCompletion();
@@ -131,7 +155,10 @@ public class EnableStaticCompletionIntegrationTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("status", () => 0);
+    builder.Map("status")
+      .WithHandler(() => 0)
+      .AsQuery()
+      .Done();
     builder.EnableStaticCompletion();
 
     // Assert - All supported shell types should be matchable
@@ -148,9 +175,18 @@ public class EnableStaticCompletionIntegrationTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("deploy {env} --version {ver} --force --dry-run,-d", (string env, string ver) => 0);
-    builder.Map("git {*args}", (string[] args) => 0);
-    builder.Map("config set {key} {value?}", (string key, string? value) => 0);
+    builder.Map("deploy {env} --version {ver} --force --dry-run,-d")
+      .WithHandler((string env, string ver) => 0)
+      .AsCommand()
+      .Done();
+    builder.Map("git {*args}")
+      .WithHandler((string[] args) => 0)
+      .AsCommand()
+      .Done();
+    builder.Map("config set {key} {value?}")
+      .WithHandler((string key, string? value) => 0)
+      .AsCommand()
+      .Done();
 
     // Act
     builder.EnableStaticCompletion();
@@ -166,10 +202,19 @@ public class EnableStaticCompletionIntegrationTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("first", () => 0);
-    builder.Map("second", () => 0);
+    builder.Map("first")
+      .WithHandler(() => 0)
+      .AsCommand()
+      .Done();
+    builder.Map("second")
+      .WithHandler(() => 0)
+      .AsCommand()
+      .Done();
     builder.EnableStaticCompletion();
-    builder.Map("third", () => 0);
+    builder.Map("third")
+      .WithHandler(() => 0)
+      .AsCommand()
+      .Done();
 
     // Assert - Original routes should maintain their relative order
     List<string> nonCompletionRoutes =
@@ -190,9 +235,15 @@ public class EnableStaticCompletionIntegrationTests
   {
     // Arrange & Act - Test fluent chaining
     NuruAppBuilder builder = new();
-    builder.Map("status", () => 0);
+    builder.Map("status")
+      .WithHandler(() => 0)
+      .AsQuery()
+      .Done();
     builder.EnableStaticCompletion();
-    builder.Map("version", () => 0);
+    builder.Map("version")
+      .WithHandler(() => 0)
+      .AsQuery()
+      .Done();
 
     // Assert
     builder.EndpointCollection.Endpoints.ShouldContain(e => e.RoutePattern == "status");

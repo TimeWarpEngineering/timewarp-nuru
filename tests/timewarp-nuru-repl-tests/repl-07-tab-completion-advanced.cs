@@ -28,8 +28,8 @@ namespace TimeWarp.Nuru.Tests.ReplTests.TabCompletionAdvanced
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("deploy --force", () => "Force deployed!")
-      .Map("deploy --dry-run", () => "Dry run!")
+      .Map("deploy --force").WithHandler(() => "Force deployed!").AsCommand().Done()
+      .Map("deploy --dry-run").WithHandler(() => "Dry run!").AsQuery().Done()
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 
@@ -53,8 +53,8 @@ namespace TimeWarp.Nuru.Tests.ReplTests.TabCompletionAdvanced
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("deploy -f", () => "Force!")
-      .Map("deploy -v", () => "Verbose!")
+      .Map("deploy -f").WithHandler(() => "Force!").AsCommand().Done()
+      .Map("deploy -v").WithHandler(() => "Verbose!").AsCommand().Done()
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 
@@ -78,9 +78,9 @@ namespace TimeWarp.Nuru.Tests.ReplTests.TabCompletionAdvanced
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("git commit", () => "Committed!")
-      .Map("git config", () => "Configured!")
-      .Map("git status", () => "Status OK")
+      .Map("git commit").WithHandler(() => "Committed!").AsCommand().Done()
+      .Map("git config").WithHandler(() => "Configured!").AsCommand().Done()
+      .Map("git status").WithHandler(() => "Status OK").AsQuery().Done()
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 
@@ -104,7 +104,10 @@ namespace TimeWarp.Nuru.Tests.ReplTests.TabCompletionAdvanced
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("deploy {env}", (string env) => $"Deployed to {env}")
+      .Map("deploy {env}")
+        .WithHandler((string env) => $"Deployed to {env}")
+        .AsCommand()
+        .Done()
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 
@@ -128,7 +131,10 @@ namespace TimeWarp.Nuru.Tests.ReplTests.TabCompletionAdvanced
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("deploy --env {env}", (string env) => $"Deployed to {env}")
+      .Map("deploy --env {env}")
+        .WithHandler((string env) => $"Deployed to {env}")
+        .AsCommand()
+        .Done()
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 
@@ -152,7 +158,10 @@ namespace TimeWarp.Nuru.Tests.ReplTests.TabCompletionAdvanced
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("cmd {arg} --opt {val}", (string arg, string val) => $"{arg}:{val}")
+      .Map("cmd {arg} --opt {val}")
+        .WithHandler((string arg, string val) => $"{arg}:{val}")
+        .AsCommand()
+        .Done()
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 
@@ -176,7 +185,10 @@ namespace TimeWarp.Nuru.Tests.ReplTests.TabCompletionAdvanced
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("docker {*args}", (string[] args) => string.Join(" ", args))
+      .Map("docker {*args}")
+        .WithHandler((string[] args) => string.Join(" ", args))
+        .AsCommand()
+        .Done()
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 
@@ -200,9 +212,9 @@ namespace TimeWarp.Nuru.Tests.ReplTests.TabCompletionAdvanced
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("kubectl get pods", () => "Pods!")
-      .Map("kubectl get services", () => "Services!")
-      .Map("kubectl get nodes", () => "Nodes!")
+      .Map("kubectl get pods").WithHandler(() => "Pods!").AsQuery().Done()
+      .Map("kubectl get services").WithHandler(() => "Services!").AsQuery().Done()
+      .Map("kubectl get nodes").WithHandler(() => "Nodes!").AsQuery().Done()
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 
@@ -231,8 +243,8 @@ namespace TimeWarp.Nuru.Tests.ReplTests.TabCompletionAdvanced
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("help", () => "Help content")
-      .Map("hello", () => "Hello!")
+      .Map("help").WithHandler(() => "Help content").AsQuery().Done()
+      .Map("hello").WithHandler(() => "Hello!").AsCommand().Done()
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 
@@ -261,9 +273,9 @@ namespace TimeWarp.Nuru.Tests.ReplTests.TabCompletionAdvanced
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("git commit", () => "Committed!")
-      .Map("git push", () => "Pushed!")
-      .Map("git pull", () => "Pulled!")
+      .Map("git commit").WithHandler(() => "Committed!").AsCommand().Done()
+      .Map("git push").WithHandler(() => "Pushed!").AsCommand().Done()
+      .Map("git pull").WithHandler(() => "Pulled!").AsCommand().Done()
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 

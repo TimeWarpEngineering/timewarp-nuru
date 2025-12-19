@@ -51,7 +51,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.Performance
 
     using NuruAppBuilder builder = new();
     builder.UseTerminal(terminal);
-    builder.Map("noop", () => { });
+    builder.Map("noop").WithHandler(() => { }).AsCommand().Done();
     builder.AddReplSupport();
     NuruCoreApp app = builder.Build();
 
@@ -80,7 +80,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.Performance
 
     using NuruAppBuilder builder = new();
     builder.UseTerminal(terminal);
-    builder.Map("cmd{n}", (string _) => "OK");
+    builder.Map("cmd{n}").WithHandler((string _) => "OK").AsCommand().Done();
     builder.AddReplSupport(options => options.MaxHistorySize = 1000);
     NuruCoreApp app = builder.Build();
 
@@ -110,7 +110,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.Performance
     for (int i = 0; i < 100; i++)
     {
       int index = i;
-      builder.Map($"cmd{index}", () => $"Command {index}");
+      builder.Map($"cmd{index}").WithHandler(() => $"Command {index}").AsCommand().Done();
     }
 
     builder.AddReplSupport(options => options.EnableArrowHistory = true);
@@ -134,7 +134,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.Performance
     for (int i = 0; i < 50; i++)
     {
       int index = i;
-      builder.Map($"command{index}", () => "OK");
+      builder.Map($"command{index}").WithHandler(() => "OK").AsCommand().Done();
     }
 
     NuruCoreApp app = builder.Build();
@@ -183,7 +183,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.Performance
   {
     // Arrange - create endpoints via app builder
     using NuruAppBuilder builder = new();
-    builder.Map("status", () => "OK");
+    builder.Map("status").WithHandler(() => "OK").AsQuery().Done();
     NuruCoreApp app = builder.Build();
     EndpointCollection endpoints = app.Endpoints;
 

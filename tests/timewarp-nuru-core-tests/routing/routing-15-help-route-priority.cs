@@ -24,11 +24,11 @@ public class HelpRoutePriorityTests
     bool userRouteExecuted = false;
     NuruCoreApp app = new NuruAppBuilder()
       .AddAutoHelp()
-      .Map("recent --verbose?", (bool verbose) =>
+      .Map("recent --verbose?").WithHandler((bool verbose) =>
       {
         userRouteExecuted = true;
         return 0;
-      }, "Show recent items")
+      }).WithDescription("Show recent items").AsQuery().Done()
       .Build();
 
     // Act - invoke without the optional flag
@@ -45,11 +45,11 @@ public class HelpRoutePriorityTests
     bool userRouteExecuted = false;
     NuruCoreApp app = new NuruAppBuilder()
       .AddAutoHelp()
-      .Map("recent --verbose?", (bool verbose) =>
+      .Map("recent --verbose?").WithHandler((bool verbose) =>
       {
         userRouteExecuted = true;
         return 0;
-      }, "Show recent items")
+      }).WithDescription("Show recent items").AsQuery().Done()
       .Build();
 
     // Act - invoke with --help flag
@@ -67,12 +67,12 @@ public class HelpRoutePriorityTests
     bool verboseValue = false;
     NuruCoreApp app = new NuruAppBuilder()
       .AddAutoHelp()
-      .Map("recent --verbose?", (bool verbose) =>
+      .Map("recent --verbose?").WithHandler((bool verbose) =>
       {
         userRouteExecuted = true;
         verboseValue = verbose;
         return 0;
-      }, "Show recent items")
+      }).WithDescription("Show recent items").AsQuery().Done()
       .Build();
 
     // Act - invoke with the optional flag
@@ -91,11 +91,11 @@ public class HelpRoutePriorityTests
     bool userRouteExecuted = false;
     NuruCoreApp app = new NuruAppBuilder()
       .AddAutoHelp()
-      .Map("list --all? --verbose?", (bool all, bool verbose) =>
+      .Map("list --all? --verbose?").WithHandler((bool all, bool verbose) =>
       {
         userRouteExecuted = true;
         return 0;
-      }, "List items")
+      }).WithDescription("List items").AsQuery().Done()
       .Build();
 
     // Act - invoke without any optional flags

@@ -22,7 +22,7 @@ public class AdditionalPrimitiveTypeTests
     // Arrange
     byte? boundValue = null;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("setbyte {value:byte}", (byte value) => { boundValue = value; return 0; })
+      .Map("setbyte {value:byte}").WithHandler((byte value) => { boundValue = value; return 0; }).AsCommand().Done()
       .Build();
 
     // Act
@@ -40,7 +40,7 @@ public class AdditionalPrimitiveTypeTests
     // Arrange
     byte? boundValue = null;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("setbyte {value:byte}", (byte value) => { boundValue = value; return 0; })
+      .Map("setbyte {value:byte}").WithHandler((byte value) => { boundValue = value; return 0; }).AsCommand().Done()
       .Build();
 
     // Act
@@ -62,7 +62,7 @@ public class AdditionalPrimitiveTypeTests
     // Arrange
     sbyte? boundValue = null;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("setsbyte {value:sbyte}", (sbyte value) => { boundValue = value; return 0; })
+      .Map("setsbyte {value:sbyte}").WithHandler((sbyte value) => { boundValue = value; return 0; }).AsCommand().Done()
       .Build();
 
     // Act
@@ -80,7 +80,7 @@ public class AdditionalPrimitiveTypeTests
     // Arrange
     sbyte? boundValue = null;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("setsbyte {value:sbyte}", (sbyte value) => { boundValue = value; return 0; })
+      .Map("setsbyte {value:sbyte}").WithHandler((sbyte value) => { boundValue = value; return 0; }).AsCommand().Done()
       .Build();
 
     // Act
@@ -102,7 +102,7 @@ public class AdditionalPrimitiveTypeTests
     // Arrange
     short? boundValue = null;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("setshort {value:short}", (short value) => { boundValue = value; return 0; })
+      .Map("setshort {value:short}").WithHandler((short value) => { boundValue = value; return 0; }).AsCommand().Done()
       .Build();
 
     // Act
@@ -120,7 +120,7 @@ public class AdditionalPrimitiveTypeTests
     // Arrange
     short? boundValue = null;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("setshort {value:short}", (short value) => { boundValue = value; return 0; })
+      .Map("setshort {value:short}").WithHandler((short value) => { boundValue = value; return 0; }).AsCommand().Done()
       .Build();
 
     // Act
@@ -142,7 +142,7 @@ public class AdditionalPrimitiveTypeTests
     // Arrange
     ushort? boundValue = null;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("setushort {value:ushort}", (ushort value) => { boundValue = value; return 0; })
+      .Map("setushort {value:ushort}").WithHandler((ushort value) => { boundValue = value; return 0; }).AsCommand().Done()
       .Build();
 
     // Act
@@ -164,7 +164,7 @@ public class AdditionalPrimitiveTypeTests
     // Arrange
     uint? boundValue = null;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("setuint {value:uint}", (uint value) => { boundValue = value; return 0; })
+      .Map("setuint {value:uint}").WithHandler((uint value) => { boundValue = value; return 0; }).AsCommand().Done()
       .Build();
 
     // Act
@@ -186,7 +186,7 @@ public class AdditionalPrimitiveTypeTests
     // Arrange
     ulong? boundValue = null;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("setulong {value:ulong}", (ulong value) => { boundValue = value; return 0; })
+      .Map("setulong {value:ulong}").WithHandler((ulong value) => { boundValue = value; return 0; }).AsCommand().Done()
       .Build();
 
     // Act
@@ -208,7 +208,7 @@ public class AdditionalPrimitiveTypeTests
     // Arrange
     float? boundValue = null;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("setfloat {value:float}", (float value) => { boundValue = value; return 0; })
+      .Map("setfloat {value:float}").WithHandler((float value) => { boundValue = value; return 0; }).AsCommand().Done()
       .Build();
 
     // Act
@@ -227,7 +227,7 @@ public class AdditionalPrimitiveTypeTests
     // Arrange
     float? boundValue = null;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("setfloat {value:float}", (float value) => { boundValue = value; return 0; })
+      .Map("setfloat {value:float}").WithHandler((float value) => { boundValue = value; return 0; }).AsCommand().Done()
       .Build();
 
     // Act
@@ -250,7 +250,7 @@ public class AdditionalPrimitiveTypeTests
     // Arrange
     char? boundValue = null;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("setchar {value:char}", (char value) => { boundValue = value; return 0; })
+      .Map("setchar {value:char}").WithHandler((char value) => { boundValue = value; return 0; }).AsCommand().Done()
       .Build();
 
     // Act
@@ -268,7 +268,7 @@ public class AdditionalPrimitiveTypeTests
     // Arrange
     char? boundValue = null;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("setchar {value:char}", (char value) => { boundValue = value; return 0; })
+      .Map("setchar {value:char}").WithHandler((char value) => { boundValue = value; return 0; }).AsCommand().Done()
       .Build();
 
     // Act
@@ -290,7 +290,7 @@ public class AdditionalPrimitiveTypeTests
     // Arrange
     byte[]? boundValues = null;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("bytes {*values:byte}", (byte[] values) => { boundValues = values; return 0; })
+      .Map("bytes {*values:byte}").WithHandler((byte[] values) => { boundValues = values; return 0; }).AsQuery().Done()
       .Build();
 
     // Act
@@ -312,7 +312,7 @@ public class AdditionalPrimitiveTypeTests
     // Arrange
     short[]? boundValues = null;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("shorts {*values:short}", (short[] values) => { boundValues = values; return 0; })
+      .Map("shorts {*values:short}").WithHandler((short[] values) => { boundValues = values; return 0; }).AsQuery().Done()
       .Build();
 
     // Act
@@ -334,7 +334,7 @@ public class AdditionalPrimitiveTypeTests
     // Arrange
     float[]? boundValues = null;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("floats {*values:float}", (float[] values) => { boundValues = values; return 0; })
+      .Map("floats {*values:float}").WithHandler((float[] values) => { boundValues = values; return 0; }).AsQuery().Done()
       .Build();
 
     // Act

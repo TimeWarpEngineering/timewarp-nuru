@@ -112,7 +112,7 @@ public class StaticFactoryMethodTests
     NuruCoreAppBuilder builder = NuruApp.CreateSlimBuilder();
 
     // Act - use Map instead of Map
-    builder.Map("test", () => { matched = true; return 0; });
+    builder.Map("test").WithHandler(() => { matched = true; return 0; }).AsQuery().Done();
     NuruCoreApp app = builder.Build();
     int exitCode = await app.RunAsync(["test"]);
 
@@ -127,8 +127,8 @@ public class StaticFactoryMethodTests
     bool matched = false;
     NuruCoreAppBuilder builder = NuruApp.CreateSlimBuilder();
 
-    // Act - use MapDefault instead of MapDefault
-    builder.MapDefault(() => { matched = true; return 0; });
+    // Act - use Map("") for default route (MapDefault is now Map(""))
+    builder.Map("").WithHandler(() => { matched = true; return 0; }).AsQuery().Done();
     NuruCoreApp app = builder.Build();
     int exitCode = await app.RunAsync([]);
 
@@ -148,7 +148,7 @@ public class StaticFactoryMethodTests
       // Additional service registrations can go here if needed
     });
     // DI is available
-    builder.Map("status", () => { matched = true; return 0; });
+    builder.Map("status").WithHandler(() => { matched = true; return 0; }).AsQuery().Done();
 
     // Act
     NuruCoreApp app = builder.Build();
@@ -165,7 +165,7 @@ public class StaticFactoryMethodTests
     // Arrange - Lightweight builder (returns NuruCoreAppBuilder)
     string result = "";
     NuruCoreAppBuilder builder = NuruApp.CreateSlimBuilder();
-    builder.Map("greet {name}", (string name) => { result = $"Hello, {name}!"; return 0; });
+    builder.Map("greet {name}").WithHandler((string name) => { result = $"Hello, {name}!"; return 0; }).AsQuery().Done();
 
     // Act
     NuruCoreApp app = builder.Build();
@@ -181,7 +181,7 @@ public class StaticFactoryMethodTests
     // Arrange - Minimal builder (returns NuruCoreAppBuilder)
     bool matched = false;
     NuruCoreAppBuilder builder = NuruApp.CreateEmptyBuilder();
-    builder.Map("cmd", () => { matched = true; return 0; });
+    builder.Map("cmd").WithHandler(() => { matched = true; return 0; }).AsQuery().Done();
 
     // Act
     NuruCoreApp app = builder.Build();
@@ -197,7 +197,7 @@ public class StaticFactoryMethodTests
     // Arrange - Internal constructor accessible via InternalsVisibleTo
     bool matched = false;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("legacy", () => { matched = true; return 0; })
+      .Map("legacy").WithHandler(() => { matched = true; return 0; }).AsQuery().Done()
       .Build();
 
     // Act

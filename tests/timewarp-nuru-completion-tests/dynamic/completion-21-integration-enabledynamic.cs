@@ -17,7 +17,7 @@ public class IntegrationEnableDynamicTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("status", () => 0);
+    builder.Map("status").WithHandler(() => 0).AsQuery().Done();
 
     // Act
     builder.EnableDynamicCompletion();
@@ -69,7 +69,7 @@ public class IntegrationEnableDynamicTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("deploy {env}", (string env) => 0);
+    builder.Map("deploy {env}").WithHandler((string env) => 0).AsCommand().Done();
 
     bool registryConfigured = false;
 
@@ -91,7 +91,7 @@ public class IntegrationEnableDynamicTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("status", () => 0);
+    builder.Map("status").WithHandler(() => 0).AsQuery().Done();
     builder.EnableDynamicCompletion();
 
     // Act - Find the __complete endpoint and verify its signature
@@ -148,8 +148,8 @@ public class IntegrationEnableDynamicTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("status", () => 0);
-    builder.Map("version", () => 0);
+    builder.Map("status").WithHandler(() => 0).AsQuery().Done();
+    builder.Map("version").WithHandler(() => 0).AsQuery().Done();
     builder.EnableDynamicCompletion();
 
     NuruCoreApp app = builder.Build();
@@ -169,7 +169,7 @@ public class IntegrationEnableDynamicTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("deploy {env}", (string env) => 0);
+    builder.Map("deploy {env}").WithHandler((string env) => 0).AsCommand().Done();
 
     builder.EnableDynamicCompletion(configure: registry =>
     {
@@ -194,7 +194,7 @@ public class IntegrationEnableDynamicTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("deploy {env} --mode {mode}", (string env, DeploymentMode mode) => 0);
+    builder.Map("deploy {env} --mode {mode}").WithHandler((string env, DeploymentMode mode) => 0).AsCommand().Done();
 
     builder.EnableDynamicCompletion(configure: registry =>
     {
@@ -220,7 +220,7 @@ public class IntegrationEnableDynamicTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("status", () => 0);
+    builder.Map("status").WithHandler(() => 0).AsQuery().Done();
 
     // Act
     builder.EnableDynamicCompletion(appName: "my-custom-app");

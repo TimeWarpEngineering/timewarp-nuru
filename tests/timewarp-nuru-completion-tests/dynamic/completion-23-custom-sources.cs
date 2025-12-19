@@ -17,7 +17,10 @@ public class CustomSourcesTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("deploy {env}", (string env) => 0);
+    builder.Map("deploy {env}")
+      .WithHandler((string env) => 0)
+      .AsCommand()
+      .Done();
 
     builder.EnableDynamicCompletion(configure: registry =>
     {
@@ -41,7 +44,10 @@ public class CustomSourcesTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("open {file}", (string file) => 0);
+    builder.Map("open {file}")
+      .WithHandler((string file) => 0)
+      .AsCommand()
+      .Done();
 
     builder.EnableDynamicCompletion(configure: registry =>
     {
@@ -65,7 +71,10 @@ public class CustomSourcesTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("deploy {env} {version}", (string env, string version) => 0);
+    builder.Map("deploy {env} {version}")
+      .WithHandler((string env, string version) => 0)
+      .AsCommand()
+      .Done();
 
     builder.EnableDynamicCompletion(configure: registry =>
     {
@@ -88,7 +97,10 @@ public class CustomSourcesTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("show {item}", (string item) => 0);
+    builder.Map("show {item}")
+      .WithHandler((string item) => 0)
+      .AsCommand()
+      .Done();
 
     builder.EnableDynamicCompletion(configure: registry =>
     {
@@ -110,7 +122,10 @@ public class CustomSourcesTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("select {item}", (string item) => 0);
+    builder.Map("select {item}")
+      .WithHandler((string item) => 0)
+      .AsCommand()
+      .Done();
 
     builder.EnableDynamicCompletion(configure: registry =>
     {
@@ -133,7 +148,10 @@ public class CustomSourcesTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("pick {number}", (string number) => 0);
+    builder.Map("pick {number}")
+      .WithHandler((string number) => 0)
+      .AsCommand()
+      .Done();
 
     builder.EnableDynamicCompletion(configure: registry =>
     {
@@ -158,7 +176,10 @@ public class CustomSourcesTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("select {region}", (string region) => 0);
+    builder.Map("select {region}")
+      .WithHandler((string region) => 0)
+      .AsCommand()
+      .Done();
 
     builder.EnableDynamicCompletion(configure: registry =>
     {
@@ -181,7 +202,10 @@ public class CustomSourcesTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("use {item}", (string item) => 0);
+    builder.Map("use {item}")
+      .WithHandler((string item) => 0)
+      .AsCommand()
+      .Done();
 
     StatefulSource statefulSource = new();
     statefulSource.AddItem("first");
@@ -207,7 +231,10 @@ public class CustomSourcesTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("info {item}", (string item) => 0);
+    builder.Map("info {item}")
+      .WithHandler((string item) => 0)
+      .AsCommand()
+      .Done();
 
     builder.EnableDynamicCompletion(configure: registry =>
     {

@@ -17,9 +17,18 @@ public class CursorContextTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("deploy", () => 0);
-    builder.Map("build", () => 0);
-    builder.Map("test", () => 0);
+    builder.Map("deploy")
+      .WithHandler(() => 0)
+      .AsCommand()
+      .Done();
+    builder.Map("build")
+      .WithHandler(() => 0)
+      .AsCommand()
+      .Done();
+    builder.Map("test")
+      .WithHandler(() => 0)
+      .AsCommand()
+      .Done();
 
     // Act
     CompletionScriptGenerator generator = new();
@@ -37,7 +46,10 @@ public class CursorContextTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("deploy --force --verbose --dry-run", () => 0);
+    builder.Map("deploy --force --verbose --dry-run")
+      .WithHandler(() => 0)
+      .AsCommand()
+      .Done();
 
     // Act
     CompletionScriptGenerator generator = new();
@@ -55,9 +67,18 @@ public class CursorContextTests
   {
     // Arrange - Multiple commands with common prefix
     NuruAppBuilder builder = new();
-    builder.Map("create", () => 0);
-    builder.Map("createorder", () => 0);
-    builder.Map("createuser", () => 0);
+    builder.Map("create")
+      .WithHandler(() => 0)
+      .AsCommand()
+      .Done();
+    builder.Map("createorder")
+      .WithHandler(() => 0)
+      .AsCommand()
+      .Done();
+    builder.Map("createuser")
+      .WithHandler(() => 0)
+      .AsCommand()
+      .Done();
 
     // Act
     CompletionScriptGenerator generator = new();
@@ -75,7 +96,10 @@ public class CursorContextTests
   {
     // Arrange - Options with common prefix
     NuruAppBuilder builder = new();
-    builder.Map("test --verbose --version --validate", () => 0);
+    builder.Map("test --verbose --version --validate")
+      .WithHandler(() => 0)
+      .AsCommand()
+      .Done();
 
     // Act
     CompletionScriptGenerator generator = new();
@@ -93,9 +117,18 @@ public class CursorContextTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("git add", () => 0);
-    builder.Map("git commit", () => 0);
-    builder.Map("git push", () => 0);
+    builder.Map("git add")
+      .WithHandler(() => 0)
+      .AsCommand()
+      .Done();
+    builder.Map("git commit")
+      .WithHandler(() => 0)
+      .AsCommand()
+      .Done();
+    builder.Map("git push")
+      .WithHandler(() => 0)
+      .AsCommand()
+      .Done();
 
     // Act
     CompletionScriptGenerator generator = new();
@@ -111,8 +144,14 @@ public class CursorContextTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("deploy {env}", (string env) => 0);
-    builder.Map("build --config {mode}", (string mode) => 0);
+    builder.Map("deploy {env}")
+      .WithHandler((string env) => 0)
+      .AsCommand()
+      .Done();
+    builder.Map("build --config {mode}")
+      .WithHandler((string mode) => 0)
+      .AsCommand()
+      .Done();
 
     // Act
     CompletionScriptGenerator generator = new();
@@ -130,8 +169,14 @@ public class CursorContextTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("test {file}", (string file) => 0);
-    builder.Map("run --verbose", () => 0);
+    builder.Map("test {file}")
+      .WithHandler((string file) => 0)
+      .AsCommand()
+      .Done();
+    builder.Map("run --verbose")
+      .WithHandler(() => 0)
+      .AsCommand()
+      .Done();
 
     // Act
     CompletionScriptGenerator generator = new();
@@ -149,8 +194,14 @@ public class CursorContextTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("status", () => 0);
-    builder.Map("config --get {key}", (string key) => 0);
+    builder.Map("status")
+      .WithHandler(() => 0)
+      .AsQuery()
+      .Done();
+    builder.Map("config --get {key}")
+      .WithHandler((string key) => 0)
+      .AsQuery()
+      .Done();
 
     // Act
     CompletionScriptGenerator generator = new();
@@ -168,7 +219,10 @@ public class CursorContextTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("deploy {env} to {region}", (string env, string region) => 0);
+    builder.Map("deploy {env} to {region}")
+      .WithHandler((string env, string region) => 0)
+      .AsCommand()
+      .Done();
 
     // Act
     CompletionScriptGenerator generator = new();
@@ -185,8 +239,14 @@ public class CursorContextTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("build --config {mode}", (string mode) => 0);
-    builder.Map("test --output {file}", (string file) => 0);
+    builder.Map("build --config {mode}")
+      .WithHandler((string mode) => 0)
+      .AsCommand()
+      .Done();
+    builder.Map("test --output {file}")
+      .WithHandler((string file) => 0)
+      .AsCommand()
+      .Done();
 
     // Act
     CompletionScriptGenerator generator = new();
@@ -203,7 +263,10 @@ public class CursorContextTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("deploy --force --dry-run --verbose", () => 0);
+    builder.Map("deploy --force --dry-run --verbose")
+      .WithHandler(() => 0)
+      .AsCommand()
+      .Done();
 
     // Act
     CompletionScriptGenerator generator = new();
@@ -221,8 +284,14 @@ public class CursorContextTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("command {param}", (string param) => 0);
-    builder.Map("option --flag {value}", (string value) => 0);
+    builder.Map("command {param}")
+      .WithHandler((string param) => 0)
+      .AsCommand()
+      .Done();
+    builder.Map("option --flag {value}")
+      .WithHandler((string value) => 0)
+      .AsCommand()
+      .Done();
 
     CompletionScriptGenerator generator = new();
 

@@ -33,7 +33,7 @@ public sealed class DelegateSignatureExtractionTests
       using TimeWarp.Nuru;
       
       var app = NuruCoreApp.CreateSlimBuilder()
-        .Map("status", () => System.Console.WriteLine("OK"))
+        .Map("status").WithHandler(() => System.Console.WriteLine("OK")).AsQuery().Done()
         .Build();
       """;
 
@@ -54,7 +54,7 @@ public sealed class DelegateSignatureExtractionTests
       using TimeWarp.Nuru;
       
       var app = NuruCoreApp.CreateSlimBuilder()
-        .Map("greet {name}", (string name) => System.Console.WriteLine($"Hello {name}"))
+        .Map("greet {name}").WithHandler((string name) => System.Console.WriteLine($"Hello {name}")).AsQuery().Done()
         .Build();
       """;
 
@@ -73,7 +73,7 @@ public sealed class DelegateSignatureExtractionTests
       using TimeWarp.Nuru;
       
       var app = NuruCoreApp.CreateSlimBuilder()
-        .Map("wait {seconds:int}", (int seconds) => System.Console.WriteLine($"Waiting {seconds}s"))
+        .Map("wait {seconds:int}").WithHandler((int seconds) => System.Console.WriteLine($"Waiting {seconds}s")).AsQuery().Done()
         .Build();
       """;
 
@@ -92,7 +92,7 @@ public sealed class DelegateSignatureExtractionTests
       using TimeWarp.Nuru;
       
       var app = NuruCoreApp.CreateSlimBuilder()
-        .Map("add {x:int} {y:int}", (int x, int y) => System.Console.WriteLine($"Result: {x + y}"))
+        .Map("add {x:int} {y:int}").WithHandler((int x, int y) => System.Console.WriteLine($"Result: {x + y}")).AsQuery().Done()
         .Build();
       """;
 
@@ -111,7 +111,7 @@ public sealed class DelegateSignatureExtractionTests
       using TimeWarp.Nuru;
       
       var app = NuruCoreApp.CreateSlimBuilder()
-        .Map("docker {*args}", (string[] args) => System.Console.WriteLine(string.Join(" ", args)))
+        .Map("docker {*args}").WithHandler((string[] args) => System.Console.WriteLine(string.Join(" ", args))).AsCommand().Done()
         .Build();
       """;
 
@@ -130,7 +130,7 @@ public sealed class DelegateSignatureExtractionTests
       using TimeWarp.Nuru;
       
       var app = NuruCoreApp.CreateSlimBuilder()
-        .Map("build --verbose", (bool verbose) => System.Console.WriteLine($"Verbose: {verbose}"))
+        .Map("build --verbose").WithHandler((bool verbose) => System.Console.WriteLine($"Verbose: {verbose}")).AsCommand().Done()
         .Build();
       """;
 
@@ -149,7 +149,7 @@ public sealed class DelegateSignatureExtractionTests
       using TimeWarp.Nuru;
       
       var app = NuruCoreApp.CreateSlimBuilder()
-        .Map("compute {x:int} {y:int}", (int x, int y) => x + y)
+        .Map("compute {x:int} {y:int}").WithHandler((int x, int y) => x + y).AsQuery().Done()
         .Build();
       """;
 
@@ -169,7 +169,7 @@ public sealed class DelegateSignatureExtractionTests
       using System.Threading.Tasks;
       
       var app = NuruCoreApp.CreateSlimBuilder()
-        .Map("fetch {url}", async (string url) => await Task.Delay(100))
+        .Map("fetch {url}").WithHandler(async (string url) => await Task.Delay(100)).AsCommand().Done()
         .Build();
       """;
 
@@ -189,11 +189,11 @@ public sealed class DelegateSignatureExtractionTests
       using System.Threading.Tasks;
       
       var app = NuruCoreApp.CreateSlimBuilder()
-        .Map("fetch {id:int}", async (int id) => 
+        .Map("fetch {id:int}").WithHandler(async (int id) => 
         {
           await Task.Delay(100);
           return id * 2;
-        })
+        }).AsQuery().Done()
         .Build();
       """;
 
@@ -212,8 +212,8 @@ public sealed class DelegateSignatureExtractionTests
       using TimeWarp.Nuru;
       
       var app = NuruCoreApp.CreateSlimBuilder()
-        .Map("deploy {env} {tag?}", (string env, string? tag) => 
-          System.Console.WriteLine($"Deploy {env} with {tag ?? "latest"}"))
+        .Map("deploy {env} {tag?}").WithHandler((string env, string? tag) => 
+          System.Console.WriteLine($"Deploy {env} with {tag ?? "latest"}")).AsCommand().Done()
         .Build();
       """;
 
@@ -232,7 +232,7 @@ public sealed class DelegateSignatureExtractionTests
       using TimeWarp.Nuru;
       
       var app = NuruCoreApp.CreateSlimBuilder()
-        .Map("calc {value:double}", (double value) => System.Console.WriteLine(value * 2.0))
+        .Map("calc {value:double}").WithHandler((double value) => System.Console.WriteLine(value * 2.0)).AsQuery().Done()
         .Build();
       """;
 
@@ -252,7 +252,7 @@ public sealed class DelegateSignatureExtractionTests
       using System;
       
       var app = NuruCoreApp.CreateSlimBuilder()
-        .Map("get {id:Guid}", (Guid id) => System.Console.WriteLine(id))
+        .Map("get {id:Guid}").WithHandler((Guid id) => System.Console.WriteLine(id)).AsQuery().Done()
         .Build();
       """;
 
@@ -272,8 +272,8 @@ public sealed class DelegateSignatureExtractionTests
       using System.Linq;
       
       var app = NuruCoreApp.CreateSlimBuilder()
-        .Map("sum {*values:int}", (int[] values) => 
-          System.Console.WriteLine(values.Sum()))
+        .Map("sum {*values:int}").WithHandler((int[] values) => 
+          System.Console.WriteLine(values.Sum())).AsQuery().Done()
         .Build();
       """;
 
@@ -292,8 +292,8 @@ public sealed class DelegateSignatureExtractionTests
       using TimeWarp.Nuru;
       
       var app = NuruCoreApp.CreateSlimBuilder()
-        .Map("greet {name}", (string name) => System.Console.WriteLine(name))
-        .Map("add {x:int} {y:int}", (int x, int y) => System.Console.WriteLine(x + y))
+        .Map("greet {name}").WithHandler((string name) => System.Console.WriteLine(name)).AsQuery().Done()
+        .Map("add {x:int} {y:int}").WithHandler((int x, int y) => System.Console.WriteLine(x + y)).AsQuery().Done()
         .Build();
       """;
 
@@ -320,7 +320,7 @@ public sealed class DelegateSignatureExtractionTests
       using TimeWarp.Nuru;
       
       var app = NuruCoreApp.CreateSlimBuilder()
-        .Map("greet {name}", (string name) => System.Console.WriteLine(name))
+        .Map("greet {name}").WithHandler((string name) => System.Console.WriteLine(name)).AsQuery().Done()
         .Build();
       """;
 
@@ -352,7 +352,7 @@ public sealed class DelegateSignatureExtractionTests
       using TimeWarp.Nuru;
       
       var app = NuruCoreApp.CreateSlimBuilder()
-        .Map("add {x:int} {y:int}", (int x, int y) => x + y)
+        .Map("add {x:int} {y:int}").WithHandler((int x, int y) => x + y).AsQuery().Done()
         .Build();
       """;
 

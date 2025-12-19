@@ -21,7 +21,7 @@ public class TypedCatchAllTests
     // Arrange
     int[]? boundNumbers = null;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("sum {*numbers:int}", (int[] numbers) => { boundNumbers = numbers; return 0; })
+      .Map("sum {*numbers:int}").WithHandler((int[] numbers) => { boundNumbers = numbers; return 0; }).AsCommand().Done()
       .Build();
 
     // Act
@@ -46,7 +46,7 @@ public class TypedCatchAllTests
     // Arrange
     double[]? boundValues = null;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("average {*values:double}", (double[] values) => { boundValues = values; return 0; })
+      .Map("average {*values:double}").WithHandler((double[] values) => { boundValues = values; return 0; }).AsCommand().Done()
       .Build();
 
     // Act
@@ -71,7 +71,7 @@ public class TypedCatchAllTests
     // Arrange
     bool[]? boundFlags = null;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("flags {*values:bool}", (bool[] values) => { boundFlags = values; return 0; })
+      .Map("flags {*values:bool}").WithHandler((bool[] values) => { boundFlags = values; return 0; }).AsCommand().Done()
       .Build();
 
     // Act
@@ -96,7 +96,7 @@ public class TypedCatchAllTests
     // Arrange
     int[]? boundNumbers = null;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("sum {*numbers:int}", (int[] numbers) => { boundNumbers = numbers; return 0; })
+      .Map("sum {*numbers:int}").WithHandler((int[] numbers) => { boundNumbers = numbers; return 0; }).AsCommand().Done()
       .Build();
 
     // Act
@@ -119,12 +119,12 @@ public class TypedCatchAllTests
     string? boundOperation = null;
     int[]? boundNumbers = null;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("calc {operation} {*numbers:int}", (string operation, int[] numbers) =>
+      .Map("calc {operation} {*numbers:int}").WithHandler((string operation, int[] numbers) =>
       {
         boundOperation = operation;
         boundNumbers = numbers;
         return 0;
-      })
+      }).AsCommand().Done()
       .Build();
 
     // Act
@@ -150,7 +150,7 @@ public class TypedCatchAllTests
     // Arrange
     long[]? boundValues = null;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("ids {*values:long}", (long[] values) => { boundValues = values; return 0; })
+      .Map("ids {*values:long}").WithHandler((long[] values) => { boundValues = values; return 0; }).AsQuery().Done()
       .Build();
 
     // Act
@@ -174,7 +174,7 @@ public class TypedCatchAllTests
     // Arrange
     decimal[]? boundValues = null;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("prices {*values:decimal}", (decimal[] values) => { boundValues = values; return 0; })
+      .Map("prices {*values:decimal}").WithHandler((decimal[] values) => { boundValues = values; return 0; }).AsQuery().Done()
       .Build();
 
     // Act
@@ -201,7 +201,7 @@ public class TypedCatchAllTests
     Guid guid1 = Guid.Parse("550e8400-e29b-41d4-a716-446655440000");
     Guid guid2 = Guid.Parse("6ba7b810-9dad-11d1-80b4-00c04fd430c8");
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("guids {*values:Guid}", (Guid[] values) => { boundGuids = values; return 0; })
+      .Map("guids {*values:Guid}").WithHandler((Guid[] values) => { boundGuids = values; return 0; }).AsQuery().Done()
       .Build();
 
     // Act
@@ -225,7 +225,7 @@ public class TypedCatchAllTests
     // Arrange
     DateTime[]? boundDates = null;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("schedule {*dates:DateTime}", (DateTime[] dates) => { boundDates = dates; return 0; })
+      .Map("schedule {*dates:DateTime}").WithHandler((DateTime[] dates) => { boundDates = dates; return 0; }).AsQuery().Done()
       .Build();
 
     // Act
@@ -253,7 +253,7 @@ public class TypedCatchAllTests
     // Arrange
     string[]? boundArgs = null;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("echo {*args:string}", (string[] args) => { boundArgs = args; return 0; })
+      .Map("echo {*args:string}").WithHandler((string[] args) => { boundArgs = args; return 0; }).AsQuery().Done()
       .Build();
 
     // Act
@@ -277,7 +277,7 @@ public class TypedCatchAllTests
     // Arrange
     string[]? boundArgs = null;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("echo {*args}", (string[] args) => { boundArgs = args; return 0; })
+      .Map("echo {*args}").WithHandler((string[] args) => { boundArgs = args; return 0; }).AsQuery().Done()
       .Build();
 
     // Act
@@ -300,7 +300,7 @@ public class TypedCatchAllTests
   {
     // Arrange
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("sum {*numbers:int}", (int[] _) => 0)
+      .Map("sum {*numbers:int}").WithHandler((int[] _) => 0).AsCommand().Done()
       .Build();
 
     // Act
@@ -320,7 +320,7 @@ public class TypedCatchAllTests
     // Arrange
     int[]? boundNumbers = null;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("calc {*numbers:int}", (int[] numbers) => { boundNumbers = numbers; return 0; })
+      .Map("calc {*numbers:int}").WithHandler((int[] numbers) => { boundNumbers = numbers; return 0; }).AsCommand().Done()
       .Build();
 
     // Act

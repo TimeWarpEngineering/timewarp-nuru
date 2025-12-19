@@ -162,8 +162,14 @@ public class YankArgumentTests
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("greet {name}", (string name) => $"Hello, {name}!")
-      .Map("{name}", (string name) => $"Received: {name}")  // Catch-all for yanked arg
+      .Map("greet {name}")
+        .WithHandler((string name) => $"Hello, {name}!")
+        .AsCommand()
+        .Done()
+      .Map("{name}")
+        .WithHandler((string name) => $"Received: {name}")  // Catch-all for yanked arg
+        .AsQuery()
+        .Done()
       .AddReplSupport(options => options.EnableColors = false)
       .Build();
 
@@ -190,8 +196,14 @@ public class YankArgumentTests
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("greet {name}", (string name) => $"Hello, {name}!")
-      .Map("{name}", (string name) => $"Received: {name}")
+      .Map("greet {name}")
+        .WithHandler((string name) => $"Hello, {name}!")
+        .AsCommand()
+        .Done()
+      .Map("{name}")
+        .WithHandler((string name) => $"Received: {name}")
+        .AsQuery()
+        .Done()
       .AddReplSupport(options => options.EnableColors = false)
       .Build();
 
@@ -215,8 +227,14 @@ public class YankArgumentTests
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("say {message}", (string message) => $"Said: {message}")
-      .Map("echo {text}", (string text) => $"Echo: {text}")
+      .Map("say {message}")
+        .WithHandler((string message) => $"Said: {message}")
+        .AsCommand()
+        .Done()
+      .Map("echo {text}")
+        .WithHandler((string text) => $"Echo: {text}")
+        .AsCommand()
+        .Done()
       .AddReplSupport(options => options.EnableColors = false)
       .Build();
 
@@ -238,7 +256,10 @@ public class YankArgumentTests
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("hello", () => "Hello!")
+      .Map("hello")
+        .WithHandler(() => "Hello!")
+        .AsQuery()
+        .Done()
       .AddReplSupport(options => options.EnableColors = false)
       .Build();
 
@@ -264,9 +285,18 @@ public class YankArgumentTests
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("status", () => "Status OK")
-      .Map("hello", () => "Hello!")
-      .Map("{text}", (string text) => $"Got: {text}")
+      .Map("status")
+        .WithHandler(() => "Status OK")
+        .AsQuery()
+        .Done()
+      .Map("hello")
+        .WithHandler(() => "Hello!")
+        .AsQuery()
+        .Done()
+      .Map("{text}")
+        .WithHandler((string text) => $"Got: {text}")
+        .AsQuery()
+        .Done()
       .AddReplSupport(options => options.EnableColors = false)
       .Build();
 
@@ -293,8 +323,14 @@ public class YankArgumentTests
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("git push origin main", () => "Pushed!")
-      .Map("{arg}", (string arg) => $"Got: {arg}")
+      .Map("git push origin main")
+        .WithHandler(() => "Pushed!")
+        .AsCommand()
+        .Done()
+      .Map("{arg}")
+        .WithHandler((string arg) => $"Got: {arg}")
+        .AsQuery()
+        .Done()
       .AddReplSupport(options => options.EnableColors = false)
       .Build();
 
@@ -318,9 +354,18 @@ public class YankArgumentTests
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("git push origin main", () => "Pushed!")
-      .Map("git", () => "Git command!")
-      .Map("{arg}", (string arg) => $"Got: {arg}")
+      .Map("git push origin main")
+        .WithHandler(() => "Pushed!")
+        .AsCommand()
+        .Done()
+      .Map("git")
+        .WithHandler(() => "Git command!")
+        .AsQuery()
+        .Done()
+      .Map("{arg}")
+        .WithHandler((string arg) => $"Got: {arg}")
+        .AsQuery()
+        .Done()
       .AddReplSupport(options => options.EnableColors = false)
       .Build();
 
@@ -345,8 +390,14 @@ public class YankArgumentTests
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("git push origin main", () => "Pushed!")
-      .Map("{arg}", (string arg) => $"Got: {arg}")
+      .Map("git push origin main")
+        .WithHandler(() => "Pushed!")
+        .AsCommand()
+        .Done()
+      .Map("{arg}")
+        .WithHandler((string arg) => $"Got: {arg}")
+        .AsQuery()
+        .Done()
       .AddReplSupport(options => options.EnableColors = false)
       .Build();
 
@@ -374,8 +425,14 @@ public class YankArgumentTests
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("status", () => "OK")
-      .Map("echo {arg}", (string arg) => $"Echo: {arg}")
+      .Map("status")
+        .WithHandler(() => "OK")
+        .AsQuery()
+        .Done()
+      .Map("echo {arg}")
+        .WithHandler((string arg) => $"Echo: {arg}")
+        .AsCommand()
+        .Done()
       .AddReplSupport(options => options.EnableColors = false)
       .Build();
 
@@ -406,9 +463,18 @@ public class YankArgumentTests
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("greet {name}", (string name) => $"Hello, {name}!")
-      .Map("done", () => "Done!")
-      .Map("{text}", (string text) => $"Got: {text}")
+      .Map("greet {name}")
+        .WithHandler((string name) => $"Hello, {name}!")
+        .AsCommand()
+        .Done()
+      .Map("done")
+        .WithHandler(() => "Done!")
+        .AsQuery()
+        .Done()
+      .Map("{text}")
+        .WithHandler((string text) => $"Got: {text}")
+        .AsQuery()
+        .Done()
       .AddReplSupport(options => options.EnableColors = false)
       .Build();
 
@@ -433,8 +499,14 @@ public class YankArgumentTests
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("greet {name}", (string name) => $"Hello, {name}!")
-      .Map("hello {name}", (string name) => $"Hi, {name}!")
+      .Map("greet {name}")
+        .WithHandler((string name) => $"Hello, {name}!")
+        .AsCommand()
+        .Done()
+      .Map("hello {name}")
+        .WithHandler((string name) => $"Hi, {name}!")
+        .AsCommand()
+        .Done()
       .AddReplSupport(options => options.EnableColors = false)
       .Build();
 

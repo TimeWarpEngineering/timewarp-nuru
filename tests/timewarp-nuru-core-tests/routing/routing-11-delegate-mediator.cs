@@ -22,7 +22,7 @@ public class DelegateMediatorConsistencyTests
     // Arrange - Delegate
     bool matched = false;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("status", () => { matched = true; return 0; })
+      .Map("status").WithHandler(() => { matched = true; return 0; }).AsQuery().Done()
       .Build();
 
     // Act
@@ -41,7 +41,7 @@ public class DelegateMediatorConsistencyTests
     NuruCoreApp app = new NuruAppBuilder()
       .AddDependencyInjection()
       .ConfigureServices(services => services.AddMediator())
-      .Map<StatusCommand>("status")
+      .Map<StatusCommand>("status").AsQuery().Done()
       .Build();
 
     // Act
@@ -59,7 +59,7 @@ public class DelegateMediatorConsistencyTests
     // Arrange - Delegate
     string? boundName = null;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("greet {name}", (string name) => { boundName = name; return 0; })
+      .Map("greet {name}").WithHandler((string name) => { boundName = name; return 0; }).AsQuery().Done()
       .Build();
 
     // Act
@@ -78,7 +78,7 @@ public class DelegateMediatorConsistencyTests
     NuruCoreApp app = new NuruAppBuilder()
       .AddDependencyInjection()
       .ConfigureServices(services => services.AddMediator())
-      .Map<GreetCommand>("greet {name}")
+      .Map<GreetCommand>("greet {name}").AsQuery().Done()
       .Build();
 
     // Act
@@ -95,7 +95,7 @@ public class DelegateMediatorConsistencyTests
   {
     // Arrange - Delegate
     NuruCoreApp app = new NuruAppBuilder()
-    .Map("delay {ms:int}", (int _) => 0)
+    .Map("delay {ms:int}").WithHandler((int _) => 0).AsCommand().Done()
     .Build();
 
     // Act
@@ -113,7 +113,7 @@ public class DelegateMediatorConsistencyTests
     NuruCoreApp app = new NuruAppBuilder()
       .AddDependencyInjection()
       .ConfigureServices(services => services.AddMediator())
-      .Map<DelayCommand>("delay {ms:int}")
+      .Map<DelayCommand>("delay {ms:int}").AsCommand().Done()
       .Build();
 
     // Act
@@ -131,7 +131,7 @@ public class DelegateMediatorConsistencyTests
     // Arrange - Delegate
     string? boundEnv = null;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("deploy {env?}", (string? env) => { boundEnv = env; return 0; })
+      .Map("deploy {env?}").WithHandler((string? env) => { boundEnv = env; return 0; }).AsCommand().Done()
       .Build();
 
     // Act
@@ -150,7 +150,7 @@ public class DelegateMediatorConsistencyTests
     NuruCoreApp app = new NuruAppBuilder()
       .AddDependencyInjection()
       .ConfigureServices(services => services.AddMediator())
-      .Map<DeployCommand>("deploy {env?}")
+      .Map<DeployCommand>("deploy {env?}").AsCommand().Done()
       .Build();
 
     // Act

@@ -17,8 +17,8 @@ public class ErrorCasesTests
   {
     // Arrange
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("status", () => 0)
-      .Map("version", () => 0)
+      .Map("status").WithHandler(() => 0).AsQuery().Done()
+      .Map("version").WithHandler(() => 0).AsQuery().Done()
       .Build();
 
     // Act
@@ -35,7 +35,7 @@ public class ErrorCasesTests
     // Arrange
 #pragma warning disable RCS1163 // Unused parameter
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("delay {ms:int}", (int ms) => 0)
+      .Map("delay {ms:int}").WithHandler((int ms) => 0).AsCommand().Done()
       .Build();
 #pragma warning restore RCS1163 // Unused parameter
 
@@ -53,7 +53,7 @@ public class ErrorCasesTests
     // Arrange
 #pragma warning disable RCS1163 // Unused parameter
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("build --config {mode}", (string mode) => 0)
+      .Map("build --config {mode}").WithHandler((string mode) => 0).AsCommand().Done()
       .Build();
 #pragma warning restore RCS1163 // Unused parameter
 
@@ -71,7 +71,7 @@ public class ErrorCasesTests
     // Arrange
 #pragma warning disable RCS1163 // Unused parameter
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("build --verbose", (bool verbose) => 0)
+      .Map("build --verbose").WithHandler((bool verbose) => 0).AsCommand().Done()
       .Build();
 #pragma warning restore RCS1163 // Unused parameter
 
@@ -89,7 +89,7 @@ public class ErrorCasesTests
     // Arrange
 #pragma warning disable RCS1163 // Unused parameter
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("build --verbose", (bool verbose) => 0)
+      .Map("build --verbose").WithHandler((bool verbose) => 0).AsCommand().Done()
       .Build();
 #pragma warning restore RCS1163 // Unused parameter
 
@@ -107,7 +107,7 @@ public class ErrorCasesTests
     // Arrange
 #pragma warning disable RCS1163 // Unused parameter
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("deploy {env} --tag {t}", (string env, string t) => 0)
+      .Map("deploy {env} --tag {t}").WithHandler((string env, string t) => 0).AsCommand().Done()
       .Build();
 #pragma warning restore RCS1163 // Unused parameter
 
@@ -125,7 +125,7 @@ public class ErrorCasesTests
     // Arrange
 #pragma warning disable RCS1163 // Unused parameter
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("deploy {env} --tag {t}", (string env, string t) => 0)
+      .Map("deploy {env} --tag {t}").WithHandler((string env, string t) => 0).AsCommand().Done()
       .Build();
 #pragma warning restore RCS1163 // Unused parameter
 

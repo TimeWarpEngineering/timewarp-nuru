@@ -24,13 +24,16 @@ public class OptionalFlagOptionalValueTests
     string? capturedMode = null;
     bool handlerCalled = false;
 
-    NuruCoreApp app = new NuruAppBuilder()
-      .Map("build --config? {mode?}", (string? mode) =>
-      {
-        capturedMode = mode;
-        handlerCalled = true;
-        return 0;
-      })
+    NuruCoreApp app = NuruCoreApp.CreateSlimBuilder()
+      .Map("build --config? {mode?}")
+        .WithHandler((string? mode) =>
+        {
+          capturedMode = mode;
+          handlerCalled = true;
+          return 0;
+        })
+        .AsCommand()
+        .Done()
       .Build();
 
     // Act - no --config flag provided
@@ -47,12 +50,15 @@ public class OptionalFlagOptionalValueTests
     // Arrange
     string? capturedMode = null;
 
-    NuruCoreApp app = new NuruAppBuilder()
-      .Map("build --config? {mode?}", (string? mode) =>
-      {
-        capturedMode = mode;
-        return 0;
-      })
+    NuruCoreApp app = NuruCoreApp.CreateSlimBuilder()
+      .Map("build --config? {mode?}")
+        .WithHandler((string? mode) =>
+        {
+          capturedMode = mode;
+          return 0;
+        })
+        .AsCommand()
+        .Done()
       .Build();
 
     // Act
@@ -69,13 +75,16 @@ public class OptionalFlagOptionalValueTests
     string? capturedMode = null;
     bool handlerCalled = false;
 
-    NuruCoreApp app = new NuruAppBuilder()
-      .Map("build --config? {mode?}", (string? mode) =>
-      {
-        capturedMode = mode;
-        handlerCalled = true;
-        return 0;
-      })
+    NuruCoreApp app = NuruCoreApp.CreateSlimBuilder()
+      .Map("build --config? {mode?}")
+        .WithHandler((string? mode) =>
+        {
+          capturedMode = mode;
+          handlerCalled = true;
+          return 0;
+        })
+        .AsCommand()
+        .Done()
       .Build();
 
     // Act - flag present but no value

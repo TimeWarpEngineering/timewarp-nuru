@@ -18,7 +18,7 @@ public class CatchAllTests
     // Arrange
     string[]? boundArgs = null;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("run {*args}", (string[] args) => { boundArgs = args; return 0; })
+      .Map("run {*args}").WithHandler((string[] args) => { boundArgs = args; return 0; }).AsCommand().Done()
       .Build();
 
     // Act
@@ -40,7 +40,7 @@ public class CatchAllTests
     // Arrange
     string[]? boundArgs = null;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("passthrough {*args}", (string[] args) => { boundArgs = args; return 0; })
+      .Map("passthrough {*args}").WithHandler((string[] args) => { boundArgs = args; return 0; }).AsCommand().Done()
       .Build();
 
     // Act
@@ -59,7 +59,7 @@ public class CatchAllTests
     // Arrange
     string[]? boundCmd = null;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("docker run {*cmd}", (string[] cmd) => { boundCmd = cmd; return 0; })
+      .Map("docker run {*cmd}").WithHandler((string[] cmd) => { boundCmd = cmd; return 0; }).AsCommand().Done()
       .Build();
 
     // Act
@@ -82,7 +82,7 @@ public class CatchAllTests
     string? boundScript = null;
     string[]? boundArgs = null;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("execute {script} {*args}", (string script, string[] args) => { boundScript = script; boundArgs = args; return 0; })
+      .Map("execute {script} {*args}").WithHandler((string script, string[] args) => { boundScript = script; boundArgs = args; return 0; }).AsCommand().Done()
       .Build();
 
     // Act
@@ -105,7 +105,7 @@ public class CatchAllTests
     // Arrange
     string[]? boundArgs = null;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("npm {*args}", (string[] args) => { boundArgs = args; return 0; })
+      .Map("npm {*args}").WithHandler((string[] args) => { boundArgs = args; return 0; }).AsCommand().Done()
       .Build();
 
     // Act

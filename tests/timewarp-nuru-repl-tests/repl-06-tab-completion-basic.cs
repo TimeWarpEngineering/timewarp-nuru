@@ -32,7 +32,10 @@ namespace TimeWarp.Nuru.Tests.ReplTests.TabCompletionBasic
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("status", () => "OK")
+      .Map("status")
+        .WithHandler(() => "OK")
+        .AsQuery()
+        .Done()
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 
@@ -56,8 +59,8 @@ namespace TimeWarp.Nuru.Tests.ReplTests.TabCompletionBasic
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("status", () => "Status OK")
-      .Map("start", () => "Started")
+      .Map("status").WithHandler(() => "Status OK").AsQuery().Done()
+      .Map("start").WithHandler(() => "Started").AsCommand().Done()
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 
@@ -83,8 +86,8 @@ namespace TimeWarp.Nuru.Tests.ReplTests.TabCompletionBasic
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("status", () => "Status OK")
-      .Map("start", () => "Started")
+      .Map("status").WithHandler(() => "Status OK").AsQuery().Done()
+      .Map("start").WithHandler(() => "Started").AsCommand().Done()
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 
@@ -110,8 +113,8 @@ namespace TimeWarp.Nuru.Tests.ReplTests.TabCompletionBasic
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("status", () => "Status OK")
-      .Map("start", () => "Started")
+      .Map("status").WithHandler(() => "Status OK").AsQuery().Done()
+      .Map("start").WithHandler(() => "Started").AsCommand().Done()
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 
@@ -137,7 +140,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.TabCompletionBasic
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("status", () => "Status OK")
+      .Map("status").WithHandler(() => "Status OK").AsQuery().Done()
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 
@@ -160,8 +163,8 @@ namespace TimeWarp.Nuru.Tests.ReplTests.TabCompletionBasic
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("status", () => "Status OK")
-      .Map("start", () => "Started")
+      .Map("status").WithHandler(() => "Status OK").AsQuery().Done()
+      .Map("start").WithHandler(() => "Started").AsCommand().Done()
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 
@@ -185,7 +188,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.TabCompletionBasic
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("deploy", () => "Deployed!")
+      .Map("deploy").WithHandler(() => "Deployed!").AsCommand().Done()
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 
@@ -209,7 +212,10 @@ namespace TimeWarp.Nuru.Tests.ReplTests.TabCompletionBasic
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("deploy {env}", (string env) => $"Deployed to {env}")
+      .Map("deploy {env}")
+        .WithHandler((string env) => $"Deployed to {env}")
+        .AsCommand()
+        .Done()
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 

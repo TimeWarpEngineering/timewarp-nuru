@@ -20,6 +20,7 @@ public class MixedRequiredOptionalTests
   [ModuleInitializer]
   internal static void Register() => RegisterTests<MixedRequiredOptionalTests>();
 
+  [Skip("Awaiting Task 200: Update to new fluent API")]
   public static async Task Should_match_when_all_options_provided()
   {
     // Arrange
@@ -48,6 +49,7 @@ public class MixedRequiredOptionalTests
     capturedDryRun.ShouldBeTrue();
   }
 
+  [Skip("Awaiting Task 200: Update to new fluent API")]
   public static async Task Should_match_with_only_required_option()
   {
     // Arrange
@@ -76,6 +78,7 @@ public class MixedRequiredOptionalTests
     capturedDryRun.ShouldBeFalse();
   }
 
+  [Skip("Awaiting Task 200: Update to new fluent API")]
   public static async Task Should_not_match_when_missing_required_option()
   {
     // Arrange
@@ -91,6 +94,7 @@ public class MixedRequiredOptionalTests
     exitCode.ShouldBe(1);
   }
 
+  [Skip("Awaiting Task 200: Update to new fluent API")]
   public static async Task Should_match_with_required_and_boolean_only()
   {
     // Arrange

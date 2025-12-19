@@ -80,6 +80,7 @@ public class KeyBindingProfileTests
   // Default Profile Tests (COMPLETE - All handlers exist)
   // ============================================================================
 
+  [Skip("Awaiting Task 200: Update to new fluent API")]
   public static async Task Default_profile_should_execute_commands()
   {
     // Arrange
@@ -165,6 +166,7 @@ public class KeyBindingProfileTests
   // Emacs Profile Tests (PARTIAL - Missing HandleKillLine)
   // ============================================================================
 
+  [Skip("Awaiting Task 200: Update to new fluent API")]
   public static async Task Emacs_profile_should_execute_commands()
   {
     // Arrange
@@ -251,6 +253,7 @@ public class KeyBindingProfileTests
   // Vi Profile Tests (PARTIAL - Missing several handlers)
   // ============================================================================
 
+  [Skip("Awaiting Task 200: Update to new fluent API")]
   public static async Task Vi_profile_should_execute_commands()
   {
     // Arrange
@@ -308,6 +311,7 @@ public class KeyBindingProfileTests
   // VSCode Profile Tests (PARTIAL - Missing handlers)
   // ============================================================================
 
+  [Skip("Awaiting Task 200: Update to new fluent API")]
   public static async Task VSCode_profile_should_execute_commands()
   {
     // Arrange

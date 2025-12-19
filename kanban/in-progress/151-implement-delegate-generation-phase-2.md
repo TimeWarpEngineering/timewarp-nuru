@@ -61,7 +61,7 @@ app.Map("")
 
 ## Checklist
 
-- [ ] Task 192: API cleanup
+- [x] Task 192: API cleanup (removed Map(pattern, handler), MapDefault, added WithDescription())
 - [ ] Task 193: Generator detection
 - [ ] Task 194: Command generation
 - [ ] Task 195: Handler generation (complex - parameter rewriting)

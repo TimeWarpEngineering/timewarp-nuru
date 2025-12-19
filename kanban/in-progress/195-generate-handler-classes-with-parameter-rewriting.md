@@ -15,45 +15,60 @@ Extend `NuruDelegateCommandGenerator` to emit Handler classes that wrap delegate
 ## Checklist
 
 ### Handler Class Generation
-- [ ] Generate `sealed class {Prefix}_Generated_CommandHandler`
-- [ ] Apply `[GeneratedCode("TimeWarp.Nuru.Analyzers", "1.0.0")]` attribute
-- [ ] Implement `ICommandHandler<TCommand, TResult>` or `IQueryHandler<TQuery, TResult>`
+- [x] Generate nested `Handler` class inside Command class
+- [x] Apply `[GeneratedCode("TimeWarp.Nuru.Analyzers", "1.0.0")]` attribute
+- [x] Implement `ICommandHandler<TCommand, TResult>`
 
 ### DI Constructor Injection
-- [ ] Generate constructor with DI parameters
-- [ ] Generate private readonly fields for each DI parameter
-- [ ] Use `_camelCase` naming for fields
-- [ ] Example: `ILogger logger` → `private readonly ILogger _logger;`
+- [x] Generate constructor with DI parameters
+- [x] Generate private readonly fields for each DI parameter
+- [x] Use `PascalCase` naming for fields (per coding standard - no underscore prefix)
+- [x] Example: `ILogger logger` → `private readonly ILogger Logger;`
 
 ### Handle Method
-- [ ] Generate `Handle(TCommand request, CancellationToken ct)` method
-- [ ] Return `ValueTask<TResult>` (Mediator convention)
-- [ ] Sync delegates: wrap in `ValueTask.FromResult()`
-- [ ] Async delegates: await and return
+- [x] Generate `Handle(TCommand request, CancellationToken ct)` method
+- [x] Return `ValueTask<TResult>` (Mediator convention)
+- [x] Sync delegates: wrap in `ValueTask.FromResult()`
+- [ ] Async delegates: await and return (not yet tested)
 
 ### Parameter Rewriting (Complex)
-- [ ] Route parameters: `env` → `request.Env`
-- [ ] DI parameters: `logger` → `_logger`
-- [ ] Walk the delegate body syntax tree
-- [ ] Replace `IdentifierNameSyntax` nodes with appropriate references
-- [ ] Handle nested scopes carefully (don't rewrite local variables with same name)
+- [x] Route parameters: `env` → `request.Env`
+- [x] DI parameters: `logger` → `Logger`
+- [x] Walk the delegate body syntax tree using `DescendantNodesAndSelf()`
+- [x] Replace `IdentifierNameSyntax` nodes with appropriate references
+- [x] Handle nested scopes carefully (don't rewrite local variables with same name)
+- [x] Handle expression-bodied lambdas: `(text) => text` → `request.Text`
 
 ### Delegate Body Extraction
-- [ ] Extract body from lambda expression
-- [ ] Handle expression lambdas: `x => x + 1`
-- [ ] Handle statement lambdas: `x => { return x + 1; }`
-- [ ] Preserve original formatting where possible
+- [x] Extract body from lambda expression
+- [x] Handle expression lambdas: `x => x + 1`
+- [x] Handle statement lambdas: `x => { return x + 1; }`
+- [x] Preserve original formatting where possible
 
 ### Async Handling
-- [ ] Detect async lambda (`async (x) => await ...`)
-- [ ] Generate async Handle method if needed
+- [x] Detect async lambda (`async (x) => await ...`)
+- [ ] Generate async Handle method if needed (basic support only)
 - [ ] Handle `Task` return (no result) → return `Unit.Value`
 - [ ] Handle `Task<T>` return → return awaited result
 
 ### Error Handling
-- [ ] Emit diagnostic error for closures (captured variables)
-- [ ] Emit diagnostic error if body extraction fails
-- [ ] Emit diagnostic warning for complex scenarios
+- [x] Skip handler generation for closures (captured variables)
+- [x] Conservative closure detection: unresolved symbols treated as closures
+- [ ] Emit diagnostic error for closures (NURU002 - not yet implemented)
+- [ ] Emit diagnostic warning for method groups (NURU003 - not yet implemented)
+
+## Results
+
+**2025-12-19:** Core handler generation is complete and working.
+
+- All 1673 CI tests pass (16 skipped for unimplemented features)
+- Fixed bug where `DescendantNodes()` missed expression-bodied lambdas - changed to `DescendantNodesAndSelf()`
+- Fixed closure detection to be conservative when symbol resolution fails
+- Enabled `EmitCompilerGeneratedFiles` repo-wide for debugging
+
+**Remaining work:**
+- Full async lambda support (Task 195 continuation or separate task)
+- Diagnostic reporting for closures/method groups (can be deferred)
 
 ## Example Output
 
@@ -63,28 +78,35 @@ app.Map("deploy {env} --force")
     .WithHandler((string env, bool force, ILogger logger) => {
         logger.LogInformation("Deploying to {Env}", env);
     })
+    .AsCommand()
+    .Done();
 ```
 
 **Generated:**
 ```csharp
 [global::System.CodeDom.Compiler.GeneratedCode("TimeWarp.Nuru.Analyzers", "1.0.0")]
-public sealed class Deploy_Generated_CommandHandler 
-    : global::Mediator.ICommandHandler<Deploy_Generated_Command, global::Mediator.Unit>
+public sealed class Deploy_Generated_Command : global::Mediator.ICommand<global::Mediator.Unit>
 {
-    private readonly global::Microsoft.Extensions.Logging.ILogger _logger;
+  public string Env { get; set; } = string.Empty;
+  public bool Force { get; set; }
+
+  public sealed class Handler : global::Mediator.ICommandHandler<Deploy_Generated_Command, global::Mediator.Unit>
+  {
+    private readonly global::Microsoft.Extensions.Logging.ILogger Logger;
     
-    public Deploy_Generated_CommandHandler(global::Microsoft.Extensions.Logging.ILogger logger)
+    public Handler(global::Microsoft.Extensions.Logging.ILogger logger)
     {
-        _logger = logger;
+      Logger = logger;
     }
     
     public global::System.Threading.Tasks.ValueTask<global::Mediator.Unit> Handle(
-        Deploy_Generated_Command request, 
-        global::System.Threading.CancellationToken ct)
+      Deploy_Generated_Command request, 
+      global::System.Threading.CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Deploying to {Env}", request.Env);
-        return default;
+      Logger.LogInformation("Deploying to {Env}", request.Env);
+      return default;
     }
+  }
 }
 ```
 
@@ -92,23 +114,23 @@ public sealed class Deploy_Generated_CommandHandler
 
 ### Closure Detection
 
-Closures capture variables from enclosing scope. We can't easily transform these:
+Closures capture variables from enclosing scope. Handler generation is skipped for these:
 
 ```csharp
-string prefix = "deploy-";  // Captured variable
+string? capturedEnv = null;  // Captured variable
 app.Map("deploy {env}")
-    .WithHandler((string env) => Console.WriteLine(prefix + env));  // ❌ Error
+    .WithHandler((string env) => { capturedEnv = env; return 0; })  // Handler skipped
+    .AsCommand()
+    .Done();
 ```
 
-Detect by checking if lambda references symbols from enclosing scope that aren't:
-- Parameters of the lambda
-- Static members
-- Instance members via `this`
+Command class is still generated, but without nested Handler. Delegate runs directly at runtime.
 
 ### Parameter Rewriting Strategy
 
-Use a `CSharpSyntaxRewriter`:
-1. Visit all `IdentifierNameSyntax` nodes
-2. If identifier matches a route parameter name → rewrite to `request.{PascalName}`
-3. If identifier matches a DI parameter name → rewrite to `_{camelName}`
-4. Otherwise leave unchanged
+Using `ParameterRewriter` class:
+1. Collect local variables declared in lambda to avoid rewriting them
+2. Visit all `IdentifierNameSyntax` nodes via `DescendantNodesAndSelf()`
+3. If identifier matches a route parameter name → rewrite to `request.{PascalName}`
+4. If identifier matches a DI parameter name → rewrite to `{PascalName}` field
+5. Otherwise leave unchanged

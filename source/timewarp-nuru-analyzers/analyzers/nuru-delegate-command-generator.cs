@@ -1,13 +1,22 @@
 namespace TimeWarp.Nuru;
 
 /// <summary>
-/// Source generator that creates Command classes and Handler classes from delegate signatures.
-/// When using AsCommand() in the fluent API, generates a sealed Command class
-/// with properties for each route parameter, and a nested Handler class that wraps
-/// the delegate body with parameter rewriting.
+/// Source generator that creates Command/Query classes and Handler classes from delegate signatures.
+/// Supports AsCommand(), AsIdempotentCommand(), and AsQuery() in the fluent API.
+/// Generates a sealed class with properties for each route parameter, and a nested Handler class
+/// that wraps the delegate body with parameter rewriting.
 /// </summary>
 /// <remarks>
-/// Example input:
+/// <para>
+/// Message type determines the generated interface:
+/// <list type="bullet">
+///   <item><description>AsCommand() → ICommand&lt;T&gt; + ICommandHandler</description></item>
+///   <item><description>AsIdempotentCommand() → ICommand&lt;T&gt;, IIdempotent + ICommandHandler</description></item>
+///   <item><description>AsQuery() → IQuery&lt;T&gt; + IQueryHandler</description></item>
+/// </list>
+/// </para>
+///
+/// <para>Example input:</para>
 /// <code>
 /// app.Map("deploy {env} --force")
 ///     .WithHandler((string env, bool force, ILogger logger) => {
@@ -17,7 +26,7 @@ namespace TimeWarp.Nuru;
 ///     .Done();
 /// </code>
 ///
-/// Example output:
+/// <para>Example output:</para>
 /// <code>
 /// [GeneratedCode("TimeWarp.Nuru.Analyzers", "1.0.0")]
 /// public sealed class Deploy_Generated_Command : ICommand&lt;Unit&gt;
@@ -63,10 +72,10 @@ public class NuruDelegateCommandGenerator : IIncrementalGenerator
         return false;
       });
 
-    // Step 2: Find all AsCommand() invocations and extract route info
+    // Step 2: Find all message type invocations (AsCommand, AsIdempotentCommand, AsQuery) and extract route info
     IncrementalValuesProvider<DelegateCommandInfo?> commandInfos = context.SyntaxProvider
       .CreateSyntaxProvider(
-        predicate: static (node, _) => IsAsCommandInvocation(node),
+        predicate: static (node, _) => IsMessageTypeInvocation(node),
         transform: static (ctx, ct) => ExtractCommandInfo(ctx, ct))
       .Where(static info => info is not null);
 
@@ -112,9 +121,10 @@ public class NuruDelegateCommandGenerator : IIncrementalGenerator
   }
 
   /// <summary>
-  /// Detects AsCommand() invocations in the fluent API pattern.
+  /// Detects message type invocations in the fluent API pattern.
+  /// Matches AsCommand(), AsIdempotentCommand(), and AsQuery().
   /// </summary>
-  private static bool IsAsCommandInvocation(Microsoft.CodeAnalysis.SyntaxNode node)
+  private static bool IsMessageTypeInvocation(Microsoft.CodeAnalysis.SyntaxNode node)
   {
     if (node is not InvocationExpressionSyntax invocation)
       return false;
@@ -122,7 +132,7 @@ public class NuruDelegateCommandGenerator : IIncrementalGenerator
     if (invocation.Expression is not MemberAccessExpressionSyntax memberAccess)
       return false;
 
-    return memberAccess.Name.Identifier.Text == "AsCommand";
+    return memberAccess.Name.Identifier.Text is "AsCommand" or "AsIdempotentCommand" or "AsQuery";
   }
 
   /// <summary>
@@ -182,10 +192,10 @@ public class NuruDelegateCommandGenerator : IIncrementalGenerator
       }
     }
 
-    // Generate class name from pattern
-    string className = GenerateClassName(chainInfo.Pattern);
+    // Generate class name from pattern (suffix varies by message type)
+    string className = GenerateClassName(chainInfo.Pattern, chainInfo.MessageType);
 
-    // Determine return type for ICommand<T>
+    // Determine return type for ICommand<T> or IQuery<T>
     string commandReturnType = GetCommandReturnType(signature);
 
     // Extract handler info if the handler is a lambda expression
@@ -200,6 +210,7 @@ public class NuruDelegateCommandGenerator : IIncrementalGenerator
       ClassName: className,
       Properties: [.. properties],
       ReturnType: commandReturnType,
+      MessageType: chainInfo.MessageType,
       Handler: handlerInfo);
   }
 
@@ -435,13 +446,25 @@ public class NuruDelegateCommandGenerator : IIncrementalGenerator
   ///               │           └── ArgumentList: ("pattern")
   ///               └── ArgumentList: (handler)
   /// </remarks>
-  private static FluentChainInfo? WalkBackFluentChain(InvocationExpressionSyntax asCommandInvocation)
+  private static FluentChainInfo? WalkBackFluentChain(InvocationExpressionSyntax messageTypeInvocation)
   {
     ExpressionSyntax? handlerExpression = null;
     string? pattern = null;
 
-    // Start from AsCommand() and walk backwards through the chain
-    ExpressionSyntax? current = asCommandInvocation.Expression;
+    // Extract message type from the invocation (AsCommand, AsIdempotentCommand, AsQuery)
+    GeneratedMessageType messageType = GeneratedMessageType.Command;
+    if (messageTypeInvocation.Expression is MemberAccessExpressionSyntax msgTypeAccess)
+    {
+      messageType = msgTypeAccess.Name.Identifier.Text switch
+      {
+        "AsQuery" => GeneratedMessageType.Query,
+        "AsIdempotentCommand" => GeneratedMessageType.IdempotentCommand,
+        _ => GeneratedMessageType.Command
+      };
+    }
+
+    // Start from message type invocation and walk backwards through the chain
+    ExpressionSyntax? current = messageTypeInvocation.Expression;
 
     while (current is MemberAccessExpressionSyntax memberAccess)
     {
@@ -484,7 +507,7 @@ public class NuruDelegateCommandGenerator : IIncrementalGenerator
     if (handlerExpression is null || pattern is null)
       return null;
 
-    return new FluentChainInfo(pattern, handlerExpression);
+    return new FluentChainInfo(pattern, handlerExpression, messageType);
   }
 
   /// <summary>
@@ -635,12 +658,14 @@ public class NuruDelegateCommandGenerator : IIncrementalGenerator
   }
 
   /// <summary>
-  /// Generates a class name from the route pattern.
+  /// Generates a class name from the route pattern and message type.
   /// </summary>
-  private static string GenerateClassName(string pattern)
+  private static string GenerateClassName(string pattern, GeneratedMessageType messageType)
   {
+    string suffix = messageType == GeneratedMessageType.Query ? "_Generated_Query" : "_Generated_Command";
+
     if (string.IsNullOrWhiteSpace(pattern))
-      return "Default_Generated_Command";
+      return $"Default{suffix}";
 
     // Extract first literal(s) from pattern
     List<string> literals = [];
@@ -669,11 +694,11 @@ public class NuruDelegateCommandGenerator : IIncrementalGenerator
     }
 
     if (literals.Count == 0)
-      return "Default_Generated_Command";
+      return $"Default{suffix}";
 
     // Convert to PascalCase and join
     string prefix = string.Concat(literals.Select(ToPascalCase));
-    return $"{prefix}_Generated_Command";
+    return $"{prefix}{suffix}";
   }
 
   /// <summary>
@@ -889,11 +914,24 @@ public class NuruDelegateCommandGenerator : IIncrementalGenerator
 
   private static void GenerateCommandClass(System.Text.StringBuilder sb, DelegateCommandInfo command)
   {
+    // Determine the interface based on message type
+    string interfaceType = command.MessageType switch
+    {
+      GeneratedMessageType.Query => $"global::Mediator.IQuery<{command.ReturnType}>",
+      GeneratedMessageType.IdempotentCommand => $"global::Mediator.ICommand<{command.ReturnType}>, global::TimeWarp.Nuru.IIdempotent",
+      _ => $"global::Mediator.ICommand<{command.ReturnType}>"
+    };
+
+    string classDescription = command.MessageType == GeneratedMessageType.Query
+      ? "Generated Query class for delegate route."
+      : "Generated Command class for delegate route.";
+
     sb.AppendLine("/// <summary>");
-    sb.AppendLine("/// Generated Command class for delegate route.");
+    sb.Append(CultureInfo.InvariantCulture, $"/// {classDescription}");
+    sb.AppendLine();
     sb.AppendLine("/// </summary>");
     sb.AppendLine("[global::System.CodeDom.Compiler.GeneratedCode(\"TimeWarp.Nuru.Analyzers\", \"1.0.0\")]");
-    sb.Append(CultureInfo.InvariantCulture, $"public sealed class {command.ClassName} : global::Mediator.ICommand<{command.ReturnType}>");
+    sb.Append(CultureInfo.InvariantCulture, $"public sealed class {command.ClassName} : {interfaceType}");
     sb.AppendLine();
     sb.AppendLine("{");
 
@@ -920,7 +958,7 @@ public class NuruDelegateCommandGenerator : IIncrementalGenerator
   }
 
   /// <summary>
-  /// Generates the nested Handler class inside the Command class.
+  /// Generates the nested Handler class inside the Command/Query class.
   /// </summary>
   private static void GenerateHandlerClass(System.Text.StringBuilder sb, DelegateCommandInfo command)
   {
@@ -930,11 +968,21 @@ public class NuruDelegateCommandGenerator : IIncrementalGenerator
     ImmutableArray<ParameterClassification> diParams =
       [.. handler.Parameters.Where(p => p.IsDiParam)];
 
+    // Determine handler interface based on message type
+    string handlerInterface = command.MessageType == GeneratedMessageType.Query
+      ? $"global::Mediator.IQueryHandler<{command.ClassName}, {command.ReturnType}>"
+      : $"global::Mediator.ICommandHandler<{command.ClassName}, {command.ReturnType}>";
+
+    string handlerDescription = command.MessageType == GeneratedMessageType.Query
+      ? "Generated Handler for this query."
+      : "Generated Handler for this command.";
+
     // Handler class declaration
     sb.AppendLine("  /// <summary>");
-    sb.AppendLine("  /// Generated Handler for this command.");
+    sb.Append(CultureInfo.InvariantCulture, $"  /// {handlerDescription}");
+    sb.AppendLine();
     sb.AppendLine("  /// </summary>");
-    sb.Append(CultureInfo.InvariantCulture, $"  public sealed class Handler : global::Mediator.ICommandHandler<{command.ClassName}, {command.ReturnType}>");
+    sb.Append(CultureInfo.InvariantCulture, $"  public sealed class Handler : {handlerInterface}");
     sb.AppendLine();
     sb.AppendLine("  {");
 
@@ -1015,7 +1063,17 @@ public class NuruDelegateCommandGenerator : IIncrementalGenerator
   }
 
   // Internal record types for data passing
-  private sealed record FluentChainInfo(string Pattern, ExpressionSyntax HandlerExpression);
+  private sealed record FluentChainInfo(string Pattern, ExpressionSyntax HandlerExpression, GeneratedMessageType MessageType);
+
+  /// <summary>
+  /// Message type for generated commands/queries.
+  /// </summary>
+  private enum GeneratedMessageType
+  {
+    Command,
+    IdempotentCommand,
+    Query
+  }
 
   private sealed record RouteParameterInfo(
     List<string> PositionalParams,
@@ -1027,6 +1085,7 @@ public class NuruDelegateCommandGenerator : IIncrementalGenerator
     string ClassName,
     ImmutableArray<CommandPropertyInfo> Properties,
     string ReturnType,
+    GeneratedMessageType MessageType,
     HandlerInfo? Handler);
 
   private sealed record CommandPropertyInfo(

@@ -50,14 +50,15 @@ app.Map("")
 
 ## Subtasks
 
-- **Task 192**: Remove Map(pattern, handler) and MapDefault overloads
-- **Task 193**: Create NuruDelegateCommandGenerator (detection + pattern parsing)
+- **Task 192**: Remove Map(pattern, handler) and MapDefault overloads ✅
+- **Task 193**: Create NuruDelegateCommandGenerator (detection + pattern parsing) ✅
 - **Task 194**: Generate Command classes from delegate signatures
 - **Task 195**: Generate Handler classes with parameter rewriting
 - **Task 196**: Add MessageType detection (.AsQuery, .AsCommand, etc.)
-- **Task 197**: Update NuruInvokerGenerator for new API
-- **Task 198**: Update samples for new Map().WithHandler().Done() API
+- **Task 197**: Update NuruInvokerGenerator for new API ✅
+- **Task 198**: Update samples for new Map().WithHandler().Done() API ✅
 - **Task 199**: Add delegate generation tests
+- **Task 200**: Update remaining test files to new fluent API ✅
 
 ## Checklist
 
@@ -69,6 +70,7 @@ app.Map("")
 - [x] Task 197: Invoker generator updates (done as part of Task 193)
 - [x] Task 198: Sample updates (28 files migrated to fluent API)
 - [ ] Task 199: Test coverage
+- [x] Task 200: Test migration (~80 test files migrated to fluent API)
 
 ## Example Transformation
 

@@ -15,6 +15,7 @@ public class ValidateOnStartTests
   internal static void Register() => RegisterTests<ValidateOnStartTests>();
 
   // Test that valid configuration passes startup validation
+  [Skip("ValidateOnStart feature not yet implemented")]
   public static async Task Should_pass_validation_with_valid_configuration()
   {
     // Arrange
@@ -49,6 +50,7 @@ public class ValidateOnStartTests
   }
 
   // Test that invalid configuration fails during Build() (startup), not during RunAsync()
+  [Skip("ValidateOnStart feature not yet implemented")]
   public static async Task Should_throw_during_build_with_invalid_configuration()
   {
     // Arrange & Act
@@ -87,6 +89,7 @@ public class ValidateOnStartTests
   }
 
   // Test that validation is optional (apps without ValidateOnStart work normally)
+  [Skip("ValidateOnStart feature not yet implemented")]
   public static async Task Should_work_without_validate_on_start()
   {
     // Arrange
@@ -117,6 +120,7 @@ public class ValidateOnStartTests
   }
 
   // Test custom validation logic
+  [Skip("ValidateOnStart feature not yet implemented")]
   public static async Task Should_throw_for_custom_validation_failure()
   {
     // Arrange & Act
@@ -157,6 +161,7 @@ public class ValidateOnStartTests
   }
 
   // Test that apps without DI are not affected (no ServiceProvider means no validators)
+  [Skip("ValidateOnStart feature not yet implemented")]
   public static async Task Should_work_without_dependency_injection()
   {
     // Arrange

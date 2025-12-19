@@ -387,6 +387,13 @@ public class NuruDelegateCommandGenerator : IIncrementalGenerator
         bodyText = bodyText[1..^1].Trim();
       }
 
+      // For sync (non-async) block bodies with non-void return,
+      // we need to wrap return statements in ValueTask
+      if (!isAsync && !returnType.IsVoid)
+      {
+        bodyText = WrapReturnStatementsInValueTask(bodyText, returnType.FullName);
+      }
+
       return bodyText;
     }
     else
@@ -425,6 +432,42 @@ public class NuruDelegateCommandGenerator : IIncrementalGenerator
         return $"return new global::System.Threading.Tasks.ValueTask<{returnType.FullName}>({bodyText});";
       }
     }
+  }
+
+  /// <summary>
+  /// Wraps return statements in a block body with ValueTask for sync handlers.
+  /// Transforms "return X;" to "return new ValueTask&lt;T&gt;(X);"
+  /// </summary>
+  private static string WrapReturnStatementsInValueTask(string bodyText, string returnTypeName)
+  {
+    // Simple regex-based transformation for return statements
+    // This handles: return value; → return new ValueTask<T>(value);
+    System.Text.StringBuilder result = new();
+    string[] lines = bodyText.Split('\n');
+
+    foreach (string line in lines)
+    {
+      string trimmedLine = line.TrimStart();
+      if (trimmedLine.StartsWith("return ", StringComparison.Ordinal) && trimmedLine.EndsWith(';'))
+      {
+        // Extract the return value (everything between "return " and ";")
+        string returnValue = trimmedLine[7..^1].Trim();
+
+        // Preserve leading whitespace
+        int leadingSpaces = line.Length - line.TrimStart().Length;
+        string indent = line[..leadingSpaces];
+
+        result.Append(indent);
+        result.Append(CultureInfo.InvariantCulture, $"return new global::System.Threading.Tasks.ValueTask<{returnTypeName}>({returnValue});");
+        result.AppendLine();
+      }
+      else
+      {
+        result.AppendLine(line);
+      }
+    }
+
+    return result.ToString().TrimEnd();
   }
 
   /// <summary>

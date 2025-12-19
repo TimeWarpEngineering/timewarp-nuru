@@ -6,16 +6,23 @@ Expose fluent builder to consumers. Add `MapGroup()` API for delegate-based grou
 
 **Goal:** Advanced consumer API for complex CLIs with full IntelliSense support.
 
+## Status: BLOCKED
+
+**Blocked by:** Task 152 (Phase 3) which is blocked by Task 201 (Performance Regression Investigation)
+
+**Reason:** December 2025 benchmarks revealed a 4x performance regression in the Full builder (34ms → 132ms). Until this is investigated and fixed, proceeding with later phases would compound the performance problem.
+
 ## Parent
 
 148-generate-command-and-handler-from-delegate-map-calls
 
 ## Dependencies
 
-- Task 149: Implement CompiledRouteBuilder (Phase 0) - must be complete
-- Task 150: Implement Attributed Routes (Phase 1) - must be complete
-- Task 151: Implement Delegate Generation (Phase 2) - must be complete
-- Task 152: Implement Unified Pipeline (Phase 3) - must be complete
+- Task 149: Implement CompiledRouteBuilder (Phase 0) - must be complete ✅
+- Task 150: Implement Attributed Routes (Phase 1) - must be complete ✅
+- Task 151: Implement Delegate Generation (Phase 2) - must be complete ✅
+- Task 152: Implement Unified Pipeline (Phase 3) - **BLOCKED** (performance regression)
+- Task 201: Investigate Full Builder 4x Performance Regression - **MUST COMPLETE FIRST**
 
 ## Checklist
 

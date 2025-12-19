@@ -6,13 +6,21 @@ More flexible `MapGroup()` usage via data flow analysis within method scope. Rel
 
 **Goal:** Quality of life improvement for `MapGroup()` users - allows code between group creation and Map calls.
 
+## Status: BLOCKED
+
+**Blocked by:** Task 153 (Phase 4) → Task 152 (Phase 3) → Task 201 (Performance Investigation)
+
+**Reason:** December 2025 benchmarks revealed a 4x performance regression in the Full builder. The entire pipeline (Phases 3-5) is blocked until the performance regression is investigated and fixed.
+
 ## Parent
 
 148-generate-command-and-handler-from-delegate-map-calls
 
 ## Dependencies
 
-- Task 153: Implement Fluent Builder API (Phase 4) - must be complete
+- Task 153: Implement Fluent Builder API (Phase 4) - **BLOCKED**
+- Task 152: Implement Unified Pipeline (Phase 3) - **BLOCKED** (performance regression)
+- Task 201: Investigate Full Builder 4x Performance Regression - **MUST COMPLETE FIRST**
 
 ## Checklist
 

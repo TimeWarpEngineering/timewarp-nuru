@@ -5,7 +5,10 @@ using TimeWarp.Nuru;
 
 NuruCoreApp app = NuruCoreApp.CreateSlimBuilder()
   .AddAutoHelp()
-  .Map("greet {name}", (string name, ITerminal t) => t.WriteLine($"Hello, {name}!"))
+  .Map("greet {name}")
+    .WithHandler((string name, ITerminal t) => t.WriteLine($"Hello, {name}!"))
+    .AsCommand()
+    .Done()
   .Build();
 
 using TestTerminal terminal = new();

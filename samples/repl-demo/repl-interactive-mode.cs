@@ -53,30 +53,26 @@ NuruCoreApp app = NuruApp.CreateBuilder(args, nuruAppOptions)
   )
 
   // Define application commands
-  .Map
-  (
-    "greet {name}",
-    (string name) => WriteLine($"Hello, {name}!"),
-    "Greet someone by name"
-  )
-  .Map
-  (
-    "status",
-    () => WriteLine("System status: OK"),
-    "Show system status"
-  )
-  .Map
-  (
-    "add {a:int} {b:int}",
-    (int a, int b) => WriteLine($"{a} + {b} = {a + b}"),
-    "Add two numbers"
-  )
-  .Map
-  (
-    "time",
-    () => WriteLine($"Current time: {DateTime.Now:HH:mm:ss}"),
-    "Show current time"
-  )
+  .Map("greet {name}")
+    .WithHandler((string name) => WriteLine($"Hello, {name}!"))
+    .WithDescription("Greet someone by name")
+    .AsCommand()
+    .Done()
+  .Map("status")
+    .WithHandler(() => WriteLine("System status: OK"))
+    .WithDescription("Show system status")
+    .AsQuery()
+    .Done()
+  .Map("add {a:int} {b:int}")
+    .WithHandler((int a, int b) => WriteLine($"{a} + {b} = {a + b}"))
+    .WithDescription("Add two numbers")
+    .AsQuery()
+    .Done()
+  .Map("time")
+    .WithHandler(() => WriteLine($"Current time: {DateTime.Now:HH:mm:ss}"))
+    .WithDescription("Show current time")
+    .AsQuery()
+    .Done()
   .Build();
 
 // Run the app - either executes a single command or enters REPL

@@ -9,28 +9,24 @@ using static System.Console;
 
 NuruCoreApp app =
   NuruCoreApp.CreateSlimBuilder(args)
-  .Map // Basic operations
-  (
-    pattern: "add {x:double} {y:double}",
-    handler: (double x, double y) => WriteLine($"{x} + {y} = {x + y}"),
-    description: "Add two numbers together"
-  )
-  .Map
-  (
-    pattern: "subtract {x:double} {y:double}",
-    handler: (double x, double y) => WriteLine($"{x} - {y} = {x - y}"),
-    description: "Subtract the second number from the first"
-  )
-  .Map
-  (
-    pattern: "multiply {x:double} {y:double}",
-    handler: (double x, double y) => WriteLine($"{x} × {y} = {x * y}"),
-    description: "Multiply two numbers together"
-  )
-  .Map
-  (
-    pattern: "divide {x:double} {y:double}",
-    handler: (double x, double y) =>
+  // Basic operations
+  .Map("add {x:double} {y:double}")
+    .WithHandler((double x, double y) => WriteLine($"{x} + {y} = {x + y}"))
+    .WithDescription("Add two numbers together")
+    .AsQuery()
+    .Done()
+  .Map("subtract {x:double} {y:double}")
+    .WithHandler((double x, double y) => WriteLine($"{x} - {y} = {x - y}"))
+    .WithDescription("Subtract the second number from the first")
+    .AsQuery()
+    .Done()
+  .Map("multiply {x:double} {y:double}")
+    .WithHandler((double x, double y) => WriteLine($"{x} × {y} = {x * y}"))
+    .WithDescription("Multiply two numbers together")
+    .AsQuery()
+    .Done()
+  .Map("divide {x:double} {y:double}")
+    .WithHandler((double x, double y) =>
     {
       if (y == 0)
       {
@@ -39,13 +35,13 @@ NuruCoreApp app =
       }
 
       WriteLine($"{x} ÷ {y} = {x / y}");
-    },
-    description: "Divide the first number by the second"
-  )
-  .Map // Rounding with options
-  (
-    pattern: "round {value:double} --mode {mode}",
-    handler: (double value, string mode) =>
+    })
+    .WithDescription("Divide the first number by the second")
+    .AsQuery()
+    .Done()
+  // Rounding with options
+  .Map("round {value:double} --mode {mode}")
+    .WithHandler((double value, string mode) =>
     {
       double result = mode.ToLower() switch
       {
@@ -64,15 +60,16 @@ NuruCoreApp app =
       }
 
       WriteLine($"Round({value}, {mode}) = {result}");
-    },
-    description: "Round a number using specified mode (up, down, nearest, banker/accountancy)"
-  )
-  .Map // Default rounding (nearest)
-  (
-    pattern: "round {value:double}",
-    handler: (double value) => WriteLine($"Round({value}) = {Math.Round(value)}"),
-    description: "Round a number to the nearest integer"
-  )
+    })
+    .WithDescription("Round a number using specified mode (up, down, nearest, banker/accountancy)")
+    .AsQuery()
+    .Done()
+  // Default rounding (nearest)
+  .Map("round {value:double}")
+    .WithHandler((double value) => WriteLine($"Round({value}) = {Math.Round(value)}"))
+    .WithDescription("Round a number to the nearest integer")
+    .AsQuery()
+    .Done()
   .Build();
 
 return await app.RunAsync(args);

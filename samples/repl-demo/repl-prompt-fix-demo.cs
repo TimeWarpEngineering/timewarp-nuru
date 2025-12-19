@@ -34,16 +34,22 @@ NuruAppOptions nuruAppOptions = new()
 
 NuruCoreApp app = NuruApp.CreateBuilder(args, nuruAppOptions)
   .ConfigureServices(services => services.AddMediator())
-  .Map("hello", () =>
-  {
-    Console.WriteLine("Hello, World!");
-    return 0;
-  })
-  .Map("status", () =>
-  {
-    Console.WriteLine("All systems operational");
-    return 0;
-  })
+  .Map("hello")
+    .WithHandler(() =>
+    {
+      Console.WriteLine("Hello, World!");
+      return 0;
+    })
+    .AsQuery()
+    .Done()
+  .Map("status")
+    .WithHandler(() =>
+    {
+      Console.WriteLine("All systems operational");
+      return 0;
+    })
+    .AsQuery()
+    .Done()
   .Build();
 
 await app.RunReplAsync();

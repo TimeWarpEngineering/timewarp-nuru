@@ -15,35 +15,38 @@ using TimeWarp.Nuru;
 
 NuruCoreApp app = NuruApp.CreateBuilder(args)
   .ConfigureServices(services => services.AddMediator())
-  .Map("show", (IConfiguration config) =>
-  {
-    string? apiKey = config["ApiKey"];
-    string? dbConnection = config["Database:ConnectionString"];
-    string? environment = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? "Production";
-
-    Console.WriteLine("=== User Secrets Demo (csproj) ===");
-    Console.WriteLine($"Environment: {environment}");
-    Console.WriteLine($"ApiKey: {apiKey ?? "(not set)"}");
-    Console.WriteLine($"Database:ConnectionString: {dbConnection ?? "(not set)"}");
-    Console.WriteLine();
-
-    if (environment == "Development")
+  .Map("show")
+    .WithHandler((IConfiguration config) =>
     {
-      if (string.IsNullOrEmpty(apiKey))
+      string? apiKey = config["ApiKey"];
+      string? dbConnection = config["Database:ConnectionString"];
+      string? environment = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? "Production";
+
+      Console.WriteLine("=== User Secrets Demo (csproj) ===");
+      Console.WriteLine($"Environment: {environment}");
+      Console.WriteLine($"ApiKey: {apiKey ?? "(not set)"}");
+      Console.WriteLine($"Database:ConnectionString: {dbConnection ?? "(not set)"}");
+      Console.WriteLine();
+
+      if (environment == "Development")
       {
-        Console.WriteLine("⚠️  No secrets found. Run:");
-        Console.WriteLine("   dotnet user-secrets set \"ApiKey\" \"secret-123\" --project samples/configuration/user-secrets-demo");
+        if (string.IsNullOrEmpty(apiKey))
+        {
+          Console.WriteLine("⚠️  No secrets found. Run:");
+          Console.WriteLine("   dotnet user-secrets set \"ApiKey\" \"secret-123\" --project samples/configuration/user-secrets-demo");
+        }
+        else
+        {
+          Console.WriteLine("✅ User secrets loaded successfully!");
+        }
       }
       else
       {
-        Console.WriteLine("✅ User secrets loaded successfully!");
+        Console.WriteLine("ℹ️  User secrets only load in Development environment");
       }
-    }
-    else
-    {
-      Console.WriteLine("ℹ️  User secrets only load in Development environment");
-    }
-  })
+    })
+    .AsQuery()
+    .Done()
   .Build();
 
 await app.RunAsync(args);

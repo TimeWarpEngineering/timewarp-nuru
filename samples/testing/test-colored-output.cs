@@ -16,12 +16,15 @@ Console.WriteLine("Test 1: Handler with colored output");
 
   NuruCoreApp app = new NuruAppBuilder()
     .UseTerminal(terminal)
-    .Map("status", (ITerminal t) =>
-    {
-      t.WriteLine("All systems operational".Green());
-      t.WriteLine("2 warnings".Yellow());
-      t.WriteLine("0 errors".BrightGreen());
-    })
+    .Map("status")
+      .WithHandler((ITerminal t) =>
+      {
+        t.WriteLine("All systems operational".Green());
+        t.WriteLine("2 warnings".Yellow());
+        t.WriteLine("0 errors".BrightGreen());
+      })
+      .AsQuery()
+      .Done()
     .Build();
 
   await app.RunAsync(["status"]);
@@ -46,12 +49,15 @@ Console.WriteLine("\nTest 2: Text formatting");
 
   NuruCoreApp app = new NuruAppBuilder()
     .UseTerminal(terminal)
-    .Map("format", (ITerminal t) =>
-    {
-      t.WriteLine("Important".Bold());
-      t.WriteLine("Emphasis".Italic());
-      t.WriteLine("Link".Underline());
-    })
+    .Map("format")
+      .WithHandler((ITerminal t) =>
+      {
+        t.WriteLine("Important".Bold());
+        t.WriteLine("Emphasis".Italic());
+        t.WriteLine("Link".Underline());
+      })
+      .AsQuery()
+      .Done()
     .Build();
 
   await app.RunAsync(["format"]);
@@ -69,11 +75,14 @@ Console.WriteLine("\nTest 3: Chained styles");
 
   NuruCoreApp app = new NuruAppBuilder()
     .UseTerminal(terminal)
-    .Map("alert", (ITerminal t) =>
-    {
-      t.WriteLine("Critical Error".Red().Bold());
-      t.WriteLine("Success!".Green().Bold().Underline());
-    })
+    .Map("alert")
+      .WithHandler((ITerminal t) =>
+      {
+        t.WriteLine("Critical Error".Red().Bold());
+        t.WriteLine("Success!".Green().Bold().Underline());
+      })
+      .AsCommand()
+      .Done()
     .Build();
 
   await app.RunAsync(["alert"]);
@@ -96,12 +105,15 @@ Console.WriteLine("\nTest 4: CSS named colors");
 
   NuruCoreApp app = new NuruAppBuilder()
     .UseTerminal(terminal)
-    .Map("palette", (ITerminal t) =>
-    {
-      t.WriteLine("Coral text".Coral());
-      t.WriteLine("Gold highlight".Gold());
-      t.WriteLine("Navy message".Navy());
-    })
+    .Map("palette")
+      .WithHandler((ITerminal t) =>
+      {
+        t.WriteLine("Coral text".Coral());
+        t.WriteLine("Gold highlight".Gold());
+        t.WriteLine("Navy message".Navy());
+      })
+      .AsQuery()
+      .Done()
     .Build();
 
   await app.RunAsync(["palette"]);
@@ -121,26 +133,32 @@ Console.WriteLine("\nTest 5: Color support detection");
 
   NuruCoreApp app = new NuruAppBuilder()
     .UseTerminal(colorTerminal)
-    .Map("check", (ITerminal t) =>
-    {
-      if (t.SupportsColor)
-        t.WriteLine("Colors enabled".Green());
-      else
-        t.WriteLine("Colors disabled");
-    })
+    .Map("check")
+      .WithHandler((ITerminal t) =>
+      {
+        if (t.SupportsColor)
+          t.WriteLine("Colors enabled".Green());
+        else
+          t.WriteLine("Colors disabled");
+      })
+      .AsQuery()
+      .Done()
     .Build();
 
   await app.RunAsync(["check"]);
 
   NuruCoreApp appNoColor = new NuruAppBuilder()
     .UseTerminal(noColorTerminal)
-    .Map("check", (ITerminal t) =>
-    {
-      if (t.SupportsColor)
-        t.WriteLine("Colors enabled".Green());
-      else
-        t.WriteLine("Colors disabled");
-    })
+    .Map("check")
+      .WithHandler((ITerminal t) =>
+      {
+        if (t.SupportsColor)
+          t.WriteLine("Colors enabled".Green());
+        else
+          t.WriteLine("Colors disabled");
+      })
+      .AsQuery()
+      .Done()
     .Build();
 
   await appNoColor.RunAsync(["check"]);

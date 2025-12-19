@@ -26,35 +26,42 @@ app.Map("deploy {env}")
 ## Checklist
 
 ### Calculator Sample
-- [ ] `samples/calculator/calc-delegate.cs`
-- [ ] `samples/calculator/calc-createbuilder.cs`
-- [ ] Other calc-*.cs files if applicable
+- [x] `samples/calculator/calc-delegate.cs`
+- [x] `samples/calculator/calc-createbuilder.cs`
+- [x] Other calc-*.cs files if applicable
 
 ### Hello World
-- [ ] `samples/hello-world/hello-world.cs`
+- [x] `samples/hello-world/hello-world.cs`
 
 ### Async Examples
-- [ ] `samples/async-examples/async-examples.cs`
+- [x] `samples/async-examples/async-examples.cs`
 
 ### Logging Samples
-- [ ] `samples/logging/console-logging.cs`
-- [ ] `samples/logging/serilog-logging.cs`
+- [x] `samples/logging/console-logging.cs`
+- [x] `samples/logging/serilog-logging.cs`
 
 ### Configuration Samples
-- [ ] `samples/configuration/*.cs`
+- [x] `samples/configuration/*.cs`
 
 ### Testing Samples
-- [ ] `samples/testing/*.cs`
+- [x] `samples/testing/*.cs`
 
 ### REPL Demo
-- [ ] `samples/repl-demo/*.cs`
+- [x] `samples/repl-demo/*.cs`
 
 ### Other Samples
-- [ ] `samples/timewarp-nuru-sample/program.cs`
-- [ ] `samples/pipeline-middleware/pipeline-middleware.cs`
-- [ ] `samples/unified-middleware/unified-middleware.cs`
-- [ ] `samples/terminal/*.cs`
-- [ ] Any other files using `Map(pattern, handler)` or `MapDefault(handler)`
+- [x] `samples/timewarp-nuru-sample/program.cs`
+- [x] `samples/pipeline-middleware/pipeline-middleware.cs` (no old API usage found)
+- [x] `samples/unified-middleware/unified-middleware.cs` (no old API usage found)
+- [x] `samples/terminal/*.cs` (no old API usage found)
+- [x] `samples/aot-example/aot-example.cs`
+- [x] `samples/syntax-examples.cs`
+- [x] `samples/builtin-types-example.cs`
+- [x] `samples/custom-type-converter-example.cs`
+
+### Additional Files (outside samples/)
+- [x] `tests/test-apps/timewarp-nuru-testapp-delegates/program.cs`
+- [x] `benchmarks/timewarp-nuru-benchmarks/commands/nuru-direct-command.cs`
 
 ### Migration Pattern
 
@@ -69,7 +76,7 @@ For each file:
    - Retryable mutations → `.AsIdempotentCommand()`
 
 ### Build Verification
-- [ ] Build entire solution after updates
+- [x] Build entire solution after updates
 - [ ] Run samples to verify they work
 
 ## Notes

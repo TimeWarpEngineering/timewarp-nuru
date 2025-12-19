@@ -31,20 +31,26 @@ using Microsoft.Extensions.Logging;
 NuruCoreApp app = NuruApp.CreateBuilder(args)
     .ConfigureServices(services => services.AddMediator())
     .UseConsoleLogging()
-    .Map("test", (ILogger<Program> logger) =>
-    {
-      logger.LogTrace("This is a TRACE message (very detailed)");
-      logger.LogDebug("This is a DEBUG message (detailed)");
-      logger.LogInformation("This is an INFORMATION message - Test command executed!");
-      logger.LogWarning("This is a WARNING message");
-      logger.LogError("This is an ERROR message");
-      Console.WriteLine("✓ Test delegate completed");
-    })
-    .Map("greet {name}", (string name, ILogger<Program> logger) =>
-    {
-      logger.LogInformation("Greeting user: {Name}", name);
-      Console.WriteLine($"Hello, {name}!");
-    })
+    .Map("test")
+      .WithHandler((ILogger<Program> logger) =>
+      {
+        logger.LogTrace("This is a TRACE message (very detailed)");
+        logger.LogDebug("This is a DEBUG message (detailed)");
+        logger.LogInformation("This is an INFORMATION message - Test command executed!");
+        logger.LogWarning("This is a WARNING message");
+        logger.LogError("This is an ERROR message");
+        Console.WriteLine("✓ Test delegate completed");
+      })
+      .AsCommand()
+      .Done()
+    .Map("greet {name}")
+      .WithHandler((string name, ILogger<Program> logger) =>
+      {
+        logger.LogInformation("Greeting user: {Name}", name);
+        Console.WriteLine($"Hello, {name}!");
+      })
+      .AsCommand()
+      .Done()
     .Build();
 
 return await app.RunAsync(args);

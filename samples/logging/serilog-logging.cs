@@ -61,42 +61,54 @@ try
         .ConfigureServices(services => services.AddMediator())
         .UseLogging(loggerFactory)  // Use Serilog for all Nuru logging
         
-        .Map("test", () => 
-        {
-            Log.Information("Test command executed");
-            Console.WriteLine("Test successful!");
-        })
+        .Map("test")
+          .WithHandler(() => 
+          {
+              Log.Information("Test command executed");
+              Console.WriteLine("Test successful!");
+          })
+          .AsCommand()
+          .Done()
         
-        .Map("greet {name}", (string name) => 
-        {
-            // Structured logging - the name will be a searchable property in Seq
-            Log.Information("Greeting user {UserName}", name);
-            Console.WriteLine($"Hello, {name}!");
-        })
+        .Map("greet {name}")
+          .WithHandler((string name) => 
+          {
+              // Structured logging - the name will be a searchable property in Seq
+              Log.Information("Greeting user {UserName}", name);
+              Console.WriteLine($"Hello, {name}!");
+          })
+          .AsCommand()
+          .Done()
         
-        .Map("error", () => 
-        {
-            Log.Error("Simulating an error for demonstration");
-            throw new InvalidOperationException("This is a test error");
-        })
+        .Map("error")
+          .WithHandler(() => 
+          {
+              Log.Error("Simulating an error for demonstration");
+              throw new InvalidOperationException("This is a test error");
+          })
+          .AsCommand()
+          .Done()
         
-        .Map("bench {iterations:int}", (int iterations) => 
-        {
-            using (Log.Logger.BeginTimedOperation("Benchmark operation"))
-            {
-                Log.Information("Starting benchmark with {IterationCount} iterations", iterations);
-                
-                for (int i = 0; i < iterations; i++)
-                {
-                    if (i % 1000 == 0)
-                    {
-                        Log.Debug("Completed {CompletedIterations} iterations", i);
-                    }
-                }
-                
-                Log.Information("Benchmark completed");
-            }
-        })
+        .Map("bench {iterations:int}")
+          .WithHandler((int iterations) => 
+          {
+              using (Log.Logger.BeginTimedOperation("Benchmark operation"))
+              {
+                  Log.Information("Starting benchmark with {IterationCount} iterations", iterations);
+                  
+                  for (int i = 0; i < iterations; i++)
+                  {
+                      if (i % 1000 == 0)
+                      {
+                          Log.Debug("Completed {CompletedIterations} iterations", i);
+                      }
+                  }
+                  
+                  Log.Information("Benchmark completed");
+              }
+          })
+          .AsQuery()
+          .Done()
         
         .Build();
     

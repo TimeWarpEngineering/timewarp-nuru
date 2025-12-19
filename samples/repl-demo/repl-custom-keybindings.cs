@@ -103,23 +103,20 @@ NuruCoreApp app = NuruApp.CreateBuilder(args, nuruAppOptions)
   // --------------------------------------------------------
   // Echo command for testing
   // --------------------------------------------------------
-  .Map
-  (
-    pattern: "echo {*message}",
-    handler: (string[] message) =>
+  .Map("echo {*message}")
+    .WithHandler((string[] message) =>
     {
       WriteLine(string.Join(" ", message));
-    },
-    description: "Echoes the message back."
-  )
+    })
+    .WithDescription("Echoes the message back.")
+    .AsQuery()
+    .Done()
 
   // --------------------------------------------------------
   // Show current key binding info
   // --------------------------------------------------------
-  .Map
-  (
-    pattern: "bindings",
-    handler: () =>
+  .Map("bindings")
+    .WithHandler(() =>
     {
       WriteLine("Current Key Binding Profile: EmacsCustomized");
       WriteLine();
@@ -139,17 +136,16 @@ NuruCoreApp app = NuruApp.CreateBuilder(args, nuruAppOptions)
       WriteLine("  Ctrl+P    : Previous history");
       WriteLine("  Ctrl+N    : Next history");
       WriteLine("  Escape    : Clear current line");
-    },
-    description: "Shows the current key binding configuration."
-  )
+    })
+    .WithDescription("Shows the current key binding configuration.")
+    .AsQuery()
+    .Done()
 
   // --------------------------------------------------------
   // List available profiles
   // --------------------------------------------------------
-  .Map
-  (
-    pattern: "profiles",
-    handler: () =>
+  .Map("profiles")
+    .WithHandler(() =>
     {
       WriteLine("Available Built-in Profiles:");
       WriteLine();
@@ -159,9 +155,10 @@ NuruCoreApp app = NuruApp.CreateBuilder(args, nuruAppOptions)
       WriteLine("  VSCode   - Modern IDE-style bindings");
       WriteLine();
       WriteLine("This demo uses: CustomKeyBindingProfile based on Emacs");
-    },
-    description: "Lists available key binding profiles."
-  )
+    })
+    .WithDescription("Lists available key binding profiles.")
+    .AsQuery()
+    .Done()
   .Build();
 
 // Start REPL mode

@@ -46,18 +46,18 @@ public interface INestedBuilder<out TParent> where TParent : class
 
 ## Subtasks
 
-- **Task 161**: Establish interfaces + apply to CompiledRouteBuilder (in-progress)
-- **Task 162**: Apply to Widget Builders (Table, Panel, Rule)
-- **Task 163**: Apply to KeyBindingBuilder
+- **Task 161**: Establish interfaces + apply to CompiledRouteBuilder ✅
+- **Task 162**: Apply to Widget Builders (Table, Panel, Rule) ✅
+- **Task 163**: Apply to KeyBindingBuilder ✅
 
 ## Checklist
 
 - [x] Task 158: Introduce initial `IBuilder<TParent>` pattern (now `INestedBuilder`)
 - [x] Task 164: Rename builders to match what they build
-- [ ] Task 161: Create `IBuilder<TBuilt>` + rename to `INestedBuilder<TParent>` + apply to CompiledRouteBuilder
-- [ ] Task 162: Apply to Widget Builders
-- [ ] Task 163: Apply to KeyBindingBuilder
-- [ ] Update documentation with unified pattern examples
+- [x] Task 161: Create `IBuilder<TBuilt>` + rename to `INestedBuilder<TParent>` + apply to CompiledRouteBuilder
+- [x] Task 162: Apply to Widget Builders
+- [x] Task 163: Apply to KeyBindingBuilder
+- [x] Update documentation with unified pattern examples (this task file serves as documentation)
 
 ## Benefits
 

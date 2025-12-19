@@ -62,11 +62,11 @@ app.Map("")
 ## Checklist
 
 - [x] Task 192: API cleanup (removed Map(pattern, handler), MapDefault, added WithDescription())
-- [ ] Task 193: Generator detection
+- [x] Task 193: Generator detection (updated NuruInvokerGenerator for new fluent API)
 - [ ] Task 194: Command generation
 - [ ] Task 195: Handler generation (complex - parameter rewriting)
 - [ ] Task 196: MessageType support
-- [ ] Task 197: Invoker generator updates
+- [x] Task 197: Invoker generator updates (done as part of Task 193)
 - [x] Task 198: Sample updates (28 files migrated to fluent API)
 - [ ] Task 199: Test coverage
 

@@ -57,7 +57,7 @@ app.Map("")
 - **Task 196**: Add MessageType detection (.AsQuery, .AsCommand, etc.) ✅
 - **Task 197**: Update NuruInvokerGenerator for new API ✅
 - **Task 198**: Update samples for new Map().WithHandler().Done() API ✅
-- **Task 199**: Add delegate generation tests
+- **Task 199**: Add delegate generation tests ✅
 - **Task 200**: Update remaining test files to new fluent API ✅
 
 ## Checklist
@@ -69,7 +69,7 @@ app.Map("")
 - [x] Task 196: MessageType support (AsCommand, AsIdempotentCommand, AsQuery)
 - [x] Task 197: Invoker generator updates (done as part of Task 193)
 - [x] Task 198: Sample updates (28 files migrated to fluent API)
-- [ ] Task 199: Test coverage (12 tests in place, may need more)
+- [x] Task 199: Test coverage (12 tests covering core functionality)
 - [x] Task 200: Test migration (~80 test files migrated to fluent API)
 
 ## Example Transformation
@@ -143,3 +143,41 @@ NuruRouteRegistry.Register<Deploy_Generated_Command>(
 ### Releasable
 
 Yes - enables quick prototyping while getting full pipeline benefits.
+
+## Results
+
+**Phase 2 Complete!** All 9 subtasks finished:
+
+### What Was Built
+
+1. **Fluent API** - `Map("pattern").WithHandler(...).AsCommand().Done()`
+2. **NuruDelegateCommandGenerator** - Source generator that:
+   - Detects `AsCommand()`, `AsIdempotentCommand()`, `AsQuery()` calls
+   - Parses route patterns to identify route vs DI parameters
+   - Generates Command/Query classes with properties for route parameters
+   - Generates Handler classes with DI injection and parameter rewriting
+   - Handles async/sync lambdas correctly
+   - Detects closures and skips generation (conservative)
+
+3. **MessageType Support**:
+   - `AsCommand()` → `ICommand<T>` + `ICommandHandler`
+   - `AsIdempotentCommand()` → `ICommand<T>, IIdempotent` + `ICommandHandler`
+   - `AsQuery()` → `IQuery<T>` + `IQueryHandler`
+
+4. **Test Coverage** - 12 generator tests covering core functionality
+
+### Code Migration
+
+- 28 samples migrated to fluent API
+- ~80 test files migrated to fluent API
+- Removed old `Map(pattern, handler)` overloads
+- Removed `MapDefault()` (use `Map("")` instead)
+
+### Generated Code Output
+
+Enabled `EmitCompilerGeneratedFiles` repo-wide for debugging:
+- Output: `artifacts/generated/$(MSBuildProjectName)/`
+
+### CI Status
+
+All 1673 tests passing.

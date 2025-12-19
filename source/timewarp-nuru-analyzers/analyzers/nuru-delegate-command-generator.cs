@@ -309,7 +309,13 @@ public class NuruDelegateCommandGenerator : IIncrementalGenerator
       ISymbol? symbol = symbolInfo.Symbol;
 
       if (symbol is null)
+      {
+        // Symbol resolution failed - be conservative and treat as closure
+        // This can happen for variables in top-level statements or outer scopes
+        // where the semantic model doesn't resolve correctly in source generators
+        capturedVariables.Add(name);
         continue;
+      }
 
       // Check what kind of symbol it is
       switch (symbol)
@@ -1092,9 +1098,10 @@ public class NuruDelegateCommandGenerator : IIncrementalGenerator
         }
       }
 
-      // Replace identifiers
+      // Replace identifiers (use DescendantNodesAndSelf to handle expression-bodied lambdas
+      // where the body itself is a single identifier like: (text) => text)
       return node.ReplaceNodes(
-        node.DescendantNodes().OfType<IdentifierNameSyntax>(),
+        node.DescendantNodesAndSelf().OfType<IdentifierNameSyntax>(),
         (original, _) => RewriteIdentifier(original, localVariables));
     }
 

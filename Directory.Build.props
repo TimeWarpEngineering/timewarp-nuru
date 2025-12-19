@@ -21,6 +21,17 @@
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 
+  <!-- Source generator debugging: emit generated files to artifacts directory -->
+  <PropertyGroup Label="Source Generator Output">
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    <CompilerGeneratedFilesOutputPath>$(ArtifactsDirectory)generated/$(MSBuildProjectName)</CompilerGeneratedFilesOutputPath>
+  </PropertyGroup>
+
+  <!-- Exclude emitted generated files from compilation (already included by source generator) -->
+  <ItemGroup Label="Source Generator Output">
+    <Compile Remove="$(CompilerGeneratedFilesOutputPath)/**/*.cs" />
+  </ItemGroup>
+
   <!-- Code quality, analyzers, and warning configuration -->
   <PropertyGroup Label="Code Quality and Analysis">
     <!-- Treat all warnings as errors -->

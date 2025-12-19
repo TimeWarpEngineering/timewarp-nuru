@@ -5,10 +5,6 @@
   <PropertyGroup>
     <!-- Tests should not be packaged -->
     <IsPackable>false</IsPackable>
-    <!-- Emit source generator output for inspection (commented out - multiple tests would overwrite each other)
-    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
-    <CompilerGeneratedFilesOutputPath>.generated</CompilerGeneratedFilesOutputPath>
-    -->
     <!-- Suppress warnings for test projects:
          CA1303: Localization not needed in tests
          CA2000: NuruAppBuilder is IDisposable but new NuruAppBuilder() creates no disposable resources

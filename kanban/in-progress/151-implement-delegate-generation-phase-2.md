@@ -52,9 +52,9 @@ app.Map("")
 
 - **Task 192**: Remove Map(pattern, handler) and MapDefault overloads ✅
 - **Task 193**: Create NuruDelegateCommandGenerator (detection + pattern parsing) ✅
-- **Task 194**: Generate Command classes from delegate signatures
-- **Task 195**: Generate Handler classes with parameter rewriting
-- **Task 196**: Add MessageType detection (.AsQuery, .AsCommand, etc.)
+- **Task 194**: Generate Command classes from delegate signatures ✅
+- **Task 195**: Generate Handler classes with parameter rewriting ✅
+- **Task 196**: Add MessageType detection (.AsQuery, .AsCommand, etc.) ✅
 - **Task 197**: Update NuruInvokerGenerator for new API ✅
 - **Task 198**: Update samples for new Map().WithHandler().Done() API ✅
 - **Task 199**: Add delegate generation tests
@@ -64,12 +64,12 @@ app.Map("")
 
 - [x] Task 192: API cleanup (removed Map(pattern, handler), MapDefault, added WithDescription())
 - [x] Task 193: Generator detection (updated NuruInvokerGenerator for new fluent API)
-- [ ] Task 194: Command generation
-- [ ] Task 195: Handler generation (complex - parameter rewriting)
-- [ ] Task 196: MessageType support
+- [x] Task 194: Command generation (generates Command classes from delegate signatures)
+- [x] Task 195: Handler generation (parameter rewriting, async handling, DI detection)
+- [x] Task 196: MessageType support (AsCommand, AsIdempotentCommand, AsQuery)
 - [x] Task 197: Invoker generator updates (done as part of Task 193)
 - [x] Task 198: Sample updates (28 files migrated to fluent API)
-- [ ] Task 199: Test coverage
+- [ ] Task 199: Test coverage (12 tests in place, may need more)
 - [x] Task 200: Test migration (~80 test files migrated to fluent API)
 
 ## Example Transformation

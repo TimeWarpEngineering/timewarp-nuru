@@ -162,7 +162,7 @@ internal sealed class Compiler : SyntaxVisitor<object?>
 
     // Create option matcher and add to segments in position
     OptionMatcher optionMatcher =
-      new      (
+      new(
         matchPattern: optionSyntax,
         expectsValue: expectsValue,
         parameterName: valueParameterName,

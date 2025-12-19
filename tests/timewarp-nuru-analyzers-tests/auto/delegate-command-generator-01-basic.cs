@@ -138,7 +138,7 @@ public sealed class DelegateCommandGeneratorTests
   }
 
   /// <summary>
-  /// Test that DI parameters are excluded from the Command class.
+  /// Test that DI parameters are excluded from Command properties but included in Handler.
   /// </summary>
   public static async Task Should_exclude_di_parameters()
   {
@@ -166,8 +166,9 @@ public sealed class DelegateCommandGeneratorTests
       
       string content = commandsTree.GetText().ToString();
       content.ShouldContain("public string Env { get; set; }");
-      // ILogger should NOT be included as it's a DI parameter
-      content.ShouldNotContain("Logger");
+      // ILogger should NOT be a PROPERTY on the Command class
+      // (it appears in the Handler as a field, which is correct)
+      content.ShouldNotContain("public ILogger Logger { get; set; }");
     }
     else
     {

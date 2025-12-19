@@ -74,6 +74,10 @@ public class NuruInvokerGenerator : IIncrementalGenerator
     });
   }
 
+  /// <summary>
+  /// Detects WithHandler() invocations in the new fluent API pattern:
+  /// app.Map("pattern").WithHandler(handler).Done()
+  /// </summary>
   private static bool IsMapInvocation(Microsoft.CodeAnalysis.SyntaxNode node)
   {
     if (node is not InvocationExpressionSyntax invocation)
@@ -82,60 +86,38 @@ public class NuruInvokerGenerator : IIncrementalGenerator
     if (invocation.Expression is not MemberAccessExpressionSyntax memberAccess)
       return false;
 
-    return memberAccess.Name.Identifier.Text is "Map" or "MapDefault";
+    // Look for WithHandler() calls - this is where the delegate is specified
+    return memberAccess.Name.Identifier.Text == "WithHandler";
   }
 
+  /// <summary>
+  /// Extracts route information from a WithHandler() invocation in the fluent API pattern:
+  /// app.Map("pattern").WithHandler(handler).Done()
+  /// </summary>
   private static RouteWithSignature? GetRouteWithSignature(
     GeneratorSyntaxContext context,
     CancellationToken cancellationToken)
   {
-    if (context.Node is not InvocationExpressionSyntax invocation)
+    if (context.Node is not InvocationExpressionSyntax withHandlerInvocation)
       return null;
 
-    ArgumentListSyntax? argumentList = invocation.ArgumentList;
+    ArgumentListSyntax? argumentList = withHandlerInvocation.ArgumentList;
     if (argumentList is null || argumentList.Arguments.Count < 1)
       return null;
 
-    // Determine if this is Map or MapDefault
-    bool isMapDefault = invocation.Expression is MemberAccessExpressionSyntax memberAccess &&
-                        memberAccess.Name.Identifier.Text == "MapDefault";
+    // Extract the handler from WithHandler(handler) - it's the first argument
+    ArgumentSyntax handlerArgument = argumentList.Arguments[0];
 
-    string pattern;
-    Location location;
+    // Walk back the fluent chain to find Map(pattern)
+    string? pattern = FindPatternFromFluentChain(withHandlerInvocation);
+    Location location = withHandlerInvocation.GetLocation();
 
-    if (isMapDefault)
-    {
-      // MapDefault has no pattern argument - use empty string
-      pattern = string.Empty;
-      location = invocation.GetLocation();
-    }
-    else
-    {
-      // Map requires at least 2 arguments (pattern and handler)
-      if (argumentList.Arguments.Count < 2)
-        return null;
+    // If we couldn't find a pattern, use empty string (equivalent to default route)
+    pattern ??= string.Empty;
 
-      // Find the pattern argument (may be positional or named)
-      ArgumentSyntax? patternArgument = FindPatternArgument(argumentList);
-      if (patternArgument is null)
-        return null;
-
-      if (patternArgument.Expression is not LiteralExpressionSyntax literal ||
-          !literal.IsKind(SyntaxKind.StringLiteralExpression))
-        return null;
-
-      pattern = literal.Token.ValueText;
-      if (pattern is null)
-        return null;
-
-      location = literal.GetLocation();
-    }
-
-    // Extract delegate signature using the handler argument
-    DelegateSignature? signature = ExtractSignatureFromMapCall(
-      invocation,
-      argumentList,
-      isMapDefault,
+    // Extract delegate signature from the handler argument
+    DelegateSignature? signature = ExtractSignatureFromHandler(
+      handlerArgument.Expression,
       context.SemanticModel,
       cancellationToken);
 
@@ -143,81 +125,48 @@ public class NuruInvokerGenerator : IIncrementalGenerator
   }
 
   /// <summary>
-  /// Finds the pattern argument, handling both positional and named arguments.
+  /// Walks back the fluent chain from WithHandler() to find the Map(pattern) call.
+  /// Example chain: app.Map("deploy {env}").WithHandler(handler).AsCommand().Done()
+  /// We start at WithHandler and walk back to find Map.
   /// </summary>
-  private static ArgumentSyntax? FindPatternArgument(ArgumentListSyntax argumentList)
+  private static string? FindPatternFromFluentChain(InvocationExpressionSyntax withHandlerInvocation)
   {
-    // Check for named argument "pattern"
-    foreach (ArgumentSyntax arg in argumentList.Arguments)
-    {
-      if (arg.NameColon?.Name.Identifier.Text == "pattern")
-        return arg;
-    }
+    // WithHandler is called on something like: app.Map("pattern")
+    // The syntax tree looks like:
+    // InvocationExpression (WithHandler)
+    //   - MemberAccessExpression (.WithHandler)
+    //     - InvocationExpression (Map("pattern"))
+    //       - MemberAccessExpression (.Map)
+    //       - ArgumentList ("pattern")
 
-    // Fall back to first positional argument
-    return argumentList.Arguments.Count > 0 ? argumentList.Arguments[0] : null;
-  }
-
-  /// <summary>
-  /// Extracts the delegate signature from a Map() or MapDefault() call, handling both positional and named arguments.
-  /// </summary>
-  private static DelegateSignature? ExtractSignatureFromMapCall(
-    InvocationExpressionSyntax invocation,
-    ArgumentListSyntax argumentList,
-    bool isMapDefault,
-    SemanticModel semanticModel,
-    CancellationToken cancellationToken)
-  {
-    // Find the handler argument (may be positional or named)
-    ArgumentSyntax? handlerArgument = null;
-
-    // Check for named argument "handler"
-    foreach (ArgumentSyntax arg in argumentList.Arguments)
-    {
-      if (arg.NameColon?.Name.Identifier.Text == "handler")
-      {
-        handlerArgument = arg;
-        break;
-      }
-    }
-
-    // Fall back to positional argument if no named argument found
-    if (handlerArgument is null)
-    {
-      if (isMapDefault)
-      {
-        // MapDefault: handler is first positional argument
-        if (argumentList.Arguments.Count >= 1)
-        {
-          ArgumentSyntax firstArg = argumentList.Arguments[0];
-          if (firstArg.NameColon is null)
-          {
-            handlerArgument = firstArg;
-          }
-        }
-      }
-      else
-      {
-        // Map: handler is second positional argument
-        if (argumentList.Arguments.Count >= 2)
-        {
-          ArgumentSyntax firstArg = argumentList.Arguments[0];
-          if (firstArg.NameColon is null)
-          {
-            handlerArgument = argumentList.Arguments[1];
-          }
-        }
-      }
-    }
-
-    if (handlerArgument is null)
+    if (withHandlerInvocation.Expression is not MemberAccessExpressionSyntax memberAccess)
       return null;
 
-    // Now extract the signature from the handler expression
-    return ExtractSignatureFromHandler(
-      handlerArgument.Expression,
-      semanticModel,
-      cancellationToken);
+    // The expression being accessed is the result of Map("pattern")
+    if (memberAccess.Expression is not InvocationExpressionSyntax mapInvocation)
+      return null;
+
+    // Verify this is a Map call
+    if (mapInvocation.Expression is not MemberAccessExpressionSyntax mapMemberAccess)
+      return null;
+
+    if (mapMemberAccess.Name.Identifier.Text != "Map")
+      return null;
+
+    // Get the pattern from Map's arguments
+    ArgumentListSyntax? mapArgs = mapInvocation.ArgumentList;
+    if (mapArgs is null || mapArgs.Arguments.Count < 1)
+      return null;
+
+    // First argument should be the pattern
+    ArgumentSyntax patternArg = mapArgs.Arguments[0];
+    if (patternArg.Expression is LiteralExpressionSyntax literal &&
+        literal.IsKind(SyntaxKind.StringLiteralExpression))
+    {
+      return literal.Token.ValueText;
+    }
+
+    return null;
   }
 
   /// <summary>

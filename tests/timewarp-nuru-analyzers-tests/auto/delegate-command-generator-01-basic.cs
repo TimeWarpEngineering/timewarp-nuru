@@ -345,9 +345,9 @@ public sealed class DelegateCommandGeneratorTests
   }
 
   /// <summary>
-  /// Test that AsQuery() does NOT generate Command classes (only AsCommand does).
+  /// Test that AsQuery() generates Query classes with IQuery interface.
   /// </summary>
-  public static async Task Should_not_generate_for_asquery()
+  public static async Task Should_generate_query_for_asquery()
   {
     const string code = """
       using TimeWarp.Nuru;
@@ -362,11 +362,133 @@ public sealed class DelegateCommandGeneratorTests
 
     GeneratorDriverRunResult result = RunGenerator(code);
 
-    // GeneratedDelegateCommands should NOT be generated for AsQuery
     SyntaxTree? commandsTree = result.GeneratedTrees
       .FirstOrDefault(t => t.FilePath.Contains("GeneratedDelegateCommands"));
     
-    commandsTree.ShouldBeNull("GeneratedDelegateCommands.g.cs should NOT be generated for AsQuery()");
+    commandsTree.ShouldNotBeNull("GeneratedDelegateCommands.g.cs should be generated for AsQuery()");
+    
+    string content = commandsTree!.GetText().ToString();
+    WriteLine("Generated Query class:");
+    WriteLine(content);
+    
+    // Should generate Query class, not Command
+    content.ShouldContain("Status_Generated_Query");
+    content.ShouldContain("IQuery<");
+    content.ShouldContain("IQueryHandler<");
+    // Should NOT contain ICommand for this route
+    content.ShouldNotContain("Status_Generated_Command");
+
+    await Task.CompletedTask;
+  }
+
+  /// <summary>
+  /// Test that AsIdempotentCommand() generates Command with IIdempotent marker.
+  /// </summary>
+  public static async Task Should_generate_idempotent_command()
+  {
+    const string code = """
+      using TimeWarp.Nuru;
+      
+      var app = NuruCoreApp.CreateSlimBuilder()
+        .Map("config set {key} {value}")
+        .WithHandler((string key, string value) => System.Console.WriteLine($"{key}={value}"))
+        .AsIdempotentCommand()
+        .Done()
+        .Build();
+      """;
+
+    GeneratorDriverRunResult result = RunGenerator(code);
+
+    SyntaxTree? commandsTree = result.GeneratedTrees
+      .FirstOrDefault(t => t.FilePath.Contains("GeneratedDelegateCommands"));
+    
+    commandsTree.ShouldNotBeNull("GeneratedDelegateCommands.g.cs should be generated for AsIdempotentCommand()");
+    
+    string content = commandsTree!.GetText().ToString();
+    WriteLine("Generated IdempotentCommand class:");
+    WriteLine(content);
+    
+    // Should have ICommand AND IIdempotent
+    content.ShouldContain("ConfigSet_Generated_Command");
+    content.ShouldContain("ICommand<");
+    content.ShouldContain("IIdempotent");
+
+    await Task.CompletedTask;
+  }
+
+  /// <summary>
+  /// Test that sync block body lambdas wrap return in ValueTask.
+  /// </summary>
+  public static async Task Should_wrap_sync_block_return_in_valuetask()
+  {
+    const string code = """
+      using TimeWarp.Nuru;
+      
+      var app = NuruCoreApp.CreateSlimBuilder()
+        .Map("count {n:int}")
+        .WithHandler((int n) => {
+          System.Console.WriteLine(n);
+          return n * 2;
+        })
+        .AsCommand()
+        .Done()
+        .Build();
+      """;
+
+    GeneratorDriverRunResult result = RunGenerator(code);
+
+    SyntaxTree? commandsTree = result.GeneratedTrees
+      .FirstOrDefault(t => t.FilePath.Contains("GeneratedDelegateCommands"));
+    
+    commandsTree.ShouldNotBeNull();
+    
+    string content = commandsTree!.GetText().ToString();
+    WriteLine("Generated Handler with ValueTask wrapping:");
+    WriteLine(content);
+    
+    // Sync return should be wrapped in ValueTask
+    content.ShouldContain("return new global::System.Threading.Tasks.ValueTask<");
+    // Should NOT have bare "return n * 2;" or similar
+    content.ShouldNotContain("return request.N * 2;");
+
+    await Task.CompletedTask;
+  }
+
+  /// <summary>
+  /// Test that async lambdas generate async Handle methods.
+  /// </summary>
+  public static async Task Should_generate_async_handler()
+  {
+    const string code = """
+      using TimeWarp.Nuru;
+      using System.Threading.Tasks;
+      
+      var app = NuruCoreApp.CreateSlimBuilder()
+        .Map("delay {ms:int}")
+        .WithHandler(async (int ms) => {
+          await Task.Delay(ms);
+          return 0;
+        })
+        .AsCommand()
+        .Done()
+        .Build();
+      """;
+
+    GeneratorDriverRunResult result = RunGenerator(code);
+
+    SyntaxTree? commandsTree = result.GeneratedTrees
+      .FirstOrDefault(t => t.FilePath.Contains("GeneratedDelegateCommands"));
+    
+    commandsTree.ShouldNotBeNull();
+    
+    string content = commandsTree!.GetText().ToString();
+    WriteLine("Generated async Handler:");
+    WriteLine(content);
+    
+    // Should have async keyword in Handle method
+    content.ShouldContain("public async global::System.Threading.Tasks.ValueTask<");
+    // Async returns don't need ValueTask wrapping
+    content.ShouldNotContain("return new global::System.Threading.Tasks.ValueTask<int>(0)");
 
     await Task.CompletedTask;
   }

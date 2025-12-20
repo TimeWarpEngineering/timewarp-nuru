@@ -76,7 +76,8 @@ internal static class EndpointResolver
   private static (Endpoint endpoint, Dictionary<string, string> extractedValues)?
     MatchRoute(string[] args, EndpointCollection endpoints, ILogger logger)
   {
-    List<RouteMatch> matches = [];
+    // Pre-size for common case: typically 0-2 matches
+    List<RouteMatch> matches = new(capacity: 2);
     Dictionary<string, string> extractedValues = new(StringComparer.OrdinalIgnoreCase);
 
     int endpointIndex = 0;
@@ -417,7 +418,8 @@ internal static class EndpointResolver
   )
   {
     // Collect positional arguments until we encounter a defined option from the route
-    List<string> catchAllArgs = [];
+    // Pre-size based on remaining args
+    List<string> catchAllArgs = new(capacity: args.Length - startPosition);
     int j = startPosition;
     while (j < args.Length)
     {

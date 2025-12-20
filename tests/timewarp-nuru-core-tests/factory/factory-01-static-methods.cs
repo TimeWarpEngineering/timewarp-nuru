@@ -356,6 +356,29 @@ public class StaticFactoryMethodTests
 
     await Task.CompletedTask;
   }
+
+  public static async Task CreateSlimBuilder_AddVersionRoute_should_register_manually()
+  {
+    // Arrange & Act - CreateSlimBuilder doesn't auto-register, but AddVersionRoute() can be called manually
+    NuruCoreAppBuilder builder = NuruApp.CreateSlimBuilder();
+    builder.AddVersionRoute();
+
+    // Assert - Should now have --version route after manual registration
+    bool hasVersionRoute = builder.EndpointCollection.Any(e =>
+      e.CompiledRoute.OptionMatchers.Any(opt =>
+        opt.MatchPattern == "--version"));
+
+    hasVersionRoute.ShouldBeTrue("AddVersionRoute() should register --version route on slim builder");
+
+    // Verify -v alias is also present
+    bool hasVersionWithAlias = builder.EndpointCollection.Any(e =>
+      e.CompiledRoute.OptionMatchers.Any(opt =>
+        opt.MatchPattern == "--version" && opt.AlternateForm == "-v"));
+
+    hasVersionWithAlias.ShouldBeTrue("AddVersionRoute() should register --version,-v with alias on slim builder");
+
+    await Task.CompletedTask;
+  }
 }
 
 } // namespace TimeWarp.Nuru.Tests.Factory

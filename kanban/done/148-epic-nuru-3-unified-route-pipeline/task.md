@@ -136,3 +136,21 @@ This is 80% of what we need — extend to also emit Command/Handler classes.
 
 - `Mediator.Abstractions` for `IRequest`, `IRequestHandler<T>`, `Unit`
 - NO dependency on `Mediator.SourceGenerator`
+
+## Results
+
+**Completed (Dec 2025):**
+- Task 158: IBuilder pattern foundation with `Done()` method
+- Task 160: Epic to unify all builders with IBuilder pattern
+  - Task 161: CompiledRouteBuilder
+  - Task 162: Widget Builders (Table, Panel, Rule)
+  - Task 163: KeyBindingBuilder
+- Task 151: Delegate Generation Phase 2
+- Task 164: Renamed builders to match what they build (RouteConfigurator → EndpointBuilder)
+
+**Backlogged for future work:**
+- Task 152: Unified Pipeline Phase 3 (remove DelegateExecutor)
+- Task 153: Fluent Builder API Phase 4
+- Task 154: Relaxed Constraints Phase 5
+
+The foundation work (IBuilder pattern, fluent API, builder unification) is complete and released. The remaining phases (unified pipeline, public fluent API, data flow analysis) are tracked as separate backlog items for future consideration.

@@ -50,14 +50,14 @@ Add a built-in `--version,-v` route that is automatically registered when using 
 - [x] Add `[assembly: SuppressNuruInvokerGeneration]` to TimeWarp.Nuru
 
 ### Testing
-- [ ] Test `--version` route is registered by `CreateBuilder()`
-- [ ] Test `--version` route is NOT registered by `CreateSlimBuilder()`
-- [ ] Test `DisableVersionRoute = true` prevents registration
-- [ ] Test `AddVersionRoute()` can be called manually on slim builder
+- [x] Test `--version` route is registered by `CreateBuilder()`
+- [x] Test `--version` route is NOT registered by `CreateSlimBuilder()`
+- [x] Test `DisableVersionRoute = true` prevents registration
+- [x] Test `AddVersionRoute()` can be called manually on slim builder
 
 ### Documentation
-- [ ] Document the `--version` route in user documentation
-- [ ] Document `DisableVersionRoute` option
+- [x] Document the `--version` route in user documentation
+- [x] Document `DisableVersionRoute` option
 
 ## Notes
 

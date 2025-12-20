@@ -78,7 +78,8 @@ internal static class EndpointResolver
   {
     // Pre-size for common case: typically 0-2 matches
     List<RouteMatch> matches = new(capacity: 2);
-    Dictionary<string, string> extractedValues = new(StringComparer.OrdinalIgnoreCase);
+    // Pre-size for typical CLI commands (4-8 parameters)
+    Dictionary<string, string> extractedValues = new(capacity: 8, StringComparer.OrdinalIgnoreCase);
 
     int endpointIndex = 0;
     foreach (Endpoint endpoint in endpoints)

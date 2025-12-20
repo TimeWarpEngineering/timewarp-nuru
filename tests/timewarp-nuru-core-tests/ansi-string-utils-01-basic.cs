@@ -20,10 +20,10 @@ public class AnsiStringUtilsTests
   public static async Task Should_strip_basic_ansi_codes()
   {
     // Arrange
-    string input = "\x1b[31mError\x1b[0m";
+    const string input = "\x1b[31mError\x1b[0m";
 
     // Act
-    string result = TimeWarp.Terminal.AnsiStringUtils.StripAnsiCodes(input);
+    string result = Terminal.AnsiStringUtils.StripAnsiCodes(input);
 
     // Assert
     result.ShouldBe("Error");

@@ -32,3 +32,7 @@ builder.MapMultiple(
 ```
 
 Help system automatically groups routes with the same description, so `workspace` and `ws` appear together in help output.
+
+## Archived
+
+**Reason:** Obsolete - `MapMultiple` is being removed entirely. It's just syntactic sugar for a foreach loop calling `Map`, the source generator doesn't support it, and help grouping is based on description matching (not registration method). Users can call `Map` multiple times with the same description to get alias grouping in help output. See task 205 for removal.

@@ -4,7 +4,7 @@
 
 cd "$(dirname "$0")"
 
-hyperfine --warmup 10 --runs 100 -N \
+hyperfine --warmup 20 --runs 1000 -N \
   -n 'ConsoleAppFramework' 'publish/bench-consoleappframework/bench-consoleappframework --str hello --i 13 --b' \
   -n 'System.CommandLine' 'publish/bench-systemcommandline/bench-systemcommandline --str hello -i 13 -b' \
   -n 'CommandLineParser' 'publish/bench-commandlineparser/bench-commandlineparser --str hello -i 13 -b' \

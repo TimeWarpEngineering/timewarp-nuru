@@ -168,18 +168,6 @@ internal static class EndpointResolver
     return bestExact ?? bestWithDefaults!;
   }
 
-  private static List<OptionMatcher> GetRepeatedOptions(IReadOnlyList<RouteMatcher> template)
-  {
-    List<OptionMatcher> result = [];
-    foreach (RouteMatcher segment in template)
-    {
-      if (segment is OptionMatcher option && option.IsRepeated)
-        result.Add(option);
-    }
-
-    return result;
-  }
-
   private static void LogExtractedValues(Dictionary<string, string> extractedValues, ILogger logger)
   {
     if (extractedValues.Count > 0)
@@ -210,9 +198,8 @@ internal static class EndpointResolver
     ParsingLoggerMessages.MatchingPositionalSegments(logger, template.Count, args.Length, null);
 
     // Pre-pass: Handle repeated options first and mark consumed indices
-    // Using loop instead of LINQ to avoid JIT overhead on cold start
     HashSet<int> consumedIndices = [];
-    List<OptionMatcher> repeatedOptions = GetRepeatedOptions(template);
+    IReadOnlyList<OptionMatcher> repeatedOptions = endpoint.CompiledRoute.RepeatedOptions;
 
     foreach (OptionMatcher repeatedOption in repeatedOptions)
     {

@@ -51,4 +51,11 @@ public class CompiledRoute
   /// </summary>
   public IReadOnlyList<OptionMatcher> OptionMatchers =>
     field ??= Segments.OfType<OptionMatcher>().ToArray();
+
+  /// <summary>
+  /// Gets the repeated option matchers from this route.
+  /// Results are cached after first access.
+  /// </summary>
+  public IReadOnlyList<OptionMatcher> RepeatedOptions =>
+    field ??= OptionMatchers.Where(o => o.IsRepeated).ToArray();
 }

@@ -38,11 +38,29 @@ public static partial class NuruAppBuilderExtensions
       builder.ConfigureHelp(options.ConfigureHelp);
     }
 
-    builder
-      .UseTelemetry(options.ConfigureTelemetry ?? (_ => { }))
-      .AddReplSupport(options.ConfigureRepl)
-      .EnableDynamicCompletion(configure: options.ConfigureCompletion)
-      .AddInteractiveRoute(options.InteractiveRoutePatterns);
+    // Add telemetry unless disabled
+    if (!options.DisableTelemetry)
+    {
+      builder.UseTelemetry(options.ConfigureTelemetry ?? (_ => { }));
+    }
+
+    // Add REPL support unless disabled
+    if (!options.DisableRepl)
+    {
+      builder.AddReplSupport(options.ConfigureRepl);
+    }
+
+    // Add dynamic shell completion unless disabled
+    if (!options.DisableCompletion)
+    {
+      builder.EnableDynamicCompletion(configure: options.ConfigureCompletion);
+    }
+
+    // Add interactive route unless disabled
+    if (!options.DisableInteractiveRoute)
+    {
+      builder.AddInteractiveRoute(options.InteractiveRoutePatterns);
+    }
 
     // Add version route unless disabled
     if (!options.DisableVersionRoute)

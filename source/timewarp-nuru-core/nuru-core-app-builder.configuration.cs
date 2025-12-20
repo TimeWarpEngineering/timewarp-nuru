@@ -47,23 +47,25 @@ public partial class NuruCoreAppBuilder<TSelf>
     string? sanitizedApplicationName = GetSanitizedApplicationName();
     string basePath = DetermineConfigurationBasePath();
 
+    // Note: reloadOnChange is false for CLI apps - no need for file watchers on short-lived processes
+    // This saves significant startup overhead from FileSystemWatcher initialization
     IConfigurationBuilder configuration = new ConfigurationBuilder()
       .SetBasePath(basePath)
-      .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
-      .AddJsonFile($"appsettings.{environmentName}.json", optional: true, reloadOnChange: true);
+      .AddJsonFile("appsettings.json", optional: true, reloadOnChange: false)
+      .AddJsonFile($"appsettings.{environmentName}.json", optional: true, reloadOnChange: false);
 
     // Add application-specific settings files (matches .NET 10 convention from https://github.com/dotnet/runtime/pull/116987)
     if (!string.IsNullOrEmpty(sanitizedApplicationName))
     {
       configuration
-        .AddJsonFile($"{sanitizedApplicationName}.settings.json", optional: true, reloadOnChange: true)
-        .AddJsonFile($"{sanitizedApplicationName}.settings.{environmentName}.json", optional: true, reloadOnChange: true);
+        .AddJsonFile($"{sanitizedApplicationName}.settings.json", optional: true, reloadOnChange: false)
+        .AddJsonFile($"{sanitizedApplicationName}.settings.{environmentName}.json", optional: true, reloadOnChange: false);
     }
 
     // Add user secrets in Development environment (optional parameter means it won't throw if UserSecretsId is missing)
     if (environmentName == "Development")
     {
-      configuration.AddUserSecrets(Assembly.GetEntryAssembly()!, optional: true, reloadOnChange: true);
+      configuration.AddUserSecrets(Assembly.GetEntryAssembly()!, optional: true, reloadOnChange: false);
     }
 
     configuration.AddEnvironmentVariables();

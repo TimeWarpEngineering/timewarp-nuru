@@ -13,6 +13,10 @@ Remove the `MapMultiple` API methods. They are just syntactic sugar for a foreac
 
 ## Checklist
 
+- [ ] Add tests validating calling `Map` multiple times with same handler works properly
+  - [ ] Test: multiple patterns with same handler all route correctly
+  - [ ] Test: multiple patterns with same description are grouped in help output
+  - [ ] Test: execution invokes the correct shared handler
 - [ ] Remove `MapMultiple(string[] patterns, Delegate handler)` from `NuruCoreAppBuilder`
 - [ ] Remove `MapMultiple<TCommand>(string[] patterns)` from `NuruCoreAppBuilder`
 - [ ] Remove `MapMultiple<TCommand, TResponse>(string[] patterns)` from `NuruCoreAppBuilder`

@@ -1,22 +1,34 @@
-# Extract Terminal/Console functionality into TimeWarp.Nuru.Terminal NuGet package
+# Extract Terminal/Console functionality into TimeWarp.Terminal NuGet package
 
 ## Description
 
-Extract the terminal and console functionality from `timewarp-nuru-core` into a new standalone NuGet package `TimeWarp.Nuru.Terminal` (`timewarp-nuru-terminal.csproj`). This will allow consumers to use the terminal/console abstractions and widgets independently without requiring the full Nuru CLI framework.
+Extract the terminal and console functionality from `timewarp-nuru-core` into a new standalone NuGet package `TimeWarp.Terminal` (`timewarp-terminal.csproj`). This will allow consumers to use the terminal/console abstractions and widgets independently without requiring the full Nuru CLI framework.
+
+**Naming Decision:** Using `TimeWarp.Terminal` (not `TimeWarp.Nuru.Terminal`) because:
+- These abstractions are general-purpose, not Nuru-specific
+- Can be reused by other TimeWarp projects (Amuru, Ganda, etc.)
+- Useful for any .NET app needing formatted console output (web apps, background services, etc.)
+- Follows the pattern of other standalone TimeWarp packages (TimeWarp.Fixie, TimeWarp.Jaribu, etc.)
 
 ## Checklist
 
 ### Project Setup
-- [ ] Create `source/timewarp-nuru-terminal/timewarp-nuru-terminal.csproj`
-- [ ] Configure NuGet package metadata (TimeWarp.Nuru.Terminal)
+- [ ] Create `source/timewarp-terminal/timewarp-terminal.csproj`
+- [ ] Configure NuGet package metadata (TimeWarp.Terminal)
 - [ ] Add to solution file `timewarp-nuru.slnx`
 - [ ] Configure `Directory.Build.props` as needed
+
+### Rename Types (remove Nuru prefix)
+- [ ] `NuruConsole` → `TerminalConsole`
+- [ ] `NuruTerminal` → `Terminal`
+- [ ] `NuruTestContext` → `TerminalTestContext`
+- [ ] Update namespace to `TimeWarp.Terminal`
 
 ### Move Core Terminal Abstractions
 - [ ] Move `io/iconsole.cs` (IConsole interface)
 - [ ] Move `io/iterminal.cs` (ITerminal interface)
-- [ ] Move `io/nuru-console.cs` (NuruConsole implementation)
-- [ ] Move `io/nuru-terminal.cs` (NuruTerminal implementation)
+- [ ] Move `io/nuru-console.cs` → `terminal-console.cs`
+- [ ] Move `io/nuru-terminal.cs` → `terminal.cs`
 
 ### Move ANSI Support
 - [ ] Move `io/ansi-colors.cs`
@@ -44,15 +56,15 @@ Extract the terminal and console functionality from `timewarp-nuru-core` into a 
 - [ ] Move `io/test-console.cs`
 - [ ] Move `io/test-terminal.cs`
 - [ ] Move `io/test-terminal-context.cs`
-- [ ] Move `io/nuru-test-context.cs`
+- [ ] Move `io/nuru-test-context.cs` → `terminal-test-context.cs`
 
 ### Update Dependencies
-- [ ] Add `timewarp-nuru-terminal` as dependency to `timewarp-nuru-core`
+- [ ] Add `timewarp-terminal` as dependency to `timewarp-nuru-core`
 - [ ] Update any internal references in timewarp-nuru-core
 - [ ] Ensure `response-display.cs` still works (may need to stay in core or reference terminal)
 
 ### Testing
-- [ ] Create `tests/timewarp-nuru-terminal-tests/` project
+- [ ] Create `tests/timewarp-terminal-tests/` project
 - [ ] Move relevant tests from `timewarp-nuru-core-tests`
 - [ ] Verify all existing tests still pass
 - [ ] Add package-specific tests if needed
@@ -68,8 +80,8 @@ Extract the terminal and console functionality from `timewarp-nuru-core` into a 
 **Core abstractions:**
 - `iconsole.cs` - IConsole interface
 - `iterminal.cs` - ITerminal interface  
-- `nuru-console.cs` - Default console implementation
-- `nuru-terminal.cs` - Default terminal implementation
+- `nuru-console.cs` - Default console implementation (rename to TerminalConsole)
+- `nuru-terminal.cs` - Default terminal implementation (rename to Terminal)
 
 **ANSI support:**
 - `ansi-colors.cs` - ANSI color definitions
@@ -86,7 +98,15 @@ Extract the terminal and console functionality from `timewarp-nuru-core` into a 
 
 **Test infrastructure:**
 - `test-console.cs`, `test-terminal.cs` - Test doubles
-- `test-terminal-context.cs`, `nuru-test-context.cs` - Test context helpers
+- `test-terminal-context.cs`, `nuru-test-context.cs` - Test context helpers (rename NuruTestContext)
+
+### Namespace Structure
+
+```
+TimeWarp.Terminal
+TimeWarp.Terminal.Widgets
+TimeWarp.Terminal.Testing
+```
 
 ### Consideration
 

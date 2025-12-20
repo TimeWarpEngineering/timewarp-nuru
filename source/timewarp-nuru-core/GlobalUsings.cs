@@ -22,6 +22,7 @@ global using System.Text.Json.Serialization;
 global using System.Runtime.CompilerServices;
 global using System.Text.RegularExpressions;
 // TimeWarp namespaces
+global using TimeWarp.Builder;
 global using TimeWarp.Terminal;
 // Mediator (martinothamar source-generator based)
 global using Mediator;

@@ -13,17 +13,17 @@ The `nuru-invoker-generator.cs` file (541 lines) generates AOT-compatible invoke
 ## Checklist
 
 ### File Creation
-- [ ] Create `nuru-invoker-generator.extraction.cs` - Signature extraction methods
-- [ ] Create `nuru-invoker-generator.codegen.cs` - Code generation methods
+- [x] Create `nuru-invoker-generator.extraction.cs` - Signature extraction methods
+- [x] Create `nuru-invoker-generator.codegen.cs` - Code generation methods
 
 ### Documentation
-- [ ] Add `<remarks>` to main file listing all partial files
-- [ ] Add XML summary to each new partial file
+- [x] Add `<remarks>` to main file listing all partial files
+- [x] Add XML summary to each new partial file
 
 ### Verification
-- [ ] All analyzer tests pass
-- [ ] Source generation works correctly
-- [ ] Build succeeds
+- [x] All analyzer tests pass
+- [x] Source generation works correctly
+- [x] Build succeeds
 
 ## Notes
 

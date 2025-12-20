@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <AssemblyName>TimeWarp.Terminal</AssemblyName>
+    <RootNamespace>TimeWarp.Nuru</RootNamespace>
+    <Description>Terminal abstractions and widgets for console applications - IConsole, ITerminal, panels, tables, rules, and ANSI color support</Description>
+    <PackageTags>terminal;console;ansi;colors;widgets;panel;table;cli;timewarp</PackageTags>
+
+    <!-- AOT Compatibility -->
+    <IsAotCompatible>true</IsAotCompatible>
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+    <EnableAotAnalyzer>true</EnableAotAnalyzer>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../timewarp-builder/timewarp-builder.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="$(RepositoryRoot)readme.md" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+</Project>

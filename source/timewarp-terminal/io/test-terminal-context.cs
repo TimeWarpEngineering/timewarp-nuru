@@ -70,7 +70,7 @@ public static class TestTerminalContext
   /// <param name="terminal">The terminal to use if no context is set.</param>
   /// <param name="fallback">The fallback terminal if both context and terminal are null.</param>
   /// <returns>The resolved terminal.</returns>
-  internal static ITerminal Resolve(ITerminal? terminal, ITerminal fallback)
+  public static ITerminal Resolve(ITerminal? terminal, ITerminal fallback)
     => Current ?? terminal ?? fallback;
 
   /// <summary>
@@ -79,6 +79,6 @@ public static class TestTerminalContext
   /// </summary>
   /// <param name="terminal">The terminal to use if no context is set.</param>
   /// <returns>The resolved terminal.</returns>
-  internal static ITerminal Resolve(ITerminal? terminal)
+  public static ITerminal Resolve(ITerminal? terminal)
     => Current ?? terminal ?? NuruTerminal.Default;
 }

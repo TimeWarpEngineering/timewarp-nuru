@@ -15,46 +15,63 @@ using OpenTelemetry.Trace;
 /// </summary>
 public static class NuruTelemetryExtensions
 {
+  // Lazy initialization to avoid cold-start overhead when telemetry is not used
+  private static readonly Lazy<ActivitySource> LazyActivitySource = new(() => new ActivitySource("TimeWarp.Nuru", "1.0.0"));
+  private static readonly Lazy<Meter> LazyMeter = new(() => new Meter("TimeWarp.Nuru", "1.0.0"));
+
   /// <summary>
   /// ActivitySource for Nuru command tracing.
+  /// Lazily initialized to avoid cold-start overhead.
   /// </summary>
-  public static readonly ActivitySource NuruActivitySource = new("TimeWarp.Nuru", "1.0.0");
+  public static ActivitySource NuruActivitySource => LazyActivitySource.Value;
 
   /// <summary>
   /// Meter for Nuru metrics.
+  /// Lazily initialized to avoid cold-start overhead.
   /// </summary>
-  public static readonly Meter NuruMeter = new("TimeWarp.Nuru", "1.0.0");
+  public static Meter NuruMeter => LazyMeter.Value;
 
-  // Metrics instruments - public for use by TelemetryBehavior
-  /// <summary>Counter for commands invoked.</summary>
-  public static readonly Counter<int> CommandsInvoked = NuruMeter.CreateCounter<int>(
+  // Lazy metrics instruments - only created when first accessed
+  private static readonly Lazy<Counter<int>> LazyCommandsInvoked = new(() => NuruMeter.CreateCounter<int>(
     name: "nuru.commands.invoked",
     unit: "{commands}",
-    description: "Number of commands executed");
+    description: "Number of commands executed"));
 
-  /// <summary>Counter for command errors.</summary>
-  public static readonly Counter<int> CommandsErrored = NuruMeter.CreateCounter<int>(
+  private static readonly Lazy<Counter<int>> LazyCommandsErrored = new(() => NuruMeter.CreateCounter<int>(
     name: "nuru.commands.errors",
     unit: "{errors}",
-    description: "Number of failed commands");
+    description: "Number of failed commands"));
 
-  /// <summary>Histogram for command duration.</summary>
-  public static readonly Histogram<double> CommandDuration = NuruMeter.CreateHistogram<double>(
+  private static readonly Lazy<Histogram<double>> LazyCommandDuration = new(() => NuruMeter.CreateHistogram<double>(
     name: "nuru.commands.duration",
     unit: "ms",
-    description: "Command execution duration in milliseconds");
+    description: "Command execution duration in milliseconds"));
 
-  /// <summary>Counter for REPL sessions.</summary>
-  public static readonly Counter<int> ReplSessions = NuruMeter.CreateCounter<int>(
+  private static readonly Lazy<Counter<int>> LazyReplSessions = new(() => NuruMeter.CreateCounter<int>(
     name: "nuru.repl.sessions",
     unit: "{sessions}",
-    description: "Number of REPL sessions started");
+    description: "Number of REPL sessions started"));
 
-  /// <summary>Counter for REPL commands.</summary>
-  public static readonly Counter<int> ReplCommands = NuruMeter.CreateCounter<int>(
+  private static readonly Lazy<Counter<int>> LazyReplCommands = new(() => NuruMeter.CreateCounter<int>(
     name: "nuru.repl.commands",
     unit: "{commands}",
-    description: "Commands executed in REPL mode");
+    description: "Commands executed in REPL mode"));
+
+  // Public accessors for metrics instruments - lazily initialized
+  /// <summary>Counter for commands invoked.</summary>
+  public static Counter<int> CommandsInvoked => LazyCommandsInvoked.Value;
+
+  /// <summary>Counter for command errors.</summary>
+  public static Counter<int> CommandsErrored => LazyCommandsErrored.Value;
+
+  /// <summary>Histogram for command duration.</summary>
+  public static Histogram<double> CommandDuration => LazyCommandDuration.Value;
+
+  /// <summary>Counter for REPL sessions.</summary>
+  public static Counter<int> ReplSessions => LazyReplSessions.Value;
+
+  /// <summary>Counter for REPL commands.</summary>
+  public static Counter<int> ReplCommands => LazyReplCommands.Value;
 
   // Track configured providers for cleanup
   private static TracerProvider? tracerProvider;
@@ -101,35 +118,35 @@ public static class NuruTelemetryExtensions
     NuruTelemetryOptions options = new();
     configure(options);
 
-    // Build resource for all telemetry types
+    // EARLY EXIT: No OTLP endpoint configured - skip expensive ResourceBuilder creation
+    // This avoids ~20ms overhead from ResourceBuilder.CreateDefault() when telemetry is not needed
+    if (!options.ShouldExportTelemetry)
+    {
+      return builder;
+    }
+
+    // Only build resource when we actually need to export telemetry
+    // ResourceBuilder.CreateDefault() is expensive as it gathers OS/process info
     ResourceBuilder resourceBuilder = ResourceBuilder.CreateDefault()
       .AddService(
         serviceName: options.EffectiveServiceName,
         serviceVersion: options.ServiceVersion);
 
-    // Configure OpenTelemetry logging when OTLP endpoint is configured
-    if (options.EnableLogging && options.ShouldExportTelemetry)
+    Uri endpoint = new(options.EffectiveOtlpEndpoint!);
+
+    // Configure OpenTelemetry logging
+    if (options.EnableLogging)
     {
-      Uri otlpEndpoint = new(options.EffectiveOtlpEndpoint!);
       builder.ConfigureLogging(logging =>
       {
         logging.SetMinimumLevel(LogLevel.Information);
         logging.AddOpenTelemetry(otelOptions =>
         {
           otelOptions.SetResourceBuilder(resourceBuilder);
-          otelOptions.AddOtlpExporter(exporterOptions => exporterOptions.Endpoint = otlpEndpoint);
+          otelOptions.AddOtlpExporter(exporterOptions => exporterOptions.Endpoint = endpoint);
         });
       });
     }
-
-    if (!options.ShouldExportTelemetry)
-    {
-      // No OTLP endpoint configured - telemetry export disabled with zero overhead
-      // Logging is still configured above (console only)
-      return builder;
-    }
-
-    Uri endpoint = new(options.EffectiveOtlpEndpoint!);
 
     // Configure tracing
     if (options.EnableTracing)

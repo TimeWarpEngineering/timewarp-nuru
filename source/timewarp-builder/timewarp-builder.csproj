@@ -13,7 +13,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="$(RepositoryRoot)readme.md" Pack="true" PackagePath="" />
+    <None Include="readme.md" Pack="true" PackagePath="" />
   </ItemGroup>
 
 </Project>

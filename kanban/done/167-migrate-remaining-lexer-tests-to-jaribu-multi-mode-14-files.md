@@ -15,20 +15,20 @@ For each file:
 4. Verify multi-mode works
 
 **Files to migrate (in order):**
-- [ ] lexer-02-valid-options.cs - migrate, verify standalone, verify multi-mode
-- [ ] lexer-03-invalid-double-dashes.cs - migrate, verify standalone, verify multi-mode
-- [ ] lexer-04-invalid-trailing-dashes.cs - migrate, verify standalone, verify multi-mode
-- [ ] lexer-05-multi-char-short-options.cs - migrate, verify standalone, verify multi-mode
-- [ ] lexer-06-end-of-options.cs - migrate, verify standalone, verify multi-mode
-- [ ] lexer-07-invalid-angle-brackets.cs - migrate, verify standalone, verify multi-mode
-- [ ] lexer-08-whitespace-handling.cs - migrate, verify standalone, verify multi-mode
-- [ ] lexer-09-complex-patterns.cs - migrate, verify standalone, verify multi-mode
-- [ ] lexer-10-edge-cases.cs - migrate, verify standalone, verify multi-mode
-- [ ] lexer-11-error-reporting.cs - migrate, verify standalone, verify multi-mode
-- [ ] lexer-12-description-tokenization.cs - migrate, verify standalone, verify multi-mode
-- [ ] lexer-13-parameter-context.cs - migrate, verify standalone, verify multi-mode
-- [ ] lexer-14-token-position.cs - migrate, verify standalone, verify multi-mode
-- [ ] lexer-15-advanced-features.cs - migrate, verify standalone, verify multi-mode
+- [x] lexer-02-valid-options.cs - migrate, verify standalone, verify multi-mode
+- [x] lexer-03-invalid-double-dashes.cs - migrate, verify standalone, verify multi-mode
+- [x] lexer-04-invalid-trailing-dashes.cs - migrate, verify standalone, verify multi-mode
+- [x] lexer-05-multi-char-short-options.cs - migrate, verify standalone, verify multi-mode
+- [x] lexer-06-end-of-options.cs - migrate, verify standalone, verify multi-mode
+- [x] lexer-07-invalid-angle-brackets.cs - migrate, verify standalone, verify multi-mode
+- [x] lexer-08-whitespace-handling.cs - migrate, verify standalone, verify multi-mode
+- [x] lexer-09-complex-patterns.cs - migrate, verify standalone, verify multi-mode
+- [x] lexer-10-edge-cases.cs - migrate, verify standalone, verify multi-mode
+- [x] lexer-11-error-reporting.cs - migrate, verify standalone, verify multi-mode
+- [x] lexer-12-description-tokenization.cs - migrate, verify standalone, verify multi-mode
+- [x] lexer-13-parameter-context.cs - migrate, verify standalone, verify multi-mode
+- [x] lexer-14-token-position.cs - migrate, verify standalone, verify multi-mode
+- [x] lexer-15-advanced-features.cs - migrate, verify standalone, verify multi-mode
 
 ## Implementation Details
 
@@ -89,3 +89,10 @@ This is part of [task 164](../in-progress/164-migrate-tests-to-jaribu-multi-mode
 - Infrastructure already in place from task 166 (InternalsVisibleTo, static using)
 - lexer-test-helper.cs is a helper file, no migration needed
 - Each file must pass both standalone and multi-mode verification before proceeding
+
+## Results
+
+**Verified complete (Dec 2025):**
+- All 15 lexer test files have `[ModuleInitializer]` and `#if !JARIBU_MULTI` pattern
+- Directory.Build.props uses wildcard include: `<Compile Include="../timewarp-nuru-core-tests/lexer/*.cs" />`
+- Tests run in both standalone and multi-mode

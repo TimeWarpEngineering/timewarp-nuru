@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <AssemblyName>TimeWarp.Builder</AssemblyName>
+    <RootNamespace>TimeWarp.Nuru</RootNamespace>
+    <Description>Fluent builder interfaces and scope extensions for TimeWarp projects</Description>
+    <PackageTags>fluent;builder;pattern;extensions;scope;timewarp</PackageTags>
+
+    <!-- AOT Compatibility -->
+    <IsAotCompatible>true</IsAotCompatible>
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+    <EnableAotAnalyzer>true</EnableAotAnalyzer>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="$(RepositoryRoot)readme.md" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+</Project>

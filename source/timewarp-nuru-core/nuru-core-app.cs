@@ -177,6 +177,10 @@ public partial class NuruCoreApp
   {
     ArgumentNullException.ThrowIfNull(args);
 
+#if NURU_TIMING_DEBUG
+    System.Diagnostics.Stopwatch swRunAsync = System.Diagnostics.Stopwatch.StartNew();
+#endif
+
     // Test harness handoff (only top-level)
     if (NuruTestContext.TryExecuteTestRunner(this, out Task<int> testResult))
     {
@@ -188,16 +192,25 @@ public partial class NuruCoreApp
     // Update session context with terminal color support for help output
     SessionContext.SupportsColor = effectiveTerminal.SupportsColor;
 
+#if NURU_TIMING_DEBUG
+    long setupTicks = swRunAsync.ElapsedTicks;
+#endif
+
     try
     {
       // Filter out configuration override args before route matching
       // Configuration overrides follow the pattern --Section:Key=value (must start with -- and contain :)
       // This allows legitimate values with colons (e.g., connection strings like //host:port/db)
-      string[] routeArgs = [.. args.Where(arg => !(arg.StartsWith("--", StringComparison.Ordinal) && arg.Contains(':', StringComparison.Ordinal)))];
+      // Using loop instead of LINQ to avoid JIT overhead on cold start
+      string[] routeArgs = FilterConfigurationArgs(args);
 
       // Parse and match route (using filtered args)
       ILogger logger = LoggerFactory.CreateLogger("RouteBasedCommandResolver");
       EndpointResolutionResult result = EndpointResolver.Resolve(routeArgs, Endpoints, TypeConverterRegistry, logger);
+
+#if NURU_TIMING_DEBUG
+      long resolveTicks = swRunAsync.ElapsedTicks;
+#endif
 
       // Exit early if route resolution failed
       if (!result.Success || result.MatchedEndpoint is null)
@@ -212,8 +225,12 @@ public partial class NuruCoreApp
 
       if (!await ValidateConfigurationAsync(args, effectiveTerminal).ConfigureAwait(false)) return 1;
 
+#if NURU_TIMING_DEBUG
+      long validateTicks = swRunAsync.ElapsedTicks;
+#endif
+
       // Execute based on endpoint strategy
-      return result.MatchedEndpoint.Strategy switch
+      int executeResult = result.MatchedEndpoint.Strategy switch
       {
         ExecutionStrategy.Mediator when ServiceProvider is null =>
           throw new InvalidOperationException
@@ -246,6 +263,14 @@ public partial class NuruCoreApp
 
         _ => throw new InvalidOperationException("Unknown execution strategy")
       };
+
+#if NURU_TIMING_DEBUG
+      long executeTicks = swRunAsync.ElapsedTicks;
+      double ticksPerUs = System.Diagnostics.Stopwatch.Frequency / 1_000_000.0;
+      Console.WriteLine($"[TIMING RunAsync] Setup={(setupTicks / ticksPerUs):F0}us, Resolve={(resolveTicks - setupTicks) / ticksPerUs:F0}us, Validate={(validateTicks - resolveTicks) / ticksPerUs:F0}us, Execute={(executeTicks - validateTicks) / ticksPerUs:F0}us, Total={(executeTicks / ticksPerUs):F0}us");
+#endif
+
+      return executeResult;
     }
 #pragma warning disable CA1031 // Do not catch general exception types
     // This is the top-level exception handler for the CLI app. We need to catch all exceptions
@@ -596,7 +621,48 @@ public partial class NuruCoreApp
   private static bool ShouldSkipValidation(string[] args)
   {
     // Skip validation if help flag is present
-    return args.Any(arg => arg == "--help" || arg == "-h");
+    // Using loop instead of LINQ to avoid JIT overhead on cold start
+    foreach (string arg in args)
+    {
+      if (arg == "--help" || arg == "-h")
+        return true;
+    }
+
+    return false;
+  }
+
+  /// <summary>
+  /// Filters out configuration override arguments (--Section:Key=value pattern).
+  /// Uses loop instead of LINQ to avoid JIT overhead on cold start.
+  /// </summary>
+  private static string[] FilterConfigurationArgs(string[] args)
+  {
+    // Fast path: if no args, return empty
+    if (args.Length == 0)
+      return [];
+
+    // Count non-config args first to avoid list resizing
+    int count = 0;
+    foreach (string arg in args)
+    {
+      if (!(arg.StartsWith("--", StringComparison.Ordinal) && arg.Contains(':', StringComparison.Ordinal)))
+        count++;
+    }
+
+    // Fast path: if all args are kept, return original array
+    if (count == args.Length)
+      return args;
+
+    // Build filtered array
+    string[] result = new string[count];
+    int index = 0;
+    foreach (string arg in args)
+    {
+      if (!(arg.StartsWith("--", StringComparison.Ordinal) && arg.Contains(':', StringComparison.Ordinal)))
+        result[index++] = arg;
+    }
+
+    return result;
   }
 
   /// <summary>

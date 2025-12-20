@@ -3,7 +3,7 @@
 // CA1054: OSC 8 hyperlinks use raw URL strings by design for ergonomic fluent API
 #pragma warning disable CA1054
 
-namespace TimeWarp.Nuru;
+namespace TimeWarp.Terminal;
 
 /// <summary>
 /// Constants for OSC 8 hyperlink escape sequences.

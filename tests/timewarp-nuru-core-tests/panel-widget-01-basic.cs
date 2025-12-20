@@ -165,8 +165,8 @@ public class PanelWidgetBasicTests
     string[] lines = panel.Render(80); // terminal width should be ignored
 
     // Assert
-    TimeWarp.Nuru.AnsiStringUtils.GetVisibleLength(lines[0]).ShouldBe(20);
-    TimeWarp.Nuru.AnsiStringUtils.GetVisibleLength(lines[2]).ShouldBe(20);
+    TimeWarp.Terminal.AnsiStringUtils.GetVisibleLength(lines[0]).ShouldBe(20);
+    TimeWarp.Terminal.AnsiStringUtils.GetVisibleLength(lines[2]).ShouldBe(20);
 
     await Task.CompletedTask;
   }

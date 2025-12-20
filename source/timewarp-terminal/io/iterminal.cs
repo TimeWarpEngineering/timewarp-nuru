@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru;
+namespace TimeWarp.Terminal;
 
 /// <summary>
 /// Abstraction for interactive terminal operations.

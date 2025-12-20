@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru;
+namespace TimeWarp.Terminal;
 
 /// <summary>
 /// Defines the visual style for horizontal lines in terminal widgets.

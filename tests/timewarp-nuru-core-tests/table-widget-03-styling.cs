@@ -55,7 +55,7 @@ public class TableWidgetStylingTests
 
     // The visible width of the content row should match the header width
     // (both padded to 6 characters)
-    string contentLine = TimeWarp.Nuru.AnsiStringUtils.StripAnsiCodes(lines[3]);
+    string contentLine = TimeWarp.Terminal.AnsiStringUtils.StripAnsiCodes(lines[3]);
     contentLine.ShouldContain("Error ");
 
     await Task.CompletedTask;

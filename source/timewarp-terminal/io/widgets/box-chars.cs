@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru;
+namespace TimeWarp.Terminal;
 
 /// <summary>
 /// Provides box-drawing characters for each <see cref="BorderStyle"/>.

@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru;
+namespace TimeWarp.Terminal;
 
 /// <summary>
 /// Extension methods for writing <see cref="Rule"/> widgets to an <see cref="ITerminal"/>.

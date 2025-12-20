@@ -28,6 +28,7 @@
     <Using Include="TimeWarp.Jaribu" />
     <Using Include="TimeWarp.Jaribu.TestRunner" Static="true" />
     <Using Include="TimeWarp.Nuru" />
+    <Using Include="TimeWarp.Terminal" />
     <Using Include="Microsoft.Extensions.Logging" />
     <Using Include="Mediator" />
     <Using Include="System.Runtime.CompilerServices" />
@@ -35,7 +36,7 @@
 
   <ItemGroup>
     <!-- Common project references for all test projects -->
-    <PackageReference Include="TimeWarp.Jaribu" />
+    <ProjectReference Include="/home/steventcramer/worktrees/github.com/TimeWarpEngineering/timewarp-jaribu/Cramer-2025-12-17-dev/Source/TimeWarp.Jaribu/TimeWarp.Jaribu.csproj" />
     <ProjectReference Include="$(MSBuildThisFileDirectory)../source/timewarp-nuru/timewarp-nuru.csproj" />
     <ProjectReference Include="$(MSBuildThisFileDirectory)../source/timewarp-nuru-logging/timewarp-nuru-logging.csproj" />
     <!-- Analyzer references don't flow transitively, so we must add it directly -->

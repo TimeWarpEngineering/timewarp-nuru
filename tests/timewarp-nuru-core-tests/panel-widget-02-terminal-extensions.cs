@@ -117,7 +117,7 @@ public class PanelTerminalExtensionTests
 
     // Assert
     string[] lines = terminal.Output.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
-    TimeWarp.Nuru.AnsiStringUtils.GetVisibleLength(lines[0]).ShouldBe(60);
+    TimeWarp.Terminal.AnsiStringUtils.GetVisibleLength(lines[0]).ShouldBe(60);
 
     await Task.CompletedTask;
   }

@@ -311,8 +311,7 @@ public class NuruDelegateCommandGenerator : IIncrementalGenerator
         continue;
 
       // Skip if it's part of a member access on the right side (obj.name - we care about 'obj', not 'name')
-      if (identifier.Parent is MemberAccessExpressionSyntax memberAccess &&
-          memberAccess.Name == identifier)
+      if (identifier.Parent is MemberAccessExpressionSyntax memberAccess && memberAccess.Name == identifier)
         continue;
 
       // Get symbol info

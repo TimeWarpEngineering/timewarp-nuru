@@ -1,7 +1,7 @@
 // CA1054: OSC 8 hyperlinks use raw URL strings by design for ergonomic API
 #pragma warning disable CA1054
 
-namespace TimeWarp.Nuru;
+namespace TimeWarp.Terminal;
 
 /// <summary>
 /// Extension methods for writing hyperlinks to an <see cref="ITerminal"/>.

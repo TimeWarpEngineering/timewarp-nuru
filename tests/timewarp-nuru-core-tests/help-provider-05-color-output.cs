@@ -149,7 +149,7 @@ public class HelpProviderColorOutputTests
     string plainText = TimeWarp.Nuru.HelpProvider.GetHelpText(endpoints, "testapp", useColor: false);
 
     // Assert - The visible (stripped) text should have proper alignment
-    string strippedColored = TimeWarp.Nuru.AnsiStringUtils.StripAnsiCodes(coloredText);
+    string strippedColored = TimeWarp.Terminal.AnsiStringUtils.StripAnsiCodes(coloredText);
 
     // Both should have the same visible structure
     strippedColored.ShouldContain("short");
@@ -202,7 +202,7 @@ public class HelpProviderColorOutputTests
 
     // Act
     string coloredText = TimeWarp.Nuru.HelpProvider.GetHelpText(endpoints, "testapp", useColor: true);
-    string strippedText = TimeWarp.Nuru.AnsiStringUtils.StripAnsiCodes(coloredText);
+    string strippedText = TimeWarp.Terminal.AnsiStringUtils.StripAnsiCodes(coloredText);
 
     // Assert - Stripped text should be clean and readable
     strippedText.ShouldNotContain("\x1b[");

@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru;
+namespace TimeWarp.Terminal;
 
 /// <summary>
 /// Provides an ambient context for <see cref="TestTerminal"/> that enables zero-configuration testing

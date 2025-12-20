@@ -1,7 +1,7 @@
 // CA1822: Analyzer bug - doesn't recognize C# 14 extension block receiver 'text' as instance data
 #pragma warning disable CA1822
 
-namespace TimeWarp.Nuru;
+namespace TimeWarp.Terminal;
 
 /// <summary>
 /// Fluent extension methods for applying ANSI color codes to strings.

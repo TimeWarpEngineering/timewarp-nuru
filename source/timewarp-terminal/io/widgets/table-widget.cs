@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru;
+namespace TimeWarp.Terminal;
 
 /// <summary>
 /// Represents a table widget for rendering formatted columnar data with headers, alignment, and borders.

@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru;
+namespace TimeWarp.Terminal;
 
 /// <summary>
 /// Default implementation of <see cref="ITerminal"/> that wraps <see cref="System.Console"/>

@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru;
+namespace TimeWarp.Terminal;
 
 /// <summary>
 /// Nested fluent builder for constructing <see cref="Table"/> instances within a fluent chain.

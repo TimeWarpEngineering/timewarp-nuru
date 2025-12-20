@@ -590,7 +590,8 @@ internal static class EndpointResolver
     ref int defaultsUsed
   )
   {
-    List<string> collectedValues = [];
+    // Lazy-create list only when we find a match (avoids allocation in common case)
+    List<string>? collectedValues = null;
 
     // Scan all args for occurrences of this repeated option
     for (int i = 0; i < args.Length; i++)
@@ -626,6 +627,7 @@ internal static class EndpointResolver
           else
           {
             // Collect the value and mark its index as consumed
+            collectedValues ??= [];
             collectedValues.Add(args[i + 1]);
             consumedIndices[i + 1] = true;
             consumedCount++;
@@ -634,13 +636,14 @@ internal static class EndpointResolver
         else
         {
           // Boolean repeated option - just count occurrences
+          collectedValues ??= [];
           collectedValues.Add("true");
         }
       }
     }
 
     // Store collected values
-    if (collectedValues.Count > 0 && option.ParameterName is not null)
+    if (collectedValues is { Count: > 0 } && option.ParameterName is not null)
     {
       // Store as space-separated (will be split by parameter binder)
       extractedValues[option.ParameterName] = string.Join(" ", collectedValues);

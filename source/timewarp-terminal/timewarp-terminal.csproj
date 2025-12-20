@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <AssemblyName>TimeWarp.Terminal</AssemblyName>
-    <RootNamespace>TimeWarp.Nuru</RootNamespace>
+    <RootNamespace>TimeWarp.Terminal</RootNamespace>
     <Description>Terminal abstractions and widgets for console applications - IConsole, ITerminal, panels, tables, rules, and ANSI color support</Description>
     <PackageTags>terminal;console;ansi;colors;widgets;panel;table;cli;timewarp</PackageTags>
 

@@ -1,7 +1,4 @@
 #!/usr/bin/dotnet --
-#:package TimeWarp.Jaribu
-#:package Shouldly
-#:package Microsoft.CodeAnalysis.CSharp
 
 // Integration tests for delegate signature extraction
 // These tests verify that the NuruRouteAnalyzer can extract delegate signatures from Map() calls
@@ -10,10 +7,6 @@ using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using TimeWarp.Jaribu;
-using Shouldly;
-using static System.Console;
-using static TimeWarp.Jaribu.TestRunner;
 
 return await RunTests<DelegateSignatureExtractionTests>();
 

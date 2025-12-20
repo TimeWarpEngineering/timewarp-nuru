@@ -1,7 +1,4 @@
 #!/usr/bin/dotnet --
-#:package TimeWarp.Jaribu
-#:package Shouldly
-#:package Microsoft.CodeAnalysis.CSharp
 
 // Integration tests for NuruInvokerGenerator source generator
 // These tests verify that the generator extracts delegate signatures and generates invoker code
@@ -10,10 +7,6 @@ using System.Collections.Immutable;
 using System.Reflection;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
-using TimeWarp.Jaribu;
-using Shouldly;
-using static System.Console;
-using static TimeWarp.Jaribu.TestRunner;
 
 return await RunTests<NuruInvokerGeneratorTests>();
 

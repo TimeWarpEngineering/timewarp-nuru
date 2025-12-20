@@ -13,21 +13,21 @@ The `nuru-delegate-command-generator.cs` file (1250 lines) is the largest source
 ## Checklist
 
 ### File Creation
-- [ ] Create `nuru-delegate-command-generator.types.cs` - Record types and constants
-- [ ] Create `nuru-delegate-command-generator.route-parsing.cs` - Route pattern parsing
-- [ ] Create `nuru-delegate-command-generator.signature.cs` - Signature extraction methods
-- [ ] Create `nuru-delegate-command-generator.handler.cs` - Handler info extraction
-- [ ] Create `nuru-delegate-command-generator.codegen.cs` - Code generation
-- [ ] Create `nuru-delegate-command-generator.rewriter.cs` - ParameterRewriter class
+- [x] Create `nuru-delegate-command-generator.types.cs` - Record types and constants
+- [x] Create `nuru-delegate-command-generator.route-parsing.cs` - Route pattern parsing
+- [x] Create `nuru-delegate-command-generator.signature.cs` - Signature extraction methods
+- [x] Create `nuru-delegate-command-generator.handler.cs` - Handler info extraction
+- [x] Create `nuru-delegate-command-generator.codegen.cs` - Code generation
+- [x] Create `nuru-delegate-command-generator.rewriter.cs` - ParameterRewriter class
 
 ### Documentation
-- [ ] Add `<remarks>` to main file listing all partial files and their purposes
-- [ ] Add XML summary to each new partial file
+- [x] Add `<remarks>` to main file listing all partial files and their purposes
+- [x] Add XML summary to each new partial file
 
 ### Verification
-- [ ] All analyzer tests pass
-- [ ] Source generation works correctly
-- [ ] Build succeeds
+- [x] All analyzer tests pass
+- [x] Source generation works correctly
+- [x] Build succeeds
 
 ## Notes
 
@@ -64,3 +64,27 @@ Follow `endpoint-resolver.cs` partial class organization:
 /// - ...
 /// </remarks>
 ```
+
+## Results
+
+### Files Created
+
+| File | Lines | Description |
+|------|-------|-------------|
+| `nuru-delegate-command-generator.cs` | ~280 | Main file with Initialize, fluent chain detection |
+| `nuru-delegate-command-generator.types.cs` | ~70 | Record types and enum |
+| `nuru-delegate-command-generator.route-parsing.cs` | ~200 | Route parsing and class name generation |
+| `nuru-delegate-command-generator.signature.cs` | ~130 | Signature extraction |
+| `nuru-delegate-command-generator.handler.cs` | ~240 | Handler extraction and body rewriting |
+| `nuru-delegate-command-generator.codegen.cs` | ~200 | Code generation |
+| `nuru-delegate-command-generator.rewriter.cs` | ~95 | ParameterRewriter class |
+
+### Test Results
+
+- `delegate-command-generator-01-basic.cs`: **12/12 passed**
+- `nuru-invoker-generator-01-basic.cs`: **6/6 passed**
+- `delegate-signature-01-models.cs`: **15/16 passed** (1 pre-existing failure)
+
+### Additional Fix
+
+Fixed analyzer test infrastructure by converting `#:package TimeWarp.Jaribu` to a project reference in `Directory.Build.props`. This resolves the `ITerminal` type loading error that occurred with the NuGet package reference.

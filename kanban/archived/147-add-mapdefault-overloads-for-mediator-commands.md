@@ -42,3 +42,7 @@ public virtual NuruCoreAppBuilder MapDefault<TCommand, TResponse>(string? descri
 ```
 
 The key difference from delegate `MapDefault` is passing `string.Empty` as the pattern to `MapMediator`, just like the delegate version passes `string.Empty` to `MapInternal`.
+
+## Archived
+
+**Reason:** Obsolete - `MapDefault` is being removed entirely to simplify source generation. Use `Map("")` instead for default routes. This applies to both delegate and Mediator command handlers.

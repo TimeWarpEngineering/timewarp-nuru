@@ -13,18 +13,18 @@ The `nuru-attributed-route-generator.cs` file (854 lines) handles attribute extr
 ## Checklist
 
 ### File Creation
-- [ ] Create `nuru-attributed-route-generator.extraction.cs` - Attribute extraction methods
-- [ ] Create `nuru-attributed-route-generator.codegen.cs` - Code generation methods
-- [ ] Create `nuru-attributed-route-generator.patterns.cs` - Pattern string building
+- [x] Create `nuru-attributed-route-generator.extraction.cs` - Attribute extraction methods
+- [x] Create `nuru-attributed-route-generator.codegen.cs` - Code generation methods
+- [x] Create `nuru-attributed-route-generator.patterns.cs` - Pattern string building
 
 ### Documentation
-- [ ] Add `<remarks>` to main file listing all partial files
-- [ ] Add XML summary to each new partial file
+- [x] Add `<remarks>` to main file listing all partial files
+- [x] Add XML summary to each new partial file
 
 ### Verification
-- [ ] All analyzer tests pass
-- [ ] Source generation works correctly
-- [ ] Build succeeds
+- [x] All analyzer tests pass
+- [x] Source generation works correctly
+- [x] Build succeeds
 
 ## Notes
 

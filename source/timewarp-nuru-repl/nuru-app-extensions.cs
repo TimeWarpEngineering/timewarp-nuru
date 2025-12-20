@@ -122,7 +122,7 @@ public static class NuruCoreAppExtensions
     ArgumentNullException.ThrowIfNull(builder);
 
     // Register REPL commands as routes using clean method group syntax
-    // Note: MapMultiple doesn't support WithDescription, so we use Map for each pattern
+    // Routes with the same description are grouped together in help output
     builder.Map("exit")
       .WithHandler(ReplSession.ExitAsync)
       .WithDescription("Exit the REPL")
@@ -245,7 +245,7 @@ public static class NuruCoreAppExtensions
 
     // Alias syntax only works for exactly 2 options (long + short form)
     // If all patterns are options AND there are exactly 2, use alias syntax
-    // Otherwise use MapMultiple for multiple options or literal command aliases
+    // Otherwise use multiple Map calls for multiple options or literal command aliases
     bool allAreOptions = patternArray.All(p => p.StartsWith('-'));
     bool canUseAliasSyntax = allAreOptions && patternArray.Length == 2;
 

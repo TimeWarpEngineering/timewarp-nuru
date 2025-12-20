@@ -30,7 +30,7 @@ public class AddInteractiveRouteAliasTests
     builder.AddInteractiveRoute();
 
     // Assert - Should have exactly 2 endpoints: "status" + one for interactive
-    // NOT 3 (which would happen if MapMultiple created separate endpoints)
+    // NOT 3 (which would happen if separate Map calls were used)
     int endpointCount = builder.EndpointCollection.Endpoints.Count;
     endpointCount.ShouldBe(2, "Should have 2 endpoints (status + single interactive route)");
 
@@ -62,17 +62,17 @@ public class AddInteractiveRouteAliasTests
     await Task.CompletedTask;
   }
 
-  public static async Task Should_use_map_multiple_for_literal_commands()
+  public static async Task Should_use_multiple_map_calls_for_literal_commands()
   {
-    // Arrange - When patterns include literals (non-option), use MapMultiple
+    // Arrange - When patterns include literals (non-option), use multiple Map calls
     NuruAppBuilder builder = new();
 
     // Act - Mix of literal and option
     builder.AddInteractiveRoute("interactive,--interactive,-i");
 
-    // Assert - Should create 3 separate endpoints (MapMultiple behavior)
+    // Assert - Should create 3 separate endpoints (multiple Map calls)
     int endpointCount = builder.EndpointCollection.Endpoints.Count;
-    endpointCount.ShouldBe(3, "Literals require MapMultiple which creates separate endpoints");
+    endpointCount.ShouldBe(3, "Literals require multiple Map calls which create separate endpoints");
 
     // Verify all patterns exist
     builder.EndpointCollection.Endpoints.ShouldContain(e => e.RoutePattern == "interactive");
@@ -101,15 +101,15 @@ public class AddInteractiveRouteAliasTests
     await Task.CompletedTask;
   }
 
-  public static async Task Should_fallback_to_map_multiple_for_more_than_two_options()
+  public static async Task Should_fallback_to_multiple_map_calls_for_more_than_two_options()
   {
-    // Arrange - Alias syntax only works for 2 options, more requires MapMultiple
+    // Arrange - Alias syntax only works for 2 options, more requires multiple Map calls
     NuruAppBuilder builder = new();
 
     // Act - Four option aliases (can't use alias syntax)
     builder.AddInteractiveRoute("--interactive,-i,--repl,-r");
 
-    // Assert - Should create 4 separate endpoints (MapMultiple behavior)
+    // Assert - Should create 4 separate endpoints (multiple Map calls)
     builder.EndpointCollection.Endpoints.Count.ShouldBe(4);
 
     // Verify all patterns exist as separate routes

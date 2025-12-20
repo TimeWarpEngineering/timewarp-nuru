@@ -176,13 +176,6 @@ public class EndpointBuilder<TBuilder> : INestedBuilder<TBuilder>
     _builder.Map(configureRoute);
 
   /// <summary>
-  /// Adds multiple route patterns that invoke the same handler (forwarded to the app builder).
-  /// Enables fluent chaining after route configuration.
-  /// </summary>
-  public TBuilder MapMultiple(string[] patterns, Delegate handler) =>
-    (TBuilder)_builder.MapMultiple(patterns, handler);
-
-  /// <summary>
   /// Adds automatic help routes to the application (forwarded to the app builder).
   /// Enables fluent chaining after route configuration.
   /// </summary>

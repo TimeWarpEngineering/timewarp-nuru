@@ -21,18 +21,38 @@ internal static class EndpointResolver
     ILogger? logger = null
   )
   {
+#if NURU_TIMING_DEBUG
+    System.Diagnostics.Stopwatch swResolve = System.Diagnostics.Stopwatch.StartNew();
+#endif
+
     ArgumentNullException.ThrowIfNull(args);
     ArgumentNullException.ThrowIfNull(endpoints);
     ArgumentNullException.ThrowIfNull(typeConverterRegistry);
 
     logger ??= NullLogger.Instance;
 
-    ParsingLoggerMessages.ResolvingCommand(logger, string.Join(" ", args), null);
-    ParsingLoggerMessages.CheckingAvailableRoutes(logger, endpoints.Count, null);
+    // Only log if we have a real logger (avoid string.Join allocation when logging disabled)
+    if (logger is not NullLogger)
+    {
+      ParsingLoggerMessages.ResolvingCommand(logger, string.Join(" ", args), null);
+      ParsingLoggerMessages.CheckingAvailableRoutes(logger, endpoints.Count, null);
+    }
+
+#if NURU_TIMING_DEBUG
+    long setupTicks = swResolve.ElapsedTicks;
+#endif
 
     // Try to match against route endpoints
+    // Pass NullLogger.Instance directly when logging is disabled to allow JIT to optimize away logging calls
+    ILogger effectiveLogger = logger is NullLogger ? NullLogger.Instance : logger;
     (Endpoint endpoint, Dictionary<string, string> extractedValues)? matchResult =
-      MatchRoute(args, endpoints, logger);
+      MatchRoute(args, endpoints, effectiveLogger);
+
+#if NURU_TIMING_DEBUG
+    long matchTicks = swResolve.ElapsedTicks;
+    double ticksPerUs = System.Diagnostics.Stopwatch.Frequency / 1_000_000.0;
+    Console.WriteLine($"[TIMING Resolve] Setup={(setupTicks / ticksPerUs):F0}us, MatchRoute={(matchTicks - setupTicks) / ticksPerUs:F0}us, Total={(matchTicks / ticksPerUs):F0}us");
+#endif
 
     if (matchResult is not null)
     {
@@ -101,7 +121,11 @@ internal static class EndpointResolver
     // If no matches found, return null
     if (matches.Count == 0)
     {
-      ParsingLoggerMessages.NoMatchingRouteFound(logger, string.Join(" ", args), null);
+      if (logger is not NullLogger)
+      {
+        ParsingLoggerMessages.NoMatchingRouteFound(logger, string.Join(" ", args), null);
+      }
+
       return null;
     }
 
@@ -109,18 +133,51 @@ internal static class EndpointResolver
     // 1. Exact matches (0 defaults) always win - pick highest specificity among them
     // 2. If no exact matches, prefer routes with MORE defaults (user routes beat help routes)
     // 3. Among matches with same defaults, prefer higher specificity
-    List<RouteMatch> exactMatches = [.. matches.Where(m => m.DefaultsUsed == 0)];
-
-    RouteMatch bestMatch = exactMatches.Count > 0
-      ? exactMatches
-          .OrderByDescending(m => m.Endpoint.CompiledRoute.Specificity)
-          .First()
-      : matches
-          .OrderByDescending(m => m.DefaultsUsed)  // More defaults is better (user routes win)
-          .ThenByDescending(m => m.Endpoint.CompiledRoute.Specificity)
-          .First();
+    // Using loops instead of LINQ to avoid JIT overhead on cold start
+    RouteMatch bestMatch = SelectBestMatch(matches);
 
     return (bestMatch.Endpoint, bestMatch.ExtractedValues);
+  }
+
+  private static RouteMatch SelectBestMatch(List<RouteMatch> matches)
+  {
+    // First, find exact matches (0 defaults) with highest specificity
+    RouteMatch? bestExact = null;
+    RouteMatch? bestWithDefaults = null;
+
+    foreach (RouteMatch match in matches)
+    {
+      if (match.DefaultsUsed == 0)
+      {
+        // Exact match - compare by specificity
+        if (bestExact is null || match.Endpoint.CompiledRoute.Specificity > bestExact.Endpoint.CompiledRoute.Specificity)
+          bestExact = match;
+      }
+      else
+      {
+        // Match with defaults - compare by defaults count (more is better), then specificity
+        if (bestWithDefaults is null ||
+            match.DefaultsUsed > bestWithDefaults.DefaultsUsed ||
+            (match.DefaultsUsed == bestWithDefaults.DefaultsUsed &&
+             match.Endpoint.CompiledRoute.Specificity > bestWithDefaults.Endpoint.CompiledRoute.Specificity))
+          bestWithDefaults = match;
+      }
+    }
+
+    // Prefer exact matches over matches with defaults
+    return bestExact ?? bestWithDefaults!;
+  }
+
+  private static List<OptionMatcher> GetRepeatedOptions(IReadOnlyList<RouteMatcher> template)
+  {
+    List<OptionMatcher> result = [];
+    foreach (RouteMatcher segment in template)
+    {
+      if (segment is OptionMatcher option && option.IsRepeated)
+        result.Add(option);
+    }
+
+    return result;
   }
 
   private static void LogExtractedValues(Dictionary<string, string> extractedValues, ILogger logger)
@@ -153,8 +210,9 @@ internal static class EndpointResolver
     ParsingLoggerMessages.MatchingPositionalSegments(logger, template.Count, args.Length, null);
 
     // Pre-pass: Handle repeated options first and mark consumed indices
+    // Using loop instead of LINQ to avoid JIT overhead on cold start
     HashSet<int> consumedIndices = [];
-    List<OptionMatcher> repeatedOptions = [.. template.OfType<OptionMatcher>().Where(o => o.IsRepeated)];
+    List<OptionMatcher> repeatedOptions = GetRepeatedOptions(template);
 
     foreach (OptionMatcher repeatedOption in repeatedOptions)
     {

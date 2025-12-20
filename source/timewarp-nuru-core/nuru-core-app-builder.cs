@@ -68,11 +68,17 @@ public partial class NuruCoreAppBuilder<TSelf>
   public NuruCoreApp Build()
   {
     // Add routes from NuruRouteRegistry (auto-registered via [NuruRoute] attributes)
+    // Build HashSet of existing patterns for O(1) lookup instead of LINQ Any() which is O(n)
+    HashSet<string> existingPatterns = new(StringComparer.OrdinalIgnoreCase);
+    foreach (Endpoint endpoint in EndpointCollection.Endpoints)
+    {
+      existingPatterns.Add(endpoint.RoutePattern);
+    }
+
     foreach (RegisteredRoute registered in NuruRouteRegistry.RegisteredRoutes)
     {
       // Skip if this exact pattern is already mapped (user explicit Map() takes precedence)
-      if (EndpointCollection.Endpoints.Any(e =>
-            string.Equals(e.RoutePattern, registered.Pattern, StringComparison.OrdinalIgnoreCase)))
+      if (existingPatterns.Contains(registered.Pattern))
         continue;
 
       Endpoint endpoint = new()

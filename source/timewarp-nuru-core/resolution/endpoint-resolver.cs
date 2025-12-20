@@ -198,14 +198,18 @@ internal static class EndpointResolver
     ParsingLoggerMessages.MatchingPositionalSegments(logger, template.Count, args.Length, null);
 
     // Pre-pass: Handle repeated options first and mark consumed indices
-    HashSet<int> consumedIndices = [];
+    // Use stack allocation for typical CLI args (zero heap allocation for <= 64 args)
+    Span<bool> consumedIndices = args.Length <= 64
+      ? stackalloc bool[args.Length]
+      : new bool[args.Length];
+    int consumedCount = 0;
     IReadOnlyList<OptionMatcher> repeatedOptions = endpoint.CompiledRoute.RepeatedOptions;
 
     foreach (OptionMatcher repeatedOption in repeatedOptions)
     {
-      if (!MatchRepeatedOptionWithIndices(repeatedOption, args, consumedIndices, extractedValues, logger, ref defaultsUsed))
+      if (!MatchRepeatedOptionWithIndices(repeatedOption, args, consumedIndices, ref consumedCount, extractedValues, logger, ref defaultsUsed))
       {
-        totalConsumed = consumedIndices.Count;
+        totalConsumed = consumedCount;
         return false;
       }
     }
@@ -233,9 +237,9 @@ internal static class EndpointResolver
       // Handle non-repeated option segments
       if (segment is OptionMatcher option)
       {
-        if (!MatchOptionSegment(option, args, extractedValues, seenEndOfOptions, endpoint.CompiledRoute.OptionMatchers, logger, ref defaultsUsed, consumedIndices))
+        if (!MatchOptionSegment(option, args, extractedValues, seenEndOfOptions, endpoint.CompiledRoute.OptionMatchers, logger, ref defaultsUsed, consumedIndices, ref consumedCount))
         {
-          totalConsumed = consumedIndices.Count;
+          totalConsumed = consumedCount;
           return false;
         }
 
@@ -256,15 +260,19 @@ internal static class EndpointResolver
         // Mark all consumed args
         for (int idx = 0; idx < consumedArgs; idx++)
         {
-          consumedIndices.Add(idx);
+          if (!consumedIndices[idx])
+          {
+            consumedIndices[idx] = true;
+            consumedCount++;
+          }
         }
 
-        totalConsumed = consumedIndices.Count;
+        totalConsumed = consumedCount;
         return true;
       }
 
       // Skip args that were consumed by repeated options
-      while (consumedArgs < args.Length && consumedIndices.Contains(consumedArgs))
+      while (consumedArgs < args.Length && consumedIndices[consumedArgs])
       {
         consumedArgs++;
       }
@@ -286,22 +294,28 @@ internal static class EndpointResolver
 
       if (validationResult == SegmentValidationResult.Fail)
       {
-        totalConsumed = consumedIndices.Count;
+        totalConsumed = consumedCount;
         return false;
       }
 
       // Match the positional segment against the argument
       if (!MatchRegularSegment(segment, args[consumedArgs], extractedValues, logger))
       {
-        totalConsumed = consumedIndices.Count;
+        totalConsumed = consumedCount;
         return false;
       }
 
-      consumedIndices.Add(consumedArgs); // Track this index as consumed
+      // Track this index as consumed
+      if (!consumedIndices[consumedArgs])
+      {
+        consumedIndices[consumedArgs] = true;
+        consumedCount++;
+      }
+
       consumedArgs++;
     }
 
-    totalConsumed = consumedIndices.Count;
+    totalConsumed = consumedCount;
     ParsingLoggerMessages.PositionalMatchingComplete(logger, consumedArgs, null);
     return true;
   }
@@ -459,7 +473,8 @@ internal static class EndpointResolver
     IReadOnlyList<OptionMatcher> optionMatchers,
     ILogger logger,
     ref int defaultsUsed,
-    HashSet<int> consumedIndices
+    Span<bool> consumedIndices,
+    ref int consumedCount
   )
   {
     // After --, don't match options - everything is positional
@@ -484,7 +499,7 @@ internal static class EndpointResolver
     for (int i = 0; i < args.Length; i++)
     {
       // Skip already consumed indices
-      if (consumedIndices.Contains(i))
+      if (consumedIndices[i])
         continue;
 
       if (option.TryMatch(args[i], out _))
@@ -496,8 +511,9 @@ internal static class EndpointResolver
 
     if (foundIndex >= 0)
     {
-      // Option found at foundIndex
-      consumedIndices.Add(foundIndex); // Mark option flag as consumed
+      // Option found at foundIndex - mark as consumed
+      consumedIndices[foundIndex] = true;
+      consumedCount++;
 
       if (option.ExpectsValue)
       {
@@ -506,7 +522,7 @@ internal static class EndpointResolver
 
         // Check if next arg is available and is NOT a defined option
         bool valueIsAvailable = valueIndex < args.Length &&
-                                !consumedIndices.Contains(valueIndex) &&
+                                !consumedIndices[valueIndex] &&
                                 (!args[valueIndex].StartsWith(CommonStrings.SingleDash, StringComparison.Ordinal) ||
                                  !IsDefinedOption(args[valueIndex], optionMatchers));
 
@@ -531,7 +547,9 @@ internal static class EndpointResolver
             ParsingLoggerMessages.ExtractedParameter(logger, option.ParameterName, args[valueIndex], null);
           }
 
-          consumedIndices.Add(valueIndex); // Mark option value as consumed
+          // Mark option value as consumed
+          consumedIndices[valueIndex] = true;
+          consumedCount++;
         }
       }
       else
@@ -565,7 +583,8 @@ internal static class EndpointResolver
   (
     OptionMatcher option,
     string[] args,
-    HashSet<int> consumedIndices,
+    Span<bool> consumedIndices,
+    ref int consumedCount,
     Dictionary<string, string> extractedValues,
     ILogger logger,
     ref int defaultsUsed
@@ -577,13 +596,15 @@ internal static class EndpointResolver
     for (int i = 0; i < args.Length; i++)
     {
       // Skip if already consumed
-      if (consumedIndices.Contains(i))
+      if (consumedIndices[i])
         continue;
 
       // Check if current arg matches the option
       if (option.TryMatch(args[i], out _))
       {
-        consumedIndices.Add(i); // Mark this index as consumed
+        // Mark this index as consumed
+        consumedIndices[i] = true;
+        consumedCount++;
 
         if (option.ExpectsValue)
         {
@@ -606,7 +627,8 @@ internal static class EndpointResolver
           {
             // Collect the value and mark its index as consumed
             collectedValues.Add(args[i + 1]);
-            consumedIndices.Add(i + 1);
+            consumedIndices[i + 1] = true;
+            consumedCount++;
           }
         }
         else

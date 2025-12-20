@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>bench-powerargs</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="PowerArgs" />
+  </ItemGroup>
+</Project>

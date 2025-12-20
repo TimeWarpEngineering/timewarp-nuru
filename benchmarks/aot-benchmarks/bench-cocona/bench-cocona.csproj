@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>bench-cocona</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Cocona" />
+  </ItemGroup>
+</Project>

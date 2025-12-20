@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru;
+namespace TimeWarp.Builder;
 
 /// <summary>
 /// Interface for nested builders that return to a parent context via <see cref="Done"/>.

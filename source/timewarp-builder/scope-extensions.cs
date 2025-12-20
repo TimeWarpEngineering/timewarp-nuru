@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru;
+namespace TimeWarp.Builder;
 
 /// <summary>
 /// Kotlin-inspired scope functions for fluent object manipulation.

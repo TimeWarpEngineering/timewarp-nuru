@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru;
+namespace TimeWarp.Builder;
 
 /// <summary>
 /// Interface for top-level builders that create objects via <see cref="Build"/>.

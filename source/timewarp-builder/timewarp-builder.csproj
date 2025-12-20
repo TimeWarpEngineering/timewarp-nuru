@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <AssemblyName>TimeWarp.Builder</AssemblyName>
-    <RootNamespace>TimeWarp.Nuru</RootNamespace>
+    <RootNamespace>TimeWarp.Builder</RootNamespace>
     <Description>Fluent builder interfaces and scope extensions for TimeWarp projects</Description>
     <PackageTags>fluent;builder;pattern;extensions;scope;timewarp</PackageTags>
 

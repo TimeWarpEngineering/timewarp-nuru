@@ -39,6 +39,14 @@ Update the existing `NuruInvokerGenerator` to work with the new `Map(pattern).Wi
 - [ ] Verify invokers still generated correctly with new API
 - [ ] Verify AOT compatibility maintained
 
+## Archived
+
+**Reason:** Superseded - this work was completed as part of Task 193.
+
+Task 193's notes confirm: "**Approach taken:** Option A - Updated existing `NuruInvokerGenerator` rather than creating new generator."
+
+The parent epic (151) also marks this as done: "Task 197: Invoker generator updates (done as part of Task 193)".
+
 ## Notes
 
 ### What NuruInvokerGenerator Does

@@ -1,6 +1,7 @@
 #!/usr/bin/dotnet --
 #:project ../../source/timewarp-nuru/timewarp-nuru.csproj
 #:project ../../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj
+#:project ../../source/timewarp-terminal/timewarp-terminal.csproj
 #:package Mediator.Abstractions
 #:package Mediator.SourceGenerator
 
@@ -16,6 +17,7 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 
 using TimeWarp.Nuru;
+using TimeWarp.Terminal;
 using Microsoft.Extensions.DependencyInjection;
 
 NuruAppOptions nuruAppOptions = new()

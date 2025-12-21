@@ -44,41 +44,23 @@ using static System.Console;
 NuruCoreApp app = NuruApp.CreateBuilder(args)
   .ConfigureServices(ConfigureServices)
   // Simple command to demonstrate pipeline
-  .Map<EchoCommand>
-  (
-    pattern: "echo {message}",
-    description: "Echo a message back (demonstrates pipeline)"
-  )
+  .Map<EchoCommand>("echo {message}")
+    .WithDescription("Echo a message back (demonstrates pipeline)")
   // Slow command to trigger performance warning
-  .Map<SlowCommand>
-  (
-    pattern: "slow {delay:int}",
-    description: "Simulate slow operation (ms) to demonstrate performance behavior"
-  )
+  .Map<SlowCommand>("slow {delay:int}")
+    .WithDescription("Simulate slow operation (ms) to demonstrate performance behavior")
   // Admin command that requires authorization (set CLI_AUTHORIZED=1 to access)
-  .Map<AdminCommand>
-  (
-    pattern: "admin {action}",
-    description: "Admin operation requiring authorization (set CLI_AUTHORIZED=1)"
-  )
+  .Map<AdminCommand>("admin {action}")
+    .WithDescription("Admin operation requiring authorization (set CLI_AUTHORIZED=1)")
   // Flaky command that simulates transient failures with retry
-  .Map<FlakyCommand>
-  (
-    pattern: "flaky {failCount:int}",
-    description: "Simulate transient failures (retries up to 3 times with exponential backoff)"
-  )
+  .Map<FlakyCommand>("flaky {failCount:int}")
+    .WithDescription("Simulate transient failures (retries up to 3 times with exponential backoff)")
   // Error command to demonstrate exception handling behavior
-  .Map<ErrorCommand>
-  (
-    pattern: "error {errorType}",
-    description: "Throw different exception types (validation, auth, argument, unknown)"
-  )
+  .Map<ErrorCommand>("error {errorType}")
+    .WithDescription("Throw different exception types (validation, auth, argument, unknown)")
   // Trace command to demonstrate telemetry/distributed tracing
-  .Map<TraceCommand>
-  (
-    pattern: "trace {operation}",
-    description: "Demonstrate OpenTelemetry-compatible distributed tracing with Activity"
-  )
+  .Map<TraceCommand>("trace {operation}")
+    .WithDescription("Demonstrate OpenTelemetry-compatible distributed tracing with Activity")
   .Build();
 
 return await app.RunAsync(args);

@@ -40,6 +40,7 @@ Console.WriteLine("Test 1: Handler with colored output");
   {
     Console.WriteLine($"    {line}");
   }
+
   Console.WriteLine("  PASSED".Green());
 }
 
@@ -96,6 +97,7 @@ Console.WriteLine("\nTest 3: Chained styles");
   {
     Console.WriteLine($"    {line}");
   }
+
   Console.WriteLine("  PASSED".Green());
 }
 

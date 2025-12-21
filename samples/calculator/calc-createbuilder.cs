@@ -16,7 +16,7 @@ NuruAppBuilder builder = NuruApp.CreateBuilder(args);
 builder.ConfigureServices(services =>
 {
   // Register Mediator - source generator discovers handlers in THIS assembly
-  
+
   builder.Services.AddMediator();
   services.AddSingleton<IScientificCalculator, ScientificCalculator>();
 });
@@ -48,6 +48,7 @@ builder.Map("divide {x:double} {y:double}")
       WriteLine("Error: Division by zero");
       return;
     }
+
     WriteLine($"{x} ÷ {y} = {x / y}");
   })
   .WithDescription("Divide the first number by the second")
@@ -96,6 +97,7 @@ public sealed class FactorialCommand : IRequest
       {
         WriteLine($"Error: {ex.Message}");
       }
+
       return default;
     }
   }
@@ -133,6 +135,7 @@ public class FibonacciCommand : IRequest
       {
         WriteLine($"Error: {ex.Message}");
       }
+
       return default;
     }
   }

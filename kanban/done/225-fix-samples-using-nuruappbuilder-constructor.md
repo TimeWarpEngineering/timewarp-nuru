@@ -8,8 +8,8 @@ Error: `CS1729: 'NuruAppBuilder' does not contain a constructor that takes 0 arg
 
 ## Checklist
 
-- [ ] samples/builtin-types-example.cs
-- [ ] samples/custom-type-converter-example.cs
+- [x] samples/builtin-types-example.cs
+- [x] samples/custom-type-converter-example.cs
 
 ## Notes
 

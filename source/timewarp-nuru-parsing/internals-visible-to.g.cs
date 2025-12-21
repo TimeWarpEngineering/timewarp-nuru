@@ -64,8 +64,6 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("engine-03-candidate-generator")]
 [assembly: InternalsVisibleTo("factory-01-static-methods")]
 [assembly: InternalsVisibleTo("GeneratedAttributedRoutes.g")]
-[assembly: InternalsVisibleTo("GeneratedDelegateCommands.g")]
-[assembly: InternalsVisibleTo("GeneratedRouteInvokers.g")]
 [assembly: InternalsVisibleTo("help-provider-01-option-detection")]
 [assembly: InternalsVisibleTo("help-provider-02-filtering")]
 [assembly: InternalsVisibleTo("help-provider-03-session-context")]

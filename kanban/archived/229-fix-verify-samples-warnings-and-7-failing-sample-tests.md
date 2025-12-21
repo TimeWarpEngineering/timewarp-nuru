@@ -43,3 +43,10 @@ The `./runfiles/verify-samples.cs` script currently treats warnings as passing. 
 ### Warnings observed
 
 Many samples emit `MSG0005: MediatorGenerator found message without any registered handler: TimeWarp.Nuru.Generated.Default_Generated_Query` - this may indicate a configuration issue or an expected warning that should be suppressed.
+
+### Archived
+
+**Reason:** Superseded - split into 3 separate focused tasks:
+- 230: Make verify-samples treat warnings as failures
+- 231: Fix 7 failing sample tests
+- 232: Address sample compilation warnings

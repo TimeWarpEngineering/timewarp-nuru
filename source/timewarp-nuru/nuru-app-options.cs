@@ -141,4 +141,14 @@ public sealed class NuruAppOptions
   /// Requires <c>RepositoryUrl</c> to be set in the project file pointing to a GitHub repository.
   /// </remarks>
   public bool DisableCheckUpdatesRoute { get; set; }
+
+  /// <summary>
+  /// When true, disables the automatic registration of the <c>--capabilities</c> route.
+  /// Default is false (capabilities route is registered).
+  /// </summary>
+  /// <remarks>
+  /// The capabilities route outputs machine-readable JSON metadata about all commands,
+  /// enabling AI tools (OpenCode, Claude, etc.) to discover CLI capabilities without MCP complexity.
+  /// </remarks>
+  public bool DisableCapabilitiesRoute { get; set; }
 }

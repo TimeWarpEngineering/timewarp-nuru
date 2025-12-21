@@ -24,6 +24,8 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("bench-spectreconsole")]
 [assembly: InternalsVisibleTo("bench-systemcommandline")]
 [assembly: InternalsVisibleTo("benchmark-aot-invocation")]
+[assembly: InternalsVisibleTo("capabilities-01-basic")]
+[assembly: InternalsVisibleTo("capabilities-02-integration")]
 [assembly: InternalsVisibleTo("ci-tests")]
 [assembly: InternalsVisibleTo("compiled-route-builder-01-basic")]
 [assembly: InternalsVisibleTo("compiled-route-test-helper")]

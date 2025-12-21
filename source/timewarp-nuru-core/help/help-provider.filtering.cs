@@ -34,6 +34,10 @@ public static partial class HelpProvider
     if (pattern is "--help" or "--help?" or "help")
       return true;
 
+    // Always filter the capabilities route - it's for AI tool discovery, not humans
+    if (pattern == "--capabilities")
+      return true;
+
     // Filter per-command help routes (e.g., "blog --help?")
     if (!options.ShowPerCommandHelpRoutes)
     {

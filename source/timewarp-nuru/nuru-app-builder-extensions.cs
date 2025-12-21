@@ -81,6 +81,12 @@ public static partial class NuruAppBuilderExtensions
       builder.AddCheckUpdatesRoute();
     }
 
+    // Add capabilities route unless disabled
+    if (!options.DisableCapabilitiesRoute)
+    {
+      builder.AddCapabilitiesRoute();
+    }
+
     return builder;
   }
 }

@@ -486,6 +486,225 @@ public sealed class DelegateCommandGeneratorTests
     await Task.CompletedTask;
   }
 
+  /// <summary>
+  /// Test that static method handlers generate proper method calls.
+  /// </summary>
+  public static async Task Should_generate_handler_for_static_method()
+  {
+    const string code = """
+      using TimeWarp.Nuru;
+      
+      public static class Handlers
+      {
+        public static void Deploy(string env) => System.Console.WriteLine(env);
+      }
+      
+      var app = NuruCoreApp.CreateSlimBuilder()
+        .Map("deploy {env}")
+        .WithHandler(Handlers.Deploy)
+        .AsCommand()
+        .Done()
+        .Build();
+      """;
+
+    GeneratorDriverRunResult result = RunGenerator(code);
+
+    SyntaxTree? commandsTree = result.GeneratedTrees
+      .FirstOrDefault(t => t.FilePath.Contains("GeneratedDelegateCommands"));
+    
+    commandsTree.ShouldNotBeNull("GeneratedDelegateCommands.g.cs should be generated for static method handler");
+    
+    string content = commandsTree!.GetText().ToString();
+    WriteLine("Generated Handler for static method:");
+    WriteLine(content);
+    
+    // Should have Handler class
+    content.ShouldContain("sealed class Handler");
+    // Should call the static method with fully qualified name
+    content.ShouldContain("Handlers.Deploy(");
+    // Should have the Command class
+    content.ShouldContain("Deploy_Generated_Command");
+
+    await Task.CompletedTask;
+  }
+
+  /// <summary>
+  /// Test that internal static method handlers work.
+  /// </summary>
+  public static async Task Should_generate_handler_for_internal_static_method()
+  {
+    const string code = """
+      using TimeWarp.Nuru;
+      
+      internal static class Handlers
+      {
+        internal static string GetStatus() => "OK";
+      }
+      
+      var app = NuruCoreApp.CreateSlimBuilder()
+        .Map("status")
+        .WithHandler(Handlers.GetStatus)
+        .AsQuery()
+        .Done()
+        .Build();
+      """;
+
+    GeneratorDriverRunResult result = RunGenerator(code);
+
+    SyntaxTree? commandsTree = result.GeneratedTrees
+      .FirstOrDefault(t => t.FilePath.Contains("GeneratedDelegateCommands"));
+    
+    commandsTree.ShouldNotBeNull("GeneratedDelegateCommands.g.cs should be generated for internal method handler");
+    
+    string content = commandsTree!.GetText().ToString();
+    WriteLine("Generated Handler for internal static method:");
+    WriteLine(content);
+    
+    // Should have Handler class
+    content.ShouldContain("sealed class Handler");
+    // Should call the static method
+    content.ShouldContain("Handlers.GetStatus(");
+
+    await Task.CompletedTask;
+  }
+
+  /// <summary>
+  /// Test that async static method handlers work.
+  /// </summary>
+  public static async Task Should_generate_handler_for_async_static_method()
+  {
+    const string code = """
+      using TimeWarp.Nuru;
+      using System.Threading.Tasks;
+      
+      public static class Handlers
+      {
+        public static async Task<int> DelayAndReturn(int ms)
+        {
+          await Task.Delay(ms);
+          return ms;
+        }
+      }
+      
+      var app = NuruCoreApp.CreateSlimBuilder()
+        .Map("delay {ms:int}")
+        .WithHandler(Handlers.DelayAndReturn)
+        .AsCommand()
+        .Done()
+        .Build();
+      """;
+
+    GeneratorDriverRunResult result = RunGenerator(code);
+
+    SyntaxTree? commandsTree = result.GeneratedTrees
+      .FirstOrDefault(t => t.FilePath.Contains("GeneratedDelegateCommands"));
+    
+    commandsTree.ShouldNotBeNull("GeneratedDelegateCommands.g.cs should be generated for async method handler");
+    
+    string content = commandsTree!.GetText().ToString();
+    WriteLine("Generated Handler for async static method:");
+    WriteLine(content);
+    
+    // Should have async Handler
+    content.ShouldContain("public async global::System.Threading.Tasks.ValueTask<");
+    // Should await the method call
+    content.ShouldContain("await");
+    content.ShouldContain("Handlers.DelayAndReturn(");
+
+    await Task.CompletedTask;
+  }
+
+  /// <summary>
+  /// Test that private method handlers do NOT generate handler (accessibility check).
+  /// </summary>
+  public static async Task Should_skip_handler_for_private_method()
+  {
+    const string code = """
+      using TimeWarp.Nuru;
+      
+      public static class Program
+      {
+        private static void SecretHandler() => System.Console.WriteLine("secret");
+        
+        public static void Main()
+        {
+          var app = NuruCoreApp.CreateSlimBuilder()
+            .Map("secret")
+            .WithHandler(SecretHandler)
+            .AsCommand()
+            .Done()
+            .Build();
+        }
+      }
+      """;
+
+    GeneratorDriverRunResult result = RunGenerator(code);
+
+    SyntaxTree? commandsTree = result.GeneratedTrees
+      .FirstOrDefault(t => t.FilePath.Contains("GeneratedDelegateCommands"));
+    
+    if (commandsTree != null)
+    {
+      string content = commandsTree.GetText().ToString();
+      WriteLine("Generated output (should NOT contain Handler for private method):");
+      WriteLine(content);
+      
+      // Should NOT have a Handler class for this route (private method is inaccessible)
+      content.ShouldNotContain("SecretHandler(");
+    }
+    else
+    {
+      WriteLine("No GeneratedDelegateCommands.g.cs generated (expected for private method)");
+    }
+
+    await Task.CompletedTask;
+  }
+
+  /// <summary>
+  /// Test that method handlers with DI parameters generate proper field injection.
+  /// </summary>
+  public static async Task Should_generate_handler_with_di_for_static_method()
+  {
+    const string code = """
+      using TimeWarp.Nuru;
+      using Microsoft.Extensions.Logging;
+      
+      public static class Handlers
+      {
+        public static void Deploy(string env, ILogger logger)
+        {
+          logger.LogInformation("Deploying to {Env}", env);
+        }
+      }
+      
+      var app = NuruCoreApp.CreateSlimBuilder()
+        .Map("deploy {env}")
+        .WithHandler(Handlers.Deploy)
+        .AsCommand()
+        .Done()
+        .Build();
+      """;
+
+    GeneratorDriverRunResult result = RunGenerator(code);
+
+    SyntaxTree? commandsTree = result.GeneratedTrees
+      .FirstOrDefault(t => t.FilePath.Contains("GeneratedDelegateCommands"));
+    
+    commandsTree.ShouldNotBeNull();
+    
+    string content = commandsTree!.GetText().ToString();
+    WriteLine("Generated Handler with DI for static method:");
+    WriteLine(content);
+    
+    // Should have Handler class with DI field
+    content.ShouldContain("sealed class Handler");
+    content.ShouldContain("ILogger");
+    // Should pass DI field to method call
+    content.ShouldContain("Handlers.Deploy(request.Env, Logger)");
+
+    await Task.CompletedTask;
+  }
+
   private static GeneratorDriverRunResult RunGenerator(string source)
   {
     CSharpCompilation compilation = CreateCompilationWithNuru(source);

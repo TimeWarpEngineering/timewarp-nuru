@@ -81,6 +81,20 @@ args[] → Match (runtime) → Execute handler (runtime) → done
 - **Smaller binary** - no runtime parsing code needed
 - **Deterministic** - same input always produces same output
 
+### Approach: Custom source generator (not comptime)
+
+Evaluated [sebastienros/comptime](https://github.com/sebastienros/comptime) which provides `[Comptime]` attribute for compile-time execution via interceptors.
+
+**Decision: Roll our own source generator**
+
+Reasons:
+- No external dependency
+- Full control over emitted code structure
+- Can emit optimized matching data structures, not just serialized data
+- Already have source generator infrastructure (Mediator, attributed routes)
+- Fits AOT-first philosophy
+- `CompiledRoute` has complex nested types that would need custom serialization anyway
+
 ### Related
 
 - Task #238: Make EndpointCollection internal (prerequisite - establishes immutability)

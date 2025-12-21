@@ -1,9 +1,5 @@
 namespace TimeWarp.Nuru;
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-
 /// <summary>
 /// Provides default completions based on registered routes and their patterns.
 /// This source analyzes the endpoint collection to suggest commands, options, and parameter types.

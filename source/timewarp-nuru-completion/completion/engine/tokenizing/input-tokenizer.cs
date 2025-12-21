@@ -1,7 +1,5 @@
 namespace TimeWarp.Nuru;
 
-using System.Text;
-
 /// <summary>
 /// Tokenizes command-line input for completion analysis.
 /// </summary>

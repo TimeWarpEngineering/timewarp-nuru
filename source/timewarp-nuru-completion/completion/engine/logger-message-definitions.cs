@@ -1,7 +1,5 @@
 namespace TimeWarp.Nuru;
 
-using Microsoft.Extensions.Logging;
-
 /// <summary>
 /// High-performance logger message definitions for the CompletionEngine.
 /// Uses LoggerMessage.Define to avoid allocations when logging is disabled.

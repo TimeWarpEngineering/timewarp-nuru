@@ -1,7 +1,5 @@
 namespace TimeWarp.Nuru;
 
-using System.Reflection;
-
 /// <summary>
 /// Generates dynamic completion scripts for various shells.
 /// Dynamic scripts call back to the application via the __complete route.

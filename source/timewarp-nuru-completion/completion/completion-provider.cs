@@ -1,8 +1,5 @@
 namespace TimeWarp.Nuru;
 
-using Microsoft.Extensions.Logging;
-using System.Collections.ObjectModel;
-
 /// <summary>
 /// Provides completion candidates by analyzing route patterns and current input.
 /// </summary>

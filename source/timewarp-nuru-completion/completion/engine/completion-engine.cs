@@ -1,7 +1,5 @@
 namespace TimeWarp.Nuru;
 
-using Microsoft.Extensions.Logging;
-
 /// <summary>
 /// Unified completion engine using pipeline architecture.
 /// </summary>

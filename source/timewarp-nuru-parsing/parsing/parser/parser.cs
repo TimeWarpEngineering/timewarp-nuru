@@ -14,12 +14,15 @@ namespace TimeWarp.Nuru;
 /// </remarks>
 internal sealed partial class Parser : IParser
 {
+#if !ANALYZER_BUILD
   private readonly ILogger<Parser> Logger;
   private readonly ILoggerFactory? LoggerFactory;
+#endif
   private IReadOnlyList<Token> Tokens = [];
   private int CurrentIndex;
   private List<ParseError>? ParseErrors;
 
+#if !ANALYZER_BUILD
   public Parser() : this(null, null) { }
 
   public Parser(ILogger<Parser>? logger = null, ILoggerFactory? loggerFactory = null)
@@ -27,6 +30,9 @@ internal sealed partial class Parser : IParser
     Logger = logger ?? NullLogger<Parser>.Instance;
     LoggerFactory = loggerFactory;
   }
+#else
+  public Parser() { }
+#endif
 
   /// <inheritdoc />
   public ParseResult<Syntax> Parse(string pattern)
@@ -38,16 +44,22 @@ internal sealed partial class Parser : IParser
     ParseErrors = null;
 
     // Tokenize input
+#if !ANALYZER_BUILD
     Lexer lexer = LoggerFactory is not null
       ? new Lexer(pattern, LoggerFactory.CreateLogger<Lexer>())
       : new Lexer(pattern);
+#else
+    Lexer lexer = new(pattern);
+#endif
     Tokens = lexer.Tokenize();
 
+#if !ANALYZER_BUILD
     ParsingLoggerMessages.ParsingPattern(Logger, pattern, null);
     if (Logger.IsEnabled(LogLevel.Trace))
     {
       ParsingLoggerMessages.DumpingTokens(Logger, Lexer.DumpTokens(Tokens), null);
     }
+#endif
 
     // Parse tokens into AST
 
@@ -64,10 +76,12 @@ internal sealed partial class Parser : IParser
       SemanticErrors = semanticErrors
     };
 
+#if !ANALYZER_BUILD
     if (result.Success && Logger.IsEnabled(LogLevel.Debug))
     {
       ParsingLoggerMessages.DumpingAst(Logger, DumpAst(ast), null);
     }
+#endif
 
     return result;
   }

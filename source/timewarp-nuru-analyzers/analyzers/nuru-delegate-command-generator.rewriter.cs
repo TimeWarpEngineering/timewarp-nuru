@@ -9,18 +9,22 @@ public partial class NuruDelegateCommandGenerator
   /// Rewrites parameter references in lambda body:
   /// - Route params: env → request.Env
   /// - DI params: logger → Logger
+  /// - Static using members: WriteLine → global::System.Console.WriteLine
   /// </summary>
   private sealed class ParameterRewriter
   {
     private readonly Dictionary<string, string> RouteParamMappings;
     private readonly Dictionary<string, string> DiParamMappings;
+    private readonly SemanticModel SemanticModel;
 
     public ParameterRewriter(
       Dictionary<string, string> routeParamMappings,
-      Dictionary<string, string> diParamMappings)
+      Dictionary<string, string> diParamMappings,
+      SemanticModel semanticModel)
     {
       RouteParamMappings = routeParamMappings;
       DiParamMappings = diParamMappings;
+      SemanticModel = semanticModel;
     }
 
     /// <summary>
@@ -93,7 +97,50 @@ public partial class NuruDelegateCommandGenerator
           .WithTriviaFrom(node);
       }
 
+      // Check if this identifier resolves to a static member from a static using
+      // (e.g., WriteLine from 'using static System.Console;')
+      SymbolInfo symbolInfo = SemanticModel.GetSymbolInfo(node);
+      ISymbol? symbol = symbolInfo.Symbol;
+
+      // Static method: WriteLine → global::System.Console.WriteLine
+      if (symbol is IMethodSymbol { IsStatic: true } method && method.ContainingType is not null)
+      {
+        string fullyQualified = GetFullyQualifiedMemberAccess(method);
+        return SyntaxFactory.ParseExpression(fullyQualified)
+          .WithTriviaFrom(node);
+      }
+
+      // Static property: PI → global::System.Math.PI
+      if (symbol is IPropertySymbol { IsStatic: true } prop && prop.ContainingType is not null)
+      {
+        string fullyQualified = GetFullyQualifiedMemberAccess(prop);
+        return SyntaxFactory.ParseExpression(fullyQualified)
+          .WithTriviaFrom(node);
+      }
+
+      // Static field: Empty → global::System.String.Empty
+      if (symbol is IFieldSymbol { IsStatic: true } field && field.ContainingType is not null)
+      {
+        string fullyQualified = GetFullyQualifiedMemberAccess(field);
+        return SyntaxFactory.ParseExpression(fullyQualified)
+          .WithTriviaFrom(node);
+      }
+
       return node;
+    }
+
+    /// <summary>
+    /// Gets the fully qualified member access string for a static member.
+    /// e.g., WriteLine → global::System.Console.WriteLine
+    /// </summary>
+    private static string GetFullyQualifiedMemberAccess(ISymbol symbol)
+    {
+      string containingType = symbol.ContainingType!.ToDisplayString(
+        new SymbolDisplayFormat(
+          globalNamespaceStyle: SymbolDisplayGlobalNamespaceStyle.Included,
+          typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces));
+
+      return $"{containingType}.{symbol.Name}";
     }
   }
 }

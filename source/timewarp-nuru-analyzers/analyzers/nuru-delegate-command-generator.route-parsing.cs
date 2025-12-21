@@ -175,8 +175,29 @@ public partial class NuruDelegateCommandGenerator
       if (i >= pattern.Length)
         break;
 
-      // Skip options and parameters
-      if (pattern[i] == '-' || pattern[i] == '{')
+      // Handle option-only patterns like "--capabilities"
+      // Extract the option name as the class prefix
+      if (pattern[i] == '-')
+      {
+        // Skip leading dashes
+        while (i < pattern.Length && pattern[i] == '-')
+          i++;
+
+        // Extract option name
+        int optStart = i;
+        while (i < pattern.Length && (char.IsLetterOrDigit(pattern[i]) || pattern[i] == '-'))
+          i++;
+
+        if (i > optStart)
+        {
+          literals.Add(pattern[optStart..i]);
+        }
+
+        break; // Stop after first option
+      }
+
+      // Skip parameters (catch-all like {*args} should use "Default")
+      if (pattern[i] == '{')
         break;
 
       // Extract literal

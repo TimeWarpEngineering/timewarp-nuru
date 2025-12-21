@@ -17,17 +17,23 @@ internal sealed class Compiler : SyntaxVisitor<object?>
   private const int SpecificityOptionalParameter = 5;
   private const int SpecificityCatchAll = 1;
 
+#if !ANALYZER_BUILD
   private readonly ILogger<Compiler> Logger;
+#endif
   private readonly List<RouteMatcher> Segments = [];
   private string? CatchAllParameterName;
   private int Specificity;
 
+#if !ANALYZER_BUILD
   public Compiler() : this(null) { }
 
   public Compiler(ILogger<Compiler>? logger = null)
   {
     Logger = logger ?? NullLogger<Compiler>.Instance;
   }
+#else
+  public Compiler() { }
+#endif
 
   /// <summary>
   /// Compiles a route pattern syntax tree to a CompiledRoute.
@@ -125,7 +131,9 @@ internal sealed class Compiler : SyntaxVisitor<object?>
     {
       // Extract the option name from the syntax (remove leading dashes) and convert to camelCase
       valueParameterName = ToCamelCase(option.LongForm ?? option.ShortForm ?? "");
+#if !ANALYZER_BUILD
       ParsingLoggerMessages.SettingBooleanOptionParameter(Logger, valueParameterName!, null);
+#endif
     }
 
     // Determine if option is optional (runtime behavior)

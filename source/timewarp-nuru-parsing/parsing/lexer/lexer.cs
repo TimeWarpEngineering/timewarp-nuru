@@ -5,7 +5,9 @@ namespace TimeWarp.Nuru;
 /// </summary>
 internal class Lexer
 {
+#if !ANALYZER_BUILD
   private readonly ILogger<Lexer> Logger;
+#endif
   private readonly string Input;
   private int Position;
   private readonly List<Token> Tokens = [];
@@ -14,6 +16,7 @@ internal class Lexer
   /// Initializes a new instance of the <see cref="Lexer"/> class.
   /// </summary>
   /// <param name="input">The input string to tokenize.</param>
+#if !ANALYZER_BUILD
   public Lexer(string input) : this(input, null) { }
 
   public Lexer(string input, ILogger<Lexer>? logger = null)
@@ -21,6 +24,12 @@ internal class Lexer
     this.Input = input ?? throw new ArgumentNullException(nameof(input));
     Logger = logger ?? NullLogger<Lexer>.Instance;
   }
+#else
+  public Lexer(string input)
+  {
+    this.Input = input ?? throw new ArgumentNullException(nameof(input));
+  }
+#endif
 
   /// <summary>
   /// Tokenizes the input string into a list of tokens.
@@ -31,7 +40,9 @@ internal class Lexer
     Tokens.Clear();
     Position = 0;
 
+#if !ANALYZER_BUILD
     ParsingLoggerMessages.StartingLexicalAnalysis(Logger, Input, null);
+#endif
 
     while (!IsAtEnd())
     {
@@ -40,11 +51,13 @@ internal class Lexer
 
     Tokens.Add(Token.EndOfInput(Position));
 
+#if !ANALYZER_BUILD
     if (Logger.IsEnabled(LogLevel.Trace))
     {
       ParsingLoggerMessages.CompletedLexicalAnalysis(Logger, Tokens.Count, null);
       ParsingLoggerMessages.DumpingTokens(Logger, DumpTokens(Tokens), null);
     }
+#endif
 
     return Tokens;
   }

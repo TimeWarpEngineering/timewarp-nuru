@@ -78,7 +78,7 @@ public partial class NuruDelegateCommandGenerator
     }
 
     // Rewrite the lambda body
-    ParameterRewriter rewriter = new(routeParamMappings, diParamMappings);
+    ParameterRewriter rewriter = new(routeParamMappings, diParamMappings, semanticModel);
     Microsoft.CodeAnalysis.SyntaxNode rewrittenBody = rewriter.Visit(body);
 
     // Convert body to string

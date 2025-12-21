@@ -1,3 +1,4 @@
+#if !ANALYZER_BUILD
 namespace TimeWarp.Nuru;
 
 using Microsoft.Extensions.Logging;
@@ -252,3 +253,4 @@ internal static class ParsingLoggerMessages
       new EventId(1700, "ConfigurationBasePath"),
       "Configuration base path: {BasePath} (source: {Source})");
 }
+#endif

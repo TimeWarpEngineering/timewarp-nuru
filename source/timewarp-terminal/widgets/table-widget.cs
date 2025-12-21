@@ -56,6 +56,14 @@ public sealed class Table
   public bool Expand { get; set; }
 
   /// <summary>
+  /// Gets or sets a value indicating whether the table should shrink columns to fit the terminal width.
+  /// When true, columns are proportionally reduced if the table would exceed terminal width.
+  /// Wider columns shrink more aggressively than narrower ones.
+  /// Defaults to <c>true</c>.
+  /// </summary>
+  public bool Shrink { get; set; } = true;
+
+  /// <summary>
   /// Gets or sets the ANSI color code for the border.
   /// If null, uses the terminal default color.
   /// </summary>
@@ -179,27 +187,73 @@ public sealed class Table
       widths[i] = maxWidth;
     }
 
+    // Calculate overhead: borders + padding + separators
+    // │ cell │ cell │ = 2 outer borders + (n-1) inner separators + 2*n padding spaces
+    int overhead = Border != BorderStyle.None
+      ? 2 + (_columns.Count - 1) + (2 * _columns.Count)
+      : (_columns.Count - 1) * 2; // Borderless: just column separators
+
+    int contentWidth = widths.Sum();
+    int totalWidth = overhead + contentWidth;
+
     // If expandable, distribute remaining width
-    if (Expand && Border != BorderStyle.None)
+    if (Expand && Border != BorderStyle.None && totalWidth < terminalWidth)
     {
-      // Calculate used width: borders + padding + separators
-      // │ cell │ cell │ = 2 outer borders + (n-1) inner separators + 2*n padding spaces
-      int usedWidth = 2 + (_columns.Count - 1) + (2 * _columns.Count);
-      int contentWidth = widths.Sum();
-      int totalUsed = usedWidth + contentWidth;
+      int extraWidth = terminalWidth - totalWidth;
+      int perColumn = extraWidth / _columns.Count;
+      int remainder = extraWidth % _columns.Count;
 
-      if (totalUsed < terminalWidth)
+      for (int i = 0; i < _columns.Count; i++)
       {
-        int extraWidth = terminalWidth - totalUsed;
-        int perColumn = extraWidth / _columns.Count;
-        int remainder = extraWidth % _columns.Count;
+        widths[i] += perColumn;
+        if (i < remainder)
+        {
+          widths[i]++;
+        }
+      }
+    }
+    // If Shrink is enabled and table exceeds terminal width, shrink columns
+    else if (Shrink && totalWidth > terminalWidth)
+    {
+      int excessWidth = totalWidth - terminalWidth;
+      int availableContentWidth = terminalWidth - overhead;
 
+      if (availableContentWidth > 0)
+      {
+        // Get minimum widths for each column (default 4 for ellipsis)
+        int[] minWidths = new int[_columns.Count];
         for (int i = 0; i < _columns.Count; i++)
         {
-          widths[i] += perColumn;
-          if (i < remainder)
+          minWidths[i] = _columns[i].MinWidth ?? 4;
+        }
+
+        // Calculate how much each column can shrink (width above minimum)
+        int[] shrinkableAmounts = new int[_columns.Count];
+        int totalShrinkable = 0;
+        for (int i = 0; i < _columns.Count; i++)
+        {
+          shrinkableAmounts[i] = Math.Max(0, widths[i] - minWidths[i]);
+          totalShrinkable += shrinkableAmounts[i];
+        }
+
+        if (totalShrinkable > 0)
+        {
+          // Shrink proportionally based on shrinkable amount (wider columns shrink more)
+          int remainingExcess = Math.Min(excessWidth, totalShrinkable);
+
+          for (int i = 0; i < _columns.Count; i++)
           {
-            widths[i]++;
+            if (shrinkableAmounts[i] > 0)
+            {
+              // Calculate this column's share of the shrinkage
+              int shrinkAmount = (int)Math.Ceiling((double)shrinkableAmounts[i] / totalShrinkable * remainingExcess);
+              shrinkAmount = Math.Min(shrinkAmount, shrinkableAmounts[i]); // Don't shrink below min
+              widths[i] -= shrinkAmount;
+
+              // Update totals for remaining columns
+              totalShrinkable -= shrinkableAmounts[i];
+              remainingExcess -= shrinkAmount;
+            }
           }
         }
       }
@@ -324,7 +378,7 @@ public sealed class Table
       int visibleLength = AnsiStringUtils.GetVisibleLength(cellValue);
       if (visibleLength > columnWidths[i])
       {
-        cellValue = TruncateWithEllipsis(cellValue, columnWidths[i]);
+        cellValue = TruncateWithEllipsis(cellValue, columnWidths[i], column.TruncateMode);
       }
 
       // Apply alignment
@@ -360,7 +414,7 @@ public sealed class Table
       int visibleLength = AnsiStringUtils.GetVisibleLength(cellValue);
       if (visibleLength > columnWidths[i])
       {
-        cellValue = TruncateWithEllipsis(cellValue, columnWidths[i]);
+        cellValue = TruncateWithEllipsis(cellValue, columnWidths[i], column.TruncateMode);
       }
 
       // Apply alignment
@@ -388,7 +442,7 @@ public sealed class Table
     };
   }
 
-  private static string TruncateWithEllipsis(string text, int maxWidth)
+  private static string TruncateWithEllipsis(string text, int maxWidth, TruncateMode mode)
   {
     if (maxWidth <= 3)
     {
@@ -404,6 +458,22 @@ public sealed class Table
     }
 
     // Simple truncation (doesn't preserve ANSI codes perfectly, but works)
-    return plainText[..(maxWidth - 3)] + "...";
+    return mode switch
+    {
+      TruncateMode.Start => "..." + plainText[^(maxWidth - 3)..],
+      TruncateMode.Middle => TruncateMiddle(plainText, maxWidth),
+      _ => plainText[..(maxWidth - 3)] + "..." // TruncateMode.End (default)
+    };
+  }
+
+  private static string TruncateMiddle(string text, int maxWidth)
+  {
+    // For middle truncation, show roughly equal parts from start and end
+    // "..." takes 3 chars, so we have (maxWidth - 3) chars to split
+    int availableChars = maxWidth - 3;
+    int startChars = (availableChars + 1) / 2; // Slightly favor start if odd
+    int endChars = availableChars - startChars;
+
+    return text[..startChars] + "..." + text[^endChars..];
   }
 }

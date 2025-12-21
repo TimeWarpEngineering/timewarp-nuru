@@ -126,6 +126,19 @@ public sealed class TableBuilder : IBuilder<Table>
   }
 
   /// <summary>
+  /// Sets whether the table should shrink columns to fit the terminal width.
+  /// When true, columns are proportionally reduced if the table would exceed terminal width.
+  /// Defaults to <c>true</c>.
+  /// </summary>
+  /// <param name="value">True to enable shrinking, false to allow overflow.</param>
+  /// <returns>This builder for method chaining.</returns>
+  public TableBuilder Shrink(bool value = true)
+  {
+    _table.Shrink = value;
+    return this;
+  }
+
+  /// <summary>
   /// Builds the configured <see cref="Table"/> instance.
   /// </summary>
   /// <returns>The configured table.</returns>

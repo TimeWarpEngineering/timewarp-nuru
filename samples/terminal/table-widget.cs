@@ -146,4 +146,57 @@ terminal.WriteTable(t => t
   .Border(BorderStyle.Rounded));
 
 terminal.WriteLine();
+
+// Example 10: Shrink to fit terminal width (default behavior)
+terminal.WriteLine("10. Shrink to Fit Terminal Width (default)");
+terminal.WriteLine("-------------------------------------------");
+
+Table shrinkTable = new Table()
+  .AddColumn("Repository")
+  .AddColumn(new TableColumn("Worktree Path") { TruncateMode = TruncateMode.Start })
+  .AddColumn("Branch")
+  .AddRow("timewarp-nuru", "/home/user/worktrees/github.com/TimeWarpEngineering/timewarp-nuru/feature-branch-name", "feature-xyz")
+  .AddRow("timewarp-state", "/home/user/worktrees/github.com/TimeWarpEngineering/timewarp-state/main", "main");
+shrinkTable.Border = BorderStyle.Rounded;
+
+terminal.WriteTable(shrinkTable);
+terminal.WriteLine();
+
+terminal.WriteLine("Note: Path column uses TruncateMode.Start to show the end of paths.");
+terminal.WriteLine("Use table.Shrink = false or .Shrink(false) to disable shrinking.");
+terminal.WriteLine();
+
+// Example 12: TruncateMode options
+terminal.WriteLine("12. TruncateMode Options");
+terminal.WriteLine("------------------------");
+
+string longText = "This-is-a-very-long-text-that-will-be-truncated-differently";
+
+Table truncateModeTable = new Table()
+  .AddColumn(new TableColumn("Mode") { MaxWidth = 8 })
+  .AddColumn(new TableColumn("End (default)") { MaxWidth = 25, TruncateMode = TruncateMode.End })
+  .AddColumn(new TableColumn("Start") { MaxWidth = 25, TruncateMode = TruncateMode.Start })
+  .AddColumn(new TableColumn("Middle") { MaxWidth = 25, TruncateMode = TruncateMode.Middle })
+  .AddRow("Result", longText, longText, longText);
+truncateModeTable.Border = BorderStyle.Rounded;
+
+terminal.WriteTable(truncateModeTable);
+terminal.WriteLine();
+
+terminal.WriteLine("TruncateMode.End:    'long text...'  - Shows beginning (default)");
+terminal.WriteLine("TruncateMode.Start:  '...long text'  - Shows end (good for paths)");
+terminal.WriteLine("TruncateMode.Middle: 'long...text'   - Shows both ends");
+terminal.WriteLine();
+
+// Example 11: Disable shrinking (allow overflow)
+terminal.WriteLine("11. Shrink Disabled (allows horizontal overflow)");
+terminal.WriteLine("------------------------------------------------");
+
+terminal.WriteTable(t => t
+  .AddColumn("Path")
+  .AddRow("/home/user/worktrees/github.com/TimeWarpEngineering/timewarp-nuru/very-long-feature-branch-name")
+  .Border(BorderStyle.Rounded)
+  .Shrink(false));
+
+terminal.WriteLine();
 terminal.WriteLine("Demo complete!");

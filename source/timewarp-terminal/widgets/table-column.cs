@@ -61,6 +61,13 @@ public sealed class TableColumn
   public Alignment Alignment { get; set; } = Alignment.Left;
 
   /// <summary>
+  /// Gets or sets the minimum width for the column.
+  /// If set, the column will not shrink below this width when fitting to terminal width.
+  /// If null, defaults to 4 to allow for "..." truncation.
+  /// </summary>
+  public int? MinWidth { get; set; }
+
+  /// <summary>
   /// Gets or sets the maximum width for the column.
   /// If set, content exceeding this width will be truncated.
   /// If null, the column auto-sizes to fit content.
@@ -78,4 +85,19 @@ public sealed class TableColumn
   /// </code>
   /// </example>
   public string? HeaderColor { get; set; }
+
+  /// <summary>
+  /// Gets or sets where to place the ellipsis when truncating content.
+  /// Defaults to <see cref="TruncateMode.End"/>.
+  /// </summary>
+  /// <example>
+  /// <code>
+  /// // Show end of path (useful for file paths)
+  /// column.TruncateMode = TruncateMode.Start;  // "...timewarp-nuru/feature"
+  ///
+  /// // Show both start and end
+  /// column.TruncateMode = TruncateMode.Middle; // "/home/...feature"
+  /// </code>
+  /// </example>
+  public TruncateMode TruncateMode { get; set; } = TruncateMode.End;
 }

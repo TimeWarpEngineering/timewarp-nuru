@@ -22,95 +22,86 @@
 
 using System.ComponentModel;
 using TimeWarp.Nuru;
-using TimeWarp.Nuru.Completion;
 
-NuruAppBuilder builder = new();
-
-// ============================================================================
-// Enable Dynamic Completion with Custom Sources
-// ============================================================================
-// This adds both:
-// - The __complete {index:int} {*words} route for dynamic callbacks
-// - The --generate-completion {shell} route for shell script generation
-
-builder.EnableDynamicCompletion(configure: registry =>
-{
-  // Register custom completion source for the "env" parameter
-  registry.RegisterForParameter("env", new EnvironmentCompletionSource());
-
-  // Register custom completion source for the "tag" parameter
-  registry.RegisterForParameter("tag", new TagCompletionSource());
-
-  // Register enum completion source for DeploymentMode type
-  registry.RegisterForType(typeof(DeploymentMode), new EnumCompletionSource<DeploymentMode>());
-});
-
-// ============================================================================
-// Sample Commands - Demonstrate Dynamic Completion
-// ============================================================================
-
-builder.Map
-(
-  "deploy {env} --version {tag}",
-  (string env, string tag) =>
-  {
-    Console.WriteLine($"🚀 Deploying:");
-    Console.WriteLine($"   Environment: {env}");
-    Console.WriteLine($"   Version: {tag}");
-  },
-  "Deploy a version to an environment"
-);
-
-builder.Map
-(
-  "deploy {env} --mode {mode}",
-  (string env, DeploymentMode mode) =>
-  {
-    Console.WriteLine($"🚀 Deploying to {env} in {mode} mode");
-  },
-  "Deploy with a specific mode"
-);
-
-builder.Map
-(
-  "list-environments",
-  () =>
-  {
-    Console.WriteLine("📋 Available Environments:");
-    foreach (string env in EnvironmentCompletionSource.GetEnvironments())
+NuruCoreApp app = NuruCoreApp.CreateSlimBuilder(args)
+  // ============================================================================
+  // Sample Commands - Demonstrate Dynamic Completion
+  // ============================================================================
+  .Map("deploy {env} --version {tag}")
+    .WithHandler((string env, string tag) =>
     {
-      Console.WriteLine($"   - {env}");
-    }
-  },
-  "List all available environments"
-);
+      Console.WriteLine($"🚀 Deploying:");
+      Console.WriteLine($"   Environment: {env}");
+      Console.WriteLine($"   Version: {tag}");
+    })
+    .WithDescription("Deploy a version to an environment")
+    .AsCommand()
+    .Done()
 
-builder.Map
-(
-  "list-tags",
-  () =>
-  {
-    Console.WriteLine("📋 Available Tags:");
-    foreach (string tag in TagCompletionSource.GetTags())
+  .Map("deploy {env} --mode {mode}")
+    .WithHandler((string env, DeploymentMode mode) =>
     {
-      Console.WriteLine($"   - {tag}");
-    }
-  },
-  "List all available tags"
-);
+      Console.WriteLine($"🚀 Deploying to {env} in {mode} mode");
+    })
+    .WithDescription("Deploy with a specific mode")
+    .AsCommand()
+    .Done()
 
-builder.Map
-(
-  "status",
-  () => Console.WriteLine("📊 System Status: OK"),
-  "Check system status"
-);
+  .Map("list-environments")
+    .WithHandler(() =>
+    {
+      Console.WriteLine("📋 Available Environments:");
+      foreach (string env in EnvironmentCompletionSource.GetEnvironments())
+      {
+        Console.WriteLine($"   - {env}");
+      }
+    })
+    .WithDescription("List all available environments")
+    .AsQuery()
+    .Done()
 
-// ============================================================================
-// Build and Run
-// ============================================================================
+  .Map("list-tags")
+    .WithHandler(() =>
+    {
+      Console.WriteLine("📋 Available Tags:");
+      foreach (string tag in TagCompletionSource.GetTags())
+      {
+        Console.WriteLine($"   - {tag}");
+      }
+    })
+    .WithDescription("List all available tags")
+    .AsQuery()
+    .Done()
 
-NuruCoreApp app = builder.Build();
+  .Map("status")
+    .WithHandler(() => Console.WriteLine("📊 System Status: OK"))
+    .WithDescription("Check system status")
+    .AsQuery()
+    .Done()
+
+  // ============================================================================
+  // Enable Dynamic Completion with Custom Sources
+  // ============================================================================
+  // This adds both:
+  // - The __complete {index:int} {*words} route for dynamic callbacks
+  // - The --generate-completion {shell} route for shell script generation
+  .EnableDynamicCompletion(configure: registry =>
+  {
+    // Register custom completion source for the "env" parameter
+    registry.RegisterForParameter("env", new EnvironmentCompletionSource());
+
+    // Register custom completion source for the "tag" parameter
+    registry.RegisterForParameter("tag", new TagCompletionSource());
+
+    // Register enum completion source for DeploymentMode type
+    registry.RegisterForType(typeof(DeploymentMode), new EnumCompletionSource<DeploymentMode>());
+  })
+
+  // ============================================================================
+  // Build and Run
+  // ============================================================================
+  .Build();
+
 return await app.RunAsync(args);
 
 // ============================================================================

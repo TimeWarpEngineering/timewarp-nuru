@@ -3,6 +3,7 @@
 
 // Demonstrates the Table widget for rendering columnar data
 using TimeWarp.Nuru;
+using TimeWarp.Terminal;
 
 // Create a terminal for colored output
 ITerminal terminal = new NuruTerminal();

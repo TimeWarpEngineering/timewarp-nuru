@@ -8,10 +8,10 @@ Error: `CS1739: The best overload for 'Map' does not have a parameter named 'des
 
 ## Checklist
 
-- [ ] samples/aspire-host-otel/nuru-client.cs
-- [ ] samples/aspire-telemetry/aspire-telemetry.cs
-- [ ] samples/calculator/calc-mediator.cs
-- [ ] samples/calculator/calc-mixed.cs (description errors)
+- [x] samples/aspire-host-otel/nuru-client.cs
+- [x] samples/aspire-telemetry/aspire-telemetry.cs
+- [x] samples/calculator/calc-mediator.cs
+- [x] samples/calculator/calc-mixed.cs (description errors AND handler errors)
 
 ## Notes
 

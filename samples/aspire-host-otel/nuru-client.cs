@@ -48,10 +48,10 @@ NuruAppOptions nuruAppOptions = new()
 // Build the Nuru app with auto-wired telemetry and REPL support
 NuruCoreApp app = NuruApp.CreateBuilder(args, nuruAppOptions)
   .ConfigureServices(ConfigureServices)
-  .Map<GreetCommand>(pattern: "greet {name}", description: "Greet someone (structured log)")
-  .Map<StatusCommand>(pattern: "status", description: "Show system status (structured log)")
-  .Map<WorkCommand>(pattern: "work {duration:int}", description: "Simulate work with duration in ms")
-  .Map<ConfigCommand>(pattern: "config", description: "Show telemetry configuration")
+  .Map<GreetCommand>("greet {name}").WithDescription("Greet someone (structured log)")
+  .Map<StatusCommand>("status").WithDescription("Show system status (structured log)")
+  .Map<WorkCommand>("work {duration:int}").WithDescription("Simulate work with duration in ms")
+  .Map<ConfigCommand>("config").WithDescription("Show telemetry configuration")
   .Build();
 
 // Run the app - use -i or --interactive to enter REPL mode

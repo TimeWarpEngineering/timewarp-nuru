@@ -13,18 +13,18 @@ The `nuru-app-builder-extensions.cs` file (509 lines) is already a partial class
 ## Checklist
 
 ### File Creation
-- [ ] Create `nuru-app-builder-extensions.version.cs` - Version route handler
-- [ ] Create `nuru-app-builder-extensions.updates.cs` - Update checking and SemVer comparison
-- [ ] Extract SemVer comparison to internal `sem-ver-comparer.cs` utility class
+- [x] Create `nuru-app-builder-extensions.version.cs` - Version route handler
+- [x] Create `nuru-app-builder-extensions.updates.cs` - Update checking and SemVer comparison
+- [x] Extract SemVer comparison to internal `sem-ver-comparer.cs` utility class
 
 ### Documentation
-- [ ] Add `<remarks>` to main file listing all partial files
-- [ ] Add XML summary to each new partial file
+- [x] Add `<remarks>` to main file listing all partial files
+- [x] Add XML summary to each new partial file
 
 ### Verification
-- [ ] All tests pass
-- [ ] Build succeeds
-- [ ] Version and check-updates commands work correctly
+- [x] All tests pass
+- [x] Build succeeds
+- [x] Version and check-updates commands work correctly
 
 ## Notes
 
@@ -64,3 +64,14 @@ This could benefit from better testability via dependency injection of HttpClien
 ### Reference Pattern
 
 Follow established partial class conventions with XML documentation.
+
+## Implementation Summary
+
+Split the original 509-line file into:
+
+| File | Lines | Content |
+|------|-------|---------|
+| `nuru-app-builder-extensions.cs` | 75 | Core `UseAllExtensions()` method with `<remarks>` listing partial files |
+| `nuru-app-builder-extensions.version.cs` | 87 | Version route: `AddVersionRoute()`, `DisplayVersion()`, constants |
+| `nuru-app-builder-extensions.updates.cs` | 213 | Updates route: `AddCheckUpdatesRoute()`, `CheckForUpdatesAsync()`, GitHub API integration |
+| `sem-ver-comparer.cs` | 143 | Internal utility class for SemVer 2.0 comparison |

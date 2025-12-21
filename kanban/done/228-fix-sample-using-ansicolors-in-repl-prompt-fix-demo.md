@@ -8,7 +8,7 @@ Error: `CS0103: The name 'AnsiColors' does not exist in the current context`
 
 ## Checklist
 
-- [ ] samples/repl-demo/repl-prompt-fix-demo.cs
+- [x] samples/repl-demo/repl-prompt-fix-demo.cs
 
 ## Notes
 

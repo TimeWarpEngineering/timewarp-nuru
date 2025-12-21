@@ -2,6 +2,7 @@
 #:project ../../source/timewarp-nuru/timewarp-nuru.csproj
 
 using TimeWarp.Nuru;
+using TimeWarp.Terminal;
 
 NuruCoreApp app = NuruCoreApp.CreateSlimBuilder()
   .AddAutoHelp()

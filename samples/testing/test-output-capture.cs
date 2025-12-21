@@ -1,11 +1,12 @@
 #!/usr/bin/dotnet --
 // test-output-capture - Demonstrates testing CLI output capture using TestTerminal
-// Uses new NuruAppBuilder() for testing scenarios - provides ITerminal injection without full Mediator
+// Uses NuruCoreApp.CreateSlimBuilder() for testing scenarios - provides ITerminal injection without full Mediator
 #:package Shouldly
 #:project ../../source/timewarp-nuru/timewarp-nuru.csproj
 
 using Shouldly;
 using TimeWarp.Nuru;
+using TimeWarp.Terminal;
 
 Console.WriteLine("=== Testing CLI Output Capture ===\n");
 
@@ -14,7 +15,7 @@ Console.WriteLine("Test 1: Basic output capture");
 {
   using TestTerminal terminal = new();
 
-  NuruCoreApp app = new NuruAppBuilder()
+  NuruCoreApp app = NuruCoreApp.CreateSlimBuilder()
     .UseTerminal(terminal)
     .Map("hello {name}")
       .WithHandler((string name, ITerminal t) => t.WriteLine($"Hello, {name}!"))
@@ -34,7 +35,7 @@ Console.WriteLine("\nTest 2: Multiple lines capture");
 {
   using TestTerminal terminal = new();
 
-  NuruCoreApp app = new NuruAppBuilder()
+  NuruCoreApp app = NuruCoreApp.CreateSlimBuilder()
     .UseTerminal(terminal)
     .Map("list")
       .WithHandler((ITerminal t) =>
@@ -63,7 +64,7 @@ Console.WriteLine("\nTest 3: Error output capture with exception");
 {
   using TestTerminal terminal = new();
 
-  NuruCoreApp app = new NuruAppBuilder()
+  NuruCoreApp app = NuruCoreApp.CreateSlimBuilder()
     .UseTerminal(terminal)
     .Map("validate")
       .WithHandler((ITerminal t) =>
@@ -87,7 +88,7 @@ Console.WriteLine("\nTest 4: Combined stdout and stderr");
 {
   using TestTerminal terminal = new();
 
-  NuruCoreApp app = new NuruAppBuilder()
+  NuruCoreApp app = NuruCoreApp.CreateSlimBuilder()
     .UseTerminal(terminal)
     .Map("mixed")
       .WithHandler((ITerminal t) =>

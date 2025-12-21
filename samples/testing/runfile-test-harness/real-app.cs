@@ -2,8 +2,10 @@
 // real-app - A sample CLI application to demonstrate testing patterns
 // This represents a "real" CLI app that a consumer would build
 #:project ../../../source/timewarp-nuru/timewarp-nuru.csproj
+#pragma warning disable CS7022 // Entry point defined in Main method is intentional for demo
 
 using TimeWarp.Nuru;
+using TimeWarp.Terminal;
 
 return await RealApp.Main(args);
 

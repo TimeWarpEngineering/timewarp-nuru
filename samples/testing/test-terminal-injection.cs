@@ -1,11 +1,12 @@
 #!/usr/bin/dotnet --
 // test-terminal-injection - Demonstrates ITerminal injection into route handlers for testable colored output
-// Uses new NuruAppBuilder() for testing scenarios - provides ITerminal injection without full Mediator
+// Uses NuruCoreApp.CreateSlimBuilder() for testing scenarios - provides ITerminal injection without full Mediator
 #:package Shouldly
 #:project ../../source/timewarp-nuru/timewarp-nuru.csproj
 
 using Shouldly;
 using TimeWarp.Nuru;
+using TimeWarp.Terminal;
 
 Console.WriteLine("=== ITerminal Injection Tests ===\n");
 
@@ -14,7 +15,7 @@ Console.WriteLine("Test 1: ITerminal injection in handlers");
 {
   using TestTerminal terminal = new();
 
-  NuruCoreApp app = new NuruAppBuilder()
+  NuruCoreApp app = NuruCoreApp.CreateSlimBuilder()
     .UseTerminal(terminal)
     .Map("deploy {env}")
       .WithHandler((string env, ITerminal t) =>
@@ -40,7 +41,7 @@ Console.WriteLine("\nTest 2: Conditional color output");
 {
   using TestTerminal terminal = new();
 
-  NuruCoreApp app = new NuruAppBuilder()
+  NuruCoreApp app = NuruCoreApp.CreateSlimBuilder()
     .UseTerminal(terminal)
     .Map("status")
       .WithHandler((ITerminal t) =>
@@ -71,7 +72,7 @@ Console.WriteLine("\nTest 3: Error output capture");
 {
   using TestTerminal terminal = new();
 
-  NuruCoreApp app = new NuruAppBuilder()
+  NuruCoreApp app = NuruCoreApp.CreateSlimBuilder()
     .UseTerminal(terminal)
     .Map("validate {file}")
       .WithHandler((string file, ITerminal t) =>
@@ -102,7 +103,7 @@ Console.WriteLine("\nTest 4: Progress-style output");
 {
   using TestTerminal terminal = new();
 
-  NuruCoreApp app = new NuruAppBuilder()
+  NuruCoreApp app = NuruCoreApp.CreateSlimBuilder()
     .UseTerminal(terminal)
     .Map("build")
       .WithHandler((ITerminal t) =>
@@ -131,7 +132,7 @@ Console.WriteLine("\nTest 5: Custom colors with WithStyle()");
 {
   using TestTerminal terminal = new();
 
-  NuruCoreApp app = new NuruAppBuilder()
+  NuruCoreApp app = NuruCoreApp.CreateSlimBuilder()
     .UseTerminal(terminal)
     .Map("theme")
       .WithHandler((ITerminal t) =>

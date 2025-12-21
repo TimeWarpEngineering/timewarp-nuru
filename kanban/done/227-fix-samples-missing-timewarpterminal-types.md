@@ -13,13 +13,17 @@ Errors:
 
 ## Checklist
 
-- [ ] samples/terminal/hyperlink-widget.cs
-- [ ] samples/terminal/panel-widget.cs
-- [ ] samples/terminal/rule-widget.cs
-- [ ] samples/terminal/table-widget.cs
+- [x] samples/terminal/hyperlink-widget.cs
+- [x] samples/terminal/panel-widget.cs
+- [x] samples/terminal/rule-widget.cs
+- [x] samples/terminal/table-widget.cs
 
 ## Notes
 
 - Discovered by `runfiles/verify-samples.cs` (task 221)
 - May need to add `#:project ../../source/timewarp-terminal/timewarp-terminal.csproj`
 - May also need `using TimeWarp.Terminal;` or similar
+
+## Solution
+
+Added `using TimeWarp.Terminal;` to all four sample files. The timewarp-terminal types are already transitively available via the timewarp-nuru project reference - only the namespace import was missing.

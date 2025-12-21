@@ -23,6 +23,14 @@
 - **WHY**: Folder structure (ToDo/InProgress/Done/Backlog) determines status; adding status fields creates redundancy
 - **CRITICAL**: NEVER start a new Kanban task without explicitly asking the user first. Always wait for explicit approval before moving to a new task.
 
+## Runfiles
+
+Runfiles (`.cs` scripts with `#!/usr/bin/dotnet --`) DO use `Directory.Build.props` - they inherit all packages, analyzers, and settings from the project hierarchy. Do not claim otherwise.
+
+## Source Generated Files
+
+Generated source files are emitted to `artifacts/generated/{ProjectName}/` (configured in Directory.Build.props via EmitCompilerGeneratedFiles).
+
 ## Code Style Guidelines
 - **Formatting**: Use `dotnet format`; 2-space indent (per .editorconfig), no trailing whitespace (RCS1037 fails build), blank lines between blocks (IDE2003).
 - **Imports**: Prefer global usings (GlobalUsings.cs); explicit for locals; no `using static` unless necessary.

@@ -70,11 +70,7 @@ builder.Map<FibonacciCommand>("fibonacci {n:int}")
 
 // Default route for when no arguments provided
 builder.Map("")
-  .WithHandler(() =>
-  {
-    WriteLine("Calculator - use --help for available commands");
-    return 0;
-  })
+  .WithHandler(() => WriteLine("Calculator - use --help for available commands"))
   .AsQuery()
   .Done();
 

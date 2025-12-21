@@ -43,7 +43,12 @@ public partial class NuruDelegateCommandGenerator
     ImmutableArray<CommandPropertyInfo> Properties,
     string ReturnType,
     GeneratedMessageType MessageType,
-    HandlerInfo? Handler);
+    HandlerInfo? Handler,
+    // Provenance fields for debugging generated code
+    string? SourceFilePath,
+    int? SourceLineNumber,
+    string PatternText,
+    string HandlerDescription);
 
   /// <summary>
   /// Property information for the generated command class.

@@ -218,12 +218,36 @@ public partial class NuruDelegateCommandGenerator : IIncrementalGenerator
       context.SemanticModel,
       cancellationToken);
 
+    // Extract provenance information for debugging
+    Location location = context.Node.GetLocation();
+    FileLinePositionSpan lineSpan = location.GetLineSpan();
+    string? sourceFilePath = !string.IsNullOrEmpty(lineSpan.Path)
+      ? System.IO.Path.GetFileName(lineSpan.Path)
+      : null;
+    int? sourceLineNumber = sourceFilePath is not null
+      ? lineSpan.StartLinePosition.Line + 1
+      : null;
+
+    // Determine handler description
+    string handlerDescription = chainInfo.HandlerExpression switch
+    {
+      LambdaExpressionSyntax when handlerInfo is not null => "lambda expression",
+      LambdaExpressionSyntax => "lambda expression (handler generation skipped - closures detected)",
+      IdentifierNameSyntax id => $"{id.Identifier.Text} (method group - handler generation not yet supported)",
+      MemberAccessExpressionSyntax ma => $"{ma.Name.Identifier.Text} (method group - handler generation not yet supported)",
+      _ => $"{chainInfo.HandlerExpression.Kind()} (handler generation not supported)"
+    };
+
     return new DelegateCommandInfo(
       ClassName: className,
       Properties: [.. properties],
       ReturnType: commandReturnType,
       MessageType: chainInfo.MessageType,
-      Handler: handlerInfo);
+      Handler: handlerInfo,
+      SourceFilePath: sourceFilePath,
+      SourceLineNumber: sourceLineNumber,
+      PatternText: chainInfo.Pattern,
+      HandlerDescription: handlerDescription);
   }
 
   /// <summary>

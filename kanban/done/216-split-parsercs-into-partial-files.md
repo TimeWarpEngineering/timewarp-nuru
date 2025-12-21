@@ -13,17 +13,17 @@ The `parser.cs` file (628 lines) is already declared as a partial class but does
 ## Checklist
 
 ### File Creation
-- [ ] Create `parser.segments.cs` - Segment parsing methods
-- [ ] Create `parser.validation.cs` - Type and identifier validation
-- [ ] Create `parser.navigation.cs` - Token navigation helpers
+- [x] Create `parser.segments.cs` - Segment parsing methods
+- [x] Create `parser.validation.cs` - Type and identifier validation
+- [x] Create `parser.navigation.cs` - Token navigation helpers
 
 ### Documentation
-- [ ] Add `<remarks>` to main file listing all partial files
-- [ ] Add XML summary to each new partial file
+- [x] Add `<remarks>` to main file listing all partial files
+- [x] Add XML summary to each new partial file
 
 ### Verification
-- [ ] All parser tests pass
-- [ ] Build succeeds
+- [x] All parser tests pass
+- [x] Build succeeds
 
 ## Notes
 

@@ -8,7 +8,13 @@ Error: `CS1739: The best overload for 'Map' does not have a parameter named 'han
 
 ## Checklist
 
-- [ ] samples/calculator/calc-mixed.cs (handler errors)
+- [x] samples/calculator/calc-mixed.cs (handler errors) - resolved as part of task 223
+
+## Results
+
+This task was already resolved when task 223 was completed. The `calc-mixed.cs` sample now uses the fluent API (`.Map(...).WithHandler(...).WithDescription(...)`) and compiles successfully.
+
+Verified by running `runfiles/verify-samples.cs` which shows `calc-mixed.cs` passing compilation.
 
 ## Notes
 

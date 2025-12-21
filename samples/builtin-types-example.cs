@@ -22,7 +22,7 @@
 using System.Net;
 using TimeWarp.Nuru;
 
-NuruAppBuilder builder = new();
+NuruAppBuilder builder = NuruApp.CreateBuilder([]);
 
 // ============================================================================
 // Original Built-In Types (v1.0)

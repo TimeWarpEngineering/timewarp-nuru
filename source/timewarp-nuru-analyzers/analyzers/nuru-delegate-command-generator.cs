@@ -233,8 +233,10 @@ public partial class NuruDelegateCommandGenerator : IIncrementalGenerator
     {
       LambdaExpressionSyntax when handlerInfo is not null => "lambda expression",
       LambdaExpressionSyntax => "lambda expression (handler generation skipped - closures detected)",
-      IdentifierNameSyntax id => $"{id.Identifier.Text} (method group - handler generation not yet supported)",
-      MemberAccessExpressionSyntax ma => $"{ma.Name.Identifier.Text} (method group - handler generation not yet supported)",
+      IdentifierNameSyntax id when handlerInfo is not null => $"local function: {id.Identifier.Text}",
+      IdentifierNameSyntax id => $"method group: {id.Identifier.Text} (handler generation failed)",
+      MemberAccessExpressionSyntax ma when handlerInfo is not null => $"static method: {ma.Expression}.{ma.Name.Identifier.Text}",
+      MemberAccessExpressionSyntax ma => $"method: {ma.Expression}.{ma.Name.Identifier.Text} (handler generation failed)",
       _ => $"{chainInfo.HandlerExpression.Kind()} (handler generation not supported)"
     };
 

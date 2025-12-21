@@ -6,7 +6,8 @@ namespace TimeWarp.Nuru;
 public partial class NuruDelegateCommandGenerator
 {
   /// <summary>
-  /// Extracts handler information from a lambda expression, including rewritten body.
+  /// Extracts handler information from various handler expression types.
+  /// Dispatches to specialized methods based on expression type.
   /// </summary>
   private static HandlerInfo? ExtractHandlerInfo(
     ExpressionSyntax handlerExpression,
@@ -15,15 +16,38 @@ public partial class NuruDelegateCommandGenerator
     SemanticModel semanticModel,
     CancellationToken cancellationToken)
   {
-    // Only support lambda expressions for now (method groups deferred)
-    if (handlerExpression is not LambdaExpressionSyntax lambda)
-      return null;
+    return handlerExpression switch
+    {
+      LambdaExpressionSyntax lambda =>
+        ExtractLambdaHandlerInfo(lambda, parameters, signature, semanticModel, cancellationToken),
+
+      IdentifierNameSyntax identifier =>
+        ExtractMethodGroupHandlerInfo(identifier, parameters, signature, semanticModel, cancellationToken),
+
+      MemberAccessExpressionSyntax memberAccess =>
+        ExtractMethodGroupHandlerInfo(memberAccess, parameters, signature, semanticModel, cancellationToken),
+
+      // Unsupported expression types - analyzer will report NURU_H003
+      _ => null
+    };
+  }
+
+  /// <summary>
+  /// Extracts handler information from a lambda expression.
+  /// </summary>
+  private static HandlerInfo? ExtractLambdaHandlerInfo(
+    LambdaExpressionSyntax lambda,
+    List<ParameterClassification> parameters,
+    DelegateSignature signature,
+    SemanticModel semanticModel,
+    CancellationToken cancellationToken)
+  {
+    _ = cancellationToken; // Available for future use
 
     // Check for closures (captured external variables)
-    if (DetectClosures(lambda, parameters, semanticModel, out List<string> capturedVariables))
+    // Analyzer will report NURU_H002, but we still skip generation
+    if (DetectClosures(lambda, parameters, semanticModel, out List<string> _))
     {
-      // For now, skip handler generation if closures detected
-      // In future, we could report diagnostics here
       return null;
     }
 
@@ -65,6 +89,155 @@ public partial class NuruDelegateCommandGenerator
       LambdaBody: bodyString,
       IsAsync: isAsync,
       ReturnType: signature.ReturnType);
+  }
+
+  /// <summary>
+  /// Extracts handler information from a method group (local function or static method).
+  /// Generates a method call expression instead of copying lambda body.
+  /// </summary>
+  private static HandlerInfo? ExtractMethodGroupHandlerInfo(
+    ExpressionSyntax handlerExpression,
+    List<ParameterClassification> parameters,
+    DelegateSignature signature,
+    SemanticModel semanticModel,
+    CancellationToken cancellationToken)
+  {
+    // Get the method symbol
+    SymbolInfo symbolInfo = semanticModel.GetSymbolInfo(handlerExpression, cancellationToken);
+    IMethodSymbol? methodSymbol = symbolInfo.Symbol as IMethodSymbol
+      ?? symbolInfo.CandidateSymbols.OfType<IMethodSymbol>().FirstOrDefault();
+
+    if (methodSymbol is null)
+      return null;
+
+    // Instance methods are not supported - analyzer reports NURU_H001
+    if (!methodSymbol.IsStatic && handlerExpression is MemberAccessExpressionSyntax)
+      return null;
+
+    // Private/protected methods are not accessible from generated code
+    // Skip handler generation - the delegate invoker will be used instead
+    if (methodSymbol.DeclaredAccessibility is Accessibility.Private or Accessibility.Protected)
+      return null;
+
+    // Get the method call expression (how to invoke this method)
+    string methodCallExpression = GetMethodCallExpression(handlerExpression, methodSymbol);
+
+    // Determine if method is async
+    bool isAsync = methodSymbol.IsAsync || signature.ReturnType.IsTask;
+
+    // Check if method accepts CancellationToken as last parameter
+    bool methodAcceptsCancellationToken = methodSymbol.Parameters.Length > 0 &&
+      methodSymbol.Parameters[^1].Type.ToDisplayString() == "System.Threading.CancellationToken";
+
+    // Build the argument list for the method call
+    List<string> arguments = [];
+
+    foreach (ParameterClassification param in parameters)
+    {
+      if (param.IsRouteParam)
+      {
+        // Route param: request.PropertyName
+        arguments.Add($"request.{ToPascalCase(param.Name)}");
+      }
+      else if (param.IsDiParam)
+      {
+        // DI param: field name (PascalCase)
+        arguments.Add(ToPascalCase(param.Name));
+      }
+    }
+
+    // Add CancellationToken if method expects it
+    if (methodAcceptsCancellationToken)
+    {
+      arguments.Add("cancellationToken");
+    }
+
+    // Generate the method call body
+    string bodyString = GenerateMethodGroupBody(
+      methodCallExpression,
+      arguments,
+      signature.ReturnType,
+      isAsync);
+
+    return new HandlerInfo(
+      Parameters: [.. parameters],
+      LambdaBody: bodyString,
+      IsAsync: isAsync,
+      ReturnType: signature.ReturnType);
+  }
+
+  /// <summary>
+  /// Gets the method call expression string from a handler expression.
+  /// Uses fully qualified names to ensure the method is accessible from generated code.
+  /// </summary>
+  private static string GetMethodCallExpression(ExpressionSyntax handlerExpression, IMethodSymbol methodSymbol)
+  {
+    // Check if this is a local function (MethodKind.LocalFunction)
+    if (methodSymbol.MethodKind == MethodKind.LocalFunction)
+    {
+      // Local functions are accessible by name in the same scope
+      // However, generated code is in a different namespace, so local functions won't work
+      // This is a limitation - local functions in consuming code can't be called from generated handlers
+      // For now, return the name and let the build fail with a clear error
+      return methodSymbol.Name;
+    }
+
+    // For static methods, use the fully qualified containing type
+    if (methodSymbol.IsStatic && methodSymbol.ContainingType is not null)
+    {
+      string containingType = methodSymbol.ContainingType.ToDisplayString(
+        new SymbolDisplayFormat(
+          globalNamespaceStyle: SymbolDisplayGlobalNamespaceStyle.Included,
+          typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces));
+
+      return $"{containingType}.{methodSymbol.Name}";
+    }
+
+    // Fallback: use expression as-is
+    return handlerExpression switch
+    {
+      IdentifierNameSyntax identifier => identifier.Identifier.Text,
+      MemberAccessExpressionSyntax memberAccess =>
+        $"{memberAccess.Expression.ToFullString().Trim()}.{memberAccess.Name.Identifier.Text}",
+      _ => methodSymbol.Name
+    };
+  }
+
+  /// <summary>
+  /// Generates the handler body for a method group call.
+  /// </summary>
+  private static string GenerateMethodGroupBody(
+    string methodCall,
+    List<string> arguments,
+    DelegateTypeInfo returnType,
+    bool isAsync)
+  {
+    string argsString = string.Join(", ", arguments);
+    string call = $"{methodCall}({argsString})";
+
+    if (returnType.IsVoid)
+    {
+      // void → execute and return Unit (handled by caller)
+      return $"{call};";
+    }
+    else if (returnType.IsTask)
+    {
+      if (returnType.TaskResultType is null)
+      {
+        // Task → await
+        return $"await {call};";
+      }
+      else
+      {
+        // Task<T> → return await
+        return $"return await {call};";
+      }
+    }
+    else
+    {
+      // Sync return value → wrap in ValueTask
+      return $"return new global::System.Threading.Tasks.ValueTask<{returnType.FullName}>({call});";
+    }
   }
 
   /// <summary>

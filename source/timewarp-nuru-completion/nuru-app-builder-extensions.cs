@@ -1,14 +1,9 @@
 namespace TimeWarp.Nuru;
 
-using System;
-using System.Diagnostics;
-using System.IO;
-using TimeWarp.Nuru;
-
 /// <summary>
 /// Extension methods for NuruAppBuilder to enable shell completion support.
 /// </summary>
-public static class NuruAppBuilderExtensions
+public static class NuruAppBuilderCompletionExtensions
 {
   // ============================================================================
   // EndpointBuilder<TBuilder> overloads - preserve builder type in fluent chain

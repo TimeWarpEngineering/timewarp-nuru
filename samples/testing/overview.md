@@ -81,6 +81,46 @@ See the [runfile-test-harness/](runfile-test-harness/) subfolder for the complet
 ./samples/testing/runfile-test-harness/run-real-app-tests.cs
 ```
 
+## Suppressing Closure Warnings in Tests
+
+When writing tests, you may intentionally use closures in handlers to capture values for assertions:
+
+```csharp
+bool handlerCalled = false;
+string capturedValue = "";
+
+app.Map("test {name}")
+  .WithHandler((string name) =>
+  {
+    handlerCalled = true;      // Closure - captures external variable
+    capturedValue = name;      // Closure - captures external variable
+  })
+  .Done();
+
+await app.RunAsync(["test", "Alice"]);
+
+handlerCalled.ShouldBeTrue();
+capturedValue.ShouldBe("Alice");
+```
+
+This triggers warning `NURU_H002: Handler lambda captures external variable(s)`. This is expected behavior - the source generator cannot create a Mediator handler for lambdas with closures because captured variables can't be injected at runtime.
+
+For test code, suppress the warning:
+
+```csharp
+#pragma warning disable NURU_H002 // Test code intentionally uses closures to capture values for assertions
+// ... test code with closures ...
+#pragma warning restore NURU_H002
+```
+
+Or suppress at the file level by adding to the top of your test file:
+
+```csharp
+#pragma warning disable NURU_H002
+```
+
+**Note:** In production code, avoid closures in handlers. Use DI-injected parameters instead.
+
 ## See Also
 
 - [Terminal Abstractions Documentation](../../documentation/user/features/terminal-abstractions.md)

@@ -54,6 +54,12 @@ jobs:
           echo "Running build script..."
           dotnet ${{ github.workspace }}/runfiles/build.cs
 
+      - name: Verify Samples
+        if: github.event_name != 'release'
+        run: |
+          echo "Verifying all samples compile..."
+          dotnet ${{ github.workspace }}/runfiles/verify-samples.cs
+
       - name: Test
         if: github.event_name != 'release'
         run: |

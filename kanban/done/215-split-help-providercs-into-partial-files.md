@@ -13,17 +13,17 @@ The `help-provider.cs` file (643 lines) is a static class handling help text gen
 ## Checklist
 
 ### File Creation
-- [ ] Create `help-provider.filtering.cs` - Route filtering and grouping
-- [ ] Create `help-provider.formatting.cs` - Pattern formatting logic
-- [ ] Create `help-provider.ansi.cs` - ANSI color formatting helpers
+- [x] Create `help-provider.filtering.cs` - Route filtering and grouping
+- [x] Create `help-provider.formatting.cs` - Pattern formatting logic
+- [x] Create `help-provider.ansi.cs` - ANSI color formatting helpers
 
 ### Documentation
-- [ ] Add `<remarks>` to main file listing all partial files
-- [ ] Add XML summary to each new partial file
+- [x] Add `<remarks>` to main file listing all partial files
+- [x] Add XML summary to each new partial file
 
 ### Verification
-- [ ] All tests pass
-- [ ] Build succeeds
+- [x] All tests pass
+- [x] Build succeeds
 
 ## Notes
 
@@ -55,3 +55,16 @@ The pattern formatting section (~280 lines) converts internal `{x}` syntax to di
 ### Reference Pattern
 
 Follow established partial class conventions with XML documentation.
+
+## Implementation Summary
+
+Split the 643-line `help-provider.cs` into 4 partial files:
+
+| File | Lines | Content |
+|------|-------|---------|
+| `help-provider.cs` | 87 | Core `GetHelpText` orchestration with `<remarks>` documentation |
+| `help-provider.filtering.cs` | 133 | `FilterRoutes`, `ShouldFilter`, `MatchesWildcard`, `GroupByDescription`, `EndpointGroup` class |
+| `help-provider.formatting.cs` | 276 | `AppendGroup`, `FormatCommandPattern`, `FormatPlainPattern` |
+| `help-provider.ansi.cs` | 107 | `GetDefaultAppName`, `FormatSectionHeader`, `FormatUsage`, `FormatDescription`, `FormatDefaultMarker`, `FormatMessageTypeIndicator`, `FormatMessageTypeLegend` |
+
+All 1694 tests pass. Build succeeds with no errors.

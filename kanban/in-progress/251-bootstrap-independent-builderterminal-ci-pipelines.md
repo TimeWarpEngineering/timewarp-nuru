@@ -18,24 +18,24 @@ Establish independent CI/CD pipelines for `TimeWarp.Builder` and `TimeWarp.Termi
 ## Checklist
 
 ### Phase 1: Add Independent Versioning
-- [ ] Add `<Version>1.0.0-beta.1</Version>` to `source/timewarp-builder/timewarp-builder.csproj`
-- [ ] Add `<Version>1.0.0-beta.1</Version>` to `source/timewarp-terminal/timewarp-terminal.csproj`
+- [x] Add `<Version>1.0.0-beta.1</Version>` to `source/timewarp-builder/timewarp-builder.csproj`
+- [x] Add `<Version>1.0.0-beta.1</Version>` to `source/timewarp-terminal/timewarp-terminal.csproj`
 
 ### Phase 2: Create Builder Workflow
-- [ ] Create `.github/workflows/builder-publish.yml`
-- [ ] Trigger on: `push` to `source/timewarp-builder/**`, `release` with `builder-v*` tag, `workflow_dispatch`
-- [ ] Build step (always runs)
-- [ ] Publish step (only on release or workflow_dispatch)
+- [x] Create `.github/workflows/builder-publish.yml`
+- [x] Trigger on: `push` to `source/timewarp-builder/**`, `release` with `builder-v*` tag, `workflow_dispatch`
+- [x] Build step (always runs)
+- [x] Publish step (only on release or workflow_dispatch)
 
 ### Phase 3: Create Terminal Workflow
-- [ ] Create `.github/workflows/terminal-publish.yml`
-- [ ] Trigger on: `push` to `source/timewarp-terminal/**`, `release` with `terminal-v*` tag, `workflow_dispatch`
-- [ ] Build step (always runs)
-- [ ] Publish step (only on release or workflow_dispatch)
+- [x] Create `.github/workflows/terminal-publish.yml`
+- [x] Trigger on: `push` to `source/timewarp-terminal/**`, `release` with `terminal-v*` tag, `workflow_dispatch`
+- [x] Build step (always runs)
+- [x] Publish step (only on release or workflow_dispatch)
 
 ### Phase 4: Update Main CI Workflow
-- [ ] Remove `TimeWarp.Builder` and `TimeWarp.Terminal` from Nuru publish list in `ci-cd.yml`
-- [ ] Skip tests temporarily (add TODO comment linking to this task)
+- [x] Remove `TimeWarp.Builder` and `TimeWarp.Terminal` from Nuru publish list in `ci-cd.yml`
+- [x] Skip tests temporarily (add TODO comment linking to this task)
 
 ### Phase 5: Merge PR
 - [ ] Commit and push changes

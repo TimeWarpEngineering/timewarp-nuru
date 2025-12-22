@@ -1,0 +1,68 @@
+name: TimeWarp.Builder Publish
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'source/timewarp-builder/**'
+      - '.github/workflows/builder-publish.yml'
+  pull_request:
+    branches: [master]
+    paths:
+      - 'source/timewarp-builder/**'
+      - '.github/workflows/builder-publish.yml'
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: 'Publish to NuGet'
+        required: true
+        type: boolean
+        default: true
+
+jobs:
+  build-and-publish:
+    # Skip if release tag doesn't match builder-v* pattern
+    if: github.event_name != 'release' || startsWith(github.event.release.tag_name, 'builder-v')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Create artifacts directory
+        run: mkdir -p artifacts/packages
+
+      - name: Build TimeWarp.Builder
+        run: |
+          echo "Building TimeWarp.Builder..."
+          dotnet build source/timewarp-builder/timewarp-builder.csproj --configuration Release --verbosity minimal
+
+      - name: Publish to NuGet.org
+        if: |
+          github.event_name == 'release' ||
+          (github.event_name == 'workflow_dispatch' && github.event.inputs.publish == 'true')
+        run: |
+          # Extract version from csproj
+          VERSION=$(grep -oP '<Version>\K[^<]+' source/timewarp-builder/timewarp-builder.csproj)
+          echo "Publishing TimeWarp.Builder version: $VERSION"
+          
+          dotnet nuget push "artifacts/packages/TimeWarp.Builder.$VERSION.nupkg" \
+            --api-key ${{ secrets.NUGET_API_KEY }} \
+            --source https://api.nuget.org/v3/index.json \
+            --skip-duplicate
+        env:
+          DOTNET_NUGET_SIGNATURE_VERIFICATION: false
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: TimeWarp.Builder-${{ github.run_number }}
+          path: artifacts/packages/TimeWarp.Builder.*.nupkg

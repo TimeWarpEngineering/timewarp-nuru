@@ -38,23 +38,24 @@ Establish independent CI/CD pipelines for `TimeWarp.Builder` and `TimeWarp.Termi
 - [x] Skip tests temporarily (add TODO comment linking to this task)
 
 ### Phase 5: Merge PR
-- [ ] Commit and push changes
-- [ ] Verify CI passes (build succeeds, tests skipped)
-- [ ] Merge PR #126
+- [x] Commit and push changes
+- [x] Verify CI passes (build succeeds, tests skipped)
+- [x] Merge PR #126
 
 ### Phase 6: Bootstrap - Publish to NuGet
-- [ ] Manually trigger `builder-publish.yml` workflow via GitHub Actions UI
-- [ ] Verify `TimeWarp.Builder 1.0.0-beta.1` appears on NuGet (~15 min propagation)
-- [ ] Manually trigger `terminal-publish.yml` workflow
-- [ ] Verify `TimeWarp.Terminal 1.0.0-beta.1` appears on NuGet
+- [x] Manually trigger `builder-publish.yml` workflow via GitHub Actions UI
+- [x] Verify `TimeWarp.Builder 1.0.0-beta.1` appears on NuGet
+- [x] Convert Terminal to use Builder NuGet package (PR #127)
+- [x] Manually trigger `terminal-publish.yml` workflow
+- [x] Verify `TimeWarp.Terminal 1.0.0-beta.1` appears on NuGet
 
 ### Phase 7: Update Jaribu (Separate Repo)
-- [ ] Change Terminal from ProjectReference to `<PackageReference Include="TimeWarp.Terminal" Version="1.0.0-beta.1" />`
-- [ ] Publish new Jaribu version (e.g., `1.0.0-beta.7`)
+- [x] Jaribu `1.0.0-beta.6` already references `TimeWarp.Terminal` from NuGet
+- [x] No new Jaribu version needed
 
 ### Phase 8: Re-enable Nuru Tests
-- [ ] Update `Directory.Packages.props` with new Jaribu version
-- [ ] Remove test skip from `ci-cd.yml`
+- [x] `Directory.Packages.props` already has Jaribu `1.0.0-beta.6`
+- [x] Remove test skip from `ci-cd.yml`
 - [ ] Commit, push, verify CI passes
 
 ## Notes

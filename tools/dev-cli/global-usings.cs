@@ -1,0 +1,13 @@
+// Global usings for the dev CLI
+global using System;
+global using System.IO;
+global using System.Linq;
+global using System.Threading;
+global using System.Threading.Tasks;
+global using System.Collections.Generic;
+global using System.Xml.Linq;
+global using Mediator;
+global using TimeWarp.Nuru;
+global using TimeWarp.Amuru;
+global using TimeWarp.Terminal;
+global using DevCli.Commands;

@@ -23,6 +23,8 @@
   </ItemGroup>
   <ItemGroup Label="TimeWarp Packages">
     <PackageVersion Include="TimeWarp.Amuru" Version="1.0.0-beta.13" />
+    <PackageVersion Include="TimeWarp.Builder" Version="1.0.0-beta.1" />
+    <PackageVersion Include="TimeWarp.Terminal" Version="1.0.0-beta.1" />
     <PackageVersion Include="TimeWarp.Jaribu" Version="1.0.0-beta.6" />
     <PackageVersion Include="TimeWarp.Build.Tasks" Version="1.0.0" />
     <PackageVersion Include="TimeWarp.OptionsValidation" Version="1.0.0-beta.4" />

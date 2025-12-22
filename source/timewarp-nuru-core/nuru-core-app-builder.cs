@@ -130,11 +130,8 @@ public partial class NuruCoreAppBuilder<TSelf>
         ServiceCollection.AddSingleton(AppMetadata);
       }
 
-      // Register terminal if configured
-      if (Terminal is not null)
-      {
-        ServiceCollection.AddSingleton<ITerminal>(Terminal);
-      }
+      // Register terminal (use configured terminal or default)
+      ServiceCollection.AddSingleton<ITerminal>(Terminal ?? TimeWarpTerminal.Default);
 
       ServiceProvider serviceProvider = ServiceCollection.BuildServiceProvider();
 

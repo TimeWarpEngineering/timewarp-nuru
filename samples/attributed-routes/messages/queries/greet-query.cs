@@ -1,12 +1,13 @@
 namespace AttributedRoutes.Messages;
 
 using TimeWarp.Nuru;
+using TimeWarp.Terminal;
 using Mediator;
-using static System.Console;
 
 /// <summary>
 /// Simple greeting query with a required parameter.
 /// This is a Query (Q) - read-only, safe to retry.
+/// Demonstrates ITerminal injection for testable output.
 /// </summary>
 [NuruRoute("greet", Description = "Greet someone by name")]
 public sealed class GreetQuery : IQuery<Unit>
@@ -16,9 +17,16 @@ public sealed class GreetQuery : IQuery<Unit>
 
   public sealed class Handler : IQueryHandler<GreetQuery, Unit>
   {
+    private readonly ITerminal Terminal;
+
+    public Handler(ITerminal terminal)
+    {
+      Terminal = terminal;
+    }
+
     public ValueTask<Unit> Handle(GreetQuery query, CancellationToken ct)
     {
-      WriteLine($"Hello, {query.Name}!");
+      Terminal.WriteLine($"Hello, {query.Name}!");
       return default;
     }
   }

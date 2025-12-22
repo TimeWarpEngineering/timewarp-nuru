@@ -9,12 +9,12 @@ namespace TimeWarp.Terminal;
 /// requiring interactive features such as REPL, tab completion, and arrow key navigation.
 /// For testing scenarios, use <see cref="TestTerminal"/> or create a custom implementation.
 /// </remarks>
-public sealed class NuruTerminal : ITerminal
+public sealed class TimeWarpTerminal : ITerminal
 {
   /// <summary>
-  /// Gets the default singleton instance of <see cref="NuruTerminal"/>.
+  /// Gets the default singleton instance of <see cref="TimeWarpTerminal"/>.
   /// </summary>
-  public static NuruTerminal Default { get; } = new();
+  public static TimeWarpTerminal Default { get; } = new();
 
   /// <inheritdoc />
   public void Write(string message)

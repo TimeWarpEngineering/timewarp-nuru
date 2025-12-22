@@ -15,7 +15,7 @@ namespace TimeWarp.Terminal;
 /// <list type="number">
 ///   <item><description><see cref="Current"/> (if set)</description></item>
 ///   <item><description><c>ITerminal</c> from DI (if registered)</description></item>
-///   <item><description><see cref="NuruTerminal.Default"/> (fallback)</description></item>
+///   <item><description><see cref="TimeWarpTerminal.Default"/> (fallback)</description></item>
 /// </list>
 /// </para>
 /// <example>
@@ -80,5 +80,5 @@ public static class TestTerminalContext
   /// <param name="terminal">The terminal to use if no context is set.</param>
   /// <returns>The resolved terminal.</returns>
   public static ITerminal Resolve(ITerminal? terminal)
-    => Current ?? terminal ?? NuruTerminal.Default;
+    => Current ?? terminal ?? TimeWarpTerminal.Default;
 }

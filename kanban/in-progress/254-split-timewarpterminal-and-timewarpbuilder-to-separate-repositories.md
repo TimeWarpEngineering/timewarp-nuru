@@ -10,9 +10,9 @@ Move TimeWarp.Terminal and TimeWarp.Builder source code from timewarp-nuru repos
 
 - [x] Move TimeWarp.Terminal source code to separate repository
 - [x] Move TimeWarp.Builder source code to separate repository
-- [ ] Update timewarp-nuru-core to use PackageReference instead of ProjectReference for both packages
-- [ ] Update Directory.Packages.props to reference correct NuGet package versions
-- [ ] Remove source directories from timewarp-nuru repository
+- [x] Update timewarp-nuru-core to use PackageReference instead of ProjectReference for both packages
+- [x] Update Directory.Packages.props to reference correct NuGet package versions
+- [x] Remove source directories from timewarp-nuru repository
 - [ ] Update CI/CD workflows (builder-publish.yml, terminal-publish.yml) if needed
 - [ ] Update samples and tests to use new package references
 - [ ] Verify builds work after migration

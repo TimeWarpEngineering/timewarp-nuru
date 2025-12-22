@@ -24,7 +24,8 @@
     <InternalsVisibleTo Include="TimeWarp.Nuru" />
     <InternalsVisibleTo Include="TimeWarp.Nuru.Completion" />
     <InternalsVisibleTo Include="TimeWarp.Nuru.Repl" />
-    <ProjectReference Include="../timewarp-terminal/timewarp-terminal.csproj" />
+    <PackageReference Include="TimeWarp.Terminal" />
+    <PackageReference Include="TimeWarp.Builder" />
     <PackageReference Include="FluentValidation" />
     <PackageReference Include="GlobalUsingsAnalyzer">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

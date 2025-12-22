@@ -41,7 +41,7 @@ public interface ITerminal : IConsole
 | Class | Description |
 |-------|-------------|
 | `NuruConsole` | Production `IConsole` wrapping `System.Console` |
-| `NuruTerminal` | Production `ITerminal` with full terminal capabilities |
+| `TimeWarpTerminal` | Production `ITerminal` with full terminal capabilities |
 | `TestConsole` | Test implementation with captured output |
 | `TestTerminal` | Test implementation for interactive scenarios |
 

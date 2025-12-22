@@ -7,7 +7,7 @@ using TimeWarp.Nuru;
 using TimeWarp.Terminal;
 
 // Get a terminal instance
-ITerminal terminal = NuruTerminal.Default;
+ITerminal terminal = TimeWarpTerminal.Default;
 
 terminal.WriteLine();
 terminal.WriteLine("OSC 8 Hyperlink Demo".Cyan().Bold());

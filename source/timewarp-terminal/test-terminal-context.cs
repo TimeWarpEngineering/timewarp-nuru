@@ -74,8 +74,8 @@ public static class TestTerminalContext
     => Current ?? terminal ?? fallback;
 
   /// <summary>
-  /// Resolves a terminal using the standard resolution order with NuruTerminal.Default as fallback:
-  /// TestTerminalContext.Current → provided terminal → NuruTerminal.Default.
+  /// Resolves a terminal using the standard resolution order with TimeWarpTerminal.Default as fallback:
+  /// TestTerminalContext.Current → provided terminal → TimeWarpTerminal.Default.
   /// </summary>
   /// <param name="terminal">The terminal to use if no context is set.</param>
   /// <returns>The resolved terminal.</returns>

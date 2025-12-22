@@ -54,9 +54,9 @@
     <PackageReference Include="Shouldly" />
   </ItemGroup>
 
-  <!-- Jaribu test framework as project reference -->
+  <!-- Jaribu test framework -->
   <ItemGroup>
-    <ProjectReference Include="/home/steventcramer/worktrees/github.com/TimeWarpEngineering/timewarp-jaribu/Cramer-2025-12-17-dev/Source/TimeWarp.Jaribu/TimeWarp.Jaribu.csproj" />
+    <PackageReference Include="TimeWarp.Jaribu" />
   </ItemGroup>
 
   <!-- Shared test helpers for source generator tests -->

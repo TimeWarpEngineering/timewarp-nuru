@@ -28,24 +28,30 @@ using static System.Console;
 NuruCoreApp app = NuruApp.CreateBuilder(args)
   .ConfigureServices(services => services.AddMediator())
   // Default route when no command is specified
-  .MapDefault
-  (
-    () => WriteLine("Welcome to the Nuru sample app! Use --help to see available commands."),
-    "Default welcome message"
-  )
-  .Map("status", () => WriteLine("✓ System is running"), "Check system status")
-  .Map("echo {message}", (string message) => WriteLine($"Echo: {message}"), "Echo a message back")
-  .Map
-  (
-    "proxy {command} {*args}",
-    (string command, string[] args) => WriteLine($"Would execute: {command} {string.Join(" ", args)}"),
-    "Proxy command execution"
-  )
-  .Map<CalculateCommand, CalculateResponse>
-  (
-    "calc {value1:double} {value2:double} --operation {operation}",
-    "Perform calculation (operations: add, subtract, multiply, divide)"
-  )
+  .Map("")
+    .WithHandler(() => WriteLine("Welcome to the Nuru sample app! Use --help to see available commands."))
+    .WithDescription("Default welcome message")
+    .AsQuery()
+    .Done()
+  .Map("status")
+    .WithHandler(() => WriteLine("✓ System is running"))
+    .WithDescription("Check system status")
+    .AsQuery()
+    .Done()
+  .Map("echo {message}")
+    .WithHandler((string message) => WriteLine($"Echo: {message}"))
+    .WithDescription("Echo a message back")
+    .AsQuery()
+    .Done()
+  .Map("proxy {command} {*args}")
+    .WithHandler((string command, string[] args) => WriteLine($"Would execute: {command} {string.Join(" ", args)}"))
+    .WithDescription("Proxy command execution")
+    .AsCommand()
+    .Done()
+  .Map<CalculateCommand, CalculateResponse>("calc {value1:double} {value2:double} --operation {operation}")
+    .WithDescription("Perform calculation (operations: add, subtract, multiply, divide)")
+    .AsQuery()
+    .Done()
   .Build();
 
 return await app.RunAsync(args).ConfigureAwait(false);

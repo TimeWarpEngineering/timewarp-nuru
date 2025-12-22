@@ -34,13 +34,24 @@ class Program
 
     config = config.AddJob(Job.Default
                      .WithStrategy(RunStrategy.ColdStart)
-                     .WithLaunchCount(1)
+                     .WithLaunchCount(5)
                      .WithWarmupCount(0)
                      .WithIterationCount(1)
                      .WithInvocationCount(1)
                      .WithToolchain(net10Toolchain)
                      .DontEnforcePowerPlan());
 
-    BenchmarkRunner.Run<CliFrameworkBenchmark>(config, args);
+    // Check for --cost flag to run the cost matrix benchmark
+    if (args.Length > 0 && args[0] == "--cost")
+    {
+      // Run cost benchmark, passing remaining args to BenchmarkDotNet
+      string[] remainingArgs = args.Length > 1 ? args[1..] : [];
+      BenchmarkRunner.Run<NuruBuilderCostBenchmark>(config, remainingArgs);
+    }
+    else
+    {
+      // Default: run CLI framework comparison benchmark
+      BenchmarkRunner.Run<CliFrameworkBenchmark>(config, args);
+    }
   }
 }

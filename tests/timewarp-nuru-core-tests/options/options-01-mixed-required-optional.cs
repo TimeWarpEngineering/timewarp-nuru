@@ -27,15 +27,17 @@ public class MixedRequiredOptionalTests
     string? capturedVer = null;
     bool capturedDryRun = false;
 
-    NuruCoreApp app = new NuruAppBuilder()
-      .Map("deploy --env {env} --version? {ver?} --dry-run",
-        (string env, string? ver, bool dryRun) =>
+    NuruCoreApp app = NuruCoreApp.CreateSlimBuilder()
+      .Map("deploy --env {env} --version? {ver?} --dry-run")
+        .WithHandler((string env, string? ver, bool dryRun) =>
         {
           capturedEnv = env;
           capturedVer = ver;
           capturedDryRun = dryRun;
           return 0;
         })
+        .AsCommand()
+        .Done()
       .Build();
 
     // Act
@@ -55,15 +57,17 @@ public class MixedRequiredOptionalTests
     string? capturedVer = null;
     bool capturedDryRun = false;
 
-    NuruCoreApp app = new NuruAppBuilder()
-      .Map("deploy --env {env} --version? {ver?} --dry-run",
-        (string env, string? ver, bool dryRun) =>
+    NuruCoreApp app = NuruCoreApp.CreateSlimBuilder()
+      .Map("deploy --env {env} --version? {ver?} --dry-run")
+        .WithHandler((string env, string? ver, bool dryRun) =>
         {
           capturedEnv = env;
           capturedVer = ver;
           capturedDryRun = dryRun;
           return 0;
         })
+        .AsCommand()
+        .Done()
       .Build();
 
     // Act
@@ -79,9 +83,11 @@ public class MixedRequiredOptionalTests
   public static async Task Should_not_match_when_missing_required_option()
   {
     // Arrange
-    NuruCoreApp app = new NuruAppBuilder()
-      .Map("deploy --env {env} --version? {ver?} --dry-run",
-        (string _, string? _, bool _) => 0)
+    NuruCoreApp app = NuruCoreApp.CreateSlimBuilder()
+      .Map("deploy --env {env} --version? {ver?} --dry-run")
+        .WithHandler((string _, string? _, bool _) => 0)
+        .AsCommand()
+        .Done()
       .Build();
 
     // Act - missing required --env
@@ -98,15 +104,17 @@ public class MixedRequiredOptionalTests
     string? capturedVer = null;
     bool capturedDryRun = false;
 
-    NuruCoreApp app = new NuruAppBuilder()
-      .Map("deploy --env {env} --version? {ver?} --dry-run",
-        (string env, string? ver, bool dryRun) =>
+    NuruCoreApp app = NuruCoreApp.CreateSlimBuilder()
+      .Map("deploy --env {env} --version? {ver?} --dry-run")
+        .WithHandler((string env, string? ver, bool dryRun) =>
         {
           capturedEnv = env;
           capturedVer = ver;
           capturedDryRun = dryRun;
           return 0;
         })
+        .AsCommand()
+        .Done()
       .Build();
 
     // Act

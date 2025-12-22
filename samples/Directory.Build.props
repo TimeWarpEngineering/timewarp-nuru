@@ -9,12 +9,23 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <!-- Don't treat warnings as errors in samples -->
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <!-- Treat warnings as errors in samples - samples should be clean examples -->
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <!-- Disable code analysis for samples -->
     <EnableNETAnalyzers>false</EnableNETAnalyzers>
     <EnforceCodeStyleInBuild>false</EnforceCodeStyleInBuild>
     <!-- Repository URL for testing version check feature -->
     <RepositoryUrl>https://github.com/TimeWarpEngineering/timewarp-nuru</RepositoryUrl>
   </PropertyGroup>
+
+  <!-- Source generator debugging: emit generated files to artifacts directory -->
+  <PropertyGroup Label="Source Generator Output">
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    <CompilerGeneratedFilesOutputPath>$(ArtifactsDirectory)generated/$(MSBuildProjectName)</CompilerGeneratedFilesOutputPath>
+  </PropertyGroup>
+
+  <!-- Exclude emitted generated files from compilation (already included by source generator) -->
+  <ItemGroup Label="Source Generator Output">
+    <Compile Remove="$(CompilerGeneratedFilesOutputPath)/**/*.cs" />
+  </ItemGroup>
 </Project>

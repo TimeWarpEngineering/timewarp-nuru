@@ -20,12 +20,12 @@ public class NegativeNumberTests
     int? capturedX = null;
     int? capturedY = null;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("add {x:int} {y:int}", (int x, int y) =>
+      .Map("add {x:int} {y:int}").WithHandler((int x, int y) =>
       {
         capturedX = x;
         capturedY = y;
         return 0;
-      })
+      }).AsCommand().Done()
       .Build();
 
     // Act
@@ -46,12 +46,12 @@ public class NegativeNumberTests
     double? capturedX = null;
     double? capturedY = null;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("multiply {x:double} {y:double}", (double x, double y) =>
+      .Map("multiply {x:double} {y:double}").WithHandler((double x, double y) =>
       {
         capturedX = x;
         capturedY = y;
         return 0;
-      })
+      }).AsCommand().Done()
       .Build();
 
     // Act
@@ -73,13 +73,13 @@ public class NegativeNumberTests
     int? capturedB = null;
     int? capturedC = null;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("calc {a:int} {b:int} {c:int}", (int a, int b, int c) =>
+      .Map("calc {a:int} {b:int} {c:int}").WithHandler((int a, int b, int c) =>
       {
         capturedA = a;
         capturedB = b;
         capturedC = c;
         return 0;
-      })
+      }).AsCommand().Done()
       .Build();
 
     // Act
@@ -101,12 +101,12 @@ public class NegativeNumberTests
     int? capturedValue = null;
     bool? capturedFlag = null;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("test {value:int} --flag", (int value, bool flag) =>
+      .Map("test {value:int} --flag").WithHandler((int value, bool flag) =>
       {
         capturedValue = value;
         capturedFlag = flag;
         return 0;
-      })
+      }).AsCommand().Done()
       .Build();
 
     // Act
@@ -126,11 +126,11 @@ public class NegativeNumberTests
     // Arrange
     decimal? capturedValue = null;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("price {amount:decimal}", (decimal amount) =>
+      .Map("price {amount:decimal}").WithHandler((decimal amount) =>
       {
         capturedValue = amount;
         return 0;
-      })
+      }).AsCommand().Done()
       .Build();
 
     // Act
@@ -149,11 +149,11 @@ public class NegativeNumberTests
     // Arrange
     string? capturedText = null;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("echo {text}", (string text) =>
+      .Map("echo {text}").WithHandler((string text) =>
       {
         capturedText = text;
         return 0;
-      })
+      }).AsQuery().Done()
       .Build();
 
     // Act
@@ -172,11 +172,11 @@ public class NegativeNumberTests
     // Arrange
     bool? capturedVerbose = null;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("test --verbose", (bool verbose) =>
+      .Map("test --verbose").WithHandler((bool verbose) =>
       {
         capturedVerbose = verbose;
         return 0;
-      })
+      }).AsCommand().Done()
       .Build();
 
     // Act - with defined option
@@ -201,11 +201,11 @@ public class NegativeNumberTests
     // Arrange
     double? capturedValue = null;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("calc {value:double}", (double value) =>
+      .Map("calc {value:double}").WithHandler((double value) =>
       {
         capturedValue = value;
         return 0;
-      })
+      }).AsCommand().Done()
       .Build();
 
     // Act
@@ -224,11 +224,11 @@ public class NegativeNumberTests
     // Arrange
     int? capturedAmount = null;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("calc --amount {amount:int}", (int amount) =>
+      .Map("calc --amount {amount:int}").WithHandler((int amount) =>
       {
         capturedAmount = amount;
         return 0;
-      })
+      }).AsCommand().Done()
       .Build();
 
     // Act - negative number as option value: --amount -5

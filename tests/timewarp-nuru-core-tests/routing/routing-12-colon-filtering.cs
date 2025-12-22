@@ -19,11 +19,11 @@ public class ColonFilteringTests
     // Arrange
     string? capturedDataSource = null;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("connect {dataSource}", (string dataSource) =>
+      .Map("connect {dataSource}").WithHandler((string dataSource) =>
       {
         capturedDataSource = dataSource;
         return 0;
-      })
+      }).AsCommand().Done()
       .Build();
 
     // Act
@@ -41,11 +41,11 @@ public class ColonFilteringTests
     // Arrange
     string? capturedDataSource = null;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("connect --data-source {dataSource}", (string dataSource) =>
+      .Map("connect --data-source {dataSource}").WithHandler((string dataSource) =>
       {
         capturedDataSource = dataSource;
         return 0;
-      })
+      }).AsCommand().Done()
       .Build();
 
     // Act
@@ -64,12 +64,12 @@ public class ColonFilteringTests
     string? capturedEnv = null;
     string? capturedConnectionString = null;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("deploy {env} {connectionString}", (string env, string connectionString) =>
+      .Map("deploy {env} {connectionString}").WithHandler((string env, string connectionString) =>
       {
         capturedEnv = env;
         capturedConnectionString = connectionString;
         return 0;
-      })
+      }).AsCommand().Done()
       .Build();
 
     // Act
@@ -88,11 +88,11 @@ public class ColonFilteringTests
     // Arrange
     string? capturedUrl = null;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("fetch {url}", (string url) =>
+      .Map("fetch {url}").WithHandler((string url) =>
       {
         capturedUrl = url;
         return 0;
-      })
+      }).AsQuery().Done()
       .Build();
 
     // Act
@@ -110,11 +110,11 @@ public class ColonFilteringTests
     // Arrange
     string? capturedDataSource = null;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("connect {dataSource}", (string dataSource) =>
+      .Map("connect {dataSource}").WithHandler((string dataSource) =>
       {
         capturedDataSource = dataSource;
         return 0;
-      })
+      }).AsCommand().Done()
       .Build();
 
     // Act - Config override --Logging:LogLevel:Default=Debug should be filtered out
@@ -132,11 +132,11 @@ public class ColonFilteringTests
     // Arrange
     string[]? capturedArgs = null;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("docker run {*args}", (string[] args) =>
+      .Map("docker run {*args}").WithHandler((string[] args) =>
       {
         capturedArgs = args;
         return 0;
-      })
+      }).AsCommand().Done()
       .Build();
 
     // Act
@@ -164,11 +164,11 @@ public class ColonFilteringTests
     string? capturedValue = null;
     NuruCoreApp app = new NuruAppBuilder()
       .UseDebugLogging()
-      .Map("test -x {value}", (string value) =>
+      .Map("test -x {value}").WithHandler((string value) =>
       {
         capturedValue = value;
         return 0;
-      })
+      }).AsCommand().Done()
       .Build();
 
     // Act - Single dash option with colon in value should NOT be filtered (only --Key:Value patterns)
@@ -186,11 +186,11 @@ public class ColonFilteringTests
     // Arrange
     string? capturedParam = null;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("run {param}", (string param) =>
+      .Map("run {param}").WithHandler((string param) =>
       {
         capturedParam = param;
         return 0;
-      })
+      }).AsCommand().Done()
       .Build();
 
     // Act - Multiple args with different colon patterns
@@ -212,11 +212,11 @@ public class ColonFilteringTests
     // Arrange - Test false positive case: --url=https://host:port should NOT be filtered
     string? capturedUrl = null;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("fetch --url {url}", (string url) =>
+      .Map("fetch --url {url}").WithHandler((string url) =>
       {
         capturedUrl = url;
         return 0;
-      })
+      }).AsQuery().Done()
       .Build();
 
     // Act - Colon is in the option VALUE, not the config path structure
@@ -234,11 +234,11 @@ public class ColonFilteringTests
     // Arrange - Test false positive case: --connection=Server=localhost:5432 should NOT be filtered
     string? capturedConnection = null;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("connect --connection {conn}", (string conn) =>
+      .Map("connect --connection {conn}").WithHandler((string conn) =>
       {
         capturedConnection = conn;
         return 0;
-      })
+      }).AsCommand().Done()
       .Build();
 
     // Act - Colon is in the option VALUE (connection string), not config path
@@ -256,11 +256,11 @@ public class ColonFilteringTests
     // Arrange
     string? capturedParam = null;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("run {param}", (string param) =>
+      .Map("run {param}").WithHandler((string param) =>
       {
         capturedParam = param;
         return 0;
-      })
+      }).AsCommand().Done()
       .Build();
 
     // Act - Nested config override --Logging:LogLevel:Default=Debug should be filtered

@@ -22,14 +22,14 @@ public class OptionOrderIndependenceTests
     string? boundDest = null;
     bool boundCompress = false;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("backup {source} --compress --output {dest}",
+      .Map("backup {source} --compress --output {dest}").WithHandler(
         (string source, bool compress, string dest) =>
         {
           boundSource = source;
           boundCompress = compress;
           boundDest = dest;
           return 0;
-        })
+        }).AsCommand().Done()
       .Build();
 
     // Act - options in DIFFERENT order than pattern
@@ -52,14 +52,14 @@ public class OptionOrderIndependenceTests
     string? boundDest = null;
     bool boundCompress = false;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("backup {source} --compress --output {dest}",
+      .Map("backup {source} --compress --output {dest}").WithHandler(
         (string source, bool compress, string dest) =>
         {
           boundSource = source;
           boundCompress = compress;
           boundDest = dest;
           return 0;
-        })
+        }).AsCommand().Done()
       .Build();
 
     // Act - options in SAME order as pattern
@@ -82,14 +82,14 @@ public class OptionOrderIndependenceTests
     bool boundGamma = false;
 
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("test --alpha --beta {value} --gamma",
+      .Map("test --alpha --beta {value} --gamma").WithHandler(
         (bool alpha, string value, bool gamma) =>
         {
           boundAlpha = alpha;
           boundBeta = value;
           boundGamma = gamma;
           return 0;
-        })
+        }).AsCommand().Done()
       .Build();
 
     // Act - order: alpha, beta, gamma (same as pattern)
@@ -111,14 +111,14 @@ public class OptionOrderIndependenceTests
     bool boundGamma = false;
 
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("test --alpha --beta {value} --gamma",
+      .Map("test --alpha --beta {value} --gamma").WithHandler(
         (bool alpha, string value, bool gamma) =>
         {
           boundAlpha = alpha;
           boundBeta = value;
           boundGamma = gamma;
           return 0;
-        })
+        }).AsCommand().Done()
       .Build();
 
     // Act - order: gamma, beta, alpha (reverse of pattern)
@@ -140,14 +140,14 @@ public class OptionOrderIndependenceTests
     bool boundGamma = false;
 
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("test --alpha --beta {value} --gamma",
+      .Map("test --alpha --beta {value} --gamma").WithHandler(
         (bool alpha, string value, bool gamma) =>
         {
           boundAlpha = alpha;
           boundBeta = value;
           boundGamma = gamma;
           return 0;
-        })
+        }).AsCommand().Done()
       .Build();
 
     // Act - order: beta, alpha, gamma (mixed)
@@ -170,7 +170,7 @@ public class OptionOrderIndependenceTests
     bool boundVerbose = false;
 
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("backup {source} --compress? --output? {dest} --verbose?",
+      .Map("backup {source} --compress? --output? {dest} --verbose?").WithHandler(
         (string source, bool compress, string? dest, bool verbose) =>
         {
           boundSource = source;
@@ -178,7 +178,7 @@ public class OptionOrderIndependenceTests
           boundOutput = dest;
           boundVerbose = verbose;
           return 0;
-        })
+        }).AsCommand().Done()
       .Build();
 
     // Act - only some options, in different order
@@ -199,8 +199,8 @@ public class OptionOrderIndependenceTests
     // Options should come AFTER all positional arguments
 #pragma warning disable RCS1163 // Unused parameter
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("copy {source} {dest} --verbose?",
-        (string source, string dest, bool verbose) => 0)
+      .Map("copy {source} {dest} --verbose?").WithHandler(
+        (string source, string dest, bool verbose) => 0).AsCommand().Done()
 #pragma warning restore RCS1163 // Unused parameter
       .Build();
 
@@ -220,13 +220,13 @@ public class OptionOrderIndependenceTests
     bool boundVerbose = false;
 
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("build --verbose,-v? --output,-o {file}",
+      .Map("build --verbose,-v? --output,-o {file}").WithHandler(
         (bool verbose, string file) =>
         {
           boundVerbose = verbose;
           boundOutput = file;
           return 0;
-        })
+        }).AsCommand().Done()
       .Build();
 
     // Act - short forms in reverse order
@@ -244,8 +244,8 @@ public class OptionOrderIndependenceTests
     // Ensure required options are still enforced
 #pragma warning disable RCS1163 // Unused parameter
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("backup {source} --compress --output {dest}",
-        (string source, bool compress, string dest) => 0)
+      .Map("backup {source} --compress --output {dest}").WithHandler(
+        (string source, bool compress, string dest) => 0).AsCommand().Done()
 #pragma warning restore RCS1163 // Unused parameter
       .Build();
 
@@ -265,12 +265,12 @@ public class OptionOrderIndependenceTests
     string? boundFile = null;
 
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("build --output {file?}",
+      .Map("build --output {file?}").WithHandler(
         (string? file) =>
         {
           boundFile = file;
           return 0;
-        })
+        }).AsCommand().Done()
       .Build();
 
     // Act - provide flag with value

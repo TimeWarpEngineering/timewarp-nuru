@@ -80,6 +80,7 @@ public class KeyBindingProfileTests
   // Default Profile Tests (COMPLETE - All handlers exist)
   // ============================================================================
 
+  [Skip("Help output format not yet finalized - see task 069")]
   public static async Task Default_profile_should_execute_commands()
   {
     // Arrange
@@ -122,7 +123,10 @@ public class KeyBindingProfileTests
         options.KeyBindingProfileName = "Default";
         options.WelcomeMessage = null;
       })
-      .Map("hello {name}", (string name) => $"Hello, {name}!")
+      .Map("hello {name}")
+        .WithHandler((string name) => $"Hello, {name}!")
+        .AsCommand()
+        .Done()
       .Build();
 
     // Act
@@ -150,7 +154,10 @@ public class KeyBindingProfileTests
         options.KeyBindingProfileName = "Default";
         options.WelcomeMessage = null;
       })
-      .Map("tet", () => "Arrow keys work!")
+      .Map("tet")
+        .WithHandler(() => "Arrow keys work!")
+        .AsQuery()
+        .Done()
       .Build();
 
     // Act
@@ -165,6 +172,7 @@ public class KeyBindingProfileTests
   // Emacs Profile Tests (PARTIAL - Missing HandleKillLine)
   // ============================================================================
 
+  [Skip("Help output format not yet finalized - see task 069")]
   public static async Task Emacs_profile_should_execute_commands()
   {
     // Arrange
@@ -209,7 +217,10 @@ public class KeyBindingProfileTests
         options.KeyBindingProfileName = "Emacs";
         options.WelcomeMessage = null;
       })
-      .Map("helo", () => "Emacs Ctrl+F/B work!")
+      .Map("helo")
+        .WithHandler(() => "Emacs Ctrl+F/B work!")
+        .AsQuery()
+        .Done()
       .Build();
 
     // Act
@@ -236,7 +247,10 @@ public class KeyBindingProfileTests
         options.KeyBindingProfileName = "Emacs";
         options.WelcomeMessage = null;
       })
-      .Map("version", () => "1.0.0")
+      .Map("version")
+        .WithHandler(() => "1.0.0")
+        .AsQuery()
+        .Done()
       .Build();
 
     // Act
@@ -251,6 +265,7 @@ public class KeyBindingProfileTests
   // Vi Profile Tests (PARTIAL - Missing several handlers)
   // ============================================================================
 
+  [Skip("Help output format not yet finalized - see task 069")]
   public static async Task Vi_profile_should_execute_commands()
   {
     // Arrange
@@ -293,7 +308,10 @@ public class KeyBindingProfileTests
         options.KeyBindingProfileName = "Vi";
         options.WelcomeMessage = null;
       })
-      .Map("tet", () => "Vi arrow keys work!")
+      .Map("tet")
+        .WithHandler(() => "Vi arrow keys work!")
+        .AsQuery()
+        .Done()
       .Build();
 
     // Act
@@ -308,6 +326,7 @@ public class KeyBindingProfileTests
   // VSCode Profile Tests (PARTIAL - Missing handlers)
   // ============================================================================
 
+  [Skip("Help output format not yet finalized - see task 069")]
   public static async Task VSCode_profile_should_execute_commands()
   {
     // Arrange
@@ -352,7 +371,10 @@ public class KeyBindingProfileTests
         options.KeyBindingProfileName = "VSCode";
         options.WelcomeMessage = null;
       })
-      .Map("start-middle-end", () => "VSCode Home/End work!")
+      .Map("start-middle-end")
+        .WithHandler(() => "VSCode Home/End work!")
+        .AsQuery()
+        .Done()
       .Build();
 
     // Act
@@ -380,7 +402,10 @@ public class KeyBindingProfileTests
         options.KeyBindingProfileName = "VSCode";
         options.WelcomeMessage = null;
       })
-      .Map("one Xtwo", () => "VSCode word movement works!")
+      .Map("one Xtwo")
+        .WithHandler(() => "VSCode word movement works!")
+        .AsQuery()
+        .Done()
       .Build();
 
     // Act

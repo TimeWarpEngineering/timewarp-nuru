@@ -63,7 +63,10 @@ public class SessionContextHelpTests
   {
     // Arrange & Act
     NuruCoreApp app = NuruCoreApp.CreateSlimBuilder()
-      .Map("test", () => "ok")
+      .Map("test")
+        .WithHandler(() => "ok")
+        .AsQuery()
+        .Done()
       .Build();
 
     // Assert - App should have SessionContext property
@@ -80,13 +83,19 @@ public class SessionContextHelpTests
     string? capturedHelp = null;
     NuruCoreApp app = NuruCoreApp.CreateSlimBuilder()
       .AddReplRoutes() // Adds exit, quit, q, clear, history, etc.
-      .Map("test", () => "ok")
-      .Map("help", (SessionContext session) =>
-      {
-        // This simulates what the auto-generated help route does
-        capturedHelp = session.HelpContext.ToString();
-        return capturedHelp;
-      })
+      .Map("test")
+        .WithHandler(() => "ok")
+        .AsQuery()
+        .Done()
+      .Map("help")
+        .WithHandler((SessionContext session) =>
+        {
+          // This simulates what the auto-generated help route does
+          capturedHelp = session.HelpContext.ToString();
+          return capturedHelp;
+        })
+        .AsQuery()
+        .Done()
       .Build();
 
     // Act - Execute help in CLI context (default)
@@ -104,12 +113,18 @@ public class SessionContextHelpTests
     string? capturedHelp = null;
     NuruCoreApp app = NuruCoreApp.CreateSlimBuilder()
       .AddReplRoutes()
-      .Map("test", () => "ok")
-      .Map("help", (SessionContext session) =>
-      {
-        capturedHelp = session.HelpContext.ToString();
-        return capturedHelp;
-      })
+      .Map("test")
+        .WithHandler(() => "ok")
+        .AsQuery()
+        .Done()
+      .Map("help")
+        .WithHandler((SessionContext session) =>
+        {
+          capturedHelp = session.HelpContext.ToString();
+          return capturedHelp;
+        })
+        .AsQuery()
+        .Done()
       .Build();
 
     // Simulate REPL context by setting the flag
@@ -134,17 +149,26 @@ public class SessionContextHelpTests
     string? dashDashHelpContext = null;
 
     NuruCoreApp app = NuruCoreApp.CreateSlimBuilder()
-      .Map("test", () => "ok")
-      .Map("help", (SessionContext session) =>
-      {
-        helpContext = session.HelpContext.ToString();
-        return helpContext;
-      })
-      .Map("--help", (SessionContext session) =>
-      {
-        dashDashHelpContext = session.HelpContext.ToString();
-        return dashDashHelpContext;
-      })
+      .Map("test")
+        .WithHandler(() => "ok")
+        .AsQuery()
+        .Done()
+      .Map("help")
+        .WithHandler((SessionContext session) =>
+        {
+          helpContext = session.HelpContext.ToString();
+          return helpContext;
+        })
+        .AsQuery()
+        .Done()
+      .Map("--help")
+        .WithHandler((SessionContext session) =>
+        {
+          dashDashHelpContext = session.HelpContext.ToString();
+          return dashDashHelpContext;
+        })
+        .AsQuery()
+        .Done()
       .Build();
 
     // Act

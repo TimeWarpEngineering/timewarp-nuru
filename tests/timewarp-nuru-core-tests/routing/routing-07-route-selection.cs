@@ -20,8 +20,8 @@ public class RouteSelectionTests
     bool literalSelected = false;
     bool parameterSelected = false;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("git status", () => { literalSelected = true; return 0; })
-      .Map("git {command}", (string command) => { parameterSelected = true; return 0; })
+      .Map("git status").WithHandler(() => { literalSelected = true; return 0; }).AsQuery().Done()
+      .Map("git {command}").WithHandler((string command) => { parameterSelected = true; return 0; }).AsCommand().Done()
       .Build();
 
     // Act
@@ -41,8 +41,8 @@ public class RouteSelectionTests
     bool typedSelected = false;
     bool untypedSelected = false;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("delay {ms:int}", (int ms) => { typedSelected = true; return 0; })
-      .Map("delay {duration}", (string duration) => { untypedSelected = true; return 0; })
+      .Map("delay {ms:int}").WithHandler((int ms) => { typedSelected = true; return 0; }).AsCommand().Done()
+      .Map("delay {duration}").WithHandler((string duration) => { untypedSelected = true; return 0; }).AsCommand().Done()
       .Build();
 
     // Act
@@ -62,8 +62,8 @@ public class RouteSelectionTests
     bool requiredSelected = false;
     bool optionalSelected = false;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("deploy {env}", (string env) => { requiredSelected = true; return 0; })
-      .Map("deploy {env?}", (string? env) => { optionalSelected = true; return 0; })
+      .Map("deploy {env}").WithHandler((string env) => { requiredSelected = true; return 0; }).AsCommand().Done()
+      .Map("deploy {env?}").WithHandler((string? env) => { optionalSelected = true; return 0; }).AsCommand().Done()
       .Build();
 
     // Act
@@ -83,8 +83,8 @@ public class RouteSelectionTests
     bool moreOptionsSelected = false;
     bool fewerOptionsSelected = false;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("build --verbose --watch", (bool verbose, bool watch) => { moreOptionsSelected = true; return 0; })
-      .Map("build --verbose", (bool verbose) => { fewerOptionsSelected = true; return 0; })
+      .Map("build --verbose --watch").WithHandler((bool verbose, bool watch) => { moreOptionsSelected = true; return 0; }).AsCommand().Done()
+      .Map("build --verbose").WithHandler((bool verbose) => { fewerOptionsSelected = true; return 0; }).AsCommand().Done()
       .Build();
 
     // Act
@@ -104,8 +104,8 @@ public class RouteSelectionTests
     bool noOptionSelected = false;
     bool requiredOptionSelected = false;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("build", () => { noOptionSelected = true; return 0; })
-      .Map("build --config {m}", (string m) => { requiredOptionSelected = true; return 0; })
+      .Map("build").WithHandler(() => { noOptionSelected = true; return 0; }).AsCommand().Done()
+      .Map("build --config {m}").WithHandler((string m) => { requiredOptionSelected = true; return 0; }).AsCommand().Done()
       .Build();
 
     // Act
@@ -126,9 +126,9 @@ public class RouteSelectionTests
     bool commitSelected = false;
     bool catchAllSelected = false;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("git status", () => { statusSelected = true; return 0; })
-      .Map("git commit", () => { commitSelected = true; return 0; })
-      .Map("git {*args}", (string[] args) => { catchAllSelected = true; return 0; })
+      .Map("git status").WithHandler(() => { statusSelected = true; return 0; }).AsQuery().Done()
+      .Map("git commit").WithHandler(() => { commitSelected = true; return 0; }).AsCommand().Done()
+      .Map("git {*args}").WithHandler((string[] args) => { catchAllSelected = true; return 0; }).AsCommand().Done()
       .Build();
 
     // Act
@@ -149,8 +149,8 @@ public class RouteSelectionTests
     bool firstSelected = false;
     bool secondSelected = false;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("greet {name}", (string name) => { firstSelected = true; return 0; })
-      .Map("hello {person}", (string person) => { secondSelected = true; return 0; })
+      .Map("greet {name}").WithHandler((string name) => { firstSelected = true; return 0; }).AsQuery().Done()
+      .Map("hello {person}").WithHandler((string person) => { secondSelected = true; return 0; }).AsQuery().Done()
       .Build();
 
     // Act
@@ -172,10 +172,10 @@ public class RouteSelectionTests
     bool lessSpecificSelected = false;
     bool leastSpecificSelected = false;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("deploy {env} --tag {t} --verbose", (string env, string t, bool verbose) => { mostSpecificSelected = true; return 0; })
-      .Map("deploy {env} --tag {t}", (string env, string t) => { mediumSelected = true; return 0; })
-      .Map("deploy {env}", (string env) => { lessSpecificSelected = true; return 0; })
-      .Map("deploy", () => { leastSpecificSelected = true; return 0; })
+      .Map("deploy {env} --tag {t} --verbose").WithHandler((string env, string t, bool verbose) => { mostSpecificSelected = true; return 0; }).AsCommand().Done()
+      .Map("deploy {env} --tag {t}").WithHandler((string env, string t) => { mediumSelected = true; return 0; }).AsCommand().Done()
+      .Map("deploy {env}").WithHandler((string env) => { lessSpecificSelected = true; return 0; }).AsCommand().Done()
+      .Map("deploy").WithHandler(() => { leastSpecificSelected = true; return 0; }).AsCommand().Done()
       .Build();
 
     // Act

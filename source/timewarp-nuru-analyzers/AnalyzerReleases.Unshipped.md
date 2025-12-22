@@ -24,3 +24,7 @@ NURU_S008 | RoutePattern.Semantic | Error | Options after end-of-options separat
 NURU_D001 | Dependencies | Error | Mediator packages required for Map&lt;TCommand&gt;
 NURU_A001 | AttributedRoutes | Error | Multi-word route pattern requires [NuruRouteGroup]
 NURU_A002 | AttributedRoutes | Error | Multiple parameters require explicit Order
+NURU_H001 | Handler.Validation | Error | Instance method handler not supported
+NURU_H002 | Handler.Validation | Warning | Closure detected in handler
+NURU_H003 | Handler.Validation | Error | Unsupported handler expression
+NURU_H004 | Handler.Validation | Warning | Private method handler not accessible

@@ -10,4 +10,15 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
+
+  <!-- Source generator debugging: emit generated files to artifacts directory -->
+  <PropertyGroup Label="Source Generator Output">
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    <CompilerGeneratedFilesOutputPath>$(ArtifactsDirectory)generated/$(MSBuildProjectName)</CompilerGeneratedFilesOutputPath>
+  </PropertyGroup>
+
+  <!-- Exclude emitted generated files from compilation (already included by source generator) -->
+  <ItemGroup Label="Source Generator Output">
+    <Compile Remove="$(CompilerGeneratedFilesOutputPath)/**/*.cs" />
+  </ItemGroup>
 </Project>

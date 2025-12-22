@@ -1,0 +1,12 @@
+#if !ANALYZER_BUILD
+global using Microsoft.Extensions.Logging;
+global using Microsoft.Extensions.Logging.Abstractions;
+#endif
+global using System;
+global using System.Collections.Generic;
+global using System.Diagnostics.CodeAnalysis;
+global using System.Linq;
+global using System.Runtime.Serialization;
+global using System.Text;
+global using System.Text.Json.Serialization;
+global using TimeWarp.Nuru;

@@ -31,7 +31,7 @@ public class EnumPartialFilteringTests
     // Arrange - Register enum converter and create route
     NuruAppBuilder builder = new();
     builder.AddTypeConverter(new EnumTypeConverter<Environment>());
-    builder.Map("deploy {env:environment} {tag?}", (Environment env, string? tag) => 0);
+    builder.Map("deploy {env:environment} {tag?}").WithHandler((Environment env, string? tag) => 0).AsCommand().Done();
 
     NuruCoreApp app = builder.Build();
     CompletionProvider provider = new(app.TypeConverterRegistry);
@@ -61,7 +61,7 @@ public class EnumPartialFilteringTests
     // Arrange
     NuruAppBuilder builder = new();
     builder.AddTypeConverter(new EnumTypeConverter<Environment>());
-    builder.Map("deploy {env:environment}", (Environment env) => 0);
+    builder.Map("deploy {env:environment}").WithHandler((Environment env) => 0).AsCommand().Done();
 
     NuruCoreApp app = builder.Build();
     CompletionProvider provider = new(app.TypeConverterRegistry);
@@ -91,7 +91,7 @@ public class EnumPartialFilteringTests
     // Arrange
     NuruAppBuilder builder = new();
     builder.AddTypeConverter(new EnumTypeConverter<Environment>());
-    builder.Map("deploy {env:environment}", (Environment env) => 0);
+    builder.Map("deploy {env:environment}").WithHandler((Environment env) => 0).AsCommand().Done();
 
     NuruCoreApp app = builder.Build();
     CompletionProvider provider = new(app.TypeConverterRegistry);
@@ -119,7 +119,7 @@ public class EnumPartialFilteringTests
     // Arrange
     NuruAppBuilder builder = new();
     builder.AddTypeConverter(new EnumTypeConverter<LogLevel>());
-    builder.Map("log {level:loglevel}", (LogLevel level) => 0);
+    builder.Map("log {level:loglevel}").WithHandler((LogLevel level) => 0).AsCommand().Done();
 
     NuruCoreApp app = builder.Build();
     CompletionProvider provider = new(app.TypeConverterRegistry);
@@ -147,7 +147,7 @@ public class EnumPartialFilteringTests
     // Arrange
     NuruAppBuilder builder = new();
     builder.AddTypeConverter(new EnumTypeConverter<Environment>());
-    builder.Map("deploy {env:environment}", (Environment env) => 0);
+    builder.Map("deploy {env:environment}").WithHandler((Environment env) => 0).AsCommand().Done();
 
     NuruCoreApp app = builder.Build();
     CompletionProvider provider = new(app.TypeConverterRegistry);

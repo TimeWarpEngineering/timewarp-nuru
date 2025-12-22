@@ -25,7 +25,7 @@ public class CandidateGeneratorTests
   private static Endpoint CreateEndpoint(string pattern)
   {
     NuruAppBuilder builder = new();
-    builder.Map(pattern, () => 0);
+    builder.Map(pattern).WithHandler(() => 0).AsCommand().Done();
     return builder.EndpointCollection.Endpoints[0];
   }
 

@@ -27,6 +27,7 @@ public sealed class DockerPsQuery : DockerGroupBase, IQuery<Unit>
       {
         WriteLine("def456         redis:7        Exited (0) 1 day ago");
       }
+
       return default;
     }
   }

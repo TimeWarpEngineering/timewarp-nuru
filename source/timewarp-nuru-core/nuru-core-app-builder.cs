@@ -4,7 +4,9 @@ namespace TimeWarp.Nuru;
 /// Core builder for configuring lightweight Nuru applications.
 /// For full-featured applications with IHostApplicationBuilder support, use NuruAppBuilder from TimeWarp.Nuru package.
 /// </summary>
-public partial class NuruCoreAppBuilder
+/// <typeparam name="TSelf">The derived builder type for fluent API support (CRTP pattern).</typeparam>
+public partial class NuruCoreAppBuilder<TSelf>
+  where TSelf : NuruCoreAppBuilder<TSelf>
 {
   private protected readonly TypeConverterRegistry TypeConverterRegistry = new();
   private protected ApplicationMetadata? AppMetadata;
@@ -43,21 +45,21 @@ public partial class NuruCoreAppBuilder
   /// Enables automatic help generation for all routes.
   /// Help routes will be generated at build time.
   /// </summary>
-  public NuruCoreAppBuilder AddAutoHelp()
+  public virtual TSelf AddAutoHelp()
   {
     AutoHelpEnabled = true;
-    return this;
+    return (TSelf)this;
   }
 
   /// <summary>
   /// Configures help output filtering and display options.
   /// </summary>
   /// <param name="configure">Action to configure help options.</param>
-  public NuruCoreAppBuilder ConfigureHelp(Action<HelpOptions> configure)
+  public virtual TSelf ConfigureHelp(Action<HelpOptions> configure)
   {
     ArgumentNullException.ThrowIfNull(configure);
     configure(HelpOptions);
-    return this;
+    return (TSelf)this;
   }
 
   /// <summary>
@@ -66,11 +68,17 @@ public partial class NuruCoreAppBuilder
   public NuruCoreApp Build()
   {
     // Add routes from NuruRouteRegistry (auto-registered via [NuruRoute] attributes)
+    // Build HashSet of existing patterns for O(1) lookup instead of LINQ Any() which is O(n)
+    HashSet<string> existingPatterns = new(StringComparer.OrdinalIgnoreCase);
+    foreach (Endpoint endpoint in EndpointCollection.Endpoints)
+    {
+      existingPatterns.Add(endpoint.RoutePattern);
+    }
+
     foreach (RegisteredRoute registered in NuruRouteRegistry.RegisteredRoutes)
     {
       // Skip if this exact pattern is already mapped (user explicit Map() takes precedence)
-      if (EndpointCollection.Endpoints.Any(e =>
-            string.Equals(e.RoutePattern, registered.Pattern, StringComparison.OrdinalIgnoreCase)))
+      if (existingPatterns.Contains(registered.Pattern))
         continue;
 
       Endpoint endpoint = new()
@@ -156,9 +164,9 @@ public partial class NuruCoreAppBuilder
   /// </summary>
   /// <param name="name">The application name. If null, will be auto-detected.</param>
   /// <param name="description">The application description.</param>
-  public NuruCoreAppBuilder WithMetadata(string? name = null, string? description = null)
+  public virtual TSelf WithMetadata(string? name = null, string? description = null)
   {
     AppMetadata = new ApplicationMetadata(name, description);
-    return this;
+    return (TSelf)this;
   }
 }

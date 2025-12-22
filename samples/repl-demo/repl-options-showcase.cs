@@ -154,131 +154,121 @@ NuruCoreApp app = NuruApp.CreateBuilder(args, nuruAppOptions)
   // Success command - returns exit code 0
   // Demonstrates: Normal successful command execution
   // --------------------------------------------------------
-  .Map
-  (
-    pattern: "success",
-    handler: () =>
+  .Map("success")
+    .WithHandler(() =>
     {
       WriteLine("Command completed successfully!");
       return 0;
-    },
-    description: "Executes successfully with exit code 0."
-  )
+    })
+    .WithDescription("Executes successfully with exit code 0.")
+    .AsQuery()
+    .Done()
 
   // --------------------------------------------------------
   // Fail command - returns non-zero exit code
   // Demonstrates: ContinueOnError=false will stop REPL
   // --------------------------------------------------------
-  .Map
-  (
-    pattern: "fail",
-    handler: () =>
+  .Map("fail")
+    .WithHandler(() =>
     {
       WriteLine("This command intentionally fails to demonstrate ContinueOnError=false");
       WriteLine("The REPL will exit after this command because ContinueOnError is disabled.");
       return 1;
-    },
-    description: "Intentionally fails with exit code 1 to demonstrate ContinueOnError behavior."
-  )
+    })
+    .WithDescription("Intentionally fails with exit code 1 to demonstrate ContinueOnError behavior.")
+    .AsCommand()
+    .Done()
 
   // --------------------------------------------------------
   // Custom exit code command
   // Demonstrates: ShowExitCode feature with various codes
   // --------------------------------------------------------
-  .Map
-  (
-    pattern: "exitcode {code:int}",
-    handler: (int code) =>
+  .Map("exitcode {code:int}")
+    .WithHandler((int code) =>
     {
       WriteLine($"Returning exit code: {code}");
       WriteLine($"Watch for '[Exit code: {code}]' displayed by ShowExitCode feature.");
       return code;
-    },
-    description: "Returns the specified exit code to demonstrate ShowExitCode display."
-  )
+    })
+    .WithDescription("Returns the specified exit code to demonstrate ShowExitCode display.")
+    .AsQuery()
+    .Done()
 
   // --------------------------------------------------------
   // Password command - excluded from history
   // Demonstrates: HistoryIgnorePatterns feature
   // --------------------------------------------------------
-  .Map
-  (
-    pattern: "set-password {value}",
-    handler: (string value) =>
+  .Map("set-password {value}")
+    .WithHandler((string value) =>
     {
       WriteLine($"Password set (not really - this is a demo).");
       WriteLine("NOTE: This command will NOT appear in history due to HistoryIgnorePatterns.");
       WriteLine("Try 'history' command to verify it's not recorded.");
-    },
-    description: "Simulates setting a password - excluded from history by pattern."
-  )
+    })
+    .WithDescription("Simulates setting a password - excluded from history by pattern.")
+    .AsIdempotentCommand()
+    .Done()
 
   // --------------------------------------------------------
   // Token command - excluded from history
   // Demonstrates: HistoryIgnorePatterns feature
   // --------------------------------------------------------
-  .Map
-  (
-    pattern: "set-token {value}",
-    handler: (string value) =>
+  .Map("set-token {value}")
+    .WithHandler((string value) =>
     {
       WriteLine($"Token configured (not really - this is a demo).");
       WriteLine("NOTE: This command will NOT appear in history due to *token* pattern.");
-    },
-    description: "Simulates setting a token - excluded from history by pattern."
-  )
+    })
+    .WithDescription("Simulates setting a token - excluded from history by pattern.")
+    .AsIdempotentCommand()
+    .Done()
 
   // --------------------------------------------------------
   // Secret command - excluded from history
   // Demonstrates: HistoryIgnorePatterns feature
   // --------------------------------------------------------
-  .Map
-  (
-    pattern: "my-secret-command",
-    handler: () =>
+  .Map("my-secret-command")
+    .WithHandler(() =>
     {
       WriteLine("This is a secret command!");
       WriteLine("NOTE: This command will NOT appear in history due to *secret* pattern.");
-    },
-    description: "A secret command - excluded from history by pattern."
-  )
+    })
+    .WithDescription("A secret command - excluded from history by pattern.")
+    .AsQuery()
+    .Done()
 
   // --------------------------------------------------------
   // Long running command
   // Demonstrates: ShowTiming feature
   // --------------------------------------------------------
-  .Map
-  (
-    pattern: "slow {ms:int}",
-    handler: async (int ms) =>
+  .Map("slow {ms:int}")
+    .WithHandler(async (int ms) =>
     {
       WriteLine($"Sleeping for {ms}ms to demonstrate ShowTiming feature...");
       await Task.Delay(ms);
       WriteLine("Done! Check the timing display above.");
-    },
-    description: "Delays for specified milliseconds to demonstrate ShowTiming."
-  )
+    })
+    .WithDescription("Delays for specified milliseconds to demonstrate ShowTiming.")
+    .AsQuery()
+    .Done()
 
   // --------------------------------------------------------
   // Echo command - useful for testing
   // --------------------------------------------------------
-  .Map
-  (
-    pattern: "echo {*message}",
-    handler: (string[] message) =>
+  .Map("echo {*message}")
+    .WithHandler((string[] message) =>
     {
       WriteLine(string.Join(" ", message));
-    },
-    description: "Echoes the message back. Useful for testing."
-  )
+    })
+    .WithDescription("Echoes the message back. Useful for testing.")
+    .AsQuery()
+    .Done()
 
   // --------------------------------------------------------
   // Info command - shows current configuration
   // --------------------------------------------------------
-  .Map
-  (
-    pattern: "config",
-    handler: () =>
+  .Map("config")
+    .WithHandler(() =>
     {
       WriteLine("Current ReplOptions Configuration:");
       WriteLine("-----------------------------------");
@@ -301,9 +291,10 @@ NuruCoreApp app = NuruApp.CreateBuilder(args, nuruAppOptions)
       WriteLine("  - *apikey*");
       WriteLine("  - *credential*");
       WriteLine("  - clear-history");
-    },
-    description: "Displays the current ReplOptions configuration."
-  )
+    })
+    .WithDescription("Displays the current ReplOptions configuration.")
+    .AsQuery()
+    .Done()
 
   .Build();
 

@@ -4,6 +4,15 @@ namespace TimeWarp.Nuru;
 /// Core CLI app that supports both direct execution and dependency injection.
 /// For the full-featured experience, use <see cref="NuruCoreApp"/> from the TimeWarp.Nuru package.
 /// </summary>
+/// <remarks>
+/// This class is split into multiple partial files for maintainability:
+/// <list type="bullet">
+///   <item><description><c>nuru-core-app.cs</c> - Factory methods, constructors, properties, and RunAsync orchestration</description></item>
+///   <item><description><c>nuru-core-app.execution.cs</c> - Mediator and delegate execution methods</description></item>
+///   <item><description><c>nuru-core-app.binding.cs</c> - Parameter binding and conversion methods</description></item>
+///   <item><description><c>nuru-core-app.validation.cs</c> - Configuration validation and help display methods</description></item>
+/// </list>
+/// </remarks>
 public partial class NuruCoreApp
 {
   private readonly IServiceProvider? ServiceProvider;
@@ -87,6 +96,8 @@ public partial class NuruCoreApp
 
   #endregion
 
+  #region Properties
+
   /// <summary>
   /// Gets the terminal I/O provider for interactive operations like REPL.
   /// </summary>
@@ -126,6 +137,10 @@ public partial class NuruCoreApp
   /// Gets the session context for tracking REPL vs CLI execution state.
   /// </summary>
   public SessionContext SessionContext { get; }
+
+  #endregion
+
+  #region Constructors
 
   /// <summary>
   /// Direct constructor - used by NuruAppBuilder for non-DI path.
@@ -173,9 +188,22 @@ public partial class NuruCoreApp
     SessionContext = serviceProvider.GetRequiredService<SessionContext>();
   }
 
+  #endregion
+
+  #region Run Orchestration
+
+  /// <summary>
+  /// Runs the application with the provided command line arguments.
+  /// </summary>
+  /// <param name="args">Command line arguments.</param>
+  /// <returns>Exit code (0 for success, non-zero for failure).</returns>
   public async Task<int> RunAsync(string[] args)
   {
     ArgumentNullException.ThrowIfNull(args);
+
+#if NURU_TIMING_DEBUG
+    System.Diagnostics.Stopwatch swRunAsync = System.Diagnostics.Stopwatch.StartNew();
+#endif
 
     // Test harness handoff (only top-level)
     if (NuruTestContext.TryExecuteTestRunner(this, out Task<int> testResult))
@@ -188,16 +216,25 @@ public partial class NuruCoreApp
     // Update session context with terminal color support for help output
     SessionContext.SupportsColor = effectiveTerminal.SupportsColor;
 
+#if NURU_TIMING_DEBUG
+    long setupTicks = swRunAsync.ElapsedTicks;
+#endif
+
     try
     {
       // Filter out configuration override args before route matching
       // Configuration overrides follow the pattern --Section:Key=value (must start with -- and contain :)
       // This allows legitimate values with colons (e.g., connection strings like //host:port/db)
-      string[] routeArgs = [.. args.Where(arg => !(arg.StartsWith("--", StringComparison.Ordinal) && arg.Contains(':', StringComparison.Ordinal)))];
+      // Using loop instead of LINQ to avoid JIT overhead on cold start
+      string[] routeArgs = FilterConfigurationArgs(args);
 
       // Parse and match route (using filtered args)
       ILogger logger = LoggerFactory.CreateLogger("RouteBasedCommandResolver");
       EndpointResolutionResult result = EndpointResolver.Resolve(routeArgs, Endpoints, TypeConverterRegistry, logger);
+
+#if NURU_TIMING_DEBUG
+      long resolveTicks = swRunAsync.ElapsedTicks;
+#endif
 
       // Exit early if route resolution failed
       if (!result.Success || result.MatchedEndpoint is null)
@@ -212,8 +249,12 @@ public partial class NuruCoreApp
 
       if (!await ValidateConfigurationAsync(args, effectiveTerminal).ConfigureAwait(false)) return 1;
 
+#if NURU_TIMING_DEBUG
+      long validateTicks = swRunAsync.ElapsedTicks;
+#endif
+
       // Execute based on endpoint strategy
-      return result.MatchedEndpoint.Strategy switch
+      int executeResult = result.MatchedEndpoint.Strategy switch
       {
         ExecutionStrategy.Mediator when ServiceProvider is null =>
           throw new InvalidOperationException
@@ -246,6 +287,14 @@ public partial class NuruCoreApp
 
         _ => throw new InvalidOperationException("Unknown execution strategy")
       };
+
+#if NURU_TIMING_DEBUG
+      long executeTicks = swRunAsync.ElapsedTicks;
+      double ticksPerUs = System.Diagnostics.Stopwatch.Frequency / 1_000_000.0;
+      Console.WriteLine($"[TIMING RunAsync] Setup={(setupTicks / ticksPerUs):F0}us, Resolve={(resolveTicks - setupTicks) / ticksPerUs:F0}us, Validate={(validateTicks - resolveTicks) / ticksPerUs:F0}us, Execute={(executeTicks - validateTicks) / ticksPerUs:F0}us, Total={(executeTicks / ticksPerUs):F0}us");
+#endif
+
+      return executeResult;
     }
 #pragma warning disable CA1031 // Do not catch general exception types
     // This is the top-level exception handler for the CLI app. We need to catch all exceptions
@@ -258,393 +307,7 @@ public partial class NuruCoreApp
     }
   }
 
-  [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode",
-      Justification = "Command type reflection is necessary for mediator pattern - users must preserve command types")]
-  [UnconditionalSuppressMessage("AOT", "IL3050:RequiresDynamicCode",
-      Justification = "Command instantiation through mediator pattern requires reflection")]
-  private async Task<int> ExecuteMediatorCommandAsync(
-      [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
-      Type commandType,
-      EndpointResolutionResult result)
-  {
-    if (MediatorExecutor is null)
-    {
-      throw new InvalidOperationException("MediatorExecutor is not available. Ensure DI is configured.");
-    }
-
-    object? returnValue = await MediatorExecutor.ExecuteCommandAsync(
-      commandType,
-      result.ExtractedValues!,
-      CancellationToken.None
-    ).ConfigureAwait(false);
-
-    // Display the response (if any)
-    MediatorExecutor.DisplayResponse(returnValue);
-
-    // Handle int return values
-    if (returnValue is int exitCode)
-    {
-      return exitCode;
-    }
-
-    return 0;
-  }
-
-  [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode",
-      Justification = "Delegate execution requires reflection - delegate types are preserved through registration")]
-  [UnconditionalSuppressMessage("AOT", "IL3050:RequiresDynamicCode",
-      Justification = "Delegate invocation may require dynamic code generation")]
-  private Task<int> ExecuteDelegateAsync(Delegate del, Dictionary<string, string> extractedValues, Endpoint endpoint)
-  {
-    // When full DI is enabled (MediatorExecutor exists), route through Mediator
-    if (MediatorExecutor is not null)
-    {
-      return ExecuteDelegateWithPipelineAsync(del, extractedValues, endpoint);
-    }
-
-    // Direct execution path (no DI)
-    return DelegateExecutor.ExecuteAsync(
-      del,
-      extractedValues,
-      TypeConverterRegistry,
-      ServiceProvider ?? EmptyServiceProvider.Instance,
-      endpoint,
-      Terminal
-    );
-  }
-
-  /// <summary>
-  /// Executes a delegate through Mediator when DI is enabled, allowing pipeline behaviors to apply.
-  /// </summary>
-  [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode",
-      Justification = "Delegate execution requires reflection - delegate types are preserved through registration")]
-  [UnconditionalSuppressMessage("AOT", "IL3050:RequiresDynamicCode",
-      Justification = "Delegate invocation may require dynamic code generation")]
-  private async Task<int> ExecuteDelegateWithPipelineAsync(
-    Delegate del,
-    Dictionary<string, string> extractedValues,
-    Endpoint endpoint)
-  {
-    // Create a scope for this request to get fresh RouteExecutionContext
-    using IServiceScope scope = ServiceProvider!.CreateScope();
-
-    // Populate RouteExecutionContext for pipeline behaviors
-    RouteExecutionContext? executionContext = scope.ServiceProvider.GetService<RouteExecutionContext>();
-    if (executionContext is not null)
-    {
-      executionContext.RoutePattern = endpoint.RoutePattern;
-      executionContext.StartedAt = DateTimeOffset.UtcNow;
-      executionContext.Strategy = ExecutionStrategy.Delegate;
-      executionContext.IsWrappedDelegate = true;
-    }
-
-    // Bind parameters first (same as direct execution)
-    object?[] boundArgs = BindDelegateParameters(del, extractedValues, endpoint);
-
-    // Create the delegate request
-    DelegateRequest request = new()
-    {
-      RoutePattern = endpoint.RoutePattern,
-      BoundArguments = boundArgs,
-      Handler = del,
-      Endpoint = endpoint
-    };
-
-    // Populate parameters in execution context
-    if (executionContext is not null)
-    {
-      executionContext.Parameters = extractedValues;
-    }
-
-    try
-    {
-      // Execute through Mediator - pipeline behaviors will be invoked automatically
-      IMediator mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
-      DelegateResponse response = await mediator.Send(request, CancellationToken.None).ConfigureAwait(false);
-
-      // Display the response (if any)
-      ResponseDisplay.Write(response.Result, Terminal);
-
-      return response.ExitCode;
-    }
-#pragma warning disable CA1031 // Do not catch general exception types
-    // We catch all exceptions here to provide consistent error handling for delegate execution.
-    // The CLI should not crash due to handler exceptions.
-    catch (Exception ex)
-#pragma warning restore CA1031
-    {
-      await Terminal.WriteErrorLineAsync($"Error executing handler: {ex.Message}").ConfigureAwait(false);
-      return 1;
-    }
-  }
-
-  /// <summary>
-  /// Binds delegate parameters from extracted route values.
-  /// </summary>
-  [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode",
-      Justification = "Delegate parameter binding uses reflection - types preserved through registration")]
-  [UnconditionalSuppressMessage("AOT", "IL3050:RequiresDynamicCode",
-      Justification = "Parameter binding may require dynamic code generation")]
-  private object?[] BindDelegateParameters(
-    Delegate del,
-    Dictionary<string, string> extractedValues,
-    Endpoint endpoint)
-  {
-    MethodInfo method = del.Method;
-    ParameterInfo[] parameters = method.GetParameters();
-
-    if (parameters.Length == 0)
-      return [];
-
-    return BindParameters(parameters, extractedValues, endpoint);
-  }
-
-  /// <summary>
-  /// Binds parameters from extracted values and services.
-  /// </summary>
-  [UnconditionalSuppressMessage("Trimming", "IL2070:UnrecognizedReflectionPattern",
-      Justification = "Parameter types are preserved through delegate registration")]
-  [UnconditionalSuppressMessage("AOT", "IL3050:RequiresDynamicCode",
-      Justification = "Array type creation is safe for known parameter types")]
-  private object?[] BindParameters(
-    ParameterInfo[] parameters,
-    Dictionary<string, string> extractedValues,
-    Endpoint endpoint)
-  {
-    object?[] args = new object?[parameters.Length];
-
-    for (int i = 0; i < parameters.Length; i++)
-    {
-      ParameterInfo param = parameters[i];
-
-      // Special case: ITerminal - use this.Terminal (which respects TestTerminalContext)
-      if (param.ParameterType == typeof(ITerminal))
-      {
-        args[i] = Terminal;
-        continue;
-      }
-
-      // Try to get value from extracted values
-      if (extractedValues.TryGetValue(param.Name!, out string? stringValue))
-      {
-        args[i] = ConvertParameter(param, stringValue);
-      }
-      else
-      {
-        // No value found - check if it's a service from DI
-        if (IsServiceParameter(param))
-        {
-          args[i] = ServiceProvider?.GetService(param.ParameterType);
-          if (args[i] is null && !param.HasDefaultValue)
-          {
-            throw new InvalidOperationException(
-                $"Cannot resolve service of type {param.ParameterType} for parameter '{param.Name}'");
-          }
-        }
-        else if (param.HasDefaultValue)
-        {
-          args[i] = param.DefaultValue;
-        }
-        else if (IsOptionalParameter(param.Name!, endpoint))
-        {
-          args[i] = null;
-        }
-        else
-        {
-          throw new InvalidOperationException(
-              $"No value provided for required parameter '{param.Name}'");
-        }
-      }
-    }
-
-    return args;
-  }
-
-  /// <summary>
-  /// Converts a string value to the parameter type.
-  /// </summary>
-  [UnconditionalSuppressMessage("Trimming", "IL2070:UnrecognizedReflectionPattern",
-      Justification = "Parameter types are preserved through delegate registration")]
-  [UnconditionalSuppressMessage("AOT", "IL3050:RequiresDynamicCode",
-      Justification = "Array type creation is safe for known parameter types")]
-  private object? ConvertParameter(ParameterInfo param, string stringValue)
-  {
-    // Handle arrays (catch-all and repeated parameters)
-    if (param.ParameterType.IsArray)
-    {
-      Type elementType = param.ParameterType.GetElementType()!;
-      string[] parts = stringValue.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-
-      if (elementType == typeof(string))
-      {
-        return parts;
-      }
-
-      Array typedArray = Array.CreateInstance(elementType, parts.Length);
-      for (int j = 0; j < parts.Length; j++)
-      {
-        if (TypeConverterRegistry.TryConvert(parts[j], elementType, out object? convertedElement))
-        {
-          typedArray.SetValue(convertedElement, j);
-        }
-        else
-        {
-          object converted = Convert.ChangeType(parts[j], elementType, CultureInfo.InvariantCulture);
-          typedArray.SetValue(converted, j);
-        }
-      }
-
-      return typedArray;
-    }
-
-    // Convert single value
-    if (TypeConverterRegistry.TryConvert(stringValue, param.ParameterType, out object? convertedValue))
-    {
-      return convertedValue;
-    }
-
-    if (param.ParameterType == typeof(string))
-    {
-      return stringValue;
-    }
-
-    return Convert.ChangeType(stringValue, param.ParameterType, CultureInfo.InvariantCulture);
-  }
-
-  /// <summary>
-  /// Checks if a parameter is optional based on the endpoint configuration.
-  /// </summary>
-  private static bool IsOptionalParameter(string parameterName, Endpoint endpoint)
-  {
-    // Check positional parameters
-    foreach (RouteMatcher segment in endpoint.CompiledRoute.PositionalMatchers)
-    {
-      if (segment is ParameterMatcher param && param.Name == parameterName)
-      {
-        return param.IsOptional;
-      }
-    }
-
-    // Check option parameters
-    foreach (OptionMatcher option in endpoint.CompiledRoute.OptionMatchers)
-    {
-      if (option.ParameterName == parameterName)
-      {
-        return option.IsOptional || option.ParameterIsOptional;
-      }
-    }
-
-    return false;
-  }
-
-  /// <summary>
-  /// Determines if a parameter should be resolved from DI.
-  /// </summary>
-  [UnconditionalSuppressMessage("Trimming", "IL2070:UnrecognizedReflectionPattern",
-      Justification = "Type checking for service parameters uses safe type comparisons")]
-  private static bool IsServiceParameter(ParameterInfo parameter)
-  {
-    Type type = parameter.ParameterType;
-
-    // Simple heuristic: if it's not a common value type and not string/array,
-    // it's likely a service
-    if (type.IsPrimitive || type == typeof(string) || type == typeof(decimal) ||
-        type == typeof(DateTime) || type == typeof(DateTimeOffset) || type == typeof(Guid) ||
-        type.IsArray || (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>)))
-    {
-      return false;
-    }
-
-    return true;
-  }
-
-  private void ShowAvailableCommands(ITerminal? terminal = null)
-  {
-    terminal ??= Terminal;
-    bool useColor = terminal.SupportsColor;
-    terminal.WriteLine(HelpProvider.GetHelpText(Endpoints, AppMetadata?.Name, AppMetadata?.Description, HelpOptions, HelpContext.Cli, useColor));
-  }
-
-  /// <summary>
-  /// Validates configuration if validation is enabled and not skipped.
-  /// </summary>
-  /// <param name="args">Command line arguments.</param>
-  /// <returns>True if validation passed or was skipped, false if validation failed.</returns>
-  private async Task<bool> ValidateConfigurationAsync(string[] args, ITerminal terminal)
-  {
-    // Skip validation for help commands or if no ServiceProvider
-    if (ShouldSkipValidation(args) || ServiceProvider is null)
-      return true;
-
-    try
-    {
-      IStartupValidator? validator = ServiceProvider.GetService<IStartupValidator>();
-      validator?.Validate();
-      return true;
-    }
-    catch (OptionsValidationException ex)
-    {
-      await DisplayValidationErrorsAsync(ex, terminal).ConfigureAwait(false);
-      return false;
-    }
-  }
-
-  /// <summary>
-  /// Determines whether configuration validation should be skipped for the current command.
-  /// Validation is skipped for help commands.
-  /// </summary>
-  private static bool ShouldSkipValidation(string[] args)
-  {
-    // Skip validation if help flag is present
-    return args.Any(arg => arg == "--help" || arg == "-h");
-  }
-
-  /// <summary>
-  /// Displays configuration validation errors in a clean, user-friendly format.
-  /// </summary>
-  private static async Task DisplayValidationErrorsAsync(OptionsValidationException exception, ITerminal terminal)
-  {
-    await terminal.WriteErrorLineAsync("❌ Configuration validation failed:").ConfigureAwait(false);
-    await terminal.WriteErrorLineAsync("").ConfigureAwait(false);
-
-    foreach (string failure in exception.Failures)
-    {
-      await terminal.WriteErrorLineAsync($"  • {failure}").ConfigureAwait(false);
-    }
-
-    await terminal.WriteErrorLineAsync("").ConfigureAwait(false);
-  }
-
-  /// <summary>
-  /// Gets the default application name using the centralized app name detector.
-  /// </summary>
-  private static string GetDefaultAppName()
-  {
-    try
-    {
-      return AppNameDetector.GetEffectiveAppName();
-    }
-    catch (InvalidOperationException)
-    {
-      return "nuru-app";
-    }
-  }
-
-  /// <summary>
-  /// Gets the application name from metadata or falls back to default detection.
-  /// </summary>
-  private string GetEffectiveAppName()
-  {
-    return AppMetadata?.Name ?? GetDefaultAppName();
-  }
-
-  /// <summary>
-  /// Gets the application description from metadata.
-  /// </summary>
-  private string? GetEffectiveDescription()
-  {
-    return AppMetadata?.Description;
-  }
+  #endregion
 
   [GeneratedRegex(@"^--[\w-]+:[\w:-]+", RegexOptions.Compiled)]
   private static partial Regex ConfigurationOverrideRegex();

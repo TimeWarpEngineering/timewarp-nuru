@@ -18,58 +18,51 @@
 // ============================================================================
 
 using TimeWarp.Nuru;
-using TimeWarp.Nuru.Completion;
 
-NuruAppBuilder builder = new();
+NuruCoreApp app = NuruCoreApp.CreateSlimBuilder(args)
+  // ============================================================================
+  // Sample Commands - Issue #30 Use Case
+  // ============================================================================
+  .Map("createorder {product} {quantity:int}")
+    .WithHandler((string product, int quantity) =>
+    {
+      Console.WriteLine($"✅ Creating order:");
+      Console.WriteLine($"   Product: {product}");
+      Console.WriteLine($"   Quantity: {quantity}");
+    })
+    .AsCommand()
+    .Done()
 
-// ============================================================================
-// Enable Shell Completion (Auto-detects executable name)
-// ============================================================================
-// This adds the --generate-completion {shell} route
-// The app name is auto-detected from the executable name at runtime
-builder.EnableStaticCompletion();
+  .Map("create {item}")
+    .WithHandler((string item) => Console.WriteLine($"✅ Created: {item}"))
+    .AsCommand()
+    .Done()
 
-// ============================================================================
-// Sample Commands - Issue #30 Use Case
-// ============================================================================
+  .Map("status")
+    .WithHandler(() => Console.WriteLine("📊 System Status: OK"))
+    .AsQuery()
+    .Done()
 
-builder.Map
-(
-  "createorder {product} {quantity:int}",
-  (string product, int quantity) =>
-  {
-    Console.WriteLine($"✅ Creating order:");
-    Console.WriteLine($"   Product: {product}");
-    Console.WriteLine($"   Quantity: {quantity}");
-  }
-);
+  .Map("deploy {env} --version {ver}")
+    .WithHandler((string env, string ver) => Console.WriteLine($"🚀 Deploying version {ver} to {env}"))
+    .AsCommand()
+    .Done()
 
-builder.Map
-(
-  "create {item}",
-  (string item) => Console.WriteLine($"✅ Created: {item}")
-);
+  .Map("list {*items}")
+    .WithHandler((string[] items) => Console.WriteLine($"📝 Items: {string.Join(", ", items)}"))
+    .AsQuery()
+    .Done()
 
-builder.Map
-(
-  "status",
-  () => Console.WriteLine("📊 System Status: OK")
-);
+  // ============================================================================
+  // Enable Shell Completion (Auto-detects executable name)
+  // ============================================================================
+  // This adds the --generate-completion {shell} route
+  // The app name is auto-detected from the executable name at runtime
+  .EnableStaticCompletion()
 
-builder.Map
-(
-  "deploy {env} --version {ver}",
-  (string env, string ver) => Console.WriteLine($"🚀 Deploying version {ver} to {env}")
-);
+  // ============================================================================
+  // Build and Run
+  // ============================================================================
+  .Build();
 
-builder.Map
-(
-  "list {*items}",
-  (string[] items) => Console.WriteLine($"📝 Items: {string.Join(", ", items)}")
-);
-// ============================================================================
-// Build and Run
-// ============================================================================
-
-NuruCoreApp app = builder.Build();
 return await app.RunAsync(args);

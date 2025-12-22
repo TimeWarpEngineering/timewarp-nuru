@@ -31,7 +31,8 @@
     <Compile Include="../timewarp-nuru-core-tests/message-type-01-fluent-api.cs" />
     <Compile Include="../timewarp-nuru-core-tests/message-type-02-help-output.cs" />
     <Compile Include="../timewarp-nuru-core-tests/nuru-route-registry-01-basic.cs" />
-    <Compile Include="../timewarp-nuru-core-tests/route-builder-01-basic.cs" />
+    <!-- TODO: Create or restore route-builder-01-basic.cs -->
+    <!-- <Compile Include="../timewarp-nuru-core-tests/route-builder-01-basic.cs" /> -->
     <Compile Include="../timewarp-nuru-core-tests/test-terminal-context-01-basic.cs" />
     <Compile Include="../timewarp-nuru-core-tests/compiled-route-test-helper.cs" />
     <!-- Parser tests (migrated) -->

@@ -1,0 +1,17 @@
+<Project>
+  <!-- Import parent benchmark props for paths -->
+  <Import Project="$(MSBuildThisFileDirectory)../Directory.Build.props" />
+
+  <PropertyGroup Label="AOT Configuration">
+    <OutputType>Exe</OutputType>
+    <PublishAot>true</PublishAot>
+    <TrimMode>partial</TrimMode>
+    <OptimizationPreference>Speed</OptimizationPreference>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <RuntimeIdentifier>linux-x64</RuntimeIdentifier>
+    <!-- Relax warnings for third-party libs that may not fully support AOT -->
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <!-- Suppress AOT warnings since we're testing compatibility -->
+    <NoWarn>$(NoWarn);IL2026;IL2067;IL2070;IL2072;IL2075;IL2104;IL3050;IL3053</NoWarn>
+  </PropertyGroup>
+</Project>

@@ -25,6 +25,11 @@
 
   <ItemGroup>
     <ProjectReference Include="$(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj" />
+    <!-- Include analyzers for source-generated invokers (avoids DynamicInvoke reflection) -->
+    <ProjectReference Include="$(SourceDirectory)timewarp-nuru-analyzers/timewarp-nuru-analyzers.csproj">
+      <OutputItemType>Analyzer</OutputItemType>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
     <PackageReference Include="Mediator.Abstractions" />
     <PackageReference Include="Mediator.SourceGenerator">
       <PrivateAssets>all</PrivateAssets>

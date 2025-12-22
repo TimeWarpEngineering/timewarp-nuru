@@ -26,7 +26,10 @@ namespace TimeWarp.Nuru.Tests.ReplTests.EdgeCases
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("echo {text}", (string text) => text)
+      .Map("echo {text}")
+        .WithHandler((string text) => text)
+        .AsCommand()
+        .Done()
       .AddReplSupport()
       .Build();
 
@@ -111,7 +114,10 @@ namespace TimeWarp.Nuru.Tests.ReplTests.EdgeCases
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("echo {text}", (string text) => text)
+      .Map("echo {text}")
+        .WithHandler((string text) => text)
+        .AsCommand()
+        .Done()
       .AddReplSupport()
       .Build();
 
@@ -138,7 +144,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.EdgeCases
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("noop", () => "OK")
+      .Map("noop").WithHandler(() => "OK").AsCommand().Done()
       .AddReplSupport()
       .Build();
 
@@ -180,7 +186,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.EdgeCases
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("cmd{n}", (string _) => "OK")
+      .Map("cmd{n}").WithHandler((string _) => "OK").AsCommand().Done()
       .AddReplSupport(options => options.MaxHistorySize = 0)
       .Build();
 

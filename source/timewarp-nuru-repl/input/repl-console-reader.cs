@@ -13,6 +13,7 @@ namespace TimeWarp.Nuru;
 /// - repl-console-reader.kill-ring.cs: Kill ring (cut/paste) handlers
 /// - repl-console-reader.undo.cs: Undo/redo handlers
 /// - repl-console-reader.selection.cs: Text selection handlers
+/// - repl-console-reader.clipboard.cs: Platform-specific clipboard operations
 /// - repl-console-reader.word-operations.cs: Word case conversion and transposition handlers
 /// </remarks>
 public sealed partial class ReplConsoleReader

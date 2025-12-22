@@ -21,7 +21,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.SyntaxHighlighting
     NuruAppBuilder builder = new();
     foreach ((string route, Func<string> handler) in routes)
     {
-      builder.Map(route, handler);
+      builder.Map(route).WithHandler(handler).AsCommand().Done();
     }
 
     NuruCoreApp app = builder.Build();

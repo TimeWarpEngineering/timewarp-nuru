@@ -37,28 +37,18 @@ using static System.Console;
 
 NuruCoreApp app = NuruApp.CreateBuilder(args)
   .ConfigureServices(ConfigureServices)
-  .Map // Use Delegate approach for simple operations (performance)
-  (
-    pattern: "add {x:double} {y:double}",
-    handler: (double x, double y) => WriteLine($"{x} + {y} = {x + y}"),
-    description: "Add two numbers together"
-  )
-  .Map
-  (
-    pattern: "subtract {x:double} {y:double}",
-    handler: (double x, double y) => WriteLine($"{x} - {y} = {x - y}"),
-    description: "Subtract the second number from the first"
-  )
-  .Map
-  (
-    pattern: "multiply {x:double} {y:double}",
-    handler: (double x, double y) => WriteLine($"{x} × {y} = {x * y}"),
-    description: "Multiply two numbers together"
-  )
-  .Map
-  (
-    pattern: "divide {x:double} {y:double}",
-    handler: (double x, double y) =>
+  // Use Delegate approach for simple operations (performance)
+  .Map("add {x:double} {y:double}")
+    .WithHandler((double x, double y) => WriteLine($"{x} + {y} = {x + y}"))
+    .WithDescription("Add two numbers together")
+  .Map("subtract {x:double} {y:double}")
+    .WithHandler((double x, double y) => WriteLine($"{x} - {y} = {x - y}"))
+    .WithDescription("Subtract the second number from the first")
+  .Map("multiply {x:double} {y:double}")
+    .WithHandler((double x, double y) => WriteLine($"{x} × {y} = {x * y}"))
+    .WithDescription("Multiply two numbers together")
+  .Map("divide {x:double} {y:double}")
+    .WithHandler((double x, double y) =>
     {
       if (y == 0)
       {
@@ -67,42 +57,27 @@ NuruCoreApp app = NuruApp.CreateBuilder(args)
       }
 
       WriteLine($"{x} ÷ {y} = {x / y}");
-    },
-    description: "Divide the first number by the second"
-  )
-  .Map<FactorialCommand> // Use Mediator for complex operations (testability, DI)
-  (
-    pattern: "factorial {n:int}",
-    description: "Calculate factorial (n!)"
-  )
-  .Map<PrimeCheckCommand>
-  (
-    pattern: "isprime {n:int}",
-    description: "Check if a number is prime"
-  )
-  .Map<FibonacciCommand>
-  (
-    pattern: "fibonacci {n:int}",
-    description: "Calculate the nth Fibonacci number"
-  )
-  .Map<StatsCommand, StatsResponse> // Example: Mediator command that returns a response object
-  (
-    pattern: "stats {*values}",
-    description: "Calculate statistics for a set of numbers (returns JSON)"
-  )
-  .Map // Example: Delegate that returns an object
-  (
-    pattern: "compare {x:double} {y:double}",
-    handler: (double x, double y) => new ComparisonResult
+    })
+    .WithDescription("Divide the first number by the second")
+  .Map<FactorialCommand>("factorial {n:int}") // Use Mediator for complex operations (testability, DI)
+    .WithDescription("Calculate factorial (n!)")
+  .Map<PrimeCheckCommand>("isprime {n:int}")
+    .WithDescription("Check if a number is prime")
+  .Map<FibonacciCommand>("fibonacci {n:int}")
+    .WithDescription("Calculate the nth Fibonacci number")
+  .Map<StatsCommand, StatsResponse>("stats {*values}") // Example: Mediator command that returns a response object
+    .WithDescription("Calculate statistics for a set of numbers (returns JSON)")
+  // Example: Delegate that returns an object
+  .Map("compare {x:double} {y:double}")
+    .WithHandler((double x, double y) => new ComparisonResult
     {
       X = x,
       Y = y,
       IsEqual = x == y,
       Difference = x - y,
       Ratio = y != 0 ? x / y : double.NaN
-    },
-    description: "Compare two numbers and return detailed comparison (returns JSON)"
-  )
+    })
+    .WithDescription("Compare two numbers and return detailed comparison (returns JSON)")
   .Build();
 
 return await app.RunAsync(args);

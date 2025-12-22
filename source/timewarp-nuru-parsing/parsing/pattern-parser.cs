@@ -14,9 +14,22 @@ public static class PatternParser
   /// <exception cref="ArgumentException">Thrown when the route pattern is invalid.</exception>
   public static CompiledRoute Parse(string routePattern)
   {
+#if !ANALYZER_BUILD
     return Parse(routePattern, null);
-  }
+#else
+    ArgumentNullException.ThrowIfNull(routePattern);
+    Parser parser = new();
+    Compiler compiler = new();
+    ParseResult<Syntax> result = parser.Parse(routePattern);
+    if (!result.Success)
+    {
+      throw new PatternException(routePattern, result.ParseErrors, result.SemanticErrors);
+    }
 
+    return compiler.Compile(result.Value!);
+#endif
+  }
+#if !ANALYZER_BUILD
   public static CompiledRoute Parse(string routePattern, ILoggerFactory? loggerFactory)
   {
     ArgumentNullException.ThrowIfNull(routePattern);
@@ -37,6 +50,7 @@ public static class PatternParser
 
     return compiler.Compile(result.Value!);
   }
+#endif
 
   /// <summary>
   /// Tries to parse a route pattern string into a CompiledRoute object.

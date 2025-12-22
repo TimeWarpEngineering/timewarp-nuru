@@ -35,7 +35,10 @@ public class BasicEditingEnhancementTests
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("ello", () => "Ctrl+D deleted char!")
+      .Map("ello")
+        .WithHandler(() => "Ctrl+D deleted char!")
+        .AsQuery()
+        .Done()
       .AddReplSupport(options => options.EnableColors = false)
       .Build();
 
@@ -54,7 +57,10 @@ public class BasicEditingEnhancementTests
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("test", () => "Should not see this")
+      .Map("test")
+        .WithHandler(() => "Should not see this")
+        .AsQuery()
+        .Done()
       .AddReplSupport(options => options.EnableColors = false)
       .Build();
 
@@ -77,7 +83,10 @@ public class BasicEditingEnhancementTests
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("ab", () => "Middle delete worked!")
+      .Map("ab")
+        .WithHandler(() => "Middle delete worked!")
+        .AsQuery()
+        .Done()
       .AddReplSupport(options => options.EnableColors = false)
       .Build();
 
@@ -103,7 +112,10 @@ public class BasicEditingEnhancementTests
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("hell", () => "Ctrl+H worked!")
+      .Map("hell")
+        .WithHandler(() => "Ctrl+H worked!")
+        .AsQuery()
+        .Done()
       .AddReplSupport(options => options.EnableColors = false)
       .Build();
 
@@ -129,7 +141,10 @@ public class BasicEditingEnhancementTests
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("test", () => "Accept line worked!")
+      .Map("test")
+        .WithHandler(() => "Accept line worked!")
+        .AsQuery()
+        .Done()
       .AddReplSupport(options => options.EnableColors = false)
       .Build();
 
@@ -152,7 +167,10 @@ public class BasicEditingEnhancementTests
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("cmd", () => "Accept line worked!")
+      .Map("cmd")
+        .WithHandler(() => "Accept line worked!")
+        .AsQuery()
+        .Done()
       .AddReplSupport(options => options.EnableColors = false)
       .Build();
 
@@ -178,7 +196,10 @@ public class BasicEditingEnhancementTests
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("hello", () => "After clear!")
+      .Map("hello")
+        .WithHandler(() => "After clear!")
+        .AsQuery()
+        .Done()
       .AddReplSupport(options => options.EnableColors = false)
       .Build();
 
@@ -209,7 +230,10 @@ public class BasicEditingEnhancementTests
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("Xbc", () => "Overwrite worked!")
+      .Map("Xbc")
+        .WithHandler(() => "Overwrite worked!")
+        .AsQuery()
+        .Done()
       .AddReplSupport(options => options.EnableColors = false)
       .Build();
 
@@ -234,7 +258,10 @@ public class BasicEditingEnhancementTests
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("Xabc", () => "Insert mode restored!")
+      .Map("Xabc")
+        .WithHandler(() => "Insert mode restored!")
+        .AsQuery()
+        .Done()
       .AddReplSupport(options => options.EnableColors = false)
       .Build();
 
@@ -261,7 +288,10 @@ public class BasicEditingEnhancementTests
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("hello ", () => "Ctrl+D deleted selection!")
+      .Map("hello ")
+        .WithHandler(() => "Ctrl+D deleted selection!")
+        .AsQuery()
+        .Done()
       .AddReplSupport(options => options.EnableColors = false)
       .Build();
 
@@ -287,7 +317,10 @@ public class BasicEditingEnhancementTests
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("test", () => "No crash!")
+      .Map("test")
+        .WithHandler(() => "No crash!")
+        .AsQuery()
+        .Done()
       .AddReplSupport(options => options.EnableColors = false)
       .Build();
 
@@ -310,7 +343,10 @@ public class BasicEditingEnhancementTests
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("test", () => "No crash!")
+      .Map("test")
+        .WithHandler(() => "No crash!")
+        .AsQuery()
+        .Done()
       .AddReplSupport(options => options.EnableColors = false)
       .Build();
 

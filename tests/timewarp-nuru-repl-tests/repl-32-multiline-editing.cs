@@ -36,11 +36,14 @@ public class MultilineEditingTests
     string? capturedInput = null;
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("{*args}", (string[] args) =>
-      {
-        capturedInput = string.Join(" ", args);
-        return "OK";
-      })
+      .Map("{*args}")
+        .WithHandler((string[] args) =>
+        {
+          capturedInput = string.Join(" ", args);
+          return "OK";
+        })
+        .AsCommand()
+        .Done()
       .AddReplSupport(options => options.EnableColors = false)
       .Build();
 
@@ -75,11 +78,14 @@ public class MultilineEditingTests
     string? capturedInput = null;
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("{*args}", (string[] args) =>
-      {
-        capturedInput = string.Join("|", args);  // Use | to see separation
-        return "OK";
-      })
+      .Map("{*args}")
+        .WithHandler((string[] args) =>
+        {
+          capturedInput = string.Join("|", args);  // Use | to see separation
+          return "OK";
+        })
+        .AsCommand()
+        .Done()
       .AddReplSupport(options => options.EnableColors = false)
       .Build();
 
@@ -109,11 +115,14 @@ public class MultilineEditingTests
     string? capturedInput = null;
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("{*args}", (string[] args) =>
-      {
-        capturedInput = string.Join(" ", args);
-        return "OK";
-      })
+      .Map("{*args}")
+        .WithHandler((string[] args) =>
+        {
+          capturedInput = string.Join(" ", args);
+          return "OK";
+        })
+        .AsCommand()
+        .Done()
       .AddReplSupport(options => options.EnableColors = false)
       .Build();
 
@@ -147,12 +156,15 @@ public class MultilineEditingTests
     string? capturedEnv = null;
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("deploy --env {env}", (string env) =>
-      {
-        deployExecuted = true;
-        capturedEnv = env;
-        return "Deployed!";
-      })
+      .Map("deploy --env {env}")
+        .WithHandler((string env) =>
+        {
+          deployExecuted = true;
+          capturedEnv = env;
+          return "Deployed!";
+        })
+        .AsCommand()
+        .Done()
       .AddReplSupport(options => options.EnableColors = false)
       .Build();
 
@@ -189,11 +201,14 @@ public class MultilineEditingTests
     int execCount = 0;
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("{*args}", (string[] _) =>
-      {
-        execCount++;
-        return "OK";
-      })
+      .Map("{*args}")
+        .WithHandler((string[] _) =>
+        {
+          execCount++;
+          return "OK";
+        })
+        .AsCommand()
+        .Done()
       .AddReplSupport(options => options.EnableColors = false)
       .Build();
 
@@ -222,7 +237,10 @@ public class MultilineEditingTests
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("{*args}", (string[] _) => "OK")
+      .Map("{*args}")
+        .WithHandler((string[] _) => "OK")
+        .AsCommand()
+        .Done()
       .AddReplSupport(options =>
       {
         options.EnableColors = false;
@@ -251,7 +269,10 @@ public class MultilineEditingTests
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("{*args}", (string[] _) => "OK")
+      .Map("{*args}")
+        .WithHandler((string[] _) => "OK")
+        .AsCommand()
+        .Done()
       .AddReplSupport(options =>
       {
         options.EnableColors = false;
@@ -284,11 +305,14 @@ public class MultilineEditingTests
     string? capturedInput = null;
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("{*args}", (string[] args) =>
-      {
-        capturedInput = string.Join(" ", args);
-        return "OK";
-      })
+      .Map("{*args}")
+        .WithHandler((string[] args) =>
+        {
+          capturedInput = string.Join(" ", args);
+          return "OK";
+        })
+        .AsCommand()
+        .Done()
       .AddReplSupport(options => options.EnableColors = false)
       .Build();
 
@@ -322,16 +346,22 @@ public class MultilineEditingTests
     int singleCount = 0;
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("single", () =>
-      {
-        singleCount++;
-        return "Single!";
-      })
-      .Map("{*args}", (string[] _) =>
-      {
-        multiCount++;
-        return "Multi!";
-      })
+      .Map("single")
+        .WithHandler(() =>
+        {
+          singleCount++;
+          return "Single!";
+        })
+        .AsQuery()
+        .Done()
+      .Map("{*args}")
+        .WithHandler((string[] _) =>
+        {
+          multiCount++;
+          return "Multi!";
+        })
+        .AsCommand()
+        .Done()
       .AddReplSupport(options => options.EnableColors = false)
       .Build();
 

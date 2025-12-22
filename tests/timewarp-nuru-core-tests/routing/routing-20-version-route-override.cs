@@ -24,7 +24,7 @@ public class VersionRouteOverrideTests
     bool customHandlerCalled = false;
     NuruCoreApp app = new NuruAppBuilder()
       .UseAllExtensions()
-      .Map("--version,-v", () => { customHandlerCalled = true; })
+      .Map("--version,-v").WithHandler(() => { customHandlerCalled = true; }).AsQuery().Done()
       .Build();
 
     // Act
@@ -41,7 +41,7 @@ public class VersionRouteOverrideTests
     bool customHandlerCalled = false;
     NuruCoreApp app = new NuruAppBuilder()
       .UseAllExtensions()
-      .Map("--version,-v", () => { customHandlerCalled = true; })
+      .Map("--version,-v").WithHandler(() => { customHandlerCalled = true; }).AsQuery().Done()
       .Build();
 
     // Act - Use short form
@@ -59,7 +59,7 @@ public class VersionRouteOverrideTests
     NuruAppOptions options = new() { DisableVersionRoute = true };
     NuruCoreApp app = new NuruAppBuilder()
       .UseAllExtensions(options)
-      .Map("--version,-v", () => { customHandlerCalled = true; })
+      .Map("--version,-v").WithHandler(() => { customHandlerCalled = true; }).AsQuery().Done()
       .Build();
 
     // Act
@@ -75,7 +75,7 @@ public class VersionRouteOverrideTests
     // Arrange
     NuruAppBuilder builder = new();
     builder.UseAllExtensions();
-    builder.Map("--version,-v", () => { });
+    builder.Map("--version,-v").WithHandler(() => { }).AsQuery().Done();
 
     // Count endpoints with --version pattern
     int versionEndpoints = builder.EndpointCollection.Count(e =>

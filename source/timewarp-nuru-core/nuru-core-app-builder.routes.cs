@@ -3,209 +3,133 @@ namespace TimeWarp.Nuru;
 /// <summary>
 /// Route registration methods for NuruCoreAppBuilder.
 /// </summary>
-public partial class NuruCoreAppBuilder
+public partial class NuruCoreAppBuilder<TSelf>
 {
-  /// <summary>
-  /// Adds a default route that executes when no arguments are provided.
-  /// </summary>
-  public virtual EndpointBuilder MapDefault(Delegate handler, string? description = null)
-  {
-    return MapInternal(string.Empty, handler, description);
-  }
-
   /// <summary>
   /// Adds REPL (Read-Eval-Print Loop) configuration options to application.
   /// This stores REPL configuration options for use when REPL mode is activated.
   /// </summary>
   /// <param name="configureOptions">Optional action to configure REPL options.</param>
   /// <returns>The builder for chaining.</returns>
-  public virtual NuruCoreAppBuilder AddReplOptions(Action<ReplOptions>? configureOptions = null)
+  public virtual TSelf AddReplOptions(Action<ReplOptions>? configureOptions = null)
   {
     ReplOptions replOptions = new();
     configureOptions?.Invoke(replOptions);
     ReplOptions = replOptions;
-    return this;
+    return (TSelf)this;
   }
 
   /// <summary>
-  /// Adds a delegate-based route.
+  /// Adds a route pattern for fluent configuration.
+  /// Use <see cref="EndpointBuilder{TSelf}.WithHandler"/> to set the handler,
+  /// and <see cref="EndpointBuilder{TSelf}.WithDescription"/> to set the description.
   /// </summary>
-  public virtual EndpointBuilder Map(string pattern, Delegate handler, string? description = null)
+  /// <param name="pattern">The route pattern to match (e.g., "deploy {env}").</param>
+  /// <returns>An <see cref="EndpointBuilder{TSelf}"/> for further endpoint configuration.</returns>
+  /// <example>
+  /// <code>
+  /// builder.Map("deploy {env}")
+  ///     .WithHandler((string env) => Deploy(env))
+  ///     .WithDescription("Deploy to the specified environment")
+  ///     .AsCommand()
+  ///     .Done();
+  /// </code>
+  /// </example>
+  public virtual EndpointBuilder<TSelf> Map(string pattern)
   {
     ArgumentNullException.ThrowIfNull(pattern);
-    return MapInternal(pattern, handler, description);
+    return MapPatternTyped(pattern);
   }
 
   /// <summary>
-  /// Adds a route using fluent <see cref="CompiledRouteBuilder"/> configuration.
-  /// Use <see cref="EndpointBuilder.WithHandler"/> to set the handler after configuring the route.
+  /// Adds a route using fluent <see cref="NestedCompiledRouteBuilder{TParent}"/> configuration.
+  /// Use <see cref="EndpointBuilder{TSelf}.WithHandler"/> to set the handler after configuring the route.
   /// </summary>
-  /// <param name="configureRoute">Action to configure the route pattern using <see cref="CompiledRouteBuilder"/>.
-  /// <param name="description">Optional description shown in help.</param>
-  /// <returns>An <see cref="EndpointBuilder"/> for further endpoint configuration.</returns>
+  /// <param name="configureRoute">
+  /// Function to configure the route pattern. Must call <see cref="NestedCompiledRouteBuilder{TParent}.Done"/>
+  /// to complete route configuration and return the <see cref="EndpointBuilder{TSelf}"/>.
+  /// </param>
+  /// <returns>An <see cref="EndpointBuilder{TSelf}"/> for further endpoint configuration.</returns>
   /// <example>
   /// <code>
   /// builder.Map(route => route
   ///     .WithLiteral("deploy")
   ///     .WithParameter("env")
-  ///     .WithOption("force", "f"))
+  ///     .WithOption("force", "f")
+  ///     .Done())                    // Must call Done() to complete route configuration
   ///     .WithHandler(async (string env, bool force) => await Deploy(env, force))
+  ///     .WithDescription("Deploy to an environment")
   ///     .AsCommand()
   ///     .Done();
   /// </code>
   /// </example>
-  public virtual EndpointBuilder Map(Action<CompiledRouteBuilder> configureRoute, string? description = null)
+  public virtual EndpointBuilder<TSelf> Map(
+    Func<NestedCompiledRouteBuilder<EndpointBuilder<TSelf>>, EndpointBuilder<TSelf>> configureRoute)
   {
-    ArgumentNullException.ThrowIfNull(configureRoute);
-
-    CompiledRouteBuilder routeBuilder = new();
-    configureRoute(routeBuilder);
-    CompiledRoute compiledRoute = routeBuilder.Build();
-
-    // Generate a display pattern from the compiled route for help text
-    string routePattern = GeneratePatternFromCompiledRoute(compiledRoute);
-
-    Endpoint endpoint = new()
-    {
-      RoutePattern = routePattern,
-      CompiledRoute = compiledRoute,
-      Description = description
-      // Handler will be set via EndpointBuilder.WithHandler()
-    };
-
-    EndpointCollection.Add(endpoint);
-    return new EndpointBuilder(this, endpoint);
+    return MapNestedTyped(configureRoute);
   }
 
   /// <summary>
   /// Adds a Mediator command-based route.
   /// Requires AddDependencyInjection() to be called first.
+  /// Use <see cref="EndpointBuilder{TSelf}.WithDescription"/> to set the description.
   /// </summary>
-  public virtual EndpointBuilder Map<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)] TCommand>(string pattern, string? description = null)
+  public virtual EndpointBuilder<TSelf> Map<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)] TCommand>(string pattern)
     where TCommand : IRequest, new()
   {
-    return MapMediator(typeof(TCommand), pattern, description);
+    return MapMediatorTyped(typeof(TCommand), pattern);
   }
 
   /// <summary>
   /// Adds a Mediator command-based route with response.
   /// Requires AddDependencyInjection() to be called first.
+  /// Use <see cref="EndpointBuilder{TSelf}.WithDescription"/> to set the description.
   /// </summary>
-  public virtual EndpointBuilder Map<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)] TCommand, TResponse>(string pattern, string? description = null)
+  public virtual EndpointBuilder<TSelf> Map<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)] TCommand, TResponse>(string pattern)
     where TCommand : IRequest<TResponse>, new()
   {
-    return MapMediator(typeof(TCommand), pattern, description);
-  }
-
-  /// <summary>
-  /// Adds multiple route patterns that invoke the same handler.
-  /// Useful for command aliases (e.g., "exit", "quit", "q").
-  /// The first pattern is considered the primary for help display.
-  /// </summary>
-  /// <param name="patterns">Array of route patterns (first is primary).</param>
-  /// <param name="handler">The handler to invoke for all patterns.</param>
-  /// <param name="description">Description shown in help.</param>
-  /// <returns>The builder for chaining.</returns>
-  /// <example>
-  /// <code>
-  /// builder.Map(
-  ///     ["exit", "quit", "q"],
-  ///     () => Environment.Exit(0),
-  ///     "Exit the application");
-  /// </code>
-  /// </example>
-  public virtual NuruCoreAppBuilder MapMultiple(string[] patterns, Delegate handler, string? description = null)
-  {
-    ArgumentNullException.ThrowIfNull(patterns);
-    ArgumentNullException.ThrowIfNull(handler);
-
-    if (patterns.Length == 0)
-      throw new ArgumentException("At least one pattern required", nameof(patterns));
-
-    foreach (string pattern in patterns)
-    {
-      MapInternal(pattern, handler, description);
-    }
-
-    return this;
-  }
-
-  /// <summary>
-  /// Adds multiple route patterns for a Mediator command.
-  /// Requires AddDependencyInjection() to be called first.
-  /// The first pattern is considered the primary for help display.
-  /// </summary>
-  /// <param name="patterns">Array of route patterns (first is primary).</param>
-  /// <param name="description">Description shown in help.</param>
-  /// <returns>The builder for chaining.</returns>
-  /// <example>
-  /// <code>
-  /// builder.Map&lt;ExitCommand&gt;(
-  ///     ["exit", "quit", "q"],
-  ///     "Exit the application");
-  /// </code>
-  /// </example>
-  public virtual NuruCoreAppBuilder MapMultiple<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)] TCommand>(string[] patterns, string? description = null)
-    where TCommand : IRequest, new()
-  {
-    ArgumentNullException.ThrowIfNull(patterns);
-
-    if (patterns.Length == 0)
-      throw new ArgumentException("At least one pattern required", nameof(patterns));
-
-    foreach (string pattern in patterns)
-    {
-      MapMediator(typeof(TCommand), pattern, description);
-    }
-
-    return this;
-  }
-
-  /// <summary>
-  /// Adds multiple route patterns for a Mediator command with response.
-  /// Requires AddDependencyInjection() to be called first.
-  /// The first pattern is considered the primary for help display.
-  /// </summary>
-  /// <param name="patterns">Array of route patterns (first is primary).</param>
-  /// <param name="description">Description shown in help.</param>
-  /// <returns>The builder for chaining.</returns>
-  /// <example>
-  /// <code>
-  /// builder.Map&lt;GreetCommand, string&gt;(
-  ///     ["greet", "hello", "hi"],
-  ///     "Greet someone");
-  /// </code>
-  /// </example>
-  public virtual NuruCoreAppBuilder MapMultiple<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)] TCommand, TResponse>(string[] patterns, string? description = null)
-    where TCommand : IRequest<TResponse>, new()
-  {
-    ArgumentNullException.ThrowIfNull(patterns);
-
-    if (patterns.Length == 0)
-      throw new ArgumentException("At least one pattern required", nameof(patterns));
-
-    foreach (string pattern in patterns)
-    {
-      MapMediator(typeof(TCommand), pattern, description);
-    }
-
-    return this;
+    return MapMediatorTyped(typeof(TCommand), pattern);
   }
 
   /// <summary>
   /// Registers a custom type converter for parameter conversion.
   /// </summary>
   /// <param name="converter">The type converter to register.</param>
-  public virtual NuruCoreAppBuilder AddTypeConverter(IRouteTypeConverter converter)
+  public virtual TSelf AddTypeConverter(IRouteTypeConverter converter)
   {
     ArgumentNullException.ThrowIfNull(converter);
     TypeConverterRegistry.RegisterConverter(converter);
-    return this;
+    return (TSelf)this;
   }
 
-  // Internal methods for creating EndpointBuilder<TBuilder> - used by extension methods
-  internal EndpointBuilder<TBuilder> MapInternalTyped<TBuilder>(string pattern, Delegate handler, string? description)
-    where TBuilder : NuruCoreAppBuilder
+  // Internal method for creating EndpointBuilder<TSelf> from pattern only - uses CRTP for type preservation
+  private EndpointBuilder<TSelf> MapPatternTyped(string pattern)
+  {
+    // Log route registration if logger is available
+    if (LoggerFactory is not null)
+    {
+      ILogger<NuruCoreAppBuilder> logger = LoggerFactory.CreateLogger<NuruCoreAppBuilder>();
+      if (EndpointCollection.Count == 0)
+      {
+        ParsingLoggerMessages.StartingRouteRegistration(logger, null);
+      }
+
+      ParsingLoggerMessages.RegisteringRoute(logger, pattern, null);
+    }
+
+    Endpoint endpoint = new()
+    {
+      RoutePattern = pattern,
+      CompiledRoute = PatternParser.Parse(pattern, LoggerFactory)
+      // Handler and Description will be set via EndpointBuilder.WithHandler() and WithDescription()
+    };
+
+    EndpointCollection.Add(endpoint);
+    return new EndpointBuilder<TSelf>((TSelf)this, endpoint);
+  }
+
+  // Internal method for creating EndpointBuilder<TSelf> with handler - uses CRTP for type preservation
+  private EndpointBuilder<TSelf> MapInternalTyped(string pattern, Delegate handler)
   {
     ArgumentNullException.ThrowIfNull(handler);
 
@@ -226,20 +150,19 @@ public partial class NuruCoreAppBuilder
       RoutePattern = pattern,
       CompiledRoute = PatternParser.Parse(pattern, LoggerFactory),
       Handler = handler,
-      Method = handler.Method,
-      Description = description
+      Method = handler.Method
+      // Description will be set via EndpointBuilder.WithDescription()
     };
 
     EndpointCollection.Add(endpoint);
-    return new EndpointBuilder<TBuilder>((TBuilder)this, endpoint);
+    return new EndpointBuilder<TSelf>((TSelf)this, endpoint);
   }
 
-  internal EndpointBuilder<TBuilder> MapMediatorTyped<TBuilder>(
+  // Internal method for creating EndpointBuilder<TSelf> for Mediator commands - uses CRTP for type preservation
+  private EndpointBuilder<TSelf> MapMediatorTyped(
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
     Type commandType,
-    string pattern,
-    string? description)
-    where TBuilder : NuruCoreAppBuilder
+    string pattern)
   {
     if (ServiceCollection is null)
     {
@@ -250,64 +173,40 @@ public partial class NuruCoreAppBuilder
     {
       RoutePattern = pattern,
       CompiledRoute = PatternParser.Parse(pattern, LoggerFactory),
-      Description = description,
       CommandType = commandType
+      // Description will be set via EndpointBuilder.WithDescription()
     };
 
     EndpointCollection.Add(endpoint);
-    return new EndpointBuilder<TBuilder>((TBuilder)this, endpoint);
+    return new EndpointBuilder<TSelf>((TSelf)this, endpoint);
   }
 
-  private EndpointBuilder MapMediator(
-    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
-    Type commandType,
-    string pattern,
-    string? description)
+  // Internal method for creating nested route builder with EndpointBuilder<TSelf> - uses CRTP for type preservation
+  private EndpointBuilder<TSelf> MapNestedTyped(
+    Func<NestedCompiledRouteBuilder<EndpointBuilder<TSelf>>, EndpointBuilder<TSelf>> configureRoute)
   {
-    if (ServiceCollection is null)
-    {
-      throw new InvalidOperationException("Dependency injection must be added before using Mediator commands. Call AddDependencyInjection() first.");
-    }
+    ArgumentNullException.ThrowIfNull(configureRoute);
 
+    // Create endpoint with placeholder values - these will be set by the nested builder callback
     Endpoint endpoint = new()
     {
-      RoutePattern = pattern,
-      CompiledRoute = PatternParser.Parse(pattern, LoggerFactory),
-      Description = description,
-      CommandType = commandType
+      RoutePattern = string.Empty,  // Placeholder - set in callback below
+      CompiledRoute = new CompiledRoute { Segments = [] }  // Placeholder - set in callback below
+      // Handler and Description will be set via EndpointBuilder.WithHandler() and WithDescription()
     };
 
     EndpointCollection.Add(endpoint);
-    return new EndpointBuilder(this, endpoint);
-  }
 
-  private EndpointBuilder MapInternal(string pattern, Delegate handler, string? description)
-  {
-    ArgumentNullException.ThrowIfNull(handler);
-
-    // Log route registration if logger is available
-    if (LoggerFactory is not null)
-    {
-      ILogger<NuruCoreAppBuilder> logger = LoggerFactory.CreateLogger<NuruCoreAppBuilder>();
-      if (EndpointCollection.Count == 0)
+    EndpointBuilder<TSelf> endpointBuilder = new((TSelf)this, endpoint);
+    NestedCompiledRouteBuilder<EndpointBuilder<TSelf>> routeBuilder = new(
+      endpointBuilder,
+      route =>
       {
-        ParsingLoggerMessages.StartingRouteRegistration(logger, null);
-      }
+        endpoint.CompiledRoute = route;
+        endpoint.RoutePattern = GeneratePatternFromCompiledRoute(route);
+      });
 
-      ParsingLoggerMessages.RegisteringRoute(logger, pattern, null);
-    }
-
-    Endpoint endpoint = new()
-    {
-      RoutePattern = pattern,
-      CompiledRoute = PatternParser.Parse(pattern, LoggerFactory),
-      Handler = handler,
-      Method = handler.Method,
-      Description = description
-    };
-
-    EndpointCollection.Add(endpoint);
-    return new EndpointBuilder(this, endpoint);
+    return configureRoute(routeBuilder);
   }
 
   /// <summary>

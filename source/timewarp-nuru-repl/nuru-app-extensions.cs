@@ -21,7 +21,7 @@ public static class NuruCoreAppExtensions
     this EndpointBuilder<TBuilder> configurator,
     Action<ReplOptions>? configureOptions = null
   )
-    where TBuilder : NuruCoreAppBuilder
+    where TBuilder : NuruCoreAppBuilder<TBuilder>
   {
     ArgumentNullException.ThrowIfNull(configurator);
     return configurator.Builder.AddReplSupport(configureOptions);
@@ -34,7 +34,7 @@ public static class NuruCoreAppExtensions
   /// <param name="configurator">The EndpointBuilder from a Map() call.</param>
   /// <returns>The underlying builder for chaining.</returns>
   public static TBuilder AddReplRoutes<TBuilder>(this EndpointBuilder<TBuilder> configurator)
-    where TBuilder : NuruCoreAppBuilder
+    where TBuilder : NuruCoreAppBuilder<TBuilder>
   {
     ArgumentNullException.ThrowIfNull(configurator);
     return configurator.Builder.AddReplRoutes();
@@ -52,7 +52,7 @@ public static class NuruCoreAppExtensions
     this EndpointBuilder<TBuilder> configurator,
     string patterns = "--interactive,-i"
   )
-    where TBuilder : NuruCoreAppBuilder
+    where TBuilder : NuruCoreAppBuilder<TBuilder>
   {
     ArgumentNullException.ThrowIfNull(configurator);
     return configurator.Builder.AddInteractiveRoute(patterns);
@@ -117,17 +117,41 @@ public static class NuruCoreAppExtensions
   /// <param name="builder">The NuruCoreAppBuilder instance.</param>
   /// <returns>The builder for chaining.</returns>
   public static TBuilder AddReplRoutes<TBuilder>(this TBuilder builder)
-    where TBuilder : NuruCoreAppBuilder
+    where TBuilder : NuruCoreAppBuilder<TBuilder>
   {
     ArgumentNullException.ThrowIfNull(builder);
 
     // Register REPL commands as routes using clean method group syntax
-    builder
-      .MapMultiple(["exit", "quit", "q"], ReplSession.ExitAsync, "Exit the REPL")
-      .Map("history", ReplSession.ShowHistoryAsync, "Show command history")
-      .MapMultiple(["clear", "cls"], ReplSession.ClearScreenAsync, "Clear the screen")
-      .Map("clear-history", ReplSession.ClearHistoryAsync, "Clear command history")
-      .AddAutoHelp();
+    // Routes with the same description are grouped together in help output
+    builder.Map("exit")
+      .WithHandler(ReplSession.ExitAsync)
+      .WithDescription("Exit the REPL")
+      .Done();
+    builder.Map("quit")
+      .WithHandler(ReplSession.ExitAsync)
+      .WithDescription("Exit the REPL")
+      .Done();
+    builder.Map("q")
+      .WithHandler(ReplSession.ExitAsync)
+      .WithDescription("Exit the REPL")
+      .Done();
+    builder.Map("history")
+      .WithHandler(ReplSession.ShowHistoryAsync)
+      .WithDescription("Show command history")
+      .Done();
+    builder.Map("clear")
+      .WithHandler(ReplSession.ClearScreenAsync)
+      .WithDescription("Clear the screen")
+      .Done();
+    builder.Map("cls")
+      .WithHandler(ReplSession.ClearScreenAsync)
+      .WithDescription("Clear the screen")
+      .Done();
+    builder.Map("clear-history")
+      .WithHandler(ReplSession.ClearHistoryAsync)
+      .WithDescription("Clear command history")
+      .Done();
+    builder.AddAutoHelp();
 
     return builder;
   }
@@ -145,7 +169,7 @@ public static class NuruCoreAppExtensions
     this TBuilder builder,
     Action<ReplOptions>? configureOptions = null
   )
-    where TBuilder : NuruCoreAppBuilder
+    where TBuilder : NuruCoreAppBuilder<TBuilder>
   {
     ArgumentNullException.ThrowIfNull(builder);
     builder.AddReplOptions(configureOptions).AddReplRoutes();
@@ -212,7 +236,7 @@ public static class NuruCoreAppExtensions
     this TBuilder builder,
     string patterns = "--interactive,-i"
   )
-    where TBuilder : NuruCoreAppBuilder
+    where TBuilder : NuruCoreAppBuilder<TBuilder>
   {
     ArgumentNullException.ThrowIfNull(builder);
     ArgumentNullException.ThrowIfNull(patterns);
@@ -221,20 +245,29 @@ public static class NuruCoreAppExtensions
 
     // Alias syntax only works for exactly 2 options (long + short form)
     // If all patterns are options AND there are exactly 2, use alias syntax
-    // Otherwise use MapMultiple for multiple options or literal command aliases
+    // Otherwise use multiple Map calls for multiple options or literal command aliases
     bool allAreOptions = patternArray.All(p => p.StartsWith('-'));
     bool canUseAliasSyntax = allAreOptions && patternArray.Length == 2;
 
     if (canUseAliasSyntax)
     {
       // Use alias syntax: "--interactive,-i" creates single endpoint with alternate form
-      builder.Map(patterns, StartInteractiveModeAsync, "Enter interactive REPL mode");
+      builder.Map(patterns)
+        .WithHandler(StartInteractiveModeAsync)
+        .WithDescription("Enter interactive REPL mode")
+        .Done();
     }
     else
     {
-      // Use MapMultiple for literals like ["interactive", "repl"]
+      // Use individual Map calls for literals like ["interactive", "repl"]
       // or for more than 2 options which can't use alias syntax
-      builder.MapMultiple(patternArray, StartInteractiveModeAsync, "Enter interactive REPL mode");
+      foreach (string pattern in patternArray)
+      {
+        builder.Map(pattern)
+          .WithHandler(StartInteractiveModeAsync)
+          .WithDescription("Enter interactive REPL mode")
+          .Done();
+      }
     }
 
     return builder;

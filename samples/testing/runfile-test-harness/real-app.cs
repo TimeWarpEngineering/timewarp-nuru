@@ -2,8 +2,10 @@
 // real-app - A sample CLI application to demonstrate testing patterns
 // This represents a "real" CLI app that a consumer would build
 #:project ../../../source/timewarp-nuru/timewarp-nuru.csproj
+#pragma warning disable CS7022 // Entry point defined in Main method is intentional for demo
 
 using TimeWarp.Nuru;
+using TimeWarp.Terminal;
 
 return await RealApp.Main(args);
 
@@ -13,10 +15,26 @@ public static class RealApp
   {
     NuruCoreApp app = NuruCoreApp.CreateSlimBuilder()
       .AddAutoHelp()
-      .Map("greet {name}", Greet, "Greet someone by name")
-      .Map("deploy {env} --dry-run", DeployDryRun, "Simulate deployment")
-      .Map("deploy {env}", Deploy, "Deploy to environment")
-      .Map("version", Version, "Show version")
+      .Map("greet {name}")
+        .WithHandler(Greet)
+        .WithDescription("Greet someone by name")
+        .AsCommand()
+        .Done()
+      .Map("deploy {env} --dry-run")
+        .WithHandler(DeployDryRun)
+        .WithDescription("Simulate deployment")
+        .AsQuery()
+        .Done()
+      .Map("deploy {env}")
+        .WithHandler(Deploy)
+        .WithDescription("Deploy to environment")
+        .AsCommand()
+        .Done()
+      .Map("version")
+        .WithHandler(Version)
+        .WithDescription("Show version")
+        .AsQuery()
+        .Done()
       .Build();
 
     return await app.RunAsync(args);

@@ -22,7 +22,7 @@ public class AnsiStringUtilsWrapTextTests
     string text = "Hello World Test";
 
     // Act
-    IReadOnlyList<string> lines = TimeWarp.Nuru.AnsiStringUtils.WrapText(text, 10);
+    IReadOnlyList<string> lines = TimeWarp.Terminal.AnsiStringUtils.WrapText(text, 10);
 
     // Assert
     lines.Count.ShouldBe(2);
@@ -35,7 +35,7 @@ public class AnsiStringUtilsWrapTextTests
   public static async Task Should_return_empty_line_for_null_input()
   {
     // Act
-    IReadOnlyList<string> lines = TimeWarp.Nuru.AnsiStringUtils.WrapText(null, 20);
+    IReadOnlyList<string> lines = TimeWarp.Terminal.AnsiStringUtils.WrapText(null, 20);
 
     // Assert
     lines.Count.ShouldBe(1);
@@ -47,7 +47,7 @@ public class AnsiStringUtilsWrapTextTests
   public static async Task Should_return_empty_line_for_empty_input()
   {
     // Act
-    IReadOnlyList<string> lines = TimeWarp.Nuru.AnsiStringUtils.WrapText("", 20);
+    IReadOnlyList<string> lines = TimeWarp.Terminal.AnsiStringUtils.WrapText("", 20);
 
     // Assert
     lines.Count.ShouldBe(1);
@@ -62,14 +62,14 @@ public class AnsiStringUtilsWrapTextTests
     string text = "Supercalifragilisticexpialidocious";
 
     // Act
-    IReadOnlyList<string> lines = TimeWarp.Nuru.AnsiStringUtils.WrapText(text, 10);
+    IReadOnlyList<string> lines = TimeWarp.Terminal.AnsiStringUtils.WrapText(text, 10);
 
     // Assert
     lines.Count.ShouldBeGreaterThan(1);
 
     foreach (string line in lines)
     {
-      TimeWarp.Nuru.AnsiStringUtils.GetVisibleLength(line).ShouldBeLessThanOrEqualTo(10);
+      TimeWarp.Terminal.AnsiStringUtils.GetVisibleLength(line).ShouldBeLessThanOrEqualTo(10);
     }
 
     await Task.CompletedTask;
@@ -81,7 +81,7 @@ public class AnsiStringUtilsWrapTextTests
     string text = $"{AnsiColors.Red}This is red text that wraps{AnsiColors.Reset}";
 
     // Act
-    IReadOnlyList<string> lines = TimeWarp.Nuru.AnsiStringUtils.WrapText(text, 15);
+    IReadOnlyList<string> lines = TimeWarp.Terminal.AnsiStringUtils.WrapText(text, 15);
 
     // Assert
     lines.Count.ShouldBeGreaterThan(1);
@@ -104,7 +104,7 @@ public class AnsiStringUtilsWrapTextTests
     string text = "Short";
 
     // Act
-    IReadOnlyList<string> lines = TimeWarp.Nuru.AnsiStringUtils.WrapText(text, 20);
+    IReadOnlyList<string> lines = TimeWarp.Terminal.AnsiStringUtils.WrapText(text, 20);
 
     // Assert
     lines.Count.ShouldBe(1);
@@ -119,7 +119,7 @@ public class AnsiStringUtilsWrapTextTests
     string text = "1234567890";
 
     // Act
-    IReadOnlyList<string> lines = TimeWarp.Nuru.AnsiStringUtils.WrapText(text, 10);
+    IReadOnlyList<string> lines = TimeWarp.Terminal.AnsiStringUtils.WrapText(text, 10);
 
     // Assert
     lines.Count.ShouldBe(1);
@@ -134,7 +134,7 @@ public class AnsiStringUtilsWrapTextTests
     string text = "ABC";
 
     // Act
-    IReadOnlyList<string> lines = TimeWarp.Nuru.AnsiStringUtils.WrapText(text, 0);
+    IReadOnlyList<string> lines = TimeWarp.Terminal.AnsiStringUtils.WrapText(text, 0);
 
     // Assert - Width should be treated as 1
     lines.Count.ShouldBe(3);
@@ -151,7 +151,7 @@ public class AnsiStringUtilsWrapTextTests
     string text = "Hello   World";
 
     // Act
-    IReadOnlyList<string> lines = TimeWarp.Nuru.AnsiStringUtils.WrapText(text, 20);
+    IReadOnlyList<string> lines = TimeWarp.Terminal.AnsiStringUtils.WrapText(text, 20);
 
     // Assert - Spaces are preserved
     lines.Count.ShouldBe(1);
@@ -165,13 +165,13 @@ public class AnsiStringUtilsWrapTextTests
     string text = "\x1b]8;;https://example.com\x1b\\Click Here\x1b]8;;\x1b\\";
 
     // Act
-    IReadOnlyList<string> lines = TimeWarp.Nuru.AnsiStringUtils.WrapText(text, 20);
+    IReadOnlyList<string> lines = TimeWarp.Terminal.AnsiStringUtils.WrapText(text, 20);
 
     // Assert
     lines.Count.ShouldBe(1);
 
     // Visible length should only be "Click Here" (10 chars)
-    TimeWarp.Nuru.AnsiStringUtils.GetVisibleLength(lines[0]).ShouldBe(10);
+    TimeWarp.Terminal.AnsiStringUtils.GetVisibleLength(lines[0]).ShouldBe(10);
 
     await Task.CompletedTask;
   }

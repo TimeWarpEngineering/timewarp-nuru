@@ -56,10 +56,10 @@ NuruCoreApp app = NuruApp.CreateBuilder(args)
       services.AddSingleton<IPipelineBehavior<StatusCommand, Unit>, TelemetryBehavior<StatusCommand, Unit>>();
     }
   )
-  .Map<GreetCommand>(pattern: "greet {name}", description: "Greet someone (demonstrates basic telemetry)")
-  .Map<WorkCommand>(pattern: "work {duration:int}", description: "Simulate work with specified duration in ms")
-  .Map<FailCommand>(pattern: "fail {message}", description: "Throw an exception (demonstrates error telemetry)")
-  .Map<StatusCommand>(pattern: "status", description: "Show telemetry configuration status")
+  .Map<GreetCommand>("greet {name}").WithDescription("Greet someone (demonstrates basic telemetry)")
+  .Map<WorkCommand>("work {duration:int}").WithDescription("Simulate work with specified duration in ms")
+  .Map<FailCommand>("fail {message}").WithDescription("Throw an exception (demonstrates error telemetry)")
+  .Map<StatusCommand>("status").WithDescription("Show telemetry configuration status")
   .Build();
 
 int exitCode = await app.RunAsync(args);

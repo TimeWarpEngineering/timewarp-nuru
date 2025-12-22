@@ -1,8 +1,5 @@
 namespace TimeWarp.Nuru;
 
-using System.Diagnostics.CodeAnalysis;
-using System.Runtime.InteropServices;
-
 /// <summary>
 /// Handles installation of completion scripts to standard shell-specific locations.
 /// </summary>

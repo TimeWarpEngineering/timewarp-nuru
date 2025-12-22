@@ -46,47 +46,42 @@ NuruCoreApp app = NuruApp.CreateBuilder(args)
   // =========================================================================
   // DELEGATE ROUTES - Wrapped in DelegateRequest, flows through same pipeline
   // =========================================================================
-  .Map
-  (
-    pattern: "add {x:int} {y:int}",
-    handler: (int x, int y) =>
+  .Map("add {x:int} {y:int}")
+    .WithHandler((int x, int y) =>
     {
       int result = x + y;
       WriteLine($"Result: {x} + {y} = {result}");
       return result;
-    },
-    description: "Add two numbers (delegate route with pipeline)"
-  )
-  .Map
-  (
-    pattern: "multiply {x:int} {y:int}",
-    handler: (int x, int y) =>
+    })
+    .WithDescription("Add two numbers (delegate route with pipeline)")
+    .AsQuery()
+    .Done()
+  .Map("multiply {x:int} {y:int}")
+    .WithHandler((int x, int y) =>
     {
       int result = x * y;
       WriteLine($"Result: {x} × {y} = {result}");
       return result;
-    },
-    description: "Multiply two numbers (delegate route with pipeline)"
-  )
-  .Map
-  (
-    pattern: "greet {name}",
-    handler: (string name) => WriteLine($"Hello, {name}!"),
-    description: "Greet someone (delegate route with pipeline)"
-  )
+    })
+    .WithDescription("Multiply two numbers (delegate route with pipeline)")
+    .AsQuery()
+    .Done()
+  .Map("greet {name}")
+    .WithHandler((string name) => WriteLine($"Hello, {name}!"))
+    .WithDescription("Greet someone (delegate route with pipeline)")
+    .AsCommand()
+    .Done()
   // =========================================================================
   // MEDIATOR ROUTES - Specific IRequest types, flows through same pipeline
   // =========================================================================
-  .Map<EchoCommand>
-  (
-    pattern: "echo {message}",
-    description: "Echo a message back (Mediator route with pipeline)"
-  )
-  .Map<SlowCommand>
-  (
-    pattern: "slow {delay:int}",
-    description: "Simulate slow operation in ms (Mediator route with pipeline)"
-  )
+  .Map<EchoCommand>("echo {message}")
+    .WithDescription("Echo a message back (Mediator route with pipeline)")
+    .AsCommand()
+    .Done()
+  .Map<SlowCommand>("slow {delay:int}")
+    .WithDescription("Simulate slow operation in ms (Mediator route with pipeline)")
+    .AsCommand()
+    .Done()
   .Build();
 
 return await app.RunAsync(args);

@@ -200,7 +200,10 @@ public class KillRingTests
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("hello", () => "Success!")
+      .Map("hello")
+        .WithHandler(() => "Success!")
+        .AsQuery()
+        .Done()
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 
@@ -232,7 +235,10 @@ public class KillRingTests
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("world", () => "Success!")
+      .Map("world")
+        .WithHandler(() => "Success!")
+        .AsQuery()
+        .Done()
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 
@@ -259,7 +265,10 @@ public class KillRingTests
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("greeting", () => "Success!")
+      .Map("greeting")
+        .WithHandler(() => "Success!")
+        .AsQuery()
+        .Done()
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 
@@ -286,7 +295,10 @@ public class KillRingTests
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("hello", () => "Success!")
+      .Map("hello")
+        .WithHandler(() => "Success!")
+        .AsQuery()
+        .Done()
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 
@@ -321,7 +333,10 @@ public class KillRingTests
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("first", () => "Success!")
+      .Map("first")
+        .WithHandler(() => "Success!")
+        .AsQuery()
+        .Done()
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 
@@ -349,7 +364,10 @@ public class KillRingTests
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("one two three", () => "Success!")
+      .Map("one two three")
+        .WithHandler(() => "Success!")
+        .AsQuery()
+        .Done()
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 
@@ -382,7 +400,10 @@ public class KillRingTests
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("hello", () => "Got hello!")
+      .Map("hello")
+        .WithHandler(() => "Got hello!")
+        .AsQuery()
+        .Done()
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 

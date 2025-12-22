@@ -28,7 +28,10 @@ public class EnumCompletionTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("log {level:LogLevel}", (LogLevel level) => 0);
+    builder.Map("log {level:LogLevel}")
+      .WithHandler((LogLevel level) => 0)
+      .AsCommand()
+      .Done();
 
     // Act
     CompletionScriptGenerator generator = new();
@@ -45,8 +48,10 @@ public class EnumCompletionTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("deploy {env:Environment} {level:LogLevel}",
-      (Environment env, LogLevel level) => 0);
+    builder.Map("deploy {env:Environment} {level:LogLevel}")
+      .WithHandler((Environment env, LogLevel level) => 0)
+      .AsCommand()
+      .Done();
 
     // Act
     CompletionScriptGenerator generator = new();
@@ -63,8 +68,10 @@ public class EnumCompletionTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("log {message} {level:LogLevel?}",
-      (string message, LogLevel? level) => 0);
+    builder.Map("log {message} {level:LogLevel?}")
+      .WithHandler((string message, LogLevel? level) => 0)
+      .AsCommand()
+      .Done();
 
     // Act
     CompletionScriptGenerator generator = new();
@@ -81,8 +88,10 @@ public class EnumCompletionTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("deploy {env:Environment} --force --verbose",
-      (Environment env) => 0);
+    builder.Map("deploy {env:Environment} --force --verbose")
+      .WithHandler((Environment env) => 0)
+      .AsCommand()
+      .Done();
 
     // Act
     CompletionScriptGenerator generator = new();
@@ -100,7 +109,10 @@ public class EnumCompletionTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("setlevel {level:LogLevel}", (LogLevel level) => 0);
+    builder.Map("setlevel {level:LogLevel}")
+      .WithHandler((LogLevel level) => 0)
+      .AsCommand()
+      .Done();
 
     CompletionScriptGenerator generator = new();
 
@@ -123,8 +135,10 @@ public class EnumCompletionTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("deploy {app} {env:Environment} --version {ver} --log {level:LogLevel}",
-      (string app, Environment env, string ver, LogLevel level) => 0);
+    builder.Map("deploy {app} {env:Environment} --version {ver} --log {level:LogLevel}")
+      .WithHandler((string app, Environment env, string ver, LogLevel level) => 0)
+      .AsCommand()
+      .Done();
 
     // Act
     CompletionScriptGenerator generator = new();
@@ -142,8 +156,10 @@ public class EnumCompletionTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("run {file} {count:int} {env:Environment} {enabled:bool}",
-      (string file, int count, Environment env, bool enabled) => 0);
+    builder.Map("run {file} {count:int} {env:Environment} {enabled:bool}")
+      .WithHandler((string file, int count, Environment env, bool enabled) => 0)
+      .AsCommand()
+      .Done();
 
     // Act
     CompletionScriptGenerator generator = new();
@@ -160,8 +176,10 @@ public class EnumCompletionTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("execute {level:LogLevel} {*args}",
-      (LogLevel level, string[] args) => 0);
+    builder.Map("execute {level:LogLevel} {*args}")
+      .WithHandler((LogLevel level, string[] args) => 0)
+      .AsCommand()
+      .Done();
 
     // Act
     CompletionScriptGenerator generator = new();

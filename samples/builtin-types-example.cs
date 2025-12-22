@@ -22,208 +22,246 @@
 using System.Net;
 using TimeWarp.Nuru;
 
-NuruAppBuilder builder = new();
+NuruAppBuilder builder = NuruApp.CreateBuilder([]);
 
 // ============================================================================
 // Original Built-In Types (v1.0)
 // ============================================================================
 
-builder.Map("delay {milliseconds:int}", (int milliseconds) =>
-{
-  Console.WriteLine($"⏱️  Delaying for {milliseconds}ms");
-  return 0;
-});
+builder.Map("delay {milliseconds:int}")
+  .WithHandler((int milliseconds) =>
+  {
+    Console.WriteLine($"⏱️  Delaying for {milliseconds}ms");
+    return 0;
+  })
+  .AsCommand().Done();
 
-builder.Map("price {amount:double} {quantity:int}", (double amount, int quantity) =>
-{
-  Console.WriteLine($"💰 Total: ${amount * quantity:F2} ({quantity} × ${amount:F2})");
-  return 0;
-});
+builder.Map("price {amount:double} {quantity:int}")
+  .WithHandler((double amount, int quantity) =>
+  {
+    Console.WriteLine($"💰 Total: ${amount * quantity:F2} ({quantity} × ${amount:F2})");
+    return 0;
+  })
+  .AsQuery().Done();
 
-builder.Map("enabled {feature} {state:bool}", (string feature, bool state) =>
-{
-  Console.WriteLine($"🎚️  Feature '{feature}' is {(state ? "enabled" : "disabled")}");
-  return 0;
-});
+builder.Map("enabled {feature} {state:bool}")
+  .WithHandler((string feature, bool state) =>
+  {
+    Console.WriteLine($"🎚️  Feature '{feature}' is {(state ? "enabled" : "disabled")}");
+    return 0;
+  })
+  .AsIdempotentCommand().Done();
 
-builder.Map("schedule {event} {when:DateTime}", (string @event, DateTime when) =>
-{
-  Console.WriteLine($"📅 Event '{@event}' scheduled for {when:yyyy-MM-dd HH:mm:ss}");
-  return 0;
-});
+builder.Map("schedule {event} {when:DateTime}")
+  .WithHandler((string @event, DateTime when) =>
+  {
+    Console.WriteLine($"📅 Event '{@event}' scheduled for {when:yyyy-MM-dd HH:mm:ss}");
+    return 0;
+  })
+  .AsCommand().Done();
 
-builder.Map("id {value:Guid}", (Guid value) =>
-{
-  Console.WriteLine($"🔑 GUID: {value}");
-  return 0;
-});
+builder.Map("id {value:Guid}")
+  .WithHandler((Guid value) =>
+  {
+    Console.WriteLine($"🔑 GUID: {value}");
+    return 0;
+  })
+  .AsQuery().Done();
 
-builder.Map("wait {duration:TimeSpan}", (TimeSpan duration) =>
-{
-  Console.WriteLine($"⏲️  Waiting for {duration.TotalSeconds:F1} seconds");
-  return 0;
-});
+builder.Map("wait {duration:TimeSpan}")
+  .WithHandler((TimeSpan duration) =>
+  {
+    Console.WriteLine($"⏲️  Waiting for {duration.TotalSeconds:F1} seconds");
+    return 0;
+  })
+  .AsCommand().Done();
 
 // ============================================================================
 // Uri Type
 // ============================================================================
 // Supports absolute URLs, relative URLs, and file:// URIs
 
-builder.Map("fetch {url:Uri}", (Uri url) =>
-{
-  Console.WriteLine($"🌐 Fetching from {url.AbsoluteUri}");
-  Console.WriteLine($"   Scheme: {url.Scheme}");
-  Console.WriteLine($"   Host: {url.Host}");
-  Console.WriteLine($"   Path: {url.AbsolutePath}");
-  return 0;
-});
+builder.Map("fetch {url:Uri}")
+  .WithHandler((Uri url) =>
+  {
+    Console.WriteLine($"🌐 Fetching from {url.AbsoluteUri}");
+    Console.WriteLine($"   Scheme: {url.Scheme}");
+    Console.WriteLine($"   Host: {url.Host}");
+    Console.WriteLine($"   Path: {url.AbsolutePath}");
+    return 0;
+  })
+  .AsQuery().Done();
 
-builder.Map("open-url {url:uri}", (Uri url) =>  // Case-insensitive!
-{
-  Console.WriteLine($"🔗 Opening {url} in browser");
-  return 0;
-});
+builder.Map("open-url {url:uri}")  // Case-insensitive!
+  .WithHandler((Uri url) =>
+  {
+    Console.WriteLine($"🔗 Opening {url} in browser");
+    return 0;
+  })
+  .AsCommand().Done();
 
 // ============================================================================
 // FileInfo Type
 // ============================================================================
 // Provides file metadata without requiring the file to exist
 
-builder.Map("read {path:FileInfo}", (FileInfo file) =>
-{
-  Console.WriteLine($"📄 File: {file.Name}");
-  Console.WriteLine($"   Full path: {file.FullName}");
-  Console.WriteLine($"   Directory: {file.DirectoryName}");
-  Console.WriteLine($"   Extension: {file.Extension}");
-  Console.WriteLine($"   Exists: {file.Exists}");
-  if (file.Exists)
+builder.Map("read {path:FileInfo}")
+  .WithHandler((FileInfo file) =>
   {
-    Console.WriteLine($"   Size: {file.Length:N0} bytes");
-    Console.WriteLine($"   Last modified: {file.LastWriteTime}");
-  }
-  return 0;
-});
+    Console.WriteLine($"📄 File: {file.Name}");
+    Console.WriteLine($"   Full path: {file.FullName}");
+    Console.WriteLine($"   Directory: {file.DirectoryName}");
+    Console.WriteLine($"   Extension: {file.Extension}");
+    Console.WriteLine($"   Exists: {file.Exists}");
+    if (file.Exists)
+    {
+      Console.WriteLine($"   Size: {file.Length:N0} bytes");
+      Console.WriteLine($"   Last modified: {file.LastWriteTime}");
+    }
+    return 0;
+  })
+  .AsQuery().Done();
 
-builder.Map("edit {file:fileinfo} --backup {backup:FileInfo?}", (FileInfo file, FileInfo? backup) =>
-{
-  Console.WriteLine($"✏️  Editing {file.FullName}");
-  if (backup != null)
-    Console.WriteLine($"   Backup to {backup.FullName}");
-  return 0;
-});
+builder.Map("edit {file:fileinfo} --backup {backup:FileInfo?}")
+  .WithHandler((FileInfo file, FileInfo? backup) =>
+  {
+    Console.WriteLine($"✏️  Editing {file.FullName}");
+    if (backup != null)
+      Console.WriteLine($"   Backup to {backup.FullName}");
+    return 0;
+  })
+  .AsCommand().Done();
 
 // ============================================================================
 // DirectoryInfo Type
 // ============================================================================
 // Provides directory metadata without requiring the directory to exist
 
-builder.Map("list {path:DirectoryInfo}", (DirectoryInfo dir) =>
-{
-  Console.WriteLine($"📁 Directory: {dir.Name}");
-  Console.WriteLine($"   Full path: {dir.FullName}");
-  Console.WriteLine($"   Parent: {dir.Parent?.FullName ?? "(root)"}");
-  Console.WriteLine($"   Exists: {dir.Exists}");
-  if (dir.Exists)
+builder.Map("list {path:DirectoryInfo}")
+  .WithHandler((DirectoryInfo dir) =>
   {
-    FileInfo[] files = dir.GetFiles();
-    DirectoryInfo[] subdirs = dir.GetDirectories();
-    Console.WriteLine($"   Contains: {files.Length} files, {subdirs.Length} directories");
-  }
-  return 0;
-});
+    Console.WriteLine($"📁 Directory: {dir.Name}");
+    Console.WriteLine($"   Full path: {dir.FullName}");
+    Console.WriteLine($"   Parent: {dir.Parent?.FullName ?? "(root)"}");
+    Console.WriteLine($"   Exists: {dir.Exists}");
+    if (dir.Exists)
+    {
+      FileInfo[] files = dir.GetFiles();
+      DirectoryInfo[] subdirs = dir.GetDirectories();
+      Console.WriteLine($"   Contains: {files.Length} files, {subdirs.Length} directories");
+    }
+    return 0;
+  })
+  .AsQuery().Done();
 
-builder.Map("sync {source:DirectoryInfo} {dest:DIRECTORYINFO}", (DirectoryInfo source, DirectoryInfo dest) =>
-{
-  Console.WriteLine($"🔄 Syncing {source.FullName} → {dest.FullName}");
-  return 0;
-});
+builder.Map("sync {source:DirectoryInfo} {dest:DIRECTORYINFO}")
+  .WithHandler((DirectoryInfo source, DirectoryInfo dest) =>
+  {
+    Console.WriteLine($"🔄 Syncing {source.FullName} → {dest.FullName}");
+    return 0;
+  })
+  .AsCommand().Done();
 
 // ============================================================================
 // IPAddress Type
 // ============================================================================
 // Supports both IPv4 and IPv6 addresses
 
-builder.Map("ping {address:ipaddress}", (IPAddress address) =>
-{
-  Console.WriteLine($"📡 Pinging {address}");
-  Console.WriteLine($"   Address family: {address.AddressFamily}");
-  Console.WriteLine($"   Is IPv4: {address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork}");
-  Console.WriteLine($"   Is IPv6: {address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6}");
-  if (IPAddress.IsLoopback(address))
-    Console.WriteLine($"   This is a loopback address");
-  return 0;
-});
+builder.Map("ping {address:ipaddress}")
+  .WithHandler((IPAddress address) =>
+  {
+    Console.WriteLine($"📡 Pinging {address}");
+    Console.WriteLine($"   Address family: {address.AddressFamily}");
+    Console.WriteLine($"   Is IPv4: {address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork}");
+    Console.WriteLine($"   Is IPv6: {address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6}");
+    if (IPAddress.IsLoopback(address))
+      Console.WriteLine($"   This is a loopback address");
+    return 0;
+  })
+  .AsQuery().Done();
 
-builder.Map("connect {host:ipaddress} {port:int}", (IPAddress host, int port) =>
-{
-  Console.WriteLine($"🔌 Connecting to {host}:{port}");
-  return 0;
-});
+builder.Map("connect {host:ipaddress} {port:int}")
+  .WithHandler((IPAddress host, int port) =>
+  {
+    Console.WriteLine($"🔌 Connecting to {host}:{port}");
+    return 0;
+  })
+  .AsCommand().Done();
 
 // ============================================================================
 // DateOnly Type
 // ============================================================================
 // For dates without time component (.NET 6+)
 
-builder.Map("report {date:DateOnly}", (DateOnly date) =>
-{
-  Console.WriteLine($"📊 Generating report for {date:yyyy-MM-dd}");
-  Console.WriteLine($"   Day of week: {date.DayOfWeek}");
-  Console.WriteLine($"   Day of year: {date.DayOfYear}");
-  return 0;
-});
+builder.Map("report {date:DateOnly}")
+  .WithHandler((DateOnly date) =>
+  {
+    Console.WriteLine($"📊 Generating report for {date:yyyy-MM-dd}");
+    Console.WriteLine($"   Day of week: {date.DayOfWeek}");
+    Console.WriteLine($"   Day of year: {date.DayOfYear}");
+    return 0;
+  })
+  .AsQuery().Done();
 
-builder.Map("range {start:dateonly} {end:DateOnly}", (DateOnly start, DateOnly end) =>
-{
-  int days = end.DayNumber - start.DayNumber;
-  Console.WriteLine($"📆 Date range: {start} to {end} ({days} days)");
-  return 0;
-});
+builder.Map("range {start:dateonly} {end:DateOnly}")
+  .WithHandler((DateOnly start, DateOnly end) =>
+  {
+    int days = end.DayNumber - start.DayNumber;
+    Console.WriteLine($"📆 Date range: {start} to {end} ({days} days)");
+    return 0;
+  })
+  .AsQuery().Done();
 
 // ============================================================================
 // TimeOnly Type
 // ============================================================================
 // For time without date component (.NET 6+)
 
-builder.Map("alarm {time:TimeOnly}", (TimeOnly time) =>
-{
-  Console.WriteLine($"⏰ Alarm set for {time:HH:mm:ss}");
-  Console.WriteLine($"   Hour: {time.Hour}");
-  Console.WriteLine($"   Minute: {time.Minute}");
-  Console.WriteLine($"   Second: {time.Second}");
-  return 0;
-});
+builder.Map("alarm {time:TimeOnly}")
+  .WithHandler((TimeOnly time) =>
+  {
+    Console.WriteLine($"⏰ Alarm set for {time:HH:mm:ss}");
+    Console.WriteLine($"   Hour: {time.Hour}");
+    Console.WriteLine($"   Minute: {time.Minute}");
+    Console.WriteLine($"   Second: {time.Second}");
+    return 0;
+  })
+  .AsCommand().Done();
 
-builder.Map("schedule-backup {time:timeonly}", (TimeOnly time) =>
-{
-  Console.WriteLine($"💾 Backup scheduled daily at {time:HH:mm}");
-  return 0;
-});
+builder.Map("schedule-backup {time:timeonly}")
+  .WithHandler((TimeOnly time) =>
+  {
+    Console.WriteLine($"💾 Backup scheduled daily at {time:HH:mm}");
+    return 0;
+  })
+  .AsCommand().Done();
 
 // ============================================================================
 // Combined Examples
 // ============================================================================
 
-builder.Map("deploy {version:Guid} {target:Uri} {date:DateOnly} --dry-run?",
-  (Guid version, Uri target, DateOnly date, bool dryRun) =>
-{
-  Console.WriteLine($"🚀 Deployment Plan:");
-  Console.WriteLine($"   Version: {version}");
-  Console.WriteLine($"   Target: {target}");
-  Console.WriteLine($"   Date: {date}");
-  Console.WriteLine($"   Mode: {(dryRun ? "DRY RUN" : "LIVE")}");
-  return 0;
-});
+builder.Map("deploy {version:Guid} {target:Uri} {date:DateOnly} --dry-run?")
+  .WithHandler((Guid version, Uri target, DateOnly date, bool dryRun) =>
+  {
+    Console.WriteLine($"🚀 Deployment Plan:");
+    Console.WriteLine($"   Version: {version}");
+    Console.WriteLine($"   Target: {target}");
+    Console.WriteLine($"   Date: {date}");
+    Console.WriteLine($"   Mode: {(dryRun ? "DRY RUN" : "LIVE")}");
+    return 0;
+  })
+  .AsCommand().Done();
 
-builder.Map("backup {source:DirectoryInfo} --dest {dest:DirectoryInfo?} --config {cfg:FileInfo?}",
-  (DirectoryInfo source, DirectoryInfo? dest, FileInfo? cfg) =>
-{
-  Console.WriteLine($"💾 Backup Configuration:");
-  Console.WriteLine($"   Source: {source.FullName}");
-  Console.WriteLine($"   Destination: {dest?.FullName ?? "(default)"}");
-  Console.WriteLine($"   Config: {cfg?.FullName ?? "(none)"}");
-  return 0;
-});
+builder.Map("backup {source:DirectoryInfo} --dest {dest:DirectoryInfo?} --config {cfg:FileInfo?}")
+  .WithHandler((DirectoryInfo source, DirectoryInfo? dest, FileInfo? cfg) =>
+  {
+    Console.WriteLine($"💾 Backup Configuration:");
+    Console.WriteLine($"   Source: {source.FullName}");
+    Console.WriteLine($"   Destination: {dest?.FullName ?? "(default)"}");
+    Console.WriteLine($"   Config: {cfg?.FullName ?? "(none)"}");
+    return 0;
+  })
+  .AsCommand().Done();
 
 NuruCoreApp app = builder.Build();
 

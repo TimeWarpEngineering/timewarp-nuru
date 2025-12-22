@@ -17,7 +17,10 @@ public class ContextAwareTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("deploy {env}", (string env) => 0);
+    builder.Map("deploy {env}")
+      .WithHandler((string env) => 0)
+      .AsCommand()
+      .Done();
 
     builder.EnableDynamicCompletion(configure: registry =>
     {
@@ -39,7 +42,10 @@ public class ContextAwareTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("deploy {env}", (string env) => 0);
+    builder.Map("deploy {env}")
+      .WithHandler((string env) => 0)
+      .AsCommand()
+      .Done();
 
     builder.EnableDynamicCompletion(configure: registry =>
     {
@@ -61,9 +67,18 @@ public class ContextAwareTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("status", () => 0);
-    builder.Map("version", () => 0);
-    builder.Map("deploy {env}", (string env) => 0);
+    builder.Map("status")
+      .WithHandler(() => 0)
+      .AsQuery()
+      .Done();
+    builder.Map("version")
+      .WithHandler(() => 0)
+      .AsQuery()
+      .Done();
+    builder.Map("deploy {env}")
+      .WithHandler((string env) => 0)
+      .AsCommand()
+      .Done();
 
     builder.EnableDynamicCompletion(configure: registry =>
     {
@@ -85,7 +100,10 @@ public class ContextAwareTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("connect {host} {port}", (string host, string port) => 0);
+    builder.Map("connect {host} {port}")
+      .WithHandler((string host, string port) => 0)
+      .AsCommand()
+      .Done();
 
     builder.EnableDynamicCompletion(configure: registry =>
     {
@@ -107,7 +125,10 @@ public class ContextAwareTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("deploy {env} {service}", (string env, string service) => 0);
+    builder.Map("deploy {env} {service}")
+      .WithHandler((string env, string service) => 0)
+      .AsCommand()
+      .Done();
 
     builder.EnableDynamicCompletion(configure: registry =>
     {
@@ -129,7 +150,10 @@ public class ContextAwareTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("backup {target} {dest}", (string target, string dest) => 0);
+    builder.Map("backup {target} {dest}")
+      .WithHandler((string target, string dest) => 0)
+      .AsCommand()
+      .Done();
 
     builder.EnableDynamicCompletion(configure: registry =>
     {
@@ -152,7 +176,10 @@ public class ContextAwareTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("select {item}", (string item) => 0);
+    builder.Map("select {item}")
+      .WithHandler((string item) => 0)
+      .AsCommand()
+      .Done();
 
     builder.EnableDynamicCompletion(configure: registry =>
     {
@@ -176,7 +203,10 @@ public class ContextAwareTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("test {param}", (string param) => 0);
+    builder.Map("test {param}")
+      .WithHandler((string param) => 0)
+      .AsCommand()
+      .Done();
 
     builder.EnableDynamicCompletion(configure: registry =>
     {
@@ -198,7 +228,10 @@ public class ContextAwareTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("build --config {mode} {target}", (string mode, string target) => 0);
+    builder.Map("build --config {mode} {target}")
+      .WithHandler((string mode, string target) => 0)
+      .AsCommand()
+      .Done();
 
     builder.EnableDynamicCompletion(configure: registry =>
     {

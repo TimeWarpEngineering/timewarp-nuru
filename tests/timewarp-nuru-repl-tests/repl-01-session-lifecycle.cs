@@ -139,7 +139,10 @@ namespace TimeWarp.Nuru.Tests.ReplTests.SessionLifecycle
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("greet {name}", (string name) => $"Hello, {name}!")
+      .Map("greet {name}")
+        .WithHandler((string name) => $"Hello, {name}!")
+        .AsCommand()
+        .Done()
       .AddReplSupport()
       .Build();
 
@@ -162,7 +165,10 @@ namespace TimeWarp.Nuru.Tests.ReplTests.SessionLifecycle
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("greet {name}", (string name) => $"Hello, {name}!")
+      .Map("greet {name}")
+        .WithHandler((string name) => $"Hello, {name}!")
+        .AsCommand()
+        .Done()
       .AddReplSupport()
       .Build();
 
@@ -183,7 +189,10 @@ namespace TimeWarp.Nuru.Tests.ReplTests.SessionLifecycle
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("greet {name}", (string name) => $"Hello, {name}!")
+      .Map("greet {name}")
+        .WithHandler((string name) => $"Hello, {name}!")
+        .AsCommand()
+        .Done()
       .AddReplSupport(options => options.ShowTiming = true)
       .Build();
 
@@ -204,7 +213,10 @@ namespace TimeWarp.Nuru.Tests.ReplTests.SessionLifecycle
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("greet {name}", (string name) => $"Hello, {name}!")
+      .Map("greet {name}")
+        .WithHandler((string name) => $"Hello, {name}!")
+        .AsCommand()
+        .Done()
       .AddReplSupport(options => options.ShowTiming = false)
       .Build();
 
@@ -225,7 +237,10 @@ namespace TimeWarp.Nuru.Tests.ReplTests.SessionLifecycle
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("greet {name}", (string name) => $"Hello, {name}!")
+      .Map("greet {name}")
+        .WithHandler((string name) => $"Hello, {name}!")
+        .AsCommand()
+        .Done()
       .AddReplSupport()
       .Build();
 

@@ -16,47 +16,64 @@ NuruAppBuilder builder = NuruApp.CreateBuilder(args);
 builder.ConfigureServices(services =>
 {
   // Register Mediator - source generator discovers handlers in THIS assembly
-  
+
   builder.Services.AddMediator();
   services.AddSingleton<IScientificCalculator, ScientificCalculator>();
 });
 
-// Map() is an alias for Map() - just like ASP.NET Core's app.Map()
-builder.Map("add {x:double} {y:double}",
-  (double x, double y) => WriteLine($"{x} + {y} = {x + y}"),
-  "Add two numbers together");
+// Map() fluent API - inspired by ASP.NET Core's app.Map()
+builder.Map("add {x:double} {y:double}")
+  .WithHandler((double x, double y) => WriteLine($"{x} + {y} = {x + y}"))
+  .WithDescription("Add two numbers together")
+  .AsQuery()
+  .Done();
 
-builder.Map("subtract {x:double} {y:double}",
-  (double x, double y) => WriteLine($"{x} - {y} = {x - y}"),
-  "Subtract the second number from the first");
+builder.Map("subtract {x:double} {y:double}")
+  .WithHandler((double x, double y) => WriteLine($"{x} - {y} = {x - y}"))
+  .WithDescription("Subtract the second number from the first")
+  .AsQuery()
+  .Done();
 
-builder.Map("multiply {x:double} {y:double}",
-  (double x, double y) => WriteLine($"{x} × {y} = {x * y}"),
-  "Multiply two numbers together");
+builder.Map("multiply {x:double} {y:double}")
+  .WithHandler((double x, double y) => WriteLine($"{x} × {y} = {x * y}"))
+  .WithDescription("Multiply two numbers together")
+  .AsQuery()
+  .Done();
 
-builder.Map("divide {x:double} {y:double}",
-  (double x, double y) =>
+builder.Map("divide {x:double} {y:double}")
+  .WithHandler((double x, double y) =>
   {
     if (y == 0)
     {
       WriteLine("Error: Division by zero");
       return;
     }
+
     WriteLine($"{x} ÷ {y} = {x / y}");
-  },
-  "Divide the first number by the second");
+  })
+  .WithDescription("Divide the first number by the second")
+  .AsQuery()
+  .Done();
 
 // Map<TCommand> works with Mediator pattern
-builder.Map<FactorialCommand>("factorial {n:int}", "Calculate factorial (n!)");
-builder.Map<PrimeCheckCommand>("isprime {n:int}", "Check if a number is prime");
-builder.Map<FibonacciCommand>("fibonacci {n:int}", "Calculate the nth Fibonacci number");
+builder.Map<FactorialCommand>("factorial {n:int}")
+  .WithDescription("Calculate factorial (n!)")
+  .AsQuery()
+  .Done();
+builder.Map<PrimeCheckCommand>("isprime {n:int}")
+  .WithDescription("Check if a number is prime")
+  .AsQuery()
+  .Done();
+builder.Map<FibonacciCommand>("fibonacci {n:int}")
+  .WithDescription("Calculate the nth Fibonacci number")
+  .AsQuery()
+  .Done();
 
-// MapDefault for when no arguments provided
-builder.MapDefault(() =>
-{
-  WriteLine("Calculator - use --help for available commands");
-  return 0;
-});
+// Default route for when no arguments provided
+builder.Map("")
+  .WithHandler(() => WriteLine("Calculator - use --help for available commands"))
+  .AsQuery()
+  .Done();
 
 // Build and run - same pattern as ASP.NET Core
 NuruCoreApp app = builder.Build();
@@ -80,6 +97,7 @@ public sealed class FactorialCommand : IRequest
       {
         WriteLine($"Error: {ex.Message}");
       }
+
       return default;
     }
   }
@@ -117,6 +135,7 @@ public class FibonacciCommand : IRequest
       {
         WriteLine($"Error: {ex.Message}");
       }
+
       return default;
     }
   }

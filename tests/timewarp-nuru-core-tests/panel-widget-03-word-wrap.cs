@@ -28,7 +28,7 @@ public class PanelWidgetWordWrapTests
     // Assert - All content lines should fit within the panel width
     foreach (string line in lines)
     {
-      int visibleLength = TimeWarp.Nuru.AnsiStringUtils.GetVisibleLength(line);
+      int visibleLength = TimeWarp.Terminal.AnsiStringUtils.GetVisibleLength(line);
       visibleLength.ShouldBeLessThanOrEqualTo(80);
     }
 
@@ -50,7 +50,7 @@ public class PanelWidgetWordWrapTests
     // Assert - All content lines should fit within panel width
     foreach (string line in lines)
     {
-      int visibleLength = TimeWarp.Nuru.AnsiStringUtils.GetVisibleLength(line);
+      int visibleLength = TimeWarp.Terminal.AnsiStringUtils.GetVisibleLength(line);
       visibleLength.ShouldBeLessThanOrEqualTo(40);
     }
 
@@ -91,7 +91,7 @@ public class PanelWidgetWordWrapTests
     // Assert - All lines should fit within width
     foreach (string line in lines)
     {
-      int visibleLength = TimeWarp.Nuru.AnsiStringUtils.GetVisibleLength(line);
+      int visibleLength = TimeWarp.Terminal.AnsiStringUtils.GetVisibleLength(line);
       visibleLength.ShouldBeLessThanOrEqualTo(50);
     }
 
@@ -110,7 +110,7 @@ public class PanelWidgetWordWrapTests
     // Assert - All lines should fit within panel width
     foreach (string line in lines)
     {
-      int visibleLength = TimeWarp.Nuru.AnsiStringUtils.GetVisibleLength(line);
+      int visibleLength = TimeWarp.Terminal.AnsiStringUtils.GetVisibleLength(line);
       visibleLength.ShouldBeLessThanOrEqualTo(20);
     }
 
@@ -132,7 +132,7 @@ public class PanelWidgetWordWrapTests
     // Assert - All lines should fit within panel width
     foreach (string line in lines)
     {
-      int visibleLength = TimeWarp.Nuru.AnsiStringUtils.GetVisibleLength(line);
+      int visibleLength = TimeWarp.Terminal.AnsiStringUtils.GetVisibleLength(line);
       visibleLength.ShouldBeLessThanOrEqualTo(40);
     }
 
@@ -191,7 +191,7 @@ public class PanelWidgetWordWrapTests
     // Each line should be exactly 20 visible chars
     foreach (string line in lines)
     {
-      int visibleLength = TimeWarp.Nuru.AnsiStringUtils.GetVisibleLength(line);
+      int visibleLength = TimeWarp.Terminal.AnsiStringUtils.GetVisibleLength(line);
       visibleLength.ShouldBe(20);
     }
 

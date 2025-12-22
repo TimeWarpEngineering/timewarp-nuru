@@ -1,7 +1,4 @@
 #!/usr/bin/dotnet --
-#:package TimeWarp.Jaribu
-#:package Shouldly
-#:package Microsoft.CodeAnalysis.CSharp
 
 // Integration tests for NuruInvokerGenerator source generator
 // These tests verify that the generator extracts delegate signatures and generates invoker code
@@ -10,10 +7,6 @@ using System.Collections.Immutable;
 using System.Reflection;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
-using TimeWarp.Jaribu;
-using Shouldly;
-using static System.Console;
-using static TimeWarp.Jaribu.TestRunner;
 
 return await RunTests<NuruInvokerGeneratorTests>();
 
@@ -25,16 +18,19 @@ return await RunTests<NuruInvokerGeneratorTests>();
 public sealed class NuruInvokerGeneratorTests
 {
   /// <summary>
-  /// Basic test to verify the generator runs without errors on a simple Map() call.
+  /// Basic test to verify the generator runs without errors on a simple Map().WithHandler() call.
   /// </summary>
   public static async Task Should_run_generator_without_errors()
   {
-    // Arrange - simple code with a Map() call
+    // Arrange - simple code with a Map().WithHandler() call (new fluent API)
     const string code = """
       using TimeWarp.Nuru;
       
       var app = NuruCoreApp.CreateSlimBuilder()
-        .Map("status", () => System.Console.WriteLine("OK"))
+        .Map("status")
+        .WithHandler(() => System.Console.WriteLine("OK"))
+        .AsQuery()
+        .Done()
         .Build();
       """;
 
@@ -62,8 +58,14 @@ public sealed class NuruInvokerGeneratorTests
       using TimeWarp.Nuru;
       
       var app = NuruCoreApp.CreateSlimBuilder()
-        .Map("status", () => System.Console.WriteLine("OK"))
-        .Map("greet {name}", (string name) => System.Console.WriteLine(name))
+        .Map("status")
+        .WithHandler(() => System.Console.WriteLine("OK"))
+        .AsQuery()
+        .Done()
+        .Map("greet {name}")
+        .WithHandler((string name) => System.Console.WriteLine(name))
+        .AsCommand()
+        .Done()
         .Build();
       """;
 
@@ -112,17 +114,35 @@ public sealed class NuruInvokerGeneratorTests
       
       var app = NuruCoreApp.CreateSlimBuilder()
         // Action (no params, no return)
-        .Map("status", () => System.Console.WriteLine("OK"))
+        .Map("status")
+        .WithHandler(() => System.Console.WriteLine("OK"))
+        .AsQuery()
+        .Done()
         // Action<string>
-        .Map("greet {name}", (string name) => System.Console.WriteLine(name))
+        .Map("greet {name}")
+        .WithHandler((string name) => System.Console.WriteLine(name))
+        .AsCommand()
+        .Done()
         // Action<int, int>
-        .Map("add {x:int} {y:int}", (int x, int y) => System.Console.WriteLine(x + y))
+        .Map("add {x:int} {y:int}")
+        .WithHandler((int x, int y) => System.Console.WriteLine(x + y))
+        .AsCommand()
+        .Done()
         // Func<int, int, int>
-        .Map("multiply {x:int} {y:int}", (int x, int y) => x * y)
+        .Map("multiply {x:int} {y:int}")
+        .WithHandler((int x, int y) => x * y)
+        .AsQuery()
+        .Done()
         // Func<string, Task>
-        .Map("async-greet {name}", async (string name) => { await Task.Delay(1); System.Console.WriteLine(name); })
+        .Map("async-greet {name}")
+        .WithHandler(async (string name) => { await Task.Delay(1); System.Console.WriteLine(name); })
+        .AsCommand()
+        .Done()
         // Action<string[]>
-        .Map("docker {*args}", (string[] args) => System.Console.WriteLine(string.Join(" ", args)))
+        .Map("docker {*args}")
+        .WithHandler((string[] args) => System.Console.WriteLine(string.Join(" ", args)))
+        .AsCommand()
+        .Done()
         .Build();
       """;
 
@@ -153,17 +173,20 @@ public sealed class NuruInvokerGeneratorTests
   }
 
   /// <summary>
-  /// Test that MapDefault is detected and generates invokers.
-  /// Issue #127: NuruInvokerGenerator must detect MapDefault invocations.
+  /// Test that default route (empty pattern) is detected and generates invokers.
+  /// This replaces the old MapDefault() test - now using Map("").WithHandler().
   /// </summary>
-  public static async Task Should_detect_MapDefault_invocations()
+  public static async Task Should_detect_default_route_invocations()
   {
     const string code = """
       using TimeWarp.Nuru;
       
       var app = NuruCoreApp.CreateSlimBuilder()
-        // MapDefault with Func<int> - should generate invoker
-        .MapDefault(() => 42)
+        // Default route with Func<int> - should generate invoker
+        .Map("")
+        .WithHandler(() => 42)
+        .AsQuery()
+        .Done()
         .Build();
       """;
 
@@ -175,7 +198,7 @@ public sealed class NuruInvokerGeneratorTests
     SyntaxTree? invokersTree = result.GeneratedTrees
       .FirstOrDefault(t => t.FilePath.Contains("GeneratedRouteInvokers"));
     
-    invokersTree.ShouldNotBeNull("GeneratedRouteInvokers.g.cs should be generated for MapDefault");
+    invokersTree.ShouldNotBeNull("GeneratedRouteInvokers.g.cs should be generated for default route");
     
     string content = invokersTree.GetText().ToString();
     WriteLine("Generated content:");
@@ -188,18 +211,24 @@ public sealed class NuruInvokerGeneratorTests
   }
 
   /// <summary>
-  /// Test that both Map and MapDefault work together.
+  /// Test that both default route and named routes work together.
   /// </summary>
-  public static async Task Should_detect_both_Map_and_MapDefault()
+  public static async Task Should_detect_both_default_and_named_routes()
   {
     const string code = """
       using TimeWarp.Nuru;
       
       var app = NuruCoreApp.CreateSlimBuilder()
-        // MapDefault with Func<int>
-        .MapDefault(() => 42)
-        // Map with Action<string>
-        .Map("greet {name}", (string name) => System.Console.WriteLine(name))
+        // Default route with Func<int>
+        .Map("")
+        .WithHandler(() => 42)
+        .AsQuery()
+        .Done()
+        // Named route with Action<string>
+        .Map("greet {name}")
+        .WithHandler((string name) => System.Console.WriteLine(name))
+        .AsCommand()
+        .Done()
         .Build();
       """;
 
@@ -215,9 +244,9 @@ public sealed class NuruInvokerGeneratorTests
     WriteLine(content);
     
     // Should contain invokers for both signatures
-    content.Contains("_Returns_Int").ShouldBeTrue("Generated code should contain invoker for Func<int> from MapDefault");
+    content.Contains("_Returns_Int").ShouldBeTrue("Generated code should contain invoker for Func<int> from default route");
     // Action<string> generates just "String" (no returns void suffix)
-    content.Contains("Invoke_String").ShouldBeTrue("Generated code should contain invoker for Action<string> from Map");
+    content.Contains("Invoke_String").ShouldBeTrue("Generated code should contain invoker for Action<string> from named route");
     
     await Task.CompletedTask;
   }
@@ -231,7 +260,10 @@ public sealed class NuruInvokerGeneratorTests
       using TimeWarp.Nuru;
       
       NuruCoreAppBuilder builder = NuruCoreApp.CreateSlimBuilder();
-      builder.Map("test", () => System.Console.WriteLine("test"));
+      builder.Map("test")
+        .WithHandler(() => System.Console.WriteLine("test"))
+        .AsCommand()
+        .Done();
       var app = builder.Build();
       """;
 
@@ -246,7 +278,7 @@ public sealed class NuruInvokerGeneratorTests
       WriteLine($"  {d.Severity}: {d.Id} - {d.GetMessage()}");
     }
 
-    // Find all Map invocations in syntax trees
+    // Find all WithHandler invocations in syntax trees (new fluent API)
     foreach (SyntaxTree tree in compilation.SyntaxTrees)
     {
       SemanticModel model = compilation.GetSemanticModel(tree);
@@ -260,9 +292,9 @@ public sealed class NuruInvokerGeneratorTests
         if (inv.Expression is Microsoft.CodeAnalysis.CSharp.Syntax.MemberAccessExpressionSyntax memberAccess)
         {
           string methodName = memberAccess.Name.Identifier.Text;
-          if (methodName == "Map")
+          if (methodName == "WithHandler")
           {
-            WriteLine($"Found Map() call at {inv.GetLocation()}");
+            WriteLine($"Found WithHandler() call at {inv.GetLocation()}");
             WriteLine($"  Arguments: {inv.ArgumentList.Arguments.Count}");
             
             foreach (var arg in inv.ArgumentList.Arguments)

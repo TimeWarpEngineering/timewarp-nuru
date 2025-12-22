@@ -118,7 +118,7 @@ public class AnsiStringUtilsTests
 This file uses an **inline test runner pattern** (not Jaribu). It needs to be fully converted to Jaribu TestRunner pattern, not just wrapped.
 
 ### AnsiStringUtils conflict
-Since there's a class `TimeWarp.Nuru.AnsiStringUtils`, tests need to use fully-qualified name or alias to avoid ambiguity.
+Since there's a class `TimeWarp.Terminal.AnsiStringUtils`, tests need to use fully-qualified name or alias to avoid ambiguity.
 
 ## Checklist
 

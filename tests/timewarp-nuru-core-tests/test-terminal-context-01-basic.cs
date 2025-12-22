@@ -145,7 +145,10 @@ public class TestTerminalContextTests
 
     // Build an app WITHOUT explicitly setting terminal - it should pick up context
     NuruCoreAppBuilder builder = NuruCoreApp.CreateSlimBuilder();
-    builder.Map("greet {name}", (string name, ITerminal t) => t.WriteLine($"Hello, {name}!"));
+    builder.Map("greet {name}")
+      .WithHandler((string name, ITerminal t) => t.WriteLine($"Hello, {name}!"))
+      .AsCommand()
+      .Done();
     NuruCoreApp app = builder.Build();
 
     // Act
@@ -168,7 +171,10 @@ public class TestTerminalContextTests
     using TestTerminal explicitTerminal = new();
     NuruCoreAppBuilder builder = NuruCoreApp.CreateSlimBuilder();
     builder.UseTerminal(explicitTerminal);  // Explicitly set a different terminal
-    builder.Map("test", (ITerminal t) => t.WriteLine("test output"));
+    builder.Map("test")
+      .WithHandler((ITerminal t) => t.WriteLine("test output"))
+      .AsCommand()
+      .Done();
     NuruCoreApp app = builder.Build();
 
     // Verify context is still set after build

@@ -20,18 +20,18 @@ namespace TimeWarp.Nuru;
 /// {
 ///     [GroupOption("debug", "D")]
 ///     public bool Debug { get; set; }
-///     
+///
 ///     [GroupOption("log-level")]
 ///     public string? LogLevel { get; set; }
 /// }
-/// 
+///
 /// [NuruRoute("run")]
 /// public sealed class DockerRunRequest : DockerRequestBase, IRequest&lt;Unit&gt;
 /// {
 ///     [Parameter]
 ///     public string Image { get; set; } = string.Empty;
 /// }
-/// 
+///
 /// // Generated route: "docker run {image} --debug,-D --log-level {logLevel?}"
 /// </code>
 /// </example>

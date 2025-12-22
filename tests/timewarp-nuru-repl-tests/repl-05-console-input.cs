@@ -26,7 +26,10 @@ namespace TimeWarp.Nuru.Tests.ReplTests.ConsoleInput
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("hello", () => "Hello!")
+      .Map("hello")
+        .WithHandler(() => "Hello!")
+        .AsCommand()
+        .Done()
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 
@@ -49,7 +52,10 @@ namespace TimeWarp.Nuru.Tests.ReplTests.ConsoleInput
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("hello", () => "Hello!")
+      .Map("hello")
+        .WithHandler(() => "Hello!")
+        .AsCommand()
+        .Done()
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 
@@ -73,7 +79,10 @@ namespace TimeWarp.Nuru.Tests.ReplTests.ConsoleInput
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("hello", () => "Hello!")
+      .Map("hello")
+        .WithHandler(() => "Hello!")
+        .AsCommand()
+        .Done()
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 
@@ -98,7 +107,10 @@ namespace TimeWarp.Nuru.Tests.ReplTests.ConsoleInput
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("hello", () => "Hello!")
+      .Map("hello")
+        .WithHandler(() => "Hello!")
+        .AsCommand()
+        .Done()
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 
@@ -124,7 +136,10 @@ namespace TimeWarp.Nuru.Tests.ReplTests.ConsoleInput
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("hello", () => "Hello!")
+      .Map("hello")
+        .WithHandler(() => "Hello!")
+        .AsCommand()
+        .Done()
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 
@@ -147,7 +162,10 @@ namespace TimeWarp.Nuru.Tests.ReplTests.ConsoleInput
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("greet {name}", (string name) => $"Hello, {name}!")
+      .Map("greet {name}")
+        .WithHandler((string name) => $"Hello, {name}!")
+        .AsCommand()
+        .Done()
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 
@@ -171,7 +189,10 @@ namespace TimeWarp.Nuru.Tests.ReplTests.ConsoleInput
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("greet {name}", (string name) => $"Hello, {name}!")
+      .Map("greet {name}")
+        .WithHandler((string name) => $"Hello, {name}!")
+        .AsCommand()
+        .Done()
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 
@@ -195,7 +216,10 @@ namespace TimeWarp.Nuru.Tests.ReplTests.ConsoleInput
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("say hello", () => "Said hello!")
+      .Map("say hello")
+        .WithHandler(() => "Said hello!")
+        .AsCommand()
+        .Done()
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 
@@ -220,7 +244,10 @@ namespace TimeWarp.Nuru.Tests.ReplTests.ConsoleInput
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("hello world", () => "Hello World!")
+      .Map("hello world")
+        .WithHandler(() => "Hello World!")
+        .AsCommand()
+        .Done()
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 
@@ -245,7 +272,10 @@ namespace TimeWarp.Nuru.Tests.ReplTests.ConsoleInput
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("hello", () => "Hello!")
+      .Map("hello")
+        .WithHandler(() => "Hello!")
+        .AsCommand()
+        .Done()
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 

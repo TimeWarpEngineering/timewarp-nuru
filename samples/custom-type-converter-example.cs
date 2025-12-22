@@ -26,7 +26,7 @@ using TimeWarp.Nuru;
 // Application Setup
 // ============================================================================
 
-NuruAppBuilder builder = new();
+NuruAppBuilder builder = NuruApp.CreateBuilder([]);
 
 // Register custom converters
 builder.AddTypeConverter(new EmailAddressConverter());
@@ -37,58 +37,68 @@ builder.AddTypeConverter(new SemanticVersionConverter());
 // Routes Using Custom Types
 // ============================================================================
 
-builder.Map("send-email {to:email} {subject}", (EmailAddress to, string subject) =>
-{
-  Console.WriteLine($"📧 Sending Email:");
-  Console.WriteLine($"   To: {to}");
-  Console.WriteLine($"   Local part: {to.LocalPart}");
-  Console.WriteLine($"   Domain: {to.Domain}");
-  Console.WriteLine($"   Subject: {subject}");
-  return 0;
-});
+builder.Map("send-email {to:email} {subject}")
+  .WithHandler((EmailAddress to, string subject) =>
+  {
+    Console.WriteLine($"📧 Sending Email:");
+    Console.WriteLine($"   To: {to}");
+    Console.WriteLine($"   Local part: {to.LocalPart}");
+    Console.WriteLine($"   Domain: {to.Domain}");
+    Console.WriteLine($"   Subject: {subject}");
+    return 0;
+  })
+  .AsCommand().Done();
 
-builder.Map("set-theme {primary:hexcolor} {secondary:hexcolor}", (HexColor primary, HexColor secondary) =>
-{
-  Console.WriteLine($"🎨 Theme Configuration:");
-  Console.WriteLine($"   Primary color: {primary}");
-  Console.WriteLine($"     RGB: ({primary.Red}, {primary.Green}, {primary.Blue})");
-  Console.WriteLine($"   Secondary color: {secondary}");
-  Console.WriteLine($"     RGB: ({secondary.Red}, {secondary.Green}, {secondary.Blue})");
-  return 0;
-});
+builder.Map("set-theme {primary:hexcolor} {secondary:hexcolor}")
+  .WithHandler((HexColor primary, HexColor secondary) =>
+  {
+    Console.WriteLine($"🎨 Theme Configuration:");
+    Console.WriteLine($"   Primary color: {primary}");
+    Console.WriteLine($"     RGB: ({primary.Red}, {primary.Green}, {primary.Blue})");
+    Console.WriteLine($"   Secondary color: {secondary}");
+    Console.WriteLine($"     RGB: ({secondary.Red}, {secondary.Green}, {secondary.Blue})");
+    return 0;
+  })
+  .AsIdempotentCommand().Done();
 
-builder.Map("release {version:semver}", (SemanticVersion version) =>
-{
-  Console.WriteLine($"🚀 Creating Release:");
-  Console.WriteLine($"   Version: {version}");
-  Console.WriteLine($"   Major: {version.Major}");
-  Console.WriteLine($"   Minor: {version.Minor}");
-  Console.WriteLine($"   Patch: {version.Patch}");
-  if (version.Prerelease != null)
-    Console.WriteLine($"   Prerelease: {version.Prerelease}");
-  if (version.BuildMetadata != null)
-    Console.WriteLine($"   Build: {version.BuildMetadata}");
-  return 0;
-});
+builder.Map("release {version:semver}")
+  .WithHandler((SemanticVersion version) =>
+  {
+    Console.WriteLine($"🚀 Creating Release:");
+    Console.WriteLine($"   Version: {version}");
+    Console.WriteLine($"   Major: {version.Major}");
+    Console.WriteLine($"   Minor: {version.Minor}");
+    Console.WriteLine($"   Patch: {version.Patch}");
+    if (version.Prerelease != null)
+      Console.WriteLine($"   Prerelease: {version.Prerelease}");
+    if (version.BuildMetadata != null)
+      Console.WriteLine($"   Build: {version.BuildMetadata}");
+    return 0;
+  })
+  .AsCommand().Done();
 
-builder.Map("notify {recipient:email} {color:hexcolor} {message}", (EmailAddress recipient, HexColor color, string message) =>
-{
-  Console.WriteLine($"🔔 Notification:");
-  Console.WriteLine($"   Recipient: {recipient}");
-  Console.WriteLine($"   Color: {color}");
-  Console.WriteLine($"   Message: {message}");
-  return 0;
-});
+builder.Map("notify {recipient:email} {color:hexcolor} {message}")
+  .WithHandler((EmailAddress recipient, HexColor color, string message) =>
+  {
+    Console.WriteLine($"🔔 Notification:");
+    Console.WriteLine($"   Recipient: {recipient}");
+    Console.WriteLine($"   Color: {color}");
+    Console.WriteLine($"   Message: {message}");
+    return 0;
+  })
+  .AsCommand().Done();
 
-builder.Map("deploy {version:semver} {env} --notify {email:email?}", (SemanticVersion version, string env, EmailAddress? email) =>
-{
-  Console.WriteLine($"🚀 Deployment Plan:");
-  Console.WriteLine($"   Version: {version}");
-  Console.WriteLine($"   Environment: {env}");
-  if (email != null)
-    Console.WriteLine($"   Notification: {email}");
-  return 0;
-});
+builder.Map("deploy {version:semver} {env} --notify {email:email?}")
+  .WithHandler((SemanticVersion version, string env, EmailAddress? email) =>
+  {
+    Console.WriteLine($"🚀 Deployment Plan:");
+    Console.WriteLine($"   Version: {version}");
+    Console.WriteLine($"   Environment: {env}");
+    if (email != null)
+      Console.WriteLine($"   Notification: {email}");
+    return 0;
+  })
+  .AsCommand().Done();
 
 NuruCoreApp app = builder.Build();
 

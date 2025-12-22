@@ -50,6 +50,13 @@
     </PackageReference>
     <!-- Roslyn for source generator verification tests -->
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
+    <!-- Test framework -->
+    <PackageReference Include="Shouldly" />
+  </ItemGroup>
+
+  <!-- Jaribu test framework -->
+  <ItemGroup>
+    <PackageReference Include="TimeWarp.Jaribu" />
   </ItemGroup>
 
   <!-- Shared test helpers for source generator tests -->
@@ -62,5 +69,8 @@
     <Using Include="System.Console" Static="true" />
     <Using Include="TimeWarp.Nuru" />
     <Using Include="Mediator" />
+    <Using Include="TimeWarp.Jaribu" />
+    <Using Include="TimeWarp.Jaribu.TestRunner" Static="true" />
+    <Using Include="Shouldly" />
   </ItemGroup>
 </Project>

@@ -17,9 +17,9 @@ public class DefaultSourceTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("status", () => 0);
-    builder.Map("version", () => 0);
-    builder.Map("help", () => 0);
+    builder.Map("status").WithHandler(() => 0).AsQuery().Done();
+    builder.Map("version").WithHandler(() => 0).AsQuery().Done();
+    builder.Map("help").WithHandler(() => 0).AsQuery().Done();
 
     CompletionContext context = new(
       Args: ["app"],
@@ -46,9 +46,9 @@ public class DefaultSourceTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("git status", () => 0);
-    builder.Map("git commit -m {message}", (string message) => 0);
-    builder.Map("git push", () => 0);
+    builder.Map("git status").WithHandler(() => 0).AsQuery().Done();
+    builder.Map("git commit -m {message}").WithHandler((string message) => 0).AsCommand().Done();
+    builder.Map("git push").WithHandler(() => 0).AsCommand().Done();
 
     CompletionContext context = new(
       Args: ["app", "git"],
@@ -75,7 +75,7 @@ public class DefaultSourceTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("deploy {env} --force --verbose", (string env, bool force, bool verbose) => 0);
+    builder.Map("deploy {env} --force --verbose").WithHandler((string env, bool force, bool verbose) => 0).AsCommand().Done();
 
     CompletionContext context = new(
       Args: ["app", "deploy", "production", "-"],
@@ -101,7 +101,7 @@ public class DefaultSourceTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("build --configuration,-c {mode}", (string mode) => 0);
+    builder.Map("build --configuration,-c {mode}").WithHandler((string mode) => 0).AsCommand().Done();
 
     CompletionContext context = new(
       Args: ["app", "build", "-"],
@@ -148,9 +148,9 @@ public class DefaultSourceTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("deploy {env}", (string env) => 0);
-    builder.Map("deploy {env} --force", (string env, bool force) => 0);
-    builder.Map("deploy {env} {tag?}", (string env, string? tag) => 0);
+    builder.Map("deploy {env}").WithHandler((string env) => 0).AsCommand().Done();
+    builder.Map("deploy {env} --force").WithHandler((string env, bool force) => 0).AsCommand().Done();
+    builder.Map("deploy {env} {tag?}").WithHandler((string env, string? tag) => 0).AsCommand().Done();
 
     CompletionContext context = new(
       Args: ["app"],
@@ -173,9 +173,9 @@ public class DefaultSourceTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("deploy {env}", (string env) => 0);
-    builder.Map("delete {resource}", (string resource) => 0);
-    builder.Map("status", () => 0);
+    builder.Map("deploy {env}").WithHandler((string env) => 0).AsCommand().Done();
+    builder.Map("delete {resource}").WithHandler((string resource) => 0).AsCommand().Done();
+    builder.Map("status").WithHandler(() => 0).AsQuery().Done();
 
     CompletionContext context = new(
       Args: ["app", "de"],
@@ -200,7 +200,7 @@ public class DefaultSourceTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("{command} {*args}", (string command, string[] args) => 0);
+    builder.Map("{command} {*args}").WithHandler((string command, string[] args) => 0).AsCommand().Done();
 
     CompletionContext context = new(
       Args: ["app"],
@@ -224,9 +224,9 @@ public class DefaultSourceTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("zebra", () => 0);
-    builder.Map("apple", () => 0);
-    builder.Map("mango", () => 0);
+    builder.Map("zebra").WithHandler(() => 0).AsQuery().Done();
+    builder.Map("apple").WithHandler(() => 0).AsQuery().Done();
+    builder.Map("mango").WithHandler(() => 0).AsQuery().Done();
 
     CompletionContext context = new(
       Args: ["app"],
@@ -252,8 +252,8 @@ public class DefaultSourceTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("build --debug --verbose", (bool debug, bool verbose) => 0);
-    builder.Map("build --release --quiet", (bool release, bool quiet) => 0);
+    builder.Map("build --debug --verbose").WithHandler((bool debug, bool verbose) => 0).AsCommand().Done();
+    builder.Map("build --release --quiet").WithHandler((bool release, bool quiet) => 0).AsCommand().Done();
 
     CompletionContext context = new(
       Args: ["app", "build", "-"],
@@ -280,8 +280,8 @@ public class DefaultSourceTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("status", () => 0);
-    builder.Map("version", () => 0);
+    builder.Map("status").WithHandler(() => 0).AsQuery().Done();
+    builder.Map("version").WithHandler(() => 0).AsQuery().Done();
 
     CompletionContext context = new(
       Args: ["app", ""],
@@ -306,7 +306,7 @@ public class DefaultSourceTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("run --verbose,-v --quiet,-q", (bool verbose, bool quiet) => 0);
+    builder.Map("run --verbose,-v --quiet,-q").WithHandler((bool verbose, bool quiet) => 0).AsCommand().Done();
 
     CompletionContext context = new(
       Args: ["app", "run", "-"],

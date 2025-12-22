@@ -1,14 +1,9 @@
 namespace TimeWarp.Nuru;
 
-using System;
-using System.Diagnostics;
-using System.IO;
-using TimeWarp.Nuru;
-
 /// <summary>
 /// Extension methods for NuruAppBuilder to enable shell completion support.
 /// </summary>
-public static class NuruAppBuilderExtensions
+public static class NuruAppBuilderCompletionExtensions
 {
   // ============================================================================
   // EndpointBuilder<TBuilder> overloads - preserve builder type in fluent chain
@@ -24,7 +19,7 @@ public static class NuruAppBuilderExtensions
   public static TBuilder EnableStaticCompletion<TBuilder>(
     this EndpointBuilder<TBuilder> configurator,
     string? appName = null)
-    where TBuilder : NuruCoreAppBuilder
+    where TBuilder : NuruCoreAppBuilder<TBuilder>
   {
     ArgumentNullException.ThrowIfNull(configurator);
     return configurator.Builder.EnableStaticCompletion(appName);
@@ -42,7 +37,7 @@ public static class NuruAppBuilderExtensions
     this EndpointBuilder<TBuilder> configurator,
     string? appName = null,
     Action<CompletionSourceRegistry>? configure = null)
-    where TBuilder : NuruCoreAppBuilder
+    where TBuilder : NuruCoreAppBuilder<TBuilder>
   {
     ArgumentNullException.ThrowIfNull(configurator);
     return configurator.Builder.EnableDynamicCompletion(appName, configure);
@@ -101,33 +96,35 @@ public static class NuruAppBuilderExtensions
     this TBuilder builder,
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Roslynator", "RCS1163:Unused parameter", Justification = "Parameter kept for backward compatibility")]
     string? appName = null)
-    where TBuilder : NuruCoreAppBuilder
+    where TBuilder : NuruCoreAppBuilder<TBuilder>
   {
     ArgumentNullException.ThrowIfNull(builder);
 
     // Auto-detect app name at generation time (not at build time)
 
     // Register the --generate-completion route
-    builder.Map("--generate-completion {shell}", (string shell) =>
-    {
-      // Detect app name at runtime (when the command is actually executed)
-      string detectedAppName = AppNameDetector.GetEffectiveAppName();
-
-      CompletionScriptGenerator generator = new();
-
-      string script = shell.ToLowerInvariant() switch
+    builder.Map("--generate-completion {shell}")
+      .WithHandler((string shell) =>
       {
-        "bash" => generator.GenerateBash(builder.EndpointCollection, detectedAppName),
-        "zsh" => generator.GenerateZsh(builder.EndpointCollection, detectedAppName),
-        "pwsh" or "powershell" => generator.GeneratePowerShell(builder.EndpointCollection, detectedAppName),
-        "fish" => generator.GenerateFish(builder.EndpointCollection, detectedAppName),
-        _ => throw new ArgumentException(
-          $"Unknown shell: {shell}. Supported shells: bash, zsh, pwsh, fish",
-          nameof(shell))
-      };
+        // Detect app name at runtime (when the command is actually executed)
+        string detectedAppName = AppNameDetector.GetEffectiveAppName();
 
-      Console.WriteLine(script);
-    });
+        CompletionScriptGenerator generator = new();
+
+        string script = shell.ToLowerInvariant() switch
+        {
+          "bash" => generator.GenerateBash(builder.EndpointCollection, detectedAppName),
+          "zsh" => generator.GenerateZsh(builder.EndpointCollection, detectedAppName),
+          "pwsh" or "powershell" => generator.GeneratePowerShell(builder.EndpointCollection, detectedAppName),
+          "fish" => generator.GenerateFish(builder.EndpointCollection, detectedAppName),
+          _ => throw new ArgumentException(
+            $"Unknown shell: {shell}. Supported shells: bash, zsh, pwsh, fish",
+            nameof(shell))
+        };
+
+        Console.WriteLine(script);
+      })
+      .Done();
 
     return builder;
   }
@@ -151,7 +148,7 @@ public static class NuruAppBuilderExtensions
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Roslynator", "RCS1163:Unused parameter", Justification = "Parameter kept for backward compatibility")]
     string? appName = null,
     Action<CompletionSourceRegistry>? configure = null)
-    where TBuilder : NuruCoreAppBuilder
+    where TBuilder : NuruCoreAppBuilder<TBuilder>
   {
     ArgumentNullException.ThrowIfNull(builder);
 
@@ -160,43 +157,51 @@ public static class NuruAppBuilderExtensions
     configure?.Invoke(registry);
 
     // Register the __complete callback route
-    builder.Map("__complete {index:int} {*words}", (int index, string[] words) =>
-    {
-      return DynamicCompletionHandler.HandleCompletion(index, words, registry, builder.EndpointCollection);
-    });
+    builder.Map("__complete {index:int} {*words}")
+      .WithHandler((int index, string[] words) =>
+      {
+        return DynamicCompletionHandler.HandleCompletion(index, words, registry, builder.EndpointCollection);
+      })
+      .Done();
 
     // Register the --generate-completion route with dynamic templates
-    builder.Map("--generate-completion {shell}", (string shell) =>
-    {
-      string detectedAppName = AppNameDetector.GetEffectiveAppName();
-
-      string script = shell.ToLowerInvariant() switch
+    builder.Map("--generate-completion {shell}")
+      .WithHandler((string shell) =>
       {
-        "bash" => DynamicCompletionScriptGenerator.GenerateBash(detectedAppName),
-        "zsh" => DynamicCompletionScriptGenerator.GenerateZsh(detectedAppName),
-        "pwsh" or "powershell" => DynamicCompletionScriptGenerator.GeneratePowerShell(detectedAppName),
-        "fish" => DynamicCompletionScriptGenerator.GenerateFish(detectedAppName),
-        _ => throw new ArgumentException(
-          $"Unknown shell: {shell}. Supported shells: bash, zsh, pwsh, fish",
-          nameof(shell))
-      };
+        string detectedAppName = AppNameDetector.GetEffectiveAppName();
 
-      Console.WriteLine(script);
-    });
+        string script = shell.ToLowerInvariant() switch
+        {
+          "bash" => DynamicCompletionScriptGenerator.GenerateBash(detectedAppName),
+          "zsh" => DynamicCompletionScriptGenerator.GenerateZsh(detectedAppName),
+          "pwsh" or "powershell" => DynamicCompletionScriptGenerator.GeneratePowerShell(detectedAppName),
+          "fish" => DynamicCompletionScriptGenerator.GenerateFish(detectedAppName),
+          _ => throw new ArgumentException(
+            $"Unknown shell: {shell}. Supported shells: bash, zsh, pwsh, fish",
+            nameof(shell))
+        };
+
+        Console.WriteLine(script);
+      })
+      .Done();
 
     // Register the --install-completion route for automatic installation
-    builder.Map("--install-completion {shell?}", (string? shell) =>
-    {
-      string detectedAppName = AppNameDetector.GetEffectiveAppName();
-      InstallCompletionHandler.Install(detectedAppName, shell);
-    });
+    builder.Map("--install-completion {shell?}")
+      .WithHandler((string? shell) =>
+      {
+        string detectedAppName = AppNameDetector.GetEffectiveAppName();
+        InstallCompletionHandler.Install(detectedAppName, shell);
+      })
+      .Done();
 
     // Register the --install-completion --dry-run route for preview
-    builder.Map("--install-completion --dry-run {shell?}", (string? shell) =>
-    {
-      string detectedAppName = AppNameDetector.GetEffectiveAppName();
-      InstallCompletionHandler.Install(detectedAppName, shell, dryRun: true);
-    });
+    builder.Map("--install-completion --dry-run {shell?}")
+      .WithHandler((string? shell) =>
+      {
+        string detectedAppName = AppNameDetector.GetEffectiveAppName();
+        InstallCompletionHandler.Install(detectedAppName, shell, dryRun: true);
+      })
+      .Done();
 
     return builder;
   }

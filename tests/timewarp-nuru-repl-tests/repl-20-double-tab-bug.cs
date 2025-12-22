@@ -39,9 +39,18 @@ public class DoubleTabBugTests
     using TestTerminal terminal = new();
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("git status", () => 0)
-      .Map("git commit -m {message}", (string _) => 0)
-      .Map("git log --count {n:int}", (int _) => 0)
+      .Map("git status")
+        .WithHandler(() => 0)
+        .AsQuery()
+        .Done()
+      .Map("git commit -m {message}")
+        .WithHandler((string _) => 0)
+        .AsCommand()
+        .Done()
+      .Map("git log --count {n:int}")
+        .WithHandler((int _) => 0)
+        .AsQuery()
+        .Done()
       .AddReplSupport(options =>
       {
         options.Prompt = "demo> ";

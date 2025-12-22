@@ -34,17 +34,28 @@ public class CompiledRoute
   /// </summary>
   public int Specificity { get; set; }
 
+  // Private backing fields for cached matchers
+
   /// <summary>
   /// Gets the positional matchers (literals and parameters) for backward compatibility.
   /// This filters out OptionMatchers from the Segments list.
+  /// Results are cached after first access.
   /// </summary>
   public IReadOnlyList<RouteMatcher> PositionalMatchers =>
-    Segments.Where(s => s is not OptionMatcher).ToArray();
+    field ??= Segments.Where(s => s is not OptionMatcher).ToArray();
 
   /// <summary>
   /// Gets the option matchers for backward compatibility.
   /// This filters OptionMatchers from the Segments list.
+  /// Results are cached after first access.
   /// </summary>
   public IReadOnlyList<OptionMatcher> OptionMatchers =>
-    Segments.OfType<OptionMatcher>().ToArray();
+    field ??= Segments.OfType<OptionMatcher>().ToArray();
+
+  /// <summary>
+  /// Gets the repeated option matchers from this route.
+  /// Results are cached after first access.
+  /// </summary>
+  public IReadOnlyList<OptionMatcher> RepeatedOptions =>
+    field ??= OptionMatchers.Where(o => o.IsRepeated).ToArray();
 }

@@ -6,7 +6,10 @@
 using TimeWarp.Nuru;
 
 NuruCoreApp app = NuruCoreApp.CreateSlimBuilder(args)
-  .MapDefault(() => "Hello World")
+  .Map("")
+    .WithHandler(() => "Hello World")
+    .AsQuery()
+    .Done()
   .Build();
 
 await app.RunAsync(args);

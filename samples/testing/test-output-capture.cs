@@ -1,11 +1,12 @@
 #!/usr/bin/dotnet --
 // test-output-capture - Demonstrates testing CLI output capture using TestTerminal
-// Uses new NuruAppBuilder() for testing scenarios - provides ITerminal injection without full Mediator
+// Uses NuruCoreApp.CreateSlimBuilder() for testing scenarios - provides ITerminal injection without full Mediator
 #:package Shouldly
 #:project ../../source/timewarp-nuru/timewarp-nuru.csproj
 
 using Shouldly;
 using TimeWarp.Nuru;
+using TimeWarp.Terminal;
 
 Console.WriteLine("=== Testing CLI Output Capture ===\n");
 
@@ -14,10 +15,12 @@ Console.WriteLine("Test 1: Basic output capture");
 {
   using TestTerminal terminal = new();
 
-  NuruCoreApp app = new NuruAppBuilder()
+  NuruCoreApp app = NuruCoreApp.CreateSlimBuilder()
     .UseTerminal(terminal)
-    .Map("hello {name}", (string name, ITerminal t) =>
-      t.WriteLine($"Hello, {name}!"))
+    .Map("hello {name}")
+      .WithHandler((string name, ITerminal t) => t.WriteLine($"Hello, {name}!"))
+      .AsCommand()
+      .Done()
     .Build();
 
   await app.RunAsync(["hello", "World"]);
@@ -32,14 +35,17 @@ Console.WriteLine("\nTest 2: Multiple lines capture");
 {
   using TestTerminal terminal = new();
 
-  NuruCoreApp app = new NuruAppBuilder()
+  NuruCoreApp app = NuruCoreApp.CreateSlimBuilder()
     .UseTerminal(terminal)
-    .Map("list", (ITerminal t) =>
-    {
-      t.WriteLine("Item 1");
-      t.WriteLine("Item 2");
-      t.WriteLine("Item 3");
-    })
+    .Map("list")
+      .WithHandler((ITerminal t) =>
+      {
+        t.WriteLine("Item 1");
+        t.WriteLine("Item 2");
+        t.WriteLine("Item 3");
+      })
+      .AsQuery()
+      .Done()
     .Build();
 
   await app.RunAsync(["list"]);
@@ -58,13 +64,16 @@ Console.WriteLine("\nTest 3: Error output capture with exception");
 {
   using TestTerminal terminal = new();
 
-  NuruCoreApp app = new NuruAppBuilder()
+  NuruCoreApp app = NuruCoreApp.CreateSlimBuilder()
     .UseTerminal(terminal)
-    .Map("validate", (ITerminal t) =>
-    {
-      t.WriteErrorLine("Error: Invalid input");
-      throw new InvalidOperationException("Intentional error to verify terminal capture still works");
-    })
+    .Map("validate")
+      .WithHandler((ITerminal t) =>
+      {
+        t.WriteErrorLine("Error: Invalid input");
+        throw new InvalidOperationException("Intentional error to verify terminal capture still works");
+      })
+      .AsCommand()
+      .Done()
     .Build();
 
   await app.RunAsync(["validate"]);
@@ -79,14 +88,17 @@ Console.WriteLine("\nTest 4: Combined stdout and stderr");
 {
   using TestTerminal terminal = new();
 
-  NuruCoreApp app = new NuruAppBuilder()
+  NuruCoreApp app = NuruCoreApp.CreateSlimBuilder()
     .UseTerminal(terminal)
-    .Map("mixed", (ITerminal t) =>
-    {
-      t.WriteLine("Processing...");
-      t.WriteErrorLine("Warning: Low memory");
-      t.WriteLine("Done!");
-    })
+    .Map("mixed")
+      .WithHandler((ITerminal t) =>
+      {
+        t.WriteLine("Processing...");
+        t.WriteErrorLine("Warning: Low memory");
+        t.WriteLine("Done!");
+      })
+      .AsCommand()
+      .Done()
     .Build();
 
   await app.RunAsync(["mixed"]);

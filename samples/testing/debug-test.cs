@@ -2,10 +2,14 @@
 #:project ../../source/timewarp-nuru/timewarp-nuru.csproj
 
 using TimeWarp.Nuru;
+using TimeWarp.Terminal;
 
 NuruCoreApp app = NuruCoreApp.CreateSlimBuilder()
   .AddAutoHelp()
-  .Map("greet {name}", (string name, ITerminal t) => t.WriteLine($"Hello, {name}!"))
+  .Map("greet {name}")
+    .WithHandler((string name, ITerminal t) => t.WriteLine($"Hello, {name}!"))
+    .AsCommand()
+    .Done()
   .Build();
 
 using TestTerminal terminal = new();

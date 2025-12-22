@@ -29,12 +29,15 @@ public class NuruContextTests
     // Arrange
     string[]? capturedRawArgs = null;
 
-    NuruCoreApp app = new NuruAppBuilder()
-      .Map("analyze {file} --verbose", (string file, bool verbose, NuruContext context) =>
-      {
-        capturedRawArgs = context.RawArgs.ToArray();
-        return 0;
-      })
+    NuruCoreApp app = NuruCoreApp.CreateSlimBuilder()
+      .Map("analyze {file} --verbose")
+        .WithHandler((string file, bool verbose, NuruContext context) =>
+        {
+          capturedRawArgs = context.RawArgs.ToArray();
+          return 0;
+        })
+        .AsCommand()
+        .Done()
       .Build();
 
     // Act
@@ -62,12 +65,15 @@ public class NuruContextTests
     // Arrange
     string[]? capturedUnmatched = null;
 
-    NuruCoreApp app = new NuruAppBuilder()
-      .Map("analyze {file} --verbose", (string file, bool verbose, NuruContext context) =>
-      {
-        capturedUnmatched = context.UnmatchedArgs.ToArray();
-        return 0;
-      })
+    NuruCoreApp app = NuruCoreApp.CreateSlimBuilder()
+      .Map("analyze {file} --verbose")
+        .WithHandler((string file, bool verbose, NuruContext context) =>
+        {
+          capturedUnmatched = context.UnmatchedArgs.ToArray();
+          return 0;
+        })
+        .AsCommand()
+        .Done()
       .Build();
 
     // Act
@@ -93,12 +99,15 @@ public class NuruContextTests
     // Arrange
     bool? tagWasProvided = null;
 
-    NuruCoreApp app = new NuruAppBuilder()
-      .Map("deploy {env} {tag?}", (string env, string? tag, NuruContext context) =>
-      {
-        tagWasProvided = context.WasProvided("tag");
-        return 0;
-      })
+    NuruCoreApp app = NuruCoreApp.CreateSlimBuilder()
+      .Map("deploy {env} {tag?}")
+        .WithHandler((string env, string? tag, NuruContext context) =>
+        {
+          tagWasProvided = context.WasProvided("tag");
+          return 0;
+        })
+        .AsCommand()
+        .Done()
       .Build();
 
     // Act - without optional tag
@@ -122,12 +131,15 @@ public class NuruContextTests
     // Arrange
     bool? tagWasProvided = null;
 
-    NuruCoreApp app = new NuruAppBuilder()
-      .Map("deploy {env} {tag?}", (string env, string? tag, NuruContext context) =>
-      {
-        tagWasProvided = context.WasProvided("tag");
-        return 0;
-      })
+    NuruCoreApp app = NuruCoreApp.CreateSlimBuilder()
+      .Map("deploy {env} {tag?}")
+        .WithHandler((string env, string? tag, NuruContext context) =>
+        {
+          tagWasProvided = context.WasProvided("tag");
+          return 0;
+        })
+        .AsCommand()
+        .Done()
       .Build();
 
     // Act - with optional tag
@@ -151,12 +163,15 @@ public class NuruContextTests
     // Arrange
     string? capturedPattern = null;
 
-    NuruCoreApp app = new NuruAppBuilder()
-      .Map("analyze {file} --verbose", (string file, bool verbose, NuruContext context) =>
-      {
-        capturedPattern = context.RoutePattern;
-        return 0;
-      })
+    NuruCoreApp app = NuruCoreApp.CreateSlimBuilder()
+      .Map("analyze {file} --verbose")
+        .WithHandler((string file, bool verbose, NuruContext context) =>
+        {
+          capturedPattern = context.RoutePattern;
+          return 0;
+        })
+        .AsCommand()
+        .Done()
       .Build();
 
     // Act

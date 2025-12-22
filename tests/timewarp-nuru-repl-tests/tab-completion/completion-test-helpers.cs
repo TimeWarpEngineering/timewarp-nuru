@@ -215,49 +215,94 @@ public static class TestAppFactory
       // ========================================
       // SIMPLE COMMANDS (Literal only)
       // ========================================
-      .Map("status", () => 0, description: "Displays the current system status.")
-      .Map("time", () => 0, description: "Displays the current time.")
+      .Map("status")
+        .WithHandler(() => 0)
+        .WithDescription("Displays the current system status.")
+        .AsQuery()
+        .Done()
+      .Map("time")
+        .WithHandler(() => 0)
+        .WithDescription("Displays the current time.")
+        .AsQuery()
+        .Done()
 
       // ========================================
       // BASIC PARAMETERS
       // ========================================
-      .Map("greet {name}", (string _) => 0, description: "Greets the person with the specified name.")
-      .Map("add {a:int} {b:int}", (int _, int _2) => 0, description: "Adds two integers.")
+      .Map("greet {name}")
+        .WithHandler((string _) => 0)
+        .WithDescription("Greets the person with the specified name.")
+        .AsCommand()
+        .Done()
+      .Map("add {a:int} {b:int}")
+        .WithHandler((int _, int _2) => 0)
+        .WithDescription("Adds two integers.")
+        .AsCommand()
+        .Done()
 
       // ========================================
       // ENUM PARAMETERS
       // ========================================
-      .Map("deploy {env:environment} {tag?}", (Environment _, string? _2) => 0,
-        description: "Deploys to environment (dev, staging, prod) with optional tag.")
+      .Map("deploy {env:environment} {tag?}")
+        .WithHandler((Environment _, string? _2) => 0)
+        .WithDescription("Deploys to environment (dev, staging, prod) with optional tag.")
+        .AsCommand()
+        .Done()
 
       // ========================================
       // CATCH-ALL PARAMETERS
       // ========================================
-      .Map("echo {*message}", (string[] _) => 0, description: "Echoes all arguments back.")
+      .Map("echo {*message}")
+        .WithHandler((string[] _) => 0)
+        .WithDescription("Echoes all arguments back.")
+        .AsCommand()
+        .Done()
 
       // ========================================
       // SUBCOMMANDS (Hierarchical routes)
       // ========================================
-      .Map("git status", () => 0, description: "Shows git working tree status.")
-      .Map("git commit -m {message}", (string _) => 0, description: "Creates a commit with the specified message.")
-      .Map("git log --count {n:int}", (int _) => 0, description: "Shows the last N commits.")
+      .Map("git status")
+        .WithHandler(() => 0)
+        .WithDescription("Shows git working tree status.")
+        .AsQuery()
+        .Done()
+      .Map("git commit -m {message}")
+        .WithHandler((string _) => 0)
+        .WithDescription("Creates a commit with the specified message.")
+        .AsCommand()
+        .Done()
+      .Map("git log --count {n:int}")
+        .WithHandler((int _) => 0)
+        .WithDescription("Shows the last N commits.")
+        .AsQuery()
+        .Done()
 
       // ========================================
       // BOOLEAN OPTIONS
       // ========================================
-      .Map("build --verbose,-v", (bool _) => 0, description: "Builds the project. Use -v for verbose output.")
+      .Map("build --verbose,-v")
+        .WithHandler((bool _) => 0)
+        .WithDescription("Builds the project. Use -v for verbose output.")
+        .AsCommand()
+        .Done()
 
       // ========================================
       // OPTIONS WITH VALUES
       // ========================================
-      .Map("search {query} --limit,-l {count:int?}", (string _, int? _2) => 0,
-        description: "Searches with optional result limit.")
+      .Map("search {query} --limit,-l {count:int?}")
+        .WithHandler((string _, int? _2) => 0)
+        .WithDescription("Searches with optional result limit.")
+        .AsQuery()
+        .Done()
 
       // ========================================
       // COMBINED OPTIONS
       // ========================================
-      .Map("backup {source} --compress,-c --output,-o {dest?}", (string _, bool _2, string? _3) => 0,
-        description: "Backs up source with optional compression and destination.")
+      .Map("backup {source} --compress,-c --output,-o {dest?}")
+        .WithHandler((string _, bool _2, string? _3) => 0)
+        .WithDescription("Backs up source with optional compression and destination.")
+        .AsCommand()
+        .Done()
 
       // ========================================
       // REPL CONFIGURATION

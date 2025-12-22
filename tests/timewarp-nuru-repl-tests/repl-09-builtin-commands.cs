@@ -82,7 +82,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.BuiltinCommands
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("status", () => "OK")
+      .Map("status").WithHandler(() => "OK").AsQuery().Done()
       .AddReplSupport()
       .Build();
 
@@ -144,7 +144,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.BuiltinCommands
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("status", () => "OK")
+      .Map("status").WithHandler(() => "OK").AsQuery().Done()
       .AddReplSupport()
       .Build();
 
@@ -167,7 +167,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.BuiltinCommands
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("status", () => "OK")
+      .Map("status").WithHandler(() => "OK").AsQuery().Done()
       .AddReplSupport()
       .Build();
 

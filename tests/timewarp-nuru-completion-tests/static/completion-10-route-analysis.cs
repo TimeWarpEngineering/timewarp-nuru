@@ -13,7 +13,10 @@ public class RouteAnalysisTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("status", () => 0);
+    builder.Map("status")
+      .WithHandler(() => 0)
+      .AsQuery()
+      .Done();
 
     // Act
     CompletionScriptGenerator generator = new();
@@ -29,7 +32,10 @@ public class RouteAnalysisTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("greet {name}", (string name) => 0);
+    builder.Map("greet {name}")
+      .WithHandler((string name) => 0)
+      .AsCommand()
+      .Done();
 
     // Act
     CompletionScriptGenerator generator = new();
@@ -47,7 +53,10 @@ public class RouteAnalysisTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("delay {ms:int}", (int ms) => 0);
+    builder.Map("delay {ms:int}")
+      .WithHandler((int ms) => 0)
+      .AsCommand()
+      .Done();
 
     // Act
     CompletionScriptGenerator generator = new();
@@ -63,7 +72,10 @@ public class RouteAnalysisTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("deploy {env} {tag?}", (string env, string? tag) => 0);
+    builder.Map("deploy {env} {tag?}")
+      .WithHandler((string env, string? tag) => 0)
+      .AsCommand()
+      .Done();
 
     // Act
     CompletionScriptGenerator generator = new();
@@ -79,7 +91,10 @@ public class RouteAnalysisTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("build --config {mode}", (string mode) => 0);
+    builder.Map("build --config {mode}")
+      .WithHandler((string mode) => 0)
+      .AsCommand()
+      .Done();
 
     // Act
     CompletionScriptGenerator generator = new();
@@ -96,7 +111,10 @@ public class RouteAnalysisTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("docker {*args}", (string[] args) => 0);
+    builder.Map("docker {*args}")
+      .WithHandler((string[] args) => 0)
+      .AsCommand()
+      .Done();
 
     // Act
     CompletionScriptGenerator generator = new();
@@ -112,7 +130,10 @@ public class RouteAnalysisTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("test --verbose --dry-run", () => 0);
+    builder.Map("test --verbose --dry-run")
+      .WithHandler(() => 0)
+      .AsCommand()
+      .Done();
 
     // Act
     CompletionScriptGenerator generator = new();
@@ -130,7 +151,10 @@ public class RouteAnalysisTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("deploy {env} --version {ver} --force", (string env, string ver) => 0);
+    builder.Map("deploy {env} --version {ver} --force")
+      .WithHandler((string env, string ver) => 0)
+      .AsCommand()
+      .Done();
 
     // Act
     CompletionScriptGenerator generator = new();
@@ -148,9 +172,18 @@ public class RouteAnalysisTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("create", () => 0);
-    builder.Map("delete", () => 0);
-    builder.Map("list --all", () => 0);
+    builder.Map("create")
+      .WithHandler(() => 0)
+      .AsCommand()
+      .Done();
+    builder.Map("delete")
+      .WithHandler(() => 0)
+      .AsCommand()
+      .Done();
+    builder.Map("list --all")
+      .WithHandler(() => 0)
+      .AsQuery()
+      .Done();
 
     // Act
     CompletionScriptGenerator generator = new();
@@ -170,9 +203,18 @@ public class RouteAnalysisTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("git commit", () => 0);
-    builder.Map("git status", () => 0);
-    builder.Map("git push", () => 0);
+    builder.Map("git commit")
+      .WithHandler(() => 0)
+      .AsCommand()
+      .Done();
+    builder.Map("git status")
+      .WithHandler(() => 0)
+      .AsQuery()
+      .Done();
+    builder.Map("git push")
+      .WithHandler(() => 0)
+      .AsCommand()
+      .Done();
 
     // Act
     CompletionScriptGenerator generator = new();
@@ -190,8 +232,10 @@ public class RouteAnalysisTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("server start --port {port:int} --host {host} --verbose",
-      (int port, string host) => 0);
+    builder.Map("server start --port {port:int} --host {host} --verbose")
+      .WithHandler((int port, string host) => 0)
+      .AsCommand()
+      .Done();
 
     // Act
     CompletionScriptGenerator generator = new();
@@ -211,7 +255,10 @@ public class RouteAnalysisTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("test --verbose,-v --quiet,-q", () => 0);
+    builder.Map("test --verbose,-v --quiet,-q")
+      .WithHandler(() => 0)
+      .AsCommand()
+      .Done();
 
     // Act
     CompletionScriptGenerator generator = new();
@@ -230,7 +277,10 @@ public class RouteAnalysisTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("deploy {env} --force", (string env) => 0);
+    builder.Map("deploy {env} --force")
+      .WithHandler((string env) => 0)
+      .AsCommand()
+      .Done();
 
     CompletionScriptGenerator generator = new();
 

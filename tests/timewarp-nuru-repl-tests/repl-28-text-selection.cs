@@ -132,7 +132,10 @@ public class TextSelectionTests
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("hel", () => "Cut worked!")
+      .Map("hel")
+        .WithHandler(() => "Cut worked!")
+        .AsQuery()
+        .Done()
       .AddReplSupport(options => options.EnableColors = false)
       .Build();
 
@@ -157,7 +160,10 @@ public class TextSelectionTests
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("llo", () => "Forward select worked!")
+      .Map("llo")
+        .WithHandler(() => "Forward select worked!")
+        .AsQuery()
+        .Done()
       .AddReplSupport(options => options.EnableColors = false)
       .Build();
 
@@ -184,7 +190,10 @@ public class TextSelectionTests
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("hello ", () => "Word select backward worked!")
+      .Map("hello ")
+        .WithHandler(() => "Word select backward worked!")
+        .AsQuery()
+        .Done()
       .AddReplSupport(options => options.EnableColors = false)
       .Build();
 
@@ -208,7 +217,10 @@ public class TextSelectionTests
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map(" world", () => "Word select forward worked!")
+      .Map(" world")
+        .WithHandler(() => "Word select forward worked!")
+        .AsQuery()
+        .Done()
       .AddReplSupport(options => options.EnableColors = false)
       .Build();
 
@@ -236,7 +248,10 @@ public class TextSelectionTests
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("test", () => "Shift+Home worked!")
+      .Map("test")
+        .WithHandler(() => "Shift+Home worked!")
+        .AsQuery()
+        .Done()
       .AddReplSupport(options => options.EnableColors = false)
       .Build();
 
@@ -261,7 +276,10 @@ public class TextSelectionTests
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("test", () => "Shift+End worked!")
+      .Map("test")
+        .WithHandler(() => "Shift+End worked!")
+        .AsQuery()
+        .Done()
       .AddReplSupport(options => options.EnableColors = false)
       .Build();
 
@@ -285,7 +303,10 @@ public class TextSelectionTests
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("replaced", () => "Select all worked!")
+      .Map("replaced")
+        .WithHandler(() => "Select all worked!")
+        .AsQuery()
+        .Done()
       .AddReplSupport(options => options.EnableColors = false)
       .Build();
 
@@ -312,7 +333,10 @@ public class TextSelectionTests
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("hello ", () => "Backspace delete worked!")
+      .Map("hello ")
+        .WithHandler(() => "Backspace delete worked!")
+        .AsQuery()
+        .Done()
       .AddReplSupport(options => options.EnableColors = false)
       .Build();
 
@@ -335,7 +359,10 @@ public class TextSelectionTests
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("hello ", () => "Delete key worked!")
+      .Map("hello ")
+        .WithHandler(() => "Delete key worked!")
+        .AsQuery()
+        .Done()
       .AddReplSupport(options => options.EnableColors = false)
       .Build();
 
@@ -358,7 +385,10 @@ public class TextSelectionTests
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("hello universe", () => "Replace worked!")
+      .Map("hello universe")
+        .WithHandler(() => "Replace worked!")
+        .AsQuery()
+        .Done()
       .AddReplSupport(options => options.EnableColors = false)
       .Build();
 
@@ -387,7 +417,10 @@ public class TextSelectionTests
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("hello world", () => "Selection cleared!")
+      .Map("hello world")
+        .WithHandler(() => "Selection cleared!")
+        .AsQuery()
+        .Done()
       .AddReplSupport(options => options.EnableColors = false)
       .Build();
 
@@ -414,7 +447,10 @@ public class TextSelectionTests
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("test", () => "Escape cleared!")
+      .Map("test")
+        .WithHandler(() => "Escape cleared!")
+        .AsQuery()
+        .Done()
       .AddReplSupport(options => options.EnableColors = false)
       .Build();
 
@@ -441,7 +477,10 @@ public class TextSelectionTests
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("test", () => "Cancel worked!")
+      .Map("test")
+        .WithHandler(() => "Cancel worked!")
+        .AsQuery()
+        .Done()
       .AddReplSupport(options => options.EnableColors = false)
       .Build();
 
@@ -469,7 +508,10 @@ public class TextSelectionTests
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("hello world", () => "Kill ring worked!")
+      .Map("hello world")
+        .WithHandler(() => "Kill ring worked!")
+        .AsQuery()
+        .Done()
       .AddReplSupport(options => options.EnableColors = false)
       .Build();
 

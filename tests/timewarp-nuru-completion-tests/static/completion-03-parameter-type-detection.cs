@@ -13,7 +13,10 @@ public class ParameterTypeDetectionTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("greet {name}", (string name) => 0);
+    builder.Map("greet {name}")
+      .WithHandler((string name) => 0)
+      .AsCommand()
+      .Done();
 
     // Act
     CompletionScriptGenerator generator = new();
@@ -30,7 +33,10 @@ public class ParameterTypeDetectionTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("delay {ms:int}", (int ms) => 0);
+    builder.Map("delay {ms:int}")
+      .WithHandler((int ms) => 0)
+      .AsCommand()
+      .Done();
 
     // Act
     CompletionScriptGenerator generator = new();
@@ -47,7 +53,10 @@ public class ParameterTypeDetectionTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("scale {factor:double}", (double factor) => 0);
+    builder.Map("scale {factor:double}")
+      .WithHandler((double factor) => 0)
+      .AsCommand()
+      .Done();
 
     // Act
     CompletionScriptGenerator generator = new();
@@ -64,7 +73,10 @@ public class ParameterTypeDetectionTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("set {enabled:bool}", (bool enabled) => 0);
+    builder.Map("set {enabled:bool}")
+      .WithHandler((bool enabled) => 0)
+      .AsCommand()
+      .Done();
 
     // Act
     CompletionScriptGenerator generator = new();
@@ -81,7 +93,10 @@ public class ParameterTypeDetectionTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("deploy {env} {tag?}", (string env, string? tag) => 0);
+    builder.Map("deploy {env} {tag?}")
+      .WithHandler((string env, string? tag) => 0)
+      .AsCommand()
+      .Done();
 
     // Act
     CompletionScriptGenerator generator = new();
@@ -98,7 +113,10 @@ public class ParameterTypeDetectionTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("exec {*args}", (string[] args) => 0);
+    builder.Map("exec {*args}")
+      .WithHandler((string[] args) => 0)
+      .AsCommand()
+      .Done();
 
     // Act
     CompletionScriptGenerator generator = new();
@@ -115,8 +133,10 @@ public class ParameterTypeDetectionTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("process {file} {count:int} {verbose:bool}",
-      (string file, int count, bool verbose) => 0);
+    builder.Map("process {file} {count:int} {verbose:bool}")
+      .WithHandler((string file, int count, bool verbose) => 0)
+      .AsCommand()
+      .Done();
 
     // Act
     CompletionScriptGenerator generator = new();
@@ -133,8 +153,10 @@ public class ParameterTypeDetectionTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("deploy {env} --force --tag {version}",
-      (string env, string version) => 0);
+    builder.Map("deploy {env} --force --tag {version}")
+      .WithHandler((string env, string version) => 0)
+      .AsCommand()
+      .Done();
 
     // Act
     CompletionScriptGenerator generator = new();
@@ -152,7 +174,10 @@ public class ParameterTypeDetectionTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("test {value:int}", (int value) => 0);
+    builder.Map("test {value:int}")
+      .WithHandler((int value) => 0)
+      .AsCommand()
+      .Done();
 
     CompletionScriptGenerator generator = new();
 
@@ -175,7 +200,10 @@ public class ParameterTypeDetectionTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("schedule {when:DateTime}", (DateTime when) => 0);
+    builder.Map("schedule {when:DateTime}")
+      .WithHandler((DateTime when) => 0)
+      .AsCommand()
+      .Done();
 
     // Act
     CompletionScriptGenerator generator = new();
@@ -192,7 +220,10 @@ public class ParameterTypeDetectionTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("lookup {id:Guid}", (Guid id) => 0);
+    builder.Map("lookup {id:Guid}")
+      .WithHandler((Guid id) => 0)
+      .AsQuery()
+      .Done();
 
     // Act
     CompletionScriptGenerator generator = new();
@@ -209,7 +240,10 @@ public class ParameterTypeDetectionTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("{source} {destination}", (string source, string destination) => 0);
+    builder.Map("{source} {destination}")
+      .WithHandler((string source, string destination) => 0)
+      .AsCommand()
+      .Done();
 
     // Act
     CompletionScriptGenerator generator = new();

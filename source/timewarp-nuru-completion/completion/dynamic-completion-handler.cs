@@ -1,7 +1,5 @@
 namespace TimeWarp.Nuru;
 
-using System.Linq;
-
 /// <summary>
 /// Handles the __complete callback route for dynamic shell completion.
 /// </summary>

@@ -4,6 +4,7 @@
 #:project ../../source/timewarp-nuru/timewarp-nuru.csproj
 
 using TimeWarp.Nuru;
+using TimeWarp.Terminal;
 
 // Get a terminal instance
 ITerminal terminal = NuruTerminal.Default;

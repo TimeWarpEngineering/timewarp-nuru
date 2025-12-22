@@ -13,9 +13,18 @@ public class OptionExtractionTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("test --verbose", () => 0);
-    builder.Map("build --force", () => 0);
-    builder.Map("deploy --dry-run", () => 0);
+    builder.Map("test --verbose")
+      .WithHandler(() => 0)
+      .AsCommand()
+      .Done();
+    builder.Map("build --force")
+      .WithHandler(() => 0)
+      .AsCommand()
+      .Done();
+    builder.Map("deploy --dry-run")
+      .WithHandler(() => 0)
+      .AsCommand()
+      .Done();
 
     // Act
     CompletionScriptGenerator generator = new();
@@ -33,9 +42,18 @@ public class OptionExtractionTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("test -v", () => 0);
-    builder.Map("build -f", () => 0);
-    builder.Map("deploy -d", () => 0);
+    builder.Map("test -v")
+      .WithHandler(() => 0)
+      .AsCommand()
+      .Done();
+    builder.Map("build -f")
+      .WithHandler(() => 0)
+      .AsCommand()
+      .Done();
+    builder.Map("deploy -d")
+      .WithHandler(() => 0)
+      .AsCommand()
+      .Done();
 
     // Act
     CompletionScriptGenerator generator = new();
@@ -53,8 +71,14 @@ public class OptionExtractionTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("test --verbose,-v", () => 0);
-    builder.Map("build --output,-o", () => 0);
+    builder.Map("test --verbose,-v")
+      .WithHandler(() => 0)
+      .AsCommand()
+      .Done();
+    builder.Map("build --output,-o")
+      .WithHandler(() => 0)
+      .AsCommand()
+      .Done();
 
     // Act
     CompletionScriptGenerator generator = new();
@@ -73,7 +97,10 @@ public class OptionExtractionTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("test --verbose --force --dry-run", () => 0);
+    builder.Map("test --verbose --force --dry-run")
+      .WithHandler(() => 0)
+      .AsCommand()
+      .Done();
 
     // Act
     CompletionScriptGenerator generator = new();
@@ -91,8 +118,14 @@ public class OptionExtractionTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("build --config {mode}", (string mode) => 0);
-    builder.Map("deploy --output {file}", (string file) => 0);
+    builder.Map("build --config {mode}")
+      .WithHandler((string mode) => 0)
+      .AsCommand()
+      .Done();
+    builder.Map("deploy --output {file}")
+      .WithHandler((string file) => 0)
+      .AsCommand()
+      .Done();
 
     // Act
     CompletionScriptGenerator generator = new();
@@ -111,9 +144,18 @@ public class OptionExtractionTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("test --verbose", () => 0);
-    builder.Map("build --verbose", () => 0);
-    builder.Map("deploy --verbose", () => 0);
+    builder.Map("test --verbose")
+      .WithHandler(() => 0)
+      .AsCommand()
+      .Done();
+    builder.Map("build --verbose")
+      .WithHandler(() => 0)
+      .AsCommand()
+      .Done();
+    builder.Map("deploy --verbose")
+      .WithHandler(() => 0)
+      .AsCommand()
+      .Done();
 
     // Act
     CompletionScriptGenerator generator = new();
@@ -132,7 +174,10 @@ public class OptionExtractionTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("test --verbose,-v --force -d --output,-o {file}", (string file) => 0);
+    builder.Map("test --verbose,-v --force -d --output,-o {file}")
+      .WithHandler((string file) => 0)
+      .AsCommand()
+      .Done();
 
     // Act
     CompletionScriptGenerator generator = new();
@@ -170,8 +215,14 @@ public class OptionExtractionTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("status", () => 0);
-    builder.Map("version", () => 0);
+    builder.Map("status")
+      .WithHandler(() => 0)
+      .AsQuery()
+      .Done();
+    builder.Map("version")
+      .WithHandler(() => 0)
+      .AsQuery()
+      .Done();
 
     // Act
     CompletionScriptGenerator generator = new();
@@ -188,7 +239,10 @@ public class OptionExtractionTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("deploy {env} --version {ver} --force --dry-run,-d", (string env, string ver) => 0);
+    builder.Map("deploy {env} --version {ver} --force --dry-run,-d")
+      .WithHandler((string env, string ver) => 0)
+      .AsCommand()
+      .Done();
 
     // Act
     CompletionScriptGenerator generator = new();
@@ -207,9 +261,18 @@ public class OptionExtractionTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("test --dry-run", () => 0);
-    builder.Map("build --skip-tests", () => 0);
-    builder.Map("deploy --no-cache", () => 0);
+    builder.Map("test --dry-run")
+      .WithHandler(() => 0)
+      .AsCommand()
+      .Done();
+    builder.Map("build --skip-tests")
+      .WithHandler(() => 0)
+      .AsCommand()
+      .Done();
+    builder.Map("deploy --no-cache")
+      .WithHandler(() => 0)
+      .AsCommand()
+      .Done();
 
     // Act
     CompletionScriptGenerator generator = new();
@@ -227,8 +290,14 @@ public class OptionExtractionTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("test --Verbose", () => 0);
-    builder.Map("build --verbose", () => 0);
+    builder.Map("test --Verbose")
+      .WithHandler(() => 0)
+      .AsCommand()
+      .Done();
+    builder.Map("build --verbose")
+      .WithHandler(() => 0)
+      .AsCommand()
+      .Done();
 
     // Act
     CompletionScriptGenerator generator = new();

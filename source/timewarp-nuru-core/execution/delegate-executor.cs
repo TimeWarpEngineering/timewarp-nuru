@@ -33,30 +33,58 @@ public static class DelegateExecutor
 
     try
     {
+#if NURU_TIMING_DEBUG
+      System.Diagnostics.Stopwatch swExec = System.Diagnostics.Stopwatch.StartNew();
+      long t0 = swExec.ElapsedTicks;
+#endif
+
       MethodInfo method = handler.Method;
       ParameterInfo[] parameters = method.GetParameters();
+#if NURU_TIMING_DEBUG
+      long t1 = swExec.ElapsedTicks;
+#endif
 
       object?[] args = parameters.Length == 0
         ? []
         : BindParameters(parameters, extractedValues, typeConverterRegistry, serviceProvider, endpoint, output);
+#if NURU_TIMING_DEBUG
+      long t2 = swExec.ElapsedTicks;
+#endif
 
       // Try to use a generated typed invoker for AOT compatibility
       string signatureKey = InvokerRegistry.ComputeSignatureKey(method);
+#if NURU_TIMING_DEBUG
+      long t3 = swExec.ElapsedTicks;
+#endif
+
       object? returnValue;
+
+#if NURU_TIMING_DEBUG
+      Console.WriteLine($"[DEBUG] DelegateExecutor: signatureKey='{signatureKey}', SyncCount={InvokerRegistry.SyncCount}");
+#endif
 
       // Check for async invoker first
       if (InvokerRegistry.TryGetAsyncInvoker(signatureKey, out AsyncInvoker? asyncInvoker))
       {
+#if NURU_TIMING_DEBUG
+        Console.WriteLine($"[DEBUG] Using ASYNC invoker for '{signatureKey}'");
+#endif
         // Use generated async invoker - no reflection needed
         returnValue = await asyncInvoker(handler, args).ConfigureAwait(false);
       }
       else if (InvokerRegistry.TryGetSync(signatureKey, out SyncInvoker? syncInvoker))
       {
+#if NURU_TIMING_DEBUG
+        Console.WriteLine($"[DEBUG] Using SYNC invoker for '{signatureKey}'");
+#endif
         // Use generated sync invoker - no reflection needed
         returnValue = syncInvoker(handler, args);
       }
       else
       {
+#if NURU_TIMING_DEBUG
+        Console.WriteLine($"[DEBUG] FALLBACK to DynamicInvoke for '{signatureKey}'");
+#endif
         // Fall back to DynamicInvoke (requires reflection)
         returnValue = handler.DynamicInvoke(args);
 
@@ -92,8 +120,17 @@ public static class DelegateExecutor
         }
       }
 
+#if NURU_TIMING_DEBUG
+      long t4 = swExec.ElapsedTicks;
+#endif
+
       // Display the response (if any)
       ResponseDisplay.Write(returnValue, output);
+
+#if NURU_TIMING_DEBUG
+      double ticksPerUs = System.Diagnostics.Stopwatch.Frequency / 1_000_000.0;
+      Console.WriteLine($"[TIMING DelegateExecutor] GetParams={(t1 - t0) / ticksPerUs:F0}us, Bind={(t2 - t1) / ticksPerUs:F0}us, SigKey={(t3 - t2) / ticksPerUs:F0}us, LookupAndInvoke={(t4 - t3) / ticksPerUs:F0}us, Total={(t4 - t0) / ticksPerUs:F0}us");
+#endif
 
       return 0;
     }
@@ -123,10 +160,21 @@ public static class DelegateExecutor
       Endpoint endpoint,
       ITerminal resolvedTerminal)
   {
+#if NURU_TIMING_DEBUG
+    System.Diagnostics.Stopwatch swBind = System.Diagnostics.Stopwatch.StartNew();
+    double ticksPerUs = System.Diagnostics.Stopwatch.Frequency / 1_000_000.0;
+#endif
+
     object?[] args = new object?[parameters.Length];
+#if NURU_TIMING_DEBUG
+    long tArrayCreate = swBind.ElapsedTicks;
+#endif
 
     for (int i = 0; i < parameters.Length; i++)
     {
+#if NURU_TIMING_DEBUG
+      long tLoopStart = swBind.ElapsedTicks;
+#endif
       ParameterInfo param = parameters[i];
 
       // Special case: ITerminal - use the resolved terminal (respects TestTerminalContext)
@@ -232,7 +280,17 @@ public static class DelegateExecutor
               $"No value provided for required parameter '{param.Name}'");
         }
       }
+
+#if NURU_TIMING_DEBUG
+      long tLoopEnd = swBind.ElapsedTicks;
+      Console.WriteLine($"[TIMING BindParam {i}] param='{param.Name}', type={param.ParameterType.Name}, time={(tLoopEnd - tLoopStart) / ticksPerUs:F0}us");
+#endif
     }
+
+#if NURU_TIMING_DEBUG
+    long tTotal = swBind.ElapsedTicks;
+    Console.WriteLine($"[TIMING BindParameters] ArrayCreate={(tArrayCreate) / ticksPerUs:F0}us, Total={(tTotal) / ticksPerUs:F0}us");
+#endif
 
     return args;
   }

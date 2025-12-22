@@ -12,12 +12,11 @@ string testsDir = Path.GetDirectoryName(scriptDir)!;
 // Configure Nuru app with routing
 NuruAppBuilder builder = new();
 
-// TODO: Bug in Nuru - optional flag with required param doesn't work without args
-// Should be: builder.Map("--tag? {tag}", (string? tag) => RunTests(tag), ...);
-// Workaround: Use two routes until optional flag bug is fixed
-
-// builder.MapDefault(() => RunTests(null), "Run all Nuru unit tests");
-builder.Map("--tag? {tag?}", (string? tag) => RunTests(tag), "Run Nuru unit tests (Lexer, Parser, Routing) filtered by tag");
+builder.Map("--tag? {tag?}")
+  .WithHandler((string? tag) => RunTests(tag))
+  .WithDescription("Run Nuru unit tests (Lexer, Parser, Routing) filtered by tag")
+  .AsCommand()
+  .Done();
 
 NuruCoreApp app = builder.Build();
 return await app.RunAsync(args);

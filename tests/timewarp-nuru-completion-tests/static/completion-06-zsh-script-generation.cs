@@ -13,8 +13,14 @@ public class ZshScriptGenerationTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("status", () => 0);
-    builder.Map("deploy {env}", (string env) => 0);
+    builder.Map("status")
+      .WithHandler(() => 0)
+      .AsQuery()
+      .Done();
+    builder.Map("deploy {env}")
+      .WithHandler((string env) => 0)
+      .AsCommand()
+      .Done();
 
     // Act
     CompletionScriptGenerator generator = new();
@@ -32,7 +38,10 @@ public class ZshScriptGenerationTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("status", () => 0);
+    builder.Map("status")
+      .WithHandler(() => 0)
+      .AsQuery()
+      .Done();
 
     // Act
     CompletionScriptGenerator generator = new();
@@ -48,10 +57,22 @@ public class ZshScriptGenerationTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("create", () => 0);
-    builder.Map("createorder", () => 0);
-    builder.Map("delete", () => 0);
-    builder.Map("list", () => 0);
+    builder.Map("create")
+      .WithHandler(() => 0)
+      .AsCommand()
+      .Done();
+    builder.Map("createorder")
+      .WithHandler(() => 0)
+      .AsCommand()
+      .Done();
+    builder.Map("delete")
+      .WithHandler(() => 0)
+      .AsCommand()
+      .Done();
+    builder.Map("list")
+      .WithHandler(() => 0)
+      .AsQuery()
+      .Done();
 
     // Act
     CompletionScriptGenerator generator = new();
@@ -70,8 +91,14 @@ public class ZshScriptGenerationTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("test --verbose --force", () => 0);
-    builder.Map("build --dry-run,-d", () => 0);
+    builder.Map("test --verbose --force")
+      .WithHandler(() => 0)
+      .AsCommand()
+      .Done();
+    builder.Map("build --dry-run,-d")
+      .WithHandler(() => 0)
+      .AsCommand()
+      .Done();
 
     // Act
     CompletionScriptGenerator generator = new();
@@ -90,7 +117,10 @@ public class ZshScriptGenerationTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("status", () => 0);
+    builder.Map("status")
+      .WithHandler(() => 0)
+      .AsQuery()
+      .Done();
 
     // Act
     CompletionScriptGenerator generator = new();
@@ -106,7 +136,10 @@ public class ZshScriptGenerationTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("status", () => 0);
+    builder.Map("status")
+      .WithHandler(() => 0)
+      .AsQuery()
+      .Done();
 
     // Act
     CompletionScriptGenerator generator = new();
@@ -140,7 +173,10 @@ public class ZshScriptGenerationTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("status", () => 0);
+    builder.Map("status")
+      .WithHandler(() => 0)
+      .AsQuery()
+      .Done();
 
     // Act
     CompletionScriptGenerator generator = new();
@@ -157,8 +193,14 @@ public class ZshScriptGenerationTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("status", () => 0);
-    builder.Map("version", () => 0);
+    builder.Map("status")
+      .WithHandler(() => 0)
+      .AsQuery()
+      .Done();
+    builder.Map("version")
+      .WithHandler(() => 0)
+      .AsQuery()
+      .Done();
 
     CompletionScriptGenerator generator = new();
 
@@ -176,8 +218,14 @@ public class ZshScriptGenerationTests
   {
     // Arrange - Replicate Issue #30 scenario
     NuruAppBuilder builder = new();
-    builder.Map("createorder {product} {quantity:int}", (string product, int quantity) => 0);
-    builder.Map("create {item}", (string item) => 0);
+    builder.Map("createorder {product} {quantity:int}")
+      .WithHandler((string product, int quantity) => 0)
+      .AsCommand()
+      .Done();
+    builder.Map("create {item}")
+      .WithHandler((string item) => 0)
+      .AsCommand()
+      .Done();
 
     // Act
     CompletionScriptGenerator generator = new();

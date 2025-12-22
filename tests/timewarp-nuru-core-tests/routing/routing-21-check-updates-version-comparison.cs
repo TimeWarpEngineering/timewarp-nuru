@@ -55,7 +55,7 @@ public class CheckUpdatesRouteTests
     bool customHandlerCalled = false;
     NuruCoreApp app = new NuruAppBuilder()
       .UseAllExtensions()
-      .Map("--check-updates", () => { customHandlerCalled = true; })
+      .Map("--check-updates").WithHandler(() => { customHandlerCalled = true; }).AsQuery().Done()
       .Build();
 
     // Act
@@ -71,7 +71,7 @@ public class CheckUpdatesRouteTests
     // Arrange
     NuruAppBuilder builder = new();
     builder.UseAllExtensions();
-    builder.Map("--check-updates", () => { });
+    builder.Map("--check-updates").WithHandler(() => { }).AsQuery().Done();
 
     // Count endpoints with --check-updates pattern
     int checkUpdatesEndpoints = builder.EndpointCollection.Count(e =>

@@ -212,11 +212,51 @@
     },
     {
       "id": "pipeline-middleware",
-      "name": "Mediator Pipeline Middleware",
-      "description": "Cross-cutting concerns with pipeline behaviors: telemetry, performance, logging, authorization, retry, and exception handling. REQUIRES: Mediator.Abstractions + Mediator.SourceGenerator packages with options.PipelineBehaviors configuration.",
+      "name": "Complete Pipeline Middleware",
+      "description": "Complete reference with all pipeline behaviors: telemetry, performance, logging, authorization, retry, and exception handling. REQUIRES: Mediator packages.",
       "path": "samples/pipeline-middleware/pipeline-middleware.cs",
-      "tags": ["pipeline", "middleware", "mediator", "behaviors", "cross-cutting-concerns", "telemetry", "performance", "enterprise"],
+      "tags": ["pipeline", "middleware", "mediator", "behaviors", "cross-cutting-concerns", "complete-reference", "enterprise"],
       "difficulty": "advanced"
+    },
+    {
+      "id": "pipeline-middleware-basic",
+      "name": "Pipeline Middleware - Basic",
+      "description": "Fundamental pipeline behaviors: logging and performance monitoring with before/after pattern.",
+      "path": "samples/pipeline-middleware/pipeline-middleware-basic.cs",
+      "tags": ["pipeline", "middleware", "logging", "performance", "getting-started"],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "pipeline-middleware-authorization",
+      "name": "Pipeline Middleware - Authorization",
+      "description": "Permission checks using marker interface pattern. Commands opt-in via IRequireAuthorization.",
+      "path": "samples/pipeline-middleware/pipeline-middleware-authorization.cs",
+      "tags": ["pipeline", "middleware", "authorization", "marker-interface", "security"],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "pipeline-middleware-retry",
+      "name": "Pipeline Middleware - Retry",
+      "description": "Resilience with exponential backoff for transient failures. Commands opt-in via IRetryable.",
+      "path": "samples/pipeline-middleware/pipeline-middleware-retry.cs",
+      "tags": ["pipeline", "middleware", "retry", "resilience", "exponential-backoff"],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "pipeline-middleware-exception",
+      "name": "Pipeline Middleware - Exception Handling",
+      "description": "Consistent exception handling with categorized errors and user-friendly messages.",
+      "path": "samples/pipeline-middleware/pipeline-middleware-exception.cs",
+      "tags": ["pipeline", "middleware", "exception-handling", "error-handling"],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "pipeline-middleware-telemetry",
+      "name": "Pipeline Middleware - Telemetry",
+      "description": "OpenTelemetry-compatible distributed tracing with Activity spans for observability.",
+      "path": "samples/pipeline-middleware/pipeline-middleware-telemetry.cs",
+      "tags": ["pipeline", "middleware", "telemetry", "opentelemetry", "distributed-tracing", "observability"],
+      "difficulty": "intermediate"
     },
     {
       "id": "unified-middleware",

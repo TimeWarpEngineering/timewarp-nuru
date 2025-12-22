@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>bench-clifx</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="CliFx" />
+  </ItemGroup>
+</Project>

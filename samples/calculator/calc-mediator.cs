@@ -34,36 +34,18 @@ using static System.Console;
 
 NuruCoreApp app = NuruApp.CreateBuilder(args)
   .ConfigureServices(ConfigureServices)
-  .Map<AddCommand>
-  (
-    pattern: "add {x:double} {y:double}",
-    description: "Add two numbers together"
-  )
-  .Map<SubtractCommand>
-  (
-    pattern: "subtract {x:double} {y:double}",
-    description: "Subtract the second number from the first"
-  )
-  .Map<MultiplyCommand>
-  (
-    pattern: "multiply {x:double} {y:double}",
-    description: "Multiply two numbers together"
-  )
-  .Map<DivideCommand>
-  (
-    pattern: "divide {x:double} {y:double}",
-    description: "Divide the first number by the second"
-  )
-  .Map<RoundCommand>
-  (
-    pattern: "round {value:double} --mode {mode}",
-    description: "Round a number using specified mode (up, down, nearest, banker/accountancy)"
-  )
-  .Map<RoundCommand>
-  (
-    pattern: "round {value:double}",
-    description: "Round a number to the nearest integer"
-  )
+  .Map<AddCommand>("add {x:double} {y:double}")
+    .WithDescription("Add two numbers together")
+  .Map<SubtractCommand>("subtract {x:double} {y:double}")
+    .WithDescription("Subtract the second number from the first")
+  .Map<MultiplyCommand>("multiply {x:double} {y:double}")
+    .WithDescription("Multiply two numbers together")
+  .Map<DivideCommand>("divide {x:double} {y:double}")
+    .WithDescription("Divide the first number by the second")
+  .Map<RoundCommand>("round {value:double} --mode {mode}")
+    .WithDescription("Round a number using specified mode (up, down, nearest, banker/accountancy)")
+  .Map<RoundCommand>("round {value:double}")
+    .WithDescription("Round a number to the nearest integer")
   .Build();
 
 return await app.RunAsync(args);

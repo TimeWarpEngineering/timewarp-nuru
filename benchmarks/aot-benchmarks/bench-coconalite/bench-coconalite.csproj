@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>bench-coconalite</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Cocona.Lite" />
+  </ItemGroup>
+</Project>

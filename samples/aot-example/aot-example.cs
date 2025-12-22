@@ -22,74 +22,106 @@ NuruAppBuilder builder = NuruApp.CreateBuilder(args);
 builder.Services.AddMediator();
 
 // Basic commands
-builder.Map("hello", () => WriteLine("Hello from AOT!"));
-builder.Map("version", () => WriteLine("aot-example v1.0.0"));
+builder.Map("hello")
+  .WithHandler(() => WriteLine("Hello from AOT!"))
+  .AsQuery()
+  .Done();
+builder.Map("version")
+  .WithHandler(() => WriteLine("aot-example v1.0.0"))
+  .AsQuery()
+  .Done();
 
 // Commands with typed parameters
-builder.Map("greet {name}", (string name) =>
-    WriteLine($"Hello, {name}!"));
+builder.Map("greet {name}")
+  .WithHandler((string name) => WriteLine($"Hello, {name}!"))
+  .AsCommand()
+  .Done();
 
-builder.Map("add {x:int} {y:int}", (int x, int y) =>
-    WriteLine($"{x} + {y} = {x + y}"));
+builder.Map("add {x:int} {y:int}")
+  .WithHandler((int x, int y) => WriteLine($"{x} + {y} = {x + y}"))
+  .AsQuery()
+  .Done();
 
-builder.Map("multiply {x:double} {y:double}", (double x, double y) =>
-    WriteLine($"{x} * {y} = {x * y}"));
+builder.Map("multiply {x:double} {y:double}")
+  .WithHandler((double x, double y) => WriteLine($"{x} * {y} = {x * y}"))
+  .AsQuery()
+  .Done();
 
 // Optional parameters
-builder.Map("deploy {env} {tag?}", (string env, string? tag) =>
-{
-  string version = tag ?? "latest";
-  WriteLine($"Deploying to {env} with tag: {version}");
-});
+builder.Map("deploy {env} {tag?}")
+  .WithHandler((string env, string? tag) =>
+  {
+    string version = tag ?? "latest";
+    WriteLine($"Deploying to {env} with tag: {version}");
+  })
+  .AsCommand()
+  .Done();
 
 // Boolean options
-builder.Map("build --release", () =>
-    WriteLine("Building in Release mode"));
+builder.Map("build --release")
+  .WithHandler(() => WriteLine("Building in Release mode"))
+  .AsCommand()
+  .Done();
 
-builder.Map("build --debug", () =>
-    WriteLine("Building in Debug mode"));
+builder.Map("build --debug")
+  .WithHandler(() => WriteLine("Building in Debug mode"))
+  .AsCommand()
+  .Done();
 
-builder.Map("build", () =>
-    WriteLine("Building in default mode"));
+builder.Map("build")
+  .WithHandler(() => WriteLine("Building in default mode"))
+  .AsCommand()
+  .Done();
 
 // Options with values
-builder.Map("config --output {path}", (string path) =>
-    WriteLine($"Configuration will be saved to: {path}"));
+builder.Map("config --output {path}")
+  .WithHandler((string path) => WriteLine($"Configuration will be saved to: {path}"))
+  .AsCommand()
+  .Done();
 
 // Async commands (fully AOT-compatible)
-builder.Map("fetch {url}", async (string url) =>
-{
-  WriteLine($"Fetching {url}...");
-  await Task.Delay(100); // Simulated network delay
-  WriteLine("Done!");
-});
+builder.Map("fetch {url}")
+  .WithHandler(async (string url) =>
+  {
+    WriteLine($"Fetching {url}...");
+    await Task.Delay(100); // Simulated network delay
+    WriteLine("Done!");
+  })
+  .AsQuery()
+  .Done();
 
 // Catch-all for unknown commands
-builder.Map("{*args}", (string[] args) =>
-{
-  WriteLine($"Unknown command: {string.Join(" ", args)}");
-  WriteLine("Run with --help for available commands.");
-});
+builder.Map("{*args}")
+  .WithHandler((string[] args) =>
+  {
+    WriteLine($"Unknown command: {string.Join(" ", args)}");
+    WriteLine("Run with --help for available commands.");
+  })
+  .AsQuery()
+  .Done();
 
 // Help command
-builder.Map("--help", () =>
-{
-  WriteLine("AOT Example - TimeWarp.Nuru Native AOT Demo");
-  WriteLine();
-  WriteLine("Usage: aot-example <command> [options]");
-  WriteLine();
-  WriteLine("Commands:");
-  WriteLine("  hello                    Print hello message");
-  WriteLine("  version                  Show version");
-  WriteLine("  greet {name}             Greet someone by name");
-  WriteLine("  add {x} {y}              Add two integers");
-  WriteLine("  multiply {x} {y}         Multiply two doubles");
-  WriteLine("  deploy {env} {tag?}      Deploy to environment (tag optional)");
-  WriteLine("  build [--release|--debug] Build the project");
-  WriteLine("  config --output {path}   Save configuration");
-  WriteLine("  fetch {url}              Fetch a URL (async demo)");
-  WriteLine("  --help                   Show this help");
-});
+builder.Map("--help")
+  .WithHandler(() =>
+  {
+    WriteLine("AOT Example - TimeWarp.Nuru Native AOT Demo");
+    WriteLine();
+    WriteLine("Usage: aot-example <command> [options]");
+    WriteLine();
+    WriteLine("Commands:");
+    WriteLine("  hello                    Print hello message");
+    WriteLine("  version                  Show version");
+    WriteLine("  greet {name}             Greet someone by name");
+    WriteLine("  add {x} {y}              Add two integers");
+    WriteLine("  multiply {x} {y}         Multiply two doubles");
+    WriteLine("  deploy {env} {tag?}      Deploy to environment (tag optional)");
+    WriteLine("  build [--release|--debug] Build the project");
+    WriteLine("  config --output {path}   Save configuration");
+    WriteLine("  fetch {url}              Fetch a URL (async demo)");
+    WriteLine("  --help                   Show this help");
+  })
+  .AsQuery()
+  .Done();
 
 // Build and run
 NuruCoreApp app = builder.Build();

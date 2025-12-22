@@ -1,6 +1,7 @@
 #!/usr/bin/dotnet --
 #:project ../../source/timewarp-nuru/timewarp-nuru.csproj
 #:project ../../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj
+#:project ../../source/timewarp-terminal/timewarp-terminal.csproj
 #:package Mediator.Abstractions
 #:package Mediator.SourceGenerator
 
@@ -16,6 +17,7 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 
 using TimeWarp.Nuru;
+using TimeWarp.Terminal;
 using Microsoft.Extensions.DependencyInjection;
 
 NuruAppOptions nuruAppOptions = new()
@@ -34,16 +36,22 @@ NuruAppOptions nuruAppOptions = new()
 
 NuruCoreApp app = NuruApp.CreateBuilder(args, nuruAppOptions)
   .ConfigureServices(services => services.AddMediator())
-  .Map("hello", () =>
-  {
-    Console.WriteLine("Hello, World!");
-    return 0;
-  })
-  .Map("status", () =>
-  {
-    Console.WriteLine("All systems operational");
-    return 0;
-  })
+  .Map("hello")
+    .WithHandler(() =>
+    {
+      Console.WriteLine("Hello, World!");
+      return 0;
+    })
+    .AsQuery()
+    .Done()
+  .Map("status")
+    .WithHandler(() =>
+    {
+      Console.WriteLine("All systems operational");
+      return 0;
+    })
+    .AsQuery()
+    .Done()
   .Build();
 
 await app.RunReplAsync();

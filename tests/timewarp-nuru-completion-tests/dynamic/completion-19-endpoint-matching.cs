@@ -17,7 +17,7 @@ public class EndpointMatchingTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("git remote add {name} {url}", (string name, string url) => 0);
+    builder.Map("git remote add {name} {url}").WithHandler((string name, string url) => 0).AsCommand().Done();
 
     string[] typedWords = ["git", "remote", "add"];
     Endpoint endpoint = builder.EndpointCollection.First();
@@ -37,7 +37,7 @@ public class EndpointMatchingTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("deploy {env} {version} {tag}", (string env, string version, string tag) => 0);
+    builder.Map("deploy {env} {version} {tag}").WithHandler((string env, string version, string tag) => 0).AsCommand().Done();
 
     string[] typedWords = ["deploy", "production", "v1.0"];
     Endpoint endpoint = builder.EndpointCollection.First();
@@ -57,7 +57,7 @@ public class EndpointMatchingTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("greet {name}", (string name) => 0);
+    builder.Map("greet {name}").WithHandler((string name) => 0).AsQuery().Done();
 
     string[] typedWords = ["greet", "alice"];
     Endpoint endpoint = builder.EndpointCollection.First();
@@ -77,7 +77,7 @@ public class EndpointMatchingTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("docker {*args}", (string[] args) => 0);
+    builder.Map("docker {*args}").WithHandler((string[] args) => 0).AsCommand().Done();
 
     string[] typedWords = ["docker"];
     Endpoint endpoint = builder.EndpointCollection.First();
@@ -106,7 +106,7 @@ public class EndpointMatchingTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("scale {factor:double}", (double factor) => 0);
+    builder.Map("scale {factor:double}").WithHandler((double factor) => 0).AsQuery().Done();
 
     string[] typedWords = ["scale"];
     Endpoint endpoint = builder.EndpointCollection.First();
@@ -126,7 +126,7 @@ public class EndpointMatchingTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("enable {flag:bool}", (bool flag) => 0);
+    builder.Map("enable {flag:bool}").WithHandler((bool flag) => 0).AsCommand().Done();
 
     string[] typedWords = ["enable"];
     Endpoint endpoint = builder.EndpointCollection.First();
@@ -146,7 +146,7 @@ public class EndpointMatchingTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("git commit --message,-m {message} --amend", (string message, bool amend) => 0);
+    builder.Map("git commit --message,-m {message} --amend").WithHandler((string message, bool amend) => 0).AsCommand().Done();
 
     string[] typedWords = ["git", "commit", "-m"];
     Endpoint endpoint = builder.EndpointCollection.First();
@@ -166,7 +166,7 @@ public class EndpointMatchingTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("git remote add {name}", (string name) => 0);
+    builder.Map("git remote add {name}").WithHandler((string name) => 0).AsCommand().Done();
 
     string[] typedWords = ["git", "remote"]; // Missing "add"
     Endpoint endpoint = builder.EndpointCollection.First();
@@ -186,7 +186,7 @@ public class EndpointMatchingTests
     NuruAppBuilder builder = new();
     // Note: Multiple consecutive optional parameters are NOT allowed (creates ambiguity)
     // Use a single optional parameter instead
-    builder.Map("deploy {env} {tag?}", (string env, string? tag) => 0);
+    builder.Map("deploy {env} {tag?}").WithHandler((string env, string? tag) => 0).AsCommand().Done();
 
     string[] typedWords = ["deploy", "production"];
     Endpoint endpoint = builder.EndpointCollection.First();
@@ -206,7 +206,7 @@ public class EndpointMatchingTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("greet {name}", (string name) => 0);
+    builder.Map("greet {name}").WithHandler((string name) => 0).AsQuery().Done();
 
     string[] typedWords = [];
     Endpoint endpoint = builder.EndpointCollection.First();
@@ -224,7 +224,7 @@ public class EndpointMatchingTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("build --configuration,-c {mode}", (string mode) => 0);
+    builder.Map("build --configuration,-c {mode}").WithHandler((string mode) => 0).AsCommand().Done();
 
     string[] typedWords = ["build", "--configuration"];
     Endpoint endpoint = builder.EndpointCollection.First();
@@ -244,7 +244,7 @@ public class EndpointMatchingTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("build --config {mode}", (string mode) => 0);
+    builder.Map("build --config {mode}").WithHandler((string mode) => 0).AsCommand().Done();
 
     string[] typedWords = ["build", "--config", "Release"];
     Endpoint endpoint = builder.EndpointCollection.First();

@@ -17,8 +17,8 @@ public class DynamicHandlerTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("status", () => 0);
-    builder.Map("version", () => 0);
+    builder.Map("status").WithHandler(() => 0).AsQuery().Done();
+    builder.Map("version").WithHandler(() => 0).AsQuery().Done();
 
     CompletionSourceRegistry registry = new();
     string[] words = ["app"];
@@ -40,7 +40,7 @@ public class DynamicHandlerTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("status", () => 0);
+    builder.Map("status").WithHandler(() => 0).AsQuery().Done();
 
     CompletionSourceRegistry registry = new();
     string[] words = ["app"];
@@ -59,7 +59,7 @@ public class DynamicHandlerTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("status", () => 0);
+    builder.Map("status").WithHandler(() => 0).AsQuery().Done();
 
     CompletionSourceRegistry registry = new();
     string[] words = ["app"];
@@ -78,7 +78,7 @@ public class DynamicHandlerTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("deploy {env}", (string env) => 0);
+    builder.Map("deploy {env}").WithHandler((string env) => 0).AsCommand().Done();
 
     CompletionSourceRegistry registry = new();
     TestCompletionSource envSource = new(["production", "staging", "development"]);
@@ -103,7 +103,7 @@ public class DynamicHandlerTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("deploy {env} --mode {mode}", (string env, DeploymentMode mode) => 0);
+    builder.Map("deploy {env} --mode {mode}").WithHandler((string env, DeploymentMode mode) => 0).AsCommand().Done();
 
     CompletionSourceRegistry registry = new();
     EnumCompletionSource<DeploymentMode> enumSource = new();
@@ -128,9 +128,9 @@ public class DynamicHandlerTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("git status", () => 0);
-    builder.Map("git push", () => 0);
-    builder.Map("git pull", () => 0);
+    builder.Map("git status").WithHandler(() => 0).AsQuery().Done();
+    builder.Map("git push").WithHandler(() => 0).AsCommand().Done();
+    builder.Map("git pull").WithHandler(() => 0).AsCommand().Done();
 
     CompletionSourceRegistry registry = new(); // Empty registry
     string[] words = ["app", "git"];
@@ -152,7 +152,7 @@ public class DynamicHandlerTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("deploy {env}", (string env) => 0);
+    builder.Map("deploy {env}").WithHandler((string env) => 0).AsCommand().Done();
 
     CompletionSourceRegistry registry = new();
     TestCompletionSourceWithDescriptions source = new([
@@ -179,7 +179,7 @@ public class DynamicHandlerTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("status", () => 0);
+    builder.Map("status").WithHandler(() => 0).AsQuery().Done();
 
     CompletionSourceRegistry registry = new();
 
@@ -197,7 +197,7 @@ public class DynamicHandlerTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("deploy {env}", (string env) => 0);
+    builder.Map("deploy {env}").WithHandler((string env) => 0).AsCommand().Done();
 
     CompletionSourceRegistry registry = new();
 
@@ -225,7 +225,7 @@ public class DynamicHandlerTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("status", () => 0);
+    builder.Map("status").WithHandler(() => 0).AsQuery().Done();
 
     CompletionSourceRegistry registry = new();
     string[] words = [];

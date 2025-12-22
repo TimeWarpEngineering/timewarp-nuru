@@ -26,12 +26,12 @@ public class OptionAliasWithDescriptionTests
     bool upperUsed = false;
     string? capturedName = null;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("hello {name} --upper,-u|Convert to uppercase", (string name, bool upper) =>
+      .Map("hello {name} --upper,-u|Convert to uppercase").WithHandler((string name, bool upper) =>
       {
         capturedName = name;
         upperUsed = upper;
         return 0;
-      })
+      }).AsQuery().Done()
       .Build();
 
     // Act - Use SHORT form (-u)
@@ -52,12 +52,12 @@ public class OptionAliasWithDescriptionTests
     bool upperUsed = false;
     string? capturedName = null;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("hello {name} --upper,-u|Convert to uppercase", (string name, bool upper) =>
+      .Map("hello {name} --upper,-u|Convert to uppercase").WithHandler((string name, bool upper) =>
       {
         capturedName = name;
         upperUsed = upper;
         return 0;
-      })
+      }).AsQuery().Done()
       .Build();
 
     // Act - Use LONG form (--upper)
@@ -77,12 +77,12 @@ public class OptionAliasWithDescriptionTests
     bool upperUsed = true;
     string? capturedName = null;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("hello {name} --upper,-u|Convert to uppercase", (string name, bool upper) =>
+      .Map("hello {name} --upper,-u|Convert to uppercase").WithHandler((string name, bool upper) =>
       {
         capturedName = name;
         upperUsed = upper;
         return 0;
-      })
+      }).AsQuery().Done()
       .Build();
 
     // Act - Omit the option
@@ -104,12 +104,12 @@ public class OptionAliasWithDescriptionTests
     string? capturedEnv = null;
 #pragma warning disable RCS1163, IDE0060
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("deploy {env} --dry-run,-d|Preview mode", (string env, bool dryrun) =>
+      .Map("deploy {env} --dry-run,-d|Preview mode").WithHandler((string env, bool dryrun) =>
       {
         capturedEnv = env;
         dryRun = dryrun;
         return 0;
-      })
+      }).AsCommand().Done()
       .Build();
 #pragma warning restore RCS1163, IDE0060
 
@@ -131,12 +131,12 @@ public class OptionAliasWithDescriptionTests
     string? capturedEnv = null;
 #pragma warning disable RCS1163, IDE0060
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("deploy {env} --dry-run,-d|Preview mode", (string env, bool dryrun) =>
+      .Map("deploy {env} --dry-run,-d|Preview mode").WithHandler((string env, bool dryrun) =>
       {
         capturedEnv = env;
         dryRun = dryrun;
         return 0;
-      })
+      }).AsCommand().Done()
       .Build();
 #pragma warning restore RCS1163, IDE0060
 

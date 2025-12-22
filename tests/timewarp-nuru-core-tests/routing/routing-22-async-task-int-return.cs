@@ -27,12 +27,12 @@ public class AsyncTaskIntReturnTests
     // Arrange
     bool executed = false;
     NuruCoreApp app = NuruApp.CreateSlimBuilder([])
-      .MapDefault(async () =>
+      .Map("").WithHandler(async () =>
       {
         await Task.Delay(1);
         executed = true;
         return 0;
-      }, "Test async Task<int>")
+      }).WithDescription("Test async Task<int>").AsCommand().Done()
       .Build();
 
     // Act
@@ -53,12 +53,12 @@ public class AsyncTaskIntReturnTests
     bool executed = false;
     NuruCoreApp app = NuruApp.CreateBuilder([])
       .ConfigureServices(services => services.AddMediator())
-      .MapDefault(async () =>
+      .Map("").WithHandler(async () =>
       {
         await Task.Delay(1);
         executed = true;
         return 0;
-      }, "Test async Task<int>")
+      }).WithDescription("Test async Task<int>").AsCommand().Done()
       .Build();
 
     // Act
@@ -77,11 +77,11 @@ public class AsyncTaskIntReturnTests
     // Arrange
     bool executed = false;
     NuruCoreApp app = NuruApp.CreateSlimBuilder([])
-      .MapDefault(async () =>
+      .Map("").WithHandler(async () =>
       {
         await Task.Delay(1);
         executed = true;
-      }, "Test async Task")
+      }).WithDescription("Test async Task").AsCommand().Done()
       .Build();
 
     // Act
@@ -101,11 +101,11 @@ public class AsyncTaskIntReturnTests
     bool executed = false;
     NuruCoreApp app = NuruApp.CreateBuilder([])
       .ConfigureServices(services => services.AddMediator())
-      .MapDefault(async () =>
+      .Map("").WithHandler(async () =>
       {
         await Task.Delay(1);
         executed = true;
-      }, "Test async Task")
+      }).WithDescription("Test async Task").AsCommand().Done()
       .Build();
 
     // Act
@@ -125,11 +125,11 @@ public class AsyncTaskIntReturnTests
     bool executed = false;
     NuruCoreApp app = NuruApp.CreateBuilder([])
       .ConfigureServices(services => services.AddMediator())
-      .MapDefault(() =>
+      .Map("").WithHandler(() =>
       {
         executed = true;
         return 0;
-      }, "Test sync Func<int>")
+      }).WithDescription("Test sync Func<int>").AsCommand().Done()
       .Build();
 
     // Act

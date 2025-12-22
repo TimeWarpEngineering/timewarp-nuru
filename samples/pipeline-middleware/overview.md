@@ -13,11 +13,11 @@ Request Flow:
 │   ┌───────────────────────────────────────────────────────────────┐   │
 │   │ LoggingBehavior                                               │   │
 │   │   ┌───────────────────────────────────────────────────────┐   │   │
-│   │   │ PerformanceBehavior                                   │   │   │
+│   │   │ AuthorizationBehavior                                 │   │   │
 │   │   │   ┌───────────────────────────────────────────────┐   │   │   │
-│   │   │   │ AuthorizationBehavior                         │   │   │   │
+│   │   │   │ RetryBehavior                                 │   │   │   │
 │   │   │   │   ┌───────────────────────────────────────┐   │   │   │   │
-│   │   │   │   │ RetryBehavior                         │   │   │   │   │
+│   │   │   │   │ PerformanceBehavior                   │   │   │   │   │
 │   │   │   │   │   ┌───────────────────────────────┐   │   │   │   │   │
 │   │   │   │   │   │ ExceptionHandlingBehavior     │   │   │   │   │   │
 │   │   │   │   │   │   ┌───────────────────────┐   │   │   │   │   │   │
@@ -34,42 +34,40 @@ Request Flow:
 
 ## Samples
 
-| Sample | Description |
-|--------|-------------|
-| [pipeline-middleware.cs](pipeline-middleware.cs) | Complete example with all behaviors |
+| Sample | Description | Concepts |
+|--------|-------------|----------|
+| [pipeline-middleware-basic.cs](pipeline-middleware-basic.cs) | Logging and performance monitoring | Before/after pattern, timing |
+| [pipeline-middleware-authorization.cs](pipeline-middleware-authorization.cs) | Permission checks with marker interfaces | Selective behavior, IRequireAuthorization |
+| [pipeline-middleware-retry.cs](pipeline-middleware-retry.cs) | Resilience with exponential backoff | Transient failures, IRetryable |
+| [pipeline-middleware-exception.cs](pipeline-middleware-exception.cs) | Consistent error handling | Exception categories, user-friendly messages |
+| [pipeline-middleware-telemetry.cs](pipeline-middleware-telemetry.cs) | OpenTelemetry distributed tracing | Activity spans, observability |
+| [pipeline-middleware.cs](pipeline-middleware.cs) | **Complete example** with all behaviors | Full reference implementation |
+
+## Quick Start
+
+Run any sample directly:
+
+```bash
+# Basic logging and performance
+./pipeline-middleware-basic.cs echo "Hello, World!"
+./pipeline-middleware-basic.cs slow 600
+
+# Authorization with marker interface
+./pipeline-middleware-authorization.cs admin delete-all       # Access denied
+CLI_AUTHORIZED=1 ./pipeline-middleware-authorization.cs admin delete-all  # Success
+
+# Retry with exponential backoff
+./pipeline-middleware-retry.cs flaky 2    # Fails twice, then succeeds
+
+# Exception handling
+./pipeline-middleware-exception.cs error validation
+./pipeline-middleware-exception.cs error unknown
+
+# Distributed tracing
+./pipeline-middleware-telemetry.cs trace database-query
+```
 
 ## Pipeline Behaviors Demonstrated
-
-### TelemetryBehavior
-
-Creates OpenTelemetry-compatible Activity spans for distributed tracing:
-
-```csharp
-public sealed class TelemetryBehavior<TMessage, TResponse> : IPipelineBehavior<TMessage, TResponse>
-{
-    private static readonly ActivitySource CommandActivitySource = new("TimeWarp.Nuru.Commands", "1.0.0");
-
-    public async ValueTask<TResponse> Handle(TMessage message, MessageHandlerDelegate<TMessage, TResponse> next, CancellationToken ct)
-    {
-        using Activity? activity = CommandActivitySource.StartActivity(typeof(TMessage).Name, ActivityKind.Internal);
-        activity?.SetTag("command.type", typeof(TMessage).FullName);
-        activity?.SetTag("command.name", typeof(TMessage).Name);
-
-        try
-        {
-            TResponse response = await next(message, ct);
-            activity?.SetStatus(ActivityStatusCode.Ok);
-            return response;
-        }
-        catch (Exception ex)
-        {
-            activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
-            activity?.SetTag("error.type", ex.GetType().Name);
-            throw;
-        }
-    }
-}
-```
 
 ### LoggingBehavior
 
@@ -113,8 +111,6 @@ public sealed class PerformanceBehavior<TMessage, TResponse> : IPipelineBehavior
 
         if (stopwatch.ElapsedMilliseconds > SlowThresholdMs)
             Logger.LogWarning("[PERFORMANCE] {RequestName} took {ElapsedMs}ms", typeof(TMessage).Name, stopwatch.ElapsedMilliseconds);
-        else
-            Logger.LogInformation("[PERFORMANCE] {RequestName} completed in {ElapsedMs}ms", typeof(TMessage).Name, stopwatch.ElapsedMilliseconds);
 
         return response;
     }
@@ -180,6 +176,36 @@ public sealed class RetryBehavior<TMessage, TResponse> : IPipelineBehavior<TMess
 }
 ```
 
+### TelemetryBehavior
+
+Creates OpenTelemetry-compatible Activity spans for distributed tracing:
+
+```csharp
+public sealed class TelemetryBehavior<TMessage, TResponse> : IPipelineBehavior<TMessage, TResponse>
+{
+    private static readonly ActivitySource CommandActivitySource = new("TimeWarp.Nuru.Commands", "1.0.0");
+
+    public async ValueTask<TResponse> Handle(TMessage message, MessageHandlerDelegate<TMessage, TResponse> next, CancellationToken ct)
+    {
+        using Activity? activity = CommandActivitySource.StartActivity(typeof(TMessage).Name, ActivityKind.Internal);
+        activity?.SetTag("command.type", typeof(TMessage).FullName);
+
+        try
+        {
+            TResponse response = await next(message, ct);
+            activity?.SetStatus(ActivityStatusCode.Ok);
+            return response;
+        }
+        catch (Exception ex)
+        {
+            activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+            activity?.SetTag("error.type", ex.GetType().Name);
+            throw;
+        }
+    }
+}
+```
+
 ### ExceptionHandlingBehavior
 
 Provides consistent error handling with user-friendly messages:
@@ -217,12 +243,18 @@ public sealed class ExceptionHandlingBehavior<TMessage, TResponse> : IPipelineBe
 - **Last registered** = innermost (executes last on request, first on response)
 
 ```csharp
-services.AddSingleton<IPipelineBehavior<MyCommand, Unit>, TelemetryBehavior<MyCommand, Unit>>();        // 1st - outermost
-services.AddSingleton<IPipelineBehavior<MyCommand, Unit>, LoggingBehavior<MyCommand, Unit>>();          // 2nd
-services.AddSingleton<IPipelineBehavior<MyCommand, Unit>, PerformanceBehavior<MyCommand, Unit>>();      // 3rd
-services.AddSingleton<IPipelineBehavior<MyCommand, Unit>, AuthorizationBehavior<MyCommand, Unit>>();    // 4th
-services.AddSingleton<IPipelineBehavior<MyCommand, Unit>, RetryBehavior<MyCommand, Unit>>();            // 5th
-services.AddSingleton<IPipelineBehavior<MyCommand, Unit>, ExceptionHandlingBehavior<MyCommand, Unit>>(); // 6th - innermost
+services.AddMediator(options =>
+{
+    options.PipelineBehaviors =
+    [
+        typeof(TelemetryBehavior<,>),         // 1st - outermost
+        typeof(LoggingBehavior<,>),           // 2nd
+        typeof(AuthorizationBehavior<,>),     // 3rd
+        typeof(RetryBehavior<,>),             // 4th
+        typeof(PerformanceBehavior<,>),       // 5th
+        typeof(ExceptionHandlingBehavior<,>)  // 6th - innermost
+    ];
+});
 ```
 
 ## Marker Interface Pattern
@@ -246,83 +278,6 @@ public sealed class FlakyCommand : IRequest, IRetryable
 public sealed class EchoCommand : IRequest { }
 ```
 
-## Comparison with Cocona
-
-| Aspect | Cocona | Nuru + Mediator |
-|--------|--------|-----------------|
-| **Approach** | Attribute-based filters | Pipeline behaviors |
-| **Registration** | `[CommandFilter]` attribute | DI container registration |
-| **Ordering** | Filter attribute order | Registration order |
-| **Selectivity** | Per-command attributes | Marker interfaces + DI |
-| **Testability** | Requires mocking attributes | Standard DI mocking |
-| **Composition** | Limited | Full composition support |
-
-### Cocona Filter Example
-
-```csharp
-[CommandFilter(typeof(LoggingFilter))]
-public class MyCommand
-{
-    public void Execute() { }
-}
-```
-
-### Nuru + Mediator Example
-
-```csharp
-// Registration
-services.AddSingleton<IPipelineBehavior<MyCommand, Unit>, LoggingBehavior<MyCommand, Unit>>();
-
-// Command
-public sealed class MyCommand : IRequest
-{
-    public sealed class Handler : IRequestHandler<MyCommand>
-    {
-        public ValueTask<Unit> Handle(MyCommand request, CancellationToken ct) { }
-    }
-}
-```
-
-## Running the Sample
-
-```bash
-# Basic echo command
-./samples/pipeline-middleware/pipeline-middleware.cs echo "Hello, World!"
-
-# Slow command (triggers performance warning at >500ms)
-./samples/pipeline-middleware/pipeline-middleware.cs slow 600
-
-# Admin command (requires CLI_AUTHORIZED=1)
-./samples/pipeline-middleware/pipeline-middleware.cs admin "delete-all"
-CLI_AUTHORIZED=1 ./samples/pipeline-middleware/pipeline-middleware.cs admin "delete-all"
-
-# Flaky command (simulates transient failures with retry)
-./samples/pipeline-middleware/pipeline-middleware.cs flaky 2
-
-# Error command (demonstrates exception handling)
-./samples/pipeline-middleware/pipeline-middleware.cs error validation
-./samples/pipeline-middleware/pipeline-middleware.cs error auth
-./samples/pipeline-middleware/pipeline-middleware.cs error unknown
-
-# Trace command (demonstrates distributed tracing)
-./samples/pipeline-middleware/pipeline-middleware.cs trace "database-query"
-
-# Help
-./samples/pipeline-middleware/pipeline-middleware.cs --help
-```
-
-## AOT Considerations
-
-For AOT/runfile scenarios, use **explicit generic registrations** instead of open generic registration:
-
-```csharp
-// Good for AOT - explicit registration
-services.AddSingleton<IPipelineBehavior<MyCommand, Unit>, LoggingBehavior<MyCommand, Unit>>();
-
-// May cause trimmer issues - open generic registration
-services.AddTransient(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
-```
-
 ## Key Benefits
 
 1. **Separation of Concerns**: Each behavior handles one responsibility
@@ -333,6 +288,6 @@ services.AddTransient(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
 
 ## See Also
 
-- [Unified Middleware Sample](../UnifiedMiddleware/unified-middleware.cs) - Pipeline behaviors for delegate routes
+- [Unified Middleware Sample](../unified-middleware/unified-middleware.cs) - Pipeline behaviors for delegate routes
+- [Aspire Telemetry Sample](../aspire-telemetry/aspire-telemetry.cs) - Full OpenTelemetry integration
 - [Mediator Documentation](https://github.com/martinothamar/Mediator)
-- [Pipeline Behavior Pattern](https://learn.microsoft.com/en-us/dotnet/architecture/microservices/microservice-ddd-cqrs-patterns/microservice-application-layer-implementation-web-api#implement-the-command-process-pipeline-with-a-mediator-pattern-mediatr)

@@ -15,4 +15,8 @@ internal static partial class DiagnosticDescriptors
       defaultSeverity: DiagnosticSeverity.Hidden,
       isEnabledByDefault: true,
       description: "Debug diagnostic to verify route detection during development.");
+
+  // NOTE: NURU002 (ClosureNotAllowed) and NURU003 (MethodGroupNotSupported) diagnostics
+  // will be added when we implement diagnostic reporting for handler generation.
+  // For now, we silently skip handler generation in these cases.
 }

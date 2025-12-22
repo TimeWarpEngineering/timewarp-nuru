@@ -145,116 +145,106 @@ try
     // SIMPLE COMMANDS (Literal only)
     // ========================================
 
-    .Map
-    (
-      pattern: "status",
-      handler: () =>
+    .Map("status")
+      .WithHandler(() =>
       {
         Log.Information("Status command executed");
         WriteLine("System is running OK");
-      },
-      description: "Displays the current system status."
-    )
-    .Map
-    (
-      pattern: "time",
-      handler: () =>
+      })
+      .WithDescription("Displays the current system status.")
+      .AsQuery()
+      .Done()
+    .Map("time")
+      .WithHandler(() =>
       {
         DateTime now = DateTime.Now;
         Log.Information("Time command executed at: {Time}", now);
         WriteLine($"Current time: {now:HH:mm:ss}");
-      },
-      description: "Displays the current time."
-    )
+      })
+      .WithDescription("Displays the current time.")
+      .AsQuery()
+      .Done()
 
     // ========================================
     // BASIC PARAMETERS
     // ========================================
 
-    .Map
-    (
-      pattern: "greet {name}",
-      handler: (string name) =>
+    .Map("greet {name}")
+      .WithHandler((string name) =>
       {
         Log.Information("Greet command: {Name}", name);
         WriteLine($"Hello, {name}!");
-      },
-      description: "Greets the person with the specified name."
-    )
-    .Map
-    (
-      pattern: "add {a:int} {b:int}",
-      handler: (int a, int b) =>
+      })
+      .WithDescription("Greets the person with the specified name.")
+      .AsCommand()
+      .Done()
+    .Map("add {a:int} {b:int}")
+      .WithHandler((int a, int b) =>
       {
         Log.Information("Add: {A} + {B}", a, b);
         WriteLine($"{a} + {b} = {a + b}");
-      },
-      description: "Adds two integers."
-    )
+      })
+      .WithDescription("Adds two integers.")
+      .AsQuery()
+      .Done()
 
     // ========================================
     // ENUM PARAMETERS
     // ========================================
 
-    .Map
-    (
-      pattern: "deploy {env:environment} {tag?}",
-      handler: (Environment env, string? tag) =>
+    .Map("deploy {env:environment} {tag?}")
+      .WithHandler((Environment env, string? tag) =>
       {
         Log.Information("Deploy: env={Env}, tag={Tag}", env, tag);
         if (tag is not null)
           WriteLine($"Deploying to {env} with tag {tag}");
         else
           WriteLine($"Deploying to {env} (latest)");
-      },
-      description: "Deploys to environment (dev, staging, prod) with optional tag."
-    )
+      })
+      .WithDescription("Deploys to environment (dev, staging, prod) with optional tag.")
+      .AsCommand()
+      .Done()
 
     // ========================================
     // CATCH-ALL PARAMETERS
     // ========================================
 
-    .Map
-    (
-      pattern: "echo {*message}",
-      handler: (string[] message) =>
+    .Map("echo {*message}")
+      .WithHandler((string[] message) =>
       {
         Log.Information("Echo: {Message}", string.Join(" ", message));
         WriteLine(string.Join(" ", message));
-      },
-      description: "Echoes all arguments back."
-    )
+      })
+      .WithDescription("Echoes all arguments back.")
+      .AsQuery()
+      .Done()
 
     // ========================================
     // SUBCOMMANDS (Hierarchical routes)
     // ========================================
 
-    .Map
-    (
-      pattern: "git status",
-      handler: () =>
+    .Map("git status")
+      .WithHandler(() =>
       {
         Log.Information("git status executed");
         WriteLine("On branch main");
         WriteLine("nothing to commit, working tree clean");
-      },
-      description: "Shows git working tree status."
-    )
-    .Map
-    (
-      pattern: "git commit -m {message}",
-      handler: (string message) =>
+      })
+      .WithDescription("Shows git working tree status.")
+      .AsQuery()
+      .Done()
+    .Map("git commit -m {message}")
+      .WithHandler((string message) =>
       {
         Log.Information("git commit: {Message}", message);
         WriteLine($"[main abc1234] {message}");
         WriteLine(" 1 file changed, 1 insertion(+)");
-      },
-      description: "Creates a commit with the specified message."
-    )
-    .Map
-    (
-      pattern: "git log --count {n:int}",
-      handler: (int n) =>
+      })
+      .WithDescription("Creates a commit with the specified message.")
+      .AsCommand()
+      .Done()
+    .Map("git log --count {n:int}")
+      .WithHandler((int n) =>
       {
         Log.Information("git log --count {N}", n);
         WriteLine($"Showing last {n} commits:");
@@ -262,18 +252,17 @@ try
         {
           WriteLine($"  {Guid.NewGuid().ToString()[..7]} - Commit message {i + 1}");
         }
-      },
-      description: "Shows the last N commits."
-    )
+      })
+      .WithDescription("Shows the last N commits.")
+      .AsQuery()
+      .Done()
 
     // ========================================
     // BOOLEAN OPTIONS
     // ========================================
 
-    .Map
-    (
-      pattern: "build --verbose,-v",
-      handler: (bool verbose) =>
+    .Map("build --verbose,-v")
+      .WithHandler((bool verbose) =>
       {
         Log.Information("Build: verbose={Verbose}", verbose);
         if (verbose)
@@ -288,18 +277,17 @@ try
         {
           WriteLine("Build succeeded.");
         }
-      },
-      description: "Builds the project. Use -v for verbose output."
-    )
+      })
+      .WithDescription("Builds the project. Use -v for verbose output.")
+      .AsCommand()
+      .Done()
 
     // ========================================
     // OPTIONS WITH VALUES
     // ========================================
 
-    .Map
-    (
-      pattern: "search {query} --limit,-l {count:int?}",
-      handler: (string query, int? count) =>
+    .Map("search {query} --limit,-l {count:int?}")
+      .WithHandler((string query, int? count) =>
       {
         int limit = count ?? 10;
         Log.Information("Search: query={Query}, limit={Limit}", query, limit);
@@ -308,18 +296,17 @@ try
         {
           WriteLine($"  {i}. Result matching '{query}'");
         }
-      },
-      description: "Searches with optional result limit."
-    )
+      })
+      .WithDescription("Searches with optional result limit.")
+      .AsQuery()
+      .Done()
 
     // ========================================
     // COMBINED OPTIONS
     // ========================================
 
-    .Map
-    (
-      pattern: "backup {source} --compress,-c --output,-o {dest?}",
-      handler: (string source, bool compress, string? dest) =>
+    .Map("backup {source} --compress,-c --output,-o {dest?}")
+      .WithHandler((string source, bool compress, string? dest) =>
       {
         string destination = dest ?? $"{source}.bak";
         Log.Information("Backup: source={Source}, compress={Compress}, dest={Dest}", source, compress, destination);
@@ -327,9 +314,10 @@ try
         if (compress)
           WriteLine("  Compression: enabled");
         WriteLine("Backup complete.");
-      },
-      description: "Backs up source with optional compression and destination."
-    )
+      })
+      .WithDescription("Backs up source with optional compression and destination.")
+      .AsCommand()
+      .Done()
 
     .Build();
 

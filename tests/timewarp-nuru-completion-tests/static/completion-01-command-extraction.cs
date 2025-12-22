@@ -13,7 +13,10 @@ public class CommandExtractionTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("status", () => 0);
+    builder.Map("status")
+      .WithHandler(() => 0)
+      .AsQuery()
+      .Done();
 
     // Act
     CompletionScriptGenerator generator = new();
@@ -30,9 +33,18 @@ public class CommandExtractionTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("create", () => 0);
-    builder.Map("createorder", () => 0);
-    builder.Map("delete", () => 0);
+    builder.Map("create")
+      .WithHandler(() => 0)
+      .AsCommand()
+      .Done();
+    builder.Map("createorder")
+      .WithHandler(() => 0)
+      .AsCommand()
+      .Done();
+    builder.Map("delete")
+      .WithHandler(() => 0)
+      .AsCommand()
+      .Done();
 
     // Act
     CompletionScriptGenerator generator = new();
@@ -50,8 +62,14 @@ public class CommandExtractionTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("deploy {env}", (string env) => 0);
-    builder.Map("build {project}", (string project) => 0);
+    builder.Map("deploy {env}")
+      .WithHandler((string env) => 0)
+      .AsCommand()
+      .Done();
+    builder.Map("build {project}")
+      .WithHandler((string project) => 0)
+      .AsCommand()
+      .Done();
 
     // Act
     CompletionScriptGenerator generator = new();
@@ -70,8 +88,14 @@ public class CommandExtractionTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("test --verbose", () => 0);
-    builder.Map("build --config {mode}", (string mode) => 0);
+    builder.Map("test --verbose")
+      .WithHandler(() => 0)
+      .AsCommand()
+      .Done();
+    builder.Map("build --config {mode}")
+      .WithHandler((string mode) => 0)
+      .AsCommand()
+      .Done();
 
     // Act
     CompletionScriptGenerator generator = new();
@@ -88,9 +112,18 @@ public class CommandExtractionTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("git commit", () => 0);
-    builder.Map("git status", () => 0);
-    builder.Map("git push", () => 0);
+    builder.Map("git commit")
+      .WithHandler(() => 0)
+      .AsCommand()
+      .Done();
+    builder.Map("git status")
+      .WithHandler(() => 0)
+      .AsQuery()
+      .Done();
+    builder.Map("git push")
+      .WithHandler(() => 0)
+      .AsCommand()
+      .Done();
 
     // Act
     CompletionScriptGenerator generator = new();
@@ -107,9 +140,18 @@ public class CommandExtractionTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("deploy {env}", (string env) => 0);
-    builder.Map("deploy {env} --force", (string env) => 0);
-    builder.Map("deploy {env} {tag}", (string env, string tag) => 0);
+    builder.Map("deploy {env}")
+      .WithHandler((string env) => 0)
+      .AsCommand()
+      .Done();
+    builder.Map("deploy {env} --force")
+      .WithHandler((string env) => 0)
+      .AsCommand()
+      .Done();
+    builder.Map("deploy {env} {tag}")
+      .WithHandler((string env, string tag) => 0)
+      .AsCommand()
+      .Done();
 
     // Act
     CompletionScriptGenerator generator = new();
@@ -145,7 +187,10 @@ public class CommandExtractionTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("deploy {env} --version {ver} --force", (string env, string ver) => 0);
+    builder.Map("deploy {env} --version {ver} --force")
+      .WithHandler((string env, string ver) => 0)
+      .AsCommand()
+      .Done();
 
     // Act
     CompletionScriptGenerator generator = new();
@@ -163,7 +208,10 @@ public class CommandExtractionTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("{command} {*args}", (string command, string[] args) => 0);
+    builder.Map("{command} {*args}")
+      .WithHandler((string command, string[] args) => 0)
+      .AsCommand()
+      .Done();
 
     // Act
     CompletionScriptGenerator generator = new();
@@ -180,8 +228,14 @@ public class CommandExtractionTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("Deploy", () => 0);
-    builder.Map("deploy", () => 0);
+    builder.Map("Deploy")
+      .WithHandler(() => 0)
+      .AsCommand()
+      .Done();
+    builder.Map("deploy")
+      .WithHandler(() => 0)
+      .AsCommand()
+      .Done();
 
     // Act
     CompletionScriptGenerator generator = new();

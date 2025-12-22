@@ -73,6 +73,47 @@ public sealed class NuruAppOptions
   public Action<HelpOptions>? ConfigureHelp { get; set; }
 
   /// <summary>
+  /// When true, disables OpenTelemetry integration via <c>UseTelemetry()</c>.
+  /// Default is false (telemetry is enabled).
+  /// </summary>
+  /// <remarks>
+  /// When disabled, no ActivitySource, Meter, or OpenTelemetry providers are configured.
+  /// This can improve startup performance when telemetry is not needed.
+  /// </remarks>
+  public bool DisableTelemetry { get; set; }
+
+  /// <summary>
+  /// When true, disables REPL support and routes (exit, quit, history, clear, etc.).
+  /// Default is false (REPL is enabled).
+  /// </summary>
+  /// <remarks>
+  /// When disabled, the following routes are not registered:
+  /// exit, quit, q, history, clear, cls, clear-history.
+  /// The <c>--interactive,-i</c> route is controlled separately by <see cref="DisableInteractiveRoute"/>.
+  /// </remarks>
+  public bool DisableRepl { get; set; }
+
+  /// <summary>
+  /// When true, disables dynamic shell completion routes.
+  /// Default is false (completion is enabled).
+  /// </summary>
+  /// <remarks>
+  /// When disabled, the following routes are not registered:
+  /// <c>__complete</c>, <c>--generate-completion</c>, <c>--install-completion</c>, <c>--install-completion --dry-run</c>.
+  /// </remarks>
+  public bool DisableCompletion { get; set; }
+
+  /// <summary>
+  /// When true, disables the <c>--interactive,-i</c> route.
+  /// Default is false (interactive route is enabled).
+  /// </summary>
+  /// <remarks>
+  /// This route triggers REPL mode when invoked.
+  /// Note: REPL support itself is controlled by <see cref="DisableRepl"/>.
+  /// </remarks>
+  public bool DisableInteractiveRoute { get; set; }
+
+  /// <summary>
   /// When true, disables the automatic registration of the <c>--version,-v</c> route.
   /// Default is false (version route is registered).
   /// </summary>
@@ -100,4 +141,14 @@ public sealed class NuruAppOptions
   /// Requires <c>RepositoryUrl</c> to be set in the project file pointing to a GitHub repository.
   /// </remarks>
   public bool DisableCheckUpdatesRoute { get; set; }
+
+  /// <summary>
+  /// When true, disables the automatic registration of the <c>--capabilities</c> route.
+  /// Default is false (capabilities route is registered).
+  /// </summary>
+  /// <remarks>
+  /// The capabilities route outputs machine-readable JSON metadata about all commands,
+  /// enabling AI tools (OpenCode, Claude, etc.) to discover CLI capabilities without MCP complexity.
+  /// </remarks>
+  public bool DisableCapabilitiesRoute { get; set; }
 }

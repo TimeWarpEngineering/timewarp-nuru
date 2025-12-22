@@ -31,7 +31,10 @@ public class WordOperationTests
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("HELLO world", () => "Success!")
+      .Map("HELLO world")
+        .WithHandler(() => "Success!")
+        .AsQuery()
+        .Done()
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 
@@ -59,7 +62,10 @@ public class WordOperationTests
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("heLLO", () => "Success!")
+      .Map("heLLO")
+        .WithHandler(() => "Success!")
+        .AsQuery()
+        .Done()
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 
@@ -87,7 +93,10 @@ public class WordOperationTests
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("hello WORLD", () => "Success!")
+      .Map("hello WORLD")
+        .WithHandler(() => "Success!")
+        .AsQuery()
+        .Done()
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 
@@ -115,7 +124,10 @@ public class WordOperationTests
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("HEllo", () => "Success!")
+      .Map("HEllo")
+        .WithHandler(() => "Success!")
+        .AsQuery()
+        .Done()
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 
@@ -143,7 +155,10 @@ public class WordOperationTests
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("Hello world", () => "Success!")
+      .Map("Hello world")
+        .WithHandler(() => "Success!")
+        .AsQuery()
+        .Done()
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 
@@ -169,7 +184,10 @@ public class WordOperationTests
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("Hello", () => "Success!")
+      .Map("Hello")
+        .WithHandler(() => "Success!")
+        .AsQuery()
+        .Done()
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 
@@ -199,7 +217,10 @@ public class WordOperationTests
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("the", () => "Success!")
+      .Map("the")
+        .WithHandler(() => "Success!")
+        .AsQuery()
+        .Done()
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 
@@ -225,7 +246,10 @@ public class WordOperationTests
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("the", () => "Success!")
+      .Map("the")
+        .WithHandler(() => "Success!")
+        .AsQuery()
+        .Done()
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 
@@ -251,7 +275,10 @@ public class WordOperationTests
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("teh", () => "Success!")
+      .Map("teh")
+        .WithHandler(() => "Success!")
+        .AsQuery()
+        .Done()
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 
@@ -278,7 +305,10 @@ public class WordOperationTests
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("hello ", () => "Success!")
+      .Map("hello ")
+        .WithHandler(() => "Success!")
+        .AsQuery()
+        .Done()
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 
@@ -307,7 +337,10 @@ public class WordOperationTests
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("hello", () => "Success!")
+      .Map("hello")
+        .WithHandler(() => "Success!")
+        .AsQuery()
+        .Done()
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 
@@ -333,7 +366,10 @@ public class WordOperationTests
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("teh", () => "Success!")
+      .Map("teh")
+        .WithHandler(() => "Success!")
+        .AsQuery()
+        .Done()
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 
@@ -362,7 +398,10 @@ public class WordOperationTests
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("Hello World", () => "Success!")
+      .Map("Hello World")
+        .WithHandler(() => "Success!")
+        .AsQuery()
+        .Done()
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 
@@ -389,7 +428,10 @@ public class WordOperationTests
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("test", () => "Success!")
+      .Map("test")
+        .WithHandler(() => "Success!")
+        .AsQuery()
+        .Done()
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 
@@ -414,7 +456,10 @@ public class WordOperationTests
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("a", () => "Success!")
+      .Map("a")
+        .WithHandler(() => "Success!")
+        .AsQuery()
+        .Done()
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 
@@ -440,7 +485,10 @@ public class WordOperationTests
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("hello", () => "Success!")
+      .Map("hello")
+        .WithHandler(() => "Success!")
+        .AsQuery()
+        .Done()
       .AddReplSupport(options => options.EnableArrowHistory = true)
       .Build();
 

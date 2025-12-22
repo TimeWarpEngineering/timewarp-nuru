@@ -16,9 +16,9 @@ var app = NuruCoreApp.CreateSlimBuilder(args)
   // 1. We're calling Map() (NON-generic form with delegate)
   // 2. Non-generic Map() does not require Mediator
   // 3. The analyzer only checks for Map<T>() generic calls
-  .Map("ping", () => WriteLine("Pong!"))
-  .Map("greet {name}", (string name) => WriteLine($"Hello, {name}!"))
-  .Map("add {a:int} {b:int}", (int a, int b) => WriteLine($"Result: {a + b}"))
+  .Map("ping").WithHandler(() => WriteLine("Pong!")).AsQuery().Done()
+  .Map("greet {name}").WithHandler((string name) => WriteLine($"Hello, {name}!")).AsQuery().Done()
+  .Map("add {a:int} {b:int}").WithHandler((int a, int b) => WriteLine($"Result: {a + b}")).AsQuery().Done()
   .Build();
 
 int result = await app.RunAsync(args);

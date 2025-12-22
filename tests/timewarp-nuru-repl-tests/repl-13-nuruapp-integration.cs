@@ -64,7 +64,10 @@ namespace TimeWarp.Nuru.Tests.ReplTests.NuruAppIntegration
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("add {a:int} {b:int}", (int a, int b) => $"{a + b}")
+      .Map("add {a:int} {b:int}")
+        .WithHandler((int a, int b) => $"{a + b}")
+        .AsCommand()
+        .Done()
       .AddReplSupport()
       .Build();
 
@@ -86,8 +89,8 @@ namespace TimeWarp.Nuru.Tests.ReplTests.NuruAppIntegration
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("cmd1", () => "Command 1")
-      .Map("cmd2", () => "Command 2")
+      .Map("cmd1").WithHandler(() => "Command 1").AsCommand().Done()
+      .Map("cmd2").WithHandler(() => "Command 2").AsCommand().Done()
       .AddReplSupport()
       .Build();
 
@@ -108,8 +111,8 @@ namespace TimeWarp.Nuru.Tests.ReplTests.NuruAppIntegration
     // Act - fluent chaining
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("status", () => "OK")
-      .Map("version", () => "1.0.0")
+      .Map("status").WithHandler(() => "OK").AsQuery().Done()
+      .Map("version").WithHandler(() => "1.0.0").AsQuery().Done()
       .AddReplSupport(options => options.Prompt = ">>> ")
       .Build();
 
@@ -168,7 +171,10 @@ namespace TimeWarp.Nuru.Tests.ReplTests.NuruAppIntegration
 
     NuruCoreApp app = new NuruAppBuilder()
       .UseTerminal(terminal)
-      .Map("greet {name}", (string name) => $"Hello, {name}!")
+      .Map("greet {name}")
+        .WithHandler((string name) => $"Hello, {name}!")
+        .AsCommand()
+        .Done()
       .AddReplSupport()
       .Build();
 

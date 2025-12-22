@@ -116,7 +116,12 @@ Successfully extracted terminal/console functionality into `TimeWarp.Terminal` N
 - Temporarily switched TimeWarp.Jaribu from NuGet to ProjectReference to resolve chicken-and-egg dependency issue
 - All 1694 tests pass (1678 passed, 16 skipped)
 
-**Remaining work:**
-- Rename types (`NuruConsole` → `TimeWarpConsole`, etc.)
+### First Version Published (2025-12-22)
+
+- TimeWarp.Terminal v1.0.0 published to NuGet
+- Package is now available for independent consumption
+
+**Follow-up tasks (not blocking completion):**
+- Rename types (`NuruConsole` → `TimeWarpConsole`, etc.) - tracked separately
 - Create dedicated test project for TimeWarp.Terminal
 - Switch Jaribu back to NuGet after both packages are published

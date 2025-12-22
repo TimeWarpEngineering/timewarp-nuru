@@ -63,8 +63,8 @@ jobs:
       - name: Test
         if: github.event_name != 'release'
         run: |
-          echo "Running Nuru unit tests (lexer, parser, routing)..."
-          dotnet ${{ github.workspace }}/tests/scripts/run-nuru-tests.cs
+          echo "Running Nuru multi-mode test suite..."
+          dotnet ${{ github.workspace }}/runfiles/test.cs
 
           echo "Running integration tests (Delegate vs Mediator)..."
           cd tests

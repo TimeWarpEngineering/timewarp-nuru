@@ -1,4 +1,4 @@
-name: NuGet Publish
+name: CI/CD
 
 on:
   push:
@@ -8,6 +8,7 @@ on:
       - 'source/**'
       - 'samples/**'
       - 'tests/**'
+      - 'tools/**'
       - 'runfiles/**'
       - '.github/workflows/**'
       - 'Directory.Build.props'
@@ -19,100 +20,46 @@ on:
       - 'source/**'
       - 'samples/**'
       - 'tests/**'
+      - 'tools/**'
       - 'runfiles/**'
       - '.github/workflows/**'
       - 'Directory.Build.props'
       - 'Directory.Packages.props'
   release:
-    types: [published] # Triggered when a release is published via GitHub Releases UI or gh CLI
+    types: [published]
   workflow_dispatch:
-    inputs:
-      version:
-        description: 'Version to publish (e.g., 2.1.0-beta.6)'
-        required: false
-        type: string
 
 jobs:
-  build-and-publish:
+  ci:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write  # Required for NuGet Trusted Publishing (OIDC)
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Required for MinVer to read all tags
+          fetch-depth: 0  # Required for MinVer to read all tags
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
 
-      - name: Create artifacts directory
-        run: mkdir -p artifacts/packages
-
-      - name: Build
-        run: |
-          echo "Running build script..."
-          dotnet ${{ github.workspace }}/runfiles/build.cs
-
-      - name: Verify Samples
-        if: github.event_name != 'release'
-        run: |
-          echo "Verifying all samples compile..."
-          dotnet ${{ github.workspace }}/runfiles/verify-samples.cs
-
-      - name: Test
-        if: github.event_name != 'release'
-        run: |
-          echo "Running Nuru multi-mode test suite..."
-          dotnet ${{ github.workspace }}/runfiles/test.cs
-
-          echo "Running integration tests (Delegate vs Mediator)..."
-          cd tests
-          ./test-both-versions.sh
-
-      - name: Check if version already published (Releases only)
+      - name: NuGet login (OIDC Trusted Publishing)
         if: github.event_name == 'release'
-        run: dotnet ${{ github.workspace }}/runfiles/check-version.cs
+        uses: nuget/login@v1
+        with:
+          user: TimeWarp.Enterprises
 
-      - name: Publish to NuGet.org (Releases only)
-        if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && github.event.inputs.version != '')
-        run: |
-          # Get version from either release tag or manual input
-          if [ "${{ github.event_name }}" == "release" ]; then
-            VERSION="${{ github.event.release.tag_name }}"
-            VERSION="${VERSION#v}"  # Remove 'v' prefix if present
-          else
-            VERSION="${{ github.event.inputs.version }}"
-          fi
-          
-          echo "Publishing version: $VERSION"
-
-          # Explicit package list in dependency order - no globs
-          # NOTE: TimeWarp.Builder and TimeWarp.Terminal have independent versioning
-          # and are published via their own workflows (builder-publish.yml, terminal-publish.yml)
-          PACKAGES=(
-            "TimeWarp.Nuru.Core"
-            "TimeWarp.Nuru.Logging"
-            "TimeWarp.Nuru.Completion"
-            "TimeWarp.Nuru.Telemetry"
-            "TimeWarp.Nuru.Repl"
-            "TimeWarp.Nuru"
-            "TimeWarp.Nuru.Analyzers"
-            "TimeWarp.Nuru.Mcp"
-          )
-
-          for pkg in "${PACKAGES[@]}"; do
-            echo "Publishing $pkg..."
-            dotnet nuget push "artifacts/packages/${pkg}.$VERSION.nupkg" \
-              --api-key ${{ secrets.NUGET_API_KEY }} \
-              --source https://api.nuget.org/v3/index.json \
-              --skip-duplicate
-          done
-        env:
-          DOTNET_NUGET_SIGNATURE_VERIFICATION: false
+      - name: Run CI Pipeline
+        run: dotnet run --project tools/dev-cli/timewarp-nuru-dev-cli.csproj -- ci
 
       - name: Upload Artifacts
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: Packages-${{ github.run_number }}
           path: artifacts/packages/*.nupkg
+          if-no-files-found: ignore

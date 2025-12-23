@@ -15,17 +15,15 @@
 //   - AOT-compatible design for maximum performance
 //
 // Commands (Phase 1 - CI/CD Orchestration):
+//   dev ci                 - Run full CI/CD pipeline (auto-detects mode)
+//   dev ci --mode pr       - PR workflow: build -> verify-samples -> test
+//   dev ci --mode release  - Release workflow: build -> check-version -> pack -> push
 //   dev build              - Build all TimeWarp.Nuru projects
-//   dev test ci           - Run CI test suite
-//   dev verify-samples    - Verify sample compilation
-//   dev check-version     - Check if version already published
-//   dev ci                - Run full CI/CD pipeline
-//   dev release publish    - Publish release packages
+//   dev clean              - Clean solution and artifacts
+//   dev test               - Run CI test suite
+//   dev verify-samples     - Verify sample compilation
+//   dev check-version      - Check if version already published
 // ═══════════════════════════════════════════════════════════════════════════════
-
-using Mediator;
-using Microsoft.Extensions.DependencyInjection;
-using TimeWarp.Nuru;
 
 NuruCoreApp app = NuruApp.CreateBuilder(args)
   .ConfigureServices(services => services.AddMediator())
@@ -33,4 +31,4 @@ NuruCoreApp app = NuruApp.CreateBuilder(args)
   .WithMetadata("dev", "Development CLI for TimeWarp.Nuru")
   .Build();
 
-await app.RunAsync(args);
+return await app.RunAsync(args);

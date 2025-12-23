@@ -1,0 +1,16 @@
+<Project>
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+
+  <PropertyGroup>
+    <!-- Suppress warnings that don't apply to CLI tools -->
+    <!-- CA1515: Internal types in exe projects are fine -->
+    <!-- CA1849: Sync WriteLine is fine for CLI output - ITerminal doesn't have async methods -->
+    <!-- CA2007: ConfigureAwait not needed in top-level console apps -->
+    <!-- CA2016: CancellationToken forwarding - will address where needed -->
+    <!-- CA2000: Dispose on app builder - handled by framework -->
+    <!-- CA1508: Dead code analysis false positive -->
+    <!-- RCS1046: Async suffix - private methods don't need it -->
+    <NoWarn>$(NoWarn);CA1515;CA1849;CA2007;CA2016;CA2000;CA1508;CA1031;RCS1046</NoWarn>
+  </PropertyGroup>
+
+</Project>

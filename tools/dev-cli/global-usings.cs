@@ -1,4 +1,3 @@
-// Global usings for the dev CLI
 global using System;
 global using System.IO;
 global using System.Linq;
@@ -10,4 +9,4 @@ global using Mediator;
 global using TimeWarp.Nuru;
 global using TimeWarp.Amuru;
 global using TimeWarp.Terminal;
-global using DevCli.Commands;
+global using Microsoft.Extensions.DependencyInjection;

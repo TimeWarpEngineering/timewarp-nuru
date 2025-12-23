@@ -2,7 +2,7 @@ namespace AttributedRoutes.Messages;
 
 using TimeWarp.Nuru;
 using Mediator;
-using static System.Console;
+using TimeWarp.Terminal;
 
 /// <summary>
 /// Deploy to an environment.

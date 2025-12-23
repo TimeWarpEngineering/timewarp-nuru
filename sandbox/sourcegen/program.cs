@@ -28,8 +28,20 @@ Console.WriteLine();
 result += RouteDefinitionIntegrationTests.Run();
 Console.WriteLine();
 
-// Run fluent chain extractor tests
+// Run fluent chain extractor tests (Source 1)
 result += FluentChainExtractorTests.Run();
+Console.WriteLine();
+
+// Run fluent route builder extractor tests (Source 2)
+result += FluentRouteBuilderExtractorTests.Run();
+Console.WriteLine();
+
+// Run attributed route extractor tests (Source 3)
+result += AttributedRouteExtractorTests.Run();
+Console.WriteLine();
+
+// Run mediator route extractor tests (Source 4)
+result += MediatorRouteExtractorTests.Run();
 Console.WriteLine();
 
 Console.WriteLine("========================================");

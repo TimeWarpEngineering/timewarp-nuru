@@ -23,10 +23,10 @@ The manual construction from step-2 serves as the reference for what should be e
 - [x] Emitted segment matchers work correctly (LiteralMatcher, IntParameterMatcher, StringParameterMatcher)
 - [x] Emitted parameter extractors work correctly (TypeConverter.ToInt32, ToString, etc.)
 - [x] End-to-end tests verify matching and extraction
-- [ ] Add Router type to generated code for command matching
+- [x] Add Router type to generated code for command matching
+- [x] `add 2 2` works via generated code ✅ **KEY DELIVERABLE**
 - [ ] AppB uses generated code instead of manual construction
 - [ ] Parity tests pass: AppA output == AppB output
-- [ ] `add 2 2` works via generated code
 
 ## Notes
 
@@ -35,19 +35,21 @@ The manual construction from step-2 serves as the reference for what should be e
 **Files created:**
 - `sandbox/sourcegen/emitters/RuntimeCodeEmitter.cs` - emits C# from RouteDefinition
 - `sandbox/sourcegen/tests/runtime-code-emitter-tests.cs` - 5 tests
-- `sandbox/sourcegen/tests/end-to-end-emitter-tests.cs` - 4 tests
+- `sandbox/sourcegen/tests/end-to-end-emitter-tests.cs` - 5 tests
+- `sandbox/sourcegen/tests/add-command-demo-test.cs` - 2 tests (key deliverable)
 
 **What works:**
 - Emits CompiledRoute, ISegmentMatcher, LiteralMatcher, IntParameterMatcher, StringParameterMatcher
 - Emits ParameterExtractor with TypeConverter methods
+- Emits Router, MatchAttempt, MatchResult for command routing
 - Generated code compiles and runs correctly
 - Matchers correctly match/reject input
 - Extractors correctly convert string→int, string→string
+- **"add 2 2" works!** Matches, extracts x=2, y=2, computes 4
 
 **What's left:**
-- Router type for matching args against routes
-- Handler registration/invocation mechanism
-- Integration with dual-build AppB
+- Integration with dual-build AppB (handler registration mechanism)
+- Parity tests comparing AppA vs AppB output
 
 ### Generated Output
 

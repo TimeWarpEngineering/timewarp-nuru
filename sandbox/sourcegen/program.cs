@@ -52,6 +52,10 @@ Console.WriteLine();
 result += EndToEndEmitterTests.Run();
 Console.WriteLine();
 
+// Run add command demo test (Step-4 key deliverable)
+result += AddCommandDemoTest.Run();
+Console.WriteLine();
+
 Console.WriteLine("========================================");
 if (result == 0)
 {

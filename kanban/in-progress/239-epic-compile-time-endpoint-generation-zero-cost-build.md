@@ -93,9 +93,9 @@ Phase 4: Delete runtime infrastructure
 - [x] #240 Design-time model
 - [x] #241 Dual-build infrastructure
 - [ ] #242 Parity tests
-  - [ ] #242-step-1 Parse pattern → design-time model
-  - [ ] #242-step-2 Manual runtime construction
-  - [ ] #242-step-3 Source gen for design-time model
+  - [x] #242-step-1 Manually build design-time model (RouteDefinition)
+  - [x] #242-step-2 Manually build runtime, `add 2 2` works
+  - [ ] #242-step-3 Source gen helpers for design-time model
   - [ ] #242-step-4 Source gen emits runtime
 - [ ] #243 Pre-sorted endpoints
 - [ ] #244 Inlined pipeline

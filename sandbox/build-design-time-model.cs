@@ -10,7 +10,7 @@ using System.Collections.Immutable;
 // Manually build the RouteDefinition for "add {x:int} {y:int}"
 // =============================================================================
 
-var addRoute = RouteDefinition.Create(
+RouteDefinition addRoute = RouteDefinition.Create(
   originalPattern: "add {x:int} {y:int}",
   segments:
   [
@@ -75,7 +75,7 @@ Console.WriteLine($"HasCatchAll: {addRoute.HasCatchAll}");
 Console.WriteLine();
 
 Console.WriteLine("=== Segments ===");
-foreach (var segment in addRoute.Segments)
+foreach (SegmentDefinition segment in addRoute.Segments)
 {
   switch (segment)
   {
@@ -101,7 +101,7 @@ Console.WriteLine($"  RequiresCancellationToken: {addRoute.Handler.RequiresCance
 Console.WriteLine();
 
 Console.WriteLine("=== Parameter Bindings ===");
-foreach (var binding in addRoute.Handler.Parameters)
+foreach (ParameterBinding binding in addRoute.Handler.Parameters)
 {
   Console.WriteLine($"  {binding.ParameterName}: {binding.ShortTypeName}");
   Console.WriteLine($"       Source: {binding.Source}, SourceName: {binding.SourceName}");

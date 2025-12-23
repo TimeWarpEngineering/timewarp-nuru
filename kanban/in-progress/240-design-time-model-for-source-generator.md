@@ -17,12 +17,12 @@ Create rich, debuggable data structures for use inside the source generator. The
 
 ## Checklist
 
-- [ ] Create `source/timewarp-nuru-analyzers/model/` directory
-- [ ] Implement `RouteDefinition` record
-- [ ] Implement `SegmentDefinition` hierarchy (Literal, Parameter, Option)
-- [ ] Implement `HandlerDefinition` record
-- [ ] Implement `ParameterBinding` record
-- [ ] Implement `PipelineDefinition` for middleware chain
+- [x] Create `source/timewarp-nuru-analyzers/models/` directory (used existing plural `models/`)
+- [x] Implement `RouteDefinition` record
+- [x] Implement `SegmentDefinition` hierarchy (Literal, Parameter, Option)
+- [x] Implement `HandlerDefinition` record
+- [x] Implement `ParameterBinding` record
+- [x] Implement `PipelineDefinition` for middleware chain
 - [ ] Refactor `NuruAttributedRouteGenerator` to use model
 - [ ] Add tests for model construction
 

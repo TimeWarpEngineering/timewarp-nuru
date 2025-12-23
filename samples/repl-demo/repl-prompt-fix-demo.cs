@@ -1,7 +1,7 @@
 #!/usr/bin/dotnet --
 #:project ../../source/timewarp-nuru/timewarp-nuru.csproj
 #:project ../../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj
-#:project ../../source/timewarp-terminal/timewarp-terminal.csproj
+#:package TimeWarp.Terminal
 #:package Mediator.Abstractions
 #:package Mediator.SourceGenerator
 

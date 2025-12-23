@@ -8,7 +8,7 @@
 
 Build testable helper methods in `sandbox/sourcegen/` that:
 1. Convert parsed pattern syntax into `SegmentDefinition` array
-2. Assemble `RouteDefinition` from pieces via a builder
+2. Assemble `RouteDefinition` from pieces via builders
 3. Extract route metadata from various source types
 
 All helper methods are public and unit-testable.
@@ -84,13 +84,12 @@ We extract directly from the Roslyn syntax of the `WithLiteral()`, `WithParamete
 | Component | Responsibility |
 |-----------|----------------|
 | `SegmentDefinitionConverter` | Converts `Syntax`, `CompiledRoute`, or fluent builder calls to `SegmentDefinition[]` |
-| `HandlerDefinitionExtractor` | Extracts handler info from delegates or `IRequest<T>` types |
-| `MetadataExtractor` | Extracts message type, description from fluent chain or attributes |
+| `HandlerDefinitionBuilder` | Builds handler info (parameters, return type, async) |
 | `RouteDefinitionBuilder` | Assembles `RouteDefinition` from pieces |
 
 ## Checklist
 
-### Setup
+### Setup - DONE
 - [x] Reorganize sandbox: existing experiments in `sandbox/experiments/`
 - [x] Create `sandbox/sourcegen/` for new generator code
 - [x] Add InternalsVisibleTo to `source/timewarp-nuru-parsing/timewarp-nuru-parsing.csproj`
@@ -104,9 +103,27 @@ We extract directly from the Roslyn syntax of the `WithLiteral()`, `WithParamete
 ### Segment Extraction - TODO
 - [ ] From Fluent Route Builder (`WithLiteral()`, `WithParameter()`, `WithOption()`) - Roslyn analysis
 
-### Handler Extraction - TODO
+### Handler Definition - DONE
+- [x] `HandlerDefinitionBuilder` for constructing handler info
+- [x] Support delegate, mediator, method handler kinds
+- [x] Support parameters, options, flags, cancellation tokens, services
+- [x] Support void, Task, Task<T>, sync return types
+- [x] Tests for handler builder (7 tests)
+
+### Handler Extraction (Roslyn) - TODO
 - [ ] From delegate in `.WithHandler(delegate)` - extract parameter types, return type, async
 - [ ] From `IRequest<T>` type (Attributed and Mediator) - extract properties, response type
+
+### Route Definition Builder - DONE
+- [x] Create `RouteDefinitionBuilder` with fluent API
+- [x] `.WithPattern()`, `.WithSegments()`, `.WithMessageType()`
+- [x] `.WithDescription()`, `.WithHandler()`, `.WithPipeline()`
+- [x] `.WithAliases()`, `.WithGroupPrefix()`, `.WithSpecificity()`, `.WithOrder()`
+- [x] `.Build()` produces immutable `RouteDefinition`
+
+### Integration - DONE
+- [x] Integration tests combining segments + handler + builder
+- [x] Tests for sync handler, options, async with cancellation token
 
 ### Metadata Extraction (Fluent API) - TODO
 - [ ] Message type from `.AsQuery()`, `.AsCommand()`, `.AsIdempotentCommand()`
@@ -118,13 +135,6 @@ We extract directly from the Roslyn syntax of the `WithLiteral()`, `WithParamete
 - [ ] Description from `[Description("...")]` attribute
 - [ ] Pattern from `[Route("...")]` attribute
 
-### Route Definition Builder - DONE
-- [x] Create `RouteDefinitionBuilder` with fluent API
-- [x] `.WithPattern()`, `.WithSegments()`, `.WithMessageType()`
-- [x] `.WithDescription()`, `.WithHandler()`, `.WithPipeline()`
-- [x] `.WithAliases()`, `.WithGroupPrefix()`, `.WithSpecificity()`, `.WithOrder()`
-- [x] `.Build()` produces immutable `RouteDefinition`
-
 ### Cleanup
 - [x] Remove old `CompiledRouteToRouteDefinition`
 - [x] Remove old test files
@@ -135,35 +145,30 @@ We extract directly from the Roslyn syntax of the `WithLiteral()`, `WithParamete
 ```
 sandbox/sourcegen/
 ├── converters/
-│   └── SegmentDefinitionConverter.cs   # FromSyntax(), FromCompiledRoute(), FromFluentBuilder()
-├── extractors/
-│   ├── HandlerDefinitionExtractor.cs   # From delegate, from IRequest<T>
-│   └── MetadataExtractor.cs            # Message type, description, aliases
+│   └── SegmentDefinitionConverter.cs   # FromSyntax(), FromCompiledRoute()
 ├── builders/
-│   └── RouteDefinitionBuilder.cs       # Fluent builder for RouteDefinition
+│   ├── RouteDefinitionBuilder.cs       # Assembles RouteDefinition
+│   └── HandlerDefinitionBuilder.cs     # Builds HandlerDefinition
 ├── models/
 │   └── design-time-model.cs            # RouteDefinition, SegmentDefinition, etc.
 ├── tests/
 │   ├── segment-from-syntax-tests.cs           
-│   └── segment-from-compiled-route-tests.cs   
+│   ├── segment-from-compiled-route-tests.cs   
+│   ├── handler-definition-builder-tests.cs
+│   └── route-definition-integration-tests.cs
 ├── program.cs
 └── sourcegen.csproj
 ```
 
-## Test Patterns (Segment Conversion)
+## Test Summary
 
-| Pattern | FromSyntax | FromCompiledRoute | Notes |
-|---------|------------|-------------------|-------|
-| `"add {x:int} {y:int}"` | ✅ | ✅ | Literal + typed parameters |
-| `"greet {name}"` | ✅ | ✅ | Untyped parameter |
-| `"copy {source} {dest?}"` | ✅ | ✅ | Optional parameter |
-| `"echo {*args}"` | ✅ | ✅ | Catch-all parameter |
-| `"status --verbose?"` | ✅ | ✅ | Optional boolean flag |
-| `"config --value {v:int}"` | ✅ | ⚠️ GAP | Option with typed parameter |
-| `"run --force,-f"` | ✅ | ✅ | Short and long form option |
-| `"log --level {l:int?}"` | ✅ | N/A | Optional typed parameter |
-
-**Key Finding**: `FromCompiledRoute` loses option type constraints. `FromSyntax` preserves full fidelity.
+| Test Suite | Tests | Status |
+|------------|-------|--------|
+| FromSyntax segments | 8 | ✅ All pass |
+| FromCompiledRoute segments | 7 | ✅ All pass (gap documented) |
+| HandlerDefinitionBuilder | 7 | ✅ All pass |
+| Integration (complete RouteDefinition) | 3 | ✅ All pass |
+| **Total** | **25** | ✅ |
 
 ## Run Tests
 
@@ -180,11 +185,13 @@ Without handler info, we can't emit working code. The handler tells us:
 - Whether async (Task vs sync)
 - Whether needs CancellationToken
 
-### Why Keep Both Segment Approaches
-- Evaluating trade-offs
-- FromSyntax: Full fidelity but requires InternalsVisibleTo
-- FromCompiledRoute: Uses public API but loses option type info
-- Will decide after more evaluation
+### What's Ready for Step-4 (Code Emission)
+We now have complete `RouteDefinition` objects containing:
+- Parsed segments (from pattern)
+- Handler definition (parameters, return type, async)
+- Metadata (message type, description)
+
+This is sufficient to start emitting code in step-4.
 
 ### Agent Context
 - Agent name: Amina

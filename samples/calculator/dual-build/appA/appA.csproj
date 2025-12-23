@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    appA: Runtime path (current Nuru implementation)
+    Part of Task #241: Dual-build infrastructure for parity testing.
+    
+    Build: dotnet build
+    Run:   dotnet run [args]
+  -->
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>calc-appA</AssemblyName>
+  </PropertyGroup>
+
+  <!-- Compile the shared source -->
+  <ItemGroup>
+    <Compile Include="../shared/calc.cs" Link="calc.cs" />
+  </ItemGroup>
+
+  <!-- Reference current Nuru (runtime path) -->
+  <ItemGroup>
+    <ProjectReference Include="../../../../source/timewarp-nuru/timewarp-nuru.csproj" />
+  </ItemGroup>
+
+</Project>

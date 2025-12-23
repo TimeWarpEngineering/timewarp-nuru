@@ -3,22 +3,25 @@
     Sandbox sourcegen helpers for #242-step-3
     Agent: Amina
     
-    These are testable helpers that will eventually become part of the source generator.
-    All types are public for unit testing.
+    Evaluating two approaches for segment conversion:
+    1. FromSyntax - uses internal Syntax types (full fidelity, requires InternalsVisibleTo)
+    2. FromCompiledRoute - uses public CompiledRoute (loses option type constraints)
+    
+    Run tests: dotnet run - -project sandbox/sourcegen/sourcegen.csproj
   -->
 
   <PropertyGroup>
-    <OutputType>Library</OutputType>
+    <OutputType>Exe</OutputType>
     <AssemblyName>TimeWarp.Nuru.SourceGen.Sandbox</AssemblyName>
   </PropertyGroup>
 
-  <!-- Reference existing parsing types (Syntax, SegmentSyntax, etc.) -->
+  <!-- Reference parsing project (has InternalsVisibleTo for this assembly) -->
   <ItemGroup>
     <ProjectReference Include="../../source/timewarp-nuru-parsing/timewarp-nuru-parsing.csproj" />
   </ItemGroup>
 
   <!-- 
-    Note: We copy the design-time model types into this project rather than reference
+    Note: Design-time model types are copied into models/ rather than referencing
     timewarp-nuru-analyzers because:
     1. The model types are internal in the analyzers project
     2. We want to keep this sandbox isolated

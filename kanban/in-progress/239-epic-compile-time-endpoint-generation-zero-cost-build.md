@@ -74,7 +74,11 @@ Phase 4: Delete runtime infrastructure
 |------|-------------|
 | #240 | Design-time model for source generator |
 | #241 | Dual-build infrastructure (AppA/AppB) |
-| #242 | Jaribu parity test suite |
+| #242 | Jaribu parity test suite (overview) |
+| #242-step-1 | Parse route pattern to design-time model |
+| #242-step-2 | Manual runtime construction from design-time model |
+| #242-step-3 | Source generator for design-time model |
+| #242-step-4 | Source generator emits runtime structures |
 | #243 | Emit pre-sorted Endpoint[] |
 | #244 | Emit inlined pipeline |
 | #245 | Emit static service fields (replace DI) |
@@ -86,9 +90,13 @@ Phase 4: Delete runtime infrastructure
 
 ## Checklist
 
-- [ ] #240 Design-time model
-- [ ] #241 Dual-build infrastructure
+- [x] #240 Design-time model
+- [x] #241 Dual-build infrastructure
 - [ ] #242 Parity tests
+  - [ ] #242-step-1 Parse pattern → design-time model
+  - [ ] #242-step-2 Manual runtime construction
+  - [ ] #242-step-3 Source gen for design-time model
+  - [ ] #242-step-4 Source gen emits runtime
 - [ ] #243 Pre-sorted endpoints
 - [ ] #244 Inlined pipeline
 - [ ] #245 Static services

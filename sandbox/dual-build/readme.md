@@ -2,10 +2,12 @@
 
 Part of Epic #239: Compile-time endpoint generation.
 
+**Location**: `sandbox/` - experimental work, not a sample yet.
+
 ## Structure
 
 ```
-dual-build/
+sandbox/dual-build/
   shared/
     calc.cs       # Shared calculator source
   appA/
@@ -17,13 +19,13 @@ dual-build/
 ## Build & Run
 
 ```bash
-# AppA (runtime path - reference implementation)
-dotnet build appA/appA.csproj
-dotnet run --project appA/appA.csproj -- add 3 5
+# Build both
+dotnet build sandbox/dual-build/appA/appA.csproj
+dotnet build sandbox/dual-build/appB/appB.csproj
 
-# AppB (generated path - stub for now)
-dotnet build appB/appB.csproj
-dotnet run --project appB/appB.csproj -- add 3 5
+# Run via dll (faster than dotnet run)
+dotnet sandbox/dual-build/appA/bin/Debug/net10.0/calc-appA.dll add 3 5
+dotnet sandbox/dual-build/appB/bin/Debug/net10.0/calc-appB.dll add 3 5
 ```
 
 ## Parity Testing
@@ -33,8 +35,8 @@ Run the same commands against both and compare output.
 
 ```bash
 # Should produce identical output
-dotnet run --project appA/appA.csproj -- add 10 20
-dotnet run --project appB/appB.csproj -- add 10 20
+dotnet sandbox/dual-build/appA/bin/Debug/net10.0/calc-appA.dll add 10 20
+dotnet sandbox/dual-build/appB/bin/Debug/net10.0/calc-appB.dll add 10 20
 ```
 
 ## Status

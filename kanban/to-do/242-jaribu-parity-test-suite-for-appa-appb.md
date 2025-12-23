@@ -8,6 +8,31 @@
 
 Create comprehensive Jaribu tests that run both AppA (runtime) and AppB (generated) with the same inputs, verifying they produce identical outputs. This proves the generated implementation is correct.
 
+## Sub-Tasks
+
+This task is broken into steps:
+
+| Step | Task | Description |
+|------|------|-------------|
+| 1 | #242-step-1 | Parse route pattern to design-time model |
+| 2 | #242-step-2 | Manual runtime construction from design-time model |
+| 3 | #242-step-3 | Source generator for design-time model |
+| 4 | #242-step-4 | Source generator emits runtime structures |
+
+## Two-Phase Approach
+
+**Phase 1: Build Design-Time Model**
+```
+Source syntax (pattern string) → RouteDefinition, SegmentDefinition, etc.
+```
+
+**Phase 2: Generate Runtime Code**
+```
+Design-Time Model → Runtime structures (Endpoint[], matchers, etc.)
+```
+
+Keeping phases separate allows independent testing and easier reasoning.
+
 ## Requirements
 
 - Tests run both executables with same args
@@ -17,14 +42,14 @@ Create comprehensive Jaribu tests that run both AppA (runtime) and AppB (generat
 
 ## Checklist
 
-- [ ] Create test file `tests/timewarp-nuru-gen-tests/parity-01-basic.cs`
+- [ ] #242-step-1: Parse patterns to design-time model
+- [ ] #242-step-2: Manual runtime construction works (`add 2 2`)
+- [ ] #242-step-3: Source generator builds design-time model
+- [ ] #242-step-4: Source generator emits runtime code
+- [ ] Create parity test file `tests/timewarp-nuru-gen-tests/parity-01-basic.cs`
 - [ ] Test all calculator routes produce same output
 - [ ] Test `--help` produces same output
-- [ ] Test `--version` produces same output
 - [ ] Test invalid commands produce same errors
-- [ ] Test parameter binding matches
-- [ ] Test option handling matches
-- [ ] Add startup time benchmark test (AppB should be faster)
 
 ## Notes
 

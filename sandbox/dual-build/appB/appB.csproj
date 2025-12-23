@@ -27,7 +27,7 @@
     For now, use same runtime path as appA.
   -->
   <ItemGroup>
-    <ProjectReference Include="../../../../source/timewarp-nuru/timewarp-nuru.csproj" />
+    <ProjectReference Include="../../../source/timewarp-nuru/timewarp-nuru.csproj" />
   </ItemGroup>
 
 </Project>

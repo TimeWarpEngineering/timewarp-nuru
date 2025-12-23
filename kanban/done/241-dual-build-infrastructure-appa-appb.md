@@ -33,7 +33,7 @@ This is a migration scaffold. Once AppB is proven correct via parity tests, AppA
 ### Project Structure (Updated)
 
 ```
-samples/calculator/dual-build/
+sandbox/dual-build/
   shared/
     calc.cs           # Shared source
   appA/
@@ -43,18 +43,20 @@ samples/calculator/dual-build/
   readme.md           # Build/run instructions
 ```
 
+Moved to `sandbox/` - it's experimental work, not a sample yet.
+
 Separate directories avoid MSBuild conflicts that occur with multiple .csproj files in same directory.
 
 ### Build Commands
 
 ```bash
 # Build
-dotnet build samples/calculator/dual-build/appA/appA.csproj
-dotnet build samples/calculator/dual-build/appB/appB.csproj
+dotnet build sandbox/dual-build/appA/appA.csproj
+dotnet build sandbox/dual-build/appB/appB.csproj
 
 # Run (via dll for reliability)
-dotnet samples/calculator/dual-build/appA/bin/Debug/net10.0/calc-appA.dll add 3 5
-dotnet samples/calculator/dual-build/appB/bin/Debug/net10.0/calc-appB.dll add 3 5
+dotnet sandbox/dual-build/appA/bin/Debug/net10.0/calc-appA.dll add 3 5
+dotnet sandbox/dual-build/appB/bin/Debug/net10.0/calc-appB.dll add 3 5
 ```
 
 ### Parity Verified
@@ -68,7 +70,7 @@ Both apps produce identical output:
 
 **Completed 2024-12-23**
 
-Created dual-build infrastructure in `samples/calculator/dual-build/`:
+Created dual-build infrastructure in `sandbox/dual-build/`:
 - `shared/calc.cs` - Calculator with add, subtract, multiply, divide commands
 - `appA/appA.csproj` - Current runtime Nuru (reference implementation)
 - `appB/appB.csproj` - Stub (identical to appA until new generator ready)

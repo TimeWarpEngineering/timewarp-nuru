@@ -13,12 +13,19 @@ Console.WriteLine();
 
 int result = 0;
 
-// Run FromSyntax tests (full fidelity)
+// Run segment conversion tests
 result += SegmentFromSyntaxTests.Run();
 Console.WriteLine();
 
-// Run FromCompiledRoute tests (documents gaps)
 result += SegmentFromCompiledRouteTests.Run();
+Console.WriteLine();
+
+// Run handler builder tests
+result += HandlerDefinitionBuilderTests.Run();
+Console.WriteLine();
+
+// Run integration tests
+result += RouteDefinitionIntegrationTests.Run();
 Console.WriteLine();
 
 Console.WriteLine("========================================");

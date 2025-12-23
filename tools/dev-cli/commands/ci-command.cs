@@ -19,6 +19,9 @@ internal sealed class CiCommand : ICommand<Unit>
   [Option("mode", "m", Description = "CI mode: pr, merge, or release (auto-detected from GITHUB_EVENT_NAME if not specified)")]
   public string? Mode { get; set; }
 
+  [Option("api-key", Description = "NuGet API key for publishing (from OIDC Trusted Publishing)")]
+  public string? ApiKey { get; set; }
+
   internal sealed class Handler : ICommandHandler<CiCommand, Unit>
   {
     private readonly ITerminal Terminal;
@@ -42,7 +45,7 @@ internal sealed class CiCommand : ICommand<Unit>
 
       if (mode == CiMode.Release)
       {
-        await RunReleaseWorkflowAsync(ct);
+        await RunReleaseWorkflowAsync(command.ApiKey, ct);
       }
       else
       {
@@ -121,7 +124,7 @@ internal sealed class CiCommand : ICommand<Unit>
       Terminal.WriteLine("===============================================================================");
     }
 
-    private async Task RunReleaseWorkflowAsync(CancellationToken ct)
+    private async Task RunReleaseWorkflowAsync(string? apiKey, CancellationToken ct)
     {
       Terminal.WriteLine("Pipeline: clean -> build -> check-version -> pack -> push");
       Terminal.WriteLine("");
@@ -165,7 +168,7 @@ internal sealed class CiCommand : ICommand<Unit>
       Terminal.WriteLine("===============================================================================");
       Terminal.WriteLine("  Step 5/5: Push to NuGet");
       Terminal.WriteLine("===============================================================================");
-      await PushPackagesAsync(repoRoot);
+      await PushPackagesAsync(repoRoot, apiKey);
 
       Terminal.WriteLine("");
       Terminal.WriteLine("===============================================================================");
@@ -211,7 +214,7 @@ internal sealed class CiCommand : ICommand<Unit>
       Terminal.WriteLine($"\nPackages created in: {artifactsDir}");
     }
 
-    private async Task PushPackagesAsync(string repoRoot)
+    private async Task PushPackagesAsync(string repoRoot, string? apiKey)
     {
       string artifactsDir = Path.Combine(repoRoot, "artifacts", "packages");
 
@@ -249,13 +252,16 @@ internal sealed class CiCommand : ICommand<Unit>
 
         Terminal.WriteLine($"Pushing {package}.{version}.nupkg...");
 
-        // Using Trusted Publishing - no API key needed
-        // The NuGet/login@v1 action in GitHub Actions handles OIDC authentication
+        // Build push arguments - include API key if provided (from OIDC Trusted Publishing)
+        List<string> args = ["nuget", "push", nupkgPath, "--source", "https://api.nuget.org/v3/index.json", "--skip-duplicate"];
+
+        if (!string.IsNullOrEmpty(apiKey))
+        {
+          args.AddRange(["--api-key", apiKey]);
+        }
+
         int exitCode = await Shell.Builder("dotnet")
-          .WithArguments(
-            "nuget", "push", nupkgPath,
-            "--source", "https://api.nuget.org/v3/index.json",
-            "--skip-duplicate")
+          .WithArguments([.. args])
           .WithWorkingDirectory(repoRoot)
           .RunAsync();
 

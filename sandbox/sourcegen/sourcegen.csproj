@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Sandbox sourcegen helpers for #242-step-3
+    Agent: Amina
+    
+    These are testable helpers that will eventually become part of the source generator.
+    All types are public for unit testing.
+  -->
+
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <AssemblyName>TimeWarp.Nuru.SourceGen.Sandbox</AssemblyName>
+  </PropertyGroup>
+
+  <!-- Reference existing parsing types (Syntax, SegmentSyntax, etc.) -->
+  <ItemGroup>
+    <ProjectReference Include="../../source/timewarp-nuru-parsing/timewarp-nuru-parsing.csproj" />
+  </ItemGroup>
+
+  <!-- 
+    Note: We copy the design-time model types into this project rather than reference
+    timewarp-nuru-analyzers because:
+    1. The model types are internal in the analyzers project
+    2. We want to keep this sandbox isolated
+    3. The types are simple records that are easy to copy
+  -->
+
+</Project>

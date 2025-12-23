@@ -424,6 +424,7 @@ LocalNuGetCache/
 
 # AOT publish output
 **/aot-output/
+/dev
 
 # Test logs
 Tests/logs/

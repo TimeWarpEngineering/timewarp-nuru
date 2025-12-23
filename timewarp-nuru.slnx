@@ -21,7 +21,4 @@
     <Project Path="tests/test-apps/timewarp-nuru-testapp-delegates/timewarp-nuru-testapp-delegates.csproj" />
     <Project Path="tests/test-apps/timewarp-nuru-testapp-mediator/timewarp-nuru-testapp-mediator.csproj" />
   </Folder>
-  <Folder Name="/tools/">
-    <Project Path="tools/dev-cli/timewarp-nuru-dev-cli.csproj" />
-  </Folder>
 </Solution>

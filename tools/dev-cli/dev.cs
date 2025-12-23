@@ -1,3 +1,4 @@
+#!/usr/bin/dotnet --
 // ═══════════════════════════════════════════════════════════════════════════════
 // DEV CLI - TIMEWARP.NURU DEVELOPMENT TOOL
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -7,6 +8,10 @@
 // - Development workflow automation
 // - AOT-compiled binary for fast execution
 // - Attributed routes for flexible command organization
+//
+// Usage:
+//   As runfile:  dotnet tools/dev-cli/dev.cs <command>
+//   As AOT:      ./dev <command>
 //
 // Architecture:
 //   - Uses TimeWarp.Nuru with attributed routes for command registration
@@ -23,6 +28,9 @@
 //   dev test               - Run CI test suite
 //   dev verify-samples     - Verify sample compilation
 //   dev check-version      - Check if version already published
+//
+// To build AOT binary:
+//   dotnet runfiles/publish-dev.cs
 // ═══════════════════════════════════════════════════════════════════════════════
 
 NuruCoreApp app = NuruApp.CreateBuilder(args)

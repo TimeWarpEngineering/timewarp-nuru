@@ -1,16 +1,69 @@
 <Project>
+  <!-- Import parent Directory.Build.props -->
   <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
 
   <PropertyGroup>
     <!-- Suppress warnings that don't apply to CLI tools -->
+    <!-- CA1031: Catch general exception types - OK for CLI error handling -->
+    <!-- CA1303: Literal strings - OK for CLI output -->
+    <!-- CA1508: Dead code analysis false positive -->
     <!-- CA1515: Internal types in exe projects are fine -->
     <!-- CA1849: Sync WriteLine is fine for CLI output - ITerminal doesn't have async methods -->
     <!-- CA2007: ConfigureAwait not needed in top-level console apps -->
     <!-- CA2016: CancellationToken forwarding - will address where needed -->
     <!-- CA2000: Dispose on app builder - handled by framework -->
-    <!-- CA1508: Dead code analysis false positive -->
     <!-- RCS1046: Async suffix - private methods don't need it -->
-    <NoWarn>$(NoWarn);CA1515;CA1849;CA2007;CA2016;CA2000;CA1508;CA1031;RCS1046</NoWarn>
+    <NoWarn>$(NoWarn);CA1031;CA1303;CA1508;CA1515;CA1849;CA2007;CA2016;CA2000;RCS1046</NoWarn>
+
+    <!-- AOT Support -->
+    <PublishAot>true</PublishAot>
+    <InvariantGlobalization>true</InvariantGlobalization>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Global usings for dev-cli -->
+    <Using Include="System" />
+    <Using Include="System.IO" />
+    <Using Include="System.Linq" />
+    <Using Include="System.Threading" />
+    <Using Include="System.Threading.Tasks" />
+    <Using Include="System.Collections.Generic" />
+    <Using Include="System.Diagnostics" />
+    <Using Include="System.Runtime.CompilerServices" />
+    <Using Include="System.Text.Json" />
+    <Using Include="System.Xml.Linq" />
+    <Using Include="Mediator" />
+    <Using Include="TimeWarp.Nuru" />
+    <Using Include="TimeWarp.Amuru" />
+    <Using Include="TimeWarp.Terminal" />
+    <Using Include="Microsoft.Extensions.DependencyInjection" />
+
+    <Using Include="System.Console" Static="true" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Include command files in compilation -->
+    <Compile Include="commands/**/*.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Project references -->
+    <ProjectReference Include="../../source/timewarp-nuru/timewarp-nuru.csproj" />
+    <!-- Explicitly reference the analyzer since it doesn't flow transitively -->
+    <ProjectReference Include="../../source/timewarp-nuru-analyzers/timewarp-nuru-analyzers.csproj">
+      <OutputItemType>Analyzer</OutputItemType>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Package references -->
+    <PackageReference Include="Mediator.Abstractions" />
+    <PackageReference Include="Mediator.SourceGenerator">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="TimeWarp.Amuru" />
+  </ItemGroup>
 
 </Project>

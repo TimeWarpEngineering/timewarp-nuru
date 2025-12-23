@@ -2,12 +2,13 @@ namespace AttributedRoutes.Messages;
 
 using TimeWarp.Nuru;
 using Mediator;
-using static System.Console;
+using TimeWarp.Terminal;
 
 /// <summary>
 /// Query: docker ps [--all]
 /// Lists running Docker containers (or all containers with --all).
 /// This is a Query (Q) - read-only, safe to retry.
+/// Demonstrates ITerminal injection for testable output.
 /// </summary>
 [NuruRoute("ps", Description = "List containers")]
 public sealed class DockerPsQuery : DockerGroupBase, IQuery<Unit>
@@ -17,15 +18,22 @@ public sealed class DockerPsQuery : DockerGroupBase, IQuery<Unit>
 
   public sealed class Handler : IQueryHandler<DockerPsQuery, Unit>
   {
+    private readonly ITerminal Terminal;
+
+    public Handler(ITerminal terminal)
+    {
+      Terminal = terminal;
+    }
+
     public ValueTask<Unit> Handle(DockerPsQuery query, CancellationToken ct)
     {
       string scope = query.All ? "all" : "running";
-      WriteLine($"Listing {scope} containers...");
-      WriteLine("CONTAINER ID   IMAGE          STATUS");
-      WriteLine("abc123         nginx:latest   Up 2 hours");
+      Terminal.WriteLine($"Listing {scope} containers...");
+      Terminal.WriteLine("CONTAINER ID   IMAGE          STATUS");
+      Terminal.WriteLine("abc123         nginx:latest   Up 2 hours");
       if (query.All)
       {
-        WriteLine("def456         redis:7        Exited (0) 1 day ago");
+        Terminal.WriteLine("def456         redis:7        Exited (0) 1 day ago");
       }
 
       return default;

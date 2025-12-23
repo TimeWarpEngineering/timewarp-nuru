@@ -9,17 +9,16 @@ WriteLine("Checking code style with dotnet format...");
 WriteLine($"Working from: {Directory.GetCurrentDirectory()}");
 
 // Check code style with dotnet format
-CommandResult dotnetCommandResult = Shell.Run("dotnet")
+CommandResult dotnetCommandResult = Shell.Builder("dotnet")
  .WithArguments("format", "../timewarp-nuru.slnx", "--verify-no-changes", "--severity", "warn", "--exclude", "**/benchmarks/**")
  .Build();
 
 WriteLine("Running ...");
 WriteLine(dotnetCommandResult.ToCommandString());
 
-ExecutionResult formatResult = await dotnetCommandResult.ExecuteAsync();
-formatResult.WriteToConsole();
+int exitCode = await dotnetCommandResult.RunAsync();
 
-if (!formatResult.IsSuccess)
+if (exitCode != 0)
 {
   WriteLine("❌ Code style violations found! Run 'dotnet format' to fix them.");
   Environment.Exit(1);

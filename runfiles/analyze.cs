@@ -42,28 +42,28 @@ foreach (string project in projects)
 
   try
   {
-    RunBuilder roslynatorCommand = Shell.Run("dotnet")
-      .WithArguments("roslynator", "fix", project);
+    List<string> roslynatorArgs = ["roslynator", "fix", project];
 
     if (!string.IsNullOrEmpty(diagnosticId))
     {
-      roslynatorCommand = roslynatorCommand.WithArguments("--supported-diagnostics", diagnosticId);
+      roslynatorArgs.Add("--supported-diagnostics");
+      roslynatorArgs.Add(diagnosticId);
       WriteLine($"  Fixing diagnostic: {diagnosticId}");
     }
 
-    ExecutionResult result = await roslynatorCommand.ExecuteAsync().ConfigureAwait(false);
+    int exitCode = await Shell.Builder("dotnet")
+      .WithArguments([.. roslynatorArgs])
+      .RunAsync();
 
-    if (result.ExitCode == 0)
+    if (exitCode == 0)
     {
       WriteLine("  ✅ Success");
     }
     else
     {
-      WriteLine($"  ❌ Failed with exit code {result.ExitCode}");
+      WriteLine($"  ❌ Failed with exit code {exitCode}");
       hasErrors = true;
     }
-
-    result.WriteToConsole();
   }
   catch (InvalidOperationException ex)
   {

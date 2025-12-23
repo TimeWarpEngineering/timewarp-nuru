@@ -25,7 +25,7 @@ Creates horizontal divider lines with optional centered text. Useful for separat
 ```csharp
 using TimeWarp.Nuru;
 
-ITerminal terminal = NuruTerminal.Default;
+ITerminal terminal = TimeWarpTerminal.Default;
 
 // Simple horizontal line
 terminal.WriteRule();
@@ -103,7 +103,7 @@ Creates bordered boxes with optional headers. Useful for highlighting important 
 ```csharp
 using TimeWarp.Nuru;
 
-ITerminal terminal = NuruTerminal.Default;
+ITerminal terminal = TimeWarpTerminal.Default;
 
 // Simple panel with content
 terminal.WritePanel("This is important information");
@@ -255,7 +255,7 @@ Creates formatted tables with columns, alignment, and borders. Useful for displa
 ```csharp
 using TimeWarp.Nuru;
 
-ITerminal terminal = NuruTerminal.Default;
+ITerminal terminal = TimeWarpTerminal.Default;
 
 // Simple table
 Table basicTable = new Table()

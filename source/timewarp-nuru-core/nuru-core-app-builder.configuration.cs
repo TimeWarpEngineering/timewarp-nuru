@@ -185,7 +185,7 @@ public partial class NuruCoreAppBuilder<TSelf>
 
   /// <summary>
   /// Sets the terminal I/O provider for interactive operations like REPL.
-  /// If not called, defaults to <see cref="NuruTerminal.Default"/>.
+  /// If not called, defaults to <see cref="TimeWarpTerminal.Default"/>.
   /// </summary>
   /// <param name="terminal">The terminal implementation to use.</param>
   /// <returns>The builder for chaining.</returns>

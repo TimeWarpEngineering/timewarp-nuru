@@ -6,7 +6,7 @@ using TimeWarp.Nuru;
 using TimeWarp.Terminal;
 
 // Create a terminal for colored output
-ITerminal terminal = new NuruTerminal();
+ITerminal terminal = new TimeWarpTerminal();
 
 terminal.WriteLine("Table Widget Demo");
 terminal.WriteLine("==================\n");

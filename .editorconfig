@@ -425,3 +425,6 @@ dotnet_diagnostic.IDE0290.severity = none
 
 # IDE1006: Naming Styles
 dotnet_diagnostic.IDE1006.severity = none
+
+# IDE0290: Use primary constructor
+csharp_style_prefer_primary_constructors = false

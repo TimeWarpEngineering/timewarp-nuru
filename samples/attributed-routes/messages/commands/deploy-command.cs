@@ -2,11 +2,12 @@ namespace AttributedRoutes.Messages;
 
 using TimeWarp.Nuru;
 using Mediator;
-using static System.Console;
+using TimeWarp.Terminal;
 
 /// <summary>
 /// Deploy to an environment.
 /// This is a Command (C) - mutating, needs confirmation before running.
+/// Demonstrates ITerminal injection for testable output.
 /// </summary>
 [NuruRoute("deploy", Description = "Deploy to an environment")]
 public sealed class DeployCommand : ICommand<Unit>
@@ -25,12 +26,19 @@ public sealed class DeployCommand : ICommand<Unit>
 
   public sealed class Handler : ICommandHandler<DeployCommand, Unit>
   {
+    private readonly ITerminal Terminal;
+
+    public Handler(ITerminal terminal)
+    {
+      Terminal = terminal;
+    }
+
     public ValueTask<Unit> Handle(DeployCommand command, CancellationToken ct)
     {
-      WriteLine($"Deploying to {command.Env}...");
-      WriteLine($"  Force: {command.Force}");
-      WriteLine($"  Config: {command.ConfigFile ?? "(default)"}");
-      WriteLine($"  Replicas: {command.Replicas}");
+      Terminal.WriteLine($"Deploying to {command.Env}...");
+      Terminal.WriteLine($"  Force: {command.Force}");
+      Terminal.WriteLine($"  Config: {command.ConfigFile ?? "(default)"}");
+      Terminal.WriteLine($"  Replicas: {command.Replicas}");
       return default;
     }
   }

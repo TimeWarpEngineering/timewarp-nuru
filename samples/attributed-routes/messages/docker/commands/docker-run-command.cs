@@ -2,12 +2,13 @@ namespace AttributedRoutes.Messages;
 
 using TimeWarp.Nuru;
 using Mediator;
-using static System.Console;
+using TimeWarp.Terminal;
 
 /// <summary>
 /// Command: docker run {image} [--detach]
 /// Runs a Docker container from an image.
 /// This is a Command (C) - mutating operation.
+/// Demonstrates ITerminal injection for testable output.
 /// </summary>
 [NuruRoute("run", Description = "Run a container from an image")]
 public sealed class DockerRunCommand : DockerGroupBase, ICommand<Unit>
@@ -20,10 +21,17 @@ public sealed class DockerRunCommand : DockerGroupBase, ICommand<Unit>
 
   public sealed class Handler : ICommandHandler<DockerRunCommand, Unit>
   {
+    private readonly ITerminal Terminal;
+
+    public Handler(ITerminal terminal)
+    {
+      Terminal = terminal;
+    }
+
     public ValueTask<Unit> Handle(DockerRunCommand command, CancellationToken ct)
     {
       string mode = command.Detach ? " (detached)" : "";
-      WriteLine($"Running container from image: {command.Image}{mode}");
+      Terminal.WriteLine($"Running container from image: {command.Image}{mode}");
       return default;
     }
   }

@@ -30,15 +30,11 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 
 using TimeWarp.Nuru;
-using Mediator;
 using Microsoft.Extensions.DependencyInjection;
 
 // No Map() calls! Routes are auto-registered via [NuruRoute] attributes
 NuruCoreApp app = NuruApp.CreateBuilder(args)
-  .ConfigureServices(services =>
-  {
-    services.AddMediator();
-  })
+  .ConfigureServices(services => services.AddMediator())
   .AddAutoHelp()
   .WithMetadata("attributed-routes", "Sample demonstrating attributed routes")
   .Build();

@@ -11,12 +11,17 @@ WriteLine($"Working from: {Directory.GetCurrentDirectory()}");
 // Clean the solution with minimal verbosity
 try
 {
-    ExecutionResult result = await DotNet.Clean()
+    CommandResult cleanResult = DotNet.Clean()
         .WithProject("../timewarp-nuru.slnx")
         .WithVerbosity("minimal")
-        .ExecuteAsync();
+        .Build();
 
-    result.WriteToConsole();
+    int exitCode = await cleanResult.RunAsync();
+    if (exitCode != 0)
+    {
+        WriteLine("❌ Clean failed!");
+        Environment.Exit(1);
+    }
 }
 catch (Exception ex)
 {
@@ -39,11 +44,14 @@ catch (Exception ex)
 WriteLine("\nDeleting obj and bin directories...");
 try
 {
-    await Shell.Run("find")
-        .WithArguments("..", "-type", "d", "(", "-name", "obj", "-o", "-name", "bin", ")")
-        .Pipe("xargs", "rm", "-rf")
-        .ExecuteAsync();
-    WriteLine("✅ Deleted all obj and bin directories");
+    int exitCode = await Shell.Builder("find")
+        .WithArguments("..", "-type", "d", "(", "-name", "obj", "-o", "-name", "bin", ")", "-exec", "rm", "-rf", "{}", "+")
+        .RunAsync();
+
+    if (exitCode == 0)
+    {
+        WriteLine("✅ Deleted all obj and bin directories");
+    }
 }
 catch (Exception ex)
 {

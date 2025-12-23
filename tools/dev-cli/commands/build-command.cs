@@ -1,0 +1,111 @@
+// ═══════════════════════════════════════════════════════════════════════════════
+// BUILD COMMAND
+// ═══════════════════════════════════════════════════════════════════════════════
+// Builds all TimeWarp.Nuru projects in dependency order using Release configuration.
+// Migrated from runfiles/build.cs to attributed routes pattern.
+
+namespace DevCli.Commands;
+
+/// <summary>
+/// Build all TimeWarp.Nuru projects in dependency order.
+/// </summary>
+[NuruRoute("build", Description = "Build all TimeWarp.Nuru projects")]
+internal sealed class BuildCommand : ICommand<Unit>
+{
+  [Option("clean", "c", Description = "Clean before building")]
+  public bool Clean { get; set; }
+
+  [Option("verbose", "v", Description = "Verbose output")]
+  public bool Verbose { get; set; }
+
+  internal sealed class Handler : ICommandHandler<BuildCommand, Unit>
+  {
+    private readonly ITerminal Terminal;
+
+    public Handler(ITerminal terminal)
+    {
+      Terminal = terminal;
+    }
+
+    public async ValueTask<Unit> Handle(BuildCommand command, CancellationToken ct)
+    {
+      // Get repo root (dev-cli is in tools/dev-cli/)
+      string repoRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
+
+      // Verify we're in the right place
+      if (!File.Exists(Path.Combine(repoRoot, "timewarp-nuru.slnx")))
+      {
+        // Try alternative path resolution for when running via dotnet run
+        repoRoot = Path.GetFullPath(Directory.GetCurrentDirectory());
+        if (!File.Exists(Path.Combine(repoRoot, "timewarp-nuru.slnx")))
+        {
+          throw new InvalidOperationException("Could not find repository root (timewarp-nuru.slnx not found)");
+        }
+      }
+
+      Terminal.WriteLine("Building TimeWarp.Nuru library...");
+      Terminal.WriteLine($"Working from: {repoRoot}");
+
+      // Clean first if requested
+      if (command.Clean)
+      {
+        Terminal.WriteLine("\nCleaning before build...");
+        string verbosity = command.Verbose ? "normal" : "minimal";
+
+        CommandResult cleanResult = DotNet.Clean()
+          .WithProject(Path.Combine(repoRoot, "timewarp-nuru.slnx"))
+          .WithVerbosity(verbosity)
+          .Build();
+
+        if (await cleanResult.RunAsync() != 0)
+        {
+          throw new InvalidOperationException("Clean failed!");
+        }
+      }
+
+      // Build each project individually to avoid framework resolution issues
+      string[] projectsToBuild =
+      [
+        "source/timewarp-nuru-analyzers/timewarp-nuru-analyzers.csproj",
+        "source/timewarp-nuru-logging/timewarp-nuru-logging.csproj",
+        "source/timewarp-nuru-mcp/timewarp-nuru-mcp.csproj",
+        "source/timewarp-nuru/timewarp-nuru.csproj",
+        "source/timewarp-nuru-completion/timewarp-nuru-completion.csproj",
+        "source/timewarp-nuru-repl/timewarp-nuru-repl.csproj",
+        "benchmarks/timewarp-nuru-benchmarks/timewarp-nuru-benchmarks.csproj",
+        "tests/test-apps/timewarp-nuru-testapp-mediator/timewarp-nuru-testapp-mediator.csproj",
+        "tests/test-apps/timewarp-nuru-testapp-delegates/timewarp-nuru-testapp-delegates.csproj",
+        "samples/timewarp-nuru-sample/timewarp-nuru-sample.csproj"
+      ];
+
+      string verbosityLevel = command.Verbose ? "normal" : "minimal";
+
+      foreach (string projectPath in projectsToBuild)
+      {
+        string fullPath = Path.Combine(repoRoot, projectPath);
+        Terminal.WriteLine($"\nBuilding {projectPath}...");
+
+        CommandResult buildCommandResult = DotNet.Build()
+          .WithProject(fullPath)
+          .WithConfiguration("Release")
+          .WithVerbosity(verbosityLevel)
+          .Build();
+
+        if (command.Verbose)
+        {
+          Terminal.WriteLine(buildCommandResult.ToCommandString());
+        }
+
+        int exitCode = await buildCommandResult.RunAsync();
+
+        if (exitCode != 0)
+        {
+          throw new InvalidOperationException($"Failed to build {projectPath}!");
+        }
+      }
+
+      Terminal.WriteLine("\nBuild completed successfully!");
+      return Unit.Value;
+    }
+  }
+}

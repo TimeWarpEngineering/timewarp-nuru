@@ -2,11 +2,12 @@ namespace AttributedRoutes.Messages;
 
 using TimeWarp.Nuru;
 using Mediator;
-using static System.Console;
+using TimeWarp.Terminal;
 
 /// <summary>
 /// Execute a command with arbitrary arguments.
 /// This is a Command (C) - executes arbitrary commands with side effects.
+/// Demonstrates ITerminal injection for testable output.
 /// </summary>
 [NuruRoute("exec", Description = "Execute a command with arguments")]
 public sealed class ExecCommand : ICommand<Unit>
@@ -16,9 +17,16 @@ public sealed class ExecCommand : ICommand<Unit>
 
   public sealed class Handler : ICommandHandler<ExecCommand, Unit>
   {
+    private readonly ITerminal Terminal;
+
+    public Handler(ITerminal terminal)
+    {
+      Terminal = terminal;
+    }
+
     public ValueTask<Unit> Handle(ExecCommand command, CancellationToken ct)
     {
-      WriteLine($"Executing: {string.Join(" ", command.Args)}");
+      Terminal.WriteLine($"Executing: {string.Join(" ", command.Args)}");
       return default;
     }
   }

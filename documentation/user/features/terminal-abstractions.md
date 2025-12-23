@@ -112,7 +112,7 @@ public interface ITerminal : IConsole
 | Class | Interface | Purpose |
 |-------|-----------|---------|
 | `NuruConsole` | `IConsole` | Production basic I/O (singleton: `NuruConsole.Default`) |
-| `NuruTerminal` | `ITerminal` | Production interactive terminal (singleton: `NuruTerminal.Default`) |
+| `TimeWarpTerminal` | `ITerminal` | Production interactive terminal (singleton: `TimeWarpTerminal.Default`) |
 | `TestTerminal` | `ITerminal` | Testing with captured output and scripted key input |
 
 ## Color Output
@@ -370,7 +370,7 @@ terminal.ClearKeys();
 NuruApp app = new NuruAppBuilder()
     .Map("hello", () => Console.WriteLine("Hello!"))
     .Build();
-// Uses NuruTerminal.Default automatically
+// Uses TimeWarpTerminal.Default automatically
 
 // Testing
 using TestTerminal terminal = new();
@@ -566,7 +566,7 @@ terminal.OutputContains("Hello, World!").ShouldBeTrue();
 When Nuru resolves a terminal, it checks in this order:
 1. `TestTerminalContext.Current` (if set)
 2. `ITerminal` from DI (if registered)
-3. `NuruTerminal.Default` (fallback)
+3. `TimeWarpTerminal.Default` (fallback)
 
 This means you can set `TestTerminalContext.Current` at the start of your test, and all terminal output will be captured without any code changes to the app being tested.
 

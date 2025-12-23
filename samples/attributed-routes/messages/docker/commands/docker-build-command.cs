@@ -2,12 +2,13 @@ namespace AttributedRoutes.Messages;
 
 using TimeWarp.Nuru;
 using Mediator;
-using static System.Console;
+using TimeWarp.Terminal;
 
 /// <summary>
 /// Command: docker build {path} [--tag {tag}] [--no-cache]
 /// Builds a Docker image from a Dockerfile.
 /// This is a Command (C) - mutating operation.
+/// Demonstrates ITerminal injection for testable output.
 /// </summary>
 [NuruRoute("build", Description = "Build an image from a Dockerfile")]
 public sealed class DockerBuildCommand : DockerGroupBase, ICommand<Unit>
@@ -23,11 +24,18 @@ public sealed class DockerBuildCommand : DockerGroupBase, ICommand<Unit>
 
   public sealed class Handler : ICommandHandler<DockerBuildCommand, Unit>
   {
+    private readonly ITerminal Terminal;
+
+    public Handler(ITerminal terminal)
+    {
+      Terminal = terminal;
+    }
+
     public ValueTask<Unit> Handle(DockerBuildCommand command, CancellationToken ct)
     {
       string tagInfo = command.Tag != null ? $" -t {command.Tag}" : "";
       string cacheInfo = command.NoCache ? " --no-cache" : "";
-      WriteLine($"Building image from: {command.Path}{tagInfo}{cacheInfo}");
+      Terminal.WriteLine($"Building image from: {command.Path}{tagInfo}{cacheInfo}");
       return default;
     }
   }

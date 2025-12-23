@@ -9,42 +9,84 @@
 Build testable helper methods in `sandbox/sourcegen/` that:
 1. Convert parsed pattern syntax into `SegmentDefinition` array
 2. Assemble `RouteDefinition` from pieces via a builder
-3. (Step-4 will handle Roslyn syntax extraction and runtime code emission)
+3. Extract route metadata from various source types
 
 All helper methods are public and unit-testable.
 
+## Route Definition Sources
+
+There are **four** ways routes can be defined:
+
+### 1. Delegate-based with Pattern String
+```csharp
+builder.Map("add {x:int} {y:int}")
+  .WithHandler((int x, int y) => x + y)
+  .WithDescription("Add two numbers")
+  .AsQuery()
+  .Done()
+```
+
+### 2. Delegate-based with Fluent Route Builder
+```csharp
+builder.Map(r => r
+    .WithLiteral("deploy")
+    .WithParameter("env")
+    .WithOption("force", "f")
+    .Done())
+  .WithHandler((string env, bool force) => ...)
+  .AsCommand()
+  .Done()
+```
+
+### 3. Attributed Routes
+```csharp
+[Route("add {x:int} {y:int}")]
+[Description("Add two numbers")]
+[Query]
+public class AddCommand : IRequest<int>
+{
+  public int X { get; set; }
+  public int Y { get; set; }
+}
+```
+
+### 4. Mediator-based with Pattern String
+```csharp
+builder.Map<AddCommand>("add {x:int} {y:int}")
+  .WithDescription("Add two numbers")
+  .AsQuery()
+  .Done()
+```
+
 ## Architecture
+
+### Data Flow by Source
+
+```
+Pattern String (Map("..."))     ──► PatternParser ──► Syntax ──┐
+                                                               │
+Fluent Builder (Map(r => ...))  ──► Analyze builder calls ─────┤
+                                                               ├──► SegmentDefinition[] ──┐
+Attributed ([Route("...")])     ──► PatternParser ──► Syntax ──┤                          │
+                                                               │                          ├──► RouteDefinitionBuilder ──► RouteDefinition
+Mediator (Map<T>("..."))        ──► PatternParser ──► Syntax ──┘                          │
+                                                                                          │
+Handler/Metadata extraction ──────────────────────────────────────────────────────────────┘
+```
+
+### Key Insight
+
+The Fluent Route Builder (#2) **doesn't need pattern parsing** - it's already structured! 
+We extract directly from the Roslyn syntax of the `WithLiteral()`, `WithParameter()`, `WithOption()` calls.
 
 ### Separation of Concerns
 
 | Component | Responsibility |
 |-----------|----------------|
-| `SegmentDefinitionConverter` | Static class. Converts `Syntax` or `CompiledRoute` segments to `SegmentDefinition` array. Pure transformation. |
-| `RouteDefinitionBuilder` | Fluent builder. Assembles `RouteDefinition` from pieces provided by different analysis phases. |
-| Design-time models | `RouteDefinition`, `SegmentDefinition`, `HandlerDefinition`, etc. Immutable records. |
-
-### Data Flow
-
-```
-Pattern string
-  → PatternParser.Parse() → Syntax (internal) or CompiledRoute (public)
-  → SegmentDefinitionConverter.FromSyntax() or .FromCompiledRoute()
-  → ImmutableArray<SegmentDefinition>
-  → RouteDefinitionBuilder.WithSegments(...)
-  → .WithPattern(...), .WithHandler(...), etc.
-  → .Build() → RouteDefinition
-```
-
-### Two Conversion Approaches (Evaluating Both)
-
-**Approach A: FromSyntax (via InternalsVisibleTo)**
-- Full fidelity - preserves all type constraints including option parameters
-- Requires InternalsVisibleTo in parsing project
-
-**Approach B: FromCompiledRoute (public API only)**
-- Uses only public types
-- **Gap**: Loses option parameter type constraints (`--value {v:int}` becomes untyped)
-- Keeping for comparison
+| `SegmentDefinitionConverter` | Converts `Syntax`, `CompiledRoute`, or fluent builder calls to `SegmentDefinition[]` |
+| `HandlerDefinitionExtractor` | Extracts handler info from delegates or `IRequest<T>` types |
+| `MetadataExtractor` | Extracts message type, description from fluent chain or attributes |
+| `RouteDefinitionBuilder` | Assembles `RouteDefinition` from pieces |
 
 ## Checklist
 
@@ -53,13 +95,30 @@ Pattern string
 - [x] Create `sandbox/sourcegen/` for new generator code
 - [x] Add InternalsVisibleTo to `source/timewarp-nuru-parsing/timewarp-nuru-parsing.csproj`
 
-### Segment Conversion
-- [x] Create `SegmentDefinitionConverter.FromSyntax()` - converts from internal Syntax
-- [x] Create `SegmentDefinitionConverter.FromCompiledRoute()` - converts from public CompiledRoute
-- [x] Tests for FromSyntax with various patterns (8 patterns, all passing)
-- [x] Tests for FromCompiledRoute with same patterns (7 patterns, documents gap)
+### Segment Extraction - DONE
+- [x] From `Syntax` (pattern parsing) - `SegmentDefinitionConverter.FromSyntax()`
+- [x] From `CompiledRoute` (runtime) - `SegmentDefinitionConverter.FromCompiledRoute()`
+- [x] Tests for FromSyntax (8 patterns, all passing)
+- [x] Tests for FromCompiledRoute (7 patterns, documents gap)
 
-### Route Definition Builder
+### Segment Extraction - TODO
+- [ ] From Fluent Route Builder (`WithLiteral()`, `WithParameter()`, `WithOption()`) - Roslyn analysis
+
+### Handler Extraction - TODO
+- [ ] From delegate in `.WithHandler(delegate)` - extract parameter types, return type, async
+- [ ] From `IRequest<T>` type (Attributed and Mediator) - extract properties, response type
+
+### Metadata Extraction (Fluent API) - TODO
+- [ ] Message type from `.AsQuery()`, `.AsCommand()`, `.AsIdempotentCommand()`
+- [ ] Description from `.WithDescription("...")`
+- [ ] Aliases from `.WithAlias("...")`
+
+### Metadata Extraction (Attributed) - TODO
+- [ ] Message type from `[Query]`, `[Command]`, `[IdempotentCommand]` attributes
+- [ ] Description from `[Description("...")]` attribute
+- [ ] Pattern from `[Route("...")]` attribute
+
+### Route Definition Builder - DONE
 - [x] Create `RouteDefinitionBuilder` with fluent API
 - [x] `.WithPattern()`, `.WithSegments()`, `.WithMessageType()`
 - [x] `.WithDescription()`, `.WithHandler()`, `.WithPipeline()`
@@ -67,16 +126,19 @@ Pattern string
 - [x] `.Build()` produces immutable `RouteDefinition`
 
 ### Cleanup
-- [x] Remove old `CompiledRouteToRouteDefinition` (replaced by SegmentDefinitionConverter)
-- [x] Remove old test files (replaced by new test structure)
-- [ ] Decide which approach to keep (Syntax vs CompiledRoute) - deferred, keeping both for now
+- [x] Remove old `CompiledRouteToRouteDefinition`
+- [x] Remove old test files
+- [ ] Decide which segment approach to keep (Syntax vs CompiledRoute)
 
 ## File Structure
 
 ```
 sandbox/sourcegen/
 ├── converters/
-│   └── SegmentDefinitionConverter.cs   # Static: FromSyntax(), FromCompiledRoute()
+│   └── SegmentDefinitionConverter.cs   # FromSyntax(), FromCompiledRoute(), FromFluentBuilder()
+├── extractors/
+│   ├── HandlerDefinitionExtractor.cs   # From delegate, from IRequest<T>
+│   └── MetadataExtractor.cs            # Message type, description, aliases
 ├── builders/
 │   └── RouteDefinitionBuilder.cs       # Fluent builder for RouteDefinition
 ├── models/
@@ -84,11 +146,11 @@ sandbox/sourcegen/
 ├── tests/
 │   ├── segment-from-syntax-tests.cs           
 │   └── segment-from-compiled-route-tests.cs   
-├── program.cs                          # Test runner entry point
+├── program.cs
 └── sourcegen.csproj
 ```
 
-## Test Patterns
+## Test Patterns (Segment Conversion)
 
 | Pattern | FromSyntax | FromCompiledRoute | Notes |
 |---------|------------|-------------------|-------|
@@ -101,7 +163,7 @@ sandbox/sourcegen/
 | `"run --force,-f"` | ✅ | ✅ | Short and long form option |
 | `"log --level {l:int?}"` | ✅ | N/A | Optional typed parameter |
 
-**Key Finding**: `FromCompiledRoute` loses option type constraints because `OptionMatcher` doesn't expose them. `FromSyntax` preserves full fidelity.
+**Key Finding**: `FromCompiledRoute` loses option type constraints. `FromSyntax` preserves full fidelity.
 
 ## Run Tests
 
@@ -111,17 +173,18 @@ dotnet run --project sandbox/sourcegen/sourcegen.csproj
 
 ## Notes
 
-### Why Static Class for Converter
-- No state - pure transformation
-- Source generators run at compile time (no DI)
-- Simpler testing - input → output
-- Matches existing patterns (`PatternParser.Parse()` is static)
+### Handler Info Needed for Code Emission
+Without handler info, we can't emit working code. The handler tells us:
+- Parameter names and types (for binding and type conversion)
+- Return type (for invoker signature)
+- Whether async (Task vs sync)
+- Whether needs CancellationToken
 
-### Why Keep Both Approaches
+### Why Keep Both Segment Approaches
 - Evaluating trade-offs
 - FromSyntax: Full fidelity but requires InternalsVisibleTo
 - FromCompiledRoute: Uses public API but loses option type info
-- Will decide after more evaluation in step-4
+- Will decide after more evaluation
 
 ### Agent Context
 - Agent name: Amina

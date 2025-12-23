@@ -44,6 +44,14 @@ Console.WriteLine();
 result += MediatorRouteExtractorTests.Run();
 Console.WriteLine();
 
+// Run runtime code emitter tests (Step-4)
+result += RuntimeCodeEmitterTests.Run();
+Console.WriteLine();
+
+// Run end-to-end emitter tests (Step-4)
+result += EndToEndEmitterTests.Run();
+Console.WriteLine();
+
 Console.WriteLine("========================================");
 if (result == 0)
 {

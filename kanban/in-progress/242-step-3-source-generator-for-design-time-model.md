@@ -107,20 +107,25 @@ Handler/Metadata extraction ─────────────────�
 
 ---
 
-### Source 1: Delegate + Pattern String
+### Source 1: Delegate + Pattern String - COMPLETE
 
 Extract from: `Map("pattern").WithHandler(delegate).WithDescription("...").AsQuery()`
 
 | What | Extract From | Status |
 |------|--------------|--------|
-| Pattern string | `Map("...")` first argument | [ ] TODO |
-| Segments | Parse pattern → `FromSyntax()` | [x] DONE (converter ready) |
-| Handler params | Delegate parameter list | [ ] TODO |
-| Handler return | Delegate return type | [ ] TODO |
-| Handler async | Check if returns Task/Task<T> | [ ] TODO |
-| Message type | `.AsQuery()`, `.AsCommand()`, `.AsIdempotentCommand()` | [ ] TODO |
-| Description | `.WithDescription("...")` argument | [ ] TODO |
-| Aliases | `.WithAlias("...")` arguments | [ ] TODO |
+| Pattern string | `Map("...")` first argument | [x] DONE |
+| Segments | Parse pattern → `FromSyntax()` | [x] DONE |
+| Handler params | Delegate parameter list | [x] DONE |
+| Handler return | Delegate return type | [x] DONE (syntax-only) |
+| Handler async | Check if returns Task/Task<T> | [x] DONE |
+| Message type | `.AsQuery()`, `.AsCommand()`, `.AsIdempotentCommand()` | [x] DONE |
+| Description | `.WithDescription("...")` argument | [x] DONE |
+| Aliases | `.WithAlias("...")` arguments | [x] DONE |
+
+**Files:**
+- `extractors/FluentChainExtractor.cs` - walks fluent chain
+- `extractors/DelegateAnalyzer.cs` - analyzes lambda parameters
+- `tests/fluent-chain-extractor-tests.cs` - 6 tests, all pass
 
 ---
 
@@ -182,6 +187,9 @@ Extract from: `Map<TRequest>("pattern").WithDescription("...").AsQuery()`
 sandbox/sourcegen/
 ├── converters/
 │   └── SegmentDefinitionConverter.cs   # FromSyntax(), FromCompiledRoute()
+├── extractors/
+│   ├── FluentChainExtractor.cs         # Extracts from Map() fluent chains
+│   └── DelegateAnalyzer.cs             # Analyzes lambda parameters/returns
 ├── builders/
 │   ├── RouteDefinitionBuilder.cs       # Assembles RouteDefinition
 │   └── HandlerDefinitionBuilder.cs     # Builds HandlerDefinition
@@ -191,7 +199,8 @@ sandbox/sourcegen/
 │   ├── segment-from-syntax-tests.cs           
 │   ├── segment-from-compiled-route-tests.cs   
 │   ├── handler-definition-builder-tests.cs
-│   └── route-definition-integration-tests.cs
+│   ├── route-definition-integration-tests.cs
+│   └── fluent-chain-extractor-tests.cs # Source 1 extraction tests
 ├── program.cs
 └── sourcegen.csproj
 ```
@@ -204,7 +213,8 @@ sandbox/sourcegen/
 | FromCompiledRoute segments | 7 | ✅ All pass (gap documented) |
 | HandlerDefinitionBuilder | 7 | ✅ All pass |
 | Integration (complete RouteDefinition) | 3 | ✅ All pass |
-| **Total** | **25** | ✅ |
+| FluentChainExtractor (Source 1) | 6 | ✅ All pass |
+| **Total** | **31** | ✅ |
 
 ## Run Tests
 

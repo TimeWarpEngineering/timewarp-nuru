@@ -20,6 +20,11 @@
     <ProjectReference Include="../../source/timewarp-nuru-parsing/timewarp-nuru-parsing.csproj" />
   </ItemGroup>
 
+  <!-- Roslyn for source code analysis -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
+  </ItemGroup>
+
   <!-- 
     Note: Design-time model types are copied into models/ rather than referencing
     timewarp-nuru-analyzers because:

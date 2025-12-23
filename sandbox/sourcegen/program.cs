@@ -28,6 +28,10 @@ Console.WriteLine();
 result += RouteDefinitionIntegrationTests.Run();
 Console.WriteLine();
 
+// Run fluent chain extractor tests
+result += FluentChainExtractorTests.Run();
+Console.WriteLine();
+
 Console.WriteLine("========================================");
 if (result == 0)
 {

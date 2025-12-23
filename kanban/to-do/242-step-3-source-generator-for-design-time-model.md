@@ -6,39 +6,63 @@
 
 ## Description
 
-Create a new source generator that automates Phase 1: parsing source code syntax into design-time model (`RouteDefinition`). This extracts the manual parsing work from step-1 into an actual source generator.
+Build the source generator incrementally, one function at a time. Start in `sandbox/` with testable helper methods that:
+1. Extract syntax (route pattern, handler info) from `Map()` calls
+2. Parse pattern string into `RouteDefinition` (design-time model)
+3. (Step-4 will handle runtime code emission)
 
-## Context
+All helper methods are public and unit-testable - they're in the sourcegen, not the library API.
 
-After manually proving:
-1. step-1: We can parse patterns → design-time model
-2. step-2: We can build runtime from design-time model
+## Approach
 
-Now we automate step-1 with a source generator.
+Work backwards from "we need this":
+
+```
+Map("add {x:int} {y:int}").WithHandler(...) 
+  → Extract pattern string + handler info (syntax extraction)
+  → Parse into RouteDefinition (pattern parsing)
+  → Generate runtime code (step-4)
+```
 
 ## Checklist
 
-- [ ] Create new source generator project (name TBD - "timewarp-nuru-sourcegen-v2"?)
-- [ ] Generator scans for `Map()` calls or `[NuruRoute]` attributes
-- [ ] For each route found, build `RouteDefinition`
-- [ ] Emit the design-time model as generated code (or use directly for phase 2)
-- [ ] Unit tests using manual construction from step-1 as reference
-- [ ] Integrate with dual-build AppB
+### Setup
+- [ ] Reorganize sandbox: existing experiments in `sandbox/experiments/`
+- [ ] Create `sandbox/sourcegen/` for new generator code
+- [ ] Create `sandbox/tests/` for unit tests
+
+### Syntax Extraction
+- [ ] Helper method: Given `Map()` invocation syntax, extract pattern string
+- [ ] Helper method: Given `WithHandler()` call, extract delegate info
+- [ ] Tests: Verify extraction works for `Map("add {x:int} {y:int}")`
+
+### Pattern Parsing
+- [ ] Evaluate existing parser in `source/timewarp-nuru-parsing/`
+- [ ] Helper method: Given pattern string, return `RouteDefinition`
+- [ ] Tests: Verify `"add {x:int} {y:int}"` produces correct model (compare to step-1)
+
+### Integration
+- [ ] Wire syntax extraction → pattern parsing → RouteDefinition
+- [ ] Test: Given source code with `Map()` call, get valid `RouteDefinition`
 
 ## Notes
 
-### Project Naming
+### What We Already Have
+- `sandbox/build-design-time-model.cs` - manually built RouteDefinition (step-1)
+- `sandbox/manual-runtime-construction.cs` - manually built runtime (step-2)
+- Existing lexer/parser in `source/timewarp-nuru-parsing/` (may reuse)
 
-Needs a good name. Options:
-- `timewarp-nuru-sourcegen-v2`
-- `timewarp-nuru-gen`
-- `timewarp-nuru-compile`
-- Other?
+### Testing Strategy
+- All sourcegen helpers are public for testability
+- Compare outputs to manual construction from step-1
+- Unit tests in `sandbox/tests/`
 
-### Incremental Generator
+### Scope
+- Start with delegate-based `Map()` calls only
+- Pattern: `"add {x:int} {y:int}"`
+- Attributed routes and Fluent Builder are future scope
 
-Should use `IIncrementalGenerator` for performance.
-
-### What It Produces
-
-The generator builds `RouteDefinition` instances internally, then uses them to emit Phase 2 code. The design-time model itself doesn't need to be emitted - it's just internal to the generator.
+### Agent Context
+- Agent name: Amina
+- Working on Epic #239: Compile-time endpoint generation
+- Step-1 and Step-2 complete (manual design-time and runtime construction)

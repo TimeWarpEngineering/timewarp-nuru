@@ -17,6 +17,13 @@ All helper methods are public and unit-testable.
 
 There are **four** ways routes can be defined:
 
+| # | Source | Pattern From | Handler From | Metadata From |
+|---|--------|--------------|--------------|---------------|
+| 1 | Delegate + Pattern String | `Map("...")` argument | `.WithHandler(delegate)` | `.AsQuery()`, `.WithDescription()` |
+| 2 | Delegate + Fluent Builder | `Map(r => r.WithLiteral()...)` | `.WithHandler(delegate)` | `.AsQuery()`, `.WithDescription()` |
+| 3 | Attributed | `[Route("...")]` attribute | `IRequest<T>` properties | `[Query]`, `[Description]` attributes |
+| 4 | Mediator + Pattern String | `Map<T>("...")` argument | `IRequest<T>` properties | `.AsQuery()`, `.WithDescription()` |
+
 ### 1. Delegate-based with Pattern String
 ```csharp
 builder.Map("add {x:int} {y:int}")
@@ -74,11 +81,6 @@ Mediator (Map<T>("..."))        ──► PatternParser ──► Syntax ──�
 Handler/Metadata extraction ──────────────────────────────────────────────────────────────┘
 ```
 
-### Key Insight
-
-The Fluent Route Builder (#2) **doesn't need pattern parsing** - it's already structured! 
-We extract directly from the Roslyn syntax of the `WithLiteral()`, `WithParameter()`, `WithOption()` calls.
-
 ### Separation of Concerns
 
 | Component | Responsibility |
@@ -94,46 +96,80 @@ We extract directly from the Roslyn syntax of the `WithLiteral()`, `WithParamete
 - [x] Create `sandbox/sourcegen/` for new generator code
 - [x] Add InternalsVisibleTo to `source/timewarp-nuru-parsing/timewarp-nuru-parsing.csproj`
 
-### Segment Extraction - DONE
-- [x] From `Syntax` (pattern parsing) - `SegmentDefinitionConverter.FromSyntax()`
-- [x] From `CompiledRoute` (runtime) - `SegmentDefinitionConverter.FromCompiledRoute()`
-- [x] Tests for FromSyntax (8 patterns, all passing)
-- [x] Tests for FromCompiledRoute (7 patterns, documents gap)
-
-### Segment Extraction - TODO
-- [ ] From Fluent Route Builder (`WithLiteral()`, `WithParameter()`, `WithOption()`) - Roslyn analysis
-
-### Handler Definition - DONE
-- [x] `HandlerDefinitionBuilder` for constructing handler info
-- [x] Support delegate, mediator, method handler kinds
-- [x] Support parameters, options, flags, cancellation tokens, services
-- [x] Support void, Task, Task<T>, sync return types
+### Shared Infrastructure - DONE
+- [x] `SegmentDefinitionConverter.FromSyntax()` - pattern string → segments
+- [x] `SegmentDefinitionConverter.FromCompiledRoute()` - (keeping for comparison)
+- [x] `HandlerDefinitionBuilder` - construct handler info
+- [x] `RouteDefinitionBuilder` - assemble RouteDefinition from pieces
+- [x] Tests for segment conversion (15 tests)
 - [x] Tests for handler builder (7 tests)
+- [x] Integration tests (3 tests)
 
-### Handler Extraction (Roslyn) - TODO
-- [ ] From delegate in `.WithHandler(delegate)` - extract parameter types, return type, async
-- [ ] From `IRequest<T>` type (Attributed and Mediator) - extract properties, response type
+---
 
-### Route Definition Builder - DONE
-- [x] Create `RouteDefinitionBuilder` with fluent API
-- [x] `.WithPattern()`, `.WithSegments()`, `.WithMessageType()`
-- [x] `.WithDescription()`, `.WithHandler()`, `.WithPipeline()`
-- [x] `.WithAliases()`, `.WithGroupPrefix()`, `.WithSpecificity()`, `.WithOrder()`
-- [x] `.Build()` produces immutable `RouteDefinition`
+### Source 1: Delegate + Pattern String
 
-### Integration - DONE
-- [x] Integration tests combining segments + handler + builder
-- [x] Tests for sync handler, options, async with cancellation token
+Extract from: `Map("pattern").WithHandler(delegate).WithDescription("...").AsQuery()`
 
-### Metadata Extraction (Fluent API) - TODO
-- [ ] Message type from `.AsQuery()`, `.AsCommand()`, `.AsIdempotentCommand()`
-- [ ] Description from `.WithDescription("...")`
-- [ ] Aliases from `.WithAlias("...")`
+| What | Extract From | Status |
+|------|--------------|--------|
+| Pattern string | `Map("...")` first argument | [ ] TODO |
+| Segments | Parse pattern → `FromSyntax()` | [x] DONE (converter ready) |
+| Handler params | Delegate parameter list | [ ] TODO |
+| Handler return | Delegate return type | [ ] TODO |
+| Handler async | Check if returns Task/Task<T> | [ ] TODO |
+| Message type | `.AsQuery()`, `.AsCommand()`, `.AsIdempotentCommand()` | [ ] TODO |
+| Description | `.WithDescription("...")` argument | [ ] TODO |
+| Aliases | `.WithAlias("...")` arguments | [ ] TODO |
 
-### Metadata Extraction (Attributed) - TODO
-- [ ] Message type from `[Query]`, `[Command]`, `[IdempotentCommand]` attributes
-- [ ] Description from `[Description("...")]` attribute
-- [ ] Pattern from `[Route("...")]` attribute
+---
+
+### Source 2: Delegate + Fluent Route Builder
+
+Extract from: `Map(r => r.WithLiteral(...).WithParameter(...)).WithHandler(delegate)`
+
+| What | Extract From | Status |
+|------|--------------|--------|
+| Segments | `WithLiteral()`, `WithParameter()`, `WithOption()` calls | [ ] TODO |
+| Handler params | Delegate parameter list | [ ] TODO (same as Source 1) |
+| Handler return | Delegate return type | [ ] TODO (same as Source 1) |
+| Handler async | Check if returns Task/Task<T> | [ ] TODO (same as Source 1) |
+| Message type | `.AsQuery()`, `.AsCommand()`, `.AsIdempotentCommand()` | [ ] TODO (same as Source 1) |
+| Description | `.WithDescription("...")` argument | [ ] TODO (same as Source 1) |
+
+---
+
+### Source 3: Attributed Routes
+
+Extract from: `[Route("pattern")] [Query] class Foo : IRequest<T> { properties }`
+
+| What | Extract From | Status |
+|------|--------------|--------|
+| Pattern string | `[Route("...")]` attribute argument | [ ] TODO |
+| Segments | Parse pattern → `FromSyntax()` | [x] DONE (converter ready) |
+| Handler params | Public properties on class | [ ] TODO |
+| Handler return | `IRequest<T>` type argument `T` | [ ] TODO |
+| Handler async | Always async (mediator) | [x] DONE (implied) |
+| Message type | `[Query]`, `[Command]`, `[IdempotentCommand]` attributes | [ ] TODO |
+| Description | `[Description("...")]` attribute | [ ] TODO |
+
+---
+
+### Source 4: Mediator + Pattern String
+
+Extract from: `Map<TRequest>("pattern").WithDescription("...").AsQuery()`
+
+| What | Extract From | Status |
+|------|--------------|--------|
+| Pattern string | `Map<T>("...")` second argument | [ ] TODO |
+| Segments | Parse pattern → `FromSyntax()` | [x] DONE (converter ready) |
+| Handler params | Public properties on `T` | [ ] TODO (same as Source 3) |
+| Handler return | `IRequest<TResponse>` type argument | [ ] TODO (same as Source 3) |
+| Handler async | Always async (mediator) | [x] DONE (implied) |
+| Message type | `.AsQuery()`, `.AsCommand()`, `.AsIdempotentCommand()` | [ ] TODO (same as Source 1) |
+| Description | `.WithDescription("...")` argument | [ ] TODO (same as Source 1) |
+
+---
 
 ### Cleanup
 - [x] Remove old `CompiledRouteToRouteDefinition`
@@ -178,20 +214,18 @@ dotnet run --project sandbox/sourcegen/sourcegen.csproj
 
 ## Notes
 
-### Handler Info Needed for Code Emission
-Without handler info, we can't emit working code. The handler tells us:
-- Parameter names and types (for binding and type conversion)
-- Return type (for invoker signature)
-- Whether async (Task vs sync)
-- Whether needs CancellationToken
+### Shared Extraction Logic
+
+Several pieces are shared across sources:
+- **Delegate analysis**: Sources 1 & 2 both need to extract from `.WithHandler(delegate)`
+- **IRequest<T> analysis**: Sources 3 & 4 both need to extract from request type properties
+- **Fluent metadata**: Sources 1, 2 & 4 use `.AsQuery()`, `.WithDescription()`, etc.
+- **Attribute metadata**: Source 3 uses `[Query]`, `[Description]`, etc.
 
 ### What's Ready for Step-4 (Code Emission)
-We now have complete `RouteDefinition` objects containing:
-- Parsed segments (from pattern)
-- Handler definition (parameters, return type, async)
-- Metadata (message type, description)
 
-This is sufficient to start emitting code in step-4.
+We have the builders ready. Once we extract from any source, we can emit code.
+For MVP, we could start with Source 1 (simplest) and expand from there.
 
 ### Agent Context
 - Agent name: Amina

@@ -32,6 +32,7 @@ public static class EndToEndEmitterTests
     passed += TestGeneratedRouteExtractsParameters(ref failed);
     passed += TestGeneratedRouteWithIntParameters(ref failed);
     passed += TestMultipleRoutesMatch(ref failed);
+    passed += TestRouterMatchesAndExecutes(ref failed);
 
     Console.WriteLine();
     Console.WriteLine("==============================================");
@@ -372,6 +373,126 @@ public static class EndToEndEmitterTests
     catch (Exception ex)
     {
       Console.WriteLine($"  FAILED: {ex.Message}");
+      failed++;
+      return 0;
+    }
+  }
+
+  /// <summary>
+  /// Test that the Router can match args and execute handlers
+  /// </summary>
+  private static int TestRouterMatchesAndExecutes(ref int failed)
+  {
+    Console.WriteLine("Test: Router matches args and executes handler");
+
+    try
+    {
+      RouteDefinition route = new RouteDefinitionBuilder()
+        .WithPattern("add {x:int} {y:int}")
+        .WithSegments([
+          new LiteralDefinition(0, "add"),
+          new ParameterDefinition(1, "x", "int", null, false, false, "global::System.Int32", null),
+          new ParameterDefinition(2, "y", "int", null, false, false, "global::System.Int32", null)
+        ])
+        .WithHandler(new HandlerDefinitionBuilder()
+          .AsDelegate()
+          .WithParameter("x", "int")
+          .WithParameter("y", "int")
+          .Returns("int")
+          .Build())
+        .Build();
+
+      Assembly? assembly = CompileRoute(route);
+      if (assembly is null)
+      {
+        throw new Exception("Failed to compile");
+      }
+
+      // Get the generated types
+      Type? routesType = assembly.GetType("Generated.GeneratedRoutes");
+      Type? routerType = assembly.GetType("Generated.Router");
+      Type? matchResultType = assembly.GetType("Generated.MatchResult");
+
+      if (routerType is null)
+      {
+        throw new Exception("Router type not found");
+      }
+
+      // Get the All routes array
+      FieldInfo? allField = routesType?.GetField("All", BindingFlags.Static | BindingFlags.NonPublic);
+      object? allRoutes = allField?.GetValue(null);
+
+      // Create a Router instance
+      object? router = Activator.CreateInstance(routerType, allRoutes);
+      if (router is null)
+      {
+        throw new Exception("Could not create Router instance");
+      }
+
+      // Call Match with ["add", "2", "3"]
+      MethodInfo? matchMethod = routerType.GetMethod("Match");
+      string[] args = ["add", "2", "3"];
+      object? matchResult = matchMethod?.Invoke(router, [args]);
+
+      if (matchResult is null)
+      {
+        throw new Exception("Match returned null");
+      }
+
+      // Check IsMatch
+      PropertyInfo? isMatchProp = matchResultType?.GetProperty("IsMatch");
+      bool isMatch = (bool)(isMatchProp?.GetValue(matchResult) ?? false);
+      Console.WriteLine($"    IsMatch for 'add 2 3': {isMatch}");
+
+      if (!isMatch)
+      {
+        throw new Exception("Expected match for 'add 2 3'");
+      }
+
+      // Check MatchedPattern
+      PropertyInfo? patternProp = matchResultType?.GetProperty("MatchedPattern");
+      string? pattern = patternProp?.GetValue(matchResult) as string;
+      Console.WriteLine($"    Matched pattern: {pattern}");
+
+      // Check ExtractedParameters
+      PropertyInfo? paramsProp = matchResultType?.GetProperty("ExtractedParameters");
+      object? extractedParams = paramsProp?.GetValue(matchResult);
+      if (extractedParams is Dictionary<string, object> paramsDict)
+      {
+        Console.WriteLine($"    Extracted x: {paramsDict["x"]} (type: {paramsDict["x"].GetType().Name})");
+        Console.WriteLine($"    Extracted y: {paramsDict["y"]} (type: {paramsDict["y"].GetType().Name})");
+
+        if (paramsDict["x"] is not int xVal || xVal != 2)
+        {
+          throw new Exception($"Expected x=2, got {paramsDict["x"]}");
+        }
+        if (paramsDict["y"] is not int yVal || yVal != 3)
+        {
+          throw new Exception($"Expected y=3, got {paramsDict["y"]}");
+        }
+      }
+
+      // Test non-matching args
+      string[] badArgs = ["subtract", "2", "3"];
+      object? noMatchResult = matchMethod?.Invoke(router, [badArgs]);
+      bool noMatch = !(bool)(isMatchProp?.GetValue(noMatchResult) ?? true);
+      Console.WriteLine($"    'subtract 2 3' does not match: {noMatch}");
+
+      if (!noMatch)
+      {
+        throw new Exception("Expected no match for 'subtract 2 3'");
+      }
+
+      Console.WriteLine("  PASSED");
+      return 1;
+    }
+    catch (Exception ex)
+    {
+      Console.WriteLine($"  FAILED: {ex.Message}");
+      if (ex.InnerException is not null)
+      {
+        Console.WriteLine($"    Inner: {ex.InnerException.Message}");
+      }
       failed++;
       return 0;
     }

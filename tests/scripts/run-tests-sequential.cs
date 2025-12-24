@@ -8,7 +8,10 @@
 // 2. Tests that hang (timeout during run)
 // 3. Tests that fail during execution
 //
-// Usage: dotnet tests/scripts/run-tests-sequential.cs
+// Usage:
+//   dotnet tests/scripts/run-tests-sequential.cs              # Use current UseNewGen value
+//   dotnet tests/scripts/run-tests-sequential.cs --v1         # Set UseNewGen=false (V1 generators)
+//   dotnet tests/scripts/run-tests-sequential.cs --v2         # Set UseNewGen=true (V2 generators)
 //
 // Results are written to tests/scripts/test-results.md
 
@@ -35,10 +38,48 @@ string scriptsDir = AppContext.GetData("EntryPointFileDirectoryPath") as string 
 string testsRoot = Path.GetFullPath(Path.Combine(scriptsDir, ".."));
 string repoRoot = Path.GetFullPath(Path.Combine(testsRoot, ".."));
 string resultsFile = Path.Combine(scriptsDir, "test-results.md");
+string directoryBuildProps = Path.Combine(repoRoot, "Directory.Build.props");
+
+// Parse command line args
+bool setV1 = args.Contains("--v1");
+bool setV2 = args.Contains("--v2");
+
+if (setV1 && setV2)
+{
+  WriteLine($"{Red}ERROR: Cannot specify both --v1 and --v2{Reset}");
+  return 1;
+}
+
+// Set UseNewGen in Directory.Build.props if requested
+if (setV1 || setV2)
+{
+  string targetValue = setV1 ? "false" : "true";
+  string generatorName = setV1 ? "V1" : "V2";
+
+  WriteLine($"{Cyan}Setting UseNewGen={targetValue} ({generatorName} generators)...{Reset}");
+
+  if (!File.Exists(directoryBuildProps))
+  {
+    WriteLine($"{Red}ERROR: Directory.Build.props not found at {directoryBuildProps}{Reset}");
+    return 1;
+  }
+
+  string content = await File.ReadAllTextAsync(directoryBuildProps);
+  string updated = Regex.Replace(content, @"<UseNewGen>\w+</UseNewGen>", $"<UseNewGen>{targetValue}</UseNewGen>");
+
+  if (updated == content)
+  {
+    WriteLine($"{Red}ERROR: Could not find <UseNewGen> element in Directory.Build.props{Reset}");
+    return 1;
+  }
+
+  await File.WriteAllTextAsync(directoryBuildProps, updated);
+  WriteLine($"{Green}Updated Directory.Build.props{Reset}");
+  WriteLine();
+}
 
 // Read UseNewGen value from Directory.Build.props
 string useNewGenValue = "unknown";
-string directoryBuildProps = Path.Combine(repoRoot, "Directory.Build.props");
 if (File.Exists(directoryBuildProps))
 {
   string content = await File.ReadAllTextAsync(directoryBuildProps);
@@ -46,6 +87,10 @@ if (File.Exists(directoryBuildProps))
   if (match.Success)
     useNewGenValue = match.Groups[1].Value;
 }
+
+string generatorLabel = useNewGenValue.Equals("true", StringComparison.OrdinalIgnoreCase) ? "V2" : "V1";
+WriteLine($"{Bold}Using {generatorLabel} generators (UseNewGen={useNewGenValue}){Reset}");
+WriteLine();
 
 // Clear runfile cache
 WriteLine($"{Cyan}Clearing runfile cache...{Reset}");
@@ -62,7 +107,7 @@ await File.WriteAllTextAsync(resultsFile, $"""
 # Sequential Test Run Results
 
 **Started:** {startTime:yyyy-MM-dd HH:mm:ss}
-**UseNewGen:** {useNewGenValue}
+**UseNewGen:** {useNewGenValue} ({generatorLabel} generators)
 
 ## Compile Phase
 

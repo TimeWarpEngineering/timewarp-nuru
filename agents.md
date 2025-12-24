@@ -23,9 +23,35 @@
 - **WHY**: Folder structure (ToDo/InProgress/Done/Backlog) determines status; adding status fields creates redundancy
 - **CRITICAL**: NEVER start a new Kanban task without explicitly asking the user first. Always wait for explicit approval before moving to a new task.
 
-## Runfiles
+## Runfiles (File-Based Apps)
 
-Runfiles (`.cs` scripts with `#!/usr/bin/dotnet --`) DO use `Directory.Build.props` - they inherit all packages, analyzers, and settings from the project hierarchy. Do not claim otherwise.
+**Documentation:** https://learn.microsoft.com/en-us/dotnet/core/sdk/file-based-apps
+
+Runfiles are .NET file-based apps (`.cs` scripts with `#!/usr/bin/dotnet --`). They inherit all packages, analyzers, and settings from `Directory.Build.props` in the project hierarchy.
+
+### CRITICAL: Valid Commands for File-Based Apps
+
+Per Microsoft documentation:
+
+```bash
+# Run a file-based app
+dotnet run file.cs
+dotnet file.cs          # shorthand
+
+# Build a file-based app (compiles without running)
+dotnet build file.cs
+
+# Clean build outputs
+dotnet clean file.cs
+
+# Publish (AOT by default)
+dotnet publish file.cs
+
+# Restore dependencies
+dotnet restore file.cs
+```
+
+**NEVER claim that `dotnet build file.cs` is wrong or invalid.** It is the correct command for building file-based apps. The SDK generates a temporary project and builds the application.
 
 ## Source Generated Files
 

@@ -18,8 +18,11 @@ public class EndpointCollection : IEnumerable<Endpoint>
   /// Adds a new endpoint to the collection and re-sorts by specificity.
   /// </summary>
   /// <param name="endpoint">The endpoint to add.</param>
+#pragma warning disable CA1822 // V2 path doesn't access instance data but V1 does
   public void Add(Endpoint endpoint)
+#pragma warning restore CA1822
   {
+#if !USE_NEW_GEN
     ArgumentNullException.ThrowIfNull(endpoint);
 
     // Check for duplicate routes
@@ -34,6 +37,10 @@ public class EndpointCollection : IEnumerable<Endpoint>
     }
 
     EndpointsList.Add(endpoint);
+#else
+    // V2: Fluent API is syntax for generator only, don't add at runtime
+    _ = endpoint; // Suppress unused parameter warning
+#endif
   }
 
   /// <summary>

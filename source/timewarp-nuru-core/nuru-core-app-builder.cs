@@ -68,7 +68,10 @@ public partial class NuruCoreAppBuilder<TSelf>
   public NuruCoreApp Build()
   {
 #if USE_NEW_GEN
-    throw new NotImplementedException("V2 runtime path not yet implemented");
+    // V2 path: Use generated Router and Invokers directly
+    // See: .agent/workspace/2024-12-25T01-00-00_v2-generator-architecture.md
+    // See: sandbox/experiments/manual-runtime-construction.cs
+    throw new NotImplementedException("V2 Build() not yet implemented. Need to use generated Router and Invokers.");
 #else
     // Add routes from NuruRouteRegistry (auto-registered via [NuruRoute] attributes)
     // Build HashSet of existing patterns for O(1) lookup instead of LINQ Any() which is O(n)

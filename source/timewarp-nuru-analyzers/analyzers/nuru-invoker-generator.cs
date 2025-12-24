@@ -32,13 +32,11 @@ public partial class NuruInvokerGenerator : IIncrementalGenerator
         return false;
       });
 
-    // Step 1b: Check for UseNewGen property
-    IncrementalValueProvider<bool> useNewGen = GeneratorHelpers.GetUseNewGenProvider(context);
-
-    // Combine both suppression conditions
-    IncrementalValueProvider<bool> shouldSuppress = hasSuppressAttribute
-      .Combine(useNewGen)
-      .Select(static (pair, _) => pair.Left || pair.Right);
+    // Note: Invokers are needed by both V1 and V2 runtime paths.
+    // The V2 generator emits Endpoint[] with handlers, but DelegateExecutor
+    // still needs generated invokers to call those handlers without reflection.
+    // So we only suppress based on the attribute, NOT on UseNewGen.
+    IncrementalValueProvider<bool> shouldSuppress = hasSuppressAttribute;
 
     // Step 2: Find all Map invocations with their delegate signatures
     IncrementalValuesProvider<RouteWithSignature?> routeSignatures = context.SyntaxProvider

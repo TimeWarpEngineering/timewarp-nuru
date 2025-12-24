@@ -87,6 +87,10 @@ Phase 4: Delete runtime infrastructure
 | #248 | Zero-cost Build() implementation |
 | #249 | Delete runtime infrastructure |
 | #250 | Benchmark and documentation |
+| #260 | Add `<UseNewGen>` toggle infrastructure |
+| #261 | Baseline test run and V2 gap analysis |
+| #262 | V2 generator - core endpoint generation |
+| #263 | Dual-build parity and benchmark testing |
 
 ## Checklist
 
@@ -105,6 +109,10 @@ Phase 4: Delete runtime infrastructure
 - [ ] #248 Zero-cost Build()
 - [ ] #249 Delete runtime code
 - [ ] #250 Benchmark/docs
+- [ ] #260 UseNewGen toggle infrastructure
+- [ ] #261 V2 gap analysis
+- [ ] #262 V2 core endpoint generation
+- [ ] #263 Dual-build parity/benchmarks
 
 ## Notes
 

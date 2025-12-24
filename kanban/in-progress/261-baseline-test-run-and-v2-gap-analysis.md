@@ -20,104 +20,103 @@ Run test suite with both V1 and V2 to identify what V2 needs to generate and whi
 - [x] Create summary report of test compatibility
 - [x] Disable DynamicInvoke fallback to expose actual V2 gaps
 - [x] Run targeted tests with fallback disabled
-- [ ] Investigate multi-mode runner hang issue
-- [ ] Create diagnostic runfile for sequential test execution
+- [x] Investigate multi-mode runner hang issue
+- [x] Create diagnostic runfile for sequential test execution
 
 ## Results
 
-### Test Results Summary
+### Final V2 Test Results (Sequential Runner)
 
-| Mode | Command | Result |
-|------|---------|--------|
-| V1 (default) | `dotnet runfiles/test.cs` | All tests pass |
-| V2 | `dotnet runfiles/test.cs -p:UseNewGen=true` | All tests pass |
+| Phase   | Success | Failed | Timeout |
+|---------|---------|--------|---------|
+| Compile | 151     | 2      | 0       |
+| Run     | 120     | 31     | 0       |
 
-### Analysis
+### Compile Failures (2 - Known Issues)
 
-**No test failures occurred** because the CI test suite (`tests/ci-tests/`) tests the **runtime library** code (lexer, parser, help provider, ANSI utilities), not the source-generated code.
+1. `ansi-string-utils-01-basic.cs` - **Fixed**: Moved to timewarp-terminal repo (tests TimeWarp.Terminal, not Nuru)
+2. `options-03-nuru-context.cs` - Uses `NuruContext` which isn't implemented yet (excluded from CI)
 
-### Test Architecture
+### Run Failures (31) - What V2 Generator Must Emit
 
-The test infrastructure is split into two areas:
+All 31 failures are due to **"No generated invoker found"** - tests that execute handlers via `NuruApp.RunAsync()`:
 
-1. **CI Tests** (`tests/ci-tests/run-ci-tests.cs`)
-   - Tests: tokenization, parsing, help provider, ANSI string utilities
-   - These test the `timewarp-nuru-core` and `timewarp-nuru-repl` runtime code
-   - **Not affected by V1/V2 toggle** - same runtime code is used regardless
+**Routing Tests (20 failures):**
+- `routing-01-basic-matching` through `routing-18-option-alias-with-description`
+- `routing-22-async-task-int-return`
+- `routing-23-multiple-map-same-handler`
+- (Note: `routing-19`, `routing-20`, `routing-21` pass - don't execute handlers)
 
-2. **Analyzer Tests** (`tests/timewarp-nuru-analyzers-tests/`)
-   - Tests: source generator output verification
-   - Standalone - not included in CI suite
-   - These **would** be affected by V1/V2 toggle
-   - Currently test V1 generators only
+**Options Tests (2 failures):**
+- `options-01-mixed-required-optional`
+- `options-02-optional-flag-optional-value`
 
-### V2 Gap Analysis
+**Completion Dynamic Tests (5 failures):**
+- `completion-21-integration-enabledynamic`
+- `completion-22-callback-protocol`
+- `completion-23-custom-sources`
+- `completion-24-context-aware`
+- `completion-25-output-format`
 
-Since CI tests pass with V2 (no generated code), this confirms:
+**REPL Tests (3 failures):**
+- `repl-23-key-binding-profiles`
+- `repl-32-multiline-editing`
+- `repl-33-yank-arguments`
 
-1. **The toggle infrastructure works correctly** - V1 generators are skipped
-2. **Runtime library is generator-agnostic** - works with any generated code (or none)
-3. **V2 needs to emit code for consuming projects** - samples, test-apps, benchmarks
+**Other (1 failure):**
+- `test-terminal-context-01-basic`
 
-### What V2 Must Generate
+### Tests That Pass (120)
 
-To make consuming projects work with `UseNewGen=true`:
+Tests that don't execute handlers work fine:
+- All 15 lexer tests
+- All 15 parser tests
+- Widget tests (panel, table, rule, hyperlink)
+- Help provider tests
+- Completion static tests
+- Completion engine tests
+- Most REPL tests
+- MCP tests
 
-| V1 Generator | Output File | V2 Equivalent Needed |
-|-------------|-------------|---------------------|
-| `NuruInvokerGenerator` | `GeneratedRouteInvokers.g.cs` | Typed invoker methods |
-| `NuruDelegateCommandGenerator` | `GeneratedDelegateCommands.g.cs` | Command/Query classes from delegates |
-| `NuruAttributedRouteGenerator` | `GeneratedAttributedRoutes.g.cs` | Route registration from attributes |
+### Multi-Mode Runner Issue
 
-### Recommendation
+The multi-mode runner (`dotnet runfiles/test.cs`) hangs when running with V2. The sequential runner (`tests/scripts/run-tests-sequential.cs`) works and found **no individual test causes a hang**. The hang occurs in the multi-mode compilation/execution context, not in any specific test.
 
-The CI tests don't reveal V2 gaps because they test runtime code. To identify actual gaps:
-
-1. Build a sample app with `UseNewGen=true`
-2. Observe compilation errors (missing generated types)
-3. Implement V2 generator to emit those types
-
----
-
-## Updated Findings (DynamicInvoke Fallback Disabled)
-
-### Test Results with DynamicInvoke Fallback Disabled
-
-We modified `source/timewarp-nuru-core/execution/delegate-executor.cs` to throw an exception instead of falling back to `DynamicInvoke` when no generated invoker is found. This exposed the following:
-
-| Mode | Test File | Result |
-|------|-----------|--------|
-| V1 (UseNewGen=false) | routing-01-basic-matching.cs | 9/9 passed |
-| V2 (UseNewGen=true) | routing-01-basic-matching.cs | 6/9 passed, 3 failed |
-
-### Key Error Message
-```
-No generated invoker found for signature '_Returns_Int'. Ensure the source generator is running and emitting invokers. DynamicInvoke fallback has been disabled to enforce AOT compatibility.
+**Workaround**: Use sequential runner for V2 testing:
+```bash
+dotnet tests/scripts/run-tests-sequential.cs --v2
 ```
 
-### Why CI Tests Passed Before (Gap Identified)
+### What V2 Generator Must Implement (Task #262)
 
-1. The runtime had a silent `DynamicInvoke` fallback that masked generator failures
-2. Tests would "pass" even when source generators weren't emitting required invokers
-3. This defeats the purpose of testing AOT compatibility
+The V2 generator needs to emit **typed invokers** for delegate signatures used in Map() calls:
 
-### Multi-Mode Runner Hang Issue
+| Signature Pattern | Example Delegate | Count |
+|-------------------|------------------|-------|
+| `_Returns_Int` | `() => int` | Many |
+| `_String_Returns_Int` | `(string) => int` | Several |
+| `_String_String_Returns_Int` | `(string, string) => int` | Several |
+| (async variants) | `() => Task<int>` | Several |
 
-When running the full test suite with V2 (`UseNewGen=true`), the multi-mode runner hangs instead of cleanly reporting failures. We need to investigate which test causes the hang.
-
-### What V2 Must Generate
-
-V2 generator needs to emit typed invokers for delegate signatures like:
-- `_Returns_Int` - `() => int`
-- (More signatures to be collected by running full test suite)
+The invokers must:
+1. Be registered in `InvokerRegistry` at startup
+2. Handle the specific parameter binding for each signature
+3. Support both sync and async return types
 
 ### Files Modified
 
-- `source/timewarp-nuru-core/execution/delegate-executor.cs` - Disabled DynamicInvoke fallback, now throws exception with helpful message
+- `source/timewarp-nuru-core/execution/delegate-executor.cs` - Disabled DynamicInvoke fallback
+- `tests/scripts/run-tests-sequential.cs` - Created sequential runner with --v1/--v2 flags
+- `tests/timewarp-nuru-core-tests/lexer/Directory.Build.props` - Fixed standalone lexer test execution
 
-### Next Steps
+### Cleanup Completed
 
-1. Create diagnostic runfile to run tests sequentially and find which test causes the hang
-2. Fix the hang issue
-3. Collect full list of required invoker signatures
-4. Implement V2 generator to emit those signatures (task #262)
+- Moved `ansi-string-utils-*.cs` tests to `timewarp-terminal` repo
+- Removed orphaned `tests/timewarp-nuru-tests/` directory
+- Moved `test-plan-overview.md` to `tests/timewarp-nuru-core-tests/`
+
+## Notes
+
+- Results saved to `tests/scripts/test-results-v1.md` and `tests/scripts/test-results-v2.md`
+- Sequential runner takes ~16 minutes for full suite
+- V1 tests should all pass (120+ tests) - this is the baseline

@@ -37,7 +37,6 @@ const string Bold = "\u001b[1m";
 string scriptsDir = AppContext.GetData("EntryPointFileDirectoryPath") as string ?? Environment.CurrentDirectory;
 string testsRoot = Path.GetFullPath(Path.Combine(scriptsDir, ".."));
 string repoRoot = Path.GetFullPath(Path.Combine(testsRoot, ".."));
-string resultsFile = Path.Combine(scriptsDir, "test-results.md");
 string directoryBuildProps = Path.Combine(repoRoot, "Directory.Build.props");
 
 // Parse command line args
@@ -89,6 +88,8 @@ if (File.Exists(directoryBuildProps))
 }
 
 string generatorLabel = useNewGenValue.Equals("true", StringComparison.OrdinalIgnoreCase) ? "V2" : "V1";
+string resultsFile = Path.Combine(scriptsDir, $"test-results-{generatorLabel.ToLowerInvariant()}.md");
+
 WriteLine($"{Bold}Using {generatorLabel} generators (UseNewGen={useNewGenValue}){Reset}");
 WriteLine();
 

@@ -17,11 +17,11 @@ Modify the source generator to emit a pre-sorted `Endpoint[]` array instead of u
 
 ## Checklist
 
-- [ ] Modify generator to collect all routes into design-time model
-- [ ] Sort routes by specificity during generation
-- [ ] Emit `GeneratedEndpoints` static class with pre-sorted array
-- [ ] Emit `CompiledRoute` instances inline (not via builder)
-- [ ] Emit `RouteMatcher` instances inline
+- [x] Modify generator to collect all routes into design-time model
+- [x] Sort routes by specificity during generation
+- [x] Emit `GeneratedEndpoints` static class with pre-sorted array
+- [x] Emit `CompiledRoute` instances inline (not via builder)
+- [x] Emit `RouteMatcher` instances inline
 - [ ] Update `Build()` to use generated array instead of registry
 - [ ] Verify matching behavior unchanged
 
@@ -65,3 +65,24 @@ internal static class GeneratedEndpoints
 - `NuruRouteRegistry` runtime registration
 - `EndpointCollection.Sort()` runtime call
 - Runtime `CompiledRouteBuilder` usage for attributed routes
+
+### Progress (2024-12-24)
+
+**Completed:**
+- V2 generator now emits `Endpoint[]` with handlers
+- Generated code compiles successfully
+- Verified with `routing-01-basic-matching.cs` test (all 9 tests pass)
+- Pure lambdas work correctly (`() => "healthy"`, `() => 0`)
+
+**Generated output includes:**
+- `Endpoint` objects with `RoutePattern`, `CompiledRoute`, `Handler`, `Order`, `MessageType`
+- `CompiledRoute` with `Segments` array of `LiteralMatcher`
+- Pre-sorted `Endpoint[] All` array
+
+**Test modification:**
+- Updated 3 tests in `routing-01-basic-matching.cs` to use `TestTerminal` and pure lambdas instead of closures
+- Closures in handlers are correctly detected by `NURU_H002` analyzer (suppressed in tests)
+
+**Remaining:**
+- Wire `Build()` to use `GeneratedEndpoints.All` instead of runtime registry (may be #248 scope)
+- Verify matching behavior at runtime with V2-generated endpoints

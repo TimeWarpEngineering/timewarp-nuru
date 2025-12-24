@@ -1,17 +1,29 @@
 // Emits runtime C# code from RouteDefinition.
 //
 // This emitter generates code that instantiates EXISTING runtime types
-// (LiteralMatcher, ParameterMatcher, OptionMatcher, CompiledRoute) from
+// (LiteralMatcher, ParameterMatcher, OptionMatcher, CompiledRoute, Endpoint) from
 // TimeWarp.Nuru namespace. It does NOT generate new type definitions.
 //
 // See: .agent/workspace/2024-12-24T18-30-00_v2-generator-runtime-types-analysis.md
+// See: .agent/workspace/2024-12-24T22-45-00_v2-source-generator-flow.md
 
 namespace TimeWarp.Nuru.SourceGen;
 
 using System.Text;
 
 /// <summary>
-/// Emits runtime C# code from a RouteDefinition.
+/// Information needed to emit an endpoint, combining RouteDefinition with handler code.
+/// </summary>
+/// <param name="Route">The route definition.</param>
+/// <param name="HandlerCode">The C# code for the handler (lambda syntax as string), or null for mediator routes.</param>
+/// <param name="CommandTypeName">For mediator routes, the fully qualified command type name.</param>
+internal sealed record EndpointEmitInfo(
+  RouteDefinition Route,
+  string? HandlerCode,
+  string? CommandTypeName);
+
+/// <summary>
+/// Emits runtime C# code from EndpointEmitInfo.
 /// Generates code that instantiates existing TimeWarp.Nuru runtime types.
 /// </summary>
 internal static class RuntimeCodeEmitter
@@ -21,7 +33,7 @@ internal static class RuntimeCodeEmitter
   /// </summary>
   internal record EmitOptions(
     string Namespace = "TimeWarp.Nuru.Generated",
-    string ClassName = "GeneratedRoutes",
+    string ClassName = "GeneratedEndpoints",
     int IndentSpaces = 2);
 
   /// <summary>
@@ -32,10 +44,10 @@ internal static class RuntimeCodeEmitter
     string FileName);
 
   /// <summary>
-  /// Emits a complete source file with all routes.
+  /// Emits a complete source file with all endpoints.
   /// </summary>
   public static EmitResult EmitSourceFile(
-    IEnumerable<RouteDefinition> routes,
+    IEnumerable<EndpointEmitInfo> endpoints,
     EmitOptions? options = null)
   {
     options ??= new EmitOptions();
@@ -49,7 +61,9 @@ internal static class RuntimeCodeEmitter
     sb.AppendLine();
 
     // Usings - reference existing runtime types
+    sb.AppendLine("using System;");
     sb.AppendLine("using System.Collections.Generic;");
+    sb.AppendLine("using System.Reflection;");
     sb.AppendLine("using TimeWarp.Nuru;");
     sb.AppendLine();
 
@@ -62,31 +76,31 @@ internal static class RuntimeCodeEmitter
     AppendLine(sb, "internal static class {0}", options.ClassName);
     sb.AppendLine("{");
 
-    // Emit each route as a static field
-    int routeIndex = 0;
-    List<string> routeFieldNames = [];
+    // Emit each endpoint as a static field
+    int endpointIndex = 0;
+    List<string> endpointFieldNames = [];
 
-    foreach (RouteDefinition route in routes)
+    foreach (EndpointEmitInfo endpoint in endpoints)
     {
-      string fieldName = string.Format(CultureInfo.InvariantCulture, "Route_{0}", routeIndex);
-      routeFieldNames.Add(fieldName);
-      EmitRouteField(sb, route, fieldName, options.IndentSpaces);
+      string fieldName = string.Format(CultureInfo.InvariantCulture, "Endpoint_{0}", endpointIndex);
+      endpointFieldNames.Add(fieldName);
+      EmitEndpointField(sb, endpoint, fieldName, options.IndentSpaces);
       sb.AppendLine();
-      routeIndex++;
+      endpointIndex++;
     }
 
     // Emit the All array
     AppendLine(sb, "{0}/// <summary>", indent);
-    AppendLine(sb, "{0}/// All compiled routes, pre-sorted by specificity (highest first).", indent);
+    AppendLine(sb, "{0}/// All endpoints, pre-sorted by specificity (highest first).", indent);
     AppendLine(sb, "{0}/// </summary>", indent);
-    AppendLine(sb, "{0}internal static readonly CompiledRoute[] All =", indent);
+    AppendLine(sb, "{0}internal static readonly Endpoint[] All =", indent);
     AppendLine(sb, "{0}[", indent);
 
     string indent2 = new(' ', options.IndentSpaces * 2);
-    for (int i = 0; i < routeFieldNames.Count; i++)
+    for (int i = 0; i < endpointFieldNames.Count; i++)
     {
-      string comma = i < routeFieldNames.Count - 1 ? "," : "";
-      AppendLine(sb, "{0}{1}{2}", indent2, routeFieldNames[i], comma);
+      string comma = i < endpointFieldNames.Count - 1 ? "," : "";
+      AppendLine(sb, "{0}{1}{2}", indent2, endpointFieldNames[i], comma);
     }
 
     AppendLine(sb, "{0}];", indent);
@@ -99,17 +113,19 @@ internal static class RuntimeCodeEmitter
   }
 
   /// <summary>
-  /// Emits a single route as a static field using existing CompiledRoute type.
+  /// Emits a single endpoint as a static field using existing Endpoint type.
   /// </summary>
-  private static void EmitRouteField(
+  private static void EmitEndpointField(
     StringBuilder sb,
-    RouteDefinition route,
+    EndpointEmitInfo endpoint,
     string fieldName,
     int indentSpaces)
   {
+    RouteDefinition route = endpoint.Route;
     string indent = new(' ', indentSpaces);
     string indent2 = new(' ', indentSpaces * 2);
     string indent3 = new(' ', indentSpaces * 3);
+    string indent4 = new(' ', indentSpaces * 4);
 
     AppendLine(sb, "{0}/// <summary>", indent);
     AppendLine(sb, "{0}/// Route: {1}", indent, EscapeXmlComment(route.OriginalPattern));
@@ -121,14 +137,21 @@ internal static class RuntimeCodeEmitter
 
     AppendLine(sb, "{0}/// </summary>", indent);
 
-    AppendLine(sb, "{0}private static readonly CompiledRoute {1} = new()", indent, fieldName);
+    AppendLine(sb, "{0}private static readonly Endpoint {1} = new()", indent, fieldName);
     AppendLine(sb, "{0}{{", indent);
 
-    // Segments array using existing RouteMatcher types
-    AppendLine(sb, "{0}Segments = new RouteMatcher[]", indent2);
+    // RoutePattern
+    AppendLine(sb, "{0}RoutePattern = \"{1}\",", indent2, EscapeString(route.OriginalPattern));
+
+    // CompiledRoute
+    AppendLine(sb, "{0}CompiledRoute = new CompiledRoute()", indent2);
     AppendLine(sb, "{0}{{", indent2);
-    EmitSegmentMatchers(sb, route.Segments, indentSpaces * 3);
-    AppendLine(sb, "{0}}},", indent2);
+
+    // Segments array using existing RouteMatcher types
+    AppendLine(sb, "{0}Segments = new RouteMatcher[]", indent3);
+    AppendLine(sb, "{0}{{", indent3);
+    EmitSegmentMatchers(sb, route.Segments, indentSpaces * 4);
+    AppendLine(sb, "{0}}},", indent3);
 
     // MessageType
     string messageType = route.MessageType switch
@@ -137,17 +160,43 @@ internal static class RuntimeCodeEmitter
       "IdempotentCommand" => "MessageType.IdempotentCommand",
       _ => "MessageType.Command"
     };
-    AppendLine(sb, "{0}MessageType = {1},", indent2, messageType);
+    AppendLine(sb, "{0}MessageType = {1},", indent3, messageType);
 
     // Specificity
-    AppendLine(sb, "{0}Specificity = {1},", indent2, route.ComputedSpecificity);
+    AppendLine(sb, "{0}Specificity = {1},", indent3, route.ComputedSpecificity);
 
     // CatchAllParameterName if present
     string? catchAllName = GetCatchAllParameterName(route.Segments);
     if (catchAllName is not null)
     {
-      AppendLine(sb, "{0}CatchAllParameterName = \"{1}\",", indent2, EscapeString(catchAllName));
+      AppendLine(sb, "{0}CatchAllParameterName = \"{1}\",", indent3, EscapeString(catchAllName));
     }
+
+    AppendLine(sb, "{0}}},", indent2);
+
+    // Handler - emit the lambda directly if available
+    if (endpoint.HandlerCode is not null)
+    {
+      AppendLine(sb, "{0}Handler = {1},", indent2, endpoint.HandlerCode);
+    }
+
+    // CommandType - for mediator routes
+    if (endpoint.CommandTypeName is not null)
+    {
+      AppendLine(sb, "{0}CommandType = typeof({1}),", indent2, endpoint.CommandTypeName);
+    }
+
+    // Order (specificity)
+    AppendLine(sb, "{0}Order = {1},", indent2, route.ComputedSpecificity);
+
+    // Description
+    if (route.Description is not null)
+    {
+      AppendLine(sb, "{0}Description = \"{1}\",", indent2, EscapeString(route.Description));
+    }
+
+    // MessageType on Endpoint
+    AppendLine(sb, "{0}MessageType = {1},", indent2, messageType);
 
     AppendLine(sb, "{0}}};", indent);
   }
@@ -186,7 +235,7 @@ internal static class RuntimeCodeEmitter
   /// </summary>
   private static void EmitParameterMatcher(StringBuilder sb, ParameterDefinition param, string indent)
   {
-    // ParameterMatcher(string name, bool isCatchAll = false, string? constraint = null, 
+    // ParameterMatcher(string name, bool isCatchAll = false, string? constraint = null,
     //                  string? description = null, bool isOptional = false)
 
     List<string> args = [$"\"{EscapeString(param.Name)}\""];

@@ -4,7 +4,6 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System.Collections.Immutable;
-using System.Text.RegularExpressions;
 
 /// <summary>
 /// V2 source generator - generates compile-time route endpoints.
@@ -16,7 +15,7 @@ using System.Text.RegularExpressions;
 ///   <item><description>Detects Map() invocations in fluent chains</description></item>
 ///   <item><description>Extracts route patterns, handlers, descriptions from the chain</description></item>
 ///   <item><description>Builds RouteDefinition objects from the extracted data</description></item>
-///   <item><description>Emits GeneratedRoutes, Router, matchers, and extractors</description></item>
+///   <item><description>Emits GeneratedEndpoints with Endpoint[], handlers, and matchers</description></item>
 /// </list>
 /// </remarks>
 [Generator]
@@ -55,8 +54,8 @@ public class NuruV2Generator : IIncrementalGenerator
         return;
       }
 
-      // Filter nulls and build route definitions
-      List<RouteDefinition> routes = [];
+      // Filter nulls and build endpoint emit infos
+      List<EndpointEmitInfo> endpoints = [];
       int order = 0;
 
       foreach (MapInvocationInfo? mapInfo in maps)
@@ -64,33 +63,33 @@ public class NuruV2Generator : IIncrementalGenerator
         if (mapInfo is null)
           continue;
 
-        RouteDefinition? route = BuildRouteDefinition(mapInfo, order++);
-        if (route is not null)
+        EndpointEmitInfo? endpoint = BuildEndpointEmitInfo(mapInfo, order++);
+        if (endpoint is not null)
         {
-          routes.Add(route);
+          endpoints.Add(endpoint);
         }
       }
 
-      if (routes.Count == 0)
+      if (endpoints.Count == 0)
       {
         EmitMarkerOnly(ctx);
         return;
       }
 
       // Sort by specificity (descending - most specific first)
-      routes.Sort((a, b) => b.ComputedSpecificity.CompareTo(a.ComputedSpecificity));
+      endpoints.Sort((a, b) => b.Route.ComputedSpecificity.CompareTo(a.Route.ComputedSpecificity));
 
       // Emit the generated code
       RuntimeCodeEmitter.EmitOptions options = new(
         Namespace: "TimeWarp.Nuru.Generated",
-        ClassName: "GeneratedRoutes",
+        ClassName: "GeneratedEndpoints",
         IndentSpaces: 2);
 
-      RuntimeCodeEmitter.EmitResult result = RuntimeCodeEmitter.EmitSourceFile(routes, options);
+      RuntimeCodeEmitter.EmitResult result = RuntimeCodeEmitter.EmitSourceFile(endpoints, options);
       ctx.AddSource(result.FileName, result.SourceCode);
 
       // Also emit the marker
-      EmitMarker(ctx, routes.Count);
+      EmitMarker(ctx, endpoints.Count);
     });
   }
 
@@ -168,9 +167,9 @@ public class NuruV2Generator : IIncrementalGenerator
   }
 
   /// <summary>
-  /// Builds a RouteDefinition from extracted map info.
+  /// Builds an EndpointEmitInfo from extracted map info.
   /// </summary>
-  private static RouteDefinition? BuildRouteDefinition(MapInvocationInfo mapInfo, int order)
+  private static EndpointEmitInfo? BuildEndpointEmitInfo(MapInvocationInfo mapInfo, int order)
   {
     // Parse the pattern into segments
     ImmutableArray<SegmentDefinition> segments = ParsePattern(mapInfo.Pattern);
@@ -180,15 +179,19 @@ public class NuruV2Generator : IIncrementalGenerator
 
     // Build handler definition
     HandlerDefinition handler;
+    string? handlerCode = null;
+    string? commandTypeName = null;
+
     if (mapInfo.IsMediator && mapInfo.RequestTypeName is not null)
     {
       handler = new HandlerDefinitionBuilder()
         .AsMediator(mapInfo.RequestTypeName)
         .Build();
+      commandTypeName = mapInfo.RequestTypeName;
     }
     else
     {
-      // For delegate handlers, analyze the lambda if available
+      // For delegate handlers, extract the lambda code
       HandlerDefinitionBuilder handlerBuilder = new HandlerDefinitionBuilder().AsDelegate();
 
       // Add parameters from route pattern
@@ -208,10 +211,16 @@ public class NuruV2Generator : IIncrementalGenerator
       handlerBuilder.ReturnsVoid();
 
       handler = handlerBuilder.Build();
+
+      // Extract the lambda code to emit directly
+      if (mapInfo.HandlerLambda is not null)
+      {
+        handlerCode = mapInfo.HandlerLambda.ToFullString().Trim();
+      }
     }
 
     // Build the route definition
-    return new RouteDefinitionBuilder()
+    RouteDefinition route = new RouteDefinitionBuilder()
       .WithPattern(mapInfo.Pattern)
       .WithSegments(segments)
       .WithMessageType(mapInfo.MessageType)
@@ -221,6 +230,11 @@ public class NuruV2Generator : IIncrementalGenerator
       .WithSpecificity(specificity)
       .WithOrder(order)
       .Build();
+
+    return new EndpointEmitInfo(
+      Route: route,
+      HandlerCode: handlerCode,
+      CommandTypeName: commandTypeName);
   }
 
   /// <summary>

@@ -16,9 +16,10 @@ public class BasicMatchingTests
   public static async Task Should_match_exact_literal_status_delegate()
   {
     // Arrange
-    bool matched = false;
+    using TestTerminal terminal = new();
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("status").WithHandler(() => { matched = true; return 0; }).AsQuery().Done()
+      .UseTerminal(terminal)
+      .Map("status").WithHandler(() => "healthy").AsQuery().Done()
       .Build();
 
     // Act
@@ -26,9 +27,7 @@ public class BasicMatchingTests
 
     // Assert
     exitCode.ShouldBe(0);
-    matched.ShouldBeTrue();
-
-    await Task.CompletedTask;
+    terminal.OutputContains("healthy").ShouldBeTrue();
   }
 
   public static async Task Should_not_match_different_literal_version_delegate()
@@ -50,9 +49,10 @@ public class BasicMatchingTests
   public static async Task Should_match_multi_literal_git_status_delegate()
   {
     // Arrange
-    bool matched = false;
+    using TestTerminal terminal = new();
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("git status").WithHandler(() => { matched = true; return 0; }).AsQuery().Done()
+      .UseTerminal(terminal)
+      .Map("git status").WithHandler(() => "healthy").AsQuery().Done()
       .Build();
 
     // Act
@@ -60,9 +60,7 @@ public class BasicMatchingTests
 
     // Assert
     exitCode.ShouldBe(0);
-    matched.ShouldBeTrue();
-
-    await Task.CompletedTask;
+    terminal.OutputContains("healthy").ShouldBeTrue();
   }
 
   public static async Task Should_not_match_different_multi_literal_git_commit_delegate()
@@ -132,9 +130,10 @@ public class BasicMatchingTests
   public static async Task Should_match_empty_pattern_with_empty_input_delegate()
   {
     // Arrange
-    bool matched = false;
+    using TestTerminal terminal = new();
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("").WithHandler(() => { matched = true; return 0; }).AsQuery().Done()
+      .UseTerminal(terminal)
+      .Map("").WithHandler(() => "healthy").AsQuery().Done()
       .Build();
 
     // Act
@@ -142,9 +141,7 @@ public class BasicMatchingTests
 
     // Assert
     exitCode.ShouldBe(0);
-    matched.ShouldBeTrue();
-
-    await Task.CompletedTask;
+    terminal.OutputContains("healthy").ShouldBeTrue();
   }
 
   public static async Task Should_not_match_empty_pattern_with_anything_delegate()

@@ -64,16 +64,26 @@ if (setV1 || setV2)
   }
 
   string content = await File.ReadAllTextAsync(directoryBuildProps);
-  string updated = Regex.Replace(content, @"<UseNewGen>\w+</UseNewGen>", $"<UseNewGen>{targetValue}</UseNewGen>");
 
-  if (updated == content)
+  // Check if element exists
+  if (!Regex.IsMatch(content, @"<UseNewGen>\w+</UseNewGen>"))
   {
     WriteLine($"{Red}ERROR: Could not find <UseNewGen> element in Directory.Build.props{Reset}");
     return 1;
   }
 
-  await File.WriteAllTextAsync(directoryBuildProps, updated);
-  WriteLine($"{Green}Updated Directory.Build.props{Reset}");
+  string updated = Regex.Replace(content, @"<UseNewGen>\w+</UseNewGen>", $"<UseNewGen>{targetValue}</UseNewGen>");
+
+  if (updated != content)
+  {
+    await File.WriteAllTextAsync(directoryBuildProps, updated);
+    WriteLine($"{Green}Updated Directory.Build.props{Reset}");
+  }
+  else
+  {
+    WriteLine($"{Green}UseNewGen already set to {targetValue}{Reset}");
+  }
+
   WriteLine();
 }
 

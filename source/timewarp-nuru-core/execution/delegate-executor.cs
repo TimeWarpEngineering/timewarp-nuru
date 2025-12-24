@@ -82,6 +82,28 @@ public static class DelegateExecutor
       }
       else
       {
+        // IMPORTANT: DynamicInvoke fallback has been intentionally disabled.
+        //
+        // Previously, when no generated invoker was found for a signature, the runtime
+        // would silently fall back to reflection-based DynamicInvoke. This allowed
+        // the system to "work" even when source generators failed to emit invokers,
+        // but it:
+        //   1. Breaks Native AOT compilation (reflection not available)
+        //   2. Masks source generator bugs (tests pass when they shouldn't)
+        //   3. Causes silent performance degradation
+        //
+        // Now we throw to enforce that all delegate signatures must have generated
+        // invokers. If you see this error, ensure the source generator
+        // (NuruInvokerGenerator for V1, or NuruV2Generator for V2) is running
+        // and emitting an invoker for this signature.
+        //
+        // The original DynamicInvoke fallback code is preserved below for reference.
+        throw new InvalidOperationException(
+            $"No generated invoker found for signature '{signatureKey}'. " +
+            "Ensure the source generator is running and emitting invokers. " +
+            "DynamicInvoke fallback has been disabled to enforce AOT compatibility.");
+
+#if false // Original DynamicInvoke fallback - preserved for reference
 #if NURU_TIMING_DEBUG
         Console.WriteLine($"[DEBUG] FALLBACK to DynamicInvoke for '{signatureKey}'");
 #endif
@@ -118,6 +140,7 @@ public static class DelegateExecutor
             returnValue = null;
           }
         }
+#endif
       }
 
 #if NURU_TIMING_DEBUG

@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru.SourceGen.Model;
+namespace TimeWarp.Nuru.SourceGen;
 
 /// <summary>
 /// Abstract base for all route segment types.

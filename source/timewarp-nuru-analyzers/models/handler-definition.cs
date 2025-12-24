@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru.SourceGen.Model;
+namespace TimeWarp.Nuru.SourceGen;
 
 /// <summary>
 /// Design-time representation of a route handler.

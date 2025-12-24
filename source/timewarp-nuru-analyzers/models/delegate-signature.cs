@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru;
+namespace TimeWarp.Nuru.SourceGen;
 
 /// <summary>
 /// Represents the signature of a delegate extracted from a Map() call.

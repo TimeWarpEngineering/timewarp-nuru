@@ -34,7 +34,7 @@
 
   <!-- Toggle for V2 source generators -->
   <PropertyGroup Label="Source Generator Toggle">
-    <UseNewGen>false</UseNewGen>
+    <UseNewGen>true</UseNewGen>
   </PropertyGroup>
 
   <!-- Expose UseNewGen to source generators -->

@@ -32,6 +32,14 @@ public partial class NuruInvokerGenerator : IIncrementalGenerator
         return false;
       });
 
+    // Step 1b: Check for UseNewGen property
+    IncrementalValueProvider<bool> useNewGen = GeneratorHelpers.GetUseNewGenProvider(context);
+
+    // Combine both suppression conditions
+    IncrementalValueProvider<bool> shouldSuppress = hasSuppressAttribute
+      .Combine(useNewGen)
+      .Select(static (pair, _) => pair.Left || pair.Right);
+
     // Step 2: Find all Map invocations with their delegate signatures
     IncrementalValuesProvider<RouteWithSignature?> routeSignatures = context.SyntaxProvider
       .CreateSyntaxProvider(
@@ -45,12 +53,12 @@ public partial class NuruInvokerGenerator : IIncrementalGenerator
 
     // Step 4: Combine signatures with suppress flag
     IncrementalValueProvider<(ImmutableArray<RouteWithSignature?> Routes, bool Suppress)> combined =
-      collectedSignatures.Combine(hasSuppressAttribute);
+      collectedSignatures.Combine(shouldSuppress);
 
     // Step 5: Generate source code (unless suppressed)
     context.RegisterSourceOutput(combined, static (ctx, data) =>
     {
-      // Skip generation if assembly has [SuppressNuruInvokerGeneration]
+      // Skip generation if assembly has [SuppressNuruInvokerGeneration] or UseNewGen=true
       if (data.Suppress)
         return;
 

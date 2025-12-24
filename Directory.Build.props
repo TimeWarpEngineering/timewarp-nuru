@@ -32,6 +32,16 @@
     <Compile Remove="$(CompilerGeneratedFilesOutputPath)/**/*.cs" />
   </ItemGroup>
 
+  <!-- Toggle for V2 source generators -->
+  <PropertyGroup Label="Source Generator Toggle">
+    <UseNewGen>false</UseNewGen>
+  </PropertyGroup>
+
+  <!-- Expose UseNewGen to source generators -->
+  <ItemGroup Label="Compiler Visible Properties">
+    <CompilerVisibleProperty Include="UseNewGen" />
+  </ItemGroup>
+
   <!-- Code quality, analyzers, and warning configuration -->
   <PropertyGroup Label="Code Quality and Analysis">
     <!-- Treat all warnings as errors -->

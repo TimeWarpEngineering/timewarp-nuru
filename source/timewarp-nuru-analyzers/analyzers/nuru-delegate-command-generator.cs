@@ -84,6 +84,14 @@ public partial class NuruDelegateCommandGenerator : IIncrementalGenerator
         return false;
       });
 
+    // Step 1b: Check for UseNewGen property
+    IncrementalValueProvider<bool> useNewGen = GeneratorHelpers.GetUseNewGenProvider(context);
+
+    // Combine both suppression conditions
+    IncrementalValueProvider<bool> shouldSuppress = hasSuppressAttribute
+      .Combine(useNewGen)
+      .Select(static (pair, _) => pair.Left || pair.Right);
+
     // Step 2: Find all message type invocations (AsCommand, AsIdempotentCommand, AsQuery) and extract route info
     IncrementalValuesProvider<DelegateCommandInfo?> commandInfos = context.SyntaxProvider
       .CreateSyntaxProvider(
@@ -96,7 +104,7 @@ public partial class NuruDelegateCommandGenerator : IIncrementalGenerator
 
     // Step 4: Combine with suppress flag
     IncrementalValueProvider<(ImmutableArray<DelegateCommandInfo?> Commands, bool Suppress)> combined =
-      collectedInfos.Combine(hasSuppressAttribute);
+      collectedInfos.Combine(shouldSuppress);
 
     // Step 5: Generate source code
     context.RegisterSourceOutput(combined, static (ctx, data) =>

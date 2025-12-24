@@ -35,6 +35,7 @@
   <!-- Toggle for V2 source generators -->
   <PropertyGroup Label="Source Generator Toggle">
     <UseNewGen>true</UseNewGen>
+    <DefineConstants Condition="'$(UseNewGen)' == 'true'">$(DefineConstants);USE_NEW_GEN</DefineConstants>
   </PropertyGroup>
 
   <!-- Expose UseNewGen to source generators -->

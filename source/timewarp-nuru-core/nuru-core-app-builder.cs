@@ -67,6 +67,9 @@ public partial class NuruCoreAppBuilder<TSelf>
   /// </summary>
   public NuruCoreApp Build()
   {
+#if USE_NEW_GEN
+    throw new NotImplementedException("V2 runtime path not yet implemented");
+#else
     // Add routes from NuruRouteRegistry (auto-registered via [NuruRoute] attributes)
     // Build HashSet of existing patterns for O(1) lookup instead of LINQ Any() which is O(n)
     HashSet<string> existingPatterns = new(StringComparer.OrdinalIgnoreCase);
@@ -154,6 +157,7 @@ public partial class NuruCoreAppBuilder<TSelf>
         HelpOptions,
         sessionContext);
     }
+#endif
   }
 
   /// <summary>

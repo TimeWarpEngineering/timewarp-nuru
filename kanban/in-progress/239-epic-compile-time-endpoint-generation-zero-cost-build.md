@@ -109,9 +109,9 @@ Phase 4: Delete runtime infrastructure
 - [ ] #248 Zero-cost Build()
 - [ ] #249 Delete runtime code
 - [ ] #250 Benchmark/docs
-- [ ] #260 UseNewGen toggle infrastructure
-- [ ] #261 V2 gap analysis
-- [ ] #262 V2 core endpoint generation
+- [x] #260 UseNewGen toggle infrastructure
+- [x] #261 V2 gap analysis
+- [x] #262 V2 core endpoint generation
 - [ ] #263 Dual-build parity/benchmarks
 
 ## Notes
@@ -129,9 +129,14 @@ Phase 4: Delete runtime infrastructure
 | Mediator dependency | Direct invocation |
 | `IPipelineBehavior` infrastructure | Inlined pipeline |
 
-### Analysis Document
+### Analysis Documents
 
-Full analysis at: `.agent/workspace/2024-12-22T14-30-00_compile-time-data-structure-analysis.md`
+- Compile-time data structure analysis: `.agent/workspace/2024-12-22T14-30-00_compile-time-data-structure-analysis.md`
+- V2 runtime types decision: `.agent/workspace/2024-12-24T18-30-00_v2-generator-runtime-types-analysis.md`
+
+### Key Decision: V2 Uses Existing Runtime Types
+
+The V2 generator emits code that instantiates **existing** runtime types (`LiteralMatcher`, `ParameterMatcher`, `CompiledRoute`) from `TimeWarp.Nuru` namespace. It does NOT generate new type definitions. This avoids type conflicts and ensures compatibility with existing runtime infrastructure until #248 wires everything together.
 
 ### Related
 

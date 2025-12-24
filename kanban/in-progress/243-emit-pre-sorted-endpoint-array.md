@@ -86,3 +86,24 @@ internal static class GeneratedEndpoints
 **Remaining:**
 - Wire `Build()` to use `GeneratedEndpoints.All` instead of runtime registry (may be #248 scope)
 - Verify matching behavior at runtime with V2-generated endpoints
+
+## Architecture Document
+
+**CRITICAL: Read this before continuing work on V2:**
+
+`.agent/workspace/2024-12-25T01-00-00_v2-generator-architecture.md`
+
+### Key Points
+
+1. **The Goal:** Move all deterministic work to compile time. Only matching (args unknown) and execution happen at runtime.
+
+2. **The Generated Invoker:** V2 generates the invoker as inline code that extracts typed parameters and calls the handler directly. No reflection, no registry lookup.
+
+3. **The Flow:**
+   ```
+   args[] → Matcher (existing V1 works) → Endpoint → Generated Invoker → result
+   ```
+
+4. **Reference Implementation:** `sandbox/experiments/manual-runtime-construction.cs` shows exactly what the generator should produce.
+
+5. **What Changes:** Instead of `Endpoint.Handler` being a `Delegate` that goes through `InvokerRegistry`, the endpoint has a generated `Func<Dictionary<string, object>, object?>` that directly calls the handler logic.

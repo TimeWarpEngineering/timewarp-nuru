@@ -203,3 +203,68 @@ The reference-only extractors show patterns for:
 - Building route definitions incrementally
 
 Key learning: Start simple with literal patterns, then add mini-language support.
+
+## Results
+
+**Completed:** 2024-12-25
+
+### Files Created (7 extractors)
+
+1. `generators/extractors/app-extractor.cs` (176 lines)
+   - Main orchestrator coordinating all extraction
+   - Uses RunAsyncLocator to find entry point
+   - Traces back through syntax tree to find builder chain
+   - Coordinates FluentChainExtractor and AttributedRouteExtractor
+
+2. `generators/extractors/fluent-chain-extractor.cs` (273 lines)
+   - Walks builder chain from Build() to CreateBuilder()
+   - Extracts routes from .Map() calls
+   - Handles app-level settings (name, description, help, repl, etc.)
+   - Tracks WithGroupPrefix scope for route prefixes
+
+3. `generators/extractors/pattern-string-extractor.cs` (224 lines)
+   - Integrates with existing PatternParser from timewarp-nuru-parsing
+   - Converts Syntax nodes to SegmentDefinition subtypes
+   - Resolves type constraints to CLR type names
+   - Builds parameter bindings from segments
+
+4. `generators/extractors/handler-extractor.cs` (393 lines)
+   - Analyzes lambda expressions and method references
+   - Extracts parameter types and bindings
+   - Determines return type and async status
+   - Detects service injection and CancellationToken
+
+5. `generators/extractors/intercept-site-extractor.cs` (139 lines)
+   - Extracts file/line/column for [InterceptsLocation]
+   - Gets method name location from invocation
+   - Formats output for code generation
+
+6. `generators/extractors/attributed-route-extractor.cs` (492 lines)
+   - Extracts from [NuruRoute] decorated classes
+   - Gets group prefix from [NuruRouteGroup] on base class
+   - Infers message type from IQuery/ICommand interfaces
+   - Extracts [Parameter] and [Option] properties
+   - Creates Mediator handler definitions
+
+7. `generators/extractors/service-extractor.cs` (246 lines)
+   - Extracts from ConfigureServices() calls
+   - Handles AddTransient, AddScoped, AddSingleton
+   - Supports generic and typeof() syntax
+   - Analyzes lambda and block bodies
+
+### Also Modified
+
+- `generators/locators/build-locator.cs` - Added IsConfirmedBuildCall() method
+
+### Key Design Decisions
+
+1. **Type alias pattern** - Used `RoslynParameterSyntax` alias to avoid namespace conflict with `TimeWarp.Nuru.ParameterSyntax`
+
+2. **Fallback to delegates** - When semantic model can't resolve method groups, create delegate handlers instead of methods to avoid null type names
+
+3. **Pattern parser reuse** - Successfully integrated existing PatternParser as a source-only dependency within the analyzer project
+
+### Next Steps
+
+- Phase 4: Emitters (generate C# code from AppModel)
+- Phase 6: Unit tests for extractors

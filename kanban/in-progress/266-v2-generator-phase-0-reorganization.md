@@ -43,8 +43,8 @@ Reorganize the `timewarp-nuru-analyzers` project to establish the new folder str
 - [x] Remove empty `analyzers/extractors/` folder
 
 ### Commit 0.5: Move emitters to reference-only/
-- [ ] Move `analyzers/emitters/runtime-code-emitter.cs`
-- [ ] Remove empty `analyzers/emitters/` folder
+- [x] Move `analyzers/emitters/runtime-code-emitter.cs`
+- [x] Remove empty `analyzers/emitters/` folder
 
 ### Commit 0.6: Move old generators to reference-only/
 - [ ] Move `analyzers/nuru-v2-generator.cs`

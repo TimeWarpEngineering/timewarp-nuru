@@ -216,13 +216,33 @@ NURU_H005 | Handler.Validation | Error | Handler parameter name doesn't match ro
 - [x] Fix `InferReturnType` to handle block bodies with return statements
 - [x] Capture lambda body source in `HandlerExtractor`
 - [x] Update `HandlerInvokerEmitter` to emit local functions
-- [ ] Handle method group handlers with qualified name calls
+- [x] Handle method group handlers with qualified name calls
 - [x] Add `NURU_H005` diagnostic descriptor
-- [ ] Add parameter name validation to `NuruHandlerAnalyzer`
+- [x] Add parameter name validation to `NuruHandlerAnalyzer` → Moved to #275
 - [x] Update `AnalyzerReleases.Unshipped.md`
 - [x] Ensure route matcher variable names align with handler parameters
-- [ ] Test with minimal test case from task #272
+- [x] Test with minimal test case from task #272
 - [x] **Fix .NET 10 / C# 14 interceptor compatibility** (added during implementation)
+- [x] **Intercept all RunAsync call sites** → Completed in #274
+
+## Results
+
+**Completed 2024-12-26**
+
+The V2 source generator now successfully:
+1. Captures lambda body source during extraction
+2. Emits local functions in generated code
+3. Intercepts all `RunAsync` call sites (not just the first)
+4. Uses .NET 10 / C# 14 compatible interceptor API
+
+All 4 minimal intercept tests pass:
+- `Should_intercept_single_route` ✓
+- `Should_return_error_for_unknown_command` ✓
+- `Should_match_correct_route_among_multiple` ✓
+- `Should_handle_version_flag` ✓
+
+**Remaining work moved to separate task:**
+- #275 - Add NURU_H005 analyzer for handler parameter name validation
 
 ## Files to Modify
 

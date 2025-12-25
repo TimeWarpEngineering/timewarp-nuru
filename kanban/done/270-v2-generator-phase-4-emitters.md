@@ -325,3 +325,32 @@ Key differences for Phase 4:
 - Reference emitter creates Endpoint objects; we create interceptor method
 - Reference emitter uses existing runtime types; we generate inline code
 - Reference emitter doesn't handle pattern matching; we use C# patterns
+
+## Results
+
+**Completed:** 2024-12-25
+
+### Files Created
+
+All 7 emitter files created in `source/timewarp-nuru-analyzers/generators/emitters/`:
+
+**Core Emitters (Commit 4.1):**
+1. `interceptor-emitter.cs` (185 lines) - Main entry point, coordinates all emitters, generates complete interceptor source with `[InterceptsLocation]` attribute
+2. `route-matcher-emitter.cs` (282 lines) - Pattern matching using C# list patterns for simple routes, length checks for complex routes with options
+3. `handler-invoker-emitter.cs` (223 lines) - Handler invocation for Delegate, Mediator, and Method handlers
+4. `service-resolver-emitter.cs` (117 lines) - DI service resolution with `GetRequiredService`/`GetService`
+
+**Feature Emitters (Commit 4.2):**
+5. `help-emitter.cs` (189 lines) - Generates `PrintHelp()` with usage, commands, and options
+6. `version-emitter.cs` (56 lines) - Generates `PrintVersion()` reading from assembly attributes
+7. `capabilities-emitter.cs` (238 lines) - Generates `PrintCapabilities()` with JSON for AI tool discovery
+
+### Build Status
+✅ Full solution builds with 0 warnings, 0 errors
+
+### Key Design Decisions
+- Used `StringBuilder` pattern consistently across all emitters
+- Simple routes use C# 11 list patterns (`args is ["cmd", var param]`)
+- Complex routes with options use length checks and manual parsing
+- Built-in flags (`--help`, `--version`, `--capabilities`) handled before route matching
+- Routes processed in specificity order (most specific first)

@@ -131,6 +131,88 @@ namespace TimeWarp.Nuru.Tests.Generator.V2.Minimal
 
       await Task.CompletedTask;
     }
+
+    // ========================================================================
+    // Commit 6.2: Parameter Tests
+    // ========================================================================
+
+    /// <summary>
+    /// Test that a string parameter is correctly bound from the route.
+    /// </summary>
+    public static async Task Should_bind_string_parameter()
+    {
+      // Arrange
+      using TestTerminal terminal = new();
+
+      NuruCoreApp app = NuruApp.CreateBuilder([])
+        .UseTerminal(terminal)
+        .Map("greet {name}")
+          .WithHandler((string name) => $"Hello, {name}!")
+          .AsQuery()
+          .Done()
+        .Build();
+
+      // Act
+      int exitCode = await app.RunAsync(["greet", "World"]);
+
+      // Assert
+      exitCode.ShouldBe(0);
+      terminal.OutputContains("Hello, World!").ShouldBeTrue();
+
+      await Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Test that an int parameter is correctly parsed and bound.
+    /// </summary>
+    public static async Task Should_bind_typed_int_parameter()
+    {
+      // Arrange
+      using TestTerminal terminal = new();
+
+      NuruCoreApp app = NuruApp.CreateBuilder([])
+        .UseTerminal(terminal)
+        .Map("repeat {count:int}")
+          .WithHandler((int count) => $"Count: {count}")
+          .AsQuery()
+          .Done()
+        .Build();
+
+      // Act
+      int exitCode = await app.RunAsync(["repeat", "42"]);
+
+      // Assert
+      exitCode.ShouldBe(0);
+      terminal.OutputContains("Count: 42").ShouldBeTrue();
+
+      await Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Test that multiple parameters are correctly bound.
+    /// </summary>
+    public static async Task Should_bind_multiple_parameters()
+    {
+      // Arrange
+      using TestTerminal terminal = new();
+
+      NuruCoreApp app = NuruApp.CreateBuilder([])
+        .UseTerminal(terminal)
+        .Map("add {a:int} {b:int}")
+          .WithHandler((int a, int b) => $"Sum: {a + b}")
+          .AsQuery()
+          .Done()
+        .Build();
+
+      // Act
+      int exitCode = await app.RunAsync(["add", "10", "32"]);
+
+      // Assert
+      exitCode.ShouldBe(0);
+      terminal.OutputContains("Sum: 42").ShouldBeTrue();
+
+      await Task.CompletedTask;
+    }
   }
 
 } // namespace TimeWarp.Nuru.Tests.Generator.V2.Minimal

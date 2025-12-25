@@ -47,6 +47,9 @@ internal static class RouteMatcherEmitter
     sb.AppendLine(CultureInfo.InvariantCulture, $"    if (args is {pattern})");
     sb.AppendLine("    {");
 
+    // Emit type conversions for typed parameters
+    EmitTypeConversions(sb, route, indent: 6);
+
     // Emit handler invocation
     HandlerInvokerEmitter.Emit(sb, route, routeIndex, indent: 6);
 
@@ -90,7 +93,76 @@ internal static class RouteMatcherEmitter
   }
 
   /// <summary>
+  /// Emits type conversion code for typed parameters.
+  /// Pattern matching captures typed params as strings with __str suffix.
+  /// This method creates the properly typed variable with the original name.
+  /// </summary>
+  private static void EmitTypeConversions(StringBuilder sb, RouteDefinition route, int indent)
+  {
+    string indentStr = new(' ', indent);
+
+    foreach (ParameterDefinition param in route.Parameters)
+    {
+      if (!param.HasTypeConstraint)
+        continue;
+
+      string varName = param.CamelCaseName;
+      string stringVarName = $"{varName}__str";
+
+      // Parse from the __str variable to create the typed variable with the original name
+      switch (param.TypeConstraint?.ToLowerInvariant())
+      {
+        case "int":
+          sb.AppendLine(CultureInfo.InvariantCulture,
+            $"{indentStr}int {varName} = int.Parse({stringVarName}, System.Globalization.CultureInfo.InvariantCulture);");
+          break;
+
+        case "long":
+          sb.AppendLine(CultureInfo.InvariantCulture,
+            $"{indentStr}long {varName} = long.Parse({stringVarName}, System.Globalization.CultureInfo.InvariantCulture);");
+          break;
+
+        case "double":
+          sb.AppendLine(CultureInfo.InvariantCulture,
+            $"{indentStr}double {varName} = double.Parse({stringVarName}, System.Globalization.CultureInfo.InvariantCulture);");
+          break;
+
+        case "decimal":
+          sb.AppendLine(CultureInfo.InvariantCulture,
+            $"{indentStr}decimal {varName} = decimal.Parse({stringVarName}, System.Globalization.CultureInfo.InvariantCulture);");
+          break;
+
+        case "bool":
+          sb.AppendLine(CultureInfo.InvariantCulture,
+            $"{indentStr}bool {varName} = bool.Parse({stringVarName});");
+          break;
+
+        case "guid":
+          sb.AppendLine(CultureInfo.InvariantCulture,
+            $"{indentStr}System.Guid {varName} = System.Guid.Parse({stringVarName});");
+          break;
+
+        case "datetime":
+          sb.AppendLine(CultureInfo.InvariantCulture,
+            $"{indentStr}System.DateTime {varName} = System.DateTime.Parse({stringVarName}, System.Globalization.CultureInfo.InvariantCulture);");
+          break;
+
+        default:
+          // Unknown type constraint - use the resolved CLR type if available
+          if (param.ResolvedClrTypeName is not null)
+          {
+            sb.AppendLine(CultureInfo.InvariantCulture,
+              $"{indentStr}// TODO: Type conversion for {param.ResolvedClrTypeName}");
+          }
+
+          break;
+      }
+    }
+  }
+
+  /// <summary>
   /// Builds a C# list pattern string for simple matching.
+  /// Typed parameters use __str suffix so we can parse them to the correct type.
   /// </summary>
   private static string BuildListPattern(RouteDefinition route)
   {
@@ -106,12 +178,15 @@ internal static class RouteMatcherEmitter
 
         case ParameterDefinition param when param.IsOptional:
           // Optional parameters use pattern with default
-          parts.Add($"var {param.CamelCaseName}");
+          string optVarName = param.HasTypeConstraint ? $"{param.CamelCaseName}__str" : param.CamelCaseName;
+          parts.Add($"var {optVarName}");
           break;
 
         case ParameterDefinition param:
           // Required parameters capture with var
-          parts.Add($"var {param.CamelCaseName}");
+          // Typed parameters get __str suffix so we can parse them
+          string varName = param.HasTypeConstraint ? $"{param.CamelCaseName}__str" : param.CamelCaseName;
+          parts.Add($"var {varName}");
           break;
       }
     }

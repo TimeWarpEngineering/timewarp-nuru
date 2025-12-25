@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru.SourceGen;
+namespace TimeWarp.Nuru.Generators;
 
 /// <summary>
 /// Design-time representation of a complete route definition.

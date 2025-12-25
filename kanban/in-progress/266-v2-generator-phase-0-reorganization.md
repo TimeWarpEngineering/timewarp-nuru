@@ -20,13 +20,13 @@ Reorganize the `timewarp-nuru-analyzers` project to establish the new folder str
 - [x] Create `reference-only/generators/`
 
 ### Commit 0.2: Move models to generators/models/
-- [ ] Move `models/route-definition.cs`
-- [ ] Move `models/segment-definition.cs`
-- [ ] Move `models/handler-definition.cs`
-- [ ] Move `models/parameter-binding.cs`
-- [ ] Move `models/pipeline-definition.cs`
-- [ ] Move `models/delegate-signature.cs`
-- [ ] Update namespace to `TimeWarp.Nuru.Generators`
+- [x] Move `models/route-definition.cs`
+- [x] Move `models/segment-definition.cs`
+- [x] Move `models/handler-definition.cs`
+- [x] Move `models/parameter-binding.cs`
+- [x] Move `models/pipeline-definition.cs`
+- [x] Move `models/delegate-signature.cs`
+- [x] Update namespace to `TimeWarp.Nuru.Generators`
 
 ### Commit 0.3: Move builders to generators/extractors/builders/
 - [ ] Move `analyzers/builders/handler-definition-builder.cs`

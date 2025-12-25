@@ -1,4 +1,4 @@
-namespace TimeWarp.Nuru.SourceGen;
+namespace TimeWarp.Nuru.Generators;
 
 /// <summary>
 /// Represents how a handler parameter is bound from route data or services.

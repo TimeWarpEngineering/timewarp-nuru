@@ -78,3 +78,9 @@ static async Task<object?> ExecuteWithPipeline(int idx, object[] args)
 - No virtual dispatch
 - JIT can inline everything
 - Smaller code if behaviors are simple
+
+### Archive Reason (2024-12-25)
+
+**Status: Superseded by redesign**
+
+Parent epic #239 is being redesigned. This task will be recreated according to the new design approach.

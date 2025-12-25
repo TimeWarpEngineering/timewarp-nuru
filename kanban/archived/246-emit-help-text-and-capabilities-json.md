@@ -79,3 +79,9 @@ internal static class GeneratedHelpText
 - Zero runtime string building
 - Instant help display
 - Capabilities JSON ready for AI tools
+
+### Archive Reason (2024-12-25)
+
+**Status: Superseded by redesign**
+
+Parent epic #239 is being redesigned. This task will be recreated according to the new design approach.

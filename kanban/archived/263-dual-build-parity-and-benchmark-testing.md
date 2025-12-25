@@ -16,3 +16,11 @@ Configure dual-build apps (appA/appB) with the UseNewGen toggle and create scrip
 - [ ] Create benchmark script (compare binary size, startup time, memory)
 - [ ] Document results and any discrepancies
 - [ ] Both apps should produce identical output for same inputs
+
+## Notes
+
+### Archive Reason (2024-12-25)
+
+**Status: Superseded by redesign**
+
+Parent epic #239 is being redesigned. This task will be recreated according to the new design approach.

@@ -88,3 +88,9 @@ if (args is ["--completion", var shell])
     return 0;
 }
 ```
+
+### Archive Reason (2024-12-25)
+
+**Status: Superseded by redesign**
+
+Parent epic #239 is being redesigned. This task will be recreated according to the new design approach.

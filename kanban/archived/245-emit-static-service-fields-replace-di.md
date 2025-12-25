@@ -77,3 +77,9 @@ static void Handle(string arg)
 - `services.AddXxx()` calls
 - `serviceProvider.GetRequiredService<T>()` calls
 - MS.Extensions.DependencyInjection package reference
+
+### Archive Reason (2024-12-25)
+
+**Status: Superseded by redesign**
+
+Parent epic #239 is being redesigned. This task will be recreated according to the new design approach.

@@ -68,3 +68,9 @@ Console.WriteLine($"P99: {Percentile(times, 99):F1}ms");
 - `documentation/developer/guides/source-generators.md`
 - `documentation/developer/design/compile-time-generation.md` (new)
 - `README.md` - performance section
+
+### Archive Reason (2024-12-25)
+
+**Status: Superseded by redesign**
+
+Parent epic #239 is being redesigned. This task will be recreated according to the new design approach.

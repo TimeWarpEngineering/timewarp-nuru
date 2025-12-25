@@ -60,3 +60,9 @@ Document any public API changes:
 - Behavior registration pattern changes
 
 Users upgrading will need to update their code.
+
+### Archive Reason (2024-12-25)
+
+**Status: Superseded by redesign**
+
+Parent epic #239 is being redesigned. This task will be recreated according to the new design approach.

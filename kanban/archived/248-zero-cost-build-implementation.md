@@ -73,3 +73,9 @@ var sw = Stopwatch.StartNew();
 var app = builder.Build();
 Console.WriteLine($"Build: {sw.ElapsedTicks} ticks");  // Should be < 1000
 ```
+
+### Archive Reason (2024-12-25)
+
+**Status: Superseded by redesign**
+
+Parent epic #239 is being redesigned. This task will be recreated according to the new design approach.

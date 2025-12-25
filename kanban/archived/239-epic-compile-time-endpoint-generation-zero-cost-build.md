@@ -141,3 +141,11 @@ The V2 generator emits code that instantiates **existing** runtime types (`Liter
 ### Related
 
 - Task #238: Make EndpointCollection internal (prerequisite - establishes immutability)
+
+### Archive Reason (2024-12-25)
+
+**Status: Superseded by redesign**
+
+This epic and its remaining child tasks are being archived because we have decided to redesign the compile-time generation approach. The completed sub-tasks (#240, #241, #242*, #260, #261, #262) remain in done/ as they represent valid completed work. The remaining incomplete tasks will be recreated according to the new design.
+
+The learnings from this epic will inform the new approach.

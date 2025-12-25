@@ -107,3 +107,9 @@ internal static class GeneratedEndpoints
 4. **Reference Implementation:** `sandbox/experiments/manual-runtime-construction.cs` shows exactly what the generator should produce.
 
 5. **What Changes:** Instead of `Endpoint.Handler` being a `Delegate` that goes through `InvokerRegistry`, the endpoint has a generated `Func<Dictionary<string, object>, object?>` that directly calls the handler logic.
+
+### Archive Reason (2024-12-25)
+
+**Status: Superseded by redesign**
+
+Parent epic #239 is being redesigned. This task will be recreated according to the new design approach.

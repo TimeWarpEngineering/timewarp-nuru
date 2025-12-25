@@ -6,42 +6,65 @@
 - `.agent/workspace/2024-12-25T12-00-00_v2-fluent-dsl-design.md` — DSL specification
 - `tests/timewarp-nuru-core-tests/routing/dsl-example.cs` — DSL reference implementation
 - `samples/attributed-routes/` — Attributed routes pattern
+- `documentation/developer/guides/route-pattern-syntax.md` — Mini-language syntax
+- `source/timewarp-nuru-parsing/` — Existing pattern parser (source-only)
 
 ## Executive Summary
 
-This document defines the architecture for the V2 source generator. The generator transforms two input sources (Fluent DSL and Attributed Routes) into generated C# code that intercepts `RunAsync()` and provides compile-time routing with zero reflection.
+This document defines the architecture for the V2 source generator. The generator transforms **three input DSLs** (Fluent DSL, Mini-Language Pattern Strings, and Attributed Routes) into generated C# code that intercepts `RunAsync()` and provides compile-time routing with zero reflection.
+
+---
+
+## Three Input DSLs — Like .NET Web Frameworks
+
+Nuru supports three ways to define routes, similar to how .NET web frameworks offer multiple patterns:
+
+| Nuru DSL              | .NET Web Equivalent | Style                       |
+| --------------------- | ------------------- | --------------------------- |
+| **Fluent DSL**        | Minimal APIs        | Inline, method chaining     |
+| **Mini-Language**     | Route templates     | Rich pattern strings        |
+| **Attributed Routes** | MVC / FastEndpoints | Class-per-endpoint          |
+
+All three produce the same `RouteModel` — the emitter doesn't care which DSL was used.
 
 ---
 
 ## 1000ft View
 
 ```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                        SOURCE GENERATOR PIPELINE                         │
-└─────────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                          SOURCE GENERATOR PIPELINE                           │
+└─────────────────────────────────────────────────────────────────────────────┘
 
-    Consumer's Code                     Generator                      Output
-    ──────────────                      ─────────                      ──────
+         Three Input DSLs                  Generator                    Output
+         ────────────────                  ─────────                    ──────
 
-┌──────────────────┐              ┌──────────────────┐          ┌──────────────────┐
-│   Program.cs     │              │                  │          │  Generated.g.cs  │
-│                  │   Roslyn     │   1. LOCATE      │          │                  │
-│  NuruApp         │   Syntax  ──▶│   Find builder   │          │  [Interceptor]   │
-│   .CreateBuilder │   Tree       │   chain + call   │          │  RunAsync_Gen()  │
-│   .Map(...)      │              │   to RunAsync()  │          │  {              │
-│   .Build()       │              │                  │          │    if status... │
-│                  │              ├──────────────────┤          │    if admin...  │
-│  app.RunAsync()◀─┼─ intercept ──│   2. EXTRACT     │──emit───▶│    ...          │
-│                  │              │   Parse DSL to   │          │  }              │
-└──────────────────┘              │   RouteModel[]   │          │                  │
-                                  │                  │          │  Capabilities    │
-┌──────────────────┐              ├──────────────────┤          │  HelpText        │
-│  GreetQuery.cs   │              │   3. EMIT        │          └──────────────────┘
-│                  │   Roslyn     │   Generate C#    │
-│  [NuruRoute]     │   Symbols ──▶│   interceptor    │
-│  class GreetQuery│              │                  │
-│                  │              └──────────────────┘
-└──────────────────┘
+┌───────────────────────────┐
+│      Fluent DSL           │
+│  .Map("status")           │
+│  .WithHandler(...)        │        ┌──────────────────┐
+│  .WithOption(...)         │        │                  │
+└───────────────────────────┘        │   1. LOCATE      │
+            │                        │   Find syntax    │
+            │     Roslyn             │   elements       │       ┌──────────────────┐
+            ├─────Syntax──────────▶  │                  │       │  Generated.g.cs  │
+            │     Tree               ├──────────────────┤       │                  │
+┌───────────────────────────┐        │                  │       │  [Interceptor]   │
+│    Mini-Language          │        │   2. EXTRACT     │       │  RunAsync_Gen()  │
+│  .Map("deploy {env}       │        │   Parse DSL to   │       │  {              │
+│    --force,-f|Skip")      │──────▶ │   RouteModel[]   │─emit─▶│    if status... │
+│                           │        │                  │       │    if deploy... │
+└───────────────────────────┘        │   Uses existing  │       │    if greet...  │
+            │                        │   PatternParser  │       │  }              │
+            │     Roslyn             ├──────────────────┤       │                  │
+            ├─────Symbols─────────▶  │                  │       │  Capabilities    │
+            │                        │   3. EMIT        │       │  HelpText        │
+┌───────────────────────────┐        │   Generate C#    │       └──────────────────┘
+│    Attributed Routes      │        │   interceptor    │
+│  [NuruRoute("greet")]     │        │                  │
+│  class GreetQuery         │────────│                  │
+│    [Parameter] Name       │        └──────────────────┘
+└───────────────────────────┘
 ```
 
 ---
@@ -74,18 +97,24 @@ source/timewarp-nuru-analyzers/
 
 ---
 
-## Two Input Sources
-
-The generator handles two ways to define routes:
+## The Three Input DSLs
 
 ### 1. Fluent DSL
+
+Explicit method chaining with separate methods for each aspect:
 
 ```csharp
 NuruCoreApp app = NuruApp.CreateBuilder(args)
     .Map("status")
         .WithHandler(() => "healthy")
-        .WithDescription("Check status")
+        .WithDescription("Check application status")
         .AsQuery()
+        .Done()
+    .Map("deploy")
+        .WithHandler((string env, bool force) => Deploy(env, force))
+        .WithDescription("Deploy to environment")
+        .WithOption("--force", "-f", "Skip confirmation")
+        .AsCommand()
         .Done()
     .Build();
 
@@ -94,24 +123,65 @@ return await app.RunAsync(args);
 
 **Characteristics:**
 - Routes defined inline in builder chain
+- Each aspect has its own method (`.WithOption()`, `.WithDescription()`, etc.)
 - Requires walking syntax tree from `RunAsync()` back through builder
 - Handler is a lambda expression in the source
 - Complex nested structures (`WithGroupPrefix`)
+- Most explicit and discoverable via IDE
 
-### 2. Attributed Routes
+### 2. Mini-Language (Pattern Strings)
+
+Rich pattern strings with inline parameters, options, and descriptions:
 
 ```csharp
-[NuruRoute("greet", Description = "Greet someone")]
+NuruCoreApp app = NuruApp.CreateBuilder(args)
+    .Map("deploy {env|Target environment} --force,-f|Skip confirmation",
+        (string env, bool force) => Deploy(env, force),
+        description: "Deploy to environment")
+    .Build();
+
+return await app.RunAsync(args);
+```
+
+**Characteristics:**
+- Compact, everything in pattern string
+- Uses pipe `|` for descriptions
+- Uses comma for short aliases (`--force,-f`)
+- Supports typed parameters (`{count:int}`)
+- Supports optional (`{tag?}`) and catch-all (`{*args}`)
+- **Existing parser available:** `source/timewarp-nuru-parsing/`
+- Most concise, good for simple routes
+
+**Pattern Syntax Reference:**
+- Literal segments: `"status"`, `"git commit"`
+- Parameters: `{name}`, `{name:int}`, `{name?}`, `{*args}`
+- Options: `--verbose`, `-v`, `--config {value}`
+- Descriptions: `{name|Description}`, `--flag|Description`
+- Aliases: `--verbose,-v`
+
+See `documentation/developer/guides/route-pattern-syntax.md` for full syntax.
+
+### 3. Attributed Routes
+
+Class-per-endpoint with attributes:
+
+```csharp
+[NuruRoute("greet", Description = "Greet someone by name")]
 public sealed class GreetQuery : IQuery<Unit>
 {
-    [Parameter(Description = "Name to greet")]
+    [Parameter(Description = "Name of the person to greet")]
     public string Name { get; set; } = string.Empty;
 
     public sealed class Handler : IQueryHandler<GreetQuery, Unit>
     {
+        private readonly ITerminal Terminal;
+
+        public Handler(ITerminal terminal) => Terminal = terminal;
+
         public ValueTask<Unit> Handle(GreetQuery query, CancellationToken ct)
         {
-            // ...
+            Terminal.WriteLine($"Hello, {query.Name}!");
+            return default;
         }
     }
 }
@@ -123,6 +193,37 @@ public sealed class GreetQuery : IQuery<Unit>
 - Message type inferred from interface (`IQuery`, `ICommand`, etc.)
 - Grouping via base class with `[NuruRouteGroup]`
 - Parameters/Options are attributed properties
+- One file per route — best for larger applications
+- Most structured, best for complex handlers with DI
+
+---
+
+## Existing Pattern Parser
+
+The `timewarp-nuru-parsing` project provides a complete parser for the mini-language:
+
+```
+source/timewarp-nuru-parsing/parsing/
+├── lexer/           # Tokenize pattern string
+│   ├── lexer.cs
+│   └── token.cs
+├── parser/          # Parse tokens into AST
+│   ├── parser.cs
+│   └── parse-result.cs
+├── syntax/          # AST node types
+│   ├── literal-syntax.cs
+│   ├── parameter-syntax.cs
+│   ├── option-syntax.cs
+│   └── segment-syntax.cs
+├── compiler/        # Compile to runtime matchers
+│   └── compiler.cs
+├── runtime/         # Runtime matching (may not need)
+│   └── matchers/
+└── validation/      # Semantic validation
+    └── semantic-validator.cs
+```
+
+**Key insight:** This is a **source-only** project already included in the analyzer/generator assembly. The generator can directly use `PatternParser` to parse mini-language strings into syntax nodes, then convert to `RouteModel`.
 
 ---
 
@@ -141,6 +242,7 @@ generators/locators/
 ├── with-description-locator.cs       # Find .WithDescription(...) calls
 ├── with-group-prefix-locator.cs      # Find .WithGroupPrefix(...) calls
 ├── with-alias-locator.cs             # Find .WithAlias(...) calls
+├── with-option-locator.cs            # Find .WithOption(...) calls
 ├── as-query-locator.cs               # Find .AsQuery() calls
 ├── as-command-locator.cs             # Find .AsCommand() calls
 ├── as-idempotent-command-locator.cs  # Find .AsIdempotentCommand() calls
@@ -151,7 +253,6 @@ generators/locators/
 ├── configure-services-locator.cs     # Find .ConfigureServices(...) calls
 ├── use-terminal-locator.cs           # Find .UseTerminal(...) calls
 ├── with-name-locator.cs              # Find .WithName(...) calls
-├── with-description-locator.cs       # Find .WithDescription(...) calls
 ├── with-ai-prompt-locator.cs         # Find .WithAiPrompt(...) calls
 └── done-locator.cs                   # Find .Done() calls (scope tracking)
 ```
@@ -177,9 +278,11 @@ Extractors parse located syntax into model objects.
 ```
 generators/extractors/
 ├── fluent-chain-extractor.cs         # Walk builder chain, build AppModel
+├── pattern-string-extractor.cs       # Parse mini-language using PatternParser
 ├── route-extractor.cs                # Extract single route from .Map() chain
 ├── handler-extractor.cs              # Extract handler lambda/method info
-├── parameter-extractor.cs            # Extract route parameters from pattern
+├── parameter-extractor.cs            # Extract route parameters
+├── option-extractor.cs               # Extract options from .WithOption() or pattern
 ├── service-extractor.cs              # Extract services from ConfigureServices
 ├── behavior-extractor.cs             # Extract behaviors with ordering
 ├── metadata-extractor.cs             # Extract name, description, aiPrompt
@@ -187,7 +290,9 @@ generators/extractors/
 └── intercept-site-extractor.cs       # Extract file/line/column for interceptor
 ```
 
-### Fluent DSL Extraction Flow
+### Extraction Flow by DSL
+
+#### Fluent DSL Extraction
 
 ```
 RunAsync() call site
@@ -203,9 +308,10 @@ RunAsync() call site
        │
        ▼
    For each .Map() encountered:
-       ├── Extract route pattern string
+       ├── Extract route pattern string (may be mini-language!)
        ├── Find .WithHandler() → extract handler
        ├── Find .WithDescription() → extract description
+       ├── Find .WithOption() → extract options
        ├── Find .AsQuery()/.AsCommand()/etc. → extract message type
        ├── Find .WithAlias() → extract aliases
        └── Track .WithGroupPrefix() scope for prefixes
@@ -214,7 +320,30 @@ RunAsync() call site
    Build AppModel with all routes
 ```
 
-### Attributed Route Extraction
+#### Mini-Language Extraction
+
+When `.Map("pattern string")` contains mini-language syntax:
+
+```
+.Map("deploy {env|Target} --force,-f|Skip")
+       │
+       ▼
+   Extract pattern string argument
+       │
+       ▼
+   Call PatternParser.Parse(patternString)
+       │
+       ▼
+   Get Syntax nodes:
+       ├── LiteralSyntax("deploy")
+       ├── ParameterSyntax(name: "env", description: "Target")
+       └── OptionSyntax(long: "force", short: "f", description: "Skip")
+       │
+       ▼
+   Convert to RouteModel with parameters and options
+```
+
+#### Attributed Route Extraction
 
 ```
 Find all [NuruRoute] classes in assembly
@@ -264,7 +393,7 @@ generators/models/
 namespace TimeWarp.Nuru.Generators;
 
 /// <summary>
-/// Complete application model extracted from DSL and attributes.
+/// Complete application model extracted from all DSLs.
 /// This is the IR passed to emitters.
 /// </summary>
 public sealed class AppModel
@@ -281,7 +410,7 @@ public sealed class AppModel
     public ReplModel? ReplOptions { get; init; }
     public bool HasConfiguration { get; init; }
     
-    // Routes (merged from fluent + attributed)
+    // Routes (merged from all three DSLs)
     public IReadOnlyList<RouteModel> Routes { get; init; } = [];
     
     // Pipeline
@@ -307,11 +436,40 @@ public sealed class RouteModel
     public IReadOnlyList<string> Aliases { get; init; } = [];
     public IReadOnlyList<RouteParameterModel> Parameters { get; init; } = [];
     public IReadOnlyList<OptionModel> Options { get; init; } = [];
-    public RouteSource Source { get; init; }             // Fluent or Attributed
+    public RouteSource Source { get; init; }             // Fluent, MiniLanguage, Attributed
 }
 
 public enum MessageType { Unspecified, Query, Command, IdempotentCommand }
-public enum RouteSource { Fluent, Attributed }
+public enum RouteSource { Fluent, MiniLanguage, Attributed }
+```
+
+### RouteParameterModel Structure
+
+```csharp
+public sealed class RouteParameterModel
+{
+    public string Name { get; init; } = "";
+    public string Type { get; init; } = "string";        // string, int, double, DateTime, etc.
+    public bool IsOptional { get; init; }
+    public bool IsCatchAll { get; init; }
+    public string? Description { get; init; }
+}
+```
+
+### OptionModel Structure
+
+```csharp
+public sealed class OptionModel
+{
+    public string LongName { get; init; } = "";          // "verbose" (without --)
+    public string? ShortName { get; init; }              // "v" (without -)
+    public string? Description { get; init; }
+    public string Type { get; init; } = "bool";          // bool for flags, or value type
+    public bool HasValue { get; init; }                  // --config {mode} vs --verbose
+    public string? ValueName { get; init; }              // "mode" from {mode}
+    public string? ValueDescription { get; init; }
+    public bool IsRequired { get; init; }
+}
 ```
 
 ### HandlerModel Structure
@@ -393,26 +551,26 @@ internal static class GeneratedRuntime
             return 0; 
         }
         
-        // Route matching (generated from RouteModel[])
+        // Route matching (generated from RouteModel[] - all DSLs merged)
         if (args is ["status"])
         {
-            // Service resolution (generated)
-            var logger = app.LoggerFactory?.CreateLogger<StatusHandler>() 
-                ?? NullLogger<StatusHandler>.Instance;
-            
-            // Handler invocation (generated)
-            var result = ((ILogger<StatusHandler> logger) => { 
-                logger.LogInformation("Status checked");
-                return "healthy"; 
-            })(logger);
-            
+            // Fluent DSL route
+            var result = "healthy";
+            app.Terminal.WriteLine(result);
+            return 0;
+        }
+        
+        if (args is ["deploy", var env, "--force" or "-f"])
+        {
+            // Mini-language route with option
+            var result = Deploy(env, force: true);
             app.Terminal.WriteLine(result);
             return 0;
         }
         
         if (args is ["greet", var name])
         {
-            // Mediator handler invocation (for attributed routes)
+            // Attributed route - Mediator handler invocation
             var request = new GreetQuery { Name = name };
             await app.Mediator.Send(request);
             return 0;
@@ -425,7 +583,7 @@ internal static class GeneratedRuntime
     
     private static void PrintHelp(ITerminal terminal)
     {
-        // Generated help text
+        // Generated help text from all routes
     }
     
     private static void PrintVersion(ITerminal terminal)
@@ -451,13 +609,13 @@ internal static class GeneratedRuntime
 
 ## Attributed Routes: Attribute Reference
 
-| Attribute          | Target     | Purpose                        | Properties                    |
-| ------------------ | ---------- | ------------------------------ | ----------------------------- |
-| `[NuruRoute]`        | Class      | Define route pattern           | Pattern, Description          |
-| `[NuruRouteGroup]`   | Class      | Prefix for derived routes      | Prefix                        |
-| `[NuruRouteAlias]`   | Class      | Alternate route pattern        | Pattern                       |
-| `[Parameter]`        | Property   | Positional parameter           | Description, IsCatchAll       |
-| `[Option]`           | Property   | Named option (--flag)          | LongName, ShortName, Description |
+| Attribute          | Target     | Purpose                        | Properties                        |
+| ------------------ | ---------- | ------------------------------ | --------------------------------- |
+| `[NuruRoute]`        | Class      | Define route pattern           | Pattern, Description              |
+| `[NuruRouteGroup]`   | Class      | Prefix for derived routes      | Prefix                            |
+| `[NuruRouteAlias]`   | Class      | Alternate route pattern        | Pattern                           |
+| `[Parameter]`        | Property   | Positional parameter           | Description, IsCatchAll           |
+| `[Option]`           | Property   | Named option (--flag)          | LongName, ShortName, Description  |
 
 ### Message Type Inference
 
@@ -495,7 +653,7 @@ public sealed class NuruGenerator : IIncrementalGenerator
 {
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        // 1. Locate RunAsync call sites
+        // 1. Locate RunAsync call sites (entry point for fluent DSL)
         var runAsyncCalls = context.SyntaxProvider
             .CreateSyntaxProvider(
                 predicate: RunAsyncLocator.IsPotentialMatch,
@@ -511,9 +669,17 @@ public sealed class NuruGenerator : IIncrementalGenerator
             );
         
         // 3. Combine and extract full AppModel
+        //    - Fluent chain extraction (may include mini-language patterns)
+        //    - Attributed route extraction
+        //    - Merge all routes into single model
         var appModel = runAsyncCalls
             .Combine(attributedRoutes.Collect())
-            .Select((data, ct) => FluentChainExtractor.Extract(data.Left, data.Right, ct));
+            .Select((data, ct) => 
+            {
+                var fluentRoutes = FluentChainExtractor.Extract(data.Left, ct);
+                var allRoutes = fluentRoutes.Routes.Concat(data.Right).ToList();
+                return fluentRoutes with { Routes = allRoutes };
+            });
         
         // 4. Emit generated code
         context.RegisterSourceOutput(appModel, (ctx, model) =>
@@ -527,19 +693,20 @@ public sealed class NuruGenerator : IIncrementalGenerator
 
 ---
 
-## Merging Fluent and Attributed Routes
+## Merging Routes from All DSLs
 
-Both sources contribute to the same `AppModel.Routes` collection:
+All three DSLs contribute to the same `AppModel.Routes` collection:
 
-1. Extract fluent routes from builder chain
-2. Extract attributed routes from `[NuruRoute]` classes
-3. Merge into single list
-4. Check for conflicts (duplicate patterns → diagnostic error)
-5. Sort by specificity for matching order
+1. Extract fluent routes from builder chain (may contain mini-language patterns)
+2. Parse any mini-language pattern strings using `PatternParser`
+3. Extract attributed routes from `[NuruRoute]` classes
+4. Merge into single list
+5. Check for conflicts (duplicate patterns → diagnostic error)
+6. Sort by specificity for matching order
 
 **Conflict Example:**
 ```csharp
-// Fluent
+// Fluent DSL
 .Map("status").WithHandler(() => "fluent")
 
 // Attributed
@@ -564,6 +731,7 @@ public class StatusQuery { }
 | NURU007 | Error    | Invalid route pattern syntax               |
 | NURU008 | Error    | Handler not found for attributed route     |
 | NURU009 | Warning  | Attributed route class should be sealed    |
+| NURU010 | Error    | Parameter type not supported               |
 
 ---
 
@@ -594,7 +762,16 @@ public class StatusQuery { }
 - `route-matcher-emitter.cs`
 - `GroupModel`
 
-### Phase 3: Attributed Routes
+### Phase 3: Mini-Language Support
+
+**Goal:** Parse pattern strings with parameters/options
+
+**Scope:**
+- `pattern-string-extractor.cs`
+- Integration with existing `PatternParser`
+- `RouteParameterModel`, `OptionModel`
+
+### Phase 4: Attributed Routes
 
 **Goal:** Merge attributed routes with fluent
 
@@ -604,16 +781,17 @@ public class StatusQuery { }
 - Route merging logic
 - Conflict detection
 
-### Phase 4: Parameters and Options
+### Phase 5: Parameters and Options
 
-**Goal:** Route parameters and options binding
+**Goal:** Full parameter and option binding
 
 **Scope:**
-- `RouteParameterModel`, `OptionModel`
 - `parameter-extractor.cs`
+- `option-extractor.cs`
 - `handler-invoker-emitter.cs`
+- Type conversion for typed parameters
 
-### Phase 5: Service Injection
+### Phase 6: Service Injection
 
 **Goal:** Handler service resolution
 
@@ -622,7 +800,7 @@ public class StatusQuery { }
 - `service-extractor.cs`
 - `service-resolver-emitter.cs`
 
-### Phase 6: Built-in Features
+### Phase 7: Built-in Features
 
 **Goal:** Help, version, capabilities
 
@@ -631,7 +809,7 @@ public class StatusQuery { }
 - `version-emitter.cs`
 - `capabilities-emitter.cs`
 
-### Phase 7: Behaviors/Middleware
+### Phase 8: Behaviors/Middleware
 
 **Goal:** Pipeline execution
 
@@ -640,7 +818,7 @@ public class StatusQuery { }
 - `behavior-extractor.cs`
 - Pipeline wrapping in emitter
 
-### Phase 8: REPL Support
+### Phase 9: REPL Support
 
 **Goal:** Interactive mode
 
@@ -652,17 +830,23 @@ public class StatusQuery { }
 
 ## Open Questions
 
-### To Investigate Before Implementation
+### Resolved
 
-1. **Route pattern syntax** — What patterns are supported? (`{param}`, `{param:int}`, `{param?}`, `{*catchAll}`)
+| Question                         | Decision                                    |
+| -------------------------------- | ------------------------------------------- |
+| Support all three DSLs?          | Yes — like .NET web frameworks              |
+| Deprecate mini-language?         | No — existing users, solid implementation   |
+| Parser reuse?                    | Yes — `timewarp-nuru-parsing` is source-only |
 
-2. **Existing generator code** — What can be reused from current implementation?
+### To Investigate During Implementation
 
-3. **Handler lambda capture** — How to emit the lambda body in generated code? Copy source text or reference?
+1. **Handler lambda capture** — How to emit the lambda body in generated code? Copy source text or reference?
 
-4. **Async handlers** — How to detect and handle `Task<T>` returns?
+2. **Async handlers** — How to detect and handle `Task<T>` returns?
 
-5. **Complex return types** — Serialize to JSON? Use ToString()?
+3. **Complex return types** — Serialize to JSON? Use ToString()?
+
+4. **Mixed DSL usage** — Can a single app use all three DSLs together? (Should work with merging)
 
 ---
 
@@ -670,5 +854,7 @@ public class StatusQuery { }
 
 - `tests/timewarp-nuru-core-tests/routing/dsl-example.cs` — Fluent DSL reference
 - `samples/attributed-routes/` — Attributed routes examples
+- `documentation/developer/guides/route-pattern-syntax.md` — Mini-language syntax
+- `source/timewarp-nuru-parsing/` — Existing pattern parser
 - `.agent/workspace/2024-12-25T12-00-00_v2-fluent-dsl-design.md` — DSL specification
-- `.agent/workspace/2024-12-25T01-00-00_v2-generator-architecture.md` — Architecture overview
+- `.agent/workspace/2024-12-25T01-00-00_v2-generator-architecture.md` — Earlier architecture notes

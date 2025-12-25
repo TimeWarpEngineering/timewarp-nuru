@@ -9,33 +9,31 @@
 
 namespace TimeWarp.Nuru.Generators;
 
-using System.Collections.Immutable;
-
 /// <summary>
 /// Fluent builder for assembling AppModel from extraction phases.
 /// Each piece may come from a different extractor.
 /// </summary>
 internal sealed class AppModelBuilder
 {
-  private string? _name;
-  private string? _description;
-  private string? _aiPrompt;
-  private bool _hasHelp;
-  private HelpModel? _helpOptions;
-  private bool _hasRepl;
-  private ReplModel? _replOptions;
-  private bool _hasConfiguration;
-  private ImmutableArray<RouteDefinition>.Builder _routes = ImmutableArray.CreateBuilder<RouteDefinition>();
-  private ImmutableArray<BehaviorDefinition>.Builder _behaviors = ImmutableArray.CreateBuilder<BehaviorDefinition>();
-  private ImmutableArray<ServiceDefinition>.Builder _services = ImmutableArray.CreateBuilder<ServiceDefinition>();
-  private InterceptSiteModel? _interceptSite;
+  private string? Name;
+  private string? Description;
+  private string? AiPrompt;
+  private bool HasHelp;
+  private HelpModel? HelpOptions;
+  private bool HasRepl;
+  private ReplModel? ReplOptions;
+  private bool HasConfiguration;
+  private ImmutableArray<RouteDefinition>.Builder Routes = ImmutableArray.CreateBuilder<RouteDefinition>();
+  private ImmutableArray<BehaviorDefinition>.Builder Behaviors = ImmutableArray.CreateBuilder<BehaviorDefinition>();
+  private ImmutableArray<ServiceDefinition>.Builder Services = ImmutableArray.CreateBuilder<ServiceDefinition>();
+  private InterceptSiteModel? InterceptSite;
 
   /// <summary>
   /// Sets the application name (from .WithName() fluent call).
   /// </summary>
   public AppModelBuilder WithName(string? name)
   {
-    _name = name;
+    Name = name;
     return this;
   }
 
@@ -44,7 +42,7 @@ internal sealed class AppModelBuilder
   /// </summary>
   public AppModelBuilder WithDescription(string? description)
   {
-    _description = description;
+    Description = description;
     return this;
   }
 
@@ -53,7 +51,7 @@ internal sealed class AppModelBuilder
   /// </summary>
   public AppModelBuilder WithAiPrompt(string? aiPrompt)
   {
-    _aiPrompt = aiPrompt;
+    AiPrompt = aiPrompt;
     return this;
   }
 
@@ -62,8 +60,8 @@ internal sealed class AppModelBuilder
   /// </summary>
   public AppModelBuilder WithHelp()
   {
-    _hasHelp = true;
-    _helpOptions = HelpModel.Default;
+    HasHelp = true;
+    HelpOptions = HelpModel.Default;
     return this;
   }
 
@@ -72,8 +70,8 @@ internal sealed class AppModelBuilder
   /// </summary>
   public AppModelBuilder WithHelp(HelpModel options)
   {
-    _hasHelp = true;
-    _helpOptions = options;
+    HasHelp = true;
+    HelpOptions = options;
     return this;
   }
 
@@ -82,8 +80,8 @@ internal sealed class AppModelBuilder
   /// </summary>
   public AppModelBuilder WithRepl()
   {
-    _hasRepl = true;
-    _replOptions = ReplModel.Default;
+    HasRepl = true;
+    ReplOptions = ReplModel.Default;
     return this;
   }
 
@@ -92,8 +90,8 @@ internal sealed class AppModelBuilder
   /// </summary>
   public AppModelBuilder WithRepl(ReplModel options)
   {
-    _hasRepl = true;
-    _replOptions = options;
+    HasRepl = true;
+    ReplOptions = options;
     return this;
   }
 
@@ -102,7 +100,7 @@ internal sealed class AppModelBuilder
   /// </summary>
   public AppModelBuilder WithConfiguration()
   {
-    _hasConfiguration = true;
+    HasConfiguration = true;
     return this;
   }
 
@@ -111,7 +109,7 @@ internal sealed class AppModelBuilder
   /// </summary>
   public AppModelBuilder AddRoute(RouteDefinition route)
   {
-    _routes.Add(route);
+    Routes.Add(route);
     return this;
   }
 
@@ -120,7 +118,7 @@ internal sealed class AppModelBuilder
   /// </summary>
   public AppModelBuilder AddRoutes(IEnumerable<RouteDefinition> routes)
   {
-    _routes.AddRange(routes);
+    Routes.AddRange(routes);
     return this;
   }
 
@@ -129,7 +127,7 @@ internal sealed class AppModelBuilder
   /// </summary>
   public AppModelBuilder AddBehavior(BehaviorDefinition behavior)
   {
-    _behaviors.Add(behavior);
+    Behaviors.Add(behavior);
     return this;
   }
 
@@ -138,7 +136,7 @@ internal sealed class AppModelBuilder
   /// </summary>
   public AppModelBuilder AddBehaviors(IEnumerable<BehaviorDefinition> behaviors)
   {
-    _behaviors.AddRange(behaviors);
+    Behaviors.AddRange(behaviors);
     return this;
   }
 
@@ -147,7 +145,7 @@ internal sealed class AppModelBuilder
   /// </summary>
   public AppModelBuilder AddService(ServiceDefinition service)
   {
-    _services.Add(service);
+    Services.Add(service);
     return this;
   }
 
@@ -156,7 +154,7 @@ internal sealed class AppModelBuilder
   /// </summary>
   public AppModelBuilder AddServices(IEnumerable<ServiceDefinition> services)
   {
-    _services.AddRange(services);
+    Services.AddRange(services);
     return this;
   }
 
@@ -165,7 +163,7 @@ internal sealed class AppModelBuilder
   /// </summary>
   public AppModelBuilder WithInterceptSite(InterceptSiteModel site)
   {
-    _interceptSite = site;
+    InterceptSite = site;
     return this;
   }
 
@@ -174,7 +172,7 @@ internal sealed class AppModelBuilder
   /// </summary>
   public AppModelBuilder WithInterceptSite(Location location)
   {
-    _interceptSite = InterceptSiteModel.FromLocation(location);
+    InterceptSite = InterceptSiteModel.FromLocation(location);
     return this;
   }
 
@@ -184,24 +182,26 @@ internal sealed class AppModelBuilder
   /// <exception cref="InvalidOperationException">Thrown when required fields are missing.</exception>
   public AppModel Build()
   {
-    if (_interceptSite is null)
+    if (InterceptSite is null)
     {
       throw new InvalidOperationException("InterceptSite is required. Call WithInterceptSite() before Build().");
     }
 
-    return new AppModel(
-      Name: _name,
-      Description: _description,
-      AiPrompt: _aiPrompt,
-      HasHelp: _hasHelp,
-      HelpOptions: _helpOptions,
-      HasRepl: _hasRepl,
-      ReplOptions: _replOptions,
-      HasConfiguration: _hasConfiguration,
-      Routes: _routes.ToImmutable(),
-      Behaviors: _behaviors.ToImmutable(),
-      Services: _services.ToImmutable(),
-      InterceptSite: _interceptSite);
+    return new AppModel
+    (
+      Name: Name,
+      Description: Description,
+      AiPrompt: AiPrompt,
+      HasHelp: HasHelp,
+      HelpOptions: HelpOptions,
+      HasRepl: HasRepl,
+      ReplOptions: ReplOptions,
+      HasConfiguration: HasConfiguration,
+      Routes: Routes.ToImmutable(),
+      Behaviors: Behaviors.ToImmutable(),
+      Services: Services.ToImmutable(),
+      InterceptSite: InterceptSite
+    );
   }
 
   /// <summary>
@@ -209,17 +209,17 @@ internal sealed class AppModelBuilder
   /// </summary>
   public void Reset()
   {
-    _name = null;
-    _description = null;
-    _aiPrompt = null;
-    _hasHelp = false;
-    _helpOptions = null;
-    _hasRepl = false;
-    _replOptions = null;
-    _hasConfiguration = false;
-    _routes = ImmutableArray.CreateBuilder<RouteDefinition>();
-    _behaviors = ImmutableArray.CreateBuilder<BehaviorDefinition>();
-    _services = ImmutableArray.CreateBuilder<ServiceDefinition>();
-    _interceptSite = null;
+    Name = null;
+    Description = null;
+    AiPrompt = null;
+    HasHelp = false;
+    HelpOptions = null;
+    HasRepl = false;
+    ReplOptions = null;
+    HasConfiguration = false;
+    Routes = ImmutableArray.CreateBuilder<RouteDefinition>();
+    Behaviors = ImmutableArray.CreateBuilder<BehaviorDefinition>();
+    Services = ImmutableArray.CreateBuilder<ServiceDefinition>();
+    InterceptSite = null;
   }
 }

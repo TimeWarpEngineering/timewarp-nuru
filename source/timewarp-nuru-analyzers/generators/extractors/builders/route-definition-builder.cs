@@ -9,31 +9,29 @@
 
 namespace TimeWarp.Nuru.Generators;
 
-using System.Collections.Immutable;
-
 /// <summary>
 /// Fluent builder for assembling RouteDefinition from pieces.
 /// Each piece may come from a different analysis phase.
 /// </summary>
 internal sealed class RouteDefinitionBuilder
 {
-  private string? _pattern;
-  private ImmutableArray<SegmentDefinition> _segments = [];
-  private string _messageType = "Unspecified";
-  private string? _description;
-  private HandlerDefinition? _handler;
-  private PipelineDefinition? _pipeline;
-  private ImmutableArray<string> _aliases = [];
-  private string? _groupPrefix;
-  private int _specificity;
-  private int _order;
+  private string? Pattern;
+  private ImmutableArray<SegmentDefinition> Segments = [];
+  private string MessageType = "Unspecified";
+  private string? Description;
+  private HandlerDefinition? Handler;
+  private PipelineDefinition? Pipeline;
+  private ImmutableArray<string> Aliases = [];
+  private string? GroupPrefix;
+  private int Specificity;
+  private int Order;
 
   /// <summary>
   /// Sets the original pattern string.
   /// </summary>
   public RouteDefinitionBuilder WithPattern(string pattern)
   {
-    _pattern = pattern;
+    Pattern = pattern;
     return this;
   }
 
@@ -43,7 +41,7 @@ internal sealed class RouteDefinitionBuilder
   /// </summary>
   public RouteDefinitionBuilder WithSegments(ImmutableArray<SegmentDefinition> segments)
   {
-    _segments = segments;
+    Segments = segments;
     return this;
   }
 
@@ -52,7 +50,7 @@ internal sealed class RouteDefinitionBuilder
   /// </summary>
   public RouteDefinitionBuilder WithMessageType(string messageType)
   {
-    _messageType = messageType;
+    MessageType = messageType;
     return this;
   }
 
@@ -61,7 +59,7 @@ internal sealed class RouteDefinitionBuilder
   /// </summary>
   public RouteDefinitionBuilder WithDescription(string? description)
   {
-    _description = description;
+    Description = description;
     return this;
   }
 
@@ -70,7 +68,7 @@ internal sealed class RouteDefinitionBuilder
   /// </summary>
   public RouteDefinitionBuilder WithHandler(HandlerDefinition handler)
   {
-    _handler = handler;
+    Handler = handler;
     return this;
   }
 
@@ -79,7 +77,7 @@ internal sealed class RouteDefinitionBuilder
   /// </summary>
   public RouteDefinitionBuilder WithPipeline(PipelineDefinition? pipeline)
   {
-    _pipeline = pipeline;
+    Pipeline = pipeline;
     return this;
   }
 
@@ -88,7 +86,7 @@ internal sealed class RouteDefinitionBuilder
   /// </summary>
   public RouteDefinitionBuilder WithAliases(ImmutableArray<string> aliases)
   {
-    _aliases = aliases;
+    Aliases = aliases;
     return this;
   }
 
@@ -97,7 +95,7 @@ internal sealed class RouteDefinitionBuilder
   /// </summary>
   public RouteDefinitionBuilder WithAlias(string alias)
   {
-    _aliases = _aliases.Add(alias);
+    Aliases = Aliases.Add(alias);
     return this;
   }
 
@@ -106,7 +104,7 @@ internal sealed class RouteDefinitionBuilder
   /// </summary>
   public RouteDefinitionBuilder WithGroupPrefix(string? prefix)
   {
-    _groupPrefix = prefix;
+    GroupPrefix = prefix;
     return this;
   }
 
@@ -115,7 +113,7 @@ internal sealed class RouteDefinitionBuilder
   /// </summary>
   public RouteDefinitionBuilder WithSpecificity(int specificity)
   {
-    _specificity = specificity;
+    Specificity = specificity;
     return this;
   }
 
@@ -124,7 +122,7 @@ internal sealed class RouteDefinitionBuilder
   /// </summary>
   public RouteDefinitionBuilder WithOrder(int order)
   {
-    _order = order;
+    Order = order;
     return this;
   }
 
@@ -134,28 +132,28 @@ internal sealed class RouteDefinitionBuilder
   /// <exception cref="InvalidOperationException">Thrown when required fields are missing.</exception>
   public RouteDefinition Build()
   {
-    if (_pattern is null)
+    if (Pattern is null)
     {
       throw new InvalidOperationException("Pattern is required. Call WithPattern() before Build().");
     }
 
-    if (_handler is null)
+    if (Handler is null)
     {
       throw new InvalidOperationException("Handler is required. Call WithHandler() before Build().");
     }
 
     return new RouteDefinition
     (
-      OriginalPattern: _pattern,
-      Segments: _segments,
-      MessageType: _messageType,
-      Description: _description,
-      Handler: _handler,
-      Pipeline: _pipeline,
-      Aliases: _aliases,
-      GroupPrefix: _groupPrefix,
-      ComputedSpecificity: _specificity,
-      Order: _order
+      OriginalPattern: Pattern,
+      Segments: Segments,
+      MessageType: MessageType,
+      Description: Description,
+      Handler: Handler,
+      Pipeline: Pipeline,
+      Aliases: Aliases,
+      GroupPrefix: GroupPrefix,
+      ComputedSpecificity: Specificity,
+      Order: Order
     );
   }
 }

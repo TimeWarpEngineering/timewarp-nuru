@@ -2,31 +2,29 @@
 
 namespace TimeWarp.Nuru.Generators;
 
-using System.Collections.Immutable;
-
 /// <summary>
 /// Fluent builder for constructing HandlerDefinition.
 /// Used to build handler info extracted from delegates or IRequest types.
 /// </summary>
 internal sealed class HandlerDefinitionBuilder
 {
-  private HandlerKind _kind = HandlerKind.Delegate;
-  private string? _fullTypeName;
-  private string? _methodName;
-  private readonly List<ParameterBinding> _parameters = [];
-  private HandlerReturnType _returnType = HandlerReturnType.Void;
-  private bool _isAsync;
-  private bool _requiresCancellationToken;
-  private bool _requiresServiceProvider;
+  private HandlerKind Kind = HandlerKind.Delegate;
+  private string? FullTypeName;
+  private string? MethodName;
+  private readonly List<ParameterBinding> Parameters = [];
+  private HandlerReturnType ReturnType = HandlerReturnType.Void;
+  private bool IsAsync;
+  private bool RequiresCancellationToken;
+  private bool RequiresServiceProvider;
 
   /// <summary>
   /// Sets this as a delegate handler.
   /// </summary>
   public HandlerDefinitionBuilder AsDelegate()
   {
-    _kind = HandlerKind.Delegate;
-    _fullTypeName = null;
-    _methodName = null;
+    Kind = HandlerKind.Delegate;
+    FullTypeName = null;
+    MethodName = null;
     return this;
   }
 
@@ -35,11 +33,11 @@ internal sealed class HandlerDefinitionBuilder
   /// </summary>
   public HandlerDefinitionBuilder AsMediator(string requestTypeName)
   {
-    _kind = HandlerKind.Mediator;
-    _fullTypeName = requestTypeName;
-    _isAsync = true;
-    _requiresCancellationToken = true;
-    _requiresServiceProvider = true;
+    Kind = HandlerKind.Mediator;
+    FullTypeName = requestTypeName;
+    IsAsync = true;
+    RequiresCancellationToken = true;
+    RequiresServiceProvider = true;
     return this;
   }
 
@@ -48,21 +46,23 @@ internal sealed class HandlerDefinitionBuilder
   /// </summary>
   public HandlerDefinitionBuilder AsMethod(string typeName, string methodName)
   {
-    _kind = HandlerKind.Method;
-    _fullTypeName = typeName;
-    _methodName = methodName;
+    Kind = HandlerKind.Method;
+    FullTypeName = typeName;
+    MethodName = methodName;
     return this;
   }
 
   /// <summary>
   /// Adds a parameter bound from a route segment.
   /// </summary>
-  public HandlerDefinitionBuilder WithParameter(
+  public HandlerDefinitionBuilder WithParameter
+  (
     string name,
     string typeName,
     string? segmentName = null,
     bool isOptional = false,
-    string? defaultValue = null)
+    string? defaultValue = null
+  )
   {
     // Resolve the type name to full form
     (string fullTypeName, _, _, _) = ResolveTypeName(typeName);
@@ -70,13 +70,18 @@ internal sealed class HandlerDefinitionBuilder
     // Determine if conversion is needed (non-string types need conversion from string input)
     bool requiresConversion = !fullTypeName.Equals("global::System.String", StringComparison.Ordinal);
 
-    _parameters.Add(ParameterBinding.FromParameter(
-      parameterName: name,
-      typeName: fullTypeName,
-      segmentName: segmentName ?? name,
-      isOptional: isOptional,
-      defaultValue: defaultValue,
-      requiresConversion: requiresConversion));
+    Parameters.Add
+    (
+      ParameterBinding.FromParameter
+      (
+        parameterName: name,
+        typeName: fullTypeName,
+        segmentName: segmentName ?? name,
+        isOptional: isOptional,
+        defaultValue: defaultValue,
+        requiresConversion: requiresConversion
+      )
+    );
 
     return this;
   }
@@ -84,13 +89,15 @@ internal sealed class HandlerDefinitionBuilder
   /// <summary>
   /// Adds a parameter bound from an option.
   /// </summary>
-  public HandlerDefinitionBuilder WithOptionParameter(
+  public HandlerDefinitionBuilder WithOptionParameter
+  (
     string name,
     string typeName,
     string optionName,
     bool isOptional = false,
     bool isArray = false,
-    string? defaultValue = null)
+    string? defaultValue = null
+  )
   {
     // Resolve the type name to full form
     (string fullTypeName, _, _, _) = ResolveTypeName(typeName);
@@ -98,14 +105,19 @@ internal sealed class HandlerDefinitionBuilder
     bool requiresConversion = !fullTypeName.Equals("global::System.String", StringComparison.Ordinal)
                            && !fullTypeName.Equals("global::System.Boolean", StringComparison.Ordinal);
 
-    _parameters.Add(ParameterBinding.FromOption(
-      parameterName: name,
-      typeName: fullTypeName,
-      optionName: optionName,
-      isOptional: isOptional,
-      isArray: isArray,
-      defaultValue: defaultValue,
-      requiresConversion: requiresConversion));
+    Parameters.Add
+    (
+      ParameterBinding.FromOption
+      (
+        parameterName: name,
+        typeName: fullTypeName,
+        optionName: optionName,
+        isOptional: isOptional,
+        isArray: isArray,
+        defaultValue: defaultValue,
+        requiresConversion: requiresConversion
+      )
+    );
 
     return this;
   }
@@ -115,7 +127,7 @@ internal sealed class HandlerDefinitionBuilder
   /// </summary>
   public HandlerDefinitionBuilder WithFlagParameter(string name, string optionName)
   {
-    _parameters.Add(ParameterBinding.FromFlag(name, optionName));
+    Parameters.Add(ParameterBinding.FromFlag(name, optionName));
     return this;
   }
 
@@ -124,8 +136,8 @@ internal sealed class HandlerDefinitionBuilder
   /// </summary>
   public HandlerDefinitionBuilder WithCancellationToken(string name = "cancellationToken")
   {
-    _requiresCancellationToken = true;
-    _parameters.Add(ParameterBinding.ForCancellationToken(name));
+    RequiresCancellationToken = true;
+    Parameters.Add(ParameterBinding.ForCancellationToken(name));
     return this;
   }
 
@@ -134,17 +146,22 @@ internal sealed class HandlerDefinitionBuilder
   /// </summary>
   public HandlerDefinitionBuilder WithService(string name, string typeName)
   {
-    _requiresServiceProvider = true;
-    _parameters.Add(new ParameterBinding(
-      ParameterName: name,
-      ParameterTypeName: typeName,
-      Source: BindingSource.Service,
-      SourceName: typeName,
-      IsOptional: false,
-      IsArray: false,
-      DefaultValueExpression: null,
-      RequiresConversion: false,
-      ConverterTypeName: null));
+    RequiresServiceProvider = true;
+    Parameters.Add
+    (
+      new ParameterBinding
+      (
+        ParameterName: name,
+        ParameterTypeName: typeName,
+        Source: BindingSource.Service,
+        SourceName: typeName,
+        IsOptional: false,
+        IsArray: false,
+        DefaultValueExpression: null,
+        RequiresConversion: false,
+        ConverterTypeName: null
+      )
+    );
     return this;
   }
 
@@ -153,8 +170,8 @@ internal sealed class HandlerDefinitionBuilder
   /// </summary>
   public HandlerDefinitionBuilder ReturnsVoid()
   {
-    _returnType = HandlerReturnType.Void;
-    _isAsync = false;
+    ReturnType = HandlerReturnType.Void;
+    IsAsync = false;
     return this;
   }
 
@@ -163,8 +180,8 @@ internal sealed class HandlerDefinitionBuilder
   /// </summary>
   public HandlerDefinitionBuilder ReturnsTask()
   {
-    _returnType = HandlerReturnType.Task;
-    _isAsync = true;
+    ReturnType = HandlerReturnType.Task;
+    IsAsync = true;
     return this;
   }
 
@@ -173,8 +190,8 @@ internal sealed class HandlerDefinitionBuilder
   /// </summary>
   public HandlerDefinitionBuilder ReturnsTaskOf(string fullTypeName, string shortTypeName)
   {
-    _returnType = HandlerReturnType.TaskOf(fullTypeName, shortTypeName);
-    _isAsync = true;
+    ReturnType = HandlerReturnType.TaskOf(fullTypeName, shortTypeName);
+    IsAsync = true;
     return this;
   }
 
@@ -183,8 +200,8 @@ internal sealed class HandlerDefinitionBuilder
   /// </summary>
   public HandlerDefinitionBuilder Returns(string fullTypeName, string shortTypeName)
   {
-    _returnType = HandlerReturnType.Of(fullTypeName, shortTypeName);
-    _isAsync = false;
+    ReturnType = HandlerReturnType.Of(fullTypeName, shortTypeName);
+    IsAsync = false;
     return this;
   }
 
@@ -198,8 +215,8 @@ internal sealed class HandlerDefinitionBuilder
     {
       string innerType = typeName[5..^1]; // Extract T from Task<T>
       (string innerFull, string innerShort, _, _) = ResolveTypeName(innerType);
-      _returnType = HandlerReturnType.TaskOf(innerFull, innerShort);
-      _isAsync = true;
+      ReturnType = HandlerReturnType.TaskOf(innerFull, innerShort);
+      IsAsync = true;
       return this;
     }
 
@@ -207,24 +224,24 @@ internal sealed class HandlerDefinitionBuilder
 
     if (isVoid)
     {
-      _returnType = HandlerReturnType.Void;
-      _isAsync = false;
+      ReturnType = HandlerReturnType.Void;
+      IsAsync = false;
     }
     else if (isAsync && shortName == "Task")
     {
-      _returnType = HandlerReturnType.Task;
-      _isAsync = true;
+      ReturnType = HandlerReturnType.Task;
+      IsAsync = true;
     }
     else if (isAsync)
     {
       // This branch shouldn't be hit anymore for Task<T> but keep for safety
-      _returnType = HandlerReturnType.TaskOf(fullName, shortName);
-      _isAsync = true;
+      ReturnType = HandlerReturnType.TaskOf(fullName, shortName);
+      IsAsync = true;
     }
     else
     {
-      _returnType = HandlerReturnType.Of(fullName, shortName);
-      _isAsync = false;
+      ReturnType = HandlerReturnType.Of(fullName, shortName);
+      IsAsync = false;
     }
 
     return this;
@@ -235,15 +252,17 @@ internal sealed class HandlerDefinitionBuilder
   /// </summary>
   public HandlerDefinition Build()
   {
-    return new HandlerDefinition(
-      HandlerKind: _kind,
-      FullTypeName: _fullTypeName,
-      MethodName: _methodName,
-      Parameters: [.. _parameters],
-      ReturnType: _returnType,
-      IsAsync: _isAsync,
-      RequiresCancellationToken: _requiresCancellationToken,
-      RequiresServiceProvider: _requiresServiceProvider);
+    return new HandlerDefinition
+    (
+      HandlerKind: Kind,
+      FullTypeName: FullTypeName,
+      MethodName: MethodName,
+      Parameters: [.. Parameters],
+      ReturnType: ReturnType,
+      IsAsync: IsAsync,
+      RequiresCancellationToken: RequiresCancellationToken,
+      RequiresServiceProvider: RequiresServiceProvider
+    );
   }
 
   /// <summary>

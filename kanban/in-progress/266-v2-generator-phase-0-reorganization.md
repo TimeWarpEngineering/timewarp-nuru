@@ -47,11 +47,11 @@ Reorganize the `timewarp-nuru-analyzers` project to establish the new folder str
 - [x] Remove empty `analyzers/emitters/` folder
 
 ### Commit 0.6: Move old generators to reference-only/
-- [ ] Move `analyzers/nuru-v2-generator.cs`
-- [ ] Move `analyzers/nuru-attributed-route-generator/` folder
-- [ ] Move `analyzers/nuru-delegate-command-generator/` folder
-- [ ] Move `analyzers/nuru-invoker-generator/` folder
-- [ ] Move `analyzers/generator-helpers.cs`
+- [x] Move `analyzers/nuru-v2-generator.cs`
+- [x] Move `analyzers/nuru-attributed-route-generator/` folder
+- [x] Move `analyzers/nuru-delegate-command-generator/` folder
+- [x] Move `analyzers/nuru-invoker-generator/` folder
+- [x] Move `analyzers/generator-helpers.cs`
 
 ### Commit 0.7: Update global-usings and verify build
 - [ ] Update `global-usings.cs` for new namespace

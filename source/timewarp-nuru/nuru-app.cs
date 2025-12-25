@@ -6,9 +6,7 @@ namespace TimeWarp.Nuru;
 /// </summary>
 public class NuruApp : NuruCoreApp
 {
-  public NuruApp(IServiceProvider serviceProvider) : base(serviceProvider)
-  {
-  }
+  public NuruApp() : base()  { }
 
   /// <summary>
   /// Runs the application and automatically flushes telemetry on completion.
@@ -75,10 +73,4 @@ public class NuruApp : NuruCoreApp
     // Add all extensions (telemetry, REPL, completion) with provided options
     return builder.UseAllExtensions(nuruAppOptions);
   }
-
-  public static new NuruCoreAppBuilder CreateSlimBuilder(string[]? args = null, NuruCoreApplicationOptions? options = null)
-    => NuruCoreApp.CreateSlimBuilder(args, options);
-
-  public static new NuruCoreAppBuilder CreateEmptyBuilder(string[]? args = null, NuruCoreApplicationOptions? options = null)
-    => NuruCoreApp.CreateEmptyBuilder(args, options);
 }

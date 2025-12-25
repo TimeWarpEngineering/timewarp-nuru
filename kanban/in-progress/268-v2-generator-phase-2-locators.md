@@ -34,11 +34,56 @@ Create all locator classes that find specific syntax elements in consumer code. 
 - [x] `done-locator.cs` - Find `.Done()` calls
 
 ### Commit 2.2: Create attributed route locators (4 files)
-- [ ] `nuru-route-attribute-locator.cs` - Find `[NuruRoute]` classes
-- [ ] `nuru-route-group-attribute-locator.cs` - Find `[NuruRouteGroup]` base classes
-- [ ] `parameter-attribute-locator.cs` - Find `[Parameter]` properties
-- [ ] `option-attribute-locator.cs` - Find `[Option]` properties
-- [ ] Verify build succeeds
+- [x] `nuru-route-attribute-locator.cs` - Find `[NuruRoute]` classes
+- [x] `nuru-route-group-attribute-locator.cs` - Find `[NuruRouteGroup]` base classes
+- [x] `parameter-attribute-locator.cs` - Find `[Parameter]` properties
+- [x] `option-attribute-locator.cs` - Find `[Option]` properties
+- [x] Verify build succeeds
+
+## Results
+
+Phase 2 completed successfully with 2 commits:
+
+1. **Commit 2.1:** Created 21 fluent DSL locators covering all builder methods
+2. **Commit 2.2:** Created 4 attributed route locators for class/property attributes
+
+### Locator Summary
+```
+generators/locators/ (25 files)
+├── Fluent DSL Locators (21)
+│   ├── run-async-locator.cs         # Entry point for interception
+│   ├── create-builder-locator.cs    # Builder chain start
+│   ├── build-locator.cs             # Builder chain end
+│   ├── map-locator.cs               # Route definitions
+│   ├── with-handler-locator.cs      # Handler lambdas
+│   ├── with-description-locator.cs  # Help text
+│   ├── with-option-locator.cs       # Command options
+│   ├── with-alias-locator.cs        # Route aliases
+│   ├── with-group-prefix-locator.cs # Route groups
+│   ├── as-query-locator.cs          # Query marker
+│   ├── as-command-locator.cs        # Command marker
+│   ├── as-idempotent-command-locator.cs # Idempotent marker
+│   ├── add-help-locator.cs          # Help feature
+│   ├── add-repl-locator.cs          # REPL feature
+│   ├── add-behavior-locator.cs      # Pipeline behaviors
+│   ├── add-configuration-locator.cs # Configuration
+│   ├── configure-services-locator.cs # DI services
+│   ├── use-terminal-locator.cs      # Terminal config
+│   ├── with-name-locator.cs         # App name
+│   ├── with-ai-prompt-locator.cs    # AI prompt
+│   └── done-locator.cs              # Scope terminator
+└── Attributed Route Locators (4)
+    ├── nuru-route-attribute-locator.cs       # [NuruRoute] classes
+    ├── nuru-route-group-attribute-locator.cs # [NuruRouteGroup] bases
+    ├── parameter-attribute-locator.cs        # [Parameter] properties
+    └── option-attribute-locator.cs           # [Option] properties
+```
+
+### Technical Note
+Due to namespace conflict with `TimeWarp.Nuru.SyntaxNode` (from parsing project), all locators use `RoslynSyntaxNode` alias for `Microsoft.CodeAnalysis.SyntaxNode`.
+
+### Build Status
+- Analyzer project builds with 0 warnings, 0 errors
 
 ## Notes
 

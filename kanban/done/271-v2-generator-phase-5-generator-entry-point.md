@@ -240,3 +240,51 @@ Consider emitting diagnostics for:
 - Use `static` lambdas to avoid allocations
 - Filter early with `Where` to reduce work
 - Make model types equatable for incremental caching
+
+## Results
+
+**Completed:** 2024-12-25
+
+### File Created
+
+`source/timewarp-nuru-analyzers/generators/nuru-generator.cs` (136 lines)
+
+### Implementation Summary
+
+The `NuruGenerator` is an incremental source generator with a 6-step pipeline:
+
+1. **Locate RunAsync calls** - Uses `CreateSyntaxProvider` with `RunAsyncLocator.IsPotentialMatch` and `RunAsyncLocator.Extract`
+2. **Locate attributed routes** - Uses `ForAttributeWithMetadataName` for `[NuruRoute]` classes
+3. **Collect attributed routes** - Gathers all attributed routes into an `ImmutableArray`
+4. **Extract AppModel** - Uses `AppExtractor.Extract` for each RunAsync call site
+5. **Combine models** - Merges fluent routes with attributed routes using `CombineModels()`
+6. **Emit code** - Calls `InterceptorEmitter.Emit()` and registers output as `NuruGenerated.g.cs`
+
+### Key Design Decisions
+
+1. **First RunAsync only** - Only the first `RunAsync` call site is used; multiple calls are not supported
+2. **Static lambdas** - All lambdas use `static` modifier to avoid allocations
+3. **Early filtering** - Uses `Where(static x => x is not null)` to filter early
+4. **Immutable merging** - Uses record `with` expression: `baseModel with { Routes = mergedRoutes }`
+5. **Graceful null handling** - Returns `null` (no output) if no `RunAsync` call found
+
+### Build Status
+
+✅ Full solution builds with 0 warnings, 0 errors
+
+### Pipeline Integration
+
+The generator successfully wires together all Phase 1-4 components:
+
+| Phase | Component | Usage in Generator |
+|-------|-----------|-------------------|
+| Phase 1 | Models | `AppModel`, `RouteDefinition`, `InterceptSiteModel` |
+| Phase 2 | Locators | `RunAsyncLocator.IsPotentialMatch`, `RunAsyncLocator.Extract` |
+| Phase 3 | Extractors | `AppExtractor.Extract`, `AttributedRouteExtractor.Extract` |
+| Phase 4 | Emitters | `InterceptorEmitter.Emit()` |
+
+### Next Steps
+
+- Phase 6: Unit tests for the generator
+- Consider adding `UseNewGen` MSBuild flag for conditional generation
+- Add diagnostic reporting for edge cases

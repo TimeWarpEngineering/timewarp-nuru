@@ -11,12 +11,12 @@ Create the new model types needed for V2 generator that don't exist in the curre
 ## Checklist
 
 ### Commit 1.1: Create new model files
-- [ ] Create `generators/models/app-model.cs`
-- [ ] Create `generators/models/intercept-site-model.cs`
-- [ ] Create `generators/models/help-model.cs`
-- [ ] Create `generators/models/repl-model.cs`
-- [ ] Create `generators/models/behavior-definition.cs`
-- [ ] Create `generators/models/service-definition.cs`
+- [x] Create `generators/models/app-model.cs`
+- [x] Create `generators/models/intercept-site-model.cs`
+- [x] Create `generators/models/help-model.cs`
+- [x] Create `generators/models/repl-model.cs`
+- [x] Create `generators/models/behavior-definition.cs`
+- [x] Create `generators/models/service-definition.cs`
 
 ### Commit 1.2: Create AppModelBuilder
 - [ ] Create `generators/extractors/builders/app-model-builder.cs`

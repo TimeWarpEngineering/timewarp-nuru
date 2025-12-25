@@ -22,7 +22,10 @@
     <ProjectReference Include="../timewarp-nuru-core/timewarp-nuru-core.csproj" />
     <ProjectReference Include="../timewarp-nuru-logging/timewarp-nuru-logging.csproj" />
     <ProjectReference Include="../timewarp-nuru-telemetry/timewarp-nuru-telemetry.csproj" />
-    <ProjectReference Include="../timewarp-nuru-repl/timewarp-nuru-repl.csproj" />
+    <!-- TODO Update REPL package to support V2 source generator
+     <ProjectReference Include="../timewarp-nuru-repl/timewarp-nuru-repl.csproj" /> 
+    -->
+    
     <ProjectReference Include="../timewarp-nuru-completion/timewarp-nuru-completion.csproj" />
     <!-- Include analyzers and source generators for AOT-compatible routing -->
     <ProjectReference Include="../timewarp-nuru-analyzers/timewarp-nuru-analyzers.csproj">

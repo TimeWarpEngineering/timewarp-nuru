@@ -54,7 +54,8 @@ public static partial class NuruAppBuilderExtensions
     // Add REPL support unless disabled
     if (!options.DisableRepl)
     {
-      builder.AddReplSupport(options.ConfigureRepl);
+      // TODO Update REPL package to support V2 source generator
+      // builder.AddReplSupport(options.ConfigureRepl);
     }
 
     // Add dynamic shell completion unless disabled
@@ -66,7 +67,8 @@ public static partial class NuruAppBuilderExtensions
     // Add interactive route unless disabled
     if (!options.DisableInteractiveRoute)
     {
-      builder.AddInteractiveRoute(options.InteractiveRoutePatterns);
+      // TODO Update REPL package to support V2 source generator
+      // builder.AddInteractiveRoute(options.InteractiveRoutePatterns);
     }
 
     // Add version route unless disabled
@@ -84,7 +86,7 @@ public static partial class NuruAppBuilderExtensions
     // Add capabilities route unless disabled
     if (!options.DisableCapabilitiesRoute)
     {
-      builder.AddCapabilitiesRoute();
+      // builder.AddCapabilitiesRoute();
     }
 
     return builder;

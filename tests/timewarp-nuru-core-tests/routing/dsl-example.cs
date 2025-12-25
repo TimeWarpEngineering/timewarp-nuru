@@ -16,7 +16,7 @@ using TestTerminal terminal = new();
 // This should become dead code once the generator is working correctly
 // and the generated code is used at runtime instead.
 // The generator looks for this syntax to extract route and handler info.
-// Note: This code is never executed at runtime when USE_NEW_GEN is defined.
+// Note: This code is never executed at runtime.
 // It only exists to be parsed by the source generator.
 // we expect the linker to remove it entirely from the final binary.
 // AOT compilers should be able to eliminate this code path.

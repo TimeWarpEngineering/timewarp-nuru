@@ -220,7 +220,7 @@ public sealed class CompiledRoute
     }
 
     // Extract parameters
-    Dictionary<string, object> parameters = new();
+    Dictionary<string, object> parameters = [];
     foreach (ParameterExtractor extractor in ParameterExtractors)
     {
       string rawValue = args[extractor.Position];

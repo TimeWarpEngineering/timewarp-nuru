@@ -22,25 +22,9 @@ public class EndpointCollection : IEnumerable<Endpoint>
   public void Add(Endpoint endpoint)
 #pragma warning restore CA1822
   {
-#if !USE_NEW_GEN
-    ArgumentNullException.ThrowIfNull(endpoint);
-
-    // Check for duplicate routes
-    Endpoint? existingRoute = EndpointsList.FirstOrDefault(e =>
-              e.RoutePattern.Equals(endpoint.RoutePattern, StringComparison.OrdinalIgnoreCase));
-
-    if (existingRoute is not null)
-    {
-      // Warn about duplicate route
-      NuruConsole.Default.WriteErrorLine($"Warning: Duplicate route pattern '{endpoint.RoutePattern}' detected. The new handler will override the previous one.");
-      EndpointsList.Remove(existingRoute);
-    }
-
-    EndpointsList.Add(endpoint);
-#else
     // V2: Fluent API is syntax for generator only, don't add at runtime
+    // TODO: Remove this method entirely once V2 is done
     _ = endpoint; // Suppress unused parameter warning
-#endif
   }
 
   /// <summary>

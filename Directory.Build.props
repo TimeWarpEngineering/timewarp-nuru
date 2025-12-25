@@ -32,12 +32,6 @@
     <Compile Remove="$(CompilerGeneratedFilesOutputPath)/**/*.cs" />
   </ItemGroup>
 
-  <!-- Toggle for V2 source generators -->
-  <PropertyGroup Label="Source Generator Toggle">
-    <UseNewGen>true</UseNewGen>
-    <DefineConstants Condition="'$(UseNewGen)' == 'true'">$(DefineConstants);USE_NEW_GEN</DefineConstants>
-  </PropertyGroup>
-
   <!-- C# Interceptors (for source generators) -->
   <PropertyGroup Label="Interceptors">
     <!-- Enable interceptors in the TimeWarp.Nuru.Generated namespace -->
@@ -69,7 +63,7 @@
     <!-- CA1724: Type name conflicts (acceptable in this context) -->
     <!-- CA1812: False positives for DI-instantiated classes -->
     <!-- IL2026, IL2067, IL2070, IL2075, IL3050, IL2104, IL3053: AOT warnings (not yet implemented) -->
-    <NoWarn>$(NoWarn);CA1014;CA1724;CA1812;IL2026;IL2067;IL2070;IL2075;IL3050;IL2104;IL3053</NoWarn>
+    <NoWarn>$(NoWarn);CA1014;CA1724;CA1812;IL2026;IL2067;IL2070;IL2075;IL3050;IL2104;IL3053;IDE0290</NoWarn>
   </PropertyGroup>
 
   <!-- Code analyzers applied to all projects -->

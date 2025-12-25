@@ -73,14 +73,14 @@ Follow `documentation/developer/standards/csharp-coding.md`:
 ## Checklist
 
 ### Commit 5.1: Create NuruGenerator
-- [ ] Create `generators/nuru-generator.cs`
-- [ ] Implement `IIncrementalGenerator.Initialize`
-- [ ] Wire up `RunAsyncLocator` as syntax provider
-- [ ] Wire up attributed route detection via `ForAttributeWithMetadataName`
-- [ ] Combine fluent and attributed routes
-- [ ] Call `InterceptorEmitter` to produce output
-- [ ] Register source output with `ctx.AddSource()`
-- [ ] Verify build succeeds
+- [x] Create `generators/nuru-generator.cs`
+- [x] Implement `IIncrementalGenerator.Initialize`
+- [x] Wire up `RunAsyncLocator` as syntax provider
+- [x] Wire up attributed route detection via `ForAttributeWithMetadataName`
+- [x] Combine fluent and attributed routes
+- [x] Call `InterceptorEmitter` to produce output
+- [x] Register source output with `ctx.AddSource()`
+- [x] Verify build succeeds
 
 ## Detailed Design
 

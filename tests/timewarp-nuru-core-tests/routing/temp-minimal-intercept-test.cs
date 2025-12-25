@@ -213,6 +213,70 @@ namespace TimeWarp.Nuru.Tests.Generator.V2.Minimal
 
       await Task.CompletedTask;
     }
+
+    // ========================================================================
+    // Commit 6.3: Multiple Routes and Groups Tests
+    // ========================================================================
+
+    /// <summary>
+    /// Test route specificity - more specific routes should match first.
+    /// </summary>
+    public static async Task Should_match_more_specific_route_first()
+    {
+      // Arrange
+      using TestTerminal terminal = new();
+
+      NuruCoreApp app = NuruApp.CreateBuilder([])
+        .UseTerminal(terminal)
+        .Map("deploy {env}")
+          .WithHandler((string env) => $"Deploying to {env}")
+          .AsCommand()
+          .Done()
+        .Map("deploy prod")
+          .WithHandler(() => "Deploying to PRODUCTION with extra safety checks")
+          .AsCommand()
+          .Done()
+        .Build();
+
+      // Act - "deploy prod" should match the literal route, not the parameterized one
+      int exitCode = await app.RunAsync(["deploy", "prod"]);
+
+      // Assert
+      exitCode.ShouldBe(0);
+      terminal.OutputContains("PRODUCTION").ShouldBeTrue();
+
+      await Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Test that a literal route vs parameterized route both work.
+    /// </summary>
+    public static async Task Should_fallback_to_parameterized_route()
+    {
+      // Arrange
+      using TestTerminal terminal = new();
+
+      NuruCoreApp app = NuruApp.CreateBuilder([])
+        .UseTerminal(terminal)
+        .Map("deploy prod")
+          .WithHandler(() => "Deploying to PRODUCTION")
+          .AsCommand()
+          .Done()
+        .Map("deploy {env}")
+          .WithHandler((string env) => $"Deploying to {env}")
+          .AsCommand()
+          .Done()
+        .Build();
+
+      // Act - "deploy staging" should match the parameterized route
+      int exitCode = await app.RunAsync(["deploy", "staging"]);
+
+      // Assert
+      exitCode.ShouldBe(0);
+      terminal.OutputContains("Deploying to staging").ShouldBeTrue();
+
+      await Task.CompletedTask;
+    }
   }
 
 } // namespace TimeWarp.Nuru.Tests.Generator.V2.Minimal

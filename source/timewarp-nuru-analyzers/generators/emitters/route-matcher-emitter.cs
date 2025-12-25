@@ -42,13 +42,16 @@ internal static class RouteMatcherEmitter
   /// </summary>
   private static void EmitSimpleMatch(StringBuilder sb, RouteDefinition route, int routeIndex)
   {
-    string pattern = BuildListPattern(route);
+    string pattern = BuildListPattern(route, routeIndex);
 
     sb.AppendLine(CultureInfo.InvariantCulture, $"    if (args is {pattern})");
     sb.AppendLine("    {");
 
+    // Emit variable aliases (from route-unique names to handler-expected names)
+    EmitVariableAliases(sb, route, routeIndex, indent: 6);
+
     // Emit type conversions for typed parameters
-    EmitTypeConversions(sb, route, indent: 6);
+    EmitTypeConversions(sb, route, routeIndex, indent: 6);
 
     // Emit handler invocation
     HandlerInvokerEmitter.Emit(sb, route, routeIndex, indent: 6);
@@ -93,11 +96,34 @@ internal static class RouteMatcherEmitter
   }
 
   /// <summary>
+  /// Emits variable aliases from route-unique names to handler-expected names.
+  /// This is needed for untyped string parameters.
+  /// </summary>
+  private static void EmitVariableAliases(StringBuilder sb, RouteDefinition route, int routeIndex, int indent)
+  {
+    string indentStr = new(' ', indent);
+
+    foreach (ParameterDefinition param in route.Parameters)
+    {
+      // Skip typed parameters - they get aliases via type conversion
+      if (param.HasTypeConstraint)
+        continue;
+
+      string varName = param.CamelCaseName;
+      string uniqueVarName = $"__{varName}_{routeIndex}";
+
+      // Create alias from unique name to handler-expected name
+      sb.AppendLine(CultureInfo.InvariantCulture,
+        $"{indentStr}string {varName} = {uniqueVarName};");
+    }
+  }
+
+  /// <summary>
   /// Emits type conversion code for typed parameters.
-  /// Pattern matching captures typed params as strings with __str suffix.
+  /// Pattern matching captures typed params with route-unique names.
   /// This method creates the properly typed variable with the original name.
   /// </summary>
-  private static void EmitTypeConversions(StringBuilder sb, RouteDefinition route, int indent)
+  private static void EmitTypeConversions(StringBuilder sb, RouteDefinition route, int routeIndex, int indent)
   {
     string indentStr = new(' ', indent);
 
@@ -107,44 +133,44 @@ internal static class RouteMatcherEmitter
         continue;
 
       string varName = param.CamelCaseName;
-      string stringVarName = $"{varName}__str";
+      string uniqueVarName = $"__{varName}_{routeIndex}";
 
-      // Parse from the __str variable to create the typed variable with the original name
+      // Parse from the unique pattern variable to create the typed variable with the original name
       switch (param.TypeConstraint?.ToLowerInvariant())
       {
         case "int":
           sb.AppendLine(CultureInfo.InvariantCulture,
-            $"{indentStr}int {varName} = int.Parse({stringVarName}, System.Globalization.CultureInfo.InvariantCulture);");
+            $"{indentStr}int {varName} = int.Parse({uniqueVarName}, System.Globalization.CultureInfo.InvariantCulture);");
           break;
 
         case "long":
           sb.AppendLine(CultureInfo.InvariantCulture,
-            $"{indentStr}long {varName} = long.Parse({stringVarName}, System.Globalization.CultureInfo.InvariantCulture);");
+            $"{indentStr}long {varName} = long.Parse({uniqueVarName}, System.Globalization.CultureInfo.InvariantCulture);");
           break;
 
         case "double":
           sb.AppendLine(CultureInfo.InvariantCulture,
-            $"{indentStr}double {varName} = double.Parse({stringVarName}, System.Globalization.CultureInfo.InvariantCulture);");
+            $"{indentStr}double {varName} = double.Parse({uniqueVarName}, System.Globalization.CultureInfo.InvariantCulture);");
           break;
 
         case "decimal":
           sb.AppendLine(CultureInfo.InvariantCulture,
-            $"{indentStr}decimal {varName} = decimal.Parse({stringVarName}, System.Globalization.CultureInfo.InvariantCulture);");
+            $"{indentStr}decimal {varName} = decimal.Parse({uniqueVarName}, System.Globalization.CultureInfo.InvariantCulture);");
           break;
 
         case "bool":
           sb.AppendLine(CultureInfo.InvariantCulture,
-            $"{indentStr}bool {varName} = bool.Parse({stringVarName});");
+            $"{indentStr}bool {varName} = bool.Parse({uniqueVarName});");
           break;
 
         case "guid":
           sb.AppendLine(CultureInfo.InvariantCulture,
-            $"{indentStr}System.Guid {varName} = System.Guid.Parse({stringVarName});");
+            $"{indentStr}System.Guid {varName} = System.Guid.Parse({uniqueVarName});");
           break;
 
         case "datetime":
           sb.AppendLine(CultureInfo.InvariantCulture,
-            $"{indentStr}System.DateTime {varName} = System.DateTime.Parse({stringVarName}, System.Globalization.CultureInfo.InvariantCulture);");
+            $"{indentStr}System.DateTime {varName} = System.DateTime.Parse({uniqueVarName}, System.Globalization.CultureInfo.InvariantCulture);");
           break;
 
         default:
@@ -162,9 +188,9 @@ internal static class RouteMatcherEmitter
 
   /// <summary>
   /// Builds a C# list pattern string for simple matching.
-  /// Typed parameters use __str suffix so we can parse them to the correct type.
+  /// Uses route-unique variable names to avoid conflicts between routes.
   /// </summary>
-  private static string BuildListPattern(RouteDefinition route)
+  private static string BuildListPattern(RouteDefinition route, int routeIndex)
   {
     List<string> parts = [];
 
@@ -177,15 +203,14 @@ internal static class RouteMatcherEmitter
           break;
 
         case ParameterDefinition param when param.IsOptional:
-          // Optional parameters use pattern with default
-          string optVarName = param.HasTypeConstraint ? $"{param.CamelCaseName}__str" : param.CamelCaseName;
+          // Optional parameters use route-unique variable names
+          string optVarName = $"__{param.CamelCaseName}_{routeIndex}";
           parts.Add($"var {optVarName}");
           break;
 
         case ParameterDefinition param:
-          // Required parameters capture with var
-          // Typed parameters get __str suffix so we can parse them
-          string varName = param.HasTypeConstraint ? $"{param.CamelCaseName}__str" : param.CamelCaseName;
+          // Required parameters use route-unique variable names
+          string varName = $"__{param.CamelCaseName}_{routeIndex}";
           parts.Add($"var {varName}");
           break;
       }

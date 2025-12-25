@@ -352,3 +352,29 @@ This was specified in the design but never implemented in Phase 1 (models) or Ph
 - Route matching not yet emitting (only built-in flags work)
 - Need to complete lambda body emission in `HandlerInvokerEmitter`
 - Test with actual route handlers
+
+### Session 2024-12-26: V2 Runtime Cleanup
+
+**Problem:** With V2 interceptor pattern, NuruCoreApp no longer needs runtime routing infrastructure.
+
+**Changes Made:**
+
+1. **Removed USE_NEW_GEN toggle** - V2 is now the only path
+2. **Simplified NuruCoreApp** to minimal shell:
+   - Only `Terminal` property
+   - Stub `RunAsync()` for interceptor to replace
+3. **Deleted V1 runtime code:**
+   - `nuru-core-app.binding.cs`
+   - `nuru-core-app.execution.cs`
+   - `nuru-core-app.validation.cs`
+   - `lightweight-service-provider.cs`
+   - `nuru-app-builder-extensions.capabilities.cs`
+4. **Disabled REPL temporarily** - needs redesign for V2
+5. **Simplified Build()** - just returns `new NuruCoreApp(Terminal)`
+
+**Test Result:** First V2 test passed (`Should_intercept_single_route`)
+
+**Remaining Issues:**
+- Generator only intercepts first `RunAsync` call site (need to intercept all)
+- Routes not yet being emitted (only built-in flags work)
+- REPL needs redesign for V2 (separate task)

@@ -29,6 +29,7 @@ internal static class RunAsyncLocator
 
   /// <summary>
   /// Extracts the intercept site from a confirmed RunAsync call.
+  /// Uses the new .NET 10 / C# 14 InterceptableLocation API.
   /// </summary>
   public static InterceptSiteModel? Extract
   (
@@ -51,7 +52,7 @@ internal static class RunAsyncLocator
     if (containingType?.Name != "NuruCoreApp")
       return null;
 
-    Location location = memberAccess.Name.GetLocation();
-    return InterceptSiteModel.FromLocation(location);
+    // Use the new Roslyn API to get an InterceptableLocation
+    return InterceptSiteExtractor.Extract(context.SemanticModel, invocation);
   }
 }

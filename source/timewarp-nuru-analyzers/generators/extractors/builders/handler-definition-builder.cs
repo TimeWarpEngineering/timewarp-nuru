@@ -11,6 +11,8 @@ internal sealed class HandlerDefinitionBuilder
   private HandlerKind Kind = HandlerKind.Delegate;
   private string? FullTypeName;
   private string? MethodName;
+  private string? LambdaBodySource;
+  private bool IsExpressionBody = true;
   private readonly List<ParameterBinding> Parameters = [];
   private HandlerReturnType ReturnType = HandlerReturnType.Void;
   private bool IsAsync;
@@ -49,6 +51,18 @@ internal sealed class HandlerDefinitionBuilder
     Kind = HandlerKind.Method;
     FullTypeName = typeName;
     MethodName = methodName;
+    return this;
+  }
+
+  /// <summary>
+  /// Sets the lambda body source for delegate handlers.
+  /// </summary>
+  /// <param name="bodySource">The lambda body source text.</param>
+  /// <param name="isExpression">True for expression body, false for block body.</param>
+  public HandlerDefinitionBuilder WithLambdaBody(string bodySource, bool isExpression)
+  {
+    LambdaBodySource = bodySource;
+    IsExpressionBody = isExpression;
     return this;
   }
 
@@ -257,6 +271,8 @@ internal sealed class HandlerDefinitionBuilder
       HandlerKind: Kind,
       FullTypeName: FullTypeName,
       MethodName: MethodName,
+      LambdaBodySource: LambdaBodySource,
+      IsExpressionBody: IsExpressionBody,
       Parameters: [.. Parameters],
       ReturnType: ReturnType,
       IsAsync: IsAsync,

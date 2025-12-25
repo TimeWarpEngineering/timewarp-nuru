@@ -38,6 +38,13 @@
     <DefineConstants Condition="'$(UseNewGen)' == 'true'">$(DefineConstants);USE_NEW_GEN</DefineConstants>
   </PropertyGroup>
 
+  <!-- C# Interceptors (for source generators) -->
+  <PropertyGroup Label="Interceptors">
+    <!-- Enable interceptors in the TimeWarp.Nuru.Generated namespace -->
+    <!-- Note: Property name changed from InterceptorsPreviewNamespaces to InterceptorsNamespaces in .NET 10 -->
+    <InterceptorsNamespaces>$(InterceptorsNamespaces);TimeWarp.Nuru.Generated</InterceptorsNamespaces>
+  </PropertyGroup>
+
   <!-- Expose UseNewGen to source generators -->
   <ItemGroup Label="Compiler Visible Properties">
     <CompilerVisibleProperty Include="UseNewGen" />

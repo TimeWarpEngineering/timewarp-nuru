@@ -12,6 +12,9 @@
     <LangVersion>latest</LangVersion>
 
     <SuppressNETCoreSdkPreviewMessage>true</SuppressNETCoreSdkPreviewMessage>
+
+    <!-- Enable C# interceptors for the V2 source generator -->
+    <InterceptorsNamespaces>$(InterceptorsNamespaces);TimeWarp.Nuru.Generated</InterceptorsNamespaces>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="$(MSBuildThisFileDirectory)../../source/timewarp-nuru/timewarp-nuru.csproj" />

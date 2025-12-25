@@ -21,6 +21,7 @@ internal static class InterceptorEmitter
     StringBuilder sb = new();
 
     EmitHeader(sb);
+    EmitInterceptsLocationAttribute(sb);
     EmitNamespaceAndUsings(sb);
     EmitClassStart(sb);
     EmitInterceptsLocation(sb, model.InterceptSite);
@@ -29,6 +30,32 @@ internal static class InterceptorEmitter
     EmitClassEnd(sb, model);
 
     return sb.ToString();
+  }
+
+  /// <summary>
+  /// Emits the InterceptsLocationAttribute definition.
+  /// In .NET 10 / C# 14, interceptors use the new versioned constructor:
+  /// InterceptsLocationAttribute(int version, string data)
+  /// We use 'file' scope so it doesn't conflict with other generators that may define it.
+  /// </summary>
+  private static void EmitInterceptsLocationAttribute(StringBuilder sb)
+  {
+    sb.AppendLine("namespace System.Runtime.CompilerServices");
+    sb.AppendLine("{");
+    sb.AppendLine("  [global::System.AttributeUsage(global::System.AttributeTargets.Method, AllowMultiple = true)]");
+    sb.AppendLine("  file sealed class InterceptsLocationAttribute : global::System.Attribute");
+    sb.AppendLine("  {");
+    sb.AppendLine("    public InterceptsLocationAttribute(int version, string data)");
+    sb.AppendLine("    {");
+    sb.AppendLine("      Version = version;");
+    sb.AppendLine("      Data = data;");
+    sb.AppendLine("    }");
+    sb.AppendLine();
+    sb.AppendLine("    public int Version { get; }");
+    sb.AppendLine("    public string Data { get; }");
+    sb.AppendLine("  }");
+    sb.AppendLine("}");
+    sb.AppendLine();
   }
 
   /// <summary>
@@ -45,14 +72,19 @@ internal static class InterceptorEmitter
 
   /// <summary>
   /// Emits the namespace declaration and using statements.
+  /// Uses block-scoped namespace to be compatible with the InterceptsLocationAttribute
+  /// which is in a separate namespace block in the same file.
   /// </summary>
   private static void EmitNamespaceAndUsings(StringBuilder sb)
   {
-    sb.AppendLine("namespace TimeWarp.Nuru.Generated;");
+    sb.AppendLine("namespace TimeWarp.Nuru.Generated");
+    sb.AppendLine("{");
     sb.AppendLine();
-    sb.AppendLine("using System.Runtime.CompilerServices;");
-    sb.AppendLine("using System.Threading;");
-    sb.AppendLine("using System.Threading.Tasks;");
+    sb.AppendLine("using global::System.Reflection;");
+    sb.AppendLine("using global::System.Runtime.CompilerServices;");
+    sb.AppendLine("using global::System.Threading.Tasks;");
+    sb.AppendLine("using global::TimeWarp.Nuru;");
+    sb.AppendLine("using global::TimeWarp.Terminal;");
     sb.AppendLine();
   }
 
@@ -67,25 +99,25 @@ internal static class InterceptorEmitter
 
   /// <summary>
   /// Emits the [InterceptsLocation] attribute for the RunAsync call site.
+  /// Uses the new .NET 10 / C# 14 versioned encoding via InterceptableLocation.
   /// </summary>
   private static void EmitInterceptsLocation(StringBuilder sb, InterceptSiteModel site)
   {
-    // The InterceptsLocation attribute requires the file path, line, and character position
-    // Note: File paths need to use verbatim string literals to handle backslashes
-    sb.AppendLine(CultureInfo.InvariantCulture,
-      $"  [InterceptsLocation(@\"{EscapeString(site.FilePath)}\", line: {site.Line}, character: {site.Column})]");
+    // Use the Roslyn-generated attribute syntax which handles all encoding
+    // Format: [global::System.Runtime.CompilerServices.InterceptsLocationAttribute(version, "data")]
+    sb.AppendLine(CultureInfo.InvariantCulture, $"  {site.GetAttributeSyntax()}");
   }
 
   /// <summary>
   /// Emits the method signature for the intercepted RunAsync method.
+  /// Must match the original NuruCoreApp.RunAsync(string[] args) signature exactly.
   /// </summary>
   private static void EmitMethodSignature(StringBuilder sb)
   {
     sb.AppendLine("  public static async Task<int> RunAsync_Intercepted");
     sb.AppendLine("  (");
     sb.AppendLine("    this NuruCoreApp app,");
-    sb.AppendLine("    string[] args,");
-    sb.AppendLine("    CancellationToken cancellationToken = default");
+    sb.AppendLine("    string[] args");
     sb.AppendLine("  )");
     sb.AppendLine("  {");
   }
@@ -99,9 +131,11 @@ internal static class InterceptorEmitter
     EmitBuiltInFlags(sb, model);
 
     // Route matching - emit in specificity order (highest first)
+    int routeIndex = 0;
     foreach (RouteDefinition route in model.RoutesBySpecificity)
     {
-      RouteMatcherEmitter.Emit(sb, route);
+      RouteMatcherEmitter.Emit(sb, route, routeIndex);
+      routeIndex++;
     }
 
     // No match fallback
@@ -150,7 +184,7 @@ internal static class InterceptorEmitter
   private static void EmitNoMatch(StringBuilder sb)
   {
     sb.AppendLine("    // No route matched");
-    sb.AppendLine("    app.Terminal.WriteError(\"Unknown command. Use --help for usage.\");");
+    sb.AppendLine("    await app.Terminal.WriteErrorLineAsync(\"Unknown command. Use --help for usage.\").ConfigureAwait(false);");
     sb.AppendLine("    return 1;");
     sb.AppendLine("  }");
   }
@@ -166,19 +200,7 @@ internal static class InterceptorEmitter
     VersionEmitter.Emit(sb, model);
     sb.AppendLine();
     CapabilitiesEmitter.Emit(sb, model);
-    sb.AppendLine("}");
-  }
-
-  /// <summary>
-  /// Escapes a string for use in C# source code.
-  /// </summary>
-  private static string EscapeString(string value)
-  {
-    return value
-      .Replace("\\", "\\\\", StringComparison.Ordinal)
-      .Replace("\"", "\\\"", StringComparison.Ordinal)
-      .Replace("\n", "\\n", StringComparison.Ordinal)
-      .Replace("\r", "\\r", StringComparison.Ordinal)
-      .Replace("\t", "\\t", StringComparison.Ordinal);
+    sb.AppendLine("}"); // Close class
+    sb.AppendLine("}"); // Close namespace
   }
 }

@@ -1,31 +1,40 @@
-// Extracts intercept site information (file/line/column) for the interceptor attribute.
+// Extracts intercept site information for the interceptor attribute.
 //
-// The [InterceptsLocation] attribute requires exact file path, line, and column
-// of the method call to intercept. This extractor obtains that information from
-// Roslyn syntax locations.
+// In .NET 10 / C# 14, interceptors use the new InterceptableLocation API
+// which provides a versioned, opaque data encoding. This is more portable
+// across machines and more evolvable than the old file/line/column approach.
+//
+// See: https://github.com/dotnet/roslyn/issues/72133
 
 namespace TimeWarp.Nuru.Generators;
 
 /// <summary>
 /// Extracts intercept site information for generating [InterceptsLocation] attributes.
+/// Uses the new .NET 10 / C# 14 InterceptableLocation API.
 /// </summary>
 internal static class InterceptSiteExtractor
 {
   /// <summary>
-  /// Extracts the intercept site from a method invocation expression.
+  /// Extracts the intercept site from a method invocation expression using SemanticModel.
   /// </summary>
+  /// <param name="semanticModel">The semantic model for the syntax tree.</param>
   /// <param name="invocation">The invocation expression to intercept.</param>
-  /// <returns>The intercept site model with file path, line, and column.</returns>
-  public static InterceptSiteModel? Extract(InvocationExpressionSyntax invocation)
+  /// <returns>The intercept site model, or null if the call is not interceptable.</returns>
+  public static InterceptSiteModel? Extract(SemanticModel semanticModel, InvocationExpressionSyntax invocation)
   {
-    // Get the location of the method name (not the whole invocation)
-    // For app.RunAsync(), we want the location of "RunAsync"
-    Location? location = GetMethodNameLocation(invocation);
+    // Use the new Roslyn API to get an InterceptableLocation
+    // This returns null if the call cannot be intercepted
+    InterceptableLocation? interceptableLocation = semanticModel.GetInterceptableLocation(invocation);
 
+    if (interceptableLocation is null)
+      return null;
+
+    // Get location for diagnostics (file/line/column)
+    Location? location = GetMethodNameLocation(invocation);
     if (location is null)
       return null;
 
-    return InterceptSiteModel.FromLocation(location);
+    return InterceptSiteModel.FromInterceptableLocation(interceptableLocation, location);
   }
 
   /// <summary>
@@ -43,30 +52,12 @@ internal static class InterceptSiteExtractor
     if (context.Node is not InvocationExpressionSyntax invocation)
       return null;
 
-    return Extract(invocation);
-  }
-
-  /// <summary>
-  /// Extracts multiple intercept sites from an array of invocations.
-  /// </summary>
-  /// <param name="invocations">The invocation expressions to intercept.</param>
-  /// <returns>Array of intercept site models.</returns>
-  public static ImmutableArray<InterceptSiteModel> ExtractAll(IEnumerable<InvocationExpressionSyntax> invocations)
-  {
-    ImmutableArray<InterceptSiteModel>.Builder builder = ImmutableArray.CreateBuilder<InterceptSiteModel>();
-
-    foreach (InvocationExpressionSyntax invocation in invocations)
-    {
-      InterceptSiteModel? site = Extract(invocation);
-      if (site is not null)
-        builder.Add(site);
-    }
-
-    return builder.ToImmutable();
+    return Extract(context.SemanticModel, invocation);
   }
 
   /// <summary>
   /// Gets the location of the method name within an invocation expression.
+  /// Used for diagnostic purposes (human-readable file/line/column).
   /// </summary>
   private static Location? GetMethodNameLocation(InvocationExpressionSyntax invocation)
   {
@@ -81,19 +72,6 @@ internal static class InterceptSiteExtractor
       // Fallback to the whole expression
       _ => invocation.Expression.GetLocation()
     };
-  }
-
-  /// <summary>
-  /// Creates an intercept site from explicit file/line/column values.
-  /// Useful for testing or when the location is known from other sources.
-  /// </summary>
-  /// <param name="filePath">Absolute path to the source file.</param>
-  /// <param name="line">1-based line number.</param>
-  /// <param name="column">1-based column number.</param>
-  /// <returns>The intercept site model.</returns>
-  public static InterceptSiteModel Create(string filePath, int line, int column)
-  {
-    return new InterceptSiteModel(filePath, line, column);
   }
 
   /// <summary>
@@ -113,18 +91,6 @@ internal static class InterceptSiteExtractor
       return false;
 
     return true;
-  }
-
-  /// <summary>
-  /// Formats an intercept site for use in generated code.
-  /// Produces a string like: @"C:\path\to\file.cs", 10, 5
-  /// </summary>
-  /// <param name="site">The intercept site.</param>
-  /// <returns>Formatted string for code generation.</returns>
-  public static string FormatForGeneration(InterceptSiteModel site)
-  {
-    // Use verbatim string literal for the file path to handle backslashes
-    return $"@\"{site.FilePath}\", {site.Line}, {site.Column}";
   }
 
   /// <summary>

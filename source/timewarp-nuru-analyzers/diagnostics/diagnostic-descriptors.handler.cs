@@ -59,4 +59,17 @@ internal static partial class DiagnosticDescriptors
     defaultSeverity: DiagnosticSeverity.Warning,
     isEnabledByDefault: true,
     description: "Private methods cannot be called from generated Mediator handlers. The route will use the delegate invoker instead. To generate a Mediator handler, make the method internal or public.");
+
+  /// <summary>
+  /// NURU_H005: Handler parameter name doesn't match route segment.
+  /// Parameter names must match for generated code to compile correctly.
+  /// </summary>
+  public static readonly DiagnosticDescriptor ParameterNameMismatch = new(
+    id: "NURU_H005",
+    title: "Handler parameter name doesn't match route segment",
+    messageFormat: "Handler parameter '{0}' doesn't match any route segment; available segments: {1}",
+    category: HandlerCategory,
+    defaultSeverity: DiagnosticSeverity.Error,
+    isEnabledByDefault: true,
+    description: "Handler parameter names must match route segment names for the generated code to compile correctly. The lambda body is inlined in generated code and uses these variable names directly.");
 }

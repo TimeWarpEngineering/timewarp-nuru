@@ -168,11 +168,12 @@ internal sealed class AppModelBuilder
   }
 
   /// <summary>
-  /// Sets the intercept site from a Roslyn Location.
+  /// Sets the intercept site from a SemanticModel and InvocationExpression.
+  /// Uses the new .NET 10 / C# 14 InterceptableLocation API.
   /// </summary>
-  public AppModelBuilder WithInterceptSite(Location location)
+  public AppModelBuilder WithInterceptSite(SemanticModel semanticModel, InvocationExpressionSyntax invocation)
   {
-    InterceptSite = InterceptSiteModel.FromLocation(location);
+    InterceptSite = InterceptSiteExtractor.Extract(semanticModel, invocation);
     return this;
   }
 

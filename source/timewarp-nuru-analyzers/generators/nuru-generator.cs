@@ -64,6 +64,7 @@ public sealed class NuruGenerator : IIncrementalGenerator
       if (model is null)
         return;
 
+      // Emit the interceptor (includes InterceptsLocationAttribute definition)
       string source = InterceptorEmitter.Emit(model);
       ctx.AddSource("NuruGenerated.g.cs", source);
     });

@@ -7,6 +7,8 @@ namespace TimeWarp.Nuru.Generators;
 /// <param name="HandlerKind">The kind of handler (Delegate, Mediator, Method)</param>
 /// <param name="FullTypeName">Fully qualified type name for mediator handlers</param>
 /// <param name="MethodName">Method name for method-based handlers</param>
+/// <param name="LambdaBodySource">The lambda body source text for delegate handlers (expression or block)</param>
+/// <param name="IsExpressionBody">True if lambda uses expression body syntax, false for block body</param>
 /// <param name="Parameters">Parameters that need to be bound from the route</param>
 /// <param name="ReturnType">Information about the return type</param>
 /// <param name="IsAsync">Whether the handler is async (returns Task/ValueTask)</param>
@@ -16,6 +18,8 @@ internal sealed record HandlerDefinition(
   HandlerKind HandlerKind,
   string? FullTypeName,
   string? MethodName,
+  string? LambdaBodySource,
+  bool IsExpressionBody,
   ImmutableArray<ParameterBinding> Parameters,
   HandlerReturnType ReturnType,
   bool IsAsync,
@@ -25,16 +29,26 @@ internal sealed record HandlerDefinition(
   /// <summary>
   /// Creates a handler definition for a delegate-based handler.
   /// </summary>
+  /// <param name="parameters">Parameters that need to be bound from the route.</param>
+  /// <param name="returnType">Information about the return type.</param>
+  /// <param name="isAsync">Whether the handler is async.</param>
+  /// <param name="lambdaBodySource">The lambda body source text (expression or block).</param>
+  /// <param name="isExpressionBody">True for expression body, false for block body.</param>
+  /// <param name="requiresCancellationToken">Whether the handler accepts a CancellationToken.</param>
   public static HandlerDefinition ForDelegate(
     ImmutableArray<ParameterBinding> parameters,
     HandlerReturnType returnType,
     bool isAsync,
+    string? lambdaBodySource = null,
+    bool isExpressionBody = true,
     bool requiresCancellationToken = false)
   {
     return new HandlerDefinition(
       HandlerKind: HandlerKind.Delegate,
       FullTypeName: null,
       MethodName: null,
+      LambdaBodySource: lambdaBodySource,
+      IsExpressionBody: isExpressionBody,
       Parameters: parameters,
       ReturnType: returnType,
       IsAsync: isAsync,
@@ -54,6 +68,8 @@ internal sealed record HandlerDefinition(
       HandlerKind: HandlerKind.Mediator,
       FullTypeName: fullTypeName,
       MethodName: null,
+      LambdaBodySource: null,
+      IsExpressionBody: false,
       Parameters: parameters,
       ReturnType: returnType,
       IsAsync: true, // Mediator is always async
@@ -77,6 +93,8 @@ internal sealed record HandlerDefinition(
       HandlerKind: HandlerKind.Method,
       FullTypeName: fullTypeName,
       MethodName: methodName,
+      LambdaBodySource: null,
+      IsExpressionBody: false,
       Parameters: parameters,
       ReturnType: returnType,
       IsAsync: isAsync,

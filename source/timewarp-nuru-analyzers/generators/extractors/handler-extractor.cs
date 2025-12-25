@@ -56,13 +56,36 @@ internal static class HandlerExtractor
   {
     ImmutableArray<ParameterBinding>.Builder parameters = ImmutableArray.CreateBuilder<ParameterBinding>();
     bool hasCancellationToken = false;
+    bool requiresServiceProvider = false;
+
+    // Capture lambda body source
+    string? lambdaBodySource = null;
+    bool isExpressionBody = false;
+
+    if (lambda.Body is ExpressionSyntax expr)
+    {
+      lambdaBodySource = expr.ToFullString().Trim();
+      isExpressionBody = true;
+    }
+    else if (lambda.Body is BlockSyntax block)
+    {
+      lambdaBodySource = block.ToFullString();
+      isExpressionBody = false;
+    }
 
     // Try to get symbol info for accurate type resolution
     SymbolInfo symbolInfo = semanticModel.GetSymbolInfo(lambda, cancellationToken);
 
     if (symbolInfo.Symbol is IMethodSymbol methodSymbol)
     {
-      return ExtractFromMethodSymbol(methodSymbol);
+      // Use method symbol for accurate parameter/return type info
+      // but also capture the lambda body source
+      HandlerDefinition baseDefinition = ExtractFromMethodSymbol(methodSymbol);
+      return baseDefinition with
+      {
+        LambdaBodySource = lambdaBodySource,
+        IsExpressionBody = isExpressionBody
+      };
     }
 
     // Fallback to syntax-only analysis
@@ -78,6 +101,7 @@ internal static class HandlerExtractor
       }
       else if (IsServiceType(typeName))
       {
+        requiresServiceProvider = true;
         parameters.Add(ParameterBinding.FromService(paramName, typeName));
       }
       else
@@ -103,11 +127,17 @@ internal static class HandlerExtractor
       returnType = InferReturnType(lambda.Body, isAsync, semanticModel, cancellationToken);
     }
 
-    return HandlerDefinition.ForDelegate(
-      parameters: parameters.ToImmutable(),
-      returnType: returnType,
-      isAsync: isAsync,
-      requiresCancellationToken: hasCancellationToken);
+    return new HandlerDefinition(
+      HandlerKind: HandlerKind.Delegate,
+      FullTypeName: null,
+      MethodName: null,
+      LambdaBodySource: lambdaBodySource,
+      IsExpressionBody: isExpressionBody,
+      Parameters: parameters.ToImmutable(),
+      ReturnType: returnType,
+      IsAsync: isAsync,
+      RequiresCancellationToken: hasCancellationToken,
+      RequiresServiceProvider: requiresServiceProvider);
   }
 
   /// <summary>
@@ -120,11 +150,33 @@ internal static class HandlerExtractor
     CancellationToken cancellationToken
   )
   {
+    // Capture lambda body source
+    string? lambdaBodySource = null;
+    bool isExpressionBody = false;
+
+    if (lambda.Body is ExpressionSyntax expr)
+    {
+      lambdaBodySource = expr.ToFullString().Trim();
+      isExpressionBody = true;
+    }
+    else if (lambda.Body is BlockSyntax block)
+    {
+      lambdaBodySource = block.ToFullString();
+      isExpressionBody = false;
+    }
+
     SymbolInfo symbolInfo = semanticModel.GetSymbolInfo(lambda, cancellationToken);
 
     if (symbolInfo.Symbol is IMethodSymbol methodSymbol)
     {
-      return ExtractFromMethodSymbol(methodSymbol);
+      // Use method symbol for accurate parameter/return type info
+      // but also capture the lambda body source
+      HandlerDefinition baseDefinition = ExtractFromMethodSymbol(methodSymbol);
+      return baseDefinition with
+      {
+        LambdaBodySource = lambdaBodySource,
+        IsExpressionBody = isExpressionBody
+      };
     }
 
     // Fallback to syntax-only
@@ -139,11 +191,25 @@ internal static class HandlerExtractor
     ];
 
     bool isAsync = lambda.AsyncKeyword.IsKind(SyntaxKind.AsyncKeyword);
+    HandlerReturnType returnType = isAsync ? HandlerReturnType.Task : HandlerReturnType.Void;
 
-    return HandlerDefinition.ForDelegate(
-      parameters: parameters,
-      returnType: isAsync ? HandlerReturnType.Task : HandlerReturnType.Void,
-      isAsync: isAsync);
+    // Try to infer return type from body
+    if (lambda.Body is not null)
+    {
+      returnType = InferReturnType(lambda.Body, isAsync, semanticModel, cancellationToken);
+    }
+
+    return new HandlerDefinition(
+      HandlerKind: HandlerKind.Delegate,
+      FullTypeName: null,
+      MethodName: null,
+      LambdaBodySource: lambdaBodySource,
+      IsExpressionBody: isExpressionBody,
+      Parameters: parameters,
+      ReturnType: returnType,
+      IsAsync: isAsync,
+      RequiresCancellationToken: false,
+      RequiresServiceProvider: false);
   }
 
   /// <summary>
@@ -239,6 +305,8 @@ internal static class HandlerExtractor
       HandlerKind: HandlerKind.Delegate,
       FullTypeName: null,
       MethodName: null,
+      LambdaBodySource: null,  // Will be set by caller if lambda
+      IsExpressionBody: true,
       Parameters: parameters.ToImmutable(),
       ReturnType: returnType,
       IsAsync: isAsync,
@@ -355,6 +423,31 @@ internal static class HandlerExtractor
           return HandlerReturnType.TaskOf(fullTypeName, shortTypeName);
 
         return HandlerReturnType.Of(fullTypeName, shortTypeName);
+      }
+    }
+
+    // For block bodies, find return statements and infer type from the returned expression
+    if (body is BlockSyntax block)
+    {
+      // Find the first return statement that has an expression
+      ReturnStatementSyntax? returnStatement = block
+        .DescendantNodes()
+        .OfType<ReturnStatementSyntax>()
+        .FirstOrDefault(r => r.Expression is not null);
+
+      if (returnStatement?.Expression is not null)
+      {
+        TypeInfo typeInfo = semanticModel.GetTypeInfo(returnStatement.Expression, cancellationToken);
+        if (typeInfo.Type is not null && typeInfo.Type.SpecialType != SpecialType.System_Void)
+        {
+          string fullTypeName = typeInfo.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+          string shortTypeName = typeInfo.Type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
+
+          if (isAsync)
+            return HandlerReturnType.TaskOf(fullTypeName, shortTypeName);
+
+          return HandlerReturnType.Of(fullTypeName, shortTypeName);
+        }
       }
     }
 

@@ -116,21 +116,23 @@ terminal.OutputContains("pong").ShouldBeTrue();
 
 ## Checklist
 
-### Commit 6.1: Create minimal test
-- [ ] Create `tests/timewarp-nuru-core-tests/routing/temp-minimal-intercept-test.cs`
-- [ ] Single route, no parameters
-- [ ] Verify interceptor is generated
-- [ ] Verify route matches and handler executes
+### Commit 6.1: Create minimal test ✅
+- [x] Create `tests/timewarp-nuru-core-tests/routing/temp-minimal-intercept-test.cs`
+- [x] Single route, no parameters
+- [x] Verify interceptor is generated
+- [x] Verify route matches and handler executes
 
-### Commit 6.2: Parameter tests
-- [ ] Route with parameter `{name}`
-- [ ] Route with typed parameter `{count:int}`
-- [ ] Optional parameter `{tag?}`
+### Commit 6.2: Parameter tests ✅
+- [x] Route with parameter `{name}`
+- [x] Route with typed parameter `{count:int}`
+- [x] Multiple typed parameters `{a:int} {b:int}`
+- [ ] Optional parameter `{tag?}` (TODO)
 
-### Commit 6.3: Multiple routes and groups
-- [ ] Multiple routes
-- [ ] Nested groups (`WithGroupPrefix`)
-- [ ] Route specificity ordering
+### Commit 6.3: Multiple routes and specificity ✅
+- [x] Multiple routes
+- [x] Route specificity ordering (literal routes before parameterized)
+- [x] Route-unique variable names to prevent conflicts
+- [ ] Nested groups (`WithGroupPrefix`) (TODO)
 
 ### Commit 6.4: Options tests
 - [ ] Boolean flag (`--force`, `-f`)

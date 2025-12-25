@@ -83,9 +83,9 @@ Follow `documentation/developer/standards/csharp-coding.md`:
 - [x] `generators/extractors/intercept-site-extractor.cs` - Extract file/line/column for interceptor
 
 ### Commit 3.2: Create remaining extractors (2 files)
-- [ ] `generators/extractors/attributed-route-extractor.cs` - Extract from `[NuruRoute]` classes
-- [ ] `generators/extractors/service-extractor.cs` - Extract from `ConfigureServices()`
-- [ ] Verify build succeeds
+- [x] `generators/extractors/attributed-route-extractor.cs` - Extract from `[NuruRoute]` classes
+- [x] `generators/extractors/service-extractor.cs` - Extract from `ConfigureServices()`
+- [x] Verify build succeeds
 
 ## Detailed Design
 

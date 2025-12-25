@@ -11,13 +11,13 @@ Reorganize the `timewarp-nuru-analyzers` project to establish the new folder str
 ## Checklist
 
 ### Commit 0.1: Create folder structure
-- [ ] Create `generators/locators/`
-- [ ] Create `generators/extractors/builders/`
-- [ ] Create `generators/emitters/`
-- [ ] Create `generators/models/`
-- [ ] Create `reference-only/extractors/`
-- [ ] Create `reference-only/emitters/`
-- [ ] Create `reference-only/generators/`
+- [x] Create `generators/locators/`
+- [x] Create `generators/extractors/builders/`
+- [x] Create `generators/emitters/`
+- [x] Create `generators/models/`
+- [x] Create `reference-only/extractors/`
+- [x] Create `reference-only/emitters/`
+- [x] Create `reference-only/generators/`
 
 ### Commit 0.2: Move models to generators/models/
 - [ ] Move `models/route-definition.cs`

@@ -45,4 +45,32 @@ internal static class BuildLocator
 
     return invocation;
   }
+
+  /// <summary>
+  /// Confirms that an invocation is a valid Build() call on a NuruAppBuilder.
+  /// </summary>
+  public static bool IsConfirmedBuildCall
+  (
+    InvocationExpressionSyntax invocation,
+    SemanticModel semanticModel,
+    CancellationToken cancellationToken
+  )
+  {
+    if (!IsPotentialMatch(invocation))
+      return false;
+
+    SymbolInfo symbolInfo = semanticModel.GetSymbolInfo(invocation, cancellationToken);
+
+    if (symbolInfo.Symbol is not IMethodSymbol methodSymbol)
+      return false;
+
+    if (methodSymbol.Name != MethodName)
+      return false;
+
+    // Check that the return type is NuruCoreApp
+    if (methodSymbol.ReturnType.Name != "NuruCoreApp")
+      return false;
+
+    return true;
+  }
 }

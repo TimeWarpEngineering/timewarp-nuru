@@ -76,11 +76,11 @@ Follow `documentation/developer/standards/csharp-coding.md`:
 ## Checklist
 
 ### Commit 3.1: Create core extractors (5 files)
-- [ ] `generators/extractors/app-extractor.cs` - Main orchestrator, builds `AppModel`
-- [ ] `generators/extractors/fluent-chain-extractor.cs` - Walk builder chain, extract routes
-- [ ] `generators/extractors/pattern-string-extractor.cs` - Parse mini-language via `PatternParser`
-- [ ] `generators/extractors/handler-extractor.cs` - Extract handler lambda/method info
-- [ ] `generators/extractors/intercept-site-extractor.cs` - Extract file/line/column for interceptor
+- [x] `generators/extractors/app-extractor.cs` - Main orchestrator, builds `AppModel`
+- [x] `generators/extractors/fluent-chain-extractor.cs` - Walk builder chain, extract routes
+- [x] `generators/extractors/pattern-string-extractor.cs` - Parse mini-language via `PatternParser`
+- [x] `generators/extractors/handler-extractor.cs` - Extract handler lambda/method info
+- [x] `generators/extractors/intercept-site-extractor.cs` - Extract file/line/column for interceptor
 
 ### Commit 3.2: Create remaining extractors (2 files)
 - [ ] `generators/extractors/attributed-route-extractor.cs` - Extract from `[NuruRoute]` classes

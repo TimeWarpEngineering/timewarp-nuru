@@ -74,16 +74,16 @@ return sb.ToString();
 ## Checklist
 
 ### Commit 4.1: Create core emitters (4 files)
-- [ ] `generators/emitters/interceptor-emitter.cs` - Main entry, emits `RunAsync_Generated`
-- [ ] `generators/emitters/route-matcher-emitter.cs` - Pattern matching code per route
-- [ ] `generators/emitters/handler-invoker-emitter.cs` - Handler invocation code
-- [ ] `generators/emitters/service-resolver-emitter.cs` - Service resolution code
+- [x] `generators/emitters/interceptor-emitter.cs` - Main entry, emits `RunAsync_Generated`
+- [x] `generators/emitters/route-matcher-emitter.cs` - Pattern matching code per route
+- [x] `generators/emitters/handler-invoker-emitter.cs` - Handler invocation code
+- [x] `generators/emitters/service-resolver-emitter.cs` - Service resolution code
 
 ### Commit 4.2: Create feature emitters (3 files)
-- [ ] `generators/emitters/help-emitter.cs` - `--help` output generation
-- [ ] `generators/emitters/version-emitter.cs` - `--version` output
-- [ ] `generators/emitters/capabilities-emitter.cs` - `--capabilities` JSON response
-- [ ] Verify build succeeds
+- [x] `generators/emitters/help-emitter.cs` - `--help` output generation
+- [x] `generators/emitters/version-emitter.cs` - `--version` output
+- [x] `generators/emitters/capabilities-emitter.cs` - `--capabilities` JSON response
+- [x] Verify build succeeds
 
 ## Detailed Design
 

@@ -35,12 +35,12 @@ Reorganize the `timewarp-nuru-analyzers` project to establish the new folder str
 - [x] Remove empty `analyzers/builders/` folder
 
 ### Commit 0.4: Move extractors to reference-only/
-- [ ] Move `analyzers/extractors/fluent-chain-extractor.cs`
-- [ ] Move `analyzers/extractors/fluent-route-builder-extractor.cs`
-- [ ] Move `analyzers/extractors/mediator-route-extractor.cs`
-- [ ] Move `analyzers/extractors/attributed-route-extractor.cs`
-- [ ] Move `analyzers/extractors/delegate-analyzer.cs`
-- [ ] Remove empty `analyzers/extractors/` folder
+- [x] Move `analyzers/extractors/fluent-chain-extractor.cs`
+- [x] Move `analyzers/extractors/fluent-route-builder-extractor.cs`
+- [x] Move `analyzers/extractors/mediator-route-extractor.cs`
+- [x] Move `analyzers/extractors/attributed-route-extractor.cs`
+- [x] Move `analyzers/extractors/delegate-analyzer.cs`
+- [x] Remove empty `analyzers/extractors/` folder
 
 ### Commit 0.5: Move emitters to reference-only/
 - [ ] Move `analyzers/emitters/runtime-code-emitter.cs`

@@ -1,6 +1,6 @@
 // Fluent builder for constructing HandlerDefinition.
 
-namespace TimeWarp.Nuru.SourceGen;
+namespace TimeWarp.Nuru.Generators;
 
 using System.Collections.Immutable;
 

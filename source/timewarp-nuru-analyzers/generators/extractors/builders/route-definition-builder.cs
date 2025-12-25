@@ -7,7 +7,7 @@
 // - Middleware analysis -> pipeline definition
 // - Route registration context -> group prefix, order
 
-namespace TimeWarp.Nuru.SourceGen;
+namespace TimeWarp.Nuru.Generators;
 
 using System.Collections.Immutable;
 

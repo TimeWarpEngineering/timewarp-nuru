@@ -29,10 +29,10 @@ Reorganize the `timewarp-nuru-analyzers` project to establish the new folder str
 - [x] Update namespace to `TimeWarp.Nuru.Generators`
 
 ### Commit 0.3: Move builders to generators/extractors/builders/
-- [ ] Move `analyzers/builders/handler-definition-builder.cs`
-- [ ] Move `analyzers/builders/route-definition-builder.cs`
-- [ ] Update namespace to `TimeWarp.Nuru.Generators`
-- [ ] Remove empty `analyzers/builders/` folder
+- [x] Move `analyzers/builders/handler-definition-builder.cs`
+- [x] Move `analyzers/builders/route-definition-builder.cs`
+- [x] Update namespace to `TimeWarp.Nuru.Generators`
+- [x] Remove empty `analyzers/builders/` folder
 
 ### Commit 0.4: Move extractors to reference-only/
 - [ ] Move `analyzers/extractors/fluent-chain-extractor.cs`

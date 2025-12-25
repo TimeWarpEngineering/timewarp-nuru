@@ -11,27 +11,27 @@ Create all locator classes that find specific syntax elements in consumer code. 
 ## Checklist
 
 ### Commit 2.1: Create fluent DSL locators (21 files)
-- [ ] `run-async-locator.cs` - Find `app.RunAsync(...)` call sites
-- [ ] `create-builder-locator.cs` - Find `NuruApp.CreateBuilder(...)`
-- [ ] `build-locator.cs` - Find `.Build()` calls
-- [ ] `map-locator.cs` - Find `.Map("pattern")` calls
-- [ ] `with-handler-locator.cs` - Find `.WithHandler(...)` calls
-- [ ] `with-description-locator.cs` - Find `.WithDescription(...)` calls
-- [ ] `with-option-locator.cs` - Find `.WithOption(...)` calls
-- [ ] `with-alias-locator.cs` - Find `.WithAlias(...)` calls
-- [ ] `with-group-prefix-locator.cs` - Find `.WithGroupPrefix(...)` calls
-- [ ] `as-query-locator.cs` - Find `.AsQuery()` calls
-- [ ] `as-command-locator.cs` - Find `.AsCommand()` calls
-- [ ] `as-idempotent-command-locator.cs` - Find `.AsIdempotentCommand()` calls
-- [ ] `add-help-locator.cs` - Find `.AddHelp(...)` calls
-- [ ] `add-repl-locator.cs` - Find `.AddRepl(...)` calls
-- [ ] `add-behavior-locator.cs` - Find `.AddBehavior(...)` calls
-- [ ] `add-configuration-locator.cs` - Find `.AddConfiguration()` calls
-- [ ] `configure-services-locator.cs` - Find `.ConfigureServices(...)` calls
-- [ ] `use-terminal-locator.cs` - Find `.UseTerminal(...)` calls
-- [ ] `with-name-locator.cs` - Find `.WithName(...)` calls
-- [ ] `with-ai-prompt-locator.cs` - Find `.WithAiPrompt(...)` calls
-- [ ] `done-locator.cs` - Find `.Done()` calls
+- [x] `run-async-locator.cs` - Find `app.RunAsync(...)` call sites
+- [x] `create-builder-locator.cs` - Find `NuruApp.CreateBuilder(...)`
+- [x] `build-locator.cs` - Find `.Build()` calls
+- [x] `map-locator.cs` - Find `.Map("pattern")` calls
+- [x] `with-handler-locator.cs` - Find `.WithHandler(...)` calls
+- [x] `with-description-locator.cs` - Find `.WithDescription(...)` calls
+- [x] `with-option-locator.cs` - Find `.WithOption(...)` calls
+- [x] `with-alias-locator.cs` - Find `.WithAlias(...)` calls
+- [x] `with-group-prefix-locator.cs` - Find `.WithGroupPrefix(...)` calls
+- [x] `as-query-locator.cs` - Find `.AsQuery()` calls
+- [x] `as-command-locator.cs` - Find `.AsCommand()` calls
+- [x] `as-idempotent-command-locator.cs` - Find `.AsIdempotentCommand()` calls
+- [x] `add-help-locator.cs` - Find `.AddHelp(...)` calls
+- [x] `add-repl-locator.cs` - Find `.AddRepl(...)` calls
+- [x] `add-behavior-locator.cs` - Find `.AddBehavior(...)` calls
+- [x] `add-configuration-locator.cs` - Find `.AddConfiguration()` calls
+- [x] `configure-services-locator.cs` - Find `.ConfigureServices(...)` calls
+- [x] `use-terminal-locator.cs` - Find `.UseTerminal(...)` calls
+- [x] `with-name-locator.cs` - Find `.WithName(...)` calls
+- [x] `with-ai-prompt-locator.cs` - Find `.WithAiPrompt(...)` calls
+- [x] `done-locator.cs` - Find `.Done()` calls
 
 ### Commit 2.2: Create attributed route locators (4 files)
 - [ ] `nuru-route-attribute-locator.cs` - Find `[NuruRoute]` classes

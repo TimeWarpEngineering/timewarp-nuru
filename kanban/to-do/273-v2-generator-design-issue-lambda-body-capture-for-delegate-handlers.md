@@ -28,113 +28,247 @@ There is no `Handler` symbol available in the generated code - the lambda exists
 
 #272 V2 Generator Phase 6: Testing - Cannot complete testing until this is resolved
 
-## Impact
+## Decision: Option A - Capture Lambda Body Source
 
-- **All delegate-based route handlers are broken**
-- The generated code will not compile
-- This is a fundamental architecture issue, not a bug
+**Chosen approach:** Capture the lambda body as source text during extraction and transform it into a local function in the generated code.
 
-## Root Cause Analysis
+**Why this works:**
+1. **No closures allowed** - The existing analyzer `NURU_H002` enforces that lambda handlers cannot capture variables from enclosing scope
+2. **Self-contained handlers** - All inputs come from route parameters or DI injection
+3. **Architecture doc already specified this** - The `HandlerModel` in the design doc includes `LambdaSource` property (line 481)
 
-The current emission architecture assumes handlers can be "invoked" but doesn't define how the handler code is made available in the generated file.
+**Key insight:** Every lambda can be transformed into a local function:
 
-**What the generator extracts:**
-- Handler parameter types
-- Handler return type
-- Handler async status
+| Lambda Form                        | Generated Local Function       |
+| ---------------------------------- | ------------------------------ |
+| `() => "pong"`                     | `string __handler_0() => "pong";` |
+| `(string name) => $"Hello {name}"` | `string __handler_0() => $"Hello {name}";` |
+| `() => { DoWork(); return "done"; }` | `string __handler_0() { DoWork(); return "done"; }` |
+| `async () => await FetchAsync()`   | `async Task<string> __handler_0() => await FetchAsync();` |
 
-**What the generator does NOT extract:**
-- The actual lambda body source code
-- A reference to the lambda that can be invoked
+## Implementation Plan
 
-## Possible Solutions
+### Step 1: Update `HandlerDefinition` Model
 
-### Option A: Capture Lambda Body Source (Workaround Attempted)
-Capture the lambda body as a string during extraction and inline it into generated code.
+**File:** `generators/models/handler-definition.cs`
 
-**Pros:** 
-- Keeps the interception model
-- Generated code is self-contained
-
-**Cons:**
-- Complex string manipulation
-- May break with complex lambdas
-- Closure variables won't work
-- Type inference issues
-
-### Option B: Store Handler Delegates at Build Time
-Instead of inlining, have `Build()` store the delegates in a registry that the generated interceptor can access.
+Add two new properties to the record:
 
 ```csharp
-// During Build():
-HandlerRegistry.Register("ping", () => "pong");
-
-// Generated code:
-var handler = HandlerRegistry.Get<Func<string>>("ping");
-string result = handler();
+internal sealed record HandlerDefinition(
+  HandlerKind HandlerKind,
+  string? FullTypeName,
+  string? MethodName,
+  string? LambdaBodySource,  // NEW: Lambda body text (expression or block with braces)
+  bool IsExpressionBody,     // NEW: true for expression body, false for block body
+  ImmutableArray<ParameterBinding> Parameters,
+  HandlerReturnType ReturnType,
+  bool IsAsync,
+  bool RequiresCancellationToken,
+  bool RequiresServiceProvider)
 ```
 
-**Pros:**
-- Handlers work correctly
-- Closures preserved
+Update `ForDelegate` factory method to accept these parameters.
 
-**Cons:**
-- Requires runtime state
-- May not be AOT-friendly
-- Defeats some of the "pure compile-time" goal
+### Step 2: Fix `InferReturnType` for Block Bodies
 
-### Option C: Generate Partial Methods
-Generate partial method stubs that the user's code implements.
+**File:** `generators/extractors/handler-extractor.cs`
 
-**Cons:**
-- Changes the API significantly
-- Not backwards compatible
+**Issue discovered:** Current `InferReturnType` only handles expression bodies. For block bodies like `() => { return "hello"; }`, it incorrectly returns `Void`.
 
-### Option D: Re-evaluate the Interception Model
-The current model intercepts `RunAsync()` and tries to replace all routing logic. Perhaps the generator should instead:
-1. Generate a route table/metadata
-2. Generate invoker methods for type-safe dispatch
-3. Keep the runtime routing but optimize it with generated data
+**Fix:** Add block body handling:
 
-**Pros:**
-- More achievable
-- Still provides compile-time optimization
-- Closures and runtime state work naturally
+```csharp
+// Block body - find return statements and infer type
+if (body is BlockSyntax block)
+{
+  ReturnStatementSyntax? returnStatement = block
+    .DescendantNodes()
+    .OfType<ReturnStatementSyntax>()
+    .FirstOrDefault(r => r.Expression is not null);
+  
+  if (returnStatement?.Expression is not null)
+  {
+    TypeInfo typeInfo = semanticModel.GetTypeInfo(returnStatement.Expression, cancellationToken);
+    // ... create HandlerReturnType from typeInfo
+  }
+}
+```
 
-**Cons:**
-- Less "pure" than full interception
-- Some runtime overhead remains
+### Step 3: Capture Lambda Body in `HandlerExtractor`
 
-## Recommended Action
+**File:** `generators/extractors/handler-extractor.cs`
 
-**STOP** attempting workarounds. This is an **architectural decision** that needs discussion before proceeding.
+In `ExtractFromLambda` and `ExtractFromSimpleLambda`:
 
-The copilot attempted to add `LambdaBodySource` capture and inline the lambda body as strings - this was reverted as it's a workaround that doesn't address the fundamental issue.
+```csharp
+string? lambdaBodySource = null;
+bool isExpressionBody = false;
 
-## Questions to Answer
+if (lambda.Body is ExpressionSyntax expr)
+{
+  lambdaBodySource = expr.ToFullString();
+  isExpressionBody = true;
+}
+else if (lambda.Body is BlockSyntax block)
+{
+  lambdaBodySource = block.ToFullString();
+  isExpressionBody = false;
+}
+```
 
-1. What is the actual goal of the V2 generator?
-   - Zero runtime reflection? 
-   - Full AOT support?
-   - Performance optimization?
-   - Type safety?
+### Step 4: Update `HandlerInvokerEmitter`
 
-2. Is intercepting `RunAsync()` the right approach, or should we generate helpers that the runtime uses?
+**File:** `generators/emitters/handler-invoker-emitter.cs`
 
-3. How do we handle closures in lambda handlers?
+Transform lambdas into local functions. Use route index for unique naming (`__handler_0`, `__handler_1`, etc.).
 
-4. What happens with handlers that reference local variables, services, etc.?
+**Expression body (has value):**
+```csharp
+// Input: () => "pong"
+// Output:
+string __handler_0() => "pong";
+string result = __handler_0();
+if (result is not null) app.Terminal.WriteLine(result.ToString());
+```
+
+**Block body (has value):**
+```csharp
+// Input: () => { DoWork(); return "done"; }
+// Output:
+string __handler_0()
+{ DoWork(); return "done"; }
+string result = __handler_0();
+if (result is not null) app.Terminal.WriteLine(result.ToString());
+```
+
+**Async block body:**
+```csharp
+// Input: async () => { await Task.Delay(1); return "done"; }
+// Output:
+async Task<string> __handler_0()
+{ await Task.Delay(1); return "done"; }
+string result = await __handler_0();
+if (result is not null) app.Terminal.WriteLine(result.ToString());
+```
+
+**Void handlers:**
+```csharp
+// Input: () => { Console.WriteLine("hi"); }
+// Output:
+void __handler_0()
+{ Console.WriteLine("hi"); }
+__handler_0();
+```
+
+### Step 5: Handle Method Groups
+
+For handlers like `.WithHandler(MyClass.DoWork)`:
+
+```csharp
+// Generate direct call using FullTypeName and MethodName
+string result = MyClass.DoWork(name);
+if (result is not null) app.Terminal.WriteLine(result.ToString());
+```
+
+### Step 6: Add `NURU_H005` Parameter Name Mismatch Analyzer
+
+**File:** `analyzers/diagnostics/diagnostic-descriptors.handler.cs`
+
+```csharp
+public static readonly DiagnosticDescriptor ParameterNameMismatch = new(
+  id: "NURU_H005",
+  title: "Handler parameter name doesn't match route segment",
+  messageFormat: "Handler parameter '{0}' doesn't match any route segment. Available segments: {1}",
+  category: HandlerCategory,
+  defaultSeverity: DiagnosticSeverity.Error,  // ERROR - blocks compilation
+  isEnabledByDefault: true,
+  description: "Handler parameter names must match route segment names for code generation.");
+```
+
+**File:** `analyzers/nuru-handler-analyzer.cs`
+
+Add validation that handler parameter names match route segment names. This ensures generated code compiles.
+
+### Step 7: Update Route Matcher Variable Names
+
+**File:** `generators/emitters/route-matcher-emitter.cs`
+
+Ensure pattern variables match handler parameter names:
+
+```csharp
+// Route: "greet {name}" with handler (string name) => ...
+if (args is ["greet", var name])  // 'name' matches handler parameter
+{
+  // handler body uses 'name' directly
+}
+```
+
+### Step 8: Update `AnalyzerReleases.Unshipped.md`
+
+```
+NURU_H005 | Handler.Validation | Error | Handler parameter name doesn't match route segment
+```
 
 ## Checklist
 
-- [ ] Discuss and decide on architecture approach
-- [ ] Document the chosen solution
-- [ ] Update affected tasks (270, 271, 272) with new design
-- [ ] Implement the solution
+- [ ] Update `HandlerDefinition` model with `LambdaBodySource` and `IsExpressionBody`
+- [ ] Fix `InferReturnType` to handle block bodies with return statements
+- [ ] Capture lambda body source in `HandlerExtractor`
+- [ ] Update `HandlerInvokerEmitter` to emit local functions
+- [ ] Handle method group handlers with qualified name calls
+- [ ] Add `NURU_H005` diagnostic descriptor
+- [ ] Add parameter name validation to `NuruHandlerAnalyzer`
+- [ ] Update `AnalyzerReleases.Unshipped.md`
+- [ ] Ensure route matcher variable names align with handler parameters
+- [ ] Test with minimal test case from task #272
+
+## Files to Modify
+
+| File | Changes |
+| ---- | ------- |
+| `generators/models/handler-definition.cs` | Add `LambdaBodySource`, `IsExpressionBody` properties |
+| `generators/extractors/handler-extractor.cs` | Capture lambda body, fix `InferReturnType` for blocks |
+| `generators/emitters/handler-invoker-emitter.cs` | Emit local functions for all lambda types |
+| `generators/emitters/route-matcher-emitter.cs` | Ensure variable names match handler parameters |
+| `analyzers/diagnostics/diagnostic-descriptors.handler.cs` | Add `NURU_H005` |
+| `analyzers/nuru-handler-analyzer.cs` | Add parameter name validation |
+| `AnalyzerReleases.Unshipped.md` | Document `NURU_H005` |
+
+## Design Constraints
+
+### No Closures Allowed
+
+The existing analyzer `NURU_H002` enforces this:
+
+> "Lambda handlers cannot capture variables from the enclosing scope. The Mediator handler will not be generated for this route. Pass dependencies as handler parameters and they will be injected from the DI container."
+
+This constraint makes Option A viable - since handlers are self-contained, the lambda body can be safely duplicated in generated code.
+
+### Parameter Names Must Match
+
+Handler parameter names must exactly match route segment names. The generator relies on this to wire up captured route values to the handler body. Example:
+
+```csharp
+// Route: "greet {name}"
+// Handler: (string name) => $"Hello {name}!"  ✓ OK - 'name' matches
+// Handler: (string n) => $"Hello {n}!"        ✗ ERROR - 'n' doesn't match segment 'name'
+```
+
+## Risks & Considerations
+
+1. **Whitespace/formatting:** `ToFullString()` preserves trivia. May need `NormalizeWhitespace()` for cleaner output.
+
+2. **Nested lambdas:** If handler body contains nested lambdas, they're captured as-is. Should work but worth testing.
+
+3. **Service parameters:** Handlers with DI-injected parameters need service resolution emitted before handler call. `ServiceResolverEmitter` handles this.
+
+4. **Async expression bodies:** `async () => await FetchAsync()` - ensure proper handling of await in expression position.
 
 ## Notes
 
 ### Discovery Context
+
 This issue was discovered while implementing Phase 6 Testing (Task #272). The minimal test case:
 
 ```csharp
@@ -149,16 +283,26 @@ NuruCoreApp app = NuruApp.CreateBuilder([])
 int exitCode = await app.RunAsync(["ping"]);
 ```
 
-The generated interceptor code has no way to invoke `() => "pong"` because that lambda only exists as syntax during compilation, not as a callable symbol in the generated code.
+### Architecture Doc Reference
 
-### Files Involved
-- `source/timewarp-nuru-analyzers/generators/emitters/handler-invoker-emitter.cs` - Emits handler invocation code
-- `source/timewarp-nuru-analyzers/generators/extractors/handler-extractor.cs` - Extracts handler info
-- `source/timewarp-nuru-analyzers/generators/models/handler-definition.cs` - Handler IR model
+The design document `.agent/workspace/2024-12-25T14-00-00_v2-source-generator-architecture.md` at line 481 specifies:
 
-### Reverted Changes
-The following changes were attempted as a workaround and reverted:
-- Adding `LambdaBodySource` property to `HandlerDefinition`
-- Capturing lambda body text in `HandlerExtractor`
-- Inlining lambda body strings in `HandlerInvokerEmitter`
-- Adding `InterceptsLocationAttribute` polyfill to generated code
+```csharp
+public sealed class HandlerModel
+{
+    public string? LambdaSource { get; init; }  // For inline lambdas
+    // ...
+}
+```
+
+This was specified in the design but never implemented in Phase 1 (models) or Phase 3 (extractors).
+
+### Related Diagnostics
+
+| Diagnostic | Severity | Purpose |
+| ---------- | -------- | ------- |
+| `NURU_H001` | Error | Instance method handlers not supported |
+| `NURU_H002` | Warning | Closure detected in handler (blocks generation) |
+| `NURU_H003` | Error | Unsupported handler expression type |
+| `NURU_H004` | Warning | Private method handler not accessible |
+| `NURU_H005` | Error | Handler parameter name doesn't match route segment (NEW) |

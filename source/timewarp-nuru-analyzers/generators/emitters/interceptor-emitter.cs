@@ -24,7 +24,7 @@ internal static class InterceptorEmitter
     EmitInterceptsLocationAttribute(sb);
     EmitNamespaceAndUsings(sb);
     EmitClassStart(sb);
-    EmitInterceptsLocation(sb, model.InterceptSite);
+    EmitInterceptsLocation(sb, model.InterceptSites);
     EmitMethodSignature(sb);
     EmitMethodBody(sb, model);
     EmitClassEnd(sb, model);
@@ -98,14 +98,18 @@ internal static class InterceptorEmitter
   }
 
   /// <summary>
-  /// Emits the [InterceptsLocation] attribute for the RunAsync call site.
+  /// Emits [InterceptsLocation] attributes for all RunAsync call sites.
   /// Uses the new .NET 10 / C# 14 versioned encoding via InterceptableLocation.
   /// </summary>
-  private static void EmitInterceptsLocation(StringBuilder sb, InterceptSiteModel site)
+  private static void EmitInterceptsLocation(StringBuilder sb, ImmutableArray<InterceptSiteModel> sites)
   {
-    // Use the Roslyn-generated attribute syntax which handles all encoding
-    // Format: [global::System.Runtime.CompilerServices.InterceptsLocationAttribute(version, "data")]
-    sb.AppendLine(CultureInfo.InvariantCulture, $"  {site.GetAttributeSyntax()}");
+    // Emit an attribute for each call site so all RunAsync calls are intercepted
+    foreach (InterceptSiteModel site in sites)
+    {
+      // Use the Roslyn-generated attribute syntax which handles all encoding
+      // Format: [global::System.Runtime.CompilerServices.InterceptsLocationAttribute(version, "data")]
+      sb.AppendLine(CultureInfo.InvariantCulture, $"  {site.GetAttributeSyntax()}");
+    }
   }
 
   /// <summary>

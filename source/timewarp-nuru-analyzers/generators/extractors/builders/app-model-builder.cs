@@ -26,7 +26,7 @@ internal sealed class AppModelBuilder
   private ImmutableArray<RouteDefinition>.Builder Routes = ImmutableArray.CreateBuilder<RouteDefinition>();
   private ImmutableArray<BehaviorDefinition>.Builder Behaviors = ImmutableArray.CreateBuilder<BehaviorDefinition>();
   private ImmutableArray<ServiceDefinition>.Builder Services = ImmutableArray.CreateBuilder<ServiceDefinition>();
-  private InterceptSiteModel? InterceptSite;
+  private ImmutableArray<InterceptSiteModel>.Builder InterceptSites = ImmutableArray.CreateBuilder<InterceptSiteModel>();
 
   /// <summary>
   /// Sets the application name (from .WithName() fluent call).
@@ -159,21 +159,35 @@ internal sealed class AppModelBuilder
   }
 
   /// <summary>
-  /// Sets the intercept site (from RunAsync location).
+  /// Adds an intercept site (from RunAsync location).
   /// </summary>
-  public AppModelBuilder WithInterceptSite(InterceptSiteModel site)
+  public AppModelBuilder AddInterceptSite(InterceptSiteModel site)
   {
-    InterceptSite = site;
+    InterceptSites.Add(site);
     return this;
   }
 
   /// <summary>
-  /// Sets the intercept site from a SemanticModel and InvocationExpression.
+  /// Adds multiple intercept sites.
+  /// </summary>
+  public AppModelBuilder AddInterceptSites(IEnumerable<InterceptSiteModel> sites)
+  {
+    InterceptSites.AddRange(sites);
+    return this;
+  }
+
+  /// <summary>
+  /// Adds an intercept site from a SemanticModel and InvocationExpression.
   /// Uses the new .NET 10 / C# 14 InterceptableLocation API.
   /// </summary>
-  public AppModelBuilder WithInterceptSite(SemanticModel semanticModel, InvocationExpressionSyntax invocation)
+  public AppModelBuilder AddInterceptSite(SemanticModel semanticModel, InvocationExpressionSyntax invocation)
   {
-    InterceptSite = InterceptSiteExtractor.Extract(semanticModel, invocation);
+    InterceptSiteModel? site = InterceptSiteExtractor.Extract(semanticModel, invocation);
+    if (site is not null)
+    {
+      InterceptSites.Add(site);
+    }
+
     return this;
   }
 
@@ -183,9 +197,9 @@ internal sealed class AppModelBuilder
   /// <exception cref="InvalidOperationException">Thrown when required fields are missing.</exception>
   public AppModel Build()
   {
-    if (InterceptSite is null)
+    if (InterceptSites.Count == 0)
     {
-      throw new InvalidOperationException("InterceptSite is required. Call WithInterceptSite() before Build().");
+      throw new InvalidOperationException("At least one InterceptSite is required. Call AddInterceptSite() before Build().");
     }
 
     return new AppModel
@@ -201,7 +215,7 @@ internal sealed class AppModelBuilder
       Routes: Routes.ToImmutable(),
       Behaviors: Behaviors.ToImmutable(),
       Services: Services.ToImmutable(),
-      InterceptSite: InterceptSite
+      InterceptSites: InterceptSites.ToImmutable()
     );
   }
 
@@ -221,6 +235,6 @@ internal sealed class AppModelBuilder
     Routes = ImmutableArray.CreateBuilder<RouteDefinition>();
     Behaviors = ImmutableArray.CreateBuilder<BehaviorDefinition>();
     Services = ImmutableArray.CreateBuilder<ServiceDefinition>();
-    InterceptSite = null;
+    InterceptSites = ImmutableArray.CreateBuilder<InterceptSiteModel>();
   }
 }

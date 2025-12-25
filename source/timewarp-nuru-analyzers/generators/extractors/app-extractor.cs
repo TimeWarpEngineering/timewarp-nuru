@@ -50,7 +50,7 @@ internal static class AppExtractor
 
     // 5. Start building the AppModel
     AppModelBuilder builder = new();
-    builder.WithInterceptSite(interceptSite);
+    builder.AddInterceptSite(interceptSite);
 
     // 6. If we found a build call, extract from the fluent chain
     if (buildCall is not null)

@@ -15,7 +15,7 @@ namespace TimeWarp.Nuru.Generators;
 /// <param name="Routes">All route definitions from all DSLs</param>
 /// <param name="Behaviors">Pipeline behaviors with ordering</param>
 /// <param name="Services">Registered services for DI</param>
-/// <param name="InterceptSite">Location of RunAsync() call for interceptor</param>
+/// <param name="InterceptSites">Locations of all RunAsync() calls for interceptor</param>
 internal sealed record AppModel(
   string? Name,
   string? Description,
@@ -28,12 +28,12 @@ internal sealed record AppModel(
   ImmutableArray<RouteDefinition> Routes,
   ImmutableArray<BehaviorDefinition> Behaviors,
   ImmutableArray<ServiceDefinition> Services,
-  InterceptSiteModel InterceptSite)
+  ImmutableArray<InterceptSiteModel> InterceptSites)
 {
   /// <summary>
-  /// Creates an empty AppModel with required intercept site.
+  /// Creates an empty AppModel with required intercept sites.
   /// </summary>
-  public static AppModel Empty(InterceptSiteModel interceptSite) => new(
+  public static AppModel Empty(ImmutableArray<InterceptSiteModel> interceptSites) => new(
     Name: null,
     Description: null,
     AiPrompt: null,
@@ -45,7 +45,13 @@ internal sealed record AppModel(
     Routes: [],
     Behaviors: [],
     Services: [],
-    InterceptSite: interceptSite);
+    InterceptSites: interceptSites);
+
+  /// <summary>
+  /// Creates an empty AppModel with a single intercept site.
+  /// </summary>
+  public static AppModel Empty(InterceptSiteModel interceptSite) =>
+    Empty([interceptSite]);
 
   /// <summary>
   /// Gets whether this app has any routes defined.

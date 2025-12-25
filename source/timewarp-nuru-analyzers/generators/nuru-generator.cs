@@ -89,7 +89,8 @@ public sealed class NuruGenerator : IIncrementalGenerator
   }
 
   /// <summary>
-  /// Combines the base AppModel from fluent routes with attributed routes.
+  /// Combines all AppModels from fluent routes with attributed routes.
+  /// Collects ALL intercept sites so every RunAsync call is intercepted.
   /// </summary>
   private static AppModel? CombineModels
   (
@@ -98,39 +99,75 @@ public sealed class NuruGenerator : IIncrementalGenerator
     CancellationToken cancellationToken
   )
   {
-    // Find the first valid AppModel (from RunAsync call)
-    AppModel? baseModel = null;
-    foreach (AppModel? model in appModels)
-    {
-      if (model is not null)
-      {
-        baseModel = model;
-        break;
-      }
-    }
-
-    // If no RunAsync call found, we can't generate an interceptor
-    if (baseModel is null)
-      return null;
-
-    // Filter out null attributed routes
-    ImmutableArray<RouteDefinition>.Builder validAttributedRoutes =
+    // Collect ALL intercept sites and routes from all AppModels
+    ImmutableArray<InterceptSiteModel>.Builder allInterceptSites =
+      ImmutableArray.CreateBuilder<InterceptSiteModel>();
+    ImmutableArray<RouteDefinition>.Builder allRoutes =
       ImmutableArray.CreateBuilder<RouteDefinition>();
 
+    string? name = null;
+    string? description = null;
+    string? aiPrompt = null;
+    bool hasHelp = false;
+    HelpModel? helpOptions = null;
+    bool hasRepl = false;
+    ReplModel? replOptions = null;
+    bool hasConfiguration = false;
+    ImmutableArray<BehaviorDefinition>.Builder allBehaviors =
+      ImmutableArray.CreateBuilder<BehaviorDefinition>();
+    ImmutableArray<ServiceDefinition>.Builder allServices =
+      ImmutableArray.CreateBuilder<ServiceDefinition>();
+
+    foreach (AppModel? model in appModels)
+    {
+      if (model is null)
+        continue;
+
+      // Collect all intercept sites
+      allInterceptSites.AddRange(model.InterceptSites);
+
+      // Collect all routes
+      allRoutes.AddRange(model.Routes);
+
+      // Merge other properties (last one wins for simple values)
+      name ??= model.Name;
+      description ??= model.Description;
+      aiPrompt ??= model.AiPrompt;
+      hasHelp = hasHelp || model.HasHelp;
+      helpOptions ??= model.HelpOptions;
+      hasRepl = hasRepl || model.HasRepl;
+      replOptions ??= model.ReplOptions;
+      hasConfiguration = hasConfiguration || model.HasConfiguration;
+      allBehaviors.AddRange(model.Behaviors);
+      allServices.AddRange(model.Services);
+    }
+
+    // If no RunAsync calls found, we can't generate an interceptor
+    if (allInterceptSites.Count == 0)
+      return null;
+
+    // Add attributed routes
     foreach (RouteDefinition? route in attributedRoutes)
     {
       if (route is not null)
-        validAttributedRoutes.Add(route);
+        allRoutes.Add(route);
     }
 
-    // If no attributed routes, return base model as-is
-    if (validAttributedRoutes.Count == 0)
-      return baseModel;
-
-    // Merge attributed routes with fluent routes
-    ImmutableArray<RouteDefinition> mergedRoutes = baseModel.Routes
-      .AddRange(validAttributedRoutes.ToImmutable());
-
-    return baseModel with { Routes = mergedRoutes };
+    // Create combined model with all intercept sites
+    return new AppModel
+    (
+      Name: name,
+      Description: description,
+      AiPrompt: aiPrompt,
+      HasHelp: hasHelp,
+      HelpOptions: helpOptions,
+      HasRepl: hasRepl,
+      ReplOptions: replOptions,
+      HasConfiguration: hasConfiguration,
+      Routes: allRoutes.ToImmutable(),
+      Behaviors: allBehaviors.ToImmutable(),
+      Services: allServices.ToImmutable(),
+      InterceptSites: allInterceptSites.ToImmutable()
+    );
   }
 }

@@ -54,9 +54,9 @@ Reorganize the `timewarp-nuru-analyzers` project to establish the new folder str
 - [x] Move `analyzers/generator-helpers.cs`
 
 ### Commit 0.7: Update global-usings and verify build
-- [ ] Update `global-usings.cs` for new namespace
-- [ ] Run `dotnet build` to verify no breakage
-- [ ] Fix any compilation errors
+- [x] Update `global-usings.cs` for new namespace
+- [x] Run `dotnet build` to verify no breakage
+- [x] Fix any compilation errors (none needed)
 
 ## Notes
 
@@ -86,3 +86,36 @@ source/timewarp-nuru-analyzers/
 ### Namespace Change
 - Old: `TimeWarp.Nuru.SourceGen`
 - New: `TimeWarp.Nuru.Generators`
+
+## Results
+
+Phase 0 reorganization completed successfully with 7 commits:
+
+1. **Commit 0.1:** Created new folder structure (`generators/` and `reference-only/`)
+2. **Commit 0.2:** Moved 6 model files to `generators/models/`, updated namespace to `TimeWarp.Nuru.Generators`
+3. **Commit 0.3:** Moved 2 builder files to `generators/extractors/builders/`, updated namespace
+4. **Commit 0.4:** Moved 5 extractor files to `reference-only/extractors/`
+5. **Commit 0.5:** Moved 1 emitter file to `reference-only/emitters/`
+6. **Commit 0.6:** Moved all old generators to `reference-only/generators/` (including 3 generator folders)
+7. **Commit 0.7:** Updated `global-usings.cs` with new namespace, verified build succeeds
+
+### Final Structure
+```
+source/timewarp-nuru-analyzers/
+├── analyzers/
+│   ├── diagnostics/        # 6 files
+│   └── *.cs                 # 3 analyzer files
+├── generators/
+│   ├── locators/           # Empty (Phase 2)
+│   ├── extractors/builders/# 2 files
+│   ├── emitters/           # Empty (Phase 4)
+│   └── models/             # 6 files
+└── reference-only/
+    ├── extractors/         # 5 files
+    ├── emitters/           # 1 file
+    └── generators/         # 2 files + 3 folders
+```
+
+### Build Status
+- Full solution builds with 0 warnings, 0 errors
+- All packages created successfully

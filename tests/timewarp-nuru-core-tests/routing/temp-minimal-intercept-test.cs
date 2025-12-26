@@ -277,6 +277,147 @@ namespace TimeWarp.Nuru.Tests.Generator.V2.Minimal
 
       await Task.CompletedTask;
     }
+
+    // ========================================================================
+    // Commit 6.4: Options Tests
+    // Note: Using unique command prefixes to avoid route conflicts between tests
+    // ========================================================================
+
+    /// <summary>
+    /// Test that a boolean flag option is correctly parsed.
+    /// Pattern: "command --verbose" where verbose is a flag (no value).
+    /// </summary>
+    public static async Task Should_parse_boolean_flag_option()
+    {
+      // Arrange
+      using TestTerminal terminal = new();
+
+      NuruCoreApp app = NuruApp.CreateBuilder([])
+        .UseTerminal(terminal)
+        .Map("opt-build --verbose")
+          .WithHandler((bool verbose) => verbose ? "Building with verbose output" : "Building quietly")
+          .AsCommand()
+          .Done()
+        .Build();
+
+      // Act - with flag
+      int exitCode = await app.RunAsync(["opt-build", "--verbose"]);
+
+      // Assert
+      exitCode.ShouldBe(0);
+      terminal.OutputContains("verbose output").ShouldBeTrue();
+
+      await Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Test that a boolean flag with alias is correctly parsed.
+    /// Pattern: "command --force,-f" where both forms are valid.
+    /// </summary>
+    public static async Task Should_parse_flag_with_alias()
+    {
+      // Arrange
+      using TestTerminal terminal = new();
+
+      NuruCoreApp app = NuruApp.CreateBuilder([])
+        .UseTerminal(terminal)
+        .Map("opt-push {env} --force,-f")
+          .WithHandler((string env, bool force) => force ? $"Force pushing to {env}" : $"Safe push to {env}")
+          .AsCommand()
+          .Done()
+        .Build();
+
+      // Act - using short form
+      int exitCode = await app.RunAsync(["opt-push", "prod", "-f"]);
+
+      // Assert
+      exitCode.ShouldBe(0);
+      terminal.OutputContains("Force pushing to prod").ShouldBeTrue();
+
+      await Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Test that an option with required value is correctly parsed.
+    /// Pattern: "command --config {value}" where value must be provided.
+    /// </summary>
+    public static async Task Should_parse_option_with_value()
+    {
+      // Arrange
+      using TestTerminal terminal = new();
+
+      NuruCoreApp app = NuruApp.CreateBuilder([])
+        .UseTerminal(terminal)
+        .Map("opt-make --config {mode}")
+          .WithHandler((string mode) => $"Making in {mode} mode")
+          .AsCommand()
+          .Done()
+        .Build();
+
+      // Act
+      int exitCode = await app.RunAsync(["opt-make", "--config", "release"]);
+
+      // Assert
+      exitCode.ShouldBe(0);
+      terminal.OutputContains("Making in release mode").ShouldBeTrue();
+
+      await Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Test that an option with alias and value is correctly parsed.
+    /// Pattern: "command --output,-o {file}" where value must be provided.
+    /// </summary>
+    public static async Task Should_parse_option_with_alias_and_value()
+    {
+      // Arrange
+      using TestTerminal terminal = new();
+
+      NuruCoreApp app = NuruApp.CreateBuilder([])
+        .UseTerminal(terminal)
+        .Map("opt-compile --output,-o {file}")
+          .WithHandler((string file) => $"Output to {file}")
+          .AsCommand()
+          .Done()
+        .Build();
+
+      // Act - using short form
+      int exitCode = await app.RunAsync(["opt-compile", "-o", "out.dll"]);
+
+      // Assert
+      exitCode.ShouldBe(0);
+      terminal.OutputContains("Output to out.dll").ShouldBeTrue();
+
+      await Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Test multiple options together.
+    /// Pattern: "multi-opt {env} --verbose --force --config {mode}"
+    /// </summary>
+    public static async Task Should_parse_multiple_options()
+    {
+      // Arrange
+      using TestTerminal terminal = new();
+
+      NuruCoreApp app = NuruApp.CreateBuilder([])
+        .UseTerminal(terminal)
+        .Map("multi-opt {env} --verbose --force --config {mode}")
+          .WithHandler((string env, bool verbose, bool force, string mode) =>
+            $"Multi-opt to {env}: verbose={verbose}, force={force}, mode={mode}")
+          .AsCommand()
+          .Done()
+        .Build();
+
+      // Act
+      int exitCode = await app.RunAsync(["multi-opt", "prod", "--verbose", "--force", "--config", "release"]);
+
+      // Assert
+      exitCode.ShouldBe(0);
+      terminal.OutputContains("Multi-opt to prod: verbose=True, force=True, mode=release").ShouldBeTrue();
+
+      await Task.CompletedTask;
+    }
   }
 
 } // namespace TimeWarp.Nuru.Tests.Generator.V2.Minimal

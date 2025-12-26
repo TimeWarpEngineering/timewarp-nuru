@@ -134,10 +134,14 @@ terminal.OutputContains("pong").ShouldBeTrue();
 - [x] Route-unique variable names to prevent conflicts
 - [ ] Nested groups (`WithGroupPrefix`) (TODO)
 
-### Commit 6.4: Options tests
-- [ ] Boolean flag (`--force`, `-f`)
-- [ ] Option with value (`--config {value}`)
-- [ ] Short form aliases
+### Commit 6.4: Options tests ✅
+- [x] Boolean flag (`--verbose`)
+- [x] Option with value (`--config {value}`)
+- [x] Short form aliases (`--force,-f`)
+- [x] Option with alias and value (`--output,-o {file}`)
+- [x] Multiple options together
+
+**Note:** Tests use unique command prefixes to avoid route conflicts when multiple tests share the same compilation unit.
 
 ### Commit 6.5: Advanced features
 - [ ] Service injection (`ILogger<T>`)

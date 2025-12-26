@@ -10,7 +10,7 @@ namespace TimeWarp.Nuru.Generators;
 /// <param name="GroupByCategory">Whether to group commands by category</param>
 /// <param name="MaxWidth">Maximum width for help output (0 = auto)</param>
 /// <param name="IndentSize">Number of spaces for indentation</param>
-internal sealed record HelpModel(
+public sealed record HelpModel(
   bool ShowHeader,
   bool ShowUsage,
   bool ShowCommands,

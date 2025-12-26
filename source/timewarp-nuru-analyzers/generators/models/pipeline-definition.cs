@@ -8,7 +8,7 @@ namespace TimeWarp.Nuru.Generators;
 /// <param name="HasAuthorization">Whether any authorization middleware is present</param>
 /// <param name="HasValidation">Whether any validation middleware is present</param>
 /// <param name="HasLogging">Whether any logging middleware is present</param>
-internal sealed record PipelineDefinition(
+public sealed record PipelineDefinition(
   ImmutableArray<MiddlewareDefinition> Middleware,
   bool HasAuthorization,
   bool HasValidation,
@@ -77,7 +77,7 @@ internal sealed record PipelineDefinition(
 /// <param name="ExecutionPhase">When this middleware executes relative to the handler</param>
 /// <param name="Order">Explicit order within the pipeline</param>
 /// <param name="Configuration">Optional configuration for the middleware</param>
-internal sealed record MiddlewareDefinition(
+public sealed record MiddlewareDefinition(
   string FullTypeName,
   MiddlewareKind Kind,
   ExecutionPhase ExecutionPhase,
@@ -127,7 +127,7 @@ internal sealed record MiddlewareDefinition(
 /// <summary>
 /// Categorizes the kind of middleware.
 /// </summary>
-internal enum MiddlewareKind
+public enum MiddlewareKind
 {
   /// <summary>
   /// Custom middleware without special handling.
@@ -173,7 +173,7 @@ internal enum MiddlewareKind
 /// <summary>
 /// Specifies when middleware executes relative to the handler.
 /// </summary>
-internal enum ExecutionPhase
+public enum ExecutionPhase
 {
   /// <summary>
   /// Executes before the handler.

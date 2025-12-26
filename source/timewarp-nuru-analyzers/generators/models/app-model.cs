@@ -16,7 +16,7 @@ namespace TimeWarp.Nuru.Generators;
 /// <param name="Behaviors">Pipeline behaviors with ordering</param>
 /// <param name="Services">Registered services for DI</param>
 /// <param name="InterceptSites">Locations of all RunAsync() calls for interceptor</param>
-internal sealed record AppModel(
+public sealed record AppModel(
   string? Name,
   string? Description,
   string? AiPrompt,

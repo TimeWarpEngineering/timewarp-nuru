@@ -6,7 +6,7 @@ namespace TimeWarp.Nuru.Generators;
 /// <param name="FullTypeName">Fully qualified type name of the behavior</param>
 /// <param name="Order">Execution order (lower runs first)</param>
 /// <param name="AppliesTo">Which route types this behavior applies to</param>
-internal sealed record BehaviorDefinition(
+public sealed record BehaviorDefinition(
   string FullTypeName,
   int Order,
   BehaviorScope AppliesTo)
@@ -55,7 +55,7 @@ internal sealed record BehaviorDefinition(
 /// <summary>
 /// Specifies which routes a behavior applies to.
 /// </summary>
-internal enum BehaviorScope
+public enum BehaviorScope
 {
   /// <summary>
   /// Behavior applies to all routes.

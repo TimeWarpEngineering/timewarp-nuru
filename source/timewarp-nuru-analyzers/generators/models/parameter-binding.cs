@@ -13,7 +13,7 @@ namespace TimeWarp.Nuru.Generators;
 /// <param name="DefaultValueExpression">C# expression for the default value, if any</param>
 /// <param name="RequiresConversion">Whether type conversion is needed</param>
 /// <param name="ConverterTypeName">Custom converter type, if specified</param>
-internal sealed record ParameterBinding(
+public sealed record ParameterBinding(
   string ParameterName,
   string ParameterTypeName,
   BindingSource Source,
@@ -186,7 +186,7 @@ internal sealed record ParameterBinding(
 /// <summary>
 /// Specifies where a parameter's value comes from.
 /// </summary>
-internal enum BindingSource
+public enum BindingSource
 {
   /// <summary>
   /// From a route parameter segment like {name}.

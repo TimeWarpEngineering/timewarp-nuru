@@ -7,7 +7,7 @@ namespace TimeWarp.Nuru.Generators;
 /// <param name="ServiceTypeName">Fully qualified interface/abstract type name</param>
 /// <param name="ImplementationTypeName">Fully qualified implementation type name</param>
 /// <param name="Lifetime">Service lifetime (Singleton, Scoped, Transient)</param>
-internal sealed record ServiceDefinition(
+public sealed record ServiceDefinition(
   string ServiceTypeName,
   string ImplementationTypeName,
   ServiceLifetime Lifetime)
@@ -59,7 +59,7 @@ internal sealed record ServiceDefinition(
 /// <summary>
 /// Service lifetime for DI container.
 /// </summary>
-internal enum ServiceLifetime
+public enum ServiceLifetime
 {
   /// <summary>
   /// Single instance for the application lifetime.

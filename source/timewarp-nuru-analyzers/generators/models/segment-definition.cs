@@ -5,7 +5,7 @@ namespace TimeWarp.Nuru.Generators;
 /// Segments are the parsed components of a route pattern.
 /// </summary>
 /// <param name="Position">Zero-based position of this segment in the route</param>
-internal abstract record SegmentDefinition(int Position)
+public abstract record SegmentDefinition(int Position)
 {
   /// <summary>
   /// Gets the specificity contribution of this segment for route matching.
@@ -20,7 +20,7 @@ internal abstract record SegmentDefinition(int Position)
 /// </summary>
 /// <param name="Position">Zero-based position of this segment in the route</param>
 /// <param name="Value">The literal text value</param>
-internal sealed record LiteralDefinition(int Position, string Value)
+public sealed record LiteralDefinition(int Position, string Value)
   : SegmentDefinition(Position)
 {
   /// <summary>
@@ -46,7 +46,7 @@ internal sealed record LiteralDefinition(int Position, string Value)
 /// <param name="IsCatchAll">Whether this is a catch-all parameter (*)</param>
 /// <param name="ResolvedClrTypeName">The resolved CLR type name (e.g., "global::System.Int32")</param>
 /// <param name="DefaultValue">Default value expression, if any</param>
-internal sealed record ParameterDefinition(
+public sealed record ParameterDefinition(
   int Position,
   string Name,
   string? TypeConstraint,
@@ -108,7 +108,7 @@ internal sealed record ParameterDefinition(
 /// <param name="IsRepeated">Whether the option can be specified multiple times</param>
 /// <param name="ParameterIsOptional">Whether the option's value parameter is optional</param>
 /// <param name="ResolvedClrTypeName">The resolved CLR type name for the value</param>
-internal sealed record OptionDefinition(
+public sealed record OptionDefinition(
   int Position,
   string LongForm,
   string? ShortForm,

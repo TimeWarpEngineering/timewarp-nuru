@@ -8,7 +8,7 @@ namespace TimeWarp.Nuru.Generators;
 /// <param name="ReturnType">The return type information</param>
 /// <param name="IsAsync">Whether the delegate returns a Task or Task&lt;T&gt;</param>
 /// <param name="UniqueIdentifier">A unique identifier for code generation</param>
-internal sealed record DelegateSignature(
+public sealed record DelegateSignature(
   ImmutableArray<DelegateParameterInfo> Parameters,
   DelegateTypeInfo ReturnType,
   bool IsAsync,
@@ -19,6 +19,7 @@ internal sealed record DelegateSignature(
   /// </summary>
   public static string CreateIdentifier(ImmutableArray<DelegateParameterInfo> parameters, DelegateTypeInfo returnType)
   {
+    ArgumentNullException.ThrowIfNull(returnType);
     System.Text.StringBuilder sb = new();
 
     foreach (DelegateParameterInfo param in parameters)
@@ -48,7 +49,7 @@ internal sealed record DelegateSignature(
 /// <param name="Type">The type information</param>
 /// <param name="IsArray">Whether the parameter is an array type</param>
 /// <param name="IsNullable">Whether the parameter is nullable</param>
-internal sealed record DelegateParameterInfo(
+public sealed record DelegateParameterInfo(
   string Name,
   DelegateTypeInfo Type,
   bool IsArray,
@@ -63,7 +64,7 @@ internal sealed record DelegateParameterInfo(
 /// <param name="IsVoid">Whether this is the void type</param>
 /// <param name="IsTask">Whether this is Task or Task&lt;T&gt;</param>
 /// <param name="TaskResultType">For Task&lt;T&gt;, the T type; null otherwise</param>
-internal sealed record DelegateTypeInfo(
+public sealed record DelegateTypeInfo(
   string FullName,
   string ShortName,
   bool IsVoid,
@@ -75,6 +76,7 @@ internal sealed record DelegateTypeInfo(
   /// </summary>
   public static DelegateTypeInfo FromSymbol(ITypeSymbol symbol)
   {
+    ArgumentNullException.ThrowIfNull(symbol);
     string fullName = symbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
     string shortName = GetShortName(symbol);
     bool isVoid = symbol.SpecialType == SpecialType.System_Void;
@@ -171,7 +173,7 @@ internal sealed record DelegateTypeInfo(
 /// <param name="Pattern">The route pattern string</param>
 /// <param name="Location">The source location for diagnostics</param>
 /// <param name="Signature">The extracted delegate signature, if available</param>
-internal sealed record RouteWithSignature(
+public sealed record RouteWithSignature(
   string Pattern,
   Location Location,
   DelegateSignature? Signature);

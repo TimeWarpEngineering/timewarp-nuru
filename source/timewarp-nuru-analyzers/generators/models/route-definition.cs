@@ -14,7 +14,7 @@ namespace TimeWarp.Nuru.Generators;
 /// <param name="GroupPrefix">Prefix inherited from route group, if any</param>
 /// <param name="ComputedSpecificity">Calculated specificity for route matching priority</param>
 /// <param name="Order">Explicit order override, if specified</param>
-internal sealed record RouteDefinition(
+public sealed record RouteDefinition(
   string OriginalPattern,
   ImmutableArray<SegmentDefinition> Segments,
   string MessageType,

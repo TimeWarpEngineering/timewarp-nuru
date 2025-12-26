@@ -9,7 +9,7 @@ namespace TimeWarp.Nuru.Generators;
 /// <param name="HistorySize">Maximum history entries to retain</param>
 /// <param name="EnableSyntaxHighlighting">Whether to highlight input</param>
 /// <param name="EnableAutoComplete">Whether to enable tab completion</param>
-internal sealed record ReplModel(
+public sealed record ReplModel(
   string Prompt,
   string ContinuationPrompt,
   ImmutableArray<string> ExitCommands,

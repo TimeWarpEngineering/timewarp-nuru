@@ -14,7 +14,7 @@ namespace TimeWarp.Nuru.Generators;
 /// <param name="IsAsync">Whether the handler is async (returns Task/ValueTask)</param>
 /// <param name="RequiresCancellationToken">Whether the handler accepts a CancellationToken</param>
 /// <param name="RequiresServiceProvider">Whether the handler requires IServiceProvider injection</param>
-internal sealed record HandlerDefinition(
+public sealed record HandlerDefinition(
   HandlerKind HandlerKind,
   string? FullTypeName,
   string? MethodName,
@@ -123,7 +123,7 @@ internal sealed record HandlerDefinition(
 /// <summary>
 /// Specifies the kind of handler.
 /// </summary>
-internal enum HandlerKind
+public enum HandlerKind
 {
   /// <summary>
   /// A delegate passed directly to Map().
@@ -149,7 +149,7 @@ internal enum HandlerKind
 /// <param name="IsVoid">Whether the return type is void</param>
 /// <param name="IsTask">Whether it returns Task/ValueTask</param>
 /// <param name="UnwrappedTypeName">For Task&lt;T&gt;, the T type name; otherwise same as FullTypeName</param>
-internal sealed record HandlerReturnType(
+public sealed record HandlerReturnType(
   string FullTypeName,
   string ShortTypeName,
   bool IsVoid,

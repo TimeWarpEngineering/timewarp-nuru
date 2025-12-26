@@ -14,7 +14,7 @@ namespace TimeWarp.Nuru.Generators;
 /// <param name="FilePath">Absolute path to the source file (for diagnostics)</param>
 /// <param name="Line">1-based line number (for diagnostics)</param>
 /// <param name="Column">1-based column number (for diagnostics)</param>
-internal sealed record InterceptSiteModel(
+public sealed record InterceptSiteModel(
   InterceptableLocation InterceptableLocation,
   string FilePath,
   int Line,
@@ -41,6 +41,7 @@ internal sealed record InterceptSiteModel(
   /// </summary>
   public static InterceptSiteModel FromInterceptableLocation(InterceptableLocation interceptableLocation, Location location)
   {
+    ArgumentNullException.ThrowIfNull(location);
     FileLinePositionSpan lineSpan = location.GetLineSpan();
     return new InterceptSiteModel(
       InterceptableLocation: interceptableLocation,

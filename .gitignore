@@ -435,3 +435,6 @@ Tests/logs/
 # Opencode temporary downloads
 opencodetmp/
 .generated/
+
+# Backup files
+*.old

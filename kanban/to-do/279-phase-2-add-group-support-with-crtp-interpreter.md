@@ -10,7 +10,7 @@ Add `IrGroupBuilder` and `IrGroupRouteBuilder` to handle nested route groups. Th
 
 ## Depends On
 
-#278 Phase 1: POC - Minimal Fluent Case
+#278 Phase 1: POC - Minimal Fluent Case ✅ (completed)
 
 ## Scope
 
@@ -42,6 +42,7 @@ This should produce routes:
 ### 2.1 Create `IrGroupBuilder<TParent>`
 
 - [ ] Create file: `source/timewarp-nuru-analyzers/generators/ir-builders/ir-group-builder.cs`
+- [ ] Make class `public` (analyzer types don't need to be internal)
 - [ ] Constructor takes: parent, accumulatedPrefix, registerRoute callback
 - [ ] Field: `AccumulatedPrefix` (string) - the full prefix including all parent groups
 - [ ] Method: `Map(pattern, segments)` → returns `IrGroupRouteBuilder<TParent>`
@@ -54,6 +55,7 @@ This should produce routes:
 ### 2.2 Create `IrGroupRouteBuilder<TParent>`
 
 - [ ] Create file: `source/timewarp-nuru-analyzers/generators/ir-builders/ir-group-route-builder.cs`
+- [ ] Make class `public` (analyzer types don't need to be internal)
 - [ ] Same structure as `IrRouteBuilder<TParent>` but parent is `IrGroupBuilder<TParent>`
 - [ ] Constructor takes: parent (IrGroupBuilder), registerRoute callback, fullPattern
 - [ ] All route configuration methods mirror `IrRouteBuilder`:
@@ -99,7 +101,7 @@ New dispatch entries:
 
 ### 2.6 Add Tests
 
-- [ ] Create/update test file: `tests/timewarp-nuru-analyzers-tests/interpreter/temp-interpreter-group-test.cs`
+- [ ] Create test file: `tests/timewarp-nuru-analyzers-tests/interpreter/dsl-interpreter-group-test.cs`
 - [ ] Test: Simple group - one level
   ```csharp
   .WithGroupPrefix("admin")
@@ -135,7 +137,7 @@ New dispatch entries:
 |------|---------|
 | `generators/ir-builders/ir-group-builder.cs` | Group builder with prefix accumulation |
 | `generators/ir-builders/ir-group-route-builder.cs` | Route builder for grouped routes |
-| `tests/.../interpreter/temp-interpreter-group-test.cs` | Group nesting tests |
+| `tests/.../interpreter/dsl-interpreter-group-test.cs` | Group nesting tests |
 
 ## Files to Modify
 
@@ -214,3 +216,43 @@ Consider adding marker interfaces:
 4. Routes after nested groups have correct prefix
 5. `Done()` correctly returns to parent at each level
 6. Existing Phase 1 tests still pass
+
+---
+
+## Lessons Learned from Phase 1
+
+### What Worked Well
+
+1. **CRTP Pattern**: The `IrAppBuilder<TSelf>` pattern works well for fluent chaining
+2. **Reusing Existing Extractors**: `PatternStringExtractor`, `HandlerExtractor`, `InterceptSiteExtractor` work out of the box
+3. **Fluent Chain Unrolling**: Walking nested `MemberAccessExpressionSyntax` and reversing gives correct execution order
+4. **Polymorphic Dispatch**: Using `object?` return type for dispatch methods allows different builder types to flow through
+
+### Key Implementation Details
+
+1. **Public Types**: All analyzer types should be `public` - they're in a separate DLL that users never reference directly
+2. **Type Alias for SyntaxNode**: Use `using RoslynSyntaxNode = Microsoft.CodeAnalysis.SyntaxNode;` to avoid conflict with `TimeWarp.Nuru.SyntaxNode`
+3. **Suppress CA1859**: Add `[SuppressMessage("Performance", "CA1859:...")]` on `DslInterpreter` class since polymorphic dispatch requires `object?` returns
+4. **Build vs FinalizeModel**: We agreed on `Build()` marks as built (returns `TSelf`), `FinalizeModel()` creates `AppModel`. Apply same pattern to group builders.
+5. **RunAsync Handling**: The interpreter walks statements after `Build()` to find `RunAsync()` calls and extract intercept sites
+
+### Test Infrastructure
+
+1. **Directory.Build.props**: Create `tests/timewarp-nuru-analyzers-tests/interpreter/Directory.Build.props` that:
+   - Imports parent Directory.Build.props
+   - Adds `<ProjectReference>` to analyzer as regular assembly (not analyzer output)
+2. **Test File Naming**: Use `dsl-interpreter-*.cs` pattern (NOT `temp-*`)
+3. **Test Pattern**: Files are runfiles with shebang, compiled not interpreted
+
+### Code Location
+
+- IR builders: `source/timewarp-nuru-analyzers/generators/ir-builders/`
+- Interpreter: `source/timewarp-nuru-analyzers/generators/interpreter/`
+- Tests: `tests/timewarp-nuru-analyzers-tests/interpreter/`
+
+### Existing Code Reference
+
+Review these Phase 1 files for patterns:
+- `ir-app-builder.cs` - CRTP pattern, `Build()`/`FinalizeModel()` separation
+- `ir-route-builder.cs` - Internal `RouteDefinitionBuilder` usage, `Done()` pattern
+- `dsl-interpreter.cs` - `UnrollFluentChain()`, `DispatchMethodCall()`, receiver type checking

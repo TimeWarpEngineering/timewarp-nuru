@@ -1,12 +1,31 @@
 # Implement WithGroupPrefix for Nested Route Groups
 
-## Description
+## Status: SUPERSEDED
+
+**This task is superseded by #277 (Semantic DSL Interpreter).**
+
+The runtime DSL builders (`GroupBuilder`, `GroupEndpointBuilder`) and `WithGroupPrefix()` method were implemented, but the generator still can't correctly extract nested group prefixes using syntax walking.
+
+The solution is the semantic interpreter approach in #277, which will:
+1. Mirror the DSL structure in IR builders
+2. Use Roslyn's semantic model to "interpret" the DSL
+3. Naturally handle prefix accumulation because the IR builders work the same way as the DSL builders
+
+Once #277 is complete, this task's goal (nested groups working end-to-end) will be achieved.
+
+---
+
+## Original Description
 
 Implement the `WithGroupPrefix()` method to enable nested route groups in the fluent DSL. This is a gap - the method is used in `dsl-example.cs` but doesn't exist in the builder.
 
 ## Parent
 
 #272 V2 Generator Phase 6: Testing
+
+## Superseded By
+
+#277 Epic: Semantic DSL Interpreter with Mirrored IR Builders
 
 ## Blocks
 

@@ -12,6 +12,13 @@ namespace TimeWarp.Nuru.Generators;
 public interface IIrAppBuilder : IIrRouteSource
 {
   /// <summary>
+  /// Sets the variable name for debugging/identification.
+  /// </summary>
+  /// <param name="variableName">The variable name from the source code.</param>
+  /// <returns>This builder for chaining.</returns>
+  IIrAppBuilder SetVariableName(string variableName);
+
+  /// <summary>
   /// Marks the builder as built.
   /// Must be called before FinalizeModel().
   /// </summary>

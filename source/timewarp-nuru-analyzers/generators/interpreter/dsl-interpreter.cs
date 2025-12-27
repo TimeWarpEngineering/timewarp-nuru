@@ -1,15 +1,17 @@
-// Semantic DSL interpreter that walks fluent builder chains.
+// Semantic DSL interpreter that walks blocks statement-by-statement.
 //
 // Instead of pattern-matching syntax, this interpreter "executes" the DSL
 // by dispatching method calls to corresponding IR builder methods.
 //
-// Phase 1: Supports pure fluent chains only.
-// Phase 2: Adds group support via IIrGroupBuilder.
-// Future phases will add variable tracking for fragmented styles.
+// Phase 1a: Block-based processing with variable tracking.
+// - Takes BlockSyntax (a method body) as input
+// - Returns IReadOnlyList<AppModel> (supports multiple apps per block)
+// - Tracks variable assignments in VariableState dictionary
+// - Processes statements one by one
 //
 // Key design:
 // - Uses SemanticModel for accurate type resolution
-// - Unrolls fluent chains from nested syntax to execution order
+// - Evaluates expressions recursively with variable resolution
 // - Dispatches to IR builders based on method name
 // - Uses marker interfaces (IIrRouteSource, IIrAppBuilder, IIrGroupBuilder, IIrRouteBuilder)
 //   for polymorphic dispatch without explicit type enumeration
@@ -32,6 +34,10 @@ public sealed class DslInterpreter
   private readonly SemanticModel SemanticModel;
   private readonly CancellationToken CancellationToken;
 
+  // Per-interpretation state
+  private Dictionary<ISymbol, object?> VariableState = null!;
+  private List<IrAppBuilder> BuiltApps = null!;
+
   /// <summary>
   /// Creates a new DSL interpreter.
   /// </summary>
@@ -44,168 +50,213 @@ public sealed class DslInterpreter
   }
 
   /// <summary>
-  /// Interprets from a CreateBuilder() call to produce an AppModel.
+  /// Interprets a block of statements to produce AppModels.
   /// </summary>
-  /// <param name="createBuilderCall">The NuruApp.CreateBuilder() invocation.</param>
-  /// <returns>The interpreted AppModel.</returns>
-  public AppModel Interpret(InvocationExpressionSyntax createBuilderCall)
+  /// <param name="block">The block containing DSL statements.</param>
+  /// <returns>List of interpreted AppModels (one per built app).</returns>
+  public IReadOnlyList<AppModel> Interpret(BlockSyntax block)
   {
-    // Create root IR builder
-    IrAppBuilder irAppBuilder = new();
+    ArgumentNullException.ThrowIfNull(block);
 
-    // For Phase 1, we handle pure fluent chains only.
-    // Find the outermost expression that contains this CreateBuilder call.
-    // Walk up to find the full chain including Build() and potentially RunAsync().
-    ExpressionSyntax? chainRoot = FindFluentChainRoot(createBuilderCall);
+    // Fresh state per interpretation
+    VariableState = new Dictionary<ISymbol, object?>(SymbolEqualityComparer.Default);
+    BuiltApps = [];
 
-    if (chainRoot is InvocationExpressionSyntax rootInvocation)
-    {
-      // Unroll and execute the fluent chain
-      EvaluateFluentChain(rootInvocation, irAppBuilder);
-    }
+    ProcessBlock(block);
 
-    // Look for RunAsync() call on the result
-    FindAndProcessRunAsyncCalls(createBuilderCall, irAppBuilder);
-
-    return irAppBuilder.FinalizeModel();
+    // Finalize all built apps
+    return BuiltApps.ConvertAll(app => app.FinalizeModel());
   }
 
-  /// <summary>
-  /// Finds the root of the fluent chain containing the given expression.
-  /// Walks up through member access and invocation expressions.
-  /// </summary>
-  private static ExpressionSyntax? FindFluentChainRoot(ExpressionSyntax expression)
-  {
-    RoslynSyntaxNode? current = expression;
-    ExpressionSyntax? root = expression;
-
-    while (current?.Parent is not null)
-    {
-      switch (current.Parent)
-      {
-        case MemberAccessExpressionSyntax:
-          current = current.Parent;
-          continue;
-
-        case InvocationExpressionSyntax invocation:
-          root = invocation;
-          current = current.Parent;
-          continue;
-
-        case ArgumentSyntax:
-        case ArgumentListSyntax:
-          current = current.Parent;
-          continue;
-
-        default:
-          return root;
-      }
-    }
-
-    return root;
-  }
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // BLOCK AND STATEMENT PROCESSING
+  // ═══════════════════════════════════════════════════════════════════════════════
 
   /// <summary>
-  /// Evaluates a fluent chain by unrolling it and dispatching each call.
+  /// Processes all statements in a block.
   /// </summary>
-  private void EvaluateFluentChain(InvocationExpressionSyntax chainRoot, IrAppBuilder irAppBuilder)
+  private void ProcessBlock(BlockSyntax block)
   {
-    // Unroll the chain to get calls in execution order
-    List<InvocationExpressionSyntax> calls = UnrollFluentChain(chainRoot);
-
-    // Current receiver state - starts as null (static call), then tracks builder type
-    object? currentReceiver = null;
-
-    foreach (InvocationExpressionSyntax call in calls)
+    foreach (StatementSyntax statement in block.Statements)
     {
-      currentReceiver = DispatchMethodCall(call, currentReceiver, irAppBuilder);
+      CancellationToken.ThrowIfCancellationRequested();
+      ProcessStatement(statement);
     }
   }
 
   /// <summary>
-  /// Unrolls a fluent chain from nested syntax to execution order.
-  /// For a.B().C().D(), returns [a.B(), a.B().C(), a.B().C().D()] but we process
-  /// by walking down and collecting in reverse, then reversing.
+  /// Processes a single statement based on its type.
   /// </summary>
-  private static List<InvocationExpressionSyntax> UnrollFluentChain(InvocationExpressionSyntax outermost)
+  private void ProcessStatement(StatementSyntax statement)
   {
-    List<InvocationExpressionSyntax> calls = [];
-    InvocationExpressionSyntax? current = outermost;
-
-    // Walk down the chain collecting invocations
-    while (current is not null)
+    switch (statement)
     {
-      calls.Add(current);
-
-      // Get the expression this method was called on
-      if (current.Expression is MemberAccessExpressionSyntax memberAccess)
-      {
-        if (memberAccess.Expression is InvocationExpressionSyntax nextInvocation)
-        {
-          current = nextInvocation;
-        }
-        else
-        {
-          // Reached the start (e.g., NuruApp.CreateBuilder)
-          break;
-        }
-      }
-      else
-      {
+      case LocalDeclarationStatementSyntax localDecl:
+        ProcessLocalDeclaration(localDecl);
         break;
-      }
-    }
 
-    // Reverse to get execution order
-    calls.Reverse();
-    return calls;
+      case ExpressionStatementSyntax exprStmt:
+        ProcessExpressionStatement(exprStmt);
+        break;
+
+      // Ignore other statement types (return, if, etc.)
+      default:
+        break;
+    }
   }
+
+  /// <summary>
+  /// Processes a local variable declaration (e.g., "var app = NuruApp.CreateBuilder(...)...").
+  /// </summary>
+  private void ProcessLocalDeclaration(LocalDeclarationStatementSyntax localDecl)
+  {
+    foreach (VariableDeclaratorSyntax declarator in localDecl.Declaration.Variables)
+    {
+      if (declarator.Initializer?.Value is null)
+        continue;
+
+      // Get the symbol for this variable
+      ISymbol? symbol = SemanticModel.GetDeclaredSymbol(declarator);
+      if (symbol is null)
+        continue;
+
+      // Evaluate the initializer expression
+      object? value = EvaluateExpression(declarator.Initializer.Value);
+
+      // Store in variable state
+      VariableState[symbol] = value;
+
+      // If it's an app builder (or built app marker), set the variable name
+      IrAppBuilder? appBuilder = value switch
+      {
+        IrAppBuilder builder => builder,
+        BuiltAppMarker marker => (IrAppBuilder)marker.Builder,
+        _ => null
+      };
+
+      appBuilder?.SetVariableName(declarator.Identifier.Text);
+    }
+  }
+
+  /// <summary>
+  /// Processes an expression statement (e.g., "await app.RunAsync(...)").
+  /// </summary>
+  private void ProcessExpressionStatement(ExpressionStatementSyntax exprStmt)
+  {
+    // Evaluate the expression for its side effects
+    EvaluateExpression(exprStmt.Expression);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // EXPRESSION EVALUATION
+  // ═══════════════════════════════════════════════════════════════════════════════
+
+  /// <summary>
+  /// Evaluates an expression, returning its IR representation.
+  /// </summary>
+  private object? EvaluateExpression(ExpressionSyntax expression)
+  {
+    return expression switch
+    {
+      InvocationExpressionSyntax invocation => EvaluateInvocation(invocation),
+      MemberAccessExpressionSyntax memberAccess => EvaluateMemberAccess(memberAccess),
+      IdentifierNameSyntax identifier => ResolveIdentifier(identifier),
+      AwaitExpressionSyntax awaitExpr => EvaluateExpression(awaitExpr.Expression),
+      _ => null // Literals, etc. - not relevant for DSL interpretation
+    };
+  }
+
+  /// <summary>
+  /// Evaluates an invocation expression.
+  /// </summary>
+  private object? EvaluateInvocation(InvocationExpressionSyntax invocation)
+  {
+    // First, evaluate what we're calling the method on
+    object? receiver = invocation.Expression switch
+    {
+      MemberAccessExpressionSyntax memberAccess => EvaluateExpression(memberAccess.Expression),
+      _ => null // Static call
+    };
+
+    // Get method name
+    string? methodName = GetMethodName(invocation);
+    if (methodName is null)
+      return null;
+
+    // Dispatch based on method name
+    return DispatchMethodCall(invocation, receiver, methodName);
+  }
+
+  /// <summary>
+  /// Evaluates a member access expression (for variable resolution).
+  /// </summary>
+  private object? EvaluateMemberAccess(MemberAccessExpressionSyntax memberAccess)
+  {
+    // For member access, we need to evaluate the receiver first
+    // This is used for things like "app.RunAsync(...)" where we need to resolve "app"
+    return EvaluateExpression(memberAccess.Expression);
+  }
+
+  /// <summary>
+  /// Resolves an identifier to its value from VariableState.
+  /// </summary>
+  private object? ResolveIdentifier(IdentifierNameSyntax identifier)
+  {
+    ISymbol? symbol = SemanticModel.GetSymbolInfo(identifier).Symbol;
+    if (symbol is null)
+      return null;
+
+    return VariableState.TryGetValue(symbol, out object? value) ? value : null;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // METHOD DISPATCH
+  // ═══════════════════════════════════════════════════════════════════════════════
 
   /// <summary>
   /// Dispatches a method call to the appropriate IR builder method.
   /// </summary>
-  /// <param name="invocation">The method invocation.</param>
-  /// <param name="currentReceiver">The current receiver state (IR builder or marker).</param>
-  /// <param name="irAppBuilder">The root app builder.</param>
-  /// <returns>The new receiver state after this call.</returns>
   private object? DispatchMethodCall(
     InvocationExpressionSyntax invocation,
-    object? currentReceiver,
-    IrAppBuilder irAppBuilder)
+    object? receiver,
+    string methodName)
   {
-    string? methodName = GetMethodName(invocation);
-    if (methodName is null)
-      return currentReceiver;
-
     return methodName switch
     {
-      "CreateBuilder" => irAppBuilder,
+      "CreateBuilder" => CreateNewAppBuilder(),
 
-      "Map" => DispatchMap(invocation, currentReceiver),
+      "Map" => DispatchMap(invocation, receiver),
 
-      "WithGroupPrefix" => DispatchWithGroupPrefix(invocation, currentReceiver),
+      "WithGroupPrefix" => DispatchWithGroupPrefix(invocation, receiver),
 
-      "WithHandler" => DispatchWithHandler(invocation, currentReceiver),
+      "WithHandler" => DispatchWithHandler(invocation, receiver),
 
-      "WithDescription" => DispatchWithDescription(invocation, currentReceiver),
+      "WithDescription" => DispatchWithDescription(invocation, receiver),
 
-      "AsQuery" => DispatchAsQuery(currentReceiver),
+      "AsQuery" => DispatchAsQuery(receiver),
 
-      "AsCommand" => DispatchAsCommand(currentReceiver),
+      "AsCommand" => DispatchAsCommand(receiver),
 
-      "AsIdempotentCommand" => DispatchAsIdempotentCommand(currentReceiver),
+      "AsIdempotentCommand" => DispatchAsIdempotentCommand(receiver),
 
-      "Done" => DispatchDone(currentReceiver),
+      "Done" => DispatchDone(receiver),
 
-      "Build" => DispatchBuild(currentReceiver),
+      "Build" => DispatchBuild(receiver),
 
-      "WithName" => DispatchWithName(invocation, currentReceiver),
+      "WithName" => DispatchWithName(invocation, receiver),
+
+      "RunAsync" => DispatchRunAsyncCall(invocation, receiver),
 
       _ => throw new InvalidOperationException(
         $"Unrecognized DSL method: {methodName}. " +
         $"Location: {invocation.GetLocation().GetLineSpan()}")
     };
   }
+
+  /// <summary>
+  /// Creates a new IR app builder.
+  /// </summary>
+  private static IrAppBuilder CreateNewAppBuilder() => new();
 
   // ═══════════════════════════════════════════════════════════════════════════════
   // DISPATCH METHODS - Using marker interfaces for polymorphic dispatch
@@ -214,9 +265,9 @@ public sealed class DslInterpreter
   /// <summary>
   /// Dispatches Map() call to any IIrRouteSource (app or group builder).
   /// </summary>
-  private static object? DispatchMap(InvocationExpressionSyntax invocation, object? currentReceiver)
+  private static object? DispatchMap(InvocationExpressionSyntax invocation, object? receiver)
   {
-    if (currentReceiver is not IIrRouteSource source)
+    if (receiver is not IIrRouteSource source)
     {
       throw new InvalidOperationException(
         $"Map() must be called on an app or group builder. Location: {invocation.GetLocation().GetLineSpan()}");
@@ -235,9 +286,9 @@ public sealed class DslInterpreter
   /// <summary>
   /// Dispatches WithGroupPrefix() call to any IIrRouteSource (app or group builder).
   /// </summary>
-  private static object? DispatchWithGroupPrefix(InvocationExpressionSyntax invocation, object? currentReceiver)
+  private static object? DispatchWithGroupPrefix(InvocationExpressionSyntax invocation, object? receiver)
   {
-    if (currentReceiver is not IIrRouteSource source)
+    if (receiver is not IIrRouteSource source)
     {
       throw new InvalidOperationException(
         $"WithGroupPrefix() must be called on an app or group builder. Location: {invocation.GetLocation().GetLineSpan()}");
@@ -256,9 +307,9 @@ public sealed class DslInterpreter
   /// <summary>
   /// Dispatches WithHandler() call to IIrRouteBuilder.
   /// </summary>
-  private object? DispatchWithHandler(InvocationExpressionSyntax invocation, object? currentReceiver)
+  private object? DispatchWithHandler(InvocationExpressionSyntax invocation, object? receiver)
   {
-    if (currentReceiver is not IIrRouteBuilder routeBuilder)
+    if (receiver is not IIrRouteBuilder routeBuilder)
     {
       throw new InvalidOperationException(
         $"WithHandler() must be called on a route builder. Location: {invocation.GetLocation().GetLineSpan()}");
@@ -277,11 +328,11 @@ public sealed class DslInterpreter
   /// <summary>
   /// Dispatches WithDescription() call to IIrRouteBuilder or IIrAppBuilder.
   /// </summary>
-  private static object? DispatchWithDescription(InvocationExpressionSyntax invocation, object? currentReceiver)
+  private static object? DispatchWithDescription(InvocationExpressionSyntax invocation, object? receiver)
   {
     string? description = ExtractStringArgument(invocation);
 
-    return currentReceiver switch
+    return receiver switch
     {
       IIrRouteBuilder routeBuilder => routeBuilder.WithDescription(description ?? ""),
       IIrAppBuilder appBuilder => appBuilder.WithDescription(description ?? ""),
@@ -293,9 +344,9 @@ public sealed class DslInterpreter
   /// <summary>
   /// Dispatches WithName() call to IIrAppBuilder.
   /// </summary>
-  private static object? DispatchWithName(InvocationExpressionSyntax invocation, object? currentReceiver)
+  private static object? DispatchWithName(InvocationExpressionSyntax invocation, object? receiver)
   {
-    if (currentReceiver is not IIrAppBuilder appBuilder)
+    if (receiver is not IIrAppBuilder appBuilder)
     {
       throw new InvalidOperationException(
         $"WithName() must be called on an app builder. Location: {invocation.GetLocation().GetLineSpan()}");
@@ -308,9 +359,9 @@ public sealed class DslInterpreter
   /// <summary>
   /// Dispatches AsQuery() call to IIrRouteBuilder.
   /// </summary>
-  private static object? DispatchAsQuery(object? currentReceiver)
+  private static object? DispatchAsQuery(object? receiver)
   {
-    if (currentReceiver is not IIrRouteBuilder routeBuilder)
+    if (receiver is not IIrRouteBuilder routeBuilder)
     {
       throw new InvalidOperationException("AsQuery() must be called on a route builder.");
     }
@@ -321,9 +372,9 @@ public sealed class DslInterpreter
   /// <summary>
   /// Dispatches AsCommand() call to IIrRouteBuilder.
   /// </summary>
-  private static object? DispatchAsCommand(object? currentReceiver)
+  private static object? DispatchAsCommand(object? receiver)
   {
-    if (currentReceiver is not IIrRouteBuilder routeBuilder)
+    if (receiver is not IIrRouteBuilder routeBuilder)
     {
       throw new InvalidOperationException("AsCommand() must be called on a route builder.");
     }
@@ -334,9 +385,9 @@ public sealed class DslInterpreter
   /// <summary>
   /// Dispatches AsIdempotentCommand() call to IIrRouteBuilder.
   /// </summary>
-  private static object? DispatchAsIdempotentCommand(object? currentReceiver)
+  private static object? DispatchAsIdempotentCommand(object? receiver)
   {
-    if (currentReceiver is not IIrRouteBuilder routeBuilder)
+    if (receiver is not IIrRouteBuilder routeBuilder)
     {
       throw new InvalidOperationException("AsIdempotentCommand() must be called on a route builder.");
     }
@@ -347,9 +398,9 @@ public sealed class DslInterpreter
   /// <summary>
   /// Dispatches Done() call to IIrRouteBuilder or IIrGroupBuilder.
   /// </summary>
-  private static object? DispatchDone(object? currentReceiver)
+  private static object? DispatchDone(object? receiver)
   {
-    return currentReceiver switch
+    return receiver switch
     {
       IIrRouteBuilder routeBuilder => routeBuilder.Done(),
       IIrGroupBuilder groupBuilder => groupBuilder.Done(),
@@ -360,78 +411,57 @@ public sealed class DslInterpreter
   /// <summary>
   /// Dispatches Build() call to IIrAppBuilder.
   /// </summary>
-  private static object? DispatchBuild(object? currentReceiver)
+  private object? DispatchBuild(object? receiver)
   {
-    if (currentReceiver is not IIrAppBuilder appBuilder)
+    if (receiver is not IrAppBuilder appBuilder)
     {
       throw new InvalidOperationException("Build() must be called on an app builder.");
     }
 
-    // Build() marks the app as built
+    // Mark as built
     appBuilder.Build();
 
-    // Return a marker indicating the app is built (for RunAsync detection)
+    // Track this built app for finalization
+    BuiltApps.Add(appBuilder);
+
+    // Return a marker for RunAsync detection
     return new BuiltAppMarker(appBuilder);
   }
 
   /// <summary>
-  /// Finds and processes RunAsync() calls following the Build().
+  /// Dispatches RunAsync() call to a built app.
   /// </summary>
-  private void FindAndProcessRunAsyncCalls(InvocationExpressionSyntax createBuilderCall, IrAppBuilder irAppBuilder)
+  private object? DispatchRunAsyncCall(InvocationExpressionSyntax invocation, object? receiver)
   {
-    // Find the statement containing CreateBuilder
-    RoslynSyntaxNode? statementNode = createBuilderCall.Parent;
-    while (statementNode is not null && statementNode is not StatementSyntax)
+    // Receiver could be:
+    // 1. BuiltAppMarker - from chained ".Build().RunAsync()"
+    // 2. IrAppBuilder - from variable reference "app.RunAsync()"
+    IrAppBuilder? appBuilder = receiver switch
     {
-      statementNode = statementNode.Parent;
+      BuiltAppMarker marker => (IrAppBuilder)marker.Builder,
+      IrAppBuilder builder => builder,
+      _ => null
+    };
+
+    if (appBuilder is null)
+    {
+      throw new InvalidOperationException(
+        $"RunAsync() must be called on a built app. Location: {invocation.GetLocation().GetLineSpan()}");
     }
 
-    if (statementNode is not StatementSyntax statement)
-      return;
-
-    // Get the containing block
-    if (statement.Parent is not BlockSyntax block)
-      return;
-
-    // Find statements after our statement
-    bool foundOurStatement = false;
-    foreach (StatementSyntax stmt in block.Statements)
+    // Extract and add the intercept site
+    InterceptSiteModel? site = InterceptSiteExtractor.Extract(SemanticModel, invocation);
+    if (site is not null)
     {
-      if (stmt == statement)
-      {
-        foundOurStatement = true;
-        // Also check if RunAsync is in this same statement (chained)
-        ProcessRunAsyncInStatement(stmt, irAppBuilder);
-        continue;
-      }
-
-      if (foundOurStatement)
-      {
-        ProcessRunAsyncInStatement(stmt, irAppBuilder);
-      }
+      appBuilder.AddInterceptSite(site);
     }
+
+    return null; // RunAsync returns void/Task
   }
 
-  /// <summary>
-  /// Processes any RunAsync() calls in a statement.
-  /// </summary>
-  private void ProcessRunAsyncInStatement(StatementSyntax statement, IrAppBuilder irAppBuilder)
-  {
-    // Find all RunAsync invocations in this statement
-    IEnumerable<InvocationExpressionSyntax> runAsyncCalls = statement
-      .DescendantNodes()
-      .OfType<InvocationExpressionSyntax>()
-      .Where(inv => GetMethodName(inv) == "RunAsync");
-
-    foreach (InvocationExpressionSyntax runAsyncCall in runAsyncCalls)
-    {
-      InterceptSiteModel? site = InterceptSiteExtractor.Extract(SemanticModel, runAsyncCall);
-      if (site is not null)
-      {
-        irAppBuilder.AddInterceptSite(site);
-      }
-    }
-  }
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // HELPER METHODS
+  // ═══════════════════════════════════════════════════════════════════════════════
 
   /// <summary>
   /// Gets the method name from an invocation expression.

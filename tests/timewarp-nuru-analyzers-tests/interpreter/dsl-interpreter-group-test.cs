@@ -1,7 +1,7 @@
 #!/usr/bin/dotnet run
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// DSL INTERPRETER GROUP TESTS
+// DSL INTERPRETER GROUP TESTS - Block-Based Processing
 // ═══════════════════════════════════════════════════════════════════════════════
 // Tests that the DslInterpreter correctly interprets nested route groups.
 //
@@ -59,18 +59,16 @@ public sealed class InterpreterGroupTests
     SyntaxTree tree = compilation.SyntaxTrees.First();
     SemanticModel semanticModel = compilation.GetSemanticModel(tree);
 
-    InvocationExpressionSyntax? createBuilderCall = tree.GetRoot()
-      .DescendantNodes()
-      .OfType<InvocationExpressionSyntax>()
-      .FirstOrDefault(inv => GetMethodName(inv) == "CreateBuilder");
-
-    createBuilderCall.ShouldNotBeNull("Could not find CreateBuilder() call in source");
+    BlockSyntax? mainBlock = FindMainMethodBlock(tree);
+    mainBlock.ShouldNotBeNull("Could not find Main method block in source");
 
     // Act
     DslInterpreter interpreter = new(semanticModel, CancellationToken.None);
-    AppModel result = interpreter.Interpret(createBuilderCall);
+    IReadOnlyList<AppModel> results = interpreter.Interpret(mainBlock);
 
     // Assert
+    results.Count.ShouldBe(1, "Should have exactly one app");
+    AppModel result = results[0];
     result.ShouldNotBeNull();
     result.Routes.Length.ShouldBe(1, "Should have exactly one route");
     result.Routes[0].OriginalPattern.ShouldBe("admin status", "Route should have group prefix prepended");
@@ -115,20 +113,17 @@ public sealed class InterpreterGroupTests
     SyntaxTree tree = compilation.SyntaxTrees.First();
     SemanticModel semanticModel = compilation.GetSemanticModel(tree);
 
-    InvocationExpressionSyntax? createBuilderCall = tree.GetRoot()
-      .DescendantNodes()
-      .OfType<InvocationExpressionSyntax>()
-      .FirstOrDefault(inv => GetMethodName(inv) == "CreateBuilder");
-
-    createBuilderCall.ShouldNotBeNull();
+    BlockSyntax? mainBlock = FindMainMethodBlock(tree);
+    mainBlock.ShouldNotBeNull();
 
     // Act
     DslInterpreter interpreter = new(semanticModel, CancellationToken.None);
-    AppModel result = interpreter.Interpret(createBuilderCall);
+    IReadOnlyList<AppModel> results = interpreter.Interpret(mainBlock);
 
     // Assert
-    result.Routes.Length.ShouldBe(1, "Should have exactly one route");
-    result.Routes[0].OriginalPattern.ShouldBe("admin config get {key}", "Route should have nested prefixes");
+    results.Count.ShouldBe(1);
+    results[0].Routes.Length.ShouldBe(1, "Should have exactly one route");
+    results[0].Routes[0].OriginalPattern.ShouldBe("admin config get {key}", "Route should have nested prefixes");
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -172,21 +167,18 @@ public sealed class InterpreterGroupTests
     SyntaxTree tree = compilation.SyntaxTrees.First();
     SemanticModel semanticModel = compilation.GetSemanticModel(tree);
 
-    InvocationExpressionSyntax? createBuilderCall = tree.GetRoot()
-      .DescendantNodes()
-      .OfType<InvocationExpressionSyntax>()
-      .FirstOrDefault(inv => GetMethodName(inv) == "CreateBuilder");
-
-    createBuilderCall.ShouldNotBeNull();
+    BlockSyntax? mainBlock = FindMainMethodBlock(tree);
+    mainBlock.ShouldNotBeNull();
 
     // Act
     DslInterpreter interpreter = new(semanticModel, CancellationToken.None);
-    AppModel result = interpreter.Interpret(createBuilderCall);
+    IReadOnlyList<AppModel> results = interpreter.Interpret(mainBlock);
 
     // Assert
-    result.Routes.Length.ShouldBe(2, "Should have two routes");
-    result.Routes[0].OriginalPattern.ShouldBe("admin config list", "First route should be in nested group");
-    result.Routes[1].OriginalPattern.ShouldBe("admin status", "Second route should be in outer group only");
+    results.Count.ShouldBe(1);
+    results[0].Routes.Length.ShouldBe(2, "Should have two routes");
+    results[0].Routes[0].OriginalPattern.ShouldBe("admin config list", "First route should be in nested group");
+    results[0].Routes[1].OriginalPattern.ShouldBe("admin status", "Second route should be in outer group only");
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -228,21 +220,18 @@ public sealed class InterpreterGroupTests
     SyntaxTree tree = compilation.SyntaxTrees.First();
     SemanticModel semanticModel = compilation.GetSemanticModel(tree);
 
-    InvocationExpressionSyntax? createBuilderCall = tree.GetRoot()
-      .DescendantNodes()
-      .OfType<InvocationExpressionSyntax>()
-      .FirstOrDefault(inv => GetMethodName(inv) == "CreateBuilder");
-
-    createBuilderCall.ShouldNotBeNull();
+    BlockSyntax? mainBlock = FindMainMethodBlock(tree);
+    mainBlock.ShouldNotBeNull();
 
     // Act
     DslInterpreter interpreter = new(semanticModel, CancellationToken.None);
-    AppModel result = interpreter.Interpret(createBuilderCall);
+    IReadOnlyList<AppModel> results = interpreter.Interpret(mainBlock);
 
     // Assert
-    result.Routes.Length.ShouldBe(2, "Should have two routes");
-    result.Routes[0].OriginalPattern.ShouldBe("admin status");
-    result.Routes[1].OriginalPattern.ShouldBe("admin info");
+    results.Count.ShouldBe(1);
+    results[0].Routes.Length.ShouldBe(2, "Should have two routes");
+    results[0].Routes[0].OriginalPattern.ShouldBe("admin status");
+    results[0].Routes[1].OriginalPattern.ShouldBe("admin info");
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -284,20 +273,17 @@ public sealed class InterpreterGroupTests
     SyntaxTree tree = compilation.SyntaxTrees.First();
     SemanticModel semanticModel = compilation.GetSemanticModel(tree);
 
-    InvocationExpressionSyntax? createBuilderCall = tree.GetRoot()
-      .DescendantNodes()
-      .OfType<InvocationExpressionSyntax>()
-      .FirstOrDefault(inv => GetMethodName(inv) == "CreateBuilder");
-
-    createBuilderCall.ShouldNotBeNull();
+    BlockSyntax? mainBlock = FindMainMethodBlock(tree);
+    mainBlock.ShouldNotBeNull();
 
     // Act
     DslInterpreter interpreter = new(semanticModel, CancellationToken.None);
-    AppModel result = interpreter.Interpret(createBuilderCall);
+    IReadOnlyList<AppModel> results = interpreter.Interpret(mainBlock);
 
     // Assert
-    result.Routes.Length.ShouldBe(1, "Should have exactly one route");
-    result.Routes[0].OriginalPattern.ShouldBe("admin config db status", "Route should have all three prefixes");
+    results.Count.ShouldBe(1);
+    results[0].Routes.Length.ShouldBe(1, "Should have exactly one route");
+    results[0].Routes[0].OriginalPattern.ShouldBe("admin config db status", "Route should have all three prefixes");
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -343,36 +329,32 @@ public sealed class InterpreterGroupTests
     SyntaxTree tree = compilation.SyntaxTrees.First();
     SemanticModel semanticModel = compilation.GetSemanticModel(tree);
 
-    InvocationExpressionSyntax? createBuilderCall = tree.GetRoot()
-      .DescendantNodes()
-      .OfType<InvocationExpressionSyntax>()
-      .FirstOrDefault(inv => GetMethodName(inv) == "CreateBuilder");
-
-    createBuilderCall.ShouldNotBeNull();
+    BlockSyntax? mainBlock = FindMainMethodBlock(tree);
+    mainBlock.ShouldNotBeNull();
 
     // Act
     DslInterpreter interpreter = new(semanticModel, CancellationToken.None);
-    AppModel result = interpreter.Interpret(createBuilderCall);
+    IReadOnlyList<AppModel> results = interpreter.Interpret(mainBlock);
 
     // Assert
-    result.Routes.Length.ShouldBe(3, "Should have three routes");
-    result.Routes[0].OriginalPattern.ShouldBe("ping", "First route is top-level");
-    result.Routes[1].OriginalPattern.ShouldBe("admin status", "Second route is grouped");
-    result.Routes[2].OriginalPattern.ShouldBe("version", "Third route is top-level");
+    results.Count.ShouldBe(1);
+    results[0].Routes.Length.ShouldBe(3, "Should have three routes");
+    results[0].Routes[0].OriginalPattern.ShouldBe("ping", "First route is top-level");
+    results[0].Routes[1].OriginalPattern.ShouldBe("admin status", "Second route is grouped");
+    results[0].Routes[2].OriginalPattern.ShouldBe("version", "Third route is top-level");
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
   // HELPER METHODS
   // ═══════════════════════════════════════════════════════════════════════════
 
-  private static string? GetMethodName(InvocationExpressionSyntax invocation)
+  private static BlockSyntax? FindMainMethodBlock(SyntaxTree tree)
   {
-    return invocation.Expression switch
-    {
-      MemberAccessExpressionSyntax memberAccess => memberAccess.Name.Identifier.Text,
-      IdentifierNameSyntax identifier => identifier.Identifier.Text,
-      _ => null
-    };
+    return tree.GetRoot()
+      .DescendantNodes()
+      .OfType<MethodDeclarationSyntax>()
+      .FirstOrDefault(m => m.Identifier.Text == "Main")
+      ?.Body;
   }
 
   private static CSharpCompilation CreateCompilationWithNuru(string source)

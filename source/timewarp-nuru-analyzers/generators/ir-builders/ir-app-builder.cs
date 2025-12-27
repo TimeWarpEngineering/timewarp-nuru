@@ -20,11 +20,22 @@ namespace TimeWarp.Nuru.Generators;
 public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSelf>
 {
   // State fields mirroring AppModel properties
+  private string? VariableName;
   private string? Name;
   private string? Description;
   private readonly List<RouteDefinition> Routes = [];
   private readonly List<InterceptSiteModel> InterceptSites = [];
   private bool IsBuilt;
+
+  /// <summary>
+  /// Sets the variable name for debugging/identification.
+  /// Called by interpreter when processing local declarations.
+  /// </summary>
+  public TSelf SetVariableName(string variableName)
+  {
+    VariableName = variableName;
+    return (TSelf)this;
+  }
 
   /// <summary>
   /// Sets the application name.
@@ -104,6 +115,7 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
     }
 
     return new AppModel(
+      VariableName: VariableName,
       Name: Name,
       Description: Description,
       AiPrompt: null,
@@ -131,6 +143,7 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
 
   IIrRouteBuilder IIrRouteSource.Map(string pattern) => Map(pattern);
   IIrGroupBuilder IIrRouteSource.WithGroupPrefix(string prefix) => WithGroupPrefix(prefix);
+  IIrAppBuilder IIrAppBuilder.SetVariableName(string variableName) => SetVariableName(variableName);
   IIrAppBuilder IIrAppBuilder.Build() => Build();
   IIrAppBuilder IIrAppBuilder.WithName(string name) => WithName(name);
   IIrAppBuilder IIrAppBuilder.WithDescription(string description) => WithDescription(description);

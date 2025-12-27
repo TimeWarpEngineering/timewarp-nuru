@@ -4,6 +4,7 @@ namespace TimeWarp.Nuru.Generators;
 /// Design-time representation of a complete CLI application.
 /// This is the top-level IR passed from extractors to emitters.
 /// </summary>
+/// <param name="VariableName">Variable name for debugging/identification (e.g., "app" from "var app = ...")</param>
 /// <param name="Name">Application name for help/version output</param>
 /// <param name="Description">Application description for help output</param>
 /// <param name="AiPrompt">AI prompt for --capabilities output</param>
@@ -17,6 +18,7 @@ namespace TimeWarp.Nuru.Generators;
 /// <param name="Services">Registered services for DI</param>
 /// <param name="InterceptSites">Locations of all RunAsync() calls for interceptor</param>
 public sealed record AppModel(
+  string? VariableName,
   string? Name,
   string? Description,
   string? AiPrompt,
@@ -34,6 +36,7 @@ public sealed record AppModel(
   /// Creates an empty AppModel with required intercept sites.
   /// </summary>
   public static AppModel Empty(ImmutableArray<InterceptSiteModel> interceptSites) => new(
+    VariableName: null,
     Name: null,
     Description: null,
     AiPrompt: null,

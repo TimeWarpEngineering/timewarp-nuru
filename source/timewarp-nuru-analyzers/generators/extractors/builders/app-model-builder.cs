@@ -204,6 +204,7 @@ internal sealed class AppModelBuilder
 
     return new AppModel
     (
+      VariableName: null, // AppModelBuilder doesn't track variable names
       Name: Name,
       Description: Description,
       AiPrompt: AiPrompt,

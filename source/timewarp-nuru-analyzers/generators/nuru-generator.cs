@@ -156,6 +156,7 @@ public sealed class NuruGenerator : IIncrementalGenerator
     // Create combined model with all intercept sites
     return new AppModel
     (
+      VariableName: null, // Combined models don't track variable names
       Name: name,
       Description: description,
       AiPrompt: aiPrompt,

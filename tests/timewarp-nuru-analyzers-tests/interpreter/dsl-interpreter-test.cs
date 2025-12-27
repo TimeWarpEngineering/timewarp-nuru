@@ -1,18 +1,13 @@
 #!/usr/bin/dotnet run
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// DSL INTERPRETER POC TEST
+// DSL INTERPRETER TEST - Block-Based Processing
 // ═══════════════════════════════════════════════════════════════════════════════
-// Tests that the DslInterpreter correctly interprets the minimal fluent case.
+// Tests that the DslInterpreter correctly interprets block-based DSL code.
 //
-// Target code under test:
-//   NuruCoreApp app = NuruApp.CreateBuilder([])
-//     .Map("ping")
-//       .WithHandler(() => "pong")
-//       .AsQuery()
-//       .Done()
-//     .Build();
-//   await app.RunAsync(["ping"]);
+// The interpreter now takes a BlockSyntax (method body) and returns
+// IReadOnlyList<AppModel>, supporting multiple apps per block and
+// variable tracking for fragmented code styles.
 // ═══════════════════════════════════════════════════════════════════════════════
 
 using System.Collections.Immutable;
@@ -55,20 +50,19 @@ public sealed class InterpreterPocTests
     SyntaxTree tree = compilation.SyntaxTrees.First();
     SemanticModel semanticModel = compilation.GetSemanticModel(tree);
 
-    // Find CreateBuilder invocation
-    InvocationExpressionSyntax? createBuilderCall = tree.GetRoot()
-      .DescendantNodes()
-      .OfType<InvocationExpressionSyntax>()
-      .FirstOrDefault(inv => GetMethodName(inv) == "CreateBuilder");
-
-    createBuilderCall.ShouldNotBeNull("Could not find CreateBuilder() call in source");
+    // Find Main method body (BlockSyntax)
+    BlockSyntax? mainBlock = FindMainMethodBlock(tree);
+    mainBlock.ShouldNotBeNull("Could not find Main method block in source");
 
     // Act
     DslInterpreter interpreter = new(semanticModel, CancellationToken.None);
-    AppModel result = interpreter.Interpret(createBuilderCall);
+    IReadOnlyList<AppModel> results = interpreter.Interpret(mainBlock);
 
     // Assert
+    results.Count.ShouldBe(1, "Should have exactly one app");
+    AppModel result = results[0];
     result.ShouldNotBeNull();
+    result.VariableName.ShouldBe("app", "Variable name should be captured");
     result.Routes.Length.ShouldBe(1, "Should have exactly one route");
     result.Routes[0].OriginalPattern.ShouldBe("ping");
     result.Routes[0].MessageType.ShouldBe("Query");
@@ -106,20 +100,17 @@ public sealed class InterpreterPocTests
     SyntaxTree tree = compilation.SyntaxTrees.First();
     SemanticModel semanticModel = compilation.GetSemanticModel(tree);
 
-    InvocationExpressionSyntax? createBuilderCall = tree.GetRoot()
-      .DescendantNodes()
-      .OfType<InvocationExpressionSyntax>()
-      .FirstOrDefault(inv => GetMethodName(inv) == "CreateBuilder");
-
-    createBuilderCall.ShouldNotBeNull();
+    BlockSyntax? mainBlock = FindMainMethodBlock(tree);
+    mainBlock.ShouldNotBeNull();
 
     // Act
     DslInterpreter interpreter = new(semanticModel, CancellationToken.None);
-    AppModel result = interpreter.Interpret(createBuilderCall);
+    IReadOnlyList<AppModel> results = interpreter.Interpret(mainBlock);
 
     // Assert
-    result.Routes.Length.ShouldBe(1);
-    result.Routes[0].Description.ShouldBe("Returns status");
+    results.Count.ShouldBe(1);
+    results[0].Routes.Length.ShouldBe(1);
+    results[0].Routes[0].Description.ShouldBe("Returns status");
   }
 
   public static async Task Should_interpret_command_route()
@@ -151,20 +142,17 @@ public sealed class InterpreterPocTests
     SyntaxTree tree = compilation.SyntaxTrees.First();
     SemanticModel semanticModel = compilation.GetSemanticModel(tree);
 
-    InvocationExpressionSyntax? createBuilderCall = tree.GetRoot()
-      .DescendantNodes()
-      .OfType<InvocationExpressionSyntax>()
-      .FirstOrDefault(inv => GetMethodName(inv) == "CreateBuilder");
-
-    createBuilderCall.ShouldNotBeNull();
+    BlockSyntax? mainBlock = FindMainMethodBlock(tree);
+    mainBlock.ShouldNotBeNull();
 
     // Act
     DslInterpreter interpreter = new(semanticModel, CancellationToken.None);
-    AppModel result = interpreter.Interpret(createBuilderCall);
+    IReadOnlyList<AppModel> results = interpreter.Interpret(mainBlock);
 
     // Assert
-    result.Routes.Length.ShouldBe(1);
-    result.Routes[0].MessageType.ShouldBe("Command");
+    results.Count.ShouldBe(1);
+    results[0].Routes.Length.ShouldBe(1);
+    results[0].Routes[0].MessageType.ShouldBe("Command");
   }
 
   public static async Task Should_interpret_multiple_routes()
@@ -200,35 +188,31 @@ public sealed class InterpreterPocTests
     SyntaxTree tree = compilation.SyntaxTrees.First();
     SemanticModel semanticModel = compilation.GetSemanticModel(tree);
 
-    InvocationExpressionSyntax? createBuilderCall = tree.GetRoot()
-      .DescendantNodes()
-      .OfType<InvocationExpressionSyntax>()
-      .FirstOrDefault(inv => GetMethodName(inv) == "CreateBuilder");
-
-    createBuilderCall.ShouldNotBeNull();
+    BlockSyntax? mainBlock = FindMainMethodBlock(tree);
+    mainBlock.ShouldNotBeNull();
 
     // Act
     DslInterpreter interpreter = new(semanticModel, CancellationToken.None);
-    AppModel result = interpreter.Interpret(createBuilderCall);
+    IReadOnlyList<AppModel> results = interpreter.Interpret(mainBlock);
 
     // Assert
-    result.Routes.Length.ShouldBe(2, "Should have two routes");
-    result.Routes[0].OriginalPattern.ShouldBe("ping");
-    result.Routes[1].OriginalPattern.ShouldBe("status");
+    results.Count.ShouldBe(1);
+    results[0].Routes.Length.ShouldBe(2, "Should have two routes");
+    results[0].Routes[0].OriginalPattern.ShouldBe("ping");
+    results[0].Routes[1].OriginalPattern.ShouldBe("status");
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
   // HELPER METHODS
   // ═══════════════════════════════════════════════════════════════════════════
 
-  private static string? GetMethodName(InvocationExpressionSyntax invocation)
+  private static BlockSyntax? FindMainMethodBlock(SyntaxTree tree)
   {
-    return invocation.Expression switch
-    {
-      MemberAccessExpressionSyntax memberAccess => memberAccess.Name.Identifier.Text,
-      IdentifierNameSyntax identifier => identifier.Identifier.Text,
-      _ => null
-    };
+    return tree.GetRoot()
+      .DescendantNodes()
+      .OfType<MethodDeclarationSyntax>()
+      .FirstOrDefault(m => m.Identifier.Text == "Main")
+      ?.Body;
   }
 
   private static CSharpCompilation CreateCompilationWithNuru(string source)

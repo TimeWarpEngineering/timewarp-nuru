@@ -8,6 +8,7 @@
 // - Method names mirror DSL methods exactly
 // - Build() marks as built but doesn't finalize (for RunAsync intercept sites)
 // - FinalizeModel() creates the actual AppModel
+// - Implements IIrAppBuilder for polymorphic dispatch in interpreter
 
 namespace TimeWarp.Nuru.Generators;
 
@@ -16,7 +17,7 @@ namespace TimeWarp.Nuru.Generators;
 /// Uses CRTP pattern to enable proper fluent chaining.
 /// </summary>
 /// <typeparam name="TSelf">The concrete builder type for fluent returns.</typeparam>
-public class IrAppBuilder<TSelf> where TSelf : IrAppBuilder<TSelf>
+public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSelf>
 {
   // State fields mirroring AppModel properties
   private string? Name;
@@ -50,11 +51,22 @@ public class IrAppBuilder<TSelf> where TSelf : IrAppBuilder<TSelf>
   /// Mirrors: NuruCoreAppBuilder.Map()
   /// </summary>
   /// <param name="pattern">The route pattern string.</param>
-  /// <param name="segments">The parsed segments from PatternStringExtractor.</param>
   /// <returns>An IrRouteBuilder for configuring the route.</returns>
-  public IrRouteBuilder<TSelf> Map(string pattern, ImmutableArray<SegmentDefinition> segments)
+  public IrRouteBuilder<TSelf> Map(string pattern)
   {
+    ImmutableArray<SegmentDefinition> segments = PatternStringExtractor.ExtractSegments(pattern);
     return new IrRouteBuilder<TSelf>((TSelf)this, pattern, segments, RegisterRoute);
+  }
+
+  /// <summary>
+  /// Creates a route group with a shared prefix.
+  /// Mirrors: NuruCoreAppBuilder.WithGroupPrefix()
+  /// </summary>
+  /// <param name="prefix">The prefix for all routes in this group.</param>
+  /// <returns>A group builder for configuring nested routes.</returns>
+  public IrGroupBuilder<TSelf> WithGroupPrefix(string prefix)
+  {
+    return new IrGroupBuilder<TSelf>((TSelf)this, prefix, RegisterRoute);
   }
 
   /// <summary>
@@ -110,6 +122,19 @@ public class IrAppBuilder<TSelf> where TSelf : IrAppBuilder<TSelf>
   /// Callback for IrRouteBuilder to register a completed route.
   /// </summary>
   private void RegisterRoute(RouteDefinition route) => Routes.Add(route);
+
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // EXPLICIT INTERFACE IMPLEMENTATIONS
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // These return interface types for polymorphic dispatch in DslInterpreter.
+  // The public methods above return concrete types for direct usage with CRTP.
+
+  IIrRouteBuilder IIrRouteSource.Map(string pattern) => Map(pattern);
+  IIrGroupBuilder IIrRouteSource.WithGroupPrefix(string prefix) => WithGroupPrefix(prefix);
+  IIrAppBuilder IIrAppBuilder.Build() => Build();
+  IIrAppBuilder IIrAppBuilder.WithName(string name) => WithName(name);
+  IIrAppBuilder IIrAppBuilder.WithDescription(string description) => WithDescription(description);
+  IIrAppBuilder IIrAppBuilder.AddInterceptSite(InterceptSiteModel site) => AddInterceptSite(site);
 }
 
 /// <summary>

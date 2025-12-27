@@ -1,5 +1,7 @@
 # Phase 2: Add Group Support with CRTP (Interpreter)
 
+**Status:** COMPLETED (2024-12-27)
+
 ## Description
 
 Add `IrGroupBuilder` and `IrGroupRouteBuilder` to handle nested route groups. This is the core feature that motivated the interpreter approach - nested groups naturally accumulate prefixes when the IR builders mirror the DSL structure.
@@ -39,112 +41,79 @@ This should produce routes:
 
 ## Checklist
 
+### 2.0 Create Marker Interfaces (NEW - unified approach)
+
+- [x] Create folder: `generators/ir-builders/abstractions/`
+- [x] Create `iir-route-source.cs` - base interface with `Map()` and `WithGroupPrefix()`
+- [x] Create `iir-app-builder.cs` - app-level interface (extends `IIrRouteSource`)
+- [x] Create `iir-group-builder.cs` - group interface (extends `IIrRouteSource`, adds `Done()`)
+- [x] Create `iir-route-builder.cs` - route configuration interface
+
 ### 2.1 Create `IrGroupBuilder<TParent>`
 
-- [ ] Create file: `source/timewarp-nuru-analyzers/generators/ir-builders/ir-group-builder.cs`
-- [ ] Make class `public` (analyzer types don't need to be internal)
-- [ ] Constructor takes: parent, accumulatedPrefix, registerRoute callback
-- [ ] Field: `AccumulatedPrefix` (string) - the full prefix including all parent groups
-- [ ] Method: `Map(pattern, segments)` → returns `IrGroupRouteBuilder<TParent>`
+- [x] Create file: `source/timewarp-nuru-analyzers/generators/ir-builders/ir-group-builder.cs`
+- [x] Implement `IIrGroupBuilder` interface
+- [x] Constructor takes: parent, accumulatedPrefix, registerRoute callback
+- [x] Field: `AccumulatedPrefix` (string) - the full prefix including all parent groups
+- [x] Method: `Map(pattern)` → returns `IrRouteBuilder<IrGroupBuilder<TParent>>` (UNIFIED - no separate IrGroupRouteBuilder)
   - Pattern becomes `$"{AccumulatedPrefix} {pattern}"`
-  - Segments are extracted from the FULL pattern
-- [ ] Method: `WithGroupPrefix(prefix)` → returns `IrGroupBuilder<IrGroupBuilder<TParent>>`
+  - Segments are extracted from the FULL pattern internally
+- [x] Method: `WithGroupPrefix(prefix)` → returns `IrGroupBuilder<IrGroupBuilder<TParent>>`
   - New prefix is `$"{AccumulatedPrefix} {prefix}"`
-- [ ] Method: `Done()` → returns `TParent`
+- [x] Method: `Done()` → returns `TParent`
+- [x] Explicit interface implementation for `IIrGroupBuilder.Done()` returning `object`
 
-### 2.2 Create `IrGroupRouteBuilder<TParent>`
+### 2.2 Update `IrRouteBuilder<TParent>` (UNIFIED - no separate IrGroupRouteBuilder needed!)
 
-- [ ] Create file: `source/timewarp-nuru-analyzers/generators/ir-builders/ir-group-route-builder.cs`
-- [ ] Make class `public` (analyzer types don't need to be internal)
-- [ ] Same structure as `IrRouteBuilder<TParent>` but parent is `IrGroupBuilder<TParent>`
-- [ ] Constructor takes: parent (IrGroupBuilder), registerRoute callback, fullPattern
-- [ ] All route configuration methods mirror `IrRouteBuilder`:
-  - `WithHandler(HandlerDefinition)`
-  - `WithDescription(string)`
-  - `AsQuery()` / `AsCommand()` / `AsIdempotentCommand()`
-- [ ] Method: `Done()` → registers route, returns `IrGroupBuilder<TParent>`
+- [x] Implement `IIrRouteBuilder` interface
+- [x] Add explicit interface implementations returning interface types
+- [x] Works for both app-level and group-level routes via `TParent` parameter
 
 ### 2.3 Add `WithGroupPrefix` to `IrAppBuilder`
 
-- [ ] Add method: `WithGroupPrefix(string prefix)` → returns `IrGroupBuilder<TSelf>`
-- [ ] Creates `IrGroupBuilder` with:
-  - Parent: `(TSelf)this`
-  - AccumulatedPrefix: `prefix`
-  - RegisterRoute: callback to add to Routes collection
+- [x] Implement `IIrAppBuilder` interface (extends `IIrRouteSource`)
+- [x] Add method: `WithGroupPrefix(string prefix)` → returns `IrGroupBuilder<TSelf>`
+- [x] Update `Map()` to extract segments internally (Option A)
+- [x] Add explicit interface implementations for polymorphic dispatch
 
 ### 2.4 Update `DslInterpreter`
 
-- [ ] Add dispatching for `WithGroupPrefix`:
-  - On `IrAppBuilder` → call `WithGroupPrefix()`, returns `IrGroupBuilder`
-  - On `IrGroupBuilder` → call `WithGroupPrefix()`, returns nested `IrGroupBuilder`
-- [ ] Add dispatching for `Map` on `IrGroupBuilder`:
-  - Extract pattern, call `Map()`, returns `IrGroupRouteBuilder`
-- [ ] Add dispatching for route methods on `IrGroupRouteBuilder`:
-  - Same as `IrRouteBuilder` but different receiver type
-- [ ] Add dispatching for `Done` on `IrGroupBuilder`:
-  - Returns parent builder
-- [ ] Update receiver type checking to handle group builders
+- [x] Add dispatching for `WithGroupPrefix` using `IIrRouteSource`
+- [x] Update `Map` dispatch to use `IIrRouteSource`
+- [x] Update route methods to use `IIrRouteBuilder`
+- [x] Update `Done` dispatch to handle both `IIrRouteBuilder` and `IIrGroupBuilder`
+- [x] Update `Build` dispatch to use `IIrAppBuilder`
+- [x] Update `BuiltAppMarker` to use `IIrAppBuilder`
 
-### 2.5 Method Dispatching Updates
+### 2.5 Add Tests
 
-New dispatch entries:
+- [x] Create test file: `tests/timewarp-nuru-analyzers-tests/interpreter/dsl-interpreter-group-test.cs`
+- [x] Test: Simple group - one level ✓
+- [x] Test: Nested groups - two levels ✓
+- [x] Test: Route in outer group after nested group ✓
+- [x] Test: Multiple routes in same group ✓
+- [x] Test: Three levels of nesting ✓
+- [x] Test: Mixed top-level and grouped routes ✓
+- [x] All Phase 1 tests still pass (no regressions) ✓
 
-| DSL Method | Receiver Type | Action | Returns |
-|------------|---------------|--------|---------|
-| `WithGroupPrefix` | `IrAppBuilder` | Create `IrGroupBuilder` with prefix | `IrGroupBuilder<IrAppBuilder>` |
-| `WithGroupPrefix` | `IrGroupBuilder<T>` | Create nested `IrGroupBuilder` | `IrGroupBuilder<IrGroupBuilder<T>>` |
-| `Map` | `IrGroupBuilder<T>` | Call `Map()` with accumulated prefix | `IrGroupRouteBuilder<T>` |
-| `WithHandler` | `IrGroupRouteBuilder<T>` | Call `WithHandler()` | `IrGroupRouteBuilder<T>` |
-| `AsQuery` etc | `IrGroupRouteBuilder<T>` | Call method | `IrGroupRouteBuilder<T>` |
-| `Done` | `IrGroupRouteBuilder<T>` | Register route, return parent | `IrGroupBuilder<T>` |
-| `Done` | `IrGroupBuilder<T>` | Return parent | `T` (parent builder) |
-
-### 2.6 Add Tests
-
-- [ ] Create test file: `tests/timewarp-nuru-analyzers-tests/interpreter/dsl-interpreter-group-test.cs`
-- [ ] Test: Simple group - one level
-  ```csharp
-  .WithGroupPrefix("admin")
-    .Map("status").WithHandler(...).Done()
-    .Done()
-  ```
-  - Assert route pattern is "admin status"
-- [ ] Test: Nested groups - two levels
-  ```csharp
-  .WithGroupPrefix("admin")
-    .WithGroupPrefix("config")
-      .Map("get {key}").WithHandler(...).Done()
-      .Done()
-    .Done()
-  ```
-  - Assert route pattern is "admin config get {key}"
-- [ ] Test: Route in outer group after nested group
-  ```csharp
-  .WithGroupPrefix("admin")
-    .WithGroupPrefix("config")
-      .Map("list").WithHandler(...).Done()
-      .Done()
-    .Map("status").WithHandler(...).Done()
-    .Done()
-  ```
-  - Assert two routes: "admin config list" and "admin status"
-- [ ] Test: Multiple routes in same group
-- [ ] Test: Three levels of nesting
-
-## Files to Create
+## Files Created
 
 | File | Purpose |
 |------|---------|
+| `generators/ir-builders/abstractions/iir-route-source.cs` | Base interface for route sources |
+| `generators/ir-builders/abstractions/iir-app-builder.cs` | App-level builder interface |
+| `generators/ir-builders/abstractions/iir-group-builder.cs` | Group builder interface |
+| `generators/ir-builders/abstractions/iir-route-builder.cs` | Route builder interface |
 | `generators/ir-builders/ir-group-builder.cs` | Group builder with prefix accumulation |
-| `generators/ir-builders/ir-group-route-builder.cs` | Route builder for grouped routes |
-| `tests/.../interpreter/dsl-interpreter-group-test.cs` | Group nesting tests |
+| `tests/.../interpreter/dsl-interpreter-group-test.cs` | Group nesting tests (6 tests) |
 
-## Files to Modify
+## Files Modified
 
 | File | Change |
 |------|--------|
-| `generators/ir-builders/ir-app-builder.cs` | Add `WithGroupPrefix()` method |
-| `generators/interpreter/dsl-interpreter.cs` | Add group method dispatching |
+| `generators/ir-builders/ir-app-builder.cs` | Implement `IIrAppBuilder`, add `WithGroupPrefix()` |
+| `generators/ir-builders/ir-route-builder.cs` | Implement `IIrRouteBuilder` |
+| `generators/interpreter/dsl-interpreter.cs` | Interface-based polymorphic dispatch |
 
 ## Technical Notes
 
@@ -210,12 +179,42 @@ Consider adding marker interfaces:
 
 ## Success Criteria
 
-1. All group tests pass
-2. Single-level groups work
-3. Nested groups accumulate prefixes correctly
-4. Routes after nested groups have correct prefix
-5. `Done()` correctly returns to parent at each level
-6. Existing Phase 1 tests still pass
+1. ✅ All group tests pass (6/6)
+2. ✅ Single-level groups work
+3. ✅ Nested groups accumulate prefixes correctly
+4. ✅ Routes after nested groups have correct prefix
+5. ✅ `Done()` correctly returns to parent at each level
+6. ✅ Existing Phase 1 tests still pass (4/4)
+
+## Key Design Decisions
+
+### Unified `IrRouteBuilder<TParent>` (No Separate `IrGroupRouteBuilder`)
+
+The original plan called for a separate `IrGroupRouteBuilder<TParent>`, but we realized this was redundant. The `TParent` generic parameter already distinguishes:
+- `IrRouteBuilder<IrAppBuilder>` - top-level route
+- `IrRouteBuilder<IrGroupBuilder<...>>` - route inside a group
+
+This unification simplifies the codebase significantly.
+
+### Marker Interfaces for Polymorphic Dispatch
+
+Instead of explicit type enumeration in the dispatcher, we introduced marker interfaces:
+- `IIrRouteSource` - can create routes and groups (`Map`, `WithGroupPrefix`)
+- `IIrAppBuilder` - app-level operations (`Build`, `FinalizeModel`, `AddInterceptSite`)
+- `IIrGroupBuilder` - nested group with `Done()`
+- `IIrRouteBuilder` - route configuration with `Done()`
+
+This enables clean dispatch:
+```csharp
+if (currentReceiver is IIrRouteSource source)
+  return source.Map(pattern);
+```
+
+### Explicit Interface Implementations
+
+Concrete classes have both:
+- **Public methods** returning concrete types (for CRTP fluent chaining)
+- **Explicit interface implementations** returning interface types (for polymorphic dispatch)
 
 ---
 

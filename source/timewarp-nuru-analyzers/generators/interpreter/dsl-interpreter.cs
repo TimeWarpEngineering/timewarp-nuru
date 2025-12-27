@@ -4,12 +4,15 @@
 // by dispatching method calls to corresponding IR builder methods.
 //
 // Phase 1: Supports pure fluent chains only.
+// Phase 2: Adds group support via IIrGroupBuilder.
 // Future phases will add variable tracking for fragmented styles.
 //
 // Key design:
 // - Uses SemanticModel for accurate type resolution
 // - Unrolls fluent chains from nested syntax to execution order
 // - Dispatches to IR builders based on method name
+// - Uses marker interfaces (IIrRouteSource, IIrAppBuilder, IIrGroupBuilder, IIrRouteBuilder)
+//   for polymorphic dispatch without explicit type enumeration
 // - Fails fast on unrecognized DSL methods
 
 namespace TimeWarp.Nuru.Generators;
@@ -178,11 +181,13 @@ public sealed class DslInterpreter
     {
       "CreateBuilder" => irAppBuilder,
 
-      "Map" => DispatchMap(invocation, irAppBuilder),
+      "Map" => DispatchMap(invocation, currentReceiver),
+
+      "WithGroupPrefix" => DispatchWithGroupPrefix(invocation, currentReceiver),
 
       "WithHandler" => DispatchWithHandler(invocation, currentReceiver),
 
-      "WithDescription" => DispatchWithDescription(invocation, currentReceiver, irAppBuilder),
+      "WithDescription" => DispatchWithDescription(invocation, currentReceiver),
 
       "AsQuery" => DispatchAsQuery(currentReceiver),
 
@@ -192,9 +197,9 @@ public sealed class DslInterpreter
 
       "Done" => DispatchDone(currentReceiver),
 
-      "Build" => DispatchBuild(irAppBuilder),
+      "Build" => DispatchBuild(currentReceiver),
 
-      "WithName" => DispatchWithName(invocation, irAppBuilder),
+      "WithName" => DispatchWithName(invocation, currentReceiver),
 
       _ => throw new InvalidOperationException(
         $"Unrecognized DSL method: {methodName}. " +
@@ -202,13 +207,21 @@ public sealed class DslInterpreter
     };
   }
 
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // DISPATCH METHODS - Using marker interfaces for polymorphic dispatch
+  // ═══════════════════════════════════════════════════════════════════════════════
+
   /// <summary>
-  /// Dispatches Map() call.
+  /// Dispatches Map() call to any IIrRouteSource (app or group builder).
   /// </summary>
-  private static IrRouteBuilder<IrAppBuilder> DispatchMap(
-    InvocationExpressionSyntax invocation,
-    IrAppBuilder irAppBuilder)
+  private static object? DispatchMap(InvocationExpressionSyntax invocation, object? currentReceiver)
   {
+    if (currentReceiver is not IIrRouteSource source)
+    {
+      throw new InvalidOperationException(
+        $"Map() must be called on an app or group builder. Location: {invocation.GetLocation().GetLineSpan()}");
+    }
+
     string? pattern = ExtractStringArgument(invocation);
     if (pattern is null)
     {
@@ -216,16 +229,36 @@ public sealed class DslInterpreter
         $"Map() requires a pattern string. Location: {invocation.GetLocation().GetLineSpan()}");
     }
 
-    ImmutableArray<SegmentDefinition> segments = PatternStringExtractor.ExtractSegments(pattern);
-    return irAppBuilder.Map(pattern, segments);
+    return source.Map(pattern);
   }
 
   /// <summary>
-  /// Dispatches WithHandler() call.
+  /// Dispatches WithGroupPrefix() call to any IIrRouteSource (app or group builder).
+  /// </summary>
+  private static object? DispatchWithGroupPrefix(InvocationExpressionSyntax invocation, object? currentReceiver)
+  {
+    if (currentReceiver is not IIrRouteSource source)
+    {
+      throw new InvalidOperationException(
+        $"WithGroupPrefix() must be called on an app or group builder. Location: {invocation.GetLocation().GetLineSpan()}");
+    }
+
+    string? prefix = ExtractStringArgument(invocation);
+    if (prefix is null)
+    {
+      throw new InvalidOperationException(
+        $"WithGroupPrefix() requires a prefix string. Location: {invocation.GetLocation().GetLineSpan()}");
+    }
+
+    return source.WithGroupPrefix(prefix);
+  }
+
+  /// <summary>
+  /// Dispatches WithHandler() call to IIrRouteBuilder.
   /// </summary>
   private object? DispatchWithHandler(InvocationExpressionSyntax invocation, object? currentReceiver)
   {
-    if (currentReceiver is not IrRouteBuilder<IrAppBuilder> routeBuilder)
+    if (currentReceiver is not IIrRouteBuilder routeBuilder)
     {
       throw new InvalidOperationException(
         $"WithHandler() must be called on a route builder. Location: {invocation.GetLocation().GetLineSpan()}");
@@ -242,39 +275,42 @@ public sealed class DslInterpreter
   }
 
   /// <summary>
-  /// Dispatches WithDescription() call.
+  /// Dispatches WithDescription() call to IIrRouteBuilder or IIrAppBuilder.
   /// </summary>
-  private static object? DispatchWithDescription(
-    InvocationExpressionSyntax invocation,
-    object? currentReceiver,
-    IrAppBuilder irAppBuilder)
+  private static object? DispatchWithDescription(InvocationExpressionSyntax invocation, object? currentReceiver)
   {
     string? description = ExtractStringArgument(invocation);
 
     return currentReceiver switch
     {
-      IrRouteBuilder<IrAppBuilder> routeBuilder => routeBuilder.WithDescription(description ?? ""),
-      IrAppBuilder => irAppBuilder.WithDescription(description ?? ""),
+      IIrRouteBuilder routeBuilder => routeBuilder.WithDescription(description ?? ""),
+      IIrAppBuilder appBuilder => appBuilder.WithDescription(description ?? ""),
       _ => throw new InvalidOperationException(
         $"WithDescription() must be called on an app or route builder. Location: {invocation.GetLocation().GetLineSpan()}")
     };
   }
 
   /// <summary>
-  /// Dispatches WithName() call.
+  /// Dispatches WithName() call to IIrAppBuilder.
   /// </summary>
-  private static object? DispatchWithName(InvocationExpressionSyntax invocation, IrAppBuilder irAppBuilder)
+  private static object? DispatchWithName(InvocationExpressionSyntax invocation, object? currentReceiver)
   {
+    if (currentReceiver is not IIrAppBuilder appBuilder)
+    {
+      throw new InvalidOperationException(
+        $"WithName() must be called on an app builder. Location: {invocation.GetLocation().GetLineSpan()}");
+    }
+
     string? name = ExtractStringArgument(invocation);
-    return irAppBuilder.WithName(name ?? "");
+    return appBuilder.WithName(name ?? "");
   }
 
   /// <summary>
-  /// Dispatches AsQuery() call.
+  /// Dispatches AsQuery() call to IIrRouteBuilder.
   /// </summary>
   private static object? DispatchAsQuery(object? currentReceiver)
   {
-    if (currentReceiver is not IrRouteBuilder<IrAppBuilder> routeBuilder)
+    if (currentReceiver is not IIrRouteBuilder routeBuilder)
     {
       throw new InvalidOperationException("AsQuery() must be called on a route builder.");
     }
@@ -283,11 +319,11 @@ public sealed class DslInterpreter
   }
 
   /// <summary>
-  /// Dispatches AsCommand() call.
+  /// Dispatches AsCommand() call to IIrRouteBuilder.
   /// </summary>
   private static object? DispatchAsCommand(object? currentReceiver)
   {
-    if (currentReceiver is not IrRouteBuilder<IrAppBuilder> routeBuilder)
+    if (currentReceiver is not IIrRouteBuilder routeBuilder)
     {
       throw new InvalidOperationException("AsCommand() must be called on a route builder.");
     }
@@ -296,11 +332,11 @@ public sealed class DslInterpreter
   }
 
   /// <summary>
-  /// Dispatches AsIdempotentCommand() call.
+  /// Dispatches AsIdempotentCommand() call to IIrRouteBuilder.
   /// </summary>
   private static object? DispatchAsIdempotentCommand(object? currentReceiver)
   {
-    if (currentReceiver is not IrRouteBuilder<IrAppBuilder> routeBuilder)
+    if (currentReceiver is not IIrRouteBuilder routeBuilder)
     {
       throw new InvalidOperationException("AsIdempotentCommand() must be called on a route builder.");
     }
@@ -309,29 +345,33 @@ public sealed class DslInterpreter
   }
 
   /// <summary>
-  /// Dispatches Done() call.
+  /// Dispatches Done() call to IIrRouteBuilder or IIrGroupBuilder.
   /// </summary>
   private static object? DispatchDone(object? currentReceiver)
   {
-    if (currentReceiver is not IrRouteBuilder<IrAppBuilder> routeBuilder)
+    return currentReceiver switch
     {
-      throw new InvalidOperationException("Done() must be called on a route builder.");
-    }
-
-    return routeBuilder.Done();
+      IIrRouteBuilder routeBuilder => routeBuilder.Done(),
+      IIrGroupBuilder groupBuilder => groupBuilder.Done(),
+      _ => throw new InvalidOperationException("Done() must be called on a route or group builder.")
+    };
   }
 
   /// <summary>
-  /// Dispatches Build() call.
+  /// Dispatches Build() call to IIrAppBuilder.
   /// </summary>
-  private static object? DispatchBuild(IrAppBuilder irAppBuilder)
+  private static object? DispatchBuild(object? currentReceiver)
   {
-    // Build() should be called on the app builder
-    // We call Build() on our IR builder to mark it as built
-    irAppBuilder.Build();
+    if (currentReceiver is not IIrAppBuilder appBuilder)
+    {
+      throw new InvalidOperationException("Build() must be called on an app builder.");
+    }
+
+    // Build() marks the app as built
+    appBuilder.Build();
 
     // Return a marker indicating the app is built (for RunAsync detection)
-    return new BuiltAppMarker(irAppBuilder);
+    return new BuiltAppMarker(appBuilder);
   }
 
   /// <summary>
@@ -428,8 +468,8 @@ public sealed class DslInterpreter
   /// <summary>
   /// Marker type indicating a built app (for RunAsync detection).
   /// </summary>
-  private sealed class BuiltAppMarker(IrAppBuilder builder)
+  private sealed class BuiltAppMarker(IIrAppBuilder builder)
   {
-    public IrAppBuilder Builder { get; } = builder;
+    public IIrAppBuilder Builder { get; } = builder;
   }
 }

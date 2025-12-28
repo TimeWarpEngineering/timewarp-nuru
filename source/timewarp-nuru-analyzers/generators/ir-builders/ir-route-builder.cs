@@ -66,6 +66,16 @@ public sealed class IrRouteBuilder<TParent> : IIrRouteBuilder
   }
 
   /// <summary>
+  /// Adds an alias for this route.
+  /// Mirrors: RouteBuilder.WithAlias()
+  /// </summary>
+  public IrRouteBuilder<TParent> WithAlias(string alias)
+  {
+    Builder.WithAlias(alias);
+    return this;
+  }
+
+  /// <summary>
   /// Marks this route as a Query.
   /// Mirrors: RouteBuilder.AsQuery()
   /// </summary>
@@ -114,6 +124,7 @@ public sealed class IrRouteBuilder<TParent> : IIrRouteBuilder
 
   IIrRouteBuilder IIrRouteBuilder.WithHandler(HandlerDefinition handler) => WithHandler(handler);
   IIrRouteBuilder IIrRouteBuilder.WithDescription(string description) => WithDescription(description);
+  IIrRouteBuilder IIrRouteBuilder.WithAlias(string alias) => WithAlias(alias);
   IIrRouteBuilder IIrRouteBuilder.AsQuery() => AsQuery();
   IIrRouteBuilder IIrRouteBuilder.AsCommand() => AsCommand();
   IIrRouteBuilder IIrRouteBuilder.AsIdempotentCommand() => AsIdempotentCommand();

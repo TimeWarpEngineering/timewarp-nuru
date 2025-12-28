@@ -25,6 +25,13 @@ public interface IIrRouteBuilder
   IIrRouteBuilder WithDescription(string description);
 
   /// <summary>
+  /// Adds an alias for this route.
+  /// </summary>
+  /// <param name="aliasPattern">The alias pattern.</param>
+  /// <returns>This builder for chaining.</returns>
+  IIrRouteBuilder WithAlias(string aliasPattern);
+
+  /// <summary>
   /// Marks this route as a Query (read-only, safe to retry).
   /// </summary>
   /// <returns>This builder for chaining.</returns>

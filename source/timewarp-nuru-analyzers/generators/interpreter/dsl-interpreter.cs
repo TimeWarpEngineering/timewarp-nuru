@@ -245,6 +245,22 @@ public sealed class DslInterpreter
 
       "WithName" => DispatchWithName(invocation, receiver),
 
+      "WithAiPrompt" => DispatchWithAiPrompt(invocation, receiver),
+
+      "AddHelp" => DispatchAddHelp(invocation, receiver),
+
+      "AddRepl" => DispatchAddRepl(invocation, receiver),
+
+      "AddConfiguration" => DispatchAddConfiguration(receiver),
+
+      "ConfigureServices" => DispatchConfigureServices(invocation, receiver),
+
+      "AddBehavior" => DispatchAddBehavior(invocation, receiver),
+
+      "UseTerminal" => DispatchUseTerminal(receiver),
+
+      "WithAlias" => DispatchWithAlias(invocation, receiver),
+
       "RunAsync" => DispatchRunAsyncCall(invocation, receiver),
 
       _ => HandleNonDslMethod(invocation, receiver, methodName)
@@ -374,6 +390,157 @@ public sealed class DslInterpreter
 
     string? name = ExtractStringArgument(invocation);
     return appBuilder.WithName(name ?? "");
+  }
+
+  /// <summary>
+  /// Dispatches WithAiPrompt() call to IIrAppBuilder.
+  /// </summary>
+  private static object? DispatchWithAiPrompt(InvocationExpressionSyntax invocation, object? receiver)
+  {
+    if (receiver is not IIrAppBuilder appBuilder)
+    {
+      throw new InvalidOperationException(
+        $"WithAiPrompt() must be called on an app builder. Location: {invocation.GetLocation().GetLineSpan()}");
+    }
+
+    string? aiPrompt = ExtractStringArgument(invocation);
+    return appBuilder.WithAiPrompt(aiPrompt ?? "");
+  }
+
+  /// <summary>
+  /// Dispatches AddHelp() call to IIrAppBuilder.
+  /// For now, we just enable help with defaults. Options extraction is Phase 5+.
+  /// </summary>
+  private static object? DispatchAddHelp(InvocationExpressionSyntax invocation, object? receiver)
+  {
+    if (receiver is not IIrAppBuilder appBuilder)
+    {
+      throw new InvalidOperationException(
+        $"AddHelp() must be called on an app builder. Location: {invocation.GetLocation().GetLineSpan()}");
+    }
+
+    // For now, just enable help with defaults
+    // TODO: Phase 5+ - extract options from lambda if present
+    return appBuilder.AddHelp();
+  }
+
+  /// <summary>
+  /// Dispatches AddRepl() call to IIrAppBuilder.
+  /// For now, we just enable REPL with defaults. Options extraction is Phase 5+.
+  /// </summary>
+  private static object? DispatchAddRepl(InvocationExpressionSyntax invocation, object? receiver)
+  {
+    if (receiver is not IIrAppBuilder appBuilder)
+    {
+      throw new InvalidOperationException(
+        $"AddRepl() must be called on an app builder. Location: {invocation.GetLocation().GetLineSpan()}");
+    }
+
+    // For now, just enable REPL with defaults
+    // TODO: Phase 5+ - extract options from lambda if present
+    return appBuilder.AddRepl();
+  }
+
+  /// <summary>
+  /// Dispatches AddConfiguration() call to IIrAppBuilder.
+  /// </summary>
+  private static object? DispatchAddConfiguration(object? receiver)
+  {
+    if (receiver is not IIrAppBuilder appBuilder)
+    {
+      throw new InvalidOperationException("AddConfiguration() must be called on an app builder.");
+    }
+
+    return appBuilder.AddConfiguration();
+  }
+
+  /// <summary>
+  /// Dispatches ConfigureServices() call to IIrAppBuilder.
+  /// For now, this is a no-op. Service extraction is Phase 5+.
+  /// </summary>
+  private static object? DispatchConfigureServices(InvocationExpressionSyntax invocation, object? receiver)
+  {
+    if (receiver is not IIrAppBuilder appBuilder)
+    {
+      throw new InvalidOperationException(
+        $"ConfigureServices() must be called on an app builder. Location: {invocation.GetLocation().GetLineSpan()}");
+    }
+
+    // TODO: Phase 5+ - use ServiceExtractor to extract services from lambda
+    // For now, just return the builder unchanged
+    return appBuilder;
+  }
+
+  /// <summary>
+  /// Dispatches AddBehavior() call to IIrAppBuilder.
+  /// Extracts the behavior type from typeof() expression.
+  /// </summary>
+  private object? DispatchAddBehavior(InvocationExpressionSyntax invocation, object? receiver)
+  {
+    if (receiver is not IIrAppBuilder appBuilder)
+    {
+      throw new InvalidOperationException(
+        $"AddBehavior() must be called on an app builder. Location: {invocation.GetLocation().GetLineSpan()}");
+    }
+
+    // Extract the typeof() argument
+    ArgumentListSyntax? args = invocation.ArgumentList;
+    if (args is null || args.Arguments.Count == 0)
+    {
+      throw new InvalidOperationException(
+        $"AddBehavior() requires a type argument. Location: {invocation.GetLocation().GetLineSpan()}");
+    }
+
+    ExpressionSyntax argExpression = args.Arguments[0].Expression;
+    if (argExpression is TypeOfExpressionSyntax typeofExpr)
+    {
+      TypeInfo typeInfo = SemanticModel.GetTypeInfo(typeofExpr.Type);
+      ITypeSymbol? behaviorType = typeInfo.Type;
+      if (behaviorType is not null)
+      {
+        string typeName = behaviorType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+        BehaviorDefinition behavior = BehaviorDefinition.ForAll(typeName);
+        return appBuilder.AddBehavior(behavior);
+      }
+    }
+
+    // If we can't extract the type, just return the builder unchanged
+    return appBuilder;
+  }
+
+  /// <summary>
+  /// Dispatches UseTerminal() call to IIrAppBuilder.
+  /// This is a no-op - terminal is runtime only.
+  /// </summary>
+  private static object? DispatchUseTerminal(object? receiver)
+  {
+    if (receiver is not IIrAppBuilder appBuilder)
+    {
+      throw new InvalidOperationException("UseTerminal() must be called on an app builder.");
+    }
+
+    return appBuilder.UseTerminal();
+  }
+
+  /// <summary>
+  /// Dispatches WithAlias() call to IIrRouteBuilder.
+  /// </summary>
+  private static object? DispatchWithAlias(InvocationExpressionSyntax invocation, object? receiver)
+  {
+    if (receiver is not IIrRouteBuilder routeBuilder)
+    {
+      throw new InvalidOperationException(
+        $"WithAlias() must be called on a route builder. Location: {invocation.GetLocation().GetLineSpan()}");
+    }
+
+    string? alias = ExtractStringArgument(invocation);
+    if (alias is null)
+    {
+      throw new InvalidOperationException(
+        $"WithAlias() requires an alias string. Location: {invocation.GetLocation().GetLineSpan()}");
+    }
+
+    return routeBuilder.WithAlias(alias);
   }
 
   /// <summary>

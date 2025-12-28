@@ -40,6 +40,65 @@ public interface IIrAppBuilder : IIrRouteSource
   IIrAppBuilder WithDescription(string description);
 
   /// <summary>
+  /// Sets the AI prompt for --capabilities output.
+  /// </summary>
+  /// <param name="aiPrompt">The AI prompt text.</param>
+  /// <returns>This builder for chaining.</returns>
+  IIrAppBuilder WithAiPrompt(string aiPrompt);
+
+  /// <summary>
+  /// Enables help with default options.
+  /// </summary>
+  /// <returns>This builder for chaining.</returns>
+  IIrAppBuilder AddHelp();
+
+  /// <summary>
+  /// Enables help with custom options.
+  /// </summary>
+  /// <param name="helpOptions">The configured help options.</param>
+  /// <returns>This builder for chaining.</returns>
+  IIrAppBuilder AddHelp(HelpModel helpOptions);
+
+  /// <summary>
+  /// Enables REPL with default options.
+  /// </summary>
+  /// <returns>This builder for chaining.</returns>
+  IIrAppBuilder AddRepl();
+
+  /// <summary>
+  /// Enables REPL with custom options.
+  /// </summary>
+  /// <param name="replOptions">The configured REPL options.</param>
+  /// <returns>This builder for chaining.</returns>
+  IIrAppBuilder AddRepl(ReplModel replOptions);
+
+  /// <summary>
+  /// Enables configuration.
+  /// </summary>
+  /// <returns>This builder for chaining.</returns>
+  IIrAppBuilder AddConfiguration();
+
+  /// <summary>
+  /// Adds a behavior (pipeline middleware).
+  /// </summary>
+  /// <param name="behavior">The behavior definition.</param>
+  /// <returns>This builder for chaining.</returns>
+  IIrAppBuilder AddBehavior(BehaviorDefinition behavior);
+
+  /// <summary>
+  /// Adds a service registration.
+  /// </summary>
+  /// <param name="service">The service definition.</param>
+  /// <returns>This builder for chaining.</returns>
+  IIrAppBuilder AddService(ServiceDefinition service);
+
+  /// <summary>
+  /// No-op for UseTerminal (runtime only).
+  /// </summary>
+  /// <returns>This builder for chaining.</returns>
+  IIrAppBuilder UseTerminal();
+
+  /// <summary>
   /// Adds an intercept site from a RunAsync() call.
   /// </summary>
   /// <param name="site">The intercept site model.</param>

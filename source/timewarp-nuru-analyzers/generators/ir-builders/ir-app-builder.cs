@@ -23,7 +23,15 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
   private string? VariableName;
   private string? Name;
   private string? Description;
+  private string? AiPrompt;
+  private bool HasHelp;
+  private HelpModel? HelpOptions;
+  private bool HasRepl;
+  private ReplModel? ReplOptions;
+  private bool HasConfiguration;
   private readonly List<RouteDefinition> Routes = [];
+  private readonly List<BehaviorDefinition> Behaviors = [];
+  private readonly List<ServiceDefinition> Services = [];
   private readonly List<InterceptSiteModel> InterceptSites = [];
   private bool IsBuilt;
 
@@ -54,6 +62,104 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
   public TSelf WithDescription(string description)
   {
     Description = description;
+    return (TSelf)this;
+  }
+
+  /// <summary>
+  /// Sets the AI prompt for --capabilities output.
+  /// Mirrors: NuruCoreAppBuilder.WithAiPrompt()
+  /// </summary>
+  public TSelf WithAiPrompt(string aiPrompt)
+  {
+    AiPrompt = aiPrompt;
+    return (TSelf)this;
+  }
+
+  /// <summary>
+  /// Enables help with default options.
+  /// Mirrors: NuruCoreAppBuilder.AddHelp()
+  /// </summary>
+  public TSelf AddHelp()
+  {
+    HasHelp = true;
+    HelpOptions = HelpModel.Default;
+    return (TSelf)this;
+  }
+
+  /// <summary>
+  /// Enables help with custom options.
+  /// Mirrors: NuruCoreAppBuilder.AddHelp(Action&lt;HelpOptions&gt;)
+  /// </summary>
+  /// <param name="helpOptions">The configured help options.</param>
+  public TSelf AddHelp(HelpModel helpOptions)
+  {
+    HasHelp = true;
+    HelpOptions = helpOptions;
+    return (TSelf)this;
+  }
+
+  /// <summary>
+  /// Enables REPL with default options.
+  /// Mirrors: NuruCoreAppBuilder.AddRepl()
+  /// </summary>
+  public TSelf AddRepl()
+  {
+    HasRepl = true;
+    ReplOptions = ReplModel.Default;
+    return (TSelf)this;
+  }
+
+  /// <summary>
+  /// Enables REPL with custom options.
+  /// Mirrors: NuruCoreAppBuilder.AddRepl(Action&lt;ReplOptions&gt;)
+  /// </summary>
+  /// <param name="replOptions">The configured REPL options.</param>
+  public TSelf AddRepl(ReplModel replOptions)
+  {
+    HasRepl = true;
+    ReplOptions = replOptions;
+    return (TSelf)this;
+  }
+
+  /// <summary>
+  /// Enables configuration.
+  /// Mirrors: NuruCoreAppBuilder.AddConfiguration()
+  /// </summary>
+  public TSelf AddConfiguration()
+  {
+    HasConfiguration = true;
+    return (TSelf)this;
+  }
+
+  /// <summary>
+  /// Adds a behavior (pipeline middleware).
+  /// Mirrors: NuruCoreAppBuilder.AddBehavior(Type)
+  /// </summary>
+  /// <param name="behavior">The behavior definition.</param>
+  public TSelf AddBehavior(BehaviorDefinition behavior)
+  {
+    Behaviors.Add(behavior);
+    return (TSelf)this;
+  }
+
+  /// <summary>
+  /// Adds a service registration.
+  /// Mirrors: NuruCoreAppBuilder.ConfigureServices()
+  /// </summary>
+  /// <param name="service">The service definition.</param>
+  public TSelf AddService(ServiceDefinition service)
+  {
+    Services.Add(service);
+    return (TSelf)this;
+  }
+
+  /// <summary>
+  /// No-op for UseTerminal (runtime only).
+  /// Mirrors: NuruCoreAppBuilder.UseTerminal()
+  /// </summary>
+  public TSelf UseTerminal()
+  {
+    // No-op - terminal is runtime only
     return (TSelf)this;
   }
 
@@ -118,15 +224,15 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
       VariableName: VariableName,
       Name: Name,
       Description: Description,
-      AiPrompt: null,
-      HasHelp: false,
-      HelpOptions: null,
-      HasRepl: false,
-      ReplOptions: null,
-      HasConfiguration: false,
+      AiPrompt: AiPrompt,
+      HasHelp: HasHelp,
+      HelpOptions: HelpOptions,
+      HasRepl: HasRepl,
+      ReplOptions: ReplOptions,
+      HasConfiguration: HasConfiguration,
       Routes: [.. Routes],
-      Behaviors: [],
-      Services: [],
+      Behaviors: [.. Behaviors],
+      Services: [.. Services],
       InterceptSites: [.. InterceptSites]);
   }
 
@@ -147,6 +253,15 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
   IIrAppBuilder IIrAppBuilder.Build() => Build();
   IIrAppBuilder IIrAppBuilder.WithName(string name) => WithName(name);
   IIrAppBuilder IIrAppBuilder.WithDescription(string description) => WithDescription(description);
+  IIrAppBuilder IIrAppBuilder.WithAiPrompt(string aiPrompt) => WithAiPrompt(aiPrompt);
+  IIrAppBuilder IIrAppBuilder.AddHelp() => AddHelp();
+  IIrAppBuilder IIrAppBuilder.AddHelp(HelpModel helpOptions) => AddHelp(helpOptions);
+  IIrAppBuilder IIrAppBuilder.AddRepl() => AddRepl();
+  IIrAppBuilder IIrAppBuilder.AddRepl(ReplModel replOptions) => AddRepl(replOptions);
+  IIrAppBuilder IIrAppBuilder.AddConfiguration() => AddConfiguration();
+  IIrAppBuilder IIrAppBuilder.AddBehavior(BehaviorDefinition behavior) => AddBehavior(behavior);
+  IIrAppBuilder IIrAppBuilder.AddService(ServiceDefinition service) => AddService(service);
+  IIrAppBuilder IIrAppBuilder.UseTerminal() => UseTerminal();
   IIrAppBuilder IIrAppBuilder.AddInterceptSite(InterceptSiteModel site) => AddInterceptSite(site);
 }
 

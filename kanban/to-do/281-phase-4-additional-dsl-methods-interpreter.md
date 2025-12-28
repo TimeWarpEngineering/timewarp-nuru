@@ -10,7 +10,11 @@ Add support for all remaining DSL methods that aren't yet handled by the interpr
 
 ## Depends On
 
-#278 Phase 1: POC - Minimal Fluent Case
+- #278 Phase 1: POC - Minimal Fluent Case ✅ (completed)
+- #279 Phase 2: Add Group Support with CRTP ✅ (completed)
+- #283 Phase 1a: Migrate Interpreter to Block-Based ✅ (completed)
+- #284 Phase 2a: Verify Group Support with Block Interpreter ✅ (completed)
+- #280 Phase 3: Handle Fragmented Code Styles ✅ (completed)
 
 ## Scope
 
@@ -127,8 +131,9 @@ Add dispatching:
 
 Add if not already present:
 
-- [ ] `WithAlias(string)` on `IrRouteBuilder` and `IrGroupRouteBuilder`
+- [ ] `WithAlias(string)` on `IrRouteBuilder` (unified - handles both app-level and group-level routes)
 - [ ] Update `RouteDefinition` to include aliases
+- [ ] Add explicit interface implementation for `IIrRouteBuilder.WithAlias()` if adding to interface
 
 ### 4.9 Update Tests
 
@@ -152,7 +157,7 @@ Add if not already present:
 | `ConfigureServices` | `IrAppBuilder` | Extract services via `ServiceExtractor` | `IrAppBuilder` |
 | `AddBehavior` | `IrAppBuilder` | Extract behavior type | `IrAppBuilder` |
 | `UseTerminal` | `IrAppBuilder` | No-op (runtime only) | `IrAppBuilder` |
-| `WithAlias` | `IrRouteBuilder` | Add alias to route | `IrRouteBuilder` |
+| `WithAlias` | `IIrRouteBuilder` | Add alias to route | `IIrRouteBuilder` |
 
 ## Files to Modify
 
@@ -160,8 +165,10 @@ Add if not already present:
 |------|--------|
 | `generators/ir-builders/ir-app-builder.cs` | Add all new methods and fields |
 | `generators/ir-builders/ir-route-builder.cs` | Add `WithAlias()` if not present |
-| `generators/ir-builders/ir-group-route-builder.cs` | Add `WithAlias()` if not present |
+| `generators/ir-builders/abstractions/iir-route-builder.cs` | Add `WithAlias()` to interface if needed |
 | `generators/interpreter/dsl-interpreter.cs` | Add dispatching for all new methods |
+
+**Note:** `ir-group-route-builder.cs` no longer exists - unified into `IrRouteBuilder<TParent>`
 
 ## Technical Notes
 
@@ -222,4 +229,70 @@ if (arg.Expression is LambdaExpressionSyntax lambda)
 3. `AppModel` includes all metadata (name, description, aiPrompt)
 4. `AppModel` includes help and REPL configuration
 5. `AppModel` includes services and behaviors
-6. Existing Phase 1-3 tests still pass
+6. Existing Phase 1-3 tests still pass (15 total)
+
+---
+
+## Lessons Learned from Previous Phases
+
+### Current Interpreter Architecture (from Phase 1a/2a/3)
+
+The interpreter now uses block-based processing:
+
+```csharp
+public IReadOnlyList<AppModel> Interpret(BlockSyntax block)
+```
+
+Key components:
+- **`VariableState`**: Dictionary tracking all variable assignments (uses `SymbolEqualityComparer.Default`)
+- **`BuiltApps`**: List of `IrAppBuilder` instances that have been built
+- **`ProcessBlock()`** → `ProcessStatement()` → `EvaluateExpression()` flow
+- **`DispatchMethodCall()`**: Central dispatch switch for all DSL methods
+
+### HandleNonDslMethod Pattern (from Phase 3)
+
+Unknown methods are handled by `HandleNonDslMethod()`:
+- If receiver is a builder type (`IIrRouteSource`, `IIrRouteBuilder`, `IIrGroupBuilder`, `IIrAppBuilder`): **throw error** (unknown DSL method - fail fast)
+- If receiver is non-builder (e.g., `Console`): **return null** (ignore - not our DSL)
+
+This means new DSL methods **must** be added to the dispatch switch, or they will throw.
+
+### Marker Interfaces for Polymorphic Dispatch
+
+Use the marker interfaces from Phase 2 for type checking:
+- `IIrRouteSource` - can create routes/groups
+- `IIrAppBuilder` - app-level builder
+- `IIrGroupBuilder` - group builder
+- `IIrRouteBuilder` - route builder
+
+### Test File Naming Convention
+
+Use `dsl-interpreter-*.cs` pattern:
+- `dsl-interpreter-test.cs` - Phase 1 tests (4 tests)
+- `dsl-interpreter-group-test.cs` - Phase 2 tests (6 tests)
+- `dsl-interpreter-fragmented-test.cs` - Phase 3 tests (5 tests)
+- `dsl-interpreter-methods-test.cs` - Phase 4 tests (suggested name)
+
+### Current Test Count
+
+- Phase 1: 4 tests
+- Phase 2: 6 tests
+- Phase 3: 5 tests
+- **Total before Phase 4: 15 tests** - all must continue to pass
+
+### Code Locations
+
+| Component | Location |
+|-----------|----------|
+| IR Builder Interfaces | `generators/ir-builders/abstractions/` |
+| IR Builder Classes | `generators/ir-builders/` |
+| Interpreter | `generators/interpreter/dsl-interpreter.cs` |
+| Tests | `tests/timewarp-nuru-analyzers-tests/interpreter/` |
+
+### Note: IrGroupRouteBuilder No Longer Exists
+
+Phase 2 unified route builders - there is only `IrRouteBuilder<TParent>` which works for both:
+- `IrRouteBuilder<IrAppBuilder>` - top-level routes
+- `IrRouteBuilder<IrGroupBuilder<...>>` - routes inside groups
+
+Update the checklist item 4.8 accordingly - `WithAlias` only needs to be added to `IrRouteBuilder`.

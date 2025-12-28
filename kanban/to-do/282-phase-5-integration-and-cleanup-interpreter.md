@@ -10,10 +10,10 @@ Integrate the new DSL interpreter into the main generator pipeline, replacing th
 
 ## Depends On
 
-- #278 Phase 1: POC - Minimal Fluent Case
-- #279 Phase 2: Add Group Support
-- #280 Phase 3: Handle Fragmented Styles
-- #281 Phase 4: Additional DSL Methods
+- #278 Phase 1: POC - Minimal Fluent Case ✅
+- #279 Phase 2: Add Group Support ✅
+- #280 Phase 3: Handle Fragmented Styles ✅
+- #281 Phase 4: Additional DSL Methods ✅
 
 ## Checklist
 
@@ -129,10 +129,14 @@ Ensure these are still used by the interpreter:
 ```
 source/timewarp-nuru-analyzers/generators/
 ├── ir-builders/
+│   ├── abstractions/
+│   │   ├── iir-app-builder.cs
+│   │   ├── iir-group-builder.cs
+│   │   ├── iir-route-builder.cs
+│   │   └── iir-route-source.cs
 │   ├── ir-app-builder.cs
-│   ├── ir-route-builder.cs
-│   ├── ir-group-builder.cs
-│   └── ir-group-route-builder.cs
+│   ├── ir-route-builder.cs           # Unified - works for both app-level and group-level routes
+│   └── ir-group-builder.cs
 ├── interpreter/
 │   └── dsl-interpreter.cs
 ├── extractors/
@@ -145,6 +149,8 @@ source/timewarp-nuru-analyzers/generators/
 ├── emitters/                          # Unchanged
 └── models/                            # Unchanged
 ```
+
+**Note:** `ir-group-route-builder.cs` no longer exists - Phase 2 unified route builders into `IrRouteBuilder<TParent>` which works for both top-level and group-level routes.
 
 ## Success Criteria
 
@@ -164,3 +170,94 @@ After this phase is complete:
 - [ ] Mark #272 nested group checklist items as complete
 - [ ] Update #277 epic as complete
 - [ ] Consider removing temporary test files
+
+---
+
+## Lessons Learned from Previous Phases
+
+### Current Interpreter Architecture (from Phases 1-4)
+
+The interpreter uses block-based processing:
+
+```csharp
+public IReadOnlyList<AppModel> Interpret(BlockSyntax block)
+```
+
+Key components:
+- **`VariableState`**: Dictionary tracking all variable assignments (uses `SymbolEqualityComparer.Default`)
+- **`BuiltApps`**: List of `IrAppBuilder` instances that have been built
+- **`ProcessBlock()`** → `ProcessStatement()` → `EvaluateExpression()` flow
+- **`DispatchMethodCall()`**: Central dispatch switch for all DSL methods
+
+### HandleNonDslMethod Pattern (from Phase 3)
+
+Unknown methods are handled by `HandleNonDslMethod()`:
+- If receiver is a builder type (`IIrRouteSource`, `IIrRouteBuilder`, `IIrGroupBuilder`, `IIrAppBuilder`): **throw error** (unknown DSL method - fail fast)
+- If receiver is non-builder (e.g., `Console`): **return null** (ignore - not our DSL)
+
+This means new DSL methods **must** be added to the dispatch switch, or they will throw.
+
+### Marker Interfaces for Polymorphic Dispatch
+
+Use the marker interfaces from Phase 2 for type checking:
+- `IIrRouteSource` - can create routes/groups
+- `IIrAppBuilder` - app-level builder
+- `IIrGroupBuilder` - group builder
+- `IIrRouteBuilder` - route builder
+
+### IrRouteBuilder Unification (from Phase 2)
+
+There is only `IrRouteBuilder<TParent>` which works for both:
+- `IrRouteBuilder<IrAppBuilder>` - top-level routes
+- `IrRouteBuilder<IrGroupBuilder<...>>` - routes inside groups
+
+`IrGroupRouteBuilder` no longer exists.
+
+### Test File Naming Convention
+
+Use `dsl-interpreter-*.cs` pattern:
+- `dsl-interpreter-test.cs` - Phase 1 tests (4 tests)
+- `dsl-interpreter-group-test.cs` - Phase 2 tests (6 tests)
+- `dsl-interpreter-fragmented-test.cs` - Phase 3 tests (5 tests)
+- `dsl-interpreter-methods-test.cs` - Phase 4 tests (8 tests)
+
+### Current Test Count
+
+| Phase | Tests | Description |
+|-------|-------|-------------|
+| Phase 1 | 4 | Basic fluent chains |
+| Phase 2 | 6 | Groups and nested groups |
+| Phase 3 | 5 | Fragmented code styles |
+| Phase 4 | 8 | Additional DSL methods |
+| **Total** | **23** | All passing |
+
+### Code Locations
+
+| Component | Location |
+|-----------|----------|
+| IR Builder Interfaces | `generators/ir-builders/abstractions/` |
+| IR Builder Classes | `generators/ir-builders/` |
+| Interpreter | `generators/interpreter/dsl-interpreter.cs` |
+| Tests | `tests/timewarp-nuru-analyzers-tests/interpreter/` |
+
+### Deferred Items from Phase 4
+
+The following items were intentionally deferred to Phase 5+:
+- **Options lambda extraction**: `AddHelp(options => ...)` and `AddRepl(options => ...)` currently use defaults only
+- **Service extraction**: `ConfigureServices(services => ...)` dispatch added but `ServiceExtractor` not yet integrated
+
+When implementing these, use the existing extractors:
+- `ServiceExtractor.ExtractFromLambda(lambda, semanticModel, cancellationToken)` for services
+- For options, analyze the lambda body for property assignments
+
+### Key Integration Points for Phase 5
+
+When integrating the interpreter into `AppExtractor`:
+
+1. **Finding the block**: The interpreter needs a `BlockSyntax` containing the DSL code
+2. **Entry point**: Use `CreateBuilderLocator` to find the `CreateBuilder()` call
+3. **Signature change**: `Interpret(BlockSyntax)` returns `IReadOnlyList<AppModel>` - typically one app per file
+
+### CA1716 Code Analysis
+
+If adding new methods with common names (like `alias`), may need to rename parameters to avoid code analysis warnings. Example: `alias` → `aliasPattern` to fix CA1716.

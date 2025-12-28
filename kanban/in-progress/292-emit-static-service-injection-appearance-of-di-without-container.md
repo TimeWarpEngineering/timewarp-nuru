@@ -6,119 +6,180 @@
 
 ## Description
 
-Provide the **appearance of dependency injection** in handler signatures without the bloat of `Microsoft.Extensions.DependencyInjection`. 
+Provide the **appearance of dependency injection** in handler signatures without the runtime DI container overhead.
 
-Users write handlers with service parameters as if DI exists:
-```csharp
-.WithHandler((string name, ILogger logger, IConfiguration config) => ...)
-```
-
-The source generator:
-1. Detects non-route parameters (services) in handler signatures
-2. Emits static fields with lazy initialization for each service type
-3. Passes the static instances to handlers at call time
-
-No `IServiceCollection`, no `IServiceProvider`, no runtime container resolution.
-
-## User Experience
-
-### DSL (what user writes)
+Users write handlers with service parameters using familiar `ConfigureServices` syntax:
 ```csharp
 NuruApp.CreateBuilder(args)
-  .AddConfiguration()  // Opts in to IConfiguration
+  .ConfigureServices(services => {
+    services.AddSingleton<IFoo, Foo>();
+    services.AddTransient<IBar, Bar>();
+  })
   .Map("greet {name}")
-    .WithHandler((string name, ILogger logger, IConfiguration config) => 
-      $"Hello {name}")
+    .WithHandler((string name, IFoo foo) => foo.Greet(name))
     .Done()
   .Build();
 ```
 
+The source generator:
+1. Parses `ConfigureServices` registrations at compile time (via `ServiceExtractor`)
+2. Matches handler parameters against registered services
+3. Emits `new ImplementationType(...)` with recursive constructor resolution
+4. Caches singletons in static fields with lazy initialization
+
+**No runtime `IServiceProvider.GetRequiredService<T>()` calls** - all instantiation is compile-time generated.
+
+## Package Strategy
+
+- **Replace** `Microsoft.Extensions.DependencyInjection` (full, ~200KB) 
+- **With** `Microsoft.Extensions.DependencyInjection.Abstractions` (lightweight, ~50KB)
+- Users get familiar `services.AddSingleton<>()` syntax
+- Generator emits `new Foo()` directly - no runtime container
+
+## How It Works
+
+### 1. Service Registration (Compile-Time Parsing)
+
+`ServiceExtractor` already parses `ConfigureServices` lambdas and extracts:
+```csharp
+ServiceDefinition {
+  ServiceTypeName: "IFoo",
+  ImplementationTypeName: "Foo", 
+  Lifetime: Singleton
+}
+```
+
+### 2. Handler Parameter Matching
+
+For each handler parameter:
+- **Route parameter** (`{name}`) → bind from args
+- **`ITerminal`** → emit `app.Terminal` (built-in)
+- **`IConfiguration`** → emit `configuration` (from ConfigurationEmitter)
+- **Registered service** → look up implementation, emit instantiation
+- **Unregistered type** → **compile error**
+
+### 3. Constructor Resolution
+
+If `Foo` has constructor `Foo(IBar bar, IConfiguration config)`:
+1. Analyzer inspects constructor parameters
+2. Recursively resolves each dependency
+3. Emits: `new Foo(new Bar(), configuration)`
+
+### 4. Lifetime Handling
+
+| Lifetime    | Behavior                           | Generated Code                              |
+| ----------- | ---------------------------------- | ------------------------------------------- |
+| `Singleton` | One instance, cached in static field | `__svc_Foo ??= new Foo(...)`                  |
+| `Scoped`    | Same as Singleton (for now*)       | `__svc_Foo ??= new Foo(...)`                  |
+| `Transient` | New instance every time            | `new Foo(...)`                                |
+
+*Scoped behavior for REPL (SessionScoped/CommandScoped) deferred to follow-up task #294
+
+## Generated Code Example
+
+### User Code
+```csharp
+.ConfigureServices(services => {
+  services.AddSingleton<IGreeter, Greeter>();
+  services.AddTransient<IFormatter, Formatter>();
+})
+.Map("greet {name}")
+  .WithHandler((string name, IGreeter greeter, IFormatter formatter) => 
+    greeter.Greet(formatter.Format(name)))
+```
+
 ### Generated Code
 ```csharp
-file static class GeneratedServices
-{
-  // Configuration - lazy loaded at first access
-  private static IConfigurationRoot? _configuration;
-  public static IConfigurationRoot Configuration => 
-    _configuration ??= new ConfigurationBuilder()
-      .SetBasePath(AppContext.BaseDirectory)
-      .AddJsonFile("appsettings.json", optional: true)
-      .AddEnvironmentVariables()
-      .Build();
-
-  // Logger - uses LoggerFactory
-  private static ILogger? _logger;
-  public static ILogger Logger =>
-    _logger ??= LoggerFactory
-      .Create(builder => builder.AddConsole())
-      .CreateLogger("App");
-}
+// Static fields for singletons
+private static Greeter? __svc_Greeter;
 
 // In route handler:
-if (args is ["greet", var name])
+if (args is ["greet", var __arg_name])
 {
-  string result = __handler_0(name, GeneratedServices.Logger, GeneratedServices.Configuration);
+  // Singleton - cached
+  Greeter greeter = __svc_Greeter ??= new Greeter();
+  // Transient - new each time
+  Formatter formatter = new Formatter();
+  
+  string result = greeter.Greet(formatter.Format(__arg_name));
   app.Terminal.WriteLine(result);
   return 0;
 }
 ```
 
+## Files to Modify/Create
+
+| Action | File |
+|--------|------|
+| Modify | `source/timewarp-nuru-core/timewarp-nuru-core.csproj` - Replace DI package with Abstractions |
+| Modify | `source/timewarp-nuru-analyzers/generators/emitters/service-resolver-emitter.cs` - Emit instantiation |
+| Modify | `source/timewarp-nuru-analyzers/generators/emitters/interceptor-emitter.cs` - Emit static fields |
+| Create | `source/timewarp-nuru-analyzers/generators/analyzers/constructor-analyzer.cs` - Resolve constructor deps |
+
 ## Checklist
 
-### Analysis
-- [ ] Identify which handler parameters are route params vs services
-- [ ] Route params: come from args (string, int, bool, etc.)
-- [ ] Service params: everything else (ILogger, IConfiguration, custom types)
+### Phase 1: Package Reference
+- [ ] Replace `Microsoft.Extensions.DependencyInjection` with `Microsoft.Extensions.DependencyInjection.Abstractions` in `timewarp-nuru-core.csproj`
+- [ ] Verify build still works
 
-### Interpreter
-- [ ] Capture service parameter types from handler signatures
-- [ ] Store in `RouteDefinition.ServiceDependencies` or similar
+### Phase 2: Built-in Service Handling
+- [ ] Add `IsTerminalType()` check in `ServiceResolverEmitter`
+- [ ] Emit `app.Terminal` for `ITerminal` parameters
+- [ ] Verify `IConfiguration` handling (already done in #291)
 
-### Emitter - GeneratedServices class
-- [ ] Emit `file static class GeneratedServices`
-- [ ] For each unique service type, emit lazy static property
-- [ ] Special handling for well-known types:
-  - `IConfiguration` / `IConfigurationRoot` - ConfigurationBuilder
-  - `ILogger` / `ILogger<T>` - LoggerFactory
-  - `ITerminal` - use `app.Terminal`
-  - Custom types - direct instantiation with `new()`
+### Phase 3: Service Registry Lookup
+- [ ] Pass `AppModel.Services` to `ServiceResolverEmitter`
+- [ ] Look up handler parameter types in registered services
+- [ ] Emit `new ImplementationType()` for registered services
+- [ ] Remove broken `app.Services.GetRequiredService<T>()` code path
 
-### Emitter - Handler calls
-- [ ] Pass `GeneratedServices.Xxx` for each service parameter
-- [ ] Maintain correct parameter order
+### Phase 4: Constructor Analysis
+- [ ] Create `ConstructorAnalyzer` class
+- [ ] Get constructor parameters for implementation type
+- [ ] Recursively resolve constructor dependencies against service registry
+- [ ] Detect circular dependencies → emit diagnostic error
+- [ ] Emit constructor calls with resolved dependencies
 
-### Custom Services
-- [ ] User-defined types: emit `new MyService()`
-- [ ] If constructor has dependencies, recursively resolve
-- [ ] Detect circular dependencies at compile time (error)
+### Phase 5: Lifetime Handling
+- [ ] For `Singleton`/`Scoped`: emit static field + lazy initialization
+- [ ] For `Transient`: emit direct `new T()` each time
+- [ ] Generate static fields at class level in `InterceptorEmitter`
 
-### Edge Cases
-- [ ] Interface without known implementation → compile error with helpful message
-- [ ] Abstract class → compile error
-- [ ] No parameterless constructor → try to resolve constructor params
+### Phase 6: Error Handling
+- [ ] Compile error for unregistered service types
+- [ ] Compile error for interfaces without implementation
+- [ ] Compile error for circular dependencies
+- [ ] Helpful error messages with registration suggestions
 
-## Benefits
+### Phase 7: Verification
+- [ ] Build solution successfully
+- [ ] Test with sample using `ConfigureServices` registrations
+- [ ] Test singleton caching behavior
+- [ ] Test transient instantiation behavior
+- [ ] Test constructor dependency resolution
 
-- **Zero runtime overhead** - No container, no reflection, no resolution
-- **AOT compatible** - All types known at compile time
-- **Smaller binary** - No DI framework packages
-- **Familiar API** - Looks like DI, feels like DI
-- **Tree-shakeable** - Only services actually used are emitted
+## Design Decisions
 
-## What Gets Removed
+1. **Package**: Use `Microsoft.Extensions.DependencyInjection.Abstractions` (~50KB) for familiar API without runtime container overhead
 
-After this is implemented:
-- `IServiceCollection` usage
-- `IServiceProvider` usage
-- `ConfigureServices()` method
-- `AddDependencyInjection()` method
-- `Microsoft.Extensions.DependencyInjection` package reference
+2. **Scoped Lifetime**: Treat as `Singleton` for now (single CLI invocation = single scope). REPL scoping (SessionScoped/CommandScoped) deferred to follow-up task.
+
+3. **Built-in Services**: Only `ITerminal` is pre-wired (via `app.Terminal`). All other services must be explicitly registered.
+
+4. **Error Strategy**: Fail at compile time with helpful messages rather than runtime exceptions.
+
+## Out of Scope (Follow-up Tasks)
+
+- **REPL Scoping** (#294): SessionScoped and CommandScoped lifetimes for REPL mode
+- **Factory Methods**: Support for `services.AddSingleton<IFoo>(sp => new Foo(sp.GetService<IBar>()))`
+- **Open Generics**: Support for `services.AddSingleton(typeof(IRepository<>), typeof(Repository<>))`
 
 ## References
 
 - Archived #245: `kanban/archived/245-emit-static-service-fields-replace-di.md`
 - Related #291: AddConfiguration emitter support
+- Follow-up #294: REPL scoping (SessionScoped/CommandScoped)
 
 ## Notes
 
-This is the "killer feature" that makes Nuru competitive with ConsoleAppFramework on startup time while keeping the ergonomic DI-style API.
+This is the "killer feature" that makes Nuru competitive with ConsoleAppFramework on startup time while keeping the ergonomic DI-style API. Users get familiar syntax, zero runtime overhead.

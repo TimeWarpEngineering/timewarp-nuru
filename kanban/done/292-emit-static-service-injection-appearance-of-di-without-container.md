@@ -119,44 +119,48 @@ if (args is ["greet", var __arg_name])
 ## Checklist
 
 ### Phase 1: Package Reference
-- [ ] Replace `Microsoft.Extensions.DependencyInjection` with `Microsoft.Extensions.DependencyInjection.Abstractions` in `timewarp-nuru-core.csproj`
-- [ ] Verify build still works
+- [x] Replace `Microsoft.Extensions.DependencyInjection` with `Microsoft.Extensions.DependencyInjection.Abstractions` in `timewarp-nuru-core.csproj`
+- [x] Verify build still works
 
 ### Phase 2: Built-in Service Handling
-- [ ] Add `IsTerminalType()` check in `ServiceResolverEmitter`
-- [ ] Emit `app.Terminal` for `ITerminal` parameters
-- [ ] Verify `IConfiguration` handling (already done in #291)
+- [x] Add `IsTerminalType()` check in `ServiceResolverEmitter`
+- [x] Emit `app.Terminal` for `ITerminal` parameters
+- [x] Verify `IConfiguration` handling (already done in #291)
 
 ### Phase 3: Service Registry Lookup
-- [ ] Pass `AppModel.Services` to `ServiceResolverEmitter`
-- [ ] Look up handler parameter types in registered services
-- [ ] Emit `new ImplementationType()` for registered services
-- [ ] Remove broken `app.Services.GetRequiredService<T>()` code path
+- [x] Pass `AppModel.Services` to `ServiceResolverEmitter`
+- [x] Look up handler parameter types in registered services
+- [x] Emit `new ImplementationType()` for registered services
+- [x] Remove broken `app.Services.GetRequiredService<T>()` code path
 
-### Phase 4: Constructor Analysis
+### Phase 4: Constructor Analysis (Deferred)
 - [ ] Create `ConstructorAnalyzer` class
 - [ ] Get constructor parameters for implementation type
 - [ ] Recursively resolve constructor dependencies against service registry
 - [ ] Detect circular dependencies → emit diagnostic error
 - [ ] Emit constructor calls with resolved dependencies
 
-### Phase 5: Lifetime Handling
-- [ ] For `Singleton`/`Scoped`: emit static field + lazy initialization
-- [ ] For `Transient`: emit direct `new T()` each time
-- [ ] Generate static fields at class level in `InterceptorEmitter`
+> **Note**: Phase 4 deferred - services must have parameterless constructors for now.
 
-### Phase 6: Error Handling
-- [ ] Compile error for unregistered service types
+### Phase 5: Lifetime Handling
+- [x] For `Singleton`/`Scoped`: emit `Lazy<T>` static field (thread-safe initialization)
+- [x] For `Transient`: emit direct `new T()` each time
+- [x] Generate static fields at class level in `InterceptorEmitter`
+
+### Phase 6: Error Handling (Partial)
+- [ ] Compile error for unregistered service types (emits error comment instead)
 - [ ] Compile error for interfaces without implementation
 - [ ] Compile error for circular dependencies
 - [ ] Helpful error messages with registration suggestions
 
+> **Note**: Phase 6 deferred - currently emits error comments rather than compile-time diagnostics.
+
 ### Phase 7: Verification
-- [ ] Build solution successfully
-- [ ] Test with sample using `ConfigureServices` registrations
-- [ ] Test singleton caching behavior
-- [ ] Test transient instantiation behavior
-- [ ] Test constructor dependency resolution
+- [x] Build solution successfully
+- [x] Test with sample using `ConfigureServices` registrations
+- [x] Test singleton caching behavior
+- [x] Test transient instantiation behavior
+- [ ] Test constructor dependency resolution (deferred with Phase 4)
 
 ## Design Decisions
 
@@ -183,3 +187,38 @@ if (args is ["greet", var __arg_name])
 ## Notes
 
 This is the "killer feature" that makes Nuru competitive with ConsoleAppFramework on startup time while keeping the ergonomic DI-style API. Users get familiar syntax, zero runtime overhead.
+
+## Results
+
+**Completed 2024-12-29**
+
+### Implementation Summary
+
+- **Package**: Replaced `Microsoft.Extensions.DependencyInjection` with `Microsoft.Extensions.DependencyInjection.Abstractions` (lighter weight, ~50KB vs ~200KB)
+- **Service Extraction**: Source generator extracts services from `ConfigureServices()` lambda at compile time
+- **Lifetime Handling**:
+  - Singleton/Scoped: Emits `Lazy<T>` static fields for thread-safe lazy initialization
+  - Transient: Emits `new T()` for fresh instance each time
+- **Built-in Services**:
+  - `ITerminal` → `app.Terminal`
+  - `IConfiguration` → `configuration` variable (from ConfigurationEmitter)
+- **ConfigureServices()**: Made into a runtime no-op (generator handles everything at compile time)
+- **Enhanced `IsServiceType()`**: Now recognizes interface types (pattern: `I` + uppercase letter)
+
+### Test Coverage
+
+Created comprehensive test file: `tests/timewarp-nuru-analyzers-tests/auto/generator-04-static-service-injection.cs`
+- 7 passing tests covering:
+  - Singleton service injection with `Lazy<T>` caching
+  - Transient service injection with fresh instances
+  - Built-in `ITerminal` service injection
+  - Built-in `IConfiguration` service injection
+  - Mixed services (singleton + transient + built-in)
+  - Multiple handlers sharing singleton instances
+  - Unregistered service error handling
+
+### Deferred Work
+
+- **Phase 4 (Constructor Resolution)**: Services must have parameterless constructors; constructor dependency resolution not implemented
+- **Phase 6 (Compile-time Errors)**: Emits error comments for unregistered services rather than compile-time diagnostics
+- **REPL Scoping**: Task #294 exists for SessionScoped/CommandScoped lifetimes

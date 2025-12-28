@@ -63,14 +63,11 @@ public class NuruApp : NuruCoreApp
     NuruCoreApplicationOptions? coreOptions = null
   )
   {
+    _ = nuruAppOptions; // currently unused - reserved for future use
     ArgumentNullException.ThrowIfNull(args);
     coreOptions ??= new NuruCoreApplicationOptions();
     coreOptions.Args = args;
-
-    // Create full builder with DI, Config, AutoHelp
-    NuruAppBuilder builder = new(BuilderMode.Full, coreOptions);
-
-    // Add all extensions (telemetry, REPL, completion) with provided options
-    return builder.UseAllExtensions(nuruAppOptions);
+    NuruAppBuilder builder = new(coreOptions);
+    return builder;
   }
 }

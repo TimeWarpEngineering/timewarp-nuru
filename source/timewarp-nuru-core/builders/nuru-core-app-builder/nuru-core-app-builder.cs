@@ -67,7 +67,7 @@ public partial class NuruCoreAppBuilder<TSelf>
   /// </summary>
   public NuruCoreApp Build()
   {
-    // V2: DSL is parsed at compile-time. RunAsync() is intercepted.
+    // DSL is parsed at compile-time. RunAsync() is intercepted.
     return new NuruCoreApp(Terminal);
   }
 

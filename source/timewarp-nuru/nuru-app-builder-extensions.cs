@@ -6,7 +6,6 @@ namespace TimeWarp.Nuru;
 /// <remarks>
 /// This partial class is split across multiple files:
 /// <list type="bullet">
-/// <item><description><c>nuru-app-builder-extensions.cs</c> - Core extension wiring (<see cref="UseAllExtensions"/>)</description></item>
 /// <item><description><c>nuru-app-builder-extensions.version.cs</c> - Version route handler</description></item>
 /// <item><description><c>nuru-app-builder-extensions.updates.cs</c> - Update checking and GitHub API integration</description></item>
 /// </list>

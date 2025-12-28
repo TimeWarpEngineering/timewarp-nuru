@@ -1,9 +1,9 @@
 <Solution>
   <Folder Name="/benchmarks/">
-    <Project Path="benchmarks/timewarp-nuru-benchmarks/timewarp-nuru-benchmarks.csproj" />
+    <!-- <Project Path="benchmarks/timewarp-nuru-benchmarks/timewarp-nuru-benchmarks.csproj" /> -->
   </Folder>
   <Folder Name="/samples/">
-    <Project Path="samples/timewarp-nuru-sample/timewarp-nuru-sample.csproj" />
+    <!-- <Project Path="samples/timewarp-nuru-sample/timewarp-nuru-sample.csproj" /> -->
   </Folder>
   <Folder Name="/source/">
 
@@ -14,7 +14,7 @@
     <Project Path="source/timewarp-nuru-logging/timewarp-nuru-logging.csproj" />
     <Project Path="source/timewarp-nuru-mcp/timewarp-nuru-mcp.csproj" />
     <Project Path="source/timewarp-nuru-parsing/timewarp-nuru-parsing.csproj" />
-    <Project Path="source/timewarp-nuru-repl/timewarp-nuru-repl.csproj" />
+    <!-- <Project Path="source/timewarp-nuru-repl/timewarp-nuru-repl.csproj" /> -->
     <Project Path="source/timewarp-nuru-telemetry/timewarp-nuru-telemetry.csproj" />
   </Folder>
   <Folder Name="/tests/">

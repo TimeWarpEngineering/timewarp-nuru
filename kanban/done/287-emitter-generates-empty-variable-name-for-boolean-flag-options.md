@@ -40,6 +40,16 @@ bool b = Array.Exists(args, a => a == "-b");
 - [x] Trace how flag parameter names are extracted from the route pattern
 - [x] Fix the extraction/emission to include the parameter name
 - [x] Verify bench-nuru-full compiles after fix
+- [x] Add regression test
+
+## Regression Test
+
+`tests/timewarp-nuru-core-tests/generator/generator-03-short-only-options.cs`
+
+Self-verifying test that:
+1. Compiles a NuruApp with short-only options (if it compiles, the fix works)
+2. Runs the app to verify execution
+3. Verifies generated file content with Jaribu assertions
 
 ## Files Modified
 

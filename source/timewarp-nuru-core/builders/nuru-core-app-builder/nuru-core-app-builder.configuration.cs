@@ -83,40 +83,6 @@ public partial class NuruCoreAppBuilder<TSelf>
   }
 
   /// <summary>
-  /// Adds dependency injection support to the application.
-  /// Uses martinothamar/Mediator source generator for full AOT compatibility.
-  /// </summary>
-  /// <remarks>
-  /// <para>
-  /// If your application uses Mediator-based command handlers (IRequest/IRequestHandler),
-  /// you must call AddMediator() in ConfigureServices:
-  /// </para>
-  /// <code>
-  /// builder.ConfigureServices(services => services.AddMediator());
-  /// </code>
-  /// <para>
-  /// The source generator creates the AddMediator() method based on handler types found
-  /// in your project at compile time. Configuration is done via [assembly: MediatorOptions] attribute.
-  /// </para>
-  /// </remarks>
-  public virtual TSelf AddDependencyInjection()
-  {
-    if (ServiceCollection is null)
-    {
-      ServiceCollection = [];
-      ServiceCollection.AddNuru();
-      ServiceCollection.AddSingleton(EndpointCollection);
-      ServiceCollection.AddSingleton<ITypeConverterRegistry>(TypeConverterRegistry);
-
-      // Note: AddMediator() must be called by the consuming application, not the library.
-      // The source generator discovers handlers in the assembly where AddMediator() is called.
-      // Applications using Mediator-based handlers should call services.AddMediator() in ConfigureServices.
-    }
-
-    return (TSelf)this;
-  }
-
-  /// <summary>
   /// Configures services using the provided action, enabling fluent service registration
   /// while maintaining the builder chain.
   /// </summary>

@@ -4,7 +4,6 @@ using TimeWarp.Nuru;
 using static System.Console;
 
 NuruAppBuilder builder = new NuruAppBuilder()
-    .AddDependencyInjection()
     .ConfigureServices(services => services.AddMediator());
 
 // Test 1: Basic Commands (2)

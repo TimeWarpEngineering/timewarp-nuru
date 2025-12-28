@@ -299,22 +299,22 @@ internal static class RouteMatcherEmitter
 
     sb.AppendLine(CultureInfo.InvariantCulture,
       $"      string? {varName} = {defaultValue};");
-    sb.AppendLine("      for (int i = 0; i < args.Length - 1; i++)");
+    sb.AppendLine("      for (int __idx = 0; __idx < args.Length - 1; __idx++)");
     sb.AppendLine("      {");
 
     if (option.ShortForm is not null)
     {
       sb.AppendLine(CultureInfo.InvariantCulture,
-        $"        if (args[i] == \"--{option.LongForm}\" || args[i] == \"-{option.ShortForm}\")");
+        $"        if (args[__idx] == \"--{option.LongForm}\" || args[__idx] == \"-{option.ShortForm}\")");
     }
     else
     {
       sb.AppendLine(CultureInfo.InvariantCulture,
-        $"        if (args[i] == \"--{option.LongForm}\")");
+        $"        if (args[__idx] == \"--{option.LongForm}\")");
     }
 
     sb.AppendLine("        {");
-    sb.AppendLine(CultureInfo.InvariantCulture, $"          {varName} = args[i + 1];");
+    sb.AppendLine(CultureInfo.InvariantCulture, $"          {varName} = args[__idx + 1];");
     sb.AppendLine("          break;");
     sb.AppendLine("        }");
     sb.AppendLine("      }");

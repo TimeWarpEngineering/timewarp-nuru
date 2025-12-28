@@ -137,9 +137,13 @@ internal static class HelpEmitter
           break;
 
         case OptionDefinition option:
-          string optionDisplay = option.ShortForm is not null
-            ? $"--{option.LongForm},-{option.ShortForm}"
-            : $"--{option.LongForm}";
+          string optionDisplay = (option.LongForm, option.ShortForm) switch
+          {
+            (not null, not null) => $"--{option.LongForm},-{option.ShortForm}",
+            (not null, null) => $"--{option.LongForm}",
+            (null, not null) => $"-{option.ShortForm}",
+            _ => "[invalid option]"
+          };
 
           if (option.ExpectsValue)
           {

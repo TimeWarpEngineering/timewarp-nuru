@@ -458,7 +458,7 @@ internal static class AttributedRouteExtractor
       if (segment is ParameterDefinition param)
         existingNames.Add(param.Name.ToLowerInvariant());
       else if (segment is OptionDefinition option)
-        existingNames.Add(option.LongForm.ToLowerInvariant());
+        existingNames.Add((option.LongForm ?? option.ShortForm ?? "").ToLowerInvariant());
     }
 
     // Add property segments that don't duplicate pattern segments
@@ -467,7 +467,7 @@ internal static class AttributedRouteExtractor
       string name = segment switch
       {
         ParameterDefinition param => param.Name.ToLowerInvariant(),
-        OptionDefinition option => option.LongForm.ToLowerInvariant(),
+        OptionDefinition option => (option.LongForm ?? option.ShortForm ?? "").ToLowerInvariant(),
         _ => ""
       };
 

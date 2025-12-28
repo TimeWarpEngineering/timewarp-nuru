@@ -97,7 +97,7 @@ internal static class PatternStringExtractor
   {
     return new OptionDefinition(
       Position: position,
-      LongForm: option.LongForm ?? "",
+      LongForm: option.LongForm,
       ShortForm: option.ShortForm,
       ParameterName: option.Parameter?.Name,
       TypeConstraint: option.Parameter?.Type,
@@ -197,16 +197,18 @@ internal static class PatternStringExtractor
             requiresConversion: typeName != "global::System.String");
 
         case OptionDefinition option
-          when string.Equals(option.LongForm, paramNameLower, StringComparison.OrdinalIgnoreCase):
+          when string.Equals(option.LongForm, paramNameLower, StringComparison.OrdinalIgnoreCase)
+            || string.Equals(option.ShortForm, paramNameLower, StringComparison.OrdinalIgnoreCase):
+          string optionName = option.LongForm ?? option.ShortForm!;
           if (option.IsFlag)
           {
-            return ParameterBinding.FromFlag(paramName, option.LongForm);
+            return ParameterBinding.FromFlag(paramName, optionName);
           }
 
           return ParameterBinding.FromOption(
             parameterName: paramName,
             typeName: typeName,
-            optionName: option.LongForm,
+            optionName: optionName,
             isOptional: isOptional || option.IsOptional,
             isArray: option.IsRepeated,
             requiresConversion: typeName != "global::System.String");
@@ -217,7 +219,7 @@ internal static class PatternStringExtractor
           return ParameterBinding.FromOption(
             parameterName: paramName,
             typeName: typeName,
-            optionName: option.LongForm,
+            optionName: option.LongForm ?? option.ShortForm!,
             isOptional: isOptional || option.ParameterIsOptional,
             isArray: option.IsRepeated,
             requiresConversion: typeName != "global::System.String");

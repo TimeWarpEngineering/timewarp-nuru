@@ -177,8 +177,12 @@ internal static class CapabilitiesEmitter
       string comma = isLast ? "" : ",";
 
       sb.AppendLine("            {");
-      sb.AppendLine(CultureInfo.InvariantCulture,
-        $"              \"long\": \"--{EscapeJsonString(option.LongForm)}\",");
+
+      if (option.LongForm is not null)
+      {
+        sb.AppendLine(CultureInfo.InvariantCulture,
+          $"              \"long\": \"--{EscapeJsonString(option.LongForm)}\",");
+      }
 
       if (option.ShortForm is not null)
       {

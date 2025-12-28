@@ -275,18 +275,18 @@ internal static class RouteMatcherEmitter
   /// </summary>
   private static void EmitFlagParsing(StringBuilder sb, OptionDefinition option)
   {
-    string varName = ToCamelCase(option.LongForm);
+    string varName = ToCamelCase(option.LongForm ?? option.ShortForm ?? "flag");
 
-    if (option.ShortForm is not null)
+    string condition = (option.LongForm, option.ShortForm) switch
     {
-      sb.AppendLine(CultureInfo.InvariantCulture,
-        $"      bool {varName} = Array.Exists(args, a => a == \"--{option.LongForm}\" || a == \"-{option.ShortForm}\");");
-    }
-    else
-    {
-      sb.AppendLine(CultureInfo.InvariantCulture,
-        $"      bool {varName} = Array.Exists(args, a => a == \"--{option.LongForm}\");");
-    }
+      (not null, not null) => $"a == \"--{option.LongForm}\" || a == \"-{option.ShortForm}\"",
+      (not null, null) => $"a == \"--{option.LongForm}\"",
+      (null, not null) => $"a == \"-{option.ShortForm}\"",
+      _ => throw new InvalidOperationException("Option must have at least one form")
+    };
+
+    sb.AppendLine(CultureInfo.InvariantCulture,
+      $"      bool {varName} = Array.Exists(args, a => {condition});");
   }
 
   /// <summary>
@@ -294,25 +294,23 @@ internal static class RouteMatcherEmitter
   /// </summary>
   private static void EmitValueOptionParsing(StringBuilder sb, OptionDefinition option)
   {
-    string varName = option.ParameterName ?? ToCamelCase(option.LongForm);
+    string varName = option.ParameterName ?? ToCamelCase(option.LongForm ?? option.ShortForm ?? "value");
     string defaultValue = option.IsOptional ? "null" : "string.Empty";
+
+    string condition = (option.LongForm, option.ShortForm) switch
+    {
+      (not null, not null) => $"args[__idx] == \"--{option.LongForm}\" || args[__idx] == \"-{option.ShortForm}\"",
+      (not null, null) => $"args[__idx] == \"--{option.LongForm}\"",
+      (null, not null) => $"args[__idx] == \"-{option.ShortForm}\"",
+      _ => throw new InvalidOperationException("Option must have at least one form")
+    };
 
     sb.AppendLine(CultureInfo.InvariantCulture,
       $"      string? {varName} = {defaultValue};");
     sb.AppendLine("      for (int __idx = 0; __idx < args.Length - 1; __idx++)");
     sb.AppendLine("      {");
-
-    if (option.ShortForm is not null)
-    {
-      sb.AppendLine(CultureInfo.InvariantCulture,
-        $"        if (args[__idx] == \"--{option.LongForm}\" || args[__idx] == \"-{option.ShortForm}\")");
-    }
-    else
-    {
-      sb.AppendLine(CultureInfo.InvariantCulture,
-        $"        if (args[__idx] == \"--{option.LongForm}\")");
-    }
-
+    sb.AppendLine(CultureInfo.InvariantCulture,
+      $"        if ({condition})");
     sb.AppendLine("        {");
     sb.AppendLine(CultureInfo.InvariantCulture, $"          {varName} = args[__idx + 1];");
     sb.AppendLine("          break;");

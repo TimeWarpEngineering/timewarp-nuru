@@ -98,7 +98,7 @@ public sealed record ParameterDefinition(
 /// Examples: "--verbose", "-v", "--output {path}", "--format {fmt?}"
 /// </summary>
 /// <param name="Position">Zero-based position of this segment in the route</param>
-/// <param name="LongForm">The long form name (without --)</param>
+/// <param name="LongForm">The long form name (without --), or null for short-only options</param>
 /// <param name="ShortForm">The short form name (without -), if any</param>
 /// <param name="ParameterName">Name of the value parameter, if this option takes a value</param>
 /// <param name="TypeConstraint">Optional type constraint for the value</param>
@@ -110,7 +110,7 @@ public sealed record ParameterDefinition(
 /// <param name="ResolvedClrTypeName">The resolved CLR type name for the value</param>
 public sealed record OptionDefinition(
   int Position,
-  string LongForm,
+  string? LongForm,
   string? ShortForm,
   string? ParameterName,
   string? TypeConstraint,
@@ -135,9 +135,9 @@ public sealed record OptionDefinition(
   public bool IsFlag => !ExpectsValue;
 
   /// <summary>
-  /// Gets the long form with prefix (e.g., "--verbose").
+  /// Gets the long form with prefix (e.g., "--verbose"), or null if no long form.
   /// </summary>
-  public string LongFormWithPrefix => $"--{LongForm}";
+  public string? LongFormWithPrefix => LongForm is not null ? $"--{LongForm}" : null;
 
   /// <summary>
   /// Gets the short form with prefix (e.g., "-v"), or null if no short form.
@@ -151,7 +151,8 @@ public sealed record OptionDefinition(
   {
     get
     {
-      yield return LongFormWithPrefix;
+      if (LongFormWithPrefix is not null)
+        yield return LongFormWithPrefix;
       if (ShortFormWithPrefix is not null)
         yield return ShortFormWithPrefix;
     }

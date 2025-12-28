@@ -1,21 +1,21 @@
 #!/usr/bin/dotnet --
 
-// V2 Generator Phase 6: Minimal Intercept Tests
-// Tests the V2 source generator end-to-end with minimal test cases
+// Generator Phase 6: Minimal Intercept Tests
+// Tests the source generator end-to-end with minimal test cases
 // Reference: kanban/in-progress/272-v2-generator-phase-6-testing.md
 
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif
 
-namespace TimeWarp.Nuru.Tests.Generator.V2.Minimal
+namespace TimeWarp.Nuru.Tests.Generator.Minimal
 {
   /// <summary>
-  /// Minimal tests for V2 generator interceptor functionality.
+  /// Minimal tests for generator interceptor functionality.
   /// These tests verify that the source generator correctly intercepts
   /// RunAsync and routes are matched/executed.
   /// </summary>
-  [TestTag("V2Generator")]
+  [TestTag("Generator")]
   public class MinimalInterceptTests
   {
     [ModuleInitializer]
@@ -23,7 +23,7 @@ namespace TimeWarp.Nuru.Tests.Generator.V2.Minimal
 
     /// <summary>
     /// Test that a single route with no parameters is intercepted and executed.
-    /// This is the most basic test case for the V2 generator.
+    /// This is the most basic test case for the generator.
     /// </summary>
     public static async Task Should_intercept_single_route()
     {
@@ -520,4 +520,4 @@ namespace TimeWarp.Nuru.Tests.Generator.V2.Minimal
     }
   }
 
-} // namespace TimeWarp.Nuru.Tests.Generator.V2.Minimal
+} // namespace TimeWarp.Nuru.Tests.Generator.Minimal

@@ -30,10 +30,24 @@ Use unique loop index names that won't conflict with user parameters:
 
 ## Checklist
 
-- [ ] Locate the emitter code that generates option extraction loops
-- [ ] Change loop variable from `i` to a unique name (e.g., `__idx`)
-- [ ] Add test case with parameter named `i`
-- [ ] Verify bench-nuru-full compiles after fix
+- [x] Locate the emitter code that generates option extraction loops
+- [x] Change loop variable from `i` to a unique name (e.g., `__idx`)
+- [ ] Add test case with parameter named `i` (blocked by #287, #288)
+- [ ] Verify bench-nuru-full compiles after fix (blocked by #287, #288)
+
+## Results
+
+Fixed by changing loop variable from `i` to `__idx` in `route-matcher-emitter.cs`.
+
+The generated code now produces:
+```csharp
+string? i = string.Empty;           // User's parameter
+for (int __idx = 0; __idx < args.Length - 1; __idx++)  // No conflict
+```
+
+Note: Full verification of bench-nuru-full blocked by related bugs:
+- #287: Empty variable name for boolean flag options
+- #288: Short-only options parsed incorrectly
 
 ## Discovered In
 

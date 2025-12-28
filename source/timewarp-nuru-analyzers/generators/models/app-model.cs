@@ -13,6 +13,7 @@ namespace TimeWarp.Nuru.Generators;
 /// <param name="HasRepl">Whether REPL mode is enabled</param>
 /// <param name="ReplOptions">REPL configuration, if enabled</param>
 /// <param name="HasConfiguration">Whether configuration is enabled</param>
+/// <param name="HasCheckUpdatesRoute">Whether the --check-updates route is enabled</param>
 /// <param name="Routes">All route definitions from all DSLs</param>
 /// <param name="Behaviors">Pipeline behaviors with ordering</param>
 /// <param name="Services">Registered services for DI</param>
@@ -27,6 +28,7 @@ public sealed record AppModel(
   bool HasRepl,
   ReplModel? ReplOptions,
   bool HasConfiguration,
+  bool HasCheckUpdatesRoute,
   ImmutableArray<RouteDefinition> Routes,
   ImmutableArray<BehaviorDefinition> Behaviors,
   ImmutableArray<ServiceDefinition> Services,
@@ -45,6 +47,7 @@ public sealed record AppModel(
     HasRepl: false,
     ReplOptions: null,
     HasConfiguration: false,
+    HasCheckUpdatesRoute: false,
     Routes: [],
     Behaviors: [],
     Services: [],

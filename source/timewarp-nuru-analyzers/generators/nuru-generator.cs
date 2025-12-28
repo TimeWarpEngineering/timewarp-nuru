@@ -113,6 +113,7 @@ public sealed class NuruGenerator : IIncrementalGenerator
     bool hasRepl = false;
     ReplModel? replOptions = null;
     bool hasConfiguration = false;
+    bool hasCheckUpdatesRoute = false;
     ImmutableArray<BehaviorDefinition>.Builder allBehaviors =
       ImmutableArray.CreateBuilder<BehaviorDefinition>();
     ImmutableArray<ServiceDefinition>.Builder allServices =
@@ -138,6 +139,7 @@ public sealed class NuruGenerator : IIncrementalGenerator
       hasRepl = hasRepl || model.HasRepl;
       replOptions ??= model.ReplOptions;
       hasConfiguration = hasConfiguration || model.HasConfiguration;
+      hasCheckUpdatesRoute = hasCheckUpdatesRoute || model.HasCheckUpdatesRoute;
       allBehaviors.AddRange(model.Behaviors);
       allServices.AddRange(model.Services);
     }
@@ -165,6 +167,7 @@ public sealed class NuruGenerator : IIncrementalGenerator
       HasRepl: hasRepl,
       ReplOptions: replOptions,
       HasConfiguration: hasConfiguration,
+      HasCheckUpdatesRoute: hasCheckUpdatesRoute,
       Routes: allRoutes.ToImmutable(),
       Behaviors: allBehaviors.ToImmutable(),
       Services: allServices.ToImmutable(),

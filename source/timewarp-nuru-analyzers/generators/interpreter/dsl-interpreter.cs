@@ -282,6 +282,8 @@ public sealed class DslInterpreter
 
       "AddConfiguration" => DispatchAddConfiguration(receiver),
 
+      "AddCheckUpdatesRoute" => DispatchAddCheckUpdatesRoute(receiver),
+
       "ConfigureServices" => DispatchConfigureServices(invocation, receiver),
 
       "AddBehavior" => DispatchAddBehavior(invocation, receiver),
@@ -481,6 +483,19 @@ public sealed class DslInterpreter
     }
 
     return appBuilder.AddConfiguration();
+  }
+
+  /// <summary>
+  /// Dispatches AddCheckUpdatesRoute() call to IIrAppBuilder.
+  /// </summary>
+  private static object? DispatchAddCheckUpdatesRoute(object? receiver)
+  {
+    if (receiver is not IIrAppBuilder appBuilder)
+    {
+      throw new InvalidOperationException("AddCheckUpdatesRoute() must be called on an app builder.");
+    }
+
+    return appBuilder.AddCheckUpdatesRoute();
   }
 
   /// <summary>

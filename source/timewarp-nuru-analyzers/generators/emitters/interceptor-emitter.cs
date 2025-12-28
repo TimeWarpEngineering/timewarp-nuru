@@ -81,11 +81,16 @@ internal static class InterceptorEmitter
     sb.AppendLine("namespace TimeWarp.Nuru.Generated");
     sb.AppendLine("{");
     sb.AppendLine();
-    sb.AppendLine("using global::System.Reflection;");
-    sb.AppendLine("using global::System.Runtime.CompilerServices;");
-    sb.AppendLine("using global::System.Threading.Tasks;");
-    sb.AppendLine("using global::TimeWarp.Nuru;");
-    sb.AppendLine("using global::TimeWarp.Terminal;");
+sb.AppendLine("using global::System.Linq;");
+sb.AppendLine("using global::System.Net.Http;");
+sb.AppendLine("using global::System.Reflection;");
+sb.AppendLine("using global::System.Runtime.CompilerServices;");
+sb.AppendLine("using global::System.Text.Json;");
+sb.AppendLine("using global::System.Text.Json.Serialization;");
+sb.AppendLine("using global::System.Text.RegularExpressions;");
+sb.AppendLine("using global::System.Threading.Tasks;");
+sb.AppendLine("using global::TimeWarp.Nuru;");
+sb.AppendLine("using global::TimeWarp.Terminal;");
     sb.AppendLine();
   }
 
@@ -181,6 +186,18 @@ internal static class InterceptorEmitter
     sb.AppendLine("      return 0;");
     sb.AppendLine("    }");
     sb.AppendLine();
+
+    // --check-updates flag (opt-in via AddCheckUpdatesRoute())
+    if (model.HasCheckUpdatesRoute)
+    {
+      sb.AppendLine("    // Built-in: --check-updates (opt-in via AddCheckUpdatesRoute())");
+      sb.AppendLine("    if (args is [\"--check-updates\"])");
+      sb.AppendLine("    {");
+      sb.AppendLine("      await CheckForUpdatesAsync(app.Terminal).ConfigureAwait(false);");
+      sb.AppendLine("      return 0;");
+      sb.AppendLine("    }");
+      sb.AppendLine();
+    }
   }
 
   /// <summary>
@@ -205,6 +222,13 @@ internal static class InterceptorEmitter
     VersionEmitter.Emit(sb, model);
     sb.AppendLine();
     CapabilitiesEmitter.Emit(sb, model);
+
+    if (model.HasCheckUpdatesRoute)
+    {
+      sb.AppendLine();
+      CheckUpdatesEmitter.Emit(sb, model);
+    }
+
     sb.AppendLine("}"); // Close class
     sb.AppendLine("}"); // Close namespace
   }

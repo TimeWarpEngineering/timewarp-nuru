@@ -79,6 +79,12 @@ public interface IIrAppBuilder : IIrRouteSource
   IIrAppBuilder AddConfiguration();
 
   /// <summary>
+  /// Enables the --check-updates route for GitHub version checking.
+  /// </summary>
+  /// <returns>This builder for chaining.</returns>
+  IIrAppBuilder AddCheckUpdatesRoute();
+
+  /// <summary>
   /// Adds a behavior (pipeline middleware).
   /// </summary>
   /// <param name="behavior">The behavior definition.</param>

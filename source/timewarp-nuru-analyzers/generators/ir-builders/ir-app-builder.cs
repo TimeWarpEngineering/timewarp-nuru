@@ -29,6 +29,7 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
   private bool HasRepl;
   private ReplModel? ReplOptions;
   private bool HasConfiguration;
+  private bool HasCheckUpdatesRoute;
   private readonly List<RouteDefinition> Routes = [];
   private readonly List<BehaviorDefinition> Behaviors = [];
   private readonly List<ServiceDefinition> Services = [];
@@ -132,6 +133,16 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
   }
 
   /// <summary>
+  /// Enables the --check-updates route for GitHub version checking.
+  /// Mirrors: NuruAppBuilderExtensions.AddCheckUpdatesRoute()
+  /// </summary>
+  public TSelf AddCheckUpdatesRoute()
+  {
+    HasCheckUpdatesRoute = true;
+    return (TSelf)this;
+  }
+
+  /// <summary>
   /// Adds a behavior (pipeline middleware).
   /// Mirrors: NuruCoreAppBuilder.AddBehavior(Type)
   /// </summary>
@@ -230,6 +241,7 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
       HasRepl: HasRepl,
       ReplOptions: ReplOptions,
       HasConfiguration: HasConfiguration,
+      HasCheckUpdatesRoute: HasCheckUpdatesRoute,
       Routes: [.. Routes],
       Behaviors: [.. Behaviors],
       Services: [.. Services],
@@ -259,6 +271,7 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
   IIrAppBuilder IIrAppBuilder.AddRepl() => AddRepl();
   IIrAppBuilder IIrAppBuilder.AddRepl(ReplModel replOptions) => AddRepl(replOptions);
   IIrAppBuilder IIrAppBuilder.AddConfiguration() => AddConfiguration();
+  IIrAppBuilder IIrAppBuilder.AddCheckUpdatesRoute() => AddCheckUpdatesRoute();
   IIrAppBuilder IIrAppBuilder.AddBehavior(BehaviorDefinition behavior) => AddBehavior(behavior);
   IIrAppBuilder IIrAppBuilder.AddService(ServiceDefinition service) => AddService(service);
   IIrAppBuilder IIrAppBuilder.UseTerminal() => UseTerminal();

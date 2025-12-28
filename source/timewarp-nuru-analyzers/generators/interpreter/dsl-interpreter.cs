@@ -68,6 +68,35 @@ public sealed class DslInterpreter
     return BuiltApps.ConvertAll(app => app.FinalizeModel());
   }
 
+  /// <summary>
+  /// Interprets top-level statements from a CompilationUnit to produce AppModels.
+  /// Top-level statements are GlobalStatementSyntax nodes directly under CompilationUnitSyntax.
+  /// </summary>
+  /// <param name="compilationUnit">The compilation unit containing top-level statements.</param>
+  /// <returns>List of interpreted AppModels (one per built app).</returns>
+  public IReadOnlyList<AppModel> InterpretTopLevelStatements(CompilationUnitSyntax compilationUnit)
+  {
+    ArgumentNullException.ThrowIfNull(compilationUnit);
+
+    // Fresh state per interpretation
+    VariableState = new Dictionary<ISymbol, object?>(SymbolEqualityComparer.Default);
+    BuiltApps = [];
+
+    // Process each GlobalStatementSyntax member
+    foreach (MemberDeclarationSyntax member in compilationUnit.Members)
+    {
+      CancellationToken.ThrowIfCancellationRequested();
+
+      if (member is GlobalStatementSyntax globalStatement)
+      {
+        ProcessStatement(globalStatement.Statement);
+      }
+    }
+
+    // Finalize all built apps
+    return BuiltApps.ConvertAll(app => app.FinalizeModel());
+  }
+
   // ═══════════════════════════════════════════════════════════════════════════════
   // BLOCK AND STATEMENT PROCESSING
   // ═══════════════════════════════════════════════════════════════════════════════

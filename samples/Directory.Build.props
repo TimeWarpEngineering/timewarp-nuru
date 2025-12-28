@@ -7,8 +7,8 @@
   <PropertyGroup>
     <!-- Basic settings for samples -->
     <TargetFramework>net10.0</TargetFramework>
-    <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
     <!-- Treat warnings as errors in samples - samples should be clean examples -->
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <!-- Disable code analysis for samples -->
@@ -16,6 +16,12 @@
     <EnforceCodeStyleInBuild>false</EnforceCodeStyleInBuild>
     <!-- Repository URL for testing version check feature -->
     <RepositoryUrl>https://github.com/TimeWarpEngineering/timewarp-nuru</RepositoryUrl>
+  </PropertyGroup>
+
+  <!-- C# Interceptors (for source generators) -->
+  <PropertyGroup Label="Interceptors">
+    <!-- Enable interceptors in the TimeWarp.Nuru.Generated namespace -->
+    <InterceptorsNamespaces>$(InterceptorsNamespaces);TimeWarp.Nuru.Generated</InterceptorsNamespaces>
   </PropertyGroup>
 
   <!-- Source generator debugging: emit generated files to artifacts directory -->
@@ -27,5 +33,13 @@
   <!-- Exclude emitted generated files from compilation (already included by source generator) -->
   <ItemGroup Label="Source Generator Output">
     <Compile Remove="$(CompilerGeneratedFilesOutputPath)/**/*.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Analyzer references don't flow transitively, so we must add it directly -->
+    <ProjectReference Include="$(MSBuildThisFileDirectory)../source/timewarp-nuru-analyzers/timewarp-nuru-analyzers.csproj">
+      <OutputItemType>Analyzer</OutputItemType>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
   </ItemGroup>
 </Project>

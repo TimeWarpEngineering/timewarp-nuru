@@ -35,16 +35,27 @@ internal static class AppExtractor
     if (context.Node is not InvocationExpressionSyntax runAsyncInvocation)
       return null;
 
-    // 2. Find the containing block (method body)
-    BlockSyntax? block = FindContainingBlock(runAsyncInvocation);
-    if (block is null)
-      return null;
-
-    // 3. Use DslInterpreter to interpret the block
+    // 2. Find the containing block (method body) or CompilationUnit (top-level statements)
     DslInterpreter interpreter = new(context.SemanticModel, cancellationToken);
-    IReadOnlyList<AppModel> models = interpreter.Interpret(block);
+    IReadOnlyList<AppModel> models;
 
-    // 4. Return the first (and typically only) app model
+    BlockSyntax? block = FindContainingBlock(runAsyncInvocation);
+    if (block is not null)
+    {
+      // Traditional method body
+      models = interpreter.Interpret(block);
+    }
+    else
+    {
+      // Check for top-level statements
+      CompilationUnitSyntax? compilationUnit = FindCompilationUnit(runAsyncInvocation);
+      if (compilationUnit is null)
+        return null;
+
+      models = interpreter.InterpretTopLevelStatements(compilationUnit);
+    }
+
+    // 3. Return the first (and typically only) app model
     // The interpreter already handles RunAsync intercept site extraction
     return models.Count > 0 ? models[0] : null;
   }
@@ -88,6 +99,24 @@ internal static class AppExtractor
     {
       if (current is BlockSyntax block)
         return block;
+
+      current = current.Parent;
+    }
+
+    return null;
+  }
+
+  /// <summary>
+  /// Finds the containing CompilationUnit for a syntax node.
+  /// Used for top-level statement support where there is no BlockSyntax.
+  /// </summary>
+  private static CompilationUnitSyntax? FindCompilationUnit(RoslynSyntaxNode node)
+  {
+    RoslynSyntaxNode? current = node.Parent;
+    while (current is not null)
+    {
+      if (current is CompilationUnitSyntax compilationUnit)
+        return compilationUnit;
 
       current = current.Parent;
     }

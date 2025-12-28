@@ -20,45 +20,33 @@ System.InvalidOperationException: RunAsync was not intercepted. Ensure the sourc
 
 `AppExtractor.FindContainingBlock()` walks up the syntax tree looking for a `BlockSyntax`, but top-level statements are wrapped in `GlobalStatementSyntax` nodes that are children of `CompilationUnitSyntax` - there is no `BlockSyntax`.
 
-```csharp
-// Current code - fails for top-level statements
-private static BlockSyntax? FindContainingBlock(RoslynSyntaxNode node)
-{
-  RoslynSyntaxNode? current = node.Parent;
-  while (current is not null)
-  {
-    if (current is BlockSyntax block)
-      return block;
-    current = current.Parent;
-  }
-  return null;  // <-- Returns null for top-level statements
-}
-```
-
-## Proposed Fix
-
-Modify `AppExtractor` to handle top-level statements:
-
-1. Detect when we're in top-level statement context (no `BlockSyntax` found, but `CompilationUnitSyntax` ancestor exists)
-2. Collect all `GlobalStatementSyntax` nodes from the `CompilationUnitSyntax`
-3. Either:
-   - Create a synthetic `BlockSyntax` containing those statements, OR
-   - Add an `Interpret(CompilationUnitSyntax)` overload to `DslInterpreter`
-
 ## Checklist
 
-- [ ] Update `AppExtractor.FindContainingBlock` to detect top-level statement context
-- [ ] Handle `GlobalStatementSyntax` / `CompilationUnitSyntax` in the interpreter
-- [ ] Test with `samples/hello-world/hello-world.cs`
-- [ ] Test with other top-level statement samples
+- [x] Update `AppExtractor.FindContainingBlock` to detect top-level statement context
+- [x] Handle `GlobalStatementSyntax` / `CompilationUnitSyntax` in the interpreter
+- [x] Test with `samples/hello-world/hello-world.cs`
+- [x] Test with other top-level statement samples
 
-## Files to Modify
+## Files Modified
 
 | File | Change |
 |------|--------|
-| `generators/extractors/app-extractor.cs` | Handle top-level statements in `FindContainingBlock` |
-| `generators/interpreter/dsl-interpreter.cs` | Possibly add `Interpret(CompilationUnitSyntax)` overload |
+| `generators/extractors/app-extractor.cs` | Added `FindCompilationUnit` and fall back to `InterpretTopLevelStatements` when no `BlockSyntax` |
+| `generators/interpreter/dsl-interpreter.cs` | Added `InterpretTopLevelStatements(CompilationUnitSyntax)` method |
+| `samples/Directory.Build.props` | Added `InterceptorsNamespaces` and direct analyzer `ProjectReference` |
 
-## Notes
+## Results
 
-The generator tests in `generator-01-intercept.cs` pass because they use a test harness that wraps code in a method body with `BlockSyntax`. Real-world top-level statement usage was not tested.
+Top-level statement support now works correctly:
+- `samples/hello-world/hello-world.cs` - outputs "Hello World"
+- `tests/temp-top-level-test/temp-top-level-test.cs` - outputs "Hello World"
+
+### Implementation Details
+
+1. **AppExtractor**: When `FindContainingBlock` returns null, we now check for `CompilationUnitSyntax` and call `InterpretTopLevelStatements`
+
+2. **DslInterpreter**: New method `InterpretTopLevelStatements` iterates over `GlobalStatementSyntax` members and processes each statement
+
+3. **samples/Directory.Build.props**: Two changes required:
+   - Added `InterceptorsNamespaces` property (enables interceptor feature)
+   - Added direct analyzer `ProjectReference` (analyzer references don't flow transitively)

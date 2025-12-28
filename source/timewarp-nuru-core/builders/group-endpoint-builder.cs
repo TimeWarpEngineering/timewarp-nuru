@@ -23,19 +23,24 @@ namespace TimeWarp.Nuru;
 public sealed class GroupEndpointBuilder<TGroupParent> : INestedBuilder<GroupBuilder<TGroupParent>>
   where TGroupParent : class
 {
-  private readonly GroupBuilder<TGroupParent> _parent;
-  private readonly Endpoint _endpoint;
+  private readonly GroupBuilder<TGroupParent> ParentBuilder;
 
-  internal GroupEndpointBuilder(GroupBuilder<TGroupParent> parent, Endpoint endpoint)
+  internal GroupEndpointBuilder(GroupBuilder<TGroupParent> parent)
   {
-    _parent = parent;
-    _endpoint = endpoint;
+    ParentBuilder = parent;
   }
+
+  /// <summary>
+  /// Temporary backward-compatible constructor for incremental migration.
+  /// Will be removed in #293-006.
+  /// </summary>
+  [EditorBrowsable(EditorBrowsableState.Never)]
+  internal GroupEndpointBuilder(GroupBuilder<TGroupParent> parent, Endpoint? _) : this(parent) { }
 
   /// <summary>
   /// Returns to the parent GroupBuilder.
   /// </summary>
-  public GroupBuilder<TGroupParent> Done() => _parent;
+  public GroupBuilder<TGroupParent> Done() => ParentBuilder;
 
   /// <summary>
   /// Sets the handler delegate for this endpoint.
@@ -44,9 +49,8 @@ public sealed class GroupEndpointBuilder<TGroupParent> : INestedBuilder<GroupBui
   /// <returns>This builder for further configuration.</returns>
   public GroupEndpointBuilder<TGroupParent> WithHandler(Delegate handler)
   {
-    ArgumentNullException.ThrowIfNull(handler);
-    _endpoint.Handler = handler;
-    _endpoint.Method = handler.Method;
+    // Source generator extracts handler at compile time
+    _ = handler;
     return this;
   }
 
@@ -57,7 +61,8 @@ public sealed class GroupEndpointBuilder<TGroupParent> : INestedBuilder<GroupBui
   /// <returns>This builder for further configuration.</returns>
   public GroupEndpointBuilder<TGroupParent> WithDescription(string description)
   {
-    _endpoint.Description = description;
+    // Source generator extracts description at compile time
+    _ = description;
     return this;
   }
 
@@ -67,8 +72,7 @@ public sealed class GroupEndpointBuilder<TGroupParent> : INestedBuilder<GroupBui
   /// <returns>This builder for further configuration.</returns>
   public GroupEndpointBuilder<TGroupParent> AsQuery()
   {
-    _endpoint.MessageType = MessageType.Query;
-    _endpoint.CompiledRoute.MessageType = MessageType.Query;
+    // Source generator sets MessageType at compile time
     return this;
   }
 
@@ -78,8 +82,7 @@ public sealed class GroupEndpointBuilder<TGroupParent> : INestedBuilder<GroupBui
   /// <returns>This builder for further configuration.</returns>
   public GroupEndpointBuilder<TGroupParent> AsCommand()
   {
-    _endpoint.MessageType = MessageType.Command;
-    _endpoint.CompiledRoute.MessageType = MessageType.Command;
+    // Source generator sets MessageType at compile time
     return this;
   }
 
@@ -89,8 +92,7 @@ public sealed class GroupEndpointBuilder<TGroupParent> : INestedBuilder<GroupBui
   /// <returns>This builder for further configuration.</returns>
   public GroupEndpointBuilder<TGroupParent> AsIdempotentCommand()
   {
-    _endpoint.MessageType = MessageType.IdempotentCommand;
-    _endpoint.CompiledRoute.MessageType = MessageType.IdempotentCommand;
+    // Source generator sets MessageType at compile time
     return this;
   }
 }

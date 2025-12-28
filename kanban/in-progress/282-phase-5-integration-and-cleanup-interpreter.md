@@ -87,9 +87,11 @@ Ensure these are still used by the interpreter:
 
 ### 5.7 Clean Up Temporary Test Files
 
-- [ ] Rename `temp-interpreter-*.cs` test files to permanent names
-- [ ] Or merge into existing test files
-- [ ] Remove `temp-` prefix once stable
+- [x] Rename `temp-interpreter-*.cs` test files to permanent names
+- [x] Or merge into existing test files
+- [x] Remove `temp-` prefix once stable
+
+Moved to: `tests/timewarp-nuru-core-tests/generator/generator-01-intercept.cs`
 
 ### 5.8 Update Documentation
 

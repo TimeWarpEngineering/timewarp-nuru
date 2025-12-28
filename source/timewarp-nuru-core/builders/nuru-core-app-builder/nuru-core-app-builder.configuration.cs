@@ -61,7 +61,9 @@ public partial class NuruCoreAppBuilder<TSelf>
   /// </example>
   public virtual TSelf ConfigureServices(Action<IServiceCollection> configure)
   {
-    configure?.Invoke(Services);
+    // This method is interpreted by the source generator at compile time.
+    // The generated code handles service registration via static instantiation.
+    // This stub exists for API compatibility - it's a no-op at runtime.
     return (TSelf)this;
   }
 
@@ -90,7 +92,9 @@ public partial class NuruCoreAppBuilder<TSelf>
   /// </example>
   public virtual TSelf ConfigureServices(Action<IServiceCollection, IConfiguration?> configure)
   {
-    configure?.Invoke(Services, Configuration);
+    // This method is interpreted by the source generator at compile time.
+    // The generated code handles service registration via static instantiation.
+    // This stub exists for API compatibility - it's a no-op at runtime.
     return (TSelf)this;
   }
 

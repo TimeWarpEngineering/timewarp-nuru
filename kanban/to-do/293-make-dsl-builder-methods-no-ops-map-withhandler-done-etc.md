@@ -87,3 +87,50 @@ The builders become thin shells that exist only to:
 3. Allow source generator to extract the DSL at compile time
 
 All actual work happens in the source generator.
+
+## Lessons Learned from #292 (Static Service Injection)
+
+### ConfigureServices() Already Converted
+
+`ConfigureServices(Action<IServiceCollection>)` and `ConfigureServices(Action<IServiceCollection, IConfiguration?>)` have already been converted to no-ops in `nuru-core-app-builder.configuration.cs`:
+
+```csharp
+public virtual TSelf ConfigureServices(Action<IServiceCollection> configure)
+{
+  // This method is interpreted by the source generator at compile time.
+  // The generated code handles service registration via static instantiation.
+  // This stub exists for API compatibility - it's a no-op at runtime.
+  return (TSelf)this;
+}
+```
+
+**Key insight:** The old implementation accessed `Services` property which threw if `AddDependencyInjection()` wasn't called. Making it a no-op removed this runtime check requirement.
+
+### AddConfiguration() Already a No-Op
+
+`AddConfiguration()` was already a no-op stub - the source generator's `ConfigurationEmitter` handles the actual work.
+
+### Pattern for Converting Methods
+
+Follow this pattern for converting DSL methods:
+
+1. **Remove all runtime work** - no parsing, no collection building
+2. **Return appropriate builder type** - maintain fluent chain
+3. **Add explanatory comment** - document that source gen handles it
+4. **No validation** - source gen validates at compile time
+
+### Watch for Property Access
+
+Some methods may access properties that have guards (like `Services` requiring `AddDependencyInjection()`). When making methods no-ops, ensure they don't trigger these guards.
+
+### Runfile Cache
+
+When testing changes, remember to clear the runfile cache:
+```bash
+ganda runfile cache --clear
+```
+Otherwise you may see old behavior.
+
+### Related Bug Found
+
+Task #295 was created: Source generator doesn't intercept chained `.Build().RunAsync()` - only works when `app` is assigned to a variable first. This is orthogonal to making DSL methods no-ops but worth noting.

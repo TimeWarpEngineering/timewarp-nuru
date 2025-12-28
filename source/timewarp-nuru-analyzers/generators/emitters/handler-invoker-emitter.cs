@@ -18,8 +18,9 @@ internal static class HandlerInvokerEmitter
   /// <param name="sb">The StringBuilder to append to.</param>
   /// <param name="route">The route containing the handler to invoke.</param>
   /// <param name="routeIndex">The index of this route (used for unique local function names).</param>
+  /// <param name="services">Registered services from ConfigureServices.</param>
   /// <param name="indent">Number of spaces for indentation.</param>
-  public static void Emit(StringBuilder sb, RouteDefinition route, int routeIndex, int indent = 6)
+  public static void Emit(StringBuilder sb, RouteDefinition route, int routeIndex, ImmutableArray<ServiceDefinition> services, int indent = 6)
   {
     string indentStr = new(' ', indent);
     HandlerDefinition handler = route.Handler;
@@ -27,7 +28,7 @@ internal static class HandlerInvokerEmitter
     // First, resolve any required services
     if (handler.RequiresServiceProvider)
     {
-      ServiceResolverEmitter.Emit(sb, handler, indent);
+      ServiceResolverEmitter.Emit(sb, handler, services, indent);
     }
 
     // Emit handler invocation based on kind

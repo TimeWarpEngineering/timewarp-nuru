@@ -490,9 +490,27 @@ internal static class HandlerExtractor
     if (typeName.Contains("IServiceProvider", StringComparison.Ordinal))
       return true;
 
-    // TODO: More sophisticated service detection based on DI container analysis
+    // Check if it's an interface (starts with I followed by uppercase letter)
+    // This handles user-defined service interfaces like IGreeter, IFormatter, etc.
+    string shortName = GetShortTypeName(typeName);
+    if (shortName.Length >= 2 && shortName[0] == 'I' && char.IsUpper(shortName[1]))
+      return true;
 
     return false;
+  }
+
+  /// <summary>
+  /// Gets the short type name from a fully qualified type name.
+  /// </summary>
+  private static string GetShortTypeName(string typeName)
+  {
+    // Remove global:: prefix
+    if (typeName.StartsWith("global::", StringComparison.Ordinal))
+      typeName = typeName[8..];
+
+    // Get last segment after the final dot
+    int lastDot = typeName.LastIndexOf('.');
+    return lastDot >= 0 ? typeName[(lastDot + 1)..] : typeName;
   }
 
   /// <summary>

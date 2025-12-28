@@ -24,6 +24,7 @@ internal static class InterceptorEmitter
     EmitInterceptsLocationAttribute(sb);
     EmitNamespaceAndUsings(sb);
     EmitClassStart(sb);
+    EmitServiceFields(sb, model.Services);
     EmitInterceptsLocation(sb, model.InterceptSites);
     EmitMethodSignature(sb);
     EmitMethodBody(sb, model);
@@ -110,6 +111,53 @@ sb.AppendLine("using global::TimeWarp.Terminal;");
   }
 
   /// <summary>
+  /// Emits static Lazy fields for Singleton and Scoped services.
+  /// These provide thread-safe lazy initialization for cached service instances.
+  /// </summary>
+  private static void EmitServiceFields(StringBuilder sb, ImmutableArray<ServiceDefinition> services)
+  {
+    // Only emit fields for Singleton and Scoped services (not Transient)
+    // Materialize to array to avoid multiple enumeration
+    ServiceDefinition[] cachedServices =
+    [
+      .. services
+        .Where(s => s.Lifetime is ServiceLifetime.Singleton or ServiceLifetime.Scoped)
+        .DistinctBy(s => s.ImplementationTypeName) // Avoid duplicates if same impl registered multiple times
+    ];
+
+    if (cachedServices.Length == 0)
+      return;
+
+    sb.AppendLine("  // Static service fields (thread-safe lazy initialization)");
+
+    foreach (ServiceDefinition service in cachedServices)
+    {
+      string fieldName = GetServiceFieldName(service.ImplementationTypeName);
+      sb.AppendLine(CultureInfo.InvariantCulture,
+        $"  private static readonly global::System.Lazy<{service.ImplementationTypeName}> {fieldName} = new(() => new {service.ImplementationTypeName}());");
+    }
+
+    sb.AppendLine();
+  }
+
+  /// <summary>
+  /// Gets the static field name for a service implementation type.
+  /// </summary>
+  /// <param name="implementationTypeName">Fully qualified implementation type name.</param>
+  /// <returns>Field name like "__svc_MyApp_Services_Greeter".</returns>
+  internal static string GetServiceFieldName(string implementationTypeName)
+  {
+    string name = implementationTypeName;
+
+    // Remove global:: prefix
+    if (name.StartsWith("global::", StringComparison.Ordinal))
+      name = name[8..];
+
+    // Replace dots with underscores for valid C# identifier
+    return "__svc_" + name.Replace(".", "_", StringComparison.Ordinal);
+  }
+
+  /// <summary>
   /// Emits [InterceptsLocation] attributes for all RunAsync call sites.
   /// Uses the new .NET 10 / C# 14 versioned encoding via InterceptableLocation.
   /// </summary>
@@ -156,7 +204,7 @@ sb.AppendLine("using global::TimeWarp.Terminal;");
     int routeIndex = 0;
     foreach (RouteDefinition route in model.RoutesBySpecificity)
     {
-      RouteMatcherEmitter.Emit(sb, route, routeIndex);
+      RouteMatcherEmitter.Emit(sb, route, routeIndex, model.Services);
       routeIndex++;
     }
 

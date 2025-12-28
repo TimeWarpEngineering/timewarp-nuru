@@ -500,9 +500,9 @@ public sealed class DslInterpreter
 
   /// <summary>
   /// Dispatches ConfigureServices() call to IIrAppBuilder.
-  /// For now, this is a no-op. Service extraction is Phase 5+.
+  /// Extracts service registrations from the lambda and adds them to the IR model.
   /// </summary>
-  private static object? DispatchConfigureServices(InvocationExpressionSyntax invocation, object? receiver)
+  private object? DispatchConfigureServices(InvocationExpressionSyntax invocation, object? receiver)
   {
     if (receiver is not IIrAppBuilder appBuilder)
     {
@@ -510,8 +510,18 @@ public sealed class DslInterpreter
         $"ConfigureServices() must be called on an app builder. Location: {invocation.GetLocation().GetLineSpan()}");
     }
 
-    // TODO: Phase 5+ - use ServiceExtractor to extract services from lambda
-    // For now, just return the builder unchanged
+    // Extract service registrations from the ConfigureServices lambda
+    ImmutableArray<ServiceDefinition> services = ServiceExtractor.Extract(
+      invocation,
+      SemanticModel,
+      CancellationToken);
+
+    // Add each service to the IR model
+    foreach (ServiceDefinition service in services)
+    {
+      appBuilder.AddService(service);
+    }
+
     return appBuilder;
   }
 

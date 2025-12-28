@@ -1,13 +1,14 @@
 // Emits service resolution code for handler parameters.
-// Generates GetRequiredService calls for injected dependencies.
+// Generates instantiation code for registered services (static DI).
 
 namespace TimeWarp.Nuru.Generators;
 
 using System.Text;
 
 /// <summary>
-/// Emits code to resolve services from the service provider.
-/// Generates GetRequiredService or GetService calls for each service parameter.
+/// Emits code to resolve services for handler parameters.
+/// Uses static instantiation (new T()) instead of runtime DI container.
+/// Built-in services (ITerminal, IConfiguration) are wired to app properties.
 /// </summary>
 internal static class ServiceResolverEmitter
 {
@@ -16,37 +17,22 @@ internal static class ServiceResolverEmitter
   /// </summary>
   /// <param name="sb">The StringBuilder to append to.</param>
   /// <param name="handler">The handler definition containing service parameters.</param>
+  /// <param name="services">Registered services from ConfigureServices.</param>
   /// <param name="indent">Number of spaces for indentation.</param>
-  public static void Emit(StringBuilder sb, HandlerDefinition handler, int indent = 6)
+  public static void Emit(StringBuilder sb, HandlerDefinition handler, ImmutableArray<ServiceDefinition> services, int indent = 6)
   {
     string indentStr = new(' ', indent);
 
     foreach (ParameterBinding param in handler.ServiceParameters)
     {
-      EmitServiceResolution(sb, param, indentStr);
-    }
-  }
-
-  /// <summary>
-  /// Emits service resolution code for a collection of service definitions.
-  /// </summary>
-  /// <param name="sb">The StringBuilder to append to.</param>
-  /// <param name="services">The service definitions to resolve.</param>
-  /// <param name="indent">Number of spaces for indentation.</param>
-  public static void Emit(StringBuilder sb, IEnumerable<ServiceDefinition> services, int indent = 6)
-  {
-    string indentStr = new(' ', indent);
-
-    foreach (ServiceDefinition service in services)
-    {
-      EmitServiceResolution(sb, service, indentStr);
+      EmitServiceResolution(sb, param, services, indentStr);
     }
   }
 
   /// <summary>
   /// Emits a single service resolution from a parameter binding.
   /// </summary>
-  private static void EmitServiceResolution(StringBuilder sb, ParameterBinding param, string indent)
+  private static void EmitServiceResolution(StringBuilder sb, ParameterBinding param, ImmutableArray<ServiceDefinition> services, string indent)
   {
     string typeName = param.ParameterTypeName;
     string varName = param.ParameterName;
@@ -60,18 +46,75 @@ internal static class ServiceResolverEmitter
       return;
     }
 
-    if (param.IsOptional)
+    // Special case: ITerminal uses app.Terminal (built-in service)
+    if (IsTerminalType(typeName))
     {
-      // Optional services use GetService (can return null)
       sb.AppendLine(CultureInfo.InvariantCulture,
-        $"{indent}{typeName}? {varName} = app.Services.GetService<{typeName}>();");
+        $"{indent}{typeName} {varName} = app.Terminal;");
+      return;
     }
-    else
+
+    // Look up service in registered services
+    ServiceDefinition? service = FindService(typeName, services);
+    if (service is not null)
     {
-      // Required services use GetRequiredService (throws if not registered)
-      sb.AppendLine(CultureInfo.InvariantCulture,
-        $"{indent}{typeName} {varName} = app.Services.GetRequiredService<{typeName}>();");
+      // Found registered service - emit instantiation based on lifetime
+      // Note: Phase 4 will add constructor dependency resolution for services with dependencies.
+      if (service.Lifetime == ServiceLifetime.Transient)
+      {
+        // Transient - new instance each time
+        sb.AppendLine(CultureInfo.InvariantCulture,
+          $"{indent}{typeName} {varName} = new {service.ImplementationTypeName}();");
+      }
+      else
+      {
+        // Singleton/Scoped - thread-safe cached via Lazy<T>
+        string fieldName = InterceptorEmitter.GetServiceFieldName(service.ImplementationTypeName);
+        sb.AppendLine(CultureInfo.InvariantCulture,
+          $"{indent}{typeName} {varName} = {fieldName}.Value;");
+      }
+
+      return;
     }
+
+    // Service not found - emit error comment
+    sb.AppendLine(CultureInfo.InvariantCulture,
+      $"{indent}// ERROR: Service {typeName} not registered. Use ConfigureServices to register it.");
+    sb.AppendLine(CultureInfo.InvariantCulture,
+      $"{indent}{typeName} {varName} = default!; // Service not registered");
+  }
+
+  /// <summary>
+  /// Finds a service definition by its service type name.
+  /// </summary>
+  private static ServiceDefinition? FindService(string typeName, ImmutableArray<ServiceDefinition> services)
+  {
+    // Try exact match first
+    foreach (ServiceDefinition service in services)
+    {
+      if (service.ServiceTypeName == typeName)
+        return service;
+    }
+
+    // Try matching without global:: prefix
+    string normalizedTypeName = NormalizeTypeName(typeName);
+    foreach (ServiceDefinition service in services)
+    {
+      if (NormalizeTypeName(service.ServiceTypeName) == normalizedTypeName)
+        return service;
+    }
+
+    return null;
+  }
+
+  /// <summary>
+  /// Normalizes a type name by removing the global:: prefix.
+  /// </summary>
+  private static string NormalizeTypeName(string typeName)
+  {
+    return typeName.StartsWith("global::", StringComparison.Ordinal)
+      ? typeName[8..]
+      : typeName;
   }
 
   /// <summary>
@@ -88,51 +131,12 @@ internal static class ServiceResolverEmitter
   }
 
   /// <summary>
-  /// Emits a single service resolution from a service definition.
+  /// Checks if a type name is ITerminal (built-in service available via app.Terminal).
   /// </summary>
-  private static void EmitServiceResolution(StringBuilder sb, ServiceDefinition service, string indent)
+  private static bool IsTerminalType(string typeName)
   {
-    string typeName = service.ServiceTypeName;
-    string varName = GetVariableName(service.ServiceTypeName);
-
-    // Services from ServiceDefinition are always required
-    sb.AppendLine(CultureInfo.InvariantCulture,
-      $"{indent}{typeName} {varName} = app.Services.GetRequiredService<{typeName}>();");
-  }
-
-  /// <summary>
-  /// Generates a variable name from a type name.
-  /// </summary>
-  private static string GetVariableName(string typeName)
-  {
-    // Remove namespace prefixes
-    string name = typeName;
-
-    if (name.StartsWith("global::", StringComparison.Ordinal))
-    {
-      name = name[8..];
-    }
-
-    int lastDot = name.LastIndexOf('.');
-    if (lastDot >= 0)
-    {
-      name = name[(lastDot + 1)..];
-    }
-
-    // Remove generic parameters
-    int genericStart = name.IndexOf('<', StringComparison.Ordinal);
-    if (genericStart >= 0)
-    {
-      name = name[..genericStart];
-    }
-
-    // Remove 'I' prefix for interfaces and convert to camelCase
-    if (name.Length > 1 && name[0] == 'I' && char.IsUpper(name[1]))
-    {
-      name = name[1..];
-    }
-
-    // Convert to camelCase
-    return char.ToLowerInvariant(name[0]) + name[1..];
+    return typeName is "global::TimeWarp.Terminal.ITerminal"
+        or "TimeWarp.Terminal.ITerminal"
+        or "ITerminal";
   }
 }

@@ -6,6 +6,7 @@
   <ItemGroup Label="Microsoft Extensions">
     <PackageVersion Include="FluentValidation" Version="12.1.1" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.1" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.1" />
     <PackageVersion Include="Microsoft.Extensions.Configuration" Version="10.0.1" />
     <PackageVersion Include="Microsoft.Extensions.Configuration.Binder" Version="10.0.1" />
     <PackageVersion Include="Microsoft.Extensions.Configuration.CommandLine" Version="10.0.1" />

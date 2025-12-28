@@ -17,7 +17,8 @@ internal static class RouteMatcherEmitter
   /// <param name="sb">The StringBuilder to append to.</param>
   /// <param name="route">The route definition to emit.</param>
   /// <param name="routeIndex">The index of this route (used for unique handler names).</param>
-  public static void Emit(StringBuilder sb, RouteDefinition route, int routeIndex)
+  /// <param name="services">Registered services from ConfigureServices.</param>
+  public static void Emit(StringBuilder sb, RouteDefinition route, int routeIndex, ImmutableArray<ServiceDefinition> services)
   {
     // Comment showing the route pattern
     sb.AppendLine(CultureInfo.InvariantCulture,
@@ -26,11 +27,11 @@ internal static class RouteMatcherEmitter
     // Determine the matching strategy based on route complexity
     if (route.HasOptions || route.HasCatchAll)
     {
-      EmitComplexMatch(sb, route, routeIndex);
+      EmitComplexMatch(sb, route, routeIndex, services);
     }
     else
     {
-      EmitSimpleMatch(sb, route, routeIndex);
+      EmitSimpleMatch(sb, route, routeIndex, services);
     }
 
     sb.AppendLine();
@@ -40,7 +41,7 @@ internal static class RouteMatcherEmitter
   /// Emits simple pattern matching using C# list patterns.
   /// Used for routes with only literals and required parameters.
   /// </summary>
-  private static void EmitSimpleMatch(StringBuilder sb, RouteDefinition route, int routeIndex)
+  private static void EmitSimpleMatch(StringBuilder sb, RouteDefinition route, int routeIndex, ImmutableArray<ServiceDefinition> services)
   {
     string pattern = BuildListPattern(route, routeIndex);
 
@@ -54,7 +55,7 @@ internal static class RouteMatcherEmitter
     EmitTypeConversions(sb, route, routeIndex, indent: 6);
 
     // Emit handler invocation
-    HandlerInvokerEmitter.Emit(sb, route, routeIndex, indent: 6);
+    HandlerInvokerEmitter.Emit(sb, route, routeIndex, services, indent: 6);
 
     sb.AppendLine("      return 0;");
     sb.AppendLine("    }");
@@ -64,7 +65,7 @@ internal static class RouteMatcherEmitter
   /// Emits complex matching logic for routes with options or catch-all parameters.
   /// Uses length checks and manual parsing.
   /// </summary>
-  private static void EmitComplexMatch(StringBuilder sb, RouteDefinition route, int routeIndex)
+  private static void EmitComplexMatch(StringBuilder sb, RouteDefinition route, int routeIndex, ImmutableArray<ServiceDefinition> services)
   {
     // Calculate minimum required args
     int minArgs = route.Literals.Count() + route.Parameters.Count(p => !p.IsOptional && !p.IsCatchAll);
@@ -88,7 +89,7 @@ internal static class RouteMatcherEmitter
     EmitOptionParsing(sb, route);
 
     // Emit handler invocation
-    HandlerInvokerEmitter.Emit(sb, route, routeIndex, indent: 6);
+    HandlerInvokerEmitter.Emit(sb, route, routeIndex, services, indent: 6);
 
     sb.AppendLine("      return 0;");
     sb.AppendLine("    }");

@@ -1,4 +1,4 @@
-# #293.4: Convert GroupBuilder Methods to No-Ops
+# #293-004: Convert GroupBuilder Methods to No-Ops
 
 ## Parent
 
@@ -6,7 +6,7 @@
 
 ## Dependencies
 
-- #293.2 (GroupEndpointBuilder constructor change)
+- #293-002 (GroupEndpointBuilder constructor change)
 
 ## Description
 
@@ -113,7 +113,7 @@ Constructor signature changes significantly:
 - Old: `GroupBuilder(TParent, string, Action<Endpoint>, ILoggerFactory?)`
 - New: `GroupBuilder(TParent)`
 
-**Impact:** Only `NuruCoreAppBuilder.WithGroupPrefix()` creates `GroupBuilder` instances. Updated in #293.3.
+**Impact:** Only `NuruCoreAppBuilder.WithGroupPrefix()` creates `GroupBuilder` instances. Updated in #293-003.
 
 ## Temporary Compatibility
 

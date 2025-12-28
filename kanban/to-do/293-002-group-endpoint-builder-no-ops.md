@@ -1,4 +1,4 @@
-# #293.2: Convert GroupEndpointBuilder Methods to No-Ops
+# #293-002: Convert GroupEndpointBuilder Methods to No-Ops
 
 ## Parent
 
@@ -6,7 +6,7 @@
 
 ## Description
 
-Convert `GroupEndpointBuilder<TGroupParent>` methods from doing runtime work to no-ops. This is nearly identical to #293.1 but for the group-specific endpoint builder.
+Convert `GroupEndpointBuilder<TGroupParent>` methods from doing runtime work to no-ops. This is nearly identical to #293-001 but for the group-specific endpoint builder.
 
 **Key change:** Remove the `_endpoint` field entirely.
 
@@ -94,11 +94,11 @@ public class GroupEndpointBuilder<TGroupParent>(GroupBuilder<TGroupParent> group
 
 Constructor signature changes from `GroupEndpointBuilder(GroupBuilder<T>, Endpoint)` to `GroupEndpointBuilder(GroupBuilder<T>)`.
 
-**Impact:** Only affects `GroupBuilder.Map()` which creates `GroupEndpointBuilder` instances. Will be updated in #293.4.
+**Impact:** Only affects `GroupBuilder.Map()` which creates `GroupEndpointBuilder` instances. Will be updated in #293-004.
 
-**Workaround:** Same as #293.1 - temporary constructor overload.
+**Workaround:** Same as #293-001 - temporary constructor overload.
 
 ## Notes
 
-- Very similar to #293.1 - same pattern, different class
-- Can potentially be done in parallel with #293.1
+- Very similar to #293-001 - same pattern, different class
+- Can potentially be done in parallel with #293-001

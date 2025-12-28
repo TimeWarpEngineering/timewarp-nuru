@@ -14,37 +14,37 @@ This epic converts these methods to no-ops that just maintain the fluent chain f
 
 | Task | Description | Dependencies |
 |------|-------------|--------------|
-| #293.1 | Convert EndpointBuilder methods to no-ops | None |
-| #293.2 | Convert GroupEndpointBuilder methods to no-ops | None |
-| #293.3 | Convert NuruCoreAppBuilder.Map() methods to no-ops | #293.1 |
-| #293.4 | Convert GroupBuilder methods to no-ops | #293.2 |
-| #293.5 | Convert AddTypeConverter() to no-op | None |
-| #293.6 | Delete dead code | #293.1-5 |
-| #293.7 | Move REPL code to reference-only | None |
+| #293-001 | Convert EndpointBuilder methods to no-ops | None |
+| #293-002 | Convert GroupEndpointBuilder methods to no-ops | None |
+| #293-003 | Convert NuruCoreAppBuilder.Map() methods to no-ops | #293-001 |
+| #293-004 | Convert GroupBuilder methods to no-ops | #293-002 |
+| #293-005 | Convert AddTypeConverter() to no-op | None |
+| #293-006 | Delete dead code | #293-001 through #293-005 |
+| #293-007 | Move REPL code to reference-only | None |
 
 ## Execution Order
 
 ```
-#293.1 ──┬──> #293.3 ──┐
-         │             │
-#293.2 ──┤             ├──> #293.6
-         │             │
-#293.4 <─┴─────────────┤
-                       │
-#293.5 ────────────────┘
+#293-001 ──┬──> #293-003 ──┐
+           │               │
+#293-002 ──┤               ├──> #293-006
+           │               │
+#293-004 <─┴───────────────┤
+                           │
+#293-005 ──────────────────┘
 
-#293.7 (independent)
+#293-007 (independent)
 ```
 
 ## Checklist
 
-- [ ] #293.1 - EndpointBuilder no-ops
-- [ ] #293.2 - GroupEndpointBuilder no-ops
-- [ ] #293.3 - NuruCoreAppBuilder.Map() no-ops
-- [ ] #293.4 - GroupBuilder no-ops
-- [ ] #293.5 - AddTypeConverter() no-op
-- [ ] #293.6 - Delete dead code
-- [ ] #293.7 - Move REPL to reference-only
+- [ ] #293-001 - EndpointBuilder no-ops
+- [ ] #293-002 - GroupEndpointBuilder no-ops
+- [ ] #293-003 - NuruCoreAppBuilder.Map() no-ops
+- [ ] #293-004 - GroupBuilder no-ops
+- [ ] #293-005 - AddTypeConverter() no-op
+- [ ] #293-006 - Delete dead code
+- [ ] #293-007 - Move REPL to reference-only
 - [ ] Generator test file: `generator-05-builder-no-ops.cs`
 
 ## Current State (Runtime Work)

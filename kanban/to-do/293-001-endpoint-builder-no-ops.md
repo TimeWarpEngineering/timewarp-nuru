@@ -1,4 +1,4 @@
-# #293.1: Convert EndpointBuilder Methods to No-Ops
+# #293-001: Convert EndpointBuilder Methods to No-Ops
 
 ## Parent
 
@@ -98,13 +98,13 @@ public class EndpointBuilder<TBuilder>(TBuilder builder)
 
 This changes the constructor signature from `EndpointBuilder(TBuilder, Endpoint)` to `EndpointBuilder(TBuilder)`.
 
-**Impact:** Only affects `NuruCoreAppBuilder.Map()` methods which create `EndpointBuilder` instances. Those will be updated in #293.3.
+**Impact:** Only affects `NuruCoreAppBuilder.Map()` methods which create `EndpointBuilder` instances. Those will be updated in #293-003.
 
 **Workaround for incremental work:** Can temporarily add a second constructor that ignores the `Endpoint` parameter:
 ```csharp
 public EndpointBuilder(TBuilder builder, Endpoint? _) : this(builder) { }
 ```
-Remove this workaround in #293.6 when deleting dead code.
+Remove this workaround in #293-006 when deleting dead code.
 
 ## Notes
 

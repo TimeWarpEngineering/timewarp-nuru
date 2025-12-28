@@ -1,4 +1,4 @@
-# #293.5: Convert AddTypeConverter() to No-Op
+# #293-005: Convert AddTypeConverter() to No-Op
 
 ## Parent
 
@@ -43,7 +43,7 @@ public virtual TSelf AddTypeConverter(IRouteTypeConverter converter)
 
 ## Related Dead Code
 
-After this change, these may become dead code (verify in #293.6):
+After this change, these may become dead code (verify in #293-006):
 - `TypeConverterRegistry` class/field
 - `IRouteTypeConverter` interface (if only used at runtime)
 

@@ -1,4 +1,4 @@
-# #293.6: Delete Dead Code
+# #293-006: Delete Dead Code
 
 ## Parent
 
@@ -6,7 +6,7 @@
 
 ## Dependencies
 
-- #293.1, #293.2, #293.3, #293.4, #293.5 (all no-op conversions complete)
+- #293-001, #293-002, #293-003, #293-004, #293-005 (all no-op conversions complete)
 
 ## Description
 
@@ -59,7 +59,7 @@ For each item, verify:
 1. Not referenced by source generator (check `timewarp-nuru-analyzers`)
 2. Not referenced by tests (update tests if needed)
 3. Not referenced by samples (update samples if needed)
-4. Not referenced by REPL (moved to reference-only in #293.7)
+4. Not referenced by REPL (moved to reference-only in #293-007)
 
 ## Process
 

@@ -1,4 +1,4 @@
-# #293.3: Convert NuruCoreAppBuilder.Map() Methods to No-Ops
+# #293-003: Convert NuruCoreAppBuilder.Map() Methods to No-Ops
 
 ## Parent
 
@@ -6,7 +6,7 @@
 
 ## Dependencies
 
-- #293.1 (EndpointBuilder constructor change)
+- #293-001 (EndpointBuilder constructor change)
 
 ## Description
 
@@ -110,8 +110,8 @@ public virtual GroupBuilder<TSelf> WithGroupPrefix(string prefix)
 
 ## Breaking Changes
 
-1. `EndpointBuilder` constructor changes (handled by #293.1)
-2. `GroupBuilder` constructor will need to change (handle in #293.4)
+1. `EndpointBuilder` constructor changes (handled by #293-001)
+2. `GroupBuilder` constructor will need to change (handle in #293-004)
 
 ## Notes
 

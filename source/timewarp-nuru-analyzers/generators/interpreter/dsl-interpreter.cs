@@ -247,9 +247,7 @@ public sealed class DslInterpreter
 
       "RunAsync" => DispatchRunAsyncCall(invocation, receiver),
 
-      _ => throw new InvalidOperationException(
-        $"Unrecognized DSL method: {methodName}. " +
-        $"Location: {invocation.GetLocation().GetLineSpan()}")
+      _ => HandleNonDslMethod(invocation, receiver, methodName)
     };
   }
 
@@ -257,6 +255,28 @@ public sealed class DslInterpreter
   /// Creates a new IR app builder.
   /// </summary>
   private static IrAppBuilder CreateNewAppBuilder() => new();
+
+  /// <summary>
+  /// Handles method calls that are not part of the DSL.
+  /// For builder receivers, throws an error (unknown DSL method).
+  /// For non-builder receivers (Console.WriteLine, etc.), returns null (ignore).
+  /// </summary>
+  private static object? HandleNonDslMethod(
+    InvocationExpressionSyntax invocation,
+    object? receiver,
+    string methodName)
+  {
+    // If receiver is a builder type, fail fast - unknown DSL method
+    if (receiver is IIrRouteSource or IIrRouteBuilder or IIrGroupBuilder or IIrAppBuilder)
+    {
+      throw new InvalidOperationException(
+        $"Unrecognized DSL method: {methodName}. " +
+        $"Location: {invocation.GetLocation().GetLineSpan()}");
+    }
+
+    // Non-DSL method call (Console.WriteLine, etc.) - ignore
+    return null;
+  }
 
   // ═══════════════════════════════════════════════════════════════════════════════
   // DISPATCH METHODS - Using marker interfaces for polymorphic dispatch
@@ -493,6 +513,20 @@ public sealed class DslInterpreter
         => literal.Token.ValueText,
       _ => null
     };
+  }
+
+  /// <summary>
+  /// Determines if a type is a DSL builder type.
+  /// Used for semantic type checking when handling unknown method calls.
+  /// </summary>
+  private static bool IsBuilderType(ITypeSymbol? type)
+  {
+    if (type is null) return false;
+
+    string typeName = type.Name;
+    return typeName is "NuruCoreAppBuilder" or "NuruAppBuilder"
+        or "EndpointBuilder" or "GroupBuilder" or "GroupEndpointBuilder"
+        or "NestedCompiledRouteBuilder";
   }
 
   /// <summary>

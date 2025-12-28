@@ -1,5 +1,7 @@
 # Phase 3: Handle Fragmented Code Styles (Interpreter)
 
+**Status:** COMPLETED (2024-12-28)
+
 ## Description
 
 Enhance the interpreter to handle fragmented code styles where consumers use temporary variables and separate fluent chains across multiple statements. This phase focuses specifically on fragmented style support - the block-based infrastructure was implemented in #283 and #284.
@@ -44,26 +46,26 @@ builder.Build();
 
 ### Handle Non-DSL Method Calls
 
-- [ ] Change `DispatchMethodCall` catch-all from throwing to calling `HandleNonDslMethod`
-- [ ] Add `HandleNonDslMethod(invocation, receiver, methodName)` method:
+- [x] Change `DispatchMethodCall` catch-all from throwing to calling `HandleNonDslMethod`
+- [x] Add `HandleNonDslMethod(invocation, receiver, methodName)` method:
   - If receiver is a builder type (`IIrRouteSource`, `IIrRouteBuilder`, `IIrGroupBuilder`, `IIrAppBuilder`): throw error (unknown DSL method)
   - If receiver is non-builder (e.g., `Console`): return `null` (ignore - not our DSL)
 
 ### Add Helper Method
 
-- [ ] Add `IsBuilderType(ITypeSymbol?)` helper method for semantic type checking
+- [x] Add `IsBuilderType(ITypeSymbol?)` helper method for semantic type checking
 
 ### Add Tests
 
-- [ ] Create test file: `tests/timewarp-nuru-analyzers-tests/interpreter/dsl-interpreter-fragmented-test.cs`
-- [ ] Test: `Should_interpret_builder_in_variable` (Style 2)
+- [x] Create test file: `tests/timewarp-nuru-analyzers-tests/interpreter/dsl-interpreter-fragmented-test.cs`
+- [x] Test: `Should_interpret_builder_in_variable` (Style 2)
   ```csharp
   var builder = NuruApp.CreateBuilder([]);
   builder.Map("ping").WithHandler(() => "pong").AsQuery().Done();
   builder.Build();
   await builder.RunAsync(["ping"]);
   ```
-- [ ] Test: `Should_interpret_fully_fragmented` (Style 3)
+- [x] Test: `Should_interpret_fully_fragmented` (Style 3)
   ```csharp
   var builder = NuruApp.CreateBuilder([]);
   var endpoint = builder.Map("ping");
@@ -73,7 +75,7 @@ builder.Build();
   builder.Build();
   await builder.RunAsync(["ping"]);
   ```
-- [ ] Test: `Should_ignore_non_builder_code` (Style 4)
+- [x] Test: `Should_ignore_non_builder_code` (Style 4)
   ```csharp
   var builder = NuruApp.CreateBuilder([]);
   var junk = "Hi mom";
@@ -82,7 +84,7 @@ builder.Build();
   builder.Build();
   await builder.RunAsync(["ping"]);
   ```
-- [ ] Test: `Should_interpret_mixed_group_and_fragmented`
+- [x] Test: `Should_interpret_mixed_group_and_fragmented`
   ```csharp
   var builder = NuruApp.CreateBuilder([]);
   var admin = builder.WithGroupPrefix("admin");
@@ -91,7 +93,7 @@ builder.Build();
   builder.Build();
   await builder.RunAsync(["admin", "status"]);
   ```
-- [ ] Test: `Should_interpret_multiple_apps_in_block`
+- [x] Test: `Should_interpret_multiple_apps_in_block`
   ```csharp
   var app1 = NuruApp.CreateBuilder([]).Map("ping").WithHandler(() => "pong").AsQuery().Done().Build();
   var app2 = NuruApp.CreateBuilder([]).Map("status").WithHandler(() => "ok").AsQuery().Done().Build();

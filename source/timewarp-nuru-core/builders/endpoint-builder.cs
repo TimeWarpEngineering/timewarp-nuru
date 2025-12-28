@@ -30,20 +30,25 @@ namespace TimeWarp.Nuru;
 public class EndpointBuilder<TBuilder> : INestedBuilder<TBuilder>
   where TBuilder : NuruCoreAppBuilder<TBuilder>
 {
-  private readonly TBuilder _builder;
-  private readonly Endpoint _endpoint;
+  private readonly TBuilder ParentBuilder;
 
-  internal EndpointBuilder(TBuilder builder, Endpoint endpoint)
+  internal EndpointBuilder(TBuilder builder)
   {
-    _builder = builder;
-    _endpoint = endpoint;
+    ParentBuilder = builder;
   }
+
+  /// <summary>
+  /// Temporary backward-compatible constructor for incremental migration.
+  /// Will be removed in #293-006.
+  /// </summary>
+  [EditorBrowsable(EditorBrowsableState.Never)]
+  internal EndpointBuilder(TBuilder builder, Endpoint? _) : this(builder) { }
 
   /// <summary>
   /// Returns to the parent builder to continue fluent chaining.
   /// </summary>
   /// <returns>The builder for further configuration.</returns>
-  public TBuilder Done() => _builder;
+  public TBuilder Done() => ParentBuilder;
 
   /// <summary>
   /// Sets the handler delegate for this endpoint.
@@ -63,9 +68,8 @@ public class EndpointBuilder<TBuilder> : INestedBuilder<TBuilder>
   /// </remarks>
   public EndpointBuilder<TBuilder> WithHandler(Delegate handler)
   {
-    ArgumentNullException.ThrowIfNull(handler);
-    _endpoint.Handler = handler;
-    _endpoint.Method = handler.Method;
+    // Source generator extracts handler at compile time
+    _ = handler;
     return this;
   }
 
@@ -85,7 +89,8 @@ public class EndpointBuilder<TBuilder> : INestedBuilder<TBuilder>
   /// </example>
   public EndpointBuilder<TBuilder> WithDescription(string description)
   {
-    _endpoint.Description = description;
+    // Source generator extracts description at compile time
+    _ = description;
     return this;
   }
 
@@ -99,8 +104,7 @@ public class EndpointBuilder<TBuilder> : INestedBuilder<TBuilder>
   /// </remarks>
   public EndpointBuilder<TBuilder> AsQuery()
   {
-    _endpoint.MessageType = MessageType.Query;
-    _endpoint.CompiledRoute.MessageType = MessageType.Query;
+    // Source generator sets MessageType at compile time
     return this;
   }
 
@@ -115,8 +119,7 @@ public class EndpointBuilder<TBuilder> : INestedBuilder<TBuilder>
   /// </remarks>
   public EndpointBuilder<TBuilder> AsCommand()
   {
-    _endpoint.MessageType = MessageType.Command;
-    _endpoint.CompiledRoute.MessageType = MessageType.Command;
+    // Source generator sets MessageType at compile time
     return this;
   }
 
@@ -131,8 +134,7 @@ public class EndpointBuilder<TBuilder> : INestedBuilder<TBuilder>
   /// </remarks>
   public EndpointBuilder<TBuilder> AsIdempotentCommand()
   {
-    _endpoint.MessageType = MessageType.IdempotentCommand;
-    _endpoint.CompiledRoute.MessageType = MessageType.IdempotentCommand;
+    // Source generator sets MessageType at compile time
     return this;
   }
 
@@ -144,7 +146,7 @@ public class EndpointBuilder<TBuilder> : INestedBuilder<TBuilder>
   /// <param name="pattern">The route pattern to match.</param>
   /// <returns>An <see cref="EndpointBuilder{TBuilder}"/> for further endpoint configuration.</returns>
   public EndpointBuilder<TBuilder> Map(string pattern) =>
-    _builder.Map(pattern);
+    ParentBuilder.Map(pattern);
 
   /// <summary>
   /// Adds a Mediator command-based route (forwarded to the app builder).
@@ -152,7 +154,7 @@ public class EndpointBuilder<TBuilder> : INestedBuilder<TBuilder>
   /// </summary>
   public EndpointBuilder<TBuilder> Map<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)] TCommand>(string pattern)
     where TCommand : IRequest, new() =>
-    _builder.Map<TCommand>(pattern);
+    ParentBuilder.Map<TCommand>(pattern);
 
   /// <summary>
   /// Adds a Mediator command-based route with response (forwarded to the app builder).
@@ -160,7 +162,7 @@ public class EndpointBuilder<TBuilder> : INestedBuilder<TBuilder>
   /// </summary>
   public EndpointBuilder<TBuilder> Map<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)] TCommand, TResponse>(string pattern)
     where TCommand : IRequest<TResponse>, new() =>
-    _builder.Map<TCommand, TResponse>(pattern);
+    ParentBuilder.Map<TCommand, TResponse>(pattern);
 
   /// <summary>
   /// Adds a route using fluent <see cref="NestedCompiledRouteBuilder{TParent}"/> configuration.
@@ -173,19 +175,19 @@ public class EndpointBuilder<TBuilder> : INestedBuilder<TBuilder>
   /// <returns>An <see cref="EndpointBuilder{TBuilder}"/> for further endpoint configuration.</returns>
   public EndpointBuilder<TBuilder> Map(
     Func<NestedCompiledRouteBuilder<EndpointBuilder<TBuilder>>, EndpointBuilder<TBuilder>> configureRoute) =>
-    _builder.Map(configureRoute);
+    ParentBuilder.Map(configureRoute);
 
   /// <summary>
   /// Adds automatic help routes to the application (forwarded to the app builder).
   /// Enables fluent chaining after route configuration.
   /// </summary>
-  public TBuilder AddAutoHelp() => (TBuilder)_builder.AddAutoHelp();
+  public TBuilder AddAutoHelp() => (TBuilder)ParentBuilder.AddAutoHelp();
 
   /// <summary>
   /// Builds the NuruCoreApp from the configured builder.
   /// Enables fluent chaining to terminate with Build().
   /// </summary>
-  public NuruCoreApp Build() => _builder.Build();
+  public NuruCoreApp Build() => ParentBuilder.Build();
 
   /// <summary>
   /// Gets the underlying app builder for accessing extension methods.
@@ -200,7 +202,7 @@ public class EndpointBuilder<TBuilder> : INestedBuilder<TBuilder>
   /// app.Map("test").WithHandler(handler).Builder.AddReplSupport().Build();
   /// </code>
   /// </example>
-  public TBuilder Builder => _builder;
+  public TBuilder Builder => ParentBuilder;
 
   /// <summary>
   /// Implicitly converts to the builder type, allowing seamless continuation of builder chain.
@@ -208,7 +210,7 @@ public class EndpointBuilder<TBuilder> : INestedBuilder<TBuilder>
   /// <param name="configurator">The route configurator.</param>
   /// <returns>The underlying app builder.</returns>
 #pragma warning disable CA2225, CA1062 // Implicit conversion provides better fluent API ergonomics
-  public static implicit operator TBuilder(EndpointBuilder<TBuilder> configurator) => configurator._builder;
+  public static implicit operator TBuilder(EndpointBuilder<TBuilder> configurator) => configurator.ParentBuilder;
 #pragma warning restore CA2225, CA1062
 }
 
@@ -218,7 +220,16 @@ public class EndpointBuilder<TBuilder> : INestedBuilder<TBuilder>
 /// </summary>
 public sealed class EndpointBuilder : EndpointBuilder<NuruCoreAppBuilder>
 {
-  internal EndpointBuilder(NuruCoreAppBuilder builder, Endpoint endpoint) : base(builder, endpoint)
+  internal EndpointBuilder(NuruCoreAppBuilder builder) : base(builder)
+  {
+  }
+
+  /// <summary>
+  /// Temporary backward-compatible constructor for incremental migration.
+  /// Will be removed in #293-006.
+  /// </summary>
+  [EditorBrowsable(EditorBrowsableState.Never)]
+  internal EndpointBuilder(NuruCoreAppBuilder builder, Endpoint? _) : this(builder)
   {
   }
 }

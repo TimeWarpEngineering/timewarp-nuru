@@ -102,6 +102,36 @@ public partial class NuruCoreAppBuilder<TSelf>
     return (TSelf)this;
   }
 
+  /// <summary>
+  /// Creates a route group with a shared prefix.
+  /// All routes defined within the group will have the prefix prepended.
+  /// </summary>
+  /// <param name="prefix">The prefix for all routes in this group (e.g., "admin").</param>
+  /// <returns>A GroupBuilder for configuring nested routes.</returns>
+  /// <example>
+  /// <code>
+  /// builder.WithGroupPrefix("admin")
+  ///     .Map("status")
+  ///       .WithHandler(() => "admin status")
+  ///       .Done()
+  ///     .WithGroupPrefix("config")  // Nested: "admin config"
+  ///       .Map("get {key}")         // Route: "admin config get {key}"
+  ///         .WithHandler((string key) => $"value: {key}")
+  ///         .Done()
+  ///       .Done()  // End config group
+  ///     .Done();   // End admin group
+  /// </code>
+  /// </example>
+  public virtual GroupBuilder<TSelf> WithGroupPrefix(string prefix)
+  {
+    ArgumentException.ThrowIfNullOrWhiteSpace(prefix);
+    return new GroupBuilder<TSelf>(
+      (TSelf)this,
+      prefix,
+      endpoint => EndpointCollection.Add(endpoint),
+      LoggerFactory);
+  }
+
   // Internal method for creating EndpointBuilder<TSelf> from pattern only - uses CRTP for type preservation
   private EndpointBuilder<TSelf> MapPatternTyped(string pattern)
   {

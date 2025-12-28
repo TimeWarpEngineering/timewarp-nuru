@@ -418,6 +418,106 @@ namespace TimeWarp.Nuru.Tests.Generator.V2.Minimal
 
       await Task.CompletedTask;
     }
+
+    // ========================================================================
+    // Commit 6.5: Nested Group Tests (Task #276)
+    // ========================================================================
+
+    /// <summary>
+    /// Test simple group prefix - routes inside a group get the prefix prepended.
+    /// </summary>
+    public static async Task Should_match_grouped_route()
+    {
+      // Arrange
+      using TestTerminal terminal = new();
+
+      NuruCoreApp app = NuruApp.CreateBuilder([])
+        .UseTerminal(terminal)
+        .WithGroupPrefix("grp-admin")
+          .Map("status")
+            .WithHandler(() => "admin status ok")
+            .AsQuery()
+            .Done()
+          .Done()
+        .Build();
+
+      // Act
+      int exitCode = await app.RunAsync(["grp-admin", "status"]);
+
+      // Assert
+      exitCode.ShouldBe(0);
+      terminal.OutputContains("admin status ok").ShouldBeTrue();
+
+      await Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Test nested group prefixes - groups within groups accumulate prefixes.
+    /// </summary>
+    public static async Task Should_match_nested_group_route()
+    {
+      // Arrange
+      using TestTerminal terminal = new();
+
+      NuruCoreApp app = NuruApp.CreateBuilder([])
+        .UseTerminal(terminal)
+        .WithGroupPrefix("grp-admin")
+          .Map("restart")
+            .WithHandler(() => "restarting...")
+            .AsCommand()
+            .Done()
+          .WithGroupPrefix("config")
+            .Map("get {key}")
+              .WithHandler((string key) => $"config value: {key}")
+              .AsQuery()
+              .Done()
+            .Done() // end config group
+          .Done() // end admin group
+        .Build();
+
+      // Act - test nested route: "grp-admin config get debug"
+      int exitCode = await app.RunAsync(["grp-admin", "config", "get", "debug"]);
+
+      // Assert
+      exitCode.ShouldBe(0);
+      terminal.OutputContains("config value: debug").ShouldBeTrue();
+
+      await Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Test that a route in the outer group still works after defining a nested group.
+    /// </summary>
+    public static async Task Should_match_outer_group_route_after_nested_group()
+    {
+      // Arrange
+      using TestTerminal terminal = new();
+
+      NuruCoreApp app = NuruApp.CreateBuilder([])
+        .UseTerminal(terminal)
+        .WithGroupPrefix("grp-admin")
+          .WithGroupPrefix("config")
+            .Map("list")
+              .WithHandler(() => "config list")
+              .AsQuery()
+              .Done()
+            .Done() // end config group
+          .Map("status")
+            .WithHandler(() => "admin status")
+            .AsQuery()
+            .Done()
+          .Done() // end admin group
+        .Build();
+
+      // Act - test outer group route
+      int exitCode = await app.RunAsync(["grp-admin", "status"]);
+
+      // Assert
+      exitCode.ShouldBe(0);
+      terminal.OutputContains("admin status").ShouldBeTrue();
+
+      await Task.CompletedTask;
+    }
   }
 
 } // namespace TimeWarp.Nuru.Tests.Generator.V2.Minimal

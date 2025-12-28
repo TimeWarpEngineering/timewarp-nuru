@@ -28,41 +28,42 @@ namespace TimeWarp.Nuru;
 public sealed class GroupBuilder<TParent> : INestedBuilder<TParent>
   where TParent : class
 {
-  private readonly TParent _parent;
-  private readonly string _prefix;
-  private readonly Action<Endpoint> _registerEndpoint;
-  private readonly ILoggerFactory? _loggerFactory;
+  private readonly TParent ParentBuilder;
 
+  internal GroupBuilder(TParent parent)
+  {
+    ParentBuilder = parent;
+  }
+
+  // ============================================================================
+  // DEAD CODE - To be removed in #293-006
+  // Old constructor with unused parameters for backward compatibility
+  // ============================================================================
+
+#pragma warning disable IDE0060 // Remove unused parameter
+
+  /// <summary>
+  /// Backward-compatible constructor for incremental migration.
+  /// Will be removed in #293-006.
+  /// </summary>
+  [EditorBrowsable(EditorBrowsableState.Never)]
   internal GroupBuilder(
     TParent parent,
     string prefix,
     Action<Endpoint> registerEndpoint,
-    ILoggerFactory? loggerFactory = null)
+    ILoggerFactory? loggerFactory = null) : this(parent)
   {
-    _parent = parent;
-    _prefix = prefix;
-    _registerEndpoint = registerEndpoint;
-    _loggerFactory = loggerFactory;
+    _ = prefix;
+    _ = registerEndpoint;
+    _ = loggerFactory;
   }
 
-  /// <summary>
-  /// Simplified constructor for no-op mode.
-  /// Temporary backward-compatible constructor for incremental migration.
-  /// Will be the only constructor after #293-004.
-  /// </summary>
-  [EditorBrowsable(EditorBrowsableState.Never)]
-  internal GroupBuilder(TParent parent)
-  {
-    _parent = parent;
-    _prefix = string.Empty;
-    _registerEndpoint = _ => { };
-    _loggerFactory = null;
-  }
+#pragma warning restore IDE0060
 
   /// <summary>
   /// Returns to the parent builder.
   /// </summary>
-  public TParent Done() => _parent;
+  public TParent Done() => ParentBuilder;
 
   /// <summary>
   /// Adds a route within this group. Pattern will be prefixed with the group prefix.
@@ -80,18 +81,9 @@ public sealed class GroupBuilder<TParent> : INestedBuilder<TParent>
   /// </example>
   public GroupEndpointBuilder<TParent> Map(string pattern)
   {
-    ArgumentNullException.ThrowIfNull(pattern);
-
-    string fullPattern = $"{_prefix} {pattern}";
-
-    Endpoint endpoint = new()
-    {
-      RoutePattern = fullPattern,
-      CompiledRoute = PatternParser.Parse(fullPattern, _loggerFactory)
-    };
-
-    _registerEndpoint(endpoint);
-    return new GroupEndpointBuilder<TParent>(this, endpoint);
+    // Source generator extracts grouped pattern at compile time
+    _ = pattern;
+    return new GroupEndpointBuilder<TParent>(this);
   }
 
   /// <summary>
@@ -113,8 +105,8 @@ public sealed class GroupBuilder<TParent> : INestedBuilder<TParent>
   /// </example>
   public GroupBuilder<GroupBuilder<TParent>> WithGroupPrefix(string prefix)
   {
-    ArgumentException.ThrowIfNullOrWhiteSpace(prefix);
-    string nestedPrefix = $"{_prefix} {prefix}";
-    return new GroupBuilder<GroupBuilder<TParent>>(this, nestedPrefix, _registerEndpoint, _loggerFactory);
+    // Source generator handles nested prefix at compile time
+    _ = prefix;
+    return new GroupBuilder<GroupBuilder<TParent>>(this);
   }
 }

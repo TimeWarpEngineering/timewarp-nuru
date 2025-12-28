@@ -46,6 +46,20 @@ public sealed class GroupBuilder<TParent> : INestedBuilder<TParent>
   }
 
   /// <summary>
+  /// Simplified constructor for no-op mode.
+  /// Temporary backward-compatible constructor for incremental migration.
+  /// Will be the only constructor after #293-004.
+  /// </summary>
+  [EditorBrowsable(EditorBrowsableState.Never)]
+  internal GroupBuilder(TParent parent)
+  {
+    _parent = parent;
+    _prefix = string.Empty;
+    _registerEndpoint = _ => { };
+    _loggerFactory = null;
+  }
+
+  /// <summary>
   /// Returns to the parent builder.
   /// </summary>
   public TParent Done() => _parent;

@@ -37,8 +37,9 @@ public partial class NuruCoreAppBuilder<TSelf>
   /// </example>
   public virtual EndpointBuilder<TSelf> Map(string pattern)
   {
-    ArgumentNullException.ThrowIfNull(pattern);
-    return MapPatternTyped(pattern);
+    // Source generator parses pattern and creates route at compile time
+    _ = pattern;
+    return new EndpointBuilder<TSelf>((TSelf)this);
   }
 
   /// <summary>
@@ -66,7 +67,9 @@ public partial class NuruCoreAppBuilder<TSelf>
   public virtual EndpointBuilder<TSelf> Map(
     Func<NestedCompiledRouteBuilder<EndpointBuilder<TSelf>>, EndpointBuilder<TSelf>> configureRoute)
   {
-    return MapNestedTyped(configureRoute);
+    // Source generator extracts nested route configuration at compile time
+    _ = configureRoute;
+    return new EndpointBuilder<TSelf>((TSelf)this);
   }
 
   /// <summary>
@@ -77,7 +80,9 @@ public partial class NuruCoreAppBuilder<TSelf>
   public virtual EndpointBuilder<TSelf> Map<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)] TCommand>(string pattern)
     where TCommand : IRequest, new()
   {
-    return MapMediatorTyped(typeof(TCommand), pattern);
+    // Source generator creates mediator route at compile time
+    _ = pattern;
+    return new EndpointBuilder<TSelf>((TSelf)this);
   }
 
   /// <summary>
@@ -88,7 +93,9 @@ public partial class NuruCoreAppBuilder<TSelf>
   public virtual EndpointBuilder<TSelf> Map<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)] TCommand, TResponse>(string pattern)
     where TCommand : IRequest<TResponse>, new()
   {
-    return MapMediatorTyped(typeof(TCommand), pattern);
+    // Source generator creates mediator route at compile time
+    _ = pattern;
+    return new EndpointBuilder<TSelf>((TSelf)this);
   }
 
   /// <summary>
@@ -124,13 +131,18 @@ public partial class NuruCoreAppBuilder<TSelf>
   /// </example>
   public virtual GroupBuilder<TSelf> WithGroupPrefix(string prefix)
   {
-    ArgumentException.ThrowIfNullOrWhiteSpace(prefix);
-    return new GroupBuilder<TSelf>(
-      (TSelf)this,
-      prefix,
-      endpoint => EndpointCollection.Add(endpoint),
-      LoggerFactory);
+    // Source generator handles group prefix at compile time
+    _ = prefix;
+    return new GroupBuilder<TSelf>((TSelf)this);
   }
+
+  // ============================================================================
+  // DEAD CODE - To be removed in #293-006
+  // These private helper methods are no longer called since Map() methods
+  // are now no-ops. The source generator handles everything at compile time.
+  // ============================================================================
+
+#pragma warning disable IDE0051 // Remove unused private members
 
   // Internal method for creating EndpointBuilder<TSelf> from pattern only - uses CRTP for type preservation
   private EndpointBuilder<TSelf> MapPatternTyped(string pattern)
@@ -287,4 +299,7 @@ public partial class NuruCoreAppBuilder<TSelf>
 
     return string.Join(" ", parts);
   }
+
+#pragma warning restore IDE0051
+
 }

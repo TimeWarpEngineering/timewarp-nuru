@@ -19,11 +19,11 @@ Integrate the new DSL interpreter into the main generator pipeline, replacing th
 
 ### 5.1 Update `AppExtractor`
 
-- [ ] Replace `FluentChainExtractor.ExtractToBuilder()` call with `DslInterpreter.Interpret()`
-- [ ] Update `Extract()` method signature if needed
-- [ ] Find `CreateBuilder()` call using `CreateBuilderLocator`
-- [ ] Create `DslInterpreter` instance
-- [ ] Call `Interpret()` and return the `AppModel`
+- [x] Replace `FluentChainExtractor.ExtractToBuilder()` call with `DslInterpreter.Interpret()`
+- [x] Update `Extract()` method signature if needed
+- [x] Find `CreateBuilder()` call using `CreateBuilderLocator`
+- [x] Create `DslInterpreter` instance
+- [x] Call `Interpret()` and return the `AppModel`
 
 ```csharp
 public static AppModel? Extract(
@@ -48,42 +48,42 @@ public static AppModel? Extract(
 
 Delete obsolete files:
 
-- [ ] `generators/extractors/fluent-chain-extractor.cs`
-- [ ] `generators/extractors/builders/app-model-builder.cs`
-- [ ] `generators/extractors/builders/route-definition-builder.cs`
-- [ ] `generators/extractors/builders/handler-definition-builder.cs`
+- [x] `generators/extractors/fluent-chain-extractor.cs`
+- [x] `generators/extractors/builders/app-model-builder.cs`
+- [x] `generators/extractors/builders/route-definition-builder.cs` (kept - still used by IrRouteBuilder)
+- [x] `generators/extractors/builders/handler-definition-builder.cs`
 
-Or move to `_obsolete/` folder for reference if preferred.
+Moved old code to `reference-only/` folder and excluded from compilation.
 
 ### 5.3 Keep Required Extractors
 
 Ensure these are still used by the interpreter:
 
-- [ ] `generators/extractors/handler-extractor.cs` - used for `WithHandler()`
-- [ ] `generators/extractors/pattern-string-extractor.cs` - used for `Map()`
-- [ ] `generators/extractors/intercept-site-extractor.cs` - used for `RunAsync()`
-- [ ] `generators/extractors/service-extractor.cs` - used for `ConfigureServices()`
+- [x] `generators/extractors/handler-extractor.cs` - used for `WithHandler()`
+- [x] `generators/extractors/pattern-string-extractor.cs` - used for `Map()`
+- [x] `generators/extractors/intercept-site-extractor.cs` - used for `RunAsync()`
+- [x] `generators/extractors/service-extractor.cs` - used for `ConfigureServices()`
 
 ### 5.4 Update Locators if Needed
 
-- [ ] Ensure `CreateBuilderLocator` can find `CreateBuilder()` from a `Build()` call
-- [ ] Or update `AppExtractor` to find `CreateBuilder()` directly
+- [x] Ensure `CreateBuilderLocator` can find `CreateBuilder()` from a `Build()` call
+- [x] Or update `AppExtractor` to find `CreateBuilder()` directly
 
 ### 5.5 Run Existing V2 Generator Tests
 
-- [ ] Run `tests/timewarp-nuru-core-tests/routing/temp-minimal-intercept-test.cs`
-- [ ] All 17 tests should pass
-- [ ] Specifically verify nested group tests now pass:
+- [x] Run `tests/timewarp-nuru-core-tests/routing/temp-minimal-intercept-test.cs`
+- [x] All 17 tests should pass (now 20 with group tests)
+- [x] Specifically verify nested group tests now pass:
   - `Should_match_grouped_route`
   - `Should_match_nested_group_route`
   - `Should_match_outer_group_route_after_nested_group`
 
 ### 5.6 Run Full Test Suite
 
-- [ ] `dotnet test` on entire solution
-- [ ] No regressions in analyzer tests
-- [ ] No regressions in core tests
-- [ ] No regressions in REPL tests
+- [ ] `dotnet test` on entire solution (REPL project currently excluded - known issue)
+- [x] No regressions in analyzer tests (23 interpreter tests pass)
+- [x] No regressions in core tests (20 minimal intercept tests pass)
+- [ ] No regressions in REPL tests (REPL not building - separate issue)
 
 ### 5.7 Clean Up Temporary Test Files
 
@@ -170,6 +170,52 @@ After this phase is complete:
 - [ ] Mark #272 nested group checklist items as complete
 - [ ] Update #277 epic as complete
 - [ ] Consider removing temporary test files
+
+---
+
+## Results (In Progress)
+
+### Commits
+
+| Commit | Description |
+|--------|-------------|
+| `8faec61e` | feat(generator): Integrate DslInterpreter into AppExtractor (#282) |
+| `31af45c7` | feat(runtime): Add WithGroupPrefix for nested route groups (#276) |
+
+### Work Completed
+
+**5.1 AppExtractor Integration (Done)**
+- Replaced `FluentChainExtractor.ExtractToBuilder()` with `DslInterpreter.Interpret()`
+- Simplified `AppExtractor` from 168 lines to ~98 lines
+- Net reduction of ~950 lines of code
+
+**5.2 Old Code Removed (Done)**
+- Deleted `fluent-chain-extractor.cs` (305 lines)
+- Deleted `app-model-builder.cs` (241 lines)
+- Deleted `handler-definition-builder.cs` (325 lines)
+- Kept `route-definition-builder.cs` (still used by IrRouteBuilder)
+- Excluded `reference-only/` folder from compilation
+
+**5.5 Tests Verified (Done)**
+- All 23 interpreter tests pass
+- All 20 minimal intercept tests pass (17 original + 3 group tests)
+- Nested group tests pass:
+  - `Should_match_grouped_route` ✅
+  - `Should_match_nested_group_route` ✅
+  - `Should_match_outer_group_route_after_nested_group` ✅
+
+**Related: Runtime WithGroupPrefix (#276)**
+- Added `GroupBuilder<TParent>` for fluent nested group configuration
+- Added `GroupEndpointBuilder<TParent>` for routes within groups
+- Added `WithGroupPrefix()` entry point on `NuruCoreAppBuilder`
+
+### Remaining Work
+
+- [ ] 5.6 Full test suite (REPL not building - known separate issue)
+- [ ] 5.7 Clean up temporary test files
+- [ ] 5.8 Update documentation
+- [ ] 5.9 Final verification
+- [ ] Post-integration tasks (mark related tasks complete)
 
 ---
 

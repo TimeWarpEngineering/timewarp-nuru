@@ -89,6 +89,12 @@ sb.AppendLine("using global::System.Text.Json;");
 sb.AppendLine("using global::System.Text.Json.Serialization;");
 sb.AppendLine("using global::System.Text.RegularExpressions;");
 sb.AppendLine("using global::System.Threading.Tasks;");
+sb.AppendLine("using global::Microsoft.Extensions.Configuration;");
+sb.AppendLine("using global::Microsoft.Extensions.Configuration.Json;");
+sb.AppendLine("using global::Microsoft.Extensions.Configuration.EnvironmentVariables;");
+sb.AppendLine("#if DEBUG");
+sb.AppendLine("using global::Microsoft.Extensions.Configuration.UserSecrets;");
+sb.AppendLine("#endif");
 sb.AppendLine("using global::TimeWarp.Nuru;");
 sb.AppendLine("using global::TimeWarp.Terminal;");
     sb.AppendLine();
@@ -137,6 +143,12 @@ sb.AppendLine("using global::TimeWarp.Terminal;");
   /// </summary>
   private static void EmitMethodBody(StringBuilder sb, AppModel model)
   {
+    // Configuration setup (if AddConfiguration was called)
+    if (model.HasConfiguration)
+    {
+      ConfigurationEmitter.Emit(sb);
+    }
+
     // Built-in flags: --help, --version, --capabilities
     EmitBuiltInFlags(sb, model);
 

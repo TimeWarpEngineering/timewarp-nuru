@@ -51,6 +51,15 @@ internal static class ServiceResolverEmitter
     string typeName = param.ParameterTypeName;
     string varName = param.ParameterName;
 
+    // Special case: IConfiguration and IConfigurationRoot use the local configuration variable
+    // (built by ConfigurationEmitter when AddConfiguration() is called)
+    if (IsConfigurationType(typeName))
+    {
+      sb.AppendLine(CultureInfo.InvariantCulture,
+        $"{indent}{typeName} {varName} = configuration;");
+      return;
+    }
+
     if (param.IsOptional)
     {
       // Optional services use GetService (can return null)
@@ -63,6 +72,19 @@ internal static class ServiceResolverEmitter
       sb.AppendLine(CultureInfo.InvariantCulture,
         $"{indent}{typeName} {varName} = app.Services.GetRequiredService<{typeName}>();");
     }
+  }
+
+  /// <summary>
+  /// Checks if a type name is IConfiguration or IConfigurationRoot.
+  /// </summary>
+  private static bool IsConfigurationType(string typeName)
+  {
+    return typeName is "global::Microsoft.Extensions.Configuration.IConfiguration"
+        or "global::Microsoft.Extensions.Configuration.IConfigurationRoot"
+        or "Microsoft.Extensions.Configuration.IConfiguration"
+        or "Microsoft.Extensions.Configuration.IConfigurationRoot"
+        or "IConfiguration"
+        or "IConfigurationRoot";
   }
 
   /// <summary>

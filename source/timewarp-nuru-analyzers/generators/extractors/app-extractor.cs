@@ -2,12 +2,12 @@
 //
 // This extractor:
 // 1. Receives GeneratorSyntaxContext from the generator
-// 2. Uses RunAsyncLocator to find entry point and get InterceptSiteModel
-// 3. Traces back through syntax tree to find builder chain
-// 4. Uses FluentChainExtractor to extract fluent routes
-// 5. Uses AttributedRouteExtractor for [NuruRoute] classes (if any)
-// 6. Merges routes from all sources, checks for conflicts
-// 7. Returns complete AppModel via AppModelBuilder
+// 2. Finds the containing block (method body) with the DSL code
+// 3. Uses DslInterpreter to semantically interpret the DSL
+// 4. Returns complete AppModel
+//
+// Phase 5: Uses DslInterpreter instead of FluentChainExtractor for robust
+// handling of nested groups and fragmented code styles.
 
 namespace TimeWarp.Nuru.Generators;
 
@@ -15,7 +15,7 @@ using RoslynSyntaxNode = Microsoft.CodeAnalysis.SyntaxNode;
 
 /// <summary>
 /// Main orchestrator that extracts a complete AppModel from source code.
-/// Coordinates all other extractors and merges results from all DSL sources.
+/// Uses DslInterpreter for semantic interpretation of DSL code.
 /// </summary>
 internal static class AppExtractor
 {
@@ -31,35 +31,22 @@ internal static class AppExtractor
     CancellationToken cancellationToken
   )
   {
-    // 1. Extract intercept site from RunAsync location
-    InterceptSiteModel? interceptSite = RunAsyncLocator.Extract(context, cancellationToken);
-    if (interceptSite is null)
-      return null;
-
-    // 2. Get the invocation expression
+    // 1. Get the invocation expression (RunAsync call)
     if (context.Node is not InvocationExpressionSyntax runAsyncInvocation)
       return null;
 
-    // 3. Trace back to find the app variable and builder chain
-    ExpressionSyntax? appExpression = GetAppExpression(runAsyncInvocation);
-    if (appExpression is null)
+    // 2. Find the containing block (method body)
+    BlockSyntax? block = FindContainingBlock(runAsyncInvocation);
+    if (block is null)
       return null;
 
-    // 4. Find the Build() call that created the app
-    InvocationExpressionSyntax? buildCall = FindBuildCall(appExpression, context.SemanticModel, cancellationToken);
+    // 3. Use DslInterpreter to interpret the block
+    DslInterpreter interpreter = new(context.SemanticModel, cancellationToken);
+    IReadOnlyList<AppModel> models = interpreter.Interpret(block);
 
-    // 5. Start building the AppModel
-    AppModelBuilder builder = new();
-    builder.AddInterceptSite(interceptSite);
-
-    // 6. If we found a build call, extract from the fluent chain
-    if (buildCall is not null)
-    {
-      FluentChainExtractor.ExtractToBuilder(buildCall, builder, context.SemanticModel, cancellationToken);
-    }
-
-    // 7. Build and return the model
-    return builder.Build();
+    // 4. Return the first (and typically only) app model
+    // The interpreter already handles RunAsync intercept site extraction
+    return models.Count > 0 ? models[0] : null;
   }
 
   /// <summary>
@@ -91,90 +78,20 @@ internal static class AppExtractor
   }
 
   /// <summary>
-  /// Gets the expression representing the app variable from a RunAsync call.
-  /// For app.RunAsync(args), returns the 'app' expression.
+  /// Finds the containing block (method body) for a syntax node.
+  /// Walks up the syntax tree until a BlockSyntax is found.
   /// </summary>
-  private static ExpressionSyntax? GetAppExpression(InvocationExpressionSyntax runAsyncInvocation)
+  private static BlockSyntax? FindContainingBlock(RoslynSyntaxNode node)
   {
-    if (runAsyncInvocation.Expression is not MemberAccessExpressionSyntax memberAccess)
-      return null;
-
-    return memberAccess.Expression;
-  }
-
-  /// <summary>
-  /// Finds the Build() call that created the app variable.
-  /// Traces back from the app variable to its assignment.
-  /// </summary>
-  private static InvocationExpressionSyntax? FindBuildCall
-  (
-    ExpressionSyntax appExpression,
-    SemanticModel semanticModel,
-    CancellationToken cancellationToken
-  )
-  {
-    // If the app expression is directly a method call ending in .Build(), use it
-    if (appExpression is InvocationExpressionSyntax directBuildCall)
+    RoslynSyntaxNode? current = node.Parent;
+    while (current is not null)
     {
-      if (IsBuildCall(directBuildCall, semanticModel, cancellationToken))
-        return directBuildCall;
-    }
+      if (current is BlockSyntax block)
+        return block;
 
-    // If it's an identifier (variable), trace back to its declaration
-    if (appExpression is IdentifierNameSyntax identifier)
-    {
-      return FindBuildCallFromVariable(identifier, semanticModel, cancellationToken);
+      current = current.Parent;
     }
 
     return null;
-  }
-
-  /// <summary>
-  /// Traces a variable back to find the Build() call in its initializer.
-  /// </summary>
-  private static InvocationExpressionSyntax? FindBuildCallFromVariable
-  (
-    IdentifierNameSyntax identifier,
-    SemanticModel semanticModel,
-    CancellationToken cancellationToken
-  )
-  {
-    SymbolInfo symbolInfo = semanticModel.GetSymbolInfo(identifier, cancellationToken);
-
-    if (symbolInfo.Symbol is not ILocalSymbol localSymbol)
-      return null;
-
-    // Find the variable declaration
-    foreach (SyntaxReference syntaxRef in localSymbol.DeclaringSyntaxReferences)
-    {
-      RoslynSyntaxNode declarationNode = syntaxRef.GetSyntax(cancellationToken);
-
-      if (declarationNode is VariableDeclaratorSyntax variableDeclarator)
-      {
-        // Check the initializer
-        EqualsValueClauseSyntax? initializer = variableDeclarator.Initializer;
-        if (initializer?.Value is InvocationExpressionSyntax invocation)
-        {
-          if (IsBuildCall(invocation, semanticModel, cancellationToken))
-            return invocation;
-        }
-      }
-    }
-
-    return null;
-  }
-
-  /// <summary>
-  /// Checks if an invocation is a Build() call on a NuruAppBuilder.
-  /// </summary>
-  private static bool IsBuildCall
-  (
-    InvocationExpressionSyntax invocation,
-    SemanticModel semanticModel,
-    CancellationToken cancellationToken
-  )
-  {
-    return BuildLocator.IsPotentialMatch(invocation) &&
-           BuildLocator.IsConfirmedBuildCall(invocation, semanticModel, cancellationToken);
   }
 }

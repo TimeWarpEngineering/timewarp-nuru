@@ -11,4 +11,3 @@ global using System.Threading;
 global using System.Threading.Tasks;
 global using TimeWarp.Nuru;
 global using TimeWarp.Nuru.Generators;
-global using TimeWarp.Nuru.SourceGen;

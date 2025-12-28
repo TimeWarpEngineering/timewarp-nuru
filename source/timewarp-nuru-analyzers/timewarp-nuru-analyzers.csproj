@@ -44,6 +44,11 @@
     <Compile Include="$(SourceDirectory)timewarp-nuru-parsing/**/*.cs" Exclude="$(SourceDirectory)timewarp-nuru-parsing/obj/**;$(SourceDirectory)timewarp-nuru-parsing/bin/**" />
   </ItemGroup>
 
+  <!-- Exclude reference-only folder (old code kept for reference during V2 development) -->
+  <ItemGroup>
+    <Compile Remove="reference-only/**/*.cs" />
+  </ItemGroup>
+
   <ItemGroup>
     <None Include="$(OutputPath)/$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
     <!-- Include Microsoft.Extensions.Logging.Abstractions in the analyzer package -->

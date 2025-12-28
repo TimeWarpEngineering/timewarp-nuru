@@ -1,6 +1,7 @@
 #!/usr/bin/dotnet --
-// Test top-level statements as runfile
-#:project ../../source/timewarp-nuru/timewarp-nuru.csproj
+// Generator test: Verify top-level statements work with source generator
+// This is a runfile that uses top-level statements (no Main method)
+#:project ../../../source/timewarp-nuru/timewarp-nuru.csproj
 
 using TimeWarp.Nuru;
 

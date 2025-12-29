@@ -35,31 +35,6 @@ public sealed class GroupBuilder<TParent> : INestedBuilder<TParent>
     ParentBuilder = parent;
   }
 
-  // ============================================================================
-  // DEAD CODE - To be removed in #293-006
-  // Old constructor with unused parameters for backward compatibility
-  // ============================================================================
-
-#pragma warning disable IDE0060 // Remove unused parameter
-
-  /// <summary>
-  /// Backward-compatible constructor for incremental migration.
-  /// Will be removed in #293-006.
-  /// </summary>
-  [EditorBrowsable(EditorBrowsableState.Never)]
-  internal GroupBuilder(
-    TParent parent,
-    string prefix,
-    Action<Endpoint> registerEndpoint,
-    ILoggerFactory? loggerFactory = null) : this(parent)
-  {
-    _ = prefix;
-    _ = registerEndpoint;
-    _ = loggerFactory;
-  }
-
-#pragma warning restore IDE0060
-
   /// <summary>
   /// Returns to the parent builder.
   /// </summary>

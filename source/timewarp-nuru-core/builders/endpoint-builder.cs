@@ -38,13 +38,6 @@ public class EndpointBuilder<TBuilder> : INestedBuilder<TBuilder>
   }
 
   /// <summary>
-  /// Temporary backward-compatible constructor for incremental migration.
-  /// Will be removed in #293-006.
-  /// </summary>
-  [EditorBrowsable(EditorBrowsableState.Never)]
-  internal EndpointBuilder(TBuilder builder, Endpoint? _) : this(builder) { }
-
-  /// <summary>
   /// Returns to the parent builder to continue fluent chaining.
   /// </summary>
   /// <returns>The builder for further configuration.</returns>
@@ -221,15 +214,6 @@ public class EndpointBuilder<TBuilder> : INestedBuilder<TBuilder>
 public sealed class EndpointBuilder : EndpointBuilder<NuruCoreAppBuilder>
 {
   internal EndpointBuilder(NuruCoreAppBuilder builder) : base(builder)
-  {
-  }
-
-  /// <summary>
-  /// Temporary backward-compatible constructor for incremental migration.
-  /// Will be removed in #293-006.
-  /// </summary>
-  [EditorBrowsable(EditorBrowsableState.Never)]
-  internal EndpointBuilder(NuruCoreAppBuilder builder, Endpoint? _) : this(builder)
   {
   }
 }

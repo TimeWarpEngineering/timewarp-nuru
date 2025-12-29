@@ -1,6 +1,6 @@
 # AOT CLI Framework Benchmark Results
 
-**Date:** 2025-12-28 23:37:55
+**Date:** 2025-12-29 10:19:19
 **Platform:** Unix 5.15.167.4
 **Runtime:** 10.0.1
 
@@ -12,8 +12,8 @@
 | bench-systemcommandline | ✓ Yes | 3.3 MB |  |
 | bench-clifx | ✓ Yes | 4.1 MB |  |
 | bench-mcmaster | ✓ Yes | 5.2 MB |  |
-| bench-nuru-direct | ✗ No | N/A | Executable not found |
-| bench-nuru-full | ✓ Yes | 11.3 MB |  |
+| bench-nuru-direct | ✗ No | N/A | AOT publish failed (non-zero exit code) |
+| bench-nuru-full | ✓ Yes | 9.9 MB |  |
 | bench-powerargs | ✓ Yes | 5.0 MB |  |
 | bench-commandlineparser | ✓ Yes | 4.5 MB |  |
 | bench-cocona | ✓ Yes | 6.4 MB |  |
@@ -32,30 +32,30 @@
 | 6 | bench-powerargs | 5.0 MB |
 | 7 | bench-mcmaster | 5.2 MB |
 | 8 | bench-cocona | 6.4 MB |
-| 9 | bench-spectreconsole | 9.9 MB |
-| 10 | bench-nuru-full | 11.3 MB |
+| 9 | bench-nuru-full | 9.9 MB |
+| 10 | bench-spectreconsole | 9.9 MB |
 
 ## Cold Start Performance (hyperfine)
 
 | Command | Mean [ms] | Min [ms] | Max [ms] | Relative |
 |:---|---:|---:|---:|---:|
-| `bench-consoleappframework` | 2.9 ± 0.8 | 2.0 | 8.1 | 1.00 |
-| `bench-systemcommandline` | 3.3 ± 0.3 | 2.4 | 4.4 | 1.16 ± 0.35 |
-| `bench-clifx` | 68.2 ± 22.7 | 47.8 | 154.3 | 23.90 ± 10.40 |
-| `bench-mcmaster` | 78.5 ± 22.7 | 56.6 | 186.1 | 27.51 ± 11.09 |
-| `bench-nuru-full` | 6.2 ± 0.6 | 5.1 | 8.0 | 2.17 ± 0.65 |
-| `bench-powerargs` | 80.9 ± 25.9 | 52.7 | 223.0 | 28.33 ± 12.07 |
-| `bench-commandlineparser` | 4.8 ± 0.4 | 3.8 | 6.1 | 1.67 ± 0.49 |
-| `bench-cocona` | 16.0 ± 3.6 | 12.8 | 33.8 | 5.59 ± 2.01 |
-| `bench-coconalite` | 5.1 ± 1.0 | 3.8 | 10.2 | 1.78 ± 0.62 |
-| `bench-spectreconsole` | 6.2 ± 0.5 | 5.0 | 7.4 | 2.16 ± 0.63 |
+| `bench-consoleappframework` | 3.1 ± 0.4 | 2.5 | 5.1 | 1.00 |
+| `bench-systemcommandline` | 3.8 ± 0.4 | 3.2 | 4.9 | 1.24 ± 0.19 |
+| `bench-clifx` | 74.7 ± 28.2 | 49.2 | 213.1 | 24.23 ± 9.64 |
+| `bench-mcmaster` | 77.0 ± 27.3 | 54.0 | 203.0 | 24.96 ± 9.38 |
+| `bench-nuru-full` | 4.5 ± 0.5 | 3.3 | 6.4 | 1.45 ± 0.24 |
+| `bench-powerargs` | 84.6 ± 53.2 | 57.2 | 526.0 | 27.45 ± 17.60 |
+| `bench-commandlineparser` | 4.1 ± 0.9 | 3.2 | 12.7 | 1.32 ± 0.35 |
+| `bench-cocona` | 16.2 ± 3.9 | 14.0 | 36.3 | 5.27 ± 1.44 |
+| `bench-coconalite` | 5.2 ± 0.6 | 4.2 | 7.7 | 1.70 ± 0.29 |
+| `bench-spectreconsole` | 8.3 ± 2.8 | 6.3 | 21.0 | 2.70 ± 0.97 |
 
 
 ## Failed Builds (AOT Not Supported)
 
 ### bench-nuru-direct
 
-**Error:** Executable not found
+**Error:** AOT publish failed (non-zero exit code)
 
 ## Summary
 

@@ -31,13 +31,6 @@ public sealed class GroupEndpointBuilder<TGroupParent> : INestedBuilder<GroupBui
   }
 
   /// <summary>
-  /// Temporary backward-compatible constructor for incremental migration.
-  /// Will be removed in #293-006.
-  /// </summary>
-  [EditorBrowsable(EditorBrowsableState.Never)]
-  internal GroupEndpointBuilder(GroupBuilder<TGroupParent> parent, Endpoint? _) : this(parent) { }
-
-  /// <summary>
   /// Returns to the parent GroupBuilder.
   /// </summary>
   public GroupBuilder<TGroupParent> Done() => ParentBuilder;

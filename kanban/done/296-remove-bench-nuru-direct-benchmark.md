@@ -8,9 +8,9 @@ The benchmark consistently fails AOT compilation and should be removed.
 
 ## Checklist
 
-- [ ] Delete `benchmarks/aot-benchmarks/bench-nuru-direct/` directory
-- [ ] Edit `benchmarks/aot-benchmarks/run-benchmark.sh` - remove line 11 (Nuru-Direct entry)
-- [ ] Leave existing result files as historical records (they show it failed anyway)
+- [x] Delete `benchmarks/aot-benchmarks/bench-nuru-direct/` directory
+- [x] Edit `benchmarks/aot-benchmarks/run-benchmark.sh` - remove Nuru-Direct entry
+- [x] Leave existing result files as historical records (they show it failed anyway)
 
 ## Notes
 

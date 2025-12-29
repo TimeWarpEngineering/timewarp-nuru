@@ -102,10 +102,15 @@ public partial class NuruCoreAppBuilder<TSelf>
   /// Registers a custom type converter for parameter conversion.
   /// </summary>
   /// <param name="converter">The type converter to register.</param>
+  /// <remarks>
+  /// This method is retained for API compatibility. Custom type converters
+  /// are detected by the source generator at compile time.
+  /// </remarks>
   public virtual TSelf AddTypeConverter(IRouteTypeConverter converter)
   {
-    ArgumentNullException.ThrowIfNull(converter);
-    TypeConverterRegistry.RegisterConverter(converter);
+    // Source generator handles type conversion at compile time.
+    // Custom converters are registered via attributes or DSL analysis.
+    _ = converter;
     return (TSelf)this;
   }
 

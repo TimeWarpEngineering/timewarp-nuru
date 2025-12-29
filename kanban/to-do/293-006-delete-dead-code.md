@@ -10,68 +10,89 @@
 
 ## Description
 
-After converting all DSL builder methods to no-ops, significant runtime infrastructure becomes dead code. This task removes it to reduce binary size and simplify the codebase.
+After converting all DSL builder methods to no-ops, significant runtime infrastructure becomes dead code. The source generator now:
+- Intercepts `RunAsync` and emits inline route matching code
+- Emits inline type conversion (no `TypeConverterRegistry` at runtime)
+- Generates help text directly (no runtime `HelpProvider`)
 
-**IMPORTANT:** Only delete code after verifying it's not used by:
-1. The source generator at compile time
-2. Other runtime paths (REPL, help generation, etc.)
+This task removes dead code to reduce binary size and simplify the codebase.
+
+**Note:** REPL is currently broken/reference-only. Code used only by REPL can be deleted; REPL will be rebuilt later (#293-007).
 
 ## Checklist
 
-### Classes to Evaluate for Deletion
+### Files to DELETE (entire files)
 
-- [ ] `EndpointCollection` class (`source/timewarp-nuru-core/endpoints/endpoint-collection.cs`)
-  - `Add()` is already no-op
-  - Verify `Endpoints` property not read anywhere
-  - Verify `Sort()`, `Count`, enumerator not used
+#### Execution Infrastructure
+- [ ] `source/timewarp-nuru-core/execution/delegate-executor.cs` - Never called, source gen emits inline
+- [ ] `source/timewarp-nuru-core/execution/delegate-request.cs` - Never called
+- [ ] `source/timewarp-nuru-core/execution/mediator-executor.cs` - Never resolved from DI
+- [ ] `source/timewarp-nuru-core/execution/route-execution-context.cs` - Never resolved from DI
+- [ ] `source/timewarp-nuru-core/execution/invoker-registry.cs` - Source gen doesn't use it
+- [ ] `source/timewarp-nuru-core/core-invoker-registration.cs` - Registers invokers for dead code
 
-- [ ] `Endpoint` class (`source/timewarp-nuru-core/endpoints/endpoint.cs`)
-  - Was used to store route configuration
-  - Verify not used by help generation or REPL
+#### Resolution Infrastructure
+- [ ] `source/timewarp-nuru-core/resolution/endpoint-resolver.cs` - Never called
+- [ ] `source/timewarp-nuru-core/resolution/endpoint-resolver.segments.cs` - Part of EndpointResolver
+- [ ] `source/timewarp-nuru-core/resolution/endpoint-resolver.options.cs` - Part of EndpointResolver
+- [ ] `source/timewarp-nuru-core/resolution/endpoint-resolver.helpers.cs` - Part of EndpointResolver
+- [ ] `source/timewarp-nuru-core/resolution/endpoint-resolution-result.cs` - Only used by EndpointResolver
 
-- [ ] `DefaultEndpointCollectionBuilder` class (`source/timewarp-nuru-core/endpoints/default-endpoint-collection-builder.cs`)
-  - If `Map()` is no-op, whole class may be removable
+#### Help Infrastructure (runtime version - source gen provides help)
+- [ ] `source/timewarp-nuru-core/help/help-route-generator.cs` - Never called
+- [ ] `source/timewarp-nuru-core/help/help-provider.cs` - Only called from HelpRouteGenerator
 
-### Private Helper Methods to Delete
+#### Service Extensions
+- [ ] `source/timewarp-nuru-core/extensions/service-collection-extensions.cs` - `AddNuru()` never called
 
-In `nuru-core-app-builder.routes.cs`:
-- [ ] `MapPatternTyped()` - line ~145-160
-- [ ] `MapInternalTyped()` - line ~165-190
-- [ ] `MapMediatorTyped()` - line ~195-215
-- [ ] `MapNestedTyped()` - line ~220-235
+#### Endpoint Builder Infrastructure
+- [ ] `source/timewarp-nuru-core/endpoints/default-endpoint-collection-builder.cs` - Only registered by deleted `AddNuru()`
 
-### Fields/Properties to Remove
+### Code to DELETE (within files)
 
-- [ ] `TypeConverterRegistry` field (if `AddTypeConverter` is no-op)
-- [ ] `EndpointCollection` property (if class deleted)
-- [ ] Constructor parameters that were only used for deleted functionality
+#### `nuru-core-app-builder.routes.cs` (lines 144-308)
+- [ ] Delete `#pragma warning disable IDE0051` block
+- [ ] Delete `MapPatternTyped()` method
+- [ ] Delete `MapInternalTyped()` method
+- [ ] Delete `MapMediatorTyped()` method
+- [ ] Delete `MapNestedTyped()` method
+- [ ] Delete `GeneratePatternFromCompiledRoute()` method
+- [ ] Delete `#pragma warning restore IDE0051`
 
-### Temporary Backward-Compatible Constructors
+#### `endpoint-builder.cs`
+- [ ] Delete lines 40-45: temporary constructor `EndpointBuilder(TBuilder builder, Endpoint? _)`
+- [ ] Delete lines 227-234: temporary constructor in non-generic `EndpointBuilder`
 
-Remove any temporary constructors added for incremental work:
-- [ ] `EndpointBuilder(TBuilder, Endpoint?)` - remove, keep only `EndpointBuilder(TBuilder)`
-- [ ] `GroupEndpointBuilder(GroupBuilder<T>, Endpoint?)` - similar
-- [ ] `GroupBuilder(TParent, string, Action<Endpoint>, ILoggerFactory?)` - similar
+#### `group-endpoint-builder.cs`
+- [ ] Delete lines 33-38: temporary constructor `GroupEndpointBuilder(GroupBuilder<TGroupParent> parent, Endpoint? _)`
 
-### Verify Before Deleting
+#### `group-builder.cs`
+- [ ] Delete lines 38-61: old constructor with unused parameters and `#pragma warning disable IDE0060` block
 
-For each item, verify:
-1. Not referenced by source generator (check `timewarp-nuru-analyzers`)
-2. Not referenced by tests (update tests if needed)
-3. Not referenced by samples (update samples if needed)
-4. Not referenced by REPL (moved to reference-only in #293-007)
+### Keep (still used by completion system)
 
-## Process
+- `EndpointCollection` class - Used by `timewarp-nuru-completion`
+- `Endpoint` class - Used by completion
+- `TypeConverterRegistry` class/field - Used by completion for enum expansion
+- `IEndpointCollectionBuilder` interface - Used by completion
+- `SessionContext` class - Keep for future REPL rebuild
 
-1. Run `grep -r "ClassName" source/` to find all usages
-2. Run `grep -r "ClassName" tests/` to find test dependencies
-3. If only references are in files being deleted, safe to remove
-4. If references exist elsewhere, investigate before deleting
+### Keep (used by source generator)
+
+- `PatternParser` and parsing infrastructure
+- `CompiledRoute`, `RouteMatcher`, `LiteralMatcher`, `ParameterMatcher`, `OptionMatcher`
+- All of `timewarp-nuru-parsing` package
+
+## Verification
+
+After each deletion phase:
+1. `dotnet build` - Must succeed with no errors
+2. `dotnet test` - Must pass
+3. Verify a sample app still works
 
 ## Notes
 
-- This is the riskiest task in the epic - be careful
-- Prefer commenting out first, then deleting after tests pass
-- Keep `PatternParser` and parsing infrastructure - used by source generator
-- Keep `CompiledRoute`, matchers, etc. - used by generated code at runtime
-- Consider keeping `Endpoint` if help system needs it (investigate first)
+- Source generator emits inline code, doesn't use runtime executors/resolvers
+- Help is now source-generated via `HelpEmitter`, not runtime `HelpProvider`
+- REPL will be rebuilt separately in #293-007
+- Delete in phases: execution → resolution → help → service extensions → inline code

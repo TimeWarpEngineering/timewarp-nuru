@@ -38,12 +38,12 @@ This epic converts these methods to no-ops that just maintain the fluent chain f
 
 ## Checklist
 
-- [ ] #293-001 - EndpointBuilder no-ops
-- [ ] #293-002 - GroupEndpointBuilder no-ops
-- [ ] #293-003 - NuruCoreAppBuilder.Map() no-ops
-- [ ] #293-004 - GroupBuilder no-ops
-- [ ] #293-005 - AddTypeConverter() no-op
-- [ ] #293-006 - Delete dead code
+- [x] #293-001 - EndpointBuilder no-ops
+- [x] #293-002 - GroupEndpointBuilder no-ops
+- [x] #293-003 - NuruCoreAppBuilder.Map() no-ops
+- [x] #293-004 - GroupBuilder no-ops
+- [x] #293-005 - AddTypeConverter() no-op
+- [x] #293-006 - Delete dead code (16 files deleted, ~2200 lines removed)
 - [ ] #293-007 - Move REPL to reference-only
 - [ ] Generator test file: `generator-05-builder-no-ops.cs`
 

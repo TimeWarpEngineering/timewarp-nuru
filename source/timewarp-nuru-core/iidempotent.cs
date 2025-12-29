@@ -26,5 +26,5 @@ namespace TimeWarp.Nuru;
 /// </remarks>
 /// <seealso cref="MessageType"/>
 #pragma warning disable CA1040 // Avoid empty interfaces - marker interface for idempotency indication
-public interface IIdempotent;
+public interface IIdempotent : IMessage;
 #pragma warning restore CA1040

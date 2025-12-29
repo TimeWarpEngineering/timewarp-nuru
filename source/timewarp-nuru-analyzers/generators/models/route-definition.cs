@@ -95,4 +95,10 @@ public sealed record RouteDefinition(
   /// </summary>
   public bool HasCatchAll =>
     Parameters.Any(p => p.IsCatchAll);
+
+  /// <summary>
+  /// Gets whether this route has any optional positional parameters.
+  /// </summary>
+  public bool HasOptionalPositionalParams =>
+    Parameters.Any(p => p.IsOptional && !p.IsCatchAll);
 }

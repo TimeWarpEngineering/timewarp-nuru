@@ -19,6 +19,25 @@ using RoslynSyntaxNode = Microsoft.CodeAnalysis.SyntaxNode;
 /// </summary>
 internal static class AppExtractor
 {
+  // Default usings already emitted by the generator - filter these out to avoid duplicates
+  private static readonly HashSet<string> DefaultUsings =
+  [
+    "System.Linq",
+    "System.Net.Http",
+    "System.Reflection",
+    "System.Runtime.CompilerServices",
+    "System.Text.Json",
+    "System.Text.Json.Serialization",
+    "System.Text.RegularExpressions",
+    "System.Threading.Tasks",
+    "Microsoft.Extensions.Configuration",
+    "Microsoft.Extensions.Configuration.Json",
+    "Microsoft.Extensions.Configuration.EnvironmentVariables",
+    "Microsoft.Extensions.Configuration.UserSecrets",
+    "TimeWarp.Nuru",
+    "TimeWarp.Terminal"
+  ];
+
   /// <summary>
   /// Extracts an AppModel from a RunAsync call site.
   /// </summary>
@@ -35,7 +54,12 @@ internal static class AppExtractor
     if (context.Node is not InvocationExpressionSyntax runAsyncInvocation)
       return null;
 
-    // 2. Find the containing block (method body) or CompilationUnit (top-level statements)
+    // 2. Find the CompilationUnit (needed for both usings extraction and top-level statements)
+    CompilationUnitSyntax? compilationUnit = FindCompilationUnit(runAsyncInvocation);
+    if (compilationUnit is null)
+      return null;
+
+    // 3. Find the containing block (method body) or use top-level statements
     DslInterpreter interpreter = new(context.SemanticModel, cancellationToken);
     IReadOnlyList<AppModel> models;
 
@@ -47,17 +71,17 @@ internal static class AppExtractor
     }
     else
     {
-      // Check for top-level statements
-      CompilationUnitSyntax? compilationUnit = FindCompilationUnit(runAsyncInvocation);
-      if (compilationUnit is null)
-        return null;
-
+      // Top-level statements
       models = interpreter.InterpretTopLevelStatements(compilationUnit);
     }
 
-    // 3. Return the first (and typically only) app model
-    // The interpreter already handles RunAsync intercept site extraction
-    return models.Count > 0 ? models[0] : null;
+    // 4. Return the first (and typically only) app model with user usings attached
+    if (models.Count == 0)
+      return null;
+
+    // Extract user's using directives and attach to the model
+    ImmutableArray<string> userUsings = ExtractUserUsings(compilationUnit);
+    return models[0] with { UserUsings = userUsings };
   }
 
   /// <summary>
@@ -122,5 +146,40 @@ internal static class AppExtractor
     }
 
     return null;
+  }
+
+  /// <summary>
+  /// Extracts user's using directives from a CompilationUnit and converts them to global form.
+  /// Filters out usings that are already included in the generated code's default set.
+  /// </summary>
+  /// <param name="compilationUnit">The compilation unit containing using directives.</param>
+  /// <returns>User's using directives in global form.</returns>
+  private static ImmutableArray<string> ExtractUserUsings(CompilationUnitSyntax compilationUnit)
+  {
+    ImmutableArray<string>.Builder usings = ImmutableArray.CreateBuilder<string>();
+
+    foreach (UsingDirectiveSyntax usingDirective in compilationUnit.Usings)
+    {
+      // Skip alias usings (using Foo = Bar;)
+      if (usingDirective.Alias is not null)
+        continue;
+
+      string? namespaceName = usingDirective.Name?.ToString();
+      if (string.IsNullOrEmpty(namespaceName))
+        continue;
+
+      // Skip usings already in the default set
+      if (DefaultUsings.Contains(namespaceName))
+        continue;
+
+      // Convert to global form for safety in generated code
+      string globalUsing = usingDirective.StaticKeyword != default
+        ? $"using static global::{namespaceName};"
+        : $"using global::{namespaceName};";
+
+      usings.Add(globalUsing);
+    }
+
+    return usings.ToImmutable();
   }
 }

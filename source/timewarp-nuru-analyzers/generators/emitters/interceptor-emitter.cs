@@ -22,7 +22,7 @@ internal static class InterceptorEmitter
 
     EmitHeader(sb);
     EmitInterceptsLocationAttribute(sb);
-    EmitNamespaceAndUsings(sb);
+    EmitNamespaceAndUsings(sb, model);
     EmitClassStart(sb);
     EmitServiceFields(sb, model.Services);
     EmitInterceptsLocation(sb, model.InterceptSites);
@@ -77,27 +77,41 @@ internal static class InterceptorEmitter
   /// Uses block-scoped namespace to be compatible with the InterceptsLocationAttribute
   /// which is in a separate namespace block in the same file.
   /// </summary>
-  private static void EmitNamespaceAndUsings(StringBuilder sb)
+  private static void EmitNamespaceAndUsings(StringBuilder sb, AppModel model)
   {
     sb.AppendLine("namespace TimeWarp.Nuru.Generated");
     sb.AppendLine("{");
     sb.AppendLine();
-sb.AppendLine("using global::System.Linq;");
-sb.AppendLine("using global::System.Net.Http;");
-sb.AppendLine("using global::System.Reflection;");
-sb.AppendLine("using global::System.Runtime.CompilerServices;");
-sb.AppendLine("using global::System.Text.Json;");
-sb.AppendLine("using global::System.Text.Json.Serialization;");
-sb.AppendLine("using global::System.Text.RegularExpressions;");
-sb.AppendLine("using global::System.Threading.Tasks;");
-sb.AppendLine("using global::Microsoft.Extensions.Configuration;");
-sb.AppendLine("using global::Microsoft.Extensions.Configuration.Json;");
-sb.AppendLine("using global::Microsoft.Extensions.Configuration.EnvironmentVariables;");
-sb.AppendLine("#if DEBUG");
-sb.AppendLine("using global::Microsoft.Extensions.Configuration.UserSecrets;");
-sb.AppendLine("#endif");
-sb.AppendLine("using global::TimeWarp.Nuru;");
-sb.AppendLine("using global::TimeWarp.Terminal;");
+
+    // Default usings required by generated code
+    sb.AppendLine("using global::System.Linq;");
+    sb.AppendLine("using global::System.Net.Http;");
+    sb.AppendLine("using global::System.Reflection;");
+    sb.AppendLine("using global::System.Runtime.CompilerServices;");
+    sb.AppendLine("using global::System.Text.Json;");
+    sb.AppendLine("using global::System.Text.Json.Serialization;");
+    sb.AppendLine("using global::System.Text.RegularExpressions;");
+    sb.AppendLine("using global::System.Threading.Tasks;");
+    sb.AppendLine("using global::Microsoft.Extensions.Configuration;");
+    sb.AppendLine("using global::Microsoft.Extensions.Configuration.Json;");
+    sb.AppendLine("using global::Microsoft.Extensions.Configuration.EnvironmentVariables;");
+    sb.AppendLine("#if DEBUG");
+    sb.AppendLine("using global::Microsoft.Extensions.Configuration.UserSecrets;");
+    sb.AppendLine("#endif");
+    sb.AppendLine("using global::TimeWarp.Nuru;");
+    sb.AppendLine("using global::TimeWarp.Terminal;");
+
+    // User-defined usings from source file
+    if (model.UserUsings.Length > 0)
+    {
+      sb.AppendLine();
+      sb.AppendLine("// User-defined usings");
+      foreach (string userUsing in model.UserUsings)
+      {
+        sb.AppendLine(userUsing);
+      }
+    }
+
     sb.AppendLine();
   }
 

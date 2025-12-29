@@ -245,7 +245,8 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
       Routes: [.. Routes],
       Behaviors: [.. Behaviors],
       Services: [.. Services],
-      InterceptSites: [.. InterceptSites]);
+      InterceptSites: [.. InterceptSites],
+      UserUsings: []);  // Usings are populated by AppExtractor, not the builder
   }
 
   /// <summary>

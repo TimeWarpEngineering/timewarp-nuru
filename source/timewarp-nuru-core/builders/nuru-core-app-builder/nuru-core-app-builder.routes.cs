@@ -73,32 +73,6 @@ public partial class NuruCoreAppBuilder<TSelf>
   }
 
   /// <summary>
-  /// Adds a Mediator command-based route.
-  /// Requires AddDependencyInjection() to be called first.
-  /// Use <see cref="EndpointBuilder{TSelf}.WithDescription"/> to set the description.
-  /// </summary>
-  public virtual EndpointBuilder<TSelf> Map<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)] TCommand>(string pattern)
-    where TCommand : IRequest, new()
-  {
-    // Source generator creates mediator route at compile time
-    _ = pattern;
-    return new EndpointBuilder<TSelf>((TSelf)this);
-  }
-
-  /// <summary>
-  /// Adds a Mediator command-based route with response.
-  /// Requires AddDependencyInjection() to be called first.
-  /// Use <see cref="EndpointBuilder{TSelf}.WithDescription"/> to set the description.
-  /// </summary>
-  public virtual EndpointBuilder<TSelf> Map<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)] TCommand, TResponse>(string pattern)
-    where TCommand : IRequest<TResponse>, new()
-  {
-    // Source generator creates mediator route at compile time
-    _ = pattern;
-    return new EndpointBuilder<TSelf>((TSelf)this);
-  }
-
-  /// <summary>
   /// Registers a custom type converter for parameter conversion.
   /// </summary>
   /// <param name="converter">The type converter to register.</param>

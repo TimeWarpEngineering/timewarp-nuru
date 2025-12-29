@@ -1,14 +1,13 @@
 #!/usr/bin/dotnet --
 // calc-delegate - Calculator using Delegate approach for maximum performance
-// Uses CreateSlimBuilder for lightweight delegate-only patterns (no DI, no Mediator)
-// Note: CreateSlimBuilder includes auto-help, Configuration, and logging by default
+// Uses CreateBuilder for lightweight delegate-only patterns
 #:project ../../source/timewarp-nuru/timewarp-nuru.csproj
 
 using TimeWarp.Nuru;
 using static System.Console;
 
 NuruCoreApp app =
-  NuruCoreApp.CreateSlimBuilder(args)
+  NuruApp.CreateBuilder(args)
   // Basic operations
   .Map("add {x:double} {y:double}")
     .WithHandler((double x, double y) => WriteLine($"{x} + {y} = {x + y}"))

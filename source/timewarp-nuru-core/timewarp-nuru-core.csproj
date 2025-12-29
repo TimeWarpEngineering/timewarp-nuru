@@ -26,7 +26,6 @@
     <InternalsVisibleTo Include="TimeWarp.Nuru.Repl" />
     <PackageReference Include="TimeWarp.Terminal" />
     <PackageReference Include="TimeWarp.Builder" />
-    <PackageReference Include="FluentValidation" />
     <PackageReference Include="GlobalUsingsAnalyzer">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>

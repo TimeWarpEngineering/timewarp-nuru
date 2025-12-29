@@ -142,22 +142,6 @@ public class EndpointBuilder<TBuilder> : INestedBuilder<TBuilder>
     ParentBuilder.Map(pattern);
 
   /// <summary>
-  /// Adds a Mediator command-based route (forwarded to the app builder).
-  /// Enables fluent chaining after route configuration.
-  /// </summary>
-  public EndpointBuilder<TBuilder> Map<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)] TCommand>(string pattern)
-    where TCommand : IRequest, new() =>
-    ParentBuilder.Map<TCommand>(pattern);
-
-  /// <summary>
-  /// Adds a Mediator command-based route with response (forwarded to the app builder).
-  /// Enables fluent chaining after route configuration.
-  /// </summary>
-  public EndpointBuilder<TBuilder> Map<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)] TCommand, TResponse>(string pattern)
-    where TCommand : IRequest<TResponse>, new() =>
-    ParentBuilder.Map<TCommand, TResponse>(pattern);
-
-  /// <summary>
   /// Adds a route using fluent <see cref="NestedCompiledRouteBuilder{TParent}"/> configuration.
   /// Use <see cref="WithHandler"/> to set the handler after configuring the route.
   /// </summary>

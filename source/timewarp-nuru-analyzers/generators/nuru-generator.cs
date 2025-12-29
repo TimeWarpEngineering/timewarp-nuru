@@ -118,6 +118,8 @@ public sealed class NuruGenerator : IIncrementalGenerator
       ImmutableArray.CreateBuilder<BehaviorDefinition>();
     ImmutableArray<ServiceDefinition>.Builder allServices =
       ImmutableArray.CreateBuilder<ServiceDefinition>();
+    ImmutableArray<string>.Builder allUserUsings =
+      ImmutableArray.CreateBuilder<string>();
 
     foreach (AppModel? model in appModels)
     {
@@ -142,6 +144,7 @@ public sealed class NuruGenerator : IIncrementalGenerator
       hasCheckUpdatesRoute = hasCheckUpdatesRoute || model.HasCheckUpdatesRoute;
       allBehaviors.AddRange(model.Behaviors);
       allServices.AddRange(model.Services);
+      allUserUsings.AddRange(model.UserUsings);
     }
 
     // If no RunAsync calls found, we can't generate an interceptor
@@ -171,7 +174,8 @@ public sealed class NuruGenerator : IIncrementalGenerator
       Routes: allRoutes.ToImmutable(),
       Behaviors: allBehaviors.ToImmutable(),
       Services: allServices.ToImmutable(),
-      InterceptSites: allInterceptSites.ToImmutable()
+      InterceptSites: allInterceptSites.ToImmutable(),
+      UserUsings: [.. allUserUsings.Distinct()]
     );
   }
 }

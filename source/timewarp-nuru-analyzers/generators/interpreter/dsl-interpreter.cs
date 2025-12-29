@@ -128,9 +128,26 @@ public sealed class DslInterpreter
         ProcessExpressionStatement(exprStmt);
         break;
 
-      // Ignore other statement types (return, if, etc.)
+      case ReturnStatementSyntax returnStmt:
+        ProcessReturnStatement(returnStmt);
+        break;
+
+      // Ignore other statement types (if, etc.)
       default:
         break;
+    }
+  }
+
+  /// <summary>
+  /// Processes a return statement (e.g., "return await app.RunAsync(...)").
+  /// Bug #298: This was missing, causing "return await" pattern to not be intercepted.
+  /// </summary>
+  private void ProcessReturnStatement(ReturnStatementSyntax returnStmt)
+  {
+    if (returnStmt.Expression is not null)
+    {
+      // Evaluate the return expression for its side effects (e.g., RunAsync interception)
+      EvaluateExpression(returnStmt.Expression);
     }
   }
 

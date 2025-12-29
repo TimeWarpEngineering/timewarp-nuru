@@ -25,7 +25,8 @@ internal static class RouteMatcherEmitter
       $"    // Route: {EscapeXmlComment(route.FullPattern)}");
 
     // Determine the matching strategy based on route complexity
-    if (route.HasOptions || route.HasCatchAll)
+    // Use complex matching for routes with options, catch-all, or optional positional params
+    if (route.HasOptions || route.HasCatchAll || route.HasOptionalPositionalParams)
     {
       EmitComplexMatch(sb, route, routeIndex, services);
     }
@@ -82,11 +83,14 @@ internal static class RouteMatcherEmitter
       literalIndex++;
     }
 
-    // Emit parameter extraction
-    EmitParameterExtraction(sb, route, literalIndex);
+    // Emit parameter extraction (typed params use unique var names for later conversion)
+    EmitParameterExtraction(sb, route, routeIndex, literalIndex);
+
+    // Emit type conversions for typed parameters
+    EmitTypeConversions(sb, route, routeIndex, indent: 6);
 
     // Emit option parsing
-    EmitOptionParsing(sb, route);
+    EmitOptionParsing(sb, route, routeIndex);
 
     // Emit handler invocation
     HandlerInvokerEmitter.Emit(sb, route, routeIndex, services, indent: 6);
@@ -136,53 +140,43 @@ internal static class RouteMatcherEmitter
       string varName = param.CamelCaseName;
       string uniqueVarName = $"__{varName}_{routeIndex}";
 
-      // Parse from the unique pattern variable to create the typed variable with the original name
-      switch (param.TypeConstraint?.ToLowerInvariant())
+      // Normalize type constraint: strip '?' suffix to get base type
+      string typeConstraint = param.TypeConstraint ?? "";
+      string baseType = typeConstraint.EndsWith('?') ? typeConstraint[..^1] : typeConstraint;
+
+      // Map base type to CLR type name and parse expression
+      (string? clrType, string? parseExpr) = baseType.ToLowerInvariant() switch
       {
-        case "int":
+        "int" => ("int", $"int.Parse({uniqueVarName}, System.Globalization.CultureInfo.InvariantCulture)"),
+        "long" => ("long", $"long.Parse({uniqueVarName}, System.Globalization.CultureInfo.InvariantCulture)"),
+        "double" => ("double", $"double.Parse({uniqueVarName}, System.Globalization.CultureInfo.InvariantCulture)"),
+        "decimal" => ("decimal", $"decimal.Parse({uniqueVarName}, System.Globalization.CultureInfo.InvariantCulture)"),
+        "bool" => ("bool", $"bool.Parse({uniqueVarName})"),
+        "guid" => ("System.Guid", $"System.Guid.Parse({uniqueVarName})"),
+        "datetime" => ("System.DateTime", $"System.DateTime.Parse({uniqueVarName}, System.Globalization.CultureInfo.InvariantCulture)"),
+        _ => (null, null)
+      };
+
+      if (clrType is not null && parseExpr is not null)
+      {
+        if (param.IsOptional)
+        {
+          // Optional param: check for null before parsing
           sb.AppendLine(CultureInfo.InvariantCulture,
-            $"{indentStr}int {varName} = int.Parse({uniqueVarName}, System.Globalization.CultureInfo.InvariantCulture);");
-          break;
-
-        case "long":
+            $"{indentStr}{clrType}? {varName} = {uniqueVarName} is not null ? {parseExpr} : null;");
+        }
+        else
+        {
+          // Required param: direct parse
           sb.AppendLine(CultureInfo.InvariantCulture,
-            $"{indentStr}long {varName} = long.Parse({uniqueVarName}, System.Globalization.CultureInfo.InvariantCulture);");
-          break;
-
-        case "double":
-          sb.AppendLine(CultureInfo.InvariantCulture,
-            $"{indentStr}double {varName} = double.Parse({uniqueVarName}, System.Globalization.CultureInfo.InvariantCulture);");
-          break;
-
-        case "decimal":
-          sb.AppendLine(CultureInfo.InvariantCulture,
-            $"{indentStr}decimal {varName} = decimal.Parse({uniqueVarName}, System.Globalization.CultureInfo.InvariantCulture);");
-          break;
-
-        case "bool":
-          sb.AppendLine(CultureInfo.InvariantCulture,
-            $"{indentStr}bool {varName} = bool.Parse({uniqueVarName});");
-          break;
-
-        case "guid":
-          sb.AppendLine(CultureInfo.InvariantCulture,
-            $"{indentStr}System.Guid {varName} = System.Guid.Parse({uniqueVarName});");
-          break;
-
-        case "datetime":
-          sb.AppendLine(CultureInfo.InvariantCulture,
-            $"{indentStr}System.DateTime {varName} = System.DateTime.Parse({uniqueVarName}, System.Globalization.CultureInfo.InvariantCulture);");
-          break;
-
-        default:
-          // Unknown type constraint - use the resolved CLR type if available
-          if (param.ResolvedClrTypeName is not null)
-          {
-            sb.AppendLine(CultureInfo.InvariantCulture,
-              $"{indentStr}// TODO: Type conversion for {param.ResolvedClrTypeName}");
-          }
-
-          break;
+            $"{indentStr}{clrType} {varName} = {parseExpr};");
+        }
+      }
+      else if (param.ResolvedClrTypeName is not null)
+      {
+        // Unknown type constraint
+        sb.AppendLine(CultureInfo.InvariantCulture,
+          $"{indentStr}// TODO: Type conversion for {param.ResolvedClrTypeName}");
       }
     }
   }
@@ -222,30 +216,36 @@ internal static class RouteMatcherEmitter
 
   /// <summary>
   /// Emits code to extract parameter values from args.
+  /// For typed parameters, extracts to unique variable names for later type conversion.
   /// </summary>
-  private static void EmitParameterExtraction(StringBuilder sb, RouteDefinition route, int startIndex)
+  private static void EmitParameterExtraction(StringBuilder sb, RouteDefinition route, int routeIndex, int startIndex)
   {
     int paramIndex = startIndex;
     foreach (ParameterDefinition param in route.Parameters)
     {
+      // For typed parameters, use unique var name; EmitTypeConversions will create the final typed variable
+      string varName = param.HasTypeConstraint
+        ? $"__{param.CamelCaseName}_{routeIndex}"
+        : param.CamelCaseName;
+
       if (param.IsCatchAll)
       {
         // Catch-all gets remaining args
         sb.AppendLine(CultureInfo.InvariantCulture,
-          $"      string[] {param.CamelCaseName} = args[{paramIndex}..];");
+          $"      string[] {varName} = args[{paramIndex}..];");
       }
       else if (param.IsOptional)
       {
-        // Optional parameter with bounds check
+        // Optional parameter with bounds check - null when not provided
         sb.AppendLine(CultureInfo.InvariantCulture,
-          $"      string {param.CamelCaseName} = args.Length > {paramIndex} ? args[{paramIndex}] : string.Empty;");
+          $"      string? {varName} = args.Length > {paramIndex} ? args[{paramIndex}] : null;");
         paramIndex++;
       }
       else
       {
         // Required parameter
         sb.AppendLine(CultureInfo.InvariantCulture,
-          $"      string {param.CamelCaseName} = args[{paramIndex}];");
+          $"      string {varName} = args[{paramIndex}];");
         paramIndex++;
       }
     }
@@ -254,7 +254,7 @@ internal static class RouteMatcherEmitter
   /// <summary>
   /// Emits code to parse options from args.
   /// </summary>
-  private static void EmitOptionParsing(StringBuilder sb, RouteDefinition route)
+  private static void EmitOptionParsing(StringBuilder sb, RouteDefinition route, int routeIndex)
   {
     foreach (OptionDefinition option in route.Options)
     {
@@ -266,7 +266,7 @@ internal static class RouteMatcherEmitter
       else
       {
         // Option with value
-        EmitValueOptionParsing(sb, option);
+        EmitValueOptionParsing(sb, option, routeIndex);
       }
     }
   }
@@ -293,7 +293,7 @@ internal static class RouteMatcherEmitter
   /// <summary>
   /// Emits code to parse an option that takes a value.
   /// </summary>
-  private static void EmitValueOptionParsing(StringBuilder sb, OptionDefinition option)
+  private static void EmitValueOptionParsing(StringBuilder sb, OptionDefinition option, int routeIndex)
   {
     string varName = option.ParameterName ?? ToCamelCase(option.LongForm ?? option.ShortForm ?? "value");
     string defaultValue = option.IsOptional ? "null" : "string.Empty";
@@ -317,6 +317,13 @@ internal static class RouteMatcherEmitter
     sb.AppendLine("          break;");
     sb.AppendLine("        }");
     sb.AppendLine("      }");
+
+    // For required options, skip route if option was not found
+    if (!option.IsOptional)
+    {
+      sb.AppendLine(CultureInfo.InvariantCulture,
+        $"      if ({varName} == string.Empty) goto route_skip_{routeIndex};");
+    }
   }
 
   /// <summary>

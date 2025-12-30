@@ -1,7 +1,6 @@
 namespace TimeWarp.Nuru;
 
 using System.Diagnostics;
-using Mediator;
 
 /// <summary>
 /// Pipeline behavior that automatically instruments all commands with OpenTelemetry.
@@ -10,28 +9,32 @@ using Mediator;
 /// </summary>
 /// <remarks>
 /// <para>
-/// Register this behavior for your commands in DI:
-/// </para>
-/// <code>
-/// services.AddSingleton&lt;IPipelineBehavior&lt;MyCommand, Unit&gt;, TelemetryBehavior&lt;MyCommand, Unit&gt;&gt;();
-/// </code>
-/// <para>
-/// The behavior uses the shared <see cref="NuruTelemetryExtensions.NuruActivitySource"/>
+/// This is a standalone telemetry behavior that works with any message type.
+/// It uses the shared <see cref="NuruTelemetryExtensions.NuruActivitySource"/>
 /// and metrics from <see cref="NuruTelemetryExtensions"/>.
 /// </para>
 /// </remarks>
 /// <typeparam name="TMessage">The message/command type.</typeparam>
 /// <typeparam name="TResponse">The response type.</typeparam>
-public sealed class TelemetryBehavior<TMessage, TResponse> : IPipelineBehavior<TMessage, TResponse>
+public sealed class TelemetryBehavior<TMessage, TResponse>
   where TMessage : IMessage
 {
   /// <summary>
+  /// Delegate type for the next handler in the pipeline.
+  /// </summary>
+#pragma warning disable CA1711 // Identifiers should not have incorrect suffix - Delegate suffix is conventional for delegate types
+  public delegate ValueTask<TResponse> MessageHandlerDelegate(TMessage message, CancellationToken cancellationToken);
+#pragma warning restore CA1711
+
+  /// <summary>
   /// Handles the command with telemetry instrumentation.
   /// </summary>
+#pragma warning disable RCS1046 // Add suffix 'Async' to asynchronous method name - Handle is conventional for handlers
   public async ValueTask<TResponse> Handle
+#pragma warning restore RCS1046
   (
     TMessage message,
-    MessageHandlerDelegate<TMessage, TResponse> next,
+    MessageHandlerDelegate next,
     CancellationToken cancellationToken
   )
   {

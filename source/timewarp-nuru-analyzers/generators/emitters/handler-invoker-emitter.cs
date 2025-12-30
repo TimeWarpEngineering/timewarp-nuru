@@ -1,6 +1,7 @@
 // Emits handler invocation code based on handler kind.
-// Supports delegate, mediator, and method-based handlers.
+// Supports delegate, command, and method-based handlers.
 // For delegate handlers, transforms lambda bodies into local functions.
+// For command handlers, instantiates nested Handler class and calls Handle().
 
 namespace TimeWarp.Nuru.Generators;
 
@@ -8,7 +9,7 @@ using System.Text;
 
 /// <summary>
 /// Emits code to invoke a route's handler.
-/// Handles different handler kinds: delegate, mediator, and method.
+/// Handles different handler kinds: delegate, command, and method.
 /// </summary>
 internal static class HandlerInvokerEmitter
 {
@@ -38,8 +39,8 @@ internal static class HandlerInvokerEmitter
         EmitDelegateInvocation(sb, route, routeIndex, indentStr);
         break;
 
-      case HandlerKind.Mediator:
-        EmitMediatorInvocation(sb, route, indentStr);
+      case HandlerKind.Command:
+        EmitCommandInvocation(sb, route, services, indentStr);
         break;
 
       case HandlerKind.Method:
@@ -97,10 +98,11 @@ internal static class HandlerInvokerEmitter
         $"{indent}{asyncModifier}{returnTypeName} {handlerName}() => {awaitKeyword}{handler.LambdaBodySource};");
 
       // Invoke and capture result
+      string resultTypeName = handler.ReturnType.UnwrappedTypeName ?? handler.ReturnType.FullTypeName;
       sb.AppendLine(CultureInfo.InvariantCulture,
         $"{indent}{GetUnwrappedReturnTypeName(handler)} result = {awaitKeyword}{handlerName}();");
 
-      EmitResultOutput(sb, indent);
+      EmitResultOutput(sb, indent, resultTypeName);
     }
     else
     {
@@ -142,10 +144,11 @@ internal static class HandlerInvokerEmitter
     if (handler.ReturnType.HasValue)
     {
       // Invoke and capture result
+      string resultTypeName = handler.ReturnType.UnwrappedTypeName ?? handler.ReturnType.FullTypeName;
       sb.AppendLine(CultureInfo.InvariantCulture,
         $"{indent}{GetUnwrappedReturnTypeName(handler)} result = {awaitKeyword}{handlerName}();");
 
-      EmitResultOutput(sb, indent);
+      EmitResultOutput(sb, indent, resultTypeName);
     }
     else
     {
@@ -191,17 +194,18 @@ internal static class HandlerInvokerEmitter
   }
 
   /// <summary>
-  /// Emits invocation for a mediator-based handler.
-  /// Creates the request object and sends it via the mediator.
+  /// Emits invocation for a command-based handler with nested Handler class.
+  /// Creates the command object, resolves handler dependencies, and invokes Handle().
   /// </summary>
-  private static void EmitMediatorInvocation(StringBuilder sb, RouteDefinition route, string indent)
+  private static void EmitCommandInvocation(StringBuilder sb, RouteDefinition route, ImmutableArray<ServiceDefinition> services, string indent)
   {
     HandlerDefinition handler = route.Handler;
-    string typeName = handler.FullTypeName ?? "UnknownRequest";
+    string commandTypeName = handler.FullTypeName ?? "UnknownCommand";
+    string handlerTypeName = handler.NestedHandlerTypeName ?? $"{commandTypeName}.Handler";
 
-    // Create the request object with property initializers
-    sb.AppendLine(CultureInfo.InvariantCulture,
-      $"{indent}{typeName} request = new()");
+    // 1. Create the command object with property initializers
+    sb.AppendLine(CultureInfo.InvariantCulture, $"{indent}// Create command instance with bound properties");
+    sb.AppendLine(CultureInfo.InvariantCulture, $"{indent}{commandTypeName} __command = new()");
     sb.AppendLine(CultureInfo.InvariantCulture, $"{indent}{{");
 
     foreach (ParameterBinding param in handler.RouteParameters)
@@ -212,18 +216,94 @@ internal static class HandlerInvokerEmitter
     }
 
     sb.AppendLine(CultureInfo.InvariantCulture, $"{indent}}};");
+    sb.AppendLine();
 
-    // Send via mediator
+    // 2. Resolve handler constructor dependencies
+    if (handler.ConstructorDependencies.Length > 0)
+    {
+      sb.AppendLine(CultureInfo.InvariantCulture, $"{indent}// Resolve handler constructor dependencies");
+      foreach (ParameterBinding dep in handler.ConstructorDependencies)
+      {
+        string resolution = ResolveServiceExpression(dep.ParameterTypeName, services);
+        sb.AppendLine(CultureInfo.InvariantCulture,
+          $"{indent}{dep.ParameterTypeName} __{dep.ParameterName} = {resolution};");
+      }
+
+      sb.AppendLine();
+    }
+
+    // 3. Create handler instance
+    sb.AppendLine(CultureInfo.InvariantCulture, $"{indent}// Create handler and invoke");
+    string constructorArgs = string.Join(", ", handler.ConstructorDependencies.Select(d => $"__{d.ParameterName}"));
+    sb.AppendLine(CultureInfo.InvariantCulture,
+      $"{indent}{handlerTypeName} __handler = new({constructorArgs});");
+
+    // 4. Invoke Handle method
     if (handler.ReturnType.HasValue)
     {
+      string resultTypeName = handler.ReturnType.UnwrappedTypeName ?? handler.ReturnType.FullTypeName;
       sb.AppendLine(CultureInfo.InvariantCulture,
-        $"{indent}{handler.ReturnType.UnwrappedTypeName ?? "object"} result = await app.Mediator.Send(request, cancellationToken);");
-      EmitResultOutput(sb, indent);
+        $"{indent}{resultTypeName} result = await __handler.Handle(__command, cancellationToken);");
+      EmitResultOutput(sb, indent, resultTypeName);
     }
     else
     {
-      sb.AppendLine(CultureInfo.InvariantCulture, $"{indent}await app.Mediator.Send(request, cancellationToken);");
+      sb.AppendLine(CultureInfo.InvariantCulture,
+        $"{indent}await __handler.Handle(__command, cancellationToken);");
     }
+  }
+
+  /// <summary>
+  /// Resolves a service type to its instantiation expression.
+  /// Uses the same static resolution approach as delegate service injection.
+  /// </summary>
+  private static string ResolveServiceExpression(string? serviceTypeName, ImmutableArray<ServiceDefinition> services)
+  {
+    // Well-known services get direct resolution
+    return serviceTypeName switch
+    {
+      "global::TimeWarp.Terminal.ITerminal" => "app.Terminal",
+      "global::Microsoft.Extensions.Configuration.IConfiguration" => "configuration",
+      "global::System.Threading.CancellationToken" => "cancellationToken",
+      _ => ResolveRegisteredService(serviceTypeName, services)
+    };
+  }
+
+  /// <summary>
+  /// Resolves a registered service from ConfigureServices.
+  /// </summary>
+  private static string ResolveRegisteredService(string? serviceTypeName, ImmutableArray<ServiceDefinition> services)
+  {
+    if (string.IsNullOrEmpty(serviceTypeName))
+      return "default!";
+
+    // Find matching service registration
+    ServiceDefinition? service = services.FirstOrDefault(s => s.ServiceTypeName == serviceTypeName);
+    if (service is not null)
+    {
+      // Return instantiation based on registration lifetime
+      // Singletons use Lazy<T> pattern for thread-safety
+      // Transient/Scoped create new instances
+      return service.Lifetime == ServiceLifetime.Singleton
+        ? $"__{ToVariableName(service.ShortServiceTypeName)}.Value"
+        : $"new {service.ImplementationTypeName}()";
+    }
+
+    // Fallback: try direct instantiation
+    return $"new {serviceTypeName}()";
+  }
+
+  /// <summary>
+  /// Converts a type name to a variable name (camelCase, removes leading I for interfaces).
+  /// </summary>
+  private static string ToVariableName(string typeName)
+  {
+    // Remove I prefix from interfaces
+    if (typeName.Length > 1 && typeName[0] == 'I' && char.IsUpper(typeName[1]))
+      typeName = typeName[1..];
+
+    // Convert to camelCase
+    return char.ToLowerInvariant(typeName[0]) + typeName[1..];
   }
 
   /// <summary>
@@ -240,13 +320,14 @@ internal static class HandlerInvokerEmitter
 
     if (handler.ReturnType.HasValue)
     {
+      string resultTypeName = handler.ReturnType.UnwrappedTypeName ?? handler.ReturnType.FullTypeName;
       string resultType = handler.IsAsync
         ? GetUnwrappedReturnTypeName(handler)
         : handler.ReturnType.ShortTypeName;
 
       sb.AppendLine(CultureInfo.InvariantCulture,
         $"{indent}{resultType} result = {awaitKeyword}{typeName}.{methodName}({args});");
-      EmitResultOutput(sb, indent);
+      EmitResultOutput(sb, indent, resultTypeName);
     }
     else
     {
@@ -258,12 +339,60 @@ internal static class HandlerInvokerEmitter
   /// <summary>
   /// Emits code to output the handler result to the terminal.
   /// </summary>
-  private static void EmitResultOutput(StringBuilder sb, string indent)
+  /// <param name="sb">The StringBuilder to append to.</param>
+  /// <param name="indent">The indentation string.</param>
+  /// <param name="resultTypeName">Optional result type name to check if null check is needed.</param>
+  private static void EmitResultOutput(StringBuilder sb, string indent, string? resultTypeName = null)
   {
-    sb.AppendLine(CultureInfo.InvariantCulture, $"{indent}if (result is not null)");
-    sb.AppendLine(CultureInfo.InvariantCulture, $"{indent}{{");
-    sb.AppendLine(CultureInfo.InvariantCulture, $"{indent}  app.Terminal.WriteLine(result.ToString());");
-    sb.AppendLine(CultureInfo.InvariantCulture, $"{indent}}}");
+    // Value types can never be null, so skip the null check for them
+    bool isValueType = IsValueType(resultTypeName);
+
+    if (isValueType)
+    {
+      // Value types - always have a value, just output directly
+      sb.AppendLine(CultureInfo.InvariantCulture, $"{indent}app.Terminal.WriteLine(result.ToString());");
+    }
+    else
+    {
+      // Reference types - check for null before outputting
+      sb.AppendLine(CultureInfo.InvariantCulture, $"{indent}if (result is not null)");
+      sb.AppendLine(CultureInfo.InvariantCulture, $"{indent}{{");
+      sb.AppendLine(CultureInfo.InvariantCulture, $"{indent}  app.Terminal.WriteLine(result.ToString());");
+      sb.AppendLine(CultureInfo.InvariantCulture, $"{indent}}}");
+    }
+  }
+
+  /// <summary>
+  /// Determines if a type name represents a value type.
+  /// </summary>
+  private static bool IsValueType(string? typeName)
+  {
+    if (string.IsNullOrEmpty(typeName))
+      return false;
+
+    // Common value types
+    return typeName switch
+    {
+      "global::System.Int32" or "int" => true,
+      "global::System.Int64" or "long" => true,
+      "global::System.Int16" or "short" => true,
+      "global::System.Byte" or "byte" => true,
+      "global::System.SByte" or "sbyte" => true,
+      "global::System.UInt32" or "uint" => true,
+      "global::System.UInt64" or "ulong" => true,
+      "global::System.UInt16" or "ushort" => true,
+      "global::System.Single" or "float" or "Float" => true,
+      "global::System.Double" or "double" or "Double" => true,
+      "global::System.Decimal" or "decimal" or "Decimal" => true,
+      "global::System.Boolean" or "bool" or "Boolean" => true,
+      "global::System.Char" or "char" => true,
+      "global::System.DateTime" or "DateTime" => true,
+      "global::System.DateTimeOffset" or "DateTimeOffset" => true,
+      "global::System.TimeSpan" or "TimeSpan" => true,
+      "global::System.Guid" or "Guid" => true,
+      "global::TimeWarp.Nuru.Unit" or "Unit" => true,
+      _ => false
+    };
   }
 
   /// <summary>

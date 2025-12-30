@@ -295,17 +295,17 @@ Move to done, document results.
 - [x] Phase 2: Create `abstractions/handler-interfaces.cs`
 - [x] Phase 3: Remove `Map<T>()` from `nuru-core-app-builder.routes.cs`
 - [x] Phase 4: Remove `Map<T>()` from `endpoint-builder.cs`
-- [ ] Phase 5.1: Remove `HandlerKind.Mediator` from enum
-- [ ] Phase 5.2: Remove `ForMediator()` factory method
-- [ ] Phase 5.3: Remove `EmitMediatorInvocation()` from emitter
-- [ ] Phase 5.4: Add `HandlerKind.Command` to enum
-- [ ] Phase 5.5: Add `NestedHandlerTypeName` and `ConstructorDependencies` properties
-- [ ] Phase 5.6: Add `ForCommand()` factory method
-- [ ] Phase 5.7: Implement `ExtractConstructorDependencies()` in extractor
-- [ ] Phase 5.8: Modify `ExtractHandler()` to find nested Handler and return `ForCommand()`
+- [x] Phase 5.1: Remove `HandlerKind.Mediator` from enum
+- [x] Phase 5.2: Remove `ForMediator()` factory method
+- [x] Phase 5.3: Remove `EmitMediatorInvocation()` from emitter
+- [x] Phase 5.4: Add `HandlerKind.Command` to enum
+- [x] Phase 5.5: Add `NestedHandlerTypeName` and `ConstructorDependencies` properties
+- [x] Phase 5.6: Add `ForCommand()` factory method
+- [x] Phase 5.7: Implement `ExtractConstructorDependencies()` in extractor
+- [x] Phase 5.8: Modify `ExtractHandler()` to find nested Handler and return `ForCommand()`
 - [x] Phase 6: Integrate attributed routes into `nuru-generator.cs` (already done)
-- [ ] Phase 7: (covered by Phase 5)
-- [ ] Phase 8: Implement command handler invocation in `handler-invoker-emitter.cs`
+- [x] Phase 7: (covered by Phase 5)
+- [x] Phase 8: Implement command handler invocation in `handler-invoker-emitter.cs`
 - [ ] Phase 9: Rename/rewrite `02-calc-mediator.cs` -> `02-calc-commands.cs`
 - [ ] Phase 10: Fix `03-calc-mixed.cs`
 - [ ] Phase 11: Update `attributed-routes/attributed-routes.cs`
@@ -320,3 +320,29 @@ This task evolved from "support `Map<T>()`" to "implement attributed routes and 
 - `Map<T>()` is redundant when pattern is in the attribute
 - Own interfaces decouple from Mediator library dependency
 - We generate everything Mediator would have done
+
+### Session 2025-12-30 Progress
+
+Completed Phase 5 and 8 implementation:
+
+1. **Handler Definition Model (`handler-definition.cs`):**
+   - Removed `HandlerKind.Mediator` enum value
+   - Added `HandlerKind.Command` enum value
+   - Added `NestedHandlerTypeName` and `ConstructorDependencies` properties
+   - Replaced `ForMediator()` with `ForCommand()` factory method
+
+2. **Handler Invoker Emitter (`handler-invoker-emitter.cs`):**
+   - Replaced `EmitMediatorInvocation()` with `EmitCommandInvocation()`
+   - Added `ResolveServiceExpression()` and `ResolveRegisteredService()` for service resolution
+   - Fixed `EmitResultOutput()` to handle value types correctly (no null check for int, double, etc.)
+
+3. **Attributed Route Extractor (`attributed-route-extractor.cs`):**
+   - Modified `ExtractHandler()` to find nested `Handler` class using `GetTypeMembers("Handler")`
+   - Added `ExtractConstructorDependencies()` to extract handler constructor parameters
+   - Returns `null` if no nested Handler class found (skips route)
+
+4. **Additional Fixes:**
+   - Updated `TelemetryBehavior` to use `TimeWarp.Nuru.IMessage` instead of `Mediator.IMessage`
+   - Updated `samples/timewarp-nuru-sample` to remove Mediator dependency and use delegate handlers
+
+**Remaining:** Phases 9-14 (update remaining samples and attributed-routes sample)

@@ -55,8 +55,13 @@ internal static class AttributedRouteExtractor
     // Merge segments (pattern segments first, then property segments that aren't duplicates)
     ImmutableArray<SegmentDefinition> mergedSegments = MergeSegments(patternSegments, segments);
 
-    // Get handler info
-    HandlerDefinition handler = ExtractHandler(classDeclaration, semanticModel, cancellationToken);
+    // Get handler info (requires nested Handler class)
+    HandlerDefinition? handler = ExtractHandler(classDeclaration, semanticModel, cancellationToken);
+    if (handler is null)
+    {
+      // No nested Handler class found - skip this route
+      return null;
+    }
 
     // Calculate specificity
     int specificity = mergedSegments.Sum(s => s.SpecificityContribution);
@@ -331,8 +336,10 @@ internal static class AttributedRouteExtractor
 
   /// <summary>
   /// Extracts handler information for attributed routes.
+  /// Finds nested Handler class and extracts its constructor dependencies.
   /// </summary>
-  private static HandlerDefinition ExtractHandler
+  /// <returns>The handler definition, or null if no nested Handler class is found.</returns>
+  private static HandlerDefinition? ExtractHandler
   (
     ClassDeclarationSyntax classDeclaration,
     SemanticModel semanticModel,
@@ -341,17 +348,24 @@ internal static class AttributedRouteExtractor
   {
     INamedTypeSymbol? classSymbol = semanticModel.GetDeclaredSymbol(classDeclaration, cancellationToken);
     if (classSymbol is null)
+      return null;
+
+    // 1. Find nested Handler class (required)
+    INamedTypeSymbol? handlerClass = classSymbol.GetTypeMembers("Handler").FirstOrDefault();
+    if (handlerClass is null)
     {
-      return HandlerDefinition.ForMediator(
-        fullTypeName: "global::System.Object",
-        parameters: [],
-        returnType: HandlerReturnType.Void);
+      // No nested Handler class found - skip this route
+      return null;
     }
 
-    string fullTypeName = classSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+    string commandTypeName = classSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+    string handlerTypeName = handlerClass.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
 
-    // Extract parameters from the route class properties
-    ImmutableArray<ParameterBinding>.Builder parameters = ImmutableArray.CreateBuilder<ParameterBinding>();
+    // 2. Extract constructor dependencies from the Handler class
+    ImmutableArray<ParameterBinding> constructorDeps = ExtractConstructorDependencies(handlerClass);
+
+    // 3. Extract property bindings from the command class
+    ImmutableArray<ParameterBinding>.Builder propertyBindings = ImmutableArray.CreateBuilder<ParameterBinding>();
 
     foreach (IPropertySymbol property in classSymbol.GetMembers().OfType<IPropertySymbol>())
     {
@@ -367,7 +381,7 @@ internal static class AttributedRouteExtractor
         if (attributeName == ParameterAttributeName || attributeName == $"{ParameterAttributeName}Attribute")
         {
           string typeName = property.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-          parameters.Add(ParameterBinding.FromParameter(
+          propertyBindings.Add(ParameterBinding.FromParameter(
             parameterName: property.Name,
             typeName: typeName,
             segmentName: property.Name.ToLowerInvariant(),
@@ -381,11 +395,11 @@ internal static class AttributedRouteExtractor
           string typeName = property.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
           if (typeName == "global::System.Boolean")
           {
-            parameters.Add(ParameterBinding.FromFlag(property.Name, property.Name.ToLowerInvariant()));
+            propertyBindings.Add(ParameterBinding.FromFlag(property.Name, property.Name.ToLowerInvariant()));
           }
           else
           {
-            parameters.Add(ParameterBinding.FromOption(
+            propertyBindings.Add(ParameterBinding.FromOption(
               parameterName: property.Name,
               typeName: typeName,
               optionName: property.Name.ToLowerInvariant(),
@@ -398,13 +412,42 @@ internal static class AttributedRouteExtractor
       }
     }
 
-    // Infer return type from interface
+    // 4. Infer return type from interface
     HandlerReturnType returnType = InferReturnTypeFromInterfaces(classSymbol);
 
-    return HandlerDefinition.ForMediator(
-      fullTypeName: fullTypeName,
-      parameters: parameters.ToImmutable(),
+    return HandlerDefinition.ForCommand(
+      commandTypeName: commandTypeName,
+      nestedHandlerTypeName: handlerTypeName,
+      propertyBindings: propertyBindings.ToImmutable(),
+      constructorDependencies: constructorDeps,
       returnType: returnType);
+  }
+
+  /// <summary>
+  /// Extracts constructor dependencies from a nested Handler class.
+  /// </summary>
+  private static ImmutableArray<ParameterBinding> ExtractConstructorDependencies(INamedTypeSymbol handlerClass)
+  {
+    ImmutableArray<ParameterBinding>.Builder deps = ImmutableArray.CreateBuilder<ParameterBinding>();
+
+    // Find the first public constructor (or primary constructor)
+    IMethodSymbol? constructor = handlerClass.InstanceConstructors
+      .FirstOrDefault(c => c.DeclaredAccessibility == Accessibility.Public);
+
+    if (constructor is null)
+      return deps.ToImmutable();
+
+    foreach (IParameterSymbol param in constructor.Parameters)
+    {
+      string typeName = param.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+
+      // All constructor params are services (resolved via static instantiation per task #292)
+      deps.Add(ParameterBinding.FromService(
+        parameterName: param.Name,
+        serviceTypeName: typeName));
+    }
+
+    return deps.ToImmutable();
   }
 
   /// <summary>

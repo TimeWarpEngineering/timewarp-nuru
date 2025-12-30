@@ -1,9 +1,9 @@
 // Extracts service registration information from ConfigureServices() calls.
 //
 // Handles:
-// - .ConfigureServices(services => { ... })
+// - .ConfigureServices(services => { ... })           - inline lambda
+// - .ConfigureServices(ConfigureServices)             - method group reference
 // - Services registered via AddTransient, AddScoped, AddSingleton
-// - Custom service configuration lambdas
 
 namespace TimeWarp.Nuru.Generators;
 
@@ -38,18 +38,17 @@ internal static class ServiceExtractor
       return ExtractFromLambda(lambda, semanticModel, cancellationToken);
     }
 
-    // Handle method group references
+    // Handle method group references (e.g., ConfigureServices(MyMethod))
     if (configureExpression is IdentifierNameSyntax or MemberAccessExpressionSyntax)
     {
-      // Can't easily analyze method group without more complex flow analysis
-      return [];
+      return ExtractFromMethodGroup(configureExpression, semanticModel, cancellationToken);
     }
 
     return [];
   }
 
   /// <summary>
-  /// Extracts services from a lambda body.
+  /// Extracts services from a lambda expression.
   /// </summary>
   private static ImmutableArray<ServiceDefinition> ExtractFromLambda
   (
@@ -58,10 +57,67 @@ internal static class ServiceExtractor
     CancellationToken cancellationToken
   )
   {
-    ImmutableArray<ServiceDefinition>.Builder services = ImmutableArray.CreateBuilder<ServiceDefinition>();
+    return ExtractFromBody(lambda.Body, semanticModel, cancellationToken);
+  }
 
-    // Get the lambda body
-    CSharpSyntaxNode body = lambda.Body;
+  /// <summary>
+  /// Extracts services from a method group reference (e.g., ConfigureServices(MyMethod)).
+  /// Resolves the method symbol and analyzes its body.
+  /// </summary>
+  private static ImmutableArray<ServiceDefinition> ExtractFromMethodGroup
+  (
+    ExpressionSyntax methodGroupExpression,
+    SemanticModel semanticModel,
+    CancellationToken cancellationToken
+  )
+  {
+    // Resolve the method symbol
+    SymbolInfo symbolInfo = semanticModel.GetSymbolInfo(methodGroupExpression, cancellationToken);
+
+    IMethodSymbol? methodSymbol = symbolInfo.Symbol as IMethodSymbol
+      ?? symbolInfo.CandidateSymbols.OfType<IMethodSymbol>().FirstOrDefault();
+
+    if (methodSymbol is null)
+      return [];
+
+    // Get the method's syntax declaration
+    SyntaxReference? syntaxRef = methodSymbol.DeclaringSyntaxReferences.FirstOrDefault();
+    if (syntaxRef is null)
+      return [];
+
+    Microsoft.CodeAnalysis.SyntaxNode? methodSyntax = syntaxRef.GetSyntax(cancellationToken);
+
+    // Extract the body based on method syntax type
+    CSharpSyntaxNode? body = methodSyntax switch
+    {
+      MethodDeclarationSyntax method => (CSharpSyntaxNode?)method.Body ?? method.ExpressionBody?.Expression,
+      LocalFunctionStatementSyntax localFunc => (CSharpSyntaxNode?)localFunc.Body ?? localFunc.ExpressionBody?.Expression,
+      _ => null
+    };
+
+    if (body is null)
+      return [];
+
+    // Get semantic model for the method's syntax tree (may be different from current)
+    SemanticModel methodSemanticModel = methodSyntax.SyntaxTree == semanticModel.SyntaxTree
+      ? semanticModel
+      : semanticModel.Compilation.GetSemanticModel(methodSyntax.SyntaxTree);
+
+    return ExtractFromBody(body, methodSemanticModel, cancellationToken);
+  }
+
+  /// <summary>
+  /// Extracts services from a method body (block or expression).
+  /// Shared between lambda and method group extraction.
+  /// </summary>
+  private static ImmutableArray<ServiceDefinition> ExtractFromBody
+  (
+    CSharpSyntaxNode body,
+    SemanticModel semanticModel,
+    CancellationToken cancellationToken
+  )
+  {
+    ImmutableArray<ServiceDefinition>.Builder services = ImmutableArray.CreateBuilder<ServiceDefinition>();
 
     // Handle expression body
     if (body is ExpressionSyntax expression)

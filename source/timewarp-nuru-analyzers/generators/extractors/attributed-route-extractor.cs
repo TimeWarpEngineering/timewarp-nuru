@@ -393,16 +393,21 @@ internal static class AttributedRouteExtractor
         if (attributeName == OptionAttributeName || attributeName == $"{OptionAttributeName}Attribute")
         {
           string typeName = property.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-          if (typeName == "global::System.Boolean")
+
+          // Extract the actual option long form from the attribute (e.g., "no-cache" from [Option("no-cache", null)])
+          // This must match what ExtractOptionFromAttribute extracts for OptionDefinition.LongForm
+          string optionLongForm = ExtractOptionLongForm(attribute, property.Name);
+
+          if (typeName is "bool" or "global::System.Boolean")
           {
-            propertyBindings.Add(ParameterBinding.FromFlag(property.Name, property.Name.ToLowerInvariant()));
+            propertyBindings.Add(ParameterBinding.FromFlag(property.Name, optionLongForm));
           }
           else
           {
             propertyBindings.Add(ParameterBinding.FromOption(
               parameterName: property.Name,
               typeName: typeName,
-              optionName: property.Name.ToLowerInvariant(),
+              optionName: optionLongForm,
               isOptional: true,
               requiresConversion: typeName != "global::System.String"));
           }
@@ -609,5 +614,30 @@ internal static class AttributedRouteExtractor
       "global::System.Version" or "System.Version" or "Version" => "version",
       _ => null
     };
+  }
+
+  /// <summary>
+  /// Extracts the long form option name from an [Option] attribute.
+  /// This must match the logic in ExtractOptionFromAttribute for consistency.
+  /// </summary>
+  private static string ExtractOptionLongForm(AttributeData attribute, string propertyName)
+  {
+    string longForm = propertyName.ToLowerInvariant();
+
+    // Check constructor arguments - first positional arg is the long form
+    if (attribute.ConstructorArguments.Length > 0 && attribute.ConstructorArguments[0].Value is string ctorLongForm)
+      longForm = ctorLongForm.TrimStart('-');
+
+    // Check named arguments
+    foreach (KeyValuePair<string, TypedConstant> namedArg in attribute.NamedArguments)
+    {
+      if (namedArg.Key == "LongName")
+      {
+        longForm = (namedArg.Value.Value as string)?.TrimStart('-') ?? longForm;
+        break;
+      }
+    }
+
+    return longForm;
   }
 }

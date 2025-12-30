@@ -293,6 +293,7 @@ internal static class RouteMatcherEmitter
 
   /// <summary>
   /// Emits code to parse an option that takes a value.
+  /// Handles type conversion for typed options (int, double, etc.).
   /// </summary>
   private static void EmitValueOptionParsing(StringBuilder sb, OptionDefinition option, int routeIndex)
   {
@@ -307,14 +308,18 @@ internal static class RouteMatcherEmitter
       _ => throw new InvalidOperationException("Option must have at least one form")
     };
 
+    // For typed options, extract to a temp string first, then convert
+    bool needsConversion = option.TypeConstraint is not null;
+    string rawVarName = needsConversion ? $"__{varName}_raw" : varName;
+
     sb.AppendLine(
-      $"      string? {varName} = {defaultValue};");
+      $"      string? {rawVarName} = {defaultValue};");
     sb.AppendLine("      for (int __idx = 0; __idx < args.Length - 1; __idx++)");
     sb.AppendLine("      {");
     sb.AppendLine(
       $"        if ({condition})");
     sb.AppendLine("        {");
-    sb.AppendLine($"          {varName} = args[__idx + 1];");
+    sb.AppendLine($"          {rawVarName} = args[__idx + 1];");
     sb.AppendLine("          break;");
     sb.AppendLine("        }");
     sb.AppendLine("      }");
@@ -323,7 +328,57 @@ internal static class RouteMatcherEmitter
     if (!option.IsOptional)
     {
       sb.AppendLine(
-        $"      if ({varName} == string.Empty) goto route_skip_{routeIndex};");
+        $"      if ({rawVarName} == string.Empty) goto route_skip_{routeIndex};");
+    }
+
+    // Emit type conversion if needed
+    if (needsConversion)
+    {
+      EmitOptionTypeConversion(sb, option, varName, rawVarName);
+    }
+  }
+
+  /// <summary>
+  /// Emits type conversion code for a typed option.
+  /// </summary>
+  private static void EmitOptionTypeConversion(StringBuilder sb, OptionDefinition option, string varName, string rawVarName)
+  {
+    string typeConstraint = option.TypeConstraint ?? "";
+    string baseType = typeConstraint.EndsWith('?') ? typeConstraint[..^1] : typeConstraint;
+
+    // Map type constraint to CLR type and parse expression
+    (string? clrType, string? parseExpr) = baseType.ToLowerInvariant() switch
+    {
+      "int" => ("int", $"int.Parse({rawVarName}, System.Globalization.CultureInfo.InvariantCulture)"),
+      "long" => ("long", $"long.Parse({rawVarName}, System.Globalization.CultureInfo.InvariantCulture)"),
+      "double" => ("double", $"double.Parse({rawVarName}, System.Globalization.CultureInfo.InvariantCulture)"),
+      "decimal" => ("decimal", $"decimal.Parse({rawVarName}, System.Globalization.CultureInfo.InvariantCulture)"),
+      "bool" => ("bool", $"bool.Parse({rawVarName})"),
+      "guid" => ("System.Guid", $"System.Guid.Parse({rawVarName})"),
+      "datetime" => ("System.DateTime", $"System.DateTime.Parse({rawVarName}, System.Globalization.CultureInfo.InvariantCulture)"),
+      _ => (null, null)
+    };
+
+    if (clrType is not null && parseExpr is not null)
+    {
+      if (option.ParameterIsOptional)
+      {
+        // Optional option value: check for null before parsing
+        sb.AppendLine(
+          $"      {clrType}? {varName} = {rawVarName} is not null ? {parseExpr} : null;");
+      }
+      else
+      {
+        // Required option value: direct parse (will throw if null/empty, but route check should prevent)
+        sb.AppendLine(
+          $"      {clrType} {varName} = {rawVarName} is not null ? {parseExpr} : default;");
+      }
+    }
+    else
+    {
+      // Unknown type - keep as string (fallback)
+      sb.AppendLine(
+        $"      string? {varName} = {rawVarName};");
     }
   }
 

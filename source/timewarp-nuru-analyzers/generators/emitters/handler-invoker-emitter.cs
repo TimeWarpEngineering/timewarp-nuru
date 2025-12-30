@@ -212,10 +212,18 @@ internal static class HandlerInvokerEmitter
     foreach (ParameterBinding param in handler.RouteParameters)
     {
       string propName = ToPascalCase(param.ParameterName);
-      // Catch-all uses route-unique variable name to avoid collision with 'args' method parameter
-      string varName = param.Source == BindingSource.CatchAll
-        ? $"__{ToCamelCase(param.ParameterName)}_{routeIndex}"
-        : param.ParameterName.ToLowerInvariant();
+      // Variable name must match what route-matcher-emitter generates:
+      // - Catch-all: __varName_routeIndex to avoid collision with 'args' parameter
+      // - Flags: ToCamelCase of LongForm (handles kebab-case like "no-cache" → "noCache")
+      // - Options (value): property name lowercased (e.g., "configfile" for ConfigFile property)
+      // - Parameters: lowercase of parameter name
+      string varName = param.Source switch
+      {
+        BindingSource.CatchAll => $"__{ToCamelCase(param.ParameterName)}_{routeIndex}",
+        BindingSource.Flag => ToCamelCase(param.SourceName),
+        BindingSource.Option => param.ParameterName.ToLowerInvariant(),
+        _ => param.ParameterName.ToLowerInvariant()
+      };
       sb.AppendLine(
         $"{indent}  {propName} = {varName},");
     }
@@ -487,12 +495,38 @@ internal static class HandlerInvokerEmitter
 
   /// <summary>
   /// Converts a string to camelCase.
+  /// Handles kebab-case (e.g., "no-cache" -> "noCache").
   /// </summary>
   private static string ToCamelCase(string value)
   {
     if (string.IsNullOrEmpty(value))
       return value;
 
-    return char.ToLowerInvariant(value[0]) + value[1..];
+    // Handle kebab-case by converting to PascalCase first, then camelCase
+    string[] parts = value.Split('-');
+    StringBuilder result = new();
+
+    for (int i = 0; i < parts.Length; i++)
+    {
+      string part = parts[i];
+      if (string.IsNullOrEmpty(part))
+        continue;
+
+      if (i == 0)
+      {
+        result.Append(char.ToLowerInvariant(part[0]));
+      }
+      else
+      {
+        result.Append(char.ToUpperInvariant(part[0]));
+      }
+
+      if (part.Length > 1)
+      {
+        result.Append(part[1..]);
+      }
+    }
+
+    return result.ToString();
   }
 }

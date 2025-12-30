@@ -306,8 +306,8 @@ Move to done, document results.
 - [x] Phase 6: Integrate attributed routes into `nuru-generator.cs` (already done)
 - [x] Phase 7: (covered by Phase 5)
 - [x] Phase 8: Implement command handler invocation in `handler-invoker-emitter.cs`
-- [ ] Phase 9: Rename/rewrite `02-calc-mediator.cs` -> `02-calc-commands.cs`
-- [ ] Phase 10: Fix `03-calc-mixed.cs`
+- [x] Phase 9: Rename/rewrite `02-calc-mediator.cs` -> `02-calc-commands.cs`
+- [ ] Phase 10: Fix `03-calc-mixed.cs` **BLOCKED by #308**
 - [ ] Phase 11: Update `attributed-routes/attributed-routes.cs`
 - [ ] Phase 12: Update `attributed-routes/messages/**/*.cs`
 - [ ] Phase 13: Update this task
@@ -346,3 +346,33 @@ Completed Phase 5 and 8 implementation:
    - Updated `samples/timewarp-nuru-sample` to remove Mediator dependency and use delegate handlers
 
 **Remaining:** Phases 9-14 (update remaining samples and attributed-routes sample)
+
+### Session 2025-12-31 Progress
+
+**Phase 9 Complete:** `02-calc-commands.cs` already working from previous session.
+
+**Phase 10 In Progress - BLOCKED:**
+
+Converted `03-calc-mixed.cs` to use attributed routes pattern:
+- Removed Mediator package directives
+- Removed `using Mediator;`
+- Removed all `Map<T>()` calls (routes auto-discovered via `[NuruRoute]`)
+- Added missing `.Done()` calls to delegate routes
+- Converted `FactorialCommand`, `PrimeCheckCommand`, `FibonacciCommand`, `StatsCommand` to:
+  - Use `[NuruRoute]` attribute with `[Parameter]` attributes
+  - Use `ICommand<Unit>` / `ICommand<StatsResponse>` from `TimeWarp.Nuru`
+  - Use `ICommandHandler<T, TResult>` from `TimeWarp.Nuru`
+- Changed `StatsCommand.Values` from `string` to `string[]` (catch-all is always array)
+- Added `#pragma warning disable NURU_H002` for object initializer false positive (see #307)
+
+**Blocking Issues Discovered:**
+
+1. **#307 - NURU_H002 false positive:** Analyzer incorrectly flags properties in object initializers as closures. Workaround: `#pragma warning disable NURU_H002`
+
+2. **#308 - Method group not analyzed:** `ServiceExtractor` returns empty when `ConfigureServices` receives a method group reference instead of inline lambda. The generator can't discover `IScientificCalculator` registration, causing `NullReferenceException` at runtime.
+
+**Current state of `03-calc-mixed.cs`:**
+- Delegate routes work: `add`, `subtract`, `multiply`, `divide`, `compare`
+- Attributed routes fail: `factorial`, `isprime`, `fibonacci`, `stats` (service not resolved)
+
+**Next:** Complete #308, then return to Phase 10.

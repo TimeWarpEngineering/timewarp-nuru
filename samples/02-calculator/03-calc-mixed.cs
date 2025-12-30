@@ -1,37 +1,31 @@
 #!/usr/bin/dotnet --
 #:project ../../source/timewarp-nuru/timewarp-nuru.csproj
-#:package Mediator.Abstractions
-#:package Mediator.SourceGenerator
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// MIXED PATTERN - DELEGATES + MEDIATOR EXAMPLE
+// MIXED PATTERN - DELEGATES + ATTRIBUTED ROUTES EXAMPLE
 // ═══════════════════════════════════════════════════════════════════════════════
 //
 // This sample demonstrates mixing both approaches:
 // - DELEGATES: For simple operations (inline, fast, no DI needed)
-// - MEDIATOR: For complex operations (testable, DI, separation of concerns)
+// - ATTRIBUTED ROUTES: For complex operations (testable, DI, separation of concerns)
 //
 // WHEN TO USE EACH:
 //   Delegates: Simple one-liners, no external dependencies, performance-critical
-//   Mediator:  Complex logic, needs DI, requires unit testing, reusable handlers
+//   Attributed Routes: Complex logic, needs DI, requires unit testing, reusable handlers
 //
-// REQUIRED PACKAGES (for Mediator commands):
-//   #:package Mediator.Abstractions    - Interfaces (IRequest, IRequestHandler)
-//   #:package Mediator.SourceGenerator - Generates AddMediator() in YOUR assembly
+// NO EXTERNAL PACKAGES REQUIRED:
+//   TimeWarp.Nuru provides ICommand<T>, ICommandHandler<T,TResult>, and Unit
+//   The source generator discovers [NuruRoute] classes and generates routing code
 //
 // HOW IT WORKS:
-//   Mediator.SourceGenerator scans YOUR assembly at compile time for:
-//   - IRequest implementations (commands)
-//   - IRequestHandler<> implementations (handlers)
-//   Then generates a type-safe AddMediator() extension method specific to YOUR project.
-//
-// COMMON ERROR:
-//   "No service for type 'Mediator.IMediator' has been registered"
-//   SOLUTION: Install BOTH packages AND call services.AddMediator()
+//   1. Mark command classes with [NuruRoute("pattern")]
+//   2. Mark properties with [Parameter] or [Option] attributes
+//   3. Create nested Handler class implementing ICommandHandler<T, TResult>
+//   4. Source generator discovers these and generates invocation code
+//   5. Delegate routes use .Map("pattern").WithHandler(...) fluent API
 // ═══════════════════════════════════════════════════════════════════════════════
 
 using TimeWarp.Nuru;
-using Mediator;
 using Microsoft.Extensions.DependencyInjection;
 using static System.Console;
 
@@ -41,12 +35,15 @@ NuruCoreApp app = NuruApp.CreateBuilder(args)
   .Map("add {x:double} {y:double}")
     .WithHandler((double x, double y) => WriteLine($"{x} + {y} = {x + y}"))
     .WithDescription("Add two numbers together")
+    .Done()
   .Map("subtract {x:double} {y:double}")
     .WithHandler((double x, double y) => WriteLine($"{x} - {y} = {x - y}"))
     .WithDescription("Subtract the second number from the first")
+    .Done()
   .Map("multiply {x:double} {y:double}")
     .WithHandler((double x, double y) => WriteLine($"{x} × {y} = {x * y}"))
     .WithDescription("Multiply two numbers together")
+    .Done()
   .Map("divide {x:double} {y:double}")
     .WithHandler((double x, double y) =>
     {
@@ -59,15 +56,10 @@ NuruCoreApp app = NuruApp.CreateBuilder(args)
       WriteLine($"{x} ÷ {y} = {x / y}");
     })
     .WithDescription("Divide the first number by the second")
-  .Map<FactorialCommand>("factorial {n:int}") // Use Mediator for complex operations (testability, DI)
-    .WithDescription("Calculate factorial (n!)")
-  .Map<PrimeCheckCommand>("isprime {n:int}")
-    .WithDescription("Check if a number is prime")
-  .Map<FibonacciCommand>("fibonacci {n:int}")
-    .WithDescription("Calculate the nth Fibonacci number")
-  .Map<StatsCommand, StatsResponse>("stats {*values}") // Example: Mediator command that returns a response object
-    .WithDescription("Calculate statistics for a set of numbers (returns JSON)")
+    .Done()
+  // Attributed routes (factorial, isprime, fibonacci, stats) are auto-discovered via [NuruRoute]
   // Example: Delegate that returns an object
+#pragma warning disable NURU_H002 // False positive: object initializer properties are not closures (see task #307)
   .Map("compare {x:double} {y:double}")
     .WithHandler((double x, double y) => new ComparisonResult
     {
@@ -78,30 +70,32 @@ NuruCoreApp app = NuruApp.CreateBuilder(args)
       Ratio = y != 0 ? x / y : double.NaN
     })
     .WithDescription("Compare two numbers and return detailed comparison (returns JSON)")
+    .Done()
+#pragma warning restore NURU_H002
   .Build();
 
 return await app.RunAsync(args);
 
 static void ConfigureServices(IServiceCollection services)
 {
-  // Register Mediator - source generator discovers handlers in THIS assembly
-  services.AddMediator();
   services.AddSingleton<IScientificCalculator, ScientificCalculator>();
 }
 
-// Complex operations using Mediator pattern with nested handlers
-public sealed class FactorialCommand : IRequest
+// Complex operations using attributed routes with nested handlers
+[NuruRoute("factorial", Description = "Calculate factorial (n!)")]
+public sealed class FactorialCommand : ICommand<Unit>
 {
+  [Parameter(Order = 0)]
   public int N { get; set; }
 
-  public sealed class Handler(IScientificCalculator calc) : IRequestHandler<FactorialCommand>
+  public sealed class Handler(IScientificCalculator calc) : ICommandHandler<FactorialCommand, Unit>
   {
-    public ValueTask<Unit> Handle(FactorialCommand request, CancellationToken cancellationToken)
+    public ValueTask<Unit> Handle(FactorialCommand command, CancellationToken cancellationToken)
     {
       try
       {
-        long result = calc.Factorial(request.N);
-        WriteLine($"{request.N}! = {result}");
+        long result = calc.Factorial(command.N);
+        WriteLine($"{command.N}! = {result}");
       }
       catch (ArgumentException ex)
       {
@@ -113,33 +107,37 @@ public sealed class FactorialCommand : IRequest
   }
 }
 
-public class PrimeCheckCommand : IRequest
+[NuruRoute("isprime", Description = "Check if a number is prime")]
+public sealed class PrimeCheckCommand : ICommand<Unit>
 {
+  [Parameter(Order = 0)]
   public int N { get; set; }
 
-  public sealed class Handler(IScientificCalculator calc) : IRequestHandler<PrimeCheckCommand>
+  public sealed class Handler(IScientificCalculator calc) : ICommandHandler<PrimeCheckCommand, Unit>
   {
-    public ValueTask<Unit> Handle(PrimeCheckCommand request, CancellationToken cancellationToken)
+    public ValueTask<Unit> Handle(PrimeCheckCommand command, CancellationToken cancellationToken)
     {
-      bool result = calc.IsPrime(request.N);
-      WriteLine($"{request.N} is {(result ? "prime" : "not prime")}");
+      bool result = calc.IsPrime(command.N);
+      WriteLine($"{command.N} is {(result ? "prime" : "not prime")}");
       return default;
     }
   }
 }
 
-public class FibonacciCommand : IRequest
+[NuruRoute("fibonacci", Description = "Calculate the nth Fibonacci number")]
+public sealed class FibonacciCommand : ICommand<Unit>
 {
+  [Parameter(Order = 0)]
   public int N { get; set; }
 
-  public sealed class Handler(IScientificCalculator calc) : IRequestHandler<FibonacciCommand>
+  public sealed class Handler(IScientificCalculator calc) : ICommandHandler<FibonacciCommand, Unit>
   {
-    public ValueTask<Unit> Handle(FibonacciCommand request, CancellationToken cancellationToken)
+    public ValueTask<Unit> Handle(FibonacciCommand command, CancellationToken cancellationToken)
     {
       try
       {
-        long result = calc.Fibonacci(request.N);
-        WriteLine($"Fibonacci({request.N}) = {result}");
+        long result = calc.Fibonacci(command.N);
+        WriteLine($"Fibonacci({command.N}) = {result}");
       }
       catch (ArgumentException ex)
       {
@@ -151,23 +149,25 @@ public class FibonacciCommand : IRequest
   }
 }
 
-// Example: Mediator command with response
-public class StatsCommand : IRequest<StatsResponse>
+// Example: Attributed route command with response object
+[NuruRoute("stats", Description = "Calculate statistics for a set of numbers (returns JSON)")]
+public sealed class StatsCommand : ICommand<StatsResponse>
 {
-  public string Values { get; set; } = "";
+  [Parameter(IsCatchAll = true)]
+  public string[] Values { get; set; } = [];
 
-  internal sealed class Handler : IRequestHandler<StatsCommand, StatsResponse>
+  public sealed class Handler : ICommandHandler<StatsCommand, StatsResponse>
   {
-    public ValueTask<StatsResponse> Handle(StatsCommand request, CancellationToken cancellationToken)
+    public ValueTask<StatsResponse> Handle(StatsCommand command, CancellationToken cancellationToken)
     {
-      if (string.IsNullOrWhiteSpace(request.Values))
+      if (command.Values.Length == 0)
       {
         return new ValueTask<StatsResponse>(new StatsResponse());
       }
 
       double[] values =
       [
-        .. request.Values.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+        .. command.Values
           .Select(v => double.TryParse(v, out double d) ? d : 0)
           .Where(v => v != 0)
       ];

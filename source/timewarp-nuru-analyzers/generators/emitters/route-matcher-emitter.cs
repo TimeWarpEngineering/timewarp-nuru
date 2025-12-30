@@ -21,7 +21,7 @@ internal static class RouteMatcherEmitter
   public static void Emit(StringBuilder sb, RouteDefinition route, int routeIndex, ImmutableArray<ServiceDefinition> services)
   {
     // Comment showing the route pattern
-    sb.AppendLine(CultureInfo.InvariantCulture,
+    sb.AppendLine(
       $"    // Route: {EscapeXmlComment(route.FullPattern)}");
 
     // Determine the matching strategy based on route complexity
@@ -46,7 +46,7 @@ internal static class RouteMatcherEmitter
   {
     string pattern = BuildListPattern(route, routeIndex);
 
-    sb.AppendLine(CultureInfo.InvariantCulture, $"    if (args is {pattern})");
+    sb.AppendLine($"    if (args is {pattern})");
     sb.AppendLine("    {");
 
     // Emit variable aliases (from route-unique names to handler-expected names)
@@ -71,14 +71,14 @@ internal static class RouteMatcherEmitter
     // Calculate minimum required args
     int minArgs = route.Literals.Count() + route.Parameters.Count(p => !p.IsOptional && !p.IsCatchAll);
 
-    sb.AppendLine(CultureInfo.InvariantCulture, $"    if (args.Length >= {minArgs})");
+    sb.AppendLine($"    if (args.Length >= {minArgs})");
     sb.AppendLine("    {");
 
     // Emit literal matching
     int literalIndex = 0;
     foreach (LiteralDefinition literal in route.Literals)
     {
-      sb.AppendLine(CultureInfo.InvariantCulture,
+      sb.AppendLine(
         $"      if (args[{literalIndex}] != \"{EscapeString(literal.Value)}\") goto route_skip_{routeIndex};");
       literalIndex++;
     }
@@ -97,7 +97,7 @@ internal static class RouteMatcherEmitter
 
     sb.AppendLine("      return 0;");
     sb.AppendLine("    }");
-    sb.AppendLine(CultureInfo.InvariantCulture, $"    route_skip_{routeIndex}:;");
+    sb.AppendLine($"    route_skip_{routeIndex}:;");
   }
 
   /// <summary>
@@ -118,7 +118,7 @@ internal static class RouteMatcherEmitter
       string uniqueVarName = $"__{varName}_{routeIndex}";
 
       // Create alias from unique name to handler-expected name
-      sb.AppendLine(CultureInfo.InvariantCulture,
+      sb.AppendLine(
         $"{indentStr}string {varName} = {uniqueVarName};");
     }
   }
@@ -162,20 +162,20 @@ internal static class RouteMatcherEmitter
         if (param.IsOptional)
         {
           // Optional param: check for null before parsing
-          sb.AppendLine(CultureInfo.InvariantCulture,
+          sb.AppendLine(
             $"{indentStr}{clrType}? {varName} = {uniqueVarName} is not null ? {parseExpr} : null;");
         }
         else
         {
           // Required param: direct parse
-          sb.AppendLine(CultureInfo.InvariantCulture,
+          sb.AppendLine(
             $"{indentStr}{clrType} {varName} = {parseExpr};");
         }
       }
       else if (param.ResolvedClrTypeName is not null)
       {
         // Unknown type constraint
-        sb.AppendLine(CultureInfo.InvariantCulture,
+        sb.AppendLine(
           $"{indentStr}// TODO: Type conversion for {param.ResolvedClrTypeName}");
       }
     }
@@ -231,20 +231,20 @@ internal static class RouteMatcherEmitter
       if (param.IsCatchAll)
       {
         // Catch-all gets remaining args
-        sb.AppendLine(CultureInfo.InvariantCulture,
+        sb.AppendLine(
           $"      string[] {varName} = args[{paramIndex}..];");
       }
       else if (param.IsOptional)
       {
         // Optional parameter with bounds check - null when not provided
-        sb.AppendLine(CultureInfo.InvariantCulture,
+        sb.AppendLine(
           $"      string? {varName} = args.Length > {paramIndex} ? args[{paramIndex}] : null;");
         paramIndex++;
       }
       else
       {
         // Required parameter
-        sb.AppendLine(CultureInfo.InvariantCulture,
+        sb.AppendLine(
           $"      string {varName} = args[{paramIndex}];");
         paramIndex++;
       }
@@ -286,7 +286,7 @@ internal static class RouteMatcherEmitter
       _ => throw new InvalidOperationException("Option must have at least one form")
     };
 
-    sb.AppendLine(CultureInfo.InvariantCulture,
+    sb.AppendLine(
       $"      bool {varName} = Array.Exists(args, a => {condition});");
   }
 
@@ -306,14 +306,14 @@ internal static class RouteMatcherEmitter
       _ => throw new InvalidOperationException("Option must have at least one form")
     };
 
-    sb.AppendLine(CultureInfo.InvariantCulture,
+    sb.AppendLine(
       $"      string? {varName} = {defaultValue};");
     sb.AppendLine("      for (int __idx = 0; __idx < args.Length - 1; __idx++)");
     sb.AppendLine("      {");
-    sb.AppendLine(CultureInfo.InvariantCulture,
+    sb.AppendLine(
       $"        if ({condition})");
     sb.AppendLine("        {");
-    sb.AppendLine(CultureInfo.InvariantCulture, $"          {varName} = args[__idx + 1];");
+    sb.AppendLine($"          {varName} = args[__idx + 1];");
     sb.AppendLine("          break;");
     sb.AppendLine("        }");
     sb.AppendLine("      }");
@@ -321,7 +321,7 @@ internal static class RouteMatcherEmitter
     // For required options, skip route if option was not found
     if (!option.IsOptional)
     {
-      sb.AppendLine(CultureInfo.InvariantCulture,
+      sb.AppendLine(
         $"      if ({varName} == string.Empty) goto route_skip_{routeIndex};");
     }
   }

@@ -24,7 +24,7 @@ internal static class VersionEmitter
     // Emit app name if available
     if (model.Name is not null)
     {
-      sb.AppendLine(CultureInfo.InvariantCulture,
+      sb.AppendLine(
         $"    terminal.Write(\"{EscapeString(model.Name)} \");");
     }
 

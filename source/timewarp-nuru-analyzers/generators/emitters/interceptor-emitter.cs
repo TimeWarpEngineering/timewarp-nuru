@@ -147,7 +147,7 @@ internal static class InterceptorEmitter
     foreach (ServiceDefinition service in cachedServices)
     {
       string fieldName = GetServiceFieldName(service.ImplementationTypeName);
-      sb.AppendLine(CultureInfo.InvariantCulture,
+      sb.AppendLine(
         $"  private static readonly global::System.Lazy<{service.ImplementationTypeName}> {fieldName} = new(() => new {service.ImplementationTypeName}());");
     }
 
@@ -182,7 +182,7 @@ internal static class InterceptorEmitter
     {
       // Use the Roslyn-generated attribute syntax which handles all encoding
       // Format: [global::System.Runtime.CompilerServices.InterceptsLocationAttribute(version, "data")]
-      sb.AppendLine(CultureInfo.InvariantCulture, $"  {site.GetAttributeSyntax()}");
+      sb.AppendLine($"  {site.GetAttributeSyntax()}");
     }
   }
 

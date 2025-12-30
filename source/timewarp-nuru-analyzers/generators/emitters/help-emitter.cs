@@ -36,13 +36,13 @@ internal static class HelpEmitter
   {
     if (model.Name is not null)
     {
-      sb.AppendLine(CultureInfo.InvariantCulture,
+      sb.AppendLine(
         $"    terminal.WriteLine(\"{EscapeString(model.Name)}\");");
     }
 
     if (model.Description is not null)
     {
-      sb.AppendLine(CultureInfo.InvariantCulture,
+      sb.AppendLine(
         $"    terminal.WriteLine(\"{EscapeString(model.Description)}\");");
       sb.AppendLine("    terminal.WriteLine();");
     }
@@ -54,7 +54,7 @@ internal static class HelpEmitter
   private static void EmitUsage(StringBuilder sb, AppModel model)
   {
     string appName = model.Name ?? "app";
-    sb.AppendLine(CultureInfo.InvariantCulture,
+    sb.AppendLine(
       $"    terminal.WriteLine(\"Usage: {EscapeString(appName)} [command] [options]\");");
     sb.AppendLine("    terminal.WriteLine();");
   }
@@ -92,7 +92,7 @@ internal static class HelpEmitter
 
     string description = route.Description ?? string.Empty;
 
-    sb.AppendLine(CultureInfo.InvariantCulture,
+    sb.AppendLine(
       $"    terminal.WriteLine(\"  {EscapeString(paddedPattern)} {EscapeString(description)}\");");
   }
 
@@ -123,15 +123,15 @@ internal static class HelpEmitter
         case ParameterDefinition param:
           if (param.IsCatchAll)
           {
-            pattern.Append(CultureInfo.InvariantCulture, $"{{*{param.Name}}} ");
+            pattern.Append($"{{*{param.Name}}} ");
           }
           else if (param.IsOptional)
           {
-            pattern.Append(CultureInfo.InvariantCulture, $"[{param.Name}] ");
+            pattern.Append($"[{param.Name}] ");
           }
           else
           {
-            pattern.Append(CultureInfo.InvariantCulture, $"{{{param.Name}}} ");
+            pattern.Append($"{{{param.Name}}} ");
           }
 
           break;
@@ -152,11 +152,11 @@ internal static class HelpEmitter
 
           if (option.IsOptional)
           {
-            pattern.Append(CultureInfo.InvariantCulture, $"[{optionDisplay}] ");
+            pattern.Append($"[{optionDisplay}] ");
           }
           else
           {
-            pattern.Append(CultureInfo.InvariantCulture, $"{optionDisplay} ");
+            pattern.Append($"{optionDisplay} ");
           }
 
           break;

@@ -39,18 +39,18 @@ internal static class CapabilitiesEmitter
   private static void EmitMetadata(StringBuilder sb, AppModel model)
   {
     string name = EscapeJsonString(model.Name ?? "app");
-    sb.AppendLine(CultureInfo.InvariantCulture, $"      \"name\": \"{name}\",");
+    sb.AppendLine($"      \"name\": \"{name}\",");
 
     if (model.Description is not null)
     {
       string description = EscapeJsonString(model.Description);
-      sb.AppendLine(CultureInfo.InvariantCulture, $"      \"description\": \"{description}\",");
+      sb.AppendLine($"      \"description\": \"{description}\",");
     }
 
     if (model.AiPrompt is not null)
     {
       string aiPrompt = EscapeJsonString(model.AiPrompt);
-      sb.AppendLine(CultureInfo.InvariantCulture, $"      \"aiPrompt\": \"{aiPrompt}\",");
+      sb.AppendLine($"      \"aiPrompt\": \"{aiPrompt}\",");
     }
   }
 
@@ -81,18 +81,18 @@ internal static class CapabilitiesEmitter
 
     // Pattern
     string pattern = EscapeJsonString(route.FullPattern);
-    sb.AppendLine(CultureInfo.InvariantCulture, $"          \"pattern\": \"{pattern}\",");
+    sb.AppendLine($"          \"pattern\": \"{pattern}\",");
 
     // Description
     if (route.Description is not null)
     {
       string description = EscapeJsonString(route.Description);
-      sb.AppendLine(CultureInfo.InvariantCulture, $"          \"description\": \"{description}\",");
+      sb.AppendLine($"          \"description\": \"{description}\",");
     }
 
     // Message type (maps to AI safety level)
     string messageType = route.MessageType.ToLowerInvariant();
-    sb.AppendLine(CultureInfo.InvariantCulture, $"          \"type\": \"{messageType}\",");
+    sb.AppendLine($"          \"type\": \"{messageType}\",");
 
     // Parameters
     if (route.Parameters.Any())
@@ -117,7 +117,7 @@ internal static class CapabilitiesEmitter
     // Actually let's make "type" always the last non-array property
 
     string comma = isLast ? "" : ",";
-    sb.AppendLine(CultureInfo.InvariantCulture, $"        }}{comma}");
+    sb.AppendLine($"        }}{comma}");
   }
 
   /// <summary>
@@ -135,16 +135,16 @@ internal static class CapabilitiesEmitter
       string comma = isLast ? "" : ",";
 
       sb.AppendLine("            {");
-      sb.AppendLine(CultureInfo.InvariantCulture,
+      sb.AppendLine(
         $"              \"name\": \"{EscapeJsonString(param.Name)}\",");
 
       if (param.Description is not null)
       {
-        sb.AppendLine(CultureInfo.InvariantCulture,
+        sb.AppendLine(
           $"              \"description\": \"{EscapeJsonString(param.Description)}\",");
       }
 
-      sb.AppendLine(CultureInfo.InvariantCulture,
+      sb.AppendLine(
         $"              \"required\": {(param.IsOptional ? "false" : "true")},");
 
       if (param.IsCatchAll)
@@ -153,10 +153,10 @@ internal static class CapabilitiesEmitter
       }
 
       string typeConstraint = param.TypeConstraint ?? "string";
-      sb.AppendLine(CultureInfo.InvariantCulture,
+      sb.AppendLine(
         $"              \"type\": \"{EscapeJsonString(typeConstraint)}\"");
 
-      sb.AppendLine(CultureInfo.InvariantCulture, $"            }}{comma}");
+      sb.AppendLine($"            }}{comma}");
     }
 
     sb.AppendLine("          ],");
@@ -180,28 +180,28 @@ internal static class CapabilitiesEmitter
 
       if (option.LongForm is not null)
       {
-        sb.AppendLine(CultureInfo.InvariantCulture,
+        sb.AppendLine(
           $"              \"long\": \"--{EscapeJsonString(option.LongForm)}\",");
       }
 
       if (option.ShortForm is not null)
       {
-        sb.AppendLine(CultureInfo.InvariantCulture,
+        sb.AppendLine(
           $"              \"short\": \"-{EscapeJsonString(option.ShortForm)}\",");
       }
 
       if (option.Description is not null)
       {
-        sb.AppendLine(CultureInfo.InvariantCulture,
+        sb.AppendLine(
           $"              \"description\": \"{EscapeJsonString(option.Description)}\",");
       }
 
-      sb.AppendLine(CultureInfo.InvariantCulture,
+      sb.AppendLine(
         $"              \"required\": {(option.IsOptional ? "false" : "true")},");
-      sb.AppendLine(CultureInfo.InvariantCulture,
+      sb.AppendLine(
         $"              \"isFlag\": {(option.IsFlag ? "true" : "false")}");
 
-      sb.AppendLine(CultureInfo.InvariantCulture, $"            }}{comma}");
+      sb.AppendLine($"            }}{comma}");
     }
 
     sb.AppendLine("          ],");
@@ -220,7 +220,7 @@ internal static class CapabilitiesEmitter
       string alias = aliases[i];
       bool isLast = i == aliases.Count - 1;
       string comma = isLast ? "" : ", ";
-      sb.Append(CultureInfo.InvariantCulture, $"\"{EscapeJsonString(alias)}\"{comma}");
+      sb.Append($"\"{EscapeJsonString(alias)}\"{comma}");
     }
 
     sb.AppendLine("],");

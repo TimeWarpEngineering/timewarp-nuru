@@ -12,7 +12,8 @@
     <DevelopmentDependency>true</DevelopmentDependency>
     <!-- Suppress RS1041 since we're intentionally targeting .NET 10 for CLI usage -->
     <!-- Suppress CA1805, CA1802, RCS1163 for parsing code that's compiled in -->
-    <NoWarn>$(NoWarn);RS1041;CA1805;CA1802;RCS1163</NoWarn>
+    <!-- Suppress CA1305: Source generators emit C# code, not localized content - culture is always irrelevant -->
+    <NoWarn>$(NoWarn);RS1041;CA1805;CA1802;RCS1163;CA1305</NoWarn>
     <!-- Define ANALYZER_BUILD for conditional compilation -->
     <DefineConstants>$(DefineConstants);ANALYZER_BUILD</DefineConstants>
     <IncludeSymbols>false</IncludeSymbols>

@@ -20,9 +20,9 @@ internal static class ConfigurationEmitter
   {
     string ind = new(' ', indent);
 
-    sb.AppendLine(CultureInfo.InvariantCulture, $"{ind}// ═══════════════════════════════════════════════════════════════════════════════");
-    sb.AppendLine(CultureInfo.InvariantCulture, $"{ind}// CONFIGURATION (from AddConfiguration())");
-    sb.AppendLine(CultureInfo.InvariantCulture, $"{ind}// ═══════════════════════════════════════════════════════════════════════════════");
+    sb.AppendLine($"{ind}// ═══════════════════════════════════════════════════════════════════════════════");
+    sb.AppendLine($"{ind}// CONFIGURATION (from AddConfiguration())");
+    sb.AppendLine($"{ind}// ═══════════════════════════════════════════════════════════════════════════════");
     sb.AppendLine();
 
     EmitEnvironmentDetection(sb, ind);
@@ -40,11 +40,11 @@ internal static class ConfigurationEmitter
   /// </summary>
   private static void EmitEnvironmentDetection(StringBuilder sb, string ind)
   {
-    sb.AppendLine(CultureInfo.InvariantCulture, $"{ind}// Determine environment");
-    sb.AppendLine(CultureInfo.InvariantCulture, $"{ind}string __configBasePath = global::System.AppContext.BaseDirectory;");
-    sb.AppendLine(CultureInfo.InvariantCulture, $"{ind}string __configEnv = global::System.Environment.GetEnvironmentVariable(\"DOTNET_ENVIRONMENT\")");
-    sb.AppendLine(CultureInfo.InvariantCulture, $"{ind}  ?? global::System.Environment.GetEnvironmentVariable(\"ASPNETCORE_ENVIRONMENT\")");
-    sb.AppendLine(CultureInfo.InvariantCulture, $"{ind}  ?? \"Production\";");
+    sb.AppendLine($"{ind}// Determine environment");
+    sb.AppendLine($"{ind}string __configBasePath = global::System.AppContext.BaseDirectory;");
+    sb.AppendLine($"{ind}string __configEnv = global::System.Environment.GetEnvironmentVariable(\"DOTNET_ENVIRONMENT\")");
+    sb.AppendLine($"{ind}  ?? global::System.Environment.GetEnvironmentVariable(\"ASPNETCORE_ENVIRONMENT\")");
+    sb.AppendLine($"{ind}  ?? \"Production\";");
   }
 
   /// <summary>
@@ -52,14 +52,14 @@ internal static class ConfigurationEmitter
   /// </summary>
   private static void EmitApplicationNameExtraction(StringBuilder sb, string ind)
   {
-    sb.AppendLine(CultureInfo.InvariantCulture, $"{ind}// Get sanitized application name for app-specific config files");
-    sb.AppendLine(CultureInfo.InvariantCulture, $"{ind}string? __configAppName = global::System.Reflection.Assembly.GetEntryAssembly()?.GetName().Name;");
-    sb.AppendLine(CultureInfo.InvariantCulture, $"{ind}if (!string.IsNullOrEmpty(__configAppName))");
-    sb.AppendLine(CultureInfo.InvariantCulture, $"{ind}{{");
-    sb.AppendLine(CultureInfo.InvariantCulture, $"{ind}  __configAppName = __configAppName");
-    sb.AppendLine(CultureInfo.InvariantCulture, $"{ind}    .Replace(global::System.IO.Path.DirectorySeparatorChar, '_')");
-    sb.AppendLine(CultureInfo.InvariantCulture, $"{ind}    .Replace(global::System.IO.Path.AltDirectorySeparatorChar, '_');");
-    sb.AppendLine(CultureInfo.InvariantCulture, $"{ind}}}");
+    sb.AppendLine($"{ind}// Get sanitized application name for app-specific config files");
+    sb.AppendLine($"{ind}string? __configAppName = global::System.Reflection.Assembly.GetEntryAssembly()?.GetName().Name;");
+    sb.AppendLine($"{ind}if (!string.IsNullOrEmpty(__configAppName))");
+    sb.AppendLine($"{ind}{{");
+    sb.AppendLine($"{ind}  __configAppName = __configAppName");
+    sb.AppendLine($"{ind}    .Replace(global::System.IO.Path.DirectorySeparatorChar, '_')");
+    sb.AppendLine($"{ind}    .Replace(global::System.IO.Path.AltDirectorySeparatorChar, '_');");
+    sb.AppendLine($"{ind}}}");
   }
 
   /// <summary>
@@ -67,42 +67,42 @@ internal static class ConfigurationEmitter
   /// </summary>
   private static void EmitConfigurationBuilder(StringBuilder sb, string ind)
   {
-    sb.AppendLine(CultureInfo.InvariantCulture, $"{ind}// Build configuration from multiple sources");
-    sb.AppendLine(CultureInfo.InvariantCulture, $"{ind}global::Microsoft.Extensions.Configuration.IConfigurationBuilder __configBuilder =");
-    sb.AppendLine(CultureInfo.InvariantCulture, $"{ind}  new global::Microsoft.Extensions.Configuration.ConfigurationBuilder()");
-    sb.AppendLine(CultureInfo.InvariantCulture, $"{ind}    .SetBasePath(__configBasePath)");
-    sb.AppendLine(CultureInfo.InvariantCulture, $"{ind}    .AddJsonFile(\"appsettings.json\", optional: true, reloadOnChange: false)");
-    sb.AppendLine(CultureInfo.InvariantCulture, $"{ind}    .AddJsonFile($\"appsettings.{{__configEnv}}.json\", optional: true, reloadOnChange: false);");
+    sb.AppendLine($"{ind}// Build configuration from multiple sources");
+    sb.AppendLine($"{ind}global::Microsoft.Extensions.Configuration.IConfigurationBuilder __configBuilder =");
+    sb.AppendLine($"{ind}  new global::Microsoft.Extensions.Configuration.ConfigurationBuilder()");
+    sb.AppendLine($"{ind}    .SetBasePath(__configBasePath)");
+    sb.AppendLine($"{ind}    .AddJsonFile(\"appsettings.json\", optional: true, reloadOnChange: false)");
+    sb.AppendLine($"{ind}    .AddJsonFile($\"appsettings.{{__configEnv}}.json\", optional: true, reloadOnChange: false);");
     sb.AppendLine();
 
     // App-specific config files
-    sb.AppendLine(CultureInfo.InvariantCulture, $"{ind}// Add application-specific settings files (.NET 10 convention)");
-    sb.AppendLine(CultureInfo.InvariantCulture, $"{ind}if (!string.IsNullOrEmpty(__configAppName))");
-    sb.AppendLine(CultureInfo.InvariantCulture, $"{ind}{{");
-    sb.AppendLine(CultureInfo.InvariantCulture, $"{ind}  __configBuilder");
-    sb.AppendLine(CultureInfo.InvariantCulture, $"{ind}    .AddJsonFile($\"{{__configAppName}}.settings.json\", optional: true, reloadOnChange: false)");
-    sb.AppendLine(CultureInfo.InvariantCulture, $"{ind}    .AddJsonFile($\"{{__configAppName}}.settings.{{__configEnv}}.json\", optional: true, reloadOnChange: false);");
-    sb.AppendLine(CultureInfo.InvariantCulture, $"{ind}}}");
+    sb.AppendLine($"{ind}// Add application-specific settings files (.NET 10 convention)");
+    sb.AppendLine($"{ind}if (!string.IsNullOrEmpty(__configAppName))");
+    sb.AppendLine($"{ind}{{");
+    sb.AppendLine($"{ind}  __configBuilder");
+    sb.AppendLine($"{ind}    .AddJsonFile($\"{{__configAppName}}.settings.json\", optional: true, reloadOnChange: false)");
+    sb.AppendLine($"{ind}    .AddJsonFile($\"{{__configAppName}}.settings.{{__configEnv}}.json\", optional: true, reloadOnChange: false);");
+    sb.AppendLine($"{ind}}}");
     sb.AppendLine();
 
     // User secrets (DEBUG only)
-    sb.AppendLine(CultureInfo.InvariantCulture, $"{ind}// User secrets (Development/DEBUG only)");
+    sb.AppendLine($"{ind}// User secrets (Development/DEBUG only)");
     sb.AppendLine("#if DEBUG");
-    sb.AppendLine(CultureInfo.InvariantCulture, $"{ind}if (__configEnv == \"Development\")");
-    sb.AppendLine(CultureInfo.InvariantCulture, $"{ind}{{");
-    sb.AppendLine(CultureInfo.InvariantCulture, $"{ind}  __configBuilder.AddUserSecrets(global::System.Reflection.Assembly.GetEntryAssembly()!, optional: true, reloadOnChange: false);");
-    sb.AppendLine(CultureInfo.InvariantCulture, $"{ind}}}");
+    sb.AppendLine($"{ind}if (__configEnv == \"Development\")");
+    sb.AppendLine($"{ind}{{");
+    sb.AppendLine($"{ind}  __configBuilder.AddUserSecrets(global::System.Reflection.Assembly.GetEntryAssembly()!, optional: true, reloadOnChange: false);");
+    sb.AppendLine($"{ind}}}");
     sb.AppendLine("#endif");
     sb.AppendLine();
 
     // Environment variables and command line
-    sb.AppendLine(CultureInfo.InvariantCulture, $"{ind}// Environment variables and command line arguments");
-    sb.AppendLine(CultureInfo.InvariantCulture, $"{ind}__configBuilder.AddEnvironmentVariables();");
-    sb.AppendLine(CultureInfo.InvariantCulture, $"{ind}__configBuilder.AddCommandLine(args);");
+    sb.AppendLine($"{ind}// Environment variables and command line arguments");
+    sb.AppendLine($"{ind}__configBuilder.AddEnvironmentVariables();");
+    sb.AppendLine($"{ind}__configBuilder.AddCommandLine(args);");
     sb.AppendLine();
 
     // Build final configuration
-    sb.AppendLine(CultureInfo.InvariantCulture, $"{ind}// Build the configuration");
-    sb.AppendLine(CultureInfo.InvariantCulture, $"{ind}global::Microsoft.Extensions.Configuration.IConfigurationRoot configuration = __configBuilder.Build();");
+    sb.AppendLine($"{ind}// Build the configuration");
+    sb.AppendLine($"{ind}global::Microsoft.Extensions.Configuration.IConfigurationRoot configuration = __configBuilder.Build();");
   }
 }

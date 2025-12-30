@@ -41,7 +41,7 @@ internal static class ServiceResolverEmitter
     // (built by ConfigurationEmitter when AddConfiguration() is called)
     if (IsConfigurationType(typeName))
     {
-      sb.AppendLine(CultureInfo.InvariantCulture,
+      sb.AppendLine(
         $"{indent}{typeName} {varName} = configuration;");
       return;
     }
@@ -49,7 +49,7 @@ internal static class ServiceResolverEmitter
     // Special case: ITerminal uses app.Terminal (built-in service)
     if (IsTerminalType(typeName))
     {
-      sb.AppendLine(CultureInfo.InvariantCulture,
+      sb.AppendLine(
         $"{indent}{typeName} {varName} = app.Terminal;");
       return;
     }
@@ -63,14 +63,14 @@ internal static class ServiceResolverEmitter
       if (service.Lifetime == ServiceLifetime.Transient)
       {
         // Transient - new instance each time
-        sb.AppendLine(CultureInfo.InvariantCulture,
+        sb.AppendLine(
           $"{indent}{typeName} {varName} = new {service.ImplementationTypeName}();");
       }
       else
       {
         // Singleton/Scoped - thread-safe cached via Lazy<T>
         string fieldName = InterceptorEmitter.GetServiceFieldName(service.ImplementationTypeName);
-        sb.AppendLine(CultureInfo.InvariantCulture,
+        sb.AppendLine(
           $"{indent}{typeName} {varName} = {fieldName}.Value;");
       }
 
@@ -78,9 +78,9 @@ internal static class ServiceResolverEmitter
     }
 
     // Service not found - emit error comment
-    sb.AppendLine(CultureInfo.InvariantCulture,
+    sb.AppendLine(
       $"{indent}// ERROR: Service {typeName} not registered. Use ConfigureServices to register it.");
-    sb.AppendLine(CultureInfo.InvariantCulture,
+    sb.AppendLine(
       $"{indent}{typeName} {varName} = default!; // Service not registered");
   }
 

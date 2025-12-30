@@ -60,9 +60,9 @@ internal static class HandlerInvokerEmitter
     // If no lambda body was captured, emit an error comment
     if (string.IsNullOrEmpty(handler.LambdaBodySource))
     {
-      sb.AppendLine(CultureInfo.InvariantCulture,
+      sb.AppendLine(
         $"{indent}// ERROR: Lambda body was not captured for this handler");
-      sb.AppendLine(CultureInfo.InvariantCulture,
+      sb.AppendLine(
         $"{indent}throw new System.NotSupportedException(\"Handler code was not captured at compile time.\");");
       return;
     }
@@ -94,12 +94,12 @@ internal static class HandlerInvokerEmitter
     {
       // Expression with return value
       // Generate: ReturnType __handler_N() => expression;
-      sb.AppendLine(CultureInfo.InvariantCulture,
+      sb.AppendLine(
         $"{indent}{asyncModifier}{returnTypeName} {handlerName}() => {awaitKeyword}{handler.LambdaBodySource};");
 
       // Invoke and capture result
       string resultTypeName = handler.ReturnType.UnwrappedTypeName ?? handler.ReturnType.FullTypeName;
-      sb.AppendLine(CultureInfo.InvariantCulture,
+      sb.AppendLine(
         $"{indent}{GetUnwrappedReturnTypeName(handler)} result = {awaitKeyword}{handlerName}();");
 
       EmitResultOutput(sb, indent, resultTypeName);
@@ -110,16 +110,16 @@ internal static class HandlerInvokerEmitter
       // Generate: void __handler_N() => expression;
       if (handler.IsAsync)
       {
-        sb.AppendLine(CultureInfo.InvariantCulture,
+        sb.AppendLine(
           $"{indent}async Task {handlerName}() => await {handler.LambdaBodySource};");
-        sb.AppendLine(CultureInfo.InvariantCulture,
+        sb.AppendLine(
           $"{indent}await {handlerName}();");
       }
       else
       {
-        sb.AppendLine(CultureInfo.InvariantCulture,
+        sb.AppendLine(
           $"{indent}void {handlerName}() => {handler.LambdaBodySource};");
-        sb.AppendLine(CultureInfo.InvariantCulture,
+        sb.AppendLine(
           $"{indent}{handlerName}();");
       }
     }
@@ -136,16 +136,16 @@ internal static class HandlerInvokerEmitter
 
     // Emit the local function with the block body
     // The block already includes { and }, so we just need to add the signature
-    sb.AppendLine(CultureInfo.InvariantCulture,
+    sb.AppendLine(
       $"{indent}{asyncModifier}{returnTypeName} {handlerName}()");
-    sb.AppendLine(CultureInfo.InvariantCulture,
+    sb.AppendLine(
       $"{indent}{handler.LambdaBodySource}");
 
     if (handler.ReturnType.HasValue)
     {
       // Invoke and capture result
       string resultTypeName = handler.ReturnType.UnwrappedTypeName ?? handler.ReturnType.FullTypeName;
-      sb.AppendLine(CultureInfo.InvariantCulture,
+      sb.AppendLine(
         $"{indent}{GetUnwrappedReturnTypeName(handler)} result = {awaitKeyword}{handlerName}();");
 
       EmitResultOutput(sb, indent, resultTypeName);
@@ -153,7 +153,7 @@ internal static class HandlerInvokerEmitter
     else
     {
       // Void - just invoke
-      sb.AppendLine(CultureInfo.InvariantCulture,
+      sb.AppendLine(
         $"{indent}{awaitKeyword}{handlerName}();");
     }
   }
@@ -205,30 +205,30 @@ internal static class HandlerInvokerEmitter
 
     // 1. Create the command object with property initializers
     // Property names are PascalCase, local variables are lowercase
-    sb.AppendLine(CultureInfo.InvariantCulture, $"{indent}// Create command instance with bound properties");
-    sb.AppendLine(CultureInfo.InvariantCulture, $"{indent}{commandTypeName} __command = new()");
-    sb.AppendLine(CultureInfo.InvariantCulture, $"{indent}{{");
+    sb.AppendLine($"{indent}// Create command instance with bound properties");
+    sb.AppendLine($"{indent}{commandTypeName} __command = new()");
+    sb.AppendLine($"{indent}{{");
 
     foreach (ParameterBinding param in handler.RouteParameters)
     {
       string propName = ToPascalCase(param.ParameterName);
       // Use the lowercase variable name that was declared in the route matching block
       string varName = param.ParameterName.ToLowerInvariant();
-      sb.AppendLine(CultureInfo.InvariantCulture,
+      sb.AppendLine(
         $"{indent}  {propName} = {varName},");
     }
 
-    sb.AppendLine(CultureInfo.InvariantCulture, $"{indent}}};");
+    sb.AppendLine($"{indent}}};");
     sb.AppendLine();
 
     // 2. Resolve handler constructor dependencies
     if (handler.ConstructorDependencies.Length > 0)
     {
-      sb.AppendLine(CultureInfo.InvariantCulture, $"{indent}// Resolve handler constructor dependencies");
+      sb.AppendLine($"{indent}// Resolve handler constructor dependencies");
       foreach (ParameterBinding dep in handler.ConstructorDependencies)
       {
         string resolution = ResolveServiceForCommand(dep.ParameterTypeName, services);
-        sb.AppendLine(CultureInfo.InvariantCulture,
+        sb.AppendLine(
           $"{indent}{dep.ParameterTypeName} __{dep.ParameterName} = {resolution};");
       }
 
@@ -236,9 +236,9 @@ internal static class HandlerInvokerEmitter
     }
 
     // 3. Create handler instance
-    sb.AppendLine(CultureInfo.InvariantCulture, $"{indent}// Create handler and invoke");
+    sb.AppendLine($"{indent}// Create handler and invoke");
     string constructorArgs = string.Join(", ", handler.ConstructorDependencies.Select(d => $"__{d.ParameterName}"));
-    sb.AppendLine(CultureInfo.InvariantCulture,
+    sb.AppendLine(
       $"{indent}{handlerTypeName} __handler = new({constructorArgs});");
 
     // 4. Invoke Handle method
@@ -246,13 +246,13 @@ internal static class HandlerInvokerEmitter
     if (handler.ReturnType.HasValue)
     {
       string resultTypeName = handler.ReturnType.UnwrappedTypeName ?? handler.ReturnType.FullTypeName;
-      sb.AppendLine(CultureInfo.InvariantCulture,
+      sb.AppendLine(
         $"{indent}{resultTypeName} result = await __handler.Handle(__command, global::System.Threading.CancellationToken.None);");
       EmitResultOutput(sb, indent, resultTypeName);
     }
     else
     {
-      sb.AppendLine(CultureInfo.InvariantCulture,
+      sb.AppendLine(
         $"{indent}await __handler.Handle(__command, global::System.Threading.CancellationToken.None);");
     }
   }
@@ -369,13 +369,13 @@ internal static class HandlerInvokerEmitter
         ? GetUnwrappedReturnTypeName(handler)
         : handler.ReturnType.ShortTypeName;
 
-      sb.AppendLine(CultureInfo.InvariantCulture,
+      sb.AppendLine(
         $"{indent}{resultType} result = {awaitKeyword}{typeName}.{methodName}({args});");
       EmitResultOutput(sb, indent, resultTypeName);
     }
     else
     {
-      sb.AppendLine(CultureInfo.InvariantCulture,
+      sb.AppendLine(
         $"{indent}{awaitKeyword}{typeName}.{methodName}({args});");
     }
   }
@@ -394,15 +394,15 @@ internal static class HandlerInvokerEmitter
     if (isValueType)
     {
       // Value types - always have a value, just output directly
-      sb.AppendLine(CultureInfo.InvariantCulture, $"{indent}app.Terminal.WriteLine(result.ToString());");
+      sb.AppendLine($"{indent}app.Terminal.WriteLine(result.ToString());");
     }
     else
     {
       // Reference types - check for null before outputting
-      sb.AppendLine(CultureInfo.InvariantCulture, $"{indent}if (result is not null)");
-      sb.AppendLine(CultureInfo.InvariantCulture, $"{indent}{{");
-      sb.AppendLine(CultureInfo.InvariantCulture, $"{indent}  app.Terminal.WriteLine(result.ToString());");
-      sb.AppendLine(CultureInfo.InvariantCulture, $"{indent}}}");
+      sb.AppendLine($"{indent}if (result is not null)");
+      sb.AppendLine($"{indent}{{");
+      sb.AppendLine($"{indent}  app.Terminal.WriteLine(result.ToString());");
+      sb.AppendLine($"{indent}}}");
     }
   }
 

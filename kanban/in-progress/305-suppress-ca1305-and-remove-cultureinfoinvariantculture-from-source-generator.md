@@ -6,17 +6,17 @@ Source generators emit C# code strings, not user-facing localized content. The C
 
 ## Checklist
 
-- [ ] Add `CA1305` to `<NoWarn>` in `source/timewarp-nuru-analyzers/timewarp-nuru-analyzers.csproj` with explanatory comment
-- [ ] Remove `CultureInfo.InvariantCulture` from `generators/emitters/configuration-emitter.cs` (39 occurrences)
-- [ ] Remove `CultureInfo.InvariantCulture` from `generators/emitters/handler-invoker-emitter.cs` (30 occurrences)
-- [ ] Remove `CultureInfo.InvariantCulture` from `generators/emitters/route-matcher-emitter.cs` (22 occurrences)
-- [ ] Remove `CultureInfo.InvariantCulture` from `generators/emitters/capabilities-emitter.cs` (19 occurrences)
-- [ ] Remove `CultureInfo.InvariantCulture` from `generators/emitters/help-emitter.cs` (9 occurrences)
-- [ ] Remove `CultureInfo.InvariantCulture` from `generators/emitters/service-resolver-emitter.cs` (6 occurrences)
-- [ ] Remove `CultureInfo.InvariantCulture` from `generators/emitters/interceptor-emitter.cs` (2 occurrences)
-- [ ] Remove `CultureInfo.InvariantCulture` from `generators/emitters/version-emitter.cs` (1 occurrence)
-- [ ] Remove `global using System.Globalization;` from `source/timewarp-nuru-analyzers/global-usings.cs`
-- [ ] Build and verify no errors/warnings
+- [x] Add `CA1305` to `<NoWarn>` in `source/timewarp-nuru-analyzers/timewarp-nuru-analyzers.csproj` with explanatory comment
+- [x] Remove `CultureInfo.InvariantCulture` from `generators/emitters/configuration-emitter.cs` (39 occurrences)
+- [x] Remove `CultureInfo.InvariantCulture` from `generators/emitters/handler-invoker-emitter.cs` (30 occurrences)
+- [x] Remove `CultureInfo.InvariantCulture` from `generators/emitters/route-matcher-emitter.cs` (22 occurrences)
+- [x] Remove `CultureInfo.InvariantCulture` from `generators/emitters/capabilities-emitter.cs` (19 occurrences)
+- [x] Remove `CultureInfo.InvariantCulture` from `generators/emitters/help-emitter.cs` (9 occurrences)
+- [x] Remove `CultureInfo.InvariantCulture` from `generators/emitters/service-resolver-emitter.cs` (6 occurrences)
+- [x] Remove `CultureInfo.InvariantCulture` from `generators/emitters/interceptor-emitter.cs` (2 occurrences)
+- [x] Remove `CultureInfo.InvariantCulture` from `generators/emitters/version-emitter.cs` (1 occurrence)
+- [x] Remove `global using System.Globalization;` from `source/timewarp-nuru-analyzers/global-usings.cs`
+- [x] Build and verify no errors/warnings
 
 ## Notes
 

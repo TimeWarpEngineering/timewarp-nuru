@@ -40,7 +40,7 @@ internal static class HandlerInvokerEmitter
         break;
 
       case HandlerKind.Command:
-        EmitCommandInvocation(sb, route, services, indentStr);
+        EmitCommandInvocation(sb, route, routeIndex, services, indentStr);
         break;
 
       case HandlerKind.Method:
@@ -197,14 +197,14 @@ internal static class HandlerInvokerEmitter
   /// Emits invocation for a command-based handler with nested Handler class.
   /// Creates the command object, resolves handler dependencies, and invokes Handle().
   /// </summary>
-  private static void EmitCommandInvocation(StringBuilder sb, RouteDefinition route, ImmutableArray<ServiceDefinition> services, string indent)
+  private static void EmitCommandInvocation(StringBuilder sb, RouteDefinition route, int routeIndex, ImmutableArray<ServiceDefinition> services, string indent)
   {
     HandlerDefinition handler = route.Handler;
     string commandTypeName = handler.FullTypeName ?? "UnknownCommand";
     string handlerTypeName = handler.NestedHandlerTypeName ?? $"{commandTypeName}.Handler";
 
     // 1. Create the command object with property initializers
-    // Property names are PascalCase, local variables are lowercase
+    // Property names are PascalCase, local variables use route-unique names for catch-all to avoid collision
     sb.AppendLine($"{indent}// Create command instance with bound properties");
     sb.AppendLine($"{indent}{commandTypeName} __command = new()");
     sb.AppendLine($"{indent}{{");
@@ -212,8 +212,10 @@ internal static class HandlerInvokerEmitter
     foreach (ParameterBinding param in handler.RouteParameters)
     {
       string propName = ToPascalCase(param.ParameterName);
-      // Use the lowercase variable name that was declared in the route matching block
-      string varName = param.ParameterName.ToLowerInvariant();
+      // Catch-all uses route-unique variable name to avoid collision with 'args' method parameter
+      string varName = param.Source == BindingSource.CatchAll
+        ? $"__{ToCamelCase(param.ParameterName)}_{routeIndex}"
+        : param.ParameterName.ToLowerInvariant();
       sb.AppendLine(
         $"{indent}  {propName} = {varName},");
     }
@@ -481,5 +483,16 @@ internal static class HandlerInvokerEmitter
       return value;
 
     return char.ToUpperInvariant(value[0]) + value[1..];
+  }
+
+  /// <summary>
+  /// Converts a string to camelCase.
+  /// </summary>
+  private static string ToCamelCase(string value)
+  {
+    if (string.IsNullOrEmpty(value))
+      return value;
+
+    return char.ToLowerInvariant(value[0]) + value[1..];
   }
 }

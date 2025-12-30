@@ -216,21 +216,22 @@ internal static class RouteMatcherEmitter
 
   /// <summary>
   /// Emits code to extract parameter values from args.
-  /// For typed parameters, extracts to unique variable names for later type conversion.
+  /// For typed parameters and catch-all, extracts to unique variable names to avoid collision with 'args' parameter.
   /// </summary>
   private static void EmitParameterExtraction(StringBuilder sb, RouteDefinition route, int routeIndex, int startIndex)
   {
     int paramIndex = startIndex;
     foreach (ParameterDefinition param in route.Parameters)
     {
-      // For typed parameters, use unique var name; EmitTypeConversions will create the final typed variable
-      string varName = param.HasTypeConstraint
+      // For typed parameters and catch-all, use unique var name to avoid collision with 'args' parameter
+      // Catch-all uses unique name because property "Args" -> "args" would shadow method parameter
+      string varName = (param.HasTypeConstraint || param.IsCatchAll)
         ? $"__{param.CamelCaseName}_{routeIndex}"
         : param.CamelCaseName;
 
       if (param.IsCatchAll)
       {
-        // Catch-all gets remaining args
+        // Catch-all gets remaining args - uses unique variable name
         sb.AppendLine(
           $"      string[] {varName} = args[{paramIndex}..];");
       }

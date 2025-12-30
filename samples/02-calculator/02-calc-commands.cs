@@ -125,20 +125,20 @@ public sealed class RoundCommand : ICommand<Unit>
   public double Value { get; set; }
 
   [Option("mode", "m", Description = "Rounding mode: up, down, nearest, banker")]
-  public string Mode { get; set; } = "nearest";
+  public string? Mode { get; set; }
 
   public sealed class Handler(ICalculatorService calc) : ICommandHandler<RoundCommand, Unit>
   {
     public ValueTask<Unit> Handle(RoundCommand command, CancellationToken cancellationToken)
     {
-      (double result, string? error) = calc.Round(command.Value, command.Mode);
+      (double result, string? error) = calc.Round(command.Value, command.Mode ?? "nearest");
       if (error != null)
       {
         WriteLine($"Error: {error}");
         WriteLine("Valid modes: up, down, nearest, banker/accountancy");
       }
       else
-        WriteLine($"Round({command.Value}, {command.Mode}) = {result}");
+        WriteLine($"Round({command.Value}, {command.Mode ?? "nearest"}) = {result}");
 
       return default;
     }

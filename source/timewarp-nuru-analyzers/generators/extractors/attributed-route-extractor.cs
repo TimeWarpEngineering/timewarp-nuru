@@ -310,7 +310,7 @@ internal static class AttributedRouteExtractor
     }
 
     string typeName = property.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-    bool isFlag = typeName == "global::System.Boolean";
+    bool isFlag = typeName is "bool" or "global::System.Boolean";
 
     // Check for array types (repeated options)
     if (typeName.EndsWith("[]", StringComparison.Ordinal) ||
@@ -584,27 +584,29 @@ internal static class AttributedRouteExtractor
 
   /// <summary>
   /// Gets a type constraint string from a CLR type name.
+  /// Handles both C# keyword aliases (e.g., "double") and fully qualified names (e.g., "global::System.Double").
   /// </summary>
   private static string? GetTypeConstraintFromClrType(string clrTypeName)
   {
     return clrTypeName switch
     {
-      "global::System.Int32" => "int",
-      "global::System.Int64" => "long",
-      "global::System.Int16" => "short",
-      "global::System.Byte" => "byte",
-      "global::System.Single" => "float",
-      "global::System.Double" => "double",
-      "global::System.Decimal" => "decimal",
-      "global::System.Boolean" => "bool",
-      "global::System.Char" => "char",
-      "global::System.String" => null, // string is default
-      "global::System.Guid" => "guid",
-      "global::System.DateTime" => "datetime",
-      "global::System.DateTimeOffset" => "datetimeoffset",
-      "global::System.TimeSpan" => "timespan",
-      "global::System.Uri" => "uri",
-      "global::System.Version" => "version",
+      // C# keyword aliases (returned by SymbolDisplayFormat.FullyQualifiedFormat for built-in types)
+      "int" or "global::System.Int32" => "int",
+      "long" or "global::System.Int64" => "long",
+      "short" or "global::System.Int16" => "short",
+      "byte" or "global::System.Byte" => "byte",
+      "float" or "global::System.Single" => "float",
+      "double" or "global::System.Double" => "double",
+      "decimal" or "global::System.Decimal" => "decimal",
+      "bool" or "global::System.Boolean" => "bool",
+      "char" or "global::System.Char" => "char",
+      "string" or "global::System.String" => null, // string is default, no conversion needed
+      "global::System.Guid" or "System.Guid" or "Guid" => "guid",
+      "global::System.DateTime" or "System.DateTime" or "DateTime" => "datetime",
+      "global::System.DateTimeOffset" or "System.DateTimeOffset" or "DateTimeOffset" => "datetimeoffset",
+      "global::System.TimeSpan" or "System.TimeSpan" or "TimeSpan" => "timespan",
+      "global::System.Uri" or "System.Uri" or "Uri" => "uri",
+      "global::System.Version" or "System.Version" or "Version" => "version",
       _ => null
     };
   }

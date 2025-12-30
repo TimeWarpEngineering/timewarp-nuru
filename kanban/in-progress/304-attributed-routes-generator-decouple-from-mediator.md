@@ -399,3 +399,40 @@ Updated all 14 message files to remove `using Mediator;` and convert interfaces:
 3. **#311 - Catch-all `Args` collision:** `ExecCommand.Args` generates `string[] args = args[1..]` which shadows the method parameter.
 
 **Next:** Fix #309, #310, #311 to unblock Phase 12.
+
+## Continuation Prompt
+
+### Current State
+- **Phase 12 blocked** by 3 generator bugs in attributed route code generation
+- All source file edits for Phase 12 are DONE (message files converted to TimeWarp.Nuru interfaces)
+- Sample doesn't compile due to generated code errors
+
+### Blocking Tasks (in suggested order)
+1. **#311** - Easiest: Fix catch-all `Args` variable collision (use `__args_N` prefix)
+2. **#310** - Medium: Fix hyphenated option naming (`noCache` vs `nocache`)  
+3. **#309** - Harder: Add type conversion for typed options (`int.Parse()` etc.)
+
+### Key Files for Generator Fixes
+- `source/timewarp-nuru-analyzers/generators/emitters/route-matcher-emitter.cs` - option parsing, catch-all extraction
+- `source/timewarp-nuru-analyzers/generators/emitters/handler-invoker-emitter.cs` - property binding in command creation
+- `source/timewarp-nuru-analyzers/generators/extractors/attributed-route-extractor.cs` - option type extraction
+
+### Test Commands After Fixes
+```bash
+ganda runfile cache --clear
+dotnet run --project samples/attributed-routes/attributed-routes.csproj -- greet World
+dotnet run --project samples/attributed-routes/attributed-routes.csproj -- ping
+dotnet run --project samples/attributed-routes/attributed-routes.csproj -- deploy prod --replicas 3
+dotnet run --project samples/attributed-routes/attributed-routes.csproj -- docker build . --no-cache
+dotnet run --project samples/attributed-routes/attributed-routes.csproj -- exec ls -la
+```
+
+### Verified Working Samples
+- `./samples/02-calculator/01-calc-delegate.cs` - delegates only
+- `./samples/02-calculator/02-calc-commands.cs` - attributed routes only  
+- `./samples/02-calculator/03-calc-mixed.cs` - mixed delegates + attributed routes
+
+### Generator Tests (all pass)
+```bash
+./tests/timewarp-nuru-core-tests/generator/generator-*.cs
+```

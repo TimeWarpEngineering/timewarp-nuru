@@ -1,7 +1,6 @@
 namespace AttributedRoutes.Messages;
 
 using TimeWarp.Nuru;
-using Mediator;
 using TimeWarp.Terminal;
 
 /// <summary>
@@ -11,7 +10,7 @@ using TimeWarp.Terminal;
 /// Demonstrates ITerminal injection for testable output.
 /// </summary>
 [NuruRoute("tag", Description = "Create a tag TARGET_IMAGE that refers to SOURCE_IMAGE")]
-public sealed class DockerTagCommand : DockerGroupBase, ICommand<Unit>, IIdempotent
+public sealed class DockerTagCommand : DockerGroupBase, IIdempotentCommand<Unit>
 {
   [Parameter(Order = 0, Description = "Source image name or ID")]
   public string Source { get; set; } = string.Empty;
@@ -19,7 +18,7 @@ public sealed class DockerTagCommand : DockerGroupBase, ICommand<Unit>, IIdempot
   [Parameter(Order = 1, Description = "Target image name with optional tag")]
   public string Target { get; set; } = string.Empty;
 
-  public sealed class Handler : ICommandHandler<DockerTagCommand, Unit>
+  public sealed class Handler : IIdempotentCommandHandler<DockerTagCommand, Unit>
   {
     private readonly ITerminal Terminal;
 

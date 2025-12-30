@@ -2,7 +2,6 @@ namespace AttributedRoutes.Messages;
 
 using TimeWarp.Nuru;
 using TimeWarp.Terminal;
-using Mediator;
 
 /// <summary>
 /// Simple greeting query with a required parameter.

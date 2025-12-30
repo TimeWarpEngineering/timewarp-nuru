@@ -30,13 +30,10 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 
 using TimeWarp.Nuru;
-using Microsoft.Extensions.DependencyInjection;
 
 // No Map() calls! Routes are auto-registered via [NuruRoute] attributes
+// No external packages needed - TimeWarp.Nuru provides ICommand<T>, IQuery<T>, handlers, and Unit
 NuruCoreApp app = NuruApp.CreateBuilder(args)
-  .ConfigureServices(services => services.AddMediator())
-  .AddAutoHelp()
-  .WithMetadata("attributed-routes", "Sample demonstrating attributed routes")
   .Build();
 
 return await app.RunAsync(args);

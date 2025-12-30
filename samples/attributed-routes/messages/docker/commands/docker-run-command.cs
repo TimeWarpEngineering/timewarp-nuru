@@ -1,7 +1,6 @@
 namespace AttributedRoutes.Messages;
 
 using TimeWarp.Nuru;
-using Mediator;
 using TimeWarp.Terminal;
 
 /// <summary>

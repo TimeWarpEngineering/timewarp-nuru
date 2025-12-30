@@ -307,9 +307,9 @@ Move to done, document results.
 - [x] Phase 7: (covered by Phase 5)
 - [x] Phase 8: Implement command handler invocation in `handler-invoker-emitter.cs`
 - [x] Phase 9: Rename/rewrite `02-calc-mediator.cs` -> `02-calc-commands.cs`
-- [ ] Phase 10: Fix `03-calc-mixed.cs` **BLOCKED by #308**
-- [ ] Phase 11: Update `attributed-routes/attributed-routes.cs`
-- [ ] Phase 12: Update `attributed-routes/messages/**/*.cs`
+- [x] Phase 10: Fix `03-calc-mixed.cs` (unblocked by #308)
+- [x] Phase 11: Update `attributed-routes/attributed-routes.cs` (entry point updated)
+- [ ] Phase 12: Update `attributed-routes/messages/**/*.cs` **BLOCKED by #309, #310, #311**
 - [ ] Phase 13: Update this task
 - [ ] Phase 14: Test everything
 
@@ -365,14 +365,37 @@ Converted `03-calc-mixed.cs` to use attributed routes pattern:
 - Changed `StatsCommand.Values` from `string` to `string[]` (catch-all is always array)
 - Added `#pragma warning disable NURU_H002` for object initializer false positive (see #307)
 
-**Blocking Issues Discovered:**
+**Issues Discovered (and resolved):**
 
-1. **#307 - NURU_H002 false positive:** Analyzer incorrectly flags properties in object initializers as closures. Workaround: `#pragma warning disable NURU_H002`
+1. **#307 - NURU_H002 false positive:** Analyzer incorrectly flags properties in object initializers as closures. Workaround: `#pragma warning disable NURU_H002` (task still open for proper fix)
 
-2. **#308 - Method group not analyzed:** `ServiceExtractor` returns empty when `ConfigureServices` receives a method group reference instead of inline lambda. The generator can't discover `IScientificCalculator` registration, causing `NullReferenceException` at runtime.
+2. **#308 - Method group not analyzed:** Fixed! `ServiceExtractor` now analyzes method group references.
 
-**Current state of `03-calc-mixed.cs`:**
-- Delegate routes work: `add`, `subtract`, `multiply`, `divide`, `compare`
-- Attributed routes fail: `factorial`, `isprime`, `fibonacci`, `stats` (service not resolved)
+**Phase 10 Complete:**
+- All delegate routes work: `add`, `subtract`, `multiply`, `divide`, `compare`
+- All attributed routes work: `factorial`, `isprime`, `fibonacci`, `stats`
+- All 10 generator tests pass (no regressions)
 
-**Next:** Complete #308, then return to Phase 10.
+**Phase 11 Complete:**
+- Removed `services.AddMediator()` from entry point
+- Removed `using Microsoft.Extensions.DependencyInjection;`
+- Removed `.AddAutoHelp()` and `.WithMetadata()` (not recognized by DSL interpreter, not needed with CreateBuilder)
+
+**Phase 12 In Progress - BLOCKED:**
+
+Updated all 14 message files to remove `using Mediator;` and convert interfaces:
+- Queries: Use `IQuery<Unit>` and `IQueryHandler<T, Unit>` (4 files)
+- Commands: Use `ICommand<Unit>` and `ICommandHandler<T, Unit>` (5 files)
+- Idempotent: Use `IIdempotentCommand<Unit>` and `IIdempotentCommandHandler<T, Unit>` (2 files)
+- Unspecified: Converted `PingRequest` to `PingQuery` (1 file)
+- Group bases: No changes needed (2 files)
+
+**Generator bugs discovered blocking compilation:**
+
+1. **#309 - Type conversion for typed options:** `DeployCommand.Replicas` is `int` but generator assigns `string` directly. Need to emit `int.Parse()`.
+
+2. **#310 - Hyphenated option variable naming:** `DockerBuildCommand` has `--no-cache` option. Generator declares `noCache` but references `nocache` in property binding.
+
+3. **#311 - Catch-all `Args` collision:** `ExecCommand.Args` generates `string[] args = args[1..]` which shadows the method parameter.
+
+**Next:** Fix #309, #310, #311 to unblock Phase 12.

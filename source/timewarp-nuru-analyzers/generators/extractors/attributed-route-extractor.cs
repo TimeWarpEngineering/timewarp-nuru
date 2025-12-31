@@ -63,6 +63,10 @@ internal static class AttributedRouteExtractor
       return null;
     }
 
+    // Extract filter interfaces (for behavior filtering)
+    ImmutableArray<InterfaceImplementationDefinition> filterInterfaces =
+      ExtractFilterInterfaces(classDeclaration, semanticModel, cancellationToken);
+
     // Calculate specificity
     int specificity = mergedSegments.Sum(s => s.SpecificityContribution);
 
@@ -73,7 +77,8 @@ internal static class AttributedRouteExtractor
       messageType: messageType,
       description: description,
       groupPrefix: groupPrefix,
-      computedSpecificity: specificity);
+      computedSpecificity: specificity,
+      implements: filterInterfaces);
   }
 
   /// <summary>
@@ -495,6 +500,79 @@ internal static class AttributedRouteExtractor
     }
 
     return HandlerReturnType.Task;
+  }
+
+  /// <summary>
+  /// Extracts filter interfaces from the command class.
+  /// Excludes Mediator interfaces (ICommand, IQuery, etc.) as those are for message typing, not behavior filtering.
+  /// </summary>
+  private static ImmutableArray<InterfaceImplementationDefinition> ExtractFilterInterfaces
+  (
+    ClassDeclarationSyntax classDeclaration,
+    SemanticModel semanticModel,
+    CancellationToken cancellationToken
+  )
+  {
+    INamedTypeSymbol? classSymbol = semanticModel.GetDeclaredSymbol(classDeclaration, cancellationToken);
+    if (classSymbol is null)
+      return [];
+
+    ImmutableArray<InterfaceImplementationDefinition>.Builder filterInterfaces =
+      ImmutableArray.CreateBuilder<InterfaceImplementationDefinition>();
+
+    foreach (INamedTypeSymbol iface in classSymbol.AllInterfaces)
+    {
+      // Skip Mediator message interfaces
+      string interfaceName = iface.Name;
+      if (IsMediatorInterface(interfaceName))
+        continue;
+
+      // Skip common .NET interfaces
+      if (IsCommonDotNetInterface(iface))
+        continue;
+
+      // This is a filter interface - add it
+      string fullTypeName = iface.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+
+      // For attributed routes, properties are already on the class - no extraction needed
+      filterInterfaces.Add(new InterfaceImplementationDefinition(
+        FullInterfaceTypeName: fullTypeName,
+        Properties: []));
+    }
+
+    return filterInterfaces.ToImmutable();
+  }
+
+  /// <summary>
+  /// Checks if an interface is a Mediator message interface.
+  /// </summary>
+  private static bool IsMediatorInterface(string interfaceName)
+  {
+    return interfaceName is "ICommand" or "IQuery" or "IIdempotentCommand"
+        || interfaceName.StartsWith("ICommand`", StringComparison.Ordinal)
+        || interfaceName.StartsWith("IQuery`", StringComparison.Ordinal)
+        || interfaceName.StartsWith("IIdempotentCommand`", StringComparison.Ordinal)
+        || interfaceName is "ICommandHandler" or "IQueryHandler"
+        || interfaceName.StartsWith("ICommandHandler`", StringComparison.Ordinal)
+        || interfaceName.StartsWith("IQueryHandler`", StringComparison.Ordinal);
+  }
+
+  /// <summary>
+  /// Checks if an interface is a common .NET interface that shouldn't be treated as a filter.
+  /// </summary>
+  private static bool IsCommonDotNetInterface(INamedTypeSymbol iface)
+  {
+    string? containingNamespace = iface.ContainingNamespace?.ToDisplayString();
+
+    // Skip System.* interfaces
+    if (containingNamespace?.StartsWith("System", StringComparison.Ordinal) == true)
+      return true;
+
+    // Skip Microsoft.* interfaces
+    if (containingNamespace?.StartsWith("Microsoft", StringComparison.Ordinal) == true)
+      return true;
+
+    return false;
   }
 
   /// <summary>

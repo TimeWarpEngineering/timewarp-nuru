@@ -204,17 +204,19 @@ public sealed class AuthorizationBehavior : INuruBehavior
 - [x] Add `DispatchImplements()` to DSL interpreter
 - [x] Commit: `1ec3e690`
 
-### Phase 6: Generate Command Classes for Delegate Routes ⏳
-- [ ] Generate `__Route_N_Command` classes for all delegate routes
-- [ ] Include route parameters as properties
-- [ ] Implement interfaces from `.Implements<T>()` calls
-- [ ] Emit interface property implementations with extracted values
+### Phase 6: Generate Command Classes for Delegate Routes ✅
+- [x] Generate `__Route_N_Command` classes for all delegate routes
+- [x] Include route parameters as properties
+- [x] Implement interfaces from `.Implements<T>()` calls
+- [x] Emit interface property implementations with extracted values
+- [x] Filter behaviors based on `FilterTypeName` vs route's implemented interfaces
+- [x] For filtered behaviors, create typed `BehaviorContext<TFilter>`
+- [x] Pass command instance to context for all routes
+- [x] Commit: (latest)
 
-### Phase 7: Update Behavior Emitter for Filtered Pipelines ⏳
-- [ ] Filter behaviors based on `FilterTypeName` vs route's implemented interfaces
-- [ ] For filtered behaviors, create typed `BehaviorContext<TFilter>`
-- [ ] Pass command instance to context for all routes
-- [ ] For attributed routes, detect implemented interfaces from command class
+### Phase 7: Attributed Routes Interface Detection ⏳
+- [ ] Extract implemented interfaces from attributed command classes
+- [ ] Add `ImplementedInterfaces` to attributed route extraction
 
 ### Phase 8: Update Samples ⏳
 - [ ] Convert `pipeline-middleware-authorization.cs` to `INuruBehavior<IRequireAuthorization>`

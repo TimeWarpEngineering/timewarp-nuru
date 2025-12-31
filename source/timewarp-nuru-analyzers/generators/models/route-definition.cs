@@ -44,7 +44,8 @@ public sealed record RouteDefinition(
     ImmutableArray<string>? aliases = null,
     string? groupPrefix = null,
     int computedSpecificity = 0,
-    int order = 0)
+    int order = 0,
+    ImmutableArray<InterfaceImplementationDefinition>? implements = null)
   {
     return new RouteDefinition(
       OriginalPattern: originalPattern,
@@ -56,7 +57,8 @@ public sealed record RouteDefinition(
       Aliases: aliases ?? [],
       GroupPrefix: groupPrefix,
       ComputedSpecificity: computedSpecificity,
-      Order: order);
+      Order: order,
+      Implements: implements ?? []);
   }
 
   /// <summary>

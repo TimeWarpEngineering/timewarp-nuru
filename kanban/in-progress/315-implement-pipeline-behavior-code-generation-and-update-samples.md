@@ -32,7 +32,101 @@ The V2 source generator has infrastructure for behaviors but no code generation:
 
 Source generator should emit inline behavior code. No runtime `IPipelineBehavior` interface needed.
 
-**User writes:**
+## Design Decisions (Finalized)
+
+### 1. Interface Pattern: `INuruBehavior` with `OnBeforeAsync`/`OnAfterAsync`/`OnErrorAsync`
+
+**Chosen approach:** Interface-based with async-first methods and default no-op implementations.
+
+```csharp
+public interface INuruBehavior
+{
+  ValueTask OnBeforeAsync(BehaviorContext context) => ValueTask.CompletedTask;
+  ValueTask OnAfterAsync(BehaviorContext context) => ValueTask.CompletedTask;
+  ValueTask OnErrorAsync(BehaviorContext context, Exception exception) => ValueTask.CompletedTask;
+}
+```
+
+**Why this approach:**
+- Familiar pattern (similar to Mediator/MediatR)
+- Async-first for flexibility
+- Default implementations mean behaviors only override what they need
+- No `next` callback - generator handles chaining
+
+### 2. Service Injection: Constructor Injection (Singleton behaviors)
+
+Behaviors are instantiated once (Singleton) with services injected via constructor:
+
+```csharp
+public class LoggingBehavior(ILogger<LoggingBehavior> logger) : INuruBehavior
+{
+  public ValueTask OnBeforeAsync(BehaviorContext context)
+  {
+    logger.LogInformation("[{CorrelationId}] Handling {Command}", 
+      context.CorrelationId, context.CommandName);
+    return ValueTask.CompletedTask;
+  }
+}
+```
+
+### 3. Per-Request State: Nested `State` class inheriting from `BehaviorContext`
+
+Behaviors needing per-request state define a nested `State` class:
+
+```csharp
+public class PerformanceBehavior(ILogger<PerformanceBehavior> logger) : INuruBehavior
+{
+  // Nested State class for per-request state
+  public class State : BehaviorContext
+  {
+    public Stopwatch Stopwatch { get; } = new();
+  }
+  
+  public ValueTask OnBeforeAsync(State state)
+  {
+    state.Stopwatch.Start();
+    return ValueTask.CompletedTask;
+  }
+  
+  public ValueTask OnAfterAsync(State state)
+  {
+    state.Stopwatch.Stop();
+    if (state.Stopwatch.ElapsedMilliseconds > 500)
+      logger.LogWarning("[{CorrelationId}] {Command} took {Ms}ms", 
+        state.CorrelationId, state.CommandName, state.Stopwatch.ElapsedMilliseconds);
+    return ValueTask.CompletedTask;
+  }
+}
+```
+
+**Key insight:** Developer experience looks like MediatR transient (instance state), but reality is Singleton with per-request context.
+
+### 4. Base Context: `BehaviorContext` with built-in properties
+
+```csharp
+public class BehaviorContext
+{
+  public required string CommandName { get; init; }
+  public required string CommandTypeName { get; init; }
+  public required CancellationToken CancellationToken { get; init; }
+  public string CorrelationId { get; } = Guid.NewGuid().ToString();  // Built-in for troubleshooting
+  public Stopwatch Stopwatch { get; } = Stopwatch.StartNew();        // Built-in for timing
+}
+```
+
+### 5. Execution Order
+
+Behaviors execute in registration order:
+- First registered = outermost (OnBefore first, OnAfter last)
+- Last registered = innermost (OnBefore last, OnAfter first)
+
+### 6. Sharing State Between Behaviors
+
+**Deferred to backlog.** If needed later, can add `Items` dictionary to `BehaviorContext`.
+
+## Example: What Developer Writes vs What Generator Emits
+
+**Developer writes:**
 ```csharp
 NuruApp.CreateBuilder(args)
   .AddBehavior<LoggingBehavior>()
@@ -45,100 +139,64 @@ NuruApp.CreateBuilder(args)
 ```csharp
 if (args is ["ping"])
 {
-  // LoggingBehavior - before
-  logger.LogInformation("[PIPELINE] Handling ping");
-  var stopwatch = Stopwatch.StartNew();
+  // Create contexts
+  var __context = new BehaviorContext
+  {
+    CommandName = "ping",
+    CommandTypeName = "PingCommand",
+    CancellationToken = cancellationToken
+  };
+  var __state_Performance = new PerformanceBehavior.State
+  {
+    CommandName = "ping",
+    CommandTypeName = "PingCommand",
+    CancellationToken = cancellationToken
+  };
   
-  try 
+  // OnBefore (outermost first)
+  await __behavior_Logging.OnBeforeAsync(__context);
+  await __behavior_Performance.OnBeforeAsync(__state_Performance);
+  
+  try
   {
     // Handler
     string result = "pong";
     app.Terminal.WriteLine(result);
     
-    // PerformanceBehavior - after
-    stopwatch.Stop();
-    if (stopwatch.ElapsedMilliseconds > 500)
-      logger.LogWarning("[PERFORMANCE] ping took {ElapsedMs}ms", stopwatch.ElapsedMilliseconds);
+    // OnAfter (innermost first - reverse order)
+    await __behavior_Performance.OnAfterAsync(__state_Performance);
+    await __behavior_Logging.OnAfterAsync(__context);
     
-    // LoggingBehavior - after
-    logger.LogInformation("[PIPELINE] Completed ping");
     return 0;
   }
-  catch (Exception ex)
+  catch (Exception __ex)
   {
-    logger.LogError(ex, "[PIPELINE] Error handling ping");
+    // OnError (innermost first - reverse order)
+    await __behavior_Performance.OnErrorAsync(__state_Performance, __ex);
+    await __behavior_Logging.OnErrorAsync(__context, __ex);
     throw;
   }
 }
 ```
 
-## Design Decisions Needed
-
-### 1. How to specify behavior code?
-
-**Option A: Convention-based methods**
-```csharp
-public class LoggingBehavior
-{
-  public static void Before(string commandName, ILogger logger) 
-    => logger.LogInformation("[PIPELINE] Handling {Command}", commandName);
-  
-  public static void After(string commandName, ILogger logger)
-    => logger.LogInformation("[PIPELINE] Completed {Command}", commandName);
-  
-  public static void OnError(string commandName, Exception ex, ILogger logger)
-    => logger.LogError(ex, "[PIPELINE] Error handling {Command}", commandName);
-}
-```
-
-**Option B: Interface with source-gen extraction**
-```csharp
-public interface INuruBehavior
-{
-  void Before(BehaviorContext context);
-  void After(BehaviorContext context);
-  void OnError(BehaviorContext context, Exception ex);
-}
-```
-
-**Option C: Attribute-based code blocks**
-```csharp
-[NuruBehavior]
-public static class LoggingBehavior
-{
-  [Before]
-  public static string BeforeCode => """
-    logger.LogInformation("[PIPELINE] Handling {command}");
-    """;
-}
-```
-
-### 2. How to handle behavior dependencies?
-
-Behaviors may need services (ILogger, IConfiguration, etc.). Options:
-- Extract from behavior class constructor
-- Use same service resolution as handlers (static instantiation per #292)
-
-### 3. Execution order
-
-Behaviors execute in registration order:
-- First registered = outermost (before first, after last)
-- Last registered = innermost (before last, after first)
-
 ## Checklist
 
-### Phase 1: Design and Interface
-- [ ] Decide on behavior specification approach (Option A/B/C above)
-- [ ] Create `INuruBehavior` or equivalent in `timewarp-nuru-core/abstractions/`
-- [ ] Create `BehaviorContext` if needed
-- [ ] Document behavior authoring pattern
+### Phase 1: Design and Interface ✅
+- [x] Decide on behavior specification approach → `INuruBehavior` interface
+- [x] Design `BehaviorContext` base class
+- [x] Design nested `State` pattern for per-request state
+- [x] Document behavior authoring pattern
+
+### Phase 1.1: Create Interface File
+- [ ] Create `source/timewarp-nuru-core/abstractions/behavior-interfaces.cs`
+- [ ] Commit: `feat(core): add INuruBehavior interface and BehaviorContext`
 
 ### Phase 2: Generator Implementation
-- [ ] Create `behavior-emitter.cs` in `generators/emitters/`
-- [ ] Extract behavior method bodies from syntax tree
-- [ ] Generate before/after/error wrapping code
-- [ ] Integrate with `handler-invoker-emitter.cs`
-- [ ] Handle behavior dependencies (service injection)
+- [ ] Create `behavior-extractor.cs` - find behaviors, extract State classes
+- [ ] Create `behavior-emitter.cs` - emit context creation and method calls
+- [ ] Integrate with `interceptor-emitter.cs` - wrap handler with behavior calls
+- [ ] Handle behavior service dependencies (constructor injection)
+- [ ] Handle behaviors with/without custom State class
 
 ### Phase 3: Update Samples (one by one)
 
@@ -185,9 +243,10 @@ Behaviors execute in registration order:
 
 | File | Action |
 |------|--------|
-| `source/timewarp-nuru-core/abstractions/behavior-interfaces.cs` | Create - behavior authoring interface |
+| `source/timewarp-nuru-core/abstractions/behavior-interfaces.cs` | Create - `INuruBehavior`, `BehaviorContext` |
+| `source/timewarp-nuru-analyzers/generators/extractors/behavior-extractor.cs` | Create - extract behaviors and State classes |
 | `source/timewarp-nuru-analyzers/generators/emitters/behavior-emitter.cs` | Create - code generation |
-| `source/timewarp-nuru-analyzers/generators/emitters/handler-invoker-emitter.cs` | Modify - integrate behaviors |
+| `source/timewarp-nuru-analyzers/generators/emitters/interceptor-emitter.cs` | Modify - integrate behavior wrapping |
 | `samples/_pipeline-middleware/*.cs` | Modify - migrate from Mediator |
 | `samples/_pipeline-middleware/overview.md` | Modify - update documentation |
 
@@ -202,6 +261,12 @@ Behaviors execute in registration order:
 - #289 V2 Generator Phase 7: Zero-Cost Runtime
 - #312 Update samples to use NuruApp.CreateBuilder
 
+## Backlog Items (Deferred)
+
+- [ ] Sharing state between behaviors (Items dictionary on BehaviorContext)
+- [ ] Marker interface pattern for selective behavior application
+- [ ] Configurable CorrelationId format
+
 ## Notes
 
 ### Why source-gen behaviors?
@@ -214,14 +279,6 @@ Source-generating behavior code eliminates:
 - Runtime reflection for behavior discovery
 - DI container overhead for behavior instantiation
 - Generic type instantiation at runtime
-
-### Marker Interface Pattern
-
-Behaviors like `AuthorizationBehavior` and `RetryBehavior` use marker interfaces (`IRequireAuthorization`, `IRetryable`) to selectively apply. The generator needs to:
-1. Detect if command implements marker interface
-2. Only emit behavior code if marker is present
-
-This may require semantic analysis of the command type at generation time.
 
 ### Reference
 

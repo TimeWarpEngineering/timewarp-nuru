@@ -9,7 +9,6 @@
 //   dotnet publish -c Release -r win-x64      # Windows
 //
 // Result: ~10 MB native binary with instant startup
-//         (enable InvariantGlobalization in csproj for ~5 MB)
 
 using TimeWarp.Nuru;
 using static System.Console;

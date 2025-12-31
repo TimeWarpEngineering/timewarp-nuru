@@ -10,7 +10,7 @@
     <!-- Use partial trimming to preserve reflection used by Nuru framework -->
     <TrimMode>partial</TrimMode>
 
-    <!-- Optional: Disable globalization for smaller binaries (~1-2 MB savings) -->
+    <!-- Optional: Disable globalization for smaller binaries (minimal savings in .NET 10) -->
     <!-- <InvariantGlobalization>true</InvariantGlobalization> -->
 
     <!-- Optional: View generated source files for debugging -->

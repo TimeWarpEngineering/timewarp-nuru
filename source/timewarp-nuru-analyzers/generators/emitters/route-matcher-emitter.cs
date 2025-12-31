@@ -18,8 +18,18 @@ internal static class RouteMatcherEmitter
   /// <param name="route">The route definition to emit.</param>
   /// <param name="routeIndex">The index of this route (used for unique handler names).</param>
   /// <param name="services">Registered services from ConfigureServices.</param>
-  public static void Emit(StringBuilder sb, RouteDefinition route, int routeIndex, ImmutableArray<ServiceDefinition> services)
+  /// <param name="behaviors">Pipeline behaviors to wrap the handler with.</param>
+  public static void Emit(
+    StringBuilder sb,
+    RouteDefinition route,
+    int routeIndex,
+    ImmutableArray<ServiceDefinition> services,
+    ImmutableArray<BehaviorDefinition> behaviors = default)
   {
+    // Use empty array if behaviors not provided
+    if (behaviors.IsDefault)
+      behaviors = [];
+
     // Comment showing the route pattern
     sb.AppendLine(
       $"    // Route: {EscapeXmlComment(route.FullPattern)}");
@@ -28,11 +38,11 @@ internal static class RouteMatcherEmitter
     // Use complex matching for routes with options, catch-all, or optional positional params
     if (route.HasOptions || route.HasCatchAll || route.HasOptionalPositionalParams)
     {
-      EmitComplexMatch(sb, route, routeIndex, services);
+      EmitComplexMatch(sb, route, routeIndex, services, behaviors);
     }
     else
     {
-      EmitSimpleMatch(sb, route, routeIndex, services);
+      EmitSimpleMatch(sb, route, routeIndex, services, behaviors);
     }
 
     sb.AppendLine();
@@ -42,7 +52,12 @@ internal static class RouteMatcherEmitter
   /// Emits simple pattern matching using C# list patterns.
   /// Used for routes with only literals and required parameters.
   /// </summary>
-  private static void EmitSimpleMatch(StringBuilder sb, RouteDefinition route, int routeIndex, ImmutableArray<ServiceDefinition> services)
+  private static void EmitSimpleMatch(
+    StringBuilder sb,
+    RouteDefinition route,
+    int routeIndex,
+    ImmutableArray<ServiceDefinition> services,
+    ImmutableArray<BehaviorDefinition> behaviors)
   {
     string pattern = BuildListPattern(route, routeIndex);
 
@@ -55,10 +70,21 @@ internal static class RouteMatcherEmitter
     // Emit type conversions for typed parameters
     EmitTypeConversions(sb, route, routeIndex, indent: 6);
 
-    // Emit handler invocation
-    HandlerInvokerEmitter.Emit(sb, route, routeIndex, services, indent: 6);
+    // Emit handler invocation (wrapped with behaviors if any)
+    if (behaviors.Length > 0)
+    {
+      BehaviorEmitter.EmitPipelineWrapper(
+        sb, route, routeIndex, behaviors, services, indent: 6,
+        () => HandlerInvokerEmitter.Emit(sb, route, routeIndex, services, indent: 8));
 
-    sb.AppendLine("      return 0;");
+      sb.AppendLine("      return 0;");
+    }
+    else
+    {
+      HandlerInvokerEmitter.Emit(sb, route, routeIndex, services, indent: 6);
+      sb.AppendLine("      return 0;");
+    }
+
     sb.AppendLine("    }");
   }
 
@@ -66,7 +92,12 @@ internal static class RouteMatcherEmitter
   /// Emits complex matching logic for routes with options or catch-all parameters.
   /// Uses length checks and manual parsing.
   /// </summary>
-  private static void EmitComplexMatch(StringBuilder sb, RouteDefinition route, int routeIndex, ImmutableArray<ServiceDefinition> services)
+  private static void EmitComplexMatch(
+    StringBuilder sb,
+    RouteDefinition route,
+    int routeIndex,
+    ImmutableArray<ServiceDefinition> services,
+    ImmutableArray<BehaviorDefinition> behaviors)
   {
     // Calculate minimum required args
     int minArgs = route.Literals.Count() + route.Parameters.Count(p => !p.IsOptional && !p.IsCatchAll);
@@ -92,10 +123,21 @@ internal static class RouteMatcherEmitter
     // Emit option parsing
     EmitOptionParsing(sb, route, routeIndex);
 
-    // Emit handler invocation
-    HandlerInvokerEmitter.Emit(sb, route, routeIndex, services, indent: 6);
+    // Emit handler invocation (wrapped with behaviors if any)
+    if (behaviors.Length > 0)
+    {
+      BehaviorEmitter.EmitPipelineWrapper(
+        sb, route, routeIndex, behaviors, services, indent: 6,
+        () => HandlerInvokerEmitter.Emit(sb, route, routeIndex, services, indent: 8));
 
-    sb.AppendLine("      return 0;");
+      sb.AppendLine("      return 0;");
+    }
+    else
+    {
+      HandlerInvokerEmitter.Emit(sb, route, routeIndex, services, indent: 6);
+      sb.AppendLine("      return 0;");
+    }
+
     sb.AppendLine("    }");
     sb.AppendLine($"    route_skip_{routeIndex}:;");
   }

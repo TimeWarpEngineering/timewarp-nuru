@@ -25,6 +25,8 @@ internal static class InterceptorEmitter
     EmitNamespaceAndUsings(sb, model);
     EmitClassStart(sb);
     EmitServiceFields(sb, model.Services);
+    BehaviorEmitter.EmitBehaviorFields(sb, model.Behaviors, model.Services);
+    BehaviorEmitter.EmitGeneratedStateClasses(sb, model.Behaviors);
     EmitInterceptsLocation(sb, model.InterceptSites);
     EmitMethodSignature(sb);
     EmitMethodBody(sb, model);
@@ -218,7 +220,7 @@ internal static class InterceptorEmitter
     int routeIndex = 0;
     foreach (RouteDefinition route in model.RoutesBySpecificity)
     {
-      RouteMatcherEmitter.Emit(sb, route, routeIndex, model.Services);
+      RouteMatcherEmitter.Emit(sb, route, routeIndex, model.Services, model.Behaviors);
       routeIndex++;
     }
 

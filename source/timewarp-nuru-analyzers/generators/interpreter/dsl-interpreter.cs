@@ -544,7 +544,7 @@ public sealed class DslInterpreter
 
   /// <summary>
   /// Dispatches AddBehavior() call to IIrAppBuilder.
-  /// Extracts the behavior type from typeof() expression.
+  /// Extracts the behavior type, constructor dependencies, and nested State class.
   /// </summary>
   private object? DispatchAddBehavior(InvocationExpressionSyntax invocation, object? receiver)
   {
@@ -567,16 +567,79 @@ public sealed class DslInterpreter
     {
       TypeInfo typeInfo = SemanticModel.GetTypeInfo(typeofExpr.Type);
       ITypeSymbol? behaviorType = typeInfo.Type;
-      if (behaviorType is not null)
+      if (behaviorType is INamedTypeSymbol namedType)
       {
-        string typeName = behaviorType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-        BehaviorDefinition behavior = BehaviorDefinition.ForAll(typeName);
+        string typeName = namedType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+
+        // Extract constructor dependencies
+        ImmutableArray<ParameterBinding> constructorDeps = ExtractBehaviorConstructorDependencies(namedType);
+
+        // Look for nested State class that inherits from BehaviorContext
+        string? stateTypeName = FindNestedStateClass(namedType);
+
+        BehaviorDefinition behavior = BehaviorDefinition.ForAll(
+          typeName,
+          order: 0,
+          constructorDependencies: constructorDeps,
+          stateTypeName: stateTypeName);
+
         return appBuilder.AddBehavior(behavior);
       }
     }
 
     // If we can't extract the type, just return the builder unchanged
     return appBuilder;
+  }
+
+  /// <summary>
+  /// Extracts constructor dependencies from a behavior type.
+  /// </summary>
+  private static ImmutableArray<ParameterBinding> ExtractBehaviorConstructorDependencies(INamedTypeSymbol behaviorType)
+  {
+    // Find the primary constructor or first non-implicit constructor
+    IMethodSymbol? constructor = behaviorType.Constructors
+      .FirstOrDefault(c => !c.IsImplicitlyDeclared && c.DeclaredAccessibility == Accessibility.Public);
+
+    if (constructor is null || constructor.Parameters.Length == 0)
+      return [];
+
+    ImmutableArray<ParameterBinding>.Builder deps = ImmutableArray.CreateBuilder<ParameterBinding>();
+
+    foreach (IParameterSymbol param in constructor.Parameters)
+    {
+      string paramTypeName = param.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+      deps.Add(ParameterBinding.FromService(param.Name, paramTypeName));
+    }
+
+    return deps.ToImmutable();
+  }
+
+  /// <summary>
+  /// Finds a nested State class that inherits from BehaviorContext.
+  /// </summary>
+  private static string? FindNestedStateClass(INamedTypeSymbol behaviorType)
+  {
+    // Look for a nested type named "State"
+    INamedTypeSymbol? stateType = behaviorType.GetTypeMembers("State").FirstOrDefault();
+
+    if (stateType is null)
+      return null;
+
+    // Verify it inherits from BehaviorContext
+    INamedTypeSymbol? baseType = stateType.BaseType;
+    while (baseType is not null)
+    {
+      if (baseType.Name == "BehaviorContext" &&
+          baseType.ContainingNamespace.ToDisplayString() == "TimeWarp.Nuru")
+      {
+        return stateType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+      }
+
+      baseType = baseType.BaseType;
+    }
+
+    // State class exists but doesn't inherit from BehaviorContext - ignore it
+    return null;
   }
 
   /// <summary>

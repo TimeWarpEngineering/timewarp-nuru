@@ -309,6 +309,8 @@ public sealed class DslInterpreter
 
       "WithAlias" => DispatchWithAlias(invocation, receiver),
 
+      "Implements" => DispatchImplements(invocation, receiver),
+
       "RunAsync" => DispatchRunAsyncCall(invocation, receiver),
 
       _ => HandleNonDslMethod(invocation, receiver, methodName)
@@ -718,6 +720,28 @@ public sealed class DslInterpreter
     }
 
     return routeBuilder.WithAlias(alias);
+  }
+
+  /// <summary>
+  /// Dispatches Implements&lt;T&gt;() call to IIrRouteBuilder.
+  /// Extracts the interface type and property assignments from the expression.
+  /// </summary>
+  private object? DispatchImplements(InvocationExpressionSyntax invocation, object? receiver)
+  {
+    if (receiver is not IIrRouteBuilder routeBuilder)
+    {
+      throw new InvalidOperationException(
+        $"Implements<T>() must be called on a route builder. Location: {invocation.GetLocation().GetLineSpan()}");
+    }
+
+    InterfaceImplementationDefinition? implementation = ImplementsExtractor.Extract(invocation, SemanticModel);
+    if (implementation is null)
+    {
+      throw new InvalidOperationException(
+        $"Could not extract interface implementation from Implements<T>(). Location: {invocation.GetLocation().GetLineSpan()}");
+    }
+
+    return routeBuilder.AddImplementation(implementation);
   }
 
   /// <summary>

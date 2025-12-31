@@ -44,21 +44,10 @@ These samples have been verified working with the new API:
 - [ ] `builtin-types-example.cs` - block body handler formatting
 - [ ] `custom-type-converter-example.cs` - likely same
 
-### Requires Mediator Pipeline Behaviors (not yet supported in TimeWarp.Nuru)
-These samples demonstrate Mediator's `IPipelineBehavior<TMessage, TResponse>` for cross-cutting concerns.
-TimeWarp.Nuru does not yet have an equivalent pipeline middleware system.
+### Pipeline Middleware Samples - See #315
+These samples require pipeline behavior code generation which is tracked in **#315**.
 
-- [ ] `_pipeline-middleware/pipeline-middleware-basic.cs` - LoggingBehavior, PerformanceBehavior
-- [ ] `_pipeline-middleware/pipeline-middleware-authorization.cs` - AuthorizationBehavior
-- [ ] `_pipeline-middleware/pipeline-middleware-exception.cs` - ExceptionHandlingBehavior
-- [ ] `_pipeline-middleware/pipeline-middleware-retry.cs` - RetryBehavior
-- [ ] `_pipeline-middleware/pipeline-middleware-telemetry.cs` - TelemetryBehavior
-- [ ] `_pipeline-middleware/pipeline-middleware.cs` - Combined example
-
-**Options:**
-1. Keep as Mediator samples (separate from main samples)
-2. Create new task to implement pipeline middleware in TimeWarp.Nuru
-3. Remove samples and document as future feature
+- [ ] `_pipeline-middleware/*` - Blocked by #315 (behavior emitter implementation)
 
 ### Unchecked (need verification)
 - [ ] `_aspire-host-otel/`

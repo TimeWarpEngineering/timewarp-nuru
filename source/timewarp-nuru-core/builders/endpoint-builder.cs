@@ -132,6 +132,48 @@ public class EndpointBuilder<TBuilder> : INestedBuilder<TBuilder>
   }
 
   /// <summary>
+  /// Declares that this route's command implements the specified interface.
+  /// Used to enable filtered pipeline behaviors that only apply to commands implementing certain interfaces.
+  /// </summary>
+  /// <typeparam name="TFilter">The interface type to implement.</typeparam>
+  /// <param name="configure">
+  /// Expression that configures the interface properties.
+  /// The generator extracts property assignments at compile time.
+  /// </param>
+  /// <returns>This configurator for further endpoint configuration.</returns>
+  /// <remarks>
+  /// <para>
+  /// The source generator analyzes the expression to extract property assignments and generates
+  /// a command class that implements the interface with those values baked in.
+  /// </para>
+  /// <para>
+  /// Multiple <c>.Implements&lt;T&gt;()</c> calls can be chained to implement multiple interfaces.
+  /// </para>
+  /// </remarks>
+  /// <example>
+  /// <code>
+  /// // Single interface
+  /// .Map("admin {action}")
+  ///   .Implements&lt;IRequireAuthorization&gt;(x =&gt; x.RequiredPermission = "admin:execute")
+  ///   .WithHandler((string action) =&gt; Console.WriteLine($"Admin: {action}"))
+  ///   .Done()
+  ///
+  /// // Multiple interfaces (chained)
+  /// .Map("dangerous {op}")
+  ///   .Implements&lt;IRequireAuthorization&gt;(x =&gt; x.RequiredPermission = "danger:execute")
+  ///   .Implements&lt;IAuditable&gt;(x =&gt; x.AuditLevel = "Critical")
+  ///   .WithHandler((string op) =&gt; Console.WriteLine($"Dangerous: {op}"))
+  ///   .Done()
+  /// </code>
+  /// </example>
+  public EndpointBuilder<TBuilder> Implements<TFilter>(Expression<Action<TFilter>> configure) where TFilter : class
+  {
+    // Source generator extracts interface type and property assignments at compile time
+    _ = configure;
+    return this;
+  }
+
+  /// <summary>
   /// Adds a route pattern (forwarded to the app builder).
   /// Use <see cref="WithHandler"/> to set the handler after configuring the route.
   /// Enables fluent chaining after route configuration.

@@ -50,6 +50,13 @@ public interface IIrRouteBuilder
   IIrRouteBuilder AsIdempotentCommand();
 
   /// <summary>
+  /// Adds an interface implementation to this route's command.
+  /// </summary>
+  /// <param name="implementation">The interface implementation definition.</param>
+  /// <returns>This builder for chaining.</returns>
+  IIrRouteBuilder AddImplementation(InterfaceImplementationDefinition implementation);
+
+  /// <summary>
   /// Completes the route configuration and returns to the parent builder.
   /// </summary>
   /// <returns>The parent builder (boxed as object for polymorphic dispatch).</returns>

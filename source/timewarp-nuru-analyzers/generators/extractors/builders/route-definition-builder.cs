@@ -25,6 +25,7 @@ internal sealed class RouteDefinitionBuilder
   private string? GroupPrefix;
   private int Specificity;
   private int Order;
+  private ImmutableArray<InterfaceImplementationDefinition> Implements = [];
 
   /// <summary>
   /// Sets the original pattern string.
@@ -127,6 +128,24 @@ internal sealed class RouteDefinitionBuilder
   }
 
   /// <summary>
+  /// Adds an interface implementation (from .Implements&lt;T&gt;() fluent call).
+  /// </summary>
+  public RouteDefinitionBuilder WithImplements(InterfaceImplementationDefinition implementation)
+  {
+    Implements = Implements.Add(implementation);
+    return this;
+  }
+
+  /// <summary>
+  /// Sets all interface implementations.
+  /// </summary>
+  public RouteDefinitionBuilder WithImplements(ImmutableArray<InterfaceImplementationDefinition> implementations)
+  {
+    Implements = implementations;
+    return this;
+  }
+
+  /// <summary>
   /// Builds the immutable RouteDefinition.
   /// </summary>
   /// <exception cref="InvalidOperationException">Thrown when required fields are missing.</exception>
@@ -153,7 +172,8 @@ internal sealed class RouteDefinitionBuilder
       Aliases: Aliases,
       GroupPrefix: GroupPrefix,
       ComputedSpecificity: Specificity,
-      Order: Order
+      Order: Order,
+      Implements: Implements
     );
   }
 }

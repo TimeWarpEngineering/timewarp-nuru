@@ -106,6 +106,16 @@ public sealed class IrRouteBuilder<TParent> : IIrRouteBuilder
   }
 
   /// <summary>
+  /// Adds an interface implementation to this route's command.
+  /// Mirrors: RouteBuilder.Implements&lt;T&gt;()
+  /// </summary>
+  public IrRouteBuilder<TParent> AddImplementation(InterfaceImplementationDefinition implementation)
+  {
+    Builder.WithImplements(implementation);
+    return this;
+  }
+
+  /// <summary>
   /// Completes the route and returns to the parent builder.
   /// Mirrors: RouteBuilder.Done()
   /// </summary>
@@ -128,5 +138,6 @@ public sealed class IrRouteBuilder<TParent> : IIrRouteBuilder
   IIrRouteBuilder IIrRouteBuilder.AsQuery() => AsQuery();
   IIrRouteBuilder IIrRouteBuilder.AsCommand() => AsCommand();
   IIrRouteBuilder IIrRouteBuilder.AsIdempotentCommand() => AsIdempotentCommand();
+  IIrRouteBuilder IIrRouteBuilder.AddImplementation(InterfaceImplementationDefinition implementation) => AddImplementation(implementation);
   object IIrRouteBuilder.Done() => Done()!;
 }

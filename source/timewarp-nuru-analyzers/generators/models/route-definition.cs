@@ -14,6 +14,10 @@ namespace TimeWarp.Nuru.Generators;
 /// <param name="GroupPrefix">Prefix inherited from route group, if any</param>
 /// <param name="ComputedSpecificity">Calculated specificity for route matching priority</param>
 /// <param name="Order">Explicit order override, if specified</param>
+/// <param name="Implements">
+/// Interface implementations declared via <c>.Implements&lt;T&gt;()</c>.
+/// Used for delegate routes to declare filter interfaces for behaviors.
+/// </param>
 public sealed record RouteDefinition(
   string OriginalPattern,
   ImmutableArray<SegmentDefinition> Segments,
@@ -24,7 +28,8 @@ public sealed record RouteDefinition(
   ImmutableArray<string> Aliases,
   string? GroupPrefix,
   int ComputedSpecificity,
-  int Order)
+  int Order,
+  ImmutableArray<InterfaceImplementationDefinition> Implements = default)
 {
   /// <summary>
   /// Creates a RouteDefinition with default values for optional parameters.
@@ -101,4 +106,19 @@ public sealed record RouteDefinition(
   /// </summary>
   public bool HasOptionalPositionalParams =>
     Parameters.Any(p => p.IsOptional && !p.IsCatchAll);
+
+  /// <summary>
+  /// Gets the interface type names this route's command implements.
+  /// Combines interfaces from <c>.Implements&lt;T&gt;()</c> calls (delegate routes)
+  /// and from the command class itself (attributed routes).
+  /// </summary>
+  public IEnumerable<string> ImplementedInterfaces =>
+    Implements.IsDefaultOrEmpty
+      ? []
+      : Implements.Select(i => i.FullInterfaceTypeName);
+
+  /// <summary>
+  /// Gets whether this route has any interface implementations.
+  /// </summary>
+  public bool HasImplements => !Implements.IsDefaultOrEmpty && Implements.Length > 0;
 }

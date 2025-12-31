@@ -191,12 +191,14 @@ if (args is ["ping"])
 - [x] Create `source/timewarp-nuru-core/abstractions/behavior-interfaces.cs`
 - [x] Commit: `feat(core): add INuruBehavior interface and BehaviorContext`
 
-### Phase 2: Generator Implementation
-- [ ] Create `behavior-extractor.cs` - find behaviors, extract State classes
-- [ ] Create `behavior-emitter.cs` - emit context creation and method calls
-- [ ] Integrate with `interceptor-emitter.cs` - wrap handler with behavior calls
-- [ ] Handle behavior service dependencies (constructor injection)
-- [ ] Handle behaviors with/without custom State class
+### Phase 2: Generator Implementation ✅
+- [x] Enhanced `BehaviorDefinition` - add ConstructorDependencies, StateTypeName
+- [x] Enhanced DSL interpreter - extract constructor params and nested State class
+- [x] Create `behavior-emitter.cs` - emit context creation and method calls
+- [x] Integrate with `interceptor-emitter.cs` - emit behavior fields and state classes
+- [x] Integrate with `route-matcher-emitter.cs` - wrap handler with behavior calls
+- [x] Handle behavior service dependencies (constructor injection)
+- [x] Handle behaviors with/without custom State class (generate empty State if needed)
 
 ### Phase 3: Update Samples (one by one)
 

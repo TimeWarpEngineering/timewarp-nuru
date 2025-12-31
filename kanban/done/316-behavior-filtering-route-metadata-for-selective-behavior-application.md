@@ -229,11 +229,15 @@ public sealed class AuthorizationBehavior : INuruBehavior
 - [x] Updated CommandClassEmitter to emit `{ get; set; }` properties for interface compatibility
 - [x] Commit: `71e82665`
 
-### Phase 9: Testing ⏳
-- [ ] Unit tests for lambda syntax parsing
-- [ ] Unit tests for command class generation with interfaces
-- [ ] Integration tests for behavior filtering
-- [ ] Sample verification tests
+### Phase 9: Testing ✅
+- [x] Integration tests for behavior filtering (`behavior-filtering-01-implements-extraction.cs`)
+  - Route without `.Implements<T>()` executes without authorization behavior
+  - Unauthorized access is blocked on protected routes
+  - Authorized access is allowed with proper credentials
+  - Global behaviors still apply to all routes
+  - Sample compiles and runs correctly
+  - Behavior ordering is maintained (LoggingBehavior wraps AuthorizationBehavior)
+- [x] Commit: `42c9b709`
 
 ## Related Tasks
 

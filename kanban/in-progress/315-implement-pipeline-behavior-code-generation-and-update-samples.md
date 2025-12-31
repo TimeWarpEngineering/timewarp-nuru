@@ -275,55 +275,55 @@ Call flow: `Telemetry → Logging → Retry → Performance → Handler`
 
 ## Checklist
 
-### Phase 1: Update Interface ⏳
-- [ ] Update `INuruBehavior` to use `HandleAsync(context, next)` pattern
-- [ ] Remove `OnBeforeAsync`/`OnAfterAsync`/`OnErrorAsync` methods
-- [ ] Simplify `BehaviorContext` (remove Stopwatch, add Command property)
-- [ ] Remove nested `State` class detection from generator
+### Phase 1: Update Interface ✅
+- [x] Update `INuruBehavior` to use `HandleAsync(context, proceed)` pattern
+- [x] Remove `OnBeforeAsync`/`OnAfterAsync`/`OnErrorAsync` methods
+- [x] Simplify `BehaviorContext` (remove Stopwatch, add Command property)
+- [x] Remove nested `State` class detection from generator
 
-### Phase 2: Update Generator ⏳
-- [ ] Update `behavior-emitter.cs` for new pattern
-- [ ] Emit nested lambda chain instead of separate OnBefore/OnAfter/OnError calls
-- [ ] Simplify generated State class handling (no longer needed)
-- [ ] Pass command instance to BehaviorContext
+### Phase 2: Update Generator ✅
+- [x] Update `behavior-emitter.cs` for new pattern
+- [x] Emit nested lambda chain instead of separate OnBefore/OnAfter/OnError calls
+- [x] Simplify generated State class handling (no longer needed)
+- [x] Pass command instance to BehaviorContext
 
-### Phase 3: Re-convert Samples ⏳
+### Phase 3: Re-convert Samples ✅ (Core samples done, deferred samples blocked on #316)
 
 All samples need re-conversion with new pattern:
 
-#### 3.1: 01-pipeline-middleware-basic.cs
-- [ ] Update `LoggingBehavior` to `HandleAsync` pattern
-- [ ] Update `PerformanceBehavior` to `HandleAsync` pattern (use local Stopwatch)
-- [ ] Test: `./01-pipeline-middleware-basic.cs echo "Hello"`
-- [ ] Test: `./01-pipeline-middleware-basic.cs slow 600`
+#### 3.1: 01-pipeline-middleware-basic.cs ✅
+- [x] Update `LoggingBehavior` to `HandleAsync` pattern
+- [x] Update `PerformanceBehavior` to `HandleAsync` pattern (use local Stopwatch)
+- [x] Test: `./01-pipeline-middleware-basic.cs echo "Hello"`
+- [x] Test: `./01-pipeline-middleware-basic.cs slow 600`
 
-#### 3.2: 02-pipeline-middleware-exception.cs
-- [ ] Update `ExceptionHandlingBehavior` to `HandleAsync` pattern
-- [ ] Now CAN catch and handle exceptions properly
-- [ ] Test exception categorization
+#### 3.2: 02-pipeline-middleware-exception.cs ✅
+- [x] Update `ExceptionHandlingBehavior` to `HandleAsync` pattern
+- [x] Now CAN catch and handle exceptions properly
+- [x] Test exception categorization
 
-#### 3.3: 03-pipeline-middleware-telemetry.cs
-- [ ] Update `TelemetryBehavior` to `HandleAsync` pattern
-- [ ] Use `using` for Activity lifecycle (much cleaner!)
-- [ ] Remove awkward `State` class
-- [ ] Test distributed tracing
+#### 3.3: 03-pipeline-middleware-telemetry.cs ✅
+- [x] Update `TelemetryBehavior` to `HandleAsync` pattern
+- [x] Use `using` for Activity lifecycle (much cleaner!)
+- [x] Remove awkward `State` class
+- [x] Test distributed tracing
 
-#### 3.4: pipeline-middleware-authorization.cs
+#### 3.4: pipeline-middleware-authorization.cs (Blocked on #316)
 - [ ] Convert with `HandleAsync` pattern
 - [ ] Requires #316 for `context.Command` and `.Implements<T>()`
 - [ ] Test authorization flow
 
-#### 3.5: pipeline-middleware-retry.cs
+#### 3.5: pipeline-middleware-retry.cs (Blocked on #316)
 - [ ] Convert with `HandleAsync` pattern (NOW POSSIBLE!)
 - [ ] Requires #316 for `context.Command` and `.Implements<T>()`
 - [ ] Test retry with exponential backoff
 
-#### 3.6: pipeline-middleware.cs (combined)
+#### 3.6: pipeline-middleware.cs (combined) (Blocked on #316)
 - [ ] Update after all individual samples work
 
-### Phase 4: Update Documentation
-- [ ] Update `overview.md` for new pattern
-- [ ] Update examples in documentation
+### Phase 4: Update Documentation ✅
+- [x] Update `overview.md` for new pattern
+- [x] Update examples in documentation
 
 ## Files to Modify
 

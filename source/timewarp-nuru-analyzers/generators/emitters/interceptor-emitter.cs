@@ -26,7 +26,6 @@ internal static class InterceptorEmitter
     EmitClassStart(sb);
     EmitServiceFields(sb, model.Services);
     BehaviorEmitter.EmitBehaviorFields(sb, model.Behaviors, model.Services);
-    BehaviorEmitter.EmitGeneratedStateClasses(sb, model.Behaviors);
     EmitInterceptsLocation(sb, model.InterceptSites);
     EmitMethodSignature(sb);
     EmitMethodBody(sb, model);

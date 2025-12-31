@@ -12,21 +12,20 @@
 // The TelemetryBehavior creates Activity spans for observability in tracing
 // backends (Jaeger, Zipkin, Aspire Dashboard).
 //
-// KEY CONCEPT: Custom State Class
-//   The TelemetryBehavior uses a nested State class to hold the Activity
-//   across OnBeforeAsync → OnAfterAsync/OnErrorAsync method calls.
-//   This demonstrates per-request state management in behaviors.
+// KEY CONCEPT: Using Statement
+//   With HandleAsync pattern, we can use 'using' for the Activity lifecycle.
+//   No custom State class needed - much simpler than OnBefore/OnAfter pattern!
 //
 // ACTIVITY TAGS CAPTURED:
-//   - command.type: Full type name of the command
-//   - command.name: Simple type name of the command
-//   - correlation.id: Request correlation ID from BehaviorContext
+//   - command.type: Type name of the command
+//   - command.name: Route pattern
+//   - correlation.id: Request correlation ID
 //   - error.type: Exception type (on failure)
 //   - error.message: Exception message (on failure)
 //
 // BEHAVIOR EXECUTION ORDER:
-//   OnBefore: TelemetryBehavior → LoggingBehavior → Handler
-//   OnAfter:  LoggingBehavior → TelemetryBehavior (Activity disposed last)
+//   TelemetryBehavior wraps LoggingBehavior wraps Handler
+//   Activity span covers the entire nested execution.
 //
 // RUN THIS SAMPLE:
 //   ./03-pipeline-middleware-telemetry.cs trace database-query
@@ -93,8 +92,8 @@ return await app.RunAsync(args);
 /// distributed tracing. Activities integrate with OpenTelemetry exporters (Jaeger,
 /// Zipkin, OTLP) for visualization in tracing backends.
 ///
-/// The nested State class holds the Activity instance across method calls,
-/// demonstrating the per-request state pattern for behaviors.
+/// With HandleAsync pattern, we use 'using' for natural Activity lifecycle management.
+/// No custom State class needed - much simpler!
 /// </remarks>
 public sealed class TelemetryBehavior : INuruBehavior
 {
@@ -104,52 +103,32 @@ public sealed class TelemetryBehavior : INuruBehavior
   /// </summary>
   private static readonly ActivitySource CommandActivitySource = new("TimeWarp.Nuru.Commands", "1.0.0");
 
-  /// <summary>
-  /// Custom State class to hold Activity across OnBefore/OnAfter/OnError calls.
-  /// The generator detects this nested State class and creates instances of it.
-  /// </summary>
-  public sealed class State : BehaviorContext
+  public async ValueTask HandleAsync(BehaviorContext context, Func<ValueTask> proceed)
   {
-    public Activity? Activity { get; set; }
-  }
+    // Start activity with 'using' - automatically disposed at end of scope
+    using Activity? activity = CommandActivitySource.StartActivity(context.CommandName, ActivityKind.Internal);
 
-  public ValueTask OnBeforeAsync(BehaviorContext context)
-  {
-    if (context is State state)
+    // Set initial tags
+    activity?.SetTag("command.type", context.CommandTypeName);
+    activity?.SetTag("command.name", context.CommandName);
+    activity?.SetTag("correlation.id", context.CorrelationId);
+
+    WriteLine($"[TELEMETRY] Started activity for {context.CommandName}, TraceId: {activity?.TraceId.ToString() ?? "none"}");
+
+    try
     {
-      // Start activity and set initial tags
-      state.Activity = CommandActivitySource.StartActivity(state.CommandName, ActivityKind.Internal);
-      state.Activity?.SetTag("command.type", state.CommandTypeName);
-      state.Activity?.SetTag("command.name", state.CommandName);
-      state.Activity?.SetTag("correlation.id", state.CorrelationId);
-
-      WriteLine($"[TELEMETRY] Started activity for {state.CommandName}, TraceId: {state.Activity?.TraceId.ToString() ?? "none"}");
+      await proceed();
+      activity?.SetStatus(ActivityStatusCode.Ok);
+      WriteLine($"[TELEMETRY] Activity completed successfully for {context.CommandName}");
     }
-    return ValueTask.CompletedTask;
-  }
-
-  public ValueTask OnAfterAsync(BehaviorContext context)
-  {
-    if (context is State state)
+    catch (Exception ex)
     {
-      state.Activity?.SetStatus(ActivityStatusCode.Ok);
-      WriteLine($"[TELEMETRY] Activity completed successfully for {state.CommandName}");
-      state.Activity?.Dispose();
+      activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+      activity?.SetTag("error.type", ex.GetType().Name);
+      activity?.SetTag("error.message", ex.Message);
+      WriteLine($"[TELEMETRY] Activity failed for {context.CommandName}: {ex.Message}");
+      throw;
     }
-    return ValueTask.CompletedTask;
-  }
-
-  public ValueTask OnErrorAsync(BehaviorContext context, Exception exception)
-  {
-    if (context is State state)
-    {
-      state.Activity?.SetStatus(ActivityStatusCode.Error, exception.Message);
-      state.Activity?.SetTag("error.type", exception.GetType().Name);
-      state.Activity?.SetTag("error.message", exception.Message);
-      WriteLine($"[TELEMETRY] Activity failed for {state.CommandName}: {exception.Message}");
-      state.Activity?.Dispose();
-    }
-    return ValueTask.CompletedTask;
   }
 }
 
@@ -159,21 +138,19 @@ public sealed class TelemetryBehavior : INuruBehavior
 /// </summary>
 public sealed class LoggingBehavior : INuruBehavior
 {
-  public ValueTask OnBeforeAsync(BehaviorContext context)
+  public async ValueTask HandleAsync(BehaviorContext context, Func<ValueTask> proceed)
   {
     WriteLine($"[PIPELINE] [{context.CorrelationId[..8]}] Handling {context.CommandName}");
-    return ValueTask.CompletedTask;
-  }
 
-  public ValueTask OnAfterAsync(BehaviorContext context)
-  {
-    WriteLine($"[PIPELINE] [{context.CorrelationId[..8]}] Completed {context.CommandName}");
-    return ValueTask.CompletedTask;
-  }
-
-  public ValueTask OnErrorAsync(BehaviorContext context, Exception exception)
-  {
-    WriteLine($"[PIPELINE] [{context.CorrelationId[..8]}] Error in {context.CommandName}: {exception.GetType().Name}");
-    return ValueTask.CompletedTask;
+    try
+    {
+      await proceed();
+      WriteLine($"[PIPELINE] [{context.CorrelationId[..8]}] Completed {context.CommandName}");
+    }
+    catch (Exception ex)
+    {
+      WriteLine($"[PIPELINE] [{context.CorrelationId[..8]}] Error in {context.CommandName}: {ex.GetType().Name}");
+      throw;
+    }
   }
 }

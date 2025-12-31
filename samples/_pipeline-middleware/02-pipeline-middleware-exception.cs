@@ -7,10 +7,10 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 //
 // This sample demonstrates consistent exception handling across all commands
-// using TimeWarp.Nuru's INuruBehavior pattern.
+// using TimeWarp.Nuru's INuruBehavior with HandleAsync(context, proceed) pattern.
 //
-// The ExceptionHandlingBehavior's OnErrorAsync categorizes exceptions and
-// provides user-friendly error messages while the LoggingBehavior logs details.
+// The ExceptionHandlingBehavior catches exceptions, categorizes them, and provides
+// user-friendly error messages while the LoggingBehavior logs details.
 //
 // EXCEPTION CATEGORIES:
 //   - ValidationException: User input validation errors (show message)
@@ -19,14 +19,14 @@
 //   - All others: Unexpected errors (hide details from user)
 //
 // BEHAVIOR EXECUTION ORDER:
-//   OnBefore: LoggingBehavior → ExceptionHandlingBehavior → Handler
-//   OnError:  ExceptionHandlingBehavior → LoggingBehavior (reverse order)
+//   LoggingBehavior wraps ExceptionHandlingBehavior wraps Handler
+//   Exceptions bubble up: Handler → ExceptionHandling (catches) → Logging (catches)
 //
 // RUN THIS SAMPLE:
-//   ./pipeline-middleware-exception.cs error validation
-//   ./pipeline-middleware-exception.cs error auth
-//   ./pipeline-middleware-exception.cs error argument
-//   ./pipeline-middleware-exception.cs error unknown
+//   ./02-pipeline-middleware-exception.cs error validation
+//   ./02-pipeline-middleware-exception.cs error auth
+//   ./02-pipeline-middleware-exception.cs error argument
+//   ./02-pipeline-middleware-exception.cs error unknown
 // ═══════════════════════════════════════════════════════════════════════════════
 
 using System.ComponentModel.DataAnnotations;
@@ -35,7 +35,6 @@ using static System.Console;
 
 NuruCoreApp app = NuruApp.CreateBuilder(args)
   // Register behaviors - execute in order (first = outermost)
-  // OnError executes in reverse order: ExceptionHandling first, then Logging
   .AddBehavior(typeof(LoggingBehavior))
   .AddBehavior(typeof(ExceptionHandlingBehavior))
   // Error command to demonstrate exception handling behavior
@@ -64,33 +63,31 @@ return await app.RunAsync(args);
 
 /// <summary>
 /// Logging behavior that logs request entry and errors.
-/// Registered first (outermost) so OnError runs last - after user-friendly message is displayed.
+/// Registered first (outermost) - catches exceptions after ExceptionHandlingBehavior.
 /// </summary>
 public sealed class LoggingBehavior : INuruBehavior
 {
-  public ValueTask OnBeforeAsync(BehaviorContext context)
+  public async ValueTask HandleAsync(BehaviorContext context, Func<ValueTask> proceed)
   {
     WriteLine($"[PIPELINE] [{context.CorrelationId[..8]}] Handling {context.CommandName}");
-    return ValueTask.CompletedTask;
-  }
 
-  public ValueTask OnAfterAsync(BehaviorContext context)
-  {
-    WriteLine($"[PIPELINE] [{context.CorrelationId[..8]}] Completed {context.CommandName}");
-    return ValueTask.CompletedTask;
-  }
-
-  public ValueTask OnErrorAsync(BehaviorContext context, Exception exception)
-  {
-    // Log the error details (runs after ExceptionHandlingBehavior displays user message)
-    Error.WriteLine($"[PIPELINE] [{context.CorrelationId[..8]}] Error in {context.CommandName}: {exception.GetType().Name}");
-    return ValueTask.CompletedTask;
+    try
+    {
+      await proceed();
+      WriteLine($"[PIPELINE] [{context.CorrelationId[..8]}] Completed {context.CommandName}");
+    }
+    catch (Exception ex)
+    {
+      // Log the error details (runs after ExceptionHandlingBehavior displays user message)
+      Error.WriteLine($"[PIPELINE] [{context.CorrelationId[..8]}] Error in {context.CommandName}: {ex.GetType().Name}");
+      throw;
+    }
   }
 }
 
 /// <summary>
 /// Exception handling behavior that provides user-friendly error messages.
-/// Registered last (innermost) so OnError runs first - displays message before logging.
+/// Registered last (innermost) - catches exceptions first and displays friendly messages.
 /// </summary>
 /// <remarks>
 /// Exception handling categories:
@@ -99,31 +96,30 @@ public sealed class LoggingBehavior : INuruBehavior
 /// - ArgumentException: Invalid arguments (show message)
 /// - All others: Unexpected errors (hide details from user)
 ///
-/// Note: Unlike Mediator's IPipelineBehavior which can catch and transform exceptions,
-/// INuruBehavior.OnErrorAsync is for observation only - the exception will still propagate
-/// after all OnErrorAsync handlers complete.
+/// With HandleAsync pattern, we have full control - can catch, log, transform, or swallow.
+/// In this example, we display a user-friendly message then re-throw.
 /// </remarks>
 public sealed class ExceptionHandlingBehavior : INuruBehavior
 {
-  // OnBeforeAsync - nothing to do before handler
-  public ValueTask OnBeforeAsync(BehaviorContext context) => ValueTask.CompletedTask;
-
-  // OnAfterAsync - nothing to do on success
-  public ValueTask OnAfterAsync(BehaviorContext context) => ValueTask.CompletedTask;
-
-  public ValueTask OnErrorAsync(BehaviorContext context, Exception exception)
+  public async ValueTask HandleAsync(BehaviorContext context, Func<ValueTask> proceed)
   {
-    // Categorize and display user-friendly messages
-    // This runs first (innermost behavior) before LoggingBehavior logs details
-    string message = exception switch
+    try
     {
-      ValidationException ex => $"Validation error: {ex.Message}",
-      UnauthorizedAccessException ex => $"Access denied: {ex.Message}",
-      ArgumentException ex => $"Invalid argument: {ex.Message}",
-      _ => "Error: An unexpected error occurred. See logs for details."
-    };
+      await proceed();
+    }
+    catch (Exception exception)
+    {
+      // Categorize and display user-friendly messages
+      string message = exception switch
+      {
+        ValidationException ex => $"Validation error: {ex.Message}",
+        UnauthorizedAccessException ex => $"Access denied: {ex.Message}",
+        ArgumentException ex => $"Invalid argument: {ex.Message}",
+        _ => "Error: An unexpected error occurred. See logs for details."
+      };
 
-    Error.WriteLine($"[EXCEPTION] {message}");
-    return ValueTask.CompletedTask;
+      Error.WriteLine($"[EXCEPTION] {message}");
+      throw;  // Re-throw to let outer behaviors and framework handle it
+    }
   }
 }

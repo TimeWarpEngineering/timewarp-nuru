@@ -1,17 +1,16 @@
 // Emits pipeline behavior code for cross-cutting concerns.
-// Generates behavior instance fields, state classes, and pipeline wrapping.
+// Generates behavior instance fields and nested lambda pipeline.
 
 namespace TimeWarp.Nuru.Generators;
 
 using System.Text;
 
 /// <summary>
-/// Emits code for pipeline behaviors.
+/// Emits code for pipeline behaviors using the HandleAsync(context, next) pattern.
 /// Generates:
 /// - Static Lazy&lt;T&gt; fields for behavior instances (Singleton pattern)
-/// - Generated State classes for behaviors without custom state
-/// - Context/state creation code per route
-/// - Pipeline wrapping (OnBefore → Handler → OnAfter, with OnError in catch)
+/// - Nested lambda chain for pipeline execution
+/// - BehaviorContext creation with command instance
 /// </summary>
 internal static class BehaviorEmitter
 {
@@ -42,35 +41,13 @@ internal static class BehaviorEmitter
   }
 
   /// <summary>
-  /// Emits generated State classes for behaviors that don't define their own.
-  /// Called from InterceptorEmitter in the class body.
-  /// </summary>
-  public static void EmitGeneratedStateClasses(StringBuilder sb, ImmutableArray<BehaviorDefinition> behaviors)
-  {
-    // Find behaviors without custom state - materialize to array to avoid multiple enumeration
-    BehaviorDefinition[] behaviorsWithoutState = [.. behaviors.Where(b => !b.HasCustomState)];
-
-    if (behaviorsWithoutState.Length == 0)
-      return;
-
-    sb.AppendLine("  // Generated State classes for behaviors without custom state");
-
-    foreach (BehaviorDefinition behavior in behaviorsWithoutState)
-    {
-      sb.AppendLine($"  private sealed class {behavior.ShortTypeName}_GeneratedState : global::TimeWarp.Nuru.BehaviorContext {{ }}");
-    }
-
-    sb.AppendLine();
-  }
-
-  /// <summary>
   /// Emits the pipeline wrapper around handler invocation.
-  /// This wraps the handler with OnBefore/OnAfter/OnError calls.
+  /// Uses nested lambdas for HandleAsync(context, next) pattern.
   /// </summary>
   /// <param name="sb">The StringBuilder to append to.</param>
   /// <param name="route">The route being handled.</param>
   /// <param name="routeIndex">Index of the route for unique naming.</param>
-  /// <param name="behaviors">Behaviors to apply (already filtered by scope if needed).</param>
+  /// <param name="behaviors">Behaviors to apply (in registration order, first = outermost).</param>
   /// <param name="services">Registered services.</param>
   /// <param name="indent">Base indentation level.</param>
   /// <param name="emitHandler">Action that emits the handler invocation code.</param>
@@ -91,87 +68,90 @@ internal static class BehaviorEmitter
     }
 
     string ind = new(' ', indent);
-    string ind2 = new(' ', indent + 2);
 
-    // Create context/state instances
-    EmitContextCreation(sb, route, routeIndex, behaviors, ind);
+    // Create the BehaviorContext
+    EmitContextCreation(sb, route, routeIndex, ind);
 
-    // OnBefore calls (in registration order)
-    sb.AppendLine($"{ind}// OnBefore (in registration order)");
-    foreach (BehaviorDefinition behavior in behaviors)
-    {
-      string fieldName = GetBehaviorFieldName(behavior);
-      string stateName = GetStateVariableName(behavior, routeIndex);
-      sb.AppendLine($"{ind}await {fieldName}.Value.OnBeforeAsync({stateName}).ConfigureAwait(false);");
-    }
-
-    sb.AppendLine();
-    sb.AppendLine($"{ind}try");
-    sb.AppendLine($"{ind}{{");
-
-    // Handler invocation (indented inside try)
-    emitHandler();
-
-    sb.AppendLine();
-
-    // OnAfter calls (reverse order, only on success)
-    sb.AppendLine($"{ind2}// OnAfter (reverse order, only on success)");
-    foreach (BehaviorDefinition behavior in behaviors.Reverse())
-    {
-      string fieldName = GetBehaviorFieldName(behavior);
-      string stateName = GetStateVariableName(behavior, routeIndex);
-      sb.AppendLine($"{ind2}await {fieldName}.Value.OnAfterAsync({stateName}).ConfigureAwait(false);");
-    }
-
-    sb.AppendLine($"{ind}}}");
-    sb.AppendLine($"{ind}catch (global::System.Exception __behaviorException)");
-    sb.AppendLine($"{ind}{{");
-
-    // OnError calls (reverse order)
-    sb.AppendLine($"{ind2}// OnError (reverse order)");
-    foreach (BehaviorDefinition behavior in behaviors.Reverse())
-    {
-      string fieldName = GetBehaviorFieldName(behavior);
-      string stateName = GetStateVariableName(behavior, routeIndex);
-      sb.AppendLine($"{ind2}await {fieldName}.Value.OnErrorAsync({stateName}, __behaviorException).ConfigureAwait(false);");
-    }
-
-    sb.AppendLine($"{ind2}throw;");
-    sb.AppendLine($"{ind}}}");
+    // Build the nested lambda chain
+    // Outermost behavior wraps the next, which wraps the next, ..., which wraps the handler
+    EmitNestedBehaviorChain(sb, behaviors, routeIndex, indent, emitHandler);
   }
 
   /// <summary>
-  /// Emits context/state instance creation for each behavior.
+  /// Emits BehaviorContext creation.
   /// </summary>
   private static void EmitContextCreation(
     StringBuilder sb,
     RouteDefinition route,
     int routeIndex,
-    ImmutableArray<BehaviorDefinition> behaviors,
     string indent)
   {
-    sb.AppendLine($"{indent}// Create behavior context/state instances");
+    string commandName = EscapeString(route.FullPattern);
+    string commandTypeName = route.Handler.FullTypeName ?? $"Route_{routeIndex}";
 
-    foreach (BehaviorDefinition behavior in behaviors)
+    sb.AppendLine($"{indent}// Create behavior context");
+    sb.AppendLine($"{indent}var __behaviorContext = new global::TimeWarp.Nuru.BehaviorContext");
+    sb.AppendLine($"{indent}{{");
+    sb.AppendLine($"{indent}  CommandName = \"{commandName}\",");
+    sb.AppendLine($"{indent}  CommandTypeName = \"{commandTypeName}\",");
+    sb.AppendLine($"{indent}  CancellationToken = global::System.Threading.CancellationToken.None,");
+    sb.AppendLine($"{indent}  Command = null");  // TODO: Pass command instance when available (#316)
+    sb.AppendLine($"{indent}}};");
+    sb.AppendLine();
+  }
+
+  /// <summary>
+  /// Emits the nested behavior chain using HandleAsync(context, next) pattern.
+  /// </summary>
+  private static void EmitNestedBehaviorChain(
+    StringBuilder sb,
+    ImmutableArray<BehaviorDefinition> behaviors,
+    int routeIndex,
+    int indent,
+    Action emitHandler)
+  {
+    string ind = new(' ', indent);
+
+    // Build from inside out: handler -> innermost behavior -> ... -> outermost behavior
+    // We emit from outermost to innermost, using nested lambdas
+
+    sb.AppendLine($"{ind}// Execute pipeline: behaviors wrap handler");
+
+    // Start with outermost behavior
+    EmitBehaviorCall(sb, behaviors, 0, routeIndex, indent, emitHandler);
+  }
+
+  /// <summary>
+  /// Recursively emits behavior calls, nesting each one.
+  /// </summary>
+  private static void EmitBehaviorCall(
+    StringBuilder sb,
+    ImmutableArray<BehaviorDefinition> behaviors,
+    int behaviorIndex,
+    int routeIndex,
+    int indent,
+    Action emitHandler)
+  {
+    string ind = new(' ', indent);
+
+    if (behaviorIndex >= behaviors.Length)
     {
-      string stateName = GetStateVariableName(behavior, routeIndex);
-      string stateTypeName = behavior.HasCustomState
-        ? behavior.StateTypeName!
-        : $"{behavior.ShortTypeName}_GeneratedState";
-
-      // Escape the route pattern for use as CommandName
-      string commandName = EscapeString(route.FullPattern);
-      string commandTypeName = route.Handler.FullTypeName ?? $"Route_{routeIndex}";
-
-      sb.AppendLine($"{indent}var {stateName} = new {stateTypeName}");
-      sb.AppendLine($"{indent}{{");
-      sb.AppendLine($"{indent}  CommandName = \"{commandName}\",");
-      sb.AppendLine($"{indent}  CommandTypeName = \"{commandTypeName}\",");
-      sb.AppendLine($"{indent}  CancellationToken = global::System.Threading.CancellationToken.None");
-      sb.AppendLine($"{indent}}};");
+      // Base case: emit the actual handler
+      emitHandler();
+      return;
     }
 
-    sb.AppendLine();
+    BehaviorDefinition behavior = behaviors[behaviorIndex];
+    string fieldName = GetBehaviorFieldName(behavior);
+
+    // Emit: await __behavior_X.Value.HandleAsync(__behaviorContext, async () => { ... });
+    sb.AppendLine($"{ind}await {fieldName}.Value.HandleAsync(__behaviorContext, async () =>");
+    sb.AppendLine($"{ind}{{");
+
+    // Recursively emit the next behavior or handler
+    EmitBehaviorCall(sb, behaviors, behaviorIndex + 1, routeIndex, indent + 2, emitHandler);
+
+    sb.AppendLine($"{ind}}}).ConfigureAwait(false);");
   }
 
   /// <summary>
@@ -257,14 +237,6 @@ internal static class BehaviorEmitter
   internal static string GetBehaviorFieldName(BehaviorDefinition behavior)
   {
     return $"__behavior_{behavior.SafeIdentifierName}";
-  }
-
-  /// <summary>
-  /// Gets the variable name for a behavior's state instance.
-  /// </summary>
-  private static string GetStateVariableName(BehaviorDefinition behavior, int routeIndex)
-  {
-    return $"__state_{behavior.ShortTypeName}_{routeIndex}";
   }
 
   /// <summary>

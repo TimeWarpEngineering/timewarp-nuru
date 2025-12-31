@@ -6,42 +6,98 @@ namespace TimeWarp.Nuru;
 /// <summary>
 /// Interface for pipeline behaviors that wrap handler execution.
 /// Behaviors are instantiated once (Singleton) with services via constructor injection.
-/// Per-request state should use a nested <c>State</c> class that inherits from <see cref="BehaviorContext"/>.
-/// All methods have default no-op implementations - override only what you need.
+/// Use the <c>next</c> delegate to invoke the next behavior or handler in the pipeline.
 /// </summary>
+/// <remarks>
+/// <para>
+/// This pattern provides full control over execution flow, enabling:
+/// </para>
+/// <list type="bullet">
+///   <item>Before/after logic (logging, timing)</item>
+///   <item>Exception handling and retry</item>
+///   <item>Short-circuiting (authorization)</item>
+///   <item>Resource management with <c>using</c> statements</item>
+/// </list>
+/// </remarks>
 /// <example>
 /// <code>
-/// // Simple behavior - no per-request state
-/// public class LoggingBehavior(ILogger&lt;LoggingBehavior&gt; logger) : INuruBehavior
+/// // Simple logging behavior
+/// public class LoggingBehavior : INuruBehavior
 /// {
-///   public ValueTask OnBeforeAsync(BehaviorContext context)
+///   public async ValueTask HandleAsync(BehaviorContext context, Func&lt;ValueTask&gt; proceed)
 ///   {
-///     logger.LogInformation("[{CorrelationId}] Handling {Command}",
-///       context.CorrelationId, context.CommandName);
-///     return ValueTask.CompletedTask;
+///     Console.WriteLine($"Before: {context.CommandName}");
+///     await proceed();
+///     Console.WriteLine($"After: {context.CommandName}");
 ///   }
 /// }
 ///
-/// // Behavior with per-request state
-/// public class PerformanceBehavior(ILogger&lt;PerformanceBehavior&gt; logger) : INuruBehavior
+/// // Performance timing
+/// public class PerformanceBehavior : INuruBehavior
 /// {
-///   public class State : BehaviorContext
+///   public async ValueTask HandleAsync(BehaviorContext context, Func&lt;ValueTask&gt; proceed)
 ///   {
-///     public Stopwatch Timer { get; } = new();
+///     var sw = Stopwatch.StartNew();
+///     await proceed();
+///     sw.Stop();
+///     if (sw.ElapsedMilliseconds > 500)
+///       Console.WriteLine($"SLOW: {context.CommandName} took {sw.ElapsedMilliseconds}ms");
 ///   }
+/// }
 ///
-///   public ValueTask OnBeforeAsync(State state)
+/// // Exception handling
+/// public class ExceptionBehavior : INuruBehavior
+/// {
+///   public async ValueTask HandleAsync(BehaviorContext context, Func&lt;ValueTask&gt; proceed)
 ///   {
-///     state.Timer.Start();
-///     return ValueTask.CompletedTask;
+///     try
+///     {
+///       await proceed();
+///     }
+///     catch (ValidationException ex)
+///     {
+///       Console.Error.WriteLine($"Validation error: {ex.Message}");
+///       throw;
+///     }
 ///   }
+/// }
 ///
-///   public ValueTask OnAfterAsync(State state)
+/// // Retry with exponential backoff
+/// public class RetryBehavior : INuruBehavior
+/// {
+///   public async ValueTask HandleAsync(BehaviorContext context, Func&lt;ValueTask&gt; proceed)
 ///   {
-///     state.Timer.Stop();
-///     if (state.Timer.ElapsedMilliseconds > 500)
-///       logger.LogWarning("{Command} took {Ms}ms", state.CommandName, state.Timer.ElapsedMilliseconds);
-///     return ValueTask.CompletedTask;
+///     if (context.Command is not IRetryable retryable) { await proceed(); return; }
+///
+///     for (int attempt = 1; attempt &lt;= retryable.MaxRetries + 1; attempt++)
+///     {
+///       try { await proceed(); return; }
+///       catch (Exception ex) when (IsTransient(ex) &amp;&amp; attempt &lt;= retryable.MaxRetries)
+///       {
+///         await Task.Delay(TimeSpan.FromSeconds(Math.Pow(2, attempt)));
+///       }
+///     }
+///   }
+/// }
+///
+/// // Telemetry with using statement
+/// public class TelemetryBehavior : INuruBehavior
+/// {
+///   private static readonly ActivitySource Source = new("MyApp");
+///
+///   public async ValueTask HandleAsync(BehaviorContext context, Func&lt;ValueTask&gt; proceed)
+///   {
+///     using var activity = Source.StartActivity(context.CommandName);
+///     try
+///     {
+///       await proceed();
+///       activity?.SetStatus(ActivityStatusCode.Ok);
+///     }
+///     catch (Exception ex)
+///     {
+///       activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+///       throw;
+///     }
 ///   }
 /// }
 /// </code>
@@ -49,25 +105,19 @@ namespace TimeWarp.Nuru;
 public interface INuruBehavior
 {
   /// <summary>
-  /// Called before the handler executes.
+  /// Handles the request by wrapping the next behavior or handler in the pipeline.
   /// </summary>
-  /// <param name="context">The behavior context containing request metadata.</param>
+  /// <param name="context">The behavior context containing request metadata and command instance.</param>
+  /// <param name="proceed">Delegate to invoke the next behavior or handler. Must be called to continue the pipeline.</param>
   /// <returns>A <see cref="ValueTask"/> representing the asynchronous operation.</returns>
-  ValueTask OnBeforeAsync(BehaviorContext context) => ValueTask.CompletedTask;
-
-  /// <summary>
-  /// Called after the handler completes successfully.
-  /// </summary>
-  /// <param name="context">The behavior context containing request metadata.</param>
-  /// <returns>A <see cref="ValueTask"/> representing the asynchronous operation.</returns>
-  ValueTask OnAfterAsync(BehaviorContext context) => ValueTask.CompletedTask;
-
-  /// <summary>
-  /// Called when the handler throws an exception.
-  /// The exception will be re-thrown after all OnErrorAsync handlers complete.
-  /// </summary>
-  /// <param name="context">The behavior context containing request metadata.</param>
-  /// <param name="exception">The exception that was thrown.</param>
-  /// <returns>A <see cref="ValueTask"/> representing the asynchronous operation.</returns>
-  ValueTask OnErrorAsync(BehaviorContext context, Exception exception) => ValueTask.CompletedTask;
+  /// <remarks>
+  /// <para>
+  /// The <paramref name="proceed"/> delegate must be called exactly once to continue the pipeline,
+  /// unless you want to short-circuit (e.g., authorization failure).
+  /// </para>
+  /// <para>
+  /// Behaviors execute in registration order. First registered = outermost (called first).
+  /// </para>
+  /// </remarks>
+  ValueTask HandleAsync(BehaviorContext context, Func<ValueTask> proceed);
 }

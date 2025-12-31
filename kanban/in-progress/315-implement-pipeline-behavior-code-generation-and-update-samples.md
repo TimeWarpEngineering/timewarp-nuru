@@ -19,7 +19,7 @@ The V2 source generator has infrastructure for behaviors but no code generation:
 | DSL interpreter `AddBehavior()` | Exists |
 | `AppModel.Behaviors` | Exists |
 | IR builder `AddBehavior()` | Exists |
-| **Emitter for behaviors** | **NOT IMPLEMENTED** |
+| **Emitter for behaviors** | **NEEDS UPDATE** |
 
 ### Current Samples Problem
 
@@ -32,76 +32,179 @@ The V2 source generator has infrastructure for behaviors but no code generation:
 
 Source generator should emit inline behavior code. No runtime `IPipelineBehavior` interface needed.
 
-## Design Decisions (Finalized)
+## Design Decisions
 
-### 1. Interface Pattern: `INuruBehavior` with `OnBeforeAsync`/`OnAfterAsync`/`OnErrorAsync`
+### ~~OLD: `OnBeforeAsync`/`OnAfterAsync`/`OnErrorAsync` Pattern~~ (REJECTED)
 
-**Chosen approach:** Interface-based with async-first methods and default no-op implementations.
+The original design used separate hooks:
+```csharp
+// REJECTED - lacks control flow (can't retry, can't skip handler)
+public interface INuruBehavior
+{
+  ValueTask OnBeforeAsync(BehaviorContext context);
+  ValueTask OnAfterAsync(BehaviorContext context);
+  ValueTask OnErrorAsync(BehaviorContext context, Exception exception);
+}
+```
+
+**Problems:**
+- `OnErrorAsync` can only observe - cannot retry or handle exceptions
+- Cannot skip handler execution (e.g., authorization failure)
+- Cannot wrap execution with `using` statements naturally
+- Required awkward `State` class pattern for per-request state
+
+### NEW: `HandleAsync(context, next)` Pattern (CHOSEN)
+
+Switch to the familiar Mediator/MediatR pattern with full control:
 
 ```csharp
 public interface INuruBehavior
 {
-  ValueTask OnBeforeAsync(BehaviorContext context) => ValueTask.CompletedTask;
-  ValueTask OnAfterAsync(BehaviorContext context) => ValueTask.CompletedTask;
-  ValueTask OnErrorAsync(BehaviorContext context, Exception exception) => ValueTask.CompletedTask;
+  ValueTask HandleAsync(BehaviorContext context, Func<ValueTask> next);
 }
 ```
 
-**Why this approach:**
-- Familiar pattern (similar to Mediator/MediatR)
-- Async-first for flexibility
-- Default implementations mean behaviors only override what they need
-- No `next` callback - generator handles chaining
+**Benefits:**
+- Full control over execution flow
+- Can retry, skip, wrap, transform
+- Familiar to Mediator/MediatR users
+- Single method to implement
+- Simpler generator code
+- Enables retry behavior (was impossible before)
 
-### 2. Service Injection: Constructor Injection (Singleton behaviors)
+### Examples with New Pattern
 
-Behaviors are instantiated once (Singleton) with services injected via constructor:
-
+**Logging (simple before/after):**
 ```csharp
-public class LoggingBehavior(ILogger<LoggingBehavior> logger) : INuruBehavior
+public sealed class LoggingBehavior : INuruBehavior
 {
-  public ValueTask OnBeforeAsync(BehaviorContext context)
+  public async ValueTask HandleAsync(BehaviorContext context, Func<ValueTask> next)
   {
-    logger.LogInformation("[{CorrelationId}] Handling {Command}", 
-      context.CorrelationId, context.CommandName);
-    return ValueTask.CompletedTask;
+    Console.WriteLine($"[{context.CorrelationId[..8]}] Before: {context.CommandName}");
+    await next();
+    Console.WriteLine($"[{context.CorrelationId[..8]}] After: {context.CommandName}");
   }
 }
 ```
 
-### 3. Per-Request State: Nested `State` class inheriting from `BehaviorContext`
-
-Behaviors needing per-request state define a nested `State` class:
-
+**Performance timing:**
 ```csharp
-public class PerformanceBehavior(ILogger<PerformanceBehavior> logger) : INuruBehavior
+public sealed class PerformanceBehavior : INuruBehavior
 {
-  // Nested State class for per-request state
-  public class State : BehaviorContext
+  public async ValueTask HandleAsync(BehaviorContext context, Func<ValueTask> next)
   {
-    public Stopwatch Stopwatch { get; } = new();
-  }
-  
-  public ValueTask OnBeforeAsync(State state)
-  {
-    state.Stopwatch.Start();
-    return ValueTask.CompletedTask;
-  }
-  
-  public ValueTask OnAfterAsync(State state)
-  {
-    state.Stopwatch.Stop();
-    if (state.Stopwatch.ElapsedMilliseconds > 500)
-      logger.LogWarning("[{CorrelationId}] {Command} took {Ms}ms", 
-        state.CorrelationId, state.CommandName, state.Stopwatch.ElapsedMilliseconds);
-    return ValueTask.CompletedTask;
+    var sw = Stopwatch.StartNew();
+    await next();
+    sw.Stop();
+    
+    if (sw.ElapsedMilliseconds > 500)
+      Console.WriteLine($"[SLOW] {context.CommandName} took {sw.ElapsedMilliseconds}ms");
   }
 }
 ```
 
-**Key insight:** Developer experience looks like MediatR transient (instance state), but reality is Singleton with per-request context.
+**Exception handling:**
+```csharp
+public sealed class ExceptionHandlingBehavior : INuruBehavior
+{
+  public async ValueTask HandleAsync(BehaviorContext context, Func<ValueTask> next)
+  {
+    try
+    {
+      await next();
+    }
+    catch (ValidationException ex)
+    {
+      Console.Error.WriteLine($"Validation error: {ex.Message}");
+      throw;  // or swallow, or wrap - YOUR CHOICE
+    }
+    catch (Exception ex)
+    {
+      Console.Error.WriteLine("An unexpected error occurred.");
+      throw;
+    }
+  }
+}
+```
 
-### 4. Base Context: `BehaviorContext` with built-in properties
+**Telemetry with `using`:**
+```csharp
+public sealed class TelemetryBehavior : INuruBehavior
+{
+  private static readonly ActivitySource Source = new("TimeWarp.Nuru.Commands");
+
+  public async ValueTask HandleAsync(BehaviorContext context, Func<ValueTask> next)
+  {
+    using var activity = Source.StartActivity(context.CommandName, ActivityKind.Internal);
+    activity?.SetTag("correlation.id", context.CorrelationId);
+    
+    try
+    {
+      await next();
+      activity?.SetStatus(ActivityStatusCode.Ok);
+    }
+    catch (Exception ex)
+    {
+      activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+      throw;
+    }
+  }
+}
+```
+
+**Retry (NOW POSSIBLE!):**
+```csharp
+public sealed class RetryBehavior : INuruBehavior
+{
+  public async ValueTask HandleAsync(BehaviorContext context, Func<ValueTask> next)
+  {
+    if (context.Command is not IRetryable retryable)
+    {
+      await next();
+      return;
+    }
+
+    for (int attempt = 1; attempt <= retryable.MaxRetries + 1; attempt++)
+    {
+      try
+      {
+        await next();
+        return;
+      }
+      catch (Exception ex) when (IsTransient(ex) && attempt <= retryable.MaxRetries)
+      {
+        var delay = TimeSpan.FromSeconds(Math.Pow(2, attempt));
+        Console.WriteLine($"[RETRY] Attempt {attempt} failed, retrying in {delay.TotalSeconds}s...");
+        await Task.Delay(delay, context.CancellationToken);
+      }
+    }
+  }
+
+  private static bool IsTransient(Exception ex) =>
+    ex is HttpRequestException or TimeoutException or IOException;
+}
+```
+
+**Authorization (can skip handler):**
+```csharp
+public sealed class AuthorizationBehavior : INuruBehavior
+{
+  public async ValueTask HandleAsync(BehaviorContext context, Func<ValueTask> next)
+  {
+    if (context.Command is IRequireAuthorization auth)
+    {
+      if (!HasPermission(auth.RequiredPermission))
+        throw new UnauthorizedAccessException($"Required: {auth.RequiredPermission}");
+    }
+    
+    await next();
+  }
+}
+```
+
+### BehaviorContext
+
+Simplified - no more `State` class pattern needed:
 
 ```csharp
 public class BehaviorContext
@@ -109,28 +212,25 @@ public class BehaviorContext
   public required string CommandName { get; init; }
   public required string CommandTypeName { get; init; }
   public required CancellationToken CancellationToken { get; init; }
-  public string CorrelationId { get; } = Guid.NewGuid().ToString();  // Built-in for troubleshooting
-  public Stopwatch Stopwatch { get; } = Stopwatch.StartNew();        // Built-in for timing
+  public string CorrelationId { get; } = Guid.NewGuid().ToString();
+  
+  /// <summary>
+  /// The command instance. Can be cast to check interface implementations.
+  /// Available for both attributed routes and delegate routes with .Implements&lt;T&gt;().
+  /// </summary>
+  public object? Command { get; init; }
 }
 ```
 
-### 5. Execution Order
+Note: `Stopwatch` removed from context - behaviors that need timing can create their own (simpler, more explicit).
 
-Behaviors execute in registration order:
-- First registered = outermost (OnBefore first, OnAfter last)
-- Last registered = innermost (OnBefore last, OnAfter first)
-
-### 6. Sharing State Between Behaviors
-
-**Deferred to backlog.** If needed later, can add `Items` dictionary to `BehaviorContext`.
-
-## Example: What Developer Writes vs What Generator Emits
+### Generator Output
 
 **Developer writes:**
 ```csharp
 NuruApp.CreateBuilder(args)
-  .AddBehavior<LoggingBehavior>()
-  .AddBehavior<PerformanceBehavior>()
+  .AddBehavior(typeof(LoggingBehavior))
+  .AddBehavior(typeof(PerformanceBehavior))
   .Map("ping").WithHandler(() => "pong").Done()
   .Build();
 ```
@@ -139,142 +239,129 @@ NuruApp.CreateBuilder(args)
 ```csharp
 if (args is ["ping"])
 {
-  // Create contexts
   var __context = new BehaviorContext
   {
     CommandName = "ping",
-    CommandTypeName = "PingCommand",
-    CancellationToken = cancellationToken
+    CommandTypeName = "Route_0",
+    CancellationToken = CancellationToken.None,
+    Command = null  // or generated command instance
   };
-  var __state_Performance = new PerformanceBehavior.State
+
+  await __behavior_Logging.HandleAsync(__context, async () =>
   {
-    CommandName = "ping",
-    CommandTypeName = "PingCommand",
-    CancellationToken = cancellationToken
-  };
+    await __behavior_Performance.HandleAsync(__context, async () =>
+    {
+      // Handler
+      string result = "pong";
+      app.Terminal.WriteLine(result);
+    });
+  });
   
-  // OnBefore (outermost first)
-  await __behavior_Logging.OnBeforeAsync(__context);
-  await __behavior_Performance.OnBeforeAsync(__state_Performance);
-  
-  try
-  {
-    // Handler
-    string result = "pong";
-    app.Terminal.WriteLine(result);
-    
-    // OnAfter (innermost first - reverse order)
-    await __behavior_Performance.OnAfterAsync(__state_Performance);
-    await __behavior_Logging.OnAfterAsync(__context);
-    
-    return 0;
-  }
-  catch (Exception __ex)
-  {
-    // OnError (innermost first - reverse order)
-    await __behavior_Performance.OnErrorAsync(__state_Performance, __ex);
-    await __behavior_Logging.OnErrorAsync(__context, __ex);
-    throw;
-  }
+  return 0;
 }
 ```
 
+### Execution Order
+
+Behaviors execute in registration order (first = outermost):
+```csharp
+.AddBehavior(typeof(TelemetryBehavior))    // 1st - outermost
+.AddBehavior(typeof(LoggingBehavior))      // 2nd
+.AddBehavior(typeof(RetryBehavior))        // 3rd
+.AddBehavior(typeof(PerformanceBehavior))  // 4th - innermost
+```
+
+Call flow: `Telemetry → Logging → Retry → Performance → Handler`
+
 ## Checklist
 
-### Phase 1: Design and Interface ✅
-- [x] Decide on behavior specification approach → `INuruBehavior` interface
-- [x] Design `BehaviorContext` base class
-- [x] Design nested `State` pattern for per-request state
-- [x] Document behavior authoring pattern
+### Phase 1: Update Interface ⏳
+- [ ] Update `INuruBehavior` to use `HandleAsync(context, next)` pattern
+- [ ] Remove `OnBeforeAsync`/`OnAfterAsync`/`OnErrorAsync` methods
+- [ ] Simplify `BehaviorContext` (remove Stopwatch, add Command property)
+- [ ] Remove nested `State` class detection from generator
 
-### Phase 1.1: Create Interface File ✅
-- [x] Create `source/timewarp-nuru-core/abstractions/behavior-interfaces.cs`
-- [x] Commit: `feat(core): add INuruBehavior interface and BehaviorContext`
+### Phase 2: Update Generator ⏳
+- [ ] Update `behavior-emitter.cs` for new pattern
+- [ ] Emit nested lambda chain instead of separate OnBefore/OnAfter/OnError calls
+- [ ] Simplify generated State class handling (no longer needed)
+- [ ] Pass command instance to BehaviorContext
 
-### Phase 2: Generator Implementation ✅
-- [x] Enhanced `BehaviorDefinition` - add ConstructorDependencies, StateTypeName
-- [x] Enhanced DSL interpreter - extract constructor params and nested State class
-- [x] Create `behavior-emitter.cs` - emit context creation and method calls
-- [x] Integrate with `interceptor-emitter.cs` - emit behavior fields and state classes
-- [x] Integrate with `route-matcher-emitter.cs` - wrap handler with behavior calls
-- [x] Handle behavior service dependencies (constructor injection)
-- [x] Handle behaviors with/without custom State class (generate empty State if needed)
+### Phase 3: Re-convert Samples ⏳
 
-### Phase 3: Update Samples (one by one)
+All samples need re-conversion with new pattern:
 
-#### 3.1: 01-pipeline-middleware-basic.cs ✅
-- [x] Remove `#:package Mediator.*` directives
-- [x] Remove `using Mediator;`
-- [x] Remove `services.AddMediator()` call
-- [x] Convert `LoggingBehavior` to TimeWarp.Nuru pattern
-- [x] Convert `PerformanceBehavior` to TimeWarp.Nuru pattern
-- [x] Use `.AddBehavior(typeof(T))` DSL
-- [x] Test: `./01-pipeline-middleware-basic.cs echo "Hello"`
-- [x] Test: `./01-pipeline-middleware-basic.cs slow 600`
+#### 3.1: 01-pipeline-middleware-basic.cs
+- [ ] Update `LoggingBehavior` to `HandleAsync` pattern
+- [ ] Update `PerformanceBehavior` to `HandleAsync` pattern (use local Stopwatch)
+- [ ] Test: `./01-pipeline-middleware-basic.cs echo "Hello"`
+- [ ] Test: `./01-pipeline-middleware-basic.cs slow 600`
 
-#### 3.2: pipeline-middleware-authorization.cs (DEFERRED)
-- [ ] Convert `AuthorizationBehavior` 
-- [ ] Convert `IRequireAuthorization` marker interface pattern
+#### 3.2: 02-pipeline-middleware-exception.cs
+- [ ] Update `ExceptionHandlingBehavior` to `HandleAsync` pattern
+- [ ] Now CAN catch and handle exceptions properly
+- [ ] Test exception categorization
+
+#### 3.3: 03-pipeline-middleware-telemetry.cs
+- [ ] Update `TelemetryBehavior` to `HandleAsync` pattern
+- [ ] Use `using` for Activity lifecycle (much cleaner!)
+- [ ] Remove awkward `State` class
+- [ ] Test distributed tracing
+
+#### 3.4: pipeline-middleware-authorization.cs
+- [ ] Convert with `HandleAsync` pattern
+- [ ] Requires #316 for `context.Command` and `.Implements<T>()`
 - [ ] Test authorization flow
-- **Reason**: Requires behavior filtering/route metadata (see Backlog Items)
 
-#### 3.3: pipeline-middleware-retry.cs (DEFERRED)
-- [ ] Convert `RetryBehavior`
-- [ ] Convert `IRetryable` marker interface pattern
+#### 3.5: pipeline-middleware-retry.cs
+- [ ] Convert with `HandleAsync` pattern (NOW POSSIBLE!)
+- [ ] Requires #316 for `context.Command` and `.Implements<T>()`
 - [ ] Test retry with exponential backoff
-- **Reason**: Requires behavior filtering/route metadata (see Backlog Items)
 
-#### 3.4: 02-pipeline-middleware-exception.cs ✅
-- [x] Convert `ExceptionHandlingBehavior` to use `OnErrorAsync`
-- [x] Remove `CommandExecutionException` (not needed - can't wrap exceptions)
-- [x] Test exception categorization (validation, auth, argument, unknown)
-- **Note**: `OnErrorAsync` is for observation only - exception still propagates
+#### 3.6: pipeline-middleware.cs (combined)
+- [ ] Update after all individual samples work
 
-#### 3.5: 03-pipeline-middleware-telemetry.cs ✅
-- [x] Convert `TelemetryBehavior` with custom `State` class
-- [x] Preserve OpenTelemetry Activity integration
-- [x] State class holds Activity across OnBefore/OnAfter/OnError
-- [x] Test distributed tracing
+### Phase 4: Update Documentation
+- [ ] Update `overview.md` for new pattern
+- [ ] Update examples in documentation
 
-#### 3.6: pipeline-middleware.cs (combined) (DEFERRED)
-- [ ] Update combined example with all behaviors
-- [ ] Verify full pipeline works end-to-end
-- **Reason**: Depends on authorization and retry samples
-
-### Phase 4: Testing and Documentation
-- [ ] Add generator tests for behavior emission
-- [x] Update `_pipeline-middleware/overview.md`
-- [ ] Rename folder to numbered sample (e.g., `07-pipeline-middleware/`)
-
-## Files to Create/Modify
+## Files to Modify
 
 | File | Action |
 |------|--------|
-| `source/timewarp-nuru-core/abstractions/behavior-interfaces.cs` | Create - `INuruBehavior`, `BehaviorContext` |
-| `source/timewarp-nuru-analyzers/generators/extractors/behavior-extractor.cs` | Create - extract behaviors and State classes |
-| `source/timewarp-nuru-analyzers/generators/emitters/behavior-emitter.cs` | Create - code generation |
-| `source/timewarp-nuru-analyzers/generators/emitters/interceptor-emitter.cs` | Modify - integrate behavior wrapping |
-| `samples/_pipeline-middleware/*.cs` | Modify - migrate from Mediator |
-| `samples/_pipeline-middleware/overview.md` | Modify - update documentation |
+| `source/timewarp-nuru-core/abstractions/behavior-interfaces.cs` | Update interface |
+| `source/timewarp-nuru-core/abstractions/behavior-context.cs` | Simplify, add Command |
+| `source/timewarp-nuru-analyzers/generators/emitters/behavior-emitter.cs` | Update emission |
+| `source/timewarp-nuru-analyzers/generators/interpreter/dsl-interpreter.cs` | Remove State detection |
+| `samples/_pipeline-middleware/*.cs` | Re-convert all |
+| `samples/_pipeline-middleware/overview.md` | Update docs |
 
 ## Dependencies
 
-- Depends on V2 generator being functional (#265 phases 0-5 complete)
-- Should be done after #289 (Zero-Cost Runtime) or in parallel
+- #316 for `.Implements<T>()` and `context.Command` (authorization/retry samples)
 
 ## Related Tasks
 
 - #265 Epic: V2 Source Generator Implementation
 - #289 V2 Generator Phase 7: Zero-Cost Runtime
-- #312 Update samples to use NuruApp.CreateBuilder
-
-## Backlog Items (Deferred)
-
-- [ ] Sharing state between behaviors (Items dictionary on BehaviorContext)
-- [ ] Marker interface pattern for selective behavior application
-- [ ] Configurable CorrelationId format
+- #316 Behavior Filtering via `.Implements<T>()`
 
 ## Notes
+
+### Why the design change?
+
+The `OnBefore/OnAfter/OnError` pattern seemed simpler but was actually more limiting:
+1. Could not retry (OnErrorAsync only observes)
+2. Could not skip handler (authorization)
+3. Required awkward State class for per-request state
+4. More methods to implement
+
+The `HandleAsync(context, next)` pattern:
+1. Enables ALL patterns (retry, skip, wrap, transform)
+2. Single method to implement
+3. Familiar to Mediator/MediatR users
+4. Simpler generated code
+5. Local variables for per-request state (no State class needed)
 
 ### Why source-gen behaviors?
 
@@ -286,9 +373,3 @@ Source-generating behavior code eliminates:
 - Runtime reflection for behavior discovery
 - DI container overhead for behavior instantiation
 - Generic type instantiation at runtime
-
-### Reference
-
-- Current Mediator-based samples: `samples/_pipeline-middleware/`
-- Behavior models: `source/timewarp-nuru-analyzers/generators/models/behavior-definition.cs`
-- Pipeline models: `source/timewarp-nuru-analyzers/generators/models/pipeline-definition.cs`

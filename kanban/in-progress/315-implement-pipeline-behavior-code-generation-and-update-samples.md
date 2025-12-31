@@ -202,43 +202,48 @@ if (args is ["ping"])
 
 ### Phase 3: Update Samples (one by one)
 
-#### 3.1: pipeline-middleware-basic.cs
-- [ ] Remove `#:package Mediator.*` directives
-- [ ] Remove `using Mediator;`
-- [ ] Remove `services.AddMediator()` call
-- [ ] Convert `LoggingBehavior` to TimeWarp.Nuru pattern
-- [ ] Convert `PerformanceBehavior` to TimeWarp.Nuru pattern
-- [ ] Use `.AddBehavior<T>()` DSL
-- [ ] Test: `./pipeline-middleware-basic.cs echo "Hello"`
-- [ ] Test: `./pipeline-middleware-basic.cs slow 600`
+#### 3.1: 01-pipeline-middleware-basic.cs ✅
+- [x] Remove `#:package Mediator.*` directives
+- [x] Remove `using Mediator;`
+- [x] Remove `services.AddMediator()` call
+- [x] Convert `LoggingBehavior` to TimeWarp.Nuru pattern
+- [x] Convert `PerformanceBehavior` to TimeWarp.Nuru pattern
+- [x] Use `.AddBehavior(typeof(T))` DSL
+- [x] Test: `./01-pipeline-middleware-basic.cs echo "Hello"`
+- [x] Test: `./01-pipeline-middleware-basic.cs slow 600`
 
-#### 3.2: pipeline-middleware-authorization.cs
+#### 3.2: pipeline-middleware-authorization.cs (DEFERRED)
 - [ ] Convert `AuthorizationBehavior` 
 - [ ] Convert `IRequireAuthorization` marker interface pattern
 - [ ] Test authorization flow
+- **Reason**: Requires behavior filtering/route metadata (see Backlog Items)
 
-#### 3.3: pipeline-middleware-retry.cs
+#### 3.3: pipeline-middleware-retry.cs (DEFERRED)
 - [ ] Convert `RetryBehavior`
 - [ ] Convert `IRetryable` marker interface pattern
 - [ ] Test retry with exponential backoff
+- **Reason**: Requires behavior filtering/route metadata (see Backlog Items)
 
-#### 3.4: pipeline-middleware-exception.cs
-- [ ] Convert `ExceptionHandlingBehavior`
-- [ ] Convert `CommandExecutionException`
-- [ ] Test exception categorization
+#### 3.4: 02-pipeline-middleware-exception.cs ✅
+- [x] Convert `ExceptionHandlingBehavior` to use `OnErrorAsync`
+- [x] Remove `CommandExecutionException` (not needed - can't wrap exceptions)
+- [x] Test exception categorization (validation, auth, argument, unknown)
+- **Note**: `OnErrorAsync` is for observation only - exception still propagates
 
-#### 3.5: pipeline-middleware-telemetry.cs
-- [ ] Convert `TelemetryBehavior`
-- [ ] Preserve OpenTelemetry Activity integration
-- [ ] Test distributed tracing
+#### 3.5: 03-pipeline-middleware-telemetry.cs ✅
+- [x] Convert `TelemetryBehavior` with custom `State` class
+- [x] Preserve OpenTelemetry Activity integration
+- [x] State class holds Activity across OnBefore/OnAfter/OnError
+- [x] Test distributed tracing
 
-#### 3.6: pipeline-middleware.cs (combined)
+#### 3.6: pipeline-middleware.cs (combined) (DEFERRED)
 - [ ] Update combined example with all behaviors
 - [ ] Verify full pipeline works end-to-end
+- **Reason**: Depends on authorization and retry samples
 
 ### Phase 4: Testing and Documentation
 - [ ] Add generator tests for behavior emission
-- [ ] Update `_pipeline-middleware/overview.md`
+- [x] Update `_pipeline-middleware/overview.md`
 - [ ] Rename folder to numbered sample (e.g., `07-pipeline-middleware/`)
 
 ## Files to Create/Modify

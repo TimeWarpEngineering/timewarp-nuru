@@ -1,6 +1,6 @@
 # Pipeline Middleware Sample
 
-This sample demonstrates how to implement cross-cutting concerns using Mediator pipeline behaviors (middleware) in TimeWarp.Nuru CLI applications.
+This sample demonstrates how to implement cross-cutting concerns using TimeWarp.Nuru's `INuruBehavior` pipeline behaviors in CLI applications.
 
 ## What is Pipeline Middleware?
 
@@ -13,18 +13,11 @@ Request Flow:
 │   ┌───────────────────────────────────────────────────────────────┐   │
 │   │ LoggingBehavior                                               │   │
 │   │   ┌───────────────────────────────────────────────────────┐   │   │
-│   │   │ AuthorizationBehavior                                 │   │   │
+│   │   │ ExceptionHandlingBehavior                             │   │   │
 │   │   │   ┌───────────────────────────────────────────────┐   │   │   │
-│   │   │   │ RetryBehavior                                 │   │   │   │
+│   │   │   │ PerformanceBehavior                           │   │   │   │
 │   │   │   │   ┌───────────────────────────────────────┐   │   │   │   │
-│   │   │   │   │ PerformanceBehavior                   │   │   │   │   │
-│   │   │   │   │   ┌───────────────────────────────┐   │   │   │   │   │
-│   │   │   │   │   │ ExceptionHandlingBehavior     │   │   │   │   │   │
-│   │   │   │   │   │   ┌───────────────────────┐   │   │   │   │   │   │
-│   │   │   │   │   │   │ Command Handler       │   │   │   │   │   │   │
-│   │   │   │   │   │   │ (innermost)           │   │   │   │   │   │   │
-│   │   │   │   │   │   └───────────────────────┘   │   │   │   │   │   │
-│   │   │   │   │   └───────────────────────────────┘   │   │   │   │   │
+│   │   │   │   │ Command Handler (innermost)           │   │   │   │   │
 │   │   │   │   └───────────────────────────────────────┘   │   │   │   │
 │   │   │   └───────────────────────────────────────────────┘   │   │   │
 │   │   └───────────────────────────────────────────────────────┘   │   │
@@ -34,37 +27,95 @@ Request Flow:
 
 ## Samples
 
-| Sample | Description | Concepts |
-|--------|-------------|----------|
-| [pipeline-middleware-basic.cs](pipeline-middleware-basic.cs) | Logging and performance monitoring | Before/after pattern, timing |
-| [pipeline-middleware-authorization.cs](pipeline-middleware-authorization.cs) | Permission checks with marker interfaces | Selective behavior, IRequireAuthorization |
-| [pipeline-middleware-retry.cs](pipeline-middleware-retry.cs) | Resilience with exponential backoff | Transient failures, IRetryable |
-| [pipeline-middleware-exception.cs](pipeline-middleware-exception.cs) | Consistent error handling | Exception categories, user-friendly messages |
-| [pipeline-middleware-telemetry.cs](pipeline-middleware-telemetry.cs) | OpenTelemetry distributed tracing | Activity spans, observability |
-| [pipeline-middleware.cs](pipeline-middleware.cs) | **Complete example** with all behaviors | Full reference implementation |
+| Sample | Description | Status |
+|--------|-------------|--------|
+| [01-pipeline-middleware-basic.cs](01-pipeline-middleware-basic.cs) | Logging and performance monitoring | **Converted to INuruBehavior** |
+| [02-pipeline-middleware-exception.cs](02-pipeline-middleware-exception.cs) | Consistent error handling | **Converted to INuruBehavior** |
+| [03-pipeline-middleware-telemetry.cs](03-pipeline-middleware-telemetry.cs) | OpenTelemetry distributed tracing | **Converted to INuruBehavior** |
+| [pipeline-middleware-authorization.cs](pipeline-middleware-authorization.cs) | Permission checks with marker interfaces | Uses Mediator (deferred) |
+| [pipeline-middleware-retry.cs](pipeline-middleware-retry.cs) | Resilience with exponential backoff | Uses Mediator (deferred) |
+| [pipeline-middleware.cs](pipeline-middleware.cs) | Combined example with all behaviors | Uses Mediator (deferred) |
 
 ## Quick Start
 
-Run any sample directly:
+Run the converted samples directly:
 
 ```bash
 # Basic logging and performance
-./pipeline-middleware-basic.cs echo "Hello, World!"
-./pipeline-middleware-basic.cs slow 600
+./01-pipeline-middleware-basic.cs echo "Hello, World!"
+./01-pipeline-middleware-basic.cs slow 600
 
-# Authorization with marker interface
-./pipeline-middleware-authorization.cs admin delete-all       # Access denied
-CLI_AUTHORIZED=1 ./pipeline-middleware-authorization.cs admin delete-all  # Success
+# Exception handling with categorization
+./02-pipeline-middleware-exception.cs error validation
+./02-pipeline-middleware-exception.cs error auth
+./02-pipeline-middleware-exception.cs error argument
+./02-pipeline-middleware-exception.cs error unknown
 
-# Retry with exponential backoff
-./pipeline-middleware-retry.cs flaky 2    # Fails twice, then succeeds
+# Distributed tracing with Activity spans
+./03-pipeline-middleware-telemetry.cs trace database-query
+./03-pipeline-middleware-telemetry.cs trace api-call
+```
 
-# Exception handling
-./pipeline-middleware-exception.cs error validation
-./pipeline-middleware-exception.cs error unknown
+## INuruBehavior Pattern
 
-# Distributed tracing
-./pipeline-middleware-telemetry.cs trace database-query
+TimeWarp.Nuru uses source generation for pipeline behaviors, eliminating runtime overhead. Behaviors implement `INuruBehavior`:
+
+```csharp
+public interface INuruBehavior
+{
+  ValueTask OnBeforeAsync(BehaviorContext context) => ValueTask.CompletedTask;
+  ValueTask OnAfterAsync(BehaviorContext context) => ValueTask.CompletedTask;
+  ValueTask OnErrorAsync(BehaviorContext context, Exception exception) => ValueTask.CompletedTask;
+}
+```
+
+### BehaviorContext
+
+Every behavior receives a `BehaviorContext` with:
+
+```csharp
+public class BehaviorContext
+{
+  public required string CommandName { get; init; }      // Route pattern: "echo {message}"
+  public required string CommandTypeName { get; init; }  // Type name or generated name
+  public required CancellationToken CancellationToken { get; init; }
+  public string CorrelationId { get; }                   // GUID for request correlation
+  public Stopwatch Stopwatch { get; }                    // Auto-started for timing
+}
+```
+
+### Custom State Pattern
+
+Behaviors needing per-request state define a nested `State` class:
+
+```csharp
+public sealed class TelemetryBehavior : INuruBehavior
+{
+  // Custom State holds Activity across method calls
+  public sealed class State : BehaviorContext
+  {
+    public Activity? Activity { get; set; }
+  }
+
+  public ValueTask OnBeforeAsync(BehaviorContext context)
+  {
+    if (context is State state)
+    {
+      state.Activity = ActivitySource.StartActivity(state.CommandName);
+    }
+    return ValueTask.CompletedTask;
+  }
+
+  public ValueTask OnAfterAsync(BehaviorContext context)
+  {
+    if (context is State state)
+    {
+      state.Activity?.SetStatus(ActivityStatusCode.Ok);
+      state.Activity?.Dispose();
+    }
+    return ValueTask.CompletedTask;
+  }
+}
 ```
 
 ## Pipeline Behaviors Demonstrated
@@ -74,220 +125,184 @@ CLI_AUTHORIZED=1 ./pipeline-middleware-authorization.cs admin delete-all  # Succ
 Logs command entry and exit for observability:
 
 ```csharp
-public sealed class LoggingBehavior<TMessage, TResponse> : IPipelineBehavior<TMessage, TResponse>
+public sealed class LoggingBehavior : INuruBehavior
 {
-    public async ValueTask<TResponse> Handle(TMessage message, MessageHandlerDelegate<TMessage, TResponse> next, CancellationToken ct)
-    {
-        Logger.LogInformation("[PIPELINE] Handling {RequestName}", typeof(TMessage).Name);
-        try
-        {
-            TResponse response = await next(message, ct);
-            Logger.LogInformation("[PIPELINE] Completed {RequestName}", typeof(TMessage).Name);
-            return response;
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "[PIPELINE] Error handling {RequestName}", typeof(TMessage).Name);
-            throw;
-        }
-    }
+  public ValueTask OnBeforeAsync(BehaviorContext context)
+  {
+    WriteLine($"[PIPELINE] [{context.CorrelationId[..8]}] Handling {context.CommandName}");
+    return ValueTask.CompletedTask;
+  }
+
+  public ValueTask OnAfterAsync(BehaviorContext context)
+  {
+    WriteLine($"[PIPELINE] [{context.CorrelationId[..8]}] Completed {context.CommandName}");
+    return ValueTask.CompletedTask;
+  }
+
+  public ValueTask OnErrorAsync(BehaviorContext context, Exception exception)
+  {
+    WriteLine($"[PIPELINE] [{context.CorrelationId[..8]}] Error: {exception.GetType().Name}");
+    return ValueTask.CompletedTask;
+  }
 }
 ```
 
 ### PerformanceBehavior
 
-Measures execution time and warns on slow commands:
+Measures execution time and warns on slow commands (uses inherited Stopwatch):
 
 ```csharp
-public sealed class PerformanceBehavior<TMessage, TResponse> : IPipelineBehavior<TMessage, TResponse>
+public sealed class PerformanceBehavior : INuruBehavior
 {
-    private const int SlowThresholdMs = 500;
+  private const int SlowThresholdMs = 500;
 
-    public async ValueTask<TResponse> Handle(TMessage message, MessageHandlerDelegate<TMessage, TResponse> next, CancellationToken ct)
-    {
-        Stopwatch stopwatch = Stopwatch.StartNew();
-        TResponse response = await next(message, ct);
-        stopwatch.Stop();
+  public ValueTask OnBeforeAsync(BehaviorContext context) => ValueTask.CompletedTask;
 
-        if (stopwatch.ElapsedMilliseconds > SlowThresholdMs)
-            Logger.LogWarning("[PERFORMANCE] {RequestName} took {ElapsedMs}ms", typeof(TMessage).Name, stopwatch.ElapsedMilliseconds);
+  public ValueTask OnAfterAsync(BehaviorContext context)
+  {
+    context.Stopwatch.Stop();
+    long elapsed = context.Stopwatch.ElapsedMilliseconds;
 
-        return response;
-    }
-}
-```
+    if (elapsed > SlowThresholdMs)
+      WriteLine($"[PERFORMANCE] {context.CommandName} took {elapsed}ms - SLOW!");
+    else
+      WriteLine($"[PERFORMANCE] {context.CommandName} completed in {elapsed}ms");
 
-### AuthorizationBehavior
-
-Checks permissions using marker interface pattern:
-
-```csharp
-public interface IRequireAuthorization
-{
-    string RequiredPermission { get; }
-}
-
-public sealed class AuthorizationBehavior<TMessage, TResponse> : IPipelineBehavior<TMessage, TResponse>
-{
-    public async ValueTask<TResponse> Handle(TMessage message, MessageHandlerDelegate<TMessage, TResponse> next, CancellationToken ct)
-    {
-        if (message is IRequireAuthorization authRequest)
-        {
-            // Check authorization (demo uses environment variable)
-            if (Environment.GetEnvironmentVariable("CLI_AUTHORIZED") != "1")
-                throw new UnauthorizedAccessException($"Permission required: {authRequest.RequiredPermission}");
-        }
-        return await next(message, ct);
-    }
-}
-```
-
-### RetryBehavior
-
-Implements exponential backoff for transient failures:
-
-```csharp
-public interface IRetryable
-{
-    int MaxRetries => 3;
-}
-
-public sealed class RetryBehavior<TMessage, TResponse> : IPipelineBehavior<TMessage, TResponse>
-{
-    public async ValueTask<TResponse> Handle(TMessage message, MessageHandlerDelegate<TMessage, TResponse> next, CancellationToken ct)
-    {
-        if (message is not IRetryable retryable)
-            return await next(message, ct);
-
-        for (int attempt = 1; attempt <= retryable.MaxRetries + 1; attempt++)
-        {
-            try { return await next(message, ct); }
-            catch (Exception ex) when (IsTransient(ex) && attempt <= retryable.MaxRetries)
-            {
-                TimeSpan delay = TimeSpan.FromSeconds(Math.Pow(2, attempt));
-                await Task.Delay(delay, ct);
-            }
-        }
-        throw new InvalidOperationException("Unreachable");
-    }
-
-    private static bool IsTransient(Exception ex) =>
-        ex is HttpRequestException or TimeoutException or IOException;
-}
-```
-
-### TelemetryBehavior
-
-Creates OpenTelemetry-compatible Activity spans for distributed tracing:
-
-```csharp
-public sealed class TelemetryBehavior<TMessage, TResponse> : IPipelineBehavior<TMessage, TResponse>
-{
-    private static readonly ActivitySource CommandActivitySource = new("TimeWarp.Nuru.Commands", "1.0.0");
-
-    public async ValueTask<TResponse> Handle(TMessage message, MessageHandlerDelegate<TMessage, TResponse> next, CancellationToken ct)
-    {
-        using Activity? activity = CommandActivitySource.StartActivity(typeof(TMessage).Name, ActivityKind.Internal);
-        activity?.SetTag("command.type", typeof(TMessage).FullName);
-
-        try
-        {
-            TResponse response = await next(message, ct);
-            activity?.SetStatus(ActivityStatusCode.Ok);
-            return response;
-        }
-        catch (Exception ex)
-        {
-            activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
-            activity?.SetTag("error.type", ex.GetType().Name);
-            throw;
-        }
-    }
+    return ValueTask.CompletedTask;
+  }
 }
 ```
 
 ### ExceptionHandlingBehavior
 
-Provides consistent error handling with user-friendly messages:
+Provides user-friendly error messages based on exception type:
 
 ```csharp
-public sealed class ExceptionHandlingBehavior<TMessage, TResponse> : IPipelineBehavior<TMessage, TResponse>
+public sealed class ExceptionHandlingBehavior : INuruBehavior
 {
-    public async ValueTask<TResponse> Handle(TMessage message, MessageHandlerDelegate<TMessage, TResponse> next, CancellationToken ct)
+  public ValueTask OnBeforeAsync(BehaviorContext context) => ValueTask.CompletedTask;
+  public ValueTask OnAfterAsync(BehaviorContext context) => ValueTask.CompletedTask;
+
+  public ValueTask OnErrorAsync(BehaviorContext context, Exception exception)
+  {
+    string message = exception switch
     {
-        try { return await next(message, ct); }
-        catch (ValidationException ex)
-        {
-            Console.Error.WriteLine($"Validation error: {ex.Message}");
-            throw new CommandExecutionException(typeof(TMessage).Name, "Validation failed", ex);
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            Console.Error.WriteLine($"Access denied: {ex.Message}");
-            throw new CommandExecutionException(typeof(TMessage).Name, "Authorization failed", ex);
-        }
-        catch (Exception ex)
-        {
-            Console.Error.WriteLine("Error: An unexpected error occurred. See logs for details.");
-            throw new CommandExecutionException(typeof(TMessage).Name, "Unexpected error", ex);
-        }
-    }
+      ValidationException ex => $"Validation error: {ex.Message}",
+      UnauthorizedAccessException ex => $"Access denied: {ex.Message}",
+      ArgumentException ex => $"Invalid argument: {ex.Message}",
+      _ => "Error: An unexpected error occurred."
+    };
+
+    Error.WriteLine($"[EXCEPTION] {message}");
+    return ValueTask.CompletedTask;
+    // Note: Exception still propagates after OnErrorAsync
+  }
 }
 ```
 
-## Registration Order
+### TelemetryBehavior
+
+Creates OpenTelemetry-compatible Activity spans (uses custom State):
+
+```csharp
+public sealed class TelemetryBehavior : INuruBehavior
+{
+  private static readonly ActivitySource CommandActivitySource = new("TimeWarp.Nuru.Commands", "1.0.0");
+
+  public sealed class State : BehaviorContext
+  {
+    public Activity? Activity { get; set; }
+  }
+
+  public ValueTask OnBeforeAsync(BehaviorContext context)
+  {
+    if (context is State state)
+    {
+      state.Activity = CommandActivitySource.StartActivity(state.CommandName, ActivityKind.Internal);
+      state.Activity?.SetTag("command.name", state.CommandName);
+      state.Activity?.SetTag("correlation.id", state.CorrelationId);
+    }
+    return ValueTask.CompletedTask;
+  }
+
+  public ValueTask OnAfterAsync(BehaviorContext context)
+  {
+    if (context is State state)
+    {
+      state.Activity?.SetStatus(ActivityStatusCode.Ok);
+      state.Activity?.Dispose();
+    }
+    return ValueTask.CompletedTask;
+  }
+
+  public ValueTask OnErrorAsync(BehaviorContext context, Exception exception)
+  {
+    if (context is State state)
+    {
+      state.Activity?.SetStatus(ActivityStatusCode.Error, exception.Message);
+      state.Activity?.SetTag("error.type", exception.GetType().Name);
+      state.Activity?.Dispose();
+    }
+    return ValueTask.CompletedTask;
+  }
+}
+```
+
+## Registration and Execution Order
 
 **Critical**: Registration order determines execution order.
 
-- **First registered** = outermost (executes first on request, last on response)
-- **Last registered** = innermost (executes last on request, first on response)
+- **First registered** = outermost (OnBefore first, OnAfter/OnError last)
+- **Last registered** = innermost (OnBefore last, OnAfter/OnError first)
 
 ```csharp
-services.AddMediator(options =>
-{
-    options.PipelineBehaviors =
-    [
-        typeof(TelemetryBehavior<,>),         // 1st - outermost
-        typeof(LoggingBehavior<,>),           // 2nd
-        typeof(AuthorizationBehavior<,>),     // 3rd
-        typeof(RetryBehavior<,>),             // 4th
-        typeof(PerformanceBehavior<,>),       // 5th
-        typeof(ExceptionHandlingBehavior<,>)  // 6th - innermost
-    ];
-});
+NuruApp.CreateBuilder(args)
+  .AddBehavior(typeof(TelemetryBehavior))       // 1st - outermost
+  .AddBehavior(typeof(LoggingBehavior))         // 2nd
+  .AddBehavior(typeof(ExceptionHandlingBehavior)) // 3rd
+  .AddBehavior(typeof(PerformanceBehavior))     // 4th - innermost
+  .Map("echo {message}")
+    .WithHandler((string message) => WriteLine(message))
+    .Done()
+  .Build();
 ```
 
-## Marker Interface Pattern
-
-Marker interfaces enable selective behavior application. Only commands implementing the interface receive the behavior:
-
-```csharp
-// Command with authorization requirement
-public sealed class AdminCommand : IRequest, IRequireAuthorization
-{
-    public string RequiredPermission => "admin:execute";
-}
-
-// Command with retry support
-public sealed class FlakyCommand : IRequest, IRetryable
-{
-    public int MaxRetries => 3;
-}
-
-// Standard command - no special behaviors
-public sealed class EchoCommand : IRequest { }
+**Execution flow:**
 ```
+OnBefore: Telemetry → Logging → Exception → Performance → Handler
+OnAfter:  Performance → Exception → Logging → Telemetry
+OnError:  Performance → Exception → Logging → Telemetry
+```
+
+## Key Differences from Mediator
+
+| Aspect | Mediator IPipelineBehavior | TimeWarp.Nuru INuruBehavior |
+|--------|---------------------------|----------------------------|
+| Pattern | `next()` callback | Separate OnBefore/OnAfter/OnError |
+| Lifetime | Per-request (transient) | Singleton (per-request State) |
+| Exception handling | Can catch and transform | Observe only (propagates) |
+| Code generation | Runtime reflection | Source-generated |
+| Startup overhead | ~131ms | ~4ms |
+
+## Deferred Samples
+
+The following samples require **behavior filtering** (applying behaviors selectively based on route metadata or marker interfaces). This feature is planned for a future release:
+
+- `pipeline-middleware-authorization.cs` - Needs `IRequireAuthorization` marker interface check
+- `pipeline-middleware-retry.cs` - Needs `IRetryable` marker interface check
+- `pipeline-middleware.cs` - Combined example with all behaviors
 
 ## Key Benefits
 
-1. **Separation of Concerns**: Each behavior handles one responsibility
-2. **Composability**: Mix and match behaviors per command
-3. **Testability**: Test behaviors in isolation
-4. **Consistency**: Same patterns across all commands
-5. **Flexibility**: Add/remove behaviors without changing command code
+1. **Source-Generated**: No runtime reflection or DI overhead
+2. **Separation of Concerns**: Each behavior handles one responsibility
+3. **Composability**: Mix and match behaviors
+4. **Testability**: Test behaviors in isolation
+5. **Consistency**: Same patterns across all commands
+6. **Performance**: Fast startup (~4ms vs ~131ms with Mediator)
 
 ## See Also
 
-- [Unified Middleware Sample](../unified-middleware/unified-middleware.cs) - Pipeline behaviors for delegate routes
-- [Aspire Telemetry Sample](../aspire-telemetry/aspire-telemetry.cs) - Full OpenTelemetry integration
-- [Mediator Documentation](https://github.com/martinothamar/Mediator)
+- [Aspire Telemetry Sample](../_aspire-telemetry/aspire-telemetry.cs) - Full OpenTelemetry integration
+- [INuruBehavior Interface](../../source/timewarp-nuru-core/abstractions/behavior-interfaces.cs) - Interface definition
+- [BehaviorContext](../../source/timewarp-nuru-core/abstractions/behavior-context.cs) - Context class

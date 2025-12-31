@@ -544,7 +544,7 @@ public sealed class DslInterpreter
 
   /// <summary>
   /// Dispatches AddBehavior() call to IIrAppBuilder.
-  /// Extracts the behavior type, constructor dependencies, and nested State class.
+  /// Extracts the behavior type, constructor dependencies, nested State class, and filter type.
   /// </summary>
   private object? DispatchAddBehavior(InvocationExpressionSyntax invocation, object? receiver)
   {
@@ -577,11 +577,21 @@ public sealed class DslInterpreter
         // Look for nested State class that inherits from BehaviorContext
         string? stateTypeName = FindNestedStateClass(namedType);
 
-        BehaviorDefinition behavior = BehaviorDefinition.ForAll(
-          typeName,
-          order: 0,
-          constructorDependencies: constructorDeps,
-          stateTypeName: stateTypeName);
+        // Check for INuruBehavior<TFilter> implementation
+        string? filterTypeName = ExtractBehaviorFilterType(namedType, invocation);
+
+        BehaviorDefinition behavior = filterTypeName is not null
+          ? BehaviorDefinition.ForFilter(
+              typeName,
+              filterTypeName,
+              order: 0,
+              constructorDependencies: constructorDeps,
+              stateTypeName: stateTypeName)
+          : BehaviorDefinition.ForAll(
+              typeName,
+              order: 0,
+              constructorDependencies: constructorDeps,
+              stateTypeName: stateTypeName);
 
         return appBuilder.AddBehavior(behavior);
       }
@@ -589,6 +599,39 @@ public sealed class DslInterpreter
 
     // If we can't extract the type, just return the builder unchanged
     return appBuilder;
+  }
+
+  /// <summary>
+  /// Extracts the filter type from INuruBehavior&lt;TFilter&gt; implementation.
+  /// Returns null if the behavior implements INuruBehavior (non-generic) or no behavior interface.
+  /// Throws if the behavior implements multiple INuruBehavior&lt;T&gt; interfaces.
+  /// </summary>
+  private static string? ExtractBehaviorFilterType(INamedTypeSymbol behaviorType, InvocationExpressionSyntax invocation)
+  {
+    List<string> filterTypes = [];
+
+    foreach (INamedTypeSymbol iface in behaviorType.AllInterfaces)
+    {
+      // Check for INuruBehavior<TFilter>
+      if (iface.IsGenericType &&
+          iface.Name == "INuruBehavior" &&
+          iface.ContainingNamespace.ToDisplayString() == "TimeWarp.Nuru" &&
+          iface.TypeArguments.Length == 1)
+      {
+        string filterTypeName = iface.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+        filterTypes.Add(filterTypeName);
+      }
+    }
+
+    // Error if multiple INuruBehavior<T> interfaces
+    if (filterTypes.Count > 1)
+    {
+      throw new InvalidOperationException(
+        $"Behavior '{behaviorType.Name}' implements multiple INuruBehavior<T> interfaces ({string.Join(", ", filterTypes)}). " +
+        $"A behavior may only implement one filtered interface. Location: {invocation.GetLocation().GetLineSpan()}");
+    }
+
+    return filterTypes.Count == 1 ? filterTypes[0] : null;
   }
 
   /// <summary>

@@ -309,9 +309,18 @@ Move to done, document results.
 - [x] Phase 9: Rename/rewrite `02-calc-mediator.cs` -> `02-calc-commands.cs`
 - [x] Phase 10: Fix `03-calc-mixed.cs` (unblocked by #308)
 - [x] Phase 11: Update `attributed-routes/attributed-routes.cs` (entry point updated)
-- [ ] Phase 12: Update `attributed-routes/messages/**/*.cs` **BLOCKED by #309, #310, #311**
+- [x] Phase 12: Update `attributed-routes/messages/**/*.cs` (unblocked - #309, #310, #311 done)
 - [ ] Phase 13: Update this task
 - [ ] Phase 14: Test everything
+
+### Known Issue: Docker Group Routes Not Matching - See #317
+
+The `docker` subcommand routes (`docker ps`, `docker build`, `docker run`, `docker tag`) are not matching.
+Simple commands work (greet, ping, deploy, exec) but grouped commands under `docker` fall through to help.
+
+**Root cause identified:** The route matcher only checks the last literal segment. For `docker ps`, it checks `args[0] != "ps"` but should check `args[0] == "docker" && args[1] == "ps"`.
+
+**Tracked in:** #317 - Fix attributed route pattern matching for multi-word routes
 
 ## Notes
 

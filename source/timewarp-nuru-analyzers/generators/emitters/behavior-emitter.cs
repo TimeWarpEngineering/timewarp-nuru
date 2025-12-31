@@ -69,16 +69,110 @@ internal static class BehaviorEmitter
 
     string ind = new(' ', indent);
 
+    // Filter behaviors that apply to this route
+    ImmutableArray<BehaviorDefinition> applicableBehaviors = FilterBehaviorsForRoute(behaviors, route);
+
+    if (applicableBehaviors.Length == 0)
+    {
+      // No applicable behaviors - just emit the handler
+      emitHandler();
+      return;
+    }
+
+    // Create command instance (for delegate routes)
+    EmitCommandCreation(sb, route, routeIndex, ind);
+
     // Create the BehaviorContext
     EmitContextCreation(sb, route, routeIndex, ind);
 
     // Build the nested lambda chain
     // Outermost behavior wraps the next, which wraps the next, ..., which wraps the handler
-    EmitNestedBehaviorChain(sb, behaviors, routeIndex, indent, emitHandler);
+    EmitNestedBehaviorChain(sb, applicableBehaviors, route, routeIndex, indent, emitHandler);
   }
 
   /// <summary>
-  /// Emits BehaviorContext creation.
+  /// Filters behaviors to only those that apply to the given route.
+  /// Global behaviors (FilterTypeName is null) always apply.
+  /// Filtered behaviors only apply if the route implements the filter interface.
+  /// </summary>
+  private static ImmutableArray<BehaviorDefinition> FilterBehaviorsForRoute(
+    ImmutableArray<BehaviorDefinition> behaviors,
+    RouteDefinition route)
+  {
+    // Get all interface type names implemented by this route
+    HashSet<string> routeInterfaces = [.. route.ImplementedInterfaces];
+
+    // For attributed routes, we'd also check the command class interfaces
+    // This is handled separately in the attributed route extractor
+
+    ImmutableArray<BehaviorDefinition>.Builder applicable = ImmutableArray.CreateBuilder<BehaviorDefinition>();
+
+    foreach (BehaviorDefinition behavior in behaviors)
+    {
+      if (!behavior.IsFiltered)
+      {
+        // Global behavior - always applies
+        applicable.Add(behavior);
+      }
+      else if (routeInterfaces.Contains(behavior.FilterTypeName!))
+      {
+        // Filtered behavior - route implements the filter interface
+        applicable.Add(behavior);
+      }
+      // else: filtered behavior but route doesn't implement interface - skip
+    }
+
+    return applicable.ToImmutable();
+  }
+
+  /// <summary>
+  /// Emits command instance creation for delegate routes.
+  /// </summary>
+  private static void EmitCommandCreation(
+    StringBuilder sb,
+    RouteDefinition route,
+    int routeIndex,
+    string indent)
+  {
+    // Only emit for delegate routes - attributed routes already have __command
+    if (route.Handler.HandlerKind != HandlerKind.Delegate)
+      return;
+
+    string className = CommandClassEmitter.GetCommandClassName(routeIndex);
+
+    sb.AppendLine($"{indent}// Create command instance for behaviors");
+    sb.AppendLine($"{indent}var __command = new {className}");
+    sb.AppendLine($"{indent}{{");
+
+    // Set route parameter properties
+    foreach (ParameterDefinition param in route.Parameters)
+    {
+      string propertyName = ToPascalCase(param.Name);
+      string varName = param.IsCatchAll
+        ? $"__{ToCamelCase(param.Name)}_{routeIndex}"
+        : param.Name.ToLowerInvariant();
+
+      sb.AppendLine($"{indent}  {propertyName} = {varName},");
+    }
+
+    // Set option properties
+    foreach (OptionDefinition option in route.Options)
+    {
+      // Use LongForm as property name
+      string propertyName = ToPascalCase(option.LongForm ?? option.ParameterName ?? "option");
+      string varName = option.IsFlag
+        ? ToCamelCase(option.LongForm ?? "flag")
+        : (option.ParameterName?.ToLowerInvariant() ?? "value");
+
+      sb.AppendLine($"{indent}  {propertyName} = {varName},");
+    }
+
+    sb.AppendLine($"{indent}}};");
+    sb.AppendLine();
+  }
+
+  /// <summary>
+  /// Emits BehaviorContext creation with command instance.
   /// </summary>
   private static void EmitContextCreation(
     StringBuilder sb,
@@ -87,7 +181,9 @@ internal static class BehaviorEmitter
     string indent)
   {
     string commandName = EscapeString(route.FullPattern);
-    string commandTypeName = route.Handler.FullTypeName ?? $"Route_{routeIndex}";
+    string commandTypeName = route.Handler.HandlerKind == HandlerKind.Delegate
+      ? CommandClassEmitter.GetCommandClassName(routeIndex)
+      : (route.Handler.FullTypeName ?? $"Route_{routeIndex}");
 
     sb.AppendLine($"{indent}// Create behavior context");
     sb.AppendLine($"{indent}var __behaviorContext = new global::TimeWarp.Nuru.BehaviorContext");
@@ -95,7 +191,7 @@ internal static class BehaviorEmitter
     sb.AppendLine($"{indent}  CommandName = \"{commandName}\",");
     sb.AppendLine($"{indent}  CommandTypeName = \"{commandTypeName}\",");
     sb.AppendLine($"{indent}  CancellationToken = global::System.Threading.CancellationToken.None,");
-    sb.AppendLine($"{indent}  Command = null");  // TODO: Pass command instance when available (#316)
+    sb.AppendLine($"{indent}  Command = __command");
     sb.AppendLine($"{indent}}};");
     sb.AppendLine();
   }
@@ -106,6 +202,7 @@ internal static class BehaviorEmitter
   private static void EmitNestedBehaviorChain(
     StringBuilder sb,
     ImmutableArray<BehaviorDefinition> behaviors,
+    RouteDefinition route,
     int routeIndex,
     int indent,
     Action emitHandler)
@@ -118,7 +215,7 @@ internal static class BehaviorEmitter
     sb.AppendLine($"{ind}// Execute pipeline: behaviors wrap handler");
 
     // Start with outermost behavior
-    EmitBehaviorCall(sb, behaviors, 0, routeIndex, indent, emitHandler);
+    EmitBehaviorCall(sb, behaviors, route, 0, routeIndex, indent, emitHandler);
   }
 
   /// <summary>
@@ -127,6 +224,7 @@ internal static class BehaviorEmitter
   private static void EmitBehaviorCall(
     StringBuilder sb,
     ImmutableArray<BehaviorDefinition> behaviors,
+    RouteDefinition route,
     int behaviorIndex,
     int routeIndex,
     int indent,
@@ -144,12 +242,32 @@ internal static class BehaviorEmitter
     BehaviorDefinition behavior = behaviors[behaviorIndex];
     string fieldName = GetBehaviorFieldName(behavior);
 
-    // Emit: await __behavior_X.Value.HandleAsync(__behaviorContext, async () => { ... });
-    sb.AppendLine($"{ind}await {fieldName}.Value.HandleAsync(__behaviorContext, async () =>");
+    if (behavior.IsFiltered)
+    {
+      // Filtered behavior - create typed context
+      string filterType = behavior.FilterTypeName!;
+
+      sb.AppendLine($"{ind}// Create typed context for filtered behavior");
+      sb.AppendLine($"{ind}var __typedContext_{behaviorIndex} = new global::TimeWarp.Nuru.BehaviorContext<{filterType}>");
+      sb.AppendLine($"{ind}{{");
+      sb.AppendLine($"{ind}  CommandName = __behaviorContext.CommandName,");
+      sb.AppendLine($"{ind}  CommandTypeName = __behaviorContext.CommandTypeName,");
+      sb.AppendLine($"{ind}  CancellationToken = __behaviorContext.CancellationToken,");
+      sb.AppendLine($"{ind}  Command = ({filterType})__command");
+      sb.AppendLine($"{ind}}};");
+
+      sb.AppendLine($"{ind}await {fieldName}.Value.HandleAsync(__typedContext_{behaviorIndex}, async () =>");
+    }
+    else
+    {
+      // Global behavior - use base context
+      sb.AppendLine($"{ind}await {fieldName}.Value.HandleAsync(__behaviorContext, async () =>");
+    }
+
     sb.AppendLine($"{ind}{{");
 
     // Recursively emit the next behavior or handler
-    EmitBehaviorCall(sb, behaviors, behaviorIndex + 1, routeIndex, indent + 2, emitHandler);
+    EmitBehaviorCall(sb, behaviors, route, behaviorIndex + 1, routeIndex, indent + 2, emitHandler);
 
     sb.AppendLine($"{ind}}}).ConfigureAwait(false);");
   }
@@ -247,5 +365,53 @@ internal static class BehaviorEmitter
     return value
       .Replace("\\", "\\\\", StringComparison.Ordinal)
       .Replace("\"", "\\\"", StringComparison.Ordinal);
+  }
+
+  /// <summary>
+  /// Converts a string to PascalCase.
+  /// </summary>
+  private static string ToPascalCase(string value)
+  {
+    if (string.IsNullOrEmpty(value))
+      return value;
+
+    return char.ToUpperInvariant(value[0]) + value[1..];
+  }
+
+  /// <summary>
+  /// Converts a string to camelCase.
+  /// Handles kebab-case (e.g., "no-cache" -> "noCache").
+  /// </summary>
+  private static string ToCamelCase(string value)
+  {
+    if (string.IsNullOrEmpty(value))
+      return value;
+
+    // Handle kebab-case by converting to PascalCase first, then camelCase
+    string[] parts = value.Split('-');
+    StringBuilder result = new();
+
+    for (int i = 0; i < parts.Length; i++)
+    {
+      string part = parts[i];
+      if (string.IsNullOrEmpty(part))
+        continue;
+
+      if (i == 0)
+      {
+        result.Append(char.ToLowerInvariant(part[0]));
+      }
+      else
+      {
+        result.Append(char.ToUpperInvariant(part[0]));
+      }
+
+      if (part.Length > 1)
+      {
+        result.Append(part[1..]);
+      }
+    }
+
+    return result.ToString();
   }
 }

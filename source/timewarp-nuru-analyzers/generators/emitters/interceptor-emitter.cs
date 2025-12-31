@@ -24,6 +24,7 @@ internal static class InterceptorEmitter
     EmitInterceptsLocationAttribute(sb);
     EmitNamespaceAndUsings(sb, model);
     EmitClassStart(sb);
+    EmitCommandClasses(sb, model);
     EmitServiceFields(sb, model.Services);
     BehaviorEmitter.EmitBehaviorFields(sb, model.Behaviors, model.Services);
     EmitInterceptsLocation(sb, model.InterceptSites);
@@ -123,6 +124,15 @@ internal static class InterceptorEmitter
   {
     sb.AppendLine("file static class GeneratedInterceptor");
     sb.AppendLine("{");
+  }
+
+  /// <summary>
+  /// Emits generated command classes for delegate routes.
+  /// These provide command instances for behaviors.
+  /// </summary>
+  private static void EmitCommandClasses(StringBuilder sb, AppModel model)
+  {
+    CommandClassEmitter.EmitCommandClasses(sb, model.RoutesBySpecificity);
   }
 
   /// <summary>

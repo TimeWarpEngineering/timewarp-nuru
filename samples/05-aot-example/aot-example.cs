@@ -1,14 +1,15 @@
 // AOT-Compatible TimeWarp.Nuru Example
 //
-// This sample demonstrates how to build a fully AOT-compatible CLI application
-// using TimeWarp.Nuru with zero IL2XXX/IL3XXX warnings.
+// TimeWarp.Nuru is fully AOT-compatible out of the box - no special configuration needed!
+// This sample demonstrates building a native AOT CLI application with zero IL2XXX/IL3XXX warnings.
 //
 // Build commands:
 //   dotnet publish -c Release -r linux-x64    # Linux
 //   dotnet publish -c Release -r osx-arm64    # macOS Apple Silicon
 //   dotnet publish -c Release -r win-x64      # Windows
 //
-// Result: ~3-5 MB native binary with instant startup (<1ms)
+// Result: ~10 MB native binary with instant startup
+//         (enable InvariantGlobalization in csproj for ~5 MB)
 
 using TimeWarp.Nuru;
 using static System.Console;

@@ -17,6 +17,8 @@ These samples have been verified working with the new API:
 - [x] `02-calculator/03-calc-mixed.cs`
 - [x] `03-attributed-routes/` (csproj)
 - [x] `04-syntax-examples/syntax-examples.cs`
+- [x] `05-aot-example/aot-example.cs` (removed Mediator, verified AOT publish works)
+- [x] `06-async-examples/async-examples.cs` (updated to CreateBuilder)
 
 ## Samples Needing Updates
 
@@ -28,10 +30,10 @@ These samples have been verified working with the new API:
 - [ ] `testing/runfile-test-harness/real-app.cs`
 
 ### Uses Mediator (replace with TimeWarp.Nuru interfaces)
-- [ ] `aot-example/aot-example.cs` - AddMediator
-- [ ] `logging/console-logging.cs` - UseConsoleLogging, Mediator
-- [ ] `logging/serilog-logging.cs` - likely same issues
-- [ ] `async-examples/async-examples.cs` - CreateSlimBuilder
+- [x] `05-aot-example/aot-example.cs` - DONE (removed AddMediator)
+- [ ] `_logging/console-logging.cs` - UseConsoleLogging, Mediator
+- [ ] `_logging/serilog-logging.cs` - likely same issues
+- [x] `06-async-examples/async-examples.cs` - DONE (updated to CreateBuilder)
 
 ### Uses private methods as handlers (NURU_H004)
 - [ ] `configuration/configuration-basics.cs`
@@ -42,16 +44,31 @@ These samples have been verified working with the new API:
 - [ ] `builtin-types-example.cs` - block body handler formatting
 - [ ] `custom-type-converter-example.cs` - likely same
 
+### Requires Mediator Pipeline Behaviors (not yet supported in TimeWarp.Nuru)
+These samples demonstrate Mediator's `IPipelineBehavior<TMessage, TResponse>` for cross-cutting concerns.
+TimeWarp.Nuru does not yet have an equivalent pipeline middleware system.
+
+- [ ] `_pipeline-middleware/pipeline-middleware-basic.cs` - LoggingBehavior, PerformanceBehavior
+- [ ] `_pipeline-middleware/pipeline-middleware-authorization.cs` - AuthorizationBehavior
+- [ ] `_pipeline-middleware/pipeline-middleware-exception.cs` - ExceptionHandlingBehavior
+- [ ] `_pipeline-middleware/pipeline-middleware-retry.cs` - RetryBehavior
+- [ ] `_pipeline-middleware/pipeline-middleware-telemetry.cs` - TelemetryBehavior
+- [ ] `_pipeline-middleware/pipeline-middleware.cs` - Combined example
+
+**Options:**
+1. Keep as Mediator samples (separate from main samples)
+2. Create new task to implement pipeline middleware in TimeWarp.Nuru
+3. Remove samples and document as future feature
+
 ### Unchecked (need verification)
-- [ ] `aspire-host-otel/`
-- [ ] `aspire-telemetry/`
-- [ ] `dynamic-completion-example/`
-- [ ] `pipeline-middleware/`
-- [ ] `repl-demo/`
-- [ ] `shell-completion-example/`
-- [ ] `terminal/`
-- [ ] `unified-middleware/`
-- [ ] `timewarp-nuru-sample/`
+- [ ] `_aspire-host-otel/`
+- [ ] `_aspire-telemetry/`
+- [ ] `_dynamic-completion-example/`
+- [ ] `_repl-demo/`
+- [ ] `_shell-completion-example/`
+- [ ] `_terminal/`
+- [ ] `_unified-middleware/`
+- [ ] `_timewarp-nuru-sample/`
 
 ## Notes
 

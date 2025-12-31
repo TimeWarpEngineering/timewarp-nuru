@@ -1,24 +1,28 @@
 #!/usr/bin/dotnet --
 #:project ../../source/timewarp-nuru/timewarp-nuru.csproj
 #:project ../../source/timewarp-nuru-logging/timewarp-nuru-logging.csproj
-#:package Mediator.Abstractions
-#:package Mediator.SourceGenerator
+#:package Microsoft.Extensions.Logging.Console
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // BASIC PIPELINE MIDDLEWARE - LOGGING AND PERFORMANCE
 // ═══════════════════════════════════════════════════════════════════════════════
 //
 // This sample demonstrates the fundamental pipeline behavior pattern using
-// Mediator's IPipelineBehavior for cross-cutting concerns.
+// TimeWarp.Nuru's INuruBehavior for cross-cutting concerns.
 //
 // BEHAVIORS DEMONSTRATED:
-//   - LoggingBehavior: Logs request entry and exit
-//   - PerformanceBehavior: Times execution and warns on slow commands
+//   - LoggingBehavior: Logs request entry and exit (uses BehaviorContext)
+//   - PerformanceBehavior: Times execution and warns on slow commands (uses custom State)
 //
 // HOW PIPELINE BEHAVIORS WORK:
 //   Behaviors execute in registration order, wrapping the handler like onion layers.
-//   First behavior = outermost (executes first on the way in, last on the way out).
-//   Each behavior can run code before AND after calling next().
+//   First behavior = outermost (OnBefore first, OnAfter last).
+//   Each behavior can implement OnBefore, OnAfter, and/or OnError.
+//
+// KEY CONCEPTS:
+//   - Behaviors are Singleton (instantiated once, services via constructor)
+//   - Per-request state uses nested State class that inherits from BehaviorContext
+//   - BehaviorContext provides: CommandName, CorrelationId, Stopwatch, CancellationToken
 //
 // RUN THIS SAMPLE:
 //   ./pipeline-middleware-basic.cs echo "Hello, World!"
@@ -27,72 +31,35 @@
 
 using System.Diagnostics;
 using TimeWarp.Nuru;
-using Mediator;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using static System.Console;
 
+#pragma warning disable NURU_H002 // Handler uses closure - intentional for demo
+
 NuruCoreApp app = NuruApp.CreateBuilder(args)
-  .ConfigureServices(ConfigureServices)
+  // Register behaviors - execute in order (first = outermost)
+  .AddBehavior(typeof(LoggingBehavior))
+  .AddBehavior(typeof(PerformanceBehavior))
   // Simple command to demonstrate pipeline execution
-  .Map<EchoCommand>("echo {message}")
+  .Map("echo {message}")
     .WithDescription("Echo a message back (demonstrates pipeline)")
+    .WithHandler((string message) => WriteLine($"Echo: {message}"))
+    .Done()
   // Slow command to trigger performance warning
-  .Map<SlowCommand>("slow {delay:int}")
+  .Map("slow {delay:int}")
     .WithDescription("Simulate slow operation (ms) to demonstrate performance behavior")
+    .WithHandler(async (int delay) =>
+    {
+      WriteLine($"Starting slow operation ({delay}ms)...");
+      await Task.Delay(delay);
+      WriteLine("Slow operation completed.");
+    })
+    .Done()
   .Build();
 
+#pragma warning restore NURU_H002
+
 return await app.RunAsync(args);
-
-static void ConfigureServices(IServiceCollection services)
-{
-  // Register Mediator with pipeline behaviors using open generics.
-  // Behaviors execute in array order: first = outermost (wraps everything).
-  services.AddMediator(options =>
-  {
-    options.PipelineBehaviors =
-    [
-      typeof(LoggingBehavior<,>),       // Outermost: logs entry/exit
-      typeof(PerformanceBehavior<,>)    // Innermost: times execution
-    ];
-  });
-}
-
-// =============================================================================
-// COMMANDS
-// =============================================================================
-
-/// <summary>Simple echo command to demonstrate pipeline execution.</summary>
-public sealed class EchoCommand : IRequest
-{
-  public string Message { get; set; } = string.Empty;
-
-  public sealed class Handler : IRequestHandler<EchoCommand>
-  {
-    public ValueTask<Unit> Handle(EchoCommand request, CancellationToken cancellationToken)
-    {
-      WriteLine($"Echo: {request.Message}");
-      return default;
-    }
-  }
-}
-
-/// <summary>Slow command that triggers the performance warning.</summary>
-public sealed class SlowCommand : IRequest
-{
-  public int Delay { get; set; }
-
-  public sealed class Handler : IRequestHandler<SlowCommand>
-  {
-    public async ValueTask<Unit> Handle(SlowCommand request, CancellationToken cancellationToken)
-    {
-      WriteLine($"Starting slow operation ({request.Delay}ms)...");
-      await Task.Delay(request.Delay, cancellationToken);
-      WriteLine("Slow operation completed.");
-      return Unit.Value;
-    }
-  }
-}
 
 // =============================================================================
 // PIPELINE BEHAVIORS
@@ -100,92 +67,76 @@ public sealed class SlowCommand : IRequest
 
 /// <summary>
 /// Logging behavior that logs request entry and exit.
-/// Demonstrates the basic before/after pattern for pipeline behaviors.
+/// Demonstrates the basic before/after/error pattern for pipeline behaviors.
+/// Uses BehaviorContext directly (no custom state needed).
 /// </summary>
-public sealed class LoggingBehavior<TMessage, TResponse> : IPipelineBehavior<TMessage, TResponse>
-  where TMessage : IMessage
+public sealed class LoggingBehavior : INuruBehavior
 {
-  private readonly ILogger<LoggingBehavior<TMessage, TResponse>> Logger;
+  // Note: In production, you'd inject ILogger<LoggingBehavior> via constructor.
+  // For this demo, we use Console output for simplicity.
 
-  public LoggingBehavior(ILogger<LoggingBehavior<TMessage, TResponse>> logger)
+  public ValueTask OnBeforeAsync(BehaviorContext context)
   {
-    Logger = logger;
+    WriteLine($"[PIPELINE] [{context.CorrelationId[..8]}] Handling {context.CommandName}");
+    return ValueTask.CompletedTask;
   }
 
-  public async ValueTask<TResponse> Handle
-  (
-    TMessage message,
-    MessageHandlerDelegate<TMessage, TResponse> next,
-    CancellationToken cancellationToken
-  )
+  public ValueTask OnAfterAsync(BehaviorContext context)
   {
-    string requestName = typeof(TMessage).Name;
-    Logger.LogInformation("[PIPELINE] Handling {RequestName}", requestName);
+    WriteLine($"[PIPELINE] [{context.CorrelationId[..8]}] Completed {context.CommandName}");
+    return ValueTask.CompletedTask;
+  }
 
-    try
-    {
-      TResponse response = await next(message, cancellationToken);
-      Logger.LogInformation("[PIPELINE] Completed {RequestName}", requestName);
-      return response;
-    }
-    catch (Exception ex)
-    {
-      Logger.LogError(ex, "[PIPELINE] Error handling {RequestName}", requestName);
-      throw;
-    }
+  public ValueTask OnErrorAsync(BehaviorContext context, Exception exception)
+  {
+    WriteLine($"[PIPELINE] [{context.CorrelationId[..8]}] Error handling {context.CommandName}: {exception.Message}");
+    return ValueTask.CompletedTask;
   }
 }
 
 /// <summary>
 /// Performance behavior that times command execution and warns on slow commands.
-/// Demonstrates cross-cutting performance monitoring.
+/// Demonstrates using custom State class for per-request state.
+/// The Stopwatch is inherited from BehaviorContext and auto-started.
 /// </summary>
-public sealed class PerformanceBehavior<TMessage, TResponse> : IPipelineBehavior<TMessage, TResponse>
-  where TMessage : IMessage
+public sealed class PerformanceBehavior : INuruBehavior
 {
-  private readonly ILogger<PerformanceBehavior<TMessage, TResponse>> Logger;
   private const int SlowThresholdMs = 500;
 
-  public PerformanceBehavior(ILogger<PerformanceBehavior<TMessage, TResponse>> logger)
+  // Custom State class - inherits BehaviorContext to get CommandName, CorrelationId, Stopwatch, etc.
+  // The Stopwatch is automatically started when the context is created.
+  public sealed class State : BehaviorContext
   {
-    Logger = logger;
+    // No additional state needed - we use the inherited Stopwatch
   }
 
-  public async ValueTask<TResponse> Handle
-  (
-    TMessage message,
-    MessageHandlerDelegate<TMessage, TResponse> next,
-    CancellationToken cancellationToken
-  )
+  public ValueTask OnBeforeAsync(BehaviorContext context)
   {
-    Stopwatch stopwatch = Stopwatch.StartNew();
+    // Stopwatch is already running (auto-started when context was created)
+    return ValueTask.CompletedTask;
+  }
 
-    TResponse response = await next(message, cancellationToken);
+  public ValueTask OnAfterAsync(BehaviorContext context)
+  {
+    context.Stopwatch.Stop();
+    long elapsed = context.Stopwatch.ElapsedMilliseconds;
 
-    stopwatch.Stop();
-
-    string requestName = typeof(TMessage).Name;
-
-    if (stopwatch.ElapsedMilliseconds > SlowThresholdMs)
+    if (elapsed > SlowThresholdMs)
     {
-      Logger.LogWarning
-      (
-        "[PERFORMANCE] {RequestName} took {ElapsedMs}ms (threshold: {ThresholdMs}ms)",
-        requestName,
-        stopwatch.ElapsedMilliseconds,
-        SlowThresholdMs
-      );
+      WriteLine($"[PERFORMANCE] {context.CommandName} took {elapsed}ms (threshold: {SlowThresholdMs}ms) - SLOW!");
     }
     else
     {
-      Logger.LogInformation
-      (
-        "[PERFORMANCE] {RequestName} completed in {ElapsedMs}ms",
-        requestName,
-        stopwatch.ElapsedMilliseconds
-      );
+      WriteLine($"[PERFORMANCE] {context.CommandName} completed in {elapsed}ms");
     }
 
-    return response;
+    return ValueTask.CompletedTask;
+  }
+
+  public ValueTask OnErrorAsync(BehaviorContext context, Exception exception)
+  {
+    context.Stopwatch.Stop();
+    WriteLine($"[PERFORMANCE] {context.CommandName} failed after {context.Stopwatch.ElapsedMilliseconds}ms");
+    return ValueTask.CompletedTask;
   }
 }

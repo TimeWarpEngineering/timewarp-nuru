@@ -42,6 +42,30 @@ public partial class NuruCoreAppBuilder<TSelf>
   }
 
   /// <summary>
+  /// Registers a pipeline behavior that wraps handler execution.
+  /// Behaviors are instantiated once (Singleton) and called in registration order.
+  /// This method is analyzed at compile-time by the source generator.
+  /// </summary>
+  /// <param name="behaviorType">The type implementing <see cref="INuruBehavior"/>.</param>
+  /// <returns>The builder for method chaining.</returns>
+  /// <example>
+  /// <code>
+  /// NuruApp.CreateBuilder(args)
+  ///   .AddBehavior(typeof(LoggingBehavior))
+  ///   .AddBehavior(typeof(PerformanceBehavior))
+  ///   .Map("ping").WithHandler(() => "pong").Done()
+  ///   .Build();
+  /// </code>
+  /// </example>
+  public virtual TSelf AddBehavior(Type behaviorType)
+  {
+    // No-op at runtime - the source generator extracts behavior info at compile-time
+    // and generates the pipeline wrapping code in the interceptor.
+    _ = behaviorType; // Suppress unused parameter warning
+    return (TSelf)this;
+  }
+
+  /// <summary>
   /// Enables automatic help generation for all routes.
   /// Help routes will be generated at build time.
   /// </summary>

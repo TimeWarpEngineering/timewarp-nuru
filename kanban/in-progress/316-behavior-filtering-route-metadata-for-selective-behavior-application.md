@@ -171,31 +171,57 @@ public sealed class AuthorizationBehavior : INuruBehavior
 
 ## Checklist
 
-### Phase 1: Core Infrastructure
-- [ ] Add `Command` property to `BehaviorContext`
-- [ ] Update behavior emitter to pass command instance to context
-- [ ] For attributed routes: command instance already created, just pass it
-- [ ] For delegate routes without `.Implements<T>()`: create simple generated command with parameters only
+### Phase 1: Add Generic Behavior Interface ✅
+- [x] Add `INuruBehavior<TFilter>` interface for filtered behaviors
+- [x] Add `BehaviorContext<TFilter>` with strongly-typed Command property
+- [x] Commit: `424804da`
 
-### Phase 2: DSL for `.Implements<T>()`
-- [ ] Add `Implements<T>(Expression<Action<T>>)` method to endpoint builder
-- [ ] Support chaining multiple `.Implements<T>()` calls
-- [ ] DSL interpreter extracts interface type from generic parameter
-- [ ] DSL interpreter extracts property assignments from expression tree
+### Phase 2: Update BehaviorDefinition Model ✅
+- [x] Add `FilterTypeName` property to `BehaviorDefinition`
+- [x] Add `ForFilter()` factory method
+- [x] Add `IsFiltered` computed property
+- [x] Commit: `2252d0dc`
 
-### Phase 3: Generator Updates
-- [ ] Generate command classes implementing specified interfaces
-- [ ] Extract constant values from expression tree assignments
-- [ ] Support single property assignment: `x => x.Prop = value`
-- [ ] Support block body with multiple assignments: `x => { x.A = 1; x.B = 2; }`
-- [ ] Emit interface implementations with extracted values
+### Phase 3: Extract Filter Type from Behavior Registration ✅
+- [x] Add `ExtractBehaviorFilterType()` to DSL interpreter
+- [x] Detect `INuruBehavior<TFilter>` implementations
+- [x] Error at compile-time for multiple filter interfaces
+- [x] Commit: `280cce81`
 
-### Phase 4: Update Samples
-- [ ] Convert `pipeline-middleware-authorization.cs` using `IRequireAuthorization`
-- [ ] Update `pipeline-middleware.cs` (combined) - partial, authorization only
-- [ ] `pipeline-middleware-retry.cs` - DEFERRED (see notes)
+### Phase 4: Add `.Implements<T>()` DSL Method ✅
+- [x] Add `Implements<T>(Expression<Action<T>>)` to `EndpointBuilder`
+- [x] Add `InterfaceImplementationDefinition` and `PropertyAssignment` models
+- [x] Add `Implements` property to `RouteDefinition`
+- [x] Add `WithImplements()` to `RouteDefinitionBuilder`
+- [x] Add `AddImplementation()` to `IIrRouteBuilder` interface
+- [x] Commit: `b063bbd9`
 
-### Phase 5: Testing
+### Phase 5: Expression Tree Extractor ✅
+- [x] Create `ImplementsExtractor` to parse lambda expressions
+- [x] Extract interface type from generic argument
+- [x] Extract property assignments from expression body
+- [x] Support both simple and block body lambdas
+- [x] Add `DispatchImplements()` to DSL interpreter
+- [x] Commit: `1ec3e690`
+
+### Phase 6: Generate Command Classes for Delegate Routes ⏳
+- [ ] Generate `__Route_N_Command` classes for all delegate routes
+- [ ] Include route parameters as properties
+- [ ] Implement interfaces from `.Implements<T>()` calls
+- [ ] Emit interface property implementations with extracted values
+
+### Phase 7: Update Behavior Emitter for Filtered Pipelines ⏳
+- [ ] Filter behaviors based on `FilterTypeName` vs route's implemented interfaces
+- [ ] For filtered behaviors, create typed `BehaviorContext<TFilter>`
+- [ ] Pass command instance to context for all routes
+- [ ] For attributed routes, detect implemented interfaces from command class
+
+### Phase 8: Update Samples ⏳
+- [ ] Convert `pipeline-middleware-authorization.cs` to `INuruBehavior<IRequireAuthorization>`
+- [ ] Test with `.Implements<T>()` delegate routes
+- [ ] `pipeline-middleware-retry.cs` - May work now with `HandleAsync` pattern
+
+### Phase 9: Testing ⏳
 - [ ] Unit tests for expression tree parsing
 - [ ] Unit tests for command class generation with interfaces
 - [ ] Integration tests for behavior filtering

@@ -187,9 +187,9 @@ if (args is ["ping"])
 - [x] Design nested `State` pattern for per-request state
 - [x] Document behavior authoring pattern
 
-### Phase 1.1: Create Interface File
-- [ ] Create `source/timewarp-nuru-core/abstractions/behavior-interfaces.cs`
-- [ ] Commit: `feat(core): add INuruBehavior interface and BehaviorContext`
+### Phase 1.1: Create Interface File ✅
+- [x] Create `source/timewarp-nuru-core/abstractions/behavior-interfaces.cs`
+- [x] Commit: `feat(core): add INuruBehavior interface and BehaviorContext`
 
 ### Phase 2: Generator Implementation
 - [ ] Create `behavior-extractor.cs` - find behaviors, extract State classes

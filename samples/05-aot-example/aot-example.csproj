@@ -31,13 +31,6 @@
       <OutputItemType>Analyzer</OutputItemType>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
-
-    <!-- Mediator source generator is required for AOT-compatible DI -->
-    <PackageReference Include="Mediator.Abstractions" />
-    <PackageReference Include="Mediator.SourceGenerator">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
-    </PackageReference>
   </ItemGroup>
 
   <!-- Exclude generated files from compilation (they're already included by the source generator) -->

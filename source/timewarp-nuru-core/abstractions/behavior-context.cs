@@ -1,5 +1,6 @@
 // Base context for pipeline behaviors.
 // See kanban task #315 for design decisions.
+// See kanban task #316 for typed context design (BehaviorContext<TFilter>).
 
 namespace TimeWarp.Nuru;
 
@@ -10,25 +11,18 @@ namespace TimeWarp.Nuru;
 /// </summary>
 /// <example>
 /// <code>
-/// public class AuthorizationBehavior : INuruBehavior
+/// // Global behavior using base BehaviorContext
+/// public class LoggingBehavior : INuruBehavior
 /// {
-///   public async ValueTask HandleAsync(BehaviorContext context, Func&lt;ValueTask&gt; next)
+///   public async ValueTask HandleAsync(BehaviorContext context, Func&lt;ValueTask&gt; proceed)
 ///   {
-///     // Check command interface
-///     if (context.Command is IRequireAuthorization auth)
-///     {
-///       if (!HasPermission(auth.RequiredPermission))
-///         throw new UnauthorizedAccessException();
-///     }
-///
-///     // Use correlation ID for logging
 ///     Console.WriteLine($"[{context.CorrelationId[..8]}] Processing {context.CommandName}");
-///
-///     await next();
+///     await proceed();
 ///   }
 /// }
 /// </code>
 /// </example>
+/// <seealso cref="BehaviorContext{TFilter}"/>
 public class BehaviorContext
 {
   /// <summary>
@@ -67,9 +61,38 @@ public class BehaviorContext
   /// For delegate routes: a generated command instance. If <c>.Implements&lt;T&gt;()</c> was used,
   /// the generated class implements that interface with the configured property values.
   /// </para>
-  /// <para>
-  /// May be <c>null</c> for delegate routes that don't use <c>.Implements&lt;T&gt;()</c>.
-  /// </para>
   /// </remarks>
   public object? Command { get; init; }
+}
+
+/// <summary>
+/// Typed context passed to filtered behaviors implementing <see cref="INuruBehavior{TFilter}"/>.
+/// Provides a strongly-typed <see cref="Command"/> property that is guaranteed to implement <typeparamref name="TFilter"/>.
+/// </summary>
+/// <typeparam name="TFilter">The filter interface type that the command implements.</typeparam>
+/// <example>
+/// <code>
+/// // Filtered behavior with typed context - no casting needed!
+/// public class AuthorizationBehavior : INuruBehavior&lt;IRequireAuthorization&gt;
+/// {
+///   public async ValueTask HandleAsync(BehaviorContext&lt;IRequireAuthorization&gt; context, Func&lt;ValueTask&gt; proceed)
+///   {
+///     // context.Command is already IRequireAuthorization
+///     string permission = context.Command.RequiredPermission;
+///
+///     if (!HasPermission(permission))
+///       throw new UnauthorizedAccessException($"Required: {permission}");
+///
+///     await proceed();
+///   }
+/// }
+/// </code>
+/// </example>
+public class BehaviorContext<TFilter> : BehaviorContext where TFilter : class
+{
+  /// <summary>
+  /// The strongly-typed command instance for this request.
+  /// Guaranteed to implement <typeparamref name="TFilter"/>.
+  /// </summary>
+  public new required TFilter Command { get; init; }
 }

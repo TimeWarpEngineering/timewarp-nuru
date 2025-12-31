@@ -149,8 +149,8 @@ internal static class BehaviorEmitter
     {
       string propertyName = ToPascalCase(param.Name);
       string varName = param.IsCatchAll
-        ? $"__{ToCamelCase(param.Name)}_{routeIndex}"
-        : param.Name.ToLowerInvariant();
+        ? $"__{param.CamelCaseName}_{routeIndex}"
+        : param.CamelCaseName;
 
       sb.AppendLine($"{indent}  {propertyName} = {varName},");
     }

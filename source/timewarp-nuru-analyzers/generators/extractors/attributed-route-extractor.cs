@@ -381,12 +381,28 @@ internal static class AttributedRouteExtractor
         if (attributeName == ParameterAttributeName || attributeName == $"{ParameterAttributeName}Attribute")
         {
           string typeName = property.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-          propertyBindings.Add(ParameterBinding.FromParameter(
-            parameterName: property.Name,
-            typeName: typeName,
-            segmentName: property.Name.ToLowerInvariant(),
-            isOptional: property.NullableAnnotation == NullableAnnotation.Annotated,
-            requiresConversion: typeName != "global::System.String"));
+
+          // Check if this is a catch-all parameter
+          bool isCatchAll = attribute.NamedArguments.Any(na =>
+            na.Key == "IsCatchAll" && na.Value.Value is true);
+
+          if (isCatchAll)
+          {
+            propertyBindings.Add(ParameterBinding.FromCatchAll(
+              parameterName: property.Name,
+              typeName: typeName,
+              segmentName: property.Name.ToLowerInvariant()));
+          }
+          else
+          {
+            propertyBindings.Add(ParameterBinding.FromParameter(
+              parameterName: property.Name,
+              typeName: typeName,
+              segmentName: property.Name.ToLowerInvariant(),
+              isOptional: property.NullableAnnotation == NullableAnnotation.Annotated,
+              requiresConversion: typeName != "global::System.String"));
+          }
+
           break;
         }
 

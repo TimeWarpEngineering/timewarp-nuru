@@ -143,15 +143,78 @@ internal static class ImplementsExtractor
 
     // Get the property type from semantic model
     SymbolInfo symbolInfo = semanticModel.GetSymbolInfo(memberAccess);
-    string propertyType = symbolInfo.Symbol switch
-    {
-      IPropertySymbol prop => prop.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
-      _ => "object"
-    };
+    string propertyType = GetPropertyType(symbolInfo, memberAccess, semanticModel);
 
     // Right side is the value expression - get as source text
     string valueExpression = assignment.Right.ToFullString().Trim();
 
     return new PropertyAssignment(propertyName, propertyType, valueExpression);
+  }
+
+  /// <summary>
+  /// Gets the property type from semantic analysis.
+  /// Falls back to inferring from the right-hand expression type if needed.
+  /// </summary>
+  private static string GetPropertyType(
+    SymbolInfo symbolInfo,
+    MemberAccessExpressionSyntax memberAccess,
+    SemanticModel semanticModel)
+  {
+    // Try to get from property symbol directly
+    if (symbolInfo.Symbol is IPropertySymbol prop)
+      return prop.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+
+    // Try candidate symbols (may be ambiguous but first is usually correct)
+    if (symbolInfo.CandidateSymbols.Length > 0 &&
+        symbolInfo.CandidateSymbols[0] is IPropertySymbol candidateProp)
+      return candidateProp.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+
+    // Try to infer from the expression type on the left side
+    // This works for lambda parameters where the type is known
+    TypeInfo typeInfo = semanticModel.GetTypeInfo(memberAccess);
+    if (typeInfo.Type is not null)
+      return typeInfo.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+
+    // Try the parameter type - walk up to find the lambda and its interface type
+    // The memberAccess.Expression should be the lambda parameter (x)
+    // and we can resolve the interface type from the Implements<T> context
+    if (memberAccess.Expression is IdentifierNameSyntax)
+    {
+      // Walk up the syntax tree to find the InvocationExpression
+      RoslynSyntaxNode? current = memberAccess.Parent;
+      while (current is not null)
+      {
+        if (current is InvocationExpressionSyntax invocation)
+        {
+          // Check if this is an Implements<T> call
+          if (invocation.Expression is MemberAccessExpressionSyntax methodAccess &&
+              methodAccess.Name is GenericNameSyntax genericName &&
+              genericName.Identifier.Text == "Implements" &&
+              genericName.TypeArgumentList.Arguments.Count > 0)
+          {
+            // Get the interface type
+            TypeSyntax interfaceTypeSyntax = genericName.TypeArgumentList.Arguments[0];
+            TypeInfo interfaceTypeInfo = semanticModel.GetTypeInfo(interfaceTypeSyntax);
+
+            if (interfaceTypeInfo.Type is INamedTypeSymbol interfaceType)
+            {
+              // Find the property on the interface
+              string propertyName = memberAccess.Name.Identifier.Text;
+              foreach (ISymbol member in interfaceType.GetMembers(propertyName))
+              {
+                if (member is IPropertySymbol interfaceProp)
+                  return interfaceProp.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+              }
+            }
+          }
+
+          break;
+        }
+
+        current = current.Parent;
+      }
+    }
+
+    return "object";
   }
 }

@@ -137,13 +137,14 @@ public class EndpointBuilder<TBuilder> : INestedBuilder<TBuilder>
   /// </summary>
   /// <typeparam name="TFilter">The interface type to implement.</typeparam>
   /// <param name="configure">
-  /// Expression that configures the interface properties.
-  /// The generator extracts property assignments at compile time.
+  /// Lambda that configures the interface properties.
+  /// The generator extracts property assignments from the syntax at compile time.
+  /// The lambda is never actually invoked - it's purely declarative.
   /// </param>
   /// <returns>This configurator for further endpoint configuration.</returns>
   /// <remarks>
   /// <para>
-  /// The source generator analyzes the expression to extract property assignments and generates
+  /// The source generator analyzes the lambda syntax to extract property assignments and generates
   /// a command class that implements the interface with those values baked in.
   /// </para>
   /// <para>
@@ -166,9 +167,10 @@ public class EndpointBuilder<TBuilder> : INestedBuilder<TBuilder>
   ///   .Done()
   /// </code>
   /// </example>
-  public EndpointBuilder<TBuilder> Implements<TFilter>(Expression<Action<TFilter>> configure) where TFilter : class
+  public EndpointBuilder<TBuilder> Implements<TFilter>(Action<TFilter> configure) where TFilter : class
   {
     // Source generator extracts interface type and property assignments at compile time
+    // The lambda is never actually invoked - purely declarative
     _ = configure;
     return this;
   }

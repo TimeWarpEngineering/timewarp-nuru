@@ -214,9 +214,12 @@ public sealed class AuthorizationBehavior : INuruBehavior
 - [x] Pass command instance to context for all routes
 - [x] Commit: (latest)
 
-### Phase 7: Attributed Routes Interface Detection ⏳
-- [ ] Extract implemented interfaces from attributed command classes
-- [ ] Add `ImplementedInterfaces` to attributed route extraction
+### Phase 7: Attributed Routes Interface Detection ✅
+- [x] Extract implemented interfaces from attributed command classes
+- [x] Add `ImplementedInterfaces` to attributed route extraction
+- [x] Filter out Mediator interfaces (ICommand, IQuery, etc.)
+- [x] Filter out common .NET interfaces (System.*, Microsoft.*)
+- [x] Commit: `baae5347`
 
 ### Phase 8: Update Samples ⏳
 - [ ] Convert `pipeline-middleware-authorization.cs` to `INuruBehavior<IRequireAuthorization>`

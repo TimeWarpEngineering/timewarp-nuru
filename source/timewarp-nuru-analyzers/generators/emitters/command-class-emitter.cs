@@ -144,6 +144,7 @@ internal static class CommandClassEmitter
 
   /// <summary>
   /// Emits interface properties from .Implements&lt;T&gt;() declarations.
+  /// Uses auto-properties with set accessors to satisfy interface contracts.
   /// </summary>
   private static void EmitInterfaceProperties(StringBuilder sb, RouteDefinition route)
   {
@@ -157,8 +158,10 @@ internal static class CommandClassEmitter
     {
       foreach (PropertyAssignment prop in impl.Properties)
       {
-        // Emit as expression-bodied property
-        sb.AppendLine($"    public {prop.PropertyType} {prop.PropertyName} => {prop.ValueExpression};");
+        // Emit as auto-property with set accessor and initializer
+        // This satisfies interfaces with { get; set; } contracts
+        // The set is effectively unused since the value is baked in at compile-time
+        sb.AppendLine($"    public {prop.PropertyType} {prop.PropertyName} {{ get; set; }} = {prop.ValueExpression};");
       }
     }
   }

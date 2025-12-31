@@ -221,13 +221,16 @@ public sealed class AuthorizationBehavior : INuruBehavior
 - [x] Filter out common .NET interfaces (System.*, Microsoft.*)
 - [x] Commit: `baae5347`
 
-### Phase 8: Update Samples ⏳
-- [ ] Convert `pipeline-middleware-authorization.cs` to `INuruBehavior<IRequireAuthorization>`
-- [ ] Test with `.Implements<T>()` delegate routes
-- [ ] `pipeline-middleware-retry.cs` - May work now with `HandleAsync` pattern
+### Phase 8: Update Samples ✅
+- [x] Created `04-pipeline-middleware-filtered-auth.cs` with `INuruBehavior<IRequireAuthorization>`
+- [x] Tested with `.Implements<T>()` delegate routes - WORKING
+- [x] Changed `.Implements<T>()` from `Expression<Action<T>>` to `Action<T>` (simpler, avoids expression tree limitations)
+- [x] Fixed property type resolution in ImplementsExtractor
+- [x] Updated CommandClassEmitter to emit `{ get; set; }` properties for interface compatibility
+- [x] Commit: `71e82665`
 
 ### Phase 9: Testing ⏳
-- [ ] Unit tests for expression tree parsing
+- [ ] Unit tests for lambda syntax parsing
 - [ ] Unit tests for command class generation with interfaces
 - [ ] Integration tests for behavior filtering
 - [ ] Sample verification tests

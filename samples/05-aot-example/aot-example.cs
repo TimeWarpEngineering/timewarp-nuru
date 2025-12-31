@@ -10,16 +10,11 @@
 //
 // Result: ~3-5 MB native binary with instant startup (<1ms)
 
-using Microsoft.Extensions.DependencyInjection;
 using TimeWarp.Nuru;
 using static System.Console;
 
 // Create builder with full DI support
 NuruAppBuilder builder = NuruApp.CreateBuilder(args);
-
-// IMPORTANT: Register the source-generated Mediator for AOT compatibility
-// This replaces reflection-based dependency resolution with compile-time generated code
-builder.Services.AddMediator();
 
 // Basic commands
 builder.Map("hello")

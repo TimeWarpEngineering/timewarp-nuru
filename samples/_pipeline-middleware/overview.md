@@ -27,18 +27,18 @@ Request Flow:
 
 ## Samples
 
-| Sample | Description | Status |
-|--------|-------------|--------|
-| [01-pipeline-middleware-basic.cs](01-pipeline-middleware-basic.cs) | Logging and performance monitoring | **Converted** |
-| [02-pipeline-middleware-exception.cs](02-pipeline-middleware-exception.cs) | Consistent error handling | **Converted** |
-| [03-pipeline-middleware-telemetry.cs](03-pipeline-middleware-telemetry.cs) | OpenTelemetry distributed tracing | **Converted** |
-| [pipeline-middleware-authorization.cs](pipeline-middleware-authorization.cs) | Permission checks with marker interfaces | Deferred (#316) |
-| [pipeline-middleware-retry.cs](pipeline-middleware-retry.cs) | Resilience with exponential backoff | Deferred (#316) |
-| [pipeline-middleware.cs](pipeline-middleware.cs) | Combined example with all behaviors | Deferred (#316) |
+| Sample | Description |
+|--------|-------------|
+| [01-pipeline-middleware-basic.cs](01-pipeline-middleware-basic.cs) | Logging and performance monitoring |
+| [02-pipeline-middleware-exception.cs](02-pipeline-middleware-exception.cs) | Consistent error handling |
+| [03-pipeline-middleware-telemetry.cs](03-pipeline-middleware-telemetry.cs) | OpenTelemetry distributed tracing |
+| [04-pipeline-middleware-filtered-auth.cs](04-pipeline-middleware-filtered-auth.cs) | Filtered authorization with `INuruBehavior<T>` |
+| [05-pipeline-middleware-retry.cs](05-pipeline-middleware-retry.cs) | Resilience with exponential backoff |
+| [06-pipeline-middleware-combined.cs](06-pipeline-middleware-combined.cs) | Combined example with all behaviors |
 
 ## Quick Start
 
-Run the converted samples directly:
+Run the samples directly:
 
 ```bash
 # Basic logging and performance
@@ -54,6 +54,25 @@ Run the converted samples directly:
 # Distributed tracing with Activity spans
 ./03-pipeline-middleware-telemetry.cs trace database-query
 ./03-pipeline-middleware-telemetry.cs trace api-call
+
+# Filtered authorization (INuruBehavior<IRequireAuthorization>)
+./04-pipeline-middleware-filtered-auth.cs echo "Hello"       # No auth needed
+./04-pipeline-middleware-filtered-auth.cs admin delete-all   # Access denied
+CLI_AUTHORIZED=1 ./04-pipeline-middleware-filtered-auth.cs admin delete-all  # Access granted
+
+# Retry with exponential backoff (INuruBehavior<IRetryable>)
+./05-pipeline-middleware-retry.cs flaky 0    # Succeeds immediately
+./05-pipeline-middleware-retry.cs flaky 2    # Fails twice, then succeeds
+./05-pipeline-middleware-retry.cs echo Hello # No retry (doesn't implement IRetryable)
+
+# Combined example with all behaviors
+./06-pipeline-middleware-combined.cs echo "Hello"
+./06-pipeline-middleware-combined.cs slow 600
+./06-pipeline-middleware-combined.cs admin delete-all
+CLI_AUTHORIZED=1 ./06-pipeline-middleware-combined.cs admin delete-all
+./06-pipeline-middleware-combined.cs flaky 2
+./06-pipeline-middleware-combined.cs error validation
+./06-pipeline-middleware-combined.cs trace api-call
 ```
 
 ## INuruBehavior Pattern
@@ -203,29 +222,60 @@ public sealed class TelemetryBehavior : INuruBehavior
 }
 ```
 
-### RetryBehavior (Coming in #316)
+## Filtered Behaviors with `INuruBehavior<T>`
 
-With `HandleAsync`, retry is now possible:
+Filtered behaviors only apply to routes that implement a specific interface via `.Implements<T>()`. This enables selective behavior application without runtime type checks.
+
+### AuthorizationBehavior (Filtered)
+
+Only runs for routes with `.Implements<IRequireAuthorization>()`:
 
 ```csharp
-public sealed class RetryBehavior : INuruBehavior
+public interface IRequireAuthorization
 {
-  public async ValueTask HandleAsync(BehaviorContext context, Func<ValueTask> proceed)
-  {
-    if (context.Command is not IRetryable retryable)
-    {
-      await proceed();
-      return;
-    }
+  string RequiredPermission { get; set; }
+}
 
-    for (int attempt = 1; attempt <= retryable.MaxRetries + 1; attempt++)
+public sealed class AuthorizationBehavior : INuruBehavior<IRequireAuthorization>
+{
+  public async ValueTask HandleAsync(BehaviorContext<IRequireAuthorization> context, Func<ValueTask> proceed)
+  {
+    // context.Command is already IRequireAuthorization - no casting needed!
+    string permission = context.Command.RequiredPermission;
+    
+    if (!HasPermission(permission))
+      throw new UnauthorizedAccessException($"Required: {permission}");
+    
+    await proceed();
+  }
+}
+```
+
+### RetryBehavior (Filtered)
+
+Only runs for routes with `.Implements<IRetryable>()`:
+
+```csharp
+public interface IRetryable
+{
+  int MaxRetries { get; set; }
+}
+
+public sealed class RetryBehavior : INuruBehavior<IRetryable>
+{
+  public async ValueTask HandleAsync(BehaviorContext<IRetryable> context, Func<ValueTask> proceed)
+  {
+    // context.Command is already IRetryable - no casting needed!
+    int maxRetries = context.Command.MaxRetries;
+
+    for (int attempt = 1; attempt <= maxRetries + 1; attempt++)
     {
       try
       {
         await proceed();
         return;
       }
-      catch (Exception ex) when (IsTransient(ex) && attempt <= retryable.MaxRetries)
+      catch (Exception ex) when (IsTransient(ex) && attempt <= maxRetries)
       {
         var delay = TimeSpan.FromSeconds(Math.Pow(2, attempt));
         await Task.Delay(delay, context.CancellationToken);
@@ -236,6 +286,33 @@ public sealed class RetryBehavior : INuruBehavior
   private static bool IsTransient(Exception ex) =>
     ex is HttpRequestException or TimeoutException or IOException;
 }
+```
+
+### Using `.Implements<T>()` on Routes
+
+```csharp
+NuruApp.CreateBuilder(args)
+  .AddBehavior(typeof(AuthorizationBehavior))
+  .AddBehavior(typeof(RetryBehavior))
+  
+  // No interfaces - neither behavior runs
+  .Map("echo {message}")
+    .WithHandler((string message) => WriteLine(message))
+    .Done()
+  
+  // Has IRequireAuthorization - AuthorizationBehavior runs
+  .Map("admin {action}")
+    .Implements<IRequireAuthorization>(x => x.RequiredPermission = "admin:execute")
+    .WithHandler((string action) => WriteLine($"Admin: {action}"))
+    .Done()
+  
+  // Has IRetryable - RetryBehavior runs
+  .Map("flaky {operation}")
+    .Implements<IRetryable>(x => x.MaxRetries = 3)
+    .WithHandler((string operation) => DoFlakyOperation(operation))
+    .Done()
+  
+  .Build();
 ```
 
 ## Registration and Execution Order
@@ -275,14 +352,6 @@ Telemetry completes ← Logging completes ← Exception completes ← Performanc
 | Code generation | Runtime reflection | Source-generated |
 | Startup overhead | ~131ms | ~4ms |
 
-## Deferred Samples (#316)
-
-The following samples require **behavior filtering** via `.Implements<T>()` to check command interfaces. This feature is tracked in #316:
-
-- `pipeline-middleware-authorization.cs` - Needs `IRequireAuthorization` interface check
-- `pipeline-middleware-retry.cs` - Needs `IRetryable` interface check
-- `pipeline-middleware.cs` - Combined example with all behaviors
-
 ## Key Benefits
 
 1. **Full Control**: Retry, skip, catch, transform - anything is possible
@@ -297,4 +366,3 @@ The following samples require **behavior filtering** via `.Implements<T>()` to c
 - [Aspire Telemetry Sample](../_aspire-telemetry/aspire-telemetry.cs) - Full OpenTelemetry integration
 - [INuruBehavior Interface](../../source/timewarp-nuru-core/abstractions/behavior-interfaces.cs) - Interface definition
 - [BehaviorContext](../../source/timewarp-nuru-core/abstractions/behavior-context.cs) - Context class
-- [#316 Behavior Filtering](../../kanban/to-do/316-behavior-filtering-route-metadata-for-selective-behavior-application.md) - `.Implements<T>()` design

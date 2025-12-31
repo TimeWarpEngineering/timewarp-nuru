@@ -287,9 +287,9 @@ Call flow: `Telemetry → Logging → Retry → Performance → Handler`
 - [x] Simplify generated State class handling (no longer needed)
 - [x] Pass command instance to BehaviorContext
 
-### Phase 3: Re-convert Samples ✅ (Core samples done, deferred samples blocked on #316)
+### Phase 3: Re-convert Samples ✅
 
-All samples need re-conversion with new pattern:
+All samples converted to source-generated `INuruBehavior` pattern:
 
 #### 3.1: 01-pipeline-middleware-basic.cs ✅
 - [x] Update `LoggingBehavior` to `HandleAsync` pattern
@@ -308,18 +308,22 @@ All samples need re-conversion with new pattern:
 - [x] Remove awkward `State` class
 - [x] Test distributed tracing
 
-#### 3.4: pipeline-middleware-authorization.cs (Blocked on #316)
-- [ ] Convert with `HandleAsync` pattern
-- [ ] Requires #316 for `context.Command` and `.Implements<T>()`
-- [ ] Test authorization flow
+#### 3.4: 04-pipeline-middleware-filtered-auth.cs ✅
+- [x] Created new sample demonstrating `INuruBehavior<IRequireAuthorization>`
+- [x] Uses `.Implements<T>()` for filtered behavior application
+- [x] Test authorization flow (auth denied/granted)
 
-#### 3.5: pipeline-middleware-retry.cs (Blocked on #316)
-- [ ] Convert with `HandleAsync` pattern (NOW POSSIBLE!)
-- [ ] Requires #316 for `context.Command` and `.Implements<T>()`
-- [ ] Test retry with exponential backoff
+#### 3.5: 05-pipeline-middleware-retry.cs ✅
+- [x] Converted to `INuruBehavior<IRetryable>` pattern
+- [x] Uses `.Implements<T>()` for selective retry
+- [x] Test retry with exponential backoff
+- [x] Deleted old Mediator-based `pipeline-middleware-retry.cs`
 
-#### 3.6: pipeline-middleware.cs (combined) (Blocked on #316)
-- [ ] Update after all individual samples work
+#### 3.6: 06-pipeline-middleware-combined.cs ✅
+- [x] Created comprehensive sample with ALL behaviors
+- [x] Demonstrates both global (`INuruBehavior`) and filtered (`INuruBehavior<T>`) behaviors
+- [x] Deleted old Mediator-based `pipeline-middleware.cs`
+- [x] Deleted redundant `pipeline-middleware-authorization.cs` (covered by sample 04)
 
 ### Phase 4: Update Documentation ✅
 - [x] Update `overview.md` for new pattern
@@ -338,7 +342,7 @@ All samples need re-conversion with new pattern:
 
 ## Dependencies
 
-- #316 for `.Implements<T>()` and `context.Command` (authorization/retry samples)
+- ~~#316 for `.Implements<T>()` and `context.Command`~~ ✅ Complete
 
 ## Related Tasks
 
@@ -373,3 +377,33 @@ Source-generating behavior code eliminates:
 - Runtime reflection for behavior discovery
 - DI container overhead for behavior instantiation
 - Generic type instantiation at runtime
+
+## Results
+
+### Completed
+
+All phases complete. Pipeline behaviors are now fully source-generated with support for both global and filtered behaviors.
+
+### Samples Updated
+
+| Sample | Description |
+|--------|-------------|
+| `01-pipeline-middleware-basic.cs` | Logging and performance monitoring |
+| `02-pipeline-middleware-exception.cs` | Consistent error handling |
+| `03-pipeline-middleware-telemetry.cs` | OpenTelemetry distributed tracing |
+| `04-pipeline-middleware-filtered-auth.cs` | Filtered authorization with `INuruBehavior<T>` |
+| `05-pipeline-middleware-retry.cs` | Resilience with exponential backoff |
+| `06-pipeline-middleware-combined.cs` | Combined example with all behaviors |
+
+### Deleted (Mediator-based, replaced)
+
+- `pipeline-middleware-authorization.cs` - Replaced by sample 04
+- `pipeline-middleware-retry.cs` - Replaced by sample 05
+- `pipeline-middleware.cs` - Replaced by sample 06
+
+### Key Features
+
+1. **Global behaviors** (`INuruBehavior`) apply to all routes
+2. **Filtered behaviors** (`INuruBehavior<T>`) apply only to routes with `.Implements<T>()`
+3. **Type-safe context** - `BehaviorContext<T>` provides typed access to command properties
+4. **Zero runtime overhead** - All behavior wiring is source-generated

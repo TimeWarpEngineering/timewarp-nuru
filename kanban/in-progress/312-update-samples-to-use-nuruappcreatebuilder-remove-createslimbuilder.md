@@ -24,11 +24,12 @@ These samples have been verified working with the new API:
 - [x] `08-testing/02-colored-output.cs` - Updated, split Test 5 for #319 workaround
 - [x] `08-testing/03-terminal-injection.cs` - Updated from CreateSlimBuilder, renamed
 - [x] `08-testing/04-debug-test.cs` - Updated from CreateSlimBuilder, renamed
+- [x] `08-testing/runfile-test-harness/real-app.cs` - Fixed in #320 (method reference handlers)
 
 ## Samples Needing Updates
 
 ### Remaining in 08-testing
-- [ ] `08-testing/runfile-test-harness/real-app.cs`
+- [x] `08-testing/runfile-test-harness/real-app.cs` - Fixed in #320 (method reference handlers)
 
 ### Uses Mediator (replace with TimeWarp.Nuru interfaces)
 - [x] `05-aot-example/aot-example.cs` - DONE (removed AddMediator)

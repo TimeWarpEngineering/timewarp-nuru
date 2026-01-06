@@ -19,14 +19,15 @@ These samples have been verified working with the new API:
 - [x] `04-syntax-examples/syntax-examples.cs`
 - [x] `05-aot-example/aot-example.cs` (removed Mediator, verified AOT publish works)
 - [x] `06-async-examples/async-examples.cs` (updated to CreateBuilder)
+- [x] `07-pipeline-middleware/` (all 6 samples working)
+- [x] `08-testing/01-output-capture.cs` - Updated from CreateSlimBuilder, renamed
+- [x] `08-testing/02-colored-output.cs` - Updated, split Test 5 for #319 workaround
+- [x] `08-testing/03-terminal-injection.cs` - Updated from CreateSlimBuilder, renamed
+- [x] `08-testing/04-debug-test.cs` - Updated from CreateSlimBuilder, renamed
 
 ## Samples Needing Updates
 
-### Uses CreateSlimBuilder (obsolete)
-- [x] `08-testing/01-output-capture.cs` - Updated and renamed
-- [x] `08-testing/02-colored-output.cs` - Updated and renamed, split Test 5 for #319 workaround
-- [x] `08-testing/03-terminal-injection.cs` - Updated and renamed
-- [x] `08-testing/04-debug-test.cs` - Updated and renamed
+### Remaining in 08-testing
 - [ ] `08-testing/runfile-test-harness/real-app.cs`
 
 ### Uses Mediator (replace with TimeWarp.Nuru interfaces)
@@ -44,10 +45,8 @@ These samples have been verified working with the new API:
 - [ ] `builtin-types-example.cs` - block body handler formatting
 - [ ] `custom-type-converter-example.cs` - likely same
 
-### Pipeline Middleware Samples - See #315
-These samples require pipeline behavior code generation which is tracked in **#315**.
-
-- [ ] `_pipeline-middleware/*` - Blocked by #315 (behavior emitter implementation)
+### Pipeline Middleware Samples - DONE
+- [x] `07-pipeline-middleware/*` - All 6 samples working (completed in #315)
 
 ### Unchecked (need verification)
 - [ ] `_aspire-host-otel/`

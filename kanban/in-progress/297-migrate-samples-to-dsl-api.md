@@ -4,77 +4,73 @@
 
 Update all samples to use the current DSL API. Many samples use deprecated APIs like `CreateSlimBuilder()` or methods the source generator doesn't recognize (`ConfigureServices`, `AddMediator`, `AddAutoHelp`).
 
+## Current Sample Structure
+
+Samples are organized as:
+- `NN-name/` - Numbered folders for complete/working samples
+- `_name/` - Underscore prefix for WIP/incomplete samples
+
 ## Checklist
 
-### Working
-- [x] hello-world/hello-world.cs
+### Completed (NN-* folders)
+- [x] `01-hello-world/hello-world.cs` - Works
+- [x] `02-calculator/01-calc-delegate.cs` - Works (delegates only)
+- [x] `02-calculator/02-calc-commands.cs` - Works (attributed routes)
+- [x] `02-calculator/03-calc-mixed.cs` - Works (mixed delegates + attributed)
+- [x] `03-attributed-routes/` - Works (full attributed routes sample, #304)
+- [x] `04-syntax-examples/syntax-examples.cs` - **BROKEN** (wrong project reference)
+- [x] `05-aot-example/` - Works (AOT publish verified)
+- [x] `06-async-examples/async-examples.cs` - Works
+- [x] `07-pipeline-middleware/` - Works (all 6 samples, #315)
 
-### Simple Samples (delegate-only)
-- [ ] calculator/calc-delegate.cs - needs `CreateSlimBuilder` -> `CreateBuilder`
-- [ ] calculator/calc-createbuilder.cs - generator fails on `ConfigureServices`
-- [ ] calculator/calc-mediator.cs
-- [ ] calculator/calc-mixed.cs
+### WIP Samples (_* folders) - Need Migration
 
-### AOT & Attributed
-- [ ] aot-example/aot-example.cs - generator fails on `AddMediator`
-- [ ] attributed-routes/attributed-routes.cs - generator fails on `AddAutoHelp`
+#### Configuration (_configuration/)
+- [ ] `command-line-overrides.cs`
+- [ ] `configuration-basics.cs`
+- [ ] `configuration-validation.cs`
+- [ ] `user-secrets-property.cs`
 
-### Configuration
-- [ ] configuration/command-line-overrides.cs
-- [ ] configuration/configuration-basics.cs
-- [ ] configuration/configuration-validation.cs
-- [ ] configuration/user-secrets-property.cs
+#### Logging (_logging/)
+- [ ] `console-logging.cs` - Uses `UseConsoleLogging`, Mediator
+- [ ] `serilog-logging.cs`
 
-### Logging
-- [ ] logging/console-logging.cs
-- [ ] logging/serilog-logging.cs
+#### REPL (_repl-demo/)
+- [ ] `repl-basic-demo.cs`
+- [ ] `repl-custom-keybindings.cs`
+- [ ] `repl-interactive-mode.cs`
+- [ ] `repl-options-showcase.cs`
+- [ ] `repl-prompt-fix-demo.cs`
 
-### Pipeline/Middleware
-- [ ] pipeline-middleware/pipeline-middleware.cs
-- [ ] pipeline-middleware/pipeline-middleware-authorization.cs
-- [ ] pipeline-middleware/pipeline-middleware-basic.cs
-- [ ] pipeline-middleware/pipeline-middleware-exception.cs
-- [ ] pipeline-middleware/pipeline-middleware-retry.cs
-- [ ] pipeline-middleware/pipeline-middleware-telemetry.cs
+#### Completion
+- [ ] `_dynamic-completion-example/dynamic-completion-example.cs`
+- [ ] `_shell-completion-example/shell-completion-example.cs`
 
-### REPL
-- [ ] repl-demo/repl-basic-demo.cs
-- [ ] repl-demo/repl-custom-keybindings.cs
-- [ ] repl-demo/repl-interactive-mode.cs
-- [ ] repl-demo/repl-options-showcase.cs
-- [ ] repl-demo/repl-prompt-fix-demo.cs
+#### Testing (_testing/)
+- [ ] `debug-test.cs` - Uses `CreateSlimBuilder`
+- [ ] `test-colored-output.cs` - Uses `CreateSlimBuilder`
+- [ ] `test-output-capture.cs` - Uses `CreateSlimBuilder`
+- [ ] `test-terminal-injection.cs` - Uses `CreateSlimBuilder`
 
-### Completion
-- [ ] dynamic-completion-example/dynamic-completion-example.cs
-- [ ] shell-completion-example/shell-completion-example.cs
+#### Other
+- [ ] `_aspire-host-otel/` - Aspire integration
+- [ ] `_aspire-telemetry/aspire-telemetry.cs` - Aspire integration
+- [ ] `_timewarp-nuru-sample/` - Reference sample project
+- [ ] `_unified-middleware/unified-middleware.cs`
 
-### Terminal
-- [ ] terminal/hyperlink-widget.cs
-- [ ] terminal/panel-widget.cs
-- [ ] terminal/rule-widget.cs
-- [ ] terminal/table-widget.cs
-
-### Other
-- [ ] aspire-host-otel/
-- [ ] aspire-telemetry/aspire-telemetry.cs
-- [ ] timewarp-nuru-sample/program.cs
-- [ ] unified-middleware/unified-middleware.cs
-- [ ] builtin-types-example.cs
-- [ ] custom-type-converter-example.cs
-- [ ] syntax-examples.cs
-- [ ] async-examples/async-examples.cs
-
-### Testing Samples
-- [ ] testing/debug-test.cs
-- [ ] testing/test-colored-output.cs
-- [ ] testing/test-output-capture.cs
-- [ ] testing/test-terminal-injection.cs
+### Root-level samples (need to organize)
+- [ ] `builtin-types-example.cs` - Block body handler formatting (#313)
+- [ ] `custom-type-converter-example.cs` - Block body handler formatting (#313)
 
 ## Notes
 
-- `hello-world.cs` works because it uses simple `NuruApp.CreateBuilder(args)` with only `.Map().WithHandler().AsQuery().Done()` pattern
-- Source generator fails on:
-  - `CreateSlimBuilder()` - method doesn't exist
-  - `ConfigureServices()` - not recognized by generator
-  - `AddMediator()`, `AddAutoHelp()` - not recognized by generator
-  - `Map<TCommand>()` without `WithHandler()` - generator requires handler
+- Terminal samples moved to `timewarp-terminal` repo
+- Pipeline middleware samples all complete (#315, #316)
+- Attributed routes decoupled from Mediator (#304)
+- Testing samples use obsolete `CreateSlimBuilder` (#312)
+
+## Related Tasks
+
+- #312 - Update samples to use NuruApp.CreateBuilder
+- #313 - Fix generator block body handler formatting issues
+- #314 - Generator support for IConfiguration and IOptions

@@ -231,6 +231,15 @@ internal static class RouteMatcherEmitter
   {
     List<string> parts = [];
 
+    // Prepend group prefix literals if present
+    if (!string.IsNullOrEmpty(route.GroupPrefix))
+    {
+      foreach (string word in route.GroupPrefix.Split(' ', StringSplitOptions.RemoveEmptyEntries))
+      {
+        parts.Add($"\"{EscapeString(word)}\"");
+      }
+    }
+
     foreach (SegmentDefinition segment in route.Segments)
     {
       switch (segment)

@@ -69,10 +69,30 @@ public sealed record RouteDefinition(
     : $"{GroupPrefix} {OriginalPattern}";
 
   /// <summary>
-  /// Gets all literal segments in order.
+  /// Gets all literal segments in order, including group prefix literals.
   /// </summary>
-  public IEnumerable<LiteralDefinition> Literals =>
-    Segments.OfType<LiteralDefinition>();
+  public IEnumerable<LiteralDefinition> Literals
+  {
+    get
+    {
+      int position = 0;
+
+      // Prepend group prefix as literal(s) if present
+      if (!string.IsNullOrEmpty(GroupPrefix))
+      {
+        foreach (string word in GroupPrefix.Split(' ', StringSplitOptions.RemoveEmptyEntries))
+        {
+          yield return new LiteralDefinition(position++, word);
+        }
+      }
+
+      // Then yield original literals from segments (with adjusted positions)
+      foreach (LiteralDefinition literal in Segments.OfType<LiteralDefinition>())
+      {
+        yield return new LiteralDefinition(position++, literal.Value);
+      }
+    }
+  }
 
   /// <summary>
   /// Gets all parameter segments in order.

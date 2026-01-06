@@ -108,12 +108,22 @@ Modify `attributed-route-extractor.cs` to insert group prefix as literal segment
 
 ## Checklist
 
-- [ ] Update `RouteDefinition.Literals` to include group prefix literals
-- [ ] Rebuild analyzers: `dotnet build source/timewarp-nuru-analyzers/`
-- [ ] Test `docker ps`, `docker build`, `docker run`, `docker tag`
-- [ ] Test `config get`, `config set`
-- [ ] Ensure single-word routes still work (`greet`, `ping`, `deploy`, `exec`)
-- [ ] Verify help output still shows correct patterns
+- [x] Update `RouteDefinition.Literals` to include group prefix literals
+- [x] Update `BuildListPattern` in route-matcher-emitter.cs to prepend group prefix
+- [x] Rebuild analyzers: `dotnet build source/timewarp-nuru-analyzers/`
+- [x] Test `docker ps`, `docker build`, `docker run`, `docker tag`
+- [x] Test `config get`, `config set`
+- [x] Ensure single-word routes still work (`greet`, `ping`, `deploy`, `exec`)
+- [x] Verify help output still shows correct patterns
+
+## Results
+
+Fixed two locations where group prefix was not being included:
+
+1. **`RouteDefinition.Literals`** - Used by `EmitComplexMatch` for routes with options/catch-all
+2. **`BuildListPattern`** - Used by `EmitSimpleMatch` for simple routes with list patterns
+
+Both now prepend group prefix literals before the route's own literals/segments.
 
 ## Test Commands
 

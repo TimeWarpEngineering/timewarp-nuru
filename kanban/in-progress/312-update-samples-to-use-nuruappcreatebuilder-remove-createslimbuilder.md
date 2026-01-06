@@ -23,11 +23,11 @@ These samples have been verified working with the new API:
 ## Samples Needing Updates
 
 ### Uses CreateSlimBuilder (obsolete)
-- [x] `testing/test-output-capture.cs` - Updated to CreateBuilder
-- [x] `testing/test-colored-output.cs` - Updated to CreateBuilder, split Test 5 for #319 workaround
-- [x] `testing/test-terminal-injection.cs` - Updated to CreateBuilder
-- [x] `testing/debug-test.cs` - Updated to CreateBuilder
-- [ ] `testing/runfile-test-harness/real-app.cs`
+- [x] `08-testing/01-output-capture.cs` - Updated and renamed
+- [x] `08-testing/02-colored-output.cs` - Updated and renamed, split Test 5 for #319 workaround
+- [x] `08-testing/03-terminal-injection.cs` - Updated and renamed
+- [x] `08-testing/04-debug-test.cs` - Updated and renamed
+- [ ] `08-testing/runfile-test-harness/real-app.cs`
 
 ### Uses Mediator (replace with TimeWarp.Nuru interfaces)
 - [x] `05-aot-example/aot-example.cs` - DONE (removed AddMediator)

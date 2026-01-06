@@ -13,8 +13,7 @@ public static class RealApp
 {
   public static async Task<int> Main(string[] args)
   {
-    NuruCoreApp app = NuruCoreApp.CreateSlimBuilder()
-      .AddAutoHelp()
+    NuruCoreApp app = NuruApp.CreateBuilder(args)
       .Map("greet {name}")
         .WithHandler(Greet)
         .WithDescription("Greet someone by name")
@@ -40,15 +39,15 @@ public static class RealApp
     return await app.RunAsync(args);
   }
 
-  private static void Greet(string name, ITerminal terminal)
+  internal static void Greet(string name, ITerminal terminal)
     => terminal.WriteLine($"Hello, {name}!");
 
-  private static void DeployDryRun(string env, ITerminal terminal)
+  internal static void DeployDryRun(string env, ITerminal terminal)
     => terminal.WriteLine($"[DRY RUN] Would deploy to {env}");
 
-  private static void Deploy(string env, ITerminal terminal)
+  internal static void Deploy(string env, ITerminal terminal)
     => terminal.WriteLine($"Deploying to {env}...");
 
-  private static void Version(ITerminal terminal)
+  internal static void Version(ITerminal terminal)
     => terminal.WriteLine("RealApp v1.0.0");
 }

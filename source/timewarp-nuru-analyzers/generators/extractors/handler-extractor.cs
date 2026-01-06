@@ -224,9 +224,17 @@ internal static class HandlerExtractor
   {
     SymbolInfo symbolInfo = semanticModel.GetSymbolInfo(methodGroup, cancellationToken);
 
+    // For method groups, Symbol may be null but CandidateSymbols contains the method(s)
     if (symbolInfo.Symbol is IMethodSymbol methodSymbol)
     {
       return ExtractFromMethodSymbolAsMethod(methodSymbol);
+    }
+
+    // Check CandidateSymbols - method groups often have the method here
+    if (symbolInfo.CandidateSymbols.Length > 0 &&
+        symbolInfo.CandidateSymbols[0] is IMethodSymbol candidateMethod)
+    {
+      return ExtractFromMethodSymbolAsMethod(candidateMethod);
     }
 
     // If we can't resolve, create a minimal handler as delegate (not method)
@@ -251,6 +259,13 @@ internal static class HandlerExtractor
     if (symbolInfo.Symbol is IMethodSymbol methodSymbol)
     {
       return ExtractFromMethodSymbolAsMethod(methodSymbol);
+    }
+
+    // Check CandidateSymbols - method groups often have the method here
+    if (symbolInfo.CandidateSymbols.Length > 0 &&
+        symbolInfo.CandidateSymbols[0] is IMethodSymbol candidateMethod)
+    {
+      return ExtractFromMethodSymbolAsMethod(candidateMethod);
     }
 
     // Fallback to delegate since we don't have type info

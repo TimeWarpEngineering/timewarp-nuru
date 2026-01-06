@@ -310,17 +310,30 @@ Move to done, document results.
 - [x] Phase 10: Fix `03-calc-mixed.cs` (unblocked by #308)
 - [x] Phase 11: Update `attributed-routes/attributed-routes.cs` (entry point updated)
 - [x] Phase 12: Update `attributed-routes/messages/**/*.cs` (unblocked - #309, #310, #311 done)
-- [ ] Phase 13: Update this task
-- [ ] Phase 14: Test everything
+- [x] Phase 13: Update this task
+- [x] Phase 14: Test everything (#317 fixed multi-word routes)
 
-### Known Issue: Docker Group Routes Not Matching - See #317
+## Results
 
-The `docker` subcommand routes (`docker ps`, `docker build`, `docker run`, `docker tag`) are not matching.
-Simple commands work (greet, ping, deploy, exec) but grouped commands under `docker` fall through to help.
+All phases complete. Attributed routes now work without Mediator dependency:
 
-**Root cause identified:** The route matcher only checks the last literal segment. For `docker ps`, it checks `args[0] != "ps"` but should check `args[0] == "docker" && args[1] == "ps"`.
+### Working Samples
+- `samples/02-calculator/01-calc-delegate.cs` - delegates only
+- `samples/02-calculator/02-calc-commands.cs` - attributed routes only
+- `samples/02-calculator/03-calc-mixed.cs` - mixed delegates + attributed routes
+- `samples/03-attributed-routes/` - comprehensive attributed routes with groups
 
-**Tracked in:** #317 - Fix attributed route pattern matching for multi-word routes
+### Commands Tested
+- Single-word: `greet`, `ping`, `deploy`, `exec`
+- Multi-word (group prefix): `docker ps`, `docker build`, `docker run`, `docker tag`, `config get`, `config set`
+- Options: `--force`, `--replicas`, `--no-cache`, `--all`, `--detach`
+- Catch-all: `exec <args...>`
+
+### Resolved Blocking Issues
+- #309 - Type conversion for typed options
+- #310 - Hyphenated option variable naming
+- #311 - Catch-all `Args` variable collision
+- #317 - Multi-word route pattern matching
 
 ## Notes
 

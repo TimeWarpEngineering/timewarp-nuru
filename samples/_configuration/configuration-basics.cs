@@ -1,7 +1,5 @@
 #!/usr/bin/dotnet --
 #:project ../../source/timewarp-nuru/timewarp-nuru.csproj
-#:package Mediator.Abstractions
-#:package Mediator.SourceGenerator
 #:package Microsoft.Extensions.Options
 #:package Microsoft.Extensions.Options.ConfigurationExtensions
 #:property EnableConfigurationBindingGenerator=true
@@ -17,10 +15,6 @@
 // - AOT-compatible configuration binding with source generators
 //
 // Settings file: configuration-basics.settings.json (automatically discovered by .NET 10)
-//
-// REQUIRED PACKAGES:
-//   #:package Mediator.Abstractions    - Required by NuruApp.CreateBuilder
-//   #:package Mediator.SourceGenerator - Generates AddMediator() in YOUR assembly
 // ═══════════════════════════════════════════════════════════════════════════════
 
 using Microsoft.Extensions.Configuration;
@@ -30,117 +24,121 @@ using TimeWarp.Nuru;
 using static System.Console;
 
 NuruCoreApp app = NuruApp.CreateBuilder(args)
-  .ConfigureServices(ConfigureServices)
+  .ConfigureServices(Handlers.ConfigureServices)
   .Map("config show")
-    .WithHandler(ShowConfigurationAsync)
+    .WithHandler(Handlers.ShowConfigurationAsync)
     .WithDescription("Show current configuration values")
     .AsQuery()
     .Done()
   .Map("db connect")
-    .WithHandler(ConnectToDatabaseAsync)
+    .WithHandler(Handlers.ConnectToDatabaseAsync)
     .WithDescription("Connect to database using config")
     .AsCommand()
     .Done()
   .Map("api call {endpoint}")
-    .WithHandler(CallApiAsync)
+    .WithHandler(Handlers.CallApiAsync)
     .WithDescription("Call API endpoint using config")
     .AsQuery()
     .Done()
   .Map("notify {message}")
-    .WithHandler(SendNotificationAsync)
+    .WithHandler(Handlers.SendNotificationAsync)
     .WithDescription("Send notification (uses environment-based service)")
     .AsCommand()
     .Done()
   .Build();
 
-static void ConfigureServices(IServiceCollection services)
-{
-  // Get configuration from the service provider
-  ServiceProvider sp = services.BuildServiceProvider();
-  IConfiguration? config = sp.GetService<IConfiguration>();
-
-  if (config != null)
-  {
-    // Bind configuration sections to strongly-typed options (AOT-compatible with source generator)
-    services.AddOptions<DatabaseOptions>().Bind(config.GetSection("Database"));
-    services.AddOptions<ApiOptions>().Bind(config.GetSection("Api"));
-
-    // Register services conditionally based on configuration
-    string? environment = config["Environment"];
-    if (environment == "Development")
-    {
-      services.AddSingleton<INotificationService, ConsoleNotificationService>();
-    }
-    else
-    {
-      services.AddSingleton<INotificationService, EmailNotificationService>();
-    }
-
-    // Access configuration values directly
-    string? appName = config["AppName"];
-    WriteLine($"Configuring application: {appName ?? "Unknown"}");
-  }
-
-  // Register Mediator - required by NuruApp.CreateBuilder
-  services.AddMediator();
-}
-
 return await app.RunAsync(args);
 
-// Route handlers demonstrating configuration usage
+// ═══════════════════════════════════════════════════════════════════════════════
+// HANDLERS
+// ═══════════════════════════════════════════════════════════════════════════════
 
-async Task ShowConfigurationAsync(IOptions<DatabaseOptions> dbOptions, IOptions<ApiOptions> apiOptions, IConfiguration config)
+internal static class Handlers
 {
-  WriteLine("\n=== Configuration Values ===");
-  WriteLine($"App Name: {config["AppName"]}");
-  WriteLine($"Environment: {config["Environment"]}");
+  internal static void ConfigureServices(IServiceCollection services)
+  {
+    // Get configuration from the service provider
+    ServiceProvider sp = services.BuildServiceProvider();
+    IConfiguration? config = sp.GetService<IConfiguration>();
 
-  WriteLine("\nDatabase Configuration:");
-  WriteLine($"  Host: {dbOptions.Value.Host}");
-  WriteLine($"  Port: {dbOptions.Value.Port}");
-  WriteLine($"  Database: {dbOptions.Value.DatabaseName}");
-  WriteLine($"  Timeout: {dbOptions.Value.Timeout}s");
+    if (config != null)
+    {
+      // Bind configuration sections to strongly-typed options (AOT-compatible with source generator)
+      services.AddOptions<DatabaseOptions>().Bind(config.GetSection("Database"));
+      services.AddOptions<ApiOptions>().Bind(config.GetSection("Api"));
 
-  WriteLine("\nAPI Configuration:");
-  WriteLine($"  Base URL: {apiOptions.Value.BaseUrl}");
-  WriteLine($"  Timeout: {apiOptions.Value.TimeoutSeconds}s");
-  WriteLine($"  Retry Count: {apiOptions.Value.RetryCount}");
+      // Register services conditionally based on configuration
+      string? environment = config["Environment"];
+      if (environment == "Development")
+      {
+        services.AddSingleton<INotificationService, ConsoleNotificationService>();
+      }
+      else
+      {
+        services.AddSingleton<INotificationService, EmailNotificationService>();
+      }
 
-  await Task.CompletedTask;
+      // Access configuration values directly
+      string? appName = config["AppName"];
+      WriteLine($"Configuring application: {appName ?? "Unknown"}");
+    }
+  }
+
+  internal static async Task ShowConfigurationAsync(IOptions<DatabaseOptions> dbOptions, IOptions<ApiOptions> apiOptions, IConfiguration config)
+  {
+    WriteLine("\n=== Configuration Values ===");
+    WriteLine($"App Name: {config["AppName"]}");
+    WriteLine($"Environment: {config["Environment"]}");
+
+    WriteLine("\nDatabase Configuration:");
+    WriteLine($"  Host: {dbOptions.Value.Host}");
+    WriteLine($"  Port: {dbOptions.Value.Port}");
+    WriteLine($"  Database: {dbOptions.Value.DatabaseName}");
+    WriteLine($"  Timeout: {dbOptions.Value.Timeout}s");
+
+    WriteLine("\nAPI Configuration:");
+    WriteLine($"  Base URL: {apiOptions.Value.BaseUrl}");
+    WriteLine($"  Timeout: {apiOptions.Value.TimeoutSeconds}s");
+    WriteLine($"  Retry Count: {apiOptions.Value.RetryCount}");
+
+    await Task.CompletedTask;
+  }
+
+  internal static async Task ConnectToDatabaseAsync(IOptions<DatabaseOptions> dbOptions)
+  {
+    DatabaseOptions db = dbOptions.Value;
+    WriteLine($"Connecting to database...");
+    WriteLine($"  Server: {db.Host}:{db.Port}");
+    WriteLine($"  Database: {db.DatabaseName}");
+    WriteLine($"  Timeout: {db.Timeout}s");
+    WriteLine("✓ Connected successfully (simulated)");
+
+    await Task.CompletedTask;
+  }
+
+  internal static async Task CallApiAsync(string endpoint, IOptions<ApiOptions> apiOptions)
+  {
+    ApiOptions api = apiOptions.Value;
+    string fullUrl = $"{api.BaseUrl}/{endpoint}";
+
+    WriteLine($"Calling API endpoint...");
+    WriteLine($"  URL: {fullUrl}");
+    WriteLine($"  Timeout: {api.TimeoutSeconds}s");
+    WriteLine($"  Max Retries: {api.RetryCount}");
+    WriteLine("✓ API call successful (simulated)");
+
+    await Task.CompletedTask;
+  }
+
+  internal static async Task SendNotificationAsync(string message, INotificationService notificationService)
+  {
+    await notificationService.SendAsync(message);
+  }
 }
 
-async Task ConnectToDatabaseAsync(IOptions<DatabaseOptions> dbOptions)
-{
-  DatabaseOptions db = dbOptions.Value;
-  WriteLine($"Connecting to database...");
-  WriteLine($"  Server: {db.Host}:{db.Port}");
-  WriteLine($"  Database: {db.DatabaseName}");
-  WriteLine($"  Timeout: {db.Timeout}s");
-  WriteLine("✓ Connected successfully (simulated)");
-
-  await Task.CompletedTask;
-}
-
-async Task CallApiAsync(string endpoint, IOptions<ApiOptions> apiOptions)
-{
-  ApiOptions api = apiOptions.Value;
-  string fullUrl = $"{api.BaseUrl}/{endpoint}";
-
-  WriteLine($"Calling API endpoint...");
-  WriteLine($"  URL: {fullUrl}");
-  WriteLine($"  Timeout: {api.TimeoutSeconds}s");
-  WriteLine($"  Max Retries: {api.RetryCount}");
-  WriteLine("✓ API call successful (simulated)");
-
-  await Task.CompletedTask;
-}
-
-async Task SendNotificationAsync(string message, INotificationService notificationService)
-{
-  await notificationService.SendAsync(message);
-}
-
-// Configuration option classes (strongly-typed)
+// ═══════════════════════════════════════════════════════════════════════════════
+// CONFIGURATION OPTIONS (strongly-typed)
+// ═══════════════════════════════════════════════════════════════════════════════
 
 public class DatabaseOptions
 {
@@ -157,7 +155,9 @@ public class ApiOptions
   public int RetryCount { get; set; } = 3;
 }
 
-// Service interface and implementations
+// ═══════════════════════════════════════════════════════════════════════════════
+// SERVICES
+// ═══════════════════════════════════════════════════════════════════════════════
 
 public interface INotificationService
 {

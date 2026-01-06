@@ -54,6 +54,13 @@ internal static class ServiceResolverEmitter
       return;
     }
 
+    // Special case: IOptions<T> - bind from configuration using convention
+    if (TryGetOptionsInnerType(typeName, out string? innerTypeName))
+    {
+      EmitOptionsBinding(sb, typeName, innerTypeName!, varName, indent);
+      return;
+    }
+
     // Look up service in registered services
     ServiceDefinition? service = FindService(typeName, services);
     if (service is not null)
@@ -138,5 +145,87 @@ internal static class ServiceResolverEmitter
     return typeName is "global::TimeWarp.Terminal.ITerminal"
         or "TimeWarp.Terminal.ITerminal"
         or "ITerminal";
+  }
+
+  /// <summary>
+  /// Checks if a type name is IOptions&lt;T&gt; and extracts the inner type name.
+  /// </summary>
+  /// <param name="typeName">The full type name to check.</param>
+  /// <param name="innerTypeName">The inner type name if it's an IOptions type.</param>
+  /// <returns>True if the type is IOptions&lt;T&gt;, false otherwise.</returns>
+  private static bool TryGetOptionsInnerType(string typeName, out string? innerTypeName)
+  {
+    innerTypeName = null;
+
+    // Match patterns like:
+    // - global::Microsoft.Extensions.Options.IOptions<global::DatabaseOptions>
+    // - Microsoft.Extensions.Options.IOptions<DatabaseOptions>
+    // - IOptions<DatabaseOptions>
+    string[] prefixes =
+    [
+      "global::Microsoft.Extensions.Options.IOptions<",
+      "Microsoft.Extensions.Options.IOptions<",
+      "IOptions<"
+    ];
+
+    foreach (string prefix in prefixes)
+    {
+      if (typeName.StartsWith(prefix, StringComparison.Ordinal) && typeName.EndsWith('>'))
+      {
+        innerTypeName = typeName[prefix.Length..^1];
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  /// <summary>
+  /// Emits code to bind IOptions&lt;T&gt; from configuration.
+  /// Uses convention: strip "Options" suffix from class name for section key.
+  /// </summary>
+  /// <param name="sb">The StringBuilder to append to.</param>
+  /// <param name="optionsTypeName">The full IOptions&lt;T&gt; type name.</param>
+  /// <param name="innerTypeName">The inner options class type name.</param>
+  /// <param name="varName">The variable name for the parameter.</param>
+  /// <param name="indent">The indentation string.</param>
+  private static void EmitOptionsBinding(StringBuilder sb, string optionsTypeName, string innerTypeName, string varName, string indent)
+  {
+    string sectionKey = GetConfigurationSectionKey(innerTypeName);
+    string valueVarName = $"__{varName}Value";
+
+    sb.AppendLine($"{indent}// Resolve {optionsTypeName} from configuration section \"{sectionKey}\"");
+    sb.AppendLine($"{indent}{innerTypeName} {valueVarName} = configuration.GetSection(\"{sectionKey}\").Get<{innerTypeName}>() ?? new();");
+    sb.AppendLine($"{indent}{optionsTypeName} {varName} = global::Microsoft.Extensions.Options.Options.Create({valueVarName});");
+  }
+
+  /// <summary>
+  /// Gets the configuration section key for an options class.
+  /// Convention: strip "Options" suffix from class name.
+  /// </summary>
+  /// <param name="innerTypeName">The fully qualified options class name.</param>
+  /// <returns>The configuration section key.</returns>
+  private static string GetConfigurationSectionKey(string innerTypeName)
+  {
+    // Extract just the class name (without namespace/global::)
+    string className = innerTypeName;
+
+    // Remove global:: prefix if present
+    if (className.StartsWith("global::", StringComparison.Ordinal))
+      className = className[8..];
+
+    // Get just the class name (after last dot)
+    int lastDot = className.LastIndexOf('.');
+    if (lastDot >= 0)
+      className = className[(lastDot + 1)..];
+
+    // Strip "Options" suffix if present
+    const string optionsSuffix = "Options";
+    if (className.EndsWith(optionsSuffix, StringComparison.Ordinal) && className.Length > optionsSuffix.Length)
+    {
+      return className[..^optionsSuffix.Length];
+    }
+
+    return className;
   }
 }

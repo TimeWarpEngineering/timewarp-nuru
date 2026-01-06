@@ -112,7 +112,7 @@ public sealed class NuruGenerator : IIncrementalGenerator
     HelpModel? helpOptions = null;
     bool hasRepl = false;
     ReplModel? replOptions = null;
-    bool hasConfiguration = false;
+    bool hasConfiguration = true; // Always emit configuration - CreateBuilder() always provides it. Future optimization task will auto-detect actual usage.
     bool hasCheckUpdatesRoute = false;
     ImmutableArray<BehaviorDefinition>.Builder allBehaviors =
       ImmutableArray.CreateBuilder<BehaviorDefinition>();

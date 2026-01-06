@@ -108,7 +108,7 @@ public sealed class NuruGenerator : IIncrementalGenerator
     string? name = null;
     string? description = null;
     string? aiPrompt = null;
-    bool hasHelp = false;
+    bool hasHelp = true; // Always enable help - CreateBuilder() apps should always have --help available.
     HelpModel? helpOptions = null;
     bool hasRepl = false;
     ReplModel? replOptions = null;

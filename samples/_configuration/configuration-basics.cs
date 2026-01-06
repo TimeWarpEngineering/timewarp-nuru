@@ -5,26 +5,25 @@
 #:property EnableConfigurationBindingGenerator=true
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// CONFIGURATION BASICS - AOT-COMPATIBLE CONFIGURATION WITH DI
+// CONFIGURATION BASICS - STATIC OPTIONS BINDING
 // ═══════════════════════════════════════════════════════════════════════════════
 //
-// This sample demonstrates NuruApp.CreateBuilder(args) which provides:
-// - Full DI container setup
-// - Configuration from appsettings.json, environment variables, command line args
-// - Auto-help generation
-// - AOT-compatible configuration binding with source generators
+// This sample demonstrates IOptions<T> parameter injection in handlers:
+// - Options are bound from configuration sections at compile time
+// - Convention: DatabaseOptions class → "Database" config section (strips "Options" suffix)
+// - Override convention with [ConfigurationKey("CustomSection")] attribute
 //
-// Settings file: configuration-basics.settings.json (automatically discovered by .NET 10)
+// Settings file: configuration-basics.settings.json
+//
+// Run: dotnet run samples/_configuration/configuration-basics.cs -- config show
 // ═══════════════════════════════════════════════════════════════════════════════
 
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using TimeWarp.Nuru;
 using static System.Console;
 
 NuruCoreApp app = NuruApp.CreateBuilder(args)
-  .ConfigureServices(Handlers.ConfigureServices)
   .Map("config show")
     .WithHandler(Handlers.ShowConfigurationAsync)
     .WithDescription("Show current configuration values")
@@ -40,11 +39,6 @@ NuruCoreApp app = NuruApp.CreateBuilder(args)
     .WithDescription("Call API endpoint using config")
     .AsQuery()
     .Done()
-  .Map("notify {message}")
-    .WithHandler(Handlers.SendNotificationAsync)
-    .WithDescription("Send notification (uses environment-based service)")
-    .AsCommand()
-    .Done()
   .Build();
 
 return await app.RunAsync(args);
@@ -55,36 +49,14 @@ return await app.RunAsync(args);
 
 internal static class Handlers
 {
-  internal static void ConfigureServices(IServiceCollection services)
-  {
-    // Get configuration from the service provider
-    ServiceProvider sp = services.BuildServiceProvider();
-    IConfiguration? config = sp.GetService<IConfiguration>();
-
-    if (config != null)
-    {
-      // Bind configuration sections to strongly-typed options (AOT-compatible with source generator)
-      services.AddOptions<DatabaseOptions>().Bind(config.GetSection("Database"));
-      services.AddOptions<ApiOptions>().Bind(config.GetSection("Api"));
-
-      // Register services conditionally based on configuration
-      string? environment = config["Environment"];
-      if (environment == "Development")
-      {
-        services.AddSingleton<INotificationService, ConsoleNotificationService>();
-      }
-      else
-      {
-        services.AddSingleton<INotificationService, EmailNotificationService>();
-      }
-
-      // Access configuration values directly
-      string? appName = config["AppName"];
-      WriteLine($"Configuring application: {appName ?? "Unknown"}");
-    }
-  }
-
-  internal static async Task ShowConfigurationAsync(IOptions<DatabaseOptions> dbOptions, IOptions<ApiOptions> apiOptions, IConfiguration config)
+  /// <summary>
+  /// Shows all configuration values.
+  /// Demonstrates: IOptions&lt;T&gt; and IConfiguration parameter injection.
+  /// </summary>
+  internal static async Task ShowConfigurationAsync(
+    IOptions<DatabaseOptions> dbOptions,
+    IOptions<ApiOptions> apiOptions,
+    IConfiguration config)
   {
     WriteLine("\n=== Configuration Values ===");
     WriteLine($"App Name: {config["AppName"]}");
@@ -104,6 +76,10 @@ internal static class Handlers
     await Task.CompletedTask;
   }
 
+  /// <summary>
+  /// Simulates connecting to a database using configured options.
+  /// Demonstrates: IOptions&lt;T&gt; parameter injection.
+  /// </summary>
   internal static async Task ConnectToDatabaseAsync(IOptions<DatabaseOptions> dbOptions)
   {
     DatabaseOptions db = dbOptions.Value;
@@ -116,6 +92,10 @@ internal static class Handlers
     await Task.CompletedTask;
   }
 
+  /// <summary>
+  /// Simulates calling an API endpoint using configured options.
+  /// Demonstrates: Route parameter + IOptions&lt;T&gt; parameter injection.
+  /// </summary>
   internal static async Task CallApiAsync(string endpoint, IOptions<ApiOptions> apiOptions)
   {
     ApiOptions api = apiOptions.Value;
@@ -129,15 +109,17 @@ internal static class Handlers
 
     await Task.CompletedTask;
   }
-
-  internal static async Task SendNotificationAsync(string message, INotificationService notificationService)
-  {
-    await notificationService.SendAsync(message);
-  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // CONFIGURATION OPTIONS (strongly-typed)
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// Convention: Class name ending in "Options" has suffix stripped for section key
+// - DatabaseOptions → binds from "Database" section
+// - ApiOptions → binds from "Api" section
+//
+// Override with: [ConfigurationKey("CustomSectionName")]
 // ═══════════════════════════════════════════════════════════════════════════════
 
 public class DatabaseOptions
@@ -153,32 +135,4 @@ public class ApiOptions
   public string BaseUrl { get; set; } = "https://api.example.com";
   public int TimeoutSeconds { get; set; } = 30;
   public int RetryCount { get; set; } = 3;
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// SERVICES
-// ═══════════════════════════════════════════════════════════════════════════════
-
-public interface INotificationService
-{
-  Task SendAsync(string message);
-}
-
-public class ConsoleNotificationService : INotificationService
-{
-  public Task SendAsync(string message)
-  {
-    WriteLine($"[Console] {message}");
-    return Task.CompletedTask;
-  }
-}
-
-public class EmailNotificationService : INotificationService
-{
-  public Task SendAsync(string message)
-  {
-    WriteLine($"[Email] Sending: {message}");
-    WriteLine("✓ Email sent successfully (simulated)");
-    return Task.CompletedTask;
-  }
 }

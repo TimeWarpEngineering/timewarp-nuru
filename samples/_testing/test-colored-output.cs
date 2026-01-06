@@ -1,6 +1,6 @@
 #!/usr/bin/dotnet --
 // test-colored-output - Demonstrates testing handlers with colored output
-// Uses NuruCoreApp.CreateSlimBuilder() for testing scenarios - provides ITerminal injection without full Mediator
+// Uses NuruApp.CreateBuilder() with UseTerminal() for testable CLI apps
 #:package Shouldly
 #:project ../../source/timewarp-nuru/timewarp-nuru.csproj
 
@@ -15,7 +15,7 @@ Console.WriteLine("Test 1: Handler with colored output");
 {
   using TestTerminal terminal = new();
 
-  NuruCoreApp app = NuruCoreApp.CreateSlimBuilder()
+  NuruCoreApp app = NuruApp.CreateBuilder([])
     .UseTerminal(terminal)
     .Map("status")
       .WithHandler((ITerminal t) =>
@@ -49,7 +49,7 @@ Console.WriteLine("\nTest 2: Text formatting");
 {
   using TestTerminal terminal = new();
 
-  NuruCoreApp app = NuruCoreApp.CreateSlimBuilder()
+  NuruCoreApp app = NuruApp.CreateBuilder([])
     .UseTerminal(terminal)
     .Map("format")
       .WithHandler((ITerminal t) =>
@@ -75,7 +75,7 @@ Console.WriteLine("\nTest 3: Chained styles");
 {
   using TestTerminal terminal = new();
 
-  NuruCoreApp app = NuruCoreApp.CreateSlimBuilder()
+  NuruCoreApp app = NuruApp.CreateBuilder([])
     .UseTerminal(terminal)
     .Map("alert")
       .WithHandler((ITerminal t) =>
@@ -106,7 +106,7 @@ Console.WriteLine("\nTest 4: CSS named colors");
 {
   using TestTerminal terminal = new();
 
-  NuruCoreApp app = NuruCoreApp.CreateSlimBuilder()
+  NuruCoreApp app = NuruApp.CreateBuilder([])
     .UseTerminal(terminal)
     .Map("palette")
       .WithHandler((ITerminal t) =>
@@ -127,14 +127,13 @@ Console.WriteLine("\nTest 4: CSS named colors");
   Console.WriteLine("  PASSED".Green());
 }
 
-// Test 5: Color support detection
-Console.WriteLine("\nTest 5: Color support detection");
+// Test 5a: Color support detection - with color
+Console.WriteLine("\nTest 5a: Color terminal");
+string colorOutput;
 {
-  // TestTerminal.SupportsColor is true by default
   using TestTerminal colorTerminal = new() { SupportsColor = true };
-  using TestTerminal noColorTerminal = new() { SupportsColor = false };
 
-  NuruCoreApp app = NuruCoreApp.CreateSlimBuilder()
+  NuruCoreApp app = NuruApp.CreateBuilder([])
     .UseTerminal(colorTerminal)
     .Map("check")
       .WithHandler((ITerminal t) =>
@@ -150,7 +149,19 @@ Console.WriteLine("\nTest 5: Color support detection");
 
   await app.RunAsync(["check"]);
 
-  NuruCoreApp appNoColor = NuruCoreApp.CreateSlimBuilder()
+  colorTerminal.OutputContains("Colors enabled").ShouldBeTrue();
+  colorOutput = colorTerminal.Output.Trim();
+  Console.WriteLine("  PASSED".Green());
+}
+
+// Test 5b: Color support detection - without color
+// NOTE: Separate block due to generator limitation with multiple apps in same block (see task #319)
+Console.WriteLine("\nTest 5b: No-color terminal");
+string noColorOutput;
+{
+  using TestTerminal noColorTerminal = new() { SupportsColor = false };
+
+  NuruCoreApp app = NuruApp.CreateBuilder([])
     .UseTerminal(noColorTerminal)
     .Map("check")
       .WithHandler((ITerminal t) =>
@@ -164,14 +175,14 @@ Console.WriteLine("\nTest 5: Color support detection");
       .Done()
     .Build();
 
-  await appNoColor.RunAsync(["check"]);
+  await app.RunAsync(["check"]);
 
-  colorTerminal.OutputContains("Colors enabled").ShouldBeTrue();
   noColorTerminal.OutputContains("Colors disabled").ShouldBeTrue();
-
-  Console.WriteLine($"  Color terminal output: {colorTerminal.Output.Trim()}");
-  Console.WriteLine($"  No-color terminal output: {noColorTerminal.Output.Trim()}");
+  noColorOutput = noColorTerminal.Output.Trim();
   Console.WriteLine("  PASSED".Green());
 }
+
+Console.WriteLine($"  Color terminal output: {colorOutput}");
+Console.WriteLine($"  No-color terminal output: {noColorOutput}");
 
 Console.WriteLine("\n=== All Tests Complete ===".BrightGreen().Bold());

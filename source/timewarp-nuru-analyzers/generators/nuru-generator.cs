@@ -158,7 +158,14 @@ public sealed class NuruGenerator : IIncrementalGenerator
         allRoutes.Add(route);
     }
 
-    // Create combined model with all intercept sites
+    // Create combined model with deduplicated intercept sites
+    // NOTE: Deduplication is needed because the generator processes the file once per RunAsync call,
+    // and each processing finds ALL RunAsync calls. This results in N² intercept sites for N calls.
+    // See task #318 for architectural fix to process files only once.
+    // See task #319 for bug where multiple apps in same block lose intercept sites (models[0] issue).
+    ImmutableArray<InterceptSiteModel> uniqueInterceptSites =
+      [.. allInterceptSites.DistinctBy(site => site.GetAttributeSyntax())];
+
     return new AppModel
     (
       VariableName: null, // Combined models don't track variable names
@@ -174,7 +181,7 @@ public sealed class NuruGenerator : IIncrementalGenerator
       Routes: allRoutes.ToImmutable(),
       Behaviors: allBehaviors.ToImmutable(),
       Services: allServices.ToImmutable(),
-      InterceptSites: allInterceptSites.ToImmutable(),
+      InterceptSites: uniqueInterceptSites,
       UserUsings: [.. allUserUsings.Distinct()]
     );
   }

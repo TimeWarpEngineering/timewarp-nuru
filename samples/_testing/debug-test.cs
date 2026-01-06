@@ -4,8 +4,7 @@
 using TimeWarp.Nuru;
 using TimeWarp.Terminal;
 
-NuruCoreApp app = NuruCoreApp.CreateSlimBuilder()
-  .AddAutoHelp()
+NuruCoreApp app = NuruApp.CreateBuilder([])
   .Map("greet {name}")
     .WithHandler((string name, ITerminal t) => t.WriteLine($"Hello, {name}!"))
     .AsCommand()

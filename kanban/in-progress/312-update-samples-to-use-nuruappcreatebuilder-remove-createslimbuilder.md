@@ -23,10 +23,10 @@ These samples have been verified working with the new API:
 ## Samples Needing Updates
 
 ### Uses CreateSlimBuilder (obsolete)
-- [ ] `testing/test-output-capture.cs`
-- [ ] `testing/test-colored-output.cs`
-- [ ] `testing/test-terminal-injection.cs`
-- [ ] `testing/debug-test.cs`
+- [x] `testing/test-output-capture.cs` - Updated to CreateBuilder
+- [x] `testing/test-colored-output.cs` - Updated to CreateBuilder, split Test 5 for #319 workaround
+- [x] `testing/test-terminal-injection.cs` - Updated to CreateBuilder
+- [x] `testing/debug-test.cs` - Updated to CreateBuilder
 - [ ] `testing/runfile-test-harness/real-app.cs`
 
 ### Uses Mediator (replace with TimeWarp.Nuru interfaces)
@@ -61,7 +61,14 @@ These samples require pipeline behavior code generation which is tracked in **#3
 
 ## Notes
 
-When updating samples:
+### Generator Bug Fix Required
+During migration, discovered that multiple `RunAsync()` calls caused CS9153 error due to duplicate
+intercept sites. Fixed by adding deduplication in `CombineModels`:
+- `allInterceptSites.DistinctBy(site => site.GetAttributeSyntax())`
+- See #318 for architectural fix (process files only once)
+- See #319 for bug with multiple apps in same block
+
+### When updating samples:
 1. Replace `CreateSlimBuilder` with `NuruApp.CreateBuilder(args)`
 2. Replace Mediator interfaces with TimeWarp.Nuru interfaces
 3. Make handler methods `internal` or `public` (not `private`)

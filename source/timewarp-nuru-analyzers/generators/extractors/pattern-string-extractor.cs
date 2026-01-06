@@ -117,7 +117,11 @@ internal static class PatternStringExtractor
     if (string.IsNullOrEmpty(typeConstraint))
       return null;
 
-    return typeConstraint.ToLowerInvariant() switch
+    // Handle nullable types (e.g., "int?", "double?")
+    bool isNullable = typeConstraint.EndsWith('?');
+    string baseType = isNullable ? typeConstraint[..^1] : typeConstraint;
+
+    string? resolvedBase = baseType.ToLowerInvariant() switch
     {
       "int" or "int32" => "global::System.Int32",
       "long" or "int64" => "global::System.Int64",
@@ -135,8 +139,10 @@ internal static class PatternStringExtractor
       "timespan" => "global::System.TimeSpan",
       "uri" => "global::System.Uri",
       "version" => "global::System.Version",
-      _ => $"global::{typeConstraint}" // Assume it's a fully qualified type
+      _ => $"global::{baseType}" // Assume it's a fully qualified type
     };
+
+    return isNullable ? $"{resolvedBase}?" : resolvedBase;
   }
 
   /// <summary>

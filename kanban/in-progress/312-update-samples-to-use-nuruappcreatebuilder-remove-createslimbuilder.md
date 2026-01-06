@@ -50,14 +50,15 @@ These samples have been verified working with the new API:
 - [x] `07-pipeline-middleware/*` - All 6 samples working (completed in #315)
 
 ### Unchecked (need verification)
-- [ ] `_aspire-host-otel/`
-- [ ] `_aspire-telemetry/`
-- [ ] `_dynamic-completion-example/`
-- [ ] `_repl-demo/`
-- [ ] `_shell-completion-example/`
-- [ ] `_terminal/`
-- [ ] `_unified-middleware/`
-- [ ] `_timewarp-nuru-sample/`
+- [ ] `_aspire-host-otel/` - Requires Mediator, Repl, Telemetry libs
+- [ ] `_aspire-telemetry/` - Requires Mediator, Telemetry lib
+- [ ] `_dynamic-completion-example/` - Requires Completion lib
+- [ ] `_repl-demo/` - Requires Mediator, Repl lib
+- [ ] `_shell-completion-example/` - Requires Completion lib
+- [ ] `_unified-middleware/` - Requires Mediator, Logging lib
+
+### Working (deferred decision on purpose)
+- [x] `99-timewarp-nuru-sample/` - Works, but redundant with other samples. Decide later if kitchen sink app or template.
 
 ## Notes
 

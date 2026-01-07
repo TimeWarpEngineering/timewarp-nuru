@@ -37,10 +37,11 @@ These samples have been verified working with the new API:
 - [ ] `_logging/serilog-logging.cs` - likely same issues
 - [x] `06-async-examples/async-examples.cs` - DONE (updated to CreateBuilder)
 
-### Uses private methods as handlers (NURU_H004)
-- [ ] `configuration/configuration-basics.cs`
-- [ ] `configuration/configuration-validation.cs`
-- [ ] Other configuration samples
+### Configuration Samples - DONE
+- [x] `_configuration/configuration-basics.cs` - Migrated to DSL API
+- [x] `_configuration/command-line-overrides.cs` - Migrated to DSL API with IOptions<T>
+- [x] `_configuration/configuration-validation.cs` - Migrated to IValidateOptions<T> (removed FluentValidation)
+- [x] `_configuration/user-secrets-property.cs` - Migrated to DSL API
 
 ### Generator formatting issues (#313)
 - [ ] `builtin-types-example.cs` - block body handler formatting
@@ -74,3 +75,8 @@ intercept sites. Fixed by adding deduplication in `CombineModels`:
 2. Replace Mediator interfaces with TimeWarp.Nuru interfaces
 3. Make handler methods `internal` or `public` (not `private`)
 4. Move working samples to numbered folders (NN-name)
+
+### Generator Enhancements Made During Migration
+- **Config arg filtering** - Command-line config overrides (`--Section:Key=value`) now filtered from route matching
+- **IValidateOptions<T> support** - Generator auto-detects validators and runs validation at startup
+- **14 generator tests** all passing

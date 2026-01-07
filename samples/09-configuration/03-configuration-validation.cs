@@ -21,16 +21,16 @@
 //   ✅ All validation runs at startup (fail-fast)
 //   ✅ No external dependencies beyond Microsoft.Extensions.Options
 //
-// Settings file: configuration-validation.settings.json
+// Settings file: 03-configuration-validation.settings.json
 //
 // Examples:
-//   dotnet run samples/_configuration/configuration-validation.cs -- validate
-//   dotnet run samples/_configuration/configuration-validation.cs -- server info
-//   dotnet run samples/_configuration/configuration-validation.cs -- db info
-//   dotnet run samples/_configuration/configuration-validation.cs -- api info
+//   dotnet run samples/09-configuration/03-configuration-validation.cs -- validate
+//   dotnet run samples/09-configuration/03-configuration-validation.cs -- server info
+//   dotnet run samples/09-configuration/03-configuration-validation.cs -- db info
+//   dotnet run samples/09-configuration/03-configuration-validation.cs -- api info
 //
 // To see validation failure:
-//   dotnet run samples/_configuration/configuration-validation.cs -- server info --Server:Port=0
+//   dotnet run samples/09-configuration/03-configuration-validation.cs -- server info --Server:Port=0
 // ═══════════════════════════════════════════════════════════════════════════════
 
 using Microsoft.Extensions.Options;

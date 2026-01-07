@@ -14,13 +14,13 @@
 // - DEBUG build configuration is used
 //
 // To set user secrets:
-//   cd samples/_configuration
+//   cd samples/09-configuration
 //   dotnet user-secrets set "ApiKey" "my-secret-api-key"
 //   dotnet user-secrets set "Database:ConnectionString" "Server=...;Password=secret"
 //
 // Examples:
-//   DOTNET_ENVIRONMENT=Development dotnet run user-secrets-property.cs -- show
-//   dotnet run user-secrets-property.cs -- show
+//   DOTNET_ENVIRONMENT=Development dotnet run samples/09-configuration/04-user-secrets-property.cs -- show
+//   dotnet run samples/09-configuration/04-user-secrets-property.cs -- show
 // ═══════════════════════════════════════════════════════════════════════════════
 
 using Microsoft.Extensions.Configuration;

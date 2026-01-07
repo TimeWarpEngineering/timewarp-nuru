@@ -15,13 +15,13 @@
 // This allows you to override any configuration value from appsettings.json,
 // environment variables, or other configuration sources.
 //
-// Settings file: command-line-overrides.settings.json
+// Settings file: 02-command-line-overrides.settings.json
 //
 // Examples:
-//   dotnet run samples/_configuration/command-line-overrides.cs -- run
-//   dotnet run samples/_configuration/command-line-overrides.cs -- run --FooOptions:Url=https://override.example.com
-//   dotnet run samples/_configuration/command-line-overrides.cs -- show
-//   dotnet run samples/_configuration/command-line-overrides.cs -- demo
+//   dotnet run samples/09-configuration/02-command-line-overrides.cs -- run
+//   dotnet run samples/09-configuration/02-command-line-overrides.cs -- run --Foo:Endpoint=https://override.example.com
+//   dotnet run samples/09-configuration/02-command-line-overrides.cs -- show
+//   dotnet run samples/09-configuration/02-command-line-overrides.cs -- demo
 // ═══════════════════════════════════════════════════════════════════════════════
 
 using Microsoft.Extensions.Configuration;

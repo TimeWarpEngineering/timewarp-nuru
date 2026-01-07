@@ -13,9 +13,9 @@
 // - Convention: DatabaseOptions class → "Database" config section (strips "Options" suffix)
 // - Override convention with [ConfigurationKey("CustomSection")] attribute
 //
-// Settings file: configuration-basics.settings.json
+// Settings file: 01-configuration-basics.settings.json
 //
-// Run: dotnet run samples/_configuration/configuration-basics.cs -- config show
+// Run: dotnet run samples/09-configuration/01-configuration-basics.cs -- config show
 // ═══════════════════════════════════════════════════════════════════════════════
 
 using Microsoft.Extensions.Configuration;

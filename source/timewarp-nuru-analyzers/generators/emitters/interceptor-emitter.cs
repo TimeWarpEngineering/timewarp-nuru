@@ -222,6 +222,11 @@ internal static class InterceptorEmitter
       ConfigurationEmitter.Emit(sb);
     }
 
+    // Filter out configuration override args before route matching
+    // Config overrides follow pattern: --Section:Key=value (starts with -- and contains :)
+    // This allows AddCommandLine(args) to process them while route matching ignores them
+    EmitConfigArgFiltering(sb);
+
     // Built-in flags: --help, --version, --capabilities
     EmitBuiltInFlags(sb, model);
 
@@ -246,7 +251,7 @@ internal static class InterceptorEmitter
     if (model.HasHelp)
     {
       sb.AppendLine("    // Built-in: --help");
-      sb.AppendLine("    if (args is [\"--help\" or \"-h\"])");
+      sb.AppendLine("    if (routeArgs is [\"--help\" or \"-h\"])");
       sb.AppendLine("    {");
       sb.AppendLine("      PrintHelp(app.Terminal);");
       sb.AppendLine("      return 0;");
@@ -256,7 +261,7 @@ internal static class InterceptorEmitter
 
     // --version flag (always available)
     sb.AppendLine("    // Built-in: --version");
-    sb.AppendLine("    if (args is [\"--version\"])");
+    sb.AppendLine("    if (routeArgs is [\"--version\"])");
     sb.AppendLine("    {");
     sb.AppendLine("      PrintVersion(app.Terminal);");
     sb.AppendLine("      return 0;");
@@ -265,7 +270,7 @@ internal static class InterceptorEmitter
 
     // --capabilities flag (always available for AI tools)
     sb.AppendLine("    // Built-in: --capabilities (for AI tools)");
-    sb.AppendLine("    if (args is [\"--capabilities\"])");
+    sb.AppendLine("    if (routeArgs is [\"--capabilities\"])");
     sb.AppendLine("    {");
     sb.AppendLine("      PrintCapabilities(app.Terminal);");
     sb.AppendLine("      return 0;");
@@ -276,13 +281,27 @@ internal static class InterceptorEmitter
     if (model.HasCheckUpdatesRoute)
     {
       sb.AppendLine("    // Built-in: --check-updates (opt-in via AddCheckUpdatesRoute())");
-      sb.AppendLine("    if (args is [\"--check-updates\"])");
+      sb.AppendLine("    if (routeArgs is [\"--check-updates\"])");
       sb.AppendLine("    {");
       sb.AppendLine("      await CheckForUpdatesAsync(app.Terminal).ConfigureAwait(false);");
       sb.AppendLine("      return 0;");
       sb.AppendLine("    }");
       sb.AppendLine();
     }
+  }
+
+  /// <summary>
+  /// Emits code to filter out configuration override args before route matching.
+  /// Config overrides follow pattern: --Section:Key=value (starts with -- and contains :)
+  /// This allows AddCommandLine(args) to process them while route matching ignores them.
+  /// </summary>
+  private static void EmitConfigArgFiltering(StringBuilder sb)
+  {
+    sb.AppendLine("    // Filter out configuration override args before route matching");
+    sb.AppendLine("    // Config overrides follow pattern: --Section:Key=value (starts with -- and contains :)");
+    sb.AppendLine("    // Original args are still passed to AddCommandLine() for configuration");
+    sb.AppendLine("    string[] routeArgs = [.. args.Where(arg => !(arg.StartsWith(\"--\", global::System.StringComparison.Ordinal) && arg.Contains(':', global::System.StringComparison.Ordinal)))];");
+    sb.AppendLine();
   }
 
   /// <summary>

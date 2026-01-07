@@ -61,7 +61,7 @@ internal static class RouteMatcherEmitter
   {
     string pattern = BuildListPattern(route, routeIndex);
 
-    sb.AppendLine($"    if (args is {pattern})");
+    sb.AppendLine($"    if (routeArgs is {pattern})");
     sb.AppendLine("    {");
 
     // Emit variable aliases (from route-unique names to handler-expected names)
@@ -102,7 +102,7 @@ internal static class RouteMatcherEmitter
     // Calculate minimum required args
     int minArgs = route.Literals.Count() + route.Parameters.Count(p => !p.IsOptional && !p.IsCatchAll);
 
-    sb.AppendLine($"    if (args.Length >= {minArgs})");
+    sb.AppendLine($"    if (routeArgs.Length >= {minArgs})");
     sb.AppendLine("    {");
 
     // Emit literal matching
@@ -110,7 +110,7 @@ internal static class RouteMatcherEmitter
     foreach (LiteralDefinition literal in route.Literals)
     {
       sb.AppendLine(
-        $"      if (args[{literalIndex}] != \"{EscapeString(literal.Value)}\") goto route_skip_{routeIndex};");
+        $"      if (routeArgs[{literalIndex}] != \"{EscapeString(literal.Value)}\") goto route_skip_{routeIndex};");
       literalIndex++;
     }
 
@@ -284,20 +284,20 @@ internal static class RouteMatcherEmitter
       {
         // Catch-all gets remaining args - uses unique variable name
         sb.AppendLine(
-          $"      string[] {varName} = args[{paramIndex}..];");
+          $"      string[] {varName} = routeArgs[{paramIndex}..];");
       }
       else if (param.IsOptional)
       {
         // Optional parameter with bounds check - null when not provided
         sb.AppendLine(
-          $"      string? {varName} = args.Length > {paramIndex} ? args[{paramIndex}] : null;");
+          $"      string? {varName} = routeArgs.Length > {paramIndex} ? routeArgs[{paramIndex}] : null;");
         paramIndex++;
       }
       else
       {
         // Required parameter
         sb.AppendLine(
-          $"      string {varName} = args[{paramIndex}];");
+          $"      string {varName} = routeArgs[{paramIndex}];");
         paramIndex++;
       }
     }
@@ -339,7 +339,7 @@ internal static class RouteMatcherEmitter
     };
 
     sb.AppendLine(
-      $"      bool {varName} = Array.Exists(args, a => {condition});");
+      $"      bool {varName} = Array.Exists(routeArgs, a => {condition});");
   }
 
   /// <summary>
@@ -353,9 +353,9 @@ internal static class RouteMatcherEmitter
 
     string condition = (option.LongForm, option.ShortForm) switch
     {
-      (not null, not null) => $"args[__idx] == \"--{option.LongForm}\" || args[__idx] == \"-{option.ShortForm}\"",
-      (not null, null) => $"args[__idx] == \"--{option.LongForm}\"",
-      (null, not null) => $"args[__idx] == \"-{option.ShortForm}\"",
+      (not null, not null) => $"routeArgs[__idx] == \"--{option.LongForm}\" || routeArgs[__idx] == \"-{option.ShortForm}\"",
+      (not null, null) => $"routeArgs[__idx] == \"--{option.LongForm}\"",
+      (null, not null) => $"routeArgs[__idx] == \"-{option.ShortForm}\"",
       _ => throw new InvalidOperationException("Option must have at least one form")
     };
 
@@ -365,12 +365,12 @@ internal static class RouteMatcherEmitter
 
     sb.AppendLine(
       $"      string? {rawVarName} = {defaultValue};");
-    sb.AppendLine("      for (int __idx = 0; __idx < args.Length - 1; __idx++)");
+    sb.AppendLine("      for (int __idx = 0; __idx < routeArgs.Length - 1; __idx++)");
     sb.AppendLine("      {");
     sb.AppendLine(
       $"        if ({condition})");
     sb.AppendLine("        {");
-    sb.AppendLine($"          {rawVarName} = args[__idx + 1];");
+    sb.AppendLine($"          {rawVarName} = routeArgs[__idx + 1];");
     sb.AppendLine("          break;");
     sb.AppendLine("        }");
     sb.AppendLine("      }");

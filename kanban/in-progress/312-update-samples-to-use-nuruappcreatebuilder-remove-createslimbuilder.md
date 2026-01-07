@@ -57,7 +57,7 @@ These samples have been verified working with the new API:
 - [ ] `_dynamic-completion-example/` - Requires Completion lib
 - [ ] `_repl-demo/` - Requires Mediator, Repl lib
 - [ ] `_shell-completion-example/` - Requires Completion lib
-- [ ] `_unified-middleware/` - Requires Mediator, Logging lib
+- [ ] `_unified-middleware/` - **Blocked by #322** (needs ILogger<T> auto-detection)
 
 ### Working (deferred decision on purpose)
 - [x] `99-timewarp-nuru-sample/` - Works, but redundant with other samples. Decide later if kitchen sink app or template.

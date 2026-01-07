@@ -144,7 +144,7 @@ terminal.OutputContains("pong").ShouldBeTrue();
 **Note:** Tests use unique command prefixes to avoid route conflicts when multiple tests share the same compilation unit.
 
 ### Commit 6.5: Advanced features
-- [ ] Service injection (`ILogger<T>`)
+- [ ] Service injection (`ILogger<T>`) - **See #322** (auto-detect and emit logging setup)
 - [ ] Attributed routes (`[NuruRoute]`)
 - [ ] Mini-language patterns
 - [ ] Full `dsl-example.cs` validation

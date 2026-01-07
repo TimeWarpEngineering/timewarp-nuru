@@ -1,10 +1,13 @@
 # Fix generator type resolution for built-in types
 
-## Status: COMPLETE (with caveats)
+## Status: BLOCKED
 
-**Commit:** `7efef874` - Type resolution for all 21 built-in types is now working.
+Type resolution implementation is complete, but sample verification is blocked by other bugs.
 
-The sample `01-builtin-types.cs` still fails to compile due to **separate pre-existing bugs** (see Remaining Issues below).
+**Blocked by:**
+- #323 - Fix C# keyword escaping in generated parameter names
+- #324 - Fix handler parameter vs service injection confusion
+- #325 - Fix block body handler indentation in generated code
 
 ## Summary
 
@@ -14,6 +17,8 @@ The generator now correctly resolves all 21 built-in types to fully-qualified CL
 - `IPAddress` → `global::System.Net.IPAddress` ✅
 - `DateOnly` → `global::System.DateOnly` ✅
 - `TimeOnly` → `global::System.TimeOnly` ✅
+
+**Commit:** `7efef874`
 
 ## What Was Done
 
@@ -31,28 +36,7 @@ The generator now correctly resolves all 21 built-in types to fully-qualified CL
 - [x] Fix `ToPascalCase()` to handle kebab-case property names
 - [x] Verify type resolution is correct in generated code
 - [x] Verify existing generator tests pass
-- [ ] Sample `01-builtin-types.cs` blocked by separate bugs
-
-## Remaining Issues (Separate Bugs)
-
-The sample `01-builtin-types.cs` cannot compile due to **pre-existing generator bugs** not related to type resolution:
-
-### 1. C# Keyword Escaping
-Parameter named `event` generates `string event = ...` instead of `string @event = ...`
-
-**Route:** `schedule {event} {when:DateTime}`
-**Error:** CS0065 - `event` is a C# keyword
-
-### 2. Handler Parameter vs Service Injection Confusion  
-Handler parameters of types like `IPAddress` are incorrectly treated as services requiring injection.
-
-**Route:** `connect {host:ipaddress} {port:int}`
-**Error:** Generator emits both route binding AND service injection for `host`
-
-### 3. Block Body Handler Formatting
-Multi-line lambda handlers have incorrect indentation in generated local functions.
-
-**These issues should be tracked as separate tasks.**
+- [ ] Sample `01-builtin-types.cs` compiles and runs (BLOCKED)
 
 ## Files Modified
 
@@ -61,8 +45,11 @@ Multi-line lambda handlers have incorrect indentation in generated local functio
 - `source/timewarp-nuru-analyzers/generators/emitters/command-class-emitter.cs`
 - `source/timewarp-nuru-analyzers/generators/extractors/pattern-string-extractor.cs`
 
+## Affected Samples
+
+- `samples/10-type-converters/01-builtin-types.cs` - Type resolution works, but sample blocked by #323, #324, #325
+- `samples/10-type-converters/02-custom-type-converters.cs` - Blocked by custom type converter support (future task)
+
 ## Related Tasks
 
-- **TODO:** Create task for C# keyword escaping in parameter names
-- **TODO:** Create task for handler parameter vs service injection logic
 - **TODO:** Create task for custom type converter support in generator

@@ -80,7 +80,7 @@ internal static class HandlerExtractor
     {
       // Use method symbol for accurate parameter/return type info
       // but also capture the lambda body source
-      HandlerDefinition baseDefinition = ExtractFromMethodSymbol(methodSymbol);
+      HandlerDefinition baseDefinition = ExtractFromMethodSymbol(methodSymbol, semanticModel.Compilation);
       return baseDefinition with
       {
         LambdaBodySource = lambdaBodySource,
@@ -171,7 +171,7 @@ internal static class HandlerExtractor
     {
       // Use method symbol for accurate parameter/return type info
       // but also capture the lambda body source
-      HandlerDefinition baseDefinition = ExtractFromMethodSymbol(methodSymbol);
+      HandlerDefinition baseDefinition = ExtractFromMethodSymbol(methodSymbol, semanticModel.Compilation);
       return baseDefinition with
       {
         LambdaBodySource = lambdaBodySource,
@@ -227,14 +227,14 @@ internal static class HandlerExtractor
     // For method groups, Symbol may be null but CandidateSymbols contains the method(s)
     if (symbolInfo.Symbol is IMethodSymbol methodSymbol)
     {
-      return ExtractFromMethodSymbolAsMethod(methodSymbol);
+      return ExtractFromMethodSymbolAsMethod(methodSymbol, semanticModel.Compilation);
     }
 
     // Check CandidateSymbols - method groups often have the method here
     if (symbolInfo.CandidateSymbols.Length > 0 &&
         symbolInfo.CandidateSymbols[0] is IMethodSymbol candidateMethod)
     {
-      return ExtractFromMethodSymbolAsMethod(candidateMethod);
+      return ExtractFromMethodSymbolAsMethod(candidateMethod, semanticModel.Compilation);
     }
 
     // If we can't resolve, create a minimal handler as delegate (not method)
@@ -258,14 +258,14 @@ internal static class HandlerExtractor
 
     if (symbolInfo.Symbol is IMethodSymbol methodSymbol)
     {
-      return ExtractFromMethodSymbolAsMethod(methodSymbol);
+      return ExtractFromMethodSymbolAsMethod(methodSymbol, semanticModel.Compilation);
     }
 
     // Check CandidateSymbols - method groups often have the method here
     if (symbolInfo.CandidateSymbols.Length > 0 &&
         symbolInfo.CandidateSymbols[0] is IMethodSymbol candidateMethod)
     {
-      return ExtractFromMethodSymbolAsMethod(candidateMethod);
+      return ExtractFromMethodSymbolAsMethod(candidateMethod, semanticModel.Compilation);
     }
 
     // Fallback to delegate since we don't have type info
@@ -278,7 +278,7 @@ internal static class HandlerExtractor
   /// <summary>
   /// Extracts handler information from a resolved method symbol (for delegates).
   /// </summary>
-  private static HandlerDefinition ExtractFromMethodSymbol(IMethodSymbol methodSymbol)
+  private static HandlerDefinition ExtractFromMethodSymbol(IMethodSymbol methodSymbol, Compilation? compilation = null)
   {
     ImmutableArray<ParameterBinding>.Builder parameters = ImmutableArray.CreateBuilder<ParameterBinding>();
     bool hasCancellationToken = false;
@@ -296,7 +296,7 @@ internal static class HandlerExtractor
       else if (IsServiceType(typeName))
       {
         requiresServiceProvider = true;
-        parameters.Add(CreateServiceBinding(param, typeName));
+        parameters.Add(CreateServiceBinding(param, typeName, compilation));
       }
       else
       {
@@ -332,7 +332,7 @@ internal static class HandlerExtractor
   /// <summary>
   /// Extracts handler information from a resolved method symbol (for method references).
   /// </summary>
-  private static HandlerDefinition ExtractFromMethodSymbolAsMethod(IMethodSymbol methodSymbol)
+  private static HandlerDefinition ExtractFromMethodSymbolAsMethod(IMethodSymbol methodSymbol, Compilation? compilation = null)
   {
     ImmutableArray<ParameterBinding>.Builder parameters = ImmutableArray.CreateBuilder<ParameterBinding>();
     bool hasCancellationToken = false;
@@ -350,7 +350,7 @@ internal static class HandlerExtractor
       else if (IsServiceType(typeName))
       {
         requiresServiceProvider = true;
-        parameters.Add(CreateServiceBinding(param, typeName));
+        parameters.Add(CreateServiceBinding(param, typeName, compilation));
       }
       else
       {
@@ -553,14 +553,21 @@ internal static class HandlerExtractor
   }
 
   /// <summary>
-  /// Checks if a type is IOptions&lt;T&gt; and extracts the configuration section key.
+  /// Checks if a type is IOptions&lt;T&gt; and extracts the configuration section key and validator type.
   /// </summary>
   /// <param name="typeSymbol">The type symbol to check.</param>
+  /// <param name="compilation">The compilation to search for validators.</param>
   /// <param name="configurationKey">The extracted configuration key (from [ConfigurationKey] or convention).</param>
+  /// <param name="validatorTypeName">The validator type implementing IValidateOptions&lt;T&gt;, if found.</param>
   /// <returns>True if the type is IOptions&lt;T&gt;, false otherwise.</returns>
-  private static bool TryGetOptionsConfigurationKey(ITypeSymbol typeSymbol, out string? configurationKey)
+  private static bool TryGetOptionsInfo(
+    ITypeSymbol typeSymbol,
+    Compilation? compilation,
+    out string? configurationKey,
+    out string? validatorTypeName)
   {
     configurationKey = null;
+    validatorTypeName = null;
 
     // Check if it's IOptions<T>
     if (typeSymbol is not INamedTypeSymbol namedType)
@@ -589,39 +596,141 @@ internal static class HandlerExtractor
             attribute.ConstructorArguments[0].Value is string key)
         {
           configurationKey = key;
-          return true;
+          break;
         }
       }
     }
 
     // Fall back to convention: strip "Options" suffix from class name
-    string innerTypeName = innerType.Name;
-    const string optionsSuffix = "Options";
-    if (innerTypeName.EndsWith(optionsSuffix, StringComparison.Ordinal) && innerTypeName.Length > optionsSuffix.Length)
+    if (configurationKey is null)
     {
-      configurationKey = innerTypeName[..^optionsSuffix.Length];
+      string innerTypeName = innerType.Name;
+      const string optionsSuffix = "Options";
+      if (innerTypeName.EndsWith(optionsSuffix, StringComparison.Ordinal) && innerTypeName.Length > optionsSuffix.Length)
+      {
+        configurationKey = innerTypeName[..^optionsSuffix.Length];
+      }
+      else
+      {
+        configurationKey = innerTypeName;
+      }
     }
-    else
+
+    // Search for IValidateOptions<T> implementations
+    if (compilation is not null)
     {
-      configurationKey = innerTypeName;
+      validatorTypeName = FindValidatorForOptionsType(innerType, compilation);
     }
 
     return true;
   }
 
   /// <summary>
-  /// Creates a service parameter binding, detecting IOptions&lt;T&gt; and extracting configuration key.
+  /// Searches the compilation for a type implementing IValidateOptions&lt;T&gt; for the given options type.
   /// </summary>
-  private static ParameterBinding CreateServiceBinding(IParameterSymbol param, string typeName)
+  /// <param name="optionsType">The options type T.</param>
+  /// <param name="compilation">The compilation to search.</param>
+  /// <returns>The fully qualified validator type name, or null if not found.</returns>
+  /// <exception cref="InvalidOperationException">Thrown if multiple validators are found for the same options type.</exception>
+  private static string? FindValidatorForOptionsType(ITypeSymbol optionsType, Compilation compilation)
   {
-    string? configurationKey = null;
+    List<INamedTypeSymbol> validators = [];
 
-    // Check if it's IOptions<T> and extract the configuration key
-    if (TryGetOptionsConfigurationKey(param.Type, out string? key))
+    // Search all types in the compilation
+    foreach (INamedTypeSymbol type in GetAllTypes(compilation.GlobalNamespace))
     {
-      configurationKey = key;
+      // Skip abstract types and interfaces
+      if (type.IsAbstract || type.TypeKind == TypeKind.Interface)
+        continue;
+
+      // Check if it implements IValidateOptions<T>
+      foreach (INamedTypeSymbol iface in type.AllInterfaces)
+      {
+        if (iface.Name == "IValidateOptions" &&
+            iface.ContainingNamespace?.ToDisplayString() == "Microsoft.Extensions.Options" &&
+            iface.TypeArguments.Length == 1 &&
+            SymbolEqualityComparer.Default.Equals(iface.TypeArguments[0], optionsType))
+        {
+          validators.Add(type);
+          break;
+        }
+      }
     }
 
-    return ParameterBinding.FromService(param.Name, typeName, configurationKey: configurationKey);
+    if (validators.Count == 0)
+      return null;
+
+    if (validators.Count > 1)
+    {
+      string optionsTypeName = optionsType.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat);
+      string validatorNames = string.Join(", ", validators.Select(v => v.Name));
+      throw new InvalidOperationException(
+        $"Multiple validators found for {optionsTypeName}: {validatorNames}. " +
+        $"Only one IValidateOptions<{optionsTypeName}> implementation is allowed.");
+    }
+
+    return validators[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+  }
+
+  /// <summary>
+  /// Recursively gets all types in a namespace and its nested namespaces.
+  /// </summary>
+  private static IEnumerable<INamedTypeSymbol> GetAllTypes(INamespaceSymbol namespaceSymbol)
+  {
+    foreach (INamedTypeSymbol type in namespaceSymbol.GetTypeMembers())
+    {
+      yield return type;
+
+      // Include nested types
+      foreach (INamedTypeSymbol nestedType in GetNestedTypes(type))
+      {
+        yield return nestedType;
+      }
+    }
+
+    foreach (INamespaceSymbol childNamespace in namespaceSymbol.GetNamespaceMembers())
+    {
+      foreach (INamedTypeSymbol type in GetAllTypes(childNamespace))
+      {
+        yield return type;
+      }
+    }
+  }
+
+  /// <summary>
+  /// Recursively gets all nested types within a type.
+  /// </summary>
+  private static IEnumerable<INamedTypeSymbol> GetNestedTypes(INamedTypeSymbol type)
+  {
+    foreach (INamedTypeSymbol nestedType in type.GetTypeMembers())
+    {
+      yield return nestedType;
+
+      foreach (INamedTypeSymbol deeplyNested in GetNestedTypes(nestedType))
+      {
+        yield return deeplyNested;
+      }
+    }
+  }
+
+  /// <summary>
+  /// Creates a service parameter binding, detecting IOptions&lt;T&gt; and extracting configuration key and validator.
+  /// </summary>
+  /// <param name="param">The parameter symbol.</param>
+  /// <param name="typeName">The fully qualified type name.</param>
+  /// <param name="compilation">Optional compilation for validator discovery.</param>
+  private static ParameterBinding CreateServiceBinding(IParameterSymbol param, string typeName, Compilation? compilation = null)
+  {
+    string? configurationKey = null;
+    string? validatorTypeName = null;
+
+    // Check if it's IOptions<T> and extract the configuration key and validator
+    if (TryGetOptionsInfo(param.Type, compilation, out string? key, out string? validator))
+    {
+      configurationKey = key;
+      validatorTypeName = validator;
+    }
+
+    return ParameterBinding.FromService(param.Name, typeName, configurationKey: configurationKey, validatorTypeName: validatorTypeName);
   }
 }

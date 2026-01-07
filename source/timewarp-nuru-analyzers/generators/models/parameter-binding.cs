@@ -13,6 +13,7 @@ namespace TimeWarp.Nuru.Generators;
 /// <param name="DefaultValueExpression">C# expression for the default value, if any</param>
 /// <param name="RequiresConversion">Whether type conversion is needed</param>
 /// <param name="ConverterTypeName">Custom converter type, if specified</param>
+/// <param name="ValidatorTypeName">For IOptions&lt;T&gt;, the validator type implementing IValidateOptions&lt;T&gt;</param>
 public sealed record ParameterBinding(
   string ParameterName,
   string ParameterTypeName,
@@ -22,7 +23,8 @@ public sealed record ParameterBinding(
   bool IsArray,
   string? DefaultValueExpression,
   bool RequiresConversion,
-  string? ConverterTypeName)
+  string? ConverterTypeName,
+  string? ValidatorTypeName = null)
 {
   /// <summary>
   /// Creates a binding for a route parameter.
@@ -97,11 +99,13 @@ public sealed record ParameterBinding(
   /// <param name="serviceTypeName">The fully qualified service type name.</param>
   /// <param name="isOptional">Whether the parameter is optional.</param>
   /// <param name="configurationKey">For IOptions&lt;T&gt;, the configuration section key (from [ConfigurationKey] or convention).</param>
+  /// <param name="validatorTypeName">For IOptions&lt;T&gt;, the validator type implementing IValidateOptions&lt;T&gt;.</param>
   public static ParameterBinding FromService(
     string parameterName,
     string serviceTypeName,
     bool isOptional = false,
-    string? configurationKey = null)
+    string? configurationKey = null,
+    string? validatorTypeName = null)
   {
     return new ParameterBinding(
       ParameterName: parameterName,
@@ -112,7 +116,8 @@ public sealed record ParameterBinding(
       IsArray: false,
       DefaultValueExpression: null,
       RequiresConversion: false,
-      ConverterTypeName: null);
+      ConverterTypeName: null,
+      ValidatorTypeName: validatorTypeName);
   }
 
   /// <summary>

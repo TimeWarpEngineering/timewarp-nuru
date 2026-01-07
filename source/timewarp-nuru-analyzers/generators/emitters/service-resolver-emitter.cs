@@ -60,7 +60,7 @@ internal static class ServiceResolverEmitter
     {
       // Use configuration key from binding (set during handler extraction with attribute/convention)
       string configurationKey = param.SourceName != typeName ? param.SourceName : GetConfigurationSectionKey(innerTypeName!);
-      EmitOptionsBinding(sb, typeName, innerTypeName!, varName, configurationKey, indent);
+      EmitOptionsBinding(sb, typeName, innerTypeName!, varName, configurationKey, param.ValidatorTypeName, indent);
       return;
     }
 
@@ -184,21 +184,62 @@ internal static class ServiceResolverEmitter
   }
 
   /// <summary>
-  /// Emits code to bind IOptions&lt;T&gt; from configuration.
+  /// Emits code to bind IOptions&lt;T&gt; from configuration with optional validation.
   /// </summary>
   /// <param name="sb">The StringBuilder to append to.</param>
   /// <param name="optionsTypeName">The full IOptions&lt;T&gt; type name.</param>
   /// <param name="innerTypeName">The inner options class type name.</param>
   /// <param name="varName">The variable name for the parameter.</param>
   /// <param name="sectionKey">The configuration section key (from [ConfigurationKey] or convention).</param>
+  /// <param name="validatorTypeName">Optional validator type implementing IValidateOptions&lt;T&gt;.</param>
   /// <param name="indent">The indentation string.</param>
-  private static void EmitOptionsBinding(StringBuilder sb, string optionsTypeName, string innerTypeName, string varName, string sectionKey, string indent)
+  private static void EmitOptionsBinding(StringBuilder sb, string optionsTypeName, string innerTypeName, string varName, string sectionKey, string? validatorTypeName, string indent)
   {
     string valueVarName = $"__{varName}Value";
 
     sb.AppendLine($"{indent}// Resolve {optionsTypeName} from configuration section \"{sectionKey}\"");
     sb.AppendLine($"{indent}{innerTypeName} {valueVarName} = configuration.GetSection(\"{sectionKey}\").Get<{innerTypeName}>() ?? new();");
+
+    // Emit validation if a validator was found
+    if (validatorTypeName is not null)
+    {
+      string validatorVarName = $"__{varName}Validator";
+      string resultVarName = $"__{varName}ValidationResult";
+
+      sb.AppendLine();
+      sb.AppendLine($"{indent}// Validate options using {validatorTypeName}");
+      sb.AppendLine($"{indent}var {validatorVarName} = new {validatorTypeName}();");
+      sb.AppendLine($"{indent}global::Microsoft.Extensions.Options.ValidateOptionsResult {resultVarName} = {validatorVarName}.Validate(null, {valueVarName});");
+      sb.AppendLine($"{indent}if ({resultVarName}.Failed)");
+      sb.AppendLine($"{indent}{{");
+      sb.AppendLine($"{indent}  throw new global::Microsoft.Extensions.Options.OptionsValidationException(");
+      sb.AppendLine($"{indent}    \"{GetShortTypeName(innerTypeName)}\",");
+      sb.AppendLine($"{indent}    typeof({innerTypeName}),");
+      sb.AppendLine($"{indent}    {resultVarName}.Failures ?? [{resultVarName}.FailureMessage ?? \"Validation failed\"]);");
+      sb.AppendLine($"{indent}}}");
+      sb.AppendLine();
+    }
+
     sb.AppendLine($"{indent}{optionsTypeName} {varName} = global::Microsoft.Extensions.Options.Options.Create({valueVarName});");
+  }
+
+  /// <summary>
+  /// Gets the short type name (without namespace) for display purposes.
+  /// </summary>
+  private static string GetShortTypeName(string fullTypeName)
+  {
+    string typeName = fullTypeName;
+
+    // Remove global:: prefix if present
+    if (typeName.StartsWith("global::", StringComparison.Ordinal))
+      typeName = typeName[8..];
+
+    // Get just the type name (after last dot)
+    int lastDot = typeName.LastIndexOf('.');
+    if (lastDot >= 0)
+      typeName = typeName[(lastDot + 1)..];
+
+    return typeName;
   }
 
   /// <summary>

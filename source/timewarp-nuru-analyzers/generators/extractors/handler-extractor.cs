@@ -296,7 +296,7 @@ internal static class HandlerExtractor
       else if (IsServiceType(typeName))
       {
         requiresServiceProvider = true;
-        parameters.Add(ParameterBinding.FromService(param.Name, typeName));
+        parameters.Add(CreateServiceBinding(param, typeName));
       }
       else
       {
@@ -350,7 +350,7 @@ internal static class HandlerExtractor
       else if (IsServiceType(typeName))
       {
         requiresServiceProvider = true;
-        parameters.Add(ParameterBinding.FromService(param.Name, typeName));
+        parameters.Add(CreateServiceBinding(param, typeName));
       }
       else
       {
@@ -550,5 +550,78 @@ internal static class HandlerExtractor
       _ when typeName.StartsWith("global::", StringComparison.Ordinal) => typeName,
       _ => $"global::{typeName}"
     };
+  }
+
+  /// <summary>
+  /// Checks if a type is IOptions&lt;T&gt; and extracts the configuration section key.
+  /// </summary>
+  /// <param name="typeSymbol">The type symbol to check.</param>
+  /// <param name="configurationKey">The extracted configuration key (from [ConfigurationKey] or convention).</param>
+  /// <returns>True if the type is IOptions&lt;T&gt;, false otherwise.</returns>
+  private static bool TryGetOptionsConfigurationKey(ITypeSymbol typeSymbol, out string? configurationKey)
+  {
+    configurationKey = null;
+
+    // Check if it's IOptions<T>
+    if (typeSymbol is not INamedTypeSymbol namedType)
+      return false;
+
+    string typeName = namedType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+
+    // Match IOptions<T> patterns
+    if (!typeName.StartsWith("global::Microsoft.Extensions.Options.IOptions<", StringComparison.Ordinal))
+      return false;
+
+    // Get the inner type T from IOptions<T>
+    if (namedType.TypeArguments.Length != 1)
+      return false;
+
+    ITypeSymbol innerType = namedType.TypeArguments[0];
+
+    // Look for [ConfigurationKey("...")] attribute on the inner type
+    foreach (AttributeData attribute in innerType.GetAttributes())
+    {
+      string? attrName = attribute.AttributeClass?.Name;
+      if (attrName is "ConfigurationKeyAttribute" or "ConfigurationKey")
+      {
+        // Get the key from the first constructor argument
+        if (attribute.ConstructorArguments.Length > 0 &&
+            attribute.ConstructorArguments[0].Value is string key)
+        {
+          configurationKey = key;
+          return true;
+        }
+      }
+    }
+
+    // Fall back to convention: strip "Options" suffix from class name
+    string innerTypeName = innerType.Name;
+    const string optionsSuffix = "Options";
+    if (innerTypeName.EndsWith(optionsSuffix, StringComparison.Ordinal) && innerTypeName.Length > optionsSuffix.Length)
+    {
+      configurationKey = innerTypeName[..^optionsSuffix.Length];
+    }
+    else
+    {
+      configurationKey = innerTypeName;
+    }
+
+    return true;
+  }
+
+  /// <summary>
+  /// Creates a service parameter binding, detecting IOptions&lt;T&gt; and extracting configuration key.
+  /// </summary>
+  private static ParameterBinding CreateServiceBinding(IParameterSymbol param, string typeName)
+  {
+    string? configurationKey = null;
+
+    // Check if it's IOptions<T> and extract the configuration key
+    if (TryGetOptionsConfigurationKey(param.Type, out string? key))
+    {
+      configurationKey = key;
+    }
+
+    return ParameterBinding.FromService(param.Name, typeName, configurationKey: configurationKey);
   }
 }

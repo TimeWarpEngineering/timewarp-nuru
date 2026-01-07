@@ -54,10 +54,13 @@ internal static class ServiceResolverEmitter
       return;
     }
 
-    // Special case: IOptions<T> - bind from configuration using convention
+    // Special case: IOptions<T> - bind from configuration
+    // The configuration key is stored in SourceName (from handler extraction)
     if (TryGetOptionsInnerType(typeName, out string? innerTypeName))
     {
-      EmitOptionsBinding(sb, typeName, innerTypeName!, varName, indent);
+      // Use configuration key from binding (set during handler extraction with attribute/convention)
+      string configurationKey = param.SourceName != typeName ? param.SourceName : GetConfigurationSectionKey(innerTypeName!);
+      EmitOptionsBinding(sb, typeName, innerTypeName!, varName, configurationKey, indent);
       return;
     }
 
@@ -182,16 +185,15 @@ internal static class ServiceResolverEmitter
 
   /// <summary>
   /// Emits code to bind IOptions&lt;T&gt; from configuration.
-  /// Uses convention: strip "Options" suffix from class name for section key.
   /// </summary>
   /// <param name="sb">The StringBuilder to append to.</param>
   /// <param name="optionsTypeName">The full IOptions&lt;T&gt; type name.</param>
   /// <param name="innerTypeName">The inner options class type name.</param>
   /// <param name="varName">The variable name for the parameter.</param>
+  /// <param name="sectionKey">The configuration section key (from [ConfigurationKey] or convention).</param>
   /// <param name="indent">The indentation string.</param>
-  private static void EmitOptionsBinding(StringBuilder sb, string optionsTypeName, string innerTypeName, string varName, string indent)
+  private static void EmitOptionsBinding(StringBuilder sb, string optionsTypeName, string innerTypeName, string varName, string sectionKey, string indent)
   {
-    string sectionKey = GetConfigurationSectionKey(innerTypeName);
     string valueVarName = $"__{varName}Value";
 
     sb.AppendLine($"{indent}// Resolve {optionsTypeName} from configuration section \"{sectionKey}\"");

@@ -93,16 +93,21 @@ public sealed record ParameterBinding(
   /// <summary>
   /// Creates a binding for a service injected from the service provider.
   /// </summary>
+  /// <param name="parameterName">The parameter name.</param>
+  /// <param name="serviceTypeName">The fully qualified service type name.</param>
+  /// <param name="isOptional">Whether the parameter is optional.</param>
+  /// <param name="configurationKey">For IOptions&lt;T&gt;, the configuration section key (from [ConfigurationKey] or convention).</param>
   public static ParameterBinding FromService(
     string parameterName,
     string serviceTypeName,
-    bool isOptional = false)
+    bool isOptional = false,
+    string? configurationKey = null)
   {
     return new ParameterBinding(
       ParameterName: parameterName,
       ParameterTypeName: serviceTypeName,
       Source: BindingSource.Service,
-      SourceName: serviceTypeName,
+      SourceName: configurationKey ?? serviceTypeName,
       IsOptional: isOptional,
       IsArray: false,
       DefaultValueExpression: null,

@@ -55,7 +55,7 @@ internal static class Handlers
   /// </summary>
   internal static async Task ShowConfigurationAsync(
     IOptions<DatabaseOptions> dbOptions,
-    IOptions<ApiOptions> apiOptions,
+    IOptions<ApiSettings> apiOptions,
     IConfiguration config)
   {
     WriteLine("\n=== Configuration Values ===");
@@ -94,11 +94,11 @@ internal static class Handlers
 
   /// <summary>
   /// Simulates calling an API endpoint using configured options.
-  /// Demonstrates: Route parameter + IOptions&lt;T&gt; parameter injection.
+  /// Demonstrates: Route parameter + IOptions&lt;T&gt; parameter injection with [ConfigurationKey] attribute.
   /// </summary>
-  internal static async Task CallApiAsync(string endpoint, IOptions<ApiOptions> apiOptions)
+  internal static async Task CallApiAsync(string endpoint, IOptions<ApiSettings> apiOptions)
   {
-    ApiOptions api = apiOptions.Value;
+    ApiSettings api = apiOptions.Value;
     string fullUrl = $"{api.BaseUrl}/{endpoint}";
 
     WriteLine($"Calling API endpoint...");
@@ -117,9 +117,9 @@ internal static class Handlers
 //
 // Convention: Class name ending in "Options" has suffix stripped for section key
 // - DatabaseOptions → binds from "Database" section
-// - ApiOptions → binds from "Api" section
 //
-// Override with: [ConfigurationKey("CustomSectionName")]
+// Attribute override: [ConfigurationKey("SectionName")] specifies the section
+// - ApiSettings with [ConfigurationKey("Api")] → binds from "Api" section
 // ═══════════════════════════════════════════════════════════════════════════════
 
 public class DatabaseOptions
@@ -130,7 +130,9 @@ public class DatabaseOptions
   public int Timeout { get; set; } = 30;
 }
 
-public class ApiOptions
+// Example of attribute-based override: ApiSettings class maps to "Api" section
+[TimeWarp.Nuru.ConfigurationKey("Api")]
+public class ApiSettings
 {
   public string BaseUrl { get; set; } = "https://api.example.com";
   public int TimeoutSeconds { get; set; } = 30;

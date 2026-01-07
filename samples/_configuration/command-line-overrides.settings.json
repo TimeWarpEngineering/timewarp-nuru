@@ -1,6 +1,6 @@
 {
-  "FooOptions": {
-    "Url": "https://default.example.com",
+  "Foo": {
+    "Endpoint": "https://default.example.com",
     "MaxItems": 10,
     "Timeout": 30,
     "Enabled": true

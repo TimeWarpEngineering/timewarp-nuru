@@ -1,6 +1,9 @@
 #!/usr/bin/dotnet --
 #:project ../../source/timewarp-nuru/timewarp-nuru.csproj
 
+// Suppress false positive - NURU_H002 incorrectly detects parameter.Property as 'this' capture
+#pragma warning disable NURU_H002
+
 // ============================================================================
 // Built-In Type Converters Example
 // ============================================================================

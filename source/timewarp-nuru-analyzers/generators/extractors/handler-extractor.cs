@@ -492,9 +492,15 @@ internal static class HandlerExtractor
 
   /// <summary>
   /// Checks if a type name appears to be a service (interface or known service types).
+  /// Excludes built-in route-bindable types like IPAddress, IList, etc.
   /// </summary>
   private static bool IsServiceType(string typeName)
   {
+    // First, check if it's a built-in route-bindable type
+    // These should NEVER be treated as services even if they look like interfaces
+    if (IsBuiltInRouteBindableType(typeName))
+      return false;
+
     // Common service patterns
     if (typeName.StartsWith("global::Microsoft.Extensions.", StringComparison.Ordinal))
       return true;
@@ -512,6 +518,51 @@ internal static class HandlerExtractor
       return true;
 
     return false;
+  }
+
+  /// <summary>
+  /// Checks if a type is a built-in route-bindable type from TypeConversionMap.
+  /// These types (like IPAddress, IList) should be bound from route parameters, not injected as services.
+  /// </summary>
+  private static bool IsBuiltInRouteBindableType(string typeName)
+  {
+    // Map fully-qualified type names to their built-in status
+    // This list must stay in sync with TypeConversionMap.GetClrTypeName()
+    return typeName switch
+    {
+      // Primitive types (unlikely to be confused with services, but included for completeness)
+      "global::System.Int32" or "int" => true,
+      "global::System.Int64" or "long" => true,
+      "global::System.Int16" or "short" => true,
+      "global::System.Byte" or "byte" => true,
+      "global::System.SByte" or "sbyte" => true,
+      "global::System.UInt16" or "ushort" => true,
+      "global::System.UInt32" or "uint" => true,
+      "global::System.UInt64" or "ulong" => true,
+      "global::System.Single" or "float" => true,
+      "global::System.Double" or "double" => true,
+      "global::System.Decimal" or "decimal" => true,
+      "global::System.Boolean" or "bool" => true,
+      "global::System.Char" or "char" => true,
+      "global::System.String" or "string" => true,
+
+      // System value types
+      "global::System.Guid" => true,
+      "global::System.DateTime" => true,
+      "global::System.DateTimeOffset" => true,
+      "global::System.TimeSpan" => true,
+      "global::System.DateOnly" => true,
+      "global::System.TimeOnly" => true,
+
+      // Reference types that could be confused with interfaces/services
+      "global::System.Uri" => true,
+      "global::System.Version" => true,
+      "global::System.IO.FileInfo" => true,
+      "global::System.IO.DirectoryInfo" => true,
+      "global::System.Net.IPAddress" => true,  // Key one! Starts with 'I' but is a class
+
+      _ => false
+    };
   }
 
   /// <summary>

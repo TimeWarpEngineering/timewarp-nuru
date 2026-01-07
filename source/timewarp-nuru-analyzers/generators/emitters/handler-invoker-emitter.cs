@@ -72,55 +72,59 @@ internal static class HandlerInvokerEmitter
     if (handler.IsExpressionBody)
     {
       // Expression body: () => "pong" or (string name) => $"Hello {name}"
-      EmitExpressionBodyHandler(sb, handler, handlerName, indent);
+      EmitExpressionBodyHandler(sb, route, handler, handlerName, indent);
     }
     else
     {
       // Block body: () => { DoWork(); return "done"; }
-      EmitBlockBodyHandler(sb, handler, handlerName, indent);
+      EmitBlockBodyHandler(sb, route, handler, handlerName, indent);
     }
   }
 
   /// <summary>
   /// Emits a local function for an expression-body lambda.
   /// </summary>
-  private static void EmitExpressionBodyHandler(StringBuilder sb, HandlerDefinition handler, string handlerName, string indent)
+  private static void EmitExpressionBodyHandler(StringBuilder sb, RouteDefinition route, HandlerDefinition handler, string handlerName, string indent)
   {
     string returnTypeName = GetReturnTypeName(handler);
     string asyncModifier = handler.IsAsync ? "async " : "";
     string awaitKeyword = handler.IsAsync ? "await " : "";
 
+    // Build parameter list for the local function (preserves handler parameter names)
+    string paramList = BuildParameterList(handler);
+    string argList = BuildArgumentListFromRoute(route, handler);
+
     if (handler.ReturnType.HasValue)
     {
       // Expression with return value
-      // Generate: ReturnType __handler_N() => expression;
+      // Generate: ReturnType __handler_N(Type param1, ...) => expression;
       sb.AppendLine(
-        $"{indent}{asyncModifier}{returnTypeName} {handlerName}() => {awaitKeyword}{handler.LambdaBodySource};");
+        $"{indent}{asyncModifier}{returnTypeName} {handlerName}({paramList}) => {awaitKeyword}{handler.LambdaBodySource};");
 
       // Invoke and capture result
       string resultTypeName = handler.ReturnType.UnwrappedTypeName ?? handler.ReturnType.FullTypeName;
       sb.AppendLine(
-        $"{indent}{GetUnwrappedReturnTypeName(handler)} result = {awaitKeyword}{handlerName}();");
+        $"{indent}{GetUnwrappedReturnTypeName(handler)} result = {awaitKeyword}{handlerName}({argList});");
 
       EmitResultOutput(sb, indent, resultTypeName);
     }
     else
     {
       // Void expression (side-effect only)
-      // Generate: void __handler_N() => expression;
+      // Generate: void __handler_N(Type param1, ...) => expression;
       if (handler.IsAsync)
       {
         sb.AppendLine(
-          $"{indent}async Task {handlerName}() => await {handler.LambdaBodySource};");
+          $"{indent}async Task {handlerName}({paramList}) => await {handler.LambdaBodySource};");
         sb.AppendLine(
-          $"{indent}await {handlerName}();");
+          $"{indent}await {handlerName}({argList});");
       }
       else
       {
         sb.AppendLine(
-          $"{indent}void {handlerName}() => {handler.LambdaBodySource};");
+          $"{indent}void {handlerName}({paramList}) => {handler.LambdaBodySource};");
         sb.AppendLine(
-          $"{indent}{handlerName}();");
+          $"{indent}{handlerName}({argList});");
       }
     }
   }
@@ -128,16 +132,20 @@ internal static class HandlerInvokerEmitter
   /// <summary>
   /// Emits a local function for a block-body lambda.
   /// </summary>
-  private static void EmitBlockBodyHandler(StringBuilder sb, HandlerDefinition handler, string handlerName, string indent)
+  private static void EmitBlockBodyHandler(StringBuilder sb, RouteDefinition route, HandlerDefinition handler, string handlerName, string indent)
   {
     string returnTypeName = GetReturnTypeName(handler);
     string asyncModifier = handler.IsAsync ? "async " : "";
     string awaitKeyword = handler.IsAsync ? "await " : "";
 
+    // Build parameter list for the local function (preserves handler parameter names)
+    string paramList = BuildParameterList(handler);
+    string argList = BuildArgumentListFromRoute(route, handler);
+
     // Emit the local function with the block body
     // The block already includes { and }, so we just need to add the signature
     sb.AppendLine(
-      $"{indent}{asyncModifier}{returnTypeName} {handlerName}()");
+      $"{indent}{asyncModifier}{returnTypeName} {handlerName}({paramList})");
     sb.AppendLine(
       $"{indent}{handler.LambdaBodySource}");
 
@@ -146,7 +154,7 @@ internal static class HandlerInvokerEmitter
       // Invoke and capture result
       string resultTypeName = handler.ReturnType.UnwrappedTypeName ?? handler.ReturnType.FullTypeName;
       sb.AppendLine(
-        $"{indent}{GetUnwrappedReturnTypeName(handler)} result = {awaitKeyword}{handlerName}();");
+        $"{indent}{GetUnwrappedReturnTypeName(handler)} result = {awaitKeyword}{handlerName}({argList});");
 
       EmitResultOutput(sb, indent, resultTypeName);
     }
@@ -154,7 +162,7 @@ internal static class HandlerInvokerEmitter
     {
       // Void - just invoke
       sb.AppendLine(
-        $"{indent}{awaitKeyword}{handlerName}();");
+        $"{indent}{awaitKeyword}{handlerName}({argList});");
     }
   }
 
@@ -451,7 +459,78 @@ internal static class HandlerInvokerEmitter
   }
 
   /// <summary>
-  /// Builds the argument list for handler invocation.
+  /// Builds the argument list for invoking the local function.
+  /// Maps route segment variables to handler parameter positions.
+  /// </summary>
+  private static string BuildArgumentListFromRoute(RouteDefinition route, HandlerDefinition handler)
+  {
+    List<string> args = [];
+
+    // Get route parameters and options for positional matching
+    List<ParameterDefinition> routeParams = [.. route.Parameters];
+    List<OptionDefinition> routeOptions = [.. route.Options];
+
+    int routeParamIndex = 0;
+
+    foreach (ParameterBinding param in handler.Parameters)
+    {
+      switch (param.Source)
+      {
+        case BindingSource.Parameter:
+        case BindingSource.CatchAll:
+          // Match by position to route parameters
+          if (routeParamIndex < routeParams.Count)
+          {
+            ParameterDefinition routeParam = routeParams[routeParamIndex];
+            string varName = CSharpIdentifierUtils.EscapeIfKeyword(routeParam.CamelCaseName);
+            args.Add(varName);
+            routeParamIndex++;
+          }
+          else
+          {
+            // Fallback to handler param name if no matching route param
+            args.Add(CSharpIdentifierUtils.EscapeIfKeyword(param.ParameterName));
+          }
+
+          break;
+
+        case BindingSource.Option:
+        case BindingSource.Flag:
+          // For options/flags, find by matching the handler parameter name to option parameter name
+          // or use the option's long form as the variable name
+          OptionDefinition? matchingOption = routeOptions.FirstOrDefault(o =>
+            o.ParameterName?.Equals(param.ParameterName, StringComparison.OrdinalIgnoreCase) == true ||
+            o.LongForm?.Equals(param.ParameterName, StringComparison.OrdinalIgnoreCase) == true ||
+            ToCamelCase(o.LongForm ?? "").Equals(param.ParameterName, StringComparison.OrdinalIgnoreCase));
+
+          if (matchingOption is not null)
+          {
+            string optVarName = ToCamelCase(matchingOption.LongForm ?? matchingOption.ShortForm ?? param.ParameterName);
+            args.Add(CSharpIdentifierUtils.EscapeIfKeyword(optVarName));
+          }
+          else
+          {
+            args.Add(CSharpIdentifierUtils.EscapeIfKeyword(param.ParameterName));
+          }
+
+          break;
+
+        case BindingSource.Service:
+          // Service parameters use the resolved service variable (named by ParameterName)
+          args.Add(CSharpIdentifierUtils.EscapeIfKeyword(param.ParameterName));
+          break;
+
+        case BindingSource.CancellationToken:
+          args.Add("cancellationToken");
+          break;
+      }
+    }
+
+    return string.Join(", ", args);
+  }
+
+  /// <summary>
+  /// Builds the argument list for handler invocation (used by method handlers).
   /// </summary>
   private static string BuildArgumentList(HandlerDefinition handler)
   {
@@ -481,6 +560,37 @@ internal static class HandlerInvokerEmitter
     }
 
     return string.Join(", ", args);
+  }
+
+  /// <summary>
+  /// Builds the parameter list for the local function signature.
+  /// Uses the handler parameter names and types so the lambda body works correctly.
+  /// </summary>
+  private static string BuildParameterList(HandlerDefinition handler)
+  {
+    List<string> parameters = [];
+
+    foreach (ParameterBinding param in handler.Parameters)
+    {
+      switch (param.Source)
+      {
+        case BindingSource.Parameter:
+        case BindingSource.Option:
+        case BindingSource.Flag:
+        case BindingSource.CatchAll:
+        case BindingSource.Service:
+          // Use the handler's parameter name and type
+          string escapedName = CSharpIdentifierUtils.EscapeIfKeyword(param.ParameterName);
+          parameters.Add($"{param.ParameterTypeName} {escapedName}");
+          break;
+
+        case BindingSource.CancellationToken:
+          parameters.Add("global::System.Threading.CancellationToken cancellationToken");
+          break;
+      }
+    }
+
+    return string.Join(", ", parameters);
   }
 
   /// <summary>

@@ -2,54 +2,62 @@
 
 ## Summary
 
-Generator should auto-detect when handlers or behaviors inject `ILogger<T>` and automatically emit logging infrastructure - same pattern we use for `IConfiguration`/`IOptions<T>`.
+Generator should auto-detect when handlers or behaviors inject `ILogger<T>` and honor explicit logging configuration. If no configuration provided, emit a diagnostic warning.
 
-**Current behavior:** `ILogger<T>` resolves to `NullLogger` (silent discard)
-**Desired behavior:** `ILogger<T>` resolves to real logger with console output
+**Current behavior:** `ILogger<T>` silently resolves to `NullLogger`
+**Desired behavior:** 
+- If `ConfigureServices` has `AddLogging(...)` → use configured factory
+- If `ILogger<T>` injected but no logging configured → emit warning diagnostic + use `NullLogger`
 
 ## Parent
 
 #272 V2 Generator Phase 6: Testing (has unchecked item for `ILogger<T>` service injection)
 
-## Existing Pattern to Follow
+## Design Approach
 
-We already do this for configuration:
-1. Scan handlers/behaviors for `IOptions<T>` injection
-2. If found, emit `IConfiguration` setup code
-3. Bind options from configuration
+**Respect explicit configuration, warn on missing configuration:**
 
-Same approach for logging:
-1. Scan handlers/behaviors for `ILogger<T>` injection  
-2. If found, emit `ILoggerFactory` setup code
-3. Create loggers from that factory
+1. Scan handlers/behaviors for `ILogger<T>` injection
+2. Check if `ConfigureServices` contains `AddLogging(...)` call
+3. If logging configured → emit factory setup from user's configuration
+4. If `ILogger<T>` used but NOT configured → emit diagnostic warning + fallback to `NullLogger`
+
+This matches how we handle `IOptions<T>` - we don't assume what configuration source, we just detect usage and bind from whatever is configured.
 
 ## Checklist
 
 ### Detection
 - [ ] Add `RequiresLogging` flag to `AppModel` (like existing `RequiresConfiguration`)
+- [ ] Add `HasLoggingConfiguration` flag to `AppModel`
 - [ ] Scan handler parameters for `ILogger<T>` types
 - [ ] Scan behavior constructor dependencies for `ILogger<T>` types
-- [ ] Set flag if any `ILogger<T>` usage detected
+- [ ] Detect `AddLogging(...)` calls in `ConfigureServices`
 
-### Emission
-- [ ] In `InterceptorEmitter`, emit logging factory setup when `RequiresLogging` is true
-- [ ] Emit: `using var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());`
-- [ ] Update `behavior-emitter.cs` line 309-311 to use real factory instead of `NullLoggerFactory`
-- [ ] Update `handler-invoker-emitter.cs` if handlers can inject `ILogger<T>`
+### Diagnostic
+- [ ] Create `NURU_H006` analyzer diagnostic: "ILogger<T> injected but no logging configured"
+- [ ] Emit warning when `RequiresLogging && !HasLoggingConfiguration`
+- [ ] Suggest: "Add .ConfigureServices(s => s.AddLogging(...)) to configure logging providers"
 
-### Package References
-- [ ] Ensure `Microsoft.Extensions.Logging` package is referenced
-- [ ] Ensure `Microsoft.Extensions.Logging.Console` package is referenced (or make configurable)
+### Emission (when logging IS configured)
+- [ ] Parse `AddLogging(...)` lambda to extract configuration
+- [ ] Emit `LoggerFactory.Create(...)` with user's configuration
+- [ ] Update `behavior-emitter.cs` to use real factory
+- [ ] Update `handler-invoker-emitter.cs` if handlers inject `ILogger<T>`
+
+### Emission (when logging NOT configured)
+- [ ] Keep current `NullLoggerFactory` behavior
+- [ ] Diagnostic warning provides guidance
 
 ### Testing
 - [ ] Create `generator-15-ilogger-injection.cs` test file
-- [ ] Test: behavior with `ILogger<T>` constructor injection
-- [ ] Test: handler with `ILogger<T>` parameter injection
-- [ ] Test: multiple behaviors each with their own `ILogger<T>`
-- [ ] Test: no logging setup emitted when no `ILogger<T>` usage
+- [ ] Test: `ILogger<T>` with `AddLogging()` configured → real logger
+- [ ] Test: `ILogger<T>` without `AddLogging()` → warning + NullLogger
+- [ ] Test: No `ILogger<T>` usage → no warning, no logging setup
+- [ ] Test: Multiple behaviors each with their own `ILogger<T>`
 
 ### Sample Update
-- [ ] Verify `_unified-middleware` sample works with visible logging output
+- [ ] Update `_unified-middleware` to use `ConfigureServices(s => s.AddLogging(...))`
+- [ ] Verify visible logging output
 - [ ] Move sample to numbered folder (e.g., `10-unified-middleware/`)
 
 ## Technical Notes
@@ -61,13 +69,12 @@ if (serviceTypeName.Contains("ILogger", StringComparison.Ordinal))
   return $"NullLoggerFactory.Instance.CreateLogger<{ExtractLoggerTypeArg(serviceTypeName)}>()";
 ```
 
-### Expected Generated Code
+### Expected Generated Code (with configuration)
 ```csharp
-// Logging setup (auto-detected from ILogger<T> usage)
+// Logging setup (from ConfigureServices)
 using var loggerFactory = LoggerFactory.Create(builder => 
 {
-  builder.AddConsole();
-  builder.SetMinimumLevel(LogLevel.Information);
+  builder.AddConsole();  // User's configuration
 });
 
 // Behavior instantiation
@@ -76,10 +83,17 @@ private static readonly Lazy<LoggingBehavior> __behavior_LoggingBehavior =
     loggerFactory.CreateLogger<LoggingBehavior>()));
 ```
 
+### Expected Diagnostic (without configuration)
+```
+warning NURU_H006: ILogger<LoggingBehavior> is injected but no logging is configured. 
+Add .ConfigureServices(s => s.AddLogging(b => b.AddConsole())) to enable logging output.
+```
+
 ### Key Files
 - `source/timewarp-nuru-analyzers/generators/emitters/behavior-emitter.cs` - Has the TODO
 - `source/timewarp-nuru-analyzers/generators/emitters/interceptor-emitter.cs` - Main emission
-- `source/timewarp-nuru-analyzers/generators/models/app-model.cs` - Add `RequiresLogging` flag
+- `source/timewarp-nuru-analyzers/generators/models/app-model.cs` - Add flags
+- `source/timewarp-nuru-analyzers/generators/extractors/service-extractor.cs` - Detect AddLogging
 - `samples/_unified-middleware/unified-middleware.cs` - Blocked sample
 
 ## Blocked
@@ -89,11 +103,15 @@ This task blocks:
 
 ## Notes
 
-### Design Decision: Console by Default
-Start with `AddConsole()` as the default. Future enhancements could:
-- Support `.UseLogging(config => ...)` DSL for customization
-- Support log level configuration via `appsettings.json`
-- Support other providers (Serilog, etc.)
+### Why Not Default to Console?
+We don't know what logging provider the user wants:
+- Console
+- Debug
+- File (Serilog, NLog)
+- OpenTelemetry
+- Custom
+
+Better to require explicit configuration and warn if missing, rather than assume.
 
 ### Lifetime Consideration
 The `loggerFactory` needs to be scoped appropriately:

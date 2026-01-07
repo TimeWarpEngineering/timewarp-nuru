@@ -142,12 +142,13 @@ internal static class HandlerInvokerEmitter
     string paramList = BuildParameterList(handler);
     string argList = BuildArgumentListFromRoute(route, handler);
 
-    // Emit the local function with the block body
-    // The block already includes { and }, so we just need to add the signature
+    // Emit the local function signature
     sb.AppendLine(
       $"{indent}{asyncModifier}{returnTypeName} {handlerName}({paramList})");
-    sb.AppendLine(
-      $"{indent}{handler.LambdaBodySource}");
+
+    // Re-indent the block body to match target indentation
+    string reindentedBody = ReindentBlockBody(handler.LambdaBodySource ?? "{}", indent);
+    sb.Append(reindentedBody);
 
     if (handler.ReturnType.HasValue)
     {
@@ -164,6 +165,62 @@ internal static class HandlerInvokerEmitter
       sb.AppendLine(
         $"{indent}{awaitKeyword}{handlerName}({argList});");
     }
+  }
+
+  /// <summary>
+  /// Re-indents a block body to match the target indentation level.
+  /// Strips the original indentation and applies new indentation to each line.
+  /// </summary>
+  private static string ReindentBlockBody(string blockBody, string targetIndent)
+  {
+    if (string.IsNullOrEmpty(blockBody))
+      return $"{targetIndent}{{}}\n";
+
+    string[] lines = blockBody.Split('\n');
+    if (lines.Length == 0)
+      return $"{targetIndent}{{}}\n";
+
+    // Find the minimum indentation (excluding empty lines)
+    int minIndent = int.MaxValue;
+    foreach (string line in lines)
+    {
+      if (string.IsNullOrWhiteSpace(line))
+        continue;
+
+      int lineIndent = 0;
+      foreach (char c in line)
+      {
+        if (c == ' ')
+          lineIndent++;
+        else if (c == '\t')
+          lineIndent += 2; // Treat tab as 2 spaces
+        else
+          break;
+      }
+
+      if (lineIndent < minIndent)
+        minIndent = lineIndent;
+    }
+
+    if (minIndent == int.MaxValue)
+      minIndent = 0;
+
+    // Re-indent each line
+    StringBuilder result = new();
+    foreach (string line in lines)
+    {
+      if (string.IsNullOrWhiteSpace(line))
+      {
+        result.AppendLine();
+        continue;
+      }
+
+      // Strip original indentation and apply target indentation
+      string trimmedLine = line.Length > minIndent ? line[minIndent..] : line.TrimStart();
+      result.AppendLine($"{targetIndent}{trimmedLine}");
+    }
+
+    return result.ToString();
   }
 
   /// <summary>

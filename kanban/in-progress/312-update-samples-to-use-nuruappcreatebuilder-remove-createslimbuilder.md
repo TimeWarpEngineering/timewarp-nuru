@@ -21,6 +21,7 @@ These samples have been verified working with the new API:
 - [x] `06-async-examples/async-examples.cs` (updated to CreateBuilder)
 - [x] `07-pipeline-middleware/` (all 6 samples working)
 - [x] `08-testing/01-output-capture.cs` - Updated from CreateSlimBuilder, renamed
+- [x] `09-configuration/` (all 4 samples working, renamed from _configuration)
 - [x] `08-testing/02-colored-output.cs` - Updated, split Test 5 for #319 workaround
 - [x] `08-testing/03-terminal-injection.cs` - Updated from CreateSlimBuilder, renamed
 - [x] `08-testing/04-debug-test.cs` - Updated from CreateSlimBuilder, renamed
@@ -37,11 +38,11 @@ These samples have been verified working with the new API:
 - [ ] `_logging/serilog-logging.cs` - likely same issues
 - [x] `06-async-examples/async-examples.cs` - DONE (updated to CreateBuilder)
 
-### Configuration Samples - DONE
-- [x] `_configuration/configuration-basics.cs` - Migrated to DSL API
-- [x] `_configuration/command-line-overrides.cs` - Migrated to DSL API with IOptions<T>
-- [x] `_configuration/configuration-validation.cs` - Migrated to IValidateOptions<T> (removed FluentValidation)
-- [x] `_configuration/user-secrets-property.cs` - Migrated to DSL API
+### Configuration Samples - DONE (renamed to 09-configuration/)
+- [x] `09-configuration/01-configuration-basics.cs` - Migrated to DSL API
+- [x] `09-configuration/02-command-line-overrides.cs` - Migrated to DSL API with IOptions<T>
+- [x] `09-configuration/03-configuration-validation.cs` - Migrated to IValidateOptions<T> (removed FluentValidation)
+- [x] `09-configuration/04-user-secrets-property.cs` - Migrated to DSL API
 
 ### Generator formatting issues (#313)
 - [ ] `builtin-types-example.cs` - block body handler formatting

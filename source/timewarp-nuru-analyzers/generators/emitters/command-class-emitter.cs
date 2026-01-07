@@ -185,12 +185,34 @@ internal static class CommandClassEmitter
 
   /// <summary>
   /// Converts a string to PascalCase.
+  /// Handles kebab-case (dry-run -> DryRun) and snake_case (dry_run -> DryRun).
   /// </summary>
   private static string ToPascalCase(string value)
   {
     if (string.IsNullOrEmpty(value))
       return value;
 
-    return char.ToUpperInvariant(value[0]) + value[1..];
+    // Handle kebab-case and snake_case by splitting on delimiters
+    string[] parts = value.Split(['-', '_'], StringSplitOptions.RemoveEmptyEntries);
+    if (parts.Length == 1)
+    {
+      // No delimiters, just capitalize first letter
+      return char.ToUpperInvariant(value[0]) + value[1..];
+    }
+
+    // Join parts with each part's first letter capitalized
+    StringBuilder result = new();
+
+    foreach (string part in parts)
+    {
+      if (part.Length > 0)
+      {
+        result.Append(char.ToUpperInvariant(part[0]));
+        if (part.Length > 1)
+          result.Append(part[1..]);
+      }
+    }
+
+    return result.ToString();
   }
 }

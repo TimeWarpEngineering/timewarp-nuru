@@ -111,6 +111,7 @@ internal static class PatternStringExtractor
 
   /// <summary>
   /// Resolves a type constraint string to a fully qualified CLR type name.
+  /// Uses the shared TypeConversionMap for built-in types.
   /// </summary>
   private static string? ResolveClrTypeName(string? typeConstraint)
   {
@@ -121,26 +122,11 @@ internal static class PatternStringExtractor
     bool isNullable = typeConstraint.EndsWith('?');
     string baseType = isNullable ? typeConstraint[..^1] : typeConstraint;
 
-    string? resolvedBase = baseType.ToLowerInvariant() switch
-    {
-      "int" or "int32" => "global::System.Int32",
-      "long" or "int64" => "global::System.Int64",
-      "short" or "int16" => "global::System.Int16",
-      "byte" => "global::System.Byte",
-      "float" or "single" => "global::System.Single",
-      "double" => "global::System.Double",
-      "decimal" => "global::System.Decimal",
-      "bool" or "boolean" => "global::System.Boolean",
-      "char" => "global::System.Char",
-      "string" => "global::System.String",
-      "guid" => "global::System.Guid",
-      "datetime" => "global::System.DateTime",
-      "datetimeoffset" => "global::System.DateTimeOffset",
-      "timespan" => "global::System.TimeSpan",
-      "uri" => "global::System.Uri",
-      "version" => "global::System.Version",
-      _ => $"global::{baseType}" // Assume it's a fully qualified type
-    };
+    // Use shared type conversion map for built-in types
+    string? resolvedBase = TypeConversionMap.GetClrTypeName(baseType);
+
+    // Fallback for unknown types (custom converters, etc.)
+    resolvedBase ??= $"global::{baseType}";
 
     return isNullable ? $"{resolvedBase}?" : resolvedBase;
   }

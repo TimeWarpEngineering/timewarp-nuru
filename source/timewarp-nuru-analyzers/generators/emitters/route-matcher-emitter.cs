@@ -186,20 +186,10 @@ internal static class RouteMatcherEmitter
       string typeConstraint = param.TypeConstraint ?? "";
       string baseType = typeConstraint.EndsWith('?') ? typeConstraint[..^1] : typeConstraint;
 
-      // Map base type to CLR type name and parse expression
-      (string? clrType, string? parseExpr) = baseType.ToLowerInvariant() switch
-      {
-        "int" => ("int", $"int.Parse({uniqueVarName}, System.Globalization.CultureInfo.InvariantCulture)"),
-        "long" => ("long", $"long.Parse({uniqueVarName}, System.Globalization.CultureInfo.InvariantCulture)"),
-        "double" => ("double", $"double.Parse({uniqueVarName}, System.Globalization.CultureInfo.InvariantCulture)"),
-        "decimal" => ("decimal", $"decimal.Parse({uniqueVarName}, System.Globalization.CultureInfo.InvariantCulture)"),
-        "bool" => ("bool", $"bool.Parse({uniqueVarName})"),
-        "guid" => ("System.Guid", $"System.Guid.Parse({uniqueVarName})"),
-        "datetime" => ("System.DateTime", $"System.DateTime.Parse({uniqueVarName}, System.Globalization.CultureInfo.InvariantCulture)"),
-        _ => (null, null)
-      };
+      // Use shared type conversion mapping for all 21 built-in types
+      (string ClrType, string ParseExpr)? conversion = TypeConversionMap.GetBuiltInConversion(baseType, uniqueVarName);
 
-      if (clrType is not null && parseExpr is not null)
+      if (conversion is var (clrType, parseExpr))
       {
         if (param.IsOptional)
         {
@@ -216,9 +206,9 @@ internal static class RouteMatcherEmitter
       }
       else if (param.ResolvedClrTypeName is not null)
       {
-        // Unknown type constraint
+        // Unknown type constraint - likely a custom type converter (not yet supported in generator)
         sb.AppendLine(
-          $"{indentStr}// TODO: Type conversion for {param.ResolvedClrTypeName}");
+          $"{indentStr}// TODO: Custom type conversion for {param.ResolvedClrTypeName} (constraint: {baseType})");
       }
     }
   }
@@ -397,20 +387,10 @@ internal static class RouteMatcherEmitter
     string typeConstraint = option.TypeConstraint ?? "";
     string baseType = typeConstraint.EndsWith('?') ? typeConstraint[..^1] : typeConstraint;
 
-    // Map type constraint to CLR type and parse expression
-    (string? clrType, string? parseExpr) = baseType.ToLowerInvariant() switch
-    {
-      "int" => ("int", $"int.Parse({rawVarName}, System.Globalization.CultureInfo.InvariantCulture)"),
-      "long" => ("long", $"long.Parse({rawVarName}, System.Globalization.CultureInfo.InvariantCulture)"),
-      "double" => ("double", $"double.Parse({rawVarName}, System.Globalization.CultureInfo.InvariantCulture)"),
-      "decimal" => ("decimal", $"decimal.Parse({rawVarName}, System.Globalization.CultureInfo.InvariantCulture)"),
-      "bool" => ("bool", $"bool.Parse({rawVarName})"),
-      "guid" => ("System.Guid", $"System.Guid.Parse({rawVarName})"),
-      "datetime" => ("System.DateTime", $"System.DateTime.Parse({rawVarName}, System.Globalization.CultureInfo.InvariantCulture)"),
-      _ => (null, null)
-    };
+    // Use shared type conversion mapping for all 21 built-in types
+    (string ClrType, string ParseExpr)? conversion = TypeConversionMap.GetBuiltInConversion(baseType, rawVarName);
 
-    if (clrType is not null && parseExpr is not null)
+    if (conversion is var (clrType, parseExpr))
     {
       if (option.ParameterIsOptional)
       {
@@ -427,7 +407,7 @@ internal static class RouteMatcherEmitter
     }
     else
     {
-      // Unknown type - keep as string (fallback)
+      // Unknown type - keep as string (fallback for custom types not yet supported)
       sb.AppendLine(
         $"      string? {varName} = {rawVarName};");
     }

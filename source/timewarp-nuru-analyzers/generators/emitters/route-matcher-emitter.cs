@@ -157,11 +157,12 @@ internal static class RouteMatcherEmitter
         continue;
 
       string varName = param.CamelCaseName;
+      string escapedVarName = CSharpIdentifierUtils.EscapeIfKeyword(varName);
       string uniqueVarName = $"__{varName}_{routeIndex}";
 
       // Create alias from unique name to handler-expected name
       sb.AppendLine(
-        $"{indentStr}string {varName} = {uniqueVarName};");
+        $"{indentStr}string {escapedVarName} = {uniqueVarName};");
     }
   }
 
@@ -180,6 +181,7 @@ internal static class RouteMatcherEmitter
         continue;
 
       string varName = param.CamelCaseName;
+      string escapedVarName = CSharpIdentifierUtils.EscapeIfKeyword(varName);
       string uniqueVarName = $"__{varName}_{routeIndex}";
 
       // Normalize type constraint: strip '?' suffix to get base type
@@ -195,13 +197,13 @@ internal static class RouteMatcherEmitter
         {
           // Optional param: check for null before parsing
           sb.AppendLine(
-            $"{indentStr}{clrType}? {varName} = {uniqueVarName} is not null ? {parseExpr} : null;");
+            $"{indentStr}{clrType}? {escapedVarName} = {uniqueVarName} is not null ? {parseExpr} : null;");
         }
         else
         {
           // Required param: direct parse
           sb.AppendLine(
-            $"{indentStr}{clrType} {varName} = {parseExpr};");
+            $"{indentStr}{clrType} {escapedVarName} = {parseExpr};");
         }
       }
       else if (param.ResolvedClrTypeName is not null)
@@ -319,6 +321,7 @@ internal static class RouteMatcherEmitter
   private static void EmitFlagParsing(StringBuilder sb, OptionDefinition option)
   {
     string varName = ToCamelCase(option.LongForm ?? option.ShortForm ?? "flag");
+    string escapedVarName = CSharpIdentifierUtils.EscapeIfKeyword(varName);
 
     string condition = (option.LongForm, option.ShortForm) switch
     {
@@ -329,7 +332,7 @@ internal static class RouteMatcherEmitter
     };
 
     sb.AppendLine(
-      $"      bool {varName} = Array.Exists(routeArgs, a => {condition});");
+      $"      bool {escapedVarName} = Array.Exists(routeArgs, a => {condition});");
   }
 
   /// <summary>
@@ -339,6 +342,7 @@ internal static class RouteMatcherEmitter
   private static void EmitValueOptionParsing(StringBuilder sb, OptionDefinition option, int routeIndex)
   {
     string varName = option.ParameterName ?? ToCamelCase(option.LongForm ?? option.ShortForm ?? "value");
+    string escapedVarName = CSharpIdentifierUtils.EscapeIfKeyword(varName);
     string defaultValue = option.IsOptional ? "null" : "string.Empty";
 
     string condition = (option.LongForm, option.ShortForm) switch
@@ -351,7 +355,7 @@ internal static class RouteMatcherEmitter
 
     // For typed options, extract to a temp string first, then convert
     bool needsConversion = option.TypeConstraint is not null;
-    string rawVarName = needsConversion ? $"__{varName}_raw" : varName;
+    string rawVarName = needsConversion ? $"__{varName}_raw" : escapedVarName;
 
     sb.AppendLine(
       $"      string? {rawVarName} = {defaultValue};");
@@ -375,7 +379,7 @@ internal static class RouteMatcherEmitter
     // Emit type conversion if needed
     if (needsConversion)
     {
-      EmitOptionTypeConversion(sb, option, varName, rawVarName);
+      EmitOptionTypeConversion(sb, option, escapedVarName, rawVarName);
     }
   }
 

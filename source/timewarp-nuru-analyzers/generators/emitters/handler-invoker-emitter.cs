@@ -217,12 +217,13 @@ internal static class HandlerInvokerEmitter
       // - Flags: ToCamelCase of LongForm (handles kebab-case like "no-cache" → "noCache")
       // - Options (value): property name lowercased (e.g., "configfile" for ConfigFile property)
       // - Parameters: lowercase of parameter name
+      // Note: Non-unique names need keyword escaping to match route-matcher-emitter
       string varName = param.Source switch
       {
         BindingSource.CatchAll => $"__{ToCamelCase(param.ParameterName)}_{routeIndex}",
-        BindingSource.Flag => ToCamelCase(param.SourceName),
-        BindingSource.Option => param.ParameterName.ToLowerInvariant(),
-        _ => param.ParameterName.ToLowerInvariant()
+        BindingSource.Flag => CSharpIdentifierUtils.EscapeIfKeyword(ToCamelCase(param.SourceName)),
+        BindingSource.Option => CSharpIdentifierUtils.EscapeIfKeyword(param.ParameterName.ToLowerInvariant()),
+        _ => CSharpIdentifierUtils.EscapeIfKeyword(param.ParameterName.ToLowerInvariant())
       };
       sb.AppendLine(
         $"{indent}  {propName} = {varName},");

@@ -35,7 +35,7 @@ internal static class ServiceResolverEmitter
   private static void EmitServiceResolution(StringBuilder sb, ParameterBinding param, ImmutableArray<ServiceDefinition> services, string indent)
   {
     string typeName = param.ParameterTypeName;
-    string varName = param.ParameterName;
+    string varName = CSharpIdentifierUtils.EscapeIfKeyword(param.ParameterName);
 
     // Special case: IConfiguration and IConfigurationRoot use the local configuration variable
     // (built by ConfigurationEmitter when AddConfiguration() is called)

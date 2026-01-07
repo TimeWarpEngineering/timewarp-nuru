@@ -148,9 +148,11 @@ internal static class BehaviorEmitter
     foreach (ParameterDefinition param in route.Parameters)
     {
       string propertyName = ToPascalCase(param.Name);
+      // Variable names must match what route-matcher-emitter generates
+      // Catch-all uses unique name; others need keyword escaping
       string varName = param.IsCatchAll
         ? $"__{param.CamelCaseName}_{routeIndex}"
-        : param.CamelCaseName;
+        : CSharpIdentifierUtils.EscapeIfKeyword(param.CamelCaseName);
 
       sb.AppendLine($"{indent}  {propertyName} = {varName},");
     }
@@ -160,9 +162,10 @@ internal static class BehaviorEmitter
     {
       // Use LongForm as property name
       string propertyName = ToPascalCase(option.LongForm ?? option.ParameterName ?? "option");
+      // Variable names must match what route-matcher-emitter generates
       string varName = option.IsFlag
-        ? ToCamelCase(option.LongForm ?? "flag")
-        : (option.ParameterName?.ToLowerInvariant() ?? "value");
+        ? CSharpIdentifierUtils.EscapeIfKeyword(ToCamelCase(option.LongForm ?? "flag"))
+        : CSharpIdentifierUtils.EscapeIfKeyword(option.ParameterName?.ToLowerInvariant() ?? "value");
 
       sb.AppendLine($"{indent}  {propertyName} = {varName},");
     }

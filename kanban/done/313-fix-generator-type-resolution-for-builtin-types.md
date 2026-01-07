@@ -1,13 +1,8 @@
 # Fix generator type resolution for built-in types
 
-## Status: BLOCKED
+## Status: COMPLETE ✅
 
-Type resolution implementation is complete, but sample verification is blocked by other bugs.
-
-**Blocked by:**
-- #323 - Fix C# keyword escaping in generated parameter names
-- #324 - Fix handler parameter vs service injection confusion
-- #325 - Fix block body handler indentation in generated code
+All blockers resolved. Sample verified working.
 
 ## Summary
 
@@ -17,8 +12,6 @@ The generator now correctly resolves all 21 built-in types to fully-qualified CL
 - `IPAddress` → `global::System.Net.IPAddress` ✅
 - `DateOnly` → `global::System.DateOnly` ✅
 - `TimeOnly` → `global::System.TimeOnly` ✅
-
-**Commit:** `7efef874`
 
 ## What Was Done
 
@@ -36,7 +29,7 @@ The generator now correctly resolves all 21 built-in types to fully-qualified CL
 - [x] Fix `ToPascalCase()` to handle kebab-case property names
 - [x] Verify type resolution is correct in generated code
 - [x] Verify existing generator tests pass
-- [ ] Sample `01-builtin-types.cs` compiles and runs (BLOCKED)
+- [x] Sample `01-builtin-types.cs` compiles and runs
 
 ## Files Modified
 
@@ -45,10 +38,26 @@ The generator now correctly resolves all 21 built-in types to fully-qualified CL
 - `source/timewarp-nuru-analyzers/generators/emitters/command-class-emitter.cs`
 - `source/timewarp-nuru-analyzers/generators/extractors/pattern-string-extractor.cs`
 
-## Affected Samples
+## Test Results
 
-- `samples/10-type-converters/01-builtin-types.cs` - Type resolution works, but sample blocked by #323, #324, #325
-- `samples/10-type-converters/02-custom-type-converters.cs` - Blocked by custom type converter support (future task)
+All commands in `samples/10-type-converters/01-builtin-types.cs` verified working:
+- `delay 100` ✅ (int)
+- `price 19.99 3` ✅ (double, int)
+- `schedule Meeting 2024-12-25T14:30:00` ✅ (string, DateTime)
+- `fetch https://example.com/api/data` ✅ (Uri)
+- `read /etc/passwd` ✅ (FileInfo)
+- `list /tmp` ✅ (DirectoryInfo)
+- `ping 192.168.1.1` ✅ (IPAddress)
+- `connect 10.0.0.1 8080` ✅ (IPAddress, int)
+- `report 2024-12-25` ✅ (DateOnly)
+- `alarm 07:30:00` ✅ (TimeOnly)
+- `sync /source /destination` ✅ (DirectoryInfo, DirectoryInfo)
+- `backup /data --dest /backup --config config.json` ✅ (DirectoryInfo, optional DirectoryInfo, optional FileInfo)
+
+## Previously Blocked By (Now Resolved)
+
+- #323 - Fix C# keyword escaping ✅ (completed)
+- #324 - Fix handler parameter vs service injection ✅ (completed)
 
 ## Related Tasks
 

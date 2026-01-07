@@ -1,5 +1,5 @@
 #!/usr/bin/dotnet --
-#:project timewarp-nuru-sample/timewarp-nuru-sample.csproj
+#:project ../../source/timewarp-nuru/timewarp-nuru.csproj
 
 // ============================================================================
 // Custom Type Converter Example

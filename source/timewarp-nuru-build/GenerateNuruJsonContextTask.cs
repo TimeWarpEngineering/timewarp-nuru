@@ -1,0 +1,316 @@
+// MSBuild task that generates a JsonSerializerContext for user-defined return types.
+// Runs before CoreCompile so System.Text.Json source generator can process the output.
+
+namespace TimeWarp.Nuru.Build;
+
+using Microsoft.Build.Framework;
+using Microsoft.Build.Utilities;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
+
+/// <summary>
+/// MSBuild task that generates a JsonSerializerContext with [JsonSerializable] attributes
+/// for user-defined return types discovered from [NuruRoute] attributed classes.
+/// </summary>
+public class GenerateNuruJsonContextTask : Task
+{
+  /// <summary>
+  /// Source files to analyze for [NuruRoute] attributes.
+  /// </summary>
+  [Required]
+  public ITaskItem[] SourceFiles { get; set; } = [];
+
+  /// <summary>
+  /// The intermediate output path where the generated file will be written.
+  /// </summary>
+  [Required]
+  public string IntermediateOutputPath { get; set; } = "";
+
+  /// <summary>
+  /// Assembly references needed for semantic analysis.
+  /// </summary>
+  public ITaskItem[] References { get; set; } = [];
+
+  /// <summary>
+  /// The generated files that should be included in compilation.
+  /// </summary>
+  [Output]
+  public ITaskItem[] GeneratedFiles { get; set; } = [];
+
+  /// <inheritdoc/>
+  public override bool Execute()
+  {
+    try
+    {
+      return ExecuteCore();
+    }
+    catch (Exception ex)
+    {
+      Log.LogWarning($"TimeWarp.Nuru.Build: Failed to generate JSON context: {ex.Message}");
+      Log.LogMessage(MessageImportance.Low, $"Stack trace: {ex.StackTrace}");
+      GeneratedFiles = [];
+      return true; // Don't fail the build - fallback to ToString() will work
+    }
+  }
+
+  private bool ExecuteCore()
+  {
+    if (SourceFiles.Length == 0)
+    {
+      Log.LogMessage(MessageImportance.Low, "TimeWarp.Nuru.Build: No source files to analyze");
+      GeneratedFiles = [];
+      return true;
+    }
+
+    // 1. Parse source files into syntax trees
+    List<SyntaxTree> syntaxTrees = [];
+    foreach (ITaskItem sourceFile in SourceFiles)
+    {
+      string filePath = sourceFile.ItemSpec;
+      if (!File.Exists(filePath))
+        continue;
+
+      try
+      {
+        string sourceText = File.ReadAllText(filePath);
+        SyntaxTree tree = CSharpSyntaxTree.ParseText(sourceText, path: filePath);
+        syntaxTrees.Add(tree);
+      }
+      catch (Exception ex)
+      {
+        Log.LogMessage(MessageImportance.Low, $"TimeWarp.Nuru.Build: Failed to parse {filePath}: {ex.Message}");
+      }
+    }
+
+    if (syntaxTrees.Count == 0)
+    {
+      Log.LogMessage(MessageImportance.Low, "TimeWarp.Nuru.Build: No syntax trees parsed");
+      GeneratedFiles = [];
+      return true;
+    }
+
+    // 2. Create metadata references
+    List<MetadataReference> references = [];
+    foreach (ITaskItem reference in References)
+    {
+      string refPath = reference.ItemSpec;
+      if (File.Exists(refPath))
+      {
+        try
+        {
+          references.Add(MetadataReference.CreateFromFile(refPath));
+        }
+        catch (Exception ex)
+        {
+          Log.LogMessage(MessageImportance.Low, $"TimeWarp.Nuru.Build: Failed to load reference {refPath}: {ex.Message}");
+        }
+      }
+    }
+
+    // 3. Create compilation
+    CSharpCompilation compilation = CSharpCompilation.Create(
+      "NuruJsonContextAnalysis",
+      syntaxTrees,
+      references,
+      new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+
+    // 4. Find [NuruRoute] attributed classes and extract return types
+    HashSet<string> jsonTypes = [];
+
+    foreach (SyntaxTree tree in syntaxTrees)
+    {
+      SemanticModel semanticModel = compilation.GetSemanticModel(tree);
+      SyntaxNode root = tree.GetRoot();
+
+      // Find all class declarations with [NuruRoute] attribute
+      IEnumerable<ClassDeclarationSyntax> classDeclarations = root
+        .DescendantNodes()
+        .OfType<ClassDeclarationSyntax>()
+        .Where(HasNuruRouteAttribute);
+
+      foreach (ClassDeclarationSyntax classDecl in classDeclarations)
+      {
+        // Extract return type from ICommand<T> or IQuery<T> base interface
+        string? returnType = ExtractReturnType(classDecl, semanticModel);
+        if (!string.IsNullOrEmpty(returnType) && ShouldSerializeAsJson(returnType))
+        {
+          jsonTypes.Add(returnType);
+          Log.LogMessage(MessageImportance.Low, $"TimeWarp.Nuru.Build: Found JSON type: {returnType}");
+        }
+      }
+    }
+
+    // 5. If no types need JSON serialization, skip generation
+    if (jsonTypes.Count == 0)
+    {
+      Log.LogMessage(MessageImportance.Normal, "TimeWarp.Nuru.Build: No user-defined types need JSON serialization");
+      GeneratedFiles = [];
+      return true;
+    }
+
+    // 6. Generate the JsonSerializerContext file
+    string outputFile = Path.Combine(IntermediateOutputPath, "NuruUserTypesJsonContext.g.cs");
+    string content = GenerateContextFile(jsonTypes);
+
+    // Ensure directory exists
+    string? directory = Path.GetDirectoryName(outputFile);
+    if (!string.IsNullOrEmpty(directory))
+    {
+      Directory.CreateDirectory(directory);
+    }
+
+    File.WriteAllText(outputFile, content);
+
+    GeneratedFiles = [new TaskItem(outputFile)];
+    Log.LogMessage(MessageImportance.Normal,
+      $"TimeWarp.Nuru.Build: Generated {outputFile} with {jsonTypes.Count} type(s): {string.Join(", ", jsonTypes)}");
+
+    return true;
+  }
+
+  /// <summary>
+  /// Checks if a class declaration has a [NuruRoute] attribute.
+  /// </summary>
+  private static bool HasNuruRouteAttribute(ClassDeclarationSyntax classDecl)
+  {
+    return classDecl.AttributeLists
+      .SelectMany(al => al.Attributes)
+      .Any(attr =>
+      {
+        string name = attr.Name.ToString();
+        return name is "NuruRoute" or "NuruRouteAttribute"
+          || name.EndsWith(".NuruRoute", StringComparison.Ordinal)
+          || name.EndsWith(".NuruRouteAttribute", StringComparison.Ordinal);
+      });
+  }
+
+  /// <summary>
+  /// Extracts the return type T from ICommand&lt;T&gt; or IQuery&lt;T&gt; base interface.
+  /// </summary>
+  private static string? ExtractReturnType(ClassDeclarationSyntax classDecl, SemanticModel semanticModel)
+  {
+    if (classDecl.BaseList is null)
+      return null;
+
+    foreach (BaseTypeSyntax baseType in classDecl.BaseList.Types)
+    {
+      // Look for ICommand<T> or IQuery<T>
+      if (baseType.Type is GenericNameSyntax genericName)
+      {
+        string name = genericName.Identifier.Text;
+        if (name is "ICommand" or "IQuery" && genericName.TypeArgumentList.Arguments.Count == 1)
+        {
+          TypeSyntax typeArg = genericName.TypeArgumentList.Arguments[0];
+
+          // Try to get the fully qualified type name
+          SymbolInfo symbolInfo = semanticModel.GetSymbolInfo(typeArg);
+          if (symbolInfo.Symbol is ITypeSymbol typeSymbol)
+          {
+            return typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+          }
+
+          // Fall back to syntax text
+          return typeArg.ToString();
+        }
+      }
+    }
+
+    return null;
+  }
+
+  /// <summary>
+  /// Determines if a type should be serialized as JSON (not a primitive, Unit, etc.).
+  /// </summary>
+  private static bool ShouldSerializeAsJson(string typeName)
+  {
+    return typeName switch
+    {
+      // Unit = no output (void equivalent)
+      "global::TimeWarp.Nuru.Unit" or "TimeWarp.Nuru.Unit" or "Unit" => false,
+
+      // String = raw output
+      "global::System.String" or "System.String" or "string" => false,
+
+      // Numeric types = raw ToString()
+      "global::System.Int32" or "System.Int32" or "int" => false,
+      "global::System.Int64" or "System.Int64" or "long" => false,
+      "global::System.Int16" or "System.Int16" or "short" => false,
+      "global::System.Byte" or "System.Byte" or "byte" => false,
+      "global::System.SByte" or "System.SByte" or "sbyte" => false,
+      "global::System.UInt32" or "System.UInt32" or "uint" => false,
+      "global::System.UInt64" or "System.UInt64" or "ulong" => false,
+      "global::System.UInt16" or "System.UInt16" or "ushort" => false,
+      "global::System.Single" or "System.Single" or "float" => false,
+      "global::System.Double" or "System.Double" or "double" => false,
+      "global::System.Decimal" or "System.Decimal" or "decimal" => false,
+      "global::System.Boolean" or "System.Boolean" or "bool" => false,
+      "global::System.Char" or "System.Char" or "char" => false,
+
+      // Guid = raw
+      "global::System.Guid" or "System.Guid" or "Guid" => false,
+
+      // Date/Time types = ISO 8601
+      "global::System.DateTime" or "System.DateTime" or "DateTime" => false,
+      "global::System.DateTimeOffset" or "System.DateTimeOffset" or "DateTimeOffset" => false,
+      "global::System.DateOnly" or "System.DateOnly" or "DateOnly" => false,
+      "global::System.TimeOnly" or "System.TimeOnly" or "TimeOnly" => false,
+      "global::System.TimeSpan" or "System.TimeSpan" or "TimeSpan" => false,
+
+      // Everything else = JSON
+      _ => true
+    };
+  }
+
+  /// <summary>
+  /// Generates the JsonSerializerContext file content.
+  /// </summary>
+  private static string GenerateContextFile(HashSet<string> types)
+  {
+    StringBuilder sb = new();
+
+    sb.AppendLine("// <auto-generated/>");
+    sb.AppendLine("// Generated by TimeWarp.Nuru.Build for AOT-compatible JSON serialization");
+    sb.AppendLine("#pragma warning disable");
+    sb.AppendLine("#nullable enable");
+    sb.AppendLine();
+    sb.AppendLine("namespace TimeWarp.Nuru.Generated;");
+    sb.AppendLine();
+
+    // Emit [JsonSerializable] attribute for each type
+    foreach (string typeName in types.OrderBy(t => t, StringComparer.Ordinal))
+    {
+      string fullTypeName = EnsureGlobalPrefix(typeName);
+      sb.AppendLine($"[global::System.Text.Json.Serialization.JsonSerializable(typeof({fullTypeName}))]");
+    }
+
+    // Emit the context class
+    sb.AppendLine("[global::System.Text.Json.Serialization.JsonSourceGenerationOptions(");
+    sb.AppendLine("  PropertyNamingPolicy = global::System.Text.Json.Serialization.JsonKnownNamingPolicy.CamelCase)]");
+    sb.AppendLine("internal partial class NuruUserTypesJsonContext");
+    sb.AppendLine("  : global::System.Text.Json.Serialization.JsonSerializerContext;");
+
+    return sb.ToString();
+  }
+
+  /// <summary>
+  /// Ensures a type name has the global:: prefix.
+  /// </summary>
+  private static string EnsureGlobalPrefix(string typeName)
+  {
+    if (typeName.StartsWith("global::", StringComparison.Ordinal))
+      return typeName;
+
+    // If it already has a namespace, add global::
+    if (typeName.Contains('.'))
+      return $"global::{typeName}";
+
+    // Simple type name - return as is (likely a local type in the project)
+    return typeName;
+  }
+}

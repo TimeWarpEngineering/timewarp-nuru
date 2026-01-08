@@ -1,0 +1,5 @@
+<Project>
+  <!-- Import root targets (which includes TimeWarp.Nuru.Build) -->
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.targets', '$(MSBuildThisFileDirectory)../'))" 
+          Condition="Exists('$([MSBuild]::GetPathOfFileAbove(Directory.Build.targets, $(MSBuildThisFileDirectory)../))')" />
+</Project>

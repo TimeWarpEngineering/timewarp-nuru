@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <!-- 
+    TimeWarp.Nuru.Build targets
+    Generates a JsonSerializerContext with [JsonSerializable] attributes for user-defined 
+    return types discovered from [NuruRoute] attributed classes.
+    
+    This runs BEFORE CoreCompile so System.Text.Json source generator can process the output.
+  -->
+
+  <!-- For development: use Debug build from source directory -->
+  <PropertyGroup>
+    <_NuruBuildTaskDir Condition="'$(_NuruBuildTaskDir)' == ''">$(MSBuildThisFileDirectory)../bin/Debug/net10.0/</_NuruBuildTaskDir>
+  </PropertyGroup>
+
+  <UsingTask 
+    TaskName="TimeWarp.Nuru.Build.GenerateNuruJsonContextTask" 
+    AssemblyFile="$(_NuruBuildTaskDir)TimeWarp.Nuru.Build.dll" />
+
+  <Target 
+    Name="GenerateNuruJsonContext" 
+    BeforeTargets="CoreCompile"
+    Condition="'@(Compile)' != '' and '$(DesignTimeBuild)' != 'true'">
+    
+    <GenerateNuruJsonContextTask
+      SourceFiles="@(Compile)"
+      References="@(ReferencePath)"
+      IntermediateOutputPath="$(IntermediateOutputPath)">
+      <Output TaskParameter="GeneratedFiles" ItemName="_NuruGeneratedJsonContext" />
+    </GenerateNuruJsonContextTask>
+
+    <!-- Include generated file in compilation -->
+    <ItemGroup Condition="'@(_NuruGeneratedJsonContext)' != ''">
+      <Compile Include="@(_NuruGeneratedJsonContext)" />
+    </ItemGroup>
+    
+    <Message 
+      Text="TimeWarp.Nuru.Build: Added @(_NuruGeneratedJsonContext) to compilation" 
+      Importance="low"
+      Condition="'@(_NuruGeneratedJsonContext)' != ''" />
+    
+  </Target>
+
+</Project>

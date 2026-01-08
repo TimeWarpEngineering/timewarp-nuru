@@ -87,26 +87,26 @@ source/timewarp-nuru-build/
 
 ## Checklist
 
-- [ ] Create `source/timewarp-nuru-build/` project structure
-- [ ] Create `timewarp-nuru-build.csproj` with references to analyzer and MSBuild APIs
-- [ ] Implement `GenerateNuruJsonContextTask.cs`:
-  - [ ] Parse source files with Roslyn
-  - [ ] Call `AttributedRouteExtractor` to find routes
-  - [ ] Extract return types from handlers
-  - [ ] Filter to JSON-serializable types (skip Unit, primitives)
-  - [ ] Generate context file to `$(IntermediateOutputPath)`
-  - [ ] Log warning on extraction failure
-- [ ] Create `build/TimeWarp.Nuru.Build.targets`:
-  - [ ] Wire up task to run `BeforeTargets="CoreCompile"`
-  - [ ] Include generated file in `@(Compile)` items
-- [ ] Update `handler-invoker-emitter.cs`:
-  - [ ] Try `NuruUserTypesJsonContext` first
-  - [ ] Fall back to `NuruJsonSerializerContext`
-  - [ ] Fall back to `ToString()`
-- [ ] Test with `samples/02-calculator/03-calc-mixed.cs` (StatsResponse)
-- [ ] Test reference resolution (`@(ReferencePath)` vs other item groups)
-- [ ] Verify AOT build works
-- [ ] Package integration with main TimeWarp.Nuru package
+- [x] Create `source/timewarp-nuru-build/` project structure
+- [x] Create `timewarp-nuru-build.csproj` with references to analyzer and MSBuild APIs
+- [x] Implement `GenerateNuruJsonContextTask.cs`:
+  - [x] Parse source files with Roslyn
+  - [x] Call `AttributedRouteExtractor` to find routes
+  - [x] Extract return types from handlers
+  - [x] Filter to JSON-serializable types (skip Unit, primitives)
+  - [x] Generate context file to `$(IntermediateOutputPath)`
+  - [x] Log warning on extraction failure
+- [x] Create `build/TimeWarp.Nuru.Build.targets`:
+  - [x] Wire up task to run `BeforeTargets="CoreCompile"`
+  - [x] Include generated file in `@(Compile)` items
+- [x] Update `handler-invoker-emitter.cs`:
+  - [x] Try `NuruUserTypesJsonContext` first
+  - [x] Fall back to `NuruJsonSerializerContext`
+  - [x] Fall back to `ToString()`
+- [x] Test with `samples/02-calculator/03-calc-mixed.cs` (StatsResponse)
+- [x] Test reference resolution (`@(ReferencePath)` vs other item groups)
+- [x] Verify AOT build works
+- [ ] Package integration with main TimeWarp.Nuru package (deferred - works for local development)
 
 ## Expected Outcome
 
@@ -160,3 +160,48 @@ namespace TimeWarp.Nuru.Generated;
 internal partial class NuruUserTypesJsonContext 
   : global::System.Text.Json.Serialization.JsonSerializerContext;
 ```
+
+## Results
+
+**Status:** Working for local development. Package integration deferred.
+
+### What Works
+
+1. **MSBuild Task** (`GenerateNuruJsonContextTask.cs`):
+   - Parses source files with Roslyn to find `[NuruRoute]` attributed classes
+   - Extracts return types from `ICommand<T>` / `IQuery<T>` interfaces
+   - Filters out primitives and Unit types
+   - Generates `NuruUserTypesJsonContext.g.cs` to intermediate output
+
+2. **Targets Integration**:
+   - `Directory.Build.targets` at repo root imports the MSBuild targets
+   - Runs `BeforeTargets="CoreCompile"` so System.Text.Json source generator sees it
+
+3. **Handler Emitter**:
+   - Updated to try `NuruUserTypesJsonContext.Default.Options` first
+   - Falls back to built-in `NuruJsonSerializerContext.Default.Options`
+   - Final fallback to `ToString()`
+
+### Test Results
+
+```bash
+# JSON output for user-defined types now works!
+$ dotnet run samples/02-calculator/03-calc-mixed.cs -- stats 1 2 3 4 5
+{"sum":15,"average":3,"min":1,"max":5,"count":5}
+
+# AOT build succeeds without warnings
+$ dotnet publish samples/05-aot-example -c Release
+# Creates ~10MB native binary
+```
+
+### Key Fix
+
+The initial issue was that `Directory.Build.targets` was in `source/` but samples are in `samples/` (siblings, not nested). Moving the targets to repo root fixed the issue.
+
+### Remaining Work (Package Integration)
+
+When packaging for NuGet:
+1. Enable `<IsPackable>true</IsPackable>` in `timewarp-nuru-build.csproj`
+2. Include task DLL and dependencies in package's `build/` folder
+3. Update main `TimeWarp.Nuru` package to depend on or include the build task
+4. Test with NuGet package reference (not project reference)

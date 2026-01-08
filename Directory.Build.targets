@@ -1,0 +1,5 @@
+<Project>
+  <!-- Import TimeWarp.Nuru.Build targets for AOT-compatible JSON serialization -->
+  <Import Project="$(MSBuildThisFileDirectory)source/timewarp-nuru-build/build/TimeWarp.Nuru.Build.targets" 
+          Condition="Exists('$(MSBuildThisFileDirectory)source/timewarp-nuru-build/build/TimeWarp.Nuru.Build.targets')" />
+</Project>

@@ -1,0 +1,50 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <AssemblyName>TimeWarp.Nuru.Build</AssemblyName>
+    <RootNamespace>TimeWarp.Nuru.Build</RootNamespace>
+    <Description>MSBuild tasks for TimeWarp.Nuru AOT-compatible JSON generation</Description>
+    <PackageTags>TimeWarp;Nuru;MSBuild;AOT;JSON</PackageTags>
+    
+    <!-- Package as build tool, not library -->
+    <IsTool>true</IsTool>
+    <DevelopmentDependency>true</DevelopmentDependency>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    
+    <!-- Suppress warnings for MSBuild task development -->
+    <!-- CA1819: Properties returning arrays are required by MSBuild task API -->
+    <!-- CA1031: Catching generic exceptions is intentional for build resilience -->
+    <!-- CA1305: Generated code doesn't need culture-specific formatting -->
+    <!-- CA1307: String.Contains with char is fine here -->
+    <NoWarn>$(NoWarn);NU5100;NU5128;CA1819;CA1031;CA1305;CA1307</NoWarn>
+    
+    <!-- Disable packing for now - will enable when ready -->
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- MSBuild Task API -->
+    <PackageReference Include="Microsoft.Build.Utilities.Core" />
+    
+    <!-- Roslyn for parsing source files -->
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Reference analyzer project to reuse extraction logic -->
+    <ProjectReference Include="../timewarp-nuru-analyzers/timewarp-nuru-analyzers.csproj">
+      <PrivateAssets>all</PrivateAssets>
+    </ProjectReference>
+  </ItemGroup>
+
+  <!-- Pack task DLL and dependencies to build/ folder -->
+  <ItemGroup>
+    <None Include="build/**" Pack="true" PackagePath="build" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <None Include="$(OutputPath)/**/*.dll" Pack="true" PackagePath="build/net10.0" Visible="false" />
+  </ItemGroup>
+
+</Project>

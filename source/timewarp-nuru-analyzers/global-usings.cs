@@ -10,3 +10,6 @@ global using System.Threading;
 global using System.Threading.Tasks;
 global using TimeWarp.Nuru;
 global using TimeWarp.Nuru.Generators;
+
+// Allow MSBuild task project to access internal extractors
+[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("TimeWarp.Nuru.Build")]

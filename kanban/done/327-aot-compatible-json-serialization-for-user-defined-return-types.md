@@ -106,7 +106,7 @@ source/timewarp-nuru-build/
 - [x] Test with `samples/02-calculator/03-calc-mixed.cs` (StatsResponse)
 - [x] Test reference resolution (`@(ReferencePath)` vs other item groups)
 - [x] Verify AOT build works
-- [ ] Package integration with main TimeWarp.Nuru package (deferred - works for local development)
+- [x] Package integration with main TimeWarp.Nuru package
 
 ## Expected Outcome
 
@@ -163,7 +163,7 @@ internal partial class NuruUserTypesJsonContext
 
 ## Results
 
-**Status:** Working for local development. Package integration deferred.
+**Status:** Complete. Works for both local development and NuGet package consumers.
 
 ### What Works
 
@@ -184,6 +184,12 @@ internal partial class NuruUserTypesJsonContext
    - Falls back to built-in `NuruJsonSerializerContext.Default.Options`
    - Final fallback to `ToString()`
 
+4. **NuGet Package Integration**:
+   - Build task bundled in main `TimeWarp.Nuru` package (Option B)
+   - Targets file at `build/TimeWarp.Nuru.targets` (auto-imported by NuGet)
+   - Task DLLs at `build/net10.0/` (includes all dependencies)
+   - Dual-mode support: local dev uses repo path, NuGet uses package path
+
 ### Test Results
 
 ```bash
@@ -198,6 +204,11 @@ $ dotnet run samples/02-calculator/03-calc-mixed.cs -- compare 10 5
 # AOT build succeeds without warnings
 $ dotnet publish samples/05-aot-example -c Release
 # Creates ~10MB native binary
+
+# NuGet package correctly loads build task
+$ dotnet build -v:detailed 2>&1 | grep GenerateNuruJsonContext
+Target "GenerateNuruJsonContext" in file ".../.nuget/packages/timewarp.nuru/3.0.0-beta.23/build/TimeWarp.Nuru.targets"
+Using "GenerateNuruJsonContextTask" task from assembly "...TimeWarp.Nuru.Build.dll"
 ```
 
 ### Key Improvements
@@ -209,10 +220,24 @@ $ dotnet publish samples/05-aot-example -c Release
    - Both delegate AND attributed routes are handled
    - Consistent extraction logic
 
-### Remaining Work (Package Integration)
+3. **Package integration**: Bundled build task in main `TimeWarp.Nuru` package:
+   - `timewarp-nuru.csproj` includes `ProjectReference` to build task (ensures build order)
+   - Targets file renamed to `TimeWarp.Nuru.targets` for NuGet auto-import
+   - `Directory.Build.targets` sets `_NuruBuildTaskDir` for local development override
+   - `TimeWarp.Nuru.Build.targets` defaults to NuGet package path, respects override
 
-When packaging for NuGet:
-1. Enable `<IsPackable>true</IsPackable>` in `timewarp-nuru-build.csproj`
-2. Include task DLL and dependencies in package's `build/` folder
-3. Update main `TimeWarp.Nuru` package to depend on or include the build task
-4. Test with NuGet package reference (not project reference)
+### Package Contents
+
+```
+TimeWarp.Nuru.nupkg
+├── lib/net10.0/TimeWarp.Nuru.dll
+├── build/
+│   ├── TimeWarp.Nuru.targets          (auto-imported by NuGet)
+│   └── net10.0/
+│       ├── TimeWarp.Nuru.Build.dll    (MSBuild task)
+│       ├── TimeWarp.Nuru.Analyzers.dll
+│       ├── Microsoft.CodeAnalysis.dll
+│       ├── Microsoft.CodeAnalysis.CSharp.dll
+│       └── ... other dependencies
+└── analyzers/dotnet/cs/TimeWarp.Nuru.Analyzers.dll
+```

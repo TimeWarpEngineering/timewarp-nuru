@@ -26,6 +26,8 @@ These samples have been verified working with the new API:
 - [x] `08-testing/03-terminal-injection.cs` - Updated from CreateSlimBuilder, renamed
 - [x] `08-testing/04-debug-test.cs` - Updated from CreateSlimBuilder, renamed
 - [x] `08-testing/runfile-test-harness/real-app.cs` - Fixed in #320 (method reference handlers)
+- [x] `10-type-converters/01-builtin-types.cs` - Working, demonstrates 15 built-in types
+- [ ] `10-type-converters/02-custom-type-converters.cs` - **Blocked by #328** - Generator doesn't recognize `AddTypeConverter()`
 
 ## Samples Needing Updates
 
@@ -44,9 +46,8 @@ These samples have been verified working with the new API:
 - [x] `09-configuration/03-configuration-validation.cs` - Migrated to IValidateOptions<T> (removed FluentValidation)
 - [x] `09-configuration/04-user-secrets-property.cs` - Migrated to DSL API
 
-### Generator formatting issues (#313)
-- [ ] `builtin-types-example.cs` - block body handler formatting
-- [ ] `custom-type-converter-example.cs` - likely same
+### Generator DSL support issues
+- [ ] `10-type-converters/02-custom-type-converters.cs` - **Blocked by #328** - Generator throws `Unrecognized DSL method: AddTypeConverter`
 
 ### Pipeline Middleware Samples - DONE
 - [x] `07-pipeline-middleware/*` - All 6 samples working (completed in #315)

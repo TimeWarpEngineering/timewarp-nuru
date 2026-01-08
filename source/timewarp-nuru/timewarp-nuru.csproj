@@ -32,10 +32,29 @@
       <OutputItemType>Analyzer</OutputItemType>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
+    
+    <!-- Build task for AOT-compatible JSON serialization (ensures it's built before packing) -->
+    <ProjectReference Include="../timewarp-nuru-build/timewarp-nuru-build.csproj">
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <PrivateAssets>all</PrivateAssets>
+    </ProjectReference>
   </ItemGroup>
 
   <ItemGroup>
     <None Include="$(RepositoryRoot)readme.md" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+  <!-- Include build task and targets in NuGet package -->
+  <ItemGroup Label="Build Task Packaging">
+    <!-- MSBuild targets file - auto-imported by NuGet when named TimeWarp.Nuru.targets -->
+    <None Include="../timewarp-nuru-build/build/TimeWarp.Nuru.Build.targets" 
+          Pack="true" 
+          PackagePath="build/TimeWarp.Nuru.targets" />
+    
+    <!-- Build task DLL and all dependencies -->
+    <None Include="../timewarp-nuru-build/bin/$(Configuration)/net10.0/*.dll" 
+          Pack="true" 
+          PackagePath="build/net10.0" />
   </ItemGroup>
 
 </Project>

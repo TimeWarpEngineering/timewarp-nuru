@@ -73,9 +73,12 @@ internal static class RouteMatcherEmitter
     // Emit handler invocation (wrapped with behaviors if any)
     if (behaviors.Length > 0)
     {
+      // For attributed routes (Command), the command is created by BehaviorEmitter before the pipeline
+      bool commandCreatedByBehavior = route.Handler.HandlerKind == HandlerKind.Command;
+
       BehaviorEmitter.EmitPipelineWrapper(
         sb, route, routeIndex, behaviors, services, indent: 6,
-        () => HandlerInvokerEmitter.Emit(sb, route, routeIndex, services, indent: 8));
+        () => HandlerInvokerEmitter.Emit(sb, route, routeIndex, services, indent: 8, commandAlreadyCreated: commandCreatedByBehavior));
 
       sb.AppendLine("      return 0;");
     }
@@ -126,9 +129,12 @@ internal static class RouteMatcherEmitter
     // Emit handler invocation (wrapped with behaviors if any)
     if (behaviors.Length > 0)
     {
+      // For attributed routes (Command), the command is created by BehaviorEmitter before the pipeline
+      bool commandCreatedByBehavior = route.Handler.HandlerKind == HandlerKind.Command;
+
       BehaviorEmitter.EmitPipelineWrapper(
         sb, route, routeIndex, behaviors, services, indent: 6,
-        () => HandlerInvokerEmitter.Emit(sb, route, routeIndex, services, indent: 8));
+        () => HandlerInvokerEmitter.Emit(sb, route, routeIndex, services, indent: 8, commandAlreadyCreated: commandCreatedByBehavior));
 
       sb.AppendLine("      return 0;");
     }

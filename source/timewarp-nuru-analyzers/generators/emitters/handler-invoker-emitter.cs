@@ -21,7 +21,8 @@ internal static class HandlerInvokerEmitter
   /// <param name="routeIndex">The index of this route (used for unique local function names).</param>
   /// <param name="services">Registered services from ConfigureServices.</param>
   /// <param name="indent">Number of spaces for indentation.</param>
-  public static void Emit(StringBuilder sb, RouteDefinition route, int routeIndex, ImmutableArray<ServiceDefinition> services, int indent = 6)
+  /// <param name="commandAlreadyCreated">If true, skip command creation (already done by behavior emitter).</param>
+  public static void Emit(StringBuilder sb, RouteDefinition route, int routeIndex, ImmutableArray<ServiceDefinition> services, int indent = 6, bool commandAlreadyCreated = false)
   {
     string indentStr = new(' ', indent);
     HandlerDefinition handler = route.Handler;
@@ -40,7 +41,7 @@ internal static class HandlerInvokerEmitter
         break;
 
       case HandlerKind.Command:
-        EmitCommandInvocation(sb, route, routeIndex, services, indentStr);
+        EmitCommandInvocation(sb, route, routeIndex, services, indentStr, commandAlreadyCreated);
         break;
 
       case HandlerKind.Method:
@@ -260,42 +261,45 @@ internal static class HandlerInvokerEmitter
 
   /// <summary>
   /// Emits invocation for a command-based handler with nested Handler class.
-  /// Creates the command object, resolves handler dependencies, and invokes Handle().
+  /// Creates the command object (unless already created), resolves handler dependencies, and invokes Handle().
   /// </summary>
-  private static void EmitCommandInvocation(StringBuilder sb, RouteDefinition route, int routeIndex, ImmutableArray<ServiceDefinition> services, string indent)
+  private static void EmitCommandInvocation(StringBuilder sb, RouteDefinition route, int routeIndex, ImmutableArray<ServiceDefinition> services, string indent, bool commandAlreadyCreated = false)
   {
     HandlerDefinition handler = route.Handler;
     string commandTypeName = handler.FullTypeName ?? "UnknownCommand";
     string handlerTypeName = handler.NestedHandlerTypeName ?? $"{commandTypeName}.Handler";
 
-    // 1. Create the command object with property initializers
-    // Property names are PascalCase, local variables use route-unique names for catch-all to avoid collision
-    sb.AppendLine($"{indent}// Create command instance with bound properties");
-    sb.AppendLine($"{indent}{commandTypeName} __command = new()");
-    sb.AppendLine($"{indent}{{");
-
-    foreach (ParameterBinding param in handler.RouteParameters)
+    // 1. Create the command object with property initializers (skip if already created by behavior emitter)
+    if (!commandAlreadyCreated)
     {
-      string propName = ToPascalCase(param.ParameterName);
-      // Variable name must match what route-matcher-emitter generates:
-      // - Catch-all: __varName_routeIndex to avoid collision with 'args' parameter
-      // - Flags: ToCamelCase of LongForm (handles kebab-case like "no-cache" → "noCache")
-      // - Options (value): property name lowercased (e.g., "configfile" for ConfigFile property)
-      // - Parameters: lowercase of parameter name
-      // Note: Non-unique names need keyword escaping to match route-matcher-emitter
-      string varName = param.Source switch
-      {
-        BindingSource.CatchAll => $"__{ToCamelCase(param.ParameterName)}_{routeIndex}",
-        BindingSource.Flag => CSharpIdentifierUtils.EscapeIfKeyword(ToCamelCase(param.SourceName)),
-        BindingSource.Option => CSharpIdentifierUtils.EscapeIfKeyword(param.ParameterName.ToLowerInvariant()),
-        _ => CSharpIdentifierUtils.EscapeIfKeyword(param.ParameterName.ToLowerInvariant())
-      };
-      sb.AppendLine(
-        $"{indent}  {propName} = {varName},");
-    }
+      // Property names are PascalCase, local variables use route-unique names for catch-all to avoid collision
+      sb.AppendLine($"{indent}// Create command instance with bound properties");
+      sb.AppendLine($"{indent}{commandTypeName} __command = new()");
+      sb.AppendLine($"{indent}{{");
 
-    sb.AppendLine($"{indent}}};");
-    sb.AppendLine();
+      foreach (ParameterBinding param in handler.RouteParameters)
+      {
+        string propName = ToPascalCase(param.ParameterName);
+        // Variable name must match what route-matcher-emitter generates:
+        // - Catch-all: __varName_routeIndex to avoid collision with 'args' parameter
+        // - Flags: ToCamelCase of LongForm (handles kebab-case like "no-cache" → "noCache")
+        // - Options (value): property name lowercased (e.g., "configfile" for ConfigFile property)
+        // - Parameters: lowercase of parameter name
+        // Note: Non-unique names need keyword escaping to match route-matcher-emitter
+        string varName = param.Source switch
+        {
+          BindingSource.CatchAll => $"__{ToCamelCase(param.ParameterName)}_{routeIndex}",
+          BindingSource.Flag => CSharpIdentifierUtils.EscapeIfKeyword(ToCamelCase(param.SourceName)),
+          BindingSource.Option => CSharpIdentifierUtils.EscapeIfKeyword(param.ParameterName.ToLowerInvariant()),
+          _ => CSharpIdentifierUtils.EscapeIfKeyword(param.ParameterName.ToLowerInvariant())
+        };
+        sb.AppendLine(
+          $"{indent}  {propName} = {varName},");
+      }
+
+      sb.AppendLine($"{indent}}};");
+      sb.AppendLine();
+    }
 
     // 2. Resolve handler constructor dependencies
     if (handler.ConstructorDependencies.Length > 0)

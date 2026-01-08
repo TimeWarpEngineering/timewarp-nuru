@@ -126,7 +126,9 @@ internal static class BehaviorEmitter
   }
 
   /// <summary>
-  /// Emits command instance creation for delegate routes.
+  /// Emits command instance creation for the behavior context.
+  /// For delegate routes: creates __NuruCommand_{N} instance.
+  /// For attributed routes: creates the command class instance.
   /// </summary>
   private static void EmitCommandCreation(
     StringBuilder sb,
@@ -134,44 +136,65 @@ internal static class BehaviorEmitter
     int routeIndex,
     string indent)
   {
-    // Only emit for delegate routes - attributed routes already have __command
-    if (route.Handler.HandlerKind != HandlerKind.Delegate)
-      return;
-
-    string className = CommandClassEmitter.GetCommandClassName(routeIndex);
-
-    sb.AppendLine($"{indent}// Create command instance for behaviors");
-    sb.AppendLine($"{indent}var __command = new {className}");
-    sb.AppendLine($"{indent}{{");
-
-    // Set route parameter properties
-    foreach (ParameterDefinition param in route.Parameters)
+    if (route.Handler.HandlerKind == HandlerKind.Delegate)
     {
-      string propertyName = ToPascalCase(param.Name);
-      // Variable names must match what route-matcher-emitter generates
-      // Catch-all uses unique name; others need keyword escaping
-      string varName = param.IsCatchAll
-        ? $"__{param.CamelCaseName}_{routeIndex}"
-        : CSharpIdentifierUtils.EscapeIfKeyword(param.CamelCaseName);
+      // Delegate routes: create generated command class
+      string className = CommandClassEmitter.GetCommandClassName(routeIndex);
 
-      sb.AppendLine($"{indent}  {propertyName} = {varName},");
+      sb.AppendLine($"{indent}// Create command instance for behaviors");
+      sb.AppendLine($"{indent}var __command = new {className}");
+      sb.AppendLine($"{indent}{{");
+
+      // Set route parameter properties
+      foreach (ParameterDefinition param in route.Parameters)
+      {
+        string propertyName = ToPascalCase(param.Name);
+        // Variable names must match what route-matcher-emitter generates
+        // Catch-all uses unique name; others need keyword escaping
+        string varName = param.IsCatchAll
+          ? $"__{param.CamelCaseName}_{routeIndex}"
+          : CSharpIdentifierUtils.EscapeIfKeyword(param.CamelCaseName);
+
+        sb.AppendLine($"{indent}  {propertyName} = {varName},");
+      }
+
+      // Set option properties
+      foreach (OptionDefinition option in route.Options)
+      {
+        // Use LongForm as property name
+        string propertyName = ToPascalCase(option.LongForm ?? option.ParameterName ?? "option");
+        // Variable names must match what route-matcher-emitter generates
+        string varName = option.IsFlag
+          ? CSharpIdentifierUtils.EscapeIfKeyword(ToCamelCase(option.LongForm ?? "flag"))
+          : CSharpIdentifierUtils.EscapeIfKeyword(option.ParameterName?.ToLowerInvariant() ?? "value");
+
+        sb.AppendLine($"{indent}  {propertyName} = {varName},");
+      }
+
+      sb.AppendLine($"{indent}}};");
+      sb.AppendLine();
     }
-
-    // Set option properties
-    foreach (OptionDefinition option in route.Options)
+    else if (route.Handler.HandlerKind == HandlerKind.Command)
     {
-      // Use LongForm as property name
-      string propertyName = ToPascalCase(option.LongForm ?? option.ParameterName ?? "option");
-      // Variable names must match what route-matcher-emitter generates
-      string varName = option.IsFlag
-        ? CSharpIdentifierUtils.EscapeIfKeyword(ToCamelCase(option.LongForm ?? "flag"))
-        : CSharpIdentifierUtils.EscapeIfKeyword(option.ParameterName?.ToLowerInvariant() ?? "value");
+      // Attributed routes: create the actual command class instance
+      string commandTypeName = route.Handler.FullTypeName ?? "UnknownCommand";
 
-      sb.AppendLine($"{indent}  {propertyName} = {varName},");
+      sb.AppendLine($"{indent}// Create command instance for behaviors");
+      sb.AppendLine($"{indent}{commandTypeName} __command = new()");
+      sb.AppendLine($"{indent}{{");
+
+      // Bind properties from route parameters
+      foreach (ParameterBinding param in route.Handler.RouteParameters)
+      {
+        string propName = ToPascalCase(param.ParameterName);
+        // Variable name: lowercase of parameter name (e.g., "message" for Message property)
+        string varName = CSharpIdentifierUtils.EscapeIfKeyword(param.ParameterName.ToLowerInvariant());
+        sb.AppendLine($"{indent}  {propName} = {varName},");
+      }
+
+      sb.AppendLine($"{indent}}};");
+      sb.AppendLine();
     }
-
-    sb.AppendLine($"{indent}}};");
-    sb.AppendLine();
   }
 
   /// <summary>

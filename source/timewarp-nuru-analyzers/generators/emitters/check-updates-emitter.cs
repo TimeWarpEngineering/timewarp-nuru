@@ -373,7 +373,7 @@ internal static class CheckUpdatesEmitter
   {
     sb.AppendLine("  [global::System.Text.Json.Serialization.JsonSerializable(typeof(CheckUpdatesGitHubRelease))]");
     sb.AppendLine("  [global::System.Text.Json.Serialization.JsonSerializable(typeof(CheckUpdatesGitHubRelease[]))]");
-    sb.AppendLine("  [global::System.Text.Json.Serialization.JsonSourceGenerationOptions(PropertyNamingPolicy = global::System.Text.Json.JsonKnownNamingPolicy.SnakeCaseLower)]");
+    sb.AppendLine("  [global::System.Text.Json.Serialization.JsonSourceGenerationOptions(PropertyNamingPolicy = global::System.Text.Json.Serialization.JsonKnownNamingPolicy.SnakeCaseLower)]");
     sb.AppendLine("  private partial class CheckUpdatesJsonSerializerContext : global::System.Text.Json.Serialization.JsonSerializerContext;");
   }
 }

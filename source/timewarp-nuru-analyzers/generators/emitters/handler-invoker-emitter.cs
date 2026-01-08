@@ -8,6 +8,23 @@ namespace TimeWarp.Nuru.Generators;
 using System.Text;
 
 /// <summary>
+/// Determines how handler results should be output to the terminal.
+/// </summary>
+internal enum OutputStrategy
+{
+  /// <summary>No output (Unit, void, null).</summary>
+  None,
+  /// <summary>Raw ToString() output (primitives, strings).</summary>
+  Raw,
+  /// <summary>ISO 8601 formatted output (DateTime, DateTimeOffset, DateOnly, TimeOnly).</summary>
+  Iso8601,
+  /// <summary>Culture-invariant formatted output (TimeSpan).</summary>
+  Invariant,
+  /// <summary>JSON serialized output (complex objects, collections).</summary>
+  Json
+}
+
+/// <summary>
 /// Emits code to invoke a route's handler.
 /// Handles different handler kinds: delegate, command, and method.
 /// </summary>
@@ -462,60 +479,175 @@ internal static class HandlerInvokerEmitter
 
   /// <summary>
   /// Emits code to output the handler result to the terminal.
+  /// Uses type-based strategy: Unit/null = no output, primitives = raw, dates = ISO 8601, complex = JSON.
   /// </summary>
   /// <param name="sb">The StringBuilder to append to.</param>
   /// <param name="indent">The indentation string.</param>
-  /// <param name="resultTypeName">Optional result type name to check if null check is needed.</param>
+  /// <param name="resultTypeName">The result type name to determine output strategy.</param>
   private static void EmitResultOutput(StringBuilder sb, string indent, string? resultTypeName = null)
   {
-    // Value types can never be null, so skip the null check for them
-    bool isValueType = IsValueType(resultTypeName);
+    OutputStrategy strategy = GetOutputStrategy(resultTypeName);
+
+    // Unit/void = no output at all
+    if (strategy == OutputStrategy.None)
+      return;
+
+    bool isValueType = IsKnownValueType(resultTypeName);
 
     if (isValueType)
     {
-      // Value types - always have a value, just output directly
-      sb.AppendLine($"{indent}app.Terminal.WriteLine(result.ToString());");
+      // Value types can never be null - output directly
+      EmitOutputForStrategy(sb, indent, strategy, resultTypeName);
     }
     else
     {
       // Reference types - check for null before outputting
       sb.AppendLine($"{indent}if (result is not null)");
       sb.AppendLine($"{indent}{{");
-      sb.AppendLine($"{indent}  app.Terminal.WriteLine(result.ToString());");
+      EmitOutputForStrategy(sb, $"{indent}  ", strategy, resultTypeName);
       sb.AppendLine($"{indent}}}");
     }
   }
 
   /// <summary>
-  /// Determines if a type name represents a value type.
+  /// Emits the actual output code based on the strategy.
   /// </summary>
-  private static bool IsValueType(string? typeName)
+  /// <param name="sb">The StringBuilder to append to.</param>
+  /// <param name="indent">The indentation string.</param>
+  /// <param name="strategy">The output strategy to use.</param>
+  /// <param name="typeName">The type name for JSON serialization context.</param>
+  private static void EmitOutputForStrategy(StringBuilder sb, string indent, OutputStrategy strategy, string? typeName = null)
+  {
+    switch (strategy)
+    {
+      case OutputStrategy.Raw:
+        sb.AppendLine($"{indent}app.Terminal.WriteLine(result.ToString());");
+        break;
+
+      case OutputStrategy.Iso8601:
+        // Use "o" format for round-trip ISO 8601
+        sb.AppendLine($"{indent}app.Terminal.WriteLine(result.ToString(\"o\", global::System.Globalization.CultureInfo.InvariantCulture));");
+        break;
+
+      case OutputStrategy.Invariant:
+        // Use "c" format for culture-invariant (TimeSpan)
+        sb.AppendLine($"{indent}app.Terminal.WriteLine(result.ToString(\"c\", global::System.Globalization.CultureInfo.InvariantCulture));");
+        break;
+
+      case OutputStrategy.Json:
+        // Try JSON serialization with NuruJsonSerializerContext, fall back to ToString() for unknown types
+        // Note: For full AOT support with user-defined types, users should create their own JsonSerializerContext
+        sb.AppendLine($"{indent}try");
+        sb.AppendLine($"{indent}{{");
+        sb.AppendLine($"{indent}  app.Terminal.WriteLine(global::System.Text.Json.JsonSerializer.Serialize(result, global::TimeWarp.Nuru.NuruJsonSerializerContext.Default.Options));");
+        sb.AppendLine($"{indent}}}");
+        sb.AppendLine($"{indent}catch (global::System.NotSupportedException)");
+        sb.AppendLine($"{indent}{{");
+        sb.AppendLine($"{indent}  // Type not in NuruJsonSerializerContext - fall back to ToString()");
+        sb.AppendLine($"{indent}  app.Terminal.WriteLine(result?.ToString() ?? \"\");");
+        sb.AppendLine($"{indent}}}");
+        break;
+    }
+  }
+
+  /// <summary>
+  /// Ensures a type name has the global:: prefix for fully qualified usage.
+  /// </summary>
+  private static string EnsureGlobalPrefix(string typeName)
+  {
+    if (typeName.StartsWith("global::", StringComparison.Ordinal))
+      return typeName;
+
+    // If it's a simple type name (no dots), it's likely a user-defined type in the current namespace
+    // We don't add global:: since it may be a local type
+    if (!typeName.Contains('.', StringComparison.Ordinal))
+      return typeName;
+
+    return $"global::{typeName}";
+  }
+
+  /// <summary>
+  /// Determines the output strategy based on the result type.
+  /// </summary>
+  private static OutputStrategy GetOutputStrategy(string? typeName)
+  {
+    if (string.IsNullOrEmpty(typeName))
+      return OutputStrategy.None;
+
+    return typeName switch
+    {
+      // Unit = no output (void equivalent)
+      "global::TimeWarp.Nuru.Unit" or "Unit" => OutputStrategy.None,
+
+      // String = raw output (no quotes)
+      "global::System.String" or "string" or "String" => OutputStrategy.Raw,
+
+      // Numeric types = raw ToString()
+      "global::System.Int32" or "int" or "Int32" => OutputStrategy.Raw,
+      "global::System.Int64" or "long" or "Int64" => OutputStrategy.Raw,
+      "global::System.Int16" or "short" or "Int16" => OutputStrategy.Raw,
+      "global::System.Byte" or "byte" or "Byte" => OutputStrategy.Raw,
+      "global::System.SByte" or "sbyte" or "SByte" => OutputStrategy.Raw,
+      "global::System.UInt32" or "uint" or "UInt32" => OutputStrategy.Raw,
+      "global::System.UInt64" or "ulong" or "UInt64" => OutputStrategy.Raw,
+      "global::System.UInt16" or "ushort" or "UInt16" => OutputStrategy.Raw,
+      "global::System.Single" or "float" or "Single" => OutputStrategy.Raw,
+      "global::System.Double" or "double" or "Double" => OutputStrategy.Raw,
+      "global::System.Decimal" or "decimal" or "Decimal" => OutputStrategy.Raw,
+      "global::System.Boolean" or "bool" or "Boolean" => OutputStrategy.Raw,
+      "global::System.Char" or "char" or "Char" => OutputStrategy.Raw,
+
+      // Guid = raw (already outputs in standard format)
+      "global::System.Guid" or "Guid" => OutputStrategy.Raw,
+
+      // Date/Time types = ISO 8601 format
+      "global::System.DateTime" or "DateTime" => OutputStrategy.Iso8601,
+      "global::System.DateTimeOffset" or "DateTimeOffset" => OutputStrategy.Iso8601,
+      "global::System.DateOnly" or "DateOnly" => OutputStrategy.Iso8601,
+      "global::System.TimeOnly" or "TimeOnly" => OutputStrategy.Iso8601,
+
+      // TimeSpan = culture-invariant format (not ISO duration)
+      "global::System.TimeSpan" or "TimeSpan" => OutputStrategy.Invariant,
+
+      // Everything else = JSON (complex objects, collections, arrays)
+      _ => OutputStrategy.Json
+    };
+  }
+
+  /// <summary>
+  /// Determines if a type name represents a known value type.
+  /// Used to decide if null checking is needed.
+  /// </summary>
+  private static bool IsKnownValueType(string? typeName)
   {
     if (string.IsNullOrEmpty(typeName))
       return false;
 
-    // Common value types
+    // Note: We can't know if user types are value types without semantic analysis
+    // So we only recognize well-known value types
     return typeName switch
     {
-      "global::System.Int32" or "int" => true,
-      "global::System.Int64" or "long" => true,
-      "global::System.Int16" or "short" => true,
-      "global::System.Byte" or "byte" => true,
-      "global::System.SByte" or "sbyte" => true,
-      "global::System.UInt32" or "uint" => true,
-      "global::System.UInt64" or "ulong" => true,
-      "global::System.UInt16" or "ushort" => true,
-      "global::System.Single" or "float" or "Float" => true,
+      "global::System.Int32" or "int" or "Int32" => true,
+      "global::System.Int64" or "long" or "Int64" => true,
+      "global::System.Int16" or "short" or "Int16" => true,
+      "global::System.Byte" or "byte" or "Byte" => true,
+      "global::System.SByte" or "sbyte" or "SByte" => true,
+      "global::System.UInt32" or "uint" or "UInt32" => true,
+      "global::System.UInt64" or "ulong" or "UInt64" => true,
+      "global::System.UInt16" or "ushort" or "UInt16" => true,
+      "global::System.Single" or "float" or "Single" => true,
       "global::System.Double" or "double" or "Double" => true,
       "global::System.Decimal" or "decimal" or "Decimal" => true,
       "global::System.Boolean" or "bool" or "Boolean" => true,
-      "global::System.Char" or "char" => true,
+      "global::System.Char" or "char" or "Char" => true,
       "global::System.DateTime" or "DateTime" => true,
       "global::System.DateTimeOffset" or "DateTimeOffset" => true,
+      "global::System.DateOnly" or "DateOnly" => true,
+      "global::System.TimeOnly" or "TimeOnly" => true,
       "global::System.TimeSpan" or "TimeSpan" => true,
       "global::System.Guid" or "Guid" => true,
       "global::TimeWarp.Nuru.Unit" or "Unit" => true,
-      _ => false
+      _ => false  // Assume reference type for unknown types (safer - adds null check)
     };
   }
 

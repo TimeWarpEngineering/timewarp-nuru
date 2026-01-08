@@ -168,8 +168,10 @@ internal partial class NuruUserTypesJsonContext
 ### What Works
 
 1. **MSBuild Task** (`GenerateNuruJsonContextTask.cs`):
-   - Parses source files with Roslyn to find `[NuruRoute]` attributed classes
-   - Extracts return types from `ICommand<T>` / `IQuery<T>` interfaces
+   - **Uses the same IR infrastructure as the source generator**
+   - `DslInterpreter` for delegate routes (`.Map(...).WithHandler(...)`)
+   - `AttributedRouteExtractor` for `[NuruRoute]` attributed classes
+   - Extracts return types from `RouteDefinition.Handler.ReturnType`
    - Filters out primitives and Unit types
    - Generates `NuruUserTypesJsonContext.g.cs` to intermediate output
 
@@ -185,18 +187,27 @@ internal partial class NuruUserTypesJsonContext
 ### Test Results
 
 ```bash
-# JSON output for user-defined types now works!
+# JSON output for attributed routes (StatsResponse from [NuruRoute])
 $ dotnet run samples/02-calculator/03-calc-mixed.cs -- stats 1 2 3 4 5
 {"sum":15,"average":3,"min":1,"max":5,"count":5}
+
+# JSON output for delegate routes (ComparisonResult from .Map().WithHandler())
+$ dotnet run samples/02-calculator/03-calc-mixed.cs -- compare 10 5
+{"x":10,"y":5,"isEqual":false,"difference":5,"ratio":2}
 
 # AOT build succeeds without warnings
 $ dotnet publish samples/05-aot-example -c Release
 # Creates ~10MB native binary
 ```
 
-### Key Fix
+### Key Improvements
 
-The initial issue was that `Directory.Build.targets` was in `source/` but samples are in `samples/` (siblings, not nested). Moving the targets to repo root fixed the issue.
+1. **Initial fix**: `Directory.Build.targets` was in `source/` but samples are in `samples/` (siblings, not nested). Moving the targets to repo root fixed the issue.
+
+2. **Reuse of IR infrastructure**: Initially the MSBuild task did its own primitive parsing looking only for `[NuruRoute]` classes. Refactored to use `DslInterpreter` and `AttributedRouteExtractor` - the same components the source generator uses. This ensures:
+   - Single source of truth for route extraction
+   - Both delegate AND attributed routes are handled
+   - Consistent extraction logic
 
 ### Remaining Work (Package Integration)
 

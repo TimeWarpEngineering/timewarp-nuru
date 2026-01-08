@@ -1,5 +1,8 @@
 // MSBuild task that generates a JsonSerializerContext for user-defined return types.
 // Runs before CoreCompile so System.Text.Json source generator can process the output.
+//
+// Uses the same IR infrastructure as the source generator (DslInterpreter, AttributedRouteExtractor)
+// to extract return types from BOTH delegate routes AND attributed routes.
 
 namespace TimeWarp.Nuru.Build;
 
@@ -13,15 +16,23 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
+using TimeWarp.Nuru.Generators;
 
 /// <summary>
 /// MSBuild task that generates a JsonSerializerContext with [JsonSerializable] attributes
-/// for user-defined return types discovered from [NuruRoute] attributed classes.
+/// for user-defined return types discovered from both delegate routes and [NuruRoute] classes.
 /// </summary>
+/// <remarks>
+/// This task uses the same IR infrastructure as the source generator:
+/// - DslInterpreter for delegate routes (.Map(...).WithHandler(...))
+/// - AttributedRouteExtractor for [NuruRoute] attributed classes
+/// This ensures consistent extraction logic and complete coverage of all route types.
+/// </remarks>
 public class GenerateNuruJsonContextTask : Task
 {
   /// <summary>
-  /// Source files to analyze for [NuruRoute] attributes.
+  /// Source files to analyze for routes.
   /// </summary>
   [Required]
   public ITaskItem[] SourceFiles { get; set; } = [];
@@ -120,30 +131,20 @@ public class GenerateNuruJsonContextTask : Task
       references,
       new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
 
-    // 4. Find [NuruRoute] attributed classes and extract return types
+    // 4. Extract return types from all routes using the IR infrastructure
     HashSet<string> jsonTypes = [];
+    CancellationToken cancellationToken = CancellationToken.None;
 
     foreach (SyntaxTree tree in syntaxTrees)
     {
       SemanticModel semanticModel = compilation.GetSemanticModel(tree);
-      SyntaxNode root = tree.GetRoot();
+      CompilationUnitSyntax root = tree.GetCompilationUnitRoot(cancellationToken);
 
-      // Find all class declarations with [NuruRoute] attribute
-      IEnumerable<ClassDeclarationSyntax> classDeclarations = root
-        .DescendantNodes()
-        .OfType<ClassDeclarationSyntax>()
-        .Where(HasNuruRouteAttribute);
+      // 4a. Extract from delegate routes using DslInterpreter
+      ExtractFromDelegateRoutes(root, semanticModel, jsonTypes, cancellationToken);
 
-      foreach (ClassDeclarationSyntax classDecl in classDeclarations)
-      {
-        // Extract return type from ICommand<T> or IQuery<T> base interface
-        string? returnType = ExtractReturnType(classDecl, semanticModel);
-        if (!string.IsNullOrEmpty(returnType) && ShouldSerializeAsJson(returnType))
-        {
-          jsonTypes.Add(returnType);
-          Log.LogMessage(MessageImportance.Low, $"TimeWarp.Nuru.Build: Found JSON type: {returnType}");
-        }
-      }
+      // 4b. Extract from [NuruRoute] attributed classes
+      ExtractFromAttributedRoutes(root, semanticModel, jsonTypes, cancellationToken);
     }
 
     // 5. If no types need JSON serialization, skip generation
@@ -175,6 +176,127 @@ public class GenerateNuruJsonContextTask : Task
   }
 
   /// <summary>
+  /// Extracts return types from delegate routes using DslInterpreter.
+  /// </summary>
+  private void ExtractFromDelegateRoutes(
+    CompilationUnitSyntax root,
+    SemanticModel semanticModel,
+    HashSet<string> jsonTypes,
+    CancellationToken cancellationToken)
+  {
+    try
+    {
+      // Use DslInterpreter for top-level statements
+      DslInterpreter interpreter = new(semanticModel, cancellationToken);
+      IReadOnlyList<AppModel> models = interpreter.InterpretTopLevelStatements(root);
+
+      foreach (AppModel model in models)
+      {
+        foreach (RouteDefinition route in model.Routes)
+        {
+          string? returnTypeName = GetReturnTypeName(route.Handler.ReturnType);
+          if (!string.IsNullOrEmpty(returnTypeName) && ShouldSerializeAsJson(returnTypeName))
+          {
+            jsonTypes.Add(returnTypeName);
+            Log.LogMessage(MessageImportance.Low, $"TimeWarp.Nuru.Build: Found JSON type from delegate route: {returnTypeName}");
+          }
+        }
+      }
+
+      // Also check for method bodies containing DSL code
+      foreach (MethodDeclarationSyntax method in root.DescendantNodes().OfType<MethodDeclarationSyntax>())
+      {
+        if (method.Body is not null)
+        {
+          try
+          {
+            IReadOnlyList<AppModel> methodModels = interpreter.Interpret(method.Body);
+            foreach (AppModel model in methodModels)
+            {
+              foreach (RouteDefinition route in model.Routes)
+              {
+                string? returnTypeName = GetReturnTypeName(route.Handler.ReturnType);
+                if (!string.IsNullOrEmpty(returnTypeName) && ShouldSerializeAsJson(returnTypeName))
+                {
+                  jsonTypes.Add(returnTypeName);
+                  Log.LogMessage(MessageImportance.Low, $"TimeWarp.Nuru.Build: Found JSON type from delegate route in method: {returnTypeName}");
+                }
+              }
+            }
+          }
+          catch
+          {
+            // Method doesn't contain DSL code - that's fine, continue
+          }
+        }
+      }
+    }
+    catch (Exception ex)
+    {
+      // DSL interpretation failed - log and continue with attributed routes
+      Log.LogMessage(MessageImportance.Low, $"TimeWarp.Nuru.Build: DSL interpretation skipped: {ex.Message}");
+    }
+  }
+
+  /// <summary>
+  /// Extracts return types from [NuruRoute] attributed classes using AttributedRouteExtractor.
+  /// </summary>
+  private void ExtractFromAttributedRoutes(
+    CompilationUnitSyntax root,
+    SemanticModel semanticModel,
+    HashSet<string> jsonTypes,
+    CancellationToken cancellationToken)
+  {
+    // Find all class declarations with [NuruRoute] attribute
+    IEnumerable<ClassDeclarationSyntax> classDeclarations = root
+      .DescendantNodes()
+      .OfType<ClassDeclarationSyntax>()
+      .Where(HasNuruRouteAttribute);
+
+    foreach (ClassDeclarationSyntax classDecl in classDeclarations)
+    {
+      try
+      {
+        // Use AttributedRouteExtractor to get the full RouteDefinition
+        RouteDefinition? route = AttributedRouteExtractor.Extract(classDecl, semanticModel, cancellationToken);
+        if (route is not null)
+        {
+          string? returnTypeName = GetReturnTypeName(route.Handler.ReturnType);
+          if (!string.IsNullOrEmpty(returnTypeName) && ShouldSerializeAsJson(returnTypeName))
+          {
+            jsonTypes.Add(returnTypeName);
+            Log.LogMessage(MessageImportance.Low, $"TimeWarp.Nuru.Build: Found JSON type from [NuruRoute]: {returnTypeName}");
+          }
+        }
+      }
+      catch (Exception ex)
+      {
+        Log.LogMessage(MessageImportance.Low, $"TimeWarp.Nuru.Build: Failed to extract attributed route from {classDecl.Identifier}: {ex.Message}");
+      }
+    }
+  }
+
+  /// <summary>
+  /// Gets the actual return type name from a HandlerReturnType.
+  /// For Task&lt;T&gt;, returns T. For non-async, returns the full type name.
+  /// </summary>
+  private static string? GetReturnTypeName(HandlerReturnType returnType)
+  {
+    if (returnType.IsVoid)
+      return null;
+
+    // For Task<T>, use the unwrapped type
+    if (returnType.IsTask && returnType.UnwrappedTypeName is not null)
+      return returnType.UnwrappedTypeName;
+
+    // For non-async with a value
+    if (!returnType.IsTask && returnType.FullTypeName != "void")
+      return returnType.FullTypeName;
+
+    return null;
+  }
+
+  /// <summary>
   /// Checks if a class declaration has a [NuruRoute] attribute.
   /// </summary>
   private static bool HasNuruRouteAttribute(ClassDeclarationSyntax classDecl)
@@ -188,40 +310,6 @@ public class GenerateNuruJsonContextTask : Task
           || name.EndsWith(".NuruRoute", StringComparison.Ordinal)
           || name.EndsWith(".NuruRouteAttribute", StringComparison.Ordinal);
       });
-  }
-
-  /// <summary>
-  /// Extracts the return type T from ICommand&lt;T&gt; or IQuery&lt;T&gt; base interface.
-  /// </summary>
-  private static string? ExtractReturnType(ClassDeclarationSyntax classDecl, SemanticModel semanticModel)
-  {
-    if (classDecl.BaseList is null)
-      return null;
-
-    foreach (BaseTypeSyntax baseType in classDecl.BaseList.Types)
-    {
-      // Look for ICommand<T> or IQuery<T>
-      if (baseType.Type is GenericNameSyntax genericName)
-      {
-        string name = genericName.Identifier.Text;
-        if (name is "ICommand" or "IQuery" && genericName.TypeArgumentList.Arguments.Count == 1)
-        {
-          TypeSyntax typeArg = genericName.TypeArgumentList.Arguments[0];
-
-          // Try to get the fully qualified type name
-          SymbolInfo symbolInfo = semanticModel.GetSymbolInfo(typeArg);
-          if (symbolInfo.Symbol is ITypeSymbol typeSymbol)
-          {
-            return typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-          }
-
-          // Fall back to syntax text
-          return typeArg.ToString();
-        }
-      }
-    }
-
-    return null;
   }
 
   /// <summary>

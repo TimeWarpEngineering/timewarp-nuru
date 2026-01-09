@@ -175,6 +175,16 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
   }
 
   /// <summary>
+  /// No-op for AddTypeConverter (runtime only).
+  /// Mirrors: NuruCoreAppBuilder.AddTypeConverter()
+  /// </summary>
+  public TSelf AddTypeConverter()
+  {
+    // No-op - type converters are runtime only
+    return (TSelf)this;
+  }
+
+  /// <summary>
   /// Begins mapping a new route.
   /// Mirrors: NuruCoreAppBuilder.Map()
   /// </summary>
@@ -276,6 +286,7 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
   IIrAppBuilder IIrAppBuilder.AddBehavior(BehaviorDefinition behavior) => AddBehavior(behavior);
   IIrAppBuilder IIrAppBuilder.AddService(ServiceDefinition service) => AddService(service);
   IIrAppBuilder IIrAppBuilder.UseTerminal() => UseTerminal();
+  IIrAppBuilder IIrAppBuilder.AddTypeConverter() => AddTypeConverter();
   IIrAppBuilder IIrAppBuilder.AddInterceptSite(InterceptSiteModel site) => AddInterceptSite(site);
 }
 

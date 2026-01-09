@@ -105,6 +105,12 @@ public interface IIrAppBuilder : IIrRouteSource
   IIrAppBuilder UseTerminal();
 
   /// <summary>
+  /// No-op for AddTypeConverter (runtime only).
+  /// </summary>
+  /// <returns>This builder for chaining.</returns>
+  IIrAppBuilder AddTypeConverter();
+
+  /// <summary>
   /// Adds an intercept site from a RunAsync() call.
   /// </summary>
   /// <param name="site">The intercept site model.</param>

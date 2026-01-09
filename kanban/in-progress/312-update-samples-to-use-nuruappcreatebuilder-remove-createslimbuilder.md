@@ -27,7 +27,7 @@ These samples have been verified working with the new API:
 - [x] `08-testing/04-debug-test.cs` - Updated from CreateSlimBuilder, renamed
 - [x] `08-testing/runfile-test-harness/real-app.cs` - Fixed in #320 (method reference handlers)
 - [x] `10-type-converters/01-builtin-types.cs` - Working, demonstrates 15 built-in types
-- [ ] `10-type-converters/02-custom-type-converters.cs` - **Blocked by #328** - Generator doesn't recognize `AddTypeConverter()`
+- [ ] `10-type-converters/02-custom-type-converters.cs` - **Blocked by #329** - Generator uses constraint name instead of handler type
 
 ## Samples Needing Updates
 
@@ -47,7 +47,8 @@ These samples have been verified working with the new API:
 - [x] `09-configuration/04-user-secrets-property.cs` - Migrated to DSL API
 
 ### Generator DSL support issues
-- [ ] `10-type-converters/02-custom-type-converters.cs` - **Blocked by #328** - Generator throws `Unrecognized DSL method: AddTypeConverter`
+- [x] `10-type-converters/02-custom-type-converters.cs` - #328 fixed `AddTypeConverter` DSL recognition
+- [ ] `10-type-converters/02-custom-type-converters.cs` - **Blocked by #329** - Generator uses constraint name instead of handler parameter type
 
 ### Pipeline Middleware Samples - DONE
 - [x] `07-pipeline-middleware/*` - All 6 samples working (completed in #315)

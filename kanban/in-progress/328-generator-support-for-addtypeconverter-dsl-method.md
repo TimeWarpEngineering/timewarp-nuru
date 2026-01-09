@@ -23,10 +23,11 @@ just needs to pass through this call without modifying the IR model.
 
 ## Checklist
 
-- [ ] Add `"AddTypeConverter"` case to `DispatchMethodCall` switch in `dsl-interpreter.cs`
-- [ ] Implement `DispatchAddTypeConverter` that returns the receiver unchanged (passthrough)
-- [ ] Verify `02-custom-type-converters.cs` sample works
-- [ ] Add generator test for `AddTypeConverter` DSL method
+- [x] Add `"AddTypeConverter"` case to `DispatchMethodCall` switch in `dsl-interpreter.cs`
+- [x] Implement `DispatchAddTypeConverter` that returns the receiver unchanged (passthrough)
+- [x] Add `AddTypeConverter()` to `IIrAppBuilder` interface and `IrAppBuilder` implementation
+- [x] Add generator test for `AddTypeConverter` DSL method
+- [ ] Verify `02-custom-type-converters.cs` sample works - **Blocked by #329**
 
 ## Notes
 
@@ -38,3 +39,9 @@ For now, a simple passthrough is sufficient since custom type converters work at
 generator just needs to not fail when it sees this method call.
 
 Discovered during #312 sample migration work.
+
+## Follow-up Issue
+
+After fixing the "Unrecognized DSL method" error, a new issue emerged: the generator uses constraint
+names (e.g., `email`, `hexcolor`, `semver`) as type names instead of the actual handler parameter types
+(e.g., `EmailAddress`, `HexColor`, `SemanticVersion`). This is tracked in **#329**.

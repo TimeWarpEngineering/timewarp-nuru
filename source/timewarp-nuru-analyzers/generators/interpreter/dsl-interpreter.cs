@@ -307,6 +307,8 @@ public sealed class DslInterpreter
 
       "UseTerminal" => DispatchUseTerminal(receiver),
 
+      "AddTypeConverter" => DispatchAddTypeConverter(receiver),
+
       "WithAlias" => DispatchWithAlias(invocation, receiver),
 
       "Implements" => DispatchImplements(invocation, receiver),
@@ -699,6 +701,20 @@ public sealed class DslInterpreter
     }
 
     return appBuilder.UseTerminal();
+  }
+
+  /// <summary>
+  /// Dispatches AddTypeConverter() call to IIrAppBuilder.
+  /// This is a no-op - type converters are registered at runtime only.
+  /// </summary>
+  private static object? DispatchAddTypeConverter(object? receiver)
+  {
+    if (receiver is not IIrAppBuilder appBuilder)
+    {
+      throw new InvalidOperationException("AddTypeConverter() must be called on an app builder.");
+    }
+
+    return appBuilder.AddTypeConverter();
   }
 
   /// <summary>

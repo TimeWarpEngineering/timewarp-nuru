@@ -281,6 +281,56 @@ public sealed class InterpreterMethodsTests
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
+  // 4.7.1 TYPE CONVERTERS: AddTypeConverter (no-op)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  public static async Task Should_interpret_AddTypeConverter_as_noop()
+  {
+    await Task.CompletedTask;
+
+    // Arrange
+    string source = """
+      using System;
+      using System.Threading.Tasks;
+      using TimeWarp.Nuru;
+
+      public class MyConverter : IRouteTypeConverter
+      {
+        public Type TargetType => typeof(string);
+        public string ConstraintName => "custom";
+        public bool TryConvert(string value, out object? result) { result = value; return true; }
+      }
+
+      public class Program
+      {
+        public static async Task Main()
+        {
+          NuruCoreApp app = NuruApp.CreateBuilder([])
+            .AddTypeConverter(new MyConverter())
+            .Map("ping")
+              .WithHandler(() => "pong")
+              .AsQuery()
+              .Done()
+            .Build();
+
+          await app.RunAsync(["ping"]);
+        }
+      }
+      """;
+
+    (SemanticModel semanticModel, BlockSyntax mainBlock) = CompileAndGetMainBlock(source);
+
+    // Act
+    DslInterpreter interpreter = new(semanticModel, CancellationToken.None);
+    IReadOnlyList<AppModel> results = interpreter.Interpret(mainBlock);
+
+    // Assert - AddTypeConverter should be ignored, app should still work
+    results.Count.ShouldBe(1);
+    AppModel result = results[0];
+    result.Routes.Length.ShouldBe(1, "Should have one route");
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
   // 4.8 ROUTE-LEVEL: WithAlias
   // ═══════════════════════════════════════════════════════════════════════════
 

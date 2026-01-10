@@ -21,7 +21,6 @@
     <PackageReference Include="Shouldly" />
     <PackageReference Include="Microsoft.Extensions.Logging" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" />
-    <PackageReference Include="Mediator.Abstractions" />
     <Using Include="Shouldly" />
     <Using Include="System.Console" Static="true" />
     <Using Include="System.Collections.Concurrent" />
@@ -30,9 +29,9 @@
     <Using Include="TimeWarp.Jaribu" />
     <Using Include="TimeWarp.Jaribu.TestRunner" Static="true" />
     <Using Include="TimeWarp.Nuru" />
+    <Using Include="TimeWarp.Nuru.Unit" Static="true" />
     <Using Include="TimeWarp.Terminal" />
     <Using Include="Microsoft.Extensions.Logging" />
-    <Using Include="Mediator" />
     <Using Include="System.Runtime.CompilerServices" />
   </ItemGroup>
 

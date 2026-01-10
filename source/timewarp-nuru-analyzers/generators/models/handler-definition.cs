@@ -144,7 +144,7 @@ public enum HandlerKind
   Delegate,
 
   /// <summary>
-  /// A command/query with nested Handler class pattern (no external Mediator library).
+  /// A command/query with nested Handler class pattern.
   /// </summary>
   Command,
 

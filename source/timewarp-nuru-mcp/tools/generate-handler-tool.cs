@@ -10,15 +10,15 @@ internal sealed class GenerateHandlerTool
   [Description("Generate a handler function from a route pattern")]
   public static string GenerateHandler(
       [Description("Route pattern (e.g., 'deploy {env} --force')")] string pattern,
-      [Description("Use mediator pattern instead of direct delegates")] bool useMediator = false)
+      [Description("Use command/handler pattern instead of direct delegates")] bool useCommand = false)
   {
     try
     {
       CompiledRoute route = PatternParser.Parse(pattern);
 
-      if (useMediator)
+      if (useCommand)
       {
-        return GenerateMediatorHandler(pattern, route);
+        return GenerateCommandHandler(pattern, route);
       }
       else
       {
@@ -116,7 +116,7 @@ internal sealed class GenerateHandlerTool
     return sb.ToString();
   }
 
-  private static string GenerateMediatorHandler(string pattern, CompiledRoute route)
+  private static string GenerateCommandHandler(string pattern, CompiledRoute route)
   {
     StringBuilder sb = new();
     List<ParameterInfo> parameters = ExtractParameters(route);
@@ -125,75 +125,71 @@ internal sealed class GenerateHandlerTool
     string commandName = GenerateCommandName(pattern);
 
     sb.AppendLine(CultureInfo.InvariantCulture, $"// Route: {pattern}");
-    sb.AppendLine("// Mediator Pattern Implementation");
+    sb.AppendLine("// Command/Handler Pattern Implementation");
+    sb.AppendLine("// Uses [NuruRoute] attribute with nested Handler class");
     sb.AppendLine();
 
-    // Generate the Command class
-    sb.AppendLine(CultureInfo.InvariantCulture, $"public sealed class {commandName}Command : IRequest");
+    // Generate the Command class with nested Handler
+    sb.AppendLine(CultureInfo.InvariantCulture, $"[NuruRoute(\"{pattern}\", Description = \"TODO: Add description\")]");
+    sb.AppendLine(CultureInfo.InvariantCulture, $"public sealed class {commandName}Command : ICommand<Unit>");
     sb.AppendLine("{");
 
+    // Properties from route parameters
     foreach (ParameterInfo param in parameters)
     {
-      sb.AppendLine(CultureInfo.InvariantCulture, $"    public {param.Type} {param.PropertyName} {{ get; set; }}");
+      if (param.IsOption && param.IsFlag)
+      {
+        sb.AppendLine(CultureInfo.InvariantCulture, $"    [Option(\"{param.DisplayName}\")]");
+      }
+      else if (param.IsOption)
+      {
+        sb.AppendLine(CultureInfo.InvariantCulture, $"    [Option(\"{param.DisplayName}\")]");
+      }
+
+      string nullableMarker = param.IsOptional ? "?" : "";
+      string requiredMarker = param.IsOptional ? "" : "required ";
+      sb.AppendLine(CultureInfo.InvariantCulture, $"    public {requiredMarker}{param.Type}{nullableMarker} {param.PropertyName} {{ get; set; }}");
+      sb.AppendLine();
     }
 
-    sb.AppendLine("}");
-    sb.AppendLine();
-
-    // Generate the Handler class
-    sb.AppendLine(CultureInfo.InvariantCulture, $"public sealed class {commandName}Handler : IRequestHandler<{commandName}Command>");
-    sb.AppendLine("{");
-    sb.AppendLine(CultureInfo.InvariantCulture, $"    public async Task Handle({commandName}Command request, CancellationToken cancellationToken)");
+    // Nested Handler class
+    sb.AppendLine(CultureInfo.InvariantCulture, $"    internal sealed class Handler : ICommandHandler<{commandName}Command, Unit>");
     sb.AppendLine("    {");
-    sb.AppendLine("        // TODO: Implement handler logic");
+    sb.AppendLine("        private readonly ITerminal Terminal;");
+    sb.AppendLine();
+    sb.AppendLine("        public Handler(ITerminal terminal)");
+    sb.AppendLine("        {");
+    sb.AppendLine("            Terminal = terminal;");
+    sb.AppendLine("        }");
+    sb.AppendLine();
+    sb.AppendLine(CultureInfo.InvariantCulture, $"        public ValueTask<Unit> Handle({commandName}Command command, CancellationToken ct)");
+    sb.AppendLine("        {");
+    sb.AppendLine("            // TODO: Implement handler logic");
 
     if (parameters.Count > 0)
     {
       sb.AppendLine();
       foreach (ParameterInfo param in parameters)
       {
-        sb.AppendLine(CultureInfo.InvariantCulture, $"        Console.WriteLine(\"{param.DisplayName}: {{0}}\", request.{param.PropertyName});");
+        sb.AppendLine(CultureInfo.InvariantCulture, $"            Terminal.WriteLine($\"{param.DisplayName}: {{command.{param.PropertyName}}}\");");
       }
     }
 
     sb.AppendLine();
-    sb.AppendLine("        await Task.CompletedTask;");
+    sb.AppendLine("            return new ValueTask<Unit>(Unit.Value);");
+    sb.AppendLine("        }");
     sb.AppendLine("    }");
     sb.AppendLine("}");
     sb.AppendLine();
 
-    // Generate the app setup with CreateBuilder
+    // Generate the app setup
     sb.AppendLine("// ═══════════════════════════════════════════════════════════════");
-    sb.AppendLine("// App setup using CreateBuilder pattern");
+    sb.AppendLine("// App setup - commands are auto-discovered from [NuruRoute] attributes");
     sb.AppendLine("// ═══════════════════════════════════════════════════════════════");
-    sb.AppendLine("// CreateBuilder auto-enables: Telemetry, REPL, Dynamic Shell Completion, Interactive routes");
-    sb.AppendLine("// To customize completion, use: new NuruAppOptions { ConfigureCompletion = registry => ... }");
     sb.AppendLine();
-    sb.AppendLine("NuruAppBuilder builder = NuruApp.CreateBuilder(args);");
-    sb.AppendLine();
-    sb.AppendLine("builder.ConfigureServices(services =>");
-    sb.AppendLine("{");
-    sb.AppendLine(CultureInfo.InvariantCulture, $"    services.AddTransient<IRequestHandler<{commandName}Command>, {commandName}Handler>();");
-    sb.AppendLine("});");
-    sb.AppendLine();
-
-    // Generate the route registration
-    sb.Append(CultureInfo.InvariantCulture, $"builder.Map<{commandName}Command>(\"{pattern}\"");
-
-    if (parameters.Count > 0)
-    {
-      sb.AppendLine(",");
-      sb.Append("    (");
-      sb.AppendJoin(", ", parameters.Select(p => $"{p.Type} {p.Name}"));
-      sb.Append(") => new() { ");
-      sb.AppendJoin(", ", parameters.Select(p => $"{p.PropertyName} = {p.Name}"));
-      sb.Append(" }");
-    }
-
-    sb.AppendLine(", \"TODO: Add route description\");");
-    sb.AppendLine();
-    sb.AppendLine("NuruCoreApp app = builder.Build();");
-    sb.AppendLine("return await app.RunAsync(args);");
+    sb.AppendLine("return await NuruApp.CreateBuilder(args)");
+    sb.AppendLine("    .Build()");
+    sb.AppendLine("    .RunAsync(args);");
 
     return sb.ToString();
   }

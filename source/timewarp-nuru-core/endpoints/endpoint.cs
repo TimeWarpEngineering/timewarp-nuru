@@ -16,12 +16,12 @@ public class Endpoint
   public required CompiledRoute CompiledRoute { get; set; }
   /// <summary>
   /// Gets or sets the handler delegate that will be invoked when this endpoint is matched.
-  /// For Mediator commands, this will be null and CommandType will be used instead.
+  /// For command-based routes, this will be null and CommandType will be used instead.
   /// </summary>
   public Delegate? Handler { get; set; }
   /// <summary>
   /// Gets or sets the method info for the handler (used for parameter binding).
-  /// For Mediator commands, this will be null.
+  /// For command-based routes, this will be null.
   /// </summary>
   public MethodInfo? Method { get; set; }
   /// <summary>
@@ -33,7 +33,7 @@ public class Endpoint
   /// </summary>
   public string? Description { get; set; }
   /// <summary>
-  /// Gets or sets the command type if this is a command-based route (using Mediator pattern).
+  /// Gets or sets the command type if this is a command-based route (using nested Handler pattern).
   /// If null, this is a delegate-based route.
   /// </summary>
   [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
@@ -48,7 +48,7 @@ public class Endpoint
   /// Gets the execution strategy for this endpoint based on its configuration.
   /// </summary>
   public ExecutionStrategy Strategy =>
-    CommandType is not null ? ExecutionStrategy.Mediator :
+    CommandType is not null ? ExecutionStrategy.Command :
     Handler is not null ? ExecutionStrategy.Delegate :
     ExecutionStrategy.Invalid;
 

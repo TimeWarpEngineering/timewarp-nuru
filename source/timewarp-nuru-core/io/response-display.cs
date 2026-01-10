@@ -27,8 +27,7 @@ public static class ResponseDisplay
     Type responseType = response.GetType();
 
     // Check if this is Unit.Value (represents no return value)
-    // martinothamar/Mediator uses Mediator namespace
-    if (responseType.Name == "Unit" && responseType.Namespace == "Mediator")
+    if (responseType.Name == "Unit" && responseType.Namespace == "TimeWarp.Nuru")
       return;
 
     // Simple types - display directly

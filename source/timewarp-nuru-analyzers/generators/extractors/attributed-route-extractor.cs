@@ -504,7 +504,7 @@ internal static class AttributedRouteExtractor
 
   /// <summary>
   /// Extracts filter interfaces from the command class.
-  /// Excludes Mediator interfaces (ICommand, IQuery, etc.) as those are for message typing, not behavior filtering.
+  /// Excludes message interfaces (ICommand, IQuery, etc.) as those are for message typing, not behavior filtering.
   /// </summary>
   private static ImmutableArray<InterfaceImplementationDefinition> ExtractFilterInterfaces
   (
@@ -522,9 +522,9 @@ internal static class AttributedRouteExtractor
 
     foreach (INamedTypeSymbol iface in classSymbol.AllInterfaces)
     {
-      // Skip Mediator message interfaces
+      // Skip Nuru message interfaces (ICommand, IQuery, etc.)
       string interfaceName = iface.Name;
-      if (IsMediatorInterface(interfaceName))
+      if (IsMessageInterface(interfaceName))
         continue;
 
       // Skip common .NET interfaces
@@ -544,9 +544,10 @@ internal static class AttributedRouteExtractor
   }
 
   /// <summary>
-  /// Checks if an interface is a Mediator message interface.
+  /// Checks if an interface is a Nuru message interface (ICommand, IQuery, etc.).
+  /// These are for message typing, not behavior filtering.
   /// </summary>
-  private static bool IsMediatorInterface(string interfaceName)
+  private static bool IsMessageInterface(string interfaceName)
   {
     return interfaceName is "ICommand" or "IQuery" or "IIdempotentCommand"
         || interfaceName.StartsWith("ICommand`", StringComparison.Ordinal)

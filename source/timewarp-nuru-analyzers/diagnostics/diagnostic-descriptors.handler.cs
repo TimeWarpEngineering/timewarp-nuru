@@ -32,7 +32,7 @@ internal static partial class DiagnosticDescriptors
     category: HandlerCategory,
     defaultSeverity: DiagnosticSeverity.Warning,
     isEnabledByDefault: true,
-    description: "Lambda handlers cannot capture variables from the enclosing scope. The Mediator handler will not be generated for this route. Pass dependencies as handler parameters and they will be injected from the DI container. For test code that intentionally uses closures, suppress with #pragma warning disable NURU_H002.");
+    description: "Lambda handlers cannot capture variables from the enclosing scope. The handler will not be generated for this route. Pass dependencies as handler parameters and they will be injected. For test code that intentionally uses closures, suppress with #pragma warning disable NURU_H002.");
 
   /// <summary>
   /// NURU_H003: Unsupported handler expression type.
@@ -58,7 +58,7 @@ internal static partial class DiagnosticDescriptors
     category: HandlerCategory,
     defaultSeverity: DiagnosticSeverity.Warning,
     isEnabledByDefault: true,
-    description: "Private methods cannot be called from generated Mediator handlers. The route will use the delegate invoker instead. To generate a Mediator handler, make the method internal or public.");
+    description: "Private methods cannot be called from generated handlers. The route will use the delegate invoker instead. To generate a handler, make the method internal or public.");
 
   /// <summary>
   /// NURU_H005: Handler parameter name doesn't match route segment.

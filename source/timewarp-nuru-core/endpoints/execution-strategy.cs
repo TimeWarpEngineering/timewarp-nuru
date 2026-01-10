@@ -6,9 +6,9 @@ namespace TimeWarp.Nuru;
 public enum ExecutionStrategy
 {
   /// <summary>
-  /// Execute through Mediator pattern (requires dependency injection).
+  /// Execute through command/handler pattern with nested Handler class.
   /// </summary>
-  Mediator,
+  Command,
   /// <summary>
   /// Execute as a direct delegate.
   /// </summary>

@@ -24,7 +24,7 @@ public partial class NuruCoreAppBuilder<TSelf>
 
   /// <summary>
   /// Gets the service collection. Throws if dependency injection has not been added.
-  /// Call AddDependencyInjection() first to enable DI and Mediator support.
+  /// Call AddDependencyInjection() first to enable DI support.
   /// </summary>
   public IServiceCollection Services
   {

@@ -13,7 +13,7 @@ public interface IQueryHandler<TQuery, TResult> where TQuery : IQuery<TResult>
   /// <param name="query">The query to handle.</param>
   /// <param name="cancellationToken">Cancellation token.</param>
   /// <returns>The query result.</returns>
-#pragma warning disable RCS1046 // Async suffix - following MediatR/Mediator convention for Handle method
+#pragma warning disable RCS1046 // Async suffix - Handle is the conventional name for handler methods
   ValueTask<TResult> Handle(TQuery query, CancellationToken cancellationToken);
 #pragma warning restore RCS1046
 }
@@ -31,7 +31,7 @@ public interface ICommandHandler<TCommand, TResult> where TCommand : ICommand<TR
   /// <param name="command">The command to handle.</param>
   /// <param name="cancellationToken">Cancellation token.</param>
   /// <returns>The command result.</returns>
-#pragma warning disable RCS1046 // Async suffix - following MediatR/Mediator convention for Handle method
+#pragma warning disable RCS1046 // Async suffix - Handle is the conventional name for handler methods
   ValueTask<TResult> Handle(TCommand command, CancellationToken cancellationToken);
 #pragma warning restore RCS1046
 }
@@ -49,7 +49,7 @@ public interface IIdempotentCommandHandler<TCommand, TResult> where TCommand : I
   /// <param name="command">The command to handle.</param>
   /// <param name="cancellationToken">Cancellation token.</param>
   /// <returns>The command result.</returns>
-#pragma warning disable RCS1046 // Async suffix - following MediatR/Mediator convention for Handle method
+#pragma warning disable RCS1046 // Async suffix - Handle is the conventional name for handler methods
   ValueTask<TResult> Handle(TCommand command, CancellationToken cancellationToken);
 #pragma warning restore RCS1046
 }

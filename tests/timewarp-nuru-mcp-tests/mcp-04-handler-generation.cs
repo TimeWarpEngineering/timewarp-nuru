@@ -20,7 +20,7 @@ public sealed class HandlerGenerationTests
     string pattern = "status";
 
     // Act
-    string result = GenerateHandlerTool.GenerateHandler(pattern, useMediator: false);
+    string result = GenerateHandlerTool.GenerateHandler(pattern, useCommand: false);
 
     // Assert
     result.ShouldContain("Map");
@@ -37,7 +37,7 @@ public sealed class HandlerGenerationTests
     string pattern = "greet {name}";
 
     // Act
-    string result = GenerateHandlerTool.GenerateHandler(pattern, useMediator: false);
+    string result = GenerateHandlerTool.GenerateHandler(pattern, useCommand: false);
 
     // Assert
     result.ShouldContain("Map");
@@ -54,7 +54,7 @@ public sealed class HandlerGenerationTests
     string pattern = "deploy {env} {tag?}";
 
     // Act
-    string result = GenerateHandlerTool.GenerateHandler(pattern, useMediator: false);
+    string result = GenerateHandlerTool.GenerateHandler(pattern, useCommand: false);
 
     // Assert
     result.ShouldContain("Map");
@@ -71,7 +71,7 @@ public sealed class HandlerGenerationTests
     string pattern = "wait {seconds:int}";
 
     // Act
-    string result = GenerateHandlerTool.GenerateHandler(pattern, useMediator: false);
+    string result = GenerateHandlerTool.GenerateHandler(pattern, useCommand: false);
 
     // Assert
     result.ShouldContain("Map");
@@ -88,7 +88,7 @@ public sealed class HandlerGenerationTests
     string pattern = "build --verbose";
 
     // Act
-    string result = GenerateHandlerTool.GenerateHandler(pattern, useMediator: false);
+    string result = GenerateHandlerTool.GenerateHandler(pattern, useCommand: false);
 
     // Assert
     result.ShouldContain("Map");
@@ -105,7 +105,7 @@ public sealed class HandlerGenerationTests
     string pattern = "test {project} --filter {pattern}";
 
     // Act
-    string result = GenerateHandlerTool.GenerateHandler(pattern, useMediator: false);
+    string result = GenerateHandlerTool.GenerateHandler(pattern, useCommand: false);
 
     // Assert
     result.ShouldContain("Map");
@@ -122,7 +122,7 @@ public sealed class HandlerGenerationTests
     string pattern = "docker {*args}";
 
     // Act
-    string result = GenerateHandlerTool.GenerateHandler(pattern, useMediator: false);
+    string result = GenerateHandlerTool.GenerateHandler(pattern, useCommand: false);
 
     // Assert
     result.ShouldContain("Map");
@@ -139,7 +139,7 @@ public sealed class HandlerGenerationTests
     string pattern = "backup {source} --output,-o {dest} --compress,-c";
 
     // Act
-    string result = GenerateHandlerTool.GenerateHandler(pattern, useMediator: false);
+    string result = GenerateHandlerTool.GenerateHandler(pattern, useCommand: false);
 
     // Assert
     result.ShouldContain("Map");
@@ -151,56 +151,55 @@ public sealed class HandlerGenerationTests
     await Task.CompletedTask;
   }
 
-  public static async Task Should_generate_mediator_handler_for_simple_pattern()
+  public static async Task Should_generate_command_handler_for_simple_pattern()
   {
     // Arrange
     string pattern = "deploy {env}";
 
     // Act
-    string result = GenerateHandlerTool.GenerateHandler(pattern, useMediator: true);
+    string result = GenerateHandlerTool.GenerateHandler(pattern, useCommand: true);
 
     // Assert
     result.ShouldContain("public sealed class");
-    result.ShouldContain("IRequest");
-    result.ShouldContain("IRequestHandler");
-    result.ShouldContain("Map<");
-    result.ShouldContain("string env");
+    result.ShouldContain("ICommand<Unit>");
+    result.ShouldContain("ICommandHandler<");
+    result.ShouldContain("[NuruRoute(");
+    result.ShouldContain("Env");
     result.ShouldNotContain("// Error");
 
     await Task.CompletedTask;
   }
 
-  public static async Task Should_generate_mediator_handler_with_optional_parameter()
+  public static async Task Should_generate_command_handler_with_optional_parameter()
   {
     // Arrange
     string pattern = "backup {source} {dest?}";
 
     // Act
-    string result = GenerateHandlerTool.GenerateHandler(pattern, useMediator: true);
+    string result = GenerateHandlerTool.GenerateHandler(pattern, useCommand: true);
 
     // Assert
     result.ShouldContain("public sealed class");
-    result.ShouldContain("string? dest");
-    result.ShouldContain("IRequest");
+    result.ShouldContain("Dest");
+    result.ShouldContain("ICommand<Unit>");
     result.ShouldNotContain("// Error");
 
     await Task.CompletedTask;
   }
 
-  public static async Task Should_generate_mediator_handler_with_complex_pattern()
+  public static async Task Should_generate_command_handler_with_complex_pattern()
   {
     // Arrange
     string pattern = "test {project} --verbose --filter {pattern}";
 
     // Act
-    string result = GenerateHandlerTool.GenerateHandler(pattern, useMediator: true);
+    string result = GenerateHandlerTool.GenerateHandler(pattern, useCommand: true);
 
     // Assert
     result.ShouldContain("public sealed class");
-    result.ShouldContain("string project");
-    result.ShouldContain("bool verbose");
-    result.ShouldContain("string pattern");
-    result.ShouldContain("IRequest");
+    result.ShouldContain("Project");
+    result.ShouldContain("bool");
+    result.ShouldContain("ICommand<Unit>");
     result.ShouldNotContain("// Error");
 
     await Task.CompletedTask;
@@ -230,7 +229,7 @@ public sealed class HandlerGenerationTests
 
     // Assert
     result.ShouldContain("Map");
-    result.ShouldNotContain("IRequest");
+    result.ShouldNotContain("[NuruRoute");
 
     await Task.CompletedTask;
   }

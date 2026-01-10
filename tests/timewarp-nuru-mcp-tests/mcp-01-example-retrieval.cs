@@ -23,7 +23,7 @@ public class ExampleRetrievalTests
     result.ShouldContain("basic");
     result.ShouldContain("mixed");
     result.ShouldContain("delegate");
-    result.ShouldContain("mediator");
+    result.ShouldContain("commands");
     result.ShouldContain("console-logging");
     result.ShouldContain("serilog");
 
@@ -37,8 +37,8 @@ public class ExampleRetrievalTests
 
     // Assert
     result.Length.ShouldBeGreaterThan(500);
-    result.ShouldContain("calc-mixed.cs");
-    result.ShouldContain("Calculator mixing Delegate and Mediator patterns");
+    result.ShouldContain("01-calc-delegate.cs");
+    result.ShouldContain("delegate routing");
 
     await Task.CompletedTask;
   }
@@ -50,21 +50,21 @@ public class ExampleRetrievalTests
 
     // Assert
     result.Length.ShouldBeGreaterThan(500);
-    result.ShouldContain("calc-delegate.cs");
-    result.ShouldContain("Pure delegate routing");
+    result.ShouldContain("01-calc-delegate.cs");
+    result.ShouldContain("delegate routing");
 
     await Task.CompletedTask;
   }
 
-  public static async Task Should_retrieve_mediator_example()
+  public static async Task Should_retrieve_commands_example()
   {
     // Arrange & Act
-    string result = await GetExampleTool.GetExampleAsync("mediator");
+    string result = await GetExampleTool.GetExampleAsync("commands");
 
     // Assert
     result.Length.ShouldBeGreaterThan(500);
-    result.ShouldContain("calc-mediator.cs");
-    result.ShouldContain("Mediator pattern");
+    result.ShouldContain("02-calc-commands.cs");
+    result.ShouldContain("command/handler pattern");
 
     await Task.CompletedTask;
   }
@@ -76,8 +76,8 @@ public class ExampleRetrievalTests
 
     // Assert
     result.Length.ShouldBeGreaterThan(500);
-    result.ShouldContain("calc-mixed.cs");
-    result.ShouldContain("Mixed approach");
+    result.ShouldContain("03-calc-mixed.cs");
+    result.ShouldContain("Mixed");
 
     await Task.CompletedTask;
   }
@@ -129,7 +129,7 @@ public class ExampleRetrievalTests
     // Assert
     refreshedResult.Length.ShouldBeGreaterThan(500);
     // Content should be identical (both valid)
-    refreshedResult.ShouldContain("calc-mixed.cs");
+    refreshedResult.ShouldContain("01-calc-delegate.cs");
 
     await Task.CompletedTask;
   }

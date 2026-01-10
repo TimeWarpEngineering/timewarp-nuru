@@ -173,7 +173,6 @@ namespace TimeWarp.Nuru.Tests.Generator.AttributedRoutes
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Command definitions with nested handlers - discovered automatically via [NuruRoute]
-// Use fully qualified types to avoid ambiguity with Mediator package
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /// <summary>

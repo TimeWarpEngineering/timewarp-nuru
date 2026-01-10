@@ -13,7 +13,7 @@
     <IsAotCompatible>true</IsAotCompatible>
     <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
     <EnableAotAnalyzer>true</EnableAotAnalyzer>
-    <!-- Note: Direct delegate routing works with full AOT. Mediator routing now uses martinothamar/Mediator source generator for full AOT support -->
+    <!-- Note: Both delegate and command/handler routing patterns work with full AOT -->
 
     <!-- Output generated source files to generated directory -->
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>

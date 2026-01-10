@@ -4,19 +4,6 @@
     
     This is intentional to provide isolated analyzer testing without inheriting
     parent test infrastructure (Jaribu, Shouldly, etc.).
-    
-    NOTE ON NURU_D001 TESTING:
-    The MediatorDependencyAnalyzer (NURU_D001) checks if Mediator.Abstractions
-    is referenced. Because timewarp-nuru-core itself references Mediator.Abstractions
-    (required for the Map<TCommand> where TCommand : IRequest constraint), any
-    project using our library will always have Mediator available transitively.
-    
-    Therefore, NURU_D001 can only fire in projects that:
-    1. Somehow use Map<T>() syntax without referencing our library
-    2. Or in synthetic Roslyn analyzer unit tests
-    
-    The test files here document expected analyzer behavior rather than
-    triggering actual NURU_D001 errors.
   -->
 
   <PropertyGroup>
@@ -41,13 +28,7 @@
     <ProjectReference Include="$(MSBuildThisFileDirectory)../../source/timewarp-nuru/timewarp-nuru.csproj" />
   </ItemGroup>
 
-  <!-- Mediator for attributed route tests -->
   <ItemGroup>
-    <PackageReference Include="Mediator.Abstractions" />
-    <PackageReference Include="Mediator.SourceGenerator">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
     <!-- Roslyn for source generator verification tests -->
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
     <!-- Test framework -->
@@ -68,7 +49,7 @@
   <ItemGroup>
     <Using Include="System.Console" Static="true" />
     <Using Include="TimeWarp.Nuru" />
-    <Using Include="Mediator" />
+    <Using Include="TimeWarp.Nuru.Unit" Static="true" />
     <Using Include="TimeWarp.Jaribu" />
     <Using Include="TimeWarp.Jaribu.TestRunner" Static="true" />
     <Using Include="Shouldly" />

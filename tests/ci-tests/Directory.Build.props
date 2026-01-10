@@ -42,12 +42,12 @@
     <!-- <Compile Include="../timewarp-nuru-core-tests/compiled-route-test-helper.cs" /> -->
     <!-- Parser tests (migrated) -->
     <Compile Include="../timewarp-nuru-core-tests/parser/*.cs" />
-    <!-- Routing tests (migrated) - exclude Mediator tests (routing-11, routing-22) which conflict with Mediator source generator in multi-mode -->
+    <!-- Routing tests (migrated) - routing-11-delegate-mediator.cs excluded (old pattern) -->
     <!-- DISABLED: routing-20, routing-21 use UseAllExtensions(); routing-23 uses CreateSlimBuilder/HelpProvider.GetHelpText -->
     <!-- <Compile Include="../timewarp-nuru-core-tests/routing/*.cs" Exclude="../timewarp-nuru-core-tests/routing/routing-11-*.cs;../timewarp-nuru-core-tests/routing/routing-20-*.cs;../timewarp-nuru-core-tests/routing/routing-21-*.cs;../timewarp-nuru-core-tests/routing/routing-22-*.cs;../timewarp-nuru-core-tests/routing/routing-23-*.cs;../timewarp-nuru-core-tests/routing/dsl-example.cs" /> -->
     <!-- Configuration tests (migrated) - DISABLED: uses AddDependencyInjection() -->
     <!-- <Compile Include="../timewarp-nuru-core-tests/configuration/*.cs" /> -->
-    <!-- Factory tests - excluded from multi-mode due to Mediator.SourceGenerator conflicts -->
+    <!-- Factory tests - excluded from multi-mode -->
     <!-- <Compile Include="../timewarp-nuru-core-tests/factory/*.cs" /> -->
     <!-- Options tests (migrated) - DISABLED: uses CreateSlimBuilder() -->
     <!-- <Compile Include="../timewarp-nuru-core-tests/options/*.cs" Exclude="../timewarp-nuru-core-tests/options/options-03-*.cs" /> -->

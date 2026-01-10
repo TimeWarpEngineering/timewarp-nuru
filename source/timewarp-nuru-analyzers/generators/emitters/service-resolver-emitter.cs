@@ -54,6 +54,15 @@ internal static class ServiceResolverEmitter
       return;
     }
 
+    // Special case: NuruCoreApp - the app instance is directly available
+    // Enables handlers to invoke other routes via app.RunAsync(["command"])
+    if (IsNuruCoreAppType(typeName))
+    {
+      sb.AppendLine(
+        $"{indent}{typeName} {varName} = app;");
+      return;
+    }
+
     // Special case: IOptions<T> - bind from configuration
     // The configuration key is stored in SourceName (from handler extraction)
     if (TryGetOptionsInnerType(typeName, out string? innerTypeName))
@@ -148,6 +157,17 @@ internal static class ServiceResolverEmitter
     return typeName is "global::TimeWarp.Terminal.ITerminal"
         or "TimeWarp.Terminal.ITerminal"
         or "ITerminal";
+  }
+
+  /// <summary>
+  /// Checks if a type name is NuruCoreApp (built-in, available as the app parameter).
+  /// Enables handlers to invoke other routes programmatically via app.RunAsync().
+  /// </summary>
+  private static bool IsNuruCoreAppType(string typeName)
+  {
+    return typeName is "global::TimeWarp.Nuru.NuruCoreApp"
+        or "TimeWarp.Nuru.NuruCoreApp"
+        or "NuruCoreApp";
   }
 
   /// <summary>

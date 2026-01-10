@@ -9,7 +9,6 @@ public partial class NuruCoreAppBuilder<TSelf>
   where TSelf : NuruCoreAppBuilder<TSelf>
 {
   private protected readonly TypeConverterRegistry TypeConverterRegistry = new();
-  private protected ApplicationMetadata? AppMetadata;
   private protected bool AutoHelpEnabled;
   private protected IConfiguration? Configuration;
   private protected HelpOptions HelpOptions = new();
@@ -76,6 +75,28 @@ public partial class NuruCoreAppBuilder<TSelf>
   }
 
   /// <summary>
+  /// Sets the application name for help display.
+  /// </summary>
+  /// <param name="name">The application name.</param>
+  public virtual TSelf WithName(string name)
+  {
+    // No-op at runtime - the source generator extracts the name at compile-time
+    _ = name;
+    return (TSelf)this;
+  }
+
+  /// <summary>
+  /// Sets the application description for help display.
+  /// </summary>
+  /// <param name="description">The application description.</param>
+  public virtual TSelf WithDescription(string description)
+  {
+    // No-op at runtime - the source generator extracts the description at compile-time
+    _ = description;
+    return (TSelf)this;
+  }
+
+  /// <summary>
   /// Configures help output filtering and display options.
   /// </summary>
   /// <param name="configure">Action to configure help options.</param>
@@ -93,16 +114,5 @@ public partial class NuruCoreAppBuilder<TSelf>
   {
     // DSL is parsed at compile-time. RunAsync() is intercepted.
     return new NuruCoreApp(Terminal);
-  }
-
-  /// <summary>
-  /// Sets the application metadata for help display.
-  /// </summary>
-  /// <param name="name">The application name. If null, will be auto-detected.</param>
-  /// <param name="description">The application description.</param>
-  public virtual TSelf WithMetadata(string? name = null, string? description = null)
-  {
-    AppMetadata = new ApplicationMetadata(name, description);
-    return (TSelf)this;
   }
 }

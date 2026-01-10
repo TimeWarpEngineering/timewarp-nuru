@@ -837,9 +837,10 @@ public sealed class DslInterpreter
   /// </summary>
   private object? DispatchBuild(object? receiver)
   {
+    // Ignore Build() calls on non-Nuru types (e.g., DotNet.Build().Build())
     if (receiver is not IrAppBuilder appBuilder)
     {
-      throw new InvalidOperationException("Build() must be called on an app builder.");
+      return null;
     }
 
     // Mark as built
@@ -867,10 +868,10 @@ public sealed class DslInterpreter
       _ => null
     };
 
+    // Ignore RunAsync() calls on non-Nuru types (e.g., CommandResult.RunAsync())
     if (appBuilder is null)
     {
-      throw new InvalidOperationException(
-        $"RunAsync() must be called on a built app. Location: {invocation.GetLocation().GetLineSpan()}");
+      return null;
     }
 
     // Extract and add the intercept site

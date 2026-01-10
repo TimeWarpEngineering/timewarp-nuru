@@ -20,12 +20,6 @@ public partial class NuruCoreAppBuilder<TSelf>
   internal NuruCoreAppBuilder(NuruCoreApplicationOptions? options)
   {
     ApplicationOptions = options;
-
-    // Apply options if provided
-    if (options?.ApplicationName is not null || options?.EnvironmentName is not null)
-    {
-      AppMetadata = new ApplicationMetadata(options.ApplicationName, null);
-    }
   }
 #pragma warning restore CA2214
 }

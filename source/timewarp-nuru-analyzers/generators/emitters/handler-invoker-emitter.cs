@@ -369,6 +369,8 @@ internal static class HandlerInvokerEmitter
     if (serviceTypeName is "global::Microsoft.Extensions.Configuration.IConfiguration"
                         or "global::Microsoft.Extensions.Configuration.IConfigurationRoot")
       return "configuration";
+    if (serviceTypeName == "global::TimeWarp.Nuru.NuruCoreApp")
+      return "app";
 
     // Find matching service registration
     ServiceDefinition? service = services.FirstOrDefault(s => s.ServiceTypeName == serviceTypeName);
@@ -406,6 +408,7 @@ internal static class HandlerInvokerEmitter
       "global::TimeWarp.Terminal.ITerminal" => "app.Terminal",
       "global::Microsoft.Extensions.Configuration.IConfiguration" => "configuration",
       "global::System.Threading.CancellationToken" => "cancellationToken",
+      "global::TimeWarp.Nuru.NuruCoreApp" => "app",
       _ => ResolveRegisteredService(serviceTypeName, services)
     };
   }

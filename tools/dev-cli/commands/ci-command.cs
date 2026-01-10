@@ -25,12 +25,10 @@ internal sealed class CiCommand : ICommand<Unit>
   internal sealed class Handler : ICommandHandler<CiCommand, Unit>
   {
     private readonly ITerminal Terminal;
-    private readonly IMediator Mediator;
 
-    public Handler(ITerminal terminal, IMediator mediator)
+    public Handler(ITerminal terminal)
     {
       Terminal = terminal;
-      Mediator = mediator;
     }
 
     public async ValueTask<Unit> Handle(CiCommand command, CancellationToken ct)
@@ -45,11 +43,11 @@ internal sealed class CiCommand : ICommand<Unit>
 
       if (mode == CiMode.Release)
       {
-        await RunReleaseWorkflowAsync(command.ApiKey, ct);
+        await RunReleaseWorkflowAsync(command.ApiKey);
       }
       else
       {
-        await RunPrWorkflowAsync(ct);
+        await RunPrWorkflowAsync();
       }
 
       return Unit.Value;
@@ -86,7 +84,7 @@ internal sealed class CiCommand : ICommand<Unit>
       return mode;
     }
 
-    private async Task RunPrWorkflowAsync(CancellationToken ct)
+    private async Task RunPrWorkflowAsync()
     {
       Terminal.WriteLine("Pipeline: clean -> build -> verify-samples -> test");
       Terminal.WriteLine("");
@@ -95,28 +93,32 @@ internal sealed class CiCommand : ICommand<Unit>
       Terminal.WriteLine("===============================================================================");
       Terminal.WriteLine("  Step 1/4: Clean");
       Terminal.WriteLine("===============================================================================");
-      await Mediator.Send(new CleanCommand(), ct);
+      CleanCommand.Handler cleanHandler = new(Terminal);
+      await cleanHandler.Handle(new CleanCommand(), CancellationToken.None);
 
       // Step 2: Build
       Terminal.WriteLine("");
       Terminal.WriteLine("===============================================================================");
       Terminal.WriteLine("  Step 2/4: Build");
       Terminal.WriteLine("===============================================================================");
-      await Mediator.Send(new BuildCommand(), ct);
+      BuildCommand.Handler buildHandler = new(Terminal);
+      await buildHandler.Handle(new BuildCommand(), CancellationToken.None);
 
       // Step 3: Verify Samples
       Terminal.WriteLine("");
       Terminal.WriteLine("===============================================================================");
       Terminal.WriteLine("  Step 3/4: Verify Samples");
       Terminal.WriteLine("===============================================================================");
-      await Mediator.Send(new VerifySamplesCommand(), ct);
+      VerifySamplesCommand.Handler verifySamplesHandler = new(Terminal);
+      await verifySamplesHandler.Handle(new VerifySamplesCommand(), CancellationToken.None);
 
       // Step 4: Test
       Terminal.WriteLine("");
       Terminal.WriteLine("===============================================================================");
       Terminal.WriteLine("  Step 4/4: Test");
       Terminal.WriteLine("===============================================================================");
-      await Mediator.Send(new TestCommand(), ct);
+      TestCommand.Handler testHandler = new(Terminal);
+      await testHandler.Handle(new TestCommand(), CancellationToken.None);
 
       Terminal.WriteLine("");
       Terminal.WriteLine("===============================================================================");
@@ -124,7 +126,7 @@ internal sealed class CiCommand : ICommand<Unit>
       Terminal.WriteLine("===============================================================================");
     }
 
-    private async Task RunReleaseWorkflowAsync(string? apiKey, CancellationToken ct)
+    private async Task RunReleaseWorkflowAsync(string? apiKey)
     {
       Terminal.WriteLine("Pipeline: clean -> build -> check-version -> pack -> push");
       Terminal.WriteLine("");
@@ -140,21 +142,24 @@ internal sealed class CiCommand : ICommand<Unit>
       Terminal.WriteLine("===============================================================================");
       Terminal.WriteLine("  Step 1/5: Clean");
       Terminal.WriteLine("===============================================================================");
-      await Mediator.Send(new CleanCommand(), ct);
+      CleanCommand.Handler cleanHandler = new(Terminal);
+      await cleanHandler.Handle(new CleanCommand(), CancellationToken.None);
 
       // Step 2: Build
       Terminal.WriteLine("");
       Terminal.WriteLine("===============================================================================");
       Terminal.WriteLine("  Step 2/5: Build");
       Terminal.WriteLine("===============================================================================");
-      await Mediator.Send(new BuildCommand(), ct);
+      BuildCommand.Handler buildHandler = new(Terminal);
+      await buildHandler.Handle(new BuildCommand(), CancellationToken.None);
 
       // Step 3: Check Version
       Terminal.WriteLine("");
       Terminal.WriteLine("===============================================================================");
       Terminal.WriteLine("  Step 3/5: Check Version");
       Terminal.WriteLine("===============================================================================");
-      await Mediator.Send(new CheckVersionCommand(), ct);
+      CheckVersionCommand.Handler checkVersionHandler = new(Terminal);
+      await checkVersionHandler.Handle(new CheckVersionCommand(), CancellationToken.None);
 
       // Step 4: Pack
       Terminal.WriteLine("");

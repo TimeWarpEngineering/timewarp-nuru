@@ -332,6 +332,9 @@ internal static class BehaviorEmitter
     if (serviceTypeName.Contains("IConfiguration", StringComparison.Ordinal))
       return "configuration";
 
+    if (serviceTypeName is "global::TimeWarp.Nuru.NuruCoreApp" or "TimeWarp.Nuru.NuruCoreApp" or "NuruCoreApp")
+      return "app";
+
     // ILogger<T> - create a null logger for now (TODO: proper logger resolution)
     if (serviceTypeName.Contains("ILogger", StringComparison.Ordinal))
       return $"global::Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance.CreateLogger<{ExtractLoggerTypeArg(serviceTypeName)}>()";

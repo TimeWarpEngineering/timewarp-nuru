@@ -222,23 +222,32 @@ internal static class DefaultTypeConverters
   /// <summary>
   /// Gets the Type associated with a constraint name (case-insensitive).
   /// </summary>
+  /// <remarks>
+  /// Supports:
+  /// - C# primitive keywords: int, bool, long, double, decimal, float, byte, sbyte, short, ushort, uint, ulong, char
+  /// - CLR type names: Int32, Boolean, Int64, Double, Decimal, Single, Byte, SByte, Int16, UInt16, UInt32, UInt64, Char
+  /// - PascalCase type names: DateTime, TimeSpan, Guid, Uri, FileInfo, DirectoryInfo, IPAddress, DateOnly, TimeOnly
+  /// </remarks>
   public static Type? GetTypeForConstraint(string constraintName)
   {
     return constraintName.ToLowerInvariant() switch
     {
-      "int" => typeof(int),
+      // C# primitive keywords (primary names)
+      "int" or "int32" => typeof(int),
       "byte" => typeof(byte),
       "sbyte" => typeof(sbyte),
-      "short" => typeof(short),
-      "ushort" => typeof(ushort),
-      "uint" => typeof(uint),
-      "ulong" => typeof(ulong),
-      "float" => typeof(float),
+      "short" or "int16" => typeof(short),
+      "ushort" or "uint16" => typeof(ushort),
+      "uint" or "uint32" => typeof(uint),
+      "ulong" or "uint64" => typeof(ulong),
+      "float" or "single" => typeof(float),
       "char" => typeof(char),
-      "bool" => typeof(bool),
-      "long" => typeof(long),
+      "bool" or "boolean" => typeof(bool),
+      "long" or "int64" => typeof(long),
       "double" => typeof(double),
       "decimal" => typeof(decimal),
+
+      // PascalCase type names (case-insensitive matching)
       "guid" => typeof(Guid),
       "datetime" => typeof(DateTime),
       "timespan" => typeof(TimeSpan),
@@ -248,6 +257,7 @@ internal static class DefaultTypeConverters
       "ipaddress" => typeof(IPAddress),
       "dateonly" => typeof(DateOnly),
       "timeonly" => typeof(TimeOnly),
+
       _ => null
     };
   }

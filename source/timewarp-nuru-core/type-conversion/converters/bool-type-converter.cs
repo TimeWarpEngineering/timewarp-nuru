@@ -17,7 +17,7 @@ public class BoolTypeConverter : IRouteTypeConverter
     };
 
   public Type TargetType => typeof(bool);
-  public string ConstraintName => "bool";
+  public string? ConstraintAlias => null;
 
   public bool TryConvert(string value, out object? result)
   {

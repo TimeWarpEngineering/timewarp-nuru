@@ -6,7 +6,7 @@ namespace TimeWarp.Nuru;
 public class DoubleTypeConverter : IRouteTypeConverter
 {
   public Type TargetType => typeof(double);
-  public string ConstraintName => "double";
+  public string? ConstraintAlias => null;
 
   public bool TryConvert(string value, out object? result)
   {

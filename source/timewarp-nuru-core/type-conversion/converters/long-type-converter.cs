@@ -6,7 +6,7 @@ namespace TimeWarp.Nuru;
 public class LongTypeConverter : IRouteTypeConverter
 {
   public Type TargetType => typeof(long);
-  public string ConstraintName => "long";
+  public string? ConstraintAlias => null;
 
   public bool TryConvert(string value, out object? result)
   {

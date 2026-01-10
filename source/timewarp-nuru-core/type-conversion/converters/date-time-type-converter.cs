@@ -4,10 +4,13 @@ namespace TimeWarp.Nuru;
 /// Converts string values to DateTime.
 /// Supports ISO 8601 and other common formats.
 /// </summary>
+/// <remarks>
+/// The primary constraint name is "DateTime" (type name).
+/// </remarks>
 public class DateTimeTypeConverter : IRouteTypeConverter
 {
   public Type TargetType => typeof(DateTime);
-  public string ConstraintName => "datetime";
+  public string? ConstraintAlias => null;
 
   public bool TryConvert(string value, out object? result)
   {

@@ -19,16 +19,20 @@ internal static class RouteMatcherEmitter
   /// <param name="routeIndex">The index of this route (used for unique handler names).</param>
   /// <param name="services">Registered services from ConfigureServices.</param>
   /// <param name="behaviors">Pipeline behaviors to wrap the handler with.</param>
+  /// <param name="customConverters">Custom type converters registered via AddTypeConverter.</param>
   public static void Emit(
     StringBuilder sb,
     RouteDefinition route,
     int routeIndex,
     ImmutableArray<ServiceDefinition> services,
-    ImmutableArray<BehaviorDefinition> behaviors = default)
+    ImmutableArray<BehaviorDefinition> behaviors = default,
+    ImmutableArray<CustomConverterDefinition> customConverters = default)
   {
-    // Use empty array if behaviors not provided
+    // Use empty array if optional parameters not provided
     if (behaviors.IsDefault)
       behaviors = [];
+    if (customConverters.IsDefault)
+      customConverters = [];
 
     // Comment showing the route pattern
     sb.AppendLine(
@@ -38,11 +42,11 @@ internal static class RouteMatcherEmitter
     // Use complex matching for routes with options, catch-all, or optional positional params
     if (route.HasOptions || route.HasCatchAll || route.HasOptionalPositionalParams)
     {
-      EmitComplexMatch(sb, route, routeIndex, services, behaviors);
+      EmitComplexMatch(sb, route, routeIndex, services, behaviors, customConverters);
     }
     else
     {
-      EmitSimpleMatch(sb, route, routeIndex, services, behaviors);
+      EmitSimpleMatch(sb, route, routeIndex, services, behaviors, customConverters);
     }
 
     sb.AppendLine();
@@ -57,7 +61,8 @@ internal static class RouteMatcherEmitter
     RouteDefinition route,
     int routeIndex,
     ImmutableArray<ServiceDefinition> services,
-    ImmutableArray<BehaviorDefinition> behaviors)
+    ImmutableArray<BehaviorDefinition> behaviors,
+    ImmutableArray<CustomConverterDefinition> customConverters)
   {
     string pattern = BuildListPattern(route, routeIndex);
 
@@ -68,7 +73,7 @@ internal static class RouteMatcherEmitter
     EmitVariableAliases(sb, route, routeIndex, indent: 6);
 
     // Emit type conversions for typed parameters
-    EmitTypeConversions(sb, route, routeIndex, indent: 6);
+    EmitTypeConversions(sb, route, routeIndex, customConverters, indent: 6);
 
     // Emit handler invocation (wrapped with behaviors if any)
     if (behaviors.Length > 0)
@@ -100,7 +105,8 @@ internal static class RouteMatcherEmitter
     RouteDefinition route,
     int routeIndex,
     ImmutableArray<ServiceDefinition> services,
-    ImmutableArray<BehaviorDefinition> behaviors)
+    ImmutableArray<BehaviorDefinition> behaviors,
+    ImmutableArray<CustomConverterDefinition> customConverters)
   {
     // Calculate minimum required args
     int minArgs = route.Literals.Count() + route.Parameters.Count(p => !p.IsOptional && !p.IsCatchAll);
@@ -121,10 +127,10 @@ internal static class RouteMatcherEmitter
     EmitParameterExtraction(sb, route, routeIndex, literalIndex);
 
     // Emit type conversions for typed parameters
-    EmitTypeConversions(sb, route, routeIndex, indent: 6);
+    EmitTypeConversions(sb, route, routeIndex, customConverters, indent: 6);
 
     // Emit option parsing
-    EmitOptionParsing(sb, route, routeIndex);
+    EmitOptionParsing(sb, route, routeIndex, customConverters);
 
     // Emit handler invocation (wrapped with behaviors if any)
     if (behaviors.Length > 0)
@@ -177,7 +183,12 @@ internal static class RouteMatcherEmitter
   /// Pattern matching captures typed params with route-unique names.
   /// This method creates the properly typed variable with the original name.
   /// </summary>
-  private static void EmitTypeConversions(StringBuilder sb, RouteDefinition route, int routeIndex, int indent)
+  private static void EmitTypeConversions(
+    StringBuilder sb,
+    RouteDefinition route,
+    int routeIndex,
+    ImmutableArray<CustomConverterDefinition> customConverters,
+    int indent)
   {
     string indentStr = new(' ', indent);
 
@@ -212,13 +223,114 @@ internal static class RouteMatcherEmitter
             $"{indentStr}{clrType} {escapedVarName} = {parseExpr};");
         }
       }
-      else if (param.ResolvedClrTypeName is not null)
+      else
       {
-        // Unknown type constraint - likely a custom type converter (not yet supported in generator)
-        sb.AppendLine(
-          $"{indentStr}// TODO: Custom type conversion for {param.ResolvedClrTypeName} (constraint: {baseType})");
+        // Try to find a custom type converter for this constraint
+        // Match by:
+        // 1. Target type name (e.g., "EmailAddress")
+        // 2. Simple target type name (e.g., "MyApp.Types.EmailAddress" -> "EmailAddress")
+        // 3. Constraint alias (e.g., "email")
+        // 4. Convention: ConverterTypeName minus "Converter" suffix (e.g., "EmailAddressConverter" -> "EmailAddress")
+        CustomConverterDefinition? converter = customConverters.FirstOrDefault(c =>
+          string.Equals(c.TargetTypeName, baseType, StringComparison.Ordinal) ||
+          string.Equals(GetSimpleTypeName(c.TargetTypeName), baseType, StringComparison.Ordinal) ||
+          string.Equals(c.ConstraintAlias, baseType, StringComparison.OrdinalIgnoreCase) ||
+          string.Equals(GetTargetTypeFromConverterName(c.ConverterTypeName), baseType, StringComparison.Ordinal));
+
+        if (converter is not null)
+        {
+          // Generate custom converter instantiation and TryConvert call
+          EmitCustomTypeConversion(sb, param, converter, escapedVarName, uniqueVarName, routeIndex, indentStr);
+        }
+        else if (param.ResolvedClrTypeName is not null)
+        {
+          // No converter found - emit warning comment
+          sb.AppendLine(
+            $"{indentStr}// WARNING: No converter found for type constraint '{baseType}' (resolved: {param.ResolvedClrTypeName})");
+          sb.AppendLine(
+            $"{indentStr}// Register a converter with: builder.AddTypeConverter<YourConverter>();");
+        }
       }
     }
+  }
+
+  /// <summary>
+  /// Emits code for custom type conversion using a registered converter.
+  /// Generates converter instantiation, TryConvert call, and error handling.
+  /// </summary>
+  private static void EmitCustomTypeConversion(
+    StringBuilder sb,
+    ParameterDefinition param,
+    CustomConverterDefinition converter,
+    string escapedVarName,
+    string uniqueVarName,
+    int routeIndex,
+    string indentStr)
+  {
+    string converterVarName = $"__converter_{param.CamelCaseName}_{routeIndex}";
+    string tempVarName = $"__temp_{param.CamelCaseName}_{routeIndex}";
+
+    // Use the parameter's resolved CLR type (from handler signature) as the target type
+    // Fall back to deriving from converter name if not available
+    string targetType = !string.IsNullOrEmpty(param.ResolvedClrTypeName)
+      ? param.ResolvedClrTypeName
+      : !string.IsNullOrEmpty(converter.TargetTypeName)
+        ? converter.TargetTypeName
+        : GetTargetTypeFromConverterName(converter.ConverterTypeName);
+
+    if (param.IsOptional)
+    {
+      // Optional param: check for null before conversion
+      sb.AppendLine($"{indentStr}{targetType}? {escapedVarName} = null;");
+      sb.AppendLine($"{indentStr}if ({uniqueVarName} is not null)");
+      sb.AppendLine($"{indentStr}{{");
+      sb.AppendLine($"{indentStr}  var {converterVarName} = new {converter.ConverterTypeName}();");
+      sb.AppendLine($"{indentStr}  if (!{converterVarName}.TryConvert({uniqueVarName}, out object? {tempVarName}))");
+      sb.AppendLine($"{indentStr}  {{");
+      sb.AppendLine($"{indentStr}    app.Terminal.WriteLine($\"Error: Invalid {GetSimpleTypeName(targetType)} value for parameter '{param.Name}': '{{{uniqueVarName}}}'\");");
+      sb.AppendLine($"{indentStr}    return 1;");
+      sb.AppendLine($"{indentStr}  }}");
+      sb.AppendLine($"{indentStr}  {escapedVarName} = ({targetType}){tempVarName}!;");
+      sb.AppendLine($"{indentStr}}}");
+    }
+    else
+    {
+      // Required param: direct conversion with error handling
+      sb.AppendLine($"{indentStr}var {converterVarName} = new {converter.ConverterTypeName}();");
+      sb.AppendLine($"{indentStr}if (!{converterVarName}.TryConvert({uniqueVarName}, out object? {tempVarName}))");
+      sb.AppendLine($"{indentStr}{{");
+      sb.AppendLine($"{indentStr}  app.Terminal.WriteLine($\"Error: Invalid {GetSimpleTypeName(targetType)} value for parameter '{param.Name}': '{{{uniqueVarName}}}'\");");
+      sb.AppendLine($"{indentStr}  return 1;");
+      sb.AppendLine($"{indentStr}}}");
+      sb.AppendLine($"{indentStr}{targetType} {escapedVarName} = ({targetType}){tempVarName}!;");
+    }
+  }
+
+  /// <summary>
+  /// Gets the simple type name from a fully qualified type name.
+  /// E.g., "MyApp.Types.EmailAddress" -> "EmailAddress"
+  /// </summary>
+  private static string GetSimpleTypeName(string fullyQualifiedName)
+  {
+    int lastDot = fullyQualifiedName.LastIndexOf('.');
+    return lastDot >= 0 ? fullyQualifiedName[(lastDot + 1)..] : fullyQualifiedName;
+  }
+
+  /// <summary>
+  /// Extracts the target type name from a converter type name by convention.
+  /// E.g., "EmailAddressConverter" -> "EmailAddress"
+  /// E.g., "MyApp.Converters.HexColorConverter" -> "HexColor"
+  /// </summary>
+  private static string GetTargetTypeFromConverterName(string converterTypeName)
+  {
+    string simpleName = GetSimpleTypeName(converterTypeName);
+    const string suffix = "Converter";
+    if (simpleName.EndsWith(suffix, StringComparison.Ordinal) && simpleName.Length > suffix.Length)
+    {
+      return simpleName[..^suffix.Length];
+    }
+
+    return simpleName;
   }
 
   /// <summary>
@@ -304,7 +416,11 @@ internal static class RouteMatcherEmitter
   /// <summary>
   /// Emits code to parse options from args.
   /// </summary>
-  private static void EmitOptionParsing(StringBuilder sb, RouteDefinition route, int routeIndex)
+  private static void EmitOptionParsing(
+    StringBuilder sb,
+    RouteDefinition route,
+    int routeIndex,
+    ImmutableArray<CustomConverterDefinition> customConverters)
   {
     foreach (OptionDefinition option in route.Options)
     {
@@ -316,7 +432,7 @@ internal static class RouteMatcherEmitter
       else
       {
         // Option with value
-        EmitValueOptionParsing(sb, option, routeIndex);
+        EmitValueOptionParsing(sb, option, routeIndex, customConverters);
       }
     }
   }
@@ -345,7 +461,11 @@ internal static class RouteMatcherEmitter
   /// Emits code to parse an option that takes a value.
   /// Handles type conversion for typed options (int, double, etc.).
   /// </summary>
-  private static void EmitValueOptionParsing(StringBuilder sb, OptionDefinition option, int routeIndex)
+  private static void EmitValueOptionParsing(
+    StringBuilder sb,
+    OptionDefinition option,
+    int routeIndex,
+    ImmutableArray<CustomConverterDefinition> customConverters)
   {
     string varName = option.ParameterName ?? ToCamelCase(option.LongForm ?? option.ShortForm ?? "value");
     string escapedVarName = CSharpIdentifierUtils.EscapeIfKeyword(varName);
@@ -385,14 +505,20 @@ internal static class RouteMatcherEmitter
     // Emit type conversion if needed
     if (needsConversion)
     {
-      EmitOptionTypeConversion(sb, option, escapedVarName, rawVarName);
+      EmitOptionTypeConversion(sb, option, escapedVarName, rawVarName, routeIndex, customConverters);
     }
   }
 
   /// <summary>
   /// Emits type conversion code for a typed option.
   /// </summary>
-  private static void EmitOptionTypeConversion(StringBuilder sb, OptionDefinition option, string varName, string rawVarName)
+  private static void EmitOptionTypeConversion(
+    StringBuilder sb,
+    OptionDefinition option,
+    string varName,
+    string rawVarName,
+    int routeIndex,
+    ImmutableArray<CustomConverterDefinition> customConverters)
   {
     string typeConstraint = option.TypeConstraint ?? "";
     string baseType = typeConstraint.EndsWith('?') ? typeConstraint[..^1] : typeConstraint;
@@ -417,9 +543,69 @@ internal static class RouteMatcherEmitter
     }
     else
     {
-      // Unknown type - keep as string (fallback for custom types not yet supported)
-      sb.AppendLine(
-        $"      string? {varName} = {rawVarName};");
+      // Try to find a custom type converter for this constraint
+      CustomConverterDefinition? converter = customConverters.FirstOrDefault(c =>
+        string.Equals(c.TargetTypeName, baseType, StringComparison.Ordinal) ||
+        string.Equals(GetSimpleTypeName(c.TargetTypeName), baseType, StringComparison.Ordinal) ||
+        string.Equals(c.ConstraintAlias, baseType, StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(GetTargetTypeFromConverterName(c.ConverterTypeName), baseType, StringComparison.Ordinal));
+
+      if (converter is not null)
+      {
+        // Generate custom converter code for option
+        EmitOptionCustomTypeConversion(sb, option, converter, varName, rawVarName, routeIndex);
+      }
+      else
+      {
+        // Unknown type - keep as string (fallback)
+        sb.AppendLine(
+          $"      string? {varName} = {rawVarName};");
+      }
+    }
+  }
+
+  /// <summary>
+  /// Emits custom type conversion code for a typed option.
+  /// </summary>
+  private static void EmitOptionCustomTypeConversion(
+    StringBuilder sb,
+    OptionDefinition option,
+    CustomConverterDefinition converter,
+    string varName,
+    string rawVarName,
+    int routeIndex)
+  {
+    string converterVarName = $"__converter_{varName}_{routeIndex}";
+    string tempVarName = $"__temp_{varName}_{routeIndex}";
+
+    // Derive target type from converter name (convention: XxxConverter -> Xxx)
+    string targetType = GetTargetTypeFromConverterName(converter.ConverterTypeName);
+
+    if (option.ParameterIsOptional)
+    {
+      // Optional option: check for null before conversion
+      sb.AppendLine($"      {targetType}? {varName} = null;");
+      sb.AppendLine($"      if ({rawVarName} is not null)");
+      sb.AppendLine("      {");
+      sb.AppendLine($"        var {converterVarName} = new {converter.ConverterTypeName}();");
+      sb.AppendLine($"        if (!{converterVarName}.TryConvert({rawVarName}, out object? {tempVarName}))");
+      sb.AppendLine("        {");
+      sb.AppendLine($"          app.Terminal.WriteLine($\"Error: Invalid {targetType} value for option '{option.LongForm ?? option.ShortForm}': '{{{rawVarName}}}'\");");
+      sb.AppendLine("          return 1;");
+      sb.AppendLine("        }");
+      sb.AppendLine($"        {varName} = ({targetType}){tempVarName}!;");
+      sb.AppendLine("      }");
+    }
+    else
+    {
+      // Required option: direct conversion with error handling
+      sb.AppendLine($"      var {converterVarName} = new {converter.ConverterTypeName}();");
+      sb.AppendLine($"      if ({rawVarName} is null || !{converterVarName}.TryConvert({rawVarName}, out object? {tempVarName}))");
+      sb.AppendLine("      {");
+      sb.AppendLine($"        app.Terminal.WriteLine($\"Error: Invalid {targetType} value for option '{option.LongForm ?? option.ShortForm}': '{{{rawVarName}}}'\");");
+      sb.AppendLine("        return 1;");
+      sb.AppendLine("      }");
+      sb.AppendLine($"      {targetType} {varName} = ({targetType}){tempVarName}!;");
     }
   }
 

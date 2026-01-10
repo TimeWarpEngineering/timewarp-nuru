@@ -105,10 +105,11 @@ public interface IIrAppBuilder : IIrRouteSource
   IIrAppBuilder UseTerminal();
 
   /// <summary>
-  /// No-op for AddTypeConverter (runtime only).
+  /// Registers a custom type converter for code generation.
   /// </summary>
+  /// <param name="converter">The converter definition.</param>
   /// <returns>This builder for chaining.</returns>
-  IIrAppBuilder AddTypeConverter();
+  IIrAppBuilder AddTypeConverter(CustomConverterDefinition converter);
 
   /// <summary>
   /// Adds an intercept site from a RunAsync() call.

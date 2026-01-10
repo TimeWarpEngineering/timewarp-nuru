@@ -297,7 +297,7 @@ public sealed class InterpreterMethodsTests
       public class MyConverter : IRouteTypeConverter
       {
         public Type TargetType => typeof(string);
-        public string ConstraintName => "custom";
+        public string? ConstraintAlias => "custom"; // Optional alias
         public bool TryConvert(string value, out object? result) { result = value; return true; }
       }
 

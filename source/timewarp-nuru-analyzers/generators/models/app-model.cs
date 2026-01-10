@@ -19,6 +19,7 @@ namespace TimeWarp.Nuru.Generators;
 /// <param name="Services">Registered services for DI</param>
 /// <param name="InterceptSites">Locations of all RunAsync() calls for interceptor</param>
 /// <param name="UserUsings">User's using directives to include in generated code</param>
+/// <param name="CustomConverters">Custom type converters registered via AddTypeConverter()</param>
 public sealed record AppModel(
   string? VariableName,
   string? Name,
@@ -34,7 +35,8 @@ public sealed record AppModel(
   ImmutableArray<BehaviorDefinition> Behaviors,
   ImmutableArray<ServiceDefinition> Services,
   ImmutableArray<InterceptSiteModel> InterceptSites,
-  ImmutableArray<string> UserUsings)
+  ImmutableArray<string> UserUsings,
+  ImmutableArray<CustomConverterDefinition> CustomConverters)
 {
   /// <summary>
   /// Creates an empty AppModel with required intercept sites.
@@ -54,7 +56,8 @@ public sealed record AppModel(
     Behaviors: [],
     Services: [],
     InterceptSites: interceptSites,
-    UserUsings: []);
+    UserUsings: [],
+    CustomConverters: []);
 
   /// <summary>
   /// Creates an empty AppModel with a single intercept site.

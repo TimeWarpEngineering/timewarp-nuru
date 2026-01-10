@@ -234,7 +234,7 @@ internal static class InterceptorEmitter
     int routeIndex = 0;
     foreach (RouteDefinition route in model.RoutesBySpecificity)
     {
-      RouteMatcherEmitter.Emit(sb, route, routeIndex, model.Services, model.Behaviors);
+      RouteMatcherEmitter.Emit(sb, route, routeIndex, model.Services, model.Behaviors, model.CustomConverters);
       routeIndex++;
     }
 

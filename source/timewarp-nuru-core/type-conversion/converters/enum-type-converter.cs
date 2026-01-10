@@ -5,14 +5,18 @@ namespace TimeWarp.Nuru;
 /// Provides case-insensitive parsing with helpful error messages.
 /// </summary>
 /// <typeparam name="TEnum">The enum type to convert to.</typeparam>
+/// <remarks>
+/// The primary constraint name is the enum type name (e.g., "LogLevel").
+/// No alias is provided by default.
+/// </remarks>
 public class EnumTypeConverter<TEnum> : IRouteTypeConverter where TEnum : struct, Enum
 {
   public Type TargetType => typeof(TEnum);
+
   /// <summary>
-  /// Gets the constraint name based on the enum type name.
-  /// For example, MyEnum becomes "myenum".
+  /// No alias - use the enum type name directly (e.g., {level:LogLevel}).
   /// </summary>
-  public string ConstraintName => typeof(TEnum).Name.ToLowerInvariant();
+  public string? ConstraintAlias => null;
 
   public bool TryConvert(string value, out object? result)
   {

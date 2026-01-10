@@ -34,6 +34,7 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
   private readonly List<BehaviorDefinition> Behaviors = [];
   private readonly List<ServiceDefinition> Services = [];
   private readonly List<InterceptSiteModel> InterceptSites = [];
+  private readonly List<CustomConverterDefinition> CustomConverters = [];
   private bool IsBuilt;
 
   /// <summary>
@@ -175,12 +176,13 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
   }
 
   /// <summary>
-  /// No-op for AddTypeConverter (runtime only).
+  /// Registers a custom type converter for code generation.
   /// Mirrors: NuruCoreAppBuilder.AddTypeConverter()
   /// </summary>
-  public TSelf AddTypeConverter()
+  /// <param name="converter">The converter definition.</param>
+  public TSelf AddTypeConverter(CustomConverterDefinition converter)
   {
-    // No-op - type converters are runtime only
+    CustomConverters.Add(converter);
     return (TSelf)this;
   }
 
@@ -256,7 +258,8 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
       Behaviors: [.. Behaviors],
       Services: [.. Services],
       InterceptSites: [.. InterceptSites],
-      UserUsings: []);  // Usings are populated by AppExtractor, not the builder
+      UserUsings: [],  // Usings are populated by AppExtractor, not the builder
+      CustomConverters: [.. CustomConverters]);
   }
 
   /// <summary>
@@ -286,7 +289,7 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
   IIrAppBuilder IIrAppBuilder.AddBehavior(BehaviorDefinition behavior) => AddBehavior(behavior);
   IIrAppBuilder IIrAppBuilder.AddService(ServiceDefinition service) => AddService(service);
   IIrAppBuilder IIrAppBuilder.UseTerminal() => UseTerminal();
-  IIrAppBuilder IIrAppBuilder.AddTypeConverter() => AddTypeConverter();
+  IIrAppBuilder IIrAppBuilder.AddTypeConverter(CustomConverterDefinition converter) => AddTypeConverter(converter);
   IIrAppBuilder IIrAppBuilder.AddInterceptSite(InterceptSiteModel site) => AddInterceptSite(site);
 }
 

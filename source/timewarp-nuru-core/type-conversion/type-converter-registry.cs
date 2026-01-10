@@ -17,6 +17,10 @@ public class TypeConverterRegistry : ITypeConverterRegistry
   /// <summary>
   /// Registers a type converter.
   /// </summary>
+  /// <remarks>
+  /// The converter is registered by both its type name (primary) and alias (if provided).
+  /// Both can be used in route patterns.
+  /// </remarks>
   public void RegisterConverter(IRouteTypeConverter converter)
   {
     ArgumentNullException.ThrowIfNull(converter);
@@ -25,7 +29,15 @@ public class TypeConverterRegistry : ITypeConverterRegistry
     ConvertersByConstraint ??= new Dictionary<string, IRouteTypeConverter>(StringComparer.OrdinalIgnoreCase);
     ConvertersByType ??= [];
 
-    ConvertersByConstraint[converter.ConstraintName] = converter;
+    // Register by type name (primary)
+    ConvertersByConstraint[converter.TargetType.Name] = converter;
+
+    // Register by alias (if provided)
+    if (converter.ConstraintAlias is not null)
+    {
+      ConvertersByConstraint[converter.ConstraintAlias] = converter;
+    }
+
     ConvertersByType[converter.TargetType] = converter;
   }
 

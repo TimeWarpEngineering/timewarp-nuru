@@ -37,7 +37,11 @@ builder.AddTypeConverter(new SemanticVersionConverter());
 // Routes Using Custom Types
 // ============================================================================
 
-builder.Map("send-email {to:email} {subject}")
+// Routes use type names as constraints: {param:TypeName}
+// The type name IS the constraint (e.g., EmailAddress, HexColor, SemanticVersion)
+// Converters can optionally define a ConstraintAlias for shorter names
+
+builder.Map("send-email {to:EmailAddress} {subject}")
   .WithHandler((EmailAddress to, string subject) =>
   {
     Console.WriteLine($"📧 Sending Email:");
@@ -49,7 +53,7 @@ builder.Map("send-email {to:email} {subject}")
   })
   .AsCommand().Done();
 
-builder.Map("set-theme {primary:hexcolor} {secondary:hexcolor}")
+builder.Map("set-theme {primary:HexColor} {secondary:HexColor}")
   .WithHandler((HexColor primary, HexColor secondary) =>
   {
     Console.WriteLine($"🎨 Theme Configuration:");
@@ -61,7 +65,7 @@ builder.Map("set-theme {primary:hexcolor} {secondary:hexcolor}")
   })
   .AsIdempotentCommand().Done();
 
-builder.Map("release {version:semver}")
+builder.Map("release {version:SemanticVersion}")
   .WithHandler((SemanticVersion version) =>
   {
     Console.WriteLine($"🚀 Creating Release:");
@@ -77,7 +81,7 @@ builder.Map("release {version:semver}")
   })
   .AsCommand().Done();
 
-builder.Map("notify {recipient:email} {color:hexcolor} {message}")
+builder.Map("notify {recipient:EmailAddress} {color:HexColor} {message}")
   .WithHandler((EmailAddress recipient, HexColor color, string message) =>
   {
     Console.WriteLine($"🔔 Notification:");
@@ -88,7 +92,7 @@ builder.Map("notify {recipient:email} {color:hexcolor} {message}")
   })
   .AsCommand().Done();
 
-builder.Map("deploy {version:semver} {env} --notify {email:email?}")
+builder.Map("deploy {version:SemanticVersion} {env} --notify {email:EmailAddress?}")
   .WithHandler((SemanticVersion version, string env, EmailAddress? email) =>
   {
     Console.WriteLine($"🚀 Deployment Plan:");
@@ -111,15 +115,15 @@ if (args.Length == 0)
   Console.WriteLine();
   Console.WriteLine("This sample demonstrates three custom type converters:");
   Console.WriteLine();
-  Console.WriteLine("1. EmailAddress (constraint: email)");
+  Console.WriteLine("1. EmailAddress (type constraint: EmailAddress)");
   Console.WriteLine("   - Validates email format (local@domain)");
   Console.WriteLine("   - Extracts local part and domain");
   Console.WriteLine();
-  Console.WriteLine("2. HexColor (constraint: hexcolor)");
+  Console.WriteLine("2. HexColor (type constraint: HexColor)");
   Console.WriteLine("   - Parses RGB colors in hex format");
   Console.WriteLine("   - Accepts #RRGGBB or RRGGBB");
   Console.WriteLine();
-  Console.WriteLine("3. SemanticVersion (constraint: semver)");
+  Console.WriteLine("3. SemanticVersion (type constraint: SemanticVersion)");
   Console.WriteLine("   - Parses SemVer 2.0 versions");
   Console.WriteLine("   - Supports major.minor.patch-prerelease+build");
   Console.WriteLine();
@@ -151,14 +155,14 @@ if (args.Length == 0)
   Console.WriteLine();
   Console.WriteLine("Each converter implements IRouteTypeConverter:");
   Console.WriteLine("  - TargetType: The type being converted to");
-  Console.WriteLine("  - ConstraintName: The name used in route patterns");
+  Console.WriteLine("  - ConstraintAlias: Optional short name (e.g., 'email' for EmailAddress)");
   Console.WriteLine("  - TryConvert: Parsing logic with validation");
   Console.WriteLine();
   Console.WriteLine("Register converters with:");
   Console.WriteLine("  builder.AddTypeConverter(new YourConverter());");
   Console.WriteLine();
-  Console.WriteLine("Then use in route patterns:");
-  Console.WriteLine("  builder.Map(\"cmd {param:yourtype}\", (YourType param) => ...)");
+  Console.WriteLine("Then use type name as constraint in route patterns:");
+  Console.WriteLine("  builder.Map(\"cmd {param:YourType}\", (YourType param) => ...)");
   Console.WriteLine();
   Console.WriteLine("═══════════════════════════════════════════════════════════════");
   return 0;
@@ -204,7 +208,7 @@ public record EmailAddress(string LocalPart, string Domain)
 public class EmailAddressConverter : IRouteTypeConverter
 {
   public Type TargetType => typeof(EmailAddress);
-  public string ConstraintName => "email";
+  public string? ConstraintAlias => "email"; // Optional: allows {param:email} as shorthand
 
   public bool TryConvert(string value, out object? result)
   {
@@ -260,7 +264,7 @@ public record HexColor(byte Red, byte Green, byte Blue)
 public class HexColorConverter : IRouteTypeConverter
 {
   public Type TargetType => typeof(HexColor);
-  public string ConstraintName => "hexcolor";
+  public string? ConstraintAlias => null; // No alias - use {param:HexColor}
 
   public bool TryConvert(string value, out object? result)
   {
@@ -328,7 +332,7 @@ public record SemanticVersion(int Major, int Minor, int Patch, string? Prereleas
 public class SemanticVersionConverter : IRouteTypeConverter
 {
   public Type TargetType => typeof(SemanticVersion);
-  public string ConstraintName => "semver";
+  public string? ConstraintAlias => "semver"; // Optional: allows {param:semver} as shorthand
 
   public bool TryConvert(string value, out object? result)
   {

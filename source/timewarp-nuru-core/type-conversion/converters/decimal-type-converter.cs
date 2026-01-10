@@ -6,7 +6,7 @@ namespace TimeWarp.Nuru;
 public class DecimalTypeConverter : IRouteTypeConverter
 {
   public Type TargetType => typeof(decimal);
-  public string ConstraintName => "decimal";
+  public string? ConstraintAlias => null;
 
   public bool TryConvert(string value, out object? result)
   {

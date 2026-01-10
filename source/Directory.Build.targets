@@ -1,5 +1,8 @@
 <Project>
-  <!-- Import root targets (which includes TimeWarp.Nuru.Build) -->
-  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.targets', '$(MSBuildThisFileDirectory)../'))" 
-          Condition="Exists('$([MSBuild]::GetPathOfFileAbove(Directory.Build.targets, $(MSBuildThisFileDirectory)../))')" />
+  <!-- 
+    Source Directory.Build.targets
+    
+    Source projects do not import the MSBuild task targets to avoid bootstrap issues.
+    Only samples need the AOT JSON context generation.
+  -->
 </Project>

@@ -1,21 +1,9 @@
 <Project>
   <!-- 
-    TimeWarp.Nuru Build Targets for Local Development
+    Root Directory.Build.targets
     
-    This file sets up the MSBuild task for AOT-compatible JSON serialization
-    when developing within the repository. It overrides the default NuGet package
-    path to use the local build output.
-    
-    For NuGet consumers: The targets come from the package's build/ folder.
-    For local development: This file overrides the task path to use local builds.
+    NOTE: MSBuild task targets for AOT JSON generation are imported in samples/Directory.Build.targets,
+    not here. Source projects must not depend on the MSBuild task to avoid bootstrap issues
+    (timewarp-nuru-build can't load itself before it's built).
   -->
-  
-  <!-- Override task path to use local development build -->
-  <PropertyGroup>
-    <_NuruBuildTaskDir>$(MSBuildThisFileDirectory)source/timewarp-nuru-build/bin/Debug/net10.0/</_NuruBuildTaskDir>
-  </PropertyGroup>
-  
-  <!-- Import the actual targets file -->
-  <Import Project="$(MSBuildThisFileDirectory)source/timewarp-nuru-build/build/TimeWarp.Nuru.Build.targets" 
-          Condition="Exists('$(MSBuildThisFileDirectory)source/timewarp-nuru-build/build/TimeWarp.Nuru.Build.targets')" />
 </Project>

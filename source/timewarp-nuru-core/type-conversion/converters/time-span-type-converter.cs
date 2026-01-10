@@ -4,10 +4,13 @@ namespace TimeWarp.Nuru;
 /// Converts string values to TimeSpan.
 /// Supports formats like "1:30:00", "00:00:30", "1.05:00:00".
 /// </summary>
+/// <remarks>
+/// The primary constraint name is "TimeSpan" (type name).
+/// </remarks>
 public class TimeSpanTypeConverter : IRouteTypeConverter
 {
   public Type TargetType => typeof(TimeSpan);
-  public string ConstraintName => "timespan";
+  public string? ConstraintAlias => null;
 
   public bool TryConvert(string value, out object? result)
   {

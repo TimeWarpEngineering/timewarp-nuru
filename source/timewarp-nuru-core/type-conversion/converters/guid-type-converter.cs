@@ -3,10 +3,13 @@ namespace TimeWarp.Nuru;
 /// <summary>
 /// Converts string values to GUIDs.
 /// </summary>
+/// <remarks>
+/// The primary constraint name is "Guid" (type name).
+/// </remarks>
 public class GuidTypeConverter : IRouteTypeConverter
 {
   public Type TargetType => typeof(Guid);
-  public string ConstraintName => "guid";
+  public string? ConstraintAlias => null;
 
   public bool TryConvert(string value, out object? result)
   {

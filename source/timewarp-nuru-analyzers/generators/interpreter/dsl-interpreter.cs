@@ -307,7 +307,7 @@ public sealed class DslInterpreter
 
       "UseTerminal" => DispatchUseTerminal(receiver),
 
-      "AddTypeConverter" => DispatchAddTypeConverter(receiver),
+      "AddTypeConverter" => DispatchAddTypeConverter(invocation, receiver),
 
       "WithAlias" => DispatchWithAlias(invocation, receiver),
 
@@ -705,16 +705,36 @@ public sealed class DslInterpreter
 
   /// <summary>
   /// Dispatches AddTypeConverter() call to IIrAppBuilder.
-  /// This is a no-op - type converters are registered at runtime only.
+  /// Extracts converter type information for code generation.
   /// </summary>
-  private static object? DispatchAddTypeConverter(object? receiver)
+  private static object? DispatchAddTypeConverter(InvocationExpressionSyntax invocation, object? receiver)
   {
     if (receiver is not IIrAppBuilder appBuilder)
     {
       throw new InvalidOperationException("AddTypeConverter() must be called on an app builder.");
     }
 
-    return appBuilder.AddTypeConverter();
+    // Extract converter info from: AddTypeConverter(new EmailAddressConverter())
+    ArgumentSyntax? arg = invocation.ArgumentList.Arguments.FirstOrDefault();
+    if (arg?.Expression is ObjectCreationExpressionSyntax objectCreation)
+    {
+      // Get the converter type name
+      string converterTypeName = objectCreation.Type.ToString();
+
+      // For now, we'll extract the target type and alias at emit time
+      // by analyzing the converter class. Store just the converter type name.
+      // The emitter will generate: new ConverterTypeName() and call TryConvert.
+      CustomConverterDefinition converter = new(
+        ConverterTypeName: converterTypeName,
+        TargetTypeName: "", // Will be resolved from handler parameter type
+        ConstraintAlias: null); // Not extractable at syntax level
+
+      return appBuilder.AddTypeConverter(converter);
+    }
+
+    // If we can't extract the type, log a warning but continue
+    // The route will fail to match custom type constraints
+    return appBuilder;
   }
 
   /// <summary>

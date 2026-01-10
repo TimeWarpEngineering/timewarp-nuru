@@ -166,6 +166,14 @@ public sealed class NuruGenerator : IIncrementalGenerator
     ImmutableArray<InterceptSiteModel> uniqueInterceptSites =
       [.. allInterceptSites.DistinctBy(site => site.GetAttributeSyntax())];
 
+    // Collect custom converters from all models
+    ImmutableArray<CustomConverterDefinition>.Builder allConverters = ImmutableArray.CreateBuilder<CustomConverterDefinition>();
+    foreach (AppModel? model in appModels)
+    {
+      if (model is not null)
+        allConverters.AddRange(model.CustomConverters);
+    }
+
     return new AppModel
     (
       VariableName: null, // Combined models don't track variable names
@@ -182,7 +190,8 @@ public sealed class NuruGenerator : IIncrementalGenerator
       Behaviors: allBehaviors.ToImmutable(),
       Services: allServices.ToImmutable(),
       InterceptSites: uniqueInterceptSites,
-      UserUsings: [.. allUserUsings.Distinct()]
+      UserUsings: [.. allUserUsings.Distinct()],
+      CustomConverters: allConverters.ToImmutable()
     );
   }
 }

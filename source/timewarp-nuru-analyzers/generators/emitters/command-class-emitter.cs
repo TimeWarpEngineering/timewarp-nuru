@@ -73,7 +73,7 @@ internal static class CommandClassEmitter
     sb.AppendLine("  {");
 
     // Route parameter properties
-    EmitParameterProperties(sb, route);
+    EmitParameterProperties(sb, route, route.Handler);
 
     // Interface implementation properties (from .Implements<T>())
     EmitInterfaceProperties(sb, route);
@@ -104,7 +104,7 @@ internal static class CommandClassEmitter
   /// <summary>
   /// Emits properties for route parameters.
   /// </summary>
-  private static void EmitParameterProperties(StringBuilder sb, RouteDefinition route)
+  private static void EmitParameterProperties(StringBuilder sb, RouteDefinition route, HandlerDefinition handler)
   {
     IEnumerable<ParameterDefinition> parameters = route.Parameters;
     bool hasParams = false;
@@ -118,7 +118,7 @@ internal static class CommandClassEmitter
       }
 
       string propertyName = ToPascalCase(param.Name);
-      string propertyType = GetPropertyType(param);
+      string propertyType = GetPropertyType(param, handler);
 
       sb.AppendLine($"    public {propertyType} {propertyName} {{ get; init; }}");
     }
@@ -136,10 +136,37 @@ internal static class CommandClassEmitter
 
       // Use LongForm as property name, or ParameterName for value options
       string propertyName = ToPascalCase(option.LongForm ?? option.ParameterName ?? "option");
-      string propertyType = option.IsFlag ? "bool" : (option.ResolvedClrTypeName ?? "string");
+      string propertyType = GetOptionPropertyType(option, handler);
 
       sb.AppendLine($"    public {propertyType} {propertyName} {{ get; init; }}");
     }
+  }
+
+  /// <summary>
+  /// Gets the C# type for an option.
+  /// For custom type constraints, uses the handler parameter type instead of the constraint name.
+  /// </summary>
+  private static string GetOptionPropertyType(OptionDefinition option, HandlerDefinition handler)
+  {
+    // Flags are always bool
+    if (option.IsFlag)
+      return "bool";
+
+    // Try to find matching handler parameter by option's parameter name or long form (case-insensitive)
+    // This is critical for custom type converters where the constraint name differs from the actual type
+    string? matchName = option.ParameterName ?? option.LongForm;
+    if (matchName is not null)
+    {
+      ParameterBinding? handlerParam = handler.Parameters
+        .FirstOrDefault(p => string.Equals(p.SourceName, matchName, StringComparison.OrdinalIgnoreCase)
+                          || string.Equals(p.ParameterName, matchName, StringComparison.OrdinalIgnoreCase));
+
+      if (handlerParam is not null)
+        return handlerParam.ParameterTypeName;
+    }
+
+    // Fallback to resolved CLR type or string
+    return option.ResolvedClrTypeName ?? "string";
   }
 
   /// <summary>
@@ -168,10 +195,21 @@ internal static class CommandClassEmitter
 
   /// <summary>
   /// Gets the C# type for a parameter.
+  /// For custom type constraints, uses the handler parameter type instead of the constraint name.
   /// </summary>
-  private static string GetPropertyType(ParameterDefinition param)
+  private static string GetPropertyType(ParameterDefinition param, HandlerDefinition handler)
   {
-    // If there's a resolved CLR type, use it
+    // First, try to find matching handler parameter by name (case-insensitive)
+    // This is critical for custom type converters where the constraint name (e.g., "email")
+    // differs from the actual handler parameter type (e.g., "EmailAddress")
+    ParameterBinding? handlerParam = handler.Parameters
+      .FirstOrDefault(p => string.Equals(p.SourceName, param.Name, StringComparison.OrdinalIgnoreCase));
+
+    // If we found a matching handler parameter, use its type
+    if (handlerParam is not null)
+      return handlerParam.ParameterTypeName;
+
+    // Fallback: If there's a resolved CLR type, use it
     if (!string.IsNullOrEmpty(param.ResolvedClrTypeName))
       return param.ResolvedClrTypeName;
 

@@ -27,7 +27,7 @@ The `timewarp-nuru-testapp-mediator` test app has compilation errors due to `Uni
   - [x] `source/timewarp-nuru-core/global-usings.cs`
   - [x] `source/timewarp-nuru/global-usings.cs`
 - [x] Remove `builder.Services.AddMediator();` from `timewarp-nuru-testapp-delegates/program.cs`
-- [ ] Delete `tests/test-apps/timewarp-nuru-testapp-mediator/` directory
+- [x] Delete `tests/test-apps/timewarp-nuru-testapp-mediator/` directory
 - [ ] Verify full solution builds successfully (blocked by #331)
 
 ## Progress

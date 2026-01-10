@@ -159,8 +159,6 @@ public class BasicMatchingTests
 
     await Task.CompletedTask;
   }
-
-  // Mediator consistency will be verified in Section 11
 }
 
 } // namespace TimeWarp.Nuru.Tests.Routing

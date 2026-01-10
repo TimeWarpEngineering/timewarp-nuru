@@ -40,11 +40,6 @@
     <PackageReference Include="TimeWarp.Jaribu" />
   </ItemGroup>
 
-  <!-- Shared test helpers for source generator tests -->
-  <ItemGroup>
-    <Compile Include="$(MSBuildThisFileDirectory)auto/attributed-route-test-helpers.cs" />
-  </ItemGroup>
-
   <!-- Common usings -->
   <ItemGroup>
     <Using Include="System.Console" Static="true" />

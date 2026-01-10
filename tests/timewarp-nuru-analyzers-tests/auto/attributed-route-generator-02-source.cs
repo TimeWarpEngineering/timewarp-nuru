@@ -33,14 +33,13 @@ void Fail(string testName, string message)
 {
   const string source = """
     using TimeWarp.Nuru;
-    using Mediator;
     
     [NuruRoute("status")]
-    public sealed class StatusRequest : IRequest
+    public sealed class StatusCommand : ICommand<Unit>
     {
-      public sealed class Handler : IRequestHandler<StatusRequest>
+      public sealed class Handler : ICommandHandler<StatusCommand, Unit>
       {
-        public ValueTask<Unit> Handle(StatusRequest request, CancellationToken ct) => default;
+        public ValueTask<Unit> Handle(StatusCommand command, CancellationToken ct) => default;
       }
     }
     """;
@@ -58,14 +57,13 @@ void Fail(string testName, string message)
 {
   const string source = """
     using TimeWarp.Nuru;
-    using Mediator;
     
     [NuruRoute("")]
-    public sealed class DefaultRequest : IRequest
+    public sealed class DefaultCommand : ICommand<Unit>
     {
-      public sealed class Handler : IRequestHandler<DefaultRequest>
+      public sealed class Handler : ICommandHandler<DefaultCommand, Unit>
       {
-        public ValueTask<Unit> Handle(DefaultRequest request, CancellationToken ct) => default;
+        public ValueTask<Unit> Handle(DefaultCommand command, CancellationToken ct) => default;
       }
     }
     """;
@@ -75,7 +73,7 @@ void Fail(string testName, string message)
 
   // Empty route should NOT have any WithLiteral calls for the pattern
   // But it should still have a route constant
-  bool hasRouteConstant = code?.Contains("__Route_DefaultRequest") == true;
+  bool hasRouteConstant = code?.Contains("__Route_DefaultCommand") == true;
   bool hasNoLiteralForPattern = code != null && !code.Contains(".WithLiteral(\"\")");
 
   if (hasRouteConstant && hasNoLiteralForPattern)
@@ -88,14 +86,13 @@ void Fail(string testName, string message)
 {
   const string source = """
     using TimeWarp.Nuru;
-    using Mediator;
     
     [NuruRoute("docker compose up")]
-    public sealed class DockerComposeUpRequest : IRequest
+    public sealed class DockerComposeUpCommand : ICommand<Unit>
     {
-      public sealed class Handler : IRequestHandler<DockerComposeUpRequest>
+      public sealed class Handler : ICommandHandler<DockerComposeUpCommand, Unit>
       {
-        public ValueTask<Unit> Handle(DockerComposeUpRequest request, CancellationToken ct) => default;
+        public ValueTask<Unit> Handle(DockerComposeUpCommand command, CancellationToken ct) => default;
       }
     }
     """;
@@ -121,17 +118,16 @@ void Fail(string testName, string message)
 {
   const string source = """
     using TimeWarp.Nuru;
-    using Mediator;
     
     [NuruRoute("greet")]
-    public sealed class GreetRequest : IRequest
+    public sealed class GreetCommand : ICommand<Unit>
     {
       [Parameter]
       public string Name { get; set; } = string.Empty;
       
-      public sealed class Handler : IRequestHandler<GreetRequest>
+      public sealed class Handler : ICommandHandler<GreetCommand, Unit>
       {
-        public ValueTask<Unit> Handle(GreetRequest request, CancellationToken ct) => default;
+        public ValueTask<Unit> Handle(GreetCommand command, CancellationToken ct) => default;
       }
     }
     """;
@@ -152,17 +148,16 @@ void Fail(string testName, string message)
 {
   const string source = """
     using TimeWarp.Nuru;
-    using Mediator;
     
     [NuruRoute("greet")]
-    public sealed class GreetRequest : IRequest
+    public sealed class GreetCommand : ICommand<Unit>
     {
       [Parameter]
       public string? Name { get; set; }
       
-      public sealed class Handler : IRequestHandler<GreetRequest>
+      public sealed class Handler : ICommandHandler<GreetCommand, Unit>
       {
-        public ValueTask<Unit> Handle(GreetRequest request, CancellationToken ct) => default;
+        public ValueTask<Unit> Handle(GreetCommand command, CancellationToken ct) => default;
       }
     }
     """;
@@ -182,17 +177,16 @@ void Fail(string testName, string message)
 {
   const string source = """
     using TimeWarp.Nuru;
-    using Mediator;
     
     [NuruRoute("count")]
-    public sealed class CountRequest : IRequest
+    public sealed class CountCommand : ICommand<Unit>
     {
       [Parameter]
       public int Count { get; set; }
       
-      public sealed class Handler : IRequestHandler<CountRequest>
+      public sealed class Handler : ICommandHandler<CountCommand, Unit>
       {
-        public ValueTask<Unit> Handle(CountRequest request, CancellationToken ct) => default;
+        public ValueTask<Unit> Handle(CountCommand command, CancellationToken ct) => default;
       }
     }
     """;
@@ -212,17 +206,16 @@ void Fail(string testName, string message)
 {
   const string source = """
     using TimeWarp.Nuru;
-    using Mediator;
     
     [NuruRoute("exec")]
-    public sealed class ExecRequest : IRequest
+    public sealed class ExecCommand : ICommand<Unit>
     {
       [Parameter(IsCatchAll = true)]
       public string[] Args { get; set; } = [];
       
-      public sealed class Handler : IRequestHandler<ExecRequest>
+      public sealed class Handler : ICommandHandler<ExecCommand, Unit>
       {
-        public ValueTask<Unit> Handle(ExecRequest request, CancellationToken ct) => default;
+        public ValueTask<Unit> Handle(ExecCommand command, CancellationToken ct) => default;
       }
     }
     """;
@@ -242,17 +235,16 @@ void Fail(string testName, string message)
 {
   const string source = """
     using TimeWarp.Nuru;
-    using Mediator;
     
     [NuruRoute("greet")]
-    public sealed class GreetRequest : IRequest
+    public sealed class GreetCommand : ICommand<Unit>
     {
       [Parameter(Description = "Name to greet")]
       public string Name { get; set; } = string.Empty;
       
-      public sealed class Handler : IRequestHandler<GreetRequest>
+      public sealed class Handler : ICommandHandler<GreetCommand, Unit>
       {
-        public ValueTask<Unit> Handle(GreetRequest request, CancellationToken ct) => default;
+        public ValueTask<Unit> Handle(GreetCommand command, CancellationToken ct) => default;
       }
     }
     """;
@@ -276,17 +268,16 @@ void Fail(string testName, string message)
 {
   const string source = """
     using TimeWarp.Nuru;
-    using Mediator;
     
     [NuruRoute("deploy")]
-    public sealed class DeployRequest : IRequest
+    public sealed class DeployCommand : ICommand<Unit>
     {
       [Option("force", "f")]
       public bool Force { get; set; }
       
-      public sealed class Handler : IRequestHandler<DeployRequest>
+      public sealed class Handler : ICommandHandler<DeployCommand, Unit>
       {
-        public ValueTask<Unit> Handle(DeployRequest request, CancellationToken ct) => default;
+        public ValueTask<Unit> Handle(DeployCommand command, CancellationToken ct) => default;
       }
     }
     """;
@@ -309,17 +300,16 @@ void Fail(string testName, string message)
 {
   const string source = """
     using TimeWarp.Nuru;
-    using Mediator;
     
     [NuruRoute("deploy")]
-    public sealed class DeployRequest : IRequest
+    public sealed class DeployCommand : ICommand<Unit>
     {
       [Option("config", "c")]
       public string Config { get; set; } = string.Empty;
       
-      public sealed class Handler : IRequestHandler<DeployRequest>
+      public sealed class Handler : ICommandHandler<DeployCommand, Unit>
       {
-        public ValueTask<Unit> Handle(DeployRequest request, CancellationToken ct) => default;
+        public ValueTask<Unit> Handle(DeployCommand command, CancellationToken ct) => default;
       }
     }
     """;
@@ -339,17 +329,16 @@ void Fail(string testName, string message)
 {
   const string source = """
     using TimeWarp.Nuru;
-    using Mediator;
     
     [NuruRoute("deploy")]
-    public sealed class DeployRequest : IRequest
+    public sealed class DeployCommand : ICommand<Unit>
     {
       [Option("config", "c")]
       public string? Config { get; set; }
       
-      public sealed class Handler : IRequestHandler<DeployRequest>
+      public sealed class Handler : ICommandHandler<DeployCommand, Unit>
       {
-        public ValueTask<Unit> Handle(DeployRequest request, CancellationToken ct) => default;
+        public ValueTask<Unit> Handle(DeployCommand command, CancellationToken ct) => default;
       }
     }
     """;
@@ -369,17 +358,16 @@ void Fail(string testName, string message)
 {
   const string source = """
     using TimeWarp.Nuru;
-    using Mediator;
     
     [NuruRoute("deploy")]
-    public sealed class DeployRequest : IRequest
+    public sealed class DeployCommand : ICommand<Unit>
     {
       [Option("replicas", "r")]
       public int Replicas { get; set; } = 1;
       
-      public sealed class Handler : IRequestHandler<DeployRequest>
+      public sealed class Handler : ICommandHandler<DeployCommand, Unit>
       {
-        public ValueTask<Unit> Handle(DeployRequest request, CancellationToken ct) => default;
+        public ValueTask<Unit> Handle(DeployCommand command, CancellationToken ct) => default;
       }
     }
     """;
@@ -399,17 +387,16 @@ void Fail(string testName, string message)
 {
   const string source = """
     using TimeWarp.Nuru;
-    using Mediator;
     
     [NuruRoute("deploy")]
-    public sealed class DeployRequest : IRequest
+    public sealed class DeployCommand : ICommand<Unit>
     {
       [Option("verbose")]
       public bool Verbose { get; set; }
       
-      public sealed class Handler : IRequestHandler<DeployRequest>
+      public sealed class Handler : ICommandHandler<DeployCommand, Unit>
       {
-        public ValueTask<Unit> Handle(DeployRequest request, CancellationToken ct) => default;
+        public ValueTask<Unit> Handle(DeployCommand command, CancellationToken ct) => default;
       }
     }
     """;
@@ -431,17 +418,16 @@ void Fail(string testName, string message)
 {
   const string source = """
     using TimeWarp.Nuru;
-    using Mediator;
     
     [NuruRoute("build")]
-    public sealed class BuildRequest : IRequest
+    public sealed class BuildCommand : ICommand<Unit>
     {
       [Option("include", "I", IsRepeated = true)]
       public string[] Includes { get; set; } = [];
       
-      public sealed class Handler : IRequestHandler<BuildRequest>
+      public sealed class Handler : ICommandHandler<BuildCommand, Unit>
       {
-        public ValueTask<Unit> Handle(BuildRequest request, CancellationToken ct) => default;
+        public ValueTask<Unit> Handle(BuildCommand command, CancellationToken ct) => default;
       }
     }
     """;
@@ -461,17 +447,16 @@ void Fail(string testName, string message)
 {
   const string source = """
     using TimeWarp.Nuru;
-    using Mediator;
     
     [NuruRoute("deploy")]
-    public sealed class DeployRequest : IRequest
+    public sealed class DeployCommand : ICommand<Unit>
     {
       [Option("force", "f", Description = "Skip confirmation")]
       public bool Force { get; set; }
       
-      public sealed class Handler : IRequestHandler<DeployRequest>
+      public sealed class Handler : ICommandHandler<DeployCommand, Unit>
       {
-        public ValueTask<Unit> Handle(DeployRequest request, CancellationToken ct) => default;
+        public ValueTask<Unit> Handle(DeployCommand command, CancellationToken ct) => default;
       }
     }
     """;
@@ -495,17 +480,16 @@ void Fail(string testName, string message)
 {
   const string source = """
     using TimeWarp.Nuru;
-    using Mediator;
     
     [NuruRouteGroup("docker")]
-    public abstract class DockerRequestBase { }
+    public abstract class DockerCommandBase { }
     
     [NuruRoute("run")]
-    public sealed class DockerRunRequest : DockerRequestBase, IRequest
+    public sealed class DockerRunCommand : DockerCommandBase, ICommand<Unit>
     {
-      public sealed class Handler : IRequestHandler<DockerRunRequest>
+      public sealed class Handler : ICommandHandler<DockerRunCommand, Unit>
       {
-        public ValueTask<Unit> Handle(DockerRunRequest request, CancellationToken ct) => default;
+        public ValueTask<Unit> Handle(DockerRunCommand command, CancellationToken ct) => default;
       }
     }
     """;
@@ -527,21 +511,20 @@ void Fail(string testName, string message)
 {
   const string source = """
     using TimeWarp.Nuru;
-    using Mediator;
     
     [NuruRouteGroup("docker")]
-    public abstract class DockerRequestBase
+    public abstract class DockerCommandBase
     {
       [GroupOption("debug", "D")]
       public bool Debug { get; set; }
     }
     
     [NuruRoute("run")]
-    public sealed class DockerRunRequest : DockerRequestBase, IRequest
+    public sealed class DockerRunCommand : DockerCommandBase, ICommand<Unit>
     {
-      public sealed class Handler : IRequestHandler<DockerRunRequest>
+      public sealed class Handler : ICommandHandler<DockerRunCommand, Unit>
       {
-        public ValueTask<Unit> Handle(DockerRunRequest request, CancellationToken ct) => default;
+        public ValueTask<Unit> Handle(DockerRunCommand command, CancellationToken ct) => default;
       }
     }
     """;
@@ -562,15 +545,14 @@ void Fail(string testName, string message)
 {
   const string source = """
     using TimeWarp.Nuru;
-    using Mediator;
     
     [NuruRoute("goodbye")]
     [NuruRouteAlias("bye", "cya")]
-    public sealed class GoodbyeRequest : IRequest
+    public sealed class GoodbyeCommand : ICommand<Unit>
     {
-      public sealed class Handler : IRequestHandler<GoodbyeRequest>
+      public sealed class Handler : ICommandHandler<GoodbyeCommand, Unit>
       {
-        public ValueTask<Unit> Handle(GoodbyeRequest request, CancellationToken ct) => default;
+        public ValueTask<Unit> Handle(GoodbyeCommand command, CancellationToken ct) => default;
       }
     }
     """;
@@ -578,9 +560,9 @@ void Fail(string testName, string message)
   GeneratorDriverRunResult result = AttributedRouteTestHelpers.RunAttributedRouteGenerator(source);
   string? code = AttributedRouteTestHelpers.GetGeneratedAttributedRoutesSource(result);
 
-  bool hasMainRoute = code?.Contains("__Route_GoodbyeRequest") == true;
-  bool hasByeAlias = code?.Contains("__Route_GoodbyeRequest_Alias_bye") == true;
-  bool hasCyaAlias = code?.Contains("__Route_GoodbyeRequest_Alias_cya") == true;
+  bool hasMainRoute = code?.Contains("__Route_GoodbyeCommand") == true;
+  bool hasByeAlias = code?.Contains("__Route_GoodbyeCommand_Alias_bye") == true;
+  bool hasCyaAlias = code?.Contains("__Route_GoodbyeCommand_Alias_cya") == true;
 
   if (hasMainRoute && hasByeAlias && hasCyaAlias)
     Pass("Test 18: Aliases generate separate __Route_*_Alias_* constants");
@@ -596,14 +578,13 @@ void Fail(string testName, string message)
 {
   const string source = """
     using TimeWarp.Nuru;
-    using Mediator;
     
     [NuruRoute("status")]
-    public sealed class StatusRequest : IRequest
+    public sealed class StatusCommand : ICommand<Unit>
     {
-      public sealed class Handler : IRequestHandler<StatusRequest>
+      public sealed class Handler : ICommandHandler<StatusCommand, Unit>
       {
-        public ValueTask<Unit> Handle(StatusRequest request, CancellationToken ct) => default;
+        public ValueTask<Unit> Handle(StatusCommand command, CancellationToken ct) => default;
       }
     }
     """;
@@ -623,10 +604,9 @@ void Fail(string testName, string message)
 {
   const string source = """
     using TimeWarp.Nuru;
-    using Mediator;
     
     [NuruRoute("deploy")]
-    public sealed class DeployRequest : IRequest
+    public sealed class DeployCommand : ICommand<Unit>
     {
       [Parameter]
       public string Env { get; set; } = string.Empty;
@@ -634,9 +614,9 @@ void Fail(string testName, string message)
       [Option("force", "f")]
       public bool Force { get; set; }
       
-      public sealed class Handler : IRequestHandler<DeployRequest>
+      public sealed class Handler : ICommandHandler<DeployCommand, Unit>
       {
-        public ValueTask<Unit> Handle(DeployRequest request, CancellationToken ct) => default;
+        public ValueTask<Unit> Handle(DeployCommand command, CancellationToken ct) => default;
       }
     }
     """;
@@ -645,7 +625,7 @@ void Fail(string testName, string message)
   string? code = AttributedRouteTestHelpers.GetGeneratedAttributedRoutesSource(result);
 
   // Pattern string should contain "deploy {env} --force,-f"
-  bool hasPatternString = code?.Contains("__Pattern_DeployRequest") == true;
+  bool hasPatternString = code?.Contains("__Pattern_DeployCommand") == true;
   bool hasEnvParam = code?.Contains("{env}") == true;
   bool hasForceOption = code?.Contains("--force,-f") == true;
 
@@ -659,14 +639,13 @@ void Fail(string testName, string message)
 {
   const string source = """
     using TimeWarp.Nuru;
-    using Mediator;
     
     [NuruRoute("status", Description = "Check system status")]
-    public sealed class StatusRequest : IRequest
+    public sealed class StatusCommand : ICommand<Unit>
     {
-      public sealed class Handler : IRequestHandler<StatusRequest>
+      public sealed class Handler : ICommandHandler<StatusCommand, Unit>
       {
-        public ValueTask<Unit> Handle(StatusRequest request, CancellationToken ct) => default;
+        public ValueTask<Unit> Handle(StatusCommand command, CancellationToken ct) => default;
       }
     }
     """;

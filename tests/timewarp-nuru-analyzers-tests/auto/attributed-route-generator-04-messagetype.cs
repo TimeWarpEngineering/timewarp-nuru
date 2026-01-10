@@ -33,7 +33,6 @@ void Fail(string testName, string message)
 {
   const string source = """
     using TimeWarp.Nuru;
-    using Mediator;
     
     [NuruRoute("list")]
     public sealed class ListQuery : IQuery<Unit>
@@ -60,7 +59,6 @@ void Fail(string testName, string message)
 {
   const string source = """
     using TimeWarp.Nuru;
-    using Mediator;
     
     [NuruRoute("deploy")]
     public sealed class DeployCommand : ICommand<Unit>
@@ -87,7 +85,6 @@ void Fail(string testName, string message)
 {
   const string source = """
     using TimeWarp.Nuru;
-    using Mediator;
     
     [NuruRoute("set")]
     public sealed class SetCommand : ICommand<Unit>, IIdempotent
@@ -110,19 +107,15 @@ void Fail(string testName, string message)
     Fail("Test 3: ICommand<T> + IIdempotent", $"Expected .WithMessageType(MessageType.IdempotentCommand)");
 }
 
-// Test 4: IRequest<T> → MessageType.Unspecified
+// Test 4: Plain class (no message interface) → MessageType.Unspecified
 {
   const string source = """
     using TimeWarp.Nuru;
-    using Mediator;
     
     [NuruRoute("ping")]
-    public sealed class PingRequest : IRequest<Unit>
+    public sealed class PingCommand
     {
-      public sealed class Handler : IRequestHandler<PingRequest, Unit>
-      {
-        public ValueTask<Unit> Handle(PingRequest request, CancellationToken ct) => default;
-      }
+      // No ICommand/IQuery interface - just a plain class with [NuruRoute]
     }
     """;
 
@@ -132,24 +125,20 @@ void Fail(string testName, string message)
   bool hasUnspecifiedMessageType = code?.Contains(".WithMessageType(global::TimeWarp.Nuru.MessageType.Unspecified)") == true;
 
   if (hasUnspecifiedMessageType)
-    Pass("Test 4: IRequest<T> generates .WithMessageType(MessageType.Unspecified)");
+    Pass("Test 4: Plain class generates .WithMessageType(MessageType.Unspecified)");
   else
-    Fail("Test 4: IRequest<T>", $"Expected .WithMessageType(MessageType.Unspecified)");
+    Fail("Test 4: Plain class", $"Expected .WithMessageType(MessageType.Unspecified)");
 }
 
-// Test 5: IRequest (non-generic) → MessageType.Unspecified
+// Test 5: IMessage marker interface → MessageType.Unspecified
 {
   const string source = """
     using TimeWarp.Nuru;
-    using Mediator;
     
     [NuruRoute("ping")]
-    public sealed class PingRequest : IRequest
+    public sealed class PingMessage : IMessage
     {
-      public sealed class Handler : IRequestHandler<PingRequest>
-      {
-        public ValueTask<Unit> Handle(PingRequest request, CancellationToken ct) => default;
-      }
+      // IMessage is the base marker interface - no specific message type
     }
     """;
 
@@ -159,18 +148,18 @@ void Fail(string testName, string message)
   bool hasUnspecifiedMessageType = code?.Contains(".WithMessageType(global::TimeWarp.Nuru.MessageType.Unspecified)") == true;
 
   if (hasUnspecifiedMessageType)
-    Pass("Test 5: IRequest (non-generic) generates .WithMessageType(MessageType.Unspecified)");
+    Pass("Test 5: IMessage generates .WithMessageType(MessageType.Unspecified)");
   else
-    Fail("Test 5: IRequest (non-generic)", $"Expected .WithMessageType(MessageType.Unspecified)");
+    Fail("Test 5: IMessage", $"Expected .WithMessageType(MessageType.Unspecified)");
 }
 
-// Test 6: No mediator interface → MessageType.Unspecified
+// Test 6: No message interface → MessageType.Unspecified
 {
   const string source = """
     using TimeWarp.Nuru;
     
     [NuruRoute("status")]
-    public sealed class StatusRequest
+    public sealed class StatusCommand
     {
     }
     """;
@@ -181,16 +170,15 @@ void Fail(string testName, string message)
   bool hasUnspecifiedMessageType = code?.Contains(".WithMessageType(global::TimeWarp.Nuru.MessageType.Unspecified)") == true;
 
   if (hasUnspecifiedMessageType)
-    Pass("Test 6: No mediator interface generates .WithMessageType(MessageType.Unspecified)");
+    Pass("Test 6: No message interface generates .WithMessageType(MessageType.Unspecified)");
   else
-    Fail("Test 6: No mediator interface", $"Expected .WithMessageType(MessageType.Unspecified)");
+    Fail("Test 6: No message interface", $"Expected .WithMessageType(MessageType.Unspecified)");
 }
 
 // Test 7: Alias also gets same MessageType
 {
   const string source = """
     using TimeWarp.Nuru;
-    using Mediator;
     
     [NuruRoute("list")]
     [NuruRouteAlias("ls")]
@@ -229,13 +217,12 @@ void Fail(string testName, string message)
 {
   const string source = """
     using TimeWarp.Nuru;
-    using Mediator;
     
     [NuruRouteGroup("docker")]
-    public abstract class DockerRequestBase { }
+    public abstract class DockerCommandBase { }
     
     [NuruRoute("run")]
-    public sealed class DockerRunCommand : DockerRequestBase, ICommand<Unit>
+    public sealed class DockerRunCommand : DockerCommandBase, ICommand<Unit>
     {
       public sealed class Handler : ICommandHandler<DockerRunCommand, Unit>
       {

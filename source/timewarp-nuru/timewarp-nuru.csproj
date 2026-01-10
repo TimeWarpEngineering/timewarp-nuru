@@ -11,8 +11,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Mediator abstractions - source generator must be added by end-user app -->
-    <PackageReference Include="Mediator.Abstractions" />
     <!-- Override TimeWarp.Build.Tasks to flow transitively to consumers (removes PrivateAssets default) -->
     <PackageReference Update="TimeWarp.Build.Tasks" PrivateAssets="none" />
   </ItemGroup>

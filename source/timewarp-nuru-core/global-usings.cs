@@ -25,5 +25,3 @@ global using System.Text.RegularExpressions;
 // TimeWarp namespaces
 global using TimeWarp.Builder;
 global using TimeWarp.Terminal;
-// Mediator (martinothamar source-generator based)
-global using Mediator;

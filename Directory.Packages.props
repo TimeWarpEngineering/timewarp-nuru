@@ -32,10 +32,7 @@
     <PackageVersion Include="TimeWarp.Nuru.Parsing" Version="$(Version)" />
     <PackageVersion Include="TimeWarp.Nuru.Analyzers" Version="$(Version)" />
   </ItemGroup>
-  <ItemGroup Label="Mediator - martinothamar source-generator based">
-    <PackageVersion Include="Mediator.Abstractions" Version="3.0.1" />
-    <PackageVersion Include="Mediator.SourceGenerator" Version="3.0.1" />
-  </ItemGroup>
+
   <ItemGroup Label="Testing">
     <PackageVersion Include="Shouldly" Version="4.3.0" />
   </ItemGroup>

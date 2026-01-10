@@ -42,7 +42,7 @@ public static class AttributedRouteTestHelpers
   }
 
   /// <summary>
-  /// Creates a C# compilation with references to TimeWarp.Nuru and Mediator.
+  /// Creates a C# compilation with references to TimeWarp.Nuru.
   /// </summary>
   /// <param name="source">The source code to compile.</param>
   /// <returns>A CSharpCompilation ready for generator execution.</returns>
@@ -52,8 +52,6 @@ public static class AttributedRouteTestHelpers
     string repoRoot = FindRepoRoot();
     string nuruDir = Path.Combine(repoRoot, "source", "timewarp-nuru", "bin", "Debug", "net10.0");
     string nuruCoreDir = Path.Combine(repoRoot, "source", "timewarp-nuru-core", "bin", "Debug", "net10.0");
-    // attributed-routes sample has Mediator.dll for IQuery/ICommand interfaces
-    string attributedRoutesDir = Path.Combine(repoRoot, "samples", "attributed-routes", "bin", "Debug", "net10.0");
 
     List<MetadataReference> references =
     [
@@ -65,16 +63,9 @@ public static class AttributedRouteTestHelpers
       MetadataReference.CreateFromFile(Path.Combine(runtimePath, "System.Collections.dll"))
     ];
 
-    // Add TimeWarp.Nuru assemblies
+    // Add TimeWarp.Nuru assemblies (includes IQuery<T>, ICommand<T>, IQueryHandler, ICommandHandler)
     AddAssembliesFromDirectory(references, nuruDir);
     AddAssembliesFromDirectory(references, nuruCoreDir);
-
-    // Add Mediator.dll for IQuery<T>/ICommand<T> interface detection
-    string mediatorDll = Path.Combine(attributedRoutesDir, "Mediator.dll");
-    if (File.Exists(mediatorDll))
-    {
-      references.Add(MetadataReference.CreateFromFile(mediatorDll));
-    }
 
     return CSharpCompilation.Create(
       "TestAssembly",

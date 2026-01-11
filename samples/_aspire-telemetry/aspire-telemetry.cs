@@ -1,13 +1,11 @@
 #!/usr/bin/dotnet --
+
+// needs refactored to use new DSL source gen approach.
 // aspire-telemetry - Demonstrates OpenTelemetry integration with Aspire Dashboard
 #:project ../../source/timewarp-nuru/timewarp-nuru.csproj
 #:project ../../source/timewarp-nuru-telemetry/timewarp-nuru-telemetry.csproj
-#:package Mediator.Abstractions
-#:package Mediator.SourceGenerator
 
 using TimeWarp.Nuru;
-using Mediator;
-using Microsoft.Extensions.DependencyInjection;
 using static System.Console;
 
 // Aspire Telemetry Sample
@@ -41,13 +39,11 @@ NuruCoreApp app = NuruApp.CreateBuilder(args)
   // - OTLP export to any compatible backend (Aspire, Jaeger, Zipkin, etc.)
   // - Distributed tracing via ActivitySource
   // - Metrics via Meter
-  .UseTelemetry()
+  .UseTelemetry() // TODO not yet converted to DSL and tested
   .ConfigureServices
   (
     services =>
     {
-      services.AddMediator();
-
       // Register TelemetryBehavior for automatic command instrumentation
       // The pre-built behavior from TimeWarp.Nuru.Telemetry uses shared ActivitySource/Meter
       services.AddSingleton<IPipelineBehavior<GreetCommand, Unit>, TelemetryBehavior<GreetCommand, Unit>>();
@@ -56,10 +52,11 @@ NuruCoreApp app = NuruApp.CreateBuilder(args)
       services.AddSingleton<IPipelineBehavior<StatusCommand, Unit>, TelemetryBehavior<StatusCommand, Unit>>();
     }
   )
-  .Map<GreetCommand>("greet {name}").WithDescription("Greet someone (demonstrates basic telemetry)")
-  .Map<WorkCommand>("work {duration:int}").WithDescription("Simulate work with specified duration in ms")
-  .Map<FailCommand>("fail {message}").WithDescription("Throw an exception (demonstrates error telemetry)")
-  .Map<StatusCommand>("status").WithDescription("Show telemetry configuration status")
+  // TODO use attributed routes and they will be automatically mapped
+  // .Map<GreetCommand>("greet {name}").WithDescription("Greet someone (demonstrates basic telemetry)")
+  // .Map<WorkCommand>("work {duration:int}").WithDescription("Simulate work with specified duration in ms")
+  // .Map<FailCommand>("fail {message}").WithDescription("Throw an exception (demonstrates error telemetry)")
+  // .Map<StatusCommand>("status").WithDescription("Show telemetry configuration status")
   .Build();
 
 int exitCode = await app.RunAsync(args);
@@ -72,6 +69,8 @@ return exitCode;
 // =============================================================================
 // COMMANDS (unchanged - business logic stays clean)
 // =============================================================================
+
+// TODO: use attributed routes and Nuru Inerfaces
 
 public sealed class GreetCommand : IRequest
 {

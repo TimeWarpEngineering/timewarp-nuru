@@ -28,6 +28,7 @@ These samples have been verified working with the new API:
 - [x] `08-testing/runfile-test-harness/real-app.cs` - Fixed in #320 (method reference handlers)
 - [x] `10-type-converters/01-builtin-types.cs` - Working, demonstrates 15 built-in types
 - [x] `10-type-converters/02-custom-type-converters.cs` - Fixed in #329 (custom type converter support)
+- [x] `11-unified-middleware/unified-middleware.cs` - Working, demonstrates unified pipeline for delegate + attributed routes
 
 ## Samples Needing Updates
 
@@ -36,7 +37,7 @@ These samples have been verified working with the new API:
 
 ### Uses Mediator (replace with TimeWarp.Nuru interfaces)
 - [x] `05-aot-example/aot-example.cs` - DONE (removed AddMediator)
-- [ ] `_logging/console-logging.cs` - UseConsoleLogging, Mediator
+- [x] `_logging/console-logging.cs` - Uses Nuru interfaces (IQuery, IQueryHandler), but **blocked by #322** (ILogger<T> injection)
 - [ ] `_logging/serilog-logging.cs` - likely same issues
 - [x] `06-async-examples/async-examples.cs` - DONE (updated to CreateBuilder)
 
@@ -59,7 +60,9 @@ These samples have been verified working with the new API:
 - [ ] `_dynamic-completion-example/` - Requires Completion lib
 - [ ] `_repl-demo/` - Requires Mediator, Repl lib
 - [ ] `_shell-completion-example/` - Requires Completion lib
-- [ ] `_unified-middleware/` - **Blocked by #322** (needs ILogger<T> auto-detection)
+
+### Completed (was marked blocked but works)
+- [x] `11-unified-middleware/` - ✓ Working! (moved from _unified-middleware)
 
 ### Working (deferred decision on purpose)
 - [x] `99-timewarp-nuru-sample/` - Works, but redundant with other samples. Decide later if kitchen sink app or template.

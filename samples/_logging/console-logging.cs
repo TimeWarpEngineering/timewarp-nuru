@@ -4,11 +4,13 @@
 #:package Microsoft.Extensions.Logging.Console
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// CONSOLE LOGGING - MICROSOFT.EXTENSIONS.LOGGING WITH ATTRIBUTED ROUTES
+// CONSOLE LOGGING - BLOCKED BY #322
 // ═══════════════════════════════════════════════════════════════════════════════
 //
-// This sample demonstrates NuruApp.CreateBuilder(args) with console logging
-// and attributed routes. ILogger<T> is injected via DI into handlers.
+// This sample is BLOCKED waiting for #322 (Auto-detect ILogger<T> injection).
+//
+// The generator doesn't currently resolve ILogger<T> from DI for attributed
+// route handlers. Once #322 is complete, this sample will work.
 //
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -49,7 +51,7 @@ public sealed class TestQuery : IQuery<Unit>
 }
 
 /// <summary>Greet query with ILogger injection.</summary>
-[NuruRoute("greet", Description = "Greet someone by name")]
+[NuruRoute("greet {name}", Description = "Greet someone by name")]
 public sealed class GreetQuery : IQuery<Unit>
 {
   [Parameter(Description = "Name of the person to greet")]

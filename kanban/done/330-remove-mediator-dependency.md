@@ -8,10 +8,6 @@ Remove the unused Mediator library dependency. The "mediator pattern" functional
 
 The `timewarp-nuru-testapp-mediator` test app has compilation errors due to `Unit` type ambiguity between `Mediator.Unit` and `TimeWarp.Nuru.Unit`. Rather than fixing these errors, we should remove the Mediator dependency entirely since it's no longer used.
 
-## Blocked By
-
-- #331 - Fix catch-all parameter variable name mismatch in generator
-
 ## Checklist
 
 - [x] Comment out `timewarp-nuru-testapp-mediator` from `timewarp-nuru.slnx`
@@ -28,7 +24,7 @@ The `timewarp-nuru-testapp-mediator` test app has compilation errors due to `Uni
   - [x] `source/timewarp-nuru/global-usings.cs`
 - [x] Remove `builder.Services.AddMediator();` from `timewarp-nuru-testapp-delegates/program.cs`
 - [x] Delete `tests/test-apps/timewarp-nuru-testapp-mediator/` directory
-- [ ] Verify full solution builds successfully (blocked by #331)
+- [x] Verify full solution builds successfully (unblocked by #331)
 
 ## Progress
 
@@ -47,3 +43,13 @@ This bug was hidden before because the Mediator-based code path was being used. 
 - The routing scenarios tested in `timewarp-nuru-testapp-mediator` (sub-commands, options, catch-all, etc.) are covered by samples and `timewarp-nuru-testapp-delegates`
 - TimeWarp.Nuru has its own `Unit` type, so the external Mediator library is redundant
 - Also fixed: `timewarp-nuru-mcp.csproj` embedded resource path updated from `../../samples/syntax-examples.cs` to `../../samples/04-syntax-examples/syntax-examples.cs`
+
+## Results
+
+Mediator dependency successfully removed from the entire codebase:
+- All package references removed from csproj files
+- Global usings cleaned up
+- Test app using Mediator deleted
+- Full solution builds successfully (0 errors, 0 warnings)
+
+The blocker (#331 - catch-all parameter variable name mismatch) was fixed, which unblocked the final verification step.

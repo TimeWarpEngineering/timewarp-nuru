@@ -66,16 +66,13 @@ internal static class RouteMatcherEmitter
   {
     string pattern = BuildListPattern(route, routeIndex);
 
-    // Check if we need a skip label (for typed parameters that may fail conversion)
-    bool hasTypedParams = route.Parameters.Any(p => p.HasTypeConstraint);
-
     sb.AppendLine($"    if (routeArgs is {pattern})");
     sb.AppendLine("    {");
 
     // Emit variable aliases (from route-unique names to handler-expected names)
     EmitVariableAliases(sb, route, routeIndex, indent: 6);
 
-    // Emit type conversions for typed parameters
+    // Emit type conversions for typed parameters (emits error and returns 1 on failure)
     EmitTypeConversions(sb, route, routeIndex, customConverters, indent: 6);
 
     // Emit handler invocation (wrapped with behaviors if any)
@@ -97,12 +94,6 @@ internal static class RouteMatcherEmitter
     }
 
     sb.AppendLine("    }");
-
-    // Emit skip label if needed for type conversion failures
-    if (hasTypedParams)
-    {
-      sb.AppendLine($"    route_skip_{routeIndex}:;");
-    }
   }
 
   /// <summary>
@@ -222,7 +213,7 @@ internal static class RouteMatcherEmitter
       {
         if (param.IsOptional)
         {
-          // Optional param: declare as nullable, check for null before parsing, skip route on parse failure
+          // Optional param: declare as nullable, check for null before parsing, error on parse failure
           // Need a temp variable for TryParse's out parameter since we need nullable
           string tempVarName = $"__{varName}_parsed_{routeIndex}";
           string tryParseWithTemp = TypeConversionMap.GetBuiltInTryConversion(baseType, uniqueVarName, tempVarName)!.Value.TryParseCondition;
@@ -231,15 +222,22 @@ internal static class RouteMatcherEmitter
           sb.AppendLine($"{indentStr}{{");
           sb.AppendLine($"{indentStr}  {clrType} {tempVarName};");
           sb.AppendLine($"{indentStr}  if (!{tryParseWithTemp})");
-          sb.AppendLine($"{indentStr}    goto route_skip_{routeIndex};");
+          sb.AppendLine($"{indentStr}  {{");
+          sb.AppendLine($"{indentStr}    app.Terminal.WriteLine($\"Error: Invalid value '{{{uniqueVarName}}}' for parameter '{param.Name}'. Expected: {baseType}\");");
+          sb.AppendLine($"{indentStr}    return 1;");
+          sb.AppendLine($"{indentStr}  }}");
           sb.AppendLine($"{indentStr}  {escapedVarName} = {tempVarName};");
           sb.AppendLine($"{indentStr}}}");
         }
         else
         {
-          // Required param: TryParse with route skip on failure
+          // Required param: TryParse with error message on failure
+          sb.AppendLine($"{indentStr}{clrType} {escapedVarName};");
           sb.AppendLine($"{indentStr}if (!{tryParseCondition})");
-          sb.AppendLine($"{indentStr}  goto route_skip_{routeIndex};");
+          sb.AppendLine($"{indentStr}{{");
+          sb.AppendLine($"{indentStr}  app.Terminal.WriteLine($\"Error: Invalid value '{{{uniqueVarName}}}' for parameter '{param.Name}'. Expected: {baseType}\");");
+          sb.AppendLine($"{indentStr}  return 1;");
+          sb.AppendLine($"{indentStr}}}");
         }
       }
       else
@@ -557,7 +555,7 @@ internal static class RouteMatcherEmitter
 
   /// <summary>
   /// Emits type conversion code for a typed option.
-  /// Uses TryParse for graceful error handling - route skips on conversion failure.
+  /// Uses TryParse with clear error messages on conversion failure.
   /// </summary>
   private static void EmitOptionTypeConversion(
     StringBuilder sb,
@@ -569,6 +567,7 @@ internal static class RouteMatcherEmitter
   {
     string typeConstraint = option.TypeConstraint ?? "";
     string baseType = typeConstraint.EndsWith('?') ? typeConstraint[..^1] : typeConstraint;
+    string optionDisplay = option.LongForm is not null ? $"--{option.LongForm}" : $"-{option.ShortForm}";
 
     // Use shared type conversion mapping with TryParse for graceful error handling
     (string ClrType, string TryParseCondition)? conversion = TypeConversionMap.GetBuiltInTryConversion(baseType, rawVarName, varName);
@@ -577,17 +576,23 @@ internal static class RouteMatcherEmitter
     {
       if (option.ParameterIsOptional)
       {
-        // Optional option value: declare with default, skip route if parse fails
+        // Optional option value: declare with default, error if value provided but invalid
         sb.AppendLine($"      {clrType} {varName} = default;");
         sb.AppendLine($"      if ({rawVarName} is not null && !{tryParseCondition})");
-        sb.AppendLine($"        goto route_skip_{routeIndex};");
+        sb.AppendLine("      {");
+        sb.AppendLine($"        app.Terminal.WriteLine($\"Error: Invalid value '{{{rawVarName}}}' for option '{optionDisplay}'. Expected: {baseType}\");");
+        sb.AppendLine("        return 1;");
+        sb.AppendLine("      }");
       }
       else
       {
-        // Required option value: TryParse with route skip on failure
+        // Required option value: TryParse with error message on failure
         sb.AppendLine($"      {clrType} {varName} = default;");
         sb.AppendLine($"      if ({rawVarName} is null || !{tryParseCondition})");
-        sb.AppendLine($"        goto route_skip_{routeIndex};");
+        sb.AppendLine("      {");
+        sb.AppendLine($"        app.Terminal.WriteLine($\"Error: Invalid value '{{{rawVarName} ?? \"(missing)\"}}' for option '{optionDisplay}'. Expected: {baseType}\");");
+        sb.AppendLine("        return 1;");
+        sb.AppendLine("      }");
       }
     }
     else

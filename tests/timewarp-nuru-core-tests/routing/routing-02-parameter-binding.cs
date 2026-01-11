@@ -62,9 +62,13 @@ namespace TimeWarp.Nuru.Tests.Routing
         .Build();
 #pragma warning restore RCS1163 // Unused parameter
 
-      // Act & Assert - type conversion failure throws exception
-      await Should.ThrowAsync<Exception>(async () => await app.RunAsync(["delay", "abc"]));
-      terminal.OutputContains("ms:").ShouldBeFalse();
+      // Act - type conversion failure returns exit code 1 with error message
+      int exitCode = await app.RunAsync(["delay", "abc"]);
+
+      // Assert
+      exitCode.ShouldBe(1);
+      terminal.OutputContains("Error:").ShouldBeTrue();
+      terminal.OutputContains("ms:").ShouldBeFalse(); // Handler should not have been invoked
 
       await Task.CompletedTask;
     }
@@ -154,9 +158,13 @@ namespace TimeWarp.Nuru.Tests.Routing
         .Map("age {years:int}").WithHandler((int years) => $"years:{years}").AsQuery().Done()
         .Build();
 
-      // Act & Assert - type conversion failure throws exception
-      await Should.ThrowAsync<Exception>(async () => await app.RunAsync(["age", "twenty"]));
-      terminal.OutputContains("years:").ShouldBeFalse();
+      // Act - type conversion failure returns exit code 1 with error message
+      int exitCode = await app.RunAsync(["age", "twenty"]);
+
+      // Assert
+      exitCode.ShouldBe(1);
+      terminal.OutputContains("Error:").ShouldBeTrue();
+      terminal.OutputContains("years:").ShouldBeFalse(); // Handler should not have been invoked
 
       await Task.CompletedTask;
     }

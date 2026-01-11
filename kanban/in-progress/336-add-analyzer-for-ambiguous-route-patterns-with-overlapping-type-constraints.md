@@ -187,19 +187,16 @@ Two routes with same signature but different type constraints → NURU_R001
 - [x] Create `ExtractionResult` record type
 - [x] Modify `DslInterpreter` to collect errors instead of throwing
 - [x] Modify `AppExtractor` to return `ExtractionResult`
-- [ ] Ensure route parse errors are collected during extraction
+- [x] Ensure route parse errors are collected during extraction
 
 ### Phase 2: Unified Analyzer
 - [x] Create `NuruAnalyzer` using `AppExtractor`
 - [x] Create `validation/ModelValidator.cs` to orchestrate validation
 - [x] Move handler validation logic to model validator (also available via extraction)
-- [x] ~~Move route pattern validation logic to model validator~~ (DECISION: Keep in NuruRouteAnalyzer for real-time IDE feedback)
-- [x] ~~Remove `NuruRouteAnalyzer`~~ (DECISION: Keep for real-time single-route validation)
-- [x] ~~Remove `NuruHandlerAnalyzer`~~ (DECISION: Keep for real-time single-handler validation)
-- [x] ~~Update any tests that reference old analyzers~~ (N/A - keeping old analyzers)
-
-**Architecture Decision**: Keep old analyzers for real-time IDE feedback on single-item validation.
-The unified `NuruAnalyzer` handles cross-route validation (overlaps) which requires the full model.
+- [x] Move route pattern validation (NURU_P###, NURU_S###) to extraction pipeline
+- [x] Remove `NuruRouteAnalyzer`
+- [x] Remove `NuruHandlerAnalyzer`
+- [x] Update tests to use unified analyzer instead of old analyzers
 
 ### Phase 3: Overlap Detection
 - [x] Implement route structure signature generation
@@ -214,9 +211,10 @@ The unified `NuruAnalyzer` handles cross-route validation (overlaps) which requi
 - [x] Verify generator still works with valid input (test app works, all tests pass)
 
 ### Final
-- [x] All existing tests pass
-- [x] New tests for overlap detection pass
-- [x] Documentation updated if needed (task notes updated)
+- [x] All existing tests pass (13 tests: 4 overlap + 3 pattern + 6 handler)
+- [x] Verify unified analyzer reports same errors as old analyzers
+- [x] Remove old analyzers
+- [ ] Documentation updated if needed
 
 ---
 
@@ -253,24 +251,38 @@ The unified `NuruAnalyzer` handles cross-route validation (overlaps) which requi
 
 ## Session Progress (2025-01-11)
 
-### Completed
+### Session 1 - Completed
 - ✅ Phase 1: `ExtractionResult` type, `InterpretWithDiagnostics()`, `ExtractWithDiagnostics()`
 - ✅ Phase 3: `OverlapValidator` with structure signature algorithm, NURU_R001 reporting
 - ✅ Tests: 4 overlap detection tests all pass
 - ✅ Updated `routing-07-route-selection.cs` to use non-conflicting patterns
+
+### Session 2 - Completed (Unified Analyzer)
+- ✅ Integrated pattern parse/semantic errors (NURU_P###, NURU_S###) into extraction pipeline
+- ✅ Integrated handler validation (NURU_H###) into extraction pipeline (via `DslInterpreter.DispatchWithHandler`)
+- ✅ Created `pattern-errors-01-basic.cs` test file (3 tests)
+- ✅ Updated `handler-analyzer-01-diagnostics.cs` to use generator-based testing (6 tests)
+- ✅ Removed old `NuruRouteAnalyzer` and `NuruHandlerAnalyzer`
+- ✅ All 13 tests pass (4 overlap + 3 pattern + 6 handler)
 
 ### Files Created
 - `source/timewarp-nuru-analyzers/analyzers/nuru-analyzer.cs`
 - `source/timewarp-nuru-analyzers/generators/models/extraction-result.cs`
 - `source/timewarp-nuru-analyzers/validation/model-validator.cs`
 - `source/timewarp-nuru-analyzers/validation/overlap-validator.cs`
+- `source/timewarp-nuru-analyzers/validation/handler-validator.cs`
 - `tests/timewarp-nuru-analyzers-tests/auto/overlap-analyzer-01-basic.cs`
+- `tests/timewarp-nuru-analyzers-tests/auto/pattern-errors-01-basic.cs`
 
-### Remaining (Lower Priority)
-The core NURU_R001 functionality is complete. Remaining items are refactoring:
-- Move handler validation from `NuruHandlerAnalyzer` to `ModelValidator`
-- Move route pattern validation from `NuruRouteAnalyzer` to `ModelValidator`
-- Remove old analyzers
-- Generator cleanup (remove redundant validation)
+### Files Removed
+- `source/timewarp-nuru-analyzers/analyzers/nuru-route-analyzer.cs`
+- `source/timewarp-nuru-analyzers/analyzers/nuru-handler-analyzer.cs`
 
-These can be done incrementally in future sessions without blocking the main feature.
+### Architecture Summary
+The unified `NuruAnalyzer` now handles ALL validation:
+- **NURU_R001** - Route overlap detection (via `OverlapValidator`)
+- **NURU_S###** - Pattern semantic errors (via `PatternStringExtractor.ExtractSegmentsWithErrors`)
+- **NURU_P###** - Pattern parse errors (via `PatternStringExtractor.ExtractSegmentsWithErrors`)
+- **NURU_H###** - Handler validation errors (via `HandlerValidator` called from `DslInterpreter.DispatchWithHandler`)
+
+All diagnostics flow through the extraction pipeline and are reported by `NuruAnalyzer`.

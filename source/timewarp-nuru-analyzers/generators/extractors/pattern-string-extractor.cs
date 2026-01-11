@@ -8,6 +8,40 @@
 namespace TimeWarp.Nuru.Generators;
 
 /// <summary>
+/// Result of extracting segments from a pattern string.
+/// Contains both the parsed segments and any parse/semantic errors encountered.
+/// </summary>
+/// <param name="Segments">The extracted segment definitions.</param>
+/// <param name="ParseErrors">Any parse errors encountered.</param>
+/// <param name="SemanticErrors">Any semantic errors encountered.</param>
+internal sealed record PatternParseResult(
+  ImmutableArray<SegmentDefinition> Segments,
+  IReadOnlyList<ParseError>? ParseErrors,
+  IReadOnlyList<SemanticError>? SemanticErrors)
+{
+  /// <summary>
+  /// Whether parsing was successful (no errors).
+  /// </summary>
+  public bool Success => (ParseErrors is null || ParseErrors.Count == 0) &&
+                         (SemanticErrors is null || SemanticErrors.Count == 0);
+
+  /// <summary>
+  /// Creates a successful result with no errors.
+  /// </summary>
+  public static PatternParseResult Ok(ImmutableArray<SegmentDefinition> segments) =>
+    new(segments, null, null);
+
+  /// <summary>
+  /// Creates a failed result with errors.
+  /// </summary>
+  public static PatternParseResult Failed(
+    ImmutableArray<SegmentDefinition> segments,
+    IReadOnlyList<ParseError>? parseErrors,
+    IReadOnlyList<SemanticError>? semanticErrors) =>
+    new(segments, parseErrors, semanticErrors);
+}
+
+/// <summary>
 /// Extracts route segments from pattern strings using the PatternParser.
 /// </summary>
 internal static class PatternStringExtractor
@@ -19,33 +53,64 @@ internal static class PatternStringExtractor
   /// <returns>An array of segment definitions.</returns>
   public static ImmutableArray<SegmentDefinition> ExtractSegments(string pattern)
   {
-    if (string.IsNullOrWhiteSpace(pattern))
-      return [];
+    PatternParseResult result = ExtractSegmentsWithErrors(pattern);
+    return result.Segments;
+  }
 
-    // Use the existing PatternParser to parse the pattern
+  /// <summary>
+  /// Extracts segments from a pattern string, returning any parse errors.
+  /// </summary>
+  /// <param name="pattern">The route pattern string.</param>
+  /// <returns>A result containing segments and any errors encountered.</returns>
+  public static PatternParseResult ExtractSegmentsWithErrors(string pattern)
+  {
+    if (string.IsNullOrWhiteSpace(pattern))
+      return PatternParseResult.Ok([]);
+
+    // Use PatternParser.TryParse to get error information
+    bool success = PatternParser.TryParse(
+      pattern,
+      out _,
+      out IReadOnlyList<ParseError>? parseErrors,
+      out IReadOnlyList<SemanticError>? semanticErrors);
+
+    if (!success)
+    {
+      // Return errors along with a fallback literal segment
+      return PatternParseResult.Failed(
+        [new LiteralDefinition(0, pattern)],
+        parseErrors,
+        semanticErrors);
+    }
+
+    // Use the Parser directly to get the Syntax tree which has full type info
     Parser parser = new();
     ParseResult<Syntax> result = parser.Parse(pattern);
 
     if (!result.Success || result.Value is null)
     {
-      // If parsing fails, treat the whole pattern as a single literal
-      return [new LiteralDefinition(0, pattern)];
+      // Shouldn't happen if TryParse succeeded, but handle it anyway
+      return PatternParseResult.Failed(
+        [new LiteralDefinition(0, pattern)],
+        parseErrors,
+        semanticErrors);
     }
 
-    // Convert Syntax segments to SegmentDefinitions
-    return ConvertSegments(result.Value.Segments);
+    // Convert Syntax segments to SegmentDefinitions (preserves type constraints)
+    ImmutableArray<SegmentDefinition> segments = ConvertSyntaxSegments(result.Value.Segments);
+    return PatternParseResult.Ok(segments);
   }
 
   /// <summary>
   /// Converts parsed Syntax segments to SegmentDefinitions.
   /// </summary>
-  private static ImmutableArray<SegmentDefinition> ConvertSegments(IReadOnlyList<SegmentSyntax> segments)
+  private static ImmutableArray<SegmentDefinition> ConvertSyntaxSegments(IReadOnlyList<SegmentSyntax> segments)
   {
     ImmutableArray<SegmentDefinition>.Builder builder = ImmutableArray.CreateBuilder<SegmentDefinition>(segments.Count);
 
     for (int i = 0; i < segments.Count; i++)
     {
-      SegmentDefinition? converted = ConvertSegment(segments[i], i);
+      SegmentDefinition? converted = ConvertSyntaxSegment(segments[i], i);
       if (converted is not null)
         builder.Add(converted);
     }
@@ -56,57 +121,33 @@ internal static class PatternStringExtractor
   /// <summary>
   /// Converts a single Syntax segment to a SegmentDefinition.
   /// </summary>
-  private static SegmentDefinition? ConvertSegment(SegmentSyntax segment, int position)
+  private static SegmentDefinition? ConvertSyntaxSegment(SegmentSyntax segment, int position)
   {
     return segment switch
     {
-      LiteralSyntax literal => ConvertLiteral(literal, position),
-      ParameterSyntax parameter => ConvertParameter(parameter, position),
-      OptionSyntax option => ConvertOption(option, position),
+      LiteralSyntax literal => new LiteralDefinition(position, literal.Value),
+      ParameterSyntax parameter => new ParameterDefinition(
+        Position: position,
+        Name: parameter.Name,
+        TypeConstraint: parameter.Type,
+        Description: parameter.Description,
+        IsOptional: parameter.IsOptional,
+        IsCatchAll: parameter.IsCatchAll,
+        ResolvedClrTypeName: ResolveClrTypeName(parameter.Type)),
+      OptionSyntax option => new OptionDefinition(
+        Position: position,
+        LongForm: option.LongForm,
+        ShortForm: option.ShortForm,
+        ParameterName: option.Parameter?.Name,
+        TypeConstraint: option.Parameter?.Type,
+        Description: option.Description,
+        ExpectsValue: option.Parameter is not null,
+        IsOptional: option.IsOptional,
+        IsRepeated: option.Parameter?.IsRepeated ?? false,
+        ParameterIsOptional: option.Parameter?.IsOptional ?? false,
+        ResolvedClrTypeName: ResolveClrTypeName(option.Parameter?.Type)),
       _ => null
     };
-  }
-
-  /// <summary>
-  /// Converts a LiteralSyntax to a LiteralDefinition.
-  /// </summary>
-  private static LiteralDefinition ConvertLiteral(LiteralSyntax literal, int position)
-  {
-    return new LiteralDefinition(position, literal.Value);
-  }
-
-  /// <summary>
-  /// Converts a ParameterSyntax to a ParameterDefinition.
-  /// </summary>
-  private static ParameterDefinition ConvertParameter(ParameterSyntax parameter, int position)
-  {
-    return new ParameterDefinition(
-      Position: position,
-      Name: parameter.Name,
-      TypeConstraint: parameter.Type,
-      Description: parameter.Description,
-      IsOptional: parameter.IsOptional,
-      IsCatchAll: parameter.IsCatchAll,
-      ResolvedClrTypeName: ResolveClrTypeName(parameter.Type));
-  }
-
-  /// <summary>
-  /// Converts an OptionSyntax to an OptionDefinition.
-  /// </summary>
-  private static OptionDefinition ConvertOption(OptionSyntax option, int position)
-  {
-    return new OptionDefinition(
-      Position: position,
-      LongForm: option.LongForm,
-      ShortForm: option.ShortForm,
-      ParameterName: option.Parameter?.Name,
-      TypeConstraint: option.Parameter?.Type,
-      Description: option.Description,
-      ExpectsValue: option.Parameter is not null,
-      IsOptional: option.IsOptional,
-      IsRepeated: option.Parameter?.IsRepeated ?? false,
-      ParameterIsOptional: option.Parameter?.IsOptional ?? false,
-      ResolvedClrTypeName: ResolveClrTypeName(option.Parameter?.Type));
   }
 
   /// <summary>

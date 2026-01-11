@@ -429,7 +429,7 @@ public sealed class DslInterpreter
   /// <summary>
   /// Dispatches Map() call to any IIrRouteSource (app or group builder).
   /// </summary>
-  private static object? DispatchMap(InvocationExpressionSyntax invocation, object? receiver)
+  private object? DispatchMap(InvocationExpressionSyntax invocation, object? receiver)
   {
     if (receiver is not IIrRouteSource source)
     {
@@ -444,7 +444,121 @@ public sealed class DslInterpreter
         $"Map() requires a pattern string. Location: {invocation.GetLocation().GetLineSpan()}");
     }
 
+    // Validate pattern and collect any parse/semantic errors
+    Location patternLocation = GetPatternLocation(invocation);
+    PatternParseResult parseResult = PatternStringExtractor.ExtractSegmentsWithErrors(pattern);
+
+    if (!parseResult.Success)
+    {
+      // Map parse errors to diagnostics
+      if (parseResult.ParseErrors is not null)
+      {
+        foreach (ParseError error in parseResult.ParseErrors)
+        {
+          Diagnostic? diagnostic = MapParseErrorToDiagnostic(error, pattern, patternLocation);
+          if (diagnostic is not null)
+          {
+            CollectedDiagnostics.Add(diagnostic);
+          }
+        }
+      }
+
+      // Map semantic errors to diagnostics
+      if (parseResult.SemanticErrors is not null)
+      {
+        foreach (SemanticError error in parseResult.SemanticErrors)
+        {
+          Diagnostic? diagnostic = MapSemanticErrorToDiagnostic(error, pattern, patternLocation);
+          if (diagnostic is not null)
+          {
+            CollectedDiagnostics.Add(diagnostic);
+          }
+        }
+      }
+    }
+
     return source.Map(pattern);
+  }
+
+  /// <summary>
+  /// Gets the location of the pattern string argument from a Map() invocation.
+  /// </summary>
+  private static Location GetPatternLocation(InvocationExpressionSyntax invocation)
+  {
+    ArgumentListSyntax? argumentList = invocation.ArgumentList;
+    if (argumentList?.Arguments.Count > 0)
+    {
+      return argumentList.Arguments[0].Expression.GetLocation();
+    }
+
+    return invocation.GetLocation();
+  }
+
+  /// <summary>
+  /// Maps a parse error to a diagnostic.
+  /// </summary>
+  private static Diagnostic? MapParseErrorToDiagnostic(ParseError error, string pattern, Location location)
+  {
+    return error switch
+    {
+      InvalidParameterSyntaxError e =>
+        Diagnostic.Create(DiagnosticDescriptors.InvalidParameterSyntax, location, e.InvalidSyntax, e.Suggestion),
+
+      UnbalancedBracesError e =>
+        Diagnostic.Create(DiagnosticDescriptors.UnbalancedBraces, location, e.Pattern),
+
+      InvalidOptionFormatError e =>
+        Diagnostic.Create(DiagnosticDescriptors.InvalidOptionFormat, location, e.InvalidOption),
+
+      InvalidTypeConstraintError e =>
+        Diagnostic.Create(DiagnosticDescriptors.InvalidTypeConstraint, location, e.InvalidType),
+
+      InvalidCharacterError e =>
+        Diagnostic.Create(DiagnosticDescriptors.InvalidCharacter, location, e.Character),
+
+      UnexpectedTokenError e =>
+        Diagnostic.Create(DiagnosticDescriptors.UnexpectedToken, location, e.Expected, e.Found),
+
+      NullPatternError =>
+        Diagnostic.Create(DiagnosticDescriptors.NullPattern, location),
+
+      _ => null
+    };
+  }
+
+  /// <summary>
+  /// Maps a semantic error to a diagnostic.
+  /// </summary>
+  private static Diagnostic? MapSemanticErrorToDiagnostic(SemanticError error, string pattern, Location location)
+  {
+    return error switch
+    {
+      DuplicateParameterNamesError e =>
+        Diagnostic.Create(DiagnosticDescriptors.DuplicateParameterNames, location, e.ParameterName),
+
+      ConflictingOptionalParametersError e =>
+        Diagnostic.Create(DiagnosticDescriptors.ConflictingOptionalParameters, location, string.Join(", ", e.ConflictingParameters)),
+
+      CatchAllNotAtEndError e =>
+        Diagnostic.Create(DiagnosticDescriptors.CatchAllNotAtEnd, location, e.CatchAllParameter, e.FollowingSegment),
+
+      MixedCatchAllWithOptionalError e =>
+        Diagnostic.Create(DiagnosticDescriptors.MixedCatchAllWithOptional, location, string.Join(", ", e.OptionalParams), e.CatchAllParam),
+
+      DuplicateOptionAliasError e =>
+        Diagnostic.Create(DiagnosticDescriptors.DuplicateOptionAlias, location, e.Alias, string.Join(", ", e.ConflictingOptions)),
+
+      OptionalBeforeRequiredError e =>
+        Diagnostic.Create(DiagnosticDescriptors.OptionalBeforeRequired, location, e.OptionalParam, e.RequiredParam),
+
+      InvalidEndOfOptionsSeparatorError e =>
+        Diagnostic.Create(DiagnosticDescriptors.InvalidEndOfOptionsSeparator, location, e.Reason),
+
+      OptionsAfterEndOfOptionsSeparatorError e =>
+        Diagnostic.Create(DiagnosticDescriptors.OptionsAfterEndOfOptionsSeparator, location, e.Option),
+
+      _ => null
+    };
   }
 
   /// <summary>

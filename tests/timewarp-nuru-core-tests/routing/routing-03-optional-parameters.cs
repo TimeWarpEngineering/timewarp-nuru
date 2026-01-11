@@ -1,12 +1,5 @@
 #!/usr/bin/dotnet --
 
-// TODO: Tests in this file are BLOCKED by task #319 (route isolation)
-// The source generator currently merges all routes from all app instances in a file,
-// so tests with overlapping route patterns (e.g., "deploy {env}" vs "deploy {env?}")
-// interfere with each other. Tests expecting "no match" may incorrectly match routes
-// from other test methods.
-// See: kanban/to-do/319-fix-multiple-apps-in-same-block-losing-intercept-sites.md
-
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

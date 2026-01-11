@@ -1,5 +1,8 @@
-// Main emitter that generates the RunAsync interceptor method.
+// Main emitter that generates the RunAsync interceptor methods.
 // This is the entry point for code emission, coordinating all other emitters.
+//
+// Key design: Each app instance gets its own interceptor method with isolated routes.
+// This ensures route patterns don't leak between different NuruCoreApp instances.
 
 namespace TimeWarp.Nuru.Generators;
 
@@ -14,9 +17,9 @@ internal static class InterceptorEmitter
   /// <summary>
   /// Generates the complete source code for the interceptor.
   /// </summary>
-  /// <param name="model">The application model containing all route definitions.</param>
+  /// <param name="model">The generator model containing all apps and routes.</param>
   /// <returns>The generated C# source code.</returns>
-  public static string Emit(AppModel model)
+  public static string Emit(GeneratorModel model)
   {
     StringBuilder sb = new();
 
@@ -24,15 +27,50 @@ internal static class InterceptorEmitter
     EmitInterceptsLocationAttribute(sb);
     EmitNamespaceAndUsings(sb, model);
     EmitClassStart(sb);
+
+    // Emit shared infrastructure (command classes, service fields, behaviors)
     EmitCommandClasses(sb, model);
-    EmitServiceFields(sb, model.Services);
-    BehaviorEmitter.EmitBehaviorFields(sb, model.Behaviors, model.Services);
-    EmitInterceptsLocation(sb, model.InterceptSites);
-    EmitMethodSignature(sb);
-    EmitMethodBody(sb, model);
+    EmitServiceFields(sb, model.AllServices);
+    BehaviorEmitter.EmitBehaviorFields(sb, [.. model.AllBehaviors], [.. model.AllServices]);
+
+    // Emit per-app interceptor methods
+    for (int appIndex = 0; appIndex < model.Apps.Length; appIndex++)
+    {
+      AppModel app = model.Apps[appIndex];
+      EmitAppInterceptorMethod(sb, app, appIndex, model);
+    }
+
     EmitClassEnd(sb, model);
 
     return sb.ToString();
+  }
+
+  /// <summary>
+  /// Emits a single interceptor method for one app.
+  /// Each app gets its own method with its own [InterceptsLocation] attributes and routes.
+  /// </summary>
+  private static void EmitAppInterceptorMethod(StringBuilder sb, AppModel app, int appIndex, GeneratorModel model)
+  {
+    // Emit [InterceptsLocation] attributes for this app's RunAsync calls
+    foreach (InterceptSiteModel site in app.InterceptSites)
+    {
+      sb.AppendLine($"  {site.GetAttributeSyntax()}");
+    }
+
+    // Method signature - use index suffix for uniqueness when multiple apps
+    string methodSuffix = model.Apps.Length > 1 ? $"_{appIndex}" : "";
+    sb.AppendLine($"  public static async Task<int> RunAsync_Intercepted{methodSuffix}");
+    sb.AppendLine("  (");
+    sb.AppendLine("    this NuruCoreApp app,");
+    sb.AppendLine("    string[] args");
+    sb.AppendLine("  )");
+    sb.AppendLine("  {");
+
+    // Method body with this app's routes only
+    EmitMethodBody(sb, app, model);
+
+    sb.AppendLine("  }");
+    sb.AppendLine();
   }
 
   /// <summary>
@@ -79,7 +117,7 @@ internal static class InterceptorEmitter
   /// Uses block-scoped namespace to be compatible with the InterceptsLocationAttribute
   /// which is in a separate namespace block in the same file.
   /// </summary>
-  private static void EmitNamespaceAndUsings(StringBuilder sb, AppModel model)
+  private static void EmitNamespaceAndUsings(StringBuilder sb, GeneratorModel model)
   {
     sb.AppendLine("namespace TimeWarp.Nuru.Generated");
     sb.AppendLine("{");
@@ -130,16 +168,17 @@ internal static class InterceptorEmitter
   /// Emits generated command classes for delegate routes.
   /// These provide command instances for behaviors.
   /// </summary>
-  private static void EmitCommandClasses(StringBuilder sb, AppModel model)
+  private static void EmitCommandClasses(StringBuilder sb, GeneratorModel model)
   {
-    CommandClassEmitter.EmitCommandClasses(sb, model.RoutesBySpecificity);
+    // Emit command classes for all routes across all apps
+    CommandClassEmitter.EmitCommandClasses(sb, model.AllRoutes);
   }
 
   /// <summary>
   /// Emits static Lazy fields for Singleton and Scoped services.
   /// These provide thread-safe lazy initialization for cached service instances.
   /// </summary>
-  private static void EmitServiceFields(StringBuilder sb, ImmutableArray<ServiceDefinition> services)
+  private static void EmitServiceFields(StringBuilder sb, IEnumerable<ServiceDefinition> services)
   {
     // Only emit fields for Singleton and Scoped services (not Transient)
     // Materialize to array to avoid multiple enumeration
@@ -183,41 +222,12 @@ internal static class InterceptorEmitter
   }
 
   /// <summary>
-  /// Emits [InterceptsLocation] attributes for all RunAsync call sites.
-  /// Uses the new .NET 10 / C# 14 versioned encoding via InterceptableLocation.
-  /// </summary>
-  private static void EmitInterceptsLocation(StringBuilder sb, ImmutableArray<InterceptSiteModel> sites)
-  {
-    // Emit an attribute for each call site so all RunAsync calls are intercepted
-    foreach (InterceptSiteModel site in sites)
-    {
-      // Use the Roslyn-generated attribute syntax which handles all encoding
-      // Format: [global::System.Runtime.CompilerServices.InterceptsLocationAttribute(version, "data")]
-      sb.AppendLine($"  {site.GetAttributeSyntax()}");
-    }
-  }
-
-  /// <summary>
-  /// Emits the method signature for the intercepted RunAsync method.
-  /// Must match the original NuruCoreApp.RunAsync(string[] args) signature exactly.
-  /// </summary>
-  private static void EmitMethodSignature(StringBuilder sb)
-  {
-    sb.AppendLine("  public static async Task<int> RunAsync_Intercepted");
-    sb.AppendLine("  (");
-    sb.AppendLine("    this NuruCoreApp app,");
-    sb.AppendLine("    string[] args");
-    sb.AppendLine("  )");
-    sb.AppendLine("  {");
-  }
-
-  /// <summary>
   /// Emits the complete method body including all route matching logic.
   /// </summary>
-  private static void EmitMethodBody(StringBuilder sb, AppModel model)
+  private static void EmitMethodBody(StringBuilder sb, AppModel app, GeneratorModel model)
   {
     // Configuration setup (if AddConfiguration was called)
-    if (model.HasConfiguration)
+    if (app.HasConfiguration)
     {
       ConfigurationEmitter.Emit(sb);
     }
@@ -228,13 +238,16 @@ internal static class InterceptorEmitter
     EmitConfigArgFiltering(sb);
 
     // Built-in flags: --help, --version, --capabilities
-    EmitBuiltInFlags(sb, model);
+    EmitBuiltInFlags(sb, app);
 
-    // Route matching - emit in specificity order (highest first)
+    // Route matching - emit this app's routes in specificity order (highest first)
+    // Also include attributed routes which are shared across all apps
+    IEnumerable<RouteDefinition> allRoutes = app.RoutesBySpecificity.Concat(model.AttributedRoutes);
+
     int routeIndex = 0;
-    foreach (RouteDefinition route in model.RoutesBySpecificity)
+    foreach (RouteDefinition route in allRoutes.OrderByDescending(r => r.ComputedSpecificity))
     {
-      RouteMatcherEmitter.Emit(sb, route, routeIndex, model.Services, model.Behaviors, model.CustomConverters);
+      RouteMatcherEmitter.Emit(sb, route, routeIndex, app.Services, app.Behaviors, app.CustomConverters);
       routeIndex++;
     }
 
@@ -245,10 +258,10 @@ internal static class InterceptorEmitter
   /// <summary>
   /// Emits handling for built-in flags (--help, --version, --capabilities).
   /// </summary>
-  private static void EmitBuiltInFlags(StringBuilder sb, AppModel model)
+  private static void EmitBuiltInFlags(StringBuilder sb, AppModel app)
   {
     // --help flag
-    if (model.HasHelp)
+    if (app.HasHelp)
     {
       sb.AppendLine("    // Built-in: --help");
       sb.AppendLine("    if (routeArgs is [\"--help\" or \"-h\"])");
@@ -278,7 +291,7 @@ internal static class InterceptorEmitter
     sb.AppendLine();
 
     // --check-updates flag (opt-in via AddCheckUpdatesRoute())
-    if (model.HasCheckUpdatesRoute)
+    if (app.HasCheckUpdatesRoute)
     {
       sb.AppendLine("    // Built-in: --check-updates (opt-in via AddCheckUpdatesRoute())");
       sb.AppendLine("    if (routeArgs is [\"--check-updates\"])");
@@ -312,28 +325,60 @@ internal static class InterceptorEmitter
     sb.AppendLine("    // No route matched");
     sb.AppendLine("    await app.Terminal.WriteErrorLineAsync(\"Unknown command. Use --help for usage.\").ConfigureAwait(false);");
     sb.AppendLine("    return 1;");
-    sb.AppendLine("  }");
   }
 
   /// <summary>
   /// Emits the closing of the class and helper methods.
   /// </summary>
-  private static void EmitClassEnd(StringBuilder sb, AppModel model)
+  private static void EmitClassEnd(StringBuilder sb, GeneratorModel model)
   {
     sb.AppendLine();
-    HelpEmitter.Emit(sb, model);
+
+    // Create a combined AppModel for helper method emission
+    // These helpers (PrintHelp, PrintVersion, etc.) need route info from all apps
+    AppModel combinedForHelpers = CreateCombinedAppModelForHelpers(model);
+
+    HelpEmitter.Emit(sb, combinedForHelpers);
     sb.AppendLine();
-    VersionEmitter.Emit(sb, model);
+    VersionEmitter.Emit(sb, combinedForHelpers);
     sb.AppendLine();
-    CapabilitiesEmitter.Emit(sb, model);
+    CapabilitiesEmitter.Emit(sb, combinedForHelpers);
 
     if (model.HasCheckUpdatesRoute)
     {
       sb.AppendLine();
-      CheckUpdatesEmitter.Emit(sb, model);
+      CheckUpdatesEmitter.Emit(sb, combinedForHelpers);
     }
 
     sb.AppendLine("}"); // Close class
     sb.AppendLine("}"); // Close namespace
+  }
+
+  /// <summary>
+  /// Creates a combined AppModel for emitting helper methods.
+  /// Helper methods (PrintHelp, PrintVersion, etc.) need aggregated data from all apps.
+  /// </summary>
+  private static AppModel CreateCombinedAppModelForHelpers(GeneratorModel model)
+  {
+    // Combine all routes for help output
+    ImmutableArray<RouteDefinition> allRoutes = [.. model.AllRoutes];
+
+    return new AppModel(
+      VariableName: null,
+      Name: model.Name,
+      Description: model.Description,
+      AiPrompt: model.AiPrompt,
+      HasHelp: model.HasHelp,
+      HelpOptions: model.HelpOptions,
+      HasRepl: model.HasRepl,
+      ReplOptions: model.ReplOptions,
+      HasConfiguration: model.HasConfiguration,
+      HasCheckUpdatesRoute: model.HasCheckUpdatesRoute,
+      Routes: allRoutes,
+      Behaviors: [.. model.AllBehaviors],
+      Services: [.. model.AllServices],
+      InterceptSites: [], // Not needed for helpers
+      UserUsings: model.UserUsings,
+      CustomConverters: [.. model.AllConverters]);
   }
 }

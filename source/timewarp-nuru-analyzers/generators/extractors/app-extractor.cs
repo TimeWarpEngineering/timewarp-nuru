@@ -75,12 +75,39 @@ internal static class AppExtractor
       models = interpreter.InterpretTopLevelStatements(compilationUnit);
     }
 
-    // 4. Return the first (and typically only) app model with user usings attached
+    // 4. Find the model that contains THIS specific RunAsync call's intercept site
     if (models.Count == 0)
       return null;
 
-    // Extract user's using directives and attach to the model
+    // Extract user's using directives
     ImmutableArray<string> userUsings = ExtractUserUsings(compilationUnit);
+
+    // If only one model, return it (common case)
+    if (models.Count == 1)
+      return models[0] with { UserUsings = userUsings };
+
+    // Multiple models: find the one that owns this specific RunAsync call
+    // Get the intercept site for the current RunAsync invocation
+    InterceptSiteModel? currentSite = InterceptSiteExtractor.Extract(context.SemanticModel, runAsyncInvocation);
+    if (currentSite is null)
+      return models[0] with { UserUsings = userUsings }; // Fallback
+
+    // Find the model whose InterceptSites contains this call
+    foreach (AppModel model in models)
+    {
+      foreach (InterceptSiteModel site in model.InterceptSites)
+      {
+        // Match by file path, line, and column
+        if (site.FilePath == currentSite.FilePath &&
+            site.Line == currentSite.Line &&
+            site.Column == currentSite.Column)
+        {
+          return model with { UserUsings = userUsings };
+        }
+      }
+    }
+
+    // Fallback to first model if no match found (shouldn't happen)
     return models[0] with { UserUsings = userUsings };
   }
 

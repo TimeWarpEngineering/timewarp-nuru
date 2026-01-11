@@ -51,15 +51,15 @@ public sealed class NuruGenerator : IIncrementalGenerator
         transform: static (ctx, ct) => AppExtractor.Extract(ctx, ct))
       .Where(static model => model is not null);
 
-    // 5. Combine the first AppModel with attributed routes
-    // Note: We take only the first RunAsync call - multiple calls are not supported
-    IncrementalValueProvider<AppModel?> combinedModel = appModelsFromRunAsync
+    // 5. Combine all AppModels with attributed routes into GeneratorModel
+    // Each app keeps its own routes isolated for per-app interceptor generation
+    IncrementalValueProvider<GeneratorModel?> generatorModel = appModelsFromRunAsync
       .Collect()
       .Combine(collectedAttributedRoutes)
-      .Select(static (data, ct) => CombineModels(data.Left, data.Right, ct));
+      .Select(static (data, ct) => CreateGeneratorModel(data.Left, data.Right, ct));
 
     // 6. Emit generated code
-    context.RegisterSourceOutput(combinedModel, static (ctx, model) =>
+    context.RegisterSourceOutput(generatorModel, static (ctx, model) =>
     {
       if (model is null)
         return;
@@ -89,109 +89,55 @@ public sealed class NuruGenerator : IIncrementalGenerator
   }
 
   /// <summary>
-  /// Combines all AppModels from fluent routes with attributed routes.
-  /// Collects ALL intercept sites so every RunAsync call is intercepted.
+  /// Creates a GeneratorModel from all AppModels, keeping routes isolated per app.
+  /// Each app gets its own interceptor method with only its routes.
   /// </summary>
-  private static AppModel? CombineModels
+  private static GeneratorModel? CreateGeneratorModel
   (
     ImmutableArray<AppModel?> appModels,
     ImmutableArray<RouteDefinition?> attributedRoutes,
     CancellationToken cancellationToken
   )
   {
-    // Collect ALL intercept sites and routes from all AppModels
-    ImmutableArray<InterceptSiteModel>.Builder allInterceptSites =
-      ImmutableArray.CreateBuilder<InterceptSiteModel>();
-    ImmutableArray<RouteDefinition>.Builder allRoutes =
-      ImmutableArray.CreateBuilder<RouteDefinition>();
-
-    string? name = null;
-    string? description = null;
-    string? aiPrompt = null;
-    bool hasHelp = true; // Always enable help - CreateBuilder() apps should always have --help available.
-    HelpModel? helpOptions = null;
-    bool hasRepl = false;
-    ReplModel? replOptions = null;
-    bool hasConfiguration = true; // Always emit configuration - CreateBuilder() always provides it. Future optimization task will auto-detect actual usage.
-    bool hasCheckUpdatesRoute = false;
-    ImmutableArray<BehaviorDefinition>.Builder allBehaviors =
-      ImmutableArray.CreateBuilder<BehaviorDefinition>();
-    ImmutableArray<ServiceDefinition>.Builder allServices =
-      ImmutableArray.CreateBuilder<ServiceDefinition>();
-    ImmutableArray<string>.Builder allUserUsings =
-      ImmutableArray.CreateBuilder<string>();
+    // Filter out null models and deduplicate by intercept site
+    // Deduplication is needed because the generator processes the file once per RunAsync call,
+    // and each processing may return the same AppModel multiple times.
+    Dictionary<string, AppModel> uniqueApps = [];
 
     foreach (AppModel? model in appModels)
     {
-      if (model is null)
+      if (model is null || model.InterceptSites.Length == 0)
         continue;
 
-      // Collect all intercept sites
-      allInterceptSites.AddRange(model.InterceptSites);
-
-      // Collect all routes
-      allRoutes.AddRange(model.Routes);
-
-      // Merge other properties (last one wins for simple values)
-      name ??= model.Name;
-      description ??= model.Description;
-      aiPrompt ??= model.AiPrompt;
-      hasHelp = hasHelp || model.HasHelp;
-      helpOptions ??= model.HelpOptions;
-      hasRepl = hasRepl || model.HasRepl;
-      replOptions ??= model.ReplOptions;
-      hasConfiguration = hasConfiguration || model.HasConfiguration;
-      hasCheckUpdatesRoute = hasCheckUpdatesRoute || model.HasCheckUpdatesRoute;
-      allBehaviors.AddRange(model.Behaviors);
-      allServices.AddRange(model.Services);
-      allUserUsings.AddRange(model.UserUsings);
+      // Use first intercept site's attribute syntax as the deduplication key
+      string key = model.InterceptSites[0].GetAttributeSyntax();
+      if (!uniqueApps.ContainsKey(key))
+      {
+        // Ensure each app has help and configuration enabled by default
+        AppModel enrichedModel = model with
+        {
+          HasHelp = true,
+          HasConfiguration = true
+        };
+        uniqueApps[key] = enrichedModel;
+      }
     }
 
-    // If no RunAsync calls found, we can't generate an interceptor
-    if (allInterceptSites.Count == 0)
+    // If no apps found, we can't generate an interceptor
+    if (uniqueApps.Count == 0)
       return null;
 
-    // Add attributed routes
-    foreach (RouteDefinition? route in attributedRoutes)
-    {
-      if (route is not null)
-        allRoutes.Add(route);
-    }
+    // Collect user usings from all apps
+    ImmutableArray<string> userUsings = [.. uniqueApps.Values
+      .SelectMany(a => a.UserUsings)
+      .Distinct()];
 
-    // Create combined model with deduplicated intercept sites
-    // NOTE: Deduplication is needed because the generator processes the file once per RunAsync call,
-    // and each processing finds ALL RunAsync calls. This results in N² intercept sites for N calls.
-    // See task #318 for architectural fix to process files only once.
-    // See task #319 for bug where multiple apps in same block lose intercept sites (models[0] issue).
-    ImmutableArray<InterceptSiteModel> uniqueInterceptSites =
-      [.. allInterceptSites.DistinctBy(site => site.GetAttributeSyntax())];
+    // Collect attributed routes (non-null only)
+    ImmutableArray<RouteDefinition> routes = [.. attributedRoutes.Where(r => r is not null)!];
 
-    // Collect custom converters from all models
-    ImmutableArray<CustomConverterDefinition>.Builder allConverters = ImmutableArray.CreateBuilder<CustomConverterDefinition>();
-    foreach (AppModel? model in appModels)
-    {
-      if (model is not null)
-        allConverters.AddRange(model.CustomConverters);
-    }
-
-    return new AppModel
-    (
-      VariableName: null, // Combined models don't track variable names
-      Name: name,
-      Description: description,
-      AiPrompt: aiPrompt,
-      HasHelp: hasHelp,
-      HelpOptions: helpOptions,
-      HasRepl: hasRepl,
-      ReplOptions: replOptions,
-      HasConfiguration: hasConfiguration,
-      HasCheckUpdatesRoute: hasCheckUpdatesRoute,
-      Routes: allRoutes.ToImmutable(),
-      Behaviors: allBehaviors.ToImmutable(),
-      Services: allServices.ToImmutable(),
-      InterceptSites: uniqueInterceptSites,
-      UserUsings: [.. allUserUsings.Distinct()],
-      CustomConverters: allConverters.ToImmutable()
-    );
+    return new GeneratorModel(
+      Apps: [.. uniqueApps.Values],
+      UserUsings: userUsings,
+      AttributedRoutes: routes);
   }
 }

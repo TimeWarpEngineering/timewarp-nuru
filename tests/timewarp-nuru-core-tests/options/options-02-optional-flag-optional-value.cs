@@ -30,7 +30,6 @@ public class OptionalFlagOptionalValueTests
         {
           capturedMode = mode;
           handlerCalled = true;
-          return 0;
         })
         .AsCommand()
         .Done()
@@ -55,7 +54,6 @@ public class OptionalFlagOptionalValueTests
         .WithHandler((string? mode) =>
         {
           capturedMode = mode;
-          return 0;
         })
         .AsCommand()
         .Done()
@@ -81,7 +79,6 @@ public class OptionalFlagOptionalValueTests
         {
           capturedMode = mode;
           handlerCalled = true;
-          return 0;
         })
         .AsCommand()
         .Done()

@@ -34,7 +34,6 @@ public class MixedRequiredOptionalTests
           capturedEnv = env;
           capturedVer = ver;
           capturedDryRun = dryRun;
-          return 0;
         })
         .AsCommand()
         .Done()
@@ -64,7 +63,6 @@ public class MixedRequiredOptionalTests
           capturedEnv = env;
           capturedVer = ver;
           capturedDryRun = dryRun;
-          return 0;
         })
         .AsCommand()
         .Done()
@@ -111,7 +109,6 @@ public class MixedRequiredOptionalTests
           capturedEnv = env;
           capturedVer = ver;
           capturedDryRun = dryRun;
-          return 0;
         })
         .AsCommand()
         .Done()

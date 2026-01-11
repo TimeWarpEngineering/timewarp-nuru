@@ -34,7 +34,6 @@ public class NuruContextTests
         .WithHandler((string file, bool verbose, NuruContext context) =>
         {
           capturedRawArgs = context.RawArgs.ToArray();
-          return 0;
         })
         .AsCommand()
         .Done()
@@ -70,7 +69,6 @@ public class NuruContextTests
         .WithHandler((string file, bool verbose, NuruContext context) =>
         {
           capturedUnmatched = context.UnmatchedArgs.ToArray();
-          return 0;
         })
         .AsCommand()
         .Done()
@@ -104,7 +102,6 @@ public class NuruContextTests
         .WithHandler((string env, string? tag, NuruContext context) =>
         {
           tagWasProvided = context.WasProvided("tag");
-          return 0;
         })
         .AsCommand()
         .Done()
@@ -136,7 +133,6 @@ public class NuruContextTests
         .WithHandler((string env, string? tag, NuruContext context) =>
         {
           tagWasProvided = context.WasProvided("tag");
-          return 0;
         })
         .AsCommand()
         .Done()
@@ -168,7 +164,6 @@ public class NuruContextTests
         .WithHandler((string file, bool verbose, NuruContext context) =>
         {
           capturedPattern = context.RoutePattern;
-          return 0;
         })
         .AsCommand()
         .Done()

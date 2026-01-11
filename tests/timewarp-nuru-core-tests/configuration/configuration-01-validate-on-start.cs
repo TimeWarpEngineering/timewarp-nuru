@@ -36,7 +36,6 @@ public class ValidateOnStartTests
       .Map("test").WithHandler((IOptions<ValidAppOptions> options) =>
       {
         options.Value.Name.ShouldBe("TestApp");
-        return 0;
       }).AsQuery().Done()
       .Build();
 

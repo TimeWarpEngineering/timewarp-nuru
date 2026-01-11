@@ -17,11 +17,11 @@ public class RouteSelectionTests
   public static async Task Should_select_literal_over_parameter_git_status()
   {
     // Arrange
-    bool literalSelected = false;
-    bool parameterSelected = false;
+    using TestTerminal terminal = new();
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("git status").WithHandler(() => { literalSelected = true; return 0; }).AsQuery().Done()
-      .Map("git {command}").WithHandler((string command) => { parameterSelected = true; return 0; }).AsCommand().Done()
+      .UseTerminal(terminal)
+      .Map("git status").WithHandler(() => "literal:git-status").AsQuery().Done()
+      .Map("git {command}").WithHandler((string command) => $"param:{command}").AsQuery().Done()
       .Build();
 
     // Act
@@ -29,8 +29,8 @@ public class RouteSelectionTests
 
     // Assert
     exitCode.ShouldBe(0);
-    literalSelected.ShouldBeTrue();
-    parameterSelected.ShouldBeFalse();
+    terminal.OutputContains("literal:git-status").ShouldBeTrue();
+    terminal.OutputContains("param:").ShouldBeFalse();
 
     await Task.CompletedTask;
   }
@@ -38,11 +38,11 @@ public class RouteSelectionTests
   public static async Task Should_select_typed_over_untyped_delay_500()
   {
     // Arrange
-    bool typedSelected = false;
-    bool untypedSelected = false;
+    using TestTerminal terminal = new();
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("delay {ms:int}").WithHandler((int ms) => { typedSelected = true; return 0; }).AsCommand().Done()
-      .Map("delay {duration}").WithHandler((string duration) => { untypedSelected = true; return 0; }).AsCommand().Done()
+      .UseTerminal(terminal)
+      .Map("delay {ms:int}").WithHandler((int ms) => $"typed:{ms}").AsQuery().Done()
+      .Map("delay {duration}").WithHandler((string duration) => $"untyped:{duration}").AsQuery().Done()
       .Build();
 
     // Act
@@ -50,8 +50,8 @@ public class RouteSelectionTests
 
     // Assert
     exitCode.ShouldBe(0);
-    typedSelected.ShouldBeTrue();
-    untypedSelected.ShouldBeFalse();
+    terminal.OutputContains("typed:500").ShouldBeTrue();
+    terminal.OutputContains("untyped:").ShouldBeFalse();
 
     await Task.CompletedTask;
   }
@@ -59,11 +59,11 @@ public class RouteSelectionTests
   public static async Task Should_select_required_over_optional_deploy_prod()
   {
     // Arrange
-    bool requiredSelected = false;
-    bool optionalSelected = false;
+    using TestTerminal terminal = new();
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("deploy {env}").WithHandler((string env) => { requiredSelected = true; return 0; }).AsCommand().Done()
-      .Map("deploy {env?}").WithHandler((string? env) => { optionalSelected = true; return 0; }).AsCommand().Done()
+      .UseTerminal(terminal)
+      .Map("deploy {env}").WithHandler((string env) => $"required:{env}").AsQuery().Done()
+      .Map("deploy {env?}").WithHandler((string? env) => $"optional:{env}").AsQuery().Done()
       .Build();
 
     // Act
@@ -71,8 +71,8 @@ public class RouteSelectionTests
 
     // Assert
     exitCode.ShouldBe(0);
-    requiredSelected.ShouldBeTrue();
-    optionalSelected.ShouldBeFalse();
+    terminal.OutputContains("required:prod").ShouldBeTrue();
+    terminal.OutputContains("optional:").ShouldBeFalse();
 
     await Task.CompletedTask;
   }
@@ -80,11 +80,11 @@ public class RouteSelectionTests
   public static async Task Should_select_more_options_over_fewer_build_verbose_watch()
   {
     // Arrange
-    bool moreOptionsSelected = false;
-    bool fewerOptionsSelected = false;
+    using TestTerminal terminal = new();
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("build --verbose --watch").WithHandler((bool verbose, bool watch) => { moreOptionsSelected = true; return 0; }).AsCommand().Done()
-      .Map("build --verbose").WithHandler((bool verbose) => { fewerOptionsSelected = true; return 0; }).AsCommand().Done()
+      .UseTerminal(terminal)
+      .Map("build --verbose --watch").WithHandler((bool verbose, bool watch) => "more-options:verbose+watch").AsQuery().Done()
+      .Map("build --verbose").WithHandler((bool verbose) => "fewer-options:verbose").AsQuery().Done()
       .Build();
 
     // Act
@@ -92,8 +92,8 @@ public class RouteSelectionTests
 
     // Assert
     exitCode.ShouldBe(0);
-    moreOptionsSelected.ShouldBeTrue();
-    fewerOptionsSelected.ShouldBeFalse();
+    terminal.OutputContains("more-options:verbose+watch").ShouldBeTrue();
+    terminal.OutputContains("fewer-options:").ShouldBeFalse();
 
     await Task.CompletedTask;
   }
@@ -101,11 +101,11 @@ public class RouteSelectionTests
   public static async Task Should_select_no_option_over_required_option_build()
   {
     // Arrange
-    bool noOptionSelected = false;
-    bool requiredOptionSelected = false;
+    using TestTerminal terminal = new();
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("build").WithHandler(() => { noOptionSelected = true; return 0; }).AsCommand().Done()
-      .Map("build --config {m}").WithHandler((string m) => { requiredOptionSelected = true; return 0; }).AsCommand().Done()
+      .UseTerminal(terminal)
+      .Map("build").WithHandler(() => "no-option:build").AsQuery().Done()
+      .Map("build --config {m}").WithHandler((string m) => $"required-option:config={m}").AsQuery().Done()
       .Build();
 
     // Act
@@ -113,8 +113,8 @@ public class RouteSelectionTests
 
     // Assert
     exitCode.ShouldBe(0);
-    noOptionSelected.ShouldBeTrue();
-    requiredOptionSelected.ShouldBeFalse();
+    terminal.OutputContains("no-option:build").ShouldBeTrue();
+    terminal.OutputContains("required-option:").ShouldBeFalse();
 
     await Task.CompletedTask;
   }
@@ -122,13 +122,12 @@ public class RouteSelectionTests
   public static async Task Should_select_catch_all_fallback_git_push()
   {
     // Arrange
-    bool statusSelected = false;
-    bool commitSelected = false;
-    bool catchAllSelected = false;
+    using TestTerminal terminal = new();
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("git status").WithHandler(() => { statusSelected = true; return 0; }).AsQuery().Done()
-      .Map("git commit").WithHandler(() => { commitSelected = true; return 0; }).AsCommand().Done()
-      .Map("git {*args}").WithHandler((string[] args) => { catchAllSelected = true; return 0; }).AsCommand().Done()
+      .UseTerminal(terminal)
+      .Map("git status").WithHandler(() => "literal:git-status").AsQuery().Done()
+      .Map("git commit").WithHandler(() => "literal:git-commit").AsQuery().Done()
+      .Map("git {*args}").WithHandler((string[] args) => $"catchall:{string.Join(",", args)}").AsQuery().Done()
       .Build();
 
     // Act
@@ -136,9 +135,8 @@ public class RouteSelectionTests
 
     // Assert
     exitCode.ShouldBe(0);
-    statusSelected.ShouldBeFalse();
-    commitSelected.ShouldBeFalse();
-    catchAllSelected.ShouldBeTrue();
+    terminal.OutputContains("literal:").ShouldBeFalse();
+    terminal.OutputContains("catchall:push").ShouldBeTrue();
 
     await Task.CompletedTask;
   }
@@ -146,11 +144,11 @@ public class RouteSelectionTests
   public static async Task Should_select_first_registered_on_equal_specificity_greet_Alice()
   {
     // Arrange - Equal specificity but different literals, so only one matches
-    bool firstSelected = false;
-    bool secondSelected = false;
+    using TestTerminal terminal = new();
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("greet {name}").WithHandler((string name) => { firstSelected = true; return 0; }).AsQuery().Done()
-      .Map("hello {person}").WithHandler((string person) => { secondSelected = true; return 0; }).AsQuery().Done()
+      .UseTerminal(terminal)
+      .Map("greet {name}").WithHandler((string name) => $"greet:{name}").AsQuery().Done()
+      .Map("hello {person}").WithHandler((string person) => $"hello:{person}").AsQuery().Done()
       .Build();
 
     // Act
@@ -158,8 +156,8 @@ public class RouteSelectionTests
 
     // Assert
     exitCode.ShouldBe(0);
-    firstSelected.ShouldBeTrue();
-    secondSelected.ShouldBeFalse();
+    terminal.OutputContains("greet:Alice").ShouldBeTrue();
+    terminal.OutputContains("hello:").ShouldBeFalse();
 
     await Task.CompletedTask;
   }
@@ -167,15 +165,13 @@ public class RouteSelectionTests
   public static async Task Should_select_progressive_specificity_deploy_prod_tag_v1_0()
   {
     // Arrange
-    bool mostSpecificSelected = false;
-    bool mediumSelected = false;
-    bool lessSpecificSelected = false;
-    bool leastSpecificSelected = false;
+    using TestTerminal terminal = new();
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("deploy {env} --tag {t} --verbose").WithHandler((string env, string t, bool verbose) => { mostSpecificSelected = true; return 0; }).AsCommand().Done()
-      .Map("deploy {env} --tag {t}").WithHandler((string env, string t) => { mediumSelected = true; return 0; }).AsCommand().Done()
-      .Map("deploy {env}").WithHandler((string env) => { lessSpecificSelected = true; return 0; }).AsCommand().Done()
-      .Map("deploy").WithHandler(() => { leastSpecificSelected = true; return 0; }).AsCommand().Done()
+      .UseTerminal(terminal)
+      .Map("deploy {env} --tag {t} --verbose").WithHandler((string env, string t, bool verbose) => $"most-specific:{env},{t},verbose").AsQuery().Done()
+      .Map("deploy {env} --tag {t}").WithHandler((string env, string t) => $"medium:{env},{t}").AsQuery().Done()
+      .Map("deploy {env}").WithHandler((string env) => $"less-specific:{env}").AsQuery().Done()
+      .Map("deploy").WithHandler(() => "least-specific").AsQuery().Done()
       .Build();
 
     // Act
@@ -183,10 +179,10 @@ public class RouteSelectionTests
 
     // Assert
     exitCode.ShouldBe(0);
-    mediumSelected.ShouldBeTrue();
-    mostSpecificSelected.ShouldBeFalse(); // Missing --verbose
-    lessSpecificSelected.ShouldBeFalse();
-    leastSpecificSelected.ShouldBeFalse();
+    terminal.OutputContains("medium:prod,v1.0").ShouldBeTrue();
+    terminal.OutputContains("most-specific:").ShouldBeFalse(); // Missing --verbose
+    terminal.OutputContains("less-specific:").ShouldBeFalse();
+    terminal.OutputContains("least-specific").ShouldBeFalse();
 
     await Task.CompletedTask;
   }

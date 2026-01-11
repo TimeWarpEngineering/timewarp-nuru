@@ -14,12 +14,56 @@ namespace TimeWarp.Nuru.Generators;
 internal static class TypeConversionMap
 {
   /// <summary>
+  /// Gets the CLR type and TryParse expression for a built-in type constraint.
+  /// Returns null if the constraint is not a known built-in type.
+  /// </summary>
+  /// <param name="constraint">The type constraint from the route pattern (e.g., "int", "DateTime", "FileInfo")</param>
+  /// <param name="inputVarName">The variable name containing the string to parse</param>
+  /// <param name="outputVarName">The variable name to store the parsed result</param>
+  /// <returns>Tuple of (fullyQualifiedClrType, tryParseCondition) or null if unknown.
+  /// The tryParseCondition is a boolean expression that is true on success.</returns>
+  public static (string ClrType, string TryParseCondition)? GetBuiltInTryConversion(string constraint, string inputVarName, string outputVarName)
+  {
+    return constraint.ToLowerInvariant() switch
+    {
+      // C# primitive keywords (primary) and CLR type names - all have TryParse
+      "int" or "int32" => ("int", $"int.TryParse({inputVarName}, global::System.Globalization.NumberStyles.Integer, global::System.Globalization.CultureInfo.InvariantCulture, out {outputVarName})"),
+      "long" or "int64" => ("long", $"long.TryParse({inputVarName}, global::System.Globalization.NumberStyles.Integer, global::System.Globalization.CultureInfo.InvariantCulture, out {outputVarName})"),
+      "short" or "int16" => ("short", $"short.TryParse({inputVarName}, global::System.Globalization.NumberStyles.Integer, global::System.Globalization.CultureInfo.InvariantCulture, out {outputVarName})"),
+      "byte" => ("byte", $"byte.TryParse({inputVarName}, global::System.Globalization.NumberStyles.Integer, global::System.Globalization.CultureInfo.InvariantCulture, out {outputVarName})"),
+      "sbyte" => ("sbyte", $"sbyte.TryParse({inputVarName}, global::System.Globalization.NumberStyles.Integer, global::System.Globalization.CultureInfo.InvariantCulture, out {outputVarName})"),
+      "ushort" or "uint16" => ("ushort", $"ushort.TryParse({inputVarName}, global::System.Globalization.NumberStyles.Integer, global::System.Globalization.CultureInfo.InvariantCulture, out {outputVarName})"),
+      "uint" or "uint32" => ("uint", $"uint.TryParse({inputVarName}, global::System.Globalization.NumberStyles.Integer, global::System.Globalization.CultureInfo.InvariantCulture, out {outputVarName})"),
+      "ulong" or "uint64" => ("ulong", $"ulong.TryParse({inputVarName}, global::System.Globalization.NumberStyles.Integer, global::System.Globalization.CultureInfo.InvariantCulture, out {outputVarName})"),
+      "float" or "single" => ("float", $"float.TryParse({inputVarName}, global::System.Globalization.NumberStyles.Float | global::System.Globalization.NumberStyles.AllowThousands, global::System.Globalization.CultureInfo.InvariantCulture, out {outputVarName})"),
+      "double" => ("double", $"double.TryParse({inputVarName}, global::System.Globalization.NumberStyles.Float | global::System.Globalization.NumberStyles.AllowThousands, global::System.Globalization.CultureInfo.InvariantCulture, out {outputVarName})"),
+      "decimal" => ("decimal", $"decimal.TryParse({inputVarName}, global::System.Globalization.NumberStyles.Number, global::System.Globalization.CultureInfo.InvariantCulture, out {outputVarName})"),
+      "bool" or "boolean" => ("bool", $"bool.TryParse({inputVarName}, out {outputVarName})"),
+      "char" => ("char", $"({inputVarName}.Length == 1 && ({outputVarName} = {inputVarName}[0]) == {outputVarName})"), // Always true if length is 1
+
+      // PascalCase type names (case-insensitive) - most have TryParse
+      "guid" => ("global::System.Guid", $"global::System.Guid.TryParse({inputVarName}, out {outputVarName})"),
+      "datetime" => ("global::System.DateTime", $"global::System.DateTime.TryParse({inputVarName}, global::System.Globalization.CultureInfo.InvariantCulture, global::System.Globalization.DateTimeStyles.None, out {outputVarName})"),
+      "timespan" => ("global::System.TimeSpan", $"global::System.TimeSpan.TryParse({inputVarName}, global::System.Globalization.CultureInfo.InvariantCulture, out {outputVarName})"),
+      "dateonly" => ("global::System.DateOnly", $"global::System.DateOnly.TryParse({inputVarName}, global::System.Globalization.CultureInfo.InvariantCulture, global::System.Globalization.DateTimeStyles.None, out {outputVarName})"),
+      "timeonly" => ("global::System.TimeOnly", $"global::System.TimeOnly.TryParse({inputVarName}, global::System.Globalization.CultureInfo.InvariantCulture, global::System.Globalization.DateTimeStyles.None, out {outputVarName})"),
+      "ipaddress" => ("global::System.Net.IPAddress", $"global::System.Net.IPAddress.TryParse({inputVarName}, out {outputVarName})"),
+
+      // Types without TryParse - use try/catch wrapper pattern (return null to signal special handling needed)
+      "uri" or "fileinfo" or "directoryinfo" => null,
+
+      _ => null
+    };
+  }
+
+  /// <summary>
   /// Gets the CLR type and parse expression for a built-in type constraint.
   /// Returns null if the constraint is not a known built-in type.
   /// </summary>
   /// <param name="constraint">The type constraint from the route pattern (e.g., "int", "DateTime", "FileInfo")</param>
   /// <param name="varName">The variable name to use in the parse expression</param>
   /// <returns>Tuple of (fullyQualifiedClrType, parseExpression) or null if unknown</returns>
+  [Obsolete("Use GetBuiltInTryConversion for safer parsing that doesn't throw exceptions")]
   public static (string ClrType, string ParseExpr)? GetBuiltInConversion(string constraint, string varName)
   {
     return constraint.ToLowerInvariant() switch
@@ -59,7 +103,7 @@ internal static class TypeConversionMap
   /// </summary>
   public static bool IsBuiltInType(string constraint)
   {
-    return GetBuiltInConversion(constraint, "_") is not null;
+    return GetClrTypeName(constraint) is not null;
   }
 
   /// <summary>

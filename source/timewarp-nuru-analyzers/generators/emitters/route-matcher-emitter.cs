@@ -66,6 +66,9 @@ internal static class RouteMatcherEmitter
   {
     string pattern = BuildListPattern(route, routeIndex);
 
+    // Check if we need a skip label (for typed parameters that may fail conversion)
+    bool hasTypedParams = route.Parameters.Any(p => p.HasTypeConstraint);
+
     sb.AppendLine($"    if (routeArgs is {pattern})");
     sb.AppendLine("    {");
 
@@ -94,6 +97,12 @@ internal static class RouteMatcherEmitter
     }
 
     sb.AppendLine("    }");
+
+    // Emit skip label if needed for type conversion failures
+    if (hasTypedParams)
+    {
+      sb.AppendLine($"    route_skip_{routeIndex}:;");
+    }
   }
 
   /// <summary>
@@ -182,6 +191,7 @@ internal static class RouteMatcherEmitter
   /// Emits type conversion code for typed parameters.
   /// Pattern matching captures typed params with route-unique names.
   /// This method creates the properly typed variable with the original name.
+  /// Uses TryParse for graceful error handling - route skips on conversion failure.
   /// </summary>
   private static void EmitTypeConversions(
     StringBuilder sb,
@@ -205,22 +215,31 @@ internal static class RouteMatcherEmitter
       string typeConstraint = param.TypeConstraint ?? "";
       string baseType = typeConstraint.EndsWith('?') ? typeConstraint[..^1] : typeConstraint;
 
-      // Use shared type conversion mapping for all 21 built-in types
-      (string ClrType, string ParseExpr)? conversion = TypeConversionMap.GetBuiltInConversion(baseType, uniqueVarName);
+      // Use shared type conversion mapping with TryParse for graceful error handling
+      (string ClrType, string TryParseCondition)? conversion = TypeConversionMap.GetBuiltInTryConversion(baseType, uniqueVarName, escapedVarName);
 
-      if (conversion is var (clrType, parseExpr))
+      if (conversion is var (clrType, tryParseCondition))
       {
         if (param.IsOptional)
         {
-          // Optional param: check for null before parsing
-          sb.AppendLine(
-            $"{indentStr}{clrType}? {escapedVarName} = {uniqueVarName} is not null ? {parseExpr} : null;");
+          // Optional param: declare as nullable, check for null before parsing, skip route on parse failure
+          // Need a temp variable for TryParse's out parameter since we need nullable
+          string tempVarName = $"__{varName}_parsed_{routeIndex}";
+          string tryParseWithTemp = TypeConversionMap.GetBuiltInTryConversion(baseType, uniqueVarName, tempVarName)!.Value.TryParseCondition;
+          sb.AppendLine($"{indentStr}{clrType}? {escapedVarName} = null;");
+          sb.AppendLine($"{indentStr}if ({uniqueVarName} is not null)");
+          sb.AppendLine($"{indentStr}{{");
+          sb.AppendLine($"{indentStr}  {clrType} {tempVarName};");
+          sb.AppendLine($"{indentStr}  if (!{tryParseWithTemp})");
+          sb.AppendLine($"{indentStr}    goto route_skip_{routeIndex};");
+          sb.AppendLine($"{indentStr}  {escapedVarName} = {tempVarName};");
+          sb.AppendLine($"{indentStr}}}");
         }
         else
         {
-          // Required param: direct parse
-          sb.AppendLine(
-            $"{indentStr}{clrType} {escapedVarName} = {parseExpr};");
+          // Required param: TryParse with route skip on failure
+          sb.AppendLine($"{indentStr}if (!{tryParseCondition})");
+          sb.AppendLine($"{indentStr}  goto route_skip_{routeIndex};");
         }
       }
       else
@@ -460,6 +479,11 @@ internal static class RouteMatcherEmitter
   /// <summary>
   /// Emits code to parse an option that takes a value.
   /// Handles type conversion for typed options (int, double, etc.).
+  /// Properly handles:
+  /// - Required flag + required value: flag and value must both be present
+  /// - Required flag + optional value: flag must be present, value can be null
+  /// - Optional flag + required value: if flag present, value must follow
+  /// - Optional flag + optional value: flag and value both optional
   /// </summary>
   private static void EmitValueOptionParsing(
     StringBuilder sb,
@@ -469,7 +493,7 @@ internal static class RouteMatcherEmitter
   {
     string varName = option.ParameterName ?? ToCamelCase(option.LongForm ?? option.ShortForm ?? "value");
     string escapedVarName = CSharpIdentifierUtils.EscapeIfKeyword(varName);
-    string defaultValue = option.IsOptional ? "null" : "string.Empty";
+    string flagFoundVar = $"__{varName}_flagFound_{routeIndex}";
 
     string condition = (option.LongForm, option.ShortForm) switch
     {
@@ -483,23 +507,45 @@ internal static class RouteMatcherEmitter
     bool needsConversion = option.TypeConstraint is not null;
     string rawVarName = needsConversion ? $"__{varName}_raw" : escapedVarName;
 
-    sb.AppendLine(
-      $"      string? {rawVarName} = {defaultValue};");
-    sb.AppendLine("      for (int __idx = 0; __idx < routeArgs.Length - 1; __idx++)");
+    // Track whether the flag was found and extract value if present
+    sb.AppendLine($"      bool {flagFoundVar} = false;");
+    sb.AppendLine($"      string? {rawVarName} = null;");
+    sb.AppendLine("      for (int __idx = 0; __idx < routeArgs.Length; __idx++)");
     sb.AppendLine("      {");
-    sb.AppendLine(
-      $"        if ({condition})");
+    sb.AppendLine($"        if ({condition})");
     sb.AppendLine("        {");
-    sb.AppendLine($"          {rawVarName} = routeArgs[__idx + 1];");
+    sb.AppendLine($"          {flagFoundVar} = true;");
+    sb.AppendLine("          // Check if there's a value following the flag (and it's not another flag)");
+    sb.AppendLine("          if (__idx + 1 < routeArgs.Length && !routeArgs[__idx + 1].StartsWith(\"-\"))");
+    sb.AppendLine("          {");
+    sb.AppendLine($"            {rawVarName} = routeArgs[__idx + 1];");
+    sb.AppendLine("          }");
     sb.AppendLine("          break;");
     sb.AppendLine("        }");
     sb.AppendLine("      }");
 
-    // For required options, skip route if option was not found
+    // Handle the four cases based on flag optionality and value optionality
     if (!option.IsOptional)
     {
-      sb.AppendLine(
-        $"      if ({rawVarName} == string.Empty) goto route_skip_{routeIndex};");
+      // Required flag: must be found
+      sb.AppendLine($"      if (!{flagFoundVar}) goto route_skip_{routeIndex};");
+
+      if (!option.ParameterIsOptional)
+      {
+        // Required flag + Required value: value must be present
+        sb.AppendLine($"      if ({rawVarName} is null) goto route_skip_{routeIndex};");
+      }
+      // else: Required flag + Optional value: flag found, value can be null - OK
+    }
+    else
+    {
+      // Optional flag
+      if (!option.ParameterIsOptional)
+      {
+        // Optional flag + Required value: if flag present, value must be present
+        sb.AppendLine($"      if ({flagFoundVar} && {rawVarName} is null) goto route_skip_{routeIndex};");
+      }
+      // else: Optional flag + Optional value: everything optional - OK
     }
 
     // Emit type conversion if needed
@@ -511,6 +557,7 @@ internal static class RouteMatcherEmitter
 
   /// <summary>
   /// Emits type conversion code for a typed option.
+  /// Uses TryParse for graceful error handling - route skips on conversion failure.
   /// </summary>
   private static void EmitOptionTypeConversion(
     StringBuilder sb,
@@ -523,22 +570,24 @@ internal static class RouteMatcherEmitter
     string typeConstraint = option.TypeConstraint ?? "";
     string baseType = typeConstraint.EndsWith('?') ? typeConstraint[..^1] : typeConstraint;
 
-    // Use shared type conversion mapping for all 21 built-in types
-    (string ClrType, string ParseExpr)? conversion = TypeConversionMap.GetBuiltInConversion(baseType, rawVarName);
+    // Use shared type conversion mapping with TryParse for graceful error handling
+    (string ClrType, string TryParseCondition)? conversion = TypeConversionMap.GetBuiltInTryConversion(baseType, rawVarName, varName);
 
-    if (conversion is var (clrType, parseExpr))
+    if (conversion is var (clrType, tryParseCondition))
     {
       if (option.ParameterIsOptional)
       {
-        // Optional option value: check for null before parsing
-        sb.AppendLine(
-          $"      {clrType}? {varName} = {rawVarName} is not null ? {parseExpr} : null;");
+        // Optional option value: declare with default, skip route if parse fails
+        sb.AppendLine($"      {clrType} {varName} = default;");
+        sb.AppendLine($"      if ({rawVarName} is not null && !{tryParseCondition})");
+        sb.AppendLine($"        goto route_skip_{routeIndex};");
       }
       else
       {
-        // Required option value: direct parse (will throw if null/empty, but route check should prevent)
-        sb.AppendLine(
-          $"      {clrType} {varName} = {rawVarName} is not null ? {parseExpr} : default;");
+        // Required option value: TryParse with route skip on failure
+        sb.AppendLine($"      {clrType} {varName} = default;");
+        sb.AppendLine($"      if ({rawVarName} is null || !{tryParseCondition})");
+        sb.AppendLine($"        goto route_skip_{routeIndex};");
       }
     }
     else

@@ -1,20 +1,20 @@
+#!/usr/bin/dotnet --
+#:project ../../source/timewarp-nuru/timewarp-nuru.csproj
+#:property UserSecretsId=nuru-csproj-user-secrets-demo
+
 // ═══════════════════════════════════════════════════════════════════════════════
-// USER SECRETS DEMO - CSPROJ-BASED PROJECT WITH USER SECRETS
+// USER SECRETS DEMO - RUNFILE WITH USER SECRETS
 // ═══════════════════════════════════════════════════════════════════════════════
 //
 // This sample demonstrates NuruApp.CreateBuilder(args) with user secrets
-// configured via the .csproj file's UserSecretsId property.
+// configured via the #:property directive.
 //
-// Note: This is a regular .csproj project, not a runfile, so Mediator packages
-// are referenced in the .csproj file.
 // ═══════════════════════════════════════════════════════════════════════════════
 
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using TimeWarp.Nuru;
 
 NuruCoreApp app = NuruApp.CreateBuilder(args)
-  .ConfigureServices(services => services.AddMediator())
   .Map("show")
     .WithHandler((IConfiguration config) =>
     {
@@ -22,7 +22,7 @@ NuruCoreApp app = NuruApp.CreateBuilder(args)
       string? dbConnection = config["Database:ConnectionString"];
       string? environment = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? "Production";
 
-      Console.WriteLine("=== User Secrets Demo (csproj) ===");
+      Console.WriteLine("=== User Secrets Demo ===");
       Console.WriteLine($"Environment: {environment}");
       Console.WriteLine($"ApiKey: {apiKey ?? "(not set)"}");
       Console.WriteLine($"Database:ConnectionString: {dbConnection ?? "(not set)"}");
@@ -33,7 +33,7 @@ NuruCoreApp app = NuruApp.CreateBuilder(args)
         if (string.IsNullOrEmpty(apiKey))
         {
           Console.WriteLine("⚠️  No secrets found. Run:");
-          Console.WriteLine("   dotnet user-secrets set \"ApiKey\" \"secret-123\" --project samples/configuration/user-secrets-demo");
+          Console.WriteLine("   dotnet user-secrets set \"ApiKey\" \"secret-123\" --id nuru-csproj-user-secrets-demo");
         }
         else
         {

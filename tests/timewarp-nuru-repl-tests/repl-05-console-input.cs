@@ -24,7 +24,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.ConsoleInput
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("hello")
         .WithHandler(() => "Hello!")
@@ -50,7 +50,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.ConsoleInput
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("hello")
         .WithHandler(() => "Hello!")
@@ -77,7 +77,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.ConsoleInput
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("hello")
         .WithHandler(() => "Hello!")
@@ -105,7 +105,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.ConsoleInput
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("hello")
         .WithHandler(() => "Hello!")
@@ -134,7 +134,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.ConsoleInput
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("hello")
         .WithHandler(() => "Hello!")
@@ -160,7 +160,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.ConsoleInput
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("greet {name}")
         .WithHandler((string name) => $"Hello, {name}!")
@@ -187,7 +187,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.ConsoleInput
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("greet {name}")
         .WithHandler((string name) => $"Hello, {name}!")
@@ -214,7 +214,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.ConsoleInput
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("say hello")
         .WithHandler(() => "Said hello!")
@@ -242,7 +242,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.ConsoleInput
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("hello world")
         .WithHandler(() => "Hello World!")
@@ -270,7 +270,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.ConsoleInput
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("hello")
         .WithHandler(() => "Hello!")

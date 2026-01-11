@@ -53,7 +53,7 @@ public class CheckUpdatesRouteTests
     // Arrange - Create builder with UseAllExtensions (registers --check-updates)
     // Override with custom handler
     bool customHandlerCalled = false;
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseAllExtensions()
       .Map("--check-updates").WithHandler(() => { customHandlerCalled = true; }).AsQuery().Done()
       .Build();

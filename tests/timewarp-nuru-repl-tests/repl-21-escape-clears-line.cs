@@ -22,7 +22,7 @@ public class EscapeClearsLineTests
   {
     // Arrange: Type some invalid text then press Escape, then valid command
     using TestTerminal terminal = new();
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("status")
         .WithHandler(() => { })
@@ -61,7 +61,7 @@ public class EscapeClearsLineTests
   {
     // Arrange: Type partial command then Escape
     using TestTerminal terminal = new();
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("status")
         .WithHandler(() => { })
@@ -99,7 +99,7 @@ public class EscapeClearsLineTests
   {
     // Arrange: Start tab completion then Escape to cancel
     using TestTerminal terminal = new();
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("status")
         .WithHandler(() => { })

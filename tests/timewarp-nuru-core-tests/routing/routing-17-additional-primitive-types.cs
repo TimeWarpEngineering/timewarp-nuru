@@ -21,7 +21,7 @@ public class AdditionalPrimitiveTypeTests
   {
     // Arrange
     byte? boundValue = null;
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .Map("setbyte {value:byte}").WithHandler((byte value) => { boundValue = value; }).AsCommand().Done()
       .Build();
 
@@ -39,7 +39,7 @@ public class AdditionalPrimitiveTypeTests
   {
     // Arrange
     byte? boundValue = null;
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .Map("setbyte {value:byte}").WithHandler((byte value) => { boundValue = value; }).AsCommand().Done()
       .Build();
 
@@ -61,7 +61,7 @@ public class AdditionalPrimitiveTypeTests
   {
     // Arrange
     sbyte? boundValue = null;
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .Map("setsbyte {value:sbyte}").WithHandler((sbyte value) => { boundValue = value; }).AsCommand().Done()
       .Build();
 
@@ -79,7 +79,7 @@ public class AdditionalPrimitiveTypeTests
   {
     // Arrange
     sbyte? boundValue = null;
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .Map("setsbyte {value:sbyte}").WithHandler((sbyte value) => { boundValue = value; }).AsCommand().Done()
       .Build();
 
@@ -101,7 +101,7 @@ public class AdditionalPrimitiveTypeTests
   {
     // Arrange
     short? boundValue = null;
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .Map("setshort {value:short}").WithHandler((short value) => { boundValue = value; }).AsCommand().Done()
       .Build();
 
@@ -119,7 +119,7 @@ public class AdditionalPrimitiveTypeTests
   {
     // Arrange
     short? boundValue = null;
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .Map("setshort {value:short}").WithHandler((short value) => { boundValue = value; }).AsCommand().Done()
       .Build();
 
@@ -141,7 +141,7 @@ public class AdditionalPrimitiveTypeTests
   {
     // Arrange
     ushort? boundValue = null;
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .Map("setushort {value:ushort}").WithHandler((ushort value) => { boundValue = value; }).AsCommand().Done()
       .Build();
 
@@ -163,7 +163,7 @@ public class AdditionalPrimitiveTypeTests
   {
     // Arrange
     uint? boundValue = null;
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .Map("setuint {value:uint}").WithHandler((uint value) => { boundValue = value; }).AsCommand().Done()
       .Build();
 
@@ -185,7 +185,7 @@ public class AdditionalPrimitiveTypeTests
   {
     // Arrange
     ulong? boundValue = null;
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .Map("setulong {value:ulong}").WithHandler((ulong value) => { boundValue = value; }).AsCommand().Done()
       .Build();
 
@@ -207,7 +207,7 @@ public class AdditionalPrimitiveTypeTests
   {
     // Arrange
     float? boundValue = null;
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .Map("setfloat {value:float}").WithHandler((float value) => { boundValue = value; }).AsCommand().Done()
       .Build();
 
@@ -226,7 +226,7 @@ public class AdditionalPrimitiveTypeTests
   {
     // Arrange
     float? boundValue = null;
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .Map("setfloat {value:float}").WithHandler((float value) => { boundValue = value; }).AsCommand().Done()
       .Build();
 
@@ -249,7 +249,7 @@ public class AdditionalPrimitiveTypeTests
   {
     // Arrange
     char? boundValue = null;
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .Map("setchar {value:char}").WithHandler((char value) => { boundValue = value; }).AsCommand().Done()
       .Build();
 
@@ -267,7 +267,7 @@ public class AdditionalPrimitiveTypeTests
   {
     // Arrange
     char? boundValue = null;
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .Map("setchar {value:char}").WithHandler((char value) => { boundValue = value; }).AsCommand().Done()
       .Build();
 
@@ -289,7 +289,7 @@ public class AdditionalPrimitiveTypeTests
   {
     // Arrange
     byte[]? boundValues = null;
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .Map("bytes {*values:byte}").WithHandler((byte[] values) => { boundValues = values; }).AsQuery().Done()
       .Build();
 
@@ -311,7 +311,7 @@ public class AdditionalPrimitiveTypeTests
   {
     // Arrange
     short[]? boundValues = null;
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .Map("shorts {*values:short}").WithHandler((short[] values) => { boundValues = values; }).AsQuery().Done()
       .Build();
 
@@ -333,7 +333,7 @@ public class AdditionalPrimitiveTypeTests
   {
     // Arrange
     float[]? boundValues = null;
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .Map("floats {*values:float}").WithHandler((float[] values) => { boundValues = values; }).AsQuery().Done()
       .Build();
 

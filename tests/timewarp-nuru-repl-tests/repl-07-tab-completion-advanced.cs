@@ -26,7 +26,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.TabCompletionAdvanced
     terminal.QueueKey(ConsoleKey.Escape);
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("deploy --force").WithHandler(() => "Force deployed!").AsCommand().Done()
       .Map("deploy --dry-run").WithHandler(() => "Dry run!").AsQuery().Done()
@@ -51,7 +51,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.TabCompletionAdvanced
     terminal.QueueKey(ConsoleKey.Escape);
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("deploy -f").WithHandler(() => "Force!").AsCommand().Done()
       .Map("deploy -v").WithHandler(() => "Verbose!").AsCommand().Done()
@@ -76,7 +76,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.TabCompletionAdvanced
     terminal.QueueKey(ConsoleKey.Escape);
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("git commit").WithHandler(() => "Committed!").AsCommand().Done()
       .Map("git config").WithHandler(() => "Configured!").AsCommand().Done()
@@ -102,7 +102,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.TabCompletionAdvanced
     terminal.QueueKey(ConsoleKey.Escape);
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("deploy {env}")
         .WithHandler((string env) => $"Deployed to {env}")
@@ -129,7 +129,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.TabCompletionAdvanced
     terminal.QueueKey(ConsoleKey.Escape);
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("deploy --env {env}")
         .WithHandler((string env) => $"Deployed to {env}")
@@ -156,7 +156,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.TabCompletionAdvanced
     terminal.QueueKey(ConsoleKey.Escape);
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("cmd {arg} --opt {val}")
         .WithHandler((string arg, string val) => $"{arg}:{val}")
@@ -183,7 +183,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.TabCompletionAdvanced
     terminal.QueueKey(ConsoleKey.Escape);
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("docker {*args}")
         .WithHandler((string[] args) => string.Join(" ", args))
@@ -210,7 +210,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.TabCompletionAdvanced
     terminal.QueueKey(ConsoleKey.Escape);
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("kubectl get pods").WithHandler(() => "Pods!").AsQuery().Done()
       .Map("kubectl get services").WithHandler(() => "Services!").AsQuery().Done()
@@ -241,7 +241,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.TabCompletionAdvanced
     terminal.QueueKey(ConsoleKey.Enter); // Submit whatever we have
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("help").WithHandler(() => "Help content").AsQuery().Done()
       .Map("hello").WithHandler(() => "Hello!").AsCommand().Done()
@@ -271,7 +271,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.TabCompletionAdvanced
     terminal.QueueKey(ConsoleKey.Escape);
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("git commit").WithHandler(() => "Committed!").AsCommand().Done()
       .Map("git push").WithHandler(() => "Pushed!").AsCommand().Done()

@@ -17,7 +17,7 @@ public class EndOfOptionsTests
   {
     // Arrange
     string[]? boundArgs = null;
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .Map("run -- {*args}").WithHandler((string[] args) => { boundArgs = args; }).AsCommand().Done()
       .Build();
 
@@ -39,7 +39,7 @@ public class EndOfOptionsTests
     // Arrange
     string? boundScript = null;
     string[]? boundArgs = null;
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .Map("execute {script} -- {*args}").WithHandler((string script, string[] args) => { boundScript = script; boundArgs = args; }).AsCommand().Done()
       .Build();
 
@@ -61,7 +61,7 @@ public class EndOfOptionsTests
   {
     // Arrange
     string[]? boundArgs = null;
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .Map("run -- {*args}").WithHandler((string[] args) => { boundArgs = args; }).AsCommand().Done()
       .Build();
 
@@ -81,7 +81,7 @@ public class EndOfOptionsTests
     // Arrange
     bool boundDetach = false;
     string[]? boundCmd = null;
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseDebugLogging()
       .Map("docker run --detach -- {*cmd}").WithHandler((bool detach, string[] cmd) => { boundDetach = detach; boundCmd = cmd; }).AsCommand().Done()
       .Build();

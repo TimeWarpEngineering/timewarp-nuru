@@ -22,7 +22,7 @@ public class VersionRouteOverrideTests
     // Arrange - Create builder with UseAllExtensions (registers --version,-v)
     // Override with SAME pattern to replace built-in
     bool customHandlerCalled = false;
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseAllExtensions()
       .Map("--version,-v").WithHandler(() => { customHandlerCalled = true; }).AsQuery().Done()
       .Build();
@@ -39,7 +39,7 @@ public class VersionRouteOverrideTests
   {
     // Arrange - Override --version,-v with custom handler (same pattern as built-in)
     bool customHandlerCalled = false;
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseAllExtensions()
       .Map("--version,-v").WithHandler(() => { customHandlerCalled = true; }).AsQuery().Done()
       .Build();
@@ -57,7 +57,7 @@ public class VersionRouteOverrideTests
     // Arrange - Disable built-in, then add custom (no duplicate)
     bool customHandlerCalled = false;
     NuruAppOptions options = new() { DisableVersionRoute = true };
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseAllExtensions(options)
       .Map("--version,-v").WithHandler(() => { customHandlerCalled = true; }).AsQuery().Done()
       .Build();

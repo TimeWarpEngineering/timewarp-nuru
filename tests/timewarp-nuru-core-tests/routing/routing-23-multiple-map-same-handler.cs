@@ -36,7 +36,7 @@ public class MultipleMapSameHandlerTests
     int executionCount = 0;
     Func<int> handler = () => { executionCount++; };
 
-    NuruCoreApp app = NuruApp.CreateSlimBuilder([])
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .Map("close").WithHandler(handler).WithDescription("Close the application").Done()
       .Map("shutdown").WithHandler(handler).WithDescription("Close the application").Done()
       .Map("bye").WithHandler(handler).WithDescription("Close the application").Done()

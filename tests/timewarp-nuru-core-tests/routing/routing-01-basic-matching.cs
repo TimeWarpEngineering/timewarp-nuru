@@ -17,7 +17,7 @@ public class BasicMatchingTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("status").WithHandler(() => "healthy").AsQuery().Done()
       .Build();
@@ -33,7 +33,7 @@ public class BasicMatchingTests
   public static async Task Should_not_match_different_literal_version_delegate()
   {
     // Arrange
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .Map("status").WithHandler(() => { }).AsQuery().Done()
       .Build();
 
@@ -50,7 +50,7 @@ public class BasicMatchingTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("git status").WithHandler(() => "healthy").AsQuery().Done()
       .Build();
@@ -66,7 +66,7 @@ public class BasicMatchingTests
   public static async Task Should_not_match_different_multi_literal_git_commit_delegate()
   {
     // Arrange
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .Map("git status").WithHandler(() => { }).AsQuery().Done()
       .Build();
 
@@ -82,7 +82,7 @@ public class BasicMatchingTests
   public static async Task Should_not_match_case_insensitive_status_delegate()
   {
     // Arrange
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .Map("status").WithHandler(() => { }).AsQuery().Done()
       .Build();
 
@@ -98,7 +98,7 @@ public class BasicMatchingTests
   public static async Task Should_not_match_too_few_arguments_git_status_delegate()
   {
     // Arrange
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .Map("git status").WithHandler(() => { }).AsQuery().Done()
       .Build();
 
@@ -114,7 +114,7 @@ public class BasicMatchingTests
   public static async Task Should_not_match_extra_arguments_git_status_verbose_delegate()
   {
     // Arrange
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .Map("git status").WithHandler(() => { }).AsQuery().Done()
       .Build();
 
@@ -131,7 +131,7 @@ public class BasicMatchingTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("").WithHandler(() => "healthy").AsQuery().Done()
       .Build();
@@ -147,7 +147,7 @@ public class BasicMatchingTests
   public static async Task Should_not_match_empty_pattern_with_anything_delegate()
   {
     // Arrange
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .Map("").WithHandler(() => { }).AsQuery().Done()
       .Build();
 

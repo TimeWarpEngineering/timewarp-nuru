@@ -130,7 +130,7 @@ public class TextSelectionTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("hel")
         .WithHandler(() => "Cut worked!")
@@ -158,7 +158,7 @@ public class TextSelectionTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("llo")
         .WithHandler(() => "Forward select worked!")
@@ -188,7 +188,7 @@ public class TextSelectionTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("hello ")
         .WithHandler(() => "Word select backward worked!")
@@ -215,7 +215,7 @@ public class TextSelectionTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map(" world")
         .WithHandler(() => "Word select forward worked!")
@@ -246,7 +246,7 @@ public class TextSelectionTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("test")
         .WithHandler(() => "Shift+Home worked!")
@@ -274,7 +274,7 @@ public class TextSelectionTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("test")
         .WithHandler(() => "Shift+End worked!")
@@ -301,7 +301,7 @@ public class TextSelectionTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("replaced")
         .WithHandler(() => "Select all worked!")
@@ -331,7 +331,7 @@ public class TextSelectionTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("hello ")
         .WithHandler(() => "Backspace delete worked!")
@@ -357,7 +357,7 @@ public class TextSelectionTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("hello ")
         .WithHandler(() => "Delete key worked!")
@@ -383,7 +383,7 @@ public class TextSelectionTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("hello universe")
         .WithHandler(() => "Replace worked!")
@@ -415,7 +415,7 @@ public class TextSelectionTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("hello world")
         .WithHandler(() => "Selection cleared!")
@@ -445,7 +445,7 @@ public class TextSelectionTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("test")
         .WithHandler(() => "Escape cleared!")
@@ -475,7 +475,7 @@ public class TextSelectionTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("test")
         .WithHandler(() => "Cancel worked!")
@@ -506,7 +506,7 @@ public class TextSelectionTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("hello world")
         .WithHandler(() => "Kill ring worked!")

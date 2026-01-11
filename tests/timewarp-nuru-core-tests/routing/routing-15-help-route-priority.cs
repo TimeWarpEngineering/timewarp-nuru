@@ -22,7 +22,7 @@ public class HelpRoutePriorityTests
     // Arrange - Issue #98 reproduction: user route with optional flag
     // Must use AddAutoHelp() to enable auto-generated help routes
     bool userRouteExecuted = false;
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .AddAutoHelp()
       .Map("recent --verbose?").WithHandler((bool verbose) =>
       {
@@ -42,7 +42,7 @@ public class HelpRoutePriorityTests
   {
     // Arrange - Must use AddAutoHelp() to enable auto-generated help routes
     bool userRouteExecuted = false;
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .AddAutoHelp()
       .Map("recent --verbose?").WithHandler((bool verbose) =>
       {
@@ -63,7 +63,7 @@ public class HelpRoutePriorityTests
     // Arrange - Must use AddAutoHelp() to enable auto-generated help routes
     bool userRouteExecuted = false;
     bool verboseValue = false;
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .AddAutoHelp()
       .Map("recent --verbose?").WithHandler((bool verbose) =>
       {
@@ -86,7 +86,7 @@ public class HelpRoutePriorityTests
     // Arrange - route with multiple optional flags
     // Must use AddAutoHelp() to enable auto-generated help routes
     bool userRouteExecuted = false;
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .AddAutoHelp()
       .Map("list --all? --verbose?").WithHandler((bool all, bool verbose) =>
       {

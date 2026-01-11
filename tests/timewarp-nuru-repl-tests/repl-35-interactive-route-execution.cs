@@ -25,7 +25,7 @@ public class InteractiveRouteExecutionTests
     using TestTerminal terminal = new();
     terminal.QueueLine("exit"); // Exit REPL immediately
 
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("status")
         .WithHandler(() => "OK")
@@ -51,7 +51,7 @@ public class InteractiveRouteExecutionTests
     using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("status")
         .WithHandler(() => "OK")
@@ -77,7 +77,7 @@ public class InteractiveRouteExecutionTests
     using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("status")
         .WithHandler(() => "OK")
@@ -104,7 +104,7 @@ public class InteractiveRouteExecutionTests
     terminal.QueueLine("status"); // Execute a command in REPL
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("status")
         .WithHandler(() => "All systems operational")

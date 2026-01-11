@@ -17,7 +17,7 @@ public class RepeatedOptionsTests
   {
     // Arrange
     string[]? boundE = null;
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .Map("docker run --env {e}*")
       .WithHandler((string[] e) => { boundE = e; })
       .AsCommand()
@@ -42,7 +42,7 @@ public class RepeatedOptionsTests
   {
     // Arrange
     string[]? boundE = null;
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .Map("docker run --env {e}*")
       .WithHandler((string[] e) => { boundE = e; })
       .AsCommand()
@@ -64,7 +64,7 @@ public class RepeatedOptionsTests
   {
     // Arrange
     int[]? boundId = null;
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .Map("process --id {id:int}*")
       .WithHandler((int[] id) => { boundId = id; })
       .AsCommand()
@@ -89,7 +89,7 @@ public class RepeatedOptionsTests
   {
     // Arrange
     string[]? boundE = null;
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .Map("docker run --env,-e {e}*")
       .WithHandler((string[] e) => { boundE = e; })
       .AsCommand()
@@ -116,7 +116,7 @@ public class RepeatedOptionsTests
     string? boundE = null;
     string[]? boundT = null;
     bool boundVerbose = false;
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .Map("deploy --env {e} --tag {t}* --verbose")
       .WithHandler((string e, string[] t, bool verbose) => { boundE = e; boundT = t; boundVerbose = verbose; })
       .AsCommand()
@@ -142,7 +142,7 @@ public class RepeatedOptionsTests
   {
     // Arrange
     string[]? boundF = null;
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .Map("run --flag {f}*")
       .WithHandler((string[] f) => { boundF = f; })
       .AsCommand()

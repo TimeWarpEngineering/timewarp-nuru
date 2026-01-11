@@ -372,7 +372,7 @@ public class CustomKeyBindingTests
     CustomKeyBindingProfile customProfile = new CustomKeyBindingProfile(new DefaultKeyBindingProfile())
       .WithName("TestCustomProfile");
 
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .AddReplSupport(options =>
       {
@@ -398,7 +398,7 @@ public class CustomKeyBindingTests
     CustomKeyBindingProfile customProfile = new CustomKeyBindingProfile(new DefaultKeyBindingProfile())
       .WithName("CustomTakesPrecedence");
 
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .AddReplSupport(options =>
       {
@@ -426,7 +426,7 @@ public class CustomKeyBindingTests
       .RemoveExitKey(ConsoleKey.D, ConsoleModifiers.Control)
       .Remove(ConsoleKey.D, ConsoleModifiers.Control);
 
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .AddReplSupport(options =>
       {
@@ -452,7 +452,7 @@ public class CustomKeyBindingTests
     CustomKeyBindingProfile customProfile = new CustomKeyBindingProfile(new EmacsKeyBindingProfile())
       .WithName("EmacsCustom");
 
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .AddReplSupport(options =>
       {

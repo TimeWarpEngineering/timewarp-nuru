@@ -20,7 +20,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.SessionLifecycle
     using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .AddReplSupport()
       .Build();
@@ -41,7 +41,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.SessionLifecycle
     using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .AddReplSupport(options => options.WelcomeMessage = "Custom Welcome!")
       .Build();
@@ -60,7 +60,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.SessionLifecycle
     using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .AddReplSupport()
       .Build();
@@ -79,7 +79,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.SessionLifecycle
     using TestTerminal terminal = new();
     terminal.QueueLine("quit");
 
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .AddReplSupport()
       .Build();
@@ -98,7 +98,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.SessionLifecycle
     using TestTerminal terminal = new();
     terminal.QueueLine("q");
 
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .AddReplSupport()
       .Build();
@@ -117,7 +117,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.SessionLifecycle
     using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .AddReplSupport(options => options.GoodbyeMessage = "See you later!")
       .Build();
@@ -137,7 +137,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.SessionLifecycle
     terminal.QueueLine("greet Alice");
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("greet {name}")
         .WithHandler((string name) => $"Hello, {name}!")
@@ -163,7 +163,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.SessionLifecycle
     terminal.QueueLine("greet Bob");
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("greet {name}")
         .WithHandler((string name) => $"Hello, {name}!")
@@ -187,7 +187,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.SessionLifecycle
     terminal.QueueLine("greet World");
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("greet {name}")
         .WithHandler((string name) => $"Hello, {name}!")
@@ -211,7 +211,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.SessionLifecycle
     terminal.QueueLine("greet World");
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("greet {name}")
         .WithHandler((string name) => $"Hello, {name}!")
@@ -235,7 +235,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.SessionLifecycle
     terminal.QueueLine("help");
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("greet {name}")
         .WithHandler((string name) => $"Hello, {name}!")

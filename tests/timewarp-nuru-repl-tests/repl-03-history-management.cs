@@ -23,7 +23,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.HistoryManagement
     terminal.QueueLine("history");
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("greet {name}")
         .WithHandler((string name) => $"Hello, {name}!")
@@ -51,7 +51,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.HistoryManagement
     terminal.QueueLine("history");
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("greet {name}")
         .WithHandler((string name) => $"Hello, {name}!")
@@ -78,7 +78,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.HistoryManagement
     terminal.QueueKey(ConsoleKey.Enter);    // Execute it again
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("greet {name}")
         .WithHandler((string name) => $"Hello, {name}!")
@@ -103,7 +103,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.HistoryManagement
     terminal.QueueLine("clear-history");
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("greet {name}")
         .WithHandler((string name) => $"Hello, {name}!")
@@ -130,7 +130,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.HistoryManagement
     terminal.QueueLine("history");
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("greet {name}")
         .WithHandler((string name) => $"Hello, {name}!")
@@ -157,7 +157,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.HistoryManagement
     terminal.QueueLine("history");        // Should NOT show "greet First" or "greet Second"
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("greet {name}")
         .WithHandler((string name) => $"Hello, {name}!")
@@ -188,7 +188,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.HistoryManagement
 
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("cmd1").WithHandler(() => "1").AsCommand().Done()
       .Map("cmd2").WithHandler(() => "2").AsCommand().Done()
@@ -216,7 +216,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.HistoryManagement
     terminal.QueueLine("history");
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("greet {name}")
         .WithHandler((string name) => $"Hello, {name}!")

@@ -21,7 +21,7 @@ public class OptionOrderIndependenceTests
     string? boundSource = null;
     string? boundDest = null;
     bool boundCompress = false;
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .Map("backup {source} --compress --output {dest}").WithHandler(
         (string source, bool compress, string dest) =>
         {
@@ -50,7 +50,7 @@ public class OptionOrderIndependenceTests
     string? boundSource = null;
     string? boundDest = null;
     bool boundCompress = false;
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .Map("backup {source} --compress --output {dest}").WithHandler(
         (string source, bool compress, string dest) =>
         {
@@ -79,7 +79,7 @@ public class OptionOrderIndependenceTests
     bool boundAlpha = false;
     bool boundGamma = false;
 
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .Map("test --alpha --beta {value} --gamma").WithHandler(
         (bool alpha, string value, bool gamma) =>
         {
@@ -107,7 +107,7 @@ public class OptionOrderIndependenceTests
     bool boundAlpha = false;
     bool boundGamma = false;
 
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .Map("test --alpha --beta {value} --gamma").WithHandler(
         (bool alpha, string value, bool gamma) =>
         {
@@ -135,7 +135,7 @@ public class OptionOrderIndependenceTests
     bool boundAlpha = false;
     bool boundGamma = false;
 
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .Map("test --alpha --beta {value} --gamma").WithHandler(
         (bool alpha, string value, bool gamma) =>
         {
@@ -164,7 +164,7 @@ public class OptionOrderIndependenceTests
     bool boundCompress = false;
     bool boundVerbose = false;
 
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .Map("backup {source} --compress? --output? {dest} --verbose?").WithHandler(
         (string source, bool compress, string? dest, bool verbose) =>
         {
@@ -192,7 +192,7 @@ public class OptionOrderIndependenceTests
     // Options interleaved between positional arguments is NOT valid CLI behavior
     // Options should come AFTER all positional arguments
 #pragma warning disable RCS1163 // Unused parameter
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .Map("copy {source} {dest} --verbose?").WithHandler(
         (string source, string dest, bool verbose) => 0).AsCommand().Done()
 #pragma warning restore RCS1163 // Unused parameter
@@ -213,7 +213,7 @@ public class OptionOrderIndependenceTests
     string? boundOutput = null;
     bool boundVerbose = false;
 
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .Map("build --verbose,-v? --output,-o {file}").WithHandler(
         (bool verbose, string file) =>
         {
@@ -236,7 +236,7 @@ public class OptionOrderIndependenceTests
   {
     // Ensure required options are still enforced
 #pragma warning disable RCS1163 // Unused parameter
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .Map("backup {source} --compress --output {dest}").WithHandler(
         (string source, bool compress, string dest) => 0).AsCommand().Done()
 #pragma warning restore RCS1163 // Unused parameter
@@ -257,7 +257,7 @@ public class OptionOrderIndependenceTests
     // This is different from --output? {file} where the flag itself is optional
     string? boundFile = null;
 
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .Map("build --output {file?}").WithHandler(
         (string? file) =>
         {

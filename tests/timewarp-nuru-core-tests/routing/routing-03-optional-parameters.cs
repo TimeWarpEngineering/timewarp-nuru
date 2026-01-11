@@ -1,5 +1,12 @@
 #!/usr/bin/dotnet --
 
+// TODO: Tests in this file are BLOCKED by task #319 (route isolation)
+// The source generator currently merges all routes from all app instances in a file,
+// so tests with overlapping route patterns (e.g., "deploy {env}" vs "deploy {env?}")
+// interfere with each other. Tests expecting "no match" may incorrectly match routes
+// from other test methods.
+// See: kanban/to-do/319-fix-multiple-apps-in-same-block-losing-intercept-sites.md
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif
@@ -7,177 +14,184 @@ return await RunAllTests();
 namespace TimeWarp.Nuru.Tests.Routing
 {
 
-[TestTag("Routing")]
-public class OptionalParametersTests
-{
-  [ModuleInitializer]
-  internal static void Register() => RegisterTests<OptionalParametersTests>();
-
-  public static async Task Should_match_required_string_deploy_prod()
+  [TestTag("Routing")]
+  public class OptionalParametersTests
   {
-    // Arrange
-    string? boundEnv = null;
-    NuruCoreApp app = new NuruAppBuilder()
-      .Map("deploy {env}").WithHandler((string env) => { boundEnv = env; }).AsCommand().Done()
-      .Build();
+    [ModuleInitializer]
+    internal static void Register() => RegisterTests<OptionalParametersTests>();
 
-    // Act
-    int exitCode = await app.RunAsync(["deploy", "prod"]);
+    public static async Task Should_match_required_string_deploy_prod()
+    {
+      // Arrange
+      using TestTerminal terminal = new();
+      NuruCoreApp app = NuruApp.CreateBuilder([])
+        .UseTerminal(terminal)
+        .Map("deploy {env}").WithHandler((string env) => $"env:{env}").AsCommand().Done()
+        .Build();
 
-    // Assert
-    exitCode.ShouldBe(0);
-    boundEnv.ShouldBe("prod");
+      // Act
+      int exitCode = await app.RunAsync(["deploy", "prod"]);
 
-    await Task.CompletedTask;
-  }
+      // Assert
+      exitCode.ShouldBe(0);
+      terminal.OutputContains("env:prod").ShouldBeTrue();
 
-  public static async Task Should_not_match_missing_required_string_deploy()
-  {
-    // Arrange
+      await Task.CompletedTask;
+    }
+
+    public static async Task Should_not_match_missing_required_string_deploy()
+    {
+      // Arrange
+      using TestTerminal terminal = new();
 #pragma warning disable RCS1163 // Unused parameter
-    NuruCoreApp app = new NuruAppBuilder()
-      .Map("deploy {env}").WithHandler((string env) => 0).AsCommand().Done()
-      .Build();
+      NuruCoreApp app = NuruApp.CreateBuilder([])
+        .UseTerminal(terminal)
+        .Map("deploy {env}").WithHandler((string env) => { }).AsCommand().Done()
+        .Build();
 #pragma warning restore RCS1163 // Unused parameter
 
-    // Act
-    int exitCode = await app.RunAsync(["deploy"]);
+      // Act
+      int exitCode = await app.RunAsync(["deploy"]);
 
-    // Assert
-    exitCode.ShouldBe(1); // Missing required parameter
+      // Assert
+      exitCode.ShouldBe(1); // Missing required parameter
 
-    await Task.CompletedTask;
-  }
+      await Task.CompletedTask;
+    }
 
-  public static async Task Should_match_optional_string_deploy_prod()
-  {
-    // Arrange
-    string? boundEnv = null;
-    NuruCoreApp app = new NuruAppBuilder()
-      .Map("deploy {env?}").WithHandler((string? env) => { boundEnv = env; }).AsCommand().Done()
-      .Build();
+    public static async Task Should_match_optional_string_deploy_prod()
+    {
+      // Arrange
+      using TestTerminal terminal = new();
+      NuruCoreApp app = NuruApp.CreateBuilder([])
+        .UseTerminal(terminal)
+        .Map("deploy {env?}").WithHandler((string? env) => $"env:{env}").AsCommand().Done()
+        .Build();
 
-    // Act
-    int exitCode = await app.RunAsync(["deploy", "prod"]);
+      // Act
+      int exitCode = await app.RunAsync(["deploy", "prod"]);
 
-    // Assert
-    exitCode.ShouldBe(0);
-    boundEnv.ShouldBe("prod");
+      // Assert
+      exitCode.ShouldBe(0);
+      terminal.OutputContains("env:prod").ShouldBeTrue();
 
-    await Task.CompletedTask;
-  }
+      await Task.CompletedTask;
+    }
 
-  public static async Task Should_match_optional_string_deploy_null()
-  {
-    // Arrange
-    string? boundEnv = "unexpected";
-    NuruCoreApp app = new NuruAppBuilder()
-      .Map("deploy {env?}").WithHandler((string? env) => { boundEnv = env; }).AsCommand().Done()
-      .Build();
+    public static async Task Should_match_optional_string_deploy_null()
+    {
+      // Arrange
+      using TestTerminal terminal = new();
+      NuruCoreApp app = NuruApp.CreateBuilder([])
+        .UseTerminal(terminal)
+        .Map("deploy {env?}").WithHandler((string? env) => $"env:{env ?? "NULL"}").AsCommand().Done()
+        .Build();
 
-    // Act
-    int exitCode = await app.RunAsync(["deploy"]);
+      // Act
+      int exitCode = await app.RunAsync(["deploy"]);
 
-    // Assert
-    exitCode.ShouldBe(0);
-    boundEnv.ShouldBeNull();
+      // Assert
+      exitCode.ShouldBe(0);
+      terminal.OutputContains("env:NULL").ShouldBeTrue();
 
-    await Task.CompletedTask;
-  }
+      await Task.CompletedTask;
+    }
 
-  public static async Task Should_match_optional_integer_list_10()
-  {
-    // Arrange
-    int? boundCount = null;
-    NuruCoreApp app = new NuruAppBuilder()
-      .Map("list {count:int?}").WithHandler((int? count) => { boundCount = count; }).AsQuery().Done()
-      .Build();
+    public static async Task Should_match_optional_integer_list_10()
+    {
+      // Arrange
+      using TestTerminal terminal = new();
+      NuruCoreApp app = NuruApp.CreateBuilder([])
+        .UseTerminal(terminal)
+        .Map("list {count:int?}").WithHandler((int? count) => $"count:{count}").AsQuery().Done()
+        .Build();
 
-    // Act
-    int exitCode = await app.RunAsync(["list", "10"]);
+      // Act
+      int exitCode = await app.RunAsync(["list", "10"]);
 
-    // Assert
-    exitCode.ShouldBe(0);
-    boundCount.ShouldBe(10);
+      // Assert
+      exitCode.ShouldBe(0);
+      terminal.OutputContains("count:10").ShouldBeTrue();
 
-    await Task.CompletedTask;
-  }
+      await Task.CompletedTask;
+    }
 
-  public static async Task Should_match_optional_integer_list_null()
-  {
-    // Arrange
-    int? boundCount = 5;
-    NuruCoreApp app = new NuruAppBuilder()
-      .Map("list {count:int?}").WithHandler((int? count) => { boundCount = count; }).AsQuery().Done()
-      .Build();
+    public static async Task Should_match_optional_integer_list_null()
+    {
+      // Arrange
+      using TestTerminal terminal = new();
+      NuruCoreApp app = NuruApp.CreateBuilder([])
+        .UseTerminal(terminal)
+        .Map("list {count:int?}").WithHandler((int? count) => $"count:{count?.ToString(CultureInfo.InvariantCulture) ?? "NULL"}").AsQuery().Done()
+        .Build();
 
-    // Act
-    int exitCode = await app.RunAsync(["list"]);
+      // Act
+      int exitCode = await app.RunAsync(["list"]);
 
-    // Assert
-    exitCode.ShouldBe(0);
-    boundCount.ShouldBeNull();
+      // Assert
+      exitCode.ShouldBe(0);
+      terminal.OutputContains("count:NULL").ShouldBeTrue();
 
-    await Task.CompletedTask;
-  }
+      await Task.CompletedTask;
+    }
 
-  public static async Task Should_match_mixed_required_optional_deploy_prod_v1_0()
-  {
-    // Arrange
-    string? boundEnv = null;
-    string? boundTag = null;
-    NuruCoreApp app = new NuruAppBuilder()
-      .Map("deploy {env} {tag?}").WithHandler((string env, string? tag) => { boundEnv = env; boundTag = tag; }).AsCommand().Done()
-      .Build();
+    public static async Task Should_match_mixed_required_optional_deploy_prod_v1_0()
+    {
+      // Arrange
+      using TestTerminal terminal = new();
+      NuruCoreApp app = NuruApp.CreateBuilder([])
+        .UseTerminal(terminal)
+        .Map("deploy {env} {tag?}").WithHandler((string env, string? tag) => $"env:{env},tag:{tag}").AsCommand().Done()
+        .Build();
 
-    // Act
-    int exitCode = await app.RunAsync(["deploy", "prod", "v1.0"]);
+      // Act
+      int exitCode = await app.RunAsync(["deploy", "prod", "v1.0"]);
 
-    // Assert
-    exitCode.ShouldBe(0);
-    boundEnv.ShouldBe("prod");
-    boundTag.ShouldBe("v1.0");
+      // Assert
+      exitCode.ShouldBe(0);
+      terminal.OutputContains("env:prod,tag:v1.0").ShouldBeTrue();
 
-    await Task.CompletedTask;
-  }
+      await Task.CompletedTask;
+    }
 
-  public static async Task Should_match_mixed_required_optional_deploy_prod_null()
-  {
-    // Arrange
-    string? boundEnv = null;
-    string? boundTag = "unexpected";
-    NuruCoreApp app = new NuruAppBuilder()
-      .Map("deploy {env} {tag?}").WithHandler((string env, string? tag) => { boundEnv = env; boundTag = tag; }).AsCommand().Done()
-      .Build();
+    public static async Task Should_match_mixed_required_optional_deploy_prod_null()
+    {
+      // Arrange
+      using TestTerminal terminal = new();
+      NuruCoreApp app = NuruApp.CreateBuilder([])
+        .UseTerminal(terminal)
+        .Map("deploy {env} {tag?}").WithHandler((string env, string? tag) => $"env:{env},tag:{tag ?? "NULL"}").AsCommand().Done()
+        .Build();
 
-    // Act
-    int exitCode = await app.RunAsync(["deploy", "prod"]);
+      // Act
+      int exitCode = await app.RunAsync(["deploy", "prod"]);
 
-    // Assert
-    exitCode.ShouldBe(0);
-    boundEnv.ShouldBe("prod");
-    boundTag.ShouldBeNull();
+      // Assert
+      exitCode.ShouldBe(0);
+      terminal.OutputContains("env:prod,tag:NULL").ShouldBeTrue();
 
-    await Task.CompletedTask;
-  }
+      await Task.CompletedTask;
+    }
 
-  public static async Task Should_not_match_mixed_missing_required_deploy()
-  {
-    // Arrange
+    public static async Task Should_not_match_mixed_missing_required_deploy()
+    {
+      // Arrange
+      using TestTerminal terminal = new();
 #pragma warning disable RCS1163 // Unused parameter
-    NuruCoreApp app = new NuruAppBuilder()
-      .Map("deploy {env} {tag?}").WithHandler((string env, string? tag) => 0).AsCommand().Done()
-      .Build();
+      NuruCoreApp app = NuruApp.CreateBuilder([])
+        .UseTerminal(terminal)
+        .Map("deploy {env} {tag?}").WithHandler((string env, string? tag) => { }).AsCommand().Done()
+        .Build();
 #pragma warning restore RCS1163 // Unused parameter
 
-    // Act
-    int exitCode = await app.RunAsync(["deploy"]);
+      // Act
+      int exitCode = await app.RunAsync(["deploy"]);
 
-    // Assert
-    exitCode.ShouldBe(1); // Missing required env
+      // Assert
+      exitCode.ShouldBe(1); // Missing required env
 
-    await Task.CompletedTask;
+      await Task.CompletedTask;
+    }
   }
-}
 
 } // namespace TimeWarp.Nuru.Tests.Routing

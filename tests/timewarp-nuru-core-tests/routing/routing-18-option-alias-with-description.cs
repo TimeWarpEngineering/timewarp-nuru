@@ -25,7 +25,7 @@ public class OptionAliasWithDescriptionTests
     // Arrange - Pattern with alias AND description
     bool upperUsed = false;
     string? capturedName = null;
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .Map("hello {name} --upper,-u|Convert to uppercase").WithHandler((string name, bool upper) =>
       {
         capturedName = name;
@@ -50,7 +50,7 @@ public class OptionAliasWithDescriptionTests
     // THIS IS THE BUG FROM TASK 013: long form should work but was failing
     bool upperUsed = false;
     string? capturedName = null;
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .Map("hello {name} --upper,-u|Convert to uppercase").WithHandler((string name, bool upper) =>
       {
         capturedName = name;
@@ -74,7 +74,7 @@ public class OptionAliasWithDescriptionTests
     // Arrange - Pattern with alias AND description
     bool upperUsed = true;
     string? capturedName = null;
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .Map("hello {name} --upper,-u|Convert to uppercase").WithHandler((string name, bool upper) =>
       {
         capturedName = name;
@@ -100,7 +100,7 @@ public class OptionAliasWithDescriptionTests
     bool dryRun = false;
     string? capturedEnv = null;
 #pragma warning disable RCS1163, IDE0060
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .Map("deploy {env} --dry-run,-d|Preview mode").WithHandler((string env, bool dryrun) =>
       {
         capturedEnv = env;
@@ -126,7 +126,7 @@ public class OptionAliasWithDescriptionTests
     bool dryRun = false;
     string? capturedEnv = null;
 #pragma warning disable RCS1163, IDE0060
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .Map("deploy {env} --dry-run,-d|Preview mode").WithHandler((string env, bool dryrun) =>
       {
         capturedEnv = env;

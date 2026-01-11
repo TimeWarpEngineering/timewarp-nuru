@@ -35,7 +35,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests
       terminal.QueueLine("");  // Submit empty (will show help)
       terminal.QueueLine("exit");
 
-      NuruCoreApp app = new NuruAppBuilder()
+      NuruCoreApp app = NuruApp.CreateBuilder([])
         .UseTerminal(terminal)
         .AddTypeConverter(new EnumTypeConverter<Environment>())
         .Map("deploy {env:environment}")
@@ -68,7 +68,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests
       terminal.QueueLine("");
       terminal.QueueLine("exit");
 
-      NuruCoreApp app = new NuruAppBuilder()
+      NuruCoreApp app = NuruApp.CreateBuilder([])
         .UseTerminal(terminal)
         .AddTypeConverter(new EnumTypeConverter<Environment>())
         .Map("deploy {env:environment}")
@@ -97,7 +97,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests
       terminal.QueueLine("");
       terminal.QueueLine("exit");
 
-      NuruCoreApp app = new NuruAppBuilder()
+      NuruCoreApp app = NuruApp.CreateBuilder([])
         .UseTerminal(terminal)
         .AddTypeConverter(new EnumTypeConverter<Environment>())
         .Map("deploy {env:environment}")
@@ -126,7 +126,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests
       terminal.QueueLine("");
       terminal.QueueLine("exit");
 
-      NuruCoreApp app = new NuruAppBuilder()
+      NuruCoreApp app = NuruApp.CreateBuilder([])
         .UseTerminal(terminal)
         .AddTypeConverter(new EnumTypeConverter<Environment>())
         .Map("deploy {env:environment}")

@@ -7,157 +7,159 @@ return await RunAllTests();
 namespace TimeWarp.Nuru.Tests.Routing
 {
 
-[TestTag("Routing")]
-public class ParameterBindingTests
-{
-  [ModuleInitializer]
-  internal static void Register() => RegisterTests<ParameterBindingTests>();
-
-  public static async Task Should_bind_string_parameter_greet_Alice()
+  [TestTag("Routing")]
+  public class ParameterBindingTests
   {
-    // Arrange
-    string? boundName = null;
-    NuruCoreApp app = new NuruAppBuilder()
-      .Map("greet {name}").WithHandler((string name) => { boundName = name; }).AsQuery().Done()
-      .Build();
+    [ModuleInitializer]
+    internal static void Register() => RegisterTests<ParameterBindingTests>();
 
-    // Act
-    int exitCode = await app.RunAsync(["greet", "Alice"]);
+    public static async Task Should_bind_string_parameter_greet_Alice()
+    {
+      // Arrange
+      using TestTerminal terminal = new();
+      NuruCoreApp app = NuruApp.CreateBuilder([])
+        .UseTerminal(terminal)
+        .Map("greet {name}").WithHandler((string name) => $"name:{name}").AsQuery().Done()
+        .Build();
 
-    // Assert
-    exitCode.ShouldBe(0);
-    boundName.ShouldBe("Alice");
+      // Act
+      int exitCode = await app.RunAsync(["greet", "Alice"]);
 
-    await Task.CompletedTask;
-  }
+      // Assert
+      exitCode.ShouldBe(0);
+      terminal.OutputContains("name:Alice").ShouldBeTrue();
 
-  public static async Task Should_bind_integer_parameter_delay_500()
-  {
-    // Arrange
-    int boundMs = 0;
-    NuruCoreApp app = new NuruAppBuilder()
-      .Map("delay {ms:int}").WithHandler((int ms) => { boundMs = ms; }).AsCommand().Done()
-      .Build();
+      await Task.CompletedTask;
+    }
 
-    // Act
-    int exitCode = await app.RunAsync(["delay", "500"]);
+    public static async Task Should_bind_integer_parameter_delay_500()
+    {
+      // Arrange
+      using TestTerminal terminal = new();
+      NuruCoreApp app = NuruApp.CreateBuilder([])
+        .UseTerminal(terminal)
+        .Map("delay {ms:int}").WithHandler((int ms) => $"ms:{ms}").AsQuery().Done()
+        .Build();
 
-    // Assert
-    exitCode.ShouldBe(0);
-    boundMs.ShouldBe(500);
+      // Act
+      int exitCode = await app.RunAsync(["delay", "500"]);
 
-    await Task.CompletedTask;
-  }
+      // Assert
+      exitCode.ShouldBe(0);
+      terminal.OutputContains("ms:500").ShouldBeTrue();
 
-  public static async Task Should_not_bind_integer_parameter_delay_abc()
-  {
-    // Arrange
+      await Task.CompletedTask;
+    }
+
+    public static async Task Should_not_bind_integer_parameter_delay_abc()
+    {
+      // Arrange
+      using TestTerminal terminal = new();
 #pragma warning disable RCS1163 // Unused parameter
-    NuruCoreApp app = new NuruAppBuilder()
-      .Map("delay {ms:int}").WithHandler((int ms) => 0).AsCommand().Done()
-      .Build();
+      NuruCoreApp app = NuruApp.CreateBuilder([])
+        .UseTerminal(terminal)
+        .Map("delay {ms:int}").WithHandler((int ms) => $"ms:{ms}").AsQuery().Done()
+        .Build();
 #pragma warning restore RCS1163 // Unused parameter
 
-    // Act
-    int exitCode = await app.RunAsync(["delay", "abc"]);
+      // Act & Assert - type conversion failure throws exception
+      await Should.ThrowAsync<Exception>(async () => await app.RunAsync(["delay", "abc"]));
+      terminal.OutputContains("ms:").ShouldBeFalse();
 
-    // Assert
-    exitCode.ShouldBe(1); // Type conversion failure
+      await Task.CompletedTask;
+    }
 
-    await Task.CompletedTask;
+    public static async Task Should_bind_double_parameter_calculate_3_14()
+    {
+      // Arrange
+      using TestTerminal terminal = new();
+      NuruCoreApp app = NuruApp.CreateBuilder([])
+        .UseTerminal(terminal)
+        .Map("calculate {value:double}").WithHandler((double value) => $"value:{value}").AsQuery().Done()
+        .Build();
+
+      // Act
+      int exitCode = await app.RunAsync(["calculate", "3.14"]);
+
+      // Assert
+      exitCode.ShouldBe(0);
+      terminal.OutputContains("value:3.14").ShouldBeTrue();
+
+      await Task.CompletedTask;
+    }
+
+    public static async Task Should_bind_bool_parameter_set_true()
+    {
+      // Arrange
+      using TestTerminal terminal = new();
+      NuruCoreApp app = NuruApp.CreateBuilder([])
+        .UseTerminal(terminal)
+        .Map("set {flag:bool}").WithHandler((bool flag) => $"flag:{flag}").AsQuery().Done()
+        .Build();
+
+      // Act
+      int exitCode = await app.RunAsync(["set", "true"]);
+
+      // Assert
+      exitCode.ShouldBe(0);
+      terminal.OutputContains("flag:True").ShouldBeTrue();
+
+      await Task.CompletedTask;
+    }
+
+    public static async Task Should_bind_bool_parameter_set_false()
+    {
+      // Arrange
+      using TestTerminal terminal = new();
+      NuruCoreApp app = NuruApp.CreateBuilder([])
+        .UseTerminal(terminal)
+        .Map("set {flag:bool}").WithHandler((bool flag) => $"flag:{flag}").AsQuery().Done()
+        .Build();
+
+      // Act
+      int exitCode = await app.RunAsync(["set", "false"]);
+
+      // Assert
+      exitCode.ShouldBe(0);
+      terminal.OutputContains("flag:False").ShouldBeTrue();
+
+      await Task.CompletedTask;
+    }
+
+    public static async Task Should_bind_multiple_parameters_connect_localhost_8080()
+    {
+      // Arrange
+      using TestTerminal terminal = new();
+      NuruCoreApp app = NuruApp.CreateBuilder([])
+        .UseTerminal(terminal)
+        .Map("connect {host} {port:int}").WithHandler((string host, int port) => $"host:{host},port:{port}").AsQuery().Done()
+        .Build();
+
+      // Act
+      int exitCode = await app.RunAsync(["connect", "localhost", "8080"]);
+
+      // Assert
+      exitCode.ShouldBe(0);
+      terminal.OutputContains("host:localhost,port:8080").ShouldBeTrue();
+
+      await Task.CompletedTask;
+    }
+
+    public static async Task Should_not_bind_type_mismatch_age_twenty()
+    {
+      // Arrange
+      using TestTerminal terminal = new();
+      NuruCoreApp app = NuruApp.CreateBuilder([])
+        .UseTerminal(terminal)
+        .Map("age {years:int}").WithHandler((int years) => $"years:{years}").AsQuery().Done()
+        .Build();
+
+      // Act & Assert - type conversion failure throws exception
+      await Should.ThrowAsync<Exception>(async () => await app.RunAsync(["age", "twenty"]));
+      terminal.OutputContains("years:").ShouldBeFalse();
+
+      await Task.CompletedTask;
+    }
   }
 
-  public static async Task Should_bind_double_parameter_calculate_3_14()
-  {
-    // Arrange
-    double boundValue = 0;
-    NuruCoreApp app = new NuruAppBuilder()
-      .Map("calculate {value:double}").WithHandler((double value) => { boundValue = value; }).AsCommand().Done()
-      .Build();
-
-    // Act
-    int exitCode = await app.RunAsync(["calculate", "3.14"]);
-
-    // Assert
-    exitCode.ShouldBe(0);
-    boundValue.ShouldBe(3.14);
-
-    await Task.CompletedTask;
-  }
-
-  public static async Task Should_bind_bool_parameter_set_true()
-  {
-    // Arrange
-    bool boundFlag = false;
-    NuruCoreApp app = new NuruAppBuilder()
-      .Map("set {flag:bool}").WithHandler((bool flag) => { boundFlag = flag; }).AsCommand().Done()
-      .Build();
-
-    // Act
-    int exitCode = await app.RunAsync(["set", "true"]);
-
-    // Assert
-    exitCode.ShouldBe(0);
-    boundFlag.ShouldBeTrue();
-
-    await Task.CompletedTask;
-  }
-
-  public static async Task Should_bind_bool_parameter_set_false()
-  {
-    // Arrange
-    bool boundFlag = true;
-    NuruCoreApp app = new NuruAppBuilder()
-      .Map("set {flag:bool}").WithHandler((bool flag) => { boundFlag = flag; }).AsCommand().Done()
-      .Build();
-
-    // Act
-    int exitCode = await app.RunAsync(["set", "false"]);
-
-    // Assert
-    exitCode.ShouldBe(0);
-    boundFlag.ShouldBeFalse();
-
-    await Task.CompletedTask;
-  }
-
-  public static async Task Should_bind_multiple_parameters_connect_localhost_8080()
-  {
-    // Arrange
-    string? boundHost = null;
-    int boundPort = 0;
-    NuruCoreApp app = new NuruAppBuilder()
-      .Map("connect {host} {port:int}").WithHandler((string host, int port) => { boundHost = host; boundPort = port; }).AsCommand().Done()
-      .Build();
-
-    // Act
-    int exitCode = await app.RunAsync(["connect", "localhost", "8080"]);
-
-    // Assert
-    exitCode.ShouldBe(0);
-    boundHost.ShouldBe("localhost");
-    boundPort.ShouldBe(8080);
-
-    await Task.CompletedTask;
-  }
-
-  public static async Task Should_not_bind_type_mismatch_age_twenty()
-  {
-    // Arrange
-#pragma warning disable RCS1163 // Unused parameter
-    NuruCoreApp app = new NuruAppBuilder()
-      .Map("age {years:int}").WithHandler((int years) => 0).AsCommand().Done()
-      .Build();
-#pragma warning restore RCS1163 // Unused parameter
-
-    // Act
-    int exitCode = await app.RunAsync(["age", "twenty"]);
-
-    // Assert
-    exitCode.ShouldBe(1); // Type conversion failure
-
-    await Task.CompletedTask;
-  }
 }
-
-} // namespace TimeWarp.Nuru.Tests.Routing

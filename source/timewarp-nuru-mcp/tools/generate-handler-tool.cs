@@ -96,7 +96,7 @@ internal sealed class GenerateHandlerTool
     sb.AppendLine("// Alternative: Fluent builder pattern");
     sb.AppendLine("// ═══════════════════════════════════════════════════════════════");
     sb.AppendLine();
-    sb.AppendLine("// NuruCoreApp app = new NuruAppBuilder()");
+    sb.AppendLine("// NuruCoreApp app = NuruApp.CreateBuilder([])");
     sb.Append(CultureInfo.InvariantCulture, $"//     .Map(\"{pattern}\", ");
 
     if (parameters.Count == 0)

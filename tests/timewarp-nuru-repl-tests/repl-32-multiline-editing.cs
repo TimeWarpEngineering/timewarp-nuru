@@ -34,7 +34,7 @@ public class MultilineEditingTests
     terminal.QueueLine("exit");
 
     string? capturedInput = null;
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("{*args}")
         .WithHandler((string[] args) =>
@@ -76,7 +76,7 @@ public class MultilineEditingTests
     terminal.QueueLine("exit");
 
     string? capturedInput = null;
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("{*args}")
         .WithHandler((string[] args) =>
@@ -113,7 +113,7 @@ public class MultilineEditingTests
     terminal.QueueLine("exit");
 
     string? capturedInput = null;
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("{*args}")
         .WithHandler((string[] args) =>
@@ -154,7 +154,7 @@ public class MultilineEditingTests
 
     bool deployExecuted = false;
     string? capturedEnv = null;
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("deploy --env {env}")
         .WithHandler((string env) =>
@@ -199,7 +199,7 @@ public class MultilineEditingTests
     terminal.QueueLine("exit");
 
     int execCount = 0;
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("{*args}")
         .WithHandler((string[] _) =>
@@ -235,7 +235,7 @@ public class MultilineEditingTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("{*args}")
         .WithHandler((string[] _) => "OK")
@@ -267,7 +267,7 @@ public class MultilineEditingTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("{*args}")
         .WithHandler((string[] _) => "OK")
@@ -303,7 +303,7 @@ public class MultilineEditingTests
     terminal.QueueLine("exit");
 
     string? capturedInput = null;
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("{*args}")
         .WithHandler((string[] args) =>
@@ -344,7 +344,7 @@ public class MultilineEditingTests
 
     int multiCount = 0;
     int singleCount = 0;
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("single")
         .WithHandler(() =>

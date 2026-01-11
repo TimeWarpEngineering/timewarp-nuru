@@ -22,7 +22,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.NuruAppIntegration
     using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .AddReplSupport()  // Extension method
       .Build();
@@ -42,7 +42,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.NuruAppIntegration
     terminal.QueueLine("help");
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .AddReplSupport()
       .Build();
@@ -62,7 +62,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.NuruAppIntegration
     terminal.QueueLine("add 5 10");
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("add {a:int} {b:int}")
         .WithHandler((int a, int b) => $"{a + b}")
@@ -87,7 +87,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.NuruAppIntegration
     terminal.QueueLine("cmd2");
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("cmd1").WithHandler(() => "Command 1").AsCommand().Done()
       .Map("cmd2").WithHandler(() => "Command 2").AsCommand().Done()
@@ -109,7 +109,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.NuruAppIntegration
     terminal.QueueLine("exit");
 
     // Act - fluent chaining
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("status").WithHandler(() => "OK").AsQuery().Done()
       .Map("version").WithHandler(() => "1.0.0").AsQuery().Done()
@@ -129,7 +129,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.NuruAppIntegration
     using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .AddReplSupport()
       .Build();
@@ -149,7 +149,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.NuruAppIntegration
     terminal.QueueLine("exit");
 
     // Create app with logging configured
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .AddReplSupport()
       .Build();
@@ -169,7 +169,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.NuruAppIntegration
     terminal.QueueLine("greet World");
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = new NuruAppBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("greet {name}")
         .WithHandler((string name) => $"Hello, {name}!")

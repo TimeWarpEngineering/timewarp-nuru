@@ -7,9 +7,9 @@ Update all samples to use `NuruApp.CreateBuilder()`.
 
 Also some samples use Mediator which is being replaced with TimeWarp.Nuru message interfaces.
 
-## Results
+## Progress
 
-**All numbered samples (01-11) are working with `NuruApp.CreateBuilder()`:**
+**Numbered samples (01-11) are working with `NuruApp.CreateBuilder()`:**
 - 01-hello-world (3 samples)
 - 02-calculator (3 samples)
 - 03-attributed-routes (csproj)
@@ -22,11 +22,11 @@ Also some samples use Mediator which is being replaced with TimeWarp.Nuru messag
 - 10-type-converters (2 samples)
 - 11-unified-middleware
 
-**Deferred to separate tasks:**
-- `_logging/` - Blocked by #322 (ILogger<T> injection)
-- `_aspire-*`, `_repl-demo`, `_completion-*` - Require library migrations
-
-**Mediator removal complete** for all active samples.
+**Remaining underscore samples tracked in separate tasks:**
+- `_logging/` - #337 (blocked by #322 ILogger<T> injection)
+- `_repl-demo/` - #338 (requires REPL library migration)
+- `_aspire-*` - #339 (requires Telemetry library migration)
+- `_completion-*` - #340 (requires Completion library migration)
 
 ## Working Samples (NN-* numbered convention)
 
@@ -75,12 +75,13 @@ These samples have been verified working with the new API:
 ### Pipeline Middleware Samples - DONE
 - [x] `07-pipeline-middleware/*` - All 6 samples working (completed in #315)
 
-### Unchecked (need verification)
-- [ ] `_aspire-host-otel/` - Requires Mediator, Repl, Telemetry libs
-- [ ] `_aspire-telemetry/` - Requires Mediator, Telemetry lib
-- [ ] `_dynamic-completion-example/` - Requires Completion lib
-- [ ] `_repl-demo/` - Requires Mediator, Repl lib
-- [ ] `_shell-completion-example/` - Requires Completion lib
+### Underscore samples - Tracked in separate tasks
+- [ ] `_logging/` - See #337 (blocked by #322)
+- [ ] `_repl-demo/` - See #338 (requires REPL library migration)
+- [ ] `_aspire-host-otel/` - See #339 (requires Telemetry library migration)
+- [ ] `_aspire-telemetry/` - See #339
+- [ ] `_dynamic-completion-example/` - See #340 (requires Completion library)
+- [ ] `_shell-completion-example/` - See #340
 
 ### Completed (was marked blocked but works)
 - [x] `11-unified-middleware/` - ✓ Working! (moved from _unified-middleware)

@@ -90,19 +90,19 @@ internal static class HandlerInvokerEmitter
     if (handler.IsExpressionBody)
     {
       // Expression body: () => "pong" or (string name) => $"Hello {name}"
-      EmitExpressionBodyHandler(sb, route, handler, handlerName, indent);
+      EmitExpressionBodyHandler(sb, route, routeIndex, handler, handlerName, indent);
     }
     else
     {
       // Block body: () => { DoWork(); return "done"; }
-      EmitBlockBodyHandler(sb, route, handler, handlerName, indent);
+      EmitBlockBodyHandler(sb, route, routeIndex, handler, handlerName, indent);
     }
   }
 
   /// <summary>
   /// Emits a local function for an expression-body lambda.
   /// </summary>
-  private static void EmitExpressionBodyHandler(StringBuilder sb, RouteDefinition route, HandlerDefinition handler, string handlerName, string indent)
+  private static void EmitExpressionBodyHandler(StringBuilder sb, RouteDefinition route, int routeIndex, HandlerDefinition handler, string handlerName, string indent)
   {
     string returnTypeName = GetReturnTypeName(handler);
     string asyncModifier = handler.IsAsync ? "async " : "";
@@ -110,7 +110,7 @@ internal static class HandlerInvokerEmitter
 
     // Build parameter list for the local function (preserves handler parameter names)
     string paramList = BuildParameterList(handler);
-    string argList = BuildArgumentListFromRoute(route, handler);
+    string argList = BuildArgumentListFromRoute(route, routeIndex, handler);
 
     if (handler.ReturnType.HasValue)
     {
@@ -150,7 +150,7 @@ internal static class HandlerInvokerEmitter
   /// <summary>
   /// Emits a local function for a block-body lambda.
   /// </summary>
-  private static void EmitBlockBodyHandler(StringBuilder sb, RouteDefinition route, HandlerDefinition handler, string handlerName, string indent)
+  private static void EmitBlockBodyHandler(StringBuilder sb, RouteDefinition route, int routeIndex, HandlerDefinition handler, string handlerName, string indent)
   {
     string returnTypeName = GetReturnTypeName(handler);
     string asyncModifier = handler.IsAsync ? "async " : "";
@@ -158,7 +158,7 @@ internal static class HandlerInvokerEmitter
 
     // Build parameter list for the local function (preserves handler parameter names)
     string paramList = BuildParameterList(handler);
-    string argList = BuildArgumentListFromRoute(route, handler);
+    string argList = BuildArgumentListFromRoute(route, routeIndex, handler);
 
     // Emit the local function signature
     sb.AppendLine(
@@ -669,7 +669,11 @@ internal static class HandlerInvokerEmitter
   /// Builds the argument list for invoking the local function.
   /// Maps route segment variables to handler parameter positions.
   /// </summary>
-  private static string BuildArgumentListFromRoute(RouteDefinition route, HandlerDefinition handler)
+  /// <param name="route">The route definition containing parameters and options.</param>
+  /// <param name="routeIndex">The route index used for unique variable naming of typed/catch-all parameters.</param>
+  /// <param name="handler">The handler definition containing parameter bindings.</param>
+  /// <returns>A comma-separated argument list string.</returns>
+  private static string BuildArgumentListFromRoute(RouteDefinition route, int routeIndex, HandlerDefinition handler)
   {
     List<string> args = [];
 
@@ -689,7 +693,13 @@ internal static class HandlerInvokerEmitter
           if (routeParamIndex < routeParams.Count)
           {
             ParameterDefinition routeParam = routeParams[routeParamIndex];
-            string varName = CSharpIdentifierUtils.EscapeIfKeyword(routeParam.CamelCaseName);
+            // Variable naming must match route-matcher-emitter.cs:
+            // - Catch-all parameters (IsCatchAll): __{name}_{routeIndex} (no type conversion step)
+            // - Typed parameters (HasTypeConstraint): escaped original name (type conversion creates this variable)
+            // - Simple parameters: just the escaped camelCase name
+            string varName = routeParam.IsCatchAll
+              ? $"__{routeParam.CamelCaseName}_{routeIndex}"
+              : CSharpIdentifierUtils.EscapeIfKeyword(routeParam.CamelCaseName);
             args.Add(varName);
             routeParamIndex++;
           }

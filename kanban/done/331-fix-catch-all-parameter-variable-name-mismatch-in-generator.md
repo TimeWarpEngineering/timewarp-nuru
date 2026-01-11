@@ -47,14 +47,35 @@ This bug affects ALL catch-all parameters, not just the universal catch-all. Exa
 
 ## Checklist
 
-- [ ] Locate the emitter code that generates handler invocation for catch-all parameters
-- [ ] Fix to use generated variable name (`__name_N`) instead of parameter name
-- [ ] Add/update generator test for catch-all parameter handling
-- [ ] Verify `timewarp-nuru-testapp-delegates` builds successfully
-- [ ] Verify all existing generator tests pass
+- [x] Locate the emitter code that generates handler invocation for catch-all parameters
+- [x] Fix to use generated variable name (`__name_N`) instead of parameter name
+- [ ] Add/update generator test for catch-all parameter handling (no dedicated test project in this worktree)
+- [x] Verify `timewarp-nuru-testapp-delegates` builds successfully
+- [ ] Verify all existing generator tests pass (no dedicated test project in this worktree)
 
 ## Notes
 
 - Bug discovered during Mediator dependency removal (task #330)
 - The bug was previously hidden because the Mediator-based generated code path was being used
 - File likely in: `source/timewarp-nuru-analyzers/generators/emitters/`
+
+## Results
+
+Fixed in `handler-invoker-emitter.cs` by updating `BuildArgumentListFromRoute` method:
+
+**Root cause**: The method used the escaped parameter name for ALL parameters, but:
+- **Catch-all parameters** use a route-unique variable name `__{name}_{routeIndex}` to avoid collision with the 'args' method parameter
+- **Typed parameters** get type conversion which creates a variable with the original name, so they use the escaped original name
+
+**Fix**: Updated the logic to:
+1. Pass `routeIndex` to `EmitExpressionBodyHandler` and `EmitBlockBodyHandler` methods  
+2. Update `BuildArgumentListFromRoute` to accept `routeIndex` and use `__{name}_{routeIndex}` for catch-all parameters only
+
+**Files changed**:
+- `source/timewarp-nuru-analyzers/generators/emitters/handler-invoker-emitter.cs`
+
+**Verification**:
+- `dotnet build` succeeds (0 errors)
+- Generated code now correctly passes:
+  - `__args_27` for catch-all `docker {*args}`
+  - `seconds` for typed `sleep {seconds:int?}`

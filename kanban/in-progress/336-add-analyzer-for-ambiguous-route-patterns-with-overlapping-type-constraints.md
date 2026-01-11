@@ -203,7 +203,7 @@ Two routes with same signature but different type constraints → NURU_R001
 - [x] Implement `OverlapValidator` to detect conflicts
 - [x] Report NURU_R001 for overlapping routes
 - [ ] Add unit tests for overlap detection
-- [ ] Update `routing-07-route-selection.cs` to not have conflicts
+- [x] Update `routing-07-route-selection.cs` to not have conflicts
 
 ### Phase 4: Generator Cleanup
 - [ ] Remove validation logic from generator

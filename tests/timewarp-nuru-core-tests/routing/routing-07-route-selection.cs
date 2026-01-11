@@ -35,14 +35,17 @@ public class RouteSelectionTests
     await Task.CompletedTask;
   }
 
-  public static async Task Should_select_typed_over_untyped_delay_500()
+  public static async Task Should_select_typed_parameter_delay_500()
   {
     // Arrange
+    // NOTE: Previously this test had two overlapping routes:
+    //   .Map("delay {ms:int}") and .Map("delay {duration}")
+    // These would now trigger NURU_R001 (overlapping type constraints).
+    // Real CLIs should use explicit subcommands instead.
     using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("delay {ms:int}").WithHandler((int ms) => $"typed:{ms}").AsQuery().Done()
-      .Map("delay {duration}").WithHandler((string duration) => $"untyped:{duration}").AsQuery().Done()
       .Build();
 
     // Act
@@ -51,7 +54,32 @@ public class RouteSelectionTests
     // Assert
     exitCode.ShouldBe(0);
     terminal.OutputContains("typed:500").ShouldBeTrue();
-    terminal.OutputContains("untyped:").ShouldBeFalse();
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_use_explicit_subcommands_for_different_types()
+  {
+    // Arrange
+    // This is the recommended pattern instead of type-based disambiguation:
+    // Use explicit subcommands like "delay-ms" vs "delay-duration"
+    using TestTerminal terminal = new();
+    NuruCoreApp app = NuruApp.CreateBuilder([])
+      .UseTerminal(terminal)
+      .Map("delay-ms {ms:int}").WithHandler((int ms) => $"typed:{ms}").AsQuery().Done()
+      .Map("delay-duration {duration}").WithHandler((string duration) => $"untyped:{duration}").AsQuery().Done()
+      .Build();
+
+    // Act - Test typed route
+    int exitCode1 = await app.RunAsync(["delay-ms", "500"]);
+    exitCode1.ShouldBe(0);
+    terminal.OutputContains("typed:500").ShouldBeTrue();
+
+    // Act - Test untyped route
+    terminal.ClearOutput();
+    int exitCode2 = await app.RunAsync(["delay-duration", "5s"]);
+    exitCode2.ShouldBe(0);
+    terminal.OutputContains("untyped:5s").ShouldBeTrue();
 
     await Task.CompletedTask;
   }

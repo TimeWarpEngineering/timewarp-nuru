@@ -479,6 +479,19 @@ public sealed class DslInterpreter
         $"WithHandler() must be called on a route builder. Location: {invocation.GetLocation().GetLineSpan()}");
     }
 
+    // Validate handler expression and collect diagnostics
+    ArgumentListSyntax? args = invocation.ArgumentList;
+    if (args?.Arguments.Count > 0)
+    {
+      ExpressionSyntax handlerExpression = args.Arguments[0].Expression;
+      ImmutableArray<Diagnostic> handlerDiagnostics = Validation.HandlerValidator.Validate(
+        handlerExpression,
+        SemanticModel,
+        handlerExpression.GetLocation());
+
+      CollectedDiagnostics.AddRange(handlerDiagnostics);
+    }
+
     HandlerDefinition? handler = HandlerExtractor.Extract(invocation, SemanticModel, CancellationToken);
     if (handler is null)
     {

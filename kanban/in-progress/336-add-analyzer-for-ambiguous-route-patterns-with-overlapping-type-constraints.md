@@ -192,7 +192,7 @@ Two routes with same signature but different type constraints → NURU_R001
 ### Phase 2: Unified Analyzer
 - [x] Create `NuruAnalyzer` using `AppExtractor`
 - [x] Create `validation/ModelValidator.cs` to orchestrate validation
-- [ ] Move handler validation logic to model validator
+- [x] Move handler validation logic to model validator
 - [ ] Move route pattern validation logic to model validator
 - [ ] Remove `NuruRouteAnalyzer`
 - [ ] Remove `NuruHandlerAnalyzer`
@@ -247,3 +247,27 @@ Two routes with same signature but different type constraints → NURU_R001
 - No fallback to next route - the analyzer prevents patterns that would rely on this
 - Both analyzer and generator build the model independently (can't pass data between them)
 - Shared code for model building ensures consistency
+
+## Session Progress (2025-01-11)
+
+### Completed
+- ✅ Phase 1: `ExtractionResult` type, `InterpretWithDiagnostics()`, `ExtractWithDiagnostics()`
+- ✅ Phase 3: `OverlapValidator` with structure signature algorithm, NURU_R001 reporting
+- ✅ Tests: 4 overlap detection tests all pass
+- ✅ Updated `routing-07-route-selection.cs` to use non-conflicting patterns
+
+### Files Created
+- `source/timewarp-nuru-analyzers/analyzers/nuru-analyzer.cs`
+- `source/timewarp-nuru-analyzers/generators/models/extraction-result.cs`
+- `source/timewarp-nuru-analyzers/validation/model-validator.cs`
+- `source/timewarp-nuru-analyzers/validation/overlap-validator.cs`
+- `tests/timewarp-nuru-analyzers-tests/auto/overlap-analyzer-01-basic.cs`
+
+### Remaining (Lower Priority)
+The core NURU_R001 functionality is complete. Remaining items are refactoring:
+- Move handler validation from `NuruHandlerAnalyzer` to `ModelValidator`
+- Move route pattern validation from `NuruRouteAnalyzer` to `ModelValidator`
+- Remove old analyzers
+- Generator cleanup (remove redundant validation)
+
+These can be done incrementally in future sessions without blocking the main feature.

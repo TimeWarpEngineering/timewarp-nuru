@@ -18,7 +18,7 @@ public class OutputFormatTests
     // Arrange
     NuruAppBuilder builder = new();
     builder.Map("status")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsQuery()
       .Done();
     builder.EnableDynamicCompletion();
@@ -67,7 +67,7 @@ public class OutputFormatTests
     // Arrange
     NuruAppBuilder builder = new();
     builder.Map("status")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsQuery()
       .Done();
     builder.EnableDynamicCompletion();
@@ -88,7 +88,7 @@ public class OutputFormatTests
     // Arrange
     NuruAppBuilder builder = new();
     builder.Map("status")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsQuery()
       .Done();
     builder.EnableDynamicCompletion();
@@ -108,15 +108,15 @@ public class OutputFormatTests
     // Arrange
     NuruAppBuilder builder = new();
     builder.Map("apple")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsQuery()
       .Done();
     builder.Map("banana")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsQuery()
       .Done();
     builder.Map("cherry")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsQuery()
       .Done();
     builder.EnableDynamicCompletion();
@@ -200,11 +200,11 @@ public class OutputFormatTests
     // Arrange
     NuruAppBuilder builder = new();
     builder.Map("status")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsQuery()
       .Done();
     builder.Map("version")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsQuery()
       .Done();
     builder.EnableDynamicCompletion();
@@ -225,7 +225,7 @@ public class OutputFormatTests
     // Arrange
     NuruAppBuilder builder = new();
     builder.Map("status")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsQuery()
       .Done();
     builder.EnableDynamicCompletion();

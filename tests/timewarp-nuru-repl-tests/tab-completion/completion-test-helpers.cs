@@ -216,12 +216,12 @@ public static class TestAppFactory
       // SIMPLE COMMANDS (Literal only)
       // ========================================
       .Map("status")
-        .WithHandler(() => 0)
+        .WithHandler(() => { })
         .WithDescription("Displays the current system status.")
         .AsQuery()
         .Done()
       .Map("time")
-        .WithHandler(() => 0)
+        .WithHandler(() => { })
         .WithDescription("Displays the current time.")
         .AsQuery()
         .Done()
@@ -262,7 +262,7 @@ public static class TestAppFactory
       // SUBCOMMANDS (Hierarchical routes)
       // ========================================
       .Map("git status")
-        .WithHandler(() => 0)
+        .WithHandler(() => { })
         .WithDescription("Shows git working tree status.")
         .AsQuery()
         .Done()

@@ -157,7 +157,7 @@ public class ParameterDetectionTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("git status").WithHandler(() => 0).AsQuery().Done();
+    builder.Map("git status").WithHandler(() => { }).AsQuery().Done();
 
     string[] typedWords = ["git"];
     Endpoint endpoint = builder.EndpointCollection.First();

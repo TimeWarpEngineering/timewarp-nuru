@@ -22,7 +22,7 @@ public class AddInteractiveRouteAliasTests
     // Arrange - Issue #119: AddInteractiveRoute should use alias syntax
     NuruAppBuilder builder = new();
     builder.Map("status")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsQuery()
       .Done();
 
@@ -126,7 +126,7 @@ public class AddInteractiveRouteAliasTests
     // Arrange
     NuruAppBuilder builder = new();
     builder.Map("status")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsQuery()
       .Done();
     builder.AddInteractiveRoute();

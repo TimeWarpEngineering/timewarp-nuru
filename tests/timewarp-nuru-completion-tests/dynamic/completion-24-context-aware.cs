@@ -68,11 +68,11 @@ public class ContextAwareTests
     // Arrange
     NuruAppBuilder builder = new();
     builder.Map("status")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsQuery()
       .Done();
     builder.Map("version")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsQuery()
       .Done();
     builder.Map("deploy {env}")

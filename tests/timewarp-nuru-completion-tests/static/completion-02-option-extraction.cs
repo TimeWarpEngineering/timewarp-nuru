@@ -14,15 +14,15 @@ public class OptionExtractionTests
     // Arrange
     NuruAppBuilder builder = new();
     builder.Map("test --verbose")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsCommand()
       .Done();
     builder.Map("build --force")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsCommand()
       .Done();
     builder.Map("deploy --dry-run")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsCommand()
       .Done();
 
@@ -43,15 +43,15 @@ public class OptionExtractionTests
     // Arrange
     NuruAppBuilder builder = new();
     builder.Map("test -v")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsCommand()
       .Done();
     builder.Map("build -f")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsCommand()
       .Done();
     builder.Map("deploy -d")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsCommand()
       .Done();
 
@@ -72,11 +72,11 @@ public class OptionExtractionTests
     // Arrange
     NuruAppBuilder builder = new();
     builder.Map("test --verbose,-v")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsCommand()
       .Done();
     builder.Map("build --output,-o")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsCommand()
       .Done();
 
@@ -98,7 +98,7 @@ public class OptionExtractionTests
     // Arrange
     NuruAppBuilder builder = new();
     builder.Map("test --verbose --force --dry-run")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsCommand()
       .Done();
 
@@ -145,15 +145,15 @@ public class OptionExtractionTests
     // Arrange
     NuruAppBuilder builder = new();
     builder.Map("test --verbose")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsCommand()
       .Done();
     builder.Map("build --verbose")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsCommand()
       .Done();
     builder.Map("deploy --verbose")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsCommand()
       .Done();
 
@@ -216,11 +216,11 @@ public class OptionExtractionTests
     // Arrange
     NuruAppBuilder builder = new();
     builder.Map("status")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsQuery()
       .Done();
     builder.Map("version")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsQuery()
       .Done();
 
@@ -262,15 +262,15 @@ public class OptionExtractionTests
     // Arrange
     NuruAppBuilder builder = new();
     builder.Map("test --dry-run")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsCommand()
       .Done();
     builder.Map("build --skip-tests")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsCommand()
       .Done();
     builder.Map("deploy --no-cache")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsCommand()
       .Done();
 
@@ -291,11 +291,11 @@ public class OptionExtractionTests
     // Arrange
     NuruAppBuilder builder = new();
     builder.Map("test --Verbose")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsCommand()
       .Done();
     builder.Map("build --verbose")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsCommand()
       .Done();
 

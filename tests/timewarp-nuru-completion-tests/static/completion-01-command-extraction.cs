@@ -14,7 +14,7 @@ public class CommandExtractionTests
     // Arrange
     NuruAppBuilder builder = new();
     builder.Map("status")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsQuery()
       .Done();
 
@@ -34,15 +34,15 @@ public class CommandExtractionTests
     // Arrange
     NuruAppBuilder builder = new();
     builder.Map("create")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsCommand()
       .Done();
     builder.Map("createorder")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsCommand()
       .Done();
     builder.Map("delete")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsCommand()
       .Done();
 
@@ -89,7 +89,7 @@ public class CommandExtractionTests
     // Arrange
     NuruAppBuilder builder = new();
     builder.Map("test --verbose")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsCommand()
       .Done();
     builder.Map("build --config {mode}")
@@ -113,15 +113,15 @@ public class CommandExtractionTests
     // Arrange
     NuruAppBuilder builder = new();
     builder.Map("git commit")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsCommand()
       .Done();
     builder.Map("git status")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsQuery()
       .Done();
     builder.Map("git push")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsCommand()
       .Done();
 
@@ -229,11 +229,11 @@ public class CommandExtractionTests
     // Arrange
     NuruAppBuilder builder = new();
     builder.Map("Deploy")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsCommand()
       .Done();
     builder.Map("deploy")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsCommand()
       .Done();
 

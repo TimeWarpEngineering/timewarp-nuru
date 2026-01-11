@@ -14,7 +14,7 @@ public class ZshScriptGenerationTests
     // Arrange
     NuruAppBuilder builder = new();
     builder.Map("status")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsQuery()
       .Done();
     builder.Map("deploy {env}")
@@ -39,7 +39,7 @@ public class ZshScriptGenerationTests
     // Arrange
     NuruAppBuilder builder = new();
     builder.Map("status")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsQuery()
       .Done();
 
@@ -58,19 +58,19 @@ public class ZshScriptGenerationTests
     // Arrange
     NuruAppBuilder builder = new();
     builder.Map("create")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsCommand()
       .Done();
     builder.Map("createorder")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsCommand()
       .Done();
     builder.Map("delete")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsCommand()
       .Done();
     builder.Map("list")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsQuery()
       .Done();
 
@@ -92,11 +92,11 @@ public class ZshScriptGenerationTests
     // Arrange
     NuruAppBuilder builder = new();
     builder.Map("test --verbose --force")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsCommand()
       .Done();
     builder.Map("build --dry-run,-d")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsCommand()
       .Done();
 
@@ -118,7 +118,7 @@ public class ZshScriptGenerationTests
     // Arrange
     NuruAppBuilder builder = new();
     builder.Map("status")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsQuery()
       .Done();
 
@@ -137,7 +137,7 @@ public class ZshScriptGenerationTests
     // Arrange
     NuruAppBuilder builder = new();
     builder.Map("status")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsQuery()
       .Done();
 
@@ -174,7 +174,7 @@ public class ZshScriptGenerationTests
     // Arrange
     NuruAppBuilder builder = new();
     builder.Map("status")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsQuery()
       .Done();
 
@@ -194,11 +194,11 @@ public class ZshScriptGenerationTests
     // Arrange
     NuruAppBuilder builder = new();
     builder.Map("status")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsQuery()
       .Done();
     builder.Map("version")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsQuery()
       .Done();
 

@@ -13,7 +13,7 @@ public class TemplateLoadingTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("status").WithHandler(() => 0).AsQuery().Done();
+    builder.Map("status").WithHandler(() => { }).AsQuery().Done();
     CompletionScriptGenerator generator = new();
 
     // Act
@@ -32,7 +32,7 @@ public class TemplateLoadingTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("status").WithHandler(() => 0).AsQuery().Done();
+    builder.Map("status").WithHandler(() => { }).AsQuery().Done();
     CompletionScriptGenerator generator = new();
 
     // Act
@@ -51,7 +51,7 @@ public class TemplateLoadingTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("status").WithHandler(() => 0).AsQuery().Done();
+    builder.Map("status").WithHandler(() => { }).AsQuery().Done();
     CompletionScriptGenerator generator = new();
 
     // Act
@@ -70,7 +70,7 @@ public class TemplateLoadingTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("status").WithHandler(() => 0).AsQuery().Done();
+    builder.Map("status").WithHandler(() => { }).AsQuery().Done();
     CompletionScriptGenerator generator = new();
 
     // Act
@@ -89,7 +89,7 @@ public class TemplateLoadingTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("status").WithHandler(() => 0).AsQuery().Done();
+    builder.Map("status").WithHandler(() => { }).AsQuery().Done();
     CompletionScriptGenerator generator = new();
 
     // Act
@@ -110,8 +110,8 @@ public class TemplateLoadingTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("create").WithHandler(() => 0).AsCommand().Done();
-    builder.Map("delete").WithHandler(() => 0).AsCommand().Done();
+    builder.Map("create").WithHandler(() => { }).AsCommand().Done();
+    builder.Map("delete").WithHandler(() => { }).AsCommand().Done();
     CompletionScriptGenerator generator = new();
 
     // Act
@@ -129,7 +129,7 @@ public class TemplateLoadingTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("test --verbose --force").WithHandler(() => 0).AsCommand().Done();
+    builder.Map("test --verbose --force").WithHandler(() => { }).AsCommand().Done();
     CompletionScriptGenerator generator = new();
 
     // Act
@@ -164,7 +164,7 @@ public class TemplateLoadingTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("status").WithHandler(() => 0).AsQuery().Done();
+    builder.Map("status").WithHandler(() => { }).AsQuery().Done();
     builder.Map("version --format {fmt}").WithHandler((string fmt) => 0).AsQuery().Done();
     CompletionScriptGenerator generator = new();
 
@@ -194,7 +194,7 @@ public class TemplateLoadingTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("test").WithHandler(() => 0).AsQuery().Done();
+    builder.Map("test").WithHandler(() => { }).AsQuery().Done();
     CompletionScriptGenerator generator = new();
 
     // Act

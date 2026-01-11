@@ -17,8 +17,8 @@ public class DynamicHandlerTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("status").WithHandler(() => 0).AsQuery().Done();
-    builder.Map("version").WithHandler(() => 0).AsQuery().Done();
+    builder.Map("status").WithHandler(() => { }).AsQuery().Done();
+    builder.Map("version").WithHandler(() => { }).AsQuery().Done();
 
     CompletionSourceRegistry registry = new();
     string[] words = ["app"];
@@ -40,7 +40,7 @@ public class DynamicHandlerTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("status").WithHandler(() => 0).AsQuery().Done();
+    builder.Map("status").WithHandler(() => { }).AsQuery().Done();
 
     CompletionSourceRegistry registry = new();
     string[] words = ["app"];
@@ -59,7 +59,7 @@ public class DynamicHandlerTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("status").WithHandler(() => 0).AsQuery().Done();
+    builder.Map("status").WithHandler(() => { }).AsQuery().Done();
 
     CompletionSourceRegistry registry = new();
     string[] words = ["app"];
@@ -128,9 +128,9 @@ public class DynamicHandlerTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("git status").WithHandler(() => 0).AsQuery().Done();
-    builder.Map("git push").WithHandler(() => 0).AsCommand().Done();
-    builder.Map("git pull").WithHandler(() => 0).AsCommand().Done();
+    builder.Map("git status").WithHandler(() => { }).AsQuery().Done();
+    builder.Map("git push").WithHandler(() => { }).AsCommand().Done();
+    builder.Map("git pull").WithHandler(() => { }).AsCommand().Done();
 
     CompletionSourceRegistry registry = new(); // Empty registry
     string[] words = ["app", "git"];
@@ -179,7 +179,7 @@ public class DynamicHandlerTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("status").WithHandler(() => 0).AsQuery().Done();
+    builder.Map("status").WithHandler(() => { }).AsQuery().Done();
 
     CompletionSourceRegistry registry = new();
 
@@ -225,7 +225,7 @@ public class DynamicHandlerTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("status").WithHandler(() => 0).AsQuery().Done();
+    builder.Map("status").WithHandler(() => { }).AsQuery().Done();
 
     CompletionSourceRegistry registry = new();
     string[] words = [];

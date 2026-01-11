@@ -14,7 +14,7 @@ public class RouteAnalysisTests
     // Arrange
     NuruAppBuilder builder = new();
     builder.Map("status")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsQuery()
       .Done();
 
@@ -131,7 +131,7 @@ public class RouteAnalysisTests
     // Arrange
     NuruAppBuilder builder = new();
     builder.Map("test --verbose --dry-run")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsCommand()
       .Done();
 
@@ -173,15 +173,15 @@ public class RouteAnalysisTests
     // Arrange
     NuruAppBuilder builder = new();
     builder.Map("create")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsCommand()
       .Done();
     builder.Map("delete")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsCommand()
       .Done();
     builder.Map("list --all")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsQuery()
       .Done();
 
@@ -204,15 +204,15 @@ public class RouteAnalysisTests
     // Arrange
     NuruAppBuilder builder = new();
     builder.Map("git commit")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsCommand()
       .Done();
     builder.Map("git status")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsQuery()
       .Done();
     builder.Map("git push")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsCommand()
       .Done();
 
@@ -256,7 +256,7 @@ public class RouteAnalysisTests
     // Arrange
     NuruAppBuilder builder = new();
     builder.Map("test --verbose,-v --quiet,-q")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsCommand()
       .Done();
 

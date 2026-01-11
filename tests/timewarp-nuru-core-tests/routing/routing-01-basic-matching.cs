@@ -34,7 +34,7 @@ public class BasicMatchingTests
   {
     // Arrange
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("status").WithHandler(() => 0).AsQuery().Done()
+      .Map("status").WithHandler(() => { }).AsQuery().Done()
       .Build();
 
     // Act
@@ -67,7 +67,7 @@ public class BasicMatchingTests
   {
     // Arrange
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("git status").WithHandler(() => 0).AsQuery().Done()
+      .Map("git status").WithHandler(() => { }).AsQuery().Done()
       .Build();
 
     // Act
@@ -83,7 +83,7 @@ public class BasicMatchingTests
   {
     // Arrange
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("status").WithHandler(() => 0).AsQuery().Done()
+      .Map("status").WithHandler(() => { }).AsQuery().Done()
       .Build();
 
     // Act
@@ -99,7 +99,7 @@ public class BasicMatchingTests
   {
     // Arrange
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("git status").WithHandler(() => 0).AsQuery().Done()
+      .Map("git status").WithHandler(() => { }).AsQuery().Done()
       .Build();
 
     // Act
@@ -115,7 +115,7 @@ public class BasicMatchingTests
   {
     // Arrange
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("git status").WithHandler(() => 0).AsQuery().Done()
+      .Map("git status").WithHandler(() => { }).AsQuery().Done()
       .Build();
 
     // Act
@@ -148,7 +148,7 @@ public class BasicMatchingTests
   {
     // Arrange
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("").WithHandler(() => 0).AsQuery().Done()
+      .Map("").WithHandler(() => { }).AsQuery().Done()
       .Build();
 
     // Act

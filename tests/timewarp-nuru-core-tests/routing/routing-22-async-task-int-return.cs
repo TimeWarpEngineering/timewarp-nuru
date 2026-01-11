@@ -70,7 +70,7 @@ public class AsyncTaskIntReturnTests
     using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
-      .Map("").WithHandler(() => 0)
+      .Map("").WithHandler(() => { })
       .WithDescription("Test sync Func<int>").AsCommand().Done()
       .Build();
 

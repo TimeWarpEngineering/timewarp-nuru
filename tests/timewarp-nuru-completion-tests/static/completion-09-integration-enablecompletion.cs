@@ -14,11 +14,11 @@ public class EnableStaticCompletionIntegrationTests
     // Arrange
     NuruAppBuilder builder = new();
     builder.Map("status")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsQuery()
       .Done();
     builder.Map("version")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsQuery()
       .Done();
 
@@ -65,7 +65,7 @@ public class EnableStaticCompletionIntegrationTests
     // Arrange
     NuruAppBuilder builder = new();
     builder.Map("status")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsQuery()
       .Done();
     builder.Map("deploy {env}")
@@ -112,7 +112,7 @@ public class EnableStaticCompletionIntegrationTests
     // Arrange
     NuruAppBuilder builder = new();
     builder.Map("status")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsQuery()
       .Done();
 
@@ -138,7 +138,7 @@ public class EnableStaticCompletionIntegrationTests
     // Arrange
     NuruAppBuilder builder = new();
     builder.Map("test")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsCommand()
       .Done();
 
@@ -156,7 +156,7 @@ public class EnableStaticCompletionIntegrationTests
     // Arrange
     NuruAppBuilder builder = new();
     builder.Map("status")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsQuery()
       .Done();
     builder.EnableStaticCompletion();
@@ -203,16 +203,16 @@ public class EnableStaticCompletionIntegrationTests
     // Arrange
     NuruAppBuilder builder = new();
     builder.Map("first")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsCommand()
       .Done();
     builder.Map("second")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsCommand()
       .Done();
     builder.EnableStaticCompletion();
     builder.Map("third")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsCommand()
       .Done();
 
@@ -236,12 +236,12 @@ public class EnableStaticCompletionIntegrationTests
     // Arrange & Act - Test fluent chaining
     NuruAppBuilder builder = new();
     builder.Map("status")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsQuery()
       .Done();
     builder.EnableStaticCompletion();
     builder.Map("version")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsQuery()
       .Done();
 

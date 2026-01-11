@@ -17,8 +17,8 @@ public class ErrorCasesTests
   {
     // Arrange
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("status").WithHandler(() => 0).AsQuery().Done()
-      .Map("version").WithHandler(() => 0).AsQuery().Done()
+      .Map("status").WithHandler(() => { }).AsQuery().Done()
+      .Map("version").WithHandler(() => { }).AsQuery().Done()
       .Build();
 
     // Act

@@ -17,7 +17,7 @@ public class IntegrationEnableDynamicTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("status").WithHandler(() => 0).AsQuery().Done();
+    builder.Map("status").WithHandler(() => { }).AsQuery().Done();
 
     // Act
     builder.EnableDynamicCompletion();
@@ -91,7 +91,7 @@ public class IntegrationEnableDynamicTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("status").WithHandler(() => 0).AsQuery().Done();
+    builder.Map("status").WithHandler(() => { }).AsQuery().Done();
     builder.EnableDynamicCompletion();
 
     // Act - Find the __complete endpoint and verify its signature
@@ -148,8 +148,8 @@ public class IntegrationEnableDynamicTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("status").WithHandler(() => 0).AsQuery().Done();
-    builder.Map("version").WithHandler(() => 0).AsQuery().Done();
+    builder.Map("status").WithHandler(() => { }).AsQuery().Done();
+    builder.Map("version").WithHandler(() => { }).AsQuery().Done();
     builder.EnableDynamicCompletion();
 
     NuruCoreApp app = builder.Build();
@@ -220,7 +220,7 @@ public class IntegrationEnableDynamicTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("status").WithHandler(() => 0).AsQuery().Done();
+    builder.Map("status").WithHandler(() => { }).AsQuery().Done();
 
     // Act
     builder.EnableDynamicCompletion(appName: "my-custom-app");

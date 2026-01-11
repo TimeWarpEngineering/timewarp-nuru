@@ -14,7 +14,7 @@ public class CompletionEdgeCasesTests
     // Arrange
     NuruAppBuilder builder = new();
     builder.Map("status")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsQuery()
       .Done();
     CompletionScriptGenerator generator = new();
@@ -34,7 +34,7 @@ public class CompletionEdgeCasesTests
     // Arrange
     NuruAppBuilder builder = new();
     builder.Map("status")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsQuery()
       .Done();
     CompletionScriptGenerator generator = new();
@@ -54,7 +54,7 @@ public class CompletionEdgeCasesTests
     // Arrange
     NuruAppBuilder builder = new();
     builder.Map("status")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsQuery()
       .Done();
     CompletionScriptGenerator generator = new();
@@ -97,11 +97,11 @@ public class CompletionEdgeCasesTests
     // Arrange
     NuruAppBuilder builder = new();
     builder.Map("--version")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsQuery()
       .Done();
     builder.Map("--help")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsQuery()
       .Done();
 
@@ -151,15 +151,15 @@ public class CompletionEdgeCasesTests
     // Arrange
     NuruAppBuilder builder = new();
     builder.Map("test --verbose")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsCommand()
       .Done();
     builder.Map("build --verbose")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsCommand()
       .Done();
     builder.Map("deploy --verbose")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsCommand()
       .Done();
 
@@ -200,11 +200,11 @@ public class CompletionEdgeCasesTests
     // Arrange
     NuruAppBuilder builder = new();
     builder.Map("kebab-case-command")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsCommand()
       .Done();
     builder.Map("snake_case_command")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsCommand()
       .Done();
 
@@ -291,15 +291,15 @@ public class CompletionEdgeCasesTests
     // Arrange
     NuruAppBuilder builder = new();
     builder.Map("Status")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsQuery()
       .Done();
     builder.Map("status")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsQuery()
       .Done();
     builder.Map("STATUS")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsQuery()
       .Done();
 
@@ -320,15 +320,15 @@ public class CompletionEdgeCasesTests
     // Arrange
     NuruAppBuilder builder = new();
     builder.Map("http2-config")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsCommand()
       .Done();
     builder.Map("base64-encode")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsCommand()
       .Done();
     builder.Map("sha256-hash")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsCommand()
       .Done();
 
@@ -349,11 +349,11 @@ public class CompletionEdgeCasesTests
     // Arrange
     NuruAppBuilder builder = new();
     builder.Map("status")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsQuery()
       .Done();
     builder.Map("version")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsQuery()
       .Done();
 

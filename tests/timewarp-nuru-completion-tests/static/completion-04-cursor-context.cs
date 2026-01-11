@@ -18,15 +18,15 @@ public class CursorContextTests
     // Arrange
     NuruAppBuilder builder = new();
     builder.Map("deploy")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsCommand()
       .Done();
     builder.Map("build")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsCommand()
       .Done();
     builder.Map("test")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsCommand()
       .Done();
 
@@ -47,7 +47,7 @@ public class CursorContextTests
     // Arrange
     NuruAppBuilder builder = new();
     builder.Map("deploy --force --verbose --dry-run")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsCommand()
       .Done();
 
@@ -68,15 +68,15 @@ public class CursorContextTests
     // Arrange - Multiple commands with common prefix
     NuruAppBuilder builder = new();
     builder.Map("create")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsCommand()
       .Done();
     builder.Map("createorder")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsCommand()
       .Done();
     builder.Map("createuser")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsCommand()
       .Done();
 
@@ -97,7 +97,7 @@ public class CursorContextTests
     // Arrange - Options with common prefix
     NuruAppBuilder builder = new();
     builder.Map("test --verbose --version --validate")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsCommand()
       .Done();
 
@@ -118,15 +118,15 @@ public class CursorContextTests
     // Arrange
     NuruAppBuilder builder = new();
     builder.Map("git add")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsCommand()
       .Done();
     builder.Map("git commit")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsCommand()
       .Done();
     builder.Map("git push")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsCommand()
       .Done();
 
@@ -174,7 +174,7 @@ public class CursorContextTests
       .AsCommand()
       .Done();
     builder.Map("run --verbose")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsCommand()
       .Done();
 
@@ -195,7 +195,7 @@ public class CursorContextTests
     // Arrange
     NuruAppBuilder builder = new();
     builder.Map("status")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsQuery()
       .Done();
     builder.Map("config --get {key}")
@@ -264,7 +264,7 @@ public class CursorContextTests
     // Arrange
     NuruAppBuilder builder = new();
     builder.Map("deploy --force --dry-run --verbose")
-      .WithHandler(() => 0)
+      .WithHandler(() => { })
       .AsCommand()
       .Done();
 

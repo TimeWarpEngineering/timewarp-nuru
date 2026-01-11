@@ -27,12 +27,17 @@ Lambda expressions dominate handler definitions (91.5%), with roughly equal spli
   .Done()
 ```
 
-#### 1b. Returning Integer (Exit Codes)
-**Count:** ~222 occurrences
+#### 1b. Returning Integer Literals (Terminal Output, NOT Exit Codes)
+**Count:** ~2 intentional occurrences (after cleanup)
+
+**IMPORTANT:** Integer return values are written to the terminal as output, they do NOT set the exit code.
+Exit codes are always 0 on success and 1 on exception. The previous ~220 occurrences of `() => 0` were
+replaced with `() => { }` to avoid this confusion.
 
 ```csharp
-// tests/timewarp-nuru-core-tests/routing/routing-01-basic-matching.cs:37
-.Map("status").WithHandler(() => 0).AsQuery().Done()
+// tests/timewarp-nuru-analyzers-tests/auto/nuru-invoker-generator-01-basic.cs:187
+// This outputs "42" to terminal (tests Func<int> generator support)
+.Map("").WithHandler(() => 42).AsQuery().Done()
 ```
 
 #### 1c. Block Body (Side Effects)

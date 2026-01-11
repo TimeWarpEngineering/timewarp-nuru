@@ -17,9 +17,9 @@ public class DefaultSourceTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("status").WithHandler(() => 0).AsQuery().Done();
-    builder.Map("version").WithHandler(() => 0).AsQuery().Done();
-    builder.Map("help").WithHandler(() => 0).AsQuery().Done();
+    builder.Map("status").WithHandler(() => { }).AsQuery().Done();
+    builder.Map("version").WithHandler(() => { }).AsQuery().Done();
+    builder.Map("help").WithHandler(() => { }).AsQuery().Done();
 
     CompletionContext context = new(
       Args: ["app"],
@@ -46,9 +46,9 @@ public class DefaultSourceTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("git status").WithHandler(() => 0).AsQuery().Done();
+    builder.Map("git status").WithHandler(() => { }).AsQuery().Done();
     builder.Map("git commit -m {message}").WithHandler((string message) => 0).AsCommand().Done();
-    builder.Map("git push").WithHandler(() => 0).AsCommand().Done();
+    builder.Map("git push").WithHandler(() => { }).AsCommand().Done();
 
     CompletionContext context = new(
       Args: ["app", "git"],
@@ -175,7 +175,7 @@ public class DefaultSourceTests
     NuruAppBuilder builder = new();
     builder.Map("deploy {env}").WithHandler((string env) => 0).AsCommand().Done();
     builder.Map("delete {resource}").WithHandler((string resource) => 0).AsCommand().Done();
-    builder.Map("status").WithHandler(() => 0).AsQuery().Done();
+    builder.Map("status").WithHandler(() => { }).AsQuery().Done();
 
     CompletionContext context = new(
       Args: ["app", "de"],
@@ -224,9 +224,9 @@ public class DefaultSourceTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("zebra").WithHandler(() => 0).AsQuery().Done();
-    builder.Map("apple").WithHandler(() => 0).AsQuery().Done();
-    builder.Map("mango").WithHandler(() => 0).AsQuery().Done();
+    builder.Map("zebra").WithHandler(() => { }).AsQuery().Done();
+    builder.Map("apple").WithHandler(() => { }).AsQuery().Done();
+    builder.Map("mango").WithHandler(() => { }).AsQuery().Done();
 
     CompletionContext context = new(
       Args: ["app"],
@@ -280,8 +280,8 @@ public class DefaultSourceTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.Map("status").WithHandler(() => 0).AsQuery().Done();
-    builder.Map("version").WithHandler(() => 0).AsQuery().Done();
+    builder.Map("status").WithHandler(() => { }).AsQuery().Done();
+    builder.Map("version").WithHandler(() => { }).AsQuery().Done();
 
     CompletionContext context = new(
       Args: ["app", ""],

@@ -28,7 +28,7 @@ public class TabCyclingBugTests
     App = new NuruAppBuilder()
       .UseTerminal(Terminal)
       .Map("git status")
-        .WithHandler(() => 0)
+        .WithHandler(() => { })
         .AsQuery()
         .Done()
       .Map("git commit -m {message}")

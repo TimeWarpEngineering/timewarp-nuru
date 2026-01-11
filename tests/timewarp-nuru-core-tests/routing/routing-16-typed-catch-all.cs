@@ -4,6 +4,8 @@
 return await RunAllTests();
 #endif
 
+#pragma warning disable RCS1163 // Unused parameter - expected in negative test cases
+
 namespace TimeWarp.Nuru.Tests.Routing
 {
 
@@ -19,9 +21,10 @@ public class TypedCatchAllTests
   public static async Task Should_bind_int_array_catch_all_sum_1_2_3()
   {
     // Arrange
-    int[]? boundNumbers = null;
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
-      .Map("sum {*numbers:int}").WithHandler((int[] numbers) => { boundNumbers = numbers; }).AsCommand().Done()
+      .UseTerminal(terminal)
+      .Map("sum {*numbers:int}").WithHandler((int[] numbers) => $"numbers:[{string.Join(",", numbers)}]|len:{numbers.Length}").AsCommand().Done()
       .Build();
 
     // Act
@@ -29,11 +32,8 @@ public class TypedCatchAllTests
 
     // Assert
     exitCode.ShouldBe(0);
-    boundNumbers.ShouldNotBeNull();
-    boundNumbers.Length.ShouldBe(3);
-    boundNumbers[0].ShouldBe(1);
-    boundNumbers[1].ShouldBe(2);
-    boundNumbers[2].ShouldBe(3);
+    terminal.OutputContains("numbers:[1,2,3]").ShouldBeTrue();
+    terminal.OutputContains("len:3").ShouldBeTrue();
 
     await Task.CompletedTask;
   }
@@ -44,9 +44,10 @@ public class TypedCatchAllTests
   public static async Task Should_bind_double_array_catch_all_average_1_5_2_5_3_5()
   {
     // Arrange
-    double[]? boundValues = null;
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
-      .Map("average {*values:double}").WithHandler((double[] values) => { boundValues = values; }).AsCommand().Done()
+      .UseTerminal(terminal)
+      .Map("average {*values:double}").WithHandler((double[] values) => $"values:[{string.Join(",", values)}]|len:{values.Length}").AsCommand().Done()
       .Build();
 
     // Act
@@ -54,11 +55,8 @@ public class TypedCatchAllTests
 
     // Assert
     exitCode.ShouldBe(0);
-    boundValues.ShouldNotBeNull();
-    boundValues.Length.ShouldBe(3);
-    boundValues[0].ShouldBe(1.5);
-    boundValues[1].ShouldBe(2.5);
-    boundValues[2].ShouldBe(3.5);
+    terminal.OutputContains("values:[1.5,2.5,3.5]").ShouldBeTrue();
+    terminal.OutputContains("len:3").ShouldBeTrue();
 
     await Task.CompletedTask;
   }
@@ -69,9 +67,10 @@ public class TypedCatchAllTests
   public static async Task Should_bind_bool_array_catch_all_flags_true_false_true()
   {
     // Arrange
-    bool[]? boundFlags = null;
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
-      .Map("flags {*values:bool}").WithHandler((bool[] values) => { boundFlags = values; }).AsCommand().Done()
+      .UseTerminal(terminal)
+      .Map("flags {*values:bool}").WithHandler((bool[] values) => $"values:[{string.Join(",", values)}]|len:{values.Length}").AsCommand().Done()
       .Build();
 
     // Act
@@ -79,11 +78,8 @@ public class TypedCatchAllTests
 
     // Assert
     exitCode.ShouldBe(0);
-    boundFlags.ShouldNotBeNull();
-    boundFlags.Length.ShouldBe(3);
-    boundFlags[0].ShouldBeTrue();
-    boundFlags[1].ShouldBeFalse();
-    boundFlags[2].ShouldBeTrue();
+    terminal.OutputContains("values:[True,False,True]").ShouldBeTrue();
+    terminal.OutputContains("len:3").ShouldBeTrue();
 
     await Task.CompletedTask;
   }
@@ -94,9 +90,10 @@ public class TypedCatchAllTests
   public static async Task Should_bind_empty_int_array_when_no_args()
   {
     // Arrange
-    int[]? boundNumbers = null;
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
-      .Map("sum {*numbers:int}").WithHandler((int[] numbers) => { boundNumbers = numbers; }).AsCommand().Done()
+      .UseTerminal(terminal)
+      .Map("sum {*numbers:int}").WithHandler((int[] numbers) => $"numbers:[{string.Join(",", numbers)}]|len:{numbers.Length}").AsCommand().Done()
       .Build();
 
     // Act
@@ -104,8 +101,8 @@ public class TypedCatchAllTests
 
     // Assert
     exitCode.ShouldBe(0);
-    boundNumbers.ShouldNotBeNull();
-    boundNumbers.Length.ShouldBe(0);
+    terminal.OutputContains("numbers:[]").ShouldBeTrue();
+    terminal.OutputContains("len:0").ShouldBeTrue();
 
     await Task.CompletedTask;
   }
@@ -116,14 +113,10 @@ public class TypedCatchAllTests
   public static async Task Should_bind_mixed_params_and_typed_catch_all()
   {
     // Arrange
-    string? boundOperation = null;
-    int[]? boundNumbers = null;
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
-      .Map("calc {operation} {*numbers:int}").WithHandler((string operation, int[] numbers) =>
-      {
-        boundOperation = operation;
-        boundNumbers = numbers;
-      }).AsCommand().Done()
+      .UseTerminal(terminal)
+      .Map("calc {operation} {*numbers:int}").WithHandler((string operation, int[] numbers) => $"operation:{operation}|numbers:[{string.Join(",", numbers)}]").AsCommand().Done()
       .Build();
 
     // Act
@@ -131,12 +124,8 @@ public class TypedCatchAllTests
 
     // Assert
     exitCode.ShouldBe(0);
-    boundOperation.ShouldBe("sum");
-    boundNumbers.ShouldNotBeNull();
-    boundNumbers.Length.ShouldBe(3);
-    boundNumbers[0].ShouldBe(10);
-    boundNumbers[1].ShouldBe(20);
-    boundNumbers[2].ShouldBe(30);
+    terminal.OutputContains("operation:sum").ShouldBeTrue();
+    terminal.OutputContains("numbers:[10,20,30]").ShouldBeTrue();
 
     await Task.CompletedTask;
   }
@@ -147,9 +136,10 @@ public class TypedCatchAllTests
   public static async Task Should_bind_long_array_catch_all()
   {
     // Arrange
-    long[]? boundValues = null;
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
-      .Map("ids {*values:long}").WithHandler((long[] values) => { boundValues = values; }).AsQuery().Done()
+      .UseTerminal(terminal)
+      .Map("ids {*values:long}").WithHandler((long[] values) => $"values:[{string.Join(",", values)}]|len:{values.Length}").AsQuery().Done()
       .Build();
 
     // Act
@@ -157,10 +147,8 @@ public class TypedCatchAllTests
 
     // Assert
     exitCode.ShouldBe(0);
-    boundValues.ShouldNotBeNull();
-    boundValues.Length.ShouldBe(2);
-    boundValues[0].ShouldBe(9223372036854775807L);
-    boundValues[1].ShouldBe(123456789012345L);
+    terminal.OutputContains("values:[9223372036854775807,123456789012345]").ShouldBeTrue();
+    terminal.OutputContains("len:2").ShouldBeTrue();
 
     await Task.CompletedTask;
   }
@@ -171,9 +159,10 @@ public class TypedCatchAllTests
   public static async Task Should_bind_decimal_array_catch_all()
   {
     // Arrange
-    decimal[]? boundValues = null;
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
-      .Map("prices {*values:decimal}").WithHandler((decimal[] values) => { boundValues = values; }).AsQuery().Done()
+      .UseTerminal(terminal)
+      .Map("prices {*values:decimal}").WithHandler((decimal[] values) => $"values:[{string.Join(",", values)}]|len:{values.Length}").AsQuery().Done()
       .Build();
 
     // Act
@@ -181,11 +170,8 @@ public class TypedCatchAllTests
 
     // Assert
     exitCode.ShouldBe(0);
-    boundValues.ShouldNotBeNull();
-    boundValues.Length.ShouldBe(3);
-    boundValues[0].ShouldBe(19.99m);
-    boundValues[1].ShouldBe(29.99m);
-    boundValues[2].ShouldBe(39.99m);
+    terminal.OutputContains("values:[19.99,29.99,39.99]").ShouldBeTrue();
+    terminal.OutputContains("len:3").ShouldBeTrue();
 
     await Task.CompletedTask;
   }
@@ -196,11 +182,10 @@ public class TypedCatchAllTests
   public static async Task Should_bind_guid_array_catch_all()
   {
     // Arrange
-    Guid[]? boundGuids = null;
-    Guid guid1 = Guid.Parse("550e8400-e29b-41d4-a716-446655440000");
-    Guid guid2 = Guid.Parse("6ba7b810-9dad-11d1-80b4-00c04fd430c8");
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
-      .Map("guids {*values:Guid}").WithHandler((Guid[] values) => { boundGuids = values; }).AsQuery().Done()
+      .UseTerminal(terminal)
+      .Map("guids {*values:Guid}").WithHandler((Guid[] values) => $"values:[{string.Join(",", values)}]|len:{values.Length}").AsQuery().Done()
       .Build();
 
     // Act
@@ -208,10 +193,9 @@ public class TypedCatchAllTests
 
     // Assert
     exitCode.ShouldBe(0);
-    boundGuids.ShouldNotBeNull();
-    boundGuids.Length.ShouldBe(2);
-    boundGuids[0].ShouldBe(guid1);
-    boundGuids[1].ShouldBe(guid2);
+    terminal.OutputContains("550e8400-e29b-41d4-a716-446655440000").ShouldBeTrue();
+    terminal.OutputContains("6ba7b810-9dad-11d1-80b4-00c04fd430c8").ShouldBeTrue();
+    terminal.OutputContains("len:2").ShouldBeTrue();
 
     await Task.CompletedTask;
   }
@@ -222,9 +206,10 @@ public class TypedCatchAllTests
   public static async Task Should_bind_datetime_array_catch_all()
   {
     // Arrange
-    DateTime[]? boundDates = null;
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
-      .Map("schedule {*dates:DateTime}").WithHandler((DateTime[] dates) => { boundDates = dates; }).AsQuery().Done()
+      .UseTerminal(terminal)
+      .Map("schedule {*dates:DateTime}").WithHandler((DateTime[] dates) => $"count:{dates.Length}|first:{dates[0]:yyyy-MM-dd}|second:{dates[1]:yyyy-MM-dd}").AsQuery().Done()
       .Build();
 
     // Act
@@ -232,14 +217,9 @@ public class TypedCatchAllTests
 
     // Assert
     exitCode.ShouldBe(0);
-    boundDates.ShouldNotBeNull();
-    boundDates.Length.ShouldBe(2);
-    boundDates[0].Year.ShouldBe(2024);
-    boundDates[0].Month.ShouldBe(1);
-    boundDates[0].Day.ShouldBe(15);
-    boundDates[1].Year.ShouldBe(2024);
-    boundDates[1].Month.ShouldBe(6);
-    boundDates[1].Day.ShouldBe(30);
+    terminal.OutputContains("count:2").ShouldBeTrue();
+    terminal.OutputContains("first:2024-01-15").ShouldBeTrue();
+    terminal.OutputContains("second:2024-06-30").ShouldBeTrue();
 
     await Task.CompletedTask;
   }
@@ -250,9 +230,10 @@ public class TypedCatchAllTests
   public static async Task Should_bind_explicit_string_array_catch_all()
   {
     // Arrange
-    string[]? boundArgs = null;
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
-      .Map("echo {*args:string}").WithHandler((string[] args) => { boundArgs = args; }).AsQuery().Done()
+      .UseTerminal(terminal)
+      .Map("echo {*args:string}").WithHandler((string[] args) => $"args:[{string.Join(",", args)}]|len:{args.Length}").AsQuery().Done()
       .Build();
 
     // Act
@@ -260,10 +241,8 @@ public class TypedCatchAllTests
 
     // Assert
     exitCode.ShouldBe(0);
-    boundArgs.ShouldNotBeNull();
-    boundArgs.Length.ShouldBe(2);
-    boundArgs[0].ShouldBe("hello");
-    boundArgs[1].ShouldBe("world");
+    terminal.OutputContains("args:[hello,world]").ShouldBeTrue();
+    terminal.OutputContains("len:2").ShouldBeTrue();
 
     await Task.CompletedTask;
   }
@@ -274,9 +253,10 @@ public class TypedCatchAllTests
   public static async Task Should_bind_default_string_array_catch_all_without_type()
   {
     // Arrange
-    string[]? boundArgs = null;
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
-      .Map("echo {*args}").WithHandler((string[] args) => { boundArgs = args; }).AsQuery().Done()
+      .UseTerminal(terminal)
+      .Map("echo {*args}").WithHandler((string[] args) => $"args:[{string.Join(",", args)}]|len:{args.Length}").AsQuery().Done()
       .Build();
 
     // Act
@@ -284,10 +264,8 @@ public class TypedCatchAllTests
 
     // Assert
     exitCode.ShouldBe(0);
-    boundArgs.ShouldNotBeNull();
-    boundArgs.Length.ShouldBe(2);
-    boundArgs[0].ShouldBe("hello");
-    boundArgs[1].ShouldBe("world");
+    terminal.OutputContains("args:[hello,world]").ShouldBeTrue();
+    terminal.OutputContains("len:2").ShouldBeTrue();
 
     await Task.CompletedTask;
   }
@@ -298,8 +276,10 @@ public class TypedCatchAllTests
   public static async Task Should_fail_on_invalid_int_conversion()
   {
     // Arrange
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
-      .Map("sum {*numbers:int}").WithHandler((int[] _) => 0).AsCommand().Done()
+      .UseTerminal(terminal)
+      .Map("sum {*numbers:int}").WithHandler((int[] numbers) => 0).AsCommand().Done()
       .Build();
 
     // Act
@@ -317,9 +297,10 @@ public class TypedCatchAllTests
   public static async Task Should_bind_negative_numbers_in_int_array()
   {
     // Arrange
-    int[]? boundNumbers = null;
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
-      .Map("calc {*numbers:int}").WithHandler((int[] numbers) => { boundNumbers = numbers; }).AsCommand().Done()
+      .UseTerminal(terminal)
+      .Map("calc {*numbers:int}").WithHandler((int[] numbers) => $"numbers:[{string.Join(",", numbers)}]|len:{numbers.Length}").AsCommand().Done()
       .Build();
 
     // Act
@@ -327,11 +308,8 @@ public class TypedCatchAllTests
 
     // Assert
     exitCode.ShouldBe(0);
-    boundNumbers.ShouldNotBeNull();
-    boundNumbers.Length.ShouldBe(3);
-    boundNumbers[0].ShouldBe(-5);
-    boundNumbers[1].ShouldBe(10);
-    boundNumbers[2].ShouldBe(-15);
+    terminal.OutputContains("numbers:[-5,10,-15]").ShouldBeTrue();
+    terminal.OutputContains("len:3").ShouldBeTrue();
 
     await Task.CompletedTask;
   }

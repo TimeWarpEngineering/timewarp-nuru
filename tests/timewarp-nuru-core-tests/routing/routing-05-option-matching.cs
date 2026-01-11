@@ -4,6 +4,8 @@
 return await RunAllTests();
 #endif
 
+#pragma warning disable RCS1163 // Unused parameter - expected in negative test cases
+
 namespace TimeWarp.Nuru.Tests.Routing
 {
 
@@ -16,10 +18,11 @@ public class OptionMatchingTests
   public static async Task Should_match_required_option_build_config_debug()
   {
     // Arrange
-    string? boundMode = null;
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
+      .UseTerminal(terminal)
       .Map("build --config {mode}")
-      .WithHandler((string mode) => { boundMode = mode; })
+      .WithHandler((string mode) => $"mode:{mode}")
       .AsCommand()
       .Done()
       .Build();
@@ -29,7 +32,7 @@ public class OptionMatchingTests
 
     // Assert
     exitCode.ShouldBe(0);
-    boundMode.ShouldBe("debug");
+    terminal.OutputContains("mode:debug").ShouldBeTrue();
 
     await Task.CompletedTask;
   }
@@ -37,9 +40,11 @@ public class OptionMatchingTests
   public static async Task Should_not_match_missing_required_option_build()
   {
     // Arrange
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
+      .UseTerminal(terminal)
       .Map("build --config {mode}")
-      .WithHandler((string _) => 0)
+      .WithHandler((string mode) => 0)
       .AsCommand()
       .Done()
       .Build();
@@ -57,10 +62,11 @@ public class OptionMatchingTests
   {
     // Behavior #2: Required flag + Optional value (--config {mode?})
     // Arrange
-    string? boundMode = null;
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
+      .UseTerminal(terminal)
       .Map("build --config {mode?}")
-      .WithHandler((string? mode) => { boundMode = mode; })
+      .WithHandler((string? mode) => $"mode:{mode ?? "NULL"}")
       .AsCommand()
       .Done()
       .Build();
@@ -70,7 +76,7 @@ public class OptionMatchingTests
 
     // Assert
     exitCode.ShouldBe(0);
-    boundMode.ShouldBe("release");
+    terminal.OutputContains("mode:release").ShouldBeTrue();
 
     await Task.CompletedTask;
   }
@@ -79,10 +85,11 @@ public class OptionMatchingTests
   {
     // Behavior #2: Flag present without value should bind null
     // Arrange
-    string? boundMode = "unexpected";
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
+      .UseTerminal(terminal)
       .Map("build --config {mode?}")
-      .WithHandler((string? mode) => { boundMode = mode; })
+      .WithHandler((string? mode) => $"mode:{mode ?? "NULL"}")
       .AsCommand()
       .Done()
       .Build();
@@ -92,7 +99,7 @@ public class OptionMatchingTests
 
     // Assert
     exitCode.ShouldBe(0);
-    boundMode.ShouldBeNull();
+    terminal.OutputContains("mode:NULL").ShouldBeTrue();
 
     await Task.CompletedTask;
   }
@@ -101,9 +108,11 @@ public class OptionMatchingTests
   {
     // Behavior #2: Missing required flag should not match
     // Arrange
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
+      .UseTerminal(terminal)
       .Map("build --config {mode?}")
-      .WithHandler((string? _) => 0)
+      .WithHandler((string? mode) => 0)
       .AsCommand()
       .Done()
       .Build();
@@ -121,10 +130,11 @@ public class OptionMatchingTests
   {
     // Behavior #3: Optional flag + Optional value (--config? {mode?})
     // Arrange
-    string? boundMode = null;
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
+      .UseTerminal(terminal)
       .Map("build --config? {mode?}")
-      .WithHandler((string? mode) => { boundMode = mode; })
+      .WithHandler((string? mode) => $"mode:{mode ?? "NULL"}")
       .AsCommand()
       .Done()
       .Build();
@@ -134,7 +144,7 @@ public class OptionMatchingTests
 
     // Assert
     exitCode.ShouldBe(0);
-    boundMode.ShouldBe("release");
+    terminal.OutputContains("mode:release").ShouldBeTrue();
 
     await Task.CompletedTask;
   }
@@ -143,10 +153,11 @@ public class OptionMatchingTests
   {
     // Behavior #3: Optional flag present without value
     // Arrange
-    string? boundMode = "unexpected";
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
+      .UseTerminal(terminal)
       .Map("build --config? {mode?}")
-      .WithHandler((string? mode) => { boundMode = mode; })
+      .WithHandler((string? mode) => $"mode:{mode ?? "NULL"}")
       .AsCommand()
       .Done()
       .Build();
@@ -156,7 +167,7 @@ public class OptionMatchingTests
 
     // Assert
     exitCode.ShouldBe(0);
-    boundMode.ShouldBeNull();
+    terminal.OutputContains("mode:NULL").ShouldBeTrue();
 
     await Task.CompletedTask;
   }
@@ -165,10 +176,11 @@ public class OptionMatchingTests
   {
     // Behavior #3: Optional flag omitted entirely
     // Arrange
-    string? boundMode = "unexpected";
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
+      .UseTerminal(terminal)
       .Map("build --config? {mode?}")
-      .WithHandler((string? mode) => { boundMode = mode; })
+      .WithHandler((string? mode) => $"mode:{mode ?? "NULL"}")
       .AsCommand()
       .Done()
       .Build();
@@ -178,7 +190,7 @@ public class OptionMatchingTests
 
     // Assert
     exitCode.ShouldBe(0);
-    boundMode.ShouldBeNull();
+    terminal.OutputContains("mode:NULL").ShouldBeTrue();
 
     await Task.CompletedTask;
   }
@@ -187,10 +199,11 @@ public class OptionMatchingTests
   {
     // Behavior #4: Optional flag + Required value (--config? {mode})
     // Arrange
-    string? boundMode = null;
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
+      .UseTerminal(terminal)
       .Map("build --config? {mode}")
-      .WithHandler((string? mode) => { boundMode = mode; })
+      .WithHandler((string? mode) => $"mode:{mode ?? "NULL"}")
       .AsCommand()
       .Done()
       .Build();
@@ -200,7 +213,7 @@ public class OptionMatchingTests
 
     // Assert
     exitCode.ShouldBe(0);
-    boundMode.ShouldBe("debug");
+    terminal.OutputContains("mode:debug").ShouldBeTrue();
 
     await Task.CompletedTask;
   }
@@ -209,10 +222,11 @@ public class OptionMatchingTests
   {
     // Behavior #4: Optional flag omitted entirely
     // Arrange
-    string? boundMode = "unexpected";
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
+      .UseTerminal(terminal)
       .Map("build --config? {mode}")
-      .WithHandler((string? mode) => { boundMode = mode; })
+      .WithHandler((string? mode) => $"mode:{mode ?? "NULL"}")
       .AsCommand()
       .Done()
       .Build();
@@ -222,7 +236,7 @@ public class OptionMatchingTests
 
     // Assert
     exitCode.ShouldBe(0);
-    boundMode.ShouldBeNull();
+    terminal.OutputContains("mode:NULL").ShouldBeTrue();
 
     await Task.CompletedTask;
   }
@@ -231,9 +245,11 @@ public class OptionMatchingTests
   {
     // Behavior #4: Flag present without required value should not match
     // Arrange
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
+      .UseTerminal(terminal)
       .Map("build --config? {mode}")
-      .WithHandler((string? _) => 0)
+      .WithHandler((string? mode) => 0)
       .AsCommand()
       .Done()
       .Build();
@@ -250,10 +266,11 @@ public class OptionMatchingTests
   public static async Task Should_match_boolean_flag_build_verbose_true()
   {
     // Arrange
-    bool boundVerbose = false;
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
+      .UseTerminal(terminal)
       .Map("build --verbose")
-      .WithHandler((bool verbose) => { boundVerbose = verbose; })
+      .WithHandler((bool verbose) => $"verbose:{verbose}")
       .AsCommand()
       .Done()
       .Build();
@@ -263,7 +280,7 @@ public class OptionMatchingTests
 
     // Assert
     exitCode.ShouldBe(0);
-    boundVerbose.ShouldBeTrue();
+    terminal.OutputContains("verbose:True").ShouldBeTrue();
 
     await Task.CompletedTask;
   }
@@ -271,10 +288,11 @@ public class OptionMatchingTests
   public static async Task Should_match_boolean_flag_build_false()
   {
     // Arrange
-    bool boundVerbose = true;
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
+      .UseTerminal(terminal)
       .Map("build --verbose")
-      .WithHandler((bool verbose) => { boundVerbose = verbose; })
+      .WithHandler((bool verbose) => $"verbose:{verbose}")
       .AsCommand()
       .Done()
       .Build();
@@ -284,7 +302,7 @@ public class OptionMatchingTests
 
     // Assert
     exitCode.ShouldBe(0);
-    boundVerbose.ShouldBeFalse();
+    terminal.OutputContains("verbose:False").ShouldBeTrue();
 
     await Task.CompletedTask;
   }
@@ -292,12 +310,11 @@ public class OptionMatchingTests
   public static async Task Should_match_mixed_required_optional_deploy_env_prod_tag_v1_0_verbose()
   {
     // Arrange
-    string? boundE = null;
-    string? boundT = null;
-    bool boundVerbose = false;
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
+      .UseTerminal(terminal)
       .Map("deploy --env {e} --tag {t?} --verbose")
-      .WithHandler((string e, string? t, bool verbose) => { boundE = e; boundT = t; boundVerbose = verbose; })
+      .WithHandler((string e, string? t, bool verbose) => $"e:{e}|t:{t ?? "NULL"}|verbose:{verbose}")
       .AsCommand()
       .Done()
       .Build();
@@ -307,9 +324,9 @@ public class OptionMatchingTests
 
     // Assert
     exitCode.ShouldBe(0);
-    boundE.ShouldBe("prod");
-    boundT.ShouldBe("v1.0");
-    boundVerbose.ShouldBeTrue();
+    terminal.OutputContains("e:prod").ShouldBeTrue();
+    terminal.OutputContains("t:v1.0").ShouldBeTrue();
+    terminal.OutputContains("verbose:True").ShouldBeTrue();
 
     await Task.CompletedTask;
   }
@@ -317,12 +334,11 @@ public class OptionMatchingTests
   public static async Task Should_match_mixed_required_optional_deploy_env_prod_defaults()
   {
     // Arrange
-    string? boundE = null;
-    string? boundT = "unexpected";
-    bool boundVerbose = true;
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
+      .UseTerminal(terminal)
       .Map("deploy --env {e} --tag? {t?} --verbose")
-      .WithHandler((string e, string? t, bool verbose) => { boundE = e; boundT = t; boundVerbose = verbose; })
+      .WithHandler((string e, string? t, bool verbose) => $"e:{e}|t:{t ?? "NULL"}|verbose:{verbose}")
       .AsCommand()
       .Done()
       .Build();
@@ -332,9 +348,9 @@ public class OptionMatchingTests
 
     // Assert
     exitCode.ShouldBe(0);
-    boundE.ShouldBe("prod");
-    boundT.ShouldBeNull();
-    boundVerbose.ShouldBeFalse();
+    terminal.OutputContains("e:prod").ShouldBeTrue();
+    terminal.OutputContains("t:NULL").ShouldBeTrue();
+    terminal.OutputContains("verbose:False").ShouldBeTrue();
 
     await Task.CompletedTask;
   }
@@ -342,8 +358,10 @@ public class OptionMatchingTests
   public static async Task Should_not_match_mixed_missing_required_deploy_tag_v1_0()
   {
     // Arrange
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
-      .Map("deploy --env {e} --tag? {t?} --verbose").WithHandler((string _, string? _, bool _) => 0).AsCommand().Done()
+      .UseTerminal(terminal)
+      .Map("deploy --env {e} --tag? {t?} --verbose").WithHandler((string e, string? t, bool verbose) => 0).AsCommand().Done()
       .Build();
 
     // Act
@@ -358,10 +376,11 @@ public class OptionMatchingTests
   public static async Task Should_match_typed_option_server_port_8080()
   {
     // Arrange
-    int boundNum = 0;
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
+      .UseTerminal(terminal)
       .Map("server --port {num:int}")
-      .WithHandler((int num) => { boundNum = num; })
+      .WithHandler((int num) => $"num:{num}")
       .AsCommand()
       .Done()
       .Build();
@@ -371,7 +390,7 @@ public class OptionMatchingTests
 
     // Assert
     exitCode.ShouldBe(0);
-    boundNum.ShouldBe(8080);
+    terminal.OutputContains("num:8080").ShouldBeTrue();
 
     await Task.CompletedTask;
   }
@@ -379,9 +398,11 @@ public class OptionMatchingTests
   public static async Task Should_not_match_typed_option_server_port_abc()
   {
     // Arrange
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
+      .UseTerminal(terminal)
       .Map("server --port {num:int}")
-      .WithHandler((int _) => 0)
+      .WithHandler((int num) => 0)
       .AsCommand()
       .Done()
       .Build();
@@ -398,10 +419,11 @@ public class OptionMatchingTests
   public static async Task Should_match_option_alias_build_verbose()
   {
     // Arrange
-    bool boundVerbose = false;
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
+      .UseTerminal(terminal)
       .Map("build --verbose,-v")
-      .WithHandler((bool verbose) => { boundVerbose = verbose; })
+      .WithHandler((bool verbose) => $"verbose:{verbose}")
       .AsCommand()
       .Done()
       .Build();
@@ -411,7 +433,7 @@ public class OptionMatchingTests
 
     // Assert
     exitCode.ShouldBe(0);
-    boundVerbose.ShouldBeTrue();
+    terminal.OutputContains("verbose:True").ShouldBeTrue();
 
     await Task.CompletedTask;
   }
@@ -419,10 +441,11 @@ public class OptionMatchingTests
   public static async Task Should_match_option_alias_build_v()
   {
     // Arrange
-    bool boundVerbose = false;
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
+      .UseTerminal(terminal)
       .Map("build --verbose,-v")
-      .WithHandler((bool verbose) => { boundVerbose = verbose; })
+      .WithHandler((bool verbose) => $"verbose:{verbose}")
       .AsCommand()
       .Done()
       .Build();
@@ -432,7 +455,7 @@ public class OptionMatchingTests
 
     // Assert
     exitCode.ShouldBe(0);
-    boundVerbose.ShouldBeTrue();
+    terminal.OutputContains("verbose:True").ShouldBeTrue();
 
     await Task.CompletedTask;
   }
@@ -441,10 +464,11 @@ public class OptionMatchingTests
   {
     // Arrange - Test optional boolean flag with alias using long form
     // Pattern: --verbose,-v? (per optional-flag-alias-syntax.md)
-    bool boundVerbose = false;
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
+      .UseTerminal(terminal)
       .Map("build --verbose,-v?")
-      .WithHandler((bool verbose) => { boundVerbose = verbose; })
+      .WithHandler((bool verbose) => $"verbose:{verbose}")
       .AsCommand()
       .Done()
       .Build();
@@ -454,7 +478,7 @@ public class OptionMatchingTests
 
     // Assert
     exitCode.ShouldBe(0);
-    boundVerbose.ShouldBeTrue();
+    terminal.OutputContains("verbose:True").ShouldBeTrue();
 
     await Task.CompletedTask;
   }
@@ -463,10 +487,11 @@ public class OptionMatchingTests
   {
     // Arrange - Test optional boolean flag with alias using short form
     // Pattern: --verbose,-v? (per optional-flag-alias-syntax.md)
-    bool boundVerbose = false;
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
+      .UseTerminal(terminal)
       .Map("build --verbose,-v?")
-      .WithHandler((bool verbose) => { boundVerbose = verbose; })
+      .WithHandler((bool verbose) => $"verbose:{verbose}")
       .AsCommand()
       .Done()
       .Build();
@@ -476,7 +501,7 @@ public class OptionMatchingTests
 
     // Assert
     exitCode.ShouldBe(0);
-    boundVerbose.ShouldBeTrue();
+    terminal.OutputContains("verbose:True").ShouldBeTrue();
 
     await Task.CompletedTask;
   }
@@ -485,10 +510,11 @@ public class OptionMatchingTests
   {
     // Arrange - Test optional boolean flag with alias omitted
     // Pattern: --verbose,-v? (per optional-flag-alias-syntax.md)
-    bool boundVerbose = true;
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
+      .UseTerminal(terminal)
       .Map("build --verbose,-v?")
-      .WithHandler((bool verbose) => { boundVerbose = verbose; })
+      .WithHandler((bool verbose) => $"verbose:{verbose}")
       .AsCommand()
       .Done()
       .Build();
@@ -498,7 +524,7 @@ public class OptionMatchingTests
 
     // Assert
     exitCode.ShouldBe(0);
-    boundVerbose.ShouldBeFalse();
+    terminal.OutputContains("verbose:False").ShouldBeTrue();
 
     await Task.CompletedTask;
   }
@@ -507,14 +533,13 @@ public class OptionMatchingTests
   {
     // Arrange - Test optional flag with alias and value using long form
     // Pattern: --output,-o? {file} (per optional-flag-alias-syntax.md)
-    string? boundFile = null;
-#pragma warning disable RCS1163 // Unused parameter
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
+      .UseTerminal(terminal)
       .Map("backup {source} --output,-o? {file}")
-      .WithHandler((string source, string? file) => { boundFile = file; })
+      .WithHandler((string source, string? file) => $"source:{source}|file:{file ?? "NULL"}")
       .AsCommand()
       .Done()
-#pragma warning restore RCS1163 // Unused parameter
       .Build();
 
     // Act
@@ -522,7 +547,7 @@ public class OptionMatchingTests
 
     // Assert
     exitCode.ShouldBe(0);
-    boundFile.ShouldBe("result.tar");
+    terminal.OutputContains("file:result.tar").ShouldBeTrue();
 
     await Task.CompletedTask;
   }
@@ -531,14 +556,13 @@ public class OptionMatchingTests
   {
     // Arrange - Test optional flag with alias and value using short form
     // Pattern: --output,-o? {file} (per optional-flag-alias-syntax.md)
-    string? boundFile = null;
-#pragma warning disable RCS1163 // Unused parameter
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
+      .UseTerminal(terminal)
       .Map("backup {source} --output,-o? {file}")
-      .WithHandler((string source, string? file) => { boundFile = file; })
+      .WithHandler((string source, string? file) => $"source:{source}|file:{file ?? "NULL"}")
       .AsCommand()
       .Done()
-#pragma warning restore RCS1163 // Unused parameter
       .Build();
 
     // Act
@@ -546,7 +570,7 @@ public class OptionMatchingTests
 
     // Assert
     exitCode.ShouldBe(0);
-    boundFile.ShouldBe("result.tar");
+    terminal.OutputContains("file:result.tar").ShouldBeTrue();
 
     await Task.CompletedTask;
   }
@@ -555,14 +579,13 @@ public class OptionMatchingTests
   {
     // Arrange - Test optional flag with alias omitted entirely
     // Pattern: --output,-o? {file} (per optional-flag-alias-syntax.md)
-    string? boundFile = "unexpected";
-#pragma warning disable RCS1163 // Unused parameter
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
+      .UseTerminal(terminal)
       .Map("backup {source} --output,-o? {file}")
-      .WithHandler((string source, string? file) => { boundFile = file; })
+      .WithHandler((string source, string? file) => $"source:{source}|file:{file ?? "NULL"}")
       .AsCommand()
       .Done()
-#pragma warning restore RCS1163 // Unused parameter
       .Build();
 
     // Act
@@ -570,7 +593,7 @@ public class OptionMatchingTests
 
     // Assert
     exitCode.ShouldBe(0);
-    boundFile.ShouldBeNull();
+    terminal.OutputContains("file:NULL").ShouldBeTrue();
 
     await Task.CompletedTask;
   }
@@ -579,10 +602,11 @@ public class OptionMatchingTests
   {
     // Arrange - Test optional flag with alias and optional value using long form
     // Pattern: --config,-c? {mode?} (per optional-flag-alias-syntax.md)
-    string? boundMode = null;
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
+      .UseTerminal(terminal)
       .Map("build --config,-c? {mode?}")
-      .WithHandler((string? mode) => { boundMode = mode; })
+      .WithHandler((string? mode) => $"mode:{mode ?? "NULL"}")
       .AsCommand()
       .Done()
       .Build();
@@ -592,7 +616,7 @@ public class OptionMatchingTests
 
     // Assert
     exitCode.ShouldBe(0);
-    boundMode.ShouldBe("debug");
+    terminal.OutputContains("mode:debug").ShouldBeTrue();
 
     await Task.CompletedTask;
   }
@@ -601,10 +625,11 @@ public class OptionMatchingTests
   {
     // Arrange - Test optional flag with alias and optional value using short form
     // Pattern: --config,-c? {mode?} (per optional-flag-alias-syntax.md)
-    string? boundMode = null;
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
+      .UseTerminal(terminal)
       .Map("build --config,-c? {mode?}")
-      .WithHandler((string? mode) => { boundMode = mode; })
+      .WithHandler((string? mode) => $"mode:{mode ?? "NULL"}")
       .AsCommand()
       .Done()
       .Build();
@@ -614,7 +639,7 @@ public class OptionMatchingTests
 
     // Assert
     exitCode.ShouldBe(0);
-    boundMode.ShouldBe("release");
+    terminal.OutputContains("mode:release").ShouldBeTrue();
 
     await Task.CompletedTask;
   }
@@ -623,10 +648,11 @@ public class OptionMatchingTests
   {
     // Arrange - Test optional flag with alias and optional value with flag omitted
     // Pattern: --config,-c? {mode?} (per optional-flag-alias-syntax.md)
-    string? boundMode = "unexpected";
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
+      .UseTerminal(terminal)
       .Map("build --config,-c? {mode?}")
-      .WithHandler((string? mode) => { boundMode = mode; })
+      .WithHandler((string? mode) => $"mode:{mode ?? "NULL"}")
       .AsCommand()
       .Done()
       .Build();
@@ -636,7 +662,7 @@ public class OptionMatchingTests
 
     // Assert
     exitCode.ShouldBe(0);
-    boundMode.ShouldBeNull();
+    terminal.OutputContains("mode:NULL").ShouldBeTrue();
 
     await Task.CompletedTask;
   }
@@ -645,10 +671,11 @@ public class OptionMatchingTests
   {
     // Arrange - Test optional flag present without value (long form)
     // Pattern: --config,-c? {mode?} (per optional-flag-alias-syntax.md)
-    string? boundMode = "unexpected";
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
+      .UseTerminal(terminal)
       .Map("build --config,-c? {mode?}")
-      .WithHandler((string? mode) => { boundMode = mode; })
+      .WithHandler((string? mode) => $"mode:{mode ?? "NULL"}")
       .AsCommand()
       .Done()
       .Build();
@@ -658,7 +685,7 @@ public class OptionMatchingTests
 
     // Assert
     exitCode.ShouldBe(0);
-    boundMode.ShouldBeNull();
+    terminal.OutputContains("mode:NULL").ShouldBeTrue();
 
     await Task.CompletedTask;
   }
@@ -667,10 +694,11 @@ public class OptionMatchingTests
   {
     // Arrange - Test optional flag present without value (short form)
     // Pattern: --config,-c? {mode?} (per optional-flag-alias-syntax.md)
-    string? boundMode = "unexpected";
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
+      .UseTerminal(terminal)
       .Map("build --config,-c? {mode?}")
-      .WithHandler((string? mode) => { boundMode = mode; })
+      .WithHandler((string? mode) => $"mode:{mode ?? "NULL"}")
       .AsCommand()
       .Done()
       .Build();
@@ -680,7 +708,7 @@ public class OptionMatchingTests
 
     // Assert
     exitCode.ShouldBe(0);
-    boundMode.ShouldBeNull();
+    terminal.OutputContains("mode:NULL").ShouldBeTrue();
 
     await Task.CompletedTask;
   }

@@ -16,12 +16,10 @@ public class ComplexIntegrationTests
   public static async Task Should_match_docker_style_command()
   {
     // Arrange
-    bool boundI = false;
-    bool boundT = false;
-    string[]? boundE = null;
-    string[]? boundCmd = null;
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
-      .Map("docker run -i -t --env {e}* -- {*cmd}").WithHandler((bool i, bool t, string[] e, string[] cmd) => { boundI = i; boundT = t; boundE = e; boundCmd = cmd; }).AsCommand().Done()
+      .UseTerminal(terminal)
+      .Map("docker run -i -t --env {e}* -- {*cmd}").WithHandler((bool i, bool t, string[] e, string[] cmd) => $"i:{i}|t:{t}|e:[{string.Join(",", e)}]|cmd:[{string.Join(",", cmd)}]").AsCommand().Done()
       .Build();
 
     // Act
@@ -29,17 +27,10 @@ public class ComplexIntegrationTests
 
     // Assert
     exitCode.ShouldBe(0);
-    boundI.ShouldBeTrue();
-    boundT.ShouldBeTrue();
-    boundE.ShouldNotBeNull();
-    boundE.Length.ShouldBe(2);
-    boundE[0].ShouldBe("A=1");
-    boundE[1].ShouldBe("B=2");
-    boundCmd.ShouldNotBeNull();
-    boundCmd.Length.ShouldBe(3);
-    boundCmd[0].ShouldBe("nginx");
-    boundCmd[1].ShouldBe("--port");
-    boundCmd[2].ShouldBe("80");
+    terminal.OutputContains("i:True").ShouldBeTrue();
+    terminal.OutputContains("t:True").ShouldBeTrue();
+    terminal.OutputContains("e:[A=1,B=2]").ShouldBeTrue();
+    terminal.OutputContains("cmd:[nginx,--port,80]").ShouldBeTrue();
 
     await Task.CompletedTask;
   }
@@ -47,11 +38,10 @@ public class ComplexIntegrationTests
   public static async Task Should_match_git_commit_with_aliases()
   {
     // Arrange
-    string? boundMsg = null;
-    bool boundAmend = false;
-    bool boundNoVerify = false;
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
-      .Map("git commit --message,-m {msg} --amend --no-verify").WithHandler((string msg, bool amend, bool noVerify) => { boundMsg = msg; boundAmend = amend; boundNoVerify = noVerify; }).AsCommand().Done()
+      .UseTerminal(terminal)
+      .Map("git commit --message,-m {msg} --amend --no-verify").WithHandler((string msg, bool amend, bool noVerify) => $"msg:{msg}|amend:{amend}|noVerify:{noVerify}").AsCommand().Done()
       .Build();
 
     // Act
@@ -59,9 +49,9 @@ public class ComplexIntegrationTests
 
     // Assert
     exitCode.ShouldBe(0);
-    boundMsg.ShouldBe("fix bug");
-    boundAmend.ShouldBeTrue();
-    boundNoVerify.ShouldBeFalse();
+    terminal.OutputContains("msg:fix bug").ShouldBeTrue();
+    terminal.OutputContains("amend:True").ShouldBeTrue();
+    terminal.OutputContains("noVerify:False").ShouldBeTrue();
 
     await Task.CompletedTask;
   }
@@ -69,12 +59,10 @@ public class ComplexIntegrationTests
   public static async Task Should_match_progressive_enhancement_build_verbose()
   {
     // Arrange
-    string? boundProject = null;
-    string? boundCfg = null;
-    bool boundVerbose = false;
-    bool boundWatch = false;
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
-      .Map("build {project?} --config? {cfg?} --verbose --watch").WithHandler((string? project, string? cfg, bool verbose, bool watch) => { boundProject = project; boundCfg = cfg; boundVerbose = verbose; boundWatch = watch; }).AsCommand().Done()
+      .UseTerminal(terminal)
+      .Map("build {project?} --config? {cfg?} --verbose --watch").WithHandler((string? project, string? cfg, bool verbose, bool watch) => $"project:{project ?? "NULL"}|cfg:{cfg ?? "NULL"}|verbose:{verbose}|watch:{watch}").AsCommand().Done()
       .Build();
 
     // Act
@@ -82,10 +70,10 @@ public class ComplexIntegrationTests
 
     // Assert
     exitCode.ShouldBe(0);
-    boundProject.ShouldBeNull();
-    boundCfg.ShouldBeNull();
-    boundVerbose.ShouldBeTrue();
-    boundWatch.ShouldBeFalse();
+    terminal.OutputContains("project:NULL").ShouldBeTrue();
+    terminal.OutputContains("cfg:NULL").ShouldBeTrue();
+    terminal.OutputContains("verbose:True").ShouldBeTrue();
+    terminal.OutputContains("watch:False").ShouldBeTrue();
 
     await Task.CompletedTask;
   }
@@ -93,11 +81,10 @@ public class ComplexIntegrationTests
   public static async Task Should_match_multi_valued_with_types_process_id_1_2_tag_A_run_sh()
   {
     // Arrange
-    int[]? boundId = null;
-    string[]? boundT = null;
-    string? boundScript = null;
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
-      .Map("process --id {id:int}* --tag {t}* {script}").WithHandler((int[] id, string[] t, string script) => { boundId = id; boundT = t; boundScript = script; }).AsCommand().Done()
+      .UseTerminal(terminal)
+      .Map("process --id {id:int}* --tag {t}* {script}").WithHandler((int[] id, string[] t, string script) => $"id:[{string.Join(",", id)}]|t:[{string.Join(",", t)}]|script:{script}").AsCommand().Done()
       .Build();
 
     // Act
@@ -105,14 +92,9 @@ public class ComplexIntegrationTests
 
     // Assert
     exitCode.ShouldBe(0);
-    boundId.ShouldNotBeNull();
-    boundId.Length.ShouldBe(2);
-    boundId[0].ShouldBe(1);
-    boundId[1].ShouldBe(2);
-    boundT.ShouldNotBeNull();
-    boundT.Length.ShouldBe(1);
-    boundT[0].ShouldBe("A");
-    boundScript.ShouldBe("run.sh");
+    terminal.OutputContains("id:[1,2]").ShouldBeTrue();
+    terminal.OutputContains("t:[A]").ShouldBeTrue();
+    terminal.OutputContains("script:run.sh").ShouldBeTrue();
 
     await Task.CompletedTask;
   }

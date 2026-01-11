@@ -7,6 +7,7 @@ namespace TimeWarp.Nuru;
 /// - NURU_H002: Lambdas with closures
 /// - NURU_H003: Unsupported expression types
 /// - NURU_H004: Private methods not accessible
+/// - NURU_H006: Discard parameters in lambdas
 /// </summary>
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public sealed class NuruHandlerAnalyzer : DiagnosticAnalyzer
@@ -16,7 +17,8 @@ public sealed class NuruHandlerAnalyzer : DiagnosticAnalyzer
     DiagnosticDescriptors.InstanceMethodNotSupported,
     DiagnosticDescriptors.ClosureNotAllowed,
     DiagnosticDescriptors.UnsupportedHandlerExpression,
-    DiagnosticDescriptors.PrivateMethodNotAccessible
+    DiagnosticDescriptors.PrivateMethodNotAccessible,
+    DiagnosticDescriptors.DiscardParameterNotSupported
   ];
 
   public override void Initialize(AnalysisContext context)
@@ -87,6 +89,16 @@ public sealed class NuruHandlerAnalyzer : DiagnosticAnalyzer
     SyntaxNodeAnalysisContext context,
     LambdaExpressionSyntax lambda)
   {
+    // Check for discard parameters ('_') which can't be referenced in generated code
+    if (HasDiscardParameters(lambda))
+    {
+      context.ReportDiagnostic(
+        Diagnostic.Create(
+          DiagnosticDescriptors.DiscardParameterNotSupported,
+          lambda.GetLocation()));
+      return; // Don't report other errors if discards are present
+    }
+
     // Check for closures (captured external variables)
     List<string> capturedVariables = DetectClosures(lambda, context.SemanticModel);
 
@@ -97,6 +109,30 @@ public sealed class NuruHandlerAnalyzer : DiagnosticAnalyzer
           DiagnosticDescriptors.ClosureNotAllowed,
           lambda.GetLocation(),
           string.Join(", ", capturedVariables)));
+    }
+  }
+
+  /// <summary>
+  /// Checks if a lambda has any discard parameters ('_').
+  /// </summary>
+  private static bool HasDiscardParameters(LambdaExpressionSyntax lambda)
+  {
+    switch (lambda)
+    {
+      case SimpleLambdaExpressionSyntax simple:
+        return simple.Parameter.Identifier.Text == "_";
+
+      case ParenthesizedLambdaExpressionSyntax parenthesized:
+        foreach (Microsoft.CodeAnalysis.CSharp.Syntax.ParameterSyntax param in parenthesized.ParameterList.Parameters)
+        {
+          if (param.Identifier.Text == "_")
+            return true;
+        }
+
+        return false;
+
+      default:
+        return false;
     }
   }
 

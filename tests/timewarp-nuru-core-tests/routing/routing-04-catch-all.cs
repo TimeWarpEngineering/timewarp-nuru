@@ -16,9 +16,10 @@ public class CatchAllTests
   public static async Task Should_match_basic_catch_all_run_one_two_three()
   {
     // Arrange
-    string[]? boundArgs = null;
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
-      .Map("run {*args}").WithHandler((string[] args) => { boundArgs = args; }).AsCommand().Done()
+      .UseTerminal(terminal)
+      .Map("run {*args}").WithHandler((string[] args) => $"args:[{string.Join(",", args)}]").AsCommand().Done()
       .Build();
 
     // Act
@@ -26,11 +27,7 @@ public class CatchAllTests
 
     // Assert
     exitCode.ShouldBe(0);
-    boundArgs.ShouldNotBeNull();
-    boundArgs.Length.ShouldBe(3);
-    boundArgs[0].ShouldBe("one");
-    boundArgs[1].ShouldBe("two");
-    boundArgs[2].ShouldBe("three");
+    terminal.OutputContains("args:[one,two,three]").ShouldBeTrue();
 
     await Task.CompletedTask;
   }
@@ -38,9 +35,10 @@ public class CatchAllTests
   public static async Task Should_match_empty_catch_all_passthrough()
   {
     // Arrange
-    string[]? boundArgs = null;
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
-      .Map("passthrough {*args}").WithHandler((string[] args) => { boundArgs = args; }).AsCommand().Done()
+      .UseTerminal(terminal)
+      .Map("passthrough {*args}").WithHandler((string[] args) => $"args:[{string.Join(",", args)}]|len:{args.Length}").AsCommand().Done()
       .Build();
 
     // Act
@@ -48,8 +46,7 @@ public class CatchAllTests
 
     // Assert
     exitCode.ShouldBe(0);
-    boundArgs.ShouldNotBeNull();
-    boundArgs.Length.ShouldBe(0);
+    terminal.OutputContains("args:[]|len:0").ShouldBeTrue();
 
     await Task.CompletedTask;
   }
@@ -57,9 +54,10 @@ public class CatchAllTests
   public static async Task Should_match_catch_all_after_literals_docker_run_nginx_port_8080()
   {
     // Arrange
-    string[]? boundCmd = null;
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
-      .Map("docker run {*cmd}").WithHandler((string[] cmd) => { boundCmd = cmd; }).AsCommand().Done()
+      .UseTerminal(terminal)
+      .Map("docker run {*cmd}").WithHandler((string[] cmd) => $"cmd:[{string.Join(",", cmd)}]").AsCommand().Done()
       .Build();
 
     // Act
@@ -67,11 +65,7 @@ public class CatchAllTests
 
     // Assert
     exitCode.ShouldBe(0);
-    boundCmd.ShouldNotBeNull();
-    boundCmd.Length.ShouldBe(3);
-    boundCmd[0].ShouldBe("nginx");
-    boundCmd[1].ShouldBe("--port");
-    boundCmd[2].ShouldBe("8080");
+    terminal.OutputContains("cmd:[nginx,--port,8080]").ShouldBeTrue();
 
     await Task.CompletedTask;
   }
@@ -79,10 +73,10 @@ public class CatchAllTests
   public static async Task Should_match_catch_all_after_parameters_execute_test_sh_verbose_output_log_txt()
   {
     // Arrange
-    string? boundScript = null;
-    string[]? boundArgs = null;
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
-      .Map("execute {script} {*args}").WithHandler((string script, string[] args) => { boundScript = script; boundArgs = args; }).AsCommand().Done()
+      .UseTerminal(terminal)
+      .Map("execute {script} {*args}").WithHandler((string script, string[] args) => $"script:{script}|args:[{string.Join(",", args)}]").AsCommand().Done()
       .Build();
 
     // Act
@@ -90,12 +84,8 @@ public class CatchAllTests
 
     // Assert
     exitCode.ShouldBe(0);
-    boundScript.ShouldBe("test.sh");
-    boundArgs.ShouldNotBeNull();
-    boundArgs.Length.ShouldBe(3);
-    boundArgs[0].ShouldBe("--verbose");
-    boundArgs[1].ShouldBe("--output");
-    boundArgs[2].ShouldBe("log.txt");
+    terminal.OutputContains("script:test.sh").ShouldBeTrue();
+    terminal.OutputContains("args:[--verbose,--output,log.txt]").ShouldBeTrue();
 
     await Task.CompletedTask;
   }
@@ -103,9 +93,10 @@ public class CatchAllTests
   public static async Task Should_match_catch_all_preserves_options_npm_install_save_dev_typescript()
   {
     // Arrange
-    string[]? boundArgs = null;
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
-      .Map("npm {*args}").WithHandler((string[] args) => { boundArgs = args; }).AsCommand().Done()
+      .UseTerminal(terminal)
+      .Map("npm {*args}").WithHandler((string[] args) => $"args:[{string.Join(",", args)}]").AsCommand().Done()
       .Build();
 
     // Act
@@ -113,11 +104,7 @@ public class CatchAllTests
 
     // Assert
     exitCode.ShouldBe(0);
-    boundArgs.ShouldNotBeNull();
-    boundArgs.Length.ShouldBe(3);
-    boundArgs[0].ShouldBe("install");
-    boundArgs[1].ShouldBe("--save-dev");
-    boundArgs[2].ShouldBe("typescript");
+    terminal.OutputContains("args:[install,--save-dev,typescript]").ShouldBeTrue();
 
     await Task.CompletedTask;
   }

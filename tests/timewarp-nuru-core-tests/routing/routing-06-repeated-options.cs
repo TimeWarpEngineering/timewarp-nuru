@@ -16,10 +16,11 @@ public class RepeatedOptionsTests
   public static async Task Should_match_basic_repeated_option_docker_run_env_A_B_C()
   {
     // Arrange
-    string[]? boundE = null;
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
+      .UseTerminal(terminal)
       .Map("docker run --env {e}*")
-      .WithHandler((string[] e) => { boundE = e; })
+      .WithHandler((string[] e) => $"e:[{string.Join(",", e)}]|len:{e.Length}")
       .AsCommand()
       .Done()
       .Build();
@@ -29,11 +30,8 @@ public class RepeatedOptionsTests
 
     // Assert
     exitCode.ShouldBe(0);
-    boundE.ShouldNotBeNull();
-    boundE.Length.ShouldBe(3);
-    boundE[0].ShouldBe("A");
-    boundE[1].ShouldBe("B");
-    boundE[2].ShouldBe("C");
+    terminal.OutputContains("e:[A,B,C]").ShouldBeTrue();
+    terminal.OutputContains("len:3").ShouldBeTrue();
 
     await Task.CompletedTask;
   }
@@ -41,10 +39,11 @@ public class RepeatedOptionsTests
   public static async Task Should_match_empty_repeated_option_docker_run()
   {
     // Arrange
-    string[]? boundE = null;
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
+      .UseTerminal(terminal)
       .Map("docker run --env {e}*")
-      .WithHandler((string[] e) => { boundE = e; })
+      .WithHandler((string[] e) => $"e:[{string.Join(",", e)}]|len:{e.Length}")
       .AsCommand()
       .Done()
       .Build();
@@ -54,8 +53,8 @@ public class RepeatedOptionsTests
 
     // Assert
     exitCode.ShouldBe(0);
-    boundE.ShouldNotBeNull();
-    boundE.Length.ShouldBe(0);
+    terminal.OutputContains("e:[]").ShouldBeTrue();
+    terminal.OutputContains("len:0").ShouldBeTrue();
 
     await Task.CompletedTask;
   }
@@ -63,10 +62,11 @@ public class RepeatedOptionsTests
   public static async Task Should_match_typed_repeated_option_process_id_1_2_3()
   {
     // Arrange
-    int[]? boundId = null;
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
+      .UseTerminal(terminal)
       .Map("process --id {id:int}*")
-      .WithHandler((int[] id) => { boundId = id; })
+      .WithHandler((int[] id) => $"id:[{string.Join(",", id)}]|len:{id.Length}")
       .AsCommand()
       .Done()
       .Build();
@@ -76,11 +76,8 @@ public class RepeatedOptionsTests
 
     // Assert
     exitCode.ShouldBe(0);
-    boundId.ShouldNotBeNull();
-    boundId.Length.ShouldBe(3);
-    boundId[0].ShouldBe(1);
-    boundId[1].ShouldBe(2);
-    boundId[2].ShouldBe(3);
+    terminal.OutputContains("id:[1,2,3]").ShouldBeTrue();
+    terminal.OutputContains("len:3").ShouldBeTrue();
 
     await Task.CompletedTask;
   }
@@ -88,10 +85,11 @@ public class RepeatedOptionsTests
   public static async Task Should_match_repeated_option_with_alias_docker_run_env_A_e_B_env_C()
   {
     // Arrange
-    string[]? boundE = null;
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
+      .UseTerminal(terminal)
       .Map("docker run --env,-e {e}*")
-      .WithHandler((string[] e) => { boundE = e; })
+      .WithHandler((string[] e) => $"e:[{string.Join(",", e)}]|len:{e.Length}")
       .AsCommand()
       .Done()
       .Build();
@@ -101,11 +99,8 @@ public class RepeatedOptionsTests
 
     // Assert
     exitCode.ShouldBe(0);
-    boundE.ShouldNotBeNull();
-    boundE.Length.ShouldBe(3);
-    boundE[0].ShouldBe("A");
-    boundE[1].ShouldBe("B");
-    boundE[2].ShouldBe("C");
+    terminal.OutputContains("e:[A,B,C]").ShouldBeTrue();
+    terminal.OutputContains("len:3").ShouldBeTrue();
 
     await Task.CompletedTask;
   }
@@ -113,12 +108,11 @@ public class RepeatedOptionsTests
   public static async Task Should_match_mixed_repeated_single_deploy_env_prod_tag_v1_v2_verbose()
   {
     // Arrange
-    string? boundE = null;
-    string[]? boundT = null;
-    bool boundVerbose = false;
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
+      .UseTerminal(terminal)
       .Map("deploy --env {e} --tag {t}* --verbose")
-      .WithHandler((string e, string[] t, bool verbose) => { boundE = e; boundT = t; boundVerbose = verbose; })
+      .WithHandler((string e, string[] t, bool verbose) => $"e:{e}|t:[{string.Join(",", t)}]|verbose:{verbose}")
       .AsCommand()
       .Done()
       .Build();
@@ -128,12 +122,9 @@ public class RepeatedOptionsTests
 
     // Assert
     exitCode.ShouldBe(0);
-    boundE.ShouldBe("prod");
-    boundT.ShouldNotBeNull();
-    boundT.Length.ShouldBe(2);
-    boundT[0].ShouldBe("v1");
-    boundT[1].ShouldBe("v2");
-    boundVerbose.ShouldBeTrue();
+    terminal.OutputContains("e:prod").ShouldBeTrue();
+    terminal.OutputContains("t:[v1,v2]").ShouldBeTrue();
+    terminal.OutputContains("verbose:True").ShouldBeTrue();
 
     await Task.CompletedTask;
   }
@@ -141,10 +132,11 @@ public class RepeatedOptionsTests
   public static async Task Should_match_single_value_repeated_option_run_flag_X()
   {
     // Arrange
-    string[]? boundF = null;
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
+      .UseTerminal(terminal)
       .Map("run --flag {f}*")
-      .WithHandler((string[] f) => { boundF = f; })
+      .WithHandler((string[] f) => $"f:[{string.Join(",", f)}]|len:{f.Length}")
       .AsCommand()
       .Done()
       .Build();
@@ -154,9 +146,8 @@ public class RepeatedOptionsTests
 
     // Assert
     exitCode.ShouldBe(0);
-    boundF.ShouldNotBeNull();
-    boundF.Length.ShouldBe(1);
-    boundF[0].ShouldBe("X");
+    terminal.OutputContains("f:[X]").ShouldBeTrue();
+    terminal.OutputContains("len:1").ShouldBeTrue();
 
     await Task.CompletedTask;
   }

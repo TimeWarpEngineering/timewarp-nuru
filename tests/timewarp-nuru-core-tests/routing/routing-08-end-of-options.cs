@@ -16,9 +16,10 @@ public class EndOfOptionsTests
   public static async Task Should_match_end_of_options_with_catch_all_run_not_a_flag_file_txt()
   {
     // Arrange
-    string[]? boundArgs = null;
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
-      .Map("run -- {*args}").WithHandler((string[] args) => { boundArgs = args; }).AsCommand().Done()
+      .UseTerminal(terminal)
+      .Map("run -- {*args}").WithHandler((string[] args) => $"args:[{string.Join(",", args)}]|len:{args.Length}").AsCommand().Done()
       .Build();
 
     // Act
@@ -26,10 +27,8 @@ public class EndOfOptionsTests
 
     // Assert
     exitCode.ShouldBe(0);
-    boundArgs.ShouldNotBeNull();
-    boundArgs.Length.ShouldBe(2);
-    boundArgs[0].ShouldBe("--not-a-flag");
-    boundArgs[1].ShouldBe("file.txt");
+    terminal.OutputContains("args:[--not-a-flag,file.txt]").ShouldBeTrue();
+    terminal.OutputContains("len:2").ShouldBeTrue();
 
     await Task.CompletedTask;
   }
@@ -37,10 +36,10 @@ public class EndOfOptionsTests
   public static async Task Should_match_parameter_before_end_of_options_execute_run_sh_verbose_file_txt()
   {
     // Arrange
-    string? boundScript = null;
-    string[]? boundArgs = null;
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
-      .Map("execute {script} -- {*args}").WithHandler((string script, string[] args) => { boundScript = script; boundArgs = args; }).AsCommand().Done()
+      .UseTerminal(terminal)
+      .Map("execute {script} -- {*args}").WithHandler((string script, string[] args) => $"script:{script}|args:[{string.Join(",", args)}]").AsCommand().Done()
       .Build();
 
     // Act
@@ -48,11 +47,8 @@ public class EndOfOptionsTests
 
     // Assert
     exitCode.ShouldBe(0);
-    boundScript.ShouldBe("run.sh");
-    boundArgs.ShouldNotBeNull();
-    boundArgs.Length.ShouldBe(2);
-    boundArgs[0].ShouldBe("--verbose");
-    boundArgs[1].ShouldBe("file.txt");
+    terminal.OutputContains("script:run.sh").ShouldBeTrue();
+    terminal.OutputContains("args:[--verbose,file.txt]").ShouldBeTrue();
 
     await Task.CompletedTask;
   }
@@ -60,9 +56,10 @@ public class EndOfOptionsTests
   public static async Task Should_match_empty_args_after_separator_run()
   {
     // Arrange
-    string[]? boundArgs = null;
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
-      .Map("run -- {*args}").WithHandler((string[] args) => { boundArgs = args; }).AsCommand().Done()
+      .UseTerminal(terminal)
+      .Map("run -- {*args}").WithHandler((string[] args) => $"args:[{string.Join(",", args)}]|len:{args.Length}").AsCommand().Done()
       .Build();
 
     // Act
@@ -70,8 +67,8 @@ public class EndOfOptionsTests
 
     // Assert
     exitCode.ShouldBe(0);
-    boundArgs.ShouldNotBeNull();
-    boundArgs.Length.ShouldBe(0);
+    terminal.OutputContains("args:[]").ShouldBeTrue();
+    terminal.OutputContains("len:0").ShouldBeTrue();
 
     await Task.CompletedTask;
   }
@@ -79,11 +76,11 @@ public class EndOfOptionsTests
   public static async Task Should_parse_options_before_separator_docker_run_detach_nginx_port_80()
   {
     // Arrange
-    bool boundDetach = false;
-    string[]? boundCmd = null;
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
+      .UseTerminal(terminal)
       .UseDebugLogging()
-      .Map("docker run --detach -- {*cmd}").WithHandler((bool detach, string[] cmd) => { boundDetach = detach; boundCmd = cmd; }).AsCommand().Done()
+      .Map("docker run --detach -- {*cmd}").WithHandler((bool detach, string[] cmd) => $"detach:{detach}|cmd:[{string.Join(",", cmd)}]").AsCommand().Done()
       .Build();
 
     // Act
@@ -91,12 +88,8 @@ public class EndOfOptionsTests
 
     // Assert
     exitCode.ShouldBe(0);
-    boundDetach.ShouldBeTrue();
-    boundCmd.ShouldNotBeNull();
-    boundCmd.Length.ShouldBe(3);
-    boundCmd[0].ShouldBe("nginx");
-    boundCmd[1].ShouldBe("--port");
-    boundCmd[2].ShouldBe("80");
+    terminal.OutputContains("detach:True").ShouldBeTrue();
+    terminal.OutputContains("cmd:[nginx,--port,80]").ShouldBeTrue();
 
     await Task.CompletedTask;
   }

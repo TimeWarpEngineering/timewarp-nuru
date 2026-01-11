@@ -23,16 +23,16 @@ internal static partial class DiagnosticDescriptors
 
   /// <summary>
   /// NURU_H002: Closure detected in lambda handler.
-  /// Captured variables cannot be injected at runtime.
+  /// Captured variables cannot be resolved in generated code.
   /// </summary>
   public static readonly DiagnosticDescriptor ClosureNotAllowed = new(
     id: "NURU_H002",
     title: "Closure detected in handler",
-    messageFormat: "Handler lambda captures external variable(s): {0}. Handler generation will be skipped. Use DI-injected parameters or suppress this warning for test code.",
+    messageFormat: "Handler lambda captures external variable(s): {0}. Lambdas with closures are not supported. Use a static method, return values, or refactor to avoid capturing variables.",
     category: HandlerCategory,
-    defaultSeverity: DiagnosticSeverity.Warning,
+    defaultSeverity: DiagnosticSeverity.Error,
     isEnabledByDefault: true,
-    description: "Lambda handlers cannot capture variables from the enclosing scope. The handler will not be generated for this route. Pass dependencies as handler parameters and they will be injected. For test code that intentionally uses closures, suppress with #pragma warning disable NURU_H002.");
+    description: "Lambda handlers cannot capture variables from the enclosing scope because the lambda body is inlined into generated code where captured variables do not exist. Use handler return values, static methods, or command classes instead.");
 
   /// <summary>
   /// NURU_H003: Unsupported handler expression type.
@@ -72,4 +72,17 @@ internal static partial class DiagnosticDescriptors
     defaultSeverity: DiagnosticSeverity.Error,
     isEnabledByDefault: true,
     description: "Handler parameter names must match route segment names for the generated code to compile correctly. The lambda body is inlined in generated code and uses these variable names directly.");
+
+  /// <summary>
+  /// NURU_H006: Discard parameter '_' not supported in handler lambdas.
+  /// The lambda body is inlined and discards cannot be referenced.
+  /// </summary>
+  public static readonly DiagnosticDescriptor DiscardParameterNotSupported = new(
+    id: "NURU_H006",
+    title: "Discard parameter not supported in handler",
+    messageFormat: "Handler lambda uses discard parameter '_'. Discards are not supported because the lambda body is inlined into generated code. Use named parameters instead.",
+    category: HandlerCategory,
+    defaultSeverity: DiagnosticSeverity.Error,
+    isEnabledByDefault: true,
+    description: "Lambda handlers cannot use discard parameters ('_') because the lambda body is inlined into generated code where discards cannot be referenced. Use named parameters that match the route segments.");
 }

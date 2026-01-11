@@ -20,9 +20,10 @@ public class AdditionalPrimitiveTypeTests
   public static async Task Should_bind_byte_parameter()
   {
     // Arrange
-    byte? boundValue = null;
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
-      .Map("setbyte {value:byte}").WithHandler((byte value) => { boundValue = value; }).AsCommand().Done()
+      .UseTerminal(terminal)
+      .Map("setbyte {value:byte}").WithHandler((byte value) => $"value:{value}").AsCommand().Done()
       .Build();
 
     // Act
@@ -30,7 +31,7 @@ public class AdditionalPrimitiveTypeTests
 
     // Assert
     exitCode.ShouldBe(0);
-    boundValue.ShouldBe((byte)255);
+    terminal.OutputContains("value:255").ShouldBeTrue();
 
     await Task.CompletedTask;
   }
@@ -38,9 +39,10 @@ public class AdditionalPrimitiveTypeTests
   public static async Task Should_bind_byte_zero()
   {
     // Arrange
-    byte? boundValue = null;
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
-      .Map("setbyte {value:byte}").WithHandler((byte value) => { boundValue = value; }).AsCommand().Done()
+      .UseTerminal(terminal)
+      .Map("setbyte {value:byte}").WithHandler((byte value) => $"value:{value}").AsCommand().Done()
       .Build();
 
     // Act
@@ -48,7 +50,7 @@ public class AdditionalPrimitiveTypeTests
 
     // Assert
     exitCode.ShouldBe(0);
-    boundValue.ShouldBe((byte)0);
+    terminal.OutputContains("value:0").ShouldBeTrue();
 
     await Task.CompletedTask;
   }
@@ -60,9 +62,10 @@ public class AdditionalPrimitiveTypeTests
   public static async Task Should_bind_sbyte_positive()
   {
     // Arrange
-    sbyte? boundValue = null;
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
-      .Map("setsbyte {value:sbyte}").WithHandler((sbyte value) => { boundValue = value; }).AsCommand().Done()
+      .UseTerminal(terminal)
+      .Map("setsbyte {value:sbyte}").WithHandler((sbyte value) => $"value:{value}").AsCommand().Done()
       .Build();
 
     // Act
@@ -70,7 +73,7 @@ public class AdditionalPrimitiveTypeTests
 
     // Assert
     exitCode.ShouldBe(0);
-    boundValue.ShouldBe((sbyte)127);
+    terminal.OutputContains("value:127").ShouldBeTrue();
 
     await Task.CompletedTask;
   }
@@ -78,9 +81,10 @@ public class AdditionalPrimitiveTypeTests
   public static async Task Should_bind_sbyte_negative()
   {
     // Arrange
-    sbyte? boundValue = null;
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
-      .Map("setsbyte {value:sbyte}").WithHandler((sbyte value) => { boundValue = value; }).AsCommand().Done()
+      .UseTerminal(terminal)
+      .Map("setsbyte {value:sbyte}").WithHandler((sbyte value) => $"value:{value}").AsCommand().Done()
       .Build();
 
     // Act
@@ -88,7 +92,7 @@ public class AdditionalPrimitiveTypeTests
 
     // Assert
     exitCode.ShouldBe(0);
-    boundValue.ShouldBe((sbyte)-128);
+    terminal.OutputContains("value:-128").ShouldBeTrue();
 
     await Task.CompletedTask;
   }
@@ -100,9 +104,10 @@ public class AdditionalPrimitiveTypeTests
   public static async Task Should_bind_short_parameter()
   {
     // Arrange
-    short? boundValue = null;
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
-      .Map("setshort {value:short}").WithHandler((short value) => { boundValue = value; }).AsCommand().Done()
+      .UseTerminal(terminal)
+      .Map("setshort {value:short}").WithHandler((short value) => $"value:{value}").AsCommand().Done()
       .Build();
 
     // Act
@@ -110,7 +115,7 @@ public class AdditionalPrimitiveTypeTests
 
     // Assert
     exitCode.ShouldBe(0);
-    boundValue.ShouldBe((short)32767);
+    terminal.OutputContains("value:32767").ShouldBeTrue();
 
     await Task.CompletedTask;
   }
@@ -118,9 +123,10 @@ public class AdditionalPrimitiveTypeTests
   public static async Task Should_bind_short_negative()
   {
     // Arrange
-    short? boundValue = null;
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
-      .Map("setshort {value:short}").WithHandler((short value) => { boundValue = value; }).AsCommand().Done()
+      .UseTerminal(terminal)
+      .Map("setshort {value:short}").WithHandler((short value) => $"value:{value}").AsCommand().Done()
       .Build();
 
     // Act
@@ -128,7 +134,7 @@ public class AdditionalPrimitiveTypeTests
 
     // Assert
     exitCode.ShouldBe(0);
-    boundValue.ShouldBe((short)-32768);
+    terminal.OutputContains("value:-32768").ShouldBeTrue();
 
     await Task.CompletedTask;
   }
@@ -140,9 +146,10 @@ public class AdditionalPrimitiveTypeTests
   public static async Task Should_bind_ushort_parameter()
   {
     // Arrange
-    ushort? boundValue = null;
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
-      .Map("setushort {value:ushort}").WithHandler((ushort value) => { boundValue = value; }).AsCommand().Done()
+      .UseTerminal(terminal)
+      .Map("setushort {value:ushort}").WithHandler((ushort value) => $"value:{value}").AsCommand().Done()
       .Build();
 
     // Act
@@ -150,7 +157,7 @@ public class AdditionalPrimitiveTypeTests
 
     // Assert
     exitCode.ShouldBe(0);
-    boundValue.ShouldBe((ushort)65535);
+    terminal.OutputContains("value:65535").ShouldBeTrue();
 
     await Task.CompletedTask;
   }
@@ -162,9 +169,10 @@ public class AdditionalPrimitiveTypeTests
   public static async Task Should_bind_uint_parameter()
   {
     // Arrange
-    uint? boundValue = null;
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
-      .Map("setuint {value:uint}").WithHandler((uint value) => { boundValue = value; }).AsCommand().Done()
+      .UseTerminal(terminal)
+      .Map("setuint {value:uint}").WithHandler((uint value) => $"value:{value}").AsCommand().Done()
       .Build();
 
     // Act
@@ -172,7 +180,7 @@ public class AdditionalPrimitiveTypeTests
 
     // Assert
     exitCode.ShouldBe(0);
-    boundValue.ShouldBe(4294967295U);
+    terminal.OutputContains("value:4294967295").ShouldBeTrue();
 
     await Task.CompletedTask;
   }
@@ -184,9 +192,10 @@ public class AdditionalPrimitiveTypeTests
   public static async Task Should_bind_ulong_parameter()
   {
     // Arrange
-    ulong? boundValue = null;
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
-      .Map("setulong {value:ulong}").WithHandler((ulong value) => { boundValue = value; }).AsCommand().Done()
+      .UseTerminal(terminal)
+      .Map("setulong {value:ulong}").WithHandler((ulong value) => $"value:{value}").AsCommand().Done()
       .Build();
 
     // Act
@@ -194,7 +203,7 @@ public class AdditionalPrimitiveTypeTests
 
     // Assert
     exitCode.ShouldBe(0);
-    boundValue.ShouldBe(18446744073709551615UL);
+    terminal.OutputContains("value:18446744073709551615").ShouldBeTrue();
 
     await Task.CompletedTask;
   }
@@ -206,9 +215,10 @@ public class AdditionalPrimitiveTypeTests
   public static async Task Should_bind_float_parameter()
   {
     // Arrange
-    float? boundValue = null;
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
-      .Map("setfloat {value:float}").WithHandler((float value) => { boundValue = value; }).AsCommand().Done()
+      .UseTerminal(terminal)
+      .Map("setfloat {value:float}").WithHandler((float value) => $"value:{value}").AsCommand().Done()
       .Build();
 
     // Act
@@ -216,8 +226,7 @@ public class AdditionalPrimitiveTypeTests
 
     // Assert
     exitCode.ShouldBe(0);
-    boundValue.ShouldNotBeNull();
-    Math.Abs(boundValue.Value - 3.14f).ShouldBeLessThan(0.001f);
+    terminal.OutputContains("value:3.14").ShouldBeTrue();
 
     await Task.CompletedTask;
   }
@@ -225,9 +234,10 @@ public class AdditionalPrimitiveTypeTests
   public static async Task Should_bind_float_negative()
   {
     // Arrange
-    float? boundValue = null;
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
-      .Map("setfloat {value:float}").WithHandler((float value) => { boundValue = value; }).AsCommand().Done()
+      .UseTerminal(terminal)
+      .Map("setfloat {value:float}").WithHandler((float value) => $"value:{value}").AsCommand().Done()
       .Build();
 
     // Act
@@ -235,8 +245,7 @@ public class AdditionalPrimitiveTypeTests
 
     // Assert
     exitCode.ShouldBe(0);
-    boundValue.ShouldNotBeNull();
-    Math.Abs(boundValue.Value - (-99.5f)).ShouldBeLessThan(0.001f);
+    terminal.OutputContains("value:-99.5").ShouldBeTrue();
 
     await Task.CompletedTask;
   }
@@ -248,9 +257,10 @@ public class AdditionalPrimitiveTypeTests
   public static async Task Should_bind_char_parameter()
   {
     // Arrange
-    char? boundValue = null;
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
-      .Map("setchar {value:char}").WithHandler((char value) => { boundValue = value; }).AsCommand().Done()
+      .UseTerminal(terminal)
+      .Map("setchar {value:char}").WithHandler((char value) => $"value:{value}").AsCommand().Done()
       .Build();
 
     // Act
@@ -258,7 +268,7 @@ public class AdditionalPrimitiveTypeTests
 
     // Assert
     exitCode.ShouldBe(0);
-    boundValue.ShouldBe('X');
+    terminal.OutputContains("value:X").ShouldBeTrue();
 
     await Task.CompletedTask;
   }
@@ -266,9 +276,10 @@ public class AdditionalPrimitiveTypeTests
   public static async Task Should_bind_char_digit()
   {
     // Arrange
-    char? boundValue = null;
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
-      .Map("setchar {value:char}").WithHandler((char value) => { boundValue = value; }).AsCommand().Done()
+      .UseTerminal(terminal)
+      .Map("setchar {value:char}").WithHandler((char value) => $"value:{value}").AsCommand().Done()
       .Build();
 
     // Act
@@ -276,7 +287,7 @@ public class AdditionalPrimitiveTypeTests
 
     // Assert
     exitCode.ShouldBe(0);
-    boundValue.ShouldBe('7');
+    terminal.OutputContains("value:7").ShouldBeTrue();
 
     await Task.CompletedTask;
   }
@@ -288,9 +299,10 @@ public class AdditionalPrimitiveTypeTests
   public static async Task Should_bind_byte_array_catch_all()
   {
     // Arrange
-    byte[]? boundValues = null;
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
-      .Map("bytes {*values:byte}").WithHandler((byte[] values) => { boundValues = values; }).AsQuery().Done()
+      .UseTerminal(terminal)
+      .Map("bytes {*values:byte}").WithHandler((byte[] values) => $"values:[{string.Join(",", values)}]|len:{values.Length}").AsQuery().Done()
       .Build();
 
     // Act
@@ -298,11 +310,8 @@ public class AdditionalPrimitiveTypeTests
 
     // Assert
     exitCode.ShouldBe(0);
-    boundValues.ShouldNotBeNull();
-    boundValues.Length.ShouldBe(3);
-    boundValues[0].ShouldBe((byte)10);
-    boundValues[1].ShouldBe((byte)20);
-    boundValues[2].ShouldBe((byte)255);
+    terminal.OutputContains("values:[10,20,255]").ShouldBeTrue();
+    terminal.OutputContains("len:3").ShouldBeTrue();
 
     await Task.CompletedTask;
   }
@@ -310,9 +319,10 @@ public class AdditionalPrimitiveTypeTests
   public static async Task Should_bind_short_array_catch_all()
   {
     // Arrange
-    short[]? boundValues = null;
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
-      .Map("shorts {*values:short}").WithHandler((short[] values) => { boundValues = values; }).AsQuery().Done()
+      .UseTerminal(terminal)
+      .Map("shorts {*values:short}").WithHandler((short[] values) => $"values:[{string.Join(",", values)}]|len:{values.Length}").AsQuery().Done()
       .Build();
 
     // Act
@@ -320,11 +330,8 @@ public class AdditionalPrimitiveTypeTests
 
     // Assert
     exitCode.ShouldBe(0);
-    boundValues.ShouldNotBeNull();
-    boundValues.Length.ShouldBe(3);
-    boundValues[0].ShouldBe((short)-100);
-    boundValues[1].ShouldBe((short)0);
-    boundValues[2].ShouldBe((short)100);
+    terminal.OutputContains("values:[-100,0,100]").ShouldBeTrue();
+    terminal.OutputContains("len:3").ShouldBeTrue();
 
     await Task.CompletedTask;
   }
@@ -332,9 +339,10 @@ public class AdditionalPrimitiveTypeTests
   public static async Task Should_bind_float_array_catch_all()
   {
     // Arrange
-    float[]? boundValues = null;
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
-      .Map("floats {*values:float}").WithHandler((float[] values) => { boundValues = values; }).AsQuery().Done()
+      .UseTerminal(terminal)
+      .Map("floats {*values:float}").WithHandler((float[] values) => $"values:[{string.Join(",", values)}]|len:{values.Length}").AsQuery().Done()
       .Build();
 
     // Act
@@ -342,11 +350,8 @@ public class AdditionalPrimitiveTypeTests
 
     // Assert
     exitCode.ShouldBe(0);
-    boundValues.ShouldNotBeNull();
-    boundValues.Length.ShouldBe(3);
-    Math.Abs(boundValues[0] - 1.5f).ShouldBeLessThan(0.001f);
-    Math.Abs(boundValues[1] - 2.5f).ShouldBeLessThan(0.001f);
-    Math.Abs(boundValues[2] - 3.5f).ShouldBeLessThan(0.001f);
+    terminal.OutputContains("values:[1.5,2.5,3.5]").ShouldBeTrue();
+    terminal.OutputContains("len:3").ShouldBeTrue();
 
     await Task.CompletedTask;
   }

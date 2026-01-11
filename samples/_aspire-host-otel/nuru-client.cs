@@ -1,6 +1,4 @@
 #!/usr/bin/env -S dotnet run --launch-profile AppHost --
-#:package Mediator.Abstractions
-#:package Mediator.SourceGenerator
 #:project ../../source/timewarp-nuru/timewarp-nuru.csproj
 #:project ../../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj
 #:project ../../source/timewarp-nuru-telemetry/timewarp-nuru-telemetry.csproj
@@ -19,9 +17,6 @@
 // Run via AppHost (telemetry auto-configured):
 //   ./apphost.cs
 
-using Mediator;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using TimeWarp.Nuru;
 
 // Configuration extracted for clean fluent API

@@ -15,9 +15,6 @@
 //   - Strongly-typed context.Command (no casting needed)
 //   - Works with both delegate routes (.Implements<T>()) and attributed routes
 //
-// COMPARE WITH:
-//   pipeline-middleware-authorization.cs - Uses Mediator's IPipelineBehavior with runtime checks
-//
 // RUN THIS SAMPLE:
 //   ./04-pipeline-middleware-filtered-auth.cs echo "Hello"           # No auth needed
 //   ./04-pipeline-middleware-filtered-auth.cs admin delete-all       # Access denied

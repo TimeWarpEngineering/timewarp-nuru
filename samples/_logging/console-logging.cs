@@ -1,64 +1,32 @@
 #!/usr/bin/dotnet --
 #:project ../../source/timewarp-nuru/timewarp-nuru.csproj
-#:project ../../source/timewarp-nuru-logging/timewarp-nuru-logging.csproj
-#:package Mediator.Abstractions
-#:package Mediator.SourceGenerator
 #:package Microsoft.Extensions.Logging
+#:package Microsoft.Extensions.Logging.Console
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// CONSOLE LOGGING - MICROSOFT.EXTENSIONS.LOGGING INTEGRATION
+// CONSOLE LOGGING - MICROSOFT.EXTENSIONS.LOGGING WITH ATTRIBUTED ROUTES
 // ═══════════════════════════════════════════════════════════════════════════════
 //
-// This sample demonstrates NuruApp.CreateBuilder(args) with console logging.
-// The builder provides full DI container setup for ILogger<T> injection.
+// This sample demonstrates NuruApp.CreateBuilder(args) with console logging
+// and attributed routes. ILogger<T> is injected via DI into handlers.
 //
-// REQUIRED PACKAGES:
-//   #:package Mediator.Abstractions    - Required by NuruApp.CreateBuilder
-//   #:package Mediator.SourceGenerator - Generates AddMediator() in YOUR assembly
-//
-// LOGGING CONVENIENCE METHODS:
-//   .UseConsoleLogging()              - Information level (default)
-//   .UseConsoleLogging(LogLevel.X)    - Custom level (Trace/Debug/Information/Warning/Error)
-//   .UseDebugLogging()                - Alias for UseConsoleLogging(LogLevel.Trace)
 // ═══════════════════════════════════════════════════════════════════════════════
 
 using TimeWarp.Nuru;
-using Mediator;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
-// Active example: Delegate routes with ILogger<T> injection
 NuruCoreApp app = NuruApp.CreateBuilder(args)
-    .ConfigureServices(services => services.AddMediator())
-    .UseConsoleLogging()
-    .Map("test")
-      .WithHandler((ILogger<Program> logger) =>
-      {
-        logger.LogTrace("This is a TRACE message (very detailed)");
-        logger.LogDebug("This is a DEBUG message (detailed)");
-        logger.LogInformation("This is an INFORMATION message - Test command executed!");
-        logger.LogWarning("This is a WARNING message");
-        logger.LogError("This is an ERROR message");
-        Console.WriteLine("✓ Test delegate completed");
-      })
-      .AsCommand()
-      .Done()
-    .Map("greet {name}")
-      .WithHandler((string name, ILogger<Program> logger) =>
-      {
-        logger.LogInformation("Greeting user: {Name}", name);
-        Console.WriteLine($"Hello, {name}!");
-      })
-      .AsCommand()
-      .Done()
+    .ConfigureServices(services => services.AddLogging(builder => builder.AddConsole()))
     .Build();
 
 return await app.RunAsync(args);
 
-// Commands that use ILogger to demonstrate logging in action
-public sealed class TestCommand : IRequest
+/// <summary>Test query demonstrating all log levels.</summary>
+[NuruRoute("test", Description = "Test all logging levels")]
+public sealed class TestQuery : IQuery<Unit>
 {
-  internal sealed class Handler : IRequestHandler<TestCommand>
+  public sealed class Handler : IQueryHandler<TestQuery, Unit>
   {
     private readonly ILogger<Handler> Logger;
 
@@ -67,24 +35,27 @@ public sealed class TestCommand : IRequest
       Logger = logger;
     }
 
-    public ValueTask<Unit> Handle(TestCommand request, CancellationToken cancellationToken)
+    public ValueTask<Unit> Handle(TestQuery query, CancellationToken ct)
     {
       Logger.LogTrace("This is a TRACE message (very detailed)");
       Logger.LogDebug("This is a DEBUG message (detailed)");
       Logger.LogInformation("This is an INFORMATION message - Test command executed!");
       Logger.LogWarning("This is a WARNING message");
       Logger.LogError("This is an ERROR message");
-      Console.WriteLine("✓ Test command completed");
+      Console.WriteLine("✓ Test query completed");
       return default;
     }
   }
 }
 
-public sealed class GreetCommand : IRequest
+/// <summary>Greet query with ILogger injection.</summary>
+[NuruRoute("greet", Description = "Greet someone by name")]
+public sealed class GreetQuery : IQuery<Unit>
 {
+  [Parameter(Description = "Name of the person to greet")]
   public string Name { get; set; } = string.Empty;
 
-  internal sealed class Handler : IRequestHandler<GreetCommand>
+  public sealed class Handler : IQueryHandler<GreetQuery, Unit>
   {
     private readonly ILogger<Handler> Logger;
 
@@ -93,10 +64,10 @@ public sealed class GreetCommand : IRequest
       Logger = logger;
     }
 
-    public ValueTask<Unit> Handle(GreetCommand request, CancellationToken cancellationToken)
+    public ValueTask<Unit> Handle(GreetQuery query, CancellationToken ct)
     {
-      Logger.LogInformation("Greeting user: {Name}", request.Name);
-      Console.WriteLine($"Hello, {request.Name}!");
+      Logger.LogInformation("Greeting user: {Name}", query.Name);
+      Console.WriteLine($"Hello, {query.Name}!");
       return default;
     }
   }

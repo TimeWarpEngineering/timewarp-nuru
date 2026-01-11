@@ -30,6 +30,7 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
   private ReplModel? ReplOptions;
   private bool HasConfiguration;
   private bool HasCheckUpdatesRoute;
+  private LoggingConfiguration? LoggingConfiguration;
   private readonly List<RouteDefinition> Routes = [];
   private readonly List<BehaviorDefinition> Behaviors = [];
   private readonly List<ServiceDefinition> Services = [];
@@ -130,6 +131,17 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
   public TSelf AddConfiguration()
   {
     HasConfiguration = true;
+    return (TSelf)this;
+  }
+
+  /// <summary>
+  /// Sets the logging configuration.
+  /// Called when AddLogging(...) is detected in ConfigureServices.
+  /// </summary>
+  /// <param name="config">The logging configuration.</param>
+  public TSelf SetLoggingConfiguration(LoggingConfiguration config)
+  {
+    LoggingConfiguration = config;
     return (TSelf)this;
   }
 
@@ -259,7 +271,8 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
       Services: [.. Services],
       InterceptSites: [.. InterceptSites],
       UserUsings: [],  // Usings are populated by AppExtractor, not the builder
-      CustomConverters: [.. CustomConverters]);
+      CustomConverters: [.. CustomConverters],
+      LoggingConfiguration: LoggingConfiguration);
   }
 
   /// <summary>
@@ -285,6 +298,7 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
   IIrAppBuilder IIrAppBuilder.AddRepl() => AddRepl();
   IIrAppBuilder IIrAppBuilder.AddRepl(ReplModel replOptions) => AddRepl(replOptions);
   IIrAppBuilder IIrAppBuilder.AddConfiguration() => AddConfiguration();
+  IIrAppBuilder IIrAppBuilder.SetLoggingConfiguration(LoggingConfiguration config) => SetLoggingConfiguration(config);
   IIrAppBuilder IIrAppBuilder.AddCheckUpdatesRoute() => AddCheckUpdatesRoute();
   IIrAppBuilder IIrAppBuilder.AddBehavior(BehaviorDefinition behavior) => AddBehavior(behavior);
   IIrAppBuilder IIrAppBuilder.AddService(ServiceDefinition service) => AddService(service);

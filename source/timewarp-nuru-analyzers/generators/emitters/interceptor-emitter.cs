@@ -379,6 +379,7 @@ internal static class InterceptorEmitter
       Services: [.. model.AllServices],
       InterceptSites: [], // Not needed for helpers
       UserUsings: model.UserUsings,
-      CustomConverters: [.. model.AllConverters]);
+      CustomConverters: [.. model.AllConverters],
+      LoggingConfiguration: null); // Combined model doesn't use logging config
   }
 }

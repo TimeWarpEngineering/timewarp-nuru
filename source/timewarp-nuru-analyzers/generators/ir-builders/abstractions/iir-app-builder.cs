@@ -79,6 +79,13 @@ public interface IIrAppBuilder : IIrRouteSource
   IIrAppBuilder AddConfiguration();
 
   /// <summary>
+  /// Sets the logging configuration from AddLogging().
+  /// </summary>
+  /// <param name="config">The logging configuration.</param>
+  /// <returns>This builder for chaining.</returns>
+  IIrAppBuilder SetLoggingConfiguration(LoggingConfiguration config);
+
+  /// <summary>
   /// Enables the --check-updates route for GitHub version checking.
   /// </summary>
   /// <returns>This builder for chaining.</returns>

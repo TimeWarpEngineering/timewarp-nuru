@@ -20,6 +20,7 @@ namespace TimeWarp.Nuru.Generators;
 /// <param name="InterceptSites">Locations of all RunAsync() calls for interceptor</param>
 /// <param name="UserUsings">User's using directives to include in generated code</param>
 /// <param name="CustomConverters">Custom type converters registered via AddTypeConverter()</param>
+/// <param name="LoggingConfiguration">Logging configuration from AddLogging(), if configured</param>
 public sealed record AppModel(
   string? VariableName,
   string? Name,
@@ -36,7 +37,8 @@ public sealed record AppModel(
   ImmutableArray<ServiceDefinition> Services,
   ImmutableArray<InterceptSiteModel> InterceptSites,
   ImmutableArray<string> UserUsings,
-  ImmutableArray<CustomConverterDefinition> CustomConverters)
+  ImmutableArray<CustomConverterDefinition> CustomConverters,
+  LoggingConfiguration? LoggingConfiguration)
 {
   /// <summary>
   /// Creates an empty AppModel with required intercept sites.
@@ -57,7 +59,8 @@ public sealed record AppModel(
     Services: [],
     InterceptSites: interceptSites,
     UserUsings: [],
-    CustomConverters: []);
+    CustomConverters: [],
+    LoggingConfiguration: null);
 
   /// <summary>
   /// Creates an empty AppModel with a single intercept site.
@@ -79,6 +82,11 @@ public sealed record AppModel(
   /// Gets whether this app has any services registered.
   /// </summary>
   public bool HasServices => Services.Length > 0;
+
+  /// <summary>
+  /// Gets whether this app has logging configured via AddLogging().
+  /// </summary>
+  public bool HasLogging => LoggingConfiguration is not null;
 
   /// <summary>
   /// Gets routes sorted by specificity (highest first).

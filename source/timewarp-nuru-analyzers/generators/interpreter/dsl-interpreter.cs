@@ -746,6 +746,17 @@ public sealed class DslInterpreter
       appBuilder.AddService(service);
     }
 
+    // Extract logging configuration from AddLogging() if present
+    LoggingConfiguration? loggingConfig = ServiceExtractor.ExtractLoggingConfiguration(
+      invocation,
+      SemanticModel,
+      CancellationToken);
+
+    if (loggingConfig is not null)
+    {
+      appBuilder.SetLoggingConfiguration(loggingConfig);
+    }
+
     return appBuilder;
   }
 

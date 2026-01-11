@@ -313,4 +313,137 @@ internal static class ServiceExtractor
 
     return allServices.ToImmutable();
   }
+
+  /// <summary>
+  /// Extracts logging configuration from a ConfigureServices() invocation.
+  /// Looks for AddLogging(...) calls and captures the lambda body.
+  /// </summary>
+  /// <param name="configureServicesInvocation">The .ConfigureServices(...) invocation.</param>
+  /// <param name="semanticModel">Semantic model for type resolution.</param>
+  /// <param name="cancellationToken">Cancellation token.</param>
+  /// <returns>LoggingConfiguration if AddLogging() is found, otherwise null.</returns>
+  public static LoggingConfiguration? ExtractLoggingConfiguration
+  (
+    InvocationExpressionSyntax configureServicesInvocation,
+    SemanticModel semanticModel,
+    CancellationToken cancellationToken
+  )
+  {
+    ArgumentListSyntax? args = configureServicesInvocation.ArgumentList;
+    if (args is null || args.Arguments.Count == 0)
+      return null;
+
+    ExpressionSyntax configureExpression = args.Arguments[0].Expression;
+
+    // Handle lambda expressions
+    if (configureExpression is LambdaExpressionSyntax lambda)
+    {
+      return ExtractLoggingFromLambdaBody(lambda.Body, semanticModel, cancellationToken);
+    }
+
+    // Handle method group references
+    if (configureExpression is IdentifierNameSyntax or MemberAccessExpressionSyntax)
+    {
+      return ExtractLoggingFromMethodGroup(configureExpression, semanticModel, cancellationToken);
+    }
+
+    return null;
+  }
+
+  /// <summary>
+  /// Extracts logging configuration from a lambda body.
+  /// </summary>
+  private static LoggingConfiguration? ExtractLoggingFromLambdaBody
+  (
+    CSharpSyntaxNode body,
+    SemanticModel semanticModel,
+    CancellationToken cancellationToken
+  )
+  {
+    // Find AddLogging invocations in the body
+    IEnumerable<InvocationExpressionSyntax> invocations = body.DescendantNodesAndSelf()
+      .OfType<InvocationExpressionSyntax>();
+
+    foreach (InvocationExpressionSyntax invocation in invocations)
+    {
+      string? methodName = GetMethodName(invocation);
+      if (methodName == "AddLogging")
+      {
+        return ExtractLoggingLambdaBody(invocation);
+      }
+    }
+
+    return null;
+  }
+
+  /// <summary>
+  /// Extracts logging configuration from a method group reference.
+  /// </summary>
+  private static LoggingConfiguration? ExtractLoggingFromMethodGroup
+  (
+    ExpressionSyntax methodGroupExpression,
+    SemanticModel semanticModel,
+    CancellationToken cancellationToken
+  )
+  {
+    // Resolve the method symbol
+    SymbolInfo symbolInfo = semanticModel.GetSymbolInfo(methodGroupExpression, cancellationToken);
+
+    IMethodSymbol? methodSymbol = symbolInfo.Symbol as IMethodSymbol
+      ?? symbolInfo.CandidateSymbols.OfType<IMethodSymbol>().FirstOrDefault();
+
+    if (methodSymbol is null)
+      return null;
+
+    // Get the method's syntax declaration
+    SyntaxReference? syntaxRef = methodSymbol.DeclaringSyntaxReferences.FirstOrDefault();
+    if (syntaxRef is null)
+      return null;
+
+    Microsoft.CodeAnalysis.SyntaxNode? methodSyntax = syntaxRef.GetSyntax(cancellationToken);
+
+    // Extract the body based on method syntax type
+    CSharpSyntaxNode? methodBody = methodSyntax switch
+    {
+      MethodDeclarationSyntax method => (CSharpSyntaxNode?)method.Body ?? method.ExpressionBody?.Expression,
+      LocalFunctionStatementSyntax localFunc => (CSharpSyntaxNode?)localFunc.Body ?? localFunc.ExpressionBody?.Expression,
+      _ => null
+    };
+
+    if (methodBody is null)
+      return null;
+
+    // Get semantic model for the method's syntax tree (may be different from current)
+    SemanticModel methodSemanticModel = methodSyntax.SyntaxTree == semanticModel.SyntaxTree
+      ? semanticModel
+      : semanticModel.Compilation.GetSemanticModel(methodSyntax.SyntaxTree);
+
+    return ExtractLoggingFromLambdaBody(methodBody, methodSemanticModel, cancellationToken);
+  }
+
+  /// <summary>
+  /// Extracts the lambda body text from an AddLogging() invocation.
+  /// </summary>
+  private static LoggingConfiguration? ExtractLoggingLambdaBody(InvocationExpressionSyntax addLoggingInvocation)
+  {
+    ArgumentListSyntax? args = addLoggingInvocation.ArgumentList;
+    if (args is null || args.Arguments.Count == 0)
+      return null;
+
+    ExpressionSyntax firstArg = args.Arguments[0].Expression;
+
+    // Handle lambda: AddLogging(builder => builder.AddConsole())
+    if (firstArg is LambdaExpressionSyntax lambda)
+    {
+      // Get the lambda body as text
+      string bodyText = lambda.Body.ToFullString().Trim();
+      return new LoggingConfiguration(bodyText);
+    }
+
+    // Handle method group: AddLogging(ConfigureLogging)
+    // For now, we don't support method groups in AddLogging - they would need more complex resolution
+    // The user would need to inline the configuration
+
+    return null;
+  }
 }

@@ -22,7 +22,6 @@ public class ColonFilteringTests
       .Map("connect {dataSource}").WithHandler((string dataSource) =>
       {
         capturedDataSource = dataSource;
-        return 0;
       }).AsCommand().Done()
       .Build();
 
@@ -44,7 +43,6 @@ public class ColonFilteringTests
       .Map("connect --data-source {dataSource}").WithHandler((string dataSource) =>
       {
         capturedDataSource = dataSource;
-        return 0;
       }).AsCommand().Done()
       .Build();
 
@@ -68,7 +66,6 @@ public class ColonFilteringTests
       {
         capturedEnv = env;
         capturedConnectionString = connectionString;
-        return 0;
       }).AsCommand().Done()
       .Build();
 
@@ -91,7 +88,6 @@ public class ColonFilteringTests
       .Map("fetch {url}").WithHandler((string url) =>
       {
         capturedUrl = url;
-        return 0;
       }).AsQuery().Done()
       .Build();
 
@@ -113,7 +109,6 @@ public class ColonFilteringTests
       .Map("connect {dataSource}").WithHandler((string dataSource) =>
       {
         capturedDataSource = dataSource;
-        return 0;
       }).AsCommand().Done()
       .Build();
 
@@ -135,7 +130,6 @@ public class ColonFilteringTests
       .Map("docker run {*args}").WithHandler((string[] args) =>
       {
         capturedArgs = args;
-        return 0;
       }).AsCommand().Done()
       .Build();
 
@@ -167,7 +161,6 @@ public class ColonFilteringTests
       .Map("test -x {value}").WithHandler((string value) =>
       {
         capturedValue = value;
-        return 0;
       }).AsCommand().Done()
       .Build();
 
@@ -189,7 +182,6 @@ public class ColonFilteringTests
       .Map("run {param}").WithHandler((string param) =>
       {
         capturedParam = param;
-        return 0;
       }).AsCommand().Done()
       .Build();
 
@@ -215,7 +207,6 @@ public class ColonFilteringTests
       .Map("fetch --url {url}").WithHandler((string url) =>
       {
         capturedUrl = url;
-        return 0;
       }).AsQuery().Done()
       .Build();
 
@@ -237,7 +228,6 @@ public class ColonFilteringTests
       .Map("connect --connection {conn}").WithHandler((string conn) =>
       {
         capturedConnection = conn;
-        return 0;
       }).AsCommand().Done()
       .Build();
 
@@ -259,7 +249,6 @@ public class ColonFilteringTests
       .Map("run {param}").WithHandler((string param) =>
       {
         capturedParam = param;
-        return 0;
       }).AsCommand().Done()
       .Build();
 

@@ -19,7 +19,7 @@ public class RepeatedOptionsTests
     string[]? boundE = null;
     NuruCoreApp app = new NuruAppBuilder()
       .Map("docker run --env {e}*")
-      .WithHandler((string[] e) => { boundE = e; return 0; })
+      .WithHandler((string[] e) => { boundE = e; })
       .AsCommand()
       .Done()
       .Build();
@@ -44,7 +44,7 @@ public class RepeatedOptionsTests
     string[]? boundE = null;
     NuruCoreApp app = new NuruAppBuilder()
       .Map("docker run --env {e}*")
-      .WithHandler((string[] e) => { boundE = e; return 0; })
+      .WithHandler((string[] e) => { boundE = e; })
       .AsCommand()
       .Done()
       .Build();
@@ -66,7 +66,7 @@ public class RepeatedOptionsTests
     int[]? boundId = null;
     NuruCoreApp app = new NuruAppBuilder()
       .Map("process --id {id:int}*")
-      .WithHandler((int[] id) => { boundId = id; return 0; })
+      .WithHandler((int[] id) => { boundId = id; })
       .AsCommand()
       .Done()
       .Build();
@@ -91,7 +91,7 @@ public class RepeatedOptionsTests
     string[]? boundE = null;
     NuruCoreApp app = new NuruAppBuilder()
       .Map("docker run --env,-e {e}*")
-      .WithHandler((string[] e) => { boundE = e; return 0; })
+      .WithHandler((string[] e) => { boundE = e; })
       .AsCommand()
       .Done()
       .Build();
@@ -118,7 +118,7 @@ public class RepeatedOptionsTests
     bool boundVerbose = false;
     NuruCoreApp app = new NuruAppBuilder()
       .Map("deploy --env {e} --tag {t}* --verbose")
-      .WithHandler((string e, string[] t, bool verbose) => { boundE = e; boundT = t; boundVerbose = verbose; return 0; })
+      .WithHandler((string e, string[] t, bool verbose) => { boundE = e; boundT = t; boundVerbose = verbose; })
       .AsCommand()
       .Done()
       .Build();
@@ -144,7 +144,7 @@ public class RepeatedOptionsTests
     string[]? boundF = null;
     NuruCoreApp app = new NuruAppBuilder()
       .Map("run --flag {f}*")
-      .WithHandler((string[] f) => { boundF = f; return 0; })
+      .WithHandler((string[] f) => { boundF = f; })
       .AsCommand()
       .Done()
       .Build();

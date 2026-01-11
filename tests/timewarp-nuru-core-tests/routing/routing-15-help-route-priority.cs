@@ -27,7 +27,6 @@ public class HelpRoutePriorityTests
       .Map("recent --verbose?").WithHandler((bool verbose) =>
       {
         userRouteExecuted = true;
-        return 0;
       }).WithDescription("Show recent items").AsQuery().Done()
       .Build();
 
@@ -48,7 +47,6 @@ public class HelpRoutePriorityTests
       .Map("recent --verbose?").WithHandler((bool verbose) =>
       {
         userRouteExecuted = true;
-        return 0;
       }).WithDescription("Show recent items").AsQuery().Done()
       .Build();
 
@@ -71,7 +69,6 @@ public class HelpRoutePriorityTests
       {
         userRouteExecuted = true;
         verboseValue = verbose;
-        return 0;
       }).WithDescription("Show recent items").AsQuery().Done()
       .Build();
 
@@ -94,7 +91,6 @@ public class HelpRoutePriorityTests
       .Map("list --all? --verbose?").WithHandler((bool all, bool verbose) =>
       {
         userRouteExecuted = true;
-        return 0;
       }).WithDescription("List items").AsQuery().Done()
       .Build();
 

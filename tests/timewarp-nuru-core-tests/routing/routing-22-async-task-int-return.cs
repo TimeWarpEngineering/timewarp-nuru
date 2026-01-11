@@ -28,7 +28,7 @@ public class AsyncTaskIntReturnTests
       .Map("").WithHandler(async () =>
       {
         await Task.Delay(1);
-        return 0;
+        return 42; // Outputs "42" to terminal (tests Task<int> handler support)
       }).WithDescription("Test async Task<int>").AsCommand().Done()
       .Build();
 

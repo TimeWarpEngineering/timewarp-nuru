@@ -24,7 +24,6 @@ public class NegativeNumberTests
       {
         capturedX = x;
         capturedY = y;
-        return 0;
       }).AsCommand().Done()
       .Build();
 
@@ -50,7 +49,6 @@ public class NegativeNumberTests
       {
         capturedX = x;
         capturedY = y;
-        return 0;
       }).AsCommand().Done()
       .Build();
 
@@ -78,7 +76,6 @@ public class NegativeNumberTests
         capturedA = a;
         capturedB = b;
         capturedC = c;
-        return 0;
       }).AsCommand().Done()
       .Build();
 
@@ -105,7 +102,6 @@ public class NegativeNumberTests
       {
         capturedValue = value;
         capturedFlag = flag;
-        return 0;
       }).AsCommand().Done()
       .Build();
 
@@ -129,7 +125,6 @@ public class NegativeNumberTests
       .Map("price {amount:decimal}").WithHandler((decimal amount) =>
       {
         capturedValue = amount;
-        return 0;
       }).AsCommand().Done()
       .Build();
 
@@ -152,7 +147,6 @@ public class NegativeNumberTests
       .Map("echo {text}").WithHandler((string text) =>
       {
         capturedText = text;
-        return 0;
       }).AsQuery().Done()
       .Build();
 
@@ -175,7 +169,6 @@ public class NegativeNumberTests
       .Map("test --verbose").WithHandler((bool verbose) =>
       {
         capturedVerbose = verbose;
-        return 0;
       }).AsCommand().Done()
       .Build();
 
@@ -204,7 +197,6 @@ public class NegativeNumberTests
       .Map("calc {value:double}").WithHandler((double value) =>
       {
         capturedValue = value;
-        return 0;
       }).AsCommand().Done()
       .Build();
 
@@ -227,7 +219,6 @@ public class NegativeNumberTests
       .Map("calc --amount {amount:int}").WithHandler((int amount) =>
       {
         capturedAmount = amount;
-        return 0;
       }).AsCommand().Done()
       .Build();
 

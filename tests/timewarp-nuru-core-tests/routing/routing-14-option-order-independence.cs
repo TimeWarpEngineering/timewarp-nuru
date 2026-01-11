@@ -28,7 +28,6 @@ public class OptionOrderIndependenceTests
           boundSource = source;
           boundCompress = compress;
           boundDest = dest;
-          return 0;
         }).AsCommand().Done()
       .Build();
 
@@ -58,7 +57,6 @@ public class OptionOrderIndependenceTests
           boundSource = source;
           boundCompress = compress;
           boundDest = dest;
-          return 0;
         }).AsCommand().Done()
       .Build();
 
@@ -88,7 +86,6 @@ public class OptionOrderIndependenceTests
           boundAlpha = alpha;
           boundBeta = value;
           boundGamma = gamma;
-          return 0;
         }).AsCommand().Done()
       .Build();
 
@@ -117,7 +114,6 @@ public class OptionOrderIndependenceTests
           boundAlpha = alpha;
           boundBeta = value;
           boundGamma = gamma;
-          return 0;
         }).AsCommand().Done()
       .Build();
 
@@ -146,7 +142,6 @@ public class OptionOrderIndependenceTests
           boundAlpha = alpha;
           boundBeta = value;
           boundGamma = gamma;
-          return 0;
         }).AsCommand().Done()
       .Build();
 
@@ -177,7 +172,6 @@ public class OptionOrderIndependenceTests
           boundCompress = compress;
           boundOutput = dest;
           boundVerbose = verbose;
-          return 0;
         }).AsCommand().Done()
       .Build();
 
@@ -225,7 +219,6 @@ public class OptionOrderIndependenceTests
         {
           boundVerbose = verbose;
           boundOutput = file;
-          return 0;
         }).AsCommand().Done()
       .Build();
 
@@ -269,7 +262,6 @@ public class OptionOrderIndependenceTests
         (string? file) =>
         {
           boundFile = file;
-          return 0;
         }).AsCommand().Done()
       .Build();
 

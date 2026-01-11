@@ -21,7 +21,7 @@ public class ComplexIntegrationTests
     string[]? boundE = null;
     string[]? boundCmd = null;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("docker run -i -t --env {e}* -- {*cmd}").WithHandler((bool i, bool t, string[] e, string[] cmd) => { boundI = i; boundT = t; boundE = e; boundCmd = cmd; return 0; }).AsCommand().Done()
+      .Map("docker run -i -t --env {e}* -- {*cmd}").WithHandler((bool i, bool t, string[] e, string[] cmd) => { boundI = i; boundT = t; boundE = e; boundCmd = cmd; }).AsCommand().Done()
       .Build();
 
     // Act
@@ -51,7 +51,7 @@ public class ComplexIntegrationTests
     bool boundAmend = false;
     bool boundNoVerify = false;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("git commit --message,-m {msg} --amend --no-verify").WithHandler((string msg, bool amend, bool noVerify) => { boundMsg = msg; boundAmend = amend; boundNoVerify = noVerify; return 0; }).AsCommand().Done()
+      .Map("git commit --message,-m {msg} --amend --no-verify").WithHandler((string msg, bool amend, bool noVerify) => { boundMsg = msg; boundAmend = amend; boundNoVerify = noVerify; }).AsCommand().Done()
       .Build();
 
     // Act
@@ -74,7 +74,7 @@ public class ComplexIntegrationTests
     bool boundVerbose = false;
     bool boundWatch = false;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("build {project?} --config? {cfg?} --verbose --watch").WithHandler((string? project, string? cfg, bool verbose, bool watch) => { boundProject = project; boundCfg = cfg; boundVerbose = verbose; boundWatch = watch; return 0; }).AsCommand().Done()
+      .Map("build {project?} --config? {cfg?} --verbose --watch").WithHandler((string? project, string? cfg, bool verbose, bool watch) => { boundProject = project; boundCfg = cfg; boundVerbose = verbose; boundWatch = watch; }).AsCommand().Done()
       .Build();
 
     // Act
@@ -97,7 +97,7 @@ public class ComplexIntegrationTests
     string[]? boundT = null;
     string? boundScript = null;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("process --id {id:int}* --tag {t}* {script}").WithHandler((int[] id, string[] t, string script) => { boundId = id; boundT = t; boundScript = script; return 0; }).AsCommand().Done()
+      .Map("process --id {id:int}* --tag {t}* {script}").WithHandler((int[] id, string[] t, string script) => { boundId = id; boundT = t; boundScript = script; }).AsCommand().Done()
       .Build();
 
     // Act

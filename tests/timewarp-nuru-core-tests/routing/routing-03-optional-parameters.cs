@@ -18,7 +18,7 @@ public class OptionalParametersTests
     // Arrange
     string? boundEnv = null;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("deploy {env}").WithHandler((string env) => { boundEnv = env; return 0; }).AsCommand().Done()
+      .Map("deploy {env}").WithHandler((string env) => { boundEnv = env; }).AsCommand().Done()
       .Build();
 
     // Act
@@ -54,7 +54,7 @@ public class OptionalParametersTests
     // Arrange
     string? boundEnv = null;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("deploy {env?}").WithHandler((string? env) => { boundEnv = env; return 0; }).AsCommand().Done()
+      .Map("deploy {env?}").WithHandler((string? env) => { boundEnv = env; }).AsCommand().Done()
       .Build();
 
     // Act
@@ -72,7 +72,7 @@ public class OptionalParametersTests
     // Arrange
     string? boundEnv = "unexpected";
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("deploy {env?}").WithHandler((string? env) => { boundEnv = env; return 0; }).AsCommand().Done()
+      .Map("deploy {env?}").WithHandler((string? env) => { boundEnv = env; }).AsCommand().Done()
       .Build();
 
     // Act
@@ -90,7 +90,7 @@ public class OptionalParametersTests
     // Arrange
     int? boundCount = null;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("list {count:int?}").WithHandler((int? count) => { boundCount = count; return 0; }).AsQuery().Done()
+      .Map("list {count:int?}").WithHandler((int? count) => { boundCount = count; }).AsQuery().Done()
       .Build();
 
     // Act
@@ -108,7 +108,7 @@ public class OptionalParametersTests
     // Arrange
     int? boundCount = 5;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("list {count:int?}").WithHandler((int? count) => { boundCount = count; return 0; }).AsQuery().Done()
+      .Map("list {count:int?}").WithHandler((int? count) => { boundCount = count; }).AsQuery().Done()
       .Build();
 
     // Act
@@ -127,7 +127,7 @@ public class OptionalParametersTests
     string? boundEnv = null;
     string? boundTag = null;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("deploy {env} {tag?}").WithHandler((string env, string? tag) => { boundEnv = env; boundTag = tag; return 0; }).AsCommand().Done()
+      .Map("deploy {env} {tag?}").WithHandler((string env, string? tag) => { boundEnv = env; boundTag = tag; }).AsCommand().Done()
       .Build();
 
     // Act
@@ -147,7 +147,7 @@ public class OptionalParametersTests
     string? boundEnv = null;
     string? boundTag = "unexpected";
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("deploy {env} {tag?}").WithHandler((string env, string? tag) => { boundEnv = env; boundTag = tag; return 0; }).AsCommand().Done()
+      .Map("deploy {env} {tag?}").WithHandler((string env, string? tag) => { boundEnv = env; boundTag = tag; }).AsCommand().Done()
       .Build();
 
     // Act

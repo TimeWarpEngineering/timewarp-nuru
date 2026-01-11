@@ -18,7 +18,7 @@ public class ParameterBindingTests
     // Arrange
     string? boundName = null;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("greet {name}").WithHandler((string name) => { boundName = name; return 0; }).AsQuery().Done()
+      .Map("greet {name}").WithHandler((string name) => { boundName = name; }).AsQuery().Done()
       .Build();
 
     // Act
@@ -36,7 +36,7 @@ public class ParameterBindingTests
     // Arrange
     int boundMs = 0;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("delay {ms:int}").WithHandler((int ms) => { boundMs = ms; return 0; }).AsCommand().Done()
+      .Map("delay {ms:int}").WithHandler((int ms) => { boundMs = ms; }).AsCommand().Done()
       .Build();
 
     // Act
@@ -72,7 +72,7 @@ public class ParameterBindingTests
     // Arrange
     double boundValue = 0;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("calculate {value:double}").WithHandler((double value) => { boundValue = value; return 0; }).AsCommand().Done()
+      .Map("calculate {value:double}").WithHandler((double value) => { boundValue = value; }).AsCommand().Done()
       .Build();
 
     // Act
@@ -90,7 +90,7 @@ public class ParameterBindingTests
     // Arrange
     bool boundFlag = false;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("set {flag:bool}").WithHandler((bool flag) => { boundFlag = flag; return 0; }).AsCommand().Done()
+      .Map("set {flag:bool}").WithHandler((bool flag) => { boundFlag = flag; }).AsCommand().Done()
       .Build();
 
     // Act
@@ -108,7 +108,7 @@ public class ParameterBindingTests
     // Arrange
     bool boundFlag = true;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("set {flag:bool}").WithHandler((bool flag) => { boundFlag = flag; return 0; }).AsCommand().Done()
+      .Map("set {flag:bool}").WithHandler((bool flag) => { boundFlag = flag; }).AsCommand().Done()
       .Build();
 
     // Act
@@ -127,7 +127,7 @@ public class ParameterBindingTests
     string? boundHost = null;
     int boundPort = 0;
     NuruCoreApp app = new NuruAppBuilder()
-      .Map("connect {host} {port:int}").WithHandler((string host, int port) => { boundHost = host; boundPort = port; return 0; }).AsCommand().Done()
+      .Map("connect {host} {port:int}").WithHandler((string host, int port) => { boundHost = host; boundPort = port; }).AsCommand().Done()
       .Build();
 
     // Act

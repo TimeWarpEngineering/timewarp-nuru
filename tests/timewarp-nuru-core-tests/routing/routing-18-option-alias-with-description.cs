@@ -30,7 +30,6 @@ public class OptionAliasWithDescriptionTests
       {
         capturedName = name;
         upperUsed = upper;
-        return 0;
       }).AsQuery().Done()
       .Build();
 
@@ -56,7 +55,6 @@ public class OptionAliasWithDescriptionTests
       {
         capturedName = name;
         upperUsed = upper;
-        return 0;
       }).AsQuery().Done()
       .Build();
 
@@ -81,7 +79,6 @@ public class OptionAliasWithDescriptionTests
       {
         capturedName = name;
         upperUsed = upper;
-        return 0;
       }).AsQuery().Done()
       .Build();
 
@@ -108,7 +105,6 @@ public class OptionAliasWithDescriptionTests
       {
         capturedEnv = env;
         dryRun = dryrun;
-        return 0;
       }).AsCommand().Done()
       .Build();
 #pragma warning restore RCS1163, IDE0060
@@ -135,7 +131,6 @@ public class OptionAliasWithDescriptionTests
       {
         capturedEnv = env;
         dryRun = dryrun;
-        return 0;
       }).AsCommand().Done()
       .Build();
 #pragma warning restore RCS1163, IDE0060

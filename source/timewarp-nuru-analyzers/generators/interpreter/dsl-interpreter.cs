@@ -37,6 +37,7 @@ public sealed class DslInterpreter
   // Per-interpretation state
   private Dictionary<ISymbol, object?> VariableState = null!;
   private List<IrAppBuilder> BuiltApps = null!;
+  private List<Diagnostic> CollectedDiagnostics = null!;
 
   /// <summary>
   /// Creates a new DSL interpreter.
@@ -61,11 +62,44 @@ public sealed class DslInterpreter
     // Fresh state per interpretation
     VariableState = new Dictionary<ISymbol, object?>(SymbolEqualityComparer.Default);
     BuiltApps = [];
+    CollectedDiagnostics = [];
 
     ProcessBlock(block);
 
     // Finalize all built apps
     return BuiltApps.ConvertAll(app => app.FinalizeModel());
+  }
+
+  /// <summary>
+  /// Interprets a block of statements to produce an ExtractionResult with diagnostics.
+  /// </summary>
+  /// <param name="block">The block containing DSL statements.</param>
+  /// <returns>Extraction result containing models and any diagnostics.</returns>
+  public ExtractionResult InterpretWithDiagnostics(BlockSyntax block)
+  {
+    ArgumentNullException.ThrowIfNull(block);
+
+    // Fresh state per interpretation
+    VariableState = new Dictionary<ISymbol, object?>(SymbolEqualityComparer.Default);
+    BuiltApps = [];
+    CollectedDiagnostics = [];
+
+    try
+    {
+      ProcessBlock(block);
+    }
+    catch (InvalidOperationException ex)
+    {
+      // Convert exception to diagnostic (fallback for not-yet-converted throws)
+      CollectedDiagnostics.Add(CreateDiagnosticFromException(ex, block.GetLocation()));
+    }
+
+    // Finalize all built apps
+    List<AppModel> models = BuiltApps.ConvertAll(app => app.FinalizeModel());
+
+    // Return first model (or null) with collected diagnostics
+    AppModel? model = models.Count > 0 ? models[0] : null;
+    return new ExtractionResult(model, [.. CollectedDiagnostics]);
   }
 
   /// <summary>
@@ -81,6 +115,7 @@ public sealed class DslInterpreter
     // Fresh state per interpretation
     VariableState = new Dictionary<ISymbol, object?>(SymbolEqualityComparer.Default);
     BuiltApps = [];
+    CollectedDiagnostics = [];
 
     // Process each GlobalStatementSyntax member
     foreach (MemberDeclarationSyntax member in compilationUnit.Members)
@@ -95,6 +130,47 @@ public sealed class DslInterpreter
 
     // Finalize all built apps
     return BuiltApps.ConvertAll(app => app.FinalizeModel());
+  }
+
+  /// <summary>
+  /// Interprets top-level statements to produce an ExtractionResult with diagnostics.
+  /// </summary>
+  /// <param name="compilationUnit">The compilation unit containing top-level statements.</param>
+  /// <returns>Extraction result containing models and any diagnostics.</returns>
+  public ExtractionResult InterpretTopLevelStatementsWithDiagnostics(CompilationUnitSyntax compilationUnit)
+  {
+    ArgumentNullException.ThrowIfNull(compilationUnit);
+
+    // Fresh state per interpretation
+    VariableState = new Dictionary<ISymbol, object?>(SymbolEqualityComparer.Default);
+    BuiltApps = [];
+    CollectedDiagnostics = [];
+
+    try
+    {
+      // Process each GlobalStatementSyntax member
+      foreach (MemberDeclarationSyntax member in compilationUnit.Members)
+      {
+        CancellationToken.ThrowIfCancellationRequested();
+
+        if (member is GlobalStatementSyntax globalStatement)
+        {
+          ProcessStatement(globalStatement.Statement);
+        }
+      }
+    }
+    catch (InvalidOperationException ex)
+    {
+      // Convert exception to diagnostic (fallback for not-yet-converted throws)
+      CollectedDiagnostics.Add(CreateDiagnosticFromException(ex, compilationUnit.GetLocation()));
+    }
+
+    // Finalize all built apps
+    List<AppModel> models = BuiltApps.ConvertAll(app => app.FinalizeModel());
+
+    // Return first model (or null) with collected diagnostics
+    AppModel? model = models.Count > 0 ? models[0] : null;
+    return new ExtractionResult(model, [.. CollectedDiagnostics]);
   }
 
   // ═══════════════════════════════════════════════════════════════════════════════
@@ -932,6 +1008,26 @@ public sealed class DslInterpreter
     return typeName is "NuruCoreAppBuilder" or "NuruAppBuilder"
         or "EndpointBuilder" or "GroupBuilder" or "GroupEndpointBuilder"
         or "NestedCompiledRouteBuilder";
+  }
+
+  /// <summary>
+  /// Creates a diagnostic from an exception that occurred during interpretation.
+  /// Used as a fallback for not-yet-converted exception throws.
+  /// </summary>
+  private static Diagnostic CreateDiagnosticFromException(Exception exception, Location location)
+  {
+    // Use NURU_S999 as a general extraction error diagnostic
+    // This is a fallback - ideally all throws should be converted to proper diagnostics
+    DiagnosticDescriptor descriptor = new(
+      id: "NURU_S999",
+      title: "DSL Interpretation Error",
+      messageFormat: "{0}",
+      category: "TimeWarp.Nuru.Semantic",
+      defaultSeverity: DiagnosticSeverity.Error,
+      isEnabledByDefault: true,
+      description: "An error occurred while interpreting the DSL code.");
+
+    return Diagnostic.Create(descriptor, location, exception.Message);
   }
 
   /// <summary>

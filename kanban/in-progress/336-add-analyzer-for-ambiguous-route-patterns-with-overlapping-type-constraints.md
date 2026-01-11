@@ -184,14 +184,14 @@ Two routes with same signature but different type constraints → NURU_R001
 ## Checklist
 
 ### Phase 1: Extraction Error Collection
-- [ ] Create `ExtractionResult` record type
-- [ ] Modify `DslInterpreter` to collect errors instead of throwing
-- [ ] Modify `AppExtractor` to return `ExtractionResult`
+- [x] Create `ExtractionResult` record type
+- [x] Modify `DslInterpreter` to collect errors instead of throwing
+- [x] Modify `AppExtractor` to return `ExtractionResult`
 - [ ] Ensure route parse errors are collected during extraction
 
 ### Phase 2: Unified Analyzer
-- [ ] Create `NuruAnalyzer` using `AppExtractor`
-- [ ] Create `validation/ModelValidator.cs` to orchestrate validation
+- [x] Create `NuruAnalyzer` using `AppExtractor`
+- [x] Create `validation/ModelValidator.cs` to orchestrate validation
 - [ ] Move handler validation logic to model validator
 - [ ] Move route pattern validation logic to model validator
 - [ ] Remove `NuruRouteAnalyzer`
@@ -199,9 +199,9 @@ Two routes with same signature but different type constraints → NURU_R001
 - [ ] Update any tests that reference old analyzers
 
 ### Phase 3: Overlap Detection
-- [ ] Implement route structure signature generation
-- [ ] Implement `OverlapValidator` to detect conflicts
-- [ ] Report NURU_R001 for overlapping routes
+- [x] Implement route structure signature generation
+- [x] Implement `OverlapValidator` to detect conflicts
+- [x] Report NURU_R001 for overlapping routes
 - [ ] Add unit tests for overlap detection
 - [ ] Update `routing-07-route-selection.cs` to not have conflicts
 

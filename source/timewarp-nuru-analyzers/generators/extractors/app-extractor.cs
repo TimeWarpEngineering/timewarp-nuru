@@ -140,6 +140,84 @@ internal static class AppExtractor
   }
 
   /// <summary>
+  /// Extracts an AppModel from a RunAsync call site, returning an ExtractionResult with diagnostics.
+  /// This method collects errors as diagnostics instead of throwing exceptions.
+  /// </summary>
+  /// <param name="context">The generator syntax context containing the RunAsync invocation.</param>
+  /// <param name="cancellationToken">Cancellation token for the operation.</param>
+  /// <returns>Extraction result containing the model and any diagnostics.</returns>
+  public static ExtractionResult ExtractWithDiagnostics
+  (
+    GeneratorSyntaxContext context,
+    CancellationToken cancellationToken
+  )
+  {
+    // 1. Get the invocation expression (RunAsync call)
+    if (context.Node is not InvocationExpressionSyntax runAsyncInvocation)
+      return ExtractionResult.Empty;
+
+    // 2. Find the CompilationUnit (needed for both usings extraction and top-level statements)
+    CompilationUnitSyntax? compilationUnit = FindCompilationUnit(runAsyncInvocation);
+    if (compilationUnit is null)
+      return ExtractionResult.Empty;
+
+    // 3. Find the containing block (method body) or use top-level statements
+    DslInterpreter interpreter = new(context.SemanticModel, cancellationToken);
+    ExtractionResult result;
+
+    BlockSyntax? block = FindContainingBlock(runAsyncInvocation);
+    if (block is not null)
+    {
+      // Traditional method body
+      result = interpreter.InterpretWithDiagnostics(block);
+    }
+    else
+    {
+      // Top-level statements
+      result = interpreter.InterpretTopLevelStatementsWithDiagnostics(compilationUnit);
+    }
+
+    // 4. If we have a model, add user usings
+    if (result.Model is not null)
+    {
+      ImmutableArray<string> userUsings = ExtractUserUsings(compilationUnit);
+      AppModel modelWithUsings = result.Model with { UserUsings = userUsings };
+      return new ExtractionResult(modelWithUsings, result.Diagnostics);
+    }
+
+    return result;
+  }
+
+  /// <summary>
+  /// Extracts an AppModel with attributed routes, returning an ExtractionResult with diagnostics.
+  /// </summary>
+  /// <param name="context">The generator syntax context containing the RunAsync invocation.</param>
+  /// <param name="attributedRoutes">Routes extracted from [NuruRoute] classes.</param>
+  /// <param name="cancellationToken">Cancellation token for the operation.</param>
+  /// <returns>Extraction result containing the model and any diagnostics.</returns>
+  public static ExtractionResult ExtractWithAttributedRoutesAndDiagnostics
+  (
+    GeneratorSyntaxContext context,
+    ImmutableArray<RouteDefinition> attributedRoutes,
+    CancellationToken cancellationToken
+  )
+  {
+    ExtractionResult baseResult = ExtractWithDiagnostics(context, cancellationToken);
+    if (baseResult.Model is null)
+      return baseResult;
+
+    // Merge attributed routes with fluent routes
+    if (attributedRoutes.Length == 0)
+      return baseResult;
+
+    // Combine routes (fluent routes first, then attributed)
+    ImmutableArray<RouteDefinition> mergedRoutes = baseResult.Model.Routes.AddRange(attributedRoutes);
+    AppModel mergedModel = baseResult.Model with { Routes = mergedRoutes };
+
+    return new ExtractionResult(mergedModel, baseResult.Diagnostics);
+  }
+
+  /// <summary>
   /// Finds the containing block (method body) for a syntax node.
   /// Walks up the syntax tree until a BlockSyntax is found.
   /// </summary>

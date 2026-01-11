@@ -218,6 +218,54 @@ Boolean flags are scored but always optional:
 3. **Progressive Enhancement**: Add specific intercepts without breaking general patterns
 4. **Fallback Safety**: Always have a catch-all for unhandled cases
 5. **Order Matters**: When specificity is equal, first registered wins
+6. **No Type-Based Dispatch**: Type conversion failures are errors, not fallback triggers
+
+## Type Constraints and Route Selection
+
+**Important:** Type constraints affect specificity scoring but do **NOT** enable type-based route dispatch.
+
+### What Type Constraints Do
+- Typed parameters (`{id:int}`) score **20 points** in specificity
+- Untyped parameters (`{id}`) score **10 points** in specificity
+- A typed route will be attempted **before** an untyped route with the same structure
+
+### What Type Constraints Do NOT Do
+Type constraints do **not** create fallback behavior. If you define:
+```csharp
+.Map("delay {ms:int}").WithHandler((int ms) => ...)
+.Map("delay {duration}").WithHandler((string duration) => ...)
+```
+
+And the user types `delay abc`:
+1. The typed route (`delay {ms:int}`) is tried first (higher specificity)
+2. Type conversion fails (`"abc"` is not an int)
+3. User sees: `Error: Invalid value 'abc' for parameter 'ms'. Expected: int`
+4. The untyped route is **NOT** tried as a fallback
+
+### Why No Fallback?
+This design was chosen because:
+1. **Real CLIs don't do this** - git, docker, kubectl use explicit subcommands, not type-based dispatch
+2. **Clear error messages** - Users get "invalid value" not "unknown command"
+3. **Analyzer enforcement** - NURU_R001 detects and prevents overlapping typed patterns at compile time
+
+### Recommended Patterns
+Instead of relying on type-based fallback, use explicit patterns:
+```csharp
+// ✅ Explicit subcommands
+.Map("get-by-id {id:int}").WithHandler(...)
+.Map("get-by-name {name}").WithHandler(...)
+
+// ✅ Flags for disambiguation
+.Map("get --id {id:int}").WithHandler(...)
+.Map("get --name {name}").WithHandler(...)
+
+// ✅ Single route with handler logic
+.Map("get {identifier}").WithHandler((string id) => {
+    if (int.TryParse(id, out var numericId))
+        return GetById(numericId);
+    return GetByName(id);
+})
+```
 
 ## Common Patterns
 

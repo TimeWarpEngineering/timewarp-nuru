@@ -141,6 +141,22 @@ Detected during semantic validation (Stage 3). Should fail immediately with clea
 ### Bind-Time Errors
 Detected during parameter binding at runtime. Should indicate which parameter failed and why (type conversion error, missing required value, etc.).
 
+**Type Conversion Failures:**
+When a typed parameter (e.g., `{port:int}`) receives an invalid value (e.g., "abc"):
+- The route **matches** structurally (the pattern matched the input)
+- The **binding fails** during type conversion
+- A clear error message is displayed: `Error: Invalid value 'abc' for parameter 'port'. Expected: int`
+- Exit code 1 is returned
+
+**Why Not Fall Through to Next Route?**
+We considered having type conversion failures skip to the next route (allowing typed→untyped fallback patterns). This was rejected because:
+1. **No real CLI uses this pattern** - git, docker, kubectl, npm all use explicit subcommands or flags for disambiguation, not type-based dispatch
+2. **Confusing user experience** - Users would get "unknown command" instead of "invalid value"
+3. **Ambiguous semantics** - What happens with `{id:int}` vs `{id:guid}` vs `{id:string}`?
+
+**Compile-Time Prevention:**
+The analyzer detects routes with overlapping structures but different type constraints and reports an error (NURU_R001), preventing ambiguous patterns at compile time rather than handling them at runtime.
+
 ### Runtime Errors
 Exceptions during handler execution. Should preserve original error information while adding context about which route and parameters were being processed.
 

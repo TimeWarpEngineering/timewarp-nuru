@@ -694,10 +694,15 @@ internal static class HandlerInvokerEmitter
           {
             ParameterDefinition routeParam = routeParams[routeParamIndex];
             // Variable naming must match route-matcher-emitter.cs:
-            // - Catch-all parameters (IsCatchAll): __{name}_{routeIndex} (no type conversion step)
+            // - Typed catch-all with non-string type: escaped original name (type conversion creates this)
+            // - Typed catch-all with string type: __{name}_{routeIndex} (no conversion needed, already string[])
+            // - Untyped catch-all: __{name}_{routeIndex} (no type conversion)
             // - Typed parameters (HasTypeConstraint): escaped original name (type conversion creates this variable)
             // - Simple parameters: just the escaped camelCase name
-            string varName = routeParam.IsCatchAll
+            bool isStringTypedCatchAll = routeParam.IsCatchAll &&
+              routeParam.HasTypeConstraint &&
+              routeParam.TypeConstraint?.Equals("string", StringComparison.OrdinalIgnoreCase) == true;
+            string varName = routeParam.IsCatchAll && (!routeParam.HasTypeConstraint || isStringTypedCatchAll)
               ? $"__{routeParam.CamelCaseName}_{routeIndex}"
               : CSharpIdentifierUtils.EscapeIfKeyword(routeParam.CamelCaseName);
             args.Add(varName);

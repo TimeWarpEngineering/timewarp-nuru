@@ -22,64 +22,81 @@ error CS1503: Argument 1: cannot convert from 'string[]' to 'int[]'
 error CS1503: Argument 1: cannot convert from 'string[]' to 'double[]'
 ```
 
-## Root Cause Analysis
+## Progress
 
-The `EmitValueOptionParsing` method in `route-matcher-emitter.cs` (lines 486-553):
+### Completed Fixes
 
-1. **Only collects ONE value** - The loop breaks after finding the first occurrence (line 521: `break;`)
-2. **Declares `string?` not `string[]`** - Line 510: `sb.AppendLine($"      string? {rawVarName} = null;");`
+1. **Typed catchall parameters** (`{*numbers:int}`) - Fixed in `route-matcher-emitter.cs`:
+   - Added `EmitCatchAllTypeConversion()` method for array type conversion
+   - Updated `EmitTypeConversions()` to handle catchall differently
+   - **TypedCatchAll tests: 13/13 passing**
+
+2. **Handler invoker for typed catchalls** - Fixed in `handler-invoker-emitter.cs`:
+   - Updated variable name selection to use converted variable for typed catchalls
+   - Handles `string` typed catchalls specially (no conversion needed)
+
+3. **NURU_R002 diagnostic** - Added duplicate route pattern detection:
+   - Added `DuplicateRoutePattern` diagnostic descriptor
+   - Updated `OverlapValidator.CheckGroupForTypeConflicts()` to detect exact duplicates
+
+### Blocking Issue Discovered
+
+**CI tests still fail (34 failures)** even though individual test files pass. Root cause:
+
+- **Attributed routes are added to ALL apps** in multi-file CI compilation
+- `[NuruRoute]` classes from `generator-11-attributed-routes.cs` (`DeployCommand`, `BuildCommand`, etc.) are injected into every test app
+- These duplicate the fluent routes (e.g., `deploy {env}`) causing wrong handlers to execute
+- The `NuruAnalyzer` doesn't validate attributed routes, so NURU_R002 isn't reported
+
+**Example:** Test expects `"env:prod"` output but gets `"Deploying to prod..."` because the attributed `DeployCommand` handler matches instead of the fluent handler.
+
+### Created Follow-up Task
+
+**Task #351: Merge NuruAnalyzer into NuruGenerator for single-pass validation**
+
+This will fix the analyzer to validate the same complete model (fluent + attributed routes) that the generator emits.
+
+## Original Root Cause Analysis (for repeated options)
+
+The `EmitValueOptionParsing` method in `route-matcher-emitter.cs`:
+
+1. **Only collects ONE value** - The loop breaks after finding the first occurrence
+2. **Declares `string?` not `string[]`** - Single value instead of collection
 3. **Doesn't check `option.IsRepeated`** - The property exists but is never used
 
-## Expected Behavior
+## Remaining Work
 
-For repeated options (`*`), the generator should:
+### After Task #351 is Complete
 
-1. Declare a `List<string>` to collect all values
-2. Loop through ALL args collecting values (don't break early)
-3. Convert to typed array after collection
+Once the analyzer properly validates attributed routes:
+1. CI tests will show NURU_R002 errors for duplicate routes
+2. Need to fix attributed route scoping (prevent them from polluting all apps)
+3. Then verify typed repeated options work correctly
 
-**Expected generated code:**
-```csharp
-// For --env {e}*
-List<string> __e_list = [];
-for (int __idx = 0; __idx < routeArgs.Length; __idx++)
-{
-  if (routeArgs[__idx] == "--env" && __idx + 1 < routeArgs.Length && !routeArgs[__idx + 1].StartsWith("-"))
-  {
-    __e_list.Add(routeArgs[__idx + 1]);
-    __idx++; // Skip the value
-  }
-}
-string[] e = __e_list.ToArray();
-
-// For typed --id {id:int}*
-List<string> __id_list = [];
-// ... collect as above ...
-int[] id = __id_list.Select(s => int.Parse(s, CultureInfo.InvariantCulture)).ToArray();
-```
-
-## Plan
-
-1. Modify `EmitValueOptionParsing` to check `option.IsRepeated`
-2. If repeated:
-   - Declare `List<string>` instead of `string?`
-   - Don't break after finding first value
-   - Continue collecting all occurrences
-3. Modify `EmitOptionTypeConversion` to handle arrays:
-   - For repeated options, convert each element with `.Select().ToArray()`
-4. Test with various repeated option patterns
-
-## Key Code Locations
-
-- `route-matcher-emitter.cs:486-553` - `EmitValueOptionParsing` - needs to handle `IsRepeated`
-- `route-matcher-emitter.cs:560-621` - `EmitOptionTypeConversion` - needs array conversion
-
-## Checklist
+### Repeated Option Fixes Still Needed
 
 - [ ] Add repeated option detection in `EmitValueOptionParsing`
 - [ ] Emit `List<string>` collection for repeated options
 - [ ] Don't break early - collect all values
 - [ ] Add array type conversion in `EmitOptionTypeConversion`
-- [ ] Support all primitive types: int, double, bool, DateTime, byte, short, long, float, decimal, Guid
-- [ ] Clear caches and run CI tests: `ganda runfile cache --clear`
-- [ ] Verify routing tests compile and pass
+
+## Key Code Locations
+
+- `route-matcher-emitter.cs` - Option parsing and type conversion
+- `handler-invoker-emitter.cs` - Builds argument list for handler calls
+- `overlap-validator.cs` - Duplicate route detection (NURU_R002)
+- `nuru-generator.cs` - Combines fluent + attributed routes
+
+## Files Modified
+
+- `source/timewarp-nuru-analyzers/generators/emitters/route-matcher-emitter.cs`
+- `source/timewarp-nuru-analyzers/generators/emitters/handler-invoker-emitter.cs`
+- `source/timewarp-nuru-analyzers/diagnostics/diagnostic-descriptors.overlap.cs`
+- `source/timewarp-nuru-analyzers/validation/overlap-validator.cs`
+- `source/timewarp-nuru-analyzers/AnalyzerReleases.Unshipped.md`
+
+## Related
+
+- Task #351: Merge NuruAnalyzer into NuruGenerator (blocking)
+- Task #336: Add analyzer for ambiguous route patterns
+- Bug #346, #347, #348, #350: Related generator fixes (done)

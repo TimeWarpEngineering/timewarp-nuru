@@ -31,3 +31,4 @@ NURU_H005 | Handler.Validation | Error | Handler parameter name doesn't match ro
 NURU_H006 | Handler.Validation | Error | Discard parameter not supported in handler
 NURU_H007 | Handler.Validation | Warning | ILogger<T> injected without logging configuration
 NURU_R001 | RoutePattern.Overlap | Error | Overlapping routes with different type constraints
+NURU_R002 | RoutePattern.Overlap | Error | Duplicate route pattern

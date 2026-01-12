@@ -206,6 +206,17 @@ internal static class RouteMatcherEmitter
       string typeConstraint = param.TypeConstraint ?? "";
       string baseType = typeConstraint.EndsWith('?') ? typeConstraint[..^1] : typeConstraint;
 
+      // Handle catchall parameters differently - they're string[] not string
+      if (param.IsCatchAll)
+      {
+        // Skip string type - catchall is already string[], no conversion needed
+        if (baseType.Equals("string", StringComparison.OrdinalIgnoreCase))
+          continue;
+
+        EmitCatchAllTypeConversion(sb, param, escapedVarName, uniqueVarName, routeIndex, baseType, indentStr);
+        continue;
+      }
+
       // Use shared type conversion mapping with TryParse for graceful error handling
       (string ClrType, string TryParseCondition)? conversion = TypeConversionMap.GetBuiltInTryConversion(baseType, uniqueVarName, escapedVarName);
 
@@ -268,6 +279,46 @@ internal static class RouteMatcherEmitter
             $"{indentStr}// Register a converter with: builder.AddTypeConverter<YourConverter>();");
         }
       }
+    }
+  }
+
+  /// <summary>
+  /// Emits type conversion code for a typed catch-all parameter.
+  /// Catch-all parameters are string[] and need to be converted to typed arrays.
+  /// </summary>
+  private static void EmitCatchAllTypeConversion(
+    StringBuilder sb,
+    ParameterDefinition param,
+    string varName,
+    string uniqueVarName,
+    int routeIndex,
+    string baseType,
+    string indentStr)
+  {
+    // Get the CLR type for this constraint
+    (string ClrType, string _)? conversion = TypeConversionMap.GetBuiltInTryConversion(baseType, "x", "y");
+
+    if (conversion is var (clrType, _))
+    {
+      // Get the parse expression for this type
+      string parseExpr = GetParseExpression(baseType, "__s");
+
+      // Emit array conversion with error handling
+      sb.AppendLine($"{indentStr}{clrType}[] {varName};");
+      sb.AppendLine($"{indentStr}try");
+      sb.AppendLine($"{indentStr}{{");
+      sb.AppendLine($"{indentStr}  {varName} = {uniqueVarName}.Select(__s => {parseExpr}).ToArray();");
+      sb.AppendLine($"{indentStr}}}");
+      sb.AppendLine($"{indentStr}catch (global::System.FormatException)");
+      sb.AppendLine($"{indentStr}{{");
+      sb.AppendLine($"{indentStr}  app.Terminal.WriteLine($\"Error: Invalid value in '{param.Name}'. Expected: {baseType}[]\");");
+      sb.AppendLine($"{indentStr}  return 1;");
+      sb.AppendLine($"{indentStr}}}");
+    }
+    else
+    {
+      // Unknown type - emit as string[] (no conversion needed, just alias)
+      sb.AppendLine($"{indentStr}string[] {varName} = {uniqueVarName};");
     }
   }
 
@@ -482,6 +533,7 @@ internal static class RouteMatcherEmitter
   /// - Required flag + optional value: flag must be present, value can be null
   /// - Optional flag + required value: if flag present, value must follow
   /// - Optional flag + optional value: flag and value both optional
+  /// - Repeated options (*): collect all occurrences into an array
   /// </summary>
   private static void EmitValueOptionParsing(
     StringBuilder sb,
@@ -489,6 +541,13 @@ internal static class RouteMatcherEmitter
     int routeIndex,
     ImmutableArray<CustomConverterDefinition> customConverters)
   {
+    // Handle repeated options separately
+    if (option.IsRepeated)
+    {
+      EmitRepeatedValueOptionParsing(sb, option, routeIndex, customConverters);
+      return;
+    }
+
     string varName = option.ParameterName ?? ToCamelCase(option.LongForm ?? option.ShortForm ?? "value");
     string escapedVarName = CSharpIdentifierUtils.EscapeIfKeyword(varName);
     string flagFoundVar = $"__{varName}_flagFound_{routeIndex}";
@@ -551,6 +610,126 @@ internal static class RouteMatcherEmitter
     {
       EmitOptionTypeConversion(sb, option, escapedVarName, rawVarName, routeIndex, customConverters);
     }
+  }
+
+  /// <summary>
+  /// Emits code to parse a repeated option that can appear multiple times.
+  /// Collects all values into a List, then converts to array (with type conversion if needed).
+  /// </summary>
+  private static void EmitRepeatedValueOptionParsing(
+    StringBuilder sb,
+    OptionDefinition option,
+    int routeIndex,
+    ImmutableArray<CustomConverterDefinition> customConverters)
+  {
+    string varName = option.ParameterName ?? ToCamelCase(option.LongForm ?? option.ShortForm ?? "value");
+    string escapedVarName = CSharpIdentifierUtils.EscapeIfKeyword(varName);
+    string listVarName = $"__{varName}_list_{routeIndex}";
+
+    string condition = (option.LongForm, option.ShortForm) switch
+    {
+      (not null, not null) => $"routeArgs[__idx] == \"--{option.LongForm}\" || routeArgs[__idx] == \"-{option.ShortForm}\"",
+      (not null, null) => $"routeArgs[__idx] == \"--{option.LongForm}\"",
+      (null, not null) => $"routeArgs[__idx] == \"-{option.ShortForm}\"",
+      _ => throw new InvalidOperationException("Option must have at least one form")
+    };
+
+    // Collect all values into a list
+    sb.AppendLine($"      global::System.Collections.Generic.List<string> {listVarName} = [];");
+    sb.AppendLine("      for (int __idx = 0; __idx < routeArgs.Length; __idx++)");
+    sb.AppendLine("      {");
+    sb.AppendLine($"        if ({condition})");
+    sb.AppendLine("        {");
+    sb.AppendLine("          // Check if there's a value following the flag (and it's not another flag)");
+    sb.AppendLine("          if (__idx + 1 < routeArgs.Length && !routeArgs[__idx + 1].StartsWith(\"-\"))");
+    sb.AppendLine("          {");
+    sb.AppendLine($"            {listVarName}.Add(routeArgs[__idx + 1]);");
+    sb.AppendLine("            __idx++; // Skip the value we just consumed");
+    sb.AppendLine("          }");
+    sb.AppendLine("        }");
+    sb.AppendLine("      }");
+
+    // Check if required option has at least one value
+    if (!option.IsOptional)
+    {
+      sb.AppendLine($"      if ({listVarName}.Count == 0) goto route_skip_{routeIndex};");
+    }
+
+    // Emit type conversion and array creation
+    EmitRepeatedOptionTypeConversion(sb, option, escapedVarName, listVarName, routeIndex, customConverters);
+  }
+
+  /// <summary>
+  /// Emits type conversion code for a repeated option.
+  /// Converts List&lt;string&gt; to typed array using Select().ToArray().
+  /// </summary>
+  private static void EmitRepeatedOptionTypeConversion(
+    StringBuilder sb,
+    OptionDefinition option,
+    string varName,
+    string listVarName,
+    int routeIndex,
+    ImmutableArray<CustomConverterDefinition> customConverters)
+  {
+    string typeConstraint = option.TypeConstraint ?? "";
+    string baseType = typeConstraint.EndsWith('?') ? typeConstraint[..^1] : typeConstraint;
+
+    if (string.IsNullOrEmpty(baseType))
+    {
+      // No type constraint - just convert to string[]
+      sb.AppendLine($"      string[] {varName} = {listVarName}.ToArray();");
+      return;
+    }
+
+    string optionDisplay = option.LongForm is not null ? $"--{option.LongForm}" : $"-{option.ShortForm}";
+
+    // Use shared type conversion mapping
+    (string ClrType, string TryParseCondition)? conversion = TypeConversionMap.GetBuiltInTryConversion(baseType, "__item", "__parsed");
+
+    if (conversion is var (clrType, _))
+    {
+      // Get the parse expression for this type
+      string parseExpr = GetParseExpression(baseType, "__s");
+
+      // Emit array conversion with error handling
+      sb.AppendLine($"      {clrType}[] {varName};");
+      sb.AppendLine("      try");
+      sb.AppendLine("      {");
+      sb.AppendLine($"        {varName} = {listVarName}.Select(__s => {parseExpr}).ToArray();");
+      sb.AppendLine("      }");
+      sb.AppendLine("      catch (global::System.FormatException)");
+      sb.AppendLine("      {");
+      sb.AppendLine($"        app.Terminal.WriteLine($\"Error: Invalid value in option '{optionDisplay}'. Expected: {baseType}\");");
+      sb.AppendLine("        return 1;");
+      sb.AppendLine("      }");
+    }
+    else
+    {
+      // Try custom converter - for now just fall back to string[]
+      // TODO: Add custom converter support for arrays
+      sb.AppendLine($"      string[] {varName} = {listVarName}.ToArray();");
+    }
+  }
+
+  /// <summary>
+  /// Gets the parse expression for a given type.
+  /// </summary>
+  private static string GetParseExpression(string baseType, string varName)
+  {
+    return baseType.ToLowerInvariant() switch
+    {
+      "int" => $"int.Parse({varName}, global::System.Globalization.CultureInfo.InvariantCulture)",
+      "long" => $"long.Parse({varName}, global::System.Globalization.CultureInfo.InvariantCulture)",
+      "short" => $"short.Parse({varName}, global::System.Globalization.CultureInfo.InvariantCulture)",
+      "byte" => $"byte.Parse({varName}, global::System.Globalization.CultureInfo.InvariantCulture)",
+      "double" => $"double.Parse({varName}, global::System.Globalization.CultureInfo.InvariantCulture)",
+      "float" => $"float.Parse({varName}, global::System.Globalization.CultureInfo.InvariantCulture)",
+      "decimal" => $"decimal.Parse({varName}, global::System.Globalization.CultureInfo.InvariantCulture)",
+      "bool" => $"bool.Parse({varName})",
+      "datetime" => $"global::System.DateTime.Parse({varName}, global::System.Globalization.CultureInfo.InvariantCulture)",
+      "guid" => $"global::System.Guid.Parse({varName})",
+      _ => varName // Unknown type - return as-is (string)
+    };
   }
 
   /// <summary>

@@ -334,8 +334,9 @@ internal static class InterceptorEmitter
     IEnumerable<RouteDefinition> allRoutes = app.RoutesBySpecificity.Concat(model.AttributedRoutes);
 
     // Build a lookup from route to its original index for command class naming
-    // Command classes are generated in model.AllRoutes order, so we need to preserve that index
-    List<RouteDefinition> allRoutesOrdered = [.. model.AllRoutes];
+    // IMPORTANT: Use only this app's routes (plus attributed routes), not all routes from all apps
+    // Using model.AllRoutes would cause route index collisions between different apps
+    List<RouteDefinition> allRoutesOrdered = [.. app.Routes.Concat(model.AttributedRoutes)];
 
     foreach (RouteDefinition route in allRoutes.OrderByDescending(r => r.ComputedSpecificity))
     {

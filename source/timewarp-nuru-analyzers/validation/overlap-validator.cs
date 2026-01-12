@@ -139,7 +139,7 @@ internal static class OverlapValidator
   }
 
   /// <summary>
-  /// Checks a group of routes with the same signature for type constraint conflicts.
+  /// Checks a group of routes with the same signature for type constraint conflicts and duplicates.
   /// </summary>
   private static ImmutableArray<Diagnostic> CheckGroupForTypeConflicts(
     List<RouteDefinition> group,
@@ -154,6 +154,23 @@ internal static class OverlapValidator
       {
         RouteDefinition route1 = group[i];
         RouteDefinition route2 = group[j];
+
+        // Check for exact duplicate patterns first
+        if (route1.OriginalPattern == route2.OriginalPattern)
+        {
+          // Get location for the first route (or use a default)
+          Location location = routeLocations.TryGetValue(route1.OriginalPattern, out Location? loc)
+            ? loc
+            : Location.None;
+
+          Diagnostic diagnostic = Diagnostic.Create(
+            DiagnosticDescriptors.DuplicateRoutePattern,
+            location,
+            route1.OriginalPattern);
+
+          diagnostics.Add(diagnostic);
+          continue; // Don't also report type constraint conflict for same pattern
+        }
 
         // Check if they have different type constraints
         if (HaveDifferentTypeConstraints(route1, route2))
@@ -179,14 +196,10 @@ internal static class OverlapValidator
 
   /// <summary>
   /// Determines if two routes have different type constraints at corresponding positions.
+  /// Note: Caller should check for duplicate patterns first before calling this method.
   /// </summary>
   private static bool HaveDifferentTypeConstraints(RouteDefinition route1, RouteDefinition route2)
   {
-    // If patterns are identical, they're duplicates (not type conflicts)
-    // That's a different error
-    if (route1.OriginalPattern == route2.OriginalPattern)
-      return false;
-
     // Get parameter segments from each route
     List<ParameterDefinition> params1 = [.. route1.Parameters];
     List<ParameterDefinition> params2 = [.. route2.Parameters];

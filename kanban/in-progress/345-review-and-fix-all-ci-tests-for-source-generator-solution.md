@@ -46,42 +46,45 @@ tests/timewarp-nuru-core-tests/nuru-route-registry-01-basic.cs(162,36): error CS
 - [x] `generator-14-options-validation.cs` - EXCLUDED from CI (top-level return conflicts with multi-mode)
 
 ### Phase 4: Lexer Tests (tests/timewarp-nuru-core-tests/lexer/)
-- [ ] Review all lexer tests (15 files)
+- [x] All 15 lexer tests IN CI via wildcard include - all passing (111 tests)
 
 ### Phase 5: Parser Tests (tests/timewarp-nuru-core-tests/parser/)
-- [ ] Review all parser tests (15 files)
+- [x] All 15 parser tests IN CI via wildcard include - all passing (100+ tests)
 
 ### Phase 6: Routing Tests (tests/timewarp-nuru-core-tests/routing/)
-- [ ] Review all routing tests (20+ files)
+- [x] EXCLUDED from CI multi-mode - cannot be combined due to generated code naming collisions
+- [x] All routing tests pass when run standalone (run: ./tests/timewarp-nuru-core-tests/routing/routing-XX-*.cs)
+- [x] Specific exclusions: routing-08 (UseDebugLogging), routing-15 (AddAutoHelp), routing-20/21 (UseAllExtensions)
 
 ### Phase 7: Widget/UI Tests
-- [ ] Review table-widget tests (5 files)
-- [ ] Review panel-widget tests (3 files)
-- [ ] Review rule-widget tests (2 files)
-- [ ] Review message-type tests (2 files)
-- [ ] Review hyperlink tests (1 file)
+- [x] table-widget tests (5 files) - EXCLUDED (belong to TimeWarp.Terminal repo)
+- [x] panel-widget tests (3 files) - EXCLUDED (belong to TimeWarp.Terminal repo)
+- [x] rule-widget tests (2 files) - EXCLUDED (belong to TimeWarp.Terminal repo)
+- [x] hyperlink tests (1 file) - EXCLUDED (belongs to TimeWarp.Terminal repo)
+- [x] `message-type-01-fluent-api.cs` - IN CI (7 tests)
+- [x] `message-type-02-help-output.cs` - EXCLUDED (uses HelpProvider API that changed)
 
 ### Phase 8: Analyzer Tests (tests/timewarp-nuru-analyzers-tests/)
-- [ ] Review auto/ analyzer tests (9 files)
-- [ ] Review interpreter/ tests (4 files)
-- [ ] Review manual/ tests (2 files)
+- [ ] Review auto/ analyzer tests (9 files) - DEFERRED (not in CI, may need separate work)
+- [ ] Review interpreter/ tests (4 files) - DEFERRED
+- [ ] Review manual/ tests (2 files) - DEFERRED
 
 ### Phase 9: Completion Tests (tests/timewarp-nuru-completion-tests/)
-- [ ] Review static/ completion tests (13 files)
-- [ ] Review dynamic/ completion tests (13 files)
-- [ ] Review engine/ tests (3 files)
+- [ ] static/ completion tests (13 files) - DEFERRED (mostly failing, needs completion package wiring)
+- [ ] dynamic/ completion tests (13 files) - DEFERRED
+- [ ] engine/ tests (3 files) - DEFERRED
 
 ### Phase 10: REPL Tests (tests/timewarp-nuru-repl-tests/)
-- [ ] Review main repl tests (35+ files)
-- [ ] Review tab-completion/ tests (9 files)
-- [ ] Review command-line-parser/ tests (2 files)
+- [ ] main repl tests (35+ files) - BLOCKED (REPL package has compile errors - uses obsolete APIs)
+- [ ] tab-completion/ tests (9 files) - BLOCKED
+- [ ] command-line-parser/ tests (2 files) - BLOCKED
 
 ### Phase 11: MCP Tests (tests/timewarp-nuru-mcp-tests/)
-- [ ] Review all MCP tests (6 files)
+- [ ] MCP tests (6 files) - DEFERRED (6/12 passing, depends on external services)
 
 ### Phase 12: Final Validation
-- [ ] Run `./tests/ci-tests/run-ci-tests.cs` successfully
-- [ ] Document any tests removed/archived with justification
+- [x] Run `./tests/ci-tests/run-ci-tests.cs` successfully - 311 tests passing
+- [x] Document tests removed/archived with justification (see Implementation Notes)
 
 ## Notes
 
@@ -144,3 +147,33 @@ Generator tests reviewed and organized:
 - `generator-14-options-validation.cs` - 5 tests (top-level return conflicts with JARIBU_MULTI)
 
 **CI test count: 311 tests, all passing**
+
+### Phase 4-6 Complete (2025-01-12)
+- **Lexer tests**: All 15 files already in CI via wildcard include
+- **Parser tests**: All 15 files already in CI via wildcard include
+- **Type-conversion tests**: Already in CI via wildcard include
+- **Routing tests**: Cannot be combined in CI multi-mode due to generated code naming collisions
+  - When multiple routing test files compile together, routes with similar patterns get identical generated class names
+  - All routing tests pass when run standalone
+  - Specific exclusions documented: routing-08 (UseDebugLogging), routing-15 (AddAutoHelp), routing-20/21 (UseAllExtensions)
+
+### Phase 7 Complete (2025-01-12)
+- Widget tests (table, panel, rule, hyperlink) - belong to TimeWarp.Terminal repo, excluded
+- `message-type-01-fluent-api.cs` - IN CI (7 tests)
+- `message-type-02-help-output.cs` - EXCLUDED (uses changed HelpProvider API)
+
+### Phase 8-11 Status (2025-01-12)
+- **Analyzer tests**: Not in CI, may need separate work
+- **Completion tests**: Mostly failing, needs completion package wiring
+- **REPL tests**: BLOCKED - REPL package doesn't compile (uses obsolete APIs like TypeConverterRegistry, InvokerRegistry, SessionContext)
+- **MCP tests**: 6/12 passing standalone, depends on external services
+
+### Summary
+The CI multi-mode test suite is now stable at **311 passing tests** covering:
+- Lexer tokenization (111 tests)
+- Parser pattern parsing (100+ tests)
+- Generator intercept/matching (29 tests)
+- Message type fluent API (7 tests)
+- Type conversion (14 tests)
+
+Remaining test areas (REPL, Completion, Analyzer, MCP) require separate fixes or should run standalone.

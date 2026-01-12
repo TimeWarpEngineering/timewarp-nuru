@@ -108,6 +108,7 @@ public sealed record ParameterDefinition(
 /// <param name="IsRepeated">Whether the option can be specified multiple times</param>
 /// <param name="ParameterIsOptional">Whether the option's value parameter is optional</param>
 /// <param name="ResolvedClrTypeName">The resolved CLR type name for the value</param>
+/// <param name="DefaultValueLiteral">The literal representation of the property's default value, if any (e.g., "1", "\"default\"")</param>
 public sealed record OptionDefinition(
   int Position,
   string? LongForm,
@@ -119,7 +120,8 @@ public sealed record OptionDefinition(
   bool IsOptional,
   bool IsRepeated,
   bool ParameterIsOptional,
-  string? ResolvedClrTypeName)
+  string? ResolvedClrTypeName,
+  string? DefaultValueLiteral = null)
   : SegmentDefinition(Position)
 {
   /// <summary>

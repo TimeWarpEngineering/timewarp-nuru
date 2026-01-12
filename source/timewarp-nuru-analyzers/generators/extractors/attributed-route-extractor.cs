@@ -222,7 +222,7 @@ internal static class AttributedRouteExtractor
 
       if (attributeName == OptionAttributeName || attributeName == $"{OptionAttributeName}Attribute")
       {
-        return ExtractOptionFromAttribute(propertySymbol, attribute, position);
+        return ExtractOptionFromAttribute(propertySymbol, attribute, position, property);
       }
     }
 
@@ -278,7 +278,8 @@ internal static class AttributedRouteExtractor
   (
     IPropertySymbol property,
     AttributeData attribute,
-    int position
+    int position,
+    PropertyDeclarationSyntax propertySyntax
   )
   {
     string longForm = property.Name.ToLowerInvariant();
@@ -325,6 +326,9 @@ internal static class AttributedRouteExtractor
       isRepeated = true;
     }
 
+    // Extract default value from property initializer (e.g., "= 1" -> "1")
+    string? defaultValueLiteral = ExtractPropertyDefaultValue(propertySyntax);
+
     return new OptionDefinition(
       Position: position,
       LongForm: longForm,
@@ -336,7 +340,24 @@ internal static class AttributedRouteExtractor
       IsOptional: isOptional,
       IsRepeated: isRepeated,
       ParameterIsOptional: property.NullableAnnotation == NullableAnnotation.Annotated,
-      ResolvedClrTypeName: typeName);
+      ResolvedClrTypeName: typeName,
+      DefaultValueLiteral: defaultValueLiteral);
+  }
+
+  /// <summary>
+  /// Extracts the default value literal from a property initializer.
+  /// </summary>
+  /// <param name="property">The property declaration syntax.</param>
+  /// <returns>The default value literal (e.g., "1", "\"default\""), or null if no initializer.</returns>
+  private static string? ExtractPropertyDefaultValue(PropertyDeclarationSyntax property)
+  {
+    // Check for property initializer (e.g., public int X { get; set; } = 1;)
+    if (property.Initializer?.Value is { } initializerValue)
+    {
+      return initializerValue.ToString();
+    }
+
+    return null;
   }
 
   /// <summary>

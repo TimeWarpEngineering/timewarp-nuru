@@ -179,14 +179,14 @@ namespace TimeWarp.Nuru.Tests.Generator.AttributedRoutes
 /// Simple greeting command to test basic attributed route.
 /// </summary>
 [NuruRoute("greet", Description = "Greet someone")]
-public sealed class GreetCommand : TimeWarp.Nuru.ICommand<TimeWarp.Nuru.Unit>
+public sealed class GreetCommand : ICommand<Unit>
 {
   [Parameter(Description = "Name to greet")]
   public string Name { get; set; } = string.Empty;
 
-  public sealed class Handler(ITerminal terminal) : TimeWarp.Nuru.ICommandHandler<GreetCommand, TimeWarp.Nuru.Unit>
+  public sealed class Handler(ITerminal terminal) : ICommandHandler<GreetCommand, Unit>
   {
-    public ValueTask<TimeWarp.Nuru.Unit> Handle(GreetCommand command, CancellationToken ct)
+    public ValueTask<Unit> Handle(GreetCommand command, CancellationToken ct)
     {
       terminal.WriteLine($"Hello, {command.Name}!");
       return default;
@@ -198,7 +198,7 @@ public sealed class GreetCommand : TimeWarp.Nuru.ICommand<TimeWarp.Nuru.Unit>
 /// Deploy command to test typed options (bug #309).
 /// </summary>
 [NuruRoute("deploy", Description = "Deploy to environment")]
-public sealed class DeployCommand : TimeWarp.Nuru.ICommand<TimeWarp.Nuru.Unit>
+public sealed class DeployCommand : ICommand<Unit>
 {
   [Parameter(Description = "Target environment")]
   public string Env { get; set; } = string.Empty;
@@ -212,9 +212,9 @@ public sealed class DeployCommand : TimeWarp.Nuru.ICommand<TimeWarp.Nuru.Unit>
   [Option("replicas", "r", Description = "Number of replicas")]
   public int Replicas { get; set; } = 1;
 
-  public sealed class Handler(ITerminal terminal) : TimeWarp.Nuru.ICommandHandler<DeployCommand, TimeWarp.Nuru.Unit>
+  public sealed class Handler(ITerminal terminal) : ICommandHandler<DeployCommand, Unit>
   {
-    public ValueTask<TimeWarp.Nuru.Unit> Handle(DeployCommand command, CancellationToken ct)
+    public ValueTask<Unit> Handle(DeployCommand command, CancellationToken ct)
     {
       terminal.WriteLine($"Deploying to {command.Env}...");
       terminal.WriteLine($"  Force: {command.Force}");
@@ -229,7 +229,7 @@ public sealed class DeployCommand : TimeWarp.Nuru.ICommand<TimeWarp.Nuru.Unit>
 /// Build command to test hyphenated flag options (bug #310).
 /// </summary>
 [NuruRoute("build", Description = "Build something")]
-public sealed class BuildCommand : TimeWarp.Nuru.ICommand<TimeWarp.Nuru.Unit>
+public sealed class BuildCommand : ICommand<Unit>
 {
   [Parameter(Description = "Path to build")]
   public string Path { get; set; } = string.Empty;
@@ -240,9 +240,9 @@ public sealed class BuildCommand : TimeWarp.Nuru.ICommand<TimeWarp.Nuru.Unit>
   [Option("no-cache", null, Description = "Disable cache")]
   public bool NoCache { get; set; }
 
-  public sealed class Handler(ITerminal terminal) : TimeWarp.Nuru.ICommandHandler<BuildCommand, TimeWarp.Nuru.Unit>
+  public sealed class Handler(ITerminal terminal) : ICommandHandler<BuildCommand, Unit>
   {
-    public ValueTask<TimeWarp.Nuru.Unit> Handle(BuildCommand command, CancellationToken ct)
+    public ValueTask<Unit> Handle(BuildCommand command, CancellationToken ct)
     {
       string tagInfo = command.Tag != null ? $" -t {command.Tag}" : "";
       string cacheInfo = command.NoCache ? " --no-cache" : "";
@@ -256,14 +256,14 @@ public sealed class BuildCommand : TimeWarp.Nuru.ICommand<TimeWarp.Nuru.Unit>
 /// Exec command to test catch-all Args parameter (bug #311).
 /// </summary>
 [NuruRoute("exec", Description = "Execute command with arguments")]
-public sealed class ExecCommand : TimeWarp.Nuru.ICommand<TimeWarp.Nuru.Unit>
+public sealed class ExecCommand : ICommand<Unit>
 {
   [Parameter(IsCatchAll = true, Description = "Command and arguments")]
   public string[] Args { get; set; } = [];
 
-  public sealed class Handler(ITerminal terminal) : TimeWarp.Nuru.ICommandHandler<ExecCommand, TimeWarp.Nuru.Unit>
+  public sealed class Handler(ITerminal terminal) : ICommandHandler<ExecCommand, Unit>
   {
-    public ValueTask<TimeWarp.Nuru.Unit> Handle(ExecCommand command, CancellationToken ct)
+    public ValueTask<Unit> Handle(ExecCommand command, CancellationToken ct)
     {
       terminal.WriteLine($"Executing: exec {string.Join(" ", command.Args)}");
       return default;

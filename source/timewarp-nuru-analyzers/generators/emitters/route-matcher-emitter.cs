@@ -574,10 +574,13 @@ internal static class RouteMatcherEmitter
 
     if (conversion is var (clrType, tryParseCondition))
     {
-      if (option.ParameterIsOptional)
+      // Determine the default value to use
+      string defaultValue = option.DefaultValueLiteral ?? "default";
+
+      if (option.ParameterIsOptional || option.DefaultValueLiteral is not null)
       {
-        // Optional option value: declare with default, error if value provided but invalid
-        sb.AppendLine($"      {clrType} {varName} = default;");
+        // Optional option value OR has default: declare with default, error only if value provided but invalid
+        sb.AppendLine($"      {clrType} {varName} = {defaultValue};");
         sb.AppendLine($"      if ({rawVarName} is not null && !{tryParseCondition})");
         sb.AppendLine("      {");
         sb.AppendLine($"        app.Terminal.WriteLine($\"Error: Invalid value '{{{rawVarName}}}' for option '{optionDisplay}'. Expected: {baseType}\");");
@@ -586,7 +589,7 @@ internal static class RouteMatcherEmitter
       }
       else
       {
-        // Required option value: TryParse with error message on failure
+        // Required option value (no default): TryParse with error message on failure
         sb.AppendLine($"      {clrType} {varName} = default;");
         sb.AppendLine($"      if ({rawVarName} is null || !{tryParseCondition})");
         sb.AppendLine("      {");

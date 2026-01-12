@@ -1,28 +1,26 @@
-// Overlap validator that detects routes with same structure but different type constraints.
+// Overlap validator that detects:
+// 1. Routes with same structure but different type constraints (NURU_R001)
+// 2. Duplicate route patterns (NURU_R002)
+// 3. Unreachable routes - where one route shadows another (NURU_R003)
 //
-// This validator compares routes by their "structure signature" - a normalized form
-// that ignores parameter names and type constraints, leaving only:
-// - Literal segments
-// - Parameter positions (marked as {P}, {P?}, or {*})
-// - Option names (without value types)
-//
-// Two routes with the same signature but different constraints produce NURU_R001.
+// Structure signature: Normalized form ignoring parameter names and types
+// Required signature: Only literals and required parameters (no options, no optional params)
 
 namespace TimeWarp.Nuru.Validation;
 
 using TimeWarp.Nuru.Generators;
 
 /// <summary>
-/// Validates that routes don't have overlapping structures with different type constraints.
+/// Validates routes for overlapping structures, duplicates, and unreachable routes.
 /// </summary>
 internal static class OverlapValidator
 {
   /// <summary>
-  /// Validates routes for overlapping structure with different type constraints.
+  /// Validates routes for various overlap and conflict issues.
   /// </summary>
   /// <param name="routes">The routes to validate.</param>
   /// <param name="routeLocations">Map from route pattern to source location for error reporting.</param>
-  /// <returns>Diagnostics for any overlapping routes found.</returns>
+  /// <returns>Diagnostics for any issues found.</returns>
   public static ImmutableArray<Diagnostic> Validate(
     ImmutableArray<RouteDefinition> routes,
     IReadOnlyDictionary<string, Location> routeLocations)
@@ -32,7 +30,7 @@ internal static class OverlapValidator
 
     List<Diagnostic> diagnostics = [];
 
-    // Group routes by their structure signature
+    // Check 1: Group by structure signature for type conflicts and duplicates
     Dictionary<string, List<RouteDefinition>> routesBySignature = [];
 
     foreach (RouteDefinition route in routes)
@@ -48,17 +46,19 @@ internal static class OverlapValidator
       group.Add(route);
     }
 
-    // Check each group for conflicts
     foreach (KeyValuePair<string, List<RouteDefinition>> entry in routesBySignature)
     {
       List<RouteDefinition> group = entry.Value;
       if (group.Count < 2)
         continue;
 
-      // Check if routes in this group have different type constraints
       ImmutableArray<Diagnostic> groupDiagnostics = CheckGroupForTypeConflicts(group, routeLocations);
       diagnostics.AddRange(groupDiagnostics);
     }
+
+    // Check 2: Group by required signature for unreachable routes
+    ImmutableArray<Diagnostic> unreachableDiagnostics = CheckForUnreachableRoutes(routes, routeLocations);
+    diagnostics.AddRange(unreachableDiagnostics);
 
     return [.. diagnostics];
   }
@@ -260,5 +260,137 @@ internal static class OverlapValidator
     }
 
     return false;
+  }
+
+  /// <summary>
+  /// Computes a required signature for a route - only literals and required parameters.
+  /// This excludes all optional elements (options, optional parameters, catch-all).
+  /// Routes with the same required signature match the same "core" inputs.
+  /// </summary>
+  /// <remarks>
+  /// Examples:
+  /// - "deploy {env} --force"     -> "deploy {P}"
+  /// - "deploy {env}"             -> "deploy {P}"
+  /// - "deploy production"        -> "deploy production"
+  /// - "git commit --amend"       -> "git commit"
+  /// - "get {id} {name?}"         -> "get {P}"
+  /// - "test --verbose --watch"   -> "test"
+  /// </remarks>
+  private static string ComputeRequiredSignature(RouteDefinition route)
+  {
+    StringBuilder signature = new();
+
+    // Include group prefix if present
+    if (!string.IsNullOrEmpty(route.GroupPrefix))
+    {
+      signature.Append(route.GroupPrefix);
+    }
+
+    foreach (SegmentDefinition segment in route.Segments)
+    {
+      switch (segment)
+      {
+        case LiteralDefinition literal:
+          if (signature.Length > 0)
+            signature.Append(' ');
+          signature.Append(literal.Value);
+          break;
+
+        case ParameterDefinition param when !param.IsOptional && !param.IsCatchAll:
+          // Only include required parameters (not optional, not catch-all)
+          if (signature.Length > 0)
+            signature.Append(' ');
+          signature.Append("{P}");
+          break;
+
+        // Skip: options (always optional for matching purposes),
+        //       optional parameters ({param?}),
+        //       catch-all ({*args})
+      }
+    }
+
+    return signature.ToString();
+  }
+
+  /// <summary>
+  /// Checks for unreachable routes - routes that can never be matched because
+  /// another route with equal or higher specificity matches all the same inputs.
+  /// </summary>
+  private static ImmutableArray<Diagnostic> CheckForUnreachableRoutes(
+    ImmutableArray<RouteDefinition> routes,
+    IReadOnlyDictionary<string, Location> routeLocations)
+  {
+    List<Diagnostic> diagnostics = [];
+
+    // Group routes by their required signature
+    Dictionary<string, List<RouteDefinition>> routesByRequiredSignature = [];
+
+    foreach (RouteDefinition route in routes)
+    {
+      string requiredSig = ComputeRequiredSignature(route);
+
+      if (!routesByRequiredSignature.TryGetValue(requiredSig, out List<RouteDefinition>? group))
+      {
+        group = [];
+        routesByRequiredSignature[requiredSig] = group;
+      }
+
+      group.Add(route);
+    }
+
+    // Check each group for shadowing
+    foreach (KeyValuePair<string, List<RouteDefinition>> entry in routesByRequiredSignature)
+    {
+      List<RouteDefinition> group = entry.Value;
+      if (group.Count < 2)
+        continue;
+
+      // Sort by specificity descending (highest first)
+      List<RouteDefinition> sortedGroup = [.. group.OrderByDescending(r => r.ComputedSpecificity)];
+
+      // Track which routes have been reported as unreachable to avoid duplicates
+      HashSet<string> reportedUnreachable = [];
+
+      // Compare each pair - higher specificity route shadows lower ones
+      for (int i = 0; i < sortedGroup.Count; i++)
+      {
+        RouteDefinition higherRoute = sortedGroup[i];
+
+        for (int j = i + 1; j < sortedGroup.Count; j++)
+        {
+          RouteDefinition lowerRoute = sortedGroup[j];
+
+          // Skip if same pattern (handled by duplicate detection)
+          if (higherRoute.OriginalPattern == lowerRoute.OriginalPattern)
+            continue;
+
+          // Skip if already reported this route as unreachable
+          if (reportedUnreachable.Contains(lowerRoute.OriginalPattern))
+            continue;
+
+          // Higher specificity route shadows lower specificity route with same required signature
+          // Also check equal specificity - first one wins, second is unreachable
+          if (higherRoute.ComputedSpecificity >= lowerRoute.ComputedSpecificity)
+          {
+            Location location = routeLocations.TryGetValue(lowerRoute.OriginalPattern, out Location? loc)
+              ? loc
+              : Location.None;
+
+            Diagnostic diagnostic = Diagnostic.Create(
+              DiagnosticDescriptors.UnreachableRoute,
+              location,
+              lowerRoute.OriginalPattern,
+              higherRoute.OriginalPattern,
+              higherRoute.ComputedSpecificity,
+              lowerRoute.ComputedSpecificity);
+
+            diagnostics.Add(diagnostic);
+            reportedUnreachable.Add(lowerRoute.OriginalPattern);
+          }
+        }
+      }
+    }
+
+    return [.. diagnostics];
   }
 }

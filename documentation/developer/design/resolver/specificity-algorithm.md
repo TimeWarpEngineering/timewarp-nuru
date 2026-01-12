@@ -220,6 +220,58 @@ Boolean flags are scored but always optional:
 5. **Order Matters**: When specificity is equal, first registered wins
 6. **No Type-Based Dispatch**: Type conversion failures are errors, not fallback triggers
 
+## Compile-Time Route Validation
+
+The Nuru source generator validates route patterns at compile time to catch common mistakes:
+
+### NURU_R001: Overlapping Type Constraints
+
+Detects routes with the same structure but different type constraints:
+
+```csharp
+// ❌ ERROR: NURU_R001
+.Map("get {id:int}").WithHandler((int id) => ...)
+.Map("get {id:guid}").WithHandler((Guid id) => ...)
+// These have the same structure - type conversion failures are errors, not fallback
+```
+
+### NURU_R002: Duplicate Route Pattern
+
+Detects when the exact same route pattern is defined multiple times:
+
+```csharp
+// ❌ ERROR: NURU_R002
+.Map("deploy {env}").WithHandler((string env) => DeployA(env))
+.Map("deploy {env}").WithHandler((string env) => DeployB(env))  // Duplicate!
+```
+
+### NURU_R003: Unreachable Route
+
+Detects when one route makes another unreachable because it matches all the same inputs with equal or higher specificity:
+
+```csharp
+// ❌ ERROR: NURU_R003
+.Map("deploy {env} --force").WithHandler((string env, bool force) => ...)  // 160 pts
+.Map("deploy {env}").WithHandler((string env) => ...)  // 110 pts - UNREACHABLE!
+// The --force route matches "deploy prod" (with force=false), shadowing the simpler route
+```
+
+**Why is this an error?** Routes with additional optional elements (options, optional parameters) will match all inputs that simpler routes match, because options are optional. The simpler route becomes dead code.
+
+**Solution:** Either remove the unreachable route, or use a required option/literal to differentiate:
+
+```csharp
+// ✅ OK: Use literal to differentiate
+.Map("deploy production --force").WithHandler(...)  // Only matches "deploy production --force"
+.Map("deploy {env}").WithHandler(...)  // Matches other environments
+
+// ✅ OK: Single route handles both cases
+.Map("deploy {env} --force").WithHandler((string env, bool force) => {
+    if (force) { /* forced deploy */ }
+    else { /* normal deploy */ }
+})
+```
+
 ## Type Constraints and Route Selection
 
 **Important:** Type constraints affect specificity scoring but do **NOT** enable type-based route dispatch.
@@ -304,5 +356,6 @@ Instead of relying on type-based fallback, use explicit patterns:
 
 ## Related Documents
 
-See [syntax-rules.md](../parser/syntax-rules.md) for route pattern syntax and validation rules.
-See [parameter-optionality.md](../cross-cutting/parameter-optionality.md) for nullability-based optionality design.
+- [syntax-rules.md](../parser/syntax-rules.md) - Route pattern syntax and validation rules
+- [parameter-optionality.md](../cross-cutting/parameter-optionality.md) - Nullability-based optionality design
+- Analyzer diagnostics: NURU_R001, NURU_R002, NURU_R003 - Compile-time route validation

@@ -713,11 +713,12 @@ internal static class HandlerInvokerEmitter
 
         case BindingSource.Option:
         case BindingSource.Flag:
-          // For options/flags, find by matching the handler parameter name to option parameter name
-          // or use the option's long form as the variable name
+          // For options/flags, find by matching the handler parameter name to option parameter name,
+          // long form, short form, or camelCase of long form
           OptionDefinition? matchingOption = routeOptions.FirstOrDefault(o =>
             o.ParameterName?.Equals(param.ParameterName, StringComparison.OrdinalIgnoreCase) == true ||
             o.LongForm?.Equals(param.ParameterName, StringComparison.OrdinalIgnoreCase) == true ||
+            o.ShortForm?.Equals(param.ParameterName, StringComparison.OrdinalIgnoreCase) == true ||
             ToCamelCase(o.LongForm ?? "").Equals(param.ParameterName, StringComparison.OrdinalIgnoreCase));
 
           if (matchingOption is not null)

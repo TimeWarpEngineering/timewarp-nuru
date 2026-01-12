@@ -22,19 +22,7 @@
     <!-- generator-14-options-validation.cs - top-level return statement conflicts with multi-mode -->
     <!-- Core tests - migrated files -->
 
-    <!-- TimeWarp.Terminal utils tests should be in that repo now not here --> 
-    <!-- <Compile Include="../timewarp-nuru-core-tests/ansi-string-utils-01-basic.cs" /> -->
-    <!-- <Compile Include="../timewarp-nuru-core-tests/ansi-string-utils-02-wrap-text.cs" /> -->
-    <!-- <Compile Include="../timewarp-nuru-core-tests/hyperlink-01-basic.cs" /> -->
-    <!-- <Compile Include="../timewarp-nuru-core-tests/panel-widget-01-basic.cs" /> -->
-    <!-- <Compile Include="../timewarp-nuru-core-tests/panel-widget-02-terminal-extensions.cs" /> -->
-    <!-- <Compile Include="../timewarp-nuru-core-tests/panel-widget-03-word-wrap.cs" /> -->
-    <!-- <Compile Include="../timewarp-nuru-core-tests/table-widget-01-basic.cs" /> -->
-    <!-- <Compile Include="../timewarp-nuru-core-tests/table-widget-02-borders.cs" /> -->
-    <!-- <Compile Include="../timewarp-nuru-core-tests/table-widget-03-styling.cs" /> -->
-    <!-- <Compile Include="../timewarp-nuru-core-tests/table-widget-04-expand.cs" /> -->
-    <!-- <Compile Include="../timewarp-nuru-core-tests/rule-widget-01-basic.cs" /> -->
-    <!-- <Compile Include="../timewarp-nuru-core-tests/rule-widget-02-terminal-extensions.cs" /> -->
+    <!-- TimeWarp.Terminal widget/utils tests have been moved to that repo -->
 
     <!-- DISABLED: These tests use old APIs (HelpProvider.GetHelpText, CreateSlimBuilder, SessionContext, InvokerRegistry) -->
     <!-- <Compile Include="../timewarp-nuru-core-tests/help-provider-01-option-detection.cs" /> -->

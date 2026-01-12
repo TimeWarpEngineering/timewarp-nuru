@@ -35,26 +35,20 @@ error CS1503: Argument 1: cannot convert from 'string[]' to 'double[]'
    - Updated variable name selection to use converted variable for typed catchalls
    - Handles `string` typed catchalls specially (no conversion needed)
 
-3. **NURU_R002 diagnostic** - Added duplicate route pattern detection:
-   - Added `DuplicateRoutePattern` diagnostic descriptor
-   - Updated `OverlapValidator.CheckGroupForTypeConflicts()` to detect exact duplicates
+3. **NURU_R002 diagnostic** - Added duplicate route pattern detection
 
-### Blocking Issue Discovered
+4. **NURU_R003 diagnostic** - Added unreachable route detection (Task #351)
 
-**CI tests still fail (34 failures)** even though individual test files pass. Root cause:
+5. **Endpoint isolation** - Implemented `.DiscoverEndpoints()` and `.Map<T>()` (Task #352)
 
-- **Attributed routes are added to ALL apps** in multi-file CI compilation
-- `[NuruRoute]` classes from `generator-11-attributed-routes.cs` (`DeployCommand`, `BuildCommand`, etc.) are injected into every test app
-- These duplicate the fluent routes (e.g., `deploy {env}`) causing wrong handlers to execute
-- The `NuruAnalyzer` doesn't validate attributed routes, so NURU_R002 isn't reported
+### Blocking Issue - RESOLVED
 
-**Example:** Test expects `"env:prod"` output but gets `"Deploying to prod..."` because the attributed `DeployCommand` handler matches instead of the fluent handler.
+~~CI tests still fail (34 failures) even though individual test files pass.~~
 
-### Created Follow-up Task
-
-**Task #351: Merge NuruAnalyzer into NuruGenerator for single-pass validation**
-
-This will fix the analyzer to validate the same complete model (fluent + attributed routes) that the generator emits.
+**Fixed by Task #351 and #352:**
+- Merged validation into NuruGenerator
+- Added endpoint isolation - attributed routes no longer auto-included
+- CI tests now run: 456 passed, 9 failed (pre-existing), 2 skipped
 
 ## Original Root Cause Analysis (for repeated options)
 
@@ -66,13 +60,6 @@ The `EmitValueOptionParsing` method in `route-matcher-emitter.cs`:
 
 ## Remaining Work
 
-### After Task #351 is Complete
-
-Once the analyzer properly validates attributed routes:
-1. CI tests will show NURU_R002 errors for duplicate routes
-2. Need to fix attributed route scoping (prevent them from polluting all apps)
-3. Then verify typed repeated options work correctly
-
 ### Repeated Option Fixes Still Needed
 
 - [ ] Add repeated option detection in `EmitValueOptionParsing`
@@ -80,11 +67,21 @@ Once the analyzer properly validates attributed routes:
 - [ ] Don't break early - collect all values
 - [ ] Add array type conversion in `EmitOptionTypeConversion`
 
+**Note:** 9 pre-existing test failures likely include repeated option tests.
+
+## CI Test Status
+
+```
+Passed: 456
+Failed: 9 (pre-existing, likely includes repeated option tests)
+Skipped: 2
+```
+
 ## Key Code Locations
 
 - `route-matcher-emitter.cs` - Option parsing and type conversion
 - `handler-invoker-emitter.cs` - Builds argument list for handler calls
-- `overlap-validator.cs` - Duplicate route detection (NURU_R002)
+- `overlap-validator.cs` - Duplicate route detection (NURU_R002, R003)
 - `nuru-generator.cs` - Combines fluent + attributed routes
 
 ## Files Modified
@@ -97,6 +94,7 @@ Once the analyzer properly validates attributed routes:
 
 ## Related
 
-- Task #351: Merge NuruAnalyzer into NuruGenerator (blocking)
+- Task #351: Merge NuruAnalyzer into NuruGenerator - **DONE**
+- Task #352: Add DiscoverEndpoints() and Map<T>() - **DONE**
 - Task #336: Add analyzer for ambiguous route patterns
 - Bug #346, #347, #348, #350: Related generator fixes (done)

@@ -12,58 +12,74 @@ When the source generator processes route patterns with typed repeated options (
 ```csharp
 .Map("process --id {id:int}*").WithHandler((int[] id) => ...)
 .Map("calc --values {v:double}*").WithHandler((double[] v) => ...)
-.Map("flags --enable {f:bool}*").WithHandler((bool[] f) => ...)
-.Map("dates --when {d:DateTime}*").WithHandler((DateTime[] d) => ...)
+.Map("docker run -i -t --env {e}* -- {*cmd}").WithHandler((bool i, bool t, string[] e, string[] cmd) => ...)
 ```
 
 **Errors:**
 ```
+error CS1503: Argument 1: cannot convert from 'string' to 'string[]'
 error CS1503: Argument 1: cannot convert from 'string[]' to 'int[]'
 error CS1503: Argument 1: cannot convert from 'string[]' to 'double[]'
-error CS1503: Argument 1: cannot convert from 'string[]' to 'bool[]'
-error CS1503: Argument 1: cannot convert from 'string[]' to 'DateTime[]'
-error CS1503: Argument 1: cannot convert from 'string[]' to 'byte[]'
-error CS1503: Argument 1: cannot convert from 'string[]' to 'short[]'
-error CS1503: Argument 1: cannot convert from 'string[]' to 'long[]'
-error CS1503: Argument 1: cannot convert from 'string[]' to 'float[]'
-error CS1503: Argument 1: cannot convert from 'string[]' to 'decimal[]'
-error CS1503: Argument 1: cannot convert from 'string[]' to 'Guid[]'
 ```
+
+## Root Cause Analysis
+
+The `EmitValueOptionParsing` method in `route-matcher-emitter.cs` (lines 486-553):
+
+1. **Only collects ONE value** - The loop breaks after finding the first occurrence (line 521: `break;`)
+2. **Declares `string?` not `string[]`** - Line 510: `sb.AppendLine($"      string? {rawVarName} = null;");`
+3. **Doesn't check `option.IsRepeated`** - The property exists but is never used
 
 ## Expected Behavior
 
-The generator should emit type conversion code for each element in the array:
-```csharp
-// Collect string values
-List<string> idStrings = new();
-// ... collect from args ...
+For repeated options (`*`), the generator should:
 
-// Convert to typed array
-int[] boundId = idStrings.Select(s => int.Parse(s, CultureInfo.InvariantCulture)).ToArray();
+1. Declare a `List<string>` to collect all values
+2. Loop through ALL args collecting values (don't break early)
+3. Convert to typed array after collection
+
+**Expected generated code:**
+```csharp
+// For --env {e}*
+List<string> __e_list = [];
+for (int __idx = 0; __idx < routeArgs.Length; __idx++)
+{
+  if (routeArgs[__idx] == "--env" && __idx + 1 < routeArgs.Length && !routeArgs[__idx + 1].StartsWith("-"))
+  {
+    __e_list.Add(routeArgs[__idx + 1]);
+    __idx++; // Skip the value
+  }
+}
+string[] e = __e_list.ToArray();
+
+// For typed --id {id:int}*
+List<string> __id_list = [];
+// ... collect as above ...
+int[] id = __id_list.Select(s => int.Parse(s, CultureInfo.InvariantCulture)).ToArray();
 ```
 
-Or use a helper method:
-```csharp
-int[] boundId = ConvertArray<int>(idStrings, int.Parse);
-```
+## Plan
+
+1. Modify `EmitValueOptionParsing` to check `option.IsRepeated`
+2. If repeated:
+   - Declare `List<string>` instead of `string?`
+   - Don't break after finding first value
+   - Continue collecting all occurrences
+3. Modify `EmitOptionTypeConversion` to handle arrays:
+   - For repeated options, convert each element with `.Select().ToArray()`
+4. Test with various repeated option patterns
+
+## Key Code Locations
+
+- `route-matcher-emitter.cs:486-553` - `EmitValueOptionParsing` - needs to handle `IsRepeated`
+- `route-matcher-emitter.cs:560-621` - `EmitOptionTypeConversion` - needs array conversion
 
 ## Checklist
 
-- [ ] Identify where repeated option values are collected
-- [ ] Add type conversion step before passing to handler
+- [ ] Add repeated option detection in `EmitValueOptionParsing`
+- [ ] Emit `List<string>` collection for repeated options
+- [ ] Don't break early - collect all values
+- [ ] Add array type conversion in `EmitOptionTypeConversion`
 - [ ] Support all primitive types: int, double, bool, DateTime, byte, short, long, float, decimal, Guid
-- [ ] Consider using existing TypeConverter infrastructure
-- [ ] Test with various typed array patterns
-- [ ] Verify affected routing tests compile and pass
-
-## Notes
-
-- Single typed options work correctly (type conversion exists)
-- The bug is specific to repeated/array options with type constraints
-- The `*` modifier indicates repeated option
-- Related tests in `routing-06-repeated-options.cs` and `routing-17-additional-primitive-types.cs`
-
-## Files to Investigate
-
-- `source/timewarp-nuru-analyzers/generators/emitters/route-matcher-emitter.cs`
-- Look for repeated option handling and compare with single option type conversion
+- [ ] Clear caches and run CI tests: `ganda runfile cache --clear`
+- [ ] Verify routing tests compile and pass

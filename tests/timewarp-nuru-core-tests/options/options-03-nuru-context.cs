@@ -29,7 +29,7 @@ public class NuruContextTests
     // Arrange
     string[]? capturedRawArgs = null;
 
-    NuruCoreApp app = NuruCoreApp.CreateSlimBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .Map("analyze {file} --verbose")
         .WithHandler((string file, bool verbose, NuruContext context) =>
         {
@@ -64,7 +64,7 @@ public class NuruContextTests
     // Arrange
     string[]? capturedUnmatched = null;
 
-    NuruCoreApp app = NuruCoreApp.CreateSlimBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .Map("analyze {file} --verbose")
         .WithHandler((string file, bool verbose, NuruContext context) =>
         {
@@ -97,7 +97,7 @@ public class NuruContextTests
     // Arrange
     bool? tagWasProvided = null;
 
-    NuruCoreApp app = NuruCoreApp.CreateSlimBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .Map("deploy {env} {tag?}")
         .WithHandler((string env, string? tag, NuruContext context) =>
         {
@@ -128,7 +128,7 @@ public class NuruContextTests
     // Arrange
     bool? tagWasProvided = null;
 
-    NuruCoreApp app = NuruCoreApp.CreateSlimBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .Map("deploy {env} {tag?}")
         .WithHandler((string env, string? tag, NuruContext context) =>
         {
@@ -159,7 +159,7 @@ public class NuruContextTests
     // Arrange
     string? capturedPattern = null;
 
-    NuruCoreApp app = NuruCoreApp.CreateSlimBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .Map("analyze {file} --verbose")
         .WithHandler((string file, bool verbose, NuruContext context) =>
         {

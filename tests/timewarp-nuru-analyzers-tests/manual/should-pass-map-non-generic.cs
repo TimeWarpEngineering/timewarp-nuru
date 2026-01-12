@@ -6,7 +6,7 @@
 WriteLine("Testing delegate-based routing with Map()");
 WriteLine();
 
-var app = NuruCoreApp.CreateSlimBuilder(args)
+var app = NuruApp.CreateBuilder(args)
   .Map("ping").WithHandler(() => WriteLine("Pong!")).AsQuery().Done()
   .Map("greet {name}").WithHandler((string name) => WriteLine($"Hello, {name}!")).AsQuery().Done()
   .Map("add {a:int} {b:int}").WithHandler((int a, int b) => WriteLine($"Result: {a + b}")).AsQuery().Done()

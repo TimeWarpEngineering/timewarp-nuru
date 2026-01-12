@@ -62,7 +62,7 @@ public class SessionContextHelpTests
   public static async Task Should_expose_session_context_from_nuru_core_app()
   {
     // Arrange & Act
-    NuruCoreApp app = NuruCoreApp.CreateSlimBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .Map("test")
         .WithHandler(() => "ok")
         .AsQuery()
@@ -81,7 +81,7 @@ public class SessionContextHelpTests
   {
     // Arrange
     string? capturedHelp = null;
-    NuruCoreApp app = NuruCoreApp.CreateSlimBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .AddReplRoutes() // Adds exit, quit, q, clear, history, etc.
       .Map("test")
         .WithHandler(() => "ok")
@@ -111,7 +111,7 @@ public class SessionContextHelpTests
   {
     // Arrange
     string? capturedHelp = null;
-    NuruCoreApp app = NuruCoreApp.CreateSlimBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .AddReplRoutes()
       .Map("test")
         .WithHandler(() => "ok")
@@ -148,7 +148,7 @@ public class SessionContextHelpTests
     string? helpContext = null;
     string? dashDashHelpContext = null;
 
-    NuruCoreApp app = NuruCoreApp.CreateSlimBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .Map("test")
         .WithHandler(() => "ok")
         .AsQuery()

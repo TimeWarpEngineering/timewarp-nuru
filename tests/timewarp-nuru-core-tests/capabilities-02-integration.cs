@@ -164,52 +164,39 @@ public class CapabilitiesIntegrationTests
     await Task.CompletedTask;
   }
 
-  public static async Task Should_not_register_capabilities_route_on_slim_builder()
+  public static async Task Should_not_register_capabilities_route_when_disabled()
   {
-    // Arrange & Act - CreateSlimBuilder does NOT call UseAllExtensions
-    NuruCoreAppBuilder builder = NuruCoreApp.CreateSlimBuilder([]);
+    // Arrange & Act - DisableCapabilitiesRoute = true should prevent auto-registration
+    NuruAppBuilder builder = NuruApp.CreateBuilder([], new NuruAppOptions
+    {
+      DisableCapabilitiesRoute = true
+    });
 
     // Assert - Should NOT have --capabilities route
     bool hasCapabilitiesRoute = builder.EndpointCollection.Any(e =>
       e.CompiledRoute.OptionMatchers.Any(opt =>
         opt.MatchPattern == "--capabilities"));
 
-    hasCapabilitiesRoute.ShouldBeFalse("CreateSlimBuilder should not auto-register --capabilities route");
+    hasCapabilitiesRoute.ShouldBeFalse("DisableCapabilitiesRoute = true should not auto-register --capabilities route");
 
     await Task.CompletedTask;
   }
 
-  public static async Task Should_not_register_capabilities_route_when_disabled()
+  public static async Task Should_allow_manual_capabilities_route_registration()
   {
-    // Arrange & Act
+    // Arrange - Start with capabilities disabled, then manually add
     NuruAppBuilder builder = NuruApp.CreateBuilder([], new NuruAppOptions
     {
       DisableCapabilitiesRoute = true
     });
-
-    // Assert - Should NOT have --capabilities route when disabled
-    bool hasCapabilitiesRoute = builder.EndpointCollection.Any(e =>
-      e.CompiledRoute.OptionMatchers.Any(opt =>
-        opt.MatchPattern == "--capabilities"));
-
-    hasCapabilitiesRoute.ShouldBeFalse("DisableCapabilitiesRoute = true should prevent --capabilities route registration");
-
-    await Task.CompletedTask;
-  }
-
-  public static async Task Should_allow_manual_capabilities_route_on_slim_builder()
-  {
-    // Arrange
-    NuruCoreAppBuilder builder = NuruCoreApp.CreateSlimBuilder([])
-      .AddDependencyInjection()
-      .AddCapabilitiesRoute();
+    builder.AddCapabilitiesRoute();
 
     // Assert - Should now have --capabilities route after manual registration
     bool hasCapabilitiesRoute = builder.EndpointCollection.Any(e =>
       e.CompiledRoute.OptionMatchers.Any(opt =>
         opt.MatchPattern == "--capabilities"));
 
-    hasCapabilitiesRoute.ShouldBeTrue("AddCapabilitiesRoute() should register --capabilities route on slim builder");
+    hasCapabilitiesRoute.ShouldBeTrue("AddCapabilitiesRoute() should register --capabilities route");
 
     await Task.CompletedTask;
   }

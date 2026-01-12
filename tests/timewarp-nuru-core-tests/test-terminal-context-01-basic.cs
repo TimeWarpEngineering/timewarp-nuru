@@ -144,7 +144,7 @@ public class TestTerminalContextTests
     TestTerminalContext.Current = terminal;
 
     // Build an app WITHOUT explicitly setting terminal - it should pick up context
-    NuruCoreAppBuilder builder = NuruCoreApp.CreateSlimBuilder();
+    NuruCoreAppBuilder builder = NuruApp.CreateBuilder([]);
     builder.Map("greet {name}")
       .WithHandler((string name, ITerminal t) => t.WriteLine($"Hello, {name}!"))
       .AsCommand()
@@ -169,7 +169,7 @@ public class TestTerminalContextTests
 
     // Build app with an explicitly configured terminal (simulates the DI scenario)
     using TestTerminal explicitTerminal = new();
-    NuruCoreAppBuilder builder = NuruCoreApp.CreateSlimBuilder();
+    NuruCoreAppBuilder builder = NuruApp.CreateBuilder([]);
     builder.UseTerminal(explicitTerminal);  // Explicitly set a different terminal
     builder.Map("test")
       .WithHandler((ITerminal t) => t.WriteLine("test output"))

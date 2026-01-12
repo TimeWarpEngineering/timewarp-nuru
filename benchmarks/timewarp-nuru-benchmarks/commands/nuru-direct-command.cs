@@ -10,7 +10,7 @@ public static class NuruDirectCommand
 
   public static async Task Execute(string[] args)
   {
-    // Use CreateEmptyBuilder for fastest benchmark (no DI, no configuration)
+    // Use CreateBuilder for benchmark
     NuruCoreApp app = NuruCoreApp.CreateBuilder(CachedNuruArgs)
       // Add a route that matches the benchmark arguments pattern
       .Map("test --str {str} -i {intOption:int} -b")

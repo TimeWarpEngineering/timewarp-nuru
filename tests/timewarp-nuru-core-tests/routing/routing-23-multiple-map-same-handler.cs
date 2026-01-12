@@ -99,7 +99,7 @@ public class MultipleMapSameHandlerTests
     string? capturedName = null;
     Func<string, int> handler = (name) => { capturedName = name; };
 
-    NuruCoreApp app = NuruApp.CreateSlimBuilder([])
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .Map("greet {name}").WithHandler(handler).WithDescription("Greet someone").Done()
       .Map("hello {name}").WithHandler(handler).WithDescription("Greet someone").Done()
       .Map("hi {name}").WithHandler(handler).WithDescription("Greet someone").Done()
@@ -133,7 +133,7 @@ public class MultipleMapSameHandlerTests
       return 42; // Outputs "42" to terminal (tests Task<int> handler support)
     };
 
-    NuruCoreApp app = NuruApp.CreateSlimBuilder([])
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .Map("save").WithHandler(handler).WithDescription("Save data").Done()
       .Map("write").WithHandler(handler).WithDescription("Save data").Done()
       .Build();

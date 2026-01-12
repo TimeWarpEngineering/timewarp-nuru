@@ -9,7 +9,7 @@ public partial class NuruCoreAppBuilder<TSelf>
 
   /// <summary>
   /// Initializes a new instance of the <see cref="NuruCoreAppBuilder"/> class with default settings.
-  /// Use <see cref="NuruCoreApp.CreateSlimBuilder(string[])"/> or <see cref="NuruApp.CreateBuilder(string[])"/> factory methods instead.
+  /// Use <see cref="NuruApp.CreateBuilder(string[])"/> factory method instead.
   /// </summary>
   internal NuruCoreAppBuilder() : this(null) { }
 
@@ -26,8 +26,7 @@ public partial class NuruCoreAppBuilder<TSelf>
 
 /// <summary>
 /// Non-generic NuruCoreAppBuilder for use with factory methods.
-/// This is the concrete class returned by <see cref="NuruCoreApp.CreateSlimBuilder(string[])"/>
-/// and <see cref="NuruCoreApp.CreateEmptyBuilder()"/>.
+/// This is the concrete class returned by <see cref="NuruApp.CreateBuilder(string[])"/>.
 /// </summary>
 /// <remarks>
 /// This class exists to provide a non-generic entry point for the CRTP pattern.

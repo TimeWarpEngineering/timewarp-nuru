@@ -27,7 +27,7 @@ public class MixedRequiredOptionalTests
     string? capturedVer = null;
     bool capturedDryRun = false;
 
-    NuruCoreApp app = NuruCoreApp.CreateSlimBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .Map("deploy --env {env} --version? {ver?} --dry-run")
         .WithHandler((string env, string? ver, bool dryRun) =>
         {
@@ -56,7 +56,7 @@ public class MixedRequiredOptionalTests
     string? capturedVer = null;
     bool capturedDryRun = false;
 
-    NuruCoreApp app = NuruCoreApp.CreateSlimBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .Map("deploy --env {env} --version? {ver?} --dry-run")
         .WithHandler((string env, string? ver, bool dryRun) =>
         {
@@ -81,7 +81,7 @@ public class MixedRequiredOptionalTests
   public static async Task Should_not_match_when_missing_required_option()
   {
     // Arrange
-    NuruCoreApp app = NuruCoreApp.CreateSlimBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .Map("deploy --env {env} --version? {ver?} --dry-run")
         .WithHandler((string _, string? _, bool _) => 0)
         .AsCommand()
@@ -102,7 +102,7 @@ public class MixedRequiredOptionalTests
     string? capturedVer = null;
     bool capturedDryRun = false;
 
-    NuruCoreApp app = NuruCoreApp.CreateSlimBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .Map("deploy --env {env} --version? {ver?} --dry-run")
         .WithHandler((string env, string? ver, bool dryRun) =>
         {

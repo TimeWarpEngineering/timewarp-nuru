@@ -26,7 +26,7 @@ public sealed class NestedCompiledRouteBuilderTests
   public static async Task Should_create_route_via_nested_builder()
   {
     // Arrange - use SlimBuilder to avoid auto-registered routes (help, version, etc.)
-    NuruCoreAppBuilder builder = NuruCoreApp.CreateSlimBuilder();
+    NuruCoreAppBuilder builder = NuruApp.CreateBuilder([]);
 
     // Act - use nested builder pattern
     EndpointBuilder<NuruCoreAppBuilder> endpointBuilder = builder.Map(

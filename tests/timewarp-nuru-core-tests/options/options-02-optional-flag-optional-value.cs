@@ -24,7 +24,7 @@ public class OptionalFlagOptionalValueTests
     string? capturedMode = null;
     bool handlerCalled = false;
 
-    NuruCoreApp app = NuruCoreApp.CreateSlimBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .Map("build --config? {mode?}")
         .WithHandler((string? mode) =>
         {
@@ -49,7 +49,7 @@ public class OptionalFlagOptionalValueTests
     // Arrange
     string? capturedMode = null;
 
-    NuruCoreApp app = NuruCoreApp.CreateSlimBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .Map("build --config? {mode?}")
         .WithHandler((string? mode) =>
         {
@@ -73,7 +73,7 @@ public class OptionalFlagOptionalValueTests
     string? capturedMode = null;
     bool handlerCalled = false;
 
-    NuruCoreApp app = NuruCoreApp.CreateSlimBuilder()
+    NuruCoreApp app = NuruApp.CreateBuilder([])
       .Map("build --config? {mode?}")
         .WithHandler((string? mode) =>
         {

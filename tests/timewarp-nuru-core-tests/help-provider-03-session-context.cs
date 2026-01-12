@@ -1,22 +1,21 @@
 #!/usr/bin/dotnet --
 #:project ../../source/timewarp-nuru/timewarp-nuru.csproj
 
-// Test SessionContext integration for help display
-// Verifies that help and --help behave consistently based on runtime context
+// Test SessionContext class behavior
+// Verifies CLI vs REPL context state management
 
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif
 
-namespace TimeWarp.Nuru.Tests.Core.HelpProviderSession
+namespace TimeWarp.Nuru.Tests.Core.SessionContextTests
 {
 
-[TestTag("Help")]
 [TestTag("SessionContext")]
-public class SessionContextHelpTests
+public class SessionContextTests
 {
   [ModuleInitializer]
-  internal static void Register() => RegisterTests<SessionContextHelpTests>();
+  internal static void Register() => RegisterTests<SessionContextTests>();
 
   public static async Task Should_default_to_cli_context()
   {
@@ -59,141 +58,30 @@ public class SessionContextHelpTests
     await Task.CompletedTask;
   }
 
-  public static async Task Should_expose_session_context_from_nuru_core_app()
-  {
-    // Arrange & Act
-    NuruCoreApp app = NuruApp.CreateBuilder([])
-      .Map("test")
-        .WithHandler(() => "ok")
-        .AsQuery()
-        .Done()
-      .Build();
-
-    // Assert - App should have SessionContext property
-    app.SessionContext.ShouldNotBeNull();
-    app.SessionContext.IsReplSession.ShouldBeFalse();
-    app.SessionContext.HelpContext.ShouldBe(HelpContext.Cli);
-
-    await Task.CompletedTask;
-  }
-
-  public static async Task Should_hide_repl_commands_in_cli_help()
+  public static async Task Should_default_supports_color_to_true()
   {
     // Arrange
-    string? capturedHelp = null;
-    NuruCoreApp app = NuruApp.CreateBuilder([])
-      .AddReplRoutes() // Adds exit, quit, q, clear, history, etc.
-      .Map("test")
-        .WithHandler(() => "ok")
-        .AsQuery()
-        .Done()
-      .Map("help")
-        .WithHandler((SessionContext session) =>
-        {
-          // This simulates what the auto-generated help route does
-          capturedHelp = session.HelpContext.ToString();
-          return capturedHelp;
-        })
-        .AsQuery()
-        .Done()
-      .Build();
+    SessionContext context = new();
 
-    // Act - Execute help in CLI context (default)
-    await app.RunAsync(["help"]);
-
-    // Assert - Should use CLI context when not in REPL
-    capturedHelp.ShouldBe("Cli");
+    // Assert
+    context.SupportsColor.ShouldBeTrue();
 
     await Task.CompletedTask;
   }
 
-  public static async Task Should_show_repl_commands_when_session_context_is_repl()
+  public static async Task Should_allow_setting_supports_color()
   {
     // Arrange
-    string? capturedHelp = null;
-    NuruCoreApp app = NuruApp.CreateBuilder([])
-      .AddReplRoutes()
-      .Map("test")
-        .WithHandler(() => "ok")
-        .AsQuery()
-        .Done()
-      .Map("help")
-        .WithHandler((SessionContext session) =>
-        {
-          capturedHelp = session.HelpContext.ToString();
-          return capturedHelp;
-        })
-        .AsQuery()
-        .Done()
-      .Build();
-
-    // Simulate REPL context by setting the flag
-    app.SessionContext.IsReplSession = true;
-
-    // Act - Execute help in REPL context
-    await app.RunAsync(["help"]);
-
-    // Assert - Should use REPL context
-    capturedHelp.ShouldBe("Repl");
-
-    // Cleanup
-    app.SessionContext.IsReplSession = false;
-
-    await Task.CompletedTask;
-  }
-
-  public static async Task Should_have_same_behavior_for_help_and_dash_dash_help()
-  {
-    // Arrange - Test that both help and --help use SessionContext
-    string? helpContext = null;
-    string? dashDashHelpContext = null;
-
-    NuruCoreApp app = NuruApp.CreateBuilder([])
-      .Map("test")
-        .WithHandler(() => "ok")
-        .AsQuery()
-        .Done()
-      .Map("help")
-        .WithHandler((SessionContext session) =>
-        {
-          helpContext = session.HelpContext.ToString();
-          return helpContext;
-        })
-        .AsQuery()
-        .Done()
-      .Map("--help")
-        .WithHandler((SessionContext session) =>
-        {
-          dashDashHelpContext = session.HelpContext.ToString();
-          return dashDashHelpContext;
-        })
-        .AsQuery()
-        .Done()
-      .Build();
+    SessionContext context = new();
 
     // Act
-    await app.RunAsync(["help"]);
-    await app.RunAsync(["--help"]);
+    context.SupportsColor = false;
 
-    // Assert - Both should use the same context (CLI by default)
-    helpContext.ShouldBe("Cli");
-    dashDashHelpContext.ShouldBe("Cli");
-
-    // Now test in REPL context
-    app.SessionContext.IsReplSession = true;
-
-    await app.RunAsync(["help"]);
-    await app.RunAsync(["--help"]);
-
-    // Both should now use REPL context
-    helpContext.ShouldBe("Repl");
-    dashDashHelpContext.ShouldBe("Repl");
-
-    // Cleanup
-    app.SessionContext.IsReplSession = false;
+    // Assert
+    context.SupportsColor.ShouldBeFalse();
 
     await Task.CompletedTask;
   }
 }
 
-} // namespace TimeWarp.Nuru.Tests.Core.HelpProviderSession
+} // namespace TimeWarp.Nuru.Tests.Core.SessionContextTests

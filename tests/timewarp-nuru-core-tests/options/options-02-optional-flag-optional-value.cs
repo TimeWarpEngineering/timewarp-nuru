@@ -21,16 +21,11 @@ public class OptionalFlagOptionalValueTests
   public static async Task Should_match_without_optional_flag()
   {
     // Arrange
-    string? capturedMode = null;
-    bool handlerCalled = false;
-
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
+      .UseTerminal(terminal)
       .Map("build --config? {mode?}")
-        .WithHandler((string? mode) =>
-        {
-          capturedMode = mode;
-          handlerCalled = true;
-        })
+        .WithHandler((string? mode) => $"mode:{mode ?? "null"}")
         .AsCommand()
         .Done()
       .Build();
@@ -40,21 +35,17 @@ public class OptionalFlagOptionalValueTests
 
     // Assert
     exitCode.ShouldBe(0);
-    handlerCalled.ShouldBeTrue();
-    capturedMode.ShouldBeNull();
+    terminal.OutputContains("mode:null").ShouldBeTrue();
   }
 
   public static async Task Should_match_with_flag_and_value()
   {
     // Arrange
-    string? capturedMode = null;
-
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
+      .UseTerminal(terminal)
       .Map("build --config? {mode?}")
-        .WithHandler((string? mode) =>
-        {
-          capturedMode = mode;
-        })
+        .WithHandler((string? mode) => $"mode:{mode ?? "null"}")
         .AsCommand()
         .Done()
       .Build();
@@ -64,22 +55,17 @@ public class OptionalFlagOptionalValueTests
 
     // Assert
     exitCode.ShouldBe(0);
-    capturedMode.ShouldBe("debug");
+    terminal.OutputContains("mode:debug").ShouldBeTrue();
   }
 
   public static async Task Should_match_with_flag_but_no_value()
   {
     // Arrange
-    string? capturedMode = null;
-    bool handlerCalled = false;
-
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
+      .UseTerminal(terminal)
       .Map("build --config? {mode?}")
-        .WithHandler((string? mode) =>
-        {
-          capturedMode = mode;
-          handlerCalled = true;
-        })
+        .WithHandler((string? mode) => $"mode:{mode ?? "null"}")
         .AsCommand()
         .Done()
       .Build();
@@ -89,8 +75,7 @@ public class OptionalFlagOptionalValueTests
 
     // Assert
     exitCode.ShouldBe(0);
-    handlerCalled.ShouldBeTrue();
-    capturedMode.ShouldBeNull();
+    terminal.OutputContains("mode:null").ShouldBeTrue();
   }
 }
 

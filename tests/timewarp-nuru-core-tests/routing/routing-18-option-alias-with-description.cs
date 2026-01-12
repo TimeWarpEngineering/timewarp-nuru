@@ -23,14 +23,11 @@ public class OptionAliasWithDescriptionTests
   public static async Task Should_match_option_alias_with_description_short_form()
   {
     // Arrange - Pattern with alias AND description
-    bool upperUsed = false;
-    string? capturedName = null;
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
-      .Map("hello {name} --upper,-u|Convert to uppercase").WithHandler((string name, bool upper) =>
-      {
-        capturedName = name;
-        upperUsed = upper;
-      }).AsQuery().Done()
+      .UseTerminal(terminal)
+      .Map("hello {name} --upper,-u|Convert to uppercase").WithHandler((string name, bool upper) => $"name:{name}|upper:{upper}")
+      .AsQuery().Done()
       .Build();
 
     // Act - Use SHORT form (-u)
@@ -38,24 +35,18 @@ public class OptionAliasWithDescriptionTests
 
     // Assert
     exitCode.ShouldBe(0);
-    capturedName.ShouldBe("World");
-    upperUsed.ShouldBeTrue();
-
-    await Task.CompletedTask;
+    terminal.OutputContains("name:World|upper:True").ShouldBeTrue();
   }
 
   public static async Task Should_match_option_alias_with_description_long_form()
   {
     // Arrange - Pattern with alias AND description
     // THIS IS THE BUG FROM TASK 013: long form should work but was failing
-    bool upperUsed = false;
-    string? capturedName = null;
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
-      .Map("hello {name} --upper,-u|Convert to uppercase").WithHandler((string name, bool upper) =>
-      {
-        capturedName = name;
-        upperUsed = upper;
-      }).AsQuery().Done()
+      .UseTerminal(terminal)
+      .Map("hello {name} --upper,-u|Convert to uppercase").WithHandler((string name, bool upper) => $"name:{name}|upper:{upper}")
+      .AsQuery().Done()
       .Build();
 
     // Act - Use LONG form (--upper)
@@ -63,23 +54,17 @@ public class OptionAliasWithDescriptionTests
 
     // Assert
     exitCode.ShouldBe(0);
-    capturedName.ShouldBe("World");
-    upperUsed.ShouldBeTrue();
-
-    await Task.CompletedTask;
+    terminal.OutputContains("name:World|upper:True").ShouldBeTrue();
   }
 
   public static async Task Should_match_option_alias_with_description_omitted()
   {
     // Arrange - Pattern with alias AND description
-    bool upperUsed = true;
-    string? capturedName = null;
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
-      .Map("hello {name} --upper,-u|Convert to uppercase").WithHandler((string name, bool upper) =>
-      {
-        capturedName = name;
-        upperUsed = upper;
-      }).AsQuery().Done()
+      .UseTerminal(terminal)
+      .Map("hello {name} --upper,-u|Convert to uppercase").WithHandler((string name, bool upper) => $"name:{name}|upper:{upper}")
+      .AsQuery().Done()
       .Build();
 
     // Act - Omit the option
@@ -87,63 +72,43 @@ public class OptionAliasWithDescriptionTests
 
     // Assert
     exitCode.ShouldBe(0);
-    capturedName.ShouldBe("World");
-    upperUsed.ShouldBeFalse();
-
-    await Task.CompletedTask;
+    terminal.OutputContains("name:World|upper:False").ShouldBeTrue();
   }
 
   public static async Task Should_match_complex_pattern_with_description_deploy_dry_run_short()
   {
     // Arrange - More complex pattern from MCP tests
-    // Note: Parameter name must match the kebab-case option name converted to camelCase
-    bool dryRun = false;
-    string? capturedEnv = null;
-#pragma warning disable RCS1163, IDE0060
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
-      .Map("deploy {env} --dry-run,-d|Preview mode").WithHandler((string env, bool dryrun) =>
-      {
-        capturedEnv = env;
-        dryRun = dryrun;
-      }).AsCommand().Done()
+      .UseTerminal(terminal)
+      .Map("deploy {env} --dry-run,-d|Preview mode").WithHandler((string env, bool dryRun) => $"env:{env}|dryRun:{dryRun}")
+      .AsCommand().Done()
       .Build();
-#pragma warning restore RCS1163, IDE0060
 
     // Act - Use short form
     int exitCode = await app.RunAsync(["deploy", "prod", "-d"]);
 
     // Assert
     exitCode.ShouldBe(0);
-    capturedEnv.ShouldBe("prod");
-    dryRun.ShouldBeTrue();
-
-    await Task.CompletedTask;
+    terminal.OutputContains("env:prod|dryRun:True").ShouldBeTrue();
   }
 
   public static async Task Should_match_complex_pattern_with_description_deploy_dry_run_long()
   {
     // Arrange - More complex pattern from MCP tests
-    bool dryRun = false;
-    string? capturedEnv = null;
-#pragma warning disable RCS1163, IDE0060
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
-      .Map("deploy {env} --dry-run,-d|Preview mode").WithHandler((string env, bool dryrun) =>
-      {
-        capturedEnv = env;
-        dryRun = dryrun;
-      }).AsCommand().Done()
+      .UseTerminal(terminal)
+      .Map("deploy {env} --dry-run,-d|Preview mode").WithHandler((string env, bool dryRun) => $"env:{env}|dryRun:{dryRun}")
+      .AsCommand().Done()
       .Build();
-#pragma warning restore RCS1163, IDE0060
 
     // Act - Use LONG form (--dry-run) - this was the reported bug
     int exitCode = await app.RunAsync(["deploy", "prod", "--dry-run"]);
 
     // Assert
     exitCode.ShouldBe(0);
-    capturedEnv.ShouldBe("prod");
-    dryRun.ShouldBeTrue();
-
-    await Task.CompletedTask;
+    terminal.OutputContains("env:prod|dryRun:True").ShouldBeTrue();
   }
 }
 

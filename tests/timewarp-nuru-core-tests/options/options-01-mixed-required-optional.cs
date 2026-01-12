@@ -23,18 +23,11 @@ public class MixedRequiredOptionalTests
   public static async Task Should_match_when_all_options_provided()
   {
     // Arrange
-    string? capturedEnv = null;
-    string? capturedVer = null;
-    bool capturedDryRun = false;
-
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
+      .UseTerminal(terminal)
       .Map("deploy --env {env} --version? {ver?} --dry-run")
-        .WithHandler((string env, string? ver, bool dryRun) =>
-        {
-          capturedEnv = env;
-          capturedVer = ver;
-          capturedDryRun = dryRun;
-        })
+        .WithHandler((string env, string? ver, bool dryRun) => $"env:{env}|ver:{ver ?? "null"}|dryRun:{dryRun}")
         .AsCommand()
         .Done()
       .Build();
@@ -44,26 +37,17 @@ public class MixedRequiredOptionalTests
 
     // Assert
     exitCode.ShouldBe(0);
-    capturedEnv.ShouldBe("prod");
-    capturedVer.ShouldBe("v1.0");
-    capturedDryRun.ShouldBeTrue();
+    terminal.OutputContains("env:prod|ver:v1.0|dryRun:True").ShouldBeTrue();
   }
 
   public static async Task Should_match_with_only_required_option()
   {
     // Arrange
-    string? capturedEnv = null;
-    string? capturedVer = null;
-    bool capturedDryRun = false;
-
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
+      .UseTerminal(terminal)
       .Map("deploy --env {env} --version? {ver?} --dry-run")
-        .WithHandler((string env, string? ver, bool dryRun) =>
-        {
-          capturedEnv = env;
-          capturedVer = ver;
-          capturedDryRun = dryRun;
-        })
+        .WithHandler((string env, string? ver, bool dryRun) => $"env:{env}|ver:{ver ?? "null"}|dryRun:{dryRun}")
         .AsCommand()
         .Done()
       .Build();
@@ -73,17 +57,17 @@ public class MixedRequiredOptionalTests
 
     // Assert
     exitCode.ShouldBe(0);
-    capturedEnv.ShouldBe("prod");
-    capturedVer.ShouldBeNull();
-    capturedDryRun.ShouldBeFalse();
+    terminal.OutputContains("env:prod|ver:null|dryRun:False").ShouldBeTrue();
   }
 
   public static async Task Should_not_match_when_missing_required_option()
   {
     // Arrange
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
+      .UseTerminal(terminal)
       .Map("deploy --env {env} --version? {ver?} --dry-run")
-        .WithHandler((string _, string? _, bool _) => 0)
+        .WithHandler((string env, string? ver, bool dryRun) => $"env:{env}|ver:{ver ?? "null"}|dryRun:{dryRun}")
         .AsCommand()
         .Done()
       .Build();
@@ -98,18 +82,11 @@ public class MixedRequiredOptionalTests
   public static async Task Should_match_with_required_and_boolean_only()
   {
     // Arrange
-    string? capturedEnv = null;
-    string? capturedVer = null;
-    bool capturedDryRun = false;
-
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
+      .UseTerminal(terminal)
       .Map("deploy --env {env} --version? {ver?} --dry-run")
-        .WithHandler((string env, string? ver, bool dryRun) =>
-        {
-          capturedEnv = env;
-          capturedVer = ver;
-          capturedDryRun = dryRun;
-        })
+        .WithHandler((string env, string? ver, bool dryRun) => $"env:{env}|ver:{ver ?? "null"}|dryRun:{dryRun}")
         .AsCommand()
         .Done()
       .Build();
@@ -119,9 +96,7 @@ public class MixedRequiredOptionalTests
 
     // Assert
     exitCode.ShouldBe(0);
-    capturedEnv.ShouldBe("staging");
-    capturedVer.ShouldBeNull();
-    capturedDryRun.ShouldBeTrue();
+    terminal.OutputContains("env:staging|ver:null|dryRun:True").ShouldBeTrue();
   }
 }
 

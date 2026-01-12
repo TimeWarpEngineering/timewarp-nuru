@@ -24,20 +24,25 @@ Merge validation into `NuruGenerator`:
 - Emits code
 - Delete separate `NuruAnalyzer`
 
-## Progress
+## Results
 
-### Completed
+**COMPLETED** - All goals achieved plus bonus endpoint isolation feature.
+
+### What Was Done
 
 1. **Merged validation into NuruGenerator** - Single generator now handles both code emission and validation
 2. **Added route location collection** - Collects locations from both `Map()` calls and `[NuruRoute]` attributes
 3. **Switched to ExtractWithDiagnostics** - Captures extraction errors during model building
 4. **Added NURU_R003 diagnostic** - Detects unreachable routes (routes shadowed by higher specificity routes)
 5. **Updated documentation** - Added compile-time validation section to `specificity-algorithm.md`
+6. **Fixed NURU_R003 false positives** - Required options now correctly included in signature comparison
+7. **Enhanced error messages** - NURU_R003 now shows file:line location of shadowing route
+8. **Added EffectivePattern** - Accurate route pattern display from segments
+9. **Implemented endpoint isolation** - `.DiscoverEndpoints()` and `.Map<T>()` API (see Task #352)
 
-### Remaining
+### Deferred
 
-- [ ] Delete `NuruAnalyzer` (deferred - may still be useful for other purposes)
-- [ ] Fix attributed route scoping (separate task needed)
+- Delete `NuruAnalyzer` - may still be useful for other purposes
 
 ## NURU_R003: Unreachable Route
 

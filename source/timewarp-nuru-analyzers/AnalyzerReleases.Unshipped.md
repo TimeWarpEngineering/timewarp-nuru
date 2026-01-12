@@ -29,4 +29,5 @@ NURU_H003 | Handler.Validation | Error | Unsupported handler expression
 NURU_H004 | Handler.Validation | Warning | Private method handler not accessible
 NURU_H005 | Handler.Validation | Error | Handler parameter name doesn't match route segment
 NURU_H006 | Handler.Validation | Error | Discard parameter not supported in handler
+NURU_H007 | Handler.Validation | Warning | ILogger<T> injected without logging configuration
 NURU_R001 | RoutePattern.Overlap | Error | Overlapping routes with different type constraints

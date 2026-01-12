@@ -18,10 +18,15 @@ internal static class BehaviorEmitter
   /// Emits static Lazy fields for behavior instances.
   /// Called from InterceptorEmitter after service fields.
   /// </summary>
+  /// <param name="sb">StringBuilder to append to.</param>
+  /// <param name="behaviors">Behavior definitions to emit.</param>
+  /// <param name="services">Service definitions for dependency resolution.</param>
+  /// <param name="loggerFactoryFieldName">Name of the logger factory field, or null if no logging configured.</param>
   public static void EmitBehaviorFields(
     StringBuilder sb,
     ImmutableArray<BehaviorDefinition> behaviors,
-    ImmutableArray<ServiceDefinition> services)
+    ImmutableArray<ServiceDefinition> services,
+    string? loggerFactoryFieldName)
   {
     if (behaviors.Length == 0)
       return;
@@ -31,7 +36,7 @@ internal static class BehaviorEmitter
     foreach (BehaviorDefinition behavior in behaviors)
     {
       string fieldName = GetBehaviorFieldName(behavior);
-      string constructorArgs = BuildConstructorArgs(behavior, services);
+      string constructorArgs = BuildConstructorArgs(behavior, services, loggerFactoryFieldName);
 
       sb.AppendLine(
         $"  private static readonly global::System.Lazy<{behavior.FullTypeName}> {fieldName} = new(() => new {behavior.FullTypeName}({constructorArgs}));");
@@ -301,7 +306,13 @@ internal static class BehaviorEmitter
   /// <summary>
   /// Builds constructor arguments for a behavior instance.
   /// </summary>
-  private static string BuildConstructorArgs(BehaviorDefinition behavior, ImmutableArray<ServiceDefinition> services)
+  /// <param name="behavior">The behavior definition.</param>
+  /// <param name="services">Service definitions for dependency resolution.</param>
+  /// <param name="loggerFactoryFieldName">Name of the logger factory field, or null if no logging configured.</param>
+  private static string BuildConstructorArgs(
+    BehaviorDefinition behavior,
+    ImmutableArray<ServiceDefinition> services,
+    string? loggerFactoryFieldName)
   {
     if (behavior.ConstructorDependencies.Length == 0)
       return string.Empty;
@@ -310,7 +321,7 @@ internal static class BehaviorEmitter
 
     foreach (ParameterBinding dep in behavior.ConstructorDependencies)
     {
-      string resolution = ResolveServiceForBehavior(dep.ParameterTypeName, services);
+      string resolution = ResolveServiceForBehavior(dep.ParameterTypeName, services, loggerFactoryFieldName);
       args.Add(resolution);
     }
 
@@ -320,7 +331,13 @@ internal static class BehaviorEmitter
   /// <summary>
   /// Resolves a service type to its instantiation expression for behavior constructors.
   /// </summary>
-  private static string ResolveServiceForBehavior(string? serviceTypeName, ImmutableArray<ServiceDefinition> services)
+  /// <param name="serviceTypeName">The type name of the service to resolve.</param>
+  /// <param name="services">Registered service definitions.</param>
+  /// <param name="loggerFactoryFieldName">Name of the logger factory field, or null if no logging configured.</param>
+  private static string ResolveServiceForBehavior(
+    string? serviceTypeName,
+    ImmutableArray<ServiceDefinition> services,
+    string? loggerFactoryFieldName)
   {
     if (string.IsNullOrEmpty(serviceTypeName))
       return "default!";
@@ -335,9 +352,21 @@ internal static class BehaviorEmitter
     if (serviceTypeName is "global::TimeWarp.Nuru.NuruCoreApp" or "TimeWarp.Nuru.NuruCoreApp" or "NuruCoreApp")
       return "app";
 
-    // ILogger<T> - create a null logger for now (TODO: proper logger resolution)
+    // ILogger<T> - use configured factory if available, otherwise NullLoggerFactory
     if (serviceTypeName.Contains("ILogger", StringComparison.Ordinal))
-      return $"global::Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance.CreateLogger<{ExtractLoggerTypeArg(serviceTypeName)}>()";
+    {
+      string typeArg = ExtractLoggerTypeArg(serviceTypeName);
+      if (loggerFactoryFieldName is not null)
+      {
+        // Use the configured logger factory
+        return $"{loggerFactoryFieldName}.CreateLogger<{typeArg}>()";
+      }
+      else
+      {
+        // Fall back to NullLogger when no logging is configured
+        return $"global::Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance.CreateLogger<{typeArg}>()";
+      }
+    }
 
     // Find matching service registration
     ServiceDefinition? service = services.FirstOrDefault(s =>

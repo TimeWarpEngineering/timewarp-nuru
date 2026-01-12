@@ -85,4 +85,17 @@ internal static partial class DiagnosticDescriptors
     defaultSeverity: DiagnosticSeverity.Error,
     isEnabledByDefault: true,
     description: "Lambda handlers cannot use discard parameters ('_') because the lambda body is inlined into generated code where discards cannot be referenced. Use named parameters that match the route segments.");
+
+  /// <summary>
+  /// NURU_H007: ILogger injected without logging configuration.
+  /// Add .ConfigureServices(s => s.AddLogging(...)) to enable logging output.
+  /// </summary>
+  public static readonly DiagnosticDescriptor LoggerInjectedWithoutConfiguration = new(
+    id: "NURU_H007",
+    title: "ILogger<T> injected without logging configuration",
+    messageFormat: "ILogger<{0}> is injected but no logging is configured. Add .ConfigureServices(s => s.AddLogging(...)) to enable logging output, or logging will use NullLogger.",
+    category: HandlerCategory,
+    defaultSeverity: DiagnosticSeverity.Warning,
+    isEnabledByDefault: true,
+    description: "When ILogger<T> is injected into a behavior or handler but no logging is configured via AddLogging(), a NullLogger is used which discards all log output. Add ConfigureServices with AddLogging to enable actual logging.");
 }

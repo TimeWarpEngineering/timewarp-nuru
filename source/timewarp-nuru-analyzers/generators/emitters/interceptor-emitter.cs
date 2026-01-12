@@ -28,10 +28,14 @@ internal static class InterceptorEmitter
     EmitNamespaceAndUsings(sb, model);
     EmitClassStart(sb);
 
-    // Emit shared infrastructure (command classes, service fields, behaviors)
+    // Emit shared infrastructure (command classes, service fields, behaviors, logging)
     EmitCommandClasses(sb, model);
     EmitServiceFields(sb, model.AllServices);
-    BehaviorEmitter.EmitBehaviorFields(sb, [.. model.AllBehaviors], [.. model.AllServices]);
+    EmitLoggingFactoryFields(sb, model);
+
+    // Determine the logger factory field name for behaviors (use first app with logging, or null)
+    string? loggerFactoryFieldName = GetFirstLoggerFactoryFieldName(model);
+    BehaviorEmitter.EmitBehaviorFields(sb, [.. model.AllBehaviors], [.. model.AllServices], loggerFactoryFieldName);
 
     // Emit per-app interceptor methods
     for (int appIndex = 0; appIndex < model.Apps.Length; appIndex++)
@@ -66,8 +70,26 @@ internal static class InterceptorEmitter
     sb.AppendLine("  )");
     sb.AppendLine("  {");
 
+    // If logging is configured, wrap in try-finally for proper disposal
+    if (app.HasLogging)
+    {
+      sb.AppendLine("    try");
+      sb.AppendLine("    {");
+    }
+
     // Method body with this app's routes only
-    EmitMethodBody(sb, app, model);
+    EmitMethodBody(sb, app, appIndex, model);
+
+    // Close try-finally if logging is configured
+    if (app.HasLogging)
+    {
+      sb.AppendLine("    }");
+      sb.AppendLine("    finally");
+      sb.AppendLine("    {");
+      string factoryFieldName = GetLoggerFactoryFieldName(appIndex, model.Apps.Length);
+      sb.AppendLine($"      ({factoryFieldName} as global::System.IDisposable)?.Dispose();");
+      sb.AppendLine("    }");
+    }
 
     sb.AppendLine("  }");
     sb.AppendLine();
@@ -205,6 +227,73 @@ internal static class InterceptorEmitter
   }
 
   /// <summary>
+  /// Emits static LoggerFactory fields for apps with logging configured.
+  /// Each app gets its own factory to support different logging configurations.
+  /// </summary>
+  private static void EmitLoggingFactoryFields(StringBuilder sb, GeneratorModel model)
+  {
+    // Only emit for apps that have logging configured
+    bool hasAnyLogging = model.Apps.Any(a => a.HasLogging);
+    if (!hasAnyLogging)
+      return;
+
+    sb.AppendLine("  // Static LoggerFactory fields (one per app with logging configured)");
+
+    for (int appIndex = 0; appIndex < model.Apps.Length; appIndex++)
+    {
+      AppModel app = model.Apps[appIndex];
+      if (app.LoggingConfiguration is null)
+        continue;
+
+      string fieldName = GetLoggerFactoryFieldName(appIndex, model.Apps.Length);
+      string lambdaBody = app.LoggingConfiguration.ConfigurationLambdaBody.TrimEnd();
+
+      // Ensure lambda body ends with semicolon
+      if (!lambdaBody.EndsWith(';'))
+        lambdaBody += ";";
+
+      sb.AppendLine($"  private static readonly global::Microsoft.Extensions.Logging.ILoggerFactory {fieldName} =");
+      sb.AppendLine("    global::Microsoft.Extensions.Logging.LoggerFactory.Create(builder =>");
+      sb.AppendLine("    {");
+      sb.AppendLine($"      {lambdaBody}");
+      sb.AppendLine("    });");
+    }
+
+    sb.AppendLine();
+  }
+
+  /// <summary>
+  /// Gets the field name for a LoggerFactory instance.
+  /// </summary>
+  /// <param name="appIndex">Index of the app (for unique naming with multiple apps).</param>
+  /// <param name="totalApps">Total number of apps.</param>
+  /// <returns>Field name like "__loggerFactory" or "__loggerFactory_0".</returns>
+  internal static string GetLoggerFactoryFieldName(int appIndex, int totalApps)
+  {
+    // Use simple name if only one app, otherwise add suffix for uniqueness
+    return totalApps > 1 ? $"__loggerFactory_{appIndex}" : "__loggerFactory";
+  }
+
+  /// <summary>
+  /// Gets the logger factory field name for the first app that has logging configured.
+  /// Used for shared behaviors that need a logger.
+  /// </summary>
+  /// <param name="model">The generator model.</param>
+  /// <returns>The field name, or null if no app has logging configured.</returns>
+  private static string? GetFirstLoggerFactoryFieldName(GeneratorModel model)
+  {
+    for (int i = 0; i < model.Apps.Length; i++)
+    {
+      if (model.Apps[i].HasLogging)
+      {
+        return GetLoggerFactoryFieldName(i, model.Apps.Length);
+      }
+    }
+
+    return null;
+  }
+
+  /// <summary>
   /// Gets the static field name for a service implementation type.
   /// </summary>
   /// <param name="implementationTypeName">Fully qualified implementation type name.</param>
@@ -224,7 +313,7 @@ internal static class InterceptorEmitter
   /// <summary>
   /// Emits the complete method body including all route matching logic.
   /// </summary>
-  private static void EmitMethodBody(StringBuilder sb, AppModel app, GeneratorModel model)
+  private static void EmitMethodBody(StringBuilder sb, AppModel app, int appIndex, GeneratorModel model)
   {
     // Configuration setup (if AddConfiguration was called)
     if (app.HasConfiguration)
@@ -244,11 +333,22 @@ internal static class InterceptorEmitter
     // Also include attributed routes which are shared across all apps
     IEnumerable<RouteDefinition> allRoutes = app.RoutesBySpecificity.Concat(model.AttributedRoutes);
 
-    int routeIndex = 0;
+    // Build a lookup from route to its original index for command class naming
+    // Command classes are generated in model.AllRoutes order, so we need to preserve that index
+    List<RouteDefinition> allRoutesOrdered = [.. model.AllRoutes];
+
     foreach (RouteDefinition route in allRoutes.OrderByDescending(r => r.ComputedSpecificity))
     {
+      // Find the route's original index in model.AllRoutes
+      int routeIndex = allRoutesOrdered.FindIndex(r => ReferenceEquals(r, route));
+      if (routeIndex < 0)
+      {
+        // For attributed routes not in allRoutesOrdered, use a new index
+        routeIndex = allRoutesOrdered.Count;
+        allRoutesOrdered.Add(route);
+      }
+
       RouteMatcherEmitter.Emit(sb, route, routeIndex, app.Services, app.Behaviors, app.CustomConverters);
-      routeIndex++;
     }
 
     // No match fallback

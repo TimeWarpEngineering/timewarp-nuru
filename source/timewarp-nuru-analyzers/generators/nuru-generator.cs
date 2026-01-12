@@ -64,10 +64,56 @@ public sealed class NuruGenerator : IIncrementalGenerator
       if (model is null)
         return;
 
+      // Report diagnostic if ILogger is injected but no logging is configured
+      ReportLoggerWithoutConfigurationWarnings(ctx, model);
+
       // Emit the interceptor (includes InterceptsLocationAttribute definition)
       string source = InterceptorEmitter.Emit(model);
       ctx.AddSource("NuruGenerated.g.cs", source);
     });
+  }
+
+  /// <summary>
+  /// Reports NURU_H007 warnings when ILogger&lt;T&gt; is injected but no AddLogging() is configured.
+  /// </summary>
+  private static void ReportLoggerWithoutConfigurationWarnings(SourceProductionContext ctx, GeneratorModel model)
+  {
+    // Check if any app has logging configured
+    bool hasLoggingConfigured = model.Apps.Any(a => a.HasLogging);
+    if (hasLoggingConfigured)
+      return; // No warning needed - logging is configured
+
+    // Find all behaviors with ILogger<T> dependencies
+    foreach (BehaviorDefinition behavior in model.AllBehaviors)
+    {
+      foreach (ParameterBinding dep in behavior.ConstructorDependencies)
+      {
+        if (dep.ParameterTypeName?.Contains("ILogger", StringComparison.Ordinal) == true)
+        {
+          // Extract the type argument from ILogger<T> for the message
+          string typeArg = ExtractLoggerTypeArg(dep.ParameterTypeName);
+
+          ctx.ReportDiagnostic(Diagnostic.Create(
+            DiagnosticDescriptors.LoggerInjectedWithoutConfiguration,
+            Location.None, // No specific location available from the model
+            typeArg));
+        }
+      }
+    }
+  }
+
+  /// <summary>
+  /// Extracts the type argument from ILogger&lt;T&gt;.
+  /// </summary>
+  private static string ExtractLoggerTypeArg(string loggerTypeName)
+  {
+    int start = loggerTypeName.IndexOf('<', StringComparison.Ordinal);
+    int end = loggerTypeName.LastIndexOf('>');
+
+    if (start >= 0 && end > start)
+      return loggerTypeName[(start + 1)..end];
+
+    return "T";
   }
 
   /// <summary>

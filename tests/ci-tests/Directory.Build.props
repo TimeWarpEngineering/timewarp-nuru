@@ -54,10 +54,12 @@
     <!-- <Compile Include="../timewarp-nuru-core-tests/compiled-route-test-helper.cs" /> -->
     <!-- Parser tests (migrated) -->
     <Compile Include="../timewarp-nuru-core-tests/parser/*.cs" />
-    <!-- Routing tests (migrated) -->
-    <!-- NOTE: Routing tests cannot be included in CI multi-mode due to route naming collisions in generated code -->
-    <!-- When multiple test files are compiled together, routes with similar patterns get identical generated names -->
-    <!-- Run routing tests standalone: ./tests/timewarp-nuru-core-tests/routing/routing-XX-*.cs -->
+    <!-- Routing tests - BLOCKED by generator bugs, cannot be included in CI multi-mode -->
+    <!-- Bug #347: routing-09 - short-only flags -i -t both generate property name "Option" -->
+    <!-- Bug #348: Multiple files - optional positional parameter binding variables not emitted -->
+    <!-- Bug #349: Multiple files - typed repeated options not converted from string[] -->
+    <!-- Also excluded: routing-08 (UseDebugLogging), routing-15 (AddAutoHelp), routing-20/21 (UseAllExtensions), dsl-example (not a test) -->
+    <!-- Run routing tests standalone until bugs are fixed: ./tests/timewarp-nuru-core-tests/routing/routing-XX-*.cs -->
     <!-- <Compile Include="../timewarp-nuru-core-tests/routing/*.cs" /> -->
     <!-- Configuration tests (migrated) - DISABLED: uses AddDependencyInjection() -->
     <!-- <Compile Include="../timewarp-nuru-core-tests/configuration/*.cs" /> -->

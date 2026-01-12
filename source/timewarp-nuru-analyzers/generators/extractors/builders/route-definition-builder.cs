@@ -161,13 +161,18 @@ internal sealed class RouteDefinitionBuilder
       throw new InvalidOperationException("Handler is required. Call WithHandler() before Build().");
     }
 
+    // Rebind handler parameters to route segments
+    // The handler extractor creates all params as BindingSource.Parameter,
+    // but they need to be rebound based on the actual route segments (flags, options, catch-all, etc.)
+    HandlerDefinition reboundHandler = RebindHandlerParameters(Handler, Segments);
+
     return new RouteDefinition
     (
       OriginalPattern: Pattern,
       Segments: Segments,
       MessageType: MessageType,
       Description: Description,
-      Handler: Handler,
+      Handler: reboundHandler,
       Pipeline: Pipeline,
       Aliases: Aliases,
       GroupPrefix: GroupPrefix,
@@ -175,5 +180,49 @@ internal sealed class RouteDefinitionBuilder
       Order: Order,
       Implements: Implements
     );
+  }
+
+  /// <summary>
+  /// Rebinds handler parameters to route segments.
+  /// This converts generic Parameter bindings to specific Flag, Option, or CatchAll bindings.
+  /// </summary>
+  private static HandlerDefinition RebindHandlerParameters(HandlerDefinition handler, ImmutableArray<SegmentDefinition> segments)
+  {
+    // Build the handler parameter info for rebinding
+    ImmutableArray<(string Name, string TypeName, bool IsOptional)> handlerParams =
+    [
+      .. handler.Parameters
+        .Where(p => p.Source is BindingSource.Parameter or BindingSource.CatchAll or BindingSource.Option or BindingSource.Flag)
+        .Select(p => (p.ParameterName, p.ParameterTypeName, p.IsOptional))
+    ];
+
+    // Rebind using the route segments
+    ImmutableArray<ParameterBinding> reboundParams = PatternStringExtractor.BuildBindings(segments, handlerParams);
+
+    // Merge rebound params with service/cancellation token params (which don't need rebinding)
+    List<ParameterBinding> finalParams = [];
+    int reboundIndex = 0;
+
+    foreach (ParameterBinding original in handler.Parameters)
+    {
+      if (original.Source is BindingSource.Service or BindingSource.CancellationToken)
+      {
+        // Keep service/cancellation token bindings as-is
+        finalParams.Add(original);
+      }
+      else if (reboundIndex < reboundParams.Length)
+      {
+        // Use the rebound parameter
+        finalParams.Add(reboundParams[reboundIndex]);
+        reboundIndex++;
+      }
+      else
+      {
+        // Fallback to original if rebinding failed
+        finalParams.Add(original);
+      }
+    }
+
+    return handler with { Parameters = [.. finalParams] };
   }
 }

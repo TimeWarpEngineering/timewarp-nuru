@@ -723,7 +723,12 @@ internal static class HandlerInvokerEmitter
 
           if (matchingOption is not null)
           {
-            string optVarName = ToCamelCase(matchingOption.LongForm ?? matchingOption.ShortForm ?? param.ParameterName);
+            // Variable name must match route-matcher-emitter.cs line 492:
+            // For value options: use ParameterName (e.g., "mode" from "--config {mode}")
+            // For flags: use LongForm or ShortForm (e.g., "verbose" from "--verbose")
+            string optVarName = matchingOption.ExpectsValue
+              ? ToCamelCase(matchingOption.ParameterName ?? matchingOption.LongForm ?? matchingOption.ShortForm ?? param.ParameterName)
+              : ToCamelCase(matchingOption.LongForm ?? matchingOption.ShortForm ?? param.ParameterName);
             args.Add(CSharpIdentifierUtils.EscapeIfKeyword(optVarName));
           }
           else

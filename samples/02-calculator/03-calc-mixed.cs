@@ -59,7 +59,6 @@ NuruCoreApp app = NuruApp.CreateBuilder(args)
     .Done()
   // Attributed routes (factorial, isprime, fibonacci, stats) are auto-discovered via [NuruRoute]
   // Example: Delegate that returns an object
-#pragma warning disable NURU_H002 // False positive: object initializer properties are not closures (see task #307)
   .Map("compare {x:double} {y:double}")
     .WithHandler((double x, double y) => new ComparisonResult
     {
@@ -71,7 +70,6 @@ NuruCoreApp app = NuruApp.CreateBuilder(args)
     })
     .WithDescription("Compare two numbers and return detailed comparison (returns JSON)")
     .Done()
-#pragma warning restore NURU_H002
   .Build();
 
 return await app.RunAsync(args);

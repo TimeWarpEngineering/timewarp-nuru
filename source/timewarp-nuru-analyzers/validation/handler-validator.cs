@@ -232,6 +232,11 @@ internal static class HandlerValidator
       if (identifier.Parent is MemberAccessExpressionSyntax ma && ma.Name == identifier)
         continue;
 
+      // Skip if it's the target of a property assignment in an object initializer
+      // e.g., new Foo { X = value } - X is not a closure, it's setting a property on the new object
+      if (IsObjectInitializerTarget(identifier))
+        continue;
+
       // Get symbol info
       SymbolInfo symbolInfo = semanticModel.GetSymbolInfo(identifier);
       ISymbol? symbol = symbolInfo.Symbol;
@@ -281,6 +286,45 @@ internal static class HandlerValidator
     }
 
     return capturedVariables;
+  }
+
+  /// <summary>
+  /// Checks if an identifier is the target (left side) of a property assignment
+  /// inside an object initializer. These are NOT closures - they're setting properties
+  /// on the newly created object, not accessing properties from the enclosing scope.
+  /// </summary>
+  /// <example>
+  /// new ComparisonResult { X = x, Y = y } - X and Y are object initializer targets
+  /// </example>
+  private static bool IsObjectInitializerTarget(IdentifierNameSyntax identifier)
+  {
+    // Check if parent is an assignment expression
+    if (identifier.Parent is not AssignmentExpressionSyntax assignment)
+      return false;
+
+    // Check if the identifier is on the left side of the assignment
+    if (assignment.Left != identifier)
+      return false;
+
+    // Check if the assignment is inside an object initializer
+    // Walk up the parent chain looking for InitializerExpressionSyntax
+    Microsoft.CodeAnalysis.SyntaxNode? current = assignment.Parent;
+    while (current is not null)
+    {
+      if (current is InitializerExpressionSyntax initializer &&
+          initializer.Kind() == SyntaxKind.ObjectInitializerExpression)
+      {
+        return true;
+      }
+
+      // Stop if we hit a statement or member declaration - we've left the expression
+      if (current is StatementSyntax or MemberDeclarationSyntax)
+        break;
+
+      current = current.Parent;
+    }
+
+    return false;
   }
 
   /// <summary>

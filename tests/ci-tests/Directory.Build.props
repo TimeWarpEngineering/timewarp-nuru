@@ -55,8 +55,10 @@
     <!-- Parser tests (migrated) -->
     <Compile Include="../timewarp-nuru-core-tests/parser/*.cs" />
     <!-- Routing tests (migrated) -->
-    <!-- DISABLED: routing-20, routing-21 use UseAllExtensions(); routing-23 uses CreateSlimBuilder/HelpProvider.GetHelpText -->
-    <!-- <Compile Include="../timewarp-nuru-core-tests/routing/*.cs" Exclude="../timewarp-nuru-core-tests/routing/routing-11-*.cs;../timewarp-nuru-core-tests/routing/routing-20-*.cs;../timewarp-nuru-core-tests/routing/routing-21-*.cs;../timewarp-nuru-core-tests/routing/routing-22-*.cs;../timewarp-nuru-core-tests/routing/routing-23-*.cs;../timewarp-nuru-core-tests/routing/dsl-example.cs" /> -->
+    <!-- NOTE: Routing tests cannot be included in CI multi-mode due to route naming collisions in generated code -->
+    <!-- When multiple test files are compiled together, routes with similar patterns get identical generated names -->
+    <!-- Run routing tests standalone: ./tests/timewarp-nuru-core-tests/routing/routing-XX-*.cs -->
+    <!-- <Compile Include="../timewarp-nuru-core-tests/routing/*.cs" /> -->
     <!-- Configuration tests (migrated) - DISABLED: uses AddDependencyInjection() -->
     <!-- <Compile Include="../timewarp-nuru-core-tests/configuration/*.cs" /> -->
     <!-- Factory tests - excluded from multi-mode -->

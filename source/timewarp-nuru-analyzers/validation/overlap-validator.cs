@@ -155,18 +155,18 @@ internal static class OverlapValidator
         RouteDefinition route1 = group[i];
         RouteDefinition route2 = group[j];
 
-        // Check for exact duplicate patterns first
-        if (route1.OriginalPattern == route2.OriginalPattern)
+        // Check for exact duplicate patterns first (use EffectivePattern for accurate comparison)
+        if (route1.EffectivePattern == route2.EffectivePattern)
         {
           // Get location for the first route (or use a default)
-          Location location = routeLocations.TryGetValue(route1.OriginalPattern, out Location? loc)
+          Location location = routeLocations.TryGetValue(route1.EffectivePattern, out Location? loc)
             ? loc
             : Location.None;
 
           Diagnostic diagnostic = Diagnostic.Create(
             DiagnosticDescriptors.DuplicateRoutePattern,
             location,
-            route1.OriginalPattern);
+            route1.EffectivePattern);
 
           diagnostics.Add(diagnostic);
           continue; // Don't also report type constraint conflict for same pattern
@@ -176,15 +176,15 @@ internal static class OverlapValidator
         if (HaveDifferentTypeConstraints(route1, route2))
         {
           // Get location for the first route (or use a default)
-          Location location = routeLocations.TryGetValue(route1.OriginalPattern, out Location? loc)
+          Location location = routeLocations.TryGetValue(route1.EffectivePattern, out Location? loc)
             ? loc
             : Location.None;
 
           Diagnostic diagnostic = Diagnostic.Create(
             DiagnosticDescriptors.OverlappingTypeConstraints,
             location,
-            route1.OriginalPattern,
-            route2.OriginalPattern);
+            route1.EffectivePattern,
+            route2.EffectivePattern);
 
           diagnostics.Add(diagnostic);
         }
@@ -263,18 +263,19 @@ internal static class OverlapValidator
   }
 
   /// <summary>
-  /// Computes a required signature for a route - only literals and required parameters.
-  /// This excludes all optional elements (options, optional parameters, catch-all).
+  /// Computes a required signature for a route - literals, required parameters, and required options.
+  /// This excludes optional elements (optional options, optional parameters, catch-all).
   /// Routes with the same required signature match the same "core" inputs.
   /// </summary>
   /// <remarks>
   /// Examples:
-  /// - "deploy {env} --force"     -> "deploy {P}"
+  /// - "deploy {env} --force?"    -> "deploy {P}"           (optional flag)
   /// - "deploy {env}"             -> "deploy {P}"
   /// - "deploy production"        -> "deploy production"
-  /// - "git commit --amend"       -> "git commit"
+  /// - "git commit --amend"       -> "git commit --amend"   (required flag)
   /// - "get {id} {name?}"         -> "get {P}"
-  /// - "test --verbose --watch"   -> "test"
+  /// - "test --verbose --watch?"  -> "test --verbose"       (one required, one optional)
+  /// - "round {v} --mode {m}"     -> "round {P} --mode {P}" (required option with value)
   /// </remarks>
   private static string ComputeRequiredSignature(RouteDefinition route)
   {
@@ -303,7 +304,19 @@ internal static class OverlapValidator
           signature.Append("{P}");
           break;
 
-        // Skip: options (always optional for matching purposes),
+        case OptionDefinition option when !option.IsOptional:
+          // Include required options (those without ?)
+          if (signature.Length > 0)
+            signature.Append(' ');
+          signature.Append(option.LongFormWithPrefix ?? option.ShortFormWithPrefix ?? "--opt");
+          if (option.ExpectsValue)
+          {
+            signature.Append(option.ParameterIsOptional ? " {P?}" : " {P}");
+          }
+
+          break;
+
+        // Skip: optional options (--flag?),
         //       optional parameters ({param?}),
         //       catch-all ({*args})
       }
@@ -361,36 +374,71 @@ internal static class OverlapValidator
           RouteDefinition lowerRoute = sortedGroup[j];
 
           // Skip if same pattern (handled by duplicate detection)
-          if (higherRoute.OriginalPattern == lowerRoute.OriginalPattern)
+          if (higherRoute.EffectivePattern == lowerRoute.EffectivePattern)
             continue;
 
           // Skip if already reported this route as unreachable
-          if (reportedUnreachable.Contains(lowerRoute.OriginalPattern))
+          if (reportedUnreachable.Contains(lowerRoute.EffectivePattern))
             continue;
 
           // Higher specificity route shadows lower specificity route with same required signature
           // Also check equal specificity - first one wins, second is unreachable
           if (higherRoute.ComputedSpecificity >= lowerRoute.ComputedSpecificity)
           {
-            Location location = routeLocations.TryGetValue(lowerRoute.OriginalPattern, out Location? loc)
+            Location location = routeLocations.TryGetValue(lowerRoute.EffectivePattern, out Location? loc)
               ? loc
               : Location.None;
+
+            // Get the location of the shadowing route for additional context
+            Location? higherLocation = routeLocations.TryGetValue(higherRoute.EffectivePattern, out Location? higherLoc)
+              ? higherLoc
+              : null;
+
+            IEnumerable<Location> additionalLocations = higherLocation is not null
+              ? [higherLocation]
+              : [];
+
+            // Format the shadowing route's location for the message
+            string higherLocationString = FormatLocation(higherLocation);
 
             Diagnostic diagnostic = Diagnostic.Create(
               DiagnosticDescriptors.UnreachableRoute,
               location,
-              lowerRoute.OriginalPattern,
-              higherRoute.OriginalPattern,
+              additionalLocations,
+              lowerRoute.EffectivePattern,
+              higherRoute.EffectivePattern,
               higherRoute.ComputedSpecificity,
-              lowerRoute.ComputedSpecificity);
+              lowerRoute.ComputedSpecificity,
+              higherLocationString);
 
             diagnostics.Add(diagnostic);
-            reportedUnreachable.Add(lowerRoute.OriginalPattern);
+            reportedUnreachable.Add(lowerRoute.EffectivePattern);
           }
         }
       }
     }
 
     return [.. diagnostics];
+  }
+
+  /// <summary>
+  /// Formats a location for display in diagnostic messages.
+  /// </summary>
+  private static string FormatLocation(Location? location)
+  {
+    if (location is null || location == Location.None)
+      return "unknown location";
+
+    FileLinePositionSpan lineSpan = location.GetLineSpan();
+    if (!lineSpan.IsValid)
+      return "unknown location";
+
+    string filePath = lineSpan.Path;
+    int line = lineSpan.StartLinePosition.Line + 1; // Convert to 1-based
+
+    // Extract just the filename for brevity
+    string fileName = Path.GetFileName(filePath);
+
+    return $"{fileName}:{line}";
   }
 }

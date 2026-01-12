@@ -330,13 +330,14 @@ internal static class InterceptorEmitter
     EmitBuiltInFlags(sb, app);
 
     // Route matching - emit this app's routes in specificity order (highest first)
-    // Also include attributed routes which are shared across all apps
-    IEnumerable<RouteDefinition> allRoutes = app.RoutesBySpecificity.Concat(model.AttributedRoutes);
+    // Filter endpoints based on app's discovery mode (DiscoverEndpoints or Map<T> calls)
+    ImmutableArray<RouteDefinition> endpointsForApp = FilterEndpointsForApp(app, model.AttributedRoutes);
+    IEnumerable<RouteDefinition> allRoutes = app.RoutesBySpecificity.Concat(endpointsForApp);
 
     // Build a lookup from route to its original index for command class naming
-    // IMPORTANT: Use only this app's routes (plus attributed routes), not all routes from all apps
+    // IMPORTANT: Use only this app's routes (plus filtered endpoints), not all routes from all apps
     // Using model.AllRoutes would cause route index collisions between different apps
-    List<RouteDefinition> allRoutesOrdered = [.. app.Routes.Concat(model.AttributedRoutes)];
+    List<RouteDefinition> allRoutesOrdered = [.. app.Routes.Concat(endpointsForApp)];
 
     foreach (RouteDefinition route in allRoutes.OrderByDescending(r => r.ComputedSpecificity))
     {
@@ -354,6 +355,42 @@ internal static class InterceptorEmitter
 
     // No match fallback
     EmitNoMatch(sb);
+  }
+
+  /// <summary>
+  /// Filters endpoints based on the app's discovery mode.
+  /// </summary>
+  /// <param name="app">The app model with discovery settings.</param>
+  /// <param name="allEndpoints">All discovered endpoint classes.</param>
+  /// <returns>Endpoints that should be included in this app.</returns>
+  private static ImmutableArray<RouteDefinition> FilterEndpointsForApp
+  (
+    AppModel app,
+    ImmutableArray<RouteDefinition> allEndpoints
+  )
+  {
+    // If DiscoverEndpoints() was called, include all endpoints
+    if (app.DiscoverEndpoints)
+      return allEndpoints;
+
+    // If explicit Map<T>() calls, include only those endpoints
+    if (!app.ExplicitEndpointTypes.IsDefaultOrEmpty && app.ExplicitEndpointTypes.Length > 0)
+    {
+      return
+      [
+        .. allEndpoints.Where
+        (
+          e => app.ExplicitEndpointTypes.Any
+          (
+            t => e.Handler.FullTypeName?.EndsWith(t, StringComparison.Ordinal) == true ||
+                 e.Handler.FullTypeName == t
+          )
+        )
+      ];
+    }
+
+    // Default: no endpoints (test isolation)
+    return [];
   }
 
   /// <summary>

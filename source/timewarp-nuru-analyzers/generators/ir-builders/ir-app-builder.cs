@@ -37,6 +37,8 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
   private readonly List<InterceptSiteModel> InterceptSites = [];
   private readonly List<CustomConverterDefinition> CustomConverters = [];
   private bool IsBuilt;
+  private bool DiscoverEndpointsEnabled;
+  private readonly List<string> ExplicitEndpointTypes = [];
 
   /// <summary>
   /// Sets the variable name for debugging/identification.
@@ -222,6 +224,27 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
   }
 
   /// <summary>
+  /// Marks that all [NuruRoute] endpoints should be discovered and included.
+  /// Mirrors: NuruCoreAppBuilder.DiscoverEndpoints()
+  /// </summary>
+  public TSelf DiscoverEndpoints()
+  {
+    DiscoverEndpointsEnabled = true;
+    return (TSelf)this;
+  }
+
+  /// <summary>
+  /// Adds a specific endpoint type to include.
+  /// Mirrors: NuruCoreAppBuilder.Map&lt;TEndpoint&gt;()
+  /// </summary>
+  /// <param name="endpointTypeName">Fully qualified type name of the endpoint.</param>
+  public TSelf MapEndpoint(string endpointTypeName)
+  {
+    ExplicitEndpointTypes.Add(endpointTypeName);
+    return (TSelf)this;
+  }
+
+  /// <summary>
   /// Adds an intercept site from a RunAsync() call.
   /// Called by interpreter when RunAsync() is encountered.
   /// </summary>
@@ -272,7 +295,9 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
       InterceptSites: [.. InterceptSites],
       UserUsings: [],  // Usings are populated by AppExtractor, not the builder
       CustomConverters: [.. CustomConverters],
-      LoggingConfiguration: LoggingConfiguration);
+      LoggingConfiguration: LoggingConfiguration,
+      DiscoverEndpoints: DiscoverEndpointsEnabled,
+      ExplicitEndpointTypes: [.. ExplicitEndpointTypes]);
   }
 
   /// <summary>
@@ -305,6 +330,8 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
   IIrAppBuilder IIrAppBuilder.UseTerminal() => UseTerminal();
   IIrAppBuilder IIrAppBuilder.AddTypeConverter(CustomConverterDefinition converter) => AddTypeConverter(converter);
   IIrAppBuilder IIrAppBuilder.AddInterceptSite(InterceptSiteModel site) => AddInterceptSite(site);
+  IIrAppBuilder IIrAppBuilder.DiscoverEndpoints() => DiscoverEndpoints();
+  IIrAppBuilder IIrAppBuilder.MapEndpoint(string endpointTypeName) => MapEndpoint(endpointTypeName);
 }
 
 /// <summary>

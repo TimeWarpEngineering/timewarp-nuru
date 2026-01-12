@@ -260,7 +260,9 @@ public sealed class NuruGenerator : IIncrementalGenerator
         break;
     }
 
-    return new RouteWithLocation(route.OriginalPattern, location, route);
+    // Use EffectivePattern for attributed routes to avoid collisions
+    // (OriginalPattern is just the attribute string, EffectivePattern includes all segments)
+    return new RouteWithLocation(route.EffectivePattern, location, route);
   }
 
   /// <summary>
@@ -317,15 +319,17 @@ public sealed class NuruGenerator : IIncrementalGenerator
       .Distinct()];
 
     // Collect attributed routes (non-null only)
-    ImmutableArray<RouteDefinition> routes = [.. attributedRoutes.Where(r => r is not null)!];
+    ImmutableArray<RouteDefinition> allEndpoints = [.. attributedRoutes.Where(r => r is not null)!];
 
-    // Validate each app's combined routes (fluent + attributed)
+    // Validate each app's combined routes (fluent + filtered endpoints)
     // This catches duplicate routes between fluent and attributed definitions
     foreach (AppModel app in uniqueApps.Values)
     {
-      // Combine this app's fluent routes with all attributed routes
-      // (same combination that happens during emission)
-      ImmutableArray<RouteDefinition> combinedRoutes = [.. app.Routes.Concat(routes)];
+      // Filter endpoints based on app's discovery mode
+      ImmutableArray<RouteDefinition> endpointsForApp = FilterEndpointsForApp(app, allEndpoints);
+
+      // Combine this app's fluent routes with filtered endpoints
+      ImmutableArray<RouteDefinition> combinedRoutes = [.. app.Routes.Concat(endpointsForApp)];
 
       ImmutableArray<Diagnostic> validationDiagnostics = ModelValidator.Validate(
         app with { Routes = combinedRoutes },
@@ -337,9 +341,45 @@ public sealed class NuruGenerator : IIncrementalGenerator
     GeneratorModel model = new(
       Apps: [.. uniqueApps.Values],
       UserUsings: userUsings,
-      AttributedRoutes: routes);
+      AttributedRoutes: allEndpoints);
 
     return new GeneratorModelWithDiagnostics(model, [.. allDiagnostics]);
+  }
+
+  /// <summary>
+  /// Filters endpoints based on the app's discovery mode.
+  /// </summary>
+  /// <param name="app">The app model with discovery settings.</param>
+  /// <param name="allEndpoints">All discovered endpoint classes.</param>
+  /// <returns>Endpoints that should be included in this app.</returns>
+  private static ImmutableArray<RouteDefinition> FilterEndpointsForApp
+  (
+    AppModel app,
+    ImmutableArray<RouteDefinition> allEndpoints
+  )
+  {
+    // If DiscoverEndpoints() was called, include all endpoints
+    if (app.DiscoverEndpoints)
+      return allEndpoints;
+
+    // If explicit Map<T>() calls, include only those endpoints
+    if (!app.ExplicitEndpointTypes.IsDefaultOrEmpty && app.ExplicitEndpointTypes.Length > 0)
+    {
+      return
+      [
+        .. allEndpoints.Where
+        (
+          e => app.ExplicitEndpointTypes.Any
+          (
+            t => e.Handler.FullTypeName?.EndsWith(t, StringComparison.Ordinal) == true ||
+                 e.Handler.FullTypeName == t
+          )
+        )
+      ];
+    }
+
+    // Default: no endpoints (test isolation)
+    return [];
   }
 
   /// <summary>

@@ -1,5 +1,7 @@
 namespace TimeWarp.Nuru.Generators;
 
+using System.Text;
+
 /// <summary>
 /// Design-time representation of a complete route definition.
 /// This type exists only during compilation for use by the source generator.
@@ -67,6 +69,46 @@ public sealed record RouteDefinition(
   public string FullPattern => string.IsNullOrEmpty(GroupPrefix)
     ? OriginalPattern
     : $"{GroupPrefix} {OriginalPattern}";
+
+  /// <summary>
+  /// Gets the effective pattern reconstructed from segments.
+  /// This includes all parameters and options extracted from attributed routes.
+  /// For fluent routes, this matches FullPattern. For attributed routes,
+  /// this shows the actual route structure with properties.
+  /// </summary>
+  public string EffectivePattern
+  {
+    get
+    {
+      StringBuilder sb = new();
+
+      if (!string.IsNullOrEmpty(GroupPrefix))
+      {
+        sb.Append(GroupPrefix);
+      }
+
+      foreach (SegmentDefinition segment in Segments)
+      {
+        if (sb.Length > 0)
+          sb.Append(' ');
+
+        switch (segment)
+        {
+          case LiteralDefinition literal:
+            sb.Append(literal.Value);
+            break;
+          case ParameterDefinition param:
+            sb.Append(param.PatternSyntax);
+            break;
+          case OptionDefinition option:
+            sb.Append(option.PatternSyntax);
+            break;
+        }
+      }
+
+      return sb.ToString();
+    }
+  }
 
   /// <summary>
   /// Gets all literal segments in order, including group prefix literals.

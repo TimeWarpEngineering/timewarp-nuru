@@ -21,6 +21,8 @@ namespace TimeWarp.Nuru.Generators;
 /// <param name="UserUsings">User's using directives to include in generated code</param>
 /// <param name="CustomConverters">Custom type converters registered via AddTypeConverter()</param>
 /// <param name="LoggingConfiguration">Logging configuration from AddLogging(), if configured</param>
+/// <param name="DiscoverEndpoints">Whether DiscoverEndpoints() was called to include all [NuruRoute] classes</param>
+/// <param name="ExplicitEndpointTypes">Fully qualified type names from Map&lt;T&gt;() calls for specific endpoint inclusion</param>
 public sealed record AppModel(
   string? VariableName,
   string? Name,
@@ -38,7 +40,9 @@ public sealed record AppModel(
   ImmutableArray<InterceptSiteModel> InterceptSites,
   ImmutableArray<string> UserUsings,
   ImmutableArray<CustomConverterDefinition> CustomConverters,
-  LoggingConfiguration? LoggingConfiguration)
+  LoggingConfiguration? LoggingConfiguration,
+  bool DiscoverEndpoints = false,
+  ImmutableArray<string> ExplicitEndpointTypes = default)
 {
   /// <summary>
   /// Creates an empty AppModel with required intercept sites.
@@ -60,7 +64,9 @@ public sealed record AppModel(
     InterceptSites: interceptSites,
     UserUsings: [],
     CustomConverters: [],
-    LoggingConfiguration: null);
+    LoggingConfiguration: null,
+    DiscoverEndpoints: false,
+    ExplicitEndpointTypes: []);
 
   /// <summary>
   /// Creates an empty AppModel with a single intercept site.

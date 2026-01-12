@@ -347,6 +347,8 @@ public sealed class DslInterpreter
     {
       "CreateBuilder" => CreateNewAppBuilder(),
 
+      "Map" when IsGenericMapCall(invocation) => DispatchMapEndpoint(invocation, receiver),
+
       "Map" => DispatchMap(invocation, receiver),
 
       "WithGroupPrefix" => DispatchWithGroupPrefix(invocation, receiver),
@@ -389,6 +391,8 @@ public sealed class DslInterpreter
 
       "Implements" => DispatchImplements(invocation, receiver),
 
+      "DiscoverEndpoints" => DispatchDiscoverEndpoints(receiver),
+
       "RunAsync" => DispatchRunAsyncCall(invocation, receiver),
 
       _ => HandleNonDslMethod(invocation, receiver, methodName)
@@ -420,6 +424,75 @@ public sealed class DslInterpreter
 
     // Non-DSL method call (Console.WriteLine, etc.) - ignore
     return null;
+  }
+
+  /// <summary>
+  /// Checks if this is a generic Map&lt;T&gt;() call vs Map("pattern").
+  /// </summary>
+  private static bool IsGenericMapCall(InvocationExpressionSyntax invocation)
+  {
+    if (invocation.Expression is MemberAccessExpressionSyntax memberAccess)
+    {
+      return memberAccess.Name is GenericNameSyntax;
+    }
+
+    return false;
+  }
+
+  /// <summary>
+  /// Dispatches DiscoverEndpoints() call to enable endpoint discovery.
+  /// </summary>
+  private static object? DispatchDiscoverEndpoints(object? receiver)
+  {
+    if (receiver is not IIrAppBuilder appBuilder)
+    {
+      throw new InvalidOperationException(
+        "DiscoverEndpoints() must be called on an app builder.");
+    }
+
+    return appBuilder.DiscoverEndpoints();
+  }
+
+  /// <summary>
+  /// Dispatches Map&lt;TEndpoint&gt;() call to include a specific endpoint.
+  /// </summary>
+  private object? DispatchMapEndpoint(InvocationExpressionSyntax invocation, object? receiver)
+  {
+    if (receiver is not IIrAppBuilder appBuilder)
+    {
+      throw new InvalidOperationException(
+        $"Map<T>() must be called on an app builder. Location: {invocation.GetLocation().GetLineSpan()}");
+    }
+
+    string? typeName = ExtractGenericTypeArgument(invocation);
+    if (typeName is null)
+    {
+      throw new InvalidOperationException(
+        $"Map<T>() requires a type argument. Location: {invocation.GetLocation().GetLineSpan()}");
+    }
+
+    return appBuilder.MapEndpoint(typeName);
+  }
+
+  /// <summary>
+  /// Extracts the fully qualified type name from a generic method call like Map&lt;T&gt;().
+  /// </summary>
+  private string? ExtractGenericTypeArgument(InvocationExpressionSyntax invocation)
+  {
+    if (invocation.Expression is not MemberAccessExpressionSyntax memberAccess)
+      return null;
+
+    if (memberAccess.Name is not GenericNameSyntax genericName)
+      return null;
+
+    TypeArgumentListSyntax? typeArgs = genericName.TypeArgumentList;
+    if (typeArgs.Arguments.Count != 1)
+      return null;
+
+    TypeSyntax typeSyntax = typeArgs.Arguments[0];
+    ITypeSymbol? typeSymbol = SemanticModel.GetTypeInfo(typeSyntax).Type;
+
+    return typeSymbol?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
   }
 
   // ═══════════════════════════════════════════════════════════════════════════════

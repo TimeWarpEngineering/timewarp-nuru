@@ -115,4 +115,44 @@ public partial class NuruCoreAppBuilder<TSelf>
     return new GroupBuilder<TSelf>((TSelf)this);
   }
 
+  /// <summary>
+  /// Discovers and includes all [NuruRoute] endpoint classes from the assembly.
+  /// Without this call, no attributed endpoints are included (only fluent routes).
+  /// </summary>
+  /// <returns>The builder for chaining.</returns>
+  /// <example>
+  /// <code>
+  /// // Include all [NuruRoute] endpoint classes
+  /// NuruApp.CreateBuilder(args)
+  ///     .DiscoverEndpoints()
+  ///     .Build();
+  /// </code>
+  /// </example>
+  public virtual TSelf DiscoverEndpoints()
+  {
+    // Source generator discovers [NuruRoute] classes at compile time
+    return (TSelf)this;
+  }
+
+  /// <summary>
+  /// Includes a specific endpoint class in this application.
+  /// Use this for explicit control over which endpoints are included.
+  /// </summary>
+  /// <typeparam name="TEndpoint">The endpoint class type with [NuruRoute] attribute.</typeparam>
+  /// <returns>The builder for chaining.</returns>
+  /// <example>
+  /// <code>
+  /// // Include only specific endpoints
+  /// NuruApp.CreateBuilder(args)
+  ///     .Map&lt;DeployCommand&gt;()
+  ///     .Map&lt;BuildCommand&gt;()
+  ///     .Build();
+  /// </code>
+  /// </example>
+  public virtual TSelf Map<TEndpoint>() where TEndpoint : class
+  {
+    // Source generator extracts the type and includes the endpoint at compile time
+    return (TSelf)this;
+  }
+
 }

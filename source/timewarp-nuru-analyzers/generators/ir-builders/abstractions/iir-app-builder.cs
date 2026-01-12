@@ -126,6 +126,19 @@ public interface IIrAppBuilder : IIrRouteSource
   IIrAppBuilder AddInterceptSite(InterceptSiteModel site);
 
   /// <summary>
+  /// Marks that all [NuruRoute] endpoints should be discovered and included.
+  /// </summary>
+  /// <returns>This builder for chaining.</returns>
+  IIrAppBuilder DiscoverEndpoints();
+
+  /// <summary>
+  /// Adds a specific endpoint type to include.
+  /// </summary>
+  /// <param name="endpointTypeName">Fully qualified type name of the endpoint.</param>
+  /// <returns>This builder for chaining.</returns>
+  IIrAppBuilder MapEndpoint(string endpointTypeName);
+
+  /// <summary>
   /// Finalizes and returns the AppModel.
   /// Must be called after Build().
   /// </summary>

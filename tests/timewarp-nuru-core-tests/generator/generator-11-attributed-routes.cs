@@ -52,6 +52,7 @@ namespace TimeWarp.Nuru.Tests.Generator.AttributedRoutes
 
       NuruCoreApp app = NuruApp.CreateBuilder([])
         .UseTerminal(terminal)
+        .DiscoverEndpoints()
         .Build();
 
       // Act
@@ -73,6 +74,7 @@ namespace TimeWarp.Nuru.Tests.Generator.AttributedRoutes
 
       NuruCoreApp app = NuruApp.CreateBuilder([])
         .UseTerminal(terminal)
+        .DiscoverEndpoints()
         .Build();
 
       // Act - deploy with --replicas option (int type)
@@ -94,6 +96,7 @@ namespace TimeWarp.Nuru.Tests.Generator.AttributedRoutes
 
       NuruCoreApp app = NuruApp.CreateBuilder([])
         .UseTerminal(terminal)
+        .DiscoverEndpoints()
         .Build();
 
       // Act - build with --no-cache flag
@@ -115,6 +118,7 @@ namespace TimeWarp.Nuru.Tests.Generator.AttributedRoutes
 
       NuruCoreApp app = NuruApp.CreateBuilder([])
         .UseTerminal(terminal)
+        .DiscoverEndpoints()
         .Build();
 
       // Act - exec with catch-all args
@@ -135,6 +139,7 @@ namespace TimeWarp.Nuru.Tests.Generator.AttributedRoutes
 
       NuruCoreApp app = NuruApp.CreateBuilder([])
         .UseTerminal(terminal)
+        .DiscoverEndpoints()
         .Build();
 
       // Act - deploy with multiple options
@@ -158,6 +163,7 @@ namespace TimeWarp.Nuru.Tests.Generator.AttributedRoutes
 
       NuruCoreApp app = NuruApp.CreateBuilder([])
         .UseTerminal(terminal)
+        .DiscoverEndpoints()
         .Build();
 
       // Act - deploy without --replicas (should use default)

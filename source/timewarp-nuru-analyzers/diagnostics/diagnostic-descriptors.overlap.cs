@@ -43,7 +43,7 @@ internal static partial class DiagnosticDescriptors
   public static readonly DiagnosticDescriptor UnreachableRoute = new(
       id: "NURU_R003",
       title: "Unreachable route",
-      messageFormat: "Route '{0}' is unreachable. Route '{1}' will match all the same inputs with equal or higher specificity ({2} vs {3} points).",
+      messageFormat: "Route '{0}' is unreachable. Route '{1}' (defined at {4}) will match all the same inputs with equal or higher specificity ({2} vs {3} points).",
       category: OverlapCategory,
       defaultSeverity: DiagnosticSeverity.Error,
       isEnabledByDefault: true,

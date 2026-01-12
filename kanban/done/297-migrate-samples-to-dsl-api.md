@@ -1,14 +1,19 @@
 # Migrate samples to DSL API
 
+## Results
+
+**COMPLETE** - Superseded by #312, which is now done.
+
+All numbered samples (01-12, 99) migrated to `NuruApp.CreateBuilder()`.
+Remaining underscore samples tracked in #338, #339, #340.
+
 ## Description
 
 Update all samples to use the current DSL API. Many samples use deprecated APIs like `CreateSlimBuilder()` or methods the source generator doesn't recognize (`ConfigureServices`, `AddMediator`, `AddAutoHelp`).
 
-## Results
+## Completed Samples
 
-**Superseded by #312** which tracked the same work with more detail.
-
-All numbered samples (01-11) are now working with `NuruApp.CreateBuilder()`:
+All numbered samples (01-12) are now working with `NuruApp.CreateBuilder()`:
 - 01-hello-world (3 samples)
 - 02-calculator (3 samples)
 - 03-attributed-routes (csproj)
@@ -20,7 +25,13 @@ All numbered samples (01-11) are now working with `NuruApp.CreateBuilder()`:
 - 09-configuration (4 samples)
 - 10-type-converters (2 samples)
 - 11-unified-middleware
+- 12-logging (2 samples)
+- 99-timewarp-nuru-sample
 
-Remaining underscore samples require library migrations (Repl, Completion, Telemetry) which are separate work.
+## Remaining Work (separate tasks)
 
-See #312 for complete details.
+- #338 - `_repl-demo/` (REPL library migration)
+- #339 - `_aspire-*` (Telemetry library migration)
+- #340 - `_completion-*` (Completion library migration)
+
+See #312 for complete implementation details.

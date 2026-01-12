@@ -19,7 +19,7 @@
 
 using TimeWarp.Nuru;
 
-NuruCoreApp app = NuruCoreApp.CreateSlimBuilder(args)
+NuruCoreApp app = NuruCoreApp.CreateBuilder(args)
   // ============================================================================
   // Sample Commands - Issue #30 Use Case
   // ============================================================================

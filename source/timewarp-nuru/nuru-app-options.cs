@@ -7,7 +7,7 @@ namespace TimeWarp.Nuru;
 /// <para>
 /// This class provides a way to configure all auto-wired extensions (telemetry, REPL, shell completion, interactive routes)
 /// when using <see cref="NuruApp.CreateBuilder"/>. Without this, users would need to use
-/// <see cref="NuruCoreApp.CreateSlimBuilder"/> and manually wire everything to avoid duplicate route warnings.
+/// <see cref="NuruCoreApp.CreateBuilder"/> and manually wire everything to avoid duplicate route warnings.
 /// </para>
 /// </remarks>
 /// <example>

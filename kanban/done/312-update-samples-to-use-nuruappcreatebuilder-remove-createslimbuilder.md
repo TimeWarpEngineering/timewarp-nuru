@@ -1,15 +1,10 @@
 # Update samples to use NuruApp.CreateBuilder (remove CreateSlimBuilder)
 
-## Summary
+## Results
 
-Many samples reference `CreateSlimBuilder` or `CreateFullBuilder` which no longer exist.
-Update all samples to use `NuruApp.CreateBuilder()`.
+**COMPLETE** - All numbered samples migrated to `NuruApp.CreateBuilder()`.
 
-Also some samples use Mediator which is being replaced with TimeWarp.Nuru message interfaces.
-
-## Progress
-
-**Numbered samples (01-11) are working with `NuruApp.CreateBuilder()`:**
+**Completed samples (01-12, 99):**
 - 01-hello-world (3 samples)
 - 02-calculator (3 samples)
 - 03-attributed-routes (csproj)
@@ -21,9 +16,38 @@ Also some samples use Mediator which is being replaced with TimeWarp.Nuru messag
 - 09-configuration (4 samples)
 - 10-type-converters (2 samples)
 - 11-unified-middleware
+- 12-logging (2 samples) - migrated after #322 completed ILogger<T> support
+- 99-timewarp-nuru-sample
+
+**Underscore samples requiring library-level changes tracked separately:**
+- `_repl-demo/` - #338 (requires REPL library migration)
+- `_aspire-*` - #339 (requires Telemetry library migration)
+- `_completion-*` - #340 (requires Completion library migration)
+
+## Summary
+
+Many samples reference `CreateSlimBuilder` or `CreateFullBuilder` which no longer exist.
+Update all samples to use `NuruApp.CreateBuilder()`.
+
+Also some samples use Mediator which is being replaced with TimeWarp.Nuru message interfaces.
+
+## Progress
+
+**Numbered samples (01-12) are working with `NuruApp.CreateBuilder()`:**
+- 01-hello-world (3 samples)
+- 02-calculator (3 samples)
+- 03-attributed-routes (csproj)
+- 04-syntax-examples
+- 05-aot-example (csproj)
+- 06-async-examples
+- 07-pipeline-middleware (6 samples)
+- 08-testing (4 samples + runfile harness)
+- 09-configuration (4 samples)
+- 10-type-converters (2 samples)
+- 11-unified-middleware
+- 12-logging (2 samples) - completed via #322
 
 **Remaining underscore samples tracked in separate tasks:**
-- `_logging/` - #337 (blocked by #322 ILogger<T> injection)
 - `_repl-demo/` - #338 (requires REPL library migration)
 - `_aspire-*` - #339 (requires Telemetry library migration)
 - `_completion-*` - #340 (requires Completion library migration)
@@ -58,8 +82,8 @@ These samples have been verified working with the new API:
 
 ### Uses Mediator (replace with TimeWarp.Nuru interfaces)
 - [x] `05-aot-example/aot-example.cs` - DONE (removed AddMediator)
-- [x] `_logging/console-logging.cs` - Uses Nuru interfaces (IQuery, IQueryHandler), but **blocked by #322** (ILogger<T> injection)
-- [ ] `_logging/serilog-logging.cs` - likely same issues
+- [x] `12-logging/console-logging.cs` - DONE (migrated via #322)
+- [x] `12-logging/serilog-logging.cs` - DONE (migrated via #322)
 - [x] `06-async-examples/async-examples.cs` - DONE (updated to CreateBuilder)
 
 ### Configuration Samples - DONE (renamed to 09-configuration/)
@@ -76,7 +100,7 @@ These samples have been verified working with the new API:
 - [x] `07-pipeline-middleware/*` - All 6 samples working (completed in #315)
 
 ### Underscore samples - Tracked in separate tasks
-- [ ] `_logging/` - See #337 (blocked by #322)
+- [x] `_logging/` - DONE, renamed to `12-logging/` (completed via #322)
 - [ ] `_repl-demo/` - See #338 (requires REPL library migration)
 - [ ] `_aspire-host-otel/` - See #339 (requires Telemetry library migration)
 - [ ] `_aspire-telemetry/` - See #339

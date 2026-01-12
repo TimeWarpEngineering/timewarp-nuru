@@ -146,6 +146,7 @@ internal static class PatternStringExtractor
         IsRepeated: option.Parameter?.IsRepeated ?? false,
         ParameterIsOptional: option.Parameter?.IsOptional ?? false,
         ResolvedClrTypeName: ResolveClrTypeName(option.Parameter?.Type)),
+      EndOfOptionsSyntax => new EndOfOptionsSeparatorDefinition(position),
       _ => null
     };
   }

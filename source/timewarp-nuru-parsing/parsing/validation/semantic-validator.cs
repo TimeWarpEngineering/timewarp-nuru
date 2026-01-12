@@ -6,7 +6,6 @@ namespace TimeWarp.Nuru;
 /// </summary>
 internal sealed class SemanticValidator
 {
-  private const string EndOfOptionsSeparator = "--";
 
   /// <summary>
   /// Validates a route syntax tree for semantic correctness.
@@ -86,8 +85,10 @@ internal sealed class SemanticValidator
 
         case LiteralSyntax literal:
           context.Literals.Add(literal);
-          if (literal.Value == EndOfOptionsSeparator)
-            context.EndOfOptionsIndex = i;
+          break;
+
+        case EndOfOptionsSyntax:
+          context.EndOfOptionsIndex = i;
           break;
       }
     }
@@ -152,9 +153,9 @@ internal sealed class SemanticValidator
           break; // Only report the first occurrence
         }
       }
-      else if (segment is OptionSyntax || segment is LiteralSyntax)
+      else if (segment is OptionSyntax || segment is LiteralSyntax || segment is EndOfOptionsSyntax)
       {
-        // Reset when we hit non-parameter segments (options or literals break the positional sequence)
+        // Reset when we hit non-parameter segments (options, literals, or end-of-options break the positional sequence)
         foundOptional = false;
         lastOptionalParam = null;
       }
@@ -187,7 +188,7 @@ internal sealed class SemanticValidator
           lastOptionalParam = null;
         }
       }
-      else if (segment is OptionSyntax || segment is LiteralSyntax)
+      else if (segment is OptionSyntax || segment is LiteralSyntax || segment is EndOfOptionsSyntax)
       {
         // Reset when we hit non-parameter segments
         lastOptionalParam = null;
@@ -209,7 +210,7 @@ internal sealed class SemanticValidator
 
           // Check if this is a positional segment (not an option or end-of-options)
           bool isPositional = nextSegment is ParameterSyntax ||
-            (nextSegment is LiteralSyntax lit && lit.Value != EndOfOptionsSeparator);
+            (nextSegment is LiteralSyntax);
 
           if (isPositional)
           {

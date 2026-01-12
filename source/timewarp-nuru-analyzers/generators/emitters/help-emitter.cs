@@ -160,6 +160,10 @@ internal static class HelpEmitter
           }
 
           break;
+
+        case EndOfOptionsSeparatorDefinition:
+          pattern.Append("-- ");
+          break;
       }
     }
 

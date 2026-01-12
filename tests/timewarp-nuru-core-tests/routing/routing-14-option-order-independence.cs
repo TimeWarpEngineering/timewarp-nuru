@@ -139,10 +139,10 @@ public class OptionOrderIndependenceTests
     terminal.OutputContains("verbose=True").ShouldBeTrue();
   }
 
-  public static async Task Should_not_match_with_options_interleaved_between_positional_args()
+  public static async Task Should_match_with_options_interleaved_between_positional_args()
   {
-    // Options interleaved between positional arguments is NOT valid CLI behavior
-    // Options should come AFTER all positional arguments
+    // Options can appear anywhere - before, after, or interleaved with positional args
+    // The router uses a two-pass approach: extract options first, then process positionals
     using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
@@ -151,11 +151,14 @@ public class OptionOrderIndependenceTests
           $"source={source}|dest={dest}|verbose={verbose}").AsQuery().Done()
       .Build();
 
-    // Act - option BETWEEN positional args (invalid)
+    // Act - option BETWEEN positional args (now valid with two-pass approach)
     int exitCode = await app.RunAsync(["copy", "file1.txt", "--verbose", "file2.txt"]);
 
-    // Should fail - options cannot be interleaved with positional args
-    exitCode.ShouldBe(1);
+    // Should succeed - options are extracted first, leaving positionals in order
+    exitCode.ShouldBe(0);
+    terminal.OutputContains("source=file1.txt").ShouldBeTrue();
+    terminal.OutputContains("dest=file2.txt").ShouldBeTrue();
+    terminal.OutputContains("verbose=True").ShouldBeTrue();
   }
 
   public static async Task Should_match_option_with_short_form_in_different_order()

@@ -220,6 +220,69 @@ Boolean flags are scored but always optional:
 5. **Order Matters**: When specificity is equal, first registered wins
 6. **No Type-Based Dispatch**: Type conversion failures are errors, not fallback triggers
 
+## Option and Positional Argument Ordering
+
+Options can appear **anywhere** in the command line - before, after, or interleaved with positional arguments. The router uses a two-pass approach:
+
+1. **First pass:** Extract all options (flags and values) from the args, tracking consumed indices
+2. **Second pass:** Remaining args are positional, processed in order
+
+### Interleaved Options Example
+
+Pattern: `copy {source} {dest} --verbose?`
+
+All of these inputs are equivalent:
+```bash
+copy file1.txt file2.txt --verbose
+copy file1.txt --verbose file2.txt
+copy --verbose file1.txt file2.txt
+```
+
+Each results in: `source="file1.txt"`, `dest="file2.txt"`, `verbose=true`
+
+### Option Value Syntax
+
+Options that take values support two syntaxes:
+
+```bash
+# Space-separated (traditional)
+--output file.txt
+-o file.txt
+
+# Equals syntax (also common)
+--output=file.txt
+-o=file.txt
+```
+
+Both are equivalent and result in the same binding.
+
+### Negative Numbers as Positional Args
+
+Option extraction only matches **defined options in the route pattern**, not arbitrary `-` prefixed tokens. This allows negative numbers to work correctly as positional arguments or option values:
+
+Pattern: `delay {ms:int}`
+```bash
+delay -100          # ms = -100 (not treated as option)
+```
+
+Pattern: `process --count {n:int}`
+```bash
+process --count -5  # n = -5 (value is negative number, not an option)
+process --count=-5  # n = -5 (equals syntax also works)
+```
+
+### End-of-Options Separator (`--`)
+
+The `--` separator marks the end of options. Everything after `--` is treated as positional, even if it starts with `-`:
+
+Pattern: `copy {source} {dest} --verbose?`
+```bash
+copy -- --weird-file.txt dest.txt
+```
+Result: `source="--weird-file.txt"`, `dest="dest.txt"`, `verbose=false`
+
+This is useful when filenames or other arguments legitimately start with dashes.
+
 ## Compile-Time Route Validation
 
 The Nuru source generator validates route patterns at compile time to catch common mistakes:

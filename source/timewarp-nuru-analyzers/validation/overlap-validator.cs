@@ -132,6 +132,11 @@ internal static class OverlapValidator
           }
 
           break;
+
+        case EndOfOptionsSeparatorDefinition:
+          // End-of-options separator is a distinguishing element
+          signature.Append("--");
+          break;
       }
     }
 
@@ -304,19 +309,25 @@ internal static class OverlapValidator
           signature.Append("{P}");
           break;
 
-        case OptionDefinition option when !option.IsOptional:
-          // Include required options (those without ?)
+        case OptionDefinition option when !option.IsOptional && option.ExpectsValue:
+          // Include required options with values (those without ? that expect a value)
+          // Boolean flags are excluded because they're always optional at runtime
+          // (per design: "Boolean flags are scored but always optional")
           if (signature.Length > 0)
             signature.Append(' ');
           signature.Append(option.LongFormWithPrefix ?? option.ShortFormWithPrefix ?? "--opt");
-          if (option.ExpectsValue)
-          {
-            signature.Append(option.ParameterIsOptional ? " {P?}" : " {P}");
-          }
+          signature.Append(option.ParameterIsOptional ? " {P?}" : " {P}");
+          break;
 
+        case EndOfOptionsSeparatorDefinition:
+          // End-of-options separator is always required when present
+          if (signature.Length > 0)
+            signature.Append(' ');
+          signature.Append("--");
           break;
 
         // Skip: optional options (--flag?),
+        //       boolean flags (--verbose) - always optional at runtime,
         //       optional parameters ({param?}),
         //       catch-all ({*args})
       }

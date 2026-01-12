@@ -182,3 +182,20 @@ public sealed record OptionDefinition(
     }
   }
 }
+
+/// <summary>
+/// Represents the end-of-options separator (--) in a route pattern.
+/// This is a structural marker indicating that everything after it
+/// should be treated as positional arguments, not options.
+/// Example: "git checkout -- {*files}" - files after -- won't be interpreted as options.
+/// </summary>
+/// <param name="Position">Zero-based position of this segment in the route</param>
+public sealed record EndOfOptionsSeparatorDefinition(int Position)
+  : SegmentDefinition(Position)
+{
+  /// <summary>
+  /// End-of-options separator has no specificity contribution.
+  /// It's a structural marker, not a matchable segment that differentiates routes.
+  /// </summary>
+  public override int SpecificityContribution => 0;
+}

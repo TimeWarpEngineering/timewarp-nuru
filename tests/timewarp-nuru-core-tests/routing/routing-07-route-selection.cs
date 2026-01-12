@@ -105,27 +105,6 @@ public class RouteSelectionTests
     await Task.CompletedTask;
   }
 
-  public static async Task Should_select_more_options_over_fewer_build_verbose_watch()
-  {
-    // Arrange
-    using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
-      .UseTerminal(terminal)
-      .Map("build --verbose --watch").WithHandler((bool verbose, bool watch) => "more-options:verbose+watch").AsQuery().Done()
-      .Map("build --verbose").WithHandler((bool verbose) => "fewer-options:verbose").AsQuery().Done()
-      .Build();
-
-    // Act
-    int exitCode = await app.RunAsync(["build", "--verbose", "--watch"]);
-
-    // Assert
-    exitCode.ShouldBe(0);
-    terminal.OutputContains("more-options:verbose+watch").ShouldBeTrue();
-    terminal.OutputContains("fewer-options:").ShouldBeFalse();
-
-    await Task.CompletedTask;
-  }
-
   public static async Task Should_select_no_option_over_required_option_build()
   {
     // Arrange
@@ -193,13 +172,13 @@ public class RouteSelectionTests
   public static async Task Should_select_progressive_specificity_deploy_prod_tag_v1_0()
   {
     // Arrange
+    // Tests progressive specificity: more specific routes (with --tag) win over simpler ones
     using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
-      .Map("deploy {env} --tag {t} --verbose").WithHandler((string env, string t, bool verbose) => $"most-specific:{env},{t},verbose").AsQuery().Done()
-      .Map("deploy {env} --tag {t}").WithHandler((string env, string t) => $"medium:{env},{t}").AsQuery().Done()
-      .Map("deploy {env}").WithHandler((string env) => $"less-specific:{env}").AsQuery().Done()
-      .Map("deploy").WithHandler(() => "least-specific").AsQuery().Done()
+      .Map("deploy {env} --tag {t}").WithHandler((string env, string t) => $"with-tag:{env},{t}").AsQuery().Done()
+      .Map("deploy {env}").WithHandler((string env) => $"env-only:{env}").AsQuery().Done()
+      .Map("deploy").WithHandler(() => "bare-deploy").AsQuery().Done()
       .Build();
 
     // Act
@@ -207,10 +186,9 @@ public class RouteSelectionTests
 
     // Assert
     exitCode.ShouldBe(0);
-    terminal.OutputContains("medium:prod,v1.0").ShouldBeTrue();
-    terminal.OutputContains("most-specific:").ShouldBeFalse(); // Missing --verbose
-    terminal.OutputContains("less-specific:").ShouldBeFalse();
-    terminal.OutputContains("least-specific").ShouldBeFalse();
+    terminal.OutputContains("with-tag:prod,v1.0").ShouldBeTrue();
+    terminal.OutputContains("env-only:").ShouldBeFalse();
+    terminal.OutputContains("bare-deploy").ShouldBeFalse();
 
     await Task.CompletedTask;
   }

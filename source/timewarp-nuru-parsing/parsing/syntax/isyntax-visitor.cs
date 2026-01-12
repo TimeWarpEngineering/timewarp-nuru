@@ -30,4 +30,10 @@ internal interface ISyntaxVisitor<T>
   /// <param name="optionNode">The option node.</param>
   /// <returns>The result of visiting this node.</returns>
   T VisitOption(OptionSyntax optionNode);
+  /// <summary>
+  /// Visits an end-of-options separator node (--).
+  /// </summary>
+  /// <param name="endOfOptions">The end-of-options node.</param>
+  /// <returns>The result of visiting this node.</returns>
+  T VisitEndOfOptions(EndOfOptionsSyntax endOfOptions);
 }

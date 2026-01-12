@@ -98,7 +98,10 @@ internal static class RouteMatcherEmitter
 
   /// <summary>
   /// Emits complex matching logic for routes with options or catch-all parameters.
-  /// Uses length checks and manual parsing.
+  /// Uses a two-pass approach:
+  /// 1. First pass: Extract options and their values, tracking consumed indices
+  /// 2. Second pass: Build positional args array, match literals, extract parameters
+  /// This allows options to appear anywhere (interleaved with positional args).
   /// </summary>
   private static void EmitComplexMatch(
     StringBuilder sb,
@@ -108,29 +111,58 @@ internal static class RouteMatcherEmitter
     ImmutableArray<BehaviorDefinition> behaviors,
     ImmutableArray<CustomConverterDefinition> customConverters)
   {
-    // Calculate minimum required args
-    int minArgs = route.Literals.Count() + route.Parameters.Count(p => !p.IsOptional && !p.IsCatchAll);
+    // Calculate minimum required positional args (positional match segments + required non-catch-all params)
+    // PositionalMatchSegments includes group prefix literals, pattern literals, and end-of-options
+    int minPositionalArgs = route.PositionalMatchSegments.Count() + route.Parameters.Count(p => !p.IsOptional && !p.IsCatchAll);
 
-    sb.AppendLine($"    if (routeArgs.Length >= {minArgs})");
+    // Initial length check (minimum possible args)
+    sb.AppendLine($"    if (routeArgs.Length >= {minPositionalArgs})");
     sb.AppendLine("    {");
 
-    // Emit literal matching
-    int literalIndex = 0;
-    foreach (LiteralDefinition literal in route.Literals)
+    // Emit the set of all option forms for this route (used to distinguish options from values)
+    EmitOptionFormsSet(sb, route, routeIndex);
+
+    // Find end-of-options marker (--)
+    sb.AppendLine($"      int __endOfOptions_{routeIndex} = global::System.Array.IndexOf(routeArgs, \"--\");");
+    sb.AppendLine($"      if (__endOfOptions_{routeIndex} < 0) __endOfOptions_{routeIndex} = routeArgs.Length;");
+
+    // Track consumed indices (options and their values)
+    sb.AppendLine($"      global::System.Collections.Generic.HashSet<int> __consumed_{routeIndex} = [];");
+
+    // First pass: Extract all options (with index tracking)
+    EmitOptionParsingWithIndexTracking(sb, route, routeIndex, customConverters);
+
+    // Build positional args array (excluding consumed indices; -- is included only if route expects it)
+    EmitPositionalArrayConstruction(sb, route, routeIndex);
+
+    // Check minimum positional args
+    sb.AppendLine($"      if (__positionalArgs_{routeIndex}.Length < {minPositionalArgs}) goto route_skip_{routeIndex};");
+
+    // Emit literal and end-of-options matching against positional args
+    // PositionalMatchSegments includes group prefix literals, pattern literals, and end-of-options
+    int positionalIndex = 0;
+    foreach (SegmentDefinition segment in route.PositionalMatchSegments)
     {
-      sb.AppendLine(
-        $"      if (routeArgs[{literalIndex}] != \"{EscapeString(literal.Value)}\") goto route_skip_{routeIndex};");
-      literalIndex++;
+      switch (segment)
+      {
+        case LiteralDefinition literal:
+          sb.AppendLine(
+            $"      if (__positionalArgs_{routeIndex}[{positionalIndex}] != \"{EscapeString(literal.Value)}\") goto route_skip_{routeIndex};");
+          positionalIndex++;
+          break;
+        case EndOfOptionsSeparatorDefinition:
+          sb.AppendLine(
+            $"      if (__positionalArgs_{routeIndex}[{positionalIndex}] != \"--\") goto route_skip_{routeIndex};");
+          positionalIndex++;
+          break;
+      }
     }
 
-    // Emit parameter extraction (typed params use unique var names for later conversion)
-    EmitParameterExtraction(sb, route, routeIndex, literalIndex);
+    // Emit parameter extraction from positional args (starting after literals and --)
+    EmitParameterExtractionFromPositionalArgs(sb, route, routeIndex, positionalIndex);
 
     // Emit type conversions for typed parameters
     EmitTypeConversions(sb, route, routeIndex, customConverters, indent: 6);
-
-    // Emit option parsing
-    EmitOptionParsing(sb, route, routeIndex, customConverters);
 
     // Emit handler invocation (wrapped with behaviors if any)
     if (behaviors.Length > 0)
@@ -152,6 +184,307 @@ internal static class RouteMatcherEmitter
 
     sb.AppendLine("    }");
     sb.AppendLine($"    route_skip_{routeIndex}:;");
+  }
+
+  /// <summary>
+  /// Emits a HashSet containing all option forms for this route.
+  /// Used to distinguish option flags from option values (e.g., negative numbers).
+  /// </summary>
+  private static void EmitOptionFormsSet(StringBuilder sb, RouteDefinition route, int routeIndex)
+  {
+    List<string> forms = [];
+    foreach (OptionDefinition option in route.Options)
+    {
+      if (option.LongForm is not null)
+        forms.Add($"\"--{option.LongForm}\"");
+      if (option.ShortForm is not null)
+        forms.Add($"\"-{option.ShortForm}\"");
+    }
+
+    if (forms.Count > 0)
+    {
+      sb.AppendLine($"      global::System.Collections.Generic.HashSet<string> __optionForms_{routeIndex} = [{string.Join(", ", forms)}];");
+    }
+    else
+    {
+      sb.AppendLine($"      global::System.Collections.Generic.HashSet<string> __optionForms_{routeIndex} = [];");
+    }
+  }
+
+  /// <summary>
+  /// Emits code to build the positional args array from routeArgs,
+  /// excluding consumed indices (options and their values).
+  /// The -- separator is included only if the route explicitly expects it.
+  /// </summary>
+  private static void EmitPositionalArrayConstruction(StringBuilder sb, RouteDefinition route, int routeIndex)
+  {
+    sb.AppendLine($"      global::System.Collections.Generic.List<string> __positionalList_{routeIndex} = [];");
+    sb.AppendLine("      for (int __i = 0; __i < routeArgs.Length; __i++)");
+    sb.AppendLine("      {");
+
+    // Only skip -- from positional args if the route does NOT explicitly include it
+    // If the route has EndOfOptionsSeparatorDefinition, we need -- in the positional array to match against
+    if (!route.HasEndOfOptions)
+    {
+      sb.AppendLine($"        if (__i == __endOfOptions_{routeIndex} && routeArgs[__i] == \"--\") continue;");
+    }
+
+    sb.AppendLine($"        if (__consumed_{routeIndex}.Contains(__i)) continue;");
+    sb.AppendLine($"        __positionalList_{routeIndex}.Add(routeArgs[__i]);");
+    sb.AppendLine("      }");
+    sb.AppendLine($"      string[] __positionalArgs_{routeIndex} = [.. __positionalList_{routeIndex}];");
+  }
+
+  /// <summary>
+  /// Emits code to extract parameter values from the positional args array.
+  /// </summary>
+  private static void EmitParameterExtractionFromPositionalArgs(StringBuilder sb, RouteDefinition route, int routeIndex, int startIndex)
+  {
+    int paramIndex = startIndex;
+    foreach (ParameterDefinition param in route.Parameters)
+    {
+      string varName = (param.HasTypeConstraint || param.IsCatchAll)
+        ? $"__{param.CamelCaseName}_{routeIndex}"
+        : param.CamelCaseName;
+
+      if (param.IsCatchAll)
+      {
+        sb.AppendLine(
+          $"      string[] {varName} = __positionalArgs_{routeIndex}[{paramIndex}..];");
+      }
+      else if (param.IsOptional)
+      {
+        sb.AppendLine(
+          $"      string? {varName} = __positionalArgs_{routeIndex}.Length > {paramIndex} ? __positionalArgs_{routeIndex}[{paramIndex}] : null;");
+        paramIndex++;
+      }
+      else
+      {
+        sb.AppendLine(
+          $"      string {varName} = __positionalArgs_{routeIndex}[{paramIndex}];");
+        paramIndex++;
+      }
+    }
+  }
+
+  /// <summary>
+  /// Emits option parsing with index tracking for the two-pass approach.
+  /// Extracts options and their values, marking consumed indices.
+  /// Supports both space-separated (--opt value) and equals syntax (--opt=value).
+  /// </summary>
+  private static void EmitOptionParsingWithIndexTracking(
+    StringBuilder sb,
+    RouteDefinition route,
+    int routeIndex,
+    ImmutableArray<CustomConverterDefinition> customConverters)
+  {
+    foreach (OptionDefinition option in route.Options)
+    {
+      if (option.IsFlag)
+      {
+        EmitFlagParsingWithIndexTracking(sb, option, routeIndex);
+      }
+      else if (option.IsRepeated)
+      {
+        EmitRepeatedValueOptionParsingWithIndexTracking(sb, option, routeIndex, customConverters);
+      }
+      else
+      {
+        EmitValueOptionParsingWithIndexTracking(sb, option, routeIndex, customConverters);
+      }
+    }
+  }
+
+  /// <summary>
+  /// Emits code to parse a boolean flag option with index tracking.
+  /// </summary>
+  private static void EmitFlagParsingWithIndexTracking(StringBuilder sb, OptionDefinition option, int routeIndex)
+  {
+    string varName = ToCamelCase(option.LongForm ?? option.ShortForm ?? "flag");
+    string escapedVarName = CSharpIdentifierUtils.EscapeIfKeyword(varName);
+
+    string? longCheck = option.LongForm is not null ? $"routeArgs[__i] == \"--{option.LongForm}\"" : null;
+    string? shortCheck = option.ShortForm is not null ? $"routeArgs[__i] == \"-{option.ShortForm}\"" : null;
+    string condition = (longCheck, shortCheck) switch
+    {
+      (not null, not null) => $"{longCheck} || {shortCheck}",
+      (not null, null) => longCheck,
+      (null, not null) => shortCheck,
+      _ => throw new InvalidOperationException("Option must have at least one form")
+    };
+
+    sb.AppendLine($"      bool {escapedVarName} = false;");
+    sb.AppendLine($"      for (int __i = 0; __i < __endOfOptions_{routeIndex}; __i++)");
+    sb.AppendLine("      {");
+    sb.AppendLine($"        if ({condition})");
+    sb.AppendLine("        {");
+    sb.AppendLine($"          {escapedVarName} = true;");
+    sb.AppendLine($"          __consumed_{routeIndex}.Add(__i);");
+    sb.AppendLine("          break;");
+    sb.AppendLine("        }");
+    sb.AppendLine("      }");
+  }
+
+  /// <summary>
+  /// Emits code to parse an option with a value, tracking consumed indices.
+  /// Supports both --opt value and --opt=value syntax.
+  /// </summary>
+  private static void EmitValueOptionParsingWithIndexTracking(
+    StringBuilder sb,
+    OptionDefinition option,
+    int routeIndex,
+    ImmutableArray<CustomConverterDefinition> customConverters)
+  {
+    string varName = option.ParameterName ?? ToCamelCase(option.LongForm ?? option.ShortForm ?? "value");
+    string escapedVarName = CSharpIdentifierUtils.EscapeIfKeyword(varName);
+    string flagFoundVar = $"__{varName}_flagFound_{routeIndex}";
+
+    // For typed options, extract to a temp string first, then convert
+    bool needsConversion = option.TypeConstraint is not null;
+    string rawVarName = needsConversion ? $"__{varName}_raw" : escapedVarName;
+
+    sb.AppendLine($"      bool {flagFoundVar} = false;");
+    sb.AppendLine($"      string? {rawVarName} = null;");
+    sb.AppendLine($"      for (int __i = 0; __i < __endOfOptions_{routeIndex}; __i++)");
+    sb.AppendLine("      {");
+
+    // Check for --option=value or -o=value syntax
+    if (option.LongForm is not null)
+    {
+      sb.AppendLine($"        if (routeArgs[__i].StartsWith(\"--{option.LongForm}=\", global::System.StringComparison.Ordinal))");
+      sb.AppendLine("        {");
+      sb.AppendLine($"          {flagFoundVar} = true;");
+      sb.AppendLine($"          __consumed_{routeIndex}.Add(__i);");
+      sb.AppendLine($"          {rawVarName} = routeArgs[__i].Substring({3 + option.LongForm.Length});");
+      sb.AppendLine("          break;");
+      sb.AppendLine("        }");
+    }
+
+    if (option.ShortForm is not null)
+    {
+      sb.AppendLine($"        if (routeArgs[__i].StartsWith(\"-{option.ShortForm}=\", global::System.StringComparison.Ordinal))");
+      sb.AppendLine("        {");
+      sb.AppendLine($"          {flagFoundVar} = true;");
+      sb.AppendLine($"          __consumed_{routeIndex}.Add(__i);");
+      sb.AppendLine($"          {rawVarName} = routeArgs[__i].Substring({2 + option.ShortForm.Length});");
+      sb.AppendLine("          break;");
+      sb.AppendLine("        }");
+    }
+
+    // Check for --option value or -o value syntax
+    string? longCheckValue = option.LongForm is not null ? $"routeArgs[__i] == \"--{option.LongForm}\"" : null;
+    string? shortCheckValue = option.ShortForm is not null ? $"routeArgs[__i] == \"-{option.ShortForm}\"" : null;
+    string conditionValue = (longCheckValue, shortCheckValue) switch
+    {
+      (not null, not null) => $"{longCheckValue} || {shortCheckValue}",
+      (not null, null) => longCheckValue,
+      (null, not null) => shortCheckValue,
+      _ => throw new InvalidOperationException("Option must have at least one form")
+    };
+
+    sb.AppendLine($"        if ({conditionValue})");
+    sb.AppendLine("        {");
+    sb.AppendLine($"          {flagFoundVar} = true;");
+    sb.AppendLine($"          __consumed_{routeIndex}.Add(__i);");
+    sb.AppendLine("          // Check if next arg exists, is before end-of-options, and is NOT a defined option");
+    sb.AppendLine($"          if (__i + 1 < __endOfOptions_{routeIndex} && !__optionForms_{routeIndex}.Contains(routeArgs[__i + 1]))");
+    sb.AppendLine("          {");
+    sb.AppendLine($"            {rawVarName} = routeArgs[__i + 1];");
+    sb.AppendLine($"            __consumed_{routeIndex}.Add(__i + 1);");
+    sb.AppendLine("          }");
+    sb.AppendLine("          break;");
+    sb.AppendLine("        }");
+    sb.AppendLine("      }");
+
+    // Handle required vs optional flag/value
+    if (!option.IsOptional)
+    {
+      sb.AppendLine($"      if (!{flagFoundVar}) goto route_skip_{routeIndex};");
+      if (!option.ParameterIsOptional)
+      {
+        sb.AppendLine($"      if ({rawVarName} is null) goto route_skip_{routeIndex};");
+      }
+    }
+    else
+    {
+      if (!option.ParameterIsOptional)
+      {
+        sb.AppendLine($"      if ({flagFoundVar} && {rawVarName} is null) goto route_skip_{routeIndex};");
+      }
+    }
+
+    // Emit type conversion if needed
+    if (needsConversion)
+    {
+      EmitOptionTypeConversion(sb, option, escapedVarName, rawVarName, routeIndex, customConverters);
+    }
+  }
+
+  /// <summary>
+  /// Emits code to parse a repeated option with index tracking.
+  /// Supports both --opt value and --opt=value syntax for each occurrence.
+  /// </summary>
+  private static void EmitRepeatedValueOptionParsingWithIndexTracking(
+    StringBuilder sb,
+    OptionDefinition option,
+    int routeIndex,
+    ImmutableArray<CustomConverterDefinition> customConverters)
+  {
+    string varName = option.ParameterName ?? ToCamelCase(option.LongForm ?? option.ShortForm ?? "value");
+    string escapedVarName = CSharpIdentifierUtils.EscapeIfKeyword(varName);
+    string listVarName = $"__{varName}_list_{routeIndex}";
+
+    sb.AppendLine($"      global::System.Collections.Generic.List<string> {listVarName} = [];");
+    sb.AppendLine($"      for (int __i = 0; __i < __endOfOptions_{routeIndex}; __i++)");
+    sb.AppendLine("      {");
+
+    // Check for --option=value or -o=value syntax
+    if (option.LongForm is not null)
+    {
+      sb.AppendLine($"        if (routeArgs[__i].StartsWith(\"--{option.LongForm}=\", global::System.StringComparison.Ordinal))");
+      sb.AppendLine("        {");
+      sb.AppendLine($"          __consumed_{routeIndex}.Add(__i);");
+      sb.AppendLine($"          {listVarName}.Add(routeArgs[__i].Substring({3 + option.LongForm.Length}));");
+      sb.AppendLine("          continue;");
+      sb.AppendLine("        }");
+    }
+
+    if (option.ShortForm is not null)
+    {
+      sb.AppendLine($"        if (routeArgs[__i].StartsWith(\"-{option.ShortForm}=\", global::System.StringComparison.Ordinal))");
+      sb.AppendLine("        {");
+      sb.AppendLine($"          __consumed_{routeIndex}.Add(__i);");
+      sb.AppendLine($"          {listVarName}.Add(routeArgs[__i].Substring({2 + option.ShortForm.Length}));");
+      sb.AppendLine("          continue;");
+      sb.AppendLine("        }");
+    }
+
+    // Check for --option value or -o value syntax
+    string? longCheckRepeated = option.LongForm is not null ? $"routeArgs[__i] == \"--{option.LongForm}\"" : null;
+    string? shortCheckRepeated = option.ShortForm is not null ? $"routeArgs[__i] == \"-{option.ShortForm}\"" : null;
+    string conditionRepeated = (longCheckRepeated, shortCheckRepeated) switch
+    {
+      (not null, not null) => $"{longCheckRepeated} || {shortCheckRepeated}",
+      (not null, null) => longCheckRepeated,
+      (null, not null) => shortCheckRepeated,
+      _ => throw new InvalidOperationException("Option must have at least one form")
+    };
+
+    sb.AppendLine($"        if ({conditionRepeated})");
+    sb.AppendLine("        {");
+    sb.AppendLine($"          __consumed_{routeIndex}.Add(__i);");
+    sb.AppendLine("          // Check if next arg exists, is before end-of-options, and is NOT a defined option");
+    sb.AppendLine($"          if (__i + 1 < __endOfOptions_{routeIndex} && !__optionForms_{routeIndex}.Contains(routeArgs[__i + 1]))");
+    sb.AppendLine("          {");
+    sb.AppendLine($"            {listVarName}.Add(routeArgs[__i + 1]);");
+    sb.AppendLine($"            __consumed_{routeIndex}.Add(__i + 1);");
+    sb.AppendLine("            __i++;");
+    sb.AppendLine("          }");
+    sb.AppendLine("        }");
+    sb.AppendLine("      }");
+
+    // Emit type conversion and array creation
+    EmitRepeatedOptionTypeConversion(sb, option, escapedVarName, listVarName, routeIndex, customConverters);
   }
 
   /// <summary>
@@ -441,220 +774,6 @@ internal static class RouteMatcherEmitter
     }
 
     return $"[{string.Join(", ", parts)}]";
-  }
-
-  /// <summary>
-  /// Emits code to extract parameter values from args.
-  /// For typed parameters and catch-all, extracts to unique variable names to avoid collision with 'args' parameter.
-  /// </summary>
-  private static void EmitParameterExtraction(StringBuilder sb, RouteDefinition route, int routeIndex, int startIndex)
-  {
-    int paramIndex = startIndex;
-    foreach (ParameterDefinition param in route.Parameters)
-    {
-      // For typed parameters and catch-all, use unique var name to avoid collision with 'args' parameter
-      // Catch-all uses unique name because property "Args" -> "args" would shadow method parameter
-      string varName = (param.HasTypeConstraint || param.IsCatchAll)
-        ? $"__{param.CamelCaseName}_{routeIndex}"
-        : param.CamelCaseName;
-
-      if (param.IsCatchAll)
-      {
-        // Catch-all gets remaining args - uses unique variable name
-        sb.AppendLine(
-          $"      string[] {varName} = routeArgs[{paramIndex}..];");
-      }
-      else if (param.IsOptional)
-      {
-        // Optional parameter with bounds check - null when not provided
-        sb.AppendLine(
-          $"      string? {varName} = routeArgs.Length > {paramIndex} ? routeArgs[{paramIndex}] : null;");
-        paramIndex++;
-      }
-      else
-      {
-        // Required parameter
-        sb.AppendLine(
-          $"      string {varName} = routeArgs[{paramIndex}];");
-        paramIndex++;
-      }
-    }
-  }
-
-  /// <summary>
-  /// Emits code to parse options from args.
-  /// </summary>
-  private static void EmitOptionParsing(
-    StringBuilder sb,
-    RouteDefinition route,
-    int routeIndex,
-    ImmutableArray<CustomConverterDefinition> customConverters)
-  {
-    foreach (OptionDefinition option in route.Options)
-    {
-      if (option.IsFlag)
-      {
-        // Boolean flag - check presence
-        EmitFlagParsing(sb, option);
-      }
-      else
-      {
-        // Option with value
-        EmitValueOptionParsing(sb, option, routeIndex, customConverters);
-      }
-    }
-  }
-
-  /// <summary>
-  /// Emits code to parse a boolean flag option.
-  /// </summary>
-  private static void EmitFlagParsing(StringBuilder sb, OptionDefinition option)
-  {
-    string varName = ToCamelCase(option.LongForm ?? option.ShortForm ?? "flag");
-    string escapedVarName = CSharpIdentifierUtils.EscapeIfKeyword(varName);
-
-    string condition = (option.LongForm, option.ShortForm) switch
-    {
-      (not null, not null) => $"a == \"--{option.LongForm}\" || a == \"-{option.ShortForm}\"",
-      (not null, null) => $"a == \"--{option.LongForm}\"",
-      (null, not null) => $"a == \"-{option.ShortForm}\"",
-      _ => throw new InvalidOperationException("Option must have at least one form")
-    };
-
-    sb.AppendLine(
-      $"      bool {escapedVarName} = Array.Exists(routeArgs, a => {condition});");
-  }
-
-  /// <summary>
-  /// Emits code to parse an option that takes a value.
-  /// Handles type conversion for typed options (int, double, etc.).
-  /// Properly handles:
-  /// - Required flag + required value: flag and value must both be present
-  /// - Required flag + optional value: flag must be present, value can be null
-  /// - Optional flag + required value: if flag present, value must follow
-  /// - Optional flag + optional value: flag and value both optional
-  /// - Repeated options (*): collect all occurrences into an array
-  /// </summary>
-  private static void EmitValueOptionParsing(
-    StringBuilder sb,
-    OptionDefinition option,
-    int routeIndex,
-    ImmutableArray<CustomConverterDefinition> customConverters)
-  {
-    // Handle repeated options separately
-    if (option.IsRepeated)
-    {
-      EmitRepeatedValueOptionParsing(sb, option, routeIndex, customConverters);
-      return;
-    }
-
-    string varName = option.ParameterName ?? ToCamelCase(option.LongForm ?? option.ShortForm ?? "value");
-    string escapedVarName = CSharpIdentifierUtils.EscapeIfKeyword(varName);
-    string flagFoundVar = $"__{varName}_flagFound_{routeIndex}";
-
-    string condition = (option.LongForm, option.ShortForm) switch
-    {
-      (not null, not null) => $"routeArgs[__idx] == \"--{option.LongForm}\" || routeArgs[__idx] == \"-{option.ShortForm}\"",
-      (not null, null) => $"routeArgs[__idx] == \"--{option.LongForm}\"",
-      (null, not null) => $"routeArgs[__idx] == \"-{option.ShortForm}\"",
-      _ => throw new InvalidOperationException("Option must have at least one form")
-    };
-
-    // For typed options, extract to a temp string first, then convert
-    bool needsConversion = option.TypeConstraint is not null;
-    string rawVarName = needsConversion ? $"__{varName}_raw" : escapedVarName;
-
-    // Track whether the flag was found and extract value if present
-    sb.AppendLine($"      bool {flagFoundVar} = false;");
-    sb.AppendLine($"      string? {rawVarName} = null;");
-    sb.AppendLine("      for (int __idx = 0; __idx < routeArgs.Length; __idx++)");
-    sb.AppendLine("      {");
-    sb.AppendLine($"        if ({condition})");
-    sb.AppendLine("        {");
-    sb.AppendLine($"          {flagFoundVar} = true;");
-    sb.AppendLine("          // Check if there's a value following the flag (and it's not another flag)");
-    sb.AppendLine("          if (__idx + 1 < routeArgs.Length && !routeArgs[__idx + 1].StartsWith(\"-\"))");
-    sb.AppendLine("          {");
-    sb.AppendLine($"            {rawVarName} = routeArgs[__idx + 1];");
-    sb.AppendLine("          }");
-    sb.AppendLine("          break;");
-    sb.AppendLine("        }");
-    sb.AppendLine("      }");
-
-    // Handle the four cases based on flag optionality and value optionality
-    if (!option.IsOptional)
-    {
-      // Required flag: must be found
-      sb.AppendLine($"      if (!{flagFoundVar}) goto route_skip_{routeIndex};");
-
-      if (!option.ParameterIsOptional)
-      {
-        // Required flag + Required value: value must be present
-        sb.AppendLine($"      if ({rawVarName} is null) goto route_skip_{routeIndex};");
-      }
-      // else: Required flag + Optional value: flag found, value can be null - OK
-    }
-    else
-    {
-      // Optional flag
-      if (!option.ParameterIsOptional)
-      {
-        // Optional flag + Required value: if flag present, value must be present
-        sb.AppendLine($"      if ({flagFoundVar} && {rawVarName} is null) goto route_skip_{routeIndex};");
-      }
-      // else: Optional flag + Optional value: everything optional - OK
-    }
-
-    // Emit type conversion if needed
-    if (needsConversion)
-    {
-      EmitOptionTypeConversion(sb, option, escapedVarName, rawVarName, routeIndex, customConverters);
-    }
-  }
-
-  /// <summary>
-  /// Emits code to parse a repeated option that can appear multiple times.
-  /// Collects all values into a List, then converts to array (with type conversion if needed).
-  /// </summary>
-  private static void EmitRepeatedValueOptionParsing(
-    StringBuilder sb,
-    OptionDefinition option,
-    int routeIndex,
-    ImmutableArray<CustomConverterDefinition> customConverters)
-  {
-    string varName = option.ParameterName ?? ToCamelCase(option.LongForm ?? option.ShortForm ?? "value");
-    string escapedVarName = CSharpIdentifierUtils.EscapeIfKeyword(varName);
-    string listVarName = $"__{varName}_list_{routeIndex}";
-
-    string condition = (option.LongForm, option.ShortForm) switch
-    {
-      (not null, not null) => $"routeArgs[__idx] == \"--{option.LongForm}\" || routeArgs[__idx] == \"-{option.ShortForm}\"",
-      (not null, null) => $"routeArgs[__idx] == \"--{option.LongForm}\"",
-      (null, not null) => $"routeArgs[__idx] == \"-{option.ShortForm}\"",
-      _ => throw new InvalidOperationException("Option must have at least one form")
-    };
-
-    // Collect all values into a list
-    sb.AppendLine($"      global::System.Collections.Generic.List<string> {listVarName} = [];");
-    sb.AppendLine("      for (int __idx = 0; __idx < routeArgs.Length; __idx++)");
-    sb.AppendLine("      {");
-    sb.AppendLine($"        if ({condition})");
-    sb.AppendLine("        {");
-    sb.AppendLine("          // Check if there's a value following the flag (and it's not another flag)");
-    sb.AppendLine("          if (__idx + 1 < routeArgs.Length && !routeArgs[__idx + 1].StartsWith(\"-\"))");
-    sb.AppendLine("          {");
-    sb.AppendLine($"            {listVarName}.Add(routeArgs[__idx + 1]);");
-    sb.AppendLine("            __idx++; // Skip the value we just consumed");
-    sb.AppendLine("          }");
-    sb.AppendLine("        }");
-    sb.AppendLine("      }");
-
-    // Note: Repeated options (*) allow zero occurrences by definition.
-    // The asterisk means "zero or more", so we don't require any values.
-    // Only non-repeated required options would check for presence.
-
-    // Emit type conversion and array creation
-    EmitRepeatedOptionTypeConversion(sb, option, escapedVarName, listVarName, routeIndex, customConverters);
   }
 
   /// <summary>

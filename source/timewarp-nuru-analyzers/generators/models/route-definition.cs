@@ -103,6 +103,9 @@ public sealed record RouteDefinition(
           case OptionDefinition option:
             sb.Append(option.PatternSyntax);
             break;
+          case EndOfOptionsSeparatorDefinition:
+            sb.Append("--");
+            break;
         }
       }
 
@@ -132,6 +135,42 @@ public sealed record RouteDefinition(
       foreach (LiteralDefinition literal in Segments.OfType<LiteralDefinition>())
       {
         yield return new LiteralDefinition(position++, literal.Value);
+      }
+    }
+  }
+
+  /// <summary>
+  /// Gets all segments that require positional matching, in order.
+  /// This includes group prefix literals, pattern literals, and end-of-options separators.
+  /// Used by the route matcher emitter to generate positional matching code.
+  /// </summary>
+  public IEnumerable<SegmentDefinition> PositionalMatchSegments
+  {
+    get
+    {
+      int position = 0;
+
+      // Prepend group prefix as literal(s) if present
+      if (!string.IsNullOrEmpty(GroupPrefix))
+      {
+        foreach (string word in GroupPrefix.Split(' ', StringSplitOptions.RemoveEmptyEntries))
+        {
+          yield return new LiteralDefinition(position++, word);
+        }
+      }
+
+      // Then yield literals and end-of-options from segments (with adjusted positions)
+      foreach (SegmentDefinition segment in Segments)
+      {
+        switch (segment)
+        {
+          case LiteralDefinition literal:
+            yield return new LiteralDefinition(position++, literal.Value);
+            break;
+          case EndOfOptionsSeparatorDefinition:
+            yield return new EndOfOptionsSeparatorDefinition(position++);
+            break;
+        }
       }
     }
   }
@@ -170,6 +209,13 @@ public sealed record RouteDefinition(
   /// </summary>
   public bool HasOptionalPositionalParams =>
     Parameters.Any(p => p.IsOptional && !p.IsCatchAll);
+
+  /// <summary>
+  /// Gets whether this route explicitly includes the end-of-options separator (--).
+  /// When true, the -- must be present in the input and matched as part of the route.
+  /// </summary>
+  public bool HasEndOfOptions =>
+    Segments.OfType<EndOfOptionsSeparatorDefinition>().Any();
 
   /// <summary>
   /// Gets the interface type names this route's command implements.

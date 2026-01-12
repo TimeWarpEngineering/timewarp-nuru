@@ -16,8 +16,6 @@ Discovered during CI test investigation (Bug #349):
 - These attributed routes are duplicating fluent routes like `deploy {env}` in test apps
 - The duplicate routes cause wrong handlers to execute
 
-The `NuruAnalyzer` should report NURU_R002 for duplicate routes, but it only validates `model.Routes` (fluent routes), not the combined model (fluent + attributed).
-
 ## Solution
 
 Merge validation into `NuruGenerator`:
@@ -26,45 +24,85 @@ Merge validation into `NuruGenerator`:
 - Emits code
 - Delete separate `NuruAnalyzer`
 
-## Benefits
+## Progress
 
-1. **Performance** - Pipeline runs once, not twice
-2. **Simpler architecture** - One generator instead of analyzer + generator
-3. **Guaranteed consistency** - Validation happens on exact model being emitted
-4. **Less code** - No separate `NuruAnalyzer` class
+### Completed
+
+1. **Merged validation into NuruGenerator** - Single generator now handles both code emission and validation
+2. **Added route location collection** - Collects locations from both `Map()` calls and `[NuruRoute]` attributes
+3. **Switched to ExtractWithDiagnostics** - Captures extraction errors during model building
+4. **Added NURU_R003 diagnostic** - Detects unreachable routes (routes shadowed by higher specificity routes)
+5. **Updated documentation** - Added compile-time validation section to `specificity-algorithm.md`
+
+### Remaining
+
+- [ ] Delete `NuruAnalyzer` (deferred - may still be useful for other purposes)
+- [ ] Fix attributed route scoping (separate task needed)
+
+## NURU_R003: Unreachable Route
+
+During implementation, we discovered that NURU_R002 (duplicate patterns) wasn't the right diagnostic for the CI test failures. The real issue is **unreachable routes** - routes that can never be matched because another route with equal or higher specificity matches all the same inputs.
+
+**Example:**
+```csharp
+// Route 'deploy {env}' is unreachable
+// Route 'deploy' (with options) shadows it because options are optional
+.Map("deploy {env} --force").WithHandler(...)  // 160 pts - matches "deploy prod"
+.Map("deploy {env}").WithHandler(...)          // 110 pts - UNREACHABLE
+```
+
+The analyzer now reports NURU_R003 errors for these cases.
+
+## CI Test Results
+
+After implementing NURU_R003, CI tests now fail with build errors (as expected):
+- Multiple `deploy` routes are shadowing each other
+- Attributed routes (`DeployCommand`, `GreetCommand`, etc.) are shadowing fluent routes
+
+This confirms the analyzer is working correctly. The next step is to fix the attributed route scoping issue so attributed routes aren't added to all apps.
 
 ## Checklist
 
 ### Phase 1: Add Route Location Collection to Generator
-- [ ] Add pipeline to collect `Map()` call locations (string pattern -> Location)
-- [ ] Add pipeline to collect `[NuruRoute]` attribute locations
-- [ ] Combine into `ImmutableDictionary<string, Location>` for error reporting
+- [x] Add pipeline to collect `Map()` call locations (string pattern -> Location)
+- [x] Add pipeline to collect `[NuruRoute]` attribute locations
+- [x] Combine into `ImmutableDictionary<string, Location>` for error reporting
 
 ### Phase 2: Switch to ExtractWithDiagnostics
-- [ ] Change `AppExtractor.Extract()` to `AppExtractor.ExtractWithDiagnostics()`
-- [ ] Capture extraction errors (NURU_P###, NURU_S###, NURU_H### diagnostics)
+- [x] Change `AppExtractor.Extract()` to `AppExtractor.ExtractWithDiagnostics()`
+- [x] Capture extraction errors (NURU_P###, NURU_S###, NURU_H### diagnostics)
 
 ### Phase 3: Add Validation in RegisterSourceOutput
-- [ ] Before emitting code, validate the combined model
-- [ ] For each app, combine `app.Routes` with `model.AttributedRoutes`
-- [ ] Call `OverlapValidator.Validate()` with route locations
-- [ ] Report all diagnostics (extraction + validation) via `ctx.ReportDiagnostic()`
+- [x] Before emitting code, validate the combined model
+- [x] For each app, combine `app.Routes` with `model.AttributedRoutes`
+- [x] Call `OverlapValidator.Validate()` with route locations
+- [x] Report all diagnostics (extraction + validation) via `ctx.ReportDiagnostic()`
 
-### Phase 4: Delete NuruAnalyzer
+### Phase 4: Add NURU_R003 Unreachable Route Detection
+- [x] Add `ComputeRequiredSignature()` to compute "core" pattern without optional elements
+- [x] Add `CheckForUnreachableRoutes()` to detect shadowed routes
+- [x] Add NURU_R003 diagnostic descriptor
+
+### Phase 5: Delete NuruAnalyzer (Deferred)
 - [ ] Remove `source/timewarp-nuru-analyzers/analyzers/nuru-analyzer.cs`
 - [ ] Update any tests that specifically test `NuruAnalyzer`
 - [ ] Verify all analyzer tests still pass through the generator
 
-### Phase 5: Verify CI Tests
-- [ ] Run CI tests: `ganda runfile cache --clear && ./tests/ci-tests/run-ci-tests.cs`
-- [ ] Verify NURU_R002 is reported for duplicate `deploy {env}` routes
-- [ ] Fix the attributed route scoping issue (separate task if needed)
+### Phase 6: Fix Attributed Route Scoping (Separate Task)
+- [ ] Create new task for attributed route scoping
+- [ ] Decide on approach: file-scoped, app name association, or explicit opt-in
+- [ ] Implement solution
+- [ ] Verify CI tests pass
 
-## Files to Modify
+## Files Modified
 
-- `source/timewarp-nuru-analyzers/generators/nuru-generator.cs` - Add validation pipeline
+- `source/timewarp-nuru-analyzers/generators/nuru-generator.cs` - Merged validation pipeline
+- `source/timewarp-nuru-analyzers/validation/overlap-validator.cs` - Added NURU_R003 detection
+- `source/timewarp-nuru-analyzers/diagnostics/diagnostic-descriptors.overlap.cs` - Added NURU_R003
+- `source/timewarp-nuru-analyzers/AnalyzerReleases.Unshipped.md` - Registered NURU_R003
+- `documentation/developer/design/resolver/specificity-algorithm.md` - Added validation docs
 
-## Files to Delete
+## Files to Delete (Deferred)
 
 - `source/timewarp-nuru-analyzers/analyzers/nuru-analyzer.cs`
 
@@ -73,13 +111,9 @@ Merge validation into `NuruGenerator`:
 - Bug #349: Typed repeated options not converted from string array (discovered this during investigation)
 - Task #336: Add analyzer for ambiguous route patterns (created the overlap validator)
 - NURU_R001: Overlapping routes with different type constraints
-- NURU_R002: Duplicate route pattern (added but not being triggered due to this bug)
+- NURU_R002: Duplicate route pattern
+- NURU_R003: Unreachable route (NEW)
 
 ## Notes
 
-The `OverlapValidator` and `ModelValidator` classes remain unchanged - they already work correctly. The issue is that they're being called with an incomplete model (missing attributed routes).
-
-Once this is fixed, we'll likely see NURU_R002 errors in CI tests where attributed routes conflict with fluent routes. That will need a follow-up fix to either:
-1. Scope attributed routes to their source file
-2. Add `App` parameter to `[NuruRoute]` for explicit app association
-3. Some other approach to prevent attributed routes from polluting all apps
+The validation is now working correctly and detecting the issues. The remaining work is to fix the attributed route scoping so that attributed routes from one test file don't pollute other test files' apps. This should be a separate task.

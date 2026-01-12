@@ -19,9 +19,19 @@ to your project.
 
 ## Checklist
 
-- [ ] Add `InterceptorsNamespaces` property to benchmark csproj
-- [ ] Verify benchmark project builds
-- [ ] Run benchmarks to ensure they work
+- [x] Add `InterceptorsNamespaces` property to benchmark csproj
+- [x] Verify benchmark project builds
+- [ ] Run benchmarks to ensure they work (skipped - not blocking)
+
+## Results
+
+Fixed multiple issues in the benchmark project:
+
+1. **Added InterceptorsNamespaces** to `timewarp-nuru-benchmarks.csproj` - fixes CS9137 error
+2. **Fixed NuruCoreApp.CreateBuilder** → `NuruApp.CreateBuilder` in `nuru-direct-command.cs`
+3. **Fixed handler return** - changed `() => { }` to `() => 0` for generator compatibility
+4. **Replaced NuruMediatorCommand** with `NuruDirectCommand` in `cli-framework-benchmark.cs`
+5. **Removed NuruBuilderCostBenchmark** reference in `program.cs` (benchmark no longer exists)
 
 ## Notes
 

@@ -17,8 +17,7 @@ public class CliFrameworkBenchmark
   [Benchmark(Description = "TimeWarp.Nuru")]
   public async Task ExecuteWithNuru()
   {
-    // TODO gotta run Nuru
-    await NuruMediatorCommand.Execute(Arguments);
+    await NuruDirectCommand.Execute(Arguments);
   }
 
   [Benchmark(Description = "Cocona.Lite")]

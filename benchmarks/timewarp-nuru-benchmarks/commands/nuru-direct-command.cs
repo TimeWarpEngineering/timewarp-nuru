@@ -11,10 +11,10 @@ public static class NuruDirectCommand
   public static async Task Execute(string[] args)
   {
     // Use CreateBuilder for benchmark
-    NuruCoreApp app = NuruCoreApp.CreateBuilder(CachedNuruArgs)
+    NuruCoreApp app = NuruApp.CreateBuilder(CachedNuruArgs)
       // Add a route that matches the benchmark arguments pattern
       .Map("test --str {str} -i {intOption:int} -b")
-        .WithHandler((string str, int intOption) => { })
+        .WithHandler((string str, int intOption) => 0)
         .AsQuery()
         .Done()
       .Build();

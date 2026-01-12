@@ -134,8 +134,8 @@ internal static class CommandClassEmitter
         hasParams = true;
       }
 
-      // Use LongForm as property name, or ParameterName for value options
-      string propertyName = ToPascalCase(option.LongForm ?? option.ParameterName ?? "option");
+      // Use LongForm as property name, or ParameterName for value options, or ShortForm for short-only options
+      string propertyName = ToPascalCase(option.LongForm ?? option.ParameterName ?? option.ShortForm ?? "option");
       string propertyType = GetOptionPropertyType(option, handler);
 
       sb.AppendLine($"    public {propertyType} {propertyName} {{ get; init; }}");

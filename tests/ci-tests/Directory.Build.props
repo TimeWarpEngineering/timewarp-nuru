@@ -9,6 +9,17 @@
   <ItemGroup>
     <!-- Core tests - lexer (migrated) -->
     <Compile Include="../timewarp-nuru-core-tests/lexer/*.cs" />
+    <!-- Core tests - generator (Jaribu format tests that support JARIBU_MULTI) -->
+    <!-- Tests 01, 10, 11, 12 have guards that skip entry point in multi-mode -->
+    <Compile Include="../timewarp-nuru-core-tests/generator/generator-01-intercept.cs" />
+    <Compile Include="../timewarp-nuru-core-tests/generator/generator-10-required-options.cs" />
+    <Compile Include="../timewarp-nuru-core-tests/generator/generator-11-attributed-routes.cs" />
+    <Compile Include="../timewarp-nuru-core-tests/generator/generator-12-method-reference-handlers.cs" />
+    <!-- EXCLUDED from CI multi-mode (must run in isolation): -->
+    <!-- generator-03-short-only-options.cs - reads generated file from path based on runfile name -->
+    <!-- generator-04-static-service-injection.cs - reads generated file from path based on runfile name -->
+    <!-- generator-13-ioptions-parameter-injection.cs - reads generated file from path based on runfile name -->
+    <!-- generator-14-options-validation.cs - top-level return statement conflicts with multi-mode -->
     <!-- Core tests - migrated files -->
 
     <!-- TimeWarp.Terminal utils tests should be in that repo now not here --> 

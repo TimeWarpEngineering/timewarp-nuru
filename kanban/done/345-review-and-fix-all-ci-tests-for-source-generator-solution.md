@@ -52,9 +52,12 @@ tests/timewarp-nuru-core-tests/nuru-route-registry-01-basic.cs(162,36): error CS
 - [x] All 15 parser tests IN CI via wildcard include - all passing (100+ tests)
 
 ### Phase 6: Routing Tests (tests/timewarp-nuru-core-tests/routing/)
-- [x] EXCLUDED from CI multi-mode - cannot be combined due to generated code naming collisions
-- [x] All routing tests pass when run standalone (run: ./tests/timewarp-nuru-core-tests/routing/routing-XX-*.cs)
-- [x] Specific exclusions: routing-08 (UseDebugLogging), routing-15 (AddAutoHelp), routing-20/21 (UseAllExtensions)
+- [x] BLOCKED by generator bugs - cannot be included in CI multi-mode
+- [x] Bug #347: Short-only flag options (-i -t) generate duplicate 'Option' property name
+- [x] Bug #348: Optional positional parameter binding variables not emitted
+- [x] Bug #349: Typed repeated options not converted from string[] to typed array
+- [x] Also excluded: routing-08 (UseDebugLogging), routing-15 (AddAutoHelp), routing-20/21 (UseAllExtensions)
+- [x] Run routing tests standalone until bugs are fixed
 
 ### Phase 7: Widget/UI Tests
 - [x] table-widget tests (5 files) - EXCLUDED (belong to TimeWarp.Terminal repo)

@@ -649,11 +649,9 @@ internal static class RouteMatcherEmitter
     sb.AppendLine("        }");
     sb.AppendLine("      }");
 
-    // Check if required option has at least one value
-    if (!option.IsOptional)
-    {
-      sb.AppendLine($"      if ({listVarName}.Count == 0) goto route_skip_{routeIndex};");
-    }
+    // Note: Repeated options (*) allow zero occurrences by definition.
+    // The asterisk means "zero or more", so we don't require any values.
+    // Only non-repeated required options would check for presence.
 
     // Emit type conversion and array creation
     EmitRepeatedOptionTypeConversion(sb, option, escapedVarName, listVarName, routeIndex, customConverters);

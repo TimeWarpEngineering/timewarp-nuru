@@ -8,8 +8,8 @@ namespace TimeWarp.Nuru.Tests.Routing
 {
 
 /// <summary>
-/// Tests for the --check-updates route registration and configuration.
-/// Task 132: Verify check-updates route is properly registered.
+/// Tests for the --check-updates route registration.
+/// Task 132: Verify check-updates route is properly registered via AddCheckUpdatesRoute().
 /// </summary>
 [TestTag("Routing")]
 public class CheckUpdatesRouteTests
@@ -17,45 +17,32 @@ public class CheckUpdatesRouteTests
   [ModuleInitializer]
   internal static void Register() => RegisterTests<CheckUpdatesRouteTests>();
 
-  public static async Task Check_updates_route_is_registered_by_default()
+  public static async Task Check_updates_route_runs_when_enabled()
   {
-    // Arrange - Create builder with UseAllExtensions (registers --check-updates)
-    NuruAppBuilder builder = new();
-    builder.UseAllExtensions();
+    // Arrange - Enable --check-updates via AddCheckUpdatesRoute()
+    using TestTerminal terminal = new();
+    NuruCoreApp app = NuruApp.CreateBuilder([])
+      .UseTerminal(terminal)
+      .AddCheckUpdatesRoute()
+      .Build();
 
-    // Assert - Should have --check-updates endpoint
-    bool hasCheckUpdates = builder.EndpointCollection.Any(e =>
-      e.CompiledRoute.OptionMatchers.Any(opt =>
-        opt.MatchPattern == "--check-updates"));
+    // Act
+    int exitCode = await app.RunAsync(["--check-updates"]);
 
-    hasCheckUpdates.ShouldBeTrue("--check-updates route should be registered by default");
-    await Task.CompletedTask;
-  }
-
-  public static async Task Check_updates_route_can_be_disabled()
-  {
-    // Arrange - Create builder with DisableCheckUpdatesRoute = true
-    NuruAppOptions options = new() { DisableCheckUpdatesRoute = true };
-    NuruAppBuilder builder = new();
-    builder.UseAllExtensions(options);
-
-    // Assert - Should NOT have --check-updates endpoint
-    bool hasCheckUpdates = builder.EndpointCollection.Any(e =>
-      e.CompiledRoute.OptionMatchers.Any(opt =>
-        opt.MatchPattern == "--check-updates"));
-
-    hasCheckUpdates.ShouldBeFalse("--check-updates route should NOT be registered when disabled");
-    await Task.CompletedTask;
+    // Assert - Should not return "Unknown command" (route exists)
+    // Note: Actual update check may fail without RepositoryUrl metadata, but route should match
+    exitCode.ShouldBe(0);
+    terminal.OutputContains("Unknown command").ShouldBeFalse();
   }
 
   public static async Task Consumer_can_override_check_updates_route()
   {
-    // Arrange - Create builder with UseAllExtensions (registers --check-updates)
-    // Override with custom handler
-    bool customHandlerCalled = false;
+    // Arrange - Enable --check-updates, then override with custom handler
+    using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
-      .UseAllExtensions()
-      .Map("--check-updates").WithHandler(() => { customHandlerCalled = true; }).AsQuery().Done()
+      .UseTerminal(terminal)
+      .AddCheckUpdatesRoute()
+      .Map("--check-updates").WithHandler(() => "custom-check-updates").AsQuery().Done()
       .Build();
 
     // Act
@@ -63,25 +50,23 @@ public class CheckUpdatesRouteTests
 
     // Assert - Custom handler should be used, not built-in
     exitCode.ShouldBe(0);
-    customHandlerCalled.ShouldBeTrue("Consumer's --check-updates handler should override the built-in one");
+    terminal.OutputContains("custom-check-updates").ShouldBeTrue();
   }
 
-  public static async Task Endpoint_count_after_override()
+  public static async Task Check_updates_not_available_without_opt_in()
   {
-    // Arrange
-    NuruAppBuilder builder = new();
-    builder.UseAllExtensions();
-    builder.Map("--check-updates").WithHandler(() => { }).AsQuery().Done();
+    // Arrange - Do NOT call AddCheckUpdatesRoute()
+    using TestTerminal terminal = new();
+    NuruCoreApp app = NuruApp.CreateBuilder([])
+      .UseTerminal(terminal)
+      .Build();
 
-    // Count endpoints with --check-updates pattern
-    int checkUpdatesEndpoints = builder.EndpointCollection.Count(e =>
-      e.CompiledRoute.OptionMatchers.Any(opt =>
-        opt.MatchPattern == "--check-updates"));
+    // Act
+    int exitCode = await app.RunAsync(["--check-updates"]);
 
-    // Assert - Should only have ONE --check-updates endpoint (the override replaced the original)
-    checkUpdatesEndpoints.ShouldBe(1, "Override should replace, not add duplicate");
-
-    await Task.CompletedTask;
+    // Assert - Should be "Unknown command" since --check-updates is opt-in
+    exitCode.ShouldBe(1);
+    terminal.ErrorContains("Unknown command").ShouldBeTrue();
   }
 }
 

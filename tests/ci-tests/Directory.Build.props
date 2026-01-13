@@ -43,8 +43,8 @@
     <!-- Parser tests (migrated) -->
     <Compile Include="../timewarp-nuru-core-tests/parser/*.cs" />
     <!-- Routing tests (migrated) -->
-    <!-- Excluded: routing-21 (UseAllExtensions API), dsl-example (not a test) -->
-    <Compile Include="../timewarp-nuru-core-tests/routing/*.cs" Exclude="../timewarp-nuru-core-tests/routing/routing-21-*.cs;../timewarp-nuru-core-tests/routing/dsl-example.cs" />
+    <!-- Excluded: dsl-example (not a test) -->
+    <Compile Include="../timewarp-nuru-core-tests/routing/*.cs" Exclude="../timewarp-nuru-core-tests/routing/dsl-example.cs" />
     <!-- Configuration tests -->
     <!-- configuration-01-validate-on-start.cs - DISABLED: uses AddDependencyInjection() -->
     <Compile Include="../timewarp-nuru-core-tests/configuration/configuration-02-cli-overrides.cs" />

@@ -18,9 +18,8 @@
     <Compile Include="../timewarp-nuru-core-tests/generator/generator-11-attributed-routes.cs" />
     <Compile Include="../timewarp-nuru-core-tests/generator/generator-12-method-reference-handlers.cs" />
     <Compile Include="../timewarp-nuru-core-tests/generator/generator-14-options-validation.cs" />
+    <Compile Include="../timewarp-nuru-core-tests/generator/generator-04-static-service-injection.cs" />
     <!-- EXCLUDED from CI multi-mode (must run in isolation): -->
-    <!-- generator-03-short-only-options.cs - reads generated file from path based on runfile name -->
-    <!-- generator-04-static-service-injection.cs - reads generated file from path based on runfile name -->
     <!-- generator-13-ioptions-parameter-injection.cs - reads generated file from path based on runfile name -->
     <!-- Core tests - migrated files -->
 

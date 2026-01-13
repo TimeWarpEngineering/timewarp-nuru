@@ -79,7 +79,6 @@ public class EndOfOptionsTests
     using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
-      .UseDebugLogging()
       .Map("docker run --detach -- {*cmd}").WithHandler((bool detach, string[] cmd) => $"detach:{detach}|cmd:[{string.Join(",", cmd)}]").AsCommand().Done()
       .Build();
 

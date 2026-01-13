@@ -9,6 +9,8 @@ Analysis of tests in `tests/timewarp-nuru-core-tests` that are NOT included in t
 - **generator-14-options-validation.cs** - ✅ Added to CI (semantic model refactor enabled lambda interception)
 - **generator-03-short-only-options.cs** - ✅ Deleted (redundant - functionality covered by routing-09, routing-12)
 - **generator-04-static-service-injection.cs** - ✅ Rewritten to test functionality, added to CI
+- **configuration-02-cli-overrides.cs** - ✅ Created and added to CI (7 tests for CLI config override filtering)
+- **routing-08-end-of-options.cs** - 🔄 Removed `UseDebugLogging()`, discovered bug #355 (positional before `--` fails)
 
 ## Scope
 
@@ -37,7 +39,7 @@ Compared the glob patterns and explicit includes in `Directory.Build.props` agai
 
 | File | Exclusion Reason |
 |------|------------------|
-| `routing/routing-08-end-of-options.cs` | Uses `UseDebugLogging` API |
+| `routing/routing-08-end-of-options.cs` | Has failing test (bug #355: positional before `--`) |
 | `routing/routing-15-help-route-priority.cs` | Uses `AddAutoHelp` API |
 | `routing/routing-20-version-route-override.cs` | Uses `UseAllExtensions` API |
 | `routing/routing-21-check-updates-version-comparison.cs` | Uses `UseAllExtensions` API |
@@ -45,11 +47,15 @@ Compared the glob patterns and explicit includes in `Directory.Build.props` agai
 
 **Included in CI**: All other routing-*.cs files
 
-### Configuration Tests (1 file)
+**Fixed**: routing-08 had `UseDebugLogging()` removed (from separate logging project)
+
+### Configuration Tests (1 file excluded)
 
 | File | Exclusion Reason |
 |------|------------------|
 | `configuration/configuration-01-validate-on-start.cs` | Uses `AddDependencyInjection()` API |
+
+**Included in CI**: configuration-02-cli-overrides.cs (7 tests)
 
 ### Options Tests (2 files)
 
@@ -86,13 +92,13 @@ Compared the glob patterns and explicit includes in `Directory.Build.props` agai
 |----------|-------------|-------|----------|
 | Generator | 7 | 6 | 1 |
 | Routing | 19 | 14 | 5 |
-| Configuration | 1 | 0 | 1 |
+| Configuration | 2 | 1 | 1 |
 | Options | 2 | 0 | 2 |
 | Root-level | 6 | 1 | 5 |
 | Lexer | 16 | 16 | 0 |
 | Parser | 15 | 15 | 0 |
 | Type Conversion | 1 | 1 | 0 |
-| **Total** | **67** | **53** | **14** |
+| **Total** | **68** | **54** | **14** |
 
 ## Recommendations
 
@@ -103,9 +109,11 @@ These tests use deprecated/removed APIs and need updating:
 - `options/options-*.cs` - needs `CreateSlimBuilder()` replacement
 - `configuration/configuration-01-validate-on-start.cs` - needs `AddDependencyInjection()` replacement
 
+### Medium Priority - Bug Fixes Needed
+- `routing-08-end-of-options.cs` - Bug #355: positional parameter before `--` separator fails to match
+
 ### Medium Priority - Extension API Tests
 These test extension methods that may need source generator support:
-- `routing-08-end-of-options.cs` - `UseDebugLogging`
 - `routing-15-help-route-priority.cs` - `AddAutoHelp`
 - `routing-20-version-route-override.cs` - `UseAllExtensions`
 - `routing-21-check-updates-version-comparison.cs` - `UseAllExtensions`

@@ -9,7 +9,6 @@ public partial class NuruCoreAppBuilder<TSelf>
   where TSelf : NuruCoreAppBuilder<TSelf>
 {
   private protected readonly TypeConverterRegistry TypeConverterRegistry = new();
-  private protected bool AutoHelpEnabled;
   private protected IConfiguration? Configuration;
   private protected HelpOptions HelpOptions = new();
   private protected ILoggerFactory? LoggerFactory;
@@ -61,16 +60,6 @@ public partial class NuruCoreAppBuilder<TSelf>
     // No-op at runtime - the source generator extracts behavior info at compile-time
     // and generates the pipeline wrapping code in the interceptor.
     _ = behaviorType; // Suppress unused parameter warning
-    return (TSelf)this;
-  }
-
-  /// <summary>
-  /// Enables automatic help generation for all routes.
-  /// Help routes will be generated at build time.
-  /// </summary>
-  public virtual TSelf AddAutoHelp()
-  {
-    AutoHelpEnabled = true;
     return (TSelf)this;
   }
 

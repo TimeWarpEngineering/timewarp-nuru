@@ -199,12 +199,6 @@ public class EndpointBuilder<TBuilder> : INestedBuilder<TBuilder>
     ParentBuilder.Map(configureRoute);
 
   /// <summary>
-  /// Adds automatic help routes to the application (forwarded to the app builder).
-  /// Enables fluent chaining after route configuration.
-  /// </summary>
-  public TBuilder AddAutoHelp() => (TBuilder)ParentBuilder.AddAutoHelp();
-
-  /// <summary>
   /// Builds the NuruCoreApp from the configured builder.
   /// Enables fluent chaining to terminate with Build().
   /// </summary>

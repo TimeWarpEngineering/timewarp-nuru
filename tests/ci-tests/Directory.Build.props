@@ -19,8 +19,7 @@
     <Compile Include="../timewarp-nuru-core-tests/generator/generator-12-method-reference-handlers.cs" />
     <Compile Include="../timewarp-nuru-core-tests/generator/generator-14-options-validation.cs" />
     <Compile Include="../timewarp-nuru-core-tests/generator/generator-04-static-service-injection.cs" />
-    <!-- EXCLUDED from CI multi-mode (must run in isolation): -->
-    <!-- generator-13-ioptions-parameter-injection.cs - reads generated file from path based on runfile name -->
+    <Compile Include="../timewarp-nuru-core-tests/generator/generator-13-ioptions-parameter-injection.cs" />
     <!-- Core tests - migrated files -->
 
     <!-- TimeWarp.Terminal widget/utils tests have been moved to that repo -->
@@ -45,8 +44,8 @@
     <Compile Include="../timewarp-nuru-core-tests/parser/*.cs" />
     <!-- Routing tests (migrated) -->
     <!-- Known bugs causing failures: #347 (short-only flags), #348 (optional positional binding), #349 (typed repeated options) -->
-    <!-- Excluded: routing-15 (AddAutoHelp API), routing-20/21 (UseAllExtensions API), dsl-example (not a test) -->
-    <Compile Include="../timewarp-nuru-core-tests/routing/*.cs" Exclude="../timewarp-nuru-core-tests/routing/routing-15-*.cs;../timewarp-nuru-core-tests/routing/routing-20-*.cs;../timewarp-nuru-core-tests/routing/routing-21-*.cs;../timewarp-nuru-core-tests/routing/dsl-example.cs" />
+    <!-- Excluded: routing-20/21 (UseAllExtensions API), dsl-example (not a test) -->
+    <Compile Include="../timewarp-nuru-core-tests/routing/*.cs" Exclude="../timewarp-nuru-core-tests/routing/routing-20-*.cs;../timewarp-nuru-core-tests/routing/routing-21-*.cs;../timewarp-nuru-core-tests/routing/dsl-example.cs" />
     <!-- Configuration tests -->
     <!-- configuration-01-validate-on-start.cs - DISABLED: uses AddDependencyInjection() -->
     <Compile Include="../timewarp-nuru-core-tests/configuration/configuration-02-cli-overrides.cs" />

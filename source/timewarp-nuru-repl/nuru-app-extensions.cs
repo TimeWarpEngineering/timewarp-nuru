@@ -151,7 +151,6 @@ public static class NuruCoreAppExtensions
       .WithHandler(ReplSession.ClearHistoryAsync)
       .WithDescription("Clear command history")
       .Done();
-    builder.AddAutoHelp();
 
     return builder;
   }

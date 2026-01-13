@@ -11,9 +11,8 @@
                  (ConfigurationManager only created via NuruApp.CreateBuilder with BuilderMode.Full)
          CA2007: ConfigureAwait not required in tests
          CS8785: NuruRouteAnalyzer can't load M.E.Logging.Abstractions with ProjectReference (works as NuGet package)
-         NURU_H002: Tests intentionally use closures in handlers to capture values for assertions
          NURU_H004: Tests may use private methods for error-throwing handlers -->
-    <NoWarn>$(NoWarn);CA1303;CA1307;CA2000;CA2007;CA1031;CA1515;CA1050;CA1052;CA1707;CS0050;RCS1046;RCS1102;RCS1110;CS8785;NURU_H002;NURU_H004</NoWarn>
+    <NoWarn>$(NoWarn);CA1303;CA1307;CA2000;CA2007;CA1031;CA1515;CA1050;CA1052;CA1707;CS0050;RCS1046;RCS1102;RCS1110;CS8785;NURU_H004</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

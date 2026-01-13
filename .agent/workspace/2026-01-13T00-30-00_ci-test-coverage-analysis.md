@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-Analysis of tests in `tests/timewarp-nuru-core-tests` that are NOT included in the CI test runner (`tests/ci-tests/run-ci-tests.cs`). Found **13 test files** excluded from CI across 5 categories.
+Analysis of tests in `tests/timewarp-nuru-core-tests` that are NOT included in the CI test runner (`tests/ci-tests/run-ci-tests.cs`). Found **11 test files** excluded from CI across 4 categories.
 
 ## Progress
 
@@ -11,6 +11,9 @@ Analysis of tests in `tests/timewarp-nuru-core-tests` that are NOT included in t
 - **generator-04-static-service-injection.cs** - ✅ Rewritten to test functionality, added to CI
 - **configuration-02-cli-overrides.cs** - ✅ Created and added to CI (7 tests for CLI config override filtering)
 - **routing-08-end-of-options.cs** - ✅ Fixed bug #355, removed `UseDebugLogging()`, added to CI (4 tests)
+- **routing-15-help-route-priority.cs** - ✅ Rewritten to use TestTerminal pattern (no closures), added to CI (4 pass, 1 skip for Task #356)
+- **NURU_H002 suppression removed** - ✅ Closures in handlers are now errors (as designed), removed from `tests/Directory.Build.props`
+- **generator-13-ioptions-parameter-injection.cs** - ✅ Added to CI (exclusion reason was outdated - test doesn't read generated files)
 
 ## Scope
 
@@ -23,30 +26,29 @@ Compared the glob patterns and explicit includes in `Directory.Build.props` agai
 
 ## Tests NOT in CI
 
-### Generator Tests (1 file)
+### Generator Tests (0 files excluded)
 
-| File | Exclusion Reason |
-|------|------------------|
-| `generator/generator-13-ioptions-parameter-injection.cs` | Reads generated file from path based on runfile name |
+All generator tests are now in CI.
 
-**Included in CI**: generator-01, generator-04, generator-10, generator-11, generator-12, generator-14
+**Included in CI**: generator-01, generator-04, generator-10, generator-11, generator-12, generator-13, generator-14
 
 **Deleted**: generator-03 (redundant - short-only options tested in routing-09, routing-12)
 
 **Rewritten**: generator-04 (now tests functionality instead of generated code content)
 
-### Routing Tests (4 files)
+### Routing Tests (3 files)
 
 | File | Exclusion Reason |
 |------|------------------|
-| `routing/routing-15-help-route-priority.cs` | Uses `AddAutoHelp` API |
 | `routing/routing-20-version-route-override.cs` | Uses `UseAllExtensions` API |
 | `routing/routing-21-check-updates-version-comparison.cs` | Uses `UseAllExtensions` API |
 | `routing/dsl-example.cs` | Not a test (example/demo file) |
 
-**Included in CI**: All routing-*.cs files except 15, 20, 21, dsl-example
+**Included in CI**: All routing-*.cs files except 20, 21, dsl-example
 
 **Fixed**: routing-08 - removed `UseDebugLogging()`, fixed bug #355 (positional before `--`), added to CI
+
+**Fixed**: routing-15 - removed `AddAutoHelp()` (now default), rewrote tests to use TestTerminal pattern (no closures), added to CI
 
 ### Configuration Tests (1 file excluded)
 
@@ -89,15 +91,15 @@ Compared the glob patterns and explicit includes in `Directory.Build.props` agai
 
 | Category | Total Files | In CI | Excluded |
 |----------|-------------|-------|----------|
-| Generator | 7 | 6 | 1 |
-| Routing | 19 | 15 | 4 |
+| Generator | 6 | 6 | 0 |
+| Routing | 19 | 16 | 3 |
 | Configuration | 2 | 1 | 1 |
 | Options | 2 | 0 | 2 |
 | Root-level | 6 | 1 | 5 |
 | Lexer | 16 | 16 | 0 |
 | Parser | 15 | 15 | 0 |
 | Type Conversion | 1 | 1 | 0 |
-| **Total** | **68** | **55** | **13** |
+| **Total** | **67** | **56** | **11** |
 
 ## Recommendations
 
@@ -110,15 +112,11 @@ These tests use deprecated/removed APIs and need updating:
 
 ### Medium Priority - Extension API Tests
 These test extension methods that may need source generator support:
-- `routing-15-help-route-priority.cs` - `AddAutoHelp`
 - `routing-20-version-route-override.cs` - `UseAllExtensions`
 - `routing-21-check-updates-version-comparison.cs` - `UseAllExtensions`
 
-### Low Priority - Isolation Required
-These work but must run in isolation (not multi-mode compatible):
-- `generator-13-ioptions-parameter-injection.cs` - reads generated file content
-
-**Note**: Testing generated file content is fragile. Consider rewriting to test functionality instead, then it can be added to CI.
+### Low Priority - None
+All isolation-required tests have been migrated to CI.
 
 ### Consider Deletion
 - `routing/dsl-example.cs` - Not a test, appears to be a demo

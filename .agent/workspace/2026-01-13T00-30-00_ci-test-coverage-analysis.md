@@ -59,12 +59,13 @@ All configuration tests are now in CI.
 
 **Rewritten**: configuration-01 - Removed obsolete `AddDependencyInjection()` API, rewrote to test lazy IOptions<T> evaluation (5 tests)
 
-### Options Tests (2 files)
+### Options Tests (0 files excluded)
 
-| File | Exclusion Reason |
-|------|------------------|
-| `options/options-01-mixed-required-optional.cs` | Uses `CreateSlimBuilder()` API |
-| `options/options-02-optional-flag-optional-value.cs` | Uses `CreateSlimBuilder()` API |
+All options tests are now in CI.
+
+**Added**: options-01-mixed-required-optional (4 tests), options-02-optional-flag-optional-value (3 tests)
+
+**Note**: Exclusion reason "Uses `CreateSlimBuilder()` API" was outdated - files didn't use that API
 
 ### Root-level Tests (5 files)
 
@@ -95,12 +96,12 @@ All configuration tests are now in CI.
 | Generator | 6 | 6 | 0 |
 | Routing | 18 | 18 | 0 |
 | Configuration | 2 | 2 | 0 |
-| Options | 2 | 0 | 2 |
+| Options | 2 | 2 | 0 |
 | Root-level | 6 | 1 | 5 |
 | Lexer | 16 | 16 | 0 |
 | Parser | 15 | 15 | 0 |
 | Type Conversion | 1 | 1 | 0 |
-| **Total** | **66** | **59** | **7** |
+| **Total** | **66** | **61** | **5** |
 
 ## Recommendations
 
@@ -108,7 +109,6 @@ All configuration tests are now in CI.
 These tests use deprecated/removed APIs and need updating:
 - `help-provider-03-session-context.cs` - needs API update
 - `nuru-route-registry-01-basic.cs` - needs `IRequest` replacement
-- `options/options-*.cs` - needs `CreateSlimBuilder()` replacement
 
 ### Medium Priority - None
 All extension API tests have been migrated to CI.

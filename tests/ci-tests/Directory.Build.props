@@ -50,8 +50,9 @@
     <Compile Include="../timewarp-nuru-core-tests/configuration/configuration-02-cli-overrides.cs" />
     <!-- Factory tests - excluded from multi-mode -->
     <!-- <Compile Include="../timewarp-nuru-core-tests/factory/*.cs" /> -->
-    <!-- Options tests (migrated) - DISABLED: uses CreateSlimBuilder() -->
-    <!-- <Compile Include="../timewarp-nuru-core-tests/options/*.cs" Exclude="../timewarp-nuru-core-tests/options/options-03-*.cs" /> -->
+    <!-- Options tests (migrated) -->
+    <Compile Include="../timewarp-nuru-core-tests/options/options-01-mixed-required-optional.cs" />
+    <Compile Include="../timewarp-nuru-core-tests/options/options-02-optional-flag-optional-value.cs" />
     <!-- Type conversion tests (migrated) -->
     <Compile Include="../timewarp-nuru-core-tests/type-conversion/*.cs" />
     <!-- Completion tests - static (migrated) -->

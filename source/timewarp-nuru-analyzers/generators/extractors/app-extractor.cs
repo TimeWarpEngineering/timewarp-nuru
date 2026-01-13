@@ -156,26 +156,14 @@ internal static class AppExtractor
     if (context.Node is not InvocationExpressionSyntax runAsyncInvocation)
       return ExtractionResult.Empty;
 
-    // 2. Find the CompilationUnit (needed for both usings extraction and top-level statements)
+    // 2. Find the CompilationUnit (needed for usings extraction)
     CompilationUnitSyntax? compilationUnit = FindCompilationUnit(runAsyncInvocation);
     if (compilationUnit is null)
       return ExtractionResult.Empty;
 
-    // 3. Find the containing block (method body) or use top-level statements
+    // 3. Trace back from RunAsync to find the app builder using semantic model
     DslInterpreter interpreter = new(context.SemanticModel, cancellationToken);
-    ExtractionResult result;
-
-    BlockSyntax? block = FindContainingBlock(runAsyncInvocation);
-    if (block is not null)
-    {
-      // Traditional method body
-      result = interpreter.InterpretWithDiagnostics(block);
-    }
-    else
-    {
-      // Top-level statements
-      result = interpreter.InterpretTopLevelStatementsWithDiagnostics(compilationUnit);
-    }
+    ExtractionResult result = interpreter.ExtractFromRunAsyncCall(runAsyncInvocation);
 
     // 4. If we have a model, add user usings
     if (result.Model is not null)

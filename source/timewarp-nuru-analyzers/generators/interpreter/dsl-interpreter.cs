@@ -173,6 +173,62 @@ public sealed class DslInterpreter
     return new ExtractionResult(model, [.. CollectedDiagnostics]);
   }
 
+  /// <summary>
+  /// Extracts an AppModel by tracing back from a RunAsync invocation to find the app builder.
+  /// Uses semantic model to follow variable declarations - no block walking needed.
+  /// </summary>
+  /// <param name="runAsyncInvocation">The RunAsync() call site.</param>
+  /// <returns>Extraction result containing the model and any diagnostics.</returns>
+  public ExtractionResult ExtractFromRunAsyncCall(InvocationExpressionSyntax runAsyncInvocation)
+  {
+    ArgumentNullException.ThrowIfNull(runAsyncInvocation);
+
+    // Fresh state per interpretation
+    VariableState = new Dictionary<ISymbol, object?>(SymbolEqualityComparer.Default);
+    BuiltApps = [];
+    CollectedDiagnostics = [];
+
+    try
+    {
+      // Get the receiver expression (the 'app' part of 'app.RunAsync()')
+      if (runAsyncInvocation.Expression is not MemberAccessExpressionSyntax memberAccess)
+        return ExtractionResult.Empty;
+
+      ExpressionSyntax receiver = memberAccess.Expression;
+
+      // Evaluate the receiver - this will trace back through variable declarations
+      // using the semantic model to find the builder chain
+      object? result = EvaluateExpression(receiver);
+
+      // Get the app builder from the result
+      IrAppBuilder? appBuilder = result switch
+      {
+        BuiltAppMarker marker => (IrAppBuilder)marker.Builder,
+        IrAppBuilder builder => builder,
+        _ => null
+      };
+
+      if (appBuilder is null)
+        return ExtractionResult.Empty;
+
+      // Add the intercept site for this RunAsync call
+      InterceptSiteModel? site = InterceptSiteExtractor.Extract(SemanticModel, runAsyncInvocation);
+      if (site is not null)
+      {
+        appBuilder.AddInterceptSite(site);
+      }
+
+      // Finalize and return the model
+      AppModel model = appBuilder.FinalizeModel();
+      return new ExtractionResult(model, [.. CollectedDiagnostics]);
+    }
+    catch (InvalidOperationException ex)
+    {
+      CollectedDiagnostics.Add(CreateDiagnosticFromException(ex, runAsyncInvocation.GetLocation()));
+      return new ExtractionResult(null, [.. CollectedDiagnostics]);
+    }
+  }
+
   // ═══════════════════════════════════════════════════════════════════════════════
   // BLOCK AND STATEMENT PROCESSING
   // ═══════════════════════════════════════════════════════════════════════════════
@@ -337,7 +393,9 @@ public sealed class DslInterpreter
   }
 
   /// <summary>
-  /// Resolves an identifier to its value from VariableState.
+  /// Resolves an identifier to its value by tracing back to its declaration.
+  /// Uses semantic model to find where the variable is declared and evaluates the initializer.
+  /// This handles captured variables from outer scopes (like lambdas).
   /// </summary>
   private object? ResolveIdentifier(IdentifierNameSyntax identifier)
   {
@@ -345,7 +403,26 @@ public sealed class DslInterpreter
     if (symbol is null)
       return null;
 
-    return VariableState.TryGetValue(symbol, out object? value) ? value : null;
+    // Check cache first (avoid re-evaluating same declaration)
+    if (VariableState.TryGetValue(symbol, out object? cached))
+      return cached;
+
+    // Use semantic model to find declaration and evaluate initializer
+    if (symbol is ILocalSymbol localSymbol)
+    {
+      SyntaxReference? syntaxRef = localSymbol.DeclaringSyntaxReferences.FirstOrDefault();
+      if (syntaxRef?.GetSyntax(CancellationToken) is VariableDeclaratorSyntax declarator
+          && declarator.Initializer?.Value is { } initializer)
+      {
+        object? value = EvaluateExpression(initializer);
+
+        // Cache for future lookups
+        VariableState[symbol] = value;
+        return value;
+      }
+    }
+
+    return null;
   }
 
   // ═══════════════════════════════════════════════════════════════════════════════

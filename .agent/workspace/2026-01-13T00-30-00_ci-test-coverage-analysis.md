@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-Analysis of tests in `tests/timewarp-nuru-core-tests` that are NOT included in the CI test runner (`tests/ci-tests/run-ci-tests.cs`). Found **15 test files** excluded from CI across 5 categories.
+Analysis of tests in `tests/timewarp-nuru-core-tests` that are NOT included in the CI test runner (`tests/ci-tests/run-ci-tests.cs`). Found **13 test files** excluded from CI across 5 categories.
 
 ## Progress
 
@@ -10,7 +10,7 @@ Analysis of tests in `tests/timewarp-nuru-core-tests` that are NOT included in t
 - **generator-03-short-only-options.cs** - ✅ Deleted (redundant - functionality covered by routing-09, routing-12)
 - **generator-04-static-service-injection.cs** - ✅ Rewritten to test functionality, added to CI
 - **configuration-02-cli-overrides.cs** - ✅ Created and added to CI (7 tests for CLI config override filtering)
-- **routing-08-end-of-options.cs** - 🔄 Removed `UseDebugLogging()`, discovered bug #355 (positional before `--` fails)
+- **routing-08-end-of-options.cs** - ✅ Fixed bug #355, removed `UseDebugLogging()`, added to CI (4 tests)
 
 ## Scope
 
@@ -35,19 +35,18 @@ Compared the glob patterns and explicit includes in `Directory.Build.props` agai
 
 **Rewritten**: generator-04 (now tests functionality instead of generated code content)
 
-### Routing Tests (5 files)
+### Routing Tests (4 files)
 
 | File | Exclusion Reason |
 |------|------------------|
-| `routing/routing-08-end-of-options.cs` | Has failing test (bug #355: positional before `--`) |
 | `routing/routing-15-help-route-priority.cs` | Uses `AddAutoHelp` API |
 | `routing/routing-20-version-route-override.cs` | Uses `UseAllExtensions` API |
 | `routing/routing-21-check-updates-version-comparison.cs` | Uses `UseAllExtensions` API |
 | `routing/dsl-example.cs` | Not a test (example/demo file) |
 
-**Included in CI**: All other routing-*.cs files
+**Included in CI**: All routing-*.cs files except 15, 20, 21, dsl-example
 
-**Fixed**: routing-08 had `UseDebugLogging()` removed (from separate logging project)
+**Fixed**: routing-08 - removed `UseDebugLogging()`, fixed bug #355 (positional before `--`), added to CI
 
 ### Configuration Tests (1 file excluded)
 
@@ -83,7 +82,7 @@ Compared the glob patterns and explicit includes in `Directory.Build.props` agai
 | Parser | `parser/*.cs` (all 15 files) |
 | Type Conversion | `type-conversion/*.cs` (1 file) |
 | Generator | 4 specific files (01, 10, 11, 12) |
-| Routing | All except 08, 15, 20, 21, dsl-example |
+| Routing | All except 15, 20, 21, dsl-example |
 | Message Type | `message-type-01-fluent-api.cs` only |
 
 ## Summary by Category
@@ -91,14 +90,14 @@ Compared the glob patterns and explicit includes in `Directory.Build.props` agai
 | Category | Total Files | In CI | Excluded |
 |----------|-------------|-------|----------|
 | Generator | 7 | 6 | 1 |
-| Routing | 19 | 14 | 5 |
+| Routing | 19 | 15 | 4 |
 | Configuration | 2 | 1 | 1 |
 | Options | 2 | 0 | 2 |
 | Root-level | 6 | 1 | 5 |
 | Lexer | 16 | 16 | 0 |
 | Parser | 15 | 15 | 0 |
 | Type Conversion | 1 | 1 | 0 |
-| **Total** | **68** | **54** | **14** |
+| **Total** | **68** | **55** | **13** |
 
 ## Recommendations
 
@@ -108,9 +107,6 @@ These tests use deprecated/removed APIs and need updating:
 - `nuru-route-registry-01-basic.cs` - needs `IRequest` replacement
 - `options/options-*.cs` - needs `CreateSlimBuilder()` replacement
 - `configuration/configuration-01-validate-on-start.cs` - needs `AddDependencyInjection()` replacement
-
-### Medium Priority - Bug Fixes Needed
-- `routing-08-end-of-options.cs` - Bug #355: positional parameter before `--` separator fails to match
 
 ### Medium Priority - Extension API Tests
 These test extension methods that may need source generator support:

@@ -138,10 +138,24 @@ internal static class RouteMatcherEmitter
     // Check minimum positional args
     sb.AppendLine($"      if (__positionalArgs_{routeIndex}.Length < {minPositionalArgs}) goto route_skip_{routeIndex};");
 
-    // Emit literal and end-of-options matching against positional args
-    // PositionalMatchSegments includes group prefix literals, pattern literals, and end-of-options
+    // Emit matching and parameter extraction in one pass through ALL segments
+    // This keeps positionalIndex correctly aligned for interleaved patterns
+    // (e.g., "execute {script} -- {*args}" where param appears before separator)
     int positionalIndex = 0;
-    foreach (SegmentDefinition segment in route.PositionalMatchSegments)
+
+    // First, handle group prefix literals
+    if (!string.IsNullOrEmpty(route.GroupPrefix))
+    {
+      foreach (string word in route.GroupPrefix.Split(' ', StringSplitOptions.RemoveEmptyEntries))
+      {
+        sb.AppendLine(
+          $"      if (__positionalArgs_{routeIndex}[{positionalIndex}] != \"{EscapeString(word)}\") goto route_skip_{routeIndex};");
+        positionalIndex++;
+      }
+    }
+
+    // Then iterate through ALL segments, matching AND extracting at correct positions
+    foreach (SegmentDefinition segment in route.Segments)
     {
       switch (segment)
       {
@@ -150,16 +164,46 @@ internal static class RouteMatcherEmitter
             $"      if (__positionalArgs_{routeIndex}[{positionalIndex}] != \"{EscapeString(literal.Value)}\") goto route_skip_{routeIndex};");
           positionalIndex++;
           break;
+
+        case ParameterDefinition param when param.IsCatchAll:
+          // Catch-all: slice from current position to end
+          string catchAllVar = (param.HasTypeConstraint || param.IsCatchAll)
+            ? $"__{param.CamelCaseName}_{routeIndex}"
+            : param.CamelCaseName;
+          sb.AppendLine(
+            $"      string[] {catchAllVar} = __positionalArgs_{routeIndex}[{positionalIndex}..];");
+          // Don't increment - catch-all consumes remaining
+          break;
+
+        case ParameterDefinition param when param.IsOptional:
+          // Optional param: conditional extraction
+          string optVar = param.HasTypeConstraint
+            ? $"__{param.CamelCaseName}_{routeIndex}"
+            : param.CamelCaseName;
+          sb.AppendLine(
+            $"      string? {optVar} = __positionalArgs_{routeIndex}.Length > {positionalIndex} ? __positionalArgs_{routeIndex}[{positionalIndex}] : null;");
+          positionalIndex++;
+          break;
+
+        case ParameterDefinition param:
+          // Required param: direct extraction
+          string reqVar = param.HasTypeConstraint
+            ? $"__{param.CamelCaseName}_{routeIndex}"
+            : param.CamelCaseName;
+          sb.AppendLine(
+            $"      string {reqVar} = __positionalArgs_{routeIndex}[{positionalIndex}];");
+          positionalIndex++;
+          break;
+
         case EndOfOptionsSeparatorDefinition:
           sb.AppendLine(
             $"      if (__positionalArgs_{routeIndex}[{positionalIndex}] != \"--\") goto route_skip_{routeIndex};");
           positionalIndex++;
           break;
+
+        // OptionDefinition: skip (handled by EmitOptionParsingWithIndexTracking)
       }
     }
-
-    // Emit parameter extraction from positional args (starting after literals and --)
-    EmitParameterExtractionFromPositionalArgs(sb, route, routeIndex, positionalIndex);
 
     // Emit type conversions for typed parameters
     EmitTypeConversions(sb, route, routeIndex, customConverters, indent: 6);

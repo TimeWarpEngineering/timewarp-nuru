@@ -47,8 +47,9 @@
     <!-- Known bugs causing failures: #347 (short-only flags), #348 (optional positional binding), #349 (typed repeated options) -->
     <!-- Excluded: routing-08 (UseDebugLogging API), routing-15 (AddAutoHelp API), routing-20/21 (UseAllExtensions API), dsl-example (not a test) -->
     <Compile Include="../timewarp-nuru-core-tests/routing/*.cs" Exclude="../timewarp-nuru-core-tests/routing/routing-08-*.cs;../timewarp-nuru-core-tests/routing/routing-15-*.cs;../timewarp-nuru-core-tests/routing/routing-20-*.cs;../timewarp-nuru-core-tests/routing/routing-21-*.cs;../timewarp-nuru-core-tests/routing/dsl-example.cs" />
-    <!-- Configuration tests (migrated) - DISABLED: uses AddDependencyInjection() -->
-    <!-- <Compile Include="../timewarp-nuru-core-tests/configuration/*.cs" /> -->
+    <!-- Configuration tests -->
+    <!-- configuration-01-validate-on-start.cs - DISABLED: uses AddDependencyInjection() -->
+    <Compile Include="../timewarp-nuru-core-tests/configuration/configuration-02-cli-overrides.cs" />
     <!-- Factory tests - excluded from multi-mode -->
     <!-- <Compile Include="../timewarp-nuru-core-tests/factory/*.cs" /> -->
     <!-- Options tests (migrated) - DISABLED: uses CreateSlimBuilder() -->
@@ -80,6 +81,7 @@
     <Using Include="System.ComponentModel.DataAnnotations" />
     <Using Include="Microsoft.Extensions.DependencyInjection" />
     <Using Include="Microsoft.Extensions.Options" />
+    <Using Include="Microsoft.Extensions.Configuration" />
     <Using Include="System.Net" />
     <!-- MCP tools namespace -->
     <!-- <Using Include="TimeWarp.Nuru.Mcp.Tools" /> -->

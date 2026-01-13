@@ -443,15 +443,31 @@ internal static class InterceptorEmitter
 
   /// <summary>
   /// Emits code to filter out configuration override args before route matching.
-  /// Config overrides follow pattern: --Section:Key=value (starts with -- and contains :)
+  /// Config overrides are identified by: --key=value, --Section:Key=value, /key=value, /Section:Key=value
   /// This allows AddCommandLine(args) to process them while route matching ignores them.
   /// </summary>
   private static void EmitConfigArgFiltering(StringBuilder sb)
   {
     sb.AppendLine("    // Filter out configuration override args before route matching");
-    sb.AppendLine("    // Config overrides follow pattern: --Section:Key=value (starts with -- and contains :)");
+    sb.AppendLine("    // Config overrides: --key=value, --Section:Key=value, /key=value, /Section:Key=value");
     sb.AppendLine("    // Original args are still passed to AddCommandLine() for configuration");
-    sb.AppendLine("    string[] routeArgs = [.. args.Where(arg => !(arg.StartsWith(\"--\", global::System.StringComparison.Ordinal) && arg.Contains(':', global::System.StringComparison.Ordinal)))];");
+    sb.AppendLine("    static bool IsConfigArg(string arg)");
+    sb.AppendLine("    {");
+    sb.AppendLine("      if (arg.StartsWith(\"--\", global::System.StringComparison.Ordinal))");
+    sb.AppendLine("      {");
+    sb.AppendLine("        int eqIdx = arg.IndexOf('=');");
+    sb.AppendLine("        int colonIdx = arg.IndexOf(':');");
+    sb.AppendLine("        return (eqIdx > 2) || (colonIdx > 2);");
+    sb.AppendLine("      }");
+    sb.AppendLine("      if (arg.StartsWith(\"/\", global::System.StringComparison.Ordinal) && arg.Length > 1 && char.IsLetter(arg[1]))");
+    sb.AppendLine("      {");
+    sb.AppendLine("        int eqIdx = arg.IndexOf('=');");
+    sb.AppendLine("        int colonIdx = arg.IndexOf(':');");
+    sb.AppendLine("        return (eqIdx > 1) || (colonIdx > 1);");
+    sb.AppendLine("      }");
+    sb.AppendLine("      return false;");
+    sb.AppendLine("    }");
+    sb.AppendLine("    string[] routeArgs = [.. args.Where(arg => !IsConfigArg(arg))];");
     sb.AppendLine();
   }
 

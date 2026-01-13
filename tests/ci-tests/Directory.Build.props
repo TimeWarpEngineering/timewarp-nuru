@@ -46,7 +46,7 @@
     <!-- Excluded: dsl-example (not a test) -->
     <Compile Include="../timewarp-nuru-core-tests/routing/*.cs" Exclude="../timewarp-nuru-core-tests/routing/dsl-example.cs" />
     <!-- Configuration tests -->
-    <!-- configuration-01-validate-on-start.cs - DISABLED: uses AddDependencyInjection() -->
+    <Compile Include="../timewarp-nuru-core-tests/configuration/configuration-01-validate-on-start.cs" />
     <Compile Include="../timewarp-nuru-core-tests/configuration/configuration-02-cli-overrides.cs" />
     <!-- Factory tests - excluded from multi-mode -->
     <!-- <Compile Include="../timewarp-nuru-core-tests/factory/*.cs" /> -->

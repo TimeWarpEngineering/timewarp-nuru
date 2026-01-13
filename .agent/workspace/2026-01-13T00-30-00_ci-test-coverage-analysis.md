@@ -53,13 +53,11 @@ All routing tests are now in CI.
 
 **Fixed**: routing-21 - Rewritten to use TestTerminal pattern, Task #358 fixed (source gen chaining)
 
-### Configuration Tests (1 file excluded)
+### Configuration Tests (0 files excluded)
 
-| File | Exclusion Reason |
-|------|------------------|
-| `configuration/configuration-01-validate-on-start.cs` | Uses `AddDependencyInjection()` API |
+All configuration tests are now in CI.
 
-**Included in CI**: configuration-02-cli-overrides.cs (7 tests)
+**Rewritten**: configuration-01 - Removed obsolete `AddDependencyInjection()` API, rewrote to test lazy IOptions<T> evaluation (5 tests)
 
 ### Options Tests (2 files)
 
@@ -96,13 +94,13 @@ All routing tests are now in CI.
 |----------|-------------|-------|----------|
 | Generator | 6 | 6 | 0 |
 | Routing | 18 | 18 | 0 |
-| Configuration | 2 | 1 | 1 |
+| Configuration | 2 | 2 | 0 |
 | Options | 2 | 0 | 2 |
 | Root-level | 6 | 1 | 5 |
 | Lexer | 16 | 16 | 0 |
 | Parser | 15 | 15 | 0 |
 | Type Conversion | 1 | 1 | 0 |
-| **Total** | **66** | **58** | **8** |
+| **Total** | **66** | **59** | **7** |
 
 ## Recommendations
 
@@ -111,7 +109,6 @@ These tests use deprecated/removed APIs and need updating:
 - `help-provider-03-session-context.cs` - needs API update
 - `nuru-route-registry-01-basic.cs` - needs `IRequest` replacement
 - `options/options-*.cs` - needs `CreateSlimBuilder()` replacement
-- `configuration/configuration-01-validate-on-start.cs` - needs `AddDependencyInjection()` replacement
 
 ### Medium Priority - None
 All extension API tests have been migrated to CI.

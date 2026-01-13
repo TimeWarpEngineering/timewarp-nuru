@@ -1,5 +1,4 @@
 #!/usr/bin/dotnet --
-#:project ../../../source/timewarp-nuru/timewarp-nuru.csproj
 #:property EnableConfigurationBindingGenerator=true
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -13,230 +12,189 @@
 // 4. Invalid options throw OptionsValidationException
 // ═══════════════════════════════════════════════════════════════════════════════
 
-using Microsoft.Extensions.Options;
-using TimeWarp.Nuru;
-using static System.Console;
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
 
-int passed = 0;
-int failed = 0;
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// Test 1: Valid options pass validation
-// ═══════════════════════════════════════════════════════════════════════════════
-try
+namespace TimeWarp.Nuru.Tests.Generator.OptionsValidation
 {
-  // Default values in settings file are valid
-  NuruCoreApp app = NuruApp.CreateBuilder(args)
-    .Map("test")
-      .WithHandler(Handlers.TestHandler)
-      .Done()
-    .Build();
-
-  await app.RunAsync(["test"]);
-  WriteLine("Test 1 PASSED: Valid options pass validation");
-  passed++;
-}
-catch (Exception ex)
-{
-  WriteLine($"Test 1 FAILED: {ex.Message}");
-  failed++;
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// Test 2: Invalid port throws validation exception
-// ═══════════════════════════════════════════════════════════════════════════════
-try
-{
-  // Pass invalid port via command line config - all args go to RunAsync
-  string[] testArgs = ["test", "--Test:Port=0"];
-  NuruCoreApp app = NuruApp.CreateBuilder(testArgs)
-    .Map("test")
-      .WithHandler(Handlers.TestHandler)
-      .Done()
-    .Build();
-
-  await app.RunAsync(testArgs);
-  WriteLine("Test 2 FAILED: Expected OptionsValidationException");
-  failed++;
-}
-catch (OptionsValidationException ex)
-{
-  if (ex.Message.Contains("Port must be between"))
+  [TestTag("Generator")]
+  [TestTag("IOptions")]
+  [TestTag("Validation")]
+  public class OptionsValidationTests
   {
-    WriteLine("Test 2 PASSED: Invalid port throws validation exception");
-    passed++;
-  }
-  else
-  {
-    WriteLine($"Test 2 FAILED: Wrong message: {ex.Message}");
-    failed++;
-  }
-}
-catch (Exception ex)
-{
-  WriteLine($"Test 2 FAILED: Wrong exception type: {ex.GetType().Name}");
-  failed++;
-}
+    [ModuleInitializer]
+    internal static void Register() => RegisterTests<OptionsValidationTests>();
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// Test 3: Empty required field throws validation exception
-// ═══════════════════════════════════════════════════════════════════════════════
-try
-{
-  // Pass empty name via command line config - all args go to RunAsync
-  string[] testArgs = ["test", "--Test:Name="];
-  NuruCoreApp app = NuruApp.CreateBuilder(testArgs)
-    .Map("test")
-      .WithHandler(Handlers.TestHandler)
-      .Done()
-    .Build();
+    /// <summary>
+    /// Valid options should pass validation without throwing.
+    /// </summary>
+    public static async Task Should_pass_validation_with_valid_options()
+    {
+      // Arrange - Default values in TestOptions are valid
+      using TestTerminal terminal = new();
+      NuruCoreApp app = NuruApp.CreateBuilder([])
+        .UseTerminal(terminal)
+        .Map("test")
+          .WithHandler(Handlers.TestHandler)
+          .Done()
+        .Build();
 
-  await app.RunAsync(testArgs);
-  WriteLine("Test 3 FAILED: Expected OptionsValidationException");
-  failed++;
-}
-catch (OptionsValidationException ex)
-{
-  if (ex.Message.Contains("Name is required"))
-  {
-    WriteLine("Test 3 PASSED: Empty required field throws validation exception");
-    passed++;
-  }
-  else
-  {
-    WriteLine($"Test 3 FAILED: Wrong message: {ex.Message}");
-    failed++;
-  }
-}
-catch (Exception ex)
-{
-  WriteLine($"Test 3 FAILED: Wrong exception type: {ex.GetType().Name}");
-  failed++;
-}
+      // Act & Assert - Should not throw
+      int exitCode = await app.RunAsync(["test"]);
+      exitCode.ShouldBe(0);
+    }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// Test 4: Multiple validation failures reported
-// ═══════════════════════════════════════════════════════════════════════════════
-try
-{
-  // Pass multiple invalid values - all args go to RunAsync
-  string[] testArgs = ["test", "--Test:Name=", "--Test:Port=0"];
-  NuruCoreApp app = NuruApp.CreateBuilder(testArgs)
-    .Map("test")
-      .WithHandler(Handlers.TestHandler)
-      .Done()
-    .Build();
+    /// <summary>
+    /// Invalid port (0) should throw OptionsValidationException.
+    /// </summary>
+    public static async Task Should_throw_when_port_invalid()
+    {
+      // Arrange - Pass invalid port via command line config
+      string[] testArgs = ["test", "--Test:Port=0"];
+      using TestTerminal terminal = new();
+      NuruCoreApp app = NuruApp.CreateBuilder(testArgs)
+        .UseTerminal(terminal)
+        .Map("test")
+          .WithHandler(Handlers.TestHandler)
+          .Done()
+        .Build();
 
-  await app.RunAsync(testArgs);
-  WriteLine("Test 4 FAILED: Expected OptionsValidationException");
-  failed++;
-}
-catch (OptionsValidationException ex)
-{
-  if (ex.Message.Contains("Name is required") && ex.Message.Contains("Port must be between"))
-  {
-    WriteLine("Test 4 PASSED: Multiple validation failures reported");
-    passed++;
-  }
-  else
-  {
-    WriteLine($"Test 4 FAILED: Expected both errors, got: {ex.Message}");
-    failed++;
-  }
-}
-catch (Exception ex)
-{
-  WriteLine($"Test 4 FAILED: Wrong exception type: {ex.GetType().Name}");
-  failed++;
-}
+      // Act & Assert
+      try
+      {
+        await app.RunAsync(testArgs);
+        throw new ShouldAssertException("Expected OptionsValidationException but none was thrown");
+      }
+      catch (OptionsValidationException ex)
+      {
+        ex.Message.ShouldContain("Port must be between");
+      }
+    }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// Test 5: Options without validator work (no validation)
-// ═══════════════════════════════════════════════════════════════════════════════
-try
-{
-  NuruCoreApp app = NuruApp.CreateBuilder(args)
-    .Map("unvalidated")
-      .WithHandler(Handlers.UnvalidatedHandler)
-      .Done()
-    .Build();
+    /// <summary>
+    /// Empty required field should throw OptionsValidationException.
+    /// </summary>
+    public static async Task Should_throw_when_required_field_empty()
+    {
+      // Arrange - Pass empty name via command line config
+      string[] testArgs = ["test", "--Test:Name="];
+      using TestTerminal terminal = new();
+      NuruCoreApp app = NuruApp.CreateBuilder(testArgs)
+        .UseTerminal(terminal)
+        .Map("test")
+          .WithHandler(Handlers.TestHandler)
+          .Done()
+        .Build();
 
-  await app.RunAsync(["unvalidated"]);
-  WriteLine("Test 5 PASSED: Options without validator work");
-  passed++;
-}
-catch (Exception ex)
-{
-  WriteLine($"Test 5 FAILED: {ex.Message}");
-  failed++;
-}
+      // Act & Assert
+      OptionsValidationException ex = await Should.ThrowAsync<OptionsValidationException>(
+        async () => await app.RunAsync(testArgs));
+      ex.Message.ShouldContain("Name is required");
+    }
 
-// Summary
-WriteLine();
-WriteLine($"Total: {passed + failed}");
-WriteLine($"Passed: {passed}");
-if (failed > 0)
-  WriteLine($"Failed: {failed}");
+    /// <summary>
+    /// Multiple validation failures should all be reported.
+    /// </summary>
+    public static async Task Should_report_multiple_validation_failures()
+    {
+      // Arrange - Pass multiple invalid values
+      string[] testArgs = ["test", "--Test:Name=", "--Test:Port=0"];
+      using TestTerminal terminal = new();
+      NuruCoreApp app = NuruApp.CreateBuilder(testArgs)
+        .UseTerminal(terminal)
+        .Map("test")
+          .WithHandler(Handlers.TestHandler)
+          .Done()
+        .Build();
 
-return failed > 0 ? 1 : 0;
+      // Act & Assert
+      OptionsValidationException ex = await Should.ThrowAsync<OptionsValidationException>(
+        async () => await app.RunAsync(testArgs));
+      ex.Message.ShouldContain("Name is required");
+      ex.Message.ShouldContain("Port must be between");
+    }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// HANDLERS
-// ═══════════════════════════════════════════════════════════════════════════════
+    /// <summary>
+    /// Options without a validator should work normally (no validation).
+    /// </summary>
+    public static async Task Should_work_without_validator()
+    {
+      // Arrange
+      using TestTerminal terminal = new();
+      NuruCoreApp app = NuruApp.CreateBuilder([])
+        .UseTerminal(terminal)
+        .Map("unvalidated")
+          .WithHandler(Handlers.UnvalidatedHandler)
+          .Done()
+        .Build();
 
-internal static class Handlers
-{
-  internal static void TestHandler(IOptions<TestOptions> options)
-  {
-    // Just access the options to trigger binding
-    _ = options.Value;
+      // Act & Assert - Should not throw
+      int exitCode = await app.RunAsync(["unvalidated"]);
+      exitCode.ShouldBe(0);
+    }
   }
 
-  internal static void UnvalidatedHandler(IOptions<UnvalidatedOptions> options)
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // HANDLERS
+  // ═══════════════════════════════════════════════════════════════════════════════
+
+  internal static class Handlers
   {
-    // Just access the options to trigger binding
-    _ = options.Value;
+    internal static void TestHandler(IOptions<TestOptions> options)
+    {
+      // Just access the options to trigger binding and validation
+      _ = options.Value;
+    }
+
+    internal static void UnvalidatedHandler(IOptions<UnvalidatedOptions> options)
+    {
+      // Just access the options to trigger binding
+      _ = options.Value;
+    }
   }
-}
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// OPTIONS CLASSES
-// ═══════════════════════════════════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // OPTIONS CLASSES
+  // ═══════════════════════════════════════════════════════════════════════════════
 
-[TimeWarp.Nuru.ConfigurationKey("Test")]
-public class TestOptions
-{
-  public string Name { get; set; } = "default";
-  public int Port { get; set; } = 8080;
-}
-
-// Options class without a validator
-[TimeWarp.Nuru.ConfigurationKey("Unvalidated")]
-public class UnvalidatedOptions
-{
-  public string Value { get; set; } = "anything";
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// VALIDATORS
-// ═══════════════════════════════════════════════════════════════════════════════
-
-public class TestOptionsValidator : IValidateOptions<TestOptions>
-{
-  public ValidateOptionsResult Validate(string? name, TestOptions options)
+  [ConfigurationKey("Test")]
+  public class TestOptions
   {
-    ArgumentNullException.ThrowIfNull(options);
+    public string Name { get; set; } = "default";
+    public int Port { get; set; } = 8080;
+  }
 
-    List<string> failures = [];
+  /// <summary>
+  /// Options class without a validator - should work without validation.
+  /// </summary>
+  [ConfigurationKey("Unvalidated")]
+  public class UnvalidatedOptions
+  {
+    public string Value { get; set; } = "anything";
+  }
 
-    if (string.IsNullOrWhiteSpace(options.Name))
-      failures.Add("Name is required");
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // VALIDATORS
+  // ═══════════════════════════════════════════════════════════════════════════════
 
-    if (options.Port < 1 || options.Port > 65535)
-      failures.Add("Port must be between 1 and 65535");
+  public class TestOptionsValidator : IValidateOptions<TestOptions>
+  {
+    public ValidateOptionsResult Validate(string? name, TestOptions options)
+    {
+      ArgumentNullException.ThrowIfNull(options);
 
-    return failures.Count > 0
-      ? ValidateOptionsResult.Fail(failures)
-      : ValidateOptionsResult.Success;
+      List<string> failures = [];
+
+      if (string.IsNullOrWhiteSpace(options.Name))
+        failures.Add("Name is required");
+
+      if (options.Port < 1 || options.Port > 65535)
+        failures.Add("Port must be between 1 and 65535");
+
+      return failures.Count > 0
+        ? ValidateOptionsResult.Fail(failures)
+        : ValidateOptionsResult.Success;
+    }
   }
 }

@@ -208,6 +208,23 @@ public sealed class DslInterpreter
         ProcessReturnStatement(returnStmt);
         break;
 
+      case TryStatementSyntax tryStmt:
+        // Process statements inside try block
+        ProcessBlock(tryStmt.Block);
+
+        // Also process catch and finally blocks if they contain DSL code
+        foreach (CatchClauseSyntax catchClause in tryStmt.Catches)
+        {
+          ProcessBlock(catchClause.Block);
+        }
+
+        if (tryStmt.Finally is not null)
+        {
+          ProcessBlock(tryStmt.Finally.Block);
+        }
+
+        break;
+
       // Ignore other statement types (if, etc.)
       default:
         break;

@@ -227,7 +227,23 @@ internal static class AppExtractor
     while (current is not null)
     {
       if (current is BlockSyntax block)
-        return block;
+      {
+        // Only return blocks that are method bodies, not nested blocks (try, using, if, etc.)
+        if (block.Parent is MethodDeclarationSyntax or
+            LocalFunctionStatementSyntax or
+            AccessorDeclarationSyntax or
+            ConstructorDeclarationSyntax or
+            DestructorDeclarationSyntax or
+            OperatorDeclarationSyntax or
+            ConversionOperatorDeclarationSyntax or
+            AnonymousMethodExpressionSyntax or
+            ParenthesizedLambdaExpressionSyntax or
+            SimpleLambdaExpressionSyntax)
+        {
+          return block;
+        }
+        // Keep walking up for nested blocks
+      }
 
       current = current.Parent;
     }

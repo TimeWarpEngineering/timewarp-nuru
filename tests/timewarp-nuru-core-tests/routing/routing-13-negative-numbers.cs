@@ -187,10 +187,6 @@ public class NegativeNumberTests
   }
 
   // TEST 9: Option with negative number value
-  // KNOWN ISSUE: Negative numbers as option values (--amount -5) don't work
-  // because -5 looks like another option. This requires special handling.
-  // For now, this test documents the current limitation.
-  [Skip("Known issue: negative numbers as option values interpreted as options")]
   public static async Task Should_accept_negative_number_as_option_value()
   {
     // Arrange

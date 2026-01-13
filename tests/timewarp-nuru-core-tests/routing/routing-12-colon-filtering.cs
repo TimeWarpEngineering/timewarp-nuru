@@ -122,8 +122,7 @@ public class ColonFilteringTests
     terminal.OutputContains("args:nginx,--port,8080:80").ShouldBeTrue();
   }
 
-  // SKIPPED: Requires alternative option-value separator support (task 023)
-  [Skip("Requires alternative option-value separator support - see task 023")]
+  // Test single-dash option with value
   public static async Task Should_not_filter_single_dash_with_colon()
   {
     // Arrange

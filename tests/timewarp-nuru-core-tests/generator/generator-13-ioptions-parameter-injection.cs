@@ -4,66 +4,23 @@
 // GENERATOR TEST: IOptions<T> Parameter Injection (#314)
 // ═══════════════════════════════════════════════════════════════════════════════
 //
-// PURPOSE: Verify the source generator correctly emits IOptions<T> parameter
-// resolution using configuration binding instead of runtime DI.
+// PURPOSE: Verify the source generator correctly handles IOptions<T> parameter
+// injection using configuration binding.
 //
 // WHAT THIS TESTS:
 // - Convention: DatabaseOptions → "Database" section (strips "Options" suffix)
 // - Attribute: [ConfigurationKey("Api")] ApiSettings → "Api" section
 // - IConfiguration parameter injection
-// - Generated code uses Options.Create() wrapper
-//
-// IMPORTANT: This test must be run in isolation (not via JARIBU_MULTI) because
-// it reads the generated file from a path based on the runfile name.
-// To run: dotnet run tests/timewarp-nuru-core-tests/generator/generator-13-ioptions-parameter-injection.cs
+// - Default values when section is missing
+// - Multiple IOptions<T> and IConfiguration in one handler
 // ═══════════════════════════════════════════════════════════════════════════════
-
-#if JARIBU_MULTI
-#error This test must be run in isolation. Run: dotnet run tests/timewarp-nuru-core-tests/generator/generator-13-ioptions-parameter-injection.cs
-#endif
-
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Options;
-using TimeWarp.Nuru;
-
-// Top-level NuruApp - triggers generator. If this compiles, the IOptions injection works!
-NuruCoreApp app = NuruApp.CreateBuilder(args)
-  // Test: Convention-based section key (DatabaseOptions → "Database")
-  .Map("show-db")
-    .WithHandler((IOptions<DatabaseOptions> opts) => $"Host: {opts.Value.Host}")
-    .WithDescription("Show database config using convention")
-    .AsQuery()
-    .Done()
-  // Test: Attribute-based section key ([ConfigurationKey("Api")] → "Api")
-  .Map("show-api")
-    .WithHandler((IOptions<ApiSettings> opts) => $"Endpoint: {opts.Value.Endpoint}")
-    .WithDescription("Show API config using attribute")
-    .AsQuery()
-    .Done()
-  // Test: IConfiguration parameter injection
-  .Map("show-config {key}")
-    .WithHandler((string key, IConfiguration config) => $"Value: {config[key] ?? "(not set)"}")
-    .WithDescription("Show config value by key")
-    .AsQuery()
-    .Done()
-  // Test: Combined IOptions<T> and IConfiguration
-  .Map("show-all")
-    .WithHandler((IOptions<DatabaseOptions> dbOpts, IOptions<ApiSettings> apiOpts, IConfiguration config) =>
-      $"DB: {dbOpts.Value.Host}, API: {apiOpts.Value.Endpoint}, Env: {config["Environment"] ?? "unknown"}")
-    .WithDescription("Show all config sources")
-    .AsQuery()
-    .Done()
-  .Build();
-
-// Run a test command to verify generated code executes
-await app.RunAsync(["show-db"]);
 
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// OPTIONS CLASSES
+// OPTIONS CLASSES (global scope for generator discovery)
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /// <summary>
@@ -93,7 +50,7 @@ public class ApiSettings
 namespace TimeWarp.Nuru.Tests.Generator.IOptionsInjection
 {
   /// <summary>
-  /// Tests that verify the generated file content for IOptions&lt;T&gt; parameter injection.
+  /// Tests that verify IOptions&lt;T&gt; and IConfiguration parameter injection functionality.
   /// </summary>
   [TestTag("Generator")]
   [TestTag("IOptions")]
@@ -105,129 +62,161 @@ namespace TimeWarp.Nuru.Tests.Generator.IOptionsInjection
 
     /// <summary>
     /// Verify convention-based section key: DatabaseOptions → "Database".
+    /// The "Options" suffix is stripped to determine the configuration section name.
     /// </summary>
-    public static async Task Should_use_convention_for_options_suffix()
+    public static async Task Should_bind_options_from_convention_section()
     {
-      string content = ReadGeneratedFile();
+      // Arrange
+      using TestTerminal terminal = new();
+      string[] testArgs = ["opts13-show-db", "--Database:Host=myhost", "--Database:Port=3306"];
 
-      // Should bind from "Database" section (not "DatabaseOptions")
-      content.ShouldContain("GetSection(\"Database\")");
-      content.ShouldContain("Get<global::DatabaseOptions>");
+      NuruCoreApp app = NuruApp.CreateBuilder(testArgs)
+        .UseTerminal(terminal)
+        .AddConfiguration()
+        .Map("opts13-show-db")
+          .WithHandler((IOptions<DatabaseOptions> opts) =>
+            $"Host: {opts.Value.Host}, Port: {opts.Value.Port}")
+          .AsQuery()
+          .Done()
+        .Build();
 
-      await Task.CompletedTask;
+      // Act
+      int exitCode = await app.RunAsync(testArgs);
+
+      // Assert
+      exitCode.ShouldBe(0);
+      terminal.OutputContains("Host: myhost").ShouldBeTrue();
+      terminal.OutputContains("Port: 3306").ShouldBeTrue();
     }
 
     /// <summary>
     /// Verify attribute-based section key: [ConfigurationKey("Api")] ApiSettings → "Api".
+    /// The attribute takes precedence over the convention.
     /// </summary>
-    public static async Task Should_use_attribute_for_configuration_key()
+    public static async Task Should_bind_options_from_attribute_section()
     {
-      string content = ReadGeneratedFile();
+      // Arrange
+      using TestTerminal terminal = new();
+      string[] testArgs = ["opts13-show-api", "--Api:Endpoint=https://test.com", "--Api:TimeoutSeconds=60"];
 
-      // Should bind from "Api" section (from attribute, not "ApiSettings" from convention)
-      content.ShouldContain("GetSection(\"Api\")");
-      content.ShouldContain("Get<global::ApiSettings>");
+      NuruCoreApp app = NuruApp.CreateBuilder(testArgs)
+        .UseTerminal(terminal)
+        .AddConfiguration()
+        .Map("opts13-show-api")
+          .WithHandler((IOptions<ApiSettings> opts) =>
+            $"Endpoint: {opts.Value.Endpoint}, Timeout: {opts.Value.TimeoutSeconds}")
+          .AsQuery()
+          .Done()
+        .Build();
 
-      // Should NOT use "ApiSettings" section (that would be the convention without attribute)
-      content.ShouldNotContain("GetSection(\"ApiSettings\")");
+      // Act
+      int exitCode = await app.RunAsync(testArgs);
 
-      await Task.CompletedTask;
+      // Assert
+      exitCode.ShouldBe(0);
+      terminal.OutputContains("Endpoint: https://test.com").ShouldBeTrue();
+      terminal.OutputContains("Timeout: 60").ShouldBeTrue();
     }
 
     /// <summary>
-    /// Verify Options.Create() wrapper is used for IOptions&lt;T&gt;.
-    /// </summary>
-    public static async Task Should_wrap_with_options_create()
-    {
-      string content = ReadGeneratedFile();
-
-      // Should wrap bound options with Options.Create()
-      content.ShouldContain("Options.Create(");
-
-      await Task.CompletedTask;
-    }
-
-    /// <summary>
-    /// Verify IConfiguration parameter uses configuration variable.
+    /// Verify IConfiguration parameter can be injected and used to read arbitrary config values.
     /// </summary>
     public static async Task Should_inject_iconfiguration()
     {
-      string content = ReadGeneratedFile();
+      // Arrange
+      using TestTerminal terminal = new();
+      string[] testArgs = ["opts13-show-config", "MyKey", "--MyKey=MyValue"];
 
-      // Should assign configuration to IConfiguration parameter
-      content.ShouldContain("IConfiguration");
-      content.ShouldContain("= configuration;");
+      NuruCoreApp app = NuruApp.CreateBuilder(testArgs)
+        .UseTerminal(terminal)
+        .AddConfiguration()
+        .Map("opts13-show-config {key}")
+          .WithHandler((string key, IConfiguration config) =>
+            $"Value: {config[key] ?? "(not set)"}")
+          .AsQuery()
+          .Done()
+        .Build();
 
-      await Task.CompletedTask;
+      // Act
+      int exitCode;
+      try
+      {
+        exitCode = await app.RunAsync(testArgs);
+      }
+      catch (Exception ex)
+      {
+        Console.WriteLine($"Exception: {ex}");
+        throw;
+      }
+
+      // Assert - Debug output
+      Console.WriteLine($"Exit code: {exitCode}");
+      Console.WriteLine($"Output: {terminal.Output}");
+
+      exitCode.ShouldBe(0);
+      terminal.OutputContains("Value: MyValue").ShouldBeTrue();
     }
 
     /// <summary>
-    /// Verify generated code contains comment with section name.
+    /// Verify default values are used when configuration section is missing.
     /// </summary>
-    public static async Task Should_emit_comment_with_section_name()
+    public static async Task Should_use_default_when_section_missing()
     {
-      string content = ReadGeneratedFile();
+      // Arrange - NO Database config passed
+      using TestTerminal terminal = new();
+      string[] testArgs = ["opts13-defaults"];
 
-      // Should have helpful comment showing which section is used
-      content.ShouldContain("from configuration section \"Database\"");
-      content.ShouldContain("from configuration section \"Api\"");
+      NuruCoreApp app = NuruApp.CreateBuilder(testArgs)
+        .UseTerminal(terminal)
+        .AddConfiguration()
+        .Map("opts13-defaults")
+          .WithHandler((IOptions<DatabaseOptions> opts) =>
+            $"Host: {opts.Value.Host}, Port: {opts.Value.Port}")
+          .AsQuery()
+          .Done()
+        .Build();
 
-      await Task.CompletedTask;
+      // Act
+      int exitCode = await app.RunAsync(testArgs);
+
+      // Assert - should use default values from DatabaseOptions class
+      exitCode.ShouldBe(0);
+      terminal.OutputContains("Host: localhost").ShouldBeTrue();
+      terminal.OutputContains("Port: 5432").ShouldBeTrue();
     }
 
     /// <summary>
-    /// Verify default value fallback for options binding.
+    /// Verify multiple IOptions&lt;T&gt; and IConfiguration can be injected into a single handler.
     /// </summary>
-    public static async Task Should_emit_default_fallback()
+    public static async Task Should_inject_multiple_options_and_configuration()
     {
-      string content = ReadGeneratedFile();
+      // Arrange
+      using TestTerminal terminal = new();
+      string[] testArgs = [
+        "opts13-show-all",
+        "--Database:Host=dbhost",
+        "--Api:Endpoint=https://multi.com",
+        "--Environment=Production"
+      ];
 
-      // Should have ?? new() fallback in case section is missing
-      content.ShouldContain("?? new()");
+      NuruCoreApp app = NuruApp.CreateBuilder(testArgs)
+        .UseTerminal(terminal)
+        .AddConfiguration()
+        .Map("opts13-show-all")
+          .WithHandler((IOptions<DatabaseOptions> dbOpts, IOptions<ApiSettings> apiOpts, IConfiguration config) =>
+            $"DB: {dbOpts.Value.Host}, API: {apiOpts.Value.Endpoint}, Env: {config["Environment"] ?? "unknown"}")
+          .AsQuery()
+          .Done()
+        .Build();
 
-      await Task.CompletedTask;
-    }
+      // Act
+      int exitCode = await app.RunAsync(testArgs);
 
-    // ═══════════════════════════════════════════════════════════════════════════
-    // HELPER METHODS
-    // ═══════════════════════════════════════════════════════════════════════════
-
-    private static string ReadGeneratedFile()
-    {
-      string repoRoot = FindRepoRoot();
-      string generatedFile = Path.Combine(
-        repoRoot,
-        "artifacts",
-        "generated",
-        "generator-13-ioptions-parameter-injection",
-        "TimeWarp.Nuru.Analyzers",
-        "TimeWarp.Nuru.Generators.NuruGenerator",
-        "NuruGenerated.g.cs");
-
-      if (!File.Exists(generatedFile))
-      {
-        throw new FileNotFoundException(
-          $"Generated file not found at: {generatedFile}\n" +
-          "This may indicate the generator did not run or the path has changed.");
-      }
-
-      return File.ReadAllText(generatedFile);
-    }
-
-    private static string FindRepoRoot()
-    {
-      string? dir = Environment.CurrentDirectory;
-
-      while (dir is not null)
-      {
-        if (File.Exists(Path.Combine(dir, "timewarp-nuru.slnx")))
-          return dir;
-
-        dir = Path.GetDirectoryName(dir);
-      }
-
-      throw new InvalidOperationException(
-        $"Could not find repository root from {Environment.CurrentDirectory}");
+      // Assert
+      exitCode.ShouldBe(0);
+      terminal.OutputContains("DB: dbhost").ShouldBeTrue();
+      terminal.OutputContains("API: https://multi.com").ShouldBeTrue();
+      terminal.OutputContains("Env: Production").ShouldBeTrue();
     }
   }
 }

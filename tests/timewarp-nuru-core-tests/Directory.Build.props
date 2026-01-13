@@ -11,6 +11,7 @@
     <Using Include="System.ComponentModel.DataAnnotations" />
     <Using Include="Microsoft.Extensions.DependencyInjection" />
     <Using Include="Microsoft.Extensions.Options" />
+    <Using Include="Microsoft.Extensions.Configuration" />
     <Using Include="System.Net" />
   </ItemGroup>
 </Project>

@@ -326,10 +326,8 @@ internal static class InterceptorEmitter
     // This allows AddCommandLine(args) to process them while route matching ignores them
     EmitConfigArgFiltering(sb);
 
-    // Built-in flags: --help, --version, --capabilities
-    EmitBuiltInFlags(sb, app);
-
     // Route matching - emit this app's routes in specificity order (highest first)
+    // User routes are emitted BEFORE built-ins so users can override --help, --version, etc.
     // Filter endpoints based on app's discovery mode (DiscoverEndpoints or Map<T> calls)
     ImmutableArray<RouteDefinition> endpointsForApp = FilterEndpointsForApp(app, model.AttributedRoutes);
     IEnumerable<RouteDefinition> allRoutes = app.RoutesBySpecificity.Concat(endpointsForApp);
@@ -352,6 +350,10 @@ internal static class InterceptorEmitter
 
       RouteMatcherEmitter.Emit(sb, route, routeIndex, app.Services, app.Behaviors, app.CustomConverters);
     }
+
+    // Built-in flags: --help, --version, --capabilities
+    // Emitted AFTER user routes so users can override default behavior
+    EmitBuiltInFlags(sb, app);
 
     // No match fallback
     EmitNoMatch(sb);

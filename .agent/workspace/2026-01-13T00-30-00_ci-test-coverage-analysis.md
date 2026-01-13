@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-Analysis of tests in `tests/timewarp-nuru-core-tests` that are NOT included in the CI test runner (`tests/ci-tests/run-ci-tests.cs`). Found **11 test files** excluded from CI across 4 categories.
+Analysis of tests in `tests/timewarp-nuru-core-tests` that are NOT included in the CI test runner (`tests/ci-tests/run-ci-tests.cs`). Found **10 test files** excluded from CI across 4 categories.
 
 ## Progress
 
@@ -14,6 +14,7 @@ Analysis of tests in `tests/timewarp-nuru-core-tests` that are NOT included in t
 - **routing-15-help-route-priority.cs** - ✅ Rewritten to use TestTerminal pattern (no closures), added to CI (4 pass, 1 skip for Task #356)
 - **NURU_H002 suppression removed** - ✅ Closures in handlers are now errors (as designed), removed from `tests/Directory.Build.props`
 - **generator-13-ioptions-parameter-injection.cs** - ✅ Added to CI (exclusion reason was outdated - test doesn't read generated files)
+- **routing-20-version-route-override.cs** - ✅ Fixed Task #357 (user routes now emitted before built-ins), added to CI (2 tests)
 
 ## Scope
 
@@ -36,19 +37,20 @@ All generator tests are now in CI.
 
 **Rewritten**: generator-04 (now tests functionality instead of generated code content)
 
-### Routing Tests (3 files)
+### Routing Tests (2 files excluded)
 
 | File | Exclusion Reason |
 |------|------------------|
-| `routing/routing-20-version-route-override.cs` | Uses `UseAllExtensions` API |
 | `routing/routing-21-check-updates-version-comparison.cs` | Uses `UseAllExtensions` API |
 | `routing/dsl-example.cs` | Not a test (example/demo file) |
 
-**Included in CI**: All routing-*.cs files except 20, 21, dsl-example
+**Included in CI**: All routing-*.cs files except 21, dsl-example
 
 **Fixed**: routing-08 - removed `UseDebugLogging()`, fixed bug #355 (positional before `--`), added to CI
 
 **Fixed**: routing-15 - removed `AddAutoHelp()` (now default), rewrote tests to use TestTerminal pattern (no closures), added to CI
+
+**Fixed**: routing-20 - Fixed Task #357 (generator emits user routes before built-ins), added to CI
 
 ### Configuration Tests (1 file excluded)
 
@@ -84,7 +86,7 @@ All generator tests are now in CI.
 | Parser | `parser/*.cs` (all 15 files) |
 | Type Conversion | `type-conversion/*.cs` (1 file) |
 | Generator | 4 specific files (01, 10, 11, 12) |
-| Routing | All except 15, 20, 21, dsl-example |
+| Routing | All except 21, dsl-example |
 | Message Type | `message-type-01-fluent-api.cs` only |
 
 ## Summary by Category
@@ -92,14 +94,14 @@ All generator tests are now in CI.
 | Category | Total Files | In CI | Excluded |
 |----------|-------------|-------|----------|
 | Generator | 6 | 6 | 0 |
-| Routing | 19 | 16 | 3 |
+| Routing | 19 | 17 | 2 |
 | Configuration | 2 | 1 | 1 |
 | Options | 2 | 0 | 2 |
 | Root-level | 6 | 1 | 5 |
 | Lexer | 16 | 16 | 0 |
 | Parser | 15 | 15 | 0 |
 | Type Conversion | 1 | 1 | 0 |
-| **Total** | **67** | **56** | **11** |
+| **Total** | **67** | **57** | **10** |
 
 ## Recommendations
 
@@ -112,7 +114,6 @@ These tests use deprecated/removed APIs and need updating:
 
 ### Medium Priority - Extension API Tests
 These test extension methods that may need source generator support:
-- `routing-20-version-route-override.cs` - `UseAllExtensions`
 - `routing-21-check-updates-version-comparison.cs` - `UseAllExtensions`
 
 ### Low Priority - None

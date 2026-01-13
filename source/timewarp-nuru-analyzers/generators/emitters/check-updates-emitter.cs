@@ -29,14 +29,10 @@ internal static class CheckUpdatesEmitter
     EmitNormalizeTagVersion(sb);
     sb.AppendLine();
     EmitSemVerComparer(sb);
-    sb.AppendLine();
-    EmitGitHubReleaseRecord(sb);
-    sb.AppendLine();
-    EmitJsonSerializerContext(sb);
   }
 
   /// <summary>
-  /// Emits the GeneratedRegex for parsing GitHub URLs.
+  /// Emits the Regex for parsing GitHub URLs.
   /// </summary>
   private static void EmitGitHubUrlRegex(StringBuilder sb)
   {
@@ -44,8 +40,7 @@ internal static class CheckUpdatesEmitter
     sb.AppendLine("  // CHECK-UPDATES SUPPORT");
     sb.AppendLine("  // ═══════════════════════════════════════════════════════════════════════════════");
     sb.AppendLine();
-    sb.AppendLine("  [global::System.Text.RegularExpressions.GeneratedRegex(@\"^https?://github\\.com/([^/]+)/([^/\\.]+)(?:\\.git)?/?$\", global::System.Text.RegularExpressions.RegexOptions.IgnoreCase)]");
-    sb.AppendLine("  private static partial global::System.Text.RegularExpressions.Regex GitHubUrlPattern();");
+    sb.AppendLine("  private static readonly global::System.Text.RegularExpressions.Regex GitHubUrlPattern = new(@\"^https?://github\\.com/([^/]+)/([^/\\.]+)(?:\\.git)?/?$\", global::System.Text.RegularExpressions.RegexOptions.IgnoreCase | global::System.Text.RegularExpressions.RegexOptions.Compiled);");
   }
 
   /// <summary>
@@ -74,7 +69,7 @@ internal static class CheckUpdatesEmitter
     sb.AppendLine("    }");
     sb.AppendLine();
     sb.AppendLine("    // Parse GitHub owner and repo from URL");
-    sb.AppendLine("    global::System.Text.RegularExpressions.Match match = GitHubUrlPattern().Match(repositoryUrl);");
+    sb.AppendLine("    global::System.Text.RegularExpressions.Match match = GitHubUrlPattern.Match(repositoryUrl);");
     sb.AppendLine("    if (!match.Success)");
     sb.AppendLine("    {");
     sb.AppendLine("      await terminal.WriteErrorLineAsync(\"Unable to check for updates: RepositoryUrl is not a GitHub URL\").ConfigureAwait(false);");
@@ -110,7 +105,7 @@ internal static class CheckUpdatesEmitter
     sb.AppendLine();
     sb.AppendLine("    try");
     sb.AppendLine("    {");
-    sb.AppendLine("      CheckUpdatesGitHubRelease[] releases = await FetchGitHubReleasesAsync(owner, repo, appName).ConfigureAwait(false);");
+    sb.AppendLine("      global::TimeWarp.Nuru.CheckUpdatesGitHubRelease[] releases = await FetchGitHubReleasesAsync(owner, repo, appName).ConfigureAwait(false);");
     sb.AppendLine();
     sb.AppendLine("      if (releases.Length == 0)");
     sb.AppendLine("      {");
@@ -121,7 +116,7 @@ internal static class CheckUpdatesEmitter
     sb.AppendLine("      // Filter releases based on pre-release status");
     sb.AppendLine("      // If current is stable, only consider stable releases");
     sb.AppendLine("      // If current is pre-release, consider all releases");
-    sb.AppendLine("      CheckUpdatesGitHubRelease[] candidateReleases = isPrerelease");
+    sb.AppendLine("      global::TimeWarp.Nuru.CheckUpdatesGitHubRelease[] candidateReleases = isPrerelease");
     sb.AppendLine("        ? releases");
     sb.AppendLine("        : [.. releases.Where(r => !r.Prerelease)];");
     sb.AppendLine();
@@ -132,7 +127,7 @@ internal static class CheckUpdatesEmitter
     sb.AppendLine("      }");
     sb.AppendLine();
     sb.AppendLine("      // Find the latest release by comparing versions");
-    sb.AppendLine("      CheckUpdatesGitHubRelease? latestRelease = FindLatestRelease(candidateReleases, currentVersion);");
+    sb.AppendLine("      global::TimeWarp.Nuru.CheckUpdatesGitHubRelease? latestRelease = FindLatestRelease(candidateReleases, currentVersion);");
     sb.AppendLine();
     sb.AppendLine("      if (latestRelease is null)");
     sb.AppendLine("      {");
@@ -178,7 +173,7 @@ internal static class CheckUpdatesEmitter
   /// </summary>
   private static void EmitFetchGitHubReleasesMethod(StringBuilder sb)
   {
-    sb.AppendLine("  private static async global::System.Threading.Tasks.Task<CheckUpdatesGitHubRelease[]> FetchGitHubReleasesAsync(string owner, string repo, string userAgent)");
+    sb.AppendLine("  private static async global::System.Threading.Tasks.Task<global::TimeWarp.Nuru.CheckUpdatesGitHubRelease[]> FetchGitHubReleasesAsync(string owner, string repo, string userAgent)");
     sb.AppendLine("  {");
     sb.AppendLine("    using global::System.Net.Http.HttpClient client = new();");
     sb.AppendLine("    client.DefaultRequestHeaders.Add(\"User-Agent\", userAgent);");
@@ -190,7 +185,7 @@ internal static class CheckUpdatesEmitter
     sb.AppendLine("    response.EnsureSuccessStatusCode();");
     sb.AppendLine();
     sb.AppendLine("    string json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);");
-    sb.AppendLine("    return global::System.Text.Json.JsonSerializer.Deserialize(json, CheckUpdatesJsonSerializerContext.Default.CheckUpdatesGitHubReleaseArray) ?? [];");
+    sb.AppendLine("    return global::System.Text.Json.JsonSerializer.Deserialize(json, global::TimeWarp.Nuru.CheckUpdatesJsonSerializerContext.Default.CheckUpdatesGitHubReleaseArray) ?? [];");
     sb.AppendLine("  }");
   }
 
@@ -199,12 +194,12 @@ internal static class CheckUpdatesEmitter
   /// </summary>
   private static void EmitFindLatestRelease(StringBuilder sb)
   {
-    sb.AppendLine("  private static CheckUpdatesGitHubRelease? FindLatestRelease(CheckUpdatesGitHubRelease[] releases, string currentVersion)");
+    sb.AppendLine("  private static global::TimeWarp.Nuru.CheckUpdatesGitHubRelease? FindLatestRelease(global::TimeWarp.Nuru.CheckUpdatesGitHubRelease[] releases, string currentVersion)");
     sb.AppendLine("  {");
-    sb.AppendLine("    CheckUpdatesGitHubRelease? latest = null;");
+    sb.AppendLine("    global::TimeWarp.Nuru.CheckUpdatesGitHubRelease? latest = null;");
     sb.AppendLine("    string latestVersion = currentVersion;");
     sb.AppendLine();
-    sb.AppendLine("    foreach (CheckUpdatesGitHubRelease release in releases)");
+    sb.AppendLine("    foreach (global::TimeWarp.Nuru.CheckUpdatesGitHubRelease release in releases)");
     sb.AppendLine("    {");
     sb.AppendLine("      string releaseVersion = NormalizeTagVersion(release.TagName);");
     sb.AppendLine("      if (CheckUpdatesSemVerComparer.Compare(releaseVersion, latestVersion) > 0)");
@@ -352,28 +347,5 @@ internal static class CheckUpdatesEmitter
     sb.AppendLine("      return 0;");
     sb.AppendLine("    }");
     sb.AppendLine("  }");
-  }
-
-  /// <summary>
-  /// Emits the GitHubRelease record for JSON deserialization.
-  /// </summary>
-  private static void EmitGitHubReleaseRecord(StringBuilder sb)
-  {
-    sb.AppendLine("  private sealed record CheckUpdatesGitHubRelease(");
-    sb.AppendLine("    [property: global::System.Text.Json.Serialization.JsonPropertyName(\"tag_name\")] string TagName,");
-    sb.AppendLine("    [property: global::System.Text.Json.Serialization.JsonPropertyName(\"prerelease\")] bool Prerelease,");
-    sb.AppendLine("    [property: global::System.Text.Json.Serialization.JsonPropertyName(\"published_at\")] global::System.DateTime? PublishedAt,");
-    sb.AppendLine("    [property: global::System.Text.Json.Serialization.JsonPropertyName(\"html_url\")] string HtmlUrl);");
-  }
-
-  /// <summary>
-  /// Emits the JSON serializer context for AOT compatibility.
-  /// </summary>
-  private static void EmitJsonSerializerContext(StringBuilder sb)
-  {
-    sb.AppendLine("  [global::System.Text.Json.Serialization.JsonSerializable(typeof(CheckUpdatesGitHubRelease))]");
-    sb.AppendLine("  [global::System.Text.Json.Serialization.JsonSerializable(typeof(CheckUpdatesGitHubRelease[]))]");
-    sb.AppendLine("  [global::System.Text.Json.Serialization.JsonSourceGenerationOptions(PropertyNamingPolicy = global::System.Text.Json.Serialization.JsonKnownNamingPolicy.SnakeCaseLower)]");
-    sb.AppendLine("  private partial class CheckUpdatesJsonSerializerContext : global::System.Text.Json.Serialization.JsonSerializerContext;");
   }
 }

@@ -178,11 +178,12 @@ internal static class InterceptorEmitter
   }
 
   /// <summary>
-  /// Emits the file-scoped static class declaration.
+  /// Emits the file-scoped static partial class declaration.
+  /// Partial is always emitted to support GeneratedRegex and other source generators.
   /// </summary>
   private static void EmitClassStart(StringBuilder sb)
   {
-    sb.AppendLine("file static class GeneratedInterceptor");
+    sb.AppendLine("file static partial class GeneratedInterceptor");
     sb.AppendLine("{");
   }
 

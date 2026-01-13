@@ -15,7 +15,8 @@ Analysis of tests in `tests/timewarp-nuru-core-tests` that are NOT included in t
 - **NURU_H002 suppression removed** - ✅ Closures in handlers are now errors (as designed), removed from `tests/Directory.Build.props`
 - **generator-13-ioptions-parameter-injection.cs** - ✅ Added to CI (exclusion reason was outdated - test doesn't read generated files)
 - **routing-20-version-route-override.cs** - ✅ Fixed Task #357 (user routes now emitted before built-ins), added to CI (2 tests)
-- **routing-21-check-updates-version-comparison.cs** - ✅ Rewritten using TestTerminal pattern, added to CI. Exposes Task #358 (generator bug: `GeneratedInterceptor` needs partial modifier for `GeneratedRegex`)
+- **routing-21-check-updates-version-comparison.cs** - ✅ Rewritten using TestTerminal pattern, added to CI
+- **Task #358** - ✅ Fixed source generator chaining issues: replaced `[GeneratedRegex]` with runtime Regex, moved `CheckUpdatesGitHubRelease` and JSON context to core library
 
 ## Scope
 
@@ -52,7 +53,7 @@ All generator tests are now in CI.
 
 **Fixed**: routing-20 - Fixed Task #357 (generator emits user routes before built-ins), added to CI
 
-**Fixed**: routing-21 - Rewritten to use TestTerminal pattern, exposes Task #358 (generator bug)
+**Fixed**: routing-21 - Rewritten to use TestTerminal pattern, Task #358 fixed (source gen chaining)
 
 ### Configuration Tests (1 file excluded)
 
@@ -88,7 +89,7 @@ All generator tests are now in CI.
 | Parser | `parser/*.cs` (all 15 files) |
 | Type Conversion | `type-conversion/*.cs` (1 file) |
 | Generator | 4 specific files (01, 10, 11, 12) |
-| Routing | All except 21, dsl-example |
+| Routing | All except dsl-example |
 | Message Type | `message-type-01-fluent-api.cs` only |
 
 ## Summary by Category

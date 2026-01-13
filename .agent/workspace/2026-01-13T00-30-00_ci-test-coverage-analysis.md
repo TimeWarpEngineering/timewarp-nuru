@@ -39,13 +39,11 @@ All generator tests are now in CI.
 
 **Rewritten**: generator-04 (now tests functionality instead of generated code content)
 
-### Routing Tests (1 file excluded)
+### Routing Tests (0 files excluded)
 
-| File | Exclusion Reason |
-|------|------------------|
-| `routing/dsl-example.cs` | Not a test (example/demo file) |
+All routing tests are now in CI.
 
-**Included in CI**: All routing-*.cs files except dsl-example
+**Moved**: `dsl-example.cs` → `documentation/developer/design/dsl/fluent-api-example.cs` (design doc, not a test)
 
 **Fixed**: routing-08 - removed `UseDebugLogging()`, fixed bug #355 (positional before `--`), added to CI
 
@@ -89,7 +87,7 @@ All generator tests are now in CI.
 | Parser | `parser/*.cs` (all 15 files) |
 | Type Conversion | `type-conversion/*.cs` (1 file) |
 | Generator | 4 specific files (01, 10, 11, 12) |
-| Routing | All except dsl-example |
+| Routing | All `routing/*.cs` files |
 | Message Type | `message-type-01-fluent-api.cs` only |
 
 ## Summary by Category
@@ -97,14 +95,14 @@ All generator tests are now in CI.
 | Category | Total Files | In CI | Excluded |
 |----------|-------------|-------|----------|
 | Generator | 6 | 6 | 0 |
-| Routing | 19 | 18 | 1 |
+| Routing | 18 | 18 | 0 |
 | Configuration | 2 | 1 | 1 |
 | Options | 2 | 0 | 2 |
 | Root-level | 6 | 1 | 5 |
 | Lexer | 16 | 16 | 0 |
 | Parser | 15 | 15 | 0 |
 | Type Conversion | 1 | 1 | 0 |
-| **Total** | **67** | **58** | **9** |
+| **Total** | **66** | **58** | **8** |
 
 ## Recommendations
 
@@ -122,7 +120,6 @@ All extension API tests have been migrated to CI.
 All isolation-required tests have been migrated to CI.
 
 ### Consider Deletion
-- `routing/dsl-example.cs` - Not a test, appears to be a demo
 - `show-help-colors.cs` - Not included, may be obsolete
 - `capabilities-01-basic.cs` / `capabilities-02-integration.cs` - Not included, status unclear
 

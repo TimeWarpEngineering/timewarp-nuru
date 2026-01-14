@@ -17,6 +17,7 @@ Analysis of tests in `tests/timewarp-nuru-core-tests` that are NOT included in t
 - **routing-20-version-route-override.cs** - ✅ Fixed Task #357 (user routes now emitted before built-ins), added to CI (2 tests)
 - **routing-21-check-updates-version-comparison.cs** - ✅ Rewritten using TestTerminal pattern, added to CI
 - **Task #358** - ✅ Fixed source generator chaining issues: replaced `[GeneratedRegex]` with runtime Regex, moved `CheckUpdatesGitHubRelease` and JSON context to core library
+- **show-help-colors.cs** - ✅ Deleted (obsolete v1 demo using EndpointCollection, HelpProvider.GetHelpText - not a test)
 
 ## Scope
 
@@ -73,7 +74,7 @@ All options tests are now in CI.
 
 Note: Original exclusion reason was wrong - file tests `SessionContext` class which still exists
 
-### Root-level Tests (5 files)
+### Root-level Tests (4 files)
 
 | File | Exclusion Reason |
 |------|------------------|
@@ -81,7 +82,8 @@ Note: Original exclusion reason was wrong - file tests `SessionContext` class wh
 | `capabilities-02-integration.cs` | Not included in any Compile directive |
 | `message-type-02-help-output.cs` | Disabled (commented out) |
 | `nuru-route-registry-01-basic.cs` | Uses `IRequest` which no longer exists |
-| `show-help-colors.cs` | Not included in any Compile directive |
+
+**Deleted**: `show-help-colors.cs` (obsolete v1 demo, not a test)
 
 ## What IS Included in CI
 
@@ -103,11 +105,11 @@ Note: Original exclusion reason was wrong - file tests `SessionContext` class wh
 | Configuration | 2 | 2 | 0 |
 | Options | 2 | 2 | 0 |
 | Session | 1 | 1 | 0 |
-| Root-level | 5 | 1 | 4 |
+| Root-level | 4 | 1 | 3 |
 | Lexer | 16 | 16 | 0 |
 | Parser | 15 | 15 | 0 |
 | Type Conversion | 1 | 1 | 0 |
-| **Total** | **66** | **62** | **4** |
+| **Total** | **65** | **62** | **3** |
 
 ## Recommendations
 
@@ -122,7 +124,6 @@ All extension API tests have been migrated to CI.
 All isolation-required tests have been migrated to CI.
 
 ### Consider Deletion
-- `show-help-colors.cs` - Not included, may be obsolete
 - `capabilities-01-basic.cs` / `capabilities-02-integration.cs` - Not included, status unclear
 
 ## References

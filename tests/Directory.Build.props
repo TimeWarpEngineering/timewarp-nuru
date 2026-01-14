@@ -38,7 +38,6 @@
     <!-- Common project references for all test projects -->
     <PackageReference Include="TimeWarp.Jaribu" />
     <ProjectReference Include="$(MSBuildThisFileDirectory)../source/timewarp-nuru/timewarp-nuru.csproj" />
-    <ProjectReference Include="$(MSBuildThisFileDirectory)../source/timewarp-nuru-logging/timewarp-nuru-logging.csproj" />
     <!-- Analyzer references don't flow transitively, so we must add it directly -->
     <ProjectReference Include="$(MSBuildThisFileDirectory)../source/timewarp-nuru-analyzers/timewarp-nuru-analyzers.csproj">
       <OutputItemType>Analyzer</OutputItemType>

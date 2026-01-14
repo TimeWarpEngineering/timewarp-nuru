@@ -26,6 +26,11 @@ With CreateSlimBuilder/CreateEmptyBuilder removed and source generation handling
 - [x] Delete source/timewarp-nuru-logging/
 - [x] Delete source/timewarp-nuru-telemetry/
 - [x] Delete source/timewarp-nuru-completion/
+- [x] Rename tests/timewarp-nuru-core-tests/ → tests/timewarp-nuru-tests/
+- [x] Merge tests/timewarp-nuru-completion-tests/ → tests/timewarp-nuru-tests/completion/
+- [x] Update tests/ci-tests/Directory.Build.props paths
+- [x] Remove stale logging project reference from tests/Directory.Build.props
+- [x] Delete tests/timewarp-nuru-completion-tests/
 - [x] Verify build succeeds
 - [x] Verify all 533 tests pass
 
@@ -40,6 +45,10 @@ With CreateSlimBuilder/CreateEmptyBuilder removed and source generation handling
 ### Projects Updated (reference changes)
 - timewarp-nuru-mcp (now references timewarp-nuru directly)
 - timewarp-nuru-repl (now references timewarp-nuru directly)
+
+### Test Folders Consolidated
+- timewarp-nuru-core-tests/ → timewarp-nuru-tests/
+- timewarp-nuru-completion-tests/ → timewarp-nuru-tests/completion/
 
 ### Verification
 - `dotnet build timewarp-nuru.slnx -c Release` - Build succeeded

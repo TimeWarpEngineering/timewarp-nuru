@@ -10,60 +10,60 @@
   </PropertyGroup>
   <ItemGroup>
     <!-- Core tests - lexer (migrated) -->
-    <Compile Include="../timewarp-nuru-core-tests/lexer/*.cs" />
+    <Compile Include="../timewarp-nuru-tests/lexer/*.cs" />
     <!-- Core tests - generator (Jaribu format tests that support JARIBU_MULTI) -->
     <!-- Tests 01, 10, 11, 12 have guards that skip entry point in multi-mode -->
-    <Compile Include="../timewarp-nuru-core-tests/generator/generator-01-intercept.cs" />
-    <Compile Include="../timewarp-nuru-core-tests/generator/generator-10-required-options.cs" />
-    <Compile Include="../timewarp-nuru-core-tests/generator/generator-11-attributed-routes.cs" />
-    <Compile Include="../timewarp-nuru-core-tests/generator/generator-12-method-reference-handlers.cs" />
-    <Compile Include="../timewarp-nuru-core-tests/generator/generator-14-options-validation.cs" />
-    <Compile Include="../timewarp-nuru-core-tests/generator/generator-04-static-service-injection.cs" />
-    <Compile Include="../timewarp-nuru-core-tests/generator/generator-13-ioptions-parameter-injection.cs" />
+    <Compile Include="../timewarp-nuru-tests/generator/generator-01-intercept.cs" />
+    <Compile Include="../timewarp-nuru-tests/generator/generator-10-required-options.cs" />
+    <Compile Include="../timewarp-nuru-tests/generator/generator-11-attributed-routes.cs" />
+    <Compile Include="../timewarp-nuru-tests/generator/generator-12-method-reference-handlers.cs" />
+    <Compile Include="../timewarp-nuru-tests/generator/generator-14-options-validation.cs" />
+    <Compile Include="../timewarp-nuru-tests/generator/generator-04-static-service-injection.cs" />
+    <Compile Include="../timewarp-nuru-tests/generator/generator-13-ioptions-parameter-injection.cs" />
     <!-- Core tests - migrated files -->
 
     <!-- TimeWarp.Terminal widget/utils tests have been moved to that repo -->
 
     <!-- DISABLED: These tests use old APIs (HelpProvider.GetHelpText, CreateSlimBuilder, SessionContext, InvokerRegistry) -->
-    <!-- <Compile Include="../timewarp-nuru-core-tests/help-provider-01-option-detection.cs" /> -->
-    <!-- <Compile Include="../timewarp-nuru-core-tests/help-provider-02-filtering.cs" /> -->
-    <!-- <Compile Include="../timewarp-nuru-core-tests/help-provider-03-session-context.cs" /> -->
-    <!-- <Compile Include="../timewarp-nuru-core-tests/help-provider-04-default-route.cs" /> -->
-    <!-- <Compile Include="../timewarp-nuru-core-tests/help-provider-05-color-output.cs" /> -->
+    <!-- <Compile Include="../timewarp-nuru-tests/help-provider-01-option-detection.cs" /> -->
+    <!-- <Compile Include="../timewarp-nuru-tests/help-provider-02-filtering.cs" /> -->
+    <!-- <Compile Include="../timewarp-nuru-tests/help-provider-03-session-context.cs" /> -->
+    <!-- <Compile Include="../timewarp-nuru-tests/help-provider-04-default-route.cs" /> -->
+    <!-- <Compile Include="../timewarp-nuru-tests/help-provider-05-color-output.cs" /> -->
     
-    <!-- <Compile Include="../timewarp-nuru-core-tests/invoker-registry-01-basic.cs" /> -->
+    <!-- <Compile Include="../timewarp-nuru-tests/invoker-registry-01-basic.cs" /> -->
     <!-- Message type tests -->
-    <Compile Include="../timewarp-nuru-core-tests/message-type/*.cs" />
-    <!-- <Compile Include="../timewarp-nuru-core-tests/message-type-02-help-output.cs" /> -->
+    <Compile Include="../timewarp-nuru-tests/message-type/*.cs" />
+    <!-- <Compile Include="../timewarp-nuru-tests/message-type-02-help-output.cs" /> -->
     <!-- TODO: Create or restore route-builder-01-basic.cs -->
-    <!-- <Compile Include="../timewarp-nuru-core-tests/route-builder-01-basic.cs" /> -->
-    <!-- <Compile Include="../timewarp-nuru-core-tests/test-terminal-context-01-basic.cs" /> -->
-    <!-- <Compile Include="../timewarp-nuru-core-tests/compiled-route-test-helper.cs" /> -->
+    <!-- <Compile Include="../timewarp-nuru-tests/route-builder-01-basic.cs" /> -->
+    <!-- <Compile Include="../timewarp-nuru-tests/test-terminal-context-01-basic.cs" /> -->
+    <!-- <Compile Include="../timewarp-nuru-tests/compiled-route-test-helper.cs" /> -->
     <!-- Parser tests (migrated) -->
-    <Compile Include="../timewarp-nuru-core-tests/parser/*.cs" />
+    <Compile Include="../timewarp-nuru-tests/parser/*.cs" />
     <!-- Routing tests (migrated) -->
     <!-- Excluded: dsl-example (not a test) -->
-    <Compile Include="../timewarp-nuru-core-tests/routing/*.cs" Exclude="../timewarp-nuru-core-tests/routing/dsl-example.cs" />
+    <Compile Include="../timewarp-nuru-tests/routing/*.cs" Exclude="../timewarp-nuru-tests/routing/dsl-example.cs" />
     <!-- Configuration tests -->
-    <Compile Include="../timewarp-nuru-core-tests/configuration/configuration-01-validate-on-start.cs" />
-    <Compile Include="../timewarp-nuru-core-tests/configuration/configuration-02-cli-overrides.cs" />
+    <Compile Include="../timewarp-nuru-tests/configuration/configuration-01-validate-on-start.cs" />
+    <Compile Include="../timewarp-nuru-tests/configuration/configuration-02-cli-overrides.cs" />
     <!-- Factory tests - excluded from multi-mode -->
-    <!-- <Compile Include="../timewarp-nuru-core-tests/factory/*.cs" /> -->
+    <!-- <Compile Include="../timewarp-nuru-tests/factory/*.cs" /> -->
     <!-- Options tests (migrated) -->
-    <Compile Include="../timewarp-nuru-core-tests/options/options-01-mixed-required-optional.cs" />
-    <Compile Include="../timewarp-nuru-core-tests/options/options-02-optional-flag-optional-value.cs" />
+    <Compile Include="../timewarp-nuru-tests/options/options-01-mixed-required-optional.cs" />
+    <Compile Include="../timewarp-nuru-tests/options/options-02-optional-flag-optional-value.cs" />
     <!-- Session tests -->
-    <Compile Include="../timewarp-nuru-core-tests/session/session-context-01-basic.cs" />
+    <Compile Include="../timewarp-nuru-tests/session/session-context-01-basic.cs" />
     <!-- Capabilities tests (task #157 - route not yet implemented) -->
-    <Compile Include="../timewarp-nuru-core-tests/capabilities/*.cs" />
+    <Compile Include="../timewarp-nuru-tests/capabilities/*.cs" />
     <!-- Type conversion tests (migrated) -->
-    <Compile Include="../timewarp-nuru-core-tests/type-conversion/*.cs" />
+    <Compile Include="../timewarp-nuru-tests/type-conversion/*.cs" />
     <!-- Completion tests - static (migrated) -->
-    <!-- <Compile Include="../timewarp-nuru-completion-tests/static/*.cs" /> -->
+    <!-- <Compile Include="../timewarp-nuru-tests/completion/static/*.cs" /> -->
     <!-- Completion tests - dynamic (migrated) -->
-    <!-- <Compile Include="../timewarp-nuru-completion-tests/dynamic/*.cs" /> -->
+    <!-- <Compile Include="../timewarp-nuru-tests/completion/dynamic/*.cs" /> -->
     <!-- Completion tests - engine (migrated) -->
-    <!-- <Compile Include="../timewarp-nuru-completion-tests/engine/*.cs" /> -->
+    <!-- <Compile Include="../timewarp-nuru-tests/completion/engine/*.cs" /> -->
     <!-- All REPL tests (recursive glob includes subfolders, excludes obj/bin) -->
     <!-- <Compile Include="../timewarp-nuru-repl-tests/**/*.cs" Exclude="../timewarp-nuru-repl-tests/obj/**;../timewarp-nuru-repl-tests/bin/**" /> -->
     <!-- MCP tests (migrated) -->

@@ -20,6 +20,9 @@ Format: **File:** link to read | **When:** context that triggers loading
 **File:** [agent-context-regions.md](shared/agent-context-regions.md)
 **When:** Adding #region Purpose or #region Design blocks to source files. Understanding the pattern for embedding agent-useful context in code.
 
+**File:** [kanban-guidelines.md](shared/kanban-guidelines.md)
+**When:** Creating, moving, or managing kanban tasks. Understanding folder structure, allowed fields, and workflow.
+
 ### Local Instructions (this repo only)
 
 **File:** [nuru-specific.md](local/nuru-specific.md)
@@ -43,7 +46,3 @@ dotnet run tests/timewarp-nuru-core-tests/routing/routing-01-basic.cs  # Single 
 ### Key Paths
 - Generated files: `artifacts/generated/{ProjectName}/`
 - Kanban tasks: `kanban/{to-do,in-progress,done,backlog}/`
-
-### Kanban Rules
-- **NEVER add**: Status, Priority, Category fields (folder = status)
-- **Use**: Description, Checklist, Notes

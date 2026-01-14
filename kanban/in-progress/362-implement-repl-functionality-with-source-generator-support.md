@@ -6,9 +6,9 @@ Implement REPL (Read-Eval-Print-Loop) functionality directly in `timewarp-nuru` 
 
 The new implementation should:
 - Work with the V2 source generator architecture
-- Generate REPL loop code at compile time where possible
-- Support interactive command entry and execution
-- Maintain feature parity with the reference implementation
+- Generate REPL completion/highlighting data at compile time
+- Keep full feature parity: tab completion, syntax highlighting, key bindings, history
+- AOT tree-shaking removes REPL code if not used
 
 ## Reference Implementation
 
@@ -16,64 +16,213 @@ The old REPL code is preserved for reference:
 - `source/timewarp-nuru-repl-reference-only/`
 - `tests/timewarp-nuru-repl-tests-reference-only/`
 
-## Key Features to Implement
+## Architecture
 
-1. **Interactive mode** (`--interactive` or `-i` flag)
-2. **Command history** (up/down arrow navigation)
-3. **Tab completion** for commands and parameters
-4. **Custom prompt** configuration
-5. **Exit commands** (`exit`, `quit`, Ctrl+C handling)
-6. **Help integration** (show available commands in REPL)
+### Key Insight
+
+Almost all REPL code is **runtime** (ReplConsoleReader, key bindings, history, etc.). The only route-dependent parts are:
+- **Tab completion** - needs to know what commands/parameters/options exist
+- **Syntax highlighting** - needs to know if a token is a valid command
+
+### Solution
+
+1. **Copy reference implementation** into `timewarp-nuru/repl/` (~25 files, ~4000 lines)
+2. **Replace `EndpointCollection`** dependency with new `IReplRouteProvider` interface
+3. **Generator emits** `GeneratedReplRouteProvider` with compile-time route data
+4. **Generator emits** `--interactive`/`-i` route and `RunReplAsync` interceptor
+
+### IReplRouteProvider Interface
+
+```csharp
+public interface IReplRouteProvider
+{
+    /// <summary>Gets all known command prefixes for completion.</summary>
+    IReadOnlyList<string> GetCommandPrefixes();
+    
+    /// <summary>Gets completion candidates for the current input.</summary>
+    IEnumerable<CompletionCandidate> GetCompletions(string[] args, bool hasTrailingSpace);
+    
+    /// <summary>Checks if a token is a known command/subcommand.</summary>
+    bool IsKnownCommand(string token);
+}
+```
+
+### REPL Built-in Commands
+
+Handled directly in `ReplSession` loop (not through route matcher):
+- `exit`, `quit`, `q` - exit REPL
+- `clear`, `cls` - clear screen
+- `history` - show command history
+- `clear-history` - clear history
+
+### Exit Mechanism
+
+REPL built-ins are handled *before* calling the command executor:
+```csharp
+while (Running)
+{
+    string[] args = CommandLineParser.Parse(ReadCommandInput());
+    
+    // Handle REPL built-ins directly
+    if (args is ["exit"] or ["quit"] or ["q"]) break;
+    if (args is ["clear"] or ["cls"]) { Terminal.Clear(); continue; }
+    // ...
+    
+    // Execute user command through generated route matcher
+    int exitCode = await executeCommand(app, args, cancellationToken);
+}
+```
 
 ## Checklist
 
-### Analysis
-- [ ] Review `source/timewarp-nuru-repl-reference-only/` for key patterns
-- [ ] Identify what can be source-generated vs runtime
-- [ ] Design REPL architecture compatible with V2 generator
+### Phase 1: Runtime Code Integration
 
-### Core Implementation
-- [ ] Add `AddRepl()` DSL method to builder
-- [ ] Implement REPL loop in `timewarp-nuru`
-- [ ] Generate REPL entry point via source generator
-- [ ] Handle `--interactive` / `-i` flag
+- [ ] Copy `input/` folder (ReplConsoleReader + all partials) to `timewarp-nuru/repl/input/`
+- [ ] Copy `key-bindings/` folder to `timewarp-nuru/repl/key-bindings/`
+- [ ] Copy `display/` folder to `timewarp-nuru/repl/display/`
+- [ ] Copy `repl/` core files (ReplSession, ReplHistory, CommandLineParser) to `timewarp-nuru/repl/`
+- [ ] Create `IReplRouteProvider` interface in `timewarp-nuru/repl/`
+- [ ] Refactor `ReplSession` to use `IReplRouteProvider` + command execution delegate
+- [ ] Refactor `TabCompletionHandler` to use `IReplRouteProvider`
+- [ ] Refactor `SyntaxHighlighter` to use `IReplRouteProvider`
+- [ ] Update namespaces to `TimeWarp.Nuru` (flat)
+- [ ] Verify build compiles
 
-### Features
-- [ ] Command history (readline-style)
-- [ ] Tab completion integration
-- [ ] Custom prompt support
-- [ ] Graceful exit handling
+### Phase 2: Generator Additions
 
-### Testing
-- [ ] Create REPL tests using TestTerminal
+- [ ] Update `InterceptorEmitter` to emit `--interactive`/`-i` route when `HasRepl=true`
+- [ ] Create `ReplRouteProviderEmitter` to emit `GeneratedReplRouteProvider` class
+- [ ] Update `InterceptorEmitter` to emit `RunReplAsync` interceptor when `HasRepl=true`
+- [ ] Extract completion data from routes (command prefixes, parameters, options, enums)
+
+### Phase 3: Testing & Validation
+
+- [ ] Add REPL unit tests using TestTerminal
 - [ ] Test interactive mode entry/exit
 - [ ] Test command execution in REPL
+- [ ] Test tab completion
 - [ ] Test history navigation
+- [ ] Verify `samples/_repl-demo/` work with new implementation
 
-### Samples
-- [ ] Update `samples/_repl-demo/` to use new implementation
-- [ ] Rename folder to numbered convention after migration
+## File Structure After Integration
 
-## Architecture Considerations
+```
+source/timewarp-nuru/
+├── repl/
+│   ├── input/
+│   │   ├── repl-console-reader.cs
+│   │   ├── repl-console-reader.basic-editing.cs
+│   │   ├── repl-console-reader.clipboard.cs
+│   │   ├── repl-console-reader.cursor-movement.cs
+│   │   ├── repl-console-reader.editing.cs
+│   │   ├── repl-console-reader.history.cs
+│   │   ├── repl-console-reader.kill-ring.cs
+│   │   ├── repl-console-reader.multiline.cs
+│   │   ├── repl-console-reader.search.cs
+│   │   ├── repl-console-reader.selection.cs
+│   │   ├── repl-console-reader.undo.cs
+│   │   ├── repl-console-reader.word-operations.cs
+│   │   ├── repl-console-reader.yank-arg.cs
+│   │   ├── tab-completion-handler.cs
+│   │   ├── syntax-highlighter.cs
+│   │   ├── command-line-token.cs
+│   │   ├── completion-state.cs
+│   │   ├── edit-mode.cs
+│   │   ├── kill-ring.cs
+│   │   ├── multiline-buffer.cs
+│   │   ├── selection.cs
+│   │   ├── token-type.cs
+│   │   └── undo-stack.cs
+│   ├── key-bindings/
+│   │   ├── ikey-binding-profile.cs
+│   │   ├── ikey-binding-builder.cs
+│   │   ├── key-binding-builder.cs
+│   │   ├── key-binding-result.cs
+│   │   ├── key-binding-profile-factory.cs
+│   │   ├── nested-key-binding-builder.cs
+│   │   ├── custom-key-binding-profile.cs
+│   │   ├── default-key-binding-profile.cs
+│   │   ├── emacs-key-binding-profile.cs
+│   │   ├── vi-key-binding-profile.cs
+│   │   └── vscode-key-binding-profile.cs
+│   ├── display/
+│   │   ├── prompt-formatter.cs
+│   │   └── syntax-colors.cs
+│   ├── repl-session.cs
+│   ├── repl-history.cs
+│   ├── repl-commands.cs
+│   ├── command-line-parser.cs
+│   └── irepl-route-provider.cs
+├── options/
+│   └── repl-options.cs (already exists)
+└── ...
+```
 
-### What can be source-generated:
-- Route matching logic (already done)
-- Help text generation
-- Completion candidates
+## Generator Output (when HasRepl=true)
 
-### What must be runtime:
-- REPL loop itself (read input → match → execute → repeat)
-- History management
-- Terminal I/O
+### 1. GeneratedReplRouteProvider
 
-### Potential approach:
-The source generator could emit a `RunRepl()` method alongside `RunAsync()` that:
-1. Uses the same generated route matching
-2. Wraps it in a read-eval-print loop
-3. Integrates with generated help/completion
+```csharp
+file sealed class GeneratedReplRouteProvider : IReplRouteProvider
+{
+    private static readonly string[] CommandPrefixes = [
+        "greet", "status", "git commit", "git status", // ... from routes
+    ];
+    
+    public IReadOnlyList<string> GetCommandPrefixes() => CommandPrefixes;
+    
+    public IEnumerable<CompletionCandidate> GetCompletions(string[] args, bool hasTrailingSpace)
+    {
+        // Generated completion logic - knows parameters, options, enums
+    }
+    
+    public bool IsKnownCommand(string token) => 
+        CommandPrefixes.Any(p => p.StartsWith(token, StringComparison.OrdinalIgnoreCase));
+}
+```
+
+### 2. Interactive Mode Route
+
+```csharp
+// In route matcher, before user routes:
+if (routeArgs is ["--interactive"] or ["-i"])
+{
+    await app.RunReplAsync().ConfigureAwait(false);
+    return 0;
+}
+```
+
+### 3. RunReplAsync Interceptor
+
+```csharp
+[InterceptsLocation(...)]
+public static async Task RunReplAsync_Intercepted(
+    this NuruCoreApp app,
+    ReplOptions? options = null,
+    CancellationToken cancellationToken = default)
+{
+    ReplOptions replOptions = options ?? app.ReplOptions ?? new();
+    IReplRouteProvider routeProvider = new GeneratedReplRouteProvider();
+    
+    await ReplSession.RunAsync(
+        app,
+        replOptions,
+        routeProvider,
+        static (app, args, ct) => GeneratedInterceptor.ExecuteRouteAsync(app, args, ct),
+        app.LoggerFactory,
+        cancellationToken
+    ).ConfigureAwait(false);
+}
+```
 
 ## Notes
 
-- Old REPL used `EndpointCollection` for runtime route discovery - this no longer exists
-- New REPL must work with compile-time generated route matching
-- Consider whether REPL needs any runtime route registration (probably not for v1)
+- Namespace: `TimeWarp.Nuru` (flat, no sub-namespace)
+- Tab completion supports: command prefixes, parameters with types, options, enum values
+- Syntax highlighting colors known commands differently
+- AOT: Unused REPL code should be tree-shaken if `AddRepl()` not called
+- `AddRepl()` DSL method already recognized by interpreter (sets `HasRepl=true`)
+
+## Dependencies
+
+- Blocks #338 (Migrate REPL demo samples) - samples need working REPL to migrate to

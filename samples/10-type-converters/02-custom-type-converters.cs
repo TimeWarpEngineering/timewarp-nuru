@@ -49,7 +49,6 @@ builder.Map("send-email {to:EmailAddress} {subject}")
     Console.WriteLine($"   Local part: {to.LocalPart}");
     Console.WriteLine($"   Domain: {to.Domain}");
     Console.WriteLine($"   Subject: {subject}");
-    return 0;
   })
   .AsCommand().Done();
 
@@ -61,7 +60,6 @@ builder.Map("set-theme {primary:HexColor} {secondary:HexColor}")
     Console.WriteLine($"     RGB: ({primary.Red}, {primary.Green}, {primary.Blue})");
     Console.WriteLine($"   Secondary color: {secondary}");
     Console.WriteLine($"     RGB: ({secondary.Red}, {secondary.Green}, {secondary.Blue})");
-    return 0;
   })
   .AsIdempotentCommand().Done();
 
@@ -77,7 +75,6 @@ builder.Map("release {version:SemanticVersion}")
       Console.WriteLine($"   Prerelease: {version.Prerelease}");
     if (version.BuildMetadata != null)
       Console.WriteLine($"   Build: {version.BuildMetadata}");
-    return 0;
   })
   .AsCommand().Done();
 
@@ -88,7 +85,6 @@ builder.Map("notify {recipient:EmailAddress} {color:HexColor} {message}")
     Console.WriteLine($"   Recipient: {recipient}");
     Console.WriteLine($"   Color: {color}");
     Console.WriteLine($"   Message: {message}");
-    return 0;
   })
   .AsCommand().Done();
 
@@ -100,7 +96,6 @@ builder.Map("deploy {version:SemanticVersion} {env} --notify {email:EmailAddress
     Console.WriteLine($"   Environment: {env}");
     if (email != null)
       Console.WriteLine($"   Notification: {email}");
-    return 0;
   })
   .AsCommand().Done();
 

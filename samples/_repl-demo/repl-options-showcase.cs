@@ -151,46 +151,42 @@ NuruCoreApp app = NuruApp.CreateBuilder(args, nuruAppOptions)
   )
 
   // --------------------------------------------------------
-  // Success command - returns exit code 0
+  // Success command - completes without error
   // Demonstrates: Normal successful command execution
   // --------------------------------------------------------
   .Map("success")
-    .WithHandler(() =>
-    {
-      WriteLine("Command completed successfully!");
-      return 0;
-    })
-    .WithDescription("Executes successfully with exit code 0.")
+    .WithHandler(() => WriteLine("Command completed successfully!"))
+    .WithDescription("Executes successfully (exit code 0).")
     .AsQuery()
     .Done()
 
   // --------------------------------------------------------
-  // Fail command - returns non-zero exit code
+  // Fail command - throws exception for non-zero exit code
   // Demonstrates: ContinueOnError=false will stop REPL
+  // NOTE: In Nuru, throw an exception to signal failure.
+  // Handler return values are OUTPUT, not exit codes.
   // --------------------------------------------------------
   .Map("fail")
     .WithHandler(() =>
     {
       WriteLine("This command intentionally fails to demonstrate ContinueOnError=false");
-      WriteLine("The REPL will exit after this command because ContinueOnError is disabled.");
-      return 1;
+      throw new InvalidOperationException("Intentional failure - REPL will exit because ContinueOnError is disabled.");
     })
-    .WithDescription("Intentionally fails with exit code 1 to demonstrate ContinueOnError behavior.")
+    .WithDescription("Intentionally fails (throws exception) to demonstrate ContinueOnError behavior.")
     .AsCommand()
     .Done()
 
   // --------------------------------------------------------
-  // Custom exit code command
-  // Demonstrates: ShowExitCode feature with various codes
+  // Exit code demo - shows that return values are OUTPUT, not exit codes
+  // Demonstrates: Handler return values are written to terminal
   // --------------------------------------------------------
-  .Map("exitcode {code:int}")
-    .WithHandler((int code) =>
+  .Map("output {value:int}")
+    .WithHandler((int value) =>
     {
-      WriteLine($"Returning exit code: {code}");
-      WriteLine($"Watch for '[Exit code: {code}]' displayed by ShowExitCode feature.");
-      return code;
+      WriteLine($"Handler returning {value} - this will be written as output, NOT as exit code.");
+      return value;
     })
-    .WithDescription("Returns the specified exit code to demonstrate ShowExitCode display.")
+    .WithDescription("Outputs the specified value to demonstrate that return values are output, not exit codes.")
     .AsQuery()
     .Done()
 

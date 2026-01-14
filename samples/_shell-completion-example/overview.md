@@ -37,7 +37,6 @@ builder.Map("createorder {product} {quantity:int}", (string product, int quantit
     Console.WriteLine($"✅ Creating order:");
     Console.WriteLine($"   Product: {product}");
     Console.WriteLine($"   Quantity: {quantity}");
-    return 0;
 });
 
 NuruApp app = builder.Build();

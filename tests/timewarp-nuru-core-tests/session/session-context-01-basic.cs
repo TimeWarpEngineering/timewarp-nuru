@@ -1,8 +1,14 @@
 #!/usr/bin/dotnet --
 #:project ../../../source/timewarp-nuru/timewarp-nuru.csproj
 
-// Test SessionContext class behavior
-// Verifies CLI vs REPL context state management
+#region Purpose
+// Tests for SessionContext class which tracks execution context (CLI vs REPL).
+// SessionContext provides:
+// - IsReplSession: whether running in REPL mode
+// - HelpContext: derived from IsReplSession (Cli or Repl)
+// - SupportsColor: whether terminal supports ANSI colors
+// This is foundational for REPL functionality (not yet migrated to v2).
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();

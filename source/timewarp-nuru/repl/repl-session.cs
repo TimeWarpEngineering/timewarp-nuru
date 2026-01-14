@@ -14,7 +14,7 @@ public delegate Task<int> ReplCommandExecutor(NuruCoreApp app, string[] args, Ca
 /// Provides REPL (Read-Eval-Print Loop) mode for interactive command execution.
 /// Implements IDisposable to ensure proper cleanup of resources (event handlers, history persistence).
 /// </summary>
-internal sealed class ReplSession : IDisposable
+public sealed class ReplSession : IDisposable
 {
   private readonly ILoggerFactory? LoggerFactory;
   private readonly NuruCoreApp NuruCoreApp;

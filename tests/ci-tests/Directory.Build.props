@@ -58,6 +58,8 @@
     <Compile Include="../timewarp-nuru-tests/capabilities/*.cs" />
     <!-- Type conversion tests (migrated) -->
     <Compile Include="../timewarp-nuru-tests/type-conversion/*.cs" />
+    <!-- REPL tests (Phase 3 of #362) -->
+    <Compile Include="../timewarp-nuru-tests/repl/*.cs" />
     <!-- Completion tests - static (migrated) -->
     <!-- <Compile Include="../timewarp-nuru-tests/completion/static/*.cs" /> -->
     <!-- Completion tests - dynamic (migrated) -->

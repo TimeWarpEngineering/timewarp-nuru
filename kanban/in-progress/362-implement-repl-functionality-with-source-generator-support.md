@@ -104,7 +104,7 @@ while (Running)
 - [x] Verify generated code compiles and runs (basic smoke test passed)
 - [x] Verify command execution works through REPL-enabled app
 - [x] Verify command prefixes are extracted correctly for completions
-- [ ] Add REPL unit tests using TestTerminal
+- [x] Add REPL unit tests (repl-02-command-parsing.cs migrated - 9 tests, 542 total)
 - [ ] Test interactive mode entry/exit
 - [ ] Test tab completion
 - [ ] Test history navigation

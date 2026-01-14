@@ -18,6 +18,7 @@ Analysis of tests in `tests/timewarp-nuru-core-tests` that are NOT included in t
 - **routing-21-check-updates-version-comparison.cs** - ✅ Rewritten using TestTerminal pattern, added to CI
 - **Task #358** - ✅ Fixed source generator chaining issues: replaced `[GeneratedRegex]` with runtime Regex, moved `CheckUpdatesGitHubRelease` and JSON context to core library
 - **show-help-colors.cs** - ✅ Deleted (obsolete v1 demo using EndpointCollection, HelpProvider.GetHelpText - not a test)
+- **message-type-02-help-output.cs** - ✅ Deleted (obsolete v1 API: EndpointCollection, PatternParser.Parse, HelpProvider.GetHelpText)
 
 ## Scope
 
@@ -74,16 +75,17 @@ All options tests are now in CI.
 
 Note: Original exclusion reason was wrong - file tests `SessionContext` class which still exists
 
-### Root-level Tests (4 files)
+### Root-level Tests (3 files)
 
 | File | Exclusion Reason |
 |------|------------------|
 | `capabilities-01-basic.cs` | Not included in any Compile directive |
 | `capabilities-02-integration.cs` | Not included in any Compile directive |
-| `message-type-02-help-output.cs` | Disabled (commented out) |
 | `nuru-route-registry-01-basic.cs` | Uses `IRequest` which no longer exists |
 
-**Deleted**: `show-help-colors.cs` (obsolete v1 demo, not a test)
+**Deleted**:
+- `show-help-colors.cs` (obsolete v1 demo, not a test)
+- `message-type-02-help-output.cs` (obsolete v1 API)
 
 ## What IS Included in CI
 

@@ -12,8 +12,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../timewarp-nuru-core/timewarp-nuru-core.csproj" />
-    <ProjectReference Include="../timewarp-nuru-completion/timewarp-nuru-completion.csproj" />
+    <ProjectReference Include="../timewarp-nuru/timewarp-nuru.csproj" />
   </ItemGroup>
 
   <ItemGroup>

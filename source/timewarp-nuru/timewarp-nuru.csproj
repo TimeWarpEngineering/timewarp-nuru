@@ -4,33 +4,62 @@
     <AssemblyName>TimeWarp.Nuru</AssemblyName>
     <RootNamespace>TimeWarp.Nuru</RootNamespace>
     <Description>Route-based CLI framework for .NET - batteries included with telemetry, REPL, and shell completion</Description>
-    <PackageTags>cli;command-line;routing;framework;dotnet;console;repl;telemetry;completion</PackageTags>
+    <PackageTags>cli;command-line;routing;framework;dotnet;console;repl;telemetry;completion;consoleappframework;commandlineparser;mcmaster;cocona;spectre;system-commandline</PackageTags>
     <!-- CA1303: CLI output strings don't need localization resources
          CS8785: NuruRouteAnalyzer fails to load M.E.Logging.Abstractions when using ProjectReference -->
     <NoWarn>$(NoWarn);CA1303;CS8785</NoWarn>
+
+    <!-- AOT Compatibility -->
+    <IsAotCompatible>true</IsAotCompatible>
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+    <EnableAotAnalyzer>true</EnableAotAnalyzer>
+
+    <!-- Output generated source files to generated directory -->
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    <CompilerGeneratedFilesOutputPath>$(MSBuildProjectDirectory)/generated</CompilerGeneratedFilesOutputPath>
   </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="TimeWarp.Nuru.Repl" />
+  </ItemGroup>
 
   <ItemGroup>
     <!-- Override TimeWarp.Build.Tasks to flow transitively to consumers (removes PrivateAssets default) -->
     <PackageReference Update="TimeWarp.Build.Tasks" PrivateAssets="none" />
   </ItemGroup>
 
+  <!-- Package references (merged from core + extensions) -->
   <ItemGroup>
-    <!-- Reference all extension packages for batteries-included experience -->
-    <ProjectReference Include="../timewarp-nuru-core/timewarp-nuru-core.csproj" />
-    <ProjectReference Include="../timewarp-nuru-logging/timewarp-nuru-logging.csproj" />
-    <ProjectReference Include="../timewarp-nuru-telemetry/timewarp-nuru-telemetry.csproj" />
-    <!-- TODO Update REPL package to support V2 source generator
-     <ProjectReference Include="../timewarp-nuru-repl/timewarp-nuru-repl.csproj" /> 
-    -->
-    
-    <ProjectReference Include="../timewarp-nuru-completion/timewarp-nuru-completion.csproj" />
+    <PackageReference Include="TimeWarp.Terminal" />
+    <PackageReference Include="TimeWarp.Builder" />
+    <PackageReference Include="GlobalUsingsAnalyzer">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.Extensions.Configuration" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.CommandLine" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Logging" GeneratePathProperty="true" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" GeneratePathProperty="true" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" />
+    <PackageReference Include="Microsoft.Extensions.Options" />
+    <!-- Telemetry packages -->
+    <PackageReference Include="OpenTelemetry" />
+    <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" />
+    <PackageReference Include="OpenTelemetry.Extensions.Hosting" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- Include analyzers and source generators for AOT-compatible routing -->
     <ProjectReference Include="../timewarp-nuru-analyzers/timewarp-nuru-analyzers.csproj">
       <OutputItemType>Analyzer</OutputItemType>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
-    
+
     <!-- Build task for AOT-compatible JSON serialization (ensures it's built before packing) -->
     <ProjectReference Include="../timewarp-nuru-build/timewarp-nuru-build.csproj">
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
@@ -38,20 +67,46 @@
     </ProjectReference>
   </ItemGroup>
 
+  <!-- Include parsing source files directly -->
+  <ItemGroup>
+    <Compile Include="../timewarp-nuru-parsing/**/*.cs" Exclude="../timewarp-nuru-parsing/obj/**;../timewarp-nuru-parsing/bin/**" />
+  </ItemGroup>
+
+  <!-- Exclude generated files from compilation (they're already included by the source generator) -->
+  <ItemGroup>
+    <Compile Remove="generated/**/*.cs" />
+  </ItemGroup>
+
+  <!-- Embed completion script templates as resources -->
+  <ItemGroup>
+    <EmbeddedResource Include="completion/completion/templates/*.sh" />
+    <EmbeddedResource Include="completion/completion/templates/*.zsh" />
+    <EmbeddedResource Include="completion/completion/templates/*.ps1" />
+    <EmbeddedResource Include="completion/completion/templates/*.fish" />
+  </ItemGroup>
+
   <ItemGroup>
     <None Include="$(RepositoryRoot)readme.md" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+  <!-- Include the analyzer in the main package as a development dependency -->
+  <ItemGroup>
+    <!-- Include analyzer DLL in the package -->
+    <None Include="../timewarp-nuru-analyzers/bin/$(Configuration)/$(TargetFramework)/TimeWarp.Nuru.Analyzers.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+    <!-- Include the logging dependency for the analyzer -->
+    <None Include="$(PkgMicrosoft_Extensions_Logging_Abstractions)/lib/net9.0/Microsoft.Extensions.Logging.Abstractions.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
   </ItemGroup>
 
   <!-- Include build task and targets in NuGet package -->
   <ItemGroup Label="Build Task Packaging">
     <!-- MSBuild targets file - auto-imported by NuGet when named TimeWarp.Nuru.targets -->
-    <None Include="../timewarp-nuru-build/build/TimeWarp.Nuru.Build.targets" 
-          Pack="true" 
+    <None Include="../timewarp-nuru-build/build/TimeWarp.Nuru.Build.targets"
+          Pack="true"
           PackagePath="build/TimeWarp.Nuru.targets" />
-    
+
     <!-- Build task DLL and all dependencies -->
-    <None Include="../timewarp-nuru-build/bin/$(Configuration)/net10.0/*.dll" 
-          Pack="true" 
+    <None Include="../timewarp-nuru-build/bin/$(Configuration)/net10.0/*.dll"
+          Pack="true"
           PackagePath="build/net10.0" />
   </ItemGroup>
 

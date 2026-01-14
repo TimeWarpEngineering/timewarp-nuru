@@ -75,18 +75,18 @@ while (Running)
 
 ## Checklist
 
-### Phase 1: Runtime Code Integration
+### Phase 1: Runtime Code Integration ✅ COMPLETED
 
-- [ ] Copy `input/` folder (ReplConsoleReader + all partials) to `timewarp-nuru/repl/input/`
-- [ ] Copy `key-bindings/` folder to `timewarp-nuru/repl/key-bindings/`
-- [ ] Copy `display/` folder to `timewarp-nuru/repl/display/`
-- [ ] Copy `repl/` core files (ReplSession, ReplHistory, CommandLineParser) to `timewarp-nuru/repl/`
-- [ ] Create `IReplRouteProvider` interface in `timewarp-nuru/repl/`
-- [ ] Refactor `ReplSession` to use `IReplRouteProvider` + command execution delegate
-- [ ] Refactor `TabCompletionHandler` to use `IReplRouteProvider`
-- [ ] Refactor `SyntaxHighlighter` to use `IReplRouteProvider`
-- [ ] Update namespaces to `TimeWarp.Nuru` (flat)
-- [ ] Verify build compiles
+- [x] Copy `input/` folder (ReplConsoleReader + all partials) to `timewarp-nuru/repl/input/`
+- [x] Copy `key-bindings/` folder to `timewarp-nuru/repl/key-bindings/`
+- [x] Copy `display/` folder to `timewarp-nuru/repl/display/`
+- [x] Copy `repl/` core files (ReplSession, ReplHistory, CommandLineParser) to `timewarp-nuru/repl/`
+- [x] Create `IReplRouteProvider` interface in `timewarp-nuru/repl/`
+- [x] Refactor `ReplSession` to use `IReplRouteProvider` + command execution delegate
+- [x] Refactor `TabCompletionHandler` to use `IReplRouteProvider`
+- [x] Refactor `SyntaxHighlighter` to use `IReplRouteProvider`
+- [x] Update namespaces to `TimeWarp.Nuru` (flat)
+- [x] Verify build compiles (533/533 tests pass)
 
 ### Phase 2: Generator Additions
 

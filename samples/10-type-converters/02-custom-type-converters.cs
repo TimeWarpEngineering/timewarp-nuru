@@ -160,7 +160,6 @@ if (args.Length == 0)
   Console.WriteLine("  builder.Map(\"cmd {param:YourType}\", (YourType param) => ...)");
   Console.WriteLine();
   Console.WriteLine("═══════════════════════════════════════════════════════════════");
-  return 0;
 }
 
 return await app.RunAsync(args);

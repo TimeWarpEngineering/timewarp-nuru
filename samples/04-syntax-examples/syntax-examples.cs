@@ -191,5 +191,3 @@ Console.WriteLine("are correct and compile successfully.");
 Console.WriteLine();
 Console.WriteLine("Run with '--help' to see auto-generated help from descriptions:");
 Console.WriteLine("  ./SyntaxExamples.cs --help");
-
-return 0;

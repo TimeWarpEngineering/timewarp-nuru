@@ -262,7 +262,6 @@ if (args.Length == 0)
   Console.WriteLine("  ./BuiltInTypesExample.cs backup /data --dest /backup --config config.json");
   Console.WriteLine();
   Console.WriteLine("═══════════════════════════════════════════════════════════════");
-  return 0;
 }
 
 return await app.RunAsync(args);

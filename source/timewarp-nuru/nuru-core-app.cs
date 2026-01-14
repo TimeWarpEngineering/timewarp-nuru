@@ -36,4 +36,23 @@ public class NuruCoreApp
           "RunAsync was not intercepted. Ensure the source generator is enabled.");
   }
   #pragma warning restore CA1822
+
+  /// <summary>
+  /// Runs the application in REPL (interactive) mode.
+  /// This method is intercepted by generated code when AddRepl() is called.
+  /// </summary>
+  /// <param name="cancellationToken">Optional cancellation token.</param>
+  /// <returns>A task that completes when the REPL session exits.</returns>
+  /// <exception cref="InvalidOperationException">
+  /// Thrown if REPL mode is not enabled via AddRepl() in the builder,
+  /// or if the source generator is not enabled.
+  /// </exception>
+  #pragma warning disable CA1822 // Member does not access instance data
+  public Task RunReplAsync(CancellationToken cancellationToken = default)
+  {
+      // This should never execute - interceptor replaces this call
+      throw new InvalidOperationException(
+          "RunReplAsync was not intercepted. Ensure AddRepl() is called and the source generator is enabled.");
+  }
+  #pragma warning restore CA1822
 }

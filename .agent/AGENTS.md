@@ -4,20 +4,26 @@ This file is the entry point for AI agents (OpenCode, Claude Code). Instructions
 
 ## When to Load Each File
 
+Format: **File:** link to read | **When:** context that triggers loading
+
 ### Shared Instructions (cross-repo patterns)
 
-| File | Load When... |
-|------|--------------|
-| [jaribu-testing-guide.md](shared/jaribu-testing-guide.md) | Writing, debugging, or reviewing Jaribu tests. Understanding test patterns, attributes ([Input], [Skip], [TestTag]), Setup/CleanUp, or multi-mode compatibility. |
-| [dotnet-runfiles.md](shared/dotnet-runfiles.md) | Working with .cs file-based apps (runfiles). Using directives (#:package, #:project), shebang syntax, or discussing dotnet-script (which is obsolete). |
-| [git-guidelines.md](shared/git-guidelines.md) | Making commits, PRs, merges. Understanding merge strategy (no squash, no rebase), worktree limitations, or commit message format. |
-| [agent-context-regions.md](shared/agent-context-regions.md) | Adding #region Purpose or #region Design blocks to source files. Understanding the pattern for embedding agent-useful context in code. |
+**File:** [jaribu-testing-guide.md](shared/jaribu-testing-guide.md)
+**When:** Writing, debugging, or reviewing Jaribu tests. Understanding test patterns, attributes ([Input], [Skip], [TestTag]), Setup/CleanUp, or multi-mode compatibility.
+
+**File:** [dotnet-runfiles.md](shared/dotnet-runfiles.md)
+**When:** Working with .cs file-based apps (runfiles). Using directives (#:package, #:project), shebang syntax, or discussing dotnet-script (which is obsolete).
+
+**File:** [git-guidelines.md](shared/git-guidelines.md)
+**When:** Making commits, PRs, merges. Understanding merge strategy (no squash, no rebase), worktree limitations, or commit message format.
+
+**File:** [agent-context-regions.md](shared/agent-context-regions.md)
+**When:** Adding #region Purpose or #region Design blocks to source files. Understanding the pattern for embedding agent-useful context in code.
 
 ### Local Instructions (this repo only)
 
-| File | Load When... |
-|------|--------------|
-| [nuru-specific.md](local/nuru-specific.md) | Working on TimeWarp.Nuru source code. Understanding the source generator architecture, fluent API patterns, or TestTerminal testing pattern. |
+**File:** [nuru-specific.md](local/nuru-specific.md)
+**When:** Working on TimeWarp.Nuru source code. Understanding the source generator architecture, fluent API patterns, or TestTerminal testing pattern.
 
 ## Quick Reference (always available)
 

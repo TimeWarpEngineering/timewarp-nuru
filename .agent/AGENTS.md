@@ -1,36 +1,43 @@
-# OpenCode Instructions
+# Agent Instructions Index
 
-This file configures OpenCode for the timewarp-nuru repository.
+This file is the entry point for AI agents (OpenCode, Claude Code). Instructions are organized into separate files for lazy loading - read the relevant file when the context matches.
 
-## Shared Instructions
+## When to Load Each File
 
-<!-- Include shared instructions that apply across repos -->
+### Shared Instructions (cross-repo patterns)
 
-- [Agent Context Regions](shared/agent-context-regions.md) - Using #region blocks for agent context
-- [.NET Runfiles](shared/dotnet-runfiles.md) - File-based app conventions
-- [Git Guidelines](shared/git-guidelines.md) - Git workflow and conventions
+| File | Load When... |
+|------|--------------|
+| [jaribu-testing-guide.md](shared/jaribu-testing-guide.md) | Writing, debugging, or reviewing Jaribu tests. Understanding test patterns, attributes ([Input], [Skip], [TestTag]), Setup/CleanUp, or multi-mode compatibility. |
+| [dotnet-runfiles.md](shared/dotnet-runfiles.md) | Working with .cs file-based apps (runfiles). Using directives (#:package, #:project), shebang syntax, or discussing dotnet-script (which is obsolete). |
+| [git-guidelines.md](shared/git-guidelines.md) | Making commits, PRs, merges. Understanding merge strategy (no squash, no rebase), worktree limitations, or commit message format. |
+| [agent-context-regions.md](shared/agent-context-regions.md) | Adding #region Purpose or #region Design blocks to source files. Understanding the pattern for embedding agent-useful context in code. |
 
-## Local Instructions
+### Local Instructions (this repo only)
 
-<!-- Repo-specific instructions -->
+| File | Load When... |
+|------|--------------|
+| [nuru-specific.md](local/nuru-specific.md) | Working on TimeWarp.Nuru source code. Understanding the source generator architecture, fluent API patterns, or TestTerminal testing pattern. |
 
-See [local/](local/) for repo-specific instructions.
-
-## Quick Reference
+## Quick Reference (always available)
 
 ### Build Commands
-- Full build: `dotnet build timewarp-nuru.slnx -c Release`
-- Runfile build: `dotnet runfiles/build.cs`
-- Clean & rebuild: `dotnet runfiles/clean-and-build.cs`
+```bash
+dotnet build timewarp-nuru.slnx -c Release  # Full build
+dotnet runfiles/build.cs                      # Runfile build with format/analyze
+dotnet runfiles/clean-and-build.cs            # Clean & rebuild
+```
 
 ### Test Commands
-- CI tests: `dotnet run tests/ci-tests/run-ci-tests.cs`
-- Single test: `dotnet run tests/timewarp-nuru-core-tests/routing/routing-01-basic.cs`
+```bash
+dotnet run tests/ci-tests/run-ci-tests.cs                              # CI tests (~500 tests)
+dotnet run tests/timewarp-nuru-core-tests/routing/routing-01-basic.cs  # Single test file
+```
 
-### Generated Files
-Source generated files emit to `artifacts/generated/{ProjectName}/`
+### Key Paths
+- Generated files: `artifacts/generated/{ProjectName}/`
+- Kanban tasks: `kanban/{to-do,in-progress,done,backlog}/`
 
-### Kanban Task Guidelines
-- **NEVER add these fields**: Status, Priority, Category
-- **Use ONLY**: Description, Parent (optional), Requirements (optional), Checklist (optional), Notes (optional)
-- Folder structure (to-do/in-progress/done/backlog) determines status
+### Kanban Rules
+- **NEVER add**: Status, Priority, Category fields (folder = status)
+- **Use**: Description, Checklist, Notes

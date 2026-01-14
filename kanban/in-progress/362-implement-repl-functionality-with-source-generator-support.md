@@ -97,12 +97,15 @@ while (Running)
 - [x] Add `ReplOptions` and `LoggerFactory` properties to `NuruCoreApp`
 - [x] Update `NuruCoreAppBuilder.Build()` to pass properties to app
 - [x] Add `AddRepl()` methods with null validation
+- [x] Make `ReplSession` public for generated code access
 
-### Phase 3: Testing & Validation
+### Phase 3: Testing & Validation (IN PROGRESS)
 
+- [x] Verify generated code compiles and runs (basic smoke test passed)
+- [x] Verify command execution works through REPL-enabled app
+- [x] Verify command prefixes are extracted correctly for completions
 - [ ] Add REPL unit tests using TestTerminal
 - [ ] Test interactive mode entry/exit
-- [ ] Test command execution in REPL
 - [ ] Test tab completion
 - [ ] Test history navigation
 - [ ] Verify `samples/_repl-demo/` work with new implementation

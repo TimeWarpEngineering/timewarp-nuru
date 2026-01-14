@@ -26,7 +26,7 @@ public sealed class NuruRouteRegistryTests
     // Arrange
     NuruRouteRegistry.Clear();
 
-    CompiledRoute route = new TimeWarp.Nuru.CompiledRouteBuilder()
+    CompiledRoute route = new CompiledRouteBuilder()
       .WithLiteral("greet")
       .WithParameter("name")
       .Build();
@@ -49,9 +49,9 @@ public sealed class NuruRouteRegistryTests
     // Arrange
     NuruRouteRegistry.Clear();
 
-    CompiledRoute route1 = new TimeWarp.Nuru.CompiledRouteBuilder().WithLiteral("exit").Build();
-    CompiledRoute route2 = new TimeWarp.Nuru.CompiledRouteBuilder().WithLiteral("quit").Build();
-    CompiledRoute route3 = new TimeWarp.Nuru.CompiledRouteBuilder().WithLiteral("q").Build();
+    CompiledRoute route1 = new CompiledRouteBuilder().WithLiteral("exit").Build();
+    CompiledRoute route2 = new CompiledRouteBuilder().WithLiteral("quit").Build();
+    CompiledRoute route3 = new CompiledRouteBuilder().WithLiteral("q").Build();
 
     // Act
     NuruRouteRegistry.Register<TestRequest2>(route1, "exit", "Exit app");
@@ -72,7 +72,7 @@ public sealed class NuruRouteRegistryTests
     // Arrange
     NuruRouteRegistry.Clear();
 
-    CompiledRoute route = new TimeWarp.Nuru.CompiledRouteBuilder().WithLiteral("test").Build();
+    CompiledRoute route = new CompiledRouteBuilder().WithLiteral("test").Build();
 
     // Act
     NuruRouteRegistry.Register<TestRequest1>(route, "test", "First");
@@ -92,7 +92,7 @@ public sealed class NuruRouteRegistryTests
     // Arrange
     NuruRouteRegistry.Clear();
 
-    CompiledRoute route = new TimeWarp.Nuru.CompiledRouteBuilder().WithLiteral("foo").Build();
+    CompiledRoute route = new CompiledRouteBuilder().WithLiteral("foo").Build();
     NuruRouteRegistry.Register<TestRequest1>(route, "foo", "Foo command");
 
     // Act & Assert
@@ -110,9 +110,9 @@ public sealed class NuruRouteRegistryTests
     // Arrange
     NuruRouteRegistry.Clear();
 
-    CompiledRoute route1 = new TimeWarp.Nuru.CompiledRouteBuilder().WithLiteral("cmd1").Build();
-    CompiledRoute route2 = new TimeWarp.Nuru.CompiledRouteBuilder().WithLiteral("cmd2").Build();
-    CompiledRoute route3 = new TimeWarp.Nuru.CompiledRouteBuilder().WithLiteral("cmd3").Build();
+    CompiledRoute route1 = new CompiledRouteBuilder().WithLiteral("cmd1").Build();
+    CompiledRoute route2 = new CompiledRouteBuilder().WithLiteral("cmd2").Build();
+    CompiledRoute route3 = new CompiledRouteBuilder().WithLiteral("cmd3").Build();
 
     NuruRouteRegistry.Register<TestRequest1>(route1, "cmd1", "Command 1");
     NuruRouteRegistry.Register<TestRequest2>(route2, "cmd2", "Command 2");
@@ -138,7 +138,7 @@ public sealed class NuruRouteRegistryTests
     // Arrange
     NuruRouteRegistry.Clear();
 
-    CompiledRoute route = new TimeWarp.Nuru.CompiledRouteBuilder().WithLiteral("test").Build();
+    CompiledRoute route = new CompiledRouteBuilder().WithLiteral("test").Build();
     NuruRouteRegistry.Register<TestRequest1>(route, "test", "Test");
 
     int countBefore = NuruRouteRegistry.Count;
@@ -158,7 +158,7 @@ public sealed class NuruRouteRegistryTests
 // ─────────────────────────────────────────────────────────────────────────────
 // Test request types
 // ─────────────────────────────────────────────────────────────────────────────
-public sealed class TestRequest1 : IRequest { }
-public sealed class TestRequest2 : IRequest { }
+public sealed class TestRequest1 : IMessage;
+public sealed class TestRequest2 : IMessage;
 
 } // namespace TimeWarp.Nuru.Tests.Core.RouteRegistry

@@ -19,6 +19,7 @@ Analysis of tests in `tests/timewarp-nuru-core-tests` that are NOT included in t
 - **Task #358** - ✅ Fixed source generator chaining issues: replaced `[GeneratedRegex]` with runtime Regex, moved `CheckUpdatesGitHubRelease` and JSON context to core library
 - **show-help-colors.cs** - ✅ Deleted (obsolete v1 demo using EndpointCollection, HelpProvider.GetHelpText - not a test)
 - **message-type-02-help-output.cs** - ✅ Deleted (obsolete v1 API: EndpointCollection, PatternParser.Parse, HelpProvider.GetHelpText)
+- **nuru-route-registry-01-basic.cs** - ✅ Fixed (IRequest → IMessage), added to CI (6 tests)
 
 ## Scope
 
@@ -75,13 +76,15 @@ All options tests are now in CI.
 
 Note: Original exclusion reason was wrong - file tests `SessionContext` class which still exists
 
-### Root-level Tests (3 files)
+### Root-level Tests (2 files excluded)
 
 | File | Exclusion Reason |
 |------|------------------|
 | `capabilities-01-basic.cs` | Not included in any Compile directive |
 | `capabilities-02-integration.cs` | Not included in any Compile directive |
-| `nuru-route-registry-01-basic.cs` | Uses `IRequest` which no longer exists |
+
+**Added to CI**:
+- `nuru-route-registry-01-basic.cs` - Fixed IRequest → IMessage (6 tests)
 
 **Deleted**:
 - `show-help-colors.cs` (obsolete v1 demo, not a test)
@@ -107,17 +110,16 @@ Note: Original exclusion reason was wrong - file tests `SessionContext` class wh
 | Configuration | 2 | 2 | 0 |
 | Options | 2 | 2 | 0 |
 | Session | 1 | 1 | 0 |
-| Root-level | 4 | 1 | 3 |
+| Root-level | 4 | 2 | 2 |
 | Lexer | 16 | 16 | 0 |
 | Parser | 15 | 15 | 0 |
 | Type Conversion | 1 | 1 | 0 |
-| **Total** | **65** | **62** | **3** |
+| **Total** | **65** | **63** | **2** |
 
 ## Recommendations
 
 ### High Priority - API Migration Needed
-These tests use deprecated/removed APIs and need updating:
-- `nuru-route-registry-01-basic.cs` - needs `IRequest` replacement
+None - all API migrations complete.
 
 ### Medium Priority - None
 All extension API tests have been migrated to CI.

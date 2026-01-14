@@ -1,5 +1,5 @@
 #!/usr/bin/dotnet --
-#:project ../../source/timewarp-nuru/timewarp-nuru.csproj
+#:project ../../../source/timewarp-nuru/timewarp-nuru.csproj
 
 // Integration tests for --capabilities route
 
@@ -149,57 +149,30 @@ public class CapabilitiesIntegrationTests
     terminal.OutputContains("\"alias\": \"o\"").ShouldBeTrue("Should contain option alias");
   }
 
-  public static async Task Should_register_capabilities_route_by_default()
+  public static async Task Should_output_capabilities_with_valid_structure()
   {
-    // Arrange & Act - NuruApp.CreateBuilder() calls UseAllExtensions() which registers --capabilities
-    NuruAppBuilder builder = NuruApp.CreateBuilder([]);
+    // Arrange
+    using TestTerminal terminal = new();
 
-    // Assert - Should have --capabilities route (same pattern as --version tests)
-    bool hasCapabilitiesRoute = builder.EndpointCollection.Any(e =>
-      e.CompiledRoute.OptionMatchers.Any(opt =>
-        opt.MatchPattern == "--capabilities"));
+    NuruCoreApp app = NuruApp.CreateBuilder([])
+      .UseTerminal(terminal)
+      .Map("test").WithHandler(() => "ok").Done()
+      .Build();
 
-    hasCapabilitiesRoute.ShouldBeTrue("--capabilities route should be registered by CreateBuilder()");
+    // Act
+    int exitCode = await app.RunAsync(["--capabilities"]);
 
-    await Task.CompletedTask;
+    // Assert
+    exitCode.ShouldBe(0);
+
+    // Verify JSON structure has required top-level fields
+    terminal.OutputContains("\"name\":").ShouldBeTrue("Should contain name field");
+    terminal.OutputContains("\"commands\":").ShouldBeTrue("Should contain commands array");
+
+    // Version should be present (from assembly metadata)
+    terminal.OutputContains("\"version\":").ShouldBeTrue("Should contain version field");
   }
 
-  public static async Task Should_not_register_capabilities_route_when_disabled()
-  {
-    // Arrange & Act - DisableCapabilitiesRoute = true should prevent auto-registration
-    NuruAppBuilder builder = NuruApp.CreateBuilder([], new NuruAppOptions
-    {
-      DisableCapabilitiesRoute = true
-    });
-
-    // Assert - Should NOT have --capabilities route
-    bool hasCapabilitiesRoute = builder.EndpointCollection.Any(e =>
-      e.CompiledRoute.OptionMatchers.Any(opt =>
-        opt.MatchPattern == "--capabilities"));
-
-    hasCapabilitiesRoute.ShouldBeFalse("DisableCapabilitiesRoute = true should not auto-register --capabilities route");
-
-    await Task.CompletedTask;
-  }
-
-  public static async Task Should_allow_manual_capabilities_route_registration()
-  {
-    // Arrange - Start with capabilities disabled, then manually add
-    NuruAppBuilder builder = NuruApp.CreateBuilder([], new NuruAppOptions
-    {
-      DisableCapabilitiesRoute = true
-    });
-    builder.AddCapabilitiesRoute();
-
-    // Assert - Should now have --capabilities route after manual registration
-    bool hasCapabilitiesRoute = builder.EndpointCollection.Any(e =>
-      e.CompiledRoute.OptionMatchers.Any(opt =>
-        opt.MatchPattern == "--capabilities"));
-
-    hasCapabilitiesRoute.ShouldBeTrue("AddCapabilitiesRoute() should register --capabilities route");
-
-    await Task.CompletedTask;
-  }
 }
 
 } // namespace TimeWarp.Nuru.Tests.Core.CapabilitiesIntegration

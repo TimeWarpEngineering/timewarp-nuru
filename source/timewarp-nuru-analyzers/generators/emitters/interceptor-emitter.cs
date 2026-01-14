@@ -354,7 +354,8 @@ internal static class InterceptorEmitter
 
     // Built-in flags: --help, --version, --capabilities
     // Emitted AFTER user routes so users can override default behavior
-    EmitBuiltInFlags(sb, app);
+    string methodSuffix = model.Apps.Length > 1 ? $"_{appIndex}" : "";
+    EmitBuiltInFlags(sb, app, methodSuffix);
 
     // No match fallback
     EmitNoMatch(sb);
@@ -399,7 +400,10 @@ internal static class InterceptorEmitter
   /// <summary>
   /// Emits handling for built-in flags (--help, --version, --capabilities).
   /// </summary>
-  private static void EmitBuiltInFlags(StringBuilder sb, AppModel app)
+  /// <param name="sb">The StringBuilder to append to.</param>
+  /// <param name="app">The application model.</param>
+  /// <param name="methodSuffix">Suffix for per-app helper methods (e.g., "_0" for multi-app assemblies).</param>
+  private static void EmitBuiltInFlags(StringBuilder sb, AppModel app, string methodSuffix)
   {
     // --help flag
     if (app.HasHelp)
@@ -407,13 +411,13 @@ internal static class InterceptorEmitter
       sb.AppendLine("    // Built-in: --help");
       sb.AppendLine("    if (routeArgs is [\"--help\" or \"-h\"])");
       sb.AppendLine("    {");
-      sb.AppendLine("      PrintHelp(app.Terminal);");
+      sb.AppendLine($"      PrintHelp{methodSuffix}(app.Terminal);");
       sb.AppendLine("      return 0;");
       sb.AppendLine("    }");
       sb.AppendLine();
     }
 
-    // --version flag (always available)
+    // --version flag (always available) - shared across apps (assembly-level)
     sb.AppendLine("    // Built-in: --version");
     sb.AppendLine("    if (routeArgs is [\"--version\"])");
     sb.AppendLine("    {");
@@ -426,7 +430,7 @@ internal static class InterceptorEmitter
     sb.AppendLine("    // Built-in: --capabilities (for AI tools)");
     sb.AppendLine("    if (routeArgs is [\"--capabilities\"])");
     sb.AppendLine("    {");
-    sb.AppendLine("      PrintCapabilities(app.Terminal);");
+    sb.AppendLine($"      PrintCapabilities{methodSuffix}(app.Terminal);");
     sb.AppendLine("      return 0;");
     sb.AppendLine("    }");
     sb.AppendLine();
@@ -491,52 +495,45 @@ internal static class InterceptorEmitter
   {
     sb.AppendLine();
 
-    // Create a combined AppModel for helper method emission
-    // These helpers (PrintHelp, PrintVersion, etc.) need route info from all apps
-    AppModel combinedForHelpers = CreateCombinedAppModelForHelpers(model);
+    // Emit per-app helper methods (PrintHelp, PrintCapabilities)
+    // Each app gets its own helpers with only its routes
+    for (int appIndex = 0; appIndex < model.Apps.Length; appIndex++)
+    {
+      AppModel app = model.Apps[appIndex];
+      string methodSuffix = model.Apps.Length > 1 ? $"_{appIndex}" : "";
 
-    HelpEmitter.Emit(sb, combinedForHelpers);
-    sb.AppendLine();
-    VersionEmitter.Emit(sb, combinedForHelpers);
-    sb.AppendLine();
-    CapabilitiesEmitter.Emit(sb, combinedForHelpers);
+      // Enrich app with version metadata from GeneratorModel
+      AppModel enrichedApp = app with
+      {
+        Version = model.Version,
+        CommitHash = model.CommitHash,
+        CommitDate = model.CommitDate
+      };
 
+      HelpEmitter.Emit(sb, enrichedApp, methodSuffix);
+      sb.AppendLine();
+      CapabilitiesEmitter.Emit(sb, enrichedApp, methodSuffix);
+      sb.AppendLine();
+    }
+
+    // Version is shared (assembly-level, same for all apps)
+    // Use first app for metadata, enriched with version info
+    AppModel firstAppForVersion = model.Apps[0] with
+    {
+      Version = model.Version,
+      CommitHash = model.CommitHash,
+      CommitDate = model.CommitDate
+    };
+    VersionEmitter.Emit(sb, firstAppForVersion);
+
+    // CheckUpdates is shared (checks same GitHub repo)
     if (model.HasCheckUpdatesRoute)
     {
       sb.AppendLine();
-      CheckUpdatesEmitter.Emit(sb, combinedForHelpers);
+      CheckUpdatesEmitter.Emit(sb, firstAppForVersion);
     }
 
     sb.AppendLine("}"); // Close class
     sb.AppendLine("}"); // Close namespace
-  }
-
-  /// <summary>
-  /// Creates a combined AppModel for emitting helper methods.
-  /// Helper methods (PrintHelp, PrintVersion, etc.) need aggregated data from all apps.
-  /// </summary>
-  private static AppModel CreateCombinedAppModelForHelpers(GeneratorModel model)
-  {
-    // Combine all routes for help output
-    ImmutableArray<RouteDefinition> allRoutes = [.. model.AllRoutes];
-
-    return new AppModel(
-      VariableName: null,
-      Name: model.Name,
-      Description: model.Description,
-      AiPrompt: model.AiPrompt,
-      HasHelp: model.HasHelp,
-      HelpOptions: model.HelpOptions,
-      HasRepl: model.HasRepl,
-      ReplOptions: model.ReplOptions,
-      HasConfiguration: model.HasConfiguration,
-      HasCheckUpdatesRoute: model.HasCheckUpdatesRoute,
-      Routes: allRoutes,
-      Behaviors: [.. model.AllBehaviors],
-      Services: [.. model.AllServices],
-      InterceptSites: [], // Not needed for helpers
-      UserUsings: model.UserUsings,
-      CustomConverters: [.. model.AllConverters],
-      LoggingConfiguration: null); // Combined model doesn't use logging config
   }
 }

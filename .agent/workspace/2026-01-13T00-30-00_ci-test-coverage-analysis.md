@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-Analysis of tests in `tests/timewarp-nuru-core-tests` that are NOT included in the CI test runner (`tests/ci-tests/run-ci-tests.cs`). Found **9 test files** excluded from CI across 4 categories.
+Analysis of tests in `tests/timewarp-nuru-core-tests` that are NOT included in the CI test runner (`tests/ci-tests/run-ci-tests.cs`). **All test files are now in CI.** CI has 534 tests (527 pass, 6 fail, 1 skip).
 
 ## Progress
 
@@ -19,118 +19,74 @@ Analysis of tests in `tests/timewarp-nuru-core-tests` that are NOT included in t
 - **Task #358** - ✅ Fixed source generator chaining issues: replaced `[GeneratedRegex]` with runtime Regex, moved `CheckUpdatesGitHubRelease` and JSON context to core library
 - **show-help-colors.cs** - ✅ Deleted (obsolete v1 demo using EndpointCollection, HelpProvider.GetHelpText - not a test)
 - **message-type-02-help-output.cs** - ✅ Deleted (obsolete v1 API: EndpointCollection, PatternParser.Parse, HelpProvider.GetHelpText)
-- **nuru-route-registry-01-basic.cs** - ✅ Fixed (IRequest → IMessage), added to CI (6 tests)
+- **nuru-route-registry-01-basic.cs** - ✅ Deleted (dead code - NuruRouteRegistry was never integrated into runtime)
+- **NuruRouteRegistry + RegisteredRoute** - ✅ Deleted from source (dead code - generator uses InvokerRegistry instead)
+- **capabilities-01-basic.cs** - ✅ Moved to `capabilities/` folder, added to CI (7 tests pass - serialization)
+- **capabilities-02-integration.cs** - ✅ Moved to `capabilities/` folder, added to CI (3 pass, 6 fail - route not implemented, task #157)
+
+## Blocking Issues
+
+**6 failing tests** in `CapabilitiesIntegration` block shipping until task #157 is complete:
+- Tests require `--capabilities` route which is not yet implemented
+- Route infrastructure exists (`DisableCapabilitiesRoute` option, response models) but route registration missing
 
 ## Scope
 
 - **Analyzed**: All `.cs` files in `tests/timewarp-nuru-core-tests/`
 - **Reference**: `tests/ci-tests/Directory.Build.props` which defines what's compiled into CI
 
-## Methodology
-
-Compared the glob patterns and explicit includes in `Directory.Build.props` against actual files in `tests/timewarp-nuru-core-tests/`.
-
 ## Tests NOT in CI
 
-### Generator Tests (0 files excluded)
-
-All generator tests are now in CI.
-
-**Included in CI**: generator-01, generator-04, generator-10, generator-11, generator-12, generator-13, generator-14
-
-**Deleted**: generator-03 (redundant - short-only options tested in routing-09, routing-12)
-
-**Rewritten**: generator-04 (now tests functionality instead of generated code content)
-
-### Routing Tests (0 files excluded)
-
-All routing tests are now in CI.
-
-**Moved**: `dsl-example.cs` → `documentation/developer/design/dsl/fluent-api-example.cs` (design doc, not a test)
-
-**Fixed**: routing-08 - removed `UseDebugLogging()`, fixed bug #355 (positional before `--`), added to CI
-
-**Fixed**: routing-15 - removed `AddAutoHelp()` (now default), rewrote tests to use TestTerminal pattern (no closures), added to CI
-
-**Fixed**: routing-20 - Fixed Task #357 (generator emits user routes before built-ins), added to CI
-
-**Fixed**: routing-21 - Rewritten to use TestTerminal pattern, Task #358 fixed (source gen chaining)
-
-### Configuration Tests (0 files excluded)
-
-All configuration tests are now in CI.
-
-**Rewritten**: configuration-01 - Removed obsolete `AddDependencyInjection()` API, rewrote to test lazy IOptions<T> evaluation (5 tests)
-
-### Options Tests (0 files excluded)
-
-All options tests are now in CI.
-
-**Added**: options-01-mixed-required-optional (4 tests), options-02-optional-flag-optional-value (3 tests)
-
-**Note**: Exclusion reason "Uses `CreateSlimBuilder()` API" was outdated - files didn't use that API
-
-### Session Tests (0 files excluded)
-
-**Renamed and moved**: `help-provider-03-session-context.cs` → `session/session-context-01-basic.cs` (5 tests)
-
-Note: Original exclusion reason was wrong - file tests `SessionContext` class which still exists
-
-### Root-level Tests (2 files excluded)
-
-| File | Exclusion Reason |
-|------|------------------|
-| `capabilities-01-basic.cs` | Not included in any Compile directive |
-| `capabilities-02-integration.cs` | Not included in any Compile directive |
-
-**Added to CI**:
-- `nuru-route-registry-01-basic.cs` - Fixed IRequest → IMessage (6 tests)
-
-**Deleted**:
-- `show-help-colors.cs` (obsolete v1 demo, not a test)
-- `message-type-02-help-output.cs` (obsolete v1 API)
+**None** - all test files are now in CI.
 
 ## What IS Included in CI
 
 | Category | Pattern/Files |
 |----------|---------------|
-| Lexer | `lexer/*.cs` (all 15 files) |
-| Parser | `parser/*.cs` (all 15 files) |
+| Lexer | `lexer/*.cs` (16 files) |
+| Parser | `parser/*.cs` (15 files) |
 | Type Conversion | `type-conversion/*.cs` (1 file) |
-| Generator | 4 specific files (01, 10, 11, 12) |
-| Routing | All `routing/*.cs` files |
-| Message Type | `message-type-01-fluent-api.cs` only |
+| Generator | 7 specific files (01, 04, 10, 11, 12, 13, 14) |
+| Routing | All `routing/*.cs` files (18 files) |
+| Message Type | `message-type-01-fluent-api.cs` |
+| Configuration | `configuration/*.cs` (2 files) |
+| Options | `options/*.cs` (2 files) |
+| Session | `session/*.cs` (1 file) |
+| Capabilities | `capabilities/*.cs` (2 files) |
 
 ## Summary by Category
 
 | Category | Total Files | In CI | Excluded |
 |----------|-------------|-------|----------|
-| Generator | 6 | 6 | 0 |
+| Generator | 7 | 7 | 0 |
 | Routing | 18 | 18 | 0 |
 | Configuration | 2 | 2 | 0 |
 | Options | 2 | 2 | 0 |
 | Session | 1 | 1 | 0 |
-| Root-level | 4 | 2 | 2 |
+| Capabilities | 2 | 2 | 0 |
 | Lexer | 16 | 16 | 0 |
 | Parser | 15 | 15 | 0 |
 | Type Conversion | 1 | 1 | 0 |
-| **Total** | **65** | **63** | **2** |
+| Root-level | 1 | 1 | 0 |
+| **Total** | **65** | **65** | **0** |
 
-## Recommendations
+## CI Test Results
 
-### High Priority - API Migration Needed
-None - all API migrations complete.
+- **Total**: 534 tests
+- **Passed**: 527
+- **Failed**: 6 (CapabilitiesIntegration - task #157)
+- **Skipped**: 1 (HelpRoutePriority - task #356)
 
-### Medium Priority - None
-All extension API tests have been migrated to CI.
+## Deleted Files (Dead Code)
 
-### Low Priority - None
-All isolation-required tests have been migrated to CI.
-
-### Consider Deletion
-- `capabilities-01-basic.cs` / `capabilities-02-integration.cs` - Not included, status unclear
+- `source/timewarp-nuru-core/nuru-route-registry.cs` - Never integrated
+- `source/timewarp-nuru-core/registered-route.cs` - Only used by NuruRouteRegistry
+- `tests/timewarp-nuru-core-tests/nuru-route-registry-01-basic.cs` - Tested dead code
+- `tests/timewarp-nuru-core-tests/show-help-colors.cs` - Obsolete v1 demo
+- `tests/timewarp-nuru-core-tests/message-type-02-help-output.cs` - Obsolete v1 API
 
 ## References
 
 - `tests/ci-tests/Directory.Build.props` - CI test configuration
 - `tests/ci-tests/run-ci-tests.cs` - CI test runner entry point
+- `kanban/in-progress/157-add-capabilities-flag-for-ai-tool-discovery.md` - Blocking task

@@ -4,13 +4,9 @@
 
 Add a well-known `--capabilities` flag to Nuru CLIs that returns machine-readable JSON metadata about all commands. This enables AI tools (OpenCode, Claude, etc.) to discover CLI capabilities without MCP complexity.
 
-## Parent
-
-148-nuru-3-unified-route-pipeline
-
 ## Dependencies
 
-- 156-add-iidempotent-interface-and-idempotency-metadata-to-routes (MessageType metadata)
+- ~~156-add-iidempotent-interface-and-idempotency-metadata-to-routes (MessageType metadata)~~ ✅ Complete
 
 ## Background
 
@@ -36,27 +32,31 @@ JSON with commands, parameters, options, descriptions, and message types.
 ## Checklist
 
 ### Design
-- [ ] Define `CapabilitiesResponse` model
-- [ ] Define `CommandCapability` model
-- [ ] Define `ParameterCapability` model
-- [ ] Define `OptionCapability` model
+- [x] Define `CapabilitiesResponse` model (inline in emitter)
+- [x] Define `CommandCapability` model (inline in emitter)
+- [x] Define `ParameterCapability` model (inline in emitter)
+- [x] Define `OptionCapability` model (inline in emitter)
 
 ### Implementation
-- [ ] Add `--capabilities` as built-in route (like `--help`, `--version`)
-- [ ] Implement `GetCapabilities()` method on app to gather route metadata
-- [ ] Mark route as `.AsQuery().Hidden()` (hidden from `--help`)
-- [ ] JSON serialization with proper formatting
+- [x] Add `--capabilities` as built-in route (like `--help`, `--version`)
+- [x] Implement capabilities gathering from route metadata
+- [x] Mark route as `.AsQuery().Hidden()` (hidden from `--help`)
+- [x] JSON serialization with proper formatting
 
 ### Integration
-- [ ] Auto-register `--capabilities` in `NuruApp.Build()`
-- [ ] Include app name, version, description from metadata
-- [ ] Include all registered routes with full metadata
+- [x] Auto-register `--capabilities` in `NuruApp.Build()`
+- [x] Include app name, version, description from metadata
+- [x] Include commitHash and commitDate from assembly metadata
+- [x] Include all registered routes with full metadata
+- [x] Removed dead code: `DisableCapabilitiesRoute` option
 
 ### Testing
-- [ ] Unit tests for `CapabilitiesResponse` serialization
-- [ ] Integration test verifying JSON output format
-- [ ] Test that hidden routes are excluded
-- [ ] Test that `--capabilities` itself is hidden from `--help`
+- [x] Integration test verifying JSON output format
+- [x] Test that hidden routes are excluded
+- [x] Test query message type output
+- [x] Test idempotent-command message type (kebab-case)
+- [x] Test typed parameter info
+- [x] Test option info with alias
 
 ## Notes
 

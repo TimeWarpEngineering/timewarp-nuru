@@ -12,11 +12,10 @@
 //   The NuruAttributedRouteGenerator source generator scans for classes with
 //   [NuruRoute] and generates:
 //   1. CompiledRouteBuilder calls for each route
-//   2. ModuleInitializer code to register routes with NuruRouteRegistry
+//   2. ModuleInitializer code to register invokers with InvokerRegistry
 //   3. Route pattern strings for help display
 //
-// At app.Build() time, routes from NuruRouteRegistry are added to the
-// endpoint collection automatically.
+// At app.Build() time, routes are added to the endpoint collection automatically.
 //
 // COMMANDS (see commands/ folder):
 //   - GreetRequest        - Simple parameter example

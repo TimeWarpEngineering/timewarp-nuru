@@ -1,7 +1,7 @@
 #!/usr/bin/dotnet --
-#:project ../../source/timewarp-nuru/timewarp-nuru.csproj
+#:project ../../../source/timewarp-nuru/timewarp-nuru.csproj
 
-// Test --capabilities route and CapabilitiesResponse serialization
+// Test CapabilitiesResponse serialization
 
 #if !JARIBU_MULTI
 return await RunAllTests();
@@ -15,25 +15,6 @@ public class CapabilitiesBasicTests
 {
   [ModuleInitializer]
   internal static void Register() => RegisterTests<CapabilitiesBasicTests>();
-
-  public static async Task Should_hide_capabilities_route_from_help()
-  {
-    // Arrange
-    EndpointCollection endpoints = [];
-    endpoints.Add(CreateEndpoint("mycommand", "User command"));
-    endpoints.Add(CreateEndpoint("--capabilities", "Machine-readable metadata"));
-
-    HelpOptions options = new();
-
-    // Act
-    string helpText = HelpProvider.GetHelpText(endpoints, "testapp", null, options, HelpContext.Cli, useColor: false);
-
-    // Assert
-    helpText.ShouldContain("mycommand");
-    helpText.ShouldNotContain("--capabilities");
-
-    await Task.CompletedTask;
-  }
 
   public static async Task Should_serialize_capabilities_response_to_json()
   {
@@ -306,17 +287,6 @@ public class CapabilitiesBasicTests
     json.ShouldContain("\"isRepeated\": true");
 
     await Task.CompletedTask;
-  }
-
-  private static Endpoint CreateEndpoint(string pattern, string? description = null)
-  {
-    return new Endpoint
-    {
-      RoutePattern = pattern,
-      CompiledRoute = PatternParser.Parse(pattern),
-      Handler = () => 0,
-      Description = description
-    };
   }
 
   private static int CountOccurrences(string text, string pattern)

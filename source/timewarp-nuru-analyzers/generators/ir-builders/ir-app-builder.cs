@@ -283,6 +283,9 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
       Name: Name,
       Description: Description,
       AiPrompt: AiPrompt,
+      Version: null,      // Populated later from AssemblyMetadataExtractor
+      CommitHash: null,   // Populated later from AssemblyMetadataExtractor
+      CommitDate: null,   // Populated later from AssemblyMetadataExtractor
       HasHelp: HasHelp,
       HelpOptions: HelpOptions,
       HasRepl: HasRepl,

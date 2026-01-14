@@ -16,9 +16,10 @@ internal static class CapabilitiesEmitter
   /// </summary>
   /// <param name="sb">The StringBuilder to append to.</param>
   /// <param name="model">The application model containing routes and metadata.</param>
-  public static void Emit(StringBuilder sb, AppModel model)
+  /// <param name="methodSuffix">Suffix for method name (e.g., "_0" for multi-app assemblies).</param>
+  public static void Emit(StringBuilder sb, AppModel model, string methodSuffix = "")
   {
-    sb.AppendLine("  private static void PrintCapabilities(ITerminal terminal)");
+    sb.AppendLine($"  private static void PrintCapabilities{methodSuffix}(ITerminal terminal)");
     sb.AppendLine("  {");
 
     // Build the JSON as a raw string literal
@@ -40,6 +41,25 @@ internal static class CapabilitiesEmitter
   {
     string name = EscapeJsonString(model.Name ?? "app");
     sb.AppendLine($"      \"name\": \"{name}\",");
+
+    // Version info (from assembly metadata, extracted at compile time)
+    if (model.Version is not null)
+    {
+      string version = EscapeJsonString(model.Version);
+      sb.AppendLine($"      \"version\": \"{version}\",");
+    }
+
+    if (model.CommitHash is not null)
+    {
+      string commitHash = EscapeJsonString(model.CommitHash);
+      sb.AppendLine($"      \"commitHash\": \"{commitHash}\",");
+    }
+
+    if (model.CommitDate is not null)
+    {
+      string commitDate = EscapeJsonString(model.CommitDate);
+      sb.AppendLine($"      \"commitDate\": \"{commitDate}\",");
+    }
 
     if (model.Description is not null)
     {
@@ -90,9 +110,9 @@ internal static class CapabilitiesEmitter
       sb.AppendLine($"          \"description\": \"{description}\",");
     }
 
-    // Message type (maps to AI safety level)
-    string messageType = route.MessageType.ToLowerInvariant();
-    sb.AppendLine($"          \"type\": \"{messageType}\",");
+    // Message type (maps to AI safety level) - convert to kebab-case
+    string messageType = ToKebabCase(route.MessageType);
+    sb.AppendLine($"          \"messageType\": \"{messageType}\",");
 
     // Parameters
     if (route.Parameters.Any())
@@ -181,13 +201,13 @@ internal static class CapabilitiesEmitter
       if (option.LongForm is not null)
       {
         sb.AppendLine(
-          $"              \"long\": \"--{EscapeJsonString(option.LongForm)}\",");
+          $"              \"name\": \"{EscapeJsonString(option.LongForm)}\",");
       }
 
       if (option.ShortForm is not null)
       {
         sb.AppendLine(
-          $"              \"short\": \"-{EscapeJsonString(option.ShortForm)}\",");
+          $"              \"alias\": \"{EscapeJsonString(option.ShortForm)}\",");
       }
 
       if (option.Description is not null)
@@ -237,5 +257,33 @@ internal static class CapabilitiesEmitter
       .Replace("\n", "\\n", StringComparison.Ordinal)
       .Replace("\r", "\\r", StringComparison.Ordinal)
       .Replace("\t", "\\t", StringComparison.Ordinal);
+  }
+
+  /// <summary>
+  /// Converts a PascalCase string to kebab-case.
+  /// Example: "IdempotentCommand" -> "idempotent-command"
+  /// </summary>
+  private static string ToKebabCase(string value)
+  {
+    if (string.IsNullOrEmpty(value))
+      return value;
+
+    StringBuilder result = new();
+    for (int i = 0; i < value.Length; i++)
+    {
+      char c = value[i];
+      if (char.IsUpper(c))
+      {
+        if (i > 0)
+          result.Append('-');
+        result.Append(char.ToLowerInvariant(c));
+      }
+      else
+      {
+        result.Append(c);
+      }
+    }
+
+    return result.ToString();
   }
 }

@@ -32,10 +32,9 @@
     <!-- <Compile Include="../timewarp-nuru-core-tests/help-provider-05-color-output.cs" /> -->
     
     <!-- <Compile Include="../timewarp-nuru-core-tests/invoker-registry-01-basic.cs" /> -->
-    <Compile Include="../timewarp-nuru-core-tests/message-type-01-fluent-api.cs" />
+    <!-- Message type tests -->
+    <Compile Include="../timewarp-nuru-core-tests/message-type/*.cs" />
     <!-- <Compile Include="../timewarp-nuru-core-tests/message-type-02-help-output.cs" /> -->
-    <!-- Route registry tests -->
-    <Compile Include="../timewarp-nuru-core-tests/nuru-route-registry-01-basic.cs" />
     <!-- TODO: Create or restore route-builder-01-basic.cs -->
     <!-- <Compile Include="../timewarp-nuru-core-tests/route-builder-01-basic.cs" /> -->
     <!-- <Compile Include="../timewarp-nuru-core-tests/test-terminal-context-01-basic.cs" /> -->
@@ -55,6 +54,8 @@
     <Compile Include="../timewarp-nuru-core-tests/options/options-02-optional-flag-optional-value.cs" />
     <!-- Session tests -->
     <Compile Include="../timewarp-nuru-core-tests/session/session-context-01-basic.cs" />
+    <!-- Capabilities tests (task #157 - route not yet implemented) -->
+    <Compile Include="../timewarp-nuru-core-tests/capabilities/*.cs" />
     <!-- Type conversion tests (migrated) -->
     <Compile Include="../timewarp-nuru-core-tests/type-conversion/*.cs" />
     <!-- Completion tests - static (migrated) -->

@@ -16,9 +16,10 @@ internal static class HelpEmitter
   /// </summary>
   /// <param name="sb">The StringBuilder to append to.</param>
   /// <param name="model">The application model containing routes and metadata.</param>
-  public static void Emit(StringBuilder sb, AppModel model)
+  /// <param name="methodSuffix">Suffix for method name (e.g., "_0" for multi-app assemblies).</param>
+  public static void Emit(StringBuilder sb, AppModel model, string methodSuffix = "")
   {
-    sb.AppendLine("  private static void PrintHelp(ITerminal terminal)");
+    sb.AppendLine($"  private static void PrintHelp{methodSuffix}(ITerminal terminal)");
     sb.AppendLine("  {");
 
     EmitHeader(sb, model);

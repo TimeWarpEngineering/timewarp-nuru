@@ -94,13 +94,19 @@ public sealed class NuruGenerator : IIncrementalGenerator
         transform: static (ctx, ct) => AppExtractor.ExtractWithDiagnostics(ctx, ct))
       .Where(static result => result.Model is not null);
 
-    // 7. Combine extraction results with attributed routes and locations into GeneratorModel
+    // 6b. Extract assembly metadata (version, commit hash, commit date) from compilation
+    IncrementalValueProvider<AssemblyMetadata> assemblyMetadata = context.CompilationProvider
+      .Select(static (compilation, _) => AssemblyMetadataExtractor.Extract(compilation));
+
+    // 7. Combine extraction results with attributed routes, locations, and assembly metadata into GeneratorModel
     IncrementalValueProvider<GeneratorModelWithDiagnostics?> generatorModelWithDiagnostics = extractionResults
       .Collect()
       .Combine(collectedAttributedRoutes)
       .Combine(routeLocations)
+      .Combine(assemblyMetadata)
       .Select(static (data, ct) => CreateGeneratorModelWithValidation(
-        data.Left.Left,
+        data.Left.Left.Left,
+        data.Left.Left.Right,
         data.Left.Right,
         data.Right,
         ct));
@@ -274,6 +280,7 @@ public sealed class NuruGenerator : IIncrementalGenerator
     ImmutableArray<ExtractionResult> extractionResults,
     ImmutableArray<RouteDefinition?> attributedRoutes,
     ImmutableDictionary<string, Location> routeLocations,
+    AssemblyMetadata assemblyMetadata,
     CancellationToken cancellationToken
   )
   {
@@ -341,7 +348,10 @@ public sealed class NuruGenerator : IIncrementalGenerator
     GeneratorModel model = new(
       Apps: [.. uniqueApps.Values],
       UserUsings: userUsings,
-      AttributedRoutes: allEndpoints);
+      AttributedRoutes: allEndpoints,
+      Version: assemblyMetadata.Version,
+      CommitHash: assemblyMetadata.CommitHash,
+      CommitDate: assemblyMetadata.CommitDate);
 
     return new GeneratorModelWithDiagnostics(model, [.. allDiagnostics]);
   }

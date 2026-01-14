@@ -7,10 +7,16 @@ namespace TimeWarp.Nuru.Generators;
 /// <param name="Apps">Individual app models, each with isolated routes and intercept sites</param>
 /// <param name="UserUsings">User's using directives to include in generated code</param>
 /// <param name="AttributedRoutes">Routes from [NuruRoute] attributed classes (shared across all apps)</param>
+/// <param name="Version">Assembly version (from AssemblyInformationalVersionAttribute or AssemblyVersion)</param>
+/// <param name="CommitHash">Git commit hash (from TimeWarp.Build.Tasks, may be null)</param>
+/// <param name="CommitDate">Git commit date (from TimeWarp.Build.Tasks, may be null)</param>
 public sealed record GeneratorModel(
   ImmutableArray<AppModel> Apps,
   ImmutableArray<string> UserUsings,
-  ImmutableArray<RouteDefinition> AttributedRoutes)
+  ImmutableArray<RouteDefinition> AttributedRoutes,
+  string? Version,
+  string? CommitHash,
+  string? CommitDate)
 {
   /// <summary>
   /// Gets whether any app has help enabled.

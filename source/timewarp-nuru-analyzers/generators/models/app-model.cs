@@ -8,6 +8,9 @@ namespace TimeWarp.Nuru.Generators;
 /// <param name="Name">Application name for help/version output</param>
 /// <param name="Description">Application description for help output</param>
 /// <param name="AiPrompt">AI prompt for --capabilities output</param>
+/// <param name="Version">Assembly version (from AssemblyInformationalVersionAttribute or AssemblyVersion)</param>
+/// <param name="CommitHash">Git commit hash (from TimeWarp.Build.Tasks, may be null)</param>
+/// <param name="CommitDate">Git commit date (from TimeWarp.Build.Tasks, may be null)</param>
 /// <param name="HasHelp">Whether help is enabled</param>
 /// <param name="HelpOptions">Help configuration, if enabled</param>
 /// <param name="HasRepl">Whether REPL mode is enabled</param>
@@ -28,6 +31,9 @@ public sealed record AppModel(
   string? Name,
   string? Description,
   string? AiPrompt,
+  string? Version,
+  string? CommitHash,
+  string? CommitDate,
   bool HasHelp,
   HelpModel? HelpOptions,
   bool HasRepl,
@@ -52,6 +58,9 @@ public sealed record AppModel(
     Name: null,
     Description: null,
     AiPrompt: null,
+    Version: null,
+    CommitHash: null,
+    CommitDate: null,
     HasHelp: false,
     HelpOptions: null,
     HasRepl: false,

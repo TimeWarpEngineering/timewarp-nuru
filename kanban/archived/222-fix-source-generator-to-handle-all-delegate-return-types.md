@@ -36,3 +36,14 @@ builder.Map("")
 **Workaround:** Changed to return void (removed `return 0`).
 
 **Root cause:** The source generator in `source/timewarp-nuru-analyzers/analyzers/nuru-invoker-generator*.cs` isn't extracting the signature properly for lambdas with return values.
+
+## Archive Reason (2026-01-15)
+
+**OBSOLETE** - This issue has been fixed. The source generator now correctly handles all delegate return types.
+
+Evidence:
+- `_Returns_Int` invokers are generated in multiple test files (routing-01-basic-matching, repl-23-key-binding-profiles, etc.)
+- Multiple samples use `return 0` and `return 1` patterns successfully (samples/10-type-converters, samples/04-syntax-examples, etc.)
+- Tested `01-builtin-types.cs` which uses return int - works correctly
+
+The workaround mentioned (removing `return 0`) is no longer needed.

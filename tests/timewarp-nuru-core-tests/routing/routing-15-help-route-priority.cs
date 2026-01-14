@@ -35,10 +35,7 @@ public class HelpRoutePriorityTests
     terminal.OutputContains("user-executed").ShouldBeTrue();
   }
 
-  // TODO: Task #356 - Per-route help (e.g., "recent --help") not yet implemented
-  // Currently only global --help is supported. This test documents the expected behavior.
-  // Skip until per-route help generation is implemented.
-  [Skip("Task #356: Per-route help not yet implemented")]
+  // Task #356: Per-route help (e.g., "recent --help") - now implemented
   public static async Task Should_show_help_when_help_flag_explicitly_provided()
   {
     // Arrange - auto-generated help routes are enabled by default

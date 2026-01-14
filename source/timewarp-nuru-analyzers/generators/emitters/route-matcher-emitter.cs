@@ -38,6 +38,10 @@ internal static class RouteMatcherEmitter
     sb.AppendLine(
       $"    // Route: {EscapeXmlComment(route.FullPattern)}");
 
+    // Per-route help: Check if args end with --help and match this route's literal prefix
+    // This enables "command --help" to show help for just that command
+    RouteHelpEmitter.EmitPerRouteHelpCheck(sb, route, routeIndex);
+
     // Determine the matching strategy based on route complexity
     // Use complex matching for routes with options, catch-all, or optional positional params
     if (route.HasOptions || route.HasCatchAll || route.HasOptionalPositionalParams)

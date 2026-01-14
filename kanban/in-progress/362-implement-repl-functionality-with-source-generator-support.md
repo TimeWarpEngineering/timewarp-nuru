@@ -88,12 +88,15 @@ while (Running)
 - [x] Update namespaces to `TimeWarp.Nuru` (flat)
 - [x] Verify build compiles (533/533 tests pass)
 
-### Phase 2: Generator Additions
+### Phase 2: Generator Additions ✅ COMPLETED
 
-- [ ] Update `InterceptorEmitter` to emit `--interactive`/`-i` route when `HasRepl=true`
-- [ ] Create `ReplRouteProviderEmitter` to emit `GeneratedReplRouteProvider` class
-- [ ] Update `InterceptorEmitter` to emit `RunReplAsync` interceptor when `HasRepl=true`
-- [ ] Extract completion data from routes (command prefixes, parameters, options, enums)
+- [x] Update `InterceptorEmitter` to emit `--interactive`/`-i` route when `HasRepl=true`
+- [x] Create `ReplEmitter` to emit `GeneratedReplRouteProvider` class
+- [x] Update `InterceptorEmitter` to call `ReplEmitter.Emit()` when `HasRepl=true`
+- [x] Extract completion data from routes (command prefixes, parameters, options)
+- [x] Add `ReplOptions` and `LoggerFactory` properties to `NuruCoreApp`
+- [x] Update `NuruCoreAppBuilder.Build()` to pass properties to app
+- [x] Add `AddRepl()` methods with null validation
 
 ### Phase 3: Testing & Validation
 

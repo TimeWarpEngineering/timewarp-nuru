@@ -102,6 +102,10 @@ public partial class NuruCoreAppBuilder<TSelf>
   public NuruCoreApp Build()
   {
     // DSL is parsed at compile-time. RunAsync() is intercepted.
-    return new NuruCoreApp(Terminal);
+    return new NuruCoreApp(Terminal)
+    {
+      ReplOptions = ReplOptions,
+      LoggerFactory = LoggerFactory
+    };
   }
 }

@@ -446,6 +446,18 @@ internal static class InterceptorEmitter
       sb.AppendLine("    }");
       sb.AppendLine();
     }
+
+    // --interactive / -i flag (opt-in via AddRepl())
+    if (app.HasRepl)
+    {
+      sb.AppendLine("    // Built-in: --interactive / -i (REPL mode, opt-in via AddRepl())");
+      sb.AppendLine("    if (routeArgs is [\"--interactive\"] or [\"-i\"])");
+      sb.AppendLine("    {");
+      sb.AppendLine($"      await RunReplAsync{methodSuffix}(app).ConfigureAwait(false);");
+      sb.AppendLine("      return 0;");
+      sb.AppendLine("    }");
+      sb.AppendLine();
+    }
   }
 
   /// <summary>
@@ -495,7 +507,7 @@ internal static class InterceptorEmitter
   {
     sb.AppendLine();
 
-    // Emit per-app helper methods (PrintHelp, PrintCapabilities)
+    // Emit per-app helper methods (PrintHelp, PrintCapabilities, REPL support)
     // Each app gets its own helpers with only its routes
     for (int appIndex = 0; appIndex < model.Apps.Length; appIndex++)
     {
@@ -514,6 +526,13 @@ internal static class InterceptorEmitter
       sb.AppendLine();
       CapabilitiesEmitter.Emit(sb, enrichedApp, methodSuffix);
       sb.AppendLine();
+
+      // REPL support (opt-in via AddRepl())
+      if (app.HasRepl)
+      {
+        ReplEmitter.Emit(sb, enrichedApp, methodSuffix, model.AttributedRoutes);
+        sb.AppendLine();
+      }
     }
 
     // Version is shared (assembly-level, same for all apps)

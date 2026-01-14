@@ -6,11 +6,64 @@ namespace TimeWarp.Nuru;
 public partial class NuruCoreAppBuilder<TSelf>
 {
   /// <summary>
+  /// Enables REPL (Read-Eval-Print Loop) mode support.
+  /// When enabled, the application can be started in interactive mode using --interactive or -i flag.
+  /// </summary>
+  /// <returns>The builder for chaining.</returns>
+  /// <example>
+  /// <code>
+  /// NuruApp.CreateBuilder(args)
+  ///     .AddRepl()  // Enable REPL mode
+  ///     .Map("greet {name}")
+  ///       .WithHandler((string name) => $"Hello, {name}!")
+  ///       .Done()
+  ///     .Build();
+  ///
+  /// // Run with: ./myapp -i  or  ./myapp --interactive
+  /// </code>
+  /// </example>
+  public virtual TSelf AddRepl()
+  {
+    ReplOptions ??= new ReplOptions();
+    return (TSelf)this;
+  }
+
+  /// <summary>
+  /// Enables REPL mode with custom configuration options.
+  /// </summary>
+  /// <param name="configureOptions">Action to configure REPL options (prompt, history, colors, etc.).</param>
+  /// <returns>The builder for chaining.</returns>
+  /// <example>
+  /// <code>
+  /// NuruApp.CreateBuilder(args)
+  ///     .AddRepl(options =>
+  ///     {
+  ///         options.Prompt = "myapp> ";
+  ///         options.WelcomeMessage = "Welcome to MyApp!";
+  ///         options.EnableColors = true;
+  ///     })
+  ///     .Map("greet {name}")
+  ///       .WithHandler((string name) => $"Hello, {name}!")
+  ///       .Done()
+  ///     .Build();
+  /// </code>
+  /// </example>
+  public virtual TSelf AddRepl(Action<ReplOptions> configureOptions)
+  {
+    ArgumentNullException.ThrowIfNull(configureOptions);
+    ReplOptions replOptions = new();
+    configureOptions(replOptions);
+    ReplOptions = replOptions;
+    return (TSelf)this;
+  }
+
+  /// <summary>
   /// Adds REPL (Read-Eval-Print Loop) configuration options to application.
   /// This stores REPL configuration options for use when REPL mode is activated.
   /// </summary>
   /// <param name="configureOptions">Optional action to configure REPL options.</param>
   /// <returns>The builder for chaining.</returns>
+  [Obsolete("Use AddRepl() or AddRepl(Action<ReplOptions>) instead.")]
   public virtual TSelf AddReplOptions(Action<ReplOptions>? configureOptions = null)
   {
     ReplOptions replOptions = new();

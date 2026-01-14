@@ -3,6 +3,9 @@ namespace TimeWarp.Nuru;
 public class NuruCoreApp
 {
   public ITerminal Terminal { get; }
+  public ReplOptions? ReplOptions { get; init; }
+  public ILoggerFactory? LoggerFactory { get; init; }
+
   public NuruCoreApp(ITerminal? terminal = null)
   {
     Terminal = terminal ?? TimeWarpTerminal.Default;

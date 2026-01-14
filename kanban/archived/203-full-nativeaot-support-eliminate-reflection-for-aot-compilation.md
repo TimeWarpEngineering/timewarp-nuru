@@ -64,3 +64,16 @@ Enable full NativeAOT compilation by eliminating all reflection-based code paths
 ### Reference
 
 See performance analysis report: `.agent/workspace/2024-12-20T03-30-00_runasync-performance-analysis.md`
+
+## Archive Reason (2026-01-15)
+
+**OBSOLETE** - This task was created based on an old architecture that has been significantly refactored.
+
+Analysis shows the AOT blockers described no longer exist:
+- `DelegateExecutor` and `MediatorExecutor` no longer exist
+- `Convert.ChangeType` is no longer used - `DefaultTypeConverters` uses explicit `TryParse` methods (AOT-safe)
+- `Activator.CreateInstance` not found in codebase
+- JSON serialization properly uses `NuruJsonSerializerContext` with suppression attributes
+- The referenced files paths (`timewarp-nuru-core/execution/`) no longer exist
+
+The architecture refactoring has already addressed the major AOT concerns described in this task.

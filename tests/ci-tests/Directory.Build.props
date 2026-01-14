@@ -53,6 +53,8 @@
     <!-- Options tests (migrated) -->
     <Compile Include="../timewarp-nuru-core-tests/options/options-01-mixed-required-optional.cs" />
     <Compile Include="../timewarp-nuru-core-tests/options/options-02-optional-flag-optional-value.cs" />
+    <!-- Session tests -->
+    <Compile Include="../timewarp-nuru-core-tests/session/session-context-01-basic.cs" />
     <!-- Type conversion tests (migrated) -->
     <Compile Include="../timewarp-nuru-core-tests/type-conversion/*.cs" />
     <!-- Completion tests - static (migrated) -->

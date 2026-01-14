@@ -67,13 +67,18 @@ All options tests are now in CI.
 
 **Note**: Exclusion reason "Uses `CreateSlimBuilder()` API" was outdated - files didn't use that API
 
+### Session Tests (0 files excluded)
+
+**Renamed and moved**: `help-provider-03-session-context.cs` → `session/session-context-01-basic.cs` (5 tests)
+
+Note: Original exclusion reason was wrong - file tests `SessionContext` class which still exists
+
 ### Root-level Tests (5 files)
 
 | File | Exclusion Reason |
 |------|------------------|
 | `capabilities-01-basic.cs` | Not included in any Compile directive |
 | `capabilities-02-integration.cs` | Not included in any Compile directive |
-| `help-provider-03-session-context.cs` | Uses old APIs (HelpProvider.GetHelpText, CreateSlimBuilder, SessionContext) |
 | `message-type-02-help-output.cs` | Disabled (commented out) |
 | `nuru-route-registry-01-basic.cs` | Uses `IRequest` which no longer exists |
 | `show-help-colors.cs` | Not included in any Compile directive |
@@ -97,17 +102,17 @@ All options tests are now in CI.
 | Routing | 18 | 18 | 0 |
 | Configuration | 2 | 2 | 0 |
 | Options | 2 | 2 | 0 |
-| Root-level | 6 | 1 | 5 |
+| Session | 1 | 1 | 0 |
+| Root-level | 5 | 1 | 4 |
 | Lexer | 16 | 16 | 0 |
 | Parser | 15 | 15 | 0 |
 | Type Conversion | 1 | 1 | 0 |
-| **Total** | **66** | **61** | **5** |
+| **Total** | **66** | **62** | **4** |
 
 ## Recommendations
 
 ### High Priority - API Migration Needed
 These tests use deprecated/removed APIs and need updating:
-- `help-provider-03-session-context.cs` - needs API update
 - `nuru-route-registry-01-basic.cs` - needs `IRequest` replacement
 
 ### Medium Priority - None

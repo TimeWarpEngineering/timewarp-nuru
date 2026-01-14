@@ -1,5 +1,5 @@
 #!/usr/bin/dotnet --
-#:project ../../source/timewarp-nuru/timewarp-nuru.csproj
+#:project ../../../source/timewarp-nuru/timewarp-nuru.csproj
 
 // Test SessionContext class behavior
 // Verifies CLI vs REPL context state management
@@ -8,7 +8,7 @@
 return await RunAllTests();
 #endif
 
-namespace TimeWarp.Nuru.Tests.Core.SessionContextTests
+namespace TimeWarp.Nuru.Tests.Session
 {
 
 [TestTag("SessionContext")]
@@ -84,4 +84,4 @@ public class SessionContextTests
   }
 }
 
-} // namespace TimeWarp.Nuru.Tests.Core.SessionContextTests
+} // namespace TimeWarp.Nuru.Tests.Session

@@ -81,3 +81,27 @@ dotnet publish -c Release -r linux-x64 -p:PublishAot=true
 
 The `timewarp-nuru` MCP server provides route validation and pattern examples.
 See `source/timewarp-nuru-mcp-server/` for implementation.
+
+### Roslyn Best Practices (Source Generators)
+
+**Always prefer SemanticModel over syntax string manipulation for type resolution.**
+
+Key learnings:
+- `SemanticModel.GetSymbolInfo()` works for types from referenced projects when `GetTypeInfo().Type` returns null
+- `GetTypeInfo().Type` may return null for external/referenced project types, but `GetSymbolInfo().Symbol` resolves correctly
+- Never use `.ToString()` on syntax nodes for type names - use semantic model to get proper fully qualified names
+- For generic types like `EnumTypeConverter<Environment>`, extract type arguments from `INamedTypeSymbol.TypeArguments`
+
+Example of correct approach:
+```csharp
+// Good: Use semantic model
+SymbolInfo symbolInfo = SemanticModel.GetSymbolInfo(objectCreation.Type);
+if (symbolInfo.Symbol is INamedTypeSymbol namedType && namedType.IsGenericType)
+{
+    ITypeSymbol targetType = namedType.TypeArguments[0];
+    string typeName = targetType.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
+}
+
+// Bad: String manipulation
+string typeName = objectCreation.Type.ToString(); // Loses namespace info, case sensitivity issues
+```

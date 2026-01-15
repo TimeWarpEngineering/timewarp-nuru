@@ -53,12 +53,12 @@ namespace TimeWarp.Nuru.Tests.ReplTests.SampleValidation
         // BASIC PARAMETERS
         // ========================================
         .Map("greet {name}")
-          .WithHandler((string _) => 0)
+          .WithHandler((string name) => 0)
           .WithDescription("Greets the person with the specified name.")
           .AsCommand()
           .Done()
         .Map("add {a:int} {b:int}")
-          .WithHandler((int _, int _2) => 0)
+          .WithHandler((int a, int b) => 0)
           .WithDescription("Adds two integers.")
           .AsQuery()
           .Done()
@@ -67,7 +67,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.SampleValidation
         // ENUM PARAMETERS
         // ========================================
         .Map("deploy {env:environment} {tag?}")
-          .WithHandler((Environment _, string? _2) => 0)
+          .WithHandler((Environment env, string? tag) => 0)
           .WithDescription("Deploys to environment (dev, staging, prod) with optional tag.")
           .AsCommand()
           .Done()
@@ -76,7 +76,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.SampleValidation
         // CATCH-ALL PARAMETERS
         // ========================================
         .Map("echo {*message}")
-          .WithHandler((string[] _) => 0)
+          .WithHandler((string[] message) => 0)
           .WithDescription("Echoes all arguments back.")
           .AsQuery()
           .Done()
@@ -90,12 +90,12 @@ namespace TimeWarp.Nuru.Tests.ReplTests.SampleValidation
           .AsQuery()
           .Done()
         .Map("git commit -m {message}")
-          .WithHandler((string _) => 0)
+          .WithHandler((string message) => 0)
           .WithDescription("Creates a commit with the specified message.")
           .AsCommand()
           .Done()
         .Map("git log --count {n:int}")
-          .WithHandler((int _) => 0)
+          .WithHandler((int n) => 0)
           .WithDescription("Shows the last N commits.")
           .AsQuery()
           .Done()
@@ -104,7 +104,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.SampleValidation
         // BOOLEAN OPTIONS
         // ========================================
         .Map("build --verbose,-v")
-          .WithHandler((bool _) => 0)
+          .WithHandler((bool verbose) => 0)
           .WithDescription("Builds the project. Use -v for verbose output.")
           .AsCommand()
           .Done()
@@ -113,7 +113,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.SampleValidation
         // OPTIONS WITH VALUES
         // ========================================
         .Map("search {query} --limit,-l {count:int?}")
-          .WithHandler((string _, int? _2) => 0)
+          .WithHandler((string query, int? count) => 0)
           .WithDescription("Searches with optional result limit.")
           .AsQuery()
           .Done()
@@ -122,7 +122,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.SampleValidation
         // COMBINED OPTIONS
         // ========================================
         .Map("backup {source} --compress,-c --output,-o {dest?}")
-          .WithHandler((string _, bool _2, string? _3) => 0)
+          .WithHandler((string source, bool compress, string? dest) => 0)
           .WithDescription("Backs up source with optional compression and destination.")
           .AsCommand()
           .Done()

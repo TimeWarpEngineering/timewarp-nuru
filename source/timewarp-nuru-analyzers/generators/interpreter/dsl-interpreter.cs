@@ -369,8 +369,28 @@ public sealed class DslInterpreter
       MemberAccessExpressionSyntax memberAccess => EvaluateMemberAccess(memberAccess),
       IdentifierNameSyntax identifier => ResolveIdentifier(identifier),
       AwaitExpressionSyntax awaitExpr => EvaluateExpression(awaitExpr.Expression),
+      AssignmentExpressionSyntax assignment => EvaluateAssignment(assignment),
       _ => null // Literals, etc. - not relevant for DSL interpretation
     };
+  }
+
+  /// <summary>
+  /// Evaluates an assignment expression (e.g., "App = NuruApp.CreateBuilder([])...Build()").
+  /// Stores the value in VariableState if the left side is a field or variable.
+  /// </summary>
+  private object? EvaluateAssignment(AssignmentExpressionSyntax assignment)
+  {
+    // Evaluate the right side first
+    object? value = EvaluateExpression(assignment.Right);
+
+    // Store in VariableState if left side is an identifier (field or variable)
+    ISymbol? leftSymbol = SemanticModel.GetSymbolInfo(assignment.Left).Symbol;
+    if (leftSymbol is not null && value is not null)
+    {
+      VariableState[leftSymbol] = value;
+    }
+
+    return value;
   }
 
   /// <summary>
@@ -408,6 +428,7 @@ public sealed class DslInterpreter
   /// Resolves an identifier to its value by tracing back to its declaration.
   /// Uses semantic model to find where the variable is declared and evaluates the initializer.
   /// This handles captured variables from outer scopes (like lambdas).
+  /// Also handles static/instance fields by searching for assignments in the containing type.
   /// </summary>
   private object? ResolveIdentifier(IdentifierNameSyntax identifier)
   {
@@ -433,8 +454,71 @@ public sealed class DslInterpreter
         return value;
       }
     }
+    else if (symbol is IFieldSymbol fieldSymbol)
+    {
+      // Handle static/instance fields by searching for assignments in the containing type
+      object? value = FindFieldAssignmentInContainingType(fieldSymbol);
+      if (value is not null)
+      {
+        // Cache for future lookups
+        VariableState[symbol] = value;
+        return value;
+      }
+    }
 
     return null;
+  }
+
+  /// <summary>
+  /// Finds an assignment to a field within the containing type and evaluates the right-hand side.
+  /// This enables tracking of static fields assigned in Setup() methods and accessed elsewhere.
+  /// </summary>
+  /// <param name="field">The field symbol to find an assignment for.</param>
+  /// <returns>The evaluated value of the assignment, or null if not found.</returns>
+  private object? FindFieldAssignmentInContainingType(IFieldSymbol field)
+  {
+    // Get the containing type
+    INamedTypeSymbol? containingType = field.ContainingType;
+    if (containingType is null)
+      return null;
+
+    // Get all syntax references for the type
+    foreach (SyntaxReference syntaxRef in containingType.DeclaringSyntaxReferences)
+    {
+      RoslynSyntaxNode typeSyntax = syntaxRef.GetSyntax(CancellationToken);
+
+      // Find assignments to this field: field = ...
+      foreach (AssignmentExpressionSyntax assignment in typeSyntax.DescendantNodes()
+        .OfType<AssignmentExpressionSyntax>())
+      {
+        if (IsAssignmentToField(assignment, field))
+        {
+          // Evaluate the right-hand side
+          object? value = EvaluateExpression(assignment.Right);
+          if (value is not null)
+            return value;
+        }
+      }
+    }
+
+    return null;
+  }
+
+  /// <summary>
+  /// Checks if an assignment expression is assigning to the specified field.
+  /// </summary>
+  /// <param name="assignment">The assignment expression to check.</param>
+  /// <param name="field">The field symbol to match.</param>
+  /// <returns>True if the assignment is to the specified field.</returns>
+  private bool IsAssignmentToField(AssignmentExpressionSyntax assignment, IFieldSymbol field)
+  {
+    // Get the symbol for the left-hand side of the assignment
+    ISymbol? leftSymbol = SemanticModel.GetSymbolInfo(assignment.Left).Symbol;
+    if (leftSymbol is null)
+      return false;
+
+    // Compare symbols using SymbolEqualityComparer.Default
+    return SymbolEqualityComparer.Default.Equals(leftSymbol, field);
   }
 
   // ═══════════════════════════════════════════════════════════════════════════════
@@ -1115,20 +1199,28 @@ public sealed class DslInterpreter
     ArgumentSyntax? arg = invocation.ArgumentList.Arguments.FirstOrDefault();
     if (arg?.Expression is ObjectCreationExpressionSyntax objectCreation)
     {
-      // Get the converter type name
-      string converterTypeName = objectCreation.Type.ToString();
-
-      // Use semantic model to resolve the generic type argument
+      // Use semantic model to get fully qualified converter type name
+      SymbolInfo symbolInfo = SemanticModel.GetSymbolInfo(objectCreation.Type);
+      string converterTypeName;
       string targetTypeName = "";
 
-      // GetSymbolInfo works for types from referenced projects
-      SymbolInfo symbolInfo = SemanticModel.GetSymbolInfo(objectCreation.Type);
-      if (symbolInfo.Symbol is INamedTypeSymbol namedType && namedType.IsGenericType && namedType.TypeArguments.Length > 0)
+      if (symbolInfo.Symbol is INamedTypeSymbol namedType)
       {
-        // Generic converter like EnumTypeConverter<Environment>
-        // Extract the first type argument as the target type
-        ITypeSymbol targetType = namedType.TypeArguments[0];
-        targetTypeName = targetType.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
+        // Use fully qualified format to avoid ambiguity with System types
+        converterTypeName = namedType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+
+        if (namedType.IsGenericType && namedType.TypeArguments.Length > 0)
+        {
+          // Generic converter like EnumTypeConverter<Environment>
+          // Extract the first type argument as the target type
+          ITypeSymbol targetType = namedType.TypeArguments[0];
+          targetTypeName = targetType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+        }
+      }
+      else
+      {
+        // Fallback to syntax text if semantic model resolution fails
+        converterTypeName = objectCreation.Type.ToString();
       }
 
       CustomConverterDefinition converter = new(

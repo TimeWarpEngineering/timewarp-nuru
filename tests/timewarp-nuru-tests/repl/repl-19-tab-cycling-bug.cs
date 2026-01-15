@@ -17,30 +17,39 @@ public class TabCyclingBugTests
   [ModuleInitializer]
   internal static void Register() => RegisterTests<TabCyclingBugTests>();
 
+  private const string DebugLogPath = "/tmp/repl-19-debug.log";
   private static TestTerminal? Terminal;
   private static NuruCoreApp? App;
 
+  private static void Log(string message)
+  {
+    File.AppendAllText(DebugLogPath, $"{DateTime.Now:HH:mm:ss.fff} {message}\n");
+  }
+
   public static async Task Setup()
   {
+    Log("Setup() started");
     Terminal = new TestTerminal();
+    Log("Terminal created");
 
-    App =NuruApp.CreateBuilder([])
+    App = NuruApp.CreateBuilder([])
       .UseTerminal(Terminal)
       .Map("git status")
         .WithHandler(() => { })
         .AsQuery()
         .Done()
       .Map("git commit -m {message}")
-        .WithHandler((string _) => 0)
+        .WithHandler((string message) => 0)
         .AsCommand()
         .Done()
       .Map("git log --count {n:int}")
-        .WithHandler((int _) => 0)
+        .WithHandler((int n) => 0)
         .AsQuery()
         .Done()
       .AddRepl(options => { options.Prompt = "demo> "; })
       .Build();
 
+    Log($"App built: {App?.GetType().Name ?? "null"}");
     await Task.CompletedTask;
   }
 
@@ -72,7 +81,9 @@ public class TabCyclingBugTests
     Terminal.QueueLine("exit");
 
     // Act
+    Log("About to call RunReplAsync");
     await App!.RunReplAsync();
+    Log("RunReplAsync completed");
 
     // Assert
     WriteLine("=== TAB CYCLING OUTPUT ===");
@@ -100,7 +111,9 @@ public class TabCyclingBugTests
     Terminal.QueueLine("exit");
 
     // Act
+    Log("About to call RunReplAsync (second test)");
     await App!.RunReplAsync();
+    Log("RunReplAsync completed (second test)");
 
     // Assert
     Terminal.OutputContains("Available completions").ShouldBeTrue(

@@ -87,47 +87,6 @@ try
   WriteLine("Debug logs: repl-debug.log");
   WriteLine();
 
-  NuruAppOptions nuruAppOptions = new()
-  {
-    ConfigureRepl = options =>
-    {
-      options.Prompt = "demo> ";
-      options.WelcomeMessage =
-        "Welcome to the Nuru REPL Demo!\n" +
-        "\n" +
-        "SIMPLE COMMANDS:\n" +
-        "  status              - Show system status\n" +
-        "  time                - Show current time\n" +
-        "\n" +
-        "PARAMETERS:\n" +
-        "  greet Alice         - Basic parameter\n" +
-        "  add 5 3             - Typed parameters (int)\n" +
-        "  deploy dev          - Enum param (dev/staging/prod)\n" +
-        "  deploy prod v1.2    - Enum with optional tag\n" +
-        "  echo hello world    - Catch-all parameter\n" +
-        "\n" +
-        "SUBCOMMANDS:\n" +
-        "  git status          - Literal subcommand\n" +
-        "  git commit -m \"fix\" - Short option with value\n" +
-        "  git log --count 3   - Long option with typed value\n" +
-        "\n" +
-        "OPTIONS:\n" +
-        "  build               - Without verbose\n" +
-        "  build -v            - With verbose (short)\n" +
-        "  build --verbose     - With verbose (long)\n" +
-        "  search foo          - Default limit\n" +
-        "  search foo -l 5     - Custom limit\n" +
-        "  backup data         - Basic backup\n" +
-        "  backup data -c      - With compression\n" +
-        "  backup data -c -o x - With compression and dest\n" +
-        "\n" +
-        "Type 'help' for all commands, 'exit' to quit.";
-      options.GoodbyeMessage = "Thanks for trying the REPL demo!";
-      options.PersistHistory = false;
-      Log.Information("REPL configured");
-    }
-  };
-
   NuruCoreApp app = NuruApp.CreateBuilder(args)
     .AddTypeConverter(new EnumTypeConverter<Environment>()) // Register enum converter
     .WithDescription("Interactive REPL demo showcasing Nuru route patterns.")
@@ -309,15 +268,44 @@ try
       .AsCommand()
       .Done()
 
+    .AddRepl(options =>
+    {
+      options.Prompt = "demo> ";
+      options.WelcomeMessage =
+        "Welcome to the Nuru REPL Demo!\n" +
+        "\n" +
+        "SIMPLE COMMANDS:\n" +
+        "  status              - Show system status\n" +
+        "  time                - Show current time\n" +
+        "\n" +
+        "PARAMETERS:\n" +
+        "  greet Alice         - Basic parameter\n" +
+        "  add 5 3             - Typed parameters (int)\n" +
+        "  deploy dev          - Enum param (dev/staging/prod)\n" +
+        "  deploy prod v1.2    - Enum with optional tag\n" +
+        "  echo hello world    - Catch-all parameter\n" +
+        "\n" +
+        "SUBCOMMANDS:\n" +
+        "  git status          - Literal subcommand\n" +
+        "  git commit -m \"fix\" - Short option with value\n" +
+        "  git log --count 3   - Long option with typed value\n" +
+        "\n" +
+        "OPTIONS:\n" +
+        "  build               - Without verbose\n" +
+        "  build -v            - With verbose (short)\n" +
+        "  build --verbose     - With verbose (long)\n" +
+        "  search foo          - Default limit\n" +
+        "  search foo -l 5     - Custom limit\n" +
+        "  backup data         - Basic backup\n" +
+        "  backup data -c      - With compression\n" +
+        "  backup data -c -o x - With compression and dest\n" +
+        "\n" +
+        "Type 'help' for all commands, 'exit' to quit.";
+      options.GoodbyeMessage = "Thanks for trying the REPL demo!";
+      options.PersistHistory = false;
+      Log.Information("REPL configured");
+    })
     .Build();
-
-  // If no args or --interactive/-i, enter REPL mode
-  // Otherwise execute the command and exit
-  // if (args.Length == 0)
-  // {
-  //   Log.Information("No args - starting REPL mode");
-  //   await app.RunReplAsync();
-  // }
 
   Log.Information("Running command: {Args}", string.Join(" ", args));
   return await app.RunAsync(args);

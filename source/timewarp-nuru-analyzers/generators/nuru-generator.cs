@@ -2,10 +2,10 @@
 // to produce the RunAsync interceptor.
 //
 // Pipeline:
-//   1. Locate RunAsync call sites → InterceptSiteModel
-//   2. Locate [NuruRoute] classes → RouteDefinition
-//   3. Collect route locations for error reporting
-//   4. Combine and extract full AppModel (with diagnostics)
+//   1. Locate Build() call sites → each Build() is one unique app
+//   2. For each Build(), extract AppModel with all entry points (RunAsync, RunReplAsync)
+//   3. Locate [NuruRoute] classes → RouteDefinition
+//   4. Collect route locations for error reporting
 //   5. Validate the combined model (fluent + attributed routes)
 //   6. Report diagnostics and emit generated interceptor code
 //
@@ -32,12 +32,13 @@ public sealed class NuruGenerator : IIncrementalGenerator
   /// </summary>
   public void Initialize(IncrementalGeneratorInitializationContext context)
   {
-    // 1. Locate RunAsync call sites (entry points for interception)
-    IncrementalValuesProvider<InterceptSiteModel?> runAsyncCalls = context.SyntaxProvider
+    // 1. Locate Build() call sites - each Build() is one unique app
+    // This replaces the RunAsync/RunReplAsync-based approach to avoid duplicate extractions
+    IncrementalValuesProvider<ExtractionResult> buildExtractionResults = context.SyntaxProvider
       .CreateSyntaxProvider(
-        predicate: static (node, _) => RunAsyncLocator.IsPotentialMatch(node),
-        transform: static (ctx, ct) => RunAsyncLocator.Extract(ctx, ct))
-      .Where(static site => site is not null);
+        predicate: static (node, _) => BuildLocator.IsPotentialMatch(node),
+        transform: static (ctx, ct) => AppExtractor.ExtractFromBuildCall(ctx, ct))
+      .Where(static result => result.Model is not null);
 
     // 2. Locate attributed routes ([NuruRoute] decorated classes) with locations
     IncrementalValuesProvider<RouteWithLocation?> attributedRoutesWithLocations = context.SyntaxProvider
@@ -87,19 +88,13 @@ public sealed class NuruGenerator : IIncrementalGenerator
           return builder.ToImmutable();
         });
 
-    // 6. For each RunAsync call site, extract the AppModel with fluent routes (with diagnostics)
-    IncrementalValuesProvider<ExtractionResult> extractionResults = context.SyntaxProvider
-      .CreateSyntaxProvider(
-        predicate: static (node, _) => RunAsyncLocator.IsPotentialMatch(node),
-        transform: static (ctx, ct) => AppExtractor.ExtractWithDiagnostics(ctx, ct))
-      .Where(static result => result.Model is not null);
-
-    // 6b. Extract assembly metadata (version, commit hash, commit date) from compilation
+    // 6. Extract assembly metadata (version, commit hash, commit date) from compilation
     IncrementalValueProvider<AssemblyMetadata> assemblyMetadata = context.CompilationProvider
       .Select(static (compilation, _) => AssemblyMetadataExtractor.Extract(compilation));
 
     // 7. Combine extraction results with attributed routes, locations, and assembly metadata into GeneratorModel
-    IncrementalValueProvider<GeneratorModelWithDiagnostics?> generatorModelWithDiagnostics = extractionResults
+    // Using buildExtractionResults ensures each Build() produces exactly one app - no duplicates
+    IncrementalValueProvider<GeneratorModelWithDiagnostics?> generatorModelWithDiagnostics = buildExtractionResults
       .Collect()
       .Combine(collectedAttributedRoutes)
       .Combine(routeLocations)
@@ -294,17 +289,20 @@ public sealed class NuruGenerator : IIncrementalGenerator
       allDiagnostics.AddRange(result.Diagnostics);
     }
 
-    // Filter out null models and deduplicate by intercept site
+    // Deduplicate by BuildLocation - each Build() call is one unique app
+    // BuildLocation is the source location of the Build() call, which uniquely identifies the app
     Dictionary<string, AppModel> uniqueApps = [];
 
     foreach (ExtractionResult result in extractionResults)
     {
-      if (result.Model is null || result.Model.InterceptSites.Length == 0)
+      if (result.Model is null || result.Model.InterceptSitesByMethod.Count == 0)
         continue;
 
-      // Use first intercept site's attribute syntax as the deduplication key
-      string key = result.Model.InterceptSites[0].GetAttributeSyntax();
-      if (!uniqueApps.ContainsKey(key))
+      // Use BuildLocation as the deduplication key
+      // Same Build() call = same app (should be rare since we extract from Build() directly)
+      string key = result.Model.BuildLocation ?? "unknown";
+
+      if (!uniqueApps.TryGetValue(key, out AppModel? existingApp))
       {
         // Ensure each app has help and configuration enabled by default
         AppModel enrichedModel = result.Model with
@@ -313,6 +311,13 @@ public sealed class NuruGenerator : IIncrementalGenerator
           HasConfiguration = true
         };
         uniqueApps[key] = enrichedModel;
+      }
+      else
+      {
+        // Merge intercept sites (shouldn't happen often with Build()-based extraction)
+        ImmutableDictionary<string, ImmutableArray<InterceptSiteModel>> mergedSites =
+          MergeInterceptSites(existingApp.InterceptSitesByMethod, result.Model.InterceptSitesByMethod);
+        uniqueApps[key] = existingApp with { InterceptSitesByMethod = mergedSites };
       }
     }
 
@@ -390,6 +395,25 @@ public sealed class NuruGenerator : IIncrementalGenerator
 
     // Default: no endpoints (test isolation)
     return [];
+  }
+
+  /// <summary>
+  /// Merges two intercept site dictionaries.
+  /// </summary>
+  private static ImmutableDictionary<string, ImmutableArray<InterceptSiteModel>> MergeInterceptSites(
+    ImmutableDictionary<string, ImmutableArray<InterceptSiteModel>> a,
+    ImmutableDictionary<string, ImmutableArray<InterceptSiteModel>> b)
+  {
+    ImmutableDictionary<string, ImmutableArray<InterceptSiteModel>>.Builder builder = a.ToBuilder();
+    foreach (KeyValuePair<string, ImmutableArray<InterceptSiteModel>> kvp in b)
+    {
+      if (builder.TryGetValue(kvp.Key, out ImmutableArray<InterceptSiteModel> existing))
+        builder[kvp.Key] = existing.AddRange(kvp.Value);
+      else
+        builder[kvp.Key] = kvp.Value;
+    }
+
+    return builder.ToImmutable();
   }
 
   /// <summary>

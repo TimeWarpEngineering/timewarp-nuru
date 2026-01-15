@@ -34,7 +34,7 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
   private readonly List<RouteDefinition> Routes = [];
   private readonly List<BehaviorDefinition> Behaviors = [];
   private readonly List<ServiceDefinition> Services = [];
-  private readonly List<InterceptSiteModel> InterceptSites = [];
+  private readonly Dictionary<string, List<InterceptSiteModel>> InterceptSitesByMethod = [];
   private readonly List<CustomConverterDefinition> CustomConverters = [];
   private bool IsBuilt;
   private bool DiscoverEndpointsEnabled;
@@ -245,12 +245,20 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
   }
 
   /// <summary>
-  /// Adds an intercept site from a RunAsync() call.
-  /// Called by interpreter when RunAsync() is encountered.
+  /// Adds an intercept site for a specific method.
+  /// Called by interpreter when entry point calls are encountered.
   /// </summary>
-  public TSelf AddInterceptSite(InterceptSiteModel site)
+  /// <param name="methodName">The method name (e.g., "RunAsync", "RunReplAsync").</param>
+  /// <param name="site">The intercept site model.</param>
+  public TSelf AddInterceptSite(string methodName, InterceptSiteModel site)
   {
-    InterceptSites.Add(site);
+    if (!InterceptSitesByMethod.TryGetValue(methodName, out List<InterceptSiteModel>? sites))
+    {
+      sites = [];
+      InterceptSitesByMethod[methodName] = sites;
+    }
+
+    sites.Add(site);
     return (TSelf)this;
   }
 
@@ -295,7 +303,9 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
       Routes: [.. Routes],
       Behaviors: [.. Behaviors],
       Services: [.. Services],
-      InterceptSites: [.. InterceptSites],
+      InterceptSitesByMethod: InterceptSitesByMethod.ToImmutableDictionary(
+        kvp => kvp.Key,
+        kvp => kvp.Value.ToImmutableArray()),
       UserUsings: [],  // Usings are populated by AppExtractor, not the builder
       CustomConverters: [.. CustomConverters],
       LoggingConfiguration: LoggingConfiguration,
@@ -332,7 +342,7 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
   IIrAppBuilder IIrAppBuilder.AddService(ServiceDefinition service) => AddService(service);
   IIrAppBuilder IIrAppBuilder.UseTerminal() => UseTerminal();
   IIrAppBuilder IIrAppBuilder.AddTypeConverter(CustomConverterDefinition converter) => AddTypeConverter(converter);
-  IIrAppBuilder IIrAppBuilder.AddInterceptSite(InterceptSiteModel site) => AddInterceptSite(site);
+  IIrAppBuilder IIrAppBuilder.AddInterceptSite(string methodName, InterceptSiteModel site) => AddInterceptSite(methodName, site);
   IIrAppBuilder IIrAppBuilder.DiscoverEndpoints() => DiscoverEndpoints();
   IIrAppBuilder IIrAppBuilder.MapEndpoint(string endpointTypeName) => MapEndpoint(endpointTypeName);
 }

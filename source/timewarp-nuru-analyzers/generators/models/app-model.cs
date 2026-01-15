@@ -20,12 +20,13 @@ namespace TimeWarp.Nuru.Generators;
 /// <param name="Routes">All route definitions from all DSLs</param>
 /// <param name="Behaviors">Pipeline behaviors with ordering</param>
 /// <param name="Services">Registered services for DI</param>
-/// <param name="InterceptSites">Locations of all RunAsync() calls for interceptor</param>
+/// <param name="InterceptSitesByMethod">Intercept sites grouped by method name (e.g., "RunAsync", "RunReplAsync")</param>
 /// <param name="UserUsings">User's using directives to include in generated code</param>
 /// <param name="CustomConverters">Custom type converters registered via AddTypeConverter()</param>
 /// <param name="LoggingConfiguration">Logging configuration from AddLogging(), if configured</param>
 /// <param name="DiscoverEndpoints">Whether DiscoverEndpoints() was called to include all [NuruRoute] classes</param>
 /// <param name="ExplicitEndpointTypes">Fully qualified type names from Map&lt;T&gt;() calls for specific endpoint inclusion</param>
+/// <param name="BuildLocation">Source location of the Build() call - unique identity for this app</param>
 public sealed record AppModel(
   string? VariableName,
   string? Name,
@@ -43,17 +44,18 @@ public sealed record AppModel(
   ImmutableArray<RouteDefinition> Routes,
   ImmutableArray<BehaviorDefinition> Behaviors,
   ImmutableArray<ServiceDefinition> Services,
-  ImmutableArray<InterceptSiteModel> InterceptSites,
+  ImmutableDictionary<string, ImmutableArray<InterceptSiteModel>> InterceptSitesByMethod,
   ImmutableArray<string> UserUsings,
   ImmutableArray<CustomConverterDefinition> CustomConverters,
   LoggingConfiguration? LoggingConfiguration,
   bool DiscoverEndpoints = false,
-  ImmutableArray<string> ExplicitEndpointTypes = default)
+  ImmutableArray<string> ExplicitEndpointTypes = default,
+  string? BuildLocation = null)
 {
   /// <summary>
   /// Creates an empty AppModel with required intercept sites.
   /// </summary>
-  public static AppModel Empty(ImmutableArray<InterceptSiteModel> interceptSites) => new(
+  public static AppModel Empty(ImmutableDictionary<string, ImmutableArray<InterceptSiteModel>> interceptSitesByMethod) => new(
     VariableName: null,
     Name: null,
     Description: null,
@@ -70,7 +72,7 @@ public sealed record AppModel(
     Routes: [],
     Behaviors: [],
     Services: [],
-    InterceptSites: interceptSites,
+    InterceptSitesByMethod: interceptSitesByMethod,
     UserUsings: [],
     CustomConverters: [],
     LoggingConfiguration: null,
@@ -78,10 +80,11 @@ public sealed record AppModel(
     ExplicitEndpointTypes: []);
 
   /// <summary>
-  /// Creates an empty AppModel with a single intercept site.
+  /// Creates an empty AppModel with a single intercept site for a specific method.
   /// </summary>
-  public static AppModel Empty(InterceptSiteModel interceptSite) =>
-    Empty([interceptSite]);
+  public static AppModel Empty(string methodName, InterceptSiteModel interceptSite) =>
+    Empty(ImmutableDictionary<string, ImmutableArray<InterceptSiteModel>>.Empty
+      .Add(methodName, [interceptSite]));
 
   /// <summary>
   /// Gets whether this app has any routes defined.

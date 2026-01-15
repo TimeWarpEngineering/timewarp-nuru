@@ -42,6 +42,7 @@ internal static class InterceptorEmitter
     {
       AppModel app = model.Apps[appIndex];
       EmitAppInterceptorMethod(sb, app, appIndex, model);
+      EmitRunReplAsyncInterceptorMethod(sb, app, appIndex, model);
     }
 
     EmitClassEnd(sb, model);
@@ -55,8 +56,12 @@ internal static class InterceptorEmitter
   /// </summary>
   private static void EmitAppInterceptorMethod(StringBuilder sb, AppModel app, int appIndex, GeneratorModel model)
   {
+    // Get RunAsync intercept sites from the dictionary
+    if (!app.InterceptSitesByMethod.TryGetValue("RunAsync", out ImmutableArray<InterceptSiteModel> runAsyncSites))
+      return;
+
     // Emit [InterceptsLocation] attributes for this app's RunAsync calls
-    foreach (InterceptSiteModel site in app.InterceptSites)
+    foreach (InterceptSiteModel site in runAsyncSites)
     {
       sb.AppendLine($"  {site.GetAttributeSyntax()}");
     }
@@ -91,6 +96,40 @@ internal static class InterceptorEmitter
       sb.AppendLine("    }");
     }
 
+    sb.AppendLine("  }");
+    sb.AppendLine();
+  }
+
+  /// <summary>
+  /// Emits the RunReplAsync interceptor method for one app.
+  /// This intercepts direct RunReplAsync() calls and delegates to the REPL session.
+  /// </summary>
+  private static void EmitRunReplAsyncInterceptorMethod(StringBuilder sb, AppModel app, int appIndex, GeneratorModel model)
+  {
+    // Get RunReplAsync intercept sites from the dictionary
+    if (!app.InterceptSitesByMethod.TryGetValue("RunReplAsync", out ImmutableArray<InterceptSiteModel> replSites))
+      return;
+
+    // Only emit if app has REPL enabled
+    if (!app.HasRepl)
+      return;
+
+    string methodSuffix = model.Apps.Length > 1 ? $"_{appIndex}" : "";
+
+    // Emit [InterceptsLocation] attributes for this app's RunReplAsync calls
+    foreach (InterceptSiteModel site in replSites)
+    {
+      sb.AppendLine($"  {site.GetAttributeSyntax()}");
+    }
+
+    // Method signature - matches NuruCoreApp.RunReplAsync signature
+    sb.AppendLine($"  public static async global::System.Threading.Tasks.Task RunReplAsync_Intercepted{methodSuffix}");
+    sb.AppendLine("  (");
+    sb.AppendLine("    this NuruCoreApp app,");
+    sb.AppendLine("    global::System.Threading.CancellationToken cancellationToken = default");
+    sb.AppendLine("  )");
+    sb.AppendLine("  {");
+    sb.AppendLine($"    await RunReplAsync{methodSuffix}(app).ConfigureAwait(false);");
     sb.AppendLine("  }");
     sb.AppendLine();
   }

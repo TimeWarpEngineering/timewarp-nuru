@@ -92,10 +92,13 @@ internal static class AppExtractor
     if (currentSite is null)
       return models[0] with { UserUsings = userUsings }; // Fallback
 
-    // Find the model whose InterceptSites contains this call
+    // Find the model whose InterceptSitesByMethod contains this call
     foreach (AppModel model in models)
     {
-      foreach (InterceptSiteModel site in model.InterceptSites)
+      if (!model.InterceptSitesByMethod.TryGetValue("RunAsync", out ImmutableArray<InterceptSiteModel> sites))
+        continue;
+
+      foreach (InterceptSiteModel site in sites)
       {
         // Match by file path, line, and column
         if (site.FilePath == currentSite.FilePath &&
@@ -163,7 +166,7 @@ internal static class AppExtractor
 
     // 3. Trace back from RunAsync to find the app builder using semantic model
     DslInterpreter interpreter = new(context.SemanticModel, cancellationToken);
-    ExtractionResult result = interpreter.ExtractFromRunAsyncCall(runAsyncInvocation);
+    ExtractionResult result = interpreter.ExtractFromEntryPointCall(runAsyncInvocation, isReplCall: false);
 
     // 4. If we have a model, add user usings
     if (result.Model is not null)
@@ -171,6 +174,102 @@ internal static class AppExtractor
       ImmutableArray<string> userUsings = ExtractUserUsings(compilationUnit);
       AppModel modelWithUsings = result.Model with { UserUsings = userUsings };
       return new ExtractionResult(modelWithUsings, result.Diagnostics);
+    }
+
+    return result;
+  }
+
+  /// <summary>
+  /// Extracts an AppModel from a RunReplAsync call site, returning an ExtractionResult with diagnostics.
+  /// This is similar to ExtractWithDiagnostics but for RunReplAsync calls.
+  /// </summary>
+  /// <param name="context">The generator syntax context containing the RunReplAsync invocation.</param>
+  /// <param name="cancellationToken">Cancellation token for the operation.</param>
+  /// <returns>Extraction result containing the model and any diagnostics.</returns>
+  public static ExtractionResult ExtractRunReplAsyncWithDiagnostics
+  (
+    GeneratorSyntaxContext context,
+    CancellationToken cancellationToken
+  )
+  {
+    // 1. Get the invocation expression (RunReplAsync call)
+    if (context.Node is not InvocationExpressionSyntax runReplAsyncInvocation)
+      return ExtractionResult.Empty;
+
+    // 2. Find the CompilationUnit (needed for usings extraction)
+    CompilationUnitSyntax? compilationUnit = FindCompilationUnit(runReplAsyncInvocation);
+    if (compilationUnit is null)
+      return ExtractionResult.Empty;
+
+    // 3. Trace back from RunReplAsync to find the app builder using semantic model
+    DslInterpreter interpreter = new(context.SemanticModel, cancellationToken);
+    ExtractionResult result = interpreter.ExtractFromEntryPointCall(runReplAsyncInvocation, isReplCall: true);
+
+    // 4. If we have a model, add user usings
+    if (result.Model is not null)
+    {
+      ImmutableArray<string> userUsings = ExtractUserUsings(compilationUnit);
+      AppModel modelWithUsings = result.Model with { UserUsings = userUsings };
+      return new ExtractionResult(modelWithUsings, result.Diagnostics);
+    }
+
+    return result;
+  }
+
+  /// <summary>
+  /// Extracts an AppModel from a Build() call site, including all entry points (RunAsync, RunReplAsync).
+  /// This is the preferred extraction method as it starts from the app definition rather than entry points,
+  /// avoiding duplicate extractions when an app has multiple entry points.
+  /// </summary>
+  /// <param name="context">The generator syntax context containing the Build() invocation.</param>
+  /// <param name="cancellationToken">Cancellation token for the operation.</param>
+  /// <returns>Extraction result containing the model and any diagnostics.</returns>
+  public static ExtractionResult ExtractFromBuildCall
+  (
+    GeneratorSyntaxContext context,
+    CancellationToken cancellationToken
+  )
+  {
+    // 1. Get the invocation expression (Build() call)
+    if (context.Node is not InvocationExpressionSyntax buildInvocation)
+      return ExtractionResult.Empty;
+
+    // 2. Verify this is a NuruCoreApp Build() call
+    if (!BuildLocator.IsConfirmedBuildCall(buildInvocation, context.SemanticModel, cancellationToken))
+      return ExtractionResult.Empty;
+
+    // 3. Find the CompilationUnit (needed for usings extraction)
+    CompilationUnitSyntax? compilationUnit = FindCompilationUnit(buildInvocation);
+    if (compilationUnit is null)
+      return ExtractionResult.Empty;
+
+    // 4. Find the containing block or use top-level statements
+    DslInterpreter interpreter = new(context.SemanticModel, cancellationToken);
+    ExtractionResult result;
+
+    BlockSyntax? block = FindContainingBlock(buildInvocation);
+    if (block is not null)
+    {
+      // Traditional method body - interpret the whole block
+      result = interpreter.InterpretWithDiagnostics(block);
+    }
+    else
+    {
+      // Top-level statements
+      result = interpreter.InterpretTopLevelStatementsWithDiagnostics(compilationUnit);
+    }
+
+    // 5. If we have a model, add user usings and set build location
+    if (result.Model is not null)
+    {
+      ImmutableArray<string> userUsings = ExtractUserUsings(compilationUnit);
+      string buildLocation = buildInvocation.GetLocation().GetLineSpan().ToString();
+      AppModel modelWithMetadata = result.Model with
+      {
+        UserUsings = userUsings,
+        BuildLocation = buildLocation
+      };
+      return new ExtractionResult(modelWithMetadata, result.Diagnostics);
     }
 
     return result;

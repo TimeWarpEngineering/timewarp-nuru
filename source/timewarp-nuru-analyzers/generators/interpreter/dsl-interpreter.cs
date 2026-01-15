@@ -174,14 +174,15 @@ public sealed class DslInterpreter
   }
 
   /// <summary>
-  /// Extracts an AppModel by tracing back from a RunAsync invocation to find the app builder.
+  /// Extracts an AppModel by tracing back from an entry point call (RunAsync or RunReplAsync) to find the app builder.
   /// Uses semantic model to follow variable declarations - no block walking needed.
   /// </summary>
-  /// <param name="runAsyncInvocation">The RunAsync() call site.</param>
+  /// <param name="invocation">The entry point call site (RunAsync or RunReplAsync).</param>
+  /// <param name="isReplCall">True if this is a RunReplAsync call, false for RunAsync.</param>
   /// <returns>Extraction result containing the model and any diagnostics.</returns>
-  public ExtractionResult ExtractFromRunAsyncCall(InvocationExpressionSyntax runAsyncInvocation)
+  public ExtractionResult ExtractFromEntryPointCall(InvocationExpressionSyntax invocation, bool isReplCall)
   {
-    ArgumentNullException.ThrowIfNull(runAsyncInvocation);
+    ArgumentNullException.ThrowIfNull(invocation);
 
     // Fresh state per interpretation
     VariableState = new Dictionary<ISymbol, object?>(SymbolEqualityComparer.Default);
@@ -190,8 +191,8 @@ public sealed class DslInterpreter
 
     try
     {
-      // Get the receiver expression (the 'app' part of 'app.RunAsync()')
-      if (runAsyncInvocation.Expression is not MemberAccessExpressionSyntax memberAccess)
+      // Get the receiver expression (the 'app' part of 'app.RunAsync()' or 'app.RunReplAsync()')
+      if (invocation.Expression is not MemberAccessExpressionSyntax memberAccess)
         return ExtractionResult.Empty;
 
       ExpressionSyntax receiver = memberAccess.Expression;
@@ -211,11 +212,12 @@ public sealed class DslInterpreter
       if (appBuilder is null)
         return ExtractionResult.Empty;
 
-      // Add the intercept site for this RunAsync call
-      InterceptSiteModel? site = InterceptSiteExtractor.Extract(SemanticModel, runAsyncInvocation);
+      // Add the intercept site for this entry point call
+      InterceptSiteModel? site = InterceptSiteExtractor.Extract(SemanticModel, invocation);
       if (site is not null)
       {
-        appBuilder.AddInterceptSite(site);
+        string methodName = isReplCall ? "RunReplAsync" : "RunAsync";
+        appBuilder.AddInterceptSite(methodName, site);
       }
 
       // Finalize and return the model
@@ -224,10 +226,20 @@ public sealed class DslInterpreter
     }
     catch (InvalidOperationException ex)
     {
-      CollectedDiagnostics.Add(CreateDiagnosticFromException(ex, runAsyncInvocation.GetLocation()));
+      CollectedDiagnostics.Add(CreateDiagnosticFromException(ex, invocation.GetLocation()));
       return new ExtractionResult(null, [.. CollectedDiagnostics]);
     }
   }
+
+  /// <summary>
+  /// Extracts an AppModel by tracing back from a RunAsync invocation to find the app builder.
+  /// Uses semantic model to follow variable declarations - no block walking needed.
+  /// </summary>
+  /// <param name="runAsyncInvocation">The RunAsync() call site.</param>
+  /// <returns>Extraction result containing the model and any diagnostics.</returns>
+  [Obsolete("Use ExtractFromEntryPointCall instead")]
+  public ExtractionResult ExtractFromRunAsyncCall(InvocationExpressionSyntax runAsyncInvocation) =>
+    ExtractFromEntryPointCall(runAsyncInvocation, isReplCall: false);
 
   // ═══════════════════════════════════════════════════════════════════════════════
   // BLOCK AND STATEMENT PROCESSING
@@ -488,6 +500,8 @@ public sealed class DslInterpreter
       "DiscoverEndpoints" => DispatchDiscoverEndpoints(receiver),
 
       "RunAsync" => DispatchRunAsyncCall(invocation, receiver),
+
+      "RunReplAsync" => DispatchRunReplAsyncCall(invocation, receiver),
 
       _ => HandleNonDslMethod(invocation, receiver, methodName)
     };
@@ -1271,10 +1285,41 @@ public sealed class DslInterpreter
     InterceptSiteModel? site = InterceptSiteExtractor.Extract(SemanticModel, invocation);
     if (site is not null)
     {
-      appBuilder.AddInterceptSite(site);
+      appBuilder.AddInterceptSite("RunAsync", site);
     }
 
     return null; // RunAsync returns void/Task
+  }
+
+  /// <summary>
+  /// Dispatches RunReplAsync() call to a built app.
+  /// </summary>
+  private object? DispatchRunReplAsyncCall(InvocationExpressionSyntax invocation, object? receiver)
+  {
+    // Receiver could be:
+    // 1. BuiltAppMarker - from chained ".Build().RunReplAsync()"
+    // 2. IrAppBuilder - from variable reference "app.RunReplAsync()"
+    IrAppBuilder? appBuilder = receiver switch
+    {
+      BuiltAppMarker marker => (IrAppBuilder)marker.Builder,
+      IrAppBuilder builder => builder,
+      _ => null
+    };
+
+    // Ignore RunReplAsync() calls on non-Nuru types
+    if (appBuilder is null)
+    {
+      return null;
+    }
+
+    // Extract and add the intercept site
+    InterceptSiteModel? site = InterceptSiteExtractor.Extract(SemanticModel, invocation);
+    if (site is not null)
+    {
+      appBuilder.AddInterceptSite("RunReplAsync", site);
+    }
+
+    return null; // RunReplAsync returns void/Task
   }
 
   // ═══════════════════════════════════════════════════════════════════════════════

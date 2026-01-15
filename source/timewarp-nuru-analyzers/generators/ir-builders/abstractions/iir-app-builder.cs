@@ -119,11 +119,12 @@ public interface IIrAppBuilder : IIrRouteSource
   IIrAppBuilder AddTypeConverter(CustomConverterDefinition converter);
 
   /// <summary>
-  /// Adds an intercept site from a RunAsync() call.
+  /// Adds an intercept site for a specific method.
   /// </summary>
+  /// <param name="methodName">The method name (e.g., "RunAsync", "RunReplAsync").</param>
   /// <param name="site">The intercept site model.</param>
   /// <returns>This builder for chaining.</returns>
-  IIrAppBuilder AddInterceptSite(InterceptSiteModel site);
+  IIrAppBuilder AddInterceptSite(string methodName, InterceptSiteModel site);
 
   /// <summary>
   /// Marks that all [NuruRoute] endpoints should be discovered and included.

@@ -84,7 +84,7 @@ public class PSReadLineKeybindingsTests
     Terminal.QueueLine("exit");
 
     // Act
-    await App!.RunAsync(["--interactive"]);
+    await App!.RunReplAsync();
 
     // Assert - Command executed successfully (session completed normally)
     Terminal.OutputContains("Goodbye!").ShouldBeTrue("LeftArrow should move cursor back one character");

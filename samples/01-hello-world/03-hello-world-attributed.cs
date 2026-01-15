@@ -10,7 +10,9 @@
 using TimeWarp.Nuru;
 using TimeWarp.Terminal;
 
-NuruCoreApp app = NuruApp.CreateBuilder(args).Build();
+NuruCoreApp app = NuruApp.CreateBuilder(args)
+  .DiscoverEndpoints()
+  .Build();
 return await app.RunAsync(args);
 
 [NuruRoute("", Description = "Greet the world")]

@@ -31,7 +31,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.SampleValidation
       // Create fresh terminal and app for each test
       Terminal = new TestTerminal();
 
-      App = new NuruAppBuilder()
+      App = NuruApp.CreateBuilder([])
         .UseTerminal(Terminal)
         .AddTypeConverter(new EnumTypeConverter<Environment>())
 
@@ -163,7 +163,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.SampleValidation
       Terminal.QueueLine("exit");
 
       // Act
-      await App.RunReplAsync();
+      await App.RunAsync(["--interactive"]);
 
       // Assert: All enum values should appear in completions
       Terminal.OutputContains("Dev").ShouldBeTrue("Should show 'Dev' enum value");
@@ -182,7 +182,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.SampleValidation
       Terminal.QueueLine("exit");
 
       // Act
-      await App.RunReplAsync();
+      await App.RunAsync(["--interactive"]);
 
       // Assert: --help option should also appear
       Terminal.OutputContains("--help").ShouldBeTrue("Should show '--help' option");
@@ -199,7 +199,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.SampleValidation
       Terminal.QueueLine("exit");
 
       // Act
-      await App.RunReplAsync();
+      await App.RunAsync(["--interactive"]);
 
       // Assert: Should show "Prod" (either as completion or auto-completed)
       Terminal.OutputContains("Prod").ShouldBeTrue("Should show or complete to 'Prod'");
@@ -221,7 +221,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.SampleValidation
       Terminal.QueueLine("exit");
 
       // Act
-      await App.RunReplAsync();
+      await App.RunAsync(["--interactive"]);
 
       // Assert: Should show "Staging" (either as completion or auto-completed)
       Terminal.OutputContains("Staging").ShouldBeTrue("Should show or complete to 'Staging'");
@@ -238,7 +238,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.SampleValidation
       Terminal.QueueLine("exit");
 
       // Act
-      await App.RunReplAsync();
+      await App.RunAsync(["--interactive"]);
 
       // Assert: Should show "Dev" (either as completion or auto-completed)
       Terminal.OutputContains("Dev").ShouldBeTrue("Should show or complete to 'Dev'");
@@ -259,7 +259,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.SampleValidation
       Terminal.QueueLine("exit");
 
       // Act
-      await App.RunReplAsync();
+      await App.RunAsync(["--interactive"]);
 
       // Assert: Should show git subcommands
       Terminal.OutputContains("status").ShouldBeTrue("Should show 'status' subcommand");
@@ -282,7 +282,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.SampleValidation
       Terminal.QueueLine("exit");
 
       // Act
-      await App.RunReplAsync();
+      await App.RunAsync(["--interactive"]);
 
       // Assert: Should show "deploy" in output
       Terminal.OutputContains("deploy").ShouldBeTrue("Should complete 'd' to 'deploy'");
@@ -299,7 +299,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.SampleValidation
       Terminal.QueueLine("exit");
 
       // Act
-      await App.RunReplAsync();
+      await App.RunAsync(["--interactive"]);
 
       // Assert: Should show both commands
       Terminal.OutputContains("status").ShouldBeTrue("Should show 'status'");
@@ -321,7 +321,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.SampleValidation
       Terminal.QueueLine("exit");
 
       // Act
-      await App.RunReplAsync();
+      await App.RunAsync(["--interactive"]);
 
       // Assert
       Terminal.OutputContains("Available completions").ShouldBeTrue("Should show completions header");
@@ -339,7 +339,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.SampleValidation
       Terminal.QueueLine("exit");
 
       // Act
-      await App.RunReplAsync();
+      await App.RunAsync(["--interactive"]);
 
       // Debug output to see cycling behavior
       WriteLine("=== OUTPUT FOR TAB CYCLING ===");
@@ -365,7 +365,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.SampleValidation
       Terminal.QueueLine("exit");
 
       // Act
-      await App.RunReplAsync();
+      await App.RunAsync(["--interactive"]);
 
       // Assert: Should show verbose options
       bool hasVerbose = Terminal.OutputContains("--verbose") || Terminal.OutputContains("-v");
@@ -401,7 +401,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.SampleValidation
       Terminal.QueueLine("exit");
 
       // Act
-      await App.RunReplAsync();
+      await App.RunAsync(["--interactive"]);
 
       // Assert
       WriteLine("=== COMPLETION OUTPUT ===");
@@ -440,7 +440,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.SampleValidation
       Terminal.QueueLine("exit");
 
       // Act
-      await App.RunReplAsync();
+      await App.RunAsync(["--interactive"]);
 
       // Assert: Should complete "com" to "commit"
       Terminal.OutputContains("commit").ShouldBeTrue("Should complete 'git com' to 'git commit'");
@@ -457,7 +457,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.SampleValidation
       Terminal.QueueLine("exit");
 
       // Act
-      await App.RunReplAsync();
+      await App.RunAsync(["--interactive"]);
 
       // Assert: Should show -m option (not complete to "git commit commit")
       Terminal.OutputContains("-m").ShouldBeTrue("Should show '-m' option after 'git commit '");
@@ -475,7 +475,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.SampleValidation
       Terminal.QueueLine("exit");
 
       // Act
-      await App.RunReplAsync();
+      await App.RunAsync(["--interactive"]);
 
       // Assert: Should NOT show route-specific options before selecting subcommand
       Terminal.OutputContains("--count").ShouldBeFalse("Should NOT show '--count' (only for 'git log')");

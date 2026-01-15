@@ -1,8 +1,5 @@
 #!/usr/bin/dotnet --
 #:project ../../source/timewarp-nuru/timewarp-nuru.csproj
-#:project ../../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj
-#:package Mediator.Abstractions
-#:package Mediator.SourceGenerator
 #:package Serilog
 #:package Serilog.Sinks.File
 #:package Serilog.Extensions.Logging
@@ -42,7 +39,6 @@
 using Serilog;
 using Serilog.Events;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.DependencyInjection;
 using TimeWarp.Nuru;
 using static System.Console;
 
@@ -132,19 +128,13 @@ try
     }
   };
 
-  NuruCoreApp app = NuruApp.CreateBuilder(args, nuruAppOptions)
-    .ConfigureServices(services => services.AddMediator())
-    .UseLogging(loggerFactory)
+  NuruCoreApp app = NuruApp.CreateBuilder(args)
     .AddTypeConverter(new EnumTypeConverter<Environment>()) // Register enum converter
-    .WithMetadata
-    (
-      description: "Interactive REPL demo showcasing Nuru route patterns."
-    )
+    .WithDescription("Interactive REPL demo showcasing Nuru route patterns.")
 
     // ========================================
     // SIMPLE COMMANDS (Literal only)
     // ========================================
-
     .Map("status")
       .WithHandler(() =>
       {
@@ -323,11 +313,11 @@ try
 
   // If no args or --interactive/-i, enter REPL mode
   // Otherwise execute the command and exit
-  if (args.Length == 0)
-  {
-    Log.Information("No args - starting REPL mode");
-    await app.RunReplAsync();
-  }
+  // if (args.Length == 0)
+  // {
+  //   Log.Information("No args - starting REPL mode");
+  //   await app.RunReplAsync();
+  // }
 
   Log.Information("Running command: {Args}", string.Join(" ", args));
   return await app.RunAsync(args);

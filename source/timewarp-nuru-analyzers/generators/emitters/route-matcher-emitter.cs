@@ -641,10 +641,10 @@ internal static class RouteMatcherEmitter
         // 3. Constraint alias (e.g., "email")
         // 4. Convention: ConverterTypeName minus "Converter" suffix (e.g., "EmailAddressConverter" -> "EmailAddress")
         CustomConverterDefinition? converter = customConverters.FirstOrDefault(c =>
-          string.Equals(c.TargetTypeName, baseType, StringComparison.Ordinal) ||
-          string.Equals(GetSimpleTypeName(c.TargetTypeName), baseType, StringComparison.Ordinal) ||
+          string.Equals(c.TargetTypeName, baseType, StringComparison.OrdinalIgnoreCase) ||
+          string.Equals(GetSimpleTypeName(c.TargetTypeName), baseType, StringComparison.OrdinalIgnoreCase) ||
           string.Equals(c.ConstraintAlias, baseType, StringComparison.OrdinalIgnoreCase) ||
-          string.Equals(GetTargetTypeFromConverterName(c.ConverterTypeName), baseType, StringComparison.Ordinal));
+          string.Equals(GetTargetTypeFromConverterName(c.ConverterTypeName), baseType, StringComparison.OrdinalIgnoreCase));
 
         if (converter is not null)
         {
@@ -655,7 +655,7 @@ internal static class RouteMatcherEmitter
         {
           // No converter found - emit warning comment
           sb.AppendLine(
-            $"{indentStr}// WARNING: No converter found for type constraint '{baseType}' (resolved: {param.ResolvedClrTypeName})");
+            $"{indentStr}// WARNING: No converter found for type constraint '{baseType}'");
           sb.AppendLine(
             $"{indentStr}// Register a converter with: builder.AddTypeConverter<YourConverter>();");
         }
@@ -719,13 +719,8 @@ internal static class RouteMatcherEmitter
     string converterVarName = $"__converter_{param.CamelCaseName}_{routeIndex}";
     string tempVarName = $"__temp_{param.CamelCaseName}_{routeIndex}";
 
-    // Use the parameter's resolved CLR type (from handler signature) as the target type
-    // Fall back to deriving from converter name if not available
-    string targetType = !string.IsNullOrEmpty(param.ResolvedClrTypeName)
-      ? param.ResolvedClrTypeName
-      : !string.IsNullOrEmpty(converter.TargetTypeName)
-        ? converter.TargetTypeName
-        : GetTargetTypeFromConverterName(converter.ConverterTypeName);
+    // Use the converter's target type (resolved via semantic model)
+    string targetType = converter.TargetTypeName;
 
     if (param.IsOptional)
     {
@@ -946,10 +941,10 @@ internal static class RouteMatcherEmitter
     {
       // Try to find a custom type converter for this constraint
       CustomConverterDefinition? converter = customConverters.FirstOrDefault(c =>
-        string.Equals(c.TargetTypeName, baseType, StringComparison.Ordinal) ||
-        string.Equals(GetSimpleTypeName(c.TargetTypeName), baseType, StringComparison.Ordinal) ||
+        string.Equals(c.TargetTypeName, baseType, StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(GetSimpleTypeName(c.TargetTypeName), baseType, StringComparison.OrdinalIgnoreCase) ||
         string.Equals(c.ConstraintAlias, baseType, StringComparison.OrdinalIgnoreCase) ||
-        string.Equals(GetTargetTypeFromConverterName(c.ConverterTypeName), baseType, StringComparison.Ordinal));
+        string.Equals(GetTargetTypeFromConverterName(c.ConverterTypeName), baseType, StringComparison.OrdinalIgnoreCase));
 
       if (converter is not null)
       {
@@ -979,8 +974,8 @@ internal static class RouteMatcherEmitter
     string converterVarName = $"__converter_{varName}_{routeIndex}";
     string tempVarName = $"__temp_{varName}_{routeIndex}";
 
-    // Derive target type from converter name (convention: XxxConverter -> Xxx)
-    string targetType = GetTargetTypeFromConverterName(converter.ConverterTypeName);
+    // Use the converter's target type (resolved via semantic model)
+    string targetType = converter.TargetTypeName;
 
     if (option.ParameterIsOptional)
     {

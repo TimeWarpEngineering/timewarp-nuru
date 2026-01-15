@@ -1087,8 +1087,9 @@ public sealed class DslInterpreter
   /// <summary>
   /// Dispatches AddTypeConverter() call to IIrAppBuilder.
   /// Extracts converter type information for code generation.
+  /// Uses semantic model to resolve generic type arguments (e.g., EnumTypeConverter&lt;Environment&gt;).
   /// </summary>
-  private static object? DispatchAddTypeConverter(InvocationExpressionSyntax invocation, object? receiver)
+  private object? DispatchAddTypeConverter(InvocationExpressionSyntax invocation, object? receiver)
   {
     if (receiver is not IIrAppBuilder appBuilder)
     {
@@ -1096,19 +1097,30 @@ public sealed class DslInterpreter
     }
 
     // Extract converter info from: AddTypeConverter(new EmailAddressConverter())
+    // or: AddTypeConverter(new EnumTypeConverter<Environment>())
     ArgumentSyntax? arg = invocation.ArgumentList.Arguments.FirstOrDefault();
     if (arg?.Expression is ObjectCreationExpressionSyntax objectCreation)
     {
       // Get the converter type name
       string converterTypeName = objectCreation.Type.ToString();
 
-      // For now, we'll extract the target type and alias at emit time
-      // by analyzing the converter class. Store just the converter type name.
-      // The emitter will generate: new ConverterTypeName() and call TryConvert.
+      // Use semantic model to resolve the generic type argument
+      string targetTypeName = "";
+
+      // GetSymbolInfo works for types from referenced projects
+      SymbolInfo symbolInfo = SemanticModel.GetSymbolInfo(objectCreation.Type);
+      if (symbolInfo.Symbol is INamedTypeSymbol namedType && namedType.IsGenericType && namedType.TypeArguments.Length > 0)
+      {
+        // Generic converter like EnumTypeConverter<Environment>
+        // Extract the first type argument as the target type
+        ITypeSymbol targetType = namedType.TypeArguments[0];
+        targetTypeName = targetType.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
+      }
+
       CustomConverterDefinition converter = new(
         ConverterTypeName: converterTypeName,
-        TargetTypeName: "", // Will be resolved from handler parameter type
-        ConstraintAlias: null); // Not extractable at syntax level
+        TargetTypeName: targetTypeName,
+        ConstraintAlias: null);
 
       return appBuilder.AddTypeConverter(converter);
     }

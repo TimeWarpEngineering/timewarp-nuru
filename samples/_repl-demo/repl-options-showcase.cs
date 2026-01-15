@@ -1,8 +1,5 @@
 #!/usr/bin/dotnet --
 #:project ../../source/timewarp-nuru/timewarp-nuru.csproj
-#:project ../../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj
-#:package Mediator.Abstractions
-#:package Mediator.SourceGenerator
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // REPLOPTIONS COMPREHENSIVE SHOWCASE

@@ -119,13 +119,34 @@ The following tests were skipped because they use patterns incompatible with the
 3. **repl-34-interactive-route-alias.cs** - Tests removed AddInteractiveRoute() API
 4. **repl-35-interactive-route-execution.cs** - Tests removed AddInteractiveRoute() API
 
+### Phase 4: All REPL Tests in CI ✅ COMPLETED
+
+All 16 REPL test files added to `tests/ci-tests/Directory.Build.props`:
+- [x] repl-02-command-parsing.cs
+- [x] repl-10-error-handling.cs
+- [x] repl-11-display-formatting.cs
+- [x] repl-12-configuration.cs
+- [x] repl-17-sample-validation.cs
+- [x] repl-18-psreadline-keybindings.cs
+- [x] repl-19-tab-cycling-bug.cs
+- [x] repl-23-key-binding-profiles.cs
+- [x] repl-24-custom-key-bindings.cs
+- [x] repl-25-interactive-history-search.cs
+- [x] repl-26-kill-ring.cs
+- [x] repl-27-undo-redo.cs
+- [x] repl-28-text-selection.cs
+- [x] repl-29-word-operations.cs
+- [x] repl-30-basic-editing-enhancement.cs
+- [x] repl-33-yank-arguments.cs
+
+**Note:** 122 tests fail due to bug #363 (generator doesn't intercept `RunAsync` on static fields).
+
 ### Remaining Work
 
+- [ ] Fix bug #363 to make failing tests pass
 - [ ] Test interactive mode entry/exit manually
 - [ ] Test tab completion manually
 - [ ] Test history navigation manually
-- [ ] Verify `samples/_repl-demo/` work with new implementation
-- [ ] Consider rewriting closure-based tests to use output verification
 
 ## File Structure After Integration
 

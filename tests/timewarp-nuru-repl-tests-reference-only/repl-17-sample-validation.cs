@@ -32,7 +32,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.SampleValidation
       // Create fresh terminal and app for each test
       Terminal = new TestTerminal();
 
-      App = new NuruAppBuilder()
+      App =NuruApp.CreateBuilder([])
         .UseTerminal(Terminal)
         .AddTypeConverter(new EnumTypeConverter<Environment>())
 

@@ -26,7 +26,7 @@ public class PSReadLineKeybindingsTests
     // Create fresh terminal and app for each test
     Terminal = new TestTerminal();
 
-    App = new NuruAppBuilder()
+    App = NuruApp.CreateBuilder([])
       .UseTerminal(Terminal)
       .Map("aXb")
         .WithHandler(() => "Success!")
@@ -84,7 +84,7 @@ public class PSReadLineKeybindingsTests
     Terminal.QueueLine("exit");
 
     // Act
-    await App!.RunReplAsync();
+    await App!.RunAsync(["--interactive"]);
 
     // Assert - Command executed successfully (session completed normally)
     Terminal.OutputContains("Goodbye!").ShouldBeTrue("LeftArrow should move cursor back one character");

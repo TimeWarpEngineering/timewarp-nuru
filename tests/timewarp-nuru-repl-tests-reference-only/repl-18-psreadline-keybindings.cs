@@ -27,7 +27,7 @@ public class PSReadLineKeybindingsTests
     // Create fresh terminal and app for each test
     Terminal = new TestTerminal();
 
-    App = new NuruAppBuilder()
+    App =NuruApp.CreateBuilder([])
       .UseTerminal(Terminal)
       .Map("aXb")
         .WithHandler(() => "Success!")

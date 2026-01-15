@@ -77,7 +77,24 @@
     <Compile Include="../timewarp-nuru-tests/repl/repl-20-double-tab-bug.cs" />
     <Compile Include="../timewarp-nuru-tests/repl/repl-21-escape-clears-line.cs" />
     <Compile Include="../timewarp-nuru-tests/repl/repl-22-prompt-display-no-arrow-history.cs" />
+    <!-- Additional REPL tests (Phase 4 of #362) -->
+    <Compile Include="../timewarp-nuru-tests/repl/repl-02-command-parsing.cs" />
+    <Compile Include="../timewarp-nuru-tests/repl/repl-10-error-handling.cs" />
+    <Compile Include="../timewarp-nuru-tests/repl/repl-11-display-formatting.cs" />
+    <Compile Include="../timewarp-nuru-tests/repl/repl-12-configuration.cs" />
+    <Compile Include="../timewarp-nuru-tests/repl/repl-17-sample-validation.cs" />
+    <Compile Include="../timewarp-nuru-tests/repl/repl-18-psreadline-keybindings.cs" />
+    <Compile Include="../timewarp-nuru-tests/repl/repl-19-tab-cycling-bug.cs" />
+    <Compile Include="../timewarp-nuru-tests/repl/repl-23-key-binding-profiles.cs" />
+    <Compile Include="../timewarp-nuru-tests/repl/repl-24-custom-key-bindings.cs" />
+    <Compile Include="../timewarp-nuru-tests/repl/repl-25-interactive-history-search.cs" />
+    <Compile Include="../timewarp-nuru-tests/repl/repl-26-kill-ring.cs" />
+    <Compile Include="../timewarp-nuru-tests/repl/repl-27-undo-redo.cs" />
+    <Compile Include="../timewarp-nuru-tests/repl/repl-28-text-selection.cs" />
+    <Compile Include="../timewarp-nuru-tests/repl/repl-29-word-operations.cs" />
+    <Compile Include="../timewarp-nuru-tests/repl/repl-30-basic-editing-enhancement.cs" />
     <Compile Include="../timewarp-nuru-tests/repl/repl-31-multiline-buffer.cs" />
+    <Compile Include="../timewarp-nuru-tests/repl/repl-33-yank-arguments.cs" />
     <!-- Skipped tests (placeholder files) -->
     <Compile Include="../timewarp-nuru-tests/repl/repl-16-enum-completion.cs" />
     <Compile Include="../timewarp-nuru-tests/repl/repl-32-multiline-editing.cs" />

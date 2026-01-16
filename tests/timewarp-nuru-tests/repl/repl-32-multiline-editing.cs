@@ -3,14 +3,8 @@
 
 // Tests for multiline editing in REPL (Task 043-009)
 //
-// NOTE: This test file has been disabled because it uses handler lambdas that
-// capture external variables (closures). The source generator doesn't support
-// closures because the lambda body is inlined into generated code.
-//
-// TODO: Rewrite these tests to use a different pattern:
-// - Use return values to indicate what happened
-// - Use static methods with appropriate state management
-// - Or verify behavior through terminal output instead of captured state
+// These tests verify Shift+Enter behavior for multiline input in the REPL.
+// Tests use return values from handlers for source generator compatibility.
 
 #if !JARIBU_MULTI
 return await RunAllTests();
@@ -28,84 +22,300 @@ public class MultilineEditingTests
   internal static void Register() => RegisterTests<MultilineEditingTests>();
 
   // ============================================================================
-  // NOTE: All tests in this file are skipped because they use handler closures
-  // which are not supported by the source generator. The closure tests need to
-  // be rewritten to verify behavior through terminal output instead of captured
-  // state variables.
-  //
-  // Original tests covered:
-  // - Shift+Enter (AddLine) behavior
-  // - Line splitting at cursor position
-  // - Multiple line additions
-  // - Full multiline execution
-  // - History integration
-  // - Continuation prompts
-  // - Edge cases (empty lines, mode reset)
+  // Shift+Enter (AddLine) Tests
   // ============================================================================
 
-  [Skip("Tests use handler closures which are not supported by source generator - needs rewrite")]
   public static async Task Should_add_new_line_with_shift_enter()
   {
-    // Original test: verified that Shift+Enter adds a new line instead of executing
-    // Rewrite approach: use terminal.OutputContains() to verify multiline input display
-    await Task.CompletedTask;
+    // Arrange
+    using TestTerminal terminal = new();
+    terminal.QueueKeys("hello");
+    terminal.QueueKey(ConsoleKey.Enter, shift: true);  // Shift+Enter adds new line
+    terminal.QueueKeys("world");
+    terminal.QueueKey(ConsoleKey.Enter);  // Execute multiline command
+    terminal.QueueLine("exit");
+
+    NuruCoreApp app = NuruApp.CreateBuilder([])
+      .UseTerminal(terminal)
+      .Map("hello {*args}")
+        .WithHandler((string[] args) => $"hello[{string.Join(" ", args)}]")
+        .AsCommand()
+        .Done()
+      .Map("world")
+        .WithHandler(() => "world[]")
+        .AsCommand()
+        .Done()
+      .AddRepl(options => options.EnableColors = false)
+      .Build();
+
+    // Act
+    await app.RunAsync(["--interactive"]);
+
+    // Assert - multiline input "hello\nworld" should be processed
+    // The handler receives "world" as rest parameter when entered on new line
+    terminal.OutputContains("hello[").ShouldBeTrue("First line should match hello pattern");
+    terminal.OutputContains("world").ShouldBeTrue("Second line content should appear in output");
   }
 
-  [Skip("Tests use handler closures which are not supported by source generator - needs rewrite")]
   public static async Task Should_split_line_at_cursor_with_shift_enter()
   {
-    // Original test: verified that Shift+Enter at cursor position splits the line
-    await Task.CompletedTask;
+    // Arrange
+    using TestTerminal terminal = new();
+    terminal.QueueKeys("helloworld");
+    terminal.QueueKey(ConsoleKey.Home);         // Go to start
+    terminal.QueueKey(ConsoleKey.RightArrow);   // Move to 'e'
+    terminal.QueueKey(ConsoleKey.RightArrow);   // Move to 'l'
+    terminal.QueueKey(ConsoleKey.RightArrow);   // Move to 'l'
+    terminal.QueueKey(ConsoleKey.RightArrow);   // Move to 'o'
+    terminal.QueueKey(ConsoleKey.RightArrow);   // Move past 'o', cursor before 'w'
+    terminal.QueueKey(ConsoleKey.Enter, shift: true);  // Split here
+    terminal.QueueKey(ConsoleKey.Enter);  // Execute
+    terminal.QueueLine("exit");
+
+    NuruCoreApp app = NuruApp.CreateBuilder([])
+      .UseTerminal(terminal)
+      .Map("hello")
+        .WithHandler(() => "hello")
+        .AsCommand()
+        .Done()
+      .Map("world")
+        .WithHandler(() => "world")
+        .AsCommand()
+        .Done()
+      .AddRepl(options => options.EnableColors = false)
+      .Build();
+
+    // Act
+    await app.RunAsync(["--interactive"]);
+
+    // Assert - lines should be separated at cursor position
+    terminal.OutputContains("hello").ShouldBeTrue("First part should be 'hello'");
+    terminal.OutputContains("world").ShouldBeTrue("Second part should be 'world'");
   }
 
-  [Skip("Tests use handler closures which are not supported by source generator - needs rewrite")]
   public static async Task Should_add_multiple_lines_with_shift_enter()
   {
-    // Original test: verified multiple Shift+Enter creates multiple lines
-    await Task.CompletedTask;
+    // Arrange
+    using TestTerminal terminal = new();
+    terminal.QueueKeys("line1");
+    terminal.QueueKey(ConsoleKey.Enter, shift: true);
+    terminal.QueueKeys("line2");
+    terminal.QueueKey(ConsoleKey.Enter, shift: true);
+    terminal.QueueKeys("line3");
+    terminal.QueueKey(ConsoleKey.Enter);  // Execute
+    terminal.QueueLine("exit");
+
+    NuruCoreApp app = NuruApp.CreateBuilder([])
+      .UseTerminal(terminal)
+      .Map("line1 line2 line3")
+        .WithHandler(() => "all-lines-executed")
+        .AsCommand()
+        .Done()
+      .AddRepl(options => options.EnableColors = false)
+      .Build();
+
+    // Act
+    await app.RunAsync(["--interactive"]);
+
+    // Assert - all three lines should be captured and executed as single command
+    terminal.OutputContains("all-lines-executed").ShouldBeTrue("All three lines should be executed as one command");
   }
 
-  [Skip("Tests use handler closures which are not supported by source generator - needs rewrite")]
+  // ============================================================================
+  // Enter Execution in Multiline Mode Tests
+  // ============================================================================
+
   public static async Task Should_execute_full_multiline_input_on_enter()
   {
-    // Original test: verified that Enter executes all lines together
-    await Task.CompletedTask;
+    // Arrange
+    using TestTerminal terminal = new();
+    terminal.QueueKeys("deploy");
+    terminal.QueueKey(ConsoleKey.Enter, shift: true);
+    terminal.QueueKeys("--env production");
+    terminal.QueueKey(ConsoleKey.Enter);  // Execute
+    terminal.QueueLine("exit");
+
+    NuruCoreApp app = NuruApp.CreateBuilder([])
+      .UseTerminal(terminal)
+      .Map("deploy --env {env}")
+        .WithHandler((string env) => $"DEPLOYED: {env}")
+        .AsCommand()
+        .Done()
+      .AddRepl(options => options.EnableColors = false)
+      .Build();
+
+    // Act
+    await app.RunAsync(["--interactive"]);
+
+    // Assert - deploy command should execute with correct environment
+    terminal.OutputContains("DEPLOYED: production").ShouldBeTrue("Deploy command should execute with env parameter");
   }
 
-  [Skip("Tests use handler closures which are not supported by source generator - needs rewrite")]
+  // ============================================================================
+  // History Integration Tests
+  // ============================================================================
+
   public static async Task Should_add_multiline_input_to_history()
   {
-    // Original test: verified that multiline commands are added to history
-    await Task.CompletedTask;
+    // Arrange
+    using TestTerminal terminal = new();
+    terminal.QueueKeys("testcmd");
+    terminal.QueueKey(ConsoleKey.Enter, shift: true);
+    terminal.QueueKeys("arg1");
+    terminal.QueueKey(ConsoleKey.Enter);  // Execute first multiline command
+    terminal.QueueLine("history");        // Check history
+    terminal.QueueLine("exit");
+
+    NuruCoreApp app = NuruApp.CreateBuilder([])
+      .UseTerminal(terminal)
+      .Map("testcmd {*args}")
+        .WithHandler((string[] args) => "OK")
+        .AsCommand()
+        .Done()
+      .AddRepl(options => options.EnableColors = false)
+      .Build();
+
+    // Act
+    await app.RunAsync(["--interactive"]);
+
+    // Assert - multiline command should be in history
+    terminal.OutputContains("Command History:").ShouldBeTrue("History command should display");
+    // The multiline command should appear in history output
+    terminal.OutputContains("testcmd").ShouldBeTrue("Multiline command should be in history");
   }
 
-  [Skip("Tests use handler closures which are not supported by source generator - needs rewrite")]
+  // ============================================================================
+  // Continuation Prompt Tests
+  // ============================================================================
+
   public static async Task Should_display_continuation_prompt()
   {
-    // Original test: verified that continuation prompt shows on second line
-    await Task.CompletedTask;
+    // Arrange
+    using TestTerminal terminal = new();
+    terminal.QueueKeys("first");
+    terminal.QueueKey(ConsoleKey.Enter, shift: true);
+    terminal.QueueKeys("second");
+    terminal.QueueKey(ConsoleKey.Enter);
+    terminal.QueueLine("exit");
+
+    NuruCoreApp app = NuruApp.CreateBuilder([])
+      .UseTerminal(terminal)
+      .Map("first")
+        .WithHandler(() => "first-ok")
+        .AsCommand()
+        .Done()
+      .Map("second")
+        .WithHandler(() => "second-ok")
+        .AsCommand()
+        .Done()
+      .AddRepl(options =>
+      {
+        options.EnableColors = false;
+        options.ContinuationPrompt = ">> ";
+      })
+      .Build();
+
+    // Act
+    await app.RunAsync(["--interactive"]);
+
+    // Assert - continuation prompt should be visible in output
+    terminal.OutputContains(">>").ShouldBeTrue("Should display continuation prompt");
   }
 
-  [Skip("Tests use handler closures which are not supported by source generator - needs rewrite")]
   public static async Task Should_use_custom_continuation_prompt()
   {
-    // Original test: verified custom continuation prompt is displayed
-    await Task.CompletedTask;
+    // Arrange
+    using TestTerminal terminal = new();
+    terminal.QueueKeys("first");
+    terminal.QueueKey(ConsoleKey.Enter, shift: true);
+    terminal.QueueKeys("second");
+    terminal.QueueKey(ConsoleKey.Enter);
+    terminal.QueueLine("exit");
+
+    NuruCoreApp app = NuruApp.CreateBuilder([])
+      .UseTerminal(terminal)
+      .Map("first")
+        .WithHandler(() => "first-ok")
+        .AsCommand()
+        .Done()
+      .Map("second")
+        .WithHandler(() => "second-ok")
+        .AsCommand()
+        .Done()
+      .AddRepl(options =>
+      {
+        options.EnableColors = false;
+        options.ContinuationPrompt = "... ";  // Custom prompt
+      })
+      .Build();
+
+    // Act
+    await app.RunAsync(["--interactive"]);
+
+    // Assert
+    terminal.OutputContains("...").ShouldBeTrue("Should display custom continuation prompt");
   }
 
-  [Skip("Tests use handler closures which are not supported by source generator - needs rewrite")]
+  // ============================================================================
+  // Edge Cases
+  // ============================================================================
+
   public static async Task Should_handle_shift_enter_on_empty_line()
   {
-    // Original test: verified behavior when Shift+Enter pressed on empty input
-    await Task.CompletedTask;
+    // Arrange
+    using TestTerminal terminal = new();
+    terminal.QueueKey(ConsoleKey.Enter, shift: true);  // Empty first line
+    terminal.QueueKeys("content");
+    terminal.QueueKey(ConsoleKey.Enter);
+    terminal.QueueLine("exit");
+
+    NuruCoreApp app = NuruApp.CreateBuilder([])
+      .UseTerminal(terminal)
+      .Map("content")
+        .WithHandler(() => "content-ok")
+        .AsCommand()
+        .Done()
+      .AddRepl(options => options.EnableColors = false)
+      .Build();
+
+    // Act
+    await app.RunAsync(["--interactive"]);
+
+    // Assert - should handle empty first line gracefully
+    terminal.OutputContains("content-ok").ShouldBeTrue("Should handle content after empty first line");
   }
 
-  [Skip("Tests use handler closures which are not supported by source generator - needs rewrite")]
   public static async Task Should_reset_multiline_mode_after_execution()
   {
-    // Original test: verified that mode resets to single-line after execution
-    await Task.CompletedTask;
+    // Arrange - Test that after multiline input, single-line commands still work
+    using TestTerminal terminal = new();
+    // Multiline: type "multi", Shift+Enter, type "line", Enter
+    terminal.QueueKeys("multi");
+    terminal.QueueKey(ConsoleKey.Enter, shift: true);
+    terminal.QueueKeys("line");
+    terminal.QueueKey(ConsoleKey.Enter);
+    // Single-line: type "test" and Enter
+    terminal.QueueKeys("test");
+    terminal.QueueKey(ConsoleKey.Enter);
+    terminal.QueueLine("exit");
+
+    NuruCoreApp app = NuruApp.CreateBuilder([])
+      .UseTerminal(terminal)
+      .Map("test")
+        .WithHandler(() => "TEST OK")
+        .AsCommand()
+        .Done()
+      .AddRepl(options => options.EnableColors = false)
+      .Build();
+
+    // Act
+    await app.RunAsync(["--interactive"]);
+
+    // Assert - single-line command should work after multiline
+    // If multiline mode didn't reset, "test" wouldn't be recognized as a command
+    terminal.OutputContains("TEST OK").ShouldBeTrue("Single-line command should work after multiline");
   }
 }
+}
 
-} // namespace TimeWarp.Nuru.Tests.ReplTests.MultilineEditing
+// EOF

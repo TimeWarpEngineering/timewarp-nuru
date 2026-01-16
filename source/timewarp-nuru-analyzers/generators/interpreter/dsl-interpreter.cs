@@ -619,6 +619,33 @@ public sealed class DslInterpreter
   }
 
   /// <summary>
+  /// Checks if the invocation is calling a method on a Nuru DSL builder type.
+  /// Uses semantic model to resolve the method's containing type.
+  /// </summary>
+  private bool IsDslBuilderMethod(InvocationExpressionSyntax invocation)
+  {
+    SymbolInfo symbolInfo = SemanticModel.GetSymbolInfo(invocation, CancellationToken);
+
+    if (symbolInfo.Symbol is not IMethodSymbol methodSymbol)
+      return false;
+
+    INamedTypeSymbol? containingType = methodSymbol.ContainingType;
+    if (containingType is null)
+      return false;
+
+    // Check if containing type is in TimeWarp.Nuru namespace
+    string? namespaceName = containingType.ContainingNamespace?.ToDisplayString();
+    if (namespaceName is not "TimeWarp.Nuru" and not "TimeWarp.Nuru.Generators")
+      return false;
+
+    // Check if type name matches known DSL types (builders and built app)
+    string typeName = containingType.Name;
+    return typeName is "NuruCoreAppBuilder" or "NuruAppBuilder"
+        or "EndpointBuilder" or "GroupBuilder" or "GroupEndpointBuilder"
+        or "NestedCompiledRouteBuilder" or "NuruApp" or "NuruCoreApp";
+  }
+
+  /// <summary>
   /// Checks if this is a generic Map&lt;T&gt;() call vs Map("pattern").
   /// </summary>
   private static bool IsGenericMapCall(InvocationExpressionSyntax invocation)
@@ -899,9 +926,17 @@ public sealed class DslInterpreter
 
   /// <summary>
   /// Dispatches WithName() call to IIrAppBuilder.
+  /// Uses semantic model check to filter out non-DSL methods (e.g., CustomKeyBindingProfile.WithName).
   /// </summary>
-  private static object? DispatchWithName(InvocationExpressionSyntax invocation, object? receiver)
+  private object? DispatchWithName(InvocationExpressionSyntax invocation, object? receiver)
   {
+    // Check if this is actually a DSL builder method call
+    // Prevents methods like CustomKeyBindingProfile.WithName() from being incorrectly dispatched
+    if (!IsDslBuilderMethod(invocation))
+    {
+      return null;
+    }
+
     if (receiver is not IIrAppBuilder appBuilder)
     {
       throw new InvalidOperationException(

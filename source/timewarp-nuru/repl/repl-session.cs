@@ -294,12 +294,12 @@ public sealed class ReplSession : IDisposable
     if (!success)
     {
       string message = errorMessage ?? $"Command failed with exit code {exitCode}";
-      Terminal.WriteLine(ReplOptions.EnableColors ? message.Red() : message);
+      Terminal.WriteErrorLine(ReplOptions.EnableColors ? message.Red() : message);
     }
     else if (!ReplOptions.ContinueOnError && exitCode != 0)
     {
       string message = $"Command failed with exit code {exitCode}. Exiting REPL.";
-      Terminal.WriteLine(ReplOptions.EnableColors ? message.Red() : message);
+      Terminal.WriteErrorLine(ReplOptions.EnableColors ? message.Red() : message);
     }
   }
 

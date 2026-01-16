@@ -183,8 +183,8 @@ internal static class ReplEmitter
     sb.AppendLine("      app,");
     sb.AppendLine("      replOptions,");
     sb.AppendLine("      routeProvider,");
-    // Call RunAsync_Intercepted directly for each REPL command - reuses all route matching logic
-    sb.AppendLine("      static (nuruApp, args, ct) => nuruApp.RunAsync(args),");
+    // Call ExecuteRouteAsync directly - the core route matching logic used by both RunAsync and REPL
+    sb.AppendLine($"      static (nuruApp, args, ct) => ExecuteRouteAsync{methodSuffix}(nuruApp, args),");
     sb.AppendLine("      app.LoggerFactory");
     sb.AppendLine("    ).ConfigureAwait(false);");
     sb.AppendLine("  }");

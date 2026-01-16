@@ -139,14 +139,30 @@ All 16 REPL test files added to `tests/ci-tests/Directory.Build.props`:
 - [x] repl-30-basic-editing-enhancement.cs
 - [x] repl-33-yank-arguments.cs
 
-**Note:** 122 tests fail due to bug #363 (generator doesn't intercept `RunAsync` on static fields).
+**Note:** #364 (cross-method field tracking) is now fixed. CI: 895/937 pass, 15 fail, 27 skipped.
 
 ### Remaining Work
 
-- [ ] Fix bug #363 to make failing tests pass
+- [x] Fix bug #364 (cross-method field tracking for static fields)
+- [x] Fix REPL ExecuteRouteAsync pattern (REPL now calls route matcher directly)
+- [x] Fix error messages to use stderr (WriteErrorLine)
 - [ ] Test interactive mode entry/exit manually
 - [ ] Test tab completion manually
 - [ ] Test history navigation manually
+
+### Blocking Bugs (15 remaining test failures)
+
+**#366 - DSL interpreter must verify receiver type (3 failures)**
+- `CustomKeyBindingProfile.WithName()` incorrectly interpreted as builder method
+- Tests: repl-24-custom-key-bindings.cs
+
+**#367 - Interceptor cannot intercept calls inside lambdas (2 failures)**
+- `Should.ThrowAsync(async () => await app.RunAsync(...))` not intercepted
+- Tests: generator-14-options-validation.cs
+
+**#368 - REPL completion missing enum values and --help (10 failures)**
+- GetCompletions() doesn't emit enum parameter values or --help
+- Tests: repl-17-sample-validation.cs
 
 ## File Structure After Integration
 

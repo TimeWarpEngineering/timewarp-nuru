@@ -56,8 +56,22 @@ internal static class InterceptorEmitter
   /// </summary>
   private static void EmitAppInterceptorMethod(StringBuilder sb, AppModel app, int appIndex, GeneratorModel model)
   {
+    string methodSuffix = model.Apps.Length > 1 ? $"_{appIndex}" : "";
+
     // Get RunAsync intercept sites from the dictionary
-    if (!app.InterceptSitesByMethod.TryGetValue("RunAsync", out ImmutableArray<InterceptSiteModel> runAsyncSites))
+    bool hasRunAsyncSites = app.InterceptSitesByMethod.TryGetValue("RunAsync", out ImmutableArray<InterceptSiteModel> runAsyncSites);
+
+    // Emit ExecuteRouteAsync when:
+    // - App has routes (needs route matching)
+    // - App has REPL (REPL calls ExecuteRouteAsync)
+    // - App has RunAsync intercept sites (RunAsync_Intercepted calls ExecuteRouteAsync)
+    if (app.HasRoutes || app.HasRepl || hasRunAsyncSites)
+    {
+      EmitExecuteRouteAsyncMethod(sb, app, appIndex, model, methodSuffix);
+    }
+
+    // Only emit RunAsync_Intercepted when there are actual intercept sites
+    if (!hasRunAsyncSites)
       return;
 
     // Emit [InterceptsLocation] attributes for this app's RunAsync calls
@@ -67,10 +81,26 @@ internal static class InterceptorEmitter
     }
 
     // Method signature - use index suffix for uniqueness when multiple apps
-    string methodSuffix = model.Apps.Length > 1 ? $"_{appIndex}" : "";
     sb.AppendLine($"  public static async Task<int> RunAsync_Intercepted{methodSuffix}");
     sb.AppendLine("  (");
     sb.AppendLine("    this NuruCoreApp app,");
+    sb.AppendLine("    string[] args");
+    sb.AppendLine("  )");
+    sb.AppendLine("  {");
+    sb.AppendLine($"    return await ExecuteRouteAsync{methodSuffix}(app, args).ConfigureAwait(false);");
+    sb.AppendLine("  }");
+    sb.AppendLine();
+  }
+
+  /// <summary>
+  /// Emits the core route execution method that handles all route matching.
+  /// This is called by both RunAsync_Intercepted and the REPL command executor.
+  /// </summary>
+  private static void EmitExecuteRouteAsyncMethod(StringBuilder sb, AppModel app, int appIndex, GeneratorModel model, string methodSuffix)
+  {
+    sb.AppendLine($"  private static async Task<int> ExecuteRouteAsync{methodSuffix}");
+    sb.AppendLine("  (");
+    sb.AppendLine("    NuruCoreApp app,");
     sb.AppendLine("    string[] args");
     sb.AppendLine("  )");
     sb.AppendLine("  {");

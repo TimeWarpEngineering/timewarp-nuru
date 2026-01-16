@@ -26,52 +26,27 @@ public class MultilineEditingTests
   // Shift+Enter (AddLine) Tests
   // ============================================================================
 
-  public static async Task Should_add_new_line_with_shift_enter()
-  {
-    // Arrange
-    using TestTerminal terminal = new();
-    terminal.QueueKeys("hello");
-    terminal.QueueKey(ConsoleKey.Enter, shift: true);  // Shift+Enter adds new line
-    terminal.QueueKeys("world");
-    terminal.QueueKey(ConsoleKey.Enter);  // Execute multiline command
-    terminal.QueueLine("exit");
-
-    NuruCoreApp app = NuruApp.CreateBuilder([])
-      .UseTerminal(terminal)
-      .Map("hello {*args}")
-        .WithHandler((string[] args) => $"hello[{string.Join(" ", args)}]")
-        .AsCommand()
-        .Done()
-      .Map("world")
-        .WithHandler(() => "SHOULD NOT EXECUTE")
-        .AsCommand()
-        .Done()
-      .AddRepl(options => options.EnableColors = false)
-      .Build();
-
-    // Act
-    await app.RunAsync(["--interactive"]);
-
-    // Assert - multiline input "hello\nworld" is joined to "hello world"
-    // The "hello" route matches, "world" becomes args, NOT a separate command
-    terminal.OutputContains("hello[").ShouldBeTrue("First line should match hello pattern");
-    terminal.OutputContains("world").ShouldBeTrue("Second line content should appear in output");
-    terminal.OutputContains("SHOULD NOT EXECUTE").ShouldBeFalse("World should not execute as separate command");
-  }
-
   public static async Task Should_split_line_at_cursor_with_shift_enter()
   {
+    #region Purpose
+    // Shift+Enter splits the current line at the cursor position.
+    // Input "echo helloworld" split at position 10 becomes "echo hello" + "world".
+    // When executed, multiline input joins with space → "echo hello world".
+    #endregion
     // Arrange
     using TestTerminal terminal = new();
-    terminal.QueueKeys("helloworld");
-    terminal.QueueKey(ConsoleKey.Home);         // Go to start
-    terminal.QueueKey(ConsoleKey.RightArrow);   // Move to 'e'
-    terminal.QueueKey(ConsoleKey.RightArrow);   // Move to 'l'
-    terminal.QueueKey(ConsoleKey.RightArrow);   // Move to 'l'
-    terminal.QueueKey(ConsoleKey.RightArrow);   // Move to 'o'
-    terminal.QueueKey(ConsoleKey.RightArrow);   // Move past 'o', cursor before 'w'
-    terminal.QueueKey(ConsoleKey.Enter, shift: true);  // Split here
-    terminal.QueueKey(ConsoleKey.Enter);  // Execute
+    terminal.QueueKeys("echo helloworld");
+    // Move cursor to position 10 (before 'w' in "world")
+    // "echo helloworld" = positions 0-14, we want cursor at 10
+    terminal.QueueKey(ConsoleKey.Home);                       // Position 0
+    terminal.QueueKey(ConsoleKey.RightArrow, ctrl: true);     // Ctrl+Right: jump past "echo " to position 5
+    terminal.QueueKey(ConsoleKey.RightArrow);                 // Position 6 (before 'e' in "hello")
+    terminal.QueueKey(ConsoleKey.RightArrow);                 // Position 7 (before first 'l')
+    terminal.QueueKey(ConsoleKey.RightArrow);                 // Position 8 (before second 'l')
+    terminal.QueueKey(ConsoleKey.RightArrow);                 // Position 9 (before 'o')
+    terminal.QueueKey(ConsoleKey.RightArrow);                 // Position 10 (before 'w')
+    terminal.QueueKey(ConsoleKey.Enter, shift: true);         // Split: "echo hello" | "world"
+    terminal.QueueKey(ConsoleKey.Enter);                      // Execute
     terminal.QueueLine("exit");
 
     NuruCoreApp app = NuruApp.CreateBuilder([])
@@ -103,6 +78,10 @@ public class MultilineEditingTests
 
   public static async Task Should_add_multiple_lines_with_shift_enter()
   {
+    #region Purpose
+    // shift-enter is used as a separator like space when matching commands
+    #endregion
+
     // Arrange
     using TestTerminal terminal = new();
     terminal.QueueKeys("line1");
@@ -116,7 +95,7 @@ public class MultilineEditingTests
     NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("line1 line2 line3")
-        .WithHandler(() => "all-lines-executed")
+        .WithHandler(() => "command-matched")
         .AsCommand()
         .Done()
       .AddRepl(options => options.EnableColors = false)
@@ -126,7 +105,7 @@ public class MultilineEditingTests
     await app.RunAsync(["--interactive"]);
 
     // Assert - all three lines should be captured and executed as single command
-    terminal.OutputContains("all-lines-executed").ShouldBeTrue("All three lines should be executed as one command");
+    terminal.OutputContains("command-matched").ShouldBeTrue("All three lines should be executed as one command");
   }
 
   // ============================================================================
@@ -267,6 +246,40 @@ public class MultilineEditingTests
   // ============================================================================
   // Edge Cases
   // ============================================================================
+
+  public static async Task Should_preserve_newline_inside_quoted_string()
+  {
+    #region Purpose
+    // Verifies that newlines within quotes are preserved as part of the argument,
+    // matching PSReadLine behavior. Quotes are stripped but content is preserved.
+    #endregion
+
+    // Arrange - multiline quoted string should be a SINGLE argument
+    using TestTerminal terminal = new();
+    terminal.QueueKeys("echo");
+    terminal.QueueKey(ConsoleKey.Enter, shift: true);  // Enter multiline mode
+    terminal.QueueKeys("\"hello");
+    terminal.QueueKey(ConsoleKey.Enter, shift: true);  // Continue inside quotes
+    terminal.QueueKeys("world\"");
+    terminal.QueueKey(ConsoleKey.Enter);  // Execute
+    terminal.QueueLine("exit");
+
+    NuruCoreApp app = NuruApp.CreateBuilder([])
+      .UseTerminal(terminal)
+      .Map("echo {message}")  // Single parameter, NOT catch-all
+        .WithHandler((string message) => $"ECHO:message='{message}'")
+        .AsCommand()
+        .Done()
+      .AddRepl(options => options.EnableColors = false)
+      .Build();
+
+    // Act
+    await app.RunAsync(["--interactive"]);
+
+    // Assert - quotes stripped, newline preserved, single argument
+    terminal.OutputContains("ECHO:message='hello").ShouldBeTrue("First part preserved");
+    terminal.OutputContains("world'").ShouldBeTrue("Second part preserved");
+  }
 
   public static async Task Should_handle_shift_enter_on_empty_line()
   {

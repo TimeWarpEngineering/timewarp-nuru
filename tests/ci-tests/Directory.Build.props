@@ -54,6 +54,8 @@
     <Compile Include="../timewarp-nuru-tests/options/options-02-optional-flag-optional-value.cs" />
     <!-- Session tests -->
     <Compile Include="../timewarp-nuru-tests/session/session-context-01-basic.cs" />
+    <!-- Help tests (per-route help, Task #356) -->
+    <Compile Include="../timewarp-nuru-tests/help/*.cs" />
     <!-- Capabilities tests (task #157 - route not yet implemented) -->
     <Compile Include="../timewarp-nuru-tests/capabilities/*.cs" />
     <!-- Type conversion tests (migrated) -->

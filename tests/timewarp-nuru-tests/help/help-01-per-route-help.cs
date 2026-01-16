@@ -1,8 +1,12 @@
 #!/usr/bin/dotnet --
+#:project ../../../source/timewarp-nuru/timewarp-nuru.csproj
 #pragma warning disable RCS1163 // Unused parameter - parameters must match route pattern names for binding
 
-// Task #356: Per-route help support
-// Tests for "command --help" showing command-specific help instead of full app help
+#region Purpose
+// Tests per-route help support (Task #356).
+// Validates "command --help" shows command-specific help instead of full app help.
+// Covers: simple commands, grouped commands, options display, parameter sections.
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();
@@ -179,11 +183,16 @@ public class PerRouteHelpTests
     StaticFlags.DangerousHandlerExecuted.ShouldBeFalse();
   }
 
-  public static async Task Should_match_route_with_matching_literal_prefix()
+  [Skip("Design question: should 'deploy --help' show help for BOTH routes? Consider using {env?} or groups instead. See kanban #370")]
+  public static async Task Should_show_help_for_multiple_routes_with_same_prefix()
   {
-    // Arrange - two routes with same literal prefix but different parameters
-    // Routes are checked in specificity order (highest first), so the more
-    // specific route (with parameters) is checked first
+    #region Purpose
+    // Design question: When two routes share a prefix (deploy, deploy {env}),
+    // what should "deploy --help" show?
+    // Options: (1) Both routes, (2) Use optional param {env?}, (3) Use group prefix
+    // Current behavior: matches deploy {env} and shows help for that route only.
+    #endregion
+    // Arrange
     using TestTerminal terminal = new();
     NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
@@ -191,32 +200,24 @@ public class PerRouteHelpTests
       .Map("deploy {env}").WithHandler((string env) => "deploy to " + env).WithDescription("Deploy to environment").Done()
       .Build();
 
-    // Act - "deploy --help" matches the first route that has "deploy" as literal prefix
-    // Since routes are ordered by specificity, the parameterized route is checked first
+    // Act
     int exitCode = await app.RunAsync(["deploy", "--help"]);
 
-    // Assert - should show help (either one is valid, as both have "deploy" prefix)
+    // Assert - should show help for BOTH routes (design TBD)
     exitCode.ShouldBe(0);
-    terminal.OutputContains("deploy").ShouldBeTrue();
-    // The description shown depends on which route matched first
-    // Both routes have "deploy" as literal prefix, so either description is valid
+    terminal.OutputContains("Simple deploy").ShouldBeTrue();
+    terminal.OutputContains("Deploy to environment").ShouldBeTrue();
   }
 }
 
 // Static class to hold handler flags (avoiding lambda closures)
 public static class StaticFlags
 {
-  private static bool _dangerousHandlerExecuted;
-
-  public static bool DangerousHandlerExecuted
-  {
-    get => _dangerousHandlerExecuted;
-    set => _dangerousHandlerExecuted = value;
-  }
+  public static bool DangerousHandlerExecuted { get; set; }
 
   public static string DangerousHandler()
   {
-    _dangerousHandlerExecuted = true;
+    DangerousHandlerExecuted = true;
     return "executed";
   }
 }

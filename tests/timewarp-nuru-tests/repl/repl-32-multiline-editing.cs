@@ -43,7 +43,7 @@ public class MultilineEditingTests
         .AsCommand()
         .Done()
       .Map("world")
-        .WithHandler(() => "world[]")
+        .WithHandler(() => "SHOULD NOT EXECUTE")
         .AsCommand()
         .Done()
       .AddRepl(options => options.EnableColors = false)
@@ -52,10 +52,11 @@ public class MultilineEditingTests
     // Act
     await app.RunAsync(["--interactive"]);
 
-    // Assert - multiline input "hello\nworld" should be processed
-    // The handler receives "world" as rest parameter when entered on new line
+    // Assert - multiline input "hello\nworld" is joined to "hello world"
+    // The "hello" route matches, "world" becomes args, NOT a separate command
     terminal.OutputContains("hello[").ShouldBeTrue("First line should match hello pattern");
     terminal.OutputContains("world").ShouldBeTrue("Second line content should appear in output");
+    terminal.OutputContains("SHOULD NOT EXECUTE").ShouldBeFalse("World should not execute as separate command");
   }
 
   public static async Task Should_split_line_at_cursor_with_shift_enter()

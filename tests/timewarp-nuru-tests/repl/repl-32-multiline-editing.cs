@@ -1,11 +1,6 @@
 #!/usr/bin/dotnet --
 #:project ../../../source/timewarp-nuru/timewarp-nuru.csproj
 
-// Tests for multiline editing in REPL (Task 043-009)
-//
-// These tests verify Shift+Enter behavior for multiline input in the REPL.
-// Tests use return values from handlers for source generator compatibility.
-
 #region Purpose
 // Tests multiline editing functionality in the REPL.
 // Validates Shift+Enter behavior, line splitting, continuation prompts,

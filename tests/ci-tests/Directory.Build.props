@@ -42,8 +42,7 @@
     <!-- Parser tests (migrated) -->
     <Compile Include="../timewarp-nuru-tests/parser/*.cs" />
     <!-- Routing tests (migrated) -->
-    <!-- Excluded: dsl-example (not a test) -->
-    <Compile Include="../timewarp-nuru-tests/routing/*.cs" Exclude="../timewarp-nuru-tests/routing/dsl-example.cs" />
+    <Compile Include="../timewarp-nuru-tests/routing/*.cs" />
     <!-- Configuration tests -->
     <Compile Include="../timewarp-nuru-tests/configuration/configuration-01-validate-on-start.cs" />
     <Compile Include="../timewarp-nuru-tests/configuration/configuration-02-cli-overrides.cs" />

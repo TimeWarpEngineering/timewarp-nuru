@@ -238,6 +238,15 @@ internal static class AppExtractor
     if (!BuildLocator.IsConfirmedBuildCall(buildInvocation, context.SemanticModel, cancellationToken))
       return ExtractionResult.Empty;
 
+    // DEBUG: Early trace that we found a Build() call
+    List<Diagnostic> earlyDiagnostics =
+    [
+      Diagnostic.Create(
+        new DiagnosticDescriptor("NURU_DEBUG2", "Debug", "ExtractFromBuildCall entered for Build() at {0}", "Debug", DiagnosticSeverity.Warning, true),
+        buildInvocation.GetLocation(),
+        buildInvocation.GetLocation().GetLineSpan().ToString())
+    ];
+
     // 3. Find the CompilationUnit (needed for usings extraction)
     CompilationUnitSyntax? compilationUnit = FindCompilationUnit(buildInvocation);
     if (compilationUnit is null)
@@ -248,6 +257,14 @@ internal static class AppExtractor
     ExtractionResult result;
 
     BlockSyntax? block = FindContainingBlock(buildInvocation);
+
+    // DEBUG: Show block info
+    string blockInfo = block is null ? "NULL" : $"Statements={block.Statements.Count}, Parent={block.Parent?.GetType().Name}";
+    earlyDiagnostics.Add(Diagnostic.Create(
+      new DiagnosticDescriptor("NURU_DEBUG4", "Debug", "Block info: {0}", "Debug", DiagnosticSeverity.Warning, true),
+      buildInvocation.GetLocation(),
+      blockInfo));
+
     if (block is not null)
     {
       // Traditional method body - interpret the whole block
@@ -259,20 +276,157 @@ internal static class AppExtractor
       result = interpreter.InterpretTopLevelStatementsWithDiagnostics(compilationUnit);
     }
 
+    // DEBUG: Serialize interpreter result
+    string modelStatus = result.Model is null ? "NULL" : $"HasRoutes={result.Model.HasRoutes}, HasRepl={result.Model.HasRepl}, InterceptSites={result.Model.InterceptSitesByMethod.Count}";
+    string diagCount = result.Diagnostics.Length.ToString();
+    string diagMessages = string.Join("; ", result.Diagnostics.Select(d => d.GetMessage()));
+    earlyDiagnostics.Add(Diagnostic.Create(
+      new DiagnosticDescriptor("NURU_DEBUG3", "Debug", "Interpreter result: Model={0}, Diagnostics={1}, Messages=[{2}]", "Debug", DiagnosticSeverity.Warning, true),
+      buildInvocation.GetLocation(),
+      modelStatus, diagCount, diagMessages));
+
     // 5. If we have a model, add user usings and set build location
     if (result.Model is not null)
     {
       ImmutableArray<string> userUsings = ExtractUserUsings(compilationUnit);
       string buildLocation = buildInvocation.GetLocation().GetLineSpan().ToString();
+
+      // 6. Check if Build() result is assigned to a field and find entry points in other methods
+      ImmutableDictionary<string, ImmutableArray<InterceptSiteModel>> interceptSites = result.Model.InterceptSitesByMethod;
+      IFieldSymbol? fieldSymbol = FindFieldAssignmentTarget(buildInvocation, context.SemanticModel);
+
+      List<Diagnostic> diagnostics = [.. result.Diagnostics];
+
+      // DEBUG: Trace field assignment detection
+      if (fieldSymbol is not null)
+      {
+        // Scan containing type for entry point calls on this field
+        ImmutableArray<(string MethodName, InterceptSiteModel Site)> additionalSites =
+          FindEntryPointCallsOnField(fieldSymbol, context.SemanticModel, cancellationToken);
+
+        // DEBUG: Report how many sites were found
+        diagnostics.Add(Diagnostic.Create(
+          new DiagnosticDescriptor("NURU_DEBUG", "Debug", "Found {0} additional entry point sites for field {1}", "Debug", DiagnosticSeverity.Warning, true),
+          buildInvocation.GetLocation(),
+          additionalSites.Length,
+          fieldSymbol.Name));
+
+        // Merge additional intercept sites
+        foreach ((string methodName, InterceptSiteModel site) in additionalSites)
+        {
+          if (interceptSites.TryGetValue(methodName, out ImmutableArray<InterceptSiteModel> existingSites))
+          {
+            // Avoid duplicates by checking if site already exists
+            if (!existingSites.Any(s => s.FilePath == site.FilePath && s.Line == site.Line && s.Column == site.Column))
+            {
+              interceptSites = interceptSites.SetItem(methodName, existingSites.Add(site));
+            }
+          }
+          else
+          {
+            interceptSites = interceptSites.Add(methodName, [site]);
+          }
+        }
+      }
+      else
+      {
+        // DEBUG: Report that no field was found
+        string parentType = buildInvocation.Parent?.GetType().Name ?? "null";
+        diagnostics.Add(Diagnostic.Create(
+          new DiagnosticDescriptor("NURU_DEBUG", "Debug", "No field assignment found. Build() parent type: {0}", "Debug", DiagnosticSeverity.Warning, true),
+          buildInvocation.GetLocation(),
+          parentType));
+      }
+
       AppModel modelWithMetadata = result.Model with
       {
         UserUsings = userUsings,
-        BuildLocation = buildLocation
+        BuildLocation = buildLocation,
+        InterceptSitesByMethod = interceptSites
       };
-      return new ExtractionResult(modelWithMetadata, result.Diagnostics);
+      diagnostics.AddRange(earlyDiagnostics);
+      return new ExtractionResult(modelWithMetadata, [.. diagnostics]);
     }
 
-    return result;
+    // Return early diagnostics even if model is null
+    return new ExtractionResult(null, [.. earlyDiagnostics]);
+  }
+
+  /// <summary>
+  /// Finds the field symbol if a Build() call result is being assigned to a field.
+  /// Handles patterns like: App = NuruApp.CreateBuilder([])...Build();
+  /// </summary>
+  private static IFieldSymbol? FindFieldAssignmentTarget(InvocationExpressionSyntax buildInvocation, SemanticModel semanticModel)
+  {
+    // Walk up to find an assignment expression
+    RoslynSyntaxNode? current = buildInvocation.Parent;
+    while (current is not null)
+    {
+      if (current is AssignmentExpressionSyntax assignment)
+      {
+        // Check if the left side is a field
+        ISymbol? leftSymbol = semanticModel.GetSymbolInfo(assignment.Left).Symbol;
+        if (leftSymbol is IFieldSymbol fieldSymbol)
+          return fieldSymbol;
+        break;
+      }
+
+      // Stop at statement boundaries
+      if (current is StatementSyntax)
+        break;
+
+      current = current.Parent;
+    }
+
+    return null;
+  }
+
+  /// <summary>
+  /// Finds all entry point calls (RunAsync, RunReplAsync) on a field in the containing type.
+  /// </summary>
+  private static ImmutableArray<(string MethodName, InterceptSiteModel Site)> FindEntryPointCallsOnField(
+    IFieldSymbol field,
+    SemanticModel semanticModel,
+    CancellationToken cancellationToken)
+  {
+    ImmutableArray<(string, InterceptSiteModel)>.Builder sites = ImmutableArray.CreateBuilder<(string, InterceptSiteModel)>();
+
+    // Get the containing type
+    INamedTypeSymbol? containingType = field.ContainingType;
+    if (containingType is null)
+      return [];
+
+    // Get all syntax references for the type
+    foreach (SyntaxReference syntaxRef in containingType.DeclaringSyntaxReferences)
+    {
+      RoslynSyntaxNode typeSyntax = syntaxRef.GetSyntax(cancellationToken);
+
+      // Find all invocations in the type
+      foreach (InvocationExpressionSyntax invocation in typeSyntax.DescendantNodes().OfType<InvocationExpressionSyntax>())
+      {
+        // Check if this is a RunAsync or RunReplAsync call
+        if (invocation.Expression is not MemberAccessExpressionSyntax memberAccess)
+          continue;
+
+        string methodName = memberAccess.Name.Identifier.Text;
+        if (methodName is not ("RunAsync" or "RunReplAsync"))
+          continue;
+
+        // Check if the receiver is our field
+        ISymbol? receiverSymbol = semanticModel.GetSymbolInfo(memberAccess.Expression, cancellationToken).Symbol;
+        if (receiverSymbol is null || !SymbolEqualityComparer.Default.Equals(receiverSymbol, field))
+          continue;
+
+        // Extract the intercept site
+        InterceptSiteModel? site = InterceptSiteExtractor.Extract(semanticModel, invocation);
+        if (site is not null)
+        {
+          sites.Add((methodName, site));
+        }
+      }
+    }
+
+    return sites.ToImmutable();
   }
 
   /// <summary>

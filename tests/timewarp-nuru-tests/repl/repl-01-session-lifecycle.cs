@@ -25,7 +25,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.SessionLifecycle
       .Build();
 
     // Act
-    await app.RunAsync(["--interactive"]);
+    await app.RunReplAsync();
 
     // Assert
     terminal.OutputContains("TimeWarp.Nuru REPL Mode")

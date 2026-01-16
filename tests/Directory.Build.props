@@ -5,6 +5,8 @@
   <PropertyGroup>
     <!-- Tests should not be packaged -->
     <IsPackable>false</IsPackable>
+    <!-- Allow warnings during debugging -->
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <!-- Suppress warnings for test projects:
          CA1303: Localization not needed in tests
          CA2000: NuruAppBuilder is IDisposable but new NuruAppBuilder() creates no disposable resources

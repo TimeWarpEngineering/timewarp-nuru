@@ -34,11 +34,12 @@ public sealed class NuruGenerator : IIncrementalGenerator
   {
     // 1. Locate Build() call sites - each Build() is one unique app
     // This replaces the RunAsync/RunReplAsync-based approach to avoid duplicate extractions
+    // NOTE: Don't filter out null models here - CreateGeneratorModelWithValidation handles that
+    // and we need to collect diagnostics from all results
     IncrementalValuesProvider<ExtractionResult> buildExtractionResults = context.SyntaxProvider
       .CreateSyntaxProvider(
         predicate: static (node, _) => BuildLocator.IsPotentialMatch(node),
-        transform: static (ctx, ct) => AppExtractor.ExtractFromBuildCall(ctx, ct))
-      .Where(static result => result.Model is not null);
+        transform: static (ctx, ct) => AppExtractor.ExtractFromBuildCall(ctx, ct));
 
     // 2. Locate attributed routes ([NuruRoute] decorated classes) with locations
     IncrementalValuesProvider<RouteWithLocation?> attributedRoutesWithLocations = context.SyntaxProvider

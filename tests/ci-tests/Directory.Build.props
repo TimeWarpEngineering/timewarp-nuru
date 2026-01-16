@@ -100,6 +100,8 @@
     <Compile Include="../timewarp-nuru-tests/repl/repl-32-multiline-editing.cs" />
     <Compile Include="../timewarp-nuru-tests/repl/repl-34-interactive-route-alias.cs" />
     <Compile Include="../timewarp-nuru-tests/repl/repl-35-interactive-route-execution.cs" />
+    <Compile Include="../timewarp-nuru-tests/repl/repl-36-run-repl-async-inline.cs" />
+    <Compile Include="../timewarp-nuru-tests/repl/repl-37-quoted-strings.cs" />
     <!-- Command-line parser tests in subdirectory -->
     <Compile Include="../timewarp-nuru-tests/repl/command-line-parser/*.cs" />
     <!-- Completion tests - static (migrated) -->

@@ -76,12 +76,16 @@ public class MultilineEditingTests
 
     NuruCoreApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
+      .Map("echo {*args}")
+        .WithHandler((string[] args) => $"ECHO:{string.Join(" ", args)}")
+        .AsCommand()
+        .Done()
       .Map("hello")
-        .WithHandler(() => "hello")
+        .WithHandler(() => "SHOULD NOT EXECUTE")
         .AsCommand()
         .Done()
       .Map("world")
-        .WithHandler(() => "world")
+        .WithHandler(() => "SHOULD NOT EXECUTE")
         .AsCommand()
         .Done()
       .AddRepl(options => options.EnableColors = false)
@@ -90,9 +94,11 @@ public class MultilineEditingTests
     // Act
     await app.RunAsync(["--interactive"]);
 
-    // Assert - lines should be separated at cursor position
-    terminal.OutputContains("hello").ShouldBeTrue("First part should be 'hello'");
-    terminal.OutputContains("world").ShouldBeTrue("Second part should be 'world'");
+    // Assert - multiline input is joined and executed as ONE echo command
+    terminal.OutputContains("ECHO:").ShouldBeTrue("Echo route should execute");
+    terminal.OutputContains("hello").ShouldBeTrue("First part should be in output");
+    terminal.OutputContains("world").ShouldBeTrue("Second part should be in output");
+    terminal.OutputContains("SHOULD NOT EXECUTE").ShouldBeFalse("hello/world should not execute separately");
   }
 
   public static async Task Should_add_multiple_lines_with_shift_enter()

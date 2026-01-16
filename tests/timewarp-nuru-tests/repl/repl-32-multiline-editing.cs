@@ -6,6 +6,12 @@
 // These tests verify Shift+Enter behavior for multiline input in the REPL.
 // Tests use return values from handlers for source generator compatibility.
 
+#region Purpose
+// Tests multiline editing functionality in the REPL.
+// Validates Shift+Enter behavior, line splitting, continuation prompts,
+// history integration, and mode reset after execution.
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

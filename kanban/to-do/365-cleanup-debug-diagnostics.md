@@ -22,6 +22,7 @@ Remove temporary debug diagnostics and restore build settings that were added du
 - `source/Directory.Build.props` - Re-enable TreatWarningsAsErrors
 - `tests/Directory.Build.props` - Re-enable TreatWarningsAsErrors
 - `tests/timewarp-nuru-tests/Directory.Build.props` - Re-enable TreatWarningsAsErrors
+- `samples/Directory.Build.props` - Re-enable TreatWarningsAsErrors
 
 ## Notes
 
@@ -34,4 +35,5 @@ These diagnostics were helpful for debugging cross-method field tracking (#364).
 - [ ] Revert TreatWarningsAsErrors in source/Directory.Build.props
 - [ ] Revert TreatWarningsAsErrors in tests/Directory.Build.props
 - [ ] Revert TreatWarningsAsErrors in tests/timewarp-nuru-tests/Directory.Build.props
+- [ ] Revert TreatWarningsAsErrors in samples/Directory.Build.props
 - [ ] Verify CI tests still pass after cleanup

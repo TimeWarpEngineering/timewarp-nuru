@@ -19,7 +19,6 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 
 using TimeWarp.Nuru;
-using Microsoft.Extensions.DependencyInjection;
 using static System.Console;
 
 WriteLine("Custom Key Bindings Demo");
@@ -91,11 +90,7 @@ NuruAppOptions nuruAppOptions = new()
 };
 
 NuruCoreApp app = NuruApp.CreateBuilder(args, nuruAppOptions)
-  .ConfigureServices(services => services.AddMediator())
-  .WithMetadata
-  (
-    description: "Demonstrates CustomKeyBindingProfile for personalized REPL key bindings."
-  )
+  .WithDescription("Demonstrates CustomKeyBindingProfile for personalized REPL key bindings.")
 
   // --------------------------------------------------------
   // Echo command for testing

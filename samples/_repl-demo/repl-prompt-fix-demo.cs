@@ -15,7 +15,6 @@
 
 using TimeWarp.Nuru;
 using TimeWarp.Terminal;
-using Microsoft.Extensions.DependencyInjection;
 
 NuruAppOptions nuruAppOptions = new()
 {
@@ -32,7 +31,6 @@ NuruAppOptions nuruAppOptions = new()
 };
 
 NuruCoreApp app = NuruApp.CreateBuilder(args, nuruAppOptions)
-  .ConfigureServices(services => services.AddMediator())
   .Map("hello")
     .WithHandler(() => Console.WriteLine("Hello, World!"))
     .AsQuery()

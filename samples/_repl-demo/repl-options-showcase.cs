@@ -24,7 +24,6 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 
 using TimeWarp.Nuru;
-using Microsoft.Extensions.DependencyInjection;
 using static System.Console;
 
 WriteLine("ReplOptions Comprehensive Showcase");
@@ -141,11 +140,7 @@ NuruAppOptions nuruAppOptions = new()
 };
 
 NuruCoreApp app = NuruApp.CreateBuilder(args, nuruAppOptions)
-  .ConfigureServices(services => services.AddMediator())
-  .WithMetadata
-  (
-    description: "ReplOptions comprehensive showcase demonstrating all configuration features."
-  )
+  .WithDescription("ReplOptions comprehensive showcase demonstrating all configuration features.")
 
   // --------------------------------------------------------
   // Success command - completes without error

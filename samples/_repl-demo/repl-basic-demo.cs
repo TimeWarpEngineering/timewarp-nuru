@@ -78,6 +78,27 @@ ILoggerFactory loggerFactory = LoggerFactory.Create(builder =>
   builder.AddSerilog(Log.Logger);
 });
 
+#region Bug #373 Workaround - Default to REPL mode when no args
+// ========================================
+// BUG #373: The ideal approach would be a default route that starts REPL:
+//
+// .Map("")
+//   .WithHandler(async (NuruCoreApp app) => await app.RunReplAsync())
+//   .WithDescription("Start interactive REPL mode (default when no args)")
+//   .AsCommand()
+//   .Done()
+//
+// This doesn't work yet due to generator issues:
+// 1. Handler invoker emits wrong variable name for NuruCoreApp parameter
+// 2. Double-await issue when handler body contains await
+// 3. DSL interpreter ignores if statements, so conditional RunReplAsync isn't intercepted
+//
+// Workaround: Treat empty args as "-i" to leverage built-in REPL flag handling.
+// See kanban task #373 for details.
+// ========================================
+string[] effectiveArgs = args.Length == 0 ? ["-i"] : args;
+#endregion
+
 try
 {
   Log.Information("Starting TimeWarp.Nuru REPL Demo");
@@ -307,18 +328,17 @@ try
     })
     .Build();
 
-  Log.Information("Running command: {Args}", string.Join(" ", args));
-  return await app.RunAsync(args);
+  Log.Information("Running command: {Args}", string.Join(" ", effectiveArgs));
+  int exitCode = await app.RunAsync(effectiveArgs);
+  Log.Information("Closing logger");
+  Log.CloseAndFlush();
+  return exitCode;
 }
 catch (Exception ex)
 {
   Log.Fatal(ex, "REPL demo terminated unexpectedly");
-  return 1;
-}
-finally
-{
-  Log.Information("Closing logger");
   Log.CloseAndFlush();
+  return 1;
 }
 
 // ============================================================================

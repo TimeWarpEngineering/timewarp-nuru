@@ -26,7 +26,6 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 
 using TimeWarp.Nuru;
-using Microsoft.Extensions.DependencyInjection;
 using static System.Console;
 
 NuruAppOptions nuruAppOptions = new()
@@ -42,12 +41,7 @@ NuruAppOptions nuruAppOptions = new()
 };
 
 NuruCoreApp app = NuruApp.CreateBuilder(args, nuruAppOptions)
-  .ConfigureServices(services => services.AddMediator())
-  .WithMetadata
-  (
-    name: "interactive-demo",
-    description: "Demo app supporting both CLI and interactive REPL modes"
-  )
+  .WithDescription("Demo app supporting both CLI and interactive REPL modes")
 
   // Define application commands
   .Map("greet {name}")

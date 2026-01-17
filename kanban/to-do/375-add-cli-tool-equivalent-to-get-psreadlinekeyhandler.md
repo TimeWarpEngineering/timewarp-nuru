@@ -62,3 +62,36 @@ Alt+?           WhatIsKey           Show the key binding for the next chord ente
 - **Three-column format**: Key | Function | Description
 - **Key chord format**: Uses standard notation like `Ctrl+`, `Shift+`, `Alt+`, `Enter`, `Tab`, arrow keys
 - **Possible Nuru command name**: `nuru key-handler`, `nuru show-keys`, or `nuru key-bindings`
+
+### Analysis Report
+
+A detailed feature comparison has been completed:
+
+- **Report:** [2026-01-17T14-30-00_nuru-vs-psreadline-keyhandler-comparison.md](../../../../.agent/workspace/2026-01-17T14-30-00_nuru-vs-psreadline-keyhandler-comparison.md)
+- **Key Finding:** Nuru implements ~81-84% of PSReadLine functions (52/62 unique functions)
+- **Coverage by Category:**
+  - History: 100%
+  - Completion: 100%
+  - Search: 100%
+  - Selection: 88%
+  - Basic Editing: 89%
+  - Cursor Movement: 86%
+  - Miscellaneous: 33-75%
+  - Prediction: 0% (not supported)
+
+The report identifies high-priority features to implement, including this CLI tool itself (`ShowKeyBindings`), as well as `GotoBrace`, `WhatIsKey`, and `InsertLineAbove/Below`.
+
+### External Editor Support (ViEditVisually)
+
+PowerShell PSReadLine includes an external editor function for full-screen editing:
+
+- **Documentation:** [about_PSReadLine_Functions](https://learn.microsoft.com/en-us/powershell/module/psreadline/about/about_psreadline_functions?view=powershell-7.5#vieditvisually)
+- **Function:** `ViEditVisually` - Opens the current command line in an external editor (reads `$EDITOR` or `$VISUAL` environment variables)
+- **Key Binding:** `Escape` + `v` (in Vi mode)
+- **Nuru Status:** Not implemented
+
+This is equivalent to bash's `edit-and-execute-command` (Ctrl+x Ctrl+e) and zsh's `edit-command-line`. Implementing this would require:
+1. Writing the current input buffer to a temporary file
+2. Launching the user's preferred editor (`$EDITOR`/`$VISUAL`)
+3. Reading the modified content back into the input buffer
+

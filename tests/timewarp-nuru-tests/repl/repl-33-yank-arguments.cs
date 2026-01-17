@@ -145,12 +145,8 @@ public class YankArgumentTests
 
   // ============================================================================
   // YankLastArg Integration Tests
-  // NOTE: These tests are skipped because they fail with the current REPL 
-  // implementation. The Alt+. key binding may not be properly connected to
-  // the yank-last-arg functionality in the generated code.
   // ============================================================================
 
-  [Skip("Integration tests fail with current REPL implementation - needs investigation")]
   public static async Task Should_yank_last_argument_with_alt_period()
   {
     // Arrange
@@ -183,7 +179,6 @@ public class YankArgumentTests
     terminal.OutputContains("Received: Bob").ShouldBeTrue("Alt+. should yank last argument from history");
   }
 
-  [Skip("Integration tests fail with current REPL implementation - needs investigation")]
   public static async Task Should_cycle_through_history_with_consecutive_alt_period()
   {
     // Arrange
@@ -218,7 +213,6 @@ public class YankArgumentTests
     terminal.OutputContains("Received: Alice").ShouldBeTrue("Consecutive Alt+. should cycle to older history entries");
   }
 
-  [Skip("Integration tests fail with current REPL implementation - needs investigation")]
   public static async Task Should_handle_quoted_last_argument()
   {
     // Arrange
@@ -250,7 +244,6 @@ public class YankArgumentTests
     terminal.OutputContains("Echo: Greeting").ShouldBeTrue("Alt+. should yank last argument");
   }
 
-  [Skip("Integration tests fail with current REPL implementation - needs investigation")]
   public static async Task Should_handle_empty_history()
   {
     // Arrange
@@ -276,7 +269,6 @@ public class YankArgumentTests
     terminal.OutputContains("Hello!").ShouldBeTrue("Session should complete normally");
   }
 
-  [Skip("Integration tests fail with current REPL implementation - needs investigation")]
   public static async Task Should_handle_alt_period_with_empty_history()
   {
     // Arrange
@@ -318,7 +310,6 @@ public class YankArgumentTests
   // YankNthArg Integration Tests
   // ============================================================================
 
-  [Skip("Integration tests fail with current REPL implementation - needs investigation")]
   public static async Task Should_yank_first_argument_with_alt_ctrl_y()
   {
     // Arrange
@@ -349,7 +340,6 @@ public class YankArgumentTests
     terminal.OutputContains("Got: push").ShouldBeTrue("Alt+Ctrl+Y should yank first argument (index 1)");
   }
 
-  [Skip("Integration tests fail with current REPL implementation - needs investigation")]
   public static async Task Should_yank_command_name_with_alt_0_alt_period()
   {
     // Arrange
@@ -386,7 +376,6 @@ public class YankArgumentTests
       .ShouldBeTrue("Alt+0 Alt+. should yank command name (index 0)");
   }
 
-  [Skip("Integration tests fail with current REPL implementation - needs investigation")]
   public static async Task Should_yank_specific_argument_with_digit_prefix()
   {
     // Arrange
@@ -422,7 +411,6 @@ public class YankArgumentTests
   // Edge Cases
   // ============================================================================
 
-  [Skip("Integration tests fail with current REPL implementation - needs investigation")]
   public static async Task Should_handle_single_word_command()
   {
     // Arrange
@@ -454,7 +442,6 @@ public class YankArgumentTests
     terminal.OutputContains("Echo: status").ShouldBeTrue("Alt+. should yank single word command as argument");
   }
 
-  [Skip("Integration tests fail with current REPL implementation - needs investigation")]
   public static async Task Should_reset_cycle_after_other_key()
   {
     // Arrange
@@ -497,7 +484,6 @@ public class YankArgumentTests
     terminal.OutputContains("Done!").ShouldBeTrue("Typing should reset yank-arg cycle");
   }
 
-  [Skip("Integration tests fail with current REPL implementation - needs investigation")]
   public static async Task Should_insert_at_cursor_position()
   {
     // Arrange

@@ -18,8 +18,9 @@ internal static class InterceptorEmitter
   /// Generates the complete source code for the interceptor.
   /// </summary>
   /// <param name="model">The generator model containing all apps and routes.</param>
+  /// <param name="compilation">The Roslyn compilation for type resolution (used for enum completions).</param>
   /// <returns>The generated C# source code.</returns>
-  public static string Emit(GeneratorModel model)
+  public static string Emit(GeneratorModel model, Compilation compilation)
   {
     StringBuilder sb = new();
 
@@ -41,11 +42,11 @@ internal static class InterceptorEmitter
     for (int appIndex = 0; appIndex < model.Apps.Length; appIndex++)
     {
       AppModel app = model.Apps[appIndex];
-      EmitAppInterceptorMethod(sb, app, appIndex, model);
+      EmitAppInterceptorMethod(sb, app, appIndex, model, compilation);
       EmitRunReplAsyncInterceptorMethod(sb, app, appIndex, model);
     }
 
-    EmitClassEnd(sb, model);
+    EmitClassEnd(sb, model, compilation);
 
     return sb.ToString();
   }
@@ -54,7 +55,7 @@ internal static class InterceptorEmitter
   /// Emits a single interceptor method for one app.
   /// Each app gets its own method with its own [InterceptsLocation] attributes and routes.
   /// </summary>
-  private static void EmitAppInterceptorMethod(StringBuilder sb, AppModel app, int appIndex, GeneratorModel model)
+  private static void EmitAppInterceptorMethod(StringBuilder sb, AppModel app, int appIndex, GeneratorModel model, Compilation compilation)
   {
     string methodSuffix = model.Apps.Length > 1 ? $"_{appIndex}" : "";
 
@@ -396,6 +397,10 @@ internal static class InterceptorEmitter
     // This allows AddCommandLine(args) to process them while route matching ignores them
     EmitConfigArgFiltering(sb);
 
+    // --interactive / -i must be checked BEFORE user routes so catch-all routes don't intercept it
+    string methodSuffix = model.Apps.Length > 1 ? $"_{appIndex}" : "";
+    EmitInteractiveFlag(sb, app, methodSuffix);
+
     // Route matching - emit this app's routes in specificity order (highest first)
     // User routes are emitted BEFORE built-ins so users can override --help, --version, etc.
     // Filter endpoints based on app's discovery mode (DiscoverEndpoints or Map<T> calls)
@@ -423,7 +428,6 @@ internal static class InterceptorEmitter
 
     // Built-in flags: --help, --version, --capabilities
     // Emitted AFTER user routes so users can override default behavior
-    string methodSuffix = model.Apps.Length > 1 ? $"_{appIndex}" : "";
     EmitBuiltInFlags(sb, app, methodSuffix);
 
     // No match fallback
@@ -515,11 +519,17 @@ internal static class InterceptorEmitter
       sb.AppendLine("    }");
       sb.AppendLine();
     }
+  }
 
-    // --interactive / -i flag (opt-in via AddRepl())
+  /// <summary>
+  /// Emits --interactive / -i flag check. Called BEFORE user routes so catch-all routes don't intercept it.
+  /// </summary>
+  private static void EmitInteractiveFlag(StringBuilder sb, AppModel app, string methodSuffix)
+  {
     if (app.HasRepl)
     {
       sb.AppendLine("    // Built-in: --interactive / -i (REPL mode, opt-in via AddRepl())");
+      sb.AppendLine("    // Emitted BEFORE user routes so catch-all routes don't intercept it");
       sb.AppendLine("    if (routeArgs is [\"--interactive\"] or [\"-i\"])");
       sb.AppendLine("    {");
       sb.AppendLine($"      await RunReplAsync{methodSuffix}(app).ConfigureAwait(false);");
@@ -572,7 +582,7 @@ internal static class InterceptorEmitter
   /// <summary>
   /// Emits the closing of the class and helper methods.
   /// </summary>
-  private static void EmitClassEnd(StringBuilder sb, GeneratorModel model)
+  private static void EmitClassEnd(StringBuilder sb, GeneratorModel model, Compilation compilation)
   {
     sb.AppendLine();
 
@@ -599,7 +609,7 @@ internal static class InterceptorEmitter
       // REPL support (opt-in via AddRepl())
       if (app.HasRepl)
       {
-        ReplEmitter.Emit(sb, enrichedApp, methodSuffix, model.AttributedRoutes);
+        ReplEmitter.Emit(sb, enrichedApp, methodSuffix, model.AttributedRoutes, compilation);
         sb.AppendLine();
       }
     }

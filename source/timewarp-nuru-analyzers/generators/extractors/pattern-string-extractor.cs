@@ -182,17 +182,17 @@ internal static class PatternStringExtractor
   public static ImmutableArray<ParameterBinding> BuildBindings
   (
     ImmutableArray<SegmentDefinition> segments,
-    ImmutableArray<(string Name, string TypeName, bool IsOptional)> handlerParameters
+    ImmutableArray<(string Name, string TypeName, bool IsOptional, bool IsEnumType)> handlerParameters
   )
   {
     ImmutableArray<ParameterBinding>.Builder bindings = ImmutableArray.CreateBuilder<ParameterBinding>();
 
-    foreach ((string paramName, string typeName, bool isOptional) in handlerParameters)
+    foreach ((string paramName, string typeName, bool isOptional, bool isEnumType) in handlerParameters)
     {
       string paramNameLower = paramName.ToLowerInvariant();
 
       // Try to find a matching segment
-      ParameterBinding? binding = TryBindParameter(segments, paramName, paramNameLower, typeName, isOptional);
+      ParameterBinding? binding = TryBindParameter(segments, paramName, paramNameLower, typeName, isOptional, isEnumType);
       if (binding is not null)
         bindings.Add(binding);
     }
@@ -209,7 +209,8 @@ internal static class PatternStringExtractor
     string paramName,
     string paramNameLower,
     string typeName,
-    bool isOptional
+    bool isOptional,
+    bool isEnumType
   )
   {
     foreach (SegmentDefinition segment in segments)
@@ -228,7 +229,8 @@ internal static class PatternStringExtractor
             typeName: typeName,
             segmentName: param.Name,
             isOptional: isOptional || param.IsOptional,
-            requiresConversion: typeName != "global::System.String");
+            requiresConversion: typeName != "global::System.String",
+            isEnumType: isEnumType);
 
         case OptionDefinition option
           when string.Equals(option.LongForm, paramNameLower, StringComparison.OrdinalIgnoreCase)
@@ -245,7 +247,8 @@ internal static class PatternStringExtractor
             optionName: optionName,
             isOptional: isOptional || option.IsOptional,
             isArray: option.IsRepeated,
-            requiresConversion: typeName != "global::System.String");
+            requiresConversion: typeName != "global::System.String",
+            isEnumType: isEnumType);
 
         case OptionDefinition option
           when option.ParameterName is not null &&
@@ -256,7 +259,8 @@ internal static class PatternStringExtractor
             optionName: option.LongForm ?? option.ShortForm!,
             isOptional: isOptional || option.ParameterIsOptional,
             isArray: option.IsRepeated,
-            requiresConversion: typeName != "global::System.String");
+            requiresConversion: typeName != "global::System.String",
+            isEnumType: isEnumType);
       }
     }
 

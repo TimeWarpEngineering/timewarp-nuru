@@ -189,11 +189,11 @@ internal sealed class RouteDefinitionBuilder
   private static HandlerDefinition RebindHandlerParameters(HandlerDefinition handler, ImmutableArray<SegmentDefinition> segments)
   {
     // Build the handler parameter info for rebinding
-    ImmutableArray<(string Name, string TypeName, bool IsOptional)> handlerParams =
+    ImmutableArray<(string Name, string TypeName, bool IsOptional, bool IsEnumType)> handlerParams =
     [
       .. handler.Parameters
         .Where(p => p.Source is BindingSource.Parameter or BindingSource.CatchAll or BindingSource.Option or BindingSource.Flag)
-        .Select(p => (p.ParameterName, p.ParameterTypeName, p.IsOptional))
+        .Select(p => (p.ParameterName, p.ParameterTypeName, p.IsOptional, p.IsEnumType))
     ];
 
     // Rebind using the route segments

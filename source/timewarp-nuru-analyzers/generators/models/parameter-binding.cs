@@ -14,6 +14,7 @@ namespace TimeWarp.Nuru.Generators;
 /// <param name="RequiresConversion">Whether type conversion is needed</param>
 /// <param name="ConverterTypeName">Custom converter type, if specified</param>
 /// <param name="ValidatorTypeName">For IOptions&lt;T&gt;, the validator type implementing IValidateOptions&lt;T&gt;</param>
+/// <param name="IsEnumType">Whether the parameter type is an enum (uses EnumTypeConverter)</param>
 public sealed record ParameterBinding(
   string ParameterName,
   string ParameterTypeName,
@@ -24,7 +25,8 @@ public sealed record ParameterBinding(
   string? DefaultValueExpression,
   bool RequiresConversion,
   string? ConverterTypeName,
-  string? ValidatorTypeName = null)
+  string? ValidatorTypeName = null,
+  bool IsEnumType = false)
 {
   /// <summary>
   /// Creates a binding for a route parameter.
@@ -35,7 +37,8 @@ public sealed record ParameterBinding(
     string segmentName,
     bool isOptional = false,
     string? defaultValue = null,
-    bool requiresConversion = false)
+    bool requiresConversion = false,
+    bool isEnumType = false)
   {
     return new ParameterBinding(
       ParameterName: parameterName,
@@ -46,7 +49,8 @@ public sealed record ParameterBinding(
       IsArray: false,
       DefaultValueExpression: defaultValue,
       RequiresConversion: requiresConversion,
-      ConverterTypeName: null);
+      ConverterTypeName: null,
+      IsEnumType: isEnumType);
   }
 
   /// <summary>
@@ -59,7 +63,8 @@ public sealed record ParameterBinding(
     bool isOptional = false,
     bool isArray = false,
     string? defaultValue = null,
-    bool requiresConversion = false)
+    bool requiresConversion = false,
+    bool isEnumType = false)
   {
     return new ParameterBinding(
       ParameterName: parameterName,
@@ -70,7 +75,8 @@ public sealed record ParameterBinding(
       IsArray: isArray,
       DefaultValueExpression: defaultValue,
       RequiresConversion: requiresConversion,
-      ConverterTypeName: null);
+      ConverterTypeName: null,
+      IsEnumType: isEnumType);
   }
 
   /// <summary>

@@ -651,13 +651,26 @@ internal static class RouteMatcherEmitter
           // Generate custom converter instantiation and TryConvert call
           EmitCustomTypeConversion(sb, param, converter, escapedVarName, uniqueVarName, routeIndex, indentStr);
         }
-        else if (param.ResolvedClrTypeName is not null)
+        else
         {
-          // No converter found - emit warning comment
-          sb.AppendLine(
-            $"{indentStr}// WARNING: No converter found for type constraint '{baseType}'");
-          sb.AppendLine(
-            $"{indentStr}// Register a converter with: builder.AddTypeConverter<YourConverter>();");
+          // Check if the handler parameter is an enum type
+          // Match by lowercase name (route segment name matches handler parameter name)
+          ParameterBinding? handlerParam = route.Handler.Parameters
+            .FirstOrDefault(p => string.Equals(p.SourceName, param.Name, StringComparison.OrdinalIgnoreCase) && p.IsEnumType);
+
+          if (handlerParam is not null)
+          {
+            // Generate EnumTypeConverter<T> code for enum types
+            EmitEnumTypeConversion(sb, param, handlerParam.ParameterTypeName, escapedVarName, uniqueVarName, routeIndex, indentStr);
+          }
+          else if (param.ResolvedClrTypeName is not null)
+          {
+            // No converter found - emit warning comment
+            sb.AppendLine(
+              $"{indentStr}// WARNING: No converter found for type constraint '{baseType}'");
+            sb.AppendLine(
+              $"{indentStr}// Register a converter with: builder.AddTypeConverter<YourConverter>();");
+          }
         }
       }
     }
@@ -747,6 +760,50 @@ internal static class RouteMatcherEmitter
       sb.AppendLine($"{indentStr}  return 1;");
       sb.AppendLine($"{indentStr}}}");
       sb.AppendLine($"{indentStr}{targetType} {escapedVarName} = ({targetType}){tempVarName}!;");
+    }
+  }
+
+  /// <summary>
+  /// Emits code for enum type conversion using EnumTypeConverter.
+  /// Generates converter instantiation, TryConvert call, and error handling with valid values.
+  /// </summary>
+  private static void EmitEnumTypeConversion(
+    StringBuilder sb,
+    ParameterDefinition param,
+    string enumTypeName,
+    string escapedVarName,
+    string uniqueVarName,
+    int routeIndex,
+    string indentStr)
+  {
+    string converterVarName = $"__enumConverter_{param.CamelCaseName}_{routeIndex}";
+    string tempVarName = $"__temp_{param.CamelCaseName}_{routeIndex}";
+
+    if (param.IsOptional)
+    {
+      // Optional param: check for null before conversion
+      sb.AppendLine($"{indentStr}{enumTypeName}? {escapedVarName} = null;");
+      sb.AppendLine($"{indentStr}if ({uniqueVarName} is not null)");
+      sb.AppendLine($"{indentStr}{{");
+      sb.AppendLine($"{indentStr}  var {converterVarName} = new global::TimeWarp.Nuru.EnumTypeConverter<{enumTypeName}>();");
+      sb.AppendLine($"{indentStr}  if (!{converterVarName}.TryConvert({uniqueVarName}, out object? {tempVarName}))");
+      sb.AppendLine($"{indentStr}  {{");
+      sb.AppendLine($"{indentStr}    app.Terminal.WriteLine($\"Error: Invalid value '{{{uniqueVarName}}}' for parameter '{param.Name}'. {{{converterVarName}.GetValidValuesMessage()}}\");");
+      sb.AppendLine($"{indentStr}    return 1;");
+      sb.AppendLine($"{indentStr}  }}");
+      sb.AppendLine($"{indentStr}  {escapedVarName} = ({enumTypeName}){tempVarName}!;");
+      sb.AppendLine($"{indentStr}}}");
+    }
+    else
+    {
+      // Required param: direct conversion with error handling
+      sb.AppendLine($"{indentStr}var {converterVarName} = new global::TimeWarp.Nuru.EnumTypeConverter<{enumTypeName}>();");
+      sb.AppendLine($"{indentStr}if (!{converterVarName}.TryConvert({uniqueVarName}, out object? {tempVarName}))");
+      sb.AppendLine($"{indentStr}{{");
+      sb.AppendLine($"{indentStr}  app.Terminal.WriteLine($\"Error: Invalid value '{{{uniqueVarName}}}' for parameter '{param.Name}'. {{{converterVarName}.GetValidValuesMessage()}}\");");
+      sb.AppendLine($"{indentStr}  return 1;");
+      sb.AppendLine($"{indentStr}}}");
+      sb.AppendLine($"{indentStr}{enumTypeName} {escapedVarName} = ({enumTypeName}){tempVarName}!;");
     }
   }
 

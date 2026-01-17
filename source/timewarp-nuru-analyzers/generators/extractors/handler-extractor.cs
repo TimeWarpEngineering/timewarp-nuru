@@ -302,6 +302,7 @@ internal static class HandlerExtractor
       {
         bool isOptional = param.IsOptional || param.NullableAnnotation == NullableAnnotation.Annotated;
         string? defaultValue = param.HasExplicitDefaultValue ? param.ExplicitDefaultValue?.ToString() : null;
+        bool isEnumType = param.Type.TypeKind == TypeKind.Enum;
 
         parameters.Add(ParameterBinding.FromParameter(
           parameterName: param.Name,
@@ -309,7 +310,8 @@ internal static class HandlerExtractor
           segmentName: param.Name.ToLowerInvariant(),
           isOptional: isOptional,
           defaultValue: defaultValue,
-          requiresConversion: typeName != "global::System.String"));
+          requiresConversion: typeName != "global::System.String",
+          isEnumType: isEnumType));
       }
     }
 
@@ -356,6 +358,7 @@ internal static class HandlerExtractor
       {
         bool isOptional = param.IsOptional || param.NullableAnnotation == NullableAnnotation.Annotated;
         string? defaultValue = param.HasExplicitDefaultValue ? param.ExplicitDefaultValue?.ToString() : null;
+        bool isEnumType = param.Type.TypeKind == TypeKind.Enum;
 
         parameters.Add(ParameterBinding.FromParameter(
           parameterName: param.Name,
@@ -363,7 +366,8 @@ internal static class HandlerExtractor
           segmentName: param.Name.ToLowerInvariant(),
           isOptional: isOptional,
           defaultValue: defaultValue,
-          requiresConversion: typeName != "global::System.String"));
+          requiresConversion: typeName != "global::System.String",
+          isEnumType: isEnumType));
       }
     }
 

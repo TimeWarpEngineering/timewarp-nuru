@@ -95,3 +95,19 @@ This is equivalent to bash's `edit-and-execute-command` (Ctrl+x Ctrl+e) and zsh'
 2. Launching the user's preferred editor (`$EDITOR`/`$VISUAL`)
 3. Reading the modified content back into the input buffer
 
+### Comprehensive Function Comparison Report
+
+A detailed analysis against the complete PSReadLine function reference has been completed:
+
+- **Report:** [2026-01-17T17-45-00_nuru-vs-psreadline-functions-comparison.md](../../../../.agent/workspace/2026-01-17T17-45-00_nuru-vs-psreadline-functions-comparison.md)
+- **Reference:** [about_PSReadLine_Functions](https://learn.microsoft.com/en-us/powershell/module/psreadline/about/about_psreadline_functions?view=powershell-7.5)
+- **Key Findings:**
+  - Nuru implements ~54% of practical PSReadLine functions (51/94 core functions)
+  - Vi-specific commands (~70 functions) are not implemented
+  - Categories with 100% coverage: Completion (7/7), Search (2/2)
+  - Categories with 0% coverage: Prediction (0/6), Display/Scroll (0/10)
+- **Recommendations:**
+  - High Priority: `ShowKeyBindings`, `GotoBrace`, `ViEditVisually`, `WhatIsKey`
+  - Medium Priority: `ClearHistory`, `ShowCommandHelp`, `Shell*Word` functions
+  - Low Priority: Full Vi mode expansion, prediction functions
+

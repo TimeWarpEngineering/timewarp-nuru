@@ -53,13 +53,11 @@ CustomKeyBindingProfile customProfile = new CustomKeyBindingProfile(new EmacsKey
   .WithName("EmacsCustomized")
 
   // Add Ctrl+G to "ding" (bell) - a simple custom action
-  // Note: Custom actions can't call internal ReplConsoleReader methods from outside the assembly,
-  // but they can perform any other action (write output, play sounds, etc.)
   .Add
   (
     ConsoleKey.G,
     ConsoleModifiers.Control,
-    _ => () => Write("\a") // Bell character
+    reader => () => reader.Write("\a") // Bell character
   )
 
   // Remove Ctrl+D so it doesn't exit the REPL
@@ -70,26 +68,7 @@ CustomKeyBindingProfile customProfile = new CustomKeyBindingProfile(new EmacsKey
 // Build the app with custom key bindings
 // ============================================================================
 
-NuruAppOptions nuruAppOptions = new()
-{
-  ConfigureRepl = options =>
-  {
-    options.Prompt = "custom> ";
-    options.PromptColor = "\x1b[35m"; // Magenta to indicate custom bindings
-
-    options.WelcomeMessage =
-      "Custom Key Bindings Demo - REPL with personalized Emacs bindings\n" +
-      "Try: 'bindings' to see customizations, 'profiles' to see available profiles\n" +
-      "Try: Ctrl+G for bell, Ctrl+A/Ctrl+E for line navigation";
-
-    options.GoodbyeMessage = "Custom key bindings demo complete!";
-
-    // Set the custom profile
-    options.KeyBindingProfile = customProfile;
-  }
-};
-
-NuruCoreApp app = NuruApp.CreateBuilder(args, nuruAppOptions)
+NuruCoreApp app = NuruApp.CreateBuilder(args)
   .WithDescription("Demonstrates CustomKeyBindingProfile for personalized REPL key bindings.")
 
   // --------------------------------------------------------
@@ -151,6 +130,23 @@ NuruCoreApp app = NuruApp.CreateBuilder(args, nuruAppOptions)
     .WithDescription("Lists available key binding profiles.")
     .AsQuery()
     .Done()
+
+  // Enable REPL mode with custom key bindings
+  .AddRepl(options =>
+  {
+    options.Prompt = "custom> ";
+    options.PromptColor = "\x1b[35m"; // Magenta to indicate custom bindings
+
+    options.WelcomeMessage =
+      "Custom Key Bindings Demo - REPL with personalized Emacs bindings\n" +
+      "Try: 'bindings' to see customizations, 'profiles' to see available profiles\n" +
+      "Try: Ctrl+G for bell, Ctrl+A/Ctrl+E for line navigation";
+
+    options.GoodbyeMessage = "Custom key bindings demo complete!";
+
+    // Set the custom profile
+    options.KeyBindingProfile = customProfile;
+  })
   .Build();
 
 // Start REPL mode

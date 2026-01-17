@@ -197,6 +197,14 @@ public sealed partial class ReplConsoleReader
   }
 
   /// <summary>
+  /// Writes text to the terminal output. This method is available for custom key binding actions
+  /// that need to write output (e.g., for playing the bell character with Ctrl+G).
+  /// </summary>
+  /// <param name="text">The text to write.</param>
+  public void Write(string text) => Terminal.Write(text);
+
+
+  /// <summary>
   /// PSReadLine: PossibleCompletions - Display possible completions without modifying the input.
   /// Similar to ShowCompletionCandidates but triggered by Alt+= instead of Tab.
   /// </summary>

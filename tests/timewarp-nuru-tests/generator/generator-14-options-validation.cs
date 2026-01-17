@@ -88,9 +88,17 @@ namespace TimeWarp.Nuru.Tests.Generator.OptionsValidation
         .Build();
 
       // Act & Assert
-      OptionsValidationException ex = await Should.ThrowAsync<OptionsValidationException>(
-        async () => await app.RunAsync(testArgs));
-      ex.Message.ShouldContain("Name is required");
+      // Note: Using try-catch instead of Should.ThrowAsync because interceptors
+      // cannot intercept calls inside lambdas (see #367)
+      try
+      {
+        await app.RunAsync(testArgs);
+        throw new ShouldAssertException("Expected OptionsValidationException but none was thrown");
+      }
+      catch (OptionsValidationException ex)
+      {
+        ex.Message.ShouldContain("Name is required");
+      }
     }
 
     /// <summary>
@@ -109,10 +117,18 @@ namespace TimeWarp.Nuru.Tests.Generator.OptionsValidation
         .Build();
 
       // Act & Assert
-      OptionsValidationException ex = await Should.ThrowAsync<OptionsValidationException>(
-        async () => await app.RunAsync(testArgs));
-      ex.Message.ShouldContain("Name is required");
-      ex.Message.ShouldContain("Port must be between");
+      // Note: Using try-catch instead of Should.ThrowAsync because interceptors
+      // cannot intercept calls inside lambdas (see #367)
+      try
+      {
+        await app.RunAsync(testArgs);
+        throw new ShouldAssertException("Expected OptionsValidationException but none was thrown");
+      }
+      catch (OptionsValidationException ex)
+      {
+        ex.Message.ShouldContain("Name is required");
+        ex.Message.ShouldContain("Port must be between");
+      }
     }
 
     /// <summary>

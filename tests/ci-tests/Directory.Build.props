@@ -96,11 +96,8 @@
     <Compile Include="../timewarp-nuru-tests/repl/repl-30-basic-editing-enhancement.cs" />
     <Compile Include="../timewarp-nuru-tests/repl/repl-31-multiline-buffer.cs" />
     <Compile Include="../timewarp-nuru-tests/repl/repl-33-yank-arguments.cs" />
-    <!-- Skipped tests (placeholder files) -->
     <Compile Include="../timewarp-nuru-tests/repl/repl-16-enum-completion.cs" />
     <Compile Include="../timewarp-nuru-tests/repl/repl-32-multiline-editing.cs" />
-    <Compile Include="../timewarp-nuru-tests/repl/repl-34-interactive-route-alias.cs" />
-    <Compile Include="../timewarp-nuru-tests/repl/repl-35-interactive-route-execution.cs" />
     <Compile Include="../timewarp-nuru-tests/repl/repl-36-run-repl-async-inline.cs" />
     <Compile Include="../timewarp-nuru-tests/repl/repl-37-quoted-strings.cs" />
     <!-- Command-line parser tests in subdirectory -->

@@ -108,27 +108,32 @@ public sealed class NuruGenerator : IIncrementalGenerator
         ct));
 
     // 8. Emit generated code and report diagnostics
-    context.RegisterSourceOutput(generatorModelWithDiagnostics, static (ctx, modelWithDiags) =>
-    {
-      if (modelWithDiags is null)
-        return;
-
-      // Report all diagnostics (extraction + validation)
-      foreach (Diagnostic diagnostic in modelWithDiags.Diagnostics)
+    // Combine with compilation for enum type resolution in REPL completions
+    context.RegisterSourceOutput(
+      generatorModelWithDiagnostics.Combine(context.CompilationProvider),
+      static (ctx, data) =>
       {
-        ctx.ReportDiagnostic(diagnostic);
-      }
+        (GeneratorModelWithDiagnostics? modelWithDiags, Compilation compilation) = data;
 
-      if (modelWithDiags.Model is null)
-        return;
+        if (modelWithDiags is null)
+          return;
 
-      // Report diagnostic if ILogger is injected but no logging is configured
-      ReportLoggerWithoutConfigurationWarnings(ctx, modelWithDiags.Model);
+        // Report all diagnostics (extraction + validation)
+        foreach (Diagnostic diagnostic in modelWithDiags.Diagnostics)
+        {
+          ctx.ReportDiagnostic(diagnostic);
+        }
 
-      // Emit the interceptor (includes InterceptsLocationAttribute definition)
-      string source = InterceptorEmitter.Emit(modelWithDiags.Model);
-      ctx.AddSource("NuruGenerated.g.cs", source);
-    });
+        if (modelWithDiags.Model is null)
+          return;
+
+        // Report diagnostic if ILogger is injected but no logging is configured
+        ReportLoggerWithoutConfigurationWarnings(ctx, modelWithDiags.Model);
+
+        // Emit the interceptor (includes InterceptsLocationAttribute definition)
+        string source = InterceptorEmitter.Emit(modelWithDiags.Model, compilation);
+        ctx.AddSource("NuruGenerated.g.cs", source);
+      });
   }
 
   /// <summary>

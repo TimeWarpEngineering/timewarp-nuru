@@ -23,6 +23,9 @@ Format: **File:** link to read | **When:** context that triggers loading
 **File:** [kanban-guidelines.md](shared/kanban-guidelines.md)
 **When:** Creating, moving, or managing kanban tasks. Understanding folder structure, allowed fields, and workflow.
 
+**File:** [testing-philosophy.md](shared/testing-philosophy.md)
+**When:** A test fails or doesn't compile. Tempted to skip, delete, or work around a failing test. Understanding that tests exist to expose bugs, not to be silenced.
+
 ### Local Instructions (this repo only)
 
 **File:** [nuru-specific.md](local/nuru-specific.md)

@@ -47,7 +47,7 @@ internal sealed class GenerateHandlerTool
     sb.AppendLine("// Recommended: ASP.NET Core-style CreateBuilder pattern");
     sb.AppendLine("// ═══════════════════════════════════════════════════════════════");
     sb.AppendLine("// CreateBuilder auto-enables: Telemetry, REPL, Dynamic Shell Completion, Interactive routes");
-    sb.AppendLine("// To customize completion, use: new NuruAppOptions { ConfigureCompletion = registry => ... }");
+    sb.AppendLine("// Use fluent API to configure: .AddRepl(options => {...}), .AddHelp(options => {...})");
     sb.AppendLine();
     sb.AppendLine("NuruAppBuilder builder = NuruApp.CreateBuilder(args);");
     sb.AppendLine();

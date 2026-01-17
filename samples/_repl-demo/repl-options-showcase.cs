@@ -39,107 +39,7 @@ WriteLine("  - Custom history file location");
 WriteLine("  - Sensitive commands excluded from history");
 WriteLine();
 
-NuruAppOptions nuruAppOptions = new()
-{
-  ConfigureRepl = options =>
-  {
-    // ========================================
-    // Prompt Customization
-    // ========================================
-
-    // Custom prompt text (default is "> ")
-    options.Prompt = "showcase> ";
-
-    // Custom prompt color: Cyan instead of default Green
-    // Common ANSI codes:
-    //   "\x1b[31m" = Red
-    //   "\x1b[32m" = Green (default)
-    //   "\x1b[33m" = Yellow
-    //   "\x1b[34m" = Blue
-    //   "\x1b[35m" = Magenta
-    //   "\x1b[36m" = Cyan
-    options.PromptColor = "\x1b[36m"; // Cyan
-
-    // Enable colored output (default is true)
-    options.EnableColors = true;
-
-    // ========================================
-    // Welcome and Goodbye Messages
-    // ========================================
-
-    options.WelcomeMessage =
-      "ReplOptions Showcase - Demonstrating ALL configuration features!\n" +
-      "Try these commands:\n" +
-      "  config         - View current configuration\n" +
-      "  success        - Command that succeeds (exit code 0)\n" +
-      "  fail           - Command that fails (REPL will exit!)\n" +
-      "  exitcode 42    - Return custom exit code\n" +
-      "  slow 500       - Demonstrate timing display\n" +
-      "  set-password x - Excluded from history\n" +
-      "  history        - View command history";
-
-    options.GoodbyeMessage = "Thanks for exploring ReplOptions! Check ./repl-showcase-history.txt for persisted history.";
-
-    // ========================================
-    // History Configuration
-    // ========================================
-
-    // Enable history persistence (saves commands between sessions)
-    options.PersistHistory = true;
-
-    // Custom history file location (default is ~/.nuru_history)
-    // Using local file for demo so users can easily inspect it
-    options.HistoryFilePath = "./repl-showcase-history.txt";
-
-    // Limit history to 50 entries (default is 1000)
-    // Useful for memory-constrained environments or privacy
-    options.MaxHistorySize = 50;
-
-    // Enable arrow key navigation through history (default is true)
-    options.EnableArrowHistory = true;
-
-    // Patterns for commands to EXCLUDE from history
-    // Wildcards: * matches any characters, ? matches single character
-    // NOTE: HistoryIgnorePatterns is init-only, set via ReplOptions constructor
-    // Default patterns include: *password*, *secret*, *token*, *apikey*, *credential*, clear-history
-
-    // ========================================
-    // Error Handling
-    // ========================================
-
-    // IMPORTANT: Setting this to false means REPL will EXIT
-    // when any command returns a non-zero exit code.
-    // Default is true (continue running on error).
-    // Try running 'fail' command to see this behavior!
-    options.ContinueOnError = false;
-
-    // ========================================
-    // Display Options
-    // ========================================
-
-    // Show exit code after each command (default is false)
-    // Displays "[Exit code: X]" after command execution
-    options.ShowExitCode = true;
-
-    // Show execution time for commands (default is true)
-    // Displays timing information after command execution
-    options.ShowTiming = true;
-
-    // ========================================
-    // Key Binding Profile
-    // ========================================
-
-    // Choose a key binding profile for the REPL (default is "Default")
-    // Available profiles: "Default", "Emacs", "Vi", "VSCode"
-    // - Default: Standard readline-style bindings
-    // - Emacs: GNU Readline/Bash-style (Ctrl+A/E, Ctrl+F/B)
-    // - Vi: Vi-inspired insert mode bindings (Ctrl+W, Ctrl+U)
-    // - VSCode: Modern IDE-style (Ctrl+Arrow for word movement)
-    options.KeyBindingProfileName = "Default";
-  }
-};
-
-NuruCoreApp app = NuruApp.CreateBuilder(args, nuruAppOptions)
+NuruCoreApp app = NuruApp.CreateBuilder(args)
   .WithDescription("ReplOptions comprehensive showcase demonstrating all configuration features.")
 
   // --------------------------------------------------------
@@ -284,6 +184,100 @@ NuruCoreApp app = NuruApp.CreateBuilder(args, nuruAppOptions)
     .AsQuery()
     .Done()
 
+  // --------------------------------------------------------
+  // REPL configuration - must be last before Build()
+  // --------------------------------------------------------
+  .AddRepl(options =>
+  {
+    // ========================================
+    // Prompt Customization
+    // ========================================
+
+    // Custom prompt text (default is "> ")
+    options.Prompt = "showcase> ";
+
+    // Custom prompt color: Cyan instead of default Green
+    // Common ANSI codes:
+    //   "\x1b[31m" = Red
+    //   "\x1b[32m" = Green (default)
+    //   "\x1b[33m" = Yellow
+    //   "\x1b[34m" = Blue
+    //   "\x1b[35m" = Magenta
+    //   "\x1b[36m" = Cyan
+    options.PromptColor = "\x1b[36m"; // Cyan
+
+    // Enable colored output (default is true)
+    options.EnableColors = true;
+
+    // ========================================
+    // Welcome and Goodbye Messages
+    // ========================================
+
+    options.WelcomeMessage =
+      "ReplOptions Showcase - Demonstrating ALL configuration features!\n" +
+      "Try these commands:\n" +
+      "  config         - View current configuration\n" +
+      "  success        - Command that succeeds (exit code 0)\n" +
+      "  fail           - Command that fails (REPL will exit!)\n" +
+      "  output 42      - Return custom exit code\n" +
+      "  slow 500       - Demonstrate timing display\n" +
+      "  set-password x - Excluded from history\n" +
+      "  history        - View command history";
+
+    options.GoodbyeMessage = "Thanks for exploring ReplOptions! Check ./repl-showcase-history.txt for persisted history.";
+
+    // ========================================
+    // History Configuration
+    // ========================================
+
+    // Enable history persistence (saves commands between sessions)
+    options.PersistHistory = true;
+
+    // Custom history file location (default is ~/.nuru_history)
+    // Using local file for demo so users can easily inspect it
+    options.HistoryFilePath = "./repl-showcase-history.txt";
+
+    // Limit history to 50 entries (default is 1000)
+    // Useful for memory-constrained environments or privacy
+    options.MaxHistorySize = 50;
+
+    // Enable arrow key navigation through history (default is true)
+    options.EnableArrowHistory = true;
+
+    // ========================================
+    // Error Handling
+    // ========================================
+
+    // IMPORTANT: Setting this to false means REPL will EXIT
+    // when any command returns a non-zero exit code.
+    // Default is true (continue running on error).
+    // Try running 'fail' command to see this behavior!
+    options.ContinueOnError = false;
+
+    // ========================================
+    // Display Options
+    // ========================================
+
+    // Show exit code after each command (default is false)
+    // Displays "[Exit code: X]" after command execution
+    options.ShowExitCode = true;
+
+    // Show execution time for commands (default is true)
+    // Displays timing information after command execution
+    options.ShowTiming = true;
+
+    // ========================================
+    // Key Binding Profile
+    // ========================================
+
+    // Choose a key binding profile for the REPL (default is "Default")
+    // Available profiles: "Default", "Emacs", "Vi", "VSCode"
+    // - Default: Standard readline-style bindings
+    // - Emacs: GNU Readline/Bash-style (Ctrl+A/E, Ctrl+F/B)
+    // - Vi: Vi-inspired insert mode bindings (Ctrl+W, Ctrl+U)
+    // - VSCode: Modern IDE-style (Ctrl+Arrow for word movement)
+    options.KeyBindingProfileName = "Default";
+  })
   .Build();
 
 // Start REPL mode

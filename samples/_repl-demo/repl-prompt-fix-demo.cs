@@ -16,9 +16,8 @@
 using TimeWarp.Nuru;
 using TimeWarp.Terminal;
 
-NuruAppOptions nuruAppOptions = new()
-{
-  ConfigureRepl = options =>
+NuruCoreApp app = NuruApp.CreateBuilder(args)
+  .AddRepl(options =>
   {
     options.WelcomeMessage = "REPL Prompt Fix Demo - Arrow History Disabled";
     options.GoodbyeMessage = "Goodbye! (Note: Prompt was displayed for each command)";
@@ -27,10 +26,7 @@ NuruAppOptions nuruAppOptions = new()
     options.EnableColors = true;
     options.PromptColor = AnsiColors.Cyan;
     options.ShowTiming = true;
-  }
-};
-
-NuruCoreApp app = NuruApp.CreateBuilder(args, nuruAppOptions)
+  })
   .Map("hello")
     .WithHandler(() => Console.WriteLine("Hello, World!"))
     .AsQuery()

@@ -203,7 +203,6 @@ public sealed partial class ReplConsoleReader
   /// <param name="text">The text to write.</param>
   public void Write(string text) => Terminal.Write(text);
 
-
   /// <summary>
   /// PSReadLine: PossibleCompletions - Display possible completions without modifying the input.
   /// Similar to ShowCompletionCandidates but triggered by Alt+= instead of Tab.

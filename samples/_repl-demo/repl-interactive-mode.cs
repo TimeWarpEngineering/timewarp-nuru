@@ -28,19 +28,7 @@
 using TimeWarp.Nuru;
 using static System.Console;
 
-NuruAppOptions nuruAppOptions = new()
-{
-  ConfigureRepl = options =>
-  {
-    options.Prompt = "demo> ";
-    options.WelcomeMessage =
-      "Welcome to Interactive Mode!\n" +
-      "Type 'help' for available commands, 'exit' to quit.";
-    options.GoodbyeMessage = "Goodbye!";
-  }
-};
-
-NuruCoreApp app = NuruApp.CreateBuilder(args, nuruAppOptions)
+NuruCoreApp app = NuruApp.CreateBuilder(args)
   .WithDescription("Demo app supporting both CLI and interactive REPL modes")
 
   // Define application commands
@@ -64,6 +52,16 @@ NuruCoreApp app = NuruApp.CreateBuilder(args, nuruAppOptions)
     .WithDescription("Show current time")
     .AsQuery()
     .Done()
+
+  // Enable REPL with custom configuration
+  .AddRepl(options =>
+  {
+    options.Prompt = "demo> ";
+    options.WelcomeMessage =
+      "Welcome to Interactive Mode!\n" +
+      "Type 'help' for available commands, 'exit' to quit.";
+    options.GoodbyeMessage = "Goodbye!";
+  })
   .Build();
 
 // Run the app - either executes a single command or enters REPL

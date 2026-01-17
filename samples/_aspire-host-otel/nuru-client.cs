@@ -19,10 +19,10 @@
 
 using TimeWarp.Nuru;
 
-// Configuration extracted for clean fluent API
-NuruAppOptions nuruAppOptions = new()
-{
-  ConfigureRepl = options =>
+// Build the Nuru app with auto-wired telemetry and REPL support
+NuruCoreApp app = NuruApp.CreateBuilder(args)
+  .ConfigureServices(ConfigureServices)
+  .AddRepl(options =>
   {
     options.Prompt = "otel> ";
     options.WelcomeMessage =
@@ -37,12 +37,7 @@ NuruAppOptions nuruAppOptions = new()
       "\n" +
       "Type 'help' for all commands, 'exit' to quit.";
     options.GoodbyeMessage = "Goodbye! Check Aspire Dashboard for telemetry data.";
-  }
-};
-
-// Build the Nuru app with auto-wired telemetry and REPL support
-NuruCoreApp app = NuruApp.CreateBuilder(args, nuruAppOptions)
-  .ConfigureServices(ConfigureServices)
+  })
   .Map<GreetCommand>("greet {name}").WithDescription("Greet someone (structured log)")
   .Map<StatusCommand>("status").WithDescription("Show system status (structured log)")
   .Map<WorkCommand>("work {duration:int}").WithDescription("Simulate work with duration in ms")

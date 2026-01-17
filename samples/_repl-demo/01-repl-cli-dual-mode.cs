@@ -59,7 +59,7 @@ NuruCoreApp app = NuruApp.CreateBuilder(args)
     options.Prompt = "demo> ";
     options.WelcomeMessage =
       "Welcome to Interactive Mode!\n" +
-      "Type 'help' for available commands, 'exit' to quit.";
+      "Type '--help' for available commands, 'exit' to quit.";
     options.GoodbyeMessage = "Goodbye!";
   })
   .Build();

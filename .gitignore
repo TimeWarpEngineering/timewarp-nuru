@@ -438,3 +438,6 @@ opencodetmp/
 
 # Backup files
 *.old
+
+# REPL history files
+repl-*-history.txt

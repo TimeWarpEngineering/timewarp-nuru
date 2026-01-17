@@ -146,9 +146,9 @@ All 16 REPL test files added to `tests/ci-tests/Directory.Build.props`:
 - [x] Fix bug #364 (cross-method field tracking for static fields)
 - [x] Fix REPL ExecuteRouteAsync pattern (REPL now calls route matcher directly)
 - [x] Fix error messages to use stderr (WriteErrorLine)
-- [ ] Test interactive mode entry/exit manually
-- [ ] Test tab completion manually
-- [ ] Test history navigation manually
+- [x] Test interactive mode entry/exit manually
+- [x] Test tab completion manually
+- [x] Test history navigation manually
 
 ### Blocking Bugs - ALL RESOLVED
 
@@ -284,3 +284,48 @@ public static async Task RunReplAsync_Intercepted(
 ## Dependencies
 
 - Blocks #338 (Migrate REPL demo samples) - samples need working REPL to migrate to
+
+## Results
+
+REPL functionality with source generator support is complete and fully integrated.
+
+### What Was Implemented
+
+1. **Runtime Code Integration**
+   - Copied ~25 REPL files (~4000 lines) from reference implementation
+   - Created `IReplRouteProvider` interface for route-dependent functionality
+   - Refactored `ReplSession`, `TabCompletionHandler`, `SyntaxHighlighter` to use interface
+   - All namespaces updated to `TimeWarp.Nuru`
+
+2. **Generator Additions**
+   - `--interactive`/`-i` route automatically added when `AddRepl()` is called
+   - `GeneratedReplRouteProvider` emitted with compile-time completion data
+   - `RunReplAsync` interceptor generated for REPL session execution
+   - `ReplOptions` and `LoggerFactory` integrated into `NuruCoreApp`
+
+3. **Testing**
+   - 542 CI tests pass including 16 REPL test files
+   - All blocking bugs resolved (#364, #366, #367, #368)
+
+4. **Samples**
+   - Samples reorganized in `samples/13-repl/` with NN-xxxx naming:
+     - `01-repl-cli-dual-mode.cs` - CLI + REPL dual-mode (69 lines)
+     - `02-repl-custom-keys.cs` - Custom key bindings (154 lines)
+     - `03-repl-options.cs` - Comprehensive ReplOptions (285 lines)
+     - `04-repl-complete.cs` - Full-featured demo (353 lines)
+
+### Manual Testing Verified
+
+- CLI mode single command execution
+- Interactive mode entry/exit (`--interactive`, `-i`)
+- Tab completion for commands and parameters
+- History navigation
+- Key binding profiles (Default, Emacs, Vi, VSCode)
+- Custom key binding profiles
+- Help output (`--help`)
+- All ReplOptions features (history, colors, timing, etc.)
+
+### AOT Compatibility
+
+- REPL code is tree-shakeable - only included when `AddRepl()` is called
+- Zero-cost at runtime when REPL not used

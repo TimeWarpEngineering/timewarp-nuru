@@ -135,4 +135,52 @@ public partial class NuruCoreAppBuilder<TSelf>
     Terminal = terminal;
     return (TSelf)this;
   }
+
+  /// <summary>
+  /// Configures OpenTelemetry with OTLP export. When not called, all telemetry
+  /// code is eliminated by AOT trimming.
+  /// </summary>
+  /// <remarks>
+  /// This method is interpreted by the source generator at compile time.
+  /// When called, the generator emits:
+  /// <list type="bullet">
+  /// <item><description>ActivitySource and Meter infrastructure</description></item>
+  /// <item><description>TracerProvider and MeterProvider setup with OTLP export</description></item>
+  /// <item><description>Command instrumentation (spans, metrics)</description></item>
+  /// <item><description>Automatic telemetry flush on RunAsync completion</description></item>
+  /// </list>
+  /// When not called, none of this code is generated, making OpenTelemetry packages
+  /// fully trimmable by the AOT linker.
+  /// </remarks>
+  public virtual TSelf UseTelemetry()
+  {
+    // This method is interpreted by the source generator at compile time.
+    // The generated code emits telemetry infrastructure when this is called.
+    // This stub exists for API compatibility.
+    return (TSelf)this;
+  }
+
+  /// <summary>
+  /// Configures OpenTelemetry with OTLP export and custom options.
+  /// </summary>
+  /// <param name="configure">Action to configure telemetry options.</param>
+  /// <remarks>
+  /// This method is interpreted by the source generator at compile time.
+  /// When called, the generator emits:
+  /// <list type="bullet">
+  /// <item><description>ActivitySource and Meter infrastructure</description></item>
+  /// <item><description>TracerProvider and MeterProvider setup with OTLP export</description></item>
+  /// <item><description>Command instrumentation (spans, metrics)</description></item>
+  /// <item><description>Automatic telemetry flush on RunAsync completion</description></item>
+  /// </list>
+  /// When not called, none of this code is generated, making OpenTelemetry packages
+  /// fully trimmable by the AOT linker.
+  /// </remarks>
+  public virtual TSelf UseTelemetry(Action<NuruTelemetryOptions> configure)
+  {
+    // This method is interpreted by the source generator at compile time.
+    // The generated code emits telemetry infrastructure when this is called.
+    // This stub exists for API compatibility.
+    return (TSelf)this;
+  }
 }

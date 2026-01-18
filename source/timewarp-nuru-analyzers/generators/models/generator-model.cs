@@ -39,6 +39,11 @@ public sealed record GeneratorModel(
   public bool HasCheckUpdatesRoute => Apps.Any(a => a.HasCheckUpdatesRoute);
 
   /// <summary>
+  /// Gets whether any app has telemetry enabled.
+  /// </summary>
+  public bool HasTelemetry => Apps.Any(a => a.HasTelemetry);
+
+  /// <summary>
   /// Gets all behaviors from all apps (deduplicated).
   /// </summary>
   public IEnumerable<BehaviorDefinition> AllBehaviors =>

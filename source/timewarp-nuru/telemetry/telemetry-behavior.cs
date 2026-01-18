@@ -1,6 +1,7 @@
 namespace TimeWarp.Nuru;
 
 using System.Diagnostics;
+using System.Diagnostics.Metrics;
 
 /// <summary>
 /// Pipeline behavior that automatically instruments all commands with OpenTelemetry.
@@ -8,15 +9,18 @@ using System.Diagnostics;
 /// manual instrumentation in each command handler.
 /// </summary>
 /// <remarks>
-/// <para>
-/// This is a standalone telemetry behavior that works with any message type.
-/// It uses the shared <see cref="NuruTelemetryExtensions.NuruActivitySource"/>
-/// and metrics from <see cref="NuruTelemetryExtensions"/>.
-/// </para>
+/// This behavior creates its own ActivitySource and Meter instances for telemetry.
+/// When used with UseTelemetry(), the generated code will configure OTLP exporters
+/// that automatically pick up these sources.
 /// </remarks>
-
 public sealed class TelemetryBehavior : INuruBehavior
 {
+  // Self-contained telemetry infrastructure
+  private static readonly ActivitySource ActivitySource = new("TimeWarp.Nuru.Behavior", "1.0.0");
+  private static readonly Meter Meter = new("TimeWarp.Nuru.Behavior", "1.0.0");
+  private static readonly Counter<int> CommandsInvoked = Meter.CreateCounter<int>("nuru.behavior.commands.invoked", "{commands}", "Number of commands executed");
+  private static readonly Counter<int> CommandsErrored = Meter.CreateCounter<int>("nuru.behavior.commands.errors", "{errors}", "Number of failed commands");
+  private static readonly Histogram<double> CommandDuration = Meter.CreateHistogram<double>("nuru.behavior.commands.duration", "ms", "Command execution duration in milliseconds");
 
   /// <summary>
   /// Handles the command with telemetry instrumentation.
@@ -27,7 +31,7 @@ public sealed class TelemetryBehavior : INuruBehavior
     ArgumentNullException.ThrowIfNull(context);
 
     // Start Activity span for distributed tracing
-    using Activity? activity = NuruTelemetryExtensions.NuruActivitySource.StartActivity(context.CommandName, ActivityKind.Internal);
+    using Activity? activity = ActivitySource.StartActivity(context.CommandName, ActivityKind.Internal);
     activity?.SetTag("command.type", context.CommandTypeName);
     activity?.SetTag("command.name", context.CommandName);
 
@@ -41,13 +45,10 @@ public sealed class TelemetryBehavior : INuruBehavior
       activity?.SetStatus(ActivityStatusCode.Ok);
 
       // Record success metrics
-      NuruTelemetryExtensions.CommandsInvoked.Add(1, new KeyValuePair<string, object?>("command", context.CommandName));
-      NuruTelemetryExtensions.CommandDuration.Record(stopwatch.ElapsedMilliseconds,
+      CommandsInvoked.Add(1, new KeyValuePair<string, object?>("command", context.CommandName));
+      CommandDuration.Record(stopwatch.ElapsedMilliseconds,
         new KeyValuePair<string, object?>("command", context.CommandName),
         new KeyValuePair<string, object?>("status", "ok"));
-
-      // Flush telemetry so metrics appear immediately in dashboards
-      await NuruTelemetryExtensions.FlushAsync().ConfigureAwait(false);
     }
     catch (Exception ex)
     {
@@ -59,16 +60,13 @@ public sealed class TelemetryBehavior : INuruBehavior
       activity?.SetTag("error.message", ex.Message);
 
       // Record error metrics
-      NuruTelemetryExtensions.CommandsErrored.Add(1,
+      CommandsErrored.Add(1,
         new KeyValuePair<string, object?>("command", context.CommandName),
         new KeyValuePair<string, object?>("error.type", ex.GetType().Name));
 
-      NuruTelemetryExtensions.CommandDuration.Record(stopwatch.ElapsedMilliseconds,
+      CommandDuration.Record(stopwatch.ElapsedMilliseconds,
         new KeyValuePair<string, object?>("command", context.CommandName),
         new KeyValuePair<string, object?>("status", "error"));
-
-      // Flush telemetry so metrics appear immediately in dashboards
-      await NuruTelemetryExtensions.FlushAsync().ConfigureAwait(false);
 
       throw;
     }

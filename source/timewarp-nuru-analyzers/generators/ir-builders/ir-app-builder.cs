@@ -38,6 +38,7 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
   private readonly List<CustomConverterDefinition> CustomConverters = [];
   private bool IsBuilt;
   private bool DiscoverEndpointsEnabled;
+  private bool TelemetryEnabled;
   private readonly List<string> ExplicitEndpointTypes = [];
 
   /// <summary>
@@ -190,6 +191,16 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
   }
 
   /// <summary>
+  /// Enables telemetry (OpenTelemetry instrumentation).
+  /// Mirrors: NuruCoreAppBuilder.UseTelemetry()
+  /// </summary>
+  public TSelf UseTelemetry()
+  {
+    TelemetryEnabled = true;
+    return (TSelf)this;
+  }
+
+  /// <summary>
   /// Registers a custom type converter for code generation.
   /// Mirrors: NuruCoreAppBuilder.AddTypeConverter()
   /// </summary>
@@ -310,7 +321,8 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
       CustomConverters: [.. CustomConverters],
       LoggingConfiguration: LoggingConfiguration,
       DiscoverEndpoints: DiscoverEndpointsEnabled,
-      ExplicitEndpointTypes: [.. ExplicitEndpointTypes]);
+      ExplicitEndpointTypes: [.. ExplicitEndpointTypes],
+      HasTelemetry: TelemetryEnabled);
   }
 
   /// <summary>
@@ -341,6 +353,7 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
   IIrAppBuilder IIrAppBuilder.AddBehavior(BehaviorDefinition behavior) => AddBehavior(behavior);
   IIrAppBuilder IIrAppBuilder.AddService(ServiceDefinition service) => AddService(service);
   IIrAppBuilder IIrAppBuilder.UseTerminal() => UseTerminal();
+  IIrAppBuilder IIrAppBuilder.UseTelemetry() => UseTelemetry();
   IIrAppBuilder IIrAppBuilder.AddTypeConverter(CustomConverterDefinition converter) => AddTypeConverter(converter);
   IIrAppBuilder IIrAppBuilder.AddInterceptSite(string methodName, InterceptSiteModel site) => AddInterceptSite(methodName, site);
   IIrAppBuilder IIrAppBuilder.DiscoverEndpoints() => DiscoverEndpoints();

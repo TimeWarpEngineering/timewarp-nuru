@@ -59,12 +59,8 @@ NuruCoreApp app = NuruApp.CreateBuilder(args)
   // .Map<StatusCommand>("status").WithDescription("Show telemetry configuration status")
   .Build();
 
-int exitCode = await app.RunAsync(args);
-
-// Flush telemetry before exit - critical for CLI apps!
-await NuruTelemetryExtensions.FlushAndShutdownAsync();
-
-return exitCode;
+// Telemetry is automatically flushed by the generated RunAsync interceptor
+return await app.RunAsync(args);
 
 // =============================================================================
 // COMMANDS (unchanged - business logic stays clean)

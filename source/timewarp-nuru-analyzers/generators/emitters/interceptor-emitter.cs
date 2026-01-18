@@ -29,10 +29,16 @@ internal static class InterceptorEmitter
     EmitNamespaceAndUsings(sb, model);
     EmitClassStart(sb);
 
-    // Emit shared infrastructure (command classes, service fields, behaviors, logging)
+    // Emit shared infrastructure (command classes, service fields, behaviors, logging, telemetry)
     EmitCommandClasses(sb, model);
     EmitServiceFields(sb, model.AllServices);
     EmitLoggingFactoryFields(sb, model);
+
+    // Emit telemetry infrastructure if any app has telemetry enabled
+    if (model.HasTelemetry)
+    {
+      TelemetryEmitter.EmitTelemetryFields(sb);
+    }
 
     // Determine the logger factory field name for behaviors (use first app with logging, or null)
     string? loggerFactoryFieldName = GetFirstLoggerFactoryFieldName(model);
@@ -88,7 +94,25 @@ internal static class InterceptorEmitter
     sb.AppendLine("    string[] args");
     sb.AppendLine("  )");
     sb.AppendLine("  {");
-    sb.AppendLine($"    return await ExecuteRouteAsync{methodSuffix}(app, args).ConfigureAwait(false);");
+
+    // Emit telemetry setup if this app has telemetry enabled
+    if (app.HasTelemetry)
+    {
+      TelemetryEmitter.EmitTelemetrySetup(sb);
+      sb.AppendLine("    try");
+      sb.AppendLine("    {");
+      sb.AppendLine($"      return await ExecuteRouteAsync{methodSuffix}(app, args).ConfigureAwait(false);");
+      sb.AppendLine("    }");
+      sb.AppendLine("    finally");
+      sb.AppendLine("    {");
+      TelemetryEmitter.EmitTelemetryFlush(sb);
+      sb.AppendLine("    }");
+    }
+    else
+    {
+      sb.AppendLine($"    return await ExecuteRouteAsync{methodSuffix}(app, args).ConfigureAwait(false);");
+    }
+
     sb.AppendLine("  }");
     sb.AppendLine();
   }
@@ -216,6 +240,15 @@ internal static class InterceptorEmitter
     sb.AppendLine("#endif");
     sb.AppendLine("using global::TimeWarp.Nuru;");
     sb.AppendLine("using global::TimeWarp.Terminal;");
+
+    // OpenTelemetry usings (only when telemetry is enabled)
+    if (model.HasTelemetry)
+    {
+      sb.AppendLine("using global::OpenTelemetry;");
+      sb.AppendLine("using global::OpenTelemetry.Metrics;");
+      sb.AppendLine("using global::OpenTelemetry.Resources;");
+      sb.AppendLine("using global::OpenTelemetry.Trace;");
+    }
 
     // User-defined usings from source file
     if (model.UserUsings.Length > 0)

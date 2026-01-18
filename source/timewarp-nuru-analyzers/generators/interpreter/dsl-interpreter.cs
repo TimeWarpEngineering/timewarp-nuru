@@ -575,6 +575,8 @@ public sealed class DslInterpreter
 
       "UseTerminal" => DispatchUseTerminal(receiver),
 
+      "UseTelemetry" => DispatchUseTelemetry(receiver),
+
       "AddTypeConverter" => DispatchAddTypeConverter(invocation, receiver),
 
       "WithAlias" => DispatchWithAlias(invocation, receiver),
@@ -1215,6 +1217,20 @@ public sealed class DslInterpreter
     }
 
     return appBuilder.UseTerminal();
+  }
+
+  /// <summary>
+  /// Dispatches UseTelemetry() call to IIrAppBuilder.
+  /// This is a no-op - telemetry is runtime only.
+  /// </summary>
+  private static object? DispatchUseTelemetry(object? receiver)
+  {
+    if (receiver is not IIrAppBuilder appBuilder)
+    {
+      throw new InvalidOperationException("UseTelemetry() must be called on an app builder.");
+    }
+
+    return appBuilder.UseTelemetry();
   }
 
   /// <summary>

@@ -1,14 +1,48 @@
 namespace TimeWarp.Nuru;
 
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Trace;
+
 public class NuruCoreApp
 {
   public ITerminal Terminal { get; }
   public ReplOptions? ReplOptions { get; init; }
   public ILoggerFactory? LoggerFactory { get; init; }
 
+  /// <summary>
+  /// Tracer provider for distributed tracing. Set by generated telemetry code.
+  /// </summary>
+  public TracerProvider? TracerProvider { get; set; }
+
+  /// <summary>
+  /// Meter provider for metrics. Set by generated telemetry code.
+  /// </summary>
+  public MeterProvider? MeterProvider { get; set; }
+
   public NuruCoreApp(ITerminal? terminal = null)
   {
     Terminal = terminal ?? TimeWarpTerminal.Default;
+  }
+
+  /// <summary>
+  /// Flushes all telemetry data and disposes providers.
+  /// Called automatically by generated RunAsync code when telemetry is enabled.
+  /// </summary>
+  /// <param name="delayMs">Delay in milliseconds to allow export to complete. Default: 1000ms.</param>
+  public async Task FlushTelemetryAsync(int delayMs = 1000)
+  {
+    TracerProvider?.ForceFlush();
+    MeterProvider?.ForceFlush();
+
+    if (delayMs > 0)
+    {
+      await Task.Delay(delayMs).ConfigureAwait(false);
+    }
+
+    TracerProvider?.Dispose();
+    MeterProvider?.Dispose();
+    TracerProvider = null;
+    MeterProvider = null;
   }
 
   /// <summary>

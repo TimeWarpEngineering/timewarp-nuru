@@ -112,6 +112,12 @@ public interface IIrAppBuilder : IIrRouteSource
   IIrAppBuilder UseTerminal();
 
   /// <summary>
+  /// No-op for UseTelemetry (runtime only).
+  /// </summary>
+  /// <returns>This builder for chaining.</returns>
+  IIrAppBuilder UseTelemetry();
+
+  /// <summary>
   /// Registers a custom type converter for code generation.
   /// </summary>
   /// <param name="converter">The converter definition.</param>

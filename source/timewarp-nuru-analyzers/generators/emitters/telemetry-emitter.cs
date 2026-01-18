@@ -65,6 +65,21 @@ internal static class TelemetryEmitter
     sb.AppendLine("        .AddMeter(\"TimeWarp.Nuru.Behavior\") // For TelemetryBehavior");
     sb.AppendLine("        .AddOtlpExporter(o => o.Endpoint = __endpoint)");
     sb.AppendLine("        .Build();");
+    sb.AppendLine();
+    sb.AppendLine("      app.LoggerFactory = global::Microsoft.Extensions.Logging.LoggerFactory.Create(builder =>");
+    sb.AppendLine("      {");
+    sb.AppendLine("        builder.SetMinimumLevel(global::Microsoft.Extensions.Logging.LogLevel.Debug);");
+    sb.AppendLine("        builder.AddOpenTelemetry(options =>");
+    sb.AppendLine("        {");
+    sb.AppendLine("          options.SetResourceBuilder(__resource);");
+    sb.AppendLine("          options.AddOtlpExporter(o => o.Endpoint = __endpoint);");
+    sb.AppendLine("        });");
+    sb.AppendLine("      });");
+    sb.AppendLine();
+    sb.AppendLine("      app.LoggerProvider = global::OpenTelemetry.Sdk.CreateLoggerProviderBuilder()");
+    sb.AppendLine("        .SetResourceBuilder(__resource)");
+    sb.AppendLine("        .AddOtlpExporter(o => o.Endpoint = __endpoint)");
+    sb.AppendLine("        .Build();");
     sb.AppendLine("    }");
     sb.AppendLine();
   }

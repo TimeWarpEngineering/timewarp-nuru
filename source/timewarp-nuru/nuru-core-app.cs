@@ -1,5 +1,6 @@
 namespace TimeWarp.Nuru;
 
+using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 
@@ -7,7 +8,7 @@ public class NuruCoreApp
 {
   public ITerminal Terminal { get; }
   public ReplOptions? ReplOptions { get; init; }
-  public ILoggerFactory? LoggerFactory { get; init; }
+  public ILoggerFactory? LoggerFactory { get; set; }
 
   /// <summary>
   /// Tracer provider for distributed tracing. Set by generated telemetry code.
@@ -18,6 +19,11 @@ public class NuruCoreApp
   /// Meter provider for metrics. Set by generated telemetry code.
   /// </summary>
   public MeterProvider? MeterProvider { get; set; }
+
+  /// <summary>
+  /// Logger provider for structured logging. Set by generated telemetry code.
+  /// </summary>
+  public LoggerProvider? LoggerProvider { get; set; }
 
   public NuruCoreApp(ITerminal? terminal = null)
   {
@@ -33,6 +39,7 @@ public class NuruCoreApp
   {
     TracerProvider?.ForceFlush();
     MeterProvider?.ForceFlush();
+    LoggerProvider?.ForceFlush();
 
     if (delayMs > 0)
     {
@@ -41,8 +48,10 @@ public class NuruCoreApp
 
     TracerProvider?.Dispose();
     MeterProvider?.Dispose();
+    LoggerProvider?.Dispose();
     TracerProvider = null;
     MeterProvider = null;
+    LoggerProvider = null;
   }
 
   /// <summary>

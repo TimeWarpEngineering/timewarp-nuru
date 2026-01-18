@@ -121,15 +121,51 @@ This is a CLI framework. Console output is for command results, not log noise. O
 
 **Implemented OTLP structured logging for source-generated telemetry:**
 
-1. `nuru-core-app.cs`:
-   - Added `using OpenTelemetry.Logs;`
-   - Changed `LoggerFactory` from `init` to `set` accessor
-   - Added `LoggerProvider` property with XML documentation
-   - Updated `FlushTelemetryAsync()` to flush, dispose, and null the `LoggerProvider`
+### Changes Made
 
-2. `telemetry-emitter.cs`:
-   - Added `LoggerFactory` setup that creates an `ILoggerFactory` with OpenTelemetry logging configured
-   - Added `LoggerProvider` setup using `OpenTelemetry.Sdk.CreateLoggerProviderBuilder()`
-   - Logs now export to OTLP alongside traces and metrics when `UseTelemetry()` is called
+**1. `source/timewarp-nuru/nuru-core-app.cs`**
+- Added `using OpenTelemetry.Logs;` import
+- Changed `LoggerFactory` from `init` to `set` accessor (allows generated code to set the logger factory)
+- Added `LoggerProvider` property with XML documentation:
+  ```csharp
+  /// <summary>
+  /// Logger provider for structured logging. Set by generated telemetry code.
+  /// </summary>
+  public LoggerProvider? LoggerProvider { get; set; }
+  ```
+- Updated `FlushTelemetryAsync()` to handle `LoggerProvider`:
+  - Added `LoggerProvider?.ForceFlush();`
+  - Added `LoggerProvider?.Dispose();`
+  - Added `LoggerProvider = null;`
 
-**Result:** When `UseTelemetry()` is called, all telemetry (traces, metrics, logs) is exported via OTLP with no console output, keeping CLI UX clean.
+**2. `source/timewarp-nuru-analyzers/generators/emitters/telemetry-emitter.cs`**
+- Added `LoggerFactory` setup that creates an `ILoggerFactory` with OpenTelemetry logging:
+  ```csharp
+  app.LoggerFactory = global::Microsoft.Extensions.Logging.LoggerFactory.Create(builder =>
+  {
+    builder.SetMinimumLevel(global::Microsoft.Extensions.Logging.LogLevel.Debug);
+    builder.AddOpenTelemetry(options =>
+    {
+      options.SetResourceBuilder(__resource);
+      options.AddOtlpExporter(o => o.Endpoint = __endpoint);
+    });
+  });
+  ```
+- Added `LoggerProvider` setup using `OpenTelemetry.Sdk.CreateLoggerProviderBuilder()`:
+  ```csharp
+  app.LoggerProvider = global::OpenTelemetry.Sdk.CreateLoggerProviderBuilder()
+    .SetResourceBuilder(__resource)
+    .AddLoggerFactory(app.LoggerFactory)
+    .AddOtlpExporter(o => o.Endpoint = __endpoint)
+    .Build();
+  ```
+
+### Result
+
+When `UseTelemetry()` is called, all telemetry (traces, metrics, **logs**) is exported via OTLP alongside traces and metrics with no console output, keeping CLI UX clean. Logs will appear in the Aspire Dashboard Structured Logs tab when OTEL_EXPORTER_OTLP_ENDPOINT is configured.
+
+### Verification
+
+- Both main projects build successfully (`timewarp-nuru` and `timewarp-nuru-analyzers`)
+- No new package references required (OpenTelemetry package already includes logging support)
+- Behavior is consistent with existing trace/metrics OTLP export (no fallback to console)

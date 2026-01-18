@@ -35,8 +35,9 @@ Both runfiles share a single `Properties/launchSettings.json` with multiple prof
 // NuruAppBuilder implements IHostApplicationBuilder!
 NuruAppBuilder builder = NuruApp.CreateBuilder(args, options);
 
-// Aspire-style extension methods work directly:
-builder.AddNuruClientDefaults();  // Uses builder.Logging, builder.Services, etc.
+// Aspire-style extension methods work directly.
+// You can write your own extensions targeting IHostApplicationBuilder:
+builder.AddMyCustomDefaults();  // Uses builder.Logging, builder.Services, etc.
 ```
 
 This means any extension method targeting `IHostApplicationBuilder` (like Aspire's `AddAppDefaults()`) works with Nuru out of the box.
@@ -182,10 +183,11 @@ logger.LogInformation("Greeting {Name} at {Timestamp}", request.Name, DateTime.U
 
 ### IHostApplicationBuilder Extensions
 
-NuruAppBuilder implements `IHostApplicationBuilder`, so Aspire-style extensions work:
+NuruAppBuilder implements `IHostApplicationBuilder`, so you can write Aspire-style extensions:
 
 ```csharp
-public static IHostApplicationBuilder AddNuruClientDefaults(this IHostApplicationBuilder builder)
+// Example: Create your own extension method targeting IHostApplicationBuilder
+public static IHostApplicationBuilder AddMyDefaults(this IHostApplicationBuilder builder)
 {
     builder.Logging.AddOpenTelemetry(logging => { ... });
     builder.Services.AddOpenTelemetry().WithTracing(tracing =>
@@ -195,6 +197,8 @@ public static IHostApplicationBuilder AddNuruClientDefaults(this IHostApplicatio
     return builder;
 }
 ```
+
+Note: Nuru's built-in telemetry is configured via `UseTelemetry()` in the fluent builder.
 
 ---
 
@@ -240,5 +244,5 @@ Duration > 1000
 ## See Also
 
 - [Aspire 13 File-Based App Support](https://aspire.dev/whats-new/aspire-13/#c-file-based-app-support)
-- [REPL Demo](../ReplDemo/) - REPL features without telemetry
-- [TimeWarp.Nuru.Telemetry](../../Source/TimeWarp.Nuru.Telemetry/) - Telemetry package
+- [REPL Demo](../13-repl/) - REPL features without telemetry
+- [Telemetry Source Generator](../../source/timewarp-nuru-analyzers/generators/emitters/telemetry-emitter.cs) - Source-generated telemetry infrastructure

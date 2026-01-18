@@ -12,9 +12,9 @@ Extend the source-generated telemetry to include OpenTelemetry logging export. W
 
 ## Checklist
 
-- [ ] Modify `telemetry-emitter.cs` to emit OpenTelemetry logging setup
-- [ ] Change `NuruCoreApp.LoggerFactory` from `init` to `set`
-- [ ] Verify package references include OpenTelemetry logging exporter
+- [x] Modify `telemetry-emitter.cs` to emit OpenTelemetry logging setup
+- [x] Change `NuruCoreApp.LoggerFactory` from `init` to `set`
+- [x] Verify package references include OpenTelemetry logging exporter
 - [ ] Build and test with Aspire sample
 - [ ] Verify logs appear in Aspire Dashboard Structured Logs tab
 

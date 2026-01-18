@@ -25,10 +25,17 @@ using Microsoft.Extensions.Logging;
 
 NuruCoreApp app = NuruApp.CreateBuilder(args)
   // Configure logging via standard Microsoft.Extensions.Logging pattern
-  .ConfigureServices(services => services
-    .AddLogging(builder => builder
-      .SetMinimumLevel(LogLevel.Debug)
-      .AddConsole()))
+  .ConfigureServices
+  (
+    services => 
+      services
+      .AddLogging
+      (
+        builder => builder
+        .SetMinimumLevel(LogLevel.Debug)
+        .AddConsole()
+      )
+  )
   // Add a logging behavior that will use the configured logger
   .AddBehavior(typeof(LoggingBehavior))
   // Simple routes

@@ -372,6 +372,14 @@ internal static class HandlerInvokerEmitter
     if (serviceTypeName == "global::TimeWarp.Nuru.NuruCoreApp")
       return "app";
 
+    // ILogger<T> - use the generated logger factory
+    if (serviceTypeName.Contains("ILogger", StringComparison.Ordinal))
+    {
+      string typeArg = ExtractLoggerTypeArg(serviceTypeName);
+      // Use __loggerFactory which is always generated when ConfigureServices adds logging
+      return $"__loggerFactory.CreateLogger<{typeArg}>()";
+    }
+
     // Find matching service registration
     ServiceDefinition? service = services.FirstOrDefault(s => s.ServiceTypeName == serviceTypeName);
     if (service is null)
@@ -448,6 +456,20 @@ internal static class HandlerInvokerEmitter
 
     // Convert to camelCase
     return char.ToLowerInvariant(typeName[0]) + typeName[1..];
+  }
+
+  /// <summary>
+  /// Extracts the type argument from ILogger&lt;T&gt;.
+  /// </summary>
+  private static string ExtractLoggerTypeArg(string loggerTypeName)
+  {
+    int start = loggerTypeName.IndexOf('<', StringComparison.Ordinal);
+    int end = loggerTypeName.LastIndexOf('>');
+
+    if (start >= 0 && end > start)
+      return loggerTypeName[(start + 1)..end];
+
+    return "object";
   }
 
   /// <summary>

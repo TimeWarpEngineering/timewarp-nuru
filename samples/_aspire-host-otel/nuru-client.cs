@@ -1,7 +1,8 @@
 #!/usr/bin/env -S dotnet run --launch-profile AppHost --
 #:project ../../source/timewarp-nuru/timewarp-nuru.csproj
-#:project ../../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj
-#:project ../../source/timewarp-nuru-telemetry/timewarp-nuru-telemetry.csproj
+
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 // Nuru CLI Client with OpenTelemetry for Aspire Host
 // ===================================================
@@ -22,6 +23,8 @@ using TimeWarp.Nuru;
 // Build the Nuru app with auto-wired telemetry and REPL support
 NuruCoreApp app = NuruApp.CreateBuilder(args)
   .ConfigureServices(ConfigureServices)
+  .AddBehavior(typeof(TelemetryBehavior))
+  .DiscoverEndpoints()
   .AddRepl(options =>
   {
     options.Prompt = "otel> ";
@@ -38,23 +41,18 @@ NuruCoreApp app = NuruApp.CreateBuilder(args)
       "Type 'help' for all commands, 'exit' to quit.";
     options.GoodbyeMessage = "Goodbye! Check Aspire Dashboard for telemetry data.";
   })
-  .Map<GreetCommand>("greet {name}").WithDescription("Greet someone (structured log)")
-  .Map<StatusCommand>("status").WithDescription("Show system status (structured log)")
-  .Map<WorkCommand>("work {duration:int}").WithDescription("Simulate work with duration in ms")
-  .Map<ConfigCommand>("config").WithDescription("Show telemetry configuration")
   .Build();
 
 // Run the app - use -i or --interactive to enter REPL mode
 // Telemetry is automatically flushed by NuruApp.RunAsync()
 return await app.RunAsync(args);
 
+
 static void ConfigureServices(IServiceCollection services)
 {
-  // Register TelemetryBehavior for all commands using MediatorOptions (AOT-compatible)
-  services.AddMediator(options =>
-  {
-    options.PipelineBehaviors = [typeof(TelemetryBehavior<,>)];
-  });
+  services.AddLogging(builder => builder
+    .SetMinimumLevel(LogLevel.Debug)
+    .AddConsole());
 }
 
 // =============================================================================
@@ -65,11 +63,14 @@ static void ConfigureServices(IServiceCollection services)
 /// Greet command demonstrating structured logging with semantic properties.
 /// The log message flows to Aspire Dashboard via OTEL pipeline.
 /// </summary>
-public sealed class GreetCommand : IRequest
+[NuruRoute("greet", Description = "Greet a user by name")]
+
+public sealed class GreetCommand : ICommand<Unit>
 {
+  [Parameter(Order = 0)]
   public string Name { get; set; } = string.Empty;
 
-  public sealed class Handler(ILogger<GreetCommand> logger) : IRequestHandler<GreetCommand>
+  public sealed class Handler(ILogger<GreetCommand> logger) : ICommandHandler<GreetCommand,Unit>
   {
     public ValueTask<Unit> Handle(GreetCommand request, CancellationToken cancellationToken)
     {
@@ -87,9 +88,10 @@ public sealed class GreetCommand : IRequest
 /// <summary>
 /// Status command showing system information with structured logging.
 /// </summary>
-public sealed class StatusCommand : IRequest
+[NuruRoute("status", Description = "Show system status (structured log)")]
+public sealed class StatusCommand : IQuery<Unit>
 {
-  public sealed class Handler(ILogger<StatusCommand> logger) : IRequestHandler<StatusCommand>
+  public sealed class Handler(ILogger<StatusCommand> logger) : IQueryHandler<StatusCommand, Unit>
   {
     public ValueTask<Unit> Handle(StatusCommand request, CancellationToken cancellationToken)
     {
@@ -115,11 +117,12 @@ public sealed class StatusCommand : IRequest
 /// <summary>
 /// Work command simulating async work - demonstrates trace spans in Aspire Dashboard.
 /// </summary>
-public sealed class WorkCommand : IRequest
+[NuruRoute("work {duration:int}", Description = "Simulate work with duration in ms")]
+public sealed class WorkCommand : ICommand<Unit>
 {
   public int Duration { get; set; }
 
-  public sealed class Handler(ILogger<WorkCommand> logger) : IRequestHandler<WorkCommand>
+  public sealed class Handler(ILogger<WorkCommand> logger) : ICommandHandler<WorkCommand, Unit>
   {
     public async ValueTask<Unit> Handle(WorkCommand request, CancellationToken cancellationToken)
     {
@@ -145,9 +148,10 @@ public sealed class WorkCommand : IRequest
 /// <summary>
 /// Config command showing current telemetry configuration.
 /// </summary>
-public sealed class ConfigCommand : IRequest
+[NuruRoute("config", Description = "Show current telemetry configuration")]
+public sealed class ConfigCommand : IQuery<Unit>
 {
-  public sealed class Handler(ILogger<ConfigCommand> logger) : IRequestHandler<ConfigCommand>
+  public sealed class Handler(ILogger<ConfigCommand> logger) : IQueryHandler<ConfigCommand, Unit>
   {
     public ValueTask<Unit> Handle(ConfigCommand request, CancellationToken cancellationToken)
     {

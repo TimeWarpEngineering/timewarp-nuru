@@ -7,14 +7,16 @@ This sample demonstrates a Nuru CLI/REPL application sending telemetry (traces, 
 Both the AppHost and NuruClient are implemented as **.NET 10 file-based apps** (runfiles) - single `.cs` files that run directly without a `.csproj`:
 
 ```bash
-cd samples/aspire-host-otel
+cd samples/_aspire-host-otel
 
-# Run the AppHost
-./apphost.cs
+# Run the AppHost using Aspire CLI
+aspire run
 
 # Run the NuruClient (in separate terminal)
 ./nuru-client.cs
 ```
+
+The `aspire run` command uses the `.aspire/settings.json` configuration to locate the AppHost.
 
 Each runfile specifies its launch profile in the shebang:
 
@@ -67,24 +69,34 @@ This means any extension method targeting `IHostApplicationBuilder` (like Aspire
 ### Prerequisites
 
 - .NET 10 SDK
+- Aspire CLI (`dotnet tool install -g aspire`)
 - Aspire 13.0+
 
 ### Step 1: Start Aspire Host
 
 ```bash
-cd samples/aspire-host-otel
-./apphost.cs
+cd samples/_aspire-host-otel
+aspire run
+```
+
+Output:
+```
+     AppHost:  apphost.cs
+   Dashboard:  http://localhost:15186/login?t=<token>
+        Logs:  ~/.aspire/cli/logs/apphost-<pid>-<timestamp>.log
+
+               Press CTRL+C to stop the apphost and exit.
 ```
 
 This:
-- Starts the Aspire Dashboard at http://localhost:15186
+- Starts the Aspire Dashboard (URL shown with auth token)
 - Launches NuruClient with `status` command (demonstrates managed telemetry)
 - Opens OTLP receiver on port 19034
 
 ### Step 2: Run Interactive REPL (separate terminal)
 
 ```bash
-cd samples/aspire-host-otel
+cd samples/_aspire-host-otel
 ./nuru-client.cs
 ```
 

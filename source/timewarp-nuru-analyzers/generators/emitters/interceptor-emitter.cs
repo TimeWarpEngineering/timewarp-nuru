@@ -106,26 +106,10 @@ internal static class InterceptorEmitter
     sb.AppendLine("  )");
     sb.AppendLine("  {");
 
-    // If logging is configured, wrap in try-finally for proper disposal
-    if (app.HasLogging)
-    {
-      sb.AppendLine("    try");
-      sb.AppendLine("    {");
-    }
-
     // Method body with this app's routes only
+    // Note: LoggerFactory is static and should NOT be disposed after each command
+    // (this would break REPL mode). Disposal happens at app shutdown via NuruCoreApp.
     EmitMethodBody(sb, app, appIndex, model);
-
-    // Close try-finally if logging is configured
-    if (app.HasLogging)
-    {
-      sb.AppendLine("    }");
-      sb.AppendLine("    finally");
-      sb.AppendLine("    {");
-      string factoryFieldName = GetLoggerFactoryFieldName(appIndex, model.Apps.Length);
-      sb.AppendLine($"      ({factoryFieldName} as global::System.IDisposable)?.Dispose();");
-      sb.AppendLine("    }");
-    }
 
     sb.AppendLine("  }");
     sb.AppendLine();

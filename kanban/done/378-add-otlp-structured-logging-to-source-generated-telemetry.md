@@ -16,7 +16,7 @@ Extend the source-generated telemetry to include OpenTelemetry logging export. W
 - [x] Change `NuruCoreApp.LoggerFactory` from `init` to `set`
 - [x] Verify package references include OpenTelemetry logging exporter
 - [x] Build and test with Aspire sample
-- [ ] Verify logs appear in Aspire Dashboard Structured Logs tab
+- [x] Verify logs appear in Aspire Dashboard Structured Logs tab
 
 ## Notes
 
@@ -154,8 +154,29 @@ Simplified from the original plan:
 
 When `UseTelemetry()` is called, all telemetry (traces, metrics, **logs**) is exported via OTLP. Logs will appear in the Aspire Dashboard Structured Logs tab when OTEL_EXPORTER_OTLP_ENDPOINT is configured.
 
+### Additional Fix: ILogger<T> Injection (2025-01-19)
+
+The OTLP exporter was configured correctly, but `ILogger<T>` injected into command handlers was still using a static field that only existed with explicit `AddLogging()`. Fixed by wiring ILogger injection to use `app.LoggerFactory` when telemetry is enabled.
+
+**Files modified:**
+- `interceptor-emitter.cs` - Thread `loggerFactoryFieldName` through emit chain
+- `handler-invoker-emitter.cs` - Support both static field and `app.LoggerFactory`
+- `behavior-emitter.cs` - Handle nullable `app.LoggerFactory` with NullLogger fallback
+- `route-matcher-emitter.cs` - Pass `loggerFactoryFieldName` to HandlerInvokerEmitter
+
+**Two-path design for AOT optimization:**
+
+| Path | When Used | AOT Characteristics |
+|------|-----------|---------------------|
+| Static `__loggerFactory` | Explicit `AddLogging()` | Zero runtime cost, trimmer sees types |
+| Instance `app.LoggerFactory` | `UseTelemetry()` | Runtime null checks (OTEL endpoint is env var) |
+
+Static field takes priority when both configured.
+
 ### Verification
 
-- Both main projects build successfully (`timewarp-nuru` and `timewarp-nuru-analyzers`)
-- No new package references required (OpenTelemetry packages already present)
-- Awaiting user verification that logs appear in Aspire Dashboard
+- [x] Both main projects build successfully
+- [x] No new package references required
+- [x] Traces appear in Aspire Dashboard ✓
+- [x] Metrics appear in Aspire Dashboard ✓
+- [x] **Structured Logs appear in Aspire Dashboard ✓**

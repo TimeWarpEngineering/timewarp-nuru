@@ -232,6 +232,10 @@ internal static class HandlerValidator
       if (identifier.Parent is MemberAccessExpressionSyntax ma && ma.Name == identifier)
         continue;
 
+      // Skip if it's the name part of a conditional member access (obj?.name)
+      if (identifier.Parent is MemberBindingExpressionSyntax mb && mb.Name == identifier)
+        continue;
+
       // Skip if it's the target of a property assignment in an object initializer
       // e.g., new Foo { X = value } - X is not a closure, it's setting a property on the new object
       if (IsObjectInitializerTarget(identifier))

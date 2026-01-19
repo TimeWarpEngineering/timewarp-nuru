@@ -638,6 +638,110 @@ internal static class RouteMatcherEmitter
       }
       else
       {
+        // Special handling for types without TryParse (Uri, FileInfo, DirectoryInfo)
+        // These need different patterns: Uri.TryCreate or constructor with try/catch
+
+        // Check for Uri type - uses TryCreate instead of TryParse
+        if (baseType.Equals("uri", StringComparison.OrdinalIgnoreCase))
+        {
+          if (param.IsOptional)
+          {
+            string tempVarName = $"__{varName}_parsed_{routeIndex}";
+            sb.AppendLine($"{indentStr}global::System.Uri? {escapedVarName} = null;");
+            sb.AppendLine($"{indentStr}if ({uniqueVarName} is not null)");
+            sb.AppendLine($"{indentStr}{{");
+            sb.AppendLine($"{indentStr}  if (!global::System.Uri.TryCreate({uniqueVarName}, global::System.UriKind.RelativeOrAbsolute, out global::System.Uri? {tempVarName}))");
+            sb.AppendLine($"{indentStr}  {{");
+            sb.AppendLine($"{indentStr}    app.Terminal.WriteLine($\"Error: Invalid value '{{{uniqueVarName}}}' for parameter '{param.Name}'. Expected: Uri\");");
+            sb.AppendLine($"{indentStr}    return 1;");
+            sb.AppendLine($"{indentStr}  }}");
+            sb.AppendLine($"{indentStr}  {escapedVarName} = {tempVarName};");
+            sb.AppendLine($"{indentStr}}}");
+          }
+          else
+          {
+            sb.AppendLine($"{indentStr}if (!global::System.Uri.TryCreate({uniqueVarName}, global::System.UriKind.RelativeOrAbsolute, out global::System.Uri? {escapedVarName}) || {escapedVarName} is null)");
+            sb.AppendLine($"{indentStr}{{");
+            sb.AppendLine($"{indentStr}  app.Terminal.WriteLine($\"Error: Invalid value '{{{uniqueVarName}}}' for parameter '{param.Name}'. Expected: Uri\");");
+            sb.AppendLine($"{indentStr}  return 1;");
+            sb.AppendLine($"{indentStr}}}");
+          }
+
+          continue;
+        }
+
+        // Check for FileInfo type - uses constructor with try/catch
+        if (baseType.Equals("fileinfo", StringComparison.OrdinalIgnoreCase))
+        {
+          if (param.IsOptional)
+          {
+            sb.AppendLine($"{indentStr}global::System.IO.FileInfo? {escapedVarName} = null;");
+            sb.AppendLine($"{indentStr}if ({uniqueVarName} is not null)");
+            sb.AppendLine($"{indentStr}{{");
+            sb.AppendLine($"{indentStr}  try");
+            sb.AppendLine($"{indentStr}  {{");
+            sb.AppendLine($"{indentStr}    {escapedVarName} = new global::System.IO.FileInfo({uniqueVarName});");
+            sb.AppendLine($"{indentStr}  }}");
+            sb.AppendLine($"{indentStr}  catch (global::System.ArgumentException)");
+            sb.AppendLine($"{indentStr}  {{");
+            sb.AppendLine($"{indentStr}    app.Terminal.WriteLine($\"Error: Invalid value '{{{uniqueVarName}}}' for parameter '{param.Name}'. Expected: FileInfo\");");
+            sb.AppendLine($"{indentStr}    return 1;");
+            sb.AppendLine($"{indentStr}  }}");
+            sb.AppendLine($"{indentStr}}}");
+          }
+          else
+          {
+            sb.AppendLine($"{indentStr}global::System.IO.FileInfo {escapedVarName};");
+            sb.AppendLine($"{indentStr}try");
+            sb.AppendLine($"{indentStr}{{");
+            sb.AppendLine($"{indentStr}  {escapedVarName} = new global::System.IO.FileInfo({uniqueVarName});");
+            sb.AppendLine($"{indentStr}}}");
+            sb.AppendLine($"{indentStr}catch (global::System.ArgumentException)");
+            sb.AppendLine($"{indentStr}{{");
+            sb.AppendLine($"{indentStr}  app.Terminal.WriteLine($\"Error: Invalid value '{{{uniqueVarName}}}' for parameter '{param.Name}'. Expected: FileInfo\");");
+            sb.AppendLine($"{indentStr}  return 1;");
+            sb.AppendLine($"{indentStr}}}");
+          }
+
+          continue;
+        }
+
+        // Check for DirectoryInfo type - uses constructor with try/catch
+        if (baseType.Equals("directoryinfo", StringComparison.OrdinalIgnoreCase))
+        {
+          if (param.IsOptional)
+          {
+            sb.AppendLine($"{indentStr}global::System.IO.DirectoryInfo? {escapedVarName} = null;");
+            sb.AppendLine($"{indentStr}if ({uniqueVarName} is not null)");
+            sb.AppendLine($"{indentStr}{{");
+            sb.AppendLine($"{indentStr}  try");
+            sb.AppendLine($"{indentStr}  {{");
+            sb.AppendLine($"{indentStr}    {escapedVarName} = new global::System.IO.DirectoryInfo({uniqueVarName});");
+            sb.AppendLine($"{indentStr}  }}");
+            sb.AppendLine($"{indentStr}  catch (global::System.ArgumentException)");
+            sb.AppendLine($"{indentStr}  {{");
+            sb.AppendLine($"{indentStr}    app.Terminal.WriteLine($\"Error: Invalid value '{{{uniqueVarName}}}' for parameter '{param.Name}'. Expected: DirectoryInfo\");");
+            sb.AppendLine($"{indentStr}    return 1;");
+            sb.AppendLine($"{indentStr}  }}");
+            sb.AppendLine($"{indentStr}}}");
+          }
+          else
+          {
+            sb.AppendLine($"{indentStr}global::System.IO.DirectoryInfo {escapedVarName};");
+            sb.AppendLine($"{indentStr}try");
+            sb.AppendLine($"{indentStr}{{");
+            sb.AppendLine($"{indentStr}  {escapedVarName} = new global::System.IO.DirectoryInfo({uniqueVarName});");
+            sb.AppendLine($"{indentStr}}}");
+            sb.AppendLine($"{indentStr}catch (global::System.ArgumentException)");
+            sb.AppendLine($"{indentStr}{{");
+            sb.AppendLine($"{indentStr}  app.Terminal.WriteLine($\"Error: Invalid value '{{{uniqueVarName}}}' for parameter '{param.Name}'. Expected: DirectoryInfo\");");
+            sb.AppendLine($"{indentStr}  return 1;");
+            sb.AppendLine($"{indentStr}}}");
+          }
+
+          continue;
+        }
+
         // Try to find a custom type converter for this constraint
         // Match by:
         // 1. Target type name (e.g., "EmailAddress")
@@ -1000,6 +1104,120 @@ internal static class RouteMatcherEmitter
     }
     else
     {
+      // Special handling for types without TryParse (Uri, FileInfo, DirectoryInfo)
+      // These need different patterns: Uri.TryCreate or constructor with try/catch
+
+      // Check for Uri type - uses TryCreate instead of TryParse
+      if (baseType.Equals("uri", StringComparison.OrdinalIgnoreCase))
+      {
+        if (option.ParameterIsOptional)
+        {
+          string tempVarName = $"__{varName}_parsed_{routeIndex}";
+          sb.AppendLine($"      global::System.Uri? {varName} = null;");
+          sb.AppendLine($"      if ({rawVarName} is not null)");
+          sb.AppendLine("      {");
+          sb.AppendLine($"        if (!global::System.Uri.TryCreate({rawVarName}, global::System.UriKind.RelativeOrAbsolute, out global::System.Uri? {tempVarName}))");
+          sb.AppendLine("        {");
+          sb.AppendLine($"          app.Terminal.WriteLine($\"Error: Invalid value '{{{rawVarName}}}' for option '{optionDisplay}'. Expected: Uri\");");
+          sb.AppendLine("          return 1;");
+          sb.AppendLine("        }");
+          sb.AppendLine($"        {varName} = {tempVarName};");
+          sb.AppendLine("      }");
+        }
+        else
+        {
+          sb.AppendLine($"      if ({rawVarName} is null || !global::System.Uri.TryCreate({rawVarName}, global::System.UriKind.RelativeOrAbsolute, out global::System.Uri? {varName}) || {varName} is null)");
+          sb.AppendLine("      {");
+          sb.AppendLine($"        app.Terminal.WriteLine($\"Error: Invalid value '{{{rawVarName} ?? \"(missing)\"}}' for option '{optionDisplay}'. Expected: Uri\");");
+          sb.AppendLine("        return 1;");
+          sb.AppendLine("      }");
+        }
+
+        return;
+      }
+
+      // Check for FileInfo type - uses constructor with try/catch
+      if (baseType.Equals("fileinfo", StringComparison.OrdinalIgnoreCase))
+      {
+        if (option.ParameterIsOptional)
+        {
+          sb.AppendLine($"      global::System.IO.FileInfo? {varName} = null;");
+          sb.AppendLine($"      if ({rawVarName} is not null)");
+          sb.AppendLine("      {");
+          sb.AppendLine("        try");
+          sb.AppendLine("        {");
+          sb.AppendLine($"          {varName} = new global::System.IO.FileInfo({rawVarName});");
+          sb.AppendLine("        }");
+          sb.AppendLine("        catch (global::System.ArgumentException)");
+          sb.AppendLine("        {");
+          sb.AppendLine($"          app.Terminal.WriteLine($\"Error: Invalid value '{{{rawVarName}}}' for option '{optionDisplay}'. Expected: FileInfo\");");
+          sb.AppendLine("          return 1;");
+          sb.AppendLine("        }");
+          sb.AppendLine("      }");
+        }
+        else
+        {
+          sb.AppendLine($"      global::System.IO.FileInfo? {varName} = null;");
+          sb.AppendLine($"      if ({rawVarName} is null)");
+          sb.AppendLine("      {");
+          sb.AppendLine($"        app.Terminal.WriteLine($\"Error: Missing value for option '{optionDisplay}'. Expected: FileInfo\");");
+          sb.AppendLine("        return 1;");
+          sb.AppendLine("      }");
+          sb.AppendLine("      try");
+          sb.AppendLine("      {");
+          sb.AppendLine($"        {varName} = new global::System.IO.FileInfo({rawVarName});");
+          sb.AppendLine("      }");
+          sb.AppendLine("      catch (global::System.ArgumentException)");
+          sb.AppendLine("      {");
+          sb.AppendLine($"        app.Terminal.WriteLine($\"Error: Invalid value '{{{rawVarName}}}' for option '{optionDisplay}'. Expected: FileInfo\");");
+          sb.AppendLine("        return 1;");
+          sb.AppendLine("      }");
+        }
+
+        return;
+      }
+
+      // Check for DirectoryInfo type - uses constructor with try/catch
+      if (baseType.Equals("directoryinfo", StringComparison.OrdinalIgnoreCase))
+      {
+        if (option.ParameterIsOptional)
+        {
+          sb.AppendLine($"      global::System.IO.DirectoryInfo? {varName} = null;");
+          sb.AppendLine($"      if ({rawVarName} is not null)");
+          sb.AppendLine("      {");
+          sb.AppendLine("        try");
+          sb.AppendLine("        {");
+          sb.AppendLine($"          {varName} = new global::System.IO.DirectoryInfo({rawVarName});");
+          sb.AppendLine("        }");
+          sb.AppendLine("        catch (global::System.ArgumentException)");
+          sb.AppendLine("        {");
+          sb.AppendLine($"          app.Terminal.WriteLine($\"Error: Invalid value '{{{rawVarName}}}' for option '{optionDisplay}'. Expected: DirectoryInfo\");");
+          sb.AppendLine("          return 1;");
+          sb.AppendLine("        }");
+          sb.AppendLine("      }");
+        }
+        else
+        {
+          sb.AppendLine($"      global::System.IO.DirectoryInfo? {varName} = null;");
+          sb.AppendLine($"      if ({rawVarName} is null)");
+          sb.AppendLine("      {");
+          sb.AppendLine($"        app.Terminal.WriteLine($\"Error: Missing value for option '{optionDisplay}'. Expected: DirectoryInfo\");");
+          sb.AppendLine("        return 1;");
+          sb.AppendLine("      }");
+          sb.AppendLine("      try");
+          sb.AppendLine("      {");
+          sb.AppendLine($"        {varName} = new global::System.IO.DirectoryInfo({rawVarName});");
+          sb.AppendLine("      }");
+          sb.AppendLine("      catch (global::System.ArgumentException)");
+          sb.AppendLine("      {");
+          sb.AppendLine($"        app.Terminal.WriteLine($\"Error: Invalid value '{{{rawVarName}}}' for option '{optionDisplay}'. Expected: DirectoryInfo\");");
+          sb.AppendLine("        return 1;");
+          sb.AppendLine("      }");
+        }
+
+        return;
+      }
+
       // Try to find a custom type converter for this constraint
       CustomConverterDefinition? converter = customConverters.FirstOrDefault(c =>
         string.Equals(c.TargetTypeName, baseType, StringComparison.OrdinalIgnoreCase) ||

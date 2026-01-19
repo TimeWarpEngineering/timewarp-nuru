@@ -277,7 +277,7 @@ internal static class AppExtractor
     }
 
     // DEBUG: Serialize interpreter result
-    string modelStatus = result.Model is null ? "NULL" : $"HasRoutes={result.Model.HasRoutes}, HasRepl={result.Model.HasRepl}, InterceptSites={result.Model.InterceptSitesByMethod.Count}";
+    string modelStatus = result.Model is null ? "NULL" : $"HasRoutes={result.Model.HasRoutes}, HasRepl={result.Model.HasRepl}, InterceptSites={result.Model.InterceptSitesByMethod.Count}, CustomConverters={result.Model.CustomConverters.Length}";
     string diagCount = result.Diagnostics.Length.ToString();
     string diagMessages = string.Join("; ", result.Diagnostics.Select(d => d.GetMessage()));
     earlyDiagnostics.Add(Diagnostic.Create(

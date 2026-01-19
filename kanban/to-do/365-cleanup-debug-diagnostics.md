@@ -11,8 +11,14 @@ Remove temporary debug diagnostics and restore build settings that were added du
 - `source/timewarp-nuru-analyzers/generators/extractors/app-extractor.cs`
   - NURU_DEBUG: Field assignment tracking
   - NURU_DEBUG2: ExtractFromBuildCall entry
-  - NURU_DEBUG3: Interpreter result
+  - NURU_DEBUG3: Interpreter result (includes CustomConverters count added in #382)
   - NURU_DEBUG4: Block info
+
+- `source/timewarp-nuru-analyzers/generators/interpreter/dsl-interpreter.cs`
+  - NURU_DEBUG_CONV1: AddTypeConverter tracing (added in #382)
+
+- `source/timewarp-nuru-analyzers/generators/emitters/route-matcher-emitter.cs`
+  - DEBUG comments in generated code showing CustomConverters.Length and converter lookup info (added in #382)
 
 - `source/timewarp-nuru-analyzers/generators/nuru-generator.cs`
   - Any related debug code
@@ -26,11 +32,13 @@ Remove temporary debug diagnostics and restore build settings that were added du
 
 ## Notes
 
-These diagnostics were helpful for debugging cross-method field tracking (#364). Keep them available as a pattern for future debugging but remove from production code.
+These diagnostics were helpful for debugging cross-method field tracking (#364) and custom type converter issues (#382). Keep them available as a pattern for future debugging but remove from production code.
 
 ## Checklist
 
 - [ ] Remove NURU_DEBUG diagnostics from app-extractor.cs
+- [ ] Remove NURU_DEBUG_CONV1 from dsl-interpreter.cs
+- [ ] Remove DEBUG comments from route-matcher-emitter.cs generated code
 - [ ] Remove debug code from nuru-generator.cs
 - [ ] Revert TreatWarningsAsErrors in source/Directory.Build.props
 - [ ] Revert TreatWarningsAsErrors in tests/Directory.Build.props

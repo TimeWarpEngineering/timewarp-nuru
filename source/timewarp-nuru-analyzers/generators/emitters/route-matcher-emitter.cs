@@ -39,6 +39,9 @@ internal static class RouteMatcherEmitter
     // Comment showing the route pattern
     sb.AppendLine(
       $"    // Route: {EscapeXmlComment(route.FullPattern)}");
+    // DEBUG: Show custom converter count
+    sb.AppendLine(
+      $"    // DEBUG: CustomConverters.Length={customConverters.Length}");
 
     // Per-route help: Check if args end with --help and match this route's literal prefix
     // This enables "command --help" to show help for just that command
@@ -748,6 +751,12 @@ internal static class RouteMatcherEmitter
         // 2. Simple target type name (e.g., "MyApp.Types.EmailAddress" -> "EmailAddress")
         // 3. Constraint alias (e.g., "email")
         // 4. Convention: ConverterTypeName minus "Converter" suffix (e.g., "EmailAddressConverter" -> "EmailAddress")
+        // DEBUG: Emit lookup info
+        sb.AppendLine($"{indentStr}// DEBUG: Looking for converter for baseType='{baseType}', customConverters.Length={customConverters.Length}");
+        foreach (CustomConverterDefinition c in customConverters)
+        {
+          sb.AppendLine($"{indentStr}// DEBUG:   Converter: {c.ConverterTypeName}, TargetTypeName={c.TargetTypeName}, Alias={c.ConstraintAlias}, DerivedTarget={GetTargetTypeFromConverterName(c.ConverterTypeName)}");
+        }
         CustomConverterDefinition? converter = customConverters.FirstOrDefault(c =>
           string.Equals(c.TargetTypeName, baseType, StringComparison.OrdinalIgnoreCase) ||
           string.Equals(GetSimpleTypeName(c.TargetTypeName), baseType, StringComparison.OrdinalIgnoreCase) ||
@@ -841,7 +850,10 @@ internal static class RouteMatcherEmitter
     string tempVarName = $"__temp_{param.CamelCaseName}_{routeIndex}";
 
     // Use the converter's target type (resolved via semantic model)
-    string targetType = converter.TargetTypeName;
+    // For non-generic converters, derive target type from converter name by convention
+    string targetType = !string.IsNullOrEmpty(converter.TargetTypeName)
+      ? converter.TargetTypeName
+      : $"global::{GetTargetTypeFromConverterName(converter.ConverterTypeName)}";
 
     if (param.IsOptional)
     {
@@ -917,10 +929,21 @@ internal static class RouteMatcherEmitter
 
   /// <summary>
   /// Gets the simple type name from a fully qualified type name.
+  /// Handles both dot notation (MyApp.Types.EmailAddress) and global:: prefix (global::EmailAddress).
   /// E.g., "MyApp.Types.EmailAddress" -> "EmailAddress"
+  /// E.g., "global::EmailAddress" -> "EmailAddress"
+  /// E.g., "global::MyApp.Types.EmailAddress" -> "EmailAddress"
   /// </summary>
   private static string GetSimpleTypeName(string fullyQualifiedName)
   {
+    // First strip global:: prefix if present
+    const string globalPrefix = "global::";
+    if (fullyQualifiedName.StartsWith(globalPrefix, StringComparison.Ordinal))
+    {
+      fullyQualifiedName = fullyQualifiedName[globalPrefix.Length..];
+    }
+
+    // Then get the part after the last dot
     int lastDot = fullyQualifiedName.LastIndexOf('.');
     return lastDot >= 0 ? fullyQualifiedName[(lastDot + 1)..] : fullyQualifiedName;
   }
@@ -1254,7 +1277,10 @@ internal static class RouteMatcherEmitter
     string tempVarName = $"__temp_{varName}_{routeIndex}";
 
     // Use the converter's target type (resolved via semantic model)
-    string targetType = converter.TargetTypeName;
+    // For non-generic converters, derive target type from converter name by convention
+    string targetType = !string.IsNullOrEmpty(converter.TargetTypeName)
+      ? converter.TargetTypeName
+      : $"global::{GetTargetTypeFromConverterName(converter.ConverterTypeName)}";
 
     if (option.ParameterIsOptional)
     {

@@ -56,7 +56,55 @@ The `tools/dev-cli/` commands and `.github/workflows/ci-cd.yml` reference outdat
 
 ## Notes
 
-- The solution file shows several projects commented out - determine which are active vs deprecated
-- Verify what packages are actually published to NuGet.org (TimeWarp.Nuru.Core, etc.)
-- The version in `source/Directory.Build.props` is 3.0.0-beta.24
-- Consider if project consolidation occurred (multiple projects merged into fewer packages)
+### Implementation Plan
+
+**Analysis:** Source code consolidation has occurred. The main `timewarp-nuru.csproj` now contains all code that used to be in separate projects (logging, telemetry, completion, repl, core). Dev-cli commands reference non-existent projects.
+
+**Clarifications confirmed:**
+- Old packages (`TimeWarp.Nuru.Logging`, `TimeWarp.Nuru.Telemetry`, `TimeWarp.Nuru.Core`, `TimeWarp.Nuru.Completion`, `TimeWarp.Nuru.Repl`) are absorbed into `TimeWarp.Nuru` and will be deprecated on NuGet later
+- Version stays at `3.0.0-beta.24`
+- `timewarp-nuru-repl-reference-only` folder is deprecated
+
+### Changes Required
+
+**1. `tools/dev-cli/commands/build-command.cs` (lines 71-82)**
+```csharp
+string[] projectsToBuild =
+[
+  "source/timewarp-nuru-analyzers/timewarp-nuru-analyzers.csproj",
+  "source/timewarp-nuru-mcp/timewarp-nuru-mcp.csproj",
+  "source/timewarp-nuru/timewarp-nuru.csproj"
+];
+```
+
+**2. `tools/dev-cli/commands/ci-command.cs` - `PackProjectsAsync()` (lines 191-201)**
+```csharp
+string[] projectsToPack =
+[
+  "source/timewarp-nuru-analyzers/timewarp-nuru-analyzers.csproj",
+  "source/timewarp-nuru-mcp/timewarp-nuru-mcp.csproj",
+  "source/timewarp-nuru/timewarp-nuru.csproj"
+];
+```
+
+**3. `tools/dev-cli/commands/ci-command.cs` - `PushPackagesAsync()` (lines 237-247)**
+```csharp
+string[] packages =
+[
+  "TimeWarp.Nuru.Analyzers",
+  "TimeWarp.Nuru.Mcp",
+  "TimeWarp.Nuru"
+];
+```
+
+**4. `tools/dev-cli/commands/check-version-command.cs` (lines 58-68)**
+```csharp
+string[] packages =
+[
+  "TimeWarp.Nuru.Analyzers",
+  "TimeWarp.Nuru.Mcp",
+  "TimeWarp.Nuru"
+];
+```
+
+**5. `.github/workflows/ci-cd.yml` - No changes required (paths look correct)

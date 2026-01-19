@@ -17,11 +17,6 @@ public partial class NuruCoreAppBuilder<TSelf>
   private protected ITerminal? Terminal;
 
   /// <summary>
-  /// Gets the collection of registered endpoints.
-  /// </summary>
-  public EndpointCollection EndpointCollection { get; } = [];
-
-  /// <summary>
   /// Gets the service collection. Throws if dependency injection has not been added.
   /// Call AddDependencyInjection() first to enable DI support.
   /// </summary>

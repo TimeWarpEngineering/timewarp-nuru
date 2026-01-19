@@ -93,68 +93,21 @@ public static class NuruAppBuilderCompletionExtensions
   /// </example>
   public static TBuilder EnableCompletion<TBuilder>(
     this TBuilder builder,
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Roslynator", "RCS1163:Unused parameter", Justification = "Parameter kept for future use")]
     string? appName = null,
     Action<CompletionSourceRegistry>? configure = null)
     where TBuilder : NuruCoreAppBuilder<TBuilder>
   {
     ArgumentNullException.ThrowIfNull(builder);
 
-    // Create and configure the registry
-    CompletionSourceRegistry registry = new();
-    configure?.Invoke(registry);
+    // Store appName and registry configuration for the source generator to use
+    // The actual __complete, --generate-completion, and --install-completion routes
+    // are emitted by CompletionEmitter at compile time
+    _ = appName; // Will be used by source generator
+    _ = configure; // Will be used by source generator
 
-    // Register the __complete callback route
-    // Note: Provider is null here (runtime path). The source generator emits code that
-    // sets app.ShellCompletionProvider, but this handler doesn't have access to the app.
-    // For full source-generated completion, the interceptor will use the provider directly.
-    builder.Map("__complete {index:int} {*words}")
-      .WithHandler((int index, string[] words) =>
-      {
-        // Use null provider - falls back to runtime reflection-based completion
-        // This is the backward compatibility path for when source generator isn't used
-        return DynamicCompletionHandler.HandleCompletion(index, words, registry, null, builder.EndpointCollection);
-      })
-      .Done();
-
-    // Register the --generate-completion route with dynamic templates
-    builder.Map("--generate-completion {shell}")
-      .WithHandler((string shell) =>
-      {
-        string detectedAppName = AppNameDetector.GetEffectiveAppName();
-
-        string script = shell.ToLowerInvariant() switch
-        {
-          "bash" => DynamicCompletionScriptGenerator.GenerateBash(detectedAppName),
-          "zsh" => DynamicCompletionScriptGenerator.GenerateZsh(detectedAppName),
-          "pwsh" or "powershell" => DynamicCompletionScriptGenerator.GeneratePowerShell(detectedAppName),
-          "fish" => DynamicCompletionScriptGenerator.GenerateFish(detectedAppName),
-          _ => throw new ArgumentException(
-            $"Unknown shell: {shell}. Supported shells: bash, zsh, pwsh, fish",
-            nameof(shell))
-        };
-
-        Console.WriteLine(script);
-      })
-      .Done();
-
-    // Register the --install-completion route for automatic installation
-    builder.Map("--install-completion {shell?}")
-      .WithHandler((string? shell) =>
-      {
-        string detectedAppName = AppNameDetector.GetEffectiveAppName();
-        InstallCompletionHandler.Install(detectedAppName, shell);
-      })
-      .Done();
-
-    // Register the --install-completion --dry-run route for preview
-    builder.Map("--install-completion --dry-run {shell?}")
-      .WithHandler((string? shell) =>
-      {
-        string detectedAppName = AppNameDetector.GetEffectiveAppName();
-        InstallCompletionHandler.Install(detectedAppName, shell, dryRun: true);
-      })
-      .Done();
+    // Note: This method is recognized by the DSL interpreter but doesn't register routes.
+    // The CompletionEmitter source generator emits the completion routes when it detects
+    // EnableCompletion() in the builder chain.
 
     return builder;
   }

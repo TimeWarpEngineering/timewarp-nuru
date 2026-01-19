@@ -10,6 +10,12 @@ public class NuruCoreApp
   public ILoggerFactory? LoggerFactory { get; set; }
 
   /// <summary>
+  /// Shell completion provider with source-generated static completion data.
+  /// Set by generated interceptor code. Used by <see cref="DynamicCompletionHandler"/>.
+  /// </summary>
+  public IShellCompletionProvider? ShellCompletionProvider { get; set; }
+
+  /// <summary>
   /// Tracer provider for distributed tracing. Set by generated telemetry code.
   /// </summary>
   public TracerProvider? TracerProvider { get; set; }

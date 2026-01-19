@@ -2,6 +2,8 @@ namespace TimeWarp.Nuru;
 
 /// <summary>
 /// Handles the __complete callback route for dynamic shell completion.
+/// Uses source-generated <see cref="IShellCompletionProvider"/> for static completion data,
+/// falling back to runtime analysis when the provider is not available.
 /// </summary>
 internal static class DynamicCompletionHandler
 {
@@ -10,26 +12,28 @@ internal static class DynamicCompletionHandler
   /// </summary>
   /// <param name="cursorIndex">The zero-based index of the word being completed.</param>
   /// <param name="words">All words on the command line.</param>
-  /// <param name="registry">The completion source registry.</param>
-  /// <param name="endpoints">The collection of registered endpoints for context.</param>
+  /// <param name="registry">The completion source registry for custom sources.</param>
+  /// <param name="provider">The source-generated completion provider (may be null for backward compatibility).</param>
+  /// <param name="endpoints">The collection of registered endpoints (fallback when provider is null).</param>
   /// <returns>Exit code (0 for success).</returns>
   public static int HandleCompletion
   (
     int cursorIndex,
     string[] words,
     CompletionSourceRegistry registry,
+    IShellCompletionProvider? provider,
     EndpointCollection endpoints
   )
   {
-    // Build completion context (using existing CompletionContext record)
+    // Build completion context for custom sources
     CompletionContext context = new(
       Args: words,
       CursorPosition: cursorIndex,
       Endpoints: endpoints
     );
 
-    // Get completions from the appropriate source
-    IEnumerable<CompletionCandidate> items = GetCompletions(context, registry);
+    // Get completions - prioritize custom sources, then use provider or fallback
+    IEnumerable<CompletionCandidate> items = GetCompletions(cursorIndex, words, context, registry, provider);
 
     // Determine the directive to use (default to NoFileComp for string parameters)
     CompletionDirective directive = CompletionDirective.NoFileComp;
@@ -57,14 +61,17 @@ internal static class DynamicCompletionHandler
   }
 
   /// <summary>
-  /// Gets completions for the current context by consulting the registry and falling back to defaults.
+  /// Gets completions by consulting custom sources first, then falling back to the provider or default.
   /// </summary>
   private static IEnumerable<CompletionCandidate> GetCompletions(
+    int cursorIndex,
+    string[] words,
     CompletionContext context,
-    CompletionSourceRegistry registry)
+    CompletionSourceRegistry registry,
+    IShellCompletionProvider? provider)
   {
-    // Try to detect if we're completing a specific parameter
-    if (TryGetParameterInfo(context, out string? paramName, out Type? paramType))
+    // Try to detect if we're completing a specific parameter using the source-generated provider
+    if (provider is not null && provider.TryGetParameterInfo(cursorIndex, words, out string? paramName, out string? paramTypeName))
     {
       // First, check if a completion source is registered for this specific parameter name
       if (paramName is not null)
@@ -77,6 +84,50 @@ internal static class DynamicCompletionHandler
       }
 
       // Second, check if a completion source is registered for this parameter's type
+      if (paramTypeName is not null)
+      {
+        Type? paramType = Type.GetType(paramTypeName);
+        if (paramType is not null)
+        {
+          ICompletionSource? typeSource = registry.GetSourceForType(paramType);
+          if (typeSource is not null)
+          {
+            return typeSource.GetCompletions(context);
+          }
+        }
+      }
+    }
+
+    // Use source-generated provider for static completions (AOT-friendly path)
+    if (provider is not null)
+    {
+      return provider.GetCompletions(cursorIndex, words);
+    }
+
+    // Fallback: use runtime reflection-based completion (backward compatibility)
+    // This path is used when source generator didn't run (e.g., direct NuruAppBuilder usage)
+    return GetCompletionsFallback(context, registry);
+  }
+
+  /// <summary>
+  /// Fallback completion using runtime reflection. Used when source-generated provider is not available.
+  /// </summary>
+  private static IEnumerable<CompletionCandidate> GetCompletionsFallback(
+    CompletionContext context,
+    CompletionSourceRegistry registry)
+  {
+    // Try to detect parameter info using runtime reflection
+    if (TryGetParameterInfoFallback(context, out string? paramName, out Type? paramType))
+    {
+      if (paramName is not null)
+      {
+        ICompletionSource? customSource = registry.GetSourceForParameter(paramName);
+        if (customSource is not null)
+        {
+          return customSource.GetCompletions(context);
+        }
+      }
+
       if (paramType is not null)
       {
         ICompletionSource? typeSource = registry.GetSourceForType(paramType);
@@ -87,19 +138,16 @@ internal static class DynamicCompletionHandler
       }
     }
 
-    // Fall back to default source (analyzes registered routes)
+    // Fall back to default source (analyzes registered routes at runtime)
     DefaultCompletionSource defaultSource = new();
     return defaultSource.GetCompletions(context);
   }
 
   /// <summary>
-  /// Attempts to determine which parameter is being completed based on the context.
+  /// Attempts to determine which parameter is being completed using runtime reflection.
+  /// This is the fallback path when source-generated provider is not available.
   /// </summary>
-  /// <param name="context">The completion context.</param>
-  /// <param name="parameterName">The name of the parameter being completed, if detected.</param>
-  /// <param name="parameterType">The type of the parameter being completed, if detected.</param>
-  /// <returns>True if a parameter was detected; otherwise, false.</returns>
-  internal static bool TryGetParameterInfo(CompletionContext context, out string? parameterName, out Type? parameterType)
+  private static bool TryGetParameterInfoFallback(CompletionContext context, out string? parameterName, out Type? parameterType)
   {
     parameterName = null;
     parameterType = null;
@@ -130,8 +178,9 @@ internal static class DynamicCompletionHandler
 
   /// <summary>
   /// Attempts to match typed words against an endpoint pattern and detect the parameter being completed.
+  /// Uses runtime reflection - only used in fallback path.
   /// </summary>
-  internal static bool TryMatchEndpoint(Endpoint endpoint, string[] typedWords, out string? parameterName, out Type? parameterType)
+  private static bool TryMatchEndpoint(Endpoint endpoint, string[] typedWords, out string? parameterName, out Type? parameterType)
   {
     parameterName = null;
     parameterType = null;
@@ -155,7 +204,7 @@ internal static class DynamicCompletionHandler
         wordIndex++;
         matcherIndex++;
       }
-      else if (matcher is ParameterMatcher parameter)
+      else if (matcher is ParameterMatcher)
       {
         // Parameter consumes the word
         wordIndex++;
@@ -210,7 +259,8 @@ internal static class DynamicCompletionHandler
   }
 
   /// <summary>
-  /// Gets the parameter type from an endpoint's method signature.
+  /// Gets the parameter type from an endpoint's method signature using reflection.
+  /// Only used in fallback path.
   /// </summary>
   private static Type? GetParameterType(Endpoint endpoint, string? parameterName)
   {

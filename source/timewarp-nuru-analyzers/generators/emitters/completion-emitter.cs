@@ -1,18 +1,18 @@
-// Emits REPL (Read-Eval-Print Loop) support code.
-// Generates the GeneratedReplRouteProvider class and RunReplAsync method.
+// Emits shell completion support code.
+// Generates the GeneratedShellCompletionProvider class for __complete callback.
 
 namespace TimeWarp.Nuru.Generators;
 
 using System.Text;
 
 /// <summary>
-/// Emits code to support REPL (interactive mode) functionality.
-/// Creates the GeneratedReplRouteProvider for completions and RunReplAsync interceptor.
+/// Emits code to support shell completion functionality.
+/// Creates the GeneratedShellCompletionProvider for the __complete callback protocol.
 /// </summary>
-internal static class ReplEmitter
+internal static class CompletionEmitter
 {
   /// <summary>
-  /// Emits all REPL-related code for an application.
+  /// Emits all shell completion-related code for an application.
   /// </summary>
   /// <param name="sb">The StringBuilder to append to.</param>
   /// <param name="app">The application model containing route definitions.</param>
@@ -22,33 +22,35 @@ internal static class ReplEmitter
   public static void Emit(StringBuilder sb, AppModel app, string methodSuffix, ImmutableArray<RouteDefinition> attributedRoutes, Compilation compilation)
   {
     sb.AppendLine("  // ═══════════════════════════════════════════════════════════════════════════════");
-    sb.AppendLine("  // REPL (INTERACTIVE MODE) SUPPORT");
+    sb.AppendLine("  // SHELL COMPLETION SUPPORT (source-generated static data)");
     sb.AppendLine("  // ═══════════════════════════════════════════════════════════════════════════════");
     sb.AppendLine();
 
-    EmitGeneratedReplRouteProvider(sb, app, methodSuffix, attributedRoutes, compilation);
-    sb.AppendLine();
-    EmitRunReplAsyncMethod(sb, methodSuffix);
+    EmitGeneratedShellCompletionProvider(sb, app, methodSuffix, attributedRoutes, compilation);
   }
 
   /// <summary>
-  /// Emits the GeneratedReplRouteProvider class implementing IReplRouteProvider.
+  /// Emits the GeneratedShellCompletionProvider class implementing IShellCompletionProvider.
   /// </summary>
-  private static void EmitGeneratedReplRouteProvider(StringBuilder sb, AppModel app, string methodSuffix, ImmutableArray<RouteDefinition> attributedRoutes, Compilation compilation)
+  private static void EmitGeneratedShellCompletionProvider(StringBuilder sb, AppModel app, string methodSuffix, ImmutableArray<RouteDefinition> attributedRoutes, Compilation compilation)
   {
-    // Collect all routes for this app
-    IEnumerable<RouteDefinition> allRoutes = app.Routes.Concat(attributedRoutes);
+    // Collect all routes for this app (excluding completion-related routes)
+    IEnumerable<RouteDefinition> allRoutes = app.Routes
+      .Concat(attributedRoutes)
+      .Where(r => !r.OriginalPattern.StartsWith("__complete", StringComparison.Ordinal) &&
+                  !r.OriginalPattern.StartsWith("--generate-completion", StringComparison.Ordinal) &&
+                  !r.OriginalPattern.StartsWith("--install-completion", StringComparison.Ordinal));
 
-    // Extract completion data using shared extractor
+    // Extract completion data using shared helpers
     List<string> commandPrefixes = CompletionDataExtractor.ExtractCommandPrefixes(allRoutes);
     List<CompletionDataExtractor.OptionInfo> options = CompletionDataExtractor.ExtractOptions(allRoutes);
     List<CompletionDataExtractor.RouteOptionInfo> routeOptions = CompletionDataExtractor.ExtractRouteOptions(allRoutes);
     List<CompletionDataExtractor.ParameterInfo> parameters = CompletionDataExtractor.ExtractParameters(allRoutes);
     List<CompletionDataExtractor.EnumParameterInfo> enumParameters = CompletionDataExtractor.ExtractEnumParameters(allRoutes, compilation);
 
-    string className = $"GeneratedReplRouteProvider{methodSuffix}";
+    string className = $"GeneratedShellCompletionProvider{methodSuffix}";
 
-    sb.AppendLine($"  private sealed class {className} : global::TimeWarp.Nuru.IReplRouteProvider");
+    sb.AppendLine($"  private sealed class {className} : global::TimeWarp.Nuru.IShellCompletionProvider");
     sb.AppendLine("  {");
 
     // Static command prefixes array
@@ -58,44 +60,42 @@ internal static class ReplEmitter
     {
       sb.AppendLine($"      \"{EscapeString(prefix)}\",");
     }
-
     sb.AppendLine("    ];");
-    sb.AppendLine();
-
-    // GetCommandPrefixes method
-    sb.AppendLine("    public global::System.Collections.Generic.IReadOnlyList<string> GetCommandPrefixes() => CommandPrefixes;");
     sb.AppendLine();
 
     // GetCompletions method
     EmitGetCompletionsMethod(sb, commandPrefixes, options, routeOptions, parameters, enumParameters);
+    sb.AppendLine();
 
-    // IsKnownCommand method
-    sb.AppendLine("    public bool IsKnownCommand(string token)");
-    sb.AppendLine("    {");
-    sb.AppendLine("      if (string.IsNullOrEmpty(token))");
-    sb.AppendLine("        return false;");
-    sb.AppendLine();
-    sb.AppendLine("      foreach (string prefix in CommandPrefixes)");
-    sb.AppendLine("      {");
-    sb.AppendLine("        if (string.Equals(prefix, token, global::System.StringComparison.OrdinalIgnoreCase))");
-    sb.AppendLine("          return true;");
-    sb.AppendLine("        if (prefix.StartsWith(token + \" \", global::System.StringComparison.OrdinalIgnoreCase))");
-    sb.AppendLine("          return true;");
-    sb.AppendLine("      }");
-    sb.AppendLine();
-    sb.AppendLine("      return false;");
-    sb.AppendLine("    }");
+    // TryGetParameterInfo method
+    EmitTryGetParameterInfoMethod(sb, parameters, enumParameters);
 
     sb.AppendLine("  }");
+    sb.AppendLine();
+
+    // Emit static instance field for easy access
+    sb.AppendLine($"  private static readonly global::TimeWarp.Nuru.IShellCompletionProvider __shellCompletionProvider{methodSuffix} = new {className}();");
   }
 
   /// <summary>
-  /// Emits the GetCompletions method for the route provider.
+  /// Emits the GetCompletions method for the shell completion provider.
   /// </summary>
-  private static void EmitGetCompletionsMethod(StringBuilder sb, List<string> commandPrefixes, List<CompletionDataExtractor.OptionInfo> options, List<CompletionDataExtractor.RouteOptionInfo> routeOptions, List<CompletionDataExtractor.ParameterInfo> parameters, List<CompletionDataExtractor.EnumParameterInfo> enumParameters)
+  private static void EmitGetCompletionsMethod(
+    StringBuilder sb,
+    List<string> commandPrefixes,
+    List<CompletionDataExtractor.OptionInfo> options,
+    List<CompletionDataExtractor.RouteOptionInfo> routeOptions,
+    List<CompletionDataExtractor.ParameterInfo> parameters,
+    List<CompletionDataExtractor.EnumParameterInfo> enumParameters)
   {
-    sb.AppendLine("    public global::System.Collections.Generic.IEnumerable<global::TimeWarp.Nuru.CompletionCandidate> GetCompletions(string[] args, bool hasTrailingSpace)");
+    sb.AppendLine("    public global::System.Collections.Generic.IEnumerable<global::TimeWarp.Nuru.CompletionCandidate> GetCompletions(int cursorIndex, string[] words)");
     sb.AppendLine("    {");
+    sb.AppendLine("      // Convert shell completion args to REPL-style format");
+    sb.AppendLine("      // Shell: cursorIndex is 1-based position in words array (including app name)");
+    sb.AppendLine("      // Words array: [appName, word1, word2, ...]");
+    sb.AppendLine("      string[] args = words.Length > 1 ? words[1..] : [];");
+    sb.AppendLine("      bool hasTrailingSpace = cursorIndex >= words.Length;");
+    sb.AppendLine();
     sb.AppendLine("      // Determine current input context");
     sb.AppendLine("      string currentInput = args.Length > 0 && !hasTrailingSpace ? args[^1] : \"\";");
     sb.AppendLine("      string prefix = args.Length > 0 ? string.Join(\" \", hasTrailingSpace ? args : args[..^1]) : \"\";");
@@ -104,11 +104,10 @@ internal static class ReplEmitter
     sb.AppendLine("      global::System.Collections.Generic.HashSet<string> yielded = new(global::System.StringComparer.OrdinalIgnoreCase);");
     sb.AppendLine();
 
-    // Command completions (when at start or after partial command)
+    // Command completions
     sb.AppendLine("      // Command prefix completions");
     sb.AppendLine("      foreach (string cmd in CommandPrefixes)");
     sb.AppendLine("      {");
-    sb.AppendLine("        // If we have a prefix, check if this command starts with prefix + space");
     sb.AppendLine("        if (!string.IsNullOrEmpty(prefix))");
     sb.AppendLine("        {");
     sb.AppendLine("          string prefixWithSpace = prefix + \" \";");
@@ -126,7 +125,6 @@ internal static class ReplEmitter
     sb.AppendLine("        }");
     sb.AppendLine("        else if (args.Length <= 1)");
     sb.AppendLine("        {");
-    sb.AppendLine("          // At the start - suggest first word of commands");
     sb.AppendLine("          string firstWord = cmd;");
     sb.AppendLine("          int spaceIdx = cmd.IndexOf(' ');");
     sb.AppendLine("          if (spaceIdx >= 0) firstWord = cmd[..spaceIdx];");
@@ -139,13 +137,13 @@ internal static class ReplEmitter
     sb.AppendLine("      }");
     sb.AppendLine();
 
-    // --help completion (always available)
+    // --help completion
     sb.AppendLine("      // --help is always available");
     sb.AppendLine("      if (string.IsNullOrEmpty(currentInput) || \"--help\".StartsWith(currentInput, global::System.StringComparison.OrdinalIgnoreCase))");
     sb.AppendLine("        yield return new global::TimeWarp.Nuru.CompletionCandidate(\"--help\", \"Show help for this command\", global::TimeWarp.Nuru.CompletionType.Option);");
     sb.AppendLine();
 
-    // Enum parameter completions (position-aware)
+    // Enum parameter completions
     if (enumParameters.Count > 0)
     {
       sb.AppendLine("      // Enum parameter completions (position-aware)");
@@ -164,15 +162,13 @@ internal static class ReplEmitter
           sb.AppendLine($"          if (\"{value}\".StartsWith(currentInput, global::System.StringComparison.OrdinalIgnoreCase))");
           sb.AppendLine($"            yield return new global::TimeWarp.Nuru.CompletionCandidate(\"{value}\", null, global::TimeWarp.Nuru.CompletionType.Enum);");
         }
-
         sb.AppendLine("        }");
         sb.AppendLine("      }");
       }
-
       sb.AppendLine();
     }
 
-    // Context-aware route option completions (show options for matched command)
+    // Context-aware route option completions
     if (routeOptions.Count > 0)
     {
       sb.AppendLine("      // Context-aware route option completions");
@@ -190,7 +186,6 @@ internal static class ReplEmitter
             sb.AppendLine($"        if (string.IsNullOrEmpty(currentInput) || \"--{opt.LongForm}\".StartsWith(currentInput, global::System.StringComparison.OrdinalIgnoreCase))");
             sb.AppendLine($"          yield return new global::TimeWarp.Nuru.CompletionCandidate(\"--{opt.LongForm}\", {description}, global::TimeWarp.Nuru.CompletionType.Option);");
           }
-
           if (opt.ShortForm is not null)
           {
             string description = opt.Description is not null ? $"\"{EscapeString(opt.Description)}\"" : "null";
@@ -198,14 +193,12 @@ internal static class ReplEmitter
             sb.AppendLine($"          yield return new global::TimeWarp.Nuru.CompletionCandidate(\"-{opt.ShortForm}\", {description}, global::TimeWarp.Nuru.CompletionType.Option);");
           }
         }
-
         sb.AppendLine("      }");
       }
-
       sb.AppendLine();
     }
 
-    // Global option completions (when typing - or --)
+    // Global option completions
     if (options.Count > 0)
     {
       sb.AppendLine("      // Global option completions (when typing - or --)");
@@ -220,7 +213,6 @@ internal static class ReplEmitter
           sb.AppendLine($"        if (\"--{opt.LongForm}\".StartsWith(currentInput, global::System.StringComparison.OrdinalIgnoreCase))");
           sb.AppendLine($"          yield return new global::TimeWarp.Nuru.CompletionCandidate(\"--{opt.LongForm}\", {description}, global::TimeWarp.Nuru.CompletionType.Option);");
         }
-
         if (opt.ShortForm is not null)
         {
           string description = opt.Description is not null ? $"\"{EscapeString(opt.Description)}\"" : "null";
@@ -236,26 +228,50 @@ internal static class ReplEmitter
   }
 
   /// <summary>
-  /// Emits the RunReplAsync method that starts the REPL session.
+  /// Emits the TryGetParameterInfo method for looking up custom completion sources.
   /// </summary>
-  private static void EmitRunReplAsyncMethod(StringBuilder sb, string methodSuffix)
+  private static void EmitTryGetParameterInfoMethod(
+    StringBuilder sb,
+    List<CompletionDataExtractor.ParameterInfo> parameters,
+    List<CompletionDataExtractor.EnumParameterInfo> enumParameters)
   {
-    string providerClassName = $"GeneratedReplRouteProvider{methodSuffix}";
-
-    sb.AppendLine($"  private static async global::System.Threading.Tasks.Task RunReplAsync{methodSuffix}(global::TimeWarp.Nuru.NuruCoreApp app)");
-    sb.AppendLine("  {");
-    sb.AppendLine($"    global::TimeWarp.Nuru.IReplRouteProvider routeProvider = new {providerClassName}();");
-    sb.AppendLine("    global::TimeWarp.Nuru.ReplOptions replOptions = app.ReplOptions ?? new global::TimeWarp.Nuru.ReplOptions();");
+    sb.AppendLine("    public bool TryGetParameterInfo(int cursorIndex, string[] words, out string? parameterName, out string? parameterTypeName)");
+    sb.AppendLine("    {");
+    sb.AppendLine("      parameterName = null;");
+    sb.AppendLine("      parameterTypeName = null;");
     sb.AppendLine();
-    sb.AppendLine("    await global::TimeWarp.Nuru.ReplSession.RunAsync(");
-    sb.AppendLine("      app,");
-    sb.AppendLine("      replOptions,");
-    sb.AppendLine("      routeProvider,");
-    // Call ExecuteRouteAsync directly - the core route matching logic used by both RunAsync and REPL
-    sb.AppendLine($"      static (nuruApp, args, ct) => ExecuteRouteAsync{methodSuffix}(nuruApp, args),");
-    sb.AppendLine("      app.LoggerFactory");
-    sb.AppendLine("    ).ConfigureAwait(false);");
-    sb.AppendLine("  }");
+    sb.AppendLine("      if (words.Length < 2) return false;");
+    sb.AppendLine();
+    sb.AppendLine("      // Get command words (excluding app name)");
+    sb.AppendLine("      string[] cmdWords = words[1..];");
+    sb.AppendLine("      string prefix = string.Join(\" \", cmdWords.Take(cursorIndex - 1));");
+    sb.AppendLine();
+
+    // Generate parameter detection based on extracted parameter info
+    foreach (CompletionDataExtractor.ParameterInfo param in parameters)
+    {
+      if (string.IsNullOrEmpty(param.CommandPrefix))
+        continue;
+
+      int cmdWordCount = param.CommandPrefix.Split(' ').Length;
+
+      sb.AppendLine($"      // Parameter '{param.Name}' for command '{EscapeString(param.CommandPrefix)}'");
+      sb.AppendLine($"      if (prefix.StartsWith(\"{EscapeString(param.CommandPrefix)}\", global::System.StringComparison.OrdinalIgnoreCase))");
+      sb.AppendLine("      {");
+      sb.AppendLine($"        int paramPos = cursorIndex - 1 - {cmdWordCount};");
+      sb.AppendLine($"        if (paramPos == 0) // First parameter position");
+      sb.AppendLine("        {");
+      sb.AppendLine($"          parameterName = \"{param.Name}\";");
+      string typeConstraint = param.TypeConstraint is not null ? $"\"{param.TypeConstraint}\"" : "null";
+      sb.AppendLine($"          parameterTypeName = {typeConstraint};");
+      sb.AppendLine("          return true;");
+      sb.AppendLine("        }");
+      sb.AppendLine("      }");
+    }
+
+    sb.AppendLine();
+    sb.AppendLine("      return false;");
+    sb.AppendLine("    }");
   }
 
   /// <summary>

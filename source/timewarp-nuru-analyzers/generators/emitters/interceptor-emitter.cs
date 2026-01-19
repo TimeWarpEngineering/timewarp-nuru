@@ -131,6 +131,10 @@ internal static class InterceptorEmitter
     sb.AppendLine("  )");
     sb.AppendLine("  {");
 
+    // Set the shell completion provider for DynamicCompletionHandler to use
+    sb.AppendLine($"    app.ShellCompletionProvider ??= __shellCompletionProvider{methodSuffix};");
+    sb.AppendLine();
+
     // Method body with this app's routes only
     // Note: LoggerFactory is static and should NOT be disposed after each command
     // (this would break REPL mode). Disposal happens at app shutdown via NuruCoreApp.
@@ -661,6 +665,10 @@ internal static class InterceptorEmitter
         ReplEmitter.Emit(sb, enrichedApp, methodSuffix, model.AttributedRoutes, compilation);
         sb.AppendLine();
       }
+
+      // Shell completion support (always emitted for __complete route)
+      CompletionEmitter.Emit(sb, enrichedApp, methodSuffix, model.AttributedRoutes, compilation);
+      sb.AppendLine();
     }
 
     // Version is shared (assembly-level, same for all apps)

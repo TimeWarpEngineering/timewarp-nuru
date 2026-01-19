@@ -105,10 +105,15 @@ public static class NuruAppBuilderCompletionExtensions
     configure?.Invoke(registry);
 
     // Register the __complete callback route
+    // Note: Provider is null here (runtime path). The source generator emits code that
+    // sets app.ShellCompletionProvider, but this handler doesn't have access to the app.
+    // For full source-generated completion, the interceptor will use the provider directly.
     builder.Map("__complete {index:int} {*words}")
       .WithHandler((int index, string[] words) =>
       {
-        return DynamicCompletionHandler.HandleCompletion(index, words, registry, builder.EndpointCollection);
+        // Use null provider - falls back to runtime reflection-based completion
+        // This is the backward compatibility path for when source generator isn't used
+        return DynamicCompletionHandler.HandleCompletion(index, words, registry, null, builder.EndpointCollection);
       })
       .Done();
 

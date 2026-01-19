@@ -318,17 +318,17 @@ internal static class InterceptorEmitter
   }
 
   /// <summary>
-  /// Emits static LoggerFactory fields for apps with logging configured.
-  /// Each app gets its own factory to support different logging configurations.
+  /// Emits static LoggerFactory fields for apps with explicit AddLogging() configuration.
+  /// This is the AOT-optimized path - factory created at static init, zero runtime cost.
   /// </summary>
   private static void EmitLoggingFactoryFields(StringBuilder sb, GeneratorModel model)
   {
-    // Only emit for apps that have logging configured
+    // Only emit for explicit AddLogging() - telemetry uses runtime app.LoggerFactory instead
     bool hasAnyLogging = model.Apps.Any(a => a.HasLogging);
     if (!hasAnyLogging)
       return;
 
-    sb.AppendLine("  // Static LoggerFactory fields (one per app with logging configured)");
+    sb.AppendLine("  // Static LoggerFactory - AOT path: compile-time deterministic, zero runtime cost");
 
     for (int appIndex = 0; appIndex < model.Apps.Length; appIndex++)
     {
@@ -365,18 +365,37 @@ internal static class InterceptorEmitter
     return totalApps > 1 ? $"__loggerFactory_{appIndex}" : "__loggerFactory";
   }
 
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // LOGGER FACTORY RESOLUTION - TWO PATHS FOR AOT OPTIMIZATION
+  // ═══════════════════════════════════════════════════════════════════════════════
+  //
+  // Path 1: STATIC FIELD (__loggerFactory)
+  //   - Used when: User calls ConfigureServices(s => s.AddLogging(...))
+  //   - Created at: Static initialization (compile-time deterministic)
+  //   - AOT benefit: Zero runtime cost, trimmer sees exact types
+  //   - Generated as: private static readonly ILoggerFactory __loggerFactory = ...
+  //
+  // Path 2: INSTANCE PROPERTY (app.LoggerFactory)
+  //   - Used when: UseTelemetry() is called (OTEL endpoint is runtime config)
+  //   - Created at: Runtime in RunAsync_Intercepted (checks OTEL_EXPORTER_OTLP_ENDPOINT)
+  //   - AOT tradeoff: Runtime null checks, dynamic factory creation
+  //   - Necessary because: OTLP endpoint is environment variable, unknown at compile time
+  //
+  // Priority: Static field wins if both are configured (better AOT characteristics)
+  // ═══════════════════════════════════════════════════════════════════════════════
+
   /// <summary>
-  /// Gets the logger factory source for behaviors that need ILogger.
+  /// Gets the logger factory source for ILogger&lt;T&gt; injection.
   /// </summary>
   /// <param name="model">The generator model.</param>
   /// <returns>
-  /// Static field name when explicit logging is configured,
-  /// "app.LoggerFactory" when telemetry is enabled (provides OTLP logging),
+  /// Static field name (AOT-optimized) when explicit logging is configured,
+  /// "app.LoggerFactory" (runtime) when only telemetry is enabled,
   /// or null if no logging source is available.
   /// </returns>
   private static string? GetFirstLoggerFactoryFieldName(GeneratorModel model)
   {
-    // Check for explicit logging configuration first (static field)
+    // Prefer static field - AOT-friendly, zero runtime cost
     for (int i = 0; i < model.Apps.Length; i++)
     {
       if (model.Apps[i].HasLogging)
@@ -385,7 +404,7 @@ internal static class InterceptorEmitter
       }
     }
 
-    // When telemetry is enabled, use app.LoggerFactory (set at runtime with OTLP export)
+    // Fall back to runtime path for telemetry (OTEL endpoint is runtime config)
     if (model.HasTelemetry)
     {
       return "app.LoggerFactory";

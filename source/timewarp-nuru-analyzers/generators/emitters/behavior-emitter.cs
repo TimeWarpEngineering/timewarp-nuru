@@ -353,25 +353,26 @@ internal static class BehaviorEmitter
       return "app";
 
     // ILogger<T> - use configured factory if available, otherwise NullLoggerFactory
+    // ILogger<T> resolution - two paths for AOT optimization (see interceptor-emitter.cs)
     if (serviceTypeName.Contains("ILogger", StringComparison.Ordinal))
     {
       string typeArg = ExtractLoggerTypeArg(serviceTypeName);
       if (loggerFactoryFieldName is not null)
       {
-        // app.LoggerFactory is nullable (set at runtime when OTEL endpoint is configured)
-        // Static __loggerFactory fields are always non-null
+        // Runtime path (app.LoggerFactory): nullable, requires null-coalescing
+        // Used for telemetry - OTEL endpoint unknown at compile time
         if (loggerFactoryFieldName.Contains('.', StringComparison.Ordinal))
         {
           return $"({loggerFactoryFieldName}?.CreateLogger<{typeArg}>() ?? global::Microsoft.Extensions.Logging.Abstractions.NullLogger<{typeArg}>.Instance)";
         }
 
+        // Static path (__loggerFactory): non-null, zero runtime overhead
+        // Used for explicit AddLogging() - fully deterministic at compile time
         return $"{loggerFactoryFieldName}.CreateLogger<{typeArg}>()";
       }
-      else
-      {
-        // Fall back to NullLogger when no logging is configured
-        return $"global::Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance.CreateLogger<{typeArg}>()";
-      }
+
+      // No logging configured - use NullLogger (optimized away by trimmer)
+      return $"global::Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance.CreateLogger<{typeArg}>()";
     }
 
     // Find matching service registration

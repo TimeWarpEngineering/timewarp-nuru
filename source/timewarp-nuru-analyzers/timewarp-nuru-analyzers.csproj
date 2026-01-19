@@ -18,6 +18,8 @@
     <DefineConstants>$(DefineConstants);ANALYZER_BUILD</DefineConstants>
     <IncludeSymbols>false</IncludeSymbols>
     <IncludeSource>false</IncludeSource>
+    <!-- Prevent Aspire from treating this analyzer as an executable project resource -->
+    <IsAspireProjectResource>false</IsAspireProjectResource>
   </PropertyGroup>
 
   <PropertyGroup>

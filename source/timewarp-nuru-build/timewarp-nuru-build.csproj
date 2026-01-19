@@ -21,6 +21,8 @@
     
     <!-- Disable packing for now - will enable when ready -->
     <IsPackable>false</IsPackable>
+    <!-- Prevent Aspire from treating this build task as an executable project resource -->
+    <IsAspireProjectResource>false</IsAspireProjectResource>
   </PropertyGroup>
 
   <ItemGroup>

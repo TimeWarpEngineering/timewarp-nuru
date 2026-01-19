@@ -40,7 +40,8 @@ internal static class InterceptorEmitter
       TelemetryEmitter.EmitTelemetryFields(sb);
     }
 
-    // Determine the logger factory field name for behaviors (use first app with logging, or null)
+    // Determine the logger factory source for ILogger<T> injection
+    // (static field when explicit logging configured, or app.LoggerFactory when telemetry enabled)
     string? loggerFactoryFieldName = GetFirstLoggerFactoryFieldName(model);
     BehaviorEmitter.EmitBehaviorFields(sb, [.. model.AllBehaviors], [.. model.AllServices], loggerFactoryFieldName);
 
@@ -48,7 +49,7 @@ internal static class InterceptorEmitter
     for (int appIndex = 0; appIndex < model.Apps.Length; appIndex++)
     {
       AppModel app = model.Apps[appIndex];
-      EmitAppInterceptorMethod(sb, app, appIndex, model, compilation);
+      EmitAppInterceptorMethod(sb, app, appIndex, model, compilation, loggerFactoryFieldName);
       EmitRunReplAsyncInterceptorMethod(sb, app, appIndex, model);
     }
 
@@ -61,7 +62,7 @@ internal static class InterceptorEmitter
   /// Emits a single interceptor method for one app.
   /// Each app gets its own method with its own [InterceptsLocation] attributes and routes.
   /// </summary>
-  private static void EmitAppInterceptorMethod(StringBuilder sb, AppModel app, int appIndex, GeneratorModel model, Compilation compilation)
+  private static void EmitAppInterceptorMethod(StringBuilder sb, AppModel app, int appIndex, GeneratorModel model, Compilation compilation, string? loggerFactoryFieldName)
   {
     string methodSuffix = model.Apps.Length > 1 ? $"_{appIndex}" : "";
 
@@ -74,7 +75,7 @@ internal static class InterceptorEmitter
     // - App has RunAsync intercept sites (RunAsync_Intercepted calls ExecuteRouteAsync)
     if (app.HasRoutes || app.HasRepl || hasRunAsyncSites)
     {
-      EmitExecuteRouteAsyncMethod(sb, app, appIndex, model, methodSuffix);
+      EmitExecuteRouteAsyncMethod(sb, app, appIndex, model, methodSuffix, loggerFactoryFieldName);
     }
 
     // Only emit RunAsync_Intercepted when there are actual intercept sites
@@ -121,7 +122,7 @@ internal static class InterceptorEmitter
   /// Emits the core route execution method that handles all route matching.
   /// This is called by both RunAsync_Intercepted and the REPL command executor.
   /// </summary>
-  private static void EmitExecuteRouteAsyncMethod(StringBuilder sb, AppModel app, int appIndex, GeneratorModel model, string methodSuffix)
+  private static void EmitExecuteRouteAsyncMethod(StringBuilder sb, AppModel app, int appIndex, GeneratorModel model, string methodSuffix, string? loggerFactoryFieldName)
   {
     sb.AppendLine($"  private static async Task<int> ExecuteRouteAsync{methodSuffix}");
     sb.AppendLine("  (");
@@ -133,7 +134,7 @@ internal static class InterceptorEmitter
     // Method body with this app's routes only
     // Note: LoggerFactory is static and should NOT be disposed after each command
     // (this would break REPL mode). Disposal happens at app shutdown via NuruCoreApp.
-    EmitMethodBody(sb, app, appIndex, model);
+    EmitMethodBody(sb, app, appIndex, model, loggerFactoryFieldName);
 
     sb.AppendLine("  }");
     sb.AppendLine();
@@ -245,6 +246,8 @@ internal static class InterceptorEmitter
     if (model.HasTelemetry)
     {
       sb.AppendLine("using global::OpenTelemetry;");
+      sb.AppendLine("using global::OpenTelemetry.Extensions.Hosting;");
+      sb.AppendLine("using global::OpenTelemetry.Logs;");
       sb.AppendLine("using global::OpenTelemetry.Metrics;");
       sb.AppendLine("using global::OpenTelemetry.Resources;");
       sb.AppendLine("using global::OpenTelemetry.Trace;");
@@ -363,19 +366,29 @@ internal static class InterceptorEmitter
   }
 
   /// <summary>
-  /// Gets the logger factory field name for the first app that has logging configured.
-  /// Used for shared behaviors that need a logger.
+  /// Gets the logger factory source for behaviors that need ILogger.
   /// </summary>
   /// <param name="model">The generator model.</param>
-  /// <returns>The field name, or null if no app has logging configured.</returns>
+  /// <returns>
+  /// Static field name when explicit logging is configured,
+  /// "app.LoggerFactory" when telemetry is enabled (provides OTLP logging),
+  /// or null if no logging source is available.
+  /// </returns>
   private static string? GetFirstLoggerFactoryFieldName(GeneratorModel model)
   {
+    // Check for explicit logging configuration first (static field)
     for (int i = 0; i < model.Apps.Length; i++)
     {
       if (model.Apps[i].HasLogging)
       {
         return GetLoggerFactoryFieldName(i, model.Apps.Length);
       }
+    }
+
+    // When telemetry is enabled, use app.LoggerFactory (set at runtime with OTLP export)
+    if (model.HasTelemetry)
+    {
+      return "app.LoggerFactory";
     }
 
     return null;
@@ -401,7 +414,7 @@ internal static class InterceptorEmitter
   /// <summary>
   /// Emits the complete method body including all route matching logic.
   /// </summary>
-  private static void EmitMethodBody(StringBuilder sb, AppModel app, int appIndex, GeneratorModel model)
+  private static void EmitMethodBody(StringBuilder sb, AppModel app, int appIndex, GeneratorModel model, string? loggerFactoryFieldName)
   {
     // Configuration setup (if AddConfiguration was called)
     if (app.HasConfiguration)
@@ -440,7 +453,7 @@ internal static class InterceptorEmitter
         allRoutesOrdered.Add(route);
       }
 
-      RouteMatcherEmitter.Emit(sb, route, routeIndex, app.Services, app.Behaviors, app.CustomConverters);
+      RouteMatcherEmitter.Emit(sb, route, routeIndex, app.Services, app.Behaviors, app.CustomConverters, loggerFactoryFieldName);
     }
 
     // Built-in flags: --help, --version, --capabilities

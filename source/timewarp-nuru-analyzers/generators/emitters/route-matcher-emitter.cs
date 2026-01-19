@@ -20,13 +20,15 @@ internal static class RouteMatcherEmitter
   /// <param name="services">Registered services from ConfigureServices.</param>
   /// <param name="behaviors">Pipeline behaviors to wrap the handler with.</param>
   /// <param name="customConverters">Custom type converters registered via AddTypeConverter.</param>
+  /// <param name="loggerFactoryFieldName">Logger factory source for ILogger injection, or null if no logging.</param>
   public static void Emit(
     StringBuilder sb,
     RouteDefinition route,
     int routeIndex,
     ImmutableArray<ServiceDefinition> services,
     ImmutableArray<BehaviorDefinition> behaviors = default,
-    ImmutableArray<CustomConverterDefinition> customConverters = default)
+    ImmutableArray<CustomConverterDefinition> customConverters = default,
+    string? loggerFactoryFieldName = null)
   {
     // Use empty array if optional parameters not provided
     if (behaviors.IsDefault)
@@ -46,11 +48,11 @@ internal static class RouteMatcherEmitter
     // Use complex matching for routes with options, catch-all, or optional positional params
     if (route.HasOptions || route.HasCatchAll || route.HasOptionalPositionalParams)
     {
-      EmitComplexMatch(sb, route, routeIndex, services, behaviors, customConverters);
+      EmitComplexMatch(sb, route, routeIndex, services, behaviors, customConverters, loggerFactoryFieldName);
     }
     else
     {
-      EmitSimpleMatch(sb, route, routeIndex, services, behaviors, customConverters);
+      EmitSimpleMatch(sb, route, routeIndex, services, behaviors, customConverters, loggerFactoryFieldName);
     }
 
     sb.AppendLine();
@@ -66,7 +68,8 @@ internal static class RouteMatcherEmitter
     int routeIndex,
     ImmutableArray<ServiceDefinition> services,
     ImmutableArray<BehaviorDefinition> behaviors,
-    ImmutableArray<CustomConverterDefinition> customConverters)
+    ImmutableArray<CustomConverterDefinition> customConverters,
+    string? loggerFactoryFieldName)
   {
     string pattern = BuildListPattern(route, routeIndex);
 
@@ -87,13 +90,13 @@ internal static class RouteMatcherEmitter
 
       BehaviorEmitter.EmitPipelineWrapper(
         sb, route, routeIndex, behaviors, services, indent: 6,
-        () => HandlerInvokerEmitter.Emit(sb, route, routeIndex, services, indent: 8, commandAlreadyCreated: commandCreatedByBehavior));
+        () => HandlerInvokerEmitter.Emit(sb, route, routeIndex, services, indent: 8, commandAlreadyCreated: commandCreatedByBehavior, loggerFactoryFieldName: loggerFactoryFieldName));
 
       sb.AppendLine("      return 0;");
     }
     else
     {
-      HandlerInvokerEmitter.Emit(sb, route, routeIndex, services, indent: 6);
+      HandlerInvokerEmitter.Emit(sb, route, routeIndex, services, indent: 6, loggerFactoryFieldName: loggerFactoryFieldName);
       sb.AppendLine("      return 0;");
     }
 
@@ -113,7 +116,8 @@ internal static class RouteMatcherEmitter
     int routeIndex,
     ImmutableArray<ServiceDefinition> services,
     ImmutableArray<BehaviorDefinition> behaviors,
-    ImmutableArray<CustomConverterDefinition> customConverters)
+    ImmutableArray<CustomConverterDefinition> customConverters,
+    string? loggerFactoryFieldName)
   {
     // Calculate minimum required positional args (positional match segments + required non-catch-all params)
     // PositionalMatchSegments includes group prefix literals, pattern literals, and end-of-options
@@ -220,13 +224,13 @@ internal static class RouteMatcherEmitter
 
       BehaviorEmitter.EmitPipelineWrapper(
         sb, route, routeIndex, behaviors, services, indent: 6,
-        () => HandlerInvokerEmitter.Emit(sb, route, routeIndex, services, indent: 8, commandAlreadyCreated: commandCreatedByBehavior));
+        () => HandlerInvokerEmitter.Emit(sb, route, routeIndex, services, indent: 8, commandAlreadyCreated: commandCreatedByBehavior, loggerFactoryFieldName: loggerFactoryFieldName));
 
       sb.AppendLine("      return 0;");
     }
     else
     {
-      HandlerInvokerEmitter.Emit(sb, route, routeIndex, services, indent: 6);
+      HandlerInvokerEmitter.Emit(sb, route, routeIndex, services, indent: 6, loggerFactoryFieldName: loggerFactoryFieldName);
       sb.AppendLine("      return 0;");
     }
 

@@ -358,7 +358,13 @@ internal static class BehaviorEmitter
       string typeArg = ExtractLoggerTypeArg(serviceTypeName);
       if (loggerFactoryFieldName is not null)
       {
-        // Use the configured logger factory
+        // app.LoggerFactory is nullable (set at runtime when OTEL endpoint is configured)
+        // Static __loggerFactory fields are always non-null
+        if (loggerFactoryFieldName.Contains('.', StringComparison.Ordinal))
+        {
+          return $"({loggerFactoryFieldName}?.CreateLogger<{typeArg}>() ?? global::Microsoft.Extensions.Logging.Abstractions.NullLogger<{typeArg}>.Instance)";
+        }
+
         return $"{loggerFactoryFieldName}.CreateLogger<{typeArg}>()";
       }
       else

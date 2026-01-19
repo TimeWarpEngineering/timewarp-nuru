@@ -58,12 +58,14 @@
     <ProjectReference Include="../timewarp-nuru-analyzers/timewarp-nuru-analyzers.csproj">
       <OutputItemType>Analyzer</OutputItemType>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <IsAspireProjectResource>false</IsAspireProjectResource>
     </ProjectReference>
 
     <!-- Build task for AOT-compatible JSON serialization (ensures it's built before packing) -->
     <ProjectReference Include="../timewarp-nuru-build/timewarp-nuru-build.csproj">
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
       <PrivateAssets>all</PrivateAssets>
+      <IsAspireProjectResource>false</IsAspireProjectResource>
     </ProjectReference>
   </ItemGroup>
 

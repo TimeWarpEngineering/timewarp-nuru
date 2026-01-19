@@ -22,8 +22,7 @@ using TimeWarp.Nuru;
 
 // Build the Nuru app with auto-wired telemetry and REPL support
 NuruCoreApp app = NuruApp.CreateBuilder(args)
-  .UseTelemetry()  // Configures OTLP export when OTEL_EXPORTER_OTLP_ENDPOINT is set
-  .ConfigureServices(ConfigureServices)
+  .UseTelemetry()  // Configures OTLP export for traces, metrics, AND logs
   .AddBehavior(typeof(TelemetryBehavior))
   .DiscoverEndpoints()
   .AddRepl(options =>
@@ -47,14 +46,6 @@ NuruCoreApp app = NuruApp.CreateBuilder(args)
 // Run the app - use -i or --interactive to enter REPL mode
 // Telemetry is automatically flushed by NuruApp.RunAsync()
 return await app.RunAsync(args);
-
-
-static void ConfigureServices(IServiceCollection services)
-{
-  services.AddLogging(builder => builder
-    .SetMinimumLevel(LogLevel.Debug)
-    .AddConsole());
-}
 
 // =============================================================================
 // COMMANDS - Using structured ILogger, NOT Console.WriteLine

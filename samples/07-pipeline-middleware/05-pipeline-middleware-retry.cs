@@ -1,6 +1,5 @@
 #!/usr/bin/dotnet --
 #:project ../../source/timewarp-nuru/timewarp-nuru.csproj
-#:project ../../source/timewarp-nuru-logging/timewarp-nuru-logging.csproj
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // RETRY PIPELINE MIDDLEWARE - RESILIENCE PATTERNS

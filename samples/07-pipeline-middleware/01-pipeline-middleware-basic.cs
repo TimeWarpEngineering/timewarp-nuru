@@ -1,6 +1,5 @@
 #!/usr/bin/dotnet --
 #:project ../../source/timewarp-nuru/timewarp-nuru.csproj
-#:project ../../source/timewarp-nuru-logging/timewarp-nuru-logging.csproj
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // BASIC PIPELINE MIDDLEWARE - LOGGING AND PERFORMANCE

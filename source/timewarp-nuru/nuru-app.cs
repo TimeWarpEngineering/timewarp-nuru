@@ -6,79 +6,41 @@ namespace TimeWarp.Nuru;
 /// </summary>
 public class NuruApp : NuruCoreApp
 {
-  public NuruApp(IServiceProvider serviceProvider) : base(serviceProvider)
-  {
-  }
+  public NuruApp() : base()  { }
 
-  /// <summary>
-  /// Runs the application and automatically flushes telemetry on completion.
-  /// </summary>
-  /// <param name="args">Command line arguments.</param>
-  /// <returns>Exit code from the command execution.</returns>
-  public new async Task<int> RunAsync(string[] args)
-  {
-    int exitCode = await base.RunAsync(args).ConfigureAwait(false);
-    await NuruTelemetryExtensions.FlushAsync(delayMs: 0).ConfigureAwait(false);
-    return exitCode;
-  }
+  // Telemetry is automatically flushed by the generated RunAsync interceptor
+  // when UseTelemetry() is called. No manual flush is needed.
 
   /// <summary>
   /// Creates a full-featured builder with DI, Configuration, and all extensions auto-wired.
+  /// Use fluent extension methods to configure individual features:
+  /// <see cref="NuruCoreAppBuilder{TSelf}.AddRepl(Action{ReplOptions})"/> for REPL,
+  /// <see cref="NuruCoreAppBuilder{TSelf}.AddHelp(Action{HelpOptions})"/> for help,
+  /// <see cref="NuruCoreAppBuilder{TSelf}.AddConfiguration"/> for configuration.
   /// </summary>
   /// <param name="args">Command line arguments.</param>
   /// <param name="options">Optional core application options.</param>
   /// <returns>A configured NuruAppBuilder with all extensions.</returns>
-  public static NuruAppBuilder CreateBuilder(string[] args, NuruCoreApplicationOptions? options = null)
-    => CreateBuilder(args, nuruAppOptions: null, options);
-
-  /// <summary>
-  /// Creates a full-featured builder with DI, Configuration, and all extensions auto-wired.
-  /// </summary>
-  /// <param name="args">Command line arguments.</param>
-  /// <param name="nuruAppOptions">Options to configure auto-wired extensions (REPL, Telemetry, interactive routes).</param>
-  /// <param name="coreOptions">Optional core application options.</param>
-  /// <returns>A configured NuruAppBuilder with all extensions.</returns>
   /// <example>
   /// <code>
-  /// NuruApp.CreateBuilder(args, new NuruAppOptions
-  /// {
-  ///   ConfigureRepl = options =>
-  ///   {
-  ///     options.Prompt = "myapp> ";
-  ///     options.WelcomeMessage = "Welcome!";
-  ///   },
-  ///   ConfigureTelemetry = options =>
-  ///   {
-  ///     options.ServiceName = "my-service";
-  ///   }
-  /// })
-  /// .Map("greet {name}", (string name) => Console.WriteLine($"Hello, {name}!"))
-  /// .Build();
+  /// NuruApp.CreateBuilder(args)
+  ///     .AddRepl(options =>
+  ///     {
+  ///       options.Prompt = "myapp> ";
+  ///       options.WelcomeMessage = "Welcome!";
+  ///     })
+  ///     .Map("greet {name}", (string name) => Console.WriteLine($"Hello, {name}!"))
+  ///     .Build();
   /// </code>
   /// </example>
   [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope",
     Justification = "Builder ownership is transferred to caller who is responsible for disposal")]
-  public static NuruAppBuilder CreateBuilder
-  (
-    string[] args,
-    NuruAppOptions? nuruAppOptions,
-    NuruCoreApplicationOptions? coreOptions = null
-  )
+  public static NuruAppBuilder CreateBuilder(string[] args, NuruCoreApplicationOptions? options = null)
   {
     ArgumentNullException.ThrowIfNull(args);
-    coreOptions ??= new NuruCoreApplicationOptions();
-    coreOptions.Args = args;
-
-    // Create full builder with DI, Config, AutoHelp
-    NuruAppBuilder builder = new(BuilderMode.Full, coreOptions);
-
-    // Add all extensions (telemetry, REPL, completion) with provided options
-    return builder.UseAllExtensions(nuruAppOptions);
+    options ??= new NuruCoreApplicationOptions();
+    options.Args = args;
+    NuruAppBuilder builder = new(options);
+    return builder;
   }
-
-  public static new NuruCoreAppBuilder CreateSlimBuilder(string[]? args = null, NuruCoreApplicationOptions? options = null)
-    => NuruCoreApp.CreateSlimBuilder(args, options);
-
-  public static new NuruCoreAppBuilder CreateEmptyBuilder(string[]? args = null, NuruCoreApplicationOptions? options = null)
-    => NuruCoreApp.CreateEmptyBuilder(args, options);
 }

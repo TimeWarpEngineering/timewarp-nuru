@@ -1,0 +1,9 @@
+<Project>
+  <!-- 
+    Root Directory.Build.targets
+    
+    NOTE: MSBuild task targets for AOT JSON generation are imported in samples/Directory.Build.targets,
+    not here. Source projects must not depend on the MSBuild task to avoid bootstrap issues
+    (timewarp-nuru-build can't load itself before it's built).
+  -->
+</Project>

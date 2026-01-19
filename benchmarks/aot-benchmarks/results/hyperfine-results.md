@@ -1,10 +1,12 @@
 | Command | Mean [ms] | Min [ms] | Max [ms] | Relative |
 |:---|---:|---:|---:|---:|
-| `ConsoleAppFramework` | 2.6 ± 0.4 | 2.1 | 4.1 | 1.00 |
-| `System.CommandLine` | 3.2 ± 0.2 | 2.8 | 4.0 | 1.20 ± 0.19 |
-| `Nuru-Direct` | 4.0 ± 0.4 | 3.4 | 5.5 | 1.52 ± 0.25 |
-| `Nuru-Full` | 8.3 ± 0.7 | 7.2 | 10.8 | 3.13 ± 0.51 |
-| `CommandLineParser` | 4.3 ± 0.5 | 3.6 | 5.7 | 1.63 ± 0.30 |
-| `Cocona` | 21.0 ± 1.6 | 18.8 | 26.3 | 7.98 ± 1.26 |
-| `CoconaLite` | 4.4 ± 0.4 | 3.7 | 5.4 | 1.65 ± 0.27 |
-| `SpectreConsole` | 6.6 ± 0.7 | 5.6 | 9.1 | 2.51 ± 0.44 |
+| `bench-consoleappframework` | 4.2 ± 1.6 | 2.6 | 12.1 | 1.06 ± 0.41 |
+| `bench-systemcommandline` | 4.0 ± 0.3 | 3.2 | 5.0 | 1.00 |
+| `bench-clifx` | 77.2 ± 32.1 | 52.3 | 209.3 | 19.51 ± 8.26 |
+| `bench-mcmaster` | 82.3 ± 28.8 | 59.1 | 284.8 | 20.80 ± 7.48 |
+| `bench-nuru-full` | 6.6 ± 1.7 | 4.6 | 15.8 | 1.67 ± 0.46 |
+| `bench-powerargs` | 94.9 ± 40.3 | 62.5 | 254.5 | 23.98 ± 10.37 |
+| `bench-commandlineparser` | 5.3 ± 0.4 | 4.5 | 6.6 | 1.34 ± 0.14 |
+| `bench-cocona` | 20.0 ± 5.0 | 16.5 | 44.3 | 5.06 ± 1.34 |
+| `bench-coconalite` | 7.1 ± 2.4 | 5.4 | 19.6 | 1.80 ± 0.63 |
+| `bench-spectreconsole` | 7.8 ± 0.8 | 6.1 | 9.9 | 1.97 ± 0.25 |

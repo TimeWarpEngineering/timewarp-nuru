@@ -429,12 +429,15 @@ LocalNuGetCache/
 # Test logs
 Tests/logs/
 
-# Agent workspace for temporary files
-.agent/workspace/
-
 # Source generator output directories
 **/generated/
 
 # Opencode temporary downloads
 opencodetmp/
 .generated/
+
+# Backup files
+*.old
+
+# REPL history files
+repl-*-history.txt

@@ -57,14 +57,9 @@ internal sealed class CheckVersionCommand : ICommand<Unit>
       // Packages to check (dependency order)
       string[] packages =
       [
-        "TimeWarp.Nuru.Core",
-        "TimeWarp.Nuru.Logging",
-        "TimeWarp.Nuru.Completion",
-        "TimeWarp.Nuru.Telemetry",
-        "TimeWarp.Nuru.Repl",
-        "TimeWarp.Nuru",
         "TimeWarp.Nuru.Analyzers",
-        "TimeWarp.Nuru.Mcp"
+        "TimeWarp.Nuru.Mcp",
+        "TimeWarp.Nuru"
       ];
 
       List<string> alreadyPublished = [];

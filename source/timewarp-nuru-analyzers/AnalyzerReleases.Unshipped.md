@@ -21,10 +21,15 @@ NURU_S005 | RoutePattern.Semantic | Error | Option with duplicate alias
 NURU_S006 | RoutePattern.Semantic | Error | Optional parameter before required parameter
 NURU_S007 | RoutePattern.Semantic | Error | Invalid end-of-options separator
 NURU_S008 | RoutePattern.Semantic | Error | Options after end-of-options separator
-NURU_D001 | Dependencies | Error | Mediator packages required for Map&lt;TCommand&gt;
 NURU_A001 | AttributedRoutes | Error | Multi-word route pattern requires [NuruRouteGroup]
 NURU_A002 | AttributedRoutes | Error | Multiple parameters require explicit Order
 NURU_H001 | Handler.Validation | Error | Instance method handler not supported
-NURU_H002 | Handler.Validation | Warning | Closure detected in handler
+NURU_H002 | Handler.Validation | Error | Closure detected in handler
 NURU_H003 | Handler.Validation | Error | Unsupported handler expression
 NURU_H004 | Handler.Validation | Warning | Private method handler not accessible
+NURU_H005 | Handler.Validation | Error | Handler parameter name doesn't match route segment
+NURU_H006 | Handler.Validation | Error | Discard parameter not supported in handler
+NURU_H007 | Handler.Validation | Warning | ILogger<T> injected without logging configuration
+NURU_R001 | RoutePattern.Overlap | Error | Overlapping routes with different type constraints
+NURU_R002 | RoutePattern.Overlap | Error | Duplicate route pattern
+NURU_R003 | RoutePattern.Overlap | Error | Unreachable route

@@ -43,9 +43,17 @@ internal sealed class VerifySamplesCommand : ICommand<Unit>
       Terminal.WriteLine("");
 
       // Discover runfile samples (*.cs files with shebang containing "dotnet")
+      // Exclude directories starting with underscore (work-in-progress samples)
       List<string> runfileSamples = [];
       foreach (string csFile in Directory.EnumerateFiles(samplesDir, "*.cs", SearchOption.AllDirectories))
       {
+        // Skip files in directories starting with underscore
+        string relativePath = Path.GetRelativePath(samplesDir, csFile);
+        if (relativePath.Split(Path.DirectorySeparatorChar).Any(part => part.StartsWith('_')))
+        {
+          continue;
+        }
+
         try
         {
           using StreamReader reader = new(csFile);
@@ -63,9 +71,13 @@ internal sealed class VerifySamplesCommand : ICommand<Unit>
       }
 
       // Discover project samples (*.csproj files)
+      // Exclude directories starting with underscore (work-in-progress samples)
       List<string> projectSamples =
       [
         .. Directory.EnumerateFiles(samplesDir, "*.csproj", SearchOption.AllDirectories)
+            .Where(f => !Path.GetRelativePath(samplesDir, f)
+                .Split(Path.DirectorySeparatorChar)
+                .Any(part => part.StartsWith('_')))
       ];
 
       int totalSamples = runfileSamples.Count + projectSamples.Count;

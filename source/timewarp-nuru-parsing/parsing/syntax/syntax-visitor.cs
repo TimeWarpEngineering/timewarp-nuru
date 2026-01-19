@@ -25,6 +25,8 @@ internal abstract class SyntaxVisitor<T> : ISyntaxVisitor<T>
   public abstract T VisitParameter(ParameterSyntax parameter);
   /// <inheritdoc />
   public abstract T VisitOption(OptionSyntax optionNode);
+  /// <inheritdoc />
+  public abstract T VisitEndOfOptions(EndOfOptionsSyntax endOfOptions);
 
   /// <summary>
   /// Dispatches to the appropriate visit method based on the node type.
@@ -36,6 +38,7 @@ internal abstract class SyntaxVisitor<T> : ISyntaxVisitor<T>
     LiteralSyntax literal => VisitLiteral(literal),
     ParameterSyntax parameter => VisitParameter(parameter),
     OptionSyntax option => VisitOption(option),
+    EndOfOptionsSyntax endOfOptions => VisitEndOfOptions(endOfOptions),
     _ => throw new ArgumentException($"Unknown segment node type: {node.GetType()}")
   };
 }

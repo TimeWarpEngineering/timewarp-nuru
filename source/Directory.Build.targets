@@ -1,0 +1,8 @@
+<Project>
+  <!-- 
+    Source Directory.Build.targets
+    
+    Source projects do not import the MSBuild task targets to avoid bootstrap issues.
+    Only samples need the AOT JSON context generation.
+  -->
+</Project>

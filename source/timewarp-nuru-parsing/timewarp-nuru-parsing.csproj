@@ -11,4 +11,9 @@
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
   </ItemGroup>
 
+  <!-- Sandbox projects for testing/evaluating source generator approaches -->
+  <ItemGroup>
+    <InternalsVisibleTo Include="TimeWarp.Nuru.SourceGen.Sandbox" />
+  </ItemGroup>
+
 </Project>

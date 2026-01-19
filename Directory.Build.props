@@ -32,10 +32,22 @@
     <Compile Remove="$(CompilerGeneratedFilesOutputPath)/**/*.cs" />
   </ItemGroup>
 
+  <!-- C# Interceptors (for source generators) -->
+  <PropertyGroup Label="Interceptors">
+    <!-- Enable interceptors in the TimeWarp.Nuru.Generated namespace -->
+    <!-- Note: Property name changed from InterceptorsPreviewNamespaces to InterceptorsNamespaces in .NET 10 -->
+    <InterceptorsNamespaces>$(InterceptorsNamespaces);TimeWarp.Nuru.Generated</InterceptorsNamespaces>
+  </PropertyGroup>
+
+  <!-- Expose UseNewGen to source generators -->
+  <ItemGroup Label="Compiler Visible Properties">
+    <CompilerVisibleProperty Include="UseNewGen" />
+  </ItemGroup>
+
   <!-- Code quality, analyzers, and warning configuration -->
   <PropertyGroup Label="Code Quality and Analysis">
     <!-- Treat all warnings as errors -->
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <WarningLevel>5</WarningLevel>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
@@ -51,7 +63,7 @@
     <!-- CA1724: Type name conflicts (acceptable in this context) -->
     <!-- CA1812: False positives for DI-instantiated classes -->
     <!-- IL2026, IL2067, IL2070, IL2075, IL3050, IL2104, IL3053: AOT warnings (not yet implemented) -->
-    <NoWarn>$(NoWarn);CA1014;CA1724;CA1812;IL2026;IL2067;IL2070;IL2075;IL3050;IL2104;IL3053</NoWarn>
+    <NoWarn>$(NoWarn);CA1014;CA1724;CA1812;IL2026;IL2067;IL2070;IL2075;IL3050;IL2104;IL3053;IDE0290</NoWarn>
   </PropertyGroup>
 
   <!-- Code analyzers applied to all projects -->

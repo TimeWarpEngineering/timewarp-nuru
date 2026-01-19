@@ -1,0 +1,14 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  // Only the index is always-loaded. Detailed files are lazy-loaded via Read tool.
+  "instructions": [
+    ".agent/AGENTS.md"
+  ],
+  "mcp": {
+    "aspire-dashboard": {
+      "type": "remote",
+      "url": "http://localhost:15186/mcp",
+      "enabled": true
+    }
+  }
+}

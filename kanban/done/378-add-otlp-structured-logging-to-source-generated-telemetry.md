@@ -1,0 +1,182 @@
+# Add OTLP structured logging to source-generated telemetry
+
+## Description
+
+Extend the source-generated telemetry to include OpenTelemetry logging export. When `UseTelemetry()` is called, logs via `ILogger<T>` will be exported to OTLP alongside traces and metrics. No console output - keeps CLI UX clean.
+
+## Current State
+
+- Traces: Working via OTLP ✓
+- Metrics: Working via OTLP ✓
+- Logs: Console only, NOT exported to OTLP
+
+## Checklist
+
+- [x] Modify `telemetry-emitter.cs` to emit OpenTelemetry logging setup
+- [x] Change `NuruCoreApp.LoggerFactory` from `init` to `set`
+- [x] Verify package references include OpenTelemetry logging exporter
+- [x] Build and test with Aspire sample
+- [x] Verify logs appear in Aspire Dashboard Structured Logs tab
+
+## Notes
+
+### Implementation Plan: Task 378 - Add OTLP Structured Logging
+
+#### Current State Analysis
+
+| Component | Status | Mechanism |
+|-----------|--------|-----------|
+| **Traces** | Working | `TracerProvider` with OTLP exporter |
+| **Metrics** | Working | `MeterProvider` with OTLP exporter |
+| **Logs** | Console only | `ILogger<T>` → Console, NOT exported to OTLP |
+
+#### Root Cause
+
+When `UseTelemetry()` is called, the generated code sets up OTLP exporters for traces and metrics in `TelemetryEmitter.EmitTelemetrySetup()`, but logging remains configured by the user's `LoggerFactory` which typically only has console output. The `LoggerFactory` property is `init`-only, preventing the generated code from setting a logging provider.
+
+#### Changes Required
+
+##### 1. `source/timewarp-nuru/nuru-core-app.cs`
+
+**Change 1a:** Add `LoggerProvider` property (similar to `TracerProvider`/`MeterProvider`)
+```csharp
+public LoggerProvider? LoggerProvider { get; set; }
+```
+
+**Change 1b:** Change `LoggerFactory` from `init` to `set`
+```csharp
+// Before:
+public ILoggerFactory? LoggerFactory { get; init; }
+
+// After:
+public ILoggerFactory? LoggerFactory { get; set; }
+```
+
+**Change 1c:** Update `FlushTelemetryAsync()` to handle `LoggerProvider`
+```csharp
+public async Task FlushTelemetryAsync(int delayMs = 1000)
+{
+  TracerProvider?.ForceFlush();
+  MeterProvider?.ForceFlush();
+  LoggerProvider?.ForceFlush();  // Add this line
+
+  if (delayMs > 0)
+    await Task.Delay(delayMs).ConfigureAwait(false);
+
+  TracerProvider?.Dispose();
+  MeterProvider?.Dispose();
+  LoggerProvider?.Dispose();  // Add these lines
+  TracerProvider = null;
+  MeterProvider = null;
+  LoggerProvider = null;  // Add this line
+}
+```
+
+##### 2. `source/timewarp-nuru-analyzers/generators/emitters/telemetry-emitter.cs`
+
+**Change 2a:** Add `using OpenTelemetry.Logs;` to `EmitTelemetrySetup()`
+
+**Change 2b:** Add `LoggerProvider` setup in `EmitTelemetrySetup()`, appending after `MeterProvider` setup:
+```csharp
+app.LoggerFactory = global::Microsoft.Extensions.Logging.LoggerFactory.Create(builder =>
+{
+  builder.SetMinimumLevel(global::Microsoft.Extensions.Logging.LogLevel.Debug);
+  builder.AddOpenTelemetry(options =>
+  {
+    options.SetResourceBuilder(__resource);
+    options.AddOtlpExporter(o => o.Endpoint = __endpoint);
+  });
+});
+
+app.LoggerProvider = global::OpenTelemetry.Sdk.CreateLoggerProviderBuilder()
+  .SetResourceBuilder(__resource)
+  .AddLoggerFactory(app.LoggerFactory)
+  .AddOtlpExporter(o => o.Endpoint = __endpoint)
+  .Build();
+```
+
+#### Package Verification
+
+Required packages already present in `timewarp-nuru.csproj`:
+- OpenTelemetry
+- OpenTelemetry.Exporter.OpenTelemetryProtocol
+- OpenTelemetry.Extensions.Hosting
+
+#### Test Verification
+
+1. Build: `dotnet build timewarp-nuru.slnx`
+2. Run Aspire sample with OTEL_EXPORTER_OTLP_ENDPOINT
+3. Verify logs appear in Aspire Dashboard Structured Logs tab
+
+### Files to Modify
+
+- `source/timewarp-nuru-analyzers/generators/emitters/telemetry-emitter.cs`
+- `source/timewarp-nuru/nuru-core-app.cs`
+
+### Rationale
+
+This is a CLI framework. Console output is for command results, not log noise. OTLP captures logs for debugging/monitoring without polluting the user's terminal. Console logger currently writes to stdout, mixing with command output.
+
+## Results
+
+**Implemented OTLP structured logging for source-generated telemetry:**
+
+### Changes Made (Final - 2025-01-19)
+
+**`source/timewarp-nuru-analyzers/generators/emitters/telemetry-emitter.cs`**
+
+Updated `EmitTelemetrySetup()` to emit `AddOpenTelemetry()` with OTLP exporter. The previous implementation only created a basic `LoggerFactory` without OTLP export - this was why traces appeared in Aspire but logs did not.
+
+**Before (broken):**
+```csharp
+builder.SetMinimumLevel(global::Microsoft.Extensions.Logging.LogLevel.Warning);
+// No OTLP export - logs went nowhere!
+```
+
+**After (fixed):**
+```csharp
+builder.SetMinimumLevel(global::Microsoft.Extensions.Logging.LogLevel.Information);
+builder.AddOpenTelemetry(options =>
+{
+  options.SetResourceBuilder(__resource);
+  options.AddOtlpExporter(o => o.Endpoint = __endpoint);
+});
+```
+
+### Architecture Decision
+
+Simplified from the original plan:
+- **NOT using separate `LoggerProvider` property** - `LoggerFactory.Create()` with `AddOpenTelemetry()` handles OTLP export
+- `FlushTelemetryAsync()` already disposes `LoggerFactory` which properly flushes the OTLP exporter
+- Log level set to `Information` (not Debug) to avoid excessive noise
+
+### Result
+
+When `UseTelemetry()` is called, all telemetry (traces, metrics, **logs**) is exported via OTLP. Logs will appear in the Aspire Dashboard Structured Logs tab when OTEL_EXPORTER_OTLP_ENDPOINT is configured.
+
+### Additional Fix: ILogger<T> Injection (2025-01-19)
+
+The OTLP exporter was configured correctly, but `ILogger<T>` injected into command handlers was still using a static field that only existed with explicit `AddLogging()`. Fixed by wiring ILogger injection to use `app.LoggerFactory` when telemetry is enabled.
+
+**Files modified:**
+- `interceptor-emitter.cs` - Thread `loggerFactoryFieldName` through emit chain
+- `handler-invoker-emitter.cs` - Support both static field and `app.LoggerFactory`
+- `behavior-emitter.cs` - Handle nullable `app.LoggerFactory` with NullLogger fallback
+- `route-matcher-emitter.cs` - Pass `loggerFactoryFieldName` to HandlerInvokerEmitter
+
+**Two-path design for AOT optimization:**
+
+| Path | When Used | AOT Characteristics |
+|------|-----------|---------------------|
+| Static `__loggerFactory` | Explicit `AddLogging()` | Zero runtime cost, trimmer sees types |
+| Instance `app.LoggerFactory` | `UseTelemetry()` | Runtime null checks (OTEL endpoint is env var) |
+
+Static field takes priority when both configured.
+
+### Verification
+
+- [x] Both main projects build successfully
+- [x] No new package references required
+- [x] Traces appear in Aspire Dashboard ✓
+- [x] Metrics appear in Aspire Dashboard ✓
+- [x] **Structured Logs appear in Aspire Dashboard ✓**

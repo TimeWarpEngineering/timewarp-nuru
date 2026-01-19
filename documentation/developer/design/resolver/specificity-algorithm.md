@@ -218,6 +218,169 @@ Boolean flags are scored but always optional:
 3. **Progressive Enhancement**: Add specific intercepts without breaking general patterns
 4. **Fallback Safety**: Always have a catch-all for unhandled cases
 5. **Order Matters**: When specificity is equal, first registered wins
+6. **No Type-Based Dispatch**: Type conversion failures are errors, not fallback triggers
+
+## Option and Positional Argument Ordering
+
+Options can appear **anywhere** in the command line - before, after, or interleaved with positional arguments. The router uses a two-pass approach:
+
+1. **First pass:** Extract all options (flags and values) from the args, tracking consumed indices
+2. **Second pass:** Remaining args are positional, processed in order
+
+### Interleaved Options Example
+
+Pattern: `copy {source} {dest} --verbose?`
+
+All of these inputs are equivalent:
+```bash
+copy file1.txt file2.txt --verbose
+copy file1.txt --verbose file2.txt
+copy --verbose file1.txt file2.txt
+```
+
+Each results in: `source="file1.txt"`, `dest="file2.txt"`, `verbose=true`
+
+### Option Value Syntax
+
+Options that take values support two syntaxes:
+
+```bash
+# Space-separated (traditional)
+--output file.txt
+-o file.txt
+
+# Equals syntax (also common)
+--output=file.txt
+-o=file.txt
+```
+
+Both are equivalent and result in the same binding.
+
+### Negative Numbers as Positional Args
+
+Option extraction only matches **defined options in the route pattern**, not arbitrary `-` prefixed tokens. This allows negative numbers to work correctly as positional arguments or option values:
+
+Pattern: `delay {ms:int}`
+```bash
+delay -100          # ms = -100 (not treated as option)
+```
+
+Pattern: `process --count {n:int}`
+```bash
+process --count -5  # n = -5 (value is negative number, not an option)
+process --count=-5  # n = -5 (equals syntax also works)
+```
+
+### End-of-Options Separator (`--`)
+
+The `--` separator marks the end of options. Everything after `--` is treated as positional, even if it starts with `-`:
+
+Pattern: `copy {source} {dest} --verbose?`
+```bash
+copy -- --weird-file.txt dest.txt
+```
+Result: `source="--weird-file.txt"`, `dest="dest.txt"`, `verbose=false`
+
+This is useful when filenames or other arguments legitimately start with dashes.
+
+## Compile-Time Route Validation
+
+The Nuru source generator validates route patterns at compile time to catch common mistakes:
+
+### NURU_R001: Overlapping Type Constraints
+
+Detects routes with the same structure but different type constraints:
+
+```csharp
+// ❌ ERROR: NURU_R001
+.Map("get {id:int}").WithHandler((int id) => ...)
+.Map("get {id:guid}").WithHandler((Guid id) => ...)
+// These have the same structure - type conversion failures are errors, not fallback
+```
+
+### NURU_R002: Duplicate Route Pattern
+
+Detects when the exact same route pattern is defined multiple times:
+
+```csharp
+// ❌ ERROR: NURU_R002
+.Map("deploy {env}").WithHandler((string env) => DeployA(env))
+.Map("deploy {env}").WithHandler((string env) => DeployB(env))  // Duplicate!
+```
+
+### NURU_R003: Unreachable Route
+
+Detects when one route makes another unreachable because it matches all the same inputs with equal or higher specificity:
+
+```csharp
+// ❌ ERROR: NURU_R003
+.Map("deploy {env} --force").WithHandler((string env, bool force) => ...)  // 160 pts
+.Map("deploy {env}").WithHandler((string env) => ...)  // 110 pts - UNREACHABLE!
+// The --force route matches "deploy prod" (with force=false), shadowing the simpler route
+```
+
+**Why is this an error?** Routes with additional optional elements (options, optional parameters) will match all inputs that simpler routes match, because options are optional. The simpler route becomes dead code.
+
+**Solution:** Either remove the unreachable route, or use a required option/literal to differentiate:
+
+```csharp
+// ✅ OK: Use literal to differentiate
+.Map("deploy production --force").WithHandler(...)  // Only matches "deploy production --force"
+.Map("deploy {env}").WithHandler(...)  // Matches other environments
+
+// ✅ OK: Single route handles both cases
+.Map("deploy {env} --force").WithHandler((string env, bool force) => {
+    if (force) { /* forced deploy */ }
+    else { /* normal deploy */ }
+})
+```
+
+## Type Constraints and Route Selection
+
+**Important:** Type constraints affect specificity scoring but do **NOT** enable type-based route dispatch.
+
+### What Type Constraints Do
+- Typed parameters (`{id:int}`) score **20 points** in specificity
+- Untyped parameters (`{id}`) score **10 points** in specificity
+- A typed route will be attempted **before** an untyped route with the same structure
+
+### What Type Constraints Do NOT Do
+Type constraints do **not** create fallback behavior. If you define:
+```csharp
+.Map("delay {ms:int}").WithHandler((int ms) => ...)
+.Map("delay {duration}").WithHandler((string duration) => ...)
+```
+
+And the user types `delay abc`:
+1. The typed route (`delay {ms:int}`) is tried first (higher specificity)
+2. Type conversion fails (`"abc"` is not an int)
+3. User sees: `Error: Invalid value 'abc' for parameter 'ms'. Expected: int`
+4. The untyped route is **NOT** tried as a fallback
+
+### Why No Fallback?
+This design was chosen because:
+1. **Real CLIs don't do this** - git, docker, kubectl use explicit subcommands, not type-based dispatch
+2. **Clear error messages** - Users get "invalid value" not "unknown command"
+3. **Analyzer enforcement** - NURU_R001 detects and prevents overlapping typed patterns at compile time
+
+### Recommended Patterns
+Instead of relying on type-based fallback, use explicit patterns:
+```csharp
+// ✅ Explicit subcommands
+.Map("get-by-id {id:int}").WithHandler(...)
+.Map("get-by-name {name}").WithHandler(...)
+
+// ✅ Flags for disambiguation
+.Map("get --id {id:int}").WithHandler(...)
+.Map("get --name {name}").WithHandler(...)
+
+// ✅ Single route with handler logic
+.Map("get {identifier}").WithHandler((string id) => {
+    if (int.TryParse(id, out var numericId))
+        return GetById(numericId);
+    return GetByName(id);
+})
+```
 
 ## Common Patterns
 
@@ -256,5 +419,6 @@ Boolean flags are scored but always optional:
 
 ## Related Documents
 
-See [syntax-rules.md](../parser/syntax-rules.md) for route pattern syntax and validation rules.
-See [parameter-optionality.md](../cross-cutting/parameter-optionality.md) for nullability-based optionality design.
+- [syntax-rules.md](../parser/syntax-rules.md) - Route pattern syntax and validation rules
+- [parameter-optionality.md](../cross-cutting/parameter-optionality.md) - Nullability-based optionality design
+- Analyzer diagnostics: NURU_R001, NURU_R002, NURU_R003 - Compile-time route validation

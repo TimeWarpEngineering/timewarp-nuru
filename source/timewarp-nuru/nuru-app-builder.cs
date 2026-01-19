@@ -21,24 +21,7 @@ public partial class NuruAppBuilder : NuruCoreAppBuilder<NuruAppBuilder>, IHostA
   /// <summary>
   /// Internal constructor for factory methods with specific builder mode.
   /// </summary>
-  internal NuruAppBuilder(BuilderMode mode, NuruCoreApplicationOptions? options) : base(mode, options)
-  {
-  }
-
-  /// <summary>
-  /// Initializes the builder based on the specified mode.
-  /// Extends base initialization with IHostApplicationBuilder setup for Full mode.
-  /// </summary>
-  protected override void InitializeForMode(BuilderMode mode, string[]? args)
-  {
-    base.InitializeForMode(mode, args);
-
-    // Initialize IHostApplicationBuilder fields after DI is set up
-    if (mode == BuilderMode.Full)
-    {
-      InitializeHostApplicationBuilder();
-    }
-  }
+  internal NuruAppBuilder(NuruCoreApplicationOptions? options) : base(options) { }
 
   /// <summary>
   /// Initializes IHostApplicationBuilder fields that depend on Services.

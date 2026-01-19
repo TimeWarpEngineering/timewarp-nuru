@@ -6,8 +6,7 @@ namespace TimeWarp.Nuru;
 /// </summary>
 /// <remarks>
 /// <para>
-/// This enum aligns with CQRS (Command Query Responsibility Segregation) patterns
-/// and Mediator interfaces (IQuery&lt;T&gt;, ICommand&lt;T&gt;).
+/// This enum aligns with CQRS (Command Query Responsibility Segregation) patterns.
 /// </para>
 /// <para>
 /// AI agents use this metadata to determine:

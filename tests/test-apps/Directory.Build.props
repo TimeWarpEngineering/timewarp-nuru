@@ -5,6 +5,9 @@
     <!-- This is expected - the analyzer works correctly when consumed as a NuGet package -->
     <NoWarn>$(NoWarn);CA1303;CA1307;CA2007;CA1031;CA1515;CA1050;CA1052;CA1707;CS8785</NoWarn>
 
+    <!-- Test apps are for development validation, not production code -->
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+
     <!-- Common Project Settings -->
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -12,6 +15,9 @@
     <LangVersion>latest</LangVersion>
 
     <SuppressNETCoreSdkPreviewMessage>true</SuppressNETCoreSdkPreviewMessage>
+
+    <!-- Enable C# interceptors for the V2 source generator -->
+    <InterceptorsNamespaces>$(InterceptorsNamespaces);TimeWarp.Nuru.Generated</InterceptorsNamespaces>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="$(MSBuildThisFileDirectory)../../source/timewarp-nuru/timewarp-nuru.csproj" />

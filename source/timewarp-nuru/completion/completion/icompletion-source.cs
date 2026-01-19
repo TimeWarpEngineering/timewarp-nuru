@@ -6,8 +6,8 @@ namespace TimeWarp.Nuru;
 /// to provide context-aware completion candidates.
 /// </summary>
 /// <remarks>
-/// This interface is used for dynamic completion (EnableDynamicCompletion).
-/// The existing CompletionProvider handles static completion (EnableStaticCompletion).
+/// This interface is used for shell completion (EnableCompletion).
+/// Register custom sources via the configure callback to provide runtime completions.
 /// </remarks>
 public interface ICompletionSource
 {

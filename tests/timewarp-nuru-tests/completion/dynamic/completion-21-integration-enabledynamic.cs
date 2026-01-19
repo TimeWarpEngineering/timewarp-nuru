@@ -20,7 +20,7 @@ public class IntegrationEnableDynamicTests
     builder.Map("status").WithHandler(() => { }).AsQuery().Done();
 
     // Act
-    builder.EnableDynamicCompletion();
+    builder.EnableCompletion();
 
     // Assert - Should have __complete route
     bool hasCompleteRoute = builder.EndpointCollection.Any(e =>
@@ -39,7 +39,7 @@ public class IntegrationEnableDynamicTests
     NuruAppBuilder builder = new();
 
     // Act
-    builder.EnableDynamicCompletion();
+    builder.EnableCompletion();
 
     // Assert - Should have --generate-completion route
     bool hasGenerateRoute = builder.EndpointCollection.Any(e =>
@@ -57,7 +57,7 @@ public class IntegrationEnableDynamicTests
     NuruAppBuilder builder = new();
 
     // Act
-    NuruAppBuilder result = builder.EnableDynamicCompletion();
+    NuruAppBuilder result = builder.EnableCompletion();
 
     // Assert
     result.ShouldBeSameAs(builder);
@@ -74,7 +74,7 @@ public class IntegrationEnableDynamicTests
     bool registryConfigured = false;
 
     // Act
-    builder.EnableDynamicCompletion(configure: registry =>
+    builder.EnableCompletion(configure: registry =>
     {
       registryConfigured = true;
       TestCompletionSource source = new(["production", "staging"]);
@@ -92,7 +92,7 @@ public class IntegrationEnableDynamicTests
     // Arrange
     NuruAppBuilder builder = new();
     builder.Map("status").WithHandler(() => { }).AsQuery().Done();
-    builder.EnableDynamicCompletion();
+    builder.EnableCompletion();
 
     // Act - Find the __complete endpoint and verify its signature
     Endpoint? completeEndpoint = builder.EndpointCollection.FirstOrDefault(e =>
@@ -118,7 +118,7 @@ public class IntegrationEnableDynamicTests
   {
     // Arrange
     NuruAppBuilder builder = new();
-    builder.EnableDynamicCompletion();
+    builder.EnableCompletion();
 
     // Act
     Endpoint? completeEndpoint = builder.EndpointCollection.FirstOrDefault(e =>
@@ -139,7 +139,7 @@ public class IntegrationEnableDynamicTests
     NuruAppBuilder? nullBuilder = null;
 
     // Act & Assert
-    Should.Throw<ArgumentNullException>(() => nullBuilder!.EnableDynamicCompletion());
+    Should.Throw<ArgumentNullException>(() => nullBuilder!.EnableCompletion());
 
     await Task.CompletedTask;
   }
@@ -150,7 +150,7 @@ public class IntegrationEnableDynamicTests
     NuruAppBuilder builder = new();
     builder.Map("status").WithHandler(() => { }).AsQuery().Done();
     builder.Map("version").WithHandler(() => { }).AsQuery().Done();
-    builder.EnableDynamicCompletion();
+    builder.EnableCompletion();
 
     NuruCoreApp app = builder.Build();
 
@@ -171,7 +171,7 @@ public class IntegrationEnableDynamicTests
     NuruAppBuilder builder = new();
     builder.Map("deploy {env}").WithHandler((string env) => 0).AsCommand().Done();
 
-    builder.EnableDynamicCompletion(configure: registry =>
+    builder.EnableCompletion(configure: registry =>
     {
       TestCompletionSource source = new(["production", "staging", "development"]);
       registry.RegisterForParameter("env", source);
@@ -196,7 +196,7 @@ public class IntegrationEnableDynamicTests
     NuruAppBuilder builder = new();
     builder.Map("deploy {env} --mode {mode}").WithHandler((string env, DeploymentMode mode) => 0).AsCommand().Done();
 
-    builder.EnableDynamicCompletion(configure: registry =>
+    builder.EnableCompletion(configure: registry =>
     {
       // Register enum source for the type
       EnumCompletionSource<DeploymentMode> enumSource = new();
@@ -223,7 +223,7 @@ public class IntegrationEnableDynamicTests
     builder.Map("status").WithHandler(() => { }).AsQuery().Done();
 
     // Act
-    builder.EnableDynamicCompletion(appName: "my-custom-app");
+    builder.EnableCompletion(appName: "my-custom-app");
 
     // Assert - The app name will be used when generating scripts
     // For now, just verify the routes are registered correctly

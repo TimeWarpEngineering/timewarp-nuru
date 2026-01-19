@@ -21,7 +21,7 @@ public class OutputFormatTests
       .WithHandler(() => { })
       .AsQuery()
       .Done();
-    builder.EnableDynamicCompletion();
+    builder.EnableCompletion();
 
     NuruCoreApp app = builder.Build();
 
@@ -44,7 +44,7 @@ public class OutputFormatTests
       .AsCommand()
       .Done();
 
-    builder.EnableDynamicCompletion(configure: registry =>
+    builder.EnableCompletion(configure: registry =>
     {
       TestCompletionSourceWithDescriptions source = new([
         ("production", "Live production environment")
@@ -70,7 +70,7 @@ public class OutputFormatTests
       .WithHandler(() => { })
       .AsQuery()
       .Done();
-    builder.EnableDynamicCompletion();
+    builder.EnableCompletion();
 
     NuruCoreApp app = builder.Build();
 
@@ -91,7 +91,7 @@ public class OutputFormatTests
       .WithHandler(() => { })
       .AsQuery()
       .Done();
-    builder.EnableDynamicCompletion();
+    builder.EnableCompletion();
 
     NuruCoreApp app = builder.Build();
 
@@ -119,7 +119,7 @@ public class OutputFormatTests
       .WithHandler(() => { })
       .AsQuery()
       .Done();
-    builder.EnableDynamicCompletion();
+    builder.EnableCompletion();
 
     NuruCoreApp app = builder.Build();
 
@@ -148,7 +148,7 @@ public class OutputFormatTests
       .AsCommand()
       .Done();
 
-    builder.EnableDynamicCompletion(configure: registry =>
+    builder.EnableCompletion(configure: registry =>
     {
       TestCompletionSourceWithDescriptions source = new([
         ("production", "") // Empty description
@@ -177,7 +177,7 @@ public class OutputFormatTests
       .AsCommand()
       .Done();
 
-    builder.EnableDynamicCompletion(configure: registry =>
+    builder.EnableCompletion(configure: registry =>
     {
       TestCompletionSourceWithDescriptions source = new([
         ("production", "The live production environment with all active users")
@@ -207,7 +207,7 @@ public class OutputFormatTests
       .WithHandler(() => { })
       .AsQuery()
       .Done();
-    builder.EnableDynamicCompletion();
+    builder.EnableCompletion();
 
     NuruCoreApp app = builder.Build();
 
@@ -228,7 +228,7 @@ public class OutputFormatTests
       .WithHandler(() => { })
       .AsQuery()
       .Done();
-    builder.EnableDynamicCompletion();
+    builder.EnableCompletion();
 
     NuruCoreApp app = builder.Build();
 
@@ -249,7 +249,7 @@ public class OutputFormatTests
       .AsCommand()
       .Done();
 
-    builder.EnableDynamicCompletion(configure: registry =>
+    builder.EnableCompletion(configure: registry =>
     {
       TestCompletionSourceWithDescriptions source = new([
         ("https://api.example.com", "API endpoint"),
@@ -277,7 +277,7 @@ public class OutputFormatTests
       .WithHandler((bool verbose, bool quiet) => 0)
       .AsCommand()
       .Done();
-    builder.EnableDynamicCompletion();
+    builder.EnableCompletion();
 
     NuruCoreApp app = builder.Build();
 

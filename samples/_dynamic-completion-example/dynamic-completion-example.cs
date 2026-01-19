@@ -85,7 +85,7 @@ NuruCoreApp app = NuruCoreApp.CreateBuilder(args)
   // This adds both:
   // - The __complete {index:int} {*words} route for dynamic callbacks
   // - The --generate-completion {shell} route for shell script generation
-  .EnableDynamicCompletion(configure: registry =>
+  .EnableCompletion(configure: registry =>
   {
     // Register custom completion source for the "env" parameter
     registry.RegisterForParameter("env", new EnvironmentCompletionSource());

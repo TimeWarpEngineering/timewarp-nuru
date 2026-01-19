@@ -22,7 +22,7 @@ public class ContextAwareTests
       .AsCommand()
       .Done();
 
-    builder.EnableDynamicCompletion(configure: registry =>
+    builder.EnableCompletion(configure: registry =>
     {
       ArgsInspectorSource source = new();
       registry.RegisterForParameter("env", source);
@@ -47,7 +47,7 @@ public class ContextAwareTests
       .AsCommand()
       .Done();
 
-    builder.EnableDynamicCompletion(configure: registry =>
+    builder.EnableCompletion(configure: registry =>
     {
       CursorInspectorSource source = new();
       registry.RegisterForParameter("env", source);
@@ -80,7 +80,7 @@ public class ContextAwareTests
       .AsCommand()
       .Done();
 
-    builder.EnableDynamicCompletion(configure: registry =>
+    builder.EnableCompletion(configure: registry =>
     {
       EndpointsInspectorSource source = new();
       registry.RegisterForParameter("env", source);
@@ -92,7 +92,7 @@ public class ContextAwareTests
     (int _, string output, string _) = await CaptureAppOutputAsync(() =>
       app.RunAsync(["__complete", "2", "app", "deploy"]));
 
-    // Assert - Source sees all endpoints (3 original + 2 from EnableDynamicCompletion)
+    // Assert - Source sees all endpoints (3 original + 2 from EnableCompletion)
     output.ShouldContain("endpoints:");
   }
 
@@ -105,7 +105,7 @@ public class ContextAwareTests
       .AsCommand()
       .Done();
 
-    builder.EnableDynamicCompletion(configure: registry =>
+    builder.EnableCompletion(configure: registry =>
     {
       PreviousArgsSource source = new();
       registry.RegisterForParameter("port", source);
@@ -130,7 +130,7 @@ public class ContextAwareTests
       .AsCommand()
       .Done();
 
-    builder.EnableDynamicCompletion(configure: registry =>
+    builder.EnableCompletion(configure: registry =>
     {
       EnvironmentAwareServiceSource source = new();
       registry.RegisterForParameter("service", source);
@@ -155,7 +155,7 @@ public class ContextAwareTests
       .AsCommand()
       .Done();
 
-    builder.EnableDynamicCompletion(configure: registry =>
+    builder.EnableCompletion(configure: registry =>
     {
       ConditionalSource source = new();
       registry.RegisterForParameter("dest", source);
@@ -181,7 +181,7 @@ public class ContextAwareTests
       .AsCommand()
       .Done();
 
-    builder.EnableDynamicCompletion(configure: registry =>
+    builder.EnableCompletion(configure: registry =>
     {
       FilteringSource source = new();
       registry.RegisterForParameter("item", source);
@@ -208,7 +208,7 @@ public class ContextAwareTests
       .AsCommand()
       .Done();
 
-    builder.EnableDynamicCompletion(configure: registry =>
+    builder.EnableCompletion(configure: registry =>
     {
       ImmutabilityTestSource source = new();
       registry.RegisterForParameter("param", source);
@@ -233,7 +233,7 @@ public class ContextAwareTests
       .AsCommand()
       .Done();
 
-    builder.EnableDynamicCompletion(configure: registry =>
+    builder.EnableCompletion(configure: registry =>
     {
       TargetSource source = new();
       registry.RegisterForParameter("target", source);

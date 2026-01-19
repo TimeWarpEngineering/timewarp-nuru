@@ -22,7 +22,7 @@ public class CustomSourcesTests
       .AsCommand()
       .Done();
 
-    builder.EnableDynamicCompletion(configure: registry =>
+    builder.EnableCompletion(configure: registry =>
     {
       EnvironmentSource source = new();
       registry.RegisterForParameter("env", source);
@@ -49,7 +49,7 @@ public class CustomSourcesTests
       .AsCommand()
       .Done();
 
-    builder.EnableDynamicCompletion(configure: registry =>
+    builder.EnableCompletion(configure: registry =>
     {
       FilePathSource source = new(["/tmp/file1.txt", "/tmp/file2.txt", "/home/user/doc.md"]);
       registry.RegisterForParameter("file", source);
@@ -76,7 +76,7 @@ public class CustomSourcesTests
       .AsCommand()
       .Done();
 
-    builder.EnableDynamicCompletion(configure: registry =>
+    builder.EnableCompletion(configure: registry =>
     {
       registry.RegisterForParameter("env", new EnvironmentSource());
       registry.RegisterForParameter("version", new VersionSource());
@@ -102,7 +102,7 @@ public class CustomSourcesTests
       .AsCommand()
       .Done();
 
-    builder.EnableDynamicCompletion(configure: registry =>
+    builder.EnableCompletion(configure: registry =>
     {
       ContextAwareSource source = new();
       registry.RegisterForParameter("item", source);
@@ -127,7 +127,7 @@ public class CustomSourcesTests
       .AsCommand()
       .Done();
 
-    builder.EnableDynamicCompletion(configure: registry =>
+    builder.EnableCompletion(configure: registry =>
     {
       EmptySource source = new();
       registry.RegisterForParameter("item", source);
@@ -153,7 +153,7 @@ public class CustomSourcesTests
       .AsCommand()
       .Done();
 
-    builder.EnableDynamicCompletion(configure: registry =>
+    builder.EnableCompletion(configure: registry =>
     {
       LargeSource source = new(100);
       registry.RegisterForParameter("number", source);
@@ -181,7 +181,7 @@ public class CustomSourcesTests
       .AsCommand()
       .Done();
 
-    builder.EnableDynamicCompletion(configure: registry =>
+    builder.EnableCompletion(configure: registry =>
     {
       RegionSource source = new();
       registry.RegisterForParameter("region", source);
@@ -211,7 +211,7 @@ public class CustomSourcesTests
     statefulSource.AddItem("first");
     statefulSource.AddItem("second");
 
-    builder.EnableDynamicCompletion(configure: registry =>
+    builder.EnableCompletion(configure: registry =>
     {
       registry.RegisterForParameter("item", statefulSource);
     });
@@ -236,7 +236,7 @@ public class CustomSourcesTests
       .AsCommand()
       .Done();
 
-    builder.EnableDynamicCompletion(configure: registry =>
+    builder.EnableCompletion(configure: registry =>
     {
       EndpointAwareSource source = new();
       registry.RegisterForParameter("item", source);

@@ -32,7 +32,7 @@ Exclude underscore-prefixed samples from verify-samples command to unblock CI.
 
 ## Checklist
 
-- [ ] Exclude underscore-prefixed samples from verify-samples configuration
+- [x] Exclude underscore-prefixed samples from verify-samples configuration
 - [ ] Fix package version mismatch in samples/09-configuration/
 - [ ] Fix source generator issues in samples/10-type-converters/
 - [ ] Fix route analyzer error in samples/08-testing/runfile-test-harness/
@@ -42,3 +42,12 @@ Exclude underscore-prefixed samples from verify-samples command to unblock CI.
 ## Notes
 
 Priority: high
+
+## Results
+
+### Item 1: Exclude underscore-prefixed samples (COMPLETED)
+- Modified: tools/dev-cli/commands/verify-samples-command.cs
+- Added filtering logic to skip directories starting with underscore
+- Underscore-prefixed samples are now excluded from verify-samples command
+- Previously: 39 runfile samples
+- After fix: 36 runfile samples (3 underscore-prefixed samples excluded)

@@ -4,7 +4,7 @@ namespace TimeWarp.Nuru;
 /// Handles the __complete callback route for dynamic shell completion.
 /// Uses source-generated <see cref="IShellCompletionProvider"/> for static completion data.
 /// </summary>
-internal static class DynamicCompletionHandler
+public static class DynamicCompletionHandler
 {
   /// <summary>
   /// Processes a completion request and outputs candidates to stdout.
@@ -20,6 +20,10 @@ internal static class DynamicCompletionHandler
     IShellCompletionProvider provider
   )
   {
+    ArgumentNullException.ThrowIfNull(context);
+    ArgumentNullException.ThrowIfNull(registry);
+    ArgumentNullException.ThrowIfNull(provider);
+
     // Get completions - prioritize custom sources, then use provider
     IEnumerable<CompletionCandidate> items = GetCompletions(context, registry, provider);
 

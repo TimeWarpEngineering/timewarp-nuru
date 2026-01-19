@@ -131,9 +131,12 @@ internal static class InterceptorEmitter
     sb.AppendLine("  )");
     sb.AppendLine("  {");
 
-    // Set the shell completion provider for DynamicCompletionHandler to use
-    sb.AppendLine($"    app.ShellCompletionProvider ??= __shellCompletionProvider{methodSuffix};");
-    sb.AppendLine();
+    // Set the shell completion provider for DynamicCompletionHandler to use (only when completion or REPL is enabled)
+    if (app.HasCompletion || app.HasRepl)
+    {
+      sb.AppendLine($"    app.ShellCompletionProvider ??= __shellCompletionProvider{methodSuffix};");
+      sb.AppendLine();
+    }
 
     // Method body with this app's routes only
     // Note: LoggerFactory is static and should NOT be disposed after each command
@@ -572,6 +575,78 @@ internal static class InterceptorEmitter
       sb.AppendLine("    }");
       sb.AppendLine();
     }
+
+    // Shell completion routes (opt-in via EnableCompletion())
+    if (app.HasCompletion)
+    {
+      EmitCompletionRoutes(sb, methodSuffix);
+    }
+  }
+
+  /// <summary>
+  /// Emits shell completion route handlers.
+  /// </summary>
+  private static void EmitCompletionRoutes(StringBuilder sb, string methodSuffix)
+  {
+    // __complete {index} {*words} - callback route for shell scripts
+    sb.AppendLine("    // Built-in: __complete (shell completion callback)");
+    sb.AppendLine("    if (routeArgs.Length >= 2 && routeArgs[0] == \"__complete\" && int.TryParse(routeArgs[1], out int completionIndex))");
+    sb.AppendLine("    {");
+    sb.AppendLine("      string[] completionWords = routeArgs.Length > 2 ? routeArgs[2..] : [];");
+    sb.AppendLine("      var completionContext = new global::TimeWarp.Nuru.CompletionContext(completionWords, completionIndex);");
+    sb.AppendLine($"      return global::TimeWarp.Nuru.DynamicCompletionHandler.HandleCompletion(completionContext, app.CompletionSourceRegistry, app.ShellCompletionProvider ?? global::TimeWarp.Nuru.EmptyShellCompletionProvider.Instance);");
+    sb.AppendLine("    }");
+    sb.AppendLine();
+
+    // --generate-completion {shell} - generates shell completion script
+    sb.AppendLine("    // Built-in: --generate-completion (generates shell script)");
+    sb.AppendLine("    if (routeArgs is [\"--generate-completion\", var genShell])");
+    sb.AppendLine("    {");
+    sb.AppendLine("      string appName = global::System.IO.Path.GetFileNameWithoutExtension(global::System.Environment.ProcessPath ?? \"app\");");
+    sb.AppendLine("      string script = genShell.ToLowerInvariant() switch");
+    sb.AppendLine("      {");
+    sb.AppendLine("        \"bash\" => global::TimeWarp.Nuru.DynamicCompletionScriptGenerator.GenerateBash(appName),");
+    sb.AppendLine("        \"zsh\" => global::TimeWarp.Nuru.DynamicCompletionScriptGenerator.GenerateZsh(appName),");
+    sb.AppendLine("        \"fish\" => global::TimeWarp.Nuru.DynamicCompletionScriptGenerator.GenerateFish(appName),");
+    sb.AppendLine("        \"pwsh\" or \"powershell\" => global::TimeWarp.Nuru.DynamicCompletionScriptGenerator.GeneratePowerShell(appName),");
+    sb.AppendLine("        _ => throw new global::System.ArgumentException($\"Unknown shell: {genShell}. Supported: bash, zsh, fish, pwsh\")");
+    sb.AppendLine("      };");
+    sb.AppendLine("      await app.Terminal.WriteLineAsync(script).ConfigureAwait(false);");
+    sb.AppendLine("      return 0;");
+    sb.AppendLine("    }");
+    sb.AppendLine();
+
+    // --install-completion --dry-run {shell?} - preview installation (more specific, check first)
+    sb.AppendLine("    // Built-in: --install-completion --dry-run (preview installation)");
+    sb.AppendLine("    if (routeArgs is [\"--install-completion\", \"--dry-run\"])");
+    sb.AppendLine("    {");
+    sb.AppendLine("      string appName = global::System.IO.Path.GetFileNameWithoutExtension(global::System.Environment.ProcessPath ?? \"app\");");
+    sb.AppendLine("      return global::TimeWarp.Nuru.InstallCompletionHandler.Install(appName, null, dryRun: true);");
+    sb.AppendLine("    }");
+    sb.AppendLine();
+
+    sb.AppendLine("    if (routeArgs is [\"--install-completion\", \"--dry-run\", var dryRunShell])");
+    sb.AppendLine("    {");
+    sb.AppendLine("      string appName = global::System.IO.Path.GetFileNameWithoutExtension(global::System.Environment.ProcessPath ?? \"app\");");
+    sb.AppendLine("      return global::TimeWarp.Nuru.InstallCompletionHandler.Install(appName, dryRunShell, dryRun: true);");
+    sb.AppendLine("    }");
+    sb.AppendLine();
+
+    // --install-completion {shell?} - installs completion to shell config (less specific, check after --dry-run)
+    sb.AppendLine("    // Built-in: --install-completion (installs shell script)");
+    sb.AppendLine("    if (routeArgs is [\"--install-completion\"])");
+    sb.AppendLine("    {");
+    sb.AppendLine("      string appName = global::System.IO.Path.GetFileNameWithoutExtension(global::System.Environment.ProcessPath ?? \"app\");");
+    sb.AppendLine("      return global::TimeWarp.Nuru.InstallCompletionHandler.Install(appName, null, dryRun: false);");
+    sb.AppendLine("    }");
+    sb.AppendLine();
+
+    sb.AppendLine("    if (routeArgs is [\"--install-completion\", var installShell])");
+    sb.AppendLine("    {");
+    sb.AppendLine("      string appName = global::System.IO.Path.GetFileNameWithoutExtension(global::System.Environment.ProcessPath ?? \"app\");");
+    sb.AppendLine("      return global::TimeWarp.Nuru.InstallCompletionHandler.Install(appName, installShell, dryRun: false);");
+    sb.AppendLine("    }");
+    sb.AppendLine();
   }
 
   /// <summary>
@@ -666,9 +741,12 @@ internal static class InterceptorEmitter
         sb.AppendLine();
       }
 
-      // Shell completion support (always emitted for __complete route)
-      CompletionEmitter.Emit(sb, enrichedApp, methodSuffix, model.AttributedRoutes, compilation);
-      sb.AppendLine();
+      // Shell completion support (opt-in via EnableCompletion() or implicitly via AddRepl())
+      if (app.HasCompletion || app.HasRepl)
+      {
+        CompletionEmitter.Emit(sb, enrichedApp, methodSuffix, model.AttributedRoutes, compilation);
+        sb.AppendLine();
+      }
     }
 
     // Version is shared (assembly-level, same for all apps)

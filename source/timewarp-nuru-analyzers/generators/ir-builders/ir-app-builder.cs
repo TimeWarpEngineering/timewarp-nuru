@@ -39,6 +39,7 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
   private bool IsBuilt;
   private bool DiscoverEndpointsEnabled;
   private bool TelemetryEnabled;
+  private bool CompletionEnabled;
   private readonly List<string> ExplicitEndpointTypes = [];
 
   /// <summary>
@@ -201,6 +202,16 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
   }
 
   /// <summary>
+  /// Enables shell completion support.
+  /// Mirrors: NuruAppBuilderCompletionExtensions.EnableCompletion()
+  /// </summary>
+  public TSelf EnableCompletion()
+  {
+    CompletionEnabled = true;
+    return (TSelf)this;
+  }
+
+  /// <summary>
   /// Registers a custom type converter for code generation.
   /// Mirrors: NuruCoreAppBuilder.AddTypeConverter()
   /// </summary>
@@ -322,7 +333,8 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
       LoggingConfiguration: LoggingConfiguration,
       DiscoverEndpoints: DiscoverEndpointsEnabled,
       ExplicitEndpointTypes: [.. ExplicitEndpointTypes],
-      HasTelemetry: TelemetryEnabled);
+      HasTelemetry: TelemetryEnabled,
+      HasCompletion: CompletionEnabled);
   }
 
   /// <summary>
@@ -358,6 +370,7 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
   IIrAppBuilder IIrAppBuilder.AddInterceptSite(string methodName, InterceptSiteModel site) => AddInterceptSite(methodName, site);
   IIrAppBuilder IIrAppBuilder.DiscoverEndpoints() => DiscoverEndpoints();
   IIrAppBuilder IIrAppBuilder.MapEndpoint(string endpointTypeName) => MapEndpoint(endpointTypeName);
+  IIrAppBuilder IIrAppBuilder.EnableCompletion() => EnableCompletion();
 }
 
 /// <summary>

@@ -1,60 +1,42 @@
 #!/usr/bin/dotnet --
 #:project ../../source/timewarp-nuru/timewarp-nuru.csproj
-#:project ../../source/timewarp-nuru-completion/timewarp-nuru-completion.csproj
 #:property PublishDir=../../artifacts/
 
 // ============================================================================
-// Dynamic Completion Example - Demonstrates Task #029
+// Dynamic Completion Example - Demonstrates Shell Completion
 // ============================================================================
-// This runfile demonstrates dynamic tab completion that queries the app
-// at Tab-press time instead of using static completion data.
+// This runfile demonstrates shell tab completion that queries the app
+// at Tab-press time for dynamic completions.
 //
 // Usage:
-//   1. Make executable:    chmod +x DynamicCompletionExample.cs
-//   2. Publish AOT:        dotnet publish DynamicCompletionExample.cs -c Release -r linux-x64 -p:PublishAot=true
-//   3. Run AOT:            ../../artifacts/DynamicCompletionExample
-//   4. Generate completion: ../../artifacts/DynamicCompletionExample --generate-completion bash
-//   5. Test completion:    source <(../../artifacts/DynamicCompletionExample --generate-completion bash)
-//                          DynamicCompletionExample deploy <TAB>  # queries app for environment list
+//   1. Run with --help:           dotnet run dynamic-completion-example.cs -- --help
+//   2. Generate completion:       dotnet run dynamic-completion-example.cs -- --generate-completion bash
+//   3. Test __complete callback:  dotnet run dynamic-completion-example.cs -- __complete 1 deploy
 //
-// Task #029: Dynamic completion calls back to the app via __complete route
+// Task #340: Shell completion architecture unification
 // ============================================================================
 
-using System.ComponentModel;
 using TimeWarp.Nuru;
 
-NuruCoreApp app = NuruCoreApp.CreateBuilder(args)
-  // ============================================================================
-  // Sample Commands - Demonstrate Dynamic Completion
-  // ============================================================================
+NuruCoreApp app = NuruApp.CreateBuilder(args)
   .Map("deploy {env} --version {tag}")
     .WithHandler((string env, string tag) =>
     {
-      Console.WriteLine($"🚀 Deploying:");
-      Console.WriteLine($"   Environment: {env}");
-      Console.WriteLine($"   Version: {tag}");
+      Console.WriteLine($"Deploying version {tag} to {env}");
     })
     .WithDescription("Deploy a version to an environment")
-    .AsCommand()
-    .Done()
-
-  .Map("deploy {env} --mode {mode}")
-    .WithHandler((string env, DeploymentMode mode) =>
-    {
-      Console.WriteLine($"🚀 Deploying to {env} in {mode} mode");
-    })
-    .WithDescription("Deploy with a specific mode")
     .AsCommand()
     .Done()
 
   .Map("list-environments")
     .WithHandler(() =>
     {
-      Console.WriteLine("📋 Available Environments:");
-      foreach (string env in EnvironmentCompletionSource.GetEnvironments())
-      {
-        Console.WriteLine($"   - {env}");
-      }
+      Console.WriteLine("Available Environments:");
+      Console.WriteLine("  - production");
+      Console.WriteLine("  - staging");
+      Console.WriteLine("  - development");
+      Console.WriteLine("  - qa");
+      Console.WriteLine("  - demo");
     })
     .WithDescription("List all available environments")
     .AsQuery()
@@ -63,43 +45,30 @@ NuruCoreApp app = NuruCoreApp.CreateBuilder(args)
   .Map("list-tags")
     .WithHandler(() =>
     {
-      Console.WriteLine("📋 Available Tags:");
-      foreach (string tag in TagCompletionSource.GetTags())
-      {
-        Console.WriteLine($"   - {tag}");
-      }
+      Console.WriteLine("Available Tags:");
+      Console.WriteLine("  - v2.1.0");
+      Console.WriteLine("  - v2.0.5");
+      Console.WriteLine("  - v2.0.4");
+      Console.WriteLine("  - v1.9.12");
+      Console.WriteLine("  - latest");
     })
     .WithDescription("List all available tags")
     .AsQuery()
     .Done()
 
   .Map("status")
-    .WithHandler(() => Console.WriteLine("📊 System Status: OK"))
+    .WithHandler(() => Console.WriteLine("System Status: OK"))
     .WithDescription("Check system status")
     .AsQuery()
     .Done()
 
-  // ============================================================================
-  // Enable Dynamic Completion with Custom Sources
-  // ============================================================================
-  // This adds both:
-  // - The __complete {index:int} {*words} route for dynamic callbacks
-  // - The --generate-completion {shell} route for shell script generation
   .EnableCompletion(configure: registry =>
   {
-    // Register custom completion source for the "env" parameter
+    // Register custom completion sources for dynamic completions
     registry.RegisterForParameter("env", new EnvironmentCompletionSource());
-
-    // Register custom completion source for the "tag" parameter
     registry.RegisterForParameter("tag", new TagCompletionSource());
-
-    // Register enum completion source for DeploymentMode type
-    registry.RegisterForType(typeof(DeploymentMode), new EnumCompletionSource<DeploymentMode>());
   })
 
-  // ============================================================================
-  // Build and Run
-  // ============================================================================
   .Build();
 
 return await app.RunAsync(args);
@@ -116,10 +85,9 @@ public class EnvironmentCompletionSource : ICompletionSource
 {
   public IEnumerable<CompletionCandidate> GetCompletions(CompletionContext context)
   {
-    // In a real app, this might query an API or configuration service
-    return GetEnvironments().Select(env => new CompletionCandidate(
-      Value: env,
-      Description: GetEnvironmentDescription(env),
+    return GetEnvironments().Select(e => new CompletionCandidate(
+      Value: e,
+      Description: GetEnvironmentDescription(e),
       Type: CompletionType.Parameter
     ));
   }
@@ -133,14 +101,14 @@ public class EnvironmentCompletionSource : ICompletionSource
     "demo"
   ];
 
-  private static string GetEnvironmentDescription(string env) => env switch
+  private static string GetEnvironmentDescription(string e) => e switch
   {
-    "production" => "Production environment (⚠️  use with caution)",
-    "staging" => "Staging environment for final testing",
-    "development" => "Development environment for active work",
-    "qa" => "Quality assurance testing environment",
-    "demo" => "Demo environment for client presentations",
-    _ => env
+    "production" => "Production environment",
+    "staging" => "Staging environment",
+    "development" => "Development environment",
+    "qa" => "QA environment",
+    "demo" => "Demo environment",
+    _ => e
   };
 }
 
@@ -152,10 +120,9 @@ public class TagCompletionSource : ICompletionSource
 {
   public IEnumerable<CompletionCandidate> GetCompletions(CompletionContext context)
   {
-    // In a real app, this might query Git tags or a Docker registry
-    return GetTags().Select(tag => new CompletionCandidate(
-      Value: tag,
-      Description: GetTagDescription(tag),
+    return GetTags().Select(t => new CompletionCandidate(
+      Value: t,
+      Description: GetTagDescription(t),
       Type: CompletionType.Parameter
     ));
   }
@@ -169,30 +136,11 @@ public class TagCompletionSource : ICompletionSource
     "latest"
   ];
 
-  private static string GetTagDescription(string tag) => tag switch
+  private static string GetTagDescription(string t) => t switch
   {
     "latest" => "Latest stable release",
-    "v2.1.0" => "Current release (2025-11-14)",
-    "v2.0.5" => "Previous stable release",
-    _ => $"Release {tag}"
+    "v2.1.0" => "Current release",
+    "v2.0.5" => "Previous release",
+    _ => $"Release {t}"
   };
-}
-
-/// <summary>
-/// Example enum for deployment modes.
-/// EnumCompletionSource will automatically provide all values.
-/// </summary>
-public enum DeploymentMode
-{
-  [Description("Fast deployment without health checks")]
-  Fast,
-
-  [Description("Standard deployment with rolling updates")]
-  Standard,
-
-  [Description("Blue-green deployment with zero downtime")]
-  BlueGreen,
-
-  [Description("Canary deployment with gradual rollout")]
-  Canary
 }

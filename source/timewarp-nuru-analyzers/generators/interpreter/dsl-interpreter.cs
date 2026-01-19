@@ -1237,7 +1237,7 @@ public sealed class DslInterpreter
 
   /// <summary>
   /// Dispatches EnableCompletion() call to IIrAppBuilder.
-  /// This is a no-op for the generator - completion is configured at runtime.
+  /// Marks the app as having shell completion enabled.
   /// </summary>
   private static object? DispatchEnableCompletion(object? receiver)
   {
@@ -1246,8 +1246,7 @@ public sealed class DslInterpreter
       throw new InvalidOperationException("EnableCompletion() must be called on an app builder.");
     }
 
-    // Just pass through - completion configuration is runtime-only
-    return appBuilder;
+    return appBuilder.EnableCompletion();
   }
 
   /// <summary>

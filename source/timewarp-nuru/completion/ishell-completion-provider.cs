@@ -32,7 +32,7 @@ public interface IShellCompletionProvider
 /// A fallback provider that returns no completions.
 /// Used when the source generator hasn't emitted a real provider.
 /// </summary>
-internal sealed class EmptyShellCompletionProvider : IShellCompletionProvider
+public sealed class EmptyShellCompletionProvider : IShellCompletionProvider
 {
   public static readonly EmptyShellCompletionProvider Instance = new();
 

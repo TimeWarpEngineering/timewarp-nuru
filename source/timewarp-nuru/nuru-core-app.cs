@@ -16,6 +16,12 @@ public class NuruCoreApp
   public IShellCompletionProvider? ShellCompletionProvider { get; set; }
 
   /// <summary>
+  /// Registry for custom completion sources (databases, APIs, etc.).
+  /// Configured via EnableCompletion(configure: registry => ...).
+  /// </summary>
+  public CompletionSourceRegistry CompletionSourceRegistry { get; } = new();
+
+  /// <summary>
   /// Tracer provider for distributed tracing. Set by generated telemetry code.
   /// </summary>
   public TracerProvider? TracerProvider { get; set; }

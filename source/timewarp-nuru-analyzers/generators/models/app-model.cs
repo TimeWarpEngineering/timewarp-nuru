@@ -28,6 +28,7 @@ namespace TimeWarp.Nuru.Generators;
 /// <param name="ExplicitEndpointTypes">Fully qualified type names from Map&lt;T&gt;() calls for specific endpoint inclusion</param>
 /// <param name="BuildLocation">Source location of the Build() call - unique identity for this app</param>
 /// <param name="HasTelemetry">Whether UseTelemetry() was called to enable OpenTelemetry instrumentation</param>
+/// <param name="HasCompletion">Whether EnableCompletion() was called to enable shell completion</param>
 public sealed record AppModel(
   string? VariableName,
   string? Name,
@@ -52,7 +53,8 @@ public sealed record AppModel(
   bool DiscoverEndpoints = false,
   ImmutableArray<string> ExplicitEndpointTypes = default,
   string? BuildLocation = null,
-  bool HasTelemetry = false)
+  bool HasTelemetry = false,
+  bool HasCompletion = false)
 {
   /// <summary>
   /// Creates an empty AppModel with required intercept sites.

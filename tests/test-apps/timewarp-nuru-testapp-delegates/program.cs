@@ -1,5 +1,4 @@
 global using static System.Console;
-using Microsoft.Extensions.DependencyInjection;
 using TimeWarp.Nuru;
 
 NuruAppBuilder builder = NuruApp.CreateBuilder(args);

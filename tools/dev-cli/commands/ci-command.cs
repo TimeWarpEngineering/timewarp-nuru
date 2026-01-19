@@ -190,14 +190,9 @@ internal sealed class CiCommand : ICommand<Unit>
       // Projects to pack (in dependency order)
       string[] projectsToPack =
       [
-        "source/timewarp-nuru-core/timewarp-nuru-core.csproj",
-        "source/timewarp-nuru-logging/timewarp-nuru-logging.csproj",
-        "source/timewarp-nuru-completion/timewarp-nuru-completion.csproj",
-        "source/timewarp-nuru-telemetry/timewarp-nuru-telemetry.csproj",
-        "source/timewarp-nuru-repl/timewarp-nuru-repl.csproj",
-        "source/timewarp-nuru/timewarp-nuru.csproj",
         "source/timewarp-nuru-analyzers/timewarp-nuru-analyzers.csproj",
-        "source/timewarp-nuru-mcp/timewarp-nuru-mcp.csproj"
+        "source/timewarp-nuru-mcp/timewarp-nuru-mcp.csproj",
+        "source/timewarp-nuru/timewarp-nuru.csproj"
       ];
 
       foreach (string projectPath in projectsToPack)
@@ -236,14 +231,9 @@ internal sealed class CiCommand : ICommand<Unit>
       // Packages in dependency order
       string[] packages =
       [
-        "TimeWarp.Nuru.Core",
-        "TimeWarp.Nuru.Logging",
-        "TimeWarp.Nuru.Completion",
-        "TimeWarp.Nuru.Telemetry",
-        "TimeWarp.Nuru.Repl",
-        "TimeWarp.Nuru",
         "TimeWarp.Nuru.Analyzers",
-        "TimeWarp.Nuru.Mcp"
+        "TimeWarp.Nuru.Mcp",
+        "TimeWarp.Nuru"
       ];
 
       foreach (string package in packages)

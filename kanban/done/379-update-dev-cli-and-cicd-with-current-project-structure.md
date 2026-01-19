@@ -108,3 +108,35 @@ string[] packages =
 ```
 
 **5. `.github/workflows/ci-cd.yml` - No changes required (paths look correct)
+
+## Results
+
+### What was implemented
+Updated dev-cli commands to reference only the consolidated projects after source code consolidation. Removed references to deprecated projects that have been absorbed into `TimeWarp.Nuru`:
+- `TimeWarp.Nuru.Core`
+- `TimeWarp.Nuru.Logging`
+- `TimeWarp.Nuru.Completion`
+- `TimeWarp.Nuru.Telemetry`
+- `TimeWarp.Nuru.Repl`
+
+### Files changed
+
+1. **`tools/dev-cli/commands/build-command.cs`** (lines 71-82)
+   - Updated `projectsToBuild` array from 5 projects to 3 consolidated projects
+
+2. **`tools/dev-cli/commands/ci-command.cs`** - `PackProjectsAsync()` (lines 191-201)
+   - Updated `projectsToPack` array from 8 projects to 3 consolidated projects
+
+3. **`tools/dev-cli/commands/ci-command.cs`** - `PushPackagesAsync()` (lines 237-247)
+   - Updated `packages` array from 8 packages to 3 consolidated packages
+
+4. **`tools/dev-cli/commands/check-version-command.cs`** (lines 58-68)
+   - Updated `packages` array from 8 packages to 3 consolidated packages
+
+### Key decisions
+- Kept the order specified in the plan (Analyzers, Mcp, Nuru) which reflects dependency order
+- `.github/workflows/ci-cd.yml` required no changes - paths were already correct
+
+### Test outcomes
+- All three consolidated source projects (`timewarp-nuru-analyzers`, `timewarp-nuru-mcp`, `timewarp-nuru`) build successfully with Release configuration
+- Pre-existing build errors in `timewarp-nuru-testapp-delegates` and debug warnings in dev-cli are unrelated to these changes

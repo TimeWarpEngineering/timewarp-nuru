@@ -71,14 +71,8 @@ internal sealed class BuildCommand : ICommand<Unit>
       string[] projectsToBuild =
       [
         "source/timewarp-nuru-analyzers/timewarp-nuru-analyzers.csproj",
-        "source/timewarp-nuru-logging/timewarp-nuru-logging.csproj",
         "source/timewarp-nuru-mcp/timewarp-nuru-mcp.csproj",
-        "source/timewarp-nuru/timewarp-nuru.csproj",
-        "source/timewarp-nuru-completion/timewarp-nuru-completion.csproj"
-        // "source/timewarp-nuru-repl/timewarp-nuru-repl.csproj", // Needs NuruCoreApp properties
-        // "benchmarks/timewarp-nuru-benchmarks/timewarp-nuru-benchmarks.csproj",
-        // "tests/test-apps/timewarp-nuru-testapp-delegates/timewarp-nuru-testapp-delegates.csproj", // Catch-all bug #331
-        // "samples/timewarp-nuru-sample/timewarp-nuru-sample.csproj"
+        "source/timewarp-nuru/timewarp-nuru.csproj"
       ];
 
       string verbosityLevel = command.Verbose ? "normal" : "minimal";

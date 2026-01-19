@@ -101,6 +101,31 @@ Runtime (only if user registered custom sources)
 - [ ] Update MCP server examples if needed
 - [ ] Run all completion tests
 
+## Current Issue: EnableCompletion() breaks source generator
+
+The source generator fails to find `Build()` calls when `.EnableCompletion()` is in the fluent chain.
+
+**Works:**
+```csharp
+NuruCoreApp app = NuruApp.CreateBuilder([])
+  .Map("status").WithHandler(() => { }).AsQuery().Done()
+  .Build();
+```
+
+**Fails (no intercept generated):**
+```csharp
+NuruCoreApp app = NuruApp.CreateBuilder([])
+  .Map("status").WithHandler(() => { }).AsQuery().Done()
+  .EnableCompletion()
+  .Build();
+```
+
+**Evidence:** With EnableCompletion() commented out, 3 intercept locations generated. With it restored, tests fail with "RunAsync was not intercepted".
+
+**Root cause investigation:** Generator traces fluent chain from Build() back to CreateBuilder(). Something about EnableCompletion() breaks this chain.
+
+**Related:** #387 (enum option params) is a separate bug found during this work.
+
 ## Notes
 
 The REPL already has all the static completion data extraction working in `ReplEmitter`:

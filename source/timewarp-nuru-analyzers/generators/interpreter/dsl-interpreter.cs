@@ -577,6 +577,8 @@ public sealed class DslInterpreter
 
       "UseTelemetry" => DispatchUseTelemetry(receiver),
 
+      "EnableCompletion" => DispatchEnableCompletion(receiver),
+
       "AddTypeConverter" => DispatchAddTypeConverter(invocation, receiver),
 
       "WithAlias" => DispatchWithAlias(invocation, receiver),
@@ -1231,6 +1233,21 @@ public sealed class DslInterpreter
     }
 
     return appBuilder.UseTelemetry();
+  }
+
+  /// <summary>
+  /// Dispatches EnableCompletion() call to IIrAppBuilder.
+  /// This is a no-op for the generator - completion is configured at runtime.
+  /// </summary>
+  private static object? DispatchEnableCompletion(object? receiver)
+  {
+    if (receiver is not IIrAppBuilder appBuilder)
+    {
+      throw new InvalidOperationException("EnableCompletion() must be called on an app builder.");
+    }
+
+    // Just pass through - completion configuration is runtime-only
+    return appBuilder;
   }
 
   /// <summary>

@@ -35,6 +35,7 @@
 NuruCoreApp app = NuruApp.CreateBuilder(args)
   .WithName("dev")
   .WithDescription("Development CLI for TimeWarp.Nuru")
+  .DiscoverEndpoints()
   .Build();
 
 return await app.RunAsync(args);

@@ -1,0 +1,13 @@
+<Project>
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+
+  <ItemGroup>
+    <!-- Include lexer test helper for standalone execution -->
+    <Compile Include="lexer-test-helper.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Static using for CreateLexer helper method -->
+    <Using Include="TimeWarp.Nuru.Tests.LexerTests.LexerTestHelper" Static="true" />
+  </ItemGroup>
+</Project>

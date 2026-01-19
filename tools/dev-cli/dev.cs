@@ -15,7 +15,6 @@
 //
 // Architecture:
 //   - Uses TimeWarp.Nuru with attributed routes for command registration
-//   - Mediator pattern for clean separation of commands and handlers
 //   - TimeWarp.Amuru for cross-platform shell and .NET operations
 //   - AOT-compatible design for maximum performance
 //
@@ -34,9 +33,9 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 
 NuruCoreApp app = NuruApp.CreateBuilder(args)
-  .ConfigureServices(services => services.AddMediator())
-  .AddAutoHelp()
-  .WithMetadata("dev", "Development CLI for TimeWarp.Nuru")
+  .WithName("dev")
+  .WithDescription("Development CLI for TimeWarp.Nuru")
+  .DiscoverEndpoints()
   .Build();
 
 return await app.RunAsync(args);

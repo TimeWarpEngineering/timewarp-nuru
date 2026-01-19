@@ -38,7 +38,7 @@ internal sealed class ErrorHandlingTool
             2. **Route Parsing Errors** - Comprehensive parsing error handling
             3. **Parameter Binding Errors** - Validates parameters and handles conversion failures
             4. **Type Conversion Errors** - Non-throwing approach with boolean success indicators
-            5. **Handler Execution Errors** - Separate handling for delegate vs Mediator commands
+            5. **Handler Execution Errors** - Separate handling for delegate vs command handlers
             6. **Command Matching Errors** - Shows help when no route matches
             7. **Output Stream Separation** - Keeps errors separate from normal output
             """

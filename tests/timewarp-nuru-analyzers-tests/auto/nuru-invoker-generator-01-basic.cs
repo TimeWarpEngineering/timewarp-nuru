@@ -26,7 +26,7 @@ public sealed class NuruInvokerGeneratorTests
     const string code = """
       using TimeWarp.Nuru;
       
-      var app = NuruCoreApp.CreateSlimBuilder()
+      var app = NuruApp.CreateBuilder([])
         .Map("status")
         .WithHandler(() => System.Console.WriteLine("OK"))
         .AsQuery()
@@ -57,7 +57,7 @@ public sealed class NuruInvokerGeneratorTests
     const string code = """
       using TimeWarp.Nuru;
       
-      var app = NuruCoreApp.CreateSlimBuilder()
+      var app = NuruApp.CreateBuilder([])
         .Map("status")
         .WithHandler(() => System.Console.WriteLine("OK"))
         .AsQuery()
@@ -112,7 +112,7 @@ public sealed class NuruInvokerGeneratorTests
       using TimeWarp.Nuru;
       using System.Threading.Tasks;
       
-      var app = NuruCoreApp.CreateSlimBuilder()
+      var app = NuruApp.CreateBuilder([])
         // Action (no params, no return)
         .Map("status")
         .WithHandler(() => System.Console.WriteLine("OK"))
@@ -181,7 +181,7 @@ public sealed class NuruInvokerGeneratorTests
     const string code = """
       using TimeWarp.Nuru;
       
-      var app = NuruCoreApp.CreateSlimBuilder()
+      var app = NuruApp.CreateBuilder([])
         // Default route with Func<int> - should generate invoker
         .Map("")
         .WithHandler(() => 42)
@@ -218,7 +218,7 @@ public sealed class NuruInvokerGeneratorTests
     const string code = """
       using TimeWarp.Nuru;
       
-      var app = NuruCoreApp.CreateSlimBuilder()
+      var app = NuruApp.CreateBuilder([])
         // Default route with Func<int>
         .Map("")
         .WithHandler(() => 42)
@@ -259,7 +259,7 @@ public sealed class NuruInvokerGeneratorTests
     const string code = """
       using TimeWarp.Nuru;
       
-      NuruCoreAppBuilder builder = NuruCoreApp.CreateSlimBuilder();
+      NuruCoreAppBuilder builder = NuruApp.CreateBuilder([]);
       builder.Map("test")
         .WithHandler(() => System.Console.WriteLine("test"))
         .AsCommand()

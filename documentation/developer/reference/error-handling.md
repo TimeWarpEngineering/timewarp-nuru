@@ -11,7 +11,7 @@ graph TD
     C -->|No| D[Show Help & Exit]
     C -->|Yes| E[Parameter Binding]
     E --> F{Type Conversion Success?}
-    F -->|No| G[InvalidOperationException]
+    F -->|No| G[Clear Error Message + Exit 1]
     F -->|Yes| H[Handler Execution]
     H --> I{Delegate or Mediator?}
     I -->|Delegate| J[Execute Delegate]
@@ -22,8 +22,7 @@ graph TD
     M -->|Yes| O[Command Error Message]
     L -->|No| P[Success]
     M -->|No| P
-    G --> Q[Global Error Handler]
-    N --> Q
+    N --> Q[Global Error Handler]
     O --> Q
     Q --> R[Write to stderr & Exit Code 1]
     P --> S[Write to stdout & Exit Code 0]
@@ -96,11 +95,19 @@ throw new InvalidOperationException(
 - Supports optional parameters with default values
 
 ### 4. **Type Conversion Errors**
-The `TypeConverterRegistry` uses a non-throwing approach:
-- **TryConvert()** methods return boolean success indicators
-- Supports built-in types: `string`, `int`, `long`, `double`, `decimal`, `bool`, `DateTime`, `Guid`, `TimeSpan`
-- Custom converters can be registered for additional types
-- Graceful fallback to basic `Convert.ChangeType()` when needed
+The source generator uses `TryParse()` for safe type conversion:
+- Uses `int.TryParse()`, `Guid.TryParse()`, etc. for built-in types
+- On conversion failure: **emits clear error message and returns exit code 1**
+- Does **NOT** skip to the next route on type conversion failure
+- Supports built-in types: `string`, `int`, `long`, `double`, `decimal`, `bool`, `DateTime`, `Guid`, `TimeSpan`, etc.
+- Custom converters use `TryConvert()` pattern for consistency
+
+**Example error output:**
+```
+Error: Invalid value 'abc' for parameter 'port'. Expected: int
+```
+
+**Design Decision:** Type conversion failures are binding errors, not matching failures. When a user types `server --port abc` and a route exists for `server --port {num:int}`, the route **matched** but the **binding failed**. The user should get a clear error, not a confusing "unknown command" message from fallback behavior.
 
 ### 5. **Handler Execution Errors**
 Separate error handling for delegate vs Mediator commands:

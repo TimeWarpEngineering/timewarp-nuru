@@ -1,0 +1,1 @@
+@../.agent/AGENTS.md

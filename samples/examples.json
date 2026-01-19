@@ -4,49 +4,41 @@
   "examples": [
     {
       "id": "basic",
-      "name": "Mixed Calculator Example",
-      "description": "Calculator mixing Delegate and Mediator patterns. REQUIRES: Mediator.Abstractions + Mediator.SourceGenerator packages and services.AddMediator() for Mediator routes.",
-      "path": "samples/calculator/calc-mixed.cs",
-      "tags": ["basics", "routing", "getting-started", "calculator", "mixed"],
+      "name": "Delegate Calculator Example",
+      "description": "Calculator using pure delegate routing - NO additional packages required beyond TimeWarp.Nuru. Maximum performance.",
+      "path": "samples/02-calculator/01-calc-delegate.cs",
+      "tags": ["basics", "routing", "getting-started", "calculator", "delegate"],
       "difficulty": "beginner"
     },
     {
-      "id": "createbuilder",
-      "name": "CreateBuilder Calculator",
-      "description": "ASP.NET Core-style CreateBuilder API - familiar pattern for web developers",
-      "path": "samples/calculator/calc-createbuilder.cs",
-      "tags": ["calculator", "createbuilder", "aspnet-style", "getting-started"],
-      "difficulty": "beginner"
+      "id": "commands",
+      "name": "Command Pattern Calculator",
+      "description": "Calculator using command/handler pattern with Nuru's ICommand<T> and ICommandHandler<T,TResult> interfaces for testability and DI.",
+      "path": "samples/02-calculator/02-calc-commands.cs",
+      "tags": ["calculator", "commands", "dependency-injection", "testable"],
+      "difficulty": "intermediate"
     },
     {
       "id": "mixed",
       "name": "Mixed Pattern Calculator",
-      "description": "Mixed approach combining delegate performance with mediator structure. REQUIRES: Mediator.Abstractions + Mediator.SourceGenerator packages and services.AddMediator().",
-      "path": "samples/calculator/calc-mixed.cs",
-      "tags": ["calculator", "mixed", "delegate", "mediator"],
+      "description": "Mixed approach combining delegate performance with attributed routes for complex operations.",
+      "path": "samples/02-calculator/03-calc-mixed.cs",
+      "tags": ["calculator", "mixed", "delegate", "attributed-routes"],
       "difficulty": "intermediate"
     },
     {
       "id": "delegate",
       "name": "Delegate Calculator",
       "description": "Pure delegate routing - NO additional packages required beyond TimeWarp.Nuru. Maximum performance with no DI overhead.",
-      "path": "samples/calculator/calc-delegate.cs",
+      "path": "samples/02-calculator/01-calc-delegate.cs",
       "tags": ["calculator", "delegate", "performance", "minimal"],
       "difficulty": "beginner"
-    },
-    {
-      "id": "mediator",
-      "name": "Mediator Calculator",
-      "description": "Mediator pattern with DI for testability. REQUIRES: Mediator.Abstractions + Mediator.SourceGenerator packages and services.AddMediator() in ConfigureServices.",
-      "path": "samples/calculator/calc-mediator.cs",
-      "tags": ["calculator", "mediator", "dependency-injection", "enterprise"],
-      "difficulty": "intermediate"
     },
     {
       "id": "hello-world",
       "name": "Hello World",
       "description": "Simplest possible Nuru app - a single route with a greeting. NO additional packages required beyond TimeWarp.Nuru.",
-      "path": "samples/hello-world/hello-world.cs",
+      "path": "samples/01-hello-world/hello-world.cs",
       "tags": ["basics", "getting-started", "minimal"],
       "difficulty": "beginner"
     },
@@ -133,7 +125,7 @@
     {
       "id": "shell-completion",
       "name": "Shell Tab Completion",
-      "description": "Static shell tab completion for Bash, Zsh, PowerShell, and Fish shells. Note: CreateBuilder auto-enables dynamic completion - use EnableStaticCompletion() with SlimBuilder for static-only.",
+      "description": "Static shell tab completion for Bash, Zsh, PowerShell, and Fish shells.",
       "path": "samples/shell-completion-example/shell-completion-example.cs",
       "tags": ["completion", "tab-completion", "bash", "zsh", "powershell", "fish", "static-completion"],
       "difficulty": "intermediate"
@@ -141,7 +133,7 @@
     {
       "id": "dynamic-completion",
       "name": "Dynamic Tab Completion",
-      "description": "Dynamic completion that queries the app at tab-press time with custom completion sources. Note: CreateBuilder auto-enables dynamic completion by default - use ConfigureCompletion to customize.",
+      "description": "Dynamic completion that queries the app at tab-press time with custom completion sources.",
       "path": "samples/dynamic-completion-example/dynamic-completion-example.cs",
       "tags": ["completion", "dynamic-completion", "custom-sources", "configure-completion", "createbuilder"],
       "difficulty": "intermediate"
@@ -213,16 +205,16 @@
     {
       "id": "pipeline-middleware",
       "name": "Complete Pipeline Middleware",
-      "description": "Complete reference with all pipeline behaviors: telemetry, performance, logging, authorization, retry, and exception handling. REQUIRES: Mediator packages.",
-      "path": "samples/pipeline-middleware/pipeline-middleware.cs",
-      "tags": ["pipeline", "middleware", "mediator", "behaviors", "cross-cutting-concerns", "complete-reference", "enterprise"],
+      "description": "Complete reference with all pipeline behaviors: telemetry, performance, logging, authorization, retry, and exception handling.",
+      "path": "samples/07-pipeline-middleware/01-pipeline-middleware.cs",
+      "tags": ["pipeline", "middleware", "behaviors", "cross-cutting-concerns", "complete-reference", "enterprise"],
       "difficulty": "advanced"
     },
     {
       "id": "pipeline-middleware-basic",
       "name": "Pipeline Middleware - Basic",
       "description": "Fundamental pipeline behaviors: logging and performance monitoring with before/after pattern.",
-      "path": "samples/pipeline-middleware/pipeline-middleware-basic.cs",
+      "path": "samples/07-pipeline-middleware/02-pipeline-middleware-basic.cs",
       "tags": ["pipeline", "middleware", "logging", "performance", "getting-started"],
       "difficulty": "intermediate"
     },
@@ -230,7 +222,7 @@
       "id": "pipeline-middleware-authorization",
       "name": "Pipeline Middleware - Authorization",
       "description": "Permission checks using marker interface pattern. Commands opt-in via IRequireAuthorization.",
-      "path": "samples/pipeline-middleware/pipeline-middleware-authorization.cs",
+      "path": "samples/07-pipeline-middleware/03-pipeline-middleware-authorization.cs",
       "tags": ["pipeline", "middleware", "authorization", "marker-interface", "security"],
       "difficulty": "intermediate"
     },
@@ -238,7 +230,7 @@
       "id": "pipeline-middleware-retry",
       "name": "Pipeline Middleware - Retry",
       "description": "Resilience with exponential backoff for transient failures. Commands opt-in via IRetryable.",
-      "path": "samples/pipeline-middleware/pipeline-middleware-retry.cs",
+      "path": "samples/07-pipeline-middleware/04-pipeline-middleware-retry.cs",
       "tags": ["pipeline", "middleware", "retry", "resilience", "exponential-backoff"],
       "difficulty": "intermediate"
     },
@@ -246,7 +238,7 @@
       "id": "pipeline-middleware-exception",
       "name": "Pipeline Middleware - Exception Handling",
       "description": "Consistent exception handling with categorized errors and user-friendly messages.",
-      "path": "samples/pipeline-middleware/pipeline-middleware-exception.cs",
+      "path": "samples/07-pipeline-middleware/05-pipeline-middleware-exception.cs",
       "tags": ["pipeline", "middleware", "exception-handling", "error-handling"],
       "difficulty": "intermediate"
     },
@@ -254,17 +246,9 @@
       "id": "pipeline-middleware-telemetry",
       "name": "Pipeline Middleware - Telemetry",
       "description": "OpenTelemetry-compatible distributed tracing with Activity spans for observability.",
-      "path": "samples/pipeline-middleware/pipeline-middleware-telemetry.cs",
+      "path": "samples/07-pipeline-middleware/06-pipeline-middleware-telemetry.cs",
       "tags": ["pipeline", "middleware", "telemetry", "opentelemetry", "distributed-tracing", "observability"],
       "difficulty": "intermediate"
-    },
-    {
-      "id": "unified-middleware",
-      "name": "Unified Pipeline Middleware",
-      "description": "Pipeline behaviors for both delegate and Mediator routes - unified cross-cutting concerns. REQUIRES: Mediator.Abstractions + Mediator.SourceGenerator packages with options.PipelineBehaviors configuration.",
-      "path": "samples/unified-middleware/unified-middleware.cs",
-      "tags": ["pipeline", "middleware", "delegate", "mediator", "unified", "cross-cutting-concerns"],
-      "difficulty": "advanced"
     },
     {
       "id": "aspire-telemetry",

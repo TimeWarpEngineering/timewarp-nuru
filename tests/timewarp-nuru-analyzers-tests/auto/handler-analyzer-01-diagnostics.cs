@@ -1,19 +1,18 @@
 #!/usr/bin/dotnet --
 
-// Integration tests for NuruHandlerAnalyzer diagnostics
+// Integration tests for handler validation diagnostics through unified NuruAnalyzer
 // These tests verify that appropriate diagnostics are reported for unsupported handler patterns
 
 using System.Collections.Immutable;
 using System.Reflection;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.Diagnostics;
 
 return await RunTests<HandlerAnalyzerDiagnosticTests>();
 
 /// <summary>
-/// Tests for NuruHandlerAnalyzer diagnostics.
-/// Verifies that NURU_H001, NURU_H002, NURU_H003, NURU_H004 are reported correctly.
+/// Tests for handler validation diagnostics through unified analyzer.
+/// Verifies that NURU_H001, NURU_H002, NURU_H003, NURU_H004, NURU_H006 are reported correctly.
 /// </summary>
 [TestTag("Analyzer")]
 public sealed class HandlerAnalyzerDiagnosticTests
@@ -33,20 +32,18 @@ public sealed class HandlerAnalyzerDiagnosticTests
       
       public class Program
       {
-        public static void Main()
+        public static async System.Threading.Tasks.Task Main()
         {
           var handler = new MyHandler();
-          var app = NuruCoreApp.CreateSlimBuilder()
-            .Map("deploy {env}")
-            .WithHandler(handler.Handle)
-            .AsCommand()
-            .Done()
+          NuruCoreApp app = NuruApp.CreateBuilder([])
+            .Map("deploy {env}").WithHandler(handler.Handle).AsCommand().Done()
             .Build();
+          await app.RunAsync([]);
         }
       }
       """;
 
-    ImmutableArray<Diagnostic> diagnostics = await RunAnalyzer(code);
+    ImmutableArray<Diagnostic> diagnostics = RunGenerator(code);
 
     WriteLine($"Found {diagnostics.Length} diagnostics:");
     foreach (Diagnostic d in diagnostics)
@@ -56,6 +53,8 @@ public sealed class HandlerAnalyzerDiagnosticTests
 
     diagnostics.Any(d => d.Id == "NURU_H001").ShouldBeTrue(
       "Should report NURU_H001 for instance method handler");
+
+    await Task.CompletedTask;
   }
 
   /// <summary>
@@ -68,20 +67,18 @@ public sealed class HandlerAnalyzerDiagnosticTests
       
       public class Program
       {
-        public static void Main()
+        public static async System.Threading.Tasks.Task Main()
         {
           bool executed = false;
-          var app = NuruCoreApp.CreateSlimBuilder()
-            .Map("test")
-            .WithHandler(() => { executed = true; })
-            .AsCommand()
-            .Done()
+          NuruCoreApp app = NuruApp.CreateBuilder([])
+            .Map("test").WithHandler(() => { executed = true; }).AsCommand().Done()
             .Build();
+          await app.RunAsync([]);
         }
       }
       """;
 
-    ImmutableArray<Diagnostic> diagnostics = await RunAnalyzer(code);
+    ImmutableArray<Diagnostic> diagnostics = RunGenerator(code);
 
     WriteLine($"Found {diagnostics.Length} diagnostics:");
     foreach (Diagnostic d in diagnostics)
@@ -91,6 +88,8 @@ public sealed class HandlerAnalyzerDiagnosticTests
 
     diagnostics.Any(d => d.Id == "NURU_H002").ShouldBeTrue(
       "Should report NURU_H002 for closure in handler lambda");
+
+    await Task.CompletedTask;
   }
 
   /// <summary>
@@ -105,19 +104,17 @@ public sealed class HandlerAnalyzerDiagnosticTests
       {
         private static void PrivateHandler() => System.Console.WriteLine("private");
         
-        public static void Main()
+        public static async System.Threading.Tasks.Task Main()
         {
-          var app = NuruCoreApp.CreateSlimBuilder()
-            .Map("secret")
-            .WithHandler(PrivateHandler)
-            .AsCommand()
-            .Done()
+          NuruCoreApp app = NuruApp.CreateBuilder([])
+            .Map("secret").WithHandler(PrivateHandler).AsCommand().Done()
             .Build();
+          await app.RunAsync([]);
         }
       }
       """;
 
-    ImmutableArray<Diagnostic> diagnostics = await RunAnalyzer(code);
+    ImmutableArray<Diagnostic> diagnostics = RunGenerator(code);
 
     WriteLine($"Found {diagnostics.Length} diagnostics:");
     foreach (Diagnostic d in diagnostics)
@@ -127,6 +124,8 @@ public sealed class HandlerAnalyzerDiagnosticTests
 
     diagnostics.Any(d => d.Id == "NURU_H004").ShouldBeTrue(
       "Should report NURU_H004 for private method handler");
+
+    await Task.CompletedTask;
   }
 
   /// <summary>
@@ -144,19 +143,17 @@ public sealed class HandlerAnalyzerDiagnosticTests
       
       public class Program
       {
-        public static void Main()
+        public static async System.Threading.Tasks.Task Main()
         {
-          var app = NuruCoreApp.CreateSlimBuilder()
-            .Map("deploy {env}")
-            .WithHandler(Handlers.Deploy)
-            .AsCommand()
-            .Done()
+          NuruCoreApp app = NuruApp.CreateBuilder([])
+            .Map("deploy {env}").WithHandler(Handlers.Deploy).AsCommand().Done()
             .Build();
+          await app.RunAsync([]);
         }
       }
       """;
 
-    ImmutableArray<Diagnostic> diagnostics = await RunAnalyzer(code);
+    ImmutableArray<Diagnostic> diagnostics = RunGenerator(code);
 
     WriteLine($"Found {diagnostics.Length} diagnostics:");
     foreach (Diagnostic d in diagnostics)
@@ -166,6 +163,8 @@ public sealed class HandlerAnalyzerDiagnosticTests
 
     diagnostics.Any(d => d.Id.StartsWith("NURU_H")).ShouldBeFalse(
       "Should not report any NURU_H diagnostics for valid public static method handler");
+
+    await Task.CompletedTask;
   }
 
   /// <summary>
@@ -178,19 +177,17 @@ public sealed class HandlerAnalyzerDiagnosticTests
       
       public class Program
       {
-        public static void Main()
+        public static async System.Threading.Tasks.Task Main()
         {
-          var app = NuruCoreApp.CreateSlimBuilder()
-            .Map("greet {name}")
-            .WithHandler((string name) => System.Console.WriteLine($"Hello, {name}!"))
-            .AsCommand()
-            .Done()
+          NuruCoreApp app = NuruApp.CreateBuilder([])
+            .Map("greet {name}").WithHandler((string name) => System.Console.WriteLine($"Hello, {name}!")).AsCommand().Done()
             .Build();
+          await app.RunAsync([]);
         }
       }
       """;
 
-    ImmutableArray<Diagnostic> diagnostics = await RunAnalyzer(code);
+    ImmutableArray<Diagnostic> diagnostics = RunGenerator(code);
 
     WriteLine($"Found {diagnostics.Length} diagnostics:");
     foreach (Diagnostic d in diagnostics)
@@ -200,6 +197,8 @@ public sealed class HandlerAnalyzerDiagnosticTests
 
     diagnostics.Any(d => d.Id.StartsWith("NURU_H")).ShouldBeFalse(
       "Should not report any NURU_H diagnostics for valid lambda handler");
+
+    await Task.CompletedTask;
   }
 
   /// <summary>
@@ -217,19 +216,17 @@ public sealed class HandlerAnalyzerDiagnosticTests
       
       public class Program
       {
-        public static void Main()
+        public static async System.Threading.Tasks.Task Main()
         {
-          var app = NuruCoreApp.CreateSlimBuilder()
-            .Map("deploy {env}")
-            .WithHandler(Handlers.Deploy)
-            .AsCommand()
-            .Done()
+          NuruCoreApp app = NuruApp.CreateBuilder([])
+            .Map("deploy {env}").WithHandler(Handlers.Deploy).AsCommand().Done()
             .Build();
+          await app.RunAsync([]);
         }
       }
       """;
 
-    ImmutableArray<Diagnostic> diagnostics = await RunAnalyzer(code);
+    ImmutableArray<Diagnostic> diagnostics = RunGenerator(code);
 
     WriteLine($"Found {diagnostics.Length} diagnostics:");
     foreach (Diagnostic d in diagnostics)
@@ -239,12 +236,18 @@ public sealed class HandlerAnalyzerDiagnosticTests
 
     diagnostics.Any(d => d.Id.StartsWith("NURU_H")).ShouldBeFalse(
       "Should not report any NURU_H diagnostics for internal static method handler");
+
+    await Task.CompletedTask;
   }
 
-  private static async Task<ImmutableArray<Diagnostic>> RunAnalyzer(string source)
+  private static ImmutableArray<Diagnostic> RunGenerator(string source)
   {
     CSharpCompilation compilation = CreateCompilationWithNuru(source);
-    
+    return RunGeneratorWithCompilation(compilation);
+  }
+
+  private static ImmutableArray<Diagnostic> RunGeneratorWithCompilation(CSharpCompilation compilation)
+  {
     string repoRoot = FindRepoRoot();
     string analyzerPath = Path.Combine(
       repoRoot,
@@ -267,39 +270,39 @@ public sealed class HandlerAnalyzerDiagnosticTests
         "TimeWarp.Nuru.Analyzers.dll");
     }
 
-    if (!File.Exists(analyzerPath))
+    ISourceGenerator[] generators;
+
+    if (File.Exists(analyzerPath))
     {
-      WriteLine($"ERROR: Analyzer not found at {analyzerPath}");
-      return [];
+      Assembly analyzerAssembly = Assembly.LoadFrom(analyzerPath);
+
+      // Find all IIncrementalGenerator types
+      Type[] generatorTypes = analyzerAssembly.GetTypes()
+        .Where(t => !t.IsAbstract && t.GetInterfaces().Any(i => i.Name == "IIncrementalGenerator"))
+        .ToArray();
+
+      generators = generatorTypes
+        .Select(t => (IIncrementalGenerator)Activator.CreateInstance(t)!)
+        .Select(g => g.AsSourceGenerator())
+        .ToArray();
+    }
+    else
+    {
+      generators = [];
     }
 
-    Assembly analyzerAssembly = Assembly.LoadFrom(analyzerPath);
-    
-    // Find the NuruHandlerAnalyzer
-    Type? analyzerType = analyzerAssembly.GetTypes()
-      .FirstOrDefault(t => t.Name == "NuruHandlerAnalyzer");
+    GeneratorDriverOptions options = new(
+      IncrementalGeneratorOutputKind.None,
+      trackIncrementalGeneratorSteps: true);
 
-    if (analyzerType == null)
-    {
-      WriteLine("ERROR: NuruHandlerAnalyzer type not found");
-      return [];
-    }
+    GeneratorDriver driver = CSharpGeneratorDriver.Create(
+      generators,
+      driverOptions: options);
 
-    DiagnosticAnalyzer analyzer = (DiagnosticAnalyzer)Activator.CreateInstance(analyzerType)!;
-    
-    CompilationWithAnalyzersOptions options = new(
-      new AnalyzerOptions([]),
-      onAnalyzerException: null,
-      concurrentAnalysis: true,
-      logAnalyzerExecutionTime: false);
+    driver = driver.RunGenerators(compilation);
+    GeneratorDriverRunResult result = driver.GetRunResult();
 
-    CompilationWithAnalyzers compilationWithAnalyzers = compilation.WithAnalyzers(
-      [analyzer],
-      options);
-
-    ImmutableArray<Diagnostic> diagnostics = await compilationWithAnalyzers.GetAnalyzerDiagnosticsAsync();
-    
-    return diagnostics;
+    return result.Diagnostics;
   }
 
   private static string FindRepoRoot()

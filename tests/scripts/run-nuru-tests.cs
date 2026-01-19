@@ -80,7 +80,6 @@ string[] testFiles = [
   Path.Combine(testsDir, "timewarp-nuru-tests/routing/routing-08-end-of-options.cs"),
   Path.Combine(testsDir, "timewarp-nuru-tests/routing/routing-09-complex-integration.cs"),
   Path.Combine(testsDir, "timewarp-nuru-tests/routing/routing-10-error-cases.cs"),
-  Path.Combine(testsDir, "timewarp-nuru-tests/routing/routing-11-delegate-mediator.cs"),
  ];
 
 foreach (string testFile in testFiles)

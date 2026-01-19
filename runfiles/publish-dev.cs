@@ -64,15 +64,15 @@ static string GetRuntimeIdentifier()
     }
     else if (OperatingSystem.IsMacOS())
     {
-        return System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture == 
+        return System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture ==
             System.Runtime.InteropServices.Architecture.Arm64 ? "osx-arm64" : "osx-x64";
     }
     else if (OperatingSystem.IsLinux())
     {
-        return System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture == 
+        return System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture ==
             System.Runtime.InteropServices.Architecture.Arm64 ? "linux-arm64" : "linux-x64";
     }
-    
+
     // Fallback
     return "linux-x64";
 }

@@ -131,13 +131,11 @@ if (!skipStandalone)
   WriteLine($"{Cyan}Tests excluded from multi-mode due to conflicts...{Reset}");
   WriteLine();
 
-  // These tests cannot run in multi-mode due to Mediator source generator conflicts
+  // These tests cannot run in multi-mode due to source generator conflicts
   // or unimplemented features
   string[] standaloneTests =
   [
-    Path.Combine(testsRoot, "timewarp-nuru-core-tests", "routing", "routing-11-delegate-mediator.cs"),
     Path.Combine(testsRoot, "timewarp-nuru-core-tests", "routing", "routing-22-async-task-int-return.cs"),
-    Path.Combine(testsRoot, "timewarp-nuru-core-tests", "factory", "factory-01-static-methods.cs"),
     Path.Combine(testsRoot, "timewarp-nuru-core-tests", "options", "options-03-nuru-context.cs"),
   ];
 

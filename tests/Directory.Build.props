@@ -5,15 +5,16 @@
   <PropertyGroup>
     <!-- Tests should not be packaged -->
     <IsPackable>false</IsPackable>
+    <!-- Allow warnings during debugging -->
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <!-- Suppress warnings for test projects:
          CA1303: Localization not needed in tests
          CA2000: NuruAppBuilder is IDisposable but new NuruAppBuilder() creates no disposable resources
                  (ConfigurationManager only created via NuruApp.CreateBuilder with BuilderMode.Full)
          CA2007: ConfigureAwait not required in tests
          CS8785: NuruRouteAnalyzer can't load M.E.Logging.Abstractions with ProjectReference (works as NuGet package)
-         NURU_H002: Tests intentionally use closures in handlers to capture values for assertions
          NURU_H004: Tests may use private methods for error-throwing handlers -->
-    <NoWarn>$(NoWarn);CA1303;CA1307;CA2000;CA2007;CA1031;CA1515;CA1050;CA1052;CA1707;CS0050;RCS1046;RCS1102;RCS1110;CS8785;NURU_H002;NURU_H004</NoWarn>
+    <NoWarn>$(NoWarn);CA1303;CA1307;CA2000;CA2007;CA1031;CA1515;CA1050;CA1052;CA1707;CS0050;RCS1046;RCS1102;RCS1110;CS8785;NURU_H004</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
@@ -21,7 +22,6 @@
     <PackageReference Include="Shouldly" />
     <PackageReference Include="Microsoft.Extensions.Logging" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" />
-    <PackageReference Include="Mediator.Abstractions" />
     <Using Include="Shouldly" />
     <Using Include="System.Console" Static="true" />
     <Using Include="System.Collections.Concurrent" />
@@ -30,9 +30,9 @@
     <Using Include="TimeWarp.Jaribu" />
     <Using Include="TimeWarp.Jaribu.TestRunner" Static="true" />
     <Using Include="TimeWarp.Nuru" />
+    <Using Include="TimeWarp.Nuru.Unit" Static="true" />
     <Using Include="TimeWarp.Terminal" />
     <Using Include="Microsoft.Extensions.Logging" />
-    <Using Include="Mediator" />
     <Using Include="System.Runtime.CompilerServices" />
   </ItemGroup>
 
@@ -40,7 +40,6 @@
     <!-- Common project references for all test projects -->
     <PackageReference Include="TimeWarp.Jaribu" />
     <ProjectReference Include="$(MSBuildThisFileDirectory)../source/timewarp-nuru/timewarp-nuru.csproj" />
-    <ProjectReference Include="$(MSBuildThisFileDirectory)../source/timewarp-nuru-logging/timewarp-nuru-logging.csproj" />
     <!-- Analyzer references don't flow transitively, so we must add it directly -->
     <ProjectReference Include="$(MSBuildThisFileDirectory)../source/timewarp-nuru-analyzers/timewarp-nuru-analyzers.csproj">
       <OutputItemType>Analyzer</OutputItemType>

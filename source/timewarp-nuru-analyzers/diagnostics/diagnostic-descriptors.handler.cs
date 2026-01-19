@@ -23,16 +23,16 @@ internal static partial class DiagnosticDescriptors
 
   /// <summary>
   /// NURU_H002: Closure detected in lambda handler.
-  /// Captured variables cannot be injected at runtime.
+  /// Captured variables cannot be resolved in generated code.
   /// </summary>
   public static readonly DiagnosticDescriptor ClosureNotAllowed = new(
     id: "NURU_H002",
     title: "Closure detected in handler",
-    messageFormat: "Handler lambda captures external variable(s): {0}. Handler generation will be skipped. Use DI-injected parameters or suppress this warning for test code.",
+    messageFormat: "Handler lambda captures external variable(s): {0}. Lambdas with closures are not supported. Use a static method, return values, or refactor to avoid capturing variables.",
     category: HandlerCategory,
-    defaultSeverity: DiagnosticSeverity.Warning,
+    defaultSeverity: DiagnosticSeverity.Error,
     isEnabledByDefault: true,
-    description: "Lambda handlers cannot capture variables from the enclosing scope. The Mediator handler will not be generated for this route. Pass dependencies as handler parameters and they will be injected from the DI container. For test code that intentionally uses closures, suppress with #pragma warning disable NURU_H002.");
+    description: "Lambda handlers cannot capture variables from the enclosing scope because the lambda body is inlined into generated code where captured variables do not exist. Use handler return values, static methods, or command classes instead.");
 
   /// <summary>
   /// NURU_H003: Unsupported handler expression type.
@@ -58,5 +58,44 @@ internal static partial class DiagnosticDescriptors
     category: HandlerCategory,
     defaultSeverity: DiagnosticSeverity.Warning,
     isEnabledByDefault: true,
-    description: "Private methods cannot be called from generated Mediator handlers. The route will use the delegate invoker instead. To generate a Mediator handler, make the method internal or public.");
+    description: "Private methods cannot be called from generated handlers. The route will use the delegate invoker instead. To generate a handler, make the method internal or public.");
+
+  /// <summary>
+  /// NURU_H005: Handler parameter name doesn't match route segment.
+  /// Parameter names must match for generated code to compile correctly.
+  /// </summary>
+  public static readonly DiagnosticDescriptor ParameterNameMismatch = new(
+    id: "NURU_H005",
+    title: "Handler parameter name doesn't match route segment",
+    messageFormat: "Handler parameter '{0}' doesn't match any route segment; available segments: {1}",
+    category: HandlerCategory,
+    defaultSeverity: DiagnosticSeverity.Error,
+    isEnabledByDefault: true,
+    description: "Handler parameter names must match route segment names for the generated code to compile correctly. The lambda body is inlined in generated code and uses these variable names directly.");
+
+  /// <summary>
+  /// NURU_H006: Discard parameter '_' not supported in handler lambdas.
+  /// The lambda body is inlined and discards cannot be referenced.
+  /// </summary>
+  public static readonly DiagnosticDescriptor DiscardParameterNotSupported = new(
+    id: "NURU_H006",
+    title: "Discard parameter not supported in handler",
+    messageFormat: "Handler lambda uses discard parameter '_'. Discards are not supported because the lambda body is inlined into generated code. Use named parameters instead.",
+    category: HandlerCategory,
+    defaultSeverity: DiagnosticSeverity.Error,
+    isEnabledByDefault: true,
+    description: "Lambda handlers cannot use discard parameters ('_') because the lambda body is inlined into generated code where discards cannot be referenced. Use named parameters that match the route segments.");
+
+  /// <summary>
+  /// NURU_H007: ILogger injected without logging configuration.
+  /// Add .ConfigureServices(s => s.AddLogging(...)) to enable logging output.
+  /// </summary>
+  public static readonly DiagnosticDescriptor LoggerInjectedWithoutConfiguration = new(
+    id: "NURU_H007",
+    title: "ILogger<T> injected without logging configuration",
+    messageFormat: "ILogger<{0}> is injected but no logging is configured. Add .ConfigureServices(s => s.AddLogging(...)) to enable logging output, or logging will use NullLogger.",
+    category: HandlerCategory,
+    defaultSeverity: DiagnosticSeverity.Warning,
+    isEnabledByDefault: true,
+    description: "When ILogger<T> is injected into a behavior or handler but no logging is configured via AddLogging(), a NullLogger is used which discards all log output. Add ConfigureServices with AddLogging to enable actual logging.");
 }

@@ -78,7 +78,7 @@ Fetches TimeWarp.Nuru code examples from the GitHub repository with intelligent 
 - `forceRefresh`: Force refresh from GitHub, bypassing cache (default: false)
 
 **Available Examples:**
-- `basic`, `createbuilder`, `delegate`, `mediator`, `mixed` - Calculator examples
+- `basic`, `createbuilder`, `delegate`, `mixed` - Calculator examples
 - `hello-world` - Simplest possible app
 - `async` - Async command handlers
 - `console-logging`, `serilog` - Logging integrations
@@ -178,13 +178,11 @@ Generates handler code from a route pattern using the recommended `NuruApp.Creat
 
 **Parameters:**
 - `pattern`: The route pattern to generate a handler for
-- `useMediator`: Whether to generate mediator pattern code (default: false)
 
 **Generated Code Features:**
 - Uses ASP.NET Core-style `NuruApp.CreateBuilder(args)` pattern (recommended)
 - Shows alternative fluent builder pattern for reference
 - Generates correct parameter types based on route constraints
-- For mediator: generates Command class, Handler class, and DI registration
 
 **Sample Prompts:**
 ```

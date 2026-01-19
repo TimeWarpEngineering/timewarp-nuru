@@ -185,6 +185,15 @@ internal sealed class Compiler : SyntaxVisitor<object?>
     return null;
   }
 
+  public override object? VisitEndOfOptions(EndOfOptionsSyntax endOfOptions)
+  {
+    // End-of-options (--) is a structural marker, not a matchable segment.
+    // It indicates that everything after it should be treated as positional args.
+    // The catch-all parameter that follows handles the actual matching.
+    // We don't add a matcher here - the semantics are handled by the route definition.
+    return null;
+  }
+
   private static string ToCamelCase(string input)
   {
     if (string.IsNullOrEmpty(input))

@@ -1,0 +1,7 @@
+{
+  "TestConfig": {
+    "Value": "from-settings-file",
+    "Number": 10
+  },
+  "FlatKey": "file-default"
+}

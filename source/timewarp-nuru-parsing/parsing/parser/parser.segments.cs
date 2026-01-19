@@ -15,12 +15,12 @@ internal sealed partial class Parser
     };
   }
 
-  private LiteralSyntax ParseEndOfOptions()
+  private EndOfOptionsSyntax ParseEndOfOptions()
   {
     Token token = Consume(RouteTokenType.EndOfOptions, "Expected '--'");
 
-    // Create a literal segment for the -- separator
-    return new LiteralSyntax("--")
+    // Create an end-of-options segment (semantically distinct from literals)
+    return new EndOfOptionsSyntax()
     {
       Position = token.Position,
       Length = token.Length

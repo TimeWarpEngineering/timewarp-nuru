@@ -1,0 +1,76 @@
+namespace TimeWarp.Nuru;
+
+/// <summary>
+/// Provides syntax highlighting for command line input based on route patterns.
+/// </summary>
+internal sealed class SyntaxHighlighter
+{
+  private readonly IReplRouteProvider RouteProvider;
+  private readonly ILogger<SyntaxHighlighter> Logger;
+
+  public SyntaxHighlighter(IReplRouteProvider routeProvider, ILoggerFactory? loggerFactory)
+  {
+    RouteProvider = routeProvider ?? EmptyReplRouteProvider.Instance;
+    Logger = loggerFactory?.CreateLogger<SyntaxHighlighter>() ?? NullLogger<SyntaxHighlighter>.Instance;
+  }
+
+  public string Highlight(string input)
+  {
+    if (string.IsNullOrEmpty(input))
+      return input;
+
+    ReplLoggerMessages.SyntaxHighlightingStarted(Logger, input, null);
+    List<CommandLineToken> tokens = CommandLineParser.ParseWithPositions(input);
+    ReplLoggerMessages.TokensGenerated(Logger, tokens.Count, null);
+
+    StringBuilder highlighted = new();
+
+    foreach (CommandLineToken token in tokens)
+    {
+      ReplLoggerMessages.TokenProcessed(Logger, token.Type.ToString(), token.Text, null);
+      highlighted.Append(GetHighlightedToken(token));
+    }
+
+    string result = highlighted.ToString();
+    ReplLoggerMessages.HighlightedTextGenerated(Logger, result, null);
+    return result;
+  }
+
+  private string GetHighlightedToken(CommandLineToken token)
+  {
+    return token.Type switch
+    {
+      ReplTokenType.Command => token.Text.WithStyle(SyntaxColors.CommandColor),
+      ReplTokenType.StringLiteral => token.Text.WithStyle(SyntaxColors.StringColor),
+      ReplTokenType.Number => token.Text.WithStyle(SyntaxColors.NumberColor),
+      ReplTokenType.LongOption => token.Text.WithStyle(SyntaxColors.KeywordColor),
+      ReplTokenType.ShortOption => token.Text.WithStyle(SyntaxColors.OperatorColor),
+      ReplTokenType.Argument => DetermineArgumentHighlighting(token),
+      ReplTokenType.Whitespace => token.Text, // No coloring for whitespace
+      _ => token.Text
+    };
+  }
+
+  private string DetermineArgumentHighlighting(CommandLineToken token)
+  {
+    // Check if this argument is actually a command
+    if (RouteProvider.IsKnownCommand(token.Text))
+    {
+      return token.Text.WithStyle(SyntaxColors.CommandColor);
+    }
+
+    // Check if it looks like a parameter (contains special chars)
+    if
+    (
+      token.Text.Contains('{', StringComparison.Ordinal) ||
+      token.Text.Contains('}', StringComparison.Ordinal) ||
+      token.Text.Contains(':', StringComparison.Ordinal)
+    )
+    {
+      return token.Text.WithStyle(SyntaxColors.ParameterColor);
+    }
+
+    // Default argument coloring
+    return token.Text.WithStyle(SyntaxColors.DefaultTokenColor);
+  }
+}

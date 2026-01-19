@@ -14,4 +14,16 @@
     <!-- Suppress AOT warnings since we're testing compatibility -->
     <NoWarn>$(NoWarn);IL2026;IL2067;IL2070;IL2072;IL2075;IL2104;IL3050;IL3053</NoWarn>
   </PropertyGroup>
+
+    <!-- Source generator debugging: emit generated files to artifacts directory -->
+  <PropertyGroup Label="Source Generator Output">
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    <CompilerGeneratedFilesOutputPath>$(ArtifactsDirectory)generated/$(MSBuildProjectName)</CompilerGeneratedFilesOutputPath>
+  </PropertyGroup>
+
+    <!-- C# Interceptors (for source generators) -->
+  <PropertyGroup Label="Interceptors">
+    <!-- Enable interceptors in the TimeWarp.Nuru.Generated namespace -->
+    <InterceptorsNamespaces>$(InterceptorsNamespaces);TimeWarp.Nuru.Generated</InterceptorsNamespaces>
+  </PropertyGroup>
 </Project>

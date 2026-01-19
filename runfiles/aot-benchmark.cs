@@ -115,6 +115,7 @@ if (!skipBuild)
             {
                 errorMessage = "AOT publish failed (non-zero exit code)";
             }
+
             WriteLine($"✗ {errorMessage}");
             buildResults[project] = (false, errorMessage, null);
         }
@@ -186,7 +187,7 @@ string hyperfineJsonFile = Path.Combine(resultsDir, "hyperfine-results.json");
 
 // Build the full hyperfine command as a shell command
 StringBuilder hyperfineCmd = new();
-hyperfineCmd.Append("hyperfine --warmup 3 --runs 100 ");
+hyperfineCmd.Append("hyperfine --warmup 3 --runs 100 --ignore-failure ");
 hyperfineCmd.Append(CultureInfo.InvariantCulture, $"--export-markdown '{hyperfineResultsFile}' ");
 hyperfineCmd.Append(CultureInfo.InvariantCulture, $"--export-json '{hyperfineJsonFile}' ");
 

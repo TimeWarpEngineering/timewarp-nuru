@@ -32,8 +32,9 @@
     <Using Include="System.Runtime.CompilerServices" />
     <Using Include="System.Text.Json" />
     <Using Include="System.Xml.Linq" />
-    <Using Include="Mediator" />
+
     <Using Include="TimeWarp.Nuru" />
+    <Using Include="TimeWarp.Nuru.Unit" Static="true" />
     <Using Include="TimeWarp.Amuru" />
     <Using Include="TimeWarp.Terminal" />
     <Using Include="Microsoft.Extensions.DependencyInjection" />
@@ -58,11 +59,6 @@
 
   <ItemGroup>
     <!-- Package references -->
-    <PackageReference Include="Mediator.Abstractions" />
-    <PackageReference Include="Mediator.SourceGenerator">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
     <PackageReference Include="TimeWarp.Amuru" />
   </ItemGroup>
 

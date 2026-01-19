@@ -1,11 +1,7 @@
 global using static System.Console;
-using Microsoft.Extensions.DependencyInjection;
 using TimeWarp.Nuru;
 
 NuruAppBuilder builder = NuruApp.CreateBuilder(args);
-
-// Register the source-generated Mediator
-builder.Services.AddMediator();
 
 // Test 1: Basic Commands
 builder.Map("status").WithHandler(() => WriteLine("✓ System is running")).AsQuery().Done();

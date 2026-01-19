@@ -234,15 +234,17 @@ NuruApp app = new NuruAppBuilder()
 
 ## Type Conversion Errors
 
-When conversion fails, users get clear error messages:
+When conversion fails, users get clear error messages and exit code 1:
 
 ```bash
 ./cli wait abc
-# Error: Cannot convert 'abc' to type Int32 for parameter 'seconds'
+# Error: Invalid value 'abc' for parameter 'seconds'. Expected: int
 
 ./cli schedule invalid-date
-# Error: Cannot convert 'invalid-date' to type DateTime for parameter 'when'
+# Error: Invalid value 'invalid-date' for parameter 'when'. Expected: DateTime
 ```
+
+**Note:** Type conversion errors are binding failures, not matching failures. The route matched, but the value couldn't be converted to the expected type. This gives users actionable feedback rather than a generic "unknown command" message.
 
 ## Custom Type Converters
 

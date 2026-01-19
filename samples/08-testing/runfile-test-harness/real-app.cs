@@ -24,11 +24,6 @@ public static class RealApp
         .WithDescription("Simulate deployment")
         .AsQuery()
         .Done()
-      .Map("deploy {env}")
-        .WithHandler(Deploy)
-        .WithDescription("Deploy to environment")
-        .AsCommand()
-        .Done()
       .Map("version")
         .WithHandler(Version)
         .WithDescription("Show version")
@@ -44,9 +39,6 @@ public static class RealApp
 
   internal static void DeployDryRun(string env, ITerminal terminal)
     => terminal.WriteLine($"[DRY RUN] Would deploy to {env}");
-
-  internal static void Deploy(string env, ITerminal terminal)
-    => terminal.WriteLine($"Deploying to {env}...");
 
   internal static void Version(ITerminal terminal)
     => terminal.WriteLine("RealApp v1.0.0");

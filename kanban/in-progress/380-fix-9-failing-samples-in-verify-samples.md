@@ -35,7 +35,7 @@ Exclude underscore-prefixed samples from verify-samples command to unblock CI.
 - [x] Exclude underscore-prefixed samples from verify-samples configuration
 - [ ] Fix package version mismatch in samples/09-configuration/
 - [ ] Fix source generator issues in samples/10-type-converters/
-- [ ] Fix route analyzer error in samples/08-testing/runfile-test-harness/
+- [x] Fix route analyzer error in samples/08-testing/runfile-test-harness/
 - [ ] Investigate and fix build failure in samples/03-attributed-routes/
 - [ ] Verify all samples pass after fixes
 
@@ -51,3 +51,9 @@ Priority: high
 - Underscore-prefixed samples are now excluded from verify-samples command
 - Previously: 39 runfile samples
 - After fix: 36 runfile samples (3 underscore-prefixed samples excluded)
+
+### Item 4: Fix route analyzer error in samples/08-testing/runfile-test-harness/ (COMPLETED)
+- **File modified:** samples/08-testing/runfile-test-harness/real-app.cs
+- **Change:** Removed unreachable `deploy {env}` route (lines 27-31) and unused `Deploy` handler
+- **Reason:** The `--dry-run` flag handling belongs in the handler, not in route specificity
+- **Result:** Sample now builds without NURU_R003 error

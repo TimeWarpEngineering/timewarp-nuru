@@ -203,11 +203,9 @@ public class EnumSourceTests
 
   private static CompletionContext CreateContext(params string[] args)
   {
-    NuruAppBuilder builder = new();
     return new CompletionContext(
       Args: args.Length > 0 ? args : ["app"],
-      CursorPosition: args.Length > 0 ? args.Length : 1,
-      Endpoints: builder.EndpointCollection
+      CursorPosition: args.Length > 0 ? args.Length : 1
     );
   }
 }

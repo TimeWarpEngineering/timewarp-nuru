@@ -333,12 +333,12 @@ dotnet_naming_style.local_function_style.capitalization = pascal_case
 dotnet_code_quality.null_check_validation_methods = NotNull
 
 # NURU_DEBUG diagnostics - Hidden by default for clean release builds
-# Uncomment to see informational debug output during development (info severity):
-# dotnet_diagnostic.NURU_DEBUG.severity = info
-# dotnet_diagnostic.NURU_DEBUG2.severity = info
-# dotnet_diagnostic.NURU_DEBUG3.severity = info
-# dotnet_diagnostic.NURU_DEBUG4.severity = info
-# dotnet_diagnostic.NURU_DEBUG_CONV1.severity = info
+# Uncomment to see debug output during development:
+# dotnet_diagnostic.NURU_DEBUG.severity = warning
+# dotnet_diagnostic.NURU_DEBUG2.severity = warning
+# dotnet_diagnostic.NURU_DEBUG3.severity = warning
+# dotnet_diagnostic.NURU_DEBUG4.severity = warning
+# dotnet_diagnostic.NURU_DEBUG_CONV1.severity = warning
 
 # CA1034: Do not nest types - Nested types are valuable for encapsulation
 dotnet_diagnostic.CA1034.severity = none

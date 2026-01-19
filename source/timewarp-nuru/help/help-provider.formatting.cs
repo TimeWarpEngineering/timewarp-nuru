@@ -6,53 +6,6 @@ namespace TimeWarp.Nuru;
 public static partial class HelpProvider
 {
   /// <summary>
-  /// Appends a group (potentially with multiple alias patterns) to the help output.
-  /// </summary>
-  private static void AppendGroup(StringBuilder sb, EndpointGroup group, bool useColor)
-  {
-    // Check if this group contains a default route (empty pattern)
-    bool hasDefaultRoute = group.Patterns.Contains(string.Empty);
-
-    // Format all non-empty patterns (convert {x} to <x>)
-    List<string> formattedPatterns = [.. group.Patterns
-      .Where(p => !string.IsNullOrEmpty(p))
-      .Select(p => FormatCommandPattern(p, useColor))];
-
-    // If only default route exists with no other patterns, show "(default)"
-    if (formattedPatterns.Count == 0 && hasDefaultRoute)
-    {
-      formattedPatterns.Add(FormatDefaultMarker(useColor));
-    }
-    // If there are patterns alongside a default route, append "(default)" indicator
-    else if (hasDefaultRoute && formattedPatterns.Count > 0)
-    {
-      formattedPatterns[0] += " " + FormatDefaultMarker(useColor);
-    }
-
-    // Join patterns with comma for alias display
-    string pattern = string.Join(", ", formattedPatterns);
-    string? description = group.Description;
-
-    // Format message type indicator
-    string messageTypeIndicator = FormatMessageTypeIndicator(group.MessageType, useColor);
-
-    if (!string.IsNullOrEmpty(description))
-    {
-      // Use ANSI-aware padding for proper alignment when colors are present
-      int visibleLength = useColor ? AnsiStringUtils.GetVisibleLength(pattern) : pattern.Length;
-      int indicatorVisibleLength = useColor ? AnsiStringUtils.GetVisibleLength(messageTypeIndicator) : messageTypeIndicator.Length;
-      int padding = 26 - visibleLength - indicatorVisibleLength;
-      if (padding < 2) padding = 2;
-      string formattedDesc = FormatDescription(description, useColor);
-      sb.AppendLine(CultureInfo.InvariantCulture, $"  {pattern} {messageTypeIndicator}{new string(' ', padding)}{formattedDesc}");
-    }
-    else
-    {
-      sb.AppendLine(CultureInfo.InvariantCulture, $"  {pattern} {messageTypeIndicator}");
-    }
-  }
-
-  /// <summary>
   /// Formats a command pattern for display with optional syntax coloring.
   /// Converts {x} to &lt;x&gt; and applies colors: commands in cyan, parameters in yellow, options in green.
   /// </summary>

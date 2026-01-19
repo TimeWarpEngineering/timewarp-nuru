@@ -242,7 +242,7 @@ internal static class AppExtractor
     List<Diagnostic> earlyDiagnostics =
     [
       Diagnostic.Create(
-        new DiagnosticDescriptor("NURU_DEBUG2", "Debug", "ExtractFromBuildCall entered for Build() at {0}", "Debug", DiagnosticSeverity.Warning, true),
+        new DiagnosticDescriptor("NURU_DEBUG2", "Debug", "ExtractFromBuildCall entered for Build() at {0}", "Debug", DiagnosticSeverity.Hidden, true),
         buildInvocation.GetLocation(),
         buildInvocation.GetLocation().GetLineSpan().ToString())
     ];
@@ -261,7 +261,7 @@ internal static class AppExtractor
     // DEBUG: Show block info
     string blockInfo = block is null ? "NULL" : $"Statements={block.Statements.Count}, Parent={block.Parent?.GetType().Name}";
     earlyDiagnostics.Add(Diagnostic.Create(
-      new DiagnosticDescriptor("NURU_DEBUG4", "Debug", "Block info: {0}", "Debug", DiagnosticSeverity.Warning, true),
+      new DiagnosticDescriptor("NURU_DEBUG4", "Debug", "Block info: {0}", "Debug", DiagnosticSeverity.Hidden, true),
       buildInvocation.GetLocation(),
       blockInfo));
 
@@ -281,7 +281,7 @@ internal static class AppExtractor
     string diagCount = result.Diagnostics.Length.ToString();
     string diagMessages = string.Join("; ", result.Diagnostics.Select(d => d.GetMessage()));
     earlyDiagnostics.Add(Diagnostic.Create(
-      new DiagnosticDescriptor("NURU_DEBUG3", "Debug", "Interpreter result: Model={0}, Diagnostics={1}, Messages=[{2}]", "Debug", DiagnosticSeverity.Warning, true),
+      new DiagnosticDescriptor("NURU_DEBUG3", "Debug", "Interpreter result: Model={0}, Diagnostics={1}, Messages=[{2}]", "Debug", DiagnosticSeverity.Hidden, true),
       buildInvocation.GetLocation(),
       modelStatus, diagCount, diagMessages));
 
@@ -306,7 +306,7 @@ internal static class AppExtractor
 
         // DEBUG: Report how many sites were found
         diagnostics.Add(Diagnostic.Create(
-          new DiagnosticDescriptor("NURU_DEBUG", "Debug", "Found {0} additional entry point sites for field {1}", "Debug", DiagnosticSeverity.Warning, true),
+          new DiagnosticDescriptor("NURU_DEBUG", "Debug", "Found {0} additional entry point sites for field {1}", "Debug", DiagnosticSeverity.Hidden, true),
           buildInvocation.GetLocation(),
           additionalSites.Length,
           fieldSymbol.Name));
@@ -333,7 +333,7 @@ internal static class AppExtractor
         // DEBUG: Report that no field was found
         string parentType = buildInvocation.Parent?.GetType().Name ?? "null";
         diagnostics.Add(Diagnostic.Create(
-          new DiagnosticDescriptor("NURU_DEBUG", "Debug", "No field assignment found. Build() parent type: {0}", "Debug", DiagnosticSeverity.Warning, true),
+          new DiagnosticDescriptor("NURU_DEBUG", "Debug", "No field assignment found. Build() parent type: {0}", "Debug", DiagnosticSeverity.Hidden, true),
           buildInvocation.GetLocation(),
           parentType));
       }

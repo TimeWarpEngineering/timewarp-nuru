@@ -1281,7 +1281,7 @@ public sealed class DslInterpreter
 
       // DEBUG: Trace converter registration
       CollectedDiagnostics.Add(Diagnostic.Create(
-        new DiagnosticDescriptor("NURU_DEBUG_CONV1", "Debug", "AddTypeConverter called: ConverterTypeName={0}, TargetTypeName={1}", "Debug", DiagnosticSeverity.Warning, true),
+        new DiagnosticDescriptor("NURU_DEBUG_CONV1", "Debug", "AddTypeConverter called: ConverterTypeName={0}, TargetTypeName={1}", "Debug", DiagnosticSeverity.Hidden, true),
         invocation.GetLocation(),
         converterTypeName, targetTypeName));
 

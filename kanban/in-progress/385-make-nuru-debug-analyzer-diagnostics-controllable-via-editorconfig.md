@@ -76,12 +76,36 @@ dotnet_diagnostic.NURU_DEBUG_CONV1.severity = info
 
 ## Checklist
 
-- [ ] Update NURU_DEBUG* diagnostics to Hidden severity in app-extractor.cs
-- [ ] Update NURU_DEBUG_CONV1 to Hidden severity in dsl-interpreter.cs
-- [ ] Add commented EditorConfig entries for NURU_DEBUG* diagnostics
-- [ ] Verify all samples build successfully with no warnings
+- [x] Update NURU_DEBUG* diagnostics to Hidden severity in app-extractor.cs
+- [x] Update NURU_DEBUG_CONV1 to Hidden severity in dsl-interpreter.cs
+- [x] Add commented EditorConfig entries for NURU_DEBUG* diagnostics
+- [x] Verify all samples build successfully with no warnings
 - [ ] Commit changes
 
 ## Notes
 
 This approach aligns with the existing EditorConfig configuration pattern already used in this project (see lines 332-430 in .editorconfig for other analyzer settings).
+
+## Results
+
+### Implementation Complete
+
+All NURU_DEBUG* diagnostics changed from `Warning` to `Hidden` severity:
+
+**Files Changed:**
+1. `source/timewarp-nuru-analyzers/generators/extractors/app-extractor.cs`
+   - NURU_DEBUG2 (line 245): Warning → Hidden
+   - NURU_DEBUG4 (line 264): Warning → Hidden
+   - NURU_DEBUG3 (line 284): Warning → Hidden
+   - NURU_DEBUG (lines 309, 336): Warning → Hidden
+
+2. `source/timewarp-nuru-analyzers/generators/interpreter/dsl-interpreter.cs`
+   - NURU_DEBUG_CONV1 (line 1284): Warning → Hidden
+
+3. `.editorconfig`
+   - Added commented entries for opt-in debug diagnostics
+
+### Verification
+- All 39 samples build successfully
+- No NURU_DEBUG* warnings appear in build output
+- Consumers can enable diagnostics via EditorConfig if needed

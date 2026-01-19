@@ -17,26 +17,33 @@ Nine samples are failing during the verify-samples command. Fix these issues to 
 4. `samples/09-configuration/01-configuration-basics.cs` - Microsoft.Extensions.Options.ConfigurationExtensions version conflict (10.0.1 vs 10.0.2)
 5. `samples/09-configuration/02-command-line-overrides.cs` - Same package version conflict
 
-### Source generator errors (CS0103 - variable not in scope):
-6. `samples/10-type-converters/01-builtin-types.cs` - Generated code has undefined variables (target, source, dest, file, url, path)
-7. `samples/10-type-converters/02-custom-type-converters.cs` - Generated code has undefined variables (recipient, color, version, to, primary, secondary)
-
 ### Route analyzer error (NURU_R003):
-8. `samples/08-testing/runfile-test-harness/real-app.cs` - Route 'deploy {env}' marked as unreachable due to 'deploy {env} --dry-run' having higher specificity
+6. `samples/08-testing/runfile-test-harness/real-app.cs` - Route 'deploy {env}' marked as unreachable due to 'deploy {env} --dry-run' having higher specificity **(FIXED)**
 
-### Build failure:
-9. `samples/03-attributed-routes/attributed-routes.csproj` - Build failed (needs investigation)
+### Route overlap errors (NURU_R003):
+7. `samples/05-aot-example/aot-example.cs` - Three route overlap errors:
+   - Line 61: Route `build --debug` unreachable (equal specificity to `build --release`)
+   - Line 66: Route `build` unreachable (lower specificity than `build --release`)
+   - Line 89: Route `{*args}` unreachable (lower specificity than `--help`)
+
+### Type converter samples (REQUIRE TASK 383 - Source Generator Bug):
+- `samples/10-type-converters/01-builtin-types.cs` - **(FIXED in task 381)** Uri/FileInfo/DirectoryInfo now work correctly
+- `samples/10-type-converters/02-custom-type-converters.cs` - **REQUIRES TASK 383** - Source generator bug: only detects `ConfigureServices` converters, not `builder.AddTypeConverter()` calls
+
+**Root cause:** The source generator bug is NOT a sample issue. The sample uses a valid API pattern (`builder.Services.AddConverter()`) that the generator should support but currently doesn't. Proper fix is in task 383.
 
 ## Immediate Action
-Exclude underscore-prefixed samples from verify-samples command to unblock CI.
+
+Fix route overlap errors in samples/05-aot-example/aot-example.cs to unblock CI.
 
 ## Checklist
 
 - [x] Exclude underscore-prefixed samples from verify-samples configuration
 - [ ] Fix package version mismatch in samples/09-configuration/
-- [ ] Fix source generator issues in samples/10-type-converters/
 - [x] Fix route analyzer error in samples/08-testing/runfile-test-harness/
-- [ ] Investigate and fix build failure in samples/03-attributed-routes/
+- [ ] Fix route overlap errors in samples/05-aot-example/aot-example.cs
+- [x] Fix 01-builtin-types.cs (Uri/FileInfo/DirectoryInfo) - COMPLETED in task 381
+- [ ] Await task 383 - Fix source generator to detect `builder.AddTypeConverter()` (not a sample bug)
 - [ ] Verify all samples pass after fixes
 
 ## Notes
@@ -52,8 +59,29 @@ Priority: high
 - Previously: 39 runfile samples
 - After fix: 36 runfile samples (3 underscore-prefixed samples excluded)
 
-### Item 4: Fix route analyzer error in samples/08-testing/runfile-test-harness/ (COMPLETED)
+### Item 2: Package version mismatch (AWAITING FIX)
+- Status: Still pending - needs resolution in samples/09-configuration/
+
+### Item 3: 01-builtin-types.cs (COMPLETED in task 381)
+- Status: Uri/FileInfo/DirectoryInfo now work correctly
+- Fixed as part of task 381
+
+### Item 4: real-app.cs route analyzer error (COMPLETED)
 - **File modified:** samples/08-testing/runfile-test-harness/real-app.cs
 - **Change:** Removed unreachable `deploy {env}` route (lines 27-31) and unused `Deploy` handler
 - **Reason:** The `--dry-run` flag handling belongs in the handler, not in route specificity
 - **Result:** Sample now builds without NURU_R003 error
+
+### Item 5: aot-example.cs route overlap (AWAITING FIX)
+- Status: Still pending - needs route overlap resolution
+
+### Item 6: 02-custom-type-converters.cs (REQUIRES TASK 383)
+- **Status:** NOT A SAMPLE BUG - Source generator limitation
+- **Root cause:** Source generator only detects converters in `ConfigureServices` blocks, not via `builder.AddTypeConverter()`
+- **Solution:** Task 383 will fix the source generator to support `builder.AddTypeConverter()` calls
+- **Sample is valid** and uses correct API pattern
+
+### attributed-routes.csproj (REMOVED - Was never broken)
+- **Status:** This sample was actually PASSING all along
+- **Issue:** Build order problem during verification (not a sample issue)
+- **Action:** Removed from failing samples list - no code changes needed

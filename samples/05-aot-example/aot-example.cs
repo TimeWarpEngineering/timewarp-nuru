@@ -53,18 +53,12 @@ builder.Map("deploy {env} {tag?}")
   .Done();
 
 // Boolean options
-builder.Map("build --release")
-  .WithHandler(() => WriteLine("Building in Release mode"))
-  .AsCommand()
-  .Done();
-
-builder.Map("build --debug")
-  .WithHandler(() => WriteLine("Building in Debug mode"))
-  .AsCommand()
-  .Done();
-
-builder.Map("build")
-  .WithHandler(() => WriteLine("Building in default mode"))
+builder.Map("build --release? --debug?")
+  .WithHandler((bool release, bool debug) =>
+  {
+    string mode = release ? "Release" : (debug ? "Debug" : "default");
+    WriteLine($"Building in {mode} mode");
+  })
   .AsCommand()
   .Done();
 
@@ -85,16 +79,6 @@ builder.Map("fetch {url}")
   .AsQuery()
   .Done();
 
-// Catch-all for unknown commands
-builder.Map("{*args}")
-  .WithHandler((string[] args) =>
-  {
-    WriteLine($"Unknown command: {string.Join(" ", args)}");
-    WriteLine("Run with --help for available commands.");
-  })
-  .AsQuery()
-  .Done();
-
 // Help command
 builder.Map("--help")
   .WithHandler(() =>
@@ -110,7 +94,7 @@ builder.Map("--help")
     WriteLine("  add {x} {y}              Add two integers");
     WriteLine("  multiply {x} {y}         Multiply two doubles");
     WriteLine("  deploy {env} {tag?}      Deploy to environment (tag optional)");
-    WriteLine("  build [--release|--debug] Build the project");
+    WriteLine("  build [--release] [--debug] Build the project");
     WriteLine("  config --output {path}   Save configuration");
     WriteLine("  fetch {url}              Fetch a URL (async demo)");
     WriteLine("  --help                   Show this help");

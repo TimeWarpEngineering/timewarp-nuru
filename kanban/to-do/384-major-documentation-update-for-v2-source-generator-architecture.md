@@ -52,6 +52,11 @@ The TimeWarp.Nuru framework has undergone a major architectural shift from runti
 - [ ] Document `[ConfigurationKey]` attribute
 - [ ] Document `ConfigureServices()` for service registration
 
+### Analyzer Diagnostics
+- [ ] Document NURU_DEBUG* diagnostics (hidden by default)
+- [ ] Document EditorConfig opt-in for debug diagnostics
+- [ ] Note: valid severity values are `none`, `silent`, `suggestion`, `warning`, `error` (NOT `info`)
+
 ### REPL Mode
 - [ ] Document `AddRepl()` configuration
 - [ ] Document REPL features (completion, history, key bindings)

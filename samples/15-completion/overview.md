@@ -137,71 +137,7 @@ dotnet run samples/15-completion/completion-example.cs -- --install-completion -
 
 ## Manual Shell Verification
 
-To verify completion works in each shell:
-
-### Bash
-
-```bash
-# 1. Build and publish
-dotnet publish samples/15-completion/completion-example.cs -c Release -o ~/.local/bin
-
-# 2. Install completion
-~/.local/bin/completion-example --install-completion bash
-
-# 3. Reload shell or source completion
-source ~/.local/share/bash-completion/completions/completion-example
-
-# 4. Test
-completion-example <TAB>           # Should show: deploy, list-environments, list-tags, status
-completion-example deploy <TAB>    # Should show environment completions
-```
-
-### Zsh
-
-```zsh
-# 1. Build and publish
-dotnet publish samples/15-completion/completion-example.cs -c Release -o ~/.local/bin
-
-# 2. Install completion
-~/.local/bin/completion-example --install-completion zsh
-
-# 3. Add to fpath (one-time setup in ~/.zshrc)
-fpath=(~/.local/share/zsh/site-functions $fpath)
-autoload -Uz compinit && compinit
-
-# 4. Reload shell and test
-completion-example <TAB>
-```
-
-### Fish
-
-```fish
-# 1. Build and publish
-dotnet publish samples/15-completion/completion-example.cs -c Release -o ~/.local/bin
-
-# 2. Install completion (Fish auto-loads from this directory)
-~/.local/bin/completion-example --install-completion fish
-
-# 3. Test (no reload needed)
-completion-example <TAB>
-```
-
-### PowerShell
-
-```powershell
-# 1. Build and publish
-dotnet publish samples/15-completion/completion-example.cs -c Release -o $HOME/.local/bin
-
-# 2. Install completion
-& "$HOME/.local/bin/completion-example" --install-completion pwsh
-
-# 3. Add to profile (one-time setup)
-Add-Content $PROFILE ". $HOME/.local/share/nuru/completions/completion-example.ps1"
-
-# 4. Reload profile and test
-. $PROFILE
-completion-example <TAB>
-```
+See [manual-testing.md](manual-testing.md) for detailed test cases with expected outcomes.
 
 ## Performance
 

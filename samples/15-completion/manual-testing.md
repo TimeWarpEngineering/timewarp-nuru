@@ -1,6 +1,12 @@
 # Manual Shell Completion Testing
 
-This document covers **interactive shell testing only**. The endpoint protocol tests (`__complete`, `--generate-completion`, `--install-completion --dry-run`) are automated in `tests/timewarp-nuru-tests/completion/completion-27-endpoint-protocol.cs`.
+This document covers **shell TAB completion testing only** - the only completion feature that requires manual verification.
+
+All other completion features are fully automated:
+- Endpoint protocol tests: `tests/timewarp-nuru-tests/completion/completion-27-endpoint-protocol.cs`
+- REPL completion: `tests/timewarp-nuru-tests/repl/` (fully automated)
+
+> **Demo tip:** Use `completion-example -i` for REPL mode to demonstrate interactive completion in presentations.
 
 ## Setup
 
@@ -14,7 +20,7 @@ dotnet publish samples/15-completion/completion-example.cs -c Release -o ~/.time
 completion-example --help
 ```
 
-## Interactive Shell Testing
+## Shell Completion Testing
 
 These tests require actual shell interaction and cannot be automated.
 

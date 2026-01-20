@@ -3,15 +3,17 @@
 #:property PublishDir=../../artifacts/
 
 // ============================================================================
-// Dynamic Completion Example - Demonstrates Shell Completion
+// Completion Example - Demonstrates Shell & REPL Completion
 // ============================================================================
-// This runfile demonstrates shell tab completion that queries the app
-// at Tab-press time for dynamic completions.
+// This runfile demonstrates both:
+//   - Shell tab completion (bash/zsh/fish/pwsh)
+//   - Interactive REPL with tab completion
 //
 // Usage:
-//   1. Run with --help:           dotnet run dynamic-completion-example.cs -- --help
-//   2. Generate completion:       dotnet run dynamic-completion-example.cs -- --generate-completion bash
-//   3. Test __complete callback:  dotnet run dynamic-completion-example.cs -- __complete 1 deploy
+//   1. Run with --help:           dotnet run completion-example.cs -- --help
+//   2. Interactive REPL:          dotnet run completion-example.cs -- -i
+//   3. Generate shell completion: dotnet run completion-example.cs -- --generate-completion bash
+//   4. Test __complete callback:  dotnet run completion-example.cs -- __complete 1 deploy
 //
 // Task #340: Shell completion architecture unification
 // ============================================================================
@@ -68,6 +70,8 @@ NuruCoreApp app = NuruApp.CreateBuilder(args)
     registry.RegisterForParameter("env", new EnvironmentCompletionSource());
     registry.RegisterForParameter("tag", new TagCompletionSource());
   })
+
+  .AddRepl()  // Enable interactive mode with -i flag
 
   .Build();
 

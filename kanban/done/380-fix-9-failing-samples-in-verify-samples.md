@@ -44,7 +44,7 @@ Fix route overlap errors in samples/05-aot-example/aot-example.cs to unblock CI.
 - [x] Fix samples/05-aot-example/aot-example.cs - was missing shebang/project directive (no route overlap errors)
 - [x] Fix 01-builtin-types.cs (Uri/FileInfo/DirectoryInfo) - COMPLETED in task 381
 - [x] Task 383 completed - `builder.AddTypeConverter()` now supported, `02-custom-type-converters.cs` works
-- [ ] Verify all samples pass after fixes
+- [x] Verify all samples pass after fixes - **40/40 samples pass**
 
 ## Notes
 

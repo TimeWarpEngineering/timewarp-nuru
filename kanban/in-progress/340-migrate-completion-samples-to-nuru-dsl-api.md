@@ -41,9 +41,16 @@ dynamic completion. Migrate and consolidate the two completion samples.
 
 ### Remaining
 
-- [ ] Add completion tests that use source-generated approach
+- [x] Delete obsolete completion tests (tested runtime-based system)
 - [x] Rename `samples/_dynamic-completion-example/` → `samples/15-completion/`
 - [ ] Verify completion works in bash, zsh, fish, PowerShell (manual testing)
+
+### Tests Retained
+
+Working completion unit tests (don't need source generation):
+- `completion-15-completion-registry.cs` - 14 tests
+- `completion-17-enum-source.cs` - 10 tests  
+- `completion-20-dynamic-script-gen.cs` - 12 tests
 
 ## Related Issues
 
@@ -85,6 +92,11 @@ Runtime
 - `tests/timewarp-nuru-tests/completion/dynamic/` (most files)
 - `tests/timewarp-nuru-repl-tests-reference-only/` (entire folder)
 - `tests/timewarp-nuru-tests/message-type/message-type-01-fluent-api.cs`
+- `tests/timewarp-nuru-tests/completion/dynamic/completion-22-callback-protocol.cs`
+- `tests/timewarp-nuru-tests/completion/dynamic/completion-23-custom-sources.cs`
+- `tests/timewarp-nuru-tests/completion/dynamic/completion-24-context-aware.cs`
+- `tests/timewarp-nuru-tests/completion/dynamic/completion-25-output-format.cs`
+- `tests/timewarp-nuru-tests/completion/dynamic/completion-26-enum-partial-filtering.cs`
 - `samples/_shell-completion-example/` (static completion)
 
 ### Created

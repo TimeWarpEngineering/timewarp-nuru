@@ -115,3 +115,84 @@ Key V2 changes to reflect:
 - Pipeline behaviors via `INuruBehavior<T>`
 - Custom type converters via `IRouteTypeConverter`
 - Attributed routes via `[NuruRoute]`
+
+## Results
+
+### What Was Implemented
+
+All phases of the MCP server V2 update were completed:
+
+**Phase 1: Updated `generate-handler-tool.cs`**
+- Removed `GenerateCommandHandler()` method (Mediator pattern)
+- Removed `useCommand` parameter from `GenerateHandler()`
+- Updated `GenerateDirectHandler()` → `GenerateWithHandlerPattern()` using new V2 fluent DSL:
+  ```csharp
+  NuruApp.CreateBuilder(args)
+    .Map("pattern")
+      .WithDescription("...")
+      .WithHandler((args) => { ... })
+      .Done();
+  ```
+- Added support for attributed routes via `[NuruRoute]` alternative comment
+- Added support for `.AddBehavior()` pipeline configuration
+- Added `.AsCommand()`, `.AsQuery()` endpoint classification
+
+**Phase 2: Updated `examples.json`**
+- Replaced `"commands"` example with `"attributed-routes"`
+- Added `"behaviors-basic"` example
+- Added `"behaviors-filtered"` example
+- Added `"type-converters-custom"` example
+- Updated descriptions to reflect V2 patterns
+
+**Phase 3: Updated Tests**
+- `mcp-04-handler-generation.cs` - Removed `useCommand=true` tests, added V2 DSL tests
+- `mcp-01-example-retrieval.cs` - Updated for new example IDs
+
+**Phase 4: Created New MCP Tools**
+1. **`get-behavior-tool.cs`** (16.5 KB)
+   - `GetBehaviorInfoAsync()` - INuruBehavior<T> overview
+   - `GetBehaviorExample()` - Global behaviors (logging, performance)
+   - `GetFilteredBehaviorExample()` - Filtered behaviors with marker interfaces
+
+2. **`get-type-converter-tool.cs`** (13.6 KB)
+   - `GetTypeConverterInfoAsync()` - IRouteTypeConverter overview
+   - `GetTypeConverterExample()` - Custom converter implementations
+
+3. **`get-attributed-route-tool.cs`** (15.7 KB)
+   - `GetAttributedRouteInfoAsync()` - [NuruRoute] attribute overview
+   - `GetAttributedRouteExample()` - Nested Handler class patterns
+
+**Phase 5: Updated README**
+- Removed all Mediator references
+- Added documentation for 7 new tool methods (tools #12-18)
+- Updated sample prompts to use V2 patterns
+
+### Files Changed
+
+| File | Action | Lines |
+|------|--------|-------|
+| `source/timewarp-nuru-mcp/tools/generate-handler-tool.cs` | Modified | -180/+0 net change |
+| `samples/examples.json` | Modified | +38 lines |
+| `source/timewarp-nuru-mcp/program.cs` | Modified | +3 new tool registrations |
+| `source/timewarp-nuru-mcp/readme.md` | Modified | Updated V2 docs |
+| `tests/timewarp-nuru-mcp-tests/mcp-04-handler-generation.cs` | Modified | Updated tests |
+| `tests/timewarp-nuru-mcp-tests/mcp-01-example-retrieval.cs` | Modified | +4 assertions |
+| `source/timewarp-nuru-mcp/tools/get-behavior-tool.cs` | Created | 16.5 KB |
+| `source/timewarp-nuru-mcp/tools/get-type-converter-tool.cs` | Created | 13.6 KB |
+| `source/timewarp-nuru-mcp/tools/get-attributed-route-tool.cs` | Created | 15.7 KB |
+
+### Test Results
+
+- **Handler generation tests**: 15/15 passed ✅
+- **Build**: 0 warnings, 0 errors ✅
+
+### Key Design Decisions
+
+1. **Removed Mediator patterns entirely** - No deprecation warning, clean V2 API
+2. **New tools follow existing patterns** - GitHub fetching with 1-hour cache TTL, fallback content
+3. **Fluent DSL uses method chaining** - `.Map().WithHandler().WithDescription().Done()`
+4. **Examples reference GitHub master** - Tests may fail until examples.json is pushed to remote
+
+### Known Issue
+
+The `GetExampleTool` fetches examples from GitHub master, but the local `examples.json` has V2 examples not yet on remote. Tests will pass once this PR is merged and examples.json is synced to GitHub.

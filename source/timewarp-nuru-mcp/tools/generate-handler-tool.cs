@@ -9,21 +9,12 @@ internal sealed class GenerateHandlerTool
   [McpServerTool]
   [Description("Generate a handler function from a route pattern")]
   public static string GenerateHandler(
-      [Description("Route pattern (e.g., 'deploy {env} --force')")] string pattern,
-      [Description("Use command/handler pattern instead of direct delegates")] bool useCommand = false)
+      [Description("Route pattern (e.g., 'deploy {env} --force')")] string pattern)
   {
     try
     {
       CompiledRoute route = PatternParser.Parse(pattern);
-
-      if (useCommand)
-      {
-        return GenerateCommandHandler(pattern, route);
-      }
-      else
-      {
-        return GenerateDirectHandler(pattern, route);
-      }
+      return GenerateWithHandlerPattern(pattern, route);
     }
     catch (PatternException ex)
     {
@@ -33,7 +24,7 @@ internal sealed class GenerateHandlerTool
     }
   }
 
-  private static string GenerateDirectHandler(string pattern, CompiledRoute route)
+  private static string GenerateWithHandlerPattern(string pattern, CompiledRoute route)
   {
     StringBuilder sb = new();
     List<ParameterInfo> parameters = ExtractParameters(route);
@@ -42,154 +33,111 @@ internal sealed class GenerateHandlerTool
     sb.AppendLine(CultureInfo.InvariantCulture, $"// Specificity Score: {route.Specificity}");
     sb.AppendLine();
 
-    // Show recommended CreateBuilder pattern first
+    // Show recommended V2 fluent DSL pattern
     sb.AppendLine("// ═══════════════════════════════════════════════════════════════");
-    sb.AppendLine("// Recommended: ASP.NET Core-style CreateBuilder pattern");
+    sb.AppendLine("// V2 Fluent DSL Pattern with .WithHandler()");
     sb.AppendLine("// ═══════════════════════════════════════════════════════════════");
-    sb.AppendLine("// CreateBuilder auto-enables: Telemetry, REPL, Dynamic Shell Completion, Interactive routes");
-    sb.AppendLine("// Use fluent API to configure: .AddRepl(options => {...}), .AddHelp(options => {...})");
+    sb.AppendLine("// Features:");
+    sb.AppendLine("//   - Source-generated at compile time (AOT compatible)");
+    sb.AppendLine("//   - Type-safe parameter binding");
+    sb.AppendLine("//   - Pipeline behaviors via .AddBehavior()");
+    sb.AppendLine("//   - Endpoint classification via .AsCommand(), .AsQuery(), etc.");
     sb.AppendLine();
-    sb.AppendLine("NuruAppBuilder builder = NuruApp.CreateBuilder(args);");
+    sb.AppendLine("using TimeWarp.Nuru;");
+    sb.AppendLine("using static System.Console;");
     sb.AppendLine();
+    sb.AppendLine("NuruCoreApp app = NuruApp.CreateBuilder(args)");
 
-    // Generate the Map call with builder
-    sb.Append(CultureInfo.InvariantCulture, $"builder.Map(\"{pattern}\", ");
+    // Generate the Map call with fluent DSL
+    sb.Append(CultureInfo.InvariantCulture, $"  .Map(\"{pattern}\")");
+    sb.AppendLine();
+    sb.AppendLine("    .WithDescription(\"TODO: Add description\")");
+
+    // Generate the WithHandler call
+    sb.Append("    .WithHandler(");
 
     if (parameters.Count == 0)
     {
-      sb.AppendLine("() =>");
+      sb.Append("() =>");
     }
     else
     {
       sb.Append('(');
       sb.AppendJoin(", ", parameters.Select(p => $"{p.Type} {p.Name}"));
-      sb.AppendLine(") =>");
+      sb.Append(") =>");
     }
 
-    sb.AppendLine("{");
-    sb.AppendLine("    // TODO: Implement handler logic");
+    sb.AppendLine();
+    sb.AppendLine("    {");
+    sb.AppendLine("      // TODO: Implement handler logic");
 
     if (parameters.Count > 0)
     {
-      sb.AppendLine();
       foreach (ParameterInfo param in parameters)
       {
-        sb.AppendLine(CultureInfo.InvariantCulture, $"    Console.WriteLine(\"{param.DisplayName}: {{{param.Name}}}\");");
+        sb.AppendLine(CultureInfo.InvariantCulture, $"      WriteLine($\"{param.DisplayName}: {{{param.Name}}}\");");
       }
     }
-
-    sb.AppendLine("}");
-
-    if (parameters.Any(p => p.Description is not null))
+    else
     {
-      sb.Append(", \"TODO: Add route description\"");
+      sb.AppendLine("      WriteLine(\"Command executed\");");
     }
 
-    sb.AppendLine(");");
+    sb.AppendLine("    })");
+    sb.AppendLine("    .AsCommand()  // or .AsQuery(), .AsIdempotentCommand()");
+    sb.AppendLine("    .Done()");
+    sb.AppendLine("  .Build();");
     sb.AppendLine();
-    sb.AppendLine("NuruCoreApp app = builder.Build();");
     sb.AppendLine("return await app.RunAsync(args);");
     sb.AppendLine();
 
-    // Also show the fluent builder pattern for reference
+    // Show attributed route alternative
     sb.AppendLine("// ═══════════════════════════════════════════════════════════════");
-    sb.AppendLine("// Alternative: Fluent builder pattern");
+    sb.AppendLine("// Alternative: [NuruRoute] Attributed Pattern");
     sb.AppendLine("// ═══════════════════════════════════════════════════════════════");
-    sb.AppendLine();
-    sb.AppendLine("// NuruCoreApp app = NuruApp.CreateBuilder([])");
-    sb.Append(CultureInfo.InvariantCulture, $"//     .Map(\"{pattern}\", ");
+    sb.AppendLine("// For larger apps, use attributed routes for auto-discovery:");
+    sb.AppendLine("//");
 
-    if (parameters.Count == 0)
-    {
-      sb.Append("() => { /* handler */ }");
-    }
-    else
-    {
-      sb.Append('(');
-      sb.AppendJoin(", ", parameters.Select(p => $"{p.Type} {p.Name}"));
-      sb.Append(") => { /* handler */ }");
-    }
-
-    sb.AppendLine(")");
-    sb.AppendLine("//     .Build();");
-
-    return sb.ToString();
-  }
-
-  private static string GenerateCommandHandler(string pattern, CompiledRoute route)
-  {
-    StringBuilder sb = new();
-    List<ParameterInfo> parameters = ExtractParameters(route);
-
-    // Generate a command name from the pattern
     string commandName = GenerateCommandName(pattern);
+    sb.AppendLine(CultureInfo.InvariantCulture, $"// [NuruRoute(\"{pattern}\", Description = \"TODO: Add description\")]");
+    sb.AppendLine(CultureInfo.InvariantCulture, $"// public sealed class {commandName}Endpoint");
+    sb.AppendLine("// {");
 
-    sb.AppendLine(CultureInfo.InvariantCulture, $"// Route: {pattern}");
-    sb.AppendLine("// Command/Handler Pattern Implementation");
-    sb.AppendLine("// Uses [NuruRoute] attribute with nested Handler class");
-    sb.AppendLine();
-
-    // Generate the Command class with nested Handler
-    sb.AppendLine(CultureInfo.InvariantCulture, $"[NuruRoute(\"{pattern}\", Description = \"TODO: Add description\")]");
-    sb.AppendLine(CultureInfo.InvariantCulture, $"public sealed class {commandName}Command : ICommand<Unit>");
-    sb.AppendLine("{");
-
-    // Properties from route parameters
     foreach (ParameterInfo param in parameters)
     {
-      if (param.IsOption && param.IsFlag)
-      {
-        sb.AppendLine(CultureInfo.InvariantCulture, $"    [Option(\"{param.DisplayName}\")]");
-      }
-      else if (param.IsOption)
-      {
-        sb.AppendLine(CultureInfo.InvariantCulture, $"    [Option(\"{param.DisplayName}\")]");
-      }
-
       string nullableMarker = param.IsOptional ? "?" : "";
       string requiredMarker = param.IsOptional ? "" : "required ";
-      sb.AppendLine(CultureInfo.InvariantCulture, $"    public {requiredMarker}{param.Type}{nullableMarker} {param.PropertyName} {{ get; set; }}");
-      sb.AppendLine();
+      sb.AppendLine(CultureInfo.InvariantCulture, $"//   public {requiredMarker}{param.Type}{nullableMarker} {param.PropertyName} {{ get; init; }}");
     }
 
-    // Nested Handler class
-    sb.AppendLine(CultureInfo.InvariantCulture, $"    internal sealed class Handler : ICommandHandler<{commandName}Command, Unit>");
-    sb.AppendLine("    {");
-    sb.AppendLine("        private readonly ITerminal Terminal;");
-    sb.AppendLine();
-    sb.AppendLine("        public Handler(ITerminal terminal)");
-    sb.AppendLine("        {");
-    sb.AppendLine("            Terminal = terminal;");
-    sb.AppendLine("        }");
-    sb.AppendLine();
-    sb.AppendLine(CultureInfo.InvariantCulture, $"        public ValueTask<Unit> Handle({commandName}Command command, CancellationToken ct)");
-    sb.AppendLine("        {");
-    sb.AppendLine("            // TODO: Implement handler logic");
-
-    if (parameters.Count > 0)
-    {
-      sb.AppendLine();
-      foreach (ParameterInfo param in parameters)
-      {
-        sb.AppendLine(CultureInfo.InvariantCulture, $"            Terminal.WriteLine($\"{param.DisplayName}: {{command.{param.PropertyName}}}\");");
-      }
-    }
-
-    sb.AppendLine();
-    sb.AppendLine("            return new ValueTask<Unit>(Unit.Value);");
-    sb.AppendLine("        }");
-    sb.AppendLine("    }");
-    sb.AppendLine("}");
+    sb.AppendLine("//");
+    sb.AppendLine("//   internal sealed class Handler(ITerminal terminal)");
+    sb.AppendLine("//   {");
+    sb.AppendLine(CultureInfo.InvariantCulture, $"//     public ValueTask<Unit> Handle({commandName}Endpoint request, CancellationToken ct)");
+    sb.AppendLine("//     {");
+    sb.AppendLine("//       // Handler logic here");
+    sb.AppendLine("//       return ValueTask.FromResult(Unit.Value);");
+    sb.AppendLine("//     }");
+    sb.AppendLine("//   }");
+    sb.AppendLine("// }");
     sb.AppendLine();
 
-    // Generate the app setup
+    // Show pipeline behaviors example
     sb.AppendLine("// ═══════════════════════════════════════════════════════════════");
-    sb.AppendLine("// App setup - commands are auto-discovered from [NuruRoute] attributes");
+    sb.AppendLine("// Adding Pipeline Behaviors");
     sb.AppendLine("// ═══════════════════════════════════════════════════════════════");
-    sb.AppendLine();
-    sb.AppendLine("return await NuruApp.CreateBuilder(args)");
-    sb.AppendLine("    .Build()");
-    sb.AppendLine("    .RunAsync(args);");
+    sb.AppendLine("// Add cross-cutting concerns with .AddBehavior():");
+    sb.AppendLine("//");
+    sb.AppendLine("// NuruCoreApp app = NuruApp.CreateBuilder(args)");
+    sb.AppendLine("//   .AddBehavior(typeof(LoggingBehavior))      // Global: applies to all routes");
+    sb.AppendLine("//   .AddBehavior(typeof(PerformanceBehavior))  // Global: applies to all routes");
+    sb.AppendLine("//   .AddBehavior(typeof(AuthBehavior))         // Filtered: INuruBehavior<IRequireAuth>");
+    sb.AppendLine(CultureInfo.InvariantCulture, $"//   .Map(\"{pattern}\")");
+    sb.AppendLine("//     .WithHandler(...)");
+    sb.AppendLine("//     .Implements<IRequireAuth>()  // Opt-in to filtered behaviors");
+    sb.AppendLine("//     .AsCommand()");
+    sb.AppendLine("//     .Done()");
+    sb.AppendLine("//   .Build();");
 
     return sb.ToString();
   }

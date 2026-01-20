@@ -174,20 +174,21 @@ Provides examples of specific route pattern features.
 ```
 
 #### 8. `generate_handler`
-Generates handler code from a route pattern using the recommended `NuruApp.CreateBuilder()` pattern.
+Generates handler code from a route pattern using the V2 fluent DSL with `.WithHandler()`.
 
 **Parameters:**
 - `pattern`: The route pattern to generate a handler for
 
 **Generated Code Features:**
-- Uses ASP.NET Core-style `NuruApp.CreateBuilder(args)` pattern (recommended)
-- Shows alternative fluent builder pattern for reference
+- Uses V2 fluent DSL pattern with `.Map().WithHandler().AsCommand().Done()`
+- Shows `[NuruRoute]` attributed pattern as alternative
+- Demonstrates pipeline behaviors with `.AddBehavior()` and `.Implements<T>()`
 - Generates correct parameter types based on route constraints
 
 **Sample Prompts:**
 ```
 "Generate a handler for the route 'deploy {env} --dry-run'"
-"Create a mediator handler for 'backup {source} {dest?}'"
+"Create handler code for 'backup {source} {dest?}'"
 "Generate code for 'test {project} --verbose --filter {pattern}'"
 "Show me the handler signature for 'docker {*args}'"
 ```
@@ -236,6 +237,87 @@ Provides best practices for error handling in TimeWarp.Nuru applications.
 "Show me error handling recommendations for Nuru apps"
 "How should I handle errors in my TimeWarp.Nuru application?"
 "Get the latest error handling best practices"
+```
+
+#### 12. `get_behavior_info`
+Provides information about pipeline behaviors in TimeWarp.Nuru.
+
+**Parameters:**
+- `forceRefresh`: Force refresh from GitHub, bypassing cache (default: false)
+
+**Sample Prompts:**
+```
+"How do pipeline behaviors work in TimeWarp.Nuru?"
+"What is INuruBehavior?"
+"Explain the behavior pipeline in Nuru"
+```
+
+#### 13. `get_behavior_example`
+Provides a code example for implementing basic pipeline behaviors.
+
+**Sample Prompts:**
+```
+"Show me how to create a logging behavior"
+"Give me an example of a pipeline behavior"
+"How do I implement INuruBehavior?"
+```
+
+#### 14. `get_filtered_behavior_example`
+Provides a code example for implementing filtered behaviors that only apply to specific routes.
+
+**Sample Prompts:**
+```
+"How do I create behaviors that only apply to certain routes?"
+"Show me filtered behavior examples"
+"How do marker interfaces work with behaviors?"
+"Give me an example of IRequireAuth behavior"
+```
+
+#### 15. `get_type_converter_info`
+Provides information about custom type converters in TimeWarp.Nuru.
+
+**Parameters:**
+- `forceRefresh`: Force refresh from GitHub, bypassing cache (default: false)
+
+**Sample Prompts:**
+```
+"How do type converters work in TimeWarp.Nuru?"
+"What is IRouteTypeConverter?"
+"How do I convert custom types from command line arguments?"
+```
+
+#### 16. `get_type_converter_example`
+Provides a code example for implementing custom type converters.
+
+**Sample Prompts:**
+```
+"Show me how to create a custom type converter"
+"Give me an IRouteTypeConverter example"
+"How do I parse custom types from strings?"
+```
+
+#### 17. `get_attributed_route_info`
+Provides information about the `[NuruRoute]` attribute for auto-discovered routes.
+
+**Parameters:**
+- `forceRefresh`: Force refresh from GitHub, bypassing cache (default: false)
+
+**Sample Prompts:**
+```
+"What is the NuruRoute attribute?"
+"How do attributed routes work in TimeWarp.Nuru?"
+"Explain auto-discovered routes"
+```
+
+#### 18. `get_attributed_route_example`
+Provides a code example for attributed routes with nested Handler class.
+
+**Sample Prompts:**
+```
+"Show me how to use [NuruRoute]"
+"Give me an attributed route example"
+"How do I create routes with auto-discovery?"
+"Show me the Handler class pattern"
 ```
 
 ## Developing from Source
@@ -288,7 +370,7 @@ Cache location:
 ```
 "Show me how to create a basic CLI app with TimeWarp.Nuru"
 "Get the createbuilder example - I'm familiar with ASP.NET Core"
-"What's the difference between the delegates and mediator examples?"
+"Show me the fluent DSL pattern with .WithHandler()"
 "Show me the syntax for optional parameters and give me examples"
 "How do I add REPL support to my CLI app?"
 ```
@@ -298,7 +380,7 @@ Cache location:
 "I want to build a git-like CLI. Show me the basic example and validate my route 'repo init {name} --bare'"
 "Help me create routes for a deployment tool. Start with validating 'deploy {env} --version {tag}'"
 "Generate a handler for 'backup {source} {dest?} --compress --verbose'"
-"Create mediator pattern code for 'migrate {database} --rollback {version?}'"
+"Create code for 'migrate {database} --rollback {version?}'"
 ```
 
 ### Adding Interactive Features
@@ -313,7 +395,29 @@ Cache location:
 ```
 "Show me examples of typed parameters and generate a handler for 'wait {seconds:int}'"
 "Get the syntax for catch-all parameters and create code for 'docker {*args}'"
-"Generate both direct and mediator handlers for 'test {project} --verbose'"
+"Generate handlers for 'test {project} --verbose'"
+```
+
+### Pipeline Behaviors
+```
+"How do I add cross-cutting concerns to my CLI?"
+"Show me the behavior example for logging"
+"How do I create filtered behaviors for authentication?"
+"Give me an example of behaviors that only apply to certain routes"
+```
+
+### Custom Type Converters
+```
+"How do I parse custom types from command line arguments?"
+"Show me how to create an Environment type converter"
+"Get the type converter example"
+```
+
+### Attributed Routes
+```
+"How do I use [NuruRoute] for auto-discovered commands?"
+"Show me the attributed route pattern"
+"What's the difference between fluent and attributed routes?"
 ```
 
 ### Configuration

@@ -11,11 +11,11 @@
       "difficulty": "beginner"
     },
     {
-      "id": "commands",
-      "name": "Command Pattern Calculator",
-      "description": "Calculator using command/handler pattern with Nuru's ICommand<T> and ICommandHandler<T,TResult> interfaces for testability and DI.",
-      "path": "samples/02-calculator/02-calc-commands.cs",
-      "tags": ["calculator", "commands", "dependency-injection", "testable"],
+      "id": "attributed-routes",
+      "name": "Attributed Routes",
+      "description": "[NuruRoute] attribute pattern for auto-discovered endpoints with nested Handler classes. Supports [NuruRouteGroup] for prefixes and [NuruRouteAlias] for aliases.",
+      "path": "samples/03-attributed-routes/attributed-routes.cs",
+      "tags": ["attributed-routes", "auto-discovery", "endpoint", "testable", "dependency-injection"],
       "difficulty": "intermediate"
     },
     {
@@ -149,9 +149,17 @@
     {
       "id": "custom-type-converter",
       "name": "Custom Type Converter",
-      "description": "Create custom type converters for your own types - enums, complex objects",
+      "description": "Create custom IRouteTypeConverter implementations for your own types. Demonstrates EmailAddress, HexColor, and SemanticVersion converters with validation.",
       "path": "samples/10-type-converters/02-custom-type-converters.cs",
-      "tags": ["types", "converters", "custom", "advanced"],
+      "tags": ["types", "converters", "IRouteTypeConverter", "custom", "validation", "advanced"],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "type-converters-custom",
+      "name": "IRouteTypeConverter Pattern",
+      "description": "Implement IRouteTypeConverter for custom parameter types. Shows TargetType, ConstraintAlias, and TryConvert pattern with practical examples.",
+      "path": "samples/10-type-converters/02-custom-type-converters.cs",
+      "tags": ["types", "IRouteTypeConverter", "converters", "custom", "extensibility"],
       "difficulty": "intermediate"
     },
     {
@@ -192,6 +200,22 @@
       "description": "Programmatically test REPL mode using TestTerminal with QueueLine() and QueueKey() for input simulation - session lifecycle, commands, and assertions",
       "path": "tests/timewarp-nuru-repl-tests/repl-01-session-lifecycle.cs",
       "tags": ["testing", "repl", "testability", "terminal", "automation", "queueline", "queuekey"],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "behaviors-basic",
+      "name": "INuruBehavior Basics",
+      "description": "Global pipeline behaviors with INuruBehavior interface. Demonstrates logging and performance behaviors with HandleAsync(context, proceed) pattern.",
+      "path": "samples/07-pipeline-middleware/01-pipeline-middleware-basic.cs",
+      "tags": ["behaviors", "INuruBehavior", "pipeline", "logging", "performance", "cross-cutting"],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "behaviors-filtered",
+      "name": "Filtered Behaviors with INuruBehavior<T>",
+      "description": "Type-safe filtered behaviors with INuruBehavior<TFilter>. Behaviors apply only to routes with .Implements<T>(). Example: AuthorizationBehavior with IRequireAuthorization.",
+      "path": "samples/07-pipeline-middleware/04-pipeline-middleware-filtered-auth.cs",
+      "tags": ["behaviors", "INuruBehavior", "filtered", "authorization", "marker-interface", "type-safe"],
       "difficulty": "intermediate"
     },
     {

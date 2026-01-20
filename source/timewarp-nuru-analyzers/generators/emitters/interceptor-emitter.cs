@@ -131,10 +131,11 @@ internal static class InterceptorEmitter
     sb.AppendLine("  )");
     sb.AppendLine("  {");
 
-    // Set the shell completion provider for DynamicCompletionHandler to use (only when completion or REPL is enabled)
+    // Set up completion support (only when completion or REPL is enabled)
     if (app.HasCompletion || app.HasRepl)
     {
       sb.AppendLine($"    app.ShellCompletionProvider ??= __shellCompletionProvider{methodSuffix};");
+      sb.AppendLine("    app.ConfigureCompletionRegistry();");
       sb.AppendLine();
     }
 

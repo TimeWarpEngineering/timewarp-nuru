@@ -73,11 +73,11 @@ completion-example __complete 2 completion-example deploy
 
 **Expected stdout** (custom EnvironmentCompletionSource):
 ```
-production	Production environment
-staging	Staging environment
-development	Development environment
-qa	QA environment
-demo	Demo environment
+production  Production environment
+staging  Staging environment
+development  Development environment
+qa  QA environment
+demo  Demo environment
 :4
 ```
 

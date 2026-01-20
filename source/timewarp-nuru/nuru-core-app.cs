@@ -22,6 +22,30 @@ public class NuruCoreApp
   public CompletionSourceRegistry CompletionSourceRegistry { get; } = new();
 
   /// <summary>
+  /// Callback to configure completion sources. Set during Build() from builder configuration.
+  /// Invoked once at the start of RunAsync by generated code.
+  /// </summary>
+  internal Action<CompletionSourceRegistry>? CompletionRegistryConfiguration { get; set; }
+
+  /// <summary>
+  /// Whether the completion registry has been configured.
+  /// </summary>
+  private bool completionRegistryConfigured;
+
+  /// <summary>
+  /// Configures the completion source registry if not already configured.
+  /// Called by generated interceptor code at the start of RunAsync.
+  /// </summary>
+  public void ConfigureCompletionRegistry()
+  {
+    if (completionRegistryConfigured)
+      return;
+
+    completionRegistryConfigured = true;
+    CompletionRegistryConfiguration?.Invoke(CompletionSourceRegistry);
+  }
+
+  /// <summary>
   /// Tracer provider for distributed tracing. Set by generated telemetry code.
   /// </summary>
   public TracerProvider? TracerProvider { get; set; }

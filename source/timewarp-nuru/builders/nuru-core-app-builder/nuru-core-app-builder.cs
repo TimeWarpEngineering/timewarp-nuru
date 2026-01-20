@@ -17,6 +17,12 @@ public partial class NuruCoreAppBuilder<TSelf>
   private protected ITerminal? Terminal;
 
   /// <summary>
+  /// Callback to configure completion source registry at runtime.
+  /// Set by EnableCompletion(), invoked by generated code during app initialization.
+  /// </summary>
+  internal Action<CompletionSourceRegistry>? CompletionRegistryConfiguration { get; set; }
+
+  /// <summary>
   /// Gets the service collection. Throws if dependency injection has not been added.
   /// Call AddDependencyInjection() first to enable DI support.
   /// </summary>
@@ -100,7 +106,8 @@ public partial class NuruCoreAppBuilder<TSelf>
     return new NuruCoreApp(Terminal)
     {
       ReplOptions = ReplOptions,
-      LoggerFactory = LoggerFactory
+      LoggerFactory = LoggerFactory,
+      CompletionRegistryConfiguration = CompletionRegistryConfiguration
     };
   }
 }

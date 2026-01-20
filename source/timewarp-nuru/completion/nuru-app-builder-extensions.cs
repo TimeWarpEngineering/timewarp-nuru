@@ -99,15 +99,15 @@ public static class NuruAppBuilderCompletionExtensions
   {
     ArgumentNullException.ThrowIfNull(builder);
 
-    // Store appName and registry configuration for the source generator to use
-    // The actual __complete, --generate-completion, and --install-completion routes
-    // are emitted by CompletionEmitter at compile time
-    _ = appName; // Will be used by source generator
-    _ = configure; // Will be used by source generator
+    // Store the configuration callback for runtime invocation.
+    // The source generator emits code to call ConfigureCompletionRegistry() which
+    // invokes this callback to populate app.CompletionSourceRegistry.
+    if (configure is not null)
+    {
+      builder.CompletionRegistryConfiguration = configure;
+    }
 
-    // Note: This method is recognized by the DSL interpreter but doesn't register routes.
-    // The CompletionEmitter source generator emits the completion routes when it detects
-    // EnableCompletion() in the builder chain.
+    _ = appName; // Will be used by source generator for script generation
 
     return builder;
   }

@@ -373,7 +373,7 @@ public sealed class InterpreterGroupTests
       MetadataReference.CreateFromFile(Path.Combine(runtimePath, "System.Collections.dll")),
     ];
 
-    // Add TimeWarp.Nuru assembly (NuruCoreApp was merged into NuruApp)
+    // Add TimeWarp.Nuru assembly
     AddAssembliesFromDirectory(references, nuruDir);
 
     return CSharpCompilation.Create(

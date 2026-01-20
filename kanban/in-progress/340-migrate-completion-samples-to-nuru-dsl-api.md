@@ -43,11 +43,12 @@ dynamic completion. Migrate and consolidate the two completion samples.
 
 - [x] Delete obsolete completion tests (tested runtime-based system)
 - [x] Rename `samples/_dynamic-completion-example/` → `samples/15-completion/`
+- [x] Add retained completion tests to CI suite (Directory.Build.props)
 - [ ] Verify completion works in bash, zsh, fish, PowerShell (manual testing)
 
-### Tests Retained
+### Tests in CI Suite
 
-Working completion unit tests (don't need source generation):
+Working completion unit tests (36 total, don't need source generation):
 - `completion-15-completion-registry.cs` - 14 tests
 - `completion-17-enum-source.cs` - 10 tests  
 - `completion-20-dynamic-script-gen.cs` - 12 tests

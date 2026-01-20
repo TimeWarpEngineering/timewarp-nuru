@@ -49,7 +49,7 @@ dynamic completion. Migrate and consolidate the two completion samples.
 - [x] Add automated endpoint protocol tests (`completion-27-endpoint-protocol.cs`)
 - [x] Move completion tests from `dynamic/` to `completion/`
 - [x] Add REPL mode to sample for demos
-- [ ] Verify shell TAB completion works in bash, zsh, fish, PowerShell (manual testing only)
+- [x] Verify shell TAB completion works in bash, zsh, fish, PowerShell (manual testing only)
 
 ### Tests in CI Suite
 

@@ -42,7 +42,7 @@ dynamic completion. Migrate and consolidate the two completion samples.
 ### Remaining
 
 - [ ] Add completion tests that use source-generated approach
-- [ ] Rename `samples/_dynamic-completion-example/` → `samples/15-completion/`
+- [x] Rename `samples/_dynamic-completion-example/` → `samples/15-completion/`
 - [ ] Verify completion works in bash, zsh, fish, PowerShell (manual testing)
 
 ## Related Issues

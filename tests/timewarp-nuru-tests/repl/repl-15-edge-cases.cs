@@ -23,7 +23,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.EdgeCases
     terminal.QueueLine($"echo {longArg}");
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("echo {text}")
         .WithHandler((string text) => text)
@@ -46,7 +46,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.EdgeCases
     using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .AddRepl()
       .Build();
@@ -67,7 +67,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.EdgeCases
     terminal.QueueLine("");  // Another empty
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .AddRepl()
       .Build();
@@ -88,7 +88,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.EdgeCases
     terminal.QueueLine("\t");   // Tab only
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .AddRepl()
       .Build();
@@ -111,7 +111,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.EdgeCases
     terminal.QueueLine("echo \"Hello!@#$%^&*()\"");
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("echo {text}")
         .WithHandler((string text) => text)
@@ -141,7 +141,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.EdgeCases
 
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("noop").WithHandler(() => "OK").AsCommand().Done()
       .AddRepl()
@@ -162,7 +162,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.EdgeCases
     terminal.WindowWidth = 10;  // Very narrow window
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .AddRepl()
       .Build();
@@ -183,7 +183,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.EdgeCases
     terminal.QueueLine("cmd2");
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("cmd{n}").WithHandler((string n) => n).AsCommand().Done()
       .AddRepl(options => options.MaxHistorySize = 0)

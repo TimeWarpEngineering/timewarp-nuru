@@ -18,7 +18,7 @@ public static class NuruLoggingExtensions
   /// <returns>The builder for chaining.</returns>
   /// <example>
   /// <code>
-  /// NuruCoreApp app = NuruApp.CreateBuilder([])
+  /// NuruApp app = NuruApp.CreateBuilder([])
   ///   .ConfigureLogging(logging =>
   ///   {
   ///     logging.SetMinimumLevel(LogLevel.Debug);

@@ -21,7 +21,7 @@ public class AdditionalPrimitiveTypeTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("setbyte {value:byte}").WithHandler((byte value) => $"value:{value}").AsCommand().Done()
       .Build();
@@ -40,7 +40,7 @@ public class AdditionalPrimitiveTypeTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("setbyte {value:byte}").WithHandler((byte value) => $"value:{value}").AsCommand().Done()
       .Build();
@@ -63,7 +63,7 @@ public class AdditionalPrimitiveTypeTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("setsbyte {value:sbyte}").WithHandler((sbyte value) => $"value:{value}").AsCommand().Done()
       .Build();
@@ -82,7 +82,7 @@ public class AdditionalPrimitiveTypeTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("setsbyte {value:sbyte}").WithHandler((sbyte value) => $"value:{value}").AsCommand().Done()
       .Build();
@@ -105,7 +105,7 @@ public class AdditionalPrimitiveTypeTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("setshort {value:short}").WithHandler((short value) => $"value:{value}").AsCommand().Done()
       .Build();
@@ -124,7 +124,7 @@ public class AdditionalPrimitiveTypeTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("setshort {value:short}").WithHandler((short value) => $"value:{value}").AsCommand().Done()
       .Build();
@@ -147,7 +147,7 @@ public class AdditionalPrimitiveTypeTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("setushort {value:ushort}").WithHandler((ushort value) => $"value:{value}").AsCommand().Done()
       .Build();
@@ -170,7 +170,7 @@ public class AdditionalPrimitiveTypeTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("setuint {value:uint}").WithHandler((uint value) => $"value:{value}").AsCommand().Done()
       .Build();
@@ -193,7 +193,7 @@ public class AdditionalPrimitiveTypeTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("setulong {value:ulong}").WithHandler((ulong value) => $"value:{value}").AsCommand().Done()
       .Build();
@@ -216,7 +216,7 @@ public class AdditionalPrimitiveTypeTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("setfloat {value:float}").WithHandler((float value) => $"value:{value}").AsCommand().Done()
       .Build();
@@ -235,7 +235,7 @@ public class AdditionalPrimitiveTypeTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("setfloat {value:float}").WithHandler((float value) => $"value:{value}").AsCommand().Done()
       .Build();
@@ -258,7 +258,7 @@ public class AdditionalPrimitiveTypeTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("setchar {value:char}").WithHandler((char value) => $"value:{value}").AsCommand().Done()
       .Build();
@@ -277,7 +277,7 @@ public class AdditionalPrimitiveTypeTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("setchar {value:char}").WithHandler((char value) => $"value:{value}").AsCommand().Done()
       .Build();
@@ -300,7 +300,7 @@ public class AdditionalPrimitiveTypeTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("bytes {*values:byte}").WithHandler((byte[] values) => $"values:[{string.Join(",", values)}]|len:{values.Length}").AsQuery().Done()
       .Build();
@@ -320,7 +320,7 @@ public class AdditionalPrimitiveTypeTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("shorts {*values:short}").WithHandler((short[] values) => $"values:[{string.Join(",", values)}]|len:{values.Length}").AsQuery().Done()
       .Build();
@@ -340,7 +340,7 @@ public class AdditionalPrimitiveTypeTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("floats {*values:float}").WithHandler((float[] values) => $"values:[{string.Join(",", values)}]|len:{values.Length}").AsQuery().Done()
       .Build();

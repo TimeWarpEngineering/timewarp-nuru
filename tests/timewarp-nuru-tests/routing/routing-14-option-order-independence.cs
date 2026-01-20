@@ -19,7 +19,7 @@ public class OptionOrderIndependenceTests
     // should match pattern: backup {source} --compress --output {dest}
     // Arrange
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("backup {source} --compress --output {dest}").WithHandler(
         (string source, bool compress, string dest) =>
@@ -41,7 +41,7 @@ public class OptionOrderIndependenceTests
     // Verify original order still works
     // Arrange
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("backup {source} --compress --output {dest}").WithHandler(
         (string source, bool compress, string dest) =>
@@ -62,7 +62,7 @@ public class OptionOrderIndependenceTests
   {
     // Test with three options: --alpha, --beta {value}, --gamma
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("test --alpha --beta {value} --gamma").WithHandler(
         (bool alpha, string value, bool gamma) =>
@@ -82,7 +82,7 @@ public class OptionOrderIndependenceTests
   {
     // Test with three options in reverse order
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("test --alpha --beta {value} --gamma").WithHandler(
         (bool alpha, string value, bool gamma) =>
@@ -102,7 +102,7 @@ public class OptionOrderIndependenceTests
   {
     // Test with three options in mixed order
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("test --alpha --beta {value} --gamma").WithHandler(
         (bool alpha, string value, bool gamma) =>
@@ -122,7 +122,7 @@ public class OptionOrderIndependenceTests
   {
     // Test optional options in different order
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("backup {source} --compress? --output? {dest} --verbose?").WithHandler(
         (string source, bool compress, string? dest, bool verbose) =>
@@ -144,7 +144,7 @@ public class OptionOrderIndependenceTests
     // Options can appear anywhere - before, after, or interleaved with positional args
     // The router uses a two-pass approach: extract options first, then process positionals
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("copy {source} {dest} --verbose?").WithHandler(
         (string source, string dest, bool verbose) =>
@@ -165,7 +165,7 @@ public class OptionOrderIndependenceTests
   {
     // Test with aliases in different order
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("build --verbose,-v? --output,-o {file}").WithHandler(
         (bool verbose, string file) =>
@@ -184,7 +184,7 @@ public class OptionOrderIndependenceTests
   {
     // Ensure required options are still enforced
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("backup {source} --compress --output {dest}").WithHandler(
         (string source, bool compress, string dest) =>
@@ -203,7 +203,7 @@ public class OptionOrderIndependenceTests
     // --output {file?} means flag is REQUIRED, but value is OPTIONAL
     // This is different from --output? {file} where the flag itself is optional
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("build --output {file?}").WithHandler(
         (string? file) => $"file={file ?? "NULL"}").AsQuery().Done()

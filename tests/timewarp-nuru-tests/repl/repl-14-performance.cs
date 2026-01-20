@@ -45,7 +45,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.Performance
     using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .AddRepl()
       .Build();
@@ -69,7 +69,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.Performance
     terminal.QueueLine("help");
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .AddRepl()
       .Build();
@@ -97,7 +97,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.Performance
 
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .AddRepl(options => options.MaxHistorySize = 1000)
       .Build();
@@ -194,7 +194,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.Performance
     using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .AddRepl()
       .Build();

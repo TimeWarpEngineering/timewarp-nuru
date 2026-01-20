@@ -23,7 +23,7 @@ public class AsyncTaskIntReturnTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("").WithHandler(async () =>
       {
@@ -46,7 +46,7 @@ public class AsyncTaskIntReturnTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("").WithHandler(async () =>
       {
@@ -68,7 +68,7 @@ public class AsyncTaskIntReturnTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("").WithHandler(() => { })
       .WithDescription("Test sync Func<int>").AsCommand().Done()

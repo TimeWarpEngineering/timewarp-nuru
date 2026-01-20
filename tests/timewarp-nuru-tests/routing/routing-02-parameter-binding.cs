@@ -17,7 +17,7 @@ namespace TimeWarp.Nuru.Tests.Routing
     {
       // Arrange
       using TestTerminal terminal = new();
-      NuruCoreApp app = NuruApp.CreateBuilder([])
+      NuruApp app = NuruApp.CreateBuilder([])
         .UseTerminal(terminal)
         .Map("greet {name}").WithHandler((string name) => $"name:{name}").AsQuery().Done()
         .Build();
@@ -36,7 +36,7 @@ namespace TimeWarp.Nuru.Tests.Routing
     {
       // Arrange
       using TestTerminal terminal = new();
-      NuruCoreApp app = NuruApp.CreateBuilder([])
+      NuruApp app = NuruApp.CreateBuilder([])
         .UseTerminal(terminal)
         .Map("delay {ms:int}").WithHandler((int ms) => $"ms:{ms}").AsQuery().Done()
         .Build();
@@ -56,7 +56,7 @@ namespace TimeWarp.Nuru.Tests.Routing
       // Arrange
       using TestTerminal terminal = new();
 #pragma warning disable RCS1163 // Unused parameter
-      NuruCoreApp app = NuruApp.CreateBuilder([])
+      NuruApp app = NuruApp.CreateBuilder([])
         .UseTerminal(terminal)
         .Map("delay {ms:int}").WithHandler((int ms) => $"ms:{ms}").AsQuery().Done()
         .Build();
@@ -77,7 +77,7 @@ namespace TimeWarp.Nuru.Tests.Routing
     {
       // Arrange
       using TestTerminal terminal = new();
-      NuruCoreApp app = NuruApp.CreateBuilder([])
+      NuruApp app = NuruApp.CreateBuilder([])
         .UseTerminal(terminal)
         .Map("calculate {value:double}").WithHandler((double value) => $"value:{value}").AsQuery().Done()
         .Build();
@@ -96,7 +96,7 @@ namespace TimeWarp.Nuru.Tests.Routing
     {
       // Arrange
       using TestTerminal terminal = new();
-      NuruCoreApp app = NuruApp.CreateBuilder([])
+      NuruApp app = NuruApp.CreateBuilder([])
         .UseTerminal(terminal)
         .Map("set {flag:bool}").WithHandler((bool flag) => $"flag:{flag}").AsQuery().Done()
         .Build();
@@ -115,7 +115,7 @@ namespace TimeWarp.Nuru.Tests.Routing
     {
       // Arrange
       using TestTerminal terminal = new();
-      NuruCoreApp app = NuruApp.CreateBuilder([])
+      NuruApp app = NuruApp.CreateBuilder([])
         .UseTerminal(terminal)
         .Map("set {flag:bool}").WithHandler((bool flag) => $"flag:{flag}").AsQuery().Done()
         .Build();
@@ -134,7 +134,7 @@ namespace TimeWarp.Nuru.Tests.Routing
     {
       // Arrange
       using TestTerminal terminal = new();
-      NuruCoreApp app = NuruApp.CreateBuilder([])
+      NuruApp app = NuruApp.CreateBuilder([])
         .UseTerminal(terminal)
         .Map("connect {host} {port:int}").WithHandler((string host, int port) => $"host:{host},port:{port}").AsQuery().Done()
         .Build();
@@ -153,7 +153,7 @@ namespace TimeWarp.Nuru.Tests.Routing
     {
       // Arrange
       using TestTerminal terminal = new();
-      NuruCoreApp app = NuruApp.CreateBuilder([])
+      NuruApp app = NuruApp.CreateBuilder([])
         .UseTerminal(terminal)
         .Map("age {years:int}").WithHandler((int years) => $"years:{years}").AsQuery().Done()
         .Build();

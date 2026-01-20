@@ -24,7 +24,7 @@ public class MixedRequiredOptionalTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("deploy --env {env} --version? {ver?} --dry-run")
         .WithHandler((string env, string? ver, bool dryRun) => $"env:{env}|ver:{ver ?? "null"}|dryRun:{dryRun}")
@@ -44,7 +44,7 @@ public class MixedRequiredOptionalTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("deploy --env {env} --version? {ver?} --dry-run")
         .WithHandler((string env, string? ver, bool dryRun) => $"env:{env}|ver:{ver ?? "null"}|dryRun:{dryRun}")
@@ -64,7 +64,7 @@ public class MixedRequiredOptionalTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("deploy --env {env} --version? {ver?} --dry-run")
         .WithHandler((string env, string? ver, bool dryRun) => $"env:{env}|ver:{ver ?? "null"}|dryRun:{dryRun}")
@@ -83,7 +83,7 @@ public class MixedRequiredOptionalTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("deploy --env {env} --version? {ver?} --dry-run")
         .WithHandler((string env, string? ver, bool dryRun) => $"env:{env}|ver:{ver ?? "null"}|dryRun:{dryRun}")

@@ -36,7 +36,7 @@ public class DoubleTabBugTests
   {
     // Arrange: Type "git commit" (no space) then Tab Tab
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("git status")
         .WithHandler(() => { })

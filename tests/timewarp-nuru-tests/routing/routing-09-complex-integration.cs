@@ -17,7 +17,7 @@ public class ComplexIntegrationTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("docker run -i -t --env {e}* -- {*cmd}").WithHandler((bool i, bool t, string[] e, string[] cmd) => $"i:{i}|t:{t}|e:[{string.Join(",", e)}]|cmd:[{string.Join(",", cmd)}]").AsCommand().Done()
       .Build();
@@ -39,7 +39,7 @@ public class ComplexIntegrationTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("git commit --message,-m {msg} --amend --no-verify").WithHandler((string msg, bool amend, bool noVerify) => $"msg:{msg}|amend:{amend}|noVerify:{noVerify}").AsCommand().Done()
       .Build();
@@ -60,7 +60,7 @@ public class ComplexIntegrationTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("build {project?} --config? {cfg?} --verbose --watch").WithHandler((string? project, string? cfg, bool verbose, bool watch) => $"project:{project ?? "NULL"}|cfg:{cfg ?? "NULL"}|verbose:{verbose}|watch:{watch}").AsCommand().Done()
       .Build();
@@ -82,7 +82,7 @@ public class ComplexIntegrationTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("process --id {id:int}* --tag {t}* {script}").WithHandler((int[] id, string[] t, string script) => $"id:[{string.Join(",", id)}]|t:[{string.Join(",", t)}]|script:{script}").AsCommand().Done()
       .Build();

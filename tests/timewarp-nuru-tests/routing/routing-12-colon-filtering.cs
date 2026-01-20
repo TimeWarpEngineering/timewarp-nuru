@@ -18,7 +18,7 @@ public class ColonFilteringTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("connect {dataSource}").WithHandler((string dataSource) => $"ds:{dataSource}")
       .AsCommand().Done()
@@ -36,7 +36,7 @@ public class ColonFilteringTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("connect --data-source {dataSource}").WithHandler((string dataSource) => $"ds:{dataSource}")
       .AsCommand().Done()
@@ -54,7 +54,7 @@ public class ColonFilteringTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("deploy {env} {connectionString}").WithHandler((string env, string connectionString) => $"env:{env}|conn:{connectionString}")
       .AsCommand().Done()
@@ -72,7 +72,7 @@ public class ColonFilteringTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("fetch {url}").WithHandler((string url) => $"url:{url}")
       .AsQuery().Done()
@@ -90,7 +90,7 @@ public class ColonFilteringTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("connect {dataSource}").WithHandler((string dataSource) => $"ds:{dataSource}")
       .AsCommand().Done()
@@ -108,7 +108,7 @@ public class ColonFilteringTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("docker run {*args}").WithHandler((string[] args) => $"args:{string.Join(",", args)}")
       .AsCommand().Done()
@@ -127,7 +127,7 @@ public class ColonFilteringTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("test -x {value}").WithHandler((string value) => $"value:{value}")
       .AsCommand().Done()
@@ -145,7 +145,7 @@ public class ColonFilteringTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("run {param}").WithHandler((string param) => $"param:{param}")
       .AsCommand().Done()
@@ -167,7 +167,7 @@ public class ColonFilteringTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("fetch --url {url}").WithHandler((string url) => $"url:{url}")
       .AsQuery().Done()
@@ -185,7 +185,7 @@ public class ColonFilteringTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("connect --connection {conn}").WithHandler((string conn) => $"conn:{conn}")
       .AsCommand().Done()
@@ -203,7 +203,7 @@ public class ColonFilteringTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("run {param}").WithHandler((string param) => $"param:{param}")
       .AsCommand().Done()

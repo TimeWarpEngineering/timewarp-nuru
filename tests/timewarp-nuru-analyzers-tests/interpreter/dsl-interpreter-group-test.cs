@@ -41,7 +41,7 @@ public sealed class InterpreterGroupTests
       {
         public static async Task Main()
         {
-          NuruCoreApp app = NuruApp.CreateBuilder([])
+          NuruApp app = NuruApp.CreateBuilder([])
             .WithGroupPrefix("admin")
               .Map("status")
                 .WithHandler(() => "admin status")
@@ -93,7 +93,7 @@ public sealed class InterpreterGroupTests
       {
         public static async Task Main()
         {
-          NuruCoreApp app = NuruApp.CreateBuilder([])
+          NuruApp app = NuruApp.CreateBuilder([])
             .WithGroupPrefix("admin")
               .WithGroupPrefix("config")
                 .Map("get {key}")
@@ -143,7 +143,7 @@ public sealed class InterpreterGroupTests
       {
         public static async Task Main()
         {
-          NuruCoreApp app = NuruApp.CreateBuilder([])
+          NuruApp app = NuruApp.CreateBuilder([])
             .WithGroupPrefix("admin")
               .WithGroupPrefix("config")
                 .Map("list")
@@ -198,7 +198,7 @@ public sealed class InterpreterGroupTests
       {
         public static async Task Main()
         {
-          NuruCoreApp app = NuruApp.CreateBuilder([])
+          NuruApp app = NuruApp.CreateBuilder([])
             .WithGroupPrefix("admin")
               .Map("status")
                 .WithHandler(() => "status")
@@ -251,7 +251,7 @@ public sealed class InterpreterGroupTests
       {
         public static async Task Main()
         {
-          NuruCoreApp app = NuruApp.CreateBuilder([])
+          NuruApp app = NuruApp.CreateBuilder([])
             .WithGroupPrefix("admin")
               .WithGroupPrefix("config")
                 .WithGroupPrefix("db")
@@ -303,7 +303,7 @@ public sealed class InterpreterGroupTests
       {
         public static async Task Main()
         {
-          NuruCoreApp app = NuruApp.CreateBuilder([])
+          NuruApp app = NuruApp.CreateBuilder([])
             .Map("ping")
               .WithHandler(() => "pong")
               .AsQuery()

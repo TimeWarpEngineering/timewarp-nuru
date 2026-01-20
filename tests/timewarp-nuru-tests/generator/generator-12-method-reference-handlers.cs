@@ -30,7 +30,7 @@ namespace TimeWarp.Nuru.Tests.Generator.MethodReference
       // Arrange
       using TestTerminal terminal = new();
 
-      NuruCoreApp app = NuruApp.CreateBuilder([])
+      NuruApp app = NuruApp.CreateBuilder([])
         .UseTerminal(terminal)
         .Map("greet {name}")
           .WithHandler(Greet)
@@ -56,7 +56,7 @@ namespace TimeWarp.Nuru.Tests.Generator.MethodReference
       // Arrange
       using TestTerminal terminal = new();
 
-      NuruCoreApp app = NuruApp.CreateBuilder([])
+      NuruApp app = NuruApp.CreateBuilder([])
         .UseTerminal(terminal)
         .Map("version")
           .WithHandler(GetVersion)
@@ -83,7 +83,7 @@ namespace TimeWarp.Nuru.Tests.Generator.MethodReference
       // Arrange
       using TestTerminal terminal = new();
 
-      NuruCoreApp app = NuruApp.CreateBuilder([])
+      NuruApp app = NuruApp.CreateBuilder([])
         .UseTerminal(terminal)
         .Map("deploy {env}")
           .WithHandler(Handlers.Deploy)
@@ -109,7 +109,7 @@ namespace TimeWarp.Nuru.Tests.Generator.MethodReference
       // Arrange
       using TestTerminal terminal = new();
 
-      NuruCoreApp app = NuruApp.CreateBuilder([])
+      NuruApp app = NuruApp.CreateBuilder([])
         .UseTerminal(terminal)
         .Map("status")
           .WithHandler(PrintStatus)

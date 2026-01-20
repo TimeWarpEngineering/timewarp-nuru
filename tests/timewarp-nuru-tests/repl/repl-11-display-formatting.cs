@@ -21,7 +21,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.DisplayFormatting
     using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .AddRepl(options => options.WelcomeMessage = "Welcome to My App!")
       .Build();
@@ -40,7 +40,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.DisplayFormatting
     using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .AddRepl(options => options.GoodbyeMessage = "Farewell!")
       .Build();
@@ -59,7 +59,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.DisplayFormatting
     using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .AddRepl(options => options.Prompt = ">>> ")
       .Build();
@@ -79,7 +79,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.DisplayFormatting
     terminal.QueueLine("status");
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("status").WithHandler(() => "OK").AsQuery().Done()
       .AddRepl(options => options.ShowExitCode = true)
@@ -100,7 +100,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.DisplayFormatting
     terminal.QueueLine("status");
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("status").WithHandler(() => "OK").AsQuery().Done()
       .AddRepl(options => options.ShowExitCode = false)
@@ -121,7 +121,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.DisplayFormatting
     terminal.QueueLine("status");
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("status").WithHandler(() => "OK").AsQuery().Done()
       .AddRepl(options => options.ShowTiming = true)
@@ -142,7 +142,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.DisplayFormatting
     terminal.QueueLine("status");
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("status").WithHandler(() => "OK").AsQuery().Done()
       .AddRepl(options => options.ShowTiming = false)
@@ -162,7 +162,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.DisplayFormatting
     using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .AddRepl(options => options.EnableColors = true)
       .Build();
@@ -181,7 +181,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.DisplayFormatting
     using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .AddRepl(options => options.EnableColors = false)
       .Build();

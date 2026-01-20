@@ -88,7 +88,7 @@ public class KeyBindingProfileTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .AddRepl(options =>
       {
@@ -115,7 +115,7 @@ public class KeyBindingProfileTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .AddRepl(options =>
       {
@@ -146,7 +146,7 @@ public class KeyBindingProfileTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .AddRepl(options =>
       {
@@ -180,7 +180,7 @@ public class KeyBindingProfileTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .AddRepl(options =>
       {
@@ -209,7 +209,7 @@ public class KeyBindingProfileTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .AddRepl(options =>
       {
@@ -239,7 +239,7 @@ public class KeyBindingProfileTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .AddRepl(options =>
       {
@@ -273,7 +273,7 @@ public class KeyBindingProfileTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .AddRepl(options =>
       {
@@ -300,7 +300,7 @@ public class KeyBindingProfileTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .AddRepl(options =>
       {
@@ -334,7 +334,7 @@ public class KeyBindingProfileTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .AddRepl(options =>
       {
@@ -363,7 +363,7 @@ public class KeyBindingProfileTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .AddRepl(options =>
       {
@@ -394,7 +394,7 @@ public class KeyBindingProfileTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .AddRepl(options =>
       {
@@ -425,7 +425,7 @@ public class KeyBindingProfileTests
     using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .AddRepl(options =>
       {
@@ -443,7 +443,7 @@ public class KeyBindingProfileTests
     using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .AddRepl(options =>
       {
@@ -461,7 +461,7 @@ public class KeyBindingProfileTests
     using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .AddRepl(options =>
       {
@@ -479,7 +479,7 @@ public class KeyBindingProfileTests
     using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .AddRepl(options =>
       {
@@ -500,7 +500,7 @@ public class KeyBindingProfileTests
     // Act & Assert
     Should.Throw<ArgumentException>(() =>
     {
-      NuruCoreApp app = NuruApp.CreateBuilder([])
+      NuruApp app = NuruApp.CreateBuilder([])
         .UseTerminal(terminal)
         .AddRepl(options =>
         {
@@ -516,7 +516,7 @@ public class KeyBindingProfileTests
     using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .AddRepl() // No profile specified
       .Build();

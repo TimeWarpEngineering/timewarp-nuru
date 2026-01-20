@@ -159,7 +159,7 @@ public class YankArgumentTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("greet {name}")
         .WithHandler((string name) => $"Hello, {name}!")
@@ -193,7 +193,7 @@ public class YankArgumentTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("greet {name}")
         .WithHandler((string name) => $"Hello, {name}!")
@@ -224,7 +224,7 @@ public class YankArgumentTests
     terminal.QueueKey(ConsoleKey.Enter);  // Execute "echo Greeting"
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("say {message}")
         .WithHandler((string message) => $"Said: {message}")
@@ -253,7 +253,7 @@ public class YankArgumentTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("hello")
         .WithHandler(() => "Hello!")
@@ -282,7 +282,7 @@ public class YankArgumentTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("status")
         .WithHandler(() => "Status OK")
@@ -320,7 +320,7 @@ public class YankArgumentTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("git push origin main")
         .WithHandler(() => "Pushed!")
@@ -351,7 +351,7 @@ public class YankArgumentTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("git push origin main")
         .WithHandler(() => "Pushed!")
@@ -387,7 +387,7 @@ public class YankArgumentTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("git push origin main")
         .WithHandler(() => "Pushed!")
@@ -422,7 +422,7 @@ public class YankArgumentTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("status")
         .WithHandler(() => "OK")
@@ -460,7 +460,7 @@ public class YankArgumentTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("greet {name}")
         .WithHandler((string name) => $"Hello, {name}!")
@@ -496,7 +496,7 @@ public class YankArgumentTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("greet {name}")
         .WithHandler((string name) => $"Hello, {name}!")

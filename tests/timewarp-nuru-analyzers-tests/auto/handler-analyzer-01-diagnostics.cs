@@ -35,7 +35,7 @@ public sealed class HandlerAnalyzerDiagnosticTests
         public static async System.Threading.Tasks.Task Main()
         {
           var handler = new MyHandler();
-          NuruCoreApp app = NuruApp.CreateBuilder([])
+          NuruApp app = NuruApp.CreateBuilder([])
             .Map("deploy {env}").WithHandler(handler.Handle).AsCommand().Done()
             .Build();
           await app.RunAsync([]);
@@ -70,7 +70,7 @@ public sealed class HandlerAnalyzerDiagnosticTests
         public static async System.Threading.Tasks.Task Main()
         {
           bool executed = false;
-          NuruCoreApp app = NuruApp.CreateBuilder([])
+          NuruApp app = NuruApp.CreateBuilder([])
             .Map("test").WithHandler(() => { executed = true; }).AsCommand().Done()
             .Build();
           await app.RunAsync([]);
@@ -106,7 +106,7 @@ public sealed class HandlerAnalyzerDiagnosticTests
         
         public static async System.Threading.Tasks.Task Main()
         {
-          NuruCoreApp app = NuruApp.CreateBuilder([])
+          NuruApp app = NuruApp.CreateBuilder([])
             .Map("secret").WithHandler(PrivateHandler).AsCommand().Done()
             .Build();
           await app.RunAsync([]);
@@ -145,7 +145,7 @@ public sealed class HandlerAnalyzerDiagnosticTests
       {
         public static async System.Threading.Tasks.Task Main()
         {
-          NuruCoreApp app = NuruApp.CreateBuilder([])
+          NuruApp app = NuruApp.CreateBuilder([])
             .Map("deploy {env}").WithHandler(Handlers.Deploy).AsCommand().Done()
             .Build();
           await app.RunAsync([]);
@@ -179,7 +179,7 @@ public sealed class HandlerAnalyzerDiagnosticTests
       {
         public static async System.Threading.Tasks.Task Main()
         {
-          NuruCoreApp app = NuruApp.CreateBuilder([])
+          NuruApp app = NuruApp.CreateBuilder([])
             .Map("greet {name}").WithHandler((string name) => System.Console.WriteLine($"Hello, {name}!")).AsCommand().Done()
             .Build();
           await app.RunAsync([]);
@@ -218,7 +218,7 @@ public sealed class HandlerAnalyzerDiagnosticTests
       {
         public static async System.Threading.Tasks.Task Main()
         {
-          NuruCoreApp app = NuruApp.CreateBuilder([])
+          NuruApp app = NuruApp.CreateBuilder([])
             .Map("deploy {env}").WithHandler(Handlers.Deploy).AsCommand().Done()
             .Build();
           await app.RunAsync([]);

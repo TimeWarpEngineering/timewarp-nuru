@@ -21,7 +21,7 @@ public class CapabilitiesIntegrationTests
     // Arrange
     using TestTerminal terminal = new();
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("mycommand").WithHandler(() => "ok").Done()
       .Build();
@@ -41,7 +41,7 @@ public class CapabilitiesIntegrationTests
     // Arrange
     using TestTerminal terminal = new();
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("deploy {env}").WithHandler((string env) => $"Deployed to {env}").WithDescription("Deploy to environment").Done()
       .Build();
@@ -59,7 +59,7 @@ public class CapabilitiesIntegrationTests
     // Arrange
     using TestTerminal terminal = new();
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("mycommand").WithHandler(() => "user command").WithDescription("User command").Done()
       .Build();
@@ -84,7 +84,7 @@ public class CapabilitiesIntegrationTests
     // Arrange
     using TestTerminal terminal = new();
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("status").WithHandler(() => "status").WithDescription("Show status").AsQuery().Done()
       .Build();
@@ -101,7 +101,7 @@ public class CapabilitiesIntegrationTests
     // Arrange
     using TestTerminal terminal = new();
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("set {key} {value}").WithHandler((string key, string value) => $"{key}={value}").WithDescription("Set a configuration value").AsIdempotentCommand().Done()
       .Build();
@@ -118,7 +118,7 @@ public class CapabilitiesIntegrationTests
     // Arrange
     using TestTerminal terminal = new();
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("listen {port:int}").WithHandler((int port) => $"Listening on {port}").WithDescription("Listen on port").Done()
       .Build();
@@ -136,7 +136,7 @@ public class CapabilitiesIntegrationTests
     // Arrange
     using TestTerminal terminal = new();
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("build --output,-o {path}").WithHandler((string path) => $"Output to {path}").WithDescription("Build project").Done()
       .Build();
@@ -154,7 +154,7 @@ public class CapabilitiesIntegrationTests
     // Arrange
     using TestTerminal terminal = new();
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("test").WithHandler(() => "ok").Done()
       .Build();

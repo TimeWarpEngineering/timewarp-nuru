@@ -18,7 +18,7 @@ Console.WriteLine("=== Testing CLI Output Capture ===\n");
 using TestTerminal terminal = new();
 
 // Build app with multiple routes to demonstrate different output patterns
-NuruCoreApp app = NuruApp.CreateBuilder([])
+NuruApp app = NuruApp.CreateBuilder([])
   .UseTerminal(terminal)
   .Map("demo")
     .WithHandler((ITerminal t) =>

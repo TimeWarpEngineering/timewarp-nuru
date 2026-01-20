@@ -49,7 +49,7 @@ public class MultilineEditingTests
     terminal.QueueKey(ConsoleKey.Enter);                      // Execute
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("echo {*args}")
         .WithHandler((string[] args) => $"ECHO:{string.Join(" ", args)}")
@@ -92,7 +92,7 @@ public class MultilineEditingTests
     terminal.QueueKey(ConsoleKey.Enter);  // Execute
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("line1 line2 line3")
         .WithHandler(() => "command-matched")
@@ -122,7 +122,7 @@ public class MultilineEditingTests
     terminal.QueueKey(ConsoleKey.Enter);  // Execute
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("deploy --env {env}")
         .WithHandler((string env) => $"DEPLOYED: {env}")
@@ -153,7 +153,7 @@ public class MultilineEditingTests
     terminal.QueueLine("history");        // Check history
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("testcmd {*args}")
         .WithHandler((string[] args) => "OK")
@@ -185,7 +185,7 @@ public class MultilineEditingTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("first")
         .WithHandler(() => "first-ok")
@@ -219,7 +219,7 @@ public class MultilineEditingTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("first")
         .WithHandler(() => "first-ok")
@@ -264,7 +264,7 @@ public class MultilineEditingTests
     terminal.QueueKey(ConsoleKey.Enter);  // Execute
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("echo {message}")  // Single parameter, NOT catch-all
         .WithHandler((string message) => $"ECHO:message='{message}'")
@@ -290,7 +290,7 @@ public class MultilineEditingTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("content")
         .WithHandler(() => "content-ok")
@@ -320,7 +320,7 @@ public class MultilineEditingTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("test")
         .WithHandler(() => "TEST OK")

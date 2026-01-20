@@ -28,7 +28,7 @@ public class UriFileInfoDirectoryInfoTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("fetch {url:Uri}").WithHandler((Uri url) => $"scheme:{url.Scheme},host:{url.Host}").AsQuery().Done()
       .Build();
@@ -48,7 +48,7 @@ public class UriFileInfoDirectoryInfoTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("open {path:Uri}").WithHandler((Uri path) => $"isAbsolute:{path.IsAbsoluteUri}").AsQuery().Done()
       .Build();
@@ -67,7 +67,7 @@ public class UriFileInfoDirectoryInfoTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("link {url:Uri?}").WithHandler((Uri? url) => $"host:{url?.Host ?? "none"}").AsQuery().Done()
       .Build();
@@ -86,7 +86,7 @@ public class UriFileInfoDirectoryInfoTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("download --url {target:Uri}").WithHandler((Uri target) => $"host:{target.Host}").AsQuery().Done()
       .Build();
@@ -105,7 +105,7 @@ public class UriFileInfoDirectoryInfoTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("upload --callback {url:Uri?}").WithHandler((Uri? url) => $"callback:{url?.Host ?? "none"}").AsQuery().Done()
       .Build();
@@ -128,7 +128,7 @@ public class UriFileInfoDirectoryInfoTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("read {file:FileInfo}").WithHandler((FileInfo file) => $"name:{file.Name},ext:{file.Extension}").AsQuery().Done()
       .Build();
@@ -148,7 +148,7 @@ public class UriFileInfoDirectoryInfoTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("edit {file:FileInfo?}").WithHandler((FileInfo? file) => $"name:{file?.Name ?? "none"}").AsQuery().Done()
       .Build();
@@ -167,7 +167,7 @@ public class UriFileInfoDirectoryInfoTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("process --input {file:FileInfo}").WithHandler((FileInfo file) => $"input:{file.Name}").AsQuery().Done()
       .Build();
@@ -186,7 +186,7 @@ public class UriFileInfoDirectoryInfoTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("compile --config {cfg:FileInfo?}").WithHandler((FileInfo? cfg) => $"config:{cfg?.Name ?? "default"}").AsQuery().Done()
       .Build();
@@ -209,7 +209,7 @@ public class UriFileInfoDirectoryInfoTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("list {dir:DirectoryInfo}").WithHandler((DirectoryInfo dir) => $"name:{dir.Name}").AsQuery().Done()
       .Build();
@@ -228,7 +228,7 @@ public class UriFileInfoDirectoryInfoTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("scan {dir:DirectoryInfo?}").WithHandler((DirectoryInfo? dir) => $"name:{dir?.Name ?? "none"}").AsQuery().Done()
       .Build();
@@ -247,7 +247,7 @@ public class UriFileInfoDirectoryInfoTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("backup --dest {dir:DirectoryInfo}").WithHandler((DirectoryInfo dir) => $"dest:{dir.Name}").AsQuery().Done()
       .Build();
@@ -266,7 +266,7 @@ public class UriFileInfoDirectoryInfoTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("sync --target {dir:DirectoryInfo?}").WithHandler((DirectoryInfo? dir) => $"target:{dir?.Name ?? "current"}").AsQuery().Done()
       .Build();
@@ -289,7 +289,7 @@ public class UriFileInfoDirectoryInfoTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("deploy {source:DirectoryInfo} {target:Uri}").WithHandler((DirectoryInfo source, Uri target) =>
         $"source:{source.Name},target:{target.Host}").AsQuery().Done()
@@ -310,7 +310,7 @@ public class UriFileInfoDirectoryInfoTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("archive {dir:DirectoryInfo} --manifest {file:FileInfo?}").WithHandler((DirectoryInfo dir, FileInfo? file) =>
         $"dir:{dir.Name},manifest:{file?.Name ?? "none"}").AsQuery().Done()
@@ -335,7 +335,7 @@ public class UriFileInfoDirectoryInfoTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("get {url:uri}").WithHandler((Uri url) => $"scheme:{url.Scheme}").AsQuery().Done()
       .Build();
@@ -354,7 +354,7 @@ public class UriFileInfoDirectoryInfoTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("cat {path:FILEINFO}").WithHandler((FileInfo path) => $"name:{path.Name}").AsQuery().Done()
       .Build();
@@ -373,7 +373,7 @@ public class UriFileInfoDirectoryInfoTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("ls {path:directoryInfo}").WithHandler((DirectoryInfo path) => $"name:{path.Name}").AsQuery().Done()
       .Build();

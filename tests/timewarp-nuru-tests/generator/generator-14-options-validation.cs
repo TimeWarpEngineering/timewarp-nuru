@@ -33,7 +33,7 @@ namespace TimeWarp.Nuru.Tests.Generator.OptionsValidation
     {
       // Arrange - Default values in TestOptions are valid
       using TestTerminal terminal = new();
-      NuruCoreApp app = NuruApp.CreateBuilder([])
+      NuruApp app = NuruApp.CreateBuilder([])
         .UseTerminal(terminal)
         .Map("test")
           .WithHandler(Handlers.TestHandler)
@@ -138,7 +138,7 @@ namespace TimeWarp.Nuru.Tests.Generator.OptionsValidation
     {
       // Arrange
       using TestTerminal terminal = new();
-      NuruCoreApp app = NuruApp.CreateBuilder([])
+      NuruApp app = NuruApp.CreateBuilder([])
         .UseTerminal(terminal)
         .Map("unvalidated")
           .WithHandler(Handlers.UnvalidatedHandler)

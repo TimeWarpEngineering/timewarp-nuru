@@ -27,7 +27,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.ErrorHandling
     terminal.QueueLine("status");
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("fail").WithHandler(ThrowInvalidOperation).AsCommand().Done()
       .Map("status").WithHandler(() => "OK").AsQuery().Done()
@@ -49,7 +49,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.ErrorHandling
     terminal.QueueLine("fail");
     terminal.QueueLine("status");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("fail").WithHandler(ThrowInvalidOperation).AsCommand().Done()
       .Map("status").WithHandler(() => "OK").AsQuery().Done()
@@ -71,7 +71,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.ErrorHandling
     terminal.QueueLine("nonexistent");
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("status").WithHandler(() => "OK").AsQuery().Done()
       .AddRepl(options => options.ContinueOnError = true)
@@ -92,7 +92,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.ErrorHandling
     terminal.QueueLine("add notanumber");
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("add {n:int}")
         .WithHandler((int n) => $"Result: {n}")
@@ -116,7 +116,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.ErrorHandling
     terminal.QueueLine("fail");
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("fail").WithHandler(ThrowInvalidOperation).AsCommand().Done()
       .AddRepl(options =>
@@ -141,7 +141,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.ErrorHandling
     terminal.QueueLine("greet");
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("greet {name}")
         .WithHandler((string name) => $"Hello, {name}!")
@@ -164,7 +164,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.ErrorHandling
     using TestTerminal terminal = new();
     terminal.QueueLine("fail");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("fail").WithHandler(ThrowInvalidOperation).AsCommand().Done()
       .AddRepl(options => options.ContinueOnError = false)
@@ -187,7 +187,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.ErrorHandling
     terminal.QueueLine("status");
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder([])
       .UseTerminal(terminal)
       .Map("fail1").WithHandler(ThrowError1).AsCommand().Done()
       .Map("fail2").WithHandler(ThrowArgument).AsCommand().Done()

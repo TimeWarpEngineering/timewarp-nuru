@@ -6,12 +6,9 @@ namespace TimeWarp.Nuru;
 public partial class NuruAppBuilder : IHostApplicationBuilder, IDisposable
 {
   private ConfigurationManager? ConfigurationManager;
-  private NuruHostEnvironment? NuruHostEnvironment;
   private NuruLoggingBuilder? NuruLoggingBuilder;
   private NuruMetricsBuilder? NuruMetricsBuilder;
   private readonly Dictionary<object, object> PropertiesDictionary = [];
-
-  private protected readonly NuruAppOptions? ApplicationOptions;
 
   /// <summary>
   /// Initializes a new instance of the <see cref="NuruAppBuilder"/> class with default settings.
@@ -20,33 +17,11 @@ public partial class NuruAppBuilder : IHostApplicationBuilder, IDisposable
   internal NuruAppBuilder() { }
 
   /// <summary>
-  /// Internal constructor for factory methods with specific builder mode.
-  /// </summary>
-  internal NuruAppBuilder(NuruAppOptions? options)
-  {
-    ApplicationOptions = options;
-  }
-
-  /// <summary>
   /// Initializes IHostApplicationBuilder fields that depend on Services.
   /// </summary>
   private void InitializeHostApplicationBuilder()
   {
     ConfigurationManager = new ConfigurationManager();
-
-    string environmentName = ApplicationOptions?.EnvironmentName
-      ?? Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")
-      ?? Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT")
-      ?? "Production";
-
-    string applicationName = ApplicationOptions?.ApplicationName
-      ?? Assembly.GetEntryAssembly()?.GetName().Name
-      ?? "NuruApp";
-
-    string contentRootPath = ApplicationOptions?.ContentRootPath
-      ?? AppContext.BaseDirectory;
-
-    NuruHostEnvironment = new NuruHostEnvironment(environmentName, applicationName, contentRootPath);
     NuruLoggingBuilder = new NuruLoggingBuilder(Services);
     NuruMetricsBuilder = new NuruMetricsBuilder(Services);
   }
@@ -63,9 +38,9 @@ public partial class NuruAppBuilder : IHostApplicationBuilder, IDisposable
   /// <summary>
   /// Gets the information about the hosting environment an application is running in.
   /// </summary>
-  public IHostEnvironment HostEnvironment =>
-    NuruHostEnvironment ?? throw new InvalidOperationException(
-      "HostEnvironment is not available. Use NuruApp.CreateBuilder() for IHostApplicationBuilder support.");
+#pragma warning disable CA1822 // Member does not access instance data
+  public IHostEnvironment HostEnvironment => new NuruHostEnvironment();
+#pragma warning restore CA1822
 
   /// <summary>
   /// Gets a collection of logging providers for the application to compose.

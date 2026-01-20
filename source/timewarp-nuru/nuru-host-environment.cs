@@ -5,16 +5,8 @@ namespace TimeWarp.Nuru;
 /// </summary>
 internal sealed class NuruHostEnvironment : IHostEnvironment
 {
-  public NuruHostEnvironment(string environmentName, string applicationName, string contentRootPath)
-  {
-    EnvironmentName = environmentName;
-    ApplicationName = applicationName;
-    ContentRootPath = contentRootPath;
-    ContentRootFileProvider = new PhysicalFileProvider(contentRootPath);
-  }
-
-  public string EnvironmentName { get; set; }
-  public string ApplicationName { get; set; }
-  public string ContentRootPath { get; set; }
-  public IFileProvider ContentRootFileProvider { get; set; }
+  public string EnvironmentName { get; set; } = "Production";
+  public string ApplicationName { get; set; } = "NuruApp";
+  public string ContentRootPath { get; set; } = AppContext.BaseDirectory;
+  public IFileProvider? ContentRootFileProvider { get; set; }
 }

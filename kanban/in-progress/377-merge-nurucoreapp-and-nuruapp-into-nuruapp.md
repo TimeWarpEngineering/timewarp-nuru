@@ -73,10 +73,9 @@ Consolidate `NuruCoreApp` and `NuruApp` into a single unified `NuruApp` class. F
 
 These cannot be changed because they serve a specific purpose:
 
-- `NuruCoreApplicationOptions` - separate options class (not being renamed)
 - `typeof(NuruCoreApp)` - for assembly reflection in get-version-info-tool
 
-**Note:** `NuruCoreAppBuilder` will be renamed to `NuruAppBuilder` in Phase 6, consolidating with the existing `NuruAppBuilder` class.
+**Note:** `NuruCoreApplicationOptions` was renamed to `NuruAppOptions` for consistency.
 
 ## Notes
 

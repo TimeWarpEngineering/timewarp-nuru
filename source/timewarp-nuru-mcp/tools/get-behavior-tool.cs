@@ -116,7 +116,7 @@ internal sealed class GetBehaviorTool
             // Registration
             // ═══════════════════════════════════════════════════════════════
             
-            NuruCoreApp app = NuruApp.CreateBuilder(args)
+            NuruApp app = NuruApp.CreateBuilder(args)
               .AddBehavior(typeof(LoggingBehavior))       // Runs first (outermost)
               .AddBehavior(typeof(PerformanceBehavior))   // Runs second
               .Map("deploy {env}")
@@ -210,7 +210,7 @@ internal sealed class GetBehaviorTool
             // Step 3: Register behaviors and opt-in routes
             // ═══════════════════════════════════════════════════════════════
             
-            NuruCoreApp app = NuruApp.CreateBuilder(args)
+            NuruApp app = NuruApp.CreateBuilder(args)
               // Register filtered behaviors
               .AddBehavior(typeof(AuthBehavior))   // Only for IRequireAuth routes
               .AddBehavior(typeof(AuditBehavior))  // Only for IAuditable routes
@@ -382,7 +382,7 @@ internal sealed class GetBehaviorTool
             ## Registration
             
             ```csharp
-            NuruCoreApp app = NuruApp.CreateBuilder(args)
+            NuruApp app = NuruApp.CreateBuilder(args)
               .AddBehavior(typeof(LoggingBehavior))      // Global
               .AddBehavior(typeof(AuthBehavior))         // Filtered: IRequireAuth
               .Map("deploy {env}")

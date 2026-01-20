@@ -28,7 +28,7 @@
 using TimeWarp.Nuru;
 using static System.Console;
 
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder(args)
   .WithDescription("Demo app supporting both CLI and interactive REPL modes")
 
   // Define application commands

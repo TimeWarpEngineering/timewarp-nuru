@@ -1,6 +1,6 @@
 using TimeWarp.Nuru;
 
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder(args)
   .Map("--str {str} -i {i:int} -b")
     .WithHandler((string str, int i) => { })
     .AsQuery()

@@ -108,7 +108,7 @@ try
   WriteLine("Debug logs: repl-debug.log");
   WriteLine();
 
-  NuruCoreApp app = NuruApp.CreateBuilder(args)
+  NuruApp app = NuruApp.CreateBuilder(args)
     .AddTypeConverter(new EnumTypeConverter<Environment>()) // Register enum converter
     .WithDescription("Interactive REPL demo showcasing Nuru route patterns.")
 

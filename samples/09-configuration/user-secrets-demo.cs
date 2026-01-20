@@ -14,7 +14,7 @@
 using Microsoft.Extensions.Configuration;
 using TimeWarp.Nuru;
 
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder(args)
   .Map("show")
     .WithHandler((IConfiguration config) =>
     {

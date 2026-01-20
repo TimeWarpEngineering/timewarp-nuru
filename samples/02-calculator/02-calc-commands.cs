@@ -27,7 +27,7 @@ using TimeWarp.Nuru;
 using Microsoft.Extensions.DependencyInjection;
 using static System.Console;
 
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder(args)
   .ConfigureServices(services => services.AddSingleton<ICalculatorService, CalculatorService>())
   .Build();
 

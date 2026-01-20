@@ -98,7 +98,7 @@ internal sealed class GetTypeConverterTool
             // Step 3: Register the converter
             // ═══════════════════════════════════════════════════════════════
             
-            NuruCoreApp app = NuruApp.CreateBuilder(args)
+            NuruApp app = NuruApp.CreateBuilder(args)
               .AddTypeConverter<Environment, EnvironmentConverter>()
               .Map("deploy {env:Environment}")
                 .WithHandler((Environment env) =>

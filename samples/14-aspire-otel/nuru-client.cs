@@ -21,7 +21,7 @@ using Microsoft.Extensions.Logging;
 using TimeWarp.Nuru;
 
 // Build the Nuru app with auto-wired telemetry and REPL support
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder(args)
   .UseTelemetry()  // Configures OTLP export for traces, metrics, AND logs
   .AddBehavior(typeof(TelemetryBehavior))
   .DiscoverEndpoints()

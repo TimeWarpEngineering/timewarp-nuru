@@ -46,7 +46,7 @@ internal sealed class GenerateHandlerTool
     sb.AppendLine("using TimeWarp.Nuru;");
     sb.AppendLine("using static System.Console;");
     sb.AppendLine();
-    sb.AppendLine("NuruCoreApp app = NuruApp.CreateBuilder(args)");
+    sb.AppendLine("NuruApp app = NuruApp.CreateBuilder(args)");
 
     // Generate the Map call with fluent DSL
     sb.Append(CultureInfo.InvariantCulture, $"  .Map(\"{pattern}\")");
@@ -128,7 +128,7 @@ internal sealed class GenerateHandlerTool
     sb.AppendLine("// ═══════════════════════════════════════════════════════════════");
     sb.AppendLine("// Add cross-cutting concerns with .AddBehavior():");
     sb.AppendLine("//");
-    sb.AppendLine("// NuruCoreApp app = NuruApp.CreateBuilder(args)");
+    sb.AppendLine("// NuruApp app = NuruApp.CreateBuilder(args)");
     sb.AppendLine("//   .AddBehavior(typeof(LoggingBehavior))      // Global: applies to all routes");
     sb.AppendLine("//   .AddBehavior(typeof(PerformanceBehavior))  // Global: applies to all routes");
     sb.AppendLine("//   .AddBehavior(typeof(AuthBehavior))         // Filtered: INuruBehavior<IRequireAuth>");

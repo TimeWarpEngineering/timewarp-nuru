@@ -68,7 +68,7 @@ CustomKeyBindingProfile customProfile = new CustomKeyBindingProfile(new EmacsKey
 // Build the app with custom key bindings
 // ============================================================================
 
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder(args)
   .WithDescription("Demonstrates CustomKeyBindingProfile for personalized REPL key bindings.")
 
   // --------------------------------------------------------

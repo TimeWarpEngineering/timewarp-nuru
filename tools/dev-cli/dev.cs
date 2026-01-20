@@ -32,7 +32,7 @@
 //   dotnet runfiles/publish-dev.cs
 // ═══════════════════════════════════════════════════════════════════════════════
 
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder(args)
   .WithName("dev")
   .WithDescription("Development CLI for TimeWarp.Nuru")
   .DiscoverEndpoints()

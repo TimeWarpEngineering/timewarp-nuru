@@ -168,7 +168,7 @@ internal sealed class GetAttributedRouteTool
             // ═══════════════════════════════════════════════════════════════
             
             // In Program.cs:
-            NuruCoreApp app = NuruApp.CreateBuilder(args)
+            NuruApp app = NuruApp.CreateBuilder(args)
               .AddBehavior(typeof(AuthBehavior))   // For IRequireAuth routes
               .AddBehavior(typeof(AuditBehavior))  // For IAuditable routes
               .AddAttributedRoutes()               // Auto-discover all [NuruRoute] classes

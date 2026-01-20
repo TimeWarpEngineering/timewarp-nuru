@@ -20,7 +20,7 @@
 
 using TimeWarp.Nuru;
 
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder(args)
   .Map("deploy {env} --version {tag}")
     .WithHandler((string env, string tag) =>
     {

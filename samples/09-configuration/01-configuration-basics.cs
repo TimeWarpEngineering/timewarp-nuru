@@ -23,7 +23,7 @@ using Microsoft.Extensions.Options;
 using TimeWarp.Nuru;
 using static System.Console;
 
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder(args)
   .Map("config show")
     .WithHandler(Handlers.ShowConfigurationAsync)
     .WithDescription("Show current configuration values")

@@ -20,7 +20,7 @@ using TimeWarp.Nuru;
 using static System.Console;
 
 // Build the app with canonical CreateBuilder pattern
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder(args)
   .ConfigureServices(_ => { /* Services registered here are available in handlers */ })
   // Default route when no command is specified
   .Map("")

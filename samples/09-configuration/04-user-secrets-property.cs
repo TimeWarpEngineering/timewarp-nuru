@@ -26,7 +26,7 @@
 using Microsoft.Extensions.Configuration;
 using TimeWarp.Nuru;
 
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder(args)
   .Map("show")
     .WithHandler(Handlers.ShowSecrets)
     .WithDescription("Show configuration values including user secrets")

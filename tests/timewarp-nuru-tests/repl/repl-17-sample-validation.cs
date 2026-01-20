@@ -24,7 +24,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.SampleValidation
     internal static void Register() => RegisterTests<SampleValidationTests>();
 
     private static TestTerminal Terminal = null!;
-    private static NuruCoreApp App = null!;
+    private static NuruApp App = null!;
 
     public static async Task Setup()
     {

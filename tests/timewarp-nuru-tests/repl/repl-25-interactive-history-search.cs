@@ -20,7 +20,7 @@ public class InteractiveHistorySearchTests
   internal static void Register() => RegisterTests<InteractiveHistorySearchTests>();
 
   private static TestTerminal? Terminal;
-  private static NuruCoreApp? App;
+  private static NuruApp? App;
 
   public static async Task Setup()
   {

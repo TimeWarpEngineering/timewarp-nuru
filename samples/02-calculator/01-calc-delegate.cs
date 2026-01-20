@@ -6,7 +6,7 @@
 using TimeWarp.Nuru;
 using static System.Console;
 
-NuruCoreApp app =
+NuruApp app =
   NuruApp.CreateBuilder(args)
   // Basic operations
   .Map("add {x:double} {y:double}")

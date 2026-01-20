@@ -39,7 +39,7 @@ builder.Map(
   }
 );
 
-NuruCoreApp app = builder.Build();
+NuruApp app = builder.Build();
 return await app.RunAsync(args);
 
 async Task<int> RunBenchmark(int runs)

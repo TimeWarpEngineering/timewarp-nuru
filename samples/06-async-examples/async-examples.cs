@@ -178,5 +178,5 @@ builder.Map("--help")
   .Done();
 
 // Build and run
-NuruCoreApp app = builder.Build();
+NuruApp app = builder.Build();
 return await app.RunAsync(args);

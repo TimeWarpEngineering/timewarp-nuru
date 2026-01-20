@@ -182,7 +182,7 @@ builder.Map("kubectl get {resource} --namespace,-n {ns?} --output,-o {format?}")
     .AsQuery().Done();
 #endregion
 
-NuruCoreApp app = builder.Build();
+NuruApp app = builder.Build();
 
 Console.WriteLine("✅ TimeWarp.Nuru Syntax Examples - All patterns compiled successfully!");
 Console.WriteLine();

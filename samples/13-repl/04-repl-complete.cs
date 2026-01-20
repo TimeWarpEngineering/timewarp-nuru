@@ -83,13 +83,13 @@ ILoggerFactory loggerFactory = LoggerFactory.Create(builder =>
 // BUG #373: The ideal approach would be a default route that starts REPL:
 //
 // .Map("")
-//   .WithHandler(async (NuruCoreApp app) => await app.RunReplAsync())
+//   .WithHandler(async (NuruApp app) => await app.RunReplAsync())
 //   .WithDescription("Start interactive REPL mode (default when no args)")
 //   .AsCommand()
 //   .Done()
 //
 // This doesn't work yet due to generator issues:
-// 1. Handler invoker emits wrong variable name for NuruCoreApp parameter
+// 1. Handler invoker emits wrong variable name for NuruApp parameter
 // 2. Double-await issue when handler body contains await
 // 3. DSL interpreter ignores if statements, so conditional RunReplAsync isn't intercepted
 //

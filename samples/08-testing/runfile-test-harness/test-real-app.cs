@@ -13,7 +13,7 @@ using static TimeWarp.Jaribu.TestRunner;
 
 public static class TestHarness
 {
-  internal static NuruCoreApp? App;
+  internal static NuruApp? App;
 
   [ModuleInitializer]
   public static void Initialize()

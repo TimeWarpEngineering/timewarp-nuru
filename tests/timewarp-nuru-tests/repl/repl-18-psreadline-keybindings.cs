@@ -19,7 +19,7 @@ public class PSReadLineKeybindingsTests
   internal static void Register() => RegisterTests<PSReadLineKeybindingsTests>();
 
   private static TestTerminal? Terminal;
-  private static NuruCoreApp? App;
+  private static NuruApp? App;
 
   public static async Task Setup()
   {

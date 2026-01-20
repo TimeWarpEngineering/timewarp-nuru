@@ -341,11 +341,11 @@ internal static class RouteMatcherEmitter
       }
       else if (option.IsRepeated)
       {
-        EmitRepeatedValueOptionParsingWithIndexTracking(sb, option, routeIndex, customConverters);
+        EmitRepeatedValueOptionParsingWithIndexTracking(sb, option, routeIndex, customConverters, route);
       }
       else
       {
-        EmitValueOptionParsingWithIndexTracking(sb, option, routeIndex, customConverters);
+        EmitValueOptionParsingWithIndexTracking(sb, option, routeIndex, customConverters, route);
       }
     }
   }
@@ -388,14 +388,19 @@ internal static class RouteMatcherEmitter
     StringBuilder sb,
     OptionDefinition option,
     int routeIndex,
-    ImmutableArray<CustomConverterDefinition> customConverters)
+    ImmutableArray<CustomConverterDefinition> customConverters,
+    RouteDefinition route)
   {
     string varName = option.ParameterName ?? ToCamelCase(option.LongForm ?? option.ShortForm ?? "value");
     string escapedVarName = CSharpIdentifierUtils.EscapeIfKeyword(varName);
     string flagFoundVar = $"__{varName}_flagFound_{routeIndex}";
 
     // For typed options, extract to a temp string first, then convert
-    bool needsConversion = option.TypeConstraint is not null;
+    // Also check if the handler parameter is an enum type (implicit type inference)
+    string optionName = option.LongForm ?? option.ShortForm!;
+    bool isEnumType = route.Handler.Parameters
+      .Any(p => string.Equals(p.SourceName, optionName, StringComparison.OrdinalIgnoreCase) && p.IsEnumType);
+    bool needsConversion = option.TypeConstraint is not null || isEnumType;
     string rawVarName = needsConversion ? $"__{varName}_raw" : escapedVarName;
 
     sb.AppendLine($"      bool {flagFoundVar} = false;");
@@ -471,7 +476,7 @@ internal static class RouteMatcherEmitter
     // Emit type conversion if needed
     if (needsConversion)
     {
-      EmitOptionTypeConversion(sb, option, escapedVarName, rawVarName, routeIndex, customConverters);
+      EmitOptionTypeConversion(sb, option, escapedVarName, rawVarName, routeIndex, customConverters, route);
     }
   }
 
@@ -483,8 +488,11 @@ internal static class RouteMatcherEmitter
     StringBuilder sb,
     OptionDefinition option,
     int routeIndex,
-    ImmutableArray<CustomConverterDefinition> customConverters)
+    ImmutableArray<CustomConverterDefinition> customConverters,
+    RouteDefinition route)
   {
+    // Note: route parameter is available for future enum support in repeated options
+    _ = route;
     string varName = option.ParameterName ?? ToCamelCase(option.LongForm ?? option.ShortForm ?? "value");
     string escapedVarName = CSharpIdentifierUtils.EscapeIfKeyword(varName);
     string listVarName = $"__{varName}_list_{routeIndex}";
@@ -1090,7 +1098,8 @@ internal static class RouteMatcherEmitter
     string varName,
     string rawVarName,
     int routeIndex,
-    ImmutableArray<CustomConverterDefinition> customConverters)
+    ImmutableArray<CustomConverterDefinition> customConverters,
+    RouteDefinition route)
   {
     string typeConstraint = option.TypeConstraint ?? "";
     string baseType = typeConstraint.EndsWith('?') ? typeConstraint[..^1] : typeConstraint;
@@ -1255,9 +1264,25 @@ internal static class RouteMatcherEmitter
       }
       else
       {
-        // Unknown type - keep as string (fallback)
-        sb.AppendLine(
-          $"      string? {varName} = {rawVarName};");
+        // Check if the handler parameter is an enum type
+        // Match by option name (LongForm or ShortForm)
+        string optionName = option.LongForm ?? option.ShortForm!;
+        ParameterBinding? handlerParam = route.Handler.Parameters
+          .FirstOrDefault(p =>
+            string.Equals(p.SourceName, optionName, StringComparison.OrdinalIgnoreCase) &&
+            p.IsEnumType);
+
+        if (handlerParam is not null)
+        {
+          // Generate EnumTypeConverter<T> code for enum types
+          EmitOptionEnumTypeConversion(sb, option, handlerParam.ParameterTypeName, varName, rawVarName, routeIndex);
+        }
+        else
+        {
+          // Unknown type - keep as string (fallback)
+          sb.AppendLine(
+            $"      string? {varName} = {rawVarName};");
+        }
       }
     }
   }
@@ -1307,6 +1332,54 @@ internal static class RouteMatcherEmitter
       sb.AppendLine("        return 1;");
       sb.AppendLine("      }");
       sb.AppendLine($"      {targetType} {varName} = ({targetType}){tempVarName}!;");
+    }
+  }
+
+  /// <summary>
+  /// Emits enum type conversion code for a typed option.
+  /// Uses EnumTypeConverter with helpful error messages showing valid values.
+  /// </summary>
+  private static void EmitOptionEnumTypeConversion(
+    StringBuilder sb,
+    OptionDefinition option,
+    string enumTypeName,
+    string varName,
+    string rawVarName,
+    int routeIndex)
+  {
+    string converterVarName = $"__enumConverter_{varName}_{routeIndex}";
+    string tempVarName = $"__temp_{varName}_{routeIndex}";
+    string optionDisplay = option.LongForm is not null ? $"--{option.LongForm}" : $"-{option.ShortForm}";
+
+    // Strip nullable suffix from the type name for the converter and casts
+    // EnumTypeConverter<T> requires the non-nullable enum type
+    string baseEnumType = enumTypeName.EndsWith('?') ? enumTypeName[..^1] : enumTypeName;
+
+    if (option.ParameterIsOptional || option.DefaultValueLiteral is not null)
+    {
+      // Optional option or has default: check for null before conversion
+      sb.AppendLine($"      {baseEnumType}? {varName} = null;");
+      sb.AppendLine($"      if ({rawVarName} is not null)");
+      sb.AppendLine("      {");
+      sb.AppendLine($"        var {converterVarName} = new global::TimeWarp.Nuru.EnumTypeConverter<{baseEnumType}>();");
+      sb.AppendLine($"        if (!{converterVarName}.TryConvert({rawVarName}, out object? {tempVarName}))");
+      sb.AppendLine("        {");
+      sb.AppendLine($"          app.Terminal.WriteLine($\"Error: Invalid value '{{{rawVarName}}}' for option '{optionDisplay}'. {{{converterVarName}.GetValidValuesMessage()}}\");");
+      sb.AppendLine("          return 1;");
+      sb.AppendLine("        }");
+      sb.AppendLine($"        {varName} = ({baseEnumType}){tempVarName}!;");
+      sb.AppendLine("      }");
+    }
+    else
+    {
+      // Required option: direct conversion with error handling
+      sb.AppendLine($"      var {converterVarName} = new global::TimeWarp.Nuru.EnumTypeConverter<{baseEnumType}>();");
+      sb.AppendLine($"      if ({rawVarName} is null || !{converterVarName}.TryConvert({rawVarName}, out object? {tempVarName}))");
+      sb.AppendLine("      {");
+      sb.AppendLine($"        app.Terminal.WriteLine($\"Error: Invalid value '{{{rawVarName} ?? \"(missing)\"}}' for option '{optionDisplay}'. {{{converterVarName}.GetValidValuesMessage()}}\");");
+      sb.AppendLine("        return 1;");
+      sb.AppendLine("      }");
+      sb.AppendLine($"      {baseEnumType} {varName} = ({baseEnumType}){tempVarName}!;");
     }
   }
 

@@ -302,7 +302,7 @@ internal static class HandlerExtractor
       {
         bool isOptional = param.IsOptional || param.NullableAnnotation == NullableAnnotation.Annotated;
         string? defaultValue = param.HasExplicitDefaultValue ? param.ExplicitDefaultValue?.ToString() : null;
-        bool isEnumType = param.Type.TypeKind == TypeKind.Enum;
+        bool isEnumType = IsEnumOrNullableEnum(param.Type);
 
         parameters.Add(ParameterBinding.FromParameter(
           parameterName: param.Name,
@@ -358,7 +358,7 @@ internal static class HandlerExtractor
       {
         bool isOptional = param.IsOptional || param.NullableAnnotation == NullableAnnotation.Annotated;
         string? defaultValue = param.HasExplicitDefaultValue ? param.ExplicitDefaultValue?.ToString() : null;
-        bool isEnumType = param.Type.TypeKind == TypeKind.Enum;
+        bool isEnumType = IsEnumOrNullableEnum(param.Type);
 
         parameters.Add(ParameterBinding.FromParameter(
           parameterName: param.Name,
@@ -492,6 +492,27 @@ internal static class HandlerExtractor
     return typeName == "global::System.Threading.CancellationToken" ||
            typeName == "CancellationToken" ||
            typeName == "System.Threading.CancellationToken";
+  }
+
+  /// <summary>
+  /// Checks if a type is an enum or a nullable enum (Nullable&lt;TEnum&gt;).
+  /// </summary>
+  private static bool IsEnumOrNullableEnum(ITypeSymbol type)
+  {
+    // Direct enum type
+    if (type.TypeKind == TypeKind.Enum)
+      return true;
+
+    // Check for Nullable<TEnum>
+    if (type is INamedTypeSymbol namedType &&
+        namedType.ConstructedFrom.SpecialType == SpecialType.System_Nullable_T &&
+        namedType.TypeArguments.Length == 1 &&
+        namedType.TypeArguments[0].TypeKind == TypeKind.Enum)
+    {
+      return true;
+    }
+
+    return false;
   }
 
   /// <summary>

@@ -1,12 +1,12 @@
 | Command | Mean [ms] | Min [ms] | Max [ms] | Relative |
 |:---|---:|---:|---:|---:|
-| `bench-consoleappframework` | 4.2 ± 1.6 | 2.6 | 12.1 | 1.06 ± 0.41 |
-| `bench-systemcommandline` | 4.0 ± 0.3 | 3.2 | 5.0 | 1.00 |
-| `bench-clifx` | 77.2 ± 32.1 | 52.3 | 209.3 | 19.51 ± 8.26 |
-| `bench-mcmaster` | 82.3 ± 28.8 | 59.1 | 284.8 | 20.80 ± 7.48 |
-| `bench-nuru-full` | 6.6 ± 1.7 | 4.6 | 15.8 | 1.67 ± 0.46 |
-| `bench-powerargs` | 94.9 ± 40.3 | 62.5 | 254.5 | 23.98 ± 10.37 |
-| `bench-commandlineparser` | 5.3 ± 0.4 | 4.5 | 6.6 | 1.34 ± 0.14 |
-| `bench-cocona` | 20.0 ± 5.0 | 16.5 | 44.3 | 5.06 ± 1.34 |
-| `bench-coconalite` | 7.1 ± 2.4 | 5.4 | 19.6 | 1.80 ± 0.63 |
-| `bench-spectreconsole` | 7.8 ± 0.8 | 6.1 | 9.9 | 1.97 ± 0.25 |
+| `bench-consoleappframework` | 2.7 ± 0.3 | 2.2 | 4.1 | 1.00 |
+| `bench-systemcommandline` | 3.4 ± 0.2 | 2.8 | 4.0 | 1.26 ± 0.15 |
+| `bench-clifx` | 64.9 ± 20.1 | 50.2 | 169.7 | 23.93 ± 7.76 |
+| `bench-mcmaster` | 75.6 ± 21.8 | 53.8 | 171.3 | 27.88 ± 8.47 |
+| `bench-nuru` | 3.0 ± 0.2 | 2.6 | 3.9 | 1.09 ± 0.13 |
+| `bench-powerargs` | 78.9 ± 118.3 | 56.1 | 1246.7 | 29.11 ± 43.73 |
+| `bench-commandlineparser` | 4.4 ± 0.3 | 3.9 | 5.5 | 1.62 ± 0.18 |
+| `bench-cocona` | 15.6 ± 0.8 | 14.6 | 19.5 | 5.74 ± 0.62 |
+| `bench-coconalite` | 5.1 ± 0.3 | 4.5 | 5.8 | 1.88 ± 0.21 |
+| `bench-spectreconsole` | 6.9 ± 0.4 | 5.8 | 8.7 | 2.54 ± 0.29 |

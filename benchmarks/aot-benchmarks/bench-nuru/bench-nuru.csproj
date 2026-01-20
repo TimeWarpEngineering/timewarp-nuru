@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <AssemblyName>bench-nuru-full</AssemblyName>
+    <AssemblyName>bench-nuru</AssemblyName>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="$(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj" />

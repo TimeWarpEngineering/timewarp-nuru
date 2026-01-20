@@ -58,6 +58,54 @@ The TimeWarp.Nuru MCP (Model Context Protocol) server provides AI assistants wit
 
 ## Notes
 
+## Implementation Plan
+
+### Phase 1: Update `generate-handler-tool.cs` (HIGH PRIORITY)
+- Remove `GenerateCommandHandler()` method entirely (lines 119-195)
+- Remove `useCommand` parameter from `GenerateHandler()` method
+- Update `GenerateDirectHandler()` to use `.WithHandler()` DSL pattern
+- Add support for attributed routes via `[NuruRoute]`
+- Add support for pipeline behaviors via `.AddBehavior()`
+
+### Phase 2: Update `examples.json`
+- Remove or deprecate `"commands"` example (uses `ICommand<T>`)
+- Add new examples:
+  - `"behaviors-basic"` - INuruBehavior patterns
+  - `"behaviors-filtered"` - INuruBehavior<TFilter> patterns
+  - `"type-converters-custom"` - IRouteTypeConverter patterns
+  - `"attributed-routes"` - [NuruRoute] patterns
+
+### Phase 3: Update Tests
+- `mcp-04-handler-generation.cs` - Remove `useCommand=true` tests, add `.WithHandler()` tests
+- `mcp-01-example-retrieval.cs` - Update for new examples
+
+### Phase 4: Add New MCP Tools
+- `get-behavior-tool.cs` - Behavior documentation and examples
+- `get-type-converter-tool.cs` - Type converter documentation
+- `get-attributed-route-tool.cs` - Attributed route documentation
+
+### Phase 5: Update README
+- Remove Mediator references
+- Add new tool documentation
+
+### Files to Modify
+- `source/timewarp-nuru-mcp/tools/generate-handler-tool.cs` [HIGH]
+- `tests/timewarp-nuru-mcp-tests/mcp-04-handler-generation.cs` [HIGH]
+- `samples/examples.json` [MEDIUM]
+- `source/timewarp-nuru-mcp/readme.md` [MEDIUM]
+- `source/timewarp-nuru-mcp/tools/get-behavior-tool.cs` [NEW]
+- `source/timewarp-nuru-mcp/tools/get-type-converter-tool.cs` [NEW]
+- `source/timewarp-nuru-mcp/tools/get-attributed-route-tool.cs` [NEW]
+- `source/timewarp-nuru-mcp/program.cs` [NEW TOOL REGISTRATION]
+- `tests/timewarp-nuru-mcp-tests/mcp-01-example-retrieval.cs` [LOW]
+
+### Clarifying Questions Resolved
+1. Remove `useCommand` parameter entirely
+2. Add new tools in this PR
+3. Update examples.json to V2 samples, remove old command-pattern samples
+
+---
+
 The MCP server is used by AI assistants (like Claude) to understand TimeWarp.Nuru patterns. Keeping it up-to-date ensures AI-generated code follows current best practices.
 
 Key V2 changes to reflect:

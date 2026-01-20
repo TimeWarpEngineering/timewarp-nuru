@@ -38,7 +38,7 @@ Consolidate `NuruCoreApp` and `NuruApp` into a single unified `NuruApp` class. F
 ### Phase 4: Verification
 - [x] Run `dotnet build timewarp-nuru.slnx -c Release` ✅ Build succeeded!
 - [x] Run `dotnet run tests/ci-tests/run-ci-tests.cs` ✅ 1016/1023 passed (7 skipped)
-- [ ] Run samples to verify they work
+- [x] Run samples to verify they work ✅ Aspire sample works!
 
 ### Phase 5: Clean up remaining references
 - [x] Update 21 test/sample files with `NuruCoreApp app` → `NuruApp app`
@@ -64,20 +64,35 @@ Consolidate `NuruCoreApp` and `NuruApp` into a single unified `NuruApp` class. F
 - [x] Build verification ✅
 - [x] Run CI tests ✅ 1016/1023 passed
 
+### Phase 7: Remove Dead Code
+- [x] Delete `NuruAppOptions` class (properties never read - dead code)
+- [x] Delete `options/nuru-application-options.cs` file
+- [x] Remove `args` parameter from `CreateBuilder()` (checked for null, never used)
+- [x] Remove incomplete `IHostApplicationBuilder` interface from NuruAppBuilder
+- [x] Remove `NuruHostEnvironment` class (only used for IHostApplicationBuilder)
+- [x] Remove `IDisposable` implementation (not needed)
+- [x] Build verification ✅
+- [x] Run CI tests ✅ 1016/1023 passed
+
 ### Additional Changes Made
 - Renamed `services/nuru-core-app-holder.cs` → `services/nuru-app-holder.cs`
 - Deleted `nuru-app-static.cs` (conflicting static partial class)
 - Restored `NuruApp.CreateBuilder()` factory method (was lost during rename, fixed in commit 1084c436)
-- Deleted `NuruAppOptions` class (dead code - properties were never read)
-- Deleted `options/nuru-application-options.cs` file
-- Simplified `NuruHostEnvironment` to minimal implementation
-- Simplified `NuruApp.CreateBuilder(args)` signature (no options parameter)
 
 ## References that MUST remain as `NuruCoreApp`
 
 These cannot be changed because they serve a specific purpose:
 
 - `typeof(NuruCoreApp)` - for assembly reflection in get-version-info-tool
+
+## Performance Results
+
+**Benchmark comparison (2026-01-20):**
+- Nuru is **nearly matching ConsoleAppFramework** in performance
+- Nuru has **significantly more features** (source generators, behaviors, REPL, telemetry, completion)
+- Trade-off: Same speed, way more functionality = win for Nuru!
+
+See: `benchmarks/aot-benchmarks/results/`
 
 ## Notes
 

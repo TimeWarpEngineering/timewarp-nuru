@@ -43,20 +43,25 @@ Consolidate `NuruCoreApp` and `NuruApp` into a single unified `NuruApp` class. F
 - [x] Update 21 test/sample files with `NuruCoreApp app` → `NuruApp app`
 - [x] Update static field declarations (`NuruCoreApp? App` → `NuruApp? App`)
 - [x] Update XML doc comments referencing `NuruCoreApp`
+- [x] Update code generators to recognize NuruApp instead of NuruCoreApp:
+  - `behavior-emitter.cs` - Update type name checks
+  - `handler-invoker-emitter.cs` - Update type name checks
+  - `interceptor-emitter.cs` - Update generated code to use NuruApp parameter type
+  - `repl-emitter.cs` - Update generated code to use NuruApp parameter type
+  - `service-resolver-emitter.cs` - Rename IsNuruCoreAppType → IsNuruAppType
+  - `dsl-interpreter.cs` - Remove NuruCoreApp from type name check
 
 ### Additional Changes Made
 - Renamed `services/nuru-core-app-holder.cs` → `services/nuru-app-holder.cs`
 - Deleted `nuru-app-static.cs` (conflicting static partial class)
 
-## Remaining References (intentionally not changed)
+## References that MUST remain as `NuruCoreApp`
 
-These remain as `NuruCoreApp` because they must for code generation correctness:
+These cannot be changed because they serve a specific purpose:
 
 - `NuruCoreApplicationOptions` - separate options class (not being renamed)
 - `NuruCoreAppBuilder` - separate builder class (not being renamed)
 - `typeof(NuruCoreApp)` - for assembly reflection in get-version-info-tool
-- String literals in generator emitters that output `NuruCoreApp` in generated code
-- Comments in generator code explaining generated code behavior
 
 ## Notes
 

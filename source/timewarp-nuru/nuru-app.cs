@@ -127,4 +127,37 @@ public partial class NuruApp
           "RunReplAsync was not intercepted. Ensure AddRepl() is called and the source generator is not enabled.");
   }
   #pragma warning restore CA1822
+
+  /// <summary>
+  /// Creates a full-featured builder with DI, Configuration, and all extensions auto-wired.
+  /// Use fluent extension methods to configure individual features:
+  /// <see cref="NuruCoreAppBuilder{TSelf}.AddRepl(Action{ReplOptions})"/> for REPL,
+  /// <see cref="NuruCoreAppBuilder{TSelf}.AddHelp(Action{HelpOptions})"/> for help,
+  /// <see cref="NuruCoreAppBuilder{TSelf}.AddConfiguration"/> for configuration.
+  /// </summary>
+  /// <param name="args">Command line arguments.</param>
+  /// <param name="options">Optional core application options.</param>
+  /// <returns>A configured NuruAppBuilder with all extensions.</returns>
+  /// <example>
+  /// <code>
+  /// NuruApp.CreateBuilder(args)
+  ///     .AddRepl(options =>
+  ///     {
+  ///       options.Prompt = "myapp> ";
+  ///       options.WelcomeMessage = "Welcome!";
+  ///     })
+  ///     .Map("greet {name}", (string name) => Console.WriteLine($"Hello, {name}!"))
+  ///     .Build();
+  /// </code>
+  /// </example>
+  [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope",
+    Justification = "Builder ownership is transferred to caller who is responsible for disposal")]
+  public static NuruAppBuilder CreateBuilder(string[] args, NuruCoreApplicationOptions? options = null)
+  {
+    ArgumentNullException.ThrowIfNull(args);
+    options ??= new NuruCoreApplicationOptions();
+    options.Args = args;
+    NuruAppBuilder builder = new(options);
+    return builder;
+  }
 }

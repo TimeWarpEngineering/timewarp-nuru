@@ -44,14 +44,20 @@ dynamic completion. Migrate and consolidate the two completion samples.
 - [x] Delete obsolete completion tests (tested runtime-based system)
 - [x] Rename `samples/_dynamic-completion-example/` → `samples/15-completion/`
 - [x] Add retained completion tests to CI suite (Directory.Build.props)
-- [ ] Verify completion works in bash, zsh, fish, PowerShell (manual testing)
+- [x] Fix completion registry callback bug (configure callback was ignored)
+- [x] Fix completion handlers to use `ITerminal` for testable output
+- [x] Add automated endpoint protocol tests (`completion-27-endpoint-protocol.cs`)
+- [x] Move completion tests from `dynamic/` to `completion/`
+- [x] Add REPL mode to sample for demos
+- [ ] Verify shell TAB completion works in bash, zsh, fish, PowerShell (manual testing only)
 
 ### Tests in CI Suite
 
-Working completion unit tests (36 total, don't need source generation):
+Working completion unit tests (49 total, don't need source generation):
 - `completion-15-completion-registry.cs` - 14 tests
 - `completion-17-enum-source.cs` - 10 tests  
 - `completion-20-dynamic-script-gen.cs` - 12 tests
+- `completion-27-endpoint-protocol.cs` - 13 tests (NEW: `__complete`, `--generate-completion`, `--install-completion`)
 
 ## Related Issues
 
@@ -115,4 +121,6 @@ Runtime
 - `source/timewarp-nuru/completion/completion/dynamic-completion-handler.cs` - made public, added null checks
 - `source/timewarp-nuru/completion/completion/dynamic-completion-script-generator.cs` - made public, fixed resource paths
 - `source/timewarp-nuru/completion/ishell-completion-provider.cs` - made `EmptyShellCompletionProvider` public
-- `samples/_dynamic-completion-example/dynamic-completion-example.cs` - updated for current API
+- `samples/15-completion/completion-example.cs` - updated for current API, added REPL mode
+- `source/timewarp-nuru/completion/completion/install-completion-handler.cs` - refactored to use ITerminal
+- `tests/timewarp-nuru-tests/completion/completion-27-endpoint-protocol.cs` - NEW: 13 automated endpoint tests

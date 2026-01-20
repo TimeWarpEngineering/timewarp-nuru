@@ -259,7 +259,7 @@ public sealed class NuruInvokerGeneratorTests
     const string code = """
       using TimeWarp.Nuru;
       
-      NuruCoreAppBuilder builder = NuruApp.CreateBuilder([]);
+      NuruAppBuilder builder = NuruApp.CreateBuilder([]);
       builder.Map("test")
         .WithHandler(() => System.Console.WriteLine("test"))
         .AsCommand()

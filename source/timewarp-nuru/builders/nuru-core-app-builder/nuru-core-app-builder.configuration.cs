@@ -1,9 +1,9 @@
 namespace TimeWarp.Nuru;
 
 /// <summary>
-/// Configuration, dependency injection, and service methods for NuruCoreAppBuilder.
+/// Configuration, dependency injection, and service methods for NuruAppBuilder.
 /// </summary>
-public partial class NuruCoreAppBuilder<TSelf>
+public partial class NuruAppBuilder
 {
   /// <summary>
   /// Adds standard .NET configuration sources to the application.
@@ -31,12 +31,12 @@ public partial class NuruCoreAppBuilder<TSelf>
   /// #:property UserSecretsId=your-guid-here
   /// </code>
   /// </remarks>
-  public virtual TSelf AddConfiguration(string[]? args = null)
+  public virtual NuruAppBuilder AddConfiguration(string[]? args = null)
   {
     // This method is interpreted by the source generator at compile time.
     // The actual configuration loading is emitted as generated code.
     // This stub exists for API compatibility.
-    return (TSelf)this;
+    return this;
   }
 
   /// <summary>
@@ -59,12 +59,12 @@ public partial class NuruCoreAppBuilder<TSelf>
   ///   .Build();
   /// </code>
   /// </example>
-  public virtual TSelf ConfigureServices(Action<IServiceCollection> configure)
+  public virtual NuruAppBuilder ConfigureServices(Action<IServiceCollection> configure)
   {
     // This method is interpreted by the source generator at compile time.
     // The generated code handles service registration via static instantiation.
     // This stub exists for API compatibility - it's a no-op at runtime.
-    return (TSelf)this;
+    return this;
   }
 
   /// <summary>
@@ -90,12 +90,12 @@ public partial class NuruCoreAppBuilder<TSelf>
   ///   .Build();
   /// </code>
   /// </example>
-  public virtual TSelf ConfigureServices(Action<IServiceCollection, IConfiguration?> configure)
+  public virtual NuruAppBuilder ConfigureServices(Action<IServiceCollection, IConfiguration?> configure)
   {
     // This method is interpreted by the source generator at compile time.
     // The generated code handles service registration via static instantiation.
     // This stub exists for API compatibility - it's a no-op at runtime.
-    return (TSelf)this;
+    return this;
   }
 
   /// <summary>
@@ -103,16 +103,16 @@ public partial class NuruCoreAppBuilder<TSelf>
   /// If not called, NullLoggerFactory is used (zero overhead).
   /// </summary>
   /// <param name="loggerFactory">The logger factory to use for creating loggers.</param>
-  public virtual TSelf UseLogging(ILoggerFactory loggerFactory)
+  public virtual NuruAppBuilder UseLogging(ILoggerFactory loggerFactory)
   {
     ArgumentNullException.ThrowIfNull(loggerFactory);
     LoggerFactory = loggerFactory;
-    return (TSelf)this;
+    return this;
   }
 
   /// <summary>
   /// Sets the terminal I/O provider for interactive operations like REPL.
-  /// If not called, defaults to <see cref="TimeWarpTerminal.Default"/>.
+  /// If not called, defaults to <see cref="TimeWarpTerminal.Default"/>
   /// </summary>
   /// <param name="terminal">The terminal implementation to use.</param>
   /// <returns>The builder for chaining.</returns>
@@ -129,11 +129,11 @@ public partial class NuruCoreAppBuilder<TSelf>
   ///     .Build();
   /// </code>
   /// </example>
-  public virtual TSelf UseTerminal(ITerminal terminal)
+  public virtual NuruAppBuilder UseTerminal(ITerminal terminal)
   {
     ArgumentNullException.ThrowIfNull(terminal);
     Terminal = terminal;
-    return (TSelf)this;
+    return this;
   }
 
   /// <summary>
@@ -152,12 +152,12 @@ public partial class NuruCoreAppBuilder<TSelf>
   /// When not called, none of this code is generated, making OpenTelemetry packages
   /// fully trimmable by the AOT linker.
   /// </remarks>
-  public virtual TSelf UseTelemetry()
+  public virtual NuruAppBuilder UseTelemetry()
   {
     // This method is interpreted by the source generator at compile time.
     // The generated code emits telemetry infrastructure when this is called.
     // This stub exists for API compatibility.
-    return (TSelf)this;
+    return this;
   }
 
   /// <summary>
@@ -176,11 +176,11 @@ public partial class NuruCoreAppBuilder<TSelf>
   /// When not called, none of this code is generated, making OpenTelemetry packages
   /// fully trimmable by the AOT linker.
   /// </remarks>
-  public virtual TSelf UseTelemetry(Action<NuruTelemetryOptions> configure)
+  public virtual NuruAppBuilder UseTelemetry(Action<NuruTelemetryOptions> configure)
   {
     // This method is interpreted by the source generator at compile time.
     // The generated code emits telemetry infrastructure when this is called.
     // This stub exists for API compatibility.
-    return (TSelf)this;
+    return this;
   }
 }

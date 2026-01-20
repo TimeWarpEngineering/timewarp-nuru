@@ -9,6 +9,7 @@ Consolidate `NuruCoreApp` and `NuruApp` into a single unified `NuruApp` class. F
 - `CreateBuilder()` factory method moved from `NuruApp` to `NuruCoreApp`
 - `NuruCoreApp` class renamed to `NuruApp`
 - `nuru-app.cs` deleted (factory method merged)
+- `NuruCoreAppBuilder` merged into `NuruAppBuilder` (flatten hierarchy)
 - All references updated across source code, tests, samples, and documentation
 - No type alias - clean rename only
 
@@ -36,7 +37,7 @@ Consolidate `NuruCoreApp` and `NuruApp` into a single unified `NuruApp` class. F
 
 ### Phase 4: Verification
 - [x] Run `dotnet build timewarp-nuru.slnx -c Release` ✅ Build succeeded!
-- [ ] Run `dotnet run tests/ci-tests/run-ci-tests.cs`
+- [x] Run `dotnet run tests/ci-tests/run-ci-tests.cs` ✅ 1016/1023 passed (7 skipped)
 - [ ] Run samples to verify they work
 
 ### Phase 5: Clean up remaining references
@@ -51,17 +52,31 @@ Consolidate `NuruCoreApp` and `NuruApp` into a single unified `NuruApp` class. F
   - `service-resolver-emitter.cs` - Rename IsNuruCoreAppType → IsNuruAppType
   - `dsl-interpreter.cs` - Remove NuruCoreApp from type name check
 
+### Phase 6: Merge NuruCoreAppBuilder into NuruAppBuilder
+- [ ] Flatten builder hierarchy: move NuruCoreAppBuilder content into NuruAppBuilder
+- [ ] Move fields/methods from `builders/nuru-core-app-builder/nuru-core-app-builder.cs`
+- [ ] Move methods from `builders/nuru-core-app-builder/nuru-core-app-builder.configuration.cs`
+- [ ] Move methods from `builders/nuru-core-app-builder/nuru-core-app-builder.routes.cs`
+- [ ] Delete `builders/nuru-core-app-builder/` directory
+- [ ] Update extension methods: `NuruCoreAppBuilder<TBuilder>` → `NuruAppBuilder`
+- [ ] Update `EndpointBuilder<NuruCoreAppBuilder>` → `EndpointBuilder<NuruAppBuilder>`
+- [ ] Delete `nuru-core-app-builder.factory.cs`
+- [ ] Build verification
+- [ ] Run CI tests
+
 ### Additional Changes Made
 - Renamed `services/nuru-core-app-holder.cs` → `services/nuru-app-holder.cs`
 - Deleted `nuru-app-static.cs` (conflicting static partial class)
+- Restored `NuruApp.CreateBuilder()` factory method (was lost during rename, fixed in commit 1084c436)
 
 ## References that MUST remain as `NuruCoreApp`
 
 These cannot be changed because they serve a specific purpose:
 
 - `NuruCoreApplicationOptions` - separate options class (not being renamed)
-- `NuruCoreAppBuilder` - separate builder class (not being renamed)
 - `typeof(NuruCoreApp)` - for assembly reflection in get-version-info-tool
+
+**Note:** `NuruCoreAppBuilder` will be renamed to `NuruAppBuilder` in Phase 6, consolidating with the existing `NuruAppBuilder` class.
 
 ## Notes
 

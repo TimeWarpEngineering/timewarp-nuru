@@ -21,7 +21,7 @@ public static class NuruAppBuilderCompletionExtensions
     this EndpointBuilder<TBuilder> configurator,
     string? appName = null,
     Action<CompletionSourceRegistry>? configure = null)
-    where TBuilder : NuruCoreAppBuilder<TBuilder>
+    where TBuilder : NuruAppBuilder
   {
     ArgumentNullException.ThrowIfNull(configurator);
     return configurator.Builder.EnableCompletion(appName, configure);
@@ -38,7 +38,7 @@ public static class NuruAppBuilderCompletionExtensions
   /// <param name="appName">Optional application name for generated scripts.</param>
   /// <param name="configure">Optional action to configure completion sources.</param>
   /// <returns>The underlying builder for chaining.</returns>
-  public static NuruCoreAppBuilder EnableCompletion(
+  public static NuruAppBuilder EnableCompletion(
     this EndpointBuilder configurator,
     string? appName = null,
     Action<CompletionSourceRegistry>? configure = null)
@@ -48,7 +48,7 @@ public static class NuruAppBuilderCompletionExtensions
   }
 
   // ============================================================================
-  // NuruCoreAppBuilder extension methods
+  // NuruAppBuilder extension methods
   // ============================================================================
 
   /// <summary>
@@ -95,7 +95,7 @@ public static class NuruAppBuilderCompletionExtensions
     this TBuilder builder,
     string? appName = null,
     Action<CompletionSourceRegistry>? configure = null)
-    where TBuilder : NuruCoreAppBuilder<TBuilder>
+    where TBuilder : NuruAppBuilder
   {
     ArgumentNullException.ThrowIfNull(builder);
 

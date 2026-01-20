@@ -2,15 +2,16 @@ namespace TimeWarp.Nuru;
 
 /// <summary>
 /// Full-featured builder for configuring Nuru applications with IHostApplicationBuilder support.
-/// Inherits from <see cref="NuruCoreAppBuilder{TSelf}"/> and adds Aspire integration.
 /// </summary>
-public partial class NuruAppBuilder : NuruCoreAppBuilder<NuruAppBuilder>, IHostApplicationBuilder, IDisposable
+public partial class NuruAppBuilder : IHostApplicationBuilder, IDisposable
 {
   private ConfigurationManager? ConfigurationManager;
   private NuruHostEnvironment? NuruHostEnvironment;
   private NuruLoggingBuilder? NuruLoggingBuilder;
   private NuruMetricsBuilder? NuruMetricsBuilder;
   private readonly Dictionary<object, object> PropertiesDictionary = [];
+
+  private protected readonly NuruCoreApplicationOptions? ApplicationOptions;
 
   /// <summary>
   /// Initializes a new instance of the <see cref="NuruAppBuilder"/> class with default settings.
@@ -21,7 +22,10 @@ public partial class NuruAppBuilder : NuruCoreAppBuilder<NuruAppBuilder>, IHostA
   /// <summary>
   /// Internal constructor for factory methods with specific builder mode.
   /// </summary>
-  internal NuruAppBuilder(NuruCoreApplicationOptions? options) : base(options) { }
+  internal NuruAppBuilder(NuruCoreApplicationOptions? options)
+  {
+    ApplicationOptions = options;
+  }
 
   /// <summary>
   /// Initializes IHostApplicationBuilder fields that depend on Services.

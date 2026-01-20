@@ -1,12 +1,10 @@
 namespace TimeWarp.Nuru;
 
 /// <summary>
-/// Core builder for configuring lightweight Nuru applications.
-/// For full-featured applications with IHostApplicationBuilder support, use NuruAppBuilder from TimeWarp.Nuru package.
+/// Builder for configuring Nuru applications.
+/// Combines lightweight configuration with IHostApplicationBuilder support.
 /// </summary>
-/// <typeparam name="TSelf">The derived builder type for fluent API support (CRTP pattern).</typeparam>
-public partial class NuruCoreAppBuilder<TSelf>
-  where TSelf : NuruCoreAppBuilder<TSelf>
+public partial class NuruAppBuilder
 {
   private protected readonly TypeConverterRegistry TypeConverterRegistry = new();
   private protected IConfiguration? Configuration;
@@ -56,45 +54,45 @@ public partial class NuruCoreAppBuilder<TSelf>
   ///   .Build();
   /// </code>
   /// </example>
-  public virtual TSelf AddBehavior(Type behaviorType)
+  public virtual NuruAppBuilder AddBehavior(Type behaviorType)
   {
     // No-op at runtime - the source generator extracts behavior info at compile-time
     // and generates the pipeline wrapping code in the interceptor.
     _ = behaviorType; // Suppress unused parameter warning
-    return (TSelf)this;
+    return this;
   }
 
   /// <summary>
   /// Sets the application name for help display.
   /// </summary>
   /// <param name="name">The application name.</param>
-  public virtual TSelf WithName(string name)
+  public virtual NuruAppBuilder WithName(string name)
   {
     // No-op at runtime - the source generator extracts the name at compile-time
     _ = name;
-    return (TSelf)this;
+    return this;
   }
 
   /// <summary>
   /// Sets the application description for help display.
   /// </summary>
   /// <param name="description">The application description.</param>
-  public virtual TSelf WithDescription(string description)
+  public virtual NuruAppBuilder WithDescription(string description)
   {
     // No-op at runtime - the source generator extracts the description at compile-time
     _ = description;
-    return (TSelf)this;
+    return this;
   }
 
   /// <summary>
   /// Configures help output filtering and display options.
   /// </summary>
   /// <param name="configure">Action to configure help options.</param>
-  public virtual TSelf ConfigureHelp(Action<HelpOptions> configure)
+  public virtual NuruAppBuilder ConfigureHelp(Action<HelpOptions> configure)
   {
     ArgumentNullException.ThrowIfNull(configure);
     configure(HelpOptions);
-    return (TSelf)this;
+    return this;
   }
 
   /// <summary>

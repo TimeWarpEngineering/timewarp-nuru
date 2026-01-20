@@ -1,9 +1,9 @@
 namespace TimeWarp.Nuru;
 
 /// <summary>
-/// Route registration methods for NuruCoreAppBuilder.
+/// Route registration methods for NuruAppBuilder.
 /// </summary>
-public partial class NuruCoreAppBuilder<TSelf>
+public partial class NuruAppBuilder
 {
   /// <summary>
   /// Enables REPL (Read-Eval-Print Loop) mode support.
@@ -22,10 +22,10 @@ public partial class NuruCoreAppBuilder<TSelf>
   /// // Run with: ./myapp -i  or  ./myapp --interactive
   /// </code>
   /// </example>
-  public virtual TSelf AddRepl()
+  public virtual NuruAppBuilder AddRepl()
   {
     ReplOptions ??= new ReplOptions();
-    return (TSelf)this;
+    return this;
   }
 
   /// <summary>
@@ -48,13 +48,13 @@ public partial class NuruCoreAppBuilder<TSelf>
   ///     .Build();
   /// </code>
   /// </example>
-  public virtual TSelf AddRepl(Action<ReplOptions> configureOptions)
+  public virtual NuruAppBuilder AddRepl(Action<ReplOptions> configureOptions)
   {
     ArgumentNullException.ThrowIfNull(configureOptions);
     ReplOptions replOptions = new();
     configureOptions(replOptions);
     ReplOptions = replOptions;
-    return (TSelf)this;
+    return this;
   }
 
   /// <summary>
@@ -64,12 +64,12 @@ public partial class NuruCoreAppBuilder<TSelf>
   /// <param name="configureOptions">Optional action to configure REPL options.</param>
   /// <returns>The builder for chaining.</returns>
   [Obsolete("Use AddRepl() or AddRepl(Action<ReplOptions>) instead.")]
-  public virtual TSelf AddReplOptions(Action<ReplOptions>? configureOptions = null)
+  public virtual NuruAppBuilder AddReplOptions(Action<ReplOptions>? configureOptions = null)
   {
     ReplOptions replOptions = new();
     configureOptions?.Invoke(replOptions);
     ReplOptions = replOptions;
-    return (TSelf)this;
+    return this;
   }
 
   /// <summary>
@@ -88,11 +88,11 @@ public partial class NuruCoreAppBuilder<TSelf>
   ///     .Done();
   /// </code>
   /// </example>
-  public virtual EndpointBuilder<TSelf> Map(string pattern)
+  public virtual EndpointBuilder<NuruAppBuilder> Map(string pattern)
   {
     // Source generator parses pattern and creates route at compile time
     _ = pattern;
-    return new EndpointBuilder<TSelf>((TSelf)this);
+    return new EndpointBuilder<NuruAppBuilder>(this);
   }
 
   /// <summary>
@@ -101,7 +101,7 @@ public partial class NuruCoreAppBuilder<TSelf>
   /// </summary>
   /// <param name="configureRoute">
   /// Function to configure the route pattern. Must call <see cref="NestedCompiledRouteBuilder{TParent}.Done"/>
-  /// to complete route configuration and return the <see cref="EndpointBuilder{TSelf}"/>.
+  /// to complete route configuration and return the <see cref="EndpointBuilder{TSelf}"/>
   /// </param>
   /// <returns>An <see cref="EndpointBuilder{TSelf}"/> for further endpoint configuration.</returns>
   /// <example>
@@ -117,12 +117,12 @@ public partial class NuruCoreAppBuilder<TSelf>
   ///     .Done();
   /// </code>
   /// </example>
-  public virtual EndpointBuilder<TSelf> Map(
-    Func<NestedCompiledRouteBuilder<EndpointBuilder<TSelf>>, EndpointBuilder<TSelf>> configureRoute)
+  public virtual EndpointBuilder<NuruAppBuilder> Map(
+    Func<NestedCompiledRouteBuilder<EndpointBuilder<NuruAppBuilder>>, EndpointBuilder<NuruAppBuilder>> configureRoute)
   {
     // Source generator extracts nested route configuration at compile time
     _ = configureRoute;
-    return new EndpointBuilder<TSelf>((TSelf)this);
+    return new EndpointBuilder<NuruAppBuilder>(this);
   }
 
   /// <summary>
@@ -133,12 +133,12 @@ public partial class NuruCoreAppBuilder<TSelf>
   /// This method is retained for API compatibility. Custom type converters
   /// are detected by the source generator at compile time.
   /// </remarks>
-  public virtual TSelf AddTypeConverter(IRouteTypeConverter converter)
+  public virtual NuruAppBuilder AddTypeConverter(IRouteTypeConverter converter)
   {
     // Source generator handles type conversion at compile time.
     // Custom converters are registered via attributes or DSL analysis.
     _ = converter;
-    return (TSelf)this;
+    return this;
   }
 
   /// <summary>
@@ -161,11 +161,11 @@ public partial class NuruCoreAppBuilder<TSelf>
   ///     .Done();   // End admin group
   /// </code>
   /// </example>
-  public virtual GroupBuilder<TSelf> WithGroupPrefix(string prefix)
+  public virtual GroupBuilder<NuruAppBuilder> WithGroupPrefix(string prefix)
   {
     // Source generator handles group prefix at compile time
     _ = prefix;
-    return new GroupBuilder<TSelf>((TSelf)this);
+    return new GroupBuilder<NuruAppBuilder>(this);
   }
 
   /// <summary>
@@ -181,10 +181,10 @@ public partial class NuruCoreAppBuilder<TSelf>
   ///     .Build();
   /// </code>
   /// </example>
-  public virtual TSelf DiscoverEndpoints()
+  public virtual NuruAppBuilder DiscoverEndpoints()
   {
     // Source generator discovers [NuruRoute] classes at compile time
-    return (TSelf)this;
+    return this;
   }
 
   /// <summary>
@@ -202,10 +202,10 @@ public partial class NuruCoreAppBuilder<TSelf>
   ///     .Build();
   /// </code>
   /// </example>
-  public virtual TSelf Map<TEndpoint>() where TEndpoint : class
+  public virtual NuruAppBuilder Map<TEndpoint>() where TEndpoint : class
   {
     // Source generator extracts the type and includes the endpoint at compile time
-    return (TSelf)this;
+    return this;
   }
 
 }

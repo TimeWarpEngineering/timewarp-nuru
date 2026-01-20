@@ -380,7 +380,7 @@ public sealed class DelegateSignatureExtractionTests
     string runtimePath = System.Runtime.InteropServices.RuntimeEnvironment.GetRuntimeDirectory();
 
     // Find the TimeWarp.Nuru assembly
-    string nuruAssemblyPath = typeof(NuruCoreApp).Assembly.Location;
+    string nuruAssemblyPath = typeof(NuruApp).Assembly.Location;
     string coreAssemblyPath = Path.Combine(Path.GetDirectoryName(nuruAssemblyPath)!, "TimeWarp.Nuru.Core.dll");
 
     List<MetadataReference> references =

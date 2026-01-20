@@ -6,7 +6,7 @@ namespace TimeWarp.Nuru.Generators;
 using RoslynSyntaxNode = Microsoft.CodeAnalysis.SyntaxNode;
 
 /// <summary>
-/// Locates RunReplAsync() call sites on NuruCoreApp instances.
+/// Locates RunReplAsync() call sites on NuruApp instances.
 /// These are the interception targets for the generated code.
 /// </summary>
 internal static class RunReplAsyncLocator

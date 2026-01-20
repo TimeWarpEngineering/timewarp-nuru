@@ -49,7 +49,7 @@ return await builder.Build().RunAsync(args);
 ```csharp
 using TestTerminal terminal = new();
 
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder(args)
     .UseTerminal(terminal)
     .Map("greet {name}", (string name, ITerminal t) =>
         t.WriteLine($"Hello, {name}!".Green()))
@@ -286,7 +286,7 @@ Where:
 ```csharp
 using TestTerminal terminal = new();
 
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder(args)
     .UseTerminal(terminal)
     .Map("hello", (ITerminal t) => t.WriteLine("Hello, World!"))
     .Build();
@@ -303,7 +303,7 @@ Assert.Equal(1, terminal.GetOutputLines().Length);
 ```csharp
 using TestTerminal terminal = new();
 
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder(args)
     .UseTerminal(terminal)
     .Map("fail", (ITerminal t) => t.WriteErrorLine("Something went wrong"))
     .Build();
@@ -325,7 +325,7 @@ terminal.QueueKey(ConsoleKey.Tab); // Press Tab for completion
 terminal.QueueKey(ConsoleKey.Enter); // Press Enter
 terminal.QueueLine("exit");       // Type "exit" and Enter
 
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder(args)
     .UseTerminal(terminal)
     .Map("hello-world", () => Console.WriteLine("Hello!"))
     .Build();
@@ -367,20 +367,20 @@ terminal.ClearKeys();
 
 ```csharp
 // Production (default)
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder(args)
     .Map("hello", () => Console.WriteLine("Hello!"))
     .Build();
 // Uses TimeWarpTerminal.Default automatically
 
 // Testing
 using TestTerminal terminal = new();
-NuruCoreApp testApp = NuruApp.CreateBuilder(args)
+NuruApp testApp = NuruApp.CreateBuilder(args)
     .UseTerminal(terminal)
     .Map("hello", () => Console.WriteLine("Hello!"))
     .Build();
 
 // Custom terminal
-NuruCoreApp customApp = NuruApp.CreateBuilder(args)
+NuruApp customApp = NuruApp.CreateBuilder(args)
     .UseTerminal(new MyCustomTerminal())
     .Build();
 ```
@@ -595,7 +595,7 @@ public static async Task Test2()
 
 ### NuruTestContext for Runfile Testing
 
-`NuruTestContext` enables testing of **runfiles** without modifying the application code. It allows a test harness to intercept `NuruCoreApp.RunAsync()` execution.
+`NuruTestContext` enables testing of **runfiles** without modifying the application code. It allows a test harness to intercept `NuruApp.RunAsync()` execution.
 
 **How It Works:**
 
@@ -607,7 +607,7 @@ public static async Task Test2()
 // test-my-app.cs - included via Directory.Build.props when NURU_TEST is set
 public static class TestHarness
 {
-    internal static NuruCoreApp? App;
+    internal static NuruApp? App;
 
     [ModuleInitializer]
     public static void Initialize()

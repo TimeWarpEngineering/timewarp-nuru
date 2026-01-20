@@ -297,7 +297,7 @@ return await app.RunAsync();
 You can manually configure features using the builder methods:
 
 ```csharp
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder(args)
     .Map("greet {name}", (string name) => Console.WriteLine($"Hello, {name}!"))
     .AddVersionRoute()      // Manually add version
     .EnableStaticCompletion()  // Manually add completion

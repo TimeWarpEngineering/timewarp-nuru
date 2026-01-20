@@ -14,7 +14,7 @@ Shell completion provides tab-completions for your CLI application. When you pre
 ## Quick Start
 
 ```csharp
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder(args)
   .Map("deploy {env} --version {tag}")
     .WithHandler((string env, string tag) => Console.WriteLine($"Deploying {tag} to {env}"))
     .AsCommand()

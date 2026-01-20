@@ -67,7 +67,7 @@ internal static class BuildLocator
     if (methodSymbol.Name != MethodName)
       return false;
 
-    // Check that the return type is NuruCoreApp
+    // Check that the return type is NuruApp
     if (methodSymbol.ReturnType.Name != "NuruApp")
       return false;
 

@@ -117,7 +117,7 @@ using TimeWarp.Nuru.Logging;
 using Mediator;
 using Microsoft.Extensions.DependencyInjection;
 
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder(args)
   .UseConsoleLogging()  // Logs → stderr
   .ConfigureServices(services =>
   {

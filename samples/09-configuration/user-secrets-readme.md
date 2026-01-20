@@ -14,7 +14,7 @@ See: [user-secrets-property.cs](user-secrets-property.cs)
 using Microsoft.Extensions.Configuration;
 using TimeWarp.Nuru;
 
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder(args)
   .AddConfiguration()
   .Map("show", (IConfiguration config) =>
   {

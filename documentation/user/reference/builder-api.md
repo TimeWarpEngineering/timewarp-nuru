@@ -7,7 +7,7 @@ Complete reference for the `NuruApp.CreateBuilder()` fluent API.
 All Nuru applications start with `NuruApp.CreateBuilder()`:
 
 ```csharp
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder(args)
   // ... configuration
   .Build();
 
@@ -220,12 +220,12 @@ Behaviors wrap handler execution like middleware. See [Pipeline Behaviors](../fe
 
 ```csharp
 // Build the application
-NuruCoreApp app = builder.Build();
+NuruApp app = builder.Build();
 ```
 
 ## App Methods
 
-Methods available on `NuruCoreApp` after building:
+Methods available on `NuruApp` after building:
 
 | Method | Description |
 |--------|-------------|
@@ -285,7 +285,7 @@ async (string p, CancellationToken ct) => await ProcessAsync(p, ct)
 ```csharp
 using TimeWarp.Nuru;
 
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder(args)
   .WithName("myapp")
   .WithDescription("My awesome CLI application")
   

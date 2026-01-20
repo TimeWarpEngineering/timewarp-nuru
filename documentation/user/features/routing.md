@@ -20,7 +20,7 @@ TimeWarp.Nuru supports intuitive route patterns:
 Parameters are automatically converted to the correct types:
 
 ```csharp
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder(args)
   // Supports common types out of the box
   .Map("wait {seconds:int}")
     .WithHandler((int seconds) => Thread.Sleep(seconds * 1000))
@@ -69,7 +69,7 @@ See [Supported Types Reference](../reference/supported-types.md) for complete li
 The `MapDefault` method registers a handler that executes when no arguments are provided:
 
 ```csharp
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder(args)
   .MapDefault()
     .WithHandler(() => Console.WriteLine("Usage: myapp <command>"))
     .AsCommand()
@@ -91,7 +91,7 @@ NuruCoreApp app = NuruApp.CreateBuilder(args)
 A typical pattern is to display help information when users run your CLI without arguments:
 
 ```csharp
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder(args)
   .MapDefault()
     .WithHandler(() =>
     {
@@ -127,7 +127,7 @@ While both can handle "fallback" scenarios, they serve different purposes:
 | **Specificity** | Most specific (exact empty match) | Least specific (matches anything) |
 
 ```csharp
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder(args)
   .MapDefault()
     .WithHandler(() => Console.WriteLine("No command provided. Try 'help'."))
     .AsCommand()

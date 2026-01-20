@@ -644,7 +644,7 @@ public sealed class DslInterpreter
 
     // Check if type name matches known DSL types (builders and built app)
     string typeName = containingType.Name;
-    return typeName is "NuruCoreAppBuilder" or "NuruAppBuilder"
+    return typeName is "NuruAppBuilder"
         or "EndpointBuilder" or "GroupBuilder" or "GroupEndpointBuilder"
         or "NestedCompiledRouteBuilder" or "NuruApp";
   }
@@ -1532,7 +1532,7 @@ public sealed class DslInterpreter
     if (type is null) return false;
 
     string typeName = type.Name;
-    return typeName is "NuruCoreAppBuilder" or "NuruAppBuilder"
+    return typeName is "NuruAppBuilder"
         or "EndpointBuilder" or "GroupBuilder" or "GroupEndpointBuilder"
         or "NestedCompiledRouteBuilder";
   }

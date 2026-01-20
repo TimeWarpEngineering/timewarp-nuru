@@ -10,7 +10,7 @@ By default, logging is disabled (zero overhead). To enable console logging:
 using TimeWarp.Nuru;
 using TimeWarp.Nuru.Logging;
 
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder(args)
     .UseConsoleLogging()  // Enable console logging
     .Map("test", () => Console.WriteLine("Test"))
     .Build();
@@ -87,7 +87,7 @@ Log.Logger = new LoggerConfiguration()
     .WriteTo.File("logs/app.log", rollingInterval: RollingInterval.Day)
     .CreateLogger();
 
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder(args)
     .UseLogging(new SerilogLoggerFactory(Log.Logger))
     .Map("test", () => Console.WriteLine("Test"))
     .Build();
@@ -103,7 +103,7 @@ ILoggerFactory loggerFactory = LoggerFactory.Create(builder =>
     builder.AddNLog();
 });
 
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder(args)
     .UseLogging(loggerFactory)
     .Map("test", () => Console.WriteLine("Test"))
     .Build();
@@ -119,7 +119,7 @@ ILoggerFactory loggerFactory = LoggerFactory.Create(builder =>
     builder.AddApplicationInsights("InstrumentationKey");
 });
 
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder(args)
     .UseLogging(loggerFactory)
     .Map("test", () => Console.WriteLine("Test"))
     .Build();
@@ -230,7 +230,7 @@ ILoggerFactory loggerFactory = LoggerFactory.Create(builder =>
     builder.AddConsole();
 });
 
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder(args)
     .UseLogging(loggerFactory)
     .Build();
 ```
@@ -317,7 +317,7 @@ ILoggerFactory loggerFactory = LoggerFactory.Create(builder =>
     builder.AddProvider(new CustomLoggerProvider());
 });
 
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder(args)
     .UseLogging(loggerFactory)
     .Build();
 ```

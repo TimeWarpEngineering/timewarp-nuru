@@ -15,7 +15,7 @@ First registered = outermost (called first, returns last).
 ## Basic Pattern
 
 ```csharp
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder(args)
   .AddBehavior(typeof(LoggingBehavior))
   .AddBehavior(typeof(PerformanceBehavior))
   .Map("echo {message}")

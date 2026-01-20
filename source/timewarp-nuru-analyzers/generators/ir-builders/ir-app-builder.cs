@@ -1,10 +1,10 @@
-// IR builder that mirrors the NuruCoreAppBuilder DSL for semantic interpretation.
+// IR builder that mirrors the NuruAppBuilder DSL for semantic interpretation.
 //
 // This builder is used by the DslInterpreter to "execute" the DSL at design time,
 // accumulating state that will be converted to an AppModel.
 //
 // Key design:
-// - CRTP pattern matches NuruCoreAppBuilder<TSelf>
+// - CRTP pattern matches NuruAppBuilder<TSelf>
 // - Method names mirror DSL methods exactly
 // - Build() marks as built but doesn't finalize (for RunAsync intercept sites)
 // - FinalizeModel() creates the actual AppModel
@@ -13,7 +13,7 @@
 namespace TimeWarp.Nuru.Generators;
 
 /// <summary>
-/// IR builder that mirrors the NuruCoreAppBuilder DSL for semantic interpretation.
+/// IR builder that mirrors the NuruAppBuilder DSL for semantic interpretation.
 /// Uses CRTP pattern to enable proper fluent chaining.
 /// </summary>
 /// <typeparam name="TSelf">The concrete builder type for fluent returns.</typeparam>
@@ -54,7 +54,7 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
 
   /// <summary>
   /// Sets the application name.
-  /// Mirrors: NuruCoreAppBuilder.WithName()
+  /// Mirrors: NuruAppBuilder.WithName()
   /// </summary>
   public TSelf WithName(string name)
   {
@@ -64,7 +64,7 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
 
   /// <summary>
   /// Sets the application description.
-  /// Mirrors: NuruCoreAppBuilder.WithDescription()
+  /// Mirrors: NuruAppBuilder.WithDescription()
   /// </summary>
   public TSelf WithDescription(string description)
   {
@@ -74,7 +74,7 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
 
   /// <summary>
   /// Sets the AI prompt for --capabilities output.
-  /// Mirrors: NuruCoreAppBuilder.WithAiPrompt()
+  /// Mirrors: NuruAppBuilder.WithAiPrompt()
   /// </summary>
   public TSelf WithAiPrompt(string aiPrompt)
   {
@@ -84,7 +84,7 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
 
   /// <summary>
   /// Enables help with default options.
-  /// Mirrors: NuruCoreAppBuilder.AddHelp()
+  /// Mirrors: NuruAppBuilder.AddHelp()
   /// </summary>
   public TSelf AddHelp()
   {
@@ -95,7 +95,7 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
 
   /// <summary>
   /// Enables help with custom options.
-  /// Mirrors: NuruCoreAppBuilder.AddHelp(Action&lt;HelpOptions&gt;)
+  /// Mirrors: NuruAppBuilder.AddHelp(Action&lt;HelpOptions&gt;)
   /// </summary>
   /// <param name="helpOptions">The configured help options.</param>
   public TSelf AddHelp(HelpModel helpOptions)
@@ -107,7 +107,7 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
 
   /// <summary>
   /// Enables REPL with default options.
-  /// Mirrors: NuruCoreAppBuilder.AddRepl()
+  /// Mirrors: NuruAppBuilder.AddRepl()
   /// </summary>
   public TSelf AddRepl()
   {
@@ -118,7 +118,7 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
 
   /// <summary>
   /// Enables REPL with custom options.
-  /// Mirrors: NuruCoreAppBuilder.AddRepl(Action&lt;ReplOptions&gt;)
+  /// Mirrors: NuruAppBuilder.AddRepl(Action&lt;ReplOptions&gt;)
   /// </summary>
   /// <param name="replOptions">The configured REPL options.</param>
   public TSelf AddRepl(ReplModel replOptions)
@@ -130,7 +130,7 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
 
   /// <summary>
   /// Enables configuration.
-  /// Mirrors: NuruCoreAppBuilder.AddConfiguration()
+  /// Mirrors: NuruAppBuilder.AddConfiguration()
   /// </summary>
   public TSelf AddConfiguration()
   {
@@ -161,7 +161,7 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
 
   /// <summary>
   /// Adds a behavior (pipeline middleware).
-  /// Mirrors: NuruCoreAppBuilder.AddBehavior(Type)
+  /// Mirrors: NuruAppBuilder.AddBehavior(Type)
   /// </summary>
   /// <param name="behavior">The behavior definition.</param>
   public TSelf AddBehavior(BehaviorDefinition behavior)
@@ -172,7 +172,7 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
 
   /// <summary>
   /// Adds a service registration.
-  /// Mirrors: NuruCoreAppBuilder.ConfigureServices()
+  /// Mirrors: NuruAppBuilder.ConfigureServices()
   /// </summary>
   /// <param name="service">The service definition.</param>
   public TSelf AddService(ServiceDefinition service)
@@ -183,7 +183,7 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
 
   /// <summary>
   /// No-op for UseTerminal (runtime only).
-  /// Mirrors: NuruCoreAppBuilder.UseTerminal()
+  /// Mirrors: NuruAppBuilder.UseTerminal()
   /// </summary>
   public TSelf UseTerminal()
   {
@@ -193,7 +193,7 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
 
   /// <summary>
   /// Enables telemetry (OpenTelemetry instrumentation).
-  /// Mirrors: NuruCoreAppBuilder.UseTelemetry()
+  /// Mirrors: NuruAppBuilder.UseTelemetry()
   /// </summary>
   public TSelf UseTelemetry()
   {
@@ -213,7 +213,7 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
 
   /// <summary>
   /// Registers a custom type converter for code generation.
-  /// Mirrors: NuruCoreAppBuilder.AddTypeConverter()
+  /// Mirrors: NuruAppBuilder.AddTypeConverter()
   /// </summary>
   /// <param name="converter">The converter definition.</param>
   public TSelf AddTypeConverter(CustomConverterDefinition converter)
@@ -224,7 +224,7 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
 
   /// <summary>
   /// Begins mapping a new route.
-  /// Mirrors: NuruCoreAppBuilder.Map()
+  /// Mirrors: NuruAppBuilder.Map()
   /// </summary>
   /// <param name="pattern">The route pattern string.</param>
   /// <returns>An IrRouteBuilder for configuring the route.</returns>
@@ -236,7 +236,7 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
 
   /// <summary>
   /// Creates a route group with a shared prefix.
-  /// Mirrors: NuruCoreAppBuilder.WithGroupPrefix()
+  /// Mirrors: NuruAppBuilder.WithGroupPrefix()
   /// </summary>
   /// <param name="prefix">The prefix for all routes in this group.</param>
   /// <returns>A group builder for configuring nested routes.</returns>
@@ -247,7 +247,7 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
 
   /// <summary>
   /// Marks that all [NuruRoute] endpoints should be discovered and included.
-  /// Mirrors: NuruCoreAppBuilder.DiscoverEndpoints()
+  /// Mirrors: NuruAppBuilder.DiscoverEndpoints()
   /// </summary>
   public TSelf DiscoverEndpoints()
   {
@@ -257,7 +257,7 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
 
   /// <summary>
   /// Adds a specific endpoint type to include.
-  /// Mirrors: NuruCoreAppBuilder.Map&lt;TEndpoint&gt;()
+  /// Mirrors: NuruAppBuilder.Map&lt;TEndpoint&gt;()
   /// </summary>
   /// <param name="endpointTypeName">Fully qualified type name of the endpoint.</param>
   public TSelf MapEndpoint(string endpointTypeName)
@@ -286,7 +286,7 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
 
   /// <summary>
   /// Marks the builder as "built".
-  /// Mirrors: NuruCoreAppBuilder.Build()
+  /// Mirrors: NuruAppBuilder.Build()
   /// Does not finalize - call FinalizeModel() after all RunAsync() sites are captured.
   /// </summary>
   public TSelf Build()

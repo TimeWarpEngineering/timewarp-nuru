@@ -48,7 +48,7 @@ The generator intercepts `Map()` calls and emits optimized matching code.
 Tests use the Jaribu test framework with `TestTerminal` for output verification:
 ```csharp
 using TestTerminal terminal = new();
-NuruCoreApp app = NuruApp.CreateBuilder([])
+NuruApp app = NuruApp.CreateBuilder([])
   .UseTerminal(terminal)
   .Map("test").WithHandler(() => "output")
   .AsCommand().Done()

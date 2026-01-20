@@ -34,7 +34,7 @@ NuruAppBuilder builder = NuruApp.CreateBuilder(args);
 builder.Map("deploy {env} --version {tag}", (string env, string tag) => Deploy(env, tag));
 builder.Map("status", () => ShowStatus());
 
-NuruCoreApp app = builder.Build();
+NuruApp app = builder.Build();
 return await app.RunAsync(args);
 ```
 
@@ -78,7 +78,7 @@ builder.Map("status", () => ShowStatus());
 // Manually enable completion
 builder.EnableDynamicCompletion();  // Or: builder.EnableStaticCompletion()
 
-NuruCoreApp app = builder.Build();
+NuruApp app = builder.Build();
 return await app.RunAsync(args);
 ```
 

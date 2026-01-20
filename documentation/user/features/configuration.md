@@ -5,7 +5,7 @@ TimeWarp.Nuru integrates with Microsoft.Extensions.Configuration and Microsoft.E
 ## Enabling Configuration
 
 ```csharp
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder(args)
   .Build();
 ```
 
@@ -50,7 +50,7 @@ public class ApiSettings
 Inject `IOptions<T>` or `IConfiguration` directly into handler parameters:
 
 ```csharp
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder(args)
   .Map("db connect")
     .WithHandler(ConnectToDatabaseAsync)
     .AsCommand()
@@ -135,7 +135,7 @@ public class DatabaseOptions
   public int TimeoutSeconds { get; set; } = 30;
 }
 
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder(args)
   .ConfigureServices((services, config) =>
   {
     services.AddOptions<DatabaseOptions>()
@@ -154,7 +154,7 @@ Register services using `ConfigureServices`:
 
 ```csharp
 // When you don't need configuration access
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder(args)
   .ConfigureServices(services =>
   {
     services.AddSingleton<IMyService, MyService>();
@@ -163,7 +163,7 @@ NuruCoreApp app = NuruApp.CreateBuilder(args)
   .Build();
 
 // When you need access to configuration
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder(args)
   .ConfigureServices((services, config) =>
   {
     services.Configure<DatabaseOptions>(config.GetSection("Database"));

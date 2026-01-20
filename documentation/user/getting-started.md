@@ -21,7 +21,7 @@ Define routes inline with a fluent builder pattern:
 ```csharp
 using TimeWarp.Nuru;
 
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder(args)
   .Map("add {x:double} {y:double}")
     .WithHandler((double x, double y) => Console.WriteLine($"{x} + {y} = {x + y}"))
     .AsCommand()
@@ -43,7 +43,7 @@ Define commands as classes with attributes - auto-discovered at build time:
 ```csharp
 using TimeWarp.Nuru;
 
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder(args)
   .DiscoverEndpoints()
   .Build();
 
@@ -147,7 +147,7 @@ Both approaches:
 Add cross-cutting concerns like logging, telemetry, or authorization:
 
 ```csharp
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder(args)
   .AddBehavior(typeof(LoggingBehavior))
   .AddBehavior(typeof(PerformanceBehavior))
   .Map("deploy {env}")
@@ -172,7 +172,7 @@ public sealed class LoggingBehavior : INuruBehavior
 Options are automatically bound from configuration sections:
 
 ```csharp
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder(args)
   .Map("config show")
     .WithHandler((IOptions<DatabaseOptions> dbOptions) =>
     {
@@ -195,7 +195,7 @@ Convention: `DatabaseOptions` binds to the `"Database"` config section (strips "
 ### REPL Mode
 
 ```csharp
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder(args)
   .Map("greet {name}")
     .WithHandler((string name) => Console.WriteLine($"Hello, {name}!"))
     .AsQuery()
@@ -234,7 +234,7 @@ TimeWarp.Nuru uses **compile-time source generation** for routing. Benefits:
 Yes! Use fluent DSL for simple commands and attributed routes for complex ones in the same app:
 
 ```csharp
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder(args)
   .Map("version")
     .WithHandler(() => Console.WriteLine("1.0.0"))
     .AsQuery()

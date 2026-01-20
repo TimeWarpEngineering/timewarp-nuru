@@ -21,7 +21,7 @@ Maximum performance with minimal overhead.
 
 **Example:**
 ```csharp
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder(args)
   .Map("version", () => Console.WriteLine("v1.0.0"))
   .Map("ping", () => Console.WriteLine("pong"))
   .Map
@@ -51,7 +51,7 @@ Enterprise patterns with full dependency injection.
 
 **Example:**
 ```csharp
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder(args)
   .ConfigureServices(services =>
   {
     services.AddSingleton<IDatabase, Database>();
@@ -78,7 +78,7 @@ Use the right tool for each command.
 
 **Example:**
 ```csharp
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder(args)
   .ConfigureServices(services =>
   {
     services.AddScoped<IDeploymentService, DeploymentService>();
@@ -203,12 +203,12 @@ mockDeployment.Verify(x => x.ExecuteAsync(It.IsAny<Config>()), Times.Once);
 
 ```csharp
 // Phase 1: Start simple
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder(args)
   .Map("deploy {env}", (string env) => Deploy(env))
   .Build();
 
 // Phase 2: Add DI for new complex command
-NuruCoreApp app2 = NuruApp.CreateBuilder(args)
+NuruApp app2 = NuruApp.CreateBuilder(args)
   .ConfigureServices(services =>
   {
     services.AddScoped<IAnalyzer, Analyzer>();
@@ -224,7 +224,7 @@ NuruCoreApp app2 = NuruApp.CreateBuilder(args)
 ### Start Mediator, Optimize Hot Paths
 
 ```csharp
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder(args)
   // Most commands use mediator
   .Map<DeployCommand>("deploy {env}")
   .Map<AnalyzeCommand>("analyze {*files}")
@@ -240,7 +240,7 @@ NuruCoreApp app = NuruApp.CreateBuilder(args)
 **Recommendation: Direct**
 
 ```csharp
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder(args)
   .Map("encode {text}", (string text) => Base64.Encode(text))
   .Map("decode {text}", (string text) => Base64.Decode(text))
   .Map("hash {file}", (string file) => ComputeHash(file))
@@ -253,7 +253,7 @@ NuruCoreApp app = NuruApp.CreateBuilder(args)
 
 ```csharp
 // Custom extension methods can use ConfigureServices for full fluent chain
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder(args)
   .ConfigureServices(services =>
   {
     services.AddDatabase();
@@ -272,7 +272,7 @@ NuruCoreApp app = NuruApp.CreateBuilder(args)
 **Recommendation: Mixed**
 
 ```csharp
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder(args)
   .ConfigureServices
   (
     services =>
@@ -296,12 +296,12 @@ NuruCoreApp app = NuruApp.CreateBuilder(args)
 
 ```csharp
 // ✅ Start with direct approach
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder(args)
   .Map("greet {name}", (string name) => $"Hello, {name}!")
   .Build();
 
 // ❌ Don't over-engineer from the start
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder(args)
   .ConfigureServices
   (
     services =>
@@ -326,7 +326,7 @@ Migrate to mediator when:
 ### Mix Freely
 
 ```csharp
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder(args)
   .ConfigureServices(services => services.AddComplexServices();)
   // Direct for simple operations
   .Map("ping", () => "pong")

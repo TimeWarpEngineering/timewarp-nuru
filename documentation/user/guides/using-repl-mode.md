@@ -17,7 +17,7 @@ REPL mode is ideal for:
 ```csharp
 using TimeWarp.Nuru;
 
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder(args)
   .Map("greet {name}")
     .WithHandler((string name) => Console.WriteLine($"Hello, {name}!"))
     .AsCommand()
@@ -159,7 +159,7 @@ Available Application Commands:
 Configure REPL behavior through the `.AddRepl(options => ...)` pattern:
 
 ```csharp
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder(args)
   .Map("greet {name}")
     .WithHandler((string name) => Console.WriteLine($"Hello, {name}!"))
     .AsCommand()
@@ -314,7 +314,7 @@ REPL works on Windows, Linux, and macOS:
 ### Simple Calculator REPL
 
 ```csharp
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder(args)
   .Map("add {a:int} {b:int}")
     .WithHandler((int a, int b) => Console.WriteLine($"{a} + {b} = {a + b}"))
     .AsQuery()
@@ -336,7 +336,7 @@ await app.RunReplAsync();
 ### CLI + REPL Dual Mode
 
 ```csharp
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder(args)
   .Map("status")
     .WithHandler(() => Console.WriteLine("System status: OK"))
     .AsQuery()

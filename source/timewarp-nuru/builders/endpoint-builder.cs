@@ -2,7 +2,7 @@ namespace TimeWarp.Nuru;
 
 /// <summary>
 /// Provides fluent configuration for a registered route endpoint.
-/// Returned by <see cref="NuruCoreAppBuilder.Map"/> methods to enable post-registration configuration.
+/// Returned by <see cref="NuruAppBuilder.Map"/> methods to enable post-registration configuration.
 /// </summary>
 /// <typeparam name="TBuilder">The builder type to return to, enabling proper fluent chaining.</typeparam>
 /// <remarks>

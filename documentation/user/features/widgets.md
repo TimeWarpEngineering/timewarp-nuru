@@ -471,7 +471,7 @@ All widgets work with `TestTerminal` for unit testing:
 ```csharp
 using TestTerminal terminal = new();
 
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder(args)
     .UseTerminal(terminal)
     .Map("status", (ITerminal t) =>
     {

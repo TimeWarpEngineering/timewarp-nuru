@@ -234,7 +234,7 @@ internal static class AppExtractor
     if (context.Node is not InvocationExpressionSyntax buildInvocation)
       return ExtractionResult.Empty;
 
-    // 2. Verify this is a NuruCoreApp Build() call
+    // 2. Verify this is a NuruApp Build() call
     if (!BuildLocator.IsConfirmedBuildCall(buildInvocation, context.SemanticModel, cancellationToken))
       return ExtractionResult.Empty;
 

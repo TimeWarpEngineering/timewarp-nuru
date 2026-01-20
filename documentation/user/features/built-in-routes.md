@@ -138,7 +138,7 @@ NuruApp.CreateBuilder(args, new NuruAppOptions
 You can manually add specific features using the builder:
 
 ```csharp
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder(args)
     .Map("greet {name}", (string name) => Console.WriteLine($"Hello, {name}!"))
     .AddVersionRoute()  // Manually add version route
     .Build();

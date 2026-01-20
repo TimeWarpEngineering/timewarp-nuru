@@ -30,7 +30,7 @@ Define routes inline with a fluent builder API:
 ```csharp
 using TimeWarp.Nuru;
 
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder(args)
   .Map("add {x:double} {y:double}")
     .WithHandler((double x, double y) => Console.WriteLine($"{x} + {y} = {x + y}"))
     .AsCommand()
@@ -48,7 +48,7 @@ Define routes as classes with `[NuruRoute]` attributes:
 using TimeWarp.Nuru;
 
 // Program.cs - minimal setup
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder(args)
   .Build();
 
 return await app.RunAsync(args);
@@ -127,7 +127,7 @@ dotnet run -- add 15 25
 Build modern command-line tools from scratch:
 
 ```csharp
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder(args)
   .Map("deploy {env} --version {tag?}")
     .WithHandler((string env, string? tag) => Deploy(env, tag))
     .AsCommand()
@@ -143,7 +143,7 @@ NuruCoreApp app = NuruApp.CreateBuilder(args)
 Wrap existing CLIs to add auth, logging, or validation:
 
 ```csharp
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder(args)
   .Map("deploy prod")
     .WithHandler(async () =>
     {
@@ -206,7 +206,7 @@ Get instant help in Claude Code, Roo Code, or Continue:
 Enable tab completion for your CLI with one line of code:
 
 ```csharp
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder(args)
   .Map("deploy {env} --version {tag}")
     .WithHandler((string env, string tag) => Deploy(env, tag))
     .AsCommand()

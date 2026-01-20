@@ -20,7 +20,7 @@ With attributed routes:
 
 ```csharp
 // Program.cs
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder(args)
   .Build();
 
 return await app.RunAsync(args);
@@ -226,7 +226,7 @@ Option optionality follows the same pattern:
 Both patterns work together in the same application:
 
 ```csharp
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder(args)
   .Map("version")
     .WithHandler(() => Console.WriteLine("1.0.0"))
     .AsQuery()

@@ -2,7 +2,7 @@
 // This is the entry point for code emission, coordinating all other emitters.
 //
 // Key design: Each app instance gets its own interceptor method with isolated routes.
-// This ensures route patterns don't leak between different NuruCoreApp instances.
+// This ensures route patterns don't leak between different NuruApp instances.
 
 namespace TimeWarp.Nuru.Generators;
 

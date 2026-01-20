@@ -37,7 +37,7 @@ public class QuotedStringTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("echo {message}")
         .WithHandler((string message) => $"ECHO:'{message}'")
@@ -65,7 +65,7 @@ public class QuotedStringTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("send {first} {second}")
         .WithHandler((string first, string second) => $"SEND:first='{first}' second='{second}'")
@@ -97,7 +97,7 @@ public class QuotedStringTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("echo {message}")
         .WithHandler((string message) => $"ECHO:'{message}'")
@@ -129,7 +129,7 @@ public class QuotedStringTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("send {recipient} {message} {priority}")
         .WithHandler((string recipient, string message, string priority) =>
@@ -159,7 +159,7 @@ public class QuotedStringTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("send {action} {arg}")
         .WithHandler((string action, string arg) => $"SEND:action='{action}' arg='{arg}'")
@@ -191,7 +191,7 @@ public class QuotedStringTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("echo {message}")
         .WithHandler((string message) => $"ECHO:'{message}'")
@@ -219,7 +219,7 @@ public class QuotedStringTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("echo {message}")
         .WithHandler((string message) => $"ECHO:'{message}'")
@@ -251,7 +251,7 @@ public class QuotedStringTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("echo {message}")
         .WithHandler((string message) => $"ECHO:'{message}'")
@@ -279,7 +279,7 @@ public class QuotedStringTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("echo {message}")
         .WithHandler((string message) => $"ECHO:'{message}'")
@@ -311,7 +311,7 @@ public class QuotedStringTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("send {message}")
         .WithHandler((string message) => $"SEND:empty={message.Length == 0}")
@@ -339,7 +339,7 @@ public class QuotedStringTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("send {message}")
         .WithHandler((string message) => $"SEND:empty={message.Length == 0}")
@@ -376,7 +376,7 @@ public class QuotedStringTests
     terminal.QueueKey(ConsoleKey.Enter);  // Execute
     terminal.QueueLine("exit");
 
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("echo {message}")
         .WithHandler((string message) => $"ECHO:msg='{message}'")
@@ -408,7 +408,7 @@ public class QuotedStringTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("echo {message}")
         .WithHandler((string message) => $"ECHO:msg='{message}'")
@@ -440,7 +440,7 @@ public class QuotedStringTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("echo {path}")
         .WithHandler((string path) => $"ECHO:'{path}'")
@@ -477,7 +477,7 @@ public class QuotedStringTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("echo {message}")
         .WithHandler((string message) => $"ECHO:'{message}'")

@@ -29,7 +29,7 @@ using Microsoft.Extensions.Options;
 using TimeWarp.Nuru;
 using static System.Console;
 
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
   // Note: {*configArgs} captures any --Section:Key=Value args, which are processed by
   // the configuration system via AddCommandLine(args) before route matching.
   .Map("run {*configArgs}")

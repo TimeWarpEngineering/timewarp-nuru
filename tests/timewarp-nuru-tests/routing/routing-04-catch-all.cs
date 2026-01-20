@@ -17,7 +17,7 @@ public class CatchAllTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("run {*args}").WithHandler((string[] args) => $"args:[{string.Join(",", args)}]").AsCommand().Done()
       .Build();
@@ -36,7 +36,7 @@ public class CatchAllTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("passthrough {*args}").WithHandler((string[] args) => $"args:[{string.Join(",", args)}]|len:{args.Length}").AsCommand().Done()
       .Build();
@@ -55,7 +55,7 @@ public class CatchAllTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("docker run {*cmd}").WithHandler((string[] cmd) => $"cmd:[{string.Join(",", cmd)}]").AsCommand().Done()
       .Build();
@@ -74,7 +74,7 @@ public class CatchAllTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("execute {script} {*args}").WithHandler((string script, string[] args) => $"script:{script}|args:[{string.Join(",", args)}]").AsCommand().Done()
       .Build();
@@ -94,7 +94,7 @@ public class CatchAllTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("npm {*args}").WithHandler((string[] args) => $"args:[{string.Join(",", args)}]").AsCommand().Done()
       .Build();

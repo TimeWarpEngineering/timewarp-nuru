@@ -30,7 +30,7 @@ using static System.Console;
 
 #pragma warning disable NURU_H002 // Handler uses closure - intentional for demo
 
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
   // Register behaviors - LoggingBehavior applies to ALL routes, RetryBehavior only to IRetryable
   .AddBehavior(typeof(LoggingBehavior))
   .AddBehavior(typeof(RetryBehavior))

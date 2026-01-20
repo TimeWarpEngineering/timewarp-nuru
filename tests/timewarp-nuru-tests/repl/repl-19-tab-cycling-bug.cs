@@ -32,7 +32,7 @@ public class TabCyclingBugTests
     Terminal = new TestTerminal();
     Log("Terminal created");
 
-    App = NuruApp.CreateBuilder([])
+    App = NuruApp.CreateBuilder()
       .UseTerminal(Terminal)
       .Map("git status")
         .WithHandler(() => { })

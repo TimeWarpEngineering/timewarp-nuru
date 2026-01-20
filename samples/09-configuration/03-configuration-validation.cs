@@ -7,7 +7,7 @@
 // CONFIGURATION VALIDATION - FAIL-FAST WITH IVALIDATEOPTIONS<T>
 // ═══════════════════════════════════════════════════════════════════════════════
 //
-// This sample demonstrates NuruApp.CreateBuilder(args) with configuration validation
+// This sample demonstrates NuruApp.CreateBuilder() with configuration validation
 // using Microsoft.Extensions.Options.IValidateOptions<T>.
 //
 // HOW IT WORKS:
@@ -37,7 +37,7 @@ using Microsoft.Extensions.Options;
 using TimeWarp.Nuru;
 using static System.Console;
 
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
   .Map("validate")
     .WithHandler(Handlers.ShowValidationStatus)
     .WithDescription("Show all validated configuration")

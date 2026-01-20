@@ -32,7 +32,7 @@ Log.Logger = new LoggerConfiguration()
     outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {SourceContext}: {Message:lj}{NewLine}{Exception}")
   .CreateLogger();
 
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
   // Configure logging via AddLogging with Serilog provider
   .ConfigureServices(services => services
     .AddLogging(builder => builder

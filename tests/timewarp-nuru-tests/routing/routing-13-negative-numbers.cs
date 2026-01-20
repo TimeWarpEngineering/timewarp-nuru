@@ -18,7 +18,7 @@ public class NegativeNumberTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("add {x:int} {y:int}").WithHandler((int x, int y) => $"x:{x}|y:{y}")
       .AsCommand().Done()
@@ -37,7 +37,7 @@ public class NegativeNumberTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("multiply {x:double} {y:double}").WithHandler((double x, double y) => $"x:{x}|y:{y}")
       .AsCommand().Done()
@@ -56,7 +56,7 @@ public class NegativeNumberTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("calc {a:int} {b:int} {c:int}").WithHandler((int a, int b, int c) => $"a:{a}|b:{b}|c:{c}")
       .AsCommand().Done()
@@ -75,7 +75,7 @@ public class NegativeNumberTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("test {value:int} --flag").WithHandler((int value, bool flag) => $"value:{value}|flag:{flag}")
       .AsCommand().Done()
@@ -94,7 +94,7 @@ public class NegativeNumberTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("price {amount:decimal}").WithHandler((decimal amount) => $"amount:{amount}")
       .AsCommand().Done()
@@ -113,7 +113,7 @@ public class NegativeNumberTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("echo {text}").WithHandler((string text) => $"text:{text}")
       .AsQuery().Done()
@@ -132,7 +132,7 @@ public class NegativeNumberTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("test --verbose").WithHandler((bool verbose) => $"verbose:{verbose}")
       .AsCommand().Done()
@@ -153,7 +153,7 @@ public class NegativeNumberTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("test --verbose").WithHandler((bool verbose) => $"verbose:{verbose}")
       .AsCommand().Done()
@@ -172,7 +172,7 @@ public class NegativeNumberTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("calc {value:double}").WithHandler((double value) => $"value:{value}")
       .AsCommand().Done()
@@ -191,7 +191,7 @@ public class NegativeNumberTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("calc --amount {amount:int}").WithHandler((int amount) => $"amount:{amount}")
       .AsCommand().Done()

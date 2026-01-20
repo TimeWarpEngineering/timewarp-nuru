@@ -56,7 +56,7 @@ namespace TimeWarp.Nuru.Tests.Configuration
       using TestTerminal terminal = new();
       string[] testArgs = ["cfg02-flat", "--FlatKey=overridden"];
 
-      NuruApp app = NuruApp.CreateBuilder(testArgs)
+      NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
         .AddConfiguration()
         .Map("cfg02-flat")
@@ -88,7 +88,7 @@ namespace TimeWarp.Nuru.Tests.Configuration
         "--TestConfig:Number=42"
       ];
 
-      NuruApp app = NuruApp.CreateBuilder(testArgs)
+      NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
         .AddConfiguration()
         .Map("cfg02-hierarchical")
@@ -122,7 +122,7 @@ namespace TimeWarp.Nuru.Tests.Configuration
         "--TestConfig:Value=cli-wins"
       ];
 
-      NuruApp app = NuruApp.CreateBuilder(testArgs)
+      NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
         .AddConfiguration()
         .Map("cfg02-precedence")
@@ -160,7 +160,7 @@ namespace TimeWarp.Nuru.Tests.Configuration
       using TestTerminal terminal = new();
       string[] testArgs = ["cfg02-defaults"];
 
-      NuruApp app = NuruApp.CreateBuilder(testArgs)
+      NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
         .AddConfiguration()
         .Map("cfg02-defaults")
@@ -190,7 +190,7 @@ namespace TimeWarp.Nuru.Tests.Configuration
       using TestTerminal terminal = new();
       string[] testArgs = ["cfg02-slash", "/SlashKey=slash-value"];
 
-      NuruApp app = NuruApp.CreateBuilder(testArgs)
+      NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
         .AddConfiguration()
         .Map("cfg02-slash")
@@ -217,7 +217,7 @@ namespace TimeWarp.Nuru.Tests.Configuration
       using TestTerminal terminal = new();
       string[] testArgs = ["cfg02-slash-hier", "/TestConfig:Value=slash-hier"];
 
-      NuruApp app = NuruApp.CreateBuilder(testArgs)
+      NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
         .AddConfiguration()
         .Map("cfg02-slash-hier")
@@ -246,7 +246,7 @@ namespace TimeWarp.Nuru.Tests.Configuration
       // --output followed by space and value should be treated as route option, not config
       string[] testArgs = ["cfg02-option", "--output", "myfile.txt"];
 
-      NuruApp app = NuruApp.CreateBuilder(testArgs)
+      NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
         .AddConfiguration()
         .Map("cfg02-option --output {file}")

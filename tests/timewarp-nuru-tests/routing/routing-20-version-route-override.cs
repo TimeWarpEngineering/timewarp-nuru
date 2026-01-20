@@ -25,7 +25,7 @@ public class VersionRouteOverrideTests
   {
     // Arrange - Map custom --version (should override built-in)
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("--version").WithHandler(() => "custom-version-output").AsQuery().Done()
       .Build();
@@ -42,7 +42,7 @@ public class VersionRouteOverrideTests
   {
     // Arrange - Map custom --version,-v with alias (should override built-in for both forms)
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("--version,-v").WithHandler(() => "custom-version-alias").AsQuery().Done()
       .Build();

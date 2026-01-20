@@ -42,7 +42,7 @@ public class EnumOptionParameterTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("deploy --env {env}")
         .WithHandler((Environment env) => $"env:{env}")
@@ -62,7 +62,7 @@ public class EnumOptionParameterTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("deploy --env {env}")
         .WithHandler((Environment env) => $"env:{env}")
@@ -86,7 +86,7 @@ public class EnumOptionParameterTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("deploy --env {env}")
         .WithHandler((Environment env) => $"env:{env}")
@@ -106,7 +106,7 @@ public class EnumOptionParameterTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("deploy --env {env}")
         .WithHandler((Environment env) => $"env:{env}")
@@ -133,7 +133,7 @@ public class EnumOptionParameterTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("deploy --env? {env?}")
         .WithHandler((Environment? env) => $"env:{env?.ToString() ?? "null"}")
@@ -153,7 +153,7 @@ public class EnumOptionParameterTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("deploy --env? {env?}")
         .WithHandler((Environment? env) => $"env:{env?.ToString() ?? "null"}")
@@ -177,7 +177,7 @@ public class EnumOptionParameterTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("deploy {name} --env {env}")
         .WithHandler((string name, Environment env) => $"name:{name}|env:{env}")
@@ -197,7 +197,7 @@ public class EnumOptionParameterTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("deploy --env {env} --verbose")
         .WithHandler((Environment env, bool verbose) => $"env:{env}|verbose:{verbose}")
@@ -217,7 +217,7 @@ public class EnumOptionParameterTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("deploy --env {env} --log {level}")
         .WithHandler((Environment env, LogLevel level) => $"env:{env}|log:{level}")
@@ -237,7 +237,7 @@ public class EnumOptionParameterTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("deploy --env,-e {env}")
         .WithHandler((Environment env) => $"env:{env}")

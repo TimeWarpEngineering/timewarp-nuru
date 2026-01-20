@@ -26,7 +26,7 @@ public class CompletionEndpointProtocolTests
     // Arrange
     using TestTerminal terminal = new();
 
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("deploy {env}").WithHandler((string env) => 0).AsCommand().Done()
       .Map("list-environments").WithHandler(() => { }).AsQuery().Done()
@@ -50,7 +50,7 @@ public class CompletionEndpointProtocolTests
     // Arrange
     using TestTerminal terminal = new();
 
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("deploy {env}").WithHandler((string env) => 0).AsCommand().Done()
       .Map("delete {item}").WithHandler((string item) => 0).AsCommand().Done()
@@ -73,7 +73,7 @@ public class CompletionEndpointProtocolTests
     // Arrange
     using TestTerminal terminal = new();
 
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("deploy {env}").WithHandler((string env) => 0).AsCommand().Done()
       .EnableCompletion(configure: registry =>
@@ -97,7 +97,7 @@ public class CompletionEndpointProtocolTests
     // Arrange
     using TestTerminal terminal = new();
 
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("status").WithHandler(() => { }).AsQuery().Done()
       .EnableCompletion()
@@ -116,7 +116,7 @@ public class CompletionEndpointProtocolTests
     // Arrange
     using TestTerminal terminal = new();
 
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("status").WithHandler(() => { }).AsQuery().Done()
       .EnableCompletion()
@@ -135,7 +135,7 @@ public class CompletionEndpointProtocolTests
     // Arrange
     using TestTerminal terminal = new();
 
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("status").WithHandler(() => { }).AsQuery().Done()
       .EnableCompletion()
@@ -160,7 +160,7 @@ public class CompletionEndpointProtocolTests
     // Arrange
     using TestTerminal terminal = new();
 
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("status").WithHandler(() => { }).AsQuery().Done()
       .EnableCompletion()
@@ -180,7 +180,7 @@ public class CompletionEndpointProtocolTests
     // Arrange
     using TestTerminal terminal = new();
 
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("status").WithHandler(() => { }).AsQuery().Done()
       .EnableCompletion()
@@ -200,7 +200,7 @@ public class CompletionEndpointProtocolTests
     // Arrange
     using TestTerminal terminal = new();
 
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("status").WithHandler(() => { }).AsQuery().Done()
       .EnableCompletion()
@@ -220,7 +220,7 @@ public class CompletionEndpointProtocolTests
     // Arrange
     using TestTerminal terminal = new();
 
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("status").WithHandler(() => { }).AsQuery().Done()
       .EnableCompletion()
@@ -240,7 +240,7 @@ public class CompletionEndpointProtocolTests
     // Arrange
     using TestTerminal terminal = new();
 
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("status").WithHandler(() => { }).AsQuery().Done()
       .EnableCompletion()
@@ -267,7 +267,7 @@ public class CompletionEndpointProtocolTests
     // Arrange
     using TestTerminal terminal = new();
 
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("status").WithHandler(() => { }).AsQuery().Done()
       .EnableCompletion()
@@ -287,7 +287,7 @@ public class CompletionEndpointProtocolTests
     // Arrange
     using TestTerminal terminal = new();
 
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("status").WithHandler(() => { }).AsQuery().Done()
       .EnableCompletion()

@@ -19,7 +19,7 @@ public class OptionMatchingTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("build --config {mode}")
       .WithHandler((string mode) => $"mode:{mode}")
@@ -41,7 +41,7 @@ public class OptionMatchingTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("build --config {mode}")
       .WithHandler((string mode) => 0)
@@ -63,7 +63,7 @@ public class OptionMatchingTests
     // Behavior #2: Required flag + Optional value (--config {mode?})
     // Arrange
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("build --config {mode?}")
       .WithHandler((string? mode) => $"mode:{mode ?? "NULL"}")
@@ -86,7 +86,7 @@ public class OptionMatchingTests
     // Behavior #2: Flag present without value should bind null
     // Arrange
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("build --config {mode?}")
       .WithHandler((string? mode) => $"mode:{mode ?? "NULL"}")
@@ -109,7 +109,7 @@ public class OptionMatchingTests
     // Behavior #2: Missing required flag should not match
     // Arrange
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("build --config {mode?}")
       .WithHandler((string? mode) => 0)
@@ -131,7 +131,7 @@ public class OptionMatchingTests
     // Behavior #3: Optional flag + Optional value (--config? {mode?})
     // Arrange
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("build --config? {mode?}")
       .WithHandler((string? mode) => $"mode:{mode ?? "NULL"}")
@@ -154,7 +154,7 @@ public class OptionMatchingTests
     // Behavior #3: Optional flag present without value
     // Arrange
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("build --config? {mode?}")
       .WithHandler((string? mode) => $"mode:{mode ?? "NULL"}")
@@ -177,7 +177,7 @@ public class OptionMatchingTests
     // Behavior #3: Optional flag omitted entirely
     // Arrange
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("build --config? {mode?}")
       .WithHandler((string? mode) => $"mode:{mode ?? "NULL"}")
@@ -200,7 +200,7 @@ public class OptionMatchingTests
     // Behavior #4: Optional flag + Required value (--config? {mode})
     // Arrange
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("build --config? {mode}")
       .WithHandler((string? mode) => $"mode:{mode ?? "NULL"}")
@@ -223,7 +223,7 @@ public class OptionMatchingTests
     // Behavior #4: Optional flag omitted entirely
     // Arrange
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("build --config? {mode}")
       .WithHandler((string? mode) => $"mode:{mode ?? "NULL"}")
@@ -246,7 +246,7 @@ public class OptionMatchingTests
     // Behavior #4: Flag present without required value should not match
     // Arrange
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("build --config? {mode}")
       .WithHandler((string? mode) => 0)
@@ -267,7 +267,7 @@ public class OptionMatchingTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("build --verbose")
       .WithHandler((bool verbose) => $"verbose:{verbose}")
@@ -289,7 +289,7 @@ public class OptionMatchingTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("build --verbose")
       .WithHandler((bool verbose) => $"verbose:{verbose}")
@@ -311,7 +311,7 @@ public class OptionMatchingTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("deploy --env {e} --tag {t?} --verbose")
       .WithHandler((string e, string? t, bool verbose) => $"e:{e}|t:{t ?? "NULL"}|verbose:{verbose}")
@@ -335,7 +335,7 @@ public class OptionMatchingTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("deploy --env {e} --tag? {t?} --verbose")
       .WithHandler((string e, string? t, bool verbose) => $"e:{e}|t:{t ?? "NULL"}|verbose:{verbose}")
@@ -359,7 +359,7 @@ public class OptionMatchingTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("deploy --env {e} --tag? {t?} --verbose").WithHandler((string e, string? t, bool verbose) => 0).AsCommand().Done()
       .Build();
@@ -377,7 +377,7 @@ public class OptionMatchingTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("server --port {num:int}")
       .WithHandler((int num) => $"num:{num}")
@@ -399,7 +399,7 @@ public class OptionMatchingTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("server --port {num:int}")
       .WithHandler((int num) => 0)
@@ -420,7 +420,7 @@ public class OptionMatchingTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("build --verbose,-v")
       .WithHandler((bool verbose) => $"verbose:{verbose}")
@@ -442,7 +442,7 @@ public class OptionMatchingTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("build --verbose,-v")
       .WithHandler((bool verbose) => $"verbose:{verbose}")
@@ -465,7 +465,7 @@ public class OptionMatchingTests
     // Arrange - Test optional boolean flag with alias using long form
     // Pattern: --verbose,-v? (per optional-flag-alias-syntax.md)
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("build --verbose,-v?")
       .WithHandler((bool verbose) => $"verbose:{verbose}")
@@ -488,7 +488,7 @@ public class OptionMatchingTests
     // Arrange - Test optional boolean flag with alias using short form
     // Pattern: --verbose,-v? (per optional-flag-alias-syntax.md)
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("build --verbose,-v?")
       .WithHandler((bool verbose) => $"verbose:{verbose}")
@@ -511,7 +511,7 @@ public class OptionMatchingTests
     // Arrange - Test optional boolean flag with alias omitted
     // Pattern: --verbose,-v? (per optional-flag-alias-syntax.md)
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("build --verbose,-v?")
       .WithHandler((bool verbose) => $"verbose:{verbose}")
@@ -534,7 +534,7 @@ public class OptionMatchingTests
     // Arrange - Test optional flag with alias and value using long form
     // Pattern: --output,-o? {file} (per optional-flag-alias-syntax.md)
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("backup {source} --output,-o? {file}")
       .WithHandler((string source, string? file) => $"source:{source}|file:{file ?? "NULL"}")
@@ -557,7 +557,7 @@ public class OptionMatchingTests
     // Arrange - Test optional flag with alias and value using short form
     // Pattern: --output,-o? {file} (per optional-flag-alias-syntax.md)
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("backup {source} --output,-o? {file}")
       .WithHandler((string source, string? file) => $"source:{source}|file:{file ?? "NULL"}")
@@ -580,7 +580,7 @@ public class OptionMatchingTests
     // Arrange - Test optional flag with alias omitted entirely
     // Pattern: --output,-o? {file} (per optional-flag-alias-syntax.md)
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("backup {source} --output,-o? {file}")
       .WithHandler((string source, string? file) => $"source:{source}|file:{file ?? "NULL"}")
@@ -603,7 +603,7 @@ public class OptionMatchingTests
     // Arrange - Test optional flag with alias and optional value using long form
     // Pattern: --config,-c? {mode?} (per optional-flag-alias-syntax.md)
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("build --config,-c? {mode?}")
       .WithHandler((string? mode) => $"mode:{mode ?? "NULL"}")
@@ -626,7 +626,7 @@ public class OptionMatchingTests
     // Arrange - Test optional flag with alias and optional value using short form
     // Pattern: --config,-c? {mode?} (per optional-flag-alias-syntax.md)
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("build --config,-c? {mode?}")
       .WithHandler((string? mode) => $"mode:{mode ?? "NULL"}")
@@ -649,7 +649,7 @@ public class OptionMatchingTests
     // Arrange - Test optional flag with alias and optional value with flag omitted
     // Pattern: --config,-c? {mode?} (per optional-flag-alias-syntax.md)
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("build --config,-c? {mode?}")
       .WithHandler((string? mode) => $"mode:{mode ?? "NULL"}")
@@ -672,7 +672,7 @@ public class OptionMatchingTests
     // Arrange - Test optional flag present without value (long form)
     // Pattern: --config,-c? {mode?} (per optional-flag-alias-syntax.md)
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("build --config,-c? {mode?}")
       .WithHandler((string? mode) => $"mode:{mode ?? "NULL"}")
@@ -695,7 +695,7 @@ public class OptionMatchingTests
     // Arrange - Test optional flag present without value (short form)
     // Pattern: --config,-c? {mode?} (per optional-flag-alias-syntax.md)
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("build --config,-c? {mode?}")
       .WithHandler((string? mode) => $"mode:{mode ?? "NULL"}")

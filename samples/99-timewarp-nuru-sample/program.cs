@@ -2,7 +2,7 @@
 // TIMEWARP.NURU SAMPLE - GENERAL REFERENCE APPLICATION
 // ═══════════════════════════════════════════════════════════════════════════════
 //
-// This sample demonstrates NuruApp.CreateBuilder(args) which provides:
+// This sample demonstrates NuruApp.CreateBuilder() which provides:
 // - Full DI container setup
 // - Configuration support
 // - Auto-help generation
@@ -20,7 +20,7 @@ using TimeWarp.Nuru;
 using static System.Console;
 
 // Build the app with canonical CreateBuilder pattern
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
   .ConfigureServices(_ => { /* Services registered here are available in handlers */ })
   // Default route when no command is specified
   .Map("")

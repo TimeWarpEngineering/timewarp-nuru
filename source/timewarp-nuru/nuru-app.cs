@@ -131,16 +131,14 @@ public partial class NuruApp
   /// <summary>
   /// Creates a full-featured builder with DI, Configuration, and all extensions auto-wired.
   /// Use fluent extension methods to configure individual features:
-  /// <see cref="NuruCoreAppBuilder{TSelf}.AddRepl(Action{ReplOptions})"/> for REPL,
-  /// <see cref="NuruCoreAppBuilder{TSelf}.AddHelp(Action{HelpOptions})"/> for help,
-  /// <see cref="NuruCoreAppBuilder{TSelf}.AddConfiguration"/> for configuration.
+  /// <see cref="NuruAppBuilder.AddRepl(Action{ReplOptions})"/> for REPL,
+  /// <see cref="NuruAppBuilder.AddHelp(Action{HelpOptions})"/> for help,
+  /// <see cref="NuruAppBuilder.AddConfiguration"/> for configuration.
   /// </summary>
-  /// <param name="args">Command line arguments.</param>
-  /// <param name="options">Optional core application options.</param>
   /// <returns>A configured NuruAppBuilder with all extensions.</returns>
   /// <example>
   /// <code>
-  /// NuruApp.CreateBuilder(args)
+  /// NuruApp.CreateBuilder()
   ///     .AddRepl(options =>
   ///     {
   ///       options.Prompt = "myapp> ";
@@ -152,9 +150,8 @@ public partial class NuruApp
   /// </example>
   [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope",
     Justification = "Builder ownership is transferred to caller who is responsible for disposal")]
-  public static NuruAppBuilder CreateBuilder(string[] args)
+  public static NuruAppBuilder CreateBuilder()
   {
-    ArgumentNullException.ThrowIfNull(args);
     return new NuruAppBuilder();
   }
 }

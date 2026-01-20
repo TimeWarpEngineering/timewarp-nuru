@@ -6,7 +6,7 @@
 // USER SECRETS PROPERTY - RUNFILE WITH USER SECRETS
 // ═══════════════════════════════════════════════════════════════════════════════
 //
-// This sample demonstrates NuruApp.CreateBuilder(args) with user secrets via
+// This sample demonstrates NuruApp.CreateBuilder() with user secrets via
 // the #:property UserSecretsId directive in a .NET 10 runfile.
 //
 // User secrets are automatically loaded when:
@@ -26,7 +26,7 @@
 using Microsoft.Extensions.Configuration;
 using TimeWarp.Nuru;
 
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
   .Map("show")
     .WithHandler(Handlers.ShowSecrets)
     .WithDescription("Show configuration values including user secrets")

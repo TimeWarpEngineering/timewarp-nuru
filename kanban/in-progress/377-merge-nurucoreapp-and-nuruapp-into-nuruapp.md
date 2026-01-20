@@ -68,14 +68,16 @@ Consolidate `NuruCoreApp` and `NuruApp` into a single unified `NuruApp` class. F
 - Renamed `services/nuru-core-app-holder.cs` → `services/nuru-app-holder.cs`
 - Deleted `nuru-app-static.cs` (conflicting static partial class)
 - Restored `NuruApp.CreateBuilder()` factory method (was lost during rename, fixed in commit 1084c436)
+- Deleted `NuruAppOptions` class (dead code - properties were never read)
+- Deleted `options/nuru-application-options.cs` file
+- Simplified `NuruHostEnvironment` to minimal implementation
+- Simplified `NuruApp.CreateBuilder(args)` signature (no options parameter)
 
 ## References that MUST remain as `NuruCoreApp`
 
 These cannot be changed because they serve a specific purpose:
 
 - `typeof(NuruCoreApp)` - for assembly reflection in get-version-info-tool
-
-**Note:** `NuruCoreApplicationOptions` was renamed to `NuruAppOptions` for consistency.
 
 ## Notes
 

@@ -29,7 +29,7 @@ using TimeWarp.Nuru;
 using Microsoft.Extensions.DependencyInjection;
 using static System.Console;
 
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
   .ConfigureServices(ConfigureServices)
   // Use Delegate approach for simple operations (performance)
   .Map("add {x:double} {y:double}")

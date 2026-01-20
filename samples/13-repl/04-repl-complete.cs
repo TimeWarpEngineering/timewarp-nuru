@@ -8,7 +8,7 @@
 // REPL BASIC DEMO - ROUTE PATTERN EXAMPLES
 // ═══════════════════════════════════════════════════════════════════════════════
 //
-// This sample demonstrates NuruApp.CreateBuilder(args) which provides:
+// This sample demonstrates NuruApp.CreateBuilder() which provides:
 // - Full DI container setup
 // - Configuration support
 // - Auto-help generation
@@ -108,7 +108,7 @@ try
   WriteLine("Debug logs: repl-debug.log");
   WriteLine();
 
-  NuruApp app = NuruApp.CreateBuilder(args)
+  NuruApp app = NuruApp.CreateBuilder()
     .AddTypeConverter(new EnumTypeConverter<Environment>()) // Register enum converter
     .WithDescription("Interactive REPL demo showcasing Nuru route patterns.")
 

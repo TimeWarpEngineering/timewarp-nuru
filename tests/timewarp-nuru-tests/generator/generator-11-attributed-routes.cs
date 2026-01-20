@@ -50,7 +50,7 @@ namespace TimeWarp.Nuru.Tests.Generator.AttributedRoutes
       // Arrange
       using TestTerminal terminal = new();
 
-      NuruApp app = NuruApp.CreateBuilder([])
+      NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
         .DiscoverEndpoints()
         .Build();
@@ -72,7 +72,7 @@ namespace TimeWarp.Nuru.Tests.Generator.AttributedRoutes
       // Arrange
       using TestTerminal terminal = new();
 
-      NuruApp app = NuruApp.CreateBuilder([])
+      NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
         .DiscoverEndpoints()
         .Build();
@@ -94,7 +94,7 @@ namespace TimeWarp.Nuru.Tests.Generator.AttributedRoutes
       // Arrange
       using TestTerminal terminal = new();
 
-      NuruApp app = NuruApp.CreateBuilder([])
+      NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
         .DiscoverEndpoints()
         .Build();
@@ -116,7 +116,7 @@ namespace TimeWarp.Nuru.Tests.Generator.AttributedRoutes
       // Arrange
       using TestTerminal terminal = new();
 
-      NuruApp app = NuruApp.CreateBuilder([])
+      NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
         .DiscoverEndpoints()
         .Build();
@@ -137,7 +137,7 @@ namespace TimeWarp.Nuru.Tests.Generator.AttributedRoutes
       // Arrange
       using TestTerminal terminal = new();
 
-      NuruApp app = NuruApp.CreateBuilder([])
+      NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
         .DiscoverEndpoints()
         .Build();
@@ -161,7 +161,7 @@ namespace TimeWarp.Nuru.Tests.Generator.AttributedRoutes
       // Arrange
       using TestTerminal terminal = new();
 
-      NuruApp app = NuruApp.CreateBuilder([])
+      NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
         .DiscoverEndpoints()
         .Build();

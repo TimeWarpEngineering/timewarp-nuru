@@ -17,7 +17,7 @@ namespace TimeWarp.Nuru.Tests.Routing
     {
       // Arrange
       using TestTerminal terminal = new();
-      NuruApp app = NuruApp.CreateBuilder([])
+      NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
         .Map("deploy {env}").WithHandler((string env) => $"env:{env}").AsCommand().Done()
         .Build();
@@ -37,7 +37,7 @@ namespace TimeWarp.Nuru.Tests.Routing
       // Arrange
       using TestTerminal terminal = new();
 #pragma warning disable RCS1163 // Unused parameter
-      NuruApp app = NuruApp.CreateBuilder([])
+      NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
         .Map("deploy {env}").WithHandler((string env) => { }).AsCommand().Done()
         .Build();
@@ -56,7 +56,7 @@ namespace TimeWarp.Nuru.Tests.Routing
     {
       // Arrange
       using TestTerminal terminal = new();
-      NuruApp app = NuruApp.CreateBuilder([])
+      NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
         .Map("deploy {env?}").WithHandler((string? env) => $"env:{env}").AsCommand().Done()
         .Build();
@@ -75,7 +75,7 @@ namespace TimeWarp.Nuru.Tests.Routing
     {
       // Arrange
       using TestTerminal terminal = new();
-      NuruApp app = NuruApp.CreateBuilder([])
+      NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
         .Map("deploy {env?}").WithHandler((string? env) => $"env:{env ?? "NULL"}").AsCommand().Done()
         .Build();
@@ -94,7 +94,7 @@ namespace TimeWarp.Nuru.Tests.Routing
     {
       // Arrange
       using TestTerminal terminal = new();
-      NuruApp app = NuruApp.CreateBuilder([])
+      NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
         .Map("list {count:int?}").WithHandler((int? count) => $"count:{count}").AsQuery().Done()
         .Build();
@@ -113,7 +113,7 @@ namespace TimeWarp.Nuru.Tests.Routing
     {
       // Arrange
       using TestTerminal terminal = new();
-      NuruApp app = NuruApp.CreateBuilder([])
+      NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
         .Map("list {count:int?}").WithHandler((int? count) => $"count:{count?.ToString(CultureInfo.InvariantCulture) ?? "NULL"}").AsQuery().Done()
         .Build();
@@ -132,7 +132,7 @@ namespace TimeWarp.Nuru.Tests.Routing
     {
       // Arrange
       using TestTerminal terminal = new();
-      NuruApp app = NuruApp.CreateBuilder([])
+      NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
         .Map("deploy {env} {tag?}").WithHandler((string env, string? tag) => $"env:{env},tag:{tag}").AsCommand().Done()
         .Build();
@@ -151,7 +151,7 @@ namespace TimeWarp.Nuru.Tests.Routing
     {
       // Arrange
       using TestTerminal terminal = new();
-      NuruApp app = NuruApp.CreateBuilder([])
+      NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
         .Map("deploy {env} {tag?}").WithHandler((string env, string? tag) => $"env:{env},tag:{tag ?? "NULL"}").AsCommand().Done()
         .Build();
@@ -171,7 +171,7 @@ namespace TimeWarp.Nuru.Tests.Routing
       // Arrange
       using TestTerminal terminal = new();
 #pragma warning disable RCS1163 // Unused parameter
-      NuruApp app = NuruApp.CreateBuilder([])
+      NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
         .Map("deploy {env} {tag?}").WithHandler((string env, string? tag) => { }).AsCommand().Done()
         .Build();

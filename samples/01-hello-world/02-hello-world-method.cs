@@ -10,7 +10,7 @@
 using TimeWarp.Nuru;
 using TimeWarp.Terminal;
 
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
   .Map("")
     .WithHandler(Handlers.Greet)
     .AsQuery()

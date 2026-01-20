@@ -24,7 +24,7 @@ public class OptionAliasWithDescriptionTests
   {
     // Arrange - Pattern with alias AND description
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("hello {name} --upper,-u|Convert to uppercase").WithHandler((string name, bool upper) => $"name:{name}|upper:{upper}")
       .AsQuery().Done()
@@ -43,7 +43,7 @@ public class OptionAliasWithDescriptionTests
     // Arrange - Pattern with alias AND description
     // THIS IS THE BUG FROM TASK 013: long form should work but was failing
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("hello {name} --upper,-u|Convert to uppercase").WithHandler((string name, bool upper) => $"name:{name}|upper:{upper}")
       .AsQuery().Done()
@@ -61,7 +61,7 @@ public class OptionAliasWithDescriptionTests
   {
     // Arrange - Pattern with alias AND description
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("hello {name} --upper,-u|Convert to uppercase").WithHandler((string name, bool upper) => $"name:{name}|upper:{upper}")
       .AsQuery().Done()
@@ -79,7 +79,7 @@ public class OptionAliasWithDescriptionTests
   {
     // Arrange - More complex pattern from MCP tests
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("deploy {env} --dry-run,-d|Preview mode").WithHandler((string env, bool dryRun) => $"env:{env}|dryRun:{dryRun}")
       .AsCommand().Done()
@@ -97,7 +97,7 @@ public class OptionAliasWithDescriptionTests
   {
     // Arrange - More complex pattern from MCP tests
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("deploy {env} --dry-run,-d|Preview mode").WithHandler((string env, bool dryRun) => $"env:{env}|dryRun:{dryRun}")
       .AsCommand().Done()

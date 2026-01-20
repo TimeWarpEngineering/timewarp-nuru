@@ -39,7 +39,7 @@ using static System.Console;
 
 #pragma warning disable NURU_H002 // Handler uses closure - intentional for demo
 
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
   // Register behaviors in order: first = outermost (wraps everything)
   .AddBehavior(typeof(TelemetryBehavior))       // Outermost: captures full execution span
   .AddBehavior(typeof(LoggingBehavior))         // Logs entry/exit for all commands

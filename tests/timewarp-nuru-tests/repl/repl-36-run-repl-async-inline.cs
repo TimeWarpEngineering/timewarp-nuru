@@ -24,7 +24,7 @@ public class RunReplAsyncInlineTests
     using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("hello")
         .WithHandler(() => "Hello!")

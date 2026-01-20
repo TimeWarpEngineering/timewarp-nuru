@@ -70,7 +70,7 @@ namespace TimeWarp.Nuru.Tests.Generator.IOptionsInjection
       using TestTerminal terminal = new();
       string[] testArgs = ["opts13-show-db", "--Database:Host=myhost", "--Database:Port=3306"];
 
-      NuruApp app = NuruApp.CreateBuilder(testArgs)
+      NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
         .AddConfiguration()
         .Map("opts13-show-db")
@@ -99,7 +99,7 @@ namespace TimeWarp.Nuru.Tests.Generator.IOptionsInjection
       using TestTerminal terminal = new();
       string[] testArgs = ["opts13-show-api", "--Api:Endpoint=https://test.com", "--Api:TimeoutSeconds=60"];
 
-      NuruApp app = NuruApp.CreateBuilder(testArgs)
+      NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
         .AddConfiguration()
         .Map("opts13-show-api")
@@ -127,7 +127,7 @@ namespace TimeWarp.Nuru.Tests.Generator.IOptionsInjection
       using TestTerminal terminal = new();
       string[] testArgs = ["opts13-show-config", "MyKey", "--MyKey=MyValue"];
 
-      NuruApp app = NuruApp.CreateBuilder(testArgs)
+      NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
         .AddConfiguration()
         .Map("opts13-show-config {key}")
@@ -166,7 +166,7 @@ namespace TimeWarp.Nuru.Tests.Generator.IOptionsInjection
       using TestTerminal terminal = new();
       string[] testArgs = ["opts13-defaults"];
 
-      NuruApp app = NuruApp.CreateBuilder(testArgs)
+      NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
         .AddConfiguration()
         .Map("opts13-defaults")
@@ -199,7 +199,7 @@ namespace TimeWarp.Nuru.Tests.Generator.IOptionsInjection
         "--Environment=Production"
       ];
 
-      NuruApp app = NuruApp.CreateBuilder(testArgs)
+      NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
         .AddConfiguration()
         .Map("opts13-show-all")

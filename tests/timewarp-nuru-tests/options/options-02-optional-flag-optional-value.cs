@@ -22,7 +22,7 @@ public class OptionalFlagOptionalValueTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("build --config? {mode?}")
         .WithHandler((string? mode) => $"mode:{mode ?? "null"}")
@@ -42,7 +42,7 @@ public class OptionalFlagOptionalValueTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("build --config? {mode?}")
         .WithHandler((string? mode) => $"mode:{mode ?? "null"}")
@@ -62,7 +62,7 @@ public class OptionalFlagOptionalValueTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("build --config? {mode?}")
         .WithHandler((string? mode) => $"mode:{mode ?? "null"}")

@@ -21,7 +21,7 @@ public class CheckUpdatesRouteTests
   {
     // Arrange - Enable --check-updates via AddCheckUpdatesRoute()
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .AddCheckUpdatesRoute()
       .Build();
@@ -39,7 +39,7 @@ public class CheckUpdatesRouteTests
   {
     // Arrange - Enable --check-updates, then override with custom handler
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .AddCheckUpdatesRoute()
       .Map("--check-updates").WithHandler(() => "custom-check-updates").AsQuery().Done()
@@ -57,7 +57,7 @@ public class CheckUpdatesRouteTests
   {
     // Arrange - Do NOT call AddCheckUpdatesRoute()
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Build();
 

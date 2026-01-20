@@ -54,7 +54,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.EnumCompletion
       terminal.QueueKey(ConsoleKey.Escape);
       terminal.QueueLine("exit");
 
-      NuruApp app = NuruApp.CreateBuilder([])
+      NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
         .Map("deploy {env:environment}")
           .WithHandler((Environment env) => $"Deploying to {env}")
@@ -81,7 +81,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.EnumCompletion
       terminal.QueueKey(ConsoleKey.Enter);
       terminal.QueueLine("exit");
 
-      NuruApp app = NuruApp.CreateBuilder([])
+      NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
         .Map("deploy {env:environment}")
           .WithHandler((Environment env) => $"Deploying to {env}")
@@ -107,7 +107,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.EnumCompletion
       terminal.QueueKey(ConsoleKey.Enter);
       terminal.QueueLine("exit");
 
-      NuruApp app = NuruApp.CreateBuilder([])
+      NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
         .Map("log {level:loglevel}")
           .WithHandler((LogLevel level) => $"Log level: {level}")
@@ -132,7 +132,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.EnumCompletion
       terminal.QueueKey(ConsoleKey.Escape);
       terminal.QueueLine("exit");
 
-      NuruApp app = NuruApp.CreateBuilder([])
+      NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
         .Map("deploy {env:environment}")
           .WithHandler((Environment env) => $"Deploying to {env}")
@@ -156,7 +156,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.EnumCompletion
       terminal.QueueKey(ConsoleKey.Enter);
       terminal.QueueLine("exit");
 
-      NuruApp app = NuruApp.CreateBuilder([])
+      NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
         .Map("deploy {env:environment}")
           .WithHandler((Environment env) => $"Deploying to {env}")
@@ -181,7 +181,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.EnumCompletion
       terminal.QueueKey(ConsoleKey.Escape);
       terminal.QueueLine("exit");
 
-      NuruApp app = NuruApp.CreateBuilder([])
+      NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
         .Map("deploy {name} {env:environment}")
           .WithHandler((string name, Environment env) => $"Deploying {name} to {env}")
@@ -207,7 +207,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.EnumCompletion
       terminal.QueueKey(ConsoleKey.Escape);
       terminal.QueueLine("exit");
 
-      NuruApp app = NuruApp.CreateBuilder([])
+      NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
         .Map("deploy {name} {env:environment}")
           .WithHandler((string name, Environment env) => $"Deploying {name} to {env}")

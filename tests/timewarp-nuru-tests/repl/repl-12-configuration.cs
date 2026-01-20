@@ -24,7 +24,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.Configuration
     using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .AddRepl()  // No options - use defaults
       .Build();
@@ -44,7 +44,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.Configuration
     using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .AddRepl(options => options.Prompt = "myapp> ")
       .Build();
@@ -70,7 +70,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.Configuration
 
     terminal.QueueLine("exit");
 
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("cmd{n}")
         .WithHandler((string n) => $"Command {n}")
@@ -97,7 +97,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.Configuration
     terminal.QueueKey(ConsoleKey.Escape);
     terminal.QueueLine("exit");
 
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("first").WithHandler(() => "First!").AsCommand().Done()
       .AddRepl(options => options.EnableArrowHistory = true)
@@ -120,7 +120,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.Configuration
     terminal.QueueLine("status");
     terminal.QueueLine("exit");
 
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("fail").WithHandler(ThrowTestException).AsCommand().Done()
       .Map("status").WithHandler(() => "OK").AsQuery().Done()
@@ -146,7 +146,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.Configuration
       terminal.QueueLine("test");
       terminal.QueueLine("exit");
 
-      NuruApp app = NuruApp.CreateBuilder([])
+      NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
         .Map("test").WithHandler(() => "OK").AsCommand().Done()
         .AddRepl(options =>
@@ -175,7 +175,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.Configuration
     using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .AddRepl(options =>
       {
@@ -202,7 +202,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.Configuration
     terminal.QueueLine("test");
     terminal.QueueLine("exit");
 
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("test").WithHandler(() => "OK").AsCommand().Done()
       .AddRepl(options =>
@@ -237,7 +237,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.Configuration
     using TestTerminal terminal = new();
     terminal.QueueLine("exit");
 
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .AddRepl(options =>
       {

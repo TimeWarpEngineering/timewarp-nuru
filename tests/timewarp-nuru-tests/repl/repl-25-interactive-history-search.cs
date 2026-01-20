@@ -27,7 +27,7 @@ public class InteractiveHistorySearchTests
     // Create fresh terminal and app for each test
     Terminal = new TestTerminal();
 
-    App =NuruApp.CreateBuilder([])
+    App =NuruApp.CreateBuilder()
       .UseTerminal(Terminal)
       .Map("deploy prod")
         .WithHandler(() => "Deployed to prod!")

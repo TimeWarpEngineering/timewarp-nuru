@@ -23,7 +23,7 @@ using TimeWarp.Nuru;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
   // Configure logging via standard Microsoft.Extensions.Logging pattern
   .ConfigureServices
   (

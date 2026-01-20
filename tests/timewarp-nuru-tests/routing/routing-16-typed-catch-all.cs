@@ -22,7 +22,7 @@ public class TypedCatchAllTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("sum {*numbers:int}").WithHandler((int[] numbers) => $"numbers:[{string.Join(",", numbers)}]|len:{numbers.Length}").AsCommand().Done()
       .Build();
@@ -45,7 +45,7 @@ public class TypedCatchAllTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("average {*values:double}").WithHandler((double[] values) => $"values:[{string.Join(",", values)}]|len:{values.Length}").AsCommand().Done()
       .Build();
@@ -68,7 +68,7 @@ public class TypedCatchAllTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("flags {*values:bool}").WithHandler((bool[] values) => $"values:[{string.Join(",", values)}]|len:{values.Length}").AsCommand().Done()
       .Build();
@@ -91,7 +91,7 @@ public class TypedCatchAllTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("sum {*numbers:int}").WithHandler((int[] numbers) => $"numbers:[{string.Join(",", numbers)}]|len:{numbers.Length}").AsCommand().Done()
       .Build();
@@ -114,7 +114,7 @@ public class TypedCatchAllTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("calc {operation} {*numbers:int}").WithHandler((string operation, int[] numbers) => $"operation:{operation}|numbers:[{string.Join(",", numbers)}]").AsCommand().Done()
       .Build();
@@ -137,7 +137,7 @@ public class TypedCatchAllTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("ids {*values:long}").WithHandler((long[] values) => $"values:[{string.Join(",", values)}]|len:{values.Length}").AsQuery().Done()
       .Build();
@@ -160,7 +160,7 @@ public class TypedCatchAllTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("prices {*values:decimal}").WithHandler((decimal[] values) => $"values:[{string.Join(",", values)}]|len:{values.Length}").AsQuery().Done()
       .Build();
@@ -183,7 +183,7 @@ public class TypedCatchAllTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("guids {*values:Guid}").WithHandler((Guid[] values) => $"values:[{string.Join(",", values)}]|len:{values.Length}").AsQuery().Done()
       .Build();
@@ -207,7 +207,7 @@ public class TypedCatchAllTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("schedule {*dates:DateTime}").WithHandler((DateTime[] dates) => $"count:{dates.Length}|first:{dates[0]:yyyy-MM-dd}|second:{dates[1]:yyyy-MM-dd}").AsQuery().Done()
       .Build();
@@ -231,7 +231,7 @@ public class TypedCatchAllTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("echo {*args:string}").WithHandler((string[] args) => $"args:[{string.Join(",", args)}]|len:{args.Length}").AsQuery().Done()
       .Build();
@@ -254,7 +254,7 @@ public class TypedCatchAllTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("echo {*args}").WithHandler((string[] args) => $"args:[{string.Join(",", args)}]|len:{args.Length}").AsQuery().Done()
       .Build();
@@ -277,7 +277,7 @@ public class TypedCatchAllTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("sum {*numbers:int}").WithHandler((int[] numbers) => 0).AsCommand().Done()
       .Build();
@@ -298,7 +298,7 @@ public class TypedCatchAllTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("calc {*numbers:int}").WithHandler((int[] numbers) => $"numbers:[{string.Join(",", numbers)}]|len:{numbers.Length}").AsCommand().Done()
       .Build();

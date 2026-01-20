@@ -34,7 +34,7 @@ public sealed class InterpreterPocTests
       {
         public static async Task Main()
         {
-          NuruApp app = NuruApp.CreateBuilder([])
+          NuruApp app = NuruApp.CreateBuilder()
             .Map("ping")
               .WithHandler(() => "pong")
               .AsQuery()
@@ -83,7 +83,7 @@ public sealed class InterpreterPocTests
       {
         public static async Task Main()
         {
-          NuruApp app = NuruApp.CreateBuilder([])
+          NuruApp app = NuruApp.CreateBuilder()
             .Map("status")
               .WithHandler(() => "ok")
               .WithDescription("Returns status")
@@ -126,7 +126,7 @@ public sealed class InterpreterPocTests
       {
         public static async Task Main()
         {
-          NuruApp app = NuruApp.CreateBuilder([])
+          NuruApp app = NuruApp.CreateBuilder()
             .Map("deploy")
               .WithHandler(() => "deployed")
               .AsCommand()
@@ -168,7 +168,7 @@ public sealed class InterpreterPocTests
       {
         public static async Task Main()
         {
-          NuruApp app = NuruApp.CreateBuilder([])
+          NuruApp app = NuruApp.CreateBuilder()
             .Map("ping")
               .WithHandler(() => "pong")
               .AsQuery()

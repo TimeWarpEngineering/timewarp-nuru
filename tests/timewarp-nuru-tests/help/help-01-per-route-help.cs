@@ -25,7 +25,7 @@ public class PerRouteHelpTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("deploy {env}").WithHandler((string env) => "Deployed to " + env).WithDescription("Deploy to an environment").Done()
       .Build();
@@ -44,7 +44,7 @@ public class PerRouteHelpTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("build {project}").WithHandler((string project) => "Built " + project).WithDescription("Build a project").Done()
       .Build();
@@ -63,7 +63,7 @@ public class PerRouteHelpTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .WithName("myapp")
       .Map("deploy {env}").WithHandler((string env) => "Deployed").WithDescription("Deploy command").Done()
@@ -84,7 +84,7 @@ public class PerRouteHelpTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .WithGroupPrefix("config")
         .Map("set {key} {value}").WithHandler((string key, string value) => "Set " + key + "=" + value).WithDescription("Set a config value").Done()
@@ -108,7 +108,7 @@ public class PerRouteHelpTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("deploy {env} --force,-f? --dry-run,-d?").WithHandler((string env, bool force, bool dryRun) => "done").WithDescription("Deploy with options").Done()
       .Build();
@@ -130,7 +130,7 @@ public class PerRouteHelpTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("copy {source} {destination}").WithHandler((string source, string destination) => "copied").WithDescription("Copy files").Done()
       .Build();
@@ -149,7 +149,7 @@ public class PerRouteHelpTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("run --verbose?").WithHandler((bool verbose) => "ran").WithDescription("Run something").Done()
       .Build();
@@ -170,7 +170,7 @@ public class PerRouteHelpTests
     StaticFlags.DangerousHandlerExecuted = false;
 
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("dangerous").WithHandler(StaticFlags.DangerousHandler).WithDescription("A dangerous command").Done()
       .Build();
@@ -194,7 +194,7 @@ public class PerRouteHelpTests
     #endregion
     // Arrange
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("deploy").WithHandler(() => "simple deploy").WithDescription("Simple deploy").Done()
       .Map("deploy {env}").WithHandler((string env) => "deploy to " + env).WithDescription("Deploy to environment").Done()

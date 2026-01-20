@@ -21,7 +21,7 @@ public class PromptDisplayTests
     // Arrange
     using TestTerminal terminal = new("hello\nexit\n");
 
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("hello")
         .WithHandler(() => "Hello World!")
@@ -48,7 +48,7 @@ public class PromptDisplayTests
     // Arrange
     using TestTerminal terminal = new("hello\nexit\n");
 
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("hello")
         .WithHandler(() => "Hello World!")
@@ -79,7 +79,7 @@ public class PromptDisplayTests
     // Arrange
     using TestTerminal terminal = new("hello\nexit\n");
 
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("hello")
         .WithHandler(() => "Hello World!")
@@ -109,7 +109,7 @@ public class PromptDisplayTests
     // Arrange
     using TestTerminal terminal = new("status\nexit\n");
 
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("status")
         .WithHandler(() => "Running")
@@ -136,7 +136,7 @@ public class PromptDisplayTests
     // Arrange
     using TestTerminal terminal = new("hello\nworld\nexit\n");
 
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("hello")
         .WithHandler(() => "Hello!")

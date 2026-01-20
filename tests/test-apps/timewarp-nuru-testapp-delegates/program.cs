@@ -1,7 +1,7 @@
 global using static System.Console;
 using TimeWarp.Nuru;
 
-NuruAppBuilder builder = NuruApp.CreateBuilder(args);
+NuruAppBuilder builder = NuruApp.CreateBuilder();
 
 // Test 1: Basic Commands
 builder.Map("status").WithHandler(() => WriteLine("✓ System is running")).AsQuery().Done();

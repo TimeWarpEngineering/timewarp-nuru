@@ -30,7 +30,7 @@ namespace TimeWarp.Nuru.Tests.Generator.Minimal
       // Arrange
       using TestTerminal terminal = new();
 
-      NuruApp app = NuruApp.CreateBuilder([])
+      NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
         .Map("ping")
           .WithHandler(() => "pong")
@@ -56,7 +56,7 @@ namespace TimeWarp.Nuru.Tests.Generator.Minimal
       // Arrange
       using TestTerminal terminal = new();
 
-      NuruApp app = NuruApp.CreateBuilder([])
+      NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
         .Map("ping")
           .WithHandler(() => "pong")
@@ -81,7 +81,7 @@ namespace TimeWarp.Nuru.Tests.Generator.Minimal
       // Arrange
       using TestTerminal terminal = new();
 
-      NuruApp app = NuruApp.CreateBuilder([])
+      NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
         .Map("ping")
           .WithHandler(() => "pong")
@@ -115,7 +115,7 @@ namespace TimeWarp.Nuru.Tests.Generator.Minimal
       // Arrange
       using TestTerminal terminal = new();
 
-      NuruApp app = NuruApp.CreateBuilder([])
+      NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
         .Map("ping")
           .WithHandler(() => "pong")
@@ -144,7 +144,7 @@ namespace TimeWarp.Nuru.Tests.Generator.Minimal
       // Arrange
       using TestTerminal terminal = new();
 
-      NuruApp app = NuruApp.CreateBuilder([])
+      NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
         .Map("greet {name}")
           .WithHandler((string name) => $"Hello, {name}!")
@@ -170,7 +170,7 @@ namespace TimeWarp.Nuru.Tests.Generator.Minimal
       // Arrange
       using TestTerminal terminal = new();
 
-      NuruApp app = NuruApp.CreateBuilder([])
+      NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
         .Map("repeat {count:int}")
           .WithHandler((int count) => $"Count: {count}")
@@ -196,7 +196,7 @@ namespace TimeWarp.Nuru.Tests.Generator.Minimal
       // Arrange
       using TestTerminal terminal = new();
 
-      NuruApp app = NuruApp.CreateBuilder([])
+      NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
         .Map("add {a:int} {b:int}")
           .WithHandler((int a, int b) => $"Sum: {a + b}")
@@ -226,7 +226,7 @@ namespace TimeWarp.Nuru.Tests.Generator.Minimal
       // Arrange
       using TestTerminal terminal = new();
 
-      NuruApp app = NuruApp.CreateBuilder([])
+      NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
         .Map("deploy {env}")
           .WithHandler((string env) => $"Deploying to {env}")
@@ -256,7 +256,7 @@ namespace TimeWarp.Nuru.Tests.Generator.Minimal
       // Arrange
       using TestTerminal terminal = new();
 
-      NuruApp app = NuruApp.CreateBuilder([])
+      NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
         .Map("deploy prod")
           .WithHandler(() => "Deploying to PRODUCTION")
@@ -292,7 +292,7 @@ namespace TimeWarp.Nuru.Tests.Generator.Minimal
       // Arrange
       using TestTerminal terminal = new();
 
-      NuruApp app = NuruApp.CreateBuilder([])
+      NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
         .Map("opt-build --verbose")
           .WithHandler((bool verbose) => verbose ? "Building with verbose output" : "Building quietly")
@@ -319,7 +319,7 @@ namespace TimeWarp.Nuru.Tests.Generator.Minimal
       // Arrange
       using TestTerminal terminal = new();
 
-      NuruApp app = NuruApp.CreateBuilder([])
+      NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
         .Map("opt-push {env} --force,-f")
           .WithHandler((string env, bool force) => force ? $"Force pushing to {env}" : $"Safe push to {env}")
@@ -346,7 +346,7 @@ namespace TimeWarp.Nuru.Tests.Generator.Minimal
       // Arrange
       using TestTerminal terminal = new();
 
-      NuruApp app = NuruApp.CreateBuilder([])
+      NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
         .Map("opt-make --config {mode}")
           .WithHandler((string mode) => $"Making in {mode} mode")
@@ -373,7 +373,7 @@ namespace TimeWarp.Nuru.Tests.Generator.Minimal
       // Arrange
       using TestTerminal terminal = new();
 
-      NuruApp app = NuruApp.CreateBuilder([])
+      NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
         .Map("opt-compile --output,-o {file}")
           .WithHandler((string file) => $"Output to {file}")
@@ -400,7 +400,7 @@ namespace TimeWarp.Nuru.Tests.Generator.Minimal
       // Arrange
       using TestTerminal terminal = new();
 
-      NuruApp app = NuruApp.CreateBuilder([])
+      NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
         .Map("multi-opt {env} --verbose --force --config {mode}")
           .WithHandler((string env, bool verbose, bool force, string mode) =>
@@ -431,7 +431,7 @@ namespace TimeWarp.Nuru.Tests.Generator.Minimal
       // Arrange
       using TestTerminal terminal = new();
 
-      NuruApp app = NuruApp.CreateBuilder([])
+      NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
         .WithGroupPrefix("grp-admin")
           .Map("status")
@@ -459,7 +459,7 @@ namespace TimeWarp.Nuru.Tests.Generator.Minimal
       // Arrange
       using TestTerminal terminal = new();
 
-      NuruApp app = NuruApp.CreateBuilder([])
+      NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
         .WithGroupPrefix("grp-admin")
           .Map("restart")
@@ -493,7 +493,7 @@ namespace TimeWarp.Nuru.Tests.Generator.Minimal
       // Arrange
       using TestTerminal terminal = new();
 
-      NuruApp app = NuruApp.CreateBuilder([])
+      NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
         .WithGroupPrefix("grp-admin")
           .WithGroupPrefix("config")

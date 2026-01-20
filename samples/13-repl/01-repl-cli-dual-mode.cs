@@ -5,7 +5,7 @@
 // INTERACTIVE MODE DEMO - CLI + REPL DUAL MODE
 // ═══════════════════════════════════════════════════════════════════════════════
 //
-// This sample demonstrates NuruApp.CreateBuilder(args) which provides:
+// This sample demonstrates NuruApp.CreateBuilder() which provides:
 // - Full DI container setup
 // - Configuration support
 // - Auto-help generation
@@ -28,7 +28,7 @@
 using TimeWarp.Nuru;
 using static System.Console;
 
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
   .WithDescription("Demo app supporting both CLI and interactive REPL modes")
 
   // Define application commands

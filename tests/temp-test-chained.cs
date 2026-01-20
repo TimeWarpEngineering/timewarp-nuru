@@ -5,7 +5,7 @@ using TimeWarp.Nuru;
 using static System.Console;
 
 // Chained pattern - this is what bug #295 says doesn't work
-return await NuruApp.CreateBuilder(args)
+return await NuruApp.CreateBuilder()
   .Map("hello")
     .WithHandler(() => WriteLine("Hello from chained pattern!"))
     .Done()

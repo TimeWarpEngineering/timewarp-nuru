@@ -315,7 +315,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.HistorySecurity
 
     public ReplSessionHelper()
     {
-      App =NuruApp.CreateBuilder([]).Build();
+      App =NuruApp.CreateBuilder().Build();
       LoggerFactoryInstance = LoggerFactory.Create(_ => { });
     }
 

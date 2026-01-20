@@ -199,10 +199,10 @@ public class EndpointBuilder<TBuilder> : INestedBuilder<TBuilder>
     ParentBuilder.Map(configureRoute);
 
   /// <summary>
-  /// Builds the NuruCoreApp from the configured builder.
+  /// Builds the NuruApp from the configured builder.
   /// Enables fluent chaining to terminate with Build().
   /// </summary>
-  public NuruCoreApp Build() => ParentBuilder.Build();
+  public NuruApp Build() => ParentBuilder.Build();
 
   /// <summary>
   /// Gets the underlying app builder for accessing extension methods.

@@ -98,12 +98,12 @@ public partial class NuruCoreAppBuilder<TSelf>
   }
 
   /// <summary>
-  /// Builds and returns a runnable NuruCoreApp.
+  /// Builds and returns a runnable NuruApp.
   /// </summary>
-  public NuruCoreApp Build()
+  public NuruApp Build()
   {
     // DSL is parsed at compile-time. RunAsync() is intercepted.
-    return new NuruCoreApp(Terminal)
+    return new NuruApp(Terminal)
     {
       ReplOptions = ReplOptions,
       LoggerFactory = LoggerFactory,

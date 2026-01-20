@@ -24,6 +24,11 @@ Consolidate `NuruCoreApp` and `NuruApp` into a single unified `NuruApp` class. F
 - [x] Rename file `nuru-core-app.cs` → `nuru-app.cs`
 - [x] Update `source/timewarp-nuru-analyzers/generators/locators/build-locator.cs` lines 43, 71:
   - Change `"NuruCoreApp"` to `"NuruApp"`
+- [x] Fix compilation errors in:
+  - `builders/nuru-core-app-builder.cs` - Build() return type
+  - `builders/endpoint-builder.cs` - Build() return type
+  - `io/nuru-test-context.cs` - delegate and method signatures
+  - `repl/repl-session.cs` - delegate, field, and method signatures
 
 ### Phase 3: MCP Server Tools
 - [ ] Update `source/timewarp-nuru-mcp/tools/get-attributed-route-tool.cs` - change `NuruCoreApp` to `NuruApp`
@@ -33,7 +38,7 @@ Consolidate `NuruCoreApp` and `NuruApp` into a single unified `NuruApp` class. F
 - [ ] Update `source/timewarp-nuru-mcp/tools/get-version-info-tool.cs` - change `NuruCoreApp` to `NuruApp`
 
 ### Phase 4: Verification
-- [ ] Run `dotnet build timewarp-nuru.slnx -c Release`
+- [x] Run `dotnet build timewarp-nuru.slnx -c Release` ✅ Build succeeded!
 - [ ] Run `dotnet run tests/ci-tests/run-ci-tests.cs`
 - [ ] Run samples to verify they work
 
@@ -42,6 +47,10 @@ Consolidate `NuruCoreApp` and `NuruApp` into a single unified `NuruApp` class. F
   - `grep -rl "NuruCoreApp" samples/ tests/`
   - `grep -rl "NuruCoreApp" documentation/`
 - [ ] Delete any `using NuruCoreApp` aliases in `global-usings.cs`
+
+### Additional Changes Made
+- Renamed `services/nuru-core-app-holder.cs` → `services/nuru-app-holder.cs`
+- Deleted `nuru-app-static.cs` (conflicting static partial class)
 
 ## Notes
 

@@ -3,7 +3,7 @@ namespace TimeWarp.Nuru;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 
-public class NuruCoreApp
+public partial class NuruApp
 {
   public ITerminal Terminal { get; }
   public ReplOptions? ReplOptions { get; init; }
@@ -55,7 +55,7 @@ public class NuruCoreApp
   /// </summary>
   public MeterProvider? MeterProvider { get; set; }
 
-  public NuruCoreApp(ITerminal? terminal = null)
+  public NuruApp(ITerminal? terminal = null)
   {
     Terminal = terminal ?? TimeWarpTerminal.Default;
   }

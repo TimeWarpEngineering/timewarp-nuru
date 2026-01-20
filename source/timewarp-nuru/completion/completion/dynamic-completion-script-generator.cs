@@ -4,12 +4,12 @@ namespace TimeWarp.Nuru;
 /// Generates dynamic completion scripts for various shells.
 /// Dynamic scripts call back to the application via the __complete route.
 /// </summary>
-internal static class DynamicCompletionScriptGenerator
+public static class DynamicCompletionScriptGenerator
 {
-  private const string BashTemplateName = "TimeWarp.Nuru.completion.templates.bash-completion-dynamic.sh";
-  private const string ZshTemplateName = "TimeWarp.Nuru.completion.templates.zsh-completion-dynamic.zsh";
-  private const string PwshTemplateName = "TimeWarp.Nuru.completion.templates.pwsh-completion-dynamic.ps1";
-  private const string FishTemplateName = "TimeWarp.Nuru.completion.templates.fish-completion-dynamic.fish";
+  private const string BashTemplateName = "TimeWarp.Nuru.completion.completion.templates.bash-completion-dynamic.sh";
+  private const string ZshTemplateName = "TimeWarp.Nuru.completion.completion.templates.zsh-completion-dynamic.zsh";
+  private const string PwshTemplateName = "TimeWarp.Nuru.completion.completion.templates.pwsh-completion-dynamic.ps1";
+  private const string FishTemplateName = "TimeWarp.Nuru.completion.completion.templates.fish-completion-dynamic.fish";
 
   /// <summary>
   /// Generates a Bash completion script.

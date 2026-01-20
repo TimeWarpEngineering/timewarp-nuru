@@ -32,7 +32,7 @@ using System.ComponentModel.DataAnnotations;
 using TimeWarp.Nuru;
 using static System.Console;
 
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
   // Register behaviors - execute in order (first = outermost)
   .AddBehavior(typeof(LoggingBehavior))
   .AddBehavior(typeof(ExceptionHandlingBehavior))

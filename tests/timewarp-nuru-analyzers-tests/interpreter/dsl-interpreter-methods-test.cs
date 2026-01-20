@@ -36,7 +36,7 @@ public sealed class InterpreterMethodsTests
       {
         public static async Task Main()
         {
-          NuruCoreApp app = NuruApp.CreateBuilder([])
+          NuruApp app = NuruApp.CreateBuilder()
             .WithName("my-app")
             .WithDescription("My CLI App")
             .WithAiPrompt("Use queries before commands.")
@@ -82,7 +82,7 @@ public sealed class InterpreterMethodsTests
       {
         public static async Task Main()
         {
-          NuruCoreApp app = NuruApp.CreateBuilder([])
+          NuruApp app = NuruApp.CreateBuilder()
             .AddHelp()
             .Map("ping")
               .WithHandler(() => "pong")
@@ -125,7 +125,7 @@ public sealed class InterpreterMethodsTests
       {
         public static async Task Main()
         {
-          NuruCoreApp app = NuruApp.CreateBuilder([])
+          NuruApp app = NuruApp.CreateBuilder()
             .AddRepl()
             .Map("ping")
               .WithHandler(() => "pong")
@@ -168,7 +168,7 @@ public sealed class InterpreterMethodsTests
       {
         public static async Task Main()
         {
-          NuruCoreApp app = NuruApp.CreateBuilder([])
+          NuruApp app = NuruApp.CreateBuilder()
             .AddConfiguration()
             .Map("ping")
               .WithHandler(() => "pong")
@@ -212,7 +212,7 @@ public sealed class InterpreterMethodsTests
       {
         public static async Task Main()
         {
-          NuruCoreApp app = NuruApp.CreateBuilder([])
+          NuruApp app = NuruApp.CreateBuilder()
             .AddBehavior(typeof(TelemetryBehavior<,>))
             .Map("ping")
               .WithHandler(() => "pong")
@@ -255,7 +255,7 @@ public sealed class InterpreterMethodsTests
       {
         public static async Task Main()
         {
-          NuruCoreApp app = NuruApp.CreateBuilder([])
+          NuruApp app = NuruApp.CreateBuilder()
             .UseTerminal(null!)
             .Map("ping")
               .WithHandler(() => "pong")
@@ -305,7 +305,7 @@ public sealed class InterpreterMethodsTests
       {
         public static async Task Main()
         {
-          NuruCoreApp app = NuruApp.CreateBuilder([])
+          NuruApp app = NuruApp.CreateBuilder()
             .AddTypeConverter(new MyConverter())
             .Map("ping")
               .WithHandler(() => "pong")
@@ -347,7 +347,7 @@ public sealed class InterpreterMethodsTests
       {
         public static async Task Main()
         {
-          NuruCoreApp app = NuruApp.CreateBuilder([])
+          NuruApp app = NuruApp.CreateBuilder()
             .Map("status")
               .WithHandler(() => "ok")
               .WithAlias("s")
@@ -396,7 +396,7 @@ public sealed class InterpreterMethodsTests
       {
         public static async Task Main()
         {
-          NuruCoreApp app = NuruApp.CreateBuilder([])
+          NuruApp app = NuruApp.CreateBuilder()
             .AddConfiguration()
             .AddBehavior(typeof(TelemetryBehavior<,>))
             .AddBehavior(typeof(ValidationBehavior<,>))
@@ -497,7 +497,6 @@ public sealed class InterpreterMethodsTests
     string runtimePath = System.Runtime.InteropServices.RuntimeEnvironment.GetRuntimeDirectory();
     string repoRoot = FindRepoRoot();
     string nuruDir = Path.Combine(repoRoot, "source", "timewarp-nuru", "bin", "Debug", "net10.0");
-    string nuruCoreDir = Path.Combine(repoRoot, "source", "timewarp-nuru-core", "bin", "Debug", "net10.0");
 
     List<MetadataReference> references =
     [
@@ -509,9 +508,8 @@ public sealed class InterpreterMethodsTests
       MetadataReference.CreateFromFile(Path.Combine(runtimePath, "System.Collections.dll")),
     ];
 
-    // Add TimeWarp.Nuru assemblies
+    // Add TimeWarp.Nuru assembly
     AddAssembliesFromDirectory(references, nuruDir);
-    AddAssembliesFromDirectory(references, nuruCoreDir);
 
     return CSharpCompilation.Create(
       "TestAssembly",

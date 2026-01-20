@@ -4,15 +4,16 @@
 #region Purpose
 // Tests enum parameter completion in REPL - focused tests for enum-specific behavior.
 //
-// KNOWN ISSUE: Generator bug causes build failures for simple routes with enum params.
-// - Routes with optional params/flags generate proper EnumTypeConverter<T> (repl-17 works)
-// - Simple routes use pattern matching that skips enum conversion (these tests fail)
+// TODO: #387 - Generator bug causes build failures for enum option parameters.
+// - Positional enum params work (fixed in #372)
+// - Option enum params (--option {enumParam}) fail - generator doesn't emit conversion code
 //
 // Expected behavior (both should work):
 // - Explicit: .Map("deploy {env:environment}") with handler (Environment env)
 // - Implicit: .Map("deploy {env}") with handler (Environment env) - infer type from handler
+// - Options: .Map("deploy --env {env}") with handler (Environment env)
 //
-// Tests are skipped until generator is fixed to handle enum params in all route types.
+// Tests use [Skip] attribute until #387 is fixed. Tests exist to expose the bug, not mask it.
 #endregion
 
 #if !JARIBU_MULTI
@@ -53,7 +54,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.EnumCompletion
       terminal.QueueKey(ConsoleKey.Escape);
       terminal.QueueLine("exit");
 
-      NuruCoreApp app = NuruApp.CreateBuilder([])
+      NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
         .Map("deploy {env:environment}")
           .WithHandler((Environment env) => $"Deploying to {env}")
@@ -80,7 +81,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.EnumCompletion
       terminal.QueueKey(ConsoleKey.Enter);
       terminal.QueueLine("exit");
 
-      NuruCoreApp app = NuruApp.CreateBuilder([])
+      NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
         .Map("deploy {env:environment}")
           .WithHandler((Environment env) => $"Deploying to {env}")
@@ -106,7 +107,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.EnumCompletion
       terminal.QueueKey(ConsoleKey.Enter);
       terminal.QueueLine("exit");
 
-      NuruCoreApp app = NuruApp.CreateBuilder([])
+      NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
         .Map("log {level:loglevel}")
           .WithHandler((LogLevel level) => $"Log level: {level}")
@@ -131,7 +132,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.EnumCompletion
       terminal.QueueKey(ConsoleKey.Escape);
       terminal.QueueLine("exit");
 
-      NuruCoreApp app = NuruApp.CreateBuilder([])
+      NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
         .Map("deploy {env:environment}")
           .WithHandler((Environment env) => $"Deploying to {env}")
@@ -155,7 +156,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.EnumCompletion
       terminal.QueueKey(ConsoleKey.Enter);
       terminal.QueueLine("exit");
 
-      NuruCoreApp app = NuruApp.CreateBuilder([])
+      NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
         .Map("deploy {env:environment}")
           .WithHandler((Environment env) => $"Deploying to {env}")
@@ -180,7 +181,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.EnumCompletion
       terminal.QueueKey(ConsoleKey.Escape);
       terminal.QueueLine("exit");
 
-      NuruCoreApp app = NuruApp.CreateBuilder([])
+      NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
         .Map("deploy {name} {env:environment}")
           .WithHandler((string name, Environment env) => $"Deploying {name} to {env}")
@@ -206,7 +207,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.EnumCompletion
       terminal.QueueKey(ConsoleKey.Escape);
       terminal.QueueLine("exit");
 
-      NuruCoreApp app = NuruApp.CreateBuilder([])
+      NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
         .Map("deploy {name} {env:environment}")
           .WithHandler((string name, Environment env) => $"Deploying {name} to {env}")

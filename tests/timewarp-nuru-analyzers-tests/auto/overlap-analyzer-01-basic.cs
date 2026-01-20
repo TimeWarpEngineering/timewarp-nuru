@@ -29,7 +29,7 @@ public sealed class OverlapAnalyzerTests
       {
         public static async Task Main()
         {
-          NuruCoreApp app = NuruApp.CreateBuilder([])
+          NuruApp app = NuruApp.CreateBuilder()
             .Map("delay {ms:int}").WithHandler((int ms) => $"typed:{ms}").AsQuery().Done()
             .Map("delay {duration}").WithHandler((string duration) => $"untyped:{duration}").AsQuery().Done()
             .Build();
@@ -82,7 +82,7 @@ public sealed class OverlapAnalyzerTests
       {
         public static async Task Main()
         {
-          NuruCoreApp app = NuruApp.CreateBuilder([])
+          NuruApp app = NuruApp.CreateBuilder()
             .Map("get {id:int}").WithHandler((int id) => $"int:{id}").AsQuery().Done()
             .Map("get {id:guid}").WithHandler((Guid id) => $"guid:{id}").AsQuery().Done()
             .Build();
@@ -123,7 +123,7 @@ public sealed class OverlapAnalyzerTests
       {
         public static async Task Main()
         {
-          NuruCoreApp app = NuruApp.CreateBuilder([])
+          NuruApp app = NuruApp.CreateBuilder()
             .Map("get-by-id {id:int}").WithHandler((int id) => $"int:{id}").AsQuery().Done()
             .Map("get-by-name {name}").WithHandler((string name) => $"string:{name}").AsQuery().Done()
             .Build();
@@ -165,7 +165,7 @@ public sealed class OverlapAnalyzerTests
       {
         public static async Task Main()
         {
-          NuruCoreApp app = NuruApp.CreateBuilder([])
+          NuruApp app = NuruApp.CreateBuilder()
             .Map("deploy {env}").WithHandler((string env) => $"required:{env}").AsQuery().Done()
             .Map("deploy {env?}").WithHandler((string? env) => $"optional:{env}").AsQuery().Done()
             .Build();

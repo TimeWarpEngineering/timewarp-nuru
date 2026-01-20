@@ -14,7 +14,7 @@ using TimeWarp.Nuru;
 using static System.Console;
 
 // Create builder with full DI support
-NuruAppBuilder builder = NuruApp.CreateBuilder(args);
+NuruAppBuilder builder = NuruApp.CreateBuilder();
 
 // Basic commands
 builder.Map("hello")
@@ -103,5 +103,5 @@ builder.Map("--help")
   .Done();
 
 // Build and run
-NuruCoreApp app = builder.Build();
+NuruApp app = builder.Build();
 return await app.RunAsync(args);

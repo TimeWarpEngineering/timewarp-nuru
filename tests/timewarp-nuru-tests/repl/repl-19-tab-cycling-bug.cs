@@ -19,7 +19,7 @@ public class TabCyclingBugTests
 
   private const string DebugLogPath = "/tmp/repl-19-debug.log";
   private static TestTerminal? Terminal;
-  private static NuruCoreApp? App;
+  private static NuruApp? App;
 
   private static void Log(string message)
   {
@@ -32,7 +32,7 @@ public class TabCyclingBugTests
     Terminal = new TestTerminal();
     Log("Terminal created");
 
-    App = NuruApp.CreateBuilder([])
+    App = NuruApp.CreateBuilder()
       .UseTerminal(Terminal)
       .Map("git status")
         .WithHandler(() => { })

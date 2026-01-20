@@ -18,7 +18,7 @@ builder.Map("--tag? {tag?}")
   .AsCommand()
   .Done();
 
-NuruCoreApp app = builder.Build();
+NuruApp app = builder.Build();
 return await app.RunAsync(args);
 
 async Task<int> RunTests(string? filterTag)

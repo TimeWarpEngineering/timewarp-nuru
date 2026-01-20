@@ -1,10 +1,8 @@
 # Getting Started with TimeWarp.Nuru
 
-Build your first command-line application with TimeWarp.Nuru in 5 minutes.
+Build your first command-line application in 5 minutes.
 
 ## Installation
-
-Add TimeWarp.Nuru to your project:
 
 ```bash
 dotnet new console -n MyCliApp
@@ -12,243 +10,252 @@ cd MyCliApp
 dotnet add package TimeWarp.Nuru
 ```
 
-## Your First CLI App
+## Two Ways to Define Commands
 
-Let's build a simple calculator CLI that demonstrates both Direct and Mediator approaches.
+TimeWarp.Nuru provides two first-class patterns for defining commands. Choose based on your preference - both are fully supported.
 
-### 1. Replace Program.cs
+### Approach 1: Fluent DSL
 
-```csharp
-using TimeWarp.Nuru;
-using static System.Console;
-
-NuruApp app = new NuruAppBuilder()
-    .Map
-    (
-      "add {x:double} {y:double}",
-      (double x, double y) => WriteLine($"{x} + {y} = {x + y}")
-    )
-    .Map
-    (
-      "multiply {x:double} {y:double}",
-      (double x, double y) => WriteLine($"{x} × {y} = {x * y}")
-    ).Build();
-
-return await app.RunAsync(args);
-```
-
-### 2. Run It
-
-```bash
-dotnet run -- add 15 25
-# Output: 15 + 25 = 40
-
-dotnet run -- multiply 3 7
-# Output: 3 × 7 = 21
-```
-
-🎉 **Congratulations!** You've created your first Nuru CLI app.
-
-## Understanding the Code
-
-### Route Pattern
-```csharp
-"add {x:double} {y:double}"
-```
-
-- `add` - Literal segment (must match exactly)
-- `{x:double}` - Typed parameter named 'x' expecting a double
-- `{y:double}` - Typed parameter named 'y' expecting a double
-
-### Handler Delegate
-```csharp
-(double x, double y) => WriteLine($"{x} + {y} = {x + y}")
-```
-
-- Parameters automatically match route pattern parameters
-- Type conversion happens automatically
-- Return Task or void for sync operations
-
-## Adding More Features
-
-### Optional Parameters
-
-```csharp
-.Map
-(
-  "greet {name} {greeting?}",
-  (string name, string? greeting) => WriteLine($"{greeting ?? "Hello"}, {name}!")
-)
-```
-
-```bash
-dotnet run -- greet Alice
-# Output: Hello, Alice!
-
-dotnet run -- greet Bob "Good morning"
-# Output: Good morning, Bob!
-```
-
-### Options (Flags)
-
-```csharp
-.Map("list --verbose", () => WriteLine("Listing files with detailed information...")
-)
-.Map("list", () => WriteLine("Listing files..."))
-```
-
-```bash
-dotnet run -- list
-# Output: Listing files...
-
-dotnet run -- list --verbose
-# Output: Listing files with detailed information...
-```
-
-### Catch-All Parameters
-
-```csharp
-.Map
-(
-  "echo {*words}",
-  (string[] words) => WriteLine(string.Join(" ", words))
-)
-```
-
-```bash
-dotnet run -- echo Hello World from Nuru!
-# Output: Hello World from Nuru!
-```
-
-### Shell Completion (Tab Completion)
-
-Enable tab completion for your CLI with one line of code:
+Define routes inline with a fluent builder pattern:
 
 ```csharp
 using TimeWarp.Nuru;
-using TimeWarp.Nuru.Completion;
 
-NuruApp app = new NuruAppBuilder()
-    .Map("deploy {env} --version {tag}", (string env, string tag) => Deploy(env, tag))
-    .Map("status", () => ShowStatus())
-    .EnableStaticCompletion()  // ← Add this
-    .Build();
-```
-
-**Install the completion package:**
-
-```bash
-dotnet add package TimeWarp.Nuru.Completion
-```
-
-**Generate and install completion scripts:**
-
-```bash
-# Bash (Linux/macOS)
-./myapp --generate-completion bash >> ~/.bashrc
-source ~/.bashrc
-
-# Zsh (macOS/Linux)
-./myapp --generate-completion zsh >> ~/.zshrc
-source ~/.zshrc
-
-# PowerShell (Windows)
-./myapp --generate-completion pwsh >> $PROFILE
-. $PROFILE
-
-# Fish (Linux/macOS)
-./myapp --generate-completion fish > ~/.config/fish/completions/myapp.fish
-```
-
-**Try it out:**
-
-```bash
-./myapp dep<TAB>        # Completes to: deploy
-./myapp deploy <TAB>    # Suggests: {env}
-./myapp deploy prod --<TAB>  # Completes to: --version
-```
-
-Tab completion automatically supports:
-- ✅ Command names (`deploy`, `status`)
-- ✅ Options (`--version`, `--verbose`)
-- ✅ Enum values (if your parameters use enums)
-- ✅ File paths (for string parameters)
-
-See the [Shell Completion Example](../../samples/shell-completion-example/) for a complete working example.
-
-## Next Steps
-
-### Add Dependency Injection
-
-For more complex scenarios, enable DI and use the Mediator pattern:
-
-```csharp
-using TimeWarp.Nuru;
-using Mediator;
-using Microsoft.Extensions.DependencyInjection;
-
-NuruApp app = new NuruAppBuilder()
-  .AddDependencyInjection()
-  .ConfigureServices(services =>
-  {
-    services.AddSingleton<ICalculator, Calculator>();
-  })
-  .Map<FactorialCommand>("factorial {n:int}")
+NuruApp app = NuruApp.CreateBuilder(args)
+  .Map("add {x:double} {y:double}")
+    .WithHandler((double x, double y) => Console.WriteLine($"{x} + {y} = {x + y}"))
+    .AsCommand()
+    .Done()
+  .Map("greet {name}")
+    .WithHandler((string name) => Console.WriteLine($"Hello, {name}!"))
+    .AsQuery()
+    .Done()
   .Build();
 
 return await app.RunAsync(args);
 ```
 
-See [Architecture Choices](guides/architecture-choices.md) for when to use Direct vs Mediator approaches.
+### Approach 2: Attributed Routes
 
-### Explore Complete Examples
+Define commands as classes with attributes - auto-discovered at build time:
 
-Check out the [Calculator Samples](../../samples/calculator/) for three complete implementations:
-- **calc-delegate.cs** - Pure Direct approach
-- **calc-mediator.cs** - Pure Mediator approach
-- **calc-mixed.cs** - Mixed approach (recommended)
+**Program.cs:**
+```csharp
+using TimeWarp.Nuru;
 
-### Learn More
+NuruApp app = NuruApp.CreateBuilder(args)
+  .DiscoverEndpoints()
+  .Build();
 
-- **[Use Cases](use-cases.md)** - Greenfield apps and progressive enhancement patterns
-- **[Routing Features](features/routing.md)** - Complete route pattern syntax
-- **[NuruAppOptions](reference/nuru-app-options.md)** - Configure REPL, telemetry, completion, and built-in routes
-- **[Deployment](guides/deployment.md)** - Native AOT and .NET 10 runfiles
-- **[MCP Server](tools/mcp-server.md)** - AI-assisted development with Claude
+return await app.RunAsync(args);
+```
+
+**AddCommand.cs:**
+```csharp
+using TimeWarp.Nuru;
+
+[NuruRoute("add", Description = "Add two numbers")]
+public sealed class AddCommand : ICommand<Unit>
+{
+  [Parameter(Description = "First number")]
+  public double X { get; set; }
+
+  [Parameter(Description = "Second number")]
+  public double Y { get; set; }
+
+  public sealed class Handler : ICommandHandler<AddCommand, Unit>
+  {
+    public ValueTask<Unit> Handle(AddCommand command, CancellationToken ct)
+    {
+      Console.WriteLine($"{command.X} + {command.Y} = {command.X + command.Y}");
+      return default;
+    }
+  }
+}
+```
+
+## Run It
+
+```bash
+dotnet run -- add 15 25
+# Output: 15 + 25 = 40
+
+dotnet run -- greet Alice
+# Output: Hello, Alice!
+```
+
+## Choosing Your Approach
+
+| Aspect | Fluent DSL | Attributed Routes |
+|--------|------------|-------------------|
+| Best for | Simple apps, scripts, quick prototypes | Larger apps, separation of concerns |
+| Organization | Single file possible | Commands in separate files |
+| Testability | Inline handlers | Handlers injected via DI |
+| Discovery | Explicit `.Map()` calls | Auto-discovered via source generator |
+
+Both approaches:
+- Use the same route pattern syntax
+- Support async handlers
+- Work with pipeline behaviors
+- Are fully AOT compatible
+
+## Understanding Route Patterns
+
+### Literals and Parameters
+```
+"greet {name}"         - "greet" is literal, {name} is a parameter
+"add {x} {y}"          - Multiple parameters
+```
+
+### Typed Parameters
+```
+"{count:int}"          - Integer
+"{amount:double}"      - Floating point
+"{enabled:bool}"       - Boolean (true/false)
+"{when:datetime}"      - DateTime
+"{id:guid}"            - GUID
+```
+
+### Optional Parameters
+```
+"{name?}"              - Optional (nullable in handler)
+"{count:int?}"         - Optional with type
+```
+
+### Options (Flags)
+```
+"deploy --force"       - Boolean flag
+"deploy --env {env}"   - Option with value
+"deploy -f --env {e}"  - Short and long forms
+```
+
+### Catch-All
+```
+"echo {*words}"        - Captures remaining args as string[]
+```
+
+## Commands vs Queries
+
+- **Command** (`.AsCommand()`): Performs an action, may have side effects
+- **Query** (`.AsQuery()`): Returns information, no side effects
+- **IdempotentCommand** (`.AsIdempotentCommand()`): Safe to retry
+
+## Adding Features
+
+### Pipeline Behaviors
+
+Add cross-cutting concerns like logging, telemetry, or authorization:
+
+```csharp
+NuruApp app = NuruApp.CreateBuilder(args)
+  .AddBehavior(typeof(LoggingBehavior))
+  .AddBehavior(typeof(PerformanceBehavior))
+  .Map("deploy {env}")
+    .WithHandler((string env) => Deploy(env))
+    .AsCommand()
+    .Done()
+  .Build();
+
+public sealed class LoggingBehavior : INuruBehavior
+{
+  public async ValueTask HandleAsync(BehaviorContext context, Func<ValueTask> proceed)
+  {
+    Console.WriteLine($"[LOG] Handling {context.CommandName}");
+    await proceed();
+    Console.WriteLine($"[LOG] Completed {context.CommandName}");
+  }
+}
+```
+
+### Configuration
+
+Options are automatically bound from configuration sections:
+
+```csharp
+NuruApp app = NuruApp.CreateBuilder(args)
+  .Map("config show")
+    .WithHandler((IOptions<DatabaseOptions> dbOptions) =>
+    {
+      Console.WriteLine($"Host: {dbOptions.Value.Host}");
+      Console.WriteLine($"Port: {dbOptions.Value.Port}");
+    })
+    .AsQuery()
+    .Done()
+  .Build();
+
+public class DatabaseOptions
+{
+  public string Host { get; set; } = "localhost";
+  public int Port { get; set; } = 5432;
+}
+```
+
+Convention: `DatabaseOptions` binds to the `"Database"` config section (strips "Options" suffix).
+
+### REPL Mode
+
+```csharp
+NuruApp app = NuruApp.CreateBuilder(args)
+  .Map("greet {name}")
+    .WithHandler((string name) => Console.WriteLine($"Hello, {name}!"))
+    .AsQuery()
+    .Done()
+  .AddRepl(options =>
+  {
+    options.Prompt = "myapp> ";
+    options.WelcomeMessage = "Welcome! Type '--help' for commands.";
+  })
+  .Build();
+```
+
+Run with `-i` or `--interactive` to enter REPL mode.
+
+## Next Steps
+
+- **[Route Patterns](features/routing.md)** - Complete syntax reference
+- **[Pipeline Behaviors](features/pipeline-behaviors.md)** - Middleware for commands
+- **[Attributed Routes](features/attributed-routes.md)** - Deep dive on class-based commands
+- **[Configuration](features/configuration.md)** - Settings and dependency injection
+- **[REPL Mode](guides/using-repl-mode.md)** - Interactive shell
+- **[Samples](../../samples/)** - Working examples
 
 ## Common Questions
 
 ### How is this different from other CLI frameworks?
 
-TimeWarp.Nuru brings **web-style routing** to CLI applications:
-- Define routes with familiar syntax (`"deploy {env} --version {tag}"`)
-- Mix Direct (performance) and Mediator (architecture) approaches
-- Compile-time validation with Roslyn Analyzer
-- Native AOT support for fast startup
+TimeWarp.Nuru uses **compile-time source generation** for routing. Benefits:
+- Zero runtime overhead
+- Native AOT compatible
+- Compile-time validation via Roslyn analyzer
+- No reflection required
 
-### Do I need to choose between Direct and Mediator?
+### Can I mix both approaches?
 
-No! You can mix both approaches in the same application:
-- Use **Direct** for simple commands (blazing fast)
-- Use **Mediator** for complex commands (testable, DI, structured)
+Yes! Use fluent DSL for simple commands and attributed routes for complex ones in the same app:
 
-See the [Mixed approach example](../../samples/calculator/calc-mixed.cs).
+```csharp
+NuruApp app = NuruApp.CreateBuilder(args)
+  .Map("version")
+    .WithHandler(() => Console.WriteLine("1.0.0"))
+    .AsQuery()
+    .Done()
+  .DiscoverEndpoints()  // Also discovers attributed routes
+  .Build();
+```
 
 ### What about help text?
 
-Enable automatic help generation:
+Help is automatic. Add descriptions with `.WithDescription()` or the `Description` property on `[NuruRoute]`:
 
 ```csharp
-NuruApp app = new NuruAppBuilder()
-    .Map("deploy {env|Target environment} {tag?|Optional version}",
-        (string env, string? tag) => Deploy(env, tag))
-    .AddAutoHelp()
-    .Build();
+.Map("deploy {env|Target environment}")
+  .WithDescription("Deploy the application to an environment")
+  .WithHandler((string env) => Deploy(env))
+  .AsCommand()
+  .Done()
 ```
 
 ```bash
 dotnet run -- --help
 dotnet run -- deploy --help
 ```
-
-Learn more in [Auto-Help Features](features/auto-help.md).

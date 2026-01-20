@@ -13,6 +13,7 @@
     <!-- <Project Path="source/timewarp-nuru-repl/timewarp-nuru-repl.csproj" /> -->
   </Folder>
   <Folder Name="/tests/">
-    <Project Path="tests/test-apps/timewarp-nuru-testapp-delegates/timewarp-nuru-testapp-delegates.csproj" />
+    <!-- Commented out: intentionally has unreachable route errors for testing analyzer diagnostics -->
+    <!-- <Project Path="tests/test-apps/timewarp-nuru-testapp-delegates/timewarp-nuru-testapp-delegates.csproj" /> -->
   </Folder>
 </Solution>

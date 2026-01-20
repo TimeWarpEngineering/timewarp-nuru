@@ -42,7 +42,7 @@ public sealed class InterpreterFragmentedTests
       {
         public static async Task Main()
         {
-          var builder = NuruApp.CreateBuilder([]);
+          var builder = NuruApp.CreateBuilder();
           builder.Map("ping").WithHandler(() => "pong").AsQuery().Done();
           builder.Build();
           await builder.RunAsync(["ping"]);
@@ -92,7 +92,7 @@ public sealed class InterpreterFragmentedTests
       {
         public static async Task Main()
         {
-          var builder = NuruApp.CreateBuilder([]);
+          var builder = NuruApp.CreateBuilder();
           var endpoint = builder.Map("ping");
           endpoint.WithHandler(() => "pong");
           endpoint.AsQuery();
@@ -146,7 +146,7 @@ public sealed class InterpreterFragmentedTests
       {
         public static async Task Main()
         {
-          var builder = NuruApp.CreateBuilder([]);
+          var builder = NuruApp.CreateBuilder();
           var junk = "Hi mom";
           Console.WriteLine(junk);
           builder.Map("ping").WithHandler(() => "pong").AsQuery().Done();
@@ -196,7 +196,7 @@ public sealed class InterpreterFragmentedTests
       {
         public static async Task Main()
         {
-          var builder = NuruApp.CreateBuilder([]);
+          var builder = NuruApp.CreateBuilder();
           var admin = builder.WithGroupPrefix("admin");
           admin.Map("status").WithHandler(() => "ok").AsQuery().Done();
           admin.Done();
@@ -246,10 +246,10 @@ public sealed class InterpreterFragmentedTests
       {
         public static async Task Main()
         {
-          var app1 = NuruApp.CreateBuilder([])
+          var app1 = NuruApp.CreateBuilder()
             .Map("ping").WithHandler(() => "pong").AsQuery().Done()
             .Build();
-          var app2 = NuruApp.CreateBuilder([])
+          var app2 = NuruApp.CreateBuilder()
             .Map("status").WithHandler(() => "ok").AsQuery().Done()
             .Build();
           await app1.RunAsync(["ping"]);
@@ -302,7 +302,6 @@ public sealed class InterpreterFragmentedTests
     string runtimePath = System.Runtime.InteropServices.RuntimeEnvironment.GetRuntimeDirectory();
     string repoRoot = FindRepoRoot();
     string nuruDir = Path.Combine(repoRoot, "source", "timewarp-nuru", "bin", "Debug", "net10.0");
-    string nuruCoreDir = Path.Combine(repoRoot, "source", "timewarp-nuru-core", "bin", "Debug", "net10.0");
 
     List<MetadataReference> references =
     [
@@ -314,9 +313,8 @@ public sealed class InterpreterFragmentedTests
       MetadataReference.CreateFromFile(Path.Combine(runtimePath, "System.Collections.dll")),
     ];
 
-    // Add TimeWarp.Nuru assemblies
+    // Add TimeWarp.Nuru assembly
     AddAssembliesFromDirectory(references, nuruDir);
-    AddAssembliesFromDirectory(references, nuruCoreDir);
 
     return CSharpCompilation.Create(
       "TestAssembly",

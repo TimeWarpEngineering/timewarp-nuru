@@ -25,7 +25,7 @@
 using System.Net;
 using TimeWarp.Nuru;
 
-NuruAppBuilder builder = NuruApp.CreateBuilder([]);
+NuruAppBuilder builder = NuruApp.CreateBuilder();
 
 // ============================================================================
 // Original Built-In Types (v1.0)
@@ -216,7 +216,7 @@ builder.Map("backup {source:DirectoryInfo} --dest {dest:DirectoryInfo?} --config
   })
   .AsCommand().Done();
 
-NuruCoreApp app = builder.Build();
+NuruApp app = builder.Build();
 
 // Show usage examples
 if (args.Length == 0)

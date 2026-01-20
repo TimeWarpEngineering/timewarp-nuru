@@ -8,7 +8,7 @@ namespace TimeWarp.Nuru;
 /// <param name="args">The parsed command-line arguments.</param>
 /// <param name="cancellationToken">Cancellation token.</param>
 /// <returns>The exit code from command execution.</returns>
-public delegate Task<int> ReplCommandExecutor(NuruCoreApp app, string[] args, CancellationToken cancellationToken);
+public delegate Task<int> ReplCommandExecutor(NuruApp app, string[] args, CancellationToken cancellationToken);
 
 /// <summary>
 /// Provides REPL (Read-Eval-Print Loop) mode for interactive command execution.
@@ -17,7 +17,7 @@ public delegate Task<int> ReplCommandExecutor(NuruCoreApp app, string[] args, Ca
 public sealed class ReplSession : IDisposable
 {
   private readonly ILoggerFactory? LoggerFactory;
-  private readonly NuruCoreApp NuruCoreApp;
+  private readonly NuruApp App;
   private readonly ReplOptions ReplOptions;
   private readonly ReplHistory History;
   private readonly IReplRouteProvider RouteProvider;
@@ -41,19 +41,19 @@ public sealed class ReplSession : IDisposable
   /// <summary>
   /// Creates a new REPL mode instance.
   /// </summary>
-  /// <param name="nuruApp">The NuruCoreApp instance.</param>
+  /// <param name="nuruApp">The NuruApp instance.</param>
   /// <param name="replOptions">Configuration for the REPL.</param>
   /// <param name="routeProvider">Provider for route information (completion, highlighting).</param>
   /// <param name="commandExecutor">Delegate to execute commands through generated route matcher.</param>
   /// <param name="loggerFactory">Logger factory for logging operations.</param>
   internal ReplSession(
-    NuruCoreApp nuruApp,
+    NuruApp nuruApp,
     ReplOptions replOptions,
     IReplRouteProvider routeProvider,
     ReplCommandExecutor commandExecutor,
     ILoggerFactory? loggerFactory)
   {
-    NuruCoreApp = nuruApp ?? throw new ArgumentNullException(nameof(nuruApp));
+    App = nuruApp ?? throw new ArgumentNullException(nameof(nuruApp));
     ReplOptions = replOptions ?? new ReplOptions();
     RouteProvider = routeProvider ?? EmptyReplRouteProvider.Instance;
     CommandExecutor = commandExecutor ?? throw new ArgumentNullException(nameof(commandExecutor));
@@ -84,14 +84,14 @@ public sealed class ReplSession : IDisposable
   /// <summary>
   /// Runs a REPL session asynchronously.
   /// </summary>
-  /// <param name="nuruApp">The NuruCoreApp instance.</param>
+  /// <param name="nuruApp">The NuruApp instance.</param>
   /// <param name="replOptions">Configuration for the REPL.</param>
   /// <param name="routeProvider">Provider for route information.</param>
   /// <param name="commandExecutor">Delegate to execute commands.</param>
-  /// <param name="loggerFactory">Logger factory for logging.</param>
+  /// <param name="loggerFactory">Logger factory for logging operations.</param>
   /// <param name="cancellationToken">Token to cancel the REPL loop.</param>
   public static async Task RunAsync(
-    NuruCoreApp nuruApp,
+    NuruApp nuruApp,
     ReplOptions replOptions,
     IReplRouteProvider routeProvider,
     ReplCommandExecutor commandExecutor,
@@ -245,7 +245,7 @@ public sealed class ReplSession : IDisposable
     Stopwatch stopwatch = Stopwatch.StartNew();
     try
     {
-      int exitCode = await CommandExecutor(NuruCoreApp, args, cancellationToken).ConfigureAwait(false);
+      int exitCode = await CommandExecutor(App, args, cancellationToken).ConfigureAwait(false);
       stopwatch.Stop();
 
       DisplayCommandResult(exitCode, stopwatch.ElapsedMilliseconds, success: true);

@@ -2,7 +2,8 @@
 
 ### Merge Strategy
 
-- **NEVER use `--squash` when merging PRs** - use `gh pr merge --merge --delete-branch`
+- **NEVER use `--squash` when merging PRs** - use `gh pr merge --merge`
+- **NEVER use `--delete-branch`** when in a worktree (worktrees are tied to their branch)
 - **NEVER use rebase**
 - Always use `--head` flag when creating pull requests with `gh pr create`
 

@@ -14,7 +14,7 @@ public static partial class NuruAppBuilderExtensions
   /// Adds a <c>--check-updates</c> route that checks GitHub for newer versions.
   /// </summary>
   /// <typeparam name="TBuilder">The builder type.</typeparam>
-  /// <param name="builder">The NuruCoreAppBuilder instance.</param>
+  /// <param name="builder">The NuruAppBuilder instance.</param>
   /// <returns>The builder for chaining.</returns>
   /// <remarks>
   /// This method is interpreted by the source generator. The generated code:
@@ -27,7 +27,7 @@ public static partial class NuruAppBuilderExtensions
   /// Requires <c>RepositoryUrl</c> assembly metadata pointing to a GitHub repository.
   /// </remarks>
   public static TBuilder AddCheckUpdatesRoute<TBuilder>(this TBuilder builder)
-    where TBuilder : NuruCoreAppBuilder<TBuilder>
+    where TBuilder : NuruAppBuilder
   {
     // This method is interpreted by the source generator at compile time.
     // The actual --check-updates handling is emitted as generated code.

@@ -34,7 +34,7 @@ public sealed class InterpreterPocTests
       {
         public static async Task Main()
         {
-          NuruCoreApp app = NuruApp.CreateBuilder([])
+          NuruApp app = NuruApp.CreateBuilder()
             .Map("ping")
               .WithHandler(() => "pong")
               .AsQuery()
@@ -83,7 +83,7 @@ public sealed class InterpreterPocTests
       {
         public static async Task Main()
         {
-          NuruCoreApp app = NuruApp.CreateBuilder([])
+          NuruApp app = NuruApp.CreateBuilder()
             .Map("status")
               .WithHandler(() => "ok")
               .WithDescription("Returns status")
@@ -126,7 +126,7 @@ public sealed class InterpreterPocTests
       {
         public static async Task Main()
         {
-          NuruCoreApp app = NuruApp.CreateBuilder([])
+          NuruApp app = NuruApp.CreateBuilder()
             .Map("deploy")
               .WithHandler(() => "deployed")
               .AsCommand()
@@ -168,7 +168,7 @@ public sealed class InterpreterPocTests
       {
         public static async Task Main()
         {
-          NuruCoreApp app = NuruApp.CreateBuilder([])
+          NuruApp app = NuruApp.CreateBuilder()
             .Map("ping")
               .WithHandler(() => "pong")
               .AsQuery()
@@ -220,7 +220,6 @@ public sealed class InterpreterPocTests
     string runtimePath = System.Runtime.InteropServices.RuntimeEnvironment.GetRuntimeDirectory();
     string repoRoot = FindRepoRoot();
     string nuruDir = Path.Combine(repoRoot, "source", "timewarp-nuru", "bin", "Debug", "net10.0");
-    string nuruCoreDir = Path.Combine(repoRoot, "source", "timewarp-nuru-core", "bin", "Debug", "net10.0");
 
     List<MetadataReference> references =
     [
@@ -232,9 +231,8 @@ public sealed class InterpreterPocTests
       MetadataReference.CreateFromFile(Path.Combine(runtimePath, "System.Collections.dll")),
     ];
 
-    // Add TimeWarp.Nuru assemblies
+    // Add TimeWarp.Nuru assembly
     AddAssembliesFromDirectory(references, nuruDir);
-    AddAssembliesFromDirectory(references, nuruCoreDir);
 
     return CSharpCompilation.Create(
       "TestAssembly",

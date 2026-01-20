@@ -184,8 +184,7 @@ builder.Map
 ### Choose Right Approach per Command
 
 ```csharp
-NuruApp app = new NuruAppBuilder()
-  .AddDependencyInjection()
+NuruApp app = NuruApp.CreateBuilder(args)
   .ConfigureServices(services =>
   {
     services.AddScoped<IDeploymentService, DeploymentService>();
@@ -298,8 +297,7 @@ public class AppOptions
 
 // Configure options through appsettings.json
 // The options will be available via IOptions<AppOptions> in your handlers
-NuruApp app = new NuruAppBuilder()
-  .AddDependencyInjection()
+NuruApp app = NuruApp.CreateBuilder(args)
   .AddConfiguration()  // Loads appsettings.json, environment variables, etc.
   .ConfigureServices(services =>
   {
@@ -333,8 +331,7 @@ public class SomeCommand : IRequest
 // - appsettings.{Environment}.json (via ASPNETCORE_ENVIRONMENT or DOTNET_ENVIRONMENT)
 // - Environment variables
 // - Command line arguments (if passed to AddConfiguration(args))
-NuruApp app = new NuruAppBuilder()
-  .AddDependencyInjection()
+NuruApp app = NuruApp.CreateBuilder(args)
   .AddConfiguration(args)  // Automatically handles environment-specific configuration
   .ConfigureServices(services =>
   {
@@ -360,8 +357,7 @@ public class DatabaseOptions
   public int CommandTimeout { get; set; } = 30;
 }
 
-NuruApp app = new NuruAppBuilder()
-  .AddDependencyInjection()
+NuruApp app = NuruApp.CreateBuilder(args)
   .AddConfiguration(args)
   .ConfigureServices(services =>
   {
@@ -457,7 +453,7 @@ builder.Map
 ### Include Help
 
 ```csharp
-NuruApp app = new NuruAppBuilder()
+NuruApp app = NuruApp.CreateBuilder(args)
   .Map("deploy {env|Environment} {version?|Version}", handler)
   .AddAutoHelp()
   .Build();

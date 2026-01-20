@@ -310,12 +310,12 @@ namespace TimeWarp.Nuru.Tests.ReplTests.HistorySecurity
   // Helper class to test ReplSession's ShouldIgnoreCommand method
   internal sealed class ReplSessionHelper
   {
-    private readonly NuruCoreApp App;
+    private readonly NuruApp App;
     private readonly ILoggerFactory LoggerFactoryInstance;
 
     public ReplSessionHelper()
     {
-      App =NuruApp.CreateBuilder([]).Build();
+      App =NuruApp.CreateBuilder().Build();
       LoggerFactoryInstance = LoggerFactory.Create(_ => { });
     }
 

@@ -65,7 +65,7 @@ internal sealed class BuildCommand : ICommand<Unit>
 
       // Build each project individually to avoid framework resolution issues
       // Note: Some projects are commented out in the solution or have known issues:
-      // - timewarp-nuru-repl: Needs NuruCoreApp properties not yet implemented
+      // - timewarp-nuru-repl: Needs NuruApp properties not yet implemented
       // - timewarp-nuru-testapp-delegates: Has catch-all parameter generator bug (#331)
       // - benchmarks/samples: Not needed for CI validation
       string[] projectsToBuild =

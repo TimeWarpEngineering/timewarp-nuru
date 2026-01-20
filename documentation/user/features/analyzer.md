@@ -271,6 +271,45 @@ dotnet_diagnostic.NURU_S002.severity = none     # Completely suppress
 
 ⚠️ **Warning**: Suppressing errors can lead to runtime failures. The analyzer exists to prevent patterns that will fail at runtime.
 
+## Debug Diagnostics
+
+TimeWarp.Nuru includes debug diagnostics (NURU_DEBUG*) that are hidden by default. These provide detailed information about the source generator's processing.
+
+### Enabling Debug Diagnostics
+
+Add to your `.editorconfig`:
+
+```ini
+[*.cs]
+# Enable specific debug diagnostics
+dotnet_diagnostic.NURU_DEBUG001.severity = suggestion
+dotnet_diagnostic.NURU_DEBUG002.severity = suggestion
+
+# Or enable all debug diagnostics
+dotnet_diagnostic.NURU_DEBUG.severity = suggestion
+```
+
+### Available Severity Values
+
+| Value | Description |
+|-------|-------------|
+| `none` | Diagnostic completely suppressed |
+| `silent` | Same as `none` |
+| `suggestion` | Shows as informational message |
+| `warning` | Shows as compiler warning |
+| `error` | Shows as compiler error |
+
+**Note:** `info` is NOT a valid severity value (common mistake).
+
+### Why Hidden by Default?
+
+Debug diagnostics are verbose and primarily useful for:
+- Troubleshooting source generator issues
+- Understanding what routes are being generated
+- Debugging custom type converter registration
+
+For normal development, keep them hidden.
+
 ## All Error Codes
 
 ### Parse Errors (NURU_P###)

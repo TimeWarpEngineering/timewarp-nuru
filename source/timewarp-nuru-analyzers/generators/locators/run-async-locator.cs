@@ -6,7 +6,7 @@ namespace TimeWarp.Nuru.Generators;
 using RoslynSyntaxNode = Microsoft.CodeAnalysis.SyntaxNode;
 
 /// <summary>
-/// Locates RunAsync() call sites on NuruCoreApp instances.
+/// Locates RunAsync() call sites on NuruApp instances.
 /// These are the interception targets for the generated code.
 /// </summary>
 internal static class RunAsyncLocator
@@ -49,7 +49,7 @@ internal static class RunAsyncLocator
       return null;
 
     INamedTypeSymbol? containingType = methodSymbol.ContainingType;
-    if (containingType?.Name != "NuruCoreApp")
+    if (containingType?.Name != "NuruApp")
       return null;
 
     // Use the new Roslyn API to get an InterceptableLocation

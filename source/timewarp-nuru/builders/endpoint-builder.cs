@@ -2,7 +2,7 @@ namespace TimeWarp.Nuru;
 
 /// <summary>
 /// Provides fluent configuration for a registered route endpoint.
-/// Returned by <see cref="NuruCoreAppBuilder.Map"/> methods to enable post-registration configuration.
+/// Returned by <see cref="NuruAppBuilder.Map"/> methods to enable post-registration configuration.
 /// </summary>
 /// <typeparam name="TBuilder">The builder type to return to, enabling proper fluent chaining.</typeparam>
 /// <remarks>
@@ -27,8 +27,8 @@ namespace TimeWarp.Nuru;
 ///    .Build();
 /// </code>
 /// </remarks>
-public class EndpointBuilder<TBuilder> : INestedBuilder<TBuilder>
-  where TBuilder : NuruCoreAppBuilder<TBuilder>
+public class EndpointBuilder<TBuilder>
+  where TBuilder : NuruAppBuilder
 {
   private readonly TBuilder ParentBuilder;
 
@@ -181,8 +181,8 @@ public class EndpointBuilder<TBuilder> : INestedBuilder<TBuilder>
   /// Enables fluent chaining after route configuration.
   /// </summary>
   /// <param name="pattern">The route pattern to match.</param>
-  /// <returns>An <see cref="EndpointBuilder{TBuilder}"/> for further endpoint configuration.</returns>
-  public EndpointBuilder<TBuilder> Map(string pattern) =>
+  /// <returns>An <see cref="EndpointBuilder{NuruAppBuilder}"/> for further endpoint configuration.</returns>
+  public EndpointBuilder<NuruAppBuilder> Map(string pattern) =>
     ParentBuilder.Map(pattern);
 
   /// <summary>
@@ -191,18 +191,18 @@ public class EndpointBuilder<TBuilder> : INestedBuilder<TBuilder>
   /// </summary>
   /// <param name="configureRoute">
   /// Function to configure the route pattern. Must call <see cref="NestedCompiledRouteBuilder{TParent}.Done"/>
-  /// to complete route configuration and return the <see cref="EndpointBuilder{TBuilder}"/>.
+  /// to complete route configuration and return the <see cref="EndpointBuilder{NuruAppBuilder}"/>
   /// </param>
-  /// <returns>An <see cref="EndpointBuilder{TBuilder}"/> for further endpoint configuration.</returns>
-  public EndpointBuilder<TBuilder> Map(
-    Func<NestedCompiledRouteBuilder<EndpointBuilder<TBuilder>>, EndpointBuilder<TBuilder>> configureRoute) =>
+  /// <returns>An <see cref="EndpointBuilder{NuruAppBuilder}"/> for further endpoint configuration.</returns>
+  public EndpointBuilder<NuruAppBuilder> Map(
+    Func<NestedCompiledRouteBuilder<EndpointBuilder<NuruAppBuilder>>, EndpointBuilder<NuruAppBuilder>> configureRoute) =>
     ParentBuilder.Map(configureRoute);
 
   /// <summary>
-  /// Builds the NuruCoreApp from the configured builder.
+  /// Builds the NuruApp from the configured builder.
   /// Enables fluent chaining to terminate with Build().
   /// </summary>
-  public NuruCoreApp Build() => ParentBuilder.Build();
+  public NuruApp Build() => ParentBuilder.Build();
 
   /// <summary>
   /// Gets the underlying app builder for accessing extension methods.
@@ -230,12 +230,12 @@ public class EndpointBuilder<TBuilder> : INestedBuilder<TBuilder>
 }
 
 /// <summary>
-/// Type alias for EndpointBuilder with the non-generic NuruCoreAppBuilder.
+/// Type alias for EndpointBuilder with the non-generic NuruAppBuilder.
 /// Provided for backward compatibility and convenience when using the non-generic builder.
 /// </summary>
-public sealed class EndpointBuilder : EndpointBuilder<NuruCoreAppBuilder>
+public sealed class EndpointBuilder : EndpointBuilder<NuruAppBuilder>
 {
-  internal EndpointBuilder(NuruCoreAppBuilder builder) : base(builder)
+  internal EndpointBuilder(NuruAppBuilder builder) : base(builder)
   {
   }
 }

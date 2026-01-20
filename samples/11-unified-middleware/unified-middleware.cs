@@ -98,7 +98,7 @@ using System.Diagnostics;
 using TimeWarp.Nuru;
 using static System.Console;
 
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
   // =========================================================================
   // REGISTER BEHAVIORS - Apply to ALL routes (delegate AND attributed)
   // =========================================================================

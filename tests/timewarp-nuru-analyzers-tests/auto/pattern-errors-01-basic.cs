@@ -29,7 +29,7 @@ public sealed class PatternErrorTests
       {
         public static async Task Main()
         {
-          NuruCoreApp app = NuruApp.CreateBuilder([])
+          NuruApp app = NuruApp.CreateBuilder()
             .Map("copy {source} {source}").WithHandler((string source) => $"copy:{source}").AsQuery().Done()
             .Build();
 
@@ -79,7 +79,7 @@ public sealed class PatternErrorTests
       {
         public static async Task Main()
         {
-          NuruCoreApp app = NuruApp.CreateBuilder([])
+          NuruApp app = NuruApp.CreateBuilder()
             .Map("deploy {env?} {region}").WithHandler((string? env, string region) => $"deploy").AsQuery().Done()
             .Build();
 
@@ -120,7 +120,7 @@ public sealed class PatternErrorTests
       {
         public static async Task Main()
         {
-          NuruCoreApp app = NuruApp.CreateBuilder([])
+          NuruApp app = NuruApp.CreateBuilder()
             .Map("deploy {env} {region?}").WithHandler((string env, string? region) => $"deploy:{env}").AsQuery().Done()
             .Build();
 

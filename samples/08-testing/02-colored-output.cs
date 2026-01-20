@@ -15,7 +15,7 @@ Console.WriteLine("Test 1: Handler with colored output");
 {
   using TestTerminal terminal = new();
 
-  NuruCoreApp app = NuruApp.CreateBuilder([])
+  NuruApp app = NuruApp.CreateBuilder()
     .UseTerminal(terminal)
     .Map("status")
       .WithHandler((ITerminal t) =>
@@ -49,7 +49,7 @@ Console.WriteLine("\nTest 2: Text formatting");
 {
   using TestTerminal terminal = new();
 
-  NuruCoreApp app = NuruApp.CreateBuilder([])
+  NuruApp app = NuruApp.CreateBuilder()
     .UseTerminal(terminal)
     .Map("format")
       .WithHandler((ITerminal t) =>
@@ -75,7 +75,7 @@ Console.WriteLine("\nTest 3: Chained styles");
 {
   using TestTerminal terminal = new();
 
-  NuruCoreApp app = NuruApp.CreateBuilder([])
+  NuruApp app = NuruApp.CreateBuilder()
     .UseTerminal(terminal)
     .Map("alert")
       .WithHandler((ITerminal t) =>
@@ -106,7 +106,7 @@ Console.WriteLine("\nTest 4: CSS named colors");
 {
   using TestTerminal terminal = new();
 
-  NuruCoreApp app = NuruApp.CreateBuilder([])
+  NuruApp app = NuruApp.CreateBuilder()
     .UseTerminal(terminal)
     .Map("palette")
       .WithHandler((ITerminal t) =>
@@ -133,7 +133,7 @@ string colorOutput;
 {
   using TestTerminal colorTerminal = new() { SupportsColor = true };
 
-  NuruCoreApp app = NuruApp.CreateBuilder([])
+  NuruApp app = NuruApp.CreateBuilder()
     .UseTerminal(colorTerminal)
     .Map("check")
       .WithHandler((ITerminal t) =>
@@ -161,7 +161,7 @@ string noColorOutput;
 {
   using TestTerminal noColorTerminal = new() { SupportsColor = false };
 
-  NuruCoreApp app = NuruApp.CreateBuilder([])
+  NuruApp app = NuruApp.CreateBuilder()
     .UseTerminal(noColorTerminal)
     .Map("check")
       .WithHandler((ITerminal t) =>

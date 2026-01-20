@@ -25,7 +25,7 @@
 
 using TimeWarp.Nuru;
 
-NuruAppBuilder builder = NuruApp.CreateBuilder(args);
+NuruAppBuilder builder = NuruApp.CreateBuilder();
 
 // Simple async route without parameters
 builder.Map("ping")
@@ -178,5 +178,5 @@ builder.Map("--help")
   .Done();
 
 // Build and run
-NuruCoreApp app = builder.Build();
+NuruApp app = builder.Build();
 return await app.RunAsync(args);

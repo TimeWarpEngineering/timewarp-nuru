@@ -24,14 +24,14 @@ namespace TimeWarp.Nuru.Tests.ReplTests.SampleValidation
     internal static void Register() => RegisterTests<SampleValidationTests>();
 
     private static TestTerminal Terminal = null!;
-    private static NuruCoreApp App = null!;
+    private static NuruApp App = null!;
 
     public static async Task Setup()
     {
       // Create fresh terminal and app for each test
       Terminal = new TestTerminal();
 
-      App = NuruApp.CreateBuilder([])
+      App = NuruApp.CreateBuilder()
         .UseTerminal(Terminal)
         .AddTypeConverter(new EnumTypeConverter<Environment>())
 

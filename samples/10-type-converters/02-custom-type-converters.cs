@@ -26,7 +26,7 @@ using TimeWarp.Nuru;
 // Application Setup
 // ============================================================================
 
-NuruAppBuilder builder = NuruApp.CreateBuilder([]);
+NuruAppBuilder builder = NuruApp.CreateBuilder();
 
 // Register custom converters
 builder.AddTypeConverter(new EmailAddressConverter());
@@ -99,7 +99,7 @@ builder.Map("deploy {version:SemanticVersion} {env} --notify {email:EmailAddress
   })
   .AsCommand().Done();
 
-NuruCoreApp app = builder.Build();
+NuruApp app = builder.Build();
 
 // Show usage examples
 if (args.Length == 0)

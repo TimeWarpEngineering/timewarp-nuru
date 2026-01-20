@@ -24,7 +24,7 @@ public sealed class RequiredOptionsTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("round {value:double} --mode {mode}")
         .WithHandler((double value, string mode) => $"WITH MODE: {value} -> {mode}")
@@ -45,7 +45,7 @@ public sealed class RequiredOptionsTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("round {value:double} --mode {mode}")
         .WithHandler((double value, string mode) => $"WITH MODE: {value} -> {mode}")

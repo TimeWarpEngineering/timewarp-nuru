@@ -24,7 +24,7 @@ using TimeWarp.Nuru;
 using Microsoft.Extensions.Logging;
 using static System.Console;
 
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
   // Register behaviors - filtered behavior only applies to matching routes
   .AddBehavior(typeof(LoggingBehavior))
   .AddBehavior(typeof(AuthorizationBehavior))

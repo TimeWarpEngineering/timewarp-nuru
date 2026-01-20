@@ -57,7 +57,7 @@
 │                         GENERATED CODE (Output)                             │
 │                                                                             │
 │   [InterceptsLocation("file.cs", 10, 5)]                                    │
-│   static async Task<int> RunAsync_Intercepted(this NuruCoreApp app, ...)   │
+│   static async Task<int> RunAsync_Intercepted(this NuruApp app, ...)   │
 │   {                                                                         │
 │       // Route matching, type conversion, handler invocation               │
 │   }                                                                         │
@@ -88,7 +88,7 @@ source/timewarp-nuru-analyzers/generators/
 │   └── dsl-interpreter.cs         Walk statements, dispatch to builders
 │
 ├── ir-builders/               ◄── PHASE 4: Build intermediate representation
-│   ├── ir-app-builder.cs          Mirror NuruCoreAppBuilder
+│   ├── ir-app-builder.cs          Mirror NuruAppBuilder
 │   ├── ir-route-builder.cs        Mirror route configuration
 │   └── ir-group-builder.cs        Mirror group configuration
 │
@@ -168,23 +168,23 @@ source/timewarp-nuru-analyzers/generators/
 │                                                 │
 │  Result: MAYBE - could be any .Build() method!                  │
 │          StringBuilder.Build()? ✓                               │
-│          NuruCoreApp.Build()?   ✓                               │
+│          NuruApp.Build()?   ✓                               │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
 ### Semantic (Extractors) - Accurate Type Resolution
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│  Q: "Is this a NuruCoreAppBuilder.Build() call?"               │
+│  Q: "Is this a NuruAppBuilder.Build() call?"               │
 │                                                                 │
 │  Semantic check:                                                │
 │    - Get symbol from SemanticModel                              │
-│    - Check containing type is NuruCoreAppBuilder                │
-│    - Verify return type is NuruCoreApp                          │
+│    - Check containing type is NuruAppBuilder                │
+│    - Verify return type is NuruApp                          │
 │                                                                 │
 │  Result: DEFINITE - type-safe confirmation                      │
 │          StringBuilder.Build()? ✗ (wrong type)                  │
-│          NuruCoreApp.Build()?   ✓ (correct!)                    │
+│          NuruApp.Build()?   ✓ (correct!)                    │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -259,7 +259,7 @@ INTERPRETER EXECUTION:
 ```
 REAL API (Runtime):                    IR BUILDER (Compile-time):
 ┌──────────────────────────┐          ┌──────────────────────────┐
-│  NuruCoreAppBuilder      │          │  IrAppBuilder            │
+│  NuruAppBuilder      │          │  IrAppBuilder            │
 │  ───────────────────     │          │  ─────────────           │
 │  .Map(pattern)           │   ◄──►   │  .Map(pattern)           │
 │  .WithName(name)         │          │  .WithName(name)         │
@@ -291,7 +291,7 @@ BENEFITS:
 
 using TimeWarp.Nuru;
 
-NuruCoreApp app =
+NuruApp app =
   NuruApp.CreateBuilder(args)
   .Map("add {x:double} {y:double}")
     .WithHandler((double x, double y) => WriteLine($"{x} + {y} = {x + y}"))
@@ -359,7 +359,7 @@ namespace TimeWarp.Nuru.Generated
 {
     [InterceptsLocation("calc.cs", line: 20, character: 10)]
     public static async Task<int> RunAsync_Intercepted(
-        this NuruCoreApp app,
+        this NuruApp app,
         string[] args)
     {
         // Parse args

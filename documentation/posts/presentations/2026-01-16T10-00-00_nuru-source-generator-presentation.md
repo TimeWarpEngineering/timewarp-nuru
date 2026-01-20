@@ -17,7 +17,7 @@ TimeWarp.Nuru uses a **semantic-first source generator architecture** that trans
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                         YOUR NURU DSL CODE                                   │
 │                                                                             │
-│   NuruCoreApp app = NuruApp.CreateBuilder(args)                            │
+│   NuruApp app = NuruApp.CreateBuilder(args)                            │
 │     .Map("ping").WithHandler(() => "pong").Done()                          │
 │     .Map("echo {message:string}").WithHandler(...)                         │
 │     .Build();                                                              │
@@ -192,7 +192,7 @@ public static bool IsConfirmedBuildCall(
     return false;
 
   // Critical: Verify it's OUR NuruApp, not some other Build() method
-  return methodSymbol.ReturnType.Name == "NuruCoreApp";
+  return methodSymbol.ReturnType.Name == "NuruApp";
 }
 ```
 
@@ -320,7 +320,7 @@ public class DslInterpreter
 #!/usr/bin/dotnet --
 using TimeWarp.Nuru;
 
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder(args)
   .Map("")
     .WithHandler(() => "Hello World")
     .AsQuery()

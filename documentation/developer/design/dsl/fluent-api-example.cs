@@ -21,7 +21,7 @@ using TestTerminal terminal = new();
 // we expect the linker to remove it entirely from the final binary.
 // AOT compilers should be able to eliminate this code path.
 
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder(args)
   #region Configuration
   // we support appsettings, environment variables, command-line args
   // configuration settings 
@@ -54,7 +54,7 @@ NuruCoreApp app = NuruApp.CreateBuilder(args)
   .AddBehavior(typeof(ValidationBehavior<,>))
   #endregion
   #region Terminal 
-   // We will store terminal on NuruCoreApp (minimal state)
+   // We will store terminal on NuruApp (minimal state)
   .UseTerminal(terminal)
   #endregion
   

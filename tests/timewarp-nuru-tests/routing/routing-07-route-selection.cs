@@ -18,7 +18,7 @@ public class RouteSelectionTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("git status").WithHandler(() => "literal:git-status").AsQuery().Done()
       .Map("git {command}").WithHandler((string command) => $"param:{command}").AsQuery().Done()
@@ -43,7 +43,7 @@ public class RouteSelectionTests
     // These would now trigger NURU_R001 (overlapping type constraints).
     // Real CLIs should use explicit subcommands instead.
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("delay {ms:int}").WithHandler((int ms) => $"typed:{ms}").AsQuery().Done()
       .Build();
@@ -64,7 +64,7 @@ public class RouteSelectionTests
     // This is the recommended pattern instead of type-based disambiguation:
     // Use explicit subcommands like "delay-ms" vs "delay-duration"
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("delay-ms {ms:int}").WithHandler((int ms) => $"typed:{ms}").AsQuery().Done()
       .Map("delay-duration {duration}").WithHandler((string duration) => $"untyped:{duration}").AsQuery().Done()
@@ -88,7 +88,7 @@ public class RouteSelectionTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("deploy {env}").WithHandler((string env) => $"required:{env}").AsQuery().Done()
       .Map("deploy {env?}").WithHandler((string? env) => $"optional:{env}").AsQuery().Done()
@@ -109,7 +109,7 @@ public class RouteSelectionTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("build").WithHandler(() => "no-option:build").AsQuery().Done()
       .Map("build --config {m}").WithHandler((string m) => $"required-option:config={m}").AsQuery().Done()
@@ -130,7 +130,7 @@ public class RouteSelectionTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("git status").WithHandler(() => "literal:git-status").AsQuery().Done()
       .Map("git commit").WithHandler(() => "literal:git-commit").AsQuery().Done()
@@ -152,7 +152,7 @@ public class RouteSelectionTests
   {
     // Arrange - Equal specificity but different literals, so only one matches
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("greet {name}").WithHandler((string name) => $"greet:{name}").AsQuery().Done()
       .Map("hello {person}").WithHandler((string person) => $"hello:{person}").AsQuery().Done()
@@ -174,7 +174,7 @@ public class RouteSelectionTests
     // Arrange
     // Tests progressive specificity: more specific routes (with --tag) win over simpler ones
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("deploy {env} --tag {t}").WithHandler((string env, string t) => $"with-tag:{env},{t}").AsQuery().Done()
       .Map("deploy {env}").WithHandler((string env) => $"env-only:{env}").AsQuery().Done()

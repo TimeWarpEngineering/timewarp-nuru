@@ -17,7 +17,7 @@ public class RepeatedOptionsTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("docker run --env {e}*")
       .WithHandler((string[] e) => $"e:[{string.Join(",", e)}]|len:{e.Length}")
@@ -40,7 +40,7 @@ public class RepeatedOptionsTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("docker run --env {e}*")
       .WithHandler((string[] e) => $"e:[{string.Join(",", e)}]|len:{e.Length}")
@@ -63,7 +63,7 @@ public class RepeatedOptionsTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("process --id {id:int}*")
       .WithHandler((int[] id) => $"id:[{string.Join(",", id)}]|len:{id.Length}")
@@ -86,7 +86,7 @@ public class RepeatedOptionsTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("docker run --env,-e {e}*")
       .WithHandler((string[] e) => $"e:[{string.Join(",", e)}]|len:{e.Length}")
@@ -109,7 +109,7 @@ public class RepeatedOptionsTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("deploy --env {e} --tag {t}* --verbose")
       .WithHandler((string e, string[] t, bool verbose) => $"e:{e}|t:[{string.Join(",", t)}]|verbose:{verbose}")
@@ -133,7 +133,7 @@ public class RepeatedOptionsTests
   {
     // Arrange
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("run --flag {f}*")
       .WithHandler((string[] f) => $"f:[{string.Join(",", f)}]|len:{f.Length}")

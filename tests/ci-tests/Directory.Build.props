@@ -32,9 +32,8 @@
     <!-- <Compile Include="../timewarp-nuru-tests/help-provider-05-color-output.cs" /> -->
     
     <!-- <Compile Include="../timewarp-nuru-tests/invoker-registry-01-basic.cs" /> -->
-    <!-- Message type tests -->
-    <Compile Include="../timewarp-nuru-tests/message-type/*.cs" />
-    <!-- <Compile Include="../timewarp-nuru-tests/message-type-02-help-output.cs" /> -->
+    <!-- Message type tests - folder is empty after deleting tests that used Endpoint class -->
+    <!-- <Compile Include="../timewarp-nuru-tests/message-type/*.cs" /> -->
     <!-- TODO: Create or restore route-builder-01-basic.cs -->
     <!-- <Compile Include="../timewarp-nuru-tests/route-builder-01-basic.cs" /> -->
     <!-- <Compile Include="../timewarp-nuru-tests/test-terminal-context-01-basic.cs" /> -->
@@ -51,8 +50,6 @@
     <!-- Options tests (migrated) -->
     <Compile Include="../timewarp-nuru-tests/options/options-01-mixed-required-optional.cs" />
     <Compile Include="../timewarp-nuru-tests/options/options-02-optional-flag-optional-value.cs" />
-    <!-- Session tests -->
-    <Compile Include="../timewarp-nuru-tests/session/session-context-01-basic.cs" />
     <!-- Help tests (per-route help, Task #356) -->
     <Compile Include="../timewarp-nuru-tests/help/*.cs" />
     <!-- Capabilities tests (task #157 - route not yet implemented) -->
@@ -102,12 +99,10 @@
     <Compile Include="../timewarp-nuru-tests/repl/repl-37-quoted-strings.cs" />
     <!-- Command-line parser tests in subdirectory -->
     <Compile Include="../timewarp-nuru-tests/repl/command-line-parser/*.cs" />
-    <!-- Completion tests - static (migrated) -->
-    <!-- <Compile Include="../timewarp-nuru-tests/completion/static/*.cs" /> -->
-    <!-- Completion tests - dynamic (migrated) -->
-    <!-- <Compile Include="../timewarp-nuru-tests/completion/dynamic/*.cs" /> -->
-    <!-- Completion tests - engine (migrated) -->
-    <!-- <Compile Include="../timewarp-nuru-tests/completion/engine/*.cs" /> -->
+    <!-- Completion tests - unit tests for components (don't need source generation) -->
+    <Compile Include="../timewarp-nuru-tests/completion/completion-15-completion-registry.cs" />
+    <Compile Include="../timewarp-nuru-tests/completion/completion-17-enum-source.cs" />
+    <Compile Include="../timewarp-nuru-tests/completion/completion-20-dynamic-script-gen.cs" />
     <!-- All REPL tests (recursive glob includes subfolders, excludes obj/bin) -->
     <!-- <Compile Include="../timewarp-nuru-repl-tests/**/*.cs" Exclude="../timewarp-nuru-repl-tests/obj/**;../timewarp-nuru-repl-tests/bin/**" /> -->
     <!-- MCP tests (migrated) -->

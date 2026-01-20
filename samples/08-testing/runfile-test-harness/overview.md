@@ -21,7 +21,7 @@ This folder demonstrates the **zero-modification pattern** for testing Nuru runf
 
 For testing **runfiles** without modifying them, use the Jaribu test harness pattern:
 
-1. Create a test harness that captures the `NuruCoreApp` instance
+1. Create a test harness that captures the `NuruApp` instance
 2. Call Jaribu's `RunTests<T>()` to execute test methods
 3. Write tests using Jaribu's `Should_` naming convention
 
@@ -32,7 +32,7 @@ using static TimeWarp.Jaribu.TestRunner;
 
 public static class TestHarness
 {
-  internal static NuruCoreApp? App;
+  internal static NuruApp? App;
 
   [ModuleInitializer]
   public static void Initialize()

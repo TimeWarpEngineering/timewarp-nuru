@@ -32,7 +32,7 @@ public class BasicEditingEnhancementTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("ello")
         .WithHandler(() => "Ctrl+D deleted char!")
@@ -54,7 +54,7 @@ public class BasicEditingEnhancementTests
     using TestTerminal terminal = new();
     terminal.QueueKey(ConsoleKey.D, ctrl: true);  // Empty line - should exit
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("test")
         .WithHandler(() => "Should not see this")
@@ -80,7 +80,7 @@ public class BasicEditingEnhancementTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("ab")
         .WithHandler(() => "Middle delete worked!")
@@ -109,7 +109,7 @@ public class BasicEditingEnhancementTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("hell")
         .WithHandler(() => "Ctrl+H worked!")
@@ -138,7 +138,7 @@ public class BasicEditingEnhancementTests
     terminal.QueueKey(ConsoleKey.Enter);  // Use Enter for now - Ctrl+M binding test is complex
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("test")
         .WithHandler(() => "Accept line worked!")
@@ -164,7 +164,7 @@ public class BasicEditingEnhancementTests
     terminal.QueueKey(ConsoleKey.Enter);  // Use Enter for now
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("cmd")
         .WithHandler(() => "Accept line worked!")
@@ -193,7 +193,7 @@ public class BasicEditingEnhancementTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("hello")
         .WithHandler(() => "After clear!")
@@ -227,7 +227,7 @@ public class BasicEditingEnhancementTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("Xbc")
         .WithHandler(() => "Overwrite worked!")
@@ -255,7 +255,7 @@ public class BasicEditingEnhancementTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("Xabc")
         .WithHandler(() => "Insert mode restored!")
@@ -285,7 +285,7 @@ public class BasicEditingEnhancementTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("hello ")
         .WithHandler(() => "Ctrl+D deleted selection!")
@@ -314,7 +314,7 @@ public class BasicEditingEnhancementTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("test")
         .WithHandler(() => "No crash!")
@@ -340,7 +340,7 @@ public class BasicEditingEnhancementTests
     terminal.QueueKey(ConsoleKey.Enter);
     terminal.QueueLine("exit");
 
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("test")
         .WithHandler(() => "No crash!")

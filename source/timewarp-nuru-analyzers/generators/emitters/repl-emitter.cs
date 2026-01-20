@@ -39,20 +39,12 @@ internal static class ReplEmitter
     // Collect all routes for this app
     IEnumerable<RouteDefinition> allRoutes = app.Routes.Concat(attributedRoutes);
 
-    // Extract command prefixes (leading literal segments)
-    List<string> commandPrefixes = ExtractCommandPrefixes(allRoutes);
-
-    // Extract options for completion (global list)
-    List<OptionInfo> options = ExtractOptions(allRoutes);
-
-    // Extract route-specific options for context-aware completions
-    List<RouteOptionInfo> routeOptions = ExtractRouteOptions(allRoutes);
-
-    // Extract parameters with their types for completion hints
-    List<ParameterInfo> parameters = ExtractParameters(allRoutes);
-
-    // Extract enum parameters for position-aware completions
-    List<EnumParameterInfo> enumParameters = ExtractEnumParameters(allRoutes, compilation);
+    // Extract completion data using shared extractor
+    List<string> commandPrefixes = CompletionDataExtractor.ExtractCommandPrefixes(allRoutes);
+    List<CompletionDataExtractor.OptionInfo> options = CompletionDataExtractor.ExtractOptions(allRoutes);
+    List<CompletionDataExtractor.RouteOptionInfo> routeOptions = CompletionDataExtractor.ExtractRouteOptions(allRoutes);
+    List<CompletionDataExtractor.ParameterInfo> parameters = CompletionDataExtractor.ExtractParameters(allRoutes);
+    List<CompletionDataExtractor.EnumParameterInfo> enumParameters = CompletionDataExtractor.ExtractEnumParameters(allRoutes, compilation);
 
     string className = $"GeneratedReplRouteProvider{methodSuffix}";
 
@@ -100,7 +92,7 @@ internal static class ReplEmitter
   /// <summary>
   /// Emits the GetCompletions method for the route provider.
   /// </summary>
-  private static void EmitGetCompletionsMethod(StringBuilder sb, List<string> commandPrefixes, List<OptionInfo> options, List<RouteOptionInfo> routeOptions, List<ParameterInfo> parameters, List<EnumParameterInfo> enumParameters)
+  private static void EmitGetCompletionsMethod(StringBuilder sb, List<string> commandPrefixes, List<CompletionDataExtractor.OptionInfo> options, List<CompletionDataExtractor.RouteOptionInfo> routeOptions, List<CompletionDataExtractor.ParameterInfo> parameters, List<CompletionDataExtractor.EnumParameterInfo> enumParameters)
   {
     sb.AppendLine("    public global::System.Collections.Generic.IEnumerable<global::TimeWarp.Nuru.CompletionCandidate> GetCompletions(string[] args, bool hasTrailingSpace)");
     sb.AppendLine("    {");
@@ -157,7 +149,7 @@ internal static class ReplEmitter
     if (enumParameters.Count > 0)
     {
       sb.AppendLine("      // Enum parameter completions (position-aware)");
-      foreach (EnumParameterInfo enumParam in enumParameters)
+      foreach (CompletionDataExtractor.EnumParameterInfo enumParam in enumParameters)
       {
         int cmdWordCount = enumParam.CommandPrefix.Split(' ').Length;
         sb.AppendLine($"      // Enum completions for '{EscapeString(enumParam.CommandPrefix)}' parameter '{enumParam.ParameterName}' at position {enumParam.Position}");
@@ -184,13 +176,13 @@ internal static class ReplEmitter
     if (routeOptions.Count > 0)
     {
       sb.AppendLine("      // Context-aware route option completions");
-      foreach (RouteOptionInfo routeOpt in routeOptions)
+      foreach (CompletionDataExtractor.RouteOptionInfo routeOpt in routeOptions)
       {
         sb.AppendLine($"      // Options for '{EscapeString(routeOpt.CommandPrefix)}'");
         sb.AppendLine($"      if (string.Equals(prefix, \"{EscapeString(routeOpt.CommandPrefix)}\", global::System.StringComparison.OrdinalIgnoreCase) ||");
         sb.AppendLine($"          prefix.StartsWith(\"{EscapeString(routeOpt.CommandPrefix)} \", global::System.StringComparison.OrdinalIgnoreCase))");
         sb.AppendLine("      {");
-        foreach (OptionInfo opt in routeOpt.Options)
+        foreach (CompletionDataExtractor.OptionInfo opt in routeOpt.Options)
         {
           if (opt.LongForm is not null)
           {
@@ -220,7 +212,7 @@ internal static class ReplEmitter
       sb.AppendLine("      if (currentInput.StartsWith(\"-\", global::System.StringComparison.Ordinal))");
       sb.AppendLine("      {");
 
-      foreach (OptionInfo opt in options.DistinctBy(o => o.LongForm ?? o.ShortForm))
+      foreach (CompletionDataExtractor.OptionInfo opt in options.DistinctBy(o => o.LongForm ?? o.ShortForm))
       {
         if (opt.LongForm is not null)
         {
@@ -250,7 +242,7 @@ internal static class ReplEmitter
   {
     string providerClassName = $"GeneratedReplRouteProvider{methodSuffix}";
 
-    sb.AppendLine($"  private static async global::System.Threading.Tasks.Task RunReplAsync{methodSuffix}(global::TimeWarp.Nuru.NuruCoreApp app)");
+    sb.AppendLine($"  private static async global::System.Threading.Tasks.Task RunReplAsync{methodSuffix}(global::TimeWarp.Nuru.NuruApp app)");
     sb.AppendLine("  {");
     sb.AppendLine($"    global::TimeWarp.Nuru.IReplRouteProvider routeProvider = new {providerClassName}();");
     sb.AppendLine("    global::TimeWarp.Nuru.ReplOptions replOptions = app.ReplOptions ?? new global::TimeWarp.Nuru.ReplOptions();");
@@ -267,156 +259,6 @@ internal static class ReplEmitter
   }
 
   /// <summary>
-  /// Extracts command prefixes from route definitions.
-  /// A command prefix is the sequence of leading literal segments.
-  /// </summary>
-  private static List<string> ExtractCommandPrefixes(IEnumerable<RouteDefinition> routes)
-  {
-    HashSet<string> prefixes = new(StringComparer.OrdinalIgnoreCase);
-
-    foreach (RouteDefinition route in routes)
-    {
-      StringBuilder prefix = new();
-
-      foreach (LiteralDefinition literal in route.Literals)
-      {
-        if (prefix.Length > 0)
-          prefix.Append(' ');
-        prefix.Append(literal.Value);
-      }
-
-      if (prefix.Length > 0)
-        prefixes.Add(prefix.ToString());
-    }
-
-    return [.. prefixes];
-  }
-
-  /// <summary>
-  /// Extracts option information from route definitions.
-  /// </summary>
-  private static List<OptionInfo> ExtractOptions(IEnumerable<RouteDefinition> routes)
-  {
-    List<OptionInfo> options = [];
-
-    foreach (RouteDefinition route in routes)
-    {
-      foreach (OptionDefinition opt in route.Options)
-      {
-        options.Add(new OptionInfo(opt.LongForm, opt.ShortForm, opt.Description, opt.ExpectsValue, opt.TypeConstraint));
-      }
-    }
-
-    return options;
-  }
-
-  /// <summary>
-  /// Extracts route-specific options with their command prefix for context-aware completions.
-  /// </summary>
-  private static List<RouteOptionInfo> ExtractRouteOptions(IEnumerable<RouteDefinition> routes)
-  {
-    List<RouteOptionInfo> routeOptions = [];
-
-    foreach (RouteDefinition route in routes)
-    {
-      if (!route.Options.Any())
-        continue;
-
-      // Get the command prefix for this route
-      string cmdPrefix = string.Join(" ", route.Literals.Select(l => l.Value));
-      if (string.IsNullOrEmpty(cmdPrefix))
-        continue;
-
-      List<OptionInfo> options = [];
-      foreach (OptionDefinition opt in route.Options)
-      {
-        options.Add(new OptionInfo(opt.LongForm, opt.ShortForm, opt.Description, opt.ExpectsValue, opt.TypeConstraint));
-      }
-
-      routeOptions.Add(new RouteOptionInfo(cmdPrefix, options));
-    }
-
-    return routeOptions;
-  }
-
-  /// <summary>
-  /// Extracts parameter information from route definitions.
-  /// </summary>
-  private static List<ParameterInfo> ExtractParameters(IEnumerable<RouteDefinition> routes)
-  {
-    List<ParameterInfo> parameters = [];
-
-    foreach (RouteDefinition route in routes)
-    {
-      // Get the command prefix for context
-      string cmdPrefix = string.Join(" ", route.Literals.Select(l => l.Value));
-
-      foreach (ParameterDefinition param in route.Parameters)
-      {
-        parameters.Add(new ParameterInfo(param.Name, param.TypeConstraint, param.Description, cmdPrefix));
-      }
-    }
-
-    return parameters;
-  }
-
-  /// <summary>
-  /// Extracts enum parameter information from route definitions using Roslyn compilation.
-  /// </summary>
-  private static List<EnumParameterInfo> ExtractEnumParameters(IEnumerable<RouteDefinition> routes, Compilation compilation)
-  {
-    List<EnumParameterInfo> result = [];
-
-    foreach (RouteDefinition route in routes)
-    {
-      if (route.Handler is null)
-        continue;
-
-      // Get the command prefix for this route
-      string cmdPrefix = string.Join(" ", route.Literals.Select(l => l.Value));
-      if (string.IsNullOrEmpty(cmdPrefix))
-        continue;
-
-      // Track position for parameters from the route
-      int position = 0;
-      foreach (ParameterBinding param in route.Handler.Parameters.Where(p => p.Source == BindingSource.Parameter))
-      {
-        // Get the type symbol from the parameter type name
-        string typeName = param.ParameterTypeName;
-
-        // Remove global:: prefix and nullable suffix for lookup
-        if (typeName.StartsWith("global::", StringComparison.Ordinal))
-          typeName = typeName[8..];
-        if (typeName.EndsWith('?'))
-          typeName = typeName[..^1];
-
-        INamedTypeSymbol? typeSymbol = compilation.GetTypeByMetadataName(typeName);
-
-        if (typeSymbol?.TypeKind == TypeKind.Enum)
-        {
-          // Extract enum member names
-          List<string> values =
-          [
-            .. typeSymbol.GetMembers()
-              .OfType<IFieldSymbol>()
-              .Where(f => f.HasConstantValue)
-              .Select(f => f.Name)
-          ];
-
-          if (values.Count > 0)
-          {
-            result.Add(new EnumParameterInfo(cmdPrefix, position, param.ParameterName, values));
-          }
-        }
-
-        position++;
-      }
-    }
-
-    return result;
-  }
-
-  /// <summary>
   /// Escapes a string for use in generated C# code.
   /// </summary>
   private static string EscapeString(string value)
@@ -428,24 +270,4 @@ internal static class ReplEmitter
       .Replace("\r", "\\r", StringComparison.Ordinal)
       .Replace("\t", "\\t", StringComparison.Ordinal);
   }
-
-  /// <summary>
-  /// Information about an option for completion generation.
-  /// </summary>
-  private sealed record OptionInfo(string? LongForm, string? ShortForm, string? Description, bool ExpectsValue, string? TypeConstraint);
-
-  /// <summary>
-  /// Information about a parameter for completion generation.
-  /// </summary>
-  private sealed record ParameterInfo(string Name, string? TypeConstraint, string? Description, string CommandPrefix);
-
-  /// <summary>
-  /// Information about an enum parameter for position-aware completion generation.
-  /// </summary>
-  private sealed record EnumParameterInfo(string CommandPrefix, int Position, string ParameterName, List<string> Values);
-
-  /// <summary>
-  /// Information about route-specific options for context-aware completion generation.
-  /// </summary>
-  private sealed record RouteOptionInfo(string CommandPrefix, List<OptionInfo> Options);
 }

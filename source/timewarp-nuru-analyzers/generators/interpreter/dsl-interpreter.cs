@@ -577,6 +577,8 @@ public sealed class DslInterpreter
 
       "UseTelemetry" => DispatchUseTelemetry(receiver),
 
+      "EnableCompletion" => DispatchEnableCompletion(receiver),
+
       "AddTypeConverter" => DispatchAddTypeConverter(invocation, receiver),
 
       "WithAlias" => DispatchWithAlias(invocation, receiver),
@@ -642,9 +644,9 @@ public sealed class DslInterpreter
 
     // Check if type name matches known DSL types (builders and built app)
     string typeName = containingType.Name;
-    return typeName is "NuruCoreAppBuilder" or "NuruAppBuilder"
+    return typeName is "NuruAppBuilder"
         or "EndpointBuilder" or "GroupBuilder" or "GroupEndpointBuilder"
-        or "NestedCompiledRouteBuilder" or "NuruApp" or "NuruCoreApp";
+        or "NestedCompiledRouteBuilder" or "NuruApp";
   }
 
   /// <summary>
@@ -1234,6 +1236,20 @@ public sealed class DslInterpreter
   }
 
   /// <summary>
+  /// Dispatches EnableCompletion() call to IIrAppBuilder.
+  /// Marks the app as having shell completion enabled.
+  /// </summary>
+  private static object? DispatchEnableCompletion(object? receiver)
+  {
+    if (receiver is not IIrAppBuilder appBuilder)
+    {
+      throw new InvalidOperationException("EnableCompletion() must be called on an app builder.");
+    }
+
+    return appBuilder.EnableCompletion();
+  }
+
+  /// <summary>
   /// Dispatches AddTypeConverter() call to IIrAppBuilder.
   /// Extracts converter type information for code generation.
   /// Uses semantic model to resolve generic type arguments (e.g., EnumTypeConverter&lt;Environment&gt;).
@@ -1281,7 +1297,7 @@ public sealed class DslInterpreter
 
       // DEBUG: Trace converter registration
       CollectedDiagnostics.Add(Diagnostic.Create(
-        new DiagnosticDescriptor("NURU_DEBUG_CONV1", "Debug", "AddTypeConverter called: ConverterTypeName={0}, TargetTypeName={1}", "Debug", DiagnosticSeverity.Warning, true),
+        new DiagnosticDescriptor("NURU_DEBUG_CONV1", "Debug", "AddTypeConverter called: ConverterTypeName={0}, TargetTypeName={1}", "Debug", DiagnosticSeverity.Hidden, true),
         invocation.GetLocation(),
         converterTypeName, targetTypeName));
 
@@ -1516,7 +1532,7 @@ public sealed class DslInterpreter
     if (type is null) return false;
 
     string typeName = type.Name;
-    return typeName is "NuruCoreAppBuilder" or "NuruAppBuilder"
+    return typeName is "NuruAppBuilder"
         or "EndpointBuilder" or "GroupBuilder" or "GroupEndpointBuilder"
         or "NestedCompiledRouteBuilder";
   }

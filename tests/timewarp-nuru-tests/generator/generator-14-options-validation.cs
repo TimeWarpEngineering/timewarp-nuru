@@ -33,7 +33,7 @@ namespace TimeWarp.Nuru.Tests.Generator.OptionsValidation
     {
       // Arrange - Default values in TestOptions are valid
       using TestTerminal terminal = new();
-      NuruCoreApp app = NuruApp.CreateBuilder([])
+      NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
         .Map("test")
           .WithHandler(Handlers.TestHandler)
@@ -53,7 +53,7 @@ namespace TimeWarp.Nuru.Tests.Generator.OptionsValidation
       // Arrange - Pass invalid port via command line config
       string[] testArgs = ["test", "--Test:Port=0"];
       using TestTerminal terminal = new();
-      NuruCoreApp app = NuruApp.CreateBuilder(testArgs)
+      NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
         .Map("test")
           .WithHandler(Handlers.TestHandler)
@@ -80,7 +80,7 @@ namespace TimeWarp.Nuru.Tests.Generator.OptionsValidation
       // Arrange - Pass empty name via command line config
       string[] testArgs = ["test", "--Test:Name="];
       using TestTerminal terminal = new();
-      NuruCoreApp app = NuruApp.CreateBuilder(testArgs)
+      NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
         .Map("test")
           .WithHandler(Handlers.TestHandler)
@@ -109,7 +109,7 @@ namespace TimeWarp.Nuru.Tests.Generator.OptionsValidation
       // Arrange - Pass multiple invalid values
       string[] testArgs = ["test", "--Test:Name=", "--Test:Port=0"];
       using TestTerminal terminal = new();
-      NuruCoreApp app = NuruApp.CreateBuilder(testArgs)
+      NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
         .Map("test")
           .WithHandler(Handlers.TestHandler)
@@ -138,7 +138,7 @@ namespace TimeWarp.Nuru.Tests.Generator.OptionsValidation
     {
       // Arrange
       using TestTerminal terminal = new();
-      NuruCoreApp app = NuruApp.CreateBuilder([])
+      NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
         .Map("unvalidated")
           .WithHandler(Handlers.UnvalidatedHandler)

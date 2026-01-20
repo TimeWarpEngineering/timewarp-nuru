@@ -16,7 +16,7 @@
 // removal in future updates. Suppress this diagnostic to proceed.
 #pragma warning disable ASPIRECSHARPAPPS001
 
-var builder = DistributedApplication.CreateBuilder(args);
+var builder = DistributedApplication.CreateBuilder();
 
 // Register NuruClient runfile as an Aspire-managed C# app.
 // Aspire will:

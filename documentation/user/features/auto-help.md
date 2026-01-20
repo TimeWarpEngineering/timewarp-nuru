@@ -7,7 +7,7 @@ TimeWarp.Nuru can automatically generate help documentation for your CLI command
 Add `.AddAutoHelp()` to your application builder:
 
 ```csharp
-NuruApp app = new NuruAppBuilder()
+NuruApp app = NuruApp.CreateBuilder(args)
   .Map("deploy {env}", (string env) => Deploy(env))
   .Map("backup {source}", (string source) => Backup(source))
   .AddAutoHelp()  // Enable automatic help
@@ -37,7 +37,7 @@ Use '<command> --help' for detailed help on a specific command.
 Use the pipe (`|`) syntax to add descriptions to parameters and options:
 
 ```csharp
-NuruApp app = new NuruAppBuilder()
+NuruApp app = NuruApp.CreateBuilder(args)
   .Map
   (
     "deploy {env|Target environment} {tag?|Optional version tag}",
@@ -91,7 +91,7 @@ Options:
 ```csharp
 using TimeWarp.Nuru;
 
-NuruApp app = new NuruAppBuilder()
+NuruApp app = NuruApp.CreateBuilder(args)
   .Map
   (
     "version|Show application version",

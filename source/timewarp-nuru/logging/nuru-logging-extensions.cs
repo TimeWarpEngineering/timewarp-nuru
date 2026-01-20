@@ -18,7 +18,7 @@ public static class NuruLoggingExtensions
   /// <returns>The builder for chaining.</returns>
   /// <example>
   /// <code>
-  /// NuruCoreApp app = NuruApp.CreateBuilder([])
+  /// NuruApp app = NuruApp.CreateBuilder([])
   ///   .ConfigureLogging(logging =>
   ///   {
   ///     logging.SetMinimumLevel(LogLevel.Debug);
@@ -30,7 +30,7 @@ public static class NuruLoggingExtensions
   /// </code>
   /// </example>
   public static TBuilder ConfigureLogging<TBuilder>(this TBuilder builder, Action<ILoggingBuilder> configure)
-    where TBuilder : NuruCoreAppBuilder<TBuilder>
+    where TBuilder : NuruAppBuilder
   {
     ArgumentNullException.ThrowIfNull(builder);
     ArgumentNullException.ThrowIfNull(configure);
@@ -47,7 +47,7 @@ public static class NuruLoggingExtensions
   /// Adds console logging with default Nuru configuration.
   /// </summary>
   public static TBuilder UseConsoleLogging<TBuilder>(this TBuilder builder, LogLevel minimumLevel = LogLevel.Information)
-    where TBuilder : NuruCoreAppBuilder<TBuilder>
+    where TBuilder : NuruAppBuilder
   {
     ArgumentNullException.ThrowIfNull(builder);
 
@@ -78,7 +78,7 @@ public static class NuruLoggingExtensions
   /// Adds console logging with custom configuration.
   /// </summary>
   public static TBuilder UseConsoleLogging<TBuilder>(this TBuilder builder, Action<ILoggingBuilder> configure)
-    where TBuilder : NuruCoreAppBuilder<TBuilder>
+    where TBuilder : NuruAppBuilder
   {
     ArgumentNullException.ThrowIfNull(builder);
     ArgumentNullException.ThrowIfNull(configure);
@@ -95,7 +95,7 @@ public static class NuruLoggingExtensions
   /// Adds debug console logging (includes Trace level).
   /// </summary>
   public static TBuilder UseDebugLogging<TBuilder>(this TBuilder builder)
-    where TBuilder : NuruCoreAppBuilder<TBuilder>
+    where TBuilder : NuruAppBuilder
   {
     ArgumentNullException.ThrowIfNull(builder);
     return builder.UseConsoleLogging(LogLevel.Trace);

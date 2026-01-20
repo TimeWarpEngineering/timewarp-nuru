@@ -21,43 +21,57 @@ dotnet add package TimeWarp.Nuru
 
 ## 🚀 Quick Start
 
-### ASP.NET Core-Style API (Recommended)
+TimeWarp.Nuru offers two first-class patterns for defining CLI commands:
+
+### Fluent DSL
+
+Define routes inline with a fluent builder API:
 
 ```csharp
 using TimeWarp.Nuru;
 
-NuruCoreApp app = NuruApp.CreateBuilder(args)
-  .Map("add {x:double} {y:double}", (double x, double y) =>
-    Console.WriteLine($"{x} + {y} = {x + y}"))
+NuruApp app = NuruApp.CreateBuilder(args)
+  .Map("add {x:double} {y:double}")
+    .WithHandler((double x, double y) => Console.WriteLine($"{x} + {y} = {x + y}"))
+    .AsCommand()
+    .Done()
   .Build();
 
 return await app.RunAsync(args);
 ```
 
-### Slim Builder (Lightweight)
+### Attributed Routes
+
+Define routes as classes with `[NuruRoute]` attributes:
 
 ```csharp
 using TimeWarp.Nuru;
 
-NuruCoreApp app = NuruApp.CreateSlimBuilder()
-  .Map("add {x:double} {y:double}", (double x, double y) =>
-    Console.WriteLine($"{x} + {y} = {x + y}"))
+// Program.cs - minimal setup
+NuruApp app = NuruApp.CreateBuilder(args)
   .Build();
 
 return await app.RunAsync(args);
-```
 
-### Empty Builder (Total Control)
+// AddCommand.cs - auto-discovered by source generator
+[NuruRoute("add", Description = "Add two numbers together")]
+public sealed class AddCommand : ICommand<Unit>
+{
+  [Parameter(Order = 0)]
+  public double X { get; set; }
 
-```csharp
-using TimeWarp.Nuru;
+  [Parameter(Order = 1)]
+  public double Y { get; set; }
 
-NuruCoreApp app = NuruApp.CreateEmptyBuilder()
-  .Map("add {x:double} {y:double}", (double x, double y) =>
-    Console.WriteLine($"{x} + {y} = {x + y}"))
-  .Build();
-
-return await app.RunAsync(args);
+  public sealed class Handler : ICommandHandler<AddCommand, Unit>
+  {
+    public ValueTask<Unit> Handle(AddCommand command, CancellationToken ct)
+    {
+      Console.WriteLine($"{command.X} + {command.Y} = {command.X + command.Y}");
+      return default;
+    }
+  }
+}
 ```
 
 ```bash
@@ -66,14 +80,6 @@ dotnet run -- add 15 25
 ```
 
 **→ [Full Getting Started Guide](documentation/user/getting-started.md)**
-
-### Choose Your Builder
-
-| Builder | Use Case | Features |
-|---------|----------|----------|
-| `NuruApp.CreateBuilder(args)` | Full-featured apps | DI, Config, Mediator, REPL, Completion |
-| `NuruApp.CreateSlimBuilder()` | Lightweight tools | Auto-help, Logging infra, AOT-friendly |
-| `NuruApp.CreateEmptyBuilder()` | Total control | Type converters only, fully AOT |
 
 ## ✨ Key Features
 
@@ -121,17 +127,15 @@ dotnet run -- add 15 25
 Build modern command-line tools from scratch:
 
 ```csharp
-NuruCoreApp app = new NuruAppBuilder()
-  .Map
-  (
-    "deploy {env} --version {tag?}",
-    (string env, string? tag) => Deploy(env, tag)
-  )
-  .Map
-  (
-    "backup {source} {dest?} --compress",
-    (string source, string? dest, bool compress) => Backup(source, dest, compress)
-  )
+NuruApp app = NuruApp.CreateBuilder(args)
+  .Map("deploy {env} --version {tag?}")
+    .WithHandler((string env, string? tag) => Deploy(env, tag))
+    .AsCommand()
+    .Done()
+  .Map("backup {source} {dest?} --compress")
+    .WithHandler((string source, string? dest, bool compress) => Backup(source, dest, compress))
+    .AsCommand()
+    .Done()
   .Build();
 ```
 
@@ -139,21 +143,19 @@ NuruCoreApp app = new NuruAppBuilder()
 Wrap existing CLIs to add auth, logging, or validation:
 
 ```csharp
-NuruCoreApp app = new NuruAppBuilder()
-  .Map
-  (
-    "deploy prod",
-    async () =>
+NuruApp app = NuruApp.CreateBuilder(args)
+  .Map("deploy prod")
+    .WithHandler(async () =>
     {
       if (!await ValidateAccess()) return 1;
       return await Shell.ExecuteAsync("existing-cli", "deploy", "prod");
-    }
-  )
-  .Map
-  (
-    "{*args}",
-    async (string[] args) => await Shell.ExecuteAsync("existing-cli", args)
-  )
+    })
+    .AsCommand()
+    .Done()
+  .Map("{*args}")
+    .WithHandler(async (string[] args) => await Shell.ExecuteAsync("existing-cli", args))
+    .AsCommand()
+    .Done()
   .Build();
 ```
 
@@ -161,20 +163,17 @@ NuruCoreApp app = new NuruAppBuilder()
 
 ## 🌟 Working Examples
 
-**[Calculator Samples](samples/calculator/)** - Four complete implementations you can run now:
-- **[calc-createbuilder.cs](samples/calculator/calc-createbuilder.cs)** - ASP.NET Core-style API (recommended)
-- **[calc-delegate.cs](samples/calculator/calc-delegate.cs)** - Direct approach (pure performance)
-- **[calc-mediator.cs](samples/calculator/calc-mediator.cs)** - Mediator pattern (enterprise)
-- **[calc-mixed.cs](samples/calculator/calc-mixed.cs)** - Mixed approach (classic builder)
+**[Calculator Samples](samples/02-calculator/)** - Three complete implementations you can run now:
+- **[01-calc-delegate.cs](samples/02-calculator/01-calc-delegate.cs)** - Fluent DSL approach (inline handlers)
+- **[02-calc-commands.cs](samples/02-calculator/02-calc-commands.cs)** - Attributed routes pattern (testable, DI)
+- **[03-calc-mixed.cs](samples/02-calculator/03-calc-mixed.cs)** - Mixed approach (both patterns together)
 
 ```bash
-./samples/calculator/calc-mixed.cs add 10 20        # Direct: fast
-./samples/calculator/calc-mixed.cs factorial 5      # Mediator: structured
+./samples/02-calculator/03-calc-mixed.cs add 10 20        # Fluent DSL: inline
+./samples/02-calculator/03-calc-mixed.cs factorial 5      # Attributed: structured
 ```
 
-**[AOT Example](samples/aot-example/)** - Native AOT compilation with source generators
-
-**[Cocona Comparison](samples/cocona-comparison/)** - Migration guides from Cocona
+**[AOT Example](samples/05-aot-example/)** - Native AOT compilation with source generators
 
 ## ⚡ Performance
 
@@ -207,9 +206,15 @@ Get instant help in Claude Code, Roo Code, or Continue:
 Enable tab completion for your CLI with one line of code:
 
 ```csharp
-NuruCoreApp app = new NuruAppBuilder()
-  .Map("deploy {env} --version {tag}", (string env, string tag) => Deploy(env, tag))
-  .Map("status", () => ShowStatus())
+NuruApp app = NuruApp.CreateBuilder(args)
+  .Map("deploy {env} --version {tag}")
+    .WithHandler((string env, string tag) => Deploy(env, tag))
+    .AsCommand()
+    .Done()
+  .Map("status")
+    .WithHandler(() => ShowStatus())
+    .AsQuery()
+    .Done()
   .EnableStaticCompletion()  // ← Add this
   .Build();
 ```
@@ -236,7 +241,7 @@ Generate completion scripts for your shell:
 - ✅ Short option aliases (`-v`, `-f`)
 - ✅ All 4 major shells (bash, zsh, PowerShell, fish)
 
-**See [shell-completion-example](samples/shell-completion-example/) for a complete working example.**
+**See [completion-example](samples/15-completion/) for a complete working example.**
 
 ## 🤝 Contributing
 
@@ -256,6 +261,6 @@ This project is licensed under the Unlicense - see the [license](license) file f
 
 **Ready to build powerful CLI applications?**
 
-**[Get Started in 5 Minutes](documentation/user/getting-started.md)** • **[View Examples](samples/calculator/)** • **[Read the Docs](documentation/user/overview.md)**
+**[Get Started in 5 Minutes](documentation/user/getting-started.md)** • **[View Examples](samples/02-calculator/)** • **[Read the Docs](documentation/user/overview.md)**
 
 </div>

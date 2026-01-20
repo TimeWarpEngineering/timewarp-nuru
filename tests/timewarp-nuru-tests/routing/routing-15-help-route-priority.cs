@@ -22,7 +22,7 @@ public class HelpRoutePriorityTests
     // Arrange - Issue #98 reproduction: user route with optional flag
     // Auto-generated help routes are enabled by default
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("recent --verbose?").WithHandler((bool verbose) => "user-executed").WithDescription("Show recent items").AsQuery().Done()
       .Build();
@@ -40,7 +40,7 @@ public class HelpRoutePriorityTests
   {
     // Arrange - auto-generated help routes are enabled by default
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("recent --verbose?").WithHandler((bool verbose) => "user-executed").WithDescription("Show recent items").AsQuery().Done()
       .Build();
@@ -58,7 +58,7 @@ public class HelpRoutePriorityTests
   {
     // Arrange - auto-generated help routes are enabled by default
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("recent --verbose?").WithHandler((bool verbose) => verbose ? "verbose-true" : "verbose-false").WithDescription("Show recent items").AsQuery().Done()
       .Build();
@@ -76,7 +76,7 @@ public class HelpRoutePriorityTests
     // Arrange - route with multiple optional flags
     // Auto-generated help routes are enabled by default
     using TestTerminal terminal = new();
-    NuruCoreApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("list --all? --verbose?").WithHandler((bool all, bool verbose) => "user-executed").WithDescription("List items").AsQuery().Done()
       .Build();

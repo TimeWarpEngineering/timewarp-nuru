@@ -54,9 +54,9 @@ internal static class ServiceResolverEmitter
       return;
     }
 
-    // Special case: NuruCoreApp - the app instance is directly available
+    // Special case: NuruApp - the app instance is directly available
     // Enables handlers to invoke other routes via app.RunAsync(["command"])
-    if (IsNuruCoreAppType(typeName))
+    if (IsNuruAppType(typeName))
     {
       sb.AppendLine(
         $"{indent}{typeName} {varName} = app;");
@@ -160,14 +160,14 @@ internal static class ServiceResolverEmitter
   }
 
   /// <summary>
-  /// Checks if a type name is NuruCoreApp (built-in, available as the app parameter).
+  /// Checks if a type name is NuruApp (built-in, available as the app parameter).
   /// Enables handlers to invoke other routes programmatically via app.RunAsync().
   /// </summary>
-  private static bool IsNuruCoreAppType(string typeName)
+  private static bool IsNuruAppType(string typeName)
   {
-    return typeName is "global::TimeWarp.Nuru.NuruCoreApp"
-        or "TimeWarp.Nuru.NuruCoreApp"
-        or "NuruCoreApp";
+    return typeName is "global::TimeWarp.Nuru.NuruApp"
+        or "TimeWarp.Nuru.NuruApp"
+        or "NuruApp";
   }
 
   /// <summary>

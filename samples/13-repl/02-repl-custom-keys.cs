@@ -5,7 +5,7 @@
 // CUSTOM KEY BINDINGS DEMO
 // ═══════════════════════════════════════════════════════════════════════════════
 //
-// This sample uses NuruApp.CreateBuilder(args) which provides all REPL features.
+// This sample uses NuruApp.CreateBuilder() which provides all REPL features.
 //
 // This demo shows how to create personalized REPL key bindings using
 // CustomKeyBindingProfile. You can:
@@ -68,7 +68,7 @@ CustomKeyBindingProfile customProfile = new CustomKeyBindingProfile(new EmacsKey
 // Build the app with custom key bindings
 // ============================================================================
 
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
   .WithDescription("Demonstrates CustomKeyBindingProfile for personalized REPL key bindings.")
 
   // --------------------------------------------------------

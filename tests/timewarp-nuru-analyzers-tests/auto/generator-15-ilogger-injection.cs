@@ -33,7 +33,7 @@ public sealed class ILoggerInjectionTests
       {
         public static async System.Threading.Tasks.Task Main()
         {
-          NuruCoreApp app = NuruApp.CreateBuilder([])
+          NuruApp app = NuruApp.CreateBuilder()
             .ConfigureServices(services => services.AddLogging(builder => builder.AddConsole()))
             .Map("greet {name}").WithHandler((string name) => System.Console.WriteLine($"Hello, {name}!")).AsCommand().Done()
             .Build();
@@ -73,7 +73,7 @@ public sealed class ILoggerInjectionTests
       {
         public static async System.Threading.Tasks.Task Main()
         {
-          NuruCoreApp app = NuruApp.CreateBuilder([])
+          NuruApp app = NuruApp.CreateBuilder()
             .ConfigureServices(services => services.AddLogging(builder => builder.AddConsole()))
             .Map("test").WithHandler(() => System.Console.WriteLine("test")).AsCommand().Done()
             .Build();
@@ -119,7 +119,7 @@ public sealed class ILoggerInjectionTests
       {
         public static async System.Threading.Tasks.Task Main()
         {
-          NuruCoreApp app = NuruApp.CreateBuilder([])
+          NuruApp app = NuruApp.CreateBuilder()
             .Map("greet {name}").WithHandler((string name) => System.Console.WriteLine($"Hello, {name}!")).AsCommand().Done()
             .Build();
           await app.RunAsync([]);

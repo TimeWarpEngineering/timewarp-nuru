@@ -10,7 +10,7 @@
 using TimeWarp.Nuru;
 using TimeWarp.Terminal;
 
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
   .DiscoverEndpoints()
   .Build();
 return await app.RunAsync(args);

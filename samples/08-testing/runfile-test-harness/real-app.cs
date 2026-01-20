@@ -13,7 +13,7 @@ public static class RealApp
 {
   public static async Task<int> Main(string[] args)
   {
-    NuruCoreApp app = NuruApp.CreateBuilder(args)
+    NuruApp app = NuruApp.CreateBuilder()
       .Map("greet {name}")
         .WithHandler(Greet)
         .WithDescription("Greet someone by name")

@@ -3,7 +3,7 @@
 using Microsoft.Extensions.Options;
 using TimeWarp.Nuru;
 
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
   .Map("test")
     .WithHandler((IOptions<TestOptions> opts) => $"Value: {opts.Value.Value}")
     .AsQuery()

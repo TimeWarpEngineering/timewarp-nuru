@@ -77,7 +77,7 @@ builder.Services.AddMediator();
 builder.Map("hello", () => Console.WriteLine("Hello!"));
 // ... more routes
 
-NuruCoreApp app = builder.Build();
+NuruApp app = builder.Build();
 return await app.RunAsync(args);
 ```
 
@@ -180,7 +180,7 @@ Create single-file executables that run directly.
 
 using TimeWarp.Nuru;
 
-NuruApp app = new NuruAppBuilder()
+NuruApp app = NuruApp.CreateBuilder(args)
   .Map("greet {name}", (string name) => $"Hello, {name}!")
   .Build();
 

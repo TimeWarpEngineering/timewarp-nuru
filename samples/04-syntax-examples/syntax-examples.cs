@@ -19,7 +19,7 @@
 using System.Net;
 using TimeWarp.Nuru;
 
-NuruAppBuilder builder = NuruApp.CreateBuilder([]);
+NuruAppBuilder builder = NuruApp.CreateBuilder();
 
 #region MCP:literals
 // Literal segments are plain text that must match exactly
@@ -182,7 +182,7 @@ builder.Map("kubectl get {resource} --namespace,-n {ns?} --output,-o {format?}")
     .AsQuery().Done();
 #endregion
 
-NuruCoreApp app = builder.Build();
+NuruApp app = builder.Build();
 
 Console.WriteLine("✅ TimeWarp.Nuru Syntax Examples - All patterns compiled successfully!");
 Console.WriteLine();

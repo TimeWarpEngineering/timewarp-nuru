@@ -26,7 +26,7 @@ builder.Map(
     await Console.Out.WriteLineAsync("================================");
     await Console.Out.WriteLineAsync();
     await Console.Out.WriteLineAsync("Measures the cold-start performance of AOT-compiled Nuru applications.");
-    await Console.Out.WriteLineAsync("This establishes a baseline for Task 029 (EnableDynamicCompletion) performance.");
+    await Console.Out.WriteLineAsync("This establishes a baseline for Task 029 (EnableCompletion) performance.");
     await Console.Out.WriteLineAsync();
     await Console.Out.WriteLineAsync("Usage:");
     await Console.Out.WriteLineAsync("  benchmark-aot-invocation.cs [--runs COUNT]");
@@ -39,7 +39,7 @@ builder.Map(
   }
 );
 
-NuruCoreApp app = builder.Build();
+NuruApp app = builder.Build();
 return await app.RunAsync(args);
 
 async Task<int> RunBenchmark(int runs)

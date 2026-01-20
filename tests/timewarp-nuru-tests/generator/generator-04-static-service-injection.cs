@@ -67,7 +67,7 @@ namespace TimeWarp.Nuru.Tests.Generator.StaticServiceInjection
       // Arrange
       using TestTerminal terminal = new();
 
-      NuruCoreApp app = NuruApp.CreateBuilder([])
+      NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
         .AddConfiguration()
         .ConfigureServices(services =>
@@ -96,7 +96,7 @@ namespace TimeWarp.Nuru.Tests.Generator.StaticServiceInjection
       // Arrange
       using TestTerminal terminal = new();
 
-      NuruCoreApp app = NuruApp.CreateBuilder([])
+      NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
         .AddConfiguration()
         .ConfigureServices(services =>
@@ -125,7 +125,7 @@ namespace TimeWarp.Nuru.Tests.Generator.StaticServiceInjection
       // Arrange
       using TestTerminal terminal = new();
 
-      NuruCoreApp app = NuruApp.CreateBuilder([])
+      NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
         .AddConfiguration()
         .ConfigureServices(services =>
@@ -156,7 +156,7 @@ namespace TimeWarp.Nuru.Tests.Generator.StaticServiceInjection
       // Arrange
       using TestTerminal terminal = new();
 
-      NuruCoreApp app = NuruApp.CreateBuilder([])
+      NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
         .Map("svc04-terminal-test")
           .WithHandler((ITerminal t) =>

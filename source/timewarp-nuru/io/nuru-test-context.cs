@@ -1,17 +1,17 @@
 namespace TimeWarp.Nuru;
 
 /// <summary>
-/// Provides an ambient context for test harnesses to take control of <see cref="NuruCoreApp"/> execution.
+/// Provides an ambient context for test harnesses to take control of <see cref="NuruApp"/> execution.
 /// </summary>
 /// <remarks>
 /// <para>
 /// This class enables zero-configuration testing of runfiles by allowing test code to be
 /// included at build time via <c>Directory.Build.props</c>. When the test runner delegate
-/// is set (typically via <c>[ModuleInitializer]</c>), <see cref="NuruCoreApp.RunAsync"/> 
+  /// is set (typically via <c>[ModuleInitializer]</c>), <see cref="NuruApp.RunAsync"/>
 /// hands control to the test harness instead of executing normally.
 /// </para>
 /// <para>
-/// The test harness receives the fully configured <see cref="NuruCoreApp"/> instance and can
+  /// The test harness receives the fully configured <see cref="NuruApp"/> instance and can
 /// run multiple test scenarios against it using <see cref="TestTerminalContext"/> for output capture.
 /// </para>
 /// <example>
@@ -42,7 +42,7 @@ namespace TimeWarp.Nuru;
 /// </remarks>
 public static class NuruTestContext
 {
-  private static readonly AsyncLocal<Func<NuruCoreApp, Task<int>>?> TestRunnerContext = new();
+  private static readonly AsyncLocal<Func<NuruApp, Task<int>>?> TestRunnerContext = new();
   private static readonly AsyncLocal<bool> IsExecutingTests = new();
 
   /// <summary>
@@ -50,20 +50,20 @@ public static class NuruTestContext
   /// </summary>
   /// <remarks>
   /// <para>
-  /// When set to a non-null value, <see cref="NuruCoreApp.RunAsync"/> will invoke this
+  /// When set to a non-null value, <see cref="NuruApp.RunAsync"/> will invoke this
   /// delegate instead of executing the command normally. The delegate receives the
-  /// fully configured <see cref="NuruCoreApp"/> instance.
+  /// fully configured <see cref="NuruApp"/> instance.
   /// </para>
   /// <para>
-  /// The delegate is only invoked once per execution. Subsequent calls to 
-  /// <see cref="NuruCoreApp.RunAsync"/> from within the test harness execute normally,
+  /// The delegate is only invoked once per execution. Subsequent calls to
+  /// <see cref="NuruApp.RunAsync"/> from within the test harness execute normally,
   /// allowing tests to run multiple scenarios.
   /// </para>
   /// </remarks>
   /// <value>
   /// The test runner delegate, or <c>null</c> if not in test mode.
   /// </value>
-  public static Func<NuruCoreApp, Task<int>>? TestRunner
+  public static Func<NuruApp, Task<int>>? TestRunner
   {
     get => TestRunnerContext.Value;
     set => TestRunnerContext.Value = value;
@@ -77,10 +77,10 @@ public static class NuruTestContext
   /// <summary>
   /// Attempts to execute the test runner if one is configured and not already executing.
   /// </summary>
-  /// <param name="app">The NuruCoreApp instance to pass to the test runner.</param>
+  /// <param name="app">The NuruApp instance to pass to the test runner.</param>
   /// <param name="exitCode">The exit code from the test runner, if executed.</param>
   /// <returns><c>true</c> if the test runner was executed; <c>false</c> if normal execution should proceed.</returns>
-  internal static bool TryExecuteTestRunner(NuruCoreApp app, out Task<int> exitCode)
+  internal static bool TryExecuteTestRunner(NuruApp app, out Task<int> exitCode)
   {
     // If no test runner, proceed with normal execution
     if (TestRunnerContext.Value is null)

@@ -118,6 +118,12 @@ public interface IIrAppBuilder : IIrRouteSource
   IIrAppBuilder UseTelemetry();
 
   /// <summary>
+  /// Enables shell completion support.
+  /// </summary>
+  /// <returns>This builder for chaining.</returns>
+  IIrAppBuilder EnableCompletion();
+
+  /// <summary>
   /// Registers a custom type converter for code generation.
   /// </summary>
   /// <param name="converter">The converter definition.</param>

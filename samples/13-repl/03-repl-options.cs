@@ -5,7 +5,7 @@
 // REPLOPTIONS COMPREHENSIVE SHOWCASE
 // ═══════════════════════════════════════════════════════════════════════════════
 //
-// This sample uses NuruApp.CreateBuilder(args) which provides all REPL features.
+// This sample uses NuruApp.CreateBuilder() which provides all REPL features.
 //
 // This demo demonstrates ALL ReplOptions configuration properties.
 // Run this file to explore each feature interactively.
@@ -39,7 +39,7 @@ WriteLine("  - Custom history file location");
 WriteLine("  - Sensitive commands excluded from history");
 WriteLine();
 
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
   .WithDescription("ReplOptions comprehensive showcase demonstrating all configuration features.")
 
   // --------------------------------------------------------

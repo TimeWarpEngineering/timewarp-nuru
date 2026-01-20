@@ -45,7 +45,7 @@ public class LazyOptionsEvaluationTests
     using TestTerminal terminal = new();
     string[] testArgs = ["db", "info", "--Cfg01Database:ConnectionString=Server=localhost;Database=test", "--Cfg01Database:MaxConnections=10"];
 
-    NuruCoreApp app = NuruApp.CreateBuilder(testArgs)
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .AddConfiguration()
       .Map("db info").WithHandler((IOptions<Cfg01DatabaseOptions> options) =>
@@ -69,7 +69,7 @@ public class LazyOptionsEvaluationTests
     using TestTerminal terminal = new();
     string[] testArgs = ["server", "info", "--Cfg01Server:Host=api.example.com", "--Cfg01Server:Port=443"];
 
-    NuruCoreApp app = NuruApp.CreateBuilder(testArgs)
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .AddConfiguration()
       .Map("server info").WithHandler((IOptions<Cfg01ServerOptions> options) =>
@@ -93,7 +93,7 @@ public class LazyOptionsEvaluationTests
     using TestTerminal terminal = new();
     string[] testArgs = ["db", "info"];
 
-    NuruCoreApp app = NuruApp.CreateBuilder(testArgs)
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .AddConfiguration()
       .Map("db info").WithHandler((IOptions<Cfg01DatabaseOptions> options) =>
@@ -116,7 +116,7 @@ public class LazyOptionsEvaluationTests
     using TestTerminal terminal = new();
     string[] testArgs = ["ping"];
 
-    NuruCoreApp app = NuruApp.CreateBuilder(testArgs)
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .Map("ping").WithHandler(() => "pong")
       .AsQuery().Done()
@@ -137,7 +137,7 @@ public class LazyOptionsEvaluationTests
     using TestTerminal terminal = new();
     string[] testArgs = ["config", "show", "--Cfg01Database:ConnectionString=db-conn", "--Cfg01Server:Host=server-host"];
 
-    NuruCoreApp app = NuruApp.CreateBuilder(testArgs)
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .AddConfiguration()
       .Map("config show").WithHandler((IOptions<Cfg01DatabaseOptions> db, IOptions<Cfg01ServerOptions> server) =>

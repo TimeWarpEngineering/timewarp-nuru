@@ -6,8 +6,8 @@
 using TimeWarp.Nuru;
 using static System.Console;
 
-NuruCoreApp app =
-  NuruApp.CreateBuilder(args)
+NuruApp app =
+  NuruApp.CreateBuilder()
   // Basic operations
   .Map("add {x:double} {y:double}")
     .WithHandler((double x, double y) => WriteLine($"{x} + {y} = {x + y}"))

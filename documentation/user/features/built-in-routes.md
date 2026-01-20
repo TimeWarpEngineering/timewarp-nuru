@@ -133,19 +133,18 @@ NuruApp.CreateBuilder(args, new NuruAppOptions
 });
 ```
 
-## Using SlimBuilder
+## Manual Feature Registration
 
-If you want complete control over which features are registered, use `NuruCoreApp.CreateSlimBuilder()` instead:
+You can manually add specific features using the builder:
 
 ```csharp
-// No built-in routes - you add only what you need
-NuruCoreApp app = NuruCoreApp.CreateSlimBuilder(args)
+NuruApp app = NuruApp.CreateBuilder(args)
     .Map("greet {name}", (string name) => Console.WriteLine($"Hello, {name}!"))
     .AddVersionRoute()  // Manually add version route
     .Build();
 ```
 
-See [Architecture Choices](../guides/architecture-choices.md) for more on choosing between `CreateBuilder` and `CreateSlimBuilder`.
+See [Architecture Choices](../guides/architecture-choices.md) for more guidance.
 
 ## Related Documentation
 

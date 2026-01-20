@@ -6,7 +6,7 @@
 // USER SECRETS DEMO - RUNFILE WITH USER SECRETS
 // ═══════════════════════════════════════════════════════════════════════════════
 //
-// This sample demonstrates NuruApp.CreateBuilder(args) with user secrets
+// This sample demonstrates NuruApp.CreateBuilder() with user secrets
 // configured via the #:property directive.
 //
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -14,7 +14,7 @@
 using Microsoft.Extensions.Configuration;
 using TimeWarp.Nuru;
 
-NuruCoreApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
   .Map("show")
     .WithHandler((IConfiguration config) =>
     {

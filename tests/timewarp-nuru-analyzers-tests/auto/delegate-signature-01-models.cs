@@ -25,7 +25,7 @@ public sealed class DelegateSignatureExtractionTests
     const string code = """
       using TimeWarp.Nuru;
       
-      var app = NuruApp.CreateBuilder([])
+      var app = NuruApp.CreateBuilder()
         .Map("status").WithHandler(() => System.Console.WriteLine("OK")).AsQuery().Done()
         .Build();
       """;
@@ -46,7 +46,7 @@ public sealed class DelegateSignatureExtractionTests
     const string code = """
       using TimeWarp.Nuru;
       
-      var app = NuruApp.CreateBuilder([])
+      var app = NuruApp.CreateBuilder()
         .Map("greet {name}").WithHandler((string name) => System.Console.WriteLine($"Hello {name}")).AsQuery().Done()
         .Build();
       """;
@@ -65,7 +65,7 @@ public sealed class DelegateSignatureExtractionTests
     const string code = """
       using TimeWarp.Nuru;
       
-      var app = NuruApp.CreateBuilder([])
+      var app = NuruApp.CreateBuilder()
         .Map("wait {seconds:int}").WithHandler((int seconds) => System.Console.WriteLine($"Waiting {seconds}s")).AsQuery().Done()
         .Build();
       """;
@@ -84,7 +84,7 @@ public sealed class DelegateSignatureExtractionTests
     const string code = """
       using TimeWarp.Nuru;
       
-      var app = NuruApp.CreateBuilder([])
+      var app = NuruApp.CreateBuilder()
         .Map("add {x:int} {y:int}").WithHandler((int x, int y) => System.Console.WriteLine($"Result: {x + y}")).AsQuery().Done()
         .Build();
       """;
@@ -103,7 +103,7 @@ public sealed class DelegateSignatureExtractionTests
     const string code = """
       using TimeWarp.Nuru;
       
-      var app = NuruApp.CreateBuilder([])
+      var app = NuruApp.CreateBuilder()
         .Map("docker {*args}").WithHandler((string[] args) => System.Console.WriteLine(string.Join(" ", args))).AsCommand().Done()
         .Build();
       """;
@@ -122,7 +122,7 @@ public sealed class DelegateSignatureExtractionTests
     const string code = """
       using TimeWarp.Nuru;
       
-      var app = NuruApp.CreateBuilder([])
+      var app = NuruApp.CreateBuilder()
         .Map("build --verbose").WithHandler((bool verbose) => System.Console.WriteLine($"Verbose: {verbose}")).AsCommand().Done()
         .Build();
       """;
@@ -141,7 +141,7 @@ public sealed class DelegateSignatureExtractionTests
     const string code = """
       using TimeWarp.Nuru;
       
-      var app = NuruApp.CreateBuilder([])
+      var app = NuruApp.CreateBuilder()
         .Map("compute {x:int} {y:int}").WithHandler((int x, int y) => x + y).AsQuery().Done()
         .Build();
       """;
@@ -161,7 +161,7 @@ public sealed class DelegateSignatureExtractionTests
       using TimeWarp.Nuru;
       using System.Threading.Tasks;
       
-      var app = NuruApp.CreateBuilder([])
+      var app = NuruApp.CreateBuilder()
         .Map("fetch {url}").WithHandler(async (string url) => await Task.Delay(100)).AsCommand().Done()
         .Build();
       """;
@@ -181,7 +181,7 @@ public sealed class DelegateSignatureExtractionTests
       using TimeWarp.Nuru;
       using System.Threading.Tasks;
       
-      var app = NuruApp.CreateBuilder([])
+      var app = NuruApp.CreateBuilder()
         .Map("fetch {id:int}").WithHandler(async (int id) => 
         {
           await Task.Delay(100);
@@ -204,7 +204,7 @@ public sealed class DelegateSignatureExtractionTests
     const string code = """
       using TimeWarp.Nuru;
       
-      var app = NuruApp.CreateBuilder([])
+      var app = NuruApp.CreateBuilder()
         .Map("deploy {env} {tag?}").WithHandler((string env, string? tag) => 
           System.Console.WriteLine($"Deploy {env} with {tag ?? "latest"}")).AsCommand().Done()
         .Build();
@@ -224,7 +224,7 @@ public sealed class DelegateSignatureExtractionTests
     const string code = """
       using TimeWarp.Nuru;
       
-      var app = NuruApp.CreateBuilder([])
+      var app = NuruApp.CreateBuilder()
         .Map("calc {value:double}").WithHandler((double value) => System.Console.WriteLine(value * 2.0)).AsQuery().Done()
         .Build();
       """;
@@ -244,7 +244,7 @@ public sealed class DelegateSignatureExtractionTests
       using TimeWarp.Nuru;
       using System;
       
-      var app = NuruApp.CreateBuilder([])
+      var app = NuruApp.CreateBuilder()
         .Map("get {id:Guid}").WithHandler((Guid id) => System.Console.WriteLine(id)).AsQuery().Done()
         .Build();
       """;
@@ -264,7 +264,7 @@ public sealed class DelegateSignatureExtractionTests
       using TimeWarp.Nuru;
       using System.Linq;
       
-      var app = NuruApp.CreateBuilder([])
+      var app = NuruApp.CreateBuilder()
         .Map("sum {*values:int}").WithHandler((int[] values) => 
           System.Console.WriteLine(values.Sum())).AsQuery().Done()
         .Build();
@@ -284,7 +284,7 @@ public sealed class DelegateSignatureExtractionTests
     const string code = """
       using TimeWarp.Nuru;
       
-      var app = NuruApp.CreateBuilder([])
+      var app = NuruApp.CreateBuilder()
         .Map("greet {name}").WithHandler((string name) => System.Console.WriteLine(name)).AsQuery().Done()
         .Map("add {x:int} {y:int}").WithHandler((int x, int y) => System.Console.WriteLine(x + y)).AsQuery().Done()
         .Build();
@@ -312,7 +312,7 @@ public sealed class DelegateSignatureExtractionTests
     const string code = """
       using TimeWarp.Nuru;
       
-      var app = NuruApp.CreateBuilder([])
+      var app = NuruApp.CreateBuilder()
         .Map("greet {name}").WithHandler((string name) => System.Console.WriteLine(name)).AsQuery().Done()
         .Build();
       """;
@@ -344,7 +344,7 @@ public sealed class DelegateSignatureExtractionTests
     const string code = """
       using TimeWarp.Nuru;
       
-      var app = NuruApp.CreateBuilder([])
+      var app = NuruApp.CreateBuilder()
         .Map("add {x:int} {y:int}").WithHandler((int x, int y) => x + y).AsQuery().Done()
         .Build();
       """;
@@ -380,7 +380,7 @@ public sealed class DelegateSignatureExtractionTests
     string runtimePath = System.Runtime.InteropServices.RuntimeEnvironment.GetRuntimeDirectory();
 
     // Find the TimeWarp.Nuru assembly
-    string nuruAssemblyPath = typeof(NuruCoreApp).Assembly.Location;
+    string nuruAssemblyPath = typeof(NuruApp).Assembly.Location;
     string coreAssemblyPath = Path.Combine(Path.GetDirectoryName(nuruAssemblyPath)!, "TimeWarp.Nuru.Core.dll");
 
     List<MetadataReference> references =

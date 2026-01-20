@@ -27,7 +27,7 @@ public sealed class EnumCompletionSource<[DynamicallyAccessedMembers(Dynamically
   /// </summary>
   public IEnumerable<CompletionCandidate> GetCompletions(CompletionContext context)
   {
-    ArgumentNullException.ThrowIfNull(context);
+    _ = context; // Not needed for enum completion - we return all values
 
     List<CompletionCandidate> candidates = [];
 

@@ -292,16 +292,12 @@ NuruApp app = NuruApp.CreateBuilder(args, new NuruAppOptions
 return await app.RunAsync();
 ```
 
-## NuruAppOptions vs SlimBuilder
+## Manual Feature Configuration
 
-| Approach | Use Case |
-|----------|----------|
-| `NuruApp.CreateBuilder()` + `NuruAppOptions` | Most applications - get all features with customization |
-| `NuruCoreApp.CreateSlimBuilder()` | Complete control - manually add only what you need |
+You can manually configure features using the builder methods:
 
 ```csharp
-// SlimBuilder: No auto-wired features, add manually
-NuruCoreApp app = NuruCoreApp.CreateSlimBuilder(args)
+NuruCoreApp app = NuruApp.CreateBuilder(args)
     .Map("greet {name}", (string name) => Console.WriteLine($"Hello, {name}!"))
     .AddVersionRoute()      // Manually add version
     .EnableStaticCompletion()  // Manually add completion

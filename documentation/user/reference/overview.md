@@ -4,6 +4,13 @@ Technical reference materials for TimeWarp.Nuru.
 
 ## Available References
 
+### [Builder API](builder-api.md)
+Complete reference for `NuruApp.CreateBuilder()` fluent API:
+- Route definition with `.Map()` and endpoint configuration
+- Application configuration (DI, settings, telemetry)
+- REPL and shell completion setup
+- Handler signatures and return values
+
 ### [Performance](performance.md)
 Performance characteristics and benchmarks:
 - Memory footprint (Direct vs Mediator)

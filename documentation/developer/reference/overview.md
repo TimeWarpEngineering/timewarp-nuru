@@ -22,7 +22,7 @@ Reference documentation describes **what IS** - the current reality of the codeb
 
 ### Parser Implementation
 - [Parser Classes: Syntax vs Semantics](parser-classes-syntax-vs-semantics.md) - Current parser architecture
-- [Parsing Flow Dependency Analysis](parsing-flow-dependency-analysis.md) - How parsing currently works
+- [Parsing Flow Dependency Analysis](parsing-flow-dependency-analysis.md) - How parsing works
 
 
 ## Important Note

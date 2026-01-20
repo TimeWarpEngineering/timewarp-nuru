@@ -20,13 +20,28 @@ TimeWarp.Nuru supports intuitive route patterns:
 Parameters are automatically converted to the correct types:
 
 ```csharp
-NuruApp app = new NuruAppBuilder()
+NuruCoreApp app = NuruApp.CreateBuilder(args)
   // Supports common types out of the box
-  .Map("wait {seconds:int}", (int s) => Thread.Sleep(s * 1000))
-  .Map("download {url:uri}", (Uri url) => Download(url))
-  .Map("verbose {enabled:bool}", (bool v) => SetVerbose(v))
-  .Map("process {date:datetime}", (DateTime d) => Process(d))
-  .Map("scale {factor:double}", (double f) => Scale(f))
+  .Map("wait {seconds:int}")
+    .WithHandler((int seconds) => Thread.Sleep(seconds * 1000))
+    .AsCommand()
+    .Done()
+  .Map("download {url:uri}")
+    .WithHandler((Uri url) => Download(url))
+    .AsCommand()
+    .Done()
+  .Map("verbose {enabled:bool}")
+    .WithHandler((bool enabled) => SetVerbose(enabled))
+    .AsCommand()
+    .Done()
+  .Map("process {date:datetime}")
+    .WithHandler((DateTime date) => Process(date))
+    .AsCommand()
+    .Done()
+  .Map("scale {factor:double}")
+    .WithHandler((double factor) => Scale(factor))
+    .AsCommand()
+    .Done()
   .Build();
 ```
 
@@ -54,9 +69,15 @@ See [Supported Types Reference](../reference/supported-types.md) for complete li
 The `MapDefault` method registers a handler that executes when no arguments are provided:
 
 ```csharp
-NuruApp app = new NuruAppBuilder()
-  .MapDefault(() => Console.WriteLine("Usage: myapp <command>"))
-  .Map("greet {name}", (string name) => Console.WriteLine($"Hello, {name}!"))
+NuruCoreApp app = NuruApp.CreateBuilder(args)
+  .MapDefault()
+    .WithHandler(() => Console.WriteLine("Usage: myapp <command>"))
+    .AsCommand()
+    .Done()
+  .Map("greet {name}")
+    .WithHandler((string name) => Console.WriteLine($"Hello, {name}!"))
+    .AsCommand()
+    .Done()
   .Build();
 ```
 
@@ -70,18 +91,27 @@ NuruApp app = new NuruAppBuilder()
 A typical pattern is to display help information when users run your CLI without arguments:
 
 ```csharp
-NuruApp app = new NuruAppBuilder()
-  .MapDefault(() =>
-  {
-    Console.WriteLine("myapp - A sample CLI application");
-    Console.WriteLine();
-    Console.WriteLine("Commands:");
-    Console.WriteLine("  greet {name}    Greet someone by name");
-    Console.WriteLine("  version         Show version info");
-    Console.WriteLine("  help            Show detailed help");
-  })
-  .Map("greet {name}", (string name) => Console.WriteLine($"Hello, {name}!"))
-  .Map("version", () => Console.WriteLine("v1.0.0"))
+NuruCoreApp app = NuruApp.CreateBuilder(args)
+  .MapDefault()
+    .WithHandler(() =>
+    {
+      Console.WriteLine("myapp - A sample CLI application");
+      Console.WriteLine();
+      Console.WriteLine("Commands:");
+      Console.WriteLine("  greet {name}    Greet someone by name");
+      Console.WriteLine("  version         Show version info");
+      Console.WriteLine("  help            Show detailed help");
+    })
+    .AsCommand()
+    .Done()
+  .Map("greet {name}")
+    .WithHandler((string name) => Console.WriteLine($"Hello, {name}!"))
+    .AsCommand()
+    .Done()
+  .Map("version")
+    .WithHandler(() => Console.WriteLine("v1.0.0"))
+    .AsCommand()
+    .Done()
   .Build();
 ```
 
@@ -97,10 +127,19 @@ While both can handle "fallback" scenarios, they serve different purposes:
 | **Specificity** | Most specific (exact empty match) | Least specific (matches anything) |
 
 ```csharp
-NuruApp app = new NuruAppBuilder()
-  .MapDefault(() => Console.WriteLine("No command provided. Try 'help'."))
-  .Map("help", () => Console.WriteLine("Available: greet, version"))
-  .Map("{*args}", (string[] args) => Console.WriteLine($"Unknown: {string.Join(" ", args)}"))
+NuruCoreApp app = NuruApp.CreateBuilder(args)
+  .MapDefault()
+    .WithHandler(() => Console.WriteLine("No command provided. Try 'help'."))
+    .AsCommand()
+    .Done()
+  .Map("help")
+    .WithHandler(() => Console.WriteLine("Available: greet, version"))
+    .AsCommand()
+    .Done()
+  .Map("{*args}")
+    .WithHandler((string[] args) => Console.WriteLine($"Unknown: {string.Join(" ", args)}"))
+    .AsCommand()
+    .Done()
   .Build();
 ```
 
@@ -115,9 +154,18 @@ NuruApp app = new NuruAppBuilder()
 Literal segments must match exactly:
 
 ```csharp
-builder.Map("status", () => ShowStatus());
-builder.Map("version", () => ShowVersion());
-builder.Map("git status", () => GitStatus());  // Multi-word literal
+builder.Map("status")
+  .WithHandler(() => ShowStatus())
+  .AsCommand()
+  .Done();
+builder.Map("version")
+  .WithHandler(() => ShowVersion())
+  .AsCommand()
+  .Done();
+builder.Map("git status")  // Multi-word literal
+  .WithHandler(() => GitStatus())
+  .AsCommand()
+  .Done();
 ```
 
 ```bash
@@ -132,17 +180,15 @@ builder.Map("git status", () => GitStatus());  // Multi-word literal
 Parameters capture values from command-line arguments:
 
 ```csharp
-builder.Map
-(
-  "greet {name}",
-  (string name) => Console.WriteLine($"Hello, {name}!")
-);
+builder.Map("greet {name}")
+  .WithHandler((string name) => Console.WriteLine($"Hello, {name}!"))
+  .AsCommand()
+  .Done();
 
-builder.Map
-(
-  "add {x:double} {y:double}",
-  (double x, double y) => Console.WriteLine($"{x} + {y} = {x + y}")
-);
+builder.Map("add {x:double} {y:double}")
+  .WithHandler((double x, double y) => Console.WriteLine($"{x} + {y} = {x + y}"))
+  .AsCommand()
+  .Done();
 ```
 
 ```bash
@@ -163,16 +209,15 @@ builder.Map
 Parameters marked with `?` are optional:
 
 ```csharp
-builder.Map
-(
-  "deploy {env} {tag?}",
-  (string env, string? tag) =>
+builder.Map("deploy {env} {tag?}")
+  .WithHandler((string env, string? tag) =>
   {
     Console.WriteLine($"Deploying to {env}");
     if (tag != null)
       Console.WriteLine($"Version: {tag}");
-  }
-);
+  })
+  .AsCommand()
+  .Done();
 ```
 
 ```bash
@@ -191,20 +236,28 @@ Options provide named arguments with `--` or `-` prefixes:
 
 ```csharp
 // Long form
-builder.Map("build --verbose", () => BuildVerbose());
+builder.Map("build --verbose")
+  .WithHandler(() => BuildVerbose())
+  .AsCommand()
+  .Done();
 
 // Short form
-builder.Map("list -l", () => ListDetailed());
+builder.Map("list -l")
+  .WithHandler(() => ListDetailed())
+  .AsCommand()
+  .Done();
 
 // With values
-builder.Map("serve --port {port:int}", (int port) => StartServer(port));
+builder.Map("serve --port {port:int}")
+  .WithHandler((int port) => StartServer(port))
+  .AsCommand()
+  .Done();
 
 // Optional options
-builder.Map
-(
-  "build --config? {mode?}",
-  (string? mode) => Build(mode ?? "Release")
-);
+builder.Map("build --config? {mode?}")
+  .WithHandler((string? mode) => Build(mode ?? "Release"))
+  .AsCommand()
+  .Done();
 ```
 
 ```bash
@@ -220,11 +273,10 @@ builder.Map
 Options can have both long and short forms:
 
 ```csharp
-builder.Map
-(
-  "backup {source} --compress,-c",
-  (string source, bool compress) => Backup(source, compress)
-);
+builder.Map("backup {source} --compress,-c")
+  .WithHandler((string source, bool compress) => Backup(source, compress))
+  .AsCommand()
+  .Done();
 ```
 
 ```bash
@@ -238,13 +290,15 @@ builder.Map
 Catch-all parameters capture all remaining arguments:
 
 ```csharp
-builder.Map
-(
-  "echo {*words}",
-  (string[] words) => Console.WriteLine(string.Join(" ", words))
-);
+builder.Map("echo {*words}")
+  .WithHandler((string[] words) => Console.WriteLine(string.Join(" ", words)))
+  .AsCommand()
+  .Done();
 
-builder.Map("git add {*files}", (string[] files) => StageFiles(files));
+builder.Map("git add {*files}")
+  .WithHandler((string[] files) => StageFiles(files))
+  .AsCommand()
+  .Done();
 ```
 
 ```bash
@@ -268,20 +322,50 @@ Build hierarchical command structures:
 
 ```csharp
 // Repository commands
-builder.Map("git init", () => GitInit());
-builder.Map("git clone {url}", (string url) => GitClone(url));
-builder.Map("git status", () => GitStatus());
+builder.Map("git init")
+  .WithHandler(() => GitInit())
+  .AsCommand()
+  .Done();
+builder.Map("git clone {url}")
+  .WithHandler((string url) => GitClone(url))
+  .AsCommand()
+  .Done();
+builder.Map("git status")
+  .WithHandler(() => GitStatus())
+  .AsCommand()
+  .Done();
 
 // Branch commands
-builder.Map("git branch", () => ListBranches());
-builder.Map("git branch {name}", (string name) => CreateBranch(name));
-builder.Map("git checkout {branch}", (string branch) => Checkout(branch));
+builder.Map("git branch")
+  .WithHandler(() => ListBranches())
+  .AsCommand()
+  .Done();
+builder.Map("git branch {name}")
+  .WithHandler((string name) => CreateBranch(name))
+  .AsCommand()
+  .Done();
+builder.Map("git checkout {branch}")
+  .WithHandler((string branch) => Checkout(branch))
+  .AsCommand()
+  .Done();
 
 // Commit commands
-builder.Map("git add {*files}", (string[] files) => GitAdd(files));
-builder.Map("git commit -m {message}", (string message) => GitCommit(message));
-builder.Map("git push", () => GitPush());
-builder.Map("git push --force", () => GitPushForce());
+builder.Map("git add {*files}")
+  .WithHandler((string[] files) => GitAdd(files))
+  .AsCommand()
+  .Done();
+builder.Map("git commit -m {message}")
+  .WithHandler((string message) => GitCommit(message))
+  .AsCommand()
+  .Done();
+builder.Map("git push")
+  .WithHandler(() => GitPush())
+  .AsCommand()
+  .Done();
+builder.Map("git push --force")
+  .WithHandler(() => GitPushForce())
+  .AsCommand()
+  .Done();
 ```
 
 ### Docker-Style Options
@@ -289,25 +373,25 @@ builder.Map("git push --force", () => GitPushForce());
 Complex option combinations:
 
 ```csharp
-builder.Map("run {image}", (string image) => Docker.Run(image));
+builder.Map("run {image}")
+  .WithHandler((string image) => Docker.Run(image))
+  .AsCommand()
+  .Done();
 
-builder.Map
-(
-  "run {image} --port {port:int}",
-  (string image, int port) => Docker.Run(image, port: port)
-);
+builder.Map("run {image} --port {port:int}")
+  .WithHandler((string image, int port) => Docker.Run(image, port: port))
+  .AsCommand()
+  .Done();
 
-builder.Map
-(
-  "run {image} --port {port:int} --detach",
-  (string image, int port) => Docker.Run(image, port: port, detached: true)
-);
+builder.Map("run {image} --port {port:int} --detach")
+  .WithHandler((string image, int port) => Docker.Run(image, port: port, detached: true))
+  .AsCommand()
+  .Done();
 
-builder.Map
-(
-  "run {image} --env {*vars}",
-  (string image, string[] vars) => Docker.Run(image, envVars: vars)
-);
+builder.Map("run {image} --env {*vars}")
+  .WithHandler((string image, string[] vars) => Docker.Run(image, envVars: vars))
+  .AsCommand()
+  .Done();
 ```
 
 ### Conditional Routing Based on Options
@@ -316,25 +400,22 @@ Different handlers for different option combinations:
 
 ```csharp
 // Dry run
-builder.Map
-(
-  "deploy {app} --env {environment} --dry-run",
-  (string app, string env) => DeployDryRun(app, env)
-);
+builder.Map("deploy {app} --env {environment} --dry-run")
+  .WithHandler((string app, string environment) => DeployDryRun(app, environment))
+  .AsCommand()
+  .Done();
 
 // Actual deployment
-builder.Map
-(
-  "deploy {app} --env {environment}",
-  (string app, string env) => DeployReal(app, env)
-);
+builder.Map("deploy {app} --env {environment}")
+  .WithHandler((string app, string environment) => DeployReal(app, environment))
+  .AsCommand()
+  .Done();
 
 // Force deployment
-builder.Map
-(
-  "deploy {app} --env {environment} --force",
-  (string app, string env) => DeployForce(app, env)
-);
+builder.Map("deploy {app} --env {environment} --force")
+  .WithHandler((string app, string environment) => DeployForce(app, environment))
+  .AsCommand()
+  .Done();
 ```
 
 ## Route Specificity and Matching
@@ -346,9 +427,18 @@ When multiple routes could match, Nuru uses specificity rules:
 3. **Options matter**: Routes with specific options are more specific
 
 ```csharp
-builder.Map("deploy prod", () => DeployProduction());           // Most specific
-builder.Map("deploy {env}", (string env) => DeployEnv(env));    // Less specific
-builder.Map("{*args}", (string[] args) => HandleGeneric(args)); // Least specific
+builder.Map("deploy prod")                                       // Most specific
+  .WithHandler(() => DeployProduction())
+  .AsCommand()
+  .Done();
+builder.Map("deploy {env}")                                      // Less specific
+  .WithHandler((string env) => DeployEnv(env))
+  .AsCommand()
+  .Done();
+builder.Map("{*args}")                                           // Least specific
+  .WithHandler((string[] args) => HandleGeneric(args))
+  .AsCommand()
+  .Done();
 ```
 
 ```bash
@@ -365,13 +455,13 @@ Design routes to minimize the number of route definitions:
 
 ```csharp
 // ❌ Factorial explosion with optional parameters
-builder.Map("deploy {env}", handler);
-builder.Map("deploy {env} {version}", handler);
-builder.Map("deploy {env} {version} {region}", handler);
+builder.Map("deploy {env}").WithHandler(handler).AsCommand().Done();
+builder.Map("deploy {env} {version}").WithHandler(handler).AsCommand().Done();
+builder.Map("deploy {env} {version} {region}").WithHandler(handler).AsCommand().Done();
 // Creates 3 routes for one concept
 
 // ✅ Use optional parameters
-builder.Map("deploy {env} {version?} {region?}", handler);
+builder.Map("deploy {env} {version?} {region?}").WithHandler(handler).AsCommand().Done();
 // One route, same flexibility
 ```
 
@@ -381,10 +471,10 @@ Use descriptive names that indicate purpose:
 
 ```csharp
 // ❌ Unclear
-builder.Map("copy {arg1} {arg2}", handler);
+builder.Map("copy {arg1} {arg2}").WithHandler(handler).AsCommand().Done();
 
 // ✅ Clear
-builder.Map("copy {source} {destination}", handler);
+builder.Map("copy {source} {destination}").WithHandler(handler).AsCommand().Done();
 ```
 
 ### Consistent Option Naming
@@ -393,9 +483,9 @@ Follow CLI conventions:
 
 ```csharp
 // ✅ Standard conventions
-builder.Map("build --verbose", handler);      // Long form
-builder.Map("build -v", handler);             // Short form
-builder.Map("build --verbose,-v", handler);   // Both (preferred)
+builder.Map("build --verbose").WithHandler(handler).AsCommand().Done();      // Long form
+builder.Map("build -v").WithHandler(handler).AsCommand().Done();             // Short form
+builder.Map("build --verbose,-v").WithHandler(handler).AsCommand().Done();   // Both (preferred)
 ```
 
 ## Related Documentation

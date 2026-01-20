@@ -16,29 +16,46 @@ REPL mode is ideal for:
 
 ```csharp
 using TimeWarp.Nuru;
-using TimeWarp.Nuru.Repl;
 
-NuruAppBuilder builder = new NuruAppBuilder()
-  .Map("greet {name}", name => Console.WriteLine($"Hello, {name}!"))
-  .Map("version", () => Console.WriteLine("v1.0.0"));
+NuruCoreApp app = NuruApp.CreateBuilder(args)
+  .Map("greet {name}")
+    .WithHandler((string name) => Console.WriteLine($"Hello, {name}!"))
+    .AsCommand()
+    .Done()
+  .Map("version")
+    .WithHandler(() => Console.WriteLine("v1.0.0"))
+    .AsQuery()
+    .Done()
+  .AddRepl(options =>
+  {
+    options.Prompt = "myapp> ";
+    options.WelcomeMessage = "Welcome to MyApp REPL!";
+    options.GoodbyeMessage = "Goodbye!";
+  })
+  .Build();
 
-NuruApp app = builder.Build();
-
-// Start REPL mode
-await app.RunReplAsync(new ReplOptions
-{
-  Prompt = "myapp> ",
-  WelcomeMessage = "Welcome to MyApp REPL!"
-});
+// Start REPL mode directly
+await app.RunReplAsync();
 ```
 
 ### Command-Line Entry
 
-If your application supports it, you can enter REPL mode via command line:
+Applications with REPL enabled support interactive mode flags:
 
 ```bash
-# If your app exposes --repl flag
-myapp --repl
+# Enter REPL mode using flags
+myapp --interactive
+myapp -i
+```
+
+Or run the app which will process commands or enter REPL based on arguments:
+
+```bash
+# Run a single command
+myapp greet Alice
+
+# Enter interactive mode
+myapp -i
 ```
 
 ## Basic Usage
@@ -46,22 +63,22 @@ myapp --repl
 ### Starting REPL
 
 ```bash
-$ myapp --repl
-TimeWarp.Nuru REPL Mode. Type 'help' for commands, 'exit' to quit.
+$ myapp -i
+Welcome to MyApp REPL!
 
->
+myapp>
 ```
 
 ### Executing Commands
 
 ```bash
-> greet Alice
+myapp> greet Alice
 Hello, Alice!
 
-> version
+myapp> version
 v1.0.0
 
-> exit
+myapp> exit
 Goodbye!
 $
 ```
@@ -81,14 +98,14 @@ $
 REPL automatically saves your command history to `~/.nuru_history`:
 
 ```bash
-> greet Bob
+myapp> greet Bob
 Hello, Bob!
 
-> history
+myapp> history
 Command History:
   1: greet Bob
 
-> # Use up/down arrows to navigate history
+myapp> # Use up/down arrows to navigate history
 ```
 
 ### Colored Output
@@ -97,11 +114,11 @@ When colors are enabled, prompts and errors are color-coded:
 
 ```bash
 # Green prompt for input
-> greet Charlie
+myapp> greet Charlie
 Hello, Charlie!
 
 # Red errors for failures
-> invalid-command
+myapp> invalid-command
 Error: No matching command found.
 ```
 
@@ -110,7 +127,7 @@ Error: No matching command found.
 Commands show execution time when enabled:
 
 ```bash
-> slow-command
+myapp> slow-command
 Command executed successfully
 (150ms)
 ```
@@ -120,7 +137,7 @@ Command executed successfully
 The `help` command shows available application commands with descriptions:
 
 ```bash
-> help
+myapp> help
 REPL Commands:
   exit, quit, q     - Exit the REPL
   help, ?           - Show this help
@@ -137,46 +154,53 @@ Available Application Commands:
 
 ## Configuration Options
 
-### ReplOptions Class
+### ReplOptions Properties
+
+Configure REPL behavior through the `.AddRepl(options => ...)` pattern:
 
 ```csharp
-public class ReplOptions
-{
-  // Prompt appearance
-  public string Prompt { get; set; } = "> ";
-  public bool EnableColors { get; set; } = true;
+NuruCoreApp app = NuruApp.CreateBuilder(args)
+  .Map("greet {name}")
+    .WithHandler((string name) => Console.WriteLine($"Hello, {name}!"))
+    .AsCommand()
+    .Done()
+  .AddRepl(options =>
+  {
+    // Prompt appearance
+    options.Prompt = "myapp> ";             // Prompt string (default: "> ")
+    options.PromptColor = "\x1b[36m";       // ANSI color code (default: green)
+    options.EnableColors = true;            // Enable colored output
 
-  // Messages
-  public string? WelcomeMessage { get; set; }
-  public string? GoodbyeMessage { get; set; }
+    // Messages
+    options.WelcomeMessage = "Welcome!";    // Displayed when REPL starts
+    options.GoodbyeMessage = "Goodbye!";    // Displayed when exiting
 
-  // History
-  public bool PersistHistory { get; set; } = true;
-  public string? HistoryFilePath { get; set; }
-  public int MaxHistorySize { get; set; } = 1000;
+    // History
+    options.PersistHistory = true;          // Save history between sessions
+    options.HistoryFilePath = "~/.myapp_history";  // Custom history file
+    options.MaxHistorySize = 1000;          // Maximum history entries
 
-  // Behavior
-  public bool ContinueOnError { get; set; } = true;
-  public bool ShowExitCode { get; set; }
-  public bool ShowTiming { get; set; } = true;
-  public bool EnableArrowHistory { get; set; } = true;
-}
+    // Behavior
+    options.ContinueOnError = true;         // Continue after command errors
+    options.ShowExitCode = false;           // Show exit code after commands
+    options.ShowTiming = true;              // Show execution time
+    options.EnableArrowHistory = true;      // Arrow key history navigation
+
+    // Key bindings
+    options.KeyBindingProfileName = "Default";  // "Default", "Emacs", "Vi", "VSCode"
+  })
+  .Build();
 ```
 
-### Example Configuration
+### ANSI Color Codes
 
-```csharp
-ReplOptions options = new()
-{
-  Prompt = "myapp> ",
-  EnableColors = true,
-  ShowTiming = true,
-  PersistHistory = true,
-  HistoryFilePath = "/custom/path/.myapp_history",
-  WelcomeMessage = "Welcome to MyApp interactive mode!",
-  GoodbyeMessage = "Thanks for using MyApp!"
-};
-```
+Common prompt color codes:
+- `"\x1b[31m"` - Red
+- `"\x1b[32m"` - Green (default)
+- `"\x1b[33m"` - Yellow
+- `"\x1b[34m"` - Blue
+- `"\x1b[35m"` - Magenta
+- `"\x1b[36m"` - Cyan
 
 ## Arrow Key History Navigation
 
@@ -189,13 +213,13 @@ When enabled, use arrow keys to navigate command history:
 - **Left/Right Arrows**: Move cursor within line
 
 ```bash
-> greet Alice
+myapp> greet Alice
 Hello, Alice!
 
-> # Press up arrow to recall "greet Alice"
-> greet Alice  # Cursor at end, can edit
+myapp> # Press up arrow to recall "greet Alice"
+myapp> greet Alice  # Cursor at end, can edit
 
-> greet Bob   # Modified and executed
+myapp> greet Bob   # Modified and executed
 Hello, Bob!
 ```
 
@@ -204,20 +228,38 @@ Hello, Bob!
 REPL continues running after command errors by default:
 
 ```bash
-> invalid-command
+myapp> invalid-command
 Error: No matching command found.
 
-> # REPL continues, ready for next command
->
+myapp> # REPL continues, ready for next command
+myapp>
 ```
 
 Configure to exit on errors:
 
 ```csharp
-ReplOptions options = new()
+.AddRepl(options =>
 {
-  ContinueOnError = false  // Exit on first error
-};
+  options.ContinueOnError = false;  // Exit on first error
+})
+```
+
+## History Ignore Patterns
+
+Exclude sensitive commands from history:
+
+```csharp
+.AddRepl(options =>
+{
+  options.HistoryIgnorePatterns = new[]
+  {
+    "*password*",
+    "*secret*",
+    "*token*",
+    "*apikey*",
+    "*credential*"
+  };
+})
 ```
 
 ## Integration with Completion
@@ -226,7 +268,7 @@ REPL integrates with TimeWarp.Nuru.Completion for enhanced help:
 
 ```csharp
 // If CompletionProvider is available, help shows command descriptions
-> help
+myapp> help
 Available Application Commands:
   greet {name} - Greet someone by name
   deploy {env} {version} - Deploy to environment
@@ -272,37 +314,52 @@ REPL works on Windows, Linux, and macOS:
 ### Simple Calculator REPL
 
 ```csharp
-NuruAppBuilder builder = new NuruAppBuilder()
-  .Map("add {a:int} {b:int}", (a, b) => Console.WriteLine($"{a} + {b} = {a + b}"))
-  .Map("multiply {a:int} {b:int}", (a, b) => Console.WriteLine($"{a} × {b} = {a * b}"));
+NuruCoreApp app = NuruApp.CreateBuilder(args)
+  .Map("add {a:int} {b:int}")
+    .WithHandler((int a, int b) => Console.WriteLine($"{a} + {b} = {a + b}"))
+    .AsQuery()
+    .Done()
+  .Map("multiply {a:int} {b:int}")
+    .WithHandler((int a, int b) => Console.WriteLine($"{a} × {b} = {a * b}"))
+    .AsQuery()
+    .Done()
+  .AddRepl(options =>
+  {
+    options.Prompt = "calc> ";
+    options.WelcomeMessage = "Calculator REPL - Type 'help' for operations";
+  })
+  .Build();
 
-NuruApp app = builder.Build();
-await app.RunReplAsync(new ReplOptions
-{
-  Prompt = "calc> ",
-  WelcomeMessage = "Calculator REPL - Type 'help' for operations"
-});
+await app.RunReplAsync();
 ```
 
-### Git Command Wrapper
+### CLI + REPL Dual Mode
 
 ```csharp
-NuruAppBuilder builder = new NuruAppBuilder()
-  .Map("status", () => RunGit("status"))
-  .Map("commit -m {message}", message => RunGit($"commit -m \"{message}\""))
-  .Map("log --oneline", () => RunGit("log --oneline"));
+NuruCoreApp app = NuruApp.CreateBuilder(args)
+  .Map("status")
+    .WithHandler(() => Console.WriteLine("System status: OK"))
+    .AsQuery()
+    .Done()
+  .Map("greet {name}")
+    .WithHandler((string name) => Console.WriteLine($"Hello, {name}!"))
+    .AsCommand()
+    .Done()
+  .AddRepl(options =>
+  {
+    options.Prompt = "demo> ";
+    options.WelcomeMessage = "Type '--help' for commands, 'exit' to quit.";
+    options.GoodbyeMessage = "Goodbye!";
+  })
+  .Build();
 
-NuruApp app = builder.Build();
-await app.RunReplAsync(new ReplOptions
-{
-  Prompt = "git> ",
-  EnableColors = true,
-  ShowTiming = true
-});
+// Runs single command or enters REPL based on args
+return await app.RunAsync(args);
 ```
+
+See [samples/13-repl/](../../../samples/13-repl/) for complete working examples.
 
 ## Next Steps
 
-- Explore [Implementing REPL Mode](../developer/guides/implementing-repl.md) for development details
-- See [REPL Samples](../../samples/repl-demo/) for working examples
-- Consider [Shell Tab Completion](../using-shell-completion.md) for external completion
+- Explore [REPL Key Bindings](../features/repl-key-bindings.md) for customizable key binding profiles
+- See [samples/13-repl/](../../../samples/13-repl/) for working examples

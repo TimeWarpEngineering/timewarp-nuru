@@ -180,7 +180,7 @@ Create single-file executables that run directly.
 
 using TimeWarp.Nuru;
 
-NuruApp app = new NuruAppBuilder()
+NuruCoreApp app = NuruApp.CreateBuilder(args)
   .Map("greet {name}", (string name) => $"Hello, {name}!")
   .Build();
 

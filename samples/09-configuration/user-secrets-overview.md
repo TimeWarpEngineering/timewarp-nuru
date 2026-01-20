@@ -35,7 +35,7 @@ DOTNET_ENVIRONMENT=Production dotnet run -- show
 
 ## How It Works
 
-The `NuruAppBuilder.AddConfiguration()` method automatically:
+The `AddConfiguration()` method automatically:
 1. Loads user secrets when `DOTNET_ENVIRONMENT=Development`
 2. Skips user secrets in Production (safe by default)
 3. Uses the `UserSecretsId` from the assembly attribute (generated from csproj property)

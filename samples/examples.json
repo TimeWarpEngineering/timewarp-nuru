@@ -38,7 +38,7 @@
       "id": "hello-world",
       "name": "Hello World",
       "description": "Simplest possible Nuru app - a single route with a greeting. NO additional packages required beyond TimeWarp.Nuru.",
-      "path": "samples/01-hello-world/hello-world.cs",
+      "path": "samples/01-hello-world/01-hello-world-lambda.cs",
       "tags": ["basics", "getting-started", "minimal"],
       "difficulty": "beginner"
     },
@@ -46,7 +46,7 @@
       "id": "async",
       "name": "Async Command Examples",
       "description": "Demonstrates async command handlers with Task-based routes and async/await patterns",
-      "path": "samples/async-examples/async-examples.cs",
+      "path": "samples/06-async-examples/async-examples.cs",
       "tags": ["async", "tasks", "advanced"],
       "difficulty": "intermediate"
     },
@@ -54,7 +54,7 @@
       "id": "console-logging",
       "name": "Console Logging Integration",
       "description": "Shows how to integrate Microsoft.Extensions.Logging with console output",
-      "path": "samples/logging/console-logging.cs",
+      "path": "samples/12-logging/console-logging.cs",
       "tags": ["logging", "console", "diagnostics"],
       "difficulty": "beginner"
     },
@@ -62,7 +62,7 @@
       "id": "serilog",
       "name": "Serilog Integration",
       "description": "Demonstrates Serilog integration with structured logging and trace-level output",
-      "path": "samples/logging/serilog-logging.cs",
+      "path": "samples/12-logging/serilog-logging.cs",
       "tags": ["logging", "serilog", "structured-logging", "diagnostics"],
       "difficulty": "intermediate"
     },
@@ -70,7 +70,7 @@
       "id": "configuration",
       "name": "Configuration Basics",
       "description": "Demonstrates AOT-compatible AddConfiguration() with .settings.json files, strongly-typed options, and ConfigureServices with IConfiguration access",
-      "path": "samples/configuration/configuration-basics.cs",
+      "path": "samples/09-configuration/01-configuration-basics.cs",
       "tags": ["configuration", "dependency-injection", "options-pattern", "settings-json", "aot-compatible"],
       "difficulty": "intermediate"
     },
@@ -78,7 +78,7 @@
       "id": "configuration-validation",
       "name": "Configuration Validation",
       "description": "Fail-fast configuration validation using DataAnnotations, custom validation, and FluentValidation with ValidateOnStart()",
-      "path": "samples/configuration/configuration-validation.cs",
+      "path": "samples/09-configuration/03-configuration-validation.cs",
       "tags": ["configuration", "validation", "fluent-validation", "data-annotations", "fail-fast"],
       "difficulty": "intermediate"
     },
@@ -86,7 +86,7 @@
       "id": "command-line-overrides",
       "name": "Command-Line Configuration Overrides",
       "description": "ASP.NET Core-style command-line configuration overrides using --Section:Key=Value syntax",
-      "path": "samples/configuration/command-line-overrides.cs",
+      "path": "samples/09-configuration/02-command-line-overrides.cs",
       "tags": ["configuration", "command-line", "overrides", "aspnet-style"],
       "difficulty": "intermediate"
     },
@@ -94,7 +94,7 @@
       "id": "repl-basic",
       "name": "REPL Basic Demo",
       "description": "Interactive REPL mode with various route pattern types - literals, parameters, options, and subcommands",
-      "path": "samples/repl-demo/repl-basic-demo.cs",
+      "path": "samples/13-repl/01-repl-cli-dual-mode.cs",
       "tags": ["repl", "interactive", "getting-started"],
       "difficulty": "beginner"
     },
@@ -102,7 +102,7 @@
       "id": "repl-keybindings",
       "name": "REPL Custom Key Bindings",
       "description": "Customize REPL key bindings with PSReadLine-style profiles (Emacs, Windows, Vi)",
-      "path": "samples/repl-demo/repl-custom-keybindings.cs",
+      "path": "samples/13-repl/02-repl-custom-keys.cs",
       "tags": ["repl", "key-bindings", "customization", "psreadline"],
       "difficulty": "intermediate"
     },
@@ -110,7 +110,7 @@
       "id": "repl-interactive",
       "name": "REPL Interactive Mode",
       "description": "CLI app with --interactive/-i flag to enter REPL mode",
-      "path": "samples/repl-demo/repl-interactive-mode.cs",
+      "path": "samples/13-repl/01-repl-cli-dual-mode.cs",
       "tags": ["repl", "interactive", "cli", "hybrid"],
       "difficulty": "intermediate"
     },
@@ -118,7 +118,7 @@
       "id": "repl-options",
       "name": "REPL Options Showcase",
       "description": "All REPL configuration options - prompts, history, welcome/goodbye messages",
-      "path": "samples/repl-demo/repl-options-showcase.cs",
+      "path": "samples/13-repl/03-repl-options.cs",
       "tags": ["repl", "options", "configuration", "customization"],
       "difficulty": "intermediate"
     },
@@ -126,23 +126,15 @@
       "id": "shell-completion",
       "name": "Shell Tab Completion",
       "description": "Static shell tab completion for Bash, Zsh, PowerShell, and Fish shells.",
-      "path": "samples/shell-completion-example/shell-completion-example.cs",
+      "path": "samples/15-completion/completion-example.cs",
       "tags": ["completion", "tab-completion", "bash", "zsh", "powershell", "fish", "static-completion"],
-      "difficulty": "intermediate"
-    },
-    {
-      "id": "dynamic-completion",
-      "name": "Dynamic Tab Completion",
-      "description": "Dynamic completion that queries the app at tab-press time with custom completion sources.",
-      "path": "samples/dynamic-completion-example/dynamic-completion-example.cs",
-      "tags": ["completion", "dynamic-completion", "custom-sources", "configure-completion", "createbuilder"],
       "difficulty": "intermediate"
     },
     {
       "id": "syntax-examples",
       "name": "Route Syntax Examples",
       "description": "Comprehensive examples of all route pattern syntax - literals, parameters, types, options, catch-all",
-      "path": "samples/syntax-examples.cs",
+      "path": "samples/04-syntax-examples/syntax-examples.cs",
       "tags": ["syntax", "patterns", "reference", "documentation"],
       "difficulty": "beginner"
     },
@@ -150,7 +142,7 @@
       "id": "builtin-types",
       "name": "Built-in Type Converters",
       "description": "Demonstrates all built-in type converters: int, double, bool, DateTime, Guid, etc.",
-      "path": "samples/builtin-types-example.cs",
+      "path": "samples/10-type-converters/01-builtin-types.cs",
       "tags": ["types", "converters", "parameters", "reference"],
       "difficulty": "beginner"
     },
@@ -158,7 +150,7 @@
       "id": "custom-type-converter",
       "name": "Custom Type Converter",
       "description": "Create custom type converters for your own types - enums, complex objects",
-      "path": "samples/custom-type-converter-example.cs",
+      "path": "samples/10-type-converters/02-custom-type-converters.cs",
       "tags": ["types", "converters", "custom", "advanced"],
       "difficulty": "intermediate"
     },
@@ -166,7 +158,7 @@
       "id": "test-output-capture",
       "name": "Testing Output Capture",
       "description": "Use TestTerminal to capture and assert CLI output in unit tests - stdout, stderr, and exit codes",
-      "path": "samples/testing/test-output-capture.cs",
+      "path": "samples/08-testing/01-output-capture.cs",
       "tags": ["testing", "terminal", "testability", "output-capture", "assertions"],
       "difficulty": "beginner"
     },
@@ -174,7 +166,7 @@
       "id": "test-colored-output",
       "name": "Testing Colored Output",
       "description": "Test handlers that produce colored/styled output using ANSI codes and fluent color extensions",
-      "path": "samples/testing/test-colored-output.cs",
+      "path": "samples/08-testing/02-colored-output.cs",
       "tags": ["testing", "terminal", "colors", "ansi", "styled-output"],
       "difficulty": "intermediate"
     },
@@ -182,7 +174,7 @@
       "id": "test-terminal-injection",
       "name": "ITerminal Dependency Injection",
       "description": "Inject ITerminal into route handlers for testable colored output with TestTerminal",
-      "path": "samples/testing/test-terminal-injection.cs",
+      "path": "samples/08-testing/03-terminal-injection.cs",
       "tags": ["testing", "terminal", "dependency-injection", "iterminal", "testability"],
       "difficulty": "intermediate"
     },
@@ -206,7 +198,7 @@
       "id": "pipeline-middleware",
       "name": "Complete Pipeline Middleware",
       "description": "Complete reference with all pipeline behaviors: telemetry, performance, logging, authorization, retry, and exception handling.",
-      "path": "samples/07-pipeline-middleware/01-pipeline-middleware.cs",
+      "path": "samples/07-pipeline-middleware/06-pipeline-middleware-combined.cs",
       "tags": ["pipeline", "middleware", "behaviors", "cross-cutting-concerns", "complete-reference", "enterprise"],
       "difficulty": "advanced"
     },
@@ -214,7 +206,7 @@
       "id": "pipeline-middleware-basic",
       "name": "Pipeline Middleware - Basic",
       "description": "Fundamental pipeline behaviors: logging and performance monitoring with before/after pattern.",
-      "path": "samples/07-pipeline-middleware/02-pipeline-middleware-basic.cs",
+      "path": "samples/07-pipeline-middleware/01-pipeline-middleware-basic.cs",
       "tags": ["pipeline", "middleware", "logging", "performance", "getting-started"],
       "difficulty": "intermediate"
     },
@@ -222,7 +214,7 @@
       "id": "pipeline-middleware-authorization",
       "name": "Pipeline Middleware - Authorization",
       "description": "Permission checks using marker interface pattern. Commands opt-in via IRequireAuthorization.",
-      "path": "samples/07-pipeline-middleware/03-pipeline-middleware-authorization.cs",
+      "path": "samples/07-pipeline-middleware/04-pipeline-middleware-filtered-auth.cs",
       "tags": ["pipeline", "middleware", "authorization", "marker-interface", "security"],
       "difficulty": "intermediate"
     },
@@ -230,7 +222,7 @@
       "id": "pipeline-middleware-retry",
       "name": "Pipeline Middleware - Retry",
       "description": "Resilience with exponential backoff for transient failures. Commands opt-in via IRetryable.",
-      "path": "samples/07-pipeline-middleware/04-pipeline-middleware-retry.cs",
+      "path": "samples/07-pipeline-middleware/05-pipeline-middleware-retry.cs",
       "tags": ["pipeline", "middleware", "retry", "resilience", "exponential-backoff"],
       "difficulty": "intermediate"
     },
@@ -238,7 +230,7 @@
       "id": "pipeline-middleware-exception",
       "name": "Pipeline Middleware - Exception Handling",
       "description": "Consistent exception handling with categorized errors and user-friendly messages.",
-      "path": "samples/07-pipeline-middleware/05-pipeline-middleware-exception.cs",
+      "path": "samples/07-pipeline-middleware/02-pipeline-middleware-exception.cs",
       "tags": ["pipeline", "middleware", "exception-handling", "error-handling"],
       "difficulty": "intermediate"
     },
@@ -246,57 +238,17 @@
       "id": "pipeline-middleware-telemetry",
       "name": "Pipeline Middleware - Telemetry",
       "description": "OpenTelemetry-compatible distributed tracing with Activity spans for observability.",
-      "path": "samples/07-pipeline-middleware/06-pipeline-middleware-telemetry.cs",
+      "path": "samples/07-pipeline-middleware/03-pipeline-middleware-telemetry.cs",
       "tags": ["pipeline", "middleware", "telemetry", "opentelemetry", "distributed-tracing", "observability"],
       "difficulty": "intermediate"
     },
     {
-      "id": "aspire-telemetry",
-      "name": "Aspire Telemetry",
+      "id": "aspire-otel",
+      "name": "Aspire OpenTelemetry Integration",
       "description": "OpenTelemetry integration with Aspire Dashboard - traces, metrics, and logs for CLI observability",
-      "path": "samples/aspire-telemetry/aspire-telemetry.cs",
+      "path": "samples/14-aspire-otel/nuru-client.cs",
       "tags": ["telemetry", "opentelemetry", "aspire", "traces", "metrics", "observability", "otlp"],
       "difficulty": "advanced"
-    },
-    {
-      "id": "aspire-host-otel",
-      "name": "Aspire Host with OpenTelemetry",
-      "description": "Full Aspire AppHost integration with IHostApplicationBuilder, .NET 10 runfiles, TelemetryBehavior pipeline, and dual output pattern",
-      "path": "samples/aspire-host-otel/nuru-client.cs",
-      "tags": ["aspire", "opentelemetry", "telemetry", "ihostapplicationbuilder", "runfiles", "dashboard", "apphost", "repl"],
-      "difficulty": "advanced"
-    },
-    {
-      "id": "rule-widget",
-      "name": "Rule Widget",
-      "description": "Horizontal divider lines with optional centered text - lightweight Spectre.Console Rule alternative",
-      "path": "samples/terminal/rule-widget.cs",
-      "tags": ["widgets", "terminal", "rule", "divider", "output", "spectre-alternative"],
-      "difficulty": "beginner"
-    },
-    {
-      "id": "panel-widget",
-      "name": "Panel Widget",
-      "description": "Bordered boxes with headers and styled content - lightweight Spectre.Console Panel alternative",
-      "path": "samples/terminal/panel-widget.cs",
-      "tags": ["widgets", "terminal", "panel", "box", "border", "output", "spectre-alternative"],
-      "difficulty": "beginner"
-    },
-    {
-      "id": "table-widget",
-      "name": "Table Widget",
-      "description": "Columnar data tables with alignment, borders, and styling - lightweight Spectre.Console Table alternative",
-      "path": "samples/terminal/table-widget.cs",
-      "tags": ["widgets", "terminal", "table", "columns", "output", "spectre-alternative"],
-      "difficulty": "intermediate"
-    },
-    {
-      "id": "hyperlink-widget",
-      "name": "Hyperlink Widget (OSC 8)",
-      "description": "Clickable terminal URLs using OSC 8 hyperlinks - supported in Windows Terminal, VS Code, iTerm2, and more",
-      "path": "samples/terminal/hyperlink-widget.cs",
-      "tags": ["widgets", "terminal", "hyperlinks", "osc8", "links", "clickable", "spectre-alternative"],
-      "difficulty": "beginner"
     }
   ]
 }

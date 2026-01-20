@@ -14,7 +14,7 @@ TimeWarp.Nuru REPL supports multiple key binding profiles to match your muscle m
 **Key Benefits:**
 - **User Choice**: Pick familiar key bindings from your preferred editor
 - **Backward Compatible**: Default profile preserves existing behavior
-- **Extensible**: Easy to add custom profiles (Phase 3)
+- **Extensible**: Create custom profiles based on built-in ones
 
 ## Quick Start
 
@@ -23,27 +23,37 @@ TimeWarp.Nuru REPL supports multiple key binding profiles to match your muscle m
 The default profile is used automatically - no configuration needed:
 
 ```csharp
-NuruAppBuilder builder = NuruApp.CreateBuilder(args);
-builder.Map("greet {name}", (string name) => $"Hello, {name}!");
-builder.AddReplSupport();
+NuruCoreApp app = NuruApp.CreateBuilder(args)
+  .Map("greet {name}")
+    .WithHandler((string name) => Console.WriteLine($"Hello, {name}!"))
+    .AsCommand()
+    .Done()
+  .AddRepl(options =>
+  {
+    options.Prompt = "myapp> ";
+  })
+  .Build();
 
-await builder.Build().RunReplAsync();
+await app.RunReplAsync();
 ```
 
 ### Selecting a Profile
 
-Choose a different profile via `ReplOptions.KeyBindingProfileName`:
+Choose a different profile via `KeyBindingProfileName`:
 
 ```csharp
-NuruAppBuilder builder = NuruApp.CreateBuilder(args);
-builder.Map("greet {name}", (string name) => $"Hello, {name}!");
-
-builder.AddReplSupport(options =>
-{
+NuruCoreApp app = NuruApp.CreateBuilder(args)
+  .Map("greet {name}")
+    .WithHandler((string name) => Console.WriteLine($"Hello, {name}!"))
+    .AsCommand()
+    .Done()
+  .AddRepl(options =>
+  {
     options.KeyBindingProfileName = "Emacs";  // or "Vi", "VSCode", "Default"
-});
+  })
+  .Build();
 
-await builder.Build().RunReplAsync();
+await app.RunReplAsync();
 ```
 
 ## Key Binding Profiles
@@ -161,28 +171,68 @@ Visual Studio Code-style bindings for users familiar with modern editors.
 | Next history | `↓`/`Ctrl+N` | `Ctrl+N` | `↓`/`Ctrl+N` | `↓` |
 | Tab completion | `Tab` | `Tab` | `Tab` | `Tab` |
 
+## Custom Key Bindings
+
+Create personalized key bindings using `CustomKeyBindingProfile`:
+
+```csharp
+using TimeWarp.Nuru;
+
+// Start from any built-in profile and customize
+CustomKeyBindingProfile customProfile = new CustomKeyBindingProfile(new EmacsKeyBindingProfile())
+  .WithName("MyCustomProfile")
+
+  // Add a custom binding (Ctrl+G for bell)
+  .Add
+  (
+    ConsoleKey.G,
+    ConsoleModifiers.Control,
+    reader => () => reader.Write("\a")
+  )
+
+  // Remove a binding (disable Ctrl+D EOF)
+  .Remove(ConsoleKey.D, ConsoleModifiers.Control);
+
+NuruCoreApp app = NuruApp.CreateBuilder(args)
+  .Map("greet {name}")
+    .WithHandler((string name) => Console.WriteLine($"Hello, {name}!"))
+    .AsCommand()
+    .Done()
+  .AddRepl(options =>
+  {
+    options.Prompt = "custom> ";
+    options.KeyBindingProfile = customProfile;
+  })
+  .Build();
+
+await app.RunReplAsync();
+```
+
+See [samples/13-repl/02-repl-custom-keys.cs](../../../samples/13-repl/02-repl-custom-keys.cs) for a complete example.
+
 ## Usage Examples
 
 ### Interactive Application with Emacs Bindings
 
 ```csharp
-#!/usr/bin/dotnet run
-using TimeWarp.Nuru;
-
-NuruAppBuilder builder = NuruApp.CreateBuilder(args);
-
-builder.Map("add {a:int} {b:int}", (int a, int b) => a + b);
-builder.Map("sub {a:int} {b:int}", (int a, int b) => a - b);
-builder.Map("mul {a:int} {b:int}", (int a, int b) => a * b);
-
-builder.AddReplSupport(options =>
-{
+NuruCoreApp app = NuruApp.CreateBuilder(args)
+  .Map("add {a:int} {b:int}")
+    .WithHandler((int a, int b) => Console.WriteLine($"{a} + {b} = {a + b}"))
+    .AsQuery()
+    .Done()
+  .Map("sub {a:int} {b:int}")
+    .WithHandler((int a, int b) => Console.WriteLine($"{a} - {b} = {a - b}"))
+    .AsQuery()
+    .Done()
+  .AddRepl(options =>
+  {
     options.Prompt = "calc> ";
     options.KeyBindingProfileName = "Emacs";
     options.EnableColors = true;
-});
+  })
+  .Build();
 
-return await builder.Build().RunReplAsync();
+await app.RunReplAsync();
 ```
 
 ### Detecting User Preference
@@ -190,15 +240,20 @@ return await builder.Build().RunReplAsync();
 You can let users choose their profile via configuration:
 
 ```csharp
-NuruAppBuilder builder = NuruApp.CreateBuilder(args);
-
-// Read from environment or config
-string profile = Environment.GetEnvironmentVariable("NURU_KEYBINDINGS") ?? "Default";
-
-builder.AddReplSupport(options =>
-{
+NuruCoreApp app = NuruApp.CreateBuilder(args)
+  .Map("greet {name}")
+    .WithHandler((string name) => Console.WriteLine($"Hello, {name}!"))
+    .AsCommand()
+    .Done()
+  .AddRepl(options =>
+  {
+    // Read from environment or config
+    string profile = Environment.GetEnvironmentVariable("NURU_KEYBINDINGS") ?? "Default";
     options.KeyBindingProfileName = profile;
-});
+  })
+  .Build();
+
+await app.RunAsync(args);
 ```
 
 ### Available Profile Names
@@ -212,9 +267,17 @@ builder.AddReplSupport(options =>
 
 Profile names are case-sensitive.
 
+## More Examples
+
+See [samples/13-repl/](../../../samples/13-repl/) for complete working examples:
+
+- `01-repl-cli-dual-mode.cs` - CLI + REPL dual mode application
+- `02-repl-custom-keys.cs` - Custom key binding profiles
+- `03-repl-options.cs` - Comprehensive ReplOptions configuration
+- `04-repl-complete.cs` - Complete REPL feature demonstration
+
 ## Future Enhancements
 
-- **Custom Key Bindings (Task 057)**: Define your own key bindings via builder API
 - **Full Vi Modal Editing**: Normal, insert, and visual modes
 - **Reverse History Search**: `Ctrl+R` incremental search (Emacs profile)
 - **Profile Auto-Detection**: Suggest profile based on OS/shell environment

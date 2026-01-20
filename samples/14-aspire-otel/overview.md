@@ -29,7 +29,7 @@ Both runfiles share a single `Properties/launchSettings.json` with multiple prof
 
 ## IHostApplicationBuilder Integration
 
-**New in Nuru 3.0**: `NuruAppBuilder` implements `IHostApplicationBuilder`, enabling seamless integration with Aspire and other .NET ecosystem extensions:
+**Nuru 3.0**: `NuruAppBuilder` implements `IHostApplicationBuilder`, enabling seamless integration with Aspire and other .NET ecosystem extensions:
 
 ```csharp
 // NuruAppBuilder implements IHostApplicationBuilder!

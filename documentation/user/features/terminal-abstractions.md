@@ -49,7 +49,7 @@ return await builder.Build().RunAsync(args);
 ```csharp
 using TestTerminal terminal = new();
 
-NuruApp app = new NuruAppBuilder()
+NuruCoreApp app = NuruApp.CreateBuilder(args)
     .UseTerminal(terminal)
     .Map("greet {name}", (string name, ITerminal t) =>
         t.WriteLine($"Hello, {name}!".Green()))
@@ -286,7 +286,7 @@ Where:
 ```csharp
 using TestTerminal terminal = new();
 
-NuruApp app = new NuruAppBuilder()
+NuruCoreApp app = NuruApp.CreateBuilder(args)
     .UseTerminal(terminal)
     .Map("hello", (ITerminal t) => t.WriteLine("Hello, World!"))
     .Build();
@@ -303,7 +303,7 @@ Assert.Equal(1, terminal.GetOutputLines().Length);
 ```csharp
 using TestTerminal terminal = new();
 
-NuruApp app = new NuruAppBuilder()
+NuruCoreApp app = NuruApp.CreateBuilder(args)
     .UseTerminal(terminal)
     .Map("fail", (ITerminal t) => t.WriteErrorLine("Something went wrong"))
     .Build();
@@ -325,7 +325,7 @@ terminal.QueueKey(ConsoleKey.Tab); // Press Tab for completion
 terminal.QueueKey(ConsoleKey.Enter); // Press Enter
 terminal.QueueLine("exit");       // Type "exit" and Enter
 
-NuruApp app = new NuruAppBuilder()
+NuruCoreApp app = NuruApp.CreateBuilder(args)
     .UseTerminal(terminal)
     .Map("hello-world", () => Console.WriteLine("Hello!"))
     .Build();
@@ -367,20 +367,20 @@ terminal.ClearKeys();
 
 ```csharp
 // Production (default)
-NuruApp app = new NuruAppBuilder()
+NuruCoreApp app = NuruApp.CreateBuilder(args)
     .Map("hello", () => Console.WriteLine("Hello!"))
     .Build();
 // Uses TimeWarpTerminal.Default automatically
 
 // Testing
 using TestTerminal terminal = new();
-NuruApp testApp = new NuruAppBuilder()
+NuruCoreApp testApp = NuruApp.CreateBuilder(args)
     .UseTerminal(terminal)
     .Map("hello", () => Console.WriteLine("Hello!"))
     .Build();
 
 // Custom terminal
-NuruApp customApp = new NuruAppBuilder()
+NuruCoreApp customApp = NuruApp.CreateBuilder(args)
     .UseTerminal(new MyCustomTerminal())
     .Build();
 ```

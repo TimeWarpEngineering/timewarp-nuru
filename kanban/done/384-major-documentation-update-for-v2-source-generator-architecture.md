@@ -91,3 +91,48 @@ Key files to reference:
 - `samples/` - Numbered sample applications
 - `source/timewarp-nuru/` - Core library
 - `source/timewarp-nuru-analyzers/` - Source generator
+
+## Results
+
+### Files Modified/Created
+
+**New Documentation Files (6):**
+- `documentation/user/reference/builder-api.md` - Complete fluent API reference
+- `documentation/user/features/attributed-routes.md` - [NuruRoute] system documentation
+- `documentation/user/features/pipeline-behaviors.md` - INuruBehavior middleware docs
+- `documentation/user/features/configuration.md` - Configuration & DI documentation
+- `documentation/user/features/telemetry.md` - OpenTelemetry/Aspire integration
+
+**Updated Documentation Files (15+):**
+- `readme.md` - Quick start with both patterns, removed SlimBuilder/EmptyBuilder
+- `documentation/user/getting-started.md` - Complete rewrite with current API
+- `documentation/user/features/routing.md` - All examples updated to fluent chain
+- `documentation/user/reference/supported-types.md` - Fixed IRouteTypeConverter interface
+- `documentation/user/guides/using-repl-mode.md` - AddRepl() API pattern
+- `documentation/user/features/repl-key-bindings.md` - Current key binding API
+- `documentation/user/features/analyzer.md` - Added debug diagnostics section
+- `documentation/user/features/logging.md` - Fixed all builder references
+- `documentation/user/features/auto-help.md` - Fixed builder references
+- `documentation/user/use-cases.md` - Fixed builder references
+- `documentation/user/guides/*.md` - Multiple files updated
+- `documentation/user/features/terminal-abstractions.md` - Fixed builder references
+- `documentation/user/features/widgets.md` - Fixed builder references
+- `documentation/user/features/built-in-routes.md` - Fixed builder references
+- `documentation/user/features/shell-completion.md` - Fixed builder references
+
+**Sample READMEs Created (15):**
+- All sample directories now have README.md files with run instructions
+
+**Support Files Updated:**
+- `samples/examples.json` - Fixed 27 broken paths, removed 6 non-existent entries
+
+### Key Changes
+- Only `NuruApp.CreateBuilder(args)` documented - removed SlimBuilder/EmptyBuilder references
+- Both fluent DSL and attributed routes presented as equal first-class patterns
+- No temporal references (V1/V2, "currently", etc.)
+- All examples use `.Map().WithHandler().AsCommand().Done()` pattern
+- Removed cocona-comparison references
+- Fixed `IRouteTypeConverter` interface (was incorrectly `ITypeConverter<T>`)
+
+### Checklist Items Completed
+All 37 checklist items from the original task have been addressed through the documentation updates.

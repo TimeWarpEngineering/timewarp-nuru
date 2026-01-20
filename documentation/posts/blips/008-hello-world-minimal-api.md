@@ -41,17 +41,11 @@ If you know ASP.NET Core, you already know Nuru:
 | `app.MapGet("/path", handler)` | `builder.Map("command", handler)` |
 | `app.Run()` | `await app.RunAsync(args)` |
 
-## Three Builder Options
+## Builder
 
 ```csharp
 // Full featured: DI, Config, Mediator, REPL, Completion
 NuruAppBuilder builder = NuruApp.CreateBuilder(args);
-
-// Lightweight: Auto-help, AOT-friendly
-NuruAppBuilder builder = NuruApp.CreateSlimBuilder();
-
-// Bare minimum: Total control
-NuruAppBuilder builder = NuruApp.CreateEmptyBuilder();
 ```
 
 ## Get Started

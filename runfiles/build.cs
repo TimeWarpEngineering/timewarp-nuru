@@ -12,7 +12,7 @@ WriteLine($"Working from: {Directory.GetCurrentDirectory()}");
 // Build each project individually to avoid framework resolution issues
 // Note: TimeWarp.Nuru.Parsing is no longer built separately - its source is compiled directly into consuming projects
 // Note: Some projects commented out due to known issues:
-// - timewarp-nuru-repl: Needs NuruCoreApp properties not yet implemented
+// - timewarp-nuru-repl: Needs NuruApp properties not yet implemented
 // - timewarp-nuru-testapp-delegates: Has catch-all parameter generator bug (#331)
 string[] projectsToBuild = [
   "../source/timewarp-nuru-analyzers/timewarp-nuru-analyzers.csproj",
@@ -20,7 +20,7 @@ string[] projectsToBuild = [
   "../source/timewarp-nuru-mcp/timewarp-nuru-mcp.csproj",
   "../source/timewarp-nuru/timewarp-nuru.csproj",
   "../source/timewarp-nuru-completion/timewarp-nuru-completion.csproj",
-  // "../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj", // Needs NuruCoreApp properties
+  // "../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj", // Needs NuruApp properties not yet implemented
   // "../benchmarks/timewarp-nuru-benchmarks/timewarp-nuru-benchmarks.csproj",
   // "../tests/test-apps/timewarp-nuru-testapp-delegates/timewarp-nuru-testapp-delegates.csproj", // Catch-all bug #331
   // "../tests/timewarp-nuru-analyzers-tests/timewarp-nuru-analyzers-tests.csproj",

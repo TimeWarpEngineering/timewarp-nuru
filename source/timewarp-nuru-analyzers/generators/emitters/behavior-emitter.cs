@@ -349,7 +349,7 @@ internal static class BehaviorEmitter
     if (serviceTypeName.Contains("IConfiguration", StringComparison.Ordinal))
       return "configuration";
 
-    if (serviceTypeName is "global::TimeWarp.Nuru.NuruCoreApp" or "TimeWarp.Nuru.NuruCoreApp" or "NuruCoreApp")
+    if (serviceTypeName is "global::TimeWarp.Nuru.NuruApp" or "TimeWarp.Nuru.NuruApp" or "NuruApp")
       return "app";
 
     // ILogger<T> - use configured factory if available, otherwise NullLoggerFactory

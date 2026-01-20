@@ -646,7 +646,7 @@ public sealed class DslInterpreter
     string typeName = containingType.Name;
     return typeName is "NuruCoreAppBuilder" or "NuruAppBuilder"
         or "EndpointBuilder" or "GroupBuilder" or "GroupEndpointBuilder"
-        or "NestedCompiledRouteBuilder" or "NuruApp" or "NuruCoreApp";
+        or "NestedCompiledRouteBuilder" or "NuruApp";
   }
 
   /// <summary>

@@ -91,7 +91,7 @@ internal static class InterceptorEmitter
     // Method signature - use index suffix for uniqueness when multiple apps
     sb.AppendLine($"  public static async Task<int> RunAsync_Intercepted{methodSuffix}");
     sb.AppendLine("  (");
-    sb.AppendLine("    this NuruCoreApp app,");
+    sb.AppendLine("    this NuruApp app,");
     sb.AppendLine("    string[] args");
     sb.AppendLine("  )");
     sb.AppendLine("  {");
@@ -126,7 +126,7 @@ internal static class InterceptorEmitter
   {
     sb.AppendLine($"  private static async Task<int> ExecuteRouteAsync{methodSuffix}");
     sb.AppendLine("  (");
-    sb.AppendLine("    NuruCoreApp app,");
+    sb.AppendLine("    NuruApp app,");
     sb.AppendLine("    string[] args");
     sb.AppendLine("  )");
     sb.AppendLine("  {");
@@ -141,7 +141,7 @@ internal static class InterceptorEmitter
 
     // Method body with this app's routes only
     // Note: LoggerFactory is static and should NOT be disposed after each command
-    // (this would break REPL mode). Disposal happens at app shutdown via NuruCoreApp.
+    // (this would break REPL mode). Disposal happens at app shutdown via NuruApp.
     EmitMethodBody(sb, app, appIndex, model, loggerFactoryFieldName);
 
     sb.AppendLine("  }");
@@ -170,10 +170,10 @@ internal static class InterceptorEmitter
       sb.AppendLine($"  {site.GetAttributeSyntax()}");
     }
 
-    // Method signature - matches NuruCoreApp.RunReplAsync signature
+    // Method signature - matches NuruApp.RunReplAsync signature
     sb.AppendLine($"  public static async global::System.Threading.Tasks.Task RunReplAsync_Intercepted{methodSuffix}");
     sb.AppendLine("  (");
-    sb.AppendLine("    this NuruCoreApp app,");
+    sb.AppendLine("    this NuruApp app,");
     sb.AppendLine("    global::System.Threading.CancellationToken cancellationToken = default");
     sb.AppendLine("  )");
     sb.AppendLine("  {");

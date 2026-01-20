@@ -242,7 +242,7 @@ internal static class ReplEmitter
   {
     string providerClassName = $"GeneratedReplRouteProvider{methodSuffix}";
 
-    sb.AppendLine($"  private static async global::System.Threading.Tasks.Task RunReplAsync{methodSuffix}(global::TimeWarp.Nuru.NuruCoreApp app)");
+    sb.AppendLine($"  private static async global::System.Threading.Tasks.Task RunReplAsync{methodSuffix}(global::TimeWarp.Nuru.NuruApp app)");
     sb.AppendLine("  {");
     sb.AppendLine($"    global::TimeWarp.Nuru.IReplRouteProvider routeProvider = new {providerClassName}();");
     sb.AppendLine("    global::TimeWarp.Nuru.ReplOptions replOptions = app.ReplOptions ?? new global::TimeWarp.Nuru.ReplOptions();");

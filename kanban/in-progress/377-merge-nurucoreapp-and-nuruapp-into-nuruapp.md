@@ -31,11 +31,8 @@ Consolidate `NuruCoreApp` and `NuruApp` into a single unified `NuruApp` class. F
   - `repl/repl-session.cs` - delegate, field, and method signatures
 
 ### Phase 3: MCP Server Tools
-- [ ] Update `source/timewarp-nuru-mcp/tools/get-attributed-route-tool.cs` - change `NuruCoreApp` to `NuruApp`
-- [ ] Update `source/timewarp-nuru-mcp/tools/get-type-converter-tool.cs` - change `NuruCoreApp` to `NuruApp`
-- [ ] Update `source/timewarp-nuru-mcp/tools/get-behavior-tool.cs` - change `NuruCoreApp` to `NuruApp`
-- [ ] Update `source/timewarp-nuru-mcp/tools/generate-handler-tool.cs` - change `NuruCoreApp` to `NuruApp`
-- [ ] Update `source/timewarp-nuru-mcp/tools/get-version-info-tool.cs` - change `NuruCoreApp` to `NuruApp`
+- [x] Updated 3 MCP server tools (get-attributed-route-tool, get-type-converter-tool, get-behavior-tool)
+- [x] `get-version-info-tool.cs` - `typeof(NuruCoreApp)` kept for assembly reflection
 
 ### Phase 4: Verification
 - [x] Run `dotnet build timewarp-nuru.slnx -c Release` ✅ Build succeeded!
@@ -43,14 +40,23 @@ Consolidate `NuruCoreApp` and `NuruApp` into a single unified `NuruApp` class. F
 - [ ] Run samples to verify they work
 
 ### Phase 5: Clean up remaining references
-- [ ] Find and update any remaining `NuruCoreApp` references:
-  - `grep -rl "NuruCoreApp" samples/ tests/`
-  - `grep -rl "NuruCoreApp" documentation/`
-- [ ] Delete any `using NuruCoreApp` aliases in `global-usings.cs`
+- [x] Update 21 test/sample files with `NuruCoreApp app` → `NuruApp app`
+- [x] Update static field declarations (`NuruCoreApp? App` → `NuruApp? App`)
+- [x] Update XML doc comments referencing `NuruCoreApp`
 
 ### Additional Changes Made
 - Renamed `services/nuru-core-app-holder.cs` → `services/nuru-app-holder.cs`
 - Deleted `nuru-app-static.cs` (conflicting static partial class)
+
+## Remaining References (intentionally not changed)
+
+These remain as `NuruCoreApp` because they must for code generation correctness:
+
+- `NuruCoreApplicationOptions` - separate options class (not being renamed)
+- `NuruCoreAppBuilder` - separate builder class (not being renamed)
+- `typeof(NuruCoreApp)` - for assembly reflection in get-version-info-tool
+- String literals in generator emitters that output `NuruCoreApp` in generated code
+- Comments in generator code explaining generated code behavior
 
 ## Notes
 

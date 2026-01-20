@@ -373,7 +373,7 @@ internal static class HandlerInvokerEmitter
     if (serviceTypeName is "global::Microsoft.Extensions.Configuration.IConfiguration"
                         or "global::Microsoft.Extensions.Configuration.IConfigurationRoot")
       return "configuration";
-    if (serviceTypeName == "global::TimeWarp.Nuru.NuruCoreApp")
+    if (serviceTypeName == "global::TimeWarp.Nuru.NuruApp")
       return "app";
 
     // ILogger<T> resolution - two paths for AOT optimization (see interceptor-emitter.cs)
@@ -433,7 +433,7 @@ internal static class HandlerInvokerEmitter
       "global::TimeWarp.Terminal.ITerminal" => "app.Terminal",
       "global::Microsoft.Extensions.Configuration.IConfiguration" => "configuration",
       "global::System.Threading.CancellationToken" => "cancellationToken",
-      "global::TimeWarp.Nuru.NuruCoreApp" => "app",
+      "global::TimeWarp.Nuru.NuruApp" => "app",
       _ => ResolveRegisteredService(serviceTypeName, services)
     };
   }

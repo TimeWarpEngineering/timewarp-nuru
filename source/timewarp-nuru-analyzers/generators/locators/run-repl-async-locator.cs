@@ -49,7 +49,7 @@ internal static class RunReplAsyncLocator
       return null;
 
     INamedTypeSymbol? containingType = methodSymbol.ContainingType;
-    if (containingType?.Name != "NuruCoreApp")
+    if (containingType?.Name != "NuruApp")
       return null;
 
     // Use the new Roslyn API to get an InterceptableLocation

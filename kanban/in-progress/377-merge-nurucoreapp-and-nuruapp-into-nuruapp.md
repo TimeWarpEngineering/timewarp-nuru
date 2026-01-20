@@ -53,16 +53,16 @@ Consolidate `NuruCoreApp` and `NuruApp` into a single unified `NuruApp` class. F
   - `dsl-interpreter.cs` - Remove NuruCoreApp from type name check
 
 ### Phase 6: Merge NuruCoreAppBuilder into NuruAppBuilder
-- [ ] Flatten builder hierarchy: move NuruCoreAppBuilder content into NuruAppBuilder
-- [ ] Move fields/methods from `builders/nuru-core-app-builder/nuru-core-app-builder.cs`
-- [ ] Move methods from `builders/nuru-core-app-builder/nuru-core-app-builder.configuration.cs`
-- [ ] Move methods from `builders/nuru-core-app-builder/nuru-core-app-builder.routes.cs`
-- [ ] Delete `builders/nuru-core-app-builder/` directory
-- [ ] Update extension methods: `NuruCoreAppBuilder<TBuilder>` → `NuruAppBuilder`
-- [ ] Update `EndpointBuilder<NuruCoreAppBuilder>` → `EndpointBuilder<NuruAppBuilder>`
-- [ ] Delete `nuru-core-app-builder.factory.cs`
-- [ ] Build verification
-- [ ] Run CI tests
+- [x] Flatten builder hierarchy: move NuruCoreAppBuilder content into NuruAppBuilder
+- [x] Move fields/methods from `builders/nuru-core-app-builder/nuru-core-app-builder.cs`
+- [x] Move methods from `builders/nuru-core-app-builder/nuru-core-app-builder.configuration.cs`
+- [x] Move methods from `builders/nuru-core-app-builder/nuru-core-app-builder.routes.cs`
+- [x] Delete `builders/nuru-core-app-builder/` directory
+- [x] Update extension methods: `NuruCoreAppBuilder<TBuilder>` → `NuruAppBuilder`
+- [x] Update `EndpointBuilder<NuruCoreAppBuilder>` → `EndpointBuilder<NuruAppBuilder>`
+- [x] Delete `nuru-core-app-builder.factory.cs`
+- [x] Build verification ✅
+- [x] Run CI tests ✅ 1016/1023 passed
 
 ### Additional Changes Made
 - Renamed `services/nuru-core-app-holder.cs` → `services/nuru-app-holder.cs`

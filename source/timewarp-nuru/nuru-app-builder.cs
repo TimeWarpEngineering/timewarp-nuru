@@ -11,7 +11,7 @@ public partial class NuruAppBuilder : IHostApplicationBuilder, IDisposable
   private NuruMetricsBuilder? NuruMetricsBuilder;
   private readonly Dictionary<object, object> PropertiesDictionary = [];
 
-  private protected readonly NuruCoreApplicationOptions? ApplicationOptions;
+  private protected readonly NuruAppOptions? ApplicationOptions;
 
   /// <summary>
   /// Initializes a new instance of the <see cref="NuruAppBuilder"/> class with default settings.
@@ -22,7 +22,7 @@ public partial class NuruAppBuilder : IHostApplicationBuilder, IDisposable
   /// <summary>
   /// Internal constructor for factory methods with specific builder mode.
   /// </summary>
-  internal NuruAppBuilder(NuruCoreApplicationOptions? options)
+  internal NuruAppBuilder(NuruAppOptions? options)
   {
     ApplicationOptions = options;
   }

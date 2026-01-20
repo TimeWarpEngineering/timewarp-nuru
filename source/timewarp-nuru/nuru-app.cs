@@ -152,10 +152,10 @@ public partial class NuruApp
   /// </example>
   [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope",
     Justification = "Builder ownership is transferred to caller who is responsible for disposal")]
-  public static NuruAppBuilder CreateBuilder(string[] args, NuruCoreApplicationOptions? options = null)
+  public static NuruAppBuilder CreateBuilder(string[] args, NuruAppOptions? options = null)
   {
     ArgumentNullException.ThrowIfNull(args);
-    options ??= new NuruCoreApplicationOptions();
+    options ??= new NuruAppOptions();
     options.Args = args;
     NuruAppBuilder builder = new(options);
     return builder;

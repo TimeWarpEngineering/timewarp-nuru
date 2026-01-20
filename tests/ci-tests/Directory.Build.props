@@ -102,9 +102,9 @@
     <!-- Command-line parser tests in subdirectory -->
     <Compile Include="../timewarp-nuru-tests/repl/command-line-parser/*.cs" />
     <!-- Completion tests - unit tests for components (don't need source generation) -->
-    <Compile Include="../timewarp-nuru-tests/completion/dynamic/completion-15-completion-registry.cs" />
-    <Compile Include="../timewarp-nuru-tests/completion/dynamic/completion-17-enum-source.cs" />
-    <Compile Include="../timewarp-nuru-tests/completion/dynamic/completion-20-dynamic-script-gen.cs" />
+    <Compile Include="../timewarp-nuru-tests/completion/completion-15-completion-registry.cs" />
+    <Compile Include="../timewarp-nuru-tests/completion/completion-17-enum-source.cs" />
+    <Compile Include="../timewarp-nuru-tests/completion/completion-20-dynamic-script-gen.cs" />
     <!-- All REPL tests (recursive glob includes subfolders, excludes obj/bin) -->
     <!-- <Compile Include="../timewarp-nuru-repl-tests/**/*.cs" Exclude="../timewarp-nuru-repl-tests/obj/**;../timewarp-nuru-repl-tests/bin/**" /> -->
     <!-- MCP tests (migrated) -->

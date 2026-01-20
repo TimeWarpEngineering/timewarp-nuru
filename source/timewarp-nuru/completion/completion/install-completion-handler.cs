@@ -12,71 +12,74 @@ public static class InstallCompletionHandler
   /// <summary>
   /// Installs the completion script for the specified shell.
   /// </summary>
+  /// <param name="terminal">The terminal for output.</param>
   /// <param name="appName">The application name.</param>
   /// <param name="shell">The shell to install for (bash, zsh, fish, pwsh). If null, installs for all shells.</param>
   /// <param name="dryRun">If true, shows what would be installed without writing files.</param>
   /// <returns>Exit code (0 for success, 1 for error).</returns>
-  public static int Install(string appName, string? shell, bool dryRun = false)
+  public static int Install(ITerminal terminal, string appName, string? shell, bool dryRun = false)
   {
+    ArgumentNullException.ThrowIfNull(terminal);
+
     // If no shell specified, install for all shells
     if (string.IsNullOrEmpty(shell))
     {
-      return InstallAll(appName, dryRun);
+      return InstallAll(terminal, appName, dryRun);
     }
 
     return shell.ToLowerInvariant() switch
     {
-      "bash" => InstallBash(appName, dryRun),
-      "zsh" => InstallZsh(appName, dryRun),
-      "fish" => InstallFish(appName, dryRun),
-      "pwsh" or "powershell" => InstallPowerShell(appName, dryRun),
-      _ => ReportUnknownShell(shell)
+      "bash" => InstallBash(terminal, appName, dryRun),
+      "zsh" => InstallZsh(terminal, appName, dryRun),
+      "fish" => InstallFish(terminal, appName, dryRun),
+      "pwsh" or "powershell" => InstallPowerShell(terminal, appName, dryRun),
+      _ => ReportUnknownShell(terminal, shell)
     };
   }
 
-  private static int InstallAll(string appName, bool dryRun)
+  private static int InstallAll(ITerminal terminal, string appName, bool dryRun)
   {
-    Console.WriteLine("Installing completions for all shells...");
-    Console.WriteLine();
+    terminal.WriteLine("Installing completions for all shells...");
+    terminal.WriteLine();
 
     int failures = 0;
 
     // Install for each shell, collecting results
-    if (InstallBash(appName, dryRun) != 0)
+    if (InstallBash(terminal, appName, dryRun) != 0)
     {
       failures++;
     }
 
-    Console.WriteLine();
+    terminal.WriteLine();
 
-    if (InstallZsh(appName, dryRun) != 0)
+    if (InstallZsh(terminal, appName, dryRun) != 0)
     {
       failures++;
     }
 
-    Console.WriteLine();
+    terminal.WriteLine();
 
-    if (InstallFish(appName, dryRun) != 0)
+    if (InstallFish(terminal, appName, dryRun) != 0)
     {
       failures++;
     }
 
-    Console.WriteLine();
+    terminal.WriteLine();
 
-    if (InstallPowerShell(appName, dryRun) != 0)
+    if (InstallPowerShell(terminal, appName, dryRun) != 0)
     {
       failures++;
     }
 
     if (failures > 0)
     {
-      Console.WriteLine();
-      Console.WriteLine("⚠️  " + failures + " shell(s) had issues during installation.");
+      terminal.WriteLine();
+      terminal.WriteLine("⚠️  " + failures + " shell(s) had issues during installation.");
       return 1;
     }
 
-    Console.WriteLine();
-    Console.WriteLine("✅ All shell completions installed successfully!");
+    terminal.WriteLine();
+    terminal.WriteLine("✅ All shell completions installed successfully!");
     return 0;
   }
 
@@ -134,7 +137,7 @@ public static class InstallCompletionHandler
     };
   }
 
-  private static int InstallBash(string appName, bool dryRun)
+  private static int InstallBash(ITerminal terminal, string appName, bool dryRun)
   {
     // Use XDG-compliant location that bash-completion auto-loads from
     string homeDir = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
@@ -145,14 +148,14 @@ public static class InstallCompletionHandler
 
     if (dryRun)
     {
-      ShowDryRun("Bash", completionFile, script, null);
+      ShowDryRun(terminal, "Bash", completionFile, script, null);
       return 0;
     }
 
-    return WriteCompletionFile(completionDir, completionFile, script, "Bash", autoLoads: true);
+    return WriteCompletionFile(terminal, completionDir, completionFile, script, "Bash", autoLoads: true);
   }
 
-  private static int InstallZsh(string appName, bool dryRun)
+  private static int InstallZsh(ITerminal terminal, string appName, bool dryRun)
   {
     // Use XDG-compliant location for Zsh completions
     string homeDir = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
@@ -170,11 +173,11 @@ public static class InstallCompletionHandler
 
     if (dryRun)
     {
-      ShowDryRun("Zsh", completionFile, script, profileSetup);
+      ShowDryRun(terminal, "Zsh", completionFile, script, profileSetup);
       return 0;
     }
 
-    int result = WriteCompletionFile(completionDir, completionFile, script, "Zsh", autoLoads: false);
+    int result = WriteCompletionFile(terminal, completionDir, completionFile, script, "Zsh", autoLoads: false);
     if (result != 0)
     {
       return result;
@@ -183,13 +186,13 @@ public static class InstallCompletionHandler
     // Check if we need to add fpath setup to .zshrc
     if (profileSetup is not null)
     {
-      AppendToProfileIfNeeded(zshrcPath, profileSetup, "Zsh", "~/.zshrc");
+      AppendToProfileIfNeeded(terminal, zshrcPath, profileSetup, "Zsh", "~/.zshrc");
     }
 
     return 0;
   }
 
-  private static int InstallFish(string appName, bool dryRun)
+  private static int InstallFish(ITerminal terminal, string appName, bool dryRun)
   {
     // Fish auto-loads from this standard location
     string homeDir = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
@@ -200,14 +203,14 @@ public static class InstallCompletionHandler
 
     if (dryRun)
     {
-      ShowDryRun("Fish", completionFile, script, null);
+      ShowDryRun(terminal, "Fish", completionFile, script, null);
       return 0;
     }
 
-    return WriteCompletionFile(completionDir, completionFile, script, "Fish", autoLoads: true);
+    return WriteCompletionFile(terminal, completionDir, completionFile, script, "Fish", autoLoads: true);
   }
 
-  private static int InstallPowerShell(string appName, bool dryRun)
+  private static int InstallPowerShell(ITerminal terminal, string appName, bool dryRun)
   {
     // Use a dedicated Nuru completions directory for PowerShell
     string homeDir = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
@@ -225,11 +228,11 @@ public static class InstallCompletionHandler
 
     if (dryRun)
     {
-      ShowDryRun("PowerShell", completionFile, script, profileSetup);
+      ShowDryRun(terminal, "PowerShell", completionFile, script, profileSetup);
       return 0;
     }
 
-    int result = WriteCompletionFile(completionDir, completionFile, script, "PowerShell", autoLoads: false);
+    int result = WriteCompletionFile(terminal, completionDir, completionFile, script, "PowerShell", autoLoads: false);
     if (result != 0)
     {
       return result;
@@ -238,20 +241,20 @@ public static class InstallCompletionHandler
     // Check if we need to add lazy loader to profile
     if (profileSetup is not null)
     {
-      AppendToProfileIfNeeded(profilePath, profileSetup, "PowerShell", "$PROFILE");
+      AppendToProfileIfNeeded(terminal, profilePath, profileSetup, "PowerShell", "$PROFILE");
     }
 
     return 0;
   }
 
-  private static void AppendToProfileIfNeeded(string profilePath, string setupContent, string shellName, string profileDisplayName)
+  private static void AppendToProfileIfNeeded(ITerminal terminal, string profilePath, string setupContent, string shellName, string profileDisplayName)
   {
     try
     {
       // Check if the marker already exists
       if (File.Exists(profilePath) && File.ReadAllText(profilePath).Contains(NuruMarkerBegin, StringComparison.Ordinal))
       {
-        Console.WriteLine("✅ " + shellName + " profile already configured (found marker in " + profileDisplayName + ")");
+        terminal.WriteLine("✅ " + shellName + " profile already configured (found marker in " + profileDisplayName + ")");
         return;
       }
 
@@ -260,32 +263,32 @@ public static class InstallCompletionHandler
       if (!string.IsNullOrEmpty(profileDir) && !Directory.Exists(profileDir))
       {
         Directory.CreateDirectory(profileDir);
-        Console.WriteLine("📁 Created profile directory: " + profileDir);
+        terminal.WriteLine("📁 Created profile directory: " + profileDir);
       }
 
       // Append the setup content
       string contentToAppend = Environment.NewLine + setupContent + Environment.NewLine;
       File.AppendAllText(profilePath, contentToAppend);
-      Console.WriteLine("✅ Added Nuru completion loader to " + profileDisplayName);
-      Console.WriteLine("   Restart your shell or source your profile to activate.");
+      terminal.WriteLine("✅ Added Nuru completion loader to " + profileDisplayName);
+      terminal.WriteLine("   Restart your shell or source your profile to activate.");
     }
     catch (IOException ex)
     {
-      Console.Error.WriteLine("⚠️  Could not auto-configure " + profileDisplayName + ": " + ex.Message);
-      Console.Error.WriteLine("   Please add the following to your " + profileDisplayName + " manually:");
-      Console.Error.WriteLine();
-      Console.Error.WriteLine(setupContent);
+      terminal.WriteErrorLine("⚠️  Could not auto-configure " + profileDisplayName + ": " + ex.Message);
+      terminal.WriteErrorLine("   Please add the following to your " + profileDisplayName + " manually:");
+      terminal.WriteErrorLine(string.Empty);
+      terminal.WriteErrorLine(setupContent);
     }
     catch (UnauthorizedAccessException ex)
     {
-      Console.Error.WriteLine("⚠️  Could not auto-configure " + profileDisplayName + ": " + ex.Message);
-      Console.Error.WriteLine("   Please add the following to your " + profileDisplayName + " manually:");
-      Console.Error.WriteLine();
-      Console.Error.WriteLine(setupContent);
+      terminal.WriteErrorLine("⚠️  Could not auto-configure " + profileDisplayName + ": " + ex.Message);
+      terminal.WriteErrorLine("   Please add the following to your " + profileDisplayName + " manually:");
+      terminal.WriteErrorLine(string.Empty);
+      terminal.WriteErrorLine(setupContent);
     }
   }
 
-  private static int WriteCompletionFile(string directory, string filePath, string content, string shellName, bool autoLoads)
+  private static int WriteCompletionFile(ITerminal terminal, string directory, string filePath, string content, string shellName, bool autoLoads)
   {
     try
     {
@@ -293,47 +296,47 @@ public static class InstallCompletionHandler
       if (!Directory.Exists(directory))
       {
         Directory.CreateDirectory(directory);
-        Console.WriteLine("📁 Created directory: " + directory);
+        terminal.WriteLine("📁 Created directory: " + directory);
       }
 
       // Write the completion script
       File.WriteAllText(filePath, content);
-      Console.WriteLine("✅ " + shellName + " completion installed to: " + filePath);
+      terminal.WriteLine("✅ " + shellName + " completion installed to: " + filePath);
 
       if (autoLoads)
       {
-        Console.WriteLine("   This location auto-loads - restart your shell or source the file.");
+        terminal.WriteLine("   This location auto-loads - restart your shell or source the file.");
       }
       else
       {
-        Console.WriteLine("   See one-time setup instructions below (if any).");
+        terminal.WriteLine("   See one-time setup instructions below (if any).");
       }
 
       return 0;
     }
     catch (IOException ex)
     {
-      Console.Error.WriteLine("❌ Failed to install " + shellName + " completion: " + ex.Message);
+      terminal.WriteErrorLine("❌ Failed to install " + shellName + " completion: " + ex.Message);
       return 1;
     }
     catch (UnauthorizedAccessException ex)
     {
-      Console.Error.WriteLine("❌ Failed to install " + shellName + " completion: " + ex.Message);
+      terminal.WriteErrorLine("❌ Failed to install " + shellName + " completion: " + ex.Message);
       return 1;
     }
   }
 
-  private static void ShowDryRun(string shellName, string filePath, string script, string? profileSetup)
+  private static void ShowDryRun(ITerminal terminal, string shellName, string filePath, string script, string? profileSetup)
   {
-    Console.WriteLine("🔍 Dry run for " + shellName + ":");
-    Console.WriteLine("   Would write to: " + filePath);
-    Console.WriteLine("   Script size: " + script.Length + " bytes");
+    terminal.WriteLine("🔍 Dry run for " + shellName + ":");
+    terminal.WriteLine("   Would write to: " + filePath);
+    terminal.WriteLine("   Script size: " + script.Length + " bytes");
 
     if (profileSetup is not null)
     {
-      Console.WriteLine();
-      Console.WriteLine("   Would require one-time profile setup:");
-      Console.WriteLine(profileSetup);
+      terminal.WriteLine();
+      terminal.WriteLine("   Would require one-time profile setup:");
+      terminal.WriteLine(profileSetup);
     }
   }
 
@@ -391,10 +394,10 @@ public static class InstallCompletionHandler
     return Path.Combine(homeDir, "Documents", "WindowsPowerShell", "Microsoft.PowerShell_profile.ps1");
   }
 
-  private static int ReportUnknownShell(string shell)
+  private static int ReportUnknownShell(ITerminal terminal, string shell)
   {
-    Console.Error.WriteLine("❌ Unknown shell: " + shell);
-    Console.Error.WriteLine("   Supported shells: bash, zsh, fish, pwsh");
+    terminal.WriteErrorLine("❌ Unknown shell: " + shell);
+    terminal.WriteErrorLine("   Supported shells: bash, zsh, fish, pwsh");
     return 1;
   }
 }

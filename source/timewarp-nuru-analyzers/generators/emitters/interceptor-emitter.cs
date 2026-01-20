@@ -595,7 +595,7 @@ internal static class InterceptorEmitter
     sb.AppendLine("    {");
     sb.AppendLine("      string[] completionWords = routeArgs.Length > 2 ? routeArgs[2..] : [];");
     sb.AppendLine("      var completionContext = new global::TimeWarp.Nuru.CompletionContext(completionWords, completionIndex);");
-    sb.AppendLine($"      return global::TimeWarp.Nuru.DynamicCompletionHandler.HandleCompletion(completionContext, app.CompletionSourceRegistry, app.ShellCompletionProvider ?? global::TimeWarp.Nuru.EmptyShellCompletionProvider.Instance);");
+    sb.AppendLine($"      return global::TimeWarp.Nuru.DynamicCompletionHandler.HandleCompletion(completionContext, app.CompletionSourceRegistry, app.ShellCompletionProvider ?? global::TimeWarp.Nuru.EmptyShellCompletionProvider.Instance, app.Terminal);");
     sb.AppendLine("    }");
     sb.AppendLine();
 
@@ -622,14 +622,14 @@ internal static class InterceptorEmitter
     sb.AppendLine("    if (routeArgs is [\"--install-completion\", \"--dry-run\"])");
     sb.AppendLine("    {");
     sb.AppendLine("      string appName = global::System.IO.Path.GetFileNameWithoutExtension(global::System.Environment.ProcessPath ?? \"app\");");
-    sb.AppendLine("      return global::TimeWarp.Nuru.InstallCompletionHandler.Install(appName, null, dryRun: true);");
+    sb.AppendLine("      return global::TimeWarp.Nuru.InstallCompletionHandler.Install(app.Terminal, appName, null, dryRun: true);");
     sb.AppendLine("    }");
     sb.AppendLine();
 
     sb.AppendLine("    if (routeArgs is [\"--install-completion\", \"--dry-run\", var dryRunShell])");
     sb.AppendLine("    {");
     sb.AppendLine("      string appName = global::System.IO.Path.GetFileNameWithoutExtension(global::System.Environment.ProcessPath ?? \"app\");");
-    sb.AppendLine("      return global::TimeWarp.Nuru.InstallCompletionHandler.Install(appName, dryRunShell, dryRun: true);");
+    sb.AppendLine("      return global::TimeWarp.Nuru.InstallCompletionHandler.Install(app.Terminal, appName, dryRunShell, dryRun: true);");
     sb.AppendLine("    }");
     sb.AppendLine();
 
@@ -638,14 +638,14 @@ internal static class InterceptorEmitter
     sb.AppendLine("    if (routeArgs is [\"--install-completion\"])");
     sb.AppendLine("    {");
     sb.AppendLine("      string appName = global::System.IO.Path.GetFileNameWithoutExtension(global::System.Environment.ProcessPath ?? \"app\");");
-    sb.AppendLine("      return global::TimeWarp.Nuru.InstallCompletionHandler.Install(appName, null, dryRun: false);");
+    sb.AppendLine("      return global::TimeWarp.Nuru.InstallCompletionHandler.Install(app.Terminal, appName, null, dryRun: false);");
     sb.AppendLine("    }");
     sb.AppendLine();
 
     sb.AppendLine("    if (routeArgs is [\"--install-completion\", var installShell])");
     sb.AppendLine("    {");
     sb.AppendLine("      string appName = global::System.IO.Path.GetFileNameWithoutExtension(global::System.Environment.ProcessPath ?? \"app\");");
-    sb.AppendLine("      return global::TimeWarp.Nuru.InstallCompletionHandler.Install(appName, installShell, dryRun: false);");
+    sb.AppendLine("      return global::TimeWarp.Nuru.InstallCompletionHandler.Install(app.Terminal, appName, installShell, dryRun: false);");
     sb.AppendLine("    }");
     sb.AppendLine();
   }

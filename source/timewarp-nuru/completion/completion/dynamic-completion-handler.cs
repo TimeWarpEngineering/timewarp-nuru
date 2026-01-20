@@ -7,22 +7,25 @@ namespace TimeWarp.Nuru;
 public static class DynamicCompletionHandler
 {
   /// <summary>
-  /// Processes a completion request and outputs candidates to stdout.
+  /// Processes a completion request and outputs candidates.
   /// </summary>
   /// <param name="context">The completion context.</param>
   /// <param name="registry">The completion source registry for custom sources.</param>
   /// <param name="provider">The source-generated completion provider.</param>
+  /// <param name="terminal">The terminal for output.</param>
   /// <returns>Exit code (0 for success).</returns>
   public static int HandleCompletion
   (
     CompletionContext context,
     CompletionSourceRegistry registry,
-    IShellCompletionProvider provider
+    IShellCompletionProvider provider,
+    ITerminal terminal
   )
   {
     ArgumentNullException.ThrowIfNull(context);
     ArgumentNullException.ThrowIfNull(registry);
     ArgumentNullException.ThrowIfNull(provider);
+    ArgumentNullException.ThrowIfNull(terminal);
 
     // Get completions - prioritize custom sources, then use provider
     IEnumerable<CompletionCandidate> items = GetCompletions(context, registry, provider);
@@ -30,21 +33,21 @@ public static class DynamicCompletionHandler
     // Determine the directive to use (default to NoFileComp for string parameters)
     CompletionDirective directive = CompletionDirective.NoFileComp;
 
-    // Output completions to stdout (one per line)
+    // Output completions (one per line)
     foreach (CompletionCandidate item in items)
     {
       if (!string.IsNullOrEmpty(item.Description))
       {
-        Console.WriteLine($"{item.Value}\t{item.Description}");
+        terminal.WriteLine($"{item.Value}\t{item.Description}");
       }
       else
       {
-        Console.WriteLine(item.Value);
+        terminal.WriteLine(item.Value);
       }
     }
 
     // Output directive code (Cobra-style)
-    Console.WriteLine($":{(int)directive}");
+    terminal.WriteLine($":{(int)directive}");
 
     // Output diagnostic to stderr (not visible to shell, useful for debugging)
     Console.Error.WriteLine($"Completion ended with directive: {directive}");

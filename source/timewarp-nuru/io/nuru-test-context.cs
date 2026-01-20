@@ -1,17 +1,17 @@
 namespace TimeWarp.Nuru;
 
 /// <summary>
-/// Provides an ambient context for test harnesses to take control of <see cref="NuruCoreApp"/> execution.
+/// Provides an ambient context for test harnesses to take control of <see cref="NuruApp"/> execution.
 /// </summary>
 /// <remarks>
 /// <para>
 /// This class enables zero-configuration testing of runfiles by allowing test code to be
 /// included at build time via <c>Directory.Build.props</c>. When the test runner delegate
-/// is set (typically via <c>[ModuleInitializer]</c>), <see cref="NuruCoreApp.RunAsync"/> 
+  /// is set (typically via <c>[ModuleInitializer]</c>), <see cref="NuruApp.RunAsync"/>
 /// hands control to the test harness instead of executing normally.
 /// </para>
 /// <para>
-/// The test harness receives the fully configured <see cref="NuruCoreApp"/> instance and can
+  /// The test harness receives the fully configured <see cref="NuruApp"/> instance and can
 /// run multiple test scenarios against it using <see cref="TestTerminalContext"/> for output capture.
 /// </para>
 /// <example>

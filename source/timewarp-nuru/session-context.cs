@@ -24,7 +24,7 @@ public sealed class SessionContext
   /// Gets or sets whether the terminal supports ANSI color codes.
   /// </summary>
   /// <remarks>
-  /// Set by the NuruCoreApp based on the terminal's SupportsColor property.
+  /// Set by the NuruApp based on the terminal's SupportsColor property.
   /// Defaults to true for color-enabled output.
   /// </remarks>
   public bool SupportsColor { get; set; } = true;

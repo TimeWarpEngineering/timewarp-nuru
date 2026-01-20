@@ -19,7 +19,7 @@
 using System.Net;
 using TimeWarp.Nuru;
 
-NuruAppBuilder builder = NuruApp.CreateBuilder([]);
+NuruAppBuilder builder = NuruApp.CreateBuilder();
 
 #region MCP:literals
 // Literal segments are plain text that must match exactly

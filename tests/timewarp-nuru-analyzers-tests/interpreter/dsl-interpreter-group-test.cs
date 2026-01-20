@@ -362,7 +362,6 @@ public sealed class InterpreterGroupTests
     string runtimePath = System.Runtime.InteropServices.RuntimeEnvironment.GetRuntimeDirectory();
     string repoRoot = FindRepoRoot();
     string nuruDir = Path.Combine(repoRoot, "source", "timewarp-nuru", "bin", "Debug", "net10.0");
-    string nuruCoreDir = Path.Combine(repoRoot, "source", "timewarp-nuru-core", "bin", "Debug", "net10.0");
 
     List<MetadataReference> references =
     [
@@ -374,9 +373,8 @@ public sealed class InterpreterGroupTests
       MetadataReference.CreateFromFile(Path.Combine(runtimePath, "System.Collections.dll")),
     ];
 
-    // Add TimeWarp.Nuru assemblies
+    // Add TimeWarp.Nuru assembly (NuruCoreApp was merged into NuruApp)
     AddAssembliesFromDirectory(references, nuruDir);
-    AddAssembliesFromDirectory(references, nuruCoreDir);
 
     return CSharpCompilation.Create(
       "TestAssembly",

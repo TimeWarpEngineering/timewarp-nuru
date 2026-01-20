@@ -39,11 +39,11 @@ Fix route overlap errors in samples/05-aot-example/aot-example.cs to unblock CI.
 ## Checklist
 
 - [x] Exclude underscore-prefixed samples from verify-samples configuration
-- [ ] Fix package version mismatch in samples/09-configuration/
+- [x] Fix package version mismatch in samples/09-configuration/ - RESOLVED (package versions aligned)
 - [x] Fix route analyzer error in samples/08-testing/runfile-test-harness/
-- [ ] Fix route overlap errors in samples/05-aot-example/aot-example.cs
+- [x] Fix samples/05-aot-example/aot-example.cs - was missing shebang/project directive (no route overlap errors)
 - [x] Fix 01-builtin-types.cs (Uri/FileInfo/DirectoryInfo) - COMPLETED in task 381
-- [ ] Await task 383 - Fix source generator to detect `builder.AddTypeConverter()` (not a sample bug)
+- [x] Task 383 completed - `builder.AddTypeConverter()` now supported, `02-custom-type-converters.cs` works
 - [ ] Verify all samples pass after fixes
 
 ## Notes
@@ -59,8 +59,9 @@ Priority: high
 - Previously: 39 runfile samples
 - After fix: 36 runfile samples (3 underscore-prefixed samples excluded)
 
-### Item 2: Package version mismatch (AWAITING FIX)
-- Status: Still pending - needs resolution in samples/09-configuration/
+### Item 2: Package version mismatch (COMPLETED)
+- Status: RESOLVED - Package versions now aligned, no more NU1605 errors
+- Both samples run successfully: `01-configuration-basics.cs`, `02-command-line-overrides.cs`
 
 ### Item 3: 01-builtin-types.cs (COMPLETED in task 381)
 - Status: Uri/FileInfo/DirectoryInfo now work correctly
@@ -72,14 +73,14 @@ Priority: high
 - **Reason:** The `--dry-run` flag handling belongs in the handler, not in route specificity
 - **Result:** Sample now builds without NURU_R003 error
 
-### Item 5: aot-example.cs route overlap (AWAITING FIX)
-- Status: Still pending - needs route overlap resolution
+### Item 5: aot-example.cs (COMPLETED)
+- **Status:** FIXED - Was missing shebang and `#:project` directive
+- **Issue:** Not route overlaps - file simply couldn't build as a runfile
+- **Fix:** Added `#!/usr/bin/dotnet --` and `#:project ../../source/timewarp-nuru/timewarp-nuru.csproj`
 
-### Item 6: 02-custom-type-converters.cs (REQUIRES TASK 383)
-- **Status:** NOT A SAMPLE BUG - Source generator limitation
-- **Root cause:** Source generator only detects converters in `ConfigureServices` blocks, not via `builder.AddTypeConverter()`
-- **Solution:** Task 383 will fix the source generator to support `builder.AddTypeConverter()` calls
-- **Sample is valid** and uses correct API pattern
+### Item 6: 02-custom-type-converters.cs (COMPLETED - Task 383 done)
+- **Status:** FIXED - `builder.AddTypeConverter()` now supported by source generator
+- **Verified:** Sample runs correctly, custom EmailAddress type converter works
 
 ### attributed-routes.csproj (REMOVED - Was never broken)
 - **Status:** This sample was actually PASSING all along

@@ -1,11 +1,11 @@
 # Manual Shell Completion Testing
 
-This document provides specific test cases with expected outcomes for verifying shell completion works correctly.
+This document covers **interactive shell testing only**. The endpoint protocol tests (`__complete`, `--generate-completion`, `--install-completion --dry-run`) are automated in `tests/timewarp-nuru-tests/completion/completion-27-endpoint-protocol.cs`.
 
 ## Setup
 
 ```bash
-# From repository root (run all commands from there)
+# From repository root
 
 # Build and publish to ~/.timewarp/bin (already in PATH)
 dotnet publish samples/15-completion/completion-example.cs -c Release -o ~/.timewarp/bin
@@ -14,185 +14,14 @@ dotnet publish samples/15-completion/completion-example.cs -c Release -o ~/.time
 completion-example --help
 ```
 
-Expected `--help` output:
-```
-Usage: app [command] [options]
-
-Commands:
-  deploy {env} --version {tag} Deploy a version to an environment
-  list-environments         List all available environments
-  list-tags                 List all available tags
-  status                    Check system status
-
-Options:
-  --help, -h             Show this help message
-  --version              Show version information
-  --capabilities         Show capabilities for AI tools
-```
-
-## Test Cases
-
-### Test 1: __complete callback returns commands
-
-```bash
-completion-example __complete 1 completion-example
-```
-
-**Expected stdout:**
-```
-deploy
-list-environments
-list-tags
-status
---help  Show help for this command
-:4
-```
-
-**Expected stderr:**
-```
-Completion ended with directive: NoFileComp
-```
-
-### Test 2: __complete with partial command
-
-```bash
-completion-example __complete 1 completion-example dep
-```
-
-**Expected stdout** (source generator filters to matching commands):
-```
-deploy
-:4
-```
-
-### Test 3: __complete for parameter position
-
-```bash
-completion-example __complete 2 completion-example deploy
-```
-
-**Expected stdout** (custom EnvironmentCompletionSource):
-```
-production  Production environment
-staging  Staging environment
-development  Development environment
-qa  QA environment
-demo  Demo environment
-:4
-```
-
-### Test 4: --generate-completion bash
-
-```bash
-completion-example --generate-completion bash | head -5
-```
-
-**Expected output:**
-```
-# Dynamic Bash completion for completion-example
-# This completion script calls back to the application at Tab-press time
-# to get context-aware completion suggestions.
-
-_completion-example_completions()
-```
-
-### Test 5: --generate-completion zsh
-
-```bash
-completion-example --generate-completion zsh | head -5
-```
-
-**Expected output:**
-```
-#compdef completion-example
-
-# Dynamic Zsh completion for completion-example
-# This completion script calls back to the application at Tab-press time
-# to get context-aware completion suggestions.
-```
-
-### Test 6: --generate-completion fish
-
-```bash
-completion-example --generate-completion fish | head -5
-```
-
-**Expected output:**
-```
-# Dynamic Fish completion for completion-example
-# This completion script calls back to the application at Tab-press time
-# to get context-aware completion suggestions.
-
-function __fish_completion-example_complete
-```
-
-### Test 7: --generate-completion pwsh
-
-```bash
-completion-example --generate-completion pwsh | head -5
-```
-
-**Expected output:**
-```
-# Dynamic PowerShell completion for completion-example
-# This completion script calls back to the application at Tab-press time
-# to get context-aware completion suggestions.
-
-$completionExampleCompleter = {
-```
-
-### Test 8: --install-completion --dry-run
-
-```bash
-completion-example --install-completion --dry-run
-```
-
-**Expected output:**
-```
-Installing completions for all shells...
-
-🔍 Dry run for Bash:
-   Would write to: /home/<user>/.local/share/bash-completion/completions/completion-example
-   Script size: XXXX bytes
-
-🔍 Dry run for Zsh:
-   Would write to: /home/<user>/.local/share/zsh/site-functions/_completion-example
-   Script size: XXXX bytes
-
-🔍 Dry run for Fish:
-   Would write to: /home/<user>/.config/fish/completions/completion-example.fish
-   Script size: XXXX bytes
-
-🔍 Dry run for PowerShell:
-   Would write to: /home/<user>/.local/share/nuru/completions/completion-example.ps1
-   Script size: XXXX bytes
-
-✅ All shell completions installed successfully!
-```
-
-### Test 9: --install-completion --dry-run bash
-
-```bash
-completion-example --install-completion --dry-run bash
-```
-
-**Expected output:**
-```
-🔍 Dry run for Bash:
-   Would write to: /home/<user>/.local/share/bash-completion/completions/completion-example
-   Script size: XXXX bytes
-
-✅ Bash completion installed successfully!
-```
-
 ## Interactive Shell Testing
 
-After running `--install-completion` for your shell:
+These tests require actual shell interaction and cannot be automated.
 
 ### Bash
 
 ```bash
-# Install
+# Install completion
 completion-example --install-completion bash
 source ~/.local/share/bash-completion/completions/completion-example
 
@@ -200,7 +29,7 @@ source ~/.local/share/bash-completion/completions/completion-example
 completion-example <TAB><TAB>
 # Expected: deploy  list-environments  list-tags  status
 
-# Test 2: Parameter completion  
+# Test 2: Parameter completion (custom source)
 completion-example deploy <TAB><TAB>
 # Expected: demo  development  production  qa  staging
 
@@ -216,7 +45,7 @@ completion-example deploy production --<TAB><TAB>
 ### Zsh
 
 ```zsh
-# Install
+# Install completion
 completion-example --install-completion zsh
 # Add to ~/.zshrc if not already: fpath=(~/.local/share/zsh/site-functions $fpath)
 autoload -Uz compinit && compinit
@@ -249,19 +78,12 @@ completion-example <TAB>
 
 ## Verification Checklist
 
-- [ ] Test 1: __complete returns commands
-- [ ] Test 2: __complete with partial input
-- [ ] Test 3: __complete for parameter (custom source)
-- [ ] Test 4: --generate-completion bash
-- [ ] Test 5: --generate-completion zsh
-- [ ] Test 6: --generate-completion fish
-- [ ] Test 7: --generate-completion pwsh
-- [ ] Test 8: --install-completion --dry-run (all shells)
-- [ ] Test 9: --install-completion --dry-run bash (single shell)
-- [ ] Interactive: Bash TAB completion
-- [ ] Interactive: Zsh TAB completion
-- [ ] Interactive: Fish TAB completion
-- [ ] Interactive: PowerShell TAB completion
+- [ ] Bash: TAB completion shows commands
+- [ ] Bash: TAB completion shows custom parameter values
+- [ ] Bash: Partial input completes correctly
+- [ ] Zsh: TAB completion works
+- [ ] Fish: TAB completion works
+- [ ] PowerShell: TAB completion works
 
 ## Cleanup
 

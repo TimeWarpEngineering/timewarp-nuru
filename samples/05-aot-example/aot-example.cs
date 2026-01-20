@@ -1,3 +1,6 @@
+#!/usr/bin/dotnet --
+#:project ../../source/timewarp-nuru/timewarp-nuru.csproj
+
 // AOT-Compatible TimeWarp.Nuru Example
 //
 // TimeWarp.Nuru is fully AOT-compatible out of the box - no special configuration needed!

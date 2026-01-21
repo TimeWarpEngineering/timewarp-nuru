@@ -31,7 +31,17 @@ internal static class InterceptorEmitter
 
     // Emit shared infrastructure (command classes, service fields, behaviors, logging, telemetry)
     EmitCommandClasses(sb, model);
-    EmitServiceFields(sb, model.AllServices);
+
+    // Emit service infrastructure - either static fields (source-gen DI) or runtime DI support
+    if (model.UsesMicrosoftDependencyInjection)
+    {
+      EmitRuntimeDIInfrastructure(sb, [.. model.AllServices]);
+    }
+    else
+    {
+      EmitServiceFields(sb, model.AllServices);
+    }
+
     EmitLoggingFactoryFields(sb, model);
 
     // Emit telemetry infrastructure if any app has telemetry enabled
@@ -326,6 +336,67 @@ internal static class InterceptorEmitter
   }
 
   /// <summary>
+  /// Emits runtime DI infrastructure when UseMicrosoftDependencyInjection() is called.
+  /// This provides full MS DI container support at the cost of runtime overhead.
+  /// </summary>
+  /// <param name="sb">The StringBuilder to append to.</param>
+  /// <param name="services">The service definitions extracted from ConfigureServices.</param>
+  private static void EmitRuntimeDIInfrastructure(StringBuilder sb, ImmutableArray<ServiceDefinition> services)
+  {
+    sb.AppendLine("  // ═══════════════════════════════════════════════════════════════════════════════");
+    sb.AppendLine("  // RUNTIME DI INFRASTRUCTURE (UseMicrosoftDependencyInjection was called)");
+    sb.AppendLine("  // ═══════════════════════════════════════════════════════════════════════════════");
+    sb.AppendLine("  // This enables full MS DI container support including:");
+    sb.AppendLine("  // - Services with constructor dependencies (MS DI resolves automatically)");
+    sb.AppendLine("  // - All service lifetimes (Singleton, Scoped, Transient)");
+    sb.AppendLine("  // Trade-off: Slightly slower startup (~2-10ms for ServiceProvider.Build())");
+    sb.AppendLine("  // Note: Extension methods (AddDbContext, AddSerilog) require Phase 4 (Execute & Inspect)");
+    sb.AppendLine();
+    sb.AppendLine("  private static global::System.IServiceProvider? __serviceProvider;");
+    sb.AppendLine();
+    sb.AppendLine("  private static global::System.IServiceProvider GetServiceProvider()");
+    sb.AppendLine("  {");
+    sb.AppendLine("    if (__serviceProvider is not null) return __serviceProvider;");
+    sb.AppendLine();
+    sb.AppendLine("    var services = new global::Microsoft.Extensions.DependencyInjection.ServiceCollection();");
+    sb.AppendLine();
+
+    // Emit service registrations extracted at compile time
+    if (services.Length > 0)
+    {
+      sb.AppendLine("    // Services extracted from ConfigureServices at compile time");
+      sb.AppendLine("    // MS DI handles constructor dependency resolution automatically");
+      foreach (ServiceDefinition service in services)
+      {
+        string methodName = service.Lifetime switch
+        {
+          ServiceLifetime.Singleton => "AddSingleton",
+          ServiceLifetime.Scoped => "AddScoped",
+          ServiceLifetime.Transient => "AddTransient",
+          _ => "AddSingleton"
+        };
+
+        // If service type equals implementation type, use single type parameter form
+        if (service.ServiceTypeName == service.ImplementationTypeName)
+        {
+          sb.AppendLine($"    global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.{methodName}<{service.ImplementationTypeName}>(services);");
+        }
+        else
+        {
+          sb.AppendLine($"    global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.{methodName}<{service.ServiceTypeName}, {service.ImplementationTypeName}>(services);");
+        }
+      }
+
+      sb.AppendLine();
+    }
+
+    sb.AppendLine("    __serviceProvider = global::Microsoft.Extensions.DependencyInjection.ServiceCollectionContainerBuilderExtensions.BuildServiceProvider(services);");
+    sb.AppendLine("    return __serviceProvider;");
+    sb.AppendLine("  }");
+    sb.AppendLine();
+  }
+
+  /// <summary>
   /// Emits static LoggerFactory fields for apps with explicit AddLogging() configuration.
   /// This is the AOT-optimized path - factory created at static init, zero runtime cost.
   /// </summary>
@@ -480,7 +551,7 @@ internal static class InterceptorEmitter
         allRoutesOrdered.Add(route);
       }
 
-      RouteMatcherEmitter.Emit(sb, route, routeIndex, app.Services, app.Behaviors, app.CustomConverters, loggerFactoryFieldName);
+      RouteMatcherEmitter.Emit(sb, route, routeIndex, app.Services, app.Behaviors, app.CustomConverters, loggerFactoryFieldName, app.UseMicrosoftDependencyInjection);
     }
 
     // Built-in flags: --help, --version, --capabilities

@@ -40,6 +40,7 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
   private bool DiscoverEndpointsEnabled;
   private bool TelemetryEnabled;
   private bool CompletionEnabled;
+  private bool MicrosoftDependencyInjectionEnabled;
   private readonly List<string> ExplicitEndpointTypes = [];
 
   /// <summary>
@@ -212,6 +213,16 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
   }
 
   /// <summary>
+  /// Enables runtime Microsoft.Extensions.DependencyInjection instead of source-gen DI.
+  /// Mirrors: NuruAppBuilder.UseMicrosoftDependencyInjection()
+  /// </summary>
+  public TSelf UseMicrosoftDependencyInjection()
+  {
+    MicrosoftDependencyInjectionEnabled = true;
+    return (TSelf)this;
+  }
+
+  /// <summary>
   /// Registers a custom type converter for code generation.
   /// Mirrors: NuruAppBuilder.AddTypeConverter()
   /// </summary>
@@ -334,7 +345,8 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
       DiscoverEndpoints: DiscoverEndpointsEnabled,
       ExplicitEndpointTypes: [.. ExplicitEndpointTypes],
       HasTelemetry: TelemetryEnabled,
-      HasCompletion: CompletionEnabled);
+      HasCompletion: CompletionEnabled,
+      UseMicrosoftDependencyInjection: MicrosoftDependencyInjectionEnabled);
   }
 
   /// <summary>
@@ -366,6 +378,7 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
   IIrAppBuilder IIrAppBuilder.AddService(ServiceDefinition service) => AddService(service);
   IIrAppBuilder IIrAppBuilder.UseTerminal() => UseTerminal();
   IIrAppBuilder IIrAppBuilder.UseTelemetry() => UseTelemetry();
+  IIrAppBuilder IIrAppBuilder.UseMicrosoftDependencyInjection() => UseMicrosoftDependencyInjection();
   IIrAppBuilder IIrAppBuilder.AddTypeConverter(CustomConverterDefinition converter) => AddTypeConverter(converter);
   IIrAppBuilder IIrAppBuilder.AddInterceptSite(string methodName, InterceptSiteModel site) => AddInterceptSite(methodName, site);
   IIrAppBuilder IIrAppBuilder.DiscoverEndpoints() => DiscoverEndpoints();

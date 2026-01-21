@@ -40,7 +40,8 @@ internal static class HandlerInvokerEmitter
   /// <param name="indent">Number of spaces for indentation.</param>
   /// <param name="commandAlreadyCreated">If true, skip command creation (already done by behavior emitter).</param>
   /// <param name="loggerFactoryFieldName">Logger factory source (static field name or "app.LoggerFactory"), or null if no logging.</param>
-  public static void Emit(StringBuilder sb, RouteDefinition route, int routeIndex, ImmutableArray<ServiceDefinition> services, int indent = 6, bool commandAlreadyCreated = false, string? loggerFactoryFieldName = null)
+  /// <param name="useRuntimeDI">When true, uses GetServiceProvider().GetRequiredService&lt;T&gt;() instead of static instantiation.</param>
+  public static void Emit(StringBuilder sb, RouteDefinition route, int routeIndex, ImmutableArray<ServiceDefinition> services, int indent = 6, bool commandAlreadyCreated = false, string? loggerFactoryFieldName = null, bool useRuntimeDI = false)
   {
     string indentStr = new(' ', indent);
     HandlerDefinition handler = route.Handler;
@@ -48,7 +49,7 @@ internal static class HandlerInvokerEmitter
     // First, resolve any required services
     if (handler.RequiresServiceProvider)
     {
-      ServiceResolverEmitter.Emit(sb, handler, services, indent);
+      ServiceResolverEmitter.Emit(sb, handler, services, indent, useRuntimeDI);
     }
 
     // Emit handler invocation based on kind
@@ -59,7 +60,7 @@ internal static class HandlerInvokerEmitter
         break;
 
       case HandlerKind.Command:
-        EmitCommandInvocation(sb, route, routeIndex, services, indentStr, commandAlreadyCreated, loggerFactoryFieldName);
+        EmitCommandInvocation(sb, route, routeIndex, services, indentStr, commandAlreadyCreated, loggerFactoryFieldName, useRuntimeDI);
         break;
 
       case HandlerKind.Method:
@@ -281,7 +282,7 @@ internal static class HandlerInvokerEmitter
   /// Emits invocation for a command/query handler class.
   /// Creates the command object (unless already created), resolves handler dependencies, and invokes Handle().
   /// </summary>
-  private static void EmitCommandInvocation(StringBuilder sb, RouteDefinition route, int routeIndex, ImmutableArray<ServiceDefinition> services, string indent, bool commandAlreadyCreated = false, string? loggerFactoryFieldName = null)
+  private static void EmitCommandInvocation(StringBuilder sb, RouteDefinition route, int routeIndex, ImmutableArray<ServiceDefinition> services, string indent, bool commandAlreadyCreated = false, string? loggerFactoryFieldName = null, bool useRuntimeDI = false)
   {
     HandlerDefinition handler = route.Handler;
     string commandTypeName = handler.FullTypeName ?? "UnknownCommand";
@@ -325,7 +326,7 @@ internal static class HandlerInvokerEmitter
       sb.AppendLine($"{indent}// Resolve handler constructor dependencies");
       foreach (ParameterBinding dep in handler.ConstructorDependencies)
       {
-        string resolution = ResolveServiceForCommand(dep.ParameterTypeName, services, loggerFactoryFieldName);
+        string resolution = ResolveServiceForCommand(dep.ParameterTypeName, services, loggerFactoryFieldName, useRuntimeDI);
         sb.AppendLine(
           $"{indent}{dep.ParameterTypeName} __{dep.ParameterName} = {resolution};");
       }
@@ -362,12 +363,13 @@ internal static class HandlerInvokerEmitter
   /// <param name="serviceTypeName">The service type to resolve.</param>
   /// <param name="services">Registered services.</param>
   /// <param name="loggerFactoryFieldName">Logger factory source (static field or "app.LoggerFactory"), or null if no logging.</param>
-  private static string ResolveServiceForCommand(string? serviceTypeName, ImmutableArray<ServiceDefinition> services, string? loggerFactoryFieldName)
+  /// <param name="useRuntimeDI">When true, uses GetServiceProvider().GetRequiredService&lt;T&gt;() instead of static instantiation.</param>
+  private static string ResolveServiceForCommand(string? serviceTypeName, ImmutableArray<ServiceDefinition> services, string? loggerFactoryFieldName, bool useRuntimeDI = false)
   {
     if (string.IsNullOrEmpty(serviceTypeName))
       return "default!";
 
-    // Well-known services get direct resolution
+    // Well-known services get direct resolution (even with runtime DI)
     if (serviceTypeName == "global::TimeWarp.Terminal.ITerminal")
       return "app.Terminal";
     if (serviceTypeName is "global::Microsoft.Extensions.Configuration.IConfiguration"
@@ -397,6 +399,13 @@ internal static class HandlerInvokerEmitter
       return $"global::Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance.CreateLogger<{typeArg}>()";
     }
 
+    // Runtime DI path: use GetServiceProvider().GetRequiredService<T>()
+    if (useRuntimeDI)
+    {
+      return $"global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<{serviceTypeName}>(GetServiceProvider())";
+    }
+
+    // Source-gen DI path: static instantiation via Lazy<T> fields
     // Find matching service registration
     ServiceDefinition? service = services.FirstOrDefault(s => s.ServiceTypeName == serviceTypeName);
     if (service is null)

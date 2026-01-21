@@ -118,6 +118,12 @@ public interface IIrAppBuilder : IIrRouteSource
   IIrAppBuilder UseTelemetry();
 
   /// <summary>
+  /// Enables runtime Microsoft.Extensions.DependencyInjection instead of source-gen DI.
+  /// </summary>
+  /// <returns>This builder for chaining.</returns>
+  IIrAppBuilder UseMicrosoftDependencyInjection();
+
+  /// <summary>
   /// Enables shell completion support.
   /// </summary>
   /// <returns>This builder for chaining.</returns>

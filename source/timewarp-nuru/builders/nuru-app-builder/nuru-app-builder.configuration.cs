@@ -183,4 +183,51 @@ public partial class NuruAppBuilder
     // This stub exists for API compatibility.
     return this;
   }
+
+  /// <summary>
+  /// Enables runtime Microsoft.Extensions.DependencyInjection instead of source-generated DI.
+  /// Use this when you need full DI container support including:
+  /// <list type="bullet">
+  /// <item><description>Factory delegate registrations</description></item>
+  /// <item><description>Services with constructor dependencies</description></item>
+  /// <item><description>Extension method registrations (AddDbContext, AddSerilog, etc.)</description></item>
+  /// <item><description>Internal type implementations from external assemblies</description></item>
+  /// </list>
+  /// </summary>
+  /// <returns>The builder for chaining.</returns>
+  /// <remarks>
+  /// <para>
+  /// By default, Nuru uses source-generated DI which provides AOT compatibility and fast startup.
+  /// However, source-gen DI has limitations - it can only instantiate services with visible
+  /// parameterless constructors or explicitly registered dependencies.
+  /// </para>
+  /// <para>
+  /// When you call this method, the generator emits code that uses a real ServiceProvider
+  /// at runtime, enabling full MS DI semantics at the cost of:
+  /// <list type="bullet">
+  /// <item><description>Slightly slower startup (~2-10ms for ServiceProvider.Build())</description></item>
+  /// <item><description>Larger binary size</description></item>
+  /// <item><description>Reduced AOT trimming effectiveness</description></item>
+  /// </list>
+  /// </para>
+  /// </remarks>
+  /// <example>
+  /// <code>
+  /// NuruApp app = NuruApp.CreateBuilder()
+  ///   .UseMicrosoftDependencyInjection()  // Enable full DI
+  ///   .ConfigureServices(services =>
+  ///   {
+  ///     services.AddDbContext&lt;MyDbContext&gt;();  // Now works!
+  ///     services.AddSingleton&lt;IService&gt;(sp => new Service(sp.GetRequiredService&lt;IDep&gt;()));
+  ///   })
+  ///   .Build();
+  /// </code>
+  /// </example>
+  public virtual NuruAppBuilder UseMicrosoftDependencyInjection()
+  {
+    // This method is interpreted by the source generator at compile time.
+    // When called, the generator emits runtime DI code instead of static instantiation.
+    // This stub exists for API compatibility.
+    return this;
+  }
 }

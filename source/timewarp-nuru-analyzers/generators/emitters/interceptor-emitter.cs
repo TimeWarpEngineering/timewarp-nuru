@@ -803,9 +803,12 @@ internal static class InterceptorEmitter
       AppModel app = model.Apps[appIndex];
       string methodSuffix = model.Apps.Length > 1 ? $"_{appIndex}" : "";
 
-      // Enrich app with version metadata and filtered routes for help/capabilities
-      // For DiscoverEndpoints() apps, routes come from model.Endpoints not app.Routes
-      ImmutableArray<RouteDefinition> appRoutes = FilterEndpointsForApp(app, model.Endpoints);
+      // Enrich app with version metadata and routes for help/capabilities
+      // For DiscoverEndpoints() or Map<T>() apps, routes come from model.Endpoints
+      // For Map() with inline lambdas, routes are already in app.Routes
+      ImmutableArray<RouteDefinition> appRoutes = app.Routes.Length > 0
+        ? app.Routes
+        : FilterEndpointsForApp(app, model.Endpoints);
       AppModel enrichedApp = app with
       {
         Version = model.Version,

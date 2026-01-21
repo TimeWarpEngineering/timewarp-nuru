@@ -57,8 +57,8 @@ NuruApp.CreateBuilder()
 - [ ] Test factory delegates work - Requires Phase 4
 - [x] Test constructor dependencies resolve correctly - MS DI handles automatically
 - [ ] Test services with ILogger<T> injection
-- [ ] Test singleton/transient/scoped lifetimes
-- [x] Verify AOT still works for default (source-gen) path - All 1018 tests pass
+- [x] Test singleton/transient lifetimes - generator-15-runtime-di.cs
+- [x] Verify AOT still works for default (source-gen) path - All 1023 tests pass
 
 ## Implementation Summary
 
@@ -103,6 +103,34 @@ public static partial class NuruGenerated
 }
 ```
 
+### Test File
+
+**tests/timewarp-nuru-tests/generator/generator-15-runtime-di.cs** - 5 tests:
+- `Should_resolve_service_with_constructor_dependency`
+- `Should_resolve_two_level_dependency_chain`
+- `Should_respect_transient_lifetime`
+- `Should_respect_singleton_lifetime`
+- `Should_inject_multiple_services_with_dependencies`
+
+## Lessons Learned
+
+### Mixed DI Strategies in Same Assembly
+
+When apps in the same assembly use different DI strategies (some source-gen, some runtime), the code generator must emit infrastructure for BOTH:
+- Static `Lazy<T>` fields for source-gen DI apps
+- `GetServiceProvider()` runtime infrastructure for runtime DI apps
+
+**Fix applied:** `interceptor-emitter.cs` now filters services by app's DI strategy and emits appropriate infrastructure for each.
+
+### Shared Static ServiceProvider Limitation
+
+The runtime DI uses a single static `__serviceProvider` field shared across all apps that use `UseMicrosoftDependencyInjection()`. This means:
+- The ServiceProvider is built once with ALL services from ALL runtime DI apps
+- Services registered with different lifetimes in different apps may conflict
+- Tests must use unique types to avoid cross-test interference
+
+**Future consideration:** For Phase 5 or beyond, consider per-app ServiceProvider isolation.
+
 ## Notes
 
 - This is Phase 1 of Epic #391
@@ -110,4 +138,4 @@ public static partial class NuruGenerated
 - Performance tradeoff is explicit and documented
 - Users understand they're opting out of AOT optimization
 - Extension methods (AddDbContext, AddSerilog) require Phase 4 (Execute & Inspect)
-- All 1018 existing tests pass with these changes
+- All 1023 tests pass with these changes

@@ -55,12 +55,12 @@ Execute ServiceCollection at compile time to see extension method registrations.
 
 ## Success Criteria
 
-- [ ] Users can opt into full MS DI with single method call
+- [x] Users can opt into full MS DI with single method call
 - [ ] Source-gen DI provides clear errors for unsupported patterns
 - [ ] Constructor dependencies work in source-gen DI (Phase 3)
 - [ ] Extension methods work in source-gen DI (Phase 4)
-- [ ] AOT compatibility maintained for default path
-- [ ] No breaking changes to existing API
+- [x] AOT compatibility maintained for default path
+- [x] No breaking changes to existing API
 
 ## Related
 
@@ -69,9 +69,33 @@ Execute ServiceCollection at compile time to see extension method registrations.
 
 ## Checklist
 
-- [ ] Phase 1: UseMicrosoftDependencyInjection (#392)
+- [x] Phase 1: UseMicrosoftDependencyInjection (#392) - DONE
 - [ ] Phase 2: DI Diagnostics (#393)
 - [ ] Phase 3: Constructor Dependency Resolution (#394)
 - [ ] Phase 4: Execute and Inspect (#395)
+- [ ] Phase 5: Per-App ServiceProvider Isolation (future)
 - [ ] Documentation updates
 - [ ] Migration guide for users hitting limitations
+
+## Lessons Learned (Phase 1)
+
+### Mixed DI Strategies
+
+When apps in the same assembly use different DI strategies, the generator must emit infrastructure for BOTH strategies. The `interceptor-emitter.cs` now filters services by each app's DI strategy.
+
+### Shared ServiceProvider Limitation
+
+The runtime DI infrastructure uses a single static `__serviceProvider` shared across all apps that call `UseMicrosoftDependencyInjection()`. This creates potential issues:
+
+1. **Service Conflicts**: If two apps register the same interface with different lifetimes, only one wins
+2. **Test Isolation**: Tests must use unique service types to avoid interference
+3. **No Per-App Scopes**: Scoped services behave like singletons across the shared provider
+
+**Recommendation for Phase 5**: Consider per-app ServiceProvider isolation using app index in field names (e.g., `__serviceProvider_0`, `__serviceProvider_1`).
+
+### Testing Pattern
+
+When testing runtime DI features:
+- Use unique type names per test (e.g., `IRdi15TransientCounter`, `IRdi15SingletonCounter`)
+- Clear runfile cache (`dotnet clean <runfile>`) when changing service registrations
+- Static counters need `Reset()` methods but won't help if ServiceProvider is cached

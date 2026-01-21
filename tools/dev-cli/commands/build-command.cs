@@ -68,9 +68,12 @@ internal sealed class BuildCommand : ICommand<Unit>
       // - timewarp-nuru-repl: Needs NuruApp properties not yet implemented
       // - timewarp-nuru-testapp-delegates: Has catch-all parameter generator bug (#331)
       // - benchmarks/samples: Not needed for CI validation
+      // IMPORTANT: timewarp-nuru-build must be built BEFORE timewarp-nuru because
+      // timewarp-nuru includes its output DLLs in the NuGet package via wildcard.
       string[] projectsToBuild =
       [
         "source/timewarp-nuru-analyzers/timewarp-nuru-analyzers.csproj",
+        "source/timewarp-nuru-build/timewarp-nuru-build.csproj",
         "source/timewarp-nuru-mcp/timewarp-nuru-mcp.csproj",
         "source/timewarp-nuru/timewarp-nuru.csproj"
       ];

@@ -8,6 +8,7 @@
   <Folder Name="/source/">
     <Project Path="source/timewarp-nuru/timewarp-nuru.csproj" />
     <Project Path="source/timewarp-nuru-analyzers/timewarp-nuru-analyzers.csproj" />
+    <Project Path="source/timewarp-nuru-build/timewarp-nuru-build.csproj" />
     <Project Path="source/timewarp-nuru-mcp/timewarp-nuru-mcp.csproj" />
     <Project Path="source/timewarp-nuru-parsing/timewarp-nuru-parsing.csproj" />
     <!-- <Project Path="source/timewarp-nuru-repl/timewarp-nuru-repl.csproj" /> -->

@@ -50,6 +50,34 @@ This can fail to include files when the build project hasn't been compiled befor
 - [x] Verify new package contains build DLLs (4.8MB with all assets)
 - [ ] Publish 3.0.0-beta.29 to NuGet
 
+## Update 2026-01-21
+
+**beta.29 still has the issue** - verified after restore from NuGet:
+
+```bash
+$ ls ~/.nuget/packages/timewarp.nuru/3.0.0-beta.29/build/
+TimeWarp.Nuru.targets  # Only the targets file, no net10.0/ folder
+```
+
+The package published to NuGet appears to still be missing the `build/net10.0/TimeWarp.Nuru.Build.dll`.
+
+### Actual Root Cause (CI investigation)
+
+The `timewarp-nuru-build` project was:
+1. **Not in the solution file** (`timewarp-nuru.slnx`)
+2. **Not in the CI build list** (`tools/dev-cli/commands/build-command.cs`)
+
+CI pipeline flow:
+1. `clean` - runs `find ... -name bin -exec rm -rf` which deletes ALL bin directories including `timewarp-nuru-build/bin`
+2. `build` - only built projects in the explicit list (did not include `timewarp-nuru-build`)
+3. `pack --no-build` - when packing `timewarp-nuru`, the wildcard `../timewarp-nuru-build/bin/Release/net10.0/*.dll` found NO files
+
+### Fix (beta.30)
+
+- [x] Added `timewarp-nuru-build` to `timewarp-nuru.slnx`
+- [x] Added `timewarp-nuru-build` to `build-command.cs` projectsToBuild array (BEFORE timewarp-nuru)
+- [x] Bump version to 3.0.0-beta.30
+
 ## Notes
 
 Discovered while migrating ccc1-cli from Nuru 2.1.0-beta.28 to 3.0.0-beta.28 Endpoints API.

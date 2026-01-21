@@ -32,14 +32,24 @@ internal static class InterceptorEmitter
     // Emit shared infrastructure (command classes, service fields, behaviors, logging, telemetry)
     EmitCommandClasses(sb, model);
 
-    // Emit service infrastructure - either static fields (source-gen DI) or runtime DI support
+    // Emit service infrastructure for both source-gen DI and runtime DI apps
+    // Apps can mix strategies - some may use UseMicrosoftDependencyInjection(), others may not
+    IEnumerable<ServiceDefinition> sourceGenServices = model.Apps
+      .Where(a => !a.UseMicrosoftDependencyInjection)
+      .SelectMany(a => a.Services)
+      .DistinctBy(s => s.ImplementationTypeName);
+    IEnumerable<ServiceDefinition> runtimeDIServices = model.Apps
+      .Where(a => a.UseMicrosoftDependencyInjection)
+      .SelectMany(a => a.Services)
+      .DistinctBy(s => s.ImplementationTypeName);
+
+    // Emit static Lazy<T> fields for source-gen DI apps
+    EmitServiceFields(sb, sourceGenServices);
+
+    // Emit runtime DI infrastructure for apps that use UseMicrosoftDependencyInjection()
     if (model.UsesMicrosoftDependencyInjection)
     {
-      EmitRuntimeDIInfrastructure(sb, [.. model.AllServices]);
-    }
-    else
-    {
-      EmitServiceFields(sb, model.AllServices);
+      EmitRuntimeDIInfrastructure(sb, [.. runtimeDIServices]);
     }
 
     EmitLoggingFactoryFields(sb, model);

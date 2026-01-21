@@ -803,12 +803,15 @@ internal static class InterceptorEmitter
       AppModel app = model.Apps[appIndex];
       string methodSuffix = model.Apps.Length > 1 ? $"_{appIndex}" : "";
 
-      // Enrich app with version metadata from GeneratorModel
+      // Enrich app with version metadata and filtered routes for help/capabilities
+      // For DiscoverEndpoints() apps, routes come from model.Endpoints not app.Routes
+      ImmutableArray<RouteDefinition> appRoutes = FilterEndpointsForApp(app, model.Endpoints);
       AppModel enrichedApp = app with
       {
         Version = model.Version,
         CommitHash = model.CommitHash,
-        CommitDate = model.CommitDate
+        CommitDate = model.CommitDate,
+        Routes = appRoutes
       };
 
       HelpEmitter.Emit(sb, enrichedApp, methodSuffix);

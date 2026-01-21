@@ -13,8 +13,8 @@ dotnet run samples/02-calculator/01-calc-delegate.cs -- round 3.7 --mode up
 ## What's Demonstrated
 
 - **01-calc-delegate.cs**: Delegate handlers with typed `{x:double}` parameters
-- **02-calc-commands.cs**: Command pattern with attributed routes
-- **03-calc-mixed.cs**: Mixing delegate and attributed routes
+- **02-calc-commands.cs**: Command pattern with endpoints
+- **03-calc-mixed.cs**: Mixing delegate routes and endpoints
 
 ## Related Documentation
 

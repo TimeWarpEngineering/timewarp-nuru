@@ -1,4 +1,4 @@
-namespace AttributedRoutes.Messages;
+namespace Endpoints.Messages;
 
 using TimeWarp.Nuru;
 

@@ -26,7 +26,7 @@ using TimeWarp.Nuru.Generators;
 /// <remarks>
 /// This task uses the same IR infrastructure as the source generator:
 /// - DslInterpreter for delegate routes (.Map(...).WithHandler(...))
-/// - EndpointExtractor for [NuruRoute] attributed classes
+/// - EndpointExtractor for [NuruRoute] endpoint classes
 /// This ensures consistent extraction logic and complete coverage of all route types.
 /// </remarks>
 public class GenerateNuruJsonContextTask : Task
@@ -143,7 +143,7 @@ public class GenerateNuruJsonContextTask : Task
       // 4a. Extract from delegate routes using DslInterpreter
       ExtractFromDelegateRoutes(root, semanticModel, jsonTypes, cancellationToken);
 
-      // 4b. Extract from [NuruRoute] attributed classes
+      // 4b. Extract from [NuruRoute] endpoint classes
       ExtractFromEndpoints(root, semanticModel, jsonTypes, cancellationToken);
     }
 
@@ -239,7 +239,7 @@ public class GenerateNuruJsonContextTask : Task
   }
 
   /// <summary>
-  /// Extracts return types from [NuruRoute] attributed classes using EndpointExtractor.
+  /// Extracts return types from [NuruRoute] endpoint classes using EndpointExtractor.
   /// </summary>
   private void ExtractFromEndpoints(
     CompilationUnitSyntax root,

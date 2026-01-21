@@ -62,7 +62,7 @@ public sealed class NuruGenerator : IIncrementalGenerator
         transform: static (ctx, ct) => GetFluentRouteLocation(ctx, ct))
       .Where(static info => info is not null);
 
-    // 5. Combine all route locations (fluent + attributed) into a dictionary
+    // 5. Combine all route locations (fluent + endpoints) into a dictionary
     IncrementalValueProvider<ImmutableDictionary<string, Location>> routeLocations =
       fluentRouteLocations
         .Collect()
@@ -340,7 +340,7 @@ public sealed class NuruGenerator : IIncrementalGenerator
     ImmutableArray<RouteDefinition> allEndpoints = [.. endpoints.Where(r => r is not null)!];
 
     // Validate each app's combined routes (fluent + filtered endpoints)
-    // This catches duplicate routes between fluent and attributed definitions
+    // This catches duplicate routes between fluent and endpoint definitions
     foreach (AppModel app in uniqueApps.Values)
     {
       // Filter endpoints based on app's discovery mode

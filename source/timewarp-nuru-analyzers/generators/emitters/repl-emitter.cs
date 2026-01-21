@@ -17,16 +17,16 @@ internal static class ReplEmitter
   /// <param name="sb">The StringBuilder to append to.</param>
   /// <param name="app">The application model containing route definitions.</param>
   /// <param name="methodSuffix">Suffix for per-app methods (e.g., "_0" for multi-app assemblies).</param>
-  /// <param name="attributedRoutes">Routes from [NuruRoute] attributed classes.</param>
+  /// <param name="endpoints">Routes from [NuruRoute] endpoint classes.</param>
   /// <param name="compilation">The Roslyn compilation for resolving enum types.</param>
-  public static void Emit(StringBuilder sb, AppModel app, string methodSuffix, ImmutableArray<RouteDefinition> attributedRoutes, Compilation compilation)
+  public static void Emit(StringBuilder sb, AppModel app, string methodSuffix, ImmutableArray<RouteDefinition> endpoints, Compilation compilation)
   {
     sb.AppendLine("  // ═══════════════════════════════════════════════════════════════════════════════");
     sb.AppendLine("  // REPL (INTERACTIVE MODE) SUPPORT");
     sb.AppendLine("  // ═══════════════════════════════════════════════════════════════════════════════");
     sb.AppendLine();
 
-    EmitGeneratedReplRouteProvider(sb, app, methodSuffix, attributedRoutes, compilation);
+    EmitGeneratedReplRouteProvider(sb, app, methodSuffix, endpoints, compilation);
     sb.AppendLine();
     EmitRunReplAsyncMethod(sb, methodSuffix);
   }
@@ -34,10 +34,10 @@ internal static class ReplEmitter
   /// <summary>
   /// Emits the GeneratedReplRouteProvider class implementing IReplRouteProvider.
   /// </summary>
-  private static void EmitGeneratedReplRouteProvider(StringBuilder sb, AppModel app, string methodSuffix, ImmutableArray<RouteDefinition> attributedRoutes, Compilation compilation)
+  private static void EmitGeneratedReplRouteProvider(StringBuilder sb, AppModel app, string methodSuffix, ImmutableArray<RouteDefinition> endpoints, Compilation compilation)
   {
     // Collect all routes for this app
-    IEnumerable<RouteDefinition> allRoutes = app.Routes.Concat(attributedRoutes);
+    IEnumerable<RouteDefinition> allRoutes = app.Routes.Concat(endpoints);
 
     // Extract completion data using shared extractor
     List<string> commandPrefixes = CompletionDataExtractor.ExtractCommandPrefixes(allRoutes);

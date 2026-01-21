@@ -181,7 +181,7 @@ Generates handler code from a route pattern using the V2 fluent DSL with `.WithH
 
 **Generated Code Features:**
 - Uses V2 fluent DSL pattern with `.Map().WithHandler().AsCommand().Done()`
-- Shows `[NuruRoute]` attributed pattern as alternative
+- Shows `[NuruRoute]` endpoint pattern as alternative
 - Demonstrates pipeline behaviors with `.AddBehavior()` and `.Implements<T>()`
 - Generates correct parameter types based on route constraints
 

@@ -3,7 +3,7 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 // ENDPOINT GENERATOR TESTS - Basic Generation
 // ═══════════════════════════════════════════════════════════════════════════════
-// Tests that the NuruAttributedRouteGenerator source generator correctly
+// Tests that the NuruEndpointGenerator source generator correctly
 // generates route registration code for classes with [NuruRoute] attributes.
 //
 // NOTE: These tests verify the integration works end-to-end. The source generator

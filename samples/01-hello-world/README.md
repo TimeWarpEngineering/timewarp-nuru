@@ -19,4 +19,4 @@ dotnet run samples/01-hello-world/03-hello-world-endpoint.cs
 ## Related Documentation
 
 - [Routing](../../documentation/user/features/routing.md)
-- [Attributed Routes](../../documentation/user/features/endpoints.md)
+- [Endpoints](../../documentation/user/features/endpoints.md)

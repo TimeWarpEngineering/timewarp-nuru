@@ -136,7 +136,7 @@ internal static class AppExtractor
     if (endpoints.Length == 0)
       return baseModel;
 
-    // Combine routes (fluent routes first, then attributed)
+    // Combine routes (fluent routes first, then endpoints)
     ImmutableArray<RouteDefinition> mergedRoutes = baseModel.Routes.AddRange(endpoints);
 
     return baseModel with { Routes = mergedRoutes };
@@ -451,7 +451,7 @@ internal static class AppExtractor
     if (endpoints.Length == 0)
       return baseResult;
 
-    // Combine routes (fluent routes first, then attributed)
+    // Combine routes (fluent routes first, then endpoints)
     ImmutableArray<RouteDefinition> mergedRoutes = baseResult.Model.Routes.AddRange(endpoints);
     AppModel mergedModel = baseResult.Model with { Routes = mergedRoutes };
 

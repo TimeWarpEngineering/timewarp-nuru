@@ -93,7 +93,7 @@ internal sealed class GenerateHandlerTool
 
     // Show endpoint alternative
     sb.AppendLine("// ═══════════════════════════════════════════════════════════════");
-    sb.AppendLine("// Alternative: [NuruRoute] Attributed Pattern");
+    sb.AppendLine("// Alternative: [NuruRoute] Endpoint Pattern");
     sb.AppendLine("// ═══════════════════════════════════════════════════════════════");
     sb.AppendLine("// For larger apps, use endpoints for auto-discovery:");
     sb.AppendLine("//");

@@ -1,4 +1,4 @@
-namespace AttributedRoutes.Messages;
+namespace Endpoints.Messages;
 
 using TimeWarp.Nuru;
 using TimeWarp.Terminal;
@@ -51,7 +51,7 @@ public sealed class DefaultQuery : IQuery<Unit>
       {
         Terminal.WriteLine("Legend: (Q)uery (I)dempotent (C)ommand ( )Unspecified");
         Terminal.WriteLine();
-        Terminal.WriteLine("Run 'attributed-routes --help' for detailed help.");
+        Terminal.WriteLine("Run 'endpoints --help' for detailed help.");
       }
       return default;
     }

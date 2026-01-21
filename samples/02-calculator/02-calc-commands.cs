@@ -9,7 +9,7 @@
 // - Testable command handlers via dependency injection
 // - Clean separation of concerns (commands, handlers, services)
 // - Type-safe parameter binding via attributes
-// - Auto-discovery of [NuruRoute] attributed classes by source generator
+// - Auto-discovery of [NuruRoute] endpoint classes by source generator
 //
 // NO EXTERNAL PACKAGES REQUIRED:
 //   TimeWarp.Nuru provides ICommand<T>, ICommandHandler<T,TResult>, and Unit

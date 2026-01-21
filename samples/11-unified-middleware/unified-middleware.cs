@@ -100,7 +100,7 @@ using static System.Console;
 
 NuruApp app = NuruApp.CreateBuilder()
   // =========================================================================
-  // REGISTER BEHAVIORS - Apply to ALL routes (delegate AND attributed)
+  // REGISTER BEHAVIORS - Apply to ALL routes (delegate routes AND endpoints)
   // =========================================================================
   .AddBehavior(typeof(LoggingBehavior))
   .AddBehavior(typeof(PerformanceBehavior))
@@ -194,9 +194,9 @@ public sealed class PerformanceBehavior : INuruBehavior
 // =============================================================================
 
 /// <summary>
-/// Echo command - demonstrates attributed route flowing through unified pipeline.
+/// Echo command - demonstrates endpoint flowing through unified pipeline.
 /// </summary>
-[NuruRoute("echo {message}", Description = "Echo a message back (attributed route with pipeline)")]
+[NuruRoute("echo {message}", Description = "Echo a message back (endpoint with pipeline)")]
 public sealed class EchoCommand : ICommand<Unit>
 {
   [Parameter(Order = 0)]
@@ -216,7 +216,7 @@ public sealed class EchoCommand : ICommand<Unit>
 /// Slow command - demonstrates performance monitoring in unified pipeline.
 /// Use delay > 500ms to trigger performance warning.
 /// </summary>
-[NuruRoute("slow {delay:int}", Description = "Simulate slow operation in ms (attributed route with pipeline)")]
+[NuruRoute("slow {delay:int}", Description = "Simulate slow operation in ms (endpoint with pipeline)")]
 public sealed class SlowCommand : ICommand<Unit>
 {
   [Parameter(Order = 0)]

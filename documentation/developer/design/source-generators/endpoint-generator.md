@@ -5,7 +5,7 @@ Design documentation for the `NuruEndpointGenerator` source generator that enabl
 ## Overview
 
 The endpoint generator scans for classes decorated with `[NuruRoute]` and generates:
-1. `CompiledRouteBuilder` calls for each attributed request
+1. `CompiledRouteBuilder` calls for each endpoint
 2. `[ModuleInitializer]` registration code
 3. Pattern strings for help display
 
@@ -160,10 +160,10 @@ public sealed class DeployRequest : IRequest
 The generator produces:
 
 ```csharp
-// GeneratedAttributedRoutes.g.cs
+// GeneratedEndpoints.g.cs
 namespace TimeWarp.Nuru.Generated;
 
-internal static class GeneratedAttributedRoutes
+internal static class GeneratedEndpoints
 {
   internal static readonly CompiledRoute __Route_DeployRequest = 
     new CompiledRouteBuilder()
@@ -175,15 +175,15 @@ internal static class GeneratedAttributedRoutes
   internal const string __Pattern_DeployRequest = "deploy {env} --force,-f";
 }
 
-internal static class GeneratedAttributedRouteRegistration
+internal static class GeneratedEndpointRegistration
 {
   [ModuleInitializer]
   internal static void Register()
   {
     NuruRouteRegistry.Register(
       typeof(DeployRequest),
-      GeneratedAttributedRoutes.__Route_DeployRequest,
-      GeneratedAttributedRoutes.__Pattern_DeployRequest,
+      GeneratedEndpoints.__Route_DeployRequest,
+      GeneratedEndpoints.__Pattern_DeployRequest,
       "Deploy to an environment");
   }
 }
@@ -215,10 +215,10 @@ public sealed class DockerRunRequest : DockerRequestBase, IRequest
 The generator produces:
 
 ```csharp
-// GeneratedAttributedRoutes.g.cs
+// GeneratedEndpoints.g.cs
 namespace TimeWarp.Nuru.Generated;
 
-internal static class GeneratedAttributedRoutes
+internal static class GeneratedEndpoints
 {
   internal static readonly CompiledRoute __Route_DockerRunRequest = 
     new CompiledRouteBuilder()
@@ -232,15 +232,15 @@ internal static class GeneratedAttributedRoutes
   internal const string __Pattern_DockerRunRequest = "docker run {image} --debug,-D --detach,-d";
 }
 
-internal static class GeneratedAttributedRouteRegistration
+internal static class GeneratedEndpointRegistration
 {
   [ModuleInitializer]
   internal static void Register()
   {
     NuruRouteRegistry.Register(
       typeof(DockerRunRequest),
-      GeneratedAttributedRoutes.__Route_DockerRunRequest,
-      GeneratedAttributedRoutes.__Pattern_DockerRunRequest,
+      GeneratedEndpoints.__Route_DockerRunRequest,
+      GeneratedEndpoints.__Pattern_DockerRunRequest,
       "Run a container");
   }
 }
@@ -343,7 +343,7 @@ Note how the group prefix `"docker"` and group option `--debug,-D` are inherited
 ### Data Types
 
 ```csharp
-record AttributedRouteInfo(
+record EndpointInfo(
   string FullTypeName,
   string TypeName,
   string Pattern,

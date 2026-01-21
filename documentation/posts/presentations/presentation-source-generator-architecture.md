@@ -125,7 +125,7 @@ source/timewarp-nuru-analyzers/generators/
 ┌───────────────────┐                      ┌───────────────────────┐
 │  3. EXTRACT       │                      │  4. EXTRACT           │
 │  from Build()     │                      │  endpoints    │
-│  AppExtractor     │                      │  AttributedExtractor  │
+│  AppExtractor     │                      │  EndpointExtractor    │
 └───────────────────┘                      └───────────────────────┘
         │                                               │
         └───────────────────────┬───────────────────────┘

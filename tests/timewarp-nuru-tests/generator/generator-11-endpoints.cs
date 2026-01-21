@@ -9,7 +9,7 @@
 // GENERATOR TEST: Endpoints (#309, #310, #311)
 // ═══════════════════════════════════════════════════════════════════════════════
 //
-// PURPOSE: Verify the source generator correctly handles [NuruRoute] attributed
+// PURPOSE: Verify the source generator correctly handles [NuruRoute] endpoint
 // classes with [Parameter] and [Option] attributes.
 //
 // REGRESSION TESTS FOR:
@@ -28,7 +28,7 @@
 return await RunAllTests();
 #endif
 
-namespace TimeWarp.Nuru.Tests.Generator.AttributedRoutes
+namespace TimeWarp.Nuru.Tests.Generator.Endpoints
 {
   /// <summary>
   /// Tests for endpoint generation ([NuruRoute] pattern).
@@ -36,11 +36,11 @@ namespace TimeWarp.Nuru.Tests.Generator.AttributedRoutes
   /// command classes with [NuruRoute], [Parameter], and [Option] attributes.
   /// </summary>
   [TestTag("Generator")]
-  [TestTag("AttributedRoutes")]
-  public class AttributedRouteTests
+  [TestTag("Endpoints")]
+  public class EndpointTests
   {
     [ModuleInitializer]
-    internal static void Register() => RegisterTests<AttributedRouteTests>();
+    internal static void Register() => RegisterTests<EndpointTests>();
 
     /// <summary>
     /// Test basic endpoint with simple string parameter.

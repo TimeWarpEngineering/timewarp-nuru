@@ -1,13 +1,13 @@
-# Attributed Routes
+# Endpoints
 
 Demonstrates auto-registration of routes via `[NuruRoute]` attributes with zero `Map()` calls.
 
 ## Run It
 
 ```bash
-dotnet run samples/03-attributed-routes/attributed-routes.cs -- greet Alice
-dotnet run samples/03-attributed-routes/attributed-routes.cs -- deploy staging --dry-run
-dotnet run samples/03-attributed-routes/attributed-routes.cs -- docker run nginx
+dotnet run samples/03-endpoints/endpoints.cs -- greet Alice
+dotnet run samples/03-endpoints/endpoints.cs -- deploy staging --dry-run
+dotnet run samples/03-endpoints/endpoints.cs -- docker run nginx
 ```
 
 ## What's Demonstrated
@@ -20,4 +20,4 @@ dotnet run samples/03-attributed-routes/attributed-routes.cs -- docker run nginx
 
 ## Related Documentation
 
-- [Attributed Routes](../../documentation/user/features/attributed-routes.md)
+- [Endpoints](../../documentation/user/features/endpoints.md)

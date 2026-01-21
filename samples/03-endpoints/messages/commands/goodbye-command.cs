@@ -1,4 +1,4 @@
-namespace AttributedRoutes.Messages;
+namespace Endpoints.Messages;
 
 using TimeWarp.Nuru;
 using TimeWarp.Terminal;
@@ -25,7 +25,7 @@ public sealed class GoodbyeCommand : ICommand<Unit>
 
     public ValueTask<Unit> Handle(GoodbyeCommand command, CancellationToken ct)
     {
-      Terminal.WriteLine("Goodbye! Thanks for using attributed routes.");
+      Terminal.WriteLine("Goodbye! Thanks for using endpoints.");
       Environment.Exit(0);
       return default;
     }

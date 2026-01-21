@@ -4,6 +4,7 @@ using TimeWarp.Nuru;
 
 /// <summary>
 /// MCP tool for validating TimeWarp.Nuru route patterns.
+/// Validates fluent API pattern syntax used with Map() calls.
 /// </summary>
 internal sealed class ValidateRouteTool
 {
@@ -18,8 +19,10 @@ internal sealed class ValidateRouteTool
 
       List<string> details = [];
 
-      // Basic info
-      details.Add($"✅ Valid route pattern: '{pattern}'");
+      // Basic info - clarify this is for fluent API
+      details.Add($"✅ Valid **fluent API** pattern: '{pattern}'");
+      details.Add("");
+      details.Add("*This validates syntax for `Map(\"pattern\")` calls in the fluent API.*");
       details.Add("");
 
       // Positional matchers breakdown
@@ -75,13 +78,27 @@ internal sealed class ValidateRouteTool
       int minRequiredArgs = route.PositionalMatchers.Count(m => m is not ParameterMatcher { IsOptional: true });
       details.Add($"  Minimum Required Args: {minRequiredArgs}");
 
+      // Add note about endpoints if pattern has parameters or options
+      bool hasParameters = route.PositionalMatchers.Any(m => m is ParameterMatcher);
+      bool hasOptions = route.OptionMatchers.Count > 0;
+
+      if (hasParameters || hasOptions)
+      {
+        details.Add("");
+        details.Add("---");
+        details.Add("");
+        details.Add("**For `[NuruRoute]` endpoints:** This pattern syntax differs.");
+        details.Add("Use `get_endpoint_info` tool for endpoints documentation.");
+        details.Add("Key difference: Use literal pattern + `[Parameter]`/`[Option]` property attributes.");
+      }
+
       return string.Join("\n", details);
     }
     catch (PatternException ex)
     {
       return $"❌ Invalid route pattern: '{pattern}'\n\nError: {ex.Message}\n\n" +
              "**Common issues:**\n" +
-             "- Missing closing brace '}' for parameters\n" +
+             "- Missing closing brace '}}' for parameters\n" +
              "- Invalid type constraint (use :int, :string, :double, etc.)\n" +
              "- Catch-all parameter '*' must be last\n" +
              "- Optional parameters must come after required ones\n" +

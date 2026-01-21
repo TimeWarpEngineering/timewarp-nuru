@@ -2,7 +2,7 @@
 // BUILD COMMAND
 // ═══════════════════════════════════════════════════════════════════════════════
 // Builds all TimeWarp.Nuru projects in dependency order using Release configuration.
-// Migrated from runfiles/build.cs to attributed routes pattern.
+// Migrated from runfiles/build.cs to endpoints pattern.
 
 namespace DevCli.Commands;
 

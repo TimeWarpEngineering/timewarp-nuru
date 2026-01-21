@@ -11,7 +11,7 @@ Multiple test files exceed 500 lines. While test files can be larger than produc
 ## Checklist
 
 ### High Priority (600+ lines)
-- [ ] `attributed-route-generator-02-source.cs` (692 lines)
+- [ ] `endpoint-generator-02-source.cs` (692 lines)
 - [ ] `routing-05-option-matching.cs` (689 lines)
 - [ ] `engine-03-candidate-generator.cs` (673 lines)
 - [ ] `engine-01-input-tokenizer.cs` (672 lines)
@@ -23,7 +23,7 @@ Multiple test files exceed 500 lines. While test files can be larger than produc
 - [ ] `repl-18-psreadline-keybindings.cs` (558 lines)
 - [ ] `repl-23-key-binding-profiles.cs` (530 lines)
 - [ ] `repl-28-text-selection.cs` (526 lines)
-- [ ] `attributed-route-generator-03-matching.cs` (524 lines)
+- [ ] `endpoint-generator-03-matching.cs` (524 lines)
 - [ ] `repl-33-yank-arguments.cs` (521 lines)
 - [ ] `lexer-15-advanced-features.cs` (515 lines)
 - [ ] `repl-29-word-operations.cs` (506 lines)

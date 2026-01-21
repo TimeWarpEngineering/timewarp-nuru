@@ -19,7 +19,7 @@ Expose fluent builder to consumers. Add `MapGroup()` API for delegate-based grou
 ## Dependencies
 
 - Task 149: Implement CompiledRouteBuilder (Phase 0) - must be complete ✅
-- Task 150: Implement Attributed Routes (Phase 1) - must be complete ✅
+- Task 150: Implement Endpoints (Phase 1) - must be complete ✅
 - Task 151: Implement Delegate Generation (Phase 2) - must be complete ✅
 - Task 152: Implement Unified Pipeline (Phase 3) - **BLOCKED** (performance regression)
 - Task 201: Investigate Full Builder 4x Performance Regression - **MUST COMPLETE FIRST**

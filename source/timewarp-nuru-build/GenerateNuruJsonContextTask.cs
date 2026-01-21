@@ -1,8 +1,8 @@
 // MSBuild task that generates a JsonSerializerContext for user-defined return types.
 // Runs before CoreCompile so System.Text.Json source generator can process the output.
 //
-// Uses the same IR infrastructure as the source generator (DslInterpreter, AttributedRouteExtractor)
-// to extract return types from BOTH delegate routes AND attributed routes.
+// Uses the same IR infrastructure as the source generator (DslInterpreter, EndpointExtractor)
+// to extract return types from BOTH delegate routes AND endpoints.
 
 namespace TimeWarp.Nuru.Build;
 
@@ -26,7 +26,7 @@ using TimeWarp.Nuru.Generators;
 /// <remarks>
 /// This task uses the same IR infrastructure as the source generator:
 /// - DslInterpreter for delegate routes (.Map(...).WithHandler(...))
-/// - AttributedRouteExtractor for [NuruRoute] attributed classes
+/// - EndpointExtractor for [NuruRoute] attributed classes
 /// This ensures consistent extraction logic and complete coverage of all route types.
 /// </remarks>
 public class GenerateNuruJsonContextTask : Task
@@ -144,7 +144,7 @@ public class GenerateNuruJsonContextTask : Task
       ExtractFromDelegateRoutes(root, semanticModel, jsonTypes, cancellationToken);
 
       // 4b. Extract from [NuruRoute] attributed classes
-      ExtractFromAttributedRoutes(root, semanticModel, jsonTypes, cancellationToken);
+      ExtractFromEndpoints(root, semanticModel, jsonTypes, cancellationToken);
     }
 
     // 5. If no types need JSON serialization, skip generation
@@ -233,15 +233,15 @@ public class GenerateNuruJsonContextTask : Task
     }
     catch (Exception ex)
     {
-      // DSL interpretation failed - log and continue with attributed routes
+      // DSL interpretation failed - log and continue with endpoints
       Log.LogMessage(MessageImportance.Low, $"TimeWarp.Nuru.Build: DSL interpretation skipped: {ex.Message}");
     }
   }
 
   /// <summary>
-  /// Extracts return types from [NuruRoute] attributed classes using AttributedRouteExtractor.
+  /// Extracts return types from [NuruRoute] attributed classes using EndpointExtractor.
   /// </summary>
-  private void ExtractFromAttributedRoutes(
+  private void ExtractFromEndpoints(
     CompilationUnitSyntax root,
     SemanticModel semanticModel,
     HashSet<string> jsonTypes,
@@ -257,8 +257,8 @@ public class GenerateNuruJsonContextTask : Task
     {
       try
       {
-        // Use AttributedRouteExtractor to get the full RouteDefinition
-        RouteDefinition? route = AttributedRouteExtractor.Extract(classDecl, semanticModel, cancellationToken);
+        // Use EndpointExtractor to get the full RouteDefinition
+        RouteDefinition? route = EndpointExtractor.Extract(classDecl, semanticModel, cancellationToken);
         if (route is not null)
         {
           string? returnTypeName = GetReturnTypeName(route.Handler.ReturnType);
@@ -271,7 +271,7 @@ public class GenerateNuruJsonContextTask : Task
       }
       catch (Exception ex)
       {
-        Log.LogMessage(MessageImportance.Low, $"TimeWarp.Nuru.Build: Failed to extract attributed route from {classDecl.Identifier}: {ex.Message}");
+        Log.LogMessage(MessageImportance.Low, $"TimeWarp.Nuru.Build: Failed to extract endpoint from {classDecl.Identifier}: {ex.Message}");
       }
     }
   }

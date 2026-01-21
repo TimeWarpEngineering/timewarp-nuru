@@ -4,8 +4,8 @@
 
 using System.Runtime.CompilerServices;
 
-[assembly: InternalsVisibleTo("attributed-route-generator-01-basic")]
-[assembly: InternalsVisibleTo("attributed-route-generator-03-matching")]
+[assembly: InternalsVisibleTo("endpoint-generator-01-basic")]
+[assembly: InternalsVisibleTo("endpoint-generator-03-matching")]
 [assembly: InternalsVisibleTo("behavior-filtering-01-implements-extraction")]
 [assembly: InternalsVisibleTo("bench-clifx")]
 [assembly: InternalsVisibleTo("bench-cocona")]
@@ -70,7 +70,7 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("generator-08-typed-params-with-options")]
 [assembly: InternalsVisibleTo("generator-09-optional-positional-params")]
 [assembly: InternalsVisibleTo("generator-10-required-options")]
-[assembly: InternalsVisibleTo("generator-11-attributed-routes")]
+[assembly: InternalsVisibleTo("generator-11-endpoints")]
 [assembly: InternalsVisibleTo("generator-12-method-reference-handlers")]
 [assembly: InternalsVisibleTo("generator-13-ioptions-parameter-injection")]
 [assembly: InternalsVisibleTo("generator-14-options-validation")]

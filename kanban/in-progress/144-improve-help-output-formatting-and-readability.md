@@ -57,7 +57,7 @@ Color formatting is implemented and working:
 **Key Discovery: Group prefix extraction already exists**
 
 `HelpRouteGenerator.GetCommandPrefix()` extracts leading literal segments from compiled routes:
-- Works for both attributed routes (`[NuruRouteGroup]`) AND delegate routes (`app.Map()`)
+- Works for both endpoints (`[NuruRouteGroup]`) AND delegate routes (`app.Map()`)
 - Consistent behavior regardless of how route was defined
 - Already used for generating per-command help routes
 
@@ -89,10 +89,10 @@ Color formatting is implemented and working:
 Top-level help (`app --help`):
 ```
 Description:
-  Sample demonstrating attributed routes
+  Sample demonstrating endpoints
 
 Usage:
-  attributed-routes [command] [options]
+  endpoints [command] [options]
 
 Commands:
   config                      Configuration commands (2 subcommands)
@@ -105,7 +105,7 @@ Options:
   --version, -v           (C) Display version information
   --interactive, -i       (C) Enter interactive REPL mode
 
-Run 'attributed-routes COMMAND --help' for more information on a command.
+Run 'endpoints COMMAND --help' for more information on a command.
 ```
 
 Group help (`app docker --help`):

@@ -1,6 +1,6 @@
 #!/usr/bin/dotnet --
 // ═══════════════════════════════════════════════════════════════════════════════
-// HELLO WORLD - ATTRIBUTED ROUTE PATTERN
+// HELLO WORLD - ENDPOINT PATTERN
 // ═══════════════════════════════════════════════════════════════════════════════
 // Uses [NuruRoute] attribute for auto-discovery. No Map() calls needed.
 // Best for: Large applications, testable handlers, DI integration

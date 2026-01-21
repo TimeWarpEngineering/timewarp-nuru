@@ -9,7 +9,7 @@
 //
 // This sample demonstrates that:
 //   1. DELEGATE ROUTES (inline lambdas via .WithHandler()) and
-//   2. ATTRIBUTED ROUTES ([NuruRoute] classes with nested Handler)
+//   2. ENDPOINTS ([NuruRoute] classes with nested Handler)
 //
 // BOTH flow through the SAME INuruBehavior pipeline. There is no separate
 // "delegate pipeline" vs "command pipeline" - behaviors are unified.
@@ -30,7 +30,7 @@
 //        .WithHandler((int x, int y) => Console.WriteLine($"{x} + {y} = {x + y}"))
 //        .Done()
 //
-//    ATTRIBUTED ROUTES (testable, DI-friendly):
+//    ENDPOINTS (testable, DI-friendly):
 //      [NuruRoute("echo {message}")]
 //      public sealed class EchoCommand : ICommand<Unit>
 //      {
@@ -68,7 +68,7 @@
 //   ./unified-middleware.cs multiply 4 7      # Shows pipeline wrapping delegate
 //   ./unified-middleware.cs greet World       # Shows pipeline wrapping delegate
 //
-// Attributed routes ([NuruRoute] commands):
+// Endpoints ([NuruRoute] commands):
 //   ./unified-middleware.cs echo "hello"      # Shows pipeline wrapping command
 //   ./unified-middleware.cs slow 600          # Shows performance warning (>500ms)
 //
@@ -84,7 +84,7 @@
 //   - Quick prototyping
 //   - Scripts and one-off tools
 //
-// ATTRIBUTED ROUTES are ideal for:
+// ENDPOINTS are ideal for:
 //   - Commands needing dependency injection
 //   - Unit-testable handlers
 //   - Complex business logic
@@ -123,7 +123,7 @@ NuruApp app = NuruApp.CreateBuilder()
     .AsCommand()
     .Done()
   // =========================================================================
-  // ATTRIBUTED ROUTES - [NuruRoute] classes below are auto-discovered
+  // ENDPOINTS - [NuruRoute] classes below are auto-discovered
   // The EchoCommand and SlowCommand classes are picked up by the generator
   // and wrapped by the SAME behavior pipeline as the delegate routes above.
   // =========================================================================
@@ -137,7 +137,7 @@ return await app.RunAsync(args);
 
 /// <summary>
 /// Logging behavior that logs request entry and exit.
-/// Applies to both delegate routes and attributed routes.
+/// Applies to both delegate routes and endpoints.
 /// </summary>
 public sealed class LoggingBehavior : INuruBehavior
 {
@@ -160,7 +160,7 @@ public sealed class LoggingBehavior : INuruBehavior
 
 /// <summary>
 /// Performance behavior that times command execution and warns on slow commands.
-/// Applies to both delegate routes and attributed routes.
+/// Applies to both delegate routes and endpoints.
 /// </summary>
 public sealed class PerformanceBehavior : INuruBehavior
 {
@@ -187,7 +187,7 @@ public sealed class PerformanceBehavior : INuruBehavior
 }
 
 // =============================================================================
-// ATTRIBUTED ROUTES - Auto-discovered by the source generator
+// ENDPOINTS - Auto-discovered by the source generator
 // =============================================================================
 // These [NuruRoute] classes are found at compile-time and integrated into
 // the same routing and behavior pipeline as the delegate routes above.

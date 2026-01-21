@@ -6,7 +6,7 @@
 #pragma warning disable RCS1248 // Use pattern matching to check for null
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// GENERATOR TEST: Attributed Routes (#309, #310, #311)
+// GENERATOR TEST: Endpoints (#309, #310, #311)
 // ═══════════════════════════════════════════════════════════════════════════════
 //
 // PURPOSE: Verify the source generator correctly handles [NuruRoute] attributed
@@ -31,7 +31,7 @@ return await RunAllTests();
 namespace TimeWarp.Nuru.Tests.Generator.AttributedRoutes
 {
   /// <summary>
-  /// Tests for attributed route generation ([NuruRoute] pattern).
+  /// Tests for endpoint generation ([NuruRoute] pattern).
   /// These tests verify that the source generator correctly handles
   /// command classes with [NuruRoute], [Parameter], and [Option] attributes.
   /// </summary>
@@ -43,9 +43,9 @@ namespace TimeWarp.Nuru.Tests.Generator.AttributedRoutes
     internal static void Register() => RegisterTests<AttributedRouteTests>();
 
     /// <summary>
-    /// Test basic attributed route with simple string parameter.
+    /// Test basic endpoint with simple string parameter.
     /// </summary>
-    public static async Task Should_handle_basic_attributed_route()
+    public static async Task Should_handle_basic_endpoint()
     {
       // Arrange
       using TestTerminal terminal = new();
@@ -182,7 +182,7 @@ namespace TimeWarp.Nuru.Tests.Generator.AttributedRoutes
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /// <summary>
-/// Simple greeting command to test basic attributed route.
+/// Simple greeting command to test basic endpoint.
 /// </summary>
 [NuruRoute("greet", Description = "Greet someone")]
 public sealed class GreetCommand : ICommand<Unit>

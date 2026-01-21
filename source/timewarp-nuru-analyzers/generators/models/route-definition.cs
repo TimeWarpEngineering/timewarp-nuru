@@ -72,8 +72,8 @@ public sealed record RouteDefinition(
 
   /// <summary>
   /// Gets the effective pattern reconstructed from segments.
-  /// This includes all parameters and options extracted from attributed routes.
-  /// For fluent routes, this matches FullPattern. For attributed routes,
+  /// This includes all parameters and options extracted from endpoints.
+  /// For fluent routes, this matches FullPattern. For endpoints,
   /// this shows the actual route structure with properties.
   /// </summary>
   public string EffectivePattern
@@ -220,7 +220,7 @@ public sealed record RouteDefinition(
   /// <summary>
   /// Gets the interface type names this route's command implements.
   /// Combines interfaces from <c>.Implements&lt;T&gt;()</c> calls (delegate routes)
-  /// and from the command class itself (attributed routes).
+  /// and from the command class itself (endpoints).
   /// </summary>
   public IEnumerable<string> ImplementedInterfaces =>
     Implements.IsDefaultOrEmpty

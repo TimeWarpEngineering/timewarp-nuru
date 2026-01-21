@@ -91,11 +91,11 @@ internal sealed class GenerateHandlerTool
     sb.AppendLine("return await app.RunAsync(args);");
     sb.AppendLine();
 
-    // Show attributed route alternative
+    // Show endpoint alternative
     sb.AppendLine("// ═══════════════════════════════════════════════════════════════");
     sb.AppendLine("// Alternative: [NuruRoute] Attributed Pattern");
     sb.AppendLine("// ═══════════════════════════════════════════════════════════════");
-    sb.AppendLine("// For larger apps, use attributed routes for auto-discovery:");
+    sb.AppendLine("// For larger apps, use endpoints for auto-discovery:");
     sb.AppendLine("//");
 
     string commandName = GenerateCommandName(pattern);

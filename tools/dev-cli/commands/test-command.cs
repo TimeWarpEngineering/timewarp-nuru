@@ -2,7 +2,7 @@
 // TEST COMMAND
 // ═══════════════════════════════════════════════════════════════════════════════
 // Runs the fast CI test suite.
-// Migrated from runfiles/test.cs to attributed routes pattern.
+// Migrated from runfiles/test.cs to endpoints pattern.
 
 namespace DevCli.Commands;
 

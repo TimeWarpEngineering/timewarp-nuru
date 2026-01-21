@@ -25,7 +25,7 @@ public sealed class DefaultQuery : IQuery<Unit>
 
     public ValueTask<Unit> Handle(DefaultQuery query, CancellationToken ct)
     {
-      Terminal.WriteLine("Attributed Routes Sample");
+      Terminal.WriteLine("Endpoints Sample");
       Terminal.WriteLine("========================");
       Terminal.WriteLine();
       Terminal.WriteLine("Queries (Q) - Read-only, safe to retry:");

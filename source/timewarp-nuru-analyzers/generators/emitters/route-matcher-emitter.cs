@@ -88,7 +88,7 @@ internal static class RouteMatcherEmitter
     // Emit handler invocation (wrapped with behaviors if any)
     if (behaviors.Length > 0)
     {
-      // For attributed routes (Command), the command is created by BehaviorEmitter before the pipeline
+      // For endpoints (Command), the command is created by BehaviorEmitter before the pipeline
       bool commandCreatedByBehavior = route.Handler.HandlerKind == HandlerKind.Command;
 
       BehaviorEmitter.EmitPipelineWrapper(
@@ -222,7 +222,7 @@ internal static class RouteMatcherEmitter
     // Emit handler invocation (wrapped with behaviors if any)
     if (behaviors.Length > 0)
     {
-      // For attributed routes (Command), the command is created by BehaviorEmitter before the pipeline
+      // For endpoints (Command), the command is created by BehaviorEmitter before the pipeline
       bool commandCreatedByBehavior = route.Handler.HandlerKind == HandlerKind.Command;
 
       BehaviorEmitter.EmitPipelineWrapper(

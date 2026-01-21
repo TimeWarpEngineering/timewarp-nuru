@@ -34,7 +34,7 @@ internal static partial class DiagnosticDescriptors
       defaultSeverity: DiagnosticSeverity.Error,
       isEnabledByDefault: true,
       description: "The same route pattern cannot be defined more than once within an application. " +
-                   "This can happen when a fluent route (.Map()) has the same pattern as an attributed route ([NuruRoute]), " +
+                   "This can happen when a fluent route (.Map()) has the same pattern as an endpoint ([NuruRoute]), " +
                    "or when the same pattern is registered multiple times via the fluent API.");
 
   /// <summary>

@@ -11,7 +11,7 @@
 //
 // PATTERNS DEMONSTRATED:
 // 1. Delegate handlers - simple lambdas for quick commands
-// 2. Attributed routes - [NuruRoute] with nested Handler class (TODO)
+// 2. Endpoints - [NuruRoute] with nested Handler class (TODO)
 //
 // ═══════════════════════════════════════════════════════════════════════════════
 

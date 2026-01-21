@@ -1,7 +1,7 @@
 #!/usr/bin/dotnet run
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// ATTRIBUTED ROUTE GENERATOR TESTS - Basic Generation
+// ENDPOINT GENERATOR TESTS - Basic Generation
 // ═══════════════════════════════════════════════════════════════════════════════
 // Tests that the NuruAttributedRouteGenerator source generator correctly
 // generates route registration code for classes with [NuruRoute] attributes.

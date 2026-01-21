@@ -296,7 +296,7 @@ Provides a code example for implementing custom type converters.
 "How do I parse custom types from strings?"
 ```
 
-#### 17. `get_attributed_route_info`
+#### 17. `get_endpoint_info`
 Provides information about the `[NuruRoute]` attribute for auto-discovered routes.
 
 **Parameters:**
@@ -305,17 +305,17 @@ Provides information about the `[NuruRoute]` attribute for auto-discovered route
 **Sample Prompts:**
 ```
 "What is the NuruRoute attribute?"
-"How do attributed routes work in TimeWarp.Nuru?"
+"How do endpoints work in TimeWarp.Nuru?"
 "Explain auto-discovered routes"
 ```
 
-#### 18. `get_attributed_route_example`
-Provides a code example for attributed routes with nested Handler class.
+#### 18. `get_endpoint_example`
+Provides a code example for endpoints with nested Handler class.
 
 **Sample Prompts:**
 ```
 "Show me how to use [NuruRoute]"
-"Give me an attributed route example"
+"Give me an endpoint example"
 "How do I create routes with auto-discovery?"
 "Show me the Handler class pattern"
 ```
@@ -413,11 +413,11 @@ Cache location:
 "Get the type converter example"
 ```
 
-### Attributed Routes
+### Endpoints
 ```
 "How do I use [NuruRoute] for auto-discovered commands?"
-"Show me the attributed route pattern"
-"What's the difference between fluent and attributed routes?"
+"Show me the endpoint pattern"
+"What's the difference between fluent and endpoints?"
 ```
 
 ### Configuration

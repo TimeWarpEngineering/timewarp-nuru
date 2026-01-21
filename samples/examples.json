@@ -11,19 +11,19 @@
       "difficulty": "beginner"
     },
     {
-      "id": "attributed-routes",
-      "name": "Attributed Routes",
+      "id": "endpoints",
+      "name": "Endpoints",
       "description": "[NuruRoute] attribute pattern for auto-discovered endpoints with nested Handler classes. Supports [NuruRouteGroup] for prefixes and [NuruRouteAlias] for aliases.",
-      "path": "samples/03-attributed-routes/attributed-routes.cs",
-      "tags": ["attributed-routes", "auto-discovery", "endpoint", "testable", "dependency-injection"],
+      "path": "samples/03-endpoints/endpoints.cs",
+      "tags": ["endpoints", "auto-discovery", "endpoint", "testable", "dependency-injection"],
       "difficulty": "intermediate"
     },
     {
       "id": "mixed",
       "name": "Mixed Pattern Calculator",
-      "description": "Mixed approach combining delegate performance with attributed routes for complex operations.",
+      "description": "Mixed approach combining delegate performance with endpoints for complex operations.",
       "path": "samples/02-calculator/03-calc-mixed.cs",
-      "tags": ["calculator", "mixed", "delegate", "attributed-routes"],
+      "tags": ["calculator", "mixed", "delegate", "endpoints"],
       "difficulty": "intermediate"
     },
     {

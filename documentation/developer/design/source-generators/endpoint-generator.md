@@ -1,10 +1,10 @@
-# Attributed Route Source Generator
+# Endpoint Source Generator
 
-Design documentation for the `NuruAttributedRouteGenerator` source generator that enables auto-registration of routes from `[NuruRoute]` attributes.
+Design documentation for the `NuruEndpointGenerator` source generator that enables auto-registration of routes from `[NuruRoute]` attributes.
 
 ## Overview
 
-The attributed route generator scans for classes decorated with `[NuruRoute]` and generates:
+The endpoint generator scans for classes decorated with `[NuruRoute]` and generates:
 1. `CompiledRouteBuilder` calls for each attributed request
 2. `[ModuleInitializer]` registration code
 3. Pattern strings for help display
@@ -13,7 +13,7 @@ This enables zero-ceremony route registration - users decorate request classes a
 
 ## Motivation
 
-Without attributed routes, users must explicitly call `Map()` for each route:
+Without endpoints, users must explicitly call `Map()` for each route:
 
 ```csharp
 var app = NuruApp.CreateBuilder(args)
@@ -21,7 +21,7 @@ var app = NuruApp.CreateBuilder(args)
   .Build();
 ```
 
-With attributed routes, registration is automatic:
+With endpoints, registration is automatic:
 
 ```csharp
 [NuruRoute("deploy")]
@@ -332,7 +332,7 @@ Note how the group prefix `"docker"` and group option `--debug,-D` are inherited
 
 ### Source File
 
-`source/timewarp-nuru-analyzers/analyzers/nuru-attributed-route-generator.cs`
+`source/timewarp-nuru-analyzers/analyzers/nuru-endpoint-generator.cs`
 
 ### Key Methods
 
@@ -358,7 +358,7 @@ record AttributedRouteInfo(
 
 ## Sample Application
 
-A complete working example is in [samples/attributed-routes/](../../../../samples/attributed-routes/).
+A complete working example is in [samples/endpoints/](../../../../samples/endpoints/).
 
 Features demonstrated:
 - Simple routes with parameters and options (`GreetRequest`, `DeployRequest`)
@@ -369,20 +369,20 @@ Features demonstrated:
 
 Run the sample:
 ```bash
-dotnet run --project samples/attributed-routes -- greet Alice
-dotnet run --project samples/attributed-routes -- deploy prod --force --replicas 3
-dotnet run --project samples/attributed-routes -- docker run nginx --debug
-dotnet run --project samples/attributed-routes -- exec echo hello world
+dotnet run --project samples/endpoints -- greet Alice
+dotnet run --project samples/endpoints -- deploy prod --force --replicas 3
+dotnet run --project samples/endpoints -- docker run nginx --debug
+dotnet run --project samples/endpoints -- exec echo hello world
 ```
 
 ## Testing
 
 Tests are in `tests/timewarp-nuru-analyzers-tests/auto/`:
 
-- `attributed-route-generator-01-basic.cs` - Integration tests (routes registered correctly)
-- `attributed-route-generator-02-source.cs` - Source verification tests (generated code correct)
+- `endpoint-generator-01-basic.cs` - Integration tests (routes registered correctly)
+- `endpoint-generator-02-source.cs` - Source verification tests (generated code correct)
 
-Shared utilities in `attributed-route-test-helpers.cs`.
+Shared utilities in `endpoint-test-helpers.cs`.
 
 ## Related Documentation
 

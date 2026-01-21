@@ -1,6 +1,6 @@
 // Extracts route definitions from classes decorated with [NuruRoute] attribute.
 //
-// Handles attributed routes pattern:
+// Handles endpoints pattern:
 // - Read pattern from [NuruRoute("pattern")]
 // - Check base class for [NuruRouteGroup] for prefix
 // - Infer message type from interface (IQuery<T>, ICommand<T>)
@@ -14,7 +14,7 @@ using RoslynSyntaxNode = Microsoft.CodeAnalysis.SyntaxNode;
 /// <summary>
 /// Extracts route definitions from classes decorated with [NuruRoute] attribute.
 /// </summary>
-internal static class AttributedRouteExtractor
+internal static class EndpointExtractor
 {
   private const string NuruRouteAttributeName = "NuruRoute";
   private const string NuruRouteGroupAttributeName = "NuruRouteGroup";
@@ -361,7 +361,7 @@ internal static class AttributedRouteExtractor
   }
 
   /// <summary>
-  /// Extracts handler information for attributed routes.
+  /// Extracts handler information for endpoints.
   /// Finds nested Handler class and extracts its constructor dependencies.
   /// </summary>
   /// <returns>The handler definition, or null if no nested Handler class is found.</returns>
@@ -555,7 +555,7 @@ internal static class AttributedRouteExtractor
       // This is a filter interface - add it
       string fullTypeName = iface.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
 
-      // For attributed routes, properties are already on the class - no extraction needed
+      // For endpoints, properties are already on the class - no extraction needed
       filterInterfaces.Add(new InterfaceImplementationDefinition(
         FullInterfaceTypeName: fullTypeName,
         Properties: []));

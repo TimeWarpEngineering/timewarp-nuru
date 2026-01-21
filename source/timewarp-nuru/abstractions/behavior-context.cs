@@ -32,7 +32,7 @@ public class BehaviorContext
 
   /// <summary>
   /// The type name of the command being executed.
-  /// For attributed routes: the user-defined command class name (e.g., "DeployCommand").
+  /// For endpoints: the user-defined command class name (e.g., "DeployCommand").
   /// For delegate routes: a generated name (e.g., "Route_0").
   /// </summary>
   public required string CommandTypeName { get; init; }
@@ -55,7 +55,7 @@ public class BehaviorContext
   /// </summary>
   /// <remarks>
   /// <para>
-  /// For attributed routes: the user-defined command class instance with bound parameters.
+  /// For endpoints: the user-defined command class instance with bound parameters.
   /// </para>
   /// <para>
   /// For delegate routes: a generated command instance. If <c>.Implements&lt;T&gt;()</c> was used,

@@ -2,7 +2,7 @@
 // CHECK VERSION COMMAND
 // ═══════════════════════════════════════════════════════════════════════════════
 // Verifies that NuGet packages are not already published before release.
-// Migrated from runfiles/check-version.cs to attributed routes pattern.
+// Migrated from runfiles/check-version.cs to endpoints pattern.
 
 namespace DevCli.Commands;
 

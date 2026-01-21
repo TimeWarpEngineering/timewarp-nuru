@@ -2,7 +2,7 @@
 // CLEAN COMMAND
 // ═══════════════════════════════════════════════════════════════════════════════
 // Cleans the TimeWarp.Nuru solution and deletes all bin/obj directories.
-// Migrated from runfiles/clean.cs to attributed routes pattern.
+// Migrated from runfiles/clean.cs to endpoints pattern.
 
 namespace DevCli.Commands;
 

@@ -14,7 +14,7 @@ internal sealed class CacheManagementTool
   private static readonly string[] CacheSubdirectories =
   [
     "examples",
-    "attributed-routes",
+    "endpoints",
     "behaviors",
     "type-converters",
     "error-handling"

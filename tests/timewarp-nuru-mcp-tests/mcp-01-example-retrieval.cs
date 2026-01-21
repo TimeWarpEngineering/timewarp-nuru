@@ -23,7 +23,7 @@ public class ExampleRetrievalTests
     result.ShouldContain("basic");
     result.ShouldContain("mixed");
     result.ShouldContain("delegate");
-    result.ShouldContain("attributed-routes");
+    result.ShouldContain("endpoints");
     result.ShouldContain("behaviors-basic");
     result.ShouldContain("behaviors-filtered");
     result.ShouldContain("console-logging");

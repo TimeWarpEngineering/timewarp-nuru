@@ -461,7 +461,7 @@ internal static class InterceptorEmitter
     // Route matching - emit this app's routes in specificity order (highest first)
     // User routes are emitted BEFORE built-ins so users can override --help, --version, etc.
     // Filter endpoints based on app's discovery mode (DiscoverEndpoints or Map<T> calls)
-    ImmutableArray<RouteDefinition> endpointsForApp = FilterEndpointsForApp(app, model.AttributedRoutes);
+    ImmutableArray<RouteDefinition> endpointsForApp = FilterEndpointsForApp(app, model.Endpoints);
     IEnumerable<RouteDefinition> allRoutes = app.RoutesBySpecificity.Concat(endpointsForApp);
 
     // Build a lookup from route to its original index for command class naming
@@ -475,7 +475,7 @@ internal static class InterceptorEmitter
       int routeIndex = allRoutesOrdered.FindIndex(r => ReferenceEquals(r, route));
       if (routeIndex < 0)
       {
-        // For attributed routes not in allRoutesOrdered, use a new index
+        // For endpoints not in allRoutesOrdered, use a new index
         routeIndex = allRoutesOrdered.Count;
         allRoutesOrdered.Add(route);
       }
@@ -738,14 +738,14 @@ internal static class InterceptorEmitter
       // REPL support (opt-in via AddRepl())
       if (app.HasRepl)
       {
-        ReplEmitter.Emit(sb, enrichedApp, methodSuffix, model.AttributedRoutes, compilation);
+        ReplEmitter.Emit(sb, enrichedApp, methodSuffix, model.Endpoints, compilation);
         sb.AppendLine();
       }
 
       // Shell completion support (opt-in via EnableCompletion() or implicitly via AddRepl())
       if (app.HasCompletion || app.HasRepl)
       {
-        CompletionEmitter.Emit(sb, enrichedApp, methodSuffix, model.AttributedRoutes, compilation);
+        CompletionEmitter.Emit(sb, enrichedApp, methodSuffix, model.Endpoints, compilation);
         sb.AppendLine();
       }
     }

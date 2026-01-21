@@ -1,26 +1,29 @@
-# Attributed Routes
+# Endpoints
 
-Attributed routes provide a class-based approach to defining CLI commands. The source generator discovers classes with `[NuruRoute]` at compile time and registers them automatically.
+Endpoints provide a class-based approach to defining CLI commands. The source generator discovers classes with `[NuruRoute]` at compile time and generates registration code for them.
+
+**Important:** You must call `DiscoverEndpoints()` on the builder to enable endpoint discovery.
 
 This is one of two first-class patterns for defining routes in TimeWarp.Nuru:
-- **Attributed routes** (this document) - Class-based with attributes
+- **Endpoints** (this document) - Class-based with attributes
 - **Fluent DSL** - Inline with `Map()` calls (see [Builder API](../reference/builder-api.md))
 
 Both patterns are fully supported and can be mixed in the same application.
 
 ## Overview
 
-With attributed routes:
+With endpoints:
 - Define commands as classes with `[NuruRoute]` attribute
 - Parameters and options declared as properties with `[Parameter]` and `[Option]`
 - Handlers are nested classes implementing handler interfaces
-- Source generator discovers and registers routes at compile time
+- Source generator discovers and registers endpoints at compile time
 
 ## Basic Example
 
 ```csharp
 // Program.cs
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
+  .DiscoverEndpoints()  // Required for endpoint discovery
   .Build();
 
 return await app.RunAsync(args);
@@ -226,22 +229,22 @@ Option optionality follows the same pattern:
 Both patterns work together in the same application:
 
 ```csharp
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
+  .DiscoverEndpoints()  // Enable endpoint discovery
   .Map("version")
     .WithHandler(() => Console.WriteLine("1.0.0"))
     .AsQuery()
     .Done()
-  // Attributed routes are discovered automatically
   .Build();
 ```
 
 Use whichever pattern fits each use case:
 - **Fluent DSL** - Simple one-off routes, quick prototyping
-- **Attributed routes** - Complex commands with many options, testable handlers with DI
+- **Endpoints** - Complex commands with many options, testable handlers with DI
 
 ## Complete Example
 
-See [samples/03-attributed-routes/](../../../samples/03-attributed-routes/) for a complete working example demonstrating:
+See [samples/03-endpoints/](../../../samples/03-endpoints/) for a complete working example demonstrating:
 
 - Simple parameters (`greet {name}`)
 - Options with short/long forms (`deploy --force,-f`)

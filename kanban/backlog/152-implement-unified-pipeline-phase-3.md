@@ -13,7 +13,7 @@ All routes flow through Mediator pipeline. Remove `DelegateExecutor` - no more d
 ## Dependencies
 
 - Task 149: Implement CompiledRouteBuilder (Phase 0) - must be complete
-- Task 150: Implement Attributed Routes (Phase 1) - must be complete
+- Task 150: Implement Endpoints (Phase 1) - must be complete
 - Task 151: Implement Delegate Generation (Phase 2) - must be complete ✅
 
 ## Status: BLOCKED - Performance Investigation Needed
@@ -97,7 +97,7 @@ Before Phase 3 can proceed, we need to:
 - [ ] All existing tests pass
 - [ ] Test middleware execution for delegate-origin routes
 - [ ] Test middleware execution for command-origin routes
-- [ ] Test middleware execution for attributed routes
+- [ ] Test middleware execution for endpoints
 - [ ] Verify identical behavior regardless of route origin
 
 ### Cleanup

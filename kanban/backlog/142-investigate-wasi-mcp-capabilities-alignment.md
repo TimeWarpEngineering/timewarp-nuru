@@ -100,7 +100,7 @@ Microsoft's Wassette (https://github.com/microsoft/wassette):
 
 ### Query/Command Distinction
 
-**Related:** Task 150 (Attributed Routes) identified a design gap - the current Nuru route syntax (string, fluent, attribute) does not distinguish between:
+**Related:** Task 150 (Endpoints) identified a design gap - the current Nuru route syntax (string, fluent, attribute) does not distinguish between:
 - `IBaseQuery` (read operations)
 - `IBaseCommand` (write operations)
 - `IBaseRequest` (general requests)

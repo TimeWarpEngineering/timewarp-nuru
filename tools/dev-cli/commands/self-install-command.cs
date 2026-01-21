@@ -1,22 +1,22 @@
 // ═══════════════════════════════════════════════════════════════════════════════
-// PUBLISH COMMAND
+// SELF-INSTALL COMMAND
 // ═══════════════════════════════════════════════════════════════════════════════
-// AOT publishes the dev CLI to ./bin for fast execution via direnv PATH.
+// AOT compiles and installs the dev CLI to ./bin for fast execution via direnv PATH.
 
 using System.Runtime.InteropServices;
 
 namespace DevCli.Commands;
 
 /// <summary>
-/// AOT publish dev CLI to ./bin directory.
+/// AOT compile and install dev CLI to ./bin directory.
 /// </summary>
-[NuruRoute("publish", Description = "AOT publish dev CLI to ./bin")]
-internal sealed class PublishCommand : ICommand<Unit>
+[NuruRoute("self-install", Description = "AOT compile and install dev CLI to ./bin")]
+internal sealed class SelfInstallCommand : ICommand<Unit>
 {
   [Option("verbose", "v", Description = "Verbose output")]
   public bool Verbose { get; set; }
 
-  internal sealed class Handler : ICommandHandler<PublishCommand, Unit>
+  internal sealed class Handler : ICommandHandler<SelfInstallCommand, Unit>
   {
     private readonly ITerminal Terminal;
 
@@ -25,7 +25,7 @@ internal sealed class PublishCommand : ICommand<Unit>
       Terminal = terminal;
     }
 
-    public async ValueTask<Unit> Handle(PublishCommand command, CancellationToken ct)
+    public async ValueTask<Unit> Handle(SelfInstallCommand command, CancellationToken ct)
     {
       // Get repo root
       string repoRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
@@ -44,7 +44,7 @@ internal sealed class PublishCommand : ICommand<Unit>
       string outputPath = Path.Combine(repoRoot, "bin");
       string rid = GetRuntimeIdentifier();
 
-      Terminal.WriteLine("Publishing dev CLI as AOT binary...");
+      Terminal.WriteLine("Installing dev CLI as AOT binary...");
       Terminal.WriteLine($"Source: {devCliSource}");
       Terminal.WriteLine($"Output: {outputPath}/dev");
       Terminal.WriteLine($"Runtime: {rid}");
@@ -70,7 +70,7 @@ internal sealed class PublishCommand : ICommand<Unit>
 
       if (exitCode != 0)
       {
-        throw new InvalidOperationException("AOT publish failed!");
+        throw new InvalidOperationException("AOT compilation failed!");
       }
 
       // Verify the binary was created
@@ -80,7 +80,7 @@ internal sealed class PublishCommand : ICommand<Unit>
       if (File.Exists(binaryPath))
       {
         FileInfo info = new(binaryPath);
-        Terminal.WriteLine($"\n✅ AOT binary created: {binaryPath}");
+        Terminal.WriteLine($"\n✅ AOT binary installed: {binaryPath}");
         Terminal.WriteLine($"   Size: {info.Length / 1024.0 / 1024.0:F1} MB");
         Terminal.WriteLine($"\nRun 'direnv allow' to add ./bin to PATH, then use: dev <command>");
       }

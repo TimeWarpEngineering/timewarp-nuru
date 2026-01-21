@@ -27,10 +27,10 @@
 //   dev test               - Run CI test suite
 //   dev verify-samples     - Verify sample compilation
 //   dev check-version      - Check if version already published
-//   dev publish            - AOT publish dev CLI to ./bin
+//   dev self-install       - AOT compile and install dev CLI to ./bin
 //
 // To bootstrap:
-//   dotnet run tools/dev-cli/dev.cs publish
+//   dotnet run tools/dev-cli/dev.cs -- self-install
 //   direnv allow
 //   dev --help
 // ═══════════════════════════════════════════════════════════════════════════════

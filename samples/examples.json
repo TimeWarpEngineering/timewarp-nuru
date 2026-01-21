@@ -273,6 +273,14 @@
       "path": "samples/14-aspire-otel/nuru-client.cs",
       "tags": ["telemetry", "opentelemetry", "aspire", "traces", "metrics", "observability", "otlp"],
       "difficulty": "advanced"
+    },
+    {
+      "id": "runtime-di",
+      "name": "Runtime DI with UseMicrosoftDependencyInjection",
+      "description": "Enable full MS DI container at runtime for services with constructor dependencies. Opt-in escape hatch when source-gen DI cannot resolve dependency chains.",
+      "path": "samples/16-runtime-di/01-runtime-di-basic.cs",
+      "tags": ["dependency-injection", "runtime-di", "constructor-dependencies", "services", "ms-di"],
+      "difficulty": "intermediate"
     }
   ]
 }

@@ -48,7 +48,7 @@ This can fail to include files when the build project hasn't been compiled befor
 - [x] Bump version to 3.0.0-beta.29
 - [x] Clean rebuild in Release configuration
 - [x] Verify new package contains build DLLs (4.8MB with all assets)
-- [ ] Publish 3.0.0-beta.29 to NuGet
+- [x] Published 3.0.0-beta.30 to NuGet (with CI fix)
 
 ## Update 2026-01-21
 

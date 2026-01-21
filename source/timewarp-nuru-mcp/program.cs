@@ -20,6 +20,6 @@ builder.Services
     .WithTools<TimeWarp.Nuru.Mcp.Tools.GetVersionInfoTool>()
     .WithTools<TimeWarp.Nuru.Mcp.Tools.GetBehaviorTool>()
     .WithTools<TimeWarp.Nuru.Mcp.Tools.GetTypeConverterTool>()
-    .WithTools<TimeWarp.Nuru.Mcp.Tools.GetAttributedRouteTool>();
+    .WithTools<TimeWarp.Nuru.Mcp.Tools.GetEndpointTool>();
 
 await builder.Build().RunAsync().ConfigureAwait(false);

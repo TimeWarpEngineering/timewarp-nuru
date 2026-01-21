@@ -1,4 +1,4 @@
-// Locator for [NuruRoute] attributed classes.
+// Locator for [NuruRoute] endpoint classes.
 
 namespace TimeWarp.Nuru.Generators;
 

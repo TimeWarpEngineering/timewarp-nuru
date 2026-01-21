@@ -47,7 +47,7 @@ Every behavior receives a `BehaviorContext` with these properties:
 | `CommandName` | `string` | Name of the route being executed |
 | `CorrelationId` | `string` | Unique ID for the execution (for tracing) |
 | `CancellationToken` | `CancellationToken` | Token for cancellation |
-| `Command` | `object?` | The command object (for attributed routes) |
+| `Command` | `object?` | The command object (for endpoints) |
 
 ## Example Behaviors
 

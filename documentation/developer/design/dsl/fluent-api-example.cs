@@ -116,7 +116,7 @@ NuruApp app = NuruApp.CreateBuilder(args)
     .WithDescription("Run my idempotent command")
     .AsIdempotentCommand()
     .Done()
-    // Note we also have attribute-based routes in attributed-routes.cs
+    // Note we also have attribute-based routes in endpoints.cs
     // those should also be picked up by the generator
     // thus no need for Map<T>() calls 
   #endregion

@@ -6,7 +6,7 @@
 //   2. For each Build(), extract AppModel with all entry points (RunAsync, RunReplAsync)
 //   3. Locate [NuruRoute] classes → RouteDefinition
 //   4. Collect route locations for error reporting
-//   5. Validate the combined model (fluent + attributed routes)
+//   5. Validate the combined model (fluent + endpoints)
 //   6. Report diagnostics and emit generated interceptor code
 //
 // This generator also performs all model validation (previously in NuruAnalyzer),
@@ -19,7 +19,7 @@ using RoslynSyntaxNode = Microsoft.CodeAnalysis.SyntaxNode;
 
 /// <summary>
 /// V2 source generator that produces compile-time route interceptors.
-/// This generator supports three DSLs: Fluent, Mini-Language, and Attributed Routes.
+/// This generator supports three DSLs: Fluent, Mini-Language, and Endpoints.
 /// Also performs model validation to detect duplicate routes, overlapping patterns, etc.
 /// </summary>
 [Generator]
@@ -41,17 +41,17 @@ public sealed class NuruGenerator : IIncrementalGenerator
         predicate: static (node, _) => BuildLocator.IsPotentialMatch(node),
         transform: static (ctx, ct) => AppExtractor.ExtractFromBuildCall(ctx, ct));
 
-    // 2. Locate attributed routes ([NuruRoute] decorated classes) with locations
-    IncrementalValuesProvider<RouteWithLocation?> attributedRoutesWithLocations = context.SyntaxProvider
+    // 2. Locate endpoints ([NuruRoute] decorated classes) with locations
+    IncrementalValuesProvider<RouteWithLocation?> endpointsWithLocations = context.SyntaxProvider
       .ForAttributeWithMetadataName(
         NuruRouteAttributeFullName,
         predicate: static (node, _) => node is ClassDeclarationSyntax,
-        transform: static (ctx, ct) => ExtractAttributedRouteWithLocation(ctx, ct))
+        transform: static (ctx, ct) => ExtractEndpointWithLocation(ctx, ct))
       .Where(static route => route is not null);
 
-    // 3. Collect attributed routes into an array (extract just the RouteDefinition)
-    IncrementalValueProvider<ImmutableArray<RouteDefinition?>> collectedAttributedRoutes =
-      attributedRoutesWithLocations
+    // 3. Collect endpoints into an array (extract just the RouteDefinition)
+    IncrementalValueProvider<ImmutableArray<RouteDefinition?>> collectedEndpoints =
+      endpointsWithLocations
         .Select(static (r, _) => r?.Route)
         .Collect();
 
@@ -62,11 +62,11 @@ public sealed class NuruGenerator : IIncrementalGenerator
         transform: static (ctx, ct) => GetFluentRouteLocation(ctx, ct))
       .Where(static info => info is not null);
 
-    // 5. Combine all route locations (fluent + attributed) into a dictionary
+    // 5. Combine all route locations (fluent + endpoints) into a dictionary
     IncrementalValueProvider<ImmutableDictionary<string, Location>> routeLocations =
       fluentRouteLocations
         .Collect()
-        .Combine(attributedRoutesWithLocations.Collect())
+        .Combine(endpointsWithLocations.Collect())
         .Select(static (data, _) =>
         {
           ImmutableDictionary<string, Location>.Builder builder =
@@ -79,7 +79,7 @@ public sealed class NuruGenerator : IIncrementalGenerator
               builder[route.Pattern] = route.Location;
           }
 
-          // Add attributed route locations
+          // Add endpoint locations
           foreach (RouteWithLocation? route in data.Right)
           {
             if (route is not null && !builder.ContainsKey(route.Pattern))
@@ -93,11 +93,11 @@ public sealed class NuruGenerator : IIncrementalGenerator
     IncrementalValueProvider<AssemblyMetadata> assemblyMetadata = context.CompilationProvider
       .Select(static (compilation, _) => AssemblyMetadataExtractor.Extract(compilation));
 
-    // 7. Combine extraction results with attributed routes, locations, and assembly metadata into GeneratorModel
+    // 7. Combine extraction results with endpoints, locations, and assembly metadata into GeneratorModel
     // Using buildExtractionResults ensures each Build() produces exactly one app - no duplicates
     IncrementalValueProvider<GeneratorModelWithDiagnostics?> generatorModelWithDiagnostics = buildExtractionResults
       .Collect()
-      .Combine(collectedAttributedRoutes)
+      .Combine(collectedEndpoints)
       .Combine(routeLocations)
       .Combine(assemblyMetadata)
       .Select(static (data, ct) => CreateGeneratorModelWithValidation(
@@ -226,7 +226,7 @@ public sealed class NuruGenerator : IIncrementalGenerator
   /// <summary>
   /// Extracts a RouteDefinition and location from a class with [NuruRoute] attribute.
   /// </summary>
-  private static RouteWithLocation? ExtractAttributedRouteWithLocation
+  private static RouteWithLocation? ExtractEndpointWithLocation
   (
     GeneratorAttributeSyntaxContext context,
     CancellationToken cancellationToken
@@ -235,7 +235,7 @@ public sealed class NuruGenerator : IIncrementalGenerator
     if (context.TargetNode is not ClassDeclarationSyntax classDeclaration)
       return null;
 
-    RouteDefinition? route = AttributedRouteExtractor.Extract(
+    RouteDefinition? route = EndpointExtractor.Extract(
       classDeclaration,
       context.SemanticModel,
       cancellationToken);
@@ -267,7 +267,7 @@ public sealed class NuruGenerator : IIncrementalGenerator
         break;
     }
 
-    // Use EffectivePattern for attributed routes to avoid collisions
+    // Use EffectivePattern for endpoints to avoid collisions
     // (OriginalPattern is just the attribute string, EffectivePattern includes all segments)
     return new RouteWithLocation(route.EffectivePattern, location, route);
   }
@@ -279,7 +279,7 @@ public sealed class NuruGenerator : IIncrementalGenerator
   private static GeneratorModelWithDiagnostics? CreateGeneratorModelWithValidation
   (
     ImmutableArray<ExtractionResult> extractionResults,
-    ImmutableArray<RouteDefinition?> attributedRoutes,
+    ImmutableArray<RouteDefinition?> endpoints,
     ImmutableDictionary<string, Location> routeLocations,
     AssemblyMetadata assemblyMetadata,
     CancellationToken cancellationToken
@@ -336,11 +336,11 @@ public sealed class NuruGenerator : IIncrementalGenerator
       .SelectMany(a => a.UserUsings)
       .Distinct()];
 
-    // Collect attributed routes (non-null only)
-    ImmutableArray<RouteDefinition> allEndpoints = [.. attributedRoutes.Where(r => r is not null)!];
+    // Collect endpoints (non-null only)
+    ImmutableArray<RouteDefinition> allEndpoints = [.. endpoints.Where(r => r is not null)!];
 
     // Validate each app's combined routes (fluent + filtered endpoints)
-    // This catches duplicate routes between fluent and attributed definitions
+    // This catches duplicate routes between fluent and endpoint definitions
     foreach (AppModel app in uniqueApps.Values)
     {
       // Filter endpoints based on app's discovery mode
@@ -359,7 +359,7 @@ public sealed class NuruGenerator : IIncrementalGenerator
     GeneratorModel model = new(
       Apps: [.. uniqueApps.Values],
       UserUsings: userUsings,
-      AttributedRoutes: allEndpoints,
+      Endpoints: allEndpoints,
       Version: assemblyMetadata.Version,
       CommitHash: assemblyMetadata.CommitHash,
       CommitDate: assemblyMetadata.CommitDate);
@@ -424,7 +424,7 @@ public sealed class NuruGenerator : IIncrementalGenerator
 
   /// <summary>
   /// Route pattern with its source location for error reporting.
-  /// Optionally includes the RouteDefinition for attributed routes.
+  /// Optionally includes the RouteDefinition for endpoints.
   /// </summary>
   private sealed record RouteWithLocation(string Pattern, Location Location, RouteDefinition? Route);
 

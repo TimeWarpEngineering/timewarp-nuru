@@ -35,7 +35,7 @@ Routes are defined using the `.Map()` method followed by configuration methods.
 | Method | Description |
 |--------|-------------|
 | `.Map(pattern)` | Define a route with a string pattern |
-| `.Map<TEndpoint>()` | Include a specific attributed endpoint class |
+| `.Map<TEndpoint>()` | Include a specific endpoint class |
 | `.Map(configureRoute)` | Define route using fluent route builder |
 
 ### Endpoint Configuration Methods
@@ -76,7 +76,7 @@ Route classification informs AI agents and tools how to treat commands:
   .WithHandler((string env) => Deploy(env))
   .Done()
 
-// Attributed endpoint class
+// Endpoint class
 .Map<DeployCommand>()
 
 // Auto-discover all [NuruRoute] classes

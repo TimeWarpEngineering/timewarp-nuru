@@ -170,7 +170,7 @@ public partial class NuruAppBuilder
 
   /// <summary>
   /// Discovers and includes all [NuruRoute] endpoint classes from the assembly.
-  /// Without this call, no attributed endpoints are included (only fluent routes).
+  /// Without this call, no endpoints are included (only fluent routes).
   /// </summary>
   /// <returns>The builder for chaining.</returns>
   /// <example>

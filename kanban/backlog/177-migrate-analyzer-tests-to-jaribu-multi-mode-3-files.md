@@ -8,7 +8,7 @@ Migrate the 3 analyzer test files in `tests/timewarp-nuru-analyzers-tests/auto/`
 
 - [ ] `nuru-invoker-generator-01-basic.cs`
 - [ ] `delegate-signature-01-models.cs`
-- [ ] `attributed-route-generator-01-basic.cs`
+- [ ] `endpoint-generator-01-basic.cs`
 
 ## Migration Pattern
 

@@ -21,8 +21,8 @@ NURU_S005 | RoutePattern.Semantic | Error | Option with duplicate alias
 NURU_S006 | RoutePattern.Semantic | Error | Optional parameter before required parameter
 NURU_S007 | RoutePattern.Semantic | Error | Invalid end-of-options separator
 NURU_S008 | RoutePattern.Semantic | Error | Options after end-of-options separator
-NURU_A001 | AttributedRoutes | Error | Multi-word route pattern requires [NuruRouteGroup]
-NURU_A002 | AttributedRoutes | Error | Multiple parameters require explicit Order
+NURU_A001 | Endpoints | Error | Multi-word route pattern requires [NuruRouteGroup]
+NURU_A002 | Endpoints | Error | Multiple parameters require explicit Order
 NURU_H001 | Handler.Validation | Error | Instance method handler not supported
 NURU_H002 | Handler.Validation | Error | Closure detected in handler
 NURU_H003 | Handler.Validation | Error | Unsupported handler expression

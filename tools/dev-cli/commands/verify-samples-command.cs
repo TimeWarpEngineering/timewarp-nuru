@@ -2,7 +2,7 @@
 // VERIFY SAMPLES COMMAND
 // ═══════════════════════════════════════════════════════════════════════════════
 // Builds all samples to verify they compile correctly.
-// Migrated from runfiles/verify-samples.cs to attributed routes pattern.
+// Migrated from runfiles/verify-samples.cs to endpoints pattern.
 
 namespace DevCli.Commands;
 

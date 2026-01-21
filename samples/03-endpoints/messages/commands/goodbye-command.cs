@@ -1,0 +1,33 @@
+namespace Endpoints.Messages;
+
+using TimeWarp.Nuru;
+using TimeWarp.Terminal;
+
+/// <summary>
+/// Say goodbye and exit.
+/// This is a Command (C) - has side effect (exits the process).
+/// Note: We use "goodbye" instead of "exit" because the REPL already registers
+/// built-in exit/quit/q commands. This demonstrates [NuruRouteAlias] without conflicts.
+/// Demonstrates ITerminal injection for testable output.
+/// </summary>
+[NuruRoute("goodbye", Description = "Say goodbye and exit")]
+[NuruRouteAlias("bye", "cya")]
+public sealed class GoodbyeCommand : ICommand<Unit>
+{
+  public sealed class Handler : ICommandHandler<GoodbyeCommand, Unit>
+  {
+    private readonly ITerminal Terminal;
+
+    public Handler(ITerminal terminal)
+    {
+      Terminal = terminal;
+    }
+
+    public ValueTask<Unit> Handle(GoodbyeCommand command, CancellationToken ct)
+    {
+      Terminal.WriteLine("Goodbye! Thanks for using endpoints.");
+      Environment.Exit(0);
+      return default;
+    }
+  }
+}

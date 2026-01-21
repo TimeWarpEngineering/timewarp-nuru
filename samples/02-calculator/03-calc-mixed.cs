@@ -2,16 +2,16 @@
 #:project ../../source/timewarp-nuru/timewarp-nuru.csproj
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// MIXED PATTERN - DELEGATES + ATTRIBUTED ROUTES EXAMPLE
+// MIXED PATTERN - DELEGATES + ENDPOINTS EXAMPLE
 // ═══════════════════════════════════════════════════════════════════════════════
 //
 // This sample demonstrates mixing both approaches:
 // - DELEGATES: For simple operations (inline, fast, no DI needed)
-// - ATTRIBUTED ROUTES: For complex operations (testable, DI, separation of concerns)
+// - ENDPOINTS: For complex operations (testable, DI, separation of concerns)
 //
 // WHEN TO USE EACH:
 //   Delegates: Simple one-liners, no external dependencies, performance-critical
-//   Attributed Routes: Complex logic, needs DI, requires unit testing, reusable handlers
+//   Endpoints: Complex logic, needs DI, requires unit testing, reusable handlers
 //
 // NO EXTERNAL PACKAGES REQUIRED:
 //   TimeWarp.Nuru provides ICommand<T>, ICommandHandler<T,TResult>, and Unit
@@ -57,7 +57,7 @@ NuruApp app = NuruApp.CreateBuilder()
     })
     .WithDescription("Divide the first number by the second")
     .Done()
-  // Attributed routes (factorial, isprime, fibonacci, stats) are auto-discovered via [NuruRoute]
+  // Endpoints (factorial, isprime, fibonacci, stats) are auto-discovered via [NuruRoute]
   // Example: Delegate that returns an object
   .Map("compare {x:double} {y:double}")
     .WithHandler((double x, double y) => new ComparisonResult
@@ -79,7 +79,7 @@ static void ConfigureServices(IServiceCollection services)
   services.AddSingleton<IScientificCalculator, ScientificCalculator>();
 }
 
-// Complex operations using attributed routes with nested handlers
+// Complex operations using endpoints with nested handlers
 [NuruRoute("factorial", Description = "Calculate factorial (n!)")]
 public sealed class FactorialCommand : ICommand<Unit>
 {
@@ -147,7 +147,7 @@ public sealed class FibonacciCommand : ICommand<Unit>
   }
 }
 
-// Example: Attributed route command with response object
+// Example: Endpoint command with response object
 [NuruRoute("stats", Description = "Calculate statistics for a set of numbers (returns JSON)")]
 public sealed class StatsCommand : ICommand<StatsResponse>
 {

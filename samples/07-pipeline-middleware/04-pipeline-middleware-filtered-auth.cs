@@ -12,7 +12,7 @@
 // KEY FEATURES:
 //   - Compile-time behavior filtering (no runtime type checks)
 //   - Strongly-typed context.Command (no casting needed)
-//   - Works with both delegate routes (.Implements<T>()) and attributed routes
+//   - Works with both delegate routes (.Implements<T>()) and endpoints
 //
 // RUN THIS SAMPLE:
 //   ./04-pipeline-middleware-filtered-auth.cs echo "Hello"           # No auth needed

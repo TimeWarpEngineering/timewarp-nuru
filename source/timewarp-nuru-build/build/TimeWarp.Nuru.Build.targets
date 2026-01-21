@@ -3,8 +3,8 @@
 
   <!-- 
     TimeWarp.Nuru.Build targets
-    Generates a JsonSerializerContext with [JsonSerializable] attributes for user-defined 
-    return types discovered from both delegate routes and [NuruRoute] attributed classes.
+    Generates a JsonSerializerContext with [JsonSerializable] attributes for user-defined
+    return types discovered from both delegate routes and [NuruRoute] endpoint classes.
     
     This runs BEFORE CoreCompile so System.Text.Json source generator can process the output.
     

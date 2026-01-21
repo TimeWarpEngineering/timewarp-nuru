@@ -7,8 +7,8 @@ Design and implement a unified `dev` CLI tool that consolidates all developer to
 ## Current State Analysis
 
 ### ✅ **Prerequisites Complete**
-- **Task 150 (Attributed Routes)**: Production-ready with auto-registration, grouped commands, aliases
-- **TimeWarp.Nuru 3.0.0-beta.22**: Full AOT support and attributed routes capabilities
+- **Task 150 (Endpoints)**: Production-ready with auto-registration, grouped commands, aliases
+- **TimeWarp.Nuru 3.0.0-beta.22**: Full AOT support and endpoints capabilities
 - **Existing Runfiles**: 10 C# scripts providing solid foundation and patterns
 
 ### 🔍 **Investigation Findings**
@@ -76,12 +76,12 @@ runfiles/dev/
 
 ### Phase 1: Foundation & CI/CD Commands
 - Create dev CLI project structure
-- Implement CI/CD orchestration commands using attributed routes
+- Implement CI/CD orchestration commands using endpoints
 - Refactor GitHub Actions workflows to use dev CLI
 - Test dual-mode execution (standalone + AOT binary)
 
 ### Phase 2: Core Command Migration  
-- Convert existing runfiles to attributed route pattern
+- Convert existing runfiles to endpoint pattern
 - Implement grouped commands for test suite
 - Add `--capabilities` for AI discoverability
 - Set up AOT bootstrap process
@@ -109,7 +109,7 @@ runfiles/dev/
 ### **Technical Benefits**
 - **Performance**: AOT binary provides instant startup vs script compilation
 - **Discoverability**: AI tools can use `--capabilities` for automation
-- **Flexibility**: Attributed routes allow easy command reorganization
+- **Flexibility**: Endpoints allow easy command reorganization
 - **Extensibility**: Easy to add new commands and features
 
 ## Open Questions
@@ -122,7 +122,7 @@ runfiles/dev/
 
 ## Technical Requirements
 
-- **Framework**: TimeWarp.Nuru with attributed routes (Task 150)
+- **Framework**: TimeWarp.Nuru with endpoints (Task 150)
 - **Compilation**: AOT-enabled for performance
 - **Platform**: Cross-platform via TimeWarp.Amuru patterns
 - **AI Discovery**: `--capabilities` flag for automation
@@ -130,7 +130,7 @@ runfiles/dev/
 
 ## Dependencies
 
-- ✅ **Task 150**: Attributed Routes (Complete)
+- ✅ **Task 150**: Endpoints (Complete)
 - 🔄 **Task 157**: `--capabilities` Flag (In Progress)  
 - ⏳ **Implementation Tasks**: To be created after investigation
 
@@ -144,4 +144,4 @@ runfiles/dev/
 
 ## Notes
 
-This Epic leverages the mature TimeWarp.Nuru attributed routes infrastructure (Task 150) and existing runfile patterns to create a unified developer tool that serves both CI/CD orchestration and development workflow automation needs. The attributed routes approach provides maximum flexibility for command organization and future evolution based on user feedback.
+This Epic leverages the mature TimeWarp.Nuru endpoints infrastructure (Task 150) and existing runfile patterns to create a unified developer tool that serves both CI/CD orchestration and development workflow automation needs. The endpoints approach provides maximum flexibility for command organization and future evolution based on user feedback.

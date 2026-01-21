@@ -15,7 +15,7 @@
     <!-- Tests 01, 10, 11, 12 have guards that skip entry point in multi-mode -->
     <Compile Include="../timewarp-nuru-tests/generator/generator-01-intercept.cs" />
     <Compile Include="../timewarp-nuru-tests/generator/generator-10-required-options.cs" />
-    <Compile Include="../timewarp-nuru-tests/generator/generator-11-attributed-routes.cs" />
+    <Compile Include="../timewarp-nuru-tests/generator/generator-11-endpoints.cs" />
     <Compile Include="../timewarp-nuru-tests/generator/generator-12-method-reference-handlers.cs" />
     <Compile Include="../timewarp-nuru-tests/generator/generator-14-options-validation.cs" />
     <Compile Include="../timewarp-nuru-tests/generator/generator-04-static-service-injection.cs" />

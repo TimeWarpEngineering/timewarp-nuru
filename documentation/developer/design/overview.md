@@ -15,7 +15,7 @@ Design documents for TimeWarp.Nuru's route-based CLI framework.
 - **[specificity-algorithm.md](resolver/specificity-algorithm.md)** - Route matching and scoring algorithm
 
 ### Source Generators (`source-generators/`)
-- **[attributed-route-generator.md](source-generators/attributed-route-generator.md)** - Auto-registration from `[NuruRoute]` attributes
+- **[endpoint-generator.md](source-generators/endpoint-generator.md)** - Auto-registration from `[NuruRoute]` attributes
 
 ### Cross-Cutting (`cross-cutting/`)
 - **[parameter-optionality.md](cross-cutting/parameter-optionality.md)** - Nullability-based optional/required approach

@@ -10,7 +10,7 @@ namespace TimeWarp.Nuru;
 /// </para>
 /// <para>
 /// The source generator uses this interface to automatically set <see cref="MessageType.IdempotentCommand"/>
-/// for attributed routes:
+/// for endpoints:
 /// </para>
 /// <code>
 /// // Derived as IdempotentCommand because it implements both ICommand and IIdempotent

@@ -40,7 +40,7 @@ NuruApp app = NuruApp.CreateBuilder(args)
 return await app.RunAsync(args);
 ```
 
-### Attributed Routes
+### Endpoints Routes
 
 Define routes as classes with `[NuruRoute]` attributes:
 
@@ -165,12 +165,12 @@ NuruApp app = NuruApp.CreateBuilder(args)
 
 **[Calculator Samples](samples/02-calculator/)** - Three complete implementations you can run now:
 - **[01-calc-delegate.cs](samples/02-calculator/01-calc-delegate.cs)** - Fluent DSL approach (inline handlers)
-- **[02-calc-commands.cs](samples/02-calculator/02-calc-commands.cs)** - Attributed routes pattern (testable, DI)
+- **[02-calc-commands.cs](samples/02-calculator/02-calc-commands.cs)** - Endpoints routes pattern (testable, DI)
 - **[03-calc-mixed.cs](samples/02-calculator/03-calc-mixed.cs)** - Mixed approach (both patterns together)
 
 ```bash
 ./samples/02-calculator/03-calc-mixed.cs add 10 20        # Fluent DSL: inline
-./samples/02-calculator/03-calc-mixed.cs factorial 5      # Attributed: structured
+./samples/02-calculator/03-calc-mixed.cs factorial 5      # Endpoints: structured
 ```
 
 **[AOT Example](samples/05-aot-example/)** - Native AOT compilation with source generators

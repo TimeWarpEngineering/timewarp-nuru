@@ -4,6 +4,7 @@ using TimeWarp.Nuru.Mcp.Services;
 
 /// <summary>
 /// MCP tool that provides information about error handling in TimeWarp.Nuru.
+/// Requires internet access to fetch documentation from GitHub.
 /// </summary>
 internal sealed class ErrorHandlingTool
 {
@@ -23,25 +24,8 @@ internal sealed class ErrorHandlingTool
     ["matching"] = "### 6. **Command Matching Errors**"
   };
 
-  // Fallback content in case GitHub fetch fails
-  private static readonly Dictionary<string, string> FallbackContent = new()
-  {
-    ["overview"] = """
-            # Error Handling in TimeWarp.Nuru
-
-            TimeWarp.Nuru implements a multi-layered approach to error handling that prioritizes clear error messages and graceful failure while maintaining simplicity.
-
-            ## Key Error Handling Mechanisms
-
-            1. **Top-Level Exception Handling** - Catches all unhandled exceptions
-            2. **Route Parsing Errors** - Comprehensive parsing error handling
-            3. **Parameter Binding Errors** - Validates parameters and handles conversion failures
-            4. **Type Conversion Errors** - Non-throwing approach with boolean success indicators
-            5. **Handler Execution Errors** - Separate handling for delegate vs command handlers
-            6. **Command Matching Errors** - Shows help when no route matches
-            7. **Output Stream Separation** - Keeps errors separate from normal output
-            """
-  };
+  private const string InternetRequiredMessage = "❌ **Internet access required.** Unable to fetch error handling documentation from GitHub. " +
+                                                 "Please check your network connection and try again.";
 
   [McpServerTool]
   [Description("Get information about TimeWarp.Nuru error handling")]
@@ -59,17 +43,13 @@ internal sealed class ErrorHandlingTool
     string? docContent = await GitHubCacheService.FetchAsync(DocPath, CacheCategory, forceRefresh);
     if (docContent is null)
     {
-      return FallbackContent.TryGetValue(normalizedArea, out string? fallback)
-          ? fallback
-          : "Could not retrieve error handling documentation.";
+      return InternetRequiredMessage;
     }
 
     string sectionContent = ExtractSection(docContent, normalizedArea);
     if (string.IsNullOrWhiteSpace(sectionContent))
     {
-      return FallbackContent.TryGetValue(normalizedArea, out string? fallback)
-          ? fallback
-          : $"Could not find content for area '{area}' in the documentation.";
+      return $"Could not find content for area '{area}' in the documentation.";
     }
 
     return sectionContent;
@@ -86,7 +66,7 @@ internal sealed class ErrorHandlingTool
     string? docContent = await GitHubCacheService.FetchAsync(DocPath, CacheCategory, forceRefresh);
     if (docContent is null)
     {
-      return "Could not retrieve error handling documentation.";
+      return InternetRequiredMessage;
     }
 
     if (normalizedScenario == "all")
@@ -140,13 +120,13 @@ internal sealed class ErrorHandlingTool
     string? docContent = await GitHubCacheService.FetchAsync(DocPath, CacheCategory, forceRefresh);
     if (docContent is null)
     {
-      return GetBestPracticesFallback();
+      return InternetRequiredMessage;
     }
 
     string philosophySection = ExtractSection(docContent, "philosophy");
     if (string.IsNullOrWhiteSpace(philosophySection))
     {
-      return GetBestPracticesFallback();
+      return "Could not find best practices content in the documentation.";
     }
 
     return """
@@ -155,48 +135,6 @@ internal sealed class ErrorHandlingTool
             The following best practices are derived from TimeWarp.Nuru's error handling philosophy:
 
             """ + philosophySection.Replace("## Error Handling Philosophy", "", StringComparison.Ordinal).Trim();
-  }
-
-  private static string GetBestPracticesFallback()
-  {
-    return """
-            # TimeWarp.Nuru Error Handling Best Practices
-
-            1. **Use Top-Level Try-Catch Blocks** - Catch all unhandled exceptions
-            2. **Validate Command Input Early** - Check for invalid input as early as possible
-            3. **Separate Output Streams** - Normal output to stdout, errors to stderr
-            4. **Return Appropriate Exit Codes** - 0 for success, 1 for errors
-            5. **Provide Helpful Error Messages** - Include context, parameters, and suggested fixes
-            6. **Handle Async Properly** - Use async/await for I/O operations, ConfigureAwait(false) in libraries
-
-            ## Example Pattern
-
-            ```csharp
-            .Map("deploy {environment}", async (string environment) =>
-            {
-                try
-                {
-                    // Validate early
-                    if (!IsValidEnvironment(environment))
-                    {
-                        await Console.Error.WriteLineAsync($"Invalid environment: {environment}");
-                        await Console.Error.WriteLineAsync("Valid environments: dev, staging, prod");
-                        return 1;
-                    }
-
-                    // Execute
-                    await DeployAsync(environment);
-                    await Console.Out.WriteLineAsync($"Successfully deployed to {environment}");
-                    return 0;
-                }
-                catch (Exception ex)
-                {
-                    await Console.Error.WriteLineAsync($"Deployment failed: {ex.Message}");
-                    return 1;
-                }
-            });
-            ```
-            """;
   }
 
   private static string ExtractSection(string content, string sectionKey)

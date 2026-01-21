@@ -107,8 +107,8 @@ internal static class BehaviorEmitter
     // Get all interface type names implemented by this route
     HashSet<string> routeInterfaces = [.. route.ImplementedInterfaces];
 
-    // For attributed routes, we'd also check the command class interfaces
-    // This is handled separately in the attributed route extractor
+    // For endpoints, we'd also check the command class interfaces
+    // This is handled separately in the endpoint extractor
 
     ImmutableArray<BehaviorDefinition>.Builder applicable = ImmutableArray.CreateBuilder<BehaviorDefinition>();
 
@@ -133,7 +133,7 @@ internal static class BehaviorEmitter
   /// <summary>
   /// Emits command instance creation for the behavior context.
   /// For delegate routes: creates __NuruCommand_{N} instance.
-  /// For attributed routes: creates the command class instance.
+  /// For endpoints: creates the command class instance.
   /// </summary>
   private static void EmitCommandCreation(
     StringBuilder sb,
@@ -181,7 +181,7 @@ internal static class BehaviorEmitter
     }
     else if (route.Handler.HandlerKind == HandlerKind.Command)
     {
-      // Attributed routes: create the actual command class instance
+      // Endpoints: create the actual command class instance
       string commandTypeName = route.Handler.FullTypeName ?? "UnknownCommand";
 
       sb.AppendLine($"{indent}// Create command instance for behaviors");

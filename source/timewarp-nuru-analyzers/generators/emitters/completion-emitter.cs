@@ -17,26 +17,26 @@ internal static class CompletionEmitter
   /// <param name="sb">The StringBuilder to append to.</param>
   /// <param name="app">The application model containing route definitions.</param>
   /// <param name="methodSuffix">Suffix for per-app methods (e.g., "_0" for multi-app assemblies).</param>
-  /// <param name="attributedRoutes">Routes from [NuruRoute] attributed classes.</param>
+  /// <param name="endpoints">Routes from [NuruRoute] endpoint classes.</param>
   /// <param name="compilation">The Roslyn compilation for resolving enum types.</param>
-  public static void Emit(StringBuilder sb, AppModel app, string methodSuffix, ImmutableArray<RouteDefinition> attributedRoutes, Compilation compilation)
+  public static void Emit(StringBuilder sb, AppModel app, string methodSuffix, ImmutableArray<RouteDefinition> endpoints, Compilation compilation)
   {
     sb.AppendLine("  // ═══════════════════════════════════════════════════════════════════════════════");
     sb.AppendLine("  // SHELL COMPLETION SUPPORT (source-generated static data)");
     sb.AppendLine("  // ═══════════════════════════════════════════════════════════════════════════════");
     sb.AppendLine();
 
-    EmitGeneratedShellCompletionProvider(sb, app, methodSuffix, attributedRoutes, compilation);
+    EmitGeneratedShellCompletionProvider(sb, app, methodSuffix, endpoints, compilation);
   }
 
   /// <summary>
   /// Emits the GeneratedShellCompletionProvider class implementing IShellCompletionProvider.
   /// </summary>
-  private static void EmitGeneratedShellCompletionProvider(StringBuilder sb, AppModel app, string methodSuffix, ImmutableArray<RouteDefinition> attributedRoutes, Compilation compilation)
+  private static void EmitGeneratedShellCompletionProvider(StringBuilder sb, AppModel app, string methodSuffix, ImmutableArray<RouteDefinition> endpoints, Compilation compilation)
   {
     // Collect all routes for this app (excluding completion-related routes)
     IEnumerable<RouteDefinition> allRoutes = app.Routes
-      .Concat(attributedRoutes)
+      .Concat(endpoints)
       .Where(r => !r.OriginalPattern.StartsWith("__complete", StringComparison.Ordinal) &&
                   !r.OriginalPattern.StartsWith("--generate-completion", StringComparison.Ordinal) &&
                   !r.OriginalPattern.StartsWith("--install-completion", StringComparison.Ordinal));

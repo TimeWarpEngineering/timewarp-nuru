@@ -7,14 +7,14 @@
 // - CI/CD orchestration commands for GitHub Actions
 // - Development workflow automation
 // - AOT-compiled binary for fast execution
-// - Attributed routes for flexible command organization
+// - Endpoints for flexible command organization
 //
 // Usage:
 //   As runfile:  dotnet tools/dev-cli/dev.cs <command>
 //   As AOT:      ./dev <command>
 //
 // Architecture:
-//   - Uses TimeWarp.Nuru with attributed routes for command registration
+//   - Uses TimeWarp.Nuru with endpoints for command registration
 //   - TimeWarp.Amuru for cross-platform shell and .NET operations
 //   - AOT-compatible design for maximum performance
 //

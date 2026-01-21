@@ -115,16 +115,16 @@ internal static class AppExtractor
   }
 
   /// <summary>
-  /// Extracts an AppModel from a RunAsync call site with additional attributed routes.
+  /// Extracts an AppModel from a RunAsync call site with additional endpoints.
   /// </summary>
   /// <param name="context">The generator syntax context containing the RunAsync invocation.</param>
-  /// <param name="attributedRoutes">Routes extracted from [NuruRoute] classes.</param>
+  /// <param name="endpoints">Routes extracted from [NuruRoute] classes.</param>
   /// <param name="cancellationToken">Cancellation token for the operation.</param>
   /// <returns>The extracted AppModel, or null if extraction fails.</returns>
-  public static AppModel? ExtractWithAttributedRoutes
+  public static AppModel? ExtractWithEndpoints
   (
     GeneratorSyntaxContext context,
-    ImmutableArray<RouteDefinition> attributedRoutes,
+    ImmutableArray<RouteDefinition> endpoints,
     CancellationToken cancellationToken
   )
   {
@@ -132,12 +132,12 @@ internal static class AppExtractor
     if (baseModel is null)
       return null;
 
-    // Merge attributed routes with fluent routes
-    if (attributedRoutes.Length == 0)
+    // Merge endpoints with fluent routes
+    if (endpoints.Length == 0)
       return baseModel;
 
-    // Combine routes (fluent routes first, then attributed)
-    ImmutableArray<RouteDefinition> mergedRoutes = baseModel.Routes.AddRange(attributedRoutes);
+    // Combine routes (fluent routes first, then endpoints)
+    ImmutableArray<RouteDefinition> mergedRoutes = baseModel.Routes.AddRange(endpoints);
 
     return baseModel with { Routes = mergedRoutes };
   }
@@ -430,16 +430,16 @@ internal static class AppExtractor
   }
 
   /// <summary>
-  /// Extracts an AppModel with attributed routes, returning an ExtractionResult with diagnostics.
+  /// Extracts an AppModel with endpoints, returning an ExtractionResult with diagnostics.
   /// </summary>
   /// <param name="context">The generator syntax context containing the RunAsync invocation.</param>
-  /// <param name="attributedRoutes">Routes extracted from [NuruRoute] classes.</param>
+  /// <param name="endpoints">Routes extracted from [NuruRoute] classes.</param>
   /// <param name="cancellationToken">Cancellation token for the operation.</param>
   /// <returns>Extraction result containing the model and any diagnostics.</returns>
-  public static ExtractionResult ExtractWithAttributedRoutesAndDiagnostics
+  public static ExtractionResult ExtractWithEndpointsAndDiagnostics
   (
     GeneratorSyntaxContext context,
-    ImmutableArray<RouteDefinition> attributedRoutes,
+    ImmutableArray<RouteDefinition> endpoints,
     CancellationToken cancellationToken
   )
   {
@@ -447,12 +447,12 @@ internal static class AppExtractor
     if (baseResult.Model is null)
       return baseResult;
 
-    // Merge attributed routes with fluent routes
-    if (attributedRoutes.Length == 0)
+    // Merge endpoints with fluent routes
+    if (endpoints.Length == 0)
       return baseResult;
 
-    // Combine routes (fluent routes first, then attributed)
-    ImmutableArray<RouteDefinition> mergedRoutes = baseResult.Model.Routes.AddRange(attributedRoutes);
+    // Combine routes (fluent routes first, then endpoints)
+    ImmutableArray<RouteDefinition> mergedRoutes = baseResult.Model.Routes.AddRange(endpoints);
     AppModel mergedModel = baseResult.Model with { Routes = mergedRoutes };
 
     return new ExtractionResult(mergedModel, baseResult.Diagnostics);

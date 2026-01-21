@@ -6,14 +6,14 @@ namespace TimeWarp.Nuru.Generators;
 /// </summary>
 /// <param name="Apps">Individual app models, each with isolated routes and intercept sites</param>
 /// <param name="UserUsings">User's using directives to include in generated code</param>
-/// <param name="AttributedRoutes">Routes from [NuruRoute] attributed classes (shared across all apps)</param>
+/// <param name="Endpoints">Routes from [NuruRoute] endpoint classes (shared across all apps)</param>
 /// <param name="Version">Assembly version (from AssemblyInformationalVersionAttribute or AssemblyVersion)</param>
 /// <param name="CommitHash">Git commit hash (from TimeWarp.Build.Tasks, may be null)</param>
 /// <param name="CommitDate">Git commit date (from TimeWarp.Build.Tasks, may be null)</param>
 public sealed record GeneratorModel(
   ImmutableArray<AppModel> Apps,
   ImmutableArray<string> UserUsings,
-  ImmutableArray<RouteDefinition> AttributedRoutes,
+  ImmutableArray<RouteDefinition> Endpoints,
   string? Version,
   string? CommitHash,
   string? CommitDate)
@@ -90,5 +90,5 @@ public sealed record GeneratorModel(
   /// Gets all routes from all apps combined (for help output).
   /// </summary>
   public IEnumerable<RouteDefinition> AllRoutes =>
-    Apps.SelectMany(a => a.Routes).Concat(AttributedRoutes);
+    Apps.SelectMany(a => a.Routes).Concat(Endpoints);
 }

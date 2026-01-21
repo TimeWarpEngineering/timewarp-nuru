@@ -35,7 +35,7 @@ NuruApp app = NuruApp.CreateBuilder(args)
 return await app.RunAsync(args);
 ```
 
-### Approach 2: Attributed Routes
+### Approach 2: Endpoints
 
 Define commands as classes with attributes - auto-discovered at build time:
 
@@ -86,7 +86,7 @@ dotnet run -- greet Alice
 
 ## Choosing Your Approach
 
-| Aspect | Fluent DSL | Attributed Routes |
+| Aspect | Fluent DSL | Endpoints |
 |--------|------------|-------------------|
 | Best for | Simple apps, scripts, quick prototypes | Larger apps, separation of concerns |
 | Organization | Single file possible | Commands in separate files |
@@ -214,7 +214,7 @@ Run with `-i` or `--interactive` to enter REPL mode.
 
 - **[Route Patterns](features/routing.md)** - Complete syntax reference
 - **[Pipeline Behaviors](features/pipeline-behaviors.md)** - Middleware for commands
-- **[Attributed Routes](features/attributed-routes.md)** - Deep dive on class-based commands
+- **[Endpoints](features/endpoints.md)** - Deep dive on class-based commands
 - **[Configuration](features/configuration.md)** - Settings and dependency injection
 - **[REPL Mode](guides/using-repl-mode.md)** - Interactive shell
 - **[Samples](../../samples/)** - Working examples
@@ -231,7 +231,7 @@ TimeWarp.Nuru uses **compile-time source generation** for routing. Benefits:
 
 ### Can I mix both approaches?
 
-Yes! Use fluent DSL for simple commands and attributed routes for complex ones in the same app:
+Yes! Use fluent DSL for simple commands and endpoints for complex ones in the same app:
 
 ```csharp
 NuruApp app = NuruApp.CreateBuilder(args)
@@ -239,7 +239,7 @@ NuruApp app = NuruApp.CreateBuilder(args)
     .WithHandler(() => Console.WriteLine("1.0.0"))
     .AsQuery()
     .Done()
-  .DiscoverEndpoints()  // Also discovers attributed routes
+  .DiscoverEndpoints()  // Also discovers endpoints
   .Build();
 ```
 

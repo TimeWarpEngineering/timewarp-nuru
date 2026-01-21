@@ -27,9 +27,12 @@
 //   dev test               - Run CI test suite
 //   dev verify-samples     - Verify sample compilation
 //   dev check-version      - Check if version already published
+//   dev publish            - AOT publish dev CLI to ./bin
 //
-// To build AOT binary:
-//   dotnet runfiles/publish-dev.cs
+// To bootstrap:
+//   dotnet run tools/dev-cli/dev.cs publish
+//   direnv allow
+//   dev --help
 // ═══════════════════════════════════════════════════════════════════════════════
 
 NuruApp app = NuruApp.CreateBuilder()

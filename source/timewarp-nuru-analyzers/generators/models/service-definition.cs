@@ -7,34 +7,78 @@ namespace TimeWarp.Nuru.Generators;
 /// <param name="ServiceTypeName">Fully qualified interface/abstract type name</param>
 /// <param name="ImplementationTypeName">Fully qualified implementation type name</param>
 /// <param name="Lifetime">Service lifetime (Singleton, Scoped, Transient)</param>
+/// <param name="ConstructorDependencyTypes">Fully qualified type names of constructor parameters</param>
+/// <param name="IsFactoryRegistration">True if registered with a factory delegate</param>
+/// <param name="IsInternalType">True if implementation type is internal</param>
+/// <param name="RegistrationLocation">Source location of the registration for error reporting</param>
 public sealed record ServiceDefinition(
   string ServiceTypeName,
   string ImplementationTypeName,
-  ServiceLifetime Lifetime)
+  ServiceLifetime Lifetime,
+  ImmutableArray<string> ConstructorDependencyTypes = default,
+  bool IsFactoryRegistration = false,
+  bool IsInternalType = false,
+  Location? RegistrationLocation = null)
 {
+  /// <summary>
+  /// Gets whether this service has constructor dependencies.
+  /// </summary>
+  public bool HasConstructorDependencies =>
+    !ConstructorDependencyTypes.IsDefaultOrEmpty && ConstructorDependencyTypes.Length > 0;
+
   /// <summary>
   /// Creates a singleton service registration.
   /// </summary>
-  public static ServiceDefinition Singleton(string serviceType, string implementationType) => new(
+  public static ServiceDefinition Singleton(
+    string serviceType,
+    string implementationType,
+    ImmutableArray<string> constructorDependencyTypes = default,
+    bool isFactoryRegistration = false,
+    bool isInternalType = false,
+    Location? registrationLocation = null) => new(
     ServiceTypeName: serviceType,
     ImplementationTypeName: implementationType,
-    Lifetime: ServiceLifetime.Singleton);
+    Lifetime: ServiceLifetime.Singleton,
+    ConstructorDependencyTypes: constructorDependencyTypes,
+    IsFactoryRegistration: isFactoryRegistration,
+    IsInternalType: isInternalType,
+    RegistrationLocation: registrationLocation);
 
   /// <summary>
   /// Creates a scoped service registration.
   /// </summary>
-  public static ServiceDefinition Scoped(string serviceType, string implementationType) => new(
+  public static ServiceDefinition Scoped(
+    string serviceType,
+    string implementationType,
+    ImmutableArray<string> constructorDependencyTypes = default,
+    bool isFactoryRegistration = false,
+    bool isInternalType = false,
+    Location? registrationLocation = null) => new(
     ServiceTypeName: serviceType,
     ImplementationTypeName: implementationType,
-    Lifetime: ServiceLifetime.Scoped);
+    Lifetime: ServiceLifetime.Scoped,
+    ConstructorDependencyTypes: constructorDependencyTypes,
+    IsFactoryRegistration: isFactoryRegistration,
+    IsInternalType: isInternalType,
+    RegistrationLocation: registrationLocation);
 
   /// <summary>
   /// Creates a transient service registration.
   /// </summary>
-  public static ServiceDefinition Transient(string serviceType, string implementationType) => new(
+  public static ServiceDefinition Transient(
+    string serviceType,
+    string implementationType,
+    ImmutableArray<string> constructorDependencyTypes = default,
+    bool isFactoryRegistration = false,
+    bool isInternalType = false,
+    Location? registrationLocation = null) => new(
     ServiceTypeName: serviceType,
     ImplementationTypeName: implementationType,
-    Lifetime: ServiceLifetime.Transient);
+    Lifetime: ServiceLifetime.Transient,
+    ConstructorDependencyTypes: constructorDependencyTypes,
+    IsFactoryRegistration: isFactoryRegistration,
+    IsInternalType: isInternalType,
+    RegistrationLocation: registrationLocation);
 
   /// <summary>
   /// Gets the short service type name for display.

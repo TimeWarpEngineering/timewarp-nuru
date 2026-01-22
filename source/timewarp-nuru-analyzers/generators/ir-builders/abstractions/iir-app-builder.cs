@@ -106,6 +106,14 @@ public interface IIrAppBuilder : IIrRouteSource
   IIrAppBuilder AddService(ServiceDefinition service);
 
   /// <summary>
+  /// Adds an extension method call detected during service extraction.
+  /// Used for NURU052 warnings about unanalyzable service registrations.
+  /// </summary>
+  /// <param name="extensionMethod">The extension method call.</param>
+  /// <returns>This builder for chaining.</returns>
+  IIrAppBuilder AddExtensionMethodCall(ExtensionMethodCall extensionMethod);
+
+  /// <summary>
   /// No-op for UseTerminal (runtime only).
   /// </summary>
   /// <returns>This builder for chaining.</returns>

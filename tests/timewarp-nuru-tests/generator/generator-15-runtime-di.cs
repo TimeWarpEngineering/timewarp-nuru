@@ -13,11 +13,11 @@
 // - Multiple services with dependency chains
 // ═══════════════════════════════════════════════════════════════════════════════
 
+using System.Globalization;
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif
-
-using System.Globalization;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // SERVICE INTERFACES AND IMPLEMENTATIONS (global scope for generator discovery)

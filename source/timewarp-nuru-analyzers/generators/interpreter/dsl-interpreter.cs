@@ -1031,6 +1031,7 @@ public sealed class DslInterpreter
   /// <summary>
   /// Dispatches ConfigureServices() call to IIrAppBuilder.
   /// Extracts service registrations from the lambda and adds them to the IR model.
+  /// Also captures the raw lambda body for runtime invocation when UseMicrosoftDependencyInjection is enabled.
   /// </summary>
   private object? DispatchConfigureServices(InvocationExpressionSyntax invocation, object? receiver)
   {
@@ -1069,7 +1070,61 @@ public sealed class DslInterpreter
       appBuilder.SetLoggingConfiguration(loggingConfig);
     }
 
+    // Extract and store the lambda body for runtime invocation (used when UseMicrosoftDependencyInjection is enabled)
+    string? lambdaBody = ExtractConfigureServicesLambdaBody(invocation);
+    if (lambdaBody is not null)
+    {
+      appBuilder.SetConfigureServicesBody(lambdaBody);
+    }
+
     return appBuilder;
+  }
+
+  /// <summary>
+  /// Extracts the raw lambda body from a ConfigureServices() invocation.
+  /// Used to emit code that invokes the user's delegate at runtime.
+  /// </summary>
+  private static string? ExtractConfigureServicesLambdaBody(InvocationExpressionSyntax invocation)
+  {
+    ArgumentListSyntax? args = invocation.ArgumentList;
+    if (args is null || args.Arguments.Count == 0)
+      return null;
+
+    ExpressionSyntax configureExpression = args.Arguments[0].Expression;
+
+    // Handle lambda expressions: services => { ... } or services => services.Add...
+    if (configureExpression is LambdaExpressionSyntax lambda)
+    {
+      // Get the parameter name (usually "services" or "s")
+      string? parameterName = lambda switch
+      {
+        SimpleLambdaExpressionSyntax simple => simple.Parameter.Identifier.Text,
+        ParenthesizedLambdaExpressionSyntax paren when paren.ParameterList.Parameters.Count > 0
+          => paren.ParameterList.Parameters[0].Identifier.Text,
+        _ => null
+      };
+
+      if (parameterName is null)
+        return null;
+
+      // Get the lambda body
+      CSharpSyntaxNode body = lambda.Body;
+
+      // For block body: { services.AddLogging(); services.AddSingleton<...>(); }
+      if (body is BlockSyntax block)
+      {
+        return block.ToFullString();
+      }
+
+      // For expression body: services.AddLogging().AddSingleton<...>()
+      // Wrap in block for consistent emission
+      if (body is ExpressionSyntax expr)
+      {
+        return $"{{ {expr.ToFullString()}; }}";
+      }
+    }
+
+    return null;
   }
 
   /// <summary>

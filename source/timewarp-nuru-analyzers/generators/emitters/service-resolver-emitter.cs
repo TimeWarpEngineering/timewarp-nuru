@@ -20,20 +20,21 @@ internal static class ServiceResolverEmitter
   /// <param name="services">Registered services from ConfigureServices.</param>
   /// <param name="indent">Number of spaces for indentation.</param>
   /// <param name="useRuntimeDI">When true, emits GetServiceProvider().GetRequiredService&lt;T&gt;() instead of static instantiation.</param>
-  public static void Emit(StringBuilder sb, HandlerDefinition handler, ImmutableArray<ServiceDefinition> services, int indent = 6, bool useRuntimeDI = false)
+  /// <param name="runtimeDISuffix">Suffix for per-app runtime DI methods (e.g., "_0" for multi-app assemblies).</param>
+  public static void Emit(StringBuilder sb, HandlerDefinition handler, ImmutableArray<ServiceDefinition> services, int indent = 6, bool useRuntimeDI = false, string runtimeDISuffix = "")
   {
     string indentStr = new(' ', indent);
 
     foreach (ParameterBinding param in handler.ServiceParameters)
     {
-      EmitServiceResolution(sb, param, services, indentStr, useRuntimeDI);
+      EmitServiceResolution(sb, param, services, indentStr, useRuntimeDI, runtimeDISuffix);
     }
   }
 
   /// <summary>
   /// Emits a single service resolution from a parameter binding.
   /// </summary>
-  private static void EmitServiceResolution(StringBuilder sb, ParameterBinding param, ImmutableArray<ServiceDefinition> services, string indent, bool useRuntimeDI)
+  private static void EmitServiceResolution(StringBuilder sb, ParameterBinding param, ImmutableArray<ServiceDefinition> services, string indent, bool useRuntimeDI, string runtimeDISuffix)
   {
     string typeName = param.ParameterTypeName;
     string varName = CSharpIdentifierUtils.EscapeIfKeyword(param.ParameterName);
@@ -74,11 +75,11 @@ internal static class ServiceResolverEmitter
       return;
     }
 
-    // Runtime DI path: use GetServiceProvider().GetRequiredService<T>()
+    // Runtime DI path: use GetServiceProvider{suffix}(app).GetRequiredService<T>()
     if (useRuntimeDI)
     {
       sb.AppendLine(
-        $"{indent}{typeName} {varName} = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<{typeName}>(GetServiceProvider());");
+        $"{indent}{typeName} {varName} = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<{typeName}>(GetServiceProvider{runtimeDISuffix}(app));");
       return;
     }
 

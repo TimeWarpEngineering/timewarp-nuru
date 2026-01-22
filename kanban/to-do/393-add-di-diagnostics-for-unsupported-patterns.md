@@ -22,67 +22,106 @@ Add compile-time diagnostics that clearly report when source-gen DI cannot handl
 | NURU053 | Error | Factory delegate registration | "Service '{0}' uses factory delegate. Use .UseMicrosoftDependencyInjection() for factory support" |
 | NURU054 | Error | Internal type not accessible | "Cannot instantiate internal type '{0}'. Use .UseMicrosoftDependencyInjection() or expose public type" |
 
-### Implementation
+### Implementation Plan
 
-- [ ] Create `ServiceValidator` class in analyzers
-- [ ] Add diagnostic descriptors to `Descriptors.cs`
-- [ ] Validate handler service requirements against registered services
-- [ ] Detect constructor dependencies on registered services
-- [ ] Detect extension method calls (methods not named AddTransient/AddScoped/AddSingleton)
-- [ ] Skip all validation when `UseMicrosoftDependencyInjection = true`
+#### Step 1: Create Diagnostic Descriptors
 
-### Validation Logic
+**File:** `source/timewarp-nuru-analyzers/diagnostics/diagnostic-descriptors.service.cs` (new)
 
-```csharp
-internal static class ServiceValidator
-{
-    public static ImmutableArray<Diagnostic> Validate(
-        AppModel app,
-        ImmutableArray<ServiceDefinition> services,
-        ImmutableArray<HandlerDefinition> handlers)
-    {
-        // Runtime DI handles everything - no validation needed
-        if (app.UseMicrosoftDependencyInjection)
-            return [];
+- [x] Add partial class with `ServiceCategory = "Service.Validation"`
+- [x] Define NURU050-054 following pattern in `diagnostic-descriptors.handler.cs`
+- [x] Include actionable guidance (mention `.UseMicrosoftDependencyInjection()` escape hatch)
 
-        var diagnostics = ImmutableArray.CreateBuilder<Diagnostic>();
+#### Step 2: Extend ServiceDefinition Model
 
-        // Check each handler's service requirements
-        foreach (var handler in handlers)
-        {
-            foreach (var param in handler.ServiceParameters)
-            {
-                ValidateServiceParameter(param, services, diagnostics);
-            }
-        }
+**File:** `source/timewarp-nuru-analyzers/generators/models/service-definition.cs`
 
-        // Check registered services for constructor dependencies
-        foreach (var service in services)
-        {
-            ValidateServiceConstructor(service, services, diagnostics);
-        }
+- [x] Add `ImmutableArray<string> ConstructorDependencyTypes` (for NURU051)
+- [x] Add `bool IsFactoryRegistration` (for NURU053)
+- [x] Add `bool IsInternalType` (for NURU054)
+- [x] Add `Location? RegistrationLocation` (for error reporting)
+- [x] Update factory methods with defaults
 
-        return diagnostics.ToImmutable();
-    }
-}
-```
+#### Step 3: Create ExtensionMethodCall Record
 
-### User Experience
+**File:** `source/timewarp-nuru-analyzers/generators/models/service-extraction-result.cs` (new)
 
-**Before (current - silent failure or cryptic error):**
-```csharp
-services.AddSingleton<IRepo, SqlRepo>();  // SqlRepo needs IDbConnection
-// Compiles, but generated code fails: CS7036 missing required arguments
-```
+- [x] Create `record ExtensionMethodCall(string MethodName, Location Location)`
+- [x] Create `record ServiceExtractionResult(Services, ExtensionMethods)`
 
-**After (clear guidance):**
-```csharp
-services.AddSingleton<IRepo, SqlRepo>();
-// error NURU051: Service 'SqlRepo' has constructor dependencies (IDbConnection, ILogger<SqlRepo>).
-//                Options:
-//                  1. Register dependencies: services.AddSingleton<IDbConnection, ...>()
-//                  2. Use runtime DI: .UseMicrosoftDependencyInjection()
-```
+#### Step 4: Enhance ServiceExtractor
+
+**File:** `source/timewarp-nuru-analyzers/generators/extractors/service-extractor.cs`
+
+- [x] Change return type to `ServiceExtractionResult(Services, ExtensionMethods)`
+- [x] Detect factory delegates (lambdas in arguments) → set `IsFactoryRegistration`
+- [x] Extract constructor parameters from implementation type → populate `ConstructorDependencyTypes`
+- [x] Check type accessibility → set `IsInternalType`
+- [x] Capture `invocation.GetLocation()` → store in `RegistrationLocation`
+- [x] Track non-standard method calls as `ExtensionMethodCall`
+
+#### Step 5: Create ServiceValidator
+
+**File:** `source/timewarp-nuru-analyzers/validation/service-validator.cs` (new)
+
+- [x] Create `ServiceValidator.Validate(AppModel)`
+- [x] Skip ALL validation when `UseMicrosoftDependencyInjection = true`
+- [x] Build registered service set (include built-ins: ITerminal, IConfiguration, NuruApp, CancellationToken)
+- [x] NURU050: Check handler service requirements
+- [x] NURU051: Check service constructor dependencies
+- [x] NURU053: Check factory registrations
+- [x] NURU054: Check type accessibility
+- [x] Create `ValidateExtensionMethods()` for NURU052 warnings
+
+#### Step 6: Integrate in ModelValidator
+
+**File:** `source/timewarp-nuru-analyzers/validation/model-validator.cs`
+
+- [x] Add `extensionMethods` parameter to `Validate()`
+- [x] Call `ServiceValidator.Validate()` after overlap validation
+- [x] Call `ServiceValidator.ValidateExtensionMethods()` for NURU052 warnings
+
+#### Step 7: Update Generator Pipeline
+
+**Files:**
+- `source/timewarp-nuru-analyzers/generators/nuru-generator.cs`
+- `source/timewarp-nuru-analyzers/generators/interpreter/dsl-interpreter.cs`
+- `source/timewarp-nuru-analyzers/generators/ir-builders/ir-app-builder.cs`
+- `source/timewarp-nuru-analyzers/generators/ir-builders/abstractions/iir-app-builder.cs`
+- `source/timewarp-nuru-analyzers/generators/models/app-model.cs`
+
+- [x] Add `ExtensionMethods` property to `AppModel`
+- [x] Add `AddExtensionMethodCall()` to `IIrAppBuilder` interface
+- [x] Implement in `IrAppBuilder`
+- [x] Update DSL interpreter to use `ServiceExtractionResult` and add extension methods
+- [x] Pass `ExtensionMethods` to `ModelValidator.Validate()`
+
+### Files Summary
+
+| File | Action |
+|------|--------|
+| `diagnostics/diagnostic-descriptors.service.cs` | Created |
+| `generators/models/service-definition.cs` | Extended |
+| `generators/models/service-extraction-result.cs` | Created |
+| `generators/models/app-model.cs` | Extended |
+| `generators/extractors/service-extractor.cs` | Enhanced |
+| `generators/interpreter/dsl-interpreter.cs` | Updated |
+| `generators/ir-builders/ir-app-builder.cs` | Updated |
+| `generators/ir-builders/abstractions/iir-app-builder.cs` | Updated |
+| `validation/service-validator.cs` | Created |
+| `validation/model-validator.cs` | Integrated |
+| `generators/nuru-generator.cs` | Wired up |
+
+### Verification
+
+- [x] Build: `dotnet build timewarp-nuru.slnx -c Release`
+- [ ] Test NURU050: Handler with unregistered service → error
+- [ ] Test NURU051: Service with constructor deps not registered → error
+- [ ] Test NURU052: Extension method like `AddLogging()` → warning
+- [ ] Test NURU053: Factory delegate registration → error
+- [ ] Test NURU054: Internal implementation type → error
+- [ ] Test skip behavior: All above with `UseMicrosoftDependencyInjection()` → no diagnostics
+- [x] Run CI tests: `dotnet run tests/ci-tests/run-ci-tests.cs`
 
 ## Notes
 

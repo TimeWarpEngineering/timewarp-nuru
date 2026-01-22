@@ -42,6 +42,7 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
   private bool CompletionEnabled;
   private bool MicrosoftDependencyInjectionEnabled;
   private readonly List<string> ExplicitEndpointTypes = [];
+  private readonly List<ExtensionMethodCall> ExtensionMethods = [];
 
   /// <summary>
   /// Sets the variable name for debugging/identification.
@@ -179,6 +180,17 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
   public TSelf AddService(ServiceDefinition service)
   {
     Services.Add(service);
+    return (TSelf)this;
+  }
+
+  /// <summary>
+  /// Adds an extension method call detected during service extraction.
+  /// Used for NURU052 warnings about unanalyzable service registrations.
+  /// </summary>
+  /// <param name="extensionMethod">The extension method call.</param>
+  public TSelf AddExtensionMethodCall(ExtensionMethodCall extensionMethod)
+  {
+    ExtensionMethods.Add(extensionMethod);
     return (TSelf)this;
   }
 
@@ -346,7 +358,8 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
       ExplicitEndpointTypes: [.. ExplicitEndpointTypes],
       HasTelemetry: TelemetryEnabled,
       HasCompletion: CompletionEnabled,
-      UseMicrosoftDependencyInjection: MicrosoftDependencyInjectionEnabled);
+      UseMicrosoftDependencyInjection: MicrosoftDependencyInjectionEnabled,
+      ExtensionMethods: [.. ExtensionMethods]);
   }
 
   /// <summary>
@@ -376,6 +389,7 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
   IIrAppBuilder IIrAppBuilder.AddCheckUpdatesRoute() => AddCheckUpdatesRoute();
   IIrAppBuilder IIrAppBuilder.AddBehavior(BehaviorDefinition behavior) => AddBehavior(behavior);
   IIrAppBuilder IIrAppBuilder.AddService(ServiceDefinition service) => AddService(service);
+  IIrAppBuilder IIrAppBuilder.AddExtensionMethodCall(ExtensionMethodCall extensionMethod) => AddExtensionMethodCall(extensionMethod);
   IIrAppBuilder IIrAppBuilder.UseTerminal() => UseTerminal();
   IIrAppBuilder IIrAppBuilder.UseTelemetry() => UseTelemetry();
   IIrAppBuilder IIrAppBuilder.UseMicrosoftDependencyInjection() => UseMicrosoftDependencyInjection();

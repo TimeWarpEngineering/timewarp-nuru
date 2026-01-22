@@ -1041,15 +1041,21 @@ public sealed class DslInterpreter
     }
 
     // Extract service registrations from the ConfigureServices lambda
-    ImmutableArray<ServiceDefinition> services = ServiceExtractor.Extract(
+    ServiceExtractionResult extraction = ServiceExtractor.Extract(
       invocation,
       SemanticModel,
       CancellationToken);
 
     // Add each service to the IR model
-    foreach (ServiceDefinition service in services)
+    foreach (ServiceDefinition service in extraction.Services)
     {
       appBuilder.AddService(service);
+    }
+
+    // Add extension method calls for validation (NURU052)
+    foreach (ExtensionMethodCall extensionMethod in extraction.ExtensionMethods)
+    {
+      appBuilder.AddExtensionMethodCall(extensionMethod);
     }
 
     // Extract logging configuration from AddLogging() if present

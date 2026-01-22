@@ -30,6 +30,7 @@ namespace TimeWarp.Nuru.Generators;
 /// <param name="HasTelemetry">Whether UseTelemetry() was called to enable OpenTelemetry instrumentation</param>
 /// <param name="HasCompletion">Whether EnableCompletion() was called to enable shell completion</param>
 /// <param name="UseMicrosoftDependencyInjection">Whether UseMicrosoftDependencyInjection() was called to use runtime DI instead of source-gen DI</param>
+/// <param name="ExtensionMethods">Extension method calls detected in ConfigureServices (for NURU052 warnings)</param>
 public sealed record AppModel(
   string? VariableName,
   string? Name,
@@ -56,7 +57,8 @@ public sealed record AppModel(
   string? BuildLocation = null,
   bool HasTelemetry = false,
   bool HasCompletion = false,
-  bool UseMicrosoftDependencyInjection = false)
+  bool UseMicrosoftDependencyInjection = false,
+  ImmutableArray<ExtensionMethodCall> ExtensionMethods = default)
 {
   /// <summary>
   /// Creates an empty AppModel with required intercept sites.

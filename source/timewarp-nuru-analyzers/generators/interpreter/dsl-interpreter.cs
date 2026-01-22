@@ -1124,6 +1124,16 @@ public sealed class DslInterpreter
       }
     }
 
+    // Handle anonymous method expressions: delegate(IServiceCollection s) { ... }
+    // (Old C# 2.0 syntax, but still valid)
+    if (configureExpression is AnonymousMethodExpressionSyntax anonymousMethod)
+    {
+      if (anonymousMethod.Block is not null)
+      {
+        return anonymousMethod.Block.ToFullString();
+      }
+    }
+
     // Handle method group reference: .ConfigureServices(ConfigureServices)
     // where ConfigureServices is a method name (static or instance)
     if (configureExpression is IdentifierNameSyntax identifier)

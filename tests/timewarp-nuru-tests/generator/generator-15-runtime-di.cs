@@ -473,5 +473,36 @@ namespace TimeWarp.Nuru.Tests.Generator.RuntimeDI
       exitCode.ShouldBe(0);
       terminal.OutputContains("Method group with logger works!").ShouldBeTrue();
     }
+
+    /// <summary>
+    /// Verify anonymous method syntax (C# 2.0 delegate) works with runtime DI.
+    /// </summary>
+    public static async Task Should_support_anonymous_method_syntax()
+    {
+      // Arrange
+      using TestTerminal terminal = new();
+
+      NuruApp app = NuruApp.CreateBuilder()
+        .UseTerminal(terminal)
+        .UseMicrosoftDependencyInjection()
+        .ConfigureServices(services =>
+        {
+          services.AddSingleton<IRdi15Formatter, Rdi15Formatter>();
+          services.AddSingleton<IRdi15Greeter, Rdi15Greeter>();
+        })
+        .Map("rdi15-anon-method {name}")
+          // Old C# 2.0 delegate syntax - still valid C#
+          .WithHandler(delegate(string name, IRdi15Greeter greeter) { return greeter.Greet(name); })
+          .AsQuery()
+          .Done()
+        .Build();
+
+      // Act
+      int exitCode = await app.RunAsync(["rdi15-anon-method", "Delegate"]);
+
+      // Assert
+      exitCode.ShouldBe(0);
+      terminal.OutputContains("Hello, Delegate!").ShouldBeTrue();
+    }
   }
 }

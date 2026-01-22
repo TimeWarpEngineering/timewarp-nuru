@@ -70,18 +70,112 @@ System.InvalidOperationException: Unable to resolve service for type
 to activate 'ServiceWithLogger'.
 ```
 
-## Expected Fix
+## Solution
 
-The generated `GetServiceProvider()` should either:
-1. Actually invoke the user's `ConfigureServices` delegate at runtime, OR
-2. Register `ILoggerFactory` and open generic `ILogger<>` in the generated service collection
+When `UseMicrosoftDependencyInjection()` is enabled, emit the user's `ConfigureServices` lambda body as a static method and invoke it at runtime. This ensures all extension methods (`AddLogging`, `AddDbContext`, etc.) work naturally.
 
-## Checklist
+**Current broken approach:**
+```csharp
+// Generated code extracts individual registrations and replays them
+private static IServiceProvider GetServiceProvider()
+{
+  var services = new ServiceCollection();
+  services.AddSingleton<IServiceWithLogger, ServiceWithLogger>(); // Extracted
+  // AddLogging() is NOT called - only detected as extension method
+  return services.BuildServiceProvider();
+}
+```
 
-- [ ] Create test endpoints mirroring the reproduction cases (test, test2, test3, test4, test5)
-- [ ] Add failing test for transitive ILogger<T> resolution
-- [ ] Fix generated code to register logging in DI container
-- [ ] Verify ConfigureServices callback is invoked at runtime with UseMicrosoftDependencyInjection
+**Fixed approach:**
+```csharp
+// Generated code invokes the user's delegate directly
+private static void __ConfigureServices(IServiceCollection services)
+{
+  // User's lambda body emitted verbatim
+  services.AddLogging(b => b.AddConsole());
+  services.AddSingleton<IServiceWithLogger, ServiceWithLogger>();
+}
+
+private static IServiceProvider GetServiceProvider()
+{
+  var services = new ServiceCollection();
+  __ConfigureServices(services); // Invoke user's delegate at runtime
+  return services.BuildServiceProvider();
+}
+```
+
+## Implementation Plan
+
+### Step 1: Capture ConfigureServices Lambda Body
+
+**File:** `source/timewarp-nuru-analyzers/generators/models/app-model.cs`
+
+- [ ] Add `string? ConfigureServicesLambdaBody` property to `AppModel`
+- [ ] This stores the raw lambda body text when `UseMicrosoftDependencyInjection` is true
+
+### Step 2: Extract Lambda Body in DSL Interpreter
+
+**File:** `source/timewarp-nuru-analyzers/generators/interpreter/dsl-interpreter.cs`
+
+- [ ] In `ProcessConfigureServices()`, when `UseMicrosoftDependencyInjection` is true:
+  - Extract the full lambda body text (block or expression)
+  - Store in `appBuilder.SetConfigureServicesBody(lambdaBody)`
+- [ ] Add `SetConfigureServicesBody()` method to `IIrAppBuilder` and `IrAppBuilder`
+
+### Step 3: Update IR Builder
+
+**Files:**
+- `source/timewarp-nuru-analyzers/generators/ir-builders/abstractions/iir-app-builder.cs`
+- `source/timewarp-nuru-analyzers/generators/ir-builders/ir-app-builder.cs`
+
+- [ ] Add `IIrAppBuilder SetConfigureServicesBody(string lambdaBody)`
+- [ ] Store and pass through to `AppModel`
+
+### Step 4: Modify Interceptor Emitter
+
+**File:** `source/timewarp-nuru-analyzers/generators/emitters/interceptor-emitter.cs`
+
+- [ ] In `EmitRuntimeDiInfrastructure()`:
+  - Emit `__ConfigureServices(IServiceCollection services)` static method with user's lambda body
+  - Remove the loop that re-registers extracted services
+  - Call `__ConfigureServices(services)` in `GetServiceProvider()`
+- [ ] Handle both block body `{ ... }` and expression body `=> ...` lambdas
+
+### Step 5: Handle Built-in Services
+
+**File:** `source/timewarp-nuru-analyzers/generators/emitters/interceptor-emitter.cs`
+
+- [ ] Register Nuru built-ins before calling user's delegate:
+  ```csharp
+  services.AddSingleton<ITerminal>(app.Terminal);
+  services.AddSingleton<IConfiguration>(configuration);
+  services.AddSingleton<NuruApp>(app);
+  ```
+- [ ] This ensures built-ins are available for user services that depend on them
+
+### Step 6: Remove Static LoggerFactory for Runtime DI Path
+
+**File:** `source/timewarp-nuru-analyzers/generators/emitters/interceptor-emitter.cs`
+
+- [ ] When `UseMicrosoftDependencyInjection` + `HasLogging`: don't emit static `__loggerFactory` field
+- [ ] Let MS DI handle `ILogger<T>` resolution naturally via `AddLogging()`
+
+## Files to Modify
+
+| File | Action |
+|------|--------|
+| `generators/models/app-model.cs` | Add `ConfigureServicesLambdaBody` property |
+| `generators/ir-builders/abstractions/iir-app-builder.cs` | Add `SetConfigureServicesBody()` |
+| `generators/ir-builders/ir-app-builder.cs` | Implement `SetConfigureServicesBody()` |
+| `generators/interpreter/dsl-interpreter.cs` | Extract and store lambda body |
+| `generators/emitters/interceptor-emitter.cs` | Emit static method + invoke at runtime |
+
+## Verification
+
+- [ ] Create test endpoints (test, test2, test3, test4, test5) as sample
+- [ ] Run test5 - transitive `ILogger<T>` must resolve
+- [ ] Run CI tests: `dotnet run tests/ci-tests/run-ci-tests.cs`
+- [ ] Verify existing samples still work
 
 ## Test Endpoints to Create
 
@@ -91,8 +185,11 @@ The generated `GetServiceProvider()` should either:
 | test2 | ITerminal (Nuru-provided) | Pass |
 | test3 | IGreetingService -> IMessageFormatter (custom) | Pass |
 | test4 | ILogger<T> (direct) | Pass |
-| test5 | IServiceWithLogger -> ILogger<T> (transitive) | **Currently Fails** |
+| test5 | IServiceWithLogger -> ILogger<T> (transitive) | Pass (currently fails) |
 
 ## Notes
 
-Discovered while migrating ccc1-cli to Nuru 3.x Endpoints API. The library services (UserDatabaseManager, SqliteCredentialRepository, etc.) all require `ILogger<T>` in their constructors.
+- This is the proper fix: invoke user's delegate at runtime instead of replaying extracted registrations
+- All extension methods (`AddLogging`, `AddDbContext`, `AddHttpClient`, etc.) will work naturally
+- No need for special-case handling of `AddLogging()` or other extensions
+- Discovered while migrating ccc1-cli to Nuru 3.x Endpoints API

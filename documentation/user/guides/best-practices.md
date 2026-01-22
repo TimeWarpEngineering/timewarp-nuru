@@ -70,6 +70,32 @@ Use consistent, clear naming:
 .Map("restart_server").WithHandler(RestartServer).Done()
 ```
 
+## Terminal Output
+
+### Use ITerminal Abstraction
+
+Always use `ITerminal` instead of `Console` directly. This enables testability with `TestTerminal`:
+
+```csharp
+// ✅ Inject ITerminal for testability
+.Map("greet {name}")
+  .WithHandler((string name, ITerminal terminal) =>
+  {
+    terminal.WriteLine($"Hello, {name}!");
+  })
+  .Done()
+
+// ❌ Don't use Console directly
+.Map("greet {name}")
+  .WithHandler((string name) =>
+  {
+    Console.WriteLine($"Hello, {name}!");  // Not testable!
+  })
+  .Done()
+```
+
+`ITerminal` is automatically registered and can be injected into any handler.
+
 ## Error Handling
 
 ### Throw Exceptions for Errors
@@ -78,7 +104,7 @@ TimeWarp.Nuru handles exceptions automatically - throwing results in exit code 1
 
 ```csharp
 .Map("validate {file}")
-  .WithHandler((string file) =>
+  .WithHandler((string file, ITerminal terminal) =>
   {
     if (!File.Exists(file))
     {
@@ -91,7 +117,7 @@ TimeWarp.Nuru handles exceptions automatically - throwing results in exit code 1
       throw new ValidationException($"{errors.Count} validation errors found");
     }
 
-    Console.WriteLine("Validation passed");
+    terminal.WriteLine("Validation passed");
   })
   .Done()
 ```
@@ -130,12 +156,12 @@ throw new SqlException("Connection timeout expired");
 
 ```csharp
 .Map("deploy {env}")
-  .WithHandler(async (string env) =>
+  .WithHandler(async (string env, ITerminal terminal) =>
   {
     try
     {
       await DeployAsync(env);
-      Console.WriteLine($"Deployed to {env}");
+      terminal.WriteLine($"Deployed to {env}");
     }
     catch (DeploymentException ex)
     {
@@ -150,25 +176,27 @@ throw new SqlException("Connection timeout expired");
 
 ### Separate Streams
 
+Use `ITerminal.WriteLine()` for stdout and `ITerminal.WriteErrorLine()` for stderr:
+
 ```csharp
 // ✅ Progress → stderr, data → stdout
 .Map("process {file}")
-  .WithHandler((string file) =>
+  .WithHandler((string file, ITerminal terminal) =>
   {
-    Console.Error.WriteLine($"Processing {file}...");  // stderr
+    terminal.WriteErrorLine($"Processing {file}...");  // stderr
     var result = Process(file);
-    Console.Error.WriteLine("Complete!");              // stderr
+    terminal.WriteErrorLine("Complete!");              // stderr
     return result;                                     // stdout (the actual output)
   })
   .Done()
 
 // ❌ Mixed output breaks piping
 .Map("process {file}")
-  .WithHandler((string file) =>
+  .WithHandler((string file, ITerminal terminal) =>
   {
-    Console.WriteLine($"Processing {file}...");  // stdout (breaks piping!)
+    terminal.WriteLine($"Processing {file}...");  // stdout (breaks piping!)
     var result = Process(file);
-    Console.WriteLine(JsonSerializer.Serialize(result));  // stdout
+    terminal.WriteLine(JsonSerializer.Serialize(result));  // stdout
   })
   .Done()
 ```
@@ -186,12 +214,12 @@ throw new SqlException("Connection timeout expired");
   })
   .Done()
 
-// ❌ Manual JSON construction
+// ❌ Manual JSON construction (error-prone)
 .Map("status")
-  .WithHandler(() =>
+  .WithHandler((ITerminal terminal) =>
   {
-    Console.WriteLine("{");
-    Console.WriteLine($"  \"version\": \"{GetVersion()}\",");
+    terminal.WriteLine("{");
+    terminal.WriteLine($"  \"version\": \"{GetVersion()}\",");
     // Error-prone and hard to maintain
   })
   .Done()
@@ -225,7 +253,7 @@ throw new SqlException("Connection timeout expired");
 
 ### Test with TestTerminal
 
-Use `TestTerminal` to capture and verify output:
+Use `TestTerminal` to capture and verify output. Since handlers inject `ITerminal`, the `TestTerminal` captures all output:
 
 ```csharp
 [Fact]
@@ -238,7 +266,8 @@ public async Task Greet_ReturnsGreeting()
   NuruApp app = NuruApp.CreateBuilder()
     .WithName("test")
     .Map("greet {name}")
-      .WithHandler((string name) => Console.WriteLine($"Hello, {name}!"))
+      .WithHandler((string name, ITerminal terminal) =>
+        terminal.WriteLine($"Hello, {name}!"))
       .Done()
     .Build();
 

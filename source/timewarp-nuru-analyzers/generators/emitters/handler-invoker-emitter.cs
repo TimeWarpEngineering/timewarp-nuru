@@ -399,10 +399,10 @@ internal static class HandlerInvokerEmitter
       return $"global::Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance.CreateLogger<{typeArg}>()";
     }
 
-    // Runtime DI path: use GetServiceProvider().GetRequiredService<T>()
+    // Runtime DI path: use GetServiceProvider(app).GetRequiredService<T>()
     if (useRuntimeDI)
     {
-      return $"global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<{serviceTypeName}>(GetServiceProvider())";
+      return $"global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<{serviceTypeName}>(GetServiceProvider(app))";
     }
 
     // Source-gen DI path: static instantiation via Lazy<T> fields

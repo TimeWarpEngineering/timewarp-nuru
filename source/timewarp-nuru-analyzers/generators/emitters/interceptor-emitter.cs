@@ -49,7 +49,8 @@ internal static class InterceptorEmitter
     // Emit runtime DI infrastructure for apps that use UseMicrosoftDependencyInjection()
     if (model.UsesMicrosoftDependencyInjection)
     {
-      EmitRuntimeDIInfrastructure(sb, [.. runtimeDIServices]);
+      ImmutableArray<AppModel> runtimeDIApps = [.. model.Apps.Where(a => a.UseMicrosoftDependencyInjection)];
+      EmitRuntimeDIInfrastructure(sb, runtimeDIApps, [.. runtimeDIServices]);
     }
 
     EmitLoggingFactoryFields(sb, model);
@@ -350,8 +351,9 @@ internal static class InterceptorEmitter
   /// This provides full MS DI container support at the cost of runtime overhead.
   /// </summary>
   /// <param name="sb">The StringBuilder to append to.</param>
-  /// <param name="services">The service definitions extracted from ConfigureServices.</param>
-  private static void EmitRuntimeDIInfrastructure(StringBuilder sb, ImmutableArray<ServiceDefinition> services)
+  /// <param name="apps">The app models that use runtime DI.</param>
+  /// <param name="services">The service definitions extracted from ConfigureServices (fallback).</param>
+  private static void EmitRuntimeDIInfrastructure(StringBuilder sb, ImmutableArray<AppModel> apps, ImmutableArray<ServiceDefinition> services)
   {
     sb.AppendLine("  // ═══════════════════════════════════════════════════════════════════════════════");
     sb.AppendLine("  // RUNTIME DI INFRASTRUCTURE (UseMicrosoftDependencyInjection was called)");
@@ -359,21 +361,49 @@ internal static class InterceptorEmitter
     sb.AppendLine("  // This enables full MS DI container support including:");
     sb.AppendLine("  // - Services with constructor dependencies (MS DI resolves automatically)");
     sb.AppendLine("  // - All service lifetimes (Singleton, Scoped, Transient)");
+    sb.AppendLine("  // - Extension methods like AddLogging(), AddDbContext(), etc.");
     sb.AppendLine("  // Trade-off: Slightly slower startup (~2-10ms for ServiceProvider.Build())");
-    sb.AppendLine("  // Note: Extension methods (AddDbContext, AddSerilog) require Phase 4 (Execute & Inspect)");
     sb.AppendLine();
+
+    // Get the first app's lambda body (if any) - assumes single app with runtime DI
+    string? lambdaBody = apps.FirstOrDefault()?.ConfigureServicesLambdaBody;
+
+    // Emit static __ConfigureServices method if lambda body is available
+    if (!string.IsNullOrEmpty(lambdaBody))
+    {
+      sb.AppendLine("  /// <summary>");
+      sb.AppendLine("  /// User's ConfigureServices delegate, invoked at runtime.");
+      sb.AppendLine("  /// This preserves extension method calls (AddLogging, AddDbContext, etc.).");
+      sb.AppendLine("  /// </summary>");
+      sb.AppendLine("  private static void __ConfigureServices(global::Microsoft.Extensions.DependencyInjection.IServiceCollection services)");
+      sb.AppendLine($"  {lambdaBody}");
+      sb.AppendLine();
+    }
+
     sb.AppendLine("  private static global::System.IServiceProvider? __serviceProvider;");
+    sb.AppendLine("  private static NuruApp? __runtimeDIApp;");
     sb.AppendLine();
-    sb.AppendLine("  private static global::System.IServiceProvider GetServiceProvider()");
+    sb.AppendLine("  private static global::System.IServiceProvider GetServiceProvider(NuruApp app)");
     sb.AppendLine("  {");
     sb.AppendLine("    if (__serviceProvider is not null) return __serviceProvider;");
     sb.AppendLine();
+    sb.AppendLine("    __runtimeDIApp = app;");
     sb.AppendLine("    var services = new global::Microsoft.Extensions.DependencyInjection.ServiceCollection();");
     sb.AppendLine();
+    sb.AppendLine("    // Register Nuru built-ins so they're available for user services");
+    sb.AppendLine("    global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton<global::TimeWarp.Terminal.ITerminal>(services, app.Terminal);");
+    sb.AppendLine("    global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton<NuruApp>(services, app);");
+    sb.AppendLine();
 
-    // Emit service registrations extracted at compile time
-    if (services.Length > 0)
+    if (!string.IsNullOrEmpty(lambdaBody))
     {
+      sb.AppendLine("    // Invoke user's ConfigureServices delegate at runtime");
+      sb.AppendLine("    // This ensures extension methods (AddLogging, AddDbContext, etc.) work correctly");
+      sb.AppendLine("    __ConfigureServices(services);");
+    }
+    else if (services.Length > 0)
+    {
+      // Fallback: emit service registrations extracted at compile time
       sb.AppendLine("    // Services extracted from ConfigureServices at compile time");
       sb.AppendLine("    // MS DI handles constructor dependency resolution automatically");
       foreach (ServiceDefinition service in services)
@@ -396,10 +426,9 @@ internal static class InterceptorEmitter
           sb.AppendLine($"    global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.{methodName}<{service.ServiceTypeName}, {service.ImplementationTypeName}>(services);");
         }
       }
-
-      sb.AppendLine();
     }
 
+    sb.AppendLine();
     sb.AppendLine("    __serviceProvider = global::Microsoft.Extensions.DependencyInjection.ServiceCollectionContainerBuilderExtensions.BuildServiceProvider(services);");
     sb.AppendLine("    return __serviceProvider;");
     sb.AppendLine("  }");

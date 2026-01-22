@@ -41,6 +41,7 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
   private bool TelemetryEnabled;
   private bool CompletionEnabled;
   private bool MicrosoftDependencyInjectionEnabled;
+  private string? ConfigureServicesBody;
   private readonly List<string> ExplicitEndpointTypes = [];
   private readonly List<ExtensionMethodCall> ExtensionMethods = [];
 
@@ -235,6 +236,17 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
   }
 
   /// <summary>
+  /// Sets the raw ConfigureServices lambda body for runtime invocation.
+  /// Used when UseMicrosoftDependencyInjection is enabled.
+  /// </summary>
+  /// <param name="lambdaBody">The lambda body source text.</param>
+  public TSelf SetConfigureServicesBody(string lambdaBody)
+  {
+    ConfigureServicesBody = lambdaBody;
+    return (TSelf)this;
+  }
+
+  /// <summary>
   /// Registers a custom type converter for code generation.
   /// Mirrors: NuruAppBuilder.AddTypeConverter()
   /// </summary>
@@ -359,6 +371,7 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
       HasTelemetry: TelemetryEnabled,
       HasCompletion: CompletionEnabled,
       UseMicrosoftDependencyInjection: MicrosoftDependencyInjectionEnabled,
+      ConfigureServicesLambdaBody: ConfigureServicesBody,
       ExtensionMethods: [.. ExtensionMethods]);
   }
 
@@ -393,6 +406,7 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
   IIrAppBuilder IIrAppBuilder.UseTerminal() => UseTerminal();
   IIrAppBuilder IIrAppBuilder.UseTelemetry() => UseTelemetry();
   IIrAppBuilder IIrAppBuilder.UseMicrosoftDependencyInjection() => UseMicrosoftDependencyInjection();
+  IIrAppBuilder IIrAppBuilder.SetConfigureServicesBody(string lambdaBody) => SetConfigureServicesBody(lambdaBody);
   IIrAppBuilder IIrAppBuilder.AddTypeConverter(CustomConverterDefinition converter) => AddTypeConverter(converter);
   IIrAppBuilder IIrAppBuilder.AddInterceptSite(string methodName, InterceptSiteModel site) => AddInterceptSite(methodName, site);
   IIrAppBuilder IIrAppBuilder.DiscoverEndpoints() => DiscoverEndpoints();

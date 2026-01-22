@@ -30,6 +30,7 @@ namespace TimeWarp.Nuru.Generators;
 /// <param name="HasTelemetry">Whether UseTelemetry() was called to enable OpenTelemetry instrumentation</param>
 /// <param name="HasCompletion">Whether EnableCompletion() was called to enable shell completion</param>
 /// <param name="UseMicrosoftDependencyInjection">Whether UseMicrosoftDependencyInjection() was called to use runtime DI instead of source-gen DI</param>
+/// <param name="ConfigureServicesLambdaBody">Raw lambda body from ConfigureServices() for runtime invocation when UseMicrosoftDependencyInjection is true</param>
 /// <param name="ExtensionMethods">Extension method calls detected in ConfigureServices (for NURU052 warnings)</param>
 public sealed record AppModel(
   string? VariableName,
@@ -58,6 +59,7 @@ public sealed record AppModel(
   bool HasTelemetry = false,
   bool HasCompletion = false,
   bool UseMicrosoftDependencyInjection = false,
+  string? ConfigureServicesLambdaBody = null,
   ImmutableArray<ExtensionMethodCall> ExtensionMethods = default)
 {
   /// <summary>

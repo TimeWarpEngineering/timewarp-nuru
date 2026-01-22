@@ -132,6 +132,15 @@ public interface IIrAppBuilder : IIrRouteSource
   IIrAppBuilder UseMicrosoftDependencyInjection();
 
   /// <summary>
+  /// Sets the raw ConfigureServices lambda body for runtime invocation.
+  /// Used when UseMicrosoftDependencyInjection is enabled to invoke the user's
+  /// delegate at runtime instead of replaying extracted registrations.
+  /// </summary>
+  /// <param name="lambdaBody">The lambda body source text.</param>
+  /// <returns>This builder for chaining.</returns>
+  IIrAppBuilder SetConfigureServicesBody(string lambdaBody);
+
+  /// <summary>
   /// Enables shell completion support.
   /// </summary>
   /// <returns>This builder for chaining.</returns>

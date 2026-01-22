@@ -74,11 +74,11 @@ internal static class ServiceResolverEmitter
       return;
     }
 
-    // Runtime DI path: use GetServiceProvider().GetRequiredService<T>()
+    // Runtime DI path: use GetServiceProvider(app).GetRequiredService<T>()
     if (useRuntimeDI)
     {
       sb.AppendLine(
-        $"{indent}{typeName} {varName} = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<{typeName}>(GetServiceProvider());");
+        $"{indent}{typeName} {varName} = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<{typeName}>(GetServiceProvider(app));");
       return;
     }
 

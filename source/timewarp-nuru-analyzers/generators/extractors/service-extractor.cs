@@ -306,6 +306,7 @@ internal static class ServiceExtractor
   /// <summary>
   /// Extracts service and implementation type names and symbol from an invocation.
   /// The symbol is needed to extract constructor dependencies and check accessibility.
+  /// Falls back to syntactic extraction if semantic resolution fails.
   /// </summary>
   private static (string? ServiceType, string? ImplementationType, INamedTypeSymbol? ImplementationSymbol) ExtractServiceTypesWithSymbol
   (
@@ -316,46 +317,100 @@ internal static class ServiceExtractor
   {
     SymbolInfo symbolInfo = semanticModel.GetSymbolInfo(invocation, cancellationToken);
 
-    if (symbolInfo.Symbol is not IMethodSymbol methodSymbol)
+    if (symbolInfo.Symbol is IMethodSymbol methodSymbol)
+    {
+      // Handle generic method: AddTransient<TService, TImplementation>()
+      if (methodSymbol.IsGenericMethod && methodSymbol.TypeArguments.Length >= 1)
+      {
+        ITypeSymbol serviceTypeSymbol = methodSymbol.TypeArguments[0];
+        string serviceType = serviceTypeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+
+        INamedTypeSymbol? implSymbol = null;
+        string? implType = null;
+
+        if (methodSymbol.TypeArguments.Length > 1)
+        {
+          ITypeSymbol implTypeSymbol = methodSymbol.TypeArguments[1];
+          implType = implTypeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+          implSymbol = implTypeSymbol as INamedTypeSymbol;
+        }
+        else
+        {
+          // Single type argument: AddTransient<Foo>() - service and impl are same
+          implSymbol = serviceTypeSymbol as INamedTypeSymbol;
+        }
+
+        return (serviceType, implType, implSymbol);
+      }
+
+      // Handle non-generic: AddTransient(typeof(IFoo), typeof(Foo))
+      ArgumentListSyntax? args = invocation.ArgumentList;
+      if (args?.Arguments.Count >= 1)
+      {
+        (string? serviceType, INamedTypeSymbol? _) = ExtractTypeOfArgumentWithSymbol(args.Arguments[0].Expression, semanticModel, cancellationToken);
+        (string? implType, INamedTypeSymbol? implSymbol) = args.Arguments.Count > 1
+          ? ExtractTypeOfArgumentWithSymbol(args.Arguments[1].Expression, semanticModel, cancellationToken)
+          : (null, null);
+
+        return (serviceType, implType, implSymbol);
+      }
+    }
+
+    // Fallback: syntactic extraction when semantic resolution fails
+    // This handles cases where extension methods can't be resolved (e.g., missing using directives)
+    return ExtractServiceTypesSyntactically(invocation, semanticModel, cancellationToken);
+  }
+
+  /// <summary>
+  /// Extracts service types syntactically from generic type arguments.
+  /// Used as fallback when semantic model can't resolve extension methods.
+  /// </summary>
+  private static (string? ServiceType, string? ImplementationType, INamedTypeSymbol? ImplementationSymbol) ExtractServiceTypesSyntactically
+  (
+    InvocationExpressionSyntax invocation,
+    SemanticModel semanticModel,
+    CancellationToken cancellationToken
+  )
+  {
+    // Get the generic name from the member access: s.AddSingleton<IFoo, Foo>()
+    GenericNameSyntax? genericName = invocation.Expression switch
+    {
+      MemberAccessExpressionSyntax memberAccess => memberAccess.Name as GenericNameSyntax,
+      GenericNameSyntax g => g,
+      _ => null
+    };
+
+    if (genericName?.TypeArgumentList.Arguments.Count is null or 0)
       return (null, null, null);
 
-    // Handle generic method: AddTransient<TService, TImplementation>()
-    if (methodSymbol.IsGenericMethod && methodSymbol.TypeArguments.Length >= 1)
+    TypeArgumentListSyntax typeArgs = genericName.TypeArgumentList;
+
+    // Get service type from first type argument
+    TypeSyntax serviceTypeSyntax = typeArgs.Arguments[0];
+    TypeInfo serviceTypeInfo = semanticModel.GetTypeInfo(serviceTypeSyntax, cancellationToken);
+
+    string? serviceType = serviceTypeInfo.Type?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+    if (serviceType is null)
+      return (null, null, null);
+
+    // Get implementation type from second type argument (if present)
+    string? implType = null;
+    INamedTypeSymbol? implSymbol = null;
+
+    if (typeArgs.Arguments.Count > 1)
     {
-      ITypeSymbol serviceTypeSymbol = methodSymbol.TypeArguments[0];
-      string serviceType = serviceTypeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-
-      INamedTypeSymbol? implSymbol = null;
-      string? implType = null;
-
-      if (methodSymbol.TypeArguments.Length > 1)
-      {
-        ITypeSymbol implTypeSymbol = methodSymbol.TypeArguments[1];
-        implType = implTypeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-        implSymbol = implTypeSymbol as INamedTypeSymbol;
-      }
-      else
-      {
-        // Single type argument: AddTransient<Foo>() - service and impl are same
-        implSymbol = serviceTypeSymbol as INamedTypeSymbol;
-      }
-
-      return (serviceType, implType, implSymbol);
+      TypeSyntax implTypeSyntax = typeArgs.Arguments[1];
+      TypeInfo implTypeInfo = semanticModel.GetTypeInfo(implTypeSyntax, cancellationToken);
+      implType = implTypeInfo.Type?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+      implSymbol = implTypeInfo.Type as INamedTypeSymbol;
+    }
+    else
+    {
+      // Single type argument: service and impl are the same
+      implSymbol = serviceTypeInfo.Type as INamedTypeSymbol;
     }
 
-    // Handle non-generic: AddTransient(typeof(IFoo), typeof(Foo))
-    ArgumentListSyntax? args = invocation.ArgumentList;
-    if (args?.Arguments.Count >= 1)
-    {
-      (string? serviceType, INamedTypeSymbol? _) = ExtractTypeOfArgumentWithSymbol(args.Arguments[0].Expression, semanticModel, cancellationToken);
-      (string? implType, INamedTypeSymbol? implSymbol) = args.Arguments.Count > 1
-        ? ExtractTypeOfArgumentWithSymbol(args.Arguments[1].Expression, semanticModel, cancellationToken)
-        : (null, null);
-
-      return (serviceType, implType, implSymbol);
-    }
-
-    return (null, null, null);
+    return (serviceType, implType, implSymbol);
   }
 
   /// <summary>

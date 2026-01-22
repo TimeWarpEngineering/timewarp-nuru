@@ -74,11 +74,14 @@ internal static class ServiceValidator
   {
     HashSet<string> set = new(StringComparer.Ordinal);
 
-    foreach (ServiceDefinition service in services)
+    if (!services.IsDefaultOrEmpty)
     {
-      // Add both with and without global:: prefix for matching
-      set.Add(service.ServiceTypeName);
-      set.Add(NormalizeTypeName(service.ServiceTypeName));
+      foreach (ServiceDefinition service in services)
+      {
+        // Add both with and without global:: prefix for matching
+        set.Add(service.ServiceTypeName);
+        set.Add(NormalizeTypeName(service.ServiceTypeName));
+      }
     }
 
     // Add built-in services that are always available
@@ -126,6 +129,9 @@ internal static class ServiceValidator
     HashSet<string> registeredServices,
     List<Diagnostic> diagnostics)
   {
+    if (app.Routes.IsDefaultOrEmpty)
+      return;
+
     foreach (RouteDefinition route in app.Routes)
     {
       // Check handler service parameters
@@ -135,18 +141,27 @@ internal static class ServiceValidator
       }
 
       // Check constructor dependencies for endpoint handlers
-      foreach (ParameterBinding dep in route.Handler.ConstructorDependencies)
+      if (!route.Handler.ConstructorDependencies.IsDefaultOrEmpty)
       {
-        ValidateServiceRequirement(dep.ParameterTypeName, registeredServices, diagnostics);
+        foreach (ParameterBinding dep in route.Handler.ConstructorDependencies)
+        {
+          ValidateServiceRequirement(dep.ParameterTypeName, registeredServices, diagnostics);
+        }
       }
     }
 
     // Also check behavior constructor dependencies
-    foreach (BehaviorDefinition behavior in app.Behaviors)
+    if (!app.Behaviors.IsDefaultOrEmpty)
     {
-      foreach (ParameterBinding dep in behavior.ConstructorDependencies)
+      foreach (BehaviorDefinition behavior in app.Behaviors)
       {
-        ValidateServiceRequirement(dep.ParameterTypeName, registeredServices, diagnostics);
+        if (!behavior.ConstructorDependencies.IsDefaultOrEmpty)
+        {
+          foreach (ParameterBinding dep in behavior.ConstructorDependencies)
+          {
+            ValidateServiceRequirement(dep.ParameterTypeName, registeredServices, diagnostics);
+          }
+        }
       }
     }
   }
@@ -187,6 +202,9 @@ internal static class ServiceValidator
     HashSet<string> registeredServices,
     List<Diagnostic> diagnostics)
   {
+    if (services.IsDefaultOrEmpty)
+      return;
+
     foreach (ServiceDefinition service in services)
     {
       if (!service.HasConstructorDependencies)
@@ -234,6 +252,9 @@ internal static class ServiceValidator
     ImmutableArray<ServiceDefinition> services,
     List<Diagnostic> diagnostics)
   {
+    if (services.IsDefaultOrEmpty)
+      return;
+
     foreach (ServiceDefinition service in services)
     {
       if (!service.IsFactoryRegistration)
@@ -255,6 +276,9 @@ internal static class ServiceValidator
     ImmutableArray<ServiceDefinition> services,
     List<Diagnostic> diagnostics)
   {
+    if (services.IsDefaultOrEmpty)
+      return;
+
     foreach (ServiceDefinition service in services)
     {
       if (!service.IsInternalType)

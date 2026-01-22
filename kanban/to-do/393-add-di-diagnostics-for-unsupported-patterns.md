@@ -115,12 +115,12 @@ Add compile-time diagnostics that clearly report when source-gen DI cannot handl
 ### Verification
 
 - [x] Build: `dotnet build timewarp-nuru.slnx -c Release`
-- [ ] Test NURU050: Handler with unregistered service → error
-- [ ] Test NURU051: Service with constructor deps not registered → error
-- [ ] Test NURU052: Extension method like `AddLogging()` → warning
-- [ ] Test NURU053: Factory delegate registration → error
-- [ ] Test NURU054: Internal implementation type → error
-- [ ] Test skip behavior: All above with `UseMicrosoftDependencyInjection()` → no diagnostics
+- [x] Test NURU050: Handler with unregistered service → error
+- [x] Test NURU051: Service with constructor deps not registered → error
+- [x] Test NURU052: Extension method like `AddLogging()` → warning
+- [x] Test NURU053: Factory delegate registration → error
+- [x] Test NURU054: Internal implementation type → error
+- [x] Test skip behavior: All above with `UseMicrosoftDependencyInjection()` → no diagnostics
 - [x] Run CI tests: `dotnet run tests/ci-tests/run-ci-tests.cs`
 
 ## Notes

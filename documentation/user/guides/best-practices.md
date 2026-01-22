@@ -10,113 +10,140 @@ Minimize route explosion by using optional parameters:
 
 ```csharp
 // ❌ Factorial explosion
-builder.Map("deploy {env}", handler);
-builder.Map("deploy {env} {version}", handler);
-builder.Map("deploy {env} {version} {region}", handler);
+.Map("deploy {env}").WithHandler(handler).Done()
+.Map("deploy {env} {version}").WithHandler(handler).Done()
+.Map("deploy {env} {version} {region}").WithHandler(handler).Done()
 // 3 routes for variations
 
 // ✅ Self-contained with optionals
-builder.Map("deploy {env} {version?} {region?}", handler);
+.Map("deploy {env} {version?} {region?}").WithHandler(handler).Done()
 // 1 route, same flexibility
 ```
 
-### Hierarchical Commands
+### Hierarchical Commands with Groups
 
-Group related commands with shared prefixes:
+Use `WithGroup()` to organize related commands:
 
 ```csharp
-// Git-style command groups
-builder.Map("user create {email}", CreateUser);
-builder.Map("user delete {id:Guid}", DeleteUser);
-builder.Map("user list", ListUsers);
-
-builder.Map("project create {name}", CreateProject);
-builder.Map("project delete {id:Guid}", DeleteProject);
-builder.Map("project list", ListProjects);
+NuruApp app = NuruApp.CreateBuilder()
+  .WithName("myapp")
+  .WithGroup("user", group => group
+    .Map("create {email}")
+      .WithHandler((string email) => CreateUser(email))
+      .Done()
+    .Map("delete {id:Guid}")
+      .WithHandler((Guid id) => DeleteUser(id))
+      .Done()
+    .Map("list")
+      .WithHandler(() => ListUsers())
+      .Done()
+  )
+  .WithGroup("project", group => group
+    .Map("create {name}")
+      .WithHandler((string name) => CreateProject(name))
+      .Done()
+    .Map("delete {id:Guid}")
+      .WithHandler((Guid id) => DeleteProject(id))
+      .Done()
+    .Map("list")
+      .WithHandler(() => ListProjects())
+      .Done()
+  )
+  .Build();
 ```
+
+This produces commands like `myapp user create foo@example.com` and `myapp project list`.
 
 ### Command Naming
 
 Use consistent, clear naming:
 
 ```csharp
-// ✅ Clear, consistent
-builder.Map("server start", StartServer);
-builder.Map("server stop", StopServer);
-builder.Map("server restart", RestartServer);
+// ✅ Clear, consistent (verb-based)
+.Map("start").WithHandler(StartServer).Done()
+.Map("stop").WithHandler(StopServer).Done()
+.Map("restart").WithHandler(RestartServer).Done()
 
 // ❌ Inconsistent
-builder.Map("start-server", StartServer);
-builder.Map("stopServer", StopServer);
-builder.Map("restart_server", RestartServer);
+.Map("start-server").WithHandler(StartServer).Done()
+.Map("stopServer").WithHandler(StopServer).Done()
+.Map("restart_server").WithHandler(RestartServer).Done()
 ```
 
 ## Error Handling
 
-### Return Exit Codes
+### Throw Exceptions for Errors
+
+TimeWarp.Nuru handles exceptions automatically - throwing results in exit code 1:
 
 ```csharp
-builder.Map
-(
-  "validate {file}",
-  (string file) =>
+.Map("validate {file}")
+  .WithHandler((string file) =>
   {
     if (!File.Exists(file))
     {
-      Console.Error.WriteLine($"❌ File not found: {file}");
-      return 1;
+      throw new FileNotFoundException($"File not found: {file}");
     }
 
     List<ValidationError> errors = Validate(file);
-    if (errors.Any())
+    if (errors.Count > 0)
     {
-      Console.Error.WriteLine($"❌ {errors.Count} validation errors");
-      return 1;
+      throw new ValidationException($"{errors.Count} validation errors found");
     }
 
-    Console.Error.WriteLine("✅ Validation passed");
-    return 0;
-  }
-);
+    Console.WriteLine("Validation passed");
+  })
+  .Done()
 ```
 
-### User-Friendly Messages
+### Return Values for Output
+
+Return values are for command output, not exit codes:
+
+```csharp
+// ✅ Return values for actual output
+.Map("add {x:int} {y:int}")
+  .WithHandler((int x, int y) => x + y)  // Returns the sum
+  .Done()
+
+.Map("greet {name}")
+  .WithHandler((string name) => $"Hello, {name}!")  // Returns greeting
+  .Done()
+
+// The returned value is written to stdout
+// myapp add 2 3  → outputs "5"
+// myapp greet World  → outputs "Hello, World!"
+```
+
+### User-Friendly Error Messages
 
 ```csharp
 // ✅ Clear, actionable
-Console.Error.WriteLine("❌ Database connection failed");
-Console.Error.WriteLine("Check your connection string in appsettings.json");
+throw new InvalidOperationException(
+  "Database connection failed. Check your connection string in appsettings.json");
 
-// ❌ Technical jargon
-Console.Error.WriteLine("SqlException: Connection timeout expired");
+// ❌ Technical jargon only
+throw new SqlException("Connection timeout expired");
 ```
 
 ### Async Error Handling
 
 ```csharp
-builder.Map
-(
-  "deploy {env}",
-  async (string env) =>
+.Map("deploy {env}")
+  .WithHandler(async (string env) =>
   {
     try
     {
       await DeployAsync(env);
-      return 0;
+      Console.WriteLine($"Deployed to {env}");
     }
     catch (DeploymentException ex)
     {
-      Console.Error.WriteLine($"❌ Deployment failed: {ex.Message}");
-      return 1;
+      // Re-throw with user-friendly message
+      throw new InvalidOperationException($"Deployment failed: {ex.Message}", ex);
     }
-    catch (Exception ex)
-    {
-      Console.Error.WriteLine($"❌ Unexpected error: {ex.Message}");
-      logger.LogError(ex, "Deployment failed");
-      return 1;
-    }
-  }
-);
+  })
+  .Done()
 ```
 
 ## Output Best Practices
@@ -125,110 +152,118 @@ builder.Map
 
 ```csharp
 // ✅ Progress → stderr, data → stdout
-builder.Map
-(
-  "process {file}",
-  (string file) =>
+.Map("process {file}")
+  .WithHandler((string file) =>
   {
     Console.Error.WriteLine($"Processing {file}...");  // stderr
-    ProcessResult result = Process(file);
+    var result = Process(file);
     Console.Error.WriteLine("Complete!");              // stderr
-    return result;                                     // stdout (JSON)
-  }
-);
+    return result;                                     // stdout (the actual output)
+  })
+  .Done()
 
-// ❌ Mixed output
-builder.Map
-(
-  "process {file}",
-  (string file) =>
+// ❌ Mixed output breaks piping
+.Map("process {file}")
+  .WithHandler((string file) =>
   {
-    Console.WriteLine($"Processing {file}...");  // stdout (breaks piping)
-    ProcessResult result = Process(file);
+    Console.WriteLine($"Processing {file}...");  // stdout (breaks piping!)
+    var result = Process(file);
     Console.WriteLine(JsonSerializer.Serialize(result));  // stdout
-    return result;
-  }
-);
+  })
+  .Done()
 ```
 
 ### Structured Output
 
 ```csharp
-// ✅ Return objects for JSON
-builder.Map
-(
-  "status",
-  () => new
+// ✅ Return objects for JSON serialization
+.Map("status")
+  .WithHandler(() => new
   {
     Version = "1.0.0",
     Uptime = GetUptime(),
     Status = "Running"
-  }
-);
+  })
+  .Done()
 
 // ❌ Manual JSON construction
-builder.Map
-(
-  "status",
-  () =>
+.Map("status")
+  .WithHandler(() =>
   {
     Console.WriteLine("{");
     Console.WriteLine($"  \"version\": \"{GetVersion()}\",");
     // Error-prone and hard to maintain
-  }
-);
+  })
+  .Done()
 ```
 
 ## Performance
-
-### Choose Right Approach per Command
-
-```csharp
-NuruApp app = NuruApp.CreateBuilder(args)
-  .ConfigureServices(services =>
-  {
-    services.AddScoped<IDeploymentService, DeploymentService>();
-  })
-  // Direct for hot paths
-  .Map("ping", () => "pong")
-  .Map("version", () => "1.0.0")
-  // Mediator for complex operations
-  .Map<DeployCommand>("deploy {env}")
-  .Build();
-```
-
-### Minimize Allocations
-
-```csharp
-// ✅ Return value types
-.Map("calc {x:int} {y:int}", (int x, int y) => x + y)
-
-// ❌ Unnecessary allocations
-.Map("calc {x:int} {y:int}", (int x, int y) => new { Result = x + y })
-```
 
 ### Use AOT for Production
 
 ```xml
 <PropertyGroup>
   <PublishAot>true</PublishAot>
-  <TrimMode>partial</TrimMode>
 </PropertyGroup>
+```
+
+### Minimize Allocations in Hot Paths
+
+```csharp
+// ✅ Return value types for simple calculations
+.Map("calc {x:int} {y:int}")
+  .WithHandler((int x, int y) => x + y)
+  .Done()
+
+// ❌ Unnecessary allocations
+.Map("calc {x:int} {y:int}")
+  .WithHandler((int x, int y) => new { Result = x + y })
+  .Done()
 ```
 
 ## Testing
 
-### Test Command Handlers
+### Test with TestTerminal
+
+Use `TestTerminal` to capture and verify output:
 
 ```csharp
-// Mediator approach enables unit testing
 [Fact]
-public async Task DeployCommand_ValidEnvironment_Succeeds()
+public async Task Greet_ReturnsGreeting()
 {
   // Arrange
-  Mock<IDeploymentService> mockService = new();
-  DeployCommand.Handler handler = new(mockService.Object);
-  DeployCommand command = new() { Environment = "test" };
+  using var terminal = new TestTerminal();
+  TestTerminalContext.Current = terminal;
+
+  NuruApp app = NuruApp.CreateBuilder()
+    .WithName("test")
+    .Map("greet {name}")
+      .WithHandler((string name) => Console.WriteLine($"Hello, {name}!"))
+      .Done()
+    .Build();
+
+  // Act
+  int exitCode = await app.RunAsync(["greet", "World"]);
+
+  // Assert
+  Assert.Equal(0, exitCode);
+  Assert.Contains("Hello, World!", terminal.Output);
+}
+```
+
+### Test Endpoint Handlers Directly
+
+For Endpoint API, test the handler class:
+
+```csharp
+[Fact]
+public async Task DeployHandler_ValidEnvironment_Succeeds()
+{
+  // Arrange
+  var mockService = new Mock<IDeploymentService>();
+  var terminal = new TestTerminal();
+  var handler = new DeployCommand.Handler(mockService.Object, terminal);
+  var command = new DeployCommand { Environment = "test" };
 
   // Act
   await handler.Handle(command, CancellationToken.None);
@@ -238,19 +273,48 @@ public async Task DeployCommand_ValidEnvironment_Succeeds()
 }
 ```
 
-### Integration Testing
+## Code Organization
+
+### Fluent API for Simple CLIs
 
 ```csharp
-[Fact]
-public async Task Application_DeployCommand_Works()
-{
-    NuruApp app = BuildApp();
-    int result = await app.RunAsync(new[] { "deploy", "test" });
-    Assert.Equal(0, result);
-}
+// Good for small apps with few commands
+NuruApp app = NuruApp.CreateBuilder()
+  .WithName("myapp")
+  .Map("ping").WithHandler(() => "pong").Done()
+  .Map("version").WithHandler(() => "1.0.0").Done()
+  .Build();
 ```
 
-## Code Organization
+### Endpoint API for Complex CLIs
+
+```csharp
+// Good for larger apps - commands in separate files
+NuruApp app = NuruApp.CreateBuilder()
+  .WithName("myapp")
+  .DiscoverEndpoints()  // Discovers [NuruRoute] classes
+  .Build();
+```
+
+```csharp
+// Commands/DeployCommand.cs
+[NuruRoute("deploy {env}", Description = "Deploy to environment")]
+public sealed class DeployCommand : ICommand<Unit>
+{
+  public required string Env { get; set; }
+
+  public sealed class Handler(IDeploymentService deployment, ITerminal terminal)
+    : ICommandHandler<DeployCommand, Unit>
+  {
+    public async ValueTask<Unit> Handle(DeployCommand cmd, CancellationToken ct)
+    {
+      await deployment.DeployAsync(cmd.Env);
+      terminal.WriteLine($"Deployed to {cmd.Env}");
+      return Unit.Value;
+    }
+  }
+}
+```
 
 ### Group by Feature
 
@@ -265,25 +329,6 @@ public async Task Application_DeployCommand_Works()
     DeleteProjectCommand.cs
 ```
 
-### Nested Handlers
-
-```csharp
-public sealed class DeployCommand : IRequest
-{
-    public string Environment { get; set; }
-
-    // Handler nested with command
-    public sealed class Handler(IDeploymentService deployment)
-      : IRequestHandler<DeployCommand>
-    {
-      public async Task Handle(DeployCommand cmd, CancellationToken ct)
-      {
-        await deployment.DeployAsync(cmd.Environment);
-      }
-    }
-}
-```
-
 ## Configuration
 
 ### Use Options Pattern
@@ -291,59 +336,22 @@ public sealed class DeployCommand : IRequest
 ```csharp
 public class AppOptions
 {
-    public string DatabaseConnection { get; set; }
-    public int Timeout { get; set; }
+  public string DatabaseConnection { get; set; } = "";
+  public int Timeout { get; set; } = 30;
 }
 
-// Configure options through appsettings.json
-// The options will be available via IOptions<AppOptions> in your handlers
-NuruApp app = NuruApp.CreateBuilder(args)
-  .AddConfiguration()  // Loads appsettings.json, environment variables, etc.
+NuruApp app = NuruApp.CreateBuilder()
+  .WithName("myapp")
   .ConfigureServices(services =>
   {
-    // Bind AppOptions to "App" section in appsettings.json
     services.AddOptions<AppOptions>()
       .BindConfiguration("App");
   })
-  .Map<SomeCommand>("some-command")
-  .Build();
-
-// In your command handler, inject IOptions<AppOptions>
-public class SomeCommand : IRequest
-{
-  public class Handler(IOptions<AppOptions> options) : IRequestHandler<SomeCommand>
-  {
-    public Task Handle(SomeCommand request, CancellationToken ct)
-    {
-      string connection = options.Value.DatabaseConnection;
-      // Use configuration...
-      return Task.CompletedTask;
-    }
-  }
-}
-```
-
-### Environment-Specific Settings
-
-```csharp
-// AddConfiguration() automatically loads:
-// - appsettings.json
-// - appsettings.{Environment}.json (via ASPNETCORE_ENVIRONMENT or DOTNET_ENVIRONMENT)
-// - Environment variables
-// - Command line arguments (if passed to AddConfiguration(args))
-NuruApp app = NuruApp.CreateBuilder(args)
-  .AddConfiguration(args)  // Automatically handles environment-specific configuration
-  .ConfigureServices(services =>
-  {
-    services.AddOptions<DatabaseOptions>().BindConfiguration("Database");
-  })
-  .Map<QueryCommand>("query {sql}")
+  .DiscoverEndpoints()
   .Build();
 ```
 
 ### Validate Configuration at Startup
-
-Use `.ValidateOnStart()` for fail-fast configuration validation (matches ASP.NET Core behavior):
 
 ```csharp
 using System.ComponentModel.DataAnnotations;
@@ -357,40 +365,28 @@ public class DatabaseOptions
   public int CommandTimeout { get; set; } = 30;
 }
 
-NuruApp app = NuruApp.CreateBuilder(args)
-  .AddConfiguration(args)
+NuruApp app = NuruApp.CreateBuilder()
+  .WithName("myapp")
   .ConfigureServices(services =>
   {
     services.AddOptions<DatabaseOptions>()
       .BindConfiguration("Database")
       .ValidateDataAnnotations()
-      .ValidateOnStart();  // ✅ Validates during Build(), not on first access
+      .ValidateOnStart();  // Fails fast during Build()
   })
-  .Map<QueryCommand>("query {sql}")
-  .Build();  // Throws OptionsValidationException if configuration is invalid
+  .DiscoverEndpoints()
+  .Build();
 ```
-
-Benefits:
-- **Fail fast** - Invalid configuration discovered immediately at startup
-- **Clear errors** - Detailed validation messages from `OptionsValidationException`
-- **Works with** - DataAnnotations, custom validation, FluentValidation
-
-See **[configuration-validation.cs](../../../samples/configuration/configuration-validation.cs)** for complete examples.
 
 ## Logging
 
 ### Structured Logging
 
 ```csharp
-// ✅ Structured
-logger.LogInformation
-(
-  "Deployed to {Environment} at {Time}",
-  env,
-  DateTime.UtcNow
-);
+// ✅ Structured - enables filtering and analysis
+logger.LogInformation("Deployed to {Environment} at {Time}", env, DateTime.UtcNow);
 
-// ❌ String interpolation
+// ❌ String interpolation - loses structure
 logger.LogInformation($"Deployed to {env} at {DateTime.UtcNow}");
 ```
 
@@ -399,9 +395,9 @@ logger.LogInformation($"Deployed to {env} at {DateTime.UtcNow}");
 ```csharp
 logger.LogTrace("Detailed debug info");      // Development only
 logger.LogDebug("Debug information");         // Development
-logger.LogInformation("General information"); // Always
-logger.LogWarning("Warning message");         // Always
-logger.LogError(ex, "Error occurred");        // Always
+logger.LogInformation("General information"); // Production
+logger.LogWarning("Warning message");         // Production
+logger.LogError(ex, "Error occurred");        // Production
 ```
 
 ## Security
@@ -419,23 +415,18 @@ logger.LogInformation("Connecting to database");
 ### Validate Input
 
 ```csharp
-builder.Map
-(
-  "deploy {env}",
-  (string env) =>
+.Map("deploy {env}")
+  .WithHandler((string env) =>
   {
-    // Validate against allowed environments
     string[] allowed = ["dev", "staging", "prod"];
     if (!allowed.Contains(env))
     {
-      Console.Error.WriteLine($"❌ Invalid environment. Allowed: {string.Join(", ", allowed)}");
-      return 1;
+      throw new ArgumentException(
+        $"Invalid environment '{env}'. Allowed: {string.Join(", ", allowed)}");
     }
-
     Deploy(env);
-    return 0;
-  }
-);
+  })
+  .Done()
 ```
 
 ## Documentation
@@ -443,34 +434,28 @@ builder.Map
 ### Add Descriptions
 
 ```csharp
-builder.Map
-(
-  "deploy {env|Target environment (dev/staging/prod)} {version?|Version tag}",
-  handler
-);
+.Map("deploy {env|Target environment (dev/staging/prod)} {version?|Version tag}")
+  .WithHandler(handler)
+  .Done()
 ```
 
-### Include Help
-
-```csharp
-NuruApp app = NuruApp.CreateBuilder(args)
-  .Map("deploy {env|Environment} {version?|Version}", handler)
-  .AddAutoHelp()
-  .Build();
-```
-
-### Provide Examples
+### Provide Examples in README
 
 ```bash
-# Show usage in README
-dotnet run -- deploy prod v1.2.3
-dotnet run -- deploy staging
-dotnet run -- deploy --help
+# Deploy to staging
+myapp deploy staging
+
+# Deploy specific version to production
+myapp deploy prod v1.2.3
+
+# Show help
+myapp --help
+myapp deploy --help
 ```
 
 ## Related Documentation
 
-- **[Architecture Choices](architecture-choices.md)** - Choose the right approach
+- **[Architecture Choices](architecture-choices.md)** - Choose Fluent API vs Endpoint API
 - **[Deployment](deployment.md)** - Production deployment
 - **[Performance](../reference/performance.md)** - Optimization tips
 - **[Use Cases](../use-cases.md)** - Real-world patterns

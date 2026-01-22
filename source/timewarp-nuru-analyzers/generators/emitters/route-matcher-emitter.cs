@@ -21,6 +21,7 @@ internal static class RouteMatcherEmitter
   /// <param name="behaviors">Pipeline behaviors to wrap the handler with.</param>
   /// <param name="customConverters">Custom type converters registered via AddTypeConverter.</param>
   /// <param name="loggerFactoryFieldName">Logger factory source for ILogger injection, or null if no logging.</param>
+  /// <param name="useRuntimeDI">When true, uses GetServiceProvider().GetRequiredService&lt;T&gt;() instead of static instantiation.</param>
   public static void Emit(
     StringBuilder sb,
     RouteDefinition route,
@@ -28,7 +29,8 @@ internal static class RouteMatcherEmitter
     ImmutableArray<ServiceDefinition> services,
     ImmutableArray<BehaviorDefinition> behaviors = default,
     ImmutableArray<CustomConverterDefinition> customConverters = default,
-    string? loggerFactoryFieldName = null)
+    string? loggerFactoryFieldName = null,
+    bool useRuntimeDI = false)
   {
     // Use empty array if optional parameters not provided
     if (behaviors.IsDefault)
@@ -51,11 +53,11 @@ internal static class RouteMatcherEmitter
     // Use complex matching for routes with options, catch-all, or optional positional params
     if (route.HasOptions || route.HasCatchAll || route.HasOptionalPositionalParams)
     {
-      EmitComplexMatch(sb, route, routeIndex, services, behaviors, customConverters, loggerFactoryFieldName);
+      EmitComplexMatch(sb, route, routeIndex, services, behaviors, customConverters, loggerFactoryFieldName, useRuntimeDI);
     }
     else
     {
-      EmitSimpleMatch(sb, route, routeIndex, services, behaviors, customConverters, loggerFactoryFieldName);
+      EmitSimpleMatch(sb, route, routeIndex, services, behaviors, customConverters, loggerFactoryFieldName, useRuntimeDI);
     }
 
     sb.AppendLine();
@@ -72,7 +74,8 @@ internal static class RouteMatcherEmitter
     ImmutableArray<ServiceDefinition> services,
     ImmutableArray<BehaviorDefinition> behaviors,
     ImmutableArray<CustomConverterDefinition> customConverters,
-    string? loggerFactoryFieldName)
+    string? loggerFactoryFieldName,
+    bool useRuntimeDI)
   {
     string pattern = BuildListPattern(route, routeIndex);
 
@@ -93,13 +96,13 @@ internal static class RouteMatcherEmitter
 
       BehaviorEmitter.EmitPipelineWrapper(
         sb, route, routeIndex, behaviors, services, indent: 6,
-        () => HandlerInvokerEmitter.Emit(sb, route, routeIndex, services, indent: 8, commandAlreadyCreated: commandCreatedByBehavior, loggerFactoryFieldName: loggerFactoryFieldName));
+        () => HandlerInvokerEmitter.Emit(sb, route, routeIndex, services, indent: 8, commandAlreadyCreated: commandCreatedByBehavior, loggerFactoryFieldName: loggerFactoryFieldName, useRuntimeDI: useRuntimeDI));
 
       sb.AppendLine("      return 0;");
     }
     else
     {
-      HandlerInvokerEmitter.Emit(sb, route, routeIndex, services, indent: 6, loggerFactoryFieldName: loggerFactoryFieldName);
+      HandlerInvokerEmitter.Emit(sb, route, routeIndex, services, indent: 6, loggerFactoryFieldName: loggerFactoryFieldName, useRuntimeDI: useRuntimeDI);
       sb.AppendLine("      return 0;");
     }
 
@@ -120,7 +123,8 @@ internal static class RouteMatcherEmitter
     ImmutableArray<ServiceDefinition> services,
     ImmutableArray<BehaviorDefinition> behaviors,
     ImmutableArray<CustomConverterDefinition> customConverters,
-    string? loggerFactoryFieldName)
+    string? loggerFactoryFieldName,
+    bool useRuntimeDI)
   {
     // Calculate minimum required positional args (positional match segments + required non-catch-all params)
     // PositionalMatchSegments includes group prefix literals, pattern literals, and end-of-options
@@ -212,7 +216,7 @@ internal static class RouteMatcherEmitter
           positionalIndex++;
           break;
 
-        // OptionDefinition: skip (handled by EmitOptionParsingWithIndexTracking)
+          // OptionDefinition: skip (handled by EmitOptionParsingWithIndexTracking)
       }
     }
 
@@ -227,13 +231,13 @@ internal static class RouteMatcherEmitter
 
       BehaviorEmitter.EmitPipelineWrapper(
         sb, route, routeIndex, behaviors, services, indent: 6,
-        () => HandlerInvokerEmitter.Emit(sb, route, routeIndex, services, indent: 8, commandAlreadyCreated: commandCreatedByBehavior, loggerFactoryFieldName: loggerFactoryFieldName));
+        () => HandlerInvokerEmitter.Emit(sb, route, routeIndex, services, indent: 8, commandAlreadyCreated: commandCreatedByBehavior, loggerFactoryFieldName: loggerFactoryFieldName, useRuntimeDI: useRuntimeDI));
 
       sb.AppendLine("      return 0;");
     }
     else
     {
-      HandlerInvokerEmitter.Emit(sb, route, routeIndex, services, indent: 6, loggerFactoryFieldName: loggerFactoryFieldName);
+      HandlerInvokerEmitter.Emit(sb, route, routeIndex, services, indent: 6, loggerFactoryFieldName: loggerFactoryFieldName, useRuntimeDI: useRuntimeDI);
       sb.AppendLine("      return 0;");
     }
 
@@ -765,6 +769,7 @@ internal static class RouteMatcherEmitter
         {
           sb.AppendLine($"{indentStr}// DEBUG:   Converter: {c.ConverterTypeName}, TargetTypeName={c.TargetTypeName}, Alias={c.ConstraintAlias}, DerivedTarget={GetTargetTypeFromConverterName(c.ConverterTypeName)}");
         }
+
         CustomConverterDefinition? converter = customConverters.FirstOrDefault(c =>
           string.Equals(c.TargetTypeName, baseType, StringComparison.OrdinalIgnoreCase) ||
           string.Equals(GetSimpleTypeName(c.TargetTypeName), baseType, StringComparison.OrdinalIgnoreCase) ||

@@ -44,6 +44,11 @@ public sealed record GeneratorModel(
   public bool HasTelemetry => Apps.Any(a => a.HasTelemetry);
 
   /// <summary>
+  /// Gets whether any app uses runtime Microsoft DI instead of source-gen DI.
+  /// </summary>
+  public bool UsesMicrosoftDependencyInjection => Apps.Any(a => a.UseMicrosoftDependencyInjection);
+
+  /// <summary>
   /// Gets all behaviors from all apps (deduplicated).
   /// </summary>
   public IEnumerable<BehaviorDefinition> AllBehaviors =>

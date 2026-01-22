@@ -4,9 +4,9 @@ Deploy your TimeWarp.Nuru CLI applications as native executables, .NET 10 runfil
 
 ## Native AOT Compilation
 
-Compile to fast, self-contained native binaries with instant startup.
+TimeWarp.Nuru is designed for full AOT compatibility. Both the Fluent API and Endpoint API work seamlessly with Native AOT.
 
-### For Direct Approach
+### Basic AOT Setup
 
 ```xml
 <PropertyGroup>
@@ -16,22 +16,7 @@ Compile to fast, self-contained native binaries with instant startup.
 
 ```bash
 dotnet publish -c Release -r linux-x64
-# Creates self-contained binary: ~3.3 MB
-# Instant startup: < 1ms
-```
-
-### For Mediator/Mixed Approach
-
-```xml
-<PropertyGroup>
-  <PublishAot>true</PublishAot>
-  <TrimMode>partial</TrimMode>  <!-- Preserve reflection for handlers -->
-</PropertyGroup>
-```
-
-```bash
-dotnet publish -c Release -r linux-x64
-# Creates self-contained binary: ~4.8 MB
+# Creates self-contained binary: ~3-5 MB
 # Instant startup: < 1ms
 ```
 
@@ -53,120 +38,75 @@ dotnet publish -c Release -r win-x64
 
 ### Source Generators for AOT
 
-TimeWarp.Nuru uses source generators to achieve full AOT compatibility with zero IL2XXX/IL3XXX warnings. When you reference the `TimeWarp.Nuru` NuGet package, the `NuruInvokerGenerator` source generator is automatically included and runs at compile time.
+TimeWarp.Nuru uses source generators to achieve full AOT compatibility with zero IL2XXX/IL3XXX warnings. When you reference the `TimeWarp.Nuru` NuGet package, the source generators are automatically included and run at compile time.
 
-**What the source generator does:**
-- Analyzes your `Map()` delegate signatures
-- Generates typed invoker methods at compile time
-- Eliminates reflection-based delegate invocation
-- Ensures fast, AOT-compatible execution
+**What the source generators do:**
+- Analyze your route patterns and handler signatures
+- Generate typed invoker methods at compile time
+- Generate service resolution code (no runtime reflection)
+- Ensure fast, AOT-compatible execution
 
-**When using `NuruApp.CreateBuilder()` with DI:**
+### AOT and Dependency Injection
 
-You must register the Mediator source generator for AOT-compatible dependency injection:
+TimeWarp.Nuru provides two DI strategies:
 
+**Source-Generated DI (Default)** - Fully AOT compatible:
 ```csharp
-using Microsoft.Extensions.DependencyInjection;
-using TimeWarp.Nuru;
-
-NuruAppBuilder builder = NuruApp.CreateBuilder(args);
-
-// REQUIRED: Register source-generated Mediator for AOT compatibility
-builder.Services.AddMediator();
-
-builder.Map("hello", () => Console.WriteLine("Hello!"));
-// ... more routes
-
-NuruApp app = builder.Build();
-return await app.RunAsync(args);
+NuruApp app = NuruApp.CreateBuilder()
+  .WithName("myapp")
+  .ConfigureServices(services =>
+  {
+    services.AddSingleton<IGreeter, Greeter>();
+  })
+  .Map("greet {name}")
+    .WithHandler((string name, IGreeter greeter) => greeter.Greet(name))
+    .Done()
+  .Build();
 ```
 
-Add the Mediator packages to your project:
-
-```xml
-<ItemGroup>
-  <PackageReference Include="Mediator.Abstractions" />
-  <PackageReference Include="Mediator.SourceGenerator">
-    <PrivateAssets>all</PrivateAssets>
-    <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
-  </PackageReference>
-</ItemGroup>
+**Runtime DI** - May have AOT limitations:
+```csharp
+NuruApp app = NuruApp.CreateBuilder()
+  .UseMicrosoftDependencyInjection()  // Uses MS DI container at runtime
+  .ConfigureServices(services =>
+  {
+    services.AddSingleton<IGreeter, Greeter>();
+  })
+  // ...
+  .Build();
 ```
+
+**AOT Considerations for `UseMicrosoftDependencyInjection()`:**
+- The MS DI container itself is AOT compatible
+- Services with simple constructors work fine
+- Extension methods like `AddDbContext()` may require additional configuration
+- For maximum AOT compatibility, prefer the default source-generated DI
 
 ### Fail-Fast Behavior
 
-TimeWarp.Nuru uses a **fail-fast, no silent fallback** approach for AOT compatibility:
+TimeWarp.Nuru uses a **fail-fast, no silent fallback** approach:
 
-- If a delegate signature doesn't have a generated invoker, an exception is thrown immediately
-- There is no silent fallback to reflection (which would fail at runtime with AOT anyway)
+- If a route pattern or handler has issues, an exception is thrown immediately
+- There is no silent fallback to reflection
 - This ensures you discover any issues at development time, not in production
 
-Example error:
-```
-No source-generated invoker found for signature 'MyCustomSignature'.
-Ensure the NuruInvokerGenerator source generator is running and the delegate signature is supported.
-```
-
-**Supported delegate signatures include:**
-- Parameterless: `() => ...`
-- With parameters: `(string name, int count) => ...`
-- With optional parameters: `(string name, int? count) => ...`
-- Async variants: `async () => ...`, `async (string name) => ...`
-- Returning int or Task<int> for exit codes
-
-### AOT Limitations and Edge Cases
+### AOT Supported Features
 
 **Fully Supported:**
 - All built-in types (int, double, string, bool, DateTime, Guid, etc.)
 - Nullable types (int?, string?, etc.)
 - Array parameters for catch-all routes (`string[]`)
 - Async/await patterns
-- Optional parameters
+- Optional parameters with `?` syntax
 - Boolean options (flags)
+- Custom type converters (when AOT-compatible)
+- Fluent API (`Map().WithHandler().Done()`)
+- Endpoint API (`[NuruRoute]` attributes)
 
 **Considerations:**
-- Custom type converters must be AOT-compatible (no runtime code generation)
-- Dynamic completion providers must not use reflection
+- Custom type converters must not use runtime code generation
 - Third-party libraries in your handlers must be AOT-compatible
-
-**Complete Example:**
-
-See the [AOT Example](../../../samples/aot-example/) for a complete, working AOT sample.
-
-### Migration from Non-AOT Versions
-
-If upgrading from a version without AOT support:
-
-1. **Add Mediator packages** (if using `CreateBuilder()`):
-   ```xml
-   <PackageReference Include="Mediator.Abstractions" />
-   <PackageReference Include="Mediator.SourceGenerator">
-     <PrivateAssets>all</PrivateAssets>
-     <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
-   </PackageReference>
-   ```
-
-2. **Call `AddMediator()`**:
-   ```csharp
-   builder.Services.AddMediator();
-   ```
-
-3. **Add AOT properties** to your .csproj:
-   ```xml
-   <PropertyGroup>
-     <PublishAot>true</PublishAot>
-     <TrimMode>partial</TrimMode>
-   </PropertyGroup>
-   ```
-
-4. **Build and test** - any unsupported patterns will fail fast with clear error messages
-
-5. **Publish**:
-   ```bash
-   dotnet publish -c Release -r linux-x64
-   ```
-
-No other code changes are required for standard use cases.
+- `UseMicrosoftDependencyInjection()` may limit some DI extension methods
 
 ## .NET 10 Runfiles
 
@@ -176,12 +116,15 @@ Create single-file executables that run directly.
 
 ```csharp
 #!/usr/bin/dotnet --
-#:package TimeWarp.Nuru
+#:package TimeWarp.Nuru@1.0.0
 
 using TimeWarp.Nuru;
 
-NuruApp app = NuruApp.CreateBuilder(args)
-  .Map("greet {name}", (string name) => $"Hello, {name}!")
+NuruApp app = NuruApp.CreateBuilder()
+  .WithName("greet")
+  .Map("greet {name}")
+    .WithHandler((string name) => Console.WriteLine($"Hello, {name}!"))
+    .Done()
   .Build();
 
 return await app.RunAsync(args);
@@ -192,19 +135,12 @@ chmod +x mycli.cs
 ./mycli.cs greet World
 ```
 
-### With Multiple Packages
+### Publishing a Runfile as AOT
 
-```csharp
-#!/usr/bin/dotnet --
-#:package TimeWarp.Nuru
-#:package TimeWarp.Nuru.Logging
-#:package Serilog
+Runfiles can be published as AOT binaries:
 
-using TimeWarp.Nuru;
-using TimeWarp.Nuru.Logging;
-using Serilog;
-
-// Your CLI code here
+```bash
+dotnet publish mycli.cs -c Release -r linux-x64
 ```
 
 ## Traditional .NET Deployment
@@ -259,22 +195,6 @@ dotnet tool install --global MyTool
 mytool --help
 ```
 
-#### npm (for .NET tools)
-
-```json
-{
-  "name": "@myorg/mytool",
-  "version": "1.0.0",
-  "bin": {
-    "mytool": "./bin/mytool"
-  }
-}
-```
-
-```bash
-npm install -g @myorg/mytool
-```
-
 #### Homebrew (macOS/Linux)
 
 ```ruby
@@ -317,7 +237,6 @@ gh release create v1.0.0 \
 ```xml
 <PropertyGroup>
   <PublishTrimmed>true</PublishTrimmed>
-  <TrimMode>partial</TrimMode>
 </PropertyGroup>
 ```
 
@@ -358,8 +277,7 @@ Bundles into single executable.
 | Framework-Dependent | ~200 KB | Fast | Fast | Requires runtime |
 | Self-Contained | ~65 MB | Fast | Moderate | No runtime needed |
 | Self-Contained + Trimmed | ~25 MB | Fast | Slow | Optimized |
-| Native AOT (Direct) | ~3.3 MB | Instant | Slow | Fastest |
-| Native AOT (Mediator) | ~4.8 MB | Instant | Slow | Fast |
+| Native AOT | ~3-5 MB | Instant | Slow | Fastest startup |
 | .NET 10 Runfile | Source file | Fast | On-demand | Development |
 
 See [Performance Reference](../reference/performance.md) for detailed benchmarks.
@@ -381,7 +299,7 @@ dotnet run -- command args
 Use framework-dependent builds:
 ```bash
 dotnet publish -c Release
-./bin/Release/net9.0/publish/mycli --version
+./bin/Release/net10.0/publish/mycli --version
 ```
 
 ### Production
@@ -425,23 +343,23 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-dotnet@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: '9.0.x'
+        dotnet-version: '10.0.x'
 
     - name: Publish
       run: dotnet publish -c Release -r ${{ matrix.rid }} -p:PublishAot=true
 
     - name: Upload
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: mytool-${{ matrix.rid }}
-        path: bin/Release/net9.0/${{ matrix.rid }}/publish/
+        path: bin/Release/net10.0/${{ matrix.rid }}/publish/
 ```
 
 ## Related Documentation
 
-- **[Architecture Choices](architecture-choices.md)** - Choose Direct vs Mediator for optimal size
+- **[Architecture Choices](architecture-choices.md)** - Choose Fluent API vs Endpoint API
 - **[Performance](../reference/performance.md)** - Detailed benchmarks
 - **[Getting Started](../getting-started.md)** - Development setup

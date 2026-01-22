@@ -21,7 +21,7 @@ namespace TimeWarp.Nuru;
 /// {
 ///     [Parameter(Description = "Target environment")]
 ///     public string Env { get; set; } = string.Empty;
-///     
+///
 ///     [Option("force", "f", Description = "Skip confirmation")]
 ///     public bool Force { get; set; }
 /// }

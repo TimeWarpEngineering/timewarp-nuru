@@ -326,10 +326,10 @@ internal static class OverlapValidator
           signature.Append("--");
           break;
 
-        // Skip: optional options (--flag?),
-        //       boolean flags (--verbose) - always optional at runtime,
-        //       optional parameters ({param?}),
-        //       catch-all ({*args})
+          // Skip: optional options (--flag?),
+          //       boolean flags (--verbose) - always optional at runtime,
+          //       optional parameters ({param?}),
+          //       catch-all ({*args})
       }
     }
 

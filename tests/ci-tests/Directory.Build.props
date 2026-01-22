@@ -20,6 +20,7 @@
     <Compile Include="../timewarp-nuru-tests/generator/generator-14-options-validation.cs" />
     <Compile Include="../timewarp-nuru-tests/generator/generator-04-static-service-injection.cs" />
     <Compile Include="../timewarp-nuru-tests/generator/generator-13-ioptions-parameter-injection.cs" />
+    <Compile Include="../timewarp-nuru-tests/generator/generator-15-runtime-di.cs" />
     <!-- Core tests - migrated files -->
 
     <!-- TimeWarp.Terminal widget/utils tests have been moved to that repo -->

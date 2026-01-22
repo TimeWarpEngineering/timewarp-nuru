@@ -24,14 +24,14 @@ namespace TimeWarp.Nuru;
 /// {
 ///     [Option("force", "f", Description = "Skip confirmation")]
 ///     public bool Force { get; set; }  // Flag: --force or -f
-///     
+///
 ///     [Option("config", "c")]
 ///     public string? ConfigFile { get; set; }  // Optional valued: --config file.json
-///     
+///
 ///     [Option("replicas", "r")]
 ///     public int Replicas { get; set; } = 1;  // Required valued: --replicas 3
 /// }
-/// 
+///
 /// // Generated route: "deploy --force,-f --config,-c {configFile?} --replicas,-r {replicas}"
 /// </code>
 /// </example>

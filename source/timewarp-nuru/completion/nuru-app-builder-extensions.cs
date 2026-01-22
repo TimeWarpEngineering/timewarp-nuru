@@ -81,7 +81,7 @@ public static class NuruAppBuilderCompletionExtensions
   ///   .Build()
   ///   .RunAsync(args);
   /// </code>
-  /// 
+  ///
   /// With custom completion sources:
   /// <code>
   /// .EnableCompletion(configure: registry =>

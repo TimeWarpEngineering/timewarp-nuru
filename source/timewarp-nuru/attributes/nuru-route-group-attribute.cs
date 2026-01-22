@@ -22,7 +22,7 @@ namespace TimeWarp.Nuru;
 ///     [GroupOption("debug", "D")]
 ///     public bool Debug { get; set; }
 /// }
-/// 
+///
 /// // Request inherits group membership
 /// [NuruRoute("run")]
 /// public sealed class DockerRunRequest : DockerRequestBase, IRequest&lt;Unit&gt;
@@ -30,7 +30,7 @@ namespace TimeWarp.Nuru;
 ///     [Parameter]
 ///     public string Image { get; set; } = string.Empty;
 /// }
-/// 
+///
 /// // Generated route: "docker run {image} --debug,-D"
 /// </code>
 /// </example>

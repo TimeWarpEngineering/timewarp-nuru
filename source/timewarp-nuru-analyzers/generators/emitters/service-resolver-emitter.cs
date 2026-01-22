@@ -19,20 +19,21 @@ internal static class ServiceResolverEmitter
   /// <param name="handler">The handler definition containing service parameters.</param>
   /// <param name="services">Registered services from ConfigureServices.</param>
   /// <param name="indent">Number of spaces for indentation.</param>
-  public static void Emit(StringBuilder sb, HandlerDefinition handler, ImmutableArray<ServiceDefinition> services, int indent = 6)
+  /// <param name="useRuntimeDI">When true, emits GetServiceProvider().GetRequiredService&lt;T&gt;() instead of static instantiation.</param>
+  public static void Emit(StringBuilder sb, HandlerDefinition handler, ImmutableArray<ServiceDefinition> services, int indent = 6, bool useRuntimeDI = false)
   {
     string indentStr = new(' ', indent);
 
     foreach (ParameterBinding param in handler.ServiceParameters)
     {
-      EmitServiceResolution(sb, param, services, indentStr);
+      EmitServiceResolution(sb, param, services, indentStr, useRuntimeDI);
     }
   }
 
   /// <summary>
   /// Emits a single service resolution from a parameter binding.
   /// </summary>
-  private static void EmitServiceResolution(StringBuilder sb, ParameterBinding param, ImmutableArray<ServiceDefinition> services, string indent)
+  private static void EmitServiceResolution(StringBuilder sb, ParameterBinding param, ImmutableArray<ServiceDefinition> services, string indent, bool useRuntimeDI)
   {
     string typeName = param.ParameterTypeName;
     string varName = CSharpIdentifierUtils.EscapeIfKeyword(param.ParameterName);
@@ -73,6 +74,15 @@ internal static class ServiceResolverEmitter
       return;
     }
 
+    // Runtime DI path: use GetServiceProvider().GetRequiredService<T>()
+    if (useRuntimeDI)
+    {
+      sb.AppendLine(
+        $"{indent}{typeName} {varName} = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<{typeName}>(GetServiceProvider());");
+      return;
+    }
+
+    // Source-gen DI path: static instantiation or Lazy<T> fields
     // Look up service in registered services
     ServiceDefinition? service = FindService(typeName, services);
     if (service is not null)

@@ -577,6 +577,8 @@ public sealed class DslInterpreter
 
       "UseTelemetry" => DispatchUseTelemetry(receiver),
 
+      "UseMicrosoftDependencyInjection" => DispatchUseMicrosoftDependencyInjection(receiver),
+
       "EnableCompletion" => DispatchEnableCompletion(receiver),
 
       "AddTypeConverter" => DispatchAddTypeConverter(invocation, receiver),
@@ -1233,6 +1235,20 @@ public sealed class DslInterpreter
     }
 
     return appBuilder.UseTelemetry();
+  }
+
+  /// <summary>
+  /// Dispatches UseMicrosoftDependencyInjection() call to IIrAppBuilder.
+  /// Enables runtime DI instead of source-generated static instantiation.
+  /// </summary>
+  private static object? DispatchUseMicrosoftDependencyInjection(object? receiver)
+  {
+    if (receiver is not IIrAppBuilder appBuilder)
+    {
+      throw new InvalidOperationException("UseMicrosoftDependencyInjection() must be called on an app builder.");
+    }
+
+    return appBuilder.UseMicrosoftDependencyInjection();
   }
 
   /// <summary>

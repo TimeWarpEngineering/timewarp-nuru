@@ -29,6 +29,7 @@ namespace TimeWarp.Nuru.Generators;
 /// <param name="BuildLocation">Source location of the Build() call - unique identity for this app</param>
 /// <param name="HasTelemetry">Whether UseTelemetry() was called to enable OpenTelemetry instrumentation</param>
 /// <param name="HasCompletion">Whether EnableCompletion() was called to enable shell completion</param>
+/// <param name="UseMicrosoftDependencyInjection">Whether UseMicrosoftDependencyInjection() was called to use runtime DI instead of source-gen DI</param>
 public sealed record AppModel(
   string? VariableName,
   string? Name,
@@ -54,7 +55,8 @@ public sealed record AppModel(
   ImmutableArray<string> ExplicitEndpointTypes = default,
   string? BuildLocation = null,
   bool HasTelemetry = false,
-  bool HasCompletion = false)
+  bool HasCompletion = false,
+  bool UseMicrosoftDependencyInjection = false)
 {
   /// <summary>
   /// Creates an empty AppModel with required intercept sites.

@@ -9,7 +9,7 @@ namespace TimeWarp.Nuru.Generators;
 /// <remarks>
 /// This type enables error collection rather than throwing exceptions during extraction.
 /// Both analyzer and generator use this to get consistent error handling.
-/// 
+///
 /// Possible states:
 /// - Model is not null, Diagnostics is empty: Extraction fully successful
 /// - Model is not null, Diagnostics has items: Partial success (model built, but with warnings or non-fatal errors)

@@ -60,6 +60,7 @@ internal static class CompletionEmitter
     {
       sb.AppendLine($"      \"{EscapeString(prefix)}\",");
     }
+
     sb.AppendLine("    ];");
     sb.AppendLine();
 
@@ -162,9 +163,11 @@ internal static class CompletionEmitter
           sb.AppendLine($"          if (\"{value}\".StartsWith(currentInput, global::System.StringComparison.OrdinalIgnoreCase))");
           sb.AppendLine($"            yield return new global::TimeWarp.Nuru.CompletionCandidate(\"{value}\", null, global::TimeWarp.Nuru.CompletionType.Enum);");
         }
+
         sb.AppendLine("        }");
         sb.AppendLine("      }");
       }
+
       sb.AppendLine();
     }
 
@@ -186,6 +189,7 @@ internal static class CompletionEmitter
             sb.AppendLine($"        if (string.IsNullOrEmpty(currentInput) || \"--{opt.LongForm}\".StartsWith(currentInput, global::System.StringComparison.OrdinalIgnoreCase))");
             sb.AppendLine($"          yield return new global::TimeWarp.Nuru.CompletionCandidate(\"--{opt.LongForm}\", {description}, global::TimeWarp.Nuru.CompletionType.Option);");
           }
+
           if (opt.ShortForm is not null)
           {
             string description = opt.Description is not null ? $"\"{EscapeString(opt.Description)}\"" : "null";
@@ -193,8 +197,10 @@ internal static class CompletionEmitter
             sb.AppendLine($"          yield return new global::TimeWarp.Nuru.CompletionCandidate(\"-{opt.ShortForm}\", {description}, global::TimeWarp.Nuru.CompletionType.Option);");
           }
         }
+
         sb.AppendLine("      }");
       }
+
       sb.AppendLine();
     }
 
@@ -213,6 +219,7 @@ internal static class CompletionEmitter
           sb.AppendLine($"        if (\"--{opt.LongForm}\".StartsWith(currentInput, global::System.StringComparison.OrdinalIgnoreCase))");
           sb.AppendLine($"          yield return new global::TimeWarp.Nuru.CompletionCandidate(\"--{opt.LongForm}\", {description}, global::TimeWarp.Nuru.CompletionType.Option);");
         }
+
         if (opt.ShortForm is not null)
         {
           string description = opt.Description is not null ? $"\"{EscapeString(opt.Description)}\"" : "null";
@@ -259,7 +266,7 @@ internal static class CompletionEmitter
       sb.AppendLine($"      if (prefix.StartsWith(\"{EscapeString(param.CommandPrefix)}\", global::System.StringComparison.OrdinalIgnoreCase))");
       sb.AppendLine("      {");
       sb.AppendLine($"        int paramPos = cursorIndex - 1 - {cmdWordCount};");
-      sb.AppendLine($"        if (paramPos == 0) // First parameter position");
+      sb.AppendLine("        if (paramPos == 0) // First parameter position");
       sb.AppendLine("        {");
       sb.AppendLine($"          parameterName = \"{param.Name}\";");
       string typeConstraint = param.TypeConstraint is not null ? $"\"{param.TypeConstraint}\"" : "null";

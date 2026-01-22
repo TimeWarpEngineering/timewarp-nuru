@@ -676,7 +676,7 @@ internal static class InterceptorEmitter
     sb.AppendLine("    {");
     sb.AppendLine("      string[] completionWords = routeArgs.Length > 2 ? routeArgs[2..] : [];");
     sb.AppendLine("      var completionContext = new global::TimeWarp.Nuru.CompletionContext(completionWords, completionIndex);");
-    sb.AppendLine($"      return global::TimeWarp.Nuru.DynamicCompletionHandler.HandleCompletion(completionContext, app.CompletionSourceRegistry, app.ShellCompletionProvider ?? global::TimeWarp.Nuru.EmptyShellCompletionProvider.Instance, app.Terminal);");
+    sb.AppendLine("      return global::TimeWarp.Nuru.DynamicCompletionHandler.HandleCompletion(completionContext, app.CompletionSourceRegistry, app.ShellCompletionProvider ?? global::TimeWarp.Nuru.EmptyShellCompletionProvider.Instance, app.Terminal);");
     sb.AppendLine("    }");
     sb.AppendLine();
 

@@ -100,14 +100,14 @@ public partial class NuruApp
   /// The exception message will be displayed and exit code will be 1.
   /// </para>
   /// </returns>
-  #pragma warning disable CA1822 // Member does not access instance data 
+#pragma warning disable CA1822 // Member does not access instance data 
   public Task<int> RunAsync(string[] args)
   {
-      // This should never execute - interceptor replaces this call
-      throw new InvalidOperationException(
-          "RunAsync was not intercepted. Ensure the source generator is enabled.");
+    // This should never execute - interceptor replaces this call
+    throw new InvalidOperationException(
+        "RunAsync was not intercepted. Ensure the source generator is enabled.");
   }
-  #pragma warning restore CA1822
+#pragma warning restore CA1822
 
   /// <summary>
   /// Runs the application in REPL (interactive) mode.
@@ -119,14 +119,14 @@ public partial class NuruApp
   /// Thrown if REPL mode is not enabled via AddRepl() in the builder,
   /// or if the source generator is not enabled.
   /// </exception>
-  #pragma warning disable CA1822 // Member does not access instance data
+#pragma warning disable CA1822 // Member does not access instance data
   public Task RunReplAsync(CancellationToken cancellationToken = default)
   {
-      // This should never execute - interceptor replaces this call
-      throw new InvalidOperationException(
-          "RunReplAsync was not intercepted. Ensure AddRepl() is called and the source generator is not enabled.");
+    // This should never execute - interceptor replaces this call
+    throw new InvalidOperationException(
+        "RunReplAsync was not intercepted. Ensure AddRepl() is called and the source generator is not enabled.");
   }
-  #pragma warning restore CA1822
+#pragma warning restore CA1822
 
   /// <summary>
   /// Creates a full-featured builder with DI, Configuration, and all extensions auto-wired.

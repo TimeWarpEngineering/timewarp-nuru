@@ -216,7 +216,7 @@ internal static class RouteMatcherEmitter
           positionalIndex++;
           break;
 
-        // OptionDefinition: skip (handled by EmitOptionParsingWithIndexTracking)
+          // OptionDefinition: skip (handled by EmitOptionParsingWithIndexTracking)
       }
     }
 
@@ -769,6 +769,7 @@ internal static class RouteMatcherEmitter
         {
           sb.AppendLine($"{indentStr}// DEBUG:   Converter: {c.ConverterTypeName}, TargetTypeName={c.TargetTypeName}, Alias={c.ConstraintAlias}, DerivedTarget={GetTargetTypeFromConverterName(c.ConverterTypeName)}");
         }
+
         CustomConverterDefinition? converter = customConverters.FirstOrDefault(c =>
           string.Equals(c.TargetTypeName, baseType, StringComparison.OrdinalIgnoreCase) ||
           string.Equals(GetSimpleTypeName(c.TargetTypeName), baseType, StringComparison.OrdinalIgnoreCase) ||

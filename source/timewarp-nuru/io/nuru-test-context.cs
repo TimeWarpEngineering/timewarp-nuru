@@ -7,11 +7,11 @@ namespace TimeWarp.Nuru;
 /// <para>
 /// This class enables zero-configuration testing of runfiles by allowing test code to be
 /// included at build time via <c>Directory.Build.props</c>. When the test runner delegate
-  /// is set (typically via <c>[ModuleInitializer]</c>), <see cref="NuruApp.RunAsync"/>
+/// is set (typically via <c>[ModuleInitializer]</c>), <see cref="NuruApp.RunAsync"/>
 /// hands control to the test harness instead of executing normally.
 /// </para>
 /// <para>
-  /// The test harness receives the fully configured <see cref="NuruApp"/> instance and can
+/// The test harness receives the fully configured <see cref="NuruApp"/> instance and can
 /// run multiple test scenarios against it using <see cref="TestTerminalContext"/> for output capture.
 /// </para>
 /// <example>
@@ -31,7 +31,7 @@ namespace TimeWarp.Nuru;
 ///                 await app.RunAsync(["greet", "Alice"]);
 ///                 terminal.OutputContains("Hello, Alice!").ShouldBeTrue();
 ///             }
-///             
+///
 ///             Console.WriteLine("All tests passed!");
 ///             return 0;
 ///         };

@@ -47,10 +47,10 @@ internal static class InterceptorEmitter
     EmitServiceFields(sb, sourceGenServices);
 
     // Emit runtime DI infrastructure for apps that use UseMicrosoftDependencyInjection()
+    // Each app gets its own __ConfigureServices and GetServiceProvider methods
     if (model.UsesMicrosoftDependencyInjection)
     {
-      ImmutableArray<AppModel> runtimeDIApps = [.. model.Apps.Where(a => a.UseMicrosoftDependencyInjection)];
-      EmitRuntimeDIInfrastructure(sb, runtimeDIApps, [.. runtimeDIServices]);
+      EmitRuntimeDIInfrastructure(sb, model.Apps);
     }
 
     EmitLoggingFactoryFields(sb, model);
@@ -348,12 +348,12 @@ internal static class InterceptorEmitter
 
   /// <summary>
   /// Emits runtime DI infrastructure when UseMicrosoftDependencyInjection() is called.
+  /// Each app gets its own __ConfigureServices and GetServiceProvider methods.
   /// This provides full MS DI container support at the cost of runtime overhead.
   /// </summary>
   /// <param name="sb">The StringBuilder to append to.</param>
-  /// <param name="apps">The app models that use runtime DI.</param>
-  /// <param name="services">The service definitions extracted from ConfigureServices (fallback).</param>
-  private static void EmitRuntimeDIInfrastructure(StringBuilder sb, ImmutableArray<AppModel> apps, ImmutableArray<ServiceDefinition> services)
+  /// <param name="apps">All app models (will filter to those using runtime DI).</param>
+  private static void EmitRuntimeDIInfrastructure(StringBuilder sb, ImmutableArray<AppModel> apps)
   {
     sb.AppendLine("  // ═══════════════════════════════════════════════════════════════════════════════");
     sb.AppendLine("  // RUNTIME DI INFRASTRUCTURE (UseMicrosoftDependencyInjection was called)");
@@ -365,76 +365,80 @@ internal static class InterceptorEmitter
     sb.AppendLine("  // Trade-off: Slightly slower startup (~2-10ms for ServiceProvider.Build())");
     sb.AppendLine();
 
-    // Get the first app's lambda body (if any)
-    // Only use lambda approach when there's exactly ONE app with runtime DI
-    // Multiple apps would share the same __ConfigureServices which is incorrect
-    string? lambdaBody = apps.Length == 1 ? apps[0].ConfigureServicesLambdaBody : null;
-
-    // Emit static __ConfigureServices method if lambda body is available
-    if (!string.IsNullOrEmpty(lambdaBody))
+    // Emit per-app infrastructure for each app that uses runtime DI
+    for (int appIndex = 0; appIndex < apps.Length; appIndex++)
     {
-      sb.AppendLine("  /// <summary>");
-      sb.AppendLine("  /// User's ConfigureServices delegate, invoked at runtime.");
-      sb.AppendLine("  /// This preserves extension method calls (AddLogging, AddDbContext, etc.).");
-      sb.AppendLine("  /// </summary>");
-      sb.AppendLine("  private static void __ConfigureServices(global::Microsoft.Extensions.DependencyInjection.IServiceCollection services)");
-      sb.AppendLine($"  {lambdaBody}");
-      sb.AppendLine();
-    }
+      AppModel app = apps[appIndex];
+      if (!app.UseMicrosoftDependencyInjection)
+        continue;
 
-    sb.AppendLine("  private static global::System.IServiceProvider? __serviceProvider;");
-    sb.AppendLine("  private static NuruApp? __runtimeDIApp;");
-    sb.AppendLine();
-    sb.AppendLine("  private static global::System.IServiceProvider GetServiceProvider(NuruApp app)");
-    sb.AppendLine("  {");
-    sb.AppendLine("    if (__serviceProvider is not null) return __serviceProvider;");
-    sb.AppendLine();
-    sb.AppendLine("    __runtimeDIApp = app;");
-    sb.AppendLine("    var services = new global::Microsoft.Extensions.DependencyInjection.ServiceCollection();");
-    sb.AppendLine();
-    sb.AppendLine("    // Register Nuru built-ins so they're available for user services");
-    sb.AppendLine("    global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton<global::TimeWarp.Terminal.ITerminal>(services, app.Terminal);");
-    sb.AppendLine("    global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton<NuruApp>(services, app);");
-    sb.AppendLine();
+      string suffix = apps.Length > 1 ? $"_{appIndex}" : "";
+      string? lambdaBody = app.ConfigureServicesLambdaBody;
 
-    if (!string.IsNullOrEmpty(lambdaBody))
-    {
-      sb.AppendLine("    // Invoke user's ConfigureServices delegate at runtime");
-      sb.AppendLine("    // This ensures extension methods (AddLogging, AddDbContext, etc.) work correctly");
-      sb.AppendLine("    __ConfigureServices(services);");
-    }
-    else if (services.Length > 0)
-    {
-      // Fallback: emit service registrations extracted at compile time
-      sb.AppendLine("    // Services extracted from ConfigureServices at compile time");
-      sb.AppendLine("    // MS DI handles constructor dependency resolution automatically");
-      foreach (ServiceDefinition service in services)
+      // Emit static __ConfigureServices method if lambda body is available
+      if (!string.IsNullOrEmpty(lambdaBody))
       {
-        string methodName = service.Lifetime switch
-        {
-          ServiceLifetime.Singleton => "AddSingleton",
-          ServiceLifetime.Scoped => "AddScoped",
-          ServiceLifetime.Transient => "AddTransient",
-          _ => "AddSingleton"
-        };
+        sb.AppendLine($"  /// <summary>");
+        sb.AppendLine($"  /// User's ConfigureServices delegate for app {appIndex}, invoked at runtime.");
+        sb.AppendLine($"  /// This preserves extension method calls (AddLogging, AddDbContext, etc.).");
+        sb.AppendLine($"  /// </summary>");
+        sb.AppendLine($"  private static void __ConfigureServices{suffix}(global::Microsoft.Extensions.DependencyInjection.IServiceCollection services)");
+        sb.AppendLine($"  {lambdaBody}");
+        sb.AppendLine();
+      }
 
-        // If service type equals implementation type, use single type parameter form
-        if (service.ServiceTypeName == service.ImplementationTypeName)
+      sb.AppendLine($"  private static global::System.IServiceProvider? __serviceProvider{suffix};");
+      sb.AppendLine();
+      sb.AppendLine($"  private static global::System.IServiceProvider GetServiceProvider{suffix}(NuruApp app)");
+      sb.AppendLine("  {");
+      sb.AppendLine($"    if (__serviceProvider{suffix} is not null) return __serviceProvider{suffix};");
+      sb.AppendLine();
+      sb.AppendLine("    var services = new global::Microsoft.Extensions.DependencyInjection.ServiceCollection();");
+      sb.AppendLine();
+      sb.AppendLine("    // Register Nuru built-ins so they're available for user services");
+      sb.AppendLine("    global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton<global::TimeWarp.Terminal.ITerminal>(services, app.Terminal);");
+      sb.AppendLine("    global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton<NuruApp>(services, app);");
+      sb.AppendLine();
+
+      if (!string.IsNullOrEmpty(lambdaBody))
+      {
+        sb.AppendLine("    // Invoke user's ConfigureServices delegate at runtime");
+        sb.AppendLine("    // This ensures extension methods (AddLogging, AddDbContext, etc.) work correctly");
+        sb.AppendLine($"    __ConfigureServices{suffix}(services);");
+      }
+      else if (app.Services.Length > 0)
+      {
+        // Fallback: emit service registrations extracted at compile time
+        sb.AppendLine("    // Services extracted from ConfigureServices at compile time");
+        sb.AppendLine("    // MS DI handles constructor dependency resolution automatically");
+        foreach (ServiceDefinition service in app.Services)
         {
-          sb.AppendLine($"    global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.{methodName}<{service.ImplementationTypeName}>(services);");
-        }
-        else
-        {
-          sb.AppendLine($"    global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.{methodName}<{service.ServiceTypeName}, {service.ImplementationTypeName}>(services);");
+          string methodName = service.Lifetime switch
+          {
+            ServiceLifetime.Singleton => "AddSingleton",
+            ServiceLifetime.Scoped => "AddScoped",
+            ServiceLifetime.Transient => "AddTransient",
+            _ => "AddSingleton"
+          };
+
+          // If service type equals implementation type, use single type parameter form
+          if (service.ServiceTypeName == service.ImplementationTypeName)
+          {
+            sb.AppendLine($"    global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.{methodName}<{service.ImplementationTypeName}>(services);");
+          }
+          else
+          {
+            sb.AppendLine($"    global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.{methodName}<{service.ServiceTypeName}, {service.ImplementationTypeName}>(services);");
+          }
         }
       }
-    }
 
-    sb.AppendLine();
-    sb.AppendLine("    __serviceProvider = global::Microsoft.Extensions.DependencyInjection.ServiceCollectionContainerBuilderExtensions.BuildServiceProvider(services);");
-    sb.AppendLine("    return __serviceProvider;");
-    sb.AppendLine("  }");
-    sb.AppendLine();
+      sb.AppendLine();
+      sb.AppendLine($"    __serviceProvider{suffix} = global::Microsoft.Extensions.DependencyInjection.ServiceCollectionContainerBuilderExtensions.BuildServiceProvider(services);");
+      sb.AppendLine($"    return __serviceProvider{suffix};");
+      sb.AppendLine("  }");
+      sb.AppendLine();
+    }
   }
 
   /// <summary>
@@ -592,7 +596,7 @@ internal static class InterceptorEmitter
         allRoutesOrdered.Add(route);
       }
 
-      RouteMatcherEmitter.Emit(sb, route, routeIndex, app.Services, app.Behaviors, app.CustomConverters, loggerFactoryFieldName, app.UseMicrosoftDependencyInjection);
+      RouteMatcherEmitter.Emit(sb, route, routeIndex, app.Services, app.Behaviors, app.CustomConverters, loggerFactoryFieldName, app.UseMicrosoftDependencyInjection, methodSuffix);
     }
 
     // Built-in flags: --help, --version, --capabilities

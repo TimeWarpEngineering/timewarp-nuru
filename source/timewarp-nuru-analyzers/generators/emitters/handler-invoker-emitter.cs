@@ -41,7 +41,8 @@ internal static class HandlerInvokerEmitter
   /// <param name="commandAlreadyCreated">If true, skip command creation (already done by behavior emitter).</param>
   /// <param name="loggerFactoryFieldName">Logger factory source (static field name or "app.LoggerFactory"), or null if no logging.</param>
   /// <param name="useRuntimeDI">When true, uses GetServiceProvider().GetRequiredService&lt;T&gt;() instead of static instantiation.</param>
-  public static void Emit(StringBuilder sb, RouteDefinition route, int routeIndex, ImmutableArray<ServiceDefinition> services, int indent = 6, bool commandAlreadyCreated = false, string? loggerFactoryFieldName = null, bool useRuntimeDI = false)
+  /// <param name="runtimeDISuffix">Suffix for per-app runtime DI methods (e.g., "_0" for multi-app assemblies).</param>
+  public static void Emit(StringBuilder sb, RouteDefinition route, int routeIndex, ImmutableArray<ServiceDefinition> services, int indent = 6, bool commandAlreadyCreated = false, string? loggerFactoryFieldName = null, bool useRuntimeDI = false, string runtimeDISuffix = "")
   {
     string indentStr = new(' ', indent);
     HandlerDefinition handler = route.Handler;
@@ -49,7 +50,7 @@ internal static class HandlerInvokerEmitter
     // First, resolve any required services
     if (handler.RequiresServiceProvider)
     {
-      ServiceResolverEmitter.Emit(sb, handler, services, indent, useRuntimeDI);
+      ServiceResolverEmitter.Emit(sb, handler, services, indent, useRuntimeDI, runtimeDISuffix);
     }
 
     // Emit handler invocation based on kind
@@ -60,7 +61,7 @@ internal static class HandlerInvokerEmitter
         break;
 
       case HandlerKind.Command:
-        EmitCommandInvocation(sb, route, routeIndex, services, indentStr, commandAlreadyCreated, loggerFactoryFieldName, useRuntimeDI);
+        EmitCommandInvocation(sb, route, routeIndex, services, indentStr, commandAlreadyCreated, loggerFactoryFieldName, useRuntimeDI, runtimeDISuffix);
         break;
 
       case HandlerKind.Method:
@@ -282,7 +283,7 @@ internal static class HandlerInvokerEmitter
   /// Emits invocation for a command/query handler class.
   /// Creates the command object (unless already created), resolves handler dependencies, and invokes Handle().
   /// </summary>
-  private static void EmitCommandInvocation(StringBuilder sb, RouteDefinition route, int routeIndex, ImmutableArray<ServiceDefinition> services, string indent, bool commandAlreadyCreated = false, string? loggerFactoryFieldName = null, bool useRuntimeDI = false)
+  private static void EmitCommandInvocation(StringBuilder sb, RouteDefinition route, int routeIndex, ImmutableArray<ServiceDefinition> services, string indent, bool commandAlreadyCreated = false, string? loggerFactoryFieldName = null, bool useRuntimeDI = false, string runtimeDISuffix = "")
   {
     HandlerDefinition handler = route.Handler;
     string commandTypeName = handler.FullTypeName ?? "UnknownCommand";
@@ -326,7 +327,7 @@ internal static class HandlerInvokerEmitter
       sb.AppendLine($"{indent}// Resolve handler constructor dependencies");
       foreach (ParameterBinding dep in handler.ConstructorDependencies)
       {
-        string resolution = ResolveServiceForCommand(dep.ParameterTypeName, services, loggerFactoryFieldName, useRuntimeDI);
+        string resolution = ResolveServiceForCommand(dep.ParameterTypeName, services, loggerFactoryFieldName, useRuntimeDI, runtimeDISuffix);
         sb.AppendLine(
           $"{indent}{dep.ParameterTypeName} __{dep.ParameterName} = {resolution};");
       }
@@ -364,7 +365,8 @@ internal static class HandlerInvokerEmitter
   /// <param name="services">Registered services.</param>
   /// <param name="loggerFactoryFieldName">Logger factory source (static field or "app.LoggerFactory"), or null if no logging.</param>
   /// <param name="useRuntimeDI">When true, uses GetServiceProvider().GetRequiredService&lt;T&gt;() instead of static instantiation.</param>
-  private static string ResolveServiceForCommand(string? serviceTypeName, ImmutableArray<ServiceDefinition> services, string? loggerFactoryFieldName, bool useRuntimeDI = false)
+  /// <param name="runtimeDISuffix">Suffix for per-app runtime DI methods (e.g., "_0" for multi-app assemblies).</param>
+  private static string ResolveServiceForCommand(string? serviceTypeName, ImmutableArray<ServiceDefinition> services, string? loggerFactoryFieldName, bool useRuntimeDI = false, string runtimeDISuffix = "")
   {
     if (string.IsNullOrEmpty(serviceTypeName))
       return "default!";
@@ -399,10 +401,10 @@ internal static class HandlerInvokerEmitter
       return $"global::Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance.CreateLogger<{typeArg}>()";
     }
 
-    // Runtime DI path: use GetServiceProvider(app).GetRequiredService<T>()
+    // Runtime DI path: use GetServiceProvider{suffix}(app).GetRequiredService<T>()
     if (useRuntimeDI)
     {
-      return $"global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<{serviceTypeName}>(GetServiceProvider(app))";
+      return $"global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<{serviceTypeName}>(GetServiceProvider{runtimeDISuffix}(app))";
     }
 
     // Source-gen DI path: static instantiation via Lazy<T> fields

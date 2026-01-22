@@ -44,6 +44,10 @@ internal static class HandlerValidator
         ValidateLambdaHandler(lambda, semanticModel, location, diagnostics);
         break;
 
+      case AnonymousMethodExpressionSyntax anonymousMethod:
+        ValidateAnonymousMethodHandler(anonymousMethod, semanticModel, location, diagnostics);
+        break;
+
       case IdentifierNameSyntax identifier:
         ValidateMethodGroupHandler(identifier, semanticModel, location, diagnostics);
         break;
@@ -62,6 +66,42 @@ internal static class HandlerValidator
     }
 
     return [.. diagnostics];
+  }
+
+  /// <summary>
+  /// Validates an anonymous method handler expression (C# 2.0 delegate syntax).
+  /// </summary>
+  private static void ValidateAnonymousMethodHandler(
+    AnonymousMethodExpressionSyntax anonymousMethod,
+    SemanticModel semanticModel,
+    Location location,
+    List<Diagnostic> diagnostics)
+  {
+    // Check for discard parameters ('_')
+    if (anonymousMethod.ParameterList is not null)
+    {
+      foreach (ParameterSyntax param in anonymousMethod.ParameterList.Parameters)
+      {
+        if (param.Identifier.Text == "_")
+        {
+          diagnostics.Add(Diagnostic.Create(
+            DiagnosticDescriptors.DiscardParameterNotSupported,
+            location));
+          return; // Don't report other errors if discards are present
+        }
+      }
+    }
+
+    // Check for closures (captured external variables)
+    List<string> capturedVariables = DetectAnonymousMethodClosures(anonymousMethod, semanticModel);
+
+    if (capturedVariables.Count > 0)
+    {
+      diagnostics.Add(Diagnostic.Create(
+        DiagnosticDescriptors.ClosureNotAllowed,
+        location,
+        string.Join(", ", capturedVariables)));
+    }
   }
 
   /// <summary>
@@ -280,6 +320,109 @@ internal static class HandlerValidator
           break;
 
         // Static members, types, namespaces, methods are OK
+        case IMethodSymbol:
+        case IFieldSymbol { IsStatic: true }:
+        case IPropertySymbol { IsStatic: true }:
+        case INamedTypeSymbol:
+        case INamespaceSymbol:
+          break;
+      }
+    }
+
+    return capturedVariables;
+  }
+
+  /// <summary>
+  /// Detects if an anonymous method captures variables from enclosing scope (closures).
+  /// </summary>
+  private static List<string> DetectAnonymousMethodClosures(
+    AnonymousMethodExpressionSyntax anonymousMethod,
+    SemanticModel semanticModel)
+  {
+    List<string> capturedVariables = [];
+
+    // Get anonymous method parameters
+    HashSet<string> parameters = [];
+    if (anonymousMethod.ParameterList is not null)
+    {
+      foreach (ParameterSyntax param in anonymousMethod.ParameterList.Parameters)
+      {
+        parameters.Add(param.Identifier.Text);
+      }
+    }
+
+    // Track local variables declared inside the method body
+    HashSet<string> localVariables = [];
+    if (anonymousMethod.Block is not null)
+    {
+      foreach (VariableDeclaratorSyntax declarator in anonymousMethod.Block.DescendantNodes()
+        .OfType<VariableDeclaratorSyntax>())
+      {
+        localVariables.Add(declarator.Identifier.Text);
+      }
+    }
+
+    // Walk method body looking for identifiers
+    if (anonymousMethod.Block is null)
+      return capturedVariables;
+
+    foreach (IdentifierNameSyntax identifier in anonymousMethod.Block.DescendantNodes()
+      .OfType<IdentifierNameSyntax>())
+    {
+      string name = identifier.Identifier.Text;
+
+      // Skip if it's a parameter
+      if (parameters.Contains(name))
+        continue;
+
+      // Skip if it's a local variable declared inside the method
+      if (localVariables.Contains(name))
+        continue;
+
+      // Skip if it's on the right side of a member access
+      if (identifier.Parent is MemberAccessExpressionSyntax ma && ma.Name == identifier)
+        continue;
+
+      // Skip if it's the name part of a conditional member access
+      if (identifier.Parent is MemberBindingExpressionSyntax mb && mb.Name == identifier)
+        continue;
+
+      // Skip if it's the target of a property assignment in an object initializer
+      if (IsObjectInitializerTarget(identifier))
+        continue;
+
+      // Get symbol info
+      SymbolInfo symbolInfo = semanticModel.GetSymbolInfo(identifier);
+      ISymbol? symbol = symbolInfo.Symbol;
+
+      if (symbol is null)
+      {
+        capturedVariables.Add(name);
+        continue;
+      }
+
+      switch (symbol)
+      {
+        case ILocalSymbol:
+          capturedVariables.Add(name);
+          break;
+
+        case IParameterSymbol param:
+          if (!parameters.Contains(param.Name))
+          {
+            capturedVariables.Add(name);
+          }
+
+          break;
+
+        case IFieldSymbol field when !field.IsStatic:
+          capturedVariables.Add($"this.{name}");
+          break;
+
+        case IPropertySymbol prop when !prop.IsStatic:
+          capturedVariables.Add($"this.{name}");
+          break;
+
         case IMethodSymbol:
         case IFieldSymbol { IsStatic: true }:
         case IPropertySymbol { IsStatic: true }:

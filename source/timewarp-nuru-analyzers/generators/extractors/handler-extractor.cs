@@ -38,6 +38,7 @@ internal static class HandlerExtractor
     {
       ParenthesizedLambdaExpressionSyntax lambda => ExtractFromLambda(lambda, semanticModel, cancellationToken),
       SimpleLambdaExpressionSyntax simpleLambda => ExtractFromSimpleLambda(simpleLambda, semanticModel, cancellationToken),
+      AnonymousMethodExpressionSyntax anonymousMethod => ExtractFromAnonymousMethod(anonymousMethod, semanticModel, cancellationToken),
       IdentifierNameSyntax methodGroup => ExtractFromMethodGroup(methodGroup, semanticModel, cancellationToken),
       MemberAccessExpressionSyntax memberAccess => ExtractFromMemberAccess(memberAccess, semanticModel, cancellationToken),
       _ => CreateDefaultHandler()
@@ -210,6 +211,95 @@ internal static class HandlerExtractor
       IsAsync: isAsync,
       RequiresCancellationToken: false,
       RequiresServiceProvider: false);
+  }
+
+  /// <summary>
+  /// Extracts handler information from an anonymous method expression (C# 2.0 delegate syntax).
+  /// Example: delegate(string name) { return name.ToUpper(); }
+  /// </summary>
+  private static HandlerDefinition? ExtractFromAnonymousMethod
+  (
+    AnonymousMethodExpressionSyntax anonymousMethod,
+    SemanticModel semanticModel,
+    CancellationToken cancellationToken
+  )
+  {
+    ImmutableArray<ParameterBinding>.Builder parameters = ImmutableArray.CreateBuilder<ParameterBinding>();
+    bool hasCancellationToken = false;
+    bool requiresServiceProvider = false;
+
+    // Anonymous methods always have block bodies (no expression bodies)
+    string? lambdaBodySource = anonymousMethod.Block?.ToFullString();
+    const bool isExpressionBody = false;
+
+    // Try to get symbol info for accurate type resolution
+    SymbolInfo symbolInfo = semanticModel.GetSymbolInfo(anonymousMethod, cancellationToken);
+
+    if (symbolInfo.Symbol is IMethodSymbol methodSymbol)
+    {
+      // Use method symbol for accurate parameter/return type info
+      HandlerDefinition baseDefinition = ExtractFromMethodSymbol(methodSymbol, semanticModel.Compilation);
+      return baseDefinition with
+      {
+        LambdaBodySource = lambdaBodySource,
+        IsExpressionBody = isExpressionBody
+      };
+    }
+
+    // Fallback to syntax-only analysis
+    // Anonymous methods can omit the parameter list entirely: delegate { ... }
+    if (anonymousMethod.ParameterList is not null)
+    {
+      foreach (RoslynParameterSyntax param in anonymousMethod.ParameterList.Parameters)
+      {
+        string paramName = param.Identifier.Text;
+        string typeName = NormalizeTypeName(param.Type?.ToString() ?? "object");
+
+        if (IsCancellationTokenType(typeName))
+        {
+          hasCancellationToken = true;
+          parameters.Add(ParameterBinding.ForCancellationToken(paramName));
+        }
+        else if (IsServiceType(typeName))
+        {
+          requiresServiceProvider = true;
+          parameters.Add(ParameterBinding.FromService(paramName, typeName));
+        }
+        else
+        {
+          // Assume it's a route parameter
+          parameters.Add(ParameterBinding.FromParameter(
+            parameterName: paramName,
+            typeName: typeName,
+            segmentName: paramName.ToLowerInvariant(),
+            isOptional: param.Default is not null,
+            defaultValue: param.Default?.Value.ToString(),
+            requiresConversion: typeName != "global::System.String"));
+        }
+      }
+    }
+
+    // Determine return type and async status
+    bool isAsync = anonymousMethod.AsyncKeyword.IsKind(SyntaxKind.AsyncKeyword);
+    HandlerReturnType returnType = isAsync ? HandlerReturnType.Task : HandlerReturnType.Void;
+
+    // Try to infer return type from body
+    if (anonymousMethod.Block is not null)
+    {
+      returnType = InferReturnType(anonymousMethod.Block, isAsync, semanticModel, cancellationToken);
+    }
+
+    return new HandlerDefinition(
+      HandlerKind: HandlerKind.Delegate,
+      FullTypeName: null,
+      MethodName: null,
+      LambdaBodySource: lambdaBodySource,
+      IsExpressionBody: isExpressionBody,
+      Parameters: parameters.ToImmutable(),
+      ReturnType: returnType,
+      IsAsync: isAsync,
+      RequiresCancellationToken: hasCancellationToken,
+      RequiresServiceProvider: requiresServiceProvider);
   }
 
   /// <summary>

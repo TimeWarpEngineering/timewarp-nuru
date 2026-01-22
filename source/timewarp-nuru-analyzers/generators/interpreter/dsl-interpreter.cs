@@ -1084,7 +1084,7 @@ public sealed class DslInterpreter
   /// Extracts the raw lambda body or method call from a ConfigureServices() invocation.
   /// Used to emit code that invokes the user's delegate at runtime.
   /// </summary>
-  private static string? ExtractConfigureServicesLambdaBody(InvocationExpressionSyntax invocation)
+  private string? ExtractConfigureServicesLambdaBody(InvocationExpressionSyntax invocation)
   {
     ArgumentListSyntax? args = invocation.ArgumentList;
     if (args is null || args.Arguments.Count == 0)
@@ -1134,14 +1134,58 @@ public sealed class DslInterpreter
       }
     }
 
-    // Handle qualified method group: .ConfigureServices(ClassName.ConfigureServices)
-    // NOTE: Unqualified method groups (just `ConfigureServices`) are NOT supported because
-    // local functions in top-level statements cannot be called from generated interceptor code.
-    // Users must either use a lambda or a qualified static method reference.
-    if (configureExpression is MemberAccessExpressionSyntax memberAccess)
+    // Handle method group references by finding the method definition and inlining the body.
+    // This works for both local functions and static methods.
+    if (configureExpression is IdentifierNameSyntax or MemberAccessExpressionSyntax)
     {
-      string qualifiedName = memberAccess.ToFullString().Trim();
-      return $"{{ {qualifiedName}(services); }}";
+      SymbolInfo symbolInfo = SemanticModel.GetSymbolInfo(configureExpression);
+      IMethodSymbol? methodSymbol = symbolInfo.Symbol as IMethodSymbol
+        ?? symbolInfo.CandidateSymbols.OfType<IMethodSymbol>().FirstOrDefault();
+
+      if (methodSymbol is not null)
+      {
+        // Find the method's syntax declaration and extract its body
+        foreach (SyntaxReference syntaxRef in methodSymbol.DeclaringSyntaxReferences)
+        {
+          RoslynSyntaxNode syntax = syntaxRef.GetSyntax();
+
+          // Handle local functions
+          if (syntax is LocalFunctionStatementSyntax localFunction)
+          {
+            if (localFunction.Body is not null)
+            {
+              return localFunction.Body.ToFullString();
+            }
+
+            if (localFunction.ExpressionBody is not null)
+            {
+              return $"{{ {localFunction.ExpressionBody.Expression.ToFullString()}; }}";
+            }
+          }
+
+          // Handle regular methods
+          if (syntax is MethodDeclarationSyntax methodDecl)
+          {
+            if (methodDecl.Body is not null)
+            {
+              return methodDecl.Body.ToFullString();
+            }
+
+            if (methodDecl.ExpressionBody is not null)
+            {
+              return $"{{ {methodDecl.ExpressionBody.Expression.ToFullString()}; }}";
+            }
+          }
+        }
+
+        // Fallback: if we couldn't get the body, try to call the method
+        // (only works for static methods on classes, not local functions)
+        if (configureExpression is MemberAccessExpressionSyntax memberAccess)
+        {
+          string qualifiedName = memberAccess.ToFullString().Trim();
+          return $"{{ {qualifiedName}(services); }}";
+        }
+      }
     }
 
     return null;

@@ -1134,15 +1134,10 @@ public sealed class DslInterpreter
       }
     }
 
-    // Handle method group reference: .ConfigureServices(ConfigureServices)
-    // where ConfigureServices is a method name (static or instance)
-    if (configureExpression is IdentifierNameSyntax identifier)
-    {
-      string methodName = identifier.Identifier.Text;
-      return $"{{ {methodName}(services); }}";
-    }
-
-    // Handle qualified method group: .ConfigureServices(Foo.ConfigureServices)
+    // Handle qualified method group: .ConfigureServices(ClassName.ConfigureServices)
+    // NOTE: Unqualified method groups (just `ConfigureServices`) are NOT supported because
+    // local functions in top-level statements cannot be called from generated interceptor code.
+    // Users must either use a lambda or a qualified static method reference.
     if (configureExpression is MemberAccessExpressionSyntax memberAccess)
     {
       string qualifiedName = memberAccess.ToFullString().Trim();

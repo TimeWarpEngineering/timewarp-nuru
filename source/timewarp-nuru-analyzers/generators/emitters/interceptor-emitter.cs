@@ -365,8 +365,10 @@ internal static class InterceptorEmitter
     sb.AppendLine("  // Trade-off: Slightly slower startup (~2-10ms for ServiceProvider.Build())");
     sb.AppendLine();
 
-    // Get the first app's lambda body (if any) - assumes single app with runtime DI
-    string? lambdaBody = apps.FirstOrDefault()?.ConfigureServicesLambdaBody;
+    // Get the first app's lambda body (if any)
+    // Only use lambda approach when there's exactly ONE app with runtime DI
+    // Multiple apps would share the same __ConfigureServices which is incorrect
+    string? lambdaBody = apps.Length == 1 ? apps[0].ConfigureServicesLambdaBody : null;
 
     // Emit static __ConfigureServices method if lambda body is available
     if (!string.IsNullOrEmpty(lambdaBody))

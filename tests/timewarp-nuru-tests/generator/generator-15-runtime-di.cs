@@ -1,7 +1,8 @@
 #!/usr/bin/dotnet --
+#:package Microsoft.Extensions.Logging.Console
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// GENERATOR TEST: Runtime DI with UseMicrosoftDependencyInjection (#392)
+// GENERATOR TEST: Runtime DI with UseMicrosoftDependencyInjection (#392, #396)
 // ═══════════════════════════════════════════════════════════════════════════════
 //
 // PURPOSE: Verify UseMicrosoftDependencyInjection() enables full MS DI container
@@ -11,9 +12,13 @@
 // - Services with constructor dependencies (MS DI resolves the chain)
 // - Singleton/Transient lifetime behavior with runtime DI
 // - Multiple services with dependency chains
+// - Method group references for ConfigureServices (#396)
+// - Transitive ILogger<T> dependencies (#396)
 // ═══════════════════════════════════════════════════════════════════════════════
 
 using System.Globalization;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 #if !JARIBU_MULTI
 return await RunAllTests();
@@ -132,6 +137,62 @@ public class Rdi15SingletonCounter : IRdi15SingletonCounter
   public int GetInstanceId() => _instanceId;
 
   public static void Reset() => s_instanceCount = 0;
+}
+
+/// <summary>
+/// Service that has ILogger as a constructor dependency.
+/// Tests transitive ILogger&lt;T&gt; resolution (#396).
+/// </summary>
+public interface IRdi15ServiceWithLogger
+{
+  void DoSomething();
+}
+
+#pragma warning disable CA1848 // Use LoggerMessage delegates
+public class Rdi15ServiceWithLogger : IRdi15ServiceWithLogger
+{
+  private readonly ILogger<Rdi15ServiceWithLogger> _logger;
+
+  public Rdi15ServiceWithLogger(ILogger<Rdi15ServiceWithLogger> logger)
+  {
+    _logger = logger;
+  }
+
+  public void DoSomething()
+  {
+    _logger.LogInformation("Rdi15ServiceWithLogger.DoSomething called!");
+  }
+}
+#pragma warning restore CA1848
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// CONFIGURE SERVICES HELPER CLASS (for method group reference tests)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/// <summary>
+/// Helper class with ConfigureServices methods for method group reference tests.
+/// </summary>
+public static class Rdi15ConfigureServicesHelper
+{
+  /// <summary>
+  /// ConfigureServices method for method group reference test.
+  /// </summary>
+  public static void ConfigureServicesMethodGroup(IServiceCollection services)
+  {
+    services.AddSingleton<IRdi15Formatter, Rdi15Formatter>();
+    services.AddSingleton<IRdi15Greeter, Rdi15Greeter>();
+  }
+
+  /// <summary>
+  /// ConfigureServices with AddLogging for method group reference test.
+  /// </summary>
+#pragma warning disable CA1848 // Use LoggerMessage delegates
+  public static void ConfigureServicesWithLogging(IServiceCollection services)
+  {
+    services.AddLogging(builder => builder.AddConsole());
+    services.AddSingleton<IRdi15ServiceWithLogger, Rdi15ServiceWithLogger>();
+  }
+#pragma warning restore CA1848
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -318,6 +379,99 @@ namespace TimeWarp.Nuru.Tests.Generator.RuntimeDI
       // Assert
       exitCode.ShouldBe(0);
       terminal.OutputContains("Formatted: Hello, Bob!").ShouldBeTrue();
+    }
+
+    /// <summary>
+    /// Verify method group reference works for ConfigureServices.
+    /// Tests the scenario: .ConfigureServices(ConfigureServices)
+    /// </summary>
+    public static async Task Should_support_method_group_reference()
+    {
+      // Arrange
+      using TestTerminal terminal = new();
+
+      NuruApp app = NuruApp.CreateBuilder()
+        .UseTerminal(terminal)
+        .UseMicrosoftDependencyInjection()
+        .ConfigureServices(Rdi15ConfigureServicesHelper.ConfigureServicesMethodGroup)
+        .Map("rdi15-method-group {name}")
+          .WithHandler((string name, IRdi15Greeter greeter) => greeter.Greet(name))
+          .AsQuery()
+          .Done()
+        .Build();
+
+      // Act
+      int exitCode = await app.RunAsync(["rdi15-method-group", "MethodGroup"]);
+
+      // Assert
+      exitCode.ShouldBe(0);
+      terminal.OutputContains("Hello, MethodGroup!").ShouldBeTrue();
+    }
+
+    /// <summary>
+    /// Verify service with transitive ILogger dependency works.
+    /// This is the exact scenario from issue #396.
+    /// </summary>
+    public static async Task Should_resolve_service_with_transitive_ilogger_dependency()
+    {
+      // Arrange
+      using TestTerminal terminal = new();
+
+      NuruApp app = NuruApp.CreateBuilder()
+        .UseTerminal(terminal)
+        .UseMicrosoftDependencyInjection()
+        .ConfigureServices(services =>
+        {
+          services.AddLogging(builder => builder.AddConsole());
+          services.AddSingleton<IRdi15ServiceWithLogger, Rdi15ServiceWithLogger>();
+        })
+        .Map("rdi15-transitive-logger")
+          .WithHandler((IRdi15ServiceWithLogger svc) =>
+          {
+            svc.DoSomething();
+            return "Done";
+          })
+          .AsQuery()
+          .Done()
+        .Build();
+
+      // Act
+      int exitCode = await app.RunAsync(["rdi15-transitive-logger"]);
+
+      // Assert
+      exitCode.ShouldBe(0);
+      terminal.OutputContains("Done").ShouldBeTrue();
+    }
+
+    /// <summary>
+    /// Verify method group reference with transitive ILogger dependency.
+    /// This combines both fixes from #396.
+    /// </summary>
+    public static async Task Should_resolve_method_group_with_transitive_ilogger()
+    {
+      // Arrange
+      using TestTerminal terminal = new();
+
+      NuruApp app = NuruApp.CreateBuilder()
+        .UseTerminal(terminal)
+        .UseMicrosoftDependencyInjection()
+        .ConfigureServices(Rdi15ConfigureServicesHelper.ConfigureServicesWithLogging)
+        .Map("rdi15-method-logger")
+          .WithHandler((IRdi15ServiceWithLogger svc) =>
+          {
+            svc.DoSomething();
+            return "Method group with logger works!";
+          })
+          .AsQuery()
+          .Done()
+        .Build();
+
+      // Act
+      int exitCode = await app.RunAsync(["rdi15-method-logger"]);
+
+      // Assert
+      exitCode.ShouldBe(0);
+      terminal.OutputContains("Method group with logger works!").ShouldBeTrue();
     }
   }
 }

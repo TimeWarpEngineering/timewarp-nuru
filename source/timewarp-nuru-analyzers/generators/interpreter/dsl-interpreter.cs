@@ -1081,7 +1081,7 @@ public sealed class DslInterpreter
   }
 
   /// <summary>
-  /// Extracts the raw lambda body from a ConfigureServices() invocation.
+  /// Extracts the raw lambda body or method call from a ConfigureServices() invocation.
   /// Used to emit code that invokes the user's delegate at runtime.
   /// </summary>
   private static string? ExtractConfigureServicesLambdaBody(InvocationExpressionSyntax invocation)
@@ -1122,6 +1122,21 @@ public sealed class DslInterpreter
       {
         return $"{{ {expr.ToFullString()}; }}";
       }
+    }
+
+    // Handle method group reference: .ConfigureServices(ConfigureServices)
+    // where ConfigureServices is a method name (static or instance)
+    if (configureExpression is IdentifierNameSyntax identifier)
+    {
+      string methodName = identifier.Identifier.Text;
+      return $"{{ {methodName}(services); }}";
+    }
+
+    // Handle qualified method group: .ConfigureServices(Foo.ConfigureServices)
+    if (configureExpression is MemberAccessExpressionSyntax memberAccess)
+    {
+      string qualifiedName = memberAccess.ToFullString().Trim();
+      return $"{{ {qualifiedName}(services); }}";
     }
 
     return null;

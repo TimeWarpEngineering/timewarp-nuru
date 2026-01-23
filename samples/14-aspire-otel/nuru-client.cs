@@ -109,9 +109,10 @@ public sealed class StatusCommand : IQuery<Unit>
 /// <summary>
 /// Work command simulating async work - demonstrates trace spans in Aspire Dashboard.
 /// </summary>
-[NuruRoute("work {duration:int}", Description = "Simulate work with duration in ms")]
+[NuruRoute("work", Description = "Simulate work with duration in ms")]
 public sealed class WorkCommand : ICommand<Unit>
 {
+  [Parameter]
   public int Duration { get; set; }
 
   public sealed class Handler(ILogger<WorkCommand> logger) : ICommandHandler<WorkCommand, Unit>

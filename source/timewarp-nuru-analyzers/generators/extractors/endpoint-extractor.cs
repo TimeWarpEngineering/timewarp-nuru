@@ -27,8 +27,8 @@ internal static class EndpointExtractor
   /// <param name="classDeclaration">The class declaration with [NuruRoute].</param>
   /// <param name="semanticModel">Semantic model for type resolution.</param>
   /// <param name="cancellationToken">Cancellation token.</param>
-  /// <returns>The extracted route definition, or null if extraction fails.</returns>
-  public static RouteDefinition? Extract
+  /// <returns>An extraction result containing the route definition and any diagnostics.</returns>
+  public static EndpointExtractionResult Extract
   (
     ClassDeclarationSyntax classDeclaration,
     SemanticModel semanticModel,
@@ -36,9 +36,16 @@ internal static class EndpointExtractor
   )
   {
     // Find the [NuruRoute] attribute
-    (string? pattern, string? description) = ExtractNuruRouteAttribute(classDeclaration);
+    (string? pattern, string? description, Location attributeLocation) = ExtractNuruRouteAttribute(classDeclaration);
     if (pattern is null)
-      return null;
+      return EndpointExtractionResult.Empty;
+
+    // VALIDATE: Pattern must be empty string OR a single literal only
+    Diagnostic? patternDiagnostic = ValidateRoutePattern(pattern, attributeLocation);
+    if (patternDiagnostic is not null)
+    {
+      return EndpointExtractionResult.Failure(patternDiagnostic);
+    }
 
     // Get the group prefix from base class, if any
     string? groupPrefix = ExtractGroupPrefix(classDeclaration, semanticModel, cancellationToken);
@@ -49,8 +56,11 @@ internal static class EndpointExtractor
     // Extract parameters and options from properties
     ImmutableArray<SegmentDefinition> segments = ExtractSegmentsFromProperties(classDeclaration, semanticModel, cancellationToken);
 
-    // Parse the pattern to add any pattern-defined segments
-    ImmutableArray<SegmentDefinition> patternSegments = PatternStringExtractor.ExtractSegments(pattern);
+    // For validated patterns, we know they are either empty or single literal
+    // So we can safely use the pattern as-is (no need to parse for parameters/options)
+    ImmutableArray<SegmentDefinition> patternSegments = string.IsNullOrEmpty(pattern)
+      ? []
+      : [new LiteralDefinition(0, pattern)];
 
     // Merge segments (pattern segments first, then property segments that aren't duplicates)
     ImmutableArray<SegmentDefinition> mergedSegments = MergeSegments(patternSegments, segments);
@@ -60,7 +70,7 @@ internal static class EndpointExtractor
     if (handler is null)
     {
       // No nested Handler class found - skip this route
-      return null;
+      return EndpointExtractionResult.Empty;
     }
 
     // Extract filter interfaces (for behavior filtering)
@@ -70,7 +80,7 @@ internal static class EndpointExtractor
     // Calculate specificity
     int specificity = mergedSegments.Sum(s => s.SpecificityContribution);
 
-    return RouteDefinition.Create(
+    RouteDefinition route = RouteDefinition.Create(
       originalPattern: pattern,
       segments: mergedSegments,
       handler: handler,
@@ -79,12 +89,38 @@ internal static class EndpointExtractor
       groupPrefix: groupPrefix,
       computedSpecificity: specificity,
       implements: filterInterfaces);
+
+    return EndpointExtractionResult.Success(route);
   }
 
   /// <summary>
-  /// Extracts pattern and description from [NuruRoute] attribute.
+  /// Validates that a route pattern is a single literal identifier or empty string.
+  /// Returns a diagnostic if the pattern is invalid, null if valid.
   /// </summary>
-  private static (string? Pattern, string? Description) ExtractNuruRouteAttribute(ClassDeclarationSyntax classDeclaration)
+  private static Diagnostic? ValidateRoutePattern(string pattern, Location attributeLocation)
+  {
+    // Empty string is valid (root/default route)
+    if (string.IsNullOrEmpty(pattern))
+      return null;
+
+    // Parse the pattern to see what it contains
+    ImmutableArray<SegmentDefinition> segments = PatternStringExtractor.ExtractSegments(pattern);
+
+    // Valid: exactly one segment that is a literal
+    if (segments.Length == 1 && segments[0] is LiteralDefinition)
+      return null;
+
+    // Invalid: zero segments (shouldn't happen), multiple segments, or non-literal segment
+    return Diagnostic.Create(
+      DiagnosticDescriptors.InvalidNuruRoutePattern,
+      attributeLocation,
+      pattern);
+  }
+
+  /// <summary>
+  /// Extracts pattern, description, and location from [NuruRoute] attribute.
+  /// </summary>
+  private static (string? Pattern, string? Description, Location Location) ExtractNuruRouteAttribute(ClassDeclarationSyntax classDeclaration)
   {
     foreach (AttributeListSyntax attributeList in classDeclaration.AttributeLists)
     {
@@ -96,12 +132,13 @@ internal static class EndpointExtractor
 
         string? pattern = ExtractPositionalStringArgument(attribute, 0);
         string? description = ExtractNamedStringArgument(attribute, "Description");
+        Location location = attribute.GetLocation();
 
-        return (pattern, description);
+        return (pattern, description, location);
       }
     }
 
-    return (null, null);
+    return (null, null, Location.None);
   }
 
   /// <summary>

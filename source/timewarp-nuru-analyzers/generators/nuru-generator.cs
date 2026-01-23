@@ -41,18 +41,24 @@ public sealed class NuruGenerator : IIncrementalGenerator
         predicate: static (node, _) => BuildLocator.IsPotentialMatch(node),
         transform: static (ctx, ct) => AppExtractor.ExtractFromBuildCall(ctx, ct));
 
-    // 2. Locate endpoints ([NuruRoute] decorated classes) with locations
-    IncrementalValuesProvider<RouteWithLocation?> endpointsWithLocations = context.SyntaxProvider
+    // 2. Locate endpoints ([NuruRoute] decorated classes) with locations and diagnostics
+    IncrementalValuesProvider<EndpointWithLocationAndDiagnostics?> endpointsWithDiagnostics = context.SyntaxProvider
       .ForAttributeWithMetadataName(
         NuruRouteAttributeFullName,
         predicate: static (node, _) => node is ClassDeclarationSyntax,
         transform: static (ctx, ct) => ExtractEndpointWithLocation(ctx, ct))
-      .Where(static route => route is not null);
+      .Where(static result => result is not null);
 
     // 3. Collect endpoints into an array (extract just the RouteDefinition)
     IncrementalValueProvider<ImmutableArray<RouteDefinition?>> collectedEndpoints =
-      endpointsWithLocations
+      endpointsWithDiagnostics
         .Select(static (r, _) => r?.Route)
+        .Collect();
+
+    // 3b. Collect endpoint diagnostics
+    IncrementalValueProvider<ImmutableArray<Diagnostic>> endpointDiagnostics =
+      endpointsWithDiagnostics
+        .SelectMany(static (r, _) => r?.Diagnostics ?? [])
         .Collect();
 
     // 4. Collect fluent route locations from Map() calls
@@ -66,7 +72,7 @@ public sealed class NuruGenerator : IIncrementalGenerator
     IncrementalValueProvider<ImmutableDictionary<string, Location>> routeLocations =
       fluentRouteLocations
         .Collect()
-        .Combine(endpointsWithLocations.Collect())
+        .Combine(endpointsWithDiagnostics.Collect())
         .Select(static (data, _) =>
         {
           ImmutableDictionary<string, Location>.Builder builder =
@@ -80,10 +86,10 @@ public sealed class NuruGenerator : IIncrementalGenerator
           }
 
           // Add endpoint locations
-          foreach (RouteWithLocation? route in data.Right)
+          foreach (EndpointWithLocationAndDiagnostics? endpoint in data.Right)
           {
-            if (route is not null && !builder.ContainsKey(route.Pattern))
-              builder[route.Pattern] = route.Location;
+            if (endpoint?.Pattern is not null && !builder.ContainsKey(endpoint.Pattern))
+              builder[endpoint.Pattern] = endpoint.Location;
           }
 
           return builder.ToImmutable();
@@ -93,15 +99,17 @@ public sealed class NuruGenerator : IIncrementalGenerator
     IncrementalValueProvider<AssemblyMetadata> assemblyMetadata = context.CompilationProvider
       .Select(static (compilation, _) => AssemblyMetadataExtractor.Extract(compilation));
 
-    // 7. Combine extraction results with endpoints, locations, and assembly metadata into GeneratorModel
+    // 7. Combine extraction results with endpoints, locations, endpoint diagnostics, and assembly metadata into GeneratorModel
     // Using buildExtractionResults ensures each Build() produces exactly one app - no duplicates
     IncrementalValueProvider<GeneratorModelWithDiagnostics?> generatorModelWithDiagnostics = buildExtractionResults
       .Collect()
       .Combine(collectedEndpoints)
       .Combine(routeLocations)
+      .Combine(endpointDiagnostics)
       .Combine(assemblyMetadata)
       .Select(static (data, ct) => CreateGeneratorModelWithValidation(
-        data.Left.Left.Left,
+        data.Left.Left.Left.Left,
+        data.Left.Left.Left.Right,
         data.Left.Left.Right,
         data.Left.Right,
         data.Right,
@@ -225,8 +233,9 @@ public sealed class NuruGenerator : IIncrementalGenerator
 
   /// <summary>
   /// Extracts a RouteDefinition and location from a class with [NuruRoute] attribute.
+  /// Also captures any diagnostics from the extraction process.
   /// </summary>
-  private static RouteWithLocation? ExtractEndpointWithLocation
+  private static EndpointWithLocationAndDiagnostics? ExtractEndpointWithLocation
   (
     GeneratorAttributeSyntaxContext context,
     CancellationToken cancellationToken
@@ -235,13 +244,10 @@ public sealed class NuruGenerator : IIncrementalGenerator
     if (context.TargetNode is not ClassDeclarationSyntax classDeclaration)
       return null;
 
-    RouteDefinition? route = EndpointExtractor.Extract(
+    EndpointExtractionResult result = EndpointExtractor.Extract(
       classDeclaration,
       context.SemanticModel,
       cancellationToken);
-
-    if (route is null)
-      return null;
 
     // Get location from the [NuruRoute] attribute
     Location location = Location.None;
@@ -267,9 +273,27 @@ public sealed class NuruGenerator : IIncrementalGenerator
         break;
     }
 
+    // If extraction failed with diagnostics but no route, still return the diagnostics
+    if (result.Route is null && result.HasDiagnostics)
+    {
+      return new EndpointWithLocationAndDiagnostics(
+        Pattern: null,
+        Location: location,
+        Route: null,
+        Diagnostics: result.Diagnostics);
+    }
+
+    // If extraction failed with no route and no diagnostics (e.g., missing Handler), skip
+    if (result.Route is null)
+      return null;
+
     // Use EffectivePattern for endpoints to avoid collisions
     // (OriginalPattern is just the attribute string, EffectivePattern includes all segments)
-    return new RouteWithLocation(route.EffectivePattern, location, route);
+    return new EndpointWithLocationAndDiagnostics(
+      result.Route.EffectivePattern,
+      location,
+      result.Route,
+      result.Diagnostics);
   }
 
   /// <summary>
@@ -281,6 +305,7 @@ public sealed class NuruGenerator : IIncrementalGenerator
     ImmutableArray<ExtractionResult> extractionResults,
     ImmutableArray<RouteDefinition?> endpoints,
     ImmutableDictionary<string, Location> routeLocations,
+    ImmutableArray<Diagnostic> endpointDiagnostics,
     AssemblyMetadata assemblyMetadata,
     CancellationToken cancellationToken
   )
@@ -294,6 +319,9 @@ public sealed class NuruGenerator : IIncrementalGenerator
     {
       allDiagnostics.AddRange(result.Diagnostics);
     }
+
+    // Collect endpoint extraction diagnostics (e.g., NURU_A001 for invalid patterns)
+    allDiagnostics.AddRange(endpointDiagnostics);
 
     // Deduplicate by BuildLocation - each Build() call is one unique app
     // BuildLocation is the source location of the Build() call, which uniquely identifies the app
@@ -428,6 +456,16 @@ public sealed class NuruGenerator : IIncrementalGenerator
   /// Optionally includes the RouteDefinition for endpoints.
   /// </summary>
   private sealed record RouteWithLocation(string Pattern, Location Location, RouteDefinition? Route);
+
+  /// <summary>
+  /// Endpoint extraction result with location and diagnostics.
+  /// Used to collect both routes and their extraction diagnostics.
+  /// </summary>
+  private sealed record EndpointWithLocationAndDiagnostics(
+    string? Pattern,
+    Location Location,
+    RouteDefinition? Route,
+    ImmutableArray<Diagnostic> Diagnostics);
 
   /// <summary>
   /// Generator model with collected diagnostics from extraction and validation.

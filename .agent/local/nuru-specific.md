@@ -21,6 +21,14 @@ Key components:
 /samples/                       # Example implementations
 /runfiles/                      # Build and utility runfiles
 /kanban/                        # Task tracking
+/artifacts/generated/{ProjectName}/  # Generated files
+```
+
+### Test Commands
+
+```bash
+dotnet run tests/ci-tests/run-ci-tests.cs                              # CI tests (~500 tests)
+dotnet run tests/timewarp-nuru-core-tests/routing/routing-01-basic.cs  # Single test file
 ```
 
 ### Route Pattern Support

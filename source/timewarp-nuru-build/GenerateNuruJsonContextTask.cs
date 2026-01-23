@@ -258,9 +258,10 @@ public class GenerateNuruJsonContextTask : Task
       try
       {
         // Use EndpointExtractor to get the full RouteDefinition
-        RouteDefinition? route = EndpointExtractor.Extract(classDecl, semanticModel, cancellationToken);
-        if (route is not null)
+        EndpointExtractionResult result = EndpointExtractor.Extract(classDecl, semanticModel, cancellationToken);
+        if (result.Route is not null)
         {
+          RouteDefinition route = result.Route;
           string? returnTypeName = GetReturnTypeName(route.Handler.ReturnType);
           if (!string.IsNullOrEmpty(returnTypeName) && ShouldSerializeAsJson(returnTypeName))
           {

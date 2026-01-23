@@ -97,7 +97,7 @@ internal sealed class GetExampleTool
     Dictionary<string, ExampleInfo> examples = await GetExamplesAsync(false);
     return "Available TimeWarp.Nuru examples:\n\n" +
            string.Join("\n", examples.Select(kvp =>
-               $"**{kvp.Key}**\n  {kvp.Value.Description}\n  File: {kvp.Value.Path}\n"));
+               $"**{kvp.Key}**\n  {kvp.Value.Description}\n  File: {GetGitHubFileUrl(kvp.Value.Path)}\n  Folder: {GetGitHubFolderUrl(kvp.Value.Path)}\n"));
   }
 
   private static async Task<string> FetchFromGitHubAsync(string path)
@@ -166,7 +166,44 @@ internal sealed class GetExampleTool
 
   private static string FormatExample(string fileName, string description, string path, string content)
   {
-    return $"// {fileName}\n// {description}\n// Path: {path}\n\n{content}";
+    string fileUrl = GetGitHubFileUrl(path);
+    string folderUrl = GetGitHubFolderUrl(path);
+
+    return $"""
+            // {fileName}
+            // {description}
+            //
+            // File: {fileUrl}
+            // Folder: {folderUrl}
+
+            {content}
+            """;
+  }
+
+  /// <summary>
+  /// Gets the GitHub URL for viewing a specific file.
+  /// </summary>
+  private static string GetGitHubFileUrl(string path)
+  {
+    return $"https://github.com/TimeWarpEngineering/timewarp-nuru/blob/master/{path}";
+  }
+
+  /// <summary>
+  /// Gets the GitHub URL for browsing the containing folder.
+  /// This allows users to explore related files in folder-based samples.
+  /// </summary>
+  private static string GetGitHubFolderUrl(string path)
+  {
+    // Get the directory containing the file
+    string? directory = Path.GetDirectoryName(path);
+    if (string.IsNullOrEmpty(directory))
+    {
+      return "https://github.com/TimeWarpEngineering/timewarp-nuru/tree/master/samples";
+    }
+
+    // Normalize path separators for URL
+    directory = directory.Replace('\\', '/');
+    return $"https://github.com/TimeWarpEngineering/timewarp-nuru/tree/master/{directory}";
   }
 
   private static async Task<Dictionary<string, ExampleInfo>> GetExamplesAsync(bool forceRefresh)

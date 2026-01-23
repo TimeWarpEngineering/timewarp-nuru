@@ -2,7 +2,8 @@
   "$schema": "https://opencode.ai/config.json",
   // Only the index is always-loaded. Detailed files are lazy-loaded via Read tool.
   "instructions": [
-    ".agent/AGENTS.md"
+    ".agent/AGENTS.md",
+    ".agent/local/nuru-specific.md"
   ],
   "mcp": {
     "aspire-dashboard": {

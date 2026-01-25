@@ -743,9 +743,31 @@ internal static class EndpointExtractor
   /// <summary>
   /// Gets a type constraint string from a CLR type name.
   /// Handles both C# keyword aliases (e.g., "double") and fully qualified names (e.g., "global::System.Double").
+  /// Also handles nullable value types (e.g., "int?", "long?").
   /// </summary>
   private static string? GetTypeConstraintFromClrType(string clrTypeName)
   {
+    // Handle nullable value types (e.g., "int?", "long?")
+    if (clrTypeName.EndsWith('?'))
+    {
+      string baseType = clrTypeName[..^1];
+      string? baseConstraint = GetTypeConstraintFromClrType(baseType);
+      return baseConstraint is not null ? $"{baseConstraint}?" : null;
+    }
+
+    // Handle Nullable<T> generic syntax (e.g., "global::System.Nullable<global::System.Int64>")
+    if (clrTypeName.Contains("System.Nullable<", StringComparison.Ordinal))
+    {
+      int start = clrTypeName.IndexOf('<', StringComparison.Ordinal) + 1;
+      int end = clrTypeName.LastIndexOf('>');
+      if (start > 0 && end > start)
+      {
+        string innerType = clrTypeName[start..end];
+        string? baseConstraint = GetTypeConstraintFromClrType(innerType);
+        return baseConstraint is not null ? $"{baseConstraint}?" : null;
+      }
+    }
+
     return clrTypeName switch
     {
       // C# keyword aliases (returned by SymbolDisplayFormat.FullyQualifiedFormat for built-in types)

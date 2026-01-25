@@ -1115,32 +1115,55 @@ internal static class RouteMatcherEmitter
     string optionDisplay = option.LongForm is not null ? $"--{option.LongForm}" : $"-{option.ShortForm}";
 
     // Use shared type conversion mapping with TryParse for graceful error handling
+    bool isNullableValueType = typeConstraint.EndsWith('?');
     (string ClrType, string TryParseCondition)? conversion = TypeConversionMap.GetBuiltInTryConversion(baseType, rawVarName, varName);
 
     if (conversion is var (clrType, tryParseCondition))
     {
-      // Determine the default value to use
-      string defaultValue = option.DefaultValueLiteral ?? "default";
-
-      if (option.ParameterIsOptional || option.DefaultValueLiteral is not null)
+      // Handle nullable value types (long?, int?, etc.) - declare as nullable and only parse if value provided
+      if (isNullableValueType)
       {
-        // Optional option value OR has default: declare with default, error only if value provided but invalid
-        sb.AppendLine($"      {clrType} {varName} = {defaultValue};");
-        sb.AppendLine($"      if ({rawVarName} is not null && !{tryParseCondition})");
+        string tempVarName = $"__{varName}_parsed_{routeIndex}";
+        sb.AppendLine($"      {clrType}? {varName} = null;");
+        sb.AppendLine($"      if ({rawVarName} is not null)");
         sb.AppendLine("      {");
-        sb.AppendLine($"        app.Terminal.WriteLine($\"Error: Invalid value '{{{rawVarName}}}' for option '{optionDisplay}'. Expected: {baseType}\");");
-        sb.AppendLine("        return 1;");
+        sb.AppendLine($"        if ({tryParseCondition.Replace($"out {varName}", $"out {clrType} {tempVarName}", StringComparison.Ordinal)})");
+        sb.AppendLine("        {");
+        sb.AppendLine($"          {varName} = {tempVarName};");
+        sb.AppendLine("        }");
+        sb.AppendLine("        else");
+        sb.AppendLine("        {");
+        sb.AppendLine($"          app.Terminal.WriteLine($\"Error: Invalid value '{{{rawVarName}}}' for option '{optionDisplay}'. Expected: {baseType}\");");
+        sb.AppendLine("          return 1;");
+        sb.AppendLine("        }");
         sb.AppendLine("      }");
       }
       else
       {
-        // Required option value (no default): TryParse with error message on failure
-        sb.AppendLine($"      {clrType} {varName} = default;");
-        sb.AppendLine($"      if ({rawVarName} is null || !{tryParseCondition})");
-        sb.AppendLine("      {");
-        sb.AppendLine($"        app.Terminal.WriteLine($\"Error: Invalid value '{{{rawVarName} ?? \"(missing)\"}}' for option '{optionDisplay}'. Expected: {baseType}\");");
-        sb.AppendLine("        return 1;");
-        sb.AppendLine("      }");
+        // Non-nullable value types - existing logic
+        // Determine the default value to use
+        string defaultValue = option.DefaultValueLiteral ?? "default";
+
+        if (option.ParameterIsOptional || option.DefaultValueLiteral is not null)
+        {
+          // Optional option value OR has default: declare with default, error only if value provided but invalid
+          sb.AppendLine($"      {clrType} {varName} = {defaultValue};");
+          sb.AppendLine($"      if ({rawVarName} is not null && !{tryParseCondition})");
+          sb.AppendLine("      {");
+          sb.AppendLine($"        app.Terminal.WriteLine($\"Error: Invalid value '{{{rawVarName}}}' for option '{optionDisplay}'. Expected: {baseType}\");");
+          sb.AppendLine("        return 1;");
+          sb.AppendLine("      }");
+        }
+        else
+        {
+          // Required option value (no default): TryParse with error message on failure
+          sb.AppendLine($"      {clrType} {varName} = default;");
+          sb.AppendLine($"      if ({rawVarName} is null || !{tryParseCondition})");
+          sb.AppendLine("      {");
+          sb.AppendLine($"        app.Terminal.WriteLine($\"Error: Invalid value '{{{rawVarName} ?? \"(missing)\"}}' for option '{optionDisplay}'. Expected: {baseType}\");");
+          sb.AppendLine("        return 1;");
+          sb.AppendLine("      }");
+        }
       }
     }
     else

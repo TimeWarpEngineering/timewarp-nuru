@@ -1190,7 +1190,8 @@ internal static class RouteMatcherEmitter
         }
         else
         {
-          sb.AppendLine($"      if ({rawVarName} is not null && (!global::System.Uri.TryCreate({rawVarName}, global::System.UriKind.RelativeOrAbsolute, out global::System.Uri? {varName}) || {varName} is null))");
+          sb.AppendLine($"      global::System.Uri? {varName} = null;");
+          sb.AppendLine($"      if ({rawVarName} is not null && !global::System.Uri.TryCreate({rawVarName}, global::System.UriKind.RelativeOrAbsolute, out {varName}))");
           sb.AppendLine("      {");
           sb.AppendLine($"        app.Terminal.WriteLine($\"Error: Invalid value '{{{rawVarName}}}' for option '{optionDisplay}'. Expected: Uri\");");
           sb.AppendLine("        return 1;");
@@ -1358,12 +1359,13 @@ internal static class RouteMatcherEmitter
     {
       // Required option: direct conversion with error handling
       sb.AppendLine($"      var {converterVarName} = new {converter.ConverterTypeName}();");
-      sb.AppendLine($"      if ({rawVarName} is not null && !{converterVarName}.TryConvert({rawVarName}, out object? {tempVarName}))");
+      sb.AppendLine($"      object? {tempVarName} = null;");
+      sb.AppendLine($"      if ({rawVarName} is not null && !{converterVarName}.TryConvert({rawVarName}, out {tempVarName}))");
       sb.AppendLine("      {");
       sb.AppendLine($"        app.Terminal.WriteLine($\"Error: Invalid {targetType} value for option '{option.LongForm ?? option.ShortForm}': '{{{rawVarName}}}'\");");
       sb.AppendLine("        return 1;");
       sb.AppendLine("      }");
-      sb.AppendLine($"      {targetType} {varName} = ({targetType}){tempVarName}!;");
+      sb.AppendLine($"      {targetType} {varName} = {tempVarName} is not null ? ({targetType}){tempVarName} : default;");
     }
   }
 
@@ -1406,12 +1408,13 @@ internal static class RouteMatcherEmitter
     {
       // Required option: direct conversion with error handling
       sb.AppendLine($"      var {converterVarName} = new global::TimeWarp.Nuru.EnumTypeConverter<{baseEnumType}>();");
-      sb.AppendLine($"      if ({rawVarName} is not null && !{converterVarName}.TryConvert({rawVarName}, out object? {tempVarName}))");
+      sb.AppendLine($"      object? {tempVarName} = null;");
+      sb.AppendLine($"      if ({rawVarName} is not null && !{converterVarName}.TryConvert({rawVarName}, out {tempVarName}))");
       sb.AppendLine("      {");
       sb.AppendLine($"        app.Terminal.WriteLine($\"Error: Invalid value '{{{rawVarName}}}' for option '{optionDisplay}'. {{{converterVarName}.GetValidValuesMessage()}}\");");
       sb.AppendLine("        return 1;");
       sb.AppendLine("      }");
-      sb.AppendLine($"      {baseEnumType} {varName} = ({baseEnumType}){tempVarName}!;");
+      sb.AppendLine($"      {baseEnumType} {varName} = {tempVarName} is not null ? ({baseEnumType}){tempVarName} : default;");
     }
   }
 

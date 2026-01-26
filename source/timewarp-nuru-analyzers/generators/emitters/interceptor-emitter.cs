@@ -378,10 +378,10 @@ internal static class InterceptorEmitter
       // Emit static __ConfigureServices method if lambda body is available
       if (!string.IsNullOrEmpty(lambdaBody))
       {
-        sb.AppendLine($"  /// <summary>");
+        sb.AppendLine("  /// <summary>");
         sb.AppendLine($"  /// User's ConfigureServices delegate for app {appIndex}, invoked at runtime.");
-        sb.AppendLine($"  /// This preserves extension method calls (AddLogging, AddDbContext, etc.).");
-        sb.AppendLine($"  /// </summary>");
+        sb.AppendLine("  /// This preserves extension method calls (AddLogging, AddDbContext, etc.).");
+        sb.AppendLine("  /// </summary>");
         sb.AppendLine($"  private static void __ConfigureServices{suffix}(global::Microsoft.Extensions.DependencyInjection.IServiceCollection services)");
         sb.AppendLine($"  {lambdaBody}");
         sb.AppendLine();

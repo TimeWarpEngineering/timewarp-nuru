@@ -82,3 +82,30 @@ Commands with optional options will correctly skip to next route candidate when 
 
 ### Impact
 This bug breaks routing for any command following a route with optional int options, making the CLI unusable in affected scenarios.
+
+## Results
+
+### What was implemented
+Fixed the source generator bug where optional `int` options (and other typed options) caused routing failures instead of skipping to next route candidate when not provided. The fix removes null validation checks for optional options across all affected type families.
+
+### Files changed
+- **File**: `source/timewarp-nuru-analyzers/generators/emitters/route-matcher-emitter.cs`
+- **Lines modified**: 1161, 1193, 1361, 1409
+
+### Key decisions made
+- **Minimal approach**: Removed `|| {rawVarName} is null` conditions rather than adding new logic
+- **Rely on existing route skipping**: Used existing logic (lines 470-482) to handle optional flag not found scenarios
+- **Comprehensive fix**: Applied to all typed options (numeric types, Uri, custom converters, enum converters)
+- **Better UX**: Route skips instead of erroring when optional option not provided
+
+### Test outcomes
+✅ **All tests passing**:
+- `routing-23-uri-fileinfo-directoryinfo.cs` - 18/18 tests passed
+- `routing-24-enum-option-parameters.cs` - 10/10 tests passed  
+- `routing-05-option-matching.cs` - 31/31 tests passed
+- `routing-25-nullable-value-type-options.cs` - 10/10 tests passed
+- `options-02-optional-flag-optional-value.cs` - 3/3 tests passed
+- CI tests - all optional/nullable tests passing
+
+### Verification
+The fix resolves the GitHub issue #152 where commands like `ganda repo setup --dry-run` would fail with "Invalid value '(missing)' for option '--days'" when a prior route had an optional int option. Now commands correctly skip routes where optional options aren't provided and match the appropriate route.

@@ -1158,7 +1158,7 @@ internal static class RouteMatcherEmitter
         {
           // Required option value (no default): TryParse with error message on failure
           sb.AppendLine($"      {clrType} {varName} = default;");
-          sb.AppendLine($"      if ({rawVarName} is null || !{tryParseCondition})");
+          sb.AppendLine($"      if (!{tryParseCondition})");
           sb.AppendLine("      {");
           sb.AppendLine($"        app.Terminal.WriteLine($\"Error: Invalid value '{{{rawVarName} ?? \"(missing)\"}}' for option '{optionDisplay}'. Expected: {baseType}\");");
           sb.AppendLine("        return 1;");
@@ -1190,7 +1190,7 @@ internal static class RouteMatcherEmitter
         }
         else
         {
-          sb.AppendLine($"      if ({rawVarName} is null || !global::System.Uri.TryCreate({rawVarName}, global::System.UriKind.RelativeOrAbsolute, out global::System.Uri? {varName}) || {varName} is null)");
+          sb.AppendLine($"      if (!global::System.Uri.TryCreate({rawVarName}, global::System.UriKind.RelativeOrAbsolute, out global::System.Uri? {varName}) || {varName} is null)");
           sb.AppendLine("      {");
           sb.AppendLine($"        app.Terminal.WriteLine($\"Error: Invalid value '{{{rawVarName} ?? \"(missing)\"}}' for option '{optionDisplay}'. Expected: Uri\");");
           sb.AppendLine("        return 1;");
@@ -1358,7 +1358,7 @@ internal static class RouteMatcherEmitter
     {
       // Required option: direct conversion with error handling
       sb.AppendLine($"      var {converterVarName} = new {converter.ConverterTypeName}();");
-      sb.AppendLine($"      if ({rawVarName} is null || !{converterVarName}.TryConvert({rawVarName}, out object? {tempVarName}))");
+      sb.AppendLine($"      if (!{converterVarName}.TryConvert({rawVarName}, out object? {tempVarName}))");
       sb.AppendLine("      {");
       sb.AppendLine($"        app.Terminal.WriteLine($\"Error: Invalid {targetType} value for option '{option.LongForm ?? option.ShortForm}': '{{{rawVarName}}}'\");");
       sb.AppendLine("        return 1;");
@@ -1406,7 +1406,7 @@ internal static class RouteMatcherEmitter
     {
       // Required option: direct conversion with error handling
       sb.AppendLine($"      var {converterVarName} = new global::TimeWarp.Nuru.EnumTypeConverter<{baseEnumType}>();");
-      sb.AppendLine($"      if ({rawVarName} is null || !{converterVarName}.TryConvert({rawVarName}, out object? {tempVarName}))");
+      sb.AppendLine($"      if (!{converterVarName}.TryConvert({rawVarName}, out object? {tempVarName}))");
       sb.AppendLine("      {");
       sb.AppendLine($"        app.Terminal.WriteLine($\"Error: Invalid value '{{{rawVarName} ?? \"(missing)\"}}' for option '{optionDisplay}'. {{{converterVarName}.GetValidValuesMessage()}}\");");
       sb.AppendLine("        return 1;");

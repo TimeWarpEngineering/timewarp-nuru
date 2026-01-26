@@ -1190,7 +1190,8 @@ internal static class RouteMatcherEmitter
         }
         else
         {
-          sb.AppendLine($"      if ({rawVarName} is not null && (!global::System.Uri.TryCreate({rawVarName}, global::System.UriKind.RelativeOrAbsolute, out global::System.Uri? {varName}) || {varName} is null))");
+          sb.AppendLine($"      global::System.Uri? {varName} = null;");
+          sb.AppendLine($"      if ({rawVarName} is not null && !global::System.Uri.TryCreate({rawVarName}, global::System.UriKind.RelativeOrAbsolute, out {varName}))");
           sb.AppendLine("      {");
           sb.AppendLine($"        app.Terminal.WriteLine($\"Error: Invalid value '{{{rawVarName}}}' for option '{optionDisplay}'. Expected: Uri\");");
           sb.AppendLine("        return 1;");

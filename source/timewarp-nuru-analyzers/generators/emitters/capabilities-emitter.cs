@@ -1,5 +1,6 @@
 // Emits capabilities JSON generation code for AI tool discovery.
 // Generates the PrintCapabilities method for --capabilities flag handling.
+// Outputs hierarchical JSON with groups containing nested groups and commands.
 
 namespace TimeWarp.Nuru.Generators;
 
@@ -8,6 +9,8 @@ using System.Text;
 /// <summary>
 /// Emits code to generate JSON capabilities for AI tools.
 /// Creates the PrintCapabilities method that outputs structured command information.
+/// Commands are organized hierarchically: grouped commands appear only within their group,
+/// ungrouped commands appear at the top level.
 /// </summary>
 internal static class CapabilitiesEmitter
 {
@@ -27,7 +30,18 @@ internal static class CapabilitiesEmitter
     sb.AppendLine("    {");
 
     EmitMetadata(sb, model);
-    EmitCommands(sb, model);
+
+    // Build group hierarchy from routes
+    GroupHierarchyResult hierarchy = GroupHierarchyBuilder.BuildHierarchy(model.Routes);
+
+    // Emit groups if any exist
+    if (hierarchy.RootGroups.Count > 0)
+    {
+      EmitGroups(sb, hierarchy.RootGroups, indent: 6, isLastProperty: hierarchy.UngroupedRoutes.Count == 0);
+    }
+
+    // Emit ungrouped commands at top level
+    EmitUngroupedCommands(sb, hierarchy.UngroupedRoutes);
 
     sb.AppendLine("    }");
     sb.AppendLine("    \"\"\");");
@@ -75,18 +89,90 @@ internal static class CapabilitiesEmitter
   }
 
   /// <summary>
-  /// Emits the commands array of the capabilities JSON.
+  /// Emits the groups array with nested groups and commands.
   /// </summary>
-  private static void EmitCommands(StringBuilder sb, AppModel model)
+  private static void EmitGroups(StringBuilder sb, IReadOnlyList<GroupNode> groups, int indent, bool isLastProperty)
   {
-    sb.AppendLine("      \"commands\": [");
+    string indentStr = new(' ', indent);
+    sb.AppendLine($"{indentStr}\"groups\": [");
 
-    IReadOnlyList<RouteDefinition> routes = [.. model.Routes];
+    for (int i = 0; i < groups.Count; i++)
+    {
+      GroupNode group = groups[i];
+      bool isLast = i == groups.Count - 1;
+      EmitGroupEntry(sb, group, indent + 2, isLast);
+    }
+
+    string comma = isLastProperty ? "" : ",";
+    sb.AppendLine($"{indentStr}]{comma}");
+  }
+
+  /// <summary>
+  /// Emits a single group entry with its nested groups and commands.
+  /// </summary>
+  private static void EmitGroupEntry(StringBuilder sb, GroupNode group, int indent, bool isLast)
+  {
+    string indentStr = new(' ', indent);
+    sb.AppendLine($"{indentStr}{{");
+
+    // Group name
+    sb.AppendLine($"{indentStr}  \"name\": \"{EscapeJsonString(group.Name)}\",");
+
+    // Nested groups (if any)
+    bool hasNestedGroups = group.Children.Count > 0;
+    bool hasCommands = group.Routes.Count > 0;
+
+    if (hasNestedGroups)
+    {
+      EmitGroups(sb, group.Children, indent + 2, isLastProperty: !hasCommands);
+    }
+
+    // Commands in this group
+    if (hasCommands)
+    {
+      EmitGroupCommands(sb, group.Routes, indent + 2);
+    }
+
+    // If no nested groups and no commands, emit empty commands array for valid JSON
+    if (!hasNestedGroups && !hasCommands)
+    {
+      sb.AppendLine($"{indentStr}  \"commands\": []");
+    }
+
+    string comma = isLast ? "" : ",";
+    sb.AppendLine($"{indentStr}}}{comma}");
+  }
+
+  /// <summary>
+  /// Emits commands within a group.
+  /// </summary>
+  private static void EmitGroupCommands(StringBuilder sb, List<RouteDefinition> routes, int indent)
+  {
+    string indentStr = new(' ', indent);
+    sb.AppendLine($"{indentStr}\"commands\": [");
+
     for (int i = 0; i < routes.Count; i++)
     {
       RouteDefinition route = routes[i];
       bool isLast = i == routes.Count - 1;
-      EmitCommandEntry(sb, route, isLast);
+      EmitCommandEntry(sb, route, indent + 2, isLast);
+    }
+
+    sb.AppendLine($"{indentStr}]");
+  }
+
+  /// <summary>
+  /// Emits ungrouped commands at the top level.
+  /// </summary>
+  private static void EmitUngroupedCommands(StringBuilder sb, IReadOnlyList<RouteDefinition> routes)
+  {
+    sb.AppendLine("      \"commands\": [");
+
+    for (int i = 0; i < routes.Count; i++)
+    {
+      RouteDefinition route = routes[i];
+      bool isLast = i == routes.Count - 1;
+      EmitCommandEntry(sb, route, indent: 8, isLast);
     }
 
     sb.AppendLine("      ]");
@@ -95,57 +181,60 @@ internal static class CapabilitiesEmitter
   /// <summary>
   /// Emits a single command entry in the capabilities JSON.
   /// </summary>
-  private static void EmitCommandEntry(StringBuilder sb, RouteDefinition route, bool isLast)
+  private static void EmitCommandEntry(StringBuilder sb, RouteDefinition route, int indent, bool isLast)
   {
-    sb.AppendLine("        {");
+    string indentStr = new(' ', indent);
+    string propIndent = new(' ', indent + 2);
+
+    sb.AppendLine($"{indentStr}{{");
 
     // Pattern
     string pattern = EscapeJsonString(route.FullPattern);
-    sb.AppendLine($"          \"pattern\": \"{pattern}\",");
+    sb.AppendLine($"{propIndent}\"pattern\": \"{pattern}\",");
 
     // Description
     if (route.Description is not null)
     {
       string description = EscapeJsonString(route.Description);
-      sb.AppendLine($"          \"description\": \"{description}\",");
+      sb.AppendLine($"{propIndent}\"description\": \"{description}\",");
     }
 
     // Message type (maps to AI safety level) - convert to kebab-case
     string messageType = ToKebabCase(route.MessageType);
-    sb.AppendLine($"          \"messageType\": \"{messageType}\",");
+    sb.AppendLine($"{propIndent}\"messageType\": \"{messageType}\",");
 
     // Parameters
     if (route.Parameters.Any())
     {
-      EmitParameters(sb, route);
+      EmitParameters(sb, route, indent + 2);
     }
 
     // Options
     if (route.Options.Any())
     {
-      EmitOptions(sb, route);
+      EmitOptions(sb, route, indent + 2);
     }
 
     // Aliases
     if (route.Aliases.Length > 0)
     {
-      EmitAliases(sb, route);
+      EmitAliases(sb, route, indent + 2);
     }
 
-    // Remove trailing comma from last property (type is always last if no params/options/aliases)
-    // We handle this by always ending with type which has no trailing comma logic needed
-    // Actually let's make "type" always the last non-array property
-
     string comma = isLast ? "" : ",";
-    sb.AppendLine($"        }}{comma}");
+    sb.AppendLine($"{indentStr}}}{comma}");
   }
 
   /// <summary>
   /// Emits the parameters array for a command.
   /// </summary>
-  private static void EmitParameters(StringBuilder sb, RouteDefinition route)
+  private static void EmitParameters(StringBuilder sb, RouteDefinition route, int indent)
   {
-    sb.AppendLine("          \"parameters\": [");
+    string indentStr = new(' ', indent);
+    string itemIndent = new(' ', indent + 2);
+    string propIndent = new(' ', indent + 4);
+
+    sb.AppendLine($"{indentStr}\"parameters\": [");
 
     IReadOnlyList<ParameterDefinition> parameters = [.. route.Parameters];
     for (int i = 0; i < parameters.Count; i++)
@@ -154,40 +243,40 @@ internal static class CapabilitiesEmitter
       bool isLast = i == parameters.Count - 1;
       string comma = isLast ? "" : ",";
 
-      sb.AppendLine("            {");
-      sb.AppendLine(
-        $"              \"name\": \"{EscapeJsonString(param.Name)}\",");
+      sb.AppendLine($"{itemIndent}{{");
+      sb.AppendLine($"{propIndent}\"name\": \"{EscapeJsonString(param.Name)}\",");
 
       if (param.Description is not null)
       {
-        sb.AppendLine(
-          $"              \"description\": \"{EscapeJsonString(param.Description)}\",");
+        sb.AppendLine($"{propIndent}\"description\": \"{EscapeJsonString(param.Description)}\",");
       }
 
-      sb.AppendLine(
-        $"              \"required\": {(param.IsOptional ? "false" : "true")},");
+      sb.AppendLine($"{propIndent}\"required\": {(param.IsOptional ? "false" : "true")},");
 
       if (param.IsCatchAll)
       {
-        sb.AppendLine("              \"catchAll\": true,");
+        sb.AppendLine($"{propIndent}\"catchAll\": true,");
       }
 
       string typeConstraint = param.TypeConstraint ?? "string";
-      sb.AppendLine(
-        $"              \"type\": \"{EscapeJsonString(typeConstraint)}\"");
+      sb.AppendLine($"{propIndent}\"type\": \"{EscapeJsonString(typeConstraint)}\"");
 
-      sb.AppendLine($"            }}{comma}");
+      sb.AppendLine($"{itemIndent}}}{comma}");
     }
 
-    sb.AppendLine("          ],");
+    sb.AppendLine($"{indentStr}],");
   }
 
   /// <summary>
   /// Emits the options array for a command.
   /// </summary>
-  private static void EmitOptions(StringBuilder sb, RouteDefinition route)
+  private static void EmitOptions(StringBuilder sb, RouteDefinition route, int indent)
   {
-    sb.AppendLine("          \"options\": [");
+    string indentStr = new(' ', indent);
+    string itemIndent = new(' ', indent + 2);
+    string propIndent = new(' ', indent + 4);
+
+    sb.AppendLine($"{indentStr}\"options\": [");
 
     IReadOnlyList<OptionDefinition> options = [.. route.Options];
     for (int i = 0; i < options.Count; i++)
@@ -196,43 +285,39 @@ internal static class CapabilitiesEmitter
       bool isLast = i == options.Count - 1;
       string comma = isLast ? "" : ",";
 
-      sb.AppendLine("            {");
+      sb.AppendLine($"{itemIndent}{{");
 
       if (option.LongForm is not null)
       {
-        sb.AppendLine(
-          $"              \"name\": \"{EscapeJsonString(option.LongForm)}\",");
+        sb.AppendLine($"{propIndent}\"name\": \"{EscapeJsonString(option.LongForm)}\",");
       }
 
       if (option.ShortForm is not null)
       {
-        sb.AppendLine(
-          $"              \"alias\": \"{EscapeJsonString(option.ShortForm)}\",");
+        sb.AppendLine($"{propIndent}\"alias\": \"{EscapeJsonString(option.ShortForm)}\",");
       }
 
       if (option.Description is not null)
       {
-        sb.AppendLine(
-          $"              \"description\": \"{EscapeJsonString(option.Description)}\",");
+        sb.AppendLine($"{propIndent}\"description\": \"{EscapeJsonString(option.Description)}\",");
       }
 
-      sb.AppendLine(
-        $"              \"required\": {(option.IsOptional ? "false" : "true")},");
-      sb.AppendLine(
-        $"              \"isFlag\": {(option.IsFlag ? "true" : "false")}");
+      sb.AppendLine($"{propIndent}\"required\": {(option.IsOptional ? "false" : "true")},");
+      sb.AppendLine($"{propIndent}\"isFlag\": {(option.IsFlag ? "true" : "false")}");
 
-      sb.AppendLine($"            }}{comma}");
+      sb.AppendLine($"{itemIndent}}}{comma}");
     }
 
-    sb.AppendLine("          ],");
+    sb.AppendLine($"{indentStr}],");
   }
 
   /// <summary>
   /// Emits the aliases array for a command.
   /// </summary>
-  private static void EmitAliases(StringBuilder sb, RouteDefinition route)
+  private static void EmitAliases(StringBuilder sb, RouteDefinition route, int indent)
   {
-    sb.Append("          \"aliases\": [");
+    string indentStr = new(' ', indent);
+    sb.Append($"{indentStr}\"aliases\": [");
 
     IReadOnlyList<string> aliases = [.. route.Aliases];
     for (int i = 0; i < aliases.Count; i++)

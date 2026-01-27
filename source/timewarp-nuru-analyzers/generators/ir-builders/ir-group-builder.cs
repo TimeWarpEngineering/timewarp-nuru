@@ -42,7 +42,7 @@ public sealed class IrGroupBuilder<TParent> : IIrGroupBuilder
   {
     string fullPattern = $"{AccumulatedPrefix} {pattern}";
     ImmutableArray<SegmentDefinition> segments = PatternStringExtractor.ExtractSegments(fullPattern);
-    return new IrRouteBuilder<IrGroupBuilder<TParent>>(this, fullPattern, segments, RegisterRoute);
+    return new IrRouteBuilder<IrGroupBuilder<TParent>>(this, pattern, segments, RegisterRoute, AccumulatedPrefix);
   }
 
   /// <summary>

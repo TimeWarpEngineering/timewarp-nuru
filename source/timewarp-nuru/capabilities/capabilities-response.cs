@@ -5,9 +5,33 @@ namespace TimeWarp.Nuru;
 /// Returned by the <c>--capabilities</c> flag.
 /// </summary>
 /// <remarks>
+/// <para>
 /// This enables AI tools (OpenCode, Claude, etc.) to discover CLI capabilities
 /// without MCP complexity, similar to how <c>--help</c> and <c>--version</c> are well-known flags.
+/// </para>
+/// <para>
+/// Commands are organized hierarchically: grouped commands appear only within their group,
+/// while ungrouped commands appear at the top level. Commands are never duplicated.
+/// </para>
 /// </remarks>
+/// <example>
+/// <code>
+/// {
+///   "name": "mytool",
+///   "version": "1.0.0",
+///   "groups": [
+///     {
+///       "name": "admin",
+///       "groups": [
+///         { "name": "config", "commands": [{"pattern": "admin config get {key}", ...}] }
+///       ],
+///       "commands": [{"pattern": "admin status", ...}]
+///     }
+///   ],
+///   "commands": [{"pattern": "version", ...}]
+/// }
+/// </code>
+/// </example>
 internal sealed class CapabilitiesResponse
 {
   /// <summary>
@@ -26,9 +50,39 @@ internal sealed class CapabilitiesResponse
   public string? Description { get; init; }
 
   /// <summary>
-  /// Gets the list of available commands with their metadata.
+  /// Gets the top-level route groups with hierarchical nesting.
+  /// Groups contain their own nested groups and direct commands.
+  /// </summary>
+  public IReadOnlyList<GroupCapability>? Groups { get; init; }
+
+  /// <summary>
+  /// Gets the list of ungrouped commands at the top level.
+  /// Grouped commands appear only within their respective groups.
   /// </summary>
   public required IReadOnlyList<CommandCapability> Commands { get; init; }
+}
+
+/// <summary>
+/// Metadata for a route group containing nested groups and commands.
+/// Groups represent hierarchical command organization (e.g., "admin", "admin config").
+/// </summary>
+internal sealed class GroupCapability
+{
+  /// <summary>
+  /// Gets the group name (single word, e.g., "admin", "config").
+  /// </summary>
+  public required string Name { get; init; }
+
+  /// <summary>
+  /// Gets nested groups within this group.
+  /// For example, "admin" group may contain a "config" nested group.
+  /// </summary>
+  public IReadOnlyList<GroupCapability>? Groups { get; init; }
+
+  /// <summary>
+  /// Gets the commands directly within this group (not in nested groups).
+  /// </summary>
+  public IReadOnlyList<CommandCapability>? Commands { get; init; }
 }
 
 /// <summary>

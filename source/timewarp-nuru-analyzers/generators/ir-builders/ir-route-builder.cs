@@ -25,20 +25,27 @@ public sealed class IrRouteBuilder<TParent> : IIrRouteBuilder
   /// Creates a new route builder.
   /// </summary>
   /// <param name="parent">The parent builder to return to via Done().</param>
-  /// <param name="pattern">The route pattern string.</param>
-  /// <param name="segments">The parsed segments from PatternStringExtractor.</param>
+  /// <param name="pattern">The route pattern string (without group prefix).</param>
+  /// <param name="segments">The parsed segments from PatternStringExtractor (includes prefix segments).</param>
   /// <param name="registerRoute">Callback to register the completed route with parent.</param>
+  /// <param name="groupPrefix">Optional group prefix for hierarchical organization.</param>
   internal IrRouteBuilder(
     TParent parent,
     string pattern,
     ImmutableArray<SegmentDefinition> segments,
-    Action<RouteDefinition> registerRoute)
+    Action<RouteDefinition> registerRoute,
+    string? groupPrefix = null)
   {
     Parent = parent;
     RegisterRoute = registerRoute;
 
     Builder.WithPattern(pattern);
     Builder.WithSegments(segments);
+
+    if (groupPrefix is not null)
+    {
+      Builder.WithGroupPrefix(groupPrefix);
+    }
 
     // Calculate specificity from segments
     int specificity = segments.Sum(s => s.SpecificityContribution);

@@ -5,6 +5,15 @@ All notable changes to TimeWarp.Nuru will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+- **BREAKING: `--capabilities` JSON structure**: The capabilities endpoint now outputs hierarchical JSON reflecting route groups. Grouped commands appear only within their respective `groups` array (not duplicated at top level). Ungrouped commands remain in the top-level `commands` array.
+
+### Added
+- **GroupCapability class**: New `groups` array in capabilities JSON output containing nested groups with their commands
+- **GroupHierarchyBuilder**: Internal utility for building hierarchical group structures from routes
+
 ## [3.0.0-beta.19] - 2025-12-10
 
 ### Added

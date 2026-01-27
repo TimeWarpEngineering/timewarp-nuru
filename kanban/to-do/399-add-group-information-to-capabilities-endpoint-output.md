@@ -11,7 +11,7 @@ The `--capabilities` endpoint currently outputs commands as a flat list without 
 - [ ] Modify capabilities emitter to group routes by `RouteDefinition.GroupPrefix`
 - [ ] Add support for group descriptions (may require extending IR model if not already present)
 - [ ] Handle nested groups (e.g., "admin config" where "config" is nested under "admin")
-- [ ] Preserve backward compatibility with existing flat command list (or provide both formats)
+- [ ] Ensure commands appear ONLY in their group OR in top-level commands array (no duplication)
 - [ ] Update tests to verify grouped output
 - [ ] Update documentation with new capabilities JSON format
 - [ ] Verify with ganda CLI (real-world Nuru app with many grouped commands)
@@ -55,16 +55,23 @@ The `--capabilities` endpoint currently outputs commands as a flat list without 
     }
   ],
   "commands": [
-    // Ungrouped commands (where GroupPrefix is null/empty)
+    // ONLY ungrouped commands (where GroupPrefix is null/empty)
+    // DO NOT duplicate grouped commands here - wastes tokens
+    {
+      "pattern": "list",
+      "description": "List all available utilities",
+      "messageType": "command"
+    }
   ]
 }
 ```
+
+**Important**: Commands should appear EITHER in a group OR in the top-level `commands` array, never both. Duplication wastes tokens and confuses consumers.
 
 ### Investigation Needed
 - Where is capabilities endpoint currently generated? (likely in emitters)
 - Does IR model support group descriptions or just group names?
 - How to handle multi-level nesting (e.g., "admin config" groups)?
-- Should we also output flat list for backward compatibility?
 
 ### Related Files
 - `source/timewarp-nuru-analyzers/generators/models/route-definition.cs` (GroupPrefix field)

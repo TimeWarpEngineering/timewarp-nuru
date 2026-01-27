@@ -40,8 +40,9 @@ public sealed class IrGroupBuilder<TParent> : IIrGroupBuilder
   /// <returns>A route builder for configuring the route.</returns>
   public IIrRouteBuilder Map(string pattern)
   {
-    string fullPattern = $"{AccumulatedPrefix} {pattern}";
-    ImmutableArray<SegmentDefinition> segments = PatternStringExtractor.ExtractSegments(fullPattern);
+    // Extract segments from the pattern only (not including prefix).
+    // The GroupPrefix is stored separately and prepended by RouteDefinition.PositionalMatchSegments.
+    ImmutableArray<SegmentDefinition> segments = PatternStringExtractor.ExtractSegments(pattern);
     return new IrRouteBuilder<IrGroupBuilder<TParent>>(this, pattern, segments, RegisterRoute, AccumulatedPrefix);
   }
 

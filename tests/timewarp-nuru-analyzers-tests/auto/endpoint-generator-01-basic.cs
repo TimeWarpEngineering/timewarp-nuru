@@ -260,6 +260,72 @@ int failed = 0;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Test 12: Two-level nested route groups (backward compatibility)
+// ─────────────────────────────────────────────────────────────────────────────
+{
+  RegisteredRoute? route = NuruRouteRegistry.RegisteredRoutes
+    .FirstOrDefault(r => r.RequestType == typeof(TwoLevelNestedRequest));
+
+  // Pattern should be "level1 nested-two"
+  bool correctPattern = route?.Pattern == "level1 nested-two";
+
+  if (correctPattern)
+  {
+    Console.WriteLine("✓ Test 12: Two-level nested route group prefix works");
+    passed++;
+  }
+  else
+  {
+    Console.WriteLine($"✗ Test 12: Expected 'level1 nested-two', got '{route?.Pattern}'");
+    failed++;
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Test 13: Three-level nested route groups (GitHub #160 fix)
+// ─────────────────────────────────────────────────────────────────────────────
+{
+  RegisteredRoute? route = NuruRouteRegistry.RegisteredRoutes
+    .FirstOrDefault(r => r.RequestType == typeof(ThreeLevelNestedRequest));
+
+  // Pattern should be "ccc1-demo queue peek" (grandparent + parent + route)
+  bool correctPattern = route?.Pattern == "ccc1-demo queue peek";
+
+  if (correctPattern)
+  {
+    Console.WriteLine("✓ Test 13: Three-level nested route group prefix works (GitHub #160)");
+    passed++;
+  }
+  else
+  {
+    Console.WriteLine($"✗ Test 13: Expected 'ccc1-demo queue peek', got '{route?.Pattern}'");
+    failed++;
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Test 14: Mixed inheritance (some parents have groups, some don't)
+// ─────────────────────────────────────────────────────────────────────────────
+{
+  RegisteredRoute? route = NuruRouteRegistry.RegisteredRoutes
+    .FirstOrDefault(r => r.RequestType == typeof(MixedInheritanceRequest));
+
+  // Pattern should be "root-group mixed" (skips middle class without group)
+  bool correctPattern = route?.Pattern == "root-group mixed";
+
+  if (correctPattern)
+  {
+    Console.WriteLine("✓ Test 14: Mixed inheritance skips classes without [NuruRouteGroup]");
+    passed++;
+  }
+  else
+  {
+    Console.WriteLine($"✗ Test 14: Expected 'root-group mixed', got '{route?.Pattern}'");
+    failed++;
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Summary
 // ─────────────────────────────────────────────────────────────────────────────
 Console.WriteLine();
@@ -273,9 +339,9 @@ return failed > 0 ? 1 : 0;
 
 /// <summary>Simple route with no parameters or options.</summary>
 [NuruRoute("simple", Description = "Simple test command")]
-public sealed class SimpleTestRequest : IRequest
+public sealed class SimpleTestRequest : IQuery<Unit>
 {
-  public sealed class Handler : IRequestHandler<SimpleTestRequest>
+  public sealed class Handler : IQueryHandler<SimpleTestRequest, Unit>
   {
     public ValueTask<Unit> Handle(SimpleTestRequest request, CancellationToken ct) => default;
   }
@@ -283,12 +349,12 @@ public sealed class SimpleTestRequest : IRequest
 
 /// <summary>Route with a required parameter.</summary>
 [NuruRoute("param", Description = "Parameter test command")]
-public sealed class ParameterTestRequest : IRequest
+public sealed class ParameterTestRequest : IQuery<Unit>
 {
   [Parameter(Description = "Test value")]
   public string Value { get; set; } = string.Empty;
 
-  public sealed class Handler : IRequestHandler<ParameterTestRequest>
+  public sealed class Handler : IQueryHandler<ParameterTestRequest, Unit>
   {
     public ValueTask<Unit> Handle(ParameterTestRequest request, CancellationToken ct) => default;
   }
@@ -296,7 +362,7 @@ public sealed class ParameterTestRequest : IRequest
 
 /// <summary>Route with options (flag and valued).</summary>
 [NuruRoute("option", Description = "Option test command")]
-public sealed class OptionTestRequest : IRequest
+public sealed class OptionTestRequest : IQuery<Unit>
 {
   [Option("verbose", "v", Description = "Enable verbose mode")]
   public bool Verbose { get; set; }
@@ -304,7 +370,7 @@ public sealed class OptionTestRequest : IRequest
   [Option("config", "c", Description = "Config file path")]
   public string? Config { get; set; }
 
-  public sealed class Handler : IRequestHandler<OptionTestRequest>
+  public sealed class Handler : IQueryHandler<OptionTestRequest, Unit>
   {
     public ValueTask<Unit> Handle(OptionTestRequest request, CancellationToken ct) => default;
   }
@@ -313,9 +379,9 @@ public sealed class OptionTestRequest : IRequest
 /// <summary>Route with aliases.</summary>
 [NuruRoute("aliased", Description = "Alias test command")]
 [NuruRouteAlias("alias1", "alias2")]
-public sealed class AliasTestRequest : IRequest
+public sealed class AliasTestRequest : IQuery<Unit>
 {
-  public sealed class Handler : IRequestHandler<AliasTestRequest>
+  public sealed class Handler : IQueryHandler<AliasTestRequest, Unit>
   {
     public ValueTask<Unit> Handle(AliasTestRequest request, CancellationToken ct) => default;
   }
@@ -331,9 +397,9 @@ public abstract class TestGroupBase
 
 /// <summary>Route that inherits group prefix.</summary>
 [NuruRoute("subcommand", Description = "Grouped test command")]
-public sealed class GroupedTestRequest : TestGroupBase, IRequest
+public sealed class GroupedTestRequest : TestGroupBase, IQuery<Unit>
 {
-  public sealed class Handler : IRequestHandler<GroupedTestRequest>
+  public sealed class Handler : IQueryHandler<GroupedTestRequest, Unit>
   {
     public ValueTask<Unit> Handle(GroupedTestRequest request, CancellationToken ct) => default;
   }
@@ -341,9 +407,9 @@ public sealed class GroupedTestRequest : TestGroupBase, IRequest
 
 /// <summary>Default route with empty pattern.</summary>
 [NuruRoute("", Description = "Default command when no arguments provided")]
-public sealed class DefaultTestRequest : IRequest
+public sealed class DefaultTestRequest : IQuery<Unit>
 {
-  public sealed class Handler : IRequestHandler<DefaultTestRequest>
+  public sealed class Handler : IQueryHandler<DefaultTestRequest, Unit>
   {
     public ValueTask<Unit> Handle(DefaultTestRequest request, CancellationToken ct) => default;
   }
@@ -351,12 +417,12 @@ public sealed class DefaultTestRequest : IRequest
 
 /// <summary>Route with catch-all parameter to capture multiple arguments.</summary>
 [NuruRoute("catchall", Description = "Catch-all test command")]
-public sealed class CatchAllTestRequest : IRequest
+public sealed class CatchAllTestRequest : IQuery<Unit>
 {
   [Parameter(IsCatchAll = true, Description = "All remaining arguments")]
   public string[] Args { get; set; } = [];
 
-  public sealed class Handler : IRequestHandler<CatchAllTestRequest>
+  public sealed class Handler : IQueryHandler<CatchAllTestRequest, Unit>
   {
     public ValueTask<Unit> Handle(CatchAllTestRequest request, CancellationToken ct) => default;
   }
@@ -364,7 +430,7 @@ public sealed class CatchAllTestRequest : IRequest
 
 /// <summary>Route with typed int option.</summary>
 [NuruRoute("typed", Description = "Typed option test command")]
-public sealed class TypedOptionTestRequest : IRequest
+public sealed class TypedOptionTestRequest : IQuery<Unit>
 {
   [Option("count", "c", Description = "Number of items")]
   public int Count { get; set; } = 1;
@@ -372,8 +438,61 @@ public sealed class TypedOptionTestRequest : IRequest
   [Option("verbose", "v", Description = "Enable verbose output")]
   public bool Verbose { get; set; }
 
-  public sealed class Handler : IRequestHandler<TypedOptionTestRequest>
+  public sealed class Handler : IQueryHandler<TypedOptionTestRequest, Unit>
   {
     public ValueTask<Unit> Handle(TypedOptionTestRequest request, CancellationToken ct) => default;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// NESTED ROUTE GROUP TEST CLASSES - Test inheritance chain prefix concatenation
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/// <summary>Base class for two-level nesting test.</summary>
+[NuruRouteGroup("level1")]
+public abstract class Level1GroupBase { }
+
+/// <summary>Route with two-level inheritance (backward compatibility test).</summary>
+[NuruRoute("nested-two", Description = "Two-level nested command")]
+public sealed class TwoLevelNestedRequest : Level1GroupBase, IQuery<Unit>
+{
+  public sealed class Handler : IQueryHandler<TwoLevelNestedRequest, Unit>
+  {
+    public ValueTask<Unit> Handle(TwoLevelNestedRequest request, CancellationToken ct) => default;
+  }
+}
+
+/// <summary>Root group for three-level nesting (GitHub #160).</summary>
+[NuruRouteGroup("ccc1-demo")]
+public abstract class Ccc1DemoGroup { }
+
+/// <summary>Middle group inheriting from root.</summary>
+[NuruRouteGroup("queue")]
+public abstract class QueueGroup : Ccc1DemoGroup { }
+
+/// <summary>Route with three-level inheritance (the bug scenario from GitHub #160).</summary>
+[NuruRoute("peek", Description = "Peek at the queue")]
+public sealed class ThreeLevelNestedRequest : QueueGroup, IQuery<Unit>
+{
+  public sealed class Handler : IQueryHandler<ThreeLevelNestedRequest, Unit>
+  {
+    public ValueTask<Unit> Handle(ThreeLevelNestedRequest request, CancellationToken ct) => default;
+  }
+}
+
+/// <summary>Root group for mixed inheritance test.</summary>
+[NuruRouteGroup("root-group")]
+public abstract class RootGroupBase { }
+
+/// <summary>Middle class WITHOUT [NuruRouteGroup] attribute.</summary>
+public abstract class MiddleNoGroupBase : RootGroupBase { }
+
+/// <summary>Route testing mixed inheritance (some parents have groups, some don't).</summary>
+[NuruRoute("mixed", Description = "Mixed inheritance command")]
+public sealed class MixedInheritanceRequest : MiddleNoGroupBase, IQuery<Unit>
+{
+  public sealed class Handler : IQueryHandler<MixedInheritanceRequest, Unit>
+  {
+    public ValueTask<Unit> Handle(MixedInheritanceRequest request, CancellationToken ct) => default;
   }
 }

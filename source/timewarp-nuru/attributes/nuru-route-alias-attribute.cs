@@ -13,13 +13,6 @@ namespace TimeWarp.Nuru;
 /// In help output, aliases are displayed together: "exit, quit, q    Exit the application"
 /// </para>
 /// </remarks>
-/// <example>
-/// <code>
-/// [NuruRoute("exit", Description = "Exit the application")]
-/// [NuruRouteAlias("quit", "q")]
-/// public sealed class ExitRequest : IRequest&lt;Unit&gt; { }
-/// </code>
-/// </example>
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
 public sealed class NuruRouteAliasAttribute : Attribute
 {

@@ -188,21 +188,22 @@ With explicit modifiers:
 // ... exponential explosion
 ```
 
-## Command Pattern Support
+## Fluent API with Optional Parameters
 
-With explicit route patterns, mediator/command pattern works:
+With explicit route patterns, optional parameters are supported:
 
 ```csharp
-// Route pattern is self-contained
-.Map<BackupCommand>("backup {source} --dest? {destination?} --compress")
-
-// Command properties match route parameters
-public class BackupCommand : IRequest
-{
-    public string Source { get; set; }        // Required (no ? in route)
-    public string? Destination { get; set; }  // Optional (? in route)
-    public bool Compress { get; set; }        // Optional (boolean)
-}
+// Route pattern with optional destination and boolean flag
+.Map("backup {source} --dest {destination?} --compress")
+  .WithHandler((string source, string? destination, bool compress) =>
+  {
+    destination ??= source + ".bak";
+    if (compress)
+      BackupWithCompression(source, destination);
+    else
+      Backup(source, destination);
+  })
+  .AsCommand().Done();
 ```
 
-The route pattern alone determines matching - the command is just the handler.
+The route pattern alone determines matching - handler parameters are injected automatically.

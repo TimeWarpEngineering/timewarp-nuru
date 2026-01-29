@@ -91,40 +91,30 @@ class Program { ... }
 - You don't need dependency injection
 - Performance is critical
 
-**Use Mediator Pattern when:**
-- You need enterprise patterns (DI, validation, logging)
-- Your commands have complex business logic
+**Use Fluent API with DI when:**
+- You need dependency injection, validation, or logging
+- Your handlers have complex business logic
 - You want testability and separation of concerns
-- Executable size is less critical
 
-### 2. Preserve Your Types
+### 2. Use the Fluent API
 
-When using mediator pattern, ensure your command types are preserved:
+The fluent API is fully AOT-compatible:
 
 ```csharp
-// Your command class
-public class DeployCommand : IRequest
-{
-    public string Environment { get; set; } = string.Empty;
-    public bool DryRun { get; set; }
-}
-
-// Preserve it for AOT
-[DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors |
-                   DynamicallyAccessedMemberTypes.PublicProperties,
-                   typeof(DeployCommand))]
-class Program
-{
-    static async Task<int> Main(string[] args)
+NuruApp app = NuruApp.CreateBuilder(args)
+  .ConfigureServices(services =>
+  {
+    services.AddSingleton<IDeploymentService, DeploymentService>();
+  })
+  .Map("deploy {environment} --dry-run")
+    .WithHandler(async (string environment, bool dryRun, IDeploymentService service) =>
     {
-        // Register route
-        NuruApp app = new NuruAppBuilder()
-            .AddMediatorRoute<DeployCommand>("deploy {environment} --dry-run?")
-            .BuildWithServices(services => services.AddMediator());
+      await service.DeployAsync(environment, dryRun);
+    })
+    .AsCommand().Done()
+  .Build();
 
-        return await app.RunAsync(args);
-    }
-}
+return await app.RunAsync(args);
 ```
 
 ### 3. Test Your AOT Build

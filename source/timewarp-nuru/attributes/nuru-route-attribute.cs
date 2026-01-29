@@ -14,19 +14,6 @@ namespace TimeWarp.Nuru;
 /// is automatically prepended to this pattern.
 /// </para>
 /// </remarks>
-/// <example>
-/// <code>
-/// [NuruRoute("deploy", Description = "Deploy to an environment")]
-/// public sealed class DeployRequest : IRequest&lt;Unit&gt;
-/// {
-///     [Parameter(Description = "Target environment")]
-///     public string Env { get; set; } = string.Empty;
-///
-///     [Option("force", "f", Description = "Skip confirmation")]
-///     public bool Force { get; set; }
-/// }
-/// </code>
-/// </example>
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
 public sealed class NuruRouteAttribute : Attribute
 {

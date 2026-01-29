@@ -142,7 +142,8 @@ internal static class EndpointExtractor
   }
 
   /// <summary>
-  /// Extracts group prefix from base class with [NuruRouteGroup] attribute.
+  /// Extracts group prefix from base class hierarchy with [NuruRouteGroup] attributes.
+  /// Walks the full inheritance chain and concatenates all prefixes from root to leaf.
   /// </summary>
   private static string? ExtractGroupPrefix
   (
@@ -158,22 +159,33 @@ internal static class EndpointExtractor
     if (classSymbol?.BaseType is null)
       return null;
 
-    // Check base type for [NuruRouteGroup] attribute
-    foreach (AttributeData attribute in classSymbol.BaseType.GetAttributes())
-    {
-      string? attributeName = attribute.AttributeClass?.Name;
-      if (attributeName != NuruRouteGroupAttributeName && attributeName != $"{NuruRouteGroupAttributeName}Attribute")
-        continue;
+    // Walk the full inheritance chain and collect prefixes
+    List<string> prefixes = [];
+    INamedTypeSymbol? current = classSymbol.BaseType;
 
-      // Get the prefix from the first constructor argument
-      if (attribute.ConstructorArguments.Length > 0 &&
-          attribute.ConstructorArguments[0].Value is string prefix)
+    while (current is not null && current.SpecialType != SpecialType.System_Object)
+    {
+      // Check this type for [NuruRouteGroup] attribute
+      foreach (AttributeData attribute in current.GetAttributes())
       {
-        return prefix;
+        string? attributeName = attribute.AttributeClass?.Name;
+        if (attributeName != NuruRouteGroupAttributeName && attributeName != $"{NuruRouteGroupAttributeName}Attribute")
+          continue;
+
+        // Get the prefix from the first constructor argument
+        if (attribute.ConstructorArguments.Length > 0 &&
+            attribute.ConstructorArguments[0].Value is string prefix &&
+            !string.IsNullOrEmpty(prefix))
+        {
+          // Insert at front to maintain root-to-leaf order (grandparent before parent)
+          prefixes.Insert(0, prefix);
+        }
       }
+
+      current = current.BaseType;
     }
 
-    return null;
+    return prefixes.Count > 0 ? string.Join(" ", prefixes) : null;
   }
 
   /// <summary>

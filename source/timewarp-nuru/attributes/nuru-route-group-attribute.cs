@@ -13,27 +13,6 @@ namespace TimeWarp.Nuru;
 /// These options are automatically included in all routes that inherit from this group.
 /// </para>
 /// </remarks>
-/// <example>
-/// <code>
-/// // Base class defines the group
-/// [NuruRouteGroup("docker")]
-/// public abstract class DockerRequestBase
-/// {
-///     [GroupOption("debug", "D")]
-///     public bool Debug { get; set; }
-/// }
-///
-/// // Request inherits group membership
-/// [NuruRoute("run")]
-/// public sealed class DockerRunRequest : DockerRequestBase, IRequest&lt;Unit&gt;
-/// {
-///     [Parameter]
-///     public string Image { get; set; } = string.Empty;
-/// }
-///
-/// // Generated route: "docker run {image} --debug,-D"
-/// </code>
-/// </example>
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
 public sealed class NuruRouteGroupAttribute : Attribute
 {

@@ -139,24 +139,18 @@ builder.UseErrorHandler((ex, commandContext) => {
 });
 ```
 
-#### Option 2: Result-based Commands
+#### Option 2: Result-based Handlers
 ```csharp
-public sealed class ProcessCommand : IRequest<Result<int>>
-{
-    public string File { get; set; }
-}
-
-public sealed class Handler : IRequestHandler<ProcessCommand, Result<int>>
-{
-    public Task<Result<int>> Handle(ProcessCommand cmd, CancellationToken ct)
-    {
-        try {
-            return Task.FromResult(Result.Success(ProcessFile(cmd.File)));
-        } catch (Exception ex) {
-            return Task.FromResult(Result.Failure<int>(ex.Message));
-        }
+builder.Map("process {file}")
+  .WithHandler((string file) =>
+  {
+    try {
+      return Result.Success(ProcessFile(file));
+    } catch (Exception ex) {
+      return Result.Failure<int>(ex.Message);
     }
-}
+  })
+  .AsQuery().Done();
 ```
 
 #### Option 3: Middleware Pattern
@@ -228,10 +222,6 @@ The proposed changes would add complexity to the simple path, potentially violat
 ```csharp
 public NuruAppBuilder AddCommand(string pattern, Delegate handler, string? description = null)
     => Map(pattern, handler, description);
-
-public NuruAppBuilder AddCommand<TCommand>(string pattern, string? description = null)
-    where TCommand : IRequest, new()
-    => Map<TCommand>(pattern, description);
 ```
 
 ### Phase 2: Enhanced Error Context

@@ -147,28 +147,23 @@ builder.Map
 );
 ```
 
-**Mediator:**
+**With DI:**
 ```csharp
-// Separated concerns
-public sealed class DeployCommand : IRequest
-{
-    public string Environment { get; set; }
-
-    public sealed class Handler(
-      IValidator validator,
-      IConfigService config,
-      IDeploymentService deployment,
-      ILogger logger) : IRequestHandler<DeployCommand>
-    {
-      public async Task Handle(DeployCommand cmd, CancellationToken ct)
-      {
-        await validator.ValidateAsync(cmd.Environment);
-        DeploymentConfig cfg = await config.LoadAsync(cmd.Environment);
-        await deployment.ExecuteAsync(cfg);
-        logger.LogInformation("Deployed to {Env}", cmd.Environment);
-      }
-    }
-}
+// Separated concerns via dependency injection
+builder.Map("deploy {env}")
+  .WithHandler(async (
+    string env,
+    IValidator validator,
+    IConfigService config,
+    IDeploymentService deployment,
+    ILogger logger) =>
+  {
+    await validator.ValidateAsync(env);
+    DeploymentConfig cfg = await config.LoadAsync(env);
+    await deployment.ExecuteAsync(cfg);
+    logger.LogInformation("Deployed to {Env}", env);
+  })
+  .AsCommand().Done();
 ```
 
 ### Testing
@@ -180,21 +175,28 @@ int result = await app.RunAsync(new[] { "deploy", "test" });
 Assert.Equal(0, result);
 ```
 
-**Mediator:**
+**With DI:**
 ```csharp
-// Test handler in isolation
-DeployCommand.Handler handler = new
-(
-  mockValidator,
-  mockConfig,
-  mockDeployment,
-  mockLogger
-);
+// Test via TestTerminal
+using TestTerminal terminal = new();
+NuruApp app = NuruApp.CreateBuilder([])
+  .UseTerminal(terminal)
+  .ConfigureServices(services =>
+  {
+    services.AddSingleton(mockValidator);
+    services.AddSingleton(mockDeployment);
+  })
+  .Map("deploy {env}")
+    .WithHandler(async (string env, IValidator validator, IDeploymentService deployment) =>
+    {
+      await validator.ValidateAsync(env);
+      await deployment.ExecuteAsync(env);
+    })
+    .AsCommand().Done()
+  .Build();
 
-DeployCommand command = new() { Environment = "test" };
-await handler.Handle(command, CancellationToken.None);
-
-mockDeployment.Verify(x => x.ExecuteAsync(It.IsAny<Config>()), Times.Once);
+await app.RunAsync(["deploy", "test"]);
+mockDeployment.Verify(x => x.ExecuteAsync("test"), Times.Once);
 ```
 
 ## Migration Paths

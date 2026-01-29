@@ -13,28 +13,6 @@ namespace TimeWarp.Nuru;
 /// Do not include dashes in the attribute - the generator adds them automatically.
 /// </para>
 /// </remarks>
-/// <example>
-/// <code>
-/// [NuruRouteGroup("docker")]
-/// public abstract class DockerRequestBase
-/// {
-///     [GroupOption("debug", "D")]
-///     public bool Debug { get; set; }
-///
-///     [GroupOption("log-level")]
-///     public string? LogLevel { get; set; }
-/// }
-///
-/// [NuruRoute("run")]
-/// public sealed class DockerRunRequest : DockerRequestBase, IRequest&lt;Unit&gt;
-/// {
-///     [Parameter]
-///     public string Image { get; set; } = string.Empty;
-/// }
-///
-/// // Generated route: "docker run {image} --debug,-D --log-level {logLevel?}"
-/// </code>
-/// </example>
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Parameter, AllowMultiple = false)]
 public sealed class GroupOptionAttribute : Attribute
 {

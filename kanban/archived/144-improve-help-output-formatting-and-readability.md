@@ -1,5 +1,7 @@
 # Improve help output formatting and readability
 
+**ARCHIVED**: Superseded by task #400 which covers the source generator help emitter approach.
+
 ## Description
 
 The `--help` output for Nuru CLI applications is plain, hard to scan, and visually cluttered. Parameter descriptions are inlined with commands making it difficult to read. The help output needs visual improvements including color, better layout, and possibly table formatting.

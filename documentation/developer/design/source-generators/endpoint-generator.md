@@ -25,8 +25,7 @@ With endpoints, registration is automatic:
 
 ```csharp
 [NuruRoute("deploy")]
-public sealed class DeployRequest : IRequest
-{
+public sealed class DeployRequest {
   [Parameter]
   public string Env { get; set; } = string.Empty;
 }
@@ -43,7 +42,7 @@ Applied to request classes. Specifies the route pattern (literals only).
 
 ```csharp
 [NuruRoute("deploy", Description = "Deploy to an environment")]
-public sealed class DeployRequest : IRequest { }
+public sealed class DeployRequest { }
 ```
 
 **Properties:**
@@ -57,7 +56,7 @@ Registers additional patterns for the same request type.
 ```csharp
 [NuruRoute("goodbye")]
 [NuruRouteAlias("bye", "cya")]
-public sealed class GoodbyeRequest : IRequest { }
+public sealed class GoodbyeRequest { }
 ```
 
 Generates three routes: `goodbye`, `bye`, `cya` - all mapping to `GoodbyeRequest`.
@@ -75,7 +74,7 @@ public abstract class DockerRequestBase
 }
 
 [NuruRoute("run")]
-public sealed class DockerRunRequest : DockerRequestBase, IRequest { }
+public sealed class DockerRunRequest : DockerRequestBase { }
 // Generated pattern: "docker run --debug,-D"
 ```
 
@@ -147,8 +146,7 @@ For a request like:
 
 ```csharp
 [NuruRoute("deploy", Description = "Deploy to an environment")]
-public sealed class DeployRequest : IRequest
-{
+public sealed class DeployRequest {
   [Parameter]
   public string Env { get; set; } = string.Empty;
   
@@ -202,8 +200,7 @@ public abstract class DockerRequestBase
 }
 
 [NuruRoute("run", Description = "Run a container")]
-public sealed class DockerRunRequest : DockerRequestBase, IRequest
-{
+public sealed class DockerRunRequest : DockerRequestBase{
   [Parameter(Description = "Image name")]
   public string Image { get; set; } = string.Empty;
   

@@ -236,95 +236,73 @@ builder.Map("calculate {a:double} {b:double}",
     (double a, double b) => a + b); // Returns result to stdout
 ```
 
-**See Also**: [**Mediator Approach**](#mediator-approach), [**Mixed Approach**](#mixed-approach)
+**See Also**: [**Fluent API with DI**](#fluent-api-with-di), [**Mixed Approach**](#mixed-approach)
 
-### Mediator Approach
-**Definition**: Command handlers structured using the Mediator pattern with dedicated command classes and handler implementations. Enables complex business logic with dependency injection.
+### Fluent API with DI
+**Definition**: Handlers that use dependency injection for services. Enables complex business logic with testable, injected dependencies.
 
 **Components**:
 
-1. **Command Classes** - Inherit from `IRequest` or `IRequest<TResponse>`
-2. **Handler Classes** - Implement `IRequestHandler<TCommand>` or `IRequestHandler<TCommand,TResponse>`
-3. **Nested Handler Pattern** - Handler classes nested inside command classes for organization
-4. **Dependency Injection Support** - Automatic injection of services
+1. **Fluent Builder** - `.Map("pattern").WithHandler(...).AsCommand().Done()`
+2. **Injected Services** - Services registered via `ConfigureServices` are injected into handlers
+3. **Type Safety** - Route parameters and injected services are strongly typed
 
 **Examples**:
 
 ```csharp
-// Synchronous Mediator Command
-public class ComputeCommand : IRequest<double>
-{
-    public double X { get; set; }
-    public double Y { get; set; }
+// Synchronous with DI
+builder.Map("add {x:double} {y:double}")
+  .WithHandler((double x, double y) => x + y)
+  .AsQuery().Done();
 
-    public sealed class Handler : IRequestHandler<ComputeCommand, double>
+// Async with HttpClient injection
+builder
+  .ConfigureServices(services => services.AddHttpClient())
+  .Map("fetch {url}")
+    .WithHandler(async (string url, HttpClient http) =>
     {
-        public Task<double> Handle(ComputeCommand cmd, CancellationToken ct)
-            => Task.FromResult(cmd.X + cmd.Y);
-    }
-}
+      HttpResponseMessage response = await http.GetAsync(url);
+      return await response.Content.ReadAsStringAsync();
+    })
+    .AsQuery().Done();
 
-// Async Mediator Command
-public class FetchDataCommand : IRequest<string>
-{
-    public string Url { get; set; }
-
-    public sealed class Handler(HttpClient http) : IRequestHandler<FetchDataCommand, string>
-    {
-        public async Task<string> Handle(FetchDataCommand cmd, CancellationToken ct)
-        {
-            var response = await http.GetAsync(cmd.Url, ct);
-            return await response.Content.ReadAsStringAsync(ct);
-        }
-    }
-}
-
-// Registration with DI
-builder.AddDependencyInjection()
-       .Services.AddHttpClient()
-       .Map<ComputeCommand>("add {x:double} {y:double}")
-       .Map<FetchDataCommand>("fetch {url}");
-
-// Alternative registration for commands without response
-public class StatusCommand : IRequest
-{
-    public sealed class Handler : IRequestHandler<StatusCommand>
-    {
-        public Task Handle(StatusCommand cmd, CancellationToken ct)
-        {
-            Console.WriteLine("System OK");
-            return Task.CompletedTask;
-        }
-    }
-}
+// Command without return value
+builder.Map("status")
+  .WithHandler(() => Console.WriteLine("System OK"))
+  .AsCommand().Done();
 ```
 
 **See Also**: [**Direct Approach**](#direct-approach), [**Mixed Approach**](#mixed-approach)
 
 ### Mixed Approach
-**Definition**: Combining both Direct and Mediator approaches within the same application. Use [**Direct Approach**](#direct-approach) for high-performance simple commands and [**Mediator Approach**](#mediator-approach) for complex operations requiring dependency injection.
+**Definition**: Combining both simple inline handlers and handlers with dependency injection within the same application.
 
 **Examples**:
 ```csharp
-NuruApp app = new NuruAppBuilder()
-  // Simple commands: Direct Approach (fast)
-  .Map("ping", () => Console.WriteLine("pong"))
-  .Map("status", () => Console.WriteLine("OK"))
-  // Enable DI for complex commands
-  .AddDependencyInjection()
+NuruApp app = NuruApp.CreateBuilder(args)
+  // Simple commands: inline handlers (fast)
+  .Map("ping").WithHandler(() => Console.WriteLine("pong")).AsCommand().Done()
+  .Map("status").WithHandler(() => Console.WriteLine("OK")).AsCommand().Done()
+  // Complex commands with DI
   .ConfigureServices(services =>
   {
     services.AddScoped<ICalculator, Calculator>();
   })
-  // Complex commands: Mediator Approach (structured)
-  .Map<FactorialCommand>("factorial {n:int}")
-  .Map<DeployCommand>("deploy {env} --version {version?}")
+  .Map("factorial {n:int}")
+    .WithHandler((int n, ICalculator calc) => calc.Factorial(n))
+    .AsQuery().Done()
+  .Map("deploy {env} --version {version?}")
+    .WithHandler(async (string env, string? version, IDeployService deploy) =>
+    {
+      await deploy.DeployAsync(env, version);
+    })
+    .AsCommand().Done()
   .Build();
 ```
 
 **Benefits**:
 - Optimal performance where needed
-- Testable complex logic with [**Direct Approach**](#direct-approach)
+- Testable complex logic via DI
 - Single application deployment
 - Clear separation between simple and complex commands
 
@@ -594,37 +572,26 @@ builder.Map("git {*args}", handler)
 ```
 
 ### Dependency Injection (DI)
-**Definition**: Framework feature allowing services to be injected into command handlers. Enables complex business logic with proper separation of concerns using the [**Mediator Approach**](#mediator-approach).
+**Definition**: Framework feature allowing services to be injected into command handlers. Enables complex business logic with proper separation of concerns.
 
 **Setup**:
 ```csharp
 // Enable DI and register services
-NuruApp app = new NuruAppBuilder()
-  .AddDependencyInjection()
+NuruApp app = NuruApp.CreateBuilder(args)
   .ConfigureServices(services =>
   {
     services.AddSingleton<ILogger, ConsoleLogger>();
     services.AddHttpClient();
     services.AddScoped<IValidationService, ValidationService>();
   })
-  .Map<DeployCommand>("deploy {env}")
-  .Build();
-
-// Inject into handlers
-public class DeployCommand : IRequest
-{
-    public string Environment { get; set; }
-
-    public sealed class Handler(ILogger logger, HttpClient http, IValidationService validator) 
-        : IRequestHandler<DeployCommand>
+  .Map("deploy {env}")
+    .WithHandler(async (string env, ILogger logger, HttpClient http, IValidationService validator) =>
     {
-        public async Task Handle(DeployCommand cmd, CancellationToken ct)
-        {
-            logger.LogInformation("Deploying to {Environment}", cmd.Environment);
-            // Use injected services...
-        }
-    }
-}
+      logger.LogInformation("Deploying to {Environment}", env);
+      // Use injected services...
+    })
+    .AsCommand().Done()
+  .Build();
 ```
 
 ---
@@ -638,7 +605,7 @@ public class DeployCommand : IRequest
 
 ### Execution Models
 - [Direct Approach](#direct-approach) → Simple delegates, maximum performance
-- [Mediator Approach](#mediator-approach) → Complex commands with DI
+- [Fluent API with DI](#fluent-api-with-di) → Complex commands with DI
 - [Mixed Approach](#mixed-approach) → Best of both worlds
 
 ### Parameter Types

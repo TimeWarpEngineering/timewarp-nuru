@@ -134,26 +134,20 @@ This gives you flexibility to:
 When using dependency injection, you can inject `EndpointCollection` directly:
 
 ```csharp
-builder.AddDependencyInjection();
-
-public class HelpHandler(EndpointCollection endpoints) : IRequestHandler<HelpCommand>
-{
-    public Task Handle(HelpCommand request, CancellationToken cancellationToken)
-    {
-        Console.WriteLine(RouteHelpProvider.GetHelpText(endpoints));
-        return Task.CompletedTask;
-    }
-}
+builder.Map("help")
+  .WithHandler((EndpointCollection endpoints) =>
+  {
+    Console.WriteLine(RouteHelpProvider.GetHelpText(endpoints));
+  })
+  .AsCommand().Done();
 
 // Or get help as a string
-public class HelpApiHandler(EndpointCollection endpoints) : IRequestHandler<HelpApiCommand, string>
-{
-    public Task<string> Handle(HelpApiCommand request, CancellationToken cancellationToken)
-    {
-        string helpText = RouteHelpProvider.GetHelpText(endpoints);
-        return Task.FromResult(helpText);
-    }
-}
+builder.Map("help-api")
+  .WithHandler((EndpointCollection endpoints) =>
+  {
+    return RouteHelpProvider.GetHelpText(endpoints);
+  })
+  .AsQuery().Done();
 ```
 
 ### Custom Help Formatting
@@ -212,66 +206,48 @@ public static class CustomHelpFormatter
 
 ## Advanced Help Patterns
 
-### Mediator-Based Help Command
+### Topic-Based Help Command
 
-For applications using the Mediator pattern:
+For applications with topic-based help:
 
 ```csharp
-public class HelpCommand : IRequest 
-{
-    public string? Topic { get; set; }
-    
-    public sealed class Handler(EndpointCollection endpoints) : IRequestHandler<HelpCommand>
+builder.Map("help {topic?}")
+  .WithHandler((string? topic, EndpointCollection endpoints) =>
+  {
+    if (!string.IsNullOrEmpty(topic))
     {
-        public Task Handle(HelpCommand request, CancellationToken cancellationToken)
-        {
-            if (!string.IsNullOrEmpty(request.Topic))
-            {
-                ShowTopicHelp(request.Topic);
-            }
-            else
-            {
-                ShowGeneralHelp();
-            }
-            
-            return Task.CompletedTask;
-        }
-        
-        private void ShowTopicHelp(string topic)
-        {
-            // Show help for specific topic
-            List<Endpoint> relevantRoutes = endpoints.Endpoints
-                .Where(e => e.RoutePattern.Contains(topic, StringComparison.OrdinalIgnoreCase))
-                .ToList();
-
-            if (relevantRoutes.Count > 0)
-            {
-                Console.WriteLine($"Help for '{topic}':");
-                foreach (Endpoint route in relevantRoutes)
-                {
-                    Console.WriteLine($"  {route.RoutePattern}");
-                    if (!string.IsNullOrEmpty(route.Description))
-                    {
-                        Console.WriteLine($"    {route.Description}");
-                    }
-                }
-            }
-            else
-            {
-                Console.WriteLine($"No help available for '{topic}'");
-            }
-        }
-        
-        private void ShowGeneralHelp()
-        {
-            Console.WriteLine(RouteHelpProvider.GetHelpText(endpoints));
-        }
+      ShowTopicHelp(topic, endpoints);
     }
-}
+    else
+    {
+      Console.WriteLine(RouteHelpProvider.GetHelpText(endpoints));
+    }
+  })
+  .AsCommand().Done();
 
-// Register the help command
-builder.AddDependencyInjection();
-builder.Map<HelpCommand>("help {topic?}");
+static void ShowTopicHelp(string topic, EndpointCollection endpoints)
+{
+  List<Endpoint> relevantRoutes = endpoints.Endpoints
+    .Where(e => e.RoutePattern.Contains(topic, StringComparison.OrdinalIgnoreCase))
+    .ToList();
+
+  if (relevantRoutes.Count > 0)
+  {
+    Console.WriteLine($"Help for '{topic}':");
+    foreach (Endpoint route in relevantRoutes)
+    {
+      Console.WriteLine($"  {route.RoutePattern}");
+      if (!string.IsNullOrEmpty(route.Description))
+      {
+        Console.WriteLine($"    {route.Description}");
+      }
+    }
+  }
+  else
+  {
+    Console.WriteLine($"No help available for '{topic}'");
+  }
+}
 ```
 
 ### Interactive Help System

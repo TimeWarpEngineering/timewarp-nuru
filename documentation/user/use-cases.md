@@ -264,46 +264,35 @@ NuruApp app = NuruApp.CreateBuilder(args)
   {
     services.AddSingleton<ITelemetryService, TelemetryService>();
   })
-  .Map<MonitoredCommand>("{*args}")
-  .Build();
-
-public sealed class MonitoredCommand : IRequest<int>
-{
-    public string[] Args { get; set; }
-
-    public sealed class Handler(ITelemetryService telemetry) : IRequestHandler<MonitoredCommand, int>
+  .Map("{*args}")
+    .WithHandler(async (string[] args, ITelemetryService telemetry) =>
     {
-      public async Task<int> Handle(MonitoredCommand cmd, CancellationToken ct)
+      Stopwatch sw = Stopwatch.StartNew();
+      string command = string.Join(" ", args);
+
+      try
       {
-        Stopwatch sw = Stopwatch.StartNew();
-        string command = string.Join(" ", cmd.Args);
+        int result = await Shell.ExecuteAsync("original-tool", args);
+        sw.Stop();
 
-        try
+        await telemetry.TrackCommandAsync(new CommandMetrics
         {
-          int result = await Shell.ExecuteAsync("original-tool", cmd.Args);
-          sw.Stop();
+          Command = command,
+          Duration = sw.Elapsed,
+          Success = result == 0,
+          Timestamp = DateTime.UtcNow
+        });
 
-          await telemetry.TrackCommandAsync
-          (
-            new CommandMetrics
-            {
-              Command = command,
-              Duration = sw.Elapsed,
-              Success = result == 0,
-              Timestamp = DateTime.UtcNow
-            }
-          );
-
-          return result;
-        }
-        catch (Exception ex)
-        {
-          await telemetry.TrackErrorAsync(command, ex);
-          throw;
-        }
+        return result;
       }
-    }
-}
+      catch (Exception ex)
+      {
+        await telemetry.TrackErrorAsync(command, ex);
+        throw;
+      }
+    })
+    .AsCommand().Done()
+  .Build();
 ```
 
 **Benefits**:

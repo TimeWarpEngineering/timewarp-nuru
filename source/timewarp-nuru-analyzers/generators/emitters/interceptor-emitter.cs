@@ -655,7 +655,7 @@ internal static class InterceptorEmitter
     if (app.HasHelp)
     {
       sb.AppendLine("    // Built-in: --help");
-      sb.AppendLine("    if (routeArgs is [\"--help\" or \"-h\"])");
+      sb.AppendLine($"    if (routeArgs is [{string.Join(" or ", BuiltInFlags.HelpForms.Select(f => $"\"{f}\""))}])");
       sb.AppendLine("    {");
       sb.AppendLine($"      PrintHelp{methodSuffix}(app.Terminal);");
       sb.AppendLine("      return 0;");
@@ -665,7 +665,7 @@ internal static class InterceptorEmitter
 
     // --version flag (always available) - shared across apps (assembly-level)
     sb.AppendLine("    // Built-in: --version");
-    sb.AppendLine("    if (routeArgs is [\"--version\"])");
+    sb.AppendLine($"    if (routeArgs is [{string.Join(" or ", BuiltInFlags.VersionForms.Select(f => $"\"{f}\""))}])");
     sb.AppendLine("    {");
     sb.AppendLine("      PrintVersion(app.Terminal);");
     sb.AppendLine("      return 0;");
@@ -674,7 +674,7 @@ internal static class InterceptorEmitter
 
     // --capabilities flag (always available for AI tools)
     sb.AppendLine("    // Built-in: --capabilities (for AI tools)");
-    sb.AppendLine("    if (routeArgs is [\"--capabilities\"])");
+    sb.AppendLine($"    if (routeArgs is [{string.Join(" or ", BuiltInFlags.CapabilitiesForms.Select(f => $"\"{f}\""))}])");
     sb.AppendLine("    {");
     sb.AppendLine($"      PrintCapabilities{methodSuffix}(app.Terminal);");
     sb.AppendLine("      return 0;");

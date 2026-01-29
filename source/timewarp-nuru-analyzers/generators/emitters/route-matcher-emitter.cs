@@ -143,11 +143,11 @@ internal static class RouteMatcherEmitter
     // Skip built-in flags for these "match everything" routes, UNLESS the route explicitly
     // maps a built-in flag (e.g., Map("--version") should be allowed to override).
     bool hasNoLiterals = !route.PositionalMatchSegments.Any();
-    bool isBuiltInFlagRoute = route.OriginalPattern is "--help" or "-h" or "--version" or "--capabilities";
+    bool isBuiltInFlagRoute = route.OriginalPattern is "--help" or "-h" or "--version" or "--capabilities"; // BuiltInFlags.IsBuiltInFlagRoutePattern
     if (minPositionalArgs == 0 && hasNoLiterals && !isBuiltInFlagRoute)
     {
       sb.AppendLine("      // Skip built-in flags for routes with no literals (default/options-only)");
-      sb.AppendLine("      if (routeArgs is [\"--help\" or \"-h\"] or [\"--version\"] or [\"--capabilities\"])");
+      sb.AppendLine($"      if (routeArgs is {BuiltInFlags.PatternMatchExpression})");
       sb.AppendLine($"        goto route_skip_{routeIndex};");
     }
 

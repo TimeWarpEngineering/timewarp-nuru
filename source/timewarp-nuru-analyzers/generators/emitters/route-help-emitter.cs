@@ -43,7 +43,9 @@ internal static class RouteHelpEmitter
       patternBuilder.Append($"\"{EscapeString(literal)}\", ");
     }
 
-    patternBuilder.Append("\"--help\" or \"-h\"]");
+    // Use BuiltInFlags constant for help forms
+    string helpFormsPattern = string.Join(" or ", BuiltInFlags.HelpForms.Select(f => $"\"{f}\""));
+    patternBuilder.Append($"{helpFormsPattern}]");
     string helpPattern = patternBuilder.ToString();
 
     // Emit the help check

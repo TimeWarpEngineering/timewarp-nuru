@@ -4,11 +4,11 @@ using TimeWarp.Nuru;
 using TimeWarp.Terminal;
 
 /// <summary>
-/// Default route that shows usage when no arguments provided.
-/// This is a Query (Q) - read-only, just displays information.
-/// Demonstrates ITerminal injection for testable output.
+/// Default route that runs when no command is specified.
+/// This demonstrates using [NuruRoute("")] as a fallback/welcome message.
+/// For help, use the auto-generated --help flag instead.
 /// </summary>
-[NuruRoute("", Description = "Show usage information")]
+[NuruRoute("", Description = "Default action when no command provided")]
 public sealed class DefaultQuery : IQuery<Unit>
 {
   [Option("verbose", "v", Description = "Show verbose output")]
@@ -25,33 +25,18 @@ public sealed class DefaultQuery : IQuery<Unit>
 
     public ValueTask<Unit> Handle(DefaultQuery query, CancellationToken ct)
     {
-      Terminal.WriteLine("Endpoints Sample");
-      Terminal.WriteLine("========================");
+      Terminal.WriteLine("Welcome to the Endpoints Sample!");
       Terminal.WriteLine();
-      Terminal.WriteLine("Queries (Q) - Read-only, safe to retry:");
-      Terminal.WriteLine("  greet <name>              Greet someone");
-      Terminal.WriteLine("  config get <key>          Get config value");
-      Terminal.WriteLine("  docker ps                 List containers");
+      Terminal.WriteLine("This is the default route - it runs when no command is specified.");
       Terminal.WriteLine();
-      Terminal.WriteLine("Commands (C) - Mutating, needs confirmation:");
-      Terminal.WriteLine("  deploy <env> [options]    Deploy to environment");
-      Terminal.WriteLine("  goodbye, bye, cya         Say goodbye and exit");
-      Terminal.WriteLine("  exec <args...>            Execute a command");
-      Terminal.WriteLine("  docker run <image>        Run a container");
-      Terminal.WriteLine("  docker build <path>       Build an image");
-      Terminal.WriteLine();
-      Terminal.WriteLine("Idempotent (I) - Mutating but safe to retry:");
-      Terminal.WriteLine("  config set <key> <value>  Set config value");
-      Terminal.WriteLine("  docker tag <image> <tag>  Tag an image");
-      Terminal.WriteLine();
-      Terminal.WriteLine("Unspecified ( ) - Not yet classified:");
-      Terminal.WriteLine("  ping                      Simple health check");
+      Terminal.WriteLine("Try these commands:");
+      Terminal.WriteLine("  greet Alice          Say hello to someone");
+      Terminal.WriteLine("  docker ps            List containers");
+      Terminal.WriteLine("  --help               Show all available commands");
       Terminal.WriteLine();
       if (query.Verbose)
       {
-        Terminal.WriteLine("Legend: (Q)uery (I)dempotent (C)ommand ( )Unspecified");
-        Terminal.WriteLine();
-        Terminal.WriteLine("Run 'endpoints --help' for detailed help.");
+        Terminal.WriteLine("Tip: Use --help for the complete auto-generated command list.");
       }
       return default;
     }

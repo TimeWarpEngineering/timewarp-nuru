@@ -45,11 +45,18 @@ public sealed class AzureStorageUploadCommand : AzureStorageGroupBase, ICommand<
 }
 
 /// <summary>
-/// Command: cloud azure vm start {name}
-/// Two-level nested route group example.
+/// Level 3 (alternate): Nested route group for VM commands
+/// Expected pattern: "cloud azure vm ..."
 /// </summary>
-[NuruRoute("vm start", Description = "Start an Azure VM")]
-public sealed class AzureVmStartCommand : AzureGroupBase, ICommand<Unit>
+[NuruRouteGroup("vm")]
+public abstract class AzureVmGroupBase : AzureGroupBase;
+
+/// <summary>
+/// Command: cloud azure vm start {name}
+/// Three-level nested route group example (alternate branch).
+/// </summary>
+[NuruRoute("start", Description = "Start an Azure VM")]
+public sealed class AzureVmStartCommand : AzureVmGroupBase, ICommand<Unit>
 {
   [Parameter(Description = "VM name")]
   public string Name { get; set; } = string.Empty;

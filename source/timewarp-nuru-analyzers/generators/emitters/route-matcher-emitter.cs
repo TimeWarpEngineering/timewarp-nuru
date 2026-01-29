@@ -138,12 +138,15 @@ internal static class RouteMatcherEmitter
     sb.AppendLine($"    if (routeArgs.Length >= {minPositionalArgs})");
     sb.AppendLine("    {");
 
-    // Bug #403: Routes with options but no literals (minPositionalArgs == 0) generate
+    // Bug #403: Routes with no literals and no required params (minPositionalArgs == 0) generate
     // "routeArgs.Length >= 0" which is always true, intercepting built-in flags like --help.
-    // Explicitly skip built-in flags for these "match everything" routes.
-    if (minPositionalArgs == 0)
+    // Skip built-in flags for these "match everything" routes, UNLESS the route explicitly
+    // maps a built-in flag (e.g., Map("--version") should be allowed to override).
+    bool hasNoLiterals = !route.PositionalMatchSegments.Any();
+    bool isBuiltInFlagRoute = route.OriginalPattern is "--help" or "-h" or "--version" or "--capabilities";
+    if (minPositionalArgs == 0 && hasNoLiterals && !isBuiltInFlagRoute)
     {
-      sb.AppendLine("      // Skip built-in flags for default/option-only routes");
+      sb.AppendLine("      // Skip built-in flags for routes with no literals (default/options-only)");
       sb.AppendLine("      if (routeArgs is [\"--help\" or \"-h\"] or [\"--version\"] or [\"--capabilities\"])");
       sb.AppendLine($"        goto route_skip_{routeIndex};");
     }

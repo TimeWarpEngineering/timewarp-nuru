@@ -138,6 +138,16 @@ internal static class RouteMatcherEmitter
     sb.AppendLine($"    if (routeArgs.Length >= {minPositionalArgs})");
     sb.AppendLine("    {");
 
+    // Bug #403: Routes with options but no literals (minPositionalArgs == 0) generate
+    // "routeArgs.Length >= 0" which is always true, intercepting built-in flags like --help.
+    // Explicitly skip built-in flags for these "match everything" routes.
+    if (minPositionalArgs == 0)
+    {
+      sb.AppendLine("      // Skip built-in flags for default/option-only routes");
+      sb.AppendLine("      if (routeArgs is [\"--help\" or \"-h\"] or [\"--version\"] or [\"--capabilities\"])");
+      sb.AppendLine($"        goto route_skip_{routeIndex};");
+    }
+
     // Emit the set of all option forms for this route (used to distinguish options from values)
     EmitOptionFormsSet(sb, route, routeIndex);
 

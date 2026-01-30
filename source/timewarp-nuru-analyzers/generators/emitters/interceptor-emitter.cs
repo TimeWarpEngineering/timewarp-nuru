@@ -585,6 +585,9 @@ internal static class InterceptorEmitter
     // Using model.AllRoutes would cause route index collisions between different apps
     List<RouteDefinition> allRoutesOrdered = [.. app.Routes.Concat(endpointsForApp)];
 
+    // Group-level help checks (before user routes so groups get priority over routes)
+    RouteHelpEmitter.EmitGroupHelpChecks(sb, allRoutesOrdered, 4);
+
     foreach (RouteDefinition route in allRoutes.OrderByDescending(r => r.ComputedSpecificity))
     {
       // Find the route's original index in model.AllRoutes

@@ -110,6 +110,7 @@
     <!-- <Compile Include="../timewarp-nuru-mcp-tests/*.cs" /> -->
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="$(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj" />
     <!-- <ProjectReference Include="$(MSBuildThisFileDirectory)../../source/timewarp-nuru-completion/timewarp-nuru-completion.csproj" /> -->
     <!-- <ProjectReference Include="$(MSBuildThisFileDirectory)../../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj" /> -->
     <!-- <ProjectReference Include="$(MSBuildThisFileDirectory)../../source/timewarp-nuru-mcp/timewarp-nuru-mcp.csproj" /> -->

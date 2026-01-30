@@ -43,7 +43,9 @@ internal static class RouteHelpEmitter
       patternBuilder.Append($"\"{EscapeString(literal)}\", ");
     }
 
-    patternBuilder.Append("\"--help\" or \"-h\"]");
+    // Use BuiltInFlags constant for help forms
+    string helpFormsPattern = string.Join(" or ", BuiltInFlags.HelpForms.Select(f => $"\"{f}\""));
+    patternBuilder.Append($"{helpFormsPattern}]");
     string helpPattern = patternBuilder.ToString();
 
     // Emit the help check
@@ -314,5 +316,102 @@ internal static class RouteHelpEmitter
       .Replace("\n", "\\n", StringComparison.Ordinal)
       .Replace("\r", "\\r", StringComparison.Ordinal)
       .Replace("\t", "\\t", StringComparison.Ordinal);
+  }
+
+  /// <summary>
+  /// Emits code to check for group-level help (e.g., "worktree --help") and display group-specific help.
+  /// This should be called before user routes so groups get priority.
+  /// </summary>
+  /// <param name="sb">The StringBuilder to append to.</param>
+  /// <param name="routes">All routes to group by prefix.</param>
+  /// <param name="indent">Indentation level (number of spaces).</param>
+  public static void EmitGroupHelpChecks(
+    StringBuilder sb,
+    IEnumerable<RouteDefinition> routes,
+    int indent = 4)
+  {
+    string indentStr = new(' ', indent);
+
+    // Group routes by GroupPrefix using case-insensitive comparison
+    IEnumerable<IGrouping<string, RouteDefinition>> groups = routes
+      .Where(r => !string.IsNullOrEmpty(r.GroupPrefix))
+      .GroupBy(r => r.GroupPrefix!, StringComparer.OrdinalIgnoreCase);
+
+    foreach (IGrouping<string, RouteDefinition> group in groups)
+    {
+      string groupPrefix = group.Key;
+      List<RouteDefinition> groupRoutes = [.. group];
+
+      // Split prefix by spaces into words
+      string[] words = groupPrefix.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+      // Build pattern: ["word1", "word2", ..., "--help" or "-h"]
+      StringBuilder patternBuilder = new();
+      patternBuilder.Append('[');
+      foreach (string word in words)
+      {
+        patternBuilder.Append($"\"{EscapeString(word)}\", ");
+      }
+
+      // Use BuiltInFlags constant for help forms
+      string helpFormsPattern = string.Join(" or ", BuiltInFlags.HelpForms.Select(f => $"\"{f}\""));
+      patternBuilder.Append($"{helpFormsPattern}]");
+      string helpPattern = patternBuilder.ToString();
+
+      // Emit the group help check
+      sb.AppendLine($"{indentStr}// Group-level help: {groupPrefix} --help");
+      sb.AppendLine($"{indentStr}if (routeArgs is {helpPattern})");
+      sb.AppendLine($"{indentStr}{{");
+
+      // Emit the group help content inline
+      EmitGroupHelpContent(sb, groupPrefix, groupRoutes, indent + 2);
+
+      sb.AppendLine($"{indentStr}  return 0;");
+      sb.AppendLine($"{indentStr}}}");
+      sb.AppendLine();
+    }
+  }
+
+  /// <summary>
+  /// Emits the help content for a group of routes.
+  /// </summary>
+  /// <param name="sb">The StringBuilder to append to.</param>
+  /// <param name="groupPrefix">The group prefix (e.g., "worktree").</param>
+  /// <param name="routes">The routes in this group.</param>
+  /// <param name="indent">Indentation level (number of spaces).</param>
+  private static void EmitGroupHelpContent(
+    StringBuilder sb,
+    string groupPrefix,
+    List<RouteDefinition> routes,
+    int indent)
+  {
+    string indentStr = new(' ', indent);
+
+    // Header line
+    sb.AppendLine($"{indentStr}app.Terminal.WriteLine(\"{EscapeString(groupPrefix)} commands:\");");
+    sb.AppendLine($"{indentStr}app.Terminal.WriteLine();");
+
+    // List each route in the group
+    foreach (RouteDefinition route in routes)
+    {
+      // Build display pattern (show the original pattern, not the full pattern with group prefix)
+      string pattern = BuildPatternDisplay(route);
+
+      // Remove the group prefix from the beginning of the pattern for display
+      // (since the header already shows the group)
+      string displayPattern = pattern;
+      if (displayPattern.StartsWith(groupPrefix, StringComparison.OrdinalIgnoreCase))
+      {
+        displayPattern = displayPattern[groupPrefix.Length..].TrimStart();
+      }
+
+      // Pad to 25 chars for alignment
+      string paddedPattern = displayPattern.PadRight(25);
+
+      // Get description or empty string
+      string description = route.Description ?? "";
+
+      sb.AppendLine($"{indentStr}app.Terminal.WriteLine(\"  {EscapeString(paddedPattern)}{EscapeString(description)}\");");
+    }
   }
 }

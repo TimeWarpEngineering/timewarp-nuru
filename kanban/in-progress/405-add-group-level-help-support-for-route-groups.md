@@ -112,4 +112,129 @@ public static async Task Should_show_group_level_help()
 
 ## Notes
 
-[Additional context]
+## Implementation Plan
+
+### Step 1: Add Group-Level Help Emitter (`route-help-emitter.cs`)
+
+**New Method:**
+
+```csharp
+/// <summary>
+/// Emits group-level help checks for each unique group prefix.
+/// This enables "group --help" to show all subcommands in that group.
+/// </summary>
+public static void EmitGroupHelpChecks(
+  StringBuilder sb,
+  IEnumerable<RouteDefinition> routes,
+  int indent = 4)
+{
+  string indentStr = new(' ', indent);
+
+  // Group routes by their GroupPrefix
+  Dictionary<string, List<RouteDefinition>> groups = new(StringComparer.OrdinalIgnoreCase);
+  foreach (RouteDefinition route in routes)
+  {
+    if (!string.IsNullOrEmpty(route.GroupPrefix))
+    {
+      if (!groups.TryGetValue(route.GroupPrefix, out var list))
+      {
+        list = [];
+        groups[route.GroupPrefix] = list;
+      }
+      list.Add(route);
+    }
+  }
+
+  // Emit help check for each group
+  foreach (var kvp in groups)
+  {
+    string groupPrefix = kvp.Key;
+    List<RouteDefinition> groupRoutes = kvp.Value;
+
+    // Split prefix into words (e.g., "admin config" -> ["admin", "config"])
+    string[] prefixWords = groupPrefix.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+    // Build pattern: ["word1", "word2", ..., "--help" or "-h"]
+    StringBuilder patternBuilder = new();
+    patternBuilder.Append('[');
+    for (int i = 0; i < prefixWords.Length; i++)
+    {
+      if (i > 0) patternBuilder.Append(", ");
+      patternBuilder.Append($"\"{EscapeString(prefixWords[i])}\"");
+    }
+    string helpFormsPattern = string.Join(" or ", BuiltInFlags.HelpForms.Select(f => $"\"{f}\""));
+    patternBuilder.Append($", {helpFormsPattern}]");
+
+    sb.AppendLine();
+    sb.AppendLine($"{indentStr}// Group-level help: {groupPrefix} --help");
+    sb.AppendLine($"{indentStr}if (routeArgs is {patternBuilder})");
+    sb.AppendLine($"{indentStr}{{");
+
+    // Emit help content for all routes in this group
+    EmitGroupHelpContent(sb, groupPrefix, groupRoutes, indent + 2);
+
+    sb.AppendLine($"{indentStr}  return 0;");
+    sb.AppendLine($"{indentStr}}}");
+  }
+}
+```
+
+**New Method for Content Generation:**
+
+```csharp
+private static void EmitGroupHelpContent(
+  StringBuilder sb,
+  string groupPrefix,
+  List<RouteDefinition> routes,
+  int indent)
+{
+  string indentStr = new(' ', indent);
+
+  sb.AppendLine($"{indentStr}app.Terminal.WriteLine(\"{EscapeString(groupPrefix)} commands:\");");
+  sb.AppendLine($"{indentStr}app.Terminal.WriteLine();");
+
+  foreach (RouteDefinition route in routes)
+  {
+    string pattern = BuildPatternDisplay(route);
+    string paddedPattern = pattern.PadRight(25);
+    string description = route.Description ?? string.Empty;
+    sb.AppendLine($"{indentStr}app.Terminal.WriteLine(\"  {EscapeString(paddedPattern)} {EscapeString(description)}\");");
+  }
+}
+```
+
+### Step 2: Modify Interceptor Emitter (`interceptor-emitter.cs`)
+
+**In `EmitMethodBody()` around line 588, add:**
+
+```csharp
+// Group-level help checks (before user routes so groups get priority over routes)
+// Example: "worktree --help" shows all worktree subcommands
+RouteHelpEmitter.EmitGroupHelpChecks(sb, allRoutesOrdered, 4);
+sb.AppendLine();
+```
+
+### Step 3: Test Requirements
+
+**File:** `tests/timewarp-nuru-tests/help/help-04-group-level-help.cs`
+
+Create tests for:
+- Basic group help (`worktree --help`)
+- Short form (`config -h`)
+- Non-group command (single route --help)
+- Nested groups (`admin config --help`)
+- Per-route help still works (`worktree add --help`)
+
+### Design Decisions
+
+1. **Show all commands under group prefix** (recursive, all nesting levels)
+2. **Use full path in header** (e.g., "admin config commands:")
+3. **Group help takes precedence** over route matching for exact match patterns
+
+### Files Modified
+
+| File | Change |
+|------|--------|
+| `route-help-emitter.cs` | Add `EmitGroupHelpChecks()` and `EmitGroupHelpContent()` methods |
+| `interceptor-emitter.cs` | Add call to `EmitGroupHelpChecks()` |
+| New test file | `help-04-group-level-help.cs` |

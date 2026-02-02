@@ -37,3 +37,29 @@ The source generator is only scanning properties in a single file (the one conta
 - [ ] Update generator to collect properties from all partial class files
 - [ ] Add integration test with options in multiple partial class files
 - [ ] Verify fix resolves the build error
+
+## Notes
+
+### Implementation Plan
+
+**Root Cause:**
+The bug is in `/source/timewarp-nuru-analyzers/generators/extractors/endpoint-extractor.cs` in the `ExtractSegmentsFromProperties` method (lines 225-246). The method uses a syntactic approach that only sees members from the single file containing `[NuruRoute]`, while `ExtractHandler` uses a semantic approach that correctly finds ALL properties including those in partial class files.
+
+**Fix:**
+Modify `ExtractSegmentsFromProperties` to use the semantic model to collect all properties from the type, similar to how `ExtractHandler` does it. Use `classSymbol.GetMembers().OfType<IPropertySymbol>()` to get ALL properties.
+
+**Files to Modify:**
+- `source/timewarp-nuru-analyzers/generators/extractors/endpoint-extractor.cs` - Rewrite `ExtractSegmentsFromProperties` method
+
+**Test:**
+- Add test in `tests/timewarp-nuru-tests/generator/` that creates a partial class with options across multiple files
+
+**Edge Cases:**
+- Duplicate property names across partial files (Roslyn deduplicates)
+- Properties without syntax references (skip)
+- Default value extraction via `DeclaringSyntaxReferences`
+
+**Validation:**
+1. Build the solution
+2. Run CI tests
+3. Verify no regression

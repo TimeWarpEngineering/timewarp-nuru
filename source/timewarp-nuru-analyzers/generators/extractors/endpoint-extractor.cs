@@ -221,6 +221,7 @@ internal static class EndpointExtractor
 
   /// <summary>
   /// Extracts segments from properties with [Parameter] or [Option] attributes.
+  /// Uses semantic model to find all properties including those in partial class files.
   /// </summary>
   private static ImmutableArray<SegmentDefinition> ExtractSegmentsFromProperties
   (
@@ -232,17 +233,49 @@ internal static class EndpointExtractor
     ImmutableArray<SegmentDefinition>.Builder segments = ImmutableArray.CreateBuilder<SegmentDefinition>();
     int position = 100; // Start after pattern segments
 
-    foreach (MemberDeclarationSyntax member in classDeclaration.Members)
-    {
-      if (member is not PropertyDeclarationSyntax property)
-        continue;
+    // Get the type symbol to find ALL properties including those in partial classes
+    INamedTypeSymbol? classSymbol = semanticModel.GetDeclaredSymbol(classDeclaration, cancellationToken);
+    if (classSymbol is null)
+      return segments.ToImmutable();
 
-      SegmentDefinition? segment = ExtractSegmentFromProperty(property, position++, semanticModel, cancellationToken);
+    // Iterate over all properties from the type symbol (handles partial classes correctly)
+    foreach (IPropertySymbol propertySymbol in classSymbol.GetMembers().OfType<IPropertySymbol>())
+    {
+      SegmentDefinition? segment = ExtractSegmentFromPropertySymbol(propertySymbol, position++, cancellationToken);
       if (segment is not null)
         segments.Add(segment);
     }
 
     return segments.ToImmutable();
+  }
+
+  /// <summary>
+  /// Extracts a segment from a property symbol with [Parameter] or [Option] attribute.
+  /// Works with IPropertySymbol to handle properties from partial classes.
+  /// </summary>
+  private static SegmentDefinition? ExtractSegmentFromPropertySymbol
+  (
+    IPropertySymbol propertySymbol,
+    int position,
+    CancellationToken cancellationToken
+  )
+  {
+    foreach (AttributeData attribute in propertySymbol.GetAttributes())
+    {
+      string? attributeName = attribute.AttributeClass?.Name;
+
+      if (attributeName == ParameterAttributeName || attributeName == $"{ParameterAttributeName}Attribute")
+      {
+        return ExtractParameterFromAttribute(propertySymbol, attribute, position);
+      }
+
+      if (attributeName == OptionAttributeName || attributeName == $"{OptionAttributeName}Attribute")
+      {
+        return ExtractOptionFromAttribute(propertySymbol, attribute, position, cancellationToken);
+      }
+    }
+
+    return null;
   }
 
   /// <summary>
@@ -271,7 +304,7 @@ internal static class EndpointExtractor
 
       if (attributeName == OptionAttributeName || attributeName == $"{OptionAttributeName}Attribute")
       {
-        return ExtractOptionFromAttribute(propertySymbol, attribute, position, property);
+        return ExtractOptionFromAttribute(propertySymbol, attribute, position, cancellationToken);
       }
     }
 
@@ -328,7 +361,7 @@ internal static class EndpointExtractor
     IPropertySymbol property,
     AttributeData attribute,
     int position,
-    PropertyDeclarationSyntax propertySyntax
+    CancellationToken cancellationToken
   )
   {
     string longForm = property.Name.ToLowerInvariant();
@@ -375,8 +408,9 @@ internal static class EndpointExtractor
       isRepeated = true;
     }
 
-    // Extract default value from property initializer (e.g., "= 1" -> "1")
-    string? defaultValueLiteral = ExtractPropertyDefaultValue(propertySyntax);
+    // Extract default value from property initializer via DeclaringSyntaxReferences
+    // This handles properties defined in partial class files correctly
+    string? defaultValueLiteral = ExtractPropertyDefaultValueFromSymbol(property, cancellationToken);
 
     return new OptionDefinition(
       Position: position,
@@ -391,6 +425,34 @@ internal static class EndpointExtractor
       ParameterIsOptional: property.NullableAnnotation == NullableAnnotation.Annotated,
       ResolvedClrTypeName: typeName,
       DefaultValueLiteral: defaultValueLiteral);
+  }
+
+  /// <summary>
+  /// Extracts the default value literal from a property symbol using DeclaringSyntaxReferences.
+  /// This method correctly handles properties defined in partial class files.
+  /// </summary>
+  /// <param name="property">The property symbol.</param>
+  /// <param name="cancellationToken">Cancellation token.</param>
+  /// <returns>The default value literal (e.g., "1", "\"default\""), or null if no initializer.</returns>
+  private static string? ExtractPropertyDefaultValueFromSymbol(IPropertySymbol property, CancellationToken cancellationToken)
+  {
+    // Get syntax references for this property (handles partial classes correctly)
+    ImmutableArray<SyntaxReference> syntaxReferences = property.DeclaringSyntaxReferences;
+    if (syntaxReferences.Length == 0)
+      return null;
+
+    // Get the first syntax reference and locate the PropertyDeclarationSyntax
+    Microsoft.CodeAnalysis.SyntaxNode? syntaxNode = syntaxReferences[0].GetSyntax(cancellationToken);
+    if (syntaxNode is not PropertyDeclarationSyntax propertySyntax)
+      return null;
+
+    // Check for property initializer (e.g., public int X { get; set; } = 1;)
+    if (propertySyntax.Initializer?.Value is { } initializerValue)
+    {
+      return initializerValue.ToString();
+    }
+
+    return null;
   }
 
   /// <summary>

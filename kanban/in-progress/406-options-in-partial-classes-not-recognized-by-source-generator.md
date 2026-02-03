@@ -63,3 +63,28 @@ Modify `ExtractSegmentsFromProperties` to use the semantic model to collect all 
 1. Build the solution
 2. Run CI tests
 3. Verify no regression
+
+## Results
+
+### What Was Implemented
+Fixed bug #406 where options in partial classes were not recognized by the source generator. The issue was that `ExtractSegmentsFromProperties` used a syntactic approach (`classDeclaration.Members`) that only saw members from the single file containing `[NuruRoute]`, ignoring properties in other partial class files.
+
+### Files Changed
+
+1. **`source/timewarp-nuru-analyzers/generators/extractors/endpoint-extractor.cs`**:
+   - Modified `ExtractSegmentsFromProperties` to use semantic model (`classSymbol.GetMembers().OfType<IPropertySymbol>()`)
+   - Added `ExtractSegmentFromPropertySymbol` method to work with `IPropertySymbol`
+   - Added `ExtractPropertyDefaultValueFromSymbol` method to extract default values via `DeclaringSyntaxReferences`
+
+2. **`tests/timewarp-nuru-tests/generator/generator-18-partial-class-options.cs`** (new):
+   - 4 tests covering partial class options: basic recognition, default values, short forms, and mixed options from both files
+
+### Key Decisions
+
+- **Used semantic model for type resolution**: Instead of iterating `classDeclaration.Members` (syntax-only), now uses `semanticModel.GetDeclaredSymbol()` to get the type symbol, then iterates all properties via `GetMembers().OfType<IPropertySymbol>()`
+
+- **Default value extraction via `DeclaringSyntaxReferences`**: For properties defined in partial classes, the syntax reference points to the actual source file where the property is defined, allowing correct default value extraction even when the property is in a different file from `[NuruRoute]`
+
+### Test Results
+- ✅ 4/4 new partial class tests pass
+- ✅ 1065/1065 CI tests pass (no regressions)

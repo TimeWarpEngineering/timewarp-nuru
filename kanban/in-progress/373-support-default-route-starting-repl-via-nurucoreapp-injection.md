@@ -107,3 +107,103 @@ return await app.RunAsync(args);
   options.AutoStartWhenEmpty = true;
 })
 ```
+
+## Notes
+
+## Implementation Plan: Add AutoStartWhenEmpty to ReplOptions
+
+### Overview
+
+This feature adds a new `AutoStartWhenEmpty` property to `ReplOptions` that, when enabled, automatically starts the REPL when no command-line arguments are provided. This eliminates the need for users to manually check `args.Length == 0` and pass `--interactive`.
+
+### Files to Modify
+
+#### 1. Runtime Configuration (`source/timewarp-nuru/options/repl-options.cs`)
+
+Add the `AutoStartWhenEmpty` property to the `ReplOptions` class:
+
+```csharp
+/// <summary>
+/// Whether to automatically start REPL when no arguments are provided.
+/// When true, running the app without arguments enters interactive mode.
+/// Default is false.
+/// </summary>
+public bool AutoStartWhenEmpty { get; set; } = false;
+```
+
+#### 2. Design-Time Model (`source/timewarp-nuru-analyzers/generators/models/repl-model.cs`)
+
+Add `AutoStartWhenEmpty` to the `ReplModel` record and update its default:
+
+```csharp
+public sealed record ReplModel(
+  string Prompt,
+  string ContinuationPrompt,
+  ImmutableArray<string> ExitCommands,
+  int HistorySize,
+  bool EnableSyntaxHighlighting,
+  bool EnableAutoComplete,
+  bool AutoStartWhenEmpty)  // NEW PARAMETER
+{
+  public static readonly ReplModel Default = new(
+    Prompt: "> ",
+    ContinuationPrompt: "... ",
+    ExitCommands: ["exit", "quit", "q"],
+    HistorySize: 100,
+    EnableSyntaxHighlighting: true,
+    EnableAutoComplete: true,
+    AutoStartWhenEmpty: false);  // UPDATED
+}
+```
+
+#### 3. DSL Interpreter (`source/timewarp-nuru-analyzers/generators/interpreter/dsl-interpreter.cs`)
+
+**Current (line 992-1003):**
+```csharp
+private static object? DispatchAddRepl(InvocationExpressionSyntax invocation, object? receiver)
+{
+  if (receiver is not IIrAppBuilder appBuilder)
+  {
+    throw new InvalidOperationException(
+      $"AddRepl() must be called on an app builder. Location: {invocation.GetLocation().GetLineSpan()}");
+  }
+
+  // For now, just enable REPL with defaults
+  // TODO: Phase 5+ - extract options from lambda if present
+  return appBuilder.AddRepl();
+}
+```
+
+**Proposed:** Create a `ReplOptionsExtractor` class and update `DispatchAddRepl` to extract options from the lambda expression.
+
+#### 4. Interceptor Emitter (`source/timewarp-nuru-analyzers/generators/emitters/interceptor-emitter.cs`)
+
+Update `EmitInteractiveFlag` (line 775-788) to check `AutoStartWhenEmpty`.
+
+### New Files to Create
+
+#### 5. ReplOptions Extractor (`source/timewarp-nuru-analyzers/generators/extractors/repl-options-extractor.cs`)
+
+Create a new extractor class to handle lambda expressions.
+
+### Testing
+
+#### 6. Unit Tests
+
+Create: `tests/timewarp-nuru-tests/repl/repl-38-auto-start-when-empty.cs`
+
+Tests to include:
+- `AutoStart_enabled_no_args_starts_repl` - When `AutoStartWhenEmpty = true` and no args, REPL starts
+- `AutoStart_disabled_no_args_unknown_command` - When `AutoStartWhenEmpty = false` and no args, shows "Unknown command"
+- `AutoStart_enabled_with_args_runs_command` - When `AutoStartWhenEmpty = true` and args provided, runs command normally
+- `Interactive_flag_still_works` - `--interactive` and `-i` flags still work regardless of `AutoStartWhenEmpty`
+
+### Implementation Order
+
+1. Add `AutoStartWhenEmpty` to `ReplOptions` (runtime)
+2. Add `AutoStartWhenEmpty` to `ReplModel` (design-time)
+3. Create `ReplOptionsExtractor`
+4. Update `DispatchAddRepl` in `DslInterpreter`
+5. Update `EmitInteractiveFlag` in `InterceptorEmitter`
+6. Add unit tests
+7. Update sample documentation

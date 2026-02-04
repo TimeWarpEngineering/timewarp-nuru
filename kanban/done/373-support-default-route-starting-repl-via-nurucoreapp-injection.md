@@ -108,7 +108,31 @@ return await app.RunAsync(args);
 })
 ```
 
-## Notes
+## Results
+
+### Implementation Complete
+
+**Files Modified:**
+1. `source/timewarp-nuru/options/repl-options.cs` - Added `AutoStartWhenEmpty` property
+2. `source/timewarp-nuru-analyzers/generators/models/repl-model.cs` - Added `AutoStartWhenEmpty` parameter to record
+3. `source/timewarp-nuru-analyzers/generators/interpreter/dsl-interpreter.cs` - Updated `DispatchAddRepl` to extract options from lambda
+4. `source/timewarp-nuru-analyzers/generators/emitters/interceptor-emitter.cs` - Updated `EmitInteractiveFlag` to emit auto-start check when enabled
+
+**Files Created:**
+5. `source/timewarp-nuru-analyzers/generators/extractors/repl-options-extractor.cs` - New extractor for ReplOptions lambda expressions
+6. `tests/timewarp-nuru-tests/repl/repl-38-auto-start-when-empty.cs` - Comprehensive unit tests
+
+**Test Results:** All 7 tests pass ✓
+
+**Key Features:**
+- When `AutoStartWhenEmpty = true`, running the app with no arguments automatically starts the REPL
+- When `AutoStartWhenEmpty = false` (default), running with no arguments shows "Unknown command"
+- The `--interactive` and `-i` flags continue to work regardless of `AutoStartWhenEmpty` setting
+- When arguments are provided, commands execute normally even with `AutoStartWhenEmpty = true`
+
+**Generated Code Verification:**
+- ExecuteRouteAsync with AutoStartWhenEmpty=true includes the auto-start check
+- ExecuteRouteAsync with AutoStartWhenEmpty=false only has `--interactive` check
 
 ## Implementation Plan: Add AutoStartWhenEmpty to ReplOptions
 

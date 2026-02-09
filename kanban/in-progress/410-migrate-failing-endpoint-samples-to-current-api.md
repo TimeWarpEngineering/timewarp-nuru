@@ -195,30 +195,36 @@ These serve as reference implementations:
 - Changed Port int[] to string[] (source generator limitation)
 - Changed option 'config' to 'mode' (avoid 'configuration' variable conflict)
 
-**Structure:**
+**Structure (with category folders):**
 ```
 03-syntax/
 ├── endpoints/
-│   ├── status-query.cs         (literal)
-│   ├── git-commit-command.cs   (literal - hyphenated)
-│   ├── version-query.cs        (literal)
-│   ├── greet-query.cs          (parameter)
-│   ├── copy-command.cs         (parameters)
-│   ├── move-command.cs         (parameters)
-│   ├── delete-command.cs       (parameter)
-│   ├── deploy-command.cs       (optional parameter)
-│   ├── wait-command.cs         (optional parameter)
-│   ├── backup-command.cs       (optional parameter)
-│   ├── docker-command.cs       (catch-all)
-│   ├── run-command.cs          (catch-all)
-│   ├── tail-command.cs         (catch-all)
-│   ├── exec-command.cs         (catch-all)
-│   ├── build-command.cs        (options)
-│   ├── deploy-full-command.cs  (options)
-│   ├── docker-env-command.cs   (array options)
-│   ├── git-command.cs          (complex)
-│   ├── docker-run-command.cs   (complex)
-│   └── kubectl-query.cs        (complex)
+│   ├── literals/
+│   │   ├── status-query.cs
+│   │   ├── git-commit-command.cs
+│   │   └── version-query.cs
+│   ├── parameters/
+│   │   ├── greet-query.cs
+│   │   ├── copy-command.cs
+│   │   ├── move-command.cs
+│   │   └── delete-command.cs
+│   ├── optional/
+│   │   ├── deploy-command.cs
+│   │   ├── wait-command.cs
+│   │   └── backup-command.cs
+│   ├── catchall/
+│   │   ├── docker-command.cs
+│   │   ├── run-command.cs
+│   │   ├── tail-command.cs
+│   │   └── exec-command.cs
+│   ├── options/
+│   │   ├── build-command.cs
+│   │   ├── deploy-full-command.cs
+│   │   └── docker-env-command.cs
+│   └── complex/
+│       ├── git-command.cs
+│       ├── docker-run-command.cs
+│       └── kubectl-query.cs
 ├── syntax.cs                   (entry point)
-└── Directory.Build.props
+└── Directory.Build.props       (**/*.cs recursively finds all)
 ```

@@ -14,7 +14,7 @@ public sealed class DivideCommand : ICommand<double>
   public double X { get; set; }
 
   [Parameter(Description = "Divisor")]
-  public double Y { get; set; };
+  public double Y { get; set; }
 
   public sealed class Handler : ICommandHandler<DivideCommand, double>
   {

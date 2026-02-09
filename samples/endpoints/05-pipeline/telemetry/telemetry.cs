@@ -20,7 +20,7 @@ using PipelineTelemetry.Behaviors;
 using TimeWarp.Nuru;
 
 NuruApp app = NuruApp.CreateBuilder()
-  .AddBehavior(typeof(TelemetryBehavior))
+  .AddBehavior(typeof(PipelineTelemetry.Behaviors.TelemetryBehavior))
   .DiscoverEndpoints()
   .Build();
 

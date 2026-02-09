@@ -18,11 +18,13 @@
 //   ./repl-interactive-mode.cs add 5 3
 //
 // Interactive mode (enter REPL):
+//   ./repl-interactive-mode.cs              (auto-starts via AutoStartWhenEmpty)
 //   ./repl-interactive-mode.cs --interactive
 //   ./repl-interactive-mode.cs -i
 //
 // This pattern allows users to run quick one-off commands or enter
-// an interactive session for extended use.
+// an interactive session for extended use. With AutoStartWhenEmpty enabled,
+// running with no arguments automatically enters the REPL.
 // ═══════════════════════════════════════════════════════════════════════════════
 
 using TimeWarp.Nuru;
@@ -61,6 +63,7 @@ NuruApp app = NuruApp.CreateBuilder()
       "Welcome to Interactive Mode!\n" +
       "Type '--help' for available commands, 'exit' to quit.";
     options.GoodbyeMessage = "Goodbye!";
+    options.AutoStartWhenEmpty = true; // Auto-start REPL when no args provided
   })
   .Build();
 

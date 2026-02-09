@@ -158,4 +158,11 @@ public class ReplOptions
   /// </code>
   /// </example>
   public object? KeyBindingProfile { get; set; }
+
+  /// <summary>
+  /// Whether to automatically start REPL when no arguments are provided.
+  /// When true, running the app without arguments enters interactive mode.
+  /// Default is false.
+  /// </summary>
+  public bool AutoStartWhenEmpty { get; set; }
 }

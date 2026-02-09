@@ -987,9 +987,9 @@ public sealed class DslInterpreter
 
   /// <summary>
   /// Dispatches AddRepl() call to IIrAppBuilder.
-  /// For now, we just enable REPL with defaults. Options extraction is Phase 5+.
+  /// Extracts options from lambda expression if present, otherwise uses defaults.
   /// </summary>
-  private static object? DispatchAddRepl(InvocationExpressionSyntax invocation, object? receiver)
+  private object? DispatchAddRepl(InvocationExpressionSyntax invocation, object? receiver)
   {
     if (receiver is not IIrAppBuilder appBuilder)
     {
@@ -997,8 +997,19 @@ public sealed class DslInterpreter
         $"AddRepl() must be called on an app builder. Location: {invocation.GetLocation().GetLineSpan()}");
     }
 
-    // For now, just enable REPL with defaults
-    // TODO: Phase 5+ - extract options from lambda if present
+    // Check if there's a lambda argument for options configuration
+    ArgumentListSyntax? args = invocation.ArgumentList;
+    if (args?.Arguments.Count > 0)
+    {
+      // Extract options from lambda
+      ReplModel? customOptions = ReplOptionsExtractor.Extract(invocation, SemanticModel, CancellationToken);
+      if (customOptions is not null)
+      {
+        return appBuilder.AddRepl(customOptions);
+      }
+    }
+
+    // Use defaults if no lambda or extraction failed
     return appBuilder.AddRepl();
   }
 

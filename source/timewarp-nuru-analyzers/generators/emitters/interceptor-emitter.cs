@@ -771,11 +771,14 @@ internal static class InterceptorEmitter
 
   /// <summary>
   /// Emits --interactive / -i flag check. Called BEFORE user routes so catch-all routes don't intercept it.
+  /// Also handles AutoStartWhenEmpty if enabled.
   /// </summary>
   private static void EmitInteractiveFlag(StringBuilder sb, AppModel app, string methodSuffix)
   {
     if (app.HasRepl)
     {
+      bool autoStartWhenEmpty = app.ReplOptions?.AutoStartWhenEmpty ?? false;
+
       sb.AppendLine("    // Built-in: --interactive / -i (REPL mode, opt-in via AddRepl())");
       sb.AppendLine("    // Emitted BEFORE user routes so catch-all routes don't intercept it");
       sb.AppendLine("    if (routeArgs is [\"--interactive\"] or [\"-i\"])");
@@ -784,6 +787,18 @@ internal static class InterceptorEmitter
       sb.AppendLine("      return 0;");
       sb.AppendLine("    }");
       sb.AppendLine();
+
+      // Emit AutoStartWhenEmpty check if enabled
+      if (autoStartWhenEmpty)
+      {
+        sb.AppendLine("    // Auto-start REPL when no arguments provided (AutoStartWhenEmpty = true)");
+        sb.AppendLine("    if (routeArgs.Length == 0)");
+        sb.AppendLine("    {");
+        sb.AppendLine($"      await RunReplAsync{methodSuffix}(app).ConfigureAwait(false);");
+        sb.AppendLine("      return 0;");
+        sb.AppendLine("    }");
+        sb.AppendLine();
+      }
     }
   }
 

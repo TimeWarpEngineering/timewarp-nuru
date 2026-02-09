@@ -83,18 +83,18 @@ internal sealed class VerifySamplesCommand : ICommand<Unit>
 
 ## Checklist
 
-- [ ] Add `[Option("category", "c", ...)]` property to `VerifySamplesCommand`
-- [ ] Implement `FilterByCategory()` helper method
-- [ ] Filter runfile samples by category
-- [ ] Filter project samples by category
-- [ ] Add proper error handling for invalid category
-- [ ] Test with each category:
-  - [ ] `dev verify-samples --category fluent`
-  - [ ] `dev verify-samples --category endpoints`
-  - [ ] `dev verify-samples --category hybrid`
-  - [ ] `dev verify-samples` (all - default behavior)
-- [ ] Test invalid category shows error message
-- [ ] Update help text for verify-samples command
+- [x] Add `[Option("category", "c", ...)]` property to `VerifySamplesCommand`
+- [x] Implement `FilterByCategory()` helper method
+- [x] Filter runfile samples by category
+- [x] Filter project samples by category
+- [x] Add proper error handling for invalid category
+- [x] Test with each category:
+  - [x] `dev verify-samples --category fluent`
+  - [x] `dev verify-samples --category endpoints`
+  - [x] `dev verify-samples --category hybrid`
+  - [x] `dev verify-samples` (all - default behavior)
+- [x] Test invalid category shows error message
+- [x] Update help text for verify-samples command
 
 ## Test Cases
 
@@ -118,3 +118,35 @@ internal sealed class VerifySamplesCommand : ICommand<Unit>
 - Current implementation: `tools/dev-cli/commands/verify-samples-command.cs`
 - Sample structure: `samples/` directory
 - Reference commands: `tools/dev-cli/commands/format-command.cs` (has `[Option]` pattern)
+
+## Results
+
+Successfully implemented `--category` filter for `dev verify-samples` command.
+
+### What Was Implemented
+- Added `[Option("category", "c", Description = "Filter by category: fluent, endpoints, hybrid")]` property to `VerifySamplesCommand` class
+- Added `FilterByCategory()` helper method that filters samples by directory name matching the category
+- Applied filter to both runfile samples and project samples
+- Added output line showing active category filter when specified
+- Implemented case-insensitive category matching
+- Added descriptive error for invalid category values
+
+### Files Changed
+- `tools/dev-cli/commands/verify-samples-command.cs` - 33 lines added (Option property + FilterByCategory method + filter application)
+
+### Key Decisions
+- Default behavior unchanged: no flag = verify all samples
+- Categories map directly to directory names under `samples/`
+- Error messages clearly list valid options
+- Filter applied consistently to both runfile and project samples
+
+### Test Results
+| Command | Result |
+|---------|--------|
+| `verify-samples --category fluent` | ✅ 23 samples |
+| `verify-samples --category endpoints` | ✅ 29 samples |
+| `verify-samples --category hybrid` | ✅ 4 samples (all passed) |
+| `verify-samples --category invalid` | ✅ Error: "Unknown category: invalid. Valid options: fluent, endpoints, hybrid" |
+| `verify-samples` (no flag) | ✅ 98 samples (all categories, default behavior preserved) |
+
+All tests passed. Implementation complete.

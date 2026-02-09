@@ -2,7 +2,6 @@
 #:project ../../../source/timewarp-nuru/timewarp-nuru.csproj
 #:package Microsoft.Extensions.Options
 #:package Microsoft.Extensions.Options.ConfigurationExtensions
-#:package System.ComponentModel.DataAnnotations
 #:property EnableConfigurationBindingGenerator=true
 
 // ═══════════════════════════════════════════════════════════════════════════════

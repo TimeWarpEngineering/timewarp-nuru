@@ -48,9 +48,9 @@ public interface IRetryable
 /// Retry behavior with exponential backoff and jitter.
 /// Only applies to commands implementing IRetryable.
 /// </summary>
-public sealed class RetryBehavior<TFilter> : INuruBehavior<TFilter> where TFilter : IRetryable
+public sealed class RetryBehavior<TFilter> : INuruBehavior<TFilter> where TFilter : class, IRetryable
 {
-  public async ValueTask HandleAsync(BehaviorContext context, Func<ValueTask> proceed)
+  public async ValueTask HandleAsync(BehaviorContext<TFilter> context, Func<ValueTask> proceed)
   {
     if (context.Command is not IRetryable retryable)
     {

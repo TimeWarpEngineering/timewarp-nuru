@@ -129,7 +129,7 @@ These serve as reference implementations:
 
 ### Fix Individual Samples
 - [x] Fix 03-syntax/endpoint-syntax-examples.cs - REFACTORED: Split into 6 categorized endpoint files
-- [ ] Fix `04-async/endpoint-async-examples.cs`
+- [x] Fix 04-async/endpoint-async-examples.cs - REFACTORED: Split into 7 endpoint files with Parallel naming fix
 - [ ] Fix `05-pipeline/endpoint-pipeline-combined.cs`
 - [ ] Fix `05-pipeline/endpoint-pipeline-exception.cs`
 - [ ] Fix `05-pipeline/endpoint-pipeline-filtered-auth.cs`
@@ -228,3 +228,45 @@ These serve as reference implementations:
 ├── syntax.cs                   (entry point)
 └── Directory.Build.props       (**/*.cs recursively finds all)
 ```
+
+### 04-async - COMPLETED (2026-02-09)
+**Issue:** `Parallel` property conflicts with `System.Threading.Tasks.Parallel` class
+
+**Solution:** Complete refactoring with bug fix:
+- Split 229-line file into 7 individual endpoint files
+- Organized into category folders:
+  - basic/: delay-command, fetch-command
+  - cancellation/: long-running-command  
+  - io/: read-file-command, process-batch-command
+  - queries/: search-query (with SearchResult), health-check-query (with HealthStatus)
+
+**Bug fixes:**
+- Renamed `Parallel` property to `IsParallel` in process-batch-command
+- Used fully qualified `System.Threading.Tasks.Parallel.ForEachAsync`
+- This prevents the CS0120 error: "object reference required for non-static field"
+
+**Structure:**
+```
+04-async/
+├── endpoints/
+│   ├── basic/
+│   │   ├── delay-command.cs
+│   │   └── fetch-command.cs
+│   ├── cancellation/
+│   │   └── long-running-command.cs
+│   ├── io/
+│   │   ├── read-file-command.cs
+│   │   └── process-batch-command.cs
+│   └── queries/
+│       ├── search-query.cs (includes SearchResult)
+│       └── health-check-query.cs (includes HealthStatus)
+├── async.cs (entry point)
+└── Directory.Build.props
+```
+
+**Test results:** All commands working
+- delay 100: Async delay with Task.Delay
+- fetch https://example.com: Simulated HTTP fetch
+- process-batch item1 item2 --parallel: Parallel processing
+- search "query" --limit 5: Async query with JSON results
+- health-check database api: Health status check

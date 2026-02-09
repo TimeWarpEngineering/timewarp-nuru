@@ -63,9 +63,9 @@ public sealed class StatusCommand : ICommand<Unit>
   {
     public ValueTask<Unit> Handle(StatusCommand c, CancellationToken ct)
     {
-      T.WriteLine($"{'✓'.Green()} System Healthy".Green());
-      T.WriteLine($"{'✓'.Green()} Database Connected".Green());
-      T.WriteLine($"{'✓'.Green()} API Responsive".Green());
+      T.WriteLine($"{"✓".Green()} System Healthy".Green());
+      T.WriteLine($"{"✓".Green()} Database Connected".Green());
+      T.WriteLine($"{"✓".Green()} API Responsive".Green());
       return default;
     }
   }
@@ -80,7 +80,7 @@ public sealed class ErrorCommand : ICommand<Unit>
   {
     public ValueTask<Unit> Handle(ErrorCommand c, CancellationToken ct)
     {
-      T.WriteErrorLine($"{'✗'.Red()} Error: {c.Message}".Red());
+      T.WriteErrorLine($"{"✗".Red()} Error: {c.Message}".Red());
       throw new InvalidOperationException(c.Message);
     }
   }
@@ -94,9 +94,9 @@ public sealed class ReportCommand : ICommand<Unit>
     public ValueTask<Unit> Handle(ReportCommand c, CancellationToken ct)
     {
       T.WriteLine("System Report:".Bold().Underline());
-      T.WriteLine($"  {'SUCCESS'.Green()}: All systems operational");
-      T.WriteLine($"  {'WARNING'.Yellow()}: High memory usage");
-      T.WriteLine($"  {'ERROR'.Red()}: 1 failed job (non-critical)");
+      T.WriteLine($"  {"SUCCESS".Green()}: All systems operational");
+      T.WriteLine($"  {"WARNING".Yellow()}: High memory usage");
+      T.WriteLine($"  {"ERROR".Red()}: 1 failed job (non-critical)");
       return default;
     }
   }

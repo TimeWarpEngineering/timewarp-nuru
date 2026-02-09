@@ -20,7 +20,7 @@ using TimeWarp.Nuru;
 using static System.Console;
 
 NuruApp app = NuruApp.CreateBuilder()
-  .AddBehavior(typeof(AuthorizationBehavior<IRequireAuthorization>))
+  .AddBehavior(typeof(AuthorizationBehavior))
   .DiscoverEndpoints()
   .Build();
 
@@ -44,9 +44,9 @@ public interface IRequireAuthorization { }
 /// Authorization behavior that only applies to commands implementing
 /// IRequireAuthorization. Uses INuruBehavior<TFilter> for type-safe filtering.
 /// </summary>
-public sealed class AuthorizationBehavior<TFilter> : INuruBehavior<TFilter> where TFilter : IRequireAuthorization
+public sealed class AuthorizationBehavior : INuruBehavior<IRequireAuthorization>
 {
-  public async ValueTask HandleAsync(BehaviorContext context, Func<ValueTask> proceed)
+  public async ValueTask HandleAsync(BehaviorContext<IRequireAuthorization> context, Func<ValueTask> proceed)
   {
     // Simulate authorization check
     string? userRole = Environment.GetEnvironmentVariable("USER_ROLE");

@@ -20,6 +20,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using TimeWarp.Nuru;
+using TimeWarp.Terminal;
 using static System.Console;
 
 NuruApp app = NuruApp.CreateBuilder()

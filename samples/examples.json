@@ -1,286 +1,510 @@
 {
-  "version": "2.0",
-  "description": "TimeWarp.Nuru example manifest for MCP server dynamic discovery",
+  "version": "3.0",
+  "description": "TimeWarp.Nuru example manifest for MCP server dynamic discovery with DSL classification",
   "examples": [
     {
-      "id": "basic",
-      "name": "Delegate Calculator Example",
-      "description": "Calculator using pure delegate routing - NO additional packages required beyond TimeWarp.Nuru. Maximum performance.",
-      "path": "samples/02-calculator/01-calc-delegate.cs",
-      "tags": ["basics", "routing", "getting-started", "calculator", "delegate"],
+      "id": "hello-world-fluent",
+      "name": "Hello World - Fluent DSL",
+      "description": "Simplest Nuru app using Fluent DSL with inline lambda handler",
+      "path": "samples/fluent/01-hello-world/fluent-hello-world-lambda.cs",
+      "dsl": "fluent",
+      "tags": ["basics", "getting-started", "minimal", "fluent"],
       "difficulty": "beginner"
     },
     {
-      "id": "endpoints",
-      "name": "Endpoints",
-      "description": "[NuruRoute] attribute pattern for auto-discovered endpoints with nested Handler classes. Supports [NuruRouteGroup] for prefixes and [NuruRouteAlias] for aliases.",
-      "path": "samples/03-endpoints/endpoints.cs",
-      "tags": ["endpoints", "auto-discovery", "endpoint", "testable", "dependency-injection"],
-      "difficulty": "intermediate"
-    },
-    {
-      "id": "mixed",
-      "name": "Mixed Pattern Calculator",
-      "description": "Mixed approach combining delegate performance with endpoints for complex operations.",
-      "path": "samples/02-calculator/03-calc-mixed.cs",
-      "tags": ["calculator", "mixed", "delegate", "endpoints"],
-      "difficulty": "intermediate"
-    },
-    {
-      "id": "delegate",
-      "name": "Delegate Calculator",
-      "description": "Pure delegate routing - NO additional packages required beyond TimeWarp.Nuru. Maximum performance with no DI overhead.",
-      "path": "samples/02-calculator/01-calc-delegate.cs",
-      "tags": ["calculator", "delegate", "performance", "minimal"],
+      "id": "hello-world-endpoint",
+      "name": "Hello World - Endpoint DSL ⭐",
+      "description": "Simplest Nuru app using Endpoint DSL with [NuruRoute] attributes",
+      "path": "samples/endpoints/01-hello-world/endpoint-hello-world.cs",
+      "dsl": "endpoint",
+      "tags": ["basics", "getting-started", "minimal", "endpoint", "recommended"],
       "difficulty": "beginner"
     },
     {
-      "id": "hello-world",
-      "name": "Hello World",
-      "description": "Simplest possible Nuru app - a single route with a greeting. NO additional packages required beyond TimeWarp.Nuru.",
-      "path": "samples/01-hello-world/01-hello-world-lambda.cs",
-      "tags": ["basics", "getting-started", "minimal"],
+      "id": "calculator-fluent",
+      "name": "Calculator - Fluent DSL",
+      "description": "Full calculator using Fluent DSL with typed parameters and options",
+      "path": "samples/fluent/02-calculator/fluent-calculator-delegate.cs",
+      "dsl": "fluent",
+      "tags": ["calculator", "delegate", "fluent", "parameters", "options"],
       "difficulty": "beginner"
     },
     {
-      "id": "async",
-      "name": "Async Command Examples",
-      "description": "Demonstrates async command handlers with Task-based routes and async/await patterns",
-      "path": "samples/06-async-examples/async-examples.cs",
-      "tags": ["async", "tasks", "advanced"],
+      "id": "calculator-endpoint",
+      "name": "Calculator - Endpoint DSL ⭐",
+      "description": "Full calculator using Endpoint DSL with dependency injection and testable handlers",
+      "path": "samples/endpoints/02-calculator/endpoint-calculator.cs",
+      "dsl": "endpoint",
+      "tags": ["calculator", "endpoint", "recommended", "di", "testable"],
       "difficulty": "intermediate"
     },
     {
-      "id": "console-logging",
-      "name": "Console Logging Integration",
-      "description": "Shows how to integrate Microsoft.Extensions.Logging with console output",
-      "path": "samples/12-logging/console-logging.cs",
-      "tags": ["logging", "console", "diagnostics"],
+      "id": "syntax-fluent",
+      "name": "Syntax Examples - Fluent DSL",
+      "description": "Comprehensive syntax reference using Fluent DSL",
+      "path": "samples/fluent/03-syntax/fluent-syntax-examples.cs",
+      "dsl": "fluent",
+      "tags": ["syntax", "patterns", "reference", "fluent"],
       "difficulty": "beginner"
     },
     {
-      "id": "serilog",
-      "name": "Serilog Integration",
-      "description": "Demonstrates Serilog integration with structured logging and trace-level output",
-      "path": "samples/12-logging/serilog-logging.cs",
-      "tags": ["logging", "serilog", "structured-logging", "diagnostics"],
-      "difficulty": "intermediate"
-    },
-    {
-      "id": "configuration",
-      "name": "Configuration Basics",
-      "description": "Demonstrates AOT-compatible AddConfiguration() with .settings.json files, strongly-typed options, and ConfigureServices with IConfiguration access",
-      "path": "samples/09-configuration/01-configuration-basics.cs",
-      "tags": ["configuration", "dependency-injection", "options-pattern", "settings-json", "aot-compatible"],
-      "difficulty": "intermediate"
-    },
-    {
-      "id": "configuration-validation",
-      "name": "Configuration Validation",
-      "description": "Fail-fast configuration validation using DataAnnotations, custom validation, and FluentValidation with ValidateOnStart()",
-      "path": "samples/09-configuration/03-configuration-validation.cs",
-      "tags": ["configuration", "validation", "fluent-validation", "data-annotations", "fail-fast"],
-      "difficulty": "intermediate"
-    },
-    {
-      "id": "command-line-overrides",
-      "name": "Command-Line Configuration Overrides",
-      "description": "ASP.NET Core-style command-line configuration overrides using --Section:Key=Value syntax",
-      "path": "samples/09-configuration/02-command-line-overrides.cs",
-      "tags": ["configuration", "command-line", "overrides", "aspnet-style"],
-      "difficulty": "intermediate"
-    },
-    {
-      "id": "repl-basic",
-      "name": "REPL Basic Demo",
-      "description": "Interactive REPL mode with various route pattern types - literals, parameters, options, and subcommands",
-      "path": "samples/13-repl/01-repl-cli-dual-mode.cs",
-      "tags": ["repl", "interactive", "getting-started"],
+      "id": "syntax-endpoint",
+      "name": "Syntax Examples - Endpoint DSL ⭐",
+      "description": "Comprehensive syntax reference using Endpoint DSL",
+      "path": "samples/endpoints/03-syntax/endpoint-syntax-examples.cs",
+      "dsl": "endpoint",
+      "tags": ["syntax", "patterns", "reference", "endpoint", "recommended"],
       "difficulty": "beginner"
     },
     {
-      "id": "repl-keybindings",
-      "name": "REPL Custom Key Bindings",
-      "description": "Customize REPL key bindings with PSReadLine-style profiles (Emacs, Windows, Vi)",
-      "path": "samples/13-repl/02-repl-custom-keys.cs",
-      "tags": ["repl", "key-bindings", "customization", "psreadline"],
+      "id": "async-fluent",
+      "name": "Async Examples - Fluent DSL",
+      "description": "Async/await patterns with Task handlers using Fluent DSL",
+      "path": "samples/fluent/04-async/fluent-async-examples.cs",
+      "dsl": "fluent",
+      "tags": ["async", "tasks", "fluent"],
       "difficulty": "intermediate"
     },
     {
-      "id": "repl-interactive",
-      "name": "REPL Interactive Mode",
-      "description": "CLI app with --interactive/-i flag to enter REPL mode",
-      "path": "samples/13-repl/01-repl-cli-dual-mode.cs",
-      "tags": ["repl", "interactive", "cli", "hybrid"],
+      "id": "async-endpoint",
+      "name": "Async Examples - Endpoint DSL ⭐",
+      "description": "Async/await patterns using Endpoint DSL with ValueTask handlers",
+      "path": "samples/endpoints/04-async/endpoint-async-examples.cs",
+      "dsl": "endpoint",
+      "tags": ["async", "tasks", "endpoint", "recommended"],
       "difficulty": "intermediate"
     },
     {
-      "id": "repl-options",
-      "name": "REPL Options Showcase",
-      "description": "All REPL configuration options - prompts, history, welcome/goodbye messages",
-      "path": "samples/13-repl/03-repl-options.cs",
-      "tags": ["repl", "options", "configuration", "customization"],
+      "id": "pipeline-basic-fluent",
+      "name": "Pipeline Basic - Fluent DSL",
+      "description": "Basic pipeline behaviors (logging, performance) using Fluent DSL",
+      "path": "samples/fluent/05-pipeline/fluent-pipeline-basic.cs",
+      "dsl": "fluent",
+      "tags": ["pipeline", "behaviors", "logging", "performance", "fluent"],
       "difficulty": "intermediate"
     },
     {
-      "id": "shell-completion",
-      "name": "Shell Tab Completion",
-      "description": "Static shell tab completion for Bash, Zsh, PowerShell, and Fish shells.",
-      "path": "samples/15-completion/completion-example.cs",
-      "tags": ["completion", "tab-completion", "bash", "zsh", "powershell", "fish", "static-completion"],
+      "id": "pipeline-basic-endpoint",
+      "name": "Pipeline Basic - Endpoint DSL ⭐",
+      "description": "Basic pipeline behaviors using Endpoint DSL with INuruBehavior",
+      "path": "samples/endpoints/05-pipeline/endpoint-pipeline-basic.cs",
+      "dsl": "endpoint",
+      "tags": ["pipeline", "behaviors", "logging", "performance", "endpoint", "recommended"],
       "difficulty": "intermediate"
     },
     {
-      "id": "syntax-examples",
-      "name": "Route Syntax Examples",
-      "description": "Comprehensive examples of all route pattern syntax - literals, parameters, types, options, catch-all",
-      "path": "samples/04-syntax-examples/syntax-examples.cs",
-      "tags": ["syntax", "patterns", "reference", "documentation"],
-      "difficulty": "beginner"
-    },
-    {
-      "id": "builtin-types",
-      "name": "Built-in Type Converters",
-      "description": "Demonstrates all built-in type converters: int, double, bool, DateTime, Guid, etc.",
-      "path": "samples/10-type-converters/01-builtin-types.cs",
-      "tags": ["types", "converters", "parameters", "reference"],
-      "difficulty": "beginner"
-    },
-    {
-      "id": "custom-type-converter",
-      "name": "Custom Type Converter",
-      "description": "Create custom IRouteTypeConverter implementations for your own types. Demonstrates EmailAddress, HexColor, and SemanticVersion converters with validation.",
-      "path": "samples/10-type-converters/02-custom-type-converters.cs",
-      "tags": ["types", "converters", "IRouteTypeConverter", "custom", "validation", "advanced"],
+      "id": "testing-output-fluent",
+      "name": "Testing Output - Fluent DSL",
+      "description": "Test CLI output capture using Fluent DSL and TestTerminal",
+      "path": "samples/fluent/06-testing/fluent-testing-output-capture.cs",
+      "dsl": "fluent",
+      "tags": ["testing", "terminal", "fluent"],
       "difficulty": "intermediate"
     },
     {
-      "id": "type-converters-custom",
-      "name": "IRouteTypeConverter Pattern",
-      "description": "Implement IRouteTypeConverter for custom parameter types. Shows TargetType, ConstraintAlias, and TryConvert pattern with practical examples.",
-      "path": "samples/10-type-converters/02-custom-type-converters.cs",
-      "tags": ["types", "IRouteTypeConverter", "converters", "custom", "extensibility"],
+      "id": "testing-output-endpoint",
+      "name": "Testing Output - Endpoint DSL ⭐",
+      "description": "Test CLI output capture using Endpoint DSL with ITerminal injection",
+      "path": "samples/endpoints/06-testing/endpoint-testing-output-capture.cs",
+      "dsl": "endpoint",
+      "tags": ["testing", "terminal", "endpoint", "recommended"],
       "difficulty": "intermediate"
     },
     {
-      "id": "test-output-capture",
-      "name": "Testing Output Capture",
-      "description": "Use TestTerminal to capture and assert CLI output in unit tests - stdout, stderr, and exit codes",
-      "path": "samples/08-testing/01-output-capture.cs",
-      "tags": ["testing", "terminal", "testability", "output-capture", "assertions"],
-      "difficulty": "beginner"
-    },
-    {
-      "id": "test-colored-output",
-      "name": "Testing Colored Output",
-      "description": "Test handlers that produce colored/styled output using ANSI codes and fluent color extensions",
-      "path": "samples/08-testing/02-colored-output.cs",
-      "tags": ["testing", "terminal", "colors", "ansi", "styled-output"],
+      "id": "configuration-fluent",
+      "name": "Configuration - Fluent DSL",
+      "description": "IOptions<T> and configuration patterns using Fluent DSL",
+      "path": "samples/fluent/07-configuration/fluent-configuration-basics.cs",
+      "dsl": "fluent",
+      "tags": ["configuration", "options", "fluent"],
       "difficulty": "intermediate"
     },
     {
-      "id": "test-terminal-injection",
-      "name": "ITerminal Dependency Injection",
-      "description": "Inject ITerminal into route handlers for testable colored output with TestTerminal",
-      "path": "samples/08-testing/03-terminal-injection.cs",
-      "tags": ["testing", "terminal", "dependency-injection", "iterminal", "testability"],
+      "id": "configuration-endpoint",
+      "name": "Configuration - Endpoint DSL ⭐",
+      "description": "IOptions<T> and configuration patterns using Endpoint DSL",
+      "path": "samples/endpoints/07-configuration/endpoint-configuration-basics.cs",
+      "dsl": "endpoint",
+      "tags": ["configuration", "options", "endpoint", "recommended"],
       "difficulty": "intermediate"
     },
     {
-      "id": "runfile-test-harness",
-      "name": "Runfile Test Harness",
-      "description": "Zero-modification testing pattern for runfiles using NuruTestContext, ModuleInitializer, and conditional compilation via Directory.Build.props",
-      "path": "samples/testing/runfile-test-harness/run-real-app-tests.cs",
-      "tags": ["testing", "runfiles", "zero-modification", "test-harness", "module-initializer", "ci-cd"],
+      "id": "type-converters-fluent",
+      "name": "Type Converters - Fluent DSL",
+      "description": "Built-in and custom type converters using Fluent DSL",
+      "path": "samples/fluent/08-type-converters/fluent-type-converters-builtin.cs",
+      "dsl": "fluent",
+      "tags": ["types", "converters", "fluent"],
       "difficulty": "intermediate"
     },
     {
-      "id": "test-repl",
-      "name": "Testing REPL Mode",
-      "description": "Programmatically test REPL mode using TestTerminal with QueueLine() and QueueKey() for input simulation - session lifecycle, commands, and assertions",
-      "path": "tests/timewarp-nuru-repl-tests/repl-01-session-lifecycle.cs",
-      "tags": ["testing", "repl", "testability", "terminal", "automation", "queueline", "queuekey"],
+      "id": "type-converters-endpoint",
+      "name": "Type Converters - Endpoint DSL ⭐",
+      "description": "Built-in and custom type converters using Endpoint DSL",
+      "path": "samples/endpoints/08-type-converters/endpoint-type-converters-builtin.cs",
+      "dsl": "endpoint",
+      "tags": ["types", "converters", "endpoint", "recommended"],
       "difficulty": "intermediate"
     },
     {
-      "id": "behaviors-basic",
-      "name": "INuruBehavior Basics",
-      "description": "Global pipeline behaviors with INuruBehavior interface. Demonstrates logging and performance behaviors with HandleAsync(context, proceed) pattern.",
-      "path": "samples/07-pipeline-middleware/01-pipeline-middleware-basic.cs",
-      "tags": ["behaviors", "INuruBehavior", "pipeline", "logging", "performance", "cross-cutting"],
+      "id": "repl-fluent",
+      "name": "REPL - Fluent DSL",
+      "description": "Interactive REPL mode using Fluent DSL",
+      "path": "samples/fluent/10-repl/fluent-repl-basic.cs",
+      "dsl": "fluent",
+      "tags": ["repl", "interactive", "fluent"],
       "difficulty": "intermediate"
     },
     {
-      "id": "behaviors-filtered",
-      "name": "Filtered Behaviors with INuruBehavior<T>",
-      "description": "Type-safe filtered behaviors with INuruBehavior<TFilter>. Behaviors apply only to routes with .Implements<T>(). Example: AuthorizationBehavior with IRequireAuthorization.",
-      "path": "samples/07-pipeline-middleware/04-pipeline-middleware-filtered-auth.cs",
-      "tags": ["behaviors", "INuruBehavior", "filtered", "authorization", "marker-interface", "type-safe"],
+      "id": "repl-endpoint",
+      "name": "REPL - Endpoint DSL ⭐",
+      "description": "Interactive REPL mode using Endpoint DSL with auto-discovered commands",
+      "path": "samples/endpoints/09-repl/endpoint-repl-basic.cs",
+      "dsl": "endpoint",
+      "tags": ["repl", "interactive", "endpoint", "recommended"],
       "difficulty": "intermediate"
     },
     {
-      "id": "pipeline-middleware",
-      "name": "Complete Pipeline Middleware",
-      "description": "Complete reference with all pipeline behaviors: telemetry, performance, logging, authorization, retry, and exception handling.",
-      "path": "samples/07-pipeline-middleware/06-pipeline-middleware-combined.cs",
-      "tags": ["pipeline", "middleware", "behaviors", "cross-cutting-concerns", "complete-reference", "enterprise"],
+      "id": "logging-fluent",
+      "name": "Logging - Fluent DSL",
+      "description": "Logging integration using Fluent DSL",
+      "path": "samples/fluent/09-logging/fluent-logging-console.cs",
+      "dsl": "fluent",
+      "tags": ["logging", "diagnostics", "fluent"],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "logging-endpoint",
+      "name": "Logging - Endpoint DSL ⭐",
+      "description": "Logging integration using Endpoint DSL with ILogger<T>",
+      "path": "samples/endpoints/10-logging/endpoint-logging-console.cs",
+      "dsl": "endpoint",
+      "tags": ["logging", "diagnostics", "endpoint", "recommended"],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "completion-fluent",
+      "name": "Completion - Fluent DSL",
+      "description": "Shell tab completion using Fluent DSL",
+      "path": "samples/fluent/11-completion/fluent-completion.cs",
+      "dsl": "fluent",
+      "tags": ["completion", "tab-completion", "fluent"],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "completion-endpoint",
+      "name": "Completion - Endpoint DSL ⭐",
+      "description": "Shell tab completion using Endpoint DSL",
+      "path": "samples/endpoints/12-completion/endpoint-completion.cs",
+      "dsl": "endpoint",
+      "tags": ["completion", "tab-completion", "endpoint", "recommended"],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "runtime-di-fluent",
+      "name": "Runtime DI - Fluent DSL",
+      "description": "Runtime dependency injection using Fluent DSL",
+      "path": "samples/fluent/12-runtime-di/fluent-runtime-di.cs",
+      "dsl": "fluent",
+      "tags": ["di", "runtime-di", "fluent"],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "runtime-di-endpoint",
+      "name": "Runtime DI - Endpoint DSL ⭐",
+      "description": "Runtime dependency injection using Endpoint DSL",
+      "path": "samples/endpoints/13-runtime-di/endpoint-runtime-di-basic.cs",
+      "dsl": "endpoint",
+      "tags": ["di", "runtime-di", "endpoint", "recommended"],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "endpoint-discovery",
+      "name": "Endpoint Discovery ⭐",
+      "description": "Auto-discovery of [NuruRoute] classes with [NuruRouteGroup] and aliases",
+      "path": "samples/endpoints/11-discovery/endpoint-discovery-basic.cs",
+      "dsl": "endpoint",
+      "tags": ["endpoints", "auto-discovery", "groups", "aliases", "recommended"],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "migration-start",
+      "name": "Migration: Start with Fluent",
+      "description": "Step 1 of migration: Pure Fluent DSL implementation",
+      "path": "samples/hybrid/01-migration/hybrid-migration-start-fluent.cs",
+      "dsl": "hybrid",
+      "tags": ["migration", "fluent", "hybrid"],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "migration-add-endpoint",
+      "name": "Migration: Add Endpoints",
+      "description": "Step 2 of migration: Adding Endpoint patterns to Fluent app",
+      "path": "samples/hybrid/01-migration/hybrid-migration-add-endpoint.cs",
+      "dsl": "hybrid",
+      "tags": ["migration", "hybrid", "mixed"],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "migration-complete",
+      "name": "Migration: Complete",
+      "description": "Step 3 of migration: Full conversion to Endpoint DSL",
+      "path": "samples/hybrid/01-migration/hybrid-migration-complete.cs",
+      "dsl": "endpoint",
+      "tags": ["migration", "endpoint", "complete"],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "unified-pipeline",
+      "name": "Unified Pipeline",
+      "description": "Demonstrates unified behavior pipeline for Fluent AND Endpoints",
+      "path": "samples/hybrid/02-unified-pipeline/hybrid-unified-pipeline.cs",
+      "dsl": "hybrid",
+      "tags": ["pipeline", "behaviors", "hybrid", "unified"],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "pipeline-exception-fluent",
+      "name": "Pipeline Exception - Fluent DSL",
+      "description": "Exception handling middleware using Fluent DSL",
+      "path": "samples/fluent/05-pipeline/fluent-pipeline-exception.cs",
+      "dsl": "fluent",
+      "tags": ["pipeline", "exception-handling", "fluent"],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "pipeline-exception-endpoint",
+      "name": "Pipeline Exception - Endpoint DSL ⭐",
+      "description": "Exception handling middleware using Endpoint DSL",
+      "path": "samples/endpoints/05-pipeline/endpoint-pipeline-exception.cs",
+      "dsl": "endpoint",
+      "tags": ["pipeline", "exception-handling", "endpoint", "recommended"],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "pipeline-telemetry-fluent",
+      "name": "Pipeline Telemetry - Fluent DSL",
+      "description": "OpenTelemetry tracing using Fluent DSL",
+      "path": "samples/fluent/05-pipeline/fluent-pipeline-telemetry.cs",
+      "dsl": "fluent",
+      "tags": ["pipeline", "telemetry", "opentelemetry", "fluent"],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "pipeline-telemetry-endpoint",
+      "name": "Pipeline Telemetry - Endpoint DSL ⭐",
+      "description": "OpenTelemetry tracing using Endpoint DSL",
+      "path": "samples/endpoints/05-pipeline/endpoint-pipeline-telemetry.cs",
+      "dsl": "endpoint",
+      "tags": ["pipeline", "telemetry", "opentelemetry", "endpoint", "recommended"],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "pipeline-auth-fluent",
+      "name": "Pipeline Authorization - Fluent DSL",
+      "description": "Filtered authorization behaviors using Fluent DSL",
+      "path": "samples/fluent/05-pipeline/fluent-pipeline-filtered-auth.cs",
+      "dsl": "fluent",
+      "tags": ["pipeline", "authorization", "security", "fluent"],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "pipeline-auth-endpoint",
+      "name": "Pipeline Authorization - Endpoint DSL ⭐",
+      "description": "Filtered authorization behaviors using Endpoint DSL",
+      "path": "samples/endpoints/05-pipeline/endpoint-pipeline-filtered-auth.cs",
+      "dsl": "endpoint",
+      "tags": ["pipeline", "authorization", "security", "endpoint", "recommended"],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "pipeline-retry-fluent",
+      "name": "Pipeline Retry - Fluent DSL",
+      "description": "Retry with exponential backoff using Fluent DSL",
+      "path": "samples/fluent/05-pipeline/fluent-pipeline-retry.cs",
+      "dsl": "fluent",
+      "tags": ["pipeline", "retry", "resilience", "fluent"],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "pipeline-retry-endpoint",
+      "name": "Pipeline Retry - Endpoint DSL ⭐",
+      "description": "Retry with exponential backoff using Endpoint DSL",
+      "path": "samples/endpoints/05-pipeline/endpoint-pipeline-retry.cs",
+      "dsl": "endpoint",
+      "tags": ["pipeline", "retry", "resilience", "endpoint", "recommended"],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "pipeline-combined-fluent",
+      "name": "Pipeline Combined - Fluent DSL",
+      "description": "Complete pipeline with all behaviors using Fluent DSL",
+      "path": "samples/fluent/05-pipeline/fluent-pipeline-combined.cs",
+      "dsl": "fluent",
+      "tags": ["pipeline", "complete", "enterprise", "fluent"],
       "difficulty": "advanced"
     },
     {
-      "id": "pipeline-middleware-basic",
-      "name": "Pipeline Middleware - Basic",
-      "description": "Fundamental pipeline behaviors: logging and performance monitoring with before/after pattern.",
-      "path": "samples/07-pipeline-middleware/01-pipeline-middleware-basic.cs",
-      "tags": ["pipeline", "middleware", "logging", "performance", "getting-started"],
-      "difficulty": "intermediate"
-    },
-    {
-      "id": "pipeline-middleware-authorization",
-      "name": "Pipeline Middleware - Authorization",
-      "description": "Permission checks using marker interface pattern. Commands opt-in via IRequireAuthorization.",
-      "path": "samples/07-pipeline-middleware/04-pipeline-middleware-filtered-auth.cs",
-      "tags": ["pipeline", "middleware", "authorization", "marker-interface", "security"],
-      "difficulty": "intermediate"
-    },
-    {
-      "id": "pipeline-middleware-retry",
-      "name": "Pipeline Middleware - Retry",
-      "description": "Resilience with exponential backoff for transient failures. Commands opt-in via IRetryable.",
-      "path": "samples/07-pipeline-middleware/05-pipeline-middleware-retry.cs",
-      "tags": ["pipeline", "middleware", "retry", "resilience", "exponential-backoff"],
-      "difficulty": "intermediate"
-    },
-    {
-      "id": "pipeline-middleware-exception",
-      "name": "Pipeline Middleware - Exception Handling",
-      "description": "Consistent exception handling with categorized errors and user-friendly messages.",
-      "path": "samples/07-pipeline-middleware/02-pipeline-middleware-exception.cs",
-      "tags": ["pipeline", "middleware", "exception-handling", "error-handling"],
-      "difficulty": "intermediate"
-    },
-    {
-      "id": "pipeline-middleware-telemetry",
-      "name": "Pipeline Middleware - Telemetry",
-      "description": "OpenTelemetry-compatible distributed tracing with Activity spans for observability.",
-      "path": "samples/07-pipeline-middleware/03-pipeline-middleware-telemetry.cs",
-      "tags": ["pipeline", "middleware", "telemetry", "opentelemetry", "distributed-tracing", "observability"],
-      "difficulty": "intermediate"
-    },
-    {
-      "id": "aspire-otel",
-      "name": "Aspire OpenTelemetry Integration",
-      "description": "OpenTelemetry integration with Aspire Dashboard - traces, metrics, and logs for CLI observability",
-      "path": "samples/14-aspire-otel/nuru-client.cs",
-      "tags": ["telemetry", "opentelemetry", "aspire", "traces", "metrics", "observability", "otlp"],
+      "id": "pipeline-combined-endpoint",
+      "name": "Pipeline Combined - Endpoint DSL ⭐",
+      "description": "Complete pipeline with all behaviors using Endpoint DSL",
+      "path": "samples/endpoints/05-pipeline/endpoint-pipeline-combined.cs",
+      "dsl": "endpoint",
+      "tags": ["pipeline", "complete", "enterprise", "endpoint", "recommended"],
       "difficulty": "advanced"
     },
     {
-      "id": "runtime-di",
-      "name": "Runtime DI with UseMicrosoftDependencyInjection",
-      "description": "Enable full MS DI container at runtime for services with constructor dependencies. Opt-in escape hatch when source-gen DI cannot resolve dependency chains.",
-      "path": "samples/16-runtime-di/01-runtime-di-basic.cs",
-      "tags": ["dependency-injection", "runtime-di", "constructor-dependencies", "services", "ms-di"],
+      "id": "configuration-overrides-fluent",
+      "name": "Configuration Overrides - Fluent DSL",
+      "description": "Command-line configuration overrides using Fluent DSL",
+      "path": "samples/fluent/07-configuration/fluent-configuration-overrides.cs",
+      "dsl": "fluent",
+      "tags": ["configuration", "command-line", "overrides", "fluent"],
       "difficulty": "intermediate"
+    },
+    {
+      "id": "configuration-overrides-endpoint",
+      "name": "Configuration Overrides - Endpoint DSL ⭐",
+      "description": "Command-line configuration overrides using Endpoint DSL",
+      "path": "samples/endpoints/07-configuration/endpoint-configuration-overrides.cs",
+      "dsl": "endpoint",
+      "tags": ["configuration", "command-line", "overrides", "endpoint", "recommended"],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "configuration-validation-fluent",
+      "name": "Configuration Validation - Fluent DSL",
+      "description": "Fail-fast configuration validation using Fluent DSL",
+      "path": "samples/fluent/07-configuration/fluent-configuration-validation.cs",
+      "dsl": "fluent",
+      "tags": ["configuration", "validation", "fluent"],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "configuration-validation-endpoint",
+      "name": "Configuration Validation - Endpoint DSL ⭐",
+      "description": "Fail-fast configuration validation using Endpoint DSL",
+      "path": "samples/endpoints/07-configuration/endpoint-configuration-validation.cs",
+      "dsl": "endpoint",
+      "tags": ["configuration", "validation", "endpoint", "recommended"],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "configuration-advanced-endpoint",
+      "name": "Configuration Advanced - Endpoint DSL ⭐",
+      "description": "Advanced configuration with collections and dictionaries",
+      "path": "samples/endpoints/07-configuration/endpoint-configuration-advanced.cs",
+      "dsl": "endpoint",
+      "tags": ["configuration", "advanced", "collections", "endpoint", "recommended"],
+      "difficulty": "advanced"
+    },
+    {
+      "id": "type-converters-custom-fluent",
+      "name": "Custom Type Converters - Fluent DSL",
+      "description": "Creating custom IRouteTypeConverter implementations using Fluent DSL",
+      "path": "samples/fluent/08-type-converters/fluent-type-converters-custom.cs",
+      "dsl": "fluent",
+      "tags": ["types", "converters", "custom", "fluent"],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "type-converters-custom-endpoint",
+      "name": "Custom Type Converters - Endpoint DSL ⭐",
+      "description": "Creating custom IRouteTypeConverter implementations using Endpoint DSL",
+      "path": "samples/endpoints/08-type-converters/endpoint-type-converters-custom.cs",
+      "dsl": "endpoint",
+      "tags": ["types", "converters", "custom", "endpoint", "recommended"],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "testing-colored-fluent",
+      "name": "Testing Colored Output - Fluent DSL",
+      "description": "Testing ANSI colored output using Fluent DSL",
+      "path": "samples/fluent/06-testing/fluent-testing-colored-output.cs",
+      "dsl": "fluent",
+      "tags": ["testing", "colors", "ansi", "fluent"],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "testing-colored-endpoint",
+      "name": "Testing Colored Output - Endpoint DSL ⭐",
+      "description": "Testing ANSI colored output using Endpoint DSL",
+      "path": "samples/endpoints/06-testing/endpoint-testing-colored-output.cs",
+      "dsl": "endpoint",
+      "tags": ["testing", "colors", "ansi", "endpoint", "recommended"],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "testing-injection-fluent",
+      "name": "Testing Terminal Injection - Fluent DSL",
+      "description": "ITerminal injection testing using Fluent DSL",
+      "path": "samples/fluent/06-testing/fluent-testing-terminal-injection.cs",
+      "dsl": "fluent",
+      "tags": ["testing", "terminal", "injection", "fluent"],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "testing-injection-endpoint",
+      "name": "Testing Terminal Injection - Endpoint DSL ⭐",
+      "description": "ITerminal injection testing using Endpoint DSL",
+      "path": "samples/endpoints/06-testing/endpoint-testing-terminal-injection.cs",
+      "dsl": "endpoint",
+      "tags": ["testing", "terminal", "injection", "endpoint", "recommended"],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "repl-keys-endpoint",
+      "name": "REPL Custom Keys - Endpoint DSL ⭐",
+      "description": "Custom key bindings for REPL mode using Endpoint DSL",
+      "path": "samples/endpoints/09-repl/endpoint-repl-custom-keys.cs",
+      "dsl": "endpoint",
+      "tags": ["repl", "key-bindings", "endpoint", "recommended"],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "repl-options-endpoint",
+      "name": "REPL Options - Endpoint DSL ⭐",
+      "description": "REPL customization with prompts, history, messages using Endpoint DSL",
+      "path": "samples/endpoints/09-repl/endpoint-repl-options.cs",
+      "dsl": "endpoint",
+      "tags": ["repl", "options", "customization", "endpoint", "recommended"],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "repl-dual-endpoint",
+      "name": "REPL Dual Mode - Endpoint DSL ⭐",
+      "description": "CLI app with --interactive flag to enter REPL mode using Endpoint DSL",
+      "path": "samples/endpoints/09-repl/endpoint-repl-dual-mode.cs",
+      "dsl": "endpoint",
+      "tags": ["repl", "interactive", "cli", "endpoint", "recommended"],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "logging-serilog-endpoint",
+      "name": "Serilog Logging - Endpoint DSL ⭐",
+      "description": "Serilog structured logging integration using Endpoint DSL",
+      "path": "samples/endpoints/10-logging/endpoint-logging-serilog.cs",
+      "dsl": "endpoint",
+      "tags": ["logging", "serilog", "structured-logging", "endpoint", "recommended"],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "runtime-di-advanced-endpoint",
+      "name": "Runtime DI Advanced - Endpoint DSL ⭐",
+      "description": "Advanced runtime DI with decorators and factories using Endpoint DSL",
+      "path": "samples/endpoints/13-runtime-di/endpoint-runtime-di-advanced.cs",
+      "dsl": "endpoint",
+      "tags": ["di", "runtime-di", "advanced", "endpoint", "recommended"],
+      "difficulty": "advanced"
+    },
+    {
+      "id": "hello-world-method-fluent",
+      "name": "Hello World Method - Fluent DSL",
+      "description": "Hello World using method reference instead of lambda",
+      "path": "samples/fluent/01-hello-world/fluent-hello-world-method.cs",
+      "dsl": "fluent",
+      "tags": ["basics", "method-reference", "fluent"],
+      "difficulty": "beginner"
     }
   ]
 }

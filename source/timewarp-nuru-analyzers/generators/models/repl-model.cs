@@ -9,13 +9,15 @@ namespace TimeWarp.Nuru.Generators;
 /// <param name="HistorySize">Maximum history entries to retain</param>
 /// <param name="EnableSyntaxHighlighting">Whether to highlight input</param>
 /// <param name="EnableAutoComplete">Whether to enable tab completion</param>
+/// <param name="AutoStartWhenEmpty">Whether to auto-start REPL when no args provided</param>
 public sealed record ReplModel(
   string Prompt,
   string ContinuationPrompt,
   ImmutableArray<string> ExitCommands,
   int HistorySize,
   bool EnableSyntaxHighlighting,
-  bool EnableAutoComplete)
+  bool EnableAutoComplete,
+  bool AutoStartWhenEmpty)
 {
   /// <summary>
   /// Default REPL configuration.
@@ -26,5 +28,6 @@ public sealed record ReplModel(
     ExitCommands: ["exit", "quit", "q"],
     HistorySize: 100,
     EnableSyntaxHighlighting: true,
-    EnableAutoComplete: true);
+    EnableAutoComplete: true,
+    AutoStartWhenEmpty: false);
 }

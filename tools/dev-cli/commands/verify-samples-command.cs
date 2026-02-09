@@ -12,6 +12,9 @@ namespace DevCli.Commands;
 [NuruRoute("verify-samples", Description = "Verify all samples compile")]
 internal sealed class VerifySamplesCommand : ICommand<Unit>
 {
+  [Option("category", "c", Description = "Filter by category: fluent, endpoints, hybrid")]
+  public string? Category { get; set; }
+
   internal sealed class Handler : ICommandHandler<VerifySamplesCommand, Unit>
   {
     private readonly ITerminal Terminal;
@@ -80,7 +83,17 @@ internal sealed class VerifySamplesCommand : ICommand<Unit>
                 .Any(part => part.StartsWith('_')))
       ];
 
+      // Apply category filter if specified
+      runfileSamples = FilterByCategory(runfileSamples, command.Category, samplesDir);
+      projectSamples = FilterByCategory(projectSamples, command.Category, samplesDir);
+
       int totalSamples = runfileSamples.Count + projectSamples.Count;
+
+      if (!string.IsNullOrEmpty(command.Category))
+      {
+        Terminal.WriteLine($"Category filter: {command.Category}");
+      }
+
       Terminal.WriteLine($"Found {runfileSamples.Count} runfile samples and {projectSamples.Count} project samples");
       Terminal.WriteLine("");
 
@@ -178,6 +191,26 @@ internal sealed class VerifySamplesCommand : ICommand<Unit>
       }
 
       throw new InvalidOperationException($"{failedSamples.Count} sample(s) failed to build");
+    }
+
+    private static List<string> FilterByCategory(List<string> samples, string? category, string samplesDir)
+    {
+      if (string.IsNullOrEmpty(category))
+        return samples;
+
+      return samples.Where(s =>
+      {
+        string relativePath = Path.GetRelativePath(samplesDir, s);
+        string[] parts = relativePath.Split(Path.DirectorySeparatorChar);
+
+        return category.ToLowerInvariant() switch
+        {
+          "fluent" => parts[0] == "fluent",
+          "endpoints" => parts[0] == "endpoints",
+          "hybrid" => parts[0] == "hybrid",
+          _ => throw new ArgumentException($"Unknown category: {category}. Valid options: fluent, endpoints, hybrid")
+        };
+      }).ToList();
     }
   }
 }

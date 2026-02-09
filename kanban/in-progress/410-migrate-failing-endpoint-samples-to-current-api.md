@@ -36,14 +36,14 @@ The fluent samples (23/23) all pass, indicating the endpoint samples need migrat
 
 **Investigation needed:** REPL API may have been renamed or restructured. Check current REPL implementation.
 
-### 3. Generic Type Constraint Issues (Pipeline Behaviors)
+### 3. Generic Type Constraint Issues (Pipeline Behaviors) - FIXED
 | Sample | Issue |
 |--------|-------|
-| `05-pipeline/endpoint-pipeline-combined.cs` | `The type 'T' must be a reference type` for `INuruBehavior<TFilter>`, `readonly` modifier invalid |
-| `05-pipeline/endpoint-pipeline-filtered-auth.cs` | Same constraint error |
-| `05-pipeline/endpoint-pipeline-retry.cs` | Same constraint error |
+| `05-pipeline/endpoint-pipeline-combined.cs` | FIXED: Non-generic behaviors |
+| `05-pipeline/endpoint-pipeline-filtered-auth.cs` | ALREADY CORRECT |
+| `05-pipeline/endpoint-pipeline-retry.cs` | FIXED: Non-generic behavior |
 
-**Investigation needed:** Pipeline behavior generic constraints need to be updated. May need `where T : class` constraint.
+**Status:** All pipeline samples fixed. Converted generic behaviors to non-generic `INuruBehavior`.
 
 ### 4. Type Converter API Changes
 | Sample | Issue |
@@ -53,12 +53,12 @@ The fluent samples (23/23) all pass, indicating the endpoint samples need migrat
 
 **Investigation needed:** Type converter API changed significantly. Check current type converter implementation.
 
-### 5. Missing Exception Types
+### 5. Missing Exception Types - FIXED
 | Sample | Issue |
 |--------|-------|
-| `05-pipeline/endpoint-pipeline-exception.cs` | `NuruException`, `NuruErrorCode` not found |
+| `05-pipeline/endpoint-pipeline-exception.cs` | FIXED: Removed NuruException, use InvalidOperationException |
 
-**Investigation needed:** These types may have been renamed or moved.
+**Status:** Fixed. Replaced with standard .NET exception types.
 
 ### 6. Project Structure Issues
 | Sample | Issue |
@@ -74,7 +74,7 @@ The fluent samples (23/23) all pass, indicating the endpoint samples need migrat
 | `04-async/endpoint-async-examples.cs` | `ProcessBatchCommand.Parallel` - object reference required for non-static field |
 | `10-logging/endpoint-logging-serilog.cs` | `Serilog.Formatting.Compact` not found |
 | `07-configuration/endpoint-configuration-validation.cs` | `System.ComponentModel.DataAnnotations` missing PackageVersion |
-| `05-pipeline/endpoint-pipeline-telemetry.cs` | `Activity.RecordException` not found |
+| `05-pipeline/endpoint-pipeline-telemetry.cs` | FIXED: Removed RecordException, use tags |
 
 **Investigation needed:** Check if these extensions exist under different names or in different namespaces.
 
@@ -131,11 +131,11 @@ These serve as reference implementations:
 - [x] Fix 03-syntax/endpoint-syntax-examples.cs - REFACTORED: Split into 6 categorized endpoint files
 - [x] Fix 04-async/endpoint-async-examples.cs - REFACTORED: Split into 7 endpoint files with Parallel naming fix
 - [x] Fix `05-pipeline/endpoint-pipeline-basic.cs` - ALREADY PASSES
-- [ ] Fix `05-pipeline/endpoint-pipeline-combined.cs` - BLOCKED: Source generator issues with generic constraints
-- [ ] Fix `05-pipeline/endpoint-pipeline-exception.cs` - BLOCKED: Source generator issues with generic constraints
-- [ ] Fix `05-pipeline/endpoint-pipeline-filtered-auth.cs` - BLOCKED: Source generator issues with generic constraints
-- [ ] Fix `05-pipeline/endpoint-pipeline-retry.cs` - BLOCKED: Source generator issues with generic constraints
-- [ ] Fix `05-pipeline/endpoint-pipeline-telemetry.cs` - BLOCKED: Source generator issues with generic constraints
+- [x] Fix `05-pipeline/endpoint-pipeline-combined.cs` - FIXED: Non-generic behaviors
+- [x] Fix `05-pipeline/endpoint-pipeline-exception.cs` - FIXED: Removed NuruException
+- [x] Fix `05-pipeline/endpoint-pipeline-filtered-auth.cs` - ALREADY CORRECT
+- [x] Fix `05-pipeline/endpoint-pipeline-retry.cs` - FIXED: Non-generic behavior
+- [x] Fix `05-pipeline/endpoint-pipeline-telemetry.cs` - FIXED: Removed RecordException
 - [x] Fix `06-testing/endpoint-testing-colored-output.cs` - FIXED: Single quotes to double quotes
 - [x] Fix `07-configuration/endpoint-configuration-advanced.cs` - FIXED: Added missing using directive
 - [x] Fix 08-type-converters/endpoint-type-converters-builtin.cs - FIXED: Manual string conversion
@@ -283,6 +283,31 @@ These serve as reference implementations:
 - **07-configuration/endpoint-configuration-validation.cs**: Removed `#:package System.ComponentModel.DataAnnotations`
   - Package is included in .NET base framework
 
+### 05-pipeline - COMPLETED (2026-02-09)
+**Issues:** Generic type constraints, missing NuruException, RecordException method not found
+
+**Fixes applied:**
+- **endpoint-pipeline-combined.cs**: Fixed generic behavior constraints
+  - Removed generic `INuruBehavior<T>` usage, use non-generic `INuruBehavior`
+  - Changed `class CombinedBehavior<T>` to `class CombinedBehavior : INuruBehavior`
+  - Updated logger constructor injection to use `ILogger<CombinedBehavior>`
+
+- **endpoint-pipeline-exception.cs**: Removed obsolete exception types
+  - Removed `NuruException` (type doesn't exist)
+  - Removed `NuruErrorCode` (type doesn't exist)
+  - Replaced with standard `InvalidOperationException`
+
+- **endpoint-pipeline-filtered-auth.cs**: No changes needed
+  - Already correct - generic constraints properly defined
+
+- **endpoint-pipeline-retry.cs**: Fixed generic behavior
+  - Removed generic `RetryBehavior<T>` to `RetryBehavior : INuruBehavior`
+  - Updated service registration accordingly
+
+- **endpoint-pipeline-telemetry.cs**: Removed unsupported method
+  - Removed `Activity.RecordException()` (method doesn't exist)
+  - Added exception details to tags instead
+
 ### 08-type-converters - COMPLETED (2026-02-09)
 **Issues:** Missing type converters, generic interface, attributes don't exist
 
@@ -319,8 +344,8 @@ These serve as reference implementations:
 
 ## Summary
 
-**Fixed:** 17/20 samples
-**Blocked:** 3 samples (all 09-repl due to API changes + source generator issues)
+**Fixed:** 22/24 samples
+**Blocked:** 2 samples (09-repl due to REPL API changes)
 
 **Common fixes applied across samples:**
 1. IsOptional attribute → nullable types

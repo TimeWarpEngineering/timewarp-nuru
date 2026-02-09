@@ -1,5 +1,5 @@
 #!/usr/bin/dotnet --
-#:project ../../../source/timewarp-nuru/timewarp-nuru.csproj
+#:project ../../../../source/timewarp-nuru/timewarp-nuru.csproj
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // ENDPOINT DSL - TELEMETRY PIPELINE ⭐ RECOMMENDED

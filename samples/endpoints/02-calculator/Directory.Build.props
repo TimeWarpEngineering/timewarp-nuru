@@ -1,13 +1,17 @@
 <Project>
+  <!-- Inherit from parent samples Directory.Build.props for analyzer support -->
+  <Import Project="$(MSBuildThisFileDirectory)../../Directory.Build.props" />
+
   <PropertyGroup>
-    <!-- Enable globbing for runfile discovery -->
-    <EnableDefaultCompileItems>true</EnableDefaultCompileItems>
+    <!-- Disable default globbing to prevent duplicate Compile items -->
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <RunfileGlobbingEnabled>true</RunfileGlobbingEnabled>
   </PropertyGroup>
 
   <ItemGroup>
     <!-- Include all .cs files recursively for endpoint discovery -->
-    <Compile Include="**/*.cs" Exclude="obj/**/*;bin/**/*" />
+    <!-- Exclude calculator.cs to avoid duplicate since it's the entry point -->
+    <Compile Include="**/*.cs" Exclude="obj/**/*;bin/**/*;calculator.cs" />
   </ItemGroup>
 
   <!-- Reference to TimeWarp.Nuru -->

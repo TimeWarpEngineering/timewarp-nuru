@@ -133,3 +133,81 @@ Developers typically pick ONE DSL paradigm and commit to it, similar to ASP.NET 
 - **ASP.NET Analogy:** ASP.NET Minimal APIs (fluent) vs Controllers (endpoints)
 - **Sample Philosophy:** Clean separation improves AI understanding
 - **Previous Analysis:** Samples DSL analysis document
+
+## Implementation Plan
+
+### Naming Conventions
+- **Fluent samples:** `fluent-{feature}-{variant}.cs` (e.g., `fluent-hello-world-lambda.cs`)
+- **Endpoint samples:** `endpoint-{feature}-{variant}.cs` (e.g., `endpoint-hello-world.cs`)
+- **Hybrid samples:** `hybrid-{feature}-{variant}.cs` (e.g., `hybrid-migration-add-endpoint.cs`)
+
+### Final Structure
+```
+samples/
+├── fluent/
+│   ├── 01-hello-world/
+│   ├── 02-calculator/
+│   ├── 03-syntax/
+│   ├── 04-async/
+│   ├── 05-pipeline/
+│   ├── 06-testing/
+│   ├── 07-configuration/
+│   ├── 08-type-converters/
+│   ├── 09-repl/
+│   ├── 10-logging/
+│   ├── 11-completion/
+│   ├── 12-runtime-di/
+│   └── 13-aot-example/
+├── endpoints/
+│   ├── 01-hello-world/
+│   ├── 02-calculator/           # Complex: has Directory.Build.props + messages/
+│   ├── 03-syntax/
+│   ├── 04-async/
+│   ├── 05-pipeline/
+│   ├── 06-testing/
+│   ├── 07-configuration/
+│   ├── 08-type-converters/
+│   ├── 09-repl/
+│   ├── 10-logging/
+│   ├── 11-discovery/
+│   ├── 12-completion/
+│   ├── 13-runtime-di/
+│   ├── 14-aspire-otel/
+│   └── 99-endpoint-sample/      # csproj example
+└── hybrid/
+    ├── 01-migration/
+    ├── 02-unified-pipeline/
+    └── 03-when-to-mix/
+```
+
+### Phase Breakdown (6 Commits)
+
+**Commit 1:** Create `fluent/` structure and migrate all Fluent samples (27 files)
+**Commit 2:** Create `endpoints/` structure and migrate existing endpoint content
+**Commit 3:** Create Endpoint mirrors for all Fluent samples that don't exist (15+ new files)
+**Commit 4:** Create `hybrid/` structure and migrate existing hybrid samples
+**Commit 5:** Documentation updates (READMEs, examples.json)
+**Commit 6:** Cleanup old folders and verify
+
+### Key Decisions
+1. **Single PR with multiple commits** (not multiple PRs)
+2. **Keep numbered subfolders** (01-hello-world/ pattern)
+3. **DSL prefix in filenames** (fluent-, endpoint-, hybrid-)
+4. **Directory.Build.props for complex endpoint samples** (02-calculator/, 99-endpoint-sample/)
+5. **Preserve existing functionality** - all samples must still build and run
+
+### README Templates
+
+**fluent/README.md:** DSL badge "Fluent DSL", "When to Use", sample table
+**endpoints/README.md:** DSL badge "Endpoint DSL ⭐ RECOMMENDED", "When to Use", complexity indicators
+**hybrid/README.md:** DSL badge "Hybrid ⚠️", warning about mixing, edge case descriptions
+
+### Testing Strategy
+```bash
+# Validate all fluent samples
+for f in samples/fluent/**/fluent-*.cs; do dotnet run "$f" --help; done
+
+# Validate endpoint samples
+cd samples/endpoints/02-calculator && dotnet run -- --help
+cd samples/endpoints/99-endpoint-sample && dotnet run -- --help
+```

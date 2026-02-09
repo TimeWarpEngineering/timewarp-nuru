@@ -128,7 +128,7 @@ These serve as reference implementations:
 - [ ] Fix `07-configuration/endpoint-configuration-validation.cs` - Add PackageVersion
 
 ### Fix Individual Samples
-- [ ] Fix `03-syntax/endpoint-syntax-examples.cs`
+- [x] Fix 03-syntax/endpoint-syntax-examples.cs - REFACTORED: Split into 6 categorized endpoint files
 - [ ] Fix `04-async/endpoint-async-examples.cs`
 - [ ] Fix `05-pipeline/endpoint-pipeline-combined.cs`
 - [ ] Fix `05-pipeline/endpoint-pipeline-exception.cs`
@@ -179,3 +179,30 @@ These serve as reference implementations:
 - add, subtract, multiply, divide: Basic operations
 - factorial, isprime, fibonacci: DI-injected service calls
 - round, stats: Complex parameters
+
+### 03-syntax - COMPLETED (2026-02-09)
+**Issue:** IsOptional, IsRepeatable attributes don't exist; multi-word route 'git commit' invalid
+
+**Solution:** Complete refactoring with API updates:
+- Split 525-line file into 6 focused files by category:
+  - literal-examples.cs: status, git-commit (changed from 'git commit'), version
+  - parameter-examples.cs: greet, copy, move, delete
+  - optional-examples.cs: deploy, wait, backup (removed IsOptional)
+  - catchall-examples.cs: docker, run, tail, exec
+  - option-examples.cs: build, deploy-full, docker-env (removed IsRepeatable)
+  - complex-examples.cs: git, docker-run, kubectl
+
+**API fixes:**
+- Removed `IsOptional=true` - use nullable types (string?, int?) instead
+- Removed `IsRepeatable=true` - array types work without it
+- Changed 'git commit' to 'git-commit' (hyphenated, single identifier)
+- Changed Port int[] to string[] (source generator limitation)
+- Changed option 'config' to 'mode' (avoid 'configuration' variable conflict)
+
+**Test results:** Commands working
+- greet, status, version: Basic queries
+- deploy, wait, backup: Optional parameters with nullable types
+- docker, run: Catch-all parameters
+- build, docker-env: Options with arrays
+
+**Discovered source generator issue:** Option named 'config' creates variable 'configuration' which conflicts with IConfigurationRoot from DI. Workaround: use different option name.

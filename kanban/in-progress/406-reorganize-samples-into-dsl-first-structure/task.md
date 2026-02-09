@@ -22,25 +22,25 @@ samples/
 ## Checklist
 
 ### Phase 1: Create folder structure and migrate Fluent samples
-- [ ] Create `fluent/` folder with subfolders:
-  - [ ] `01-hello-world/`
-  - [ ] `02-calculator/`
-  - [ ] `03-syntax/`
-  - [ ] `04-async/`
-  - [ ] `05-pipeline/`
-  - [ ] `06-testing/`
-  - [ ] `07-configuration/`
-  - [ ] `08-type-converters/`
-  - [ ] `09-repl/`
-  - [ ] `10-logging/`
-  - [ ] `11-completion/`
-  - [ ] `12-runtime-di/`
-- [ ] Migrate existing Fluent samples to new locations with DSL suffixes:
-  - [ ] `01-hello-world/01-lambda.cs` (from `01-hello-world-lambda.cs`)
-  - [ ] `01-hello-world/02-method-reference.cs` (from `02-hello-world-method.cs`)
-  - [ ] `02-calculator/calculator.cs` (from `01-calc-delegate.cs`)
-  - [ ] `03-syntax/syntax-examples.cs` (from `syntax-examples.cs`)
-  - [ ] `04-async/async-examples.cs` (from `async-examples.cs`)
+- [x] Create `fluent/` folder with subfolders:
+  - [x] `01-hello-world/`
+  - [x] `02-calculator/`
+  - [x] `03-syntax/`
+  - [x] `04-async/`
+  - [x] `05-pipeline/`
+  - [x] `06-testing/`
+  - [x] `07-configuration/`
+  - [x] `08-type-converters/`
+  - [x] `09-repl/`
+  - [x] `10-logging/`
+  - [x] `11-completion/`
+  - [x] `12-runtime-di/`
+- [x] Migrate existing Fluent samples to new locations with DSL suffixes:
+  - [x] `01-hello-world/01-lambda.cs` (from `01-hello-world-lambda.cs`)
+  - [x] `01-hello-world/02-method-reference.cs` (from `02-hello-world-method.cs`)
+  - [x] `02-calculator/calculator.cs` (from `01-calc-delegate.cs`)
+  - [x] `03-syntax/syntax-examples.cs` (from `syntax-examples.cs`)
+  - [x] `04-async/async-examples.cs` (from `async-examples.cs`)
   - [ ] All pipeline middleware samples (6 files)
   - [ ] All testing samples (3 files)
   - [ ] All configuration samples (4 files)
@@ -53,10 +53,10 @@ samples/
 ### Phase 2: Create Endpoint DSL mirrors
 - [ ] Create `endpoints/` folder with identical subfolder structure
 - [ ] Create Endpoint versions of all Fluent samples:
-  - [ ] `01-hello-world/hello-world.cs`
-  - [ ] `02-calculator/calculator.cs`
-  - [ ] `03-syntax/syntax-examples.cs`
-  - [ ] `04-async/async-examples.cs`
+  - [x] `01-hello-world/hello-world.cs`
+  - [x] `02-calculator/calculator.cs`
+  - [x] `03-syntax/syntax-examples.cs`
+  - [x] `04-async/async-examples.cs`
   - [ ] All pipeline middleware samples (6 files)
   - [ ] All testing samples (3 files)
   - [ ] All configuration samples (4 files)

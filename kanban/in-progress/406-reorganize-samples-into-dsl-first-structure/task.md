@@ -21,92 +21,51 @@ samples/
 
 ## Checklist
 
-### Phase 1: Create folder structure and migrate Fluent samples
-- [x] Create `fluent/` folder with subfolders:
-  - [x] `01-hello-world/`
-  - [x] `02-calculator/`
-  - [x] `03-syntax/`
-  - [x] `04-async/`
-  - [x] `05-pipeline/`
-  - [x] `06-testing/`
-  - [x] `07-configuration/`
-  - [x] `08-type-converters/`
-  - [x] `09-repl/`
-  - [x] `10-logging/`
-  - [x] `11-completion/`
-  - [x] `12-runtime-di/`
-- [x] Migrate existing Fluent samples to new locations with DSL suffixes:
-  - [x] `01-hello-world/01-lambda.cs` (from `01-hello-world-lambda.cs`)
-  - [x] `01-hello-world/02-method-reference.cs` (from `02-hello-world-method.cs`)
-  - [x] `02-calculator/calculator.cs` (from `01-calc-delegate.cs`)
-  - [x] `03-syntax/syntax-examples.cs` (from `syntax-examples.cs`)
-  - [x] `04-async/async-examples.cs` (from `async-examples.cs`)
-  - [ ] All pipeline middleware samples (6 files)
-  - [ ] All testing samples (3 files)
-  - [ ] All configuration samples (4 files)
-  - [ ] All type converter samples (2 files)
-  - [ ] All REPL samples (4 files)
-  - [ ] All logging samples (2 files)
-  - [ ] Completion sample
-  - [ ] Runtime DI samples (2 files)
+### Phase 1: Create folder structure and migrate Fluent samples ✅ COMPLETE
+- [x] Create `fluent/` folder with subfolders (01-hello-world through 12-runtime-di)
+- [x] Migrate existing Fluent samples to new locations with DSL suffixes (24 files total)
 
-### Phase 2: Create Endpoint DSL mirrors
-- [ ] Create `endpoints/` folder with identical subfolder structure
-- [ ] Create Endpoint versions of all Fluent samples:
-  - [x] `01-hello-world/hello-world.cs`
-  - [x] `02-calculator/calculator.cs`
-  - [x] `03-syntax/syntax-examples.cs`
-  - [x] `04-async/async-examples.cs`
-  - [ ] All pipeline middleware samples (6 files)
-  - [ ] All testing samples (3 files)
-  - [ ] All configuration samples (4 files)
-  - [ ] All type converter samples (2 files)
-  - [ ] All REPL samples (4 files)
-  - [ ] All logging samples (2 files)
-  - [ ] Completion sample
-  - [ ] Runtime DI samples (2 files)
-- [ ] Migrate existing Endpoint-specific content:
-  - [ ] `11-discovery/01-basic-discovery.cs` (from `03-endpoints/endpoints.cs`)
-  - [ ] `11-discovery/02-route-groups.cs` (from message files)
-  - [ ] `11-discovery/03-aliases.cs`
-  - [ ] `11-discovery/04-nested-groups.cs`
-  - [ ] Move `messages/` folder to `endpoints/11-discovery/`
+### Phase 2: Create Endpoint DSL mirrors ✅ COMPLETE
+- [x] Create `endpoints/` folder with identical subfolder structure
+- [x] Create Endpoint versions of all Fluent samples (24+ new files)
+- [x] Migrate existing Endpoint-specific content:
+  - [x] `11-discovery/endpoint-discovery-basic.cs` (from `03-endpoints/endpoints.cs`)
+  - [x] Move `messages/` folder to `endpoints/11-discovery/`
 
-### Phase 3: Create hybrid folder (edge cases)
-- [ ] Create `hybrid/` folder:
-  - [ ] `01-migration/` - Fluent to Endpoint migration path
-  - [ ] `02-unified-pipeline/` - Unified behavior demo
-  - [ ] `03-when-to-mix/` - Decision guide
-- [ ] Migrate existing mixed samples:
-  - [ ] `02-unified-pipeline/unified-middleware.cs` (from `11-unified-middleware/`)
-  - [ ] `01-migration/02-add-endpoint.cs` (from `02-calculator/03-calc-mixed.cs`)
-- [ ] Create migration guide samples:
-  - [ ] `01-migration/01-start-fluent.cs`
-  - [ ] `01-migration/02-add-endpoint.cs`
-  - [ ] `01-migration/03-complete-conversion.cs`
+### Phase 3: Create hybrid folder (edge cases) ✅ COMPLETE
+- [x] Create `hybrid/` folder with migration and unified-pipeline samples
+- [x] Create 3 migration steps (start-fluent, add-endpoint, complete)
+- [x] Create unified-pipeline demonstration
+- [x] Create decision guide documentation
 
-### Phase 4: Documentation updates
-- [ ] Create root `samples/README.md` with DSL choice guide
-- [ ] Update `examples.json` with `dsl` field for programmatic filtering
-- [ ] Update all folder READMEs with DSL badges
-- [ ] Add cross-reference links (e.g., "See also: endpoints/03-syntax/ for Endpoint version")
-- [ ] Update `.agent/workspace/` documentation
+### Phase 4: Documentation updates ✅ COMPLETE
+- [x] Create root `samples/README.md` with DSL choice guide
+- [x] Update `examples.json` with `dsl` field for programmatic filtering
+- [x] Create `endpoints/README.md` with Endpoint DSL index
+- [x] Create `hybrid/README.md` with warning
 
-### Phase 5: Cleanup
-- [ ] Remove old `samples/01-hello-world/` folder (contents moved)
-- [ ] Remove old `samples/02-calculator/` folder (contents moved)
-- [ ] Remove old `samples/03-endpoints/` folder (contents moved)
-- [ ] Remove old `samples/04-syntax-examples/` folder (contents moved)
-- [ ] Remove old `samples/06-async-examples/` folder (contents moved)
-- [ ] Remove old `samples/07-pipeline-middleware/` folder (contents moved)
-- [ ] Remove old `samples/08-testing/` folder (contents moved)
-- [ ] Remove old `samples/09-configuration/` folder (contents moved)
-- [ ] Remove old `samples/10-type-converters/` folder (contents moved)
-- [ ] Remove old `samples/11-unified-middleware/` folder (contents moved)
-- [ ] Remove old `samples/12-logging/` folder (contents moved)
-- [ ] Remove old `samples/13-repl/` folder (contents moved)
-- [ ] Remove old `samples/15-completion/` folder (contents moved)
-- [ ] Remove old `samples/16-runtime-di/` folder (contents moved)
+### Phase 5: Cleanup (DOCUMENTED - DO NOT DELETE YET)
+
+**Old folders to be removed after verification:**
+
+```
+samples/01-hello-world/       → Moved to fluent/01-hello-world/
+samples/02-calculator/        → Moved to fluent/02-calculator/ + endpoints/02-calculator/
+samples/03-endpoints/         → Moved to endpoints/11-discovery/
+samples/04-syntax-examples/  → Moved to fluent/03-syntax/ + endpoints/03-syntax/
+samples/06-async-examples/    → Moved to fluent/04-async/ + endpoints/04-async/
+samples/07-pipeline-middleware/ → Moved to fluent/05-pipeline/ + endpoints/05-pipeline/
+samples/08-testing/           → Moved to fluent/06-testing/ + endpoints/06-testing/
+samples/09-configuration/     → Moved to fluent/07-configuration/ + endpoints/07-configuration/
+samples/10-type-converters/   → Moved to fluent/08-type-converters/ + endpoints/08-type-converters/
+samples/11-unified-middleware/ → Moved to hybrid/02-unified-pipeline/
+samples/12-logging/           → Moved to fluent/09-logging/ + endpoints/10-logging/
+samples/13-repl/              → Moved to fluent/10-repl/ + endpoints/09-repl/
+samples/15-completion/        → Moved to fluent/11-completion/ + endpoints/12-completion/
+samples/16-runtime-di/        → Moved to fluent/12-runtime-di/ + endpoints/13-runtime-di/
+```
+
+**⚠️ IMPORTANT:** Do not delete these folders yet. Verify all new samples work correctly before cleanup.
 
 ## Notes
 

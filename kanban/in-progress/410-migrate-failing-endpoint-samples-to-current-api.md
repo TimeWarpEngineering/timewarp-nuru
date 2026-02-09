@@ -124,7 +124,7 @@ These serve as reference implementations:
 - [ ] Research exception types (NuruException, NuruErrorCode)
 
 ### Fix Simple Issues
-- [ ] Fix `02-calculator/endpoint-calculator.cs` - Remove duplicate Compile items
+- [x] Fix `02-calculator/endpoint-calculator.cs` - REFACTORED: Split into endpoints/ and services/ folders
 - [ ] Fix `07-configuration/endpoint-configuration-validation.cs` - Add PackageVersion
 
 ### Fix Individual Samples
@@ -158,3 +158,24 @@ These serve as reference implementations:
 - Fluent samples (all pass): `samples/fluent/` - use as reference
 - Current API documentation: TimeWarp.Nuru docs
 - Related task: 409 - Add --category filter to verify-samples (completed)
+
+## Implementation Notes
+
+### 02-calculator - COMPLETED (2026-02-09)
+**Issue:** Duplicate Compile items - Directory.Build.props had EnableDefaultCompileItems=true + explicit Include
+
+**Solution:** Complete refactoring following real-world endpoint pattern:
+- Split 308-line monolithic file into 11 focused files
+- Created `endpoints/` folder with 9 command files
+- Created `services/` folder with scientific-calculator.cs
+- calculator.cs: 26-line entry point
+
+**Key fixes:**
+- Changed `EnableDefaultCompileItems` from true to false
+- Added Import for parent Directory.Build.props (enables source generator)
+- Excluded calculator.cs from glob (entry point already included by runfile system)
+
+**Test results:** All commands working
+- add, subtract, multiply, divide: Basic operations
+- factorial, isprime, fibonacci: DI-injected service calls
+- round, stats: Complex parameters

@@ -183,14 +183,10 @@ These serve as reference implementations:
 ### 03-syntax - COMPLETED (2026-02-09)
 **Issue:** IsOptional, IsRepeatable attributes don't exist; multi-word route 'git commit' invalid
 
-**Solution:** Complete refactoring with API updates:
-- Split 525-line file into 6 focused files by category:
-  - literal-examples.cs: status, git-commit (changed from 'git commit'), version
-  - parameter-examples.cs: greet, copy, move, delete
-  - optional-examples.cs: deploy, wait, backup (removed IsOptional)
-  - catchall-examples.cs: docker, run, tail, exec
-  - option-examples.cs: build, deploy-full, docker-env (removed IsRepeatable)
-  - complex-examples.cs: git, docker-run, kubectl
+**Solution:** Complete refactoring with one endpoint per file:
+- 20 individual endpoint files (one class per file)
+- Follows real-world pattern from 02-calculator
+- File names match endpoint purpose (e.g., greet-query.cs, deploy-command.cs)
 
 **API fixes:**
 - Removed `IsOptional=true` - use nullable types (string?, int?) instead
@@ -199,10 +195,30 @@ These serve as reference implementations:
 - Changed Port int[] to string[] (source generator limitation)
 - Changed option 'config' to 'mode' (avoid 'configuration' variable conflict)
 
-**Test results:** Commands working
-- greet, status, version: Basic queries
-- deploy, wait, backup: Optional parameters with nullable types
-- docker, run: Catch-all parameters
-- build, docker-env: Options with arrays
-
-**Discovered source generator issue:** Option named 'config' creates variable 'configuration' which conflicts with IConfigurationRoot from DI. Workaround: use different option name.
+**Structure:**
+```
+03-syntax/
+├── endpoints/
+│   ├── status-query.cs         (literal)
+│   ├── git-commit-command.cs   (literal - hyphenated)
+│   ├── version-query.cs        (literal)
+│   ├── greet-query.cs          (parameter)
+│   ├── copy-command.cs         (parameters)
+│   ├── move-command.cs         (parameters)
+│   ├── delete-command.cs       (parameter)
+│   ├── deploy-command.cs       (optional parameter)
+│   ├── wait-command.cs         (optional parameter)
+│   ├── backup-command.cs       (optional parameter)
+│   ├── docker-command.cs       (catch-all)
+│   ├── run-command.cs          (catch-all)
+│   ├── tail-command.cs         (catch-all)
+│   ├── exec-command.cs         (catch-all)
+│   ├── build-command.cs        (options)
+│   ├── deploy-full-command.cs  (options)
+│   ├── docker-env-command.cs   (array options)
+│   ├── git-command.cs          (complex)
+│   ├── docker-run-command.cs   (complex)
+│   └── kubectl-query.cs        (complex)
+├── syntax.cs                   (entry point)
+└── Directory.Build.props
+```

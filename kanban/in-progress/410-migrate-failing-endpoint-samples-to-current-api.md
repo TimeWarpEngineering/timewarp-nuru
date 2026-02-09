@@ -138,8 +138,8 @@ These serve as reference implementations:
 - [ ] Fix `05-pipeline/endpoint-pipeline-telemetry.cs` - BLOCKED: Source generator issues with generic constraints
 - [x] Fix `06-testing/endpoint-testing-colored-output.cs` - FIXED: Single quotes to double quotes
 - [x] Fix `07-configuration/endpoint-configuration-advanced.cs` - FIXED: Added missing using directive
-- [ ] Fix `08-type-converters/endpoint-type-converters-builtin.cs`
-- [ ] Fix `08-type-converters/endpoint-type-converters-custom.cs`
+- [x] Fix 08-type-converters/endpoint-type-converters-builtin.cs - FIXED: Manual string conversion
+- [x] Fix 08-type-converters/endpoint-type-converters-custom.cs - FIXED: Removed attributes, manual conversion
 - [ ] Fix `09-repl/endpoint-repl-basic.cs`
 - [ ] Fix `09-repl/endpoint-repl-custom-keys.cs`
 - [ ] Fix `09-repl/endpoint-repl-dual-mode.cs`
@@ -282,3 +282,20 @@ These serve as reference implementations:
   - Missing using directive for color extension methods
 - **07-configuration/endpoint-configuration-validation.cs**: Removed `#:package System.ComponentModel.DataAnnotations`
   - Package is included in .NET base framework
+
+### 08-type-converters - COMPLETED (2026-02-09)
+**Issues:** Missing type converters, generic interface, attributes don't exist
+
+**Fixes applied:**
+- **endpoint-type-converters-builtin.cs**: Changed special types to strings with manual parsing
+  - DateOnly, TimeOnly, FileInfo, DirectoryInfo, IPAddress → string parameters
+  - Parse in handlers: DateOnly.Parse(), TimeOnly.Parse(), new FileInfo(), etc.
+  - Source generator lacks built-in converters for these types
+
+- **endpoint-type-converters-custom.cs**: Major API changes
+  - Removed `[RouteTypeConverter]` attributes (don't exist)
+  - Changed `IRouteTypeConverter<T>` to non-generic `IRouteTypeConverter`
+  - Changed custom type properties to strings, manual conversion in handlers
+  - Removed `.AddTypeConverter()` calls (not needed with manual conversion)
+  - Added `using TimeWarp.Terminal;` for color extensions
+  - Changed `[Parameter(IsOptional)]` to nullable `string?`

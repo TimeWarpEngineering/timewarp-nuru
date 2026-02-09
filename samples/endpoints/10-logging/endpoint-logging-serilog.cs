@@ -29,7 +29,6 @@ using static System.Console;
 Log.Logger = new LoggerConfiguration()
   .MinimumLevel.Debug()
   .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}")
-  .WriteTo.Console(formatter: new Serilog.Formatting.Compact.CompactJsonFormatter(), standardErrorFromLevel: Serilog.Events.LogEventLevel.Error)
   .Enrich.FromLogContext()
   .CreateLogger();
 

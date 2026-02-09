@@ -27,13 +27,15 @@ NuruApp app = NuruApp.CreateBuilder()
     // Base services
     services.AddSingleton<ILogger, ConsoleLogger>();
 
-    // Decorated service - adds caching
-    services.AddScoped<IRepository, DatabaseRepository>();
-    services.Decorate<IRepository, CachedRepository>();
+    // Repository with caching wrapper (manual decoration pattern)
+    services.AddScoped<IRepository>(provider =>
+      new CachedRepository(
+        new DatabaseRepository(),
+        provider.GetRequiredService<ILogger>()));
 
-    // Named services
-    services.AddKeyedSingleton<IProcessor, FastProcessor>("fast");
-    services.AddKeyedSingleton<IProcessor, ThoroughProcessor>("thorough");
+    // Both processor implementations
+    services.AddSingleton<FastProcessor>();
+    services.AddSingleton<ThoroughProcessor>();
 
     // Factory registration
     services.AddTransient<Func<string, IAnalyzer>>(provider =>
@@ -171,13 +173,13 @@ public sealed class GetCommand : ICommand<string>
   }
 }
 
-[NuruRoute("process", Description = "Process with named processor")]
+[NuruRoute("process", Description = "Process with selected mode")]
 public sealed class ProcessCommand : ICommand<string>
 {
   [Parameter] public string Mode { get; set; } = "fast";
   [Parameter] public string Input { get; set; } = "";
 
-  public sealed class Handler([FromKeyedServices("fast")] IProcessor Fast, [FromKeyedServices("thorough")] IProcessor Thorough) : ICommandHandler<ProcessCommand, string>
+  public sealed class Handler(FastProcessor Fast, ThoroughProcessor Thorough) : ICommandHandler<ProcessCommand, string>
   {
     public async ValueTask<string> Handle(ProcessCommand c, CancellationToken ct)
     {

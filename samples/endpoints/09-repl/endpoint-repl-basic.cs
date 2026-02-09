@@ -17,21 +17,24 @@
 
 using TimeWarp.Nuru;
 
-NuruApp app = NuruApp.CreateBuilder()
-  .DiscoverEndpoints()
-  .Build();
+NuruAppBuilder builder = NuruApp.CreateBuilder();
 
 // Check if --interactive flag is passed
 if (args.Contains("--interactive") || args.Contains("-i"))
 {
+  builder.AddRepl();
+  NuruApp app = builder.DiscoverEndpoints().Build();
+  
   Console.WriteLine("Entering REPL mode...");
   Console.WriteLine("Available commands: greet, calc, status, help");
   Console.WriteLine("Type 'exit' to quit\n");
-  return await app.RunAsReplAsync();
+  await app.RunReplAsync();
+  return 0;
 }
 
 // Otherwise run as standard CLI
-return await app.RunAsync(args);
+NuruApp cliApp = builder.DiscoverEndpoints().Build();
+return await cliApp.RunAsync(args);
 
 // =============================================================================
 // ENDPOINT DEFINITIONS

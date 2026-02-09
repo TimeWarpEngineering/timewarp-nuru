@@ -62,7 +62,7 @@ public sealed class ConfigCommand : ICommand<Unit>
   [Parameter(Description = "Configuration key")]
   public string Key { get; set; } = "";
 
-  [Parameter(IsOptional = true, Description = "Configuration value (for set)")]
+  [Parameter(Description = "Configuration value (for set)")]
   public string? Value { get; set; }
 
   public sealed class Handler : ICommandHandler<ConfigCommand, Unit>

@@ -60,7 +60,6 @@ public sealed class TelemetryBehavior : INuruBehavior
     catch (Exception ex)
     {
       activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
-      activity?.RecordException(ex);
       throw;
     }
   }

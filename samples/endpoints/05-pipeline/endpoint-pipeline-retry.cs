@@ -21,7 +21,7 @@ using TimeWarp.Nuru;
 using static System.Console;
 
 NuruApp app = NuruApp.CreateBuilder()
-  .AddBehavior(typeof(RetryBehavior<IRetryable>))
+  .AddBehavior(typeof(RetryBehavior))
   .DiscoverEndpoints()
   .Build();
 
@@ -48,17 +48,11 @@ public interface IRetryable
 /// Retry behavior with exponential backoff and jitter.
 /// Only applies to commands implementing IRetryable.
 /// </summary>
-public sealed class RetryBehavior<TFilter> : INuruBehavior<TFilter> where TFilter : class, IRetryable
+public sealed class RetryBehavior : INuruBehavior<IRetryable>
 {
-  public async ValueTask HandleAsync(BehaviorContext<TFilter> context, Func<ValueTask> proceed)
+  public async ValueTask HandleAsync(BehaviorContext<IRetryable> context, Func<ValueTask> proceed)
   {
-    if (context.Command is not IRetryable retryable)
-    {
-      await proceed();
-      return;
-    }
-
-    int maxRetries = retryable.MaxRetries;
+    int maxRetries = context.Command.MaxRetries;
     int attempt = 0;
 
     while (true)

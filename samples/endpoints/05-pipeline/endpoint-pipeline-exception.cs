@@ -44,22 +44,22 @@ public sealed class ExceptionHandlingBehavior : INuruBehavior
     catch (ArgumentException ex)
     {
       WriteLine($"[ERROR] Invalid input: {ex.Message}");
-      throw new NuruException(NuruErrorCode.InvalidInput, ex.Message, ex);
+      throw;
     }
     catch (InvalidOperationException ex)
     {
       WriteLine($"[ERROR] Operation failed: {ex.Message}");
-      throw new NuruException(NuruErrorCode.OperationFailed, ex.Message, ex);
+      throw;
     }
     catch (UnauthorizedAccessException ex)
     {
       WriteLine($"[ERROR] Access denied: {ex.Message}");
-      throw new NuruException(NuruErrorCode.AccessDenied, ex.Message, ex);
+      throw;
     }
     catch (Exception ex)
     {
       WriteLine($"[ERROR] Unexpected error: {ex.Message}");
-      throw new NuruException(NuruErrorCode.Unknown, "An unexpected error occurred", ex);
+      throw;
     }
   }
 }

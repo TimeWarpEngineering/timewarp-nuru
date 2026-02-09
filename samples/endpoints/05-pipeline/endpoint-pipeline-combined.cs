@@ -33,9 +33,9 @@ NuruApp app = NuruApp.CreateBuilder()
   // Next: Logging
   .AddBehavior(typeof(LoggingBehavior))
   // Next: Authorization (filtered to IRequireAuthorization)
-  .AddBehavior(typeof(AuthorizationBehavior<IRequireAuthorization>))
+  .AddBehavior(typeof(AuthorizationBehavior))
   // Next: Retry (filtered to IRetryable)
-  .AddBehavior(typeof(RetryBehavior<IRetryable>))
+  .AddBehavior(typeof(RetryBehavior))
   // Innermost: Exception handling
   .AddBehavior(typeof(ExceptionHandlingBehavior))
   .DiscoverEndpoints()
@@ -65,7 +65,6 @@ public sealed class TelemetryBehavior : INuruBehavior
     catch (Exception ex)
     {
       activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
-      activity?.RecordException(ex);
       throw;
     }
   }
@@ -98,11 +97,14 @@ public sealed class LoggingBehavior : INuruBehavior
   }
 }
 
-public interface IRequireAuthorization { }
-
-public sealed class AuthorizationBehavior<T> : INuruBehavior<T> where T : IRequireAuthorization
+public interface IRequireAuthorization
 {
-  public async ValueTask HandleAsync(BehaviorContext context, Func<ValueTask> proceed)
+  // Marker interface for authorization filtering
+}
+
+public sealed class AuthorizationBehavior : INuruBehavior<IRequireAuthorization>
+{
+  public async ValueTask HandleAsync(BehaviorContext<IRequireAuthorization> context, Func<ValueTask> proceed)
   {
     string? role = Environment.GetEnvironmentVariable("USER_ROLE") ?? "user";
     if (role != "admin")
@@ -112,18 +114,21 @@ public sealed class AuthorizationBehavior<T> : INuruBehavior<T> where T : IRequi
   }
 }
 
-public interface IRetryable { int MaxRetries { get; } }
-
-public sealed class RetryBehavior<T> : INuruBehavior<T> where T : IRetryable
+public interface IRetryable
 {
-  public async ValueTask HandleAsync(BehaviorContext context, Func<ValueTask> proceed)
-  {
-    if (context.Command is not IRetryable r) { await proceed(); return; }
+  int MaxRetries { get; }
+}
 
-    for (int i = 1; i <= r.MaxRetries + 1; i++)
+public sealed class RetryBehavior : INuruBehavior<IRetryable>
+{
+  public async ValueTask HandleAsync(BehaviorContext<IRetryable> context, Func<ValueTask> proceed)
+  {
+    int maxRetries = context.Command.MaxRetries;
+
+    for (int i = 1; i <= maxRetries + 1; i++)
     {
       try { await proceed(); return; }
-      catch (Exception ex) when (i <= r.MaxRetries && IsTransient(ex))
+      catch (Exception ex) when (i <= maxRetries && IsTransient(ex))
       {
         int delay = Math.Min((int)Math.Pow(2, i) * 50 + Random.Shared.Next(50), 3000);
         WriteLine($"[RETRY] Attempt {i} failed, waiting {delay}ms...");

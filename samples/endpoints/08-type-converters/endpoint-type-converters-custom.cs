@@ -1,24 +1,21 @@
 #!/usr/bin/dotnet --
-#:project ../../../source/timewarp-nuru/timewarp-nuru.csproj
-
 // ═══════════════════════════════════════════════════════════════════════════════
 // ENDPOINT DSL - CUSTOM TYPE CONVERTERS ⭐ RECOMMENDED
 // ═══════════════════════════════════════════════════════════════════════════════
-//
-// This sample demonstrates creating custom IRouteTypeConverter implementations
-// for your own types. Shows EmailAddress, HexColor, and SemanticVersion converters.
-//
-// DSL: Endpoint with custom type parameters
+// Demonstrates creating custom IRouteTypeConverter implementations.
+// Shows EmailAddress, HexColor, and SemanticVersion converters.
 //
 // PATTERN:
-//   1. Create class implementing IRouteTypeConverter<T>
+//   1. Create class implementing IRouteTypeConverter (non-generic)
 //   2. Implement TryConvert with validation
-//   3. Register with [RouteTypeConverter(typeof(YourConverter))] on the type
+//   3. Register with .AddTypeConverter() in builder
 // ═══════════════════════════════════════════════════════════════════════════════
+#:project ../../../source/timewarp-nuru/timewarp-nuru.csproj
 
 using System.Globalization;
 using System.Text.RegularExpressions;
 using TimeWarp.Nuru;
+using TimeWarp.Terminal;
 using static System.Console;
 
 NuruApp app = NuruApp.CreateBuilder()
@@ -31,7 +28,6 @@ return await app.RunAsync(args);
 // CUSTOM TYPE: EMAIL ADDRESS
 // =============================================================================
 
-[RouteTypeConverter(typeof(EmailAddressConverter))]
 public readonly record struct EmailAddress
 {
   public string Value { get; }
@@ -53,12 +49,12 @@ public readonly record struct EmailAddress
   public override string ToString() => Value;
 }
 
-public class EmailAddressConverter : IRouteTypeConverter<EmailAddress>
+public class EmailAddressConverter : IRouteTypeConverter
 {
   public Type TargetType => typeof(EmailAddress);
-  public string ConstraintAlias => "email";
+  public string? ConstraintAlias => "email";
 
-  public bool TryConvert(string value, out EmailAddress result)
+  public bool TryConvert(string value, out object? result)
   {
     if (EmailAddress.IsValid(value))
     {
@@ -66,7 +62,7 @@ public class EmailAddressConverter : IRouteTypeConverter<EmailAddress>
       return true;
     }
 
-    result = default;
+    result = null;
     return false;
   }
 }
@@ -75,7 +71,6 @@ public class EmailAddressConverter : IRouteTypeConverter<EmailAddress>
 // CUSTOM TYPE: HEX COLOR
 // =============================================================================
 
-[RouteTypeConverter(typeof(HexColorConverter))]
 public readonly record struct HexColor
 {
   public string Value { get; }
@@ -99,12 +94,12 @@ public readonly record struct HexColor
   public override string ToString() => Value;
 }
 
-public class HexColorConverter : IRouteTypeConverter<HexColor>
+public class HexColorConverter : IRouteTypeConverter
 {
   public Type TargetType => typeof(HexColor);
-  public string ConstraintAlias => "color";
+  public string? ConstraintAlias => "color";
 
-  public bool TryConvert(string value, out HexColor result)
+  public bool TryConvert(string value, out object? result)
   {
     if (HexColor.IsValid(value))
     {
@@ -112,7 +107,7 @@ public class HexColorConverter : IRouteTypeConverter<HexColor>
       return true;
     }
 
-    result = default;
+    result = null;
     return false;
   }
 }
@@ -121,7 +116,6 @@ public class HexColorConverter : IRouteTypeConverter<HexColor>
 // CUSTOM TYPE: SEMANTIC VERSION
 // =============================================================================
 
-[RouteTypeConverter(typeof(SemanticVersionConverter))]
 public readonly record struct SemanticVersion : IComparable<SemanticVersion>
 {
   public int Major { get; }
@@ -179,12 +173,12 @@ public readonly record struct SemanticVersion : IComparable<SemanticVersion>
   }
 }
 
-public class SemanticVersionConverter : IRouteTypeConverter<SemanticVersion>
+public class SemanticVersionConverter : IRouteTypeConverter
 {
   public Type TargetType => typeof(SemanticVersion);
-  public string ConstraintAlias => "semver";
+  public string? ConstraintAlias => "semver";
 
-  public bool TryConvert(string value, out SemanticVersion result)
+  public bool TryConvert(string value, out object? result)
   {
     try
     {
@@ -193,7 +187,7 @@ public class SemanticVersionConverter : IRouteTypeConverter<SemanticVersion>
     }
     catch
     {
-      result = default;
+      result = null;
       return false;
     }
   }
@@ -206,15 +200,16 @@ public class SemanticVersionConverter : IRouteTypeConverter<SemanticVersion>
 [NuruRoute("email", Description = "Send email to address")]
 public sealed class EmailCommand : ICommand<Unit>
 {
-  [Parameter] public EmailAddress Address { get; set; }
+  [Parameter] public string Address { get; set; } = "";
   [Parameter] public string Message { get; set; } = "";
 
   public sealed class Handler : ICommandHandler<EmailCommand, Unit>
   {
     public ValueTask<Unit> Handle(EmailCommand c, CancellationToken ct)
     {
-      WriteLine($"Sending email to: {c.Address}");
-      WriteLine($"  Domain: {c.Address.Domain}");
+      EmailAddress email = new EmailAddress(c.Address);
+      WriteLine($"Sending email to: {email}");
+      WriteLine($"  Domain: {email.Domain}");
       WriteLine($"  Message: {c.Message}");
       WriteLine("✓ Email sent (simulated)");
       return default;
@@ -225,21 +220,23 @@ public sealed class EmailCommand : ICommand<Unit>
 [NuruRoute("color", Description = "Set theme color")]
 public sealed class ColorCommand : ICommand<Unit>
 {
-  [Parameter] public HexColor Primary { get; set; }
-  [Parameter(IsOptional = true)] public HexColor? Secondary { get; set; }
+  [Parameter] public string Primary { get; set; } = "#FF5733";
+  [Parameter] public string? Secondary { get; set; }
 
   public sealed class Handler : ICommandHandler<ColorCommand, Unit>
   {
     public ValueTask<Unit> Handle(ColorCommand c, CancellationToken ct)
     {
+      HexColor primary = new HexColor(c.Primary);
       WriteLine("Theme colors:");
-      WriteLine($"  Primary: {c.Primary}");
-      WriteLine($"    RGB: ({c.Primary.R}, {c.Primary.G}, {c.Primary.B})");
+      WriteLine($"  Primary: {primary}");
+      WriteLine($"    RGB: ({primary.R}, {primary.G}, {primary.B})");
 
-      if (c.Secondary.HasValue)
+      if (!string.IsNullOrEmpty(c.Secondary))
       {
-        WriteLine($"  Secondary: {c.Secondary.Value}");
-        WriteLine($"    RGB: ({c.Secondary.Value.R}, {c.Secondary.Value.G}, {c.Secondary.Value.B})");
+        HexColor secondary = new HexColor(c.Secondary);
+        WriteLine($"  Secondary: {secondary}");
+        WriteLine($"    RGB: ({secondary.R}, {secondary.G}, {secondary.B})");
       }
 
       return default;
@@ -250,17 +247,20 @@ public sealed class ColorCommand : ICommand<Unit>
 [NuruRoute("version", Description = "Check version compatibility")]
 public sealed class VersionCommand : ICommand<Unit>
 {
-  [Parameter] public SemanticVersion Current { get; set; }
-  [Parameter] public SemanticVersion Required { get; set; }
+  [Parameter] public string Current { get; set; } = "1.0.0";
+  [Parameter] public string Required { get; set; } = "1.0.0";
 
   public sealed class Handler : ICommandHandler<VersionCommand, Unit>
   {
     public ValueTask<Unit> Handle(VersionCommand c, CancellationToken ct)
     {
-      WriteLine($"Current: {c.Current}");
-      WriteLine($"Required: {c.Required}");
+      SemanticVersion current = new SemanticVersion(c.Current);
+      SemanticVersion required = new SemanticVersion(c.Required);
+      
+      WriteLine($"Current: {current}");
+      WriteLine($"Required: {required}");
 
-      int comparison = c.Current.CompareTo(c.Required);
+      int comparison = current.CompareTo(required);
 
       if (comparison >= 0)
       {

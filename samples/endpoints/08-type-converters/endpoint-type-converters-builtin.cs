@@ -116,13 +116,14 @@ public sealed class ScheduleCommand : ICommand<Unit>
 [NuruRoute("daily", Description = "Daily report for a specific date")]
 public sealed class DailyCommand : ICommand<Unit>
 {
-  [Parameter] public DateOnly Date { get; set; }
+  [Parameter] public string Date { get; set; } = DateTime.Now.ToString("yyyy-MM-dd");
 
   public sealed class Handler : ICommandHandler<DailyCommand, Unit>
   {
     public ValueTask<Unit> Handle(DailyCommand c, CancellationToken ct)
     {
-      WriteLine($"Daily report for: {c.Date:yyyy-MM-dd}");
+      DateOnly date = DateOnly.Parse(c.Date);
+      WriteLine($"Daily report for: {date:yyyy-MM-dd}");
       return default;
     }
   }
@@ -131,13 +132,14 @@ public sealed class DailyCommand : ICommand<Unit>
 [NuruRoute("alarm", Description = "Set an alarm time")]
 public sealed class AlarmCommand : ICommand<Unit>
 {
-  [Parameter] public TimeOnly Time { get; set; }
+  [Parameter] public string Time { get; set; } = "09:00";
 
   public sealed class Handler : ICommandHandler<AlarmCommand, Unit>
   {
     public ValueTask<Unit> Handle(AlarmCommand c, CancellationToken ct)
     {
-      WriteLine($"Alarm set for: {c.Time:HH:mm}");
+      TimeOnly time = TimeOnly.Parse(c.Time);
+      WriteLine($"Alarm set for: {time:HH:mm}");
       return default;
     }
   }
@@ -177,15 +179,16 @@ public sealed class IdentifyCommand : IQuery<string>
 [NuruRoute("read", Description = "Read a file")]
 public sealed class ReadCommand : ICommand<Unit>
 {
-  [Parameter] public FileInfo File { get; set; } = new FileInfo(".");
+  [Parameter] public string File { get; set; } = ".";
 
   public sealed class Handler : ICommandHandler<ReadCommand, Unit>
   {
     public ValueTask<Unit> Handle(ReadCommand c, CancellationToken ct)
     {
-      WriteLine($"Reading: {c.File.FullName}");
-      WriteLine($"  Exists: {c.File.Exists}");
-      WriteLine($"  Size: {c.File.Length} bytes");
+      FileInfo file = new FileInfo(c.File);
+      WriteLine($"Reading: {file.FullName}");
+      WriteLine($"  Exists: {file.Exists}");
+      WriteLine($"  Size: {file.Length} bytes");
       return default;
     }
   }
@@ -194,19 +197,20 @@ public sealed class ReadCommand : ICommand<Unit>
 [NuruRoute("list", Description = "List directory contents")]
 public sealed class ListCommand : ICommand<Unit>
 {
-  [Parameter] public DirectoryInfo Dir { get; set; } = new DirectoryInfo(".");
+  [Parameter] public string Dir { get; set; } = ".";
 
   public sealed class Handler : ICommandHandler<ListCommand, Unit>
   {
     public ValueTask<Unit> Handle(ListCommand c, CancellationToken ct)
     {
-      WriteLine($"Listing: {c.Dir.FullName}");
-      WriteLine($"  Exists: {c.Dir.Exists}");
+      DirectoryInfo dir = new DirectoryInfo(c.Dir);
+      WriteLine($"Listing: {dir.FullName}");
+      WriteLine($"  Exists: {dir.Exists}");
 
-      if (c.Dir.Exists)
+      if (dir.Exists)
       {
-        WriteLine($"  Files: {c.Dir.GetFiles().Length}");
-        WriteLine($"  Subdirectories: {c.Dir.GetDirectories().Length}");
+        WriteLine($"  Files: {dir.GetFiles().Length}");
+        WriteLine($"  Subdirectories: {dir.GetDirectories().Length}");
       }
 
       return default;
@@ -240,14 +244,15 @@ public sealed class FetchCommand : ICommand<Unit>
 [NuruRoute("ping", Description = "Ping an IP address")]
 public sealed class PingCommand : ICommand<Unit>
 {
-  [Parameter] public System.Net.IPAddress Addr { get; set; } = System.Net.IPAddress.Loopback;
+  [Parameter] public string Addr { get; set; } = "127.0.0.1";
 
   public sealed class Handler : ICommandHandler<PingCommand, Unit>
   {
     public ValueTask<Unit> Handle(PingCommand c, CancellationToken ct)
     {
-      WriteLine($"Pinging: {c.Addr}");
-      WriteLine($"  AddressFamily: {c.Addr.AddressFamily}");
+      System.Net.IPAddress addr = System.Net.IPAddress.Parse(c.Addr);
+      WriteLine($"Pinging: {addr}");
+      WriteLine($"  AddressFamily: {addr.AddressFamily}");
       return default;
     }
   }

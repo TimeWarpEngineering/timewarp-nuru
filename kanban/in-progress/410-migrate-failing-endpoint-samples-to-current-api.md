@@ -125,18 +125,19 @@ These serve as reference implementations:
 
 ### Fix Simple Issues
 - [x] Fix `02-calculator/endpoint-calculator.cs` - REFACTORED: Split into endpoints/ and services/ folders
-- [ ] Fix `07-configuration/endpoint-configuration-validation.cs` - Add PackageVersion
+- [x] Fix `07-configuration/endpoint-configuration-validation.cs` - FIXED: Removed unnecessary package reference
 
 ### Fix Individual Samples
 - [x] Fix 03-syntax/endpoint-syntax-examples.cs - REFACTORED: Split into 6 categorized endpoint files
 - [x] Fix 04-async/endpoint-async-examples.cs - REFACTORED: Split into 7 endpoint files with Parallel naming fix
-- [ ] Fix `05-pipeline/endpoint-pipeline-combined.cs`
-- [ ] Fix `05-pipeline/endpoint-pipeline-exception.cs`
-- [ ] Fix `05-pipeline/endpoint-pipeline-filtered-auth.cs`
-- [ ] Fix `05-pipeline/endpoint-pipeline-retry.cs`
-- [ ] Fix `05-pipeline/endpoint-pipeline-telemetry.cs`
-- [ ] Fix `06-testing/endpoint-testing-colored-output.cs`
-- [ ] Fix `07-configuration/endpoint-configuration-advanced.cs`
+- [x] Fix `05-pipeline/endpoint-pipeline-basic.cs` - ALREADY PASSES
+- [ ] Fix `05-pipeline/endpoint-pipeline-combined.cs` - BLOCKED: Source generator issues with generic constraints
+- [ ] Fix `05-pipeline/endpoint-pipeline-exception.cs` - BLOCKED: Source generator issues with generic constraints
+- [ ] Fix `05-pipeline/endpoint-pipeline-filtered-auth.cs` - BLOCKED: Source generator issues with generic constraints
+- [ ] Fix `05-pipeline/endpoint-pipeline-retry.cs` - BLOCKED: Source generator issues with generic constraints
+- [ ] Fix `05-pipeline/endpoint-pipeline-telemetry.cs` - BLOCKED: Source generator issues with generic constraints
+- [x] Fix `06-testing/endpoint-testing-colored-output.cs` - FIXED: Single quotes to double quotes
+- [x] Fix `07-configuration/endpoint-configuration-advanced.cs` - FIXED: Added missing using directive
 - [ ] Fix `08-type-converters/endpoint-type-converters-builtin.cs`
 - [ ] Fix `08-type-converters/endpoint-type-converters-custom.cs`
 - [ ] Fix `09-repl/endpoint-repl-basic.cs`
@@ -270,3 +271,14 @@ These serve as reference implementations:
 - process-batch item1 item2 --parallel: Parallel processing
 - search "query" --limit 5: Async query with JSON results
 - health-check database api: Health status check
+
+### 06-07 Testing/Configuration - COMPLETED (2026-02-09)
+**Issues:** String literal syntax, missing usings, package references
+
+**Fixes applied:**
+- **06-testing/endpoint-testing-colored-output.cs**: Changed `{'✓'.Green()}` to `{"✓".Green()}` (4 occurrences)
+  - Single quotes create character literals, need double quotes for strings
+- **07-configuration/endpoint-configuration-advanced.cs**: Added `using TimeWarp.Terminal;`
+  - Missing using directive for color extension methods
+- **07-configuration/endpoint-configuration-validation.cs**: Removed `#:package System.ComponentModel.DataAnnotations`
+  - Package is included in .NET base framework

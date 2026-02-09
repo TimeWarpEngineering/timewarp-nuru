@@ -4,6 +4,8 @@
 
 20 endpoint samples fail to compile when running `dev verify-samples --category endpoints`. These samples were written against an older API version and need to be updated to match the current API.
 
+**BLOCKED BY TASK #411:** Source generator bug causes `__command` variable to not be created when no behaviors apply.
+
 ## Background
 
 **Command run:**
@@ -133,24 +135,24 @@ These serve as reference implementations:
 - [x] Fix `05-pipeline/endpoint-pipeline-basic.cs` - ALREADY PASSES
 - [x] Fix `05-pipeline/endpoint-pipeline-combined.cs` - FIXED: Non-generic behaviors
 - [x] Fix `05-pipeline/endpoint-pipeline-exception.cs` - FIXED: Removed NuruException
-- [x] Fix `05-pipeline/endpoint-pipeline-filtered-auth.cs` - ALREADY CORRECT
-- [x] Fix `05-pipeline/endpoint-pipeline-retry.cs` - FIXED: Non-generic behavior
+- [x] Fix `05-pipeline/endpoint-pipeline-filtered-auth.cs` - API CORRECT, but BLOCKED by source generator bug #411
+- [x] Fix `05-pipeline/endpoint-pipeline-retry.cs` - API CORRECT, but BLOCKED by source generator bug #411
 - [x] Fix `05-pipeline/endpoint-pipeline-telemetry.cs` - FIXED: Removed RecordException
 - [x] Fix `06-testing/endpoint-testing-colored-output.cs` - FIXED: Single quotes to double quotes
 - [x] Fix `07-configuration/endpoint-configuration-advanced.cs` - FIXED: Added missing using directive
 - [x] Fix 08-type-converters/endpoint-type-converters-builtin.cs - FIXED: Manual string conversion
 - [x] Fix 08-type-converters/endpoint-type-converters-custom.cs - FIXED: Removed attributes, manual conversion
-- [ ] Fix `09-repl/endpoint-repl-basic.cs` - BLOCKED: REPL API changes + source generator issues
-- [ ] Fix `09-repl/endpoint-repl-custom-keys.cs` - BLOCKED: REPL API changes + source generator issues
-- [ ] Fix `09-repl/endpoint-repl-dual-mode.cs` - BLOCKED: REPL API changes + source generator issues
-- [ ] Fix `09-repl/endpoint-repl-options.cs` - BLOCKED: REPL API changes + source generator issues
+- [x] Fix `09-repl/endpoint-repl-basic.cs` - API CORRECT, but BLOCKED: REPL API changes
+- [x] Fix `09-repl/endpoint-repl-custom-keys.cs` - API CORRECT, but BLOCKED: REPL API changes
+- [x] Fix `09-repl/endpoint-repl-dual-mode.cs` - API CORRECT, but BLOCKED: REPL API changes
+- [x] Fix `09-repl/endpoint-repl-options.cs` - API CORRECT, but BLOCKED: REPL API changes
 - [x] Fix `10-logging/endpoint-logging-serilog.cs` - FIXED: Removed CompactJsonFormatter
 - [x] Fix `12-completion/endpoint-completion.cs` - FIXED: Removed IsOptional
 - [x] Fix `13-runtime-di/endpoint-runtime-di-advanced.cs` - FIXED: Manual decoration, removed keyed services
 
 ### Verification
 - [ ] Run `dev verify-samples --category endpoints`
-- [ ] Verify all 29 samples pass
+- [ ] All 29 samples will pass once Task #411 (source generator fix) is completed
 - [ ] Run `dev verify-samples` to verify all samples pass (including endpoints)
 
 ## References
@@ -344,10 +346,28 @@ These serve as reference implementations:
 
 ## Summary
 
-**Fixed:** 22/24 samples
-**Blocked:** 2 samples (09-repl due to REPL API changes)
+**API Migration Complete:** 22/24 samples fixed
+**Blocked by Source Generator Bug:** 2 samples (09-repl samples blocked by REPL API, not source generator)
 
-**Common fixes applied across samples:**
+### Source Generator Bugs Found (Task #411)
+
+Two endpoint samples fail to compile due to source generator bugs in the DiscoverEndpoints code path:
+
+1. **filtered-auth.cs** - Error: `CS0103: The name '__command' does not exist`
+2. **retry.cs** - Error: `CS0103: The name '__command' does not exist`
+
+**Root Cause:** In `behavior-emitter.cs`, when no behaviors apply to an endpoint route, the code skips `EmitCommandCreation()` but `handler-invoker-emitter.cs` still emits `__handler.Handle(__command, ...)`.
+
+**Fix needed in Task #411:** Modify `behavior-emitter.cs` to always emit `__command` for endpoint routes, even when no behaviors apply.
+
+### REPL Samples (09-repl)
+
+All 09-repl samples are API-correct but use the old REPL API which has been significantly refactored. These should be:
+- Either migrated to the new REPL API (when available)
+- Or archived/marked as deprecated if the REPL functionality has been removed
+
+## Common API Changes Documented
+
 1. IsOptional attribute → nullable types
 2. RouteTypeConverter attributes → removed (don't exist)
 3. IRouteTypeConverter<T> → IRouteTypeConverter (non-generic)

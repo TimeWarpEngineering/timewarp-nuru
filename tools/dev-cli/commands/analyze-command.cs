@@ -30,15 +30,18 @@ internal sealed class AnalyzeCommand : ICommand<Unit>
 
     public async ValueTask<Unit> Handle(AnalyzeCommand command, CancellationToken ct)
     {
-      string repoRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
+      // Get repo root using Git.FindRoot
+      string? repoRoot = Git.FindRoot();
 
+      if (repoRoot is null)
+      {
+        throw new InvalidOperationException("Could not find git repository root (.git not found)");
+      }
+
+      // Verify we're in the right place
       if (!File.Exists(Path.Combine(repoRoot, "timewarp-nuru.slnx")))
       {
-        repoRoot = Path.GetFullPath(Directory.GetCurrentDirectory());
-        if (!File.Exists(Path.Combine(repoRoot, "timewarp-nuru.slnx")))
-        {
-          throw new InvalidOperationException("Could not find repository root (timewarp-nuru.slnx not found)");
-        }
+        throw new InvalidOperationException("Could not find repository root (timewarp-nuru.slnx not found)");
       }
 
       Terminal.WriteLine("Running Roslynator analysis and fixes...");

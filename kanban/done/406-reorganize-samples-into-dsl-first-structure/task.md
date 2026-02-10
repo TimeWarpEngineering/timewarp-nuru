@@ -44,28 +44,31 @@ samples/
 - [x] Create `endpoints/README.md` with Endpoint DSL index
 - [x] Create `hybrid/README.md` with warning
 
-### Phase 5: Cleanup (DOCUMENTED - DO NOT DELETE YET)
+### Phase 5: Cleanup ✅ COMPLETE
 
-**Old folders to be removed after verification:**
+**Old folders deleted after verification:**
 
 ```
-samples/01-hello-world/       → Moved to fluent/01-hello-world/
-samples/02-calculator/        → Moved to fluent/02-calculator/ + endpoints/02-calculator/
-samples/03-endpoints/         → Moved to endpoints/11-discovery/
-samples/04-syntax-examples/  → Moved to fluent/03-syntax/ + endpoints/03-syntax/
-samples/06-async-examples/    → Moved to fluent/04-async/ + endpoints/04-async/
-samples/07-pipeline-middleware/ → Moved to fluent/05-pipeline/ + endpoints/05-pipeline/
-samples/08-testing/           → Moved to fluent/06-testing/ + endpoints/06-testing/
-samples/09-configuration/     → Moved to fluent/07-configuration/ + endpoints/07-configuration/
-samples/10-type-converters/   → Moved to fluent/08-type-converters/ + endpoints/08-type-converters/
-samples/11-unified-middleware/ → Moved to hybrid/02-unified-pipeline/
-samples/12-logging/           → Moved to fluent/09-logging/ + endpoints/10-logging/
-samples/13-repl/              → Moved to fluent/10-repl/ + endpoints/09-repl/
-samples/15-completion/        → Moved to fluent/11-completion/ + endpoints/12-completion/
-samples/16-runtime-di/        → Moved to fluent/12-runtime-di/ + endpoints/13-runtime-di/
+samples/01-hello-world/       ✅ Deleted (moved to fluent/01-hello-world/)
+samples/02-calculator/        ✅ Deleted (moved to fluent/02-calculator/ + endpoints/02-calculator/)
+samples/03-endpoints/         ✅ Deleted (moved to endpoints/11-discovery/)
+samples/04-syntax-examples/   ✅ Deleted (moved to fluent/03-syntax/ + endpoints/03-syntax/)
+samples/06-async-examples/    ✅ Deleted (moved to fluent/04-async/ + endpoints/04-async/)
+samples/07-pipeline-middleware/ ✅ Deleted (moved to fluent/05-pipeline/ + endpoints/05-pipeline/)
+samples/08-testing/           ✅ Deleted (moved to fluent/06-testing/ + endpoints/06-testing/)
+samples/09-configuration/     ✅ Deleted (moved to fluent/07-configuration/ + endpoints/07-configuration/)
+samples/10-type-converters/   ✅ Deleted (moved to fluent/08-type-converters/ + endpoints/08-type-converters/)
+samples/12-logging/           ✅ Deleted (moved to fluent/09-logging/ + endpoints/10-logging/)
+samples/13-repl/              ✅ Deleted (moved to fluent/10-repl/ + endpoints/09-repl/)
+samples/15-completion/        ✅ Deleted (moved to fluent/11-completion/ + endpoints/12-completion/)
+samples/16-runtime-di/        ✅ Deleted (moved to fluent/12-runtime-di/ + endpoints/13-runtime-di/)
 ```
 
-**⚠️ IMPORTANT:** Do not delete these folders yet. Verify all new samples work correctly before cleanup.
+**Folders NOT migrated (kept at root):**
+- `samples/05-aot-example/` - AOT compilation example (special case)
+- `samples/11-unified-middleware/` - Hybrid unified pipeline demo
+- `samples/14-aspire-otel/` - Aspire + OpenTelemetry example
+- `samples/99-timewarp-nuru-sample/` - Kitchen sink sample app
 
 ## Notes
 

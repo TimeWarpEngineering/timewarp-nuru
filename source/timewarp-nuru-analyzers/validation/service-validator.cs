@@ -49,6 +49,13 @@ internal static class ServiceValidator
   }
 
   /// <summary>
+  /// Extension methods that are known to be safe and should not trigger NURU052.
+  /// These register standard services that Nuru handles correctly at runtime.
+  /// </summary>
+  private static readonly HashSet<string> WhitelistedExtensionMethods =
+    new(StringComparer.Ordinal) { "AddLogging" };
+
+  /// <summary>
   /// Reports warnings for extension method calls that may register services.
   /// NURU052: Extension method registration.
   /// </summary>
@@ -59,8 +66,9 @@ internal static class ServiceValidator
     if (useMicrosoftDependencyInjection || extensionMethods.IsDefaultOrEmpty)
       return [];
 
-    return [.. extensionMethods.Select(ext =>
-      Diagnostic.Create(
+    return [.. extensionMethods
+      .Where(ext => !WhitelistedExtensionMethods.Contains(ext.MethodName))
+      .Select(ext => Diagnostic.Create(
         DiagnosticDescriptors.ExtensionMethodRegistration,
         ext.Location,
         ext.MethodName))];

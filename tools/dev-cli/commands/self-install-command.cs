@@ -27,17 +27,18 @@ internal sealed class SelfInstallCommand : ICommand<Unit>
 
     public async ValueTask<Unit> Handle(SelfInstallCommand command, CancellationToken ct)
     {
-      // Get repo root
-      string repoRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
+      // Get repo root using Git.FindRoot
+      string? repoRoot = Git.FindRoot();
+
+      if (repoRoot is null)
+      {
+        throw new InvalidOperationException("Could not find git repository root (.git not found)");
+      }
 
       // Verify we're in the right place
       if (!File.Exists(Path.Combine(repoRoot, "timewarp-nuru.slnx")))
       {
-        repoRoot = Path.GetFullPath(Directory.GetCurrentDirectory());
-        if (!File.Exists(Path.Combine(repoRoot, "timewarp-nuru.slnx")))
-        {
-          throw new InvalidOperationException("Could not find repository root (timewarp-nuru.slnx not found)");
-        }
+        throw new InvalidOperationException("Could not find repository root (timewarp-nuru.slnx not found)");
       }
 
       string devCliSource = Path.Combine(repoRoot, "tools", "dev-cli", "dev.cs");
@@ -82,7 +83,7 @@ internal sealed class SelfInstallCommand : ICommand<Unit>
         FileInfo info = new(binaryPath);
         Terminal.WriteLine($"\n✅ AOT binary installed: {binaryPath}");
         Terminal.WriteLine($"   Size: {info.Length / 1024.0 / 1024.0:F1} MB");
-        Terminal.WriteLine($"\nRun 'direnv allow' to add ./bin to PATH, then use: dev <command>");
+        Terminal.WriteLine("\nRun 'direnv allow' to add ./bin to PATH, then use: dev <command>");
       }
       else
       {

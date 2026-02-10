@@ -26,17 +26,18 @@ internal sealed class VerifySamplesCommand : ICommand<Unit>
 
     public async ValueTask<Unit> Handle(VerifySamplesCommand command, CancellationToken ct)
     {
-      // Get repo root
-      string repoRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
+      // Get repo root using Git.FindRoot
+      string? repoRoot = Git.FindRoot();
+
+      if (repoRoot is null)
+      {
+        throw new InvalidOperationException("Could not find git repository root (.git not found)");
+      }
 
       // Verify we're in the right place
       if (!File.Exists(Path.Combine(repoRoot, "timewarp-nuru.slnx")))
       {
-        repoRoot = Path.GetFullPath(Directory.GetCurrentDirectory());
-        if (!File.Exists(Path.Combine(repoRoot, "timewarp-nuru.slnx")))
-        {
-          throw new InvalidOperationException("Could not find repository root (timewarp-nuru.slnx not found)");
-        }
+        throw new InvalidOperationException("Could not find repository root (timewarp-nuru.slnx not found)");
       }
 
       string samplesDir = Path.Combine(repoRoot, "samples");
@@ -198,7 +199,7 @@ internal sealed class VerifySamplesCommand : ICommand<Unit>
       if (string.IsNullOrEmpty(category))
         return samples;
 
-      return samples.Where(s =>
+      return [.. samples.Where(s =>
       {
         string relativePath = Path.GetRelativePath(samplesDir, s);
         string[] parts = relativePath.Split(Path.DirectorySeparatorChar);
@@ -210,7 +211,7 @@ internal sealed class VerifySamplesCommand : ICommand<Unit>
           "hybrid" => parts[0] == "hybrid",
           _ => throw new ArgumentException($"Unknown category: {category}. Valid options: fluent, endpoints, hybrid")
         };
-      }).ToList();
+      })];
     }
   }
 }

@@ -29,18 +29,18 @@ internal sealed class BuildCommand : ICommand<Unit>
 
     public async ValueTask<Unit> Handle(BuildCommand command, CancellationToken ct)
     {
-      // Get repo root (dev-cli is in tools/dev-cli/)
-      string repoRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
+      // Get repo root using Git.FindRoot
+      string? repoRoot = Git.FindRoot();
+
+      if (repoRoot is null)
+      {
+        throw new InvalidOperationException("Could not find git repository root (.git not found)");
+      }
 
       // Verify we're in the right place
       if (!File.Exists(Path.Combine(repoRoot, "timewarp-nuru.slnx")))
       {
-        // Try alternative path resolution for when running via dotnet run
-        repoRoot = Path.GetFullPath(Directory.GetCurrentDirectory());
-        if (!File.Exists(Path.Combine(repoRoot, "timewarp-nuru.slnx")))
-        {
-          throw new InvalidOperationException("Could not find repository root (timewarp-nuru.slnx not found)");
-        }
+        throw new InvalidOperationException("Could not find repository root (timewarp-nuru.slnx not found)");
       }
 
       Terminal.WriteLine("Building TimeWarp.Nuru library...");

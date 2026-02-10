@@ -58,15 +58,15 @@ samples/07-pipeline-middleware/ ✅ Deleted (moved to fluent/05-pipeline/ + endp
 samples/08-testing/           ✅ Deleted (moved to fluent/06-testing/ + endpoints/06-testing/)
 samples/09-configuration/     ✅ Deleted (moved to fluent/07-configuration/ + endpoints/07-configuration/)
 samples/10-type-converters/   ✅ Deleted (moved to fluent/08-type-converters/ + endpoints/08-type-converters/)
+samples/11-unified-middleware/ ✅ Deleted (moved to hybrid/02-unified-pipeline/)
 samples/12-logging/           ✅ Deleted (moved to fluent/09-logging/ + endpoints/10-logging/)
 samples/13-repl/              ✅ Deleted (moved to fluent/10-repl/ + endpoints/09-repl/)
 samples/15-completion/        ✅ Deleted (moved to fluent/11-completion/ + endpoints/12-completion/)
 samples/16-runtime-di/        ✅ Deleted (moved to fluent/12-runtime-di/ + endpoints/13-runtime-di/)
 ```
 
-**Folders NOT migrated (kept at root):**
+**Folders NOT migrated (kept at root - 3 total):**
 - `samples/05-aot-example/` - AOT compilation example (special case)
-- `samples/11-unified-middleware/` - Hybrid unified pipeline demo
 - `samples/14-aspire-otel/` - Aspire + OpenTelemetry example
 - `samples/99-timewarp-nuru-sample/` - Kitchen sink sample app
 

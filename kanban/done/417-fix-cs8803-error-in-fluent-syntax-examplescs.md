@@ -33,3 +33,25 @@ dotnet run ./samples/fluent/03-syntax/fluent-syntax-examples.cs
 ```
 
 This file is used by the TimeWarp.Nuru MCP Server for extracting code snippets. All #region blocks must remain intact and the file must compile successfully.
+
+## Results
+
+**Fixed CS8803 error in fluent-syntax-examples.cs:**
+
+### Changes Made
+1. **Added missing builder declaration** (line 29): `var builder = NuruApp.CreateBuilder(args);`
+2. **Restructured file order** to satisfy C# top-level statement requirements:
+   - Lines 1-29: Shebang, comments, using statements, builder declaration
+   - Lines 31-348: Fluent DSL examples (top-level statements with #region blocks)
+   - Lines 350-411: Endpoint DSL class definitions (type declarations)
+
+### Verification
+- CS8803 error: **RESOLVED** (no longer appears in build output)
+- All MCP #region blocks: **PRESERVED** (critical for MCP server compatibility)
+- File structure: **CORRECT** (top-level statements now precede type declarations)
+
+### Pre-existing Issues (separate from this fix)
+The file still has NURU_A001 analyzer errors and CS0246 interface errors related to outdated Endpoint DSL syntax examples. These are documented in the task Notes and require a separate task to update the Endpoint DSL examples to use the current API.
+
+### Files Changed
+- `samples/fluent/03-syntax/fluent-syntax-examples.cs` (145 insertions, 143 deletions - structural reordering)

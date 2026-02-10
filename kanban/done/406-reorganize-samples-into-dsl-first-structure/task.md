@@ -53,6 +53,7 @@ samples/01-hello-world/       ✅ Deleted (moved to fluent/01-hello-world/)
 samples/02-calculator/        ✅ Deleted (moved to fluent/02-calculator/ + endpoints/02-calculator/)
 samples/03-endpoints/         ✅ Deleted (moved to endpoints/11-discovery/)
 samples/04-syntax-examples/   ✅ Deleted (moved to fluent/03-syntax/ + endpoints/03-syntax/)
+samples/05-aot-example/       ✅ Deleted (not migrated - AOT is default behavior, no longer needs special demo)
 samples/06-async-examples/    ✅ Deleted (moved to fluent/04-async/ + endpoints/04-async/)
 samples/07-pipeline-middleware/ ✅ Deleted (moved to fluent/05-pipeline/ + endpoints/05-pipeline/)
 samples/08-testing/           ✅ Deleted (moved to fluent/06-testing/ + endpoints/06-testing/)
@@ -65,8 +66,7 @@ samples/15-completion/        ✅ Deleted (moved to fluent/11-completion/ + endp
 samples/16-runtime-di/        ✅ Deleted (moved to fluent/12-runtime-di/ + endpoints/13-runtime-di/)
 ```
 
-**Folders NOT migrated (kept at root - 3 total):**
-- `samples/05-aot-example/` - AOT compilation example (special case)
+**Folders NOT migrated (kept at root - 2 total):**
 - `samples/14-aspire-otel/` - Aspire + OpenTelemetry example
 - `samples/99-timewarp-nuru-sample/` - Kitchen sink sample app
 
@@ -118,8 +118,7 @@ samples/
 │   ├── 09-repl/
 │   ├── 10-logging/
 │   ├── 11-completion/
-│   ├── 12-runtime-di/
-│   └── 13-aot-example/
+│   └── 12-runtime-di/
 ├── endpoints/
 │   ├── 01-hello-world/
 │   ├── 02-calculator/           # Complex: has Directory.Build.props + messages/

@@ -61,7 +61,7 @@ internal static class HelpEmitter
   }
 
   /// <summary>
-  /// Emits the commands section.
+  /// Emits the commands section as a table.
   /// </summary>
   private static void EmitCommands(StringBuilder sb, AppModel model)
   {
@@ -71,115 +71,34 @@ internal static class HelpEmitter
     }
 
     sb.AppendLine("    terminal.WriteLine(\"Commands:\");");
+    sb.AppendLine("    terminal.WriteTable(table => table");
+    sb.AppendLine("      .AddColumn(\"Command\")");
+    sb.AppendLine("      .AddColumn(\"Description\")");
 
     foreach (RouteDefinition route in model.Routes)
     {
-      EmitRouteHelp(sb, route);
+      string pattern = HelpPatternHelper.BuildPatternDisplay(route);
+      string description = route.Description ?? "";
+      sb.AppendLine($"      .AddRow(\"{EscapeString(pattern)}\", \"{EscapeString(description)}\")");
     }
 
-    sb.AppendLine("    terminal.WriteLine();");
+    sb.AppendLine("    );");
+    sb.AppendLine();
   }
 
   /// <summary>
-  /// Emits help text for a single route.
-  /// </summary>
-  private static void EmitRouteHelp(StringBuilder sb, RouteDefinition route)
-  {
-    // Build the pattern display (e.g., "deploy {env} [--force]")
-    string pattern = BuildPatternDisplay(route);
-
-    // Pad for alignment (assuming max 25 char pattern)
-    string paddedPattern = pattern.PadRight(25);
-
-    string description = route.Description ?? string.Empty;
-
-    sb.AppendLine(
-      $"    terminal.WriteLine(\"  {EscapeString(paddedPattern)} {EscapeString(description)}\");");
-  }
-
-  /// <summary>
-  /// Builds the display pattern for help text.
-  /// </summary>
-  private static string BuildPatternDisplay(RouteDefinition route)
-  {
-    StringBuilder pattern = new();
-
-    // Add group prefix if present
-    if (!string.IsNullOrEmpty(route.GroupPrefix))
-    {
-      pattern.Append(route.GroupPrefix);
-      pattern.Append(' ');
-    }
-
-    // Add segments
-    foreach (SegmentDefinition segment in route.Segments)
-    {
-      switch (segment)
-      {
-        case LiteralDefinition literal:
-          pattern.Append(literal.Value);
-          pattern.Append(' ');
-          break;
-
-        case ParameterDefinition param:
-          if (param.IsCatchAll)
-          {
-            pattern.Append($"{{*{param.Name}}} ");
-          }
-          else if (param.IsOptional)
-          {
-            pattern.Append($"[{param.Name}] ");
-          }
-          else
-          {
-            pattern.Append($"{{{param.Name}}} ");
-          }
-
-          break;
-
-        case OptionDefinition option:
-          string optionDisplay = (option.LongForm, option.ShortForm) switch
-          {
-            (not null, not null) => $"--{option.LongForm},-{option.ShortForm}",
-            (not null, null) => $"--{option.LongForm}",
-            (null, not null) => $"-{option.ShortForm}",
-            _ => "[invalid option]"
-          };
-
-          if (option.ExpectsValue)
-          {
-            optionDisplay += $" {{{option.ParameterName ?? "value"}}}";
-          }
-
-          if (option.IsOptional)
-          {
-            pattern.Append($"[{optionDisplay}] ");
-          }
-          else
-          {
-            pattern.Append($"{optionDisplay} ");
-          }
-
-          break;
-
-        case EndOfOptionsSeparatorDefinition:
-          pattern.Append("-- ");
-          break;
-      }
-    }
-
-    return pattern.ToString().Trim();
-  }
-
-  /// <summary>
-  /// Emits the global options section.
+  /// Emits the global options section as a table.
   /// </summary>
   private static void EmitOptions(StringBuilder sb)
   {
     sb.AppendLine("    terminal.WriteLine(\"Options:\");");
-    sb.AppendLine("    terminal.WriteLine(\"  --help, -h             Show this help message\");");
-    sb.AppendLine("    terminal.WriteLine(\"  --version              Show version information\");");
-    sb.AppendLine("    terminal.WriteLine(\"  --capabilities         Show capabilities for AI tools\");");
+    sb.AppendLine("    terminal.WriteTable(table => table");
+    sb.AppendLine("      .AddColumn(\"Option\")");
+    sb.AppendLine("      .AddColumn(\"Description\")");
+    sb.AppendLine("      .AddRow(\"--help, -h\", \"Show this help message\")");
+    sb.AppendLine("      .AddRow(\"--version\", \"Show version information\")");
+    sb.AppendLine("      .AddRow(\"--capabilities\", \"Show capabilities for AI tools\")");
+    sb.AppendLine("    );");
   }
 
   /// <summary>

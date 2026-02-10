@@ -3,6 +3,7 @@
 
 namespace TimeWarp.Nuru.Generators;
 
+using System.Linq;
 using System.Text;
 
 /// <summary>
@@ -35,18 +36,20 @@ internal static class HelpEmitter
   /// </summary>
   private static void EmitHeader(StringBuilder sb, AppModel model)
   {
+    // App name with version in cyan bold
     if (model.Name is not null)
     {
-      sb.AppendLine(
-        $"    terminal.WriteLine(\"{EscapeString(model.Name)}\");");
+      string version = model.Version ?? "1.0.0";
+      sb.AppendLine($"    terminal.WriteLine(\"{EscapeString(model.Name)} v{version}\".BrightCyan().Bold());");
     }
 
+    // App description in gray
     if (model.Description is not null)
     {
-      sb.AppendLine(
-        $"    terminal.WriteLine(\"{EscapeString(model.Description)}\");");
-      sb.AppendLine("    terminal.WriteLine();");
+      sb.AppendLine($"    terminal.WriteLine(\"{EscapeString(model.Description)}\".Gray());");
     }
+
+    sb.AppendLine("    terminal.WriteLine();");
   }
 
   /// <summary>
@@ -55,8 +58,7 @@ internal static class HelpEmitter
   private static void EmitUsage(StringBuilder sb, AppModel model)
   {
     string appName = model.Name ?? "app";
-    sb.AppendLine(
-      $"    terminal.WriteLine(\"Usage: {EscapeString(appName)} [command] [options]\");");
+    sb.AppendLine($"    terminal.WriteLine(\"USAGE: {EscapeString(appName)} [command] [options]\".Yellow());");
     sb.AppendLine("    terminal.WriteLine();");
   }
 
@@ -70,20 +72,63 @@ internal static class HelpEmitter
       return;
     }
 
-    sb.AppendLine("    terminal.WriteLine(\"Commands:\");");
-    sb.AppendLine("    terminal.WriteTable(table => table");
-    sb.AppendLine("      .AddColumn(\"Command\")");
-    sb.AppendLine("      .AddColumn(\"Description\")");
+    // Group routes by GroupPrefix
+    IEnumerable<IGrouping<string, RouteDefinition>> groups = model.Routes
+      .GroupBy(r => r.GroupPrefix ?? "") // Empty string for no group
+      .OrderBy(g => g.Key); // Ungrouped first, then alphabetically
 
-    foreach (RouteDefinition route in model.Routes)
+    bool firstGroup = true;
+    foreach (IGrouping<string, RouteDefinition> group in groups)
     {
-      string pattern = HelpPatternHelper.BuildPatternDisplay(route);
-      string description = route.Description ?? "";
-      sb.AppendLine($"      .AddRow(\"{EscapeString(pattern)}\", \"{EscapeString(description)}\")");
+      string categoryName = string.IsNullOrEmpty(group.Key)
+        ? "COMMANDS"
+        : group.Key.ToUpperInvariant();
+
+      // Category header in cyan bold
+      if (!firstGroup)
+      {
+        sb.AppendLine("    terminal.WriteLine();");
+      }
+
+      sb.AppendLine($"    terminal.WriteLine(\"{EscapeString(categoryName)}\".Cyan().Bold());");
+
+      // Table with command names only (not full patterns)
+      sb.AppendLine("    terminal.WriteTable(table => table");
+      sb.AppendLine("      .AddColumn(\"Command\")");
+      sb.AppendLine("      .AddColumn(\"Description\")");
+
+      foreach (RouteDefinition route in group)
+      {
+        string commandName = GetCommandName(route);
+        string description = route.Description ?? "";
+        sb.AppendLine($"      .AddRow(\"{EscapeString(commandName)}\", \"{EscapeString(description)}\")");
+      }
+
+      sb.AppendLine("    );");
+      firstGroup = false;
+    }
+  }
+
+  // Helper to get just the command name
+  private static string GetCommandName(RouteDefinition route)
+  {
+    // If has group prefix, use FullPattern
+    if (!string.IsNullOrEmpty(route.GroupPrefix))
+    {
+      return route.FullPattern;
     }
 
-    sb.AppendLine("    );");
-    sb.AppendLine();
+    // Otherwise, get just the first literal segment
+    foreach (SegmentDefinition segment in route.Segments)
+    {
+      if (segment is LiteralDefinition literal)
+      {
+        return literal.Value;
+      }
+    }
+
+    // Fallback to FullPattern if no literal found
+    return route.FullPattern;
   }
 
   /// <summary>
@@ -91,7 +136,8 @@ internal static class HelpEmitter
   /// </summary>
   private static void EmitOptions(StringBuilder sb)
   {
-    sb.AppendLine("    terminal.WriteLine(\"Options:\");");
+    sb.AppendLine("    terminal.WriteLine();");
+    sb.AppendLine("    terminal.WriteLine(\"OPTIONS\".Cyan().Bold());");
     sb.AppendLine("    terminal.WriteTable(table => table");
     sb.AppendLine("      .AddColumn(\"Option\")");
     sb.AppendLine("      .AddColumn(\"Description\")");

@@ -23,8 +23,19 @@ internal static class HelpEmitter
     sb.AppendLine($"  private static void PrintHelp{methodSuffix}(ITerminal terminal)");
     sb.AppendLine("  {");
 
+    // Emit runtime code to get app name with fallback to assembly name
+    sb.AppendLine("    // Get app name: explicit > assembly name > \"app\"");
+    if (model.Name is not null)
+    {
+      sb.AppendLine($"    string __appName = \"{EscapeString(model.Name)}\";");
+    }
+    else
+    {
+      sb.AppendLine("    string __appName = global::System.Reflection.Assembly.GetEntryAssembly()?.GetName().Name ?? \"app\";");
+    }
+
     EmitHeader(sb, model);
-    EmitUsage(sb, model);
+    EmitUsage(sb);
     EmitCommands(sb, model);
     EmitOptions(sb);
 
@@ -37,11 +48,8 @@ internal static class HelpEmitter
   private static void EmitHeader(StringBuilder sb, AppModel model)
   {
     // App name with version in cyan bold
-    if (model.Name is not null)
-    {
-      string version = model.Version ?? "1.0.0";
-      sb.AppendLine($"    terminal.WriteLine(\"{EscapeString(model.Name)} v{version}\".BrightCyan().Bold());");
-    }
+    string version = model.Version ?? "1.0.0";
+    sb.AppendLine($"    terminal.WriteLine($\"  {{__appName}} v{version}\".BrightCyan().Bold());");
 
     // App description in gray
     if (model.Description is not null)
@@ -55,10 +63,9 @@ internal static class HelpEmitter
   /// <summary>
   /// Emits the usage line.
   /// </summary>
-  private static void EmitUsage(StringBuilder sb, AppModel model)
+  private static void EmitUsage(StringBuilder sb)
   {
-    string appName = model.Name ?? "app";
-    sb.AppendLine($"    terminal.WriteLine(\"USAGE: {EscapeString(appName)} [command] [options]\".Yellow());");
+    sb.AppendLine("    terminal.WriteLine($\"USAGE: {__appName} [command] [options]\".Yellow());");
     sb.AppendLine("    terminal.WriteLine();");
   }
 

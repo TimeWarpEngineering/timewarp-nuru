@@ -53,11 +53,11 @@ internal static class HelpEmitter
     sb.AppendLine($"    terminal.WriteLine($\"  v{version}\".BrightCyan().Bold());");
     sb.AppendLine("    terminal.WriteLine();");
 
-    // App description with "Description:" header and indented value
+    // App description with "Description:" header and indented value (no color for content - uses terminal default)
     if (model.Description is not null)
     {
       sb.AppendLine("    terminal.WriteLine(\"Description:\".White());");
-      sb.AppendLine($"    terminal.WriteLine($\"  {EscapeString(model.Description)}\".White());");
+      sb.AppendLine($"    terminal.WriteLine($\"  {EscapeString(model.Description)}\");");
     }
 
     sb.AppendLine("    terminal.WriteLine();");

@@ -462,13 +462,14 @@ internal static class InterceptorEmitter
 
       string fieldName = GetLoggerFactoryFieldName(appIndex, model.Apps.Length);
       string lambdaBody = app.LoggingConfiguration.ConfigurationLambdaBody.TrimEnd();
+      string paramName = app.LoggingConfiguration.LambdaParameterName;
 
       // Ensure lambda body ends with semicolon
       if (!lambdaBody.EndsWith(';'))
         lambdaBody += ";";
 
       sb.AppendLine($"  private static readonly global::Microsoft.Extensions.Logging.ILoggerFactory {fieldName} =");
-      sb.AppendLine("    global::Microsoft.Extensions.Logging.LoggerFactory.Create(builder =>");
+      sb.AppendLine($"    global::Microsoft.Extensions.Logging.LoggerFactory.Create({paramName} =>");
       sb.AppendLine("    {");
       sb.AppendLine($"      {lambdaBody}");
       sb.AppendLine("    });");

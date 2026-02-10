@@ -636,7 +636,17 @@ internal static class ServiceExtractor
     {
       // Get the lambda body as text
       string bodyText = lambda.Body.ToFullString().Trim();
-      return new LoggingConfiguration(bodyText);
+
+      // Extract the lambda parameter name (e.g., "b" from "b => b.AddConsole()")
+      string parameterName = lambda switch
+      {
+        SimpleLambdaExpressionSyntax simple => simple.Parameter.Identifier.Text,
+        ParenthesizedLambdaExpressionSyntax paren when paren.ParameterList.Parameters.Count == 1
+          => paren.ParameterList.Parameters[0].Identifier.Text,
+        _ => "builder"
+      };
+
+      return new LoggingConfiguration(bodyText, parameterName);
     }
 
     // Handle method group: AddLogging(ConfigureLogging)

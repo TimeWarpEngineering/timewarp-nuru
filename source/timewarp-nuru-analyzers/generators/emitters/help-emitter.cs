@@ -50,6 +50,7 @@ internal static class HelpEmitter
     // App name with version in cyan bold
     string version = model.Version ?? "1.0.0";
     sb.AppendLine($"    terminal.WriteLine($\"  {{__appName}} v{version}\".BrightCyan().Bold());");
+    sb.AppendLine("    terminal.WriteLine();");
 
     // App description with "Description:" header and indented value
     if (model.Description is not null)

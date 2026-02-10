@@ -2,12 +2,15 @@
 #:project ../../../source/timewarp-nuru/timewarp-nuru.csproj
 
 // ============================================================================
-// TIMEWARP.NURU - SYNTAX EXAMPLES (ENDPOINT DSL + FLUENT DSL)
+// TIMEWARP.NURU - FLUENT DSL SYNTAX EXAMPLES
 // ============================================================================
-// This file provides syntax examples for both DSLs used by the MCP Server.
+// This file provides Fluent DSL syntax examples for the MCP Server.
 //
-// PRIORITY: Endpoint DSL (Recommended for agents - scales better, easier to reason about)
-// ALTERNATIVE: Fluent DSL (Minimal API style - good for simple cases)
+// The Fluent DSL uses builder.Map().WithHandler().AsCommand().Done()
+// Benefits: Minimal API style, good for simple cases and quick prototyping.
+// Use this for: Simple scripts, prototyping, migration from minimal APIs.
+//
+// For Endpoint DSL examples, see: samples/endpoints/03-syntax/
 //
 // IMPORTANT: This file is used by the TimeWarp.Nuru MCP Server
 // ============================================================================
@@ -26,7 +29,7 @@
 using System.Net;
 using TimeWarp.Nuru;
 
-var builder = NuruApp.CreateBuilder(args);
+var builder = NuruApp.CreateBuilder();
 
 // ============================================================================
 // FLUENT DSL EXAMPLES (ALTERNATIVE - Priority 2)
@@ -157,254 +160,14 @@ builder.Map("fluent-kubectl-get {resource} --namespace,-n {ns?} --output,-o {for
 
 NuruApp app = builder.Build();
 
-Console.WriteLine("✅ TimeWarp.Nuru Syntax Examples - All patterns compiled successfully!");
+Console.WriteLine("✅ TimeWarp.Nuru Fluent DSL Syntax Examples - All patterns compiled successfully!");
 Console.WriteLine();
-Console.WriteLine("This file validates that all syntax examples used in MCP documentation");
+Console.WriteLine("This file validates that all Fluent DSL syntax examples used in MCP documentation");
 Console.WriteLine("are correct and compile successfully.");
 Console.WriteLine();
-Console.WriteLine("DSL PRIORITY:");
-Console.WriteLine("  1. Endpoint DSL (RECOMMENDED) - Scalable, single responsibility, agent-friendly");
-Console.WriteLine("  2. Fluent DSL (Alternative) - Minimal API style, good for simple cases");
+Console.WriteLine("For Endpoint DSL examples, see: samples/endpoints/03-syntax/");
 Console.WriteLine();
 Console.WriteLine("Run with '--help' to see auto-generated help from descriptions:");
-Console.WriteLine("  ./syntax-examples.cs --help");
+Console.WriteLine("  ./fluent-syntax-examples.cs --help");
 
-// ============================================================================
-// ENDPOINT DSL EXAMPLES (RECOMMENDED - Priority 1)
-// ============================================================================
-// The Endpoint DSL uses classes with [NuruRoute] attributes.
-// Benefits: Single responsibility, easier to test, scales better, saves context.
-// Use this for: Production apps, complex scenarios, agent-friendly codebases.
-// ============================================================================
-
-#region MCP:endpoint-literals
-// Literal segments are plain text that must match exactly
-// File: endpoints/status-query.cs
-[NuruRoute("status")]
-public class StatusQuery : INuruQuery
-{
-  public string Handle() => "OK";
-}
-
-// File: endpoints/version-query.cs
-[NuruRoute("version")]
-public class VersionQuery : INuruQuery
-{
-  public string Handle() => "1.0.0";
-}
-
-// Multi-word literals (hyphenated)
-// File: endpoints/git-commit-command.cs
-[NuruRoute("git-commit")]  // Call with: app git-commit
-public class GitCommitCommand : INuruCommand
-{
-  public void Handle() => Console.WriteLine("Committing...");
-}
-#endregion
-
-#region MCP:endpoint-parameters
-// Parameters are defined using curly braces {} and capture values from the command line
-// File: endpoints/greet-query.cs
-[NuruRoute("greet {name}")]
-public class GreetQuery : INuruQuery
-{
-  public string Handle(string name) => $"Hello {name}";
-}
-
-// File: endpoints/copy-command.cs
-[NuruRoute("copy {source} {destination}")]
-public class CopyCommand : INuruCommand
-{
-  public void Handle(string source, string destination) =>
-    Console.WriteLine($"Copying {source} to {destination}");
-}
-#endregion
-
-#region MCP:endpoint-types
-// Parameters can have type constraints using a colon : followed by the type
-// File: endpoints/delay-command.cs
-[NuruRoute("delay {milliseconds:int}")]
-public class DelayCommand : INuruCommand
-{
-  public void Handle(int milliseconds) =>
-    Console.WriteLine($"Delaying {milliseconds}ms");
-}
-
-// File: endpoints/price-query.cs
-[NuruRoute("price {amount:double}")]
-public class PriceQuery : INuruQuery
-{
-  public string Handle(double amount) => $"Price: ${amount:F2}";
-}
-
-// File: endpoints/schedule-command.cs
-[NuruRoute("schedule {date:DateTime}")]
-public class ScheduleCommand : INuruCommand
-{
-  public void Handle(DateTime date) =>
-    Console.WriteLine($"Scheduled for {date}");
-}
-
-// File: endpoints/fetch-query.cs (Uri type)
-[NuruRoute("fetch {url:Uri}")]
-public class FetchQuery : INuruQuery
-{
-  public string Handle(Uri url) => $"Fetching {url}";
-}
-
-// File: endpoints/read-file-query.cs (FileInfo type)
-[NuruRoute("read-file {file:FileInfo}")]
-public class ReadFileQuery : INuruQuery
-{
-  public string Handle(FileInfo file) => $"Reading {file.FullName}";
-}
-
-// Supported types: string, int, long, double, decimal, bool, DateTime, Guid, TimeSpan,
-// Uri, FileInfo, DirectoryInfo, IPAddress, DateOnly, TimeOnly
-// Custom types via IRouteTypeConverter also supported
-#endregion
-
-#region MCP:endpoint-optional
-// Parameters can be made optional by adding ? after the name
-// The handler parameter type must be nullable
-// File: endpoints/deploy-command.cs
-[NuruRoute("deploy {environment} {tag?}")]
-public class DeployCommand : INuruCommand
-{
-  public void Handle(string environment, string? tag) =>
-    Console.WriteLine($"Deploying to {environment}" + (tag != null ? $" with tag {tag}" : ""));
-}
-
-// File: endpoints/wait-command.cs
-[NuruRoute("wait {seconds:int?}")]
-public class WaitCommand : INuruCommand
-{
-  public void Handle(int? seconds) =>
-    Console.WriteLine($"Waiting {seconds?.ToString() ?? "default"} seconds");
-}
-#endregion
-
-#region MCP:endpoint-catchall
-// Use * prefix for catch-all parameters that capture all remaining arguments
-// File: endpoints/docker-command.cs
-[NuruRoute("docker {*args}")]
-public class DockerCommand : INuruCommand
-{
-  public void Handle(string[] args) =>
-    Console.WriteLine($"Docker args: {string.Join(" ", args)}");
-}
-
-// File: endpoints/run-command.cs
-[NuruRoute("run {script} {*parameters}")]
-public class RunCommand : INuruCommand
-{
-  public void Handle(string script, string[] parameters) =>
-    Console.WriteLine($"Running {script} with {parameters.Length} parameters");
-}
-
-// Catch-all parameters must be the last parameter in the route pattern
-#endregion
-
-#region MCP:endpoint-options
-// Options are parameters that start with -- (long form) or - (short form)
-// File: endpoints/build-command.cs
-[NuruRoute("build --verbose")]
-public class BuildCommand : INuruCommand
-{
-  public void Handle(bool verbose) =>
-    Console.WriteLine($"Building (verbose: {verbose})");
-}
-
-// File: endpoints/build-with-config-command.cs
-[NuruRoute("build-with-config --config {mode}")]
-public class BuildWithConfigCommand : INuruCommand
-{
-  public void Handle(string mode) =>
-    Console.WriteLine($"Building in {mode} mode");
-}
-
-// Option with alias
-// File: endpoints/build-with-alias-command.cs
-[NuruRoute("build-with-alias --config,-c {mode}")]
-public class BuildWithAliasCommand : INuruCommand
-{
-  public void Handle(string mode) =>
-    Console.WriteLine($"Building in {mode} mode");
-}
-
-// Multiple options
-// File: endpoints/deploy-with-options-command.cs
-[NuruRoute("deploy-with-options {environment} --dry-run --force")]
-public class DeployWithOptionsCommand : INuruCommand
-{
-  public void Handle(string environment, bool dryRun, bool force) =>
-    Console.WriteLine($"Deploy to {environment} (dry-run: {dryRun}, force: {force})");
-}
-
-// Optional options (can be omitted)
-// File: endpoints/build-with-optional-command.cs
-[NuruRoute("build-with-optional --verbose? --debug?")]
-public class BuildWithOptionalCommand : INuruCommand
-{
-  public void Handle(bool verbose, bool debug) =>
-    Console.WriteLine($"Build (verbose: {verbose}, debug: {debug})");
-}
-
-// Repeated options (collect multiple values into array)
-// File: endpoints/docker-with-env-command.cs
-[NuruRoute("docker-with-env --env {variables}*")]
-public class DockerWithEnvCommand : INuruCommand
-{
-  public void Handle(string[] variables) =>
-    Console.WriteLine($"Environment variables: {string.Join(", ", variables)}");
-}
-#endregion
-
-#region MCP:endpoint-descriptions
-// Use | to add descriptions for parameters and options (shown in auto-generated help)
-// File: endpoints/deploy-with-desc-command.cs
-[NuruRoute("deploy-with-desc {environment|Target environment} --dry-run|Preview changes without applying")]
-public class DeployWithDescCommand : INuruCommand
-{
-  public void Handle(string environment, bool dryRun) =>
-    Console.WriteLine($"Deploying to {environment} (dry-run: {dryRun})");
-}
-
-// File: endpoints/backup-command.cs
-[NuruRoute("backup {source|Source directory} {destination?|Destination path}")]
-public class BackupCommand : INuruCommand
-{
-  public void Handle(string source, string? destination) =>
-    Console.WriteLine($"Backup {source} to {destination ?? "default location"}");
-}
-#endregion
-
-#region MCP:endpoint-complex
-// Real-world examples combining multiple features
-// Git-style command with multiple options and aliases
-// File: endpoints/git-commit-full-command.cs
-[NuruRoute("git-commit-full --message,-m {message} --amend? --no-verify?")]
-public class GitCommitFullCommand : INuruCommand
-{
-  public void Handle(string message, bool amend, bool noVerify) =>
-    Console.WriteLine($"Commit: {message} (amend: {amend}, no-verify: {noVerify})");
-}
-
-// Docker-style with repeated options and catch-all
-// File: endpoints/docker-run-command.cs
-[NuruRoute("docker-run --env {env}* -p {ports:int}* {image} {*command}")]
-public class DockerRunCommand : INuruCommand
-{
-  public void Handle(string[] env, int[] ports, string image, string[] command) =>
-    Console.WriteLine($"Running {image} with {env.Length} env vars, {ports.Length} ports");
-}
-
-// Kubectl-style with optional typed parameter and option with value
-// File: endpoints/kubectl-get-query.cs
-[NuruRoute("kubectl-get {resource} --namespace,-n {namespace?} --output,-o {format?}")]
-public class KubectlGetQuery : INuruQuery
-{
-  public string Handle(string resource, string? ns, string? format) =>
-    $"Get {resource} in namespace {ns ?? "default"}";
-}
-#endregion
+await app.RunAsync(args);

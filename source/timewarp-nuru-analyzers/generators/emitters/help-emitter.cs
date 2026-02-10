@@ -51,10 +51,11 @@ internal static class HelpEmitter
     string version = model.Version ?? "1.0.0";
     sb.AppendLine($"    terminal.WriteLine($\"  {{__appName}} v{version}\".BrightCyan().Bold());");
 
-    // App description in gray
+    // App description with "Description:" header and indented value
     if (model.Description is not null)
     {
-      sb.AppendLine($"    terminal.WriteLine(\"{EscapeString(model.Description)}\".Gray());");
+      sb.AppendLine("    terminal.WriteLine(\"Description:\".Gray());");
+      sb.AppendLine($"    terminal.WriteLine($\"  {EscapeString(model.Description)}\".Gray());");
     }
 
     sb.AppendLine("    terminal.WriteLine();");
@@ -65,7 +66,8 @@ internal static class HelpEmitter
   /// </summary>
   private static void EmitUsage(StringBuilder sb)
   {
-    sb.AppendLine("    terminal.WriteLine($\"USAGE: {__appName} [command] [options]\".Yellow());");
+    sb.AppendLine("    terminal.WriteLine(\"Usage:\".Yellow());");
+    sb.AppendLine("    terminal.WriteLine($\"  {__appName} [command] [options]\".Yellow());");
     sb.AppendLine("    terminal.WriteLine();");
   }
 
@@ -88,8 +90,8 @@ internal static class HelpEmitter
     foreach (IGrouping<string, RouteDefinition> group in groups)
     {
       string categoryName = string.IsNullOrEmpty(group.Key)
-        ? "COMMANDS"
-        : group.Key.ToUpperInvariant();
+        ? "Commands"
+        : group.Key;  // Keep original case, not ToUpperInvariant()
 
       // Category header in cyan bold
       if (!firstGroup)
@@ -97,7 +99,7 @@ internal static class HelpEmitter
         sb.AppendLine("    terminal.WriteLine();");
       }
 
-      sb.AppendLine($"    terminal.WriteLine(\"{EscapeString(categoryName)}\".Cyan().Bold());");
+      sb.AppendLine($"    terminal.WriteLine(\"{EscapeString(categoryName)}:\".Cyan().Bold());");
 
       // Table with command names only (not full patterns)
       sb.AppendLine("    terminal.WriteTable(table => table");
@@ -145,7 +147,7 @@ internal static class HelpEmitter
   private static void EmitOptions(StringBuilder sb)
   {
     sb.AppendLine("    terminal.WriteLine();");
-    sb.AppendLine("    terminal.WriteLine(\"OPTIONS\".Cyan().Bold());");
+    sb.AppendLine("    terminal.WriteLine(\"Options:\".Cyan().Bold());");
     sb.AppendLine("    terminal.WriteTable(table => table");
     sb.AppendLine("      .AddColumn(\"Option\")");
     sb.AppendLine("      .AddColumn(\"Description\")");

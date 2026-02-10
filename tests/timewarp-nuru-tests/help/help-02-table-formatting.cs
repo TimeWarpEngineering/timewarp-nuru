@@ -37,7 +37,7 @@ public class HelpTableFormattingTests
 
     // Assert - Table headers should be present
     exitCode.ShouldBe(0);
-    terminal.OutputContains("COMMANDS").ShouldBeTrue();
+    terminal.OutputContains("Commands:").ShouldBeTrue();
     // Verify commands are shown (table will render these as rows)
     terminal.OutputContains("deploy").ShouldBeTrue();
     terminal.OutputContains("build").ShouldBeTrue();
@@ -61,7 +61,7 @@ public class HelpTableFormattingTests
 
     // Assert
     exitCode.ShouldBe(0);
-    terminal.OutputContains("OPTIONS").ShouldBeTrue();
+    terminal.OutputContains("Options:").ShouldBeTrue();
     terminal.OutputContains("--help").ShouldBeTrue();
     terminal.OutputContains("-h").ShouldBeTrue();
     terminal.OutputContains("Show this help message").ShouldBeTrue();
@@ -129,7 +129,7 @@ public class HelpTableFormattingTests
 
     // Assert
     exitCode.ShouldBe(0);
-    terminal.OutputContains("COMMANDS").ShouldBeTrue();
+    terminal.OutputContains("Commands:").ShouldBeTrue();
     terminal.OutputContains("deploy").ShouldBeTrue();
     // Should still render even without description (empty cell in table)
   }

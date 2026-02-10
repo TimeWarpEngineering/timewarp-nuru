@@ -15,14 +15,24 @@ Create comprehensive test cases and sample implementations for the GroupOption f
 
 ## Checklist
 
-- [ ] Create test cases for GroupOption inheritance
-- [ ] Create test cases for GroupOption parsing and binding
-- [ ] Create test cases for GroupOption help text generation
-- [ ] Create sample demonstrating GroupOption with NuruRouteGroup
-- [ ] Verify all tests pass
-- [ ] Update documentation if needed
+- [x] Create test cases for GroupOption inheritance (created but failing)
+- [x] Create test cases for GroupOption parsing and binding (created but failing)
+- [x] Create test cases for GroupOption help text generation (created but failing)
+- [x] Create sample demonstrating GroupOption with NuruRouteGroup (created)
+- [ ] Wait for #420 to implement generator support
+- [ ] Re-run tests after generator fix
 
 ## Notes
+
+## BLOCKER NOTICE - Generator Implementation Missing
+
+**This task is currently BLOCKED.** The GroupOption feature is documented and the test cases have been created, but the source generator does not yet implement GroupOption support. The tests fail because the generated code does not recognize GroupOptions on route group base classes.
+
+**Blocker:** [#420 - Implement GroupOption support in source generator](../backlog/420-implement-groupoption-support-in-generator.md)
+
+Once #420 is complete, re-run the tests to verify GroupOption functionality works correctly.
+
+---
 
 Documentation reference: See SKILL.md lines 202-213 and source/timewarp-nuru/attributes/group-option-attribute.cs
 

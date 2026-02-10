@@ -6,11 +6,11 @@ Demonstrates OpenTelemetry integration with .NET Aspire for traces, metrics, and
 
 ```bash
 # Run via AppHost (telemetry auto-configured)
-dotnet run samples/14-aspire-otel/apphost.cs
+dotnet run samples/aspire-otel/apphost.cs
 
 # Run standalone with OTLP endpoint
 OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317 \
-  dotnet run samples/14-aspire-otel/nuru-client.cs -- greet Alice
+  dotnet run samples/aspire-otel/nuru-client.cs -- greet Alice
 ```
 
 ## What's Demonstrated

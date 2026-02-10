@@ -67,7 +67,7 @@ samples/16-runtime-di/        ✅ Deleted (moved to fluent/12-runtime-di/ + endp
 ```
 
 **Folders NOT migrated (kept at root - 2 total):**
-- `samples/14-aspire-otel/` - Aspire + OpenTelemetry example
+- `samples/aspire-otel/` - Aspire + OpenTelemetry integration example (renamed from 14-aspire-otel, not part of DSL learning path)
 - `samples/99-timewarp-nuru-sample/` - Kitchen sink sample app
 
 ## Notes
@@ -133,12 +133,13 @@ samples/
 │   ├── 11-discovery/
 │   ├── 12-completion/
 │   ├── 13-runtime-di/
-│   ├── 14-aspire-otel/
 │   └── 99-endpoint-sample/      # csproj example
-└── hybrid/
-    ├── 01-migration/
-    ├── 02-unified-pipeline/
-    └── 03-when-to-mix/
+├── hybrid/
+│   ├── 01-migration/
+│   ├── 02-unified-pipeline/
+│   └── 03-when-to-mix/
+├── aspire-otel/              # Integration example: Aspire + OpenTelemetry (not DSL-specific)
+└── 99-timewarp-nuru-sample/  # Kitchen sink project-based sample
 ```
 
 ### Phase Breakdown (6 Commits)

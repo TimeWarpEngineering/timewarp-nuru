@@ -114,5 +114,5 @@ public sealed class GreetCommand : ICommand<Unit>
 
 ## See Also
 
-- [samples/14-aspire-otel/](../../../samples/14-aspire-otel/) - Complete Aspire + OTEL example
+- [samples/aspire-otel/](../../../samples/aspire-otel/) - Complete Aspire + OTEL example
 - [Pipeline Behaviors](pipeline-behaviors.md) - TelemetryBehavior pattern

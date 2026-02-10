@@ -36,8 +36,8 @@ internal static class HelpEmitter
 
     EmitHeader(sb, model);
     EmitUsage(sb);
-    EmitCommands(sb, model);
-    EmitOptions(sb);
+    EmitOptions(sb);          // ← OPTIONS first (Aspire style)
+    EmitCommands(sb, model);  // ← Then COMMANDS
 
     sb.AppendLine("  }");
   }
@@ -111,6 +111,7 @@ internal static class HelpEmitter
         sb.AppendLine($"      .AddRow(\"{EscapeString(commandName)}\", \"{EscapeString(description)}\")");
       }
 
+      sb.AppendLine("      .HideHeaders()         // ← Remove headers");
       sb.AppendLine("    );");
       firstGroup = false;
     }
@@ -151,6 +152,7 @@ internal static class HelpEmitter
     sb.AppendLine("      .AddRow(\"--help, -h\", \"Show this help message\")");
     sb.AppendLine("      .AddRow(\"--version\", \"Show version information\")");
     sb.AppendLine("      .AddRow(\"--capabilities\", \"Show capabilities for AI tools\")");
+    sb.AppendLine("      .HideHeaders()         // ← Remove headers");
     sb.AppendLine("    );");
   }
 

@@ -9,7 +9,7 @@
 // PATTERN: Inject ITerminal into Handler constructor for testable output
 // ═══════════════════════════════════════════════════════════════════════════════
 #:package Shouldly
-#:project ../../../source/timewarp-nuru/timewarp-nuru.csproj
+#:project ../../../../source/timewarp-nuru/timewarp-nuru.csproj
 
 using Shouldly;
 using TimeWarp.Nuru;
@@ -68,51 +68,3 @@ if (!string.IsNullOrEmpty(terminal.ErrorOutput))
 }
 
 Console.WriteLine("=== Test Complete ===".BrightGreen().Bold());
-
-// =============================================================================
-// ENDPOINT DEFINITIONS - ITerminal injection
-// =============================================================================
-
-[NuruRoute("greet", Description = "Greet someone using injected terminal")]
-public sealed class GreetCommand : ICommand<Unit>
-{
-  [Parameter(Description = "Name to greet")]
-  public string Name { get; set; } = "";
-
-  public sealed class Handler(ITerminal Terminal) : ICommandHandler<GreetCommand, Unit>
-  {
-    public ValueTask<Unit> Handle(GreetCommand c, CancellationToken ct)
-    {
-      Terminal.WriteLine($"Hello, {c.Name}!");
-      return default;
-    }
-  }
-}
-
-[NuruRoute("info", Description = "Show info with styling")]
-public sealed class InfoCommand : ICommand<Unit>
-{
-  public sealed class Handler(ITerminal Terminal) : ICommandHandler<InfoCommand, Unit>
-  {
-    public ValueTask<Unit> Handle(InfoCommand c, CancellationToken ct)
-    {
-      Terminal.WriteLine("INFO".Blue().Bold());
-      Terminal.WriteLine("This is an informational message.".Blue());
-      return default;
-    }
-  }
-}
-
-[NuruRoute("fail", Description = "Simulate a failure")]
-public sealed class FailCommand : ICommand<Unit>
-{
-  public sealed class Handler(ITerminal Terminal) : ICommandHandler<FailCommand, Unit>
-  {
-    public ValueTask<Unit> Handle(FailCommand c, CancellationToken ct)
-    {
-      Terminal.WriteErrorLine("ERROR".Red().Bold());
-      Terminal.WriteErrorLine("Operation failed!".Red());
-      throw new InvalidOperationException("Intentional failure");
-    }
-  }
-}

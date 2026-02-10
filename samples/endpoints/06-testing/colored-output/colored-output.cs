@@ -9,7 +9,7 @@
 // PATTERN: Verify ANSI codes in captured output from TestTerminal
 // ═══════════════════════════════════════════════════════════════════════════════
 #:package Shouldly
-#:project ../../../source/timewarp-nuru/timewarp-nuru.csproj
+#:project ../../../../source/timewarp-nuru/timewarp-nuru.csproj
 
 using Shouldly;
 using TimeWarp.Nuru;
@@ -51,53 +51,3 @@ Console.WriteLine("  ✓ All color codes captured");
 Console.WriteLine("\n--- Full captured output ---");
 Console.WriteLine(terminal.Output);
 Console.WriteLine("=== Test Complete ===".BrightGreen().Bold());
-
-// =============================================================================
-// ENDPOINT DEFINITIONS - Colored output using ITerminal
-// =============================================================================
-
-[NuruRoute("status", Description = "Show status with colors")]
-public sealed class StatusCommand : ICommand<Unit>
-{
-  public sealed class Handler(ITerminal T) : ICommandHandler<StatusCommand, Unit>
-  {
-    public ValueTask<Unit> Handle(StatusCommand c, CancellationToken ct)
-    {
-      T.WriteLine($"{"✓".Green()} System Healthy".Green());
-      T.WriteLine($"{"✓".Green()} Database Connected".Green());
-      T.WriteLine($"{"✓".Green()} API Responsive".Green());
-      return default;
-    }
-  }
-}
-
-[NuruRoute("error", Description = "Simulate an error")]
-public sealed class ErrorCommand : ICommand<Unit>
-{
-  [Parameter] public string Message { get; set; } = "";
-
-  public sealed class Handler(ITerminal T) : ICommandHandler<ErrorCommand, Unit>
-  {
-    public ValueTask<Unit> Handle(ErrorCommand c, CancellationToken ct)
-    {
-      T.WriteErrorLine($"{"✗".Red()} Error: {c.Message}".Red());
-      throw new InvalidOperationException(c.Message);
-    }
-  }
-}
-
-[NuruRoute("report", Description = "Show report with mixed colors")]
-public sealed class ReportCommand : ICommand<Unit>
-{
-  public sealed class Handler(ITerminal T) : ICommandHandler<ReportCommand, Unit>
-  {
-    public ValueTask<Unit> Handle(ReportCommand c, CancellationToken ct)
-    {
-      T.WriteLine("System Report:".Bold().Underline());
-      T.WriteLine($"  {"SUCCESS".Green()}: All systems operational");
-      T.WriteLine($"  {"WARNING".Yellow()}: High memory usage");
-      T.WriteLine($"  {"ERROR".Red()}: 1 failed job (non-critical)");
-      return default;
-    }
-  }
-}

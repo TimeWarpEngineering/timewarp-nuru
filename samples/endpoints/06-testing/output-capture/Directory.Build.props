@@ -1,0 +1,13 @@
+<Project>
+  <Import Project="$(MSBuildThisFileDirectory)../../../Directory.Build.props" />
+  <PropertyGroup>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <RunfileGlobbingEnabled>true</RunfileGlobbingEnabled>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="**/*.cs" Exclude="obj/**/*;bin/**/*;output-capture.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../../../source/timewarp-nuru/timewarp-nuru.csproj" />
+  </ItemGroup>
+</Project>

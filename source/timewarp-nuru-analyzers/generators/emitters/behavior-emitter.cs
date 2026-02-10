@@ -79,12 +79,18 @@ internal static class BehaviorEmitter
 
     if (applicableBehaviors.Length == 0)
     {
-      // No applicable behaviors - just emit the handler
+      // No applicable behaviors - but we still need to create __command for endpoint routes
+      // because HandlerInvokerEmitter.Emit() expects it to exist for Command handlers
+      if (route.Handler.HandlerKind == HandlerKind.Command)
+      {
+        EmitCommandCreation(sb, route, routeIndex, ind);
+      }
+
       emitHandler();
       return;
     }
 
-    // Create command instance (for delegate routes)
+    // Create command instance (for both delegate and endpoint routes)
     EmitCommandCreation(sb, route, routeIndex, ind);
 
     // Create the BehaviorContext
@@ -188,12 +194,21 @@ internal static class BehaviorEmitter
       sb.AppendLine($"{indent}{commandTypeName} __command = new()");
       sb.AppendLine($"{indent}{{");
 
-      // Bind properties from route parameters
+      // Bind properties from route parameters and options
       foreach (ParameterBinding param in route.Handler.RouteParameters)
       {
         string propName = ToPascalCase(param.ParameterName);
-        // Variable name: lowercase of parameter name (e.g., "message" for Message property)
-        string varName = CSharpIdentifierUtils.EscapeIfKeyword(param.ParameterName.ToLowerInvariant());
+        // Variable name must match what route-matcher-emitter generates:
+        // - Parameters: lowercase of parameter name
+        // - Flags: camelCase of option name (SourceName) to match route-matcher
+        // - Options: lowercase of parameter name (for value options)
+        // - CatchAll: __{name}_{routeIndex}
+        string varName = param.Source switch
+        {
+          BindingSource.Flag => CSharpIdentifierUtils.EscapeIfKeyword(ToCamelCase(param.SourceName)),
+          BindingSource.CatchAll => $"__{ToCamelCase(param.ParameterName)}_{routeIndex}",
+          _ => CSharpIdentifierUtils.EscapeIfKeyword(param.ParameterName.ToLowerInvariant())
+        };
         sb.AppendLine($"{indent}  {propName} = {varName},");
       }
 
@@ -443,40 +458,5 @@ internal static class BehaviorEmitter
     return char.ToUpperInvariant(value[0]) + value[1..];
   }
 
-  /// <summary>
-  /// Converts a string to camelCase.
-  /// Handles kebab-case (e.g., "no-cache" -> "noCache").
-  /// </summary>
-  private static string ToCamelCase(string value)
-  {
-    if (string.IsNullOrEmpty(value))
-      return value;
-
-    // Handle kebab-case by converting to PascalCase first, then camelCase
-    string[] parts = value.Split('-');
-    StringBuilder result = new();
-
-    for (int i = 0; i < parts.Length; i++)
-    {
-      string part = parts[i];
-      if (string.IsNullOrEmpty(part))
-        continue;
-
-      if (i == 0)
-      {
-        result.Append(char.ToLowerInvariant(part[0]));
-      }
-      else
-      {
-        result.Append(char.ToUpperInvariant(part[0]));
-      }
-
-      if (part.Length > 1)
-      {
-        result.Append(part[1..]);
-      }
-    }
-
-    return result.ToString();
-  }
+  private static string ToCamelCase(string value) => CSharpIdentifierUtils.ToCamelCase(value);
 }

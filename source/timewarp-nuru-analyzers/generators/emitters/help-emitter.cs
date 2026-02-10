@@ -3,6 +3,7 @@
 
 namespace TimeWarp.Nuru.Generators;
 
+using System.Linq;
 using System.Text;
 
 /// <summary>
@@ -22,10 +23,21 @@ internal static class HelpEmitter
     sb.AppendLine($"  private static void PrintHelp{methodSuffix}(ITerminal terminal)");
     sb.AppendLine("  {");
 
+    // Emit runtime code to get app name with fallback to assembly name
+    sb.AppendLine("    // Get app name: explicit > assembly name > \"app\"");
+    if (model.Name is not null)
+    {
+      sb.AppendLine($"    string __appName = \"{EscapeString(model.Name)}\";");
+    }
+    else
+    {
+      sb.AppendLine("    string __appName = global::System.Reflection.Assembly.GetEntryAssembly()?.GetName().Name ?? \"app\";");
+    }
+
     EmitHeader(sb, model);
-    EmitUsage(sb, model);
-    EmitCommands(sb, model);
-    EmitOptions(sb);
+    EmitUsage(sb);
+    EmitOptions(sb);          // ← OPTIONS first (Aspire style)
+    EmitCommands(sb, model);  // ← Then COMMANDS
 
     sb.AppendLine("  }");
   }
@@ -35,33 +47,34 @@ internal static class HelpEmitter
   /// </summary>
   private static void EmitHeader(StringBuilder sb, AppModel model)
   {
-    if (model.Name is not null)
-    {
-      sb.AppendLine(
-        $"    terminal.WriteLine(\"{EscapeString(model.Name)}\");");
-    }
+    // Version with colon format
+    string version = model.Version ?? "1.0.0";
+    sb.AppendLine("    terminal.WriteLine(\"Version:\".BrightCyan().Bold());");
+    sb.AppendLine($"    terminal.WriteLine($\"  v{version}\".BrightCyan().Bold());");
+    sb.AppendLine("    terminal.WriteLine();");
 
+    // App description with "Description:" header and indented value (default colors for light/dark mode compatibility)
     if (model.Description is not null)
     {
-      sb.AppendLine(
-        $"    terminal.WriteLine(\"{EscapeString(model.Description)}\");");
-      sb.AppendLine("    terminal.WriteLine();");
+      sb.AppendLine("    terminal.WriteLine(\"Description:\");");
+      sb.AppendLine($"    terminal.WriteLine($\"  {EscapeString(model.Description)}\");");
     }
+
+    sb.AppendLine("    terminal.WriteLine();");
   }
 
   /// <summary>
   /// Emits the usage line.
   /// </summary>
-  private static void EmitUsage(StringBuilder sb, AppModel model)
+  private static void EmitUsage(StringBuilder sb)
   {
-    string appName = model.Name ?? "app";
-    sb.AppendLine(
-      $"    terminal.WriteLine(\"Usage: {EscapeString(appName)} [command] [options]\");");
+    sb.AppendLine("    terminal.WriteLine(\"Usage:\".Yellow());");
+    sb.AppendLine("    terminal.WriteLine($\"  {__appName} [command] [options]\".Yellow());");
     sb.AppendLine("    terminal.WriteLine();");
   }
 
   /// <summary>
-  /// Emits the commands section.
+  /// Emits the commands section as a table.
   /// </summary>
   private static void EmitCommands(StringBuilder sb, AppModel model)
   {
@@ -70,116 +83,80 @@ internal static class HelpEmitter
       return;
     }
 
-    sb.AppendLine("    terminal.WriteLine(\"Commands:\");");
+    // Group routes by GroupPrefix
+    IEnumerable<IGrouping<string, RouteDefinition>> groups = model.Routes
+      .GroupBy(r => r.GroupPrefix ?? "") // Empty string for no group
+      .OrderBy(g => g.Key); // Ungrouped first, then alphabetically
 
-    foreach (RouteDefinition route in model.Routes)
+    bool firstGroup = true;
+    foreach (IGrouping<string, RouteDefinition> group in groups)
     {
-      EmitRouteHelp(sb, route);
+      string categoryName = string.IsNullOrEmpty(group.Key)
+        ? "Commands"
+        : group.Key;  // Keep original case, not ToUpperInvariant()
+
+      // Category header in cyan bold
+      if (!firstGroup)
+      {
+        sb.AppendLine("    terminal.WriteLine();");
+      }
+
+      sb.AppendLine($"    terminal.WriteLine(\"{EscapeString(categoryName)}:\".Cyan().Bold());");
+
+      // Table with command names only (not full patterns)
+      sb.AppendLine("    terminal.WriteTable(table => table");
+      sb.AppendLine("      .AddColumn(\"Command\")");
+      sb.AppendLine("      .AddColumn(\"Description\")");
+
+      foreach (RouteDefinition route in group)
+      {
+        string commandName = GetCommandName(route);
+        string description = route.Description ?? "";
+        sb.AppendLine($"      .AddRow(\"{EscapeString(commandName)}\", \"{EscapeString(description)}\")");
+      }
+
+      sb.AppendLine("      .HideHeaders()         // ← Remove headers");
+      sb.AppendLine("    );");
+      firstGroup = false;
     }
-
-    sb.AppendLine("    terminal.WriteLine();");
   }
 
-  /// <summary>
-  /// Emits help text for a single route.
-  /// </summary>
-  private static void EmitRouteHelp(StringBuilder sb, RouteDefinition route)
+  // Helper to get just the command name
+  private static string GetCommandName(RouteDefinition route)
   {
-    // Build the pattern display (e.g., "deploy {env} [--force]")
-    string pattern = BuildPatternDisplay(route);
-
-    // Pad for alignment (assuming max 25 char pattern)
-    string paddedPattern = pattern.PadRight(25);
-
-    string description = route.Description ?? string.Empty;
-
-    sb.AppendLine(
-      $"    terminal.WriteLine(\"  {EscapeString(paddedPattern)} {EscapeString(description)}\");");
-  }
-
-  /// <summary>
-  /// Builds the display pattern for help text.
-  /// </summary>
-  private static string BuildPatternDisplay(RouteDefinition route)
-  {
-    StringBuilder pattern = new();
-
-    // Add group prefix if present
+    // If has group prefix, use FullPattern
     if (!string.IsNullOrEmpty(route.GroupPrefix))
     {
-      pattern.Append(route.GroupPrefix);
-      pattern.Append(' ');
+      return route.FullPattern;
     }
 
-    // Add segments
+    // Otherwise, get just the first literal segment
     foreach (SegmentDefinition segment in route.Segments)
     {
-      switch (segment)
+      if (segment is LiteralDefinition literal)
       {
-        case LiteralDefinition literal:
-          pattern.Append(literal.Value);
-          pattern.Append(' ');
-          break;
-
-        case ParameterDefinition param:
-          if (param.IsCatchAll)
-          {
-            pattern.Append($"{{*{param.Name}}} ");
-          }
-          else if (param.IsOptional)
-          {
-            pattern.Append($"[{param.Name}] ");
-          }
-          else
-          {
-            pattern.Append($"{{{param.Name}}} ");
-          }
-
-          break;
-
-        case OptionDefinition option:
-          string optionDisplay = (option.LongForm, option.ShortForm) switch
-          {
-            (not null, not null) => $"--{option.LongForm},-{option.ShortForm}",
-            (not null, null) => $"--{option.LongForm}",
-            (null, not null) => $"-{option.ShortForm}",
-            _ => "[invalid option]"
-          };
-
-          if (option.ExpectsValue)
-          {
-            optionDisplay += $" {{{option.ParameterName ?? "value"}}}";
-          }
-
-          if (option.IsOptional)
-          {
-            pattern.Append($"[{optionDisplay}] ");
-          }
-          else
-          {
-            pattern.Append($"{optionDisplay} ");
-          }
-
-          break;
-
-        case EndOfOptionsSeparatorDefinition:
-          pattern.Append("-- ");
-          break;
+        return literal.Value;
       }
     }
 
-    return pattern.ToString().Trim();
+    // Fallback to FullPattern if no literal found
+    return route.FullPattern;
   }
 
   /// <summary>
-  /// Emits the global options section.
+  /// Emits the global options section as a table.
   /// </summary>
   private static void EmitOptions(StringBuilder sb)
   {
-    sb.AppendLine("    terminal.WriteLine(\"Options:\");");
-    sb.AppendLine("    terminal.WriteLine(\"  --help, -h             Show this help message\");");
-    sb.AppendLine("    terminal.WriteLine(\"  --version              Show version information\");");
-    sb.AppendLine("    terminal.WriteLine(\"  --capabilities         Show capabilities for AI tools\");");
+    sb.AppendLine("    terminal.WriteLine(\"Options:\".Cyan().Bold());");
+    sb.AppendLine("    terminal.WriteTable(table => table");
+    sb.AppendLine("      .AddColumn(\"Option\")");
+    sb.AppendLine("      .AddColumn(\"Description\")");
+    sb.AppendLine("      .AddRow(\"--help, -h\", \"Show this help message\")");
+    sb.AppendLine("      .AddRow(\"--version\", \"Show version information\")");
+    sb.AppendLine("      .AddRow(\"--capabilities\", \"Show capabilities for AI tools\")");
+    sb.AppendLine("      .HideHeaders()         // ← Remove headers");
+    sb.AppendLine("    );");
   }
 
   /// <summary>

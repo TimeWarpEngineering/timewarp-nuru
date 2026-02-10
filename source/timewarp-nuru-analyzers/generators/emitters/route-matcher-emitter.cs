@@ -1431,41 +1431,7 @@ internal static class RouteMatcherEmitter
     }
   }
 
-  /// <summary>
-  /// Converts a string to camelCase.
-  /// </summary>
-  private static string ToCamelCase(string value)
-  {
-    if (string.IsNullOrEmpty(value))
-      return value;
-
-    // Handle kebab-case by converting to PascalCase first, then camelCase
-    string[] parts = value.Split('-');
-    StringBuilder result = new();
-
-    for (int i = 0; i < parts.Length; i++)
-    {
-      string part = parts[i];
-      if (string.IsNullOrEmpty(part))
-        continue;
-
-      if (i == 0)
-      {
-        result.Append(char.ToLowerInvariant(part[0]));
-      }
-      else
-      {
-        result.Append(char.ToUpperInvariant(part[0]));
-      }
-
-      if (part.Length > 1)
-      {
-        result.Append(part[1..]);
-      }
-    }
-
-    return result.ToString();
-  }
+  private static string ToCamelCase(string value) => CSharpIdentifierUtils.ToCamelCase(value);
 
   /// <summary>
   /// Escapes a string for use in C# source code.

@@ -19,18 +19,14 @@ Create comprehensive test cases and sample implementations for the GroupOption f
 - [x] Create test cases for GroupOption parsing and binding (created but failing)
 - [x] Create test cases for GroupOption help text generation (created but failing)
 - [x] Create sample demonstrating GroupOption with NuruRouteGroup (created)
-- [ ] Wait for #420 to implement generator support
+- [x] Wait for #420 to implement generator support
 - [ ] Re-run tests after generator fix
 
 ## Notes
 
-## BLOCKER NOTICE - Generator Implementation Missing
+**Status: Unblocked - Ready to verify test results**
 
-**This task is currently BLOCKED.** The GroupOption feature is documented and the test cases have been created, but the source generator does not yet implement GroupOption support. The tests fail because the generated code does not recognize GroupOptions on route group base classes.
-
-**Blocker:** [#420 - Implement GroupOption support in source generator](../backlog/420-implement-groupoption-support-in-generator.md)
-
-Once #420 is complete, re-run the tests to verify GroupOption functionality works correctly.
+**#420 COMPLETE - Generator implementation finished. Ready to verify tests.**
 
 ---
 

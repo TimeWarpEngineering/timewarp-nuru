@@ -47,9 +47,10 @@ internal static class HelpEmitter
   /// </summary>
   private static void EmitHeader(StringBuilder sb, AppModel model)
   {
-    // App name with version in cyan bold
+    // Version with colon format
     string version = model.Version ?? "1.0.0";
-    sb.AppendLine($"    terminal.WriteLine($\"  {{__appName}} v{version}\".BrightCyan().Bold());");
+    sb.AppendLine("    terminal.WriteLine(\"Version:\".BrightCyan().Bold());");
+    sb.AppendLine($"    terminal.WriteLine($\"  v{version}\".BrightCyan().Bold());");
     sb.AppendLine("    terminal.WriteLine();");
 
     // App description with "Description:" header and indented value

@@ -10,41 +10,41 @@
 // DSL: Endpoint with custom REPL options
 //
 // PROFILES:
+//   - Default: PSReadLine-compatible bindings
 //   - Emacs: Ctrl+A (beginning), Ctrl+E (end), Ctrl+K (kill line)
-//   - Windows: Home, End, Ctrl+Arrow keys
 //   - Vi: Modal editing with Esc/command mode
 // ═══════════════════════════════════════════════════════════════════════════════
 
 using TimeWarp.Nuru;
-using TimeWarp.Terminal;
-
-NuruApp app = NuruApp.CreateBuilder()
-  .DiscoverEndpoints()
-  .Build();
 
 // Check for keybinding preference
 string? profile = Environment.GetEnvironmentVariable("REPL_KEYBINDINGS")?.ToLower();
-KeyBindings bindings = profile switch
+string profileName = profile switch
 {
-  "windows" => KeyBindings.Windows,
-  "vi" or "vim" => KeyBindings.Vi,
-  _ => KeyBindings.Emacs
+  "emacs" => "Emacs",
+  "vi" or "vim" => "Vi",
+  _ => "Default"
 };
 
-Console.WriteLine($"REPL mode with {bindings} key bindings");
-Console.WriteLine("Set REPL_KEYBINDINGS=windows|vi|emacs to change");
+Console.WriteLine($"REPL mode with {profileName} key bindings");
+Console.WriteLine("Set REPL_KEYBINDINGS=emacs|vi to change");
 Console.WriteLine();
 
-// Configure REPL options
-ReplOptions options = new()
-{
-  KeyBindings = bindings,
-  Prompt = $"nuru-{profile ?? "emacs"}> ",
-  WelcomeMessage = "Interactive REPL with custom key bindings",
-  GoodbyeMessage = "Goodbye!"
-};
+// Single Build() with AddRepl() - handles both CLI and REPL modes
+NuruApp app = NuruApp.CreateBuilder()
+  .DiscoverEndpoints()
+  .AddRepl(options =>
+  {
+    options.KeyBindingProfileName = profileName;
+    options.Prompt = $"nuru-{profile ?? "default"}> ";
+    options.WelcomeMessage = "Interactive REPL with custom key bindings";
+    options.GoodbyeMessage = "Goodbye!";
+    options.AutoStartWhenEmpty = true;
+  })
+  .Build();
 
-return await app.RunAsReplAsync(options);
+// RunAsync handles both CLI and REPL modes automatically
+return await app.RunAsync(args);
 
 // =============================================================================
 // ENDPOINT DEFINITIONS
@@ -81,7 +81,8 @@ public sealed class TimeCommand : IQuery<Unit>
 [NuruRoute("history", Description = "Show command history")]
 public sealed class HistoryCommand : ICommand<Unit>
 {
-  [Parameter(IsOptional = true)] public int? Count { get; set; }
+  // Use nullable type for optional parameter (no IsOptional attribute needed)
+  [Parameter] public int? Count { get; set; }
 
   public sealed class Handler : ICommandHandler<HistoryCommand, Unit>
   {

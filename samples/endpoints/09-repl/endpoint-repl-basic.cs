@@ -7,7 +7,7 @@
 //
 // Interactive REPL mode with Endpoint DSL using auto-discovered endpoints.
 //
-// DSL: Endpoint with .RunAsRepl() for interactive mode
+// DSL: Endpoint with .AddRepl() for interactive mode
 //
 // PATTERNS:
 //   - CLI app that can run in REPL mode
@@ -17,24 +17,23 @@
 
 using TimeWarp.Nuru;
 
-NuruAppBuilder builder = NuruApp.CreateBuilder();
+// Single Build() with AddRepl() - handles both CLI and REPL modes
+NuruApp app = NuruApp.CreateBuilder()
+  .DiscoverEndpoints()
+  .AddRepl(options =>
+  {
+    options.Prompt = "repl> ";
+    options.WelcomeMessage = """
+      Entering REPL mode...
+      Available commands: greet, calc, status, help
+      Type 'exit' to quit
+      """;
+    options.AutoStartWhenEmpty = true;  // Auto-start REPL when no args provided
+  })
+  .Build();
 
-// Check if --interactive flag is passed
-if (args.Contains("--interactive") || args.Contains("-i"))
-{
-  builder.AddRepl();
-  NuruApp app = builder.DiscoverEndpoints().Build();
-  
-  Console.WriteLine("Entering REPL mode...");
-  Console.WriteLine("Available commands: greet, calc, status, help");
-  Console.WriteLine("Type 'exit' to quit\n");
-  await app.RunReplAsync();
-  return 0;
-}
-
-// Otherwise run as standard CLI
-NuruApp cliApp = builder.DiscoverEndpoints().Build();
-return await cliApp.RunAsync(args);
+// RunAsync handles both CLI and REPL modes automatically
+return await app.RunAsync(args);
 
 // =============================================================================
 // ENDPOINT DEFINITIONS

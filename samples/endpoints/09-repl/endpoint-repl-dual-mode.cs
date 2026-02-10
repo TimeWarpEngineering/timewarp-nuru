@@ -7,49 +7,42 @@
 //
 // CLI app that works both as command-line tool and interactive REPL.
 //
-// DSL: Endpoint with automatic mode detection
+// DSL: Endpoint with automatic mode detection via AutoStartWhenEmpty
 //
 // USAGE:
 //   ./endpoint-repl-dual-mode.cs greet World     # CLI mode
-//   ./endpoint-repl-dual-mode.cs --interactive  # REPL mode
+//   ./endpoint-repl-dual-mode.cs                 # REPL mode (no args)
+//   ./endpoint-repl-dual-mode.cs --interactive   # REPL mode (explicit flag)
 // ═══════════════════════════════════════════════════════════════════════════════
 
 using TimeWarp.Nuru;
 
+// Single Build() with AddRepl() - handles both CLI and REPL modes automatically
 NuruApp app = NuruApp.CreateBuilder()
   .DiscoverEndpoints()
-  .Build();
-
-// Detect mode based on arguments
-bool isInteractive = args.Length == 0
-  || args.Contains("--interactive")
-  || args.Contains("-i");
-
-if (isInteractive)
-{
-  // REPL mode
-  Console.WriteLine("╔════════════════════════════════════╗");
-  Console.WriteLine("║  Nuru Dual-Mode Demo               ║");
-  Console.WriteLine("║  Type commands or 'exit' to quit   ║");
-  Console.WriteLine("╚════════════════════════════════════╝\n");
-
-  ReplOptions replOptions = new()
+  .AddRepl(options =>
   {
-    Prompt = "dual> ",
-    WelcomeMessage = null, // We already showed our custom banner
-    HistoryFilePath = Path.Combine(
+    options.Prompt = "dual> ";
+    options.WelcomeMessage = """
+      ╔════════════════════════════════════╗
+      ║  Nuru Dual-Mode Demo               ║
+      ║  Type commands or 'exit' to quit   ║
+      ╚════════════════════════════════════╝
+      """;
+    options.PersistHistory = true;
+    options.HistoryFilePath = Path.Combine(
       Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
       ".nuru_dual_history"
-    )
-  };
+    );
+    options.AutoStartWhenEmpty = true;  // Auto-start REPL when no args provided
+  })
+  .Build();
 
-  return await app.RunAsReplAsync(replOptions);
-}
-else
-{
-  // CLI mode - pass through to normal execution
-  return await app.RunAsync(args);
-}
+// RunAsync automatically handles mode detection:
+// - With args: runs as CLI
+// - Without args: starts REPL (due to AutoStartWhenEmpty)
+// - With --interactive: starts REPL
+return await app.RunAsync(args);
 
 // =============================================================================
 // ENDPOINT DEFINITIONS
@@ -86,7 +79,8 @@ public sealed class AddCommand : IQuery<double>
 [NuruRoute("list", Description = "List items")]
 public sealed class ListCommand : IQuery<string[]>
 {
-  [Parameter(IsOptional = true)] public int? Count { get; set; }
+  // Use nullable type for optional parameter (no IsOptional attribute needed)
+  [Parameter] public int? Count { get; set; }
 
   public sealed class Handler : IQueryHandler<ListCommand, string[]>
   {

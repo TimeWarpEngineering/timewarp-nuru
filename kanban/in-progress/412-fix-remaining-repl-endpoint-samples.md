@@ -172,11 +172,48 @@ This is a continuation of Task #410, which fixed the API migration issues. The R
 
 The source generator intercepts `RunAsync()` once per app instance. Calling `DiscoverEndpoints().Build()` twice creates two app instances, causing two intercepts.
 
+## Results
+
+**Implementation Complete:** All 4 REPL endpoint samples fixed
+
+**Files Modified:**
+1. `samples/endpoints/09-repl/endpoint-repl-basic.cs`
+   - Removed duplicate Build() calls
+   - Removed manual --interactive flag check
+   - Changed to single AddRepl() pattern with AutoStartWhenEmpty
+   - Changed RunReplAsync() to RunAsync()
+
+2. `samples/endpoints/09-repl/endpoint-repl-options.cs`
+   - Fixed to use AddRepl() pattern
+   - Changed HistorySize → MaxHistorySize
+   - Removed non-existent properties (EnableAutoCompletion, EnableSyntaxHighlighting, MultiLineInput)
+
+3. `samples/endpoints/09-repl/endpoint-repl-custom-keys.cs`
+   - Removed [Parameter(IsOptional = true)] attribute (doesn't exist)
+   - Fixed to use KeyBindingProfileName instead of KeyBindings
+   - Updated to AddRepl() pattern
+
+4. `samples/endpoints/09-repl/endpoint-repl-dual-mode.cs`
+   - Removed duplicate Build() calls
+   - Removed manual mode detection
+   - Updated to AddRepl() pattern with AutoStartWhenEmpty
+
+**API Discoveries:**
+- ReplOptions.KeyBindingProfileName accepts: "Default", "Emacs", "Vi"
+- No KeyBindings property exists on ReplOptions
+- No [Parameter(IsOptional = true)] attribute exists - use nullable types (int?) for optional parameters
+- Properties like EnableAutoCompletion, EnableSyntaxHighlighting, MultiLineInput don't exist in current API
+
+**Verification:**
+- All 4 REPL samples compile successfully
+- 29/29 endpoint samples now pass
+- dev verify-samples --category endpoints shows 29/29 pass
+
 ## Checklist
 
-- [ ] Fix `endpoint-repl-basic.cs` - single Build(), AddRepl() pattern
-- [ ] Fix `endpoint-repl-options.cs` - update ReplOptions to current API
-- [ ] Fix `endpoint-repl-dual-mode.cs` - single Build(), AddRepl() pattern
-- [ ] Fix `endpoint-repl-custom-keys.cs` - remove IsOptional, use nullable types
-- [ ] Verify all 4 REPL samples compile
-- [ ] Run `dev verify-samples --category endpoints` - should show 29/29 pass
+- [x] Fix `endpoint-repl-basic.cs` - single Build(), AddRepl() pattern
+- [x] Fix `endpoint-repl-options.cs` - update ReplOptions to current API
+- [x] Fix `endpoint-repl-dual-mode.cs` - single Build(), AddRepl() pattern
+- [x] Fix `endpoint-repl-custom-keys.cs` - remove IsOptional, use nullable types
+- [x] Verify all 4 REPL samples compile
+- [x] Run `dev verify-samples --category endpoints` - should show 29/29 pass

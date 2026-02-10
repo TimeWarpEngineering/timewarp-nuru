@@ -13,48 +13,52 @@
 //   - Custom prompts (static and dynamic)
 //   - Welcome/goodbye messages
 //   - History configuration
-//   - Auto-completion
-//   - Syntax highlighting
+//   - Arrow key history navigation
 // ═══════════════════════════════════════════════════════════════════════════════
 
 using TimeWarp.Nuru;
-using TimeWarp.Terminal;
 
+// Single Build() with AddRepl() - handles both CLI and REPL modes
 NuruApp app = NuruApp.CreateBuilder()
   .DiscoverEndpoints()
+  .AddRepl(options =>
+  {
+    // Prompts
+    options.Prompt = "nuru> ";
+    options.ContinuationPrompt = "... ";
+
+    // Messages
+    options.WelcomeMessage = """
+      ╔════════════════════════════════════════════════╗
+      ║     TimeWarp.Nuru Interactive Shell          ║
+      ║     Type 'help' for available commands       ║
+      ╚════════════════════════════════════════════════╝
+      """;
+    options.GoodbyeMessage = "Thank you for using Nuru!";
+
+    // History
+    options.PersistHistory = true;
+    options.HistoryFilePath = Path.Combine(
+      Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+      ".nuru_history"
+    );
+    options.MaxHistorySize = 1000;
+
+    // Behavior
+    options.ContinueOnError = true;
+    options.ShowExitCode = false;
+    options.ShowTiming = true;
+    options.EnableArrowHistory = true;
+    options.EnableColors = true;
+    options.PromptColor = "\x1b[32m"; // Green
+
+    // Auto-start REPL when no arguments provided
+    options.AutoStartWhenEmpty = true;
+  })
   .Build();
 
-// Full REPL customization
-ReplOptions options = new()
-{
-  // Prompts
-  Prompt = "nuru> ",
-  ContinuationPrompt = "... ",
-
-  // Messages
-  WelcomeMessage = """
-    ╔════════════════════════════════════════════════╗
-    ║     TimeWarp.Nuru Interactive Shell          ║
-    ║     Type 'help' for available commands       ║
-    ╚════════════════════════════════════════════════╝
-    """,
-  GoodbyeMessage = "Thank you for using Nuru! 👋",
-
-  // History
-  HistoryFilePath = Path.Combine(
-    Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-    ".nuru_history"
-  ),
-  HistorySize = 1000,
-
-  // Behavior
-  EnableAutoCompletion = true,
-  EnableSyntaxHighlighting = true,
-  MultiLineInput = true
-};
-
-Console.WriteLine("Starting REPL with full options showcase...\n");
-return await app.RunAsReplAsync(options);
+// RunAsync handles both CLI and REPL modes automatically
+return await app.RunAsync(args);
 
 // =============================================================================
 // ENDPOINT DEFINITIONS
@@ -88,7 +92,7 @@ public sealed class GreetCommand : ICommand<Unit>
   {
     public ValueTask<Unit> Handle(GreetCommand c, CancellationToken ct)
     {
-      Console.WriteLine($"Hello, {c.Name}! 👋");
+      Console.WriteLine($"Hello, {c.Name}!");
       return default;
     }
   }

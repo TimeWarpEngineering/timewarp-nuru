@@ -50,4 +50,41 @@ internal static class CSharpIdentifierUtils
   {
     return !string.IsNullOrEmpty(identifier) && CSharpKeywords.Contains(identifier);
   }
+
+  /// <summary>
+  /// Converts a kebab-case string to camelCase.
+  /// Handles simple strings (no hyphens) by lowering the first character.
+  /// Examples: "dry-run" → "dryRun", "no-cache" → "noCache", "force" → "force"
+  /// </summary>
+  public static string ToCamelCase(string value)
+  {
+    if (string.IsNullOrEmpty(value))
+      return value;
+
+    string[] parts = value.Split('-');
+    StringBuilder result = new();
+
+    for (int i = 0; i < parts.Length; i++)
+    {
+      string part = parts[i];
+      if (string.IsNullOrEmpty(part))
+        continue;
+
+      if (i == 0)
+      {
+        result.Append(char.ToLowerInvariant(part[0]));
+      }
+      else
+      {
+        result.Append(char.ToUpperInvariant(part[0]));
+      }
+
+      if (part.Length > 1)
+      {
+        result.Append(part[1..]);
+      }
+    }
+
+    return result.ToString();
+  }
 }

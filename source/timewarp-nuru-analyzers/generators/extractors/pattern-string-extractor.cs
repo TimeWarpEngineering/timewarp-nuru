@@ -234,7 +234,8 @@ internal static class PatternStringExtractor
 
         case OptionDefinition option
           when string.Equals(option.LongForm, paramNameLower, StringComparison.OrdinalIgnoreCase)
-            || string.Equals(option.ShortForm, paramNameLower, StringComparison.OrdinalIgnoreCase):
+            || string.Equals(option.ShortForm, paramNameLower, StringComparison.OrdinalIgnoreCase)
+            || string.Equals(CSharpIdentifierUtils.ToCamelCase(option.LongForm ?? ""), paramName, StringComparison.OrdinalIgnoreCase):
           string optionName = option.LongForm ?? option.ShortForm!;
           if (option.IsFlag)
           {
@@ -266,4 +267,5 @@ internal static class PatternStringExtractor
 
     return null;
   }
+
 }

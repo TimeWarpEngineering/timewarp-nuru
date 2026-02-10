@@ -29,7 +29,7 @@
 using System.Net;
 using TimeWarp.Nuru;
 
-var builder = NuruApp.CreateBuilder();
+NuruAppBuilder builder = NuruApp.CreateBuilder();
 
 // ============================================================================
 // FLUENT DSL EXAMPLES (ALTERNATIVE - Priority 2)
@@ -53,7 +53,7 @@ builder.Map("fluent-greet {name}")
     .AsCommand()
     .Done();
 builder.Map("fluent-copy {source} {destination}")
-    .WithHandler((string source, string dest) => Console.WriteLine($"Copying {source} to {dest}"))
+    .WithHandler((string source, string destination) => Console.WriteLine($"Copying {source} to {destination}"))
     .AsCommand()
     .Done();
 #endregion
@@ -61,7 +61,7 @@ builder.Map("fluent-copy {source} {destination}")
 #region MCP:fluent-types
 // Parameters can have type constraints using a colon : followed by the type
 builder.Map("fluent-delay {ms:int}")
-    .WithHandler((int milliseconds) => Console.WriteLine($"Delaying {milliseconds}ms"))
+    .WithHandler((int ms) => Console.WriteLine($"Delaying {ms}ms"))
     .AsCommand().Done();
 builder.Map("fluent-price {amount:double}")
     .WithHandler((double amount) => Console.WriteLine($"Price: ${amount:F2}"))
@@ -98,8 +98,8 @@ builder.Map("fluent-docker {*args}")
     .WithHandler((string[] args) => Console.WriteLine($"Docker args: {string.Join(" ", args)}"))
     .AsCommand().Done();
 builder.Map("fluent-run {script} {*params}")
-    .WithHandler((string script, string[] parameters) =>
-        Console.WriteLine($"Running {script} with {parameters.Length} parameters"))
+    .WithHandler((string script, string[] @params) =>
+        Console.WriteLine($"Running {script} with {@params.Length} parameters"))
     .AsCommand().Done();
 #endregion
 

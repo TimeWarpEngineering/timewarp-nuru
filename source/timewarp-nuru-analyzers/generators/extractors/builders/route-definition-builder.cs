@@ -218,8 +218,17 @@ internal sealed class RouteDefinitionBuilder
       }
       else
       {
-        // Fallback to original if rebinding failed
-        finalParams.Add(original);
+        string segmentNames = string.Join(", ", segments.Select(s => s switch
+        {
+          OptionDefinition o => $"--{o.LongForm ?? o.ShortForm}",
+          ParameterDefinition p => $"{{{p.Name}}}",
+          LiteralDefinition l => l.Value,
+          _ => s.ToString() ?? "?"
+        }));
+        throw new InvalidOperationException(
+          $"Handler parameter '{original.ParameterName}' ({original.ParameterTypeName}) " +
+          $"does not match any segment in route [{segmentNames}]. " +
+          $"Rebound {reboundParams.Length} of {handlerParams.Length} route parameters.");
       }
     }
 

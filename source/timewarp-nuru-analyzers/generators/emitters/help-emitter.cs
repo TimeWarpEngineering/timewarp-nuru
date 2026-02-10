@@ -146,7 +146,6 @@ internal static class HelpEmitter
   /// </summary>
   private static void EmitOptions(StringBuilder sb)
   {
-    sb.AppendLine("    terminal.WriteLine();");
     sb.AppendLine("    terminal.WriteLine(\"Options:\".Cyan().Bold());");
     sb.AppendLine("    terminal.WriteTable(table => table");
     sb.AppendLine("      .AddColumn(\"Option\")");

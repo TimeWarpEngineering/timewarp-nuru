@@ -56,8 +56,8 @@ internal static class HelpEmitter
     // App description with "Description:" header and indented value
     if (model.Description is not null)
     {
-      sb.AppendLine("    terminal.WriteLine(\"Description:\".Gray());");
-      sb.AppendLine($"    terminal.WriteLine($\"  {EscapeString(model.Description)}\".Gray());");
+      sb.AppendLine("    terminal.WriteLine(\"Description:\".White());");
+      sb.AppendLine($"    terminal.WriteLine($\"  {EscapeString(model.Description)}\".White());");
     }
 
     sb.AppendLine("    terminal.WriteLine();");

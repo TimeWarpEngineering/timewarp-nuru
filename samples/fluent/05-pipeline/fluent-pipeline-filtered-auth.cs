@@ -23,10 +23,12 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 
 using TimeWarp.Nuru;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using static System.Console;
 
 NuruApp app = NuruApp.CreateBuilder()
+  .ConfigureServices(s => s.AddLogging(b => b.AddConsole()))
   // Register behaviors - filtered behavior only applies to matching routes
   .AddBehavior(typeof(LoggingBehavior))
   .AddBehavior(typeof(AuthorizationBehavior))

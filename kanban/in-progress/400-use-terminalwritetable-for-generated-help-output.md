@@ -155,7 +155,72 @@ terminal.WriteTable(table => table
 
 ## Notes
 
-### Why Source Generator Changes?
+### Implementation Plan (Updated 2026-02-10)
+
+---
+
+## Implementation Plan
+
+### Phase 1: Create HelpPatternHelper
+Create new file: `source/timewarp-nuru-analyzers/generators/emitters/help-pattern-helper.cs` with shared `BuildPatternDisplay()` method.
+
+### Phase 2: Update help-emitter.cs
+- Remove `BuildPatternDisplay()` method (move to helper)
+- Modify `EmitCommands()` to emit WriteTable code
+- Modify `EmitOptions()` to emit WriteTable code  
+- Remove `EmitRouteHelp()` method
+
+### Phase 3: Update route-help-emitter.cs
+- Modify `EmitRouteHelpContent()` to emit WriteTable for parameters (3 columns: Name, Required, Type)
+- Modify `EmitRouteHelpContent()` to emit WriteTable for options (2 columns: Option, Description)
+- Remove `BuildParameterHelpLine()` and `BuildOptionHelpLine()` methods
+- Update `EmitGroupHelpContent()` to use WriteTable
+
+### Phase 4: Create Tests
+Create new test file: `tests/timewarp-nuru-tests/help/help-02-table-formatting.cs`
+
+### Phase 5: Verify Existing Tests
+Run existing help tests to ensure no regressions
+
+### Phase 6: Full Test Suite
+Run `dotnet run tests/ci-tests/run-ci-tests.cs`
+
+## Key Code Changes
+
+**EmitCommands() will generate:**
+```csharp
+terminal.WriteLine("Commands:");
+terminal.WriteTable(table => table
+  .AddColumn("Command")
+  .AddColumn("Description")
+  .AddRow("deploy {env}", "Deploy to an environment")
+);
+```
+
+**EmitOptions() will generate:**
+```csharp
+terminal.WriteLine("Options:");
+terminal.WriteTable(table => table
+  .AddColumn("Option")
+  .AddColumn("Description")
+  .AddRow("--help, -h", "Show this help message")
+  .AddRow("--version", "Show version information")
+  .AddRow("--capabilities", "Show capabilities for AI tools")
+);
+```
+
+## Files to Modify
+
+| File | Action |
+|------|--------|
+| `help-pattern-helper.cs` | Create |
+| `help-emitter.cs` | Modify |
+| `route-help-emitter.cs` | Modify |
+| `help-02-table-formatting.cs` | Create |
+
+---
+
+### Why Source Source Generator Changes?
 
 The source generator emits the `PrintHelp()` method at compile time. This task modifies the **emitter** (`help-emitter.cs`) to generate code that calls `terminal.WriteTable()` instead of `terminal.WriteLine()` with manual padding.
 

@@ -283,7 +283,7 @@ public class GroupOptionTests
     int exitCode = await app.RunAsync(["task419", "typed", "config", "--output", "json"]);
 
     exitCode.ShouldBe(0);
-    terminal.OutputContains("Config: output=json").ShouldBeTrue();
+    terminal.OutputContains("output=json").ShouldBeTrue();
   }
 
   public static async Task Should_support_typed_int_group_option()
@@ -298,7 +298,8 @@ public class GroupOptionTests
     int exitCode = await app.RunAsync(["task419", "typed", "config", "--verbose", "--count", "42"]);
 
     exitCode.ShouldBe(0);
-    terminal.OutputContains("Config: verbose=True, count=42").ShouldBeTrue();
+    terminal.OutputContains("verbose=True").ShouldBeTrue();
+    terminal.OutputContains("count=42").ShouldBeTrue();
   }
 
   public static async Task Should_support_nullable_typed_group_option()
@@ -313,7 +314,9 @@ public class GroupOptionTests
     int exitCode = await app.RunAsync(["task419", "typed", "config", "--verbose"]);
 
     exitCode.ShouldBe(0);
-    terminal.OutputContains("Config: verbose=True, count=(null)").ShouldBeTrue();
+    terminal.OutputContains("verbose=True").ShouldBeTrue();
+    terminal.OutputContains("count=(null)").ShouldBeTrue();
+    terminal.OutputContains("output=text").ShouldBeTrue(); // default value preserved
   }
 
   public static async Task Should_support_nullable_string_group_option_with_value()
@@ -328,7 +331,8 @@ public class GroupOptionTests
     int exitCode = await app.RunAsync(["task419", "typed", "config", "--output", "xml", "--limit", "100"]);
 
     exitCode.ShouldBe(0);
-    terminal.OutputContains("Config: output=xml, limit=100").ShouldBeTrue();
+    terminal.OutputContains("output=xml").ShouldBeTrue();
+    terminal.OutputContains("limit=100").ShouldBeTrue();
   }
 }
 

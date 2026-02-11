@@ -1,0 +1,302 @@
+---
+name: nuru
+description: Build CLI applications with TimeWarp.Nuru - a .NET route-based CLI framework with web-style routing, source generators, and AOT support. Use when creating CLI tools, defining commands/queries, adding parameters or options, testing CLI output, or working with TimeWarp.Nuru.
+---
+
+# TimeWarp.Nuru
+
+Route-based CLI framework for .NET. Define commands like web routes. Source-generated for AOT compatibility.
+
+**Package:** `TimeWarp.Nuru`
+**Repository:** https://github.com/TimeWarpEngineering/timewarp-nuru
+**Depends on:** [TimeWarp.Terminal](https://github.com/TimeWarpEngineering/timewarp-terminal) - console abstractions (`IConsole`, `ITerminal`), widgets (panels, tables, rules), ANSI colors, and `TestTerminal` for testable output. Included transitively via the Nuru package. For full Terminal API docs (colors, widgets, builders), fetch the README at https://raw.githubusercontent.com/TimeWarpEngineering/timewarp-terminal/refs/heads/master/README.md
+
+## Choose a DSL
+
+Nuru offers two DSLs. Pick one based on your needs:
+
+- **Endpoint DSL (Recommended)**: Class-based with `[NuruRoute]` attribute. Best for testable, structured apps with dependency injection. Scales to large CLIs.
+- **Fluent DSL**: Inline lambdas with `Map().WithHandler().AsCommand().Done()`. Best for quick scripts and simple CLIs.
+
+## Endpoint DSL (Recommended)
+
+### Basics
+
+```csharp
+NuruApp app = NuruApp.CreateBuilder()
+  .DiscoverEndpoints()
+  .Build();
+
+return await app.RunAsync(args);
+```
+
+`DiscoverEndpoints()` auto-discovers all classes with `[NuruRoute]`.
+
+### Commands, Queries, and Idempotent Commands
+
+- **ICommand<T>** / **ICommandHandler<TCommand, T>**: Actions with side effects, NOT safe to retry (deploy, build, delete)
+- **IQuery<T>** / **IQueryHandler<TQuery, T>**: Read-only operations, safe to retry (status, greet, version)
+- **IIdempotentCommand<T>** / **IIdempotentCommandHandler<TCommand, T>**: Mutating but safe to retry (set config, PUT/DELETE-style operations)
+- Use `Unit` as return type when there's no meaningful return value
+
+### Simple Endpoint
+
+`[NuruRoute]` takes a single literal (e.g. `"greet"`, `"status"`) or empty string (`""` for default route). The analyzer enforces this - multiple words or parameters in `[NuruRoute]` will produce a compile error.
+
+```csharp
+[NuruRoute("greet", Description = "Greet someone")]
+public sealed class GreetQuery : IQuery<Unit>
+{
+  [Parameter(Description = "Name of the person to greet")]
+  public string Name { get; set; } = string.Empty;
+
+  public sealed class Handler : IQueryHandler<GreetQuery, Unit>
+  {
+    public ValueTask<Unit> Handle(GreetQuery query, CancellationToken ct)
+    {
+      Console.WriteLine($"Hello {query.Name}");
+      return default;
+    }
+  }
+}
+```
+
+### Parameters
+
+When a command has **multiple `[Parameter]` attributes**, each **must** specify an explicit `Order` value (enforced by analyzer NURU_A002). A single parameter does not need `Order`.
+
+```csharp
+[NuruRoute("deploy", Description = "Deploy to an environment")]
+public sealed class DeployCommand : ICommand<Unit>
+{
+  [Parameter(Order = 0, Description = "Target environment")]
+  public string Env { get; set; } = string.Empty;
+
+  // Optional parameter: use nullable type (string?), NOT IsOptional=true
+  [Parameter(Order = 1, Description = "Optional tag to deploy")]
+  public string? Tag { get; set; }
+
+  public sealed class Handler : ICommandHandler<DeployCommand, Unit>
+  {
+    public ValueTask<Unit> Handle(DeployCommand command, CancellationToken ct)
+    {
+      Console.WriteLine($"Deploying to {command.Env}");
+      return default;
+    }
+  }
+}
+```
+
+### Options (flags and named values)
+
+```csharp
+[NuruRoute("build", Description = "Build a project")]
+public sealed class BuildCommand : ICommand<Unit>
+{
+  [Parameter(Description = "Project to build")]
+  public string Project { get; set; } = string.Empty;
+
+  [Option("mode", "m", Description = "Build mode (Debug or Release)")]
+  public string Mode { get; set; } = "Debug";
+
+  [Option("verbose", "v", Description = "Verbose output")]
+  public bool Verbose { get; set; }
+
+  public sealed class Handler : ICommandHandler<BuildCommand, Unit>
+  {
+    public ValueTask<Unit> Handle(BuildCommand command, CancellationToken ct)
+    {
+      Console.WriteLine($"Building {command.Project} ({command.Mode}, verbose: {command.Verbose})");
+      return default;
+    }
+  }
+}
+```
+
+Usage: `myapp build MyApp --mode Release --verbose` or `myapp build MyApp -m Release -v`
+
+### Catch-all Parameters
+
+```csharp
+[NuruRoute("exec", Description = "Run with arbitrary arguments")]
+public sealed class ExecCommand : ICommand<Unit>
+{
+  [Parameter(IsCatchAll = true, Description = "Arguments")]
+  public string[] Args { get; set; } = [];
+
+  public sealed class Handler : ICommandHandler<ExecCommand, Unit>
+  {
+    public ValueTask<Unit> Handle(ExecCommand command, CancellationToken ct)
+    {
+      Console.WriteLine($"Args: {string.Join(" ", command.Args)}");
+      return default;
+    }
+  }
+}
+```
+
+### Route Groups (sub-command hierarchies)
+
+The shell splits `myapp docker build .` so the app only receives `["docker", "build", "."]` as args. Since `[NuruRoute]` accepts only a single literal, sub-command hierarchies use `[NuruRouteGroup]` on an abstract base class. The group prefix is prepended to the child's `[NuruRoute]` literal. Groups can nest to any depth.
+
+```csharp
+// Base class defines the "docker" prefix
+[NuruRouteGroup("docker")]
+public abstract class DockerGroupBase;
+
+// Matched by: myapp docker build . --tag foo
+// App receives args: ["docker", "build", ".", "--tag", "foo"]
+[NuruRoute("build", Description = "Build an image from a Dockerfile")]
+public sealed class DockerBuildCommand : DockerGroupBase, ICommand<Unit>
+{
+  [Parameter(Description = "Path to Dockerfile or build context")]
+  public string Path { get; set; } = string.Empty;
+
+  [Option("tag", "t", Description = "Name and optionally a tag")]
+  public string? Tag { get; set; }
+
+  [Option("no-cache", null, Description = "Do not use cache")]
+  public bool NoCache { get; set; }
+
+  public sealed class Handler : ICommandHandler<DockerBuildCommand, Unit>
+  {
+    public ValueTask<Unit> Handle(DockerBuildCommand command, CancellationToken ct)
+    {
+      Console.WriteLine($"Building image from: {command.Path}");
+      return default;
+    }
+  }
+}
+```
+
+Nested groups concatenate prefixes through inheritance:
+
+```csharp
+[NuruRouteGroup("cloud")]
+public abstract class CloudGroupBase;
+
+[NuruRouteGroup("azure")]
+public abstract class AzureGroupBase : CloudGroupBase;
+
+[NuruRouteGroup("storage")]
+public abstract class AzureStorageGroupBase : AzureGroupBase;
+
+// Matched by: myapp cloud azure storage upload myfile.txt
+[NuruRoute("upload", Description = "Upload a file to Azure storage")]
+public sealed class AzureStorageUploadCommand : AzureStorageGroupBase, ICommand<Unit>
+{
+  [Parameter(Description = "File to upload")]
+  public string File { get; set; } = string.Empty;
+
+  public sealed class Handler : ICommandHandler<AzureStorageUploadCommand, Unit>
+  {
+    public ValueTask<Unit> Handle(AzureStorageUploadCommand command, CancellationToken ct)
+    {
+      Console.WriteLine($"Uploading: {command.File}");
+      return default;
+    }
+  }
+}
+```
+
+Shared options across a group use `[GroupOption]` on the base class properties. All routes inheriting from the group automatically get these options. Do not include dashes in the attribute - the generator adds them.
+
+```csharp
+[NuruRouteGroup("docker")]
+public abstract class DockerGroupBase
+{
+  [GroupOption("verbose", "v", Description = "Verbose output")]
+  public bool Verbose { get; set; }
+}
+
+// Both DockerBuildCommand and DockerRunCommand inherit --verbose/-v from DockerGroupBase
+```
+
+### Endpoint Key Rules
+
+- Endpoint classes must be `sealed` (can be `public sealed` or `internal sealed`)
+- Handler must be a nested `sealed class Handler` (accessibility matches the endpoint class)
+- `[NuruRoute]` takes only a single literal or `""` - the analyzer rejects anything else
+- Use nullable types (`string?`) for optional parameters, NOT `IsOptional=true`
+- Return `Unit` when no meaningful return value
+- Use `ValueTask<T>` for handler return types
+
+## Fluent DSL
+
+### Basics
+
+```csharp
+NuruApp app = NuruApp.CreateBuilder()
+  .Map("greet {name}")
+    .WithHandler((string name) => $"Hello, {name}!")
+    .AsQuery()
+    .Done()
+  .Build();
+
+await app.RunAsync(args);
+```
+
+### Route Pattern Syntax
+
+In the Fluent DSL, the full route pattern including parameters, options, and sub-commands is expressed in the `Map()` string.
+
+| Pattern | `Map()` Example | Description |
+|---------|-----------------|-------------|
+| Literal | `"status"`, `"docker build"` | Exact match (multi-word = sub-commands) |
+| Parameter | `"greet {name}"` | Required parameter |
+| Typed | `"delay {ms:int}"` | Type-constrained parameter |
+| Optional | `"deploy {env} {tag?}"` | Nullable parameter (handler param must be nullable) |
+| Catch-all | `"exec {*args}"` | Captures all remaining args (must be last) |
+| Option | `"build --config {mode}"` | Named option with value |
+| Flag | `"build --verbose"` | Boolean flag |
+| Short option | `"build -m {mode}"` | Short alias |
+| Option alias | `"build --config,-c {mode}"` | Long and short form |
+| Repeated option | `"run --env {var}*"` | Collects multiple values into array |
+| Description | `"{env\|Target environment}"` | Inline help text via `\|` |
+
+## Testing with TestTerminal
+
+Use `TestTerminal` from `TimeWarp.Terminal` to capture and verify CLI output:
+
+```csharp
+using TimeWarp.Terminal;
+
+// Create test terminal for output capture
+using TestTerminal terminal = new();
+
+NuruApp app = NuruApp.CreateBuilder()
+  .UseTerminal(terminal)
+  .Map("demo")
+    .WithHandler((ITerminal t) =>
+    {
+      t.WriteLine("Hello from stdout!");
+      t.WriteErrorLine("Warning: something happened");
+    })
+    .AsCommand()
+    .Done()
+  .Build();
+
+await app.RunAsync(["demo"]);
+
+// Verify output
+terminal.OutputContains("Hello from stdout!").ShouldBeTrue();
+terminal.ErrorContains("Warning").ShouldBeTrue();
+string[] lines = terminal.GetOutputLines();
+```
+
+## Installation
+
+```xml
+<!-- In .csproj -->
+<PackageReference Include="TimeWarp.Nuru" />
+```
+
+```csharp
+// In a runfile
+#:package TimeWarp.Nuru
+```
+
+## General Rules
+
+- `DiscoverEndpoints()` auto-discovers all `[NuruRoute]` classes
+- All warnings treated as errors; no trailing whitespace

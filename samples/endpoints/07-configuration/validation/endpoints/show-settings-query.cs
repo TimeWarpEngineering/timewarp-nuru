@@ -6,7 +6,7 @@ using static System.Console;
 [NuruRoute("settings", Description = "Show all current settings")]
 public sealed class ShowSettingsQuery : IQuery<Unit>
 {
-  public sealed class Handler(IOptions<ValidatedSettings> settings, IConfiguration config) : IQueryHandler<ShowSettingsQuery, Unit>
+  public sealed class Handler(IOptions<ValidatedSettings> settings) : IQueryHandler<ShowSettingsQuery, Unit>
   {
     public ValueTask<Unit> Handle(ShowSettingsQuery query, CancellationToken ct)
     {

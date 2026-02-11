@@ -20,6 +20,11 @@ public class ValidatedSettings
   [AllowedValues("Development", "Staging", "Production")]
   public string Environment { get; set; } = "Development";
 
+  // MaxLengthAttribute constructor is marked [RequiresUnreferencedCode] because its
+  // IsValid method uses reflection to find a 'Count' property on non-ICollection types.
+  // string[] implements ICollection, so the reflection path is never reached.
+#pragma warning disable IL2026
   [MaxLength(5, ErrorMessage = "Maximum 5 tags allowed")]
+#pragma warning restore IL2026
   public string[] Tags { get; set; } = ["cli", "api"];
 }

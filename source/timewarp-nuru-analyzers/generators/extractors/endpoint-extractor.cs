@@ -20,6 +20,7 @@ internal static class EndpointExtractor
   private const string NuruRouteGroupAttributeName = "NuruRouteGroup";
   private const string ParameterAttributeName = "Parameter";
   private const string OptionAttributeName = "Option";
+  private const string GroupOptionAttributeName = "GroupOption";
 
   /// <summary>
   /// Extracts a RouteDefinition from a class with [NuruRoute] attribute.
@@ -189,6 +190,205 @@ internal static class EndpointExtractor
   }
 
   /// <summary>
+  /// Extracts GroupOptions from base class hierarchy.
+  /// Walks the full inheritance chain and collects options from properties with [GroupOption] attributes.
+  /// </summary>
+  private static ImmutableArray<SegmentDefinition> ExtractGroupOptionsFromBaseClasses
+  (
+    ClassDeclarationSyntax classDeclaration,
+    SemanticModel semanticModel,
+    int startPosition,
+    CancellationToken cancellationToken
+  )
+  {
+    if (classDeclaration.BaseList is null)
+      return [];
+
+    INamedTypeSymbol? classSymbol = semanticModel.GetDeclaredSymbol(classDeclaration, cancellationToken);
+    if (classSymbol?.BaseType is null)
+      return [];
+
+    ImmutableArray<SegmentDefinition>.Builder options = ImmutableArray.CreateBuilder<SegmentDefinition>();
+    int position = startPosition;
+    INamedTypeSymbol? current = classSymbol.BaseType;
+
+    while (current is not null && current.SpecialType != SpecialType.System_Object)
+    {
+      // Check this type for properties with [GroupOption] attributes
+      foreach (IPropertySymbol property in current.GetMembers().OfType<IPropertySymbol>())
+      {
+        foreach (AttributeData attribute in property.GetAttributes())
+        {
+          string? attributeName = attribute.AttributeClass?.Name;
+          if (attributeName != GroupOptionAttributeName && attributeName != $"{GroupOptionAttributeName}Attribute")
+            continue;
+
+          OptionDefinition? option = ExtractGroupOptionFromAttribute(property, attribute, position++, cancellationToken);
+          if (option is not null)
+            options.Add(option);
+        }
+      }
+
+      current = current.BaseType;
+    }
+
+    return options.ToImmutable();
+  }
+
+  /// <summary>
+  /// Extracts an OptionDefinition from a [GroupOption] attribute.
+  /// Similar to ExtractOptionFromAttribute but for GroupOption.
+  /// </summary>
+  private static OptionDefinition? ExtractGroupOptionFromAttribute
+  (
+    IPropertySymbol property,
+    AttributeData attribute,
+    int position,
+    CancellationToken cancellationToken
+  )
+  {
+    string longForm = property.Name.ToLowerInvariant();
+    string? shortForm = null;
+    string? description = null;
+    bool isOptional = true; // Options are optional by default
+    bool isRepeated = false;
+
+    // Check constructor arguments
+    if (attribute.ConstructorArguments.Length > 0 && attribute.ConstructorArguments[0].Value is string ctorLongForm)
+      longForm = ctorLongForm.TrimStart('-');
+
+    if (attribute.ConstructorArguments.Length > 1 && attribute.ConstructorArguments[1].Value is string ctorShortForm)
+      shortForm = ctorShortForm.TrimStart('-');
+
+    // Check named arguments
+    foreach (KeyValuePair<string, TypedConstant> namedArg in attribute.NamedArguments)
+    {
+      switch (namedArg.Key)
+      {
+        case "LongName":
+          longForm = (namedArg.Value.Value as string)?.TrimStart('-') ?? longForm;
+          break;
+        case "ShortName":
+          shortForm = (namedArg.Value.Value as string)?.TrimStart('-');
+          break;
+        case "Description":
+          description = namedArg.Value.Value as string;
+          break;
+        case "IsRequired":
+          isOptional = namedArg.Value.Value is not true;
+          break;
+      }
+    }
+
+    string typeName = property.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+    bool isFlag = typeName is "bool" or "global::System.Boolean";
+
+    // Check for array types (repeated options)
+    if (typeName.EndsWith("[]", StringComparison.Ordinal) ||
+        typeName.Contains("IEnumerable", StringComparison.Ordinal) ||
+        typeName.Contains("IList", StringComparison.Ordinal))
+    {
+      isRepeated = true;
+    }
+
+    // Extract default value from property initializer
+    string? defaultValueLiteral = ExtractPropertyDefaultValueFromSymbol(property, cancellationToken);
+
+    return new OptionDefinition(
+      Position: position,
+      LongForm: longForm,
+      ShortForm: shortForm,
+      ParameterName: isFlag ? null : property.Name.ToLowerInvariant(),
+      TypeConstraint: isFlag ? null : GetTypeConstraintFromClrType(typeName),
+      Description: description,
+      ExpectsValue: !isFlag,
+      IsOptional: isOptional,
+      IsRepeated: isRepeated,
+      ParameterIsOptional: property.NullableAnnotation == NullableAnnotation.Annotated,
+      ResolvedClrTypeName: typeName,
+      DefaultValueLiteral: defaultValueLiteral);
+  }
+
+  /// <summary>
+  /// Extracts GroupOption bindings from base class hierarchy for handler property bindings.
+  /// Walks the full inheritance chain and creates ParameterBinding entries for [GroupOption] properties.
+  /// </summary>
+  private static void ExtractGroupOptionBindingsFromBaseClasses
+  (
+    INamedTypeSymbol classSymbol,
+    ImmutableArray<ParameterBinding>.Builder propertyBindings
+  )
+  {
+    if (classSymbol.BaseType is null)
+      return;
+
+    INamedTypeSymbol? current = classSymbol.BaseType;
+
+    while (current is not null && current.SpecialType != SpecialType.System_Object)
+    {
+      foreach (IPropertySymbol property in current.GetMembers().OfType<IPropertySymbol>())
+      {
+        // Skip properties without setters
+        if (property.SetMethod is null && property.IsReadOnly)
+          continue;
+
+        foreach (AttributeData attribute in property.GetAttributes())
+        {
+          string? attributeName = attribute.AttributeClass?.Name;
+          if (attributeName != GroupOptionAttributeName && attributeName != $"{GroupOptionAttributeName}Attribute")
+            continue;
+
+          string typeName = property.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+          string optionLongForm = ExtractGroupOptionLongForm(attribute, property.Name);
+
+          if (typeName is "bool" or "global::System.Boolean")
+          {
+            propertyBindings.Add(ParameterBinding.FromFlag(property.Name, optionLongForm));
+          }
+          else
+          {
+            propertyBindings.Add(ParameterBinding.FromOption(
+              parameterName: property.Name,
+              typeName: typeName,
+              optionName: optionLongForm,
+              isOptional: true,
+              requiresConversion: typeName != "global::System.String"));
+          }
+
+          break;
+        }
+      }
+
+      current = current.BaseType;
+    }
+  }
+
+  /// <summary>
+  /// Extracts the long form option name from a [GroupOption] attribute.
+  /// This must match the logic in ExtractGroupOptionFromAttribute for consistency.
+  /// </summary>
+  private static string ExtractGroupOptionLongForm(AttributeData attribute, string propertyName)
+  {
+    string longForm = propertyName.ToLowerInvariant();
+
+    // Check constructor arguments - first positional arg is the long form
+    if (attribute.ConstructorArguments.Length > 0 && attribute.ConstructorArguments[0].Value is string ctorLongForm)
+      longForm = ctorLongForm.TrimStart('-');
+
+    // Check named arguments
+    foreach (KeyValuePair<string, TypedConstant> namedArg in attribute.NamedArguments)
+    {
+      if (namedArg.Key == "LongName")
+      {
+        longForm = (namedArg.Value.Value as string)?.TrimStart('-') ?? longForm;
+        break;
+      }
+    }
+
+    return longForm;
+  }
+
+  /// <summary>
   /// Infers message type from implemented interfaces.
   /// </summary>
   private static string InferMessageType
@@ -222,6 +422,7 @@ internal static class EndpointExtractor
   /// <summary>
   /// Extracts segments from properties with [Parameter] or [Option] attributes.
   /// Uses semantic model to find all properties including those in partial class files.
+  /// Also extracts [GroupOption] attributes from base classes.
   /// </summary>
   private static ImmutableArray<SegmentDefinition> ExtractSegmentsFromProperties
   (
@@ -245,6 +446,14 @@ internal static class EndpointExtractor
       if (segment is not null)
         segments.Add(segment);
     }
+
+    // Extract GroupOptions from base classes and add them to segments
+    ImmutableArray<SegmentDefinition> groupOptions = ExtractGroupOptionsFromBaseClasses(
+      classDeclaration,
+      semanticModel,
+      position,
+      cancellationToken);
+    segments.AddRange(groupOptions);
 
     return segments.ToImmutable();
   }
@@ -569,6 +778,9 @@ internal static class EndpointExtractor
         }
       }
     }
+
+    // 3b. Extract GroupOption bindings from base classes
+    ExtractGroupOptionBindingsFromBaseClasses(classSymbol, propertyBindings);
 
     // 4. Infer return type from interface
     HandlerReturnType returnType = InferReturnTypeFromInterfaces(classSymbol);

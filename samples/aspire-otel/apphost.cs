@@ -1,5 +1,6 @@
 #!/usr/bin/env -S dotnet run --launch-profile http --
 #:sdk Aspire.AppHost.Sdk@13.1.0
+#:property NoWarn=ASPIRE004
 
 // Aspire Host with OpenTelemetry Sample
 // ======================================

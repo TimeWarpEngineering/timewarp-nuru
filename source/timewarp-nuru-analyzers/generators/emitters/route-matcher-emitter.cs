@@ -425,7 +425,11 @@ internal static class RouteMatcherEmitter
     string rawVarName = needsConversion ? $"__{varName}_raw" : escapedVarName;
 
     sb.AppendLine($"      bool {flagFoundVar} = false;");
-    sb.AppendLine($"      string? {rawVarName} = null;");
+    // Use property default value when available (e.g., string Output = "text")
+    string rawInitializer = !needsConversion && option.DefaultValueLiteral is not null
+      ? option.DefaultValueLiteral
+      : "null";
+    sb.AppendLine($"      string? {rawVarName} = {rawInitializer};");
     sb.AppendLine($"      for (int __i = 0; __i < __endOfOptions_{routeIndex}; __i++)");
     sb.AppendLine("      {");
 

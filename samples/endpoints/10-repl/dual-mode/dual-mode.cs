@@ -1,6 +1,6 @@
 #!/usr/bin/dotnet --
 // ═══════════════════════════════════════════════════════════════════════════════════════
-// ENDPOINT DSL - REPL DUAL MODE (CLI + Interactive) ⭐ RECOMMENDED
+// ENDPOINT DSL - REPL DUAL MODE (CLI + Interactive)
 // ═══════════════════════════════════════════════════════════════════════════════════════
 //
 // CLI app that works both as command-line tool and interactive REPL.

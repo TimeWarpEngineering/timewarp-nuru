@@ -1,6 +1,6 @@
 #!/usr/bin/dotnet --
 // ═══════════════════════════════════════════════════════════════════════════════
-// ENDPOINT DISCOVERY - BASIC EXAMPLE ⭐ RECOMMENDED
+// ENDPOINT DISCOVERY - BASIC EXAMPLE
 // ═══════════════════════════════════════════════════════════════════════════════
 //
 // This sample demonstrates endpoints with discovery:

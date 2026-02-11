@@ -1,6 +1,6 @@
 #!/usr/bin/dotnet --
 // ═══════════════════════════════════════════════════════════════════════════════
-// ENDPOINT DSL - BASIC PIPELINE MIDDLEWARE ⭐ RECOMMENDED
+// ENDPOINT DSL - BASIC PIPELINE MIDDLEWARE
 // ═══════════════════════════════════════════════════════════════════════════════
 //
 // This sample demonstrates the fundamental pipeline behavior pattern using

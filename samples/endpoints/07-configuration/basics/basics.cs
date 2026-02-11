@@ -1,6 +1,6 @@
 #!/usr/bin/dotnet --
 // ═══════════════════════════════════════════════════════════════════════════════════════
-// ENDPOINT DSL - CONFIGURATION BASICS ⭐ RECOMMENDED
+// ENDPOINT DSL - CONFIGURATION BASICS
 // ═══════════════════════════════════════════════════════════════════════════════════════
 //
 // This sample demonstrates IOptions<T> with Endpoint DSL:

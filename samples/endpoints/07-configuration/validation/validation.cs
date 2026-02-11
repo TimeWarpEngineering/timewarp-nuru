@@ -1,6 +1,6 @@
 #!/usr/bin/dotnet --
 // ═══════════════════════════════════════════════════════════════════════════════════════
-// ENDPOINT DSL - CONFIGURATION VALIDATION ⭐ RECOMMENDED
+// ENDPOINT DSL - CONFIGURATION VALIDATION
 // ═══════════════════════════════════════════════════════════════════════════════════════
 //
 // This sample demonstrates fail-fast configuration validation using DataAnnotations

@@ -1,6 +1,6 @@
 #!/usr/bin/dotnet --
 // ═══════════════════════════════════════════════════════════════════════════════
-// ASYNC EXAMPLES - ENDPOINT DSL ⭐ RECOMMENDED
+// ASYNC EXAMPLES - ENDPOINT DSL
 // ═══════════════════════════════════════════════════════════════════════════════
 // Demonstrates async command handlers using the Endpoint DSL pattern.
 //

@@ -1,6 +1,6 @@
 #!/usr/bin/dotnet --
 // ═══════════════════════════════════════════════════════════════════════════════
-// ENDPOINT DSL - TESTING OUTPUT CAPTURE ⭐ RECOMMENDED
+// ENDPOINT DSL - TESTING OUTPUT CAPTURE
 // ═══════════════════════════════════════════════════════════════════════════════
 // Demonstrates testing CLI output using Endpoint DSL with ITerminal injection.
 //

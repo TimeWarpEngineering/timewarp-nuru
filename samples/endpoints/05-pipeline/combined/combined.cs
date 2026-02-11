@@ -1,6 +1,6 @@
 #!/usr/bin/dotnet --
 // ═══════════════════════════════════════════════════════════════════════════════
-// ENDPOINT DSL - COMPLETE PIPELINE MIDDLEWARE ⭐ RECOMMENDED
+// ENDPOINT DSL - COMPLETE PIPELINE MIDDLEWARE
 // ═══════════════════════════════════════════════════════════════════════════════
 //
 // Complete enterprise-grade reference implementation combining ALL pipeline behaviors.

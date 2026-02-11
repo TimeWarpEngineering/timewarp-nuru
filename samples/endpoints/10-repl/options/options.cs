@@ -1,6 +1,6 @@
 #!/usr/bin/dotnet --
 // ═══════════════════════════════════════════════════════════════════════════════════════════════
-// ENDPOINT DSL - REPL OPTIONS SHOWCASE ⭐ RECOMMENDED
+// ENDPOINT DSL - REPL OPTIONS SHOWCASE
 // ═══════════════════════════════════════════════════════════════════════════════════════
 //
 // Comprehensive REPL configuration demonstrating all available options.

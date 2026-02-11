@@ -1,6 +1,6 @@
 #!/usr/bin/dotnet --
 // ═══════════════════════════════════════════════════════════════════════════════════════
-// ENDPOINT DSL - ADVANCED CONFIGURATION PATTERNS ⭐ RECOMMENDED
+// ENDPOINT DSL - ADVANCED CONFIGURATION PATTERNS
 // ═══════════════════════════════════════════════════════════════════════════════════════
 //
 // This sample demonstrates advanced configuration patterns:

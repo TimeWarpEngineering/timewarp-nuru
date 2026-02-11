@@ -1,6 +1,6 @@
 #!/usr/bin/dotnet --
 // ═══════════════════════════════════════════════════════════════════════════════
-// ENDPOINT DSL - RETRY PIPELINE ⭐ RECOMMENDED
+// ENDPOINT DSL - RETRY PIPELINE
 // ═══════════════════════════════════════════════════════════════════════════════
 //
 // Demonstrates resilience with exponential backoff using filtered behaviors.

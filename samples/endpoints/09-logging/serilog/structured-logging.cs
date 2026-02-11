@@ -1,6 +1,6 @@
 #!/usr/bin/dotnet --
 // ═══════════════════════════════════════════════════════════════════════════════════════
-// ENDPOINT DSL - SERILOG STRUCTURED LOGGING ⭐ RECOMMENDED
+// ENDPOINT DSL - SERILOG STRUCTURED LOGGING
 // ═══════════════════════════════════════════════════════════════════════════════════════
 //
 // Serilog integration with structured logging and multiple sinks.

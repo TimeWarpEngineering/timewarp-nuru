@@ -1,6 +1,6 @@
 #!/usr/bin/dotnet --
 // ═══════════════════════════════════════════════════════════════════════════════
-// ENDPOINT DSL - SYNTAX EXAMPLES ⭐ RECOMMENDED
+// ENDPOINT DSL - SYNTAX EXAMPLES
 // ═══════════════════════════════════════════════════════════════════════════════
 // This project demonstrates all route pattern syntax using the Endpoint DSL.
 //

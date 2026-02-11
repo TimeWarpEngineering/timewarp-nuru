@@ -1,6 +1,6 @@
 #!/usr/bin/dotnet --
 // ═══════════════════════════════════════════════════════════════════════════════
-// HELLO WORLD - ENDPOINT DSL ⭐ RECOMMENDED
+// HELLO WORLD - ENDPOINT DSL
 // ═══════════════════════════════════════════════════════════════════════════════
 // Simplest endpoint approach using [NuruRoute] attribute.
 // Best for: Testable commands, dependency injection, separation of concerns

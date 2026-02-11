@@ -1,6 +1,6 @@
 #!/usr/bin/dotnet --
 // ═══════════════════════════════════════════════════════════════════════════════════════════════
-// ENDPOINT DSL - SHELL TAB COMPLETION ⭐ RECOMMENDED
+// ENDPOINT DSL - SHELL TAB COMPLETION
 // ═══════════════════════════════════════════════════════════════════════════════════════════════
 //
 // Static shell tab completion for Bash, Zsh, PowerShell, and Fish.

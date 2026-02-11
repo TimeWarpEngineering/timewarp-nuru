@@ -85,7 +85,7 @@ dotnet run -- add 15 25
 | Feature | Description | Learn More |
 |---------|-------------|------------|
 | 🎯 **Web-Style Routing** | Familiar `"deploy {env} --version {tag}"` syntax | [Routing Guide](documentation/user/features/routing.md) |
-| 📦 **Endpoint DSL** | Class-based commands with kebab-case files in `endpoints/` folder | [Architecture Choices](documentation/user/guides/architecture-choices.md) |
+| 📦 **Endpoint DSL** | Class-based commands with `DiscoverEndpoints()` auto-discovery | [Architecture Choices](documentation/user/guides/architecture-choices.md) |
 | 🔧 **Fluent DSL** | Inline routes with `.Map().WithHandler().Done()` chain | [Architecture Choices](documentation/user/guides/architecture-choices.md) |
 | 🛡️ **Roslyn Analyzer** | Catch route errors at compile-time | [Analyzer Docs](documentation/user/features/analyzer.md) |
 | ⌨️ **Shell Completion** | Tab completion for bash, zsh, PowerShell, fish | [Shell Completion](#-shell-completion) |

@@ -94,7 +94,7 @@ dotnet run -- add 15 25
 | 🚀 **Native AOT** | Zero warnings, 3.3 MB binaries, instant startup | [Deployment Guide](documentation/user/guides/deployment.md#native-aot-compilation) |
 | 🔒 **Type-Safe Parameters** | Automatic type conversion and validation | [Supported Types](documentation/user/reference/supported-types.md) |
 | 📖 **Auto-Help** | Generate help from route patterns | [Auto-Help Feature](documentation/user/features/auto-help.md) |
-| 🎨 **Colored Output** | Fluent ANSI colors without Spectre.Console | [Terminal Abstractions](documentation/user/features/terminal-abstractions.md) |
+| 🎨 **Rich Terminal** | Colors, tables, panels, rules via [TimeWarp.Terminal](https://github.com/TimeWarpEngineering/timewarp-terminal) | [Terminal Guide](documentation/user/features/terminal-abstractions.md) |
 
 ## 📚 Documentation
 

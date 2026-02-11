@@ -1,6 +1,6 @@
 #!/usr/bin/dotnet --
 // ═══════════════════════════════════════════════════════════════════════════════════════════════
-// ENDPOINT DSL - RUNTIME DI ADVANCED ⭐ RECOMMENDED
+// ENDPOINT DSL - RUNTIME DI ADVANCED
 // ═══════════════════════════════════════════════════════════════════════════════════════════════
 //
 // Advanced runtime DI scenarios: decorators, factories, keyed services.

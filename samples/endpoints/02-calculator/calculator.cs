@@ -1,6 +1,6 @@
 #!/usr/bin/dotnet --
 // ═══════════════════════════════════════════════════════════════════════════════
-// CALCULATOR - ENDPOINT DSL ⭐ RECOMMENDED
+// CALCULATOR - ENDPOINT DSL
 // ═══════════════════════════════════════════════════════════════════════════════
 // Full-featured calculator using Endpoint DSL pattern.
 // Demonstrates: Commands with parameters, dependency injection, testable handlers

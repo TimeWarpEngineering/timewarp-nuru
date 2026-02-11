@@ -1,6 +1,6 @@
 #!/usr/bin/dotnet --
 // ═══════════════════════════════════════════════════════════════════════════════════════════════
-// ENDPOINT DSL - RUNTIME DI BASICS ⭐ RECOMMENDED
+// ENDPOINT DSL - RUNTIME DI BASICS
 // ═══════════════════════════════════════════════════════════════════════════════════════════════
 //
 // Runtime DI with full Microsoft DI container for complex dependency chains.

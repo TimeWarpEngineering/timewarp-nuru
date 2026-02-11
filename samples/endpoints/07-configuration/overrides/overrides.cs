@@ -1,6 +1,6 @@
 #!/usr/bin/dotnet --
 // ═══════════════════════════════════════════════════════════════════════════════════════
-// ENDPOINT DSL - COMMAND-LINE CONFIGURATION OVERRIDES ⭐ RECOMMENDED
+// ENDPOINT DSL - COMMAND-LINE CONFIGURATION OVERRIDES
 // ═══════════════════════════════════════════════════════════════════════════════════════
 //
 // This sample demonstrates ASP.NET Core-style command-line configuration overrides

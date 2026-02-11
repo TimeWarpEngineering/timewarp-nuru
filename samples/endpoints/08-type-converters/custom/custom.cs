@@ -1,6 +1,6 @@
 #!/usr/bin/dotnet --
 // ═══════════════════════════════════════════════════════════════════════════════════════
-// ENDPOINT DSL - CUSTOM TYPE CONVERTERS ⭐ RECOMMENDED
+// ENDPOINT DSL - CUSTOM TYPE CONVERTERS
 // ═══════════════════════════════════════════════════════════════════════════════════════
 // Demonstrates creating custom IRouteTypeConverter implementations.
 // Shows EmailAddress, HexColor, and SemanticVersion converters.

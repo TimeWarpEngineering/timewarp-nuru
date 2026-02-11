@@ -1,6 +1,6 @@
 #!/usr/bin/dotnet --
 // ═══════════════════════════════════════════════════════════════════════════════
-// ENDPOINT DSL - TELEMETRY PIPELINE ⭐ RECOMMENDED
+// ENDPOINT DSL - TELEMETRY PIPELINE
 // ═══════════════════════════════════════════════════════════════════════════════
 //
 // Demonstrates OpenTelemetry-compatible distributed tracing using INuruBehavior.

@@ -1,6 +1,6 @@
 #!/usr/bin/dotnet --
 // ═══════════════════════════════════════════════════════════════════════════════════════
-// ENDPOINT DSL - BUILT-IN TYPE CONVERTERS ⭐ RECOMMENDED
+// ENDPOINT DSL - BUILT-IN TYPE CONVERTERS
 // ═══════════════════════════════════════════════════════════════════════════════════════
 //
 // This sample demonstrates all built-in type converters using Endpoint DSL:

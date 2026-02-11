@@ -1,6 +1,6 @@
 #!/usr/bin/dotnet --
 // ═══════════════════════════════════════════════════════════════════════════════════════
-// ENDPOINT DSL - REPL WITH CUSTOM KEY BINDINGS ⭐ RECOMMENDED
+// ENDPOINT DSL - REPL WITH CUSTOM KEY BINDINGS
 // ═══════════════════════════════════════════════════════════════════════════════════════
 //
 // REPL mode with PSReadLine-style key binding profiles.

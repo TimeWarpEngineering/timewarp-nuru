@@ -1,6 +1,6 @@
 #!/usr/bin/dotnet --
 // ═══════════════════════════════════════════════════════════════════════════════
-// ENDPOINT DSL - TERMINAL DEPENDENCY INJECTION ⭐ RECOMMENDED
+// ENDPOINT DSL - TERMINAL DEPENDENCY INJECTION
 // ═══════════════════════════════════════════════════════════════════════════════
 // Demonstrates ITerminal injection into endpoint handlers for testable output.
 //

@@ -1,6 +1,6 @@
 #!/usr/bin/dotnet --
 // ═══════════════════════════════════════════════════════════════════════════════
-// ENDPOINT DSL - EXCEPTION HANDLING PIPELINE ⭐ RECOMMENDED
+// ENDPOINT DSL - EXCEPTION HANDLING PIPELINE
 // ═══════════════════════════════════════════════════════════════════════════════
 //
 // Demonstrates consistent exception handling using INuruBehavior.

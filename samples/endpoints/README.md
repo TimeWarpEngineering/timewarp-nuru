@@ -1,8 +1,8 @@
-# Endpoint DSL Samples ⭐ RECOMMENDED
+# Endpoint DSL Samples
 
 > **Class-based, attribute-driven CLI development**
 
-The **Endpoint DSL** is the recommended approach for most applications. It provides:
+The **Endpoint DSL** provides:
 - ✅ **Testability** - Handlers are testable classes
 - ✅ **Dependency Injection** - Constructor injection support
 - ✅ **Clean Architecture** - Separation of concerns

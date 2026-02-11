@@ -1,6 +1,6 @@
 #!/usr/bin/dotnet --
 // ═══════════════════════════════════════════════════════════════════════════════════════
-// ENDPOINT DSL - CONSOLE LOGGING ⭐ RECOMMENDED
+// ENDPOINT DSL - CONSOLE LOGGING
 // ═══════════════════════════════════════════════════════════════════════════════════════
 //
 // Console logging integration with Microsoft.Extensions.Logging using Endpoint DSL.

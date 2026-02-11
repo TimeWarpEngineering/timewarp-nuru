@@ -1,6 +1,6 @@
 #!/usr/bin/dotnet --
 // ═══════════════════════════════════════════════════════════════════════════════
-// ENDPOINT DSL - FILTERED AUTHORIZATION PIPELINE ⭐ RECOMMENDED
+// ENDPOINT DSL - FILTERED AUTHORIZATION PIPELINE
 // ═══════════════════════════════════════════════════════════════════════════════
 //
 // Demonstrates filtered behaviors using INuruBehavior<TFilter>.

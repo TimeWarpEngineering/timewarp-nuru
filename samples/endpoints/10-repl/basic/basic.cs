@@ -1,6 +1,6 @@
 #!/usr/bin/dotnet --
 // ═══════════════════════════════════════════════════════════════════════════════════════
-// ENDPOINT DSL - REPL BASIC DEMO ⭐ RECOMMENDED
+// ENDPOINT DSL - REPL BASIC DEMO
 // ═══════════════════════════════════════════════════════════════════════════════════════
 //
 // Interactive REPL mode with Endpoint DSL using auto-discovered endpoints.

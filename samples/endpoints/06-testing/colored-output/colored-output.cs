@@ -1,6 +1,6 @@
 #!/usr/bin/dotnet --
 // ═══════════════════════════════════════════════════════════════════════════════
-// ENDPOINT DSL - TESTING COLORED OUTPUT ⭐ RECOMMENDED
+// ENDPOINT DSL - TESTING COLORED OUTPUT
 // ═══════════════════════════════════════════════════════════════════════════════
 // Demonstrates testing handlers that produce colored/styled output.
 //

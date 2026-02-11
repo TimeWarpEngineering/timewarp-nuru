@@ -6,15 +6,15 @@
 
 Choose your paradigm based on your needs:
 
-| If you need... | Go to | Badge |
-|----------------|-------|-------|
-| **Testability & DI** | [`endpoints/`](./endpoints/) | ⭐ RECOMMENDED |
-| **Simple scripts** | [`fluent/`](./fluent/) | 🚀 Quick Start |
+| If you need... | Go to |
+|----------------|-------|
+| **Testability & DI** | [`endpoints/`](./endpoints/) |
+| **Simple scripts** | [`fluent/`](./fluent/) |
 | **Migration examples** | [`hybrid/`](./hybrid/) | ⚠️ Edge Cases |
 
 ## DSL Paradigms Explained
 
-### ⭐ Endpoint DSL (Recommended)
+### ⭐ Endpoint DSL
 
 **Class-based, attribute-driven approach**
 

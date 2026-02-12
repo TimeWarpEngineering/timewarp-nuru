@@ -1,0 +1,21 @@
+<Project>
+  <!-- Inherit from samples Directory.Build.props for analyzer support -->
+  <Import Project="$(MSBuildThisFileDirectory)../../Directory.Build.props" />
+
+  <PropertyGroup>
+    <!-- Disable default globbing to prevent duplicate Compile items -->
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <RunfileGlobbingEnabled>true</RunfileGlobbingEnabled>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Include all endpoint .cs files from ganda/endpoints for all editions -->
+    <!-- MSBuildThisFileDirectory resolves to this props file's directory -->
+    <Compile Include="$(MSBuildThisFileDirectory)ganda/endpoints/**/*.cs" />
+  </ItemGroup>
+
+  <!-- Reference to TimeWarp.Nuru -->
+  <ItemGroup>
+    <ProjectReference Include="$(MSBuildThisFileDirectory)../../../source/timewarp-nuru/timewarp-nuru.csproj" />
+  </ItemGroup>
+</Project>

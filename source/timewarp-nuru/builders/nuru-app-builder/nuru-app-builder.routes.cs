@@ -188,6 +188,27 @@ public partial class NuruAppBuilder
   }
 
   /// <summary>
+  /// Discovers and includes only [NuruRoute] endpoint classes that belong to the specified group types.
+  /// Use this overload to create subset CLI editions with only specific groups of endpoints.
+  /// </summary>
+  /// <param name="groupTypes">The group type classes to filter endpoints by.</param>
+  /// <returns>The builder for chaining.</returns>
+  /// <example>
+  /// <code>
+  /// // Include only endpoints from the MaintenanceGroup
+  /// NuruApp.CreateBuilder(args)
+  ///     .DiscoverEndpoints(typeof(MaintenanceGroup))
+  ///     .Build();
+  /// </code>
+  /// </example>
+  public virtual NuruAppBuilder DiscoverEndpoints(params Type[] groupTypes)
+  {
+    // Source generator discovers [NuruRoute] classes filtered by group types at compile time
+    _ = groupTypes;
+    return this;
+  }
+
+  /// <summary>
   /// Includes a specific endpoint class in this application.
   /// Use this for explicit control over which endpoints are included.
   /// </summary>

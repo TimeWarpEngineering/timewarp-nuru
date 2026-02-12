@@ -20,6 +20,7 @@ using System.Text;
 /// Interface implementations declared via <c>.Implements&lt;T&gt;()</c>.
 /// Used for delegate routes to declare filter interfaces for behaviors.
 /// </param>
+/// <param name="GroupTypeHierarchy">Type hierarchy for group filtering in subset CLI editions</param>
 public sealed record RouteDefinition(
   string OriginalPattern,
   ImmutableArray<SegmentDefinition> Segments,
@@ -31,7 +32,8 @@ public sealed record RouteDefinition(
   string? GroupPrefix,
   int ComputedSpecificity,
   int Order,
-  ImmutableArray<InterfaceImplementationDefinition> Implements = default)
+  ImmutableArray<InterfaceImplementationDefinition> Implements = default,
+  ImmutableArray<string> GroupTypeHierarchy = default)
 {
   /// <summary>
   /// Creates a RouteDefinition with default values for optional parameters.
@@ -47,7 +49,8 @@ public sealed record RouteDefinition(
     string? groupPrefix = null,
     int computedSpecificity = 0,
     int order = 0,
-    ImmutableArray<InterfaceImplementationDefinition>? implements = null)
+    ImmutableArray<InterfaceImplementationDefinition>? implements = null,
+    ImmutableArray<string>? groupTypeHierarchy = null)
   {
     return new RouteDefinition(
       OriginalPattern: originalPattern,
@@ -60,7 +63,8 @@ public sealed record RouteDefinition(
       GroupPrefix: groupPrefix,
       ComputedSpecificity: computedSpecificity,
       Order: order,
-      Implements: implements ?? []);
+      Implements: implements ?? [],
+      GroupTypeHierarchy: groupTypeHierarchy ?? []);
   }
 
   /// <summary>

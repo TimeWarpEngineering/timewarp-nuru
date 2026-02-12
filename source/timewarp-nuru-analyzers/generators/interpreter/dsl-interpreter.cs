@@ -587,7 +587,7 @@ public sealed class DslInterpreter
 
       "Implements" => DispatchImplements(invocation, receiver),
 
-      "DiscoverEndpoints" => DispatchDiscoverEndpoints(receiver),
+      "DiscoverEndpoints" => DispatchDiscoverEndpoints(invocation, receiver),
 
       "RunAsync" => DispatchRunAsyncCall(invocation, receiver),
 
@@ -667,7 +667,7 @@ public sealed class DslInterpreter
   /// <summary>
   /// Dispatches DiscoverEndpoints() call to enable endpoint discovery.
   /// </summary>
-  private static object? DispatchDiscoverEndpoints(object? receiver)
+  private object? DispatchDiscoverEndpoints(InvocationExpressionSyntax invocation, object? receiver)
   {
     if (receiver is not IIrAppBuilder appBuilder)
     {
@@ -675,6 +675,28 @@ public sealed class DslInterpreter
         "DiscoverEndpoints() must be called on an app builder.");
     }
 
+    ArgumentListSyntax? args = invocation.ArgumentList;
+    if (args?.Arguments.Count > 0)
+    {
+      // Extract type arguments from params array (typeof() expressions)
+      ImmutableArray<string>.Builder typeNames = ImmutableArray.CreateBuilder<string>();
+      foreach (ArgumentSyntax arg in args.Arguments)
+      {
+        if (arg.Expression is TypeOfExpressionSyntax typeofExpr)
+        {
+          SymbolInfo symbolInfo = SemanticModel.GetSymbolInfo(typeofExpr.Type);
+          if (symbolInfo.Symbol is INamedTypeSymbol typeSymbol)
+          {
+            string typeName = typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+            typeNames.Add(typeName);
+          }
+        }
+      }
+
+      return appBuilder.DiscoverEndpoints(typeNames.ToImmutable());
+    }
+
+    // No arguments - discover all endpoints
     return appBuilder.DiscoverEndpoints();
   }
 

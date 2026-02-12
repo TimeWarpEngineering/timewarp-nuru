@@ -32,6 +32,7 @@ namespace TimeWarp.Nuru.Generators;
 /// <param name="UseMicrosoftDependencyInjection">Whether UseMicrosoftDependencyInjection() was called to use runtime DI instead of source-gen DI</param>
 /// <param name="ConfigureServicesLambdaBody">Raw lambda body from ConfigureServices() for runtime invocation when UseMicrosoftDependencyInjection is true</param>
 /// <param name="ExtensionMethods">Extension method calls detected in ConfigureServices (for NURU052 warnings)</param>
+/// <param name="FilterGroupTypeNames">Group type names to filter endpoints by for subset CLI editions</param>
 public sealed record AppModel(
   string? VariableName,
   string? Name,
@@ -60,7 +61,8 @@ public sealed record AppModel(
   bool HasCompletion = false,
   bool UseMicrosoftDependencyInjection = false,
   string? ConfigureServicesLambdaBody = null,
-  ImmutableArray<ExtensionMethodCall> ExtensionMethods = default)
+  ImmutableArray<ExtensionMethodCall> ExtensionMethods = default,
+  ImmutableArray<string> FilterGroupTypeNames = default)
 {
   /// <summary>
   /// Creates an empty AppModel with required intercept sites.
@@ -87,7 +89,8 @@ public sealed record AppModel(
     CustomConverters: [],
     LoggingConfiguration: null,
     DiscoverEndpoints: false,
-    ExplicitEndpointTypes: []);
+    ExplicitEndpointTypes: [],
+    FilterGroupTypeNames: []);
 
   /// <summary>
   /// Creates an empty AppModel with a single intercept site for a specific method.

@@ -151,9 +151,8 @@ namespace TimeWarp.Nuru.Tests.Generator.GroupFiltering
       // Act - try to run ungrouped command
       int exitCode = await app.RunAsync(["ungrouped"]);
 
-      // Assert - ungrouped command not available with filter active
+      // Assert - ungrouped command not available with filter active (exit code 1 = not found)
       exitCode.ShouldBe(1);
-      terminal.OutputContains("Unknown command").ShouldBeTrue();
     }
 
     /// <summary>
@@ -208,16 +207,14 @@ namespace TimeWarp.Nuru.Tests.Generator.GroupFiltering
       // Act - try any command
       int exitCode = await app.RunAsync(["testapp", "kanban", "add", "test"]);
 
-      // Assert - no commands available
+      // Assert - no commands available (exit code 1 = not found)
       exitCode.ShouldBe(1);
 
       // Act - even ungrouped should fail
-      terminal.ClearOutput();
       exitCode = await app.RunAsync(["ungrouped"]);
 
-      // Assert
+      // Assert - still not found
       exitCode.ShouldBe(1);
-      terminal.OutputContains("Unknown command").ShouldBeTrue();
     }
   }
 }

@@ -48,14 +48,8 @@ internal static class EndpointExtractor
       return EndpointExtractionResult.Failure(patternDiagnostic);
     }
 
-    // Get the group info from base class hierarchy
-    // TODO: Get filterTypeNames from IrAppBuilder via the semantic model or another mechanism
-    ImmutableArray<string> filterTypeNames = []; // Will be passed from IrAppBuilder
-    GroupInfo groupInfo = ExtractGroupInfo(classDeclaration, semanticModel, filterTypeNames, cancellationToken);
-
-    // If endpoint doesn't match filter, return empty
-    if (!groupInfo.IsIncluded)
-      return EndpointExtractionResult.Empty;
+    // Get the group info from base class hierarchy - always collect full hierarchy
+    GroupInfo groupInfo = ExtractGroupInfo(classDeclaration, semanticModel, cancellationToken);
 
     // Infer message type from interfaces
     string messageType = InferMessageType(classDeclaration, semanticModel, cancellationToken);
@@ -93,7 +87,7 @@ internal static class EndpointExtractor
       handler: handler,
       messageType: messageType,
       description: description,
-      groupPrefix: groupInfo.EffectivePrefix,
+      groupPrefix: groupInfo.FullPrefix,
       groupTypeHierarchy: groupInfo.TypeHierarchy,
       computedSpecificity: specificity,
       implements: filterInterfaces);
@@ -155,8 +149,7 @@ internal static class EndpointExtractor
   private readonly record struct GroupInfo
   (
     ImmutableArray<string> TypeHierarchy,
-    string? EffectivePrefix,
-    bool IsIncluded
+    string? FullPrefix
   );
 
   /// <summary>
@@ -164,30 +157,25 @@ internal static class EndpointExtractor
   /// Walks the full inheritance chain and:
   /// 1. Collects all group type full names in the chain (TypeHierarchy)
   /// 2. Collects all prefixes
-  /// 3. Determines if the endpoint passes the filter (IsIncluded)
-  /// 4. Strips prefixes from types above the matched filter type (EffectivePrefix)
+  /// 3. Returns the full concatenated prefix
   ///
-  /// If no filter types are specified, includes all endpoints with full hierarchy and prefixes.
-  /// If filter types are specified, includes only endpoints that inherit from any filter type,
-  /// and strips prefixes from types above the matched type.
+  /// This always returns the full hierarchy - filtering by group types happens in
+  /// FilterEndpointsForApp after extraction.
   /// </summary>
   private static GroupInfo ExtractGroupInfo
   (
     ClassDeclarationSyntax classDeclaration,
     SemanticModel semanticModel,
-    ImmutableArray<string> filterTypeNames,
     CancellationToken cancellationToken
   )
   {
     if (classDeclaration.BaseList is null)
     {
       // No base class - ungrouped endpoint
-      // If filter is active, exclude it; if no filter, include with no group info
       return new GroupInfo
       (
         TypeHierarchy: [],
-        EffectivePrefix: null,
-        IsIncluded: filterTypeNames.IsEmpty
+        FullPrefix: null
       );
     }
 
@@ -197,8 +185,7 @@ internal static class EndpointExtractor
       return new GroupInfo
       (
         TypeHierarchy: [],
-        EffectivePrefix: null,
-        IsIncluded: filterTypeNames.IsEmpty
+        FullPrefix: null
       );
     }
 
@@ -242,64 +229,15 @@ internal static class EndpointExtractor
 
     ImmutableArray<string> typeHierarchy = [.. typeHierarchyReversed];
 
-    // If no filter types, include all with full prefix
-    if (filterTypeNames.IsEmpty)
-    {
-      string? fullPrefix = prefixesReversed.Any(p => !string.IsNullOrEmpty(p))
-        ? string.Join(" ", prefixesReversed.Where(p => !string.IsNullOrEmpty(p)))
-        : null;
-
-      return new GroupInfo
-      (
-        TypeHierarchy: typeHierarchy,
-        EffectivePrefix: fullPrefix,
-        IsIncluded: true
-      );
-    }
-
-    // Find the first (root-most) type that matches any filter type
-    // Match is case-insensitive on full type names
-    int? matchedIndex = null;
-    for (int i = 0; i < typeHierarchyReversed.Count; i++)
-    {
-      string typeName = typeHierarchyReversed[i];
-      if (filterTypeNames.Any(filterType =>
-        string.Equals(filterType, typeName, StringComparison.OrdinalIgnoreCase)))
-      {
-        matchedIndex = i;
-        break;
-      }
-    }
-
-    // If no match found, exclude this endpoint
-    if (matchedIndex is null)
-    {
-      return new GroupInfo
-      (
-        TypeHierarchy: typeHierarchy,
-        EffectivePrefix: null,
-        IsIncluded: false
-      );
-    }
-
-    // Strip prefixes from types above the matched type
-    // Include prefixes from matched type and below
-    List<string> effectivePrefixes = [];
-    for (int i = matchedIndex.Value; i < prefixesReversed.Count; i++)
-    {
-      if (!string.IsNullOrEmpty(prefixesReversed[i]))
-        effectivePrefixes.Add(prefixesReversed[i]);
-    }
-
-    string? effectivePrefix = effectivePrefixes.Count > 0
-      ? string.Join(" ", effectivePrefixes)
+    // Build full prefix from all prefixes
+    string? fullPrefix = prefixesReversed.Any(p => !string.IsNullOrEmpty(p))
+      ? string.Join(" ", prefixesReversed.Where(p => !string.IsNullOrEmpty(p)))
       : null;
 
     return new GroupInfo
     (
       TypeHierarchy: typeHierarchy,
-      EffectivePrefix: effectivePrefix,
-      IsIncluded: true
+      FullPrefix: fullPrefix
     );
   }
 

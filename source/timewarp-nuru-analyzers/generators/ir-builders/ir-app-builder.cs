@@ -45,6 +45,7 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
   private readonly List<string> ExplicitEndpointTypes = [];
   private readonly List<ExtensionMethodCall> ExtensionMethods = [];
   private readonly List<string> FilterGroupTypeNames = [];
+  private readonly List<HttpClientConfiguration> HttpClientConfigurations = [];
 
   /// <summary>
   /// Sets the variable name for debugging/identification.
@@ -150,6 +151,16 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
   public TSelf SetLoggingConfiguration(LoggingConfiguration config)
   {
     LoggingConfiguration = config;
+    return (TSelf)this;
+  }
+
+  /// <summary>
+  /// Adds an HttpClient configuration from AddHttpClient().
+  /// </summary>
+  /// <param name="config">The HttpClient configuration.</param>
+  public TSelf AddHttpClientConfiguration(HttpClientConfiguration config)
+  {
+    HttpClientConfigurations.Add(config);
     return (TSelf)this;
   }
 
@@ -413,6 +424,7 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
   IIrAppBuilder IIrAppBuilder.AddRepl(ReplModel replOptions) => AddRepl(replOptions);
   IIrAppBuilder IIrAppBuilder.AddConfiguration() => AddConfiguration();
   IIrAppBuilder IIrAppBuilder.SetLoggingConfiguration(LoggingConfiguration config) => SetLoggingConfiguration(config);
+  IIrAppBuilder IIrAppBuilder.AddHttpClientConfiguration(HttpClientConfiguration config) => AddHttpClientConfiguration(config);
   IIrAppBuilder IIrAppBuilder.AddCheckUpdatesRoute() => AddCheckUpdatesRoute();
   IIrAppBuilder IIrAppBuilder.AddBehavior(BehaviorDefinition behavior) => AddBehavior(behavior);
   IIrAppBuilder IIrAppBuilder.AddService(ServiceDefinition service) => AddService(service);

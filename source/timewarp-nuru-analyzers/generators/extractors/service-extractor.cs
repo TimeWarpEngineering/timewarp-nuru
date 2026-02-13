@@ -791,6 +791,7 @@ internal static class ServiceExtractor
       {
         serviceTypeName = methodSymbol.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
       }
+
       if (methodSymbol.TypeArguments.Length >= 2)
       {
         implementationTypeName = methodSymbol.TypeArguments[1].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);

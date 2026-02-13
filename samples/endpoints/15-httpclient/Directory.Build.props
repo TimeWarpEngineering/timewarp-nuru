@@ -1,0 +1,21 @@
+<Project>
+  <!-- Inherit from parent samples Directory.Build.props for analyzer support -->
+  <Import Project="$(MSBuildThisFileDirectory)../../Directory.Build.props" />
+
+  <PropertyGroup>
+    <!-- Disable default globbing to prevent duplicate Compile items -->
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <RunfileGlobbingEnabled>true</RunfileGlobbingEnabled>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Include all .cs files recursively for endpoint discovery -->
+    <!-- Exclude endpoint-httpclient-openmeteo.cs to avoid duplicate since it's the entry point -->
+    <Compile Include="**/*.cs" Exclude="obj/**/*;bin/**/*;endpoint-httpclient-openmeteo.cs" />
+  </ItemGroup>
+
+  <!-- Reference to TimeWarp.Nuru -->
+  <ItemGroup>
+    <ProjectReference Include="../../../source/timewarp-nuru/timewarp-nuru.csproj" />
+  </ItemGroup>
+</Project>

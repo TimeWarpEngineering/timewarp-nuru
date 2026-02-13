@@ -8,13 +8,13 @@ This sample will demonstrate the idiomatic .NET 10 pattern of using `AddHttpClie
 
 ## Checklist
 
-- [ ] Create the sample in `/samples/endpoints/15-httpclient/` directory (Endpoint DSL)
-- [ ] Demonstrate AddHttpClient() registration with typed client
-- [ ] Show async handler patterns with injected HTTP service
-- [ ] Add proper error handling for HTTP failures
-- [ ] Add README.md explaining how to run the sample
-- [ ] Test the sample locally to ensure it works
-- [ ] Update `/samples/endpoints/readme.md` to include the new sample
+- [x] Create the sample in `/samples/endpoints/15-httpclient/` directory (Endpoint DSL)
+- [x] Demonstrate AddHttpClient() registration with typed client
+- [x] Show async handler patterns with injected HTTP service
+- [x] Add proper error handling for HTTP failures
+- [x] Add README.md explaining how to run the sample
+- [x] Test the sample locally to ensure it works
+- [x] Update `/samples/endpoints/readme.md` to include the new sample
 
 ## Planned Implementation
 
@@ -66,3 +66,45 @@ This sample will demonstrate the idiomatic .NET 10 pattern of using `AddHttpClie
 ## Related Tasks
 
 - **423** - Implement AddHttpClient support in source generator (COMPLETED) - Unblocks this task
+
+## Results
+
+Successfully created HttpClient sample demonstrating AddHttpClient support with Nuru's source-gen DI.
+
+### Files Created
+
+1. **endpoint-httpclient-openmeteo.cs** - Main runfile showing AddHttpClient registration
+2. **endpoints/CurrentWeatherEndpoint.cs** - [NuruRoute("weather {city}")] endpoint
+3. **services/IOpenMeteoService.cs** - Service interface
+4. **services/OpenMeteoService.cs** - Implementation using HttpClient
+5. **services/WeatherModels.cs** - DTOs for JSON deserialization
+6. **readme.md** - Documentation
+
+### Key Demonstration
+
+The sample shows the idiomatic .NET 10 pattern WITHOUT UseMicrosoftDependencyInjection():
+
+```csharp
+.ConfigureServices(services =>
+{
+  services.AddHttpClient<IOpenMeteoService, OpenMeteoService>(client =>
+  {
+    client.Timeout = TimeSpan.FromSeconds(30);
+  });
+})
+```
+
+### Features
+
+- ✅ Typed client registration with AddHttpClient
+- ✅ Constructor injection of service
+- ✅ Real Open-Meteo Weather API integration
+- ✅ Proper error handling (invalid cities, network failures)
+- ✅ Pretty formatted weather output
+- ✅ Works without Microsoft DI (pure source-gen)
+
+### Usage
+
+```bash
+dotnet run samples/endpoints/15-httpclient/endpoint-httpclient-openmeteo.cs -- weather "London"
+```

@@ -25,7 +25,6 @@
 #:project ../../../source/timewarp-nuru/timewarp-nuru.csproj
 
 using TimeWarp.Nuru;
-using HttpClientSample.Services;
 
 NuruApp app = NuruApp.CreateBuilder()
   .WithName("Weather CLI")

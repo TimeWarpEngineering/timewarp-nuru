@@ -26,12 +26,19 @@ Create a runnable sample demonstrating HttpClient usage in a Nuru CLI applicatio
 6. **GitHub Public API** (limited endpoints) - Could show repo info or user data
 7. **SWAPI (Star Wars API)** (https://swapi.dev/) - Good for demonstrating nested resource fetching
 
+**CRITICAL REQUIREMENT: No Microsoft DI**
+
+The sample must demonstrate HttpClient usage WITHOUT `UseMicrosoftDependencyInjection()` or `AddHttpClient()`. This should show Nuru's source generator DI capabilities or manual instantiation patterns.
+
 **Recommended approach:**
 - Use Open-Meteo for weather by city name (people understand weather)
 - Show route like: `weather {city}` or `weather --city {city} --days {days:int?}`
 - Demonstrate JSON parsing with System.Text.Json
 - Include proper timeout and error handling
-- Consider showing both inline HttpClient creation and MS DI AddHttpClient() approaches
+- Show how to register HttpClient (or a wrapper service) with Nuru's source generator DI system
+- Alternatively show clean inline HttpClient instantiation within handlers
+
+**IMPORTANT**: The sample should work with pure Nuru DI - NOT require `.UseMicrosoftDependencyInjection()`.
 
 **Requirements:**
 - Must be a runnable `.cs` file (runfile style)

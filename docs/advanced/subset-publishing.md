@@ -426,90 +426,76 @@ public sealed class S3UploadCommand : S3GroupBase, ICommand<Unit>
 
 ## Project Structure
 
-Recommended organization for multiple editions:
+### Runfile-Based (Recommended for Rapid Development)
+
+Use a `Directory.Build.props` to share endpoint files across multiple runfile entry points:
 
 ```
-/MySolution
-  /MyApp.Shared           # Class library with all commands
-    /Groups
-      Groups.cs           # All group base classes
-    /Commands
-      AdminCommands.cs
-      UserCommands.cs
-      GitCommands.cs
-      KanbanCommands.cs
-    MyApp.Shared.csproj
-
-  /MyApp.Admin            # Admin edition entry point
-    Program.cs
-    MyApp.Admin.csproj
-
-  /MyApp.User             # User edition entry point
-    Program.cs
-    MyApp.User.csproj
-
-  /MyApp.Git              # Git tools edition
-    Program.cs
-    MyApp.Git.csproj
-
-  /MyApp.Full             # Full edition with all commands
-    Program.cs
-    MyApp.Full.csproj
-
-  MySolution.sln
+my-cli/
+├── Directory.Build.props       # Includes ganda/endpoints/** for all editions
+├── ganda/
+│   ├── ganda.cs                # Full edition entry point
+│   └── endpoints/
+│       ├── ganda-group.cs      # [NuruRouteGroup("ganda")] root group
+│       ├── kanban-group.cs     # [NuruRouteGroup("kanban")] : GandaGroup
+│       ├── git-group.cs        # [NuruRouteGroup("git")] : GandaGroup
+│       ├── kanban-add-command.cs
+│       ├── kanban-list-command.cs
+│       ├── git-commit-command.cs
+│       └── git-status-command.cs
+├── kanban/
+│   └── kanban.cs               # Kanban-only entry point
+└── git/
+    └── git.cs                  # Git-only entry point
 ```
 
-### Shared Library Configuration
+The `Directory.Build.props` includes the shared endpoint files into every runfile's compilation:
 
 ```xml
-<!-- MyApp.Shared.csproj -->
-<Project Sdk="Microsoft.NET.Sdk">
+<Project>
+  <Import Project="$(MSBuildThisFileDirectory)../../Directory.Build.props" />
+
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <RunfileGlobbingEnabled>true</RunfileGlobbingEnabled>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="TimeWarp.Nuru" />
+    <!-- Include shared endpoint files for all editions -->
+    <Compile Include="$(MSBuildThisFileDirectory)ganda/endpoints/**/*.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="$(MSBuildThisFileDirectory)../../../source/timewarp-nuru/timewarp-nuru.csproj" />
   </ItemGroup>
 </Project>
 ```
 
-### Entry Point Configuration
+Each entry point runfile is minimal:
 
-```xml
-<!-- MyApp.Admin.csproj -->
-<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>net10.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
+```csharp
+#!/usr/bin/dotnet --
+using TimeWarp.Nuru;
 
-  <ItemGroup>
-    <ProjectReference Include="../MyApp.Shared/MyApp.Shared.csproj" />
-  </ItemGroup>
-</Project>
+// Kanban-only edition
+NuruApp app = NuruApp.CreateBuilder()
+  .DiscoverEndpoints(typeof(KanbanGroup))
+  .Build();
+
+return await app.RunAsync(args);
 ```
 
-### Build Configuration
-
-Build different editions from the command line:
+### Build and Run
 
 ```bash
-# Build all editions
-$ dotnet build
-
-# Build specific edition
-$ dotnet build MyApp.Admin/MyApp.Admin.csproj
+# Run each edition directly
+dotnet run ganda/ganda.cs -- --help
+dotnet run kanban/kanban.cs -- --help
+dotnet run git/git.cs -- --help
 
 # Publish AOT editions
-$ dotnet publish MyApp.Admin/MyApp.Admin.csproj \
-    -c Release -r linux-x64 -p:PublishAot=true
-$ dotnet publish MyApp.User/MyApp.User.csproj \
-    -c Release -r linux-x64 -p:PublishAot=true
+dotnet publish ganda/ganda.cs -c Release -r linux-x64 -p:PublishAot=true
+dotnet publish kanban/kanban.cs -c Release -r linux-x64 -p:PublishAot=true
 ```
 
 ---
@@ -719,7 +705,7 @@ public class AdminEditionRoutingTests
 
 ## See Also
 
-- **Sample:** [samples/editions/01-group-filtering/](../samples/editions/01-group-filtering/) - Complete working example with kanban, git, and ganda editions
+- **Sample:** [samples/editions/01-group-filtering/](../../samples/editions/01-group-filtering/) - Complete working example with shared endpoints, three runfile editions
 - **Route Groups:** [route-groups.md](route-groups.md) - Detailed documentation on creating hierarchical command structures
 - **Testing:** [testing.md](testing.md) - Testing strategies for filtered CLI editions
 - **AOT Publishing:** [aot-publishing.md](aot-publishing.md) - Building native executables for your editions

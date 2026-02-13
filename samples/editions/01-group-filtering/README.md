@@ -1,139 +1,109 @@
 # Group Filtering Sample
 
-This sample demonstrates how to use route groups in TimeWarp.Nuru to create different "editions" of your CLI from a shared codebase.
+This sample demonstrates how to create different "editions" of a CLI from shared endpoint files using `DiscoverEndpoints(typeof(...))`.
 
 ## Overview
 
-The sample contains a shared library with commands for two groups: `kanban` and `git`. Three executables demonstrate different group filtering strategies:
+All commands live in `ganda/endpoints/`. Three runfile entry points demonstrate different group filtering:
 
-- **ganda**: Full edition with all commands
-- **kanban**: Kanban-only edition
-- **git**: Git-only edition
+- **ganda.cs**: Full edition with all commands
+- **kanban.cs**: Kanban-only edition (parent "ganda" prefix stripped)
+- **git.cs**: Git-only edition (parent "ganda" prefix stripped)
 
 ## Project Structure
 
 ```
 01-group-filtering/
-├── shared/
-│   ├── Groups.cs          # Route group definitions
-│   ├── KanbanCommands.cs  # Kanban commands
-│   ├── GitCommands.cs     # Git commands
-│   └── shared.csproj
+├── Directory.Build.props       # Includes ganda/endpoints/** for all editions
 ├── ganda/
-│   ├── Program.cs         # Discovers all endpoints
-│   └── ganda.csproj
+│   ├── ganda.cs                # Full edition entry point
+│   └── endpoints/
+│       ├── ganda-group.cs      # [NuruRouteGroup("ganda")] root group
+│       ├── kanban-group.cs     # [NuruRouteGroup("kanban")] : GandaGroup
+│       ├── git-group.cs        # [NuruRouteGroup("git")] : GandaGroup
+│       ├── kanban-add-command.cs
+│       ├── kanban-list-command.cs
+│       ├── git-commit-command.cs
+│       └── git-status-command.cs
 ├── kanban/
-│   ├── Program.cs         # Discovers only kanban endpoints
-│   └── kanban.csproj
+│   └── kanban.cs               # Kanban-only entry point
 ├── git/
-│   ├── Program.cs         # Discovers only git endpoints
-│   └── git.csproj
+│   └── git.cs                  # Git-only entry point
 └── README.md
 ```
 
 ## Group Hierarchy
 
-The groups form an inheritance hierarchy:
-
 ```
-GandaGroupBase (root)
-├── KanbanGroupBase
-└── GitGroupBase
-```
-
-The `[NuruRouteGroup("name")]` attribute marks classes as group bases.
-
-## Building
-
-### Build the Full Edition (ganda)
-
-```bash
-cd ganda
-dotnet build
+GandaGroup          [NuruRouteGroup("ganda")]
+├── KanbanGroup     [NuruRouteGroup("kanban")]
+│   ├── KanbanAddCommand
+│   └── KanbanListCommand
+└── GitGroup        [NuruRouteGroup("git")]
+    ├── GitCommitCommand
+    └── GitStatusCommand
 ```
 
-### Build the Kanban Edition
+## How It Works
 
-```bash
-cd kanban
-dotnet build
-```
+The `Directory.Build.props` in the sample root includes `ganda/endpoints/**/*.cs` for all runfiles. Each entry point differs only in its `DiscoverEndpoints()` call:
 
-### Build the Git Edition
+```csharp
+// ganda.cs - full edition
+.DiscoverEndpoints()
 
-```bash
-cd git
-dotnet build
+// kanban.cs - kanban only, "ganda" prefix stripped
+.DiscoverEndpoints(typeof(KanbanGroup))
+
+// git.cs - git only, "ganda" prefix stripped
+.DiscoverEndpoints(typeof(GitGroup))
 ```
 
 ## Running
 
-### Ganda Edition
+### Ganda (Full Edition)
 
 ```bash
-dotnet run --project ganda -- kanban add
-# Output: Kanban: Adding a new task
+dotnet run ganda/ganda.cs -- --help
+# Shows: ganda kanban add, ganda kanban list, ganda git commit, ganda git status
 
-dotnet run --project ganda -- kanban list
-# Output: Kanban: Listing all tasks
+dotnet run ganda/ganda.cs -- ganda kanban add "Task 1"
+# [KANBAN] Added task: Task 1
 
-dotnet run --project ganda -- git commit
-# Output: Git: Committing changes
-
-dotnet run --project ganda -- git status
-# Output: Git: Showing repository status
+dotnet run ganda/ganda.cs -- ganda git commit -m "message"
+# [GIT] Committed: message
 ```
 
 ### Kanban Edition
 
 ```bash
-dotnet run --project kanban -- add
-# Output: Kanban: Adding a new task
+dotnet run kanban/kanban.cs -- --help
+# Shows: kanban add, kanban list (no git commands, no "ganda" prefix)
 
-dotnet run --project kanban -- list
-# Output: Kanban: Listing all tasks
-
-# Git commands are NOT available:
-dotnet run --project kanban -- commit
-# Output: No matching command found
+dotnet run kanban/kanban.cs -- kanban add "Task 1"
+# [KANBAN] Added task: Task 1
 ```
 
 ### Git Edition
 
 ```bash
-dotnet run --project git -- commit
-# Output: Git: Committing changes
+dotnet run git/git.cs -- --help
+# Shows: git commit, git status (no kanban commands, no "ganda" prefix)
 
-dotnet run --project git -- status
-# Output: Git: Showing repository status
-
-# Kanban commands are NOT available:
-dotnet run --project git -- add
-# Output: No matching command found
+dotnet run git/git.cs -- git commit -m "message"
+# [GIT] Committed: message
 ```
 
 ## Key Concepts
 
-### `DiscoverEndpoints()` Behavior
+### Shared Endpoints
 
-1. **No arguments**: Discovers ALL endpoints from referenced assemblies
-   ```csharp
-   builder.DiscoverEndpoints()
-   ```
+All command classes live in `ganda/endpoints/` and are compiled into every edition via `Directory.Build.props`. The source generator filters which routes are active based on the `DiscoverEndpoints()` call.
 
-2. **With group type**: Discovers only endpoints in that group and its subgroups
-   ```csharp
-   builder.DiscoverEndpoints(typeof(KanbanGroupBase))  // kanban + subgroups
-   builder.DiscoverEndpoints(typeof(GitGroupBase))     // git + subgroups
-   ```
+### Prefix Stripping
 
-### Use Cases
+When filtering by `typeof(KanbanGroup)`, the parent "ganda" prefix is stripped. Users type `kanban add` instead of `ganda kanban add`.
 
-- **Plugin architectures**: Ship different feature sets based on license
-- **Modular deployments**: Build lightweight tools for specific workflows
-- **Development vs production**: Include debug commands only in dev builds
-- **Multi-tenant CLIs**: Same codebase, different command sets per customer
+### Type-Based Filtering
 
-## Source Generator Output
-
-The TimeWarp.Nuru source generator emits different route tables based on the `DiscoverEndpoints()` call. Each edition gets only the routes it needs, ensuring minimal binary size and no unused code paths.
+Filtering uses `typeof()` for type safety. Refactoring a group class name automatically updates all references.

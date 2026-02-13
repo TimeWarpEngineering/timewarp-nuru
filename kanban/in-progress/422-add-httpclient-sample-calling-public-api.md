@@ -1,47 +1,89 @@
 # Add HttpClient sample calling public API
 
+**Status:** BLOCKED by Task 423  
+**Blocked by:** [423-implement-addhttpclient-support-in-source-generator](../to-do/423-implement-addhttpclient-support-in-source-generator.md)
+
 ## Description
 
 Create a runnable sample demonstrating HttpClient usage in a Nuru CLI application. The sample should call a free public API and display the results. This fills a gap in our samples collection - we currently have no examples showing HTTP requests in actual runnable code.
 
-## Checklist
+**This task is blocked until Task 423 (AddHttpClient source generator support) is completed.** Once that work is done, this sample will demonstrate the idiomatic .NET 10 pattern of using `AddHttpClient()` with Nuru's source-gen DI - no `UseMicrosoftDependencyInjection()` required.
+
+## Why Blocked?
+
+The sample should demonstrate the idiomatic .NET 10 pattern:
+```csharp
+.ConfigureServices(services =>
+{
+  services.AddHttpClient<IOpenMeteoService, OpenMeteoService>(client =>
+  {
+    client.BaseAddress = new Uri("https://api.open-meteo.com/");
+    client.Timeout = TimeSpan.FromSeconds(30);
+  });
+})
+```
+
+However, `AddHttpClient()` currently requires `UseMicrosoftDependencyInjection()` because Nuru's source generator doesn't yet support this extension method. We want to show the proper pattern, not a workaround.
+
+## Checklist (Pending Task 423)
 
 - [ ] Research and select a suitable public API (no auth required, stable, interesting data)
-- [ ] Create the sample in `/samples/fluent/13-httpclient/` directory
-- [ ] Show both sync and async patterns if applicable
+- [ ] Create the sample in `/samples/endpoints/15-httpclient/` directory (Endpoint DSL)
+- [ ] Demonstrate AddHttpClient() registration with typed client
+- [ ] Show async handler patterns with injected HTTP service
 - [ ] Add proper error handling for HTTP failures
 - [ ] Add README.md explaining how to run the sample
 - [ ] Test the sample locally to ensure it works
-- [ ] Update `/samples/fluent/readme.md` to include the new sample
+- [ ] Update `/samples/endpoints/readme.md` to include the new sample
 
-## Notes
+## Planned Implementation
 
-**Potential Public APIs to consider:**
+**API:** Open-Meteo Weather API (https://open-meteo.com/)
+- Free, no API key
+- Familiar domain (weather)
+- Demonstrates geocoding (city → lat/long) then weather fetch
 
-1. **Open-Meteo Weather API** (https://open-meteo.com/) - Free, no API key, good for demonstrating simple GET requests with query parameters
-2. **Random User API** (https://randomuser.me/) - Generates random user data, good for demonstrating JSON deserialization
-3. **PokéAPI** (https://pokeapi.co/) - Pokemon data, fun and well-known
-4. **REST Countries** (https://restcountries.com/) - Country information, good for search/filter patterns
-5. **Cat Facts API** (https://catfact.ninja/) - Simple, no auth
-6. **GitHub Public API** (limited endpoints) - Could show repo info or user data
-7. **SWAPI (Star Wars API)** (https://swapi.dev/) - Good for demonstrating nested resource fetching
+**Structure:**
+```
+/samples/endpoints/15-httpclient/
+  ├── endpoint-httpclient-openmeteo.cs
+  ├── endpoints/
+  │   ├── CurrentWeatherEndpoint.cs    # [NuruRoute("weather {city}")]
+  │   └── ForecastEndpoint.cs          # [NuruRoute("forecast {city} --days {days:int}")]
+  └── services/
+      ├── IOpenMeteoService.cs
+      ├── OpenMeteoService.cs
+      └── GeoCodingResponse.cs
+```
 
-**CRITICAL REQUIREMENT: No Microsoft DI**
+**Key Features to Demonstrate:**
+- `AddHttpClient<TService, TImplementation>()` registration
+- Constructor injection of typed HTTP client
+- Proper HttpClient lifetime management (no `new HttpClient()` code smell)
+- JSON deserialization with System.Text.Json
+- Error handling for invalid cities, network failures, timeouts
 
-The sample must demonstrate HttpClient usage WITHOUT `UseMicrosoftDependencyInjection()` or `AddHttpClient()`. This should show Nuru's source generator DI capabilities or manual instantiation patterns.
+## Research Notes
 
-**Recommended approach:**
-- Use Open-Meteo for weather by city name (people understand weather)
-- Show route like: `weather {city}` or `weather --city {city} --days {days:int?}`
-- Demonstrate JSON parsing with System.Text.Json
-- Include proper timeout and error handling
-- Show how to register HttpClient (or a wrapper service) with Nuru's source generator DI system
-- Alternatively show clean inline HttpClient instantiation within handlers
+**Open-Meteo API Structure:**
+1. Geocoding: `https://geocoding-api.open-meteo.com/v1/search?name={city}`
+   - Returns lat/long for city name
+2. Weather: `https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=temperature_2m,weather_code`
+   - Returns current weather for coordinates
 
-**IMPORTANT**: The sample should work with pure Nuru DI - NOT require `.UseMicrosoftDependencyInjection()`.
+**Example Response:**
+```json
+{
+  "latitude": 52.52,
+  "longitude": 13.419,
+  "current": {
+    "temperature_2m": 15.3,
+    "weather_code": 1
+  }
+}
+```
 
-**Requirements:**
-- Must be a runnable `.cs` file (runfile style)
-- No API keys required (to keep sample simple)
-- Should demonstrate practical HttpClient patterns
-- Include comments explaining the code
+## Related Tasks
+
+- **423** - Implement AddHttpClient support in source generator (BLOCKER)
+- When 423 is complete, this task can proceed to implementation

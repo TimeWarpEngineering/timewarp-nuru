@@ -11,34 +11,23 @@ Route-based CLI framework for .NET. Define commands like web routes. Source-gene
 **Repository:** https://github.com/TimeWarpEngineering/timewarp-nuru
 **Depends on:** [TimeWarp.Terminal](https://github.com/TimeWarpEngineering/timewarp-terminal) - console abstractions (`IConsole`, `ITerminal`), widgets (panels, tables, rules), ANSI colors, and `TestTerminal` for testable output. Included transitively via the Nuru package. For full Terminal API docs (colors, widgets, builders), fetch the README at https://raw.githubusercontent.com/TimeWarpEngineering/timewarp-terminal/refs/heads/master/README.md
 
-## Reference Sample: Calculator
+## Reference: Calculator CLI
 
-The **calculator sample** (`samples/endpoints/02-calculator/`) is the canonical reference for building a multi-command Nuru CLI with the Endpoint DSL. Use it as the template when creating new CLIs.
+For a complete working example of a multi-command Nuru CLI, see the [calculator sample](https://github.com/TimeWarpEngineering/timewarp-nuru/tree/master/samples/endpoints/02-calculator). Replicate this folder structure for new CLIs:
 
-**Structure:**
 ```
-samples/endpoints/02-calculator/
-├── calculator.cs               # Entry point runfile
-├── Directory.Build.props       # Includes endpoints/**/*.cs into compilation
-├── endpoints/
-│   ├── add-command.cs          # One command per file
-│   ├── subtract-command.cs
-│   ├── multiply-command.cs
-│   ├── divide-command.cs
-│   ├── factorial-command.cs
-│   ├── fibonacci-command.cs
-│   ├── prime-check-command.cs
-│   ├── round-command.cs
-│   └── stats-command.cs
-└── services/
-    └── scientific-calculator.cs  # Injected service
+my-cli/
+├── my-cli.cs             # Entry point runfile
+├── Directory.Build.props # Includes endpoints/**/*.cs into compilation
+└── endpoints/
+    └── *.cs              # One endpoint class per file
 ```
 
-**Key patterns to replicate:**
-- Entry point runfile with `#:project` directive pointing to Nuru
-- `Directory.Build.props` that includes `endpoints/**/*.cs` and excludes the entry point
-- One endpoint class per file in `endpoints/` directory
-- Namespace per sample (e.g. `namespace EndpointCalculator.Endpoints;`)
+**Key patterns:**
+- Entry point runfile with `#:project` directive referencing the Nuru project
+- `Directory.Build.props` that glob-includes `endpoints/**/*.cs` and excludes the entry point
+- One endpoint class per file in `endpoints/`
+- File-scoped namespace in each endpoint file
 - `DiscoverEndpoints()` with `.AddRepl(options => { options.AutoStartWhenEmpty = true; })`
 
 ## Choose a DSL

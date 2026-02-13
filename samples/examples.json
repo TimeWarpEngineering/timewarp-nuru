@@ -505,6 +505,15 @@
       "dsl": "fluent",
       "tags": ["basics", "method-reference", "fluent"],
       "difficulty": "beginner"
+    },
+    {
+      "id": "httpclient-endpoint",
+      "name": "HttpClient - Endpoint DSL ⭐",
+      "description": "Typed HttpClient with AddHttpClient using Open-Meteo Weather API - works WITHOUT UseMicrosoftDependencyInjection()",
+      "path": "samples/endpoints/15-httpclient/endpoint-httpclient-openmeteo.cs",
+      "dsl": "endpoint",
+      "tags": ["httpclient", "di", "api", "http", "endpoint", "recommended"],
+      "difficulty": "intermediate"
     }
   ]
 }

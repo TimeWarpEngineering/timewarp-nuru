@@ -357,6 +357,47 @@ In the Fluent DSL, the full route pattern including parameters, options, and sub
 | Repeated option | `"run --env {var}*"` | Collects multiple values into array |
 | Description | `"{env\|Target environment}"` | Inline help text via `\|` |
 
+## Dependency Injection
+
+Nuru has two DI modes:
+
+1. **Source-Generated DI (Default)**: Fast, AOT-compatible. Supports:
+   - `AddTransient/AddScoped/AddSingleton<T>()` - basic registrations
+   - `AddLogging()` - logging with Microsoft.Extensions.Logging
+   - `AddHttpClient<TService, TImplementation>()` - typed HTTP clients
+
+2. **Runtime DI** (opt-in with `.UseMicrosoftDependencyInjection()`):
+   - Use when you need complex DI features like:
+     - Extension methods beyond the supported ones
+     - Factory delegates with `sp => new Service()`
+     - Services with constructor dependencies that Nuru can't resolve
+   - Slightly slower startup, but full MS DI capabilities
+
+Example of AddHttpClient with source-gen DI:
+```csharp
+.ConfigureServices(services =>
+{
+  services.AddHttpClient<IWeatherService, WeatherService>(client =>
+  {
+    client.BaseAddress = new Uri("https://api.example.com/");
+    client.Timeout = TimeSpan.FromSeconds(30);
+  });
+})
+.DiscoverEndpoints()
+.Build();
+```
+
+Then in the handler:
+```csharp
+public sealed class Handler(IWeatherService weatherService) : IQueryHandler<WeatherQuery, string>
+{
+  public async ValueTask<string> Handle(WeatherQuery query, CancellationToken ct)
+  {
+    return await weatherService.GetWeatherAsync(query.City, ct);
+  }
+}
+```
+
 ## Testing with TestTerminal
 
 Use `TestTerminal` from `TimeWarp.Terminal` to capture and verify CLI output:
@@ -429,3 +470,8 @@ For CLIs with multiple endpoint files, use a `Directory.Build.props` to include 
 - One endpoint class per file in `endpoints/` directory
 - Use namespaces in endpoint files
 - Follow the calculator sample structure for new CLIs
+
+## Samples
+
+- `samples/endpoints/02-calculator/` - Complete calculator CLI reference pattern
+- `samples/endpoints/05-httpclient/` - Typed HTTP client with source-gen DI example

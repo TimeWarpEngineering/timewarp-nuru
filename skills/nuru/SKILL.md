@@ -389,9 +389,9 @@ string[] lines = terminal.GetOutputLines();
 
 ## Installation
 
-```xml
-<!-- In .csproj -->
-<PackageReference Include="TimeWarp.Nuru" />
+```bash
+# Add to a .csproj project (--prerelease gets the latest version)
+dotnet add package TimeWarp.Nuru --prerelease
 ```
 
 ```csharp

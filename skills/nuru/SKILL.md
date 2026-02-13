@@ -11,6 +11,36 @@ Route-based CLI framework for .NET. Define commands like web routes. Source-gene
 **Repository:** https://github.com/TimeWarpEngineering/timewarp-nuru
 **Depends on:** [TimeWarp.Terminal](https://github.com/TimeWarpEngineering/timewarp-terminal) - console abstractions (`IConsole`, `ITerminal`), widgets (panels, tables, rules), ANSI colors, and `TestTerminal` for testable output. Included transitively via the Nuru package. For full Terminal API docs (colors, widgets, builders), fetch the README at https://raw.githubusercontent.com/TimeWarpEngineering/timewarp-terminal/refs/heads/master/README.md
 
+## Reference Sample: Calculator
+
+The **calculator sample** (`samples/endpoints/02-calculator/`) is the canonical reference for building a multi-command Nuru CLI with the Endpoint DSL. Use it as the template when creating new CLIs.
+
+**Structure:**
+```
+samples/endpoints/02-calculator/
+├── calculator.cs               # Entry point runfile
+├── Directory.Build.props       # Includes endpoints/**/*.cs into compilation
+├── endpoints/
+│   ├── add-command.cs          # One command per file
+│   ├── subtract-command.cs
+│   ├── multiply-command.cs
+│   ├── divide-command.cs
+│   ├── factorial-command.cs
+│   ├── fibonacci-command.cs
+│   ├── prime-check-command.cs
+│   ├── round-command.cs
+│   └── stats-command.cs
+└── services/
+    └── scientific-calculator.cs  # Injected service
+```
+
+**Key patterns to replicate:**
+- Entry point runfile with `#:project` directive pointing to Nuru
+- `Directory.Build.props` that includes `endpoints/**/*.cs` and excludes the entry point
+- One endpoint class per file in `endpoints/` directory
+- Namespace per sample (e.g. `namespace EndpointCalculator.Endpoints;`)
+- `DiscoverEndpoints()` with `.AddRepl(options => { options.AutoStartWhenEmpty = true; })`
+
 ## Choose a DSL
 
 Nuru offers two DSLs. Pick one based on your needs:
@@ -25,12 +55,17 @@ Nuru offers two DSLs. Pick one based on your needs:
 ```csharp
 NuruApp app = NuruApp.CreateBuilder()
   .DiscoverEndpoints()
+  .AddRepl(options =>
+  {
+    options.AutoStartWhenEmpty = true;
+  })
   .Build();
 
 return await app.RunAsync(args);
 ```
 
 `DiscoverEndpoints()` auto-discovers all classes with `[NuruRoute]`.
+`.AddRepl()` enables interactive REPL mode. `AutoStartWhenEmpty = true` starts REPL when no args provided.
 
 ### Commands, Queries, and Idempotent Commands
 
@@ -212,6 +247,53 @@ public abstract class DockerGroupBase
 // Both DockerBuildCommand and DockerRunCommand inherit --verbose/-v from DockerGroupBase
 ```
 
+### Subset Publishing (Group Filtering)
+
+Create multiple specialized CLI editions from one codebase by filtering endpoints by group type. Parent prefixes above the matched group are stripped.
+
+```csharp
+// Full edition - all commands
+NuruApp.CreateBuilder()
+  .DiscoverEndpoints()
+  .Build();
+
+// Kanban-only edition - "ganda" prefix stripped, only kanban commands
+NuruApp.CreateBuilder()
+  .DiscoverEndpoints(typeof(KanbanGroup))
+  .Build();
+
+// Multiple groups - OR logic
+NuruApp.CreateBuilder()
+  .DiscoverEndpoints(typeof(KanbanGroup), typeof(GitGroup))
+  .Build();
+```
+
+**Behavior:**
+- Include endpoint if it inherits (directly or indirectly) from any specified group type
+- Strip all group prefixes above the matched type
+- Ungrouped endpoints excluded when filter is active
+- Type-based (`typeof()`) for refactoring safety
+
+**Project structure** for multi-edition CLIs using runfiles:
+
+```
+my-cli/
+├── Directory.Build.props       # Includes ganda/endpoints/** for all editions
+├── ganda/
+│   ├── ganda.cs                # Full edition entry point
+│   └── endpoints/              # Shared command files (one per file)
+│       ├── ganda-group.cs
+│       ├── kanban-group.cs
+│       ├── kanban-add-command.cs
+│       └── git-commit-command.cs
+├── kanban/
+│   └── kanban.cs               # .DiscoverEndpoints(typeof(KanbanGroup))
+└── git/
+    └── git.cs                  # .DiscoverEndpoints(typeof(GitGroup))
+```
+
+See `samples/editions/01-group-filtering/` for a complete working example.
+
 ### Endpoint Key Rules
 
 - Endpoint classes must be `sealed` (can be `public sealed` or `internal sealed`)
@@ -220,6 +302,34 @@ public abstract class DockerGroupBase
 - Use nullable types (`string?`) for optional parameters, NOT `IsOptional=true`
 - Return `Unit` when no meaningful return value
 - Use `ValueTask<T>` for handler return types
+
+## REPL Mode
+
+Add interactive REPL to any Nuru app with `.AddRepl()`:
+
+```csharp
+NuruApp app = NuruApp.CreateBuilder()
+  .DiscoverEndpoints()
+  .AddRepl(options =>
+  {
+    options.AutoStartWhenEmpty = true;  // Start REPL when no args
+    options.Prompt = "calc> ";
+    options.WelcomeMessage = "Calculator REPL. Type commands or 'exit' to quit.";
+    options.PersistHistory = true;
+    options.HistoryFilePath = Path.Combine(
+      Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+      ".my_app_history"
+    );
+  })
+  .Build();
+
+return await app.RunAsync(args);
+```
+
+**Mode detection:**
+- With args: runs as CLI (e.g. `myapp add 2 3`)
+- Without args + `AutoStartWhenEmpty`: starts REPL
+- With `--interactive` / `-i`: starts REPL explicitly
 
 ## Fluent DSL
 
@@ -296,7 +406,33 @@ string[] lines = terminal.GetOutputLines();
 #:package TimeWarp.Nuru
 ```
 
+## Multi-File Runfile Projects
+
+For CLIs with multiple endpoint files, use a `Directory.Build.props` to include them. See `samples/endpoints/02-calculator/Directory.Build.props` for the reference pattern:
+
+```xml
+<Project>
+  <Import Project="$(MSBuildThisFileDirectory)../../Directory.Build.props" />
+
+  <PropertyGroup>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <RunfileGlobbingEnabled>true</RunfileGlobbingEnabled>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="**/*.cs" Exclude="obj/**/*;bin/**/*;calculator.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../../source/timewarp-nuru/timewarp-nuru.csproj" />
+  </ItemGroup>
+</Project>
+```
+
 ## General Rules
 
 - `DiscoverEndpoints()` auto-discovers all `[NuruRoute]` classes
 - All warnings treated as errors; no trailing whitespace
+- One endpoint class per file in `endpoints/` directory
+- Use namespaces in endpoint files
+- Follow the calculator sample structure for new CLIs

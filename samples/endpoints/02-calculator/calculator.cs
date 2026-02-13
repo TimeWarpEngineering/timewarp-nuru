@@ -15,6 +15,10 @@ using TimeWarp.Nuru;
 NuruApp app = NuruApp.CreateBuilder()
   .ConfigureServices(ConfigureServices)
   .DiscoverEndpoints()
+  .AddRepl(options =>
+  {
+    options.AutoStartWhenEmpty = true;
+  })
   .Build();
 
 return await app.RunAsync(args);

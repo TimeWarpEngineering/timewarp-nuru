@@ -1,33 +1,13 @@
 # Add HttpClient sample calling public API
 
-**Status:** BLOCKED by Task 423  
-**Blocked by:** [423-implement-addhttpclient-support-in-source-generator](../to-do/423-implement-addhttpclient-support-in-source-generator.md)
-
 ## Description
 
 Create a runnable sample demonstrating HttpClient usage in a Nuru CLI application. The sample should call a free public API and display the results. This fills a gap in our samples collection - we currently have no examples showing HTTP requests in actual runnable code.
 
-**This task is blocked until Task 423 (AddHttpClient source generator support) is completed.** Once that work is done, this sample will demonstrate the idiomatic .NET 10 pattern of using `AddHttpClient()` with Nuru's source-gen DI - no `UseMicrosoftDependencyInjection()` required.
+This sample will demonstrate the idiomatic .NET 10 pattern of using `AddHttpClient()` with Nuru's source-gen DI - no `UseMicrosoftDependencyInjection()` required.
 
-## Why Blocked?
+## Checklist
 
-The sample should demonstrate the idiomatic .NET 10 pattern:
-```csharp
-.ConfigureServices(services =>
-{
-  services.AddHttpClient<IOpenMeteoService, OpenMeteoService>(client =>
-  {
-    client.BaseAddress = new Uri("https://api.open-meteo.com/");
-    client.Timeout = TimeSpan.FromSeconds(30);
-  });
-})
-```
-
-However, `AddHttpClient()` currently requires `UseMicrosoftDependencyInjection()` because Nuru's source generator doesn't yet support this extension method. We want to show the proper pattern, not a workaround.
-
-## Checklist (Pending Task 423)
-
-- [ ] Research and select a suitable public API (no auth required, stable, interesting data)
 - [ ] Create the sample in `/samples/endpoints/15-httpclient/` directory (Endpoint DSL)
 - [ ] Demonstrate AddHttpClient() registration with typed client
 - [ ] Show async handler patterns with injected HTTP service
@@ -85,5 +65,4 @@ However, `AddHttpClient()` currently requires `UseMicrosoftDependencyInjection()
 
 ## Related Tasks
 
-- **423** - Implement AddHttpClient support in source generator (BLOCKER)
-- When 423 is complete, this task can proceed to implementation
+- **423** - Implement AddHttpClient support in source generator (COMPLETED) - Unblocks this task

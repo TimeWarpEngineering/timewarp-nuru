@@ -19,8 +19,10 @@ For a complete working example of a multi-command Nuru CLI, see the [calculator 
 my-cli/
 ├── my-cli.cs             # Entry point runfile
 ├── Directory.Build.props # Includes endpoints/**/*.cs into compilation
-└── endpoints/
-    └── *.cs              # One endpoint class per file
+├── endpoints/
+│   └── *.cs              # One endpoint class per file
+└── services/
+    └── *.cs              # Injected services
 ```
 
 **Key patterns:**

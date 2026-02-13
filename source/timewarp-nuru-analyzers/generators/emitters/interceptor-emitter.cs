@@ -623,11 +623,19 @@ internal static class InterceptorEmitter
     ImmutableArray<RouteDefinition> allEndpoints
   )
   {
-    // If DiscoverEndpoints() was called, include all endpoints
-    if (app.DiscoverEndpoints)
-      return allEndpoints;
+    // Priority 1: FilterGroupTypeNames (DiscoverEndpoints(typeof(...)))
+    // Must be checked BEFORE DiscoverEndpoints because both set DiscoverEndpoints=true
+    if (!app.FilterGroupTypeNames.IsDefaultOrEmpty && app.FilterGroupTypeNames.Length > 0)
+    {
+      return
+      [
+        .. allEndpoints
+          .Where(e => MatchesFilterGroupType(e, app.FilterGroupTypeNames))
+          .Select(e => StripGroupPrefixAboveMatchedType(e, app.FilterGroupTypeNames))
+      ];
+    }
 
-    // If explicit Map<T>() calls, include only those endpoints
+    // Priority 2: Explicit Map<T>() calls
     if (!app.ExplicitEndpointTypes.IsDefaultOrEmpty && app.ExplicitEndpointTypes.Length > 0)
     {
       return
@@ -643,8 +651,87 @@ internal static class InterceptorEmitter
       ];
     }
 
+    // Priority 3: DiscoverEndpoints() without filters - include all endpoints
+    if (app.DiscoverEndpoints)
+      return allEndpoints;
+
     // Default: no endpoints (test isolation)
     return [];
+  }
+
+  /// <summary>
+  /// Checks if an endpoint's group type hierarchy matches any of the filter types.
+  /// </summary>
+  private static bool MatchesFilterGroupType
+  (
+    RouteDefinition endpoint,
+    ImmutableArray<string> filterTypeNames
+  )
+  {
+    // Ungrouped endpoints don't match group filters
+    if (endpoint.GroupTypeHierarchy.IsDefaultOrEmpty)
+      return false;
+
+    return endpoint.GroupTypeHierarchy.Any(typeName =>
+      filterTypeNames.Any(filterType =>
+        string.Equals(filterType, typeName, StringComparison.OrdinalIgnoreCase)));
+  }
+
+  /// <summary>
+  /// Computes the stripped group prefix for an endpoint.
+  /// Strips prefixes from types above the matched filter type.
+  /// </summary>
+  private static RouteDefinition StripGroupPrefixAboveMatchedType
+  (
+    RouteDefinition endpoint,
+    ImmutableArray<string> filterTypeNames
+  )
+  {
+    if (endpoint.GroupTypeHierarchy.IsDefaultOrEmpty || string.IsNullOrEmpty(endpoint.GroupPrefix))
+    {
+      // No group info - no changes needed
+      return endpoint;
+    }
+
+    // Find the matched index in the type hierarchy
+    // Type hierarchy is in root-to-leaf order (most general to most specific)
+    int? matchedIndex = null;
+    for (int i = 0; i < endpoint.GroupTypeHierarchy.Length; i++)
+    {
+      string typeName = endpoint.GroupTypeHierarchy[i];
+      if (filterTypeNames.Any(filterType =>
+        string.Equals(filterType, typeName, StringComparison.OrdinalIgnoreCase)))
+      {
+        matchedIndex = i;
+        break;
+      }
+    }
+
+    if (matchedIndex is null)
+    {
+      // No match - shouldn't happen since we already filtered, but be safe
+      return endpoint;
+    }
+
+    // Split the current prefix into individual components
+    // Prefix is built from root-to-leaf order, so we can slice by index
+    string[] allPrefixes = endpoint.GroupPrefix.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+    // The number of non-empty prefixes in the hierarchy should match the length
+    // We keep prefixes from matched index onwards
+    if (matchedIndex.Value >= allPrefixes.Length)
+    {
+      // Matched type has no prefix, use empty prefix
+      return endpoint with { GroupPrefix = null };
+    }
+
+    // Slice from matched index to end
+    string[] effectivePrefixes = allPrefixes[matchedIndex.Value..];
+    string? effectivePrefix = effectivePrefixes.Length > 0
+      ? string.Join(" ", effectivePrefixes)
+      : null;
+
+    return endpoint with { GroupPrefix = effectivePrefix };
   }
 
   /// <summary>

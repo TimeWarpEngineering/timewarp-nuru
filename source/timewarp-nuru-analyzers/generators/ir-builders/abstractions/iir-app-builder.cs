@@ -168,6 +168,13 @@ public interface IIrAppBuilder : IIrRouteSource
   IIrAppBuilder DiscoverEndpoints();
 
   /// <summary>
+  /// Marks that [NuruRoute] endpoints should be discovered and filtered by group types.
+  /// </summary>
+  /// <param name="groupTypeNames">Fully qualified type names of the group classes to filter by.</param>
+  /// <returns>This builder for chaining.</returns>
+  IIrAppBuilder DiscoverEndpoints(ImmutableArray<string> groupTypeNames);
+
+  /// <summary>
   /// Adds a specific endpoint type to include.
   /// </summary>
   /// <param name="endpointTypeName">Fully qualified type name of the endpoint.</param>

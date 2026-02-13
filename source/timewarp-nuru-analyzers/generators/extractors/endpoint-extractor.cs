@@ -48,8 +48,8 @@ internal static class EndpointExtractor
       return EndpointExtractionResult.Failure(patternDiagnostic);
     }
 
-    // Get the group prefix from base class, if any
-    string? groupPrefix = ExtractGroupPrefix(classDeclaration, semanticModel, cancellationToken);
+    // Get the group info from base class hierarchy - always collect full hierarchy
+    GroupInfo groupInfo = ExtractGroupInfo(classDeclaration, semanticModel, cancellationToken);
 
     // Infer message type from interfaces
     string messageType = InferMessageType(classDeclaration, semanticModel, cancellationToken);
@@ -87,7 +87,8 @@ internal static class EndpointExtractor
       handler: handler,
       messageType: messageType,
       description: description,
-      groupPrefix: groupPrefix,
+      groupPrefix: groupInfo.FullPrefix,
+      groupTypeHierarchy: groupInfo.TypeHierarchy,
       computedSpecificity: specificity,
       implements: filterInterfaces);
 
@@ -143,10 +144,25 @@ internal static class EndpointExtractor
   }
 
   /// <summary>
-  /// Extracts group prefix from base class hierarchy with [NuruRouteGroup] attributes.
-  /// Walks the full inheritance chain and concatenates all prefixes from root to leaf.
+  /// Contains the result of extracting group information from the inheritance hierarchy.
   /// </summary>
-  private static string? ExtractGroupPrefix
+  private readonly record struct GroupInfo
+  (
+    ImmutableArray<string> TypeHierarchy,
+    string? FullPrefix
+  );
+
+  /// <summary>
+  /// Extracts group information from base class hierarchy with [NuruRouteGroup] attributes.
+  /// Walks the full inheritance chain and:
+  /// 1. Collects all group type full names in the chain (TypeHierarchy)
+  /// 2. Collects all prefixes
+  /// 3. Returns the full concatenated prefix
+  ///
+  /// This always returns the full hierarchy - filtering by group types happens in
+  /// FilterEndpointsForApp after extraction.
+  /// </summary>
+  private static GroupInfo ExtractGroupInfo
   (
     ClassDeclarationSyntax classDeclaration,
     SemanticModel semanticModel,
@@ -154,19 +170,39 @@ internal static class EndpointExtractor
   )
   {
     if (classDeclaration.BaseList is null)
-      return null;
+    {
+      // No base class - ungrouped endpoint
+      return new GroupInfo
+      (
+        TypeHierarchy: [],
+        FullPrefix: null
+      );
+    }
 
     INamedTypeSymbol? classSymbol = semanticModel.GetDeclaredSymbol(classDeclaration, cancellationToken);
     if (classSymbol?.BaseType is null)
-      return null;
+    {
+      return new GroupInfo
+      (
+        TypeHierarchy: [],
+        FullPrefix: null
+      );
+    }
 
-    // Walk the full inheritance chain and collect prefixes
-    List<string> prefixes = [];
+    // Walk the full inheritance chain from leaf to root, collecting info
+    // We'll store in reverse order first, then reverse
+    List<string> typeHierarchyReversed = [];
+    List<string> prefixesReversed = [];
+
     INamedTypeSymbol? current = classSymbol.BaseType;
 
     while (current is not null && current.SpecialType != SpecialType.System_Object)
     {
-      // Check this type for [NuruRouteGroup] attribute
+      string typeFullName = current.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+      typeHierarchyReversed.Add(typeFullName);
+
+      // Check this type for [NuruRouteGroup] attribute and collect prefix
+      string? prefix = null;
       foreach (AttributeData attribute in current.GetAttributes())
       {
         string? attributeName = attribute.AttributeClass?.Name;
@@ -175,18 +211,34 @@ internal static class EndpointExtractor
 
         // Get the prefix from the first constructor argument
         if (attribute.ConstructorArguments.Length > 0 &&
-            attribute.ConstructorArguments[0].Value is string prefix &&
-            !string.IsNullOrEmpty(prefix))
+            attribute.ConstructorArguments[0].Value is string p &&
+            !string.IsNullOrEmpty(p))
         {
-          // Insert at front to maintain root-to-leaf order (grandparent before parent)
-          prefixes.Insert(0, prefix);
+          prefix = p;
+          break;
         }
       }
 
+      prefixesReversed.Add(prefix ?? "");
       current = current.BaseType;
     }
 
-    return prefixes.Count > 0 ? string.Join(" ", prefixes) : null;
+    // Reverse to get root-to-leaf order
+    typeHierarchyReversed.Reverse();
+    prefixesReversed.Reverse();
+
+    ImmutableArray<string> typeHierarchy = [.. typeHierarchyReversed];
+
+    // Build full prefix from all prefixes
+    string? fullPrefix = prefixesReversed.Any(p => !string.IsNullOrEmpty(p))
+      ? string.Join(" ", prefixesReversed.Where(p => !string.IsNullOrEmpty(p)))
+      : null;
+
+    return new GroupInfo
+    (
+      TypeHierarchy: typeHierarchy,
+      FullPrefix: fullPrefix
+    );
   }
 
   /// <summary>

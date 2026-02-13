@@ -44,6 +44,7 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
   private string? ConfigureServicesBody;
   private readonly List<string> ExplicitEndpointTypes = [];
   private readonly List<ExtensionMethodCall> ExtensionMethods = [];
+  private readonly List<string> FilterGroupTypeNames = [];
 
   /// <summary>
   /// Sets the variable name for debugging/identification.
@@ -291,6 +292,18 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
   }
 
   /// <summary>
+  /// Marks that [NuruRoute] endpoints should be discovered and filtered by group types.
+  /// Mirrors: NuruAppBuilder.DiscoverEndpoints(params Type[])
+  /// </summary>
+  /// <param name="groupTypeNames">Fully qualified type names of the group classes to filter by.</param>
+  public TSelf DiscoverEndpoints(ImmutableArray<string> groupTypeNames)
+  {
+    DiscoverEndpointsEnabled = true;
+    FilterGroupTypeNames.AddRange(groupTypeNames);
+    return (TSelf)this;
+  }
+
+  /// <summary>
   /// Adds a specific endpoint type to include.
   /// Mirrors: NuruAppBuilder.Map&lt;TEndpoint&gt;()
   /// </summary>
@@ -372,7 +385,8 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
       HasCompletion: CompletionEnabled,
       UseMicrosoftDependencyInjection: MicrosoftDependencyInjectionEnabled,
       ConfigureServicesLambdaBody: ConfigureServicesBody,
-      ExtensionMethods: [.. ExtensionMethods]);
+      ExtensionMethods: [.. ExtensionMethods],
+      FilterGroupTypeNames: [.. FilterGroupTypeNames]);
   }
 
   /// <summary>
@@ -410,6 +424,7 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
   IIrAppBuilder IIrAppBuilder.AddTypeConverter(CustomConverterDefinition converter) => AddTypeConverter(converter);
   IIrAppBuilder IIrAppBuilder.AddInterceptSite(string methodName, InterceptSiteModel site) => AddInterceptSite(methodName, site);
   IIrAppBuilder IIrAppBuilder.DiscoverEndpoints() => DiscoverEndpoints();
+  IIrAppBuilder IIrAppBuilder.DiscoverEndpoints(ImmutableArray<string> groupTypeNames) => DiscoverEndpoints(groupTypeNames);
   IIrAppBuilder IIrAppBuilder.MapEndpoint(string endpointTypeName) => MapEndpoint(endpointTypeName);
   IIrAppBuilder IIrAppBuilder.EnableCompletion() => EnableCompletion();
 }

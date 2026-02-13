@@ -1,29 +1,20 @@
 #!/usr/bin/dotnet --
 // ═══════════════════════════════════════════════════════════════════════════════
-// CALCULATOR - ENDPOINT DSL
+// GIT EDITION - Subset of ganda CLI
 // ═══════════════════════════════════════════════════════════════════════════════
-// Full-featured calculator using Endpoint DSL pattern.
-// Demonstrates: Commands with parameters, dependency injection, testable handlers
-// DSL: Endpoint (class-based with [NuruRoute], nested Handler classes)
+// Only git commands. "ganda" prefix stripped.
+// Usage: dotnet run git.cs -- git commit -m "message"
+//        dotnet run git.cs -- git status
+//        dotnet run git.cs -- --help
 // ═══════════════════════════════════════════════════════════════════════════════
-#:project ../../../source/timewarp-nuru/timewarp-nuru.csproj
 
-using EndpointCalculator.Services;
-using Microsoft.Extensions.DependencyInjection;
+#pragma warning disable CA2007
+
+using Editions.GroupFiltering;
 using TimeWarp.Nuru;
 
 NuruApp app = NuruApp.CreateBuilder()
-  .ConfigureServices(ConfigureServices)
-  .DiscoverEndpoints()
-  .AddRepl(options =>
-  {
-    options.AutoStartWhenEmpty = true;
-  })
+  .DiscoverEndpoints(typeof(GitGroup))
   .Build();
 
 return await app.RunAsync(args);
-
-static void ConfigureServices(IServiceCollection services)
-{
-  services.AddSingleton<IScientificCalculator, ScientificCalculator>();
-}

@@ -1,29 +1,19 @@
 #!/usr/bin/dotnet --
 // ═══════════════════════════════════════════════════════════════════════════════
-// CALCULATOR - ENDPOINT DSL
+// GANDA FULL EDITION
 // ═══════════════════════════════════════════════════════════════════════════════
-// Full-featured calculator using Endpoint DSL pattern.
-// Demonstrates: Commands with parameters, dependency injection, testable handlers
-// DSL: Endpoint (class-based with [NuruRoute], nested Handler classes)
+// Full CLI with all commands: kanban, git, and all groups.
+// Usage: dotnet run ganda.cs -- ganda kanban add "Task 1"
+//        dotnet run ganda.cs -- ganda git commit -m "message"
+//        dotnet run ganda.cs -- --help
 // ═══════════════════════════════════════════════════════════════════════════════
-#:project ../../../source/timewarp-nuru/timewarp-nuru.csproj
 
-using EndpointCalculator.Services;
-using Microsoft.Extensions.DependencyInjection;
+#pragma warning disable CA2007
+
 using TimeWarp.Nuru;
 
 NuruApp app = NuruApp.CreateBuilder()
-  .ConfigureServices(ConfigureServices)
   .DiscoverEndpoints()
-  .AddRepl(options =>
-  {
-    options.AutoStartWhenEmpty = true;
-  })
   .Build();
 
 return await app.RunAsync(args);
-
-static void ConfigureServices(IServiceCollection services)
-{
-  services.AddSingleton<IScientificCalculator, ScientificCalculator>();
-}

@@ -21,11 +21,12 @@ The source generator should:
 
 ## Checklist
 
+- [ ] Build a test case to reproduce the issue (service with only parameterized constructor)
+- [ ] Verify the build fails with CS7036 error as expected
 - [ ] Investigate source generator code that handles service instantiation
 - [ ] Add logic to detect parameterized constructors
 - [ ] Generate code using `GetRequiredService<T>()` for parameterized constructors
-- [ ] Add tests for parameterized constructor scenarios
-- [ ] Verify fix works with the reported issue
+- [ ] Verify fix resolves the issue
 
 ## Notes
 

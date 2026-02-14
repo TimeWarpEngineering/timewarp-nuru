@@ -365,12 +365,13 @@ Nuru has two DI modes:
    - `AddTransient/AddScoped/AddSingleton<T>()` - basic registrations
    - `AddLogging()` - logging with Microsoft.Extensions.Logging
    - `AddHttpClient<TService, TImplementation>()` - typed HTTP clients
+   - Services with constructor dependencies (resolved at compile time via `new T(dep1, dep2)`)
+   - Transitive dependencies (service depending on service with its own deps)
 
 2. **Runtime DI** (opt-in with `.UseMicrosoftDependencyInjection()`):
    - Use when you need complex DI features like:
      - Extension methods beyond the supported ones
      - Factory delegates with `sp => new Service()`
-     - Services with constructor dependencies that Nuru can't resolve
    - Slightly slower startup, but full MS DI capabilities
 
 Example of AddHttpClient with source-gen DI:

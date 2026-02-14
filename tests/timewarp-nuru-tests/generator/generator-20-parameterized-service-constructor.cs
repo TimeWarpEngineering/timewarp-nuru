@@ -1,4 +1,5 @@
 #!/usr/bin/dotnet --
+#pragma warning disable CA1849 // Call async methods when in async method
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // GENERATOR TEST: Parameterized Service Constructor (#425, #426)
@@ -104,6 +105,51 @@ public class MessageBuilderService : IMessageBuilder
   }
 
   public string Build(string name) => $"[{Greeter.Greet(name)}]";
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ENDPOINT DSL: Services for [NuruRoute] endpoint tests (issue #175)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+public interface IWorkspaceService
+{
+  string GetWorkspace();
+}
+
+public class WorkspaceService : IWorkspaceService
+{
+  public string GetWorkspace() => "/home/user/workspace";
+}
+
+public interface IKanbanService
+{
+  string ListTasks();
+}
+
+public class KanbanService : IKanbanService
+{
+  private readonly IWorkspaceService WorkspaceService;
+
+  public KanbanService(IWorkspaceService workspaceService)
+  {
+    WorkspaceService = workspaceService;
+  }
+
+  public string ListTasks() => $"Tasks in {WorkspaceService.GetWorkspace()}";
+}
+
+// Endpoint: Singleton service with parameterized constructor (reproduces #175)
+[NuruRoute("gen20-kanban", Description = "List kanban tasks")]
+public sealed class Gen20KanbanQuery : IQuery<Unit>
+{
+  public sealed class Handler(ITerminal terminal, IKanbanService kanbanService) : IQueryHandler<Gen20KanbanQuery, Unit>
+  {
+    public ValueTask<Unit> Handle(Gen20KanbanQuery query, CancellationToken cancellationToken)
+    {
+      terminal.WriteLine(kanbanService.ListTasks());
+      return default;
+    }
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -245,6 +291,33 @@ namespace TimeWarp.Nuru.Tests.Generator.ParameterizedServiceConstructor
       // Assert
       exitCode.ShouldBe(0);
       terminal.OutputContains("[Hi, Deep!]").ShouldBeTrue();
+    }
+
+    /// <summary>
+    /// Endpoint DSL: Singleton service with parameterized constructor.
+    /// Reproduces issue #175 - CS0103 missing Lazy field for KanbanService.
+    /// </summary>
+    public static async Task Should_resolve_singleton_with_constructor_deps_in_endpoint()
+    {
+      // Arrange
+      using TestTerminal terminal = new();
+
+      NuruApp app = NuruApp.CreateBuilder()
+        .UseTerminal(terminal)
+        .ConfigureServices(services =>
+        {
+          services.AddSingleton<IWorkspaceService, WorkspaceService>();
+          services.AddSingleton<IKanbanService, KanbanService>();
+        })
+        .DiscoverEndpoints()
+        .Build();
+
+      // Act
+      int exitCode = await app.RunAsync(["gen20-kanban"]);
+
+      // Assert
+      exitCode.ShouldBe(0);
+      terminal.OutputContains("Tasks in /home/user/workspace").ShouldBeTrue();
     }
   }
 }

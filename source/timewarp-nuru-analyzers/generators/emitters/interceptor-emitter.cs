@@ -323,13 +323,14 @@ internal static class InterceptorEmitter
   /// </summary>
   private static void EmitServiceFields(StringBuilder sb, IEnumerable<ServiceDefinition> services)
   {
-    // Only emit fields for Singleton and Scoped services without constructor dependencies.
-    // Services with constructor deps are resolved inline (deps may only be available at runtime).
-    // Materialize to array to avoid multiple enumeration
+    // Emit Lazy<T> fields for all Singleton and Scoped services (thread-safe caching).
+    // Services with constructor deps get their args resolved in the lambda.
+    // Materialize to ImmutableArray for ResolveConstructorArguments compatibility
+    ImmutableArray<ServiceDefinition> allServices = [.. services];
     ServiceDefinition[] cachedServices =
     [
-      .. services
-        .Where(s => (s.Lifetime is ServiceLifetime.Singleton or ServiceLifetime.Scoped) && !s.HasConstructorDependencies)
+      .. allServices
+        .Where(s => s.Lifetime is ServiceLifetime.Singleton or ServiceLifetime.Scoped)
         .DistinctBy(s => s.ImplementationTypeName) // Avoid duplicates if same impl registered multiple times
     ];
 
@@ -341,8 +342,17 @@ internal static class InterceptorEmitter
     foreach (ServiceDefinition service in cachedServices)
     {
       string fieldName = GetServiceFieldName(service.ImplementationTypeName);
-      sb.AppendLine(
-        $"  private static readonly global::System.Lazy<{service.ImplementationTypeName}> {fieldName} = new(() => new {service.ImplementationTypeName}());");
+      if (service.HasConstructorDependencies)
+      {
+        string args = ServiceResolverEmitter.ResolveConstructorArguments(service, allServices);
+        sb.AppendLine(
+          $"  private static readonly global::System.Lazy<{service.ImplementationTypeName}> {fieldName} = new(() => new {service.ImplementationTypeName}({args}));");
+      }
+      else
+      {
+        sb.AppendLine(
+          $"  private static readonly global::System.Lazy<{service.ImplementationTypeName}> {fieldName} = new(() => new {service.ImplementationTypeName}());");
+      }
     }
 
     sb.AppendLine();

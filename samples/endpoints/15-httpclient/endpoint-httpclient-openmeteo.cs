@@ -24,6 +24,8 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 #:project ../../../source/timewarp-nuru/timewarp-nuru.csproj
 
+using Microsoft.Extensions.DependencyInjection;
+using HttpClientSample.Services;
 using TimeWarp.Nuru;
 
 NuruApp app = NuruApp.CreateBuilder()
@@ -39,7 +41,6 @@ NuruApp app = NuruApp.CreateBuilder()
     });
   })
   .DiscoverEndpoints()
-  .AddHelp()
   .Build();
 
 return await app.RunAsync(args);

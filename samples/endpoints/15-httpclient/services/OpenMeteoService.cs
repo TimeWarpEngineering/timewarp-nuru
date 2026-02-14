@@ -45,7 +45,7 @@ public sealed class OpenMeteoService(HttpClient httpClient) : IOpenMeteoService
     GeocodingResponse? geocodingData;
     try
     {
-      geocodingData = JsonSerializer.Deserialize<GeocodingResponse>(geocodeJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+      geocodingData = JsonSerializer.Deserialize(geocodeJson, OpenMeteoJsonContext.Default.GeocodingResponse);
     }
     catch (JsonException ex)
     {
@@ -81,7 +81,7 @@ public sealed class OpenMeteoService(HttpClient httpClient) : IOpenMeteoService
     WeatherResponse? weatherData;
     try
     {
-      weatherData = JsonSerializer.Deserialize<WeatherResponse>(weatherJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+      weatherData = JsonSerializer.Deserialize(weatherJson, OpenMeteoJsonContext.Default.WeatherResponse);
     }
     catch (JsonException ex)
     {
@@ -97,9 +97,9 @@ public sealed class OpenMeteoService(HttpClient httpClient) : IOpenMeteoService
     {
       City = location.Name,
       Country = location.Country,
-      TemperatureC = weatherData.Current.Temperature_2m,
-      WeatherCode = weatherData.Current.Weather_Code,
-      Condition = GetWeatherDescription(weatherData.Current.Weather_Code)
+      TemperatureC = weatherData.Current.Temperature2m,
+      WeatherCode = weatherData.Current.WeatherCode,
+      Condition = GetWeatherDescription(weatherData.Current.WeatherCode)
     };
   }
 

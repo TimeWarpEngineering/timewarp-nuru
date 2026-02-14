@@ -1,24 +1,31 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 // WEATHER MODELS
 // ═══════════════════════════════════════════════════════════════════════════════
-// DTOs for Open-Meteo API responses.
+// DTOs for Open-Meteo API responses with AOT-compatible JSON serialization.
 
 namespace HttpClientSample.Services;
 
+using System.Text.Json.Serialization;
+
 #region Design
 // These models map directly to the Open-Meteo API JSON responses.
-// Using nullable reference types to handle missing data gracefully.
-// Properties use nullable types where the API may not return values.
+// Uses [JsonPropertyName] and [JsonSerializable] for AOT compatibility.
+// The OpenMeteoJsonContext provides source-generated serialization.
 #endregion
+
+/// <summary>
+/// Source-generated JSON serializer context for AOT-compatible deserialization.
+/// </summary>
+[JsonSerializable(typeof(GeocodingResponse))]
+[JsonSerializable(typeof(WeatherResponse))]
+public sealed partial class OpenMeteoJsonContext : JsonSerializerContext;
 
 /// <summary>
 /// Response from the Open-Meteo geocoding API.
 /// </summary>
 public sealed class GeocodingResponse
 {
-  /// <summary>
-  /// The list of matching locations.
-  /// </summary>
+  [JsonPropertyName("results")]
   public List<GeocodingResult> Results { get; set; } = [];
 }
 
@@ -27,24 +34,16 @@ public sealed class GeocodingResponse
 /// </summary>
 public sealed class GeocodingResult
 {
-  /// <summary>
-  /// The location name.
-  /// </summary>
+  [JsonPropertyName("name")]
   public string Name { get; set; } = string.Empty;
 
-  /// <summary>
-  /// Latitude of the location.
-  /// </summary>
+  [JsonPropertyName("latitude")]
   public double Latitude { get; set; }
 
-  /// <summary>
-  /// Longitude of the location.
-  /// </summary>
+  [JsonPropertyName("longitude")]
   public double Longitude { get; set; }
 
-  /// <summary>
-  /// Country where the location is.
-  /// </summary>
+  [JsonPropertyName("country")]
   public string? Country { get; set; }
 }
 
@@ -53,9 +52,7 @@ public sealed class GeocodingResult
 /// </summary>
 public sealed class WeatherResponse
 {
-  /// <summary>
-  /// Current weather data.
-  /// </summary>
+  [JsonPropertyName("current")]
   public CurrentWeather Current { get; set; } = new();
 }
 
@@ -64,15 +61,11 @@ public sealed class WeatherResponse
 /// </summary>
 public sealed class CurrentWeather
 {
-  /// <summary>
-  /// Temperature in Celsius.
-  /// </summary>
-  public double Temperature_2m { get; set; }
+  [JsonPropertyName("temperature_2m")]
+  public double Temperature2m { get; set; }
 
-  /// <summary>
-  /// WMO weather interpretation code.
-  /// </summary>
-  public int Weather_Code { get; set; }
+  [JsonPropertyName("weather_code")]
+  public int WeatherCode { get; set; }
 }
 
 /// <summary>
@@ -80,33 +73,10 @@ public sealed class CurrentWeather
 /// </summary>
 public sealed class WeatherResult
 {
-  /// <summary>
-  /// City name.
-  /// </summary>
   public string City { get; set; } = string.Empty;
-
-  /// <summary>
-  /// Country name (if available).
-  /// </summary>
   public string? Country { get; set; }
-
-  /// <summary>
-  /// Temperature in Celsius.
-  /// </summary>
   public double TemperatureC { get; set; }
-
-  /// <summary>
-  /// Temperature in Fahrenheit.
-  /// </summary>
   public double TemperatureF => Math.Round(TemperatureC * 9 / 5 + 32, 1);
-
-  /// <summary>
-  /// Weather condition description.
-  /// </summary>
   public string Condition { get; set; } = string.Empty;
-
-  /// <summary>
-  /// Weather interpretation code from API.
-  /// </summary>
   public int WeatherCode { get; set; }
 }

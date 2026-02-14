@@ -32,7 +32,8 @@ internal static class RouteMatcherEmitter
     ImmutableArray<CustomConverterDefinition> customConverters = default,
     string? loggerFactoryFieldName = null,
     bool useRuntimeDI = false,
-    string runtimeDISuffix = "")
+    string runtimeDISuffix = "",
+    ImmutableArray<HttpClientConfiguration> httpClientConfigurations = default)
   {
     // Use empty array if optional parameters not provided
     if (behaviors.IsDefault)
@@ -55,11 +56,11 @@ internal static class RouteMatcherEmitter
     // Use complex matching for routes with options, catch-all, or optional positional params
     if (route.HasOptions || route.HasCatchAll || route.HasOptionalPositionalParams)
     {
-      EmitComplexMatch(sb, route, routeIndex, services, behaviors, customConverters, loggerFactoryFieldName, useRuntimeDI, runtimeDISuffix);
+      EmitComplexMatch(sb, route, routeIndex, services, behaviors, customConverters, loggerFactoryFieldName, useRuntimeDI, runtimeDISuffix, httpClientConfigurations);
     }
     else
     {
-      EmitSimpleMatch(sb, route, routeIndex, services, behaviors, customConverters, loggerFactoryFieldName, useRuntimeDI, runtimeDISuffix);
+      EmitSimpleMatch(sb, route, routeIndex, services, behaviors, customConverters, loggerFactoryFieldName, useRuntimeDI, runtimeDISuffix, httpClientConfigurations);
     }
 
     sb.AppendLine();
@@ -78,7 +79,8 @@ internal static class RouteMatcherEmitter
     ImmutableArray<CustomConverterDefinition> customConverters,
     string? loggerFactoryFieldName,
     bool useRuntimeDI,
-    string runtimeDISuffix)
+    string runtimeDISuffix,
+    ImmutableArray<HttpClientConfiguration> httpClientConfigurations)
   {
     string pattern = BuildListPattern(route, routeIndex);
 
@@ -99,13 +101,13 @@ internal static class RouteMatcherEmitter
 
       BehaviorEmitter.EmitPipelineWrapper(
         sb, route, routeIndex, behaviors, services, indent: 6,
-        () => HandlerInvokerEmitter.Emit(sb, route, routeIndex, services, indent: 8, commandAlreadyCreated: commandCreatedByBehavior, loggerFactoryFieldName: loggerFactoryFieldName, useRuntimeDI: useRuntimeDI, runtimeDISuffix: runtimeDISuffix));
+        () => HandlerInvokerEmitter.Emit(sb, route, routeIndex, services, indent: 8, commandAlreadyCreated: commandCreatedByBehavior, loggerFactoryFieldName: loggerFactoryFieldName, useRuntimeDI: useRuntimeDI, runtimeDISuffix: runtimeDISuffix, httpClientConfigurations: httpClientConfigurations));
 
       sb.AppendLine("      return 0;");
     }
     else
     {
-      HandlerInvokerEmitter.Emit(sb, route, routeIndex, services, indent: 6, loggerFactoryFieldName: loggerFactoryFieldName, useRuntimeDI: useRuntimeDI, runtimeDISuffix: runtimeDISuffix);
+      HandlerInvokerEmitter.Emit(sb, route, routeIndex, services, indent: 6, loggerFactoryFieldName: loggerFactoryFieldName, useRuntimeDI: useRuntimeDI, runtimeDISuffix: runtimeDISuffix, httpClientConfigurations: httpClientConfigurations);
       sb.AppendLine("      return 0;");
     }
 
@@ -128,7 +130,8 @@ internal static class RouteMatcherEmitter
     ImmutableArray<CustomConverterDefinition> customConverters,
     string? loggerFactoryFieldName,
     bool useRuntimeDI,
-    string runtimeDISuffix)
+    string runtimeDISuffix,
+    ImmutableArray<HttpClientConfiguration> httpClientConfigurations)
   {
     // Calculate minimum required positional args (positional match segments + required non-catch-all params)
     // PositionalMatchSegments includes group prefix literals, pattern literals, and end-of-options
@@ -248,13 +251,13 @@ internal static class RouteMatcherEmitter
 
       BehaviorEmitter.EmitPipelineWrapper(
         sb, route, routeIndex, behaviors, services, indent: 6,
-        () => HandlerInvokerEmitter.Emit(sb, route, routeIndex, services, indent: 8, commandAlreadyCreated: commandCreatedByBehavior, loggerFactoryFieldName: loggerFactoryFieldName, useRuntimeDI: useRuntimeDI, runtimeDISuffix: runtimeDISuffix));
+        () => HandlerInvokerEmitter.Emit(sb, route, routeIndex, services, indent: 8, commandAlreadyCreated: commandCreatedByBehavior, loggerFactoryFieldName: loggerFactoryFieldName, useRuntimeDI: useRuntimeDI, runtimeDISuffix: runtimeDISuffix, httpClientConfigurations: httpClientConfigurations));
 
       sb.AppendLine("      return 0;");
     }
     else
     {
-      HandlerInvokerEmitter.Emit(sb, route, routeIndex, services, indent: 6, loggerFactoryFieldName: loggerFactoryFieldName, useRuntimeDI: useRuntimeDI, runtimeDISuffix: runtimeDISuffix);
+      HandlerInvokerEmitter.Emit(sb, route, routeIndex, services, indent: 6, loggerFactoryFieldName: loggerFactoryFieldName, useRuntimeDI: useRuntimeDI, runtimeDISuffix: runtimeDISuffix, httpClientConfigurations: httpClientConfigurations);
       sb.AppendLine("      return 0;");
     }
 

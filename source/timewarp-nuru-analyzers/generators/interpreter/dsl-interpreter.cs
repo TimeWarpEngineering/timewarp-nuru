@@ -1103,6 +1103,17 @@ public sealed class DslInterpreter
       appBuilder.SetLoggingConfiguration(loggingConfig);
     }
 
+    // Extract HttpClient configurations from AddHttpClient() if present
+    ImmutableArray<HttpClientConfiguration> httpClientConfigs = ServiceExtractor.ExtractHttpClientConfigurations(
+      invocation,
+      SemanticModel,
+      CancellationToken);
+
+    foreach (HttpClientConfiguration httpClientConfig in httpClientConfigs)
+    {
+      appBuilder.AddHttpClientConfiguration(httpClientConfig);
+    }
+
     // Extract and store the lambda body for runtime invocation (used when UseMicrosoftDependencyInjection is enabled)
     string? lambdaBody = ExtractConfigureServicesLambdaBody(invocation);
     if (lambdaBody is not null)

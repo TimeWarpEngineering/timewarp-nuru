@@ -65,7 +65,7 @@ This sample will demonstrate the idiomatic .NET 10 pattern of using `AddHttpClie
 
 ## Related Tasks
 
-- **423** - Implement AddHttpClient support in source generator (COMPLETED) - Unblocks this task
+- **423** - Implement AddHttpClient support in source generator - Unblocks this task
 
 ## Results
 
@@ -74,11 +74,17 @@ Successfully created HttpClient sample demonstrating AddHttpClient support with 
 ### Files Created
 
 1. **endpoint-httpclient-openmeteo.cs** - Main runfile showing AddHttpClient registration
-2. **endpoints/CurrentWeatherEndpoint.cs** - [NuruRoute("weather {city}")] endpoint
+2. **endpoints/CurrentWeatherEndpoint.cs** - `[NuruRoute("weather")]` endpoint with `[Parameter]`
 3. **services/IOpenMeteoService.cs** - Service interface
 4. **services/OpenMeteoService.cs** - Implementation using HttpClient
-5. **services/WeatherModels.cs** - DTOs for JSON deserialization
+5. **services/WeatherModels.cs** - DTOs with AOT-compatible `JsonSerializerContext`
 6. **readme.md** - Documentation
+
+### Fixes Applied
+
+- Route pattern fixed: `[NuruRoute("weather {city}")]` → `[NuruRoute("weather")]` + `[Parameter]` (correct endpoint DSL)
+- JSON deserialization fixed for AOT: Added `OpenMeteoJsonContext` with `[JsonSerializable]` and `[JsonPropertyName]` attributes (reflection-based serialization is disabled in AOT mode)
+- Property names normalized: `Temperature_2m` → `Temperature2m`, `Weather_Code` → `WeatherCode`
 
 ### Key Demonstration
 
@@ -102,6 +108,7 @@ The sample shows the idiomatic .NET 10 pattern WITHOUT UseMicrosoftDependencyInj
 - ✅ Proper error handling (invalid cities, network failures)
 - ✅ Pretty formatted weather output
 - ✅ Works without Microsoft DI (pure source-gen)
+- ✅ AOT-compatible JSON serialization via source-generated context
 
 ### Usage
 

@@ -33,6 +33,19 @@ internal static class ServiceValidator
     // Build a set of registered service type names for lookup
     HashSet<string> registeredServices = BuildRegisteredServiceSet(app.Services);
 
+    // Add HttpClient-registered service types
+    if (!app.HttpClientConfigurations.IsDefaultOrEmpty)
+    {
+      foreach (HttpClientConfiguration httpConfig in app.HttpClientConfigurations)
+      {
+        if (httpConfig.ServiceTypeName is not null)
+        {
+          registeredServices.Add(httpConfig.ServiceTypeName);
+          registeredServices.Add(NormalizeTypeName(httpConfig.ServiceTypeName));
+        }
+      }
+    }
+
     // NURU050: Validate handler service requirements
     ValidateHandlerServiceRequirements(app, registeredServices, diagnostics);
 
@@ -53,7 +66,7 @@ internal static class ServiceValidator
   /// These register standard services that Nuru handles correctly at runtime.
   /// </summary>
   private static readonly HashSet<string> WhitelistedExtensionMethods =
-    new(StringComparer.Ordinal) { "AddLogging" };
+    new(StringComparer.Ordinal) { "AddLogging", "AddHttpClient" };
 
   /// <summary>
   /// Reports warnings for extension method calls that may register services.

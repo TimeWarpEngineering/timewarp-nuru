@@ -21,6 +21,7 @@
     <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.2" />
     <PackageVersion Include="Microsoft.Extensions.Options.DataAnnotations" Version="10.0.2" />
     <PackageVersion Include="Microsoft.Extensions.Configuration.UserSecrets" Version="10.0.2" />
+    <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.2" />
   </ItemGroup>
   <ItemGroup Label="TimeWarp Packages">
     <PackageVersion Include="TimeWarp.Amuru" Version="1.0.0-beta.17" />

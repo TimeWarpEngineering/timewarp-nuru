@@ -397,6 +397,7 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
       UseMicrosoftDependencyInjection: MicrosoftDependencyInjectionEnabled,
       ConfigureServicesLambdaBody: ConfigureServicesBody,
       ExtensionMethods: [.. ExtensionMethods],
+      HttpClientConfigurations: [.. HttpClientConfigurations],
       FilterGroupTypeNames: [.. FilterGroupTypeNames]);
   }
 

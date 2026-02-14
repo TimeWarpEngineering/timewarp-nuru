@@ -88,27 +88,25 @@ internal static class ServiceResolverEmitter
     ServiceDefinition? service = FindService(typeName, services);
     if (service is not null)
     {
-      // Found registered service - emit resolution based on lifetime and dependencies
-      if (service.HasConstructorDependencies)
+      if (service.Lifetime is ServiceLifetime.Singleton or ServiceLifetime.Scoped)
       {
-        // Service has constructor dependencies - resolve at compile time
-        // Emit: new ImplementationType(resolvedDep1, resolvedDep2, ...)
+        // Singleton/Scoped: use Lazy<T> field (generated with constructor args if needed)
+        string fieldName = InterceptorEmitter.GetServiceFieldName(service.ImplementationTypeName);
+        sb.AppendLine(
+          $"{indent}{typeName} {varName} = {fieldName}.Value;");
+      }
+      else if (service.HasConstructorDependencies)
+      {
+        // Transient with constructor deps: inline new T(resolvedDeps...)
         string args = ResolveConstructorArguments(service, services);
         sb.AppendLine(
           $"{indent}{typeName} {varName} = new {service.ImplementationTypeName}({args});");
       }
-      else if (service.Lifetime == ServiceLifetime.Transient)
-      {
-        // Transient with no dependencies - new instance each time
-        sb.AppendLine(
-          $"{indent}{typeName} {varName} = new {service.ImplementationTypeName}();");
-      }
       else
       {
-        // Singleton/Scoped with no dependencies - thread-safe cached via Lazy<T>
-        string fieldName = InterceptorEmitter.GetServiceFieldName(service.ImplementationTypeName);
+        // Transient without deps: new instance each time
         sb.AppendLine(
-          $"{indent}{typeName} {varName} = {fieldName}.Value;");
+          $"{indent}{typeName} {varName} = new {service.ImplementationTypeName}();");
       }
 
       return;
@@ -313,7 +311,7 @@ internal static class ServiceResolverEmitter
   /// <summary>
   /// Resolves all constructor arguments for a service to their compile-time expressions.
   /// </summary>
-  private static string ResolveConstructorArguments(ServiceDefinition service, ImmutableArray<ServiceDefinition> services)
+  internal static string ResolveConstructorArguments(ServiceDefinition service, ImmutableArray<ServiceDefinition> services)
   {
     if (service.ConstructorDependencyTypes.IsDefaultOrEmpty)
       return "";
@@ -352,19 +350,22 @@ internal static class ServiceResolverEmitter
     ServiceDefinition? depService = FindService(depType, services);
     if (depService is not null)
     {
+      // Singleton/Scoped: use Lazy<T> field (generated with constructor args if needed)
+      if (depService.Lifetime is ServiceLifetime.Singleton or ServiceLifetime.Scoped)
+      {
+        string fieldName = InterceptorEmitter.GetServiceFieldName(depService.ImplementationTypeName);
+        return $"{fieldName}.Value";
+      }
+
+      // Transient with constructor deps: inline new T(resolvedDeps...)
       if (depService.HasConstructorDependencies)
       {
-        // Recursive: service with its own constructor dependencies
         string innerArgs = ResolveConstructorArguments(depService, services);
         return $"new {depService.ImplementationTypeName}({innerArgs})";
       }
 
-      if (depService.Lifetime == ServiceLifetime.Transient)
-        return $"new {depService.ImplementationTypeName}()";
-
-      // Singleton/Scoped without deps - use cached Lazy<T> field
-      string fieldName = InterceptorEmitter.GetServiceFieldName(depService.ImplementationTypeName);
-      return $"{fieldName}.Value";
+      // Transient without deps: new instance
+      return $"new {depService.ImplementationTypeName}()";
     }
 
     // Unresolvable - NURU051 validator will report the error

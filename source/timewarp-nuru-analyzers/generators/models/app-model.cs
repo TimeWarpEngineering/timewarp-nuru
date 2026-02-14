@@ -32,6 +32,7 @@ namespace TimeWarp.Nuru.Generators;
 /// <param name="UseMicrosoftDependencyInjection">Whether UseMicrosoftDependencyInjection() was called to use runtime DI instead of source-gen DI</param>
 /// <param name="ConfigureServicesLambdaBody">Raw lambda body from ConfigureServices() for runtime invocation when UseMicrosoftDependencyInjection is true</param>
 /// <param name="ExtensionMethods">Extension method calls detected in ConfigureServices (for NURU052 warnings)</param>
+/// <param name="HttpClientConfigurations">HttpClient configurations from AddHttpClient() for typed client generation</param>
 /// <param name="FilterGroupTypeNames">Group type names to filter endpoints by for subset CLI editions</param>
 public sealed record AppModel(
   string? VariableName,
@@ -62,6 +63,7 @@ public sealed record AppModel(
   bool UseMicrosoftDependencyInjection = false,
   string? ConfigureServicesLambdaBody = null,
   ImmutableArray<ExtensionMethodCall> ExtensionMethods = default,
+  ImmutableArray<HttpClientConfiguration> HttpClientConfigurations = default,
   ImmutableArray<string> FilterGroupTypeNames = default)
 {
   /// <summary>
@@ -90,6 +92,7 @@ public sealed record AppModel(
     LoggingConfiguration: null,
     DiscoverEndpoints: false,
     ExplicitEndpointTypes: [],
+    HttpClientConfigurations: [],
     FilterGroupTypeNames: []);
 
   /// <summary>
@@ -118,6 +121,11 @@ public sealed record AppModel(
   /// Gets whether this app has logging configured via AddLogging().
   /// </summary>
   public bool HasLogging => LoggingConfiguration is not null;
+
+  /// <summary>
+  /// Gets whether this app has any HttpClient configurations via AddHttpClient().
+  /// </summary>
+  public bool HasHttpClients => !HttpClientConfigurations.IsDefaultOrEmpty;
 
   /// <summary>
   /// Gets routes sorted by specificity (highest first).

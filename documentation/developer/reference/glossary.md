@@ -255,16 +255,32 @@ builder.Map("add {x:double} {y:double}")
   .WithHandler((double x, double y) => x + y)
   .AsQuery().Done();
 
-// Async with HttpClient injection
+// Async with typed HTTP client injection
+// Works with source-generated DI (no UseMicrosoftDependencyInjection needed)
 builder
-  .ConfigureServices(services => services.AddHttpClient())
-  .Map("fetch {url}")
-    .WithHandler(async (string url, HttpClient http) =>
+  .ConfigureServices(services =>
+  {
+    services.AddHttpClient<IFetchService, FetchService>(client =>
     {
-      HttpResponseMessage response = await http.GetAsync(url);
-      return await response.Content.ReadAsStringAsync();
-    })
-    .AsQuery().Done();
+      client.Timeout = TimeSpan.FromSeconds(30);
+    });
+  })
+  .DiscoverEndpoints()
+  .Build();
+
+// Then in your endpoint handler:
+public sealed class FetchQuery : IQuery<string>
+{
+  [Parameter] public string Url { get; set; } = string.Empty;
+
+  public sealed class Handler(IFetchService fetchService) : IQueryHandler<FetchQuery, string>
+  {
+    public async ValueTask<string> Handle(FetchQuery query, CancellationToken ct)
+    {
+      return await fetchService.FetchAsync(query.Url, ct);
+    }
+  }
+}
 
 // Command without return value
 builder.Map("status")
@@ -576,21 +592,30 @@ builder.Map("git {*args}", handler)
 
 **Setup**:
 ```csharp
-// Enable DI and register services
+// Source-generated DI (default, AOT-compatible)
 NuruApp app = NuruApp.CreateBuilder(args)
   .ConfigureServices(services =>
   {
     services.AddSingleton<ILogger, ConsoleLogger>();
-    services.AddHttpClient();
     services.AddScoped<IValidationService, ValidationService>();
-  })
-  .Map("deploy {env}")
-    .WithHandler(async (string env, ILogger logger, HttpClient http, IValidationService validator) =>
+    // Typed HTTP clients work with source-gen DI
+    services.AddHttpClient<IDeployService, DeployService>(client =>
     {
-      logger.LogInformation("Deploying to {Environment}", env);
-      // Use injected services...
-    })
-    .AsCommand().Done()
+      client.BaseAddress = new Uri("https://api.example.com/");
+    });
+  })
+  .DiscoverEndpoints()
+  .Build();
+
+// Or use Microsoft DI for complex scenarios (opt-in)
+NuruApp app = NuruApp.CreateBuilder(args)
+  .UseMicrosoftDependencyInjection()
+  .ConfigureServices(services =>
+  {
+    // Full MS DI features available
+    services.AddSingleton(sp => new CustomService(sp.GetRequiredService<ILogger>()));
+  })
+  .DiscoverEndpoints()
   .Build();
 ```
 

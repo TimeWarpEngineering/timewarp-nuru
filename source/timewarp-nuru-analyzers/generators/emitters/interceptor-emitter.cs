@@ -54,6 +54,7 @@ internal static class InterceptorEmitter
     }
 
     EmitLoggingFactoryFields(sb, model);
+    EmitHttpClientFields(sb, model);
 
     // Emit telemetry infrastructure if any app has telemetry enabled
     if (model.HasTelemetry)
@@ -322,12 +323,13 @@ internal static class InterceptorEmitter
   /// </summary>
   private static void EmitServiceFields(StringBuilder sb, IEnumerable<ServiceDefinition> services)
   {
-    // Only emit fields for Singleton and Scoped services (not Transient)
+    // Only emit fields for Singleton and Scoped services without constructor dependencies.
+    // Services with constructor deps are resolved inline (deps may only be available at runtime).
     // Materialize to array to avoid multiple enumeration
     ServiceDefinition[] cachedServices =
     [
       .. services
-        .Where(s => s.Lifetime is ServiceLifetime.Singleton or ServiceLifetime.Scoped)
+        .Where(s => (s.Lifetime is ServiceLifetime.Singleton or ServiceLifetime.Scoped) && !s.HasConstructorDependencies)
         .DistinctBy(s => s.ImplementationTypeName) // Avoid duplicates if same impl registered multiple times
     ];
 
@@ -479,6 +481,77 @@ internal static class InterceptorEmitter
   }
 
   /// <summary>
+  /// Emits static HttpClient fields for apps with AddHttpClient() configurations.
+  /// Each typed client gets a static field with its configuration lambda applied.
+  /// </summary>
+  private static void EmitHttpClientFields(StringBuilder sb, GeneratorModel model)
+  {
+    bool hasAny = model.Apps.Any(a => a.HasHttpClients);
+    if (!hasAny)
+      return;
+
+    sb.AppendLine("  // Static HttpClient fields - AOT path: compile-time deterministic");
+
+    foreach (AppModel app in model.Apps)
+    {
+      if (!app.HasHttpClients)
+        continue;
+
+      foreach (HttpClientConfiguration config in app.HttpClientConfigurations)
+      {
+        if (config.ServiceTypeName is null)
+          continue;
+
+        string fieldName = GetHttpClientFieldName(config.ServiceTypeName);
+
+        sb.AppendLine($"  private static readonly global::System.Net.Http.HttpClient {fieldName} = Create_{fieldName}();");
+        sb.AppendLine($"  private static global::System.Net.Http.HttpClient Create_{fieldName}()");
+        sb.AppendLine("  {");
+        sb.AppendLine("    var client = new global::System.Net.Http.HttpClient();");
+
+        if (config.ConfigurationLambdaBody is not null)
+        {
+          string lambdaBody = config.ConfigurationLambdaBody.TrimEnd();
+
+          // Handle block body: { stmt1; stmt2; }
+          if (lambdaBody.StartsWith('{') && lambdaBody.EndsWith('}'))
+          {
+            string inner = lambdaBody[1..^1].Trim();
+            inner = inner.Replace(config.LambdaParameterName + ".", "client.", StringComparison.Ordinal);
+            sb.AppendLine($"    {inner}");
+          }
+          else
+          {
+            // Expression body: client.Timeout = TimeSpan.FromSeconds(30)
+            string body = lambdaBody.Replace(config.LambdaParameterName + ".", "client.", StringComparison.Ordinal);
+            if (!body.EndsWith(';'))
+              body += ";";
+            sb.AppendLine($"    {body}");
+          }
+        }
+
+        sb.AppendLine("    return client;");
+        sb.AppendLine("  }");
+        sb.AppendLine();
+      }
+    }
+  }
+
+  /// <summary>
+  /// Gets the static field name for an HttpClient instance based on the service type.
+  /// </summary>
+  /// <param name="serviceTypeName">Fully qualified service type name.</param>
+  /// <returns>Field name like "__httpClient_IOpenMeteoService".</returns>
+  internal static string GetHttpClientFieldName(string serviceTypeName)
+  {
+    string name = serviceTypeName;
+    int lastDot = name.LastIndexOf('.');
+    if (lastDot >= 0)
+      name = name[(lastDot + 1)..];
+    return $"__httpClient_{name}";
+  }
+
+  /// <summary>
   /// Gets the field name for a LoggerFactory instance.
   /// </summary>
   /// <param name="appIndex">Index of the app (for unique naming with multiple apps).</param>
@@ -600,7 +673,7 @@ internal static class InterceptorEmitter
         allRoutesOrdered.Add(route);
       }
 
-      RouteMatcherEmitter.Emit(sb, route, routeIndex, app.Services, app.Behaviors, app.CustomConverters, loggerFactoryFieldName, app.UseMicrosoftDependencyInjection, methodSuffix);
+      RouteMatcherEmitter.Emit(sb, route, routeIndex, app.Services, app.Behaviors, app.CustomConverters, loggerFactoryFieldName, app.UseMicrosoftDependencyInjection, methodSuffix, app.HttpClientConfigurations);
     }
 
     // Built-in flags: --help, --version, --capabilities

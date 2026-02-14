@@ -90,4 +90,40 @@ public class MyService : IMyService
 
 ## Results
 
-[To be filled after completion]
+### Summary
+Successfully fixed issue #172 - source generator now handles services with parameterized constructors.
+
+### Files Changed
+1. **New test file**: `tests/timewarp-nuru-tests/generator/generator-20-parameterized-service-constructor.cs`
+   - Reproduces the issue with a service that has only a parameterized constructor
+   - Verifies the fix works correctly
+
+2. **Modified**: `source/timewarp-nuru-analyzers/generators/emitters/service-resolver-emitter.cs`
+   - Lines 92-99: Added check for `service.HasConstructorDependencies`
+   - When service has constructor dependencies, emits `GetRequiredService<T>()` instead of `new T()`
+   - Passes configuration to `GetServiceProvider()` so it's available in DI container
+
+3. **Modified**: `source/timewarp-nuru-analyzers/generators/emitters/interceptor-emitter.cs`
+   - Updated to emit runtime DI infrastructure when services have constructor dependencies
+   - Modified `GetServiceProvider` to register IConfiguration in DI when available
+
+4. **Modified**: `source/timewarp-nuru-analyzers/generators/models/generator-model.cs`
+   - Added `NeedsRuntimeDIInfrastructure` property
+   - Detects when any non-runtime-DI app has services with constructor dependencies
+
+### Key Decisions
+- **Approach**: Auto-fallback to runtime DI when services have constructor dependencies
+- This means users don't need to call `UseMicrosoftDependencyInjection()` explicitly
+- The fix is automatic and seamless - generator detects dependencies and uses appropriate resolution
+
+### Test Results
+```
+✓ New test: Should_resolve_service_with_parameterized_constructor - PASSED
+✓ All existing tests: 1067 passed, 7 skipped
+✓ No regressions introduced
+```
+
+### Impact
+- Services with parameterized constructors now work without requiring `.UseMicrosoftDependencyInjection()`
+- No breaking changes - fixes broken behavior
+- Minimal performance impact - one check per service instantiation

@@ -88,17 +88,25 @@ internal static class ServiceResolverEmitter
     ServiceDefinition? service = FindService(typeName, services);
     if (service is not null)
     {
-      // Found registered service - emit instantiation based on lifetime
-      // Note: Phase 4 will add constructor dependency resolution for services with dependencies.
-      if (service.Lifetime == ServiceLifetime.Transient)
+      // Found registered service - emit resolution based on lifetime and dependencies
+      // Services with constructor dependencies must use runtime DI resolution
+      if (service.HasConstructorDependencies)
       {
-        // Transient - new instance each time
+        // Service has constructor dependencies - use runtime DI resolution
+        // Emit: GetRequiredService<T>(GetServiceProvider{suffix}(app, configuration))
+        // Note: configuration is passed so it can be registered in the DI container for services that need it
+        sb.AppendLine(
+          $"{indent}{typeName} {varName} = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<{typeName}>(GetServiceProvider{runtimeDISuffix}(app, configuration));");
+      }
+      else if (service.Lifetime == ServiceLifetime.Transient)
+      {
+        // Transient with no dependencies - new instance each time
         sb.AppendLine(
           $"{indent}{typeName} {varName} = new {service.ImplementationTypeName}();");
       }
       else
       {
-        // Singleton/Scoped - thread-safe cached via Lazy<T>
+        // Singleton/Scoped with no dependencies - thread-safe cached via Lazy<T>
         string fieldName = InterceptorEmitter.GetServiceFieldName(service.ImplementationTypeName);
         sb.AppendLine(
           $"{indent}{typeName} {varName} = {fieldName}.Value;");

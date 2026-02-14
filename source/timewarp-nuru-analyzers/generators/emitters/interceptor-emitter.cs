@@ -46,11 +46,9 @@ internal static class InterceptorEmitter
     // Emit static Lazy<T> fields for source-gen DI apps
     EmitServiceFields(sb, sourceGenServices);
 
-    // Emit runtime DI infrastructure when needed:
-    // - Apps that call UseMicrosoftDependencyInjection()
-    // - Apps with services that have constructor dependencies (need GetServiceProvider for resolution)
+    // Emit runtime DI infrastructure for apps that use UseMicrosoftDependencyInjection()
     // Each app gets its own __ConfigureServices and GetServiceProvider methods
-    if (model.NeedsRuntimeDIInfrastructure)
+    if (model.UsesMicrosoftDependencyInjection)
     {
       EmitRuntimeDIInfrastructure(sb, model.Apps);
     }
@@ -325,12 +323,13 @@ internal static class InterceptorEmitter
   /// </summary>
   private static void EmitServiceFields(StringBuilder sb, IEnumerable<ServiceDefinition> services)
   {
-    // Only emit fields for Singleton and Scoped services (not Transient)
+    // Only emit fields for Singleton and Scoped services without constructor dependencies.
+    // Services with constructor deps are resolved inline (deps may only be available at runtime).
     // Materialize to array to avoid multiple enumeration
     ServiceDefinition[] cachedServices =
     [
       .. services
-        .Where(s => s.Lifetime is ServiceLifetime.Singleton or ServiceLifetime.Scoped)
+        .Where(s => (s.Lifetime is ServiceLifetime.Singleton or ServiceLifetime.Scoped) && !s.HasConstructorDependencies)
         .DistinctBy(s => s.ImplementationTypeName) // Avoid duplicates if same impl registered multiple times
     ];
 
@@ -350,17 +349,16 @@ internal static class InterceptorEmitter
   }
 
   /// <summary>
-  /// Emits runtime DI infrastructure when UseMicrosoftDependencyInjection() is called,
-  /// or when services have constructor dependencies requiring runtime resolution.
+  /// Emits runtime DI infrastructure when UseMicrosoftDependencyInjection() is called.
   /// Each app gets its own __ConfigureServices and GetServiceProvider methods.
   /// This provides full MS DI container support at the cost of runtime overhead.
   /// </summary>
   /// <param name="sb">The StringBuilder to append to.</param>
-  /// <param name="apps">All app models (will filter to those needing runtime DI).</param>
+  /// <param name="apps">All app models (will filter to those using runtime DI).</param>
   private static void EmitRuntimeDIInfrastructure(StringBuilder sb, ImmutableArray<AppModel> apps)
   {
     sb.AppendLine("  // ═══════════════════════════════════════════════════════════════════════════════");
-    sb.AppendLine("  // RUNTIME DI INFRASTRUCTURE");
+    sb.AppendLine("  // RUNTIME DI INFRASTRUCTURE (UseMicrosoftDependencyInjection was called)");
     sb.AppendLine("  // ═══════════════════════════════════════════════════════════════════════════════");
     sb.AppendLine("  // This enables full MS DI container support including:");
     sb.AppendLine("  // - Services with constructor dependencies (MS DI resolves automatically)");
@@ -369,14 +367,11 @@ internal static class InterceptorEmitter
     sb.AppendLine("  // Trade-off: Slightly slower startup (~2-10ms for ServiceProvider.Build())");
     sb.AppendLine();
 
-    // Emit per-app infrastructure for each app that needs runtime DI
+    // Emit per-app infrastructure for each app that uses runtime DI
     for (int appIndex = 0; appIndex < apps.Length; appIndex++)
     {
       AppModel app = apps[appIndex];
-      bool hasConstructorDependencies = app.Services.Any(s => s.HasConstructorDependencies);
-      // Skip apps that don't need runtime DI:
-      // 1. No UseMicrosoftDependencyInjection AND no services with constructor dependencies
-      if (!app.UseMicrosoftDependencyInjection && !hasConstructorDependencies)
+      if (!app.UseMicrosoftDependencyInjection)
         continue;
 
       string suffix = apps.Length > 1 ? $"_{appIndex}" : "";
@@ -396,7 +391,7 @@ internal static class InterceptorEmitter
 
       sb.AppendLine($"  private static global::System.IServiceProvider? __serviceProvider{suffix};");
       sb.AppendLine();
-      sb.AppendLine($"  private static global::System.IServiceProvider GetServiceProvider{suffix}(NuruApp app, global::Microsoft.Extensions.Configuration.IConfiguration? configuration = null)");
+      sb.AppendLine($"  private static global::System.IServiceProvider GetServiceProvider{suffix}(NuruApp app)");
       sb.AppendLine("  {");
       sb.AppendLine($"    if (__serviceProvider{suffix} is not null) return __serviceProvider{suffix};");
       sb.AppendLine();
@@ -405,19 +400,6 @@ internal static class InterceptorEmitter
       sb.AppendLine("    // Register Nuru built-ins so they're available for user services");
       sb.AppendLine("    global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton<global::TimeWarp.Terminal.ITerminal>(services, app.Terminal);");
       sb.AppendLine("    global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton<NuruApp>(services, app);");
-
-      // If this app has configuration enabled (AddConfiguration was called), register IConfiguration
-      // This makes configuration available for injection into services with constructor dependencies
-      if (app.HasConfiguration)
-      {
-        sb.AppendLine();
-        sb.AppendLine("    // Register IConfiguration from AddConfiguration() for services that need it");
-        sb.AppendLine("    if (configuration is not null)");
-        sb.AppendLine("    {");
-        sb.AppendLine("      global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton<global::Microsoft.Extensions.Configuration.IConfiguration>(services, configuration);");
-        sb.AppendLine("    }");
-      }
-
       sb.AppendLine();
 
       if (!string.IsNullOrEmpty(lambdaBody))

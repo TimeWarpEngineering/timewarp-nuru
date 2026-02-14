@@ -49,19 +49,6 @@ public sealed record GeneratorModel(
   public bool UsesMicrosoftDependencyInjection => Apps.Any(a => a.UseMicrosoftDependencyInjection);
 
   /// <summary>
-  /// Gets whether any non-runtime-DI app has services with constructor dependencies.
-  /// When true, runtime DI infrastructure must be emitted for these services.
-  /// </summary>
-  public bool NeedsRuntimeDIForConstructorDependencies =>
-    Apps.Any(a => !a.UseMicrosoftDependencyInjection && a.Services.Any(s => s.HasConstructorDependencies));
-
-  /// <summary>
-  /// Gets whether runtime DI infrastructure needs to be emitted (either for explicit
-  /// UseMicrosoftDependencyInjection calls or for services with constructor dependencies).
-  /// </summary>
-  public bool NeedsRuntimeDIInfrastructure => UsesMicrosoftDependencyInjection || NeedsRuntimeDIForConstructorDependencies;
-
-  /// <summary>
   /// Gets all behaviors from all apps (deduplicated).
   /// </summary>
   public IEnumerable<BehaviorDefinition> AllBehaviors =>

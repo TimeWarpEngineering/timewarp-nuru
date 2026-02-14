@@ -89,14 +89,13 @@ internal static class ServiceResolverEmitter
     if (service is not null)
     {
       // Found registered service - emit resolution based on lifetime and dependencies
-      // Services with constructor dependencies must use runtime DI resolution
       if (service.HasConstructorDependencies)
       {
-        // Service has constructor dependencies - use runtime DI resolution
-        // Emit: GetRequiredService<T>(GetServiceProvider{suffix}(app, configuration))
-        // Note: configuration is passed so it can be registered in the DI container for services that need it
+        // Service has constructor dependencies - resolve at compile time
+        // Emit: new ImplementationType(resolvedDep1, resolvedDep2, ...)
+        string args = ResolveConstructorArguments(service, services);
         sb.AppendLine(
-          $"{indent}{typeName} {varName} = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<{typeName}>(GetServiceProvider{runtimeDISuffix}(app, configuration));");
+          $"{indent}{typeName} {varName} = new {service.ImplementationTypeName}({args});");
       }
       else if (service.Lifetime == ServiceLifetime.Transient)
       {
@@ -309,5 +308,66 @@ internal static class ServiceResolverEmitter
     }
 
     return className;
+  }
+
+  /// <summary>
+  /// Resolves all constructor arguments for a service to their compile-time expressions.
+  /// </summary>
+  private static string ResolveConstructorArguments(ServiceDefinition service, ImmutableArray<ServiceDefinition> services)
+  {
+    if (service.ConstructorDependencyTypes.IsDefaultOrEmpty)
+      return "";
+
+    return string.Join(", ", service.ConstructorDependencyTypes.Select(dep => ResolveDepExpression(dep, services)));
+  }
+
+  /// <summary>
+  /// Resolves a single dependency type to its compile-time expression.
+  /// Maps built-in types to their known sources and registered services to their instantiation.
+  /// </summary>
+  private static string ResolveDepExpression(string depType, ImmutableArray<ServiceDefinition> services)
+  {
+    // Built-in: IConfiguration / IConfigurationRoot
+    if (IsConfigurationType(depType))
+      return "configuration";
+
+    // Built-in: ITerminal
+    if (IsTerminalType(depType))
+      return "app.Terminal";
+
+    // Built-in: NuruApp
+    if (IsNuruAppType(depType))
+      return "app";
+
+    // Built-in: ILogger<T> - use NullLogger when no logging configured
+    if (depType.Contains("ILogger", StringComparison.Ordinal))
+    {
+      int start = depType.IndexOf('<', StringComparison.Ordinal);
+      int end = depType.LastIndexOf('>');
+      string typeArg = start >= 0 && end > start ? depType[(start + 1)..end] : "object";
+      return $"global::Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance.CreateLogger<{typeArg}>()";
+    }
+
+    // Registered service - resolve by looking up in registered services
+    ServiceDefinition? depService = FindService(depType, services);
+    if (depService is not null)
+    {
+      if (depService.HasConstructorDependencies)
+      {
+        // Recursive: service with its own constructor dependencies
+        string innerArgs = ResolveConstructorArguments(depService, services);
+        return $"new {depService.ImplementationTypeName}({innerArgs})";
+      }
+
+      if (depService.Lifetime == ServiceLifetime.Transient)
+        return $"new {depService.ImplementationTypeName}()";
+
+      // Singleton/Scoped without deps - use cached Lazy<T> field
+      string fieldName = InterceptorEmitter.GetServiceFieldName(depService.ImplementationTypeName);
+      return $"{fieldName}.Value";
+    }
+
+    // Unresolvable - NURU051 validator will report the error
+    return $"default! /* ERROR: Cannot resolve {depType} */";
   }
 }

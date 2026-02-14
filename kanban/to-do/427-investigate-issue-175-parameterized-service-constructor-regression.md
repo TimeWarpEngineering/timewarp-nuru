@@ -1,98 +1,104 @@
-# Investigate issue 175 - parameterized service constructor regression
+# Fix issue 175 - parameterized service constructor regression
 
 ## Description
 
-Claim: After updating to beta.48, services with parameterized constructors cause compilation errors. The source generator creates references to non-existent static fields.
+After updating to beta.48, Singleton/Scoped services with parameterized constructors cause compilation errors (CS0103). The generator references non-existent Lazy<T> fields.
 
-### Reported Issue Details
+### Actual Bug/Error
 
-**Error Message:** (Not specified in issue, but mentions CS0103 errors)
+**Error:**
+```
+error CS0103: The name '__svc_TimeWarp_Zana_Kanban_KanbanService' does not exist in the current context
+```
 
-**Reproduction Steps:**
-1. Service with parameterized constructor (implementation not shown)
-2. Registered in ConfigureServices (implementation not shown)
-3. Handler uses the service (implementation not shown)
-4. Build fails with CS0103 errors
+**Service Registration Pattern:**
+- Service: `KanbanService` (from timewarp-ganda)
+- Likely: Singleton or Scoped with parameterized constructor
+- Constructor parameter: `IWorkspaceService` or similar
 
-**Root Cause Claim:**
-Generated code (NuruGenerated.g.cs) has:
-- Missing lazy field
-- Broken reference
+**Root Cause:**
+In `service-resolver-emitter.cs:86-114`:
 
-**Expected Behavior:**
-Option 1: Generate the static lazy field for parameterized services (if they have parameterless constructors for the Lazy init)
-Option 2: Generate code that uses `GetRequiredService<T>()` from the service provider
-Option 3: Fail with a clear error explaining the limitation
+```csharp
+if (service.HasConstructorDependencies)
+{
+  // Emit inline: new Type(args)
+  string args = ResolveConstructorArguments(service, services);
+  sb.AppendLine($"{indent}{typeName} {varName} = new {service.ImplementationTypeName}({args});");
+}
+else if (service.Lifetime == ServiceLifetime.Transient)
+{
+  sb.AppendLine($"{indent}{typeName} {varName} = new {service.ImplementationTypeName}();");
+}
+else  // Singleton/Scoped without deps - use Lazy<T>
+{
+  string fieldName = InterceptorEmitter.GetServiceFieldName(service.ImplementationTypeName);
+  sb.AppendLine($"{indent}{typeName} {varName} = {fieldName}.Value;");
+}
+```
 
-**Related:**
-- Issue #172 (parameterized constructor support)
-- PR that fixed #172 appears incomplete
+**The bug:** When the code reaches the `else` block (path 3), it references a Lazy<T> field.
+But `InterceptorEmitter.EmitServiceFields()` only emits Lazy<T> fields for:
+- Singleton/Scoped services AND
+- **NOT** HasConstructorDependencies (line 332)
 
-### Current Investigation Status
+So if:
+- `HasConstructorDependencies` is incorrectly `false`, OR
+- There's a code path that doesn't check `HasConstructorDependencies` properly
 
-**Test Results:**
-- `generator-20-parameterized-service-constructor.cs` - ALL 4 TESTS PASS ✓
-  - Should_resolve_service_with_configuration_dependency ✓
-  - Should_resolve_service_with_registered_service_dependency ✓
-  - Should_resolve_mixed_parameterless_and_parameterized_services ✓
-  - Should_resolve_transitive_dependencies ✓
+Then the code will reference a non-existent Lazy field.
 
-**Code Review Findings:**
+### Analysis of the Fix in Beta.48
 
-The implementation in beta.48 correctly handles parameterized service constructors:
+The previous fix (#425) added `HasConstructorDependencies` handling, but it appears incomplete.
 
-1. **ServiceExtractor** (`service-extractor.cs:274-285`):
-   - Extracts constructor dependencies from implementation type
-   - Uses `SymbolDisplayFormat.FullyQualifiedFormat` for type names
+Looking at line 100-112, the logic is:
+1. Check `HasConstructorDependencies` first → emit inline
+2. Else check `Transient` → emit new()
+3. Else (Singleton/Scoped) → use Lazy field
 
-2. **InterceptorEmitter** (`interceptor-emitter.cs:324-349`):
-   - `EmitServiceFields()` only emits Lazy<T> fields for Singleton/Scoped services WITHOUT constructor dependencies
-   - This is CORRECT - parameterized constructors are resolved inline, not via lazy
-   - Line 332: `Where(s => (s.Lifetime is ServiceLifetime.Singleton or ServiceLifetime.Scoped) && !s.HasConstructorDependencies)`
+This IS correct logic. So the question is: **Why doesn't it work?**
 
-3. **ServiceResolverEmitter** (`service-resolver-emitter.cs:86-114`):
-   - Checks `service.HasConstructorDependencies`
-   - If true, emits `new {ImplementationTypeName}({resolvedArgs})` with inline dependency resolution
-   - **No Lazy<T> field is used for parameterized constructors** - this is by design
+### Possible Root Causes
 
-**Analysis:**
-The current implementation is **correct** - parameterized service constructors are resolved inline by inlining `new Type(dep1, dep2...)`. This is the design goal: compile-time resolution without runtime DI.
+1. **`HasConstructorDependencies` is false when it should be true**
+   - `ServiceExtractor.ExtractConstructorDependencies()` might not be finding the constructor
+   - Constructor might be non-public (private/protected)
+   - Constructor parameters might not be resolvable
 
-### Possible Explanations
+2. **Code path bypasses the check**
+   - There might be another code path that doesn't check `HasConstructorDependencies`
 
-Since the tests all pass and the code is correct, the issue might be:
+3. **Service lookup returns wrong service**
+   - `FindService(typeName, services)` might return a service definition with wrong state
 
-1. **User's scenario not covered by tests** - Perhaps they're using a different pattern
-   - Example: Singleton service with parameterized constructor (should use runtime DI)
-   - Example: Complex dependency chain we haven't tested
-   - Example: Using UseMicrosoftDependencyInjection() with mixed services
+### Investigation Steps
 
-2. **Misunderstanding of feature behavior** - The issue says "generate references to non-existent static fields" but we don't generate lazy fields for parameterized services by design
-
-3. **Edge case not tested** - Need to understand the exact service/registration pattern from the user
-
-### Next Steps
-
-- [ ] Clarify the reproduction case with the user - get their exact code
-- [ ] Ask for the generated `NuruGenerated.g.cs` code showing the broken reference
-- [ ] Ask for the build error message (CS0103 details)
-- [ ] Create a test case that reproduces the reported issue if we can understand the pattern
+- [ ] Check `ServiceExtractor.ExtractConstructorDependencies()` logic
+- [ ] Verify it finds constructors for `KanbanService`
+- [ ] Check if constructor visibility matters (public vs non-public)
+- [ ] Look for other code paths in ServiceResolverEmitter that might reference Lazy fields
 
 ## Notes
 
-Issue #425 (fix source generator parameterized service constructors) was marked as done in beta.47/beta.48. The tests confirm the feature works for all tested scenarios:
+**Issue #425 Results said:**
+"Successfully fixed issue #172 - source generator now handles services with parameterized constructors."
 
-1. Service with IConfiguration dependency
-2. Service with other registered service dependency
-3. Mixed mode: parameterless + parameterized services
-4. Transitive dependencies (service depending on service)
+This fix worked for **Transient** services with parameterized constructors (see test generator-20).
 
-Need more information from the user to reproduce the reported regression.
+But it seems **Singleton/Scoped** services with parameterized constructors were not tested.
+
+**Test Coverage Gap:**
+- `generator-20-parameterized-service-constructor.cs` only tests Transient with parameterized constructors
+- No tests for Singleton with parameterized constructors
+- No tests for Scoped with parameterized constructors
 
 ## Checklist
 
-- [ ] Get reproduction code from the user
-- [ ] Get generated NuruGenerated.g.cs code
-- [ ] Get full build error message
-- [ ] Create test case matching their scenario
-- [ ] Fix if genuine issue, or clarify misinterpretation
+- [ ] Check ServiceExtractor constructor extraction for non-public constructors
+- [ ] Create test case: Singleton service with parameterized constructor
+- [ ] Create test case: Scoped service with parameterized constructor
+- [ ] Identify the exact code path causing the bug
+- [ ] Fix the root cause
+- [ ] Add test coverage for Singleton/Scoped with parameterized constructors
+- [ ] Verify fix works in timewarp-ganda context

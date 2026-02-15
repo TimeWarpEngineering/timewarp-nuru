@@ -140,7 +140,7 @@ internal static class CompletionEmitter
 
     // --help completion
     sb.AppendLine("      // --help is always available");
-    sb.AppendLine("      if (string.IsNullOrEmpty(currentInput) || \"--help\".StartsWith(currentInput, global::System.StringComparison.OrdinalIgnoreCase))");
+    sb.AppendLine("      if ((string.IsNullOrEmpty(currentInput) || \"--help\".StartsWith(currentInput, global::System.StringComparison.OrdinalIgnoreCase)) && yielded.Add(\"--help\"))");
     sb.AppendLine("        yield return new global::TimeWarp.Nuru.CompletionCandidate(\"--help\", \"Show help for this command\", global::TimeWarp.Nuru.CompletionType.Option);");
     sb.AppendLine();
 
@@ -160,7 +160,7 @@ internal static class CompletionEmitter
         sb.AppendLine("        {");
         foreach (string value in enumParam.Values)
         {
-          sb.AppendLine($"          if (\"{value}\".StartsWith(currentInput, global::System.StringComparison.OrdinalIgnoreCase))");
+          sb.AppendLine($"          if (\"{value}\".StartsWith(currentInput, global::System.StringComparison.OrdinalIgnoreCase) && yielded.Add(\"{value}\"))");
           sb.AppendLine($"            yield return new global::TimeWarp.Nuru.CompletionCandidate(\"{value}\", null, global::TimeWarp.Nuru.CompletionType.Enum);");
         }
 
@@ -186,14 +186,14 @@ internal static class CompletionEmitter
           if (opt.LongForm is not null)
           {
             string description = opt.Description is not null ? $"\"{EscapeString(opt.Description)}\"" : "null";
-            sb.AppendLine($"        if (string.IsNullOrEmpty(currentInput) || \"--{opt.LongForm}\".StartsWith(currentInput, global::System.StringComparison.OrdinalIgnoreCase))");
+            sb.AppendLine($"        if ((string.IsNullOrEmpty(currentInput) || \"--{opt.LongForm}\".StartsWith(currentInput, global::System.StringComparison.OrdinalIgnoreCase)) && yielded.Add(\"--{opt.LongForm}\"))");
             sb.AppendLine($"          yield return new global::TimeWarp.Nuru.CompletionCandidate(\"--{opt.LongForm}\", {description}, global::TimeWarp.Nuru.CompletionType.Option);");
           }
 
           if (opt.ShortForm is not null)
           {
             string description = opt.Description is not null ? $"\"{EscapeString(opt.Description)}\"" : "null";
-            sb.AppendLine($"        if (string.IsNullOrEmpty(currentInput) || \"-{opt.ShortForm}\".StartsWith(currentInput, global::System.StringComparison.OrdinalIgnoreCase))");
+            sb.AppendLine($"        if ((string.IsNullOrEmpty(currentInput) || \"-{opt.ShortForm}\".StartsWith(currentInput, global::System.StringComparison.OrdinalIgnoreCase)) && yielded.Add(\"-{opt.ShortForm}\"))");
             sb.AppendLine($"          yield return new global::TimeWarp.Nuru.CompletionCandidate(\"-{opt.ShortForm}\", {description}, global::TimeWarp.Nuru.CompletionType.Option);");
           }
         }
@@ -216,14 +216,14 @@ internal static class CompletionEmitter
         if (opt.LongForm is not null)
         {
           string description = opt.Description is not null ? $"\"{EscapeString(opt.Description)}\"" : "null";
-          sb.AppendLine($"        if (\"--{opt.LongForm}\".StartsWith(currentInput, global::System.StringComparison.OrdinalIgnoreCase))");
+          sb.AppendLine($"        if (\"--{opt.LongForm}\".StartsWith(currentInput, global::System.StringComparison.OrdinalIgnoreCase) && yielded.Add(\"--{opt.LongForm}\"))");
           sb.AppendLine($"          yield return new global::TimeWarp.Nuru.CompletionCandidate(\"--{opt.LongForm}\", {description}, global::TimeWarp.Nuru.CompletionType.Option);");
         }
 
         if (opt.ShortForm is not null)
         {
           string description = opt.Description is not null ? $"\"{EscapeString(opt.Description)}\"" : "null";
-          sb.AppendLine($"        if (\"-{opt.ShortForm}\".StartsWith(currentInput, global::System.StringComparison.OrdinalIgnoreCase))");
+          sb.AppendLine($"        if (\"-{opt.ShortForm}\".StartsWith(currentInput, global::System.StringComparison.OrdinalIgnoreCase) && yielded.Add(\"-{opt.ShortForm}\"))");
           sb.AppendLine($"          yield return new global::TimeWarp.Nuru.CompletionCandidate(\"-{opt.ShortForm}\", {description}, global::TimeWarp.Nuru.CompletionType.Option);");
         }
       }

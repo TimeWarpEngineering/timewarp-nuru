@@ -31,11 +31,11 @@ Both sections yield the same options without using the `yielded` HashSet for ded
 
 ## Checklist
 
-- [ ] Add `yielded.Add()` check to context-aware route options (long form)
-- [ ] Add `yielded.Add()` check to context-aware route options (short form)
-- [ ] Add `yielded.Add()` check to global options (long form)
-- [ ] Add `yielded.Add()` check to global options (short form)
-- [ ] Add unit test to verify no duplicate completions
+- [x] Add `yielded.Add()` check to context-aware route options (long form)
+- [x] Add `yielded.Add()` check to context-aware route options (short form)
+- [x] Add `yielded.Add()` check to global options (long form)
+- [x] Add `yielded.Add()` check to global options (short form)
+- [x] Add unit test to verify no duplicate completions
 
 ## Fix Pattern
 
@@ -56,3 +56,33 @@ if ("--config".StartsWith(currentInput, ...) && yielded.Add("--config"))
 The `yielded` HashSet is already declared at line 104-105 and used correctly for command completions. Need to apply same pattern to all four option yield locations (2 sections × 2 forms).
 
 Full analysis: `.agent/workspace/2026-02-16T10-45-00_duplicate-completion-suggestions-analysis.md`
+
+## Results
+
+### Files Modified
+
+1. `source/timewarp-nuru-analyzers/generators/emitters/completion-emitter.cs`
+   - Added `yielded.Add("--help")` to --help completion (line 143)
+   - Added `yielded.Add("{value}")` to enum completions (line 163)
+   - Added `yielded.Add("--{opt.LongForm}")` to context-aware route option long form (line 189)
+   - Added `yielded.Add("-{opt.ShortForm}")` to context-aware route option short form (line 196)
+   - Added `yielded.Add("--{opt.LongForm}")` to global option long form (line 219)
+   - Added `yielded.Add("-{opt.ShortForm}")` to global option short form (line 226)
+
+2. `source/timewarp-nuru-analyzers/generators/emitters/repl-emitter.cs`
+   - Same changes applied to corresponding lines
+
+### Test Added
+
+3. `tests/timewarp-nuru-tests/repl/repl-39-no-duplicate-options.cs`
+   - 3 tests verifying deduplication logic
+
+### Test Results
+
+- Build: ✓ Passed (0 warnings, 0 errors)
+- New tests: ✓ 3/3 passed
+- CI tests: ✓ 1067 passed, 7 skipped
+
+### Key Decision
+
+Used `yielded.Add()` pattern consistently across all completion types (options, enums, --help) to ensure no duplicates can appear from any completion source.

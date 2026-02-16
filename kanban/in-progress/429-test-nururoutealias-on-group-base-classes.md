@@ -8,10 +8,9 @@ Create test case to validate the failure reported in GitHub Issue #178. The issu
 
 - [x] Examine existing routing test patterns in `tests/timewarp-nuru-tests/routing/`
 - [x] Create test file for group alias propagation (e.g., `routing-28-group-alias.cs`)
-- [ ] Test `[NuruRouteAlias]` directly on command class (verify current state)
-- [ ] Test `[NuruRouteAlias]` on group base class (verify reported bug)
-- [x] Run tests and confirm failure
-- [ ] Document expected vs actual behavior in test
+- [x] Test `[NuruRouteAlias]` directly on command class (verify current state)
+- [x] Test `[NuruRouteAlias]` on group base class (verify reported bug)
+- [x] Document expected vs actual behavior in test
 
 ## Notes
 

@@ -52,76 +52,26 @@ internal static class RouteMatcherEmitter
     // This enables "command --help" to show help for just that command
     RouteHelpEmitter.EmitPerRouteHelpCheck(sb, route, routeIndex);
 
-    // Determine the matching strategy based on route complexity
-    // Use complex matching for routes with options, catch-all, or optional positional params
-    if (route.HasOptions || route.HasCatchAll || route.HasOptionalPositionalParams)
+    // Use unified matching for all routes
+    EmitMatch(sb, route, routeIndex, services, behaviors, customConverters, loggerFactoryFieldName, useRuntimeDI, runtimeDISuffix, httpClientConfigurations);
+
+    // Emit alias matches
+    foreach (string alias in route.Aliases)
     {
-      EmitComplexMatch(sb, route, routeIndex, services, behaviors, customConverters, loggerFactoryFieldName, useRuntimeDI, runtimeDISuffix, httpClientConfigurations);
-    }
-    else
-    {
-      EmitSimpleMatch(sb, route, routeIndex, services, behaviors, customConverters, loggerFactoryFieldName, useRuntimeDI, runtimeDISuffix, httpClientConfigurations);
+      EmitAliasMatch(sb, route, routeIndex, alias, services, behaviors, customConverters, loggerFactoryFieldName, useRuntimeDI, runtimeDISuffix, httpClientConfigurations);
     }
 
     sb.AppendLine();
   }
 
   /// <summary>
-  /// Emits simple pattern matching using C# list patterns.
-  /// Used for routes with only literals and required parameters.
-  /// </summary>
-  private static void EmitSimpleMatch(
-    StringBuilder sb,
-    RouteDefinition route,
-    int routeIndex,
-    ImmutableArray<ServiceDefinition> services,
-    ImmutableArray<BehaviorDefinition> behaviors,
-    ImmutableArray<CustomConverterDefinition> customConverters,
-    string? loggerFactoryFieldName,
-    bool useRuntimeDI,
-    string runtimeDISuffix,
-    ImmutableArray<HttpClientConfiguration> httpClientConfigurations)
-  {
-    string pattern = BuildListPattern(route, routeIndex);
-
-    sb.AppendLine($"    if (routeArgs is {pattern})");
-    sb.AppendLine("    {");
-
-    // Emit variable aliases (from route-unique names to handler-expected names)
-    EmitVariableAliases(sb, route, routeIndex, indent: 6);
-
-    // Emit type conversions for typed parameters (emits error and returns 1 on failure)
-    EmitTypeConversions(sb, route, routeIndex, customConverters, indent: 6);
-
-    // Emit handler invocation (wrapped with behaviors if any)
-    if (behaviors.Length > 0)
-    {
-      // For endpoints (Command), the command is created by BehaviorEmitter before the pipeline
-      bool commandCreatedByBehavior = route.Handler.HandlerKind == HandlerKind.Command;
-
-      BehaviorEmitter.EmitPipelineWrapper(
-        sb, route, routeIndex, behaviors, services, indent: 6,
-        () => HandlerInvokerEmitter.Emit(sb, route, routeIndex, services, indent: 8, commandAlreadyCreated: commandCreatedByBehavior, loggerFactoryFieldName: loggerFactoryFieldName, useRuntimeDI: useRuntimeDI, runtimeDISuffix: runtimeDISuffix, httpClientConfigurations: httpClientConfigurations));
-
-      sb.AppendLine("      return 0;");
-    }
-    else
-    {
-      HandlerInvokerEmitter.Emit(sb, route, routeIndex, services, indent: 6, loggerFactoryFieldName: loggerFactoryFieldName, useRuntimeDI: useRuntimeDI, runtimeDISuffix: runtimeDISuffix, httpClientConfigurations: httpClientConfigurations);
-      sb.AppendLine("      return 0;");
-    }
-
-    sb.AppendLine("    }");
-  }
-
-  /// <summary>
-  /// Emits complex matching logic for routes with options or catch-all parameters.
+  /// Emits route matching code using two-pass approach for all routes.
   /// Uses a two-pass approach:
   /// 1. First pass: Extract options and their values, tracking consumed indices
   /// 2. Second pass: Build positional args array, match literals, extract parameters
   /// This allows options to appear anywhere (interleaved with positional args).
   /// </summary>
-  private static void EmitComplexMatch(
+  private static void EmitMatch(
     StringBuilder sb,
     RouteDefinition route,
     int routeIndex,
@@ -170,8 +120,18 @@ internal static class RouteMatcherEmitter
     // Build positional args array (excluding consumed indices; -- is included only if route expects it)
     EmitPositionalArrayConstruction(sb, route, routeIndex);
 
-    // Check minimum positional args
+    // Check minimum positional args (required parameters must be present)
     sb.AppendLine($"      if (__positionalArgs_{routeIndex}.Length < {minPositionalArgs}) goto route_skip_{routeIndex};");
+
+    // For routes with ONLY literals and required params (no options, no optional params, no catch-all),
+    // enforce exact length matching. This prevents empty pattern routes from matching arbitrary input (Issue #179).
+    // Routes with options are exempt because unknown options become extra positionals.
+    bool hasOnlyLiteralsAndRequiredParams = !route.HasOptions && !route.HasOptionalPositionalParams && !route.HasCatchAll;
+    if (hasOnlyLiteralsAndRequiredParams)
+    {
+      // Enforce exact length (no extra args allowed)
+      sb.AppendLine($"      if (__positionalArgs_{routeIndex}.Length > {minPositionalArgs}) goto route_skip_{routeIndex};");
+    }
 
     // Emit matching and parameter extraction in one pass through ALL segments
     // This keeps positionalIndex correctly aligned for interleaved patterns
@@ -263,6 +223,123 @@ internal static class RouteMatcherEmitter
 
     sb.AppendLine("    }");
     sb.AppendLine($"    route_skip_{routeIndex}:;");
+  }
+
+  /// <summary>
+  /// Emits matching logic for an alias route using the same handler as the primary route.
+  /// </summary>
+  private static void EmitAliasMatch(
+    StringBuilder sb,
+    RouteDefinition route,
+    int routeIndex,
+    string alias,
+    ImmutableArray<ServiceDefinition> services,
+    ImmutableArray<BehaviorDefinition> behaviors,
+    ImmutableArray<CustomConverterDefinition> customConverters,
+    string? loggerFactoryFieldName,
+    bool useRuntimeDI,
+    string runtimeDISuffix,
+    ImmutableArray<HttpClientConfiguration> httpClientConfigurations)
+  {
+    sb.AppendLine($"    // Alias: {EscapeXmlComment(alias)}");
+
+    string[] aliasParts = alias.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+    // The alias is a complete replacement for groupPrefix + pattern literals.
+    // Only non-literal segments (parameters, catch-all, end-of-options) need additional matching.
+    int minPositionalArgs = aliasParts.Length +
+      route.Parameters.Count(p => !p.IsOptional && !p.IsCatchAll) +
+      route.Segments.Count(s => s is EndOfOptionsSeparatorDefinition);
+
+    string aliasSkipLabel = $"alias_skip_{routeIndex}_{alias.GetHashCode(System.StringComparison.Ordinal):X}";
+
+    sb.AppendLine($"    if (routeArgs.Length >= {minPositionalArgs})");
+    sb.AppendLine("    {");
+
+    EmitOptionFormsSet(sb, route, routeIndex);
+
+    sb.AppendLine($"      int __endOfOptions_{routeIndex} = global::System.Array.IndexOf(routeArgs, \"--\");");
+    sb.AppendLine($"      if (__endOfOptions_{routeIndex} < 0) __endOfOptions_{routeIndex} = routeArgs.Length;");
+    sb.AppendLine($"      global::System.Collections.Generic.HashSet<int> __consumed_{routeIndex} = [];");
+
+    EmitOptionParsingWithIndexTracking(sb, route, routeIndex, customConverters);
+    EmitPositionalArrayConstruction(sb, route, routeIndex);
+
+    sb.AppendLine($"      if (__positionalArgs_{routeIndex}.Length < {minPositionalArgs}) goto {aliasSkipLabel};");
+
+    int positionalIndex = 0;
+
+    // Match alias prefix instead of group prefix
+    foreach (string word in aliasParts)
+    {
+      sb.AppendLine(
+        $"      if (__positionalArgs_{routeIndex}[{positionalIndex}] != \"{EscapeString(word)}\") goto {aliasSkipLabel};");
+      positionalIndex++;
+    }
+
+    // Match non-literal segments only (literals are already encoded in the alias string)
+    foreach (SegmentDefinition segment in route.Segments)
+    {
+      switch (segment)
+      {
+        case LiteralDefinition:
+          // Skip: literals are already part of the alias prefix
+          break;
+
+        case ParameterDefinition param when param.IsCatchAll:
+          string catchAllVar = (param.HasTypeConstraint || param.IsCatchAll)
+            ? $"__{param.CamelCaseName}_{routeIndex}"
+            : param.CamelCaseName;
+          sb.AppendLine(
+            $"      string[] {catchAllVar} = __positionalArgs_{routeIndex}[{positionalIndex}..];");
+          break;
+
+        case ParameterDefinition param when param.IsOptional:
+          string optVar = param.HasTypeConstraint
+            ? $"__{param.CamelCaseName}_{routeIndex}"
+            : param.CamelCaseName;
+          sb.AppendLine(
+            $"      string? {optVar} = __positionalArgs_{routeIndex}.Length > {positionalIndex} ? __positionalArgs_{routeIndex}[{positionalIndex}] : null;");
+          positionalIndex++;
+          break;
+
+        case ParameterDefinition param:
+          string reqVar = param.HasTypeConstraint
+            ? $"__{param.CamelCaseName}_{routeIndex}"
+            : param.CamelCaseName;
+          sb.AppendLine(
+            $"      string {reqVar} = __positionalArgs_{routeIndex}[{positionalIndex}];");
+          positionalIndex++;
+          break;
+
+        case EndOfOptionsSeparatorDefinition:
+          sb.AppendLine(
+            $"      if (__positionalArgs_{routeIndex}[{positionalIndex}] != \"--\") goto {aliasSkipLabel};");
+          positionalIndex++;
+          break;
+      }
+    }
+
+    EmitTypeConversions(sb, route, routeIndex, customConverters, indent: 6);
+
+    if (behaviors.Length > 0)
+    {
+      bool commandCreatedByBehavior = route.Handler.HandlerKind == HandlerKind.Command;
+
+      BehaviorEmitter.EmitPipelineWrapper(
+        sb, route, routeIndex, behaviors, services, indent: 6,
+        () => HandlerInvokerEmitter.Emit(sb, route, routeIndex, services, indent: 8, commandAlreadyCreated: commandCreatedByBehavior, loggerFactoryFieldName: loggerFactoryFieldName, useRuntimeDI: useRuntimeDI, runtimeDISuffix: runtimeDISuffix, httpClientConfigurations: httpClientConfigurations));
+
+      sb.AppendLine("      return 0;");
+    }
+    else
+    {
+      HandlerInvokerEmitter.Emit(sb, route, routeIndex, services, indent: 6, loggerFactoryFieldName: loggerFactoryFieldName, useRuntimeDI: useRuntimeDI, runtimeDISuffix: runtimeDISuffix, httpClientConfigurations: httpClientConfigurations);
+      sb.AppendLine("      return 0;");
+    }
+
+    sb.AppendLine("    }");
+    sb.AppendLine($"    {aliasSkipLabel}:;");
   }
 
   /// <summary>
@@ -1000,48 +1077,6 @@ internal static class RouteMatcherEmitter
     }
 
     return simpleName;
-  }
-
-  /// <summary>
-  /// Builds a C# list pattern string for simple matching.
-  /// Uses route-unique variable names to avoid conflicts between routes.
-  /// </summary>
-  private static string BuildListPattern(RouteDefinition route, int routeIndex)
-  {
-    List<string> parts = [];
-
-    // Prepend group prefix literals if present
-    if (!string.IsNullOrEmpty(route.GroupPrefix))
-    {
-      foreach (string word in route.GroupPrefix.Split(' ', StringSplitOptions.RemoveEmptyEntries))
-      {
-        parts.Add($"\"{EscapeString(word)}\"");
-      }
-    }
-
-    foreach (SegmentDefinition segment in route.Segments)
-    {
-      switch (segment)
-      {
-        case LiteralDefinition literal:
-          parts.Add($"\"{EscapeString(literal.Value)}\"");
-          break;
-
-        case ParameterDefinition param when param.IsOptional:
-          // Optional parameters use route-unique variable names
-          string optVarName = $"__{param.CamelCaseName}_{routeIndex}";
-          parts.Add($"var {optVarName}");
-          break;
-
-        case ParameterDefinition param:
-          // Required parameters use route-unique variable names
-          string varName = $"__{param.CamelCaseName}_{routeIndex}";
-          parts.Add($"var {varName}");
-          break;
-      }
-    }
-
-    return $"[{string.Join(", ", parts)}]";
   }
 
   /// <summary>

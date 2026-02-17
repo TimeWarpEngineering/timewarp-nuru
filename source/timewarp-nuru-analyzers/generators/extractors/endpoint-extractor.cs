@@ -18,6 +18,7 @@ internal static class EndpointExtractor
 {
   private const string NuruRouteAttributeName = "NuruRoute";
   private const string NuruRouteGroupAttributeName = "NuruRouteGroup";
+  private const string NuruRouteAliasAttributeName = "NuruRouteAlias";
   private const string ParameterAttributeName = "Parameter";
   private const string OptionAttributeName = "Option";
   private const string GroupOptionAttributeName = "GroupOption";
@@ -81,6 +82,14 @@ internal static class EndpointExtractor
     // Calculate specificity
     int specificity = mergedSegments.Sum(s => s.SpecificityContribution);
 
+    // Extract and combine aliases
+    ImmutableArray<string> aliases = ExtractAndCombineAliases(
+      classDeclaration,
+      semanticModel,
+      groupInfo,
+      pattern,
+      cancellationToken);
+
     RouteDefinition route = RouteDefinition.Create(
       originalPattern: pattern,
       segments: mergedSegments,
@@ -90,9 +99,51 @@ internal static class EndpointExtractor
       groupPrefix: groupInfo.FullPrefix,
       groupTypeHierarchy: groupInfo.TypeHierarchy,
       computedSpecificity: specificity,
+      aliases: aliases,
       implements: filterInterfaces);
 
     return EndpointExtractionResult.Success(route);
+  }
+
+  /// <summary>
+  /// Extracts and combines aliases from the command class and group hierarchy.
+  /// </summary>
+  private static ImmutableArray<string> ExtractAndCombineAliases(
+    ClassDeclarationSyntax classDeclaration,
+    SemanticModel semanticModel,
+    GroupInfo groupInfo,
+    string pattern,
+    CancellationToken cancellationToken)
+  {
+    List<string> allAliases = [];
+
+    // Extract direct aliases from command class
+    ImmutableArray<string> directAliases = ExtractNuruRouteAliasAttribute(classDeclaration, semanticModel, cancellationToken);
+    allAliases.AddRange(directAliases);
+
+    // Generate full alias patterns from group aliases
+    if (!groupInfo.GroupAliases.IsDefaultOrEmpty && !string.IsNullOrEmpty(groupInfo.FullPrefix))
+    {
+      string[] prefixParts = groupInfo.FullPrefix.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+      foreach (GroupAliasDefinition groupAlias in groupInfo.GroupAliases)
+      {
+        if (groupAlias.GroupPrefixIndex < prefixParts.Length)
+        {
+          string[] aliasParts = (string[])prefixParts.Clone();
+          aliasParts[groupAlias.GroupPrefixIndex] = groupAlias.Alias;
+
+          string aliasPrefix = string.Join(" ", aliasParts);
+          string fullAliasPattern = string.IsNullOrEmpty(pattern)
+            ? aliasPrefix
+            : $"{aliasPrefix} {pattern}";
+
+          allAliases.Add(fullAliasPattern);
+        }
+      }
+    }
+
+    return [..allAliases];
   }
 
   /// <summary>
@@ -144,12 +195,66 @@ internal static class EndpointExtractor
   }
 
   /// <summary>
+  /// Extracts aliases from [NuruRouteAlias] attribute on the command class.
+  /// </summary>
+  private static ImmutableArray<string> ExtractNuruRouteAliasAttribute(
+    ClassDeclarationSyntax classDeclaration,
+    SemanticModel semanticModel,
+    CancellationToken cancellationToken)
+  {
+    INamedTypeSymbol? classSymbol = semanticModel.GetDeclaredSymbol(classDeclaration, cancellationToken);
+    if (classSymbol is null)
+      return [];
+
+    foreach (AttributeData attribute in classSymbol.GetAttributes())
+    {
+      string? attributeName = attribute.AttributeClass?.Name;
+      if (attributeName != NuruRouteAliasAttributeName && attributeName != $"{NuruRouteAliasAttributeName}Attribute")
+        continue;
+
+      if (attribute.ConstructorArguments.Length > 0)
+      {
+        TypedConstant argsArray = attribute.ConstructorArguments[0];
+
+        List<string> aliases = [];
+
+        if (argsArray.Values.Length > 0)
+        {
+          foreach (TypedConstant value in argsArray.Values)
+          {
+            if (value.Value is string alias)
+              aliases.Add(alias);
+          }
+        }
+        else if (argsArray.Value is string singleAlias)
+        {
+          aliases.Add(singleAlias);
+        }
+
+        return [..aliases];
+      }
+    }
+
+    return [];
+  }
+
+  /// <summary>
+  /// Represents an alias defined at a specific level in the group hierarchy.
+  /// </summary>
+  /// <param name="Alias">The alias string (e.g., "ws")</param>
+  /// <param name="GroupPrefixIndex">The index in the full prefix that this alias replaces (0 = first segment)</param>
+  private readonly record struct GroupAliasDefinition(
+    string Alias,
+    int GroupPrefixIndex);
+
+  /// <summary>
   /// Contains the result of extracting group information from the inheritance hierarchy.
   /// </summary>
   private readonly record struct GroupInfo
   (
     ImmutableArray<string> TypeHierarchy,
-    string? FullPrefix
+    string? FullPrefix,
+    ImmutableArray<GroupAliasDefinition> GroupAliases
   );
 
   /// <summary>
@@ -175,7 +280,8 @@ internal static class EndpointExtractor
       return new GroupInfo
       (
         TypeHierarchy: [],
-        FullPrefix: null
+        FullPrefix: null,
+        GroupAliases: []
       );
     }
 
@@ -185,7 +291,8 @@ internal static class EndpointExtractor
       return new GroupInfo
       (
         TypeHierarchy: [],
-        FullPrefix: null
+        FullPrefix: null,
+        GroupAliases: []
       );
     }
 
@@ -193,8 +300,10 @@ internal static class EndpointExtractor
     // We'll store in reverse order first, then reverse
     List<string> typeHierarchyReversed = [];
     List<string> prefixesReversed = [];
+    List<GroupAliasDefinition> groupAliasesReversed = [];
 
     INamedTypeSymbol? current = classSymbol.BaseType;
+    int groupIndex = 0;  // Only counts classes with [NuruRouteGroup] + non-empty prefix
 
     while (current is not null && current.SpecialType != SpecialType.System_Object)
     {
@@ -220,12 +329,59 @@ internal static class EndpointExtractor
       }
 
       prefixesReversed.Add(prefix ?? "");
+
+      // Check this type for [NuruRouteAlias] attribute(s) and collect aliases
+      // Use groupIndex which only increments for actual group classes
+      if (!string.IsNullOrEmpty(prefix))
+      {
+        foreach (AttributeData attribute in current.GetAttributes())
+        {
+          string? attributeName = attribute.AttributeClass?.Name;
+          if (attributeName != NuruRouteAliasAttributeName && attributeName != $"{NuruRouteAliasAttributeName}Attribute")
+            continue;
+
+          if (attribute.ConstructorArguments.Length > 0)
+          {
+            TypedConstant argsArray = attribute.ConstructorArguments[0];
+
+            if (argsArray.Values.Length > 0)
+            {
+              foreach (TypedConstant value in argsArray.Values)
+              {
+                if (value.Value is string alias)
+                  groupAliasesReversed.Add(new GroupAliasDefinition(alias, groupIndex));
+              }
+            }
+            else if (argsArray.Value is string singleAlias)
+            {
+              groupAliasesReversed.Add(new GroupAliasDefinition(singleAlias, groupIndex));
+            }
+          }
+        }
+
+        groupIndex++;
+      }
+
       current = current.BaseType;
     }
 
     // Reverse to get root-to-leaf order
     typeHierarchyReversed.Reverse();
     prefixesReversed.Reverse();
+
+    // Recalculate alias indices after reversal
+    // groupAliases was collected leaf-to-root, so after reversal:
+    // - What was at index N-1 (leaf) is now at index 0 (root)
+    // - What was at index 0 (root) is now at index N-1 (leaf)
+    // For an alias that was at index i, its new index is (groupIndex - 1 - i)
+    List<GroupAliasDefinition> recalculatedAliases = [];
+    foreach (GroupAliasDefinition alias in groupAliasesReversed)
+    {
+      int newIndex = groupIndex - 1 - alias.GroupPrefixIndex;
+      recalculatedAliases.Add(new GroupAliasDefinition(alias.Alias, newIndex));
+    }
+
+    recalculatedAliases.Reverse();
 
     ImmutableArray<string> typeHierarchy = [.. typeHierarchyReversed];
 
@@ -237,7 +393,8 @@ internal static class EndpointExtractor
     return new GroupInfo
     (
       TypeHierarchy: typeHierarchy,
-      FullPrefix: fullPrefix
+      FullPrefix: fullPrefix,
+      GroupAliases: [.. recalculatedAliases]
     );
   }
 

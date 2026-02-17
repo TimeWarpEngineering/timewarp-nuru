@@ -231,12 +231,12 @@ internal static class RouteMatcherEmitter
         sb, route, routeIndex, behaviors, services, indent: 6,
         () => HandlerInvokerEmitter.Emit(sb, route, routeIndex, services, indent: 8, commandAlreadyCreated: commandCreatedByBehavior, loggerFactoryFieldName: loggerFactoryFieldName, useRuntimeDI: useRuntimeDI, runtimeDISuffix: runtimeDISuffix, httpClientConfigurations: httpClientConfigurations));
 
-      sb.AppendLine("      return 0;");
+      sb.AppendLine("      return global::System.Environment.ExitCode;");
     }
     else
     {
       HandlerInvokerEmitter.Emit(sb, route, routeIndex, services, indent: 6, loggerFactoryFieldName: loggerFactoryFieldName, useRuntimeDI: useRuntimeDI, runtimeDISuffix: runtimeDISuffix, httpClientConfigurations: httpClientConfigurations);
-      sb.AppendLine("      return 0;");
+      sb.AppendLine("      return global::System.Environment.ExitCode;");
     }
 
     sb.AppendLine("    }");
@@ -348,12 +348,12 @@ internal static class RouteMatcherEmitter
         sb, route, routeIndex, behaviors, services, indent: 6,
         () => HandlerInvokerEmitter.Emit(sb, route, routeIndex, services, indent: 8, commandAlreadyCreated: commandCreatedByBehavior, loggerFactoryFieldName: loggerFactoryFieldName, useRuntimeDI: useRuntimeDI, runtimeDISuffix: runtimeDISuffix, httpClientConfigurations: httpClientConfigurations));
 
-      sb.AppendLine("      return 0;");
+      sb.AppendLine("      return global::System.Environment.ExitCode;");
     }
     else
     {
       HandlerInvokerEmitter.Emit(sb, route, routeIndex, services, indent: 6, loggerFactoryFieldName: loggerFactoryFieldName, useRuntimeDI: useRuntimeDI, runtimeDISuffix: runtimeDISuffix, httpClientConfigurations: httpClientConfigurations);
-      sb.AppendLine("      return 0;");
+      sb.AppendLine("      return global::System.Environment.ExitCode;");
     }
 
     sb.AppendLine("    }");

@@ -96,8 +96,8 @@ public partial class NuruApp
   /// outputs "42" to the terminal but still returns exit code 0.
   /// </para>
   /// <para>
-  /// To signal failure with a non-zero exit code, throw an exception from your handler.
-  /// The exception message will be displayed and exit code will be 1.
+  /// To signal failure with a non-zero exit code, set <c>Environment.ExitCode</c>
+  /// in your handler. The value will be returned as the process exit code.
   /// </para>
   /// </returns>
 #pragma warning disable CA1822 // Member does not access instance data 

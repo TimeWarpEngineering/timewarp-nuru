@@ -90,9 +90,11 @@ internal sealed class CheckVersionCommand : ICommand<Unit>
 
       if (alreadyPublished.Count > 0)
       {
-        throw new InvalidOperationException(
+        Terminal.WriteErrorLine(
           $"Package(s) already published: {string.Join(", ", alreadyPublished)}. " +
           "Please increment the version in source/Directory.Build.props");
+        Environment.ExitCode = 1;
+        return Unit.Value;
       }
 
       Terminal.WriteLine("\nAll packages are ready to publish!");

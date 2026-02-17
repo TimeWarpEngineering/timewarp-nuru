@@ -1,6 +1,24 @@
 // Emits pattern matching code for individual routes.
 // Generates C# pattern matching expressions for each route definition.
 
+#region Design
+// UNIFIED MATCHING: All routes use EmitMatch (formerly EmitComplexMatch).
+// A dual simple/complex code path existed previously and caused 5+ bugs (#179, #301, #302, #303, #403)
+// due to behavioral concerns being added to one path but forgotten in the other.
+//
+// BUILT-IN FLAG SKIP GUARD: Routes with no literals (empty pattern) must skip built-in flags
+// like --help REGARDLESS of whether they have required parameters. The check is `hasNoLiterals`
+// not `minPositionalArgs == 0`. Without this, --help gets consumed as a parameter value.
+//
+// ALIAS MATCHING: The alias string is a COMPLETE replacement for groupPrefix + pattern literals.
+// EmitAliasMatch must NOT re-emit literal segments from route.Segments — they are already
+// encoded in the alias parts. Only parameters, catch-all, and end-of-options segments are emitted.
+//
+// EXACT LENGTH: Routes without options, optional params, or catch-all enforce exact positional
+// arg count. Routes WITH options cannot enforce exact length because unknown options become
+// extra positionals.
+#endregion
+
 namespace TimeWarp.Nuru.Generators;
 
 using System.Text;
@@ -91,13 +109,13 @@ internal static class RouteMatcherEmitter
     sb.AppendLine($"    if (routeArgs.Length >= {minPositionalArgs})");
     sb.AppendLine("    {");
 
-    // Bug #403: Routes with no literals and no required params (minPositionalArgs == 0) generate
-    // "routeArgs.Length >= 0" which is always true, intercepting built-in flags like --help.
-    // Skip built-in flags for these "match everything" routes, UNLESS the route explicitly
-    // maps a built-in flag (e.g., Map("--version") should be allowed to override).
+    // Issue #179: Routes with no literals (empty pattern like [NuruRoute("")]) can intercept
+    // built-in flags like --help. The flag ends up as a positional arg or option value.
+    // Skip built-in flags for these routes regardless of required parameter count,
+    // UNLESS the route explicitly maps a built-in flag (e.g., Map("--version")).
     bool hasNoLiterals = !route.PositionalMatchSegments.Any();
-    bool isBuiltInFlagRoute = route.OriginalPattern is "--help" or "-h" or "--version" or "--capabilities"; // BuiltInFlags.IsBuiltInFlagRoutePattern
-    if (minPositionalArgs == 0 && hasNoLiterals && !isBuiltInFlagRoute)
+    bool isBuiltInFlagRoute = route.OriginalPattern is "--help" or "-h" or "--version" or "--capabilities";
+    if (hasNoLiterals && !isBuiltInFlagRoute)
     {
       sb.AppendLine("      // Skip built-in flags for routes with no literals (default/options-only)");
       sb.AppendLine($"      if (routeArgs is {BuiltInFlags.PatternMatchExpression})");

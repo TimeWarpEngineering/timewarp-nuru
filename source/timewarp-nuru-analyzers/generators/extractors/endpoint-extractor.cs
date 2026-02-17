@@ -7,6 +7,16 @@
 // - Find [Parameter] and [Option] properties
 // - Find nested Handler class
 
+#region Design
+// ENDPOINT SCOPING: All [NuruRoute] classes in a compilation are collected globally by the
+// source generator. They are filtered per-app via FilterEndpointsForApp() during emission.
+// .DiscoverEndpoints() includes ALL endpoints; .Map<T>() includes only that type.
+//
+// ALIAS GENERATION: ExtractAndCombineAliases builds full alias strings that completely replace
+// groupPrefix + pattern. For group aliases, the alias word replaces one segment in the prefix
+// at the correct index. The emitter should NOT re-match literal segments after the alias prefix.
+#endregion
+
 namespace TimeWarp.Nuru.Generators;
 
 using RoslynSyntaxNode = Microsoft.CodeAnalysis.SyntaxNode;

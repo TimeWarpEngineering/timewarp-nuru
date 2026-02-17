@@ -32,7 +32,7 @@ public class EndpointDefaultRouteHelpTests
     NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .WithName("testapp")
-      .DiscoverEndpoints()
+      .Map<DefaultEndpoint>()
       .Build();
 
     // Act - invoke with --help
@@ -54,7 +54,7 @@ public class EndpointDefaultRouteHelpTests
     NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .WithName("testapp")
-      .DiscoverEndpoints()
+      .Map<DefaultEndpoint>()
       .Build();
 
     // Act - invoke with --help
@@ -75,7 +75,7 @@ public class EndpointDefaultRouteHelpTests
     using TestTerminal terminal = new();
     NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
-      .DiscoverEndpoints()
+      .Map<DefaultEndpoint>()
       .Build();
 
     // Act - invoke with no args
@@ -95,7 +95,7 @@ public class EndpointDefaultRouteHelpTests
     using TestTerminal terminal = new();
     NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
-      .DiscoverEndpoints()
+      .Map<DefaultEndpoint>()
       .Build();
 
     // Act - invoke with a positional argument

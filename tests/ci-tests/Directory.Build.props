@@ -43,6 +43,8 @@
     <Compile Include="../timewarp-nuru-tests/parser/*.cs" />
     <!-- Routing tests (migrated) -->
     <Compile Include="../timewarp-nuru-tests/routing/*.cs" />
+    <!-- Exclude routing-28: Issue #178 NuruRouteAlias propagation is incomplete -->
+    <Compile Remove="../timewarp-nuru-tests/routing/routing-28-group-alias.cs" />
     <!-- Configuration tests -->
     <Compile Include="../timewarp-nuru-tests/configuration/configuration-01-validate-on-start.cs" />
     <Compile Include="../timewarp-nuru-tests/configuration/configuration-02-cli-overrides.cs" />

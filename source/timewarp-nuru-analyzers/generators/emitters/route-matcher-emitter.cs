@@ -123,12 +123,13 @@ internal static class RouteMatcherEmitter
     // Check minimum positional args (required parameters must be present)
     sb.AppendLine($"      if (__positionalArgs_{routeIndex}.Length < {minPositionalArgs}) goto route_skip_{routeIndex};");
 
-    // For routes without optional/catch-all params, enforce exact length matching
-    // This prevents empty pattern routes from matching arbitrary input (Issue #179)
-    bool hasOptionalOrCatchAll = route.HasOptionalPositionalParams || route.HasCatchAll;
-    if (!hasOptionalOrCatchAll)
+    // For routes with ONLY literals and required params (no options, no optional params, no catch-all),
+    // enforce exact length matching. This prevents empty pattern routes from matching arbitrary input (Issue #179).
+    // Routes with options are exempt because unknown options become extra positionals.
+    bool hasOnlyLiteralsAndRequiredParams = !route.HasOptions && !route.HasOptionalPositionalParams && !route.HasCatchAll;
+    if (hasOnlyLiteralsAndRequiredParams)
     {
-      // No optional or catch-all params: enforce exact length (no extra args allowed)
+      // Enforce exact length (no extra args allowed)
       sb.AppendLine($"      if (__positionalArgs_{routeIndex}.Length > {minPositionalArgs}) goto route_skip_{routeIndex};");
     }
 
@@ -264,13 +265,6 @@ internal static class RouteMatcherEmitter
     EmitPositionalArrayConstruction(sb, route, routeIndex);
 
     sb.AppendLine($"      if (__positionalArgs_{routeIndex}.Length < {minPositionalArgs}) goto {aliasSkipLabel};");
-
-    // For routes without optional/catch-all params, enforce exact length matching
-    bool aliasHasOptionalOrCatchAll = route.HasOptionalPositionalParams || route.HasCatchAll;
-    if (!aliasHasOptionalOrCatchAll)
-    {
-      sb.AppendLine($"      if (__positionalArgs_{routeIndex}.Length > {minPositionalArgs}) goto {aliasSkipLabel};");
-    }
 
     int positionalIndex = 0;
 

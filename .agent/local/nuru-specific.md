@@ -27,9 +27,22 @@ Key components:
 ### Test Commands
 
 ```bash
-dotnet run tests/ci-tests/run-ci-tests.cs                              # CI tests (~500 tests)
+dotnet run tests/ci-tests/run-ci-tests.cs                              # CI tests (~1000+ tests)
 dotnet run tests/timewarp-nuru-core-tests/routing/routing-01-basic.cs  # Single test file
 ```
+
+### Runfile Cache
+
+- **Always run `ganda runfile cache --clear` before CI tests** when source generator code has changed. Stale cached runfiles use old generated code and produce false results.
+- Tests that pass individually but fail in CI are often caused by stale cache.
+
+### CI Multi-Mode Compilation
+
+- CI compiles ALL test files matching globs in `tests/ci-tests/Directory.Build.props` into a single assembly.
+- `[NuruRoute]` endpoint classes are collected **globally** across the entire compilation.
+- `.DiscoverEndpoints()` includes ALL `[NuruRoute]` endpoints in the compilation, not just those in the same file.
+- **Tests must use `.Map<TEndpoint>()` instead of `.DiscoverEndpoints()`** to avoid cross-contamination when multiple test files define endpoints with the same route pattern (e.g., two `[NuruRoute("")]` endpoints).
+- Tests that pass individually but fail in CI multi-mode are almost always caused by endpoint cross-contamination via `DiscoverEndpoints()`.
 
 ### Route Pattern Support
 

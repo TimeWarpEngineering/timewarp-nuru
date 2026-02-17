@@ -1,6 +1,24 @@
 // Emits pattern matching code for individual routes.
 // Generates C# pattern matching expressions for each route definition.
 
+#region Design
+// UNIFIED MATCHING: All routes use EmitMatch (formerly EmitComplexMatch).
+// A dual simple/complex code path existed previously and caused 5+ bugs (#179, #301, #302, #303, #403)
+// due to behavioral concerns being added to one path but forgotten in the other.
+//
+// BUILT-IN FLAG SKIP GUARD: Routes with no literals (empty pattern) must skip built-in flags
+// like --help REGARDLESS of whether they have required parameters. The check is `hasNoLiterals`
+// not `minPositionalArgs == 0`. Without this, --help gets consumed as a parameter value.
+//
+// ALIAS MATCHING: The alias string is a COMPLETE replacement for groupPrefix + pattern literals.
+// EmitAliasMatch must NOT re-emit literal segments from route.Segments — they are already
+// encoded in the alias parts. Only parameters, catch-all, and end-of-options segments are emitted.
+//
+// EXACT LENGTH: Routes without options, optional params, or catch-all enforce exact positional
+// arg count. Routes WITH options cannot enforce exact length because unknown options become
+// extra positionals.
+#endregion
+
 namespace TimeWarp.Nuru.Generators;
 
 using System.Text;

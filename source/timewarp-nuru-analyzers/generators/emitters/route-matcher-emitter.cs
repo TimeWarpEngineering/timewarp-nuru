@@ -91,13 +91,13 @@ internal static class RouteMatcherEmitter
     sb.AppendLine($"    if (routeArgs.Length >= {minPositionalArgs})");
     sb.AppendLine("    {");
 
-    // Bug #403: Routes with no literals and no required params (minPositionalArgs == 0) generate
-    // "routeArgs.Length >= 0" which is always true, intercepting built-in flags like --help.
-    // Skip built-in flags for these "match everything" routes, UNLESS the route explicitly
-    // maps a built-in flag (e.g., Map("--version") should be allowed to override).
+    // Issue #179: Routes with no literals (empty pattern like [NuruRoute("")]) can intercept
+    // built-in flags like --help. The flag ends up as a positional arg or option value.
+    // Skip built-in flags for these routes regardless of required parameter count,
+    // UNLESS the route explicitly maps a built-in flag (e.g., Map("--version")).
     bool hasNoLiterals = !route.PositionalMatchSegments.Any();
-    bool isBuiltInFlagRoute = route.OriginalPattern is "--help" or "-h" or "--version" or "--capabilities"; // BuiltInFlags.IsBuiltInFlagRoutePattern
-    if (minPositionalArgs == 0 && hasNoLiterals && !isBuiltInFlagRoute)
+    bool isBuiltInFlagRoute = route.OriginalPattern is "--help" or "-h" or "--version" or "--capabilities";
+    if (hasNoLiterals && !isBuiltInFlagRoute)
     {
       sb.AppendLine("      // Skip built-in flags for routes with no literals (default/options-only)");
       sb.AppendLine($"      if (routeArgs is {BuiltInFlags.PatternMatchExpression})");

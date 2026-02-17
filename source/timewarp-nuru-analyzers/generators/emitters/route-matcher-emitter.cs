@@ -120,8 +120,17 @@ internal static class RouteMatcherEmitter
     // Build positional args array (excluding consumed indices; -- is included only if route expects it)
     EmitPositionalArrayConstruction(sb, route, routeIndex);
 
-    // Check minimum positional args
+    // Check minimum positional args (required parameters must be present)
     sb.AppendLine($"      if (__positionalArgs_{routeIndex}.Length < {minPositionalArgs}) goto route_skip_{routeIndex};");
+
+    // For routes without optional/catch-all params, enforce exact length matching
+    // This prevents empty pattern routes from matching arbitrary input (Issue #179)
+    bool hasOptionalOrCatchAll = route.HasOptionalPositionalParams || route.HasCatchAll;
+    if (!hasOptionalOrCatchAll)
+    {
+      // No optional or catch-all params: enforce exact length (no extra args allowed)
+      sb.AppendLine($"      if (__positionalArgs_{routeIndex}.Length > {minPositionalArgs}) goto route_skip_{routeIndex};");
+    }
 
     // Emit matching and parameter extraction in one pass through ALL segments
     // This keeps positionalIndex correctly aligned for interleaved patterns
@@ -255,6 +264,13 @@ internal static class RouteMatcherEmitter
     EmitPositionalArrayConstruction(sb, route, routeIndex);
 
     sb.AppendLine($"      if (__positionalArgs_{routeIndex}.Length < {minPositionalArgs}) goto {aliasSkipLabel};");
+
+    // For routes without optional/catch-all params, enforce exact length matching
+    bool aliasHasOptionalOrCatchAll = route.HasOptionalPositionalParams || route.HasCatchAll;
+    if (!aliasHasOptionalOrCatchAll)
+    {
+      sb.AppendLine($"      if (__positionalArgs_{routeIndex}.Length > {minPositionalArgs}) goto {aliasSkipLabel};");
+    }
 
     int positionalIndex = 0;
 

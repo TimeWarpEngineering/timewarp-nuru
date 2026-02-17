@@ -244,11 +244,12 @@ internal static class RouteMatcherEmitter
     sb.AppendLine($"    // Alias: {EscapeXmlComment(alias)}");
 
     string[] aliasParts = alias.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-    string[] originalPrefixParts = route.GroupPrefix?.Split(' ', StringSplitOptions.RemoveEmptyEntries) ?? [];
 
+    // The alias is a complete replacement for groupPrefix + pattern literals.
+    // Only non-literal segments (parameters, catch-all, end-of-options) need additional matching.
     int minPositionalArgs = aliasParts.Length +
-      route.Segments.Count(s => s is LiteralDefinition or EndOfOptionsSeparatorDefinition) +
-      route.Parameters.Count(p => !p.IsOptional && !p.IsCatchAll);
+      route.Parameters.Count(p => !p.IsOptional && !p.IsCatchAll) +
+      route.Segments.Count(s => s is EndOfOptionsSeparatorDefinition);
 
     string aliasSkipLabel = $"alias_skip_{routeIndex}_{alias.GetHashCode(System.StringComparison.Ordinal):X}";
 
@@ -276,15 +277,13 @@ internal static class RouteMatcherEmitter
       positionalIndex++;
     }
 
-    // Match pattern segments (skip any segments that were part of the original group prefix)
+    // Match non-literal segments only (literals are already encoded in the alias string)
     foreach (SegmentDefinition segment in route.Segments)
     {
       switch (segment)
       {
-        case LiteralDefinition literal:
-          sb.AppendLine(
-            $"      if (__positionalArgs_{routeIndex}[{positionalIndex}] != \"{EscapeString(literal.Value)}\") goto {aliasSkipLabel};");
-          positionalIndex++;
+        case LiteralDefinition:
+          // Skip: literals are already part of the alias prefix
           break;
 
         case ParameterDefinition param when param.IsCatchAll:

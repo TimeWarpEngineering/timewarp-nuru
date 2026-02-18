@@ -296,6 +296,40 @@ See `samples/editions/01-group-filtering/` for a complete working example.
 - Return `Unit` when no meaningful return value
 - Use `ValueTask<T>` for handler return types
 
+### Return Values vs Exit Codes
+
+Handler return values and exit codes are **independent concerns**:
+
+- **Return value** → written to terminal (stdout). Controls what the user sees.
+- **`Environment.ExitCode`** → controls the process exit code returned by `RunAsync()`. Controls what scripts/CI see.
+
+| Return Type | Terminal Output | Exit Code |
+|-------------|-----------------|-----------|
+| `Unit` | Nothing | 0 (default) |
+| `string` | Raw string | 0 (default) |
+| `int` | Raw number (printed, **not** used as exit code) | 0 (default) |
+| Complex object | JSON serialized | 0 (default) |
+| `DateTime` | ISO 8601 formatted | 0 (default) |
+
+**To signal failure**, set `Environment.ExitCode` explicitly:
+
+```csharp
+public sealed class Handler : ICommandHandler<DeployCommand, Unit>
+{
+  public async ValueTask<Unit> Handle(DeployCommand command, CancellationToken ct)
+  {
+    if (failed)
+    {
+      Terminal.WriteErrorLine("Deployment failed");
+      Environment.ExitCode = 1;
+    }
+    return Unit.Value;
+  }
+}
+```
+
+**Common mistake**: returning `int` thinking it sets the exit code. `.WithHandler(() => 42)` outputs `"42"` to the terminal but the exit code is still 0.
+
 ## REPL Mode
 
 Add interactive REPL to any Nuru app with `.AddRepl()`:

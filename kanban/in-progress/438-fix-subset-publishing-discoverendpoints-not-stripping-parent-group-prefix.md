@@ -42,3 +42,33 @@ public sealed class RepoBaseSyncCommand : RepoBaseGroupBase, ICommand<Unit>
 The source generator detects endpoints correctly (they show in capabilities), but the prefix stripping logic is not applied during route registration for subset editions.
 
 **Environment:** Nuru version 3.0.0-beta.52, .NET 10.0.x
+
+## Implementation Plan
+
+### Problem Summary
+When using `.DiscoverEndpoints(typeof(GroupBase))` for subset publishing, the parent group prefix is not being stripped from command routes when the matched type is the ROOT in the hierarchy.
+
+### Root Cause
+The `StripGroupPrefixAboveMatchedType` method in `nuru-generator.cs` and `interceptor-emitter.cs` only strips prefixes ABOVE the matched type, not including the matched type itself. When filtering by a root group (matchedIndex = 0), there's nothing above it, so no prefix is stripped.
+
+### Files to Modify
+1. `source/timewarp-nuru-analyzers/generators/nuru-generator.cs` - lines 505-514
+2. `source/timewarp-nuru-analyzers/generators/emitters/interceptor-emitter.cs` - lines 803-812
+
+### Fix Logic
+For root groups (matchedIndex == 0), strip the first prefix segment:
+```csharp
+int startIndex = matchedIndex.Value == 0 
+  ? matchedIndex.Value + 1  // Strip root prefix
+  : matchedIndex.Value;      // Keep matched type's prefix
+string[] effectivePrefixes = allPrefixes[startIndex..];
+```
+
+### Test to Add
+Add `FilterByRootType_StripsRootPrefix` test in `tests/timewarp-nuru-tests/generator/generator-19-group-filtering.cs`
+
+### Verification
+1. Clear runfile cache
+2. Run group filtering tests
+3. Run full CI test suite
+4. Test the sample application

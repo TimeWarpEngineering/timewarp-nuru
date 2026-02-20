@@ -72,3 +72,24 @@ Add `FilterByRootType_StripsRootPrefix` test in `tests/timewarp-nuru-tests/gener
 2. Run group filtering tests
 3. Run full CI test suite
 4. Test the sample application
+
+## Results
+
+### What Was Implemented
+Fixed subset publishing to strip root group prefix when filtering by root group type.
+
+### Files Changed
+1. `source/timewarp-nuru-analyzers/generators/nuru-generator.cs` - Modified `StripGroupPrefixAboveMatchedType` to strip root prefix when `matchedIndex == 0`
+2. `source/timewarp-nuru-analyzers/generators/emitters/interceptor-emitter.cs` - Applied identical fix to the duplicate method
+3. `tests/timewarp-nuru-tests/generator/generator-19-group-filtering.cs` - Added test `FilterByRootType_StripsRootPrefix`
+
+### Key Decision
+The fix only strips the first prefix segment when the matched type is at index 0 (root). This preserves the existing behavior for non-root groups while enabling subset editions from root groups.
+
+### Test Outcomes
+- Group filtering tests: 7/7 passed
+- CI tests: 1086 passed, 7 skipped, 0 failed
+
+### Example
+Before: filtering by `RepoGroupBase` kept `repo base` prefix → command was `repo base sync`
+After: filtering by `RepoGroupBase` strips `repo` → command is `base sync`

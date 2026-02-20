@@ -135,6 +135,38 @@ namespace TimeWarp.Nuru.Tests.Generator.GroupFiltering
     }
 
     /// <summary>
+    /// Test that filtering by ROOT group strips the root prefix.
+    /// When filtering by TestTopGroup (root with "testapp" prefix),
+    /// the "testapp" prefix is removed, leaving just "kanban add".
+    /// </summary>
+    public static async Task FilterByRootType_StripsRootPrefix()
+    {
+      // Arrange
+      using TestTerminal terminal = new();
+
+      // Full version would be: "testapp kanban add" (no filter)
+      // Filtered by ROOT should be: "kanban add" (root prefix stripped)
+      NuruApp app = NuruApp.CreateBuilder()
+        .UseTerminal(terminal)
+        .DiscoverEndpoints(typeof(TestTopGroup))
+        .Build();
+
+      // Act - without "testapp" prefix - should work because root prefix is stripped
+      int exitCode = await app.RunAsync(["kanban", "add", "Root Filter Test"]);
+
+      // Assert
+      exitCode.ShouldBe(0);
+      terminal.OutputContains("Added: Root Filter Test").ShouldBeTrue();
+
+      // Act - verify the old full path does NOT work
+      terminal.ClearOutput();
+      exitCode = await app.RunAsync(["testapp", "kanban", "add", "Wont Work"]);
+
+      // Assert - unknown command because root prefix is stripped
+      exitCode.ShouldBe(1);
+    }
+
+    /// <summary>
     /// Test that ungrouped commands are excluded when a filter is active.
     /// Commands without [NuruRouteGroup] base are only available when no filter is set.
     /// </summary>

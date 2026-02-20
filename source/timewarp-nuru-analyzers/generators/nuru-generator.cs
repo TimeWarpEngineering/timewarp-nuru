@@ -510,8 +510,12 @@ public sealed class NuruGenerator : IIncrementalGenerator
       return endpoint with { GroupPrefix = null };
     }
 
-    // Slice from matched index to end
-    string[] effectivePrefixes = allPrefixes[matchedIndex.Value..];
+    // For root groups (matchedIndex == 0), also strip the first prefix segment
+    // This enables creating subset editions from root groups with the root prefix stripped
+    int startIndex = matchedIndex.Value == 0
+      ? matchedIndex.Value + 1 // Strip root prefix
+      : matchedIndex.Value; // Keep matched type's prefix
+    string[] effectivePrefixes = allPrefixes[startIndex..];
     string? effectivePrefix = effectivePrefixes.Length > 0
       ? string.Join(" ", effectivePrefixes)
       : null;

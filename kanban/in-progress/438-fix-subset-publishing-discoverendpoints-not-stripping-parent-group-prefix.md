@@ -18,11 +18,11 @@ GitHub Issue #184: When using `.DiscoverEndpoints(typeof(GroupBase))` for subset
 
 ## Checklist
 
-- [ ] Reproduce the issue with a test case
-- [ ] Identify where prefix stripping logic should be applied
-- [ ] Implement fix in source generator or runtime
-- [ ] Add unit tests for subset publishing with group prefix stripping
-- [ ] Verify fix works with nested group hierarchies
+- [x] Reproduce the issue with a test case
+- [x] Identify where prefix stripping logic should be applied
+- [x] Implement fix in source generator or runtime
+- [x] Add unit tests for subset publishing with group prefix stripping
+- [x] Verify fix works with nested group hierarchies
 - [ ] Update documentation if needed
 
 ## Notes

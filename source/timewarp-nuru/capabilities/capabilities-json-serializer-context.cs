@@ -17,4 +17,4 @@ namespace TimeWarp.Nuru;
   WriteIndented = true,
   PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase,
   DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull)]
-internal partial class CapabilitiesJsonSerializerContext : JsonSerializerContext;
+public partial class CapabilitiesJsonSerializerContext : JsonSerializerContext;

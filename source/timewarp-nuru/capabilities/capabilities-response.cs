@@ -32,7 +32,7 @@ namespace TimeWarp.Nuru;
 /// }
 /// </code>
 /// </example>
-internal sealed class CapabilitiesResponse
+public sealed class CapabilitiesResponse
 {
   /// <summary>
   /// Gets the application name.
@@ -66,7 +66,7 @@ internal sealed class CapabilitiesResponse
 /// Metadata for a route group containing nested groups and commands.
 /// Groups represent hierarchical command organization (e.g., "admin", "admin config").
 /// </summary>
-internal sealed class GroupCapability
+public sealed class GroupCapability
 {
   /// <summary>
   /// Gets the group name (single word, e.g., "admin", "config").
@@ -88,7 +88,7 @@ internal sealed class GroupCapability
 /// <summary>
 /// Metadata for a single command/route.
 /// </summary>
-internal sealed class CommandCapability
+public sealed class CommandCapability
 {
   /// <summary>
   /// Gets the route pattern (e.g., "users list", "user create {name}").
@@ -128,7 +128,7 @@ internal sealed class CommandCapability
 /// <summary>
 /// Metadata for a positional parameter.
 /// </summary>
-internal sealed class ParameterCapability
+public sealed class ParameterCapability
 {
   /// <summary>
   /// Gets the parameter name.
@@ -160,7 +160,7 @@ internal sealed class ParameterCapability
 /// <summary>
 /// Metadata for an option (flag or named argument).
 /// </summary>
-internal sealed class OptionCapability
+public sealed class OptionCapability
 {
   /// <summary>
   /// Gets the option name (long form without dashes, e.g., "format").

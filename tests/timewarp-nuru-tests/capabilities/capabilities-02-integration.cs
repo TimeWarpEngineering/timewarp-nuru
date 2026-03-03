@@ -31,9 +31,9 @@ public class CapabilitiesIntegrationTests
 
     // Assert
     exitCode.ShouldBe(0);
-    terminal.OutputContains("\"commands\":").ShouldBeTrue("Should contain commands array");
+    terminal.OutputContains("\"endpoints\":").ShouldBeTrue("Should contain endpoints array");
     terminal.OutputContains("\"pattern\":").ShouldBeTrue("Should contain pattern field");
-    terminal.OutputContains("\"messageType\":").ShouldBeTrue("Should contain messageType field");
+    terminal.OutputContains("\"kind\":").ShouldBeTrue("Should contain kind field");
   }
 
   public static async Task Should_include_user_commands_in_capabilities()
@@ -79,7 +79,7 @@ public class CapabilitiesIntegrationTests
     terminal.OutputContains("mycommand").ShouldBeTrue("Should contain user command");
   }
 
-  public static async Task Should_show_correct_message_type_for_query_command()
+  public static async Task Should_show_correct_kind_for_query_command()
   {
     // Arrange
     using TestTerminal terminal = new();
@@ -93,10 +93,10 @@ public class CapabilitiesIntegrationTests
     await app.RunAsync(["--capabilities"]);
 
     // Assert
-    terminal.OutputContains("\"messageType\": \"query\"").ShouldBeTrue("Should show query message type");
+    terminal.OutputContains("\"kind\": \"query\"").ShouldBeTrue("Should show query kind");
   }
 
-  public static async Task Should_show_correct_message_type_for_idempotent_command()
+  public static async Task Should_show_correct_kind_for_idempotent_command()
   {
     // Arrange
     using TestTerminal terminal = new();
@@ -109,8 +109,8 @@ public class CapabilitiesIntegrationTests
     // Act
     await app.RunAsync(["--capabilities"]);
 
-    // Assert
-    terminal.OutputContains("\"messageType\": \"idempotent-command\"").ShouldBeTrue("Should show idempotent-command message type");
+    // Assert - EndpointKind.IdempotentCommand with camelCase policy -> "idempotentCommand"
+    terminal.OutputContains("\"kind\": \"idempotentCommand\"").ShouldBeTrue("Should show idempotentCommand kind");
   }
 
   public static async Task Should_include_typed_parameter_info()
@@ -167,12 +167,60 @@ public class CapabilitiesIntegrationTests
 
     // Verify JSON structure has required top-level fields
     terminal.OutputContains("\"name\":").ShouldBeTrue("Should contain name field");
-    terminal.OutputContains("\"commands\":").ShouldBeTrue("Should contain commands array");
+    terminal.OutputContains("\"endpoints\":").ShouldBeTrue("Should contain endpoints array");
 
     // Version should be present (from assembly metadata)
     terminal.OutputContains("\"version\":").ShouldBeTrue("Should contain version field");
   }
 
+  public static async Task Should_parse_output_as_valid_json()
+  {
+    // Arrange
+    using TestTerminal terminal = new();
+
+    NuruApp app = NuruApp.CreateBuilder()
+      .UseTerminal(terminal)
+      .Map("status").WithHandler(() => "ok").AsQuery().Done()
+      .Build();
+
+    // Act
+    await app.RunAsync(["--capabilities"]);
+
+    string output = terminal.AllOutput;
+
+    // Assert - should not throw
+    using System.Text.Json.JsonDocument doc = System.Text.Json.JsonDocument.Parse(output);
+    doc.RootElement.GetProperty("name").GetString().ShouldNotBeNullOrEmpty();
+    doc.RootElement.GetProperty("version").GetString().ShouldNotBeNullOrEmpty();
+    doc.RootElement.GetProperty("endpoints").ValueKind.ShouldBe(System.Text.Json.JsonValueKind.Array);
+  }
+
+  public static async Task Should_deserialize_output_to_capabilities_response()
+  {
+    // Arrange
+    using TestTerminal terminal = new();
+
+    NuruApp app = NuruApp.CreateBuilder()
+      .UseTerminal(terminal)
+      .Map("greet {name}").WithHandler((string name) => $"Hello {name}").WithDescription("Greet someone").AsQuery().Done()
+      .Build();
+
+    // Act
+    await app.RunAsync(["--capabilities"]);
+
+    string output = terminal.AllOutput;
+    CapabilitiesResponse? response = System.Text.Json.JsonSerializer.Deserialize(output, CapabilitiesJsonSerializerContext.Default.CapabilitiesResponse);
+
+    // Assert
+    response.ShouldNotBeNull();
+    response.Endpoints.Count.ShouldBeGreaterThan(0);
+
+    EndpointCapability greet = response.Endpoints.First(e => e.Pattern.Contains("greet"));
+    greet.Kind.ShouldBe(EndpointKind.Query);
+    greet.Description.ShouldBe("Greet someone");
+    greet.Parameters.Count.ShouldBe(1);
+    greet.Parameters[0].Name.ShouldBe("name");
+  }
 }
 
 } // namespace TimeWarp.Nuru.Tests.Core.CapabilitiesIntegration

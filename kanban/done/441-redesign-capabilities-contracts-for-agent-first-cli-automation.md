@@ -50,3 +50,31 @@ This is a forward-looking beta redesign. Backward compatibility is not required.
 ### Motivation / Prior Gaps
 
 Recent analysis found emitter-model drift and test blind spots (field name mismatches, missing required collections, invalid JSON scenarios, unmodeled fields). This task resolves those design flaws by moving to a strict contract-first pipeline with roundtrip validation.
+
+## Results
+
+### What was implemented
+- Rewrote `capabilities-response.cs` with new agent-first contract: `CapabilitiesResponse` → flat `Endpoints` list, `CommandCapability` → `EndpointCapability`, `MessageType string` → `Kind EndpointKind` enum, added `GroupPath string[]`, `Aliases string[]`, `DefaultValue`, `AllowedValues`, `IsFlag` fields
+- Deleted `GroupCapability` class entirely (hierarchical groups model removed)
+- Updated `capabilities-json-serializer-context.cs`: removed old type registrations, added `EndpointCapability`, `EndpointKind`, added `UseStringEnumConverter = true`
+- Rewrote `capabilities-emitter.cs`: replaced hand-built JSON string approach with C# code that builds typed `CapabilitiesResponse` DTO instances and serializes via `JsonSerializer.Serialize()` + `CapabilitiesJsonSerializerContext`
+- `AllowedValues` deferred (requires `Compilation` access not available in `CapabilitiesEmitter`) — to be handled separately
+
+### Files changed
+- `source/timewarp-nuru/capabilities/capabilities-response.cs` — full rewrite
+- `source/timewarp-nuru/capabilities/capabilities-json-serializer-context.cs` — full rewrite
+- `source/timewarp-nuru-analyzers/generators/emitters/capabilities-emitter.cs` — full rewrite
+- `tests/timewarp-nuru-tests/capabilities/capabilities-01-basic.cs` — rewritten for new DTOs
+- `tests/timewarp-nuru-tests/capabilities/capabilities-02-integration.cs` — updated to JSON parse + deserialize assertions
+- `tests/timewarp-nuru-tests/capabilities/capabilities-03-groups.cs` — updated for flat model + GroupPath
+- `tests/timewarp-nuru-tests/capabilities/capabilities-04-roundtrip.cs` — NEW file created
+
+### Key decisions
+- `EndpointKind` enum serializes via `UseStringEnumConverter` with camelCase policy: `Query` → `"query"`, `IdempotentCommand` → `"idempotentCommand"`
+- `GroupPath` computed by splitting `route.GroupPrefix` on `' '`; empty array for top-level routes
+- `AllowedValues` deferred — emitter does not have access to `Compilation` needed for enum metadata extraction
+- `GroupHierarchyBuilder` retained (used by other emitters); only the capabilities emitter dependency removed
+
+### Test outcomes
+- All 29 new capabilities tests pass
+- Full CI: **1091 passed, 7 skipped (pre-existing), 0 failed**

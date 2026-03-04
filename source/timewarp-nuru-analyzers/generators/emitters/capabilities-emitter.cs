@@ -19,12 +19,13 @@ internal static class CapabilitiesEmitter
   /// <param name="sb">The StringBuilder to append to.</param>
   /// <param name="model">The application model containing routes and metadata.</param>
   /// <param name="methodSuffix">Suffix for method name (e.g., "_0" for multi-app assemblies).</param>
-  public static void Emit(StringBuilder sb, AppModel model, string methodSuffix = "")
+  /// <param name="compilation">Optional Roslyn compilation for enum value extraction.</param>
+  public static void Emit(StringBuilder sb, AppModel model, string methodSuffix = "", Compilation? compilation = null)
   {
     sb.AppendLine($"  private static void PrintCapabilities{methodSuffix}(ITerminal terminal)");
     sb.AppendLine("  {");
 
-    EmitResponseConstruction(sb, model);
+    EmitResponseConstruction(sb, model, compilation);
 
     sb.AppendLine("    string json = global::System.Text.Json.JsonSerializer.Serialize(response, global::TimeWarp.Nuru.CapabilitiesJsonSerializerContext.Default.CapabilitiesResponse);");
     sb.AppendLine("    terminal.WriteLine(json);");
@@ -34,7 +35,7 @@ internal static class CapabilitiesEmitter
   /// <summary>
   /// Emits the CapabilitiesResponse object construction code.
   /// </summary>
-  private static void EmitResponseConstruction(StringBuilder sb, AppModel model)
+  private static void EmitResponseConstruction(StringBuilder sb, AppModel model, Compilation? compilation)
   {
     string name = EscapeCSharpString(model.Name ?? "app");
     string version = EscapeCSharpString(model.Version ?? "0.0.0");
@@ -58,7 +59,7 @@ internal static class CapabilitiesEmitter
     {
       RouteDefinition route = routes[i];
       bool isLast = i == routes.Length - 1;
-      EmitEndpointCapability(sb, route, isLast);
+      EmitEndpointCapability(sb, route, isLast, compilation);
     }
 
     sb.AppendLine("      ]");
@@ -68,7 +69,7 @@ internal static class CapabilitiesEmitter
   /// <summary>
   /// Emits a single EndpointCapability initializer.
   /// </summary>
-  private static void EmitEndpointCapability(StringBuilder sb, RouteDefinition route, bool isLast)
+  private static void EmitEndpointCapability(StringBuilder sb, RouteDefinition route, bool isLast, Compilation? compilation)
   {
     string pattern = EscapeCSharpString(route.FullPattern);
     string[] groupPathParts = string.IsNullOrEmpty(route.GroupPrefix)
@@ -121,7 +122,11 @@ internal static class CapabilitiesEmitter
     {
       ParameterDefinition param = parameters[i];
       bool paramIsLast = i == parameters.Count - 1;
-      EmitParameterCapability(sb, param, paramIsLast);
+      string? handlerTypeName = route.Handler.Parameters
+        .FirstOrDefault(p => p.Source == BindingSource.Parameter &&
+          string.Equals(p.SourceName, param.Name, StringComparison.OrdinalIgnoreCase))
+        ?.ParameterTypeName;
+      EmitParameterCapability(sb, param, paramIsLast, compilation, handlerTypeName);
     }
 
     sb.AppendLine("          ],");
@@ -134,7 +139,11 @@ internal static class CapabilitiesEmitter
     {
       OptionDefinition option = options[i];
       bool optionIsLast = i == options.Count - 1;
-      EmitOptionCapability(sb, option, optionIsLast);
+      string? handlerTypeName = route.Handler.Parameters
+        .FirstOrDefault(p => p.Source == BindingSource.Option &&
+          string.Equals(p.SourceName, option.LongForm ?? option.ShortForm, StringComparison.OrdinalIgnoreCase))
+        ?.ParameterTypeName;
+      EmitOptionCapability(sb, option, optionIsLast, compilation, handlerTypeName);
     }
 
     sb.AppendLine("          ]");
@@ -146,7 +155,7 @@ internal static class CapabilitiesEmitter
   /// <summary>
   /// Emits a single ParameterCapability initializer.
   /// </summary>
-  private static void EmitParameterCapability(StringBuilder sb, ParameterDefinition param, bool isLast)
+  private static void EmitParameterCapability(StringBuilder sb, ParameterDefinition param, bool isLast, Compilation? compilation, string? handlerTypeName = null)
   {
     string name = EscapeCSharpString(param.Name);
     string type = EscapeCSharpString(param.TypeConstraint ?? "string");
@@ -172,6 +181,23 @@ internal static class CapabilitiesEmitter
       sb.AppendLine($"              DefaultValue = \"{defaultValue}\",");
     }
 
+    // Use resolved CLR type name first; fall back to handler's parameter type when pattern has no type annotation
+    string? typeNameForEnum = param.ResolvedClrTypeName ?? handlerTypeName;
+    string[]? allowedValues = ExtractEnumValues(typeNameForEnum, compilation);
+    if (allowedValues is not null)
+    {
+      sb.Append("              AllowedValues = [");
+      for (int i = 0; i < allowedValues.Length; i++)
+      {
+        if (i > 0)
+          sb.Append(", ");
+
+        sb.Append($"\"{EscapeCSharpString(allowedValues[i])}\"");
+      }
+
+      sb.AppendLine("],");
+    }
+
     string comma = isLast ? "" : ",";
     sb.AppendLine($"            }}{comma}");
   }
@@ -179,7 +205,7 @@ internal static class CapabilitiesEmitter
   /// <summary>
   /// Emits a single OptionCapability initializer.
   /// </summary>
-  private static void EmitOptionCapability(StringBuilder sb, OptionDefinition option, bool isLast)
+  private static void EmitOptionCapability(StringBuilder sb, OptionDefinition option, bool isLast, Compilation? compilation, string? handlerTypeName = null)
   {
     string name = EscapeCSharpString(option.LongForm ?? option.ShortForm ?? "");
     string type = EscapeCSharpString(option.TypeConstraint ?? (option.IsFlag ? "bool" : "string"));
@@ -214,6 +240,23 @@ internal static class CapabilitiesEmitter
       sb.AppendLine($"              DefaultValue = \"{defaultValue}\",");
     }
 
+    // Use resolved CLR type name first; fall back to handler's parameter type when pattern has no type annotation
+    string? typeNameForEnum = option.ResolvedClrTypeName ?? handlerTypeName;
+    string[]? allowedValues = ExtractEnumValues(typeNameForEnum, compilation);
+    if (allowedValues is not null)
+    {
+      sb.Append("              AllowedValues = [");
+      for (int i = 0; i < allowedValues.Length; i++)
+      {
+        if (i > 0)
+          sb.Append(", ");
+
+        sb.Append($"\"{EscapeCSharpString(allowedValues[i])}\"");
+      }
+
+      sb.AppendLine("],");
+    }
+
     string comma = isLast ? "" : ",";
     sb.AppendLine($"            }}{comma}");
   }
@@ -229,6 +272,33 @@ internal static class CapabilitiesEmitter
       "IdempotentCommand" => "IdempotentCommand",
       _ => "Unspecified"
     };
+
+  /// <summary>
+  /// Extracts enum member names for a given CLR type name using the Roslyn compilation.
+  /// Returns null if the type is not an enum or if compilation is unavailable.
+  /// </summary>
+  private static string[]? ExtractEnumValues(string? resolvedClrTypeName, Compilation? compilation)
+  {
+    if (compilation is null || resolvedClrTypeName is null)
+      return null;
+
+    string typeName = resolvedClrTypeName;
+    if (typeName.StartsWith("global::", StringComparison.Ordinal))
+      typeName = typeName[8..];
+    if (typeName.EndsWith('?'))
+      typeName = typeName[..^1];
+
+    INamedTypeSymbol? typeSymbol = compilation.GetTypeByMetadataName(typeName);
+    if (typeSymbol?.TypeKind != TypeKind.Enum)
+      return null;
+
+    string[] values = [.. typeSymbol.GetMembers()
+      .OfType<IFieldSymbol>()
+      .Where(f => f.HasConstantValue)
+      .Select(f => f.Name)];
+
+    return values.Length > 0 ? values : null;
+  }
 
   /// <summary>
   /// Escapes a string for use in a C# string literal.

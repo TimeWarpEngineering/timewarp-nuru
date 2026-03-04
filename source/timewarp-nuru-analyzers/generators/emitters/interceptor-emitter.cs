@@ -1047,7 +1047,7 @@ internal static class InterceptorEmitter
 
       HelpEmitter.Emit(sb, enrichedApp, methodSuffix);
       sb.AppendLine();
-      CapabilitiesEmitter.Emit(sb, enrichedApp, methodSuffix);
+      CapabilitiesEmitter.Emit(sb, enrichedApp, methodSuffix, compilation);
       sb.AppendLine();
 
       // REPL support (opt-in via AddRepl())

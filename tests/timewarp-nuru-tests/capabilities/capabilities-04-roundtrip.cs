@@ -10,6 +10,8 @@ return await RunAllTests();
 namespace TimeWarp.Nuru.Tests.Core.CapabilitiesRoundtrip
 {
 
+public enum DeployEnvironment { Development, Staging, Production }
+
 [TestTag("Capabilities")]
 public class CapabilitiesRoundtripTests
 {
@@ -156,6 +158,52 @@ public class CapabilitiesRoundtripTests
     greet.Description.ShouldBe("Greet someone");
     greet.Parameters.Count.ShouldBe(1);
     greet.Parameters[0].Name.ShouldBe("name");
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_include_allowed_values_for_enum_parameter()
+  {
+    using TestTerminal terminal = new();
+    NuruApp app = NuruApp.CreateBuilder()
+      .UseTerminal(terminal)
+      .Map("deploy --env {env}").WithHandler((DeployEnvironment env) => $"Deploying to {env}").Done()
+      .Build();
+
+    await app.RunAsync(["--capabilities"]);
+
+    string output = terminal.AllOutput;
+    CapabilitiesResponse? response = System.Text.Json.JsonSerializer.Deserialize(output, CapabilitiesJsonSerializerContext.Default.CapabilitiesResponse);
+
+    response.ShouldNotBeNull();
+    EndpointCapability deploy = response.Endpoints.First(e => e.Pattern.Contains("deploy"));
+    deploy.Options.Count.ShouldBe(1);
+
+    OptionCapability envOption = deploy.Options[0];
+    envOption.AllowedValues.ShouldNotBeNull("Enum option should have AllowedValues");
+    envOption.AllowedValues!.ShouldContain("Development");
+    envOption.AllowedValues!.ShouldContain("Staging");
+    envOption.AllowedValues!.ShouldContain("Production");
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_not_include_allowed_values_for_string_parameter()
+  {
+    using TestTerminal terminal = new();
+    NuruApp app = NuruApp.CreateBuilder()
+      .UseTerminal(terminal)
+      .Map("greet {name}").WithHandler((string name) => $"Hello {name}").Done()
+      .Build();
+
+    await app.RunAsync(["--capabilities"]);
+
+    string output = terminal.AllOutput;
+    CapabilitiesResponse? response = System.Text.Json.JsonSerializer.Deserialize(output, CapabilitiesJsonSerializerContext.Default.CapabilitiesResponse);
+
+    response.ShouldNotBeNull();
+    EndpointCapability greet = response.Endpoints.First(e => e.Pattern.Contains("greet"));
+    greet.Parameters[0].AllowedValues.ShouldBeNull("String parameter should not have AllowedValues");
 
     await Task.CompletedTask;
   }

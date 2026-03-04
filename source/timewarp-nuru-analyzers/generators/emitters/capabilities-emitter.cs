@@ -1,16 +1,15 @@
-// Emits capabilities JSON generation code for AI tool discovery.
+// Emits capabilities DTO construction code for AI agent discovery.
 // Generates the PrintCapabilities method for --capabilities flag handling.
-// Outputs hierarchical JSON with groups containing nested groups and commands.
+// Outputs a flat list of EndpointCapability objects with GroupPath arrays.
 
 namespace TimeWarp.Nuru.Generators;
 
 using System.Text;
 
 /// <summary>
-/// Emits code to generate JSON capabilities for AI tools.
-/// Creates the PrintCapabilities method that outputs structured command information.
-/// Commands are organized hierarchically: grouped commands appear only within their group,
-/// ungrouped commands appear at the top level.
+/// Emits code to build and serialize a CapabilitiesResponse DTO for AI agents.
+/// Creates the PrintCapabilities method that outputs structured JSON endpoint information.
+/// All routes are emitted as a flat list; group hierarchy is encoded in the GroupPath array.
 /// </summary>
 internal static class CapabilitiesEmitter
 {
@@ -20,321 +19,291 @@ internal static class CapabilitiesEmitter
   /// <param name="sb">The StringBuilder to append to.</param>
   /// <param name="model">The application model containing routes and metadata.</param>
   /// <param name="methodSuffix">Suffix for method name (e.g., "_0" for multi-app assemblies).</param>
-  public static void Emit(StringBuilder sb, AppModel model, string methodSuffix = "")
+  /// <param name="compilation">Optional Roslyn compilation for enum value extraction.</param>
+  public static void Emit(StringBuilder sb, AppModel model, string methodSuffix = "", Compilation? compilation = null)
   {
     sb.AppendLine($"  private static void PrintCapabilities{methodSuffix}(ITerminal terminal)");
     sb.AppendLine("  {");
 
-    // Build the JSON as a raw string literal
-    sb.AppendLine("    terminal.WriteLine(\"\"\"");
-    sb.AppendLine("    {");
+    EmitResponseConstruction(sb, model, compilation);
 
-    EmitMetadata(sb, model);
-
-    // Build group hierarchy from routes
-    GroupHierarchyResult hierarchy = GroupHierarchyBuilder.BuildHierarchy(model.Routes);
-
-    // Emit groups if any exist
-    if (hierarchy.RootGroups.Count > 0)
-    {
-      EmitGroups(sb, hierarchy.RootGroups, indent: 6, isLastProperty: hierarchy.UngroupedRoutes.Count == 0);
-    }
-
-    // Emit ungrouped commands at top level
-    EmitUngroupedCommands(sb, hierarchy.UngroupedRoutes);
-
-    sb.AppendLine("    }");
-    sb.AppendLine("    \"\"\");");
+    sb.AppendLine("    string json = global::System.Text.Json.JsonSerializer.Serialize(response, global::TimeWarp.Nuru.CapabilitiesJsonSerializerContext.Default.CapabilitiesResponse);");
+    sb.AppendLine("    terminal.WriteLine(json);");
     sb.AppendLine("  }");
   }
 
   /// <summary>
-  /// Emits the metadata section of the capabilities JSON.
+  /// Emits the CapabilitiesResponse object construction code.
   /// </summary>
-  private static void EmitMetadata(StringBuilder sb, AppModel model)
+  private static void EmitResponseConstruction(StringBuilder sb, AppModel model, Compilation? compilation)
   {
-    string name = EscapeJsonString(model.Name ?? "app");
-    sb.AppendLine($"      \"name\": \"{name}\",");
+    string name = EscapeCSharpString(model.Name ?? "app");
+    string version = EscapeCSharpString(model.Version ?? "0.0.0");
 
-    // Version info (from assembly metadata, extracted at compile time)
-    if (model.Version is not null)
-    {
-      string version = EscapeJsonString(model.Version);
-      sb.AppendLine($"      \"version\": \"{version}\",");
-    }
-
-    if (model.CommitHash is not null)
-    {
-      string commitHash = EscapeJsonString(model.CommitHash);
-      sb.AppendLine($"      \"commitHash\": \"{commitHash}\",");
-    }
-
-    if (model.CommitDate is not null)
-    {
-      string commitDate = EscapeJsonString(model.CommitDate);
-      sb.AppendLine($"      \"commitDate\": \"{commitDate}\",");
-    }
+    sb.AppendLine("    global::TimeWarp.Nuru.CapabilitiesResponse response = new()");
+    sb.AppendLine("    {");
+    sb.AppendLine($"      Name = \"{name}\",");
+    sb.AppendLine($"      Version = \"{version}\",");
 
     if (model.Description is not null)
     {
-      string description = EscapeJsonString(model.Description);
-      sb.AppendLine($"      \"description\": \"{description}\",");
+      string description = EscapeCSharpString(model.Description);
+      sb.AppendLine($"      Description = \"{description}\",");
     }
 
-    if (model.AiPrompt is not null)
-    {
-      string aiPrompt = EscapeJsonString(model.AiPrompt);
-      sb.AppendLine($"      \"aiPrompt\": \"{aiPrompt}\",");
-    }
-  }
+    sb.AppendLine("      Endpoints =");
+    sb.AppendLine("      [");
 
-  /// <summary>
-  /// Emits the groups array with nested groups and commands.
-  /// </summary>
-  private static void EmitGroups(StringBuilder sb, IReadOnlyList<GroupNode> groups, int indent, bool isLastProperty)
-  {
-    string indentStr = new(' ', indent);
-    sb.AppendLine($"{indentStr}\"groups\": [");
-
-    for (int i = 0; i < groups.Count; i++)
-    {
-      GroupNode group = groups[i];
-      bool isLast = i == groups.Count - 1;
-      EmitGroupEntry(sb, group, indent + 2, isLast);
-    }
-
-    string comma = isLastProperty ? "" : ",";
-    sb.AppendLine($"{indentStr}]{comma}");
-  }
-
-  /// <summary>
-  /// Emits a single group entry with its nested groups and commands.
-  /// </summary>
-  private static void EmitGroupEntry(StringBuilder sb, GroupNode group, int indent, bool isLast)
-  {
-    string indentStr = new(' ', indent);
-    sb.AppendLine($"{indentStr}{{");
-
-    // Group name
-    sb.AppendLine($"{indentStr}  \"name\": \"{EscapeJsonString(group.Name)}\",");
-
-    // Nested groups (if any)
-    bool hasNestedGroups = group.Children.Count > 0;
-    bool hasCommands = group.Routes.Count > 0;
-
-    if (hasNestedGroups)
-    {
-      EmitGroups(sb, group.Children, indent + 2, isLastProperty: !hasCommands);
-    }
-
-    // Commands in this group
-    if (hasCommands)
-    {
-      EmitGroupCommands(sb, group.Routes, indent + 2);
-    }
-
-    // If no nested groups and no commands, emit empty commands array for valid JSON
-    if (!hasNestedGroups && !hasCommands)
-    {
-      sb.AppendLine($"{indentStr}  \"commands\": []");
-    }
-
-    string comma = isLast ? "" : ",";
-    sb.AppendLine($"{indentStr}}}{comma}");
-  }
-
-  /// <summary>
-  /// Emits commands within a group.
-  /// </summary>
-  private static void EmitGroupCommands(StringBuilder sb, List<RouteDefinition> routes, int indent)
-  {
-    string indentStr = new(' ', indent);
-    sb.AppendLine($"{indentStr}\"commands\": [");
-
-    for (int i = 0; i < routes.Count; i++)
+    ImmutableArray<RouteDefinition> routes = model.Routes;
+    for (int i = 0; i < routes.Length; i++)
     {
       RouteDefinition route = routes[i];
-      bool isLast = i == routes.Count - 1;
-      EmitCommandEntry(sb, route, indent + 2, isLast);
-    }
-
-    sb.AppendLine($"{indentStr}]");
-  }
-
-  /// <summary>
-  /// Emits ungrouped commands at the top level.
-  /// </summary>
-  private static void EmitUngroupedCommands(StringBuilder sb, IReadOnlyList<RouteDefinition> routes)
-  {
-    sb.AppendLine("      \"commands\": [");
-
-    for (int i = 0; i < routes.Count; i++)
-    {
-      RouteDefinition route = routes[i];
-      bool isLast = i == routes.Count - 1;
-      EmitCommandEntry(sb, route, indent: 8, isLast);
+      bool isLast = i == routes.Length - 1;
+      EmitEndpointCapability(sb, route, isLast, compilation);
     }
 
     sb.AppendLine("      ]");
+    sb.AppendLine("    };");
   }
 
   /// <summary>
-  /// Emits a single command entry in the capabilities JSON.
+  /// Emits a single EndpointCapability initializer.
   /// </summary>
-  private static void EmitCommandEntry(StringBuilder sb, RouteDefinition route, int indent, bool isLast)
+  private static void EmitEndpointCapability(StringBuilder sb, RouteDefinition route, bool isLast, Compilation? compilation)
   {
-    string indentStr = new(' ', indent);
-    string propIndent = new(' ', indent + 2);
+    string pattern = EscapeCSharpString(route.FullPattern);
+    string[] groupPathParts = string.IsNullOrEmpty(route.GroupPrefix)
+      ? []
+      : route.GroupPrefix.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+    string kindValue = MapMessageTypeToKind(route.MessageType);
 
-    sb.AppendLine($"{indentStr}{{");
+    sb.AppendLine("        new global::TimeWarp.Nuru.EndpointCapability");
+    sb.AppendLine("        {");
+    sb.AppendLine($"          Pattern = \"{pattern}\",");
 
-    // Pattern
-    string pattern = EscapeJsonString(route.FullPattern);
-    sb.AppendLine($"{propIndent}\"pattern\": \"{pattern}\",");
+    // GroupPath
+    sb.Append("          GroupPath = [");
+    for (int i = 0; i < groupPathParts.Length; i++)
+    {
+      if (i > 0)
+        sb.Append(", ");
+      sb.Append($"\"{EscapeCSharpString(groupPathParts[i])}\"");
+    }
+
+    sb.AppendLine("],");
+
+    // Aliases
+    sb.Append("          Aliases = [");
+    IReadOnlyList<string> aliases = [.. route.Aliases];
+    for (int i = 0; i < aliases.Count; i++)
+    {
+      if (i > 0)
+        sb.Append(", ");
+      sb.Append($"\"{EscapeCSharpString(aliases[i])}\"");
+    }
+
+    sb.AppendLine("],");
 
     // Description
     if (route.Description is not null)
     {
-      string description = EscapeJsonString(route.Description);
-      sb.AppendLine($"{propIndent}\"description\": \"{description}\",");
+      string description = EscapeCSharpString(route.Description);
+      sb.AppendLine($"          Description = \"{description}\",");
     }
 
-    // Message type (maps to AI safety level) - convert to kebab-case
-    string messageType = ToKebabCase(route.MessageType);
-    sb.AppendLine($"{propIndent}\"messageType\": \"{messageType}\",");
+    // Kind
+    sb.AppendLine($"          Kind = global::TimeWarp.Nuru.EndpointKind.{kindValue},");
 
     // Parameters
-    if (route.Parameters.Any())
-    {
-      EmitParameters(sb, route, indent + 2);
-    }
-
-    // Options
-    if (route.Options.Any())
-    {
-      EmitOptions(sb, route, indent + 2);
-    }
-
-    // Aliases
-    if (route.Aliases.Length > 0)
-    {
-      EmitAliases(sb, route, indent + 2);
-    }
-
-    string comma = isLast ? "" : ",";
-    sb.AppendLine($"{indentStr}}}{comma}");
-  }
-
-  /// <summary>
-  /// Emits the parameters array for a command.
-  /// </summary>
-  private static void EmitParameters(StringBuilder sb, RouteDefinition route, int indent)
-  {
-    string indentStr = new(' ', indent);
-    string itemIndent = new(' ', indent + 2);
-    string propIndent = new(' ', indent + 4);
-
-    sb.AppendLine($"{indentStr}\"parameters\": [");
-
+    sb.AppendLine("          Parameters =");
+    sb.AppendLine("          [");
     IReadOnlyList<ParameterDefinition> parameters = [.. route.Parameters];
     for (int i = 0; i < parameters.Count; i++)
     {
       ParameterDefinition param = parameters[i];
-      bool isLast = i == parameters.Count - 1;
-      string comma = isLast ? "" : ",";
-
-      sb.AppendLine($"{itemIndent}{{");
-      sb.AppendLine($"{propIndent}\"name\": \"{EscapeJsonString(param.Name)}\",");
-
-      if (param.Description is not null)
-      {
-        sb.AppendLine($"{propIndent}\"description\": \"{EscapeJsonString(param.Description)}\",");
-      }
-
-      sb.AppendLine($"{propIndent}\"required\": {(param.IsOptional ? "false" : "true")},");
-
-      if (param.IsCatchAll)
-      {
-        sb.AppendLine($"{propIndent}\"catchAll\": true,");
-      }
-
-      string typeConstraint = param.TypeConstraint ?? "string";
-      sb.AppendLine($"{propIndent}\"type\": \"{EscapeJsonString(typeConstraint)}\"");
-
-      sb.AppendLine($"{itemIndent}}}{comma}");
+      bool paramIsLast = i == parameters.Count - 1;
+      string? handlerTypeName = route.Handler.Parameters
+        .FirstOrDefault(p => p.Source == BindingSource.Parameter &&
+          string.Equals(p.SourceName, param.Name, StringComparison.OrdinalIgnoreCase))
+        ?.ParameterTypeName;
+      EmitParameterCapability(sb, param, paramIsLast, compilation, handlerTypeName);
     }
 
-    sb.AppendLine($"{indentStr}],");
-  }
+    sb.AppendLine("          ],");
 
-  /// <summary>
-  /// Emits the options array for a command.
-  /// </summary>
-  private static void EmitOptions(StringBuilder sb, RouteDefinition route, int indent)
-  {
-    string indentStr = new(' ', indent);
-    string itemIndent = new(' ', indent + 2);
-    string propIndent = new(' ', indent + 4);
-
-    sb.AppendLine($"{indentStr}\"options\": [");
-
+    // Options
+    sb.AppendLine("          Options =");
+    sb.AppendLine("          [");
     IReadOnlyList<OptionDefinition> options = [.. route.Options];
     for (int i = 0; i < options.Count; i++)
     {
       OptionDefinition option = options[i];
-      bool isLast = i == options.Count - 1;
-      string comma = isLast ? "" : ",";
-
-      sb.AppendLine($"{itemIndent}{{");
-
-      if (option.LongForm is not null)
-      {
-        sb.AppendLine($"{propIndent}\"name\": \"{EscapeJsonString(option.LongForm)}\",");
-      }
-
-      if (option.ShortForm is not null)
-      {
-        sb.AppendLine($"{propIndent}\"alias\": \"{EscapeJsonString(option.ShortForm)}\",");
-      }
-
-      if (option.Description is not null)
-      {
-        sb.AppendLine($"{propIndent}\"description\": \"{EscapeJsonString(option.Description)}\",");
-      }
-
-      sb.AppendLine($"{propIndent}\"required\": {(option.IsOptional ? "false" : "true")},");
-      sb.AppendLine($"{propIndent}\"isFlag\": {(option.IsFlag ? "true" : "false")}");
-
-      sb.AppendLine($"{itemIndent}}}{comma}");
+      bool optionIsLast = i == options.Count - 1;
+      string? handlerTypeName = route.Handler.Parameters
+        .FirstOrDefault(p => p.Source == BindingSource.Option &&
+          string.Equals(p.SourceName, option.LongForm ?? option.ShortForm, StringComparison.OrdinalIgnoreCase))
+        ?.ParameterTypeName;
+      EmitOptionCapability(sb, option, optionIsLast, compilation, handlerTypeName);
     }
 
-    sb.AppendLine($"{indentStr}],");
+    sb.AppendLine("          ]");
+
+    string comma = isLast ? "" : ",";
+    sb.AppendLine($"        }}{comma}");
   }
 
   /// <summary>
-  /// Emits the aliases array for a command.
+  /// Emits a single ParameterCapability initializer.
   /// </summary>
-  private static void EmitAliases(StringBuilder sb, RouteDefinition route, int indent)
+  private static void EmitParameterCapability(StringBuilder sb, ParameterDefinition param, bool isLast, Compilation? compilation, string? handlerTypeName = null)
   {
-    string indentStr = new(' ', indent);
-    sb.Append($"{indentStr}\"aliases\": [");
+    string name = EscapeCSharpString(param.Name);
+    string type = EscapeCSharpString(param.TypeConstraint ?? "string");
+    string required = param.IsOptional ? "false" : "true";
+    string isCatchAll = param.IsCatchAll ? "true" : "false";
 
-    IReadOnlyList<string> aliases = [.. route.Aliases];
-    for (int i = 0; i < aliases.Count; i++)
+    sb.AppendLine("            new global::TimeWarp.Nuru.ParameterCapability");
+    sb.AppendLine("            {");
+    sb.AppendLine($"              Name = \"{name}\",");
+    sb.AppendLine($"              Type = \"{type}\",");
+    sb.AppendLine($"              Required = {required},");
+    sb.AppendLine($"              IsCatchAll = {isCatchAll},");
+
+    if (param.Description is not null)
     {
-      string alias = aliases[i];
-      bool isLast = i == aliases.Count - 1;
-      string comma = isLast ? "" : ", ";
-      sb.Append($"\"{EscapeJsonString(alias)}\"{comma}");
+      string description = EscapeCSharpString(param.Description);
+      sb.AppendLine($"              Description = \"{description}\",");
     }
 
-    sb.AppendLine("],");
+    if (param.DefaultValue is not null)
+    {
+      string defaultValue = EscapeCSharpString(param.DefaultValue);
+      sb.AppendLine($"              DefaultValue = \"{defaultValue}\",");
+    }
+
+    // Use resolved CLR type name first; fall back to handler's parameter type when pattern has no type annotation
+    string? typeNameForEnum = param.ResolvedClrTypeName ?? handlerTypeName;
+    string[]? allowedValues = ExtractEnumValues(typeNameForEnum, compilation);
+    if (allowedValues is not null)
+    {
+      sb.Append("              AllowedValues = [");
+      for (int i = 0; i < allowedValues.Length; i++)
+      {
+        if (i > 0)
+          sb.Append(", ");
+
+        sb.Append($"\"{EscapeCSharpString(allowedValues[i])}\"");
+      }
+
+      sb.AppendLine("],");
+    }
+
+    string comma = isLast ? "" : ",";
+    sb.AppendLine($"            }}{comma}");
   }
 
   /// <summary>
-  /// Escapes a string for use in JSON.
+  /// Emits a single OptionCapability initializer.
   /// </summary>
-  private static string EscapeJsonString(string value)
+  private static void EmitOptionCapability(StringBuilder sb, OptionDefinition option, bool isLast, Compilation? compilation, string? handlerTypeName = null)
+  {
+    string name = EscapeCSharpString(option.LongForm ?? option.ShortForm ?? "");
+    string type = EscapeCSharpString(option.TypeConstraint ?? (option.IsFlag ? "bool" : "string"));
+    string required = option.IsOptional ? "false" : "true";
+    string isFlag = option.IsFlag ? "true" : "false";
+    string isRepeated = option.IsRepeated ? "true" : "false";
+
+    sb.AppendLine("            new global::TimeWarp.Nuru.OptionCapability");
+    sb.AppendLine("            {");
+    sb.AppendLine($"              Name = \"{name}\",");
+
+    if (option.ShortForm is not null)
+    {
+      string alias = EscapeCSharpString(option.ShortForm);
+      sb.AppendLine($"              Alias = \"{alias}\",");
+    }
+
+    sb.AppendLine($"              Type = \"{type}\",");
+    sb.AppendLine($"              Required = {required},");
+    sb.AppendLine($"              IsFlag = {isFlag},");
+    sb.AppendLine($"              IsRepeated = {isRepeated},");
+
+    if (option.Description is not null)
+    {
+      string description = EscapeCSharpString(option.Description);
+      sb.AppendLine($"              Description = \"{description}\",");
+    }
+
+    if (option.DefaultValueLiteral is not null)
+    {
+      string defaultValue = EscapeCSharpString(option.DefaultValueLiteral);
+      sb.AppendLine($"              DefaultValue = \"{defaultValue}\",");
+    }
+
+    // Use resolved CLR type name first; fall back to handler's parameter type when pattern has no type annotation
+    string? typeNameForEnum = option.ResolvedClrTypeName ?? handlerTypeName;
+    string[]? allowedValues = ExtractEnumValues(typeNameForEnum, compilation);
+    if (allowedValues is not null)
+    {
+      sb.Append("              AllowedValues = [");
+      for (int i = 0; i < allowedValues.Length; i++)
+      {
+        if (i > 0)
+          sb.Append(", ");
+
+        sb.Append($"\"{EscapeCSharpString(allowedValues[i])}\"");
+      }
+
+      sb.AppendLine("],");
+    }
+
+    string comma = isLast ? "" : ",";
+    sb.AppendLine($"            }}{comma}");
+  }
+
+  /// <summary>
+  /// Maps a MessageType string (PascalCase) to an EndpointKind enum member name.
+  /// </summary>
+  private static string MapMessageTypeToKind(string messageType) =>
+    messageType switch
+    {
+      "Query" => "Query",
+      "Command" => "Command",
+      "IdempotentCommand" => "IdempotentCommand",
+      _ => "Unspecified"
+    };
+
+  /// <summary>
+  /// Extracts enum member names for a given CLR type name using the Roslyn compilation.
+  /// Returns null if the type is not an enum or if compilation is unavailable.
+  /// </summary>
+  private static string[]? ExtractEnumValues(string? resolvedClrTypeName, Compilation? compilation)
+  {
+    if (compilation is null || resolvedClrTypeName is null)
+      return null;
+
+    string typeName = resolvedClrTypeName;
+    if (typeName.StartsWith("global::", StringComparison.Ordinal))
+      typeName = typeName[8..];
+    if (typeName.EndsWith('?'))
+      typeName = typeName[..^1];
+
+    INamedTypeSymbol? typeSymbol = compilation.GetTypeByMetadataName(typeName);
+    if (typeSymbol?.TypeKind != TypeKind.Enum)
+      return null;
+
+    string[] values = [.. typeSymbol.GetMembers()
+      .OfType<IFieldSymbol>()
+      .Where(f => f.HasConstantValue)
+      .Select(f => f.Name)];
+
+    return values.Length > 0 ? values : null;
+  }
+
+  /// <summary>
+  /// Escapes a string for use in a C# string literal.
+  /// </summary>
+  private static string EscapeCSharpString(string value)
   {
     return value
       .Replace("\\", "\\\\", StringComparison.Ordinal)
@@ -342,33 +311,5 @@ internal static class CapabilitiesEmitter
       .Replace("\n", "\\n", StringComparison.Ordinal)
       .Replace("\r", "\\r", StringComparison.Ordinal)
       .Replace("\t", "\\t", StringComparison.Ordinal);
-  }
-
-  /// <summary>
-  /// Converts a PascalCase string to kebab-case.
-  /// Example: "IdempotentCommand" -> "idempotent-command"
-  /// </summary>
-  private static string ToKebabCase(string value)
-  {
-    if (string.IsNullOrEmpty(value))
-      return value;
-
-    StringBuilder result = new();
-    for (int i = 0; i < value.Length; i++)
-    {
-      char c = value[i];
-      if (char.IsUpper(c))
-      {
-        if (i > 0)
-          result.Append('-');
-        result.Append(char.ToLowerInvariant(c));
-      }
-      else
-      {
-        result.Append(c);
-      }
-    }
-
-    return result.ToString();
   }
 }

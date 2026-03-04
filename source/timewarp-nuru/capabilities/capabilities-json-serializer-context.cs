@@ -5,14 +5,14 @@ namespace TimeWarp.Nuru;
 /// Enables AOT-compatible JSON serialization of capabilities metadata.
 /// </summary>
 [JsonSerializable(typeof(CapabilitiesResponse))]
-[JsonSerializable(typeof(GroupCapability))]
-[JsonSerializable(typeof(CommandCapability))]
+[JsonSerializable(typeof(EndpointCapability))]
+[JsonSerializable(typeof(EndpointKind))]
 [JsonSerializable(typeof(ParameterCapability))]
 [JsonSerializable(typeof(OptionCapability))]
-[JsonSerializable(typeof(IReadOnlyList<GroupCapability>))]
-[JsonSerializable(typeof(IReadOnlyList<CommandCapability>))]
+[JsonSerializable(typeof(IReadOnlyList<EndpointCapability>))]
 [JsonSerializable(typeof(IReadOnlyList<ParameterCapability>))]
 [JsonSerializable(typeof(IReadOnlyList<OptionCapability>))]
+[JsonSerializable(typeof(IReadOnlyList<string>))]
 [JsonSourceGenerationOptions(
   WriteIndented = true,
   PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase,

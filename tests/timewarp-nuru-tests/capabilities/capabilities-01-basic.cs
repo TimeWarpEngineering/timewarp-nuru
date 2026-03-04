@@ -24,13 +24,15 @@ public class CapabilitiesBasicTests
       Name = "mytool",
       Version = "1.0.0",
       Description = "A test CLI tool",
-      Commands =
+      Endpoints =
       [
-        new CommandCapability
+        new EndpointCapability
         {
           Pattern = "users list",
           Description = "List all users",
-          MessageType = "query",
+          Kind = EndpointKind.Query,
+          GroupPath = [],
+          Aliases = [],
           Parameters = [],
           Options = []
         }
@@ -45,7 +47,7 @@ public class CapabilitiesBasicTests
     json.ShouldContain("\"version\": \"1.0.0\"");
     json.ShouldContain("\"description\": \"A test CLI tool\"");
     json.ShouldContain("\"pattern\": \"users list\"");
-    json.ShouldContain("\"messageType\": \"query\"");
+    json.ShouldContain("\"kind\": \"query\"");
 
     await Task.CompletedTask;
   }
@@ -57,13 +59,15 @@ public class CapabilitiesBasicTests
     {
       Name = "mytool",
       Version = "1.0.0",
-      Commands =
+      Endpoints =
       [
-        new CommandCapability
+        new EndpointCapability
         {
           Pattern = "user create {name}",
           Description = "Create a new user",
-          MessageType = "command",
+          Kind = EndpointKind.Command,
+          GroupPath = [],
+          Aliases = [],
           Parameters =
           [
             new ParameterCapability
@@ -97,13 +101,15 @@ public class CapabilitiesBasicTests
     {
       Name = "mytool",
       Version = "1.0.0",
-      Commands =
+      Endpoints =
       [
-        new CommandCapability
+        new EndpointCapability
         {
           Pattern = "users list --format,-f {format}",
           Description = "List users with format",
-          MessageType = "query",
+          Kind = EndpointKind.Query,
+          GroupPath = [],
+          Aliases = [],
           Parameters = [],
           Options =
           [
@@ -112,8 +118,7 @@ public class CapabilitiesBasicTests
               Name = "format",
               Alias = "f",
               Type = "string",
-              Required = false,
-              Description = "Output format"
+              Required = false
             }
           ]
         }
@@ -131,40 +136,44 @@ public class CapabilitiesBasicTests
     await Task.CompletedTask;
   }
 
-  public static async Task Should_serialize_all_message_types()
+  public static async Task Should_serialize_all_endpoint_kinds()
   {
     // Arrange
     CapabilitiesResponse response = new()
     {
       Name = "mytool",
       Version = "1.0.0",
-      Commands =
+      Endpoints =
       [
-        new CommandCapability
+        new EndpointCapability
         {
           Pattern = "query-cmd",
-          MessageType = "query",
+          Kind = EndpointKind.Query,
+          GroupPath = [],
           Parameters = [],
           Options = []
         },
-        new CommandCapability
+        new EndpointCapability
         {
           Pattern = "command-cmd",
-          MessageType = "command",
+          Kind = EndpointKind.Command,
+          GroupPath = [],
           Parameters = [],
           Options = []
         },
-        new CommandCapability
+        new EndpointCapability
         {
           Pattern = "idempotent-cmd",
-          MessageType = "idempotent-command",
+          Kind = EndpointKind.IdempotentCommand,
+          GroupPath = [],
           Parameters = [],
           Options = []
         },
-        new CommandCapability
+        new EndpointCapability
         {
           Pattern = "unspecified-cmd",
-          MessageType = "unspecified",
+          Kind = EndpointKind.Unspecified,
+          GroupPath = [],
           Parameters = [],
           Options = []
         }
@@ -174,11 +183,11 @@ public class CapabilitiesBasicTests
     // Act
     string json = System.Text.Json.JsonSerializer.Serialize(response, CapabilitiesJsonSerializerContext.Default.CapabilitiesResponse);
 
-    // Assert
-    json.ShouldContain("\"messageType\": \"query\"");
-    json.ShouldContain("\"messageType\": \"command\"");
-    json.ShouldContain("\"messageType\": \"idempotent-command\"");
-    json.ShouldContain("\"messageType\": \"unspecified\"");
+    // Assert - UseStringEnumConverter with CamelCase policy produces camelCase enum values
+    json.ShouldContain("\"kind\": \"query\"");
+    json.ShouldContain("\"kind\": \"command\"");
+    json.ShouldContain("\"kind\": \"idempotentCommand\"");
+    json.ShouldContain("\"kind\": \"unspecified\"");
 
     await Task.CompletedTask;
   }
@@ -191,13 +200,14 @@ public class CapabilitiesBasicTests
       Name = "mytool",
       Version = "1.0.0",
       Description = null, // Should be omitted
-      Commands =
+      Endpoints =
       [
-        new CommandCapability
+        new EndpointCapability
         {
           Pattern = "test",
           Description = null, // Should be omitted
-          MessageType = "query",
+          Kind = EndpointKind.Query,
+          GroupPath = [],
           Parameters = [],
           Options = []
         }
@@ -221,12 +231,13 @@ public class CapabilitiesBasicTests
     {
       Name = "mytool",
       Version = "1.0.0",
-      Commands =
+      Endpoints =
       [
-        new CommandCapability
+        new EndpointCapability
         {
           Pattern = "exec {*args}",
-          MessageType = "command",
+          Kind = EndpointKind.Command,
+          GroupPath = [],
           Parameters =
           [
             new ParameterCapability
@@ -258,12 +269,13 @@ public class CapabilitiesBasicTests
     {
       Name = "mytool",
       Version = "1.0.0",
-      Commands =
+      Endpoints =
       [
-        new CommandCapability
+        new EndpointCapability
         {
           Pattern = "build --tag,-t {tag}*",
-          MessageType = "command",
+          Kind = EndpointKind.Command,
+          GroupPath = [],
           Parameters = [],
           Options =
           [
@@ -285,6 +297,44 @@ public class CapabilitiesBasicTests
 
     // Assert
     json.ShouldContain("\"isRepeated\": true");
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_serialize_is_flag_option()
+  {
+    // Arrange
+    CapabilitiesResponse response = new()
+    {
+      Name = "mytool",
+      Version = "1.0.0",
+      Endpoints =
+      [
+        new EndpointCapability
+        {
+          Pattern = "build --verbose",
+          Kind = EndpointKind.Command,
+          GroupPath = [],
+          Parameters = [],
+          Options =
+          [
+            new OptionCapability
+            {
+              Name = "verbose",
+              Type = "bool",
+              Required = false,
+              IsFlag = true
+            }
+          ]
+        }
+      ]
+    };
+
+    // Act
+    string json = System.Text.Json.JsonSerializer.Serialize(response, CapabilitiesJsonSerializerContext.Default.CapabilitiesResponse);
+
+    // Assert
+    json.ShouldContain("\"isFlag\": true");
 
     await Task.CompletedTask;
   }

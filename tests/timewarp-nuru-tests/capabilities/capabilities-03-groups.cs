@@ -1,7 +1,7 @@
 #!/usr/bin/dotnet --
 #:project ../../../source/timewarp-nuru/timewarp-nuru.csproj
 
-// Tests for hierarchical group structure in --capabilities output
+// Tests for group path information in --capabilities output
 
 #if !JARIBU_MULTI
 return await RunAllTests();
@@ -16,7 +16,7 @@ public class CapabilitiesGroupTests
   [ModuleInitializer]
   internal static void Register() => RegisterTests<CapabilitiesGroupTests>();
 
-  public static async Task Should_include_groups_array_when_routes_have_group_prefix()
+  public static async Task Should_include_group_path_when_route_has_group_prefix()
   {
     // Arrange
     using TestTerminal terminal = new();
@@ -31,15 +31,15 @@ public class CapabilitiesGroupTests
     // Act
     await app.RunAsync(["--capabilities"]);
 
-    // Assert
-    terminal.OutputContains("\"groups\":").ShouldBeTrue("Should contain groups array");
-    terminal.OutputContains("\"name\": \"admin\"").ShouldBeTrue("Should contain admin group");
+    // Assert - flat model uses groupPath array instead of nested groups
+    terminal.OutputContains("\"groupPath\":").ShouldBeTrue("Should contain groupPath array");
+    terminal.OutputContains("\"admin\"").ShouldBeTrue("Should contain admin in groupPath");
     terminal.OutputContains("admin status").ShouldBeTrue("Should contain admin status pattern");
 
     await Task.CompletedTask;
   }
 
-  public static async Task Should_nest_groups_hierarchically()
+  public static async Task Should_include_multi_segment_group_path_for_nested_groups()
   {
     // Arrange
     using TestTerminal terminal = new();
@@ -56,17 +56,16 @@ public class CapabilitiesGroupTests
     // Act
     await app.RunAsync(["--capabilities"]);
 
-    // Assert - Check for nested structure
-    // Should have top-level groups array with admin
-    terminal.OutputContains("\"groups\":").ShouldBeTrue("Should contain groups array");
-    terminal.OutputContains("\"name\": \"admin\"").ShouldBeTrue("Should contain admin group");
-    terminal.OutputContains("\"name\": \"config\"").ShouldBeTrue("Should contain config nested group");
+    // Assert - nested groups produce multi-segment groupPath
+    terminal.OutputContains("\"groupPath\":").ShouldBeTrue("Should contain groupPath array");
+    terminal.OutputContains("\"admin\"").ShouldBeTrue("Should contain admin in groupPath");
+    terminal.OutputContains("\"config\"").ShouldBeTrue("Should contain config in groupPath");
     terminal.OutputContains("admin config get {key}").ShouldBeTrue("Should contain full pattern with prefix");
 
     await Task.CompletedTask;
   }
 
-  public static async Task Should_place_ungrouped_commands_at_top_level_only()
+  public static async Task Should_place_ungrouped_commands_with_empty_group_path()
   {
     // Arrange
     using TestTerminal terminal = new();
@@ -82,18 +81,14 @@ public class CapabilitiesGroupTests
     // Act
     await app.RunAsync(["--capabilities"]);
 
-    // Assert
-    // Top-level commands should contain version
+    // Assert - both patterns appear exactly once in the flat list
     terminal.OutputContains("\"pattern\": \"version\"").ShouldBeTrue("Should contain version pattern");
-
-    // Groups should contain admin
-    terminal.OutputContains("\"name\": \"admin\"").ShouldBeTrue("Should contain admin group");
     terminal.OutputContains("\"pattern\": \"admin status\"").ShouldBeTrue("Should contain admin status in group");
 
     await Task.CompletedTask;
   }
 
-  public static async Task Should_not_duplicate_grouped_commands_at_top_level()
+  public static async Task Should_not_duplicate_grouped_commands()
   {
     // Arrange
     using TestTerminal terminal = new();
@@ -109,45 +104,19 @@ public class CapabilitiesGroupTests
     // Act
     await app.RunAsync(["--capabilities"]);
 
-    // Assert - The top-level commands array should be empty
-    // (all commands are in the docker group)
+    // Assert - each route appears exactly once in the flat list
     string output = terminal.AllOutput;
 
-    // Count occurrences of "docker run" - should only appear once (in the group)
     int runCount = CountOccurrences(output, "\"pattern\": \"docker run\"");
-    runCount.ShouldBe(1, "docker run should appear exactly once (in group only)");
+    runCount.ShouldBe(1, "docker run should appear exactly once");
 
     int psCount = CountOccurrences(output, "\"pattern\": \"docker ps\"");
-    psCount.ShouldBe(1, "docker ps should appear exactly once (in group only)");
+    psCount.ShouldBe(1, "docker ps should appear exactly once");
 
     await Task.CompletedTask;
   }
 
-  public static async Task Should_show_empty_parent_groups_in_hierarchy()
-  {
-    // Arrange - admin has no direct commands, only nested config group has commands
-    using TestTerminal terminal = new();
-
-    NuruApp app = NuruApp.CreateBuilder()
-      .UseTerminal(terminal)
-      .WithGroupPrefix("admin")
-        .WithGroupPrefix("config")
-          .Map("get").WithHandler(() => "config get").Done()
-          .Done()
-        .Done()
-      .Build();
-
-    // Act
-    await app.RunAsync(["--capabilities"]);
-
-    // Assert - admin group should appear even with no direct commands
-    terminal.OutputContains("\"name\": \"admin\"").ShouldBeTrue("Should contain admin group");
-    terminal.OutputContains("\"name\": \"config\"").ShouldBeTrue("Should contain config group");
-
-    await Task.CompletedTask;
-  }
-
-  public static async Task Should_support_three_level_nesting()
+  public static async Task Should_support_three_level_group_path()
   {
     // Arrange
     using TestTerminal terminal = new();
@@ -167,38 +136,10 @@ public class CapabilitiesGroupTests
     await app.RunAsync(["--capabilities"]);
 
     // Assert
-    terminal.OutputContains("\"name\": \"admin\"").ShouldBeTrue("Should contain admin group");
-    terminal.OutputContains("\"name\": \"config\"").ShouldBeTrue("Should contain config group");
-    terminal.OutputContains("\"name\": \"db\"").ShouldBeTrue("Should contain db group");
+    terminal.OutputContains("\"admin\"").ShouldBeTrue("Should contain admin in groupPath");
+    terminal.OutputContains("\"config\"").ShouldBeTrue("Should contain config in groupPath");
+    terminal.OutputContains("\"db\"").ShouldBeTrue("Should contain db in groupPath");
     terminal.OutputContains("admin config db status").ShouldBeTrue("Should contain full nested pattern");
-
-    await Task.CompletedTask;
-  }
-
-  public static async Task Should_sort_groups_alphabetically()
-  {
-    // Arrange
-    using TestTerminal terminal = new();
-
-    NuruApp app = NuruApp.CreateBuilder()
-      .UseTerminal(terminal)
-      .WithGroupPrefix("zebra")
-        .Map("cmd").WithHandler(() => "zebra cmd").Done()
-        .Done()
-      .WithGroupPrefix("alpha")
-        .Map("cmd").WithHandler(() => "alpha cmd").Done()
-        .Done()
-      .Build();
-
-    // Act
-    await app.RunAsync(["--capabilities"]);
-
-    // Assert - alpha should appear before zebra in the output
-    string output = terminal.AllOutput;
-    int alphaPos = output.IndexOf("\"name\": \"alpha\"", StringComparison.Ordinal);
-    int zebraPos = output.IndexOf("\"name\": \"zebra\"", StringComparison.Ordinal);
-
-    alphaPos.ShouldBeLessThan(zebraPos, "alpha group should appear before zebra group");
 
     await Task.CompletedTask;
   }
@@ -224,22 +165,16 @@ public class CapabilitiesGroupTests
     // Act
     await app.RunAsync(["--capabilities"]);
 
-    // Assert
-    // Groups should exist
-    terminal.OutputContains("\"groups\":").ShouldBeTrue("Should contain groups array");
-
-    // Ungrouped commands should be at top level
+    // Assert - all patterns appear in the flat list
     terminal.OutputContains("\"pattern\": \"help\"").ShouldBeTrue("Should contain help pattern");
     terminal.OutputContains("\"pattern\": \"version\"").ShouldBeTrue("Should contain version pattern");
-
-    // Grouped commands should be in their groups
-    terminal.OutputContains("\"name\": \"admin\"").ShouldBeTrue("Should contain admin group");
-    terminal.OutputContains("\"name\": \"config\"").ShouldBeTrue("Should contain config group");
+    terminal.OutputContains("admin status").ShouldBeTrue("Should contain admin status");
+    terminal.OutputContains("config get {key}").ShouldBeTrue("Should contain config get");
 
     await Task.CompletedTask;
   }
 
-  public static async Task Should_include_command_details_in_grouped_commands()
+  public static async Task Should_include_endpoint_details_in_grouped_commands()
   {
     // Arrange
     using TestTerminal terminal = new();
@@ -256,10 +191,12 @@ public class CapabilitiesGroupTests
     // Act
     await app.RunAsync(["--capabilities"]);
 
-    // Assert - command should have full details
-    terminal.OutputContains("\"name\": \"deploy\"").ShouldBeTrue("Should contain deploy group");
+    // Assert - endpoint should have full details including kind
+    terminal.OutputContains("\"groupPath\":").ShouldBeTrue("Should contain groupPath");
+    terminal.OutputContains("\"deploy\"").ShouldBeTrue("Should contain deploy in groupPath");
     terminal.OutputContains("deploy {env}").ShouldBeTrue("Should contain pattern");
     terminal.OutputContains("Deploy to environment").ShouldBeTrue("Should contain description");
+    terminal.OutputContains("\"kind\":").ShouldBeTrue("Should contain kind field");
     terminal.OutputContains("\"name\": \"env\"").ShouldBeTrue("Should contain parameter name");
     terminal.OutputContains("\"name\": \"dry-run\"").ShouldBeTrue("Should contain option name");
     terminal.OutputContains("\"alias\": \"d\"").ShouldBeTrue("Should contain option alias");

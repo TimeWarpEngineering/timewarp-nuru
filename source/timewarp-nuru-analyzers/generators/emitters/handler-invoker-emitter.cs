@@ -269,9 +269,14 @@ internal static class HandlerInvokerEmitter
   {
     if (handler.IsAsync && handler.ReturnType.UnwrappedTypeName is not null)
     {
-      // For Task<T>, use T
-      // Extract short name from fully qualified unwrapped type
       string unwrapped = handler.ReturnType.UnwrappedTypeName;
+
+      // Preserve fully qualified name for Nuru's Unit to avoid ambiguity
+      // when other packages (e.g. Mediator) also define a Unit type.
+      if (unwrapped == "global::TimeWarp.Nuru.Unit")
+        return unwrapped;
+
+      // For Task<T>, extract short name from fully qualified unwrapped type
       int lastDot = unwrapped.LastIndexOf('.');
       return lastDot >= 0 ? unwrapped[(lastDot + 1)..] : unwrapped;
     }

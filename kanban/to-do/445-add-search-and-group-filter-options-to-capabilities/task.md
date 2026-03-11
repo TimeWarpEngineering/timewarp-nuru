@@ -4,11 +4,15 @@
 
 Extend the `--capabilities` built-in flag to support filtering options for AI agent token efficiency. This enables agents to discover relevant endpoints without receiving the full capabilities catalog.
 
+Includes three components:
+1. **Nuru changes** - Add Amuru dependency, implement `--group-filter` (local) and `--search` (subprocess) options
+2. **nuru-search tool** - Companion CLI for semantic search across all Nuru-based CLIs with SQLite + embeddings
+
 ## Checklist
 
 - [ ] Add TimeWarp.Amuru dependency and migrate clipboard code (#445-001)
 - [ ] Implement --search and --group-filter options (#445-002)
-- [ ] Create timewarp-nuru-search companion tool (separate epic)
+- [ ] Create timewarp-nuru-search companion tool (#445-003)
 
 ## Notes
 
@@ -51,6 +55,51 @@ nuru-search search --cli ganda --version 1.2.3 --query "push" --group "git"
 ```
 
 Returns same CapabilitiesResponse format with filter metadata.
+
+### nuru-search Architecture
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    Nuru Search Index                    │
+│  (SQLite with semantic embeddings)                      │
+│  Location: ~/.nuru/search-index.db                      │
+│                                                         │
+│  ganda --capabilities → ─┐                              │
+│  nuru --capabilities  → ─┼─→ indexed & embedded         │
+│  other-cli caps       → ─┘                              │
+└─────────────────────────────────────────────────────────┘
+```
+
+**Indexing Strategy:**
+- On-demand: When `--search` is used, nuru-search checks if CLI+version is indexed
+- If not indexed or version mismatch: Run `cli --capabilities`, index results
+- Semantic embeddings stored in SQLite for fast similarity search
+
+**Search Flow:**
+```
+ganda --capabilities --search "commit"
+         │
+         ▼
+┌──────────────────────────────┐
+│ Call nuru-search subprocess  │
+│ (cli: ganda, version: 1.2.3, │
+│  query: "commit")            │
+└──────────────────────────────┘
+         │
+         ▼
+┌──────────────────────────────┐
+│ nuru-search checks index:    │
+│ ganda v1.2.3 indexed?        │
+└──────────────────────────────┘
+         │
+    YES  │  NO
+         ▼         ▼
+┌──────────┐ ┌──────────────────┐
+│ Return   │ │ Run ganda       │
+│ results  │ │ --capabilities  │
+└──────────┘ │ index it        │
+             └──────────────────┘
+```
 
 ### Related
 

@@ -6,7 +6,7 @@ Extend the `--capabilities` built-in flag to support filtering options for AI ag
 
 Includes three components:
 1. **Nuru changes** - Add Amuru dependency, implement `--group-filter` (local) and `--search` (subprocess) options
-2. **nuru-search tool** - Companion CLI for semantic search across all Nuru-based CLIs with SQLite + embeddings
+2. **nuru-search tool** - Companion CLI for keyword search across all Nuru-based CLIs using SQLite FTS5
 
 ## Checklist
 
@@ -28,7 +28,7 @@ ganda --capabilities --group-filter "git" --search "push"  # Both → nuru-searc
 
 **Behavior:**
 - `--group-filter` → Local filtering (exact match on GroupPath prefix)
-- `--search` → Requires `nuru-search` tool installed, semantic search across all indexed CLIs
+- `--search` → Requires `nuru-search` tool installed, keyword search across all indexed CLIs
 - Both options → Pass both to nuru-search, let it handle combined filtering
 
 **Error Handling:**
@@ -61,19 +61,33 @@ Returns same CapabilitiesResponse format with filter metadata.
 ```
 ┌─────────────────────────────────────────────────────────┐
 │                    Nuru Search Index                    │
-│  (SQLite with semantic embeddings)                      │
+│  (SQLite with FTS5 full-text search)                   │
 │  Location: ~/.nuru/search-index.db                      │
 │                                                         │
 │  ganda --capabilities → ─┐                              │
-│  nuru --capabilities  → ─┼─→ indexed & embedded         │
+│  nuru --capabilities  → ─┼─→ indexed for FTS5          │
 │  other-cli caps       → ─┘                              │
 └─────────────────────────────────────────────────────────┘
 ```
 
+**Key Insight: No Embedding Model Needed**
+
+The agent (LLM) already has semantic understanding. When a user says "I want to save my work", the agent formulates the search query "commit" - it doesn't pass the raw user request to search. The search tool is a fast keyword matcher, not a semantic engine.
+
+```
+User: "I want to save my work"
+         ↓
+Agent (LLM): Translates to search query "commit"
+         ↓
+nuru-search (FTS5): Returns ganda git commit, etc.
+         ↓
+Agent: Presents options, executes chosen command
+```
+
 **Indexing Strategy:**
 - On-demand: When `--search` is used, nuru-search checks if CLI+version is indexed
-- If not indexed or version mismatch: Run `cli --capabilities`, index results
-- Semantic embeddings stored in SQLite for fast similarity search
+- If not indexed or version mismatch: Run `cli --capabilities`, index results into FTS5
+- No embedding generation - just text indexing
 
 **Search Flow:**
 ```
@@ -97,7 +111,7 @@ ganda --capabilities --search "commit"
 ┌──────────┐ ┌──────────────────┐
 │ Return   │ │ Run ganda       │
 │ results  │ │ --capabilities  │
-└──────────┘ │ index it        │
+└──────────┘ │ index into FTS5 │
              └──────────────────┘
 ```
 

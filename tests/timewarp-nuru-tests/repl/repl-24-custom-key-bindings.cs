@@ -48,7 +48,7 @@ public class CustomKeyBindingTests
     KeyBindingBuilder builder = new();
 
     // Act
-    builder.Bind(ConsoleKey.A, () => { });
+    builder.Bind(ConsoleKey.A, () => Task.CompletedTask);
 
     // Assert
     builder.BindingCount.ShouldBe(1, "Builder should have one binding");
@@ -63,7 +63,7 @@ public class CustomKeyBindingTests
     KeyBindingBuilder builder = new();
 
     // Act
-    builder.Bind(ConsoleKey.K, ConsoleModifiers.Control, () => { });
+    builder.Bind(ConsoleKey.K, ConsoleModifiers.Control, () => Task.CompletedTask);
 
     // Assert
     builder.IsBound(ConsoleKey.K, ConsoleModifiers.Control).ShouldBeTrue("Ctrl+K should be bound");
@@ -78,7 +78,7 @@ public class CustomKeyBindingTests
     KeyBindingBuilder builder = new();
 
     // Act
-    builder.BindExit(ConsoleKey.Enter, () => { });
+    builder.BindExit(ConsoleKey.Enter, () => Task.CompletedTask);
 
     // Assert
     builder.BindingCount.ShouldBe(1, "Exit key should also be a binding");
@@ -94,7 +94,7 @@ public class CustomKeyBindingTests
     KeyBindingBuilder builder = new();
 
     // Act
-    builder.BindExit(ConsoleKey.D, ConsoleModifiers.Control, () => { });
+    builder.BindExit(ConsoleKey.D, ConsoleModifiers.Control, () => Task.CompletedTask);
 
     // Assert
     builder.IsExitKey(ConsoleKey.D, ConsoleModifiers.Control).ShouldBeTrue("Ctrl+D should be an exit key");
@@ -106,8 +106,8 @@ public class CustomKeyBindingTests
   {
     // Arrange
     KeyBindingBuilder builder = new();
-    builder.Bind(ConsoleKey.A, () => { });
-    builder.Bind(ConsoleKey.B, () => { });
+    builder.Bind(ConsoleKey.A, () => Task.CompletedTask);
+    builder.Bind(ConsoleKey.B, () => Task.CompletedTask);
 
     // Act
     builder.Remove(ConsoleKey.A);
@@ -123,7 +123,7 @@ public class CustomKeyBindingTests
   {
     // Arrange
     KeyBindingBuilder builder = new();
-    builder.BindExit(ConsoleKey.Enter, () => { });
+    builder.BindExit(ConsoleKey.Enter, () => Task.CompletedTask);
 
     // Act
     builder.Remove(ConsoleKey.Enter);
@@ -139,9 +139,9 @@ public class CustomKeyBindingTests
   {
     // Arrange
     KeyBindingBuilder builder = new();
-    builder.Bind(ConsoleKey.A, () => { });
-    builder.Bind(ConsoleKey.B, () => { });
-    builder.BindExit(ConsoleKey.Enter, () => { });
+    builder.Bind(ConsoleKey.A, () => Task.CompletedTask);
+    builder.Bind(ConsoleKey.B, () => Task.CompletedTask);
+    builder.BindExit(ConsoleKey.Enter, () => Task.CompletedTask);
 
     // Act
     builder.Clear();
@@ -156,9 +156,9 @@ public class CustomKeyBindingTests
   {
     // Arrange & Act
     KeyBindingBuilder builder = new KeyBindingBuilder()
-      .Bind(ConsoleKey.A, () => { })
-      .Bind(ConsoleKey.B, ConsoleModifiers.Control, () => { })
-      .BindExit(ConsoleKey.Enter, () => { })
+      .Bind(ConsoleKey.A, () => Task.CompletedTask)
+      .Bind(ConsoleKey.B, ConsoleModifiers.Control, () => Task.CompletedTask)
+      .BindExit(ConsoleKey.Enter, () => Task.CompletedTask)
       .Remove(ConsoleKey.A);
 
     // Assert
@@ -173,7 +173,7 @@ public class CustomKeyBindingTests
   {
     // Arrange
     KeyBindingBuilder builder = new();
-    builder.Bind(ConsoleKey.Escape, () => { });
+    builder.Bind(ConsoleKey.Escape, () => Task.CompletedTask);
 
     // Act
     builder.MarkAsExit(ConsoleKey.Escape);
@@ -202,7 +202,7 @@ public class CustomKeyBindingTests
   {
     // Arrange
     KeyBindingBuilder builder = new();
-    builder.BindExit(ConsoleKey.Enter, () => { });
+    builder.BindExit(ConsoleKey.Enter, () => Task.CompletedTask);
 
     // Act
     builder.UnmarkAsExit(ConsoleKey.Enter);
@@ -218,11 +218,11 @@ public class CustomKeyBindingTests
     // Arrange
     int counter = 0;
     KeyBindingBuilder builder = new KeyBindingBuilder()
-      .Bind(ConsoleKey.A, () => counter++)
-      .BindExit(ConsoleKey.Enter, () => counter += 10);
+      .Bind(ConsoleKey.A, () => { counter++; return Task.CompletedTask; })
+      .BindExit(ConsoleKey.Enter, () => { counter += 10; return Task.CompletedTask; });
 
     // Act
-    (Dictionary<(ConsoleKey Key, ConsoleModifiers Modifiers), Action> bindings,
+    (Dictionary<(ConsoleKey Key, ConsoleModifiers Modifiers), Func<Task>> bindings,
      HashSet<(ConsoleKey Key, ConsoleModifiers Modifiers)> exitKeys) = builder.Build();
 
     // Assert
@@ -233,9 +233,8 @@ public class CustomKeyBindingTests
     exitKeys.Contains((ConsoleKey.Enter, ConsoleModifiers.None)).ShouldBeTrue("Enter should be in exit keys");
 
     // Verify actions work
-    bindings[(ConsoleKey.A, ConsoleModifiers.None)]();
+    await bindings[(ConsoleKey.A, ConsoleModifiers.None)]();
     counter.ShouldBe(1, "A action should increment counter");
-    await Task.CompletedTask;
   }
 
   public static async Task KeyBindingBuilder_should_throw_on_null_action()

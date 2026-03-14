@@ -9,9 +9,9 @@ namespace TimeWarp.Nuru;
 public sealed class KeyBindingResult
 {
   /// <summary>
-  /// The key bindings dictionary mapping key combinations to actions.
+  /// The key bindings dictionary mapping key combinations to async actions.
   /// </summary>
-  public Dictionary<(ConsoleKey Key, ConsoleModifiers Modifiers), Action> Bindings { get; init; } = [];
+  public Dictionary<(ConsoleKey Key, ConsoleModifiers Modifiers), Func<Task>> Bindings { get; init; } = [];
 
   /// <summary>
   /// The set of key combinations that terminate the read loop.
@@ -29,7 +29,7 @@ public sealed class KeyBindingResult
   /// </code>
   /// </example>
   public void Deconstruct(
-    out Dictionary<(ConsoleKey Key, ConsoleModifiers Modifiers), Action> bindings,
+    out Dictionary<(ConsoleKey Key, ConsoleModifiers Modifiers), Func<Task>> bindings,
     out HashSet<(ConsoleKey Key, ConsoleModifiers Modifiers)> exitKeys)
   {
     bindings = Bindings;

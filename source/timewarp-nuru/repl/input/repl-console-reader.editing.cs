@@ -9,13 +9,13 @@ public sealed partial class ReplConsoleReader
   /// PSReadLine: BackwardDeleteChar - Delete the character before the cursor.
   /// If there is a selection, delete the selected text instead.
   /// </summary>
-  internal void HandleBackwardDeleteChar()
+  internal Task HandleBackwardDeleteChar()
   {
     // If there's a selection, delete it instead
     if (SelectionState.IsActive)
     {
       HandleDeleteSelection();
-      return;
+      return Task.CompletedTask;
     }
 
     if (CursorPosition > 0)
@@ -31,19 +31,20 @@ public sealed partial class ReplConsoleReader
       ReplLoggerMessages.UserInputChanged(Logger, UserInput, CursorPosition, null);
       RedrawLine();
     }
+    return Task.CompletedTask;
   }
 
   /// <summary>
   /// PSReadLine: DeleteChar - Delete the character under the cursor.
   /// If there is a selection, delete the selected text instead.
   /// </summary>
-  internal void HandleDeleteChar()
+  internal Task HandleDeleteChar()
   {
     // If there's a selection, delete it instead
     if (SelectionState.IsActive)
     {
       HandleDeleteSelection();
-      return;
+      return Task.CompletedTask;
     }
 
     if (CursorPosition < UserInput.Length)
@@ -58,13 +59,14 @@ public sealed partial class ReplConsoleReader
       ReplLoggerMessages.UserInputChanged(Logger, UserInput, CursorPosition, null);
       RedrawLine();
     }
+    return Task.CompletedTask;
   }
 
   /// <summary>
   /// PSReadLine: RevertLine - Clear the entire input line (like Escape in PowerShell).
   /// Clears all user input and resets cursor to the beginning.
   /// </summary>
-  internal void HandleEscape()
+  internal Task HandleEscape()
   {
     // Clear completion state
     CompletionHandler.Reset();
@@ -86,16 +88,18 @@ public sealed partial class ReplConsoleReader
 
     // Redraw the empty line
     RedrawLine();
+    return Task.CompletedTask;
   }
 
   /// <summary>
   /// PSReadLine: KillLine - Delete from the cursor position to the end of the line.
   /// The deleted text is stored in the kill ring for later yanking.
   /// </summary>
-  internal void HandleKillLine()
+  internal Task HandleKillLine()
   {
     // Delegate to the kill ring implementation
     HandleKillLineToRing();
+    return Task.CompletedTask;
   }
 
   /// <summary>
@@ -103,19 +107,21 @@ public sealed partial class ReplConsoleReader
   /// Deletes from cursor back to the start of the current or previous word.
   /// The deleted text is stored in the kill ring for later yanking.
   /// </summary>
-  internal void HandleDeleteWordBackward()
+  internal Task HandleDeleteWordBackward()
   {
     // Delegate to the kill ring implementation (BackwardKillWord uses word boundaries)
     HandleBackwardKillWord();
+    return Task.CompletedTask;
   }
 
   /// <summary>
   /// PSReadLine: BackwardKillLine - Delete from the beginning of the line to the cursor.
   /// The deleted text is stored in the kill ring for later yanking.
   /// </summary>
-  internal void HandleDeleteToLineStart()
+  internal Task HandleDeleteToLineStart()
   {
     // Delegate to the kill ring implementation
     HandleBackwardKillInput();
+    return Task.CompletedTask;
   }
 }

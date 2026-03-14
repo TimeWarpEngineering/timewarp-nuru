@@ -26,7 +26,7 @@ public sealed partial class ReplConsoleReader
   private readonly ILoggerFactory? LoggerFactory;
   private readonly ITerminal Terminal;
   private readonly TabCompletionHandler CompletionHandler;
-  private readonly Dictionary<(ConsoleKey Key, ConsoleModifiers Modifiers), Action> KeyBindings;
+  private readonly Dictionary<(ConsoleKey Key, ConsoleModifiers Modifiers), Func<Task>> KeyBindings;
   private readonly HashSet<(ConsoleKey Key, ConsoleModifiers Modifiers)> ExitKeys;
   private string UserInput = string.Empty;
   private int CursorPosition;
@@ -100,7 +100,7 @@ public sealed partial class ReplConsoleReader
   /// </summary>
   /// <param name="prompt">The prompt to display.</param>
   /// <returns>The input line from user, or null if EOF (Ctrl+D) is received.</returns>
-  public string? ReadLine(string prompt)
+  public async Task<string?> ReadLineAsync(string prompt)
   {
     ArgumentException.ThrowIfNullOrEmpty(prompt);
 
@@ -126,7 +126,7 @@ public sealed partial class ReplConsoleReader
       // Route to mode-specific handler
       if (CurrentMode == EditMode.Search)
       {
-        string? result = HandleSearchModeKey(keyInfo);
+        string? result = await HandleSearchModeKey(keyInfo).ConfigureAwait(false);
         if (result is not null)
           return result;
 
@@ -138,9 +138,9 @@ public sealed partial class ReplConsoleReader
       ConsoleModifiers normalizedMods = keyInfo.Modifiers & (ConsoleModifiers.Control | ConsoleModifiers.Alt | ConsoleModifiers.Shift);
       (ConsoleKey Key, ConsoleModifiers Modifiers) keyBinding = (keyInfo.Key, normalizedMods);
 
-      if (KeyBindings.TryGetValue(keyBinding, out Action? handler))
+      if (KeyBindings.TryGetValue(keyBinding, out Func<Task>? handler))
       {
-        handler();
+        await handler().ConfigureAwait(false);
 
         // Check if handler signaled exit (e.g., DeleteCharOrExit on empty line)
         if (ShouldExitRepl)
@@ -166,7 +166,7 @@ public sealed partial class ReplConsoleReader
     }
   }
 
-  internal void HandleEnter()
+  internal async Task HandleEnter()
   {
     // If in multiline mode, move cursor to end of last line first
     if (IsMultilineMode)
@@ -175,7 +175,7 @@ public sealed partial class ReplConsoleReader
       SyncFromMultilineBuffer();
     }
 
-    Terminal.WriteLine();
+    await Terminal.WriteLineAsync().ConfigureAwait(false);
 
     // Add to history if not empty and not duplicate of last entry
     if (!string.IsNullOrWhiteSpace(UserInput))
@@ -190,10 +190,11 @@ public sealed partial class ReplConsoleReader
     MultilineInput.Clear();
   }
 
-  internal void HandleTabCompletion(bool reverse)
+  internal Task HandleTabCompletion(bool reverse)
   {
     (UserInput, CursorPosition) = CompletionHandler.HandleTab(UserInput, CursorPosition, reverse);
     RedrawLine();
+    return Task.CompletedTask;
   }
 
   /// <summary>
@@ -207,9 +208,10 @@ public sealed partial class ReplConsoleReader
   /// PSReadLine: PossibleCompletions - Display possible completions without modifying the input.
   /// Similar to ShowCompletionCandidates but triggered by Alt+= instead of Tab.
   /// </summary>
-  internal void HandlePossibleCompletions()
+  internal Task HandlePossibleCompletions()
   {
     CompletionHandler.ShowPossibleCompletions(UserInput, CursorPosition);
+    return Task.CompletedTask;
   }
 
   private void HandleCharacter(char charToInsert)

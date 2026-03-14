@@ -41,11 +41,11 @@ namespace TimeWarp.Nuru;
 /// </example>
 public sealed class KeyBindingBuilder : IKeyBindingBuilder<KeyBindingBuilder>, IBuilder<KeyBindingResult>
 {
-  private readonly Dictionary<(ConsoleKey Key, ConsoleModifiers Modifiers), Action> Bindings = [];
+  private readonly Dictionary<(ConsoleKey Key, ConsoleModifiers Modifiers), Func<Task>> Bindings = [];
   private readonly HashSet<(ConsoleKey Key, ConsoleModifiers Modifiers)> ExitKeys = [];
 
   /// <inheritdoc />
-  public KeyBindingBuilder Bind(ConsoleKey key, Action action)
+  public KeyBindingBuilder Bind(ConsoleKey key, Func<Task> action)
   {
     ArgumentNullException.ThrowIfNull(action);
     Bindings[(key, ConsoleModifiers.None)] = action;
@@ -53,7 +53,7 @@ public sealed class KeyBindingBuilder : IKeyBindingBuilder<KeyBindingBuilder>, I
   }
 
   /// <inheritdoc />
-  public KeyBindingBuilder Bind(ConsoleKey key, ConsoleModifiers modifiers, Action action)
+  public KeyBindingBuilder Bind(ConsoleKey key, ConsoleModifiers modifiers, Func<Task> action)
   {
     ArgumentNullException.ThrowIfNull(action);
     Bindings[(key, modifiers)] = action;
@@ -61,7 +61,7 @@ public sealed class KeyBindingBuilder : IKeyBindingBuilder<KeyBindingBuilder>, I
   }
 
   /// <inheritdoc />
-  public KeyBindingBuilder BindExit(ConsoleKey key, Action action)
+  public KeyBindingBuilder BindExit(ConsoleKey key, Func<Task> action)
   {
     ArgumentNullException.ThrowIfNull(action);
     (ConsoleKey Key, ConsoleModifiers Modifiers) keyBinding = (key, ConsoleModifiers.None);
@@ -71,7 +71,7 @@ public sealed class KeyBindingBuilder : IKeyBindingBuilder<KeyBindingBuilder>, I
   }
 
   /// <inheritdoc />
-  public KeyBindingBuilder BindExit(ConsoleKey key, ConsoleModifiers modifiers, Action action)
+  public KeyBindingBuilder BindExit(ConsoleKey key, ConsoleModifiers modifiers, Func<Task> action)
   {
     ArgumentNullException.ThrowIfNull(action);
     (ConsoleKey Key, ConsoleModifiers Modifiers) keyBinding = (key, modifiers);
@@ -115,7 +115,7 @@ public sealed class KeyBindingBuilder : IKeyBindingBuilder<KeyBindingBuilder>, I
     Bindings.Clear();
     ExitKeys.Clear();
 
-    foreach (KeyValuePair<(ConsoleKey Key, ConsoleModifiers Modifiers), Action> binding in profile.GetBindings(reader))
+    foreach (KeyValuePair<(ConsoleKey Key, ConsoleModifiers Modifiers), Func<Task>> binding in profile.GetBindings(reader))
     {
       Bindings[binding.Key] = binding.Value;
     }
@@ -181,7 +181,7 @@ public sealed class KeyBindingBuilder : IKeyBindingBuilder<KeyBindingBuilder>, I
   /// </remarks>
   public KeyBindingResult Build() => new()
   {
-    Bindings = new Dictionary<(ConsoleKey Key, ConsoleModifiers Modifiers), Action>(Bindings),
+    Bindings = new Dictionary<(ConsoleKey Key, ConsoleModifiers Modifiers), Func<Task>>(Bindings),
     ExitKeys = [.. ExitKeys]
   };
 

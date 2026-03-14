@@ -75,7 +75,7 @@ public sealed class CustomKeyBindingProfile : IKeyBindingProfile
   /// Overrides or adds a key binding (without modifiers).
   /// </summary>
   /// <param name="key">The console key to bind.</param>
-  /// <param name="actionFactory">Factory that creates the action given a ReplConsoleReader.</param>
+  /// <param name="actionFactory">Factory that creates the async action given a ReplConsoleReader.</param>
   /// <returns>This profile for fluent chaining.</returns>
   /// <exception cref="ArgumentNullException">Thrown when actionFactory is null.</exception>
   /// <remarks>
@@ -85,7 +85,7 @@ public sealed class CustomKeyBindingProfile : IKeyBindingProfile
   public CustomKeyBindingProfile Override
   (
     ConsoleKey key,
-    Func<ReplConsoleReader, Action> actionFactory
+    Func<ReplConsoleReader, Func<Task>> actionFactory
   )
   {
     ArgumentNullException.ThrowIfNull(actionFactory);
@@ -99,14 +99,14 @@ public sealed class CustomKeyBindingProfile : IKeyBindingProfile
   /// </summary>
   /// <param name="key">The console key to bind.</param>
   /// <param name="modifiers">The modifier keys (Ctrl, Alt, Shift) required.</param>
-  /// <param name="actionFactory">Factory that creates the action given a ReplConsoleReader.</param>
+  /// <param name="actionFactory">Factory that creates the async action given a ReplConsoleReader.</param>
   /// <returns>This profile for fluent chaining.</returns>
   /// <exception cref="ArgumentNullException">Thrown when actionFactory is null.</exception>
   public CustomKeyBindingProfile Override
   (
     ConsoleKey key,
     ConsoleModifiers modifiers,
-    Func<ReplConsoleReader, Action> actionFactory
+    Func<ReplConsoleReader, Func<Task>> actionFactory
   )
   {
     ArgumentNullException.ThrowIfNull(actionFactory);
@@ -119,13 +119,13 @@ public sealed class CustomKeyBindingProfile : IKeyBindingProfile
   /// Adds a new key binding (without modifiers). Alias for Override.
   /// </summary>
   /// <param name="key">The console key to bind.</param>
-  /// <param name="actionFactory">Factory that creates the action given a ReplConsoleReader.</param>
+  /// <param name="actionFactory">Factory that creates the async action given a ReplConsoleReader.</param>
   /// <returns>This profile for fluent chaining.</returns>
   /// <exception cref="ArgumentNullException">Thrown when actionFactory is null.</exception>
   public CustomKeyBindingProfile Add
   (
     ConsoleKey key,
-    Func<ReplConsoleReader, Action> actionFactory
+    Func<ReplConsoleReader, Func<Task>> actionFactory
   ) => Override(key, actionFactory);
 
   /// <summary>
@@ -133,14 +133,14 @@ public sealed class CustomKeyBindingProfile : IKeyBindingProfile
   /// </summary>
   /// <param name="key">The console key to bind.</param>
   /// <param name="modifiers">The modifier keys (Ctrl, Alt, Shift) required.</param>
-  /// <param name="actionFactory">Factory that creates the action given a ReplConsoleReader.</param>
+  /// <param name="actionFactory">Factory that creates the async action given a ReplConsoleReader.</param>
   /// <returns>This profile for fluent chaining.</returns>
   /// <exception cref="ArgumentNullException">Thrown when actionFactory is null.</exception>
   public CustomKeyBindingProfile Add
   (
     ConsoleKey key,
     ConsoleModifiers modifiers,
-    Func<ReplConsoleReader, Action> actionFactory
+    Func<ReplConsoleReader, Func<Task>> actionFactory
   ) => Override(key, modifiers, actionFactory);
 
   /// <summary>
@@ -176,7 +176,7 @@ public sealed class CustomKeyBindingProfile : IKeyBindingProfile
   /// Adds an exit key binding (without modifiers).
   /// </summary>
   /// <param name="key">The console key to make an exit key.</param>
-  /// <param name="actionFactory">Factory that creates the action given a ReplConsoleReader.</param>
+  /// <param name="actionFactory">Factory that creates the async action given a ReplConsoleReader.</param>
   /// <returns>This profile for fluent chaining.</returns>
   /// <exception cref="ArgumentNullException">Thrown when actionFactory is null.</exception>
   /// <remarks>
@@ -185,7 +185,7 @@ public sealed class CustomKeyBindingProfile : IKeyBindingProfile
   public CustomKeyBindingProfile AddExitKey
   (
     ConsoleKey key,
-    Func<ReplConsoleReader, Action> actionFactory
+    Func<ReplConsoleReader, Func<Task>> actionFactory
   )
   {
     ArgumentNullException.ThrowIfNull(actionFactory);
@@ -202,14 +202,14 @@ public sealed class CustomKeyBindingProfile : IKeyBindingProfile
   /// </summary>
   /// <param name="key">The console key to make an exit key.</param>
   /// <param name="modifiers">The modifier keys (Ctrl, Alt, Shift) required.</param>
-  /// <param name="actionFactory">Factory that creates the action given a ReplConsoleReader.</param>
+  /// <param name="actionFactory">Factory that creates the async action given a ReplConsoleReader.</param>
   /// <returns>This profile for fluent chaining.</returns>
   /// <exception cref="ArgumentNullException">Thrown when actionFactory is null.</exception>
   public CustomKeyBindingProfile AddExitKey
   (
     ConsoleKey key,
     ConsoleModifiers modifiers,
-    Func<ReplConsoleReader, Action> actionFactory
+    Func<ReplConsoleReader, Func<Task>> actionFactory
   )
   {
     ArgumentNullException.ThrowIfNull(actionFactory);
@@ -247,13 +247,13 @@ public sealed class CustomKeyBindingProfile : IKeyBindingProfile
   }
 
   /// <inheritdoc/>
-  public Dictionary<(ConsoleKey Key, ConsoleModifiers Modifiers), Action> GetBindings(ReplConsoleReader reader)
+  public Dictionary<(ConsoleKey Key, ConsoleModifiers Modifiers), Func<Task>> GetBindings(ReplConsoleReader reader)
   {
     ArgumentNullException.ThrowIfNull(reader);
 
     // Start with base profile bindings if we have one
-    Dictionary<(ConsoleKey Key, ConsoleModifiers Modifiers), Action> bindings = BaseProfile is not null
-      ? new Dictionary<(ConsoleKey Key, ConsoleModifiers Modifiers), Action>(BaseProfile.GetBindings(reader))
+    Dictionary<(ConsoleKey Key, ConsoleModifiers Modifiers), Func<Task>> bindings = BaseProfile is not null
+      ? new Dictionary<(ConsoleKey Key, ConsoleModifiers Modifiers), Func<Task>>(BaseProfile.GetBindings(reader))
       : [];
 
     // Remove any bindings marked for removal
@@ -305,6 +305,6 @@ public sealed class CustomKeyBindingProfile : IKeyBindingProfile
   (
     ConsoleKey Key,
     ConsoleModifiers Modifiers,
-    Func<ReplConsoleReader, Action> ActionFactory
+    Func<ReplConsoleReader, Func<Task>> ActionFactory
   );
 }

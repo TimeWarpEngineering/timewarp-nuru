@@ -158,7 +158,7 @@ public sealed class ReplSession : IDisposable
   private async Task<int> ProcessSingleCommandAsync(CancellationToken cancellationToken)
   {
     // Read input
-    string? input = ReadCommandInput();
+    string? input = await ReadCommandInputAsync().ConfigureAwait(false);
 
     // Handle EOF (Ctrl+D on Unix, Ctrl+Z on Windows)
     if (input is null)
@@ -223,7 +223,7 @@ public sealed class ReplSession : IDisposable
     return false;
   }
 
-  private string? ReadCommandInput()
+  private async Task<string?> ReadCommandInputAsync()
   {
     if (ReplOptions.EnableArrowHistory)
     {
@@ -233,7 +233,7 @@ public sealed class ReplSession : IDisposable
         ReplOptions,
         LoggerFactory,
         Terminal);
-      return consoleReader.ReadLine(ReplOptions.Prompt);
+      return await consoleReader.ReadLineAsync(ReplOptions.Prompt).ConfigureAwait(false);
     }
 
     Terminal.Write(PromptFormatter.Format(ReplOptions));

@@ -24,20 +24,20 @@ public sealed partial class ReplConsoleReader
   /// - If there's text and cursor is not at end: delete character at cursor
   /// - If line is empty: signal EOF (exit REPL)
   /// </remarks>
-  internal void HandleDeleteCharOrExit()
+  internal Task HandleDeleteCharOrExit()
   {
     // If line is empty, signal exit
     if (string.IsNullOrEmpty(UserInput))
     {
       ShouldExitRepl = true;
-      return;
+      return Task.CompletedTask;
     }
 
     // If there's a selection, delete it
     if (SelectionState.IsActive)
     {
       HandleDeleteSelection();
-      return;
+      return Task.CompletedTask;
     }
 
     // Otherwise delete character at cursor (if any)
@@ -49,12 +49,13 @@ public sealed partial class ReplConsoleReader
       ResetKillTracking();
       RedrawLine();
     }
+    return Task.CompletedTask;
   }
 
   /// <summary>
   /// PSReadLine: ClearScreen - Clear the terminal screen and redraw the prompt.
   /// </summary>
-  internal void HandleClearScreen()
+  internal Task HandleClearScreen()
   {
     // Clear screen using ANSI escape codes: clear screen + cursor home
     Terminal.Write("\u001b[2J\u001b[H");
@@ -73,17 +74,19 @@ public sealed partial class ReplConsoleReader
 
     // Position cursor correctly
     UpdateCursorPosition();
+    return Task.CompletedTask;
   }
 
   /// <summary>
   /// PSReadLine: ToggleInsertMode - Toggle between insert and overwrite modes.
   /// </summary>
-  internal void HandleToggleInsertMode()
+  internal Task HandleToggleInsertMode()
   {
     IsOverwriteMode = !IsOverwriteMode;
 
     // Visual indicator: could change cursor shape, but that's terminal-dependent
     // For now, just toggle the state - the HandleCharacter method will use it
+    return Task.CompletedTask;
   }
 
   /// <summary>

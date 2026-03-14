@@ -98,11 +98,11 @@ public sealed class VSCodeKeyBindingProfile : IKeyBindingProfile
   public string Name => "VSCode";
 
   /// <inheritdoc/>
-  public Dictionary<(ConsoleKey Key, ConsoleModifiers Modifiers), Action> GetBindings(ReplConsoleReader reader)
+  public Dictionary<(ConsoleKey Key, ConsoleModifiers Modifiers), Func<Task>> GetBindings(ReplConsoleReader reader)
   {
     ArgumentNullException.ThrowIfNull(reader);
 
-    return new Dictionary<(ConsoleKey Key, ConsoleModifiers Modifiers), Action>
+    return new Dictionary<(ConsoleKey Key, ConsoleModifiers Modifiers), Func<Task>>
     {
       // === Enter/Submit ===
       [(ConsoleKey.Enter, ConsoleModifiers.None)] = reader.HandleEnter,
@@ -154,16 +154,16 @@ public sealed class VSCodeKeyBindingProfile : IKeyBindingProfile
       [(ConsoleKey.Y, ConsoleModifiers.Alt | ConsoleModifiers.Control)] = reader.HandleYankNthArg,  // Alt+Ctrl+Y
 
       // === Digit Arguments for YankNthArg (Alt+0 through Alt+9) ===
-      [(ConsoleKey.D0, ConsoleModifiers.Alt)] = () => reader.HandleDigitArgument(0),
-      [(ConsoleKey.D1, ConsoleModifiers.Alt)] = () => reader.HandleDigitArgument(1),
-      [(ConsoleKey.D2, ConsoleModifiers.Alt)] = () => reader.HandleDigitArgument(2),
-      [(ConsoleKey.D3, ConsoleModifiers.Alt)] = () => reader.HandleDigitArgument(3),
-      [(ConsoleKey.D4, ConsoleModifiers.Alt)] = () => reader.HandleDigitArgument(4),
-      [(ConsoleKey.D5, ConsoleModifiers.Alt)] = () => reader.HandleDigitArgument(5),
-      [(ConsoleKey.D6, ConsoleModifiers.Alt)] = () => reader.HandleDigitArgument(6),
-      [(ConsoleKey.D7, ConsoleModifiers.Alt)] = () => reader.HandleDigitArgument(7),
-      [(ConsoleKey.D8, ConsoleModifiers.Alt)] = () => reader.HandleDigitArgument(8),
-      [(ConsoleKey.D9, ConsoleModifiers.Alt)] = () => reader.HandleDigitArgument(9),
+      [(ConsoleKey.D0, ConsoleModifiers.Alt)] = () => { reader.HandleDigitArgument(0); return Task.CompletedTask; },
+      [(ConsoleKey.D1, ConsoleModifiers.Alt)] = () => { reader.HandleDigitArgument(1); return Task.CompletedTask; },
+      [(ConsoleKey.D2, ConsoleModifiers.Alt)] = () => { reader.HandleDigitArgument(2); return Task.CompletedTask; },
+      [(ConsoleKey.D3, ConsoleModifiers.Alt)] = () => { reader.HandleDigitArgument(3); return Task.CompletedTask; },
+      [(ConsoleKey.D4, ConsoleModifiers.Alt)] = () => { reader.HandleDigitArgument(4); return Task.CompletedTask; },
+      [(ConsoleKey.D5, ConsoleModifiers.Alt)] = () => { reader.HandleDigitArgument(5); return Task.CompletedTask; },
+      [(ConsoleKey.D6, ConsoleModifiers.Alt)] = () => { reader.HandleDigitArgument(6); return Task.CompletedTask; },
+      [(ConsoleKey.D7, ConsoleModifiers.Alt)] = () => { reader.HandleDigitArgument(7); return Task.CompletedTask; },
+      [(ConsoleKey.D8, ConsoleModifiers.Alt)] = () => { reader.HandleDigitArgument(8); return Task.CompletedTask; },
+      [(ConsoleKey.D9, ConsoleModifiers.Alt)] = () => { reader.HandleDigitArgument(9); return Task.CompletedTask; },
 
       // === Undo/Redo Operations (VSCode standard: Ctrl+Z, Ctrl+Shift+Z) ===
       [(ConsoleKey.Z, ConsoleModifiers.Control)] = reader.HandleUndo,

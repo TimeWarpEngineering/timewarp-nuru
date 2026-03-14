@@ -22,7 +22,7 @@ public sealed partial class ReplConsoleReader
   /// <summary>
   /// PSReadLine: SelectBackwardChar - Extend selection one character backward.
   /// </summary>
-  internal void HandleSelectBackwardChar()
+  internal Task HandleSelectBackwardChar()
   {
     if (CursorPosition > 0)
     {
@@ -31,12 +31,13 @@ public sealed partial class ReplConsoleReader
       SelectionState.ExtendTo(CursorPosition);
       RedrawLineWithSelection();
     }
+    return Task.CompletedTask;
   }
 
   /// <summary>
   /// PSReadLine: SelectForwardChar - Extend selection one character forward.
   /// </summary>
-  internal void HandleSelectForwardChar()
+  internal Task HandleSelectForwardChar()
   {
     if (CursorPosition < UserInput.Length)
     {
@@ -45,6 +46,7 @@ public sealed partial class ReplConsoleReader
       SelectionState.ExtendTo(CursorPosition);
       RedrawLineWithSelection();
     }
+    return Task.CompletedTask;
   }
 
   // ============================================================================
@@ -54,7 +56,7 @@ public sealed partial class ReplConsoleReader
   /// <summary>
   /// PSReadLine: SelectBackwardWord - Extend selection to beginning of previous word.
   /// </summary>
-  internal void HandleSelectBackwardWord()
+  internal Task HandleSelectBackwardWord()
   {
     StartOrExtendSelection();
 
@@ -71,12 +73,13 @@ public sealed partial class ReplConsoleReader
     CursorPosition = newPos;
     SelectionState.ExtendTo(CursorPosition);
     RedrawLineWithSelection();
+    return Task.CompletedTask;
   }
 
   /// <summary>
   /// PSReadLine: SelectNextWord - Extend selection to end of next word.
   /// </summary>
-  internal void HandleSelectNextWord()
+  internal Task HandleSelectNextWord()
   {
     StartOrExtendSelection();
 
@@ -93,6 +96,7 @@ public sealed partial class ReplConsoleReader
     CursorPosition = newPos;
     SelectionState.ExtendTo(CursorPosition);
     RedrawLineWithSelection();
+    return Task.CompletedTask;
   }
 
   // ============================================================================
@@ -102,34 +106,37 @@ public sealed partial class ReplConsoleReader
   /// <summary>
   /// PSReadLine: SelectBackwardsLine - Extend selection to beginning of line.
   /// </summary>
-  internal void HandleSelectBackwardsLine()
+  internal Task HandleSelectBackwardsLine()
   {
     StartOrExtendSelection();
     CursorPosition = 0;
     SelectionState.ExtendTo(CursorPosition);
     RedrawLineWithSelection();
+    return Task.CompletedTask;
   }
 
   /// <summary>
   /// PSReadLine: SelectLine - Extend selection to end of line.
   /// </summary>
-  internal void HandleSelectLine()
+  internal Task HandleSelectLine()
   {
     StartOrExtendSelection();
     CursorPosition = UserInput.Length;
     SelectionState.ExtendTo(CursorPosition);
     RedrawLineWithSelection();
+    return Task.CompletedTask;
   }
 
   /// <summary>
   /// PSReadLine: SelectAll - Select entire input.
   /// </summary>
-  internal void HandleSelectAll()
+  internal Task HandleSelectAll()
   {
     SelectionState.StartAt(0);
     CursorPosition = UserInput.Length;
     SelectionState.ExtendTo(CursorPosition);
     RedrawLineWithSelection();
+    return Task.CompletedTask;
   }
 
   // ============================================================================
@@ -139,7 +146,7 @@ public sealed partial class ReplConsoleReader
   /// <summary>
   /// PSReadLine: CopyOrCancelLine - Copy selection to clipboard, or cancel line if no selection.
   /// </summary>
-  internal void HandleCopyOrCancelLine()
+  internal async Task HandleCopyOrCancelLine()
   {
     if (SelectionState.IsActive)
     {
@@ -147,7 +154,7 @@ public sealed partial class ReplConsoleReader
       string selectedText = SelectionState.GetSelectedText(UserInput);
       if (!string.IsNullOrEmpty(selectedText))
       {
-        SetClipboardText(selectedText);
+        await SetClipboardTextAsync(selectedText).ConfigureAwait(false);
       }
 
       ClearSelection();
@@ -156,14 +163,14 @@ public sealed partial class ReplConsoleReader
     else
     {
       // No selection - cancel line (like Escape)
-      HandleEscape();
+      await HandleEscape().ConfigureAwait(false);
     }
   }
 
   /// <summary>
   /// PSReadLine: Cut - Cut selection to clipboard and kill ring.
   /// </summary>
-  internal void HandleCut()
+  internal async Task HandleCut()
   {
     if (!SelectionState.IsActive)
       return;
@@ -173,7 +180,7 @@ public sealed partial class ReplConsoleReader
       return;
 
     // Save to clipboard and kill ring
-    SetClipboardText(selectedText);
+    await SetClipboardTextAsync(selectedText).ConfigureAwait(false);
     KillRing.Add(selectedText);
 
     // Save undo state before deletion
@@ -194,9 +201,9 @@ public sealed partial class ReplConsoleReader
   /// PSReadLine: Paste - Paste from system clipboard.
   /// Falls back to the kill ring when system clipboard is unavailable.
   /// </summary>
-  internal void HandlePaste()
+  internal async Task HandlePaste()
   {
-    string? clipboardText = GetClipboardText();
+    string? clipboardText = await GetClipboardTextAsync().ConfigureAwait(false);
 
     // Fall back to kill ring when clipboard is unavailable
     if (string.IsNullOrEmpty(clipboardText))
@@ -232,10 +239,10 @@ public sealed partial class ReplConsoleReader
   /// <summary>
   /// Delete selected text (called when Delete or Backspace pressed with selection).
   /// </summary>
-  internal void HandleDeleteSelection()
+  internal Task HandleDeleteSelection()
   {
     if (!SelectionState.IsActive)
-      return;
+      return Task.CompletedTask;
 
     SaveUndoState(isCharacterInput: false);
 
@@ -247,6 +254,7 @@ public sealed partial class ReplConsoleReader
     ClearSelection();
     ResetKillTracking();
     RedrawLine();
+    return Task.CompletedTask;
   }
 
   // ============================================================================

@@ -35,7 +35,7 @@ public sealed partial class ReplConsoleReader
   /// Splits the current line at the cursor position, moving text after the cursor
   /// to a new line. The cursor moves to the start of the new line.
   /// </remarks>
-  internal void HandleAddLine()
+  internal Task HandleAddLine()
   {
     // Save undo state before the edit
     SaveUndoState(isCharacterInput: false);
@@ -56,6 +56,7 @@ public sealed partial class ReplConsoleReader
 
     // Redraw with multiline support
     RedrawMultiline();
+    return Task.CompletedTask;
   }
 
   /// <summary>

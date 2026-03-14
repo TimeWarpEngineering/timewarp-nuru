@@ -21,25 +21,21 @@ public sealed partial class ReplConsoleReader
   /// Gets text from the system clipboard.
   /// </summary>
   /// <returns>The clipboard text, or null if unavailable.</returns>
-  private static string? GetClipboardText()
+  private static async Task<string?> GetClipboardTextAsync()
   {
-    // Platform-independent clipboard access
-    // For now, return null - clipboard integration is platform-specific
-    // Future: Use TextCopy or similar cross-platform library
     try
     {
-      // Try xclip/xsel on Linux, pbpaste on macOS, or PowerShell on Windows
       if (OperatingSystem.IsWindows())
       {
-        return GetWindowsClipboard();
+        return await GetWindowsClipboardAsync().ConfigureAwait(false);
       }
       else if (OperatingSystem.IsMacOS())
       {
-        return GetMacOSClipboard();
+        return await GetMacOSClipboardAsync().ConfigureAwait(false);
       }
       else if (OperatingSystem.IsLinux())
       {
-        return GetLinuxClipboard();
+        return await GetLinuxClipboardAsync().ConfigureAwait(false);
       }
     }
     catch (Exception)
@@ -54,7 +50,7 @@ public sealed partial class ReplConsoleReader
   /// Sets text to the system clipboard.
   /// </summary>
   /// <param name="text">The text to copy to clipboard.</param>
-  private static void SetClipboardText(string text)
+  private static async Task SetClipboardTextAsync(string text)
   {
     if (string.IsNullOrEmpty(text))
       return;
@@ -63,15 +59,15 @@ public sealed partial class ReplConsoleReader
     {
       if (OperatingSystem.IsWindows())
       {
-        SetWindowsClipboard(text);
+        await SetWindowsClipboardAsync(text).ConfigureAwait(false);
       }
       else if (OperatingSystem.IsMacOS())
       {
-        SetMacOSClipboard(text);
+        await SetMacOSClipboardAsync(text).ConfigureAwait(false);
       }
       else if (OperatingSystem.IsLinux())
       {
-        SetLinuxClipboard(text);
+        await SetLinuxClipboardAsync(text).ConfigureAwait(false);
       }
     }
     catch (Exception)
@@ -84,86 +80,52 @@ public sealed partial class ReplConsoleReader
   // Windows Clipboard
   // ============================================================================
 
-  private static string? GetWindowsClipboard()
+  private static async Task<string?> GetWindowsClipboardAsync()
   {
-    using System.Diagnostics.Process process = new()
-    {
-      StartInfo = new System.Diagnostics.ProcessStartInfo
-      {
-        FileName = "powershell",
-        Arguments = "-command \"Get-Clipboard\"",
-        RedirectStandardOutput = true,
-        UseShellExecute = false,
-        CreateNoWindow = true
-      }
-    };
-    process.Start();
-    string result = process.StandardOutput.ReadToEnd().TrimEnd('\r', '\n');
-    process.WaitForExit();
-    return result;
+    CommandOutput output = await Shell.Builder("powershell")
+      .WithArguments("-command", "Get-Clipboard")
+      .WithNoValidation()
+      .CaptureAsync()
+      .ConfigureAwait(false);
+    return output.Success ? output.Stdout.TrimEnd('\r', '\n') : null;
   }
 
-  private static void SetWindowsClipboard(string text)
+  private static async Task SetWindowsClipboardAsync(string text)
   {
-    using System.Diagnostics.Process process = new()
-    {
-      StartInfo = new System.Diagnostics.ProcessStartInfo
-      {
-        FileName = "powershell",
-        Arguments = $"-command \"Set-Clipboard -Value '{text.Replace("'", "''", StringComparison.Ordinal)}'\"",
-        UseShellExecute = false,
-        CreateNoWindow = true
-      }
-    };
-    process.Start();
-    process.WaitForExit();
+    await Shell.Builder("powershell")
+      .WithArguments($"-command \"Set-Clipboard -Value '{text.Replace("'", "''", StringComparison.Ordinal)}'\"")
+      .WithNoValidation()
+      .RunAsync()
+      .ConfigureAwait(false);
   }
 
   // ============================================================================
   // macOS Clipboard
   // ============================================================================
 
-  private static string? GetMacOSClipboard()
+  private static async Task<string?> GetMacOSClipboardAsync()
   {
-    using System.Diagnostics.Process process = new()
-    {
-      StartInfo = new System.Diagnostics.ProcessStartInfo
-      {
-        FileName = "pbpaste",
-        RedirectStandardOutput = true,
-        UseShellExecute = false,
-        CreateNoWindow = true
-      }
-    };
-    process.Start();
-    string result = process.StandardOutput.ReadToEnd();
-    process.WaitForExit();
-    return result;
+    CommandOutput output = await Shell.Builder("pbpaste")
+      .WithNoValidation()
+      .CaptureAsync()
+      .ConfigureAwait(false);
+    return output.Success ? output.Stdout : null;
   }
 
-  private static void SetMacOSClipboard(string text)
+  private static async Task SetMacOSClipboardAsync(string text)
   {
-    using System.Diagnostics.Process process = new()
-    {
-      StartInfo = new System.Diagnostics.ProcessStartInfo
-      {
-        FileName = "pbcopy",
-        RedirectStandardInput = true,
-        UseShellExecute = false,
-        CreateNoWindow = true
-      }
-    };
-    process.Start();
-    process.StandardInput.Write(text);
-    process.StandardInput.Close();
-    process.WaitForExit();
+    await Shell.Builder("pbcopy")
+      .WithStandardInput(text)
+      .WithNoValidation()
+      .RunAsync()
+      .ConfigureAwait(false);
   }
 
   // ============================================================================
   // Linux Clipboard
   // ============================================================================
 
-  private static string? GetLinuxClipboard()
+  private static async Task<string?> GetLinuxClipboardAsync()
   {
     // Try methods in order of preference:
     // 1. pwsh (PowerShell Core - cross-platform)
@@ -174,123 +136,55 @@ public sealed partial class ReplConsoleReader
     // Try pwsh (PowerShell Core)
     if (ClipboardToolCache.HasPwsh)
     {
-      try
-      {
-        using System.Diagnostics.Process process = new()
-        {
-          StartInfo = new System.Diagnostics.ProcessStartInfo
-          {
-            FileName = "pwsh",
-            Arguments = "-NoProfile -Command \"Get-Clipboard\"",
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true
-          }
-        };
-        process.Start();
-        string result = process.StandardOutput.ReadToEnd().TrimEnd('\r', '\n');
-        process.WaitForExit();
-        if (process.ExitCode == 0 && !string.IsNullOrEmpty(result))
-          return result;
-      }
-      catch (Exception)
-      {
-        // pwsh failed, continue to next method
-      }
+      CommandOutput output = await Shell.Builder("pwsh")
+        .WithArguments("-NoProfile", "-Command", "Get-Clipboard")
+        .WithNoValidation()
+        .CaptureAsync()
+        .ConfigureAwait(false);
+      if (output.Success && !string.IsNullOrEmpty(output.Stdout.TrimEnd('\r', '\n')))
+        return output.Stdout.TrimEnd('\r', '\n');
     }
 
     // Try powershell.exe (WSL → Windows clipboard)
     if (ClipboardToolCache.HasPowershellExe)
     {
-      try
-      {
-        using System.Diagnostics.Process process = new()
-        {
-          StartInfo = new System.Diagnostics.ProcessStartInfo
-          {
-            FileName = "powershell.exe",
-            Arguments = "-NoProfile -Command \"Get-Clipboard\"",
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true
-          }
-        };
-        process.Start();
-        string result = process.StandardOutput.ReadToEnd().TrimEnd('\r', '\n');
-        process.WaitForExit();
-        if (process.ExitCode == 0 && !string.IsNullOrEmpty(result))
-          return result;
-      }
-      catch (Exception)
-      {
-        // powershell.exe failed, continue to next method
-      }
+      CommandOutput output = await Shell.Builder("powershell.exe")
+        .WithArguments("-NoProfile", "-Command", "Get-Clipboard")
+        .WithNoValidation()
+        .CaptureAsync()
+        .ConfigureAwait(false);
+      if (output.Success && !string.IsNullOrEmpty(output.Stdout.TrimEnd('\r', '\n')))
+        return output.Stdout.TrimEnd('\r', '\n');
     }
 
     // Try xclip
     if (ClipboardToolCache.HasXclip)
     {
-      try
-      {
-        using System.Diagnostics.Process process = new()
-        {
-          StartInfo = new System.Diagnostics.ProcessStartInfo
-          {
-            FileName = "xclip",
-            Arguments = "-selection clipboard -o",
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true
-          }
-        };
-        process.Start();
-        string result = process.StandardOutput.ReadToEnd();
-        process.WaitForExit();
-        if (process.ExitCode == 0)
-          return result;
-      }
-      catch (Exception)
-      {
-        // xclip failed, continue to next method
-      }
+      CommandOutput output = await Shell.Builder("xclip")
+        .WithArguments("-selection", "clipboard", "-o")
+        .WithNoValidation()
+        .CaptureAsync()
+        .ConfigureAwait(false);
+      if (output.Success)
+        return output.Stdout;
     }
 
     // Try xsel as final fallback
     if (ClipboardToolCache.HasXsel)
     {
-      try
-      {
-        using System.Diagnostics.Process process = new()
-        {
-          StartInfo = new System.Diagnostics.ProcessStartInfo
-          {
-            FileName = "xsel",
-            Arguments = "--clipboard --output",
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true
-          }
-        };
-        process.Start();
-        string result = process.StandardOutput.ReadToEnd();
-        process.WaitForExit();
-        if (process.ExitCode == 0)
-          return result;
-      }
-      catch (Exception)
-      {
-        // xsel failed
-      }
+      CommandOutput output = await Shell.Builder("xsel")
+        .WithArguments("--clipboard", "--output")
+        .WithNoValidation()
+        .CaptureAsync()
+        .ConfigureAwait(false);
+      if (output.Success)
+        return output.Stdout;
     }
 
     return null;
   }
 
-  private static void SetLinuxClipboard(string text)
+  private static async Task SetLinuxClipboardAsync(string text)
   {
     // Try methods in order of preference:
     // 1. pwsh (PowerShell Core - cross-platform)
@@ -301,119 +195,50 @@ public sealed partial class ReplConsoleReader
     // Try pwsh (PowerShell Core)
     if (ClipboardToolCache.HasPwsh)
     {
-      try
-      {
-        // Use stdin piping to handle special characters safely
-        using System.Diagnostics.Process process = new()
-        {
-          StartInfo = new System.Diagnostics.ProcessStartInfo
-          {
-            FileName = "pwsh",
-            Arguments = "-NoProfile -Command \"$input | Set-Clipboard\"",
-            RedirectStandardInput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true
-          }
-        };
-        process.Start();
-        process.StandardInput.Write(text);
-        process.StandardInput.Close();
-        process.WaitForExit();
-        if (process.ExitCode == 0)
-          return;
-      }
-      catch (Exception)
-      {
-        // pwsh failed, continue to next method
-      }
+      CommandOutput output = await Shell.Builder("pwsh")
+        .WithArguments("-NoProfile", "-Command", "$input | Set-Clipboard")
+        .WithStandardInput(text)
+        .WithNoValidation()
+        .CaptureAsync()
+        .ConfigureAwait(false);
+      if (output.Success)
+        return;
     }
 
     // Try clip.exe (WSL → Windows clipboard)
     if (ClipboardToolCache.HasClipExe)
     {
-      try
-      {
-        using System.Diagnostics.Process process = new()
-        {
-          StartInfo = new System.Diagnostics.ProcessStartInfo
-          {
-            FileName = "clip.exe",
-            RedirectStandardInput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true
-          }
-        };
-        process.Start();
-        process.StandardInput.Write(text);
-        process.StandardInput.Close();
-        process.WaitForExit();
-        if (process.ExitCode == 0)
-          return;
-      }
-      catch (Exception)
-      {
-        // clip.exe failed, continue to next method
-      }
+      CommandOutput output = await Shell.Builder("clip.exe")
+        .WithStandardInput(text)
+        .WithNoValidation()
+        .CaptureAsync()
+        .ConfigureAwait(false);
+      if (output.Success)
+        return;
     }
 
     // Try xclip
     if (ClipboardToolCache.HasXclip)
     {
-      try
-      {
-        using System.Diagnostics.Process process = new()
-        {
-          StartInfo = new System.Diagnostics.ProcessStartInfo
-          {
-            FileName = "xclip",
-            Arguments = "-selection clipboard",
-            RedirectStandardInput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true
-          }
-        };
-        process.Start();
-        process.StandardInput.Write(text);
-        process.StandardInput.Close();
-        process.WaitForExit();
-        if (process.ExitCode == 0)
-          return;
-      }
-      catch (Exception)
-      {
-        // xclip failed, continue to next method
-      }
+      CommandOutput output = await Shell.Builder("xclip")
+        .WithArguments("-selection", "clipboard")
+        .WithStandardInput(text)
+        .WithNoValidation()
+        .CaptureAsync()
+        .ConfigureAwait(false);
+      if (output.Success)
+        return;
     }
 
     // Try xsel as final fallback
     if (ClipboardToolCache.HasXsel)
     {
-      try
-      {
-        using System.Diagnostics.Process process = new()
-        {
-          StartInfo = new System.Diagnostics.ProcessStartInfo
-          {
-            FileName = "xsel",
-            Arguments = "--clipboard --input",
-            RedirectStandardInput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true
-          }
-        };
-        process.Start();
-        process.StandardInput.Write(text);
-        process.StandardInput.Close();
-        process.WaitForExit();
-      }
-      catch (Exception)
-      {
-        // xsel failed - no more fallbacks
-      }
+      await Shell.Builder("xsel")
+        .WithArguments("--clipboard", "--input")
+        .WithStandardInput(text)
+        .WithNoValidation()
+        .RunAsync()
+        .ConfigureAwait(false);
     }
   }
 

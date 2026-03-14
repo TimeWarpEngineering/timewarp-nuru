@@ -10,10 +10,10 @@ public sealed partial class ReplConsoleReader
   /// PSReadLine: UpcaseWord - Convert characters from cursor to end of word to UPPERCASE.
   /// Moves cursor to end of word after conversion.
   /// </summary>
-  internal void HandleUpcaseWord()
+  internal Task HandleUpcaseWord()
   {
     if (CursorPosition >= UserInput.Length)
-      return;
+      return Task.CompletedTask;
 
     SaveUndoState(isCharacterInput: false);
 
@@ -33,16 +33,17 @@ public sealed partial class ReplConsoleReader
     ResetKillTracking();
     CompletionHandler.Reset();
     RedrawLine();
+    return Task.CompletedTask;
   }
 
   /// <summary>
   /// PSReadLine: DowncaseWord - Convert characters from cursor to end of word to lowercase.
   /// Moves cursor to end of word after conversion.
   /// </summary>
-  internal void HandleDowncaseWord()
+  internal Task HandleDowncaseWord()
   {
     if (CursorPosition >= UserInput.Length)
-      return;
+      return Task.CompletedTask;
 
     SaveUndoState(isCharacterInput: false);
 
@@ -62,16 +63,17 @@ public sealed partial class ReplConsoleReader
     ResetKillTracking();
     CompletionHandler.Reset();
     RedrawLine();
+    return Task.CompletedTask;
   }
 
   /// <summary>
   /// PSReadLine: CapitalizeWord - Capitalize first character after cursor, lowercase rest of word.
   /// Moves cursor to end of word after conversion.
   /// </summary>
-  internal void HandleCapitalizeWord()
+  internal Task HandleCapitalizeWord()
   {
     if (CursorPosition >= UserInput.Length)
-      return;
+      return Task.CompletedTask;
 
     SaveUndoState(isCharacterInput: false);
 
@@ -82,7 +84,7 @@ public sealed partial class ReplConsoleReader
       startPos++;
 
     if (startPos >= UserInput.Length)
-      return;
+      return Task.CompletedTask;
 
     int endPos = FindWordEnd(startPos);
 
@@ -100,6 +102,7 @@ public sealed partial class ReplConsoleReader
     ResetKillTracking();
     CompletionHandler.Reset();
     RedrawLine();
+    return Task.CompletedTask;
   }
 
   /// <summary>
@@ -107,11 +110,11 @@ public sealed partial class ReplConsoleReader
   /// Moves cursor forward after swap (Emacs behavior).
   /// At the end of line, swaps the two characters before cursor.
   /// </summary>
-  internal void HandleSwapCharacters()
+  internal Task HandleSwapCharacters()
   {
     // Need at least 2 characters and cursor not at position 0
     if (UserInput.Length < 2)
-      return;
+      return Task.CompletedTask;
 
     SaveUndoState(isCharacterInput: false);
 
@@ -134,7 +137,7 @@ public sealed partial class ReplConsoleReader
 
     // Ensure swapPos is valid
     if (swapPos < 0 || swapPos + 1 >= UserInput.Length)
-      return;
+      return Task.CompletedTask;
 
     char[] chars = UserInput.ToCharArray();
     (chars[swapPos], chars[swapPos + 1]) = (chars[swapPos + 1], chars[swapPos]);
@@ -146,26 +149,27 @@ public sealed partial class ReplConsoleReader
     ResetKillTracking();
     CompletionHandler.Reset();
     RedrawLine();
+    return Task.CompletedTask;
   }
 
   /// <summary>
   /// PSReadLine: DeleteWord - Delete from cursor to end of word.
   /// This is an alias for KillWord in this implementation.
   /// </summary>
-  internal void HandleDeleteWord()
+  internal Task HandleDeleteWord()
   {
     // Delegate to KillWord - in PSReadLine, DeleteWord and KillWord behave the same
-    HandleKillWord();
+    return HandleKillWord();
   }
 
   /// <summary>
   /// PSReadLine: BackwardDeleteWord - Delete from start of current word to cursor.
   /// This is an alias for BackwardKillWord in this implementation.
   /// </summary>
-  internal void HandleBackwardDeleteWord()
+  internal Task HandleBackwardDeleteWord()
   {
     // Delegate to BackwardKillWord - in PSReadLine these behave the same
-    HandleBackwardKillWord();
+    return HandleBackwardKillWord();
   }
 
   /// <summary>

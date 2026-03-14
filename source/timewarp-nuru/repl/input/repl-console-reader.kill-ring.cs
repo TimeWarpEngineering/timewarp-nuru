@@ -10,7 +10,7 @@ public sealed partial class ReplConsoleReader
   /// PSReadLine: KillLine - Kill text from cursor to end of line.
   /// Stores the killed text in the kill ring.
   /// </summary>
-  internal Task HandleKillLineToRing()
+  internal Task HandleKillLineToRingAsync()
   {
     if (CursorPosition >= UserInput.Length)
       return Task.CompletedTask;
@@ -39,7 +39,7 @@ public sealed partial class ReplConsoleReader
   /// PSReadLine: BackwardKillInput - Kill text from beginning of line to cursor.
   /// Also known as unix-line-discard in readline.
   /// </summary>
-  internal Task HandleBackwardKillInput()
+  internal Task HandleBackwardKillInputAsync()
   {
     if (CursorPosition == 0)
       return Task.CompletedTask;
@@ -69,7 +69,7 @@ public sealed partial class ReplConsoleReader
   /// PSReadLine: UnixWordRubout - Kill the previous whitespace-delimited word.
   /// Also known as backward-kill-word with whitespace as the word boundary.
   /// </summary>
-  internal Task HandleUnixWordRubout()
+  internal Task HandleUnixWordRuboutAsync()
   {
     if (CursorPosition == 0)
       return Task.CompletedTask;
@@ -108,7 +108,7 @@ public sealed partial class ReplConsoleReader
   /// PSReadLine: KillWord - Kill from cursor to end of current word.
   /// Uses word boundaries (non-word to word transitions).
   /// </summary>
-  internal Task HandleKillWord()
+  internal Task HandleKillWordAsync()
   {
     if (CursorPosition >= UserInput.Length)
       return Task.CompletedTask;
@@ -148,7 +148,7 @@ public sealed partial class ReplConsoleReader
   /// PSReadLine: BackwardKillWord - Kill from start of current word to cursor.
   /// Uses word boundaries (non-word to word transitions).
   /// </summary>
-  internal Task HandleBackwardKillWord()
+  internal Task HandleBackwardKillWordAsync()
   {
     if (CursorPosition == 0)
       return Task.CompletedTask;
@@ -186,7 +186,7 @@ public sealed partial class ReplConsoleReader
   /// <summary>
   /// PSReadLine: Yank - Paste the most recently killed text at the cursor position.
   /// </summary>
-  internal Task HandleYank()
+  internal Task HandleYankAsync()
   {
     string? text = KillRing.Yank();
     if (text is null)
@@ -211,7 +211,7 @@ public sealed partial class ReplConsoleReader
   /// PSReadLine: YankPop - Replace the just-yanked text with the previous kill ring entry.
   /// Only works immediately after Yank or YankPop.
   /// </summary>
-  internal Task HandleYankPop()
+  internal Task HandleYankPopAsync()
   {
     // YankPop only works if the last command was Yank or YankPop
     if (!LastCommandWasYank || !KillRing.CanYankPop)

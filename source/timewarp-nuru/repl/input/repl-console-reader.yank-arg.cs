@@ -41,7 +41,7 @@ public sealed partial class ReplConsoleReader
   /// Alt+. → "main" (last arg of older command)
   /// Alt+. → "Initial commit" (last arg, quoted string)
   /// </remarks>
-  internal Task HandleYankLastArg()
+  internal Task HandleYankLastArgAsync()
   {
     if (History.Count == 0)
       return Task.CompletedTask;
@@ -120,7 +120,7 @@ public sealed partial class ReplConsoleReader
   /// Alt+0 Alt+Ctrl+Y → "git" (command name, index 0)
   /// Alt+3 Alt+Ctrl+Y → "Initial commit" (index 3)
   /// </remarks>
-  internal Task HandleYankNthArg()
+  internal Task HandleYankNthArgAsync()
   {
     if (History.Count == 0)
       return Task.CompletedTask;

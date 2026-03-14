@@ -126,7 +126,7 @@ public sealed partial class ReplConsoleReader
       // Route to mode-specific handler
       if (CurrentMode == EditMode.Search)
       {
-        string? result = await HandleSearchModeKey(keyInfo).ConfigureAwait(false);
+        string? result = await HandleSearchModeKeyAsync(keyInfo).ConfigureAwait(false);
         if (result is not null)
           return result;
 
@@ -166,7 +166,7 @@ public sealed partial class ReplConsoleReader
     }
   }
 
-  internal async Task HandleEnter()
+  internal async Task HandleEnterAsync()
   {
     // If in multiline mode, move cursor to end of last line first
     if (IsMultilineMode)
@@ -190,7 +190,7 @@ public sealed partial class ReplConsoleReader
     MultilineInput.Clear();
   }
 
-  internal Task HandleTabCompletion(bool reverse)
+  internal Task HandleTabCompletionAsync(bool reverse)
   {
     (UserInput, CursorPosition) = CompletionHandler.HandleTab(UserInput, CursorPosition, reverse);
     RedrawLine();
@@ -208,7 +208,7 @@ public sealed partial class ReplConsoleReader
   /// PSReadLine: PossibleCompletions - Display possible completions without modifying the input.
   /// Similar to ShowCompletionCandidates but triggered by Alt+= instead of Tab.
   /// </summary>
-  internal Task HandlePossibleCompletions()
+  internal Task HandlePossibleCompletionsAsync()
   {
     CompletionHandler.ShowPossibleCompletions(UserInput, CursorPosition);
     return Task.CompletedTask;

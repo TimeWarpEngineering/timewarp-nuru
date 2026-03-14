@@ -8,7 +8,7 @@ public sealed partial class ReplConsoleReader
   /// <summary>
   /// PSReadLine: Undo - Undo the last edit operation.
   /// </summary>
-  internal Task HandleUndo()
+  internal Task HandleUndoAsync()
   {
     UndoUnit? undoUnit = UndoManager.Undo(UserInput, CursorPosition);
     if (undoUnit.HasValue)
@@ -17,13 +17,14 @@ public sealed partial class ReplConsoleReader
       CursorPosition = undoUnit.Value.CursorPosition;
       RedrawLine();
     }
+
     return Task.CompletedTask;
   }
 
   /// <summary>
   /// PSReadLine: Redo - Redo an undone edit operation.
   /// </summary>
-  internal Task HandleRedo()
+  internal Task HandleRedoAsync()
   {
     UndoUnit? redoUnit = UndoManager.Redo(UserInput, CursorPosition);
     if (redoUnit.HasValue)
@@ -32,13 +33,14 @@ public sealed partial class ReplConsoleReader
       CursorPosition = redoUnit.Value.CursorPosition;
       RedrawLine();
     }
+
     return Task.CompletedTask;
   }
 
   /// <summary>
   /// PSReadLine: RevertLine - Undo ALL changes to the current line, restoring it to its initial state.
   /// </summary>
-  internal Task HandleRevertLine()
+  internal Task HandleRevertLineAsync()
   {
     UndoUnit initialState = UndoManager.GetInitialState();
 

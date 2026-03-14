@@ -24,7 +24,7 @@ public sealed partial class ReplConsoleReader
   /// - If there's text and cursor is not at end: delete character at cursor
   /// - If line is empty: signal EOF (exit REPL)
   /// </remarks>
-  internal Task HandleDeleteCharOrExit()
+  internal Task HandleDeleteCharOrExitAsync()
   {
     // If line is empty, signal exit
     if (string.IsNullOrEmpty(UserInput))
@@ -36,7 +36,7 @@ public sealed partial class ReplConsoleReader
     // If there's a selection, delete it
     if (SelectionState.IsActive)
     {
-      HandleDeleteSelection();
+      HandleDeleteSelectionAsync();
       return Task.CompletedTask;
     }
 
@@ -49,13 +49,14 @@ public sealed partial class ReplConsoleReader
       ResetKillTracking();
       RedrawLine();
     }
+
     return Task.CompletedTask;
   }
 
   /// <summary>
   /// PSReadLine: ClearScreen - Clear the terminal screen and redraw the prompt.
   /// </summary>
-  internal Task HandleClearScreen()
+  internal Task HandleClearScreenAsync()
   {
     // Clear screen using ANSI escape codes: clear screen + cursor home
     Terminal.Write("\u001b[2J\u001b[H");
@@ -80,7 +81,7 @@ public sealed partial class ReplConsoleReader
   /// <summary>
   /// PSReadLine: ToggleInsertMode - Toggle between insert and overwrite modes.
   /// </summary>
-  internal Task HandleToggleInsertMode()
+  internal Task HandleToggleInsertModeAsync()
   {
     IsOverwriteMode = !IsOverwriteMode;
 

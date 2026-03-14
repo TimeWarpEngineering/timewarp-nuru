@@ -22,7 +22,7 @@ public sealed partial class ReplConsoleReader
   /// <summary>
   /// PSReadLine: SelectBackwardChar - Extend selection one character backward.
   /// </summary>
-  internal Task HandleSelectBackwardChar()
+  internal Task HandleSelectBackwardCharAsync()
   {
     if (CursorPosition > 0)
     {
@@ -31,13 +31,14 @@ public sealed partial class ReplConsoleReader
       SelectionState.ExtendTo(CursorPosition);
       RedrawLineWithSelection();
     }
+
     return Task.CompletedTask;
   }
 
   /// <summary>
   /// PSReadLine: SelectForwardChar - Extend selection one character forward.
   /// </summary>
-  internal Task HandleSelectForwardChar()
+  internal Task HandleSelectForwardCharAsync()
   {
     if (CursorPosition < UserInput.Length)
     {
@@ -46,6 +47,7 @@ public sealed partial class ReplConsoleReader
       SelectionState.ExtendTo(CursorPosition);
       RedrawLineWithSelection();
     }
+
     return Task.CompletedTask;
   }
 
@@ -56,7 +58,7 @@ public sealed partial class ReplConsoleReader
   /// <summary>
   /// PSReadLine: SelectBackwardWord - Extend selection to beginning of previous word.
   /// </summary>
-  internal Task HandleSelectBackwardWord()
+  internal Task HandleSelectBackwardWordAsync()
   {
     StartOrExtendSelection();
 
@@ -79,7 +81,7 @@ public sealed partial class ReplConsoleReader
   /// <summary>
   /// PSReadLine: SelectNextWord - Extend selection to end of next word.
   /// </summary>
-  internal Task HandleSelectNextWord()
+  internal Task HandleSelectNextWordAsync()
   {
     StartOrExtendSelection();
 
@@ -106,7 +108,7 @@ public sealed partial class ReplConsoleReader
   /// <summary>
   /// PSReadLine: SelectBackwardsLine - Extend selection to beginning of line.
   /// </summary>
-  internal Task HandleSelectBackwardsLine()
+  internal Task HandleSelectBackwardsLineAsync()
   {
     StartOrExtendSelection();
     CursorPosition = 0;
@@ -118,7 +120,7 @@ public sealed partial class ReplConsoleReader
   /// <summary>
   /// PSReadLine: SelectLine - Extend selection to end of line.
   /// </summary>
-  internal Task HandleSelectLine()
+  internal Task HandleSelectLineAsync()
   {
     StartOrExtendSelection();
     CursorPosition = UserInput.Length;
@@ -130,7 +132,7 @@ public sealed partial class ReplConsoleReader
   /// <summary>
   /// PSReadLine: SelectAll - Select entire input.
   /// </summary>
-  internal Task HandleSelectAll()
+  internal Task HandleSelectAllAsync()
   {
     SelectionState.StartAt(0);
     CursorPosition = UserInput.Length;
@@ -146,7 +148,7 @@ public sealed partial class ReplConsoleReader
   /// <summary>
   /// PSReadLine: CopyOrCancelLine - Copy selection to clipboard, or cancel line if no selection.
   /// </summary>
-  internal async Task HandleCopyOrCancelLine()
+  internal async Task HandleCopyOrCancelLineAsync()
   {
     if (SelectionState.IsActive)
     {
@@ -163,14 +165,14 @@ public sealed partial class ReplConsoleReader
     else
     {
       // No selection - cancel line (like Escape)
-      await HandleEscape().ConfigureAwait(false);
+      await HandleEscapeAsync().ConfigureAwait(false);
     }
   }
 
   /// <summary>
   /// PSReadLine: Cut - Cut selection to clipboard and kill ring.
   /// </summary>
-  internal async Task HandleCut()
+  internal async Task HandleCutAsync()
   {
     if (!SelectionState.IsActive)
       return;
@@ -201,7 +203,7 @@ public sealed partial class ReplConsoleReader
   /// PSReadLine: Paste - Paste from system clipboard.
   /// Falls back to the kill ring when system clipboard is unavailable.
   /// </summary>
-  internal async Task HandlePaste()
+  internal async Task HandlePasteAsync()
   {
     string? clipboardText = await GetClipboardTextAsync().ConfigureAwait(false);
 
@@ -239,7 +241,7 @@ public sealed partial class ReplConsoleReader
   /// <summary>
   /// Delete selected text (called when Delete or Backspace pressed with selection).
   /// </summary>
-  internal Task HandleDeleteSelection()
+  internal Task HandleDeleteSelectionAsync()
   {
     if (!SelectionState.IsActive)
       return Task.CompletedTask;

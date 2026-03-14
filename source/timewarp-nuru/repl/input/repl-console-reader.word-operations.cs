@@ -10,7 +10,7 @@ public sealed partial class ReplConsoleReader
   /// PSReadLine: UpcaseWord - Convert characters from cursor to end of word to UPPERCASE.
   /// Moves cursor to end of word after conversion.
   /// </summary>
-  internal Task HandleUpcaseWord()
+  internal Task HandleUpcaseWordAsync()
   {
     if (CursorPosition >= UserInput.Length)
       return Task.CompletedTask;
@@ -40,7 +40,7 @@ public sealed partial class ReplConsoleReader
   /// PSReadLine: DowncaseWord - Convert characters from cursor to end of word to lowercase.
   /// Moves cursor to end of word after conversion.
   /// </summary>
-  internal Task HandleDowncaseWord()
+  internal Task HandleDowncaseWordAsync()
   {
     if (CursorPosition >= UserInput.Length)
       return Task.CompletedTask;
@@ -70,7 +70,7 @@ public sealed partial class ReplConsoleReader
   /// PSReadLine: CapitalizeWord - Capitalize first character after cursor, lowercase rest of word.
   /// Moves cursor to end of word after conversion.
   /// </summary>
-  internal Task HandleCapitalizeWord()
+  internal Task HandleCapitalizeWordAsync()
   {
     if (CursorPosition >= UserInput.Length)
       return Task.CompletedTask;
@@ -110,7 +110,7 @@ public sealed partial class ReplConsoleReader
   /// Moves cursor forward after swap (Emacs behavior).
   /// At the end of line, swaps the two characters before cursor.
   /// </summary>
-  internal Task HandleSwapCharacters()
+  internal Task HandleSwapCharactersAsync()
   {
     // Need at least 2 characters and cursor not at position 0
     if (UserInput.Length < 2)
@@ -156,20 +156,20 @@ public sealed partial class ReplConsoleReader
   /// PSReadLine: DeleteWord - Delete from cursor to end of word.
   /// This is an alias for KillWord in this implementation.
   /// </summary>
-  internal Task HandleDeleteWord()
+  internal Task HandleDeleteWordAsync()
   {
     // Delegate to KillWord - in PSReadLine, DeleteWord and KillWord behave the same
-    return HandleKillWord();
+    return HandleKillWordAsync();
   }
 
   /// <summary>
   /// PSReadLine: BackwardDeleteWord - Delete from start of current word to cursor.
   /// This is an alias for BackwardKillWord in this implementation.
   /// </summary>
-  internal Task HandleBackwardDeleteWord()
+  internal Task HandleBackwardDeleteWordAsync()
   {
     // Delegate to BackwardKillWord - in PSReadLine these behave the same
-    return HandleBackwardKillWord();
+    return HandleBackwardKillWordAsync();
   }
 
   /// <summary>

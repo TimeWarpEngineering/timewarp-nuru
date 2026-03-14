@@ -35,7 +35,7 @@ public sealed partial class ReplConsoleReader
   /// Splits the current line at the cursor position, moving text after the cursor
   /// to a new line. The cursor moves to the start of the new line.
   /// </remarks>
-  internal Task HandleAddLine()
+  internal Task HandleAddLineAsync()
   {
     // Save undo state before the edit
     SaveUndoState(isCharacterInput: false);

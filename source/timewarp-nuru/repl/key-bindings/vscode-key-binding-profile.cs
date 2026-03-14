@@ -105,53 +105,53 @@ public sealed class VSCodeKeyBindingProfile : IKeyBindingProfile
     return new Dictionary<(ConsoleKey Key, ConsoleModifiers Modifiers), Func<Task>>
     {
       // === Enter/Submit ===
-      [(ConsoleKey.Enter, ConsoleModifiers.None)] = reader.HandleEnter,
+      [(ConsoleKey.Enter, ConsoleModifiers.None)] = reader.HandleEnterAsync,
 
       // === Tab Completion ===
-      [(ConsoleKey.Tab, ConsoleModifiers.None)] = () => reader.HandleTabCompletion(reverse: false),
-      [(ConsoleKey.Tab, ConsoleModifiers.Shift)] = () => reader.HandleTabCompletion(reverse: true),
+      [(ConsoleKey.Tab, ConsoleModifiers.None)] = () => reader.HandleTabCompletionAsync(reverse: false),
+      [(ConsoleKey.Tab, ConsoleModifiers.Shift)] = () => reader.HandleTabCompletionAsync(reverse: true),
 
       // === Character Movement (Arrow Keys) ===
-      [(ConsoleKey.LeftArrow, ConsoleModifiers.None)] = reader.HandleBackwardChar,
-      [(ConsoleKey.RightArrow, ConsoleModifiers.None)] = reader.HandleForwardChar,
+      [(ConsoleKey.LeftArrow, ConsoleModifiers.None)] = reader.HandleBackwardCharAsync,
+      [(ConsoleKey.RightArrow, ConsoleModifiers.None)] = reader.HandleForwardCharAsync,
 
       // === Word Movement (Ctrl+Arrow) ===
-      [(ConsoleKey.LeftArrow, ConsoleModifiers.Control)] = reader.HandleBackwardWord,
-      [(ConsoleKey.RightArrow, ConsoleModifiers.Control)] = reader.HandleForwardWord,
+      [(ConsoleKey.LeftArrow, ConsoleModifiers.Control)] = reader.HandleBackwardWordAsync,
+      [(ConsoleKey.RightArrow, ConsoleModifiers.Control)] = reader.HandleForwardWordAsync,
 
       // === Line Position (Home/End) ===
-      [(ConsoleKey.Home, ConsoleModifiers.None)] = reader.HandleBeginningOfLine,
-      [(ConsoleKey.End, ConsoleModifiers.None)] = reader.HandleEndOfLine,
+      [(ConsoleKey.Home, ConsoleModifiers.None)] = reader.HandleBeginningOfLineAsync,
+      [(ConsoleKey.End, ConsoleModifiers.None)] = reader.HandleEndOfLineAsync,
 
       // === History Position (Ctrl+Home/End) ===
-      [(ConsoleKey.Home, ConsoleModifiers.Control)] = reader.HandleBeginningOfHistory,
-      [(ConsoleKey.End, ConsoleModifiers.Control)] = reader.HandleEndOfHistory,
+      [(ConsoleKey.Home, ConsoleModifiers.Control)] = reader.HandleBeginningOfHistoryAsync,
+      [(ConsoleKey.End, ConsoleModifiers.Control)] = reader.HandleEndOfHistoryAsync,
 
       // === History Navigation (Arrow Keys) ===
-      [(ConsoleKey.UpArrow, ConsoleModifiers.None)] = reader.HandlePreviousHistory,
-      [(ConsoleKey.DownArrow, ConsoleModifiers.None)] = reader.HandleNextHistory,
+      [(ConsoleKey.UpArrow, ConsoleModifiers.None)] = reader.HandlePreviousHistoryAsync,
+      [(ConsoleKey.DownArrow, ConsoleModifiers.None)] = reader.HandleNextHistoryAsync,
 
       // === Interactive History Search ===
-      [(ConsoleKey.R, ConsoleModifiers.Control)] = reader.HandleReverseSearchHistory,
-      [(ConsoleKey.S, ConsoleModifiers.Control)] = reader.HandleForwardSearchHistory,
+      [(ConsoleKey.R, ConsoleModifiers.Control)] = reader.HandleReverseSearchHistoryAsync,
+      [(ConsoleKey.S, ConsoleModifiers.Control)] = reader.HandleForwardSearchHistoryAsync,
 
       // === Deletion ===
-      [(ConsoleKey.Backspace, ConsoleModifiers.None)] = reader.HandleBackwardDeleteChar,
-      [(ConsoleKey.Delete, ConsoleModifiers.None)] = reader.HandleDeleteChar,
+      [(ConsoleKey.Backspace, ConsoleModifiers.None)] = reader.HandleBackwardDeleteCharAsync,
+      [(ConsoleKey.Delete, ConsoleModifiers.None)] = reader.HandleDeleteCharAsync,
 
       // === Kill Operations ===
-      [(ConsoleKey.K, ConsoleModifiers.Control)] = reader.HandleKillLine,
-      [(ConsoleKey.Backspace, ConsoleModifiers.Control)] = reader.HandleBackwardKillWord,
-      [(ConsoleKey.U, ConsoleModifiers.Control)] = reader.HandleBackwardKillInput,
+      [(ConsoleKey.K, ConsoleModifiers.Control)] = reader.HandleKillLineAsync,
+      [(ConsoleKey.Backspace, ConsoleModifiers.Control)] = reader.HandleBackwardKillWordAsync,
+      [(ConsoleKey.U, ConsoleModifiers.Control)] = reader.HandleBackwardKillInputAsync,
 
       // === Yank Operations (Cut/Paste from kill ring) ===
-      [(ConsoleKey.Y, ConsoleModifiers.Control)] = reader.HandleYank,
-      [(ConsoleKey.Y, ConsoleModifiers.Alt)] = reader.HandleYankPop,
+      [(ConsoleKey.Y, ConsoleModifiers.Control)] = reader.HandleYankAsync,
+      [(ConsoleKey.Y, ConsoleModifiers.Alt)] = reader.HandleYankPopAsync,
 
       // === Yank Argument Operations (PSReadLine: YankLastArg, YankNthArg) ===
-      [(ConsoleKey.OemPeriod, ConsoleModifiers.Alt)] = reader.HandleYankLastArg,  // Alt+.
-      [(ConsoleKey.OemMinus, ConsoleModifiers.Alt | ConsoleModifiers.Shift)] = reader.HandleYankLastArg,  // Alt+_
-      [(ConsoleKey.Y, ConsoleModifiers.Alt | ConsoleModifiers.Control)] = reader.HandleYankNthArg,  // Alt+Ctrl+Y
+      [(ConsoleKey.OemPeriod, ConsoleModifiers.Alt)] = reader.HandleYankLastArgAsync,  // Alt+.
+      [(ConsoleKey.OemMinus, ConsoleModifiers.Alt | ConsoleModifiers.Shift)] = reader.HandleYankLastArgAsync,  // Alt+_
+      [(ConsoleKey.Y, ConsoleModifiers.Alt | ConsoleModifiers.Control)] = reader.HandleYankNthArgAsync,  // Alt+Ctrl+Y
 
       // === Digit Arguments for YankNthArg (Alt+0 through Alt+9) ===
       [(ConsoleKey.D0, ConsoleModifiers.Alt)] = () => { reader.HandleDigitArgument(0); return Task.CompletedTask; },
@@ -166,35 +166,35 @@ public sealed class VSCodeKeyBindingProfile : IKeyBindingProfile
       [(ConsoleKey.D9, ConsoleModifiers.Alt)] = () => { reader.HandleDigitArgument(9); return Task.CompletedTask; },
 
       // === Undo/Redo Operations (VSCode standard: Ctrl+Z, Ctrl+Shift+Z) ===
-      [(ConsoleKey.Z, ConsoleModifiers.Control)] = reader.HandleUndo,
-      [(ConsoleKey.Z, ConsoleModifiers.Control | ConsoleModifiers.Shift)] = reader.HandleRedo,
+      [(ConsoleKey.Z, ConsoleModifiers.Control)] = reader.HandleUndoAsync,
+      [(ConsoleKey.Z, ConsoleModifiers.Control | ConsoleModifiers.Shift)] = reader.HandleRedoAsync,
 
       // === Character Selection (Shift+Arrow) ===
-      [(ConsoleKey.LeftArrow, ConsoleModifiers.Shift)] = reader.HandleSelectBackwardChar,
-      [(ConsoleKey.RightArrow, ConsoleModifiers.Shift)] = reader.HandleSelectForwardChar,
+      [(ConsoleKey.LeftArrow, ConsoleModifiers.Shift)] = reader.HandleSelectBackwardCharAsync,
+      [(ConsoleKey.RightArrow, ConsoleModifiers.Shift)] = reader.HandleSelectForwardCharAsync,
 
       // === Word Selection (Ctrl+Shift+Arrow) ===
-      [(ConsoleKey.LeftArrow, ConsoleModifiers.Control | ConsoleModifiers.Shift)] = reader.HandleSelectBackwardWord,
-      [(ConsoleKey.RightArrow, ConsoleModifiers.Control | ConsoleModifiers.Shift)] = reader.HandleSelectNextWord,
+      [(ConsoleKey.LeftArrow, ConsoleModifiers.Control | ConsoleModifiers.Shift)] = reader.HandleSelectBackwardWordAsync,
+      [(ConsoleKey.RightArrow, ConsoleModifiers.Control | ConsoleModifiers.Shift)] = reader.HandleSelectNextWordAsync,
 
       // === Line Selection (Shift+Home/End) ===
-      [(ConsoleKey.Home, ConsoleModifiers.Shift)] = reader.HandleSelectBackwardsLine,
-      [(ConsoleKey.End, ConsoleModifiers.Shift)] = reader.HandleSelectLine,
-      [(ConsoleKey.A, ConsoleModifiers.Control)] = reader.HandleSelectAll,  // VSCode uses Ctrl+A for Select All
+      [(ConsoleKey.Home, ConsoleModifiers.Shift)] = reader.HandleSelectBackwardsLineAsync,
+      [(ConsoleKey.End, ConsoleModifiers.Shift)] = reader.HandleSelectLineAsync,
+      [(ConsoleKey.A, ConsoleModifiers.Control)] = reader.HandleSelectAllAsync,  // VSCode uses Ctrl+A for Select All
 
       // === Clipboard Operations (VSCode standard: Ctrl+C, Ctrl+X, Ctrl+V) ===
-      [(ConsoleKey.C, ConsoleModifiers.Control)] = reader.HandleCopyOrCancelLine,
-      [(ConsoleKey.X, ConsoleModifiers.Control)] = reader.HandleCut,
-      [(ConsoleKey.V, ConsoleModifiers.Control)] = reader.HandlePaste,
+      [(ConsoleKey.C, ConsoleModifiers.Control)] = reader.HandleCopyOrCancelLineAsync,
+      [(ConsoleKey.X, ConsoleModifiers.Control)] = reader.HandleCutAsync,
+      [(ConsoleKey.V, ConsoleModifiers.Control)] = reader.HandlePasteAsync,
 
       // === Screen Operations ===
-      [(ConsoleKey.L, ConsoleModifiers.Control)] = reader.HandleClearScreen,
+      [(ConsoleKey.L, ConsoleModifiers.Control)] = reader.HandleClearScreenAsync,
 
       // === Insert Mode Toggle ===
-      [(ConsoleKey.Insert, ConsoleModifiers.None)] = reader.HandleToggleInsertMode,
+      [(ConsoleKey.Insert, ConsoleModifiers.None)] = reader.HandleToggleInsertModeAsync,
 
       // === Special Keys ===
-      [(ConsoleKey.Escape, ConsoleModifiers.None)] = reader.HandleEscape,
+      [(ConsoleKey.Escape, ConsoleModifiers.None)] = reader.HandleEscapeAsync,
     };
   }
 

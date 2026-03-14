@@ -6,11 +6,11 @@ Add TimeWarp.Amuru as a dependency to timewarp-nuru and migrate the clipboard co
 
 ## Checklist
 
-- [ ] Add TimeWarp.Amuru package reference to timewarp-nuru.csproj
-- [ ] Update Directory.Packages.props with Amuru version
-- [ ] Migrate repl-console-reader.clipboard.cs to use Shell.Builder
-- [ ] Remove direct System.Diagnostics.Process usage
-- [ ] Run tests to verify clipboard functionality
+- [x] Add TimeWarp.Amuru package reference to timewarp-nuru.csproj
+- [x] Update Directory.Packages.props with Amuru version
+- [x] Migrate repl-console-reader.clipboard.cs to use Shell.Builder
+- [x] Remove direct System.Diagnostics.Process usage
+- [x] Run tests to verify clipboard functionality
 
 ## Notes
 
@@ -190,3 +190,32 @@ dotnet run tests/ci-tests/run-ci-tests.cs
 | Breaking existing key binding profiles | All profiles are internal, update together |
 | Async handler overhead | Most handlers return `Task.CompletedTask` (no allocation) |
 | Test failures | Run full CI test suite after changes |
+
+---
+
+## Results
+
+### What Was Implemented
+- Added TimeWarp.Amuru package dependency to timewarp-nuru
+- Migrated clipboard code from `System.Diagnostics.Process` to Amuru's `Shell.Builder` API
+- Refactored key binding system from `Action` to `Func<Task>` for async support
+- Renamed 50+ handler methods with `Async` suffix per C# conventions
+
+### Files Changed
+- `source/timewarp-nuru/timewarp-nuru.csproj` - Added TimeWarp.Amuru package reference
+- `source/timewarp-nuru/global-usings.cs` - Added `global using TimeWarp.Amuru;`
+- `source/timewarp-nuru/repl/input/repl-console-reader.clipboard.cs` - Migrated to Shell.Builder
+- `source/timewarp-nuru/repl/input/repl-console-reader.cs` - Updated to async handlers
+- `source/timewarp-nuru/repl/input/repl-console-reader.*.cs` (11 files) - Renamed handlers with Async suffix
+- `source/timewarp-nuru/repl/key-bindings/*.cs` (5 files) - Updated to Func<Task>
+- `tests/timewarp-nuru-tests/repl/repl-24-custom-key-bindings.cs` - Updated test
+
+### Key Decisions
+- Used Amuru's `Shell.Builder` with `CaptureAsync()` for clipboard reads
+- Used `WithStandardInput()` for clipboard writes (pbcopy, xclip)
+- Added `WithNoValidation()` to handle missing clipboard tools gracefully
+- All handlers return `Task` (most return `Task.CompletedTask` for sync operations)
+
+### Test Outcomes
+- CI tests: 1093 passed, 7 skipped, 0 failed
+- Build: 0 warnings, 0 errors

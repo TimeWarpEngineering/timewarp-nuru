@@ -192,7 +192,8 @@ internal sealed class CiCommand : ICommand<Unit>
       [
         "source/timewarp-nuru-analyzers/timewarp-nuru-analyzers.csproj",
         "source/timewarp-nuru-mcp/timewarp-nuru-mcp.csproj",
-        "source/timewarp-nuru/timewarp-nuru.csproj"
+        "source/timewarp-nuru/timewarp-nuru.csproj",
+        "source/timewarp-nuru-search/timewarp-nuru-search.csproj"
       ];
 
       foreach (string projectPath in projectsToPack)
@@ -233,7 +234,8 @@ internal sealed class CiCommand : ICommand<Unit>
       [
         "TimeWarp.Nuru.Analyzers",
         "TimeWarp.Nuru.Mcp",
-        "TimeWarp.Nuru"
+        "TimeWarp.Nuru",
+        "TimeWarp.Nuru.Search"
       ];
 
       foreach (string package in packages)

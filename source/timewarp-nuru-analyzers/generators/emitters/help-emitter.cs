@@ -156,7 +156,7 @@ internal static class HelpEmitter
     sb.AppendLine("      .AddRow(\"--version\", \"Show version information\")");
     sb.AppendLine("      .AddRow(\"--capabilities\", \"Show capabilities for AI tools\")");
     sb.AppendLine("      .AddRow(\"--capabilities --group-filter <group>\", \"Filter capabilities by group prefix\")");
-    sb.AppendLine("      .AddRow(\"--capabilities --search <query>\", \"Search capabilities using nuru-search\")");
+    sb.AppendLine("      .AddRow(\"--capabilities --search <query>\", \"Search capabilities using nuru\")");
     sb.AppendLine("      .HideHeaders()         // ← Remove headers");
     sb.AppendLine("    );");
   }

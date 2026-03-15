@@ -22,19 +22,24 @@ internal static class BuiltInFlags
   public static readonly string[] CapabilitiesForms = ["--capabilities"];
 
   /// <summary>
+  /// Search flag forms: --search, -s
+  /// </summary>
+  public static readonly string[] SearchForms = ["--search", "-s"];
+
+  /// <summary>
   /// All built-in flag forms combined.
   /// </summary>
-  public static readonly string[] All = ["--help", "-h", "--version", "--capabilities"];
+  public static readonly string[] All = ["--help", "-h", "--version", "--capabilities", "--search", "-s"];
 
   /// <summary>
   /// Pattern match expression for checking if a single-element array is a built-in flag.
   /// Used in generated code: if (routeArgs is [PatternMatchExpression])
   /// </summary>
-  public const string PatternMatchExpression = "[\"--help\" or \"-h\"] or [\"--version\"] or [\"--capabilities\"]";
+  public const string PatternMatchExpression = "[\"--help\" or \"-h\"] or [\"--version\"] or [\"--capabilities\"] or [\"--search\"] or [\"-s\"]";
 
   /// <summary>
   /// Pattern match expression for checking if route OriginalPattern is a built-in flag route.
   /// Used in source generator analysis: route.OriginalPattern is IsBuiltInFlagRoutePattern
   /// </summary>
-  public const string IsBuiltInFlagRoutePattern = "\"--help\" or \"-h\" or \"--version\" or \"--capabilities\"";
+  public const string IsBuiltInFlagRoutePattern = "\"--help\" or \"-h\" or \"--version\" or \"--capabilities\" or \"--search\" or \"-s\"";
 }

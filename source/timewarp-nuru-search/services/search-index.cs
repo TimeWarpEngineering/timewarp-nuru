@@ -219,6 +219,7 @@ public sealed partial class SearchIndex : IAsyncDisposable
   public async Task<IReadOnlyList<SearchResult>> SearchAsync(
     string query,
     string? cliName = null,
+    string? groupPath = null,
     int limit = 50,
     CancellationToken cancellationToken = default)
   {
@@ -234,29 +235,30 @@ public sealed partial class SearchIndex : IAsyncDisposable
 
     await using SqliteCommand cmd = connection.CreateCommand();
 
-    if (string.IsNullOrEmpty(cliName))
+    StringBuilder sqlBuilder = new();
+    sqlBuilder.AppendLine("""
+      SELECT e.cli_name, e.pattern, e.description, e.group_path, e.endpoint_json, endpoints_fts.rank
+      FROM endpoints_fts
+      JOIN endpoints e ON endpoints_fts.rowid = e.id
+      WHERE endpoints_fts MATCH $query
+      """);
+
+    if (!string.IsNullOrEmpty(cliName))
     {
-      cmd.CommandText = """
-        SELECT e.cli_name, e.pattern, e.description, e.group_path, e.endpoint_json, endpoints_fts.rank
-        FROM endpoints_fts
-        JOIN endpoints e ON endpoints_fts.rowid = e.id
-        WHERE endpoints_fts MATCH $query
-        ORDER BY endpoints_fts.rank
-        LIMIT $limit
-        """;
-    }
-    else
-    {
-      cmd.CommandText = """
-        SELECT e.cli_name, e.pattern, e.description, e.group_path, e.endpoint_json, endpoints_fts.rank
-        FROM endpoints_fts
-        JOIN endpoints e ON endpoints_fts.rowid = e.id
-        WHERE endpoints_fts MATCH $query AND e.cli_name = $cliName
-        ORDER BY endpoints_fts.rank
-        LIMIT $limit
-        """;
+      sqlBuilder.AppendLine("  AND e.cli_name = $cliName");
       cmd.Parameters.AddWithValue("$cliName", cliName);
     }
+
+    if (!string.IsNullOrEmpty(groupPath))
+    {
+      sqlBuilder.AppendLine("  AND e.group_path LIKE $groupPath || '%'");
+      cmd.Parameters.AddWithValue("$groupPath", groupPath);
+    }
+
+    sqlBuilder.AppendLine("  ORDER BY endpoints_fts.rank");
+    sqlBuilder.AppendLine("  LIMIT $limit");
+
+    cmd.CommandText = sqlBuilder.ToString();
 
     cmd.Parameters.AddWithValue("$query", sanitizedQuery);
     cmd.Parameters.AddWithValue("$limit", limit);

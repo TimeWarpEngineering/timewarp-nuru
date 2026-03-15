@@ -12,6 +12,9 @@ public sealed class SearchQuery : SearchGroup, IQuery<SearchResult[]>
   [Option("--query", Description = "Search query (positional or named)")]
   public string? Query { get; set; }
 
+  [Option("--group", Description = "Filter results by group path prefix")]
+  public string? Group { get; set; }
+
   [Parameter(Order = 0, Description = "Search query terms", IsCatchAll = true)]
   public string[]? Terms { get; set; }
 
@@ -37,6 +40,7 @@ public sealed class SearchQuery : SearchGroup, IQuery<SearchResult[]>
       IReadOnlyList<SearchResult> results = await searchIndex.SearchAsync(
         searchQuery,
         query.Cli,
+        query.Group,
         query.Limit,
         cancellationToken).ConfigureAwait(false);
 

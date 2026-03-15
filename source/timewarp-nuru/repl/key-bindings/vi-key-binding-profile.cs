@@ -93,100 +93,100 @@ public sealed class ViKeyBindingProfile : IKeyBindingProfile
   public string Name => "Vi";
 
   /// <inheritdoc/>
-  public Dictionary<(ConsoleKey Key, ConsoleModifiers Modifiers), Action> GetBindings(ReplConsoleReader reader)
+  public Dictionary<(ConsoleKey Key, ConsoleModifiers Modifiers), Func<Task>> GetBindings(ReplConsoleReader reader)
   {
     ArgumentNullException.ThrowIfNull(reader);
 
-    return new Dictionary<(ConsoleKey Key, ConsoleModifiers Modifiers), Action>
+    return new Dictionary<(ConsoleKey Key, ConsoleModifiers Modifiers), Func<Task>>
     {
       // === Enter/Submit ===
-      [(ConsoleKey.Enter, ConsoleModifiers.None)] = reader.HandleEnter,
+      [(ConsoleKey.Enter, ConsoleModifiers.None)] = reader.HandleEnterAsync,
 
       // === Tab Completion ===
-      [(ConsoleKey.Tab, ConsoleModifiers.None)] = () => reader.HandleTabCompletion(reverse: false),
-      [(ConsoleKey.Tab, ConsoleModifiers.Shift)] = () => reader.HandleTabCompletion(reverse: true),
+      [(ConsoleKey.Tab, ConsoleModifiers.None)] = () => reader.HandleTabCompletionAsync(reverse: false),
+      [(ConsoleKey.Tab, ConsoleModifiers.Shift)] = () => reader.HandleTabCompletionAsync(reverse: true),
 
       // === Character Movement ===
-      [(ConsoleKey.B, ConsoleModifiers.Control)] = reader.HandleBackwardChar,
-      [(ConsoleKey.F, ConsoleModifiers.Control)] = reader.HandleForwardChar,
-      [(ConsoleKey.LeftArrow, ConsoleModifiers.None)] = reader.HandleBackwardChar,
-      [(ConsoleKey.RightArrow, ConsoleModifiers.None)] = reader.HandleForwardChar,
+      [(ConsoleKey.B, ConsoleModifiers.Control)] = reader.HandleBackwardCharAsync,
+      [(ConsoleKey.F, ConsoleModifiers.Control)] = reader.HandleForwardCharAsync,
+      [(ConsoleKey.LeftArrow, ConsoleModifiers.None)] = reader.HandleBackwardCharAsync,
+      [(ConsoleKey.RightArrow, ConsoleModifiers.None)] = reader.HandleForwardCharAsync,
 
       // === Word Movement ===
-      [(ConsoleKey.LeftArrow, ConsoleModifiers.Control)] = reader.HandleBackwardWord,
-      [(ConsoleKey.RightArrow, ConsoleModifiers.Control)] = reader.HandleForwardWord,
+      [(ConsoleKey.LeftArrow, ConsoleModifiers.Control)] = reader.HandleBackwardWordAsync,
+      [(ConsoleKey.RightArrow, ConsoleModifiers.Control)] = reader.HandleForwardWordAsync,
 
       // === Line Position ===
-      [(ConsoleKey.A, ConsoleModifiers.Control)] = reader.HandleBeginningOfLine,
-      [(ConsoleKey.E, ConsoleModifiers.Control)] = reader.HandleEndOfLine,
-      [(ConsoleKey.Home, ConsoleModifiers.None)] = reader.HandleBeginningOfLine,
-      [(ConsoleKey.End, ConsoleModifiers.None)] = reader.HandleEndOfLine,
+      [(ConsoleKey.A, ConsoleModifiers.Control)] = reader.HandleBeginningOfLineAsync,
+      [(ConsoleKey.E, ConsoleModifiers.Control)] = reader.HandleEndOfLineAsync,
+      [(ConsoleKey.Home, ConsoleModifiers.None)] = reader.HandleBeginningOfLineAsync,
+      [(ConsoleKey.End, ConsoleModifiers.None)] = reader.HandleEndOfLineAsync,
 
       // === History Navigation ===
-      [(ConsoleKey.P, ConsoleModifiers.Control)] = reader.HandlePreviousHistory,
-      [(ConsoleKey.N, ConsoleModifiers.Control)] = reader.HandleNextHistory,
-      [(ConsoleKey.UpArrow, ConsoleModifiers.None)] = reader.HandlePreviousHistory,
-      [(ConsoleKey.DownArrow, ConsoleModifiers.None)] = reader.HandleNextHistory,
+      [(ConsoleKey.P, ConsoleModifiers.Control)] = reader.HandlePreviousHistoryAsync,
+      [(ConsoleKey.N, ConsoleModifiers.Control)] = reader.HandleNextHistoryAsync,
+      [(ConsoleKey.UpArrow, ConsoleModifiers.None)] = reader.HandlePreviousHistoryAsync,
+      [(ConsoleKey.DownArrow, ConsoleModifiers.None)] = reader.HandleNextHistoryAsync,
 
       // === Interactive History Search ===
-      [(ConsoleKey.R, ConsoleModifiers.Control)] = reader.HandleReverseSearchHistory,
-      [(ConsoleKey.S, ConsoleModifiers.Control)] = reader.HandleForwardSearchHistory,
+      [(ConsoleKey.R, ConsoleModifiers.Control)] = reader.HandleReverseSearchHistoryAsync,
+      [(ConsoleKey.S, ConsoleModifiers.Control)] = reader.HandleForwardSearchHistoryAsync,
 
       // === Deletion ===
-      [(ConsoleKey.Backspace, ConsoleModifiers.None)] = reader.HandleBackwardDeleteChar,
-      [(ConsoleKey.Delete, ConsoleModifiers.None)] = reader.HandleDeleteChar,
-      [(ConsoleKey.D, ConsoleModifiers.Control)] = reader.HandleDeleteCharOrExit,  // Delete char or EOF if empty
+      [(ConsoleKey.Backspace, ConsoleModifiers.None)] = reader.HandleBackwardDeleteCharAsync,
+      [(ConsoleKey.Delete, ConsoleModifiers.None)] = reader.HandleDeleteCharAsync,
+      [(ConsoleKey.D, ConsoleModifiers.Control)] = reader.HandleDeleteCharOrExitAsync,  // Delete char or EOF if empty
 
       // === Vi-style Kill Operations ===
-      [(ConsoleKey.W, ConsoleModifiers.Control)] = reader.HandleUnixWordRubout,
-      [(ConsoleKey.U, ConsoleModifiers.Control)] = reader.HandleBackwardKillInput,
-      [(ConsoleKey.K, ConsoleModifiers.Control)] = reader.HandleKillLine,
-      [(ConsoleKey.D, ConsoleModifiers.Alt)] = reader.HandleKillWord,
-      [(ConsoleKey.Backspace, ConsoleModifiers.Alt)] = reader.HandleBackwardKillWord,
+      [(ConsoleKey.W, ConsoleModifiers.Control)] = reader.HandleUnixWordRuboutAsync,
+      [(ConsoleKey.U, ConsoleModifiers.Control)] = reader.HandleBackwardKillInputAsync,
+      [(ConsoleKey.K, ConsoleModifiers.Control)] = reader.HandleKillLineAsync,
+      [(ConsoleKey.D, ConsoleModifiers.Alt)] = reader.HandleKillWordAsync,
+      [(ConsoleKey.Backspace, ConsoleModifiers.Alt)] = reader.HandleBackwardKillWordAsync,
 
       // === Yank Operations ===
-      [(ConsoleKey.Y, ConsoleModifiers.Control)] = reader.HandleYank,
-      [(ConsoleKey.Y, ConsoleModifiers.Alt)] = reader.HandleYankPop,
+      [(ConsoleKey.Y, ConsoleModifiers.Control)] = reader.HandleYankAsync,
+      [(ConsoleKey.Y, ConsoleModifiers.Alt)] = reader.HandleYankPopAsync,
 
       // === Yank Argument Operations (PSReadLine: YankLastArg, YankNthArg) ===
-      [(ConsoleKey.OemPeriod, ConsoleModifiers.Alt)] = reader.HandleYankLastArg,  // Alt+.
-      [(ConsoleKey.OemMinus, ConsoleModifiers.Alt | ConsoleModifiers.Shift)] = reader.HandleYankLastArg,  // Alt+_
-      [(ConsoleKey.Y, ConsoleModifiers.Alt | ConsoleModifiers.Control)] = reader.HandleYankNthArg,  // Alt+Ctrl+Y
+      [(ConsoleKey.OemPeriod, ConsoleModifiers.Alt)] = reader.HandleYankLastArgAsync,  // Alt+.
+      [(ConsoleKey.OemMinus, ConsoleModifiers.Alt | ConsoleModifiers.Shift)] = reader.HandleYankLastArgAsync,  // Alt+_
+      [(ConsoleKey.Y, ConsoleModifiers.Alt | ConsoleModifiers.Control)] = reader.HandleYankNthArgAsync,  // Alt+Ctrl+Y
 
       // === Digit Arguments for YankNthArg (Alt+0 through Alt+9) ===
-      [(ConsoleKey.D0, ConsoleModifiers.Alt)] = () => reader.HandleDigitArgument(0),
-      [(ConsoleKey.D1, ConsoleModifiers.Alt)] = () => reader.HandleDigitArgument(1),
-      [(ConsoleKey.D2, ConsoleModifiers.Alt)] = () => reader.HandleDigitArgument(2),
-      [(ConsoleKey.D3, ConsoleModifiers.Alt)] = () => reader.HandleDigitArgument(3),
-      [(ConsoleKey.D4, ConsoleModifiers.Alt)] = () => reader.HandleDigitArgument(4),
-      [(ConsoleKey.D5, ConsoleModifiers.Alt)] = () => reader.HandleDigitArgument(5),
-      [(ConsoleKey.D6, ConsoleModifiers.Alt)] = () => reader.HandleDigitArgument(6),
-      [(ConsoleKey.D7, ConsoleModifiers.Alt)] = () => reader.HandleDigitArgument(7),
-      [(ConsoleKey.D8, ConsoleModifiers.Alt)] = () => reader.HandleDigitArgument(8),
-      [(ConsoleKey.D9, ConsoleModifiers.Alt)] = () => reader.HandleDigitArgument(9),
+      [(ConsoleKey.D0, ConsoleModifiers.Alt)] = () => { reader.HandleDigitArgument(0); return Task.CompletedTask; },
+      [(ConsoleKey.D1, ConsoleModifiers.Alt)] = () => { reader.HandleDigitArgument(1); return Task.CompletedTask; },
+      [(ConsoleKey.D2, ConsoleModifiers.Alt)] = () => { reader.HandleDigitArgument(2); return Task.CompletedTask; },
+      [(ConsoleKey.D3, ConsoleModifiers.Alt)] = () => { reader.HandleDigitArgument(3); return Task.CompletedTask; },
+      [(ConsoleKey.D4, ConsoleModifiers.Alt)] = () => { reader.HandleDigitArgument(4); return Task.CompletedTask; },
+      [(ConsoleKey.D5, ConsoleModifiers.Alt)] = () => { reader.HandleDigitArgument(5); return Task.CompletedTask; },
+      [(ConsoleKey.D6, ConsoleModifiers.Alt)] = () => { reader.HandleDigitArgument(6); return Task.CompletedTask; },
+      [(ConsoleKey.D7, ConsoleModifiers.Alt)] = () => { reader.HandleDigitArgument(7); return Task.CompletedTask; },
+      [(ConsoleKey.D8, ConsoleModifiers.Alt)] = () => { reader.HandleDigitArgument(8); return Task.CompletedTask; },
+      [(ConsoleKey.D9, ConsoleModifiers.Alt)] = () => { reader.HandleDigitArgument(9); return Task.CompletedTask; },
 
       // === Undo/Redo Operations ===
-      [(ConsoleKey.Z, ConsoleModifiers.Control)] = reader.HandleUndo,
-      [(ConsoleKey.Z, ConsoleModifiers.Control | ConsoleModifiers.Shift)] = reader.HandleRedo,
+      [(ConsoleKey.Z, ConsoleModifiers.Control)] = reader.HandleUndoAsync,
+      [(ConsoleKey.Z, ConsoleModifiers.Control | ConsoleModifiers.Shift)] = reader.HandleRedoAsync,
 
       // === Selection (Shift+Arrow) ===
-      [(ConsoleKey.LeftArrow, ConsoleModifiers.Shift)] = reader.HandleSelectBackwardChar,
-      [(ConsoleKey.RightArrow, ConsoleModifiers.Shift)] = reader.HandleSelectForwardChar,
-      [(ConsoleKey.LeftArrow, ConsoleModifiers.Control | ConsoleModifiers.Shift)] = reader.HandleSelectBackwardWord,
-      [(ConsoleKey.RightArrow, ConsoleModifiers.Control | ConsoleModifiers.Shift)] = reader.HandleSelectNextWord,
-      [(ConsoleKey.Home, ConsoleModifiers.Shift)] = reader.HandleSelectBackwardsLine,
-      [(ConsoleKey.End, ConsoleModifiers.Shift)] = reader.HandleSelectLine,
+      [(ConsoleKey.LeftArrow, ConsoleModifiers.Shift)] = reader.HandleSelectBackwardCharAsync,
+      [(ConsoleKey.RightArrow, ConsoleModifiers.Shift)] = reader.HandleSelectForwardCharAsync,
+      [(ConsoleKey.LeftArrow, ConsoleModifiers.Control | ConsoleModifiers.Shift)] = reader.HandleSelectBackwardWordAsync,
+      [(ConsoleKey.RightArrow, ConsoleModifiers.Control | ConsoleModifiers.Shift)] = reader.HandleSelectNextWordAsync,
+      [(ConsoleKey.Home, ConsoleModifiers.Shift)] = reader.HandleSelectBackwardsLineAsync,
+      [(ConsoleKey.End, ConsoleModifiers.Shift)] = reader.HandleSelectLineAsync,
 
       // === Clipboard Operations ===
-      [(ConsoleKey.C, ConsoleModifiers.Control)] = reader.HandleCopyOrCancelLine,
-      [(ConsoleKey.X, ConsoleModifiers.Control)] = reader.HandleCut,
-      [(ConsoleKey.V, ConsoleModifiers.Control)] = reader.HandlePaste,
+      [(ConsoleKey.C, ConsoleModifiers.Control)] = reader.HandleCopyOrCancelLineAsync,
+      [(ConsoleKey.X, ConsoleModifiers.Control)] = reader.HandleCutAsync,
+      [(ConsoleKey.V, ConsoleModifiers.Control)] = reader.HandlePasteAsync,
 
       // === Screen Operations ===
-      [(ConsoleKey.L, ConsoleModifiers.Control)] = reader.HandleClearScreen,
+      [(ConsoleKey.L, ConsoleModifiers.Control)] = reader.HandleClearScreenAsync,
 
       // === Clear/Escape ===
-      [(ConsoleKey.Escape, ConsoleModifiers.None)] = reader.HandleEscape,
+      [(ConsoleKey.Escape, ConsoleModifiers.None)] = reader.HandleEscapeAsync,
       // Note: Ctrl+[ is Escape in ASCII, but ConsoleKey doesn't distinguish this easily
     };
   }

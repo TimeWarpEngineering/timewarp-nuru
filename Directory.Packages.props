@@ -70,6 +70,9 @@
   <ItemGroup Label="MCP Server">
     <PackageVersion Include="ModelContextProtocol" Version="0.8.0-preview.1" />
   </ItemGroup>
+  <ItemGroup Label="SQLite">
+    <PackageVersion Include="Microsoft.Data.Sqlite" Version="10.0.5" />
+  </ItemGroup>
   <ItemGroup Label="Code Analyzers">
     <PackageVersion Include="GlobalUsingsAnalyzer" Version="1.4.0">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

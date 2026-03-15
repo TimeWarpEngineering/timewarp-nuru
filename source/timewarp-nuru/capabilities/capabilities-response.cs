@@ -9,7 +9,16 @@ public sealed class CapabilitiesResponse
   public required string Name { get; init; }
   public required string Version { get; init; }
   public string? Description { get; init; }
+  public CapabilitiesFilter? Filter { get; init; }
   public required IReadOnlyList<EndpointCapability> Endpoints { get; init; }
+}
+
+/// <summary>
+/// Filter metadata indicating which endpoints were included in the response.
+/// </summary>
+public sealed class CapabilitiesFilter
+{
+  public string? Group { get; init; }
 }
 
 /// <summary>

@@ -26,6 +26,7 @@ global using System.Text.Json;
 global using System.Text.Json.Serialization;
 global using System.Text.RegularExpressions;
 // TimeWarp namespaces
+global using TimeWarp.Amuru;
 global using TimeWarp.Builder;
 global using TimeWarp.Nuru;
 global using TimeWarp.Terminal;

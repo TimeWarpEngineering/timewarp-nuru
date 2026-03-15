@@ -23,14 +23,14 @@ public interface IKeyBindingProfile
   /// </summary>
   /// <param name="reader">The ReplConsoleReader instance for accessing handler methods.</param>
   /// <returns>
-  /// Dictionary mapping key combinations (ConsoleKey + ConsoleModifiers) to actions
+  /// Dictionary mapping key combinations (ConsoleKey + ConsoleModifiers) to async actions
   /// that will be invoked when the key combination is pressed.
   /// </returns>
   /// <remarks>
   /// The reader parameter allows profiles to invoke the reader's handler methods
   /// (e.g., HandleBackwardChar, HandleForwardChar) which implement the actual editing operations.
   /// </remarks>
-  Dictionary<(ConsoleKey Key, ConsoleModifiers Modifiers), Action> GetBindings(ReplConsoleReader reader);
+  Dictionary<(ConsoleKey Key, ConsoleModifiers Modifiers), Func<Task>> GetBindings(ReplConsoleReader reader);
 
   /// <summary>
   /// Gets the keys that should exit the read loop (typically Enter and Ctrl+D).

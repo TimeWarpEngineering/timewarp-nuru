@@ -22,13 +22,73 @@ internal static class CapabilitiesEmitter
   /// <param name="compilation">Optional Roslyn compilation for enum value extraction.</param>
   public static void Emit(StringBuilder sb, AppModel model, string methodSuffix = "", Compilation? compilation = null)
   {
-    sb.AppendLine($"  private static void PrintCapabilities{methodSuffix}(ITerminal terminal)");
+    sb.AppendLine($"  private static void PrintCapabilities{methodSuffix}(ITerminal terminal, string? groupFilter = null)");
     sb.AppendLine("  {");
 
     EmitResponseConstruction(sb, model, compilation);
 
     sb.AppendLine("    string json = global::System.Text.Json.JsonSerializer.Serialize(response, global::TimeWarp.Nuru.CapabilitiesJsonSerializerContext.Default.CapabilitiesResponse);");
     sb.AppendLine("    terminal.WriteLine(json);");
+    sb.AppendLine("  }");
+
+    EmitSearchCapabilities(sb, model, methodSuffix);
+  }
+
+  /// <summary>
+  /// Emits the SearchCapabilitiesAsync method for calling nuru-search subprocess.
+  /// </summary>
+  /// <param name="sb">The StringBuilder to append to.</param>
+  /// <param name="model">The application model containing name and version.</param>
+  /// <param name="methodSuffix">Suffix for method name (e.g., "_0" for multi-app assemblies).</param>
+  private static void EmitSearchCapabilities(StringBuilder sb, AppModel model, string methodSuffix)
+  {
+    string name = EscapeCSharpString(model.Name ?? "app");
+
+    sb.AppendLine();
+    sb.AppendLine($"  private static async global::System.Threading.Tasks.Task<int> SearchCapabilitiesAsync{methodSuffix}(ITerminal terminal, string query, string? groupFilter = null)");
+    sb.AppendLine("  {");
+    sb.AppendLine("    // Build nuru-search arguments");
+    sb.AppendLine("    global::System.Collections.Generic.List<string> args = new()");
+    sb.AppendLine("    {");
+    sb.AppendLine("      \"search\",");
+    sb.AppendLine($"      \"--cli\", \"{name}\",");
+    sb.AppendLine("    };");
+    sb.AppendLine();
+    sb.AppendLine("    if (groupFilter is not null)");
+    sb.AppendLine("    {");
+    sb.AppendLine("      args.Add(\"--group\");");
+    sb.AppendLine("      args.Add(groupFilter);");
+    sb.AppendLine("    }");
+    sb.AppendLine();
+    sb.AppendLine("    args.Add(\"--query\");");
+    sb.AppendLine("    args.Add(query);");
+    sb.AppendLine();
+    sb.AppendLine("    // Execute nuru-search via Amuru (wrap in try-catch for missing tool)");
+    sb.AppendLine("    global::TimeWarp.Amuru.CommandOutput output;");
+    sb.AppendLine("    try");
+    sb.AppendLine("    {");
+    sb.AppendLine("      output = await global::TimeWarp.Amuru.Shell.Builder(\"nuru-search\")");
+    sb.AppendLine("        .WithArguments([.. args])");
+    sb.AppendLine("        .WithNoValidation()");
+    sb.AppendLine("        .CaptureAsync().ConfigureAwait(false);");
+    sb.AppendLine("    }");
+    sb.AppendLine("    catch (global::System.ComponentModel.Win32Exception)");
+    sb.AppendLine("    {");
+    sb.AppendLine("      // nuru-search not found - show install instructions");
+    sb.AppendLine("      await terminal.WriteErrorLineAsync(\"Search requires timewarp-nuru-search to be installed.\").ConfigureAwait(false);");
+    sb.AppendLine("      await terminal.WriteErrorLineAsync(\"Install with: dotnet tool install --global TimeWarp.Nuru.Search\").ConfigureAwait(false);");
+    sb.AppendLine("      return 1;");
+    sb.AppendLine("    }");
+    sb.AppendLine();
+    sb.AppendLine("    if (!output.Success)");
+    sb.AppendLine("    {");
+    sb.AppendLine("      await terminal.WriteErrorLineAsync(\"Search requires timewarp-nuru-search to be installed.\").ConfigureAwait(false);");
+    sb.AppendLine("      await terminal.WriteErrorLineAsync(\"Install with: dotnet tool install --global TimeWarp.Nuru.Search\").ConfigureAwait(false);");
+    sb.AppendLine("      return 1;");
+    sb.AppendLine("    }");
+    sb.AppendLine();
+    sb.AppendLine("    await terminal.WriteLineAsync(output.Stdout).ConfigureAwait(false);");
+    sb.AppendLine("    return 0;");
     sb.AppendLine("  }");
   }
 
@@ -39,6 +99,30 @@ internal static class CapabilitiesEmitter
   {
     string name = EscapeCSharpString(model.Name ?? "app");
     string version = EscapeCSharpString(model.Version ?? "0.0.0");
+
+    sb.AppendLine("    global::System.Collections.Generic.List<global::TimeWarp.Nuru.EndpointCapability> __endpoints = new();");
+    sb.AppendLine();
+
+    ImmutableArray<RouteDefinition> routes = model.Routes;
+    for (int i = 0; i < routes.Length; i++)
+    {
+      RouteDefinition route = routes[i];
+      EmitEndpointCapabilityAdd(sb, route, compilation);
+    }
+
+    sb.AppendLine();
+    sb.AppendLine("    // Filter endpoints by group prefix if groupFilter is provided");
+    sb.AppendLine("    global::System.Collections.Generic.IReadOnlyList<global::TimeWarp.Nuru.EndpointCapability> __filteredEndpoints = __endpoints;");
+    sb.AppendLine("    if (groupFilter is not null)");
+    sb.AppendLine("    {");
+    sb.AppendLine("      string[] __groupParts = groupFilter.Split('.');");
+    sb.AppendLine("      __filteredEndpoints = __endpoints");
+    sb.AppendLine("        .Where(e => e.GroupPath.Count >= __groupParts.Length &&");
+    sb.AppendLine("          global::System.Linq.Enumerable.Zip(__groupParts, e.GroupPath)");
+    sb.AppendLine("            .All(p => string.Equals(p.First, p.Second, global::System.StringComparison.OrdinalIgnoreCase)))");
+    sb.AppendLine("        .ToList();");
+    sb.AppendLine("    }");
+    sb.AppendLine();
 
     sb.AppendLine("    global::TimeWarp.Nuru.CapabilitiesResponse response = new()");
     sb.AppendLine("    {");
@@ -51,25 +135,15 @@ internal static class CapabilitiesEmitter
       sb.AppendLine($"      Description = \"{description}\",");
     }
 
-    sb.AppendLine("      Endpoints =");
-    sb.AppendLine("      [");
-
-    ImmutableArray<RouteDefinition> routes = model.Routes;
-    for (int i = 0; i < routes.Length; i++)
-    {
-      RouteDefinition route = routes[i];
-      bool isLast = i == routes.Length - 1;
-      EmitEndpointCapability(sb, route, isLast, compilation);
-    }
-
-    sb.AppendLine("      ]");
+    sb.AppendLine("      Filter = groupFilter is null ? null : new global::TimeWarp.Nuru.CapabilitiesFilter { Group = groupFilter },");
+    sb.AppendLine("      Endpoints = __filteredEndpoints");
     sb.AppendLine("    };");
   }
 
   /// <summary>
-  /// Emits a single EndpointCapability initializer.
+  /// Emits code to add a single EndpointCapability to the endpoints list.
   /// </summary>
-  private static void EmitEndpointCapability(StringBuilder sb, RouteDefinition route, bool isLast, Compilation? compilation)
+  private static void EmitEndpointCapabilityAdd(StringBuilder sb, RouteDefinition route, Compilation? compilation)
   {
     string pattern = EscapeCSharpString(route.FullPattern);
     string[] groupPathParts = string.IsNullOrEmpty(route.GroupPrefix)
@@ -77,12 +151,13 @@ internal static class CapabilitiesEmitter
       : route.GroupPrefix.Split(' ', StringSplitOptions.RemoveEmptyEntries);
     string kindValue = MapMessageTypeToKind(route.MessageType);
 
-    sb.AppendLine("        new global::TimeWarp.Nuru.EndpointCapability");
-    sb.AppendLine("        {");
-    sb.AppendLine($"          Pattern = \"{pattern}\",");
+    sb.AppendLine("    __endpoints.Add(");
+    sb.AppendLine("      new global::TimeWarp.Nuru.EndpointCapability");
+    sb.AppendLine("      {");
+    sb.AppendLine($"        Pattern = \"{pattern}\",");
 
     // GroupPath
-    sb.Append("          GroupPath = [");
+    sb.Append("        GroupPath = [");
     for (int i = 0; i < groupPathParts.Length; i++)
     {
       if (i > 0)
@@ -93,7 +168,7 @@ internal static class CapabilitiesEmitter
     sb.AppendLine("],");
 
     // Aliases
-    sb.Append("          Aliases = [");
+    sb.Append("        Aliases = [");
     IReadOnlyList<string> aliases = [.. route.Aliases];
     for (int i = 0; i < aliases.Count; i++)
     {
@@ -108,15 +183,15 @@ internal static class CapabilitiesEmitter
     if (route.Description is not null)
     {
       string description = EscapeCSharpString(route.Description);
-      sb.AppendLine($"          Description = \"{description}\",");
+      sb.AppendLine($"        Description = \"{description}\",");
     }
 
     // Kind
-    sb.AppendLine($"          Kind = global::TimeWarp.Nuru.EndpointKind.{kindValue},");
+    sb.AppendLine($"        Kind = global::TimeWarp.Nuru.EndpointKind.{kindValue},");
 
     // Parameters
-    sb.AppendLine("          Parameters =");
-    sb.AppendLine("          [");
+    sb.AppendLine("        Parameters =");
+    sb.AppendLine("        [");
     IReadOnlyList<ParameterDefinition> parameters = [.. route.Parameters];
     for (int i = 0; i < parameters.Count; i++)
     {
@@ -129,11 +204,11 @@ internal static class CapabilitiesEmitter
       EmitParameterCapability(sb, param, paramIsLast, compilation, handlerTypeName);
     }
 
-    sb.AppendLine("          ],");
+    sb.AppendLine("        ],");
 
     // Options
-    sb.AppendLine("          Options =");
-    sb.AppendLine("          [");
+    sb.AppendLine("        Options =");
+    sb.AppendLine("        [");
     IReadOnlyList<OptionDefinition> options = [.. route.Options];
     for (int i = 0; i < options.Count; i++)
     {
@@ -146,10 +221,8 @@ internal static class CapabilitiesEmitter
       EmitOptionCapability(sb, option, optionIsLast, compilation, handlerTypeName);
     }
 
-    sb.AppendLine("          ]");
-
-    string comma = isLast ? "" : ",";
-    sb.AppendLine($"        }}{comma}");
+    sb.AppendLine("        ]");
+    sb.AppendLine("      });");
   }
 
   /// <summary>

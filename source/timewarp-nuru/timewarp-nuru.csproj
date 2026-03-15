@@ -51,6 +51,8 @@
     <PackageReference Include="OpenTelemetry" />
     <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" />
     <PackageReference Include="OpenTelemetry.Extensions.Hosting" />
+    <!-- Process execution -->
+    <PackageReference Include="TimeWarp.Amuru" />
   </ItemGroup>
 
   <ItemGroup>

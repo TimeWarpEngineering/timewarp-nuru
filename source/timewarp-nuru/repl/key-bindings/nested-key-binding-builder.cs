@@ -53,28 +53,28 @@ public sealed class NestedKeyBindingBuilder<TParent> : IKeyBindingBuilder<Nested
   }
 
   /// <inheritdoc />
-  public NestedKeyBindingBuilder<TParent> Bind(ConsoleKey key, Action action)
+  public NestedKeyBindingBuilder<TParent> Bind(ConsoleKey key, Func<Task> action)
   {
     _inner.Bind(key, action);
     return this;
   }
 
   /// <inheritdoc />
-  public NestedKeyBindingBuilder<TParent> Bind(ConsoleKey key, ConsoleModifiers modifiers, Action action)
+  public NestedKeyBindingBuilder<TParent> Bind(ConsoleKey key, ConsoleModifiers modifiers, Func<Task> action)
   {
     _inner.Bind(key, modifiers, action);
     return this;
   }
 
   /// <inheritdoc />
-  public NestedKeyBindingBuilder<TParent> BindExit(ConsoleKey key, Action action)
+  public NestedKeyBindingBuilder<TParent> BindExit(ConsoleKey key, Func<Task> action)
   {
     _inner.BindExit(key, action);
     return this;
   }
 
   /// <inheritdoc />
-  public NestedKeyBindingBuilder<TParent> BindExit(ConsoleKey key, ConsoleModifiers modifiers, Action action)
+  public NestedKeyBindingBuilder<TParent> BindExit(ConsoleKey key, ConsoleModifiers modifiers, Func<Task> action)
   {
     _inner.BindExit(key, modifiers, action);
     return this;

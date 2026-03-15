@@ -20,35 +20,35 @@ public interface IKeyBindingBuilder<TSelf> where TSelf : IKeyBindingBuilder<TSel
   /// Binds a key (without modifiers) to an action.
   /// </summary>
   /// <param name="key">The console key to bind.</param>
-  /// <param name="action">The action to execute when the key is pressed.</param>
+  /// <param name="action">The async action to execute when the key is pressed.</param>
   /// <returns>This builder for fluent chaining.</returns>
-  TSelf Bind(ConsoleKey key, Action action);
+  TSelf Bind(ConsoleKey key, Func<Task> action);
 
   /// <summary>
   /// Binds a key with modifiers to an action.
   /// </summary>
   /// <param name="key">The console key to bind.</param>
   /// <param name="modifiers">The modifier keys (Ctrl, Alt, Shift) required.</param>
-  /// <param name="action">The action to execute when the key combination is pressed.</param>
+  /// <param name="action">The async action to execute when the key combination is pressed.</param>
   /// <returns>This builder for fluent chaining.</returns>
-  TSelf Bind(ConsoleKey key, ConsoleModifiers modifiers, Action action);
+  TSelf Bind(ConsoleKey key, ConsoleModifiers modifiers, Func<Task> action);
 
   /// <summary>
   /// Binds an exit key (without modifiers) that will terminate the read loop.
   /// </summary>
   /// <param name="key">The console key to bind as an exit key.</param>
-  /// <param name="action">The action to execute before exiting.</param>
+  /// <param name="action">The async action to execute before exiting.</param>
   /// <returns>This builder for fluent chaining.</returns>
-  TSelf BindExit(ConsoleKey key, Action action);
+  TSelf BindExit(ConsoleKey key, Func<Task> action);
 
   /// <summary>
   /// Binds an exit key with modifiers that will terminate the read loop.
   /// </summary>
   /// <param name="key">The console key to bind as an exit key.</param>
   /// <param name="modifiers">The modifier keys (Ctrl, Alt, Shift) required.</param>
-  /// <param name="action">The action to execute before exiting.</param>
+  /// <param name="action">The async action to execute before exiting.</param>
   /// <returns>This builder for fluent chaining.</returns>
-  TSelf BindExit(ConsoleKey key, ConsoleModifiers modifiers, Action action);
+  TSelf BindExit(ConsoleKey key, ConsoleModifiers modifiers, Func<Task> action);
 
   /// <summary>
   /// Removes a key binding (without modifiers).

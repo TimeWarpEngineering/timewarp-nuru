@@ -11,6 +11,7 @@
     <Project Path="source/timewarp-nuru-build/timewarp-nuru-build.csproj" />
     <Project Path="source/timewarp-nuru-mcp/timewarp-nuru-mcp.csproj" />
     <Project Path="source/timewarp-nuru-parsing/timewarp-nuru-parsing.csproj" />
+    <Project Path="source/timewarp-nuru-search/timewarp-nuru-search.csproj" />
     <!-- <Project Path="source/timewarp-nuru-repl/timewarp-nuru-repl.csproj" /> -->
   </Folder>
   <Folder Name="/tests/">

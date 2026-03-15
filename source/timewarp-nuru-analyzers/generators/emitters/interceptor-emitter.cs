@@ -850,6 +850,39 @@ internal static class InterceptorEmitter
     sb.AppendLine("    }");
     sb.AppendLine();
 
+    // --capabilities --search <query> --group-filter <group> (most specific, check first)
+    sb.AppendLine("    // Built-in: --capabilities --search <query> --group-filter <group>");
+    sb.AppendLine("    if (routeArgs.Length == 5 && routeArgs[0] == \"--capabilities\" && (routeArgs[1] == \"--search\" || routeArgs[1] == \"-s\") && (routeArgs[3] == \"--group-filter\" || routeArgs[3] == \"-g\"))");
+    sb.AppendLine("    {");
+    sb.AppendLine($"      return await SearchCapabilitiesAsync{methodSuffix}(app.Terminal, query: routeArgs[2], groupFilter: routeArgs[4]).ConfigureAwait(false);");
+    sb.AppendLine("    }");
+    sb.AppendLine();
+
+    // --capabilities --group-filter <group> --search <query> (alternate order)
+    sb.AppendLine("    // Built-in: --capabilities --group-filter <group> --search <query>");
+    sb.AppendLine("    if (routeArgs.Length == 5 && routeArgs[0] == \"--capabilities\" && (routeArgs[1] == \"--group-filter\" || routeArgs[1] == \"-g\") && (routeArgs[3] == \"--search\" || routeArgs[3] == \"-s\"))");
+    sb.AppendLine("    {");
+    sb.AppendLine($"      return await SearchCapabilitiesAsync{methodSuffix}(app.Terminal, query: routeArgs[4], groupFilter: routeArgs[2]).ConfigureAwait(false);");
+    sb.AppendLine("    }");
+    sb.AppendLine();
+
+    // --capabilities --search <query> (search without group filter)
+    sb.AppendLine("    // Built-in: --capabilities --search <query>");
+    sb.AppendLine("    if (routeArgs.Length == 3 && routeArgs[0] == \"--capabilities\" && (routeArgs[1] == \"--search\" || routeArgs[1] == \"-s\"))");
+    sb.AppendLine("    {");
+    sb.AppendLine($"      return await SearchCapabilitiesAsync{methodSuffix}(app.Terminal, query: routeArgs[2]).ConfigureAwait(false);");
+    sb.AppendLine("    }");
+    sb.AppendLine();
+
+    // --capabilities flag with --group-filter (always available for AI tools)
+    sb.AppendLine("    // Built-in: --capabilities with --group-filter (for AI tools)");
+    sb.AppendLine("    if (routeArgs.Length == 3 && routeArgs[0] == \"--capabilities\" && (routeArgs[1] == \"--group-filter\" || routeArgs[1] == \"-g\"))");
+    sb.AppendLine("    {");
+    sb.AppendLine($"      PrintCapabilities{methodSuffix}(app.Terminal, groupFilter: routeArgs[2]);");
+    sb.AppendLine("      return 0;");
+    sb.AppendLine("    }");
+    sb.AppendLine();
+
     // --capabilities flag (always available for AI tools)
     sb.AppendLine("    // Built-in: --capabilities (for AI tools)");
     sb.AppendLine($"    if (routeArgs is [{string.Join(" or ", BuiltInFlags.CapabilitiesForms.Select(f => $"\"{f}\""))}])");

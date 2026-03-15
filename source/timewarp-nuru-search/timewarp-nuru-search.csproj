@@ -1,0 +1,53 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <AssemblyName>TimeWarp.Nuru.Search</AssemblyName>
+    <RootNamespace>TimeWarp.Nuru.Search</RootNamespace>
+    <OutputType>Exe</OutputType>
+    <Description>CLI search tool for indexing and searching Nuru CLI endpoints across multiple CLIs</Description>
+    <PackageTags>cli;search;index;fts;sqlite;nuru;discovery</PackageTags>
+    
+    <!-- AOT Compatibility -->
+    <IsAotCompatible>true</IsAotCompatible>
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+    <EnableAotAnalyzer>true</EnableAotAnalyzer>
+    
+    <!-- Set up as a .NET Tool -->
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>nuru-search</ToolCommandName>
+    <PackageId>TimeWarp.Nuru.Search</PackageId>
+    
+    <NoWarn>$(NoWarn);CA1303;CA1515;CA2007;CA1819</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Data.Sqlite" />
+    <PackageReference Include="TimeWarp.Amuru" />
+    <PackageReference Include="TimeWarp.Terminal" />
+    <PackageReference Include="Microsoft.Extensions.Logging" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <_NuruBuildTaskDir>$(MSBuildThisFileDirectory)../timewarp-nuru-build/bin/$(Configuration)/net10.0/</_NuruBuildTaskDir>
+  </PropertyGroup>
+
+  <Import Project="../timewarp-nuru-build/build/TimeWarp.Nuru.Build.targets" 
+          Condition="Exists('../timewarp-nuru-build/build/TimeWarp.Nuru.Build.targets')" />
+
+  <ItemGroup>
+    <ProjectReference Include="../timewarp-nuru/timewarp-nuru.csproj" />
+    <ProjectReference Include="../timewarp-nuru-analyzers/timewarp-nuru-analyzers.csproj">
+      <OutputItemType>Analyzer</OutputItemType>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="../timewarp-nuru-build/timewarp-nuru-build.csproj">
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <PrivateAssets>all</PrivateAssets>
+    </ProjectReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="readme.md" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+</Project>

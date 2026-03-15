@@ -10,10 +10,10 @@ public sealed partial class ReplConsoleReader
   /// PSReadLine: KillLine - Kill text from cursor to end of line.
   /// Stores the killed text in the kill ring.
   /// </summary>
-  internal void HandleKillLineToRing()
+  internal Task HandleKillLineToRingAsync()
   {
     if (CursorPosition >= UserInput.Length)
-      return;
+      return Task.CompletedTask;
 
     SaveUndoState(isCharacterInput: false);  // Save state before kill
 
@@ -32,16 +32,17 @@ public sealed partial class ReplConsoleReader
     LastCommandWasKill = true;
     CompletionHandler.Reset();
     RedrawLine();
+    return Task.CompletedTask;
   }
 
   /// <summary>
   /// PSReadLine: BackwardKillInput - Kill text from beginning of line to cursor.
   /// Also known as unix-line-discard in readline.
   /// </summary>
-  internal void HandleBackwardKillInput()
+  internal Task HandleBackwardKillInputAsync()
   {
     if (CursorPosition == 0)
-      return;
+      return Task.CompletedTask;
 
     SaveUndoState(isCharacterInput: false);  // Save state before kill
 
@@ -61,16 +62,17 @@ public sealed partial class ReplConsoleReader
     LastCommandWasKill = true;
     CompletionHandler.Reset();
     RedrawLine();
+    return Task.CompletedTask;
   }
 
   /// <summary>
   /// PSReadLine: UnixWordRubout - Kill the previous whitespace-delimited word.
   /// Also known as backward-kill-word with whitespace as the word boundary.
   /// </summary>
-  internal void HandleUnixWordRubout()
+  internal Task HandleUnixWordRuboutAsync()
   {
     if (CursorPosition == 0)
-      return;
+      return Task.CompletedTask;
 
     SaveUndoState(isCharacterInput: false);  // Save state before kill
 
@@ -99,16 +101,17 @@ public sealed partial class ReplConsoleReader
     LastCommandWasKill = true;
     CompletionHandler.Reset();
     RedrawLine();
+    return Task.CompletedTask;
   }
 
   /// <summary>
   /// PSReadLine: KillWord - Kill from cursor to end of current word.
   /// Uses word boundaries (non-word to word transitions).
   /// </summary>
-  internal void HandleKillWord()
+  internal Task HandleKillWordAsync()
   {
     if (CursorPosition >= UserInput.Length)
-      return;
+      return Task.CompletedTask;
 
     SaveUndoState(isCharacterInput: false);  // Save state before kill
 
@@ -138,16 +141,17 @@ public sealed partial class ReplConsoleReader
     LastCommandWasKill = true;
     CompletionHandler.Reset();
     RedrawLine();
+    return Task.CompletedTask;
   }
 
   /// <summary>
   /// PSReadLine: BackwardKillWord - Kill from start of current word to cursor.
   /// Uses word boundaries (non-word to word transitions).
   /// </summary>
-  internal void HandleBackwardKillWord()
+  internal Task HandleBackwardKillWordAsync()
   {
     if (CursorPosition == 0)
-      return;
+      return Task.CompletedTask;
 
     SaveUndoState(isCharacterInput: false);  // Save state before kill
 
@@ -176,16 +180,17 @@ public sealed partial class ReplConsoleReader
     LastCommandWasKill = true;
     CompletionHandler.Reset();
     RedrawLine();
+    return Task.CompletedTask;
   }
 
   /// <summary>
   /// PSReadLine: Yank - Paste the most recently killed text at the cursor position.
   /// </summary>
-  internal void HandleYank()
+  internal Task HandleYankAsync()
   {
     string? text = KillRing.Yank();
     if (text is null)
-      return;
+      return Task.CompletedTask;
 
     SaveUndoState(isCharacterInput: false);  // Save state before yank
 
@@ -199,21 +204,22 @@ public sealed partial class ReplConsoleReader
     LastCommandWasYank = true;
     CompletionHandler.Reset();
     RedrawLine();
+    return Task.CompletedTask;
   }
 
   /// <summary>
   /// PSReadLine: YankPop - Replace the just-yanked text with the previous kill ring entry.
   /// Only works immediately after Yank or YankPop.
   /// </summary>
-  internal void HandleYankPop()
+  internal Task HandleYankPopAsync()
   {
     // YankPop only works if the last command was Yank or YankPop
     if (!LastCommandWasYank || !KillRing.CanYankPop)
-      return;
+      return Task.CompletedTask;
 
     string? text = KillRing.YankPop();
     if (text is null)
-      return;
+      return Task.CompletedTask;
 
     SaveUndoState(isCharacterInput: false);  // Save state before yank pop
 
@@ -232,6 +238,7 @@ public sealed partial class ReplConsoleReader
 
     CompletionHandler.Reset();
     RedrawLine();
+    return Task.CompletedTask;
   }
 
   /// <summary>

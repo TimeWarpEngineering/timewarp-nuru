@@ -12,7 +12,7 @@ public sealed partial class ReplConsoleReader
   /// In search mode, the user types a search pattern and sees matching history entries
   /// in real-time. Pressing Ctrl+R again cycles to the next (older) match.
   /// </remarks>
-  internal void HandleReverseSearchHistory()
+  internal Task HandleReverseSearchHistoryAsync()
   {
     if (CurrentMode == EditMode.Normal)
     {
@@ -24,6 +24,8 @@ public sealed partial class ReplConsoleReader
       SearchDirectionIsReverse = true;
       FindNextMatch(reverse: true);
     }
+
+    return Task.CompletedTask;
   }
 
   /// <summary>
@@ -33,7 +35,7 @@ public sealed partial class ReplConsoleReader
   /// In search mode, the user types a search pattern and sees matching history entries
   /// in real-time. Pressing Ctrl+S again cycles to the next (newer) match.
   /// </remarks>
-  internal void HandleForwardSearchHistory()
+  internal Task HandleForwardSearchHistoryAsync()
   {
     if (CurrentMode == EditMode.Normal)
     {
@@ -45,6 +47,8 @@ public sealed partial class ReplConsoleReader
       SearchDirectionIsReverse = false;
       FindNextMatch(reverse: false);
     }
+
+    return Task.CompletedTask;
   }
 
   private void EnterSearchMode(bool reverse)
@@ -96,7 +100,7 @@ public sealed partial class ReplConsoleReader
   /// The result string if the read loop should exit (e.g., Enter was pressed),
   /// or null to continue the loop.
   /// </returns>
-  private string? HandleSearchModeKey(ConsoleKeyInfo keyInfo)
+  private async Task<string?> HandleSearchModeKeyAsync(ConsoleKeyInfo keyInfo)
   {
     ConsoleModifiers mods = keyInfo.Modifiers & (ConsoleModifiers.Control | ConsoleModifiers.Alt | ConsoleModifiers.Shift);
 
@@ -120,7 +124,7 @@ public sealed partial class ReplConsoleReader
     if (keyInfo.Key == ConsoleKey.Enter)
     {
       ExitSearchMode(acceptMatch: true);
-      HandleEnter();
+      await HandleEnterAsync().ConfigureAwait(false);
       return UserInput;
     }
 
@@ -168,9 +172,9 @@ public sealed partial class ReplConsoleReader
     ConsoleModifiers normalizedMods = keyInfo.Modifiers & (ConsoleModifiers.Control | ConsoleModifiers.Alt | ConsoleModifiers.Shift);
     (ConsoleKey Key, ConsoleModifiers Modifiers) keyBinding = (keyInfo.Key, normalizedMods);
 
-    if (KeyBindings.TryGetValue(keyBinding, out Action? handler))
+    if (KeyBindings.TryGetValue(keyBinding, out Func<Task>? handler))
     {
-      handler();
+      await handler().ConfigureAwait(false);
       if (ExitKeys.Contains(keyBinding))
       {
         return keyInfo.Key == ConsoleKey.Enter ? UserInput : null;

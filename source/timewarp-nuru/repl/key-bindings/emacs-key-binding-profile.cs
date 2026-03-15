@@ -114,123 +114,123 @@ public sealed class EmacsKeyBindingProfile : IKeyBindingProfile
   public string Name => "Emacs";
 
   /// <inheritdoc/>
-  public Dictionary<(ConsoleKey Key, ConsoleModifiers Modifiers), Action> GetBindings(ReplConsoleReader reader)
+  public Dictionary<(ConsoleKey Key, ConsoleModifiers Modifiers), Func<Task>> GetBindings(ReplConsoleReader reader)
   {
     ArgumentNullException.ThrowIfNull(reader);
 
-    return new Dictionary<(ConsoleKey Key, ConsoleModifiers Modifiers), Action>
+    return new Dictionary<(ConsoleKey Key, ConsoleModifiers Modifiers), Func<Task>>
     {
       // === Enter/Submit ===
-      [(ConsoleKey.Enter, ConsoleModifiers.None)] = reader.HandleEnter,
+      [(ConsoleKey.Enter, ConsoleModifiers.None)] = reader.HandleEnterAsync,
 
       // === Tab Completion ===
-      [(ConsoleKey.Tab, ConsoleModifiers.None)] = () => reader.HandleTabCompletion(reverse: false),
-      [(ConsoleKey.Tab, ConsoleModifiers.Shift)] = () => reader.HandleTabCompletion(reverse: true),
-      [(ConsoleKey.Oem7, ConsoleModifiers.Alt)] = reader.HandlePossibleCompletions, // Alt+=
+      [(ConsoleKey.Tab, ConsoleModifiers.None)] = () => reader.HandleTabCompletionAsync(reverse: false),
+      [(ConsoleKey.Tab, ConsoleModifiers.Shift)] = () => reader.HandleTabCompletionAsync(reverse: true),
+      [(ConsoleKey.Oem7, ConsoleModifiers.Alt)] = reader.HandlePossibleCompletionsAsync, // Alt+=
 
       // === Character Movement (Emacs: forward-char, backward-char) ===
-      [(ConsoleKey.F, ConsoleModifiers.Control)] = reader.HandleForwardChar,
-      [(ConsoleKey.B, ConsoleModifiers.Control)] = reader.HandleBackwardChar,
+      [(ConsoleKey.F, ConsoleModifiers.Control)] = reader.HandleForwardCharAsync,
+      [(ConsoleKey.B, ConsoleModifiers.Control)] = reader.HandleBackwardCharAsync,
 
       // === Word Movement (Emacs: forward-word, backward-word) ===
-      [(ConsoleKey.F, ConsoleModifiers.Alt)] = reader.HandleForwardWord,
-      [(ConsoleKey.B, ConsoleModifiers.Alt)] = reader.HandleBackwardWord,
+      [(ConsoleKey.F, ConsoleModifiers.Alt)] = reader.HandleForwardWordAsync,
+      [(ConsoleKey.B, ConsoleModifiers.Alt)] = reader.HandleBackwardWordAsync,
 
       // === Line Position (Emacs: beginning-of-line, end-of-line) ===
-      [(ConsoleKey.A, ConsoleModifiers.Control)] = reader.HandleBeginningOfLine,
-      [(ConsoleKey.E, ConsoleModifiers.Control)] = reader.HandleEndOfLine,
+      [(ConsoleKey.A, ConsoleModifiers.Control)] = reader.HandleBeginningOfLineAsync,
+      [(ConsoleKey.E, ConsoleModifiers.Control)] = reader.HandleEndOfLineAsync,
 
       // === History Navigation (Emacs: previous-history, next-history) ===
-      [(ConsoleKey.P, ConsoleModifiers.Control)] = reader.HandlePreviousHistory,
-      [(ConsoleKey.N, ConsoleModifiers.Control)] = reader.HandleNextHistory,
+      [(ConsoleKey.P, ConsoleModifiers.Control)] = reader.HandlePreviousHistoryAsync,
+      [(ConsoleKey.N, ConsoleModifiers.Control)] = reader.HandleNextHistoryAsync,
 
       // === History Position (Emacs: beginning-of-history, end-of-history) ===
-      [(ConsoleKey.OemComma, ConsoleModifiers.Alt | ConsoleModifiers.Shift)] = reader.HandleBeginningOfHistory, // Alt+<
-      [(ConsoleKey.OemPeriod, ConsoleModifiers.Alt | ConsoleModifiers.Shift)] = reader.HandleEndOfHistory, // Alt+>
+      [(ConsoleKey.OemComma, ConsoleModifiers.Alt | ConsoleModifiers.Shift)] = reader.HandleBeginningOfHistoryAsync, // Alt+<
+      [(ConsoleKey.OemPeriod, ConsoleModifiers.Alt | ConsoleModifiers.Shift)] = reader.HandleEndOfHistoryAsync, // Alt+>
 
       // === Interactive History Search (Emacs: reverse-search-history, forward-search-history) ===
-      [(ConsoleKey.R, ConsoleModifiers.Control)] = reader.HandleReverseSearchHistory,
-      [(ConsoleKey.S, ConsoleModifiers.Control)] = reader.HandleForwardSearchHistory,
+      [(ConsoleKey.R, ConsoleModifiers.Control)] = reader.HandleReverseSearchHistoryAsync,
+      [(ConsoleKey.S, ConsoleModifiers.Control)] = reader.HandleForwardSearchHistoryAsync,
 
       // === Deletion (Emacs: backward-delete-char, delete-char, delete-char-or-eof) ===
-      [(ConsoleKey.Backspace, ConsoleModifiers.None)] = reader.HandleBackwardDeleteChar,
-      [(ConsoleKey.H, ConsoleModifiers.Control)] = reader.HandleBackwardDeleteChar,  // Ctrl+H = Backspace
-      [(ConsoleKey.Delete, ConsoleModifiers.None)] = reader.HandleDeleteChar,
-      [(ConsoleKey.D, ConsoleModifiers.Control)] = reader.HandleDeleteCharOrExit,  // Delete char or EOF if empty
+      [(ConsoleKey.Backspace, ConsoleModifiers.None)] = reader.HandleBackwardDeleteCharAsync,
+      [(ConsoleKey.H, ConsoleModifiers.Control)] = reader.HandleBackwardDeleteCharAsync,  // Ctrl+H = Backspace
+      [(ConsoleKey.Delete, ConsoleModifiers.None)] = reader.HandleDeleteCharAsync,
+      [(ConsoleKey.D, ConsoleModifiers.Control)] = reader.HandleDeleteCharOrExitAsync,  // Delete char or EOF if empty
 
       // === Kill Operations (Emacs: kill-line, backward-kill-input, unix-word-rubout, kill-word, backward-kill-word) ===
-      [(ConsoleKey.K, ConsoleModifiers.Control)] = reader.HandleKillLine,
-      [(ConsoleKey.U, ConsoleModifiers.Control)] = reader.HandleBackwardKillInput,
-      [(ConsoleKey.W, ConsoleModifiers.Control)] = reader.HandleUnixWordRubout,
-      [(ConsoleKey.D, ConsoleModifiers.Alt)] = reader.HandleKillWord,
-      [(ConsoleKey.Backspace, ConsoleModifiers.Alt)] = reader.HandleBackwardKillWord,
+      [(ConsoleKey.K, ConsoleModifiers.Control)] = reader.HandleKillLineAsync,
+      [(ConsoleKey.U, ConsoleModifiers.Control)] = reader.HandleBackwardKillInputAsync,
+      [(ConsoleKey.W, ConsoleModifiers.Control)] = reader.HandleUnixWordRuboutAsync,
+      [(ConsoleKey.D, ConsoleModifiers.Alt)] = reader.HandleKillWordAsync,
+      [(ConsoleKey.Backspace, ConsoleModifiers.Alt)] = reader.HandleBackwardKillWordAsync,
 
       // === Yank Operations (Emacs: yank, yank-pop) ===
-      [(ConsoleKey.Y, ConsoleModifiers.Control)] = reader.HandleYank,
-      [(ConsoleKey.Y, ConsoleModifiers.Alt)] = reader.HandleYankPop,
+      [(ConsoleKey.Y, ConsoleModifiers.Control)] = reader.HandleYankAsync,
+      [(ConsoleKey.Y, ConsoleModifiers.Alt)] = reader.HandleYankPopAsync,
 
       // === Yank Argument Operations (Emacs: yank-last-arg, yank-nth-arg) ===
-      [(ConsoleKey.OemPeriod, ConsoleModifiers.Alt)] = reader.HandleYankLastArg,  // Alt+. (insert-last-argument)
-      [(ConsoleKey.OemMinus, ConsoleModifiers.Alt | ConsoleModifiers.Shift)] = reader.HandleYankLastArg,  // Alt+_
-      [(ConsoleKey.Y, ConsoleModifiers.Alt | ConsoleModifiers.Control)] = reader.HandleYankNthArg,  // Alt+Ctrl+Y
+      [(ConsoleKey.OemPeriod, ConsoleModifiers.Alt)] = reader.HandleYankLastArgAsync,  // Alt+. (insert-last-argument)
+      [(ConsoleKey.OemMinus, ConsoleModifiers.Alt | ConsoleModifiers.Shift)] = reader.HandleYankLastArgAsync,  // Alt+_
+      [(ConsoleKey.Y, ConsoleModifiers.Alt | ConsoleModifiers.Control)] = reader.HandleYankNthArgAsync,  // Alt+Ctrl+Y
 
       // === Digit Arguments for YankNthArg (Alt+0 through Alt+9) ===
-      [(ConsoleKey.D0, ConsoleModifiers.Alt)] = () => reader.HandleDigitArgument(0),
-      [(ConsoleKey.D1, ConsoleModifiers.Alt)] = () => reader.HandleDigitArgument(1),
-      [(ConsoleKey.D2, ConsoleModifiers.Alt)] = () => reader.HandleDigitArgument(2),
-      [(ConsoleKey.D3, ConsoleModifiers.Alt)] = () => reader.HandleDigitArgument(3),
-      [(ConsoleKey.D4, ConsoleModifiers.Alt)] = () => reader.HandleDigitArgument(4),
-      [(ConsoleKey.D5, ConsoleModifiers.Alt)] = () => reader.HandleDigitArgument(5),
-      [(ConsoleKey.D6, ConsoleModifiers.Alt)] = () => reader.HandleDigitArgument(6),
-      [(ConsoleKey.D7, ConsoleModifiers.Alt)] = () => reader.HandleDigitArgument(7),
-      [(ConsoleKey.D8, ConsoleModifiers.Alt)] = () => reader.HandleDigitArgument(8),
-      [(ConsoleKey.D9, ConsoleModifiers.Alt)] = () => reader.HandleDigitArgument(9),
+      [(ConsoleKey.D0, ConsoleModifiers.Alt)] = () => { reader.HandleDigitArgument(0); return Task.CompletedTask; },
+      [(ConsoleKey.D1, ConsoleModifiers.Alt)] = () => { reader.HandleDigitArgument(1); return Task.CompletedTask; },
+      [(ConsoleKey.D2, ConsoleModifiers.Alt)] = () => { reader.HandleDigitArgument(2); return Task.CompletedTask; },
+      [(ConsoleKey.D3, ConsoleModifiers.Alt)] = () => { reader.HandleDigitArgument(3); return Task.CompletedTask; },
+      [(ConsoleKey.D4, ConsoleModifiers.Alt)] = () => { reader.HandleDigitArgument(4); return Task.CompletedTask; },
+      [(ConsoleKey.D5, ConsoleModifiers.Alt)] = () => { reader.HandleDigitArgument(5); return Task.CompletedTask; },
+      [(ConsoleKey.D6, ConsoleModifiers.Alt)] = () => { reader.HandleDigitArgument(6); return Task.CompletedTask; },
+      [(ConsoleKey.D7, ConsoleModifiers.Alt)] = () => { reader.HandleDigitArgument(7); return Task.CompletedTask; },
+      [(ConsoleKey.D8, ConsoleModifiers.Alt)] = () => { reader.HandleDigitArgument(8); return Task.CompletedTask; },
+      [(ConsoleKey.D9, ConsoleModifiers.Alt)] = () => { reader.HandleDigitArgument(9); return Task.CompletedTask; },
 
       // === Word Case Operations (Emacs: upcase-word, downcase-word, capitalize-word) ===
-      [(ConsoleKey.U, ConsoleModifiers.Alt)] = reader.HandleUpcaseWord,
-      [(ConsoleKey.L, ConsoleModifiers.Alt)] = reader.HandleDowncaseWord,
-      [(ConsoleKey.C, ConsoleModifiers.Alt)] = reader.HandleCapitalizeWord,
+      [(ConsoleKey.U, ConsoleModifiers.Alt)] = reader.HandleUpcaseWordAsync,
+      [(ConsoleKey.L, ConsoleModifiers.Alt)] = reader.HandleDowncaseWordAsync,
+      [(ConsoleKey.C, ConsoleModifiers.Alt)] = reader.HandleCapitalizeWordAsync,
 
       // === Character Transposition (Emacs: transpose-chars) ===
-      [(ConsoleKey.T, ConsoleModifiers.Control)] = reader.HandleSwapCharacters,
+      [(ConsoleKey.T, ConsoleModifiers.Control)] = reader.HandleSwapCharactersAsync,
 
       // === Word Deletion (Emacs: backward-kill-word with Ctrl+Backspace) ===
-      [(ConsoleKey.Backspace, ConsoleModifiers.Control)] = reader.HandleBackwardDeleteWord,
+      [(ConsoleKey.Backspace, ConsoleModifiers.Control)] = reader.HandleBackwardDeleteWordAsync,
 
       // === Undo/Redo Operations (Emacs: undo, redo, revert-line) ===
-      [(ConsoleKey.OemMinus, ConsoleModifiers.Control)] = reader.HandleUndo,  // Ctrl+_ (underscore) - canonical Emacs
-      [(ConsoleKey.Z, ConsoleModifiers.Control)] = reader.HandleUndo,         // Ctrl+Z - alternative
-      [(ConsoleKey.Z, ConsoleModifiers.Control | ConsoleModifiers.Shift)] = reader.HandleRedo,
-      [(ConsoleKey.R, ConsoleModifiers.Alt)] = reader.HandleRevertLine,
+      [(ConsoleKey.OemMinus, ConsoleModifiers.Control)] = reader.HandleUndoAsync,  // Ctrl+_ (underscore) - canonical Emacs
+      [(ConsoleKey.Z, ConsoleModifiers.Control)] = reader.HandleUndoAsync,         // Ctrl+Z - alternative
+      [(ConsoleKey.Z, ConsoleModifiers.Control | ConsoleModifiers.Shift)] = reader.HandleRedoAsync,
+      [(ConsoleKey.R, ConsoleModifiers.Alt)] = reader.HandleRevertLineAsync,
 
       // === Word Selection (Emacs: uses Shift+movement) ===
-      [(ConsoleKey.LeftArrow, ConsoleModifiers.Shift)] = reader.HandleSelectBackwardChar,
-      [(ConsoleKey.RightArrow, ConsoleModifiers.Shift)] = reader.HandleSelectForwardChar,
-      [(ConsoleKey.LeftArrow, ConsoleModifiers.Control | ConsoleModifiers.Shift)] = reader.HandleSelectBackwardWord,
-      [(ConsoleKey.RightArrow, ConsoleModifiers.Control | ConsoleModifiers.Shift)] = reader.HandleSelectNextWord,
-      [(ConsoleKey.B, ConsoleModifiers.Alt | ConsoleModifiers.Shift)] = reader.HandleSelectBackwardWord,
-      [(ConsoleKey.F, ConsoleModifiers.Alt | ConsoleModifiers.Shift)] = reader.HandleSelectNextWord,
-      [(ConsoleKey.Home, ConsoleModifiers.Shift)] = reader.HandleSelectBackwardsLine,
-      [(ConsoleKey.End, ConsoleModifiers.Shift)] = reader.HandleSelectLine,
-      [(ConsoleKey.A, ConsoleModifiers.Control | ConsoleModifiers.Shift)] = reader.HandleSelectAll,
+      [(ConsoleKey.LeftArrow, ConsoleModifiers.Shift)] = reader.HandleSelectBackwardCharAsync,
+      [(ConsoleKey.RightArrow, ConsoleModifiers.Shift)] = reader.HandleSelectForwardCharAsync,
+      [(ConsoleKey.LeftArrow, ConsoleModifiers.Control | ConsoleModifiers.Shift)] = reader.HandleSelectBackwardWordAsync,
+      [(ConsoleKey.RightArrow, ConsoleModifiers.Control | ConsoleModifiers.Shift)] = reader.HandleSelectNextWordAsync,
+      [(ConsoleKey.B, ConsoleModifiers.Alt | ConsoleModifiers.Shift)] = reader.HandleSelectBackwardWordAsync,
+      [(ConsoleKey.F, ConsoleModifiers.Alt | ConsoleModifiers.Shift)] = reader.HandleSelectNextWordAsync,
+      [(ConsoleKey.Home, ConsoleModifiers.Shift)] = reader.HandleSelectBackwardsLineAsync,
+      [(ConsoleKey.End, ConsoleModifiers.Shift)] = reader.HandleSelectLineAsync,
+      [(ConsoleKey.A, ConsoleModifiers.Control | ConsoleModifiers.Shift)] = reader.HandleSelectAllAsync,
 
       // === Clipboard Operations ===
-      [(ConsoleKey.C, ConsoleModifiers.Control)] = reader.HandleCopyOrCancelLine,
-      [(ConsoleKey.X, ConsoleModifiers.Control)] = reader.HandleCut,
-      [(ConsoleKey.V, ConsoleModifiers.Control)] = reader.HandlePaste,
+      [(ConsoleKey.C, ConsoleModifiers.Control)] = reader.HandleCopyOrCancelLineAsync,
+      [(ConsoleKey.X, ConsoleModifiers.Control)] = reader.HandleCutAsync,
+      [(ConsoleKey.V, ConsoleModifiers.Control)] = reader.HandlePasteAsync,
 
       // === Screen Operations (Emacs: clear-screen) ===
-      [(ConsoleKey.L, ConsoleModifiers.Control)] = reader.HandleClearScreen,
+      [(ConsoleKey.L, ConsoleModifiers.Control)] = reader.HandleClearScreenAsync,
 
       // === Insert Mode Toggle ===
-      [(ConsoleKey.Insert, ConsoleModifiers.None)] = reader.HandleToggleInsertMode,
+      [(ConsoleKey.Insert, ConsoleModifiers.None)] = reader.HandleToggleInsertModeAsync,
 
       // === Alternative AcceptLine bindings (Emacs: accept-line) ===
-      [(ConsoleKey.M, ConsoleModifiers.Control)] = reader.HandleEnter,  // Ctrl+M = carriage return
-      [(ConsoleKey.J, ConsoleModifiers.Control)] = reader.HandleEnter,  // Ctrl+J = newline
+      [(ConsoleKey.M, ConsoleModifiers.Control)] = reader.HandleEnterAsync,  // Ctrl+M = carriage return
+      [(ConsoleKey.J, ConsoleModifiers.Control)] = reader.HandleEnterAsync,  // Ctrl+J = newline
 
       // === Special Keys ===
-      [(ConsoleKey.Escape, ConsoleModifiers.None)] = reader.HandleEscape,
+      [(ConsoleKey.Escape, ConsoleModifiers.None)] = reader.HandleEscapeAsync,
     };
   }
 

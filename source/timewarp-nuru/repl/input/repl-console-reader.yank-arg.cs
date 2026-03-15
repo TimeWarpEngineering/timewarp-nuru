@@ -41,10 +41,10 @@ public sealed partial class ReplConsoleReader
   /// Alt+. → "main" (last arg of older command)
   /// Alt+. → "Initial commit" (last arg, quoted string)
   /// </remarks>
-  internal void HandleYankLastArg()
+  internal Task HandleYankLastArgAsync()
   {
     if (History.Count == 0)
-      return;
+      return Task.CompletedTask;
 
     SaveUndoState(isCharacterInput: false);
 
@@ -94,7 +94,7 @@ public sealed partial class ReplConsoleReader
 
         CompletionHandler.Reset();
         RedrawLine();
-        return;
+        return Task.CompletedTask;
       }
 
       historyIndexToUse--;
@@ -103,6 +103,7 @@ public sealed partial class ReplConsoleReader
     // No history entry with arguments found - reset state
     LastCommandWasYankArg = false;
     DigitArgument = null;
+    return Task.CompletedTask;
   }
 
   /// <summary>
@@ -119,17 +120,17 @@ public sealed partial class ReplConsoleReader
   /// Alt+0 Alt+Ctrl+Y → "git" (command name, index 0)
   /// Alt+3 Alt+Ctrl+Y → "Initial commit" (index 3)
   /// </remarks>
-  internal void HandleYankNthArg()
+  internal Task HandleYankNthArgAsync()
   {
     if (History.Count == 0)
-      return;
+      return Task.CompletedTask;
 
     // Get most recent history entry
     string lastCommand = History[^1];
     string[] args = ParseHistoryArguments(lastCommand);
 
     if (args.Length == 0)
-      return;
+      return Task.CompletedTask;
 
     SaveUndoState(isCharacterInput: false);
 
@@ -158,6 +159,7 @@ public sealed partial class ReplConsoleReader
 
     CompletionHandler.Reset();
     RedrawLine();
+    return Task.CompletedTask;
   }
 
   /// <summary>

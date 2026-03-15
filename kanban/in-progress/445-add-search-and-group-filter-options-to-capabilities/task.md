@@ -1,135 +1,28 @@
 # Add --search and --group-filter options to --capabilities
 
-## Description
+## Purpose
 
-Extend the `--capabilities` built-in flag to support filtering options for AI agent token efficiency. This enables agents to discover relevant endpoints without receiving the full capabilities catalog.
-
-Includes four components:
-1. **Amuru dependency** - Add TimeWarp.Amuru for process execution (#445-001) ✓
-2. **Group filter** - Local filtering by GroupPath prefix (#445-002)
-3. **nuru-search tool** - Companion CLI for keyword search across all Nuru-based CLIs using SQLite FTS5 (#445-003)
-4. **Search option** - Call nuru-search subprocess (#445-004)
+Extend the `--capabilities` output to support filtering and searching capabilities, making it easier for AI agents and users to discover relevant CLI commands.
 
 ## Checklist
 
 - [x] Add TimeWarp.Amuru dependency and migrate clipboard code (#445-001)
-- [ ] Implement --group-filter option (#445-002)
-- [ ] Create timewarp-nuru-search companion tool (#445-003)
-- [ ] Implement --search option (#445-004)
+- [x] Implement --group-filter option (#445-002)
+- [x] Create timewarp-nuru-search companion tool (#445-003)
+- [ ] Implement --search option for --capabilities (#445-004)
 
 ## Notes
 
-### Design Decisions
+### Overview
 
-**CLI Surface:**
-```bash
-ganda --capabilities                                    # Full
-ganda --capabilities --group-filter "kanban"            # Local filter
-ganda --capabilities --search "commit"                  # nuru-search
-ganda --capabilities --group-filter "git" --search "push"  # Both → nuru-search
-```
+This epic adds two new options to the `--capabilities` built-in route:
 
-**Behavior:**
-- `--group-filter` → Local filtering (exact match on GroupPath prefix)
-- `--search` → Requires `nuru-search` tool installed, keyword search across all indexed CLIs
-- Both options → Pass both to nuru-search, let it handle combined filtering
+1. **--group-filter** - Filter capabilities by group name
+2. **--search** - Search capabilities using the timewarp-nuru-search tool
 
-**Error Handling:**
-- `--search` without nuru-search → upsell message, no fallback
-- `--group-filter` alone → local filtering, no nuru-search needed
+### Subtasks
 
-**Output Format (when filtered):**
-```json
-{
-  "name": "ganda",
-  "version": "1.2.3",
-  "filter": {
-    "group": "kanban",      // present if --group-filter used
-    "search": "commit"      // present if --search used
-  },
-  "endpoints": [...]
-}
-```
-
-### nuru-search Contract
-
-```bash
-nuru-search search --cli ganda --version 1.2.3 --query "push" --group "git"
-```
-
-Returns same CapabilitiesResponse format with filter metadata.
-
-### nuru-search Architecture
-
-```
-┌─────────────────────────────────────────────────────────┐
-│                    Nuru Search Index                    │
-│  (SQLite with FTS5 full-text search)                   │
-│  Location: ~/.nuru/search-index.db                      │
-│                                                         │
-│  ganda --capabilities → ─┐                              │
-│  nuru --capabilities  → ─┼─→ indexed for FTS5          │
-│  other-cli caps       → ─┘                              │
-└─────────────────────────────────────────────────────────┘
-```
-
-**Key Insight: No Embedding Model Needed**
-
-The agent (LLM) already has semantic understanding. When a user says "I want to save my work", the agent formulates the search query "commit" - it doesn't pass the raw user request to search. The search tool is a fast keyword matcher, not a semantic engine.
-
-```
-User: "I want to save my work"
-         ↓
-Agent (LLM): Translates to search query "commit"
-         ↓
-nuru-search (FTS5): Returns ganda git commit, etc.
-         ↓
-Agent: Presents options, executes chosen command
-```
-
-**Indexing Strategy:**
-- On-demand: When `--search` is used, nuru-search checks if CLI+version is indexed
-- If not indexed or version mismatch: Run `cli --capabilities`, index results into FTS5
-- No embedding generation - just text indexing
-
-**Search Flow:**
-```
-ganda --capabilities --search "commit"
-         │
-         ▼
-┌──────────────────────────────┐
-│ Call nuru-search subprocess  │
-│ (cli: ganda, version: 1.2.3, │
-│  query: "commit")            │
-└──────────────────────────────┘
-         │
-         ▼
-┌──────────────────────────────┐
-│ nuru-search checks index:    │
-│ ganda v1.2.3 indexed?        │
-└──────────────────────────────┘
-         │
-    YES  │  NO
-         ▼         ▼
-┌──────────┐ ┌──────────────────┐
-│ Return   │ │ Run ganda       │
-│ results  │ │ --capabilities  │
-└──────────┘ │ index into FTS5 │
-             └──────────────────┘
-```
-
-### Dependency Order
-
-```
-445-001 ✓ → 445-002 → 445-003 → 445-004
-   │           │          │          │
-   │           │          │          └── Requires nuru-search
-   │           │          └── Independent tool
-   │           └── Local only, no dependency
-   └── Amuru dependency
-```
-
-### Related
-
-- Design discussion: 2026-03-12
-- Precedent: Cloudflare MCP discover/call pattern
+- **#445-001**: Add TimeWarp.Amuru dependency (DONE)
+- **#445-002**: Implement --group-filter option (DONE)
+- **#445-003**: Create timewarp-nuru-search companion tool (DONE)
+- **#445-004**: Implement --search option (TODO)

@@ -6,10 +6,10 @@ Extend the generated `PrintCapabilities` method to support `--group-filter` opti
 
 ## Checklist
 
-- [ ] Extend CapabilitiesResponse DTO with filter metadata
-- [ ] Add --group-filter option handling (local filtering)
-- [ ] Update help output to show new option
-- [ ] Add tests for group-filter functionality
+- [x] Extend CapabilitiesResponse DTO with filter metadata
+- [x] Add --group-filter option handling (local filtering)
+- [x] Update help output to show new option
+- [x] Add tests for group-filter functionality
 
 ## Notes
 
@@ -184,3 +184,28 @@ Test cases:
 ganda runfile cache --clear
 dotnet run tests/ci-tests/run-ci-tests.cs
 ```
+
+## Results
+
+### What Was Implemented
+- Added `--group-filter` option to `--capabilities` command
+- Case-insensitive prefix matching for group paths
+- Filter metadata included in JSON output: `{"filter": {"group": "kanban"}}`
+- Short form `-g` supported: `--capabilities -g kanban`
+
+### Files Changed
+- `source/timewarp-nuru/capabilities/capabilities-response.cs` - Added `CapabilitiesFilter` class
+- `source/timewarp-nuru/capabilities/capabilities-json-serializer-context.cs` - Added to JSON context
+- `source/timewarp-nuru-analyzers/generators/emitters/capabilities-emitter.cs` - Filtering logic
+- `source/timewarp-nuru-analyzers/generators/emitters/interceptor-emitter.cs` - Pattern matching
+- `source/timewarp-nuru-analyzers/generators/emitters/help-emitter.cs` - Help text
+- `tests/timewarp-nuru-tests/capabilities/capabilities-group-filter.cs` - 10 new tests
+
+### Key Decisions
+- **Prefix matching** - filtering by "admin" matches all endpoints under "admin.*"
+- **Case-insensitive** matching for group names
+- **Original string format** in filter output: `{"group": "kanban"}` (not array)
+
+### Test Outcomes
+- CI tests: 1103 passed, 7 skipped, 0 failed
+- All 10 new group filter tests pass

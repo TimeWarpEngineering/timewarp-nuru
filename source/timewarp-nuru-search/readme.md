@@ -13,28 +13,28 @@ dotnet tool install -g TimeWarp.Nuru.Search
 ### Index a CLI
 
 ```bash
-nuru-search index rebuild --cli /path/to/cli
+nuru index rebuild --cli /path/to/cli
 ```
 
 ### Search endpoints
 
 ```bash
-nuru-search search build
-nuru-search search --cli my-cli deploy
-nuru-search search --query "greet name"
+nuru search build
+nuru search --cli my-cli deploy
+nuru search --query "greet name"
 ```
 
 ### List indexed CLIs
 
 ```bash
-nuru-search index list
+nuru index list
 ```
 
 ### Clear index
 
 ```bash
-nuru-search index clear
-nuru-search index clear --cli my-cli
+nuru index clear
+nuru index clear --cli my-cli
 ```
 
 ## Features

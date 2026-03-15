@@ -14,7 +14,7 @@
     
     <!-- Set up as a .NET Tool -->
     <PackAsTool>true</PackAsTool>
-    <ToolCommandName>nuru-search</ToolCommandName>
+    <ToolCommandName>nuru</ToolCommandName>
     <PackageId>TimeWarp.Nuru.Search</PackageId>
     
     <NoWarn>$(NoWarn);CA1303;CA1515;CA2007;CA1819</NoWarn>

@@ -46,6 +46,17 @@ internal sealed class BuildCommand : ICommand<Unit>
       Terminal.WriteLine("Building TimeWarp.Nuru library...");
       Terminal.WriteLine($"Working from: {repoRoot}");
 
+      // Restore first to ensure all dependencies are available
+      Terminal.WriteLine("\nRestoring packages...");
+      CommandResult restoreResult = DotNet.Restore()
+        .WithProject(Path.Combine(repoRoot, "timewarp-nuru.slnx"))
+        .Build();
+
+      if (await restoreResult.RunAsync() != 0)
+      {
+        throw new InvalidOperationException("Restore failed!");
+      }
+
       // Clean first if requested
       if (command.Clean)
       {

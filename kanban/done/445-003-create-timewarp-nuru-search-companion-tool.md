@@ -8,13 +8,13 @@ Create a standalone .NET tool that provides keyword search across all Nuru-based
 
 ## Checklist
 
-- [ ] Create timewarp-nuru-search project structure
-- [ ] Implement SQLite schema with FTS5 virtual table
-- [ ] Implement `nuru-search search` command
-- [ ] Implement on-demand indexing (run `cli --capabilities`, parse, store)
-- [ ] Implement version drift detection (re-index if version changed)
-- [ ] Add `nuru-search index list` command (show indexed CLIs)
-- [ ] Add `nuru-search index rebuild` command (force re-index)
+- [x] Create timewarp-nuru-search project structure
+- [x] Implement SQLite schema with FTS5 virtual table
+- [x] Implement `nuru-search search` command
+- [x] Implement on-demand indexing (run `cli --capabilities`, parse, store)
+- [x] Implement version drift detection (re-index if version changed)
+- [x] Add `nuru-search index list` command (show indexed CLIs)
+- [x] Add `nuru-search index rebuild` command (force re-index)
 - [ ] Publish as .NET tool to NuGet
 
 ## Notes
@@ -260,3 +260,44 @@ Package metadata, `dotnet pack`, publish to NuGet
 ### Parent Task
 
 #445 - Add --search and --group-filter options to --capabilities
+
+## Results
+
+### What Was Implemented
+- New CLI tool `TimeWarp.Nuru.Search` for keyword search across Nuru-based CLIs
+- SQLite FTS5 with Porter stemmer for fast full-text search
+- On-demand indexing (run `cli --capabilities`, parse, store)
+- Version drift detection (re-index if version changed)
+- Commands: `search`, `index list`, `index rebuild`, `index clear`
+
+### Files Created
+- `source/timewarp-nuru-search/timewarp-nuru-search.csproj` - Project file with AOT support
+- `source/timewarp-nuru-search/global-usings.cs` - Global using statements
+- `source/timewarp-nuru-search/program.cs` - Entry point with DI setup
+- `source/timewarp-nuru-search/endpoints/search-group.cs` - Route group
+- `source/timewarp-nuru-search/endpoints/search-query.cs` - Main search endpoint
+- `source/timewarp-nuru-search/endpoints/index-group.cs` - Route group
+- `source/timewarp-nuru-search/endpoints/index-list-query.cs` - List indexed CLIs
+- `source/timewarp-nuru-search/endpoints/index-rebuild-command.cs` - Force re-index
+- `source/timewarp-nuru-search/endpoints/index-clear-command.cs` - Clear index
+- `source/timewarp-nuru-search/services/database-path.cs` - ~/.nuru/index.db path
+- `source/timewarp-nuru-search/services/search-index.cs` - SQLite FTS5 operations
+- `source/timewarp-nuru-search/services/capabilities-client.cs` - Run CLI via Amuru
+
+### Files Modified
+- `Directory.Packages.props` - Added Microsoft.Data.Sqlite
+- `timewarp-nuru.slnx` - Added new project
+
+### Key Decisions
+- **`~/.nuru/index.db`** - Consistent with existing Nuru history location
+- **SQLite FTS5 with Porter stemmer** - Better word matching for search
+- **On-demand indexing** - No background services, index when needed
+- **AOT compilation** - Fast startup, single binary deployment
+- **Explicit `--cli` argument** - Simple, predictable CLI indexing
+
+### Test Outcomes
+- Build: 0 warnings, 0 errors
+- CI tests: 1103 passed, 7 skipped, 0 failed
+- CLI help: Working
+- `index list`: Working
+- `--capabilities`: Working (4 endpoints registered)

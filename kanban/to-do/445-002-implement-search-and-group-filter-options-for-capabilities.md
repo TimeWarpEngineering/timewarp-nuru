@@ -1,19 +1,15 @@
-# Implement --search and --group-filter options for --capabilities
+# Implement --group-filter option for --capabilities
 
 ## Description
 
-Extend the generated `PrintCapabilities` method to support `--group-filter` (local) and `--search` (nuru-search subprocess) options.
+Extend the generated `PrintCapabilities` method to support `--group-filter` option for local filtering by GroupPath prefix. This is a standalone feature with no external dependencies.
 
 ## Checklist
 
 - [ ] Extend CapabilitiesResponse DTO with filter metadata
 - [ ] Add --group-filter option handling (local filtering)
-- [ ] Add --search option handling (nuru-search subprocess)
-- [ ] Handle combined --group-filter + --search (pass to nuru-search)
-- [ ] Add error message when nuru-search not installed
-- [ ] Update help output to show new options
+- [ ] Update help output to show new option
 - [ ] Add tests for group-filter functionality
-- [ ] Add tests for search error handling (nuru-search not installed)
 
 ## Notes
 
@@ -27,22 +23,12 @@ if (routeArgs is ["--capabilities"])
 }
 ```
 
-Extended pattern with options:
+Extended pattern with group-filter:
 ```csharp
-// With group filter only (local)
+// With group filter (local)
 if (routeArgs is ["--capabilities", "--group-filter", var group] or ["--capabilities", "-g", var group])
 {
   PrintCapabilities(app.Terminal, groupFilter: group);
-}
-// With search (requires nuru-search)
-else if (routeArgs is ["--capabilities", "--search", var query] or ["--capabilities", "-s", var query])
-{
-  await SearchCapabilitiesAsync(app.Terminal, query: query);
-}
-// Both combined (pass to nuru-search)
-else if (routeArgs has --group-filter and --search)
-{
-  await SearchCapabilitiesAsync(app.Terminal, query: query, groupFilter: group);
 }
 // No options
 else if (routeArgs is ["--capabilities"])
@@ -55,35 +41,31 @@ else if (routeArgs is ["--capabilities"])
 
 ```csharp
 // Filter endpoints by GroupPath prefix match
+string[] groupParts = group.Split('.');
 var filtered = endpoints.Where(e => 
   e.GroupPath.Length >= groupParts.Length &&
   groupParts.Zip(e.GroupPath).All(p => p.First == p.Second));
 ```
 
-### Search Subprocess (Amuru)
+### Output Format (when filtered)
 
-```csharp
-CommandOutput output = await Shell.Builder("nuru-search")
-  .WithArguments("search", "--cli", cliName, "--version", version, "--query", query)
-  .WithNoValidation()
-  .CaptureAsync();
-
-if (!output.Success)
+```json
 {
-  terminal.WriteLine("Search requires timewarp-nuru-search to be installed.");
-  terminal.WriteLine("Install with: dotnet tool install --global TimeWarp.Nuru.Search");
-}
-else
-{
-  terminal.WriteLine(output.Stdout);
+  "name": "ganda",
+  "version": "1.2.3",
+  "filter": {
+    "group": "kanban"
+  },
+  "endpoints": [...]
 }
 ```
 
-### Error Message
+### CLI Surface
 
-```
-Search requires timewarp-nuru-search to be installed.
-Install with: dotnet tool install --global TimeWarp.Nuru.Search
+```bash
+ganda --capabilities                         # Full
+ganda --capabilities --group-filter "kanban" # Local filter
+ganda --capabilities -g "git"                # Short form
 ```
 
 ### Parent Task

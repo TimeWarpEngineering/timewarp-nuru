@@ -4,15 +4,18 @@
 
 Extend the `--capabilities` built-in flag to support filtering options for AI agent token efficiency. This enables agents to discover relevant endpoints without receiving the full capabilities catalog.
 
-Includes three components:
-1. **Nuru changes** - Add Amuru dependency, implement `--group-filter` (local) and `--search` (subprocess) options
-2. **nuru-search tool** - Companion CLI for keyword search across all Nuru-based CLIs using SQLite FTS5
+Includes four components:
+1. **Amuru dependency** - Add TimeWarp.Amuru for process execution (#445-001) ✓
+2. **Group filter** - Local filtering by GroupPath prefix (#445-002)
+3. **nuru-search tool** - Companion CLI for keyword search across all Nuru-based CLIs using SQLite FTS5 (#445-003)
+4. **Search option** - Call nuru-search subprocess (#445-004)
 
 ## Checklist
 
-- [ ] Add TimeWarp.Amuru dependency and migrate clipboard code (#445-001)
-- [ ] Implement --search and --group-filter options (#445-002)
+- [x] Add TimeWarp.Amuru dependency and migrate clipboard code (#445-001)
+- [ ] Implement --group-filter option (#445-002)
 - [ ] Create timewarp-nuru-search companion tool (#445-003)
+- [ ] Implement --search option (#445-004)
 
 ## Notes
 
@@ -113,6 +116,17 @@ ganda --capabilities --search "commit"
 │ results  │ │ --capabilities  │
 └──────────┘ │ index into FTS5 │
              └──────────────────┘
+```
+
+### Dependency Order
+
+```
+445-001 ✓ → 445-002 → 445-003 → 445-004
+   │           │          │          │
+   │           │          │          └── Requires nuru-search
+   │           │          └── Independent tool
+   │           └── Local only, no dependency
+   └── Amuru dependency
 ```
 
 ### Related

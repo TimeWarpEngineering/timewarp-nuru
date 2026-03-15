@@ -258,7 +258,9 @@ public sealed partial class SearchIndex : IAsyncDisposable
     sqlBuilder.AppendLine("  ORDER BY endpoints_fts.rank");
     sqlBuilder.AppendLine("  LIMIT $limit");
 
+#pragma warning disable CA2100 // SQL is built from our own code, user input goes through parameters
     cmd.CommandText = sqlBuilder.ToString();
+#pragma warning restore CA2100
 
     cmd.Parameters.AddWithValue("$query", sanitizedQuery);
     cmd.Parameters.AddWithValue("$limit", limit);

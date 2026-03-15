@@ -31,7 +31,7 @@ internal static class CapabilitiesEmitter
     sb.AppendLine("    terminal.WriteLine(json);");
     sb.AppendLine("  }");
 
-    EmitSearchCapabilitiesAsync(sb, model, methodSuffix);
+    EmitSearchCapabilities(sb, model, methodSuffix);
   }
 
   /// <summary>
@@ -40,7 +40,7 @@ internal static class CapabilitiesEmitter
   /// <param name="sb">The StringBuilder to append to.</param>
   /// <param name="model">The application model containing name and version.</param>
   /// <param name="methodSuffix">Suffix for method name (e.g., "_0" for multi-app assemblies).</param>
-  private static void EmitSearchCapabilitiesAsync(StringBuilder sb, AppModel model, string methodSuffix)
+  private static void EmitSearchCapabilities(StringBuilder sb, AppModel model, string methodSuffix)
   {
     string name = EscapeCSharpString(model.Name ?? "app");
 

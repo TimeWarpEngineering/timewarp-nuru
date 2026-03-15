@@ -182,6 +182,81 @@ timewarp-nuru-search
 dotnet tool install --global TimeWarp.Nuru.Search
 ```
 
+## Implementation Plan
+
+### Project Structure
+
+```
+source/timewarp-nuru-search/
+├── timewarp-nuru-search.csproj
+├── Directory.Build.props
+├── global-usings.cs
+├── program.cs                    # Entry point
+├── endpoints/
+│   ├── search-group.cs           # [NuruRouteGroup("search")]
+│   ├── search-query.cs           # search --cli --version --query
+│   ├── index-group.cs            # [NuruRouteGroup("index")]
+│   ├── index-list-query.cs       # index list
+│   ├── index-rebuild-command.cs  # index rebuild --cli/--all
+│   └── index-clear-command.cs    # index clear
+└── services/
+    ├── search-index.cs           # SQLite FTS5 operations
+    ├── capabilities-client.cs    # Run CLI --capabilities via Amuru
+    └── database-path.cs          # ~/.nuru/index.db path resolution
+```
+
+### Phase 1: Project Setup
+
+1. Create `source/timewarp-nuru-search/timewarp-nuru-search.csproj`
+2. Create `source/timewarp-nuru-search/Directory.Build.props`
+3. Create `source/timewarp-nuru-search/global-usings.cs`
+4. Add to `timewarp-nuru.slnx`
+5. Add `Microsoft.Data.Sqlite` to `Directory.Packages.props`
+
+### Phase 2: Core Services
+
+1. `services/database-path.cs` - Resolve `~/.nuru/index.db` path
+2. `services/search-index.cs` - SQLite FTS5 operations
+3. `services/capabilities-client.cs` - Run CLI --capabilities via Amuru
+
+### Phase 3: SQLite Schema
+
+Tables:
+- `clis` - CLI metadata (name, version, indexed_at, capabilities_json)
+- `endpoints` - Endpoint data (id, cli_name, pattern, description, group_path, endpoint_json)
+- `endpoints_fts` - FTS5 virtual table with porter stemmer
+
+Triggers for FTS sync (insert, delete, update)
+
+### Phase 4: Endpoints
+
+1. `search-group.cs` - Route group
+2. `search-query.cs` - Main search endpoint
+3. `index-group.cs` - Route group
+4. `index-list-query.cs` - List indexed CLIs
+5. `index-rebuild-command.cs` - Force re-index
+6. `index-clear-command.cs` - Clear index
+
+### Phase 5: Entry Point
+
+`program.cs` - NuruApp with DI for services
+
+### Phase 6: Testing
+
+Unit tests for search-index, capabilities-client, FTS query sanitization
+
+### Phase 7: NuGet Packaging
+
+Package metadata, `dotnet pack`, publish to NuGet
+
+### Key Design Decisions
+
+1. **`~/.nuru/index.db`** - Consistent with existing Nuru history location
+2. **AOT compilation** - Fast startup, single binary
+3. **Explicit `--cli` argument** - Simple, predictable
+4. **Porter stemmer** - FTS5 tokenizer for better word matching
+5. **On-demand indexing** - No background services, index when needed
+
 ### Parent Task
 
 #445 - Add --search and --group-filter options to --capabilities

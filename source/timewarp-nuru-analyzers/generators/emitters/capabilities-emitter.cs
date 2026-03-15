@@ -42,7 +42,7 @@ internal static class CapabilitiesEmitter
   /// <param name="methodSuffix">Suffix for method name (e.g., "_0" for multi-app assemblies).</param>
   private static void EmitSearchCapabilities(StringBuilder sb, AppModel model, string methodSuffix)
   {
-    string name = EscapeCSharpString(model.Name ?? "app");
+    string? nameLiteral = model.Name is not null ? $"\"{EscapeCSharpString(model.Name)}\"" : null;
 
     sb.AppendLine();
     sb.AppendLine($"  private static async global::System.Threading.Tasks.Task<int> SearchCapabilitiesAsync{methodSuffix}(ITerminal terminal, string query, string? groupFilter = null)");
@@ -51,7 +51,7 @@ internal static class CapabilitiesEmitter
     sb.AppendLine("    global::System.Collections.Generic.List<string> args = new()");
     sb.AppendLine("    {");
     sb.AppendLine("      \"search\",");
-    sb.AppendLine($"      \"--cli\", \"{name}\",");
+    sb.AppendLine($"      \"--cli\", {nameLiteral ?? "global::System.Reflection.Assembly.GetEntryAssembly()!.GetName().Name!"},");
     sb.AppendLine("    };");
     sb.AppendLine();
     sb.AppendLine("    if (groupFilter is not null)");
@@ -97,7 +97,7 @@ internal static class CapabilitiesEmitter
   /// </summary>
   private static void EmitResponseConstruction(StringBuilder sb, AppModel model, Compilation? compilation)
   {
-    string name = EscapeCSharpString(model.Name ?? "app");
+    string? nameLiteral = model.Name is not null ? $"\"{EscapeCSharpString(model.Name)}\"" : null;
     string version = EscapeCSharpString(model.Version ?? "0.0.0");
 
     sb.AppendLine("    global::System.Collections.Generic.List<global::TimeWarp.Nuru.EndpointCapability> __endpoints = new();");
@@ -126,7 +126,7 @@ internal static class CapabilitiesEmitter
 
     sb.AppendLine("    global::TimeWarp.Nuru.CapabilitiesResponse response = new()");
     sb.AppendLine("    {");
-    sb.AppendLine($"      Name = \"{name}\",");
+    sb.AppendLine($"      Name = {nameLiteral ?? "global::System.Reflection.Assembly.GetEntryAssembly()!.GetName().Name!"},");
     sb.AppendLine($"      Version = \"{version}\",");
 
     if (model.Description is not null)

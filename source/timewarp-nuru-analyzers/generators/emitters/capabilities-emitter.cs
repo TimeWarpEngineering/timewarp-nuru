@@ -35,7 +35,7 @@ internal static class CapabilitiesEmitter
   }
 
   /// <summary>
-  /// Emits the SearchCapabilitiesAsync method for calling nuru-search subprocess.
+  /// Emits the SearchCapabilitiesAsync method for calling nuru subprocess.
   /// </summary>
   /// <param name="sb">The StringBuilder to append to.</param>
   /// <param name="model">The application model containing name and version.</param>
@@ -47,7 +47,7 @@ internal static class CapabilitiesEmitter
     sb.AppendLine();
     sb.AppendLine($"  private static async global::System.Threading.Tasks.Task<int> SearchCapabilitiesAsync{methodSuffix}(ITerminal terminal, string query, string? groupFilter = null)");
     sb.AppendLine("  {");
-    sb.AppendLine("    // Build nuru-search arguments");
+    sb.AppendLine("    // Build nuru arguments");
     sb.AppendLine("    global::System.Collections.Generic.List<string> args = new()");
     sb.AppendLine("    {");
     sb.AppendLine("      \"search\",");
@@ -63,26 +63,26 @@ internal static class CapabilitiesEmitter
     sb.AppendLine("    args.Add(\"--query\");");
     sb.AppendLine("    args.Add(query);");
     sb.AppendLine();
-    sb.AppendLine("    // Execute nuru-search via Amuru (wrap in try-catch for missing tool)");
+    sb.AppendLine("    // Execute nuru via Amuru (wrap in try-catch for missing tool)");
     sb.AppendLine("    global::TimeWarp.Amuru.CommandOutput output;");
     sb.AppendLine("    try");
     sb.AppendLine("    {");
-    sb.AppendLine("      output = await global::TimeWarp.Amuru.Shell.Builder(\"nuru-search\")");
+    sb.AppendLine("      output = await global::TimeWarp.Amuru.Shell.Builder(\"nuru\")");
     sb.AppendLine("        .WithArguments([.. args])");
     sb.AppendLine("        .WithNoValidation()");
     sb.AppendLine("        .CaptureAsync().ConfigureAwait(false);");
     sb.AppendLine("    }");
     sb.AppendLine("    catch (global::System.ComponentModel.Win32Exception)");
     sb.AppendLine("    {");
-    sb.AppendLine("      // nuru-search not found - show install instructions");
-    sb.AppendLine("      await terminal.WriteErrorLineAsync(\"Search requires timewarp-nuru-search to be installed.\").ConfigureAwait(false);");
+    sb.AppendLine("      // nuru not found - show install instructions");
+    sb.AppendLine("      await terminal.WriteErrorLineAsync(\"Search requires TimeWarp.Nuru.Search to be installed.\").ConfigureAwait(false);");
     sb.AppendLine("      await terminal.WriteErrorLineAsync(\"Install with: dotnet tool install --global TimeWarp.Nuru.Search\").ConfigureAwait(false);");
     sb.AppendLine("      return 1;");
     sb.AppendLine("    }");
     sb.AppendLine();
     sb.AppendLine("    if (!output.Success)");
     sb.AppendLine("    {");
-    sb.AppendLine("      await terminal.WriteErrorLineAsync(\"Search requires timewarp-nuru-search to be installed.\").ConfigureAwait(false);");
+    sb.AppendLine("      await terminal.WriteErrorLineAsync(\"Search requires TimeWarp.Nuru.Search to be installed.\").ConfigureAwait(false);");
     sb.AppendLine("      await terminal.WriteErrorLineAsync(\"Install with: dotnet tool install --global TimeWarp.Nuru.Search\").ConfigureAwait(false);");
     sb.AppendLine("      return 1;");
     sb.AppendLine("    }");

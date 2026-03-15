@@ -155,6 +155,7 @@ internal static class HelpEmitter
     sb.AppendLine("      .AddRow(\"--help, -h\", \"Show this help message\")");
     sb.AppendLine("      .AddRow(\"--version\", \"Show version information\")");
     sb.AppendLine("      .AddRow(\"--capabilities\", \"Show capabilities for AI tools\")");
+    sb.AppendLine("      .AddRow(\"--capabilities --group-filter <group>\", \"Filter capabilities by group prefix\")");
     sb.AppendLine("      .HideHeaders()         // ← Remove headers");
     sb.AppendLine("    );");
   }

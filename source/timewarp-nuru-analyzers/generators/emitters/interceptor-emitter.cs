@@ -850,6 +850,15 @@ internal static class InterceptorEmitter
     sb.AppendLine("    }");
     sb.AppendLine();
 
+    // --capabilities flag with --group-filter (always available for AI tools)
+    sb.AppendLine("    // Built-in: --capabilities with --group-filter (for AI tools)");
+    sb.AppendLine("    if (routeArgs.Length == 3 && routeArgs[0] == \"--capabilities\" && (routeArgs[1] == \"--group-filter\" || routeArgs[1] == \"-g\"))");
+    sb.AppendLine("    {");
+    sb.AppendLine($"      PrintCapabilities{methodSuffix}(app.Terminal, groupFilter: routeArgs[2]);");
+    sb.AppendLine("      return 0;");
+    sb.AppendLine("    }");
+    sb.AppendLine();
+
     // --capabilities flag (always available for AI tools)
     sb.AppendLine("    // Built-in: --capabilities (for AI tools)");
     sb.AppendLine($"    if (routeArgs is [{string.Join(" or ", BuiltInFlags.CapabilitiesForms.Select(f => $"\"{f}\""))}])");

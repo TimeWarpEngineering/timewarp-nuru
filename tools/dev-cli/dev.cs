@@ -37,9 +37,13 @@
 //   dev --help
 // ═══════════════════════════════════════════════════════════════════════════════
 
+#region Purpose
+// Dev CLI command for TimeWarp.Nuru development workflow
+#endregion
+
 NuruApp app = NuruApp.CreateBuilder()
   .WithName("dev")
-  .WithDescription("Development CLI for TimeWarp.Nuru")
+  .WithDescription("Development CLI for timewarp-nuru")
   .DiscoverEndpoints()
   .Build();
 

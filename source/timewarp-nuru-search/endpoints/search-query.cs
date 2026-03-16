@@ -1,9 +1,9 @@
 namespace TimeWarp.Nuru.Search.Endpoints;
 
 [NuruRoute("", Description = "Search indexed CLI endpoints")]
-public sealed class SearchQuery : SearchGroup, IQuery<SearchResult[]>
+public sealed partial class SearchQuery : SearchGroup, IQuery<SearchResult[]>
 {
-  [Option("--cli", Description = "Filter results to a specific CLI")]
+  [Option("--cli", Description = "Filter results to a specific CLI (will auto-index if not found)")]
   public string? Cli { get; set; }
 
   [Option("--version", Description = "Show CLI version in results")]
@@ -21,9 +21,11 @@ public sealed class SearchQuery : SearchGroup, IQuery<SearchResult[]>
   [Option("--limit", Description = "Maximum number of results")]
   public int Limit { get; set; } = 50;
 
-  public sealed class Handler(
+  public sealed partial class Handler(
     SearchIndex searchIndex,
-    ITerminal terminal) : IQueryHandler<SearchQuery, SearchResult[]>
+    CapabilitiesClient capabilitiesClient,
+    ITerminal terminal,
+    ILogger<Handler> logger) : IQueryHandler<SearchQuery, SearchResult[]>
   {
     public async ValueTask<SearchResult[]> Handle(SearchQuery query, CancellationToken cancellationToken)
     {
@@ -35,6 +37,12 @@ public sealed class SearchQuery : SearchGroup, IQuery<SearchResult[]>
       {
         await terminal.WriteLineAsync("Error: No search query provided. Use --query or pass search terms.").ConfigureAwait(false);
         return [];
+      }
+
+      // On-demand indexing: if --cli is specified, ensure it's indexed
+      if (!string.IsNullOrEmpty(query.Cli))
+      {
+        await EnsureCliIndexedAsync(query.Cli, cancellationToken).ConfigureAwait(false);
       }
 
       IReadOnlyList<SearchResult> results = await searchIndex.SearchAsync(
@@ -72,6 +80,46 @@ public sealed class SearchQuery : SearchGroup, IQuery<SearchResult[]>
       return [.. results];
     }
 
+    private async Task EnsureCliIndexedAsync(string cliName, CancellationToken cancellationToken)
+    {
+      // Check if already indexed
+      string? indexedVersion = await searchIndex.GetCliVersionAsync(cliName, cancellationToken).ConfigureAwait(false);
+
+      if (indexedVersion is not null)
+      {
+        LogCliAlreadyIndexed(logger, cliName, indexedVersion);
+        return;
+      }
+
+      // Find CLI in PATH using Amuru's PathResolver
+      string? cliPath = PathResolver.ResolveExecutable(cliName);
+      if (cliPath is null)
+      {
+        await terminal.WriteLineAsync($"Warning: CLI '{cliName}' not found in PATH. Cannot auto-index.").ConfigureAwait(false);
+        return;
+      }
+
+      LogAutoIndexingCli(logger, cliName, cliPath);
+
+      // Get capabilities from CLI
+      CliCapabilities? capabilities = await capabilitiesClient.GetCapabilitiesAsync(cliPath, cancellationToken).ConfigureAwait(false);
+      if (capabilities is null)
+      {
+        await terminal.WriteLineAsync($"Warning: Failed to get capabilities from '{cliName}'. Cannot auto-index.").ConfigureAwait(false);
+        return;
+      }
+
+      // Index the CLI
+      await searchIndex.IndexCliAsync(
+        capabilities.Name,
+        capabilities.Version,
+        capabilities.RawJson,
+        capabilities.Endpoints,
+        cancellationToken).ConfigureAwait(false);
+
+      await terminal.WriteLineAsync($"Auto-indexed {capabilities.Name} v{capabilities.Version} ({capabilities.Endpoints.Count} endpoints)").ConfigureAwait(false);
+    }
+
     private static string BuildSearchQuery(SearchQuery query)
     {
       if (!string.IsNullOrWhiteSpace(query.Query))
@@ -86,5 +134,11 @@ public sealed class SearchQuery : SearchGroup, IQuery<SearchResult[]>
 
       return string.Empty;
     }
+
+    [LoggerMessage(LogLevel.Debug, "CLI {CliName} already indexed at version {Version}")]
+    private static partial void LogCliAlreadyIndexed(ILogger logger, string cliName, string version);
+
+    [LoggerMessage(LogLevel.Information, "Auto-indexing CLI {CliName} from {CliPath}")]
+    private static partial void LogAutoIndexingCli(ILogger logger, string cliName, string cliPath);
   }
 }

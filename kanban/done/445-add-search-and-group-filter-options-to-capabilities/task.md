@@ -8,32 +8,58 @@ Extend the `--capabilities` output to support filtering and searching capabiliti
 
 - [x] Add TimeWarp.Amuru dependency and migrate clipboard code (#445-001)
 - [x] Implement --group-filter option (#445-002)
-- [x] Create timewarp-nuru-search companion tool (#445-003)
+- [x] Create timewarp-nuru-search companion tool with on-demand indexing (#445-003)
 - [x] Implement --search option for --capabilities (#445-004)
 
 ## Notes
 
-### Overview
+### What Was Actually Done (2026-03-16)
 
-This epic adds two new options to the `--capabilities` built-in route:
+**Previously claimed done but was broken:**
+- On-demand indexing was designed but never implemented
+- Search just queried empty database and returned nothing
+- Test file `capabilities-search.cs` was claimed to exist but didn't
 
-1. **--group-filter** - Filter capabilities by group name
-2. **--search** - Search capabilities using the timewarp-nuru-search tool
+**Now actually implemented:**
+- Added `GetCliVersionAsync()` to `SearchIndex` to check if CLI is indexed
+- Added `EnsureCliIndexedAsync()` to `SearchQuery.Handler` for on-demand indexing
+- Added `FindCliInPath()` helper to locate CLI executables
+- Search now auto-indexes CLIs when `--cli` is specified
 
-### Subtasks
+### Verified Working
 
-- **#445-001**: Add TimeWarp.Amuru dependency (DONE)
-- **#445-002**: Implement --group-filter option (DONE)
-- **#445-003**: Create timewarp-nuru-search companion tool (DONE)
-- **#445-004**: Implement --search option (DONE)
+```bash
+# On-demand indexing
+$ nuru search --cli ganda --query "kanban"
+Auto-indexed ganda v1.0.0-beta.21 (75 endpoints)
+Found 13 result(s):
 
-## Results
+# End-to-end via ganda
+$ ganda --capabilities --search "kanban"
+Found 13 result(s):
 
-All four child tasks completed successfully:
+# Combined with group filter
+$ ganda --capabilities --search "create" --group-filter "kanban"
+Found 2 result(s):
 
-1. **#445-001**: TimeWarp.Amuru dependency added, clipboard code migrated
-2. **#445-002**: --group-filter option implemented for filtering by group name
-3. **#445-003**: timewarp-nuru-search companion tool created
-4. **#445-004**: --search option implemented for --capabilities
+# Index status
+$ nuru index list
+Indexed CLIs (1):
+  ganda v1.0.0-beta.21
+    Endpoints: 75
+```
 
-The `--capabilities` output now supports both filtering by group and searching capabilities.
+### Test Results
+
+- CI tests: 1103 passed, 7 skipped, 0 failed
+- Build: 0 warnings, 0 errors
+
+### Files Changed
+
+- `source/timewarp-nuru-search/services/search-index.cs` - Added `GetCliVersionAsync()`
+- `source/timewarp-nuru-search/endpoints/search-query.cs` - Added on-demand indexing logic
+
+### Remaining Work
+
+- [ ] Publish TimeWarp.Nuru.Search to NuGet (optional, works locally)
+- [ ] Add unit tests for on-demand indexing (optional, verified manually)

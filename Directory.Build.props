@@ -31,6 +31,10 @@
   <ItemGroup Label="Source Generator Output">
     <Compile Remove="$(CompilerGeneratedFilesOutputPath)/**/*.cs" />
   </ItemGroup>
+  <!-- Banned API Symbols -->
+  <ItemGroup Label="Banned API Analyzers">
+    <AdditionalFiles Include="$(MSBuildThisFileDirectory)BannedSymbols.txt" />
+  </ItemGroup>
 
   <!-- C# Interceptors (for source generators) -->
   <PropertyGroup Label="Interceptors">
@@ -42,6 +46,10 @@
   <!-- Expose UseNewGen to source generators -->
   <ItemGroup Label="Compiler Visible Properties">
     <CompilerVisibleProperty Include="UseNewGen" />
+  </ItemGroup>
+  <!-- Banned API Symbols -->
+  <ItemGroup Label="Banned API Analyzers">
+    <AdditionalFiles Include="$(MSBuildThisFileDirectory)BannedSymbols.txt" />
   </ItemGroup>
 
   <!-- Code quality, analyzers, and warning configuration -->
@@ -72,7 +80,12 @@
     <PackageReference Include="Roslynator.CodeAnalysis.Analyzers" PrivateAssets="all" />
     <PackageReference Include="Roslynator.Formatting.Analyzers" PrivateAssets="all" />
     <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" PrivateAssets="all" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.CodeStyle" PrivateAssets="all" />
+  </ItemGroup>
+  <!-- Banned API Symbols -->
+  <ItemGroup Label="Banned API Analyzers">
+    <AdditionalFiles Include="$(MSBuildThisFileDirectory)BannedSymbols.txt" />
   </ItemGroup>
 
 </Project>

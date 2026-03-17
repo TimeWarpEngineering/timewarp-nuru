@@ -393,6 +393,26 @@ public sealed partial class SearchIndex : IAsyncDisposable
   [LoggerMessage(LogLevel.Information, "Cleared index for CLI {CliName}")]
   private static partial void LogClearedCli(ILogger logger, string cliName);
 
+  /// <summary>
+  /// Gets the indexed version of a CLI, or null if not indexed.
+  /// </summary>
+  public async Task<string?> GetCliVersionAsync(string cliName, CancellationToken cancellationToken = default)
+  {
+    ArgumentNullException.ThrowIfNull(cliName);
+
+    if (!initialized)
+    {
+      await InitializeAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    await using SqliteCommand cmd = connection.CreateCommand();
+    cmd.CommandText = "SELECT version FROM clis WHERE name = $name";
+    cmd.Parameters.AddWithValue("$name", cliName);
+
+    object? result = await cmd.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
+    return result as string;
+  }
+
   public async ValueTask DisposeAsync()
   {
     await connection.CloseAsync().ConfigureAwait(false);

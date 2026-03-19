@@ -73,7 +73,7 @@ public sealed class ReplSession : IDisposable
     if (Disposed) return;
 
     // Critical cleanup that must happen
-    Console.CancelKeyPress -= OnCancelKeyPress;
+    Terminal.CancelKeyPress -= OnCancelKeyPress;
 
     if (ReplOptions.PersistHistory)
       History.Save();
@@ -139,8 +139,8 @@ public sealed class ReplSession : IDisposable
     // Load history if persistence is enabled
     if (ReplOptions.PersistHistory) History.Load();
 
-    // Handle Ctrl+C gracefully - still uses System.Console for event subscription
-    Console.CancelKeyPress += OnCancelKeyPress;
+    // Handle Ctrl+C gracefully
+    Terminal.CancelKeyPress += OnCancelKeyPress;
   }
 
   private async Task<int> ProcessCommandLoopAsync(CancellationToken cancellationToken)

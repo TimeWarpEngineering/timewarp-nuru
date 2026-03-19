@@ -15,7 +15,7 @@
 //   - Exponential backoff with jitter
 //   - Configurable max retries via IRetryable.MaxRetries
 // ═══════════════════════════════════════════════════════════════════════════════
-#:project ../../../../source/timewarp-nuru/timewarp-nuru.csproj
+#:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
 using PipelineRetry.Behaviors;
 using TimeWarp.Nuru;

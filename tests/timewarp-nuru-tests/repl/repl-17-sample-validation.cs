@@ -1,5 +1,5 @@
 #!/usr/bin/dotnet --
-#:project ../../../source/timewarp-nuru/timewarp-nuru.csproj
+#:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
 // Tests that validate REPL behavior using the same routes as repl-basic-demo.cs
 // This test file mirrors the exact route configuration from samples/repl-demo/repl-basic-demo.cs

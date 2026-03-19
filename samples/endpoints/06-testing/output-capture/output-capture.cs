@@ -9,7 +9,7 @@
 // PATTERN: Use TestTerminal to capture and assert CLI output in unit tests
 // ═══════════════════════════════════════════════════════════════════════════════
 #:package Shouldly
-#:project ../../../../source/timewarp-nuru/timewarp-nuru.csproj
+#:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
 using Shouldly;
 using TimeWarp.Nuru;

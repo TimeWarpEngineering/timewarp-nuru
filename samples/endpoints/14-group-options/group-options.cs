@@ -13,7 +13,7 @@
 //   dotnet run -- git clone https://github.com/user/repo --verbose --config user.name
 //
 // ═══════════════════════════════════════════════════════════════════════════════
-#:project ../../../source/timewarp-nuru/timewarp-nuru.csproj
+#:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
 using TimeWarp.Nuru;
 

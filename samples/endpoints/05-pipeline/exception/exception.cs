@@ -14,7 +14,7 @@
 //   - Provides user-friendly error messages
 //   - Logs detailed error information
 // ═══════════════════════════════════════════════════════════════════════════════
-#:project ../../../../source/timewarp-nuru/timewarp-nuru.csproj
+#:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
 using PipelineException.Behaviors;
 using TimeWarp.Nuru;

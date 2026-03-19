@@ -1,5 +1,5 @@
 #!/usr/bin/dotnet --
-#:project ../../../source/timewarp-nuru/timewarp-nuru.csproj
+#:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
 // Tests for PSReadLine-compatible interactive history search (Task 043-002a)
 // Verifies Ctrl+R (reverse search) and Ctrl+S (forward search) functionality

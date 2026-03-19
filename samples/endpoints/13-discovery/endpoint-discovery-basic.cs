@@ -30,7 +30,7 @@
 // DSL: Endpoint (auto-discovery with [NuruRoute] classes)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-#:project ../../../source/timewarp-nuru/timewarp-nuru.csproj
+#:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
 using TimeWarp.Nuru;
 

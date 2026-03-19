@@ -13,7 +13,7 @@
 //   - Factory-based service creation
 //   - Scoped lifetime management
 // ═══════════════════════════════════════════════════════════════════════════════════════════════
-#:project ../../../../source/timewarp-nuru/timewarp-nuru.csproj
+#:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 #:package Microsoft.Extensions.DependencyInjection
 
 using Microsoft.Extensions.DependencyInjection;

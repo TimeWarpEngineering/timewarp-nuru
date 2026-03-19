@@ -1,5 +1,5 @@
 #!/usr/bin/dotnet --
-#:project ../../../source/timewarp-nuru/timewarp-nuru.csproj
+#:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
 // Test NuruApp integration (Section 13 of REPL Test Plan)
 

@@ -1,5 +1,5 @@
 #!/usr/bin/dotnet --
-#:project ../../../source/timewarp-nuru/timewarp-nuru.csproj
+#:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 #pragma warning disable RCS1163 // Unused parameter - parameters must match route pattern names for binding
 
 #region Purpose

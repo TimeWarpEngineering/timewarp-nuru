@@ -12,7 +12,7 @@
 //   ./custom-keys.cs                     # REPL mode (no args)
 //   ./custom-keys.cs --interactive       # REPL mode (explicit flag)
 // ═══════════════════════════════════════════════════════════════════════════════════════
-#:project ../../../../source/timewarp-nuru/timewarp-nuru.csproj
+#:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
 using TimeWarp.Nuru;
 

@@ -12,7 +12,7 @@
 //   ./completion.cs completion zsh   # Generate zsh completions
 //   ./completion.cs completion ps   # Generate PowerShell completions
 // ═══════════════════════════════════════════════════════════════════════════════════════════════
-#:project ../../../source/timewarp-nuru/timewarp-nuru.csproj
+#:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
 using TimeWarp.Nuru;
 using static System.Console;

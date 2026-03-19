@@ -2,7 +2,7 @@
 // fluent-calculator-delegate - Calculator using Fluent DSL delegate approach
 // Uses CreateBuilder for lightweight delegate-only patterns
 // DSL: Fluent API (Map().WithHandler().AsQuery().Done())
-#:project ../../../source/timewarp-nuru/timewarp-nuru.csproj
+#:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
 using TimeWarp.Nuru;
 using static System.Console;

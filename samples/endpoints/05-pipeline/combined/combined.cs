@@ -21,7 +21,7 @@
 //
 // ORDER MATTERS: Behaviors execute in registration order (first = outermost)
 // ═══════════════════════════════════════════════════════════════════════════════
-#:project ../../../../source/timewarp-nuru/timewarp-nuru.csproj
+#:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
 using PipelineCombined.Behaviors;
 using TimeWarp.Nuru;

@@ -1,5 +1,5 @@
 #!/usr/bin/dotnet --
-#:project ../../../source/timewarp-nuru/timewarp-nuru.csproj
+#:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
 #region Purpose
 // Tests quoted string handling in the REPL, mirroring PSReadLine capabilities.

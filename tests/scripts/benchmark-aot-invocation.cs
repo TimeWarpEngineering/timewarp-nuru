@@ -1,6 +1,6 @@
 #!/usr/bin/dotnet --
 #:package TimeWarp.Amuru
-#:project ../../source/timewarp-nuru/timewarp-nuru.csproj
+#:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
 using System.Diagnostics;
 using System.Globalization;

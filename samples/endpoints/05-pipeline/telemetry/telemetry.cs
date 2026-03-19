@@ -14,7 +14,7 @@
 //   - Compatible with OpenTelemetry exporters
 //   - Adds tags for command name and correlation ID
 // ═══════════════════════════════════════════════════════════════════════════════
-#:project ../../../../source/timewarp-nuru/timewarp-nuru.csproj
+#:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
 using PipelineTelemetry.Behaviors;
 using TimeWarp.Nuru;

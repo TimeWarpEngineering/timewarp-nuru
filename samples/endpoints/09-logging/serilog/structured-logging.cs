@@ -13,7 +13,7 @@
 //   - Context enrichment
 //   - Log level control
 // ═══════════════════════════════════════════════════════════════════════════════════════
-#:project ../../../../source/timewarp-nuru/timewarp-nuru.csproj
+#:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 #:package Serilog
 #:package Serilog.Extensions.Logging
 #:package Serilog.Sinks.Console

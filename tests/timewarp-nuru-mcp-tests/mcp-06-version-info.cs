@@ -1,5 +1,5 @@
 #!/usr/bin/dotnet --
-#:project ../../source/timewarp-nuru-mcp/timewarp-nuru-mcp.csproj
+#:project $(SourceDirectory)timewarp-nuru-mcp/timewarp-nuru-mcp.csproj
 
 #if !JARIBU_MULTI
 return await RunAllTests();

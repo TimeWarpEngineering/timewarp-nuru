@@ -1,5 +1,5 @@
 #!/usr/bin/dotnet --
-#:project ../../../source/timewarp-nuru/timewarp-nuru.csproj
+#:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
 // Test command line parsing with quotes and escapes (Section 2 of REPL Test Plan)
 // Migrated from tests/timewarp-nuru-repl-tests-reference-only/

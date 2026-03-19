@@ -12,7 +12,7 @@
 //   - Supports complex service graphs
 //   - Opt-in when source-gen DI is insufficient
 // ═══════════════════════════════════════════════════════════════════════════════════════════════
-#:project ../../../../source/timewarp-nuru/timewarp-nuru.csproj
+#:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 #:package Microsoft.Extensions.DependencyInjection
 
 using Microsoft.Extensions.DependencyInjection;

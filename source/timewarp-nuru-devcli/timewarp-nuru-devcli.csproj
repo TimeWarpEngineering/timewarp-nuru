@@ -12,6 +12,7 @@
     
     <!-- This is a source-only package - no assembly output needed -->
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
   </PropertyGroup>
 
   <!-- No compilation - this is a source-only content package -->

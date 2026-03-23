@@ -104,7 +104,7 @@ internal static class DependencyGraphBuilder
     if (result.Count != services.Length)
       return services;
 
-    return result.ToImmutableArray();
+    return [.. result];
   }
 
   /// <summary>
@@ -132,7 +132,7 @@ internal static class DependencyGraphBuilder
     {
       string implName = NormalizeTypeName(service.ImplementationTypeName);
       if (!graph.ContainsKey(implName))
-        graph[implName] = new List<string>();
+        graph[implName] = [];
 
       if (!service.ConstructorDependencyTypes.IsDefaultOrEmpty)
       {
@@ -166,7 +166,7 @@ internal static class DependencyGraphBuilder
       }
     }
 
-    return cycleNodes.ToImmutableArray();
+    return [.. cycleNodes];
   }
 
   /// <summary>
@@ -213,7 +213,7 @@ internal static class DependencyGraphBuilder
     if (services.IsDefaultOrEmpty)
       return [];
 
-    List<(string, string, string, string)> mismatches = new();
+    List<(string, string, string, string)> mismatches = [];
 
     // Build lookup
     Dictionary<string, ServiceDefinition> serviceByImpl = new(StringComparer.Ordinal);
@@ -254,7 +254,7 @@ internal static class DependencyGraphBuilder
       }
     }
 
-    return mismatches.ToImmutableArray();
+    return [.. mismatches];
   }
 
   /// <summary>

@@ -402,7 +402,7 @@ internal static class ServiceResolverEmitter
     // IOptions<T> - handled separately in EmitServiceResolution
     if (typeName.Contains("IOptions<", StringComparison.Ordinal))
     {
-      return $"default! /* IOptions<T> should be handled in EmitServiceResolution */";
+      return "default! /* IOptions<T> should be handled in EmitServiceResolution */";
     }
 
     return $"default! /* Unknown built-in type: {typeName} */";

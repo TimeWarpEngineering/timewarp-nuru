@@ -1,5 +1,6 @@
 // Emits service resolution code for handler parameters.
 // Generates instantiation code for registered services (static DI).
+// Supports constructor parameters with optional default values.
 
 namespace TimeWarp.Nuru.Generators;
 
@@ -310,13 +311,101 @@ internal static class ServiceResolverEmitter
 
   /// <summary>
   /// Resolves all constructor arguments for a service to their compile-time expressions.
+  /// Uses ConstructorParameters if available for detailed resolution including optional params.
   /// </summary>
   internal static string ResolveConstructorArguments(ServiceDefinition service, ImmutableArray<ServiceDefinition> services)
   {
+    // Prefer ConstructorParameters if available (has detailed info)
+    if (!service.ConstructorParameters.IsDefaultOrEmpty && service.ConstructorParameters.Length > 0)
+    {
+      return string.Join(", ", service.ConstructorParameters
+        .Select(param => ResolveParameterExpression(param, services)));
+    }
+
+    // Fallback to ConstructorDependencyTypes
     if (service.ConstructorDependencyTypes.IsDefaultOrEmpty)
       return "";
 
     return string.Join(", ", service.ConstructorDependencyTypes.Select(dep => ResolveDepExpression(dep, services)));
+  }
+
+  /// <summary>
+  /// Resolves a single constructor parameter to its compile-time expression.
+  /// Handles optional parameters with default values.
+  /// </summary>
+  private static string ResolveParameterExpression(ConstructorParameter param, ImmutableArray<ServiceDefinition> services)
+  {
+    // Built-in types
+    if (param.IsBuiltIn)
+    {
+      return ResolveBuiltInType(param.TypeName);
+    }
+
+    // Check if this is a registered service
+    ServiceDefinition? depService = FindService(param.TypeName, services);
+    if (depService is not null)
+    {
+      // Singleton/Scoped: use Lazy<T> field
+      if (depService.Lifetime is ServiceLifetime.Singleton or ServiceLifetime.Scoped)
+      {
+        string fieldName = InterceptorEmitter.GetServiceFieldName(depService.ImplementationTypeName);
+        return $"{fieldName}.Value";
+      }
+
+      // Transient with constructor deps: inline new T(resolvedDeps...)
+      if (depService.HasConstructorDependencies)
+      {
+        string innerArgs = ResolveConstructorArguments(depService, services);
+        return $"new {depService.ImplementationTypeName}({innerArgs})";
+      }
+
+      // Transient without deps: new instance
+      return $"new {depService.ImplementationTypeName}()";
+    }
+
+    // Optional parameter with default value - use the default
+    if (param.HasDefaultValue && param.DefaultValue is not null)
+    {
+      return param.DefaultValue;
+    }
+
+    // Unresolvable - NURU051 validator will report the error
+    return $"default! /* ERROR: Cannot resolve {param.TypeName} */";
+  }
+
+  /// <summary>
+  /// Resolves a built-in type to its compile-time expression.
+  /// </summary>
+  private static string ResolveBuiltInType(string typeName)
+  {
+    // IConfiguration / IConfigurationRoot
+    if (IsConfigurationType(typeName))
+      return "configuration";
+
+    // ITerminal
+    if (IsTerminalType(typeName))
+      return "app.Terminal";
+
+    // NuruApp
+    if (IsNuruAppType(typeName))
+      return "app";
+
+    // ILogger<T> - use NullLogger
+    if (typeName.Contains("ILogger", StringComparison.Ordinal))
+    {
+      int start = typeName.IndexOf('<', StringComparison.Ordinal);
+      int end = typeName.LastIndexOf('>');
+      string typeArg = start >= 0 && end > start ? typeName[(start + 1)..end] : "object";
+      return $"global::Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance.CreateLogger<{typeArg}>()";
+    }
+
+    // IOptions<T> - handled separately in EmitServiceResolution
+    if (typeName.Contains("IOptions<", StringComparison.Ordinal))
+    {
+      return $"default! /* IOptions<T> should be handled in EmitServiceResolution */";
+    }
+
+    return $"default! /* Unknown built-in type: {typeName} */";
   }
 
   /// <summary>

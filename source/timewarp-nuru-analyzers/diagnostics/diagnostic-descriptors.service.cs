@@ -68,4 +68,28 @@ internal static partial class DiagnosticDescriptors
     defaultSeverity: DiagnosticSeverity.Error,
     isEnabledByDefault: true,
     description: "Generated code runs in a different assembly context and cannot access internal types without [InternalsVisibleTo]. Either expose the type publicly or use .UseMicrosoftDependencyInjection() for runtime DI.");
+
+  /// <summary>
+  /// NURU055: Circular dependency detected.
+  /// </summary>
+  public static readonly DiagnosticDescriptor CircularDependency = new(
+    id: "NURU055",
+    title: "Circular dependency detected",
+    messageFormat: "Circular dependency detected: {0}. Services cannot depend on each other. Refactor to break the cycle or use .UseMicrosoftDependencyInjection().",
+    category: ServiceCategory,
+    defaultSeverity: DiagnosticSeverity.Error,
+    isEnabledByDefault: true,
+    description: "Source-generated DI cannot resolve circular dependencies at compile time. Refactor the services to eliminate the cycle, or use .UseMicrosoftDependencyInjection() for runtime DI which handles cycles via lazy resolution.");
+
+  /// <summary>
+  /// NURU056: Singleton/Scoped service depends on Transient service.
+  /// </summary>
+  public static readonly DiagnosticDescriptor LifetimeMismatch = new(
+    id: "NURU056",
+    title: "Service lifetime mismatch",
+    messageFormat: "Service '{0}' ({1} lifetime) depends on transient service '{2}'. Each resolution will get a new instance. If intentional, use #pragma warning disable NURU056.",
+    category: ServiceCategory,
+    defaultSeverity: DiagnosticSeverity.Warning,
+    isEnabledByDefault: true,
+    description: "A Singleton or Scoped service depending on a Transient service will receive a new Transient instance each time the dependency is resolved. This is often unintentional. If this is desired behavior, suppress the warning with #pragma warning disable NURU056.");
 }

@@ -320,6 +320,7 @@ internal static class InterceptorEmitter
   /// <summary>
   /// Emits static Lazy fields for Singleton and Scoped services.
   /// These provide thread-safe lazy initialization for cached service instances.
+  /// Services are sorted topologically to ensure dependencies are emitted first.
   /// </summary>
   private static void EmitServiceFields(StringBuilder sb, IEnumerable<ServiceDefinition> services)
   {
@@ -327,19 +328,26 @@ internal static class InterceptorEmitter
     // Services with constructor deps get their args resolved in the lambda.
     // Materialize to ImmutableArray for ResolveConstructorArguments compatibility
     ImmutableArray<ServiceDefinition> allServices = [.. services];
+
+    // Filter to Singleton/Scoped and remove duplicates
     ServiceDefinition[] cachedServices =
     [
       .. allServices
         .Where(s => s.Lifetime is ServiceLifetime.Singleton or ServiceLifetime.Scoped)
-        .DistinctBy(s => s.ImplementationTypeName) // Avoid duplicates if same impl registered multiple times
+        .DistinctBy(s => s.ImplementationTypeName)
     ];
 
     if (cachedServices.Length == 0)
       return;
 
-    sb.AppendLine("  // Static service fields (thread-safe lazy initialization)");
+    // Sort services topologically (dependencies first)
+    ImmutableArray<ServiceDefinition> sortedServices =
+      DependencyGraphBuilder.TopologicalSort([.. cachedServices]);
 
-    foreach (ServiceDefinition service in cachedServices)
+    sb.AppendLine("  // Static service fields (thread-safe lazy initialization)");
+    sb.AppendLine("  // Services are sorted topologically to ensure dependencies are emitted first");
+
+    foreach (ServiceDefinition service in sortedServices)
     {
       string fieldName = GetServiceFieldName(service.ImplementationTypeName);
       if (service.HasConstructorDependencies)

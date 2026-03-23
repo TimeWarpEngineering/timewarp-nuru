@@ -9,7 +9,7 @@
 // PATTERN: Inject ITerminal into Handler constructor for testable output
 // ═══════════════════════════════════════════════════════════════════════════════
 #:package Shouldly
-#:project ../../../../source/timewarp-nuru/timewarp-nuru.csproj
+#:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
 using Shouldly;
 using TimeWarp.Nuru;

@@ -6,7 +6,7 @@
 // Demonstrates: Commands with parameters, dependency injection, testable handlers
 // DSL: Endpoint (class-based with [NuruRoute], nested Handler classes)
 // ═══════════════════════════════════════════════════════════════════════════════
-#:project ../../../source/timewarp-nuru/timewarp-nuru.csproj
+#:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
 using EndpointCalculator.Services;
 using Microsoft.Extensions.DependencyInjection;

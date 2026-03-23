@@ -1,5 +1,5 @@
 #!/usr/bin/dotnet --
-#:project ../../../source/timewarp-nuru/timewarp-nuru.csproj
+#:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
 // Test if RunReplAsync() is intercepted when called inline (no Setup method)
 // This verifies whether bug #363 is about cross-method tracking or if

@@ -26,7 +26,7 @@
 //   - HandleAsync(context, proceed) gives full control over execution flow
 //   - BehaviorContext provides: CommandName, CorrelationId, CancellationToken, Command
 // ═══════════════════════════════════════════════════════════════════════════════
-#:project ../../../../source/timewarp-nuru/timewarp-nuru.csproj
+#:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
 using PipelineBasic.Behaviors;
 using TimeWarp.Nuru;

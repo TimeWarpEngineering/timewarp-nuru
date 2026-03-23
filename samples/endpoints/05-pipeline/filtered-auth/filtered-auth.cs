@@ -15,7 +15,7 @@
 //   - Type-safe filtered behavior with INuruBehavior<TFilter>
 //   - Authorization checks before command execution
 // ═══════════════════════════════════════════════════════════════════════════════
-#:project ../../../../source/timewarp-nuru/timewarp-nuru.csproj
+#:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
 using PipelineFilteredAuth.Behaviors;
 using TimeWarp.Nuru;

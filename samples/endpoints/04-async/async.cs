@@ -10,7 +10,7 @@
 //   - Task-based async operations
 //   - Async I/O simulation
 // ═══════════════════════════════════════════════════════════════════════════════
-#:project ../../../source/timewarp-nuru/timewarp-nuru.csproj
+#:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
 using TimeWarp.Nuru;
 

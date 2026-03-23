@@ -12,7 +12,7 @@
 //   - All endpoints available interactively
 //   - Type 'exit' or Ctrl+C to quit
 // ═══════════════════════════════════════════════════════════════════════════════════════
-#:project ../../../../source/timewarp-nuru/timewarp-nuru.csproj
+#:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
 using TimeWarp.Nuru;
 

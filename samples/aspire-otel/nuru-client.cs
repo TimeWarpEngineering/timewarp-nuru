@@ -1,5 +1,5 @@
 #!/usr/bin/env -S dotnet run --launch-profile AppHost --
-#:project ../../source/timewarp-nuru/timewarp-nuru.csproj
+#:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;

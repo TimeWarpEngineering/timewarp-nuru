@@ -11,7 +11,7 @@
 // Usage:
 //   ./overrides.cs --Database:Host=prod-db --Api:TimeoutSeconds=60
 // ═══════════════════════════════════════════════════════════════════════════════════════
-#:project ../../../../source/timewarp-nuru/timewarp-nuru.csproj
+#:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 #:package Microsoft.Extensions.Options
 #:package Microsoft.Extensions.Options.ConfigurationExtensions
 #:property EnableConfigurationBindingGenerator=true

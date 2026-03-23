@@ -12,7 +12,7 @@
 // Type converters automatically convert string arguments to the target type.
 // They validate input and provide helpful error messages.
 // ═══════════════════════════════════════════════════════════════════════════════════════
-#:project ../../../../source/timewarp-nuru/timewarp-nuru.csproj
+#:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
 using TimeWarp.Nuru;
 using static System.Console;

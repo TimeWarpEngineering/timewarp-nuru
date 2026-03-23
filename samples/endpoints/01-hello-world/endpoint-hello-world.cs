@@ -6,7 +6,7 @@
 // Best for: Testable commands, dependency injection, separation of concerns
 // DSL: Endpoint (class-based with [NuruRoute], [Parameter], nested Handler)
 // ═══════════════════════════════════════════════════════════════════════════════
-#:project ../../../source/timewarp-nuru/timewarp-nuru.csproj
+#:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
 using TimeWarp.Nuru;
 

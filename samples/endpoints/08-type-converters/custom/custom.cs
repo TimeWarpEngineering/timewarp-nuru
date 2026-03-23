@@ -10,7 +10,7 @@
 //   2. Implement TryConvert with validation
 //   3. Register with .AddTypeConverter() in builder
 // ═══════════════════════════════════════════════════════════════════════════════════════
-#:project ../../../../source/timewarp-nuru/timewarp-nuru.csproj
+#:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
 using System.Globalization;
 using System.Text.RegularExpressions;

@@ -6,7 +6,7 @@
 // Best for: Clean separation of routing and logic, testable without full classes
 // DSL: Fluent API (Map().WithHandler().AsQuery().Done())
 // ═══════════════════════════════════════════════════════════════════════════════
-#:project ../../../source/timewarp-nuru/timewarp-nuru.csproj
+#:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
 using TimeWarp.Nuru;
 using TimeWarp.Terminal;

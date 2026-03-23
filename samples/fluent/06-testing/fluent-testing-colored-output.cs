@@ -4,7 +4,7 @@
 //
 // DSL: Fluent API with .UseTerminal()
 #:package Shouldly
-#:project ../../../source/timewarp-nuru/timewarp-nuru.csproj
+#:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
 using Shouldly;
 using TimeWarp.Nuru;

@@ -1,5 +1,5 @@
 #!/usr/bin/dotnet --
-#:project ../../../source/timewarp-nuru/timewarp-nuru.csproj
+#:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
 // Tests for PSReadLine-compatible yank argument functionality (Task 043-010)
 // Verifies YankLastArg (Alt+.) and YankNthArg (Alt+Ctrl+Y) functionality

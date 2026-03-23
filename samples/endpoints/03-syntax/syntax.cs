@@ -14,7 +14,7 @@
 // This file MUST compile successfully - it serves as both documentation
 // and validation that all syntax examples are correct and working.
 // ═══════════════════════════════════════════════════════════════════════════════
-#:project ../../../source/timewarp-nuru/timewarp-nuru.csproj
+#:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
 using TimeWarp.Nuru;
 

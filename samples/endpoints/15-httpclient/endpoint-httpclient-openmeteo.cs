@@ -22,7 +22,7 @@
 //   chmod +x samples/endpoints/15-httpclient/endpoint-httpclient-openmeteo.cs
 //   ./samples/endpoints/15-httpclient/endpoint-httpclient-openmeteo.cs weather "Paris"
 // ═══════════════════════════════════════════════════════════════════════════════
-#:project ../../../source/timewarp-nuru/timewarp-nuru.csproj
+#:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
 using Microsoft.Extensions.DependencyInjection;
 using HttpClientSample.Services;

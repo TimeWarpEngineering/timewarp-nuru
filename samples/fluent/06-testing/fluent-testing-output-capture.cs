@@ -7,7 +7,7 @@
 // NOTE: For multiple test scenarios, use the Jaribu test framework pattern.
 // This sample demonstrates a single comprehensive test.
 #:package Shouldly
-#:project ../../../source/timewarp-nuru/timewarp-nuru.csproj
+#:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
 using Shouldly;
 using TimeWarp.Nuru;

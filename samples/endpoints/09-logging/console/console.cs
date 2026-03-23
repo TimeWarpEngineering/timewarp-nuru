@@ -12,7 +12,7 @@
 //   - Inject ILogger<T> into handlers
 //   - Log at different levels (Debug, Info, Warning, Error)
 // ═══════════════════════════════════════════════════════════════════════════════════════
-#:project ../../../../source/timewarp-nuru/timewarp-nuru.csproj
+#:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;

@@ -50,7 +50,7 @@ public static class DynamicCompletionHandler
     terminal.WriteLine($":{(int)directive}");
 
     // Output diagnostic to stderr (not visible to shell, useful for debugging)
-    Console.Error.WriteLine($"Completion ended with directive: {directive}");
+    terminal.WriteErrorLine($"Completion ended with directive: {directive}");
 
     return 0;
   }

@@ -6,7 +6,7 @@
 // Best for: Quick scripts, simple commands, minimal boilerplate
 // DSL: Fluent API (Map().WithHandler().AsQuery().Done())
 // ═══════════════════════════════════════════════════════════════════════════════
-#:project ../../../source/timewarp-nuru/timewarp-nuru.csproj
+#:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
 using TimeWarp.Nuru;
 

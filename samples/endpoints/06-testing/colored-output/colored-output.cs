@@ -9,7 +9,7 @@
 // PATTERN: Verify ANSI codes in captured output from TestTerminal
 // ═══════════════════════════════════════════════════════════════════════════════
 #:package Shouldly
-#:project ../../../../source/timewarp-nuru/timewarp-nuru.csproj
+#:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
 using Shouldly;
 using TimeWarp.Nuru;

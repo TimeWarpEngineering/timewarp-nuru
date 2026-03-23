@@ -21,6 +21,8 @@
     <Compile Include="../timewarp-nuru-tests/generator/generator-04-static-service-injection.cs" />
     <Compile Include="../timewarp-nuru-tests/generator/generator-13-ioptions-parameter-injection.cs" />
     <Compile Include="../timewarp-nuru-tests/generator/generator-15-runtime-di.cs" />
+    <Compile Include="../timewarp-nuru-tests/generator/generator-26-constructor-dependency-resolution.cs" />
+    <Compile Include="../timewarp-nuru-tests/generator/generator-27-ienumerable-dependency.cs" />
     <!-- Core tests - migrated files -->
 
     <!-- TimeWarp.Terminal widget/utils tests have been moved to that repo -->

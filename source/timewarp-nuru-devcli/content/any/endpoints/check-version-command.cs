@@ -94,7 +94,7 @@ public sealed class CheckVersionCommand : ICommand<Unit>
         );
         Terminal.WriteLine("  Bump the version before releasing.");
 
-        if (result.AlreadyPublishedPackages.Count > 0)
+        if (result.AlreadyPublishedPackages is { Count: > 0 })
         {
           Terminal.WriteLine
           (

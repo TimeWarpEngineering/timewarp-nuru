@@ -4,6 +4,8 @@
 // NURU052: Extension method registration (warning)
 // NURU053: Factory delegate registration
 // NURU054: Internal type not accessible
+// NURU055: Circular dependency detected
+// NURU056: Lifetime mismatch (Singleton/Scoped depends on Transient)
 //
 // All validation is skipped when UseMicrosoftDependencyInjection = true.
 
@@ -57,6 +59,12 @@ internal static class ServiceValidator
 
     // NURU054: Validate type accessibility
     ValidateTypeAccessibility(app.Services, diagnostics);
+
+    // NURU055: Validate circular dependencies
+    ValidateCircularDependencies(app.Services, diagnostics);
+
+    // NURU056: Validate lifetime mismatches
+    ValidateLifetimeMismatches(app.Services, diagnostics);
 
     return [.. diagnostics];
   }
@@ -311,6 +319,54 @@ internal static class ServiceValidator
         DiagnosticDescriptors.InternalTypeNotAccessible,
         location,
         GetShortTypeName(service.ImplementationTypeName)));
+    }
+  }
+
+  /// <summary>
+  /// NURU055: Validates circular dependencies.
+  /// </summary>
+  private static void ValidateCircularDependencies(
+    ImmutableArray<ServiceDefinition> services,
+    List<Diagnostic> diagnostics)
+  {
+    if (services.IsDefaultOrEmpty)
+      return;
+
+    ImmutableArray<string> cycles = DependencyGraphBuilder.DetectCircularDependencies(services);
+
+    if (!cycles.IsDefaultOrEmpty && cycles.Length > 0)
+    {
+      diagnostics.Add(Diagnostic.Create(
+        DiagnosticDescriptors.CircularDependency,
+        Location.None,
+        string.Join(" -> ", cycles)));
+    }
+  }
+
+  /// <summary>
+  /// NURU056: Validates lifetime mismatches (Singleton/Scoped depending on Transient).
+  /// </summary>
+  private static void ValidateLifetimeMismatches(
+    ImmutableArray<ServiceDefinition> services,
+    List<Diagnostic> diagnostics)
+  {
+    if (services.IsDefaultOrEmpty)
+      return;
+
+    ImmutableArray<(string DependentService, string DependencyService, string DependentLifetime, string DependencyLifetime)> mismatches =
+      DependencyGraphBuilder.DetectLifetimeMismatches(services);
+
+    if (!mismatches.IsDefaultOrEmpty)
+    {
+      foreach ((string dependentService, string dependencyService, string dependentLifetime, string dependencyLifetime) in mismatches)
+      {
+        diagnostics.Add(Diagnostic.Create(
+          DiagnosticDescriptors.LifetimeMismatch,
+          Location.None,
+          dependentService,
+          dependentLifetime,
+          dependencyService));
+      }
     }
   }
 

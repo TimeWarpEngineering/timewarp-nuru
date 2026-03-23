@@ -10,8 +10,12 @@
 // - Constructor dependencies of implementation types (NURU051)
 // - Internal types (NURU054)
 // - Extension method calls like AddLogging (NURU052)
+// - Multiple constructors (chooses one with most parameters)
+// - Optional parameters with default values
 
 namespace TimeWarp.Nuru.Generators;
+
+using System.Globalization;
 
 /// <summary>
 /// Extracts service registration information from ConfigureServices() calls.
@@ -229,11 +233,13 @@ internal static class ServiceExtractor
 
     // Extract constructor dependencies (NURU051)
     ImmutableArray<string> constructorDeps = [];
+    ImmutableArray<ConstructorParameter> constructorParams = [];
     bool isInternalType = false;
 
     if (implementationSymbol is not null && !isFactoryRegistration)
     {
       constructorDeps = ExtractConstructorDependencies(implementationSymbol);
+      constructorParams = ExtractConstructorParameters(implementationSymbol);
       isInternalType = IsInternalType(implementationSymbol);
     }
 
@@ -242,6 +248,7 @@ internal static class ServiceExtractor
       ImplementationTypeName: implementationTypeName ?? serviceTypeName,
       Lifetime: lifetime,
       ConstructorDependencyTypes: constructorDeps,
+      ConstructorParameters: constructorParams,
       IsFactoryRegistration: isFactoryRegistration,
       IsInternalType: isInternalType,
       RegistrationLocation: invocation.GetLocation());
@@ -270,18 +277,120 @@ internal static class ServiceExtractor
 
   /// <summary>
   /// Extracts constructor dependencies from an implementation type.
+  /// Supports multiple constructors - chooses the one with most parameters.
   /// </summary>
   private static ImmutableArray<string> ExtractConstructorDependencies(INamedTypeSymbol implementationType)
   {
-    // Find the first public non-static constructor
-    IMethodSymbol? constructor = implementationType.InstanceConstructors
-      .FirstOrDefault(c => c.DeclaredAccessibility == Accessibility.Public && !c.IsImplicitlyDeclared);
+    // Find the best constructor (most parameters)
+    IMethodSymbol? constructor = FindBestConstructor(implementationType);
 
     if (constructor is null || constructor.Parameters.Length == 0)
       return [];
 
     return [.. constructor.Parameters
       .Select(p => p.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat))];
+  }
+
+  /// <summary>
+  /// Extracts detailed constructor parameters from an implementation type.
+  /// Supports multiple constructors, optional parameters, and built-in type detection.
+  /// </summary>
+  private static ImmutableArray<ConstructorParameter> ExtractConstructorParameters(INamedTypeSymbol implementationType)
+  {
+    // Find the best constructor (most parameters)
+    IMethodSymbol? constructor = FindBestConstructor(implementationType);
+
+    if (constructor is null || constructor.Parameters.Length == 0)
+      return [];
+
+    ImmutableArray<ConstructorParameter>.Builder parameters = ImmutableArray.CreateBuilder<ConstructorParameter>();
+
+    foreach (IParameterSymbol param in constructor.Parameters)
+    {
+      string typeName = param.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+      bool hasDefaultValue = param.HasExplicitDefaultValue;
+      string? defaultValue = null;
+
+      if (hasDefaultValue)
+      {
+        defaultValue = GetDefaultValueExpression(param);
+      }
+
+      bool isBuiltIn = IsBuiltInServiceType(typeName);
+
+      parameters.Add(new ConstructorParameter(
+        ParameterName: param.Name,
+        TypeName: typeName,
+        HasDefaultValue: hasDefaultValue,
+        DefaultValue: defaultValue,
+        IsBuiltIn: isBuiltIn));
+    }
+
+    return parameters.ToImmutable();
+  }
+
+  /// <summary>
+  /// Finds the best constructor for DI resolution.
+  /// MS DI behavior: choose the constructor with the most parameters.
+  /// </summary>
+  private static IMethodSymbol? FindBestConstructor(INamedTypeSymbol implementationType)
+  {
+    // Get all public non-static constructors
+    // Choose the constructor with the most parameters
+    // This matches MS DI behavior for constructor selection
+    return implementationType.InstanceConstructors
+      .Where(c => c.DeclaredAccessibility == Accessibility.Public && !c.IsImplicitlyDeclared)
+      .OrderByDescending(c => c.Parameters.Length)
+      .FirstOrDefault();
+  }
+
+  /// <summary>
+  /// Gets the default value expression for a parameter.
+  /// </summary>
+  private static string? GetDefaultValueExpression(IParameterSymbol param)
+  {
+    if (!param.HasExplicitDefaultValue)
+      return null;
+
+    object? defaultValue = param.ExplicitDefaultValue;
+
+    // Handle null
+    if (defaultValue is null)
+      return "null";
+
+    // Handle common types
+    return defaultValue switch
+    {
+      string s => $"\"{s}\"",
+      bool b => b ? "true" : "false",
+      int i => i.ToString(CultureInfo.InvariantCulture),
+      long l => l.ToString(CultureInfo.InvariantCulture),
+      double d => d.ToString(CultureInfo.InvariantCulture),
+      float f => f.ToString(CultureInfo.InvariantCulture),
+      decimal dec => dec.ToString(CultureInfo.InvariantCulture) + "m",
+      char c => $"'{c}'",
+      _ => defaultValue.ToString()
+    };
+  }
+
+  /// <summary>
+  /// Checks if a type name represents a built-in service type.
+  /// </summary>
+  private static bool IsBuiltInServiceType(string typeName)
+  {
+    string normalized = typeName;
+
+    if (normalized.StartsWith("global::", StringComparison.Ordinal))
+      normalized = normalized[8..];
+
+    return normalized.StartsWith("Microsoft.Extensions.Configuration.", StringComparison.Ordinal)
+        || normalized.StartsWith("Microsoft.Extensions.Logging.", StringComparison.Ordinal)
+        || normalized.StartsWith("TimeWarp.Terminal.", StringComparison.Ordinal)
+        || normalized.StartsWith("TimeWarp.Nuru.NuruApp", StringComparison.Ordinal)
+        || normalized == "System.Threading.CancellationToken"
+        || normalized.StartsWith("Microsoft.Extensions.Options.IOptions", StringComparison.Ordinal)
+        || normalized.StartsWith("Microsoft.Extensions.Options.IOptionsSnapshot", StringComparison.Ordinal)
+        || normalized.StartsWith("Microsoft.Extensions.Options.IOptionsMonitor", StringComparison.Ordinal);
   }
 
   /// <summary>

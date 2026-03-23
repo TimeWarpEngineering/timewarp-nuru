@@ -46,6 +46,7 @@ internal sealed class WorkflowCommand : ICommand<Unit>
         Environment.ExitCode = 1;
         return false;
       }
+
       RepoRoot = root;
       DevBin = Path.Combine(RepoRoot, "bin", "dev");
       Terminal.WriteLine("Starting CI workflow...");
@@ -65,6 +66,7 @@ internal sealed class WorkflowCommand : ICommand<Unit>
         Environment.ExitCode = exitCode;
         return false;
       }
+
       return true;
     }
   }

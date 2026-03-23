@@ -1,3 +1,2 @@
 # Banned API symbols
 T:System.Console;Use ITerminal for testable console output. TimeWarp.Terminal.Terminal static class is available for migration.
-T:System.Console;Prefer injecting ITerminal. TimeWarp.Terminal.Terminal static class is available for migration.

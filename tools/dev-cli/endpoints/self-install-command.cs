@@ -7,7 +7,7 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 // AOT compiles and installs the dev CLI to ./bin for fast execution via direnv PATH.
 
-namespace DevCli.Commands;
+namespace DevCli.Endpoints;
 
 using System.Runtime.InteropServices;
 

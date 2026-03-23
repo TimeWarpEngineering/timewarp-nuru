@@ -7,7 +7,7 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 // Run Roslynator analysis and fixes on all projects.
 
-namespace DevCli.Commands;
+namespace DevCli.Endpoints;
 
 using System.Xml.Linq;
 

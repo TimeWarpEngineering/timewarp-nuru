@@ -12,7 +12,7 @@
 //   pr/merge:  clean -> build -> verify-samples -> test
 //   release:   clean -> build -> check-version -> pack -> push
 
-namespace DevCli.Commands;
+namespace DevCli.Endpoints;
 
 /// <summary>
 /// Run the full CI/CD pipeline.
@@ -29,12 +29,22 @@ internal sealed class WorkflowCommand : ICommand<Unit>
   internal sealed class Handler : ICommandHandler<WorkflowCommand, Unit>
   {
     private readonly ITerminal Terminal;
-    private readonly NuruApp App;
+    private readonly IRepoCleanService RepoCleanService;
+    private readonly IRepoCheckVersionService CheckVersionService;
+    private readonly IRepoConfigService ConfigService;
 
-    public Handler(ITerminal terminal, NuruApp app)
+    public Handler
+    (
+      ITerminal terminal,
+      IRepoCleanService repoCleanService,
+      IRepoCheckVersionService checkVersionService,
+      IRepoConfigService configService
+    )
     {
       Terminal = terminal;
-      App = app;
+      RepoCleanService = repoCleanService;
+      CheckVersionService = checkVersionService;
+      ConfigService = configService;
     }
 
     public async ValueTask<Unit> Handle(WorkflowCommand command, CancellationToken ct)
@@ -99,7 +109,8 @@ internal sealed class WorkflowCommand : ICommand<Unit>
       Terminal.WriteLine("===============================================================================");
       Terminal.WriteLine("  Step 1/4: Clean");
       Terminal.WriteLine("===============================================================================");
-      await App.RunAsync(["clean"]);
+      CleanCommand.Handler cleanHandler = new(Terminal, RepoCleanService);
+      await cleanHandler.Handle(new CleanCommand(), CancellationToken.None);
 
       // Step 2: Build
       Terminal.WriteLine("");
@@ -147,7 +158,8 @@ internal sealed class WorkflowCommand : ICommand<Unit>
       Terminal.WriteLine("===============================================================================");
       Terminal.WriteLine("  Step 1/5: Clean");
       Terminal.WriteLine("===============================================================================");
-      await App.RunAsync(["clean"]);
+      CleanCommand.Handler cleanHandler = new(Terminal, RepoCleanService);
+      await cleanHandler.Handle(new CleanCommand(), CancellationToken.None);
 
       // Step 2: Build
       Terminal.WriteLine("");
@@ -162,7 +174,8 @@ internal sealed class WorkflowCommand : ICommand<Unit>
       Terminal.WriteLine("===============================================================================");
       Terminal.WriteLine("  Step 3/5: Check Version");
       Terminal.WriteLine("===============================================================================");
-      await App.RunAsync(["check-version"]);
+      CheckVersionCommand.Handler checkVersionHandler = new(Terminal, CheckVersionService, ConfigService);
+      await checkVersionHandler.Handle(new CheckVersionCommand(), CancellationToken.None);
 
       // Step 4: Pack
       Terminal.WriteLine("");

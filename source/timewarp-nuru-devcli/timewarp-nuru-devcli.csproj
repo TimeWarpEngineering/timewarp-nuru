@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <PackageId>TimeWarp.Nuru.DevCli</PackageId>
+    <AssemblyName>TimeWarp.Nuru.DevCli</AssemblyName>
+    <RootNamespace>TimeWarp.Nuru.DevCli</RootNamespace>
+    <TargetFramework>net10.0</TargetFramework>
+    <Description>Reusable dev-cli endpoints for TimeWarp repositories - clean, self-install, check-version</Description>
+    <PackageTags>cli;nuru;devcli;endpoints;source-only</PackageTags>
+    <IsPackable>true</IsPackable>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    
+    <!-- This is a source-only package - no assembly output needed -->
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+  </PropertyGroup>
+
+  <!-- No compilation - this is a source-only content package -->
+  <ItemGroup>
+    <Compile Remove="**/*.cs" />
+  </ItemGroup>
+
+  <!-- Include source-only content files in NuGet package -->
+  <ItemGroup>
+    <None Include="content/**/*.cs"
+          Pack="true"
+          PackagePath="content/" />
+    
+    <!-- Props file to include content files in consuming project -->
+    <None Include="build/TimeWarp.Nuru.DevCli.props"
+          Pack="true"
+          PackagePath="build/" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="$(RepositoryRoot)readme.md" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,18 @@
+<Project>
+  <!--
+    TimeWarp.Nuru DevCli Shared Endpoints
+    
+    This .props file includes the source-only content files from the NuGet package
+    into the consuming project's compilation.
+    
+    The content files are placed in the content/ folder of the package and will be
+    copied to the consuming project's directory structure during package install.
+  -->
+
+  <ItemGroup>
+    <!-- Include DevCli shared endpoint files -->
+    <Compile Include="$(MSBuildThisFileDirectory)../content/any/endpoints/*.cs" 
+             Visible="false" />
+  </ItemGroup>
+
+</Project>

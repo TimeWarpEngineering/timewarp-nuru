@@ -49,20 +49,20 @@ internal static class ServiceResolverEmitter
       return;
     }
 
-    // Special case: ITerminal uses app.Terminal (built-in service)
+    // Special case: ITerminal uses framework service field
     if (IsTerminalType(typeName))
     {
       sb.AppendLine(
-        $"{indent}{typeName} {varName} = app.Terminal;");
+        $"{indent}{typeName} {varName} = __fw_ITerminal;");
       return;
     }
 
-    // Special case: NuruApp - the app instance is directly available
+    // Special case: NuruApp - use framework service field
     // Enables handlers to invoke other routes via app.RunAsync(["command"])
     if (IsNuruAppType(typeName))
     {
       sb.AppendLine(
-        $"{indent}{typeName} {varName} = app;");
+        $"{indent}{typeName} {varName} = __fw_NuruApp;");
       return;
     }
 
@@ -84,17 +84,17 @@ internal static class ServiceResolverEmitter
       return;
     }
 
-    // Source-gen DI path: static instantiation or Lazy<T> fields
+    // Source-gen DI path: static instantiation or static fields
     // Look up service in registered services
     ServiceDefinition? service = FindService(typeName, services);
     if (service is not null)
     {
       if (service.Lifetime is ServiceLifetime.Singleton or ServiceLifetime.Scoped)
       {
-        // Singleton/Scoped: use Lazy<T> field (generated with constructor args if needed)
+        // Singleton/Scoped: use static field directly
         string fieldName = InterceptorEmitter.GetServiceFieldName(service.ImplementationTypeName);
         sb.AppendLine(
-          $"{indent}{typeName} {varName} = {fieldName}.Value;");
+          $"{indent}{typeName} {varName} = {fieldName};");
       }
       else if (service.HasConstructorDependencies)
       {
@@ -335,21 +335,21 @@ internal static class ServiceResolverEmitter
   /// </summary>
   private static string ResolveParameterExpression(ConstructorParameter param, ImmutableArray<ServiceDefinition> services)
   {
-    // Built-in types
-    if (param.IsBuiltIn)
+    // Framework service types (ITerminal, IConfiguration, NuruApp, etc.)
+    if (FrameworkServices.IsFrameworkServiceType(param.TypeName))
     {
-      return ResolveBuiltInType(param.TypeName);
+      return FrameworkServices.GetFieldName(param.TypeName);
     }
 
     // Check if this is a registered service
     ServiceDefinition? depService = FindService(param.TypeName, services);
     if (depService is not null)
     {
-      // Singleton/Scoped: use Lazy<T> field
+      // Singleton/Scoped: use static field directly
       if (depService.Lifetime is ServiceLifetime.Singleton or ServiceLifetime.Scoped)
       {
         string fieldName = InterceptorEmitter.GetServiceFieldName(depService.ImplementationTypeName);
-        return $"{fieldName}.Value";
+        return fieldName;
       }
 
       // Transient with constructor deps: inline new T(resolvedDeps...)
@@ -374,76 +374,26 @@ internal static class ServiceResolverEmitter
   }
 
   /// <summary>
-  /// Resolves a built-in type to its compile-time expression.
-  /// </summary>
-  private static string ResolveBuiltInType(string typeName)
-  {
-    // IConfiguration / IConfigurationRoot
-    if (IsConfigurationType(typeName))
-      return "configuration";
-
-    // ITerminal
-    if (IsTerminalType(typeName))
-      return "app.Terminal";
-
-    // NuruApp
-    if (IsNuruAppType(typeName))
-      return "app";
-
-    // ILogger<T> - use NullLogger
-    if (typeName.Contains("ILogger", StringComparison.Ordinal))
-    {
-      int start = typeName.IndexOf('<', StringComparison.Ordinal);
-      int end = typeName.LastIndexOf('>');
-      string typeArg = start >= 0 && end > start ? typeName[(start + 1)..end] : "object";
-      return $"global::Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance.CreateLogger<{typeArg}>()";
-    }
-
-    // IOptions<T> - handled separately in EmitServiceResolution
-    if (typeName.Contains("IOptions<", StringComparison.Ordinal))
-    {
-      return "default! /* IOptions<T> should be handled in EmitServiceResolution */";
-    }
-
-    return $"default! /* Unknown built-in type: {typeName} */";
-  }
-
-  /// <summary>
   /// Resolves a single dependency type to its compile-time expression.
-  /// Maps built-in types to their known sources and registered services to their instantiation.
+  /// Maps framework types to their known sources and registered services to their instantiation.
   /// </summary>
   private static string ResolveDepExpression(string depType, ImmutableArray<ServiceDefinition> services)
   {
-    // Built-in: IConfiguration / IConfigurationRoot
-    if (IsConfigurationType(depType))
-      return "configuration";
-
-    // Built-in: ITerminal
-    if (IsTerminalType(depType))
-      return "app.Terminal";
-
-    // Built-in: NuruApp
-    if (IsNuruAppType(depType))
-      return "app";
-
-    // Built-in: ILogger<T> - use NullLogger when no logging configured
-    if (depType.Contains("ILogger", StringComparison.Ordinal))
+    // Framework service types (ITerminal, IConfiguration, NuruApp, etc.)
+    if (FrameworkServices.IsFrameworkServiceType(depType))
     {
-      int start = depType.IndexOf('<', StringComparison.Ordinal);
-      int end = depType.LastIndexOf('>');
-      string typeArg = start >= 0 && end > start ? depType[(start + 1)..end] : "object";
-      return $"global::Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance.CreateLogger<{typeArg}>()";
+      return FrameworkServices.GetFieldName(depType);
     }
 
     // Registered service - resolve by looking up in registered services
     ServiceDefinition? depService = FindService(depType, services);
     if (depService is not null)
     {
-      // Singleton/Scoped: use Lazy<T> field (generated with constructor args if needed)
+      // Singleton/Scoped: use static field directly
       if (depService.Lifetime is ServiceLifetime.Singleton or ServiceLifetime.Scoped)
       {
         string fieldName = InterceptorEmitter.GetServiceFieldName(depService.ImplementationTypeName);
-        return $"{fieldName}.Value";
+        return fieldName;
       }
 
       // Transient with constructor deps: inline new T(resolvedDeps...)

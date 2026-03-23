@@ -7,13 +7,11 @@ namespace TimeWarp.Nuru.Generators;
 /// <param name="TypeName">Fully qualified type name of the parameter.</param>
 /// <param name="HasDefaultValue">True if the parameter has a default value.</param>
 /// <param name="DefaultValue">The default value expression (as string) if HasDefaultValue is true.</param>
-/// <param name="IsBuiltIn">True if this is a built-in type (ILogger, IConfiguration, ITerminal, NuruApp, CancellationToken).</param>
 public sealed record ConstructorParameter(
   string ParameterName,
   string TypeName,
   bool HasDefaultValue = false,
-  string? DefaultValue = null,
-  bool IsBuiltIn = false)
+  string? DefaultValue = null)
 {
   /// <summary>
   /// Gets the short type name for display.

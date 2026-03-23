@@ -44,6 +44,13 @@
 NuruApp app = NuruApp.CreateBuilder()
   .WithName("dev")
   .WithDescription("Development CLI for timewarp-nuru")
+  .ConfigureServices(services =>
+  {
+    services.AddSingleton<IRepoCleanService, RepoCleanService>();
+    services.AddSingleton<INuGetPackageService, NuGetPackageService>();
+    services.AddSingleton<IRepoCheckVersionService, RepoCheckVersionService>();
+    services.AddSingleton<IRepoConfigService, RepoConfigService>();
+  })
   .DiscoverEndpoints()
   .Build();
 

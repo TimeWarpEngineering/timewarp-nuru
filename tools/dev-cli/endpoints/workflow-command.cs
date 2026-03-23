@@ -29,10 +29,12 @@ internal sealed class WorkflowCommand : ICommand<Unit>
   internal sealed class Handler : ICommandHandler<WorkflowCommand, Unit>
   {
     private readonly ITerminal Terminal;
+    private readonly NuruApp App;
 
-    public Handler(ITerminal terminal)
+    public Handler(ITerminal terminal, NuruApp app)
     {
       Terminal = terminal;
+      App = app;
     }
 
     public async ValueTask<Unit> Handle(WorkflowCommand command, CancellationToken ct)
@@ -97,8 +99,7 @@ internal sealed class WorkflowCommand : ICommand<Unit>
       Terminal.WriteLine("===============================================================================");
       Terminal.WriteLine("  Step 1/4: Clean");
       Terminal.WriteLine("===============================================================================");
-      CleanCommand.Handler cleanHandler = new(Terminal);
-      await cleanHandler.Handle(new CleanCommand(), CancellationToken.None);
+      await App.RunAsync(["clean"]);
 
       // Step 2: Build
       Terminal.WriteLine("");
@@ -146,8 +147,7 @@ internal sealed class WorkflowCommand : ICommand<Unit>
       Terminal.WriteLine("===============================================================================");
       Terminal.WriteLine("  Step 1/5: Clean");
       Terminal.WriteLine("===============================================================================");
-      CleanCommand.Handler cleanHandler = new(Terminal);
-      await cleanHandler.Handle(new CleanCommand(), CancellationToken.None);
+      await App.RunAsync(["clean"]);
 
       // Step 2: Build
       Terminal.WriteLine("");
@@ -162,8 +162,7 @@ internal sealed class WorkflowCommand : ICommand<Unit>
       Terminal.WriteLine("===============================================================================");
       Terminal.WriteLine("  Step 3/5: Check Version");
       Terminal.WriteLine("===============================================================================");
-      CheckVersionCommand.Handler checkVersionHandler = new(Terminal);
-      await checkVersionHandler.Handle(new CheckVersionCommand(), CancellationToken.None);
+      await App.RunAsync(["check-version"]);
 
       // Step 4: Pack
       Terminal.WriteLine("");

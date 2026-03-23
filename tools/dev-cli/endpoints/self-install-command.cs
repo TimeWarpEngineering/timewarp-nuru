@@ -64,6 +64,7 @@ internal sealed class SelfInstallCommand : ICommand<Unit>
         .WithRuntime(rid)
         .WithSelfContained()
         .WithOutput(outputPath)
+        .WithNoValidation()
         .Build();
 
       if (command.Verbose)

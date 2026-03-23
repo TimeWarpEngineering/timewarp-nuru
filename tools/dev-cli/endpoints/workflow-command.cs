@@ -35,7 +35,7 @@ internal sealed class WorkflowCommand : ICommand<Unit>
       Terminal = terminal;
     }
 
-    public async ValueTask<Unit> Handle(CiCommand command, CancellationToken ct)
+    public async ValueTask<Unit> Handle(WorkflowCommand command, CancellationToken ct)
     {
       // Determine CI mode
       CiMode mode = DetermineMode(command.Mode);

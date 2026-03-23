@@ -32,59 +32,115 @@ private static readonly Lazy<SqlRepo> __svc_SqlRepo =
         __loggerFactory.CreateLogger<SqlRepo>()));
 ```
 
-## Requirements
+## Design Decisions
 
-### Model Enhancement
-- [ ] Extend `ServiceDefinition` to include constructor parameters:
+| Item | Decision | Rationale |
+|------|----------|-----------|
+| NURU055 (circular deps) | Error | Circular dependencies cannot be resolved |
+| NURU056 (singleton→transient) | Warning | MS DI allows this silently; warning for unintentional cases (can pragma if intentional) |
+| Multiple constructors | Choose one with most resolvable params | Matches MS DI behavior |
+| Optional parameters | Use default value if service not registered | Matches MS DI behavior |
+| `IOptions<T>` with default | Use default (null) if not registered | Matches MS DI behavior |
+| `IEnumerable<T>` dependencies | Tests only, no implementation | Deferred to future work |
+
+## Implementation Steps
+
+### Step 1: Create Dependency Graph Builder
+
+**File:** `source/timewarp-nuru-analyzers/generators/dependency-graph-builder.cs` (new)
+
+- [ ] Create `DependencyGraphBuilder` static class
+- [ ] Implement `TopologicalSort()` using Kahn's algorithm
+- [ ] Implement `DetectCircularDependencies()` using DFS cycle detection
+- [ ] Return services in dependency order (dependencies first)
+
+### Step 2: Add NURU055 and NURU056 Diagnostics
+
+**File:** `source/timewarp-nuru-analyzers/diagnostics/diagnostic-descriptors.service.cs`
+
+- [ ] NURU055: Error - "Circular dependency detected: {0}. Services cannot depend on each other."
+- [ ] NURU056: Warning - "Service '{0}' ({1} lifetime) depends on transient service '{2}'. Each resolution will get a new instance."
+
+### Step 3: Enhance ServiceDefinition Model
+
+**File:** `source/timewarp-nuru-analyzers/generators/models/service-definition.cs`
+
+- [ ] Add `ConstructorParameter` record:
   ```csharp
-  record ServiceDefinition(
-      string ServiceTypeName,
-      string ImplementationTypeName,
-      ServiceLifetime Lifetime,
-      ImmutableArray<ConstructorParameter> ConstructorParameters  // NEW
-  );
-
-  record ConstructorParameter(
-      string ParameterName,
-      string TypeName,
-      bool IsBuiltIn  // ILogger<T>, IConfiguration, IOptions<T>, etc.
+  public sealed record ConstructorParameter(
+    string ParameterName,
+    string TypeName,
+    bool HasDefaultValue,
+    object? DefaultValue,
+    bool IsBuiltIn  // ILogger<T>, IConfiguration, ITerminal, NuruApp, CancellationToken
   );
   ```
+- [ ] Add `ImmutableArray<ConstructorParameter> ConstructorParameters` to `ServiceDefinition`
 
-### Service Extractor Enhancement
-- [ ] After extracting service registration, analyze implementation constructor
-- [ ] Extract parameter types and names
-- [ ] Identify built-in services (ILogger<T>, IConfiguration, IOptions<T>, ITerminal, NuruApp)
+### Step 4: Enhance ServiceExtractor
 
-### Dependency Graph Builder (New)
-- [ ] Create `DependencyGraphBuilder` class
-- [ ] Build adjacency list from service → dependencies
-- [ ] Implement topological sort (Kahn's algorithm)
-- [ ] Detect and report circular dependencies (NURU055 diagnostic)
+**File:** `source/timewarp-nuru-analyzers/generators/extractors/service-extractor.cs`
 
-### Emitter Enhancement
-- [ ] Modify `InterceptorEmitter.EmitServiceFields()`:
-  - Sort services topologically before emission
-  - Emit constructor arguments based on dependencies
-- [ ] Modify `ServiceResolverEmitter`:
-  - Handle transient services with dependencies
-  - Generate correct constructor calls
+- [ ] Support multiple constructors - find constructor with most resolvable parameters
+- [ ] Extract optional parameter defaults (`HasDefaultValue`, `DefaultValue`)
+- [ ] Identify built-in types (`ILogger<T>`, `IConfiguration`, `ITerminal`, `NuruApp`)
+- [ ] Update `ExtractConstructorDependencies()` to return `ConstructorParameter` records
 
-### Built-in Service Resolution
-- [ ] `ILogger<T>` → `__loggerFactory.CreateLogger<T>()`
-- [ ] `IConfiguration` → `configuration`
-- [ ] `IOptions<T>` → Bind from configuration (existing logic)
-- [ ] `ITerminal` → `app.Terminal`
-- [ ] `NuruApp` → `app`
+### Step 5: Update ServiceValidator
 
-### Testing
-- [ ] Service with single dependency
-- [ ] Service with multiple dependencies
-- [ ] Multi-level dependency chain (A → B → C)
-- [ ] Diamond dependency pattern (A → B, A → C, B → D, C → D)
-- [ ] Circular dependency detection
-- [ ] Mix of built-in and custom services
-- [ ] Transient services with dependencies
+**File:** `source/timewarp-nuru-analyzers/validation/service-validator.cs`
+
+- [ ] Add circular dependency detection (NURU055)
+- [ ] Add lifetime mismatch warning (NURU056) - Singleton/Scoped depending on Transient
+
+### Step 6: Update InterceptorEmitter
+
+**File:** `source/timewarp-nuru-analyzers/generators/emitters/interceptor-emitter.cs`
+
+- [ ] Modify `EmitServiceFields()` to use topological sort
+- [ ] Emit services in dependency order
+
+### Step 7: Update ServiceResolverEmitter
+
+**File:** `source/timewarp-nuru-analyzers/generators/emitters/service-resolver-emitter.cs`
+
+- [ ] Handle optional parameters with default values
+- [ ] Resolve multi-level dependency chains
+- [ ] Emit NURU056 warnings for lifetime mismatches
+
+## Files Summary
+
+| File | Action |
+|------|--------|
+| `generators/dependency-graph-builder.cs` | **Create** |
+| `generators/models/service-definition.cs` | **Extend** - add `ConstructorParameter` record |
+| `generators/extractors/service-extractor.cs` | **Enhance** - multi-constructor, optional params |
+| `diagnostics/diagnostic-descriptors.service.cs` | **Extend** - NURU055, NURU056 |
+| `validation/service-validator.cs` | **Extend** - circular deps, lifetime warnings |
+| `generators/emitters/interceptor-emitter.cs` | **Modify** - topological sort |
+| `generators/emitters/service-resolver-emitter.cs` | **Enhance** - optional params |
+
+## Testing
+
+### Test File: `tests/timewarp-nuru-core-tests/di/constructor-dependency-resolution-01.cs`
+
+- [ ] Single dependency - `SqlRepo(Settings)` → emit Settings first
+- [ ] Multiple dependencies - `SqlRepo(Settings, ILogger<SqlRepo>)` → resolve both
+- [ ] Multi-level chain - A → B → C → emit C, B, A in order
+- [ ] Diamond pattern - A → B, A → C, B → D, C → D → emit D first
+- [ ] Circular dependency - A → B → A → NURU055 error
+- [ ] Optional parameter with default - `Service(IDependency dep = null)` → use null if not registered
+- [ ] Optional with non-null default - `Service(int timeout = 30)` → use 30
+- [ ] Multiple constructors - Choose constructor with most resolvable params
+- [ ] Singleton depends on Transient - NURU056 warning
+- [ ] Mixed built-in and custom - `MyService(IRepo, ITerminal, ILogger)` → resolve correctly
+- [ ] Transient with dependencies - Inline `new T(resolvedArgs...)` each time
+
+### Test File: `tests/timewarp-nuru-core-tests/di/ienumerable-dependency-01.cs` (tests only, no implementation)
+
+- [ ] Multiple implementations of same interface - `IEnumerable<IHandler>` → array of all registered
+- [ ] Empty collection - No implementations registered → empty array
+- [ ] Mixed lifetimes - `IEnumerable<IService>` with Singleton and Transient impls
 
 ## Generated Code Example
 
@@ -126,3 +182,4 @@ private static readonly Lazy<MyService> __svc_MyService =
 - Still requires all dependencies to be explicitly registered
 - Extension method registrations still not visible (addressed in Phase 4)
 - Maintains AOT compatibility
+- MS DI compatibility: constructor selection and optional parameters match MS DI behavior

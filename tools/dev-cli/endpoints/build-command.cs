@@ -91,7 +91,8 @@ internal sealed class BuildCommand : ICommand<Unit>
         "source/timewarp-nuru-build/timewarp-nuru-build.csproj",
         "source/timewarp-nuru-mcp/timewarp-nuru-mcp.csproj",
         "source/timewarp-nuru/timewarp-nuru.csproj",
-        "source/timewarp-nuru-search/timewarp-nuru-search.csproj"
+        "source/timewarp-nuru-search/timewarp-nuru-search.csproj",
+        "source/timewarp-nuru-devcli/timewarp-nuru-devcli.csproj"
       ];
 
       string verbosityLevel = command.Verbose ? "normal" : "minimal";

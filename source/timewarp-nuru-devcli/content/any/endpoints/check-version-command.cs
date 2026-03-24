@@ -79,20 +79,49 @@ public sealed class CheckVersionCommand : ICommand<Unit>
         )
         .ConfigureAwait(false);
 
-      Terminal.WriteLine($"Version: {result.Version}".Cyan());
-      Terminal.WriteLine($"Tag: {result.ResolvedTag}".Cyan());
+      // Display strategy
+      string strategyDisplay = result.Strategy switch
+      {
+        "git-tag" => "git-tag (GitHub releases)",
+        "nuget-search" => "nuget-search (NuGet packages)",
+        _ => result.Strategy
+      };
+      Terminal.WriteLine($"Strategy: {strategyDisplay}");
+      Terminal.WriteLine("");
+
+      // Display version in source
+      Terminal.WriteLine($"Version in source: {result.Version}".Cyan());
+
+      // Display latest based on strategy
+      if (result.Strategy == "git-tag")
+      {
+        string latestTag = result.LatestReleaseTag ?? "(none)";
+        Terminal.WriteLine($"Latest release tag on GitHub: {latestTag}".Cyan());
+      }
+      else if (result.Strategy == "nuget-search")
+      {
+        string latestNuGet = result.LatestNuGetVersion ?? "(none)";
+        Terminal.WriteLine($"Latest NuGet version: {latestNuGet}".Cyan());
+
+        if (result.CheckedPackages is { Count: > 0 })
+        {
+          Terminal.WriteLine($"Packages checked: {string.Join(", ", result.CheckedPackages)}");
+        }
+      }
+
+      Terminal.WriteLine("");
 
       if (result.IsNewVersion)
       {
-        Terminal.WriteLine("\n✓ Version is new — safe to release.".Green());
+        Terminal.WriteLine("✓ Version in source is new — safe to release.".Green());
       }
       else
       {
         Terminal.WriteLine
         (
-          $"\n✗ Version {result.Version} was already released.".Red()
+          $"✗ Version {result.Version} was already released.".Red()
         );
-        Terminal.WriteLine("  Bump the version before releasing.");
+        Terminal.WriteLine("  Bump the version before releasing.".Yellow());
 
         if (result.AlreadyPublishedPackages is { Count: > 0 })
         {

@@ -6,13 +6,13 @@ Commit `453c874` (refactor AOT DI for framework service registration) introduced
 
 ## Checklist
 
-- [ ] Fix A: Remove early-return guard in `EmitServiceFields` (interceptor-emitter.cs:342-344) so `EnsureServicesInitialized` method and framework fields are always emitted
-- [ ] Fix B: Change behavior pipeline emission to use `.Value.HandleAsync` instead of `.HandleAsync` on `Lazy<T>` fields (behavior-emitter.cs:305, 310)
-- [ ] `dotnet build` — analyzer project compiles
-- [ ] `ganda runfile cache --clear`
-- [ ] `dev verify-samples` — 64/64 passing
-- [ ] `dotnet run tests/ci-tests/run-ci-tests.cs` — full CI test suite passes
-- [ ] Spot-check a generated `NuruGenerated.g.cs` to confirm method definition present and `.Value.HandleAsync` used
+- [x] Fix A: Remove early-return guard in `EmitServiceFields` (interceptor-emitter.cs:342-344) so `EnsureServicesInitialized` method and framework fields are always emitted
+- [x] Fix B: Change behavior pipeline emission to use `.Value.HandleAsync` instead of `.HandleAsync` on `Lazy<T>` fields (behavior-emitter.cs:305, 310)
+- [x] `dotnet build` — analyzer project compiles
+- [x] `ganda runfile cache --clear`
+- [x] `dev verify-samples` — 64/64 passing
+- [x] `dotnet run tests/ci-tests/run-ci-tests.cs` — full CI test suite passes
+- [x] Spot-check a generated `NuruGenerated.g.cs` to confirm method definition present and `.Value.HandleAsync` used
 
 ## Notes
 
@@ -66,3 +66,12 @@ In `behavior-emitter.cs`, two lines:
 
 - `.agent/workspace/2026-03-24T00-49-56Z_diagnosis-source-generator-regression-453c874.md`
 - `.agent/workspace/2026-03-24T01-05-00_diagnosis-blast-radius-generator-regression-453c874.md`
+
+## Results
+
+- Removed early-return guard in `EmitServiceFields` (interceptor-emitter.cs:342-344) — `EnsureServicesInitialized` method and framework fields now always emitted
+- Changed behavior pipeline emission to use `.Value.HandleAsync()` on `Lazy<T>` fields (behavior-emitter.cs:305, 310)
+- 2 files changed, 2 insertions, 6 deletions
+- verify-samples: 64/64 passing (was 7/64)
+- CI tests: 1120 passed, 7 skipped, 0 failed
+- Commit: 72aad9dd

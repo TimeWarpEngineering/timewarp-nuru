@@ -339,10 +339,6 @@ internal static class InterceptorEmitter
         .DistinctBy(s => s.ImplementationTypeName)
     ];
 
-    // Only emit if there are cached services OR framework service types needed
-    if (cachedServices.Length == 0 && frameworkServiceTypes.Count == 0)
-      return;
-
     // Sort services topologically (dependencies first)
     ImmutableArray<ServiceDefinition> sortedServices =
       DependencyGraphBuilder.TopologicalSort([.. cachedServices]);

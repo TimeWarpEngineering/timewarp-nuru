@@ -302,12 +302,12 @@ internal static class BehaviorEmitter
       sb.AppendLine($"{ind}  Command = ({filterType})__command");
       sb.AppendLine($"{ind}}};");
 
-      sb.AppendLine($"{ind}await {fieldName}.HandleAsync(__typedContext_{behaviorIndex}, async () =>");
+      sb.AppendLine($"{ind}await {fieldName}.Value.HandleAsync(__typedContext_{behaviorIndex}, async () =>");
     }
     else
     {
       // Global behavior - use base context
-      sb.AppendLine($"{ind}await {fieldName}.HandleAsync(__behaviorContext, async () =>");
+      sb.AppendLine($"{ind}await {fieldName}.Value.HandleAsync(__behaviorContext, async () =>");
     }
 
     sb.AppendLine($"{ind}{{");

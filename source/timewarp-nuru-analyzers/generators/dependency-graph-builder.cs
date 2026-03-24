@@ -47,8 +47,8 @@ internal static class DependencyGraphBuilder
         {
           string normalizedDep = NormalizeTypeName(depType);
 
-          // Skip built-in types (always available)
-          if (IsBuiltInType(normalizedDep))
+          // Skip framework service types (always available)
+          if (FrameworkServices.IsFrameworkServiceType(depType))
             continue;
 
           // Check if dependency is a registered service
@@ -104,7 +104,7 @@ internal static class DependencyGraphBuilder
     if (result.Count != services.Length)
       return services;
 
-    return result.ToImmutableArray();
+    return [.. result];
   }
 
   /// <summary>
@@ -132,7 +132,7 @@ internal static class DependencyGraphBuilder
     {
       string implName = NormalizeTypeName(service.ImplementationTypeName);
       if (!graph.ContainsKey(implName))
-        graph[implName] = new List<string>();
+        graph[implName] = [];
 
       if (!service.ConstructorDependencyTypes.IsDefaultOrEmpty)
       {
@@ -140,7 +140,7 @@ internal static class DependencyGraphBuilder
         {
           string normalizedDep = NormalizeTypeName(depType);
 
-          if (IsBuiltInType(normalizedDep))
+          if (FrameworkServices.IsFrameworkServiceType(depType))
             continue;
 
           if (serviceByImpl.TryGetValue(normalizedDep, out ServiceDefinition? depService) ||
@@ -166,7 +166,7 @@ internal static class DependencyGraphBuilder
       }
     }
 
-    return cycleNodes.ToImmutableArray();
+    return [.. cycleNodes];
   }
 
   /// <summary>
@@ -213,7 +213,7 @@ internal static class DependencyGraphBuilder
     if (services.IsDefaultOrEmpty)
       return [];
 
-    List<(string, string, string, string)> mismatches = new();
+    List<(string, string, string, string)> mismatches = [];
 
     // Build lookup
     Dictionary<string, ServiceDefinition> serviceByImpl = new(StringComparer.Ordinal);
@@ -235,7 +235,7 @@ internal static class DependencyGraphBuilder
       {
         string normalizedDep = NormalizeTypeName(depType);
 
-        if (IsBuiltInType(normalizedDep))
+        if (FrameworkServices.IsFrameworkServiceType(depType))
           continue;
 
         if (serviceByImpl.TryGetValue(normalizedDep, out ServiceDefinition? depService) ||
@@ -254,7 +254,7 @@ internal static class DependencyGraphBuilder
       }
     }
 
-    return mismatches.ToImmutableArray();
+    return [.. mismatches];
   }
 
   /// <summary>
@@ -265,21 +265,6 @@ internal static class DependencyGraphBuilder
     return typeName.StartsWith("global::", StringComparison.Ordinal)
       ? typeName[8..]
       : typeName;
-  }
-
-  /// <summary>
-  /// Checks if a type is a built-in service type (always available).
-  /// </summary>
-  private static bool IsBuiltInType(string normalizedTypeName)
-  {
-    return normalizedTypeName.StartsWith("Microsoft.Extensions.Configuration.", StringComparison.Ordinal)
-        || normalizedTypeName.StartsWith("Microsoft.Extensions.Logging.", StringComparison.Ordinal)
-        || normalizedTypeName.StartsWith("TimeWarp.Terminal.", StringComparison.Ordinal)
-        || normalizedTypeName.StartsWith("TimeWarp.Nuru.NuruApp", StringComparison.Ordinal)
-        || normalizedTypeName == "System.Threading.CancellationToken"
-        || normalizedTypeName.StartsWith("Microsoft.Extensions.Options.IOptions", StringComparison.Ordinal)
-        || normalizedTypeName.StartsWith("Microsoft.Extensions.Options.IOptionsSnapshot", StringComparison.Ordinal)
-        || normalizedTypeName.StartsWith("Microsoft.Extensions.Options.IOptionsMonitor", StringComparison.Ordinal);
   }
 
   /// <summary>

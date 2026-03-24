@@ -38,3 +38,5 @@ NURU051 | Service.Validation | Error | Service has constructor dependencies
 NURU052 | Service.Validation | Warning | Extension method registration not analyzable
 NURU053 | Service.Validation | Error | Factory delegate registration not supported
 NURU054 | Service.Validation | Error | Internal type not accessible
+NURU055 | Service.Validation | Error | Circular dependency detected
+NURU056 | Service.Validation | Warning | Singleton depends on Transient service

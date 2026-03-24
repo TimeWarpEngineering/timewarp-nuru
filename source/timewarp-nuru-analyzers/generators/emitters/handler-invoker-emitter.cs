@@ -437,9 +437,9 @@ internal static class HandlerInvokerEmitter
 
       if (service.Lifetime is ServiceLifetime.Singleton or ServiceLifetime.Scoped)
       {
-        // Singleton/Scoped: use Lazy<T> field (generated with constructor args if needed)
+        // Singleton/Scoped: use static field directly
         string fieldName = InterceptorEmitter.GetServiceFieldName(service.ImplementationTypeName);
-        return $"{fieldName}.Value";
+        return fieldName;
       }
 
       // Transient without deps: new instance
@@ -478,10 +478,10 @@ internal static class HandlerInvokerEmitter
     // Well-known services get direct resolution
     return serviceTypeName switch
     {
-      "global::TimeWarp.Terminal.ITerminal" => "app.Terminal",
+      "global::TimeWarp.Terminal.ITerminal" => "__fw_ITerminal",
       "global::Microsoft.Extensions.Configuration.IConfiguration" => "configuration",
       "global::System.Threading.CancellationToken" => "cancellationToken",
-      "global::TimeWarp.Nuru.NuruApp" => "app",
+      "global::TimeWarp.Nuru.NuruApp" => "__fw_NuruApp",
       _ => ResolveRegisteredService(serviceTypeName, services)
     };
   }
@@ -507,8 +507,8 @@ internal static class HandlerInvokerEmitter
 
       if (service.Lifetime is ServiceLifetime.Singleton or ServiceLifetime.Scoped)
       {
-        // Singleton/Scoped: use Lazy<T> field (generated with constructor args if needed)
-        return $"__{ToVariableName(service.ShortServiceTypeName)}.Value";
+        // Singleton/Scoped: use static field directly
+        return InterceptorEmitter.GetServiceFieldName(service.ImplementationTypeName);
       }
 
       // Transient without deps: new instance

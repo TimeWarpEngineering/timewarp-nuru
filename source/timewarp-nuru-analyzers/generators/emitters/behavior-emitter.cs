@@ -398,7 +398,7 @@ internal static class BehaviorEmitter
     if (service is not null)
     {
       string fieldName = InterceptorEmitter.GetServiceFieldName(service.ImplementationTypeName);
-      return $"{fieldName}.Value";
+      return fieldName;
     }
 
     // Fallback: emit error

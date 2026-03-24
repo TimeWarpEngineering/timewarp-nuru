@@ -316,14 +316,11 @@ internal static class ServiceExtractor
         defaultValue = GetDefaultValueExpression(param);
       }
 
-      bool isBuiltIn = IsBuiltInServiceType(typeName);
-
       parameters.Add(new ConstructorParameter(
         ParameterName: param.Name,
         TypeName: typeName,
         HasDefaultValue: hasDefaultValue,
-        DefaultValue: defaultValue,
-        IsBuiltIn: isBuiltIn));
+        DefaultValue: defaultValue));
     }
 
     return parameters.ToImmutable();
@@ -371,26 +368,6 @@ internal static class ServiceExtractor
       char c => $"'{c}'",
       _ => defaultValue.ToString()
     };
-  }
-
-  /// <summary>
-  /// Checks if a type name represents a built-in service type.
-  /// </summary>
-  private static bool IsBuiltInServiceType(string typeName)
-  {
-    string normalized = typeName;
-
-    if (normalized.StartsWith("global::", StringComparison.Ordinal))
-      normalized = normalized[8..];
-
-    return normalized.StartsWith("Microsoft.Extensions.Configuration.", StringComparison.Ordinal)
-        || normalized.StartsWith("Microsoft.Extensions.Logging.", StringComparison.Ordinal)
-        || normalized.StartsWith("TimeWarp.Terminal.", StringComparison.Ordinal)
-        || normalized.StartsWith("TimeWarp.Nuru.NuruApp", StringComparison.Ordinal)
-        || normalized == "System.Threading.CancellationToken"
-        || normalized.StartsWith("Microsoft.Extensions.Options.IOptions", StringComparison.Ordinal)
-        || normalized.StartsWith("Microsoft.Extensions.Options.IOptionsSnapshot", StringComparison.Ordinal)
-        || normalized.StartsWith("Microsoft.Extensions.Options.IOptionsMonitor", StringComparison.Ordinal);
   }
 
   /// <summary>

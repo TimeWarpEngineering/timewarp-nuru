@@ -43,13 +43,18 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Include command files in compilation -->
-    <Compile Include="endpoints/**/*.cs" />
+    <!-- Include local command files in compilation (excluding shared DevCli endpoints) -->
+    <Compile Include="endpoints/**/*.cs"
+             Exclude="endpoints/clean-command.cs;endpoints/check-version-command.cs;endpoints/self-install-command.cs" />
+
+    <!-- Include shared DevCli endpoints from source-only project -->
+    <Compile Include="../../source/timewarp-nuru-devcli/content/any/endpoints/*.cs" />
   </ItemGroup>
 
   <ItemGroup>
     <!-- Project references -->
     <ProjectReference Include="../../source/timewarp-nuru/timewarp-nuru.csproj" />
+    <ProjectReference Include="../../source/timewarp-nuru-devcli/timewarp-nuru-devcli.csproj" />
     <!-- Explicitly reference the analyzer since it doesn't flow transitively -->
     <ProjectReference Include="../../source/timewarp-nuru-analyzers/timewarp-nuru-analyzers.csproj">
       <OutputItemType>Analyzer</OutputItemType>

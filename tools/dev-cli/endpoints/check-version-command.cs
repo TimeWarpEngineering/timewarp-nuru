@@ -8,7 +8,7 @@
 // Verifies that NuGet packages are not already published before release.
 // Migrated from runfiles/check-version.cs to endpoints pattern.
 
-namespace DevCli.Commands;
+namespace DevCli.Endpoints;
 
 /// <summary>
 /// Check if NuGet packages are already published.

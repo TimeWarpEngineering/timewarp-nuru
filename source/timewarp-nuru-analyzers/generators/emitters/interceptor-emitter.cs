@@ -318,16 +318,18 @@ internal static class InterceptorEmitter
   }
 
   /// <summary>
-  /// Emits static Lazy fields for Singleton and Scoped services.
-  /// These provide thread-safe lazy initialization for cached service instances.
+  /// Emits static nullable fields for Singleton and Scoped services.
+  /// These are initialized lazily in EnsureServicesInitialized.
   /// Services are sorted topologically to ensure dependencies are emitted first.
   /// </summary>
   private static void EmitServiceFields(StringBuilder sb, IEnumerable<ServiceDefinition> services)
   {
-    // Emit Lazy<T> fields for all Singleton and Scoped services (thread-safe caching).
-    // Services with constructor deps get their args resolved in the lambda.
     // Materialize to ImmutableArray for ResolveConstructorArguments compatibility
     ImmutableArray<ServiceDefinition> allServices = [.. services];
+
+    // Collect framework service types needed by ALL services (including Transient)
+    // Transient services are instantiated inline but still need framework service fields
+    HashSet<string> frameworkServiceTypes = CollectFrameworkServiceTypes(allServices);
 
     // Filter to Singleton/Scoped and remove duplicates
     ServiceDefinition[] cachedServices =
@@ -337,33 +339,248 @@ internal static class InterceptorEmitter
         .DistinctBy(s => s.ImplementationTypeName)
     ];
 
-    if (cachedServices.Length == 0)
-      return;
-
     // Sort services topologically (dependencies first)
     ImmutableArray<ServiceDefinition> sortedServices =
       DependencyGraphBuilder.TopologicalSort([.. cachedServices]);
 
-    sb.AppendLine("  // Static service fields (thread-safe lazy initialization)");
+    sb.AppendLine("  // Static service fields (initialized in EnsureServicesInitialized)");
     sb.AppendLine("  // Services are sorted topologically to ensure dependencies are emitted first");
 
+    // Emit framework service fields (always needed)
+    sb.AppendLine("  private static global::TimeWarp.Terminal.ITerminal? __fw_ITerminal;");
+    sb.AppendLine("  private static global::TimeWarp.Nuru.NuruApp? __fw_NuruApp;");
+
+    // Emit additional framework service fields needed by services
+    foreach (string frameworkType in frameworkServiceTypes)
+    {
+      string fieldName = FrameworkServices.GetFieldName(frameworkType);
+      if (fieldName == "__fw_ITerminal" || fieldName == "__fw_NuruApp")
+        continue; // Already emitted
+
+      sb.AppendLine($"  private static {frameworkType}? {fieldName};");
+    }
+
+    // Emit user service fields
+    foreach (ServiceDefinition service in sortedServices)
+    {
+      string fieldName = GetServiceFieldName(service.ImplementationTypeName);
+      sb.AppendLine(
+        $"  private static {service.ImplementationTypeName}? {fieldName};");
+    }
+
+    sb.AppendLine();
+
+    // Emit EnsureServicesInitialized method
+    EmitEnsureServicesInitialized(sb, sortedServices, allServices, frameworkServiceTypes);
+  }
+
+  /// <summary>
+  /// Collects all framework service types needed by the given services.
+  /// </summary>
+  private static HashSet<string> CollectFrameworkServiceTypes(ImmutableArray<ServiceDefinition> services)
+  {
+    HashSet<string> frameworkTypes = new(StringComparer.Ordinal);
+
+    foreach (ServiceDefinition service in services)
+    {
+      if (!service.ConstructorParameters.IsDefaultOrEmpty)
+      {
+        foreach (ConstructorParameter param in service.ConstructorParameters)
+        {
+          if (FrameworkServices.IsFrameworkServiceType(param.TypeName))
+          {
+            frameworkTypes.Add(param.TypeName);
+          }
+        }
+      }
+
+      if (!service.ConstructorDependencyTypes.IsDefaultOrEmpty)
+      {
+        foreach (string depType in service.ConstructorDependencyTypes)
+        {
+          if (FrameworkServices.IsFrameworkServiceType(depType))
+          {
+            frameworkTypes.Add(depType);
+          }
+        }
+      }
+    }
+
+    return frameworkTypes;
+  }
+
+  /// <summary>
+  /// Emits the EnsureServicesInitialized method that initializes all service fields.
+  /// This is called after configuration is built in ExecuteRouteAsync.
+  /// Uses app instance check instead of boolean flag to support multiple app instances
+  /// in the same process (e.g., CI multi-mode tests).
+  /// </summary>
+  private static void EmitEnsureServicesInitialized(StringBuilder sb, ImmutableArray<ServiceDefinition> sortedServices, ImmutableArray<ServiceDefinition> allServices, HashSet<string> frameworkServiceTypes)
+  {
+    sb.AppendLine("  private static void EnsureServicesInitialized(NuruApp app, global::Microsoft.Extensions.Configuration.IConfigurationRoot configuration)");
+    sb.AppendLine("  {");
+    // Check if already initialized for THIS app instance (supports multiple apps in same process)
+    sb.AppendLine("    if (__fw_NuruApp == app) return;");
+    sb.AppendLine();
+
+    // Initialize framework services
+    sb.AppendLine("    // Framework services");
+    sb.AppendLine("    __fw_NuruApp = app;");
+    sb.AppendLine("    __fw_ITerminal = app.Terminal;");
+
+    // Initialize additional framework services
+    foreach (string frameworkType in frameworkServiceTypes)
+    {
+      string fieldName = FrameworkServices.GetFieldName(frameworkType);
+      if (fieldName == "__fw_ITerminal" || fieldName == "__fw_NuruApp")
+        continue; // Already initialized
+
+      string initExpr = FrameworkServices.GetInitExpression(frameworkType);
+      sb.AppendLine($"    {fieldName} = {initExpr};");
+    }
+
+    sb.AppendLine();
+
+    // Initialize user services in topological order
+    sb.AppendLine("    // User services");
     foreach (ServiceDefinition service in sortedServices)
     {
       string fieldName = GetServiceFieldName(service.ImplementationTypeName);
       if (service.HasConstructorDependencies)
       {
-        string args = ServiceResolverEmitter.ResolveConstructorArguments(service, allServices);
+        string args = ResolveConstructorArgumentsForInit(service, allServices);
         sb.AppendLine(
-          $"  private static readonly global::System.Lazy<{service.ImplementationTypeName}> {fieldName} = new(() => new {service.ImplementationTypeName}({args}));");
+          $"    {fieldName} = new {service.ImplementationTypeName}({args});");
       }
       else
       {
         sb.AppendLine(
-          $"  private static readonly global::System.Lazy<{service.ImplementationTypeName}> {fieldName} = new(() => new {service.ImplementationTypeName}());");
+          $"    {fieldName} = new {service.ImplementationTypeName}();");
       }
     }
 
+    sb.AppendLine("  }");
     sb.AppendLine();
+  }
+
+  /// <summary>
+  /// Resolves constructor arguments for service initialization.
+  /// Framework services use __fw_* fields, user services use __svc_* fields.
+  /// </summary>
+  private static string ResolveConstructorArgumentsForInit(ServiceDefinition service, ImmutableArray<ServiceDefinition> allServices)
+  {
+    if (!service.ConstructorParameters.IsDefaultOrEmpty && service.ConstructorParameters.Length > 0)
+    {
+      return string.Join(", ", service.ConstructorParameters
+        .Select(param => ResolveParameterForInit(param, allServices)));
+    }
+
+    if (service.ConstructorDependencyTypes.IsDefaultOrEmpty)
+      return "";
+
+    return string.Join(", ", service.ConstructorDependencyTypes
+      .Select(dep => ResolveDepForInit(dep, allServices)));
+  }
+
+  /// <summary>
+  /// Resolves a single constructor parameter for service initialization.
+  /// </summary>
+  private static string ResolveParameterForInit(ConstructorParameter param, ImmutableArray<ServiceDefinition> allServices)
+  {
+    // Framework service types
+    if (FrameworkServices.IsFrameworkServiceType(param.TypeName))
+    {
+      return FrameworkServices.GetFieldName(param.TypeName);
+    }
+
+    // Check if this is a registered service
+    ServiceDefinition? depService = FindServiceForInit(param.TypeName, allServices);
+    if (depService is not null)
+    {
+      if (depService.Lifetime is ServiceLifetime.Singleton or ServiceLifetime.Scoped)
+      {
+        return GetServiceFieldName(depService.ImplementationTypeName);
+      }
+
+      if (depService.HasConstructorDependencies)
+      {
+        string innerArgs = ResolveConstructorArgumentsForInit(depService, allServices);
+        return $"new {depService.ImplementationTypeName}({innerArgs})";
+      }
+
+      return $"new {depService.ImplementationTypeName}()";
+    }
+
+    // Optional parameter with default value
+    if (param.HasDefaultValue && param.DefaultValue is not null)
+    {
+      return param.DefaultValue;
+    }
+
+    return $"default! /* ERROR: Cannot resolve {param.TypeName} */";
+  }
+
+  /// <summary>
+  /// Resolves a dependency type for service initialization.
+  /// </summary>
+  private static string ResolveDepForInit(string depType, ImmutableArray<ServiceDefinition> allServices)
+  {
+    // Framework service types
+    if (FrameworkServices.IsFrameworkServiceType(depType))
+    {
+      return FrameworkServices.GetFieldName(depType);
+    }
+
+    // Registered service
+    ServiceDefinition? depService = FindServiceForInit(depType, allServices);
+    if (depService is not null)
+    {
+      if (depService.Lifetime is ServiceLifetime.Singleton or ServiceLifetime.Scoped)
+      {
+        return GetServiceFieldName(depService.ImplementationTypeName);
+      }
+
+      if (depService.HasConstructorDependencies)
+      {
+        string innerArgs = ResolveConstructorArgumentsForInit(depService, allServices);
+        return $"new {depService.ImplementationTypeName}({innerArgs})";
+      }
+
+      return $"new {depService.ImplementationTypeName}()";
+    }
+
+    return $"default! /* ERROR: Cannot resolve {depType} */";
+  }
+
+  /// <summary>
+  /// Finds a service by its type name (checks both service type and implementation type).
+  /// </summary>
+  private static ServiceDefinition? FindServiceForInit(string typeName, ImmutableArray<ServiceDefinition> services)
+  {
+    string normalized = typeName.StartsWith("global::", StringComparison.Ordinal)
+      ? typeName[8..]
+      : typeName;
+
+    foreach (ServiceDefinition service in services)
+    {
+      // Check service type name (interface)
+      string serviceTypeNormalized = service.ServiceTypeName.StartsWith("global::", StringComparison.Ordinal)
+        ? service.ServiceTypeName[8..]
+        : service.ServiceTypeName;
+
+      if (serviceTypeNormalized == normalized)
+        return service;
+
+      // Check implementation type name (class)
+      string implNormalized = service.ImplementationTypeName.StartsWith("global::", StringComparison.Ordinal)
+        ? service.ImplementationTypeName[8..]
+        : service.ImplementationTypeName;
+
+      if (implNormalized == normalized)
+        return service;
+    }
+
+    return null;
   }
 
   /// <summary>
@@ -656,6 +873,19 @@ internal static class InterceptorEmitter
     {
       ConfigurationEmitter.Emit(sb);
     }
+    else
+    {
+      // Create a minimal configuration for apps without AddConfiguration()
+      // This is needed for EnsureServicesInitialized
+      sb.AppendLine("    // Minimal configuration for service initialization");
+      sb.AppendLine("    global::Microsoft.Extensions.Configuration.IConfigurationRoot configuration =");
+      sb.AppendLine("      new global::Microsoft.Extensions.Configuration.ConfigurationBuilder().Build();");
+    }
+
+    // Initialize services after configuration is built
+    sb.AppendLine("    // Initialize services with app and configuration");
+    sb.AppendLine("    EnsureServicesInitialized(app, configuration);");
+    sb.AppendLine();
 
     // Filter out configuration override args before route matching
     // Config overrides follow pattern: --Section:Key=value (starts with -- and contains :)

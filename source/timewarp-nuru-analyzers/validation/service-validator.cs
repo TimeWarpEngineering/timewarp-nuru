@@ -245,8 +245,8 @@ internal static class ServiceValidator
       {
         if (!IsServiceRegistered(depType, registeredServices))
         {
-          // Skip built-in types that are always available
-          if (IsBuiltInServiceType(depType))
+          // Skip framework service types that are always available
+          if (FrameworkServices.IsFrameworkServiceType(depType))
             continue;
 
           // Skip ILogger<T> - always available via NullLogger
@@ -405,19 +405,6 @@ internal static class ServiceValidator
   private static bool IsLoggerType(string typeName)
   {
     return typeName.Contains("ILogger", StringComparison.Ordinal);
-  }
-
-  /// <summary>
-  /// Checks if a type is a built-in service type.
-  /// </summary>
-  private static bool IsBuiltInServiceType(string typeName)
-  {
-    string normalized = NormalizeTypeName(typeName);
-    return normalized.StartsWith("Microsoft.Extensions.Configuration.", StringComparison.Ordinal)
-        || normalized.StartsWith("Microsoft.Extensions.Logging.", StringComparison.Ordinal)
-        || normalized.StartsWith("TimeWarp.Terminal.", StringComparison.Ordinal)
-        || normalized.StartsWith("TimeWarp.Nuru.NuruApp", StringComparison.Ordinal)
-        || normalized == "System.Threading.CancellationToken";
   }
 
   /// <summary>

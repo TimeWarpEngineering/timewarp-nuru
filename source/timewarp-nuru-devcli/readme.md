@@ -29,14 +29,14 @@ Create a `.timewarp/dev.jsonc` file in your repository root:
 {
   "checkVersionConfig": {
     // checkVersionStrategy: "git-tag" (compare to GitHub releases) or "nuget-search" (check NuGet.org)
-    "checkVersionStrategy": "git-tag",
+    "checkVersionStrategy": "nuget-search",
     // packages: comma-separated NuGet package IDs (nuget-search strategy only)
     "packages": "TimeWarp.Nuru,TimeWarp.Nuru.Analyzers"
   }
 }
 ```
 
-If the file does not exist, `IRepoConfigService` returns defaults (strategy: `git-tag`, no packages).
+If the file does not exist, `IRepoConfigService` returns defaults (strategy: `nuget-search`, no packages).
 
 ## Installation
 

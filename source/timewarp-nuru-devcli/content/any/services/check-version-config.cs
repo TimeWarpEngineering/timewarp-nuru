@@ -12,9 +12,9 @@ public sealed class CheckVersionConfig
 {
   /// <summary>
   /// The strategy to use when checking versions.
-  /// Defaults to <see cref="CheckVersionStrategy.GitTag"/> if not specified.
+  /// Defaults to <see cref="CheckVersionStrategy.NuGetSearch"/> if not specified.
   /// </summary>
-  public CheckVersionStrategy CheckVersionStrategy { get; init; } = CheckVersionStrategy.GitTag;
+  public CheckVersionStrategy CheckVersionStrategy { get; init; } = CheckVersionStrategy.NuGetSearch;
 
   /// <summary>
   /// Comma-separated NuGet package IDs to check.

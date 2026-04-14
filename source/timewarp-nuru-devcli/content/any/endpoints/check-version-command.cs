@@ -70,7 +70,7 @@ public sealed class CheckVersionCommand : ICommand<Unit>
           .GetConfigAsync(cancellationToken)
           .ConfigureAwait(false);
 
-        effectiveStrategy = config.CheckVersionConfig?.CheckVersionStrategy ?? CheckVersionStrategy.GitTag;
+        effectiveStrategy = config.CheckVersionConfig?.CheckVersionStrategy ?? CheckVersionStrategy.NuGetSearch;
       }
 
       // Display strategy

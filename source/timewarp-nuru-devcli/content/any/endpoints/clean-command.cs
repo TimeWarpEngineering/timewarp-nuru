@@ -7,7 +7,7 @@
 // CA1849 suppressed: synchronous terminal methods are acceptable in CLI context.
 #endregion
 
-namespace DevCli.Endpoints;
+namespace DevCli;
 
 using TimeWarp.Amuru;
 using TimeWarp.Nuru;

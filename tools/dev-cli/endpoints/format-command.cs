@@ -7,7 +7,7 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 // Check or fix code formatting using dotnet format.
 
-namespace DevCli.Endpoints;
+namespace DevCli;
 
 /// <summary>
 /// Check or fix code formatting.

@@ -13,6 +13,9 @@
     <!-- Include DevCli shared endpoint files -->
     <Compile Include="$(MSBuildThisFileDirectory)../content/any/endpoints/*.cs" 
              Visible="false" />
+    <!-- Include DevCli shared service files -->
+    <Compile Include="$(MSBuildThisFileDirectory)../content/any/services/*.cs" 
+             Visible="false" />
   </ItemGroup>
 
 </Project>

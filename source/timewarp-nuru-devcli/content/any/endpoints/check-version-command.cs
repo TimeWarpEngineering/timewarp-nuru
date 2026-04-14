@@ -3,12 +3,13 @@
 #endregion
 #region Design
 // Uses IRepoCheckVersionService from TimeWarp.Amuru for version checking.
+// Uses IRepoConfigService for per-repo config defaults.
 // Supports two strategies: nuget-search (checks NuGet) and git-tag (compares to git tag).
-// Strategy defaults to per-repo config, then git-tag.
+// Strategy defaults to per-repo config (.timewarp/dev.jsonc), then git-tag.
 // CA1849 suppressed: synchronous terminal methods are acceptable in CLI context.
 #endregion
 
-namespace DevCli.Endpoints;
+namespace DevCli;
 
 using TimeWarp.Amuru;
 using TimeWarp.Nuru;
@@ -53,60 +54,100 @@ public sealed class CheckVersionCommand : ICommand<Unit>
     {
       ArgumentNullException.ThrowIfNull(command);
 
-      string? repoRoot = Git.FindRoot();
-      if (repoRoot is null)
+      // Resolve strategy: CLI flag > config > default
+      string? strategyInput = command.Strategy;
+      CheckVersionStrategy effectiveStrategy;
+      if (strategyInput is not null && TryParseStrategy(strategyInput, out CheckVersionStrategy parsed))
       {
-        Terminal.WriteErrorLine("Error: not in a git repository.");
+        effectiveStrategy = parsed;
+      }
+      else if (strategyInput is not null)
+      {
+        Terminal.WriteErrorLine($"Error: unknown strategy '{strategyInput}'. Valid values: git-tag, nuget-search");
         Environment.ExitCode = 1;
         return Unit.Value;
       }
+      else
+      {
+        RepoConfig config = await ConfigService
+          .GetConfigAsync(cancellationToken)
+          .ConfigureAwait(false);
 
-      // Get per-repo config defaults
-      RepoConfig config = await ConfigService
-        .GetConfigAsync(cancellationToken)
-        .ConfigureAwait(false);
-
-      string effectiveStrategy = command.Strategy ?? config.CheckVersion?.Strategy ?? "git-tag";
-      string? effectivePackage = command.Package ?? config.CheckVersion?.Packages;
-
-      CheckVersionResult result = await CheckVersionService
-        .CheckAsync
-        (
-          effectiveStrategy,
-          effectivePackage ?? string.Empty,
-          command.Tag ?? string.Empty,
-          cancellationToken
-        )
-        .ConfigureAwait(false);
+        effectiveStrategy = config.CheckVersionConfig?.CheckVersionStrategy ?? CheckVersionStrategy.GitTag;
+      }
 
       // Display strategy
-      string strategyDisplay = result.Strategy switch
+      string strategyDisplay = effectiveStrategy switch
       {
-        "git-tag" => "git-tag (GitHub releases)",
-        "nuget-search" => "nuget-search (NuGet packages)",
-        _ => result.Strategy
+        CheckVersionStrategy.GitTag => "git-tag (GitHub releases)",
+        CheckVersionStrategy.NuGetSearch => "nuget-search (NuGet packages)",
+        _ => effectiveStrategy.ToString()
       };
       Terminal.WriteLine($"Strategy: {strategyDisplay}");
       Terminal.WriteLine("");
 
-      // Display version in source
-      Terminal.WriteLine($"Version in source: {result.Version}".Cyan());
-
-      // Display latest based on strategy
-      if (result.Strategy == "git-tag")
+      if (effectiveStrategy == CheckVersionStrategy.GitTag)
       {
-        string latestTag = result.LatestReleaseTag ?? "(none)";
-        Terminal.WriteLine($"Latest release tag on GitHub: {latestTag}".Cyan());
+        await HandleGitTagAsync(command, cancellationToken).ConfigureAwait(false);
       }
-      else if (result.Strategy == "nuget-search")
+      else if (effectiveStrategy == CheckVersionStrategy.NuGetSearch)
       {
-        string latestNuGet = result.LatestNuGetVersion ?? "(none)";
-        Terminal.WriteLine($"Latest NuGet version: {latestNuGet}".Cyan());
+        await HandleNuGetSearchAsync(command, cancellationToken).ConfigureAwait(false);
+      }
 
-        if (result.CheckedPackages is { Count: > 0 })
-        {
-          Terminal.WriteLine($"Packages checked: {string.Join(", ", result.CheckedPackages)}");
-        }
+      return Unit.Value;
+    }
+
+    private async ValueTask HandleGitTagAsync(CheckVersionCommand command, CancellationToken cancellationToken)
+    {
+      GitTagCheckResult result = await CheckVersionService
+        .CheckGitTagVersionAsync(command.Tag, cancellationToken)
+        .ConfigureAwait(false);
+
+      Terminal.WriteLine($"Version in source: {result.Version}".Cyan());
+      string latestTag = result.LatestReleaseTag ?? "(none)";
+      Terminal.WriteLine($"Latest release tag on GitHub: {latestTag}".Cyan());
+      Terminal.WriteLine("");
+
+      if (result.IsNewVersion)
+      {
+        Terminal.WriteLine("✓ Version in source is new — safe to release.".Green());
+      }
+      else
+      {
+        Terminal.WriteLine($"✗ Version {result.Version} was already released.".Red());
+        Terminal.WriteLine("  Bump the version before releasing.".Yellow());
+        Environment.ExitCode = 1;
+      }
+    }
+
+    private async ValueTask HandleNuGetSearchAsync(CheckVersionCommand command, CancellationToken cancellationToken)
+    {
+      RepoConfig config = await ConfigService
+        .GetConfigAsync(cancellationToken)
+        .ConfigureAwait(false);
+
+      string? packageInput = command.Package ?? config.CheckVersionConfig?.Packages;
+      if (string.IsNullOrWhiteSpace(packageInput))
+      {
+        Terminal.WriteErrorLine("Error: no packages specified. Use --package or configure Packages in .timewarp/dev.jsonc");
+        Environment.ExitCode = 1;
+        return;
+      }
+
+      IReadOnlyList<string> packages = packageInput.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+      NuGetCheckResult result = await CheckVersionService
+        .CheckNuGetVersionAsync(packages, cancellationToken)
+        .ConfigureAwait(false);
+
+      Terminal.WriteLine($"Version in source: {result.Version}".Cyan());
+      string latestNuGet = result.LatestNuGetVersion ?? "(none)";
+      Terminal.WriteLine($"Latest NuGet version: {latestNuGet}".Cyan());
+
+      if (result.CheckedPackages is { Count: > 0 })
+      {
+        Terminal.WriteLine($"Packages checked: {string.Join(", ", result.CheckedPackages)}");
       }
 
       Terminal.WriteLine("");
@@ -117,24 +158,36 @@ public sealed class CheckVersionCommand : ICommand<Unit>
       }
       else
       {
-        Terminal.WriteLine
-        (
-          $"✗ Version {result.Version} was already released.".Red()
-        );
+        Terminal.WriteLine($"✗ Version {result.Version} was already released.".Red());
         Terminal.WriteLine("  Bump the version before releasing.".Yellow());
 
         if (result.AlreadyPublishedPackages is { Count: > 0 })
         {
-          Terminal.WriteLine
-          (
-            $"  Already published: {string.Join(", ", result.AlreadyPublishedPackages)}".Yellow()
-          );
+          Terminal.WriteLine($"  Already published: {string.Join(", ", result.AlreadyPublishedPackages)}".Yellow());
         }
 
         Environment.ExitCode = 1;
       }
+    }
 
-      return Unit.Value;
+    /// <summary>
+    /// Parses a strategy string from CLI input into a <see cref="CheckVersionStrategy"/>.
+    /// Accepts hyphenated form ("git-tag", "nuget-search") or PascalCase form ("GitTag", "NuGetSearch").
+    /// </summary>
+    private static bool TryParseStrategy(string input, out CheckVersionStrategy strategy)
+    {
+      return input switch
+      {
+        "git-tag" => SetResult(CheckVersionStrategy.GitTag, out strategy),
+        "nuget-search" => SetResult(CheckVersionStrategy.NuGetSearch, out strategy),
+        _ => Enum.TryParse(input, ignoreCase: true, out strategy)
+      };
+    }
+
+    private static bool SetResult(CheckVersionStrategy value, out CheckVersionStrategy strategy)
+    {
+      strategy = value;
+      return true;
     }
   }
 }

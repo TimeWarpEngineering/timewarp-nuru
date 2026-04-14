@@ -8,7 +8,7 @@
 // Runs the fast CI test suite.
 // Migrated from runfiles/test.cs to endpoints pattern.
 
-namespace DevCli.Endpoints;
+namespace DevCli;
 
 /// <summary>
 /// Run the CI test suite.

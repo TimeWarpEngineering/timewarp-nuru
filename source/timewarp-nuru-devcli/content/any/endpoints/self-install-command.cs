@@ -8,7 +8,7 @@
 // CA1031 suppressed: catch-all is needed for rollback on any failure.
 #endregion
 
-namespace DevCli.Endpoints;
+namespace DevCli;
 
 using TimeWarp.Amuru;
 using TimeWarp.Nuru;

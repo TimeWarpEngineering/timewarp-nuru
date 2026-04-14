@@ -12,7 +12,7 @@
 //   pr/merge:  clean -> build -> verify-samples -> test
 //   release:   clean -> build -> check-version -> pack -> push
 
-namespace DevCli.Endpoints;
+namespace DevCli;
 
 /// <summary>
 /// Run the full CI/CD pipeline.

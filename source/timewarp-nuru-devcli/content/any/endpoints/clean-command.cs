@@ -4,7 +4,6 @@
 #region Design
 // Uses IRepoCleanService from TimeWarp.Amuru for comprehensive cleaning.
 // Executes dotnet restore, dotnet clean, then removes bin/obj directories.
-// CA1849 suppressed: synchronous terminal methods are acceptable in CLI context.
 #endregion
 
 namespace DevCli;
@@ -12,8 +11,6 @@ namespace DevCli;
 using TimeWarp.Amuru;
 using TimeWarp.Nuru;
 using TimeWarp.Terminal;
-
-#pragma warning disable CA1849 // Consider using an async method overload
 
 /// <summary>
 /// Clean solution and build artifacts.
@@ -62,5 +59,3 @@ public sealed class CleanCommand : ICommand<Unit>
     }
   }
 }
-
-#pragma warning restore CA1849

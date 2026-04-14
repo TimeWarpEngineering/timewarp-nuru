@@ -6,7 +6,6 @@
 // Uses IRepoConfigService for per-repo config defaults.
 // Supports two strategies: nuget-search (checks NuGet) and git-tag (compares to git tag).
 // Strategy defaults to per-repo config (.timewarp/dev.jsonc), then git-tag.
-// CA1849 suppressed: synchronous terminal methods are acceptable in CLI context.
 #endregion
 
 namespace DevCli;
@@ -14,8 +13,6 @@ namespace DevCli;
 using TimeWarp.Amuru;
 using TimeWarp.Nuru;
 using TimeWarp.Terminal;
-
-#pragma warning disable CA1849 // Consider using an async method overload
 
 /// <summary>
 /// Verify version is ready to release.
@@ -65,7 +62,7 @@ public sealed class CheckVersionCommand : ICommand<Unit>
       {
         Terminal.WriteErrorLine($"Error: unknown strategy '{strategyInput}'. Valid values: git-tag, nuget-search");
         Environment.ExitCode = 1;
-        return Unit.Value;
+        return Value;
       }
       else
       {
@@ -95,7 +92,7 @@ public sealed class CheckVersionCommand : ICommand<Unit>
         await HandleNuGetSearchAsync(command, cancellationToken).ConfigureAwait(false);
       }
 
-      return Unit.Value;
+      return Value;
     }
 
     private async ValueTask HandleGitTagAsync(CheckVersionCommand command, CancellationToken cancellationToken)
@@ -191,5 +188,3 @@ public sealed class CheckVersionCommand : ICommand<Unit>
     }
   }
 }
-
-#pragma warning restore CA1849

@@ -1,6 +1,7 @@
 #region Purpose
 // Reads per-repo dev-cli configuration from .timewarp/dev.jsonc.
 // Returns an empty RepoConfig with defaults if the file does not exist.
+// Uses source-generated JSON context for AOT compatibility.
 #endregion
 
 namespace DevCli;
@@ -18,7 +19,8 @@ public sealed class RepoConfigService : IRepoConfigService
   {
     PropertyNameCaseInsensitive = true,
     ReadCommentHandling = JsonCommentHandling.Skip,
-    AllowTrailingCommas = true
+    AllowTrailingCommas = true,
+    TypeInfoResolver = DevCliJsonContext.Default
   };
 
   /// <inheritdoc />

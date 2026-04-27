@@ -12,4 +12,5 @@ using System.Text.Json.Serialization;
 [JsonSerializable(typeof(RepoConfig))]
 [JsonSerializable(typeof(CheckVersionConfig))]
 [JsonSerializable(typeof(CheckVersionStrategy))]
+[JsonSerializable(typeof(NuGetVersionIndex))]
 internal sealed partial class DevCliJsonContext : JsonSerializerContext;

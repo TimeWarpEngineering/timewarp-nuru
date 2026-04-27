@@ -30,20 +30,23 @@ internal sealed class WorkflowCommand : ICommand<Unit>
   {
     private readonly ITerminal Terminal;
     private readonly IRepoCleanService RepoCleanService;
-    private readonly IRepoCheckVersionService CheckVersionService;
+    private readonly NuGetVersionService NuGetVersionService;
+    private readonly GitTagCheckService GitTagCheckService;
     private readonly IRepoConfigService ConfigService;
 
     public Handler
     (
       ITerminal terminal,
       IRepoCleanService repoCleanService,
-      IRepoCheckVersionService checkVersionService,
+      NuGetVersionService nuGetVersionService,
+      GitTagCheckService gitTagCheckService,
       IRepoConfigService configService
     )
     {
       Terminal = terminal;
       RepoCleanService = repoCleanService;
-      CheckVersionService = checkVersionService;
+      NuGetVersionService = nuGetVersionService;
+      GitTagCheckService = gitTagCheckService;
       ConfigService = configService;
     }
 
@@ -158,7 +161,7 @@ internal sealed class WorkflowCommand : ICommand<Unit>
       Terminal.WriteLine("===============================================================================");
       Terminal.WriteLine("  Step 1/5: Check Version");
       Terminal.WriteLine("===============================================================================");
-      CheckVersionCommand.Handler checkVersionHandler = new(Terminal, CheckVersionService, ConfigService);
+      CheckVersionCommand.Handler checkVersionHandler = new(Terminal, NuGetVersionService, GitTagCheckService, ConfigService);
       await checkVersionHandler.Handle(new CheckVersionCommand(), CancellationToken.None);
 
       if (Environment.ExitCode != 0)

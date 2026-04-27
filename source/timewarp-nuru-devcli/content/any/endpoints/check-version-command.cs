@@ -2,21 +2,19 @@
 // Verify that the version in Directory.Build.props has not already been released
 #endregion
 #region Design
-// Uses IRepoCheckVersionService from TimeWarp.Amuru for version checking.
+// Uses NuGetVersionService (HttpClient-based) for NuGet checks — no NuGet.Protocol dependency.
+// Uses GitTagCheckService for git-tag checks — no INuGetPackageService dependency.
 // Uses IRepoConfigService for per-repo config defaults.
 // Supports two strategies: nuget-search (checks NuGet) and git-tag (compares to git tag).
-// Strategy defaults to per-repo config (.timewarp/dev.jsonc), then git-tag.
+// Strategy defaults to per-repo config (.timewarp/dev.jsonc), then nuget-search.
 #endregion
 
 namespace DevCli;
 
-using TimeWarp.Amuru;
+using System.Xml.Linq;
 using TimeWarp.Nuru;
 using TimeWarp.Terminal;
 
-/// <summary>
-/// Verify version is ready to release.
-/// </summary>
 [NuruRoute("check-version", Description = "Verify version is ready to release")]
 public sealed class CheckVersionCommand : ICommand<Unit>
 {
@@ -32,18 +30,21 @@ public sealed class CheckVersionCommand : ICommand<Unit>
   public sealed class Handler : ICommandHandler<CheckVersionCommand, Unit>
   {
     private readonly ITerminal Terminal;
-    private readonly IRepoCheckVersionService CheckVersionService;
+    private readonly NuGetVersionService NuGetVersionService;
+    private readonly GitTagCheckService GitTagCheckService;
     private readonly IRepoConfigService ConfigService;
 
     public Handler
     (
       ITerminal terminal,
-      IRepoCheckVersionService checkVersionService,
+      NuGetVersionService nuGetVersionService,
+      GitTagCheckService gitTagCheckService,
       IRepoConfigService configService
     )
     {
       Terminal = terminal;
-      CheckVersionService = checkVersionService;
+      NuGetVersionService = nuGetVersionService;
+      GitTagCheckService = gitTagCheckService;
       ConfigService = configService;
     }
 
@@ -51,7 +52,6 @@ public sealed class CheckVersionCommand : ICommand<Unit>
     {
       ArgumentNullException.ThrowIfNull(command);
 
-      // Resolve strategy: CLI flag > config > default
       string? strategyInput = command.Strategy;
       CheckVersionStrategy effectiveStrategy;
       if (strategyInput is not null && TryParseStrategy(strategyInput, out CheckVersionStrategy parsed))
@@ -73,7 +73,6 @@ public sealed class CheckVersionCommand : ICommand<Unit>
         effectiveStrategy = config.CheckVersionConfig?.CheckVersionStrategy ?? CheckVersionStrategy.NuGetSearch;
       }
 
-      // Display strategy
       string strategyDisplay = effectiveStrategy switch
       {
         CheckVersionStrategy.GitTag => "git-tag (GitHub releases)",
@@ -97,7 +96,7 @@ public sealed class CheckVersionCommand : ICommand<Unit>
 
     private async ValueTask HandleGitTagAsync(CheckVersionCommand command, CancellationToken cancellationToken)
     {
-      GitTagCheckResult result = await CheckVersionService
+      GitTagCheckResult result = await GitTagCheckService
         .CheckGitTagVersionAsync(command.Tag, cancellationToken)
         .ConfigureAwait(false);
 
@@ -134,43 +133,105 @@ public sealed class CheckVersionCommand : ICommand<Unit>
 
       IReadOnlyList<string> packages = packageInput.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
-      NuGetCheckResult result = await CheckVersionService
-        .CheckNuGetVersionAsync(packages, cancellationToken)
-        .ConfigureAwait(false);
-
-      Terminal.WriteLine($"Version in source: {result.Version}".Cyan());
-      string latestNuGet = result.LatestNuGetVersion ?? "(none)";
-      Terminal.WriteLine($"Latest NuGet version: {latestNuGet}".Cyan());
-
-      if (result.CheckedPackages is { Count: > 0 })
+      string? version = GetVersionFromSource();
+      if (version is null)
       {
-        Terminal.WriteLine($"Packages checked: {string.Join(", ", result.CheckedPackages)}");
+        Terminal.WriteErrorLine("Error: could not read Version from source/Directory.Build.props");
+        Environment.ExitCode = 1;
+        return;
+      }
+
+      List<string> checkedPackages = [];
+      List<string> alreadyPublished = [];
+      string? latestNuGetVersion = null;
+
+      foreach (string pkg in packages)
+      {
+        checkedPackages.Add(pkg);
+
+        IReadOnlyList<string> versions = await NuGetVersionService
+          .GetPackageVersionsAsync(pkg, cancellationToken)
+          .ConfigureAwait(false);
+
+        if (versions.Count == 0)
+        {
+          continue;
+        }
+
+        string highestVersion = versions[^1];
+
+        if (latestNuGetVersion is null || NuGetVersionService.CompareVersions(highestVersion, latestNuGetVersion) > 0)
+        {
+          latestNuGetVersion = highestVersion;
+        }
+
+        if (string.Equals(version, highestVersion, StringComparison.OrdinalIgnoreCase))
+        {
+          alreadyPublished.Add(pkg);
+        }
+      }
+
+      Terminal.WriteLine($"Version in source: {version}".Cyan());
+      string latestDisplay = latestNuGetVersion ?? "(none)";
+      Terminal.WriteLine($"Latest NuGet version: {latestDisplay}".Cyan());
+
+      if (checkedPackages.Count > 0)
+      {
+        Terminal.WriteLine($"Packages checked: {string.Join(", ", checkedPackages)}");
       }
 
       Terminal.WriteLine("");
 
-      if (result.IsNewVersion)
+      bool isNewVersion = alreadyPublished.Count == 0;
+
+      if (isNewVersion)
       {
         Terminal.WriteLine("✓ Version in source is new — safe to release.".Green());
       }
       else
       {
-        Terminal.WriteLine($"✗ Version {result.Version} was already released.".Red());
+        Terminal.WriteLine($"✗ Version {version} was already released.".Red());
         Terminal.WriteLine("  Bump the version before releasing.".Yellow());
 
-        if (result.AlreadyPublishedPackages is { Count: > 0 })
+        if (alreadyPublished.Count > 0)
         {
-          Terminal.WriteLine($"  Already published: {string.Join(", ", result.AlreadyPublishedPackages)}".Yellow());
+          Terminal.WriteLine($"  Already published: {string.Join(", ", alreadyPublished)}".Yellow());
         }
 
         Environment.ExitCode = 1;
       }
     }
 
-    /// <summary>
-    /// Parses a strategy string from CLI input into a <see cref="CheckVersionStrategy"/>.
-    /// Accepts hyphenated form ("git-tag", "nuget-search") or PascalCase form ("GitTag", "NuGetSearch").
-    /// </summary>
+    private static string? GetVersionFromSource()
+    {
+      string? repoRoot = Git.FindRoot();
+      if (repoRoot is null)
+      {
+        return null;
+      }
+
+      string sourceDir = Path.Combine(repoRoot, "source");
+      if (!Directory.Exists(sourceDir))
+      {
+        return null;
+      }
+
+      string[] buildPropsFiles = Directory.GetFiles(sourceDir, "Directory.Build.props", SearchOption.TopDirectoryOnly);
+      if (buildPropsFiles is not { Length: > 0 })
+      {
+        return null;
+      }
+
+      string xml = File.ReadAllText(buildPropsFiles[0]);
+#pragma warning disable IDE0007
+      XDocument doc = XDocument.Parse(xml);
+#pragma warning restore IDE0007
+      XNamespace ns = "http://schemas.microsoft.com/developer/msbuild/2003";
+
+      XElement? versionElement = doc.Descendants(ns + "Version").FirstOrDefault();
+      return (versionElement ?? doc.Descendants("Version").FirstOrDefault())?.Value;
+    }
+
     private static bool TryParseStrategy(string input, out CheckVersionStrategy strategy)
     {
       return input switch

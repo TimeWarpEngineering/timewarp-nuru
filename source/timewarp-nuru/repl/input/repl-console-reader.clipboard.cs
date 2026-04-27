@@ -284,28 +284,14 @@ public sealed partial class ReplConsoleReader
 
     private static bool IsCommandAvailable(string command)
     {
-      try
-      {
-        using System.Diagnostics.Process process = new()
-        {
-          StartInfo = new System.Diagnostics.ProcessStartInfo
-          {
-            FileName = "which",
-            Arguments = command,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true
-          }
-        };
-        process.Start();
-        process.WaitForExit();
-        return process.ExitCode == 0;
-      }
-      catch
-      {
-        return false;
-      }
+      CommandOutput output = Shell.Builder("which")
+        .WithArguments(command)
+        .WithNoValidation()
+        .CaptureAsync()
+        .GetAwaiter()
+        .GetResult();
+
+      return output.Success;
     }
   }
 }

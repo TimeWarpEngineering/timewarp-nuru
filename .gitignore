@@ -442,3 +442,6 @@ opencodetmp/
 
 # REPL history files
 repl-*-history.txt
+
+# Language server cache
+*.lscache

@@ -10,9 +10,9 @@
 //
 // Modes:
 //   pr/merge:  clean -> build -> verify-samples -> test
-//   release:   clean -> build -> check-version -> pack -> push
+//   release:   check-version -> clean -> build -> pack -> push
 
-namespace DevCli.Endpoints;
+namespace DevCli;
 
 /// <summary>
 /// Run the full CI/CD pipeline.
@@ -30,15 +30,24 @@ internal sealed class WorkflowCommand : ICommand<Unit>
   {
     private readonly ITerminal Terminal;
     private readonly IRepoCleanService RepoCleanService;
+    private readonly NuGetVersionService NuGetVersionService;
+    private readonly GitTagCheckService GitTagCheckService;
+    private readonly IRepoConfigService ConfigService;
 
     public Handler
     (
       ITerminal terminal,
-      IRepoCleanService repoCleanService
+      IRepoCleanService repoCleanService,
+      NuGetVersionService nuGetVersionService,
+      GitTagCheckService gitTagCheckService,
+      IRepoConfigService configService
     )
     {
       Terminal = terminal;
       RepoCleanService = repoCleanService;
+      NuGetVersionService = nuGetVersionService;
+      GitTagCheckService = gitTagCheckService;
+      ConfigService = configService;
     }
 
     public async ValueTask<Unit> Handle(WorkflowCommand command, CancellationToken ct)
@@ -138,7 +147,7 @@ internal sealed class WorkflowCommand : ICommand<Unit>
 
     private async Task RunReleaseWorkflowAsync(string? apiKey)
     {
-      Terminal.WriteLine("Pipeline: clean -> build -> pack -> push");
+      Terminal.WriteLine("Pipeline: check-version -> clean -> build -> pack -> push");
       Terminal.WriteLine("");
 
       // Get repo root for pack/push operations
@@ -148,32 +157,49 @@ internal sealed class WorkflowCommand : ICommand<Unit>
         repoRoot = Path.GetFullPath(Directory.GetCurrentDirectory());
       }
 
-      // Step 1: Clean
+      // Step 1: Check Version
       Terminal.WriteLine("===============================================================================");
-      Terminal.WriteLine("  Step 1/4: Clean");
+      Terminal.WriteLine("  Step 1/5: Check Version");
+      Terminal.WriteLine("===============================================================================");
+      CheckVersionCommand.Handler checkVersionHandler = new(Terminal, NuGetVersionService, GitTagCheckService, ConfigService);
+      await checkVersionHandler.Handle(new CheckVersionCommand(), CancellationToken.None);
+
+      if (Environment.ExitCode != 0)
+      {
+        Terminal.WriteLine("");
+        Terminal.WriteLine("===============================================================================");
+        Terminal.WriteLine("  Pipeline ABORTED — version already released");
+        Terminal.WriteLine("===============================================================================");
+        Environment.ExitCode = 1;
+        return;
+      }
+
+      // Step 2: Clean
+      Terminal.WriteLine("===============================================================================");
+      Terminal.WriteLine("  Step 2/5: Clean");
       Terminal.WriteLine("===============================================================================");
       CleanCommand.Handler cleanHandler = new(Terminal, RepoCleanService);
       await cleanHandler.Handle(new CleanCommand(), CancellationToken.None);
 
-      // Step 2: Build
+      // Step 3: Build
       Terminal.WriteLine("");
       Terminal.WriteLine("===============================================================================");
-      Terminal.WriteLine("  Step 2/4: Build");
+      Terminal.WriteLine("  Step 3/5: Build");
       Terminal.WriteLine("===============================================================================");
       BuildCommand.Handler buildHandler = new(Terminal);
       await buildHandler.Handle(new BuildCommand(), CancellationToken.None);
 
-      // Step 3: Pack
+      // Step 4: Pack
       Terminal.WriteLine("");
       Terminal.WriteLine("===============================================================================");
-      Terminal.WriteLine("  Step 3/4: Pack");
+      Terminal.WriteLine("  Step 4/5: Pack");
       Terminal.WriteLine("===============================================================================");
       await PackProjectsAsync(repoRoot);
 
-      // Step 4: Push
+      // Step 5: Push
       Terminal.WriteLine("");
       Terminal.WriteLine("===============================================================================");
-      Terminal.WriteLine("  Step 4/4: Push to NuGet");
+      Terminal.WriteLine("  Step 5/5: Push to NuGet");
       Terminal.WriteLine("===============================================================================");
       await PushPackagesAsync(repoRoot, apiKey);
 

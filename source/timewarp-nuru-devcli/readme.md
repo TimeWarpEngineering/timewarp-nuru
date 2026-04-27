@@ -1,14 +1,42 @@
 # TimeWarp.Nuru.DevCli
 
-Reusable dev-cli endpoints for TimeWarp repositories. This package provides source-only endpoint files that can be consumed by any TimeWarp repository.
+Reusable dev-cli endpoints and services for TimeWarp repositories. This package provides source-only files that can be consumed by any TimeWarp repository.
 
 ## What's Included
+
+### Endpoints
 
 | Endpoint | Description | Dependencies |
 |----------|-------------|--------------|
 | `clean` | Clean solution and build artifacts | `IRepoCleanService` (TimeWarp.Amuru) |
 | `self-install` | AOT compile dev CLI to ./bin | None (standalone) |
-| `check-version` | Verify version is ready to release | `IRepoCheckVersionService` (TimeWarp.Amuru) |
+| `check-version` | Verify version is ready to release | `IRepoCheckVersionService`, `IRepoConfigService` |
+
+### Services
+
+| Service | Description |
+|---------|-------------|
+| `IRepoConfigService` / `RepoConfigService` | Reads per-repo config from `.timewarp/dev.jsonc` |
+| `CheckVersionStrategy` | Enum for version check strategies (`git-tag`, `nuget-search`) |
+| `CheckVersionConfig` | Config model for the check-version command |
+| `RepoConfig` | Top-level config model for `.timewarp/dev.jsonc` |
+
+## Configuration
+
+Create a `.timewarp/dev.jsonc` file in your repository root:
+
+```jsonc
+{
+  "checkVersionConfig": {
+    // checkVersionStrategy: "git-tag" (compare to GitHub releases) or "nuget-search" (check NuGet.org)
+    "checkVersionStrategy": "nuget-search",
+    // packages: comma-separated NuGet package IDs (nuget-search strategy only)
+    "packages": "TimeWarp.Nuru,TimeWarp.Nuru.Analyzers"
+  }
+}
+```
+
+If the file does not exist, `IRepoConfigService` returns defaults (strategy: `nuget-search`, no packages).
 
 ## Installation
 
@@ -48,7 +76,7 @@ await app.RunAsync(args);
 
 ## Source-Only Package
 
-This is a **source-only NuGet package**. The endpoint files are included in your project's compilation, not as a compiled assembly. This is required for Nuru's source generators to work correctly.
+This is a **source-only NuGet package**. The endpoint and service files are included in your project's compilation, not as a compiled assembly. This is required for Nuru's source generators to work correctly.
 
 ### Why Source-Only?
 
@@ -60,8 +88,9 @@ This package serves as a reference for creating your own reusable endpoint packa
 
 1. Create a project with `IncludeBuildOutput=false`
 2. Place endpoint files in `content/any/endpoints/`
-3. Create a `.props` file in `build/` to include the content files
-4. Pack the project as a NuGet package
+3. Place service files in `content/any/services/`
+4. Create a `.props` file in `build/` to include the content files
+5. Pack the project as a NuGet package
 
 Example `.props` file:
 
@@ -70,10 +99,8 @@ Example `.props` file:
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)../content/any/endpoints/*.cs" 
              Visible="false" />
+    <Compile Include="$(MSBuildThisFileDirectory)../content/any/services/*.cs" 
+             Visible="false" />
   </ItemGroup>
 </Project>
 ```
-
-## License
-
-MIT

@@ -8,7 +8,7 @@
 // Builds all samples to verify they compile correctly.
 // Migrated from runfiles/verify-samples.cs to endpoints pattern.
 
-namespace DevCli.Endpoints;
+namespace DevCli;
 
 /// <summary>
 /// Build all samples to verify they compile.

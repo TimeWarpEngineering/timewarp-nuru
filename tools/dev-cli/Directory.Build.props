@@ -13,7 +13,7 @@
     <!-- CA2016: CancellationToken forwarding - will address where needed -->
     <!-- CA2000: Dispose on app builder - handled by framework -->
     <!-- RCS1046: Async suffix - private methods don't need it -->
-    <NoWarn>$(NoWarn);CA1031;CA1303;CA1508;CA1515;CA1849;CA2007;CA2016;CA2000;RCS1046</NoWarn>
+    <NoWarn>$(NoWarn);CA1031;CA1303;CA1508;CA1515;CA1849;CA2007;CA2016;CA2000;RCS1046;CA1034;IDE0065;IL2104;IL3053;CA5399</NoWarn>
 
     <!-- AOT Support -->
     <PublishAot>true</PublishAot>
@@ -37,6 +37,7 @@
     <Using Include="TimeWarp.Nuru.Unit" Static="true" />
     <Using Include="TimeWarp.Amuru" />
     <Using Include="TimeWarp.Terminal" />
+    <Using Include="DevCli" />
     <Using Include="Microsoft.Extensions.DependencyInjection" />
 
     <Using Include="System.Console" Static="true" />
@@ -49,6 +50,9 @@
 
     <!-- Include shared DevCli endpoints from source-only project -->
     <Compile Include="../../source/timewarp-nuru-devcli/content/any/endpoints/*.cs" />
+
+    <!-- Include shared DevCli services from source-only project -->
+    <Compile Include="../../source/timewarp-nuru-devcli/content/any/services/*.cs" />
   </ItemGroup>
 
   <ItemGroup>

@@ -4,17 +4,15 @@
 #region Design
 // Uses dotnet publish to create the binary in ./bin
 // Standalone - no external service dependencies
-// CA1849 suppressed: synchronous terminal methods are acceptable in CLI context.
 // CA1031 suppressed: catch-all is needed for rollback on any failure.
 #endregion
 
-namespace DevCli.Endpoints;
+namespace DevCli;
 
 using TimeWarp.Amuru;
 using TimeWarp.Nuru;
 using TimeWarp.Terminal;
 
-#pragma warning disable CA1849 // Consider using an async method overload
 #pragma warning disable CA1031 // Do not catch generally exception types
 
 /// <summary>
@@ -113,4 +111,3 @@ public sealed class SelfInstallCommand : ICommand<Unit>
 }
 
 #pragma warning restore CA1031
-#pragma warning restore CA1849

@@ -1,0 +1,7 @@
+{
+  // Per-repo configuration for TimeWarp.Nuru dev-cli
+  "checkVersionConfig": {
+    "checkVersionStrategy": "nuget-search",
+    "packages": "TimeWarp.Nuru.Analyzers,TimeWarp.Nuru.Mcp,TimeWarp.Nuru,TimeWarp.Nuru.Search,TimeWarp.Nuru.DevCli"
+  }
+}

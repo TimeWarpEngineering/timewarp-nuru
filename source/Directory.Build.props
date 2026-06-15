@@ -8,7 +8,7 @@
 
   <!-- Default package metadata (can be overridden in individual projects) -->
   <PropertyGroup Label="Package Metadata">
-    <Version>3.0.0-beta.70</Version>
+    <Version>3.0.0-beta.71</Version>
     <Authors>Steven T. Cramer</Authors>
     <RepositoryUrl>https://github.com/TimeWarpEngineering/timewarp-nuru</RepositoryUrl>
     <PackageLicenseExpression>Unlicense</PackageLicenseExpression>
@@ -33,8 +33,6 @@
     <None Include="$(RepositoryRoot)assets/logo.png" Pack="true" PackagePath="" />
   </ItemGroup>
 
-  <ItemGroup Label="Build Tasks">
-    <PackageReference Include="TimeWarp.Build.Tasks" />
-  </ItemGroup>
+  <!-- TimeWarp.Build.Tasks is referenced repo-wide in the root Directory.Build.props. -->
 
 </Project>

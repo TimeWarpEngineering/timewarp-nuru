@@ -145,6 +145,52 @@ public class PerRouteHelpTests
     terminal.OutputContains("destination").ShouldBeTrue();
   }
 
+  public static async Task Should_show_parameter_descriptions_in_help()
+  {
+    // Issue #215 / kanban #453: Endpoint DSL [Parameter(Description)] must render
+    // in per-route help (previously the Parameters table dropped the description).
+    // Arrange
+    using TestTerminal terminal = new();
+    NuruApp app = NuruApp.CreateBuilder()
+      .UseTerminal(terminal)
+      .Map<ForkEndpoint>()
+      .Build();
+
+    // Act
+    int exitCode = await app.RunAsync(["fork", "--help"]);
+
+    // Assert
+    exitCode.ShouldBe(0);
+    terminal.OutputContains("Parameters").ShouldBeTrue();
+    terminal.OutputContains("source").ShouldBeTrue();
+    terminal.OutputContains("Description").ShouldBeTrue();
+    terminal.OutputContains("Source repository identifier").ShouldBeTrue();
+  }
+
+  public static async Task Should_not_show_description_column_when_no_parameter_descriptions()
+  {
+    // Issue #215 / kanban #453: omit the Description column when no parameter has one.
+    // Arrange
+    using TestTerminal terminal = new();
+    NuruApp app = NuruApp.CreateBuilder()
+      .UseTerminal(terminal)
+      .Map("move {source} {destination}")
+        .WithHandler((string source, string destination) => "moved")
+        .WithDescription("Move files")
+        .Done()
+      .Build();
+
+    // Act
+    int exitCode = await app.RunAsync(["move", "--help"]);
+
+    // Assert - parameters render, but no Description column header appears
+    exitCode.ShouldBe(0);
+    terminal.OutputContains("Parameters").ShouldBeTrue();
+    terminal.OutputContains("source").ShouldBeTrue();
+    terminal.OutputContains("destination").ShouldBeTrue();
+    terminal.OutputContains("Description").ShouldBeFalse();
+  }
+
   public static async Task Should_show_options_section_in_help()
   {
     // Arrange
@@ -219,6 +265,23 @@ public static class StaticFlags
   {
     DangerousHandlerExecuted = true;
     return "executed";
+  }
+}
+
+// Issue #215 / kanban #453: Endpoint DSL endpoint with a described parameter.
+[NuruRoute("fork", Description = "Fork a repository")]
+internal sealed class ForkEndpoint : ICommand<Unit>
+{
+  [Parameter(Description = "Source repository identifier")]
+  public required string Source { get; set; }
+
+  internal sealed class Handler(ITerminal terminal) : ICommandHandler<ForkEndpoint, Unit>
+  {
+    public async ValueTask<Unit> Handle(ForkEndpoint command, CancellationToken ct)
+    {
+      await terminal.WriteLineAsync($"forked {command.Source}").ConfigureAwait(false);
+      return default;
+    }
   }
 }
 

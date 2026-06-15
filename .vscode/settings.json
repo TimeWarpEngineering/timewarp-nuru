@@ -21,11 +21,12 @@
   "peacock.remoteColor": "#3957CF",
   "cSpell.words": [
     "Cocona",
-    "Fx\u0027s",
+    "Fx's",
     "LINQ",
     "Nuru",
     "Ryzen",
     "Stackalloc"
   ],
-  "timewarp.blurImagePath": "assets/timewarp-nuru-avatar.svg"
+  "timewarp.blurImagePath": "assets/timewarp-nuru-avatar.svg",
+  "window.title": "timewarp-nuru · ${rootName}${separator}${activeEditorShort}"
 }

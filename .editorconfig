@@ -436,3 +436,8 @@ dotnet_diagnostic.IDE1006.severity = none
 
 # IDE0290: Use primary constructor
 csharp_style_prefer_primary_constructors = false
+
+# ganda repo audit configuration
+[ganda.audit]
+# This IS the TimeWarp.Nuru repo, so it cannot reference TimeWarp.Nuru as a package.
+nuru.severity = off

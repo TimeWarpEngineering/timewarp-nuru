@@ -33,8 +33,6 @@
     <None Include="$(RepositoryRoot)assets/logo.png" Pack="true" PackagePath="" />
   </ItemGroup>
 
-  <ItemGroup Label="Build Tasks">
-    <PackageReference Include="TimeWarp.Build.Tasks" />
-  </ItemGroup>
+  <!-- TimeWarp.Build.Tasks is referenced repo-wide in the root Directory.Build.props. -->
 
 </Project>

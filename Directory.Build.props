@@ -1,3 +1,4 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project>
 
   <!-- Import repository path definitions -->
@@ -86,6 +87,12 @@
   <!-- Banned API Symbols -->
   <ItemGroup Label="Banned API Analyzers">
     <AdditionalFiles Include="$(MSBuildThisFileDirectory)BannedSymbols.txt" />
+  </ItemGroup>
+
+  <!-- Git commit metadata for assemblies (repo-wide). timewarp-nuru.csproj overrides
+       PrivateAssets to "none" so it flows transitively to package consumers. -->
+  <ItemGroup Label="Build Tasks">
+    <PackageReference Include="TimeWarp.Build.Tasks" PrivateAssets="all" />
   </ItemGroup>
 
 </Project>

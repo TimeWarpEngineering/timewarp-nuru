@@ -111,15 +111,22 @@ internal static class RouteHelpEmitter
     }
 
     // Parameters section
-    IEnumerable<ParameterDefinition> parameters = route.Parameters.ToList();
-    if (parameters.Any())
+    List<ParameterDefinition> parameters = [.. route.Parameters];
+    if (parameters.Count > 0)
     {
+      // Only show the Description column when at least one parameter has a description.
+      bool anyDescriptions = parameters.Any(p => !string.IsNullOrEmpty(p.Description));
+
       sb.AppendLine($"{indentStr}app.Terminal.WriteLine();");
       sb.AppendLine($"{indentStr}app.Terminal.WriteLine(\"Parameters:\");");
       sb.AppendLine($"{indentStr}app.Terminal.WriteTable(table => table");
       sb.AppendLine($"{indentStr}  .AddColumn(\"Name\")");
       sb.AppendLine($"{indentStr}  .AddColumn(\"Required\")");
       sb.AppendLine($"{indentStr}  .AddColumn(\"Type\")");
+      if (anyDescriptions)
+      {
+        sb.AppendLine($"{indentStr}  .AddColumn(\"Description\")");
+      }
 
       foreach (ParameterDefinition param in parameters)
       {
@@ -134,7 +141,15 @@ internal static class RouteHelpEmitter
           ? param.TypeConstraint
           : "string";
 
-        sb.AppendLine($"{indentStr}  .AddRow(\"{EscapeString(name)}\", \"{EscapeString(required)}\", \"{EscapeString(type)}\")");
+        if (anyDescriptions)
+        {
+          string description = param.Description ?? "";
+          sb.AppendLine($"{indentStr}  .AddRow(\"{EscapeString(name)}\", \"{EscapeString(required)}\", \"{EscapeString(type)}\", \"{EscapeString(description)}\")");
+        }
+        else
+        {
+          sb.AppendLine($"{indentStr}  .AddRow(\"{EscapeString(name)}\", \"{EscapeString(required)}\", \"{EscapeString(type)}\")");
+        }
       }
 
       sb.AppendLine($"{indentStr});");
